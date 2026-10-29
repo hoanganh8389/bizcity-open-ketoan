@@ -50,6 +50,8 @@
 | 2.8 | Tách `packages/contracts/src/mua-hang/*` về phân hệ (A-06) | `packages/contracts` không còn thư mục `mua-hang` | 1.6 |
 | 2.9 | `GET /api/v1/system/capabilities` trả `bizcity-standard.json` + trạng thái thật | test so khớp | mới |
 | 2.10 | Chẩn đoán: `GET /api/v1/system/diagnostics` | [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md) | 1.5 |
+| 2.11 | **`platform/mcp` đọc (2b)**: `POST /mcp`, công cụ `ketoan.*` §5.1 bọc route hiện có, khoá `mcp_…` có scope, phong bì + `as_of` ([bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md)) | Claude / ChatGPT đọc được cân đối phát sinh, công nợ của một đơn vị | mới |
+| 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt | mới |
 
 **Rủi ro:** RLS và chuỗi băm bằng chứng tốn hiệu năng. Đo trên dữ liệu thật (30.000 chứng từ / ngày) trước khi bật cho bảng Kernel; bảng module bật ngay vì mới và nhỏ.
 
@@ -69,6 +71,8 @@
 | 3.8 | `@bizcity/ui-kit` từ `apps/web/src/components` + `layout` + `lib`; slot `partner.detail.tab`, `dashboard.widget`… | `apps/web/src/phan-he/*` chỉ import ui-kit | mới |
 | 3.9 | Chuyển `phan-he/*` → `modules/*`; sửa hết A-17 (bỏ waiver) | `kiem-chuan.sh` không còn danh sách nợ | — |
 | 3.10 | Role CSDL theo module (`mod_<key>_rw`) | module không `INSERT` được bảng Kernel ở tầng CSDL | 3.4 |
+| 3.11 | **Gói định khoản**: bảng `config_packs`, xem trước + cài + gỡ (STD-TPL-5..9), tách `db/seeds` thành `bizcity.vn-tt99.nen` + gói thương mại; màn Gói định khoản | cài gói lên đơn vị trống → mọi `docType` hiện có ghi sổ được | mới |
+| 3.12 | `posting.reason.suggest` tất định (từ khoá, ví dụ, lịch sử đơn vị) + manifest `ledger.submits[].reasons` | gợi ý đúng ≥ 80% trên tình huống mẫu của gói | mới |
 
 ## Phase 4 — AGENTS.md, CLI, starter template, test
 
@@ -91,7 +95,9 @@
 |---|---|---|---|
 | 5.1 | Module **CRM** do người ngoài nhóm Lõi viết chỉ bằng SDK (khách tiềm năng, cơ hội, chăm sóc; chuyển thành khách → `core.partner.upsert`) | `module check` đạt, 0 thay đổi Core | 3.7 |
 | 5.2 | Module **kho** tách khỏi lõi: màn, báo cáo, tồn max là module; sổ phụ kho ở Kernel | Kernel không còn màn kho | mới |
-| 5.3 | `adapters/cell`: MCP server, khoá `cell`, liên kết người dùng kênh, `core.notify.send` qua Cell, chuyển `tro-ly` / `spreadsheet-ai` ([CELL-MCP.md](CELL-MCP.md)) | Cell hỏi được công nợ, lập phiếu nháp qua Zalo; CI "no-cell" xanh | mới |
+| 5.3 | `adapters/cell` theo [CHANNEL-GATEWAY-PORT.md](CHANNEL-GATEWAY-PORT.md): khoá 1API + bốn bước + kết nối một chạm ([CELL-CONNECT.md](CELL-CONNECT.md)), cầu MCP `/api/v1/cell/mcp`, liên kết principal, web chat `twin-agent-turn`, `core.notify.send` qua Cell, chuyển `tro-ly` / `spreadsheet-ai` | Cell hỏi được công nợ, lập phiếu nháp qua Zalo có xác nhận; bản Pro bật bằng một khoá; CI "no-cell" xanh | mới |
+| 5.3b | Đề xuất H-1..H-5 cho Hub / Cell (proof path, `callback_base`, mode `accounting*`, nhiều khoá một domain, Guru kế toán) | nhóm plugin chấp nhận / từ chối có ghi lại | mới |
+| 5.8 | Registry gói định khoản công khai + chữ ký ([TEMPLATE-MARKETPLACE.md](TEMPLATE-MARKETPLACE.md)); OCR hoá đơn qua Cell (khuôn `INVOICE_AI_URL`) | 3 gói official, 1 gói verified của đối tác | mới |
 | 5.4 | `adapters/wordpress`: connector hiện có + `bizcity/ledger-php-sdk` + webhook sự kiện; `tgs_accounting_bridge` dùng SDK | plugin WP chạy qua hợp đồng, không gọi URL tự đặt | 2.5 |
 | 5.5 | Hàng đợi trước định khoản (`event_inbox`), partition sổ cái theo năm | tải 30.000 chứng từ / ngày | 3.1, 3.2 |
 | 5.6 | Gói phát hành: image có nhãn, `CHANGELOG.md` 3 mục, `compat-matrix.json` | bản Beta | 3.6 |

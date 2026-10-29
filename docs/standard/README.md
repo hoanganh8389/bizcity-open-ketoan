@@ -26,6 +26,22 @@ Bizcity Core (repo open-ketoan) là **hạ tầng ứng dụng doanh nghiệp**,
                                └──────────────────────────────┘
 ```
 
+### Ba điểm khác biệt của Bizcity Core
+
+| | Khác phần mềm kế toán thường ở chỗ | Tài liệu |
+|---|---|---|
+| **1. Sẵn cho vibecode** | Người hoặc AI viết module (bán hàng, hợp đồng, CRM…) theo 7 hợp đồng mà không đụng sổ cái. Bộ kiểm quyết định module có được cài hay không | [GOLDEN-CASE-HOP-DONG.md](GOLDEN-CASE-HOP-DONG.md), [CONFORMANCE.md](CONFORMANCE.md) |
+| **2. Chuẩn MCP** | Mọi việc làm được trên màn hình đều có công cụ MCP cùng quyền, cùng luật, cùng bằng chứng. Ghi qua AI luôn xác nhận hai bước và chỉ ra phiếu chờ duyệt | [bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md) |
+| **3. Trợ lý Cell ghi sổ, đọc báo cáo** | Chủ doanh nghiệp không rành định khoản: tải **gói định khoản theo ngành**, trợ lý AI chọn lý do, xem trước bút toán, lập phiếu nháp qua Zalo. Bật bằng một khoá 1API qua bốn bước (bản **Pro**) | [bizcity_posting_template@1](../contracts/BIZCITY-POSTING-TEMPLATE-v1.md), [TEMPLATE-MARKETPLACE.md](TEMPLATE-MARKETPLACE.md), [CELL-CONNECT.md](CELL-CONNECT.md), [CHANNEL-GATEWAY-PORT.md](CHANNEL-GATEWAY-PORT.md) |
+
+Chuỗi đi từ module tới sổ, AI chỉ chen ở bước gợi ý:
+
+```text
+module ─► sự việc (bizcity_ledger_intake@1) ─► lý do định khoản (gói ngành) ─► luật Kernel + AccountResolver ─► bút toán
+                                    ▲
+             Cell gợi ý reasonCode, xem trước — không ghi hiệu lực (CELL-5)
+```
+
 ## 2. Ba nguyên tắc khoá
 
 | # | Nguyên tắc | Nghĩa cụ thể | Kiểm bằng |

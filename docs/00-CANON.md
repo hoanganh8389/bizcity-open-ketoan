@@ -54,6 +54,8 @@
 | `bizcity_master_data@1` | [contracts/BIZCITY-MASTER-DATA-v1.md](contracts/BIZCITY-MASTER-DATA-v1.md) | Ổn định | `modules/{accounts,branches,partners,products,tax-codes,posting-config}` |
 | `bizcity_connector@1` | [contracts/BIZCITY-CONNECTOR-v1.md](contracts/BIZCITY-CONNECTOR-v1.md) | Ổn định | `modules/connections`, `packages/contracts/src/connections.ts` |
 | `bizcity_settings@1` | [contracts/BIZCITY-SETTINGS-MATRIX-v1.md](contracts/BIZCITY-SETTINGS-MATRIX-v1.md) | **Đề xuất** | `core/posting-modes.ts`, `core/date-rules.ts` (rải rác) |
+| `bizcity_posting_template@1` | [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) | **Đề xuất** — gói định khoản theo ngành, marketplace ([standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md)) | `posting_reasons`, `account-resolver.ts`; kiểm SC-TPL-1 |
+| `bizcity_mcp@1` | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) | **Đề xuất** — công cụ MCP cho Cell / chatbot; hồ sơ của chuẩn MCP hệ sinh thái ([standard/CELL-CONNECT.md](standard/CELL-CONNECT.md)) | chưa có (Phase 2b) |
 | ~~`bizcity_workflow@1`~~ | [workflows/README.md](workflows/README.md) | Gộp vào `bizcity_document@1` §5 (năng lực `documents.workflow`) | — |
 
 Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`. **Đề xuất** = chuẩn đích, code đang chuyển dần (xem [framework/05-LO-TRINH.md](framework/05-LO-TRINH.md)).
@@ -77,6 +79,9 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Thêm điểm mở rộng (slot, hook, action công khai của Core) | `contracts/BIZCITY-EXTENSION-v1.md` §3–§5 |
 | Thêm kiểm vào bộ cài đặt | `standard/CONFORMANCE.md` + một check ở `tests/conformance/` kèm ca tự kiểm trong `fixtures/expect.json` (ADR-0006) |
 | Thêm luật `R-*` / `STD-*` mới | cột "Kiểm bằng" trỏ tới test hoặc check `SC-*` / `DG-*`; bảng điểm đo độ phủ |
+| Lý do, nhóm hạch toán, tài khoản ngầm định mặc định (`db/seeds/ly-do.jsonl`…) | gói định khoản tương ứng theo `contracts/BIZCITY-POSTING-TEMPLATE-v1.md` |
+| Route / action được AI dùng (`expose.mcp`), công cụ `ketoan.*` | `contracts/BIZCITY-MCP-v1.md` §5 (danh mục công cụ); đổi phá vỡ = công cụ mới |
+| `adapters/cell`, kết nối Hub / Cell | `standard/CELL-CONNECT.md`, `standard/CHANNEL-GATEWAY-PORT.md` |
 | Sửa xong một nợ đã biết | `node tests/conformance/selfcheck.mjs --update-baseline` trong cùng PR (CI chạy `--strict`) |
 | Tách / chuyển thư mục giữa Kernel, Platform, module | `standard/REUSE-MAP.md`, `standard/TARGET-LAYOUT.md` |
 

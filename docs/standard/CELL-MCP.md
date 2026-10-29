@@ -2,6 +2,12 @@
 
 > Thực thi nguyên tắc **P1: Core không phụ thuộc Cell.** Cell bổ sung AI, LLM, OCR, RAG, điều phối; Core vẫn đủ chức năng khi không có Cell.
 > Hợp đồng liên quan: [Action §6](../contracts/BIZCITY-ACTION-v1.md#6-phơi-ra-cho-ai-mcp), [Evidence](../contracts/BIZCITY-EVIDENCE-v1.md), [Event](../contracts/BIZCITY-EVENT-v1.md). Năng lực: `mcp.tools`, `ai.cell` (Phase 5).
+> **Chi tiết đã chốt (2026-10-29), thắng khi lệch với §3–§5 dưới:**
+> - khuôn công cụ, xác nhận ghi, cầu uỷ quyền: [bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md), là hồ sơ của `bizcity-mcp-tool@1.0.0` + `bizcity-mcp-bridge@1.0.0` của hệ sinh thái;
+> - khoá: khoá 1API `biz-…` qua Hub, bốn bước, bản Pro: [CELL-CONNECT.md](CELL-CONNECT.md);
+> - port gateway: [CHANNEL-GATEWAY-PORT.md](CHANNEL-GATEWAY-PORT.md).
+>
+> Các luật CELL-1..7 ở đây giữ nguyên.
 
 ## 1. Ai làm gì
 

@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bizcity.vn/contracts/bizcity_posting_template/1.0.0",
+  "title": "bizcity_posting_template@1",
+  "description": "Gói định khoản: lý do, nhóm hạch toán, tài khoản ngầm định, hình thức thanh toán, loại thuế, khoản mục, tình huống mẫu. Dữ liệu cấu hình, không chứa code. Xem BIZCITY-POSTING-TEMPLATE-v1.md.",
+  "type": "object",
+  "required": ["contract", "id", "version", "title", "publisher", "regime", "industries", "reasons"],
+  "properties": {
+    "contract": { "const": "bizcity_posting_template@1" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z0-9-]+\\.[a-z0-9-]+$", "description": "<publisher>.<chế độ>.<ngành>, vd bizcity.vn-tt99.thuong-mai" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-z0-9.]+)?$" },
+    "title": { "type": "string", "minLength": 3, "maxLength": 120 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "publisher": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "name": { "type": "string", "minLength": 2 },
+        "url": { "type": "string" },
+        "trust": { "enum": ["official", "verified", "community"], "description": "Do marketplace gán khi duyệt, gói tự khai không có giá trị" }
+      },
+      "additionalProperties": false
+    },
+    "license": { "type": "string" },
+    "regime": { "enum": ["vn-tt99-2025", "vn-tt133-2016"] },
+    "industries": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": { "enum": ["nen", "thuong-mai", "ban-le", "fnb", "dich-vu", "san-xuat", "nha-may", "xay-dung", "xuat-nhap-khau", "nhan-su-luong", "nong-nghiep", "van-tai", "bat-dong-san", "giao-duc", "y-te"] }
+    },
+    "extends": { "type": "array", "items": { "$ref": "#/$defs/packRef" }, "uniqueItems": true },
+    "overrides": { "type": "array", "items": { "$ref": "#/$defs/code" }, "uniqueItems": true, "description": "Mã của gói khác mà gói này cố ý thay; người cài phải đồng ý" },
+    "requires": {
+      "type": "object",
+      "properties": {
+        "docTypes": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }, "uniqueItems": true },
+        "capabilities": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)+$" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "parent", "name"],
+        "properties": {
+          "code": { "$ref": "#/$defs/account" },
+          "parent": { "$ref": "#/$defs/account" },
+          "name": { "type": "string", "minLength": 2 },
+          "track": { "type": "array", "items": { "enum": ["partner", "cost_item", "department", "contract", "employee", "cashflow", "product"] }, "uniqueItems": true }
+        },
+        "additionalProperties": false
+      }
+    },
+    "postingDefaults": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/account" }
+    },
+    "reasons": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/reason" } },
+    "postingGroups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "name", "inventoryAccount", "cogsAccount", "revenueAccount"],
+        "properties": {
+          "code": { "$ref": "#/$defs/code" },
+          "name": { "type": "string" },
+          "inventoryAccount": { "$ref": "#/$defs/account" },
+          "cogsAccount": { "$ref": "#/$defs/account" },
+          "revenueAccount": { "$ref": "#/$defs/account" },
+          "discountAccount": { "$ref": "#/$defs/account" },
+          "salesReturnAccount": { "$ref": "#/$defs/account" },
+          "isDefault": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "paymentMethods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "name", "account"],
+        "properties": {
+          "code": { "$ref": "#/$defs/code" },
+          "name": { "type": "string" },
+          "account": { "$ref": "#/$defs/account" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "taxCodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "name", "rate", "direction", "account"],
+        "properties": {
+          "code": { "$ref": "#/$defs/code" },
+          "name": { "type": "string" },
+          "rate": { "type": "number", "minimum": 0, "maximum": 100 },
+          "direction": { "enum": ["output", "input"] },
+          "account": { "$ref": "#/$defs/account" },
+          "reportGroup": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "costItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "name"],
+        "properties": { "code": { "$ref": "#/$defs/code" }, "name": { "type": "string" }, "parent": { "$ref": "#/$defs/code" } },
+        "additionalProperties": false
+      }
+    },
+    "scenarios": { "type": "array", "items": { "$ref": "#/$defs/scenario" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "code": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,32}$" },
+    "account": { "type": "string", "pattern": "^[0-9]{3,10}$" },
+    "packRef": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z0-9-]+\\.[a-z0-9-]+@\\^?\\d+(\\.\\d+){0,2}$", "description": "id@range, vd bizcity.vn-tt99.nen@^1" },
+    "reason": {
+      "type": "object",
+      "required": ["code", "name", "kind"],
+      "properties": {
+        "code": { "$ref": "#/$defs/code" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "kind": { "enum": ["in", "out", "receipt", "payment"] },
+        "counterAccount": { "$ref": "#/$defs/account" },
+        "revenueAccount": { "$ref": "#/$defs/account" },
+        "expenseAccount": { "$ref": "#/$defs/account" },
+        "cashflowCode": { "type": "string" },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "default": { "type": "string", "pattern": "^[a-z_]+(:[a-z_]+)?$" },
+            "postToLedger": { "type": "boolean" },
+            "returnAtOpeningCost": { "type": "boolean" },
+            "excludeFromCost": { "type": "boolean" },
+            "costAtSalePrice": { "type": "boolean" },
+            "giftCostToPromotion": { "type": "boolean" },
+            "costItem": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "ai": {
+          "type": "object",
+          "properties": {
+            "keywords": { "type": "array", "items": { "type": "string", "minLength": 2 }, "uniqueItems": true },
+            "examples": { "type": "array", "items": { "type": "string", "minLength": 5 } },
+            "askIf": { "type": "array", "items": { "type": "string" } },
+            "notFor": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["id", "title", "document", "expect"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Z0-9-]{2,20}$" },
+        "title": { "type": "string", "minLength": 5 },
+        "document": {
+          "type": "object",
+          "required": ["docType"],
+          "properties": { "docType": { "type": "string" }, "reasonCode": { "$ref": "#/$defs/code" } },
+          "description": "Sự việc theo bizcity_ledger_intake@1 (rút gọn: chỉ trường cần cho tình huống), hoặc docType 'voucher' cho phiếu thu / chi / kế toán tay"
+        },
+        "expect": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["debit", "credit", "amount"],
+            "properties": {
+              "debit": { "$ref": "#/$defs/account" },
+              "credit": { "$ref": "#/$defs/account" },
+              "amount": { "anyOf": [{ "type": "number", "exclusiveMinimum": 0 }, { "enum": ["cost"] }] },
+              "note": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

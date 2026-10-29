@@ -24,6 +24,7 @@ Từ 2026-10-29 repo còn là **Bizcity Core Framework**: hạ tầng ứng dụ
 |---|---|
 | **Mọi người** (bắt buộc) | [00-CANON.md](00-CANON.md) → [framework/00-TONG-QUAN.md](framework/00-TONG-QUAN.md) |
 | Người / AI viết **module mới** (cộng đồng, vibecode) | [../AGENTS.md](../AGENTS.md) → [standard/README.md](standard/README.md) → [standard/GOLDEN-CASE-HOP-DONG.md](standard/GOLDEN-CASE-HOP-DONG.md) → 7 hợp đồng → [standard/CONFORMANCE.md](standard/CONFORMANCE.md) |
+| Người làm **AI / Cell / chatbot**, gói định khoản theo ngành | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) → [standard/CELL-CONNECT.md](standard/CELL-CONNECT.md) → [standard/CHANNEL-GATEWAY-PORT.md](standard/CHANNEL-GATEWAY-PORT.md) → [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) → [standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md) |
 | Nhóm Lõi **tách Kernel / Platform** | [standard/REUSE-MAP.md](standard/REUSE-MAP.md) → [standard/TARGET-LAYOUT.md](standard/TARGET-LAYOUT.md) → [standard/PHASES.md](standard/PHASES.md) |
 | Người làm **lõi** | [framework/01-CORE-MODULES.md](framework/01-CORE-MODULES.md) → [rules/](rules/) (cả thư mục) → [contracts/](contracts/README.md) |
 | Người phụ trách **phân hệ** (mua hàng, kho, nhân sự…) | [framework/03-MO-RONG.md](framework/03-MO-RONG.md) → [rules/RULE-MODULE-BOUNDARY.md](rules/RULE-MODULE-BOUNDARY.md) → [rules/RULE-EVENT.md](rules/RULE-EVENT.md) → [contracts/BIZCITY-MODULE-v1.md](contracts/BIZCITY-MODULE-v1.md) → [workflows/](workflows/README.md) |

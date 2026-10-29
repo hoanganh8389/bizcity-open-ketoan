@@ -1,0 +1,127 @@
+{
+  "contract": "bizcity_posting_template@1",
+  "id": "bizcity.vn-tt99.thuong-mai",
+  "version": "0.1.0",
+  "title": "Thương mại bán lẻ — TT99/2025",
+  "description": "Gói mẫu cho doanh nghiệp thương mại có cửa hàng: bán lẻ có / không thuế, khách trả lại, mua hàng NCC, thu chi thường ngày. Ví dụ cho hợp đồng bizcity_posting_template@1; tài khoản theo hệ thống seed hiện có.",
+  "publisher": { "id": "bizcity", "name": "Bizcity", "url": "https://bizcity.vn" },
+  "license": "CC-BY-4.0",
+  "regime": "vn-tt99-2025",
+  "industries": ["thuong-mai", "ban-le"],
+  "requires": {
+    "docTypes": ["sale", "sale_return", "purchase", "customer_payment", "supplier_payment"],
+    "capabilities": ["ledger.submit"]
+  },
+  "accounts": [
+    { "code": "11211", "parent": "1121", "name": "Tiền gửi ngân hàng — tài khoản chính", "track": ["cashflow"] }
+  ],
+  "postingDefaults": {
+    "cash": "1111",
+    "receivable": "1311",
+    "payable": "3312",
+    "tax_output": "33311",
+    "tax_input": "1331"
+  },
+  "reasons": [
+    {
+      "code": "XBA", "name": "Xuất bán tại cửa hàng", "kind": "out",
+      "counterAccount": "1311", "revenueAccount": "51111",
+      "flags": { "default": "sale", "postToLedger": true },
+      "ai": { "keywords": ["bán hàng", "bán lẻ", "xuất bán"], "examples": ["Bán 2 lon sữa cho khách lẻ"] }
+    },
+    {
+      "code": "NTH1", "name": "Nhập trả hàng bán", "kind": "in",
+      "counterAccount": "1311", "revenueAccount": "52131",
+      "flags": { "default": "sale_return", "postToLedger": true },
+      "ai": { "keywords": ["trả hàng", "khách trả lại", "đổi trả"], "examples": ["Khách mang trả 1 hộp sữa bị móp"] }
+    },
+    {
+      "code": "NMH1", "name": "Nhập mua hàng từ nhà cung cấp", "kind": "in",
+      "counterAccount": "3312",
+      "flags": { "default": "purchase", "postToLedger": true },
+      "ai": { "keywords": ["nhập hàng", "mua hàng", "nhà cung cấp"], "examples": ["Nhập 100 thùng hàng của NCC Vinamilk"] }
+    },
+    {
+      "code": "TTBHK", "name": "Thu tiền bán hàng", "kind": "receipt",
+      "counterAccount": "1311",
+      "flags": { "default": "receipt", "postToLedger": true },
+      "ai": { "keywords": ["thu tiền", "khách trả nợ", "thu công nợ"], "examples": ["Anh Nam chuyển khoản trả nợ 5 triệu"] }
+    },
+    {
+      "code": "CMH", "name": "Trả tiền mua hàng", "kind": "payment",
+      "counterAccount": "3312",
+      "flags": { "default": "payment", "postToLedger": true },
+      "ai": { "keywords": ["trả tiền NCC", "thanh toán nhà cung cấp", "trả nợ NCC"], "examples": ["Chuyển khoản trả NCC 30 triệu tiền hàng tháng 9"] }
+    },
+    {
+      "code": "CDV01", "name": "Chi tiền điện, nước, internet cửa hàng", "kind": "payment",
+      "counterAccount": "64173",
+      "flags": { "postToLedger": true },
+      "ai": {
+        "keywords": ["tiền điện", "EVN", "tiền nước", "internet", "cước viễn thông"],
+        "examples": ["Trả tiền điện tháng 10 cửa hàng Cầu Giấy", "Thanh toán cước FPT cửa hàng"],
+        "askIf": ["Chi phí của cửa hàng (bán hàng) hay văn phòng (quản lý)?"],
+        "notFor": ["Điện nước văn phòng → CDV02 (64273)"]
+      }
+    },
+    {
+      "code": "CDV02", "name": "Chi tiền điện, nước, internet văn phòng", "kind": "payment",
+      "counterAccount": "64273",
+      "flags": { "postToLedger": true },
+      "ai": { "keywords": ["điện văn phòng", "nước văn phòng", "internet văn phòng"], "examples": ["Trả tiền internet văn phòng tháng 10"] }
+    },
+    {
+      "code": "CTMB", "name": "Chi tiền thuê cửa hàng", "kind": "payment",
+      "counterAccount": "64172",
+      "flags": { "postToLedger": true },
+      "ai": { "keywords": ["thuê nhà", "thuê cửa hàng", "tiền mặt bằng"], "examples": ["Trả tiền thuê mặt bằng quý 4"], "askIf": ["Trả trước nhiều kỳ? Nếu có cần phân bổ qua 242"] }
+    }
+  ],
+  "postingGroups": [
+    { "code": "NHT01", "name": "Hàng hoá", "inventoryAccount": "1561", "cogsAccount": "6321", "revenueAccount": "51111", "salesReturnAccount": "52131", "isDefault": true }
+  ],
+  "paymentMethods": [
+    { "code": "TM", "name": "Tiền mặt", "account": "1111" },
+    { "code": "CK", "name": "Chuyển khoản", "account": "11211" }
+  ],
+  "taxCodes": [
+    { "code": "R08", "name": "Thuế GTGT 8%", "rate": 8, "direction": "output", "account": "33311", "reportGroup": "8" },
+    { "code": "V08", "name": "Thuế GTGT đầu vào 8%", "rate": 8, "direction": "input", "account": "1331", "reportGroup": "8" }
+  ],
+  "scenarios": [
+    {
+      "id": "TM-01", "title": "Bán lẻ thuế 8%, khách trả tiền mặt",
+      "document": { "docType": "sale", "reasonCode": "XBA" },
+      "expect": [
+        { "debit": "1311", "credit": "51111", "amount": 1000000 },
+        { "debit": "1311", "credit": "33311", "amount": 80000 },
+        { "debit": "1111", "credit": "1311", "amount": 1080000, "note": "phần thanh toán TM của hoá đơn" },
+        { "debit": "6321", "credit": "1561", "amount": "cost" }
+      ]
+    },
+    {
+      "id": "TM-02", "title": "Khách trả lại hàng đã mua",
+      "document": { "docType": "sale_return", "reasonCode": "NTH1" },
+      "expect": [
+        { "debit": "52131", "credit": "1311", "amount": 500000 },
+        { "debit": "33311", "credit": "1311", "amount": 40000 },
+        { "debit": "1561", "credit": "6321", "amount": "cost" }
+      ]
+    },
+    {
+      "id": "TM-03", "title": "Nhập mua hàng NCC có hoá đơn thuế 8%",
+      "document": { "docType": "purchase", "reasonCode": "NMH1" },
+      "expect": [
+        { "debit": "1561", "credit": "3312", "amount": 10000000 },
+        { "debit": "1331", "credit": "3312", "amount": 800000 }
+      ]
+    },
+    {
+      "id": "TM-04", "title": "Chuyển khoản trả tiền điện cửa hàng",
+      "document": { "docType": "voucher", "reasonCode": "CDV01" },
+      "expect": [
+        { "debit": "64173", "credit": "11211", "amount": 3200000 }
+      ]
+    }
+  ]
+}

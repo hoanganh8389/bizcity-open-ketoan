@@ -18,7 +18,9 @@
     "bizcity_master_data": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-MASTER-DATA-v1.md" },
     "bizcity_connector": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-CONNECTOR-v1.md" },
     "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
-    "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" }
+    "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
+    "bizcity_posting_template": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
+    "bizcity_mcp": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] }
   },
   "capabilities": [
     { "id": "masterdata.read", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Đọc danh mục chuẩn (đối tượng, mặt hàng, chi nhánh, kho, thuế) qua HTTP. Phase 2: qua ctx.data và view chỉ đọc." },
@@ -48,7 +50,18 @@
     { "id": "ui.kit", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit: DataGrid, form, bộ lọc, in, khung trang (tách từ apps/web/src/components)." },
     { "id": "ui.slots", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Chèn tab / panel / widget vào màn của Core." },
     { "id": "ui.menu", "since": "1.0", "status": "available", "contract": "bizcity_extension", "description": "Nhóm menu, màn, biểu tượng phân hệ (WebModule.groups, menu.ts)." },
-    { "id": "mcp.tools", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_action", "description": "adapters/cell xuất action (expose.mcp) thành công cụ MCP." },
+    { "id": "mcp.read", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_mcp", "description": "platform/mcp: POST /mcp, công cụ đọc ketoan.* bọc route hiện có, khoá mcp_… có scope (Phase 2b)." },
+    { "id": "mcp.tools", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_mcp", "description": "Sinh công cụ MCP từ registry action (expose.mcp); xác nhận trước khi ghi (needs_confirmation + confirm_token)." },
+    { "id": "mcp.cell-bridge", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_mcp", "description": "POST /api/v1/cell/mcp: Cell gọi công cụ Core qua Hub, uỷ quyền X-BizCity-Principal (bizcity-mcp-bridge@1)." },
+    { "id": "cell.connect", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_mcp", "description": "Khoá 1API biz-…, bốn bước, kết nối một chạm PKCE, đồng bộ gói từ Hub (CELL-CONNECT.md)." },
+    { "id": "ai.ocr-invoice", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_mcp", "description": "Hoá đơn ảnh / PDF / XML → sự việc mua hàng nháp qua Cell (khuôn INVOICE_AI_URL)." },
+    { "id": "templates.posting", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_posting_template", "description": "Cài / nâng cấp / gỡ gói định khoản có xem trước, bảng config_packs." },
+    { "id": "templates.marketplace", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_posting_template", "description": "Registry gói công khai có chữ ký, ba mức tin cậy (TEMPLATE-MARKETPLACE.md)." },
+    { "id": "posting.reason-suggest", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_posting_template", "description": "Xếp hạng lý do tất định từ ai.keywords / examples của gói + lịch sử đơn vị." },
+    { "id": "ledger.reasons.declare", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "Manifest khai lý do cần cho docType nộp (ledger.submits[].reasons); kiểm khi cài module." },
+    { "id": "ledger.doctype.production", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Sản xuất / xây dựng: xuất NVL → 154 → thành phẩm, giá thành, theo công trình." },
+    { "id": "ledger.doctype.payroll", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Bảng lương → 334, 338x, chi phí theo bộ phận." },
+    { "id": "ledger.fx", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Ngoại tệ, chênh lệch tỷ giá; thuế nhập khẩu (ledger.doctype.import_duty)." },
     { "id": "ai.cell", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_extension", "description": "Gọi LLM / OCR / RAG qua Cell; vắng Cell thì năng lực này không có, module phải tự lui." }
   ],
   "documentStatusGroups": ["draft", "pending", "approved", "done", "cancelled"],
@@ -76,6 +89,6 @@
     "planned": ["IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"]
   },
   "changelog": [
-    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)"] }
+    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)"] }
   ]
 }

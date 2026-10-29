@@ -11,6 +11,8 @@ export async function routes(r: any, db: any, ledgerService: any, reply: any, z:
   reply.status(400).send({});                                        // SC-API-1
   z.object({ all: z.coerce.boolean() });                             // SC-API-2
   setInterval(() => {}, 1000);                                       // SC-EVT-1
+  const ctl = new AbortController(); setTimeout(() => ctl.abort(), 5000); // KHÔNG tính: hạn giờ lời gọi
+  await new Promise((ok) => setTimeout(ok, 1500));                   // KHÔNG tính: chờ thử lại
   await appendFile('nhat-ky.jsonl', '{}');                           // SC-EVD-1
 }
 declare function requirePermission(p: string): unknown;

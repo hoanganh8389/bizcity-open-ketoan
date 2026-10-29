@@ -46,7 +46,11 @@ export const checks = [
       const metrics = { manifests: 0, capabilitiesRequired: 0, capabilitiesAvailable: 0, blockedBy: [] };
 
       for (const file of files) {
-        if (!ctx.repo.exists(file)) { findings.push(ctx.finding(file, null, 'thiếu bizcity.module.json ở gốc module', 'missing')); continue; }
+        if (!ctx.repo.exists(file)) {
+          // Thư mục chỉ chứa gói định khoản (kiểm bằng SC-TPL-1) thì không đòi manifest module.
+          if (ctx.mode === 'module' && ctx.repo.files({ match: /posting-pack.json$/ }).length) continue;
+          findings.push(ctx.finding(file, null, 'thiếu bizcity.module.json ở gốc module', 'missing')); continue;
+        }
         const isExample = file.startsWith('docs/');
         const m = ctx.repo.json(file);
         metrics.manifests++;
@@ -177,6 +181,8 @@ export const checks = [
       for (const f of files) {
         ctx.repo.lines(f).forEach((t, i) => {
           for (const m of t.matchAll(/\b((?:R|STD|CONF)-[A-Z]+-\d+)\b/g)) {
+            // Mã luật của hệ sinh thái (plugin bizcity-twin-ai, Hub) được trích dẫn, không định nghĩa ở repo này.
+            if (/^R-(SETUP|LLM|TOKEN|USAGE|WALLET|MCP|TAA)-/.test(m[1])) continue;
             if (!defined.has(m[1])) findings.push(ctx.finding(f, i + 1, `nhắc ${m[1]} nhưng không nơi nào định nghĩa`, `undef:${m[1]}`));
           }
         });

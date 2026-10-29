@@ -1,0 +1,26 @@
+{
+  "contract": "bizcity_posting_template@1",
+  "id": "acme.vn-tt99.sai",
+  "version": "0.1.0",
+  "title": "Gói CỐ Ý SAI (tự kiểm SC-TPL-1)",
+  "publisher": { "id": "acme", "name": "Acme" },
+  "regime": "vn-tt99-2025",
+  "industries": ["san-xuat"],
+  "requires": { "docTypes": ["sale", "production"], "capabilities": ["ledger.khong-co"] },
+  "accounts": [
+    { "code": "1111", "parent": "111", "name": "Khai lại tài khoản có sẵn" },
+    { "code": "99901", "parent": "9990", "name": "Cha không có" }
+  ],
+  "postingDefaults": { "cash": "1119" },
+  "reasons": [
+    { "code": "XB1", "name": "Bán 1", "kind": "out", "counterAccount": "1311", "flags": { "default": "sale" } },
+    { "code": "XB2", "name": "Bán 2", "kind": "out", "counterAccount": "1311", "flags": { "default": "sale" } },
+    { "code": "XB2", "name": "Bán 2 trùng mã", "kind": "out" }
+  ],
+  "scenarios": [
+    { "id": "S-1", "title": "Lý do không có trong gói", "document": { "docType": "sale", "reasonCode": "KHONGCO" },
+      "expect": [ { "debit": "1311", "credit": "1311", "amount": 1000 } ] },
+    { "id": "S-2", "title": "docType chưa khai", "document": { "docType": "purchase" },
+      "expect": [ { "debit": "1561", "credit": "3312", "amount": 1000 } ] }
+  ]
+}

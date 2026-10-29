@@ -127,6 +127,8 @@ Bộ kiểm `tests/conformance/` (khởi tạo 2026-10-29) đã chạy các CONF
 | CONF-STATIC | SC-MOD-1 (STATIC-1), SC-MOD-2 + SC-KERNEL-1..3 (STATIC-2), SC-API-1 (STATIC-9), SC-EVT-1 (STATIC-11), SC-EVD-1 (STATIC-13) | STATIC-3..8, 10, 12 |
 | CONF-MIG (đọc tệp) | SC-DATA-1, 2 (MIG-1), SC-DATA-3 (MIG-6), SC-DATA-4 (MIG-4), SC-DATA-5 (MIG-2 phần `tenant_id`); SC-DATA-6 đo RLS | MIG-3, MIG-5; bản chính xác trên `pg_catalog` |
 | CONF-RUN | lane diagnostics DG-* (toàn vẹn sổ của RUN-5, RUN-17) | RUN-1..16 → lane `runtime` Phase 4 |
+| Gói định khoản | SC-TPL-1 (STD-TPL-1..4, 9) — `--module <thư mục gói>` kiểm một gói | chạy tình huống mẫu qua Kernel thật (lane `runtime`) |
+| MCP | — | CONF-MCP-1..6 ([bizcity_mcp@1 §7](../contracts/BIZCITY-MCP-v1.md)): tĩnh khi có registry action, chạy ở lane `runtime` |
 
 Test vitest vẫn là phần chạy thật:
 

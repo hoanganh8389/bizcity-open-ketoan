@@ -26,6 +26,8 @@ Hợp đồng = thoả thuận có phiên bản giữa lõi và bên dùng (phâ
 | `bizcity_master_data@1` | [BIZCITY-MASTER-DATA-v1.md](BIZCITY-MASTER-DATA-v1.md) | plugin | Ổn định | `modules/{branches,partners,products,tax-codes,posting-config}` |
 | `bizcity_connector@1` | [BIZCITY-CONNECTOR-v1.md](BIZCITY-CONNECTOR-v1.md) | plugin cho lõi kéo | Ổn định | `modules/connections`, `packages/contracts/src/connections.ts` |
 | `bizcity_settings@1` | [BIZCITY-SETTINGS-MATRIX-v1.md](BIZCITY-SETTINGS-MATRIX-v1.md) · [registry](bizcity-settings.registry.json) | lõi, phân hệ | Đề xuất | `core/posting-modes.ts`, `core/date-rules.ts` |
+| `bizcity_posting_template@1` | [BIZCITY-POSTING-TEMPLATE-v1.md](BIZCITY-POSTING-TEMPLATE-v1.md) · [schema](BIZCITY-POSTING-TEMPLATE-v1.schema.json) | gói định khoản theo ngành (marketplace), trợ lý AI chọn lý do | Đề xuất | `posting_reasons` + `db/seeds/ly-do.jsonl`, `modules/posting/account-resolver.ts` |
+| `bizcity_mcp@1` | [BIZCITY-MCP-v1.md](BIZCITY-MCP-v1.md) | Bizcity Cell, chatbot (Claude, ChatGPT), agent | Đề xuất — hồ sơ của `bizcity-mcp-tool@1.0.0` + `bizcity-mcp-bridge@1.0.0` (plugin `bizcity-twin-ai`) | chưa có (Phase 2b: `platform/mcp`) |
 
 ## Quy tắc phiên bản
 

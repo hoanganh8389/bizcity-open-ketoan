@@ -130,6 +130,7 @@ export default {
 | Data (CONF-MIG) | SC-DATA-1..6 | kiểm số migration CI; thêm khoá băm, COMMENT, kiểu tiền, tenant_id, RLS |
 | Module (CONF-STATIC, CONF-MAN) | SC-MOD-1..3, SC-CON-2 | `phan-he-ranh-gioi.test.ts` (giữ nguyên); thêm ghi bảng lõi, manifest |
 | Action / API / Event / Evidence | SC-API-1..3, SC-ACT-1, SC-EVT-1, SC-EVD-1..2 | grep tay trong review |
+| Gói định khoản | SC-TPL-1 (`--module <thư mục gói>` kiểm một gói) | mới — [bizcity_posting_template@1](../../docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md) |
 | Hợp đồng, tài liệu | SC-CON-1..7, SC-DOC-1..2 | kiểm schema tay bằng ajv; kiểm liên kết tay |
 | Diagnostics (CONF-RUN) | DG-LEDGER-1..4, DG-EVENT-1..3, DG-DB-1, DG-SET-1, DG-PLAN-1..6 | `GET /system/diagnostics` (Phase 2) |
 

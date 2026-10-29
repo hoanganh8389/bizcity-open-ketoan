@@ -12,7 +12,7 @@
     "lane": { "enum": ["selfcheck", "diagnostics"] },
     "gate": { "enum": ["KERNEL", "CONF-MAN", "CONF-STATIC", "CONF-MIG", "CONF-RUN", "DOCS"] },
     "contract": {
-      "enum": ["kernel", "quality", "docs", "contracts", "bizcity_module", "bizcity_data", "bizcity_document", "bizcity_action", "bizcity_event", "bizcity_evidence", "bizcity_extension", "bizcity_ledger_intake", "bizcity_api", "bizcity_settings"]
+      "enum": ["kernel", "quality", "docs", "contracts", "bizcity_module", "bizcity_data", "bizcity_document", "bizcity_action", "bizcity_event", "bizcity_evidence", "bizcity_extension", "bizcity_ledger_intake", "bizcity_api", "bizcity_settings", "bizcity_posting_template", "bizcity_mcp"]
     },
     "rules": { "type": "array", "items": { "type": "string", "pattern": "^(R|STD)-[A-Z]+-\\d+$" }, "uniqueItems": true },
     "conf": { "type": "array", "items": { "type": "string", "pattern": "^CONF-[A-Z]+-\\d+$" }, "uniqueItems": true },

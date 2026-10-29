@@ -70,7 +70,11 @@ export const checks = [
     gate: 'CONF-STATIC', contract: 'bizcity_event', rules: ['STD-EVT-6'], conf: ['CONF-STATIC-11'], tier: 1, enforce: 'ratchet', weight: 2, targets: ['repo', 'module'], scope: 'module',
     run(ctx) {
       const opts = srcOpts(ctx);
-      const hits = ctx.repo.grep(/\b(setInterval|setTimeout)\(|from ['"](node-cron|cron|node-schedule)['"]/, { ...opts, skipComments: true });
+      // Không tính: hạn giờ của một lời gọi (setTimeout(() => ctl.abort(), …)) và chờ trước khi thử lại (new Promise(r => setTimeout(r, …))).
+      // Hai thứ đó là một phần của lời gọi đang chạy, không phải việc định kỳ (STD-EVT-6).
+      const benign = /setTimeout\(\s*\(\)\s*=>\s*\w+\.abort\(\)|new Promise\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*setTimeout\(\s*\1\s*,/;
+      const hits = ctx.repo.grep(/\b(setInterval|setTimeout)\(|from ['"](node-cron|cron|node-schedule)['"]/, { ...opts, skipComments: true })
+        .filter((h) => !benign.test(h.text));
       return { examined: ctx.repo.files(opts).length, findings: hits.map((h) => ctx.finding(h.file, h.line, h.text, /setInterval/.test(h.text) ? 'setInterval' : /setTimeout/.test(h.text) ? 'setTimeout' : 'cron')) };
     },
   },
