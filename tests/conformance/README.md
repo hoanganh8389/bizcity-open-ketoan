@@ -72,6 +72,8 @@ Trên Git Bash (Windows) thêm `MSYS_NO_PATHCONV=1` trước lệnh. Mọi truy 
 | **Sẵn sàng Standard v1** | Core đã có bao nhiêu thứ Standard v1 hứa | trung bình của: % năng lực `available` trong `bizcity-standard.json`; % năng lực ca chuẩn Hợp đồng cần đã có; độ sẵn sàng các check `planned` |
 | **Độ phủ luật** | bao nhiêu luật có kiểm tự động | luật R-* (cột "Kiểm bằng" là test / CSDL / CI, hoặc có check ở đây) + STD-* (có CONF đã cài) + CONF-* (đã có check) |
 
+**Lộ trình theo Phase.** Lần chạy đầy đủ còn tính [docs/standard/roadmap.json](../../docs/standard/roadmap.json): mỗi việc của PHASES có tín hiệu "xong" đo được (check đạt, hết một phát hiện, năng lực `available`, tệp có mặt, độ phủ, việc tay có `doneAt`). Bảng điểm in tiến độ từng Phase, ma trận mảng × Phase, việc kế tiếp, cảnh báo làm trái thứ tự; `history.jsonl` giữ `roadmap` để xem xu hướng.
+
 Hạng: A ≥ 95 · B ≥ 85 · C ≥ 70 · D ≥ 50 · F. Bảng điểm chia thêm **theo hợp đồng**, **theo cổng** (KERNEL, CONF-MAN, CONF-STATIC, CONF-MIG, CONF-RUN, DOCS) và **theo phân hệ / add-in**; mỗi điểm có cột so với lần chạy đầy đủ trước.
 
 Kết luận ĐẠT / KHÔNG ĐẠT **không** dựa vào điểm: chỉ cần một check `fail` hoặc `error` là KHÔNG ĐẠT. Điểm để theo dõi tiến độ, cổng để chặn.

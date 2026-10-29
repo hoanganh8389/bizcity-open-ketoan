@@ -1,6 +1,11 @@
 # Lộ trình Standard v1: Phase 1 → 6
 
 > Thay phần "Giai đoạn 0–3" của [../framework/05-LO-TRINH.md](../framework/05-LO-TRINH.md) (tệp đó giữ phần tư vấn và trỏ về đây). Mỗi việc cũ có mã (vd `1.1`) được ghi lại ở cột "Từ lộ trình cũ".
+> **Bản máy đọc:** [roadmap.json](roadmap.json) (`bizcity_roadmap@1`). Mỗi việc dưới đây có điều kiện "xong" là **tín hiệu đo được**: check SC- / DG- đạt, năng lực `available`, tệp có mặt, độ phủ CONF, hoặc việc tay có người và ngày xác nhận.
+> - `node tests/conformance/selfcheck.mjs` tự tính trạng thái từng việc, tiến độ từng Phase, ma trận mảng × Phase, việc kế tiếp, cảnh báo làm trái thứ tự (mục "Lộ trình theo Phase" trong `SCOREBOARD.md`).
+> - Thêm, bớt, sửa việc ở bảng dưới thì sửa `roadmap.json` trong cùng PR; SC-RMP-1 so hai bên.
+> - Đánh dấu việc tay đã xong: thêm `"doneAt": "YYYY-MM-DD", "by": "<người>"` vào tín hiệu `manual`.
+>
 > Nguyên tắc: **không viết lại**. Mỗi Phase giữ 624 phép thử hiện có xanh, máy chủ đang chạy nâng cấp được không đổi cấu hình (VER-3). Thời lượng là ước lượng cho 2–3 người làm Lõi.
 
 | Phase | Mục tiêu | Đầu ra | Ước lượng |

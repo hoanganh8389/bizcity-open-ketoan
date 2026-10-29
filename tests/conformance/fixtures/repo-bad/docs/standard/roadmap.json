@@ -1,0 +1,12 @@
+{
+  "contract": "bizcity_roadmap@1",
+  "updated": "2026-10-29",
+  "areas": { "kernel": "Kernel" },
+  "phases": [{ "id": "0", "title": "Chốt chuẩn", "output": "tài liệu" }],
+  "items": [
+    { "id": "0.1", "phase": "0", "title": "Việc A trỏ check không có", "areas": ["kernel"], "after": ["0.2"], "done": [{ "check": "SC-KHONG-9" }] },
+    { "id": "0.2", "phase": "0", "title": "Việc B vòng thứ tự", "areas": ["khong-co"], "after": ["0.1"], "done": [{ "capability": "nang-luc.khong-co" }] },
+    { "id": "0.2", "phase": "0", "title": "Việc B khai trùng", "areas": ["kernel"], "after": ["0.1"], "done": [{ "manual": "x", "doneAt": "2026-10-29" }] },
+    { "id": "1.1", "phase": "0", "title": "Mã không thuộc phase", "areas": ["kernel"], "done": [{ "file": "a", "noFile": "b" }] }
+  ]
+}

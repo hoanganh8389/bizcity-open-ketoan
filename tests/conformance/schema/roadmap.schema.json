@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bizcity.vn/contracts/bizcity_roadmap/1.0.0",
+  "title": "bizcity_roadmap@1",
+  "description": "Lộ trình máy đọc: mỗi việc của PHASES.md có điều kiện 'xong' là tín hiệu đo được. Bộ kiểm tests/conformance tự tính trạng thái, tiến độ Phase, ma trận Phase × mảng.",
+  "type": "object",
+  "required": ["contract", "updated", "areas", "phases", "items"],
+  "properties": {
+    "contract": { "const": "bizcity_roadmap@1" },
+    "updated": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "note": { "type": "string" },
+    "areas": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z-]*$" },
+      "additionalProperties": { "type": "string", "minLength": 2 },
+      "description": "Mảng của ma trận (cột): khoá → tên hiển thị"
+    },
+    "phases": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "output"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[0-9]+$" },
+          "title": { "type": "string", "minLength": 3 },
+          "output": { "type": "string", "minLength": 3, "description": "Đầu ra của Phase (PHASES.md)" },
+          "estimate": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "items": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "phase", "title", "areas", "done"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+[a-z]?$" },
+          "phase": { "type": "string", "pattern": "^[0-9]+$" },
+          "title": { "type": "string", "minLength": 5 },
+          "areas": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+          "after": { "type": "array", "items": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+[a-z]?$" }, "uniqueItems": true, "description": "Việc phải xong trước (PHASES 'Thứ tự không được đảo')" },
+          "owner": { "type": ["string", "null"] },
+          "done": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/signal" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "signal": {
+      "type": "object",
+      "description": "Đúng MỘT loại tín hiệu mỗi phần tử",
+      "properties": {
+        "label": { "type": "string" },
+        "check": { "type": "string", "pattern": "^(SC|DG)-[A-Z]+-\\d+$", "description": "check phải ở trạng thái pass (không còn nợ)" },
+        "noFinding": { "type": "object", "required": ["check", "key"], "properties": { "check": { "type": "string" }, "key": { "type": "string" } }, "additionalProperties": false },
+        "readiness": { "type": "object", "required": ["check", "min"], "properties": { "check": { "type": "string" }, "min": { "type": "number", "minimum": 0, "maximum": 100 } }, "additionalProperties": false },
+        "capability": { "type": "string", "description": "năng lực phải 'available' trong bizcity-standard.json" },
+        "file": { "type": "string", "description": "tệp / thư mục phải có" },
+        "noFile": { "type": "string", "description": "tệp / thư mục phải KHÔNG còn" },
+        "glob": { "type": "string", "description": "có ít nhất một tệp khớp regex đường dẫn" },
+        "fileContains": { "type": "object", "required": ["file", "text"], "properties": { "file": { "type": "string" }, "text": { "type": "string" } }, "additionalProperties": false },
+        "coverage": { "type": "object", "required": ["family", "min"], "properties": { "family": { "enum": ["R", "STD", "CONF"] }, "min": { "type": "number" } }, "additionalProperties": false },
+        "standardStable": { "const": true, "description": "Standard đã bỏ hậu tố -draft" },
+        "manual": { "type": "string", "description": "việc tay; tính xong khi có doneAt" },
+        "doneAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "by": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

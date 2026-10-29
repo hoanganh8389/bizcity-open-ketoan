@@ -30,6 +30,14 @@ export function renderConsole(sb, results, { verbose = false } = {}) {
     out.push('');
   }
   const s = sb.scores;
+  if (sb.roadmap) {
+    const rm = sb.roadmap;
+    out.push(`── LỘ TRÌNH (docs/standard/roadmap.json) — tổng ${rm.overall}% · đang ở Phase ${rm.currentPhase ?? '—'}`);
+    for (const p of rm.phases) out.push(`  ${p.gate ? '✔' : p.done || p.doing ? '◐' : '○'} Phase ${p.id.padEnd(2)} ${pad(p.title, 52)} ${String(p.progress).padStart(3)}%  ${p.done}/${p.items} xong${p.doing ? `, ${p.doing} đang làm` : ''}`);
+    if (rm.next.length) out.push(`  Việc kế tiếp (Phase ${rm.currentPhase}): ${rm.next.map((n) => `${n.id} ${n.title} (${n.progress}%)`).join(' · ')}`);
+    for (const w of rm.orderWarnings) out.push(`  ▲ trái thứ tự: ${w}`);
+    out.push('');
+  }
   out.push('── BẢNG ĐIỂM');
   out.push(`  Tuân chuẩn (conformance) ${fmt(s.conformance.score).padStart(5)}  ${s.conformance.grade}${delta(s.conformance.delta)}`);
   out.push(`  Sẵn sàng Standard v1     ${fmt(s.readiness.score).padStart(5)}  ${s.readiness.grade}${delta(s.readiness.delta)}`);
@@ -100,6 +108,7 @@ export function renderMarkdown(sb) {
     if (c.unmappedStd.length) L.push(`- STD chưa có mã CONF nào: ${c.unmappedStd.join(', ')}.`);
     L.push('');
   }
+  if (sb.roadmap) L.push(...renderRoadmapMarkdown(sb.roadmap));
   L.push('## Từng check');
   L.push('');
   L.push('| | Mã | Check | Cổng | Thực thi | Điểm | Phát hiện (mới) | ms |');
@@ -157,9 +166,59 @@ ${rows(sb.byContract, [{ f: (g) => esc(g.contract) }, { num: 1, f: (g) => `${fmt
 ${sb.byModule.length ? `<h2>Theo phân hệ / add-in</h2><div class="wrap"><table><tr><th>Phân hệ</th><th class="num">Điểm</th><th class="num">Phát hiện</th><th class="num">Mới</th><th>Check vi phạm</th></tr>
 ${rows(sb.byModule, [{ f: (m) => esc(m.module) }, { num: 1, f: (m) => `${m.score}${bar(m.score)}` }, { num: 1, f: (m) => m.findings }, { num: 1, f: (m) => m.newFindings }, { f: (m) => esc(m.checks.join(', ')) }])}</table></div>` : ''}
 <h2>Sẵn sàng Standard v1</h2><p>Năng lực có sẵn <b>${sb.readiness.capabilities.available}/${sb.readiness.capabilities.total}</b>${sb.readiness.goldenCase ? ` · Ca chuẩn Hợp đồng <b>${sb.readiness.goldenCase.available}/${sb.readiness.goldenCase.required}</b>` : ''}</p>
+${sb.roadmap ? renderRoadmapHtml(sb.roadmap, esc) : ''}
 <h2>Từng check</h2><div class="wrap"><table><tr><th></th><th>Mã</th><th>Check</th><th>Cổng</th><th class="num">Điểm</th><th class="num">Phát hiện</th></tr>
 ${rows(sb.checks, [{ f: (c) => `<span class="s-${c.status}">${ICON[c.status]}</span>` }, { f: (c) => esc(c.id) }, { f: (c) => `${esc(c.title)}${c.notes.length ? `<br><small>${esc(c.notes.join('; '))}</small>` : ''}` }, { f: (c) => esc(c.gate) }, { num: 1, f: (c) => (c.status === 'planned' ? `${fmt(c.readiness)}%` : fmt(c.score)) }, { num: 1, f: (c) => `${c.findings}${c.new ? ` <b class="s-fail">(${c.new} mới)</b>` : ''}` }])}</table></div>
 </body></html>`;
 }
 
 function pad(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s.padEnd(n); }
+
+const RM_ICON = { done: '☑', doing: '◐', todo: '☐', unknown: '?' };
+const RM_LABEL = { done: 'xong', doing: 'đang làm', todo: 'chưa làm', unknown: 'chưa biết (check chưa chạy)' };
+
+/** Lộ trình theo Phase: tiến độ, ma trận mảng × Phase, checklist từng việc với tín hiệu còn thiếu. */
+export function renderRoadmapMarkdown(rm) {
+  const L = [];
+  L.push(`## Lộ trình theo Phase — tổng ${rm.overall}%`);
+  L.push('');
+  L.push(`> Tính tự động từ [roadmap.json](../../../../docs/standard/roadmap.json) (bản máy đọc của PHASES.md). Việc "xong" khi mọi tín hiệu đo được đều đúng. Đang ở **Phase ${rm.currentPhase ?? '—'}**.`);
+  L.push('');
+  L.push('| Phase | Mục tiêu | Đầu ra | Xong | Đang làm | Tiến độ | Cổng |');
+  L.push('|---|---|---|---:|---:|---:|:---:|');
+  for (const p of rm.phases) L.push(`| ${p.id} | ${p.title} | ${p.output} | ${p.done}/${p.items} | ${p.doing} | ${p.progress}% | ${p.gate ? '✔' : '—'} |`);
+  L.push('');
+  if (rm.next.length) { L.push(`**Việc kế tiếp** (Phase ${rm.currentPhase}, đã đủ điều kiện trước): ${rm.next.map((n) => `${n.id} ${n.title} (${n.progress}%)`).join(' · ')}`); L.push(''); }
+  if (rm.orderWarnings.length) { L.push('**Làm trái thứ tự** (PHASES "Thứ tự không được đảo"):'); for (const w of rm.orderWarnings) L.push(`- ${w}`); L.push(''); }
+  L.push('### Ma trận mảng × Phase');
+  L.push('');
+  L.push(`| Mảng | ${rm.phases.map((p) => `P${p.id}`).join(' | ')} |`);
+  L.push(`|---|${rm.phases.map(() => ':---:').join('|')}|`);
+  for (const row of rm.matrix) L.push(`| ${row.label} | ${row.cells.map((c) => (c.total ? `${c.done}/${c.total} · ${c.progress}%` : '')).join(' | ')} |`);
+  L.push('');
+  L.push('### Checklist');
+  for (const p of rm.phases) {
+    L.push('');
+    L.push(`**Phase ${p.id} — ${p.title}** (${p.progress}%)`);
+    L.push('');
+    for (const i of rm.items.filter((x) => x.phase === p.id)) {
+      const miss = i.signals.filter((s) => s.ok !== true).map((s) => (s.ok === null ? `? ${s.text}` : s.text));
+      L.push(`- ${RM_ICON[i.status]} **${i.id}** ${i.title}${i.status === 'done' ? '' : ` — ${i.progress}%; còn: ${miss.join('; ')}`}`);
+    }
+  }
+  L.push('');
+  L.push(`Ký hiệu: ${Object.entries(RM_ICON).map(([k, v]) => `${v} ${RM_LABEL[k]}`).join(' · ')}.`);
+  L.push('');
+  return L;
+}
+
+function renderRoadmapHtml(rm, esc) {
+  const cell = (c) => (c.total ? `<td class="num" style="background:color-mix(in srgb, var(--acc) ${Math.round(c.progress * 0.6)}%, transparent)">${c.done}/${c.total}</td>` : '<td></td>');
+  return `<h2>Lộ trình theo Phase — tổng ${rm.overall}% · đang ở Phase ${esc(rm.currentPhase ?? '—')}</h2>
+<div class="wrap"><table><tr><th>Phase</th><th>Mục tiêu</th><th class="num">Xong</th><th class="num">Tiến độ</th></tr>
+${rm.phases.map((p) => `<tr><td>${p.gate ? '✔' : ''} P${esc(p.id)}</td><td>${esc(p.title)}<br><small>${esc(p.output)}</small></td><td class="num">${p.done}/${p.items}</td><td class="num">${p.progress}%<span class="bar"><span style="width:${p.progress}%"></span></span></td></tr>`).join('')}</table></div>
+${rm.next.length ? `<p><b>Việc kế tiếp:</b> ${rm.next.map((n) => esc(`${n.id} ${n.title}`)).join(' · ')}</p>` : ''}
+${rm.orderWarnings.map((w) => `<p class="s-warn">▲ ${esc(w)}</p>`).join('')}
+<h2>Ma trận mảng × Phase</h2><div class="wrap"><table><tr><th>Mảng</th>${rm.phases.map((p) => `<th class="num">P${esc(p.id)}</th>`).join('')}</tr>
+${rm.matrix.map((r) => `<tr><td>${esc(r.label)}</td>${r.cells.map(cell).join('')}</tr>`).join('')}</table></div>`;
+}

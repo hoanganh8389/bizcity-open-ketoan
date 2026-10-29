@@ -21,6 +21,7 @@ import { validate } from './lib/jsonschema.mjs';
 import { runPool } from './lib/pool.mjs';
 import { renderConsole, renderEvidence, renderHtml, renderMarkdown } from './lib/render.mjs';
 import { createRepo, moduleOf } from './lib/repo.mjs';
+import { evaluateRoadmap, ROADMAP_FILE } from './lib/roadmap.mjs';
 import { buildScoreboard } from './lib/scoreboard.mjs';
 
 const ROOT = path.resolve(SUITE_DIR, '../..');
@@ -262,6 +263,17 @@ async function main() {
     results, coverage, standard: createRepo(ROOT).json('docs/standard/bizcity-standard.json'), previous,
     run: { runId, at: at.toISOString(), mode, target: path.relative(ROOT, root).split(path.sep).join('/') || '.', strict: !!args.strict, db: db.available ? db.label : null, durationMs: Date.now() - started },
   });
+  // Lộ trình chỉ tính ở lần chạy đầy đủ trên repo: tín hiệu cần kết quả của mọi check.
+  const roadmap = createRepo(ROOT).json(ROADMAP_FILE);
+  if (mode === 'repo' && !args.only && roadmap) {
+    try {
+      sb.roadmap = evaluateRoadmap({ roadmap, results, standard: createRepo(ROOT).json('docs/standard/bizcity-standard.json'), coverage, repo: createRepo(ROOT) });
+      const prevRm = previous?.roadmap?.overall;
+      sb.scores.roadmap = { score: sb.roadmap.overall, grade: null, delta: prevRm == null ? null : sb.roadmap.overall - prevRm };
+    } catch (e) {
+      console.error(`Không tính được lộ trình: ${e.message}`);
+    }
+  }
 
   const partial = !!args.only || args.lane !== 'all';
   const where = persist(outDir, sb, results, partial);

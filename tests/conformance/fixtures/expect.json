@@ -260,6 +260,21 @@
           "keys": [
             "missing"
           ]
+        },
+        "SC-RMP-1": {
+          "min": 9,
+          "keys": [
+            "check:0.1:SC-KHONG-9",
+            "cap:0.2:nang-luc.khong-co",
+            "area:0.2:khong-co",
+            "dup:0.2",
+            "by:0.2",
+            "phase-id:1.1",
+            "kind:1.1",
+            "cycle:",
+            "md-only:0.9",
+            "json-only:1.1"
+          ]
         }
       }
     },
