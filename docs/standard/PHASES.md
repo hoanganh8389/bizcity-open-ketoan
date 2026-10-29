@@ -23,7 +23,7 @@
 |---|---|---|---|
 | 0.1 | Nhóm Lõi duyệt `docs/standard/`, 7 hợp đồng, CANON | PR merge | 0.1 |
 | 0.2 | Bật CI (`.github/workflows/ci.yml`) | badge xanh | 0.2 |
-| 0.3 | Sửa hai migration trùng `0028` (A-03) | CI kiểm số migration xanh | 0.3 |
+| 0.3 | Migration đúng chuẩn: sửa hai migration trùng `0028` (A-03); mọi bảng / cột trong `db/types.ts` có migration tạo | SC-DATA-1 hết trùng, SC-DATA-7 đạt — **xong** 2026-10-30 (`0031`, `0030`, `0033`) | 0.3 |
 | 0.4 | Chốt 3 câu hỏi ở [REUSE-MAP.md §6](REUSE-MAP.md#6-việc-cần-chốt-trước-phase-2) | ghi ADR — **xong** 2026-10-29 (ADR-0003, 0004, 0005) | mới |
 | 0.5 | Bộ kiểm chuẩn một chỗ `tests/conformance/`: lane selfcheck + diagnostics song song, bảng điểm, baseline bánh cóc, tự kiểm ([ADR-0006](../adr/ADR-0006-bo-kiem-chuan-mot-cho.md)) | `selfcheck.mjs --self-test` và `--strict` xanh ở CI — **khởi tạo xong** 2026-10-29 | mới |
 | 0.6 | Luật R-KER, R-SEC, R-REL, R-DIAG; `SECURITY.md`, `CHANGELOG.md`; bật GitHub Private Vulnerability Reporting | SC-SEC-*, SC-REL-* xanh — **tài liệu xong** 2026-10-29; còn bật tính năng trên GitHub | mới |

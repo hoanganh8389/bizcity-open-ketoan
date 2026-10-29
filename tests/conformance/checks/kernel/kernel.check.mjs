@@ -46,7 +46,8 @@ export const checks = [
       const allow = {
         cost_overwrite: /^(apps\/api\/src\/modules\/ledger\/|apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
         allow_ledger_purge: /^(apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
-        session_replication_role: /^(scripts\/xoa-chung-tu\.sh|scripts\/kiem-chuan\.sh)/,
+        // test được nhắc tên cờ để chứng minh vai trò ứng dụng KHÔNG đặt được (app-role.test.ts)
+        session_replication_role: /^(scripts\/xoa-chung-tu\.sh|scripts\/kiem-chuan\.sh|apps\/api\/test\/)/,
       };
       const findings = [];
       for (const [flag, ok] of Object.entries(allow)) {

@@ -1,4 +1,5 @@
--- 0028 Mã thuế KKKN "HH, DV không phải kê khai, tính nộp VAT" (quà không hoá đơn, hàng tự mua không VAT): trước chỉ có ở đơn vị
+-- 0031 (trước là 0028_thue_kkkn.sql — trùng số với 0028_cau_hinh_mau_in.sql, đổi số theo R-DB-3; bản cài đã áp tên cũ thì migrate.ts ghi nhận, không chạy lại)
+-- Mã thuế KKKN "HH, DV không phải kê khai, tính nộp VAT" (quà không hoá đơn, hàng tự mua không VAT): trước chỉ có ở đơn vị
 --      nạp dữ liệu mẫu hoặc khôi phục danh mục Loại thuế — đơn vị mới thiếu nên dòng quà mã KKKN không ghi sổ được. Thêm cho mọi đơn vị
 --      (đã có thì giữ nguyên); đơn vị tạo sau lấy từ dữ liệu khởi tạo.
 INSERT INTO tax_codes (tenant_id, code, name, rate, direction, account_code, report_group)

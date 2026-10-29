@@ -102,7 +102,8 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
     const claims = await verifySession(header.slice(7));
     if (!claims) return null;
     // Vé đã bị thu hồi: đổi / đặt lại mật khẩu, đổi vai trò, khoá tài khoản, đăng xuất các thiết bị khác (core/security/session-state.ts).
-    if (!(await sessionStillValid(claims.sub, claims.sv ?? 1))) return null;
+    // Vé cấp trước khi có cơ chế không ghi sv → 0 = mặc định users.session_version (0029): dùng được tới lần thu hồi đầu.
+    if (!(await sessionStillValid(claims.sub, claims.sv ?? 0))) return null;
     const role = claims.role as Role;
     return {
       tenantId: claims.tid,

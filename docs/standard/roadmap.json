@@ -30,8 +30,8 @@
       "done": [{ "manual": "PR tài liệu chuẩn được merge vào main" }] },
     { "id": "0.2", "phase": "0", "title": "Bật CI", "areas": ["quality"],
       "done": [{ "file": ".github/workflows/ci.yml" }, { "file": ".github/workflows/conformance.yml" }, { "manual": "CI xanh trên main (badge)" }] },
-    { "id": "0.3", "phase": "0", "title": "Sửa hai migration trùng số 0028 (A-03)", "areas": ["data"],
-      "done": [{ "noFinding": { "check": "SC-DATA-1", "key": "dup:0028" } }] },
+    { "id": "0.3", "phase": "0", "title": "Migration đúng chuẩn: hết trùng số 0028 (A-03), không thiếu migration so với db/types.ts", "areas": ["data"],
+      "done": [{ "noFinding": { "check": "SC-DATA-1", "key": "dup:0028" } }, { "check": "SC-DATA-7" }] },
     { "id": "0.4", "phase": "0", "title": "Chốt 3 câu hỏi REUSE-MAP §6 bằng ADR", "areas": ["kernel", "module"],
       "done": [{ "file": "docs/adr/ADR-0003-hop-dong-thanh-module.md" }, { "file": "docs/adr/ADR-0004-ban-hang-tach-doi.md" }, { "file": "docs/adr/ADR-0005-danh-muc-chuan-o-packages-data.md" }] },
     { "id": "0.5", "phase": "0", "title": "Bộ kiểm chuẩn một chỗ tests/conformance", "areas": ["quality", "diagnostics"],
@@ -39,7 +39,7 @@
     { "id": "0.6", "phase": "0", "title": "Luật R-KER, R-SEC, R-REL, R-DIAG; SECURITY.md, CHANGELOG.md", "areas": ["security", "release", "kernel", "diagnostics"],
       "done": [{ "check": "SC-SEC-3" }, { "check": "SC-REL-1" }, { "file": "docs/rules/RULE-KERNEL.md" }, { "manual": "Bật GitHub Private Vulnerability Reporting" }] },
     { "id": "0.7", "phase": "0", "title": "API dùng vai trò CSDL không superuser; header bảo mật web", "areas": ["security"],
-      "done": [{ "check": "DG-SEC-1" }, { "fileContains": { "file": "docker/nginx.conf", "text": "X-Content-Type-Options" } }] },
+      "done": [{ "check": "DG-SEC-1" }, { "fileContains": { "file": "docker/nginx.conf", "text": "X-Content-Type-Options" } }, { "manual": "Bản cài thật đặt DB_APP_USER=ketoan_app + DB_APP_PASSWORD; DG-SEC-2 đạt khi chạy bằng tài khoản của API" }] },
 
     { "id": "1.1", "phase": "1", "title": "Rà REUSE-MAP với người phụ trách từng phân hệ", "areas": ["module"],
       "done": [{ "manual": "Mỗi dòng REUSE-MAP có người xác nhận" }] },
@@ -53,7 +53,7 @@
       "done": [{ "file": "packages/module-sdk/API.md" }] },
 
     { "id": "2.1", "phase": "2", "title": "eventStore.commit(): một cửa ghi sổ cho vouchers, closing, assets, costing (A-01)", "areas": ["kernel"],
-      "done": [{ "check": "SC-KERNEL-3" }] },
+      "done": [{ "check": "SC-KERNEL-3" }, { "check": "DG-EVENT-4" }] },
     { "id": "2.2", "phase": "2", "title": "assertLedgerInvariants() ở afterAll mọi tệp test", "areas": ["kernel", "quality"],
       "done": [{ "fileContains": { "file": "apps/api/test/helpers.ts", "text": "assertLedgerInvariants" } }] },
     { "id": "2.3", "phase": "2", "title": "Workspace packages/kernel + public.ts", "areas": ["kernel"], "after": ["2.1"],

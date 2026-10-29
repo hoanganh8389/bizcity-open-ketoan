@@ -37,14 +37,37 @@ export const checks = [
     },
   },
   {
-    id: 'DG-SEC-1', code: 'DB_ROLE_PRIVILEGE',
-    title: 'Ứng dụng không kết nối CSDL bằng quyền superuser (superuser tắt được trigger bảo vệ sổ)',
-    gate: 'CONF-RUN', contract: 'kernel', rules: ['R-SEC-6', 'R-DIAG-2'], conf: [], tier: 1, enforce: 'info', weight: 3,
+    id: 'DG-SEC-1', code: 'DB_APP_ROLE',
+    title: 'Có vai trò ketoan_app đúng chuẩn: không superuser, không BYPASSRLS, không sở hữu bảng, ghi được bảng nghiệp vụ',
+    gate: 'CONF-RUN', contract: 'kernel', rules: ['R-SEC-6', 'R-KER-3'], conf: [], tier: 1, enforce: 'block', weight: 4,
+    async run(ctx) {
+      const [r] = await ctx.db.query(`SELECT r.rolsuper AS super, r.rolbypassrls AS bypass, r.rolcanlogin AS login,
+               (SELECT count(*)::int FROM pg_tables t WHERE t.schemaname = 'public' AND t.tableowner = r.rolname) AS owns,
+               has_table_privilege(r.rolname, 'public.ledger_lines', 'INSERT') AS can_write,
+               has_table_privilege(r.rolname, 'public.ledger_lines', 'TRUNCATE') AS can_truncate
+          FROM pg_roles r WHERE r.rolname = 'ketoan_app'`);
+      const findings = [];
+      const add = (msg, key) => findings.push(ctx.finding('db/migrations/0032_vai_tro_ung_dung.sql', null, msg, key));
+      if (!r) add('chưa có vai trò ketoan_app — chạy job db-migrate (migration 0032), hoặc người quản trị CSDL tự tạo theo tệp này', 'missing');
+      else {
+        if (r.super) add('ketoan_app là superuser', 'superuser');
+        if (r.bypass) add('ketoan_app có BYPASSRLS', 'bypassrls');
+        if (r.owns) add(`ketoan_app sở hữu ${r.owns} bảng — chủ bảng tắt được trigger`, 'owner');
+        if (!r.can_write) add('ketoan_app chưa có quyền ghi bảng nghiệp vụ (GRANT trong 0032)', 'no-write');
+        if (r.can_truncate) add('ketoan_app có quyền TRUNCATE sổ cái', 'truncate');
+      }
+      return { examined: 1, unitBy: 'key', findings, notes: r ? [`ketoan_app ${r.login ? 'đã bật đăng nhập (DB_APP_PASSWORD)' : 'chưa bật đăng nhập — API đang dùng vai trò sở hữu'}`] : [] };
+    },
+  },
+  {
+    id: 'DG-SEC-2', code: 'DB_CONNECTION_ROLE',
+    title: 'Kết nối đang dùng không phải superuser (chạy diagnostics bằng đúng tài khoản CSDL của API để kiểm API)',
+    gate: 'CONF-RUN', contract: 'kernel', rules: ['R-SEC-6', 'R-DIAG-2'], conf: [], tier: 1, enforce: 'info', weight: 2,
     async run(ctx) {
       const [r] = await ctx.db.query(`SELECT current_user AS role, r.rolsuper AS super, r.rolbypassrls AS bypass
                                       FROM pg_roles r WHERE r.rolname = current_user`);
       const findings = [];
-      if (r?.super) findings.push(ctx.finding(null, null, `vai trò "${r.role}" là superuser — đổi API sang vai trò thường (RULE-SECURITY R-SEC-6)`, 'superuser'));
+      if (r?.super) findings.push(ctx.finding(null, null, `kết nối dùng vai trò "${r.role}" là superuser — nếu đây là tài khoản của API: đặt DB_APP_USER=ketoan_app + DB_APP_PASSWORD (R-SEC-6)`, 'superuser'));
       else if (r?.bypass) findings.push(ctx.finding(null, null, `vai trò "${r.role}" có BYPASSRLS — RLS sẽ không có tác dụng`, 'bypassrls'));
       return { examined: 1, unitBy: 'key', findings, notes: ['Đo vai trò của kết nối diagnostics; bản cài thật phải chạy kiểm này bằng đúng chuỗi kết nối của API'] };
     },

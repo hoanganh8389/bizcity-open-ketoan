@@ -13,12 +13,12 @@ export interface SessionClaims {
   name: string;
   /** Quyền do hệ thống quản trị cấp (đăng nhập qua vé) — có thì dùng thay cho quyền theo vai trò. */
   perms?: string[];
-  /** Số phiên bản phiên của người dùng lúc cấp vé (users.session_version); vé cũ không có = 1. */
+  /** Số phiên bản phiên của người dùng lúc cấp vé (users.session_version); vé cũ không có = 0 = mặc định của cột (migration 0029). */
   sv?: number;
 }
 
 export async function signSession(claims: SessionClaims): Promise<string> {
-  return new SignJWT({ tid: claims.tid, role: claims.role, name: claims.name, sv: claims.sv ?? 1, ...(claims.perms ? { perms: claims.perms } : {}) })
+  return new SignJWT({ tid: claims.tid, role: claims.role, name: claims.name, sv: claims.sv ?? 0, ...(claims.perms ? { perms: claims.perms } : {}) })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(claims.sub)
     .setIssuedAt()
@@ -36,7 +36,7 @@ export async function verifySession(token: string): Promise<SessionClaims | null
       role: String(payload.role),
       name: String(payload.name ?? ''),
       ...(Array.isArray(payload.perms) ? { perms: payload.perms.map(String) } : {}),
-      sv: typeof payload.sv === 'number' ? payload.sv : 1,
+      sv: typeof payload.sv === 'number' ? payload.sv : 0,
     };
   } catch {
     return null;

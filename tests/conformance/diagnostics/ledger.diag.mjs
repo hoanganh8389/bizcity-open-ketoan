@@ -7,6 +7,12 @@
  */
 import { sqlCheck } from '../lib/diag.mjs';
 
+/**
+ * Sự việc do service lõi tự sinh và tự gọi ledgerService (closing, costing, assets — nợ A-01): chưa đi một cửa nên chưa cập nhật
+ * posted_version. Tách khỏi DG-EVENT-1 để lỗi thật của cửa nạp sổ không bị lẫn; DG-EVENT-4 theo dõi tới khi xong PHASES 2.1.
+ */
+const INTERNAL = "('closing', 'cogs', 'depreciation')";
+
 export const checks = [
   sqlCheck({
     id: 'DG-LEDGER-1', code: 'LEDGER_BALANCED',
@@ -58,12 +64,22 @@ export const checks = [
   }),
   sqlCheck({
     id: 'DG-EVENT-1', code: 'EVENT_POSTED_VERSION',
-    title: 'Sự việc posted có posted_version = version',
+    title: 'Sự việc posted có posted_version = version (sự việc vào qua cửa nạp sổ / phiếu tay)',
     rules: ['R-EVENT-4'], conf: ['CONF-RUN-5'], tier: 0, enforce: 'block', weight: 4,
-    count: "SELECT count(*)::int AS n FROM accounting_events WHERE status = 'posted'",
+    count: `SELECT count(*)::int AS n FROM accounting_events WHERE status = 'posted' AND doc_type NOT IN ${INTERNAL}`,
     sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('version', a.version, 'posted_version', a.posted_version) AS detail
           FROM accounting_events a JOIN tenants t ON t.id = a.tenant_id
-          WHERE a.status = 'posted' AND a.posted_version IS DISTINCT FROM a.version
+          WHERE a.status = 'posted' AND a.doc_type NOT IN ${INTERNAL} AND a.posted_version IS DISTINCT FROM a.version
+          LIMIT 200`,
+  }),
+  sqlCheck({
+    id: 'DG-EVENT-4', code: 'INTERNAL_EVENT_VERSION',
+    title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version — nợ A-01, hết khi có eventStore.commit()',
+    rules: ['R-EVENT-2', 'R-EVENT-4'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM accounting_events WHERE status = 'posted' AND doc_type IN ${INTERNAL}`,
+    sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('doc_type', a.doc_type, 'version', a.version, 'posted_version', a.posted_version) AS detail
+          FROM accounting_events a JOIN tenants t ON t.id = a.tenant_id
+          WHERE a.status = 'posted' AND a.doc_type IN ${INTERNAL} AND a.posted_version IS DISTINCT FROM a.version
           LIMIT 200`,
   }),
   sqlCheck({

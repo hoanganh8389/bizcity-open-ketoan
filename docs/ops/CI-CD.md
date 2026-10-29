@@ -32,8 +32,8 @@ Viết ở [`scripts/kiem-chuan.sh`](../../scripts/kiem-chuan.sh) (chạy đư�
 | Ghi sổ cái | `insertInto\('ledger_` · `updateTable\('ledger_` · `INSERT INTO ledger_` | `apps/api/src/modules/ledger/` |
 | Ghi sự việc | `insertInto\('(accounting_events\|accounting_event_versions\|posting_log)'\)` | `apps/api/src/modules/documents/` |
 | Gọi thẳng ledger | `ledgerService\.(post\|reverse)\(` | `modules/{ledger,posting,documents}` + **danh sách nợ** (vouchers, closing, assets, inventory) — xoá dần ở Giai đoạn 1 |
-| Cờ thoát trigger | `cost_overwrite` · `allow_ledger_purge` · `session_replication_role` | lần lượt: `db/migrations/` + `modules/ledger/` + test · `db/migrations/` + test · `scripts/xoa-chung-tu.sh` |
-| Trùng số migration | `ls db/migrations \| cut -c1-4 \| uniq -d` | — (hiện có `0028` trùng: CI **cảnh báo** tới khi sửa xong Giai đoạn 0, sau đó **chặn**) |
+| Cờ thoát trigger | `cost_overwrite` · `allow_ledger_purge` · `session_replication_role` | lần lượt: `db/migrations/` + `modules/ledger/` + test · `db/migrations/` + test · `scripts/xoa-chung-tu.sh` + test (chứng minh vai trò ứng dụng không đặt được) |
+| Trùng số migration | `ls db/migrations \| cut -c1-4 \| uniq -d` | — **chặn** (đã sửa `0028` trùng ngày 2026-10-30: `0028_thue_kkkn` → `0031`, ghi nhận qua `RENAMED` trong `db/migrate.ts`) |
 
 Danh sách nợ đặt trong biến `DEBT_LEDGER_CALLERS` ở đầu script; xoá phần tử nào thì quy tắc tự chặt lại.
 

@@ -33,21 +33,29 @@ Mỗi bản ghi đủ sáu mục:
 - Đọc hoá đơn nhà cung cấp bằng dịch vụ AI: `INVOICE_AI_URL`, `INVOICE_AI_KEY`, `INVOICE_AI_TIMEOUT_MS`.
 - `GET /api/v1/system/health` trả thêm `version`, `kernel`, `standard` (R-REL-1).
 - Guard `requireUser()`, `requireAuthenticated()` cho route tự phục vụ (R-API-6).
+- Migration `0030_hoa_don_ncc.sql`: bảng `supplier_invoices`, `supplier_invoice_lines`, `supplier_item_aliases` mà code Hoá đơn NCC đã dùng nhưng chưa có migration (khuôn theo `db/types.ts`).
+- Migration `0032_vai_tro_ung_dung.sql`: vai trò CSDL `ketoan_app` cho API (không superuser, không sở hữu bảng); biến `DB_APP_USER`, `DB_APP_PASSWORD` (R-SEC-6).
 
 ### Đổi
 - `POST /api/v1/auth/logout-others` khai `requireUser()` (khoá API → `403 FORBIDDEN`, như service vốn kiểm). `/api/v1/presence*` khai `requireAuthenticated()` — hành vi không đổi.
 - Mua hàng → dữ liệu mẫu tạo kho mặc định qua dịch vụ danh mục kho của lõi (có ghi nhật ký), thôi ghi thẳng bảng `warehouses`.
+- `0028_thue_kkkn.sql` đổi số thành `0031_thue_kkkn.sql` (sửa trùng số, A-03); `migrate.ts` ghi nhận tên mới cho bản cài đã áp tên cũ, không chạy lại.
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
+
+### Sửa
+- Migration `0033_ma_hang_cha_sua_tay.sql`: cột `products.parent_manual` code đã dùng nhưng chưa có migration — thêm / sửa mặt hàng (và Mua hàng, ĐVT, tồn max dùng tới) báo "column parent_manual does not exist".
+- Vé đăng nhập cấp trước khi có cơ chế thu hồi phiên (không ghi `sv`) bị từ chối ngay: code coi thiếu `sv` = 1 trong khi `users.session_version` mặc định 0 (migration 0029). Nay thiếu `sv` = 0, dùng được tới lần thu hồi đầu như thiết kế.
+- Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
 
 ### Thay đổi định khoản
 - Không có.
 
 ### Nâng cấp cần làm
-- Không có.
+- Khuyên làm trên bản cài thật: đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` trong `.env` rồi `docker compose up -d` (DEPLOY D-9). Không đặt thì mọi thứ chạy như cũ.
 
 ### Bảo mật
 - nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).
-- Đã biết, chưa sửa: API dùng vai trò CSDL superuser trong Docker mẫu (R-SEC-6). Xem sổ rủi ro ở `docs/rules/RULE-SECURITY.md` §3.
+- API có thể chạy bằng vai trò CSDL thường `ketoan_app`: không tắt được trigger bảo vệ sổ, không TRUNCATE (R-SEC-6, R-KER-3). Bật bằng biến môi trường (xem Nâng cấp cần làm).
 
 ## [0.1.0] - 2026-10-29
 

@@ -275,6 +275,13 @@
             "md-only:0.9",
             "json-only:1.1"
           ]
+        },
+        "SC-DATA-7": {
+          "findings": 2,
+          "keys": [
+            "column:branches.extra_col",
+            "table:ghost_table"
+          ]
         }
       }
     },

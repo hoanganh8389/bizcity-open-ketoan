@@ -30,6 +30,10 @@
     "0026_ma_hang_cha.sql": "sha256:861ecbac8baaf1ae9e086668a60f085e4b35a1d979bee22b18649bd25ad6d2f9",
     "0027_thue_kct_mua_vao.sql": "sha256:ad05f59a76f1dd3b59f69aad679a7a72cb19d3608dceaf43df1ecaf2f7e33514",
     "0028_cau_hinh_mau_in.sql": "sha256:e4c47996f2442813dbd96207cdd6d0f9fca04dec1a5a5d51e425b1923d623d0d",
-    "0028_thue_kkkn.sql": "sha256:d971b94e2a90dbf492feb9dce7801d764a207bee49af191c77ddef169696ea0e"
+    "0029_them_session_version.sql": "sha256:4c1e2d0e8061fb15a69017d1f6cc5b2324c855c5456c37d7ec5713c4aa01819c",
+    "0030_hoa_don_ncc.sql": "sha256:a6c71578194369a975c4f7be9e3f68ed22f42c3899d590941edb0cbae3ee0a25",
+    "0031_thue_kkkn.sql": "sha256:e80802f18e8db3bcc14b9e2c92b8cc76625b7075667756486393dbace32ffe23",
+    "0032_vai_tro_ung_dung.sql": "sha256:00de6342c8b3e82e1dd5a4dc136e925fe41a8c4283914801bf0361c0e0d548b8",
+    "0033_ma_hang_cha_sua_tay.sql": "sha256:c2b2f51cff0325bb81a84010fc3e366e42de433fff2f4999419b2382d0b04295"
   }
 }

@@ -25,6 +25,27 @@ const BASELINE = [
 ];
 const LAST_OLD = '0067_danh_muc_hang_chuan.sql';
 
+/**
+ * File đã ĐỔI TÊN (sửa trùng số, R-DB-3): tên mới → tên cũ. Cơ sở dữ liệu đã áp tên cũ thì chỉ ghi nhận tên mới, không chạy lại.
+ * Chỉ thêm vào danh sách này, không xoá (bản cài cũ cần nó khi nâng cấp).
+ */
+const RENAMED: Readonly<Record<string, string>> = {
+  '0031_thue_kkkn.sql': '0028_thue_kkkn.sql',
+};
+
+/** Ghi nhận tên mới cho file đã đổi tên mà tên cũ đã áp. Trả danh sách vừa ghi nhận. */
+async function adoptRenamed(client: { query: typeof pool.query }, done: Set<string>): Promise<string[]> {
+  const adopted: string[] = [];
+  for (const [now, was] of Object.entries(RENAMED)) {
+    if (done.has(was) && !done.has(now)) {
+      await client.query('INSERT INTO schema_migrations (name) VALUES ($1) ON CONFLICT DO NOTHING', [now]);
+      done.add(now);
+      adopted.push(`${was} → ${now}`);
+    }
+  }
+  return adopted;
+}
+
 /** Ghi nhận các file gốc cho cơ sở dữ liệu đang chạy (đã đủ migration cũ). Trả true nếu vừa ghi nhận. */
 async function adoptBaseline(client: { query: typeof pool.query }, done: Set<string>): Promise<boolean> {
   if (done.size === 0 || BASELINE.every((f) => done.has(f))) return false;
@@ -52,6 +73,7 @@ export async function runMigrations(log: (msg: string) => void = console.log): P
 
     const done = new Set((await client.query<{ name: string }>('SELECT name FROM schema_migrations')).rows.map((r) => r.name));
     if (await adoptBaseline(client as unknown as { query: typeof pool.query }, done)) log(`→ Cơ sở dữ liệu đã đủ cấu trúc (tới ${LAST_OLD}): ghi nhận ${BASELINE.length} file gốc, không chạy lại`);
+    for (const r of await adoptRenamed(client as unknown as { query: typeof pool.query }, done)) log(`→ File đã đổi tên, đã áp từ trước: ${r} (ghi nhận, không chạy lại)`);
     const files = (await readdir(MIGRATIONS_DIR)).filter((f) => /^\d{4}_.+\.sql$/.test(f)).sort();
 
     for (const file of files) {
@@ -84,6 +106,8 @@ export async function pendingMigrations(): Promise<string[]> {
   const done = new Set((await pool.query<{ name: string }>('SELECT name FROM schema_migrations')).rows.map((r) => r.name));
   // Cơ sở dữ liệu đã đủ migration cũ coi như đã có file nền (job db-migrate sẽ ghi nhận).
   if (done.has(LAST_OLD)) BASELINE.forEach((f) => done.add(f));
+  // File đã đổi tên mà tên cũ đã áp: không tính là còn thiếu (job db-migrate sẽ ghi nhận tên mới).
+  for (const [now, was] of Object.entries(RENAMED)) if (done.has(was)) done.add(now);
   return files.filter((f) => !done.has(f));
 }
 

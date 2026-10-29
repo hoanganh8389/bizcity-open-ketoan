@@ -7,7 +7,7 @@
 |---|---|---|
 | **R-DB-1** *(T0)* | **Migration chỉ thêm.** Không sửa tệp đã chạy ở máy chủ thật (kể cả 9 tệp gốc `000x_goc_*`). Đổi thì thêm tệp số kế tiếp | Duyệt PR; CI so băm tệp cũ (Giai đoạn 1) |
 | **R-DB-2** *(T0)* | Ràng buộc bảo vệ sổ (trigger, CHECK, UNIQUE của R-LEDGER) chỉ được **thêm chặt hơn**, không nới. Nới = ADR + duyệt nhóm Lõi | `db-rules.test.ts` |
-| **R-DB-3** | **Số migration không trùng**, tăng dần, dạng `NNNN_mo_ta_khong_dau.sql`. Hiện có `0028_cau_hinh_mau_in.sql` và `0028_thue_kkkn.sql` trùng số — sửa ở Giai đoạn 0 | CI: `ls db/migrations \| cut -c1-4 \| uniq -d` rỗng |
+| **R-DB-3** | **Số migration không trùng**, tăng dần, dạng `NNNN_mo_ta_khong_dau.sql`. Đổi tên tệp đã chạy để sửa trùng số: thêm vào `RENAMED` trong `db/migrate.ts` (bản cài đã áp tên cũ chỉ ghi nhận tên mới). Đã sửa `0028_thue_kkkn.sql` → `0031_thue_kkkn.sql` (2026-10-30, A-03) | CI: `ls db/migrations \| cut -c1-4 \| uniq -d` rỗng |
 | **R-DB-4** | Mỗi tệp chạy trong **một giao dịch**; khoá `pg_advisory_lock(727001)` chặn chạy song song; Docker: job `db-migrate` chạy trước API (`AUTO_MIGRATE=0`) | `migrate.ts` |
 | **R-DB-5** | Bảng, cột mới có `COMMENT ON` **tiếng Việt**; bảng mới có mục trong `modules/system/schema-catalog.ts`; kiểu khai ở `apps/api/src/db/types.ts` | `db-rules.test.ts` |
 | **R-DB-6** | Đặt tên theo [../framework/04-DAT-TEN-BIZCITY.md](../framework/04-DAT-TEN-BIZCITY.md) §2: bảng lõi theo miền (`ledger_`, `event_`, `config_`…), bảng phân hệ tiền tố phân hệ, add-in `addin_<id>_` | Duyệt PR |

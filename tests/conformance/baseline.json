@@ -126,11 +126,6 @@
       "ref": "Audit A-03 (trùng 0028); 0015 hở từ trước — ghi chú trong migrate.ts",
       "debts": [
         {
-          "fp": "SC-DATA-1|db/migrations|dup:0028",
-          "file": "db/migrations",
-          "message": "trùng số 0028: 0028_cau_hinh_mau_in.sql, 0028_thue_kkkn.sql"
-        },
-        {
           "fp": "SC-DATA-1|db/migrations|gap:0015",
           "file": "db/migrations",
           "message": "hở số 0015"

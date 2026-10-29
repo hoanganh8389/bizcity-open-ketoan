@@ -38,6 +38,7 @@ reverse proxy (HTTPS, tên miền) ──► web (nginx, 127.0.0.1:WEB_PORT) ─
 | D-6 | Một bản cài = một `name:` Docker Compose riêng; không đổi `name:` của bản đang chạy (đổi tên volume) |
 | D-7 | Phát hành gắn nhãn phiên bản (`git tag vX.Y.Z`); image ghi nhãn `org.opencontainers.image.version` (Giai đoạn 3). Bản đang chạy: `GET /api/v1/system/health` trả `version`, `kernel`, `standard` |
 | D-8 | Proxy TLS phía trước (cổng 443) gửi `Strict-Transport-Security: max-age=15552000`. nginx của container `web` đã gửi `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'`. Không đặt `X-Frame-Options` vì phần mềm được nhúng trong trang quản trị WP (R-SEC-11) |
+| D-9 | API dùng vai trò CSDL thường `ketoan_app` (R-SEC-6): trong `.env` đặt `DB_APP_USER=ketoan_app` và `DB_APP_PASSWORD=<openssl rand -hex 24>` → `docker compose up -d` (job `db-migrate` bật đăng nhập cho vai trò, API kết nối bằng nó). Kiểm: `BIZCITY_PSQL="docker exec -i <db> psql -U ketoan_app -d ketoan" node tests/conformance/selfcheck.mjs --lane diagnostics` → DG-SEC-2 đạt |
 
 ## 4. Kiểm sau triển khai (bắt buộc — R-QG-10)
 

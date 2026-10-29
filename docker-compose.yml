@@ -50,6 +50,8 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123}
       SEED_API_KEY: ${SEED_API_KEY:-}
+      # Có giá trị: job bật đăng nhập cho vai trò ketoan_app (migration 0032) — API dùng vai trò thường (R-SEC-6).
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:-}
       TZ: Asia/Ho_Chi_Minh
 
   api:
@@ -66,7 +68,9 @@ services:
       NODE_ENV: production
       PORT: 4100
       AUTO_MIGRATE: "0"
-      DATABASE_URL: postgres://ketoan:${DB_PASSWORD:-ketoan}@db:5432/ketoan
+      # Vai trò CSDL của API (R-SEC-6): mặc định vai trò sở hữu (như cũ). Bản thật: đặt DB_APP_USER=ketoan_app + DB_APP_PASSWORD
+      # trong .env → API không tắt được trigger bảo vệ sổ. Job db-migrate vẫn dùng vai trò sở hữu.
+      DATABASE_URL: postgres://${DB_APP_USER:-ketoan}:${DB_APP_PASSWORD:-${DB_PASSWORD:-ketoan}}@db:5432/ketoan
       JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8088}
       ADDINS: ${ADDINS:-*}

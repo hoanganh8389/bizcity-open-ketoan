@@ -15,8 +15,8 @@ FAIL=0
 
 # Nợ R-LEDGER-4 / audit A-01: module lõi còn gọi thẳng ledgerService (chuyển sang eventStore.commit ở Giai đoạn 1.1).
 DEBT_LEDGER_CALLERS='modules/vouchers/|modules/closing/|modules/assets/|modules/inventory/costing'
-# Nợ R-DB-3 / audit A-03: hai migration cùng số 0028.
-DEBT_MIGRATION_DUP='0028'
+# Nợ R-DB-3 / audit A-03: đã sửa 2026-10-30 (0028_thue_kkkn → 0031). Để trống: mọi trùng số đều chặn.
+DEBT_MIGRATION_DUP=''
 # Ngoại lệ E2 (R-LEDGER): định khoản lại cập nhật thông tin đầu bút toán tại chỗ.
 E2_HEADER_UPDATE="^$SRC/modules/posting/posting.service.ts:[0-9]+:.*updateTable\('ledger_entries'\)"
 
@@ -47,7 +47,7 @@ check "$( {
   grep -rnE "allow_ledger_purge" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh \
     | grep -vE "^(apps/api/test/|scripts/kiem-chuan.sh)"
   grep -rnE "session_replication_role" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh \
-    | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/kiem-chuan.sh)"
+    | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/kiem-chuan.sh|apps/api/test/)"
 } )"
 
 rule "R-DB-3: số migration không trùng"
