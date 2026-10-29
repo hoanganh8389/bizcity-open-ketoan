@@ -142,6 +142,28 @@ export function requirePermission(...needed: Permission[]) {
   };
 }
 
+/**
+ * preHandler cho route "tự phục vụ" (đổi mật khẩu của mình, đăng xuất máy khác, báo online…): không cần quyền nghiệp vụ nào
+ * nhưng chỉ NGƯỜI DÙNG đăng nhập được gọi — khoá API bị từ chối. Khai tường minh để route nào cũng nói rõ mình cần gì (R-API-6).
+ */
+export function requireUser() {
+  return async (req: FastifyRequest, _reply: FastifyReply) => {
+    const auth = req.auth;
+    if (!auth) throw Errors.unauthorized();
+    if (auth.kind !== 'user') throw Errors.forbidden('Chỉ dùng cho người dùng đăng nhập, không dùng bằng khoá API');
+  };
+}
+
+/**
+ * preHandler cho route chỉ cần ĐÃ XÁC THỰC (người dùng hoặc khoá API), không gắn quyền nghiệp vụ — vd báo online, xem số đang online
+ * (khoá API gọi được nhưng không được đếm). Khai tường minh thay vì bỏ trống preHandler (R-API-6).
+ */
+export function requireAuthenticated() {
+  return async (req: FastifyRequest, _reply: FastifyReply) => {
+    if (!req.auth) throw Errors.unauthorized();
+  };
+}
+
 /** Lấy ngữ cảnh xác thực (đã chắc chắn có vì qua authPlugin). */
 export function authOf(req: FastifyRequest): AuthContext {
   if (!req.auth) throw Errors.unauthorized();

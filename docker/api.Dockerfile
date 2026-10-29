@@ -24,6 +24,8 @@ COPY --from=build /app/apps/api/dist apps/api/dist
 # Thư mục cơ sở dữ liệu (migrations, seeds) — đường dẫn /app/db (apps/api/src/db/paths.ts).
 COPY db/migrations db/migrations
 COPY db/seeds db/seeds
+# Phiên bản Standard trả ở /api/v1/system/health (apps/api/src/core/version.ts, R-REL-1).
+COPY docs/standard/bizcity-standard.json docs/standard/bizcity-standard.json
 COPY docker/api-entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 WORKDIR /app/apps/api

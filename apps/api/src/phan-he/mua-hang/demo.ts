@@ -15,6 +15,7 @@ import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { voucherService } from '../../modules/vouchers/voucher.service.js';
 import { documentService } from '../../modules/documents/document.service.js';
+import { warehouseService } from '../../modules/warehouses/warehouse.routes.js';
 import { loadSettings, resolveAccounts, saveSettings } from './analysis.js';
 import { purchaseService } from './service.js';
 import { policyInputSchema, savePolicy } from './store.js';
@@ -162,9 +163,14 @@ export async function ensureDemoWarehouses(auth: AuthContext) {
     const has = await db.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', b.id).where('is_default', '=', true).executeTakeFirst();
     if (has) continue;
     const code = `${b.code}-HH`;
-    const r = await db.insertInto('warehouses').values({ tenant_id: auth.tenantId, branch_id: b.id, code, name: 'Kho hàng', is_default: true, note: 'Kho mặc định của chi nhánh mẫu (dữ liệu tình huống mua hàng)' })
-      .onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).returning('code').executeTakeFirst();
-    if (r) created.push(code);
+    // Thêm qua service danh mục kho của lõi (kiểm chi nhánh, ghi nhật ký) — phân hệ không ghi thẳng bảng lõi (R-BOUND-2, A-17).
+    const taken = await db.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
+    if (taken) continue;
+    await warehouseService.create(auth, {
+      code, branchCode: b.code, name: 'Kho hàng', address: '', isActive: true, isDefault: true, isPromo: false, account: '',
+      note: 'Kho mặc định của chi nhánh mẫu (dữ liệu tình huống mua hàng)',
+    });
+    created.push(code);
   }
   if (created.length) await logEvents(auth.tenantId, [{ event: 'demo_warehouses', docNo: '', user: auth.actorName, data: { created } }]);
   return { created, branches: rows.map((b) => b.code) };

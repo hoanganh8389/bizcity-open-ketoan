@@ -15,7 +15,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { authOf } from '../../core/auth.js';
+import { authOf, requireAuthenticated } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { todayVN } from '../../core/date-rules.js';
 
@@ -100,6 +100,7 @@ export function readPresence(tenantId: string, withList: boolean) {
 export async function presenceRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
   r.post('/api/v1/presence/ping', {
+    preHandler: requireAuthenticated(),
     schema: {
       tags: ['Hệ thống'], summary: 'Tab đang mở báo còn online (≈1 phút / lần); deviceId = mã trình duyệt (đếm theo thiết bị); leave = tab đóng / ẩn',
       body: z.object({ deviceId: z.string().max(64).default(''), tabId: z.string().min(1).max(64), path: z.string().max(300).default(''), screen: z.string().max(200).default(''), leave: z.boolean().default(false) }),
@@ -111,6 +112,7 @@ export async function presenceRoutes(app: FastifyInstance): Promise<void> {
     },
   });
   r.get('/api/v1/presence', {
+    preHandler: requireAuthenticated(),
     schema: { tags: ['Hệ thống'], summary: 'Thiết bị / tài khoản đang online, số tab, đã vào hôm nay; danh sách chi tiết theo tài khoản → thiết bị cho người có quyền quản trị người dùng' },
     handler: async (req) => {
       const a = authOf(req);

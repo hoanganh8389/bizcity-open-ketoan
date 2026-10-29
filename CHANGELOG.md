@@ -31,8 +31,12 @@ Mỗi bản ghi đủ sáu mục:
 - `SECURITY.md`, `CHANGELOG.md`.
 - Tra cứu mã số thuế: `DOANHNGHIEP_API_KEY`, `TAX_LOOKUP`.
 - Đọc hoá đơn nhà cung cấp bằng dịch vụ AI: `INVOICE_AI_URL`, `INVOICE_AI_KEY`, `INVOICE_AI_TIMEOUT_MS`.
+- `GET /api/v1/system/health` trả thêm `version`, `kernel`, `standard` (R-REL-1).
+- Guard `requireUser()`, `requireAuthenticated()` cho route tự phục vụ (R-API-6).
 
 ### Đổi
+- `POST /api/v1/auth/logout-others` khai `requireUser()` (khoá API → `403 FORBIDDEN`, như service vốn kiểm). `/api/v1/presence*` khai `requireAuthenticated()` — hành vi không đổi.
+- Mua hàng → dữ liệu mẫu tạo kho mặc định qua dịch vụ danh mục kho của lõi (có ghi nhật ký), thôi ghi thẳng bảng `warehouses`.
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Thay đổi định khoản
@@ -42,7 +46,8 @@ Mỗi bản ghi đủ sáu mục:
 - Không có.
 
 ### Bảo mật
-- Đã biết, chưa sửa: API dùng vai trò CSDL superuser trong Docker mẫu (R-SEC-6); nginx chưa gửi header bảo mật (R-SEC-11). Xem sổ rủi ro ở `docs/rules/RULE-SECURITY.md` §3.
+- nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).
+- Đã biết, chưa sửa: API dùng vai trò CSDL superuser trong Docker mẫu (R-SEC-6). Xem sổ rủi ro ở `docs/rules/RULE-SECURITY.md` §3.
 
 ## [0.1.0] - 2026-10-29
 

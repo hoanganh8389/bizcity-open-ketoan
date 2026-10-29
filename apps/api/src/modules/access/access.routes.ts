@@ -10,7 +10,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { authOf, requirePermission } from '../../core/auth.js';
+import { authOf, requirePermission, requireUser } from '../../core/auth.js';
 import { ok, idParamSchema } from '../../core/http.js';
 import { apiKeyCreateSchema, changePasswordSchema, userCreateSchema, userUpdateSchema } from './access.schemas.js';
 import { accessService } from './access.service.js';
@@ -52,6 +52,7 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
   });
 
   r.post('/api/v1/auth/logout-others', {
+    preHandler: requireUser(),
     schema: { tags, summary: 'Đăng xuất mọi thiết bị khác đang đăng nhập tài khoản này (máy đang bấm nhận vé mới, vẫn đăng nhập)' },
     handler: async (req) => ok(await accessService.logoutOthers(authOf(req), reissueFor(req))),
   });

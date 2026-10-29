@@ -5,6 +5,7 @@ import { appendFile } from 'node:fs/promises';
 export async function routes(r: any, db: any, ledgerService: any, reply: any, z: any) {
   r.get('/api/v1/alpha', { handler: async () => y });                // SC-API-3: không requirePermission
   r.post('/api/v1/alpha', { preHandler: requirePermission('documents:write'), handler: async () => 1 });
+  r.post('/api/v1/alpha/me', { preHandler: requireUser(), handler: async () => 2 }); // KHÔNG tính: route tự phục vụ khai requireUser()
   await db.insertInto('ledger_lines').values({}).execute();          // SC-KERNEL-1, SC-MOD-2 (bảng nhân)
   await db.updateTable('branches').set({}).execute();                // SC-MOD-2 (bảng lõi)
   await ledgerService.post(db, {});                                  // SC-KERNEL-3
@@ -16,3 +17,4 @@ export async function routes(r: any, db: any, ledgerService: any, reply: any, z:
   await appendFile('nhat-ky.jsonl', '{}');                           // SC-EVD-1
 }
 declare function requirePermission(p: string): unknown;
+declare function requireUser(): unknown;

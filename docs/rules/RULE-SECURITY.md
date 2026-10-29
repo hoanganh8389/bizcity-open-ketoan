@@ -43,6 +43,6 @@
 | Repo **công khai** chứa dữ liệu thật trong `db/seeds/` (đối tượng, nhân viên, chi nhánh, mặt hàng) — trái R-SEC-10 | **Chủ dự án chấp nhận** 2026-10-29 khi đẩy lên GitHub | Khi đổi ý: chuyển seed thật ra kho riêng, tạo seed ẩn danh; dữ liệu đã đẩy coi như đã công khai |
 | API dùng vai trò CSDL `ketoan` = superuser (Docker mặc định) — trái R-SEC-6 | mở | Migration tạo vai trò `ketoan_app` (không superuser), compose dùng vai trò đó cho API (PHASES 2.4) |
 | Chưa có RLS (A-23) | mở | PHASES 2.4–2.5 |
-| `docker/nginx.conf` chưa gửi header bảo mật (HSTS, CSP, `X-Content-Type-Options`, `Referrer-Policy`) — R-SEC-11 | mở | thêm vào nginx (thường đặt ở proxy 443 phía trước; ghi rõ trong DEPLOY.md) |
+| Header bảo mật web — R-SEC-11 | **một phần** (2026-10-29): nginx đã gửi `nosniff`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` | HSTS do proxy TLS gửi (DEPLOY D-8); CSP đầy đủ (`script-src`, `frame-src` cho add-in nhúng) cần thử trên giao diện thật trước khi bật |
 | GitHub Action ghim theo nhãn `@v4` | mở (Tier 2) | ghim SHA khi bật bảo vệ nhánh |
 | Chưa có giới hạn tần suất cho đăng nhập / khoá API | mở | PHASES 2.5 (`RATE_LIMITED`) |

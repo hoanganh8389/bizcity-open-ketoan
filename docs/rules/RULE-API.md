@@ -10,7 +10,7 @@
 | **R-API-3** | Kiểm đầu vào bằng zod tại route (`fastify-type-provider-zod`); khuôn dùng chung đặt ở `packages/contracts`, khuôn riêng ở `<ten>.schemas.ts` | OpenAPI tự sinh tại `/api/docs` |
 | **R-API-4** | Tiền là **number** (đồng), cộng trừ qua `toCents/fromCents`; ngày `YYYY-MM-DD` hoặc ISO 8601; mã là chuỗi, phân biệt hoa thường | `money.ts` |
 | **R-API-5** | Tham số true/false trên URL dùng `queryBool`, không dùng `z.coerce.boolean()` (vì `"false"` thành `true`) | Grep CI |
-| **R-API-6** | Mọi route khai `preHandler: requirePermission(...)` trừ route `config.public` | Test liệt kê route (Giai đoạn 1) |
+| **R-API-6** | Mọi route khai `preHandler: requirePermission(...)`. Có hai ngoại lệ: route `config.public`; và route tự phục vụ của chính người dùng (đổi mật khẩu, đăng xuất máy khác, báo online) khai `preHandler: requireUser()` (chỉ người dùng đăng nhập, từ chối khoá API) hoặc `requireAuthenticated()` (người dùng hoặc khoá API) | SC-API-3 (bộ kiểm) |
 | **R-API-7** | Đường dẫn **ổn định** dưới `/api/v1/`. Đổi phá vỡ (bỏ trường, đổi nghĩa, đổi kiểu) → `/api/v2/` song song; thêm trường tuỳ chọn không phá vỡ | Duyệt PR + CHANGELOG |
 | **R-API-8** | Phạm vi công khai cho plugin = route liệt kê trong [../contracts/BIZCITY-API-v1.md](../contracts/BIZCITY-API-v1.md) §5. Route khác là nội bộ giao diện, được đổi không báo | Hợp đồng |
 | **R-API-9** | Thao tác ghi từ hệ thống ngoài phải **idempotent**: dựa trên `docKey` + `version` (sự việc) hoặc mã (danh mục `PUT /:code`). Không có endpoint "tạo" không khoá tự nhiên cho plugin | Hợp đồng |
