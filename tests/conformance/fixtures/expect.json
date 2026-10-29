@@ -1,0 +1,69 @@
+{
+  "contract": "bizcity_selftest@1",
+  "note": "Kết quả mong đợi khi chạy bộ kiểm trên fixtures. Thêm check mới → thêm vi phạm mẫu vào repo-bad/ hoặc module-bad/ và một dòng ở đây; check không có ca tự kiểm thì chưa được tin.",
+  "jsonschema": [
+    { "name": "type + required", "schema": { "type": "object", "required": ["a"], "properties": { "a": { "type": "integer" } } }, "data": { "a": 1 }, "valid": true },
+    { "name": "thiếu required", "schema": { "type": "object", "required": ["a"] }, "data": {}, "valid": false },
+    { "name": "integer không nhận 1.5", "schema": { "type": "integer" }, "data": 1.5, "valid": false },
+    { "name": "additionalProperties false", "schema": { "type": "object", "properties": { "a": {} }, "additionalProperties": false }, "data": { "a": 1, "b": 2 }, "valid": false },
+    { "name": "pattern unicode", "schema": { "type": "string", "pattern": "^\\p{L}+$" }, "data": "Hợpđồng", "valid": true },
+    { "name": "maxLength đếm ký tự, không đếm byte", "schema": { "type": "string", "maxLength": 3 }, "data": "Ước", "valid": true },
+    { "name": "oneOf đúng một nhánh", "schema": { "oneOf": [{ "const": 1 }, { "type": "string" }] }, "data": 1, "valid": true },
+    { "name": "oneOf khớp hai nhánh", "schema": { "oneOf": [{ "type": "number" }, { "type": "integer" }] }, "data": 1, "valid": false },
+    { "name": "$ref + $defs", "schema": { "$defs": { "m": { "type": "number", "exclusiveMinimum": 0 } }, "$ref": "#/$defs/m" }, "data": 0, "valid": false },
+    { "name": "if / then", "schema": { "if": { "properties": { "k": { "const": "addin" } } }, "then": { "not": { "required": ["data"] } } }, "data": { "k": "addin", "data": {} }, "valid": false },
+    { "name": "items not pattern (bảng nhân)", "schema": { "type": "array", "items": { "not": { "pattern": "^ledger_" } } }, "data": ["contracts", "ledger_lines"], "valid": false }
+  ],
+  "targets": [
+    {
+      "root": "repo-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-KERNEL-1": { "findings": 1 },
+        "SC-KERNEL-3": { "findings": 1 },
+        "SC-KERNEL-5": { "findings": 2, "keys": ["'5111'", "'131'"] },
+        "SC-QG-1": { "findings": 1 },
+        "SC-MOD-1": { "findings": 1, "keys": ["beta"] },
+        "SC-MOD-2": { "findings": 2, "keys": ["kernel:ledger_lines", "core:branches"] },
+        "SC-API-1": { "findings": 1 },
+        "SC-API-2": { "findings": 1 },
+        "SC-API-3": { "findings": 1, "keys": ["get /api/v1/alpha"] },
+        "SC-EVT-1": { "findings": 1 },
+        "SC-EVD-1": { "findings": 1 },
+        "SC-DATA-1": { "findings": 2, "keys": ["dup:0001", "gap:0002"] },
+        "SC-DATA-3": { "findings": 3, "keys": ["columns:branches", "table:lines_no_tenant", "column:lines_no_tenant.note"] },
+        "SC-DATA-4": { "findings": 1, "keys": ["branches.amount"] },
+        "SC-DATA-5": { "findings": 1, "keys": ["lines_no_tenant"] },
+        "SC-DOC-1": { "findings": 1 }
+      }
+    },
+    {
+      "root": "module-good/hop-dong-mini",
+      "mode": "module",
+      "checks": {
+        "SC-CON-2": { "findings": 0 },
+        "SC-MOD-1": { "findings": 0 },
+        "SC-API-1": { "findings": 0 },
+        "SC-EVT-1": { "findings": 0 },
+        "SC-EVD-1": { "findings": 0 },
+        "SC-DATA-1": { "findings": 0 },
+        "SC-DATA-3": { "findings": 0 },
+        "SC-DATA-4": { "findings": 0 },
+        "SC-DATA-5": { "findings": 0 }
+      }
+    },
+    {
+      "root": "module-bad/xau",
+      "mode": "module",
+      "checks": {
+        "SC-CON-2": {
+          "min": 11,
+          "keys": ["schema:/data/tables/0", "key-dir", "standard", "cap-planned:documents.attachments", "cap-unknown:ledger.anything", "perm-prefix:contracts:read", "action-prefix:khac.contract.list", "sub-unknown:bizcity.ledger.khong-co", "setting-prefix:bizcity.khac.remind_days", "data-schema", "doctype-unknown:revenue_recognition", "slot:partner.sidebar"]
+        },
+        "SC-MOD-1": { "findings": 2, "keys": ["escape:", "import:pg"] },
+        "SC-API-1": { "findings": 1 },
+        "SC-EVT-1": { "findings": 1 }
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "acme.hop-dong",
+  "key": "hop-dong",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Module CỐ Ý SAI",
+  "description": "Mỗi trường dưới cài một lỗi CONF-MAN (xem ../../expect.json).",
+  "owners": ["@acme"],
+  "standard": "^2.0",
+  "requires": { "capabilities": ["ledger.submit", "documents.attachments", "ledger.anything"] },
+  "permissions": [{ "key": "contracts:read", "label": "Xem", "roles": ["owner"], "risk": "low" }],
+  "data": { "schema": "mod_khac", "tables": ["ledger_lines"] },
+  "actions": ["khac.contract.list"],
+  "events": { "subscribes": [{ "type": "bizcity.ledger.khong-co", "version": 1 }] },
+  "ledger": { "submits": [{ "docType": "revenue_recognition", "contract": "bizcity_ledger_intake@1" }] },
+  "settings": ["bizcity.khac.remind_days"],
+  "extensions": { "slots": [{ "slot": "partner.sidebar", "component": "web/slots/X", "permission": "contracts:read" }] }
+}

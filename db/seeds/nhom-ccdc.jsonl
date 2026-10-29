@@ -1,0 +1,3 @@
+{"_bang": "nhom-ccdc", "_mo_ta": "Nhóm công cụ dụng cụ, chi phí trả trước.", "_cot": ["code", "name", "parent_code", "note", "is_active"]}
+{"code": "PB001", "name": "Nhóm công cụ dụng cụ", "parent_code": null, "note": "", "is_active": true}
+{"code": "PB002", "name": "Nhóm chi phí", "parent_code": null, "note": "", "is_active": true}

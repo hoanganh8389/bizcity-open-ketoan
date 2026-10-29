@@ -1,0 +1,5 @@
+/* Mẫu in chứng từ mua hàng (MH03): đề mục phần, đoạn văn biên bản, dòng lô / hạn dùng dưới tên hàng. */
+.pdoc .mh-sec { font-weight: 700; margin: 8px 0 3px; }
+.pdoc .mh-p { margin: 4px 0; text-align: justify; }
+.pdoc .mh-sub { font-size: 0.85em; color: #333; }
+.pdoc .mh-two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0; }

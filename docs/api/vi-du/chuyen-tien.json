@@ -1,0 +1,16 @@
+{
+  "docType": "cash_transfer",
+  "docKey": "quy:CN01:cash_transfer:451",
+  "version": 1,
+  "branchCode": "CN01",
+  "toBranchCode": "CN02",
+  "docNo": "CT0000451",
+  "docDate": "2026-10-12",
+  "fromMethodCode": "TM",
+  "toMethodCode": "TM",
+  "status": "received",
+  "description": "Chuyển tiền mặt bổ sung quỹ cửa hàng CN02",
+  "totals": {
+    "total": 5000000
+  }
+}

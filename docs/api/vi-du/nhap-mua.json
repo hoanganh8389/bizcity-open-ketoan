@@ -1,0 +1,53 @@
+{
+  "docType": "purchase",
+  "docKey": "kho:KHO01:purchase:9001",
+  "version": 1,
+  "branchCode": "CN01",
+  "docNo": "NM0009001",
+  "docDate": "2026-10-03",
+  "description": "Nhập hàng đợt 1 tháng 10",
+  "partner": {
+    "code": "NCC-ABC",
+    "name": "Công ty CP Sữa ABC",
+    "taxCode": "0300588569",
+    "address": "TP Hồ Chí Minh"
+  },
+  "invoice": {
+    "no": "0004567",
+    "serial": "C26TAB",
+    "form": "1",
+    "date": "2026-10-03",
+    "status": "valid"
+  },
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 24,
+      "unitPrice": 300000,
+      "amountBeforeTax": 7200000,
+      "taxCode": "V08",
+      "taxAmount": 576000
+    },
+    {
+      "lineKey": "2",
+      "sku": "SUA900",
+      "name": "Sữa bột 900g",
+      "unit": "Lon",
+      "qty": 12,
+      "unitPrice": 610000,
+      "amountBeforeTax": 7320000,
+      "discount": 0,
+      "taxCode": "V08",
+      "taxAmount": 585600
+    }
+  ],
+  "payments": [],
+  "totals": {
+    "beforeTax": 14520000,
+    "tax": 1161600,
+    "total": 15681600
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "docType": "stock_adjustment",
+  "docKey": "kho:adjust:KK-CN02-1025",
+  "version": 1,
+  "branchCode": "CN02",
+  "docNo": "KK-CN02-1025",
+  "docDate": "2026-10-25",
+  "direction": "decrease",
+  "description": "Kiểm kê thiếu cuối tháng",
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 1,
+      "amount": 300000
+    }
+  ],
+  "totals": {
+    "total": 300000
+  }
+}

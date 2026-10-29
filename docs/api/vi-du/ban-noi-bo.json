@@ -1,0 +1,32 @@
+{
+  "docType": "sale",
+  "docKey": "pos:CN01:sale:XCN-31",
+  "version": 1,
+  "branchCode": "CN01",
+  "docNo": "CN01XCN0031",
+  "docDate": "2026-10-14",
+  "reasonCode": "XCN",
+  "description": "Bán hàng cho chi nhánh CN02 theo giá bán",
+  "partner": {
+    "code": "CN-CN02",
+    "name": "Cửa hàng 02"
+  },
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 5,
+      "amountBeforeTax": 1500000,
+      "taxCode": "R08",
+      "taxAmount": 120000
+    }
+  ],
+  "payments": [],
+  "totals": {
+    "beforeTax": 1500000,
+    "tax": 120000,
+    "total": 1620000
+  }
+}

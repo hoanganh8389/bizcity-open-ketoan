@@ -1,0 +1,23 @@
+{
+  "docType": "stock_adjustment",
+  "docKey": "kho:adjust:KK-CN02-1025-T",
+  "version": 1,
+  "branchCode": "CN02",
+  "docNo": "KK-CN02-1025-T",
+  "docDate": "2026-10-25",
+  "direction": "increase",
+  "description": "Kiểm kê thừa cuối tháng (chưa có giá, chờ tính giá vốn)",
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA900",
+      "name": "Sữa bột 900g",
+      "unit": "Lon",
+      "qty": 1,
+      "amount": 0
+    }
+  ],
+  "totals": {
+    "total": 0
+  }
+}

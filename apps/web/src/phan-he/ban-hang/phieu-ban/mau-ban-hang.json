@@ -1,0 +1,140 @@
+[
+  {
+    "id": "mau-bh-1",
+    "docType": "sale",
+    "status": "approved",
+    "docNo": "BH2600001",
+    "docDate": "@-3",
+    "branchCode": "00001Premium",
+    "partner": {
+      "code": "307AA000316",
+      "name": "Nguyễn Thị Hoa"
+    },
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 1836000
+      }
+    ],
+    "note": "Bán lẻ tại quầy",
+    "lines": [
+      {
+        "lineKey": "L1",
+        "sku": "100021002",
+        "name": "Biomil Plus 1 800g",
+        "unit": "Lon",
+        "qty": 2,
+        "unitPrice": 680000,
+        "amountBeforeTax": 1360000,
+        "taxCode": "R08",
+        "taxAmount": 108800
+      },
+      {
+        "lineKey": "L2",
+        "sku": "100021003",
+        "name": "Biomil Plus 2 400g",
+        "unit": "Lon",
+        "qty": 1,
+        "unitPrice": 340000,
+        "amountBeforeTax": 340000,
+        "taxCode": "R08",
+        "taxAmount": 27200
+      }
+    ],
+    "totals": {
+      "beforeTax": 1700000,
+      "tax": 136000,
+      "total": 1836000
+    }
+  },
+  {
+    "id": "mau-bh-2",
+    "docType": "sale",
+    "status": "draft",
+    "docNo": "BH2600002",
+    "docDate": "@-1",
+    "branchCode": "00001Premium",
+    "partner": {
+      "code": "232AA000185",
+      "name": "Trần Văn An",
+      "taxCode": "0101234567"
+    },
+    "invoice": {
+      "no": "0001235",
+      "serial": "C26TAA",
+      "date": "@-1"
+    },
+    "payments": [
+      {
+        "methodCode": "CK",
+        "amount": 1000000,
+        "reference": "FT26296000123"
+      }
+    ],
+    "note": "Khách lấy hoá đơn, chuyển khoản một phần",
+    "lines": [
+      {
+        "lineKey": "L3",
+        "sku": "100021004",
+        "name": "Biomil Plus 2 800g",
+        "unit": "Lon",
+        "qty": 3,
+        "unitPrice": 670000,
+        "discount": 30000,
+        "amountBeforeTax": 1980000,
+        "taxCode": "R08",
+        "taxAmount": 158400
+      },
+      {
+        "lineKey": "L4",
+        "sku": "100021001",
+        "name": "Biomil Plus 1 400g",
+        "unit": "Lon",
+        "qty": 1,
+        "unitPrice": 340000,
+        "amountBeforeTax": 0,
+        "taxCode": "R08",
+        "taxAmount": 0,
+        "isGift": true
+      }
+    ],
+    "totals": {
+      "beforeTax": 1980000,
+      "tax": 158400,
+      "total": 2138400
+    }
+  },
+  {
+    "id": "mau-bh-3",
+    "docType": "sale",
+    "status": "draft",
+    "docNo": "BH2600003",
+    "docDate": "@0",
+    "branchCode": "00002Plus",
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 2203200
+      }
+    ],
+    "note": "Khách lẻ",
+    "lines": [
+      {
+        "lineKey": "L5",
+        "sku": "100021001",
+        "name": "Biomil Plus 1 400g",
+        "unit": "Lon",
+        "qty": 6,
+        "unitPrice": 340000,
+        "amountBeforeTax": 2040000,
+        "taxCode": "R08",
+        "taxAmount": 163200
+      }
+    ],
+    "totals": {
+      "beforeTax": 2040000,
+      "tax": 163200,
+      "total": 2203200
+    }
+  }
+]

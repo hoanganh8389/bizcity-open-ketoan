@@ -1,0 +1,46 @@
+{"_bang": "nhan-vien", "_mo_ta": "Nhân viên phụ trách gắn trên dòng phiếu kế toán (công nợ, tạm ứng theo nhân viên). extra: chức vụ, địa chỉ, điện thoại, di động, email, chi nhánh làm việc, mã phòng ban, nhóm nhân viên.", "_cot": ["code", "name", "parent_code", "note", "is_active", "extra"]}
+{"code": "CTKT-018", "name": "Phạm Thị Phượng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
+{"code": "CTKT-036", "name": "Nguyễn Hải Phú", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
+{"code": "CTKT-039", "name": "Phạm Thị Khánh Huyền", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "KT thuế"}}
+{"code": "CTKT-043", "name": "Nguyễn Vũ Hiệp", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
+{"code": "CTKT-044", "name": "Bùi Thị Phương Linh", "parent_code": null, "note": "", "is_active": true, "extra": {}}
+{"code": "CTKT-045", "name": "Trần Ngọc Vỹ", "parent_code": null, "note": "", "is_active": true, "extra": {}}
+{"code": "CTKT-047", "name": "Nguyễn Thị Ngọc Hà", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế", "branchCode": "HOTGS"}}
+{"code": "CTO-KT010", "name": "Phan Ngọc Ngân", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "KTV", "branchCode": "22000"}}
+{"code": "CTO-KT011", "name": "Đặng Thanh Hằng", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "22000"}}
+{"code": "CTO-KT013", "name": "Võ Hoàng Vy", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "22000"}}
+{"code": "CTO-KT016", "name": "Lê Trương Ngọc Hân", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "22000"}}
+{"code": "DNG_KT001", "name": "Lê Thị Hằng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế", "branchCode": "21024Plus"}}
+{"code": "DNG-KT001", "name": "Lê Thị Hằng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế", "branchCode": "21024Plus"}}
+{"code": "DNG-KT013", "name": "Nguyễn Hiền Vi", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "21024Plus"}}
+{"code": "HNKT-17", "name": "Đỗ Thị Kim Dung", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
+{"code": "HNKT-21", "name": "Hoàng Thị Nay", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "NVKT", "branchCode": "HOTGS"}}
+{"code": "HNKT-23", "name": "Lê Thị Tươi", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán nội bộ"}}
+{"code": "HPKT-003", "name": "Hoàng Thị Thảo", "parent_code": null, "note": "", "is_active": true, "extra": {"mobile": "0967 312 269", "position": "Ke toan kho"}}
+{"code": "HPKT-004", "name": "Nguyễn Thị Hồng Vân", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
+{"code": "NA-Duongbtt", "name": "Bùi Thị Thùy Dương", "parent_code": null, "note": "", "is_active": true, "extra": {"phone": "01666 546 08", "email": "thuyduong6089@gmail.com", "position": "Kế toán nhập kho", "branchCode": "14003Premium"}}
+{"code": "NAKT-012", "name": "Phạm Thị Phương", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
+{"code": "NAKT-013", "name": "Nguyễn Thị Thanh", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
+{"code": "NAKT-014", "name": "Hoàng Thị Thanh Tâm", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
+{"code": "NAKT-015", "name": "Nguyễn Thị Hoa", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14003Premium"}}
+{"code": "NAKT-017", "name": "Trần Thị Ngọc Ngà", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "14000"}}
+{"code": "NDKT-002", "name": "Nguyễn Thị Hồng Hạnh", "parent_code": null, "note": "", "is_active": true, "extra": {"phone": "0868072444", "position": "KT công nợ", "branchCode": "01000"}}
+{"code": "NDKT-010", "name": "Ngô Thị Bích Ngọc", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kê toán nhập"}}
+{"code": "NDKT-011", "name": "Vũ Thị Hường", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "NH kế toán"}}
+{"code": "NDKT-tuyetta", "name": "Trần Thị Ánh Tuyết", "parent_code": null, "note": "", "is_active": true, "extra": {}}
+{"code": "ND-maint", "name": "Nguyễn Thị Mai", "parent_code": null, "note": "", "is_active": true, "extra": {"address": "Xóm C - xã Thành lợi - H. Vụ Bản NĐ", "mobile": "0917606690", "position": "Kế toán KHO", "branchCode": "01000"}}
+{"code": "ND-PhuongNB", "name": "Nguyễn Bích Phượng", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "ktoan", "branchCode": "01000"}}
+{"code": "PT-HungDL", "name": "Dương Lâm Hùng", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
+{"code": "PTKT-003", "name": "Nguyễn Thị Lan Anh", "parent_code": null, "note": "", "is_active": true, "extra": {"mobile": "01669269298", "position": "KT HH", "branchCode": "08000"}}
+{"code": "PTKT-013", "name": "Phùng Thị Thanh Hòa", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
+{"code": "PTKT-022", "name": "Trần Lệ Quyên", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
+{"code": "PTKT-025", "name": "Nguyễn Thị Hồng Thu", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "08000"}}
+{"code": "quypt", "name": "Phạm Thị Quy", "parent_code": null, "note": "", "is_active": false, "extra": {"address": "Nam Định", "mobile": "0944246735", "position": "Kế toán CN NĐ", "branchCode": "01000"}}
+{"code": "SG-Anhnt", "name": "Ngô Thị Ánh", "parent_code": null, "note": "", "is_active": true, "extra": {"address": "62/6F Ấp Đông, đường Thới Tam Thôn, Xã TTT, H.", "phone": "0869800563", "position": "NVBH"}}
+{"code": "SGKT-010", "name": "Trần Thị Hương Giang", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán", "branchCode": "05007PLus"}}
+{"code": "SGKT-014", "name": "Nguyễn Hồng Thắm", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "KT", "branchCode": "05007PLus"}}
+{"code": "SGKT-ChinTT", "name": "Trần Thị Chín", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán", "branchCode": "05007PLus"}}
+{"code": "SG-tranglth", "name": "Lâm Thị Huyền Trang", "parent_code": null, "note": "", "is_active": true, "extra": {"phone": "01682709395", "mobile": "01223686359", "position": "Thủ Kho Q12"}}
+{"code": "THA-KT005", "name": "Nguyễn Thị Yến", "parent_code": null, "note": "", "is_active": true, "extra": {"position": "Kế toán thuế"}}
+{"code": "THA-KT007", "name": "Mai Thị Sâm", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "10025"}}
+{"code": "THA-KT009", "name": "Nguyễn Thị Tình", "parent_code": null, "note": "", "is_active": true, "extra": {"branchCode": "10000", "position": "Kế toán thuế"}}

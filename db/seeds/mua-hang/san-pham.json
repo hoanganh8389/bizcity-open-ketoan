@@ -1,0 +1,195 @@
+[
+  {
+    "sku": "110154035",
+    "name": "Anlene Gold hương vani 800g",
+    "unit": "Lon",
+    "brandCode": "ANLENE",
+    "groupCode": "SUA-BOT-NL",
+    "industry": "SUA-BOT",
+    "taxCode": "V08"
+  },
+  {
+    "sku": "110154036",
+    "name": "Anlene hương vani 800g",
+    "unit": "Lon",
+    "brandCode": "ANLENE",
+    "groupCode": "SUA-BOT-NL",
+    "industry": "SUA-BOT",
+    "taxCode": "V08"
+  },
+  {
+    "sku": "110154028",
+    "name": "Anlene Gold 5X hương vani 400g",
+    "unit": "Lon",
+    "brandCode": "ANLENE",
+    "groupCode": "SUA-BOT-NL",
+    "industry": "SUA-BOT",
+    "taxCode": "V08"
+  },
+  {
+    "sku": "140181006",
+    "name": "Sữa chua TH Nha đam 100g",
+    "unit": "Hộp",
+    "brandCode": "TH",
+    "groupCode": "SUA-CHUA",
+    "industry": "SUA-NUOC",
+    "taxCode": "V08",
+    "units": [
+      {
+        "unit": "Hộp",
+        "ratio": 1,
+        "isDefault": true
+      },
+      {
+        "unit": "Lốc",
+        "ratio": 4
+      },
+      {
+        "unit": "Thùng",
+        "ratio": 48,
+        "isPurchaseDefault": true
+      }
+    ]
+  },
+  {
+    "sku": "QT-THUNG-SUA",
+    "name": "Thùng sữa tặng kèm (ngoài hợp đồng)",
+    "unit": "Thùng",
+    "brandCode": "QUA",
+    "groupCode": "QUA",
+    "industry": "QUA",
+    "taxCode": "KKKN",
+    "isGiftItem": true,
+    "giftValue": 480000
+  },
+  {
+    "sku": "QT-BINH-01",
+    "name": "Bình giữ nhiệt Anlene (quà chương trình)",
+    "unit": "Cái",
+    "brandCode": "QUA",
+    "groupCode": "QUA",
+    "industry": "QUA",
+    "taxCode": "KKKN",
+    "isGiftItem": true,
+    "giftValue": 85000
+  },
+  {
+    "sku": "QT-BO-TRIAN",
+    "name": "Bộ quà tri ân khách hàng TGS",
+    "unit": "Bộ",
+    "brandCode": "QUA",
+    "groupCode": "QUA",
+    "industry": "QUA",
+    "taxCode": "V10",
+    "isGiftItem": true,
+    "giftValue": 150000
+  },
+  {
+    "sku": "110054057",
+    "name": "Vinamilk CanxiPro 900g",
+    "unit": "Hộp",
+    "brandCode": "VINAMILK",
+    "groupCode": "SUA-BOT-NL",
+    "industry": "SUA-BOT",
+    "taxCode": "V08",
+    "units": [
+      {
+        "unit": "Hộp",
+        "ratio": 1,
+        "isDefault": true
+      },
+      {
+        "unit": "Thùng",
+        "ratio": 12
+      }
+    ]
+  },
+  {
+    "sku": "110054061",
+    "name": "Vinamilk Sure Prevent 900g",
+    "unit": "Hộp",
+    "brandCode": "VINAMILK",
+    "groupCode": "SUA-BOT-NL",
+    "industry": "SUA-BOT",
+    "taxCode": "V08",
+    "units": [
+      {
+        "unit": "Hộp",
+        "ratio": 1,
+        "isDefault": true
+      },
+      {
+        "unit": "Thùng",
+        "ratio": 12
+      }
+    ]
+  },
+  {
+    "sku": "170413004",
+    "name": "Khăn ướt Newis 100T",
+    "unit": "Gói",
+    "brandCode": "NEWIS",
+    "groupCode": "KHAN-UOT",
+    "industry": "DO-DUNG",
+    "taxCode": "V10"
+  },
+  {
+    "sku": "150346006",
+    "name": "Dầu Smart Kids Omega 3 250ml",
+    "unit": "Chai",
+    "brandCode": "SMARTKIDS",
+    "groupCode": "DAU-AN",
+    "industry": "THUC-PHAM",
+    "taxCode": "V10"
+  },
+  {
+    "sku": "130181002",
+    "name": "Sữa tươi TH có đường 110ml",
+    "unit": "Hộp",
+    "brandCode": "TH",
+    "groupCode": "SUA-TUOI",
+    "industry": "SUA-NUOC",
+    "taxCode": "V08",
+    "units": [
+      {
+        "unit": "Hộp",
+        "ratio": 1,
+        "isDefault": true
+      },
+      {
+        "unit": "Lốc",
+        "ratio": 4
+      },
+      {
+        "unit": "Thùng",
+        "ratio": 48,
+        "isPurchaseDefault": true
+      }
+    ]
+  },
+  {
+    "sku": "140181001",
+    "name": "Sữa chua TH Việt Quất 100g",
+    "unit": "Hộp",
+    "brandCode": "TH",
+    "groupCode": "SUA-CHUA",
+    "industry": "SUA-NUOC",
+    "taxCode": "V08",
+    "units": [
+      {
+        "unit": "Hộp",
+        "ratio": 1,
+        "isDefault": true
+      },
+      {
+        "unit": "Lốc",
+        "ratio": 4
+      },
+      {
+        "unit": "Thùng",
+        "ratio": 48,
+        "isPurchaseDefault": true
+      }
+    ]
+  }
+]

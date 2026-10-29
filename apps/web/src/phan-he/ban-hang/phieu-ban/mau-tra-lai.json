@@ -1,0 +1,40 @@
+[
+  {
+    "id": "mau-tl-1",
+    "docType": "sale_return",
+    "status": "draft",
+    "docNo": "TL2600001",
+    "docDate": "@-1",
+    "branchCode": "00001Premium",
+    "partner": {
+      "code": "307AA000316",
+      "name": "Nguyễn Thị Hoa"
+    },
+    "originalDocNo": "BH2600001",
+    "payments": [
+      {
+        "methodCode": "TM",
+        "amount": 367200
+      }
+    ],
+    "note": "Khách đổi ý, trả 1 lon",
+    "lines": [
+      {
+        "lineKey": "L6",
+        "sku": "100021003",
+        "name": "Biomil Plus 2 400g",
+        "unit": "Lon",
+        "qty": 1,
+        "unitPrice": 340000,
+        "amountBeforeTax": 340000,
+        "taxCode": "R08",
+        "taxAmount": 27200
+      }
+    ],
+    "totals": {
+      "beforeTax": 340000,
+      "tax": 27200,
+      "total": 367200
+    }
+  }
+]

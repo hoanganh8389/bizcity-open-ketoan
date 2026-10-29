@@ -1,0 +1,52 @@
+{"_bang": "loai-thue", "_mo_ta": "Loại thuế GTGT: mã, tên, thuế suất, chiều (output ra / input vào), tài khoản thuế, nhóm trên bảng kê (KCT, 0, 5, 8, 10, KKK không kê khai). Thuế 8% lên nhóm 8.", "_cot": ["code", "name", "rate", "direction", "account_code", "report_group", "is_active"]}
+{"code": "KCT", "name": "Không chịu thuế GTGT", "rate": 0, "direction": "output", "account_code": "33311", "report_group": "KCT", "is_active": true}
+{"code": "KKKN", "name": "HH, DV không phải kê khai, tính nộp VAT", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "KKK", "is_active": true}
+{"code": "R00", "name": "Thuế GTGT đầu ra 0% (xuất khẩu)", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R00C", "name": "Điều chỉnh thuế đầu ra cho Dự án đầu tư", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R00D", "name": "Điều chỉnh thuế đầu ra cho SXKD", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R00K", "name": "Hàng hoá dịch vụ bán ra không chịu thuế VAT", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "KCT", "is_active": true}
+{"code": "R00L", "name": "Hàng hoá dịch vụ bán lẻ", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R05", "name": "Thuế GTGT đầu ra 5%", "rate": 5.0, "direction": "output", "account_code": "33311", "report_group": "5", "is_active": true}
+{"code": "R05A", "name": "Thuế GTGT đầu ra 5% (Giá có thuế)", "rate": 5.0, "direction": "output", "account_code": "33311", "report_group": "5", "is_active": true}
+{"code": "R05B", "name": "Thuế GTGT đầu ra 5% (Người dùng tự nhập)", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R05C", "name": "Thuế GTGT 5% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)", "rate": 5.0, "direction": "output", "account_code": "33311", "report_group": "5", "is_active": true}
+{"code": "R08", "name": "Thuế GTGT đầu ra 8%", "rate": 8.0, "direction": "output", "account_code": "33311", "report_group": "8", "is_active": true}
+{"code": "R08A", "name": "Thuế GTGT đầu ra 8% (Giá có thuế)", "rate": 8.0, "direction": "output", "account_code": "33311", "report_group": "8", "is_active": true}
+{"code": "R08B", "name": "Thuế GTGT đầu ra 8% (Người dùng tự nhập)", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R08C", "name": "Thuế GTGT 8% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)", "rate": 8.0, "direction": "output", "account_code": "33311", "report_group": "8", "is_active": true}
+{"code": "R10", "name": "Thuế GTGT đầu ra 10%", "rate": 10.0, "direction": "output", "account_code": "33311", "report_group": "10", "is_active": true}
+{"code": "R10A", "name": "Thuế GTGT đầu ra 10% (Giá có thuế)", "rate": 10.0, "direction": "output", "account_code": "33311", "report_group": "10", "is_active": true}
+{"code": "R10B", "name": "Thuế GTGT đầu ra 10% (Người dùng tự nhập)", "rate": 0.0, "direction": "output", "account_code": "33311", "report_group": "0", "is_active": true}
+{"code": "R10C", "name": "Thuế GTGT 10% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)", "rate": 10.0, "direction": "output", "account_code": "33311", "report_group": "10", "is_active": true}
+{"code": "V00", "name": "Thuế GTGT đầu vào 0%", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V00C", "name": "Điều chỉnh thuế đầu vào cho Dự án đầu tư", "rate": 0.0, "direction": "input", "account_code": "1332", "report_group": "0", "is_active": true}
+{"code": "V00D", "name": "Điều chỉnh thuế đầu vào cho SXKD", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V00K", "name": "Hàng hoá mua vào không có hoá đơn", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V051", "name": "Thuế GTGT đầu vào 5% (HH, DV dùng riêng cho SXKD chịu VAT đủ ĐK)", "rate": 5.0, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V053", "name": "Thuế GTGT đầu vào 5% (HH, DV chịu VAT và không chịu VAT đủ ĐK)", "rate": 5.0, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V054", "name": "Thuế GTGT đầu vào 5% (HH,DV dùng cho Dự án đầu tư đủ ĐK KT)", "rate": 5.0, "direction": "input", "account_code": "1332", "report_group": "5", "is_active": true}
+{"code": "V05B", "name": "Thuế GTGT đầu vào 5% (có phụ phí) dùng cho SXKD", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V05C", "name": "Thuế GTGT 5% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)", "rate": 5.0, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V05S", "name": "Thuế GTGT đầu vào 5% (có phụ phí) dùng cho Dự án đầu tư", "rate": 0.0, "direction": "input", "account_code": "1332", "report_group": "0", "is_active": true}
+{"code": "V071", "name": "Thuế GTGT đầu vào 7% (HH, DV dùng riêng cho SXKD chịu VAT đủ ĐK)", "rate": 7.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V081", "name": "Thuế GTGT đầu vào 8% (HH, DV dùng riêng cho SXKD chịu VAT đủ ĐK)", "rate": 8.0, "direction": "input", "account_code": "1331", "report_group": "8", "is_active": true}
+{"code": "V083", "name": "Thuế GTGT đầu vào 8% (HH, DV chịu VAT và không chịu VAT đủ ĐK)", "rate": 8.0, "direction": "input", "account_code": "1331", "report_group": "8", "is_active": true}
+{"code": "V101", "name": "Thuế GTGT đầu vào 10% (HH,DV dùng riêng cho SXKD chịu VAT đủ ĐK)", "rate": 10.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V103", "name": "Thuế GTGT đầu vào 10% (HH, DV chịu VAT và không chịu VAT đủ ĐK)", "rate": 10.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V104", "name": "Thuế GTGT đầu vào 10% (HH,DV dùng cho Dự án đầu tư đủ ĐK KT)", "rate": 10.0, "direction": "input", "account_code": "1332", "report_group": "10", "is_active": true}
+{"code": "V105", "name": "Thuế GTGT đầu vào 10% Báo cáo kỳ sau", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V10B", "name": "Thuế GTGT đầu vào 10% (có phụ phí) dùng cho SXKD", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V10C", "name": "Thuế GTGT 10% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)", "rate": 10.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V11A", "name": "Thuế GTGT đầu vào 10% (Giá bao gồm thuế)", "rate": 10.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V11B", "name": "Thuế GTGT đầu vào 10% (có phụ phí) dùng cho Dự án đầu tư", "rate": 0.0, "direction": "input", "account_code": "1332", "report_group": "0", "is_active": true}
+{"code": "V13A", "name": "Thuế GTGT đầu vào 10% (Giá bao gồm thuế)", "rate": 10.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V13B", "name": "Thuế GTGT đầu vào 10% (HH, DV chịu VAT và không chịu VAT đủ ĐK)", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V13K", "name": "Thuế GTGT đầu vào 0% (không chịu VAT)", "rate": 0.0, "direction": "input", "account_code": "1331", "report_group": "0", "is_active": true}
+{"code": "V14A", "name": "Thuế GTGT đầu vào 10% (Giá bao gồm thuế)", "rate": 10.0, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}
+{"code": "V20", "name": "Thuế đầu vào kỳ sau", "rate": 0.0, "direction": "input", "account_code": "13888", "report_group": "0", "is_active": true}
+{"code": "V51A", "name": "Thuế GTGT đầu vào 5% (Giá bao gồm thuế)", "rate": 5.0, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V53A", "name": "Thuế GTGT đầu vào 5% (Giá bao gồm thuế)", "rate": 5.0, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V54A", "name": "Thuế GTGT đầu vào 5% (Giá bao gồm thuế)", "rate": 5.0, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V05", "name": "Thuế GTGT đầu vào 5%", "rate": 5, "direction": "input", "account_code": "1331", "report_group": "5", "is_active": true}
+{"code": "V08", "name": "Thuế GTGT đầu vào 8%", "rate": 8, "direction": "input", "account_code": "1331", "report_group": "8", "is_active": true}
+{"code": "V10", "name": "Thuế GTGT đầu vào 10%", "rate": 10, "direction": "input", "account_code": "1331", "report_group": "10", "is_active": true}

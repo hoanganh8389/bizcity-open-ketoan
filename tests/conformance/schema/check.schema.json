@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bizcity.vn/contracts/bizcity_check/1.0.0",
+  "title": "bizcity_check@1",
+  "description": "Khuôn một check của bộ kiểm tests/conformance (phần meta; hàm run(ctx) kiểm riêng). Mọi kiểm hợp đồng / chuẩn viết theo khuôn này, ở thư mục này — không viết test hợp đồng rải rác.",
+  "type": "object",
+  "required": ["id", "title", "gate", "contract", "rules", "tier", "enforce", "weight"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^(SC|DG)-[A-Z]+-\\d+$", "description": "SC-* lane selfcheck (tĩnh), DG-* lane diagnostics (CSDL)" },
+    "code": { "type": "string", "pattern": "^[A-Z_]+$", "description": "Mã kiểm của GET /system/diagnostics (chỉ DG-*)" },
+    "title": { "type": "string", "minLength": 10 },
+    "lane": { "enum": ["selfcheck", "diagnostics"] },
+    "gate": { "enum": ["KERNEL", "CONF-MAN", "CONF-STATIC", "CONF-MIG", "CONF-RUN", "DOCS"] },
+    "contract": {
+      "enum": ["kernel", "quality", "docs", "contracts", "bizcity_module", "bizcity_data", "bizcity_document", "bizcity_action", "bizcity_event", "bizcity_evidence", "bizcity_extension", "bizcity_ledger_intake", "bizcity_api", "bizcity_settings"]
+    },
+    "rules": { "type": "array", "items": { "type": "string", "pattern": "^(R|STD)-[A-Z]+-\\d+$" }, "uniqueItems": true },
+    "conf": { "type": "array", "items": { "type": "string", "pattern": "^CONF-[A-Z]+-\\d+$" }, "uniqueItems": true },
+    "tier": { "enum": [0, 1, 2] },
+    "enforce": {
+      "enum": ["block", "ratchet", "info", "planned"],
+      "description": "block: mọi phát hiện là đỏ. ratchet: chỉ phát hiện ngoài baseline là đỏ. info: chỉ cảnh báo. planned: năng lực chưa có, đo độ sẵn sàng"
+    },
+    "phase": { "type": "string" },
+    "weight": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "targets": { "type": "array", "items": { "enum": ["repo", "module"] }, "minItems": 1, "uniqueItems": true },
+    "scope": { "enum": ["module"], "description": "Phát hiện được quy về phân hệ / module để chấm điểm theo module" }
+  },
+  "additionalProperties": false,
+  "if": { "properties": { "enforce": { "const": "planned" } } },
+  "then": { "required": ["phase"] }
+}

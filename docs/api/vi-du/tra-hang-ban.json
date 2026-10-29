@@ -1,0 +1,36 @@
+{
+  "docType": "sale_return",
+  "docKey": "pos:CN01:return:118",
+  "version": 1,
+  "branchCode": "CN01",
+  "docNo": "CN01TL00118",
+  "docDate": "2026-10-11",
+  "originalDocKey": "pos:CN01:sale:3058",
+  "partner": {
+    "code": "0912345678",
+    "name": "Nguyễn Văn A"
+  },
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 1,
+      "amountBeforeTax": 398148,
+      "taxCode": "R08",
+      "taxAmount": 31852
+    }
+  ],
+  "payments": [
+    {
+      "methodCode": "TM",
+      "amount": 430000
+    }
+  ],
+  "totals": {
+    "beforeTax": 398148,
+    "tax": 31852,
+    "total": 430000
+  }
+}

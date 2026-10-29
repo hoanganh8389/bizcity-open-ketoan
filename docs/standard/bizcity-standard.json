@@ -1,0 +1,81 @@
+{
+  "standard": "bizcity_standard@1",
+  "version": "1.0.0-draft",
+  "released": null,
+  "notes": "Bản máy đọc của Bizcity Framework Standard. Sửa cùng docs/standard/VERSIONING.md. status: available = có trong code; planned = chưa có (phase = Phase dự kiến trong docs/standard/PHASES.md).",
+  "contracts": {
+    "bizcity_module": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
+    "bizcity_data": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-DATA-v1.md" },
+    "bizcity_document": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
+    "bizcity_action": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
+    "bizcity_event": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EVENT-v1.md" },
+    "bizcity_evidence": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EVIDENCE-v1.md" },
+    "bizcity_extension": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
+  },
+  "kernelContracts": {
+    "bizcity_ledger_intake": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
+    "bizcity_posting_rule": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-POSTING-RULE-v1.md", "internal": true },
+    "bizcity_master_data": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-MASTER-DATA-v1.md" },
+    "bizcity_connector": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-CONNECTOR-v1.md" },
+    "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
+    "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" }
+  },
+  "capabilities": [
+    { "id": "masterdata.read", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Đọc danh mục chuẩn (đối tượng, mặt hàng, chi nhánh, kho, thuế) qua HTTP. Phase 2: qua ctx.data và view chỉ đọc." },
+    { "id": "masterdata.write", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Thêm / sửa danh mục chuẩn qua API của Core (không ghi thẳng bảng)." },
+    { "id": "ledger.submit", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Nộp sự việc kế toán; Core định khoản, ghi sổ, đảo khi sửa. Hiện là postDocumentIn() / POST /documents; Phase 2 là ctx.ledger.submit()." },
+    { "id": "ledger.cancel", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Huỷ sự việc đã nộp (bút toán đảo)." },
+    { "id": "ledger.query", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_ledger_intake", "description": "Đọc sổ, số dư, công nợ qua API đọc của Kernel thay vì SQL trên bảng ledger_*." },
+    { "id": "data.tenant-tx", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_data", "description": "Giao dịch đặt bizcity.tenant_id; bảng module có RLS." },
+    { "id": "data.read-views", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_data", "description": "Schema bizcity_read: view chỉ đọc danh mục chuẩn cho module JOIN." },
+    { "id": "data.migrations.module", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_data", "description": "Migration riêng mỗi module, schema mod_<key>, có kiểm lint." },
+    { "id": "documents.numbering", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Cấp số chứng từ theo dãy (document_sequences hiện có, chưa mở cho module)." },
+    { "id": "documents.versions", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Lưu ảnh chụp mỗi phiên bản chứng từ module." },
+    { "id": "documents.links", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Tham chiếu giữa chứng từ (kể cả tới sự việc kế toán)." },
+    { "id": "documents.attachments", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Đính kèm tệp chung (thay purchase_attachments riêng của Mua hàng)." },
+    { "id": "documents.signatures", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Ký theo vai trên mọi chứng từ (document_signatures hiện chỉ gắn accounting_events)." },
+    { "id": "documents.workflow", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_document", "description": "Máy trạng thái khai báo, duyệt nhiều cấp theo ngưỡng." },
+    { "id": "actions.runtime", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "defineAction(): quyền, zod, giao dịch, lỗi chuẩn, sinh HTTP + OpenAPI." },
+    { "id": "actions.idempotency", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "Header Idempotency-Key; gửi lại cùng khoá trả cùng kết quả." },
+    { "id": "actions.dry-run", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "Chạy thử trong giao dịch rồi huỷ (mẫu đã có ở add-in tro-ly /simulate)." },
+    { "id": "evidence.receipt", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_evidence", "description": "Mỗi action ghi có bản ghi bằng chứng chỉ thêm, chuỗi băm, trả biên nhận." },
+    { "id": "permissions.module", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "Module khai quyền mới trong manifest; hiện PERMISSIONS là danh sách đóng trong core/auth.ts." },
+    { "id": "events.outbox", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Phát sự kiện miền trong cùng giao dịch; gửi ít nhất một lần." },
+    { "id": "events.subscribe", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Đăng ký xử lý sự kiện; chống xử lý trùng theo (consumer, event_id); retry, dead-letter, replay." },
+    { "id": "events.clock", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Sự kiện đồng hồ bizcity.clock.daily / hourly cho nhắc hạn, việc định kỳ." },
+    { "id": "notify.inapp", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Action core.notify.send: thông báo trong ứng dụng; có Cell thì chuyển thêm qua kênh (Zalo)." },
+    { "id": "settings.registry", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_settings", "description": "settings.get(key, scope) theo registry; module khai khoá riêng." },
+    { "id": "ui.kit", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit: DataGrid, form, bộ lọc, in, khung trang (tách từ apps/web/src/components)." },
+    { "id": "ui.slots", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Chèn tab / panel / widget vào màn của Core." },
+    { "id": "ui.menu", "since": "1.0", "status": "available", "contract": "bizcity_extension", "description": "Nhóm menu, màn, biểu tượng phân hệ (WebModule.groups, menu.ts)." },
+    { "id": "mcp.tools", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_action", "description": "adapters/cell xuất action (expose.mcp) thành công cụ MCP." },
+    { "id": "ai.cell", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_extension", "description": "Gọi LLM / OCR / RAG qua Cell; vắng Cell thì năng lực này không có, module phải tự lui." }
+  ],
+  "documentStatusGroups": ["draft", "pending", "approved", "done", "cancelled"],
+  "extensionPoints": {
+    "note": "Nguồn: BIZCITY-EXTENSION-v1.md §3–§4. Bộ kiểm CONF-MAN-7 đọc danh sách này.",
+    "slots": ["partner.detail.tab", "product.detail.tab", "document.detail.panel", "dashboard.widget", "ledger.drilldown.source"],
+    "hooks": [
+      { "id": "masterdata.referenceCheck", "timeoutMs": 200 },
+      { "id": "document.beforeTransition", "timeoutMs": 500 },
+      { "id": "ledger.previewSource", "timeoutMs": 100 }
+    ]
+  },
+  "coreEvents": {
+    "note": "Nguồn: BIZCITY-EVENT-v1.md. Module chỉ đăng ký được sự kiện bizcity.* có trong danh sách này.",
+    "types": [
+      "bizcity.clock.daily", "bizcity.clock.hourly",
+      "bizcity.ledger.entry.posted", "bizcity.ledger.entry.reversed", "bizcity.ledger.event.received", "bizcity.ledger.event.failed",
+      "bizcity.masterdata.partner.changed", "bizcity.masterdata.product.changed",
+      "bizcity.module.enabled", "bizcity.period.locked"
+    ]
+  },
+  "errorCodes": {
+    "note": "available = có trong ERROR_CODES (packages/contracts/src/api.ts); planned = khai ở BIZCITY-ACTION-v1.md §8, chưa có code.",
+    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR"],
+    "planned": ["IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"]
+  },
+  "changelog": [
+    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)"] }
+  ]
+}

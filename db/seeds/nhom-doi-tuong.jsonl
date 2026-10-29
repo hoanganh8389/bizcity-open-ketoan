@@ -1,0 +1,13 @@
+{"_bang": "nhom-doi-tuong", "_mo_ta": "Nhóm đối tượng (loại khách hàng / nhà cung cấp) và loại đối tượng của nhóm (customer khách, supplier nhà cung cấp, employee nhân viên, internal nội bộ, other khác).", "_cot": ["code", "name", "kind", "parent_code", "is_active", "note"]}
+{"code": "CQNN", "name": "Cơ quan nhà nước (thuế, bảo hiểm…)", "kind": "other", "parent_code": null, "is_active": true, "note": ""}
+{"code": "KH-LE", "name": "Khách mua lẻ", "kind": "customer", "parent_code": null, "is_active": true, "note": ""}
+{"code": "KH-BUON", "name": "Khách mua buôn", "kind": "customer", "parent_code": null, "is_active": true, "note": ""}
+{"code": "NCC-HH", "name": "Nhà cung cấp hàng hoá", "kind": "supplier", "parent_code": null, "is_active": true, "note": ""}
+{"code": "NCC-TSDV", "name": "Nhà cung cấp tài sản, dịch vụ (TS, CCDC, XDCB, dịch vụ khác)", "kind": "supplier", "parent_code": null, "is_active": true, "note": "TS, CCDC, XDCB, Dịch vụ khác"}
+{"code": "CHU-NHA", "name": "Chủ nhà, cho thuê mặt bằng", "kind": "supplier", "parent_code": null, "is_active": true, "note": "Chủ nhà/Shop"}
+{"code": "NHAN-VIEN", "name": "Nhân viên", "kind": "employee", "parent_code": null, "is_active": true, "note": "Nhân Viên"}
+{"code": "CQ-THUE", "name": "Cơ quan thuế", "kind": "other", "parent_code": "CQNN", "is_active": true, "note": "Cơ Quan Thuế"}
+{"code": "CQ-BHXH", "name": "Cơ quan bảo hiểm", "kind": "other", "parent_code": "CQNN", "is_active": true, "note": "CQ Bảo Hiểm"}
+{"code": "NOI-BO", "name": "Nội bộ (chi nhánh, công ty liên quan)", "kind": "internal", "parent_code": null, "is_active": true, "note": "NCC Nội bộ"}
+{"code": "BT-GROUP", "name": "BT Group", "kind": "internal", "parent_code": null, "is_active": true, "note": "BT Group"}
+{"code": "GOP-VON", "name": "Thành viên góp vốn", "kind": "other", "parent_code": null, "is_active": true, "note": "Góp Vốn CSH"}

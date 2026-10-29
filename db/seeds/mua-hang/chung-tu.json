@@ -1,0 +1,1721 @@
+[
+  {
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "kind": "order",
+    "docDate": "2026-10-01",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {
+      "pct": 7
+    },
+    "status": "approved",
+    "id": "th1-dh",
+    "docNo": "DH2610001",
+    "note": "Đặt hàng TH1 — Trung Hậu: Anlene Gold 60 + Anlene vani 24, CK thẳng 7% trên đơn, hạn 10 ngày làm việc",
+    "lines": [
+      {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2608A",
+        "expDate": "2028-02-28"
+      },
+      {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2607B",
+        "expDate": "2028-01-31"
+      }
+    ],
+    "id": "th1",
+    "kind": "receipt",
+    "docNo": "NM2610001",
+    "docDate": "2026-10-01",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "3181",
+      "serial": "TH/26E",
+      "date": "2026-10-01",
+      "total": 39082320
+    },
+    "orderDiscount": {
+      "pct": 7
+    },
+    "note": "TH1 — chiết khấu thẳng 7%, hạn 10 ngày làm việc",
+    "refIds": [
+      "th1-dh"
+    ]
+  },
+  {
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "kind": "order",
+    "docDate": "2026-10-03",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {
+      "amount": 2000000
+    },
+    "status": "approved",
+    "id": "th2-dh",
+    "docNo": "DH2610002",
+    "note": "Đặt hàng TH2 — Trung Hậu: Anlene Gold 80 + Anlene vani 20, CK 2.000.000đ trên tổng đơn",
+    "lines": [
+      {
+        "lineKey": "b1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 80,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "b2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "b1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 80,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2608A",
+        "expDate": "2028-02-28"
+      },
+      {
+        "lineKey": "b2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2607B",
+        "expDate": "2028-01-31"
+      }
+    ],
+    "id": "th2",
+    "kind": "receipt",
+    "docNo": "NM2610002",
+    "docDate": "2026-10-03",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "3182",
+      "serial": "TH/26E",
+      "date": "2026-10-03",
+      "total": 48860000
+    },
+    "orderDiscount": {
+      "amount": 2000000
+    },
+    "note": "TH2 — CK 2.000.000đ trên tổng đơn; quà 5 thùng ngoài hợp đồng nhập ở phiếu QT2610001",
+    "refIds": [
+      "th2-dh"
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "c1",
+        "sku": "QT-THUNG-SUA",
+        "name": "Thùng sữa tặng kèm (ngoài hợp đồng)",
+        "unit": "Thùng",
+        "qty": 5,
+        "price": 480000,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer"
+      }
+    ],
+    "id": "th2q",
+    "kind": "gift_in",
+    "docNo": "QT2610001",
+    "docDate": "2026-10-03",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "refIds": [
+      "th2"
+    ],
+    "gift": {
+      "source": "ncc_extra",
+      "hasVat": false
+    },
+    "note": "TH2 — quà tặng ngoài hợp đồng, không hoá đơn: chứng từ riêng, ghi 711 theo giá trị hợp lý"
+  },
+  {
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "kind": "order",
+    "docDate": "2026-10-05",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {},
+    "term": {
+      "basis": "invoice_date",
+      "days": 15,
+      "workingDays": true
+    },
+    "status": "approved",
+    "id": "th3-dh",
+    "docNo": "DH2610033",
+    "note": "Đặt hàng TH3 — Trung Hậu: Anlene Gold 100 + Anlene vani 150, không CK, hạn 15 ngày làm việc",
+    "lines": [
+      {
+        "lineKey": "d1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "d2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 150,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "pending_approval",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "d1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2609C",
+        "expDate": "2028-03-31"
+      },
+      {
+        "lineKey": "d2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 150,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2609D",
+        "expDate": "2028-03-15"
+      }
+    ],
+    "id": "th3",
+    "kind": "receipt",
+    "docNo": "NM2610003",
+    "docDate": "2026-10-05",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "3183",
+      "serial": "TH/26E",
+      "date": "2026-10-05",
+      "total": 117450000
+    },
+    "orderDiscount": {},
+    "term": {
+      "basis": "invoice_date",
+      "days": 15,
+      "workingDays": true
+    },
+    "note": "TH3 — không chiết khấu, hạn 15 ngày làm việc; nợ sau nhập 567.450.000 / hạn mức 600 triệu",
+    "refIds": [
+      "th3-dh"
+    ]
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "e1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 76,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ],
+    "id": "th3b",
+    "kind": "order",
+    "docNo": "DH2610003",
+    "docDate": "2026-10-05",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {
+      "amount": 128000
+    },
+    "note": "TH3 — đặt thêm 40.000.000đ (76 lon − CK 128.000đ) chưa thanh toán → vượt hạn mức 7.450.000đ"
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [],
+    "id": "pay1",
+    "kind": "payment",
+    "docNo": "UC2610001",
+    "docDate": "2026-10-06",
+    "partnerCode": "NCC-TRUNGHAU",
+    "amount": 150000000,
+    "note": "Trả bớt nợ Trung Hậu (chuyển khoản)"
+  },
+  {
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "kind": "order",
+    "docDate": "2026-10-06",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {
+      "pct": 7
+    },
+    "cktt": {
+      "pct": 2
+    },
+    "status": "pending_approval",
+    "id": "th4-dh",
+    "docNo": "DH2610004",
+    "note": "Đặt hàng TH4 — Trung Hậu: CK thẳng 7% + CKTT 2% nếu trả đúng hạn; sau TH3 nợ 567.450.000 nên đơn vượt hạn mức 6.532.320 → chờ duyệt ngoại lệ",
+    "lines": [
+      {
+        "lineKey": "f1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "f2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "f1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2609C",
+        "expDate": "2028-03-31"
+      },
+      {
+        "lineKey": "f2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2609D",
+        "expDate": "2028-03-15"
+      }
+    ],
+    "id": "th4",
+    "kind": "receipt",
+    "docNo": "NM2610004",
+    "docDate": "2026-10-06",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "3184",
+      "serial": "TH/26E",
+      "date": "2026-10-06",
+      "total": 39082320
+    },
+    "orderDiscount": {
+      "pct": 7
+    },
+    "cktt": {
+      "pct": 2
+    },
+    "note": "TH4 — CK thẳng 7% + CKTT 2% nếu trả đúng hạn",
+    "refIds": [
+      "th4-dh"
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "g1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 30,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "g2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ],
+    "id": "dh005",
+    "kind": "order",
+    "docNo": "DH005/2026",
+    "docDate": "2026-10-07",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {},
+    "term": {
+      "basis": "fixed",
+      "days": 0,
+      "workingDays": false
+    },
+    "note": "TH5 — thanh toán trước 100% khi đặt"
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [],
+    "id": "ut005",
+    "kind": "prepayment",
+    "docNo": "UT2610001",
+    "docDate": "2026-10-07",
+    "partnerCode": "NCC-TRUNGHAU",
+    "amount": 24460000,
+    "refIds": [
+      "dh005"
+    ],
+    "note": "TH5 — ứng trước 100% đơn DH005/2026"
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "h1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 30,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2609C",
+        "expDate": "2028-03-31"
+      },
+      {
+        "lineKey": "h2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2609D",
+        "expDate": "2028-03-15"
+      }
+    ],
+    "id": "th5",
+    "kind": "receipt",
+    "docNo": "NM2610005",
+    "docDate": "2026-10-08",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "3185",
+      "serial": "TH/26E",
+      "date": "2026-10-08",
+      "total": 24460000
+    },
+    "orderDiscount": {},
+    "refIds": [
+      "dh005"
+    ],
+    "note": "TH5 — nhận hàng + HĐ 3185: tự đối trừ tiền ứng trước, không ghi trả trùng"
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "i1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "i2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 30,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ],
+    "id": "dh010",
+    "kind": "order",
+    "docNo": "DH2610010",
+    "docDate": "2026-10-09",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "orderDiscount": {},
+    "note": "Đơn đặt cho phiếu demo cảnh báo"
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "j1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 545000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2510Z",
+        "expDate": "2026-11-05"
+      },
+      {
+        "lineKey": "j2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ],
+    "id": "canhbao",
+    "kind": "receipt",
+    "docNo": "NM2610010",
+    "docDate": "2026-10-10",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "3181",
+      "serial": "TH/26E",
+      "date": "2026-10-10",
+      "total": 40000000
+    },
+    "orderDiscount": {},
+    "refIds": [
+      "dh010"
+    ],
+    "note": "DEMO CẢNH BÁO — trùng số HĐ 3181, giá lệch, lệch đơn đặt, lệch tổng HĐ, cận date, thiếu lô"
+  },
+  {
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "kind": "order",
+    "docDate": "2026-10-09",
+    "partnerCode": "NCC-THANGBAO",
+    "brandCode": "ANLENE",
+    "orderDiscount": {},
+    "status": "approved",
+    "id": "tb12-dh",
+    "docNo": "DH2610012",
+    "note": "Đặt hàng TH12 — Thắng Bảo: 108.000.000đ (còn trong hạn mức 600 triệu)",
+    "lines": [
+      {
+        "lineKey": "k1",
+        "sku": "110154028",
+        "name": "Anlene Gold 5X hương vani 400g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 250000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "k1",
+        "sku": "110154028",
+        "name": "Anlene Gold 5X hương vani 400g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 250000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "A5X2609",
+        "expDate": "2028-06-30"
+      }
+    ],
+    "id": "tb12",
+    "kind": "receipt",
+    "docNo": "NM2610012",
+    "docDate": "2026-10-09",
+    "partnerCode": "NCC-THANGBAO",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "0771",
+      "serial": "TB/26E",
+      "date": "2026-10-09",
+      "total": 108000000
+    },
+    "orderDiscount": {},
+    "note": "TH12 — nợ cũ 480 triệu + 108 triệu = 588 triệu, còn hạn mức 12 triệu: duyệt bình thường",
+    "refIds": [
+      "tb12-dh"
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [],
+    "id": "pay2",
+    "kind": "payment",
+    "docNo": "UC2610002",
+    "docDate": "2026-10-10",
+    "partnerCode": "NCC-THANGBAO",
+    "amount": 38000000,
+    "note": "Trả bớt nợ Thắng Bảo"
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "l1",
+        "sku": "110154028",
+        "name": "Anlene Gold 5X hương vani 400g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 250000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ],
+    "id": "tb13",
+    "kind": "order",
+    "docNo": "DH2610013",
+    "docDate": "2026-10-10",
+    "partnerCode": "NCC-THANGBAO",
+    "brandCode": "ANLENE",
+    "orderDiscount": {},
+    "note": "TH13 — nợ 550 triệu + 108 triệu = 658 triệu, vượt 58 triệu: chặn duyệt, cần duyệt ngoại lệ"
+  },
+  {
+    "branchCode": "CN-PT",
+    "priceIncludesVat": false,
+    "kind": "order",
+    "docDate": "2026-10-12",
+    "partnerCode": "NCC-ANLENE",
+    "brandCode": "ANLENE",
+    "orderDiscount": {},
+    "status": "approved",
+    "id": "anl21-dh",
+    "docNo": "DH2610021",
+    "note": "Đặt hàng TH21 — nhãn Anlene 500.000.000đ chưa VAT, trả 3 đợt",
+    "lines": [
+      {
+        "lineKey": "m1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 500,
+        "price": 480000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "m2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 400000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "m3",
+        "sku": "110154028",
+        "name": "Anlene Gold 5X hương vani 400g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 250000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-PT",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "m1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 500,
+        "price": 480000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AG2610E",
+        "expDate": "2028-04-30"
+      },
+      {
+        "lineKey": "m2",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 400000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2610F",
+        "expDate": "2028-04-15"
+      },
+      {
+        "lineKey": "m3",
+        "sku": "110154028",
+        "name": "Anlene Gold 5X hương vani 400g",
+        "unit": "Lon",
+        "qty": 400,
+        "price": 250000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "A5X2610",
+        "expDate": "2028-07-31"
+      }
+    ],
+    "id": "anl21",
+    "kind": "receipt",
+    "docNo": "NM2610021",
+    "docDate": "2026-10-12",
+    "partnerCode": "NCC-ANLENE",
+    "brandCode": "ANLENE",
+    "invoice": {
+      "no": "10021",
+      "serial": "AN/26E",
+      "date": "2026-10-12",
+      "total": 540000000
+    },
+    "orderDiscount": {},
+    "note": "TH21 + TH11 — nhập nhãn Anlene 500.000.000đ chưa VAT; trả 3 đợt",
+    "schedule": [
+      {
+        "seq": 1,
+        "dueDate": "2026-10-10",
+        "amount": 180000000
+      },
+      {
+        "seq": 2,
+        "dueDate": "2026-10-20",
+        "amount": 180000000
+      },
+      {
+        "seq": 3,
+        "dueDate": "2026-11-10",
+        "amount": 180000000
+      }
+    ],
+    "refIds": [
+      "anl21-dh"
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-PT",
+    "priceIncludesVat": true,
+    "lines": [],
+    "id": "vt21",
+    "kind": "cost",
+    "docNo": "CP2610001",
+    "docDate": "2026-10-12",
+    "partnerCode": "NCC-VANTAI",
+    "amount": 10000000,
+    "refIds": [
+      "anl21"
+    ],
+    "note": "TH21 — cước vận chuyển 10.000.000đ phân bổ vào giá vốn phiếu NM2610021"
+  },
+  {
+    "id": "pay3",
+    "kind": "payment",
+    "status": "approved",
+    "docNo": "UC2610003",
+    "docDate": "2026-10-14",
+    "branchCode": "CN-PT",
+    "partnerCode": "NCC-ANLENE",
+    "priceIncludesVat": true,
+    "lines": [],
+    "amount": 200000000,
+    "note": "Trả NCC Anlene — đợt 1 + một phần đợt 2"
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "n1",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 4,
+        "price": 431000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "AV2607B",
+        "expDate": "2028-01-31"
+      }
+    ],
+    "id": "tr23",
+    "kind": "return",
+    "docNo": "TN2610001",
+    "docDate": "2026-10-15",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "refIds": [
+      "th1"
+    ],
+    "reason": "Hàng lỗi móp lon",
+    "orderDiscount": {
+      "pct": 7
+    },
+    "note": "TH23.4 — trả 4 lon lỗi, NCC giảm công nợ"
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "o1",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 3,
+        "price": 488889,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "dir": "out",
+        "lotNo": "AG2608A",
+        "expDate": "2028-02-28"
+      },
+      {
+        "lineKey": "o2",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 3,
+        "price": 488889,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "dir": "in",
+        "lotNo": "AG2609C",
+        "expDate": "2028-03-31"
+      }
+    ],
+    "id": "ex23a",
+    "kind": "exchange",
+    "docNo": "DO2610001",
+    "docDate": "2026-10-16",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "refIds": [
+      "th2"
+    ],
+    "reason": "Đổi hàng lỗi cùng mã",
+    "orderDiscount": {},
+    "settle": "offset",
+    "note": "TH23.1 — đổi cùng mã, cùng SL, cùng giá trị: chênh lệch 0"
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "p1",
+        "sku": "110154036",
+        "name": "Anlene hương vani 800g",
+        "unit": "Lon",
+        "qty": 10,
+        "price": 500000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "dir": "out",
+        "lotNo": "AV2609D",
+        "expDate": "2028-03-15"
+      },
+      {
+        "lineKey": "p2",
+        "sku": "110154035",
+        "name": "Anlene Gold hương vani 800g",
+        "unit": "Lon",
+        "qty": 12,
+        "price": 500000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "dir": "in",
+        "lotNo": "AG2609C",
+        "expDate": "2028-03-31"
+      }
+    ],
+    "id": "ex23b",
+    "kind": "exchange",
+    "docNo": "DO2610002",
+    "docDate": "2026-10-17",
+    "partnerCode": "NCC-TRUNGHAU",
+    "brandCode": "ANLENE",
+    "refIds": [
+      "th3"
+    ],
+    "reason": "Đổi khác mã",
+    "orderDiscount": {},
+    "settle": "pay",
+    "note": "TH23.3 — trả mã A 5.000.000đ, nhận mã B 6.000.000đ, chênh lệch 1.000.000đ (+VAT) thanh toán bổ sung"
+  },
+  {
+    "branchCode": "CN-ND",
+    "priceIncludesVat": true,
+    "kind": "order",
+    "docDate": "2026-10-20",
+    "partnerCode": "NCC-HOANGNHI",
+    "brandCode": "TH",
+    "status": "approved",
+    "id": "hn14-dh",
+    "docNo": "DH2610014",
+    "note": "Đặt hàng TH14 — Hoàng Nhi: sữa chua Nha đam 1.200 + KM người bán 120 + KM NTD 240",
+    "lines": [
+      {
+        "lineKey": "q1",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 1200,
+        "price": 7787,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 1.5
+      },
+      {
+        "lineKey": "q2",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 120,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller",
+        "program": "HN-KM-TGS"
+      },
+      {
+        "lineKey": "q3",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 240,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_consumer",
+        "program": "HN-KM-NTD"
+      }
+    ]
+  },
+  {
+    "status": "draft",
+    "branchCode": "CN-ND",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "q1",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 1200,
+        "price": 7787,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 1.5,
+        "lotNo": "A",
+        "expDate": "2026-11-15"
+      },
+      {
+        "lineKey": "q2",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 120,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller",
+        "program": "HN-KM-TGS",
+        "lotNo": "B",
+        "expDate": "2026-11-30"
+      },
+      {
+        "lineKey": "q3",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 240,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_consumer",
+        "program": "HN-KM-NTD",
+        "lotNo": "B",
+        "expDate": "2026-11-30"
+      }
+    ],
+    "id": "hn14",
+    "kind": "receipt",
+    "docNo": "NM2610014",
+    "docDate": "2026-10-20",
+    "partnerCode": "NCC-HOANGNHI",
+    "brandCode": "TH",
+    "invoice": {
+      "no": "13209",
+      "serial": "HN/26E",
+      "date": "2026-10-20",
+      "total": 9204234
+    },
+    "note": "TH14 + TH19 — hàng mua 1.200 + KM người bán 120 (chia giá) + KM NTD 240 (không chia giá); 2 lô hạn khác nhau",
+    "refIds": [
+      "hn14-dh"
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-PT",
+    "priceIncludesVat": true,
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "QT-BINH-01",
+        "name": "Bình giữ nhiệt Anlene (quà chương trình)",
+        "unit": "Cái",
+        "qty": 100,
+        "price": 85000,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer",
+        "program": "ANL-T10-BINH"
+      }
+    ],
+    "id": "gq1",
+    "kind": "gift_in",
+    "docNo": "QT2610002",
+    "docDate": "2026-10-12",
+    "partnerCode": "NCC-ANLENE",
+    "brandCode": "ANLENE",
+    "refIds": [
+      "anl21"
+    ],
+    "gift": {
+      "source": "ncc_program",
+      "program": "ANL-T10-BINH",
+      "hasVat": false
+    },
+    "note": "TH20 — 100 sản phẩm được tặng theo chương trình mua hàng"
+  },
+  {
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "kind": "order",
+    "docDate": "2026-10-13",
+    "partnerCode": "NCC-QUATANG",
+    "brandCode": "TGS",
+    "orderDiscount": {},
+    "gift": {
+      "source": "self_buy",
+      "program": "TGS-TRI-AN",
+      "hasVat": true
+    },
+    "status": "approved",
+    "id": "gq2-dh",
+    "docNo": "DH2610130",
+    "note": "Đặt hàng TH20 — TGS tự mua 50 bộ quà tri ân (có hoá đơn VAT)",
+    "lines": [
+      {
+        "lineKey": "s1",
+        "sku": "QT-BO-TRIAN",
+        "name": "Bộ quà tri ân khách hàng TGS",
+        "unit": "Bộ",
+        "qty": 50,
+        "price": 150000,
+        "taxCode": "V10",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "s1",
+        "sku": "QT-BO-TRIAN",
+        "name": "Bộ quà tri ân khách hàng TGS",
+        "unit": "Bộ",
+        "qty": 50,
+        "price": 150000,
+        "taxCode": "V10",
+        "lineType": "buy"
+      }
+    ],
+    "id": "gq2",
+    "kind": "receipt",
+    "docNo": "NM2610030",
+    "docDate": "2026-10-13",
+    "partnerCode": "NCC-QUATANG",
+    "brandCode": "TGS",
+    "invoice": {
+      "no": "5501",
+      "serial": "HP/26E",
+      "date": "2026-10-13",
+      "total": 8250000
+    },
+    "orderDiscount": {},
+    "gift": {
+      "source": "self_buy",
+      "program": "TGS-TRI-AN",
+      "hasVat": true
+    },
+    "note": "TH20 — TGS tự mua 50 bộ quà có hoá đơn VAT",
+    "refIds": [
+      "gq2-dh"
+    ]
+  },
+  {
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "kind": "order",
+    "docDate": "2026-10-13",
+    "partnerCode": "NCC-QUATANG",
+    "brandCode": "TGS",
+    "orderDiscount": {},
+    "gift": {
+      "source": "self_buy",
+      "program": "TGS-TRI-AN",
+      "hasVat": false
+    },
+    "status": "approved",
+    "id": "gq3-dh",
+    "docNo": "DH2610131",
+    "note": "Đặt hàng TH20 — TGS tự mua 30 bộ quà tri ân (không hoá đơn VAT)",
+    "lines": [
+      {
+        "lineKey": "t1",
+        "sku": "QT-BO-TRIAN",
+        "name": "Bộ quà tri ân khách hàng TGS",
+        "unit": "Bộ",
+        "qty": 30,
+        "price": 140000,
+        "taxCode": "KKKN",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "status": "approved",
+    "branchCode": "CN-ND",
+    "priceIncludesVat": false,
+    "lines": [
+      {
+        "lineKey": "t1",
+        "sku": "QT-BO-TRIAN",
+        "name": "Bộ quà tri ân khách hàng TGS",
+        "unit": "Bộ",
+        "qty": 30,
+        "price": 140000,
+        "taxCode": "KKKN",
+        "lineType": "buy"
+      }
+    ],
+    "id": "gq3",
+    "kind": "receipt",
+    "docNo": "NM2610031",
+    "docDate": "2026-10-13",
+    "partnerCode": "NCC-QUATANG",
+    "brandCode": "TGS",
+    "orderDiscount": {},
+    "gift": {
+      "source": "self_buy",
+      "program": "TGS-TRI-AN",
+      "hasVat": false
+    },
+    "note": "TH20 — TGS tự mua 30 bộ quà không có hoá đơn VAT",
+    "refIds": [
+      "gq3-dh"
+    ]
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "brandCode": "VINAMILK",
+    "priceIncludesVat": false,
+    "id": "vd1",
+    "kind": "order",
+    "status": "approved",
+    "docNo": "DH2610051",
+    "docDate": "2026-10-18",
+    "branchCode": "CN-ND",
+    "lines": [
+      {
+        "lineKey": "o1",
+        "sku": "110054057",
+        "name": "Vinamilk CanxiPro 900g",
+        "unit": "Hộp",
+        "qty": 120,
+        "price": 380000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "o2",
+        "sku": "110054061",
+        "name": "Vinamilk Sure Prevent 900g",
+        "unit": "Hộp",
+        "qty": 60,
+        "price": 520000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "o3",
+        "sku": "170413004",
+        "name": "Khăn ướt Newis 100T",
+        "unit": "Gói",
+        "qty": 200,
+        "price": 28000,
+        "taxCode": "V10",
+        "lineType": "buy"
+      }
+    ],
+    "note": "VD1 — đơn đặt Hoà Bình 3 mã, 2 mức thuế (8% sữa, 10% khăn ướt); giữ hạn mức 300 triệu"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "brandCode": "VINAMILK",
+    "priceIncludesVat": false,
+    "id": "vd2",
+    "kind": "receipt",
+    "status": "approved",
+    "docNo": "NM2610051",
+    "docDate": "2026-10-19",
+    "branchCode": "CN-ND",
+    "refIds": [
+      "vd1"
+    ],
+    "invoice": {
+      "no": "0001256",
+      "serial": "1C26THB",
+      "date": "2026-10-19"
+    },
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "110054057",
+        "name": "Vinamilk CanxiPro 900g",
+        "unit": "Hộp",
+        "qty": 80,
+        "price": 380000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "CP2609A",
+        "expDate": "2028-03-31"
+      },
+      {
+        "lineKey": "r2",
+        "sku": "110054061",
+        "name": "Vinamilk Sure Prevent 900g",
+        "unit": "Hộp",
+        "qty": 60,
+        "price": 520000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "SP2609B",
+        "expDate": "2028-02-28"
+      },
+      {
+        "lineKey": "r3",
+        "sku": "170413004",
+        "name": "Khăn ướt Newis 100T",
+        "unit": "Gói",
+        "qty": 200,
+        "price": 28000,
+        "taxCode": "V10",
+        "lineType": "buy",
+        "lotNo": "NW2610",
+        "expDate": "2028-10-01"
+      }
+    ],
+    "note": "VD2 — giao lần 1 theo đơn DH2610051 (CanxiPro 80/120); khăn ướt 200 gói tự hưởng bậc CK 5%; hạn 15 ngày làm việc, CKTT 1,5%"
+  },
+  {
+    "partnerCode": "NCC-VANTAI",
+    "priceIncludesVat": false,
+    "id": "vd3",
+    "kind": "cost",
+    "status": "approved",
+    "docNo": "CP2610051",
+    "docDate": "2026-10-19",
+    "branchCode": "CN-ND",
+    "amount": 1200000,
+    "costType": "boc_xep",
+    "basis": "qty",
+    "refIds": [
+      "vd2"
+    ],
+    "lines": [],
+    "note": "VD3 — bốc xếp 1.200.000đ phân bổ theo SỐ LƯỢNG vào phiếu NM2610051"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "brandCode": "VINAMILK",
+    "priceIncludesVat": false,
+    "kind": "order",
+    "docDate": "2026-10-20",
+    "branchCode": "CN-PT",
+    "status": "approved",
+    "id": "vd4-dh",
+    "docNo": "DH2610052",
+    "note": "Đặt hàng VD4 — Hoà Bình: CanxiPro theo giá cố định 380.000 / Hộp",
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "110054057",
+        "name": "Vinamilk CanxiPro 900g",
+        "unit": "Hộp",
+        "qty": 30,
+        "price": 380000,
+        "taxCode": "V08",
+        "lineType": "buy"
+      },
+      {
+        "lineKey": "r2",
+        "sku": "150346006",
+        "name": "Dầu Smart Kids Omega 3 250ml",
+        "unit": "Chai",
+        "qty": 48,
+        "price": 165000,
+        "taxCode": "V10",
+        "lineType": "buy"
+      }
+    ]
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "brandCode": "VINAMILK",
+    "priceIncludesVat": false,
+    "id": "vd4",
+    "kind": "receipt",
+    "status": "approved",
+    "docNo": "NM2610052",
+    "docDate": "2026-10-20",
+    "branchCode": "CN-PT",
+    "invoice": {
+      "no": "0001270",
+      "serial": "1C26THB",
+      "date": "2026-10-20"
+    },
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "110054057",
+        "name": "Vinamilk CanxiPro 900g",
+        "unit": "Hộp",
+        "qty": 30,
+        "price": 395000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "CP2609C",
+        "expDate": "2028-04-30"
+      },
+      {
+        "lineKey": "r2",
+        "sku": "150346006",
+        "name": "Dầu Smart Kids Omega 3 250ml",
+        "unit": "Chai",
+        "qty": 48,
+        "price": 165000,
+        "taxCode": "V10",
+        "lineType": "buy",
+        "lotNo": "SK2608",
+        "expDate": "2027-08-31"
+      }
+    ],
+    "note": "VD4 — giá CanxiPro 395.000 cao hơn giá cố định 380.000 (+3,9%): cảnh báo nhưng vẫn duyệt được; dầu ăn trẻ em thuế 10%",
+    "refIds": [
+      "vd4-dh"
+    ]
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "priceIncludesVat": false,
+    "id": "vd5",
+    "kind": "rebate",
+    "status": "approved",
+    "docNo": "CK2610051",
+    "docDate": "2026-10-21",
+    "branchCode": "CN-ND",
+    "amount": 3000000,
+    "taxCode": "V08",
+    "basis": "value",
+    "refIds": [
+      "vd2"
+    ],
+    "invoice": {
+      "no": "0001301",
+      "date": "2026-10-21"
+    },
+    "lines": [],
+    "note": "VD5 — NCC giảm giá thêm 3.000.000đ sau mua, có HĐ điều chỉnh giảm (giảm cả thuế đầu vào), phân bổ giảm giá vốn theo giá trị"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "priceIncludesVat": false,
+    "id": "vd6",
+    "kind": "payment",
+    "status": "approved",
+    "docNo": "UC2610051",
+    "docDate": "2026-10-22",
+    "branchCode": "CN-ND",
+    "amount": 50000000,
+    "method": "bank",
+    "refIds": [
+      "vd2"
+    ],
+    "lines": [],
+    "note": "VD6 — trả trước một phần 50 triệu cho phiếu NM2610051 (chưa đủ nên không hưởng CKTT)"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "brandCode": "VINAMILK",
+    "priceIncludesVat": false,
+    "id": "vd7",
+    "kind": "receipt",
+    "status": "draft",
+    "docNo": "NM2610053",
+    "docDate": "2026-10-22",
+    "branchCode": "CN-ND",
+    "refIds": [
+      "vd1"
+    ],
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "110054057",
+        "name": "Vinamilk CanxiPro 900g",
+        "unit": "Hộp",
+        "qty": 40,
+        "price": 380000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "CP2610X",
+        "expDate": "2026-11-10"
+      }
+    ],
+    "note": "VD7 — giao lần 2 phần còn lại của đơn (40 hộp); lô hết hạn 10/11/2026 → cảnh báo cận date (còn 19 ngày)"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "brandCode": "VINAMILK",
+    "priceIncludesVat": false,
+    "id": "vd8",
+    "kind": "receipt",
+    "status": "draft",
+    "docNo": "NM2610054",
+    "docDate": "2026-10-23",
+    "branchCode": "CN-ND",
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "170413004",
+        "name": "Khăn ướt Newis 100T",
+        "unit": "Gói",
+        "qty": 120,
+        "price": 28000,
+        "taxCode": "V10",
+        "lineType": "buy",
+        "lotNo": "NW2611",
+        "expDate": "2028-11-01"
+      },
+      {
+        "lineKey": "r2",
+        "sku": "110054061",
+        "name": "Vinamilk Sure Prevent 900g",
+        "unit": "Hộp",
+        "qty": 10,
+        "price": 520000,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "lotNo": "SP2610",
+        "expDate": "2028-03-31"
+      }
+    ],
+    "note": "VD8 — phiếu nháp để thử: khăn ướt 120 gói → bậc CK 3%; bấm thử Chép hàng, đổi SL lên 200 để thấy bậc 5%"
+  },
+  {
+    "partnerCode": "NC100227",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": false,
+    "id": "vc1",
+    "kind": "order",
+    "status": "approved",
+    "docNo": "DH2610061",
+    "docDate": "2026-10-19",
+    "lines": [
+      {
+        "lineKey": "o1",
+        "sku": "130181002",
+        "name": "Sữa tươi TH có đường 110ml",
+        "unit": "Hộp",
+        "qty": 14400,
+        "price": 5389.8125,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 2.5
+      },
+      {
+        "lineKey": "o2",
+        "sku": "130181002",
+        "name": "Sữa tươi TH có đường 110ml",
+        "unit": "Hộp",
+        "qty": 632,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller"
+      },
+      {
+        "lineKey": "o3",
+        "sku": "140181001",
+        "name": "Sữa chua TH Việt Quất 100g",
+        "unit": "Hộp",
+        "qty": 1152,
+        "price": 7210.1875,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 4
+      },
+      {
+        "lineKey": "o4",
+        "sku": "140181001",
+        "name": "Sữa chua TH Việt Quất 100g",
+        "unit": "Hộp",
+        "qty": 72,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller"
+      },
+      {
+        "lineKey": "o5",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 1728,
+        "price": 7210.1875,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 4
+      },
+      {
+        "lineKey": "o6",
+        "sku": "140181006",
+        "name": "Sữa chua TH Nha đam 100g",
+        "unit": "Hộp",
+        "qty": 108,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller"
+      }
+    ],
+    "note": "VC1 — Vinh Châu: đơn đặt sữa TH (dòng giá 0 = hàng tặng chia giá, như file phiếu nhập NK1426042221)"
+  },
+  {
+    "partnerCode": "NC100227",
+    "branchCode": "CN-NA",
+    "priceIncludesVat": false,
+    "id": "vc2",
+    "kind": "receipt",
+    "status": "approved",
+    "docNo": "NM2610061",
+    "docDate": "2026-10-21",
+    "receivedDate": "2026-10-22",
+    "refIds": [
+      "vc1"
+    ],
+    "invoice": {
+      "no": "4430",
+      "serial": "1C26TVC",
+      "date": "2026-10-21"
+    },
+    "lines": [
+      {
+        "lineKey": "r1",
+        "sku": "130181002",
+        "name": "Sữa tươi TH có đường 110ml",
+        "unit": "Hộp",
+        "qty": 14400,
+        "price": 5389.8125,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 2.5,
+        "lotNo": "9618M",
+        "expDate": "2026-11-18"
+      },
+      {
+        "lineKey": "r2",
+        "sku": "130181002",
+        "name": "Sữa tươi TH có đường 110ml",
+        "unit": "Hộp",
+        "qty": 632,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller",
+        "lotNo": "9618M",
+        "expDate": "2026-11-18"
+      },
+      {
+        "lineKey": "r3",
+        "sku": "140181001",
+        "name": "Sữa chua TH Việt Quất 100g",
+        "unit": "Hộp",
+        "qty": 576,
+        "price": 7210.1875,
+        "taxCode": "V08",
+        "lineType": "buy",
+        "discountPct": 4,
+        "lotNo": "9630E",
+        "expDate": "2026-12-30"
+      },
+      {
+        "lineKey": "r4",
+        "sku": "140181001",
+        "name": "Sữa chua TH Việt Quất 100g",
+        "unit": "Hộp",
+        "qty": 36,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller",
+        "lotNo": "9630E",
+        "expDate": "2026-12-30"
+      }
+    ],
+    "note": "VC2 — nhận hàng lần 1 theo đơn DH2610061 (sữa chua Việt Quất mới giao 576/1152, Nha đam chưa giao); nhận đủ hồ sơ 22/10 → hạn 10 ngày làm việc"
+  }
+]

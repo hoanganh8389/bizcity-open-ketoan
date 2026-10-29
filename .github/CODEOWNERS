@@ -1,0 +1,58 @@
+# Người phụ trách từng phần (GitHub tự gắn người duyệt PR theo thư mục bị sửa).
+# Điền tài khoản GitHub của người / nhóm phụ trách thay cho @Thuy2k; dòng sau ghi đè dòng trước.
+# Xem docs/phat-trien.md mục "Cấu trúc theo phân hệ".
+
+*                                   @Thuy2k
+
+# Cơ sở dữ liệu (migrations, seeds, job db-migrate)
+/db/                                @Thuy2k
+/apps/api/src/db/                   @Thuy2k
+
+# Lõi: khuôn API, xác thực, chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo, danh mục dùng chung
+/packages/contracts/                @Thuy2k
+/apps/api/src/core/                 @Thuy2k
+/apps/api/src/modules/              @Thuy2k
+/apps/api/src/phan-he/loi.ts        @Thuy2k
+/apps/web/src/features/             @Thuy2k
+/apps/web/src/components/           @Thuy2k
+/apps/web/src/layout/               @Thuy2k
+
+# Phân hệ — mỗi phân hệ hai thư mục cùng tên (máy chủ + giao diện). Thay @Thuy2k bằng người phụ trách.
+/apps/api/src/phan-he/ke-toan/      @Thuy2k
+/apps/web/src/phan-he/ke-toan/      @Thuy2k
+/apps/api/src/phan-he/quy/          @Thuy2k
+/apps/web/src/phan-he/quy/          @Thuy2k
+/apps/api/src/phan-he/mua-hang/     @Thuy2k
+/apps/web/src/phan-he/mua-hang/     @Thuy2k
+/apps/api/src/phan-he/ban-hang/     @Thuy2k
+/apps/web/src/phan-he/ban-hang/     @Thuy2k
+/apps/api/src/phan-he/kho/          @Thuy2k
+/apps/web/src/phan-he/kho/          @Thuy2k
+/apps/api/src/phan-he/tai-san/      @Thuy2k
+/apps/web/src/phan-he/tai-san/      @Thuy2k
+/apps/api/src/phan-he/thue/         @Thuy2k
+/apps/web/src/phan-he/thue/         @Thuy2k
+/apps/api/src/phan-he/api/          @Thuy2k
+/apps/web/src/phan-he/api/          @Thuy2k
+/docs/api/                          @Thuy2k
+/apps/api/src/phan-he/he-thong/     @Thuy2k
+/apps/web/src/phan-he/he-thong/     @Thuy2k
+
+# Bộ chuẩn framework: luật, hợp đồng, CANON, CI — nhóm Lõi duyệt (docs/00-CANON.md)
+/docs/00-CANON.md                   @Thuy2k
+/docs/rules/                        @Thuy2k
+/docs/contracts/                    @Thuy2k
+/docs/framework/                    @Thuy2k
+/docs/adr/                          @Thuy2k
+/docs/standard/                     @Thuy2k
+/.github/workflows/                  @Thuy2k
+/scripts/kiem-chuan.sh              @Thuy2k
+# Bộ kiểm chuẩn: thêm nợ vào baseline hoặc sửa khoá băm migration phải qua nhóm Lõi (ADR-0006)
+/tests/conformance/                 @Thuy2k
+/tests/conformance/baseline.json    @Thuy2k
+/tests/conformance/locks/           @Thuy2k
+
+# Docker, triển khai
+/docker/                            @Thuy2k
+/docker-compose.yml                 @Thuy2k
+/scripts/                           @Thuy2k

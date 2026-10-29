@@ -1,0 +1,58 @@
+/**
+ * Khuôn phản hồi chung của API.
+ *
+ * Thành công:  { "ok": true,  "data": ..., "meta": {...} }
+ * Thất bại:    { "ok": false, "error": { "code": "...", "message": "...", "details": ... } }
+ *
+ * Mọi endpoint trả đúng một trong hai dạng này, để phía gọi chỉ cần một cách xử lý.
+ */
+
+export interface ApiSuccess<T> {
+  ok: true;
+  data: T;
+  meta?: PageMeta | Record<string, unknown>;
+}
+
+export interface ApiFailure {
+  ok: false;
+  error: {
+    code: ErrorCode;
+    message: string;
+    details?: unknown;
+  };
+}
+
+export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
+
+export interface PageMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+/** Mã lỗi ổn định, phía gọi dựa vào mã này để xử lý (không dựa vào câu chữ). */
+export const ERROR_CODES = {
+  VALIDATION: 'VALIDATION_ERROR',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  CONFLICT: 'CONFLICT',
+  PERIOD_LOCKED: 'PERIOD_LOCKED',
+  POSTING_FAILED: 'POSTING_FAILED',
+  UNBALANCED: 'UNBALANCED_ENTRY',
+  INTERNAL: 'INTERNAL_ERROR',
+} as const;
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+
+/** Mục menu. Dùng cho menu lõi lẫn menu do add-in khai báo. */
+export interface MenuItem {
+  key: string;
+  label: string;
+  /** Đường dẫn trên giao diện; mục cha có thể để trống. */
+  path?: string;
+  /** Mã chức năng hiển thị cạnh tên, ví dụ "ACC10". */
+  code?: string;
+  /** Chỉ hiện với người có quyền này (ví dụ "users:write"). Để trống = ai cũng thấy. */
+  permission?: string;
+  children?: MenuItem[];
+}

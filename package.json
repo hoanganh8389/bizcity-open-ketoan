@@ -1,0 +1,30 @@
+{
+  "name": "tgs-ketoan",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Phần mềm kế toán doanh nghiệp: sổ cái trung tâm, nhiều đơn vị, nhận chứng từ qua API, mở rộng bằng add-in.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @ketoan/contracts && npm run build -w @ketoan/api && npm run build -w @ketoan/web",
+    "dev": "node scripts/dev.mjs",
+    "dev:ke-toan": "node scripts/dev.mjs ke-toan",
+    "dev:quy": "node scripts/dev.mjs quy",
+    "dev:mua-hang": "node scripts/dev.mjs mua-hang",
+    "dev:ban-hang": "node scripts/dev.mjs ban-hang",
+    "dev:kho": "node scripts/dev.mjs kho",
+    "dev:tai-san": "node scripts/dev.mjs tai-san",
+    "dev:thue": "node scripts/dev.mjs thue",
+    "dev:api": "npm run dev -w @ketoan/api",
+    "dev:web": "npm run dev -w @ketoan/web",
+    "db:migrate": "npm run db:migrate -w @ketoan/api",
+    "db:seed": "npm run db:seed -w @ketoan/api",
+    "test": "npm run test -w @ketoan/api",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

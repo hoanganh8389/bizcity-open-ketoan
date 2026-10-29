@@ -1,0 +1,53 @@
+[
+  {
+    "id": "x1",
+    "date": "2026-10-14",
+    "branchCode": "CN-PT",
+    "sku": "QT-BINH-01",
+    "qty": 40,
+    "program": "ANL-T10-BINH",
+    "ref": "BH2610155",
+    "note": "Tặng khách mua Anlene từ 2 lon"
+  },
+  {
+    "id": "x2",
+    "date": "2026-10-18",
+    "branchCode": "CN-PT",
+    "sku": "QT-BINH-01",
+    "qty": 25,
+    "program": "ANL-T10-BINH",
+    "ref": "BH2610301",
+    "note": "Tặng khách mua Anlene từ 2 lon"
+  },
+  {
+    "id": "x3",
+    "date": "2026-10-15",
+    "branchCode": "CN-ND",
+    "sku": "QT-BO-TRIAN",
+    "qty": 35,
+    "program": "TGS-TRI-AN",
+    "ref": "CSKH-1015",
+    "note": "Tri ân khách VIP"
+  },
+  {
+    "id": "x4",
+    "date": "2026-10-16",
+    "branchCode": "CN-NA",
+    "sku": "QT-THUNG-SUA",
+    "qty": 2,
+    "program": "",
+    "ref": "BH2610188",
+    "note": "Quà ngoài hợp đồng tặng lại khách sỉ"
+  },
+  {
+    "id": "x5",
+    "date": "2026-10-21",
+    "branchCode": "CN-ND",
+    "sku": "140181006",
+    "qty": 200,
+    "program": "HN-KM-NTD",
+    "ref": "BH2610402",
+    "note": "KM NTD mua 10 tặng 2 — chờ duyệt phiếu nhập NM2610014 (duyệt trước thì bị chặn xuất vượt tồn)",
+    "status": "draft"
+  }
+]

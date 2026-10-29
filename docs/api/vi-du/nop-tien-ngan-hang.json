@@ -1,0 +1,15 @@
+{
+  "docType": "cash_transfer",
+  "docKey": "quy:CN01:cash_transfer:452",
+  "version": 1,
+  "branchCode": "CN01",
+  "toBranchCode": "CN01",
+  "docNo": "CT0000452",
+  "docDate": "2026-10-12",
+  "fromMethodCode": "TM",
+  "toMethodCode": "CK",
+  "description": "Nộp tiền bán hàng ngày 12/10 vào ngân hàng",
+  "totals": {
+    "total": 25000000
+  }
+}

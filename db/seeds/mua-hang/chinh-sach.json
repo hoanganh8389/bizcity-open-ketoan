@@ -1,0 +1,611 @@
+[
+  {
+    "id": "p1",
+    "code": "TH-DK10",
+    "kind": "payment_term",
+    "name": "Trung Hậu: hạn 10 ngày làm việc từ ngày hoá đơn",
+    "scope": {
+      "partnerCode": "NCC-TRUNGHAU"
+    },
+    "validFrom": "2026-01-01",
+    "isActive": true,
+    "rule": {
+      "basis": "invoice_date",
+      "days": 10,
+      "workingDays": true
+    }
+  },
+  {
+    "id": "p2",
+    "code": "TH-HM600",
+    "kind": "credit_limit",
+    "name": "Trung Hậu: hạn mức công nợ 600 triệu",
+    "scope": {
+      "partnerCode": "NCC-TRUNGHAU"
+    },
+    "isActive": true,
+    "rule": {
+      "limit": 600000000,
+      "warnPct": 90
+    }
+  },
+  {
+    "id": "p3",
+    "code": "TH-THUONG-T",
+    "kind": "period_rebate",
+    "name": "Trung Hậu: thưởng doanh số tháng",
+    "scope": {
+      "partnerCode": "NCC-TRUNGHAU"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-12-31",
+    "isActive": true,
+    "rule": {
+      "period": "month",
+      "tiers": [
+        {
+          "from": 200000000,
+          "pct": 2
+        },
+        {
+          "from": 300000000,
+          "pct": 3
+        }
+      ],
+      "vatPct": 8
+    }
+  },
+  {
+    "id": "p6",
+    "code": "HN-KM-TGS",
+    "kind": "promo_gift",
+    "name": "TH Nha đam: KM người bán mua 10 tặng 1 (chia giá)",
+    "scope": {
+      "partnerCode": "NCC-HOANGNHI",
+      "sku": "140181006"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-10-31",
+    "isActive": true,
+    "rule": {
+      "buy": 10,
+      "get": 1,
+      "giftSku": "140181006",
+      "splitIntoCost": true
+    }
+  },
+  {
+    "id": "p7",
+    "code": "HN-KM-NTD",
+    "kind": "promo_gift",
+    "name": "TH Nha đam: KM người tiêu dùng mua 10 tặng 2 (không chia giá)",
+    "scope": {
+      "partnerCode": "NCC-HOANGNHI",
+      "sku": "140181006"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-10-31",
+    "isActive": true,
+    "rule": {
+      "buy": 10,
+      "get": 2,
+      "giftSku": "140181006",
+      "splitIntoCost": false
+    }
+  },
+  {
+    "id": "p8",
+    "code": "HN-DK30",
+    "kind": "payment_term",
+    "name": "Hoàng Nhi: 30 ngày lịch từ ngày đơn",
+    "scope": {
+      "partnerCode": "NCC-HOANGNHI"
+    },
+    "isActive": true,
+    "rule": {
+      "basis": "order_date",
+      "days": 30,
+      "workingDays": false
+    }
+  },
+  {
+    "id": "p9",
+    "code": "HN-CKTT1",
+    "kind": "payment_discount",
+    "name": "Hoàng Nhi: CKTT 1% nếu trả đúng hạn",
+    "scope": {
+      "partnerCode": "NCC-HOANGNHI"
+    },
+    "isActive": true,
+    "rule": {
+      "pct": 1
+    }
+  },
+  {
+    "id": "p10",
+    "code": "TB-HM600",
+    "kind": "credit_limit",
+    "name": "Thắng Bảo: hạn mức công nợ 600 triệu",
+    "scope": {
+      "partnerCode": "NCC-THANGBAO"
+    },
+    "isActive": true,
+    "rule": {
+      "limit": 600000000,
+      "warnPct": 90
+    }
+  },
+  {
+    "id": "p11",
+    "code": "TB-DK-CODINH",
+    "kind": "payment_term",
+    "name": "Thắng Bảo: công nợ cố định (duy trì số dư theo thoả thuận)",
+    "scope": {
+      "partnerCode": "NCC-THANGBAO"
+    },
+    "isActive": true,
+    "rule": {
+      "basis": "fixed",
+      "days": 0,
+      "workingDays": false
+    }
+  },
+  {
+    "id": "p12",
+    "code": "ANL-HM-NHAN",
+    "kind": "credit_limit",
+    "name": "Anlene: hạn mức toàn nhãn 2 tỷ, phân bổ chi nhánh",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "isActive": true,
+    "rule": {
+      "limit": 2000000000,
+      "warnPct": 90,
+      "branches": {
+        "CN-ND": 500000000,
+        "CN-PT": 600000000,
+        "CN-HCM": 400000000
+      }
+    }
+  },
+  {
+    "id": "p13",
+    "code": "ANL-CT-THANG",
+    "kind": "target_rebate",
+    "name": "Anlene: chỉ tiêu tháng 10/2026 — 500 triệu",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-10-31",
+    "isActive": true,
+    "rule": {
+      "period": "month",
+      "target": 500000000,
+      "tiers": [
+        {
+          "fromPct": 100,
+          "pct": 2
+        },
+        {
+          "fromPct": 110,
+          "pct": 3
+        }
+      ]
+    }
+  },
+  {
+    "id": "p14",
+    "code": "ANL-CT-QUY",
+    "kind": "target_rebate",
+    "name": "Anlene: chỉ tiêu quý IV/2026 — 1,5 tỷ",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-12-31",
+    "isActive": true,
+    "rule": {
+      "period": "quarter",
+      "target": 1500000000,
+      "tiers": [
+        {
+          "fromPct": 100,
+          "pct": 1.5
+        },
+        {
+          "fromPct": 110,
+          "pct": 2.5
+        }
+      ]
+    }
+  },
+  {
+    "id": "p15",
+    "code": "ANL-CT-NAM",
+    "kind": "target_rebate",
+    "name": "Anlene: chỉ tiêu năm 2026 — 6 tỷ",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "validFrom": "2026-01-01",
+    "validTo": "2026-12-31",
+    "isActive": true,
+    "rule": {
+      "period": "year",
+      "target": 6000000000,
+      "tiers": [
+        {
+          "fromPct": 100,
+          "pct": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "p16",
+    "code": "ANL-GD-T10",
+    "kind": "stage_rebate",
+    "name": "Anlene: thưởng nhập hàng theo giai đoạn tháng 10",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-10-31",
+    "isActive": true,
+    "rule": {
+      "mode": "stage",
+      "stages": [
+        {
+          "from": 1,
+          "to": 10,
+          "min": 100000000,
+          "pct": 1
+        },
+        {
+          "from": 11,
+          "to": 20,
+          "min": 150000000,
+          "pct": 2
+        },
+        {
+          "from": 21,
+          "to": 31,
+          "min": 200000000,
+          "pct": 3
+        }
+      ]
+    }
+  },
+  {
+    "id": "p17",
+    "code": "ANL-CU-T10",
+    "kind": "supply_target",
+    "name": "Anlene: chỉ tiêu cung ứng tháng 10 theo chi nhánh",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "validFrom": "2026-10-01",
+    "validTo": "2026-10-31",
+    "isActive": true,
+    "rule": {
+      "period": "2026-10",
+      "branches": {
+        "CN-ND": 600000000,
+        "CN-PT": 700000000,
+        "CN-HCM": 300000000
+      }
+    }
+  },
+  {
+    "id": "p18",
+    "code": "BAN-BAC-SL",
+    "kind": "qty_tier",
+    "name": "(Phía bán — TH7) Bậc CK theo số lượng Anlene Gold",
+    "scope": {
+      "partnerCode": "KH-TRUNGHAU",
+      "sku": "110154035"
+    },
+    "validFrom": "2026-10-01",
+    "isActive": true,
+    "rule": {
+      "tiers": [
+        {
+          "from": 0,
+          "pct": 0
+        },
+        {
+          "from": 50,
+          "pct": 3
+        },
+        {
+          "from": 100,
+          "pct": 5
+        },
+        {
+          "from": 200,
+          "pct": 7
+        }
+      ]
+    }
+  },
+  {
+    "id": "p19",
+    "code": "LO-ANLENE",
+    "kind": "lot_tracking",
+    "name": "Anlene: bắt buộc số lô, hạn dùng khi nhập",
+    "scope": {
+      "brandCode": "ANLENE"
+    },
+    "isActive": true,
+    "rule": {
+      "required": true
+    }
+  },
+  {
+    "id": "p20",
+    "code": "LO-TH",
+    "kind": "lot_tracking",
+    "name": "Sữa chua TH: bắt buộc số lô, hạn dùng khi nhập",
+    "scope": {
+      "brandCode": "TH"
+    },
+    "isActive": true,
+    "rule": {
+      "required": true
+    }
+  },
+  {
+    "code": "HB-DK15",
+    "kind": "payment_term",
+    "name": "Hoà Bình: 15 ngày làm việc từ ngày hoá đơn",
+    "scope": {
+      "partnerCode": "NCC-HOABINH"
+    },
+    "isActive": true,
+    "validFrom": "2026-10-01",
+    "rule": {
+      "basis": "invoice_date",
+      "days": 15,
+      "workingDays": true
+    }
+  },
+  {
+    "code": "HB-CKTT",
+    "kind": "payment_discount",
+    "name": "Hoà Bình: CKTT 1,5% nếu trả đúng hạn",
+    "scope": {
+      "partnerCode": "NCC-HOABINH"
+    },
+    "isActive": true,
+    "validFrom": "2026-10-01",
+    "rule": {
+      "pct": 1.5
+    }
+  },
+  {
+    "code": "HB-HM300",
+    "kind": "credit_limit",
+    "name": "Hoà Bình: hạn mức công nợ 300 triệu",
+    "scope": {
+      "partnerCode": "NCC-HOABINH"
+    },
+    "isActive": true,
+    "validFrom": "2026-10-01",
+    "rule": {
+      "limit": 300000000,
+      "warnPct": 90
+    }
+  },
+  {
+    "code": "HB-BAC-KHAN",
+    "kind": "qty_tier",
+    "name": "Hoà Bình: khăn ướt mua từ 100 gói CK 3%, từ 200 gói CK 5%",
+    "scope": {
+      "partnerCode": "NCC-HOABINH",
+      "sku": "170413004"
+    },
+    "isActive": true,
+    "validFrom": "2026-10-01",
+    "rule": {
+      "tiers": [
+        {
+          "from": 0,
+          "pct": 0
+        },
+        {
+          "from": 100,
+          "pct": 3
+        },
+        {
+          "from": 200,
+          "pct": 5
+        }
+      ]
+    }
+  },
+  {
+    "code": "NC100227-HD",
+    "kind": "contract",
+    "name": "Vinh Châu: hợp đồng mua bán 2026",
+    "scope": {
+      "partnerCode": "NC100227"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "no": "01/2026/HĐMB-TGS-VC",
+      "signedOn": "2026-01-05",
+      "note": "Phân phối sữa TH khu vực Nghệ An"
+    },
+    "validTo": "2026-12-31"
+  },
+  {
+    "code": "NC100227-HANMUC",
+    "kind": "credit_limit",
+    "name": "Vinh Châu: hạn mức công nợ 600 triệu",
+    "scope": {
+      "partnerCode": "NC100227"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "limit": 600000000,
+      "warnPct": 90
+    }
+  },
+  {
+    "code": "NC100227-HANTT",
+    "kind": "payment_term",
+    "name": "Vinh Châu: 10 ngày làm việc từ ngày nhận đủ hàng và hồ sơ",
+    "scope": {
+      "partnerCode": "NC100227"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "receipt_date",
+      "days": 10,
+      "workingDays": true,
+      "dayType": "working"
+    }
+  },
+  {
+    "code": "NC100214-HANTT",
+    "kind": "payment_term",
+    "name": "Bảo Huy: 10 ngày làm việc từ ngày nhận hàng và hồ sơ hợp lệ",
+    "scope": {
+      "partnerCode": "NC100214"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "receipt_date",
+      "days": 10,
+      "workingDays": true,
+      "dayType": "working"
+    }
+  },
+  {
+    "code": "NC100495-HANTT",
+    "kind": "payment_term",
+    "name": "Diana: 15 ngày làm việc (trừ CN, lễ), trả vào ngày 5, 15, 25",
+    "scope": {
+      "partnerCode": "NC100495"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "receipt_date",
+      "days": 15,
+      "workingDays": true,
+      "dayType": "working6",
+      "payDays": [
+        5,
+        15,
+        25
+      ]
+    }
+  },
+  {
+    "code": "NC209097-HANTT",
+    "kind": "payment_term",
+    "name": "Lifesfood: 30 ngày từ ngày nhận đủ hàng và hồ sơ",
+    "scope": {
+      "partnerCode": "NC209097"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "receipt_date",
+      "days": 30,
+      "workingDays": false,
+      "dayType": "calendar"
+    }
+  },
+  {
+    "code": "NC208354-HANTT",
+    "kind": "payment_term",
+    "name": "Hoàng Tuấn: trước ngày 25 hàng tháng",
+    "scope": {
+      "partnerCode": "NC208354"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "receipt_date",
+      "days": 0,
+      "workingDays": false,
+      "monthDay": 25
+    }
+  },
+  {
+    "code": "NC100220-HANTT",
+    "kind": "payment_term",
+    "name": "Hoàng Gia Phú: nhận hàng thanh toán ngay",
+    "scope": {
+      "partnerCode": "NC100220"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "immediate",
+      "days": 0,
+      "workingDays": false
+    }
+  },
+  {
+    "code": "NC100620-HANTT",
+    "kind": "payment_term",
+    "name": "Đại Thịnh: thanh toán trước khi giao hàng",
+    "scope": {
+      "partnerCode": "NC100620"
+    },
+    "isActive": true,
+    "validFrom": "2026-01-01",
+    "rule": {
+      "basis": "prepay",
+      "days": 0,
+      "workingDays": false
+    }
+  },
+  {
+    "id": "p-ckma",
+    "code": "NC100227-CKMA",
+    "kind": "item_discount",
+    "name": "Vinh Châu: chiết khấu theo mã hàng tháng 11 (bảng nhiều mã)",
+    "scope": {
+      "partnerCode": "NC100227"
+    },
+    "validFrom": "2026-11-01",
+    "validTo": "2026-11-30",
+    "isActive": true,
+    "rule": {
+      "items": [
+        {
+          "sku": "130181002",
+          "pct": 2,
+          "note": "CTKM tháng 11"
+        },
+        {
+          "sku": "130181002",
+          "pct": 3,
+          "minQty": 10,
+          "unit": "Thùng",
+          "note": "từ 10 thùng"
+        },
+        {
+          "sku": "140181001",
+          "amount": 300,
+          "unit": "Hộp"
+        },
+        {
+          "sku": "140181006",
+          "amount": 300,
+          "unit": "Hộp"
+        }
+      ]
+    }
+  }
+]

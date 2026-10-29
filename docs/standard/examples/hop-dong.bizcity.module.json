@@ -1,0 +1,94 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.hop-dong",
+  "key": "hop-dong",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Hợp đồng",
+  "description": "Hợp đồng với khách hàng: kỳ thanh toán, tệp đính kèm, duyệt, nhắc thu tiền, ghi nhận thu tiền vào sổ.",
+  "owners": ["@bizcity-community"],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "masterdata.read", "masterdata.write",
+      "ledger.submit", "ledger.cancel",
+      "data.tenant-tx", "data.read-views", "data.migrations.module",
+      "documents.numbering", "documents.versions", "documents.links", "documents.attachments", "documents.workflow",
+      "actions.runtime", "actions.idempotency", "actions.dry-run",
+      "evidence.receipt",
+      "events.outbox", "events.subscribe", "events.clock",
+      "permissions.module", "settings.registry", "notify.inapp",
+      "ui.menu", "ui.kit", "ui.slots"
+    ]
+  },
+  "permissions": [
+    { "key": "hop-dong:read", "label": "Xem hợp đồng", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },
+    { "key": "hop-dong:write", "label": "Lập, sửa hợp đồng nháp", "roles": ["owner", "chief_accountant", "accountant"], "risk": "low" },
+    { "key": "hop-dong:approve", "label": "Duyệt, trả lại, huỷ, thanh lý hợp đồng", "roles": ["owner", "chief_accountant"], "risk": "high" },
+    { "key": "hop-dong:collect", "label": "Ghi nhận khách trả tiền kỳ hợp đồng", "roles": ["owner", "chief_accountant", "accountant"], "risk": "high" }
+  ],
+  "data": {
+    "schema": "mod_hop_dong",
+    "tables": ["contracts", "installments"],
+    "reads": ["bizcity_read.partners", "bizcity_read.payment_methods", "bizcity_read.branches"]
+  },
+  "documents": [
+    {
+      "type": "hop-dong.contract",
+      "label": "Hợp đồng",
+      "numbering": { "series": "HD", "pattern": "HD-{yyyy}-{0000}" },
+      "workflow": "api/documents/contract.workflow.yaml"
+    },
+    {
+      "type": "hop-dong.installment",
+      "label": "Kỳ thanh toán",
+      "workflow": "api/documents/installment.workflow.yaml",
+      "ledger": [
+        { "on": "collect", "docType": "customer_payment" }
+      ]
+    }
+  ],
+  "actions": [
+    "hop-dong.contract.create", "hop-dong.contract.update", "hop-dong.contract.get", "hop-dong.contract.list",
+    "hop-dong.contract.submit", "hop-dong.contract.approve", "hop-dong.contract.reject",
+    "hop-dong.contract.activate", "hop-dong.contract.close", "hop-dong.contract.cancel",
+    "hop-dong.contract.attach",
+    "hop-dong.installment.list-due", "hop-dong.installment.record-payment", "hop-dong.installment.cancel-payment"
+  ],
+  "events": {
+    "emits": [
+      { "type": "hop-dong.contract.approved", "version": 1 },
+      { "type": "hop-dong.contract.cancelled", "version": 1 },
+      { "type": "hop-dong.installment.due", "version": 1 },
+      { "type": "hop-dong.installment.paid", "version": 1 }
+    ],
+    "subscribes": [
+      { "type": "bizcity.clock.daily", "version": 1 },
+      { "type": "bizcity.ledger.entry.posted", "version": 1 },
+      { "type": "bizcity.ledger.entry.reversed", "version": 1 }
+    ]
+  },
+  "ledger": {
+    "submits": [
+      { "docType": "customer_payment", "contract": "bizcity_ledger_intake@1" }
+    ]
+  },
+  "settings": ["bizcity.hop_dong.remind_days", "bizcity.hop_dong.second_approval_amount"],
+  "extensions": {
+    "menu": [
+      { "key": "hop-dong", "label": "Hợp đồng", "path": "/app/hop-dong", "code": "HD01", "permission": "hop-dong:read" },
+      { "key": "hop-dong-lich-thu", "label": "Lịch thu tiền", "path": "/app/hop-dong/lich-thu", "code": "HD02", "parent": "hop-dong", "permission": "hop-dong:read" }
+    ],
+    "slots": [
+      { "slot": "partner.detail.tab", "component": "web/slots/PartnerContractsTab", "permission": "hop-dong:read" },
+      { "slot": "dashboard.widget", "component": "web/slots/DueThisWeek", "permission": "hop-dong:read" },
+      { "slot": "ledger.drilldown.source", "component": "web/slots/OpenInstallment", "permission": "hop-dong:read" }
+    ],
+    "hooks": [
+      { "hook": "masterdata.referenceCheck", "handler": "api/hooks/partner-in-use" },
+      { "hook": "document.beforeTransition", "handler": "api/hooks/schedule-matches-total" }
+    ],
+    "print": ["web/print/contract"]
+  },
+  "ui": { "icon": "FileSignature", "color": "#0f766e", "order": 45 }
+}

@@ -1,0 +1,31 @@
+{
+  "docType": "customer_payment",
+  "docKey": "quy:CN01:customer_payment:2201",
+  "version": 1,
+  "branchCode": "CN01",
+  "docNo": "PT0002201",
+  "docDate": "2026-10-15",
+  "partner": {
+    "code": "0912345678",
+    "name": "Nguyễn Văn A"
+  },
+  "methodCode": "CK",
+  "description": "Khách trả nợ hai hoá đơn",
+  "lines": [
+    {
+      "lineKey": "1",
+      "amount": 1200000,
+      "invoiceDocKey": "pos:CN01:sale:3101"
+    },
+    {
+      "lineKey": "2",
+      "amount": 800000,
+      "branchCode": "CN02",
+      "invoiceDocKey": "pos:CN02:sale:887",
+      "description": "Thu hộ hoá đơn của CN02"
+    }
+  ],
+  "totals": {
+    "total": 2000000
+  }
+}

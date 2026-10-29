@@ -1,0 +1,47 @@
+/* Sơ đồ quy trình phân hệ (tiền tố qt-). */
+.qt { display: flex; flex-direction: column; gap: 10px; }
+.qt-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 10px; align-items: start; }
+.qt-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.qt-card-head { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.02em; text-align: center; padding: 10px 12px; border-bottom: 1px solid var(--line-soft); color: var(--ink-700); }
+.qt-flow { padding-bottom: 14px; }
+.qt-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; padding: 14px 18px 0; }
+.qt-row.side { padding-top: 0; }
+.qt-step { position: relative; display: flex; flex-direction: column; align-items: center; }
+.qt-step-main { border: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px; border-radius: 10px; width: 100%; transition: background 0.15s, transform 0.15s; }
+.qt-step-main:hover { background: var(--brand-50, #eef5ff); transform: translateY(-2px); }
+.qt-icon { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; box-shadow: 0 4px 10px rgba(14, 42, 69, 0.15); }
+.qt-label { font-size: 13px; font-weight: 600; color: var(--ink-800, #1e2b3a); text-align: center; line-height: 1.3; }
+.qt-label b { color: var(--brand-600, #1d6fd8); }
+.qt-hint { font-size: 11px; color: var(--ink-500); text-align: center; line-height: 1.3; }
+.qt-badge { position: absolute; top: 2px; right: 14%; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+.qt-badge.warn { background: var(--warn-bg); color: #8a5300; }
+.qt-badge.info { background: var(--info-bg); color: var(--brand-700); }
+.qt-badge.bad { background: var(--bad-bg); color: var(--bad); }
+.qt-new { border: 1px solid var(--line); background: #fff; border-radius: 12px; font-size: 11px; padding: 2px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; color: var(--brand-700); }
+.qt-new:hover { background: var(--brand-50, #eef5ff); border-color: var(--brand-500); }
+/* Trục thời gian: vạch nối các bước chính, mũi tên về phía cuối. */
+.qt-axis { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 10px 18px; height: 22px; }
+.qt-axis::before { content: ''; position: absolute; left: 4%; right: 0; top: 50%; border-top: 2px solid #9fb3c8; }
+.qt-tick { position: relative; }
+.qt-tick::after { content: ''; position: absolute; left: 50%; top: -6px; height: 17px; border-left: 2px solid #9fb3c8; }
+.qt-arrow { position: absolute; right: -2px; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-left: 9px solid #9fb3c8; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+.qt-panels { display: flex; flex-direction: column; gap: 10px; }
+.qt-links { padding: 6px 10px 10px; display: flex; flex-direction: column; }
+.qt-link { display: flex; align-items: center; gap: 6px; padding: 6px 4px; font-size: 13px; color: var(--ink-700); text-decoration: none; border-bottom: 1px dashed var(--line-soft); }
+.qt-link:last-child { border-bottom: 0; }
+.qt-link:hover { color: var(--brand-700); background: var(--brand-50, #eef5ff); }
+.qt-shortcuts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.qt-shortcut { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; font-size: 13px; color: var(--ink-700); text-decoration: none; border-right: 1px solid var(--line-soft); }
+.qt-shortcut:last-child { border-right: 0; }
+.qt-shortcut:hover { background: var(--brand-50, #eef5ff); color: var(--brand-700); }
+/* Việc cần làm */
+.qt-todo { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+.qt-todo-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; text-decoration: none; font-size: 13px; border: 1px solid transparent; }
+.qt-todo-item b { font-size: 16px; }
+.qt-todo-item.error { background: var(--bad-bg); color: var(--bad); }
+.qt-todo-item.warn { background: var(--warn-bg); color: #8a5300; }
+.qt-todo-item.info { background: var(--info-bg); color: var(--brand-700); }
+.qt-todo-item:hover { border-color: currentColor; }
+.qt-todo-ok { padding: 10px 14px; color: var(--ok); font-size: 13px; }
+.module-home-tabs { display: flex; gap: 4px; margin: 0 0 10px; border-bottom: 1px solid var(--line); }
+@media (max-width: 1100px) { .qt-body { grid-template-columns: 1fr; } .qt-row, .qt-shortcuts { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); } .qt-axis { display: none; } }

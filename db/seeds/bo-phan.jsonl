@@ -1,0 +1,764 @@
+{"_bang": "bo-phan", "_mo_ta": "Danh mục bộ phận: phòng ban, khối, từng cửa hàng (mã BH + mã cửa hàng, ví dụ BH26001 = cửa hàng 26001). ", "_cot": ["code", "name", "parent_code", "address", "phone", "note", "is_active"]}
+{"code": "BH", "name": "Bán hàng", "parent_code": "KD", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00000", "name": "HO Công ty", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00001", "name": "Shop Vĩnh Hưng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00002", "name": "Shop Chợ Bún", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00003", "name": "Shop Trường Lâm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00004", "name": "Shop Vác", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00005", "name": "Shop Vạn Điểm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00006", "name": "Shop Phú La", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00007", "name": "Shop Thạch Bàn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00008", "name": "Shop Vân Đình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00009", "name": "Shop Bình Đà", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00010", "name": "Shop Xuân Mai", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00011", "name": "Shop Ba Thá", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00012", "name": "Shop Trường Yên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00013", "name": "Shop Hoàng Văn Thụ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00014", "name": "Shop Thư Phú", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00015", "name": "Shop Hương Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00016", "name": "Shop Thạch Hòa", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00017", "name": "Shop Thắng Lợi", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00018", "name": "Shop Đại Nghĩa", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00019", "name": "Shop Cổ Đông", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00020", "name": "Shop Quảng Bị", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00021", "name": "Shop Chùa Thông", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00022", "name": "Shop Phúc Thọ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00023", "name": "Shop Vật Lại", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH00024", "name": "Shop Phú Xuyên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01", "name": "Cửa hàng 01", "parent_code": null, "address": "ádff", "phone": "", "note": "", "is_active": true}
+{"code": "BH01000", "name": "HO Nam Định", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01001", "name": "Shop Trần Huy Liệu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01002", "name": "Shop Gôi", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01003", "name": "Shop Chợ Chùa", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01004", "name": "Shop Ý Yên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01005", "name": "Shop Chợ Cầu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01006", "name": "Shop Chợ Đền", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01007", "name": "Shop Chợ Dần", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01008", "name": "Shop Cổ Lễ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01009", "name": "Shop Chợ Gạo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01010", "name": "Shop Ngô Đồng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01011", "name": "Shop Liễu Đề", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01012", "name": "Shop Tt Cồn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01013", "name": "Shop Tam Thôn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01014", "name": "Shop Thịnh Long", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01015", "name": "Shop Cát Thành", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01016", "name": "Shop Giải Phóng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01017", "name": "Shop Đặng Xuân Bảng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01018", "name": "Shop Chợ Hầu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01019", "name": "Shop Hồng Thuận", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01020", "name": "Shop Quỹ Nhất", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01021", "name": "Shop Mai Xá", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01022", "name": "Shop Yên Chính", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01023", "name": "Shop Bình Lãng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01024", "name": "Shop Nghĩa Tân", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01025", "name": "Shop Quất Lâm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01026", "name": "Shop Yên Đồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01027", "name": "Shop Hạ Long", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01028", "name": "Shop Chợ Hành Thiện", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01029", "name": "Shop Hàng Thao", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01030", "name": "Shop Nghĩa Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01031", "name": "Shop Hải Phong", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01032", "name": "Shop Chợ Lâm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01033", "name": "Shop Trần Phú", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01034", "name": "Shop Hưng Yên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01035", "name": "Shop Trần Nhật Duật", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01036", "name": "Shop Trung Đông", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01037", "name": "Shop Chợ Bể", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01038", "name": "Shop Trực Đại", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01039", "name": "Shop Rạng Đông", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01040", "name": "Giao Tiến", "parent_code": null, "address": "Xóm 5, Quyết Tiến, xã Giao Tiến, huyện Giao Thủy,", "phone": "", "note": "", "is_active": true}
+{"code": "BH01041", "name": "Xuân Kiên", "parent_code": null, "address": "Xóm 12A Xã Xuân Kiên Huyện Xuân Trường Nam Định", "phone": "", "note": "", "is_active": true}
+{"code": "BH01042", "name": "Shop Trực Cường", "parent_code": null, "address": "xóm Thái Học, Xã Trực Cường, Trực Ninh, Nam Định.", "phone": "", "note": "", "is_active": true}
+{"code": "BH01043", "name": "Shop Nghĩa Lạc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01044", "name": "Chợ Quán", "parent_code": null, "address": "", "phone": "", "note": "Xóm 3 Xã  Hải hà, Huyện Hải Hậu, Tỉnh Nam Định", "is_active": true}
+{"code": "BH01045", "name": "Đồng Phong", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01046", "name": "Shop Gia Viễn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01047", "name": "Shop Trung Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01048", "name": "Shop Vân Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01049", "name": "Shop Nguyễn Văn Trỗi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01050", "name": "TT NON", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01051", "name": "Phố Cà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01052", "name": "Đinh Tiên Hoàng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01053", "name": "Châu GIang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH01054", "name": "Đô Hai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02000", "name": "Shop HO Vĩnh Phúc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02001", "name": "Shop Vĩnh Tường", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02002", "name": "Shop Yên Lạc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02003", "name": "Shop Hương Canh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02004", "name": "Shop Tam Dương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02005", "name": "Shop Lý Thường Kiệt", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02006", "name": "Shop Chợ Tổng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02007", "name": "Shop Lập Thạch", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02008", "name": "Shop Hương Canh 2", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02009", "name": "Shop Phố Kiệu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02010", "name": "Shop Tứ Trưng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02011", "name": "Shop Tam Hồng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02012", "name": "Shop Trần Hưng Đạo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02013", "name": "Shop Tam Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02014", "name": "Trung Kiên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02015", "name": "Quán Tiên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02016", "name": "Shop Xuân Hòa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02017", "name": "Shop Trưng Trắc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02018", "name": "Shop Tích Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02019", "name": "Shop Lập Thạch 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02020", "name": "Shop Hợp Lý", "parent_code": null, "address": "Thôn Bỉnh Ri, xã Hợp Lý, huyện Lập Thạch, tỉnh Vĩn", "phone": "", "note": "", "is_active": true}
+{"code": "BH02021", "name": "Shop Thái Hòa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02022", "name": "Shop Lý Thường Kiệt 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02023", "name": "Shop Chợ Vàng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02024", "name": "Hợp Châu", "parent_code": null, "address": "TDP Đồi Thông, Thị trấn Hợp Châu, Huyện Tam Đảo, t", "phone": "", "note": "", "is_active": true}
+{"code": "BH02025", "name": "Shop Bồ Sao", "parent_code": null, "address": "Thôn Chùa, xã Bồ Sao, huyện Vĩnh Tường, tỉnh Vĩnh", "phone": "", "note": "", "is_active": true}
+{"code": "BH02026", "name": "Chợ Tổng 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH02027", "name": "Gốc Đề", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03000", "name": "Shop HO Hà Nam", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03001", "name": "Shop Bình Mỹ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03002", "name": "Shop Nguyễn Văn Trỗi", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03003", "name": "Shop Quế", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03004", "name": "Shop Vĩnh Trụ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03005", "name": "Shop Duy Tiên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03006", "name": "Shop Tt Non", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03007", "name": "Shop Chợ Lương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03008", "name": "Shop Chợ Đằn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03009", "name": "Shop Phố Cà", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03010", "name": "Shop Thanh Hà", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03011", "name": "Shop Tt Đồng Văn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03012", "name": "Shop Nhân Hậu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03013", "name": "Shop Đinh Tiên Hoàng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03014", "name": "Shop Đô Hai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03015", "name": "Shop Châu Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03016", "name": "Shop Bình Nghĩa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03017", "name": "Shop Kiện Khê", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03018", "name": "Vĩnh Trụ 2", "parent_code": null, "address": "Khu phố I, TT Vĩnh Trụ, Lý Nhân, Hà Nam.", "phone": "", "note": "", "is_active": true}
+{"code": "BH03019", "name": "Shop Cầu Gừng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH03020", "name": "Shop Chợ Động", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04000", "name": "Shop HO Ninh Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04001", "name": "Shop Lãn Ông", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04002", "name": "Shop Nho Quan", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04003", "name": "Shop Tam Điệp", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04004", "name": "Shop Gia Viễn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04005", "name": "Shop Yên Mô", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04006", "name": "Shop Bích Đào", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04007", "name": "Shop Yên Khánh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04008", "name": "Shop Khánh Phú", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04009", "name": "Shop Vân Giang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04010", "name": "Shop Gia Trấn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04011", "name": "Shop Bình Minh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04012", "name": "Shop Trung Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH04013", "name": "Đồng Phong", "parent_code": null, "address": "Xã Đồng Phong, huyện Nho Quan, Ninh Bình", "phone": "", "note": "", "is_active": true}
+{"code": "BH04014", "name": "Chợ Rịa", "parent_code": null, "address": "Xã Phú Lộc, Nho Quan, Ninh Bình", "phone": "", "note": "", "is_active": true}
+{"code": "BH05000", "name": "HO HCM", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05001", "name": "Shop Lê Đức Thọ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05002", "name": "Shop Nguyễn Văn Quá", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05003", "name": "Shop Tân Hương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05004", "name": "Shop Văn Cao", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05005", "name": "Shop Thoại Ngọc Hầu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05006", "name": "Shop Hương Lộ 80B", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05007", "name": "Shop Bùi Công Trừng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05008", "name": "Shop Thống Nhất", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05009", "name": "Shop Nữ Dân Công", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05010", "name": "Shop Nguyễn Ảnh Thủ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05011", "name": "Shop Thới Tây 2", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05012", "name": "Shop Ấp 5-Vĩnh Lộc B", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05013", "name": "Shop Đông Bắc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05014", "name": "Shop Quách Điêu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05015", "name": "Shop Nguyễn Thị Kiểu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05016", "name": "Shop Ấp 1A- Vĩnh Lộc B", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05017", "name": "Shop Hồ Văn Long", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05018", "name": "Shop Bà Hom", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05019", "name": "Shop Bà Điểm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05020", "name": "Shop Thới Tam Thôn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05021", "name": "Shop Đông Thạnh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05022", "name": "Shop 49 Tân Tạo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05023", "name": "Shop Tân Thới Nhất", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05024", "name": "Shop Bình Thành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05025", "name": "Liên Ấp 2-6", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05026", "name": "Nghĩa Phát", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05027", "name": "Shop Tân Trụ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05028", "name": "Lê Đình Cẩn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05029", "name": "Shop Thống Nhất 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05030", "name": "Shop Vường Lài", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05031", "name": "Shop Phan Anh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05032", "name": "Shop Liên Khu 5-6", "parent_code": null, "address": "29 Liên Khu 5-6, Khu Phố 6, P.Bình Hưng Hòa B, Q.B", "phone": "", "note": "", "is_active": true}
+{"code": "BH05033", "name": "Shop Thái Thị Giữ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05034", "name": "Shop  LK56-2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05035", "name": "Shop Thới Tứ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05036", "name": "Shop Đặng Chất", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05037", "name": "Shop Bình Thành 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05038", "name": "Shop Tân Thới Nhất 01", "parent_code": null, "address": "53/6E KP2, P. Tân Thới Nhất, Quận 12, Tp. HCM", "phone": "", "note": "", "is_active": true}
+{"code": "BH05039", "name": "Shop Chợ Đường", "parent_code": null, "address": "94/4 Bùi Công Trừng, P. Thạnh Xuân, Quận 12, Tp. H", "phone": "", "note": "", "is_active": true}
+{"code": "BH05040", "name": "Shop Nguyễn Văn Quá 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05041", "name": "Bùi Dương Lịch", "parent_code": null, "address": "78 Bùi Dương Lịch, Khu Phố 1, P.Bình Hưng Hòa B, Q", "phone": "", "note": "", "is_active": true}
+{"code": "BH05042", "name": "Phan Văn Đối", "parent_code": null, "address": "Phan Văn Đối, Bà Điểm, Hóc Môn, Tp.Hồ Chí Minh", "phone": "", "note": "", "is_active": true}
+{"code": "BH05043", "name": "Nguyễn Văn Bứa", "parent_code": null, "address": "27A Ấp 6, Xã Xuân Thới Sơn, Hóc Môn, TPHCM", "phone": "", "note": "", "is_active": true}
+{"code": "BH05044", "name": "Xuân Thới Thượng", "parent_code": null, "address": "104/84, Ấp 3, Xã Xuân Thới Thượng, Huyện Hóc Môn,", "phone": "", "note": "", "is_active": true}
+{"code": "BH05045", "name": "Tân Thạnh Đông", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05046", "name": "Cửu Phú", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05047", "name": "Bình Chiểu", "parent_code": null, "address": "115 Bình Chiểu, KP1, P.Bình CHiểu, Thủ Đức, TPHCM", "phone": "", "note": "", "is_active": true}
+{"code": "BH05048", "name": "Đinh Đức Thiện", "parent_code": null, "address": "C13/45 Tổ 13, Ấp 3, xã Bình CHánh, TPHCM", "phone": "", "note": "", "is_active": true}
+{"code": "BH05049", "name": "Trần Văn Mười", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05050", "name": "Thới Hòa", "parent_code": null, "address": "E9/13 Ấp 5A, xã Vĩnh Lộc A, Bình CHánh, TPHCM", "phone": "", "note": "", "is_active": true}
+{"code": "BH05051", "name": "Thuận Đạt", "parent_code": null, "address": "F44/68 Ấp 6, Xã Hưng Long, huyện Bình CHánh, TPHCM", "phone": "", "note": "", "is_active": true}
+{"code": "BH05052", "name": "Phú Hòa Đông", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05053", "name": "An Nhơn Tây", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05054", "name": "Phan Văn Hớn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05055", "name": "shop Nguyễn Văn Ni", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05056", "name": "Shop An Nhơn Tây", "parent_code": null, "address": "", "phone": "", "note": "Trùng mã với: TỈNH LỘ 8", "is_active": true}
+{"code": "BH05057", "name": "Shop Thạnh Xuân 21", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05058", "name": "Tân Phú Trung", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05059", "name": "Chợ Việt Kiều", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05060", "name": "Trịnh Đình Thảo", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05061", "name": "Nguyễn Văn Khạ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH05062", "name": "Chợ Bình Hoà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06000", "name": "HO Bắc Ninh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06001", "name": "Shop Chợ Dâu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06002", "name": "Shop Gia Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06003", "name": "Shop Lương Tài", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06004", "name": "Shop Hồ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06005", "name": "Shop Chờ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06006", "name": "Shop Từ Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06007", "name": "Shop Chợ Ngụ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06008", "name": "Shop Đại Bái", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06009", "name": "Shop Gia Đông", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06010", "name": "Shop Thanh Khương", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06011", "name": "Shop Chợ Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06012", "name": "Shop Hương Mạc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06013", "name": "Shop Văn Môn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06014", "name": "Shop Yên Phụ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06015", "name": "Shop Tân Hồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06016", "name": "Shop Đại Đồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06017", "name": "Shop Đồng Kỵ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH06018", "name": "Shop Tiền An", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07000", "name": "HO Hưng Yên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07001", "name": "Shop Cửu Cao", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07002", "name": "Shop Lương Bằng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07003", "name": "Shop Phụng Công", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07004", "name": "Shop Dân Tiến", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07005", "name": "Shop Liêu Xá", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07006", "name": "Shop Minh Châu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07007", "name": "Shop Bô Thời", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07008", "name": "Shop Chợ Đầu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07009", "name": "Shop Tân Việt", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH07010", "name": "Shop Yên Mỹ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08000", "name": "HO Phú Thọ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08001", "name": "Shop Bãi Bằng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08002", "name": "Shop Thanh Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08003", "name": "Shop Hạ Hòa", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08004", "name": "Shop Lâm Thao", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08005", "name": "Shop Thanh Ba", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08006", "name": "Shop Thanh Thủy", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08007", "name": "Shop Nông Trang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08008", "name": "Shop Hùng Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08009", "name": "Shop Yên Lập", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08010", "name": "Shop Tây Cốc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08011", "name": "Shop Phú Hộ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08012", "name": "Shop Sông Thao", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08013", "name": "Shop Phương Xá", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08014", "name": "Shop Cổ Tiết", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08015", "name": "Shop Đoan Hùng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08016", "name": "Shop Đền Hùng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08017", "name": "Shop Âu Cơ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08018", "name": "Shop Chí Đám", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08019", "name": "Shop Hoàng Xá", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08020", "name": "Shop Thanh Miếu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08021", "name": "Shop Phú Lộc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08022", "name": "Shop Châu Phong", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08023", "name": "Shop Nguyễn Du", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08024", "name": "Hòa Phong", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08025", "name": "Yển Khê", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08026", "name": "Trạm Thản", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08027", "name": "Shop Phú Lạc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08028", "name": "Shop Tiên Cát", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08029", "name": "Shop Hàn Thuyên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08030", "name": "Shop Chân Mộng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08031", "name": "Shop Tứ Xã", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08032", "name": "Shop Hùng Lô", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08033", "name": "Shop Hùng Vương", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08034", "name": "Shop Thanh Sơn 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08035", "name": "Shop Cổ Tiết 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08036", "name": "Thanh ba 2", "parent_code": null, "address": "Khu 11, TT Thanh Ba, huyện Thanh ba, tỉnh Phú Thọ", "phone": "", "note": "", "is_active": true}
+{"code": "BH08037", "name": "Hưng Hóa", "parent_code": null, "address": "Khu Tân Hưng, TT Hưng Hóa, huyện Tam Nông, tỉnh Ph", "phone": "", "note": "", "is_active": true}
+{"code": "BH08038", "name": "Shop Hiền Đa", "parent_code": null, "address": "Khu Thạch Đê, xã Hiền Đa, huyện Cẩm Khê, tỉnh Phú", "phone": "", "note": "", "is_active": true}
+{"code": "BH08039", "name": "Hùng Sơn 2", "parent_code": null, "address": "Khu 6, TT Hùng Sơn, huyện Lâm Thao, tỉnh Phú Thọ", "phone": "", "note": "", "is_active": true}
+{"code": "BH08040", "name": "Shop Tiên Kiên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08041", "name": "Shop Then", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08042", "name": "Cao Xá", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08043", "name": "Nguyễn Tất Thành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08044", "name": "BH08044", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH08045", "name": "BH08045", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09000", "name": "HO Thái Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09001", "name": "Shop Vũ Lạc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09002", "name": "Shop Diêm Điền", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09003", "name": "Shop Kiến Xương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09004", "name": "Shop Quỳnh Phụ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09005", "name": "Shop Vũ Thư", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09006", "name": "Shop Đông Hưng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09007", "name": "Shop Long Hưng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09008", "name": "Shop Mễ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09009", "name": "Shop Tiền Hải", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09010", "name": "Shop Hưng Nhân", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09011", "name": "Shop Đông Á", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09012", "name": "Shop Đông Cơ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09013", "name": "Shop Chợ Thái", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09014", "name": "Shop Lý Bôn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09015", "name": "Shop Chợ Gốc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09016", "name": "Shop Đống Năm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09017", "name": "Shop Nam Trung", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09018", "name": "Shop Chợ Lục", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09019", "name": "Shop Thanh Tân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09020", "name": "Shop Tiên Hưng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09021", "name": "Shop Chợ Diêm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09022", "name": "Shop Lý Thường Kiệt", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09023", "name": "Shop Chợ Thụy Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09024", "name": "Shop Quỳnh Hồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09025", "name": "Shop Tân Phong", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09026", "name": "Shop An Ninh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09027", "name": "Shop Quỳnh Nguyên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09028", "name": "Shop Chợ Lụ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09029", "name": "Shop An Đồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09030", "name": "SHop Đồng Bằng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09031", "name": "Shop Hùng Dũng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09032", "name": "Shop Chợ Cầu Đen", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09033", "name": "Nam Hà", "parent_code": null, "address": "Xã Nam Hà, Huyện Tiền Hải, Tỉnh Thái Bình", "phone": "", "note": "", "is_active": true}
+{"code": "BH09034", "name": "Chợ Buộm", "parent_code": null, "address": "thôn Lương Ngọc, xã Tân Tiến, Hưng Hà, Thái Bình", "phone": "", "note": "", "is_active": true}
+{"code": "BH09035", "name": "Hưng Hà", "parent_code": null, "address": "Khu Nhân Cầu 1, TT Hưng Hà, Hưng Hà, Thái Bình", "phone": "", "note": "", "is_active": true}
+{"code": "BH09036", "name": "264 Lý Bôn", "parent_code": null, "address": "Số nhà 264, Đường Lý Bôn, Tổ 20, Phường Tiền Phong", "phone": "", "note": "", "is_active": true}
+{"code": "BH09037", "name": "Quang Trung", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09038", "name": "Chợ Tây", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09039", "name": "Tây Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09040", "name": "Chợ Bàng", "parent_code": null, "address": "Thôn Xuân Bảng, xã Thụy Xuân, Thái Thụy, Thái Bình", "phone": "", "note": "", "is_active": true}
+{"code": "BH09041", "name": "Shop Chợ Hồ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09042", "name": "Chợ Cọi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09043", "name": "Chợ Sóc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH09044", "name": "Shop An Bài", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10000", "name": "HO Thanh Hóa", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10001", "name": "Shop Bỉm Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10002", "name": "Shop Nga Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10003", "name": "Shop Bỉm Sơn 2", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10004", "name": "Shop Nga Liên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10005", "name": "Shop Lang Chánh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10006", "name": "Shop Tân Dân", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10007", "name": "Shop Phố Cát", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10008", "name": "Shop Vạn Hà", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10009", "name": "Shop Bút Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10010", "name": "Shop Chợ Quảng Xương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10011", "name": "Shop Hoằng Ngọc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10012", "name": "Shop Bến Sung", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10013", "name": "Shop Cành Nàng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10014", "name": "Shop Yên Cát", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10015", "name": "Shop Cẩm Thủy", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10016", "name": "Shop Đò Lèn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10017", "name": "Shop Chợ Thiều", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10018", "name": "Shop Quảng Thắng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10019", "name": "Shop Bái Thượng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10020", "name": "Shop Chợ Đà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10021", "name": "Shop Phố Cống", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10022", "name": "Shop Vĩnh Thịnh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10023", "name": "Shop Tân An", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10024", "name": "Shop Hậu Lộc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10025", "name": "Shop Thị trấn Vĩnh Lộc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10026", "name": "Shop Minh Lộc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10027", "name": "Shop Nam Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10028", "name": "Shop Cầu Quan", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10029", "name": "Shop Ngọc Lặc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10030", "name": "Shop Thường Xuân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10031", "name": "Shop Nga Điền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10032", "name": "Shop Sầm Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10033", "name": "Shop Sao Vàng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10034", "name": "Shop Nông Cống", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10035", "name": "Shop Ba Chè", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10036", "name": "Shop La Hán", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10037", "name": "Shop Chợ Quăng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10038", "name": "Shop Phố Môi", "parent_code": null, "address": "SN 115, Phố Môi, xã Quảng Tâm, TP Thanh Hóa, tỉnh", "phone": "", "note": "", "is_active": true}
+{"code": "BH10039", "name": "Bến Ngự", "parent_code": null, "address": "SN 46 Bến Ngự, P. Trường Thi, TP. Thanh Hóa, Tỉnh", "phone": "", "note": "", "is_active": true}
+{"code": "BH10040", "name": "Quảng Tiến", "parent_code": null, "address": "SN 111, đường Trần Hưng Đạo, khu phố Thọ Xuân, P.", "phone": "", "note": "", "is_active": true}
+{"code": "BH10041", "name": "Shop Phú Sơn", "parent_code": null, "address": "616B Nguyễn Trãi, Phố Tây Sơn 2, P.Phú Sơn, Tp.Tha", "phone": "", "note": "", "is_active": true}
+{"code": "BH10042", "name": "Shop Yên Tâm", "parent_code": null, "address": "thôn Mỹ Quan, xã Yên Tâm, huyện Yên Định, tỉnh Tha", "phone": "", "note": "", "is_active": true}
+{"code": "BH10043", "name": "Shop Kim Tân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10044", "name": "Shop Quan Hóa", "parent_code": null, "address": "Khu 2, TT Quan Hóa, H. Quan Hóa, T. Thanh Hóa", "phone": "", "note": "", "is_active": true}
+{"code": "BH10045", "name": "Shop Phố Kiểu", "parent_code": null, "address": "Phố Kiểu, xã Yên Trường, huyện Yên Định, tỉnh Than", "phone": "", "note": "", "is_active": true}
+{"code": "BH10046", "name": "Lam Sơn", "parent_code": null, "address": "Khu 3, Thị trấn Lam Sơn, Huyện Thọ Xuân, Tỉnh Than", "phone": "", "note": "", "is_active": true}
+{"code": "BH10047", "name": "Chợ Sim", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10048", "name": "Điền Lư", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10049", "name": "Shop Quảng Ngọc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10050", "name": "Shop Phố Giắt", "parent_code": null, "address": "SN 22 Phố Giắt, TT Triệu Sơn, huyện Triệu Sơn, tỉn", "phone": "", "note": "", "is_active": true}
+{"code": "BH10051", "name": "Nga Mỹ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH10052", "name": "Quảng Lưu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11000", "name": "Shop HO Hải Phòng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11001", "name": "Shop Kiến An", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11002", "name": "Shop Vĩnh Bảo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11003", "name": "Shop Thủy Nguyên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11004", "name": "Shop Minh Kha", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11005", "name": "Shop Trường Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11006", "name": "Shop Chợ Hương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11007", "name": "Shop Tôn Đức Thắng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11008", "name": "Shop Trần Tất Văn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11009", "name": "Shop Quý Kim", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11010", "name": "Shop Kiến Thụy", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11011", "name": "Shop Thủy Đường", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11012", "name": "Shop Chợ Lũng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11013", "name": "Shop Trường Chinh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11014", "name": "Shop Tiên Lãng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11015", "name": "Shop Quán Toan", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11016", "name": "Shop Nguyễn Lương Bằng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11017", "name": "Shop Thiên Lôi", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11018", "name": "Shop Chợ Tổng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11019", "name": "Shop Thủy Triều", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11020", "name": "Shop Cầu Đen", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11021", "name": "Shop Lập Lễ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11022", "name": "Shop Bắc Hưng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11023", "name": "Shop Đà Nẵng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11024", "name": "Shop Miếu Hai Xã", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11025", "name": "Shop Vĩnh Niệm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11026", "name": "Shop Tam Cường", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11027", "name": "Shop Ngô Gia Tự", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11028", "name": "Shop Ngọ Dương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11029", "name": "Shop Đình Đông", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11030", "name": "Shop Đại Hợp", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11031", "name": "Shop Đông Thái", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11032", "name": "Shop Chợ Rế", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11033", "name": "Shop Chợ Đôi", "parent_code": null, "address": "", "phone": "", "note": "Shop Chợ Đôi", "is_active": true}
+{"code": "BH11034", "name": "Shop Mỹ Đức", "parent_code": null, "address": "", "phone": "", "note": "Shop Mỹ Đức", "is_active": true}
+{"code": "BH11035", "name": "Shop Dư Hàng", "parent_code": null, "address": "Số 33 Dư Hàng, Phường Dư Hàng, Quận Lê Chân, Thành", "phone": "", "note": "", "is_active": true}
+{"code": "BH11036", "name": "Shop Tràng Cát", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11037", "name": "Shop Đa Phúc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11038", "name": "Shop Thanh Lãng", "parent_code": null, "address": "Thôn Phố, Xã Quảng Thanh, Huyện Thủy Nguyên, Thành", "phone": "", "note": "", "is_active": true}
+{"code": "BH11039", "name": "Shop Thủy Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11040", "name": "Shop Hải Triều", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH11041", "name": "Shop An Dương", "parent_code": null, "address": "Số 29 đường Tôn Đức Thắng, phường Trần Nguyên Hãn,", "phone": "", "note": "Số 29 đường Tôn Đức Thắng, phường Trần Nguyên Hãn, quận Lê Chân, thành phố Hải Phòng", "is_active": true}
+{"code": "BH11042", "name": "Shop Chợ Đôn", "parent_code": null, "address": "", "phone": "", "note": "Số 47 đường Thiên Lôi, Nghĩa Xá, quận Lê Chân,TP Hải Phòng", "is_active": true}
+{"code": "BH11043", "name": "Shop Đông Hải", "parent_code": null, "address": "Khu dân cư Phương Lưu, phường Đông Hải 1, quận Hải", "phone": "", "note": "", "is_active": true}
+{"code": "BH11044", "name": "Lê Lai", "parent_code": null, "address": "số 103 Lê Lai, phường Máy Chai, quận Ngô Quyền, Tp", "phone": "", "note": "", "is_active": true}
+{"code": "BH11045", "name": "Đồ Sơn", "parent_code": null, "address": "Số 44A đường Đình Đoài, phường Vạn Sơn, quận Đồ Sơ", "phone": "", "note": "", "is_active": true}
+{"code": "BH11046", "name": "Hải Thành", "parent_code": null, "address": "Số nhà 445, TDP 1C, phường Hải thành, quận Dương K", "phone": "", "note": "", "is_active": true}
+{"code": "BH11047", "name": "Shop Chợ Hàng", "parent_code": null, "address": "Số 146 Chợ Hàng, P.Dư Hàng Kênh, quận Lê Chân, TP", "phone": "", "note": "", "is_active": true}
+{"code": "BH11048", "name": "Shop Kiều Hạ", "parent_code": null, "address": "Số 475 Đông Hải, Bình Kiều 1, Đông Hải 2, Hải An,", "phone": "", "note": "11048", "is_active": true}
+{"code": "BH12000", "name": "HO Bắc Giang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12001", "name": "Shop Hồng Giang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12002", "name": "Shop Tân An", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12003", "name": "Shop Cầu Gồ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12004", "name": "Shop Phố Kim", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12005", "name": "Shop Đồi Ngô", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12006", "name": "Shop Tt Kép", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12007", "name": "Shop Buộm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12008", "name": "Shop Cao Thượng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12009", "name": "Shop Neo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12010", "name": "Shop Chũ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12011", "name": "Shop Chàng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12012", "name": "Shop Tiền Phong", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12013", "name": "Shop Bố Hạ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12014", "name": "Shop Thị Trấn Thắng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12015", "name": "Shop Nhã Nam", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12016", "name": "Shop Minh Đức", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12017", "name": "Shop Nếnh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12018", "name": "Shop Dĩnh Kế", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12019", "name": "Shop Phố Cốc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12020", "name": "Shop Bích Động", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12021", "name": "Shop Hà Vị", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12022", "name": "Shop Ngọc Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12023", "name": "Phố Sàn", "parent_code": null, "address": "SN 55, Thị tứ Sàn ( phố Sàn), xã Phương Sơn, huyện", "phone": "", "note": "", "is_active": true}
+{"code": "BH12024", "name": "Bắc Lý", "parent_code": null, "address": "Thôn Nội Thổ, Xã Bắc Lý, Huyện Hiệp Hòa, Tỉnh Bắc", "phone": "", "note": "", "is_active": true}
+{"code": "BH12025", "name": "TT Vôi", "parent_code": null, "address": "Thôn Chu Nguyên, TT Vôi, huyện Lạng Giang, tỉnh Bắ", "phone": "", "note": "", "is_active": true}
+{"code": "BH12026", "name": "Ngô Quyền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH12027", "name": "Shop Quang Trung", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13000", "name": "HO Hà Nội", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13001", "name": "Shop Vĩnh Quỳnh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13002", "name": "Shop Hòa Thạch", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13003", "name": "Shop Ngô Xuân Quảng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13004", "name": "Shop Bình Phú", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13005", "name": "Shop Liên Quan", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13006", "name": "Shop Chúc Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13007", "name": "Shop Thọ Xuân", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13008", "name": "Shop Cát Quế", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13009", "name": "Shop Hà Huy Tập", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13010", "name": "Shop Chợ Bái", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13011", "name": "Shop Hòa Nam", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13012", "name": "Shop Chu Minh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13013", "name": "Shop Mỹ Đình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13014", "name": "Shop Kiến Hưng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13015", "name": "Shop Thạch Bích", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13016", "name": "Shop La Phù", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13017", "name": "Shop Phố Nỷ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13018", "name": "Shop Phố Keo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13019", "name": "Shop Kim Nỗ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13020", "name": "Shop Hoàng Công Chất-Phú Diễn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13021", "name": "Shop Trôi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13022", "name": "Shop Phủ Lỗ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13023", "name": "Shop Chợ Tó", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13024", "name": "Shop Chợ Yên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13025", "name": "Shop Ngọc Hồi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13026", "name": "Shop Nhông", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13027", "name": "Tân Hội", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13028", "name": "Hương Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13029", "name": "Sơn Đồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13030", "name": "Sóc Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13031", "name": "Shop Đại Mỗ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13032", "name": "Shop Thạch Đà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13033", "name": "Shop Cổ Nhuế", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13034", "name": "Shop Nguyễn Đức Cảnh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13035", "name": "Shop Định Công", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13036", "name": "Shop Cổ Bi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13037", "name": "Shop Yên Sở", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13038", "name": "Shop Tứ Hiệp", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13039", "name": "Shop Xuân Đỉnh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13040", "name": "Shop Định Công 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13041", "name": "Shop Hải Bối", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13042", "name": "Shop Chợ Mun", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13043", "name": "Shop Chợ Nghệ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13044", "name": "Shop Kẻ Vẽ", "parent_code": null, "address": "Số 84 Kẻ Vẽ, Phường Đông Ngạc, Quận Bắc Từ Liêm, T", "phone": "", "note": "", "is_active": true}
+{"code": "BH13045", "name": "Shop Chợ Giường", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13046", "name": "Shop Vũ Xuân Thiều", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13047", "name": "Quốc Oai", "parent_code": null, "address": "Số nhà 154 đường Phố Huyện, Thị Trấn Quốc Oai, Huy", "phone": "", "note": "", "is_active": true}
+{"code": "BH13048", "name": "Shop Tân Mai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13049", "name": "Bạch Đằng", "parent_code": null, "address": "Số 508, Bạch Đằng, Phường Chương Dương,Quận Hoàn K", "phone": "", "note": "", "is_active": true}
+{"code": "BH13050", "name": "Chợ Chuông", "parent_code": null, "address": "'Số 252, Ngã Ba Chợ Chiều, Thôn Mã Kiều, Xã Phương", "phone": "", "note": "", "is_active": true}
+{"code": "BH13051", "name": "Shop Tân Khai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13052", "name": "Xốm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13053", "name": "Yên Phụ", "parent_code": null, "address": "Số 73 phố Yên Phụ, Phường Yên Phụ, Quận Tây Hồ, Hà", "phone": "", "note": "", "is_active": true}
+{"code": "BH13054", "name": "Đức Giang", "parent_code": null, "address": "Số 25 Đức Giang, Phường Đức Giang, Quận Long Biên", "phone": "", "note": "", "is_active": true}
+{"code": "BH13055", "name": "Trần Cung", "parent_code": null, "address": "Số 141-143 Trần Cung, Phường Cổ Nhuế 1, Quận Bắc T", "phone": "", "note": "", "is_active": true}
+{"code": "BH13056", "name": "Nam Dư", "parent_code": null, "address": "Số 207 Phố Nam Dư, Tổ 12, Phường Lĩnh Nam, Quận Ho", "phone": "", "note": "", "is_active": true}
+{"code": "BH13057", "name": "Khương Trung", "parent_code": null, "address": "Số 287 Khương Trung, Phường Khương Trung, Quận Tha", "phone": "", "note": "", "is_active": true}
+{"code": "BH13058", "name": "Nguyễn An Ninh", "parent_code": null, "address": "Số 72 đường Nguyễn An Ninh ,Phường Tương Mai,Quận", "phone": "", "note": "", "is_active": true}
+{"code": "BH13059", "name": "Shop Xuân Trung", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13060", "name": "Shop Tản Đà", "parent_code": null, "address": "28 Tản Đà, Phường Nguyễn Trãi, Quận Hà Đông, TP. H", "phone": "", "note": "", "is_active": true}
+{"code": "BH13061", "name": "Shop Chợ Phùng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13062", "name": "Shop Phú Minh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13063", "name": "Tự Nhiên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13064", "name": "Yên Nghĩa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13065", "name": "Ninh Sở", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH13066", "name": "Chùa Thầy", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14000", "name": "HO Nghệ An", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14001", "name": "Shop Thanh Chương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14002", "name": "Shop Bảo Thành", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14003", "name": "Shop Chợ Cọi", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14004", "name": "Shop Đông Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14005", "name": "Shop Hòa Hiếu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14006", "name": "Shop Chợ 1/5", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14007", "name": "Shop Chợ Con Cuông", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14008", "name": "Shop Chợ Hôm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14009", "name": "Shop Chợ Rộc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14010", "name": "Shop Đô Thành", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14011", "name": "Shop Mai Trang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14012", "name": "Shop Đà Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14013", "name": "Shop Chợ Tuần", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14014", "name": "Shop Chợ Anh Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14015", "name": "Shop Chợ Dinh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14016", "name": "Shop Hợp Tâm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14017", "name": "Shop Sa Nam", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14018", "name": "Shop Nguyễn Trường Tộ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14019", "name": "Shop Tuệ Tĩnh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14020", "name": "Shop Cầu Giát", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14021", "name": "Shop Trần Hưng Đạo", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14022", "name": "Shop Nghi Hải", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14023", "name": "Shop Lê Lợi", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14024", "name": "Shop Phủ Diễn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14025", "name": "Shop Tân Kỳ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14026", "name": "Shop Diễn Xuân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14027", "name": "Shop Diễn Ngọc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14028", "name": "Shop Quán Hành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14029", "name": "Shop Quán Bánh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14030", "name": "Shop Hoàng Mai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14031", "name": "Shop Thanh Chương 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14032", "name": "Shop Diễn Hồng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14033", "name": "Shop Sơn Hải", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14034", "name": "Shop Diễn Thọ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14035", "name": "Shop Bến Thủy", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14036", "name": "Shop Yên Thành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14037", "name": "Shop Hậu Thành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14038", "name": "Shop Quỳnh Nghĩa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14039", "name": "Shop Hợp Thành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14040", "name": "Shop Thanh Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14041", "name": "Shop Nghĩa Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14042", "name": "Chợ Cây Chanh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14043", "name": "Diễn Mỹ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14044", "name": "Yên Sơn", "parent_code": null, "address": "Xóm 3,Xã Yên Sơn,Huyện Đô Lương,Tỉnh Nghệ An", "phone": "", "note": "", "is_active": true}
+{"code": "BH14045", "name": "Tam Quang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14046", "name": "Diễn Kỷ", "parent_code": null, "address": "thôn 7, xã Diễn Kỷ, huyện Diễn Châu, tỉnh Nghệ An", "phone": "", "note": "", "is_active": true}
+{"code": "BH14047", "name": "Long Xá", "parent_code": null, "address": "Xóm 2 - Xã Long Xá -Huyện Hưng Nguyên - Tỉnh Nghệ", "phone": "", "note": "", "is_active": true}
+{"code": "BH14048", "name": "Anh Sơn 2", "parent_code": null, "address": "khối 6A, thị trấn Anh Sơn, huyện Anh Sơn, tỉnh Ngh", "phone": "", "note": "", "is_active": true}
+{"code": "BH14049", "name": "Xuân Hòa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14050", "name": "Chợ Rộ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14051", "name": "Hòa Bình", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH14052", "name": "Nghĩa Thuận", "parent_code": null, "address": "", "phone": "", "note": "Nghĩa Thuận", "is_active": true}
+{"code": "BH14053", "name": "Chợ Cồn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH140SA", "name": "Shop Hòa Bình", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15000", "name": "HO Hải Dương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15001", "name": "Shop Tứ Kỳ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15002", "name": "Shop Ninh Giang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15003", "name": "Shop Chợ Cậy", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15004", "name": "Shop Quý Cao", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15005", "name": "Shop Chợ Rồng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15006", "name": "Shop Nam Sách", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH15007", "name": "Shop Thanh Miện", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16000", "name": "HO Hòa Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16001", "name": "Shop Lương Sơn", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16002", "name": "Shop Hữu Nghị", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16003", "name": "Shop Tân Giang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16004", "name": "Shop Kim Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16005", "name": "Shop Cao Phong", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16006", "name": "Shop Hàng Trạm", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16007", "name": "Shop Chăm Mát", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16008", "name": "Shop Đồng Tiến", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16009", "name": "Shop Đà Bắc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH16010", "name": "Shop Tân Lạc", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17000", "name": "HO Thái Nguyên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17001", "name": "Shop Samsung Thái Nguyên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17002", "name": "Shop Gia Sàng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17003", "name": "Shop Sông Công", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17004", "name": "Shop Ba Hàng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17005", "name": "Shop Hương Sơn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17006", "name": "17006#Phú Lương", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17007", "name": "Shop Chùa Hang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH17008", "name": "Shop Đại Từ", "parent_code": null, "address": "Chợ 1, Thị trấn Hùng Sơn, huyện Đại Từ, tỉnh Thái", "phone": "", "note": "", "is_active": true}
+{"code": "BH18000", "name": "HO Yên Bái", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18001", "name": "Shop Yên Ninh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18002", "name": "Shop Yên Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18003", "name": "Shop Yên Thịnh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18004", "name": "Shop Chợ Ga", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18005", "name": "Shop Cát Lem", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18006", "name": "Shop Cổ Phúc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18007", "name": "Shop Minh Tân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18008", "name": "Shop Mậu A", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18009", "name": "Shop Thác Bà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH18010", "name": "Shop Nam Cường", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19000", "name": "HO Tuyên Quang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19001", "name": "Shop Bình Thuận", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19002", "name": "Shop Sơn Dương", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19003", "name": "Shop Tân Bình", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19004", "name": "Shop Mỹ Bằng", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19005", "name": "Tân Yên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19006", "name": "Na Hang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19007", "name": "Phan Thiết", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19008", "name": "Shop Tân Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH19009", "name": "Shop Vĩnh Lộc", "parent_code": null, "address": "Tổ luộc 4, TT Vĩnh Lộc, Huyện Chiêm Hóa, tỉnh Tuyê", "phone": "", "note": "", "is_active": true}
+{"code": "BH19010", "name": "Tân Yên 2", "parent_code": null, "address": "", "phone": "", "note": "Tổ nhân dân Tân Yên, TT Tân yên, Huyện Hàm Yên, tỉnh Tuyên Quang", "is_active": true}
+{"code": "BH19011", "name": "Trung Môn", "parent_code": null, "address": "Xóm 5, xã Trung Môn, huyện Yên Sơn, tỉnh Tuyên Qua", "phone": "", "note": "", "is_active": true}
+{"code": "BH20000", "name": "HO Hà Tĩnh", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20001", "name": "Shop Tân Giang", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20002", "name": "Shop Nghi Xuân", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20003", "name": "Shop Cẩm Xuyên", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20004", "name": "Shop Phố Châu", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20005", "name": "Shop Hương Khê", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20006", "name": "Shop Bắc Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20007", "name": "Shop Xuân An", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20008", "name": "Shop Thạch Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20009", "name": "Shop Nghèn", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20010", "name": "Shop Thạch Châu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20011", "name": "Shop TT.Voi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20012", "name": "Shop Đức Thọ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20013", "name": "Thạch Bằng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20014", "name": "Cương Gián", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH20015", "name": "Hưng Trí", "parent_code": null, "address": "Tổ dân phố Châu Phố - Phường Sông Trí -Thị xã Kỳ A", "phone": "", "note": "", "is_active": true}
+{"code": "BH20016", "name": "Shop Hương Khê 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21000", "name": "HO Đà Nẵng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21001", "name": "Shop Lê Độ", "parent_code": null, "address": "150 Lê Độ. phường Chính Gián, Quận Thanh Khê, Tp Đ", "phone": "", "note": "", "is_active": true}
+{"code": "BH21002", "name": "Shop Hòa Cầm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21003", "name": "Shop An Cư", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21004", "name": "Shop Lê Nổ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21005", "name": "Shop Đống Đa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21006", "name": "Shop Phú Lộc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21007", "name": "Shop Hòa Khánh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21008", "name": "Shop Hòa An", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21009", "name": "Shop Túy Loan", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21010", "name": "Shop Xuân Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21011", "name": "Shop Chợ Mai", "parent_code": null, "address": "62 Nguyễn Phan Vinh, Q. Sơn Trà, TP Đà Nẵng", "phone": "", "note": "", "is_active": true}
+{"code": "BH21012", "name": "Chợ Lệ Trạch", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21013", "name": "Mẹ Nhu", "parent_code": null, "address": "761 Trần Cao Vân, P. Thanh Khê Đông, Quận Thanh Kh", "phone": "", "note": "", "is_active": true}
+{"code": "BH21014", "name": "Hòa Mỹ", "parent_code": null, "address": "112 Lương Trúc Đàm , P. Hòa Minh, Quận Liên Chiểu,", "phone": "", "note": "", "is_active": true}
+{"code": "BH21015", "name": "Shop Mỹ An", "parent_code": null, "address": "Lô C-05 đường Bà Huyện Thanh Quan, P.Mỹ An, Q.Ngũ", "phone": "", "note": "", "is_active": true}
+{"code": "BH21016", "name": "Cẩm Lệ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21017", "name": "Shop Tân Lập", "parent_code": null, "address": "63 Phạm Văn Nghị , P. Thạc Gián, Quận Thanh Khê, T", "phone": "", "note": "", "is_active": true}
+{"code": "BH21018", "name": "Shop Hoà Cường", "parent_code": null, "address": "50 Lê Thanh Nghị, Phường Hoà Cường Bắc, Quận Hải C", "phone": "", "note": "", "is_active": true}
+{"code": "BH21019", "name": "Shop Tân An", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21020", "name": "Shop Hòa Hải", "parent_code": null, "address": "26 Tây Sơn, Phường Hòa Hải, Quận Ngũ Hành Sơn, TP", "phone": "", "note": "", "is_active": true}
+{"code": "BH21021", "name": "Shop An Hải Bắc", "parent_code": null, "address": "87 Nguyễn Thị Định, Phường An Hải Bắc, Quận Sơn Tr", "phone": "", "note": "", "is_active": true}
+{"code": "BH21022", "name": "Shop Hòa Xuân", "parent_code": null, "address": "87 Trần Lê, Phường Hòa Xuân, Quận Cẩm Lệ, TP Đà Nẵ", "phone": "", "note": "", "is_active": true}
+{"code": "BH21023", "name": "Shop Âu Cơ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21024", "name": "Shop Chợ Mân Thái", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH21025", "name": "Shop Tô Hiệu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22000", "name": "HO Cần Thơ", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22001", "name": "Trần Quang Diệu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22002", "name": "Thốt Nốt", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22003", "name": "An Hòa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22004", "name": "22004-Long Hòa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22005", "name": "22005#Ô Môn-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22006", "name": "22006#Bà Bộ-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22007", "name": "22007-Bình Thủy", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22008", "name": "22008#Phong Điền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22009", "name": "22009#Ô Môn 2", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22010", "name": "22010#An Khánh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22011", "name": "22011#chợ Phước Thới", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22012", "name": "22012#Cái Răng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22013", "name": "22013#Vĩnh Thạnh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22014", "name": "Shop Chợ Cờ Đỏ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22015", "name": "Chợ An Bình", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22016", "name": "Shop Thới Thạnh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22017", "name": "Shop Trường Thành", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22018", "name": "Shop Thới Đông", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22019", "name": "Trường Long", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22020", "name": "Chợ Tầm Vu", "parent_code": null, "address": "Số 230 Tầm Vu, Phường Hưng Lợi, Quận Ninh Kiều, Th", "phone": "", "note": "", "is_active": true}
+{"code": "BH22021", "name": "Trường Xuân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22022", "name": "Thạnh An", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22023", "name": "Chợ Láng Sen", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22024", "name": "Chợ Thới Lai", "parent_code": null, "address": "Số 29 Ấp Thới Thuận A, Thị Trấn Thới Lai, Huyện Th", "phone": "", "note": "", "is_active": true}
+{"code": "BH22025", "name": "Chợ Lấp Vò", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22026", "name": "Trường Lạc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22027", "name": "Shop Bà Đầm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22028", "name": "Shop Giai Xuân", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22029", "name": "Shop Trung Hưng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH22030", "name": "Trà Nóc", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23000", "name": "HO Đồng Nai", "parent_code": "BH", "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23001", "name": "23001-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23002", "name": "23002-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23003", "name": "23003-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23004", "name": "23004#Cổng-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23005", "name": "23005# shop Phú Thọ", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23006", "name": "23006# shop Thanh Hóa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23007", "name": "23007# shop Bùi Trọng Nghĩa", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23008", "name": "Shop KP4 - Đồng Nai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23009", "name": "Shop Phúc Lâm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23010", "name": "Shop Thạnh Phú", "parent_code": null, "address": "981B Tổ 9, Ấp 2, Xã Thạnh Phú, Vĩnh Cửu, Đồng Nai", "phone": "", "note": "", "is_active": true}
+{"code": "BH23011", "name": "Shop Quang Thắng", "parent_code": null, "address": "P. Trảng Dài, Biên Hòa, Đồng Nai", "phone": "", "note": "", "is_active": true}
+{"code": "BH23012", "name": "23012#Chợ Chiều", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23013", "name": "Shop Chợ Đồi", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23014", "name": "Shop Chợ Trương Định", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23015", "name": "Shop Chợ Changsin C2", "parent_code": null, "address": "30, đường Đồng Khởi, ấp 1, xã Thạnh Phú, H.Vĩnh Cử", "phone": "", "note": "", "is_active": true}
+{"code": "BH23016", "name": "Shop Sông Mây", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23017", "name": "Chợ Phi Trường", "parent_code": null, "address": "32A/A13/kp 11, phường tân phong biên hoà đồng nai", "phone": "", "note": "", "is_active": true}
+{"code": "BH23018", "name": "Trà Cổ", "parent_code": null, "address": "Số 37, Ấp Trà Cổ, xã Bình Minh, huyện Trảng Bom, t", "phone": "", "note": "", "is_active": true}
+{"code": "BH23019", "name": "Chợ Thánh Tâm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH23020", "name": "Chợ Trảng Bòm", "parent_code": null, "address": "Số 16, đường Hùng Vương, kp1,Thị Trấn Trảng Bom, H", "phone": "", "note": "", "is_active": true}
+{"code": "BH23021", "name": "Chợ Tân Mai 2", "parent_code": null, "address": "Số 25, tổ 5, KP tân mai , phường phước tân, thành", "phone": "", "note": "", "is_active": true}
+{"code": "BH24000", "name": "CN Bình Dương", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH24001", "name": "24001-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH24002", "name": "24002#H.Lân2-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH24003", "name": "24003#B.Hòa-Tiền", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25000", "name": "HO Quảng Ninh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25001", "name": "Shop Uông Bí", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25002", "name": "Shop Hạ Long", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25003", "name": "Shop Hà Lầm", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25004", "name": "Shop Mạo Khê", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25005", "name": "Giếng Đáy", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25006", "name": "Shop Hồng Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH25007", "name": "Chợ Cột", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26000", "name": "HO Lào Cai", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26001", "name": "Bảo Hà", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26002", "name": "Hoàng Liên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26003", "name": "Shop Phố Ràng", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26004", "name": "Shop Cam Đường", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26005", "name": "Shop Cốc Lếu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH26006", "name": "Phố Lu", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH27000", "name": "Shop HO An Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH28000", "name": "Shop HO Vĩnh Long", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH29000", "name": "HO Hà Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH29001", "name": "Shop Việt Quang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH30000", "name": "HO Quảng Nam", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH30001", "name": "Chợ Thanh Quýt", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH30002", "name": "Shop Cẩm Châu", "parent_code": null, "address": "230 Lê Thánh Tông, Phường Cẩm Châu, TP Hội An, Tỉn", "phone": "", "note": "", "is_active": true}
+{"code": "BH32000", "name": "HO An Giang", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH32001", "name": "Chợ Long Xuyên", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH32002", "name": "Mỹ Quý", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BH32003", "name": "Shop Bình Khánh", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "BHCHOMA", "name": "chưa có mã", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "HOTGS", "name": "Trụ sở chính TGS", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "KD", "name": "KINH DOANH", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}
+{"code": "SH22025", "name": "Shop Lấp Vò", "parent_code": null, "address": "", "phone": "", "note": "", "is_active": true}

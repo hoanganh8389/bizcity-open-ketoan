@@ -1,0 +1,3 @@
+-- 0016 Chú thích cột loại chính sách: thêm item_discount (bảng chiết khấu theo nhiều mã trong một chính sách).
+COMMENT ON COLUMN purchase_policies.kind IS 'Loại: trade_discount (CK đơn), item_discount (CK theo bảng nhiều mã: rule.items), qty_tier, payment_discount, promo_gift, period_rebate, target_rebate, stage_rebate, credit_limit, payment_term, supply_target, lot_tracking, gift_budget, contract, stock_minmax.';
+COMMENT ON COLUMN purchase_policies.rule IS 'Quy tắc theo kind (máy chủ kiểm khuôn). Ví dụ { "pct": 7 } · { "tiers": [...] } · item_discount: { "items": [ { "sku", "pct" | "amount", "unit"?, "minQty"? } ] } (tới 10.000 dòng).';

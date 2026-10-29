@@ -1,0 +1,73 @@
+# CI BizCity Ledger Framework — xem docs/ops/CI-CD.md
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: Kiểm chuẩn (grep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/kiem-chuan.sh
+
+  typecheck:
+    name: Kiểm kiểu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # @ketoan/contracts trỏ vào dist/ — build trước để api, web thấy kiểu
+      - run: npm run build -w @ketoan/contracts
+      - run: npm run typecheck
+
+  test:
+    name: Test trên PostgreSQL 16
+    runs-on: ubuntu-latest
+    needs: [guard]
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ketoan
+          POSTGRES_USER: ketoan
+          POSTGRES_PASSWORD: ketoan
+          TZ: Asia/Ho_Chi_Minh
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ketoan -d ketoan"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://ketoan:ketoan@localhost:5432/ketoan
+      JWT_SECRET: ci-only-secret-not-for-production-0123456789
+      ENABLED_MODULES: "*"
+      TZ: Asia/Ho_Chi_Minh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @ketoan/contracts
+      - run: npm run db:seed
+      - name: vitest (+ báo cáo JSON làm bằng chứng)
+        run: npm test -- --reporter=default --reporter=json --outputFile=test-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-report
+          path: apps/api/test-report.json
+          retention-days: 30

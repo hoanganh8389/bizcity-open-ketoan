@@ -1,0 +1,26 @@
+{
+  "docType": "supplier_payment",
+  "docKey": "quy:CN02:supplier_payment:77",
+  "version": 1,
+  "branchCode": "CN02",
+  "docNo": "PC0000077",
+  "docDate": "2026-10-16",
+  "partner": {
+    "code": "NCC-ABC",
+    "name": "Công ty CP Sữa ABC",
+    "taxCode": "0300588569"
+  },
+  "methodCode": "CK",
+  "description": "Trả tiền hàng phiếu nhập NM0009001 (trả hộ CN01)",
+  "lines": [
+    {
+      "lineKey": "1",
+      "amount": 15681600,
+      "branchCode": "CN01",
+      "invoiceDocKey": "kho:KHO01:purchase:9001"
+    }
+  ],
+  "totals": {
+    "total": 15681600
+  }
+}

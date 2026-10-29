@@ -1,0 +1,18 @@
+{"_bang": "tai-khoan-ngam-dinh", "_mo_ta": "Tài khoản dùng khi chứng từ, lý do, mặt hàng không chỉ định. ", "_cot": ["key", "account_code", "name"]}
+{"key": "cash", "account_code": "1111", "name": "TK tiền mặt mặc định"}
+{"key": "tax_output", "account_code": "33311", "name": "TK thuế đầu ra ngầm định"}
+{"key": "tax_input", "account_code": "1331", "name": "TK thuế đầu vào ngầm định"}
+{"key": "goods_in_transit", "account_code": "1579", "name": "TK hàng gửi đi bán"}
+{"key": "internal_receivable_goods", "account_code": "13681", "name": "TK phải thu nội bộ hàng"}
+{"key": "internal_payable_goods", "account_code": "33681", "name": "TK phải trả nội bộ hàng"}
+{"key": "internal_receivable", "account_code": "13681", "name": "TK phải thu nội bộ tiền"}
+{"key": "internal_payable", "account_code": "33681", "name": "TK phải trả nội bộ tiền"}
+{"key": "internal_cogs", "account_code": "6326", "name": "TK ghi nhận giá vốn nội bộ khi chuyển kho"}
+{"key": "commission_debit", "account_code": "6418", "name": "TK Nợ mặc định ghi nhận hoa hồng"}
+{"key": "commission_credit", "account_code": "33881", "name": "TK Có mặc định ghi nhận hoa hồng"}
+{"key": "cash_in_transit", "account_code": "11319", "name": "Tiền đang chuyển"}
+{"key": "promotion_expense", "account_code": "64184", "name": "Chi phí hàng khuyến mại, tặng khách"}
+{"key": "receivable", "account_code": "1311", "name": "Phải thu khách hàng"}
+{"key": "payable", "account_code": "3312", "name": "Phải trả nhà cung cấp"}
+{"key": "stock_surplus", "account_code": "3381", "name": "Hàng thừa chờ xử lý"}
+{"key": "stock_shortage", "account_code": "1381", "name": "Hàng thiếu chờ xử lý"}

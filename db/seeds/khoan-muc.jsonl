@@ -1,0 +1,296 @@
+{"_bang": "khoan-muc", "_mo_ta": "Danh mục khoản mục chi phí (cây cha – con). ", "_cot": ["code", "name", "parent_code", "note", "is_active"]}
+{"code": "CPBT", "name": "CHI PHÍ PHẠT, KHÁC", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPBT01", "name": "Chi phí bồi thường HĐKT", "parent_code": "CPBT", "note": "", "is_active": true}
+{"code": "CPBT02", "name": "Nộp phạt QLTT", "parent_code": "CPBT", "note": "", "is_active": true}
+{"code": "CPBT03", "name": "Nột phạt CQNN khác", "parent_code": "CPBT", "note": "", "is_active": true}
+{"code": "CPBT04", "name": "Lãi chậm nộp BHXH", "parent_code": "CPBT", "note": "", "is_active": true}
+{"code": "CPBT05", "name": "Các khoản bồi thường khác", "parent_code": "CPBT", "note": "", "is_active": true}
+{"code": "CPBT99", "name": "Các khoản phạt khác", "parent_code": "CPBT", "note": "", "is_active": true}
+{"code": "CPDD", "name": "CHI PHÍ THUÊ ĐỊA ĐIỂM KINH DOANH", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPDD01", "name": "Tiền Thuê kho, văn phòng", "parent_code": "CPDD", "note": "", "is_active": true}
+{"code": "CPDD02", "name": "Tiền Thuê cửa hàng", "parent_code": "CPDD", "note": "", "is_active": true}
+{"code": "CPDD03", "name": "Nộp thuế thay chủ nhà khi thuê kho, VP", "parent_code": "CPDD", "note": "", "is_active": true}
+{"code": "CPDD04", "name": "Nộp thuế thay chủ nhà khi thuê cửa hàng", "parent_code": "CPDD", "note": "", "is_active": true}
+{"code": "CPDD99", "name": "Tiền thuê mặt bằng khác", "parent_code": "CPDD", "note": "", "is_active": true}
+{"code": "CPHD", "name": "CHI PHÍ HOẠT ĐỘNG", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPHD01", "name": "Tiền điện", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD02", "name": "Cước điện thoại", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD02.01", "name": "Cước điện thoại cố định", "parent_code": "CPHD02", "note": "", "is_active": true}
+{"code": "CPHD02.02", "name": "Cước điện thoại di động", "parent_code": "CPHD02", "note": "", "is_active": true}
+{"code": "CPHD03", "name": "Cước đường truyền, Internet", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD03.01", "name": "Cước Internet", "parent_code": "CPHD03", "note": "", "is_active": true}
+{"code": "CPHD03.02", "name": "Cước dữ liệu camera xe tô tô", "parent_code": "CPHD03", "note": "", "is_active": true}
+{"code": "CPHD04", "name": "Nước sinh hoạt", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD05", "name": "Vệ sinh môi trường", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD06", "name": "Thắp hương", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD07", "name": "Chi phí Ngoại giao", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD07.01", "name": "CP ngoại giao QLTT", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.02", "name": "CP ngoại giao CA khu vực", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.03", "name": "CP ngoại giao CQ Thuế", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.04", "name": "CP ngoại giao CQ Bảo hiểm", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.05", "name": "CP ngoại giao với đối tác", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.06", "name": "CP tài trợ cho Y tế, giáo dục", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.98", "name": "CP tài trợ, ủng hộ, từ thiện khác", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD07.99", "name": "Chi phí Ngoại giao khác", "parent_code": "CPHD07", "note": "", "is_active": true}
+{"code": "CPHD08", "name": "CCDC, đồ dùng, tạp vụ", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD08.01", "name": "Chi phí hao mòn CCDC", "parent_code": "CPHD08", "note": "", "is_active": true}
+{"code": "CPHD08.02", "name": "Chi phí thanh lý CCDC", "parent_code": "CPHD08", "note": "", "is_active": true}
+{"code": "CPHD08.99", "name": "Chi phí dụng cụ, đồ dùng khác", "parent_code": "CPHD08", "note": "", "is_active": true}
+{"code": "CPHD09", "name": "Vật tư bán hàng", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD10", "name": "Văn phòng phẩm", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD11", "name": "Nước uống", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD12", "name": "Bưu phẩm, chuyển phát nhanh", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD13", "name": "Chi phí In ấn, photocopy", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD14", "name": "Sách, báo, tạp chí ….", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD15", "name": "Chi phí trang trí VP, Shop", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD15.01", "name": "Vật tư, đồ dùng trang trí VP, Shop", "parent_code": "CPHD15", "note": "", "is_active": true}
+{"code": "CPHD15.02", "name": "CP thuê ngoài trang trí VP, shop", "parent_code": "CPHD15", "note": "", "is_active": true}
+{"code": "CPHD16", "name": "Chi phí Bảo vệ", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD17", "name": "Sửa chữa, Bảo dưỡng", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD17.01", "name": "Sửa chữa, Bảo dưỡng thiết bị văn phòng", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.02", "name": "Sửa chữa, Bảo dưỡng hệ thống Camera", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.03", "name": "Sửa chữa, Bảo dưỡng thiết bị kho", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.04", "name": "Sửa chữa, Bảo dưỡng thiết bị shop", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.05", "name": "Sửa chữa văn phòng, nhà ăn", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.06", "name": "Sửa chữa Kho", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.07", "name": "Sửa chữa cửa hàng", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD17.99", "name": "CP sửa chữa nhỏ khác", "parent_code": "CPHD17", "note": "", "is_active": true}
+{"code": "CPHD18", "name": "Chi phí vận chuyển", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD18.01", "name": "Xăng", "parent_code": "CPHD18", "note": "", "is_active": true}
+{"code": "CPHD18.02", "name": "Dầu", "parent_code": "CPHD18", "note": "", "is_active": true}
+{"code": "CPHD18.03", "name": "Lệ phí giao thông, cầu, đường …", "parent_code": "CPHD18", "note": "", "is_active": true}
+{"code": "CPHD18.99", "name": "CP Vận chuyển khác", "parent_code": "CPHD18", "note": "", "is_active": true}
+{"code": "CPHD19", "name": "Chi phí bảo hiểm", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD19.01", "name": "CP Bảo hiểm TNDS Xe ô tô", "parent_code": "CPHD19", "note": "", "is_active": true}
+{"code": "CPHD19.02", "name": "CP Bảo hiểm thân vỏ Xe ô tô", "parent_code": "CPHD19", "note": "", "is_active": true}
+{"code": "CPHD19.03", "name": "CP Bảo hiểm hàng hóa", "parent_code": "CPHD19", "note": "", "is_active": true}
+{"code": "CPHD19.04", "name": "CP Bảo hiểm ĐĐKD", "parent_code": "CPHD19", "note": "", "is_active": true}
+{"code": "CPHD19.05", "name": "CP Bảo hiểm TSCĐ khác", "parent_code": "CPHD19", "note": "", "is_active": true}
+{"code": "CPHD19.99", "name": "CP Bảo hiểm khác", "parent_code": "CPHD19", "note": "", "is_active": true}
+{"code": "CPHD20", "name": "Chi phí CNTT", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD20.01", "name": "CP tên miền", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD20.02", "name": "Phí cấp & QL địa chỉ Internet", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD20.03", "name": "CP servermail", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD20.04", "name": "CP thuê server", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD20.05", "name": "CP thuê chỗ đặt server", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD20.06", "name": "CP hosting", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD20.99", "name": "CP CNTT khác", "parent_code": "CPHD20", "note": "", "is_active": true}
+{"code": "CPHD21", "name": "Chi phí Tư vấn, kiểm toán", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD21.01", "name": "CP Kiểm toán", "parent_code": "CPHD21", "note": "", "is_active": true}
+{"code": "CPHD21.99", "name": "CP Tư vấn khác", "parent_code": "CPHD21", "note": "", "is_active": true}
+{"code": "CPHD22", "name": "Chi phí gửi xe", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD23", "name": "Chi phí Tuyển dụng", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD23.01", "name": "CP đăng tuyển", "parent_code": "CPHD23", "note": "", "is_active": true}
+{"code": "CPHD23.02", "name": "CP tư vấn, DV tuyển dụng", "parent_code": "CPHD23", "note": "", "is_active": true}
+{"code": "CPHD23.99", "name": "CP tuyển dụng khác", "parent_code": "CPHD23", "note": "", "is_active": true}
+{"code": "CPHD24", "name": "Chi phí Công chứng", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD25", "name": "Công tác phí", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD25.01", "name": "Tiền thuê chỗ ở (KS, nhà nghỉ, phòng nghỉ)", "parent_code": "CPHD25", "note": "", "is_active": true}
+{"code": "CPHD25.02", "name": "Vé máy bay, tàu, xe …..", "parent_code": "CPHD25", "note": "", "is_active": true}
+{"code": "CPHD25.03", "name": "Lệ phí giao thông, cầu, đường…", "parent_code": "CPHD25", "note": "", "is_active": true}
+{"code": "CPHD25.04", "name": "Phụ cấp lưu trú", "parent_code": "CPHD25", "note": "", "is_active": true}
+{"code": "CPHD25.99", "name": "Công tác phí khác", "parent_code": "CPHD25", "note": "", "is_active": true}
+{"code": "CPHD26", "name": "Chi phí liên hoan, team building", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHD99", "name": "Chi phí khác", "parent_code": "CPHD", "note": "", "is_active": true}
+{"code": "CPHH", "name": "CHI PHÍ HÀNG HÓA", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPHH01", "name": "CP Hàng hỏng", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPHH02", "name": "CP Hàng cận date, hết date", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPHH03", "name": "CP Mất, thất thoát hàng hóa", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPHH04", "name": "CP giao nhận hàng hóa trong nước", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPHH05", "name": "CP nhập khẩu hàng hóa", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPHH06", "name": "CP Dự phòng giảm giá hàng tồn kho", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPHH99", "name": "CP hàng hóa khác", "parent_code": "CPHH", "note": "", "is_active": true}
+{"code": "CPKH", "name": "CHI PHÍ KHẤU HAO", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPKH01", "name": "CPKH nhà cửa, vật kiến trúc", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH02", "name": "CPKH máy móc, thiết bị", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH03", "name": "CPKH phương tiện vận tải truyền dẫn", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH04", "name": "CPKH thiết bị dụng cụ quản lý", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH05", "name": "CPKH TSCĐ hữu hình khác", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH06", "name": "CPKH bất động sản đầu tư", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH07", "name": "CPKH Quyền sử dụng đất", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH08", "name": "CPKH Quyền phát hành", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH09", "name": "CPKH Bản quyền, bằng sáng chế", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH10", "name": "CPKH Nhãn hiệu hàng hóa", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH11", "name": "CPKH Chương trình Phần mềm", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH12", "name": "CPKH Giấy phép và giấy phép nhượng quyền", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH13", "name": "CPKH TSCĐ vô hình khác", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKH14", "name": "CP thanh lý nhượng bán TSCĐ", "parent_code": "CPKH", "note": "", "is_active": true}
+{"code": "CPKM", "name": "CHI PHÍ KHUYẾCH TRƯƠNG BÁN HÀNG", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPKM01", "name": "Chi phí khuyến mại cho Hàng chiến lược", "parent_code": "CPKM", "note": "", "is_active": true}
+{"code": "CPKM01.01", "name": "Khuyến mại bằng hàng cho HCL", "parent_code": "CPKM01", "note": "", "is_active": true}
+{"code": "CPKM01.02", "name": "Khuyến mại bằng vật phẩm cho HCL", "parent_code": "CPKM01", "note": "", "is_active": true}
+{"code": "CPKM01.99", "name": "Khuyến mại khác cho HCL", "parent_code": "CPKM01", "note": "", "is_active": true}
+{"code": "CPKM02", "name": "Chi phí khuyến mại cho hàng khác", "parent_code": "CPKM", "note": "", "is_active": true}
+{"code": "CPKM02.01", "name": "Khuyến mại bằng hàng", "parent_code": "CPKM02", "note": "", "is_active": true}
+{"code": "CPKM02.02", "name": "Khuyến mại bằng vật phẩm", "parent_code": "CPKM02", "note": "", "is_active": true}
+{"code": "CPKM02.99", "name": "Khuyến mại khác", "parent_code": "CPKM02", "note": "", "is_active": true}
+{"code": "CPNH", "name": "CHI PHÍ NGÂN HÀNG", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPNH01", "name": "Chi phí lãi vay", "parent_code": "CPNH", "note": "", "is_active": true}
+{"code": "CPNH02", "name": "Phí chuyển khoản", "parent_code": "CPNH", "note": "", "is_active": true}
+{"code": "CPNH03", "name": "Chi phí làm hồ sơ tín dụng", "parent_code": "CPNH", "note": "", "is_active": true}
+{"code": "CPNH04", "name": "Phí bảo lãnh ngân hàng", "parent_code": "CPNH", "note": "", "is_active": true}
+{"code": "CPNH05", "name": "Chênh lệch tỉ giá", "parent_code": "CPNH", "note": "", "is_active": true}
+{"code": "CPNH99", "name": "Chi phí ngân hàng khác", "parent_code": "CPNH", "note": "", "is_active": true}
+{"code": "CPNV", "name": "CHI PHÍ NHÂN VIÊN", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPNV01", "name": "Lương cơ bản", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV02", "name": "Lương TN, Phụ cấp khác", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV02.01", "name": "Lương trách nhiệm", "parent_code": "CPNV02", "note": "", "is_active": true}
+{"code": "CPNV02.02", "name": "Phụ cấp Ăn ca", "parent_code": "CPNV02", "note": "", "is_active": true}
+{"code": "CPNV02.03", "name": "Phụ cấp giao hàng", "parent_code": "CPNV02", "note": "", "is_active": true}
+{"code": "CPNV02.04", "name": "Phụ cấp lưu động", "parent_code": "CPNV02", "note": "", "is_active": true}
+{"code": "CPNV02.05", "name": "Hỗ trợ xăng xe", "parent_code": "CPNV02", "note": "", "is_active": true}
+{"code": "CPNV02.99", "name": "Phụ cấp khác", "parent_code": "CPNV02", "note": "", "is_active": true}
+{"code": "CPNV03", "name": "Lương làm thêm giờ", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV03.01", "name": "Lương làm thêm giờ ngày thường", "parent_code": "CPNV03", "note": "", "is_active": true}
+{"code": "CPNV03.02", "name": "Lương làm thêm giờ ngày nghỉ", "parent_code": "CPNV03", "note": "", "is_active": true}
+{"code": "CPNV03.03", "name": "Lương làm thêm giờ ngày lễ", "parent_code": "CPNV03", "note": "", "is_active": true}
+{"code": "CPNV03.04", "name": "Lương làm thêm giờ vượt định biên được duyệt", "parent_code": "CPNV03", "note": "", "is_active": true}
+{"code": "CPNV04", "name": "Lương Doanh số", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV04.01", "name": "Lương chốt điểm", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.02", "name": "Lương chỉ tiêu QLKD", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.03", "name": "Lương Doanh số Tổng", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.04", "name": "Lương Doanh số Biomil", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.05", "name": "Lương Doanh số Blemil", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.06", "name": "Lương Doanh số Rontamil", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.07", "name": "Lương Doanh số Ron Kid", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.08", "name": "Lương Doanh số Rontameal", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.09", "name": "Lương Doanh số Bimbosan Stage", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.10", "name": "Lương Doanh số Bimbosan Lady", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.11", "name": "Lương Doanh số Lacsure", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.12", "name": "Lương Doanh số Me n' Mil", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.13", "name": "Lương Doanh số Bio Grow", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.14", "name": "Lương Doanh số Bio trái cây", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.15", "name": "Lương Doanh số Yến", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.16", "name": "Lương Doanh số TPCN", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.98", "name": "Lương vượt Doanh số HCL", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV04.99", "name": "Lương Doanh số khác", "parent_code": "CPNV04", "note": "", "is_active": true}
+{"code": "CPNV05", "name": "Lương nghỉ phép", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV06", "name": "Lương tháng 13", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV07", "name": "Lương nhân viên khác", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV08", "name": "CP Bảo hiểm xã hội", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV08.01", "name": "CP BHXH", "parent_code": "CPNV08", "note": "", "is_active": true}
+{"code": "CPNV08.02", "name": "CP BHYT", "parent_code": "CPNV08", "note": "", "is_active": true}
+{"code": "CPNV08.03", "name": "CP BHTN", "parent_code": "CPNV08", "note": "", "is_active": true}
+{"code": "CPNV08.04", "name": "CP BHTNLĐ", "parent_code": "CPNV08", "note": "", "is_active": true}
+{"code": "CPNV09", "name": "Kinh phí Công đoàn", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV10", "name": "Các khoản hỗ trợ", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV10.01", "name": "Hỗ trợ Ăn ca ngoài lương", "parent_code": "CPNV10", "note": "", "is_active": true}
+{"code": "CPNV10.02", "name": "Hỗ trợ nghỉ việc", "parent_code": "CPNV10", "note": "", "is_active": true}
+{"code": "CPNV10.03", "name": "Hỗ trợ tai nạn lao động", "parent_code": "CPNV10", "note": "", "is_active": true}
+{"code": "CPNV10.04", "name": "Hỗ trợ nhà ở", "parent_code": "CPNV10", "note": "", "is_active": true}
+{"code": "CPNV10.05", "name": "Hỗ trợ điện thoại", "parent_code": "CPNV10", "note": "", "is_active": true}
+{"code": "CPNV10.99", "name": "Các khoản hỗ trợ khác", "parent_code": "CPNV10", "note": "", "is_active": true}
+{"code": "CPNV11", "name": "CP Đào tạo nhân viên", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV12", "name": "Chi phí phúc lợi", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV12.01", "name": "Hiếu, Hỉ, Thăm hỏi NV", "parent_code": "CPNV12", "note": "", "is_active": true}
+{"code": "CPNV12.02", "name": "CP khám sức khoẻ định kỳ", "parent_code": "CPNV12", "note": "", "is_active": true}
+{"code": "CPNV12.03", "name": "CP Bảo hiểm sức khỏe", "parent_code": "CPNV12", "note": "", "is_active": true}
+{"code": "CPNV12.04", "name": "CP Bảo hiểm nhân thọ", "parent_code": "CPNV12", "note": "", "is_active": true}
+{"code": "CPNV12.99", "name": "CP Phúc lợi khác", "parent_code": "CPNV12", "note": "", "is_active": true}
+{"code": "CPNV13", "name": "Thưởng thành tích công việc", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV13.01", "name": "Thưởng Star shop", "parent_code": "CPNV13", "note": "", "is_active": true}
+{"code": "CPNV13.02", "name": "Thưởng Queen Milk", "parent_code": "CPNV13", "note": "", "is_active": true}
+{"code": "CPNV13.03", "name": "Thưởng sáng kiến công việc", "parent_code": "CPNV13", "note": "", "is_active": true}
+{"code": "CPNV13.04", "name": "Thưởng NV xuất sắc", "parent_code": "CPNV13", "note": "", "is_active": true}
+{"code": "CPNV13.99", "name": "Thưởng thành tích khác", "parent_code": "CPNV13", "note": "", "is_active": true}
+{"code": "CPNV14", "name": "Thưởng Lễ, Tết", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV14.01", "name": "Thưởng 30/04 & 01/5", "parent_code": "CPNV14", "note": "", "is_active": true}
+{"code": "CPNV14.02", "name": "Thưởng 02/09", "parent_code": "CPNV14", "note": "", "is_active": true}
+{"code": "CPNV14.03", "name": "Thưởng Tết AL", "parent_code": "CPNV14", "note": "", "is_active": true}
+{"code": "CPNV14.04", "name": "Thưởng Tết DL", "parent_code": "CPNV14", "note": "", "is_active": true}
+{"code": "CPNV14.99", "name": "Thưởng các ngày khác", "parent_code": "CPNV14", "note": "", "is_active": true}
+{"code": "CPNV15", "name": "Các khoản thưởng khác", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV16", "name": "CP Đồng phục, trang phục", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV17", "name": "CP Thuế TNCN", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPNV17.01", "name": "Thuế TNCN NV ký HĐLĐ có thời hạn", "parent_code": "CPNV17", "note": "", "is_active": true}
+{"code": "CPNV17.02", "name": "Thuế TNCN NV thời vụ", "parent_code": "CPNV17", "note": "", "is_active": true}
+{"code": "CPNV99", "name": "CP Nhân viên khác", "parent_code": "CPNV", "note": "", "is_active": true}
+{"code": "CPQC", "name": "CHI PHÍ QUẢNG CÁO", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPQC01", "name": "Quảng cáo trên truyền hình", "parent_code": "CPQC", "note": "", "is_active": true}
+{"code": "CPQC02", "name": "Quảng cáo trên báo chí  (Báo đài/ báo mạng...)", "parent_code": "CPQC", "note": "", "is_active": true}
+{"code": "CPQC03", "name": "Tờ rơi/ catalog/ biển bảng quảng cáo", "parent_code": "CPQC", "note": "", "is_active": true}
+{"code": "CPQC99", "name": "Quảng cáo khác", "parent_code": "CPQC", "note": "", "is_active": true}
+{"code": "CPQT", "name": "CHI PHÍ HĐQT, BKS", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPQT98", "name": "Chi phí của Chủ tịch HĐQT", "parent_code": "CPQT", "note": "", "is_active": true}
+{"code": "CPXE", "name": "CHI PHÍ XE Ô TÔ", "parent_code": null, "note": "", "is_active": true}
+{"code": "CPXE01", "name": "Chi phí đăng kiểm", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CPXE02", "name": "Phí lưu hành đường bộ", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CPXE03", "name": "CP lấy xe ban đầu khác", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CPXE04", "name": "CP Định vị GPS", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CPXE05", "name": "Thay thế phụ tùng xe", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CPXE05.01", "name": "Thay acquy", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.02", "name": "Thay lốp", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.03", "name": "Thay phanh", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.04", "name": "Thay chổi gạt", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.05", "name": "Thay đèn", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.06", "name": "Thay còi", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.07", "name": "Thay thảm, nội thất", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.08", "name": "Thay lọc nhiên liệu", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.09", "name": "Thay kính", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE05.99", "name": "Phụ tùng thay thế khác", "parent_code": "CPXE05", "note": "", "is_active": true}
+{"code": "CPXE06", "name": "Sửa chữa, bảo dưỡng xe", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CPXE06.01", "name": "Công Sửa chữa, bảo dưỡng xe", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.02", "name": "Rửa xe", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.03", "name": "Thay dầu máy", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.04", "name": "Bơm Vá săm lốp, cân lốp", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.05", "name": "Sửa điều hòa xe", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.06", "name": "Sửa chữa, bảo dưỡng buồng đốt", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.07", "name": "Sửa chữa, bảo dưỡng phanh", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE06.99", "name": "Sửa chữa, bảo dưỡng xe khác", "parent_code": "CPXE06", "note": "", "is_active": true}
+{"code": "CPXE99", "name": "Chi phí xe ô tô khác", "parent_code": "CPXE", "note": "", "is_active": true}
+{"code": "CSVC", "name": "CHI PHÍ CƠ SỞ VẬT CHẤT", "parent_code": null, "note": "", "is_active": true}
+{"code": "CTAX", "name": "CHI PHÍ THUẾ", "parent_code": null, "note": "", "is_active": true}
+{"code": "CTAX01", "name": "Thuế Môn bài", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX02", "name": "Thuế Thu nhập doanh nghiệp", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX03", "name": "Thuế chuyển quyền sử dụng đất", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX04", "name": "Thuế nhà đất", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX05", "name": "Chi phí Thuế tiêu thụ đặc biệt", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX06", "name": "Phạt thuế/ truy nộp thuế", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX07", "name": "Phí và lệ phí khác", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTAX99", "name": "Chi phí Thuế khác", "parent_code": "CTAX", "note": "", "is_active": true}
+{"code": "CTCS", "name": "CHƯƠNG TRÌNH/  CHÍNH SÁCH CỦA HÃNG", "parent_code": null, "note": "", "is_active": true}
+{"code": "CTCS01", "name": "CHIẾT KHẤU", "parent_code": "CTCS", "note": "", "is_active": true}
+{"code": "CTCS01.01", "name": "Chiết khấu thẳng trên đơn", "parent_code": "CTCS01", "note": "", "is_active": true}
+{"code": "CTCS01.02", "name": "CK trên đơn theo CT hàng tháng bằng tiền", "parent_code": "CTCS01", "note": "", "is_active": true}
+{"code": "CTCS01.03", "name": "CK trên đơn theo CT hàng tháng bằng hàng (KM)", "parent_code": "CTCS01", "note": "", "is_active": true}
+{"code": "CTCS01.04", "name": "Chiết khấu thanh toán đúng hạn", "parent_code": "CTCS01", "note": "", "is_active": true}
+{"code": "CTCS01.99", "name": "Chiết khấu khác", "parent_code": "CTCS01", "note": "", "is_active": true}
+{"code": "CTCS02", "name": "HỖ TRỢ", "parent_code": "CTCS", "note": "", "is_active": true}
+{"code": "CTCS02.01", "name": "NPP Hỗ trợ trên đơn bằng tiền", "parent_code": "CTCS02", "note": "", "is_active": true}
+{"code": "CTCS02.02", "name": "NPP Hỗ trợ trên đơn bằng hàng", "parent_code": "CTCS02", "note": "", "is_active": true}
+{"code": "CTCS02.03", "name": "Hỗ trợ Shop khai trương/ sinh nhật", "parent_code": "CTCS02", "note": "", "is_active": true}
+{"code": "CTCS02.99", "name": "Hỗ trợ trên đơn - khác", "parent_code": "CTCS02", "note": "", "is_active": true}
+{"code": "CTCS03", "name": "TRƯNG BẦY", "parent_code": "CTCS", "note": "", "is_active": true}
+{"code": "CTCS03.01", "name": "Trưng bầy TT trực tiếp trên đơn", "parent_code": "CTCS03", "note": "", "is_active": true}
+{"code": "CTCS03.02", "name": "Trưng bầy Trả sau - Bằng tiền", "parent_code": "CTCS03", "note": "", "is_active": true}
+{"code": "CTCS03.03", "name": "Trưng bầy Trả sau - Bằng hàng", "parent_code": "CTCS03", "note": "", "is_active": true}
+{"code": "CTCS03.04", "name": "Mua vị trí trưng bầy", "parent_code": "CTCS03", "note": "", "is_active": true}
+{"code": "CTCS04", "name": "THƯỞNG", "parent_code": "CTCS", "note": "", "is_active": true}
+{"code": "CTCS04.01", "name": "Hoàn thành đặt hàng sớm - Bằng tiền", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.02", "name": "Hoàn thành đặt hàng sớm - Bằng hàng", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.03", "name": "Thưởng đạt doanh số - Bằng tiền", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.04", "name": "Thưởng đạt doanh số - Bằng hàng", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.05", "name": "Thưởng vượt doanh số - Bằng tiền", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.06", "name": "Thưởng vượt doanh số - Bằng hàng", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.07", "name": "Thưởng tăng trưởng - Bằng tiền", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.08", "name": "Thưởng tăng trưởng - Bằng hàng", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.09", "name": "Thưởng theo giai đoạn - Bằng Tiền", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.10", "name": "Thưởng theo giai đoạn - Bằng hàng", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS04.99", "name": "Thưởng khác", "parent_code": "CTCS04", "note": "", "is_active": true}
+{"code": "CTCS05", "name": "TÍCH LŨY", "parent_code": "CTCS", "note": "", "is_active": true}
+{"code": "CTCS05.01", "name": "Tích lũy tháng - Tiền", "parent_code": "CTCS05", "note": "", "is_active": true}
+{"code": "CTCS05.02", "name": "Tích lũy tháng - Hàng", "parent_code": "CTCS05", "note": "", "is_active": true}
+{"code": "CTCS05.03", "name": "Tích lũy quý - Tiền", "parent_code": "CTCS05", "note": "", "is_active": true}
+{"code": "CTCS05.04", "name": "Tích lũy quý - Hàng", "parent_code": "CTCS05", "note": "", "is_active": true}
+{"code": "CTCS05.05", "name": "Tích lũy năm", "parent_code": "CTCS05", "note": "", "is_active": true}
+{"code": "CTCS05.99", "name": "Tích lũy khác", "parent_code": "CTCS05", "note": "", "is_active": true}
+{"code": "CTCS06", "name": "CÁC TRƯƠNG TRÌNH HỖ TRỢ BH", "parent_code": "CTCS", "note": "", "is_active": true}
+{"code": "CTCS06.01", "name": "Hotzone", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.02", "name": "Ontop - Bằng tiền", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.03", "name": "Ontop - Bằng hàng", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.04", "name": "Khách hàng thân thiết", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.05", "name": "Thần tài, Thẻ cào, bốc thăm", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.06", "name": "Nhãn hàng tập trung", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.07", "name": "Các khoản hỗ trợ (tiếp thị, vận chuyển ….)", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.08", "name": "Lương + Thưởng PG", "parent_code": "CTCS06", "note": "", "is_active": true}
+{"code": "CTCS06.99", "name": "Hỗ trợ khác", "parent_code": "CTCS06", "note": "", "is_active": true}

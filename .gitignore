@@ -1,0 +1,23 @@
+node_modules/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+backups/
+
+# Cấu hình Docker riêng từng máy (tên miền .local, ổ dữ liệu…): không đưa lên git
+docker-compose.override.yml*
+*.code-workspace
+apps/api/data/
+/data/
+
+# Bộ kiểm chuẩn (tests/conformance): kết quả chạy không đưa lên git; check-report.json của module thì giữ
+tests/conformance/output/
+**/.bizcity/latest/
+**/.bizcity/runs/
+**/.bizcity/history.jsonl

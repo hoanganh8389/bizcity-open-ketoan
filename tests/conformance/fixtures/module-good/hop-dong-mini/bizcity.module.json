@@ -1,0 +1,21 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "acme.hop-dong-mini",
+  "key": "hop-dong-mini",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Hợp đồng (mẫu tối thiểu)",
+  "description": "Module mẫu ĐẠT: chỉ xin năng lực đang có, tiền vào sổ qua customer_payment.",
+  "owners": ["@acme"],
+  "standard": "^1.0",
+  "requires": { "capabilities": ["masterdata.read", "ledger.submit", "ui.menu"] },
+  "permissions": [
+    { "key": "hop-dong-mini:read", "label": "Xem", "roles": ["owner", "accountant"], "risk": "low" },
+    { "key": "hop-dong-mini:collect", "label": "Ghi nhận thu tiền", "roles": ["owner"], "risk": "high" }
+  ],
+  "data": { "schema": "mod_hop_dong_mini", "tables": ["contracts"], "reads": ["bizcity_read.partners"] },
+  "actions": ["hop-dong-mini.contract.list", "hop-dong-mini.installment.record-payment"],
+  "ledger": { "submits": [{ "docType": "customer_payment", "contract": "bizcity_ledger_intake@1" }] },
+  "settings": ["bizcity.hop_dong_mini.remind_days"],
+  "extensions": { "menu": [{ "key": "hop-dong-mini", "label": "Hợp đồng", "path": "/app/hop-dong-mini", "code": "HM01", "permission": "hop-dong-mini:read" }] }
+}

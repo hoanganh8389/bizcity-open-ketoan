@@ -1,0 +1,32 @@
+{
+  "docType": "purchase_return",
+  "docKey": "kho:KHO01:purchase_return:77",
+  "version": 1,
+  "branchCode": "CN01",
+  "docNo": "XT0000077",
+  "docDate": "2026-10-08",
+  "originalDocKey": "kho:KHO01:purchase:9001",
+  "description": "Trả 2 lon móp méo",
+  "partner": {
+    "code": "NCC-ABC",
+    "name": "Công ty CP Sữa ABC",
+    "taxCode": "0300588569"
+  },
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 2,
+      "amountBeforeTax": 600000,
+      "taxCode": "V08",
+      "taxAmount": 48000
+    }
+  ],
+  "totals": {
+    "beforeTax": 600000,
+    "tax": 48000,
+    "total": 648000
+  }
+}

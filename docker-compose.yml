@@ -1,0 +1,115 @@
+# =============================================================================
+# Phần mềm kế toán — chạy toàn bộ bằng Docker Compose.
+#
+#   docker compose up -d --build        dựng và chạy
+#   docker compose logs -f api          xem nhật ký API
+#   docker compose down                 dừng (giữ dữ liệu)
+#
+# Truy cập:  giao diện  http://localhost:8088
+#            API        http://localhost:8088/api/v1/...
+#            Tài liệu API http://localhost:8088/api/docs
+# Cấu hình: sao chép .env.example → .env rồi sửa.
+# =============================================================================
+name: ketoan
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ketoan
+      POSTGRES_USER: ketoan
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ketoan}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "127.0.0.1:${DB_PORT:-5434}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ketoan -d ketoan"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Job cơ sở dữ liệu: áp migration + seed MỘT lần rồi thoát (cùng image API). API chỉ chạy sau khi job xong.
+  db-migrate:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: "no"
+    entrypoint: ["node", "dist/db/setup.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://ketoan:${DB_PASSWORD:-ketoan}@db:5432/ketoan
+      JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
+      SEED_TENANT_CODE: ${SEED_TENANT_CODE:-demo}
+      SEED_TENANT_NAME: ${SEED_TENANT_NAME:-Công ty Demo}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123}
+      SEED_API_KEY: ${SEED_API_KEY:-}
+      TZ: Asia/Ho_Chi_Minh
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: 4100
+      AUTO_MIGRATE: "0"
+      DATABASE_URL: postgres://ketoan:${DB_PASSWORD:-ketoan}@db:5432/ketoan
+      JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8088}
+      ADDINS: ${ADDINS:-*}
+      # internal = sổ nội bộ (mặc định); tax = sổ thuế (chỉ kéo phiếu bán / hoàn có số hoá đơn)
+      BOOK_MODE: ${BOOK_MODE:-internal}
+      # Nhãn môi trường (vd. BẢN TEST): dải màu trên đầu giao diện; trống = bản thật, không hiện
+      ENV_LABEL: ${ENV_LABEL:-}
+      # Đăng nhập bằng tài khoản hệ thống quản trị: khoá chung (giống bên hệ thống quản trị) + mã đơn vị
+      WP_SSO_SECRET: ${WP_SSO_SECRET:-}
+      WP_SSO_TENANT: ${WP_SSO_TENANT:-}
+      WP_SSO_LOGIN_URL: ${WP_SSO_LOGIN_URL:-}
+      WP_EMBED_URL: ${WP_EMBED_URL:-}
+      SPREADSHEET_AI_URL: ${SPREADSHEET_AI_URL:-}
+      SEED_TENANT_CODE: ${SEED_TENANT_CODE:-demo}
+      SEED_TENANT_NAME: ${SEED_TENANT_NAME:-Công ty Demo}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123}
+      SEED_API_KEY: ${SEED_API_KEY:-}
+      TZ: Asia/Ho_Chi_Minh
+      # Tệp dữ liệu nhẹ không nằm trong cơ sở dữ liệu (dữ liệu huấn luyện trợ lý JSONL + ảnh).
+      DATA_DIR: /app/apps/api/data
+    volumes:
+      - appdata:/app/apps/api/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4100/api/v1/system/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # WEB_BIND=127.0.0.1 trên máy chủ thật: chỉ cho cổng vào (reverse proxy) cùng máy gọi tới.
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8088}:80"
+
+volumes:
+  # Dữ liệu PostgreSQL (khoá chính id bigint tự tăng, từ 10/2026).
+  # Ổ dbdata cũ (bản khoá chính UUID) không còn dùng — xem docs/trien-khai.md mục 4b.
+  pgdata:
+  # Tệp dữ liệu của API (trợ lý: <tenant>.jsonl + ảnh). Sao lưu cùng scripts/sao-luu.sh.
+  appdata:

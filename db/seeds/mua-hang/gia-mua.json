@@ -1,0 +1,157 @@
+[
+  {
+    "partnerCode": "NC100227",
+    "sku": "130181002",
+    "unit": "Thùng",
+    "isDefaultUnit": true,
+    "nccSku": "TH-ST110-D",
+    "price": 258711,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-01-01",
+    "note": "Giá theo thùng 48 hộp (≈ 5.389,81 / hộp)"
+  },
+  {
+    "partnerCode": "NC100227",
+    "sku": "140181001",
+    "unit": "Hộp",
+    "isDefaultUnit": false,
+    "nccSku": "TH-SCA-VQ",
+    "price": null,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-01-01",
+    "note": ""
+  },
+  {
+    "partnerCode": "NC100227",
+    "sku": "140181006",
+    "unit": "Hộp",
+    "isDefaultUnit": false,
+    "nccSku": "TH-SCA-ND",
+    "price": null,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-01-01",
+    "note": ""
+  },
+  {
+    "partnerCode": "NCC-TRUNGHAU",
+    "sku": "110154035",
+    "unit": "Lon",
+    "price": 528000,
+    "priceIncludesVat": true,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua Anlene Gold 800g của Trung Hậu (gồm VAT 8%)"
+  },
+  {
+    "partnerCode": "NCC-TRUNGHAU",
+    "sku": "110154036",
+    "unit": "Lon",
+    "price": 431000,
+    "priceIncludesVat": true,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua Anlene vani 800g của Trung Hậu (gồm VAT 8%)"
+  },
+  {
+    "partnerCode": "NCC-ANLENE",
+    "sku": "110154035",
+    "unit": "Lon",
+    "price": 480000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua Anlene Gold 800g mua thẳng nhãn Anlene"
+  },
+  {
+    "partnerCode": "NCC-ANLENE",
+    "sku": "110154036",
+    "unit": "Lon",
+    "price": 400000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua Anlene vani 800g mua thẳng nhãn Anlene"
+  },
+  {
+    "partnerCode": "NCC-ANLENE",
+    "sku": "110154028",
+    "unit": "Lon",
+    "price": 250000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua Anlene 400g mua thẳng nhãn Anlene"
+  },
+  {
+    "partnerCode": "NCC-THANGBAO",
+    "sku": "110154028",
+    "unit": "Lon",
+    "price": 250000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua Anlene 400g của Thắng Bảo"
+  },
+  {
+    "partnerCode": "NCC-HOANGNHI",
+    "sku": "140181006",
+    "unit": "Hộp",
+    "price": 7787,
+    "priceIncludesVat": true,
+    "warnPct": 2,
+    "validFrom": "2026-07-01",
+    "note": "Giá mua sữa chua TH Nha đam 100g của Hoàng Nhi (gồm VAT 8%)"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "sku": "110054057",
+    "unit": "Hộp",
+    "price": 380000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-10-01",
+    "note": "Giá mua cố định Vinamilk CanxiPro 900g / Hộp"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "sku": "110054061",
+    "unit": "Hộp",
+    "price": 520000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-10-01",
+    "note": "Giá mua cố định Vinamilk Sure Prevent 900g / Hộp"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "sku": "170413004",
+    "unit": "Gói",
+    "price": 28000,
+    "priceIncludesVat": false,
+    "warnPct": 3,
+    "validFrom": "2026-10-01",
+    "note": "Giá mua cố định Khăn ướt Newis 100T / Gói"
+  },
+  {
+    "partnerCode": "NCC-HOABINH",
+    "sku": "150346006",
+    "unit": "Chai",
+    "price": 165000,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "validFrom": "2026-10-01",
+    "note": "Giá mua Smartkids của Hoà Bình"
+  },
+  {
+    "partnerCode": "NCC-QUATANG",
+    "sku": "QT-BO-TRIAN",
+    "unit": "Bộ",
+    "price": null,
+    "priceIncludesVat": false,
+    "warnPct": 2,
+    "note": "Bộ quà tri ân TGS tự mua — giá theo từng đợt (có / không hoá đơn VAT)"
+  }
+]

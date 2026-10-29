@@ -1,0 +1,28 @@
+/* Mẫu in danh mục hàng (DM10 tem mã vạch, tem kệ) và bảng giá (DM14 báo giá dạng thẻ). Chỉ dùng trong .pdoc. */
+
+/* Tờ tem: tự chia trang (mỗi .lb-page một tờ A4), ô tem cố định cỡ theo số cột — xem productPrint.tsx. */
+.pdoc .lb-page { display: grid; align-content: start; break-after: page; page-break-after: always; }
+.pdoc .lb-page:last-child { break-after: auto; page-break-after: auto; }
+.pdoc .lb-cell { box-sizing: border-box; overflow: hidden; padding: 1mm 1.2mm; display: flex; flex-direction: column; align-items: stretch; text-align: center; outline: 0.2mm dashed #bbb; outline-offset: -0.1mm; line-height: 1.15; }
+.pdoc .lb-org { font-size: 0.8em; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdoc .lb-name { font-weight: 700; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.pdoc .lb-code { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.pdoc .lb-price { font-weight: 700; white-space: nowrap; }
+.pdoc .lb-price small { font-weight: 400; font-size: 0.8em; }
+
+/* Tem kệ hàng: thẻ to, giá nổi bật. */
+.pdoc .sc-cell { box-sizing: border-box; border: 0.3mm solid #000; border-radius: 2mm; padding: 3mm 4mm; display: flex; flex-direction: column; gap: 1.5mm; overflow: hidden; }
+.pdoc .sc-org { font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 0.2mm solid #000; padding-bottom: 1mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdoc .sc-name { font-size: 15px; font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pdoc .sc-price { font-size: 34px; font-weight: 800; line-height: 1; text-align: right; white-space: nowrap; margin-top: auto; }
+.pdoc .sc-price small { font-size: 13px; font-weight: 600; }
+.pdoc .sc-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 3mm; font-size: 9px; }
+.pdoc .sc-bottom .pd-barcode { margin: 0 !important; }
+
+/* Báo giá dạng thẻ: lưới 3 cột trên A4. */
+.pdoc .qc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-top: 4mm; }
+.pdoc .qc-card { border: 0.3mm solid #000; padding: 2.5mm 3mm; display: flex; flex-direction: column; gap: 1.2mm; break-inside: avoid; page-break-inside: avoid; min-height: 42mm; }
+.pdoc .qc-name { font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pdoc .qc-sku { font-size: 0.85em; color: #333; }
+.pdoc .qc-price { font-size: 1.45em; font-weight: 800; margin-top: auto; }
+.pdoc .qc-price small { font-size: 0.6em; font-weight: 400; }

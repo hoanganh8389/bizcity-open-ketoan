@@ -1,0 +1,66 @@
+{
+  "docType": "sale",
+  "docKey": "pos:CN01:sale:3058",
+  "version": 1,
+  "branchCode": "CN01",
+  "docNo": "CN01AA20515",
+  "docDate": "2026-10-09",
+  "description": "Bán hàng tại quầy",
+  "partner": {
+    "code": "0912345678",
+    "name": "Nguyễn Văn A",
+    "taxCode": "0101234567",
+    "address": "12 Lê Lợi, Lào Cai"
+  },
+  "invoice": {
+    "no": "0054969",
+    "serial": "C26TNH",
+    "form": "1",
+    "date": "2026-10-09",
+    "status": "valid",
+    "buyerLegalName": "Công ty TNHH A",
+    "buyerTaxCode": "0101234567"
+  },
+  "lines": [
+    {
+      "lineKey": "7062",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 1,
+      "unitPrice": 398148,
+      "amountBeforeTax": 398148,
+      "discount": 0,
+      "taxCode": "R08",
+      "taxAmount": 31852
+    },
+    {
+      "lineKey": "7063",
+      "sku": "QT01",
+      "name": "Quà tặng kèm",
+      "unit": "Cái",
+      "qty": 1,
+      "amountBeforeTax": 0,
+      "taxCode": "R08",
+      "taxAmount": 0,
+      "isGift": true
+    }
+  ],
+  "payments": [
+    {
+      "methodCode": "TM",
+      "amount": 230000,
+      "reference": "PT0002"
+    },
+    {
+      "methodCode": "QR",
+      "amount": 200000,
+      "reference": "FT26282123456"
+    }
+  ],
+  "totals": {
+    "beforeTax": 398148,
+    "tax": 31852,
+    "total": 430000
+  }
+}

@@ -1,0 +1,5 @@
+{"_bang": "hop-dong", "_mo_ta": "Hợp đồng (thuê nhà, tín dụng, mua tài sản…): mã, tên, hợp đồng gốc, ghi chú; extra: loại, đối tượng, ngày ký, giá trị.", "_cot": ["code", "name", "parent_code", "note", "is_active", "extra"]}
+{"code": "Nha01000.003", "name": "HD Thuê kho VP + kho số 3", "parent_code": null, "note": "Công ty Xuân Phương", "is_active": true, "extra": {"type": "rent", "signedDate": "2018-07-18", "value": 68181818.0}}
+{"code": "Nha01000.002", "name": "HĐ thuê kho hàng 300m2 số 2", "parent_code": null, "note": "Cty Tuyết Thanh", "is_active": true, "extra": {"type": "rent", "signedDate": "2019-06-28", "value": 9000000.0}}
+{"code": "Nha010000.003", "name": "HĐ thuê kho + VP số 3", "parent_code": null, "note": "Cty Xuân Phương", "is_active": true, "extra": {"type": "rent", "signedDate": "2018-07-17", "value": 68181818.0}}
+{"code": "Nha01000.001", "name": "HĐ thuê kho 500m2 VP NĐ 01", "parent_code": null, "note": "Cty Tuyết Thanh", "is_active": true, "extra": {"type": "rent", "signedDate": "2019-06-28", "value": 13636364.0}}

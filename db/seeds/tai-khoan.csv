@@ -1,0 +1,504 @@
+code,parent_code,name,normal_side,is_posting,track_partner,track_cost_item,track_department,track_contract,track_employee,track_cashflow,name_en,is_foreign_currency,track_product,track_internal_debt,is_vat,is_debt,is_loan,always_increase,is_ledger,is_cost
+001,,Tài sản. Hàng hóa nhận giữ hộ,debit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+0011,001,Tài sản nhận giữ hộ,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+0012,001,Hàng hóa nhận giữ hộ,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+002,,Chương trình thưởng chưa quy ra giá trị,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+111,,Tiền mặt,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1111,111,Tiền Việt Nam,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1112,111,Ngoại tệ,debit,1,0,0,0,0,0,,,1,0,0,0,0,0,1,1,0
+1113,111,Vàng tiền tệ,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+112,,Tiền gửi không kỳ hạn,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1121,112,Tiền Việt Nam,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+112100,1121,Ngân hàng trực thuộc Công ty,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210001,112100,Công ty: Vietcombank - CN Thành Công,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210005,112100,"Công ty: Vietinbank CN Thành An, Hà Nội - TK TT",debit,1,0,0,0,0,0,1,"Vietinbank CN Hà Tây, HN (TK TT)",0,0,0,0,0,0,1,1,0
+11210006,112100,"Công ty: Vietinbank CN Thành An, Hà Nội - POS",debit,1,0,0,0,0,0,1,"Vietinbank CN Hà Tây, HN (POS)",0,0,0,0,0,0,1,1,0
+11210007,112100,"Công ty: Vietinbank CN Thành An, Hà Nội - QR",debit,1,0,0,0,0,0,1,"Vietinbank CN Hà Tây, HN (QR)",0,0,0,0,0,0,1,1,0
+11210008,112100,Công ty: MB Bank CN Hoàn Kiếm - TK TT,debit,1,0,0,0,0,0,1,MB Bank CN Hoàn Kiếm,0,0,0,0,0,0,1,1,0
+11210009,112100,"Công ty: Vietinbank CN Hà Tây, HN (TMDT)",debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210010,112100,Công ty: MB Bank CN Hoàn Kiếm - QR,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210011,112100,"Công ty: Vietinbank CN Thành An, Hà Nội - Visa",debit,1,0,0,0,0,0,1,"Vietinbank CN Hà Tây, HN (Visa)",0,0,0,0,0,0,1,1,0
+11210012,112100,"Công ty: Agribank CN Tràng An, Hà Nội - POS",debit,1,0,0,0,0,0,1,"Agribank CN Tràng An, HN (POS)",0,0,0,0,0,0,1,1,0
+11210013,112100,"Công ty: Agribank CN Tràng An, Hà Nội - TKTT",debit,1,0,0,0,0,0,1,"Agribank CN Tràng An, Hà Nội - POS",0,0,0,0,0,0,1,1,0
+11210014,112100,"Công ty: Techcombank CN Đông Đô, Hà Nội - QR động",debit,1,0,0,0,0,0,1,"Techcombank CN Đông Đô, HN (QR)",0,0,0,0,0,0,1,1,0
+11210015,112100,Công ty: MB Bank CN Hoàn Kiếmn - VietQR,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+112101,1121,Nam Định,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210103,112101,Nam Định: Vietinbank CN Nam Định,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112102,1121,Vĩnh Phúc,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210204,112102,Vietinbank CN Vĩnh Phúc- Bình Xuyên,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112103,1121,Hà Nam,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210302,112103,Hà Nam: Vietinbank CN Hà Nam,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112104,1121,Ninh Bình,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210402,112104,Ninh Bình: Vietinbank CN Tam Điệp,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112105,1121,Hồ Chí Minh,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210501,112105,CNHCM Vietcombank - CN TP HCM,debit,1,0,0,0,0,0,1,HCM:  CVB Thành - HCM,0,0,0,0,0,0,1,1,0
+11210503,112105,CNHCM Vietinbank - CN Tân Bình,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210504,112105,CNHCM Vietinbank 2 - CN Tân Bình,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210594,112105,HCM: Vietcombank Visa HCM Hanh,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+112106,1121,Bắc Ninh,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210604,112106,Bắc Ninh: Vietinbank - CN Bắc Ninh 1,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210694,112106,Bắc Ninh: Vietinbank CN Bắc Hưng Yên-Đàm Thị Nguyệt,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112107,1121,Hưng Yên,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210702,112107,Vietinbank CN Hưng Yên - PGD Văn Giang,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11210794,112107,Hưng Yên: Vietinbank CN Bắc Hưng Yên-Đàm Thị Nguyệt,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112108,1121,Phú Thọ,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210803,112108,Phú Thọ: Vietinbank - CN Đền Hùng,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112109,1121,Thái Bình,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11210902,112109,Thái Bình: Vietinbank CN Thái Bình,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112110,1121,Thanh Hóa,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211003,112110,Thanh Hoá: Vietinbank - CN Tỉnh Thanh Hóa,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+11211004,112110,Thanh Hoá: MBank- CN tỉnh Thanh Hóa,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+11211005,112110,Thanh Hoá - MB Bank-CN Hoàn Kiếm,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+112111,1121,Hải Phòng,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211101,112111,Hải Phòng: Agribank - An Dương,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211102,112111,Hải Phòng- Vietinbank CN Lê Chân,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11211103,112111,Hải Phòng - MB Bank-CN Hoàn Kiếm,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+112112,1121,Bắc Giang,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211203,112112,Bắc Giang: Viettinbank-CN Bắc Giang,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11211290,112112,Bắc Giang: Vietinbank CN Bắc Hưng Yên-Đàm Thị Nguyệt,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112113,1121,Hà Nội,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211302,112113,Hà Nội: Vietinbank - CN Bắc Hà Nội,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11211303,112113,Hà Nội - MB Bank-CN Hoàn Kiếm,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+11211394,112113,Hà Nội: Vietinbank CN Bắc Hưng Yên-Đàm Thị Nguyệt,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112114,1121,Nghệ An,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211402,112114,Nghệ An: Viettinbank CN TP Vinh,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11211403,112114,Nghệ An: Techcombank CN Đông Đô,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112115,1121,Hải Dương,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211501,112115,Hải Dương: Agribank - CN An Dương,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211502,112115,Vietinbank- CN Hải Dương- PGD Tứ Kỳ,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112116,1121,Hòa Bình,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211602,112116,Hoà Bình: Vietinbank CN Hòa Bình - PGD Hữu Nghị,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11211694,112116,Hòa Bình: Vietinbank CN Bắc Hưng Yên-Đàm Thị Nguyệt,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112117,1121,Thái Nguyên,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211703,112117,Thái Nguyên: Vietinbank CN Thái Nguyên 1,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11211794,112117,Thái Nguyên: Vietinbank CN Bắc Hưng Yên-Đàm Thị Nguyệt,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112118,1121,Yên Bái,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211802,112118,Yên Bái: Vietinbank CN Yên Bái - PGD Đồng Tâm,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112119,1121,Tuyên Quang,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11211902,112119,Vietinbank CN Tuyên Quang,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112120,1121,Hà Tĩnh,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11212002,112120,Hà Tĩnh: Viettinbank CN Hà Tĩnh,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112121,1121,Đà Nẵng,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11212101,112121,Đà Nẵng: Vietinbank - CN Đà Nẵng,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11212102,112121,Đà Nẵng - MB Bank-CN Hoàn Kiếm,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+112122,1121,Cần Thơ,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11212201,112122,CNCT Vietinbank - CN Cần Thơ,debit,1,0,0,0,0,0,1,CNCT Viettinbank-Cần Thơ,0,0,0,0,0,0,1,1,0
+11212202,112122,CNCT Agribank - CN Cần Thơ,debit,1,0,0,0,0,0,1,CNCT Agribank-Cần Thơ,0,0,0,0,0,0,1,1,0
+112123,1121,Đồng Nai,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11212301,112123,Đồng Nai: Vietinbank CN Đồng Nai,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112124,1121,Bình Dương,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11212401,112124,CNBD Vietinbank CN Bình Dương-Hội Sở,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112125,1121,Chi Nhánh Quảng Ninh,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11212501,112125,CN QN-Agribank CN An Dương-Hải Phòng,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+11212502,112125,CN QN- Vietinbank- CN Uông Bí,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112126,1121,Lào Cai,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11212602,112126,Vietinbank CN Lào Cai - PGD Thành Phố,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112127,1121,An Giang,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112128,1121,Vĩnh Long,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112129,1121,Hà Giang,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11212902,112129,Vietinbank CN Hà Giang - PGD Bắc Quang,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112130,1121,Chi nhánh Quảng Nam,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11213001,112130,Vietinbank-CN Quảng Nam,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+112132,1121,An Giang,debit,0,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+11213201,112132,CNAG Viettinbank- CN An Giang,debit,1,0,0,0,0,0,1,,0,0,0,0,0,0,1,1,0
+1122,112,Ngoại tệ,debit,1,0,0,0,0,0,0,,1,0,0,0,0,0,1,1,0
+1123,112,Vàng tiền tệ,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+113,,Tiền đang chuyển,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1131,113,Tiền Việt Nam,debit,0,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+11311,1131,Tiền Việt Nam đang chuyển,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+11318,1131,Tiền lưu chuyển trong chi nhánh (PTT),debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+11319,1131,Tiền lưu chuyển trong chi nhánh (PCT),debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+1132,113,Ngoại tệ,debit,1,0,0,0,0,0,0,,1,0,0,0,0,0,1,1,0
+121,,Chứng khoán kinh doanh,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1211,121,Cổ phiếu,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1212,121,Trái phiếu,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1218,121,Chứng khoán và công cụ tài chính khác,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+128,,Đầu tư nắm giữ đến ngày đáo hạn,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1281,128,Tiền gửi có kỳ hạn,debit,1,0,0,0,1,0,0,,0,0,0,0,0,0,1,1,0
+1282,128,Trái phiếu,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1283,128,Cho vay,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1288,128,Các khoản đầu tư khác nắm giữ đến ngày đáo hạn,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+131,,Phải thu của khách hàng,both,0,1,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1311,131,Phải thu từ hoạt động bán hàng,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+1312,131,Phải thu từ hoạt động cung cấp dịch vụ,both,0,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13121,1312,"Phải thu từ trưng bày, hỗ trợ được hưởng từ NCC",both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13128,1312,Phải thu từ hoạt động cung cấp dịch vụ khác,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+1318,131,Các khoản phải thu khách hàng khác,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+133,,Thuế GTGT được khấu trừ,debit,0,0,0,0,0,0,0,,0,0,0,1,0,0,1,1,0
+1331,133,"Thuế GTGT được khấu trừ của hàng hóa, dịch vụ",debit,1,0,0,0,0,0,0,,0,0,0,1,0,0,1,1,0
+1332,133,Thuế GTGT được khấu trừ của TSCĐ,debit,1,0,0,0,0,0,0,,0,0,0,1,0,0,1,1,0
+136,,Phải thu nội bộ,both,0,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+1361,136,Vốn kinh doanh ở đơn vị trực thuộc,both,1,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+1362,136,Phải thu nội bộ về chênh lệch tỷ giá,debit,1,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+1363,136,Phải thu nội bộ về chi phí đi vay đủ điều kiện được vốn hoá,debit,1,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+1368,136,Phải thu nội bộ khác,both,0,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+13681,1368,"Phải thu nội bộ: Tiền, hàng hoá, chi phí",debit,1,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+13688,1368,Phải thu nội bộ khác,debit,1,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+138,,Phải thu khác,both,0,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+1381,138,Tài sản thiếu chờ xử lý,debit,1,1,0,1,0,1,0,,0,0,0,0,0,0,1,1,0
+1383,138,Thuế TTĐB của hàng nhập khẩu,debit,1,0,0,0,1,0,0,,0,0,0,0,0,0,1,1,0
+1388,138,Phải thu khác,both,0,1,0,0,0,1,0,,0,0,0,0,0,0,1,1,0
+13881,1388,Phải thu ngắn hạn khác,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13882,1388,Phải thu dài hạn khác,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13883,1388,Phải thu hàng đổi trả NCC,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13884,1388,Phải thu các khoản thưởng từ NCC,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13888,1388,Các khoản phải thu khác,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+1389,138,"Phải thu khác NCC (Hàng đổi trả, Thu ngoài C.Tr)",debit,0,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+13891,1389,Phải thu hàng đổi trả NCC,debit,1,1,0,0,0,,,,0,0,0,0,0,0,1,1,0
+13892,1389,Phải thu CL HĐ GTGT,debit,1,1,0,0,0,,,,0,0,0,0,0,0,1,1,0
+13893,1389,Phải thu Các khoản ngoài Chương trình,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+141,,Tạm ứng,debit,0,1,0,0,0,1,0,,0,0,0,0,0,0,1,1,0
+1411,141,Tạm ứng Công việc,debit,1,1,0,1,0,1,0,,0,0,0,0,0,0,1,1,0
+1412,141,Tạm ứng Lương,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+1418,141,Tạm ứng khác,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+151,,Hàng mua đang đi đường,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1511,151,Hàng hóa đang đi đường,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1512,151,Vật tư đang đi đường,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1513,151,"Tài sản, CCDC đang đi đường",debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+152,,"Nguyên liệu, vật liệu",debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+153,,"Công cụ, dụng cụ",debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+1531,153,"Công cụ, dụng cụ",debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+1532,153,"Bao bì, Vật tư bán hàng",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+1533,153,"Thiết bị, đồ dùng đi mượn",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+1534,153,"Thiết bị, đồ dùng thay thế",debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+154,,Chi phí SXKD dở dang,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+155,,Sản phẩm,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+156,,Hàng hóa,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1561,156,Giá mua hàng hóa,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1562,156,Chi phí thu mua hàng hóa,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+157,,Hàng gửi đi bán,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+1579,157,Hàng lưu chuyển trong chi nhánh,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+158,,"Nguyên liệu, vật tư tại kho bảo thuế",debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+171,,Giao dịch mua bán lại trái phiếu chính phủ,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+211,,Tài sản cố định hữu hình,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2111,211,"Nhà cửa, vật kiến trúc",debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2112,211,"Máy móc, thiết bị",debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2113,211,"Phương tiện vận tải, truyền dẫn",debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2114,211,"Thiết bị, dụng cụ quản lý",debit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,0,0
+2115,211,Cây lâu năm cho sản phẩm định kỳ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2118,211,TSCĐ hữu hình khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+212,,Tài sản cố định thuê tài chính,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2121,212,TSCĐ hữu hình thuê tài chính,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2122,212,TSCĐ vô hình thuê tài chính,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+213,,Tài sản cố định vô hình,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2134,213,"Nhãn hiệu, tên thương mại",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2135,213,Phần mềm,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2138,213,TSCĐ vô hình khác,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+214,,Hao mòn tài sản cố định,credit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2141,214,Hao mòn TSCĐ hữu hình,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2142,214,Hao mòn TSCĐ thuê tài chính,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2143,214,Hao mòn TSCĐ vô hình,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2147,214,Hao mòn BĐSĐT,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+215,,Tài sản sinh học,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+217,,Bất động sản đầu tư,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+221,,Đầu tư vào công ty con,both,1,1,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+222,,"Đầu tư vào công ty liên doanh, liên kết",both,1,1,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+228,,Đầu tư khác,both,0,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+2281,228,Đầu tư góp vốn vào đơn vị khác,debit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+2288,228,Đầu tư khác,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+229,,Dự phòng tổn thất tài sản,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+2291,229,Dự phòng giảm giá chứng khoán kinh doanh,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+2292,229,Dự phòng tổn thất đầu tư vào đơn vị khác,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+2293,229,Dự phòng phải thu khó đòi,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+2294,229,Dự phòng giảm giá hàng tồn kho,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+2295,229,Dự phòng tổn thất tài sản sinh học,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+241,,Xây dựng cơ bản dở dang,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2411,241,Mua sắm TSCĐ,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2412,241,Xây dựng cơ bản,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2413,241,"Sửa chữa, bảo dưỡng định kỳ TSCĐ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2414,241,"Nâng cấp, cải tạo TSCĐ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+242,,Chi phí chờ phân bổ,both,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2421,242,Chi phí trả trước ngắn hạn,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+24211,2421,"Trả trước tiền thuê kho, nhà, đất",debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+242111,24211,"Trả trước tiền thuê kho, nhà, đất",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+242112,24211,Nộp thuế thay chủ nhà,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+24218,2421,Chi phí trả trước ngắn hạn khác,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+2422,242,Chi phí trả trước dài hạn,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+24221,2422,"Trả trước tiền thuê kho, nhà, đất",debit,0,0,0,1,0,0,,,0,0,0,0,0,0,1,1,0
+242211,24221,"Trả trước tiền thuê kho, nhà, đất",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+242212,24221,Nộp thuế thay chủ nhà,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+24228,2422,Chi phí trả trước dài hạn khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+243,,Tài sản thuế thu nhập hoãn lại,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+244,,"Ký quỹ, ký cược",debit,0,1,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2441,244,"Ký quỹ, ký cược ngắn hạn",debit,1,1,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+2442,244,"Ký quỹ, ký cược dài hạn",debit,1,1,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+331,,Phải trả cho người bán,both,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3311,331,"Phải trả người bán: Tài sản, Chi phí",both,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33111,3311,"Phải trả: Tài sản, Chi phí",both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33112,3311,Phải trả: Giá trị đảm bảo nghĩa vụ bảo hành,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3312,331,Phải trả người bán: Hàng hóa,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3319,331,Phải trả cho người bán-Trung Gian,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+332,,"Phải trả cổ tức, lợi nhuận",credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+333,,Thuế và các khoản phải nộp Nhà nước,credit,0,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3331,333,Thuế giá trị gia tăng phải nộp,credit,0,0,0,0,0,0,,,0,0,0,1,0,0,0,1,0
+33311,3331,Thuế GTGT đầu ra,credit,1,0,0,0,0,0,0,,0,0,0,1,0,0,0,1,0
+33312,3331,Thuế GTGT hàng nhập khẩu,credit,1,0,0,0,0,0,0,,0,0,0,1,0,0,0,1,0
+3332,333,Thuế tiêu thụ đặc biệt,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3333,333,Thuế xuất nhập khẩu,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3334,333,Thuế thu nhập doanh nghiệp,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3335,333,Thuế thu nhập cá nhân,credit,1,1,0,0,0,1,0,,0,0,0,0,0,0,0,1,0
+3336,333,Thuế tài nguyên,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3337,333,"Thuế nhà đất, tiền thuê đất",credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3338,333,Các loại phí khác,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+33381,3338,Thuế bảo vệ môi trường,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+33382,3338,Các loại thuế khác,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3339,333,"Phí, lệ phí và các khoản phải nộp khác",credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+334,,Phải trả người lao động,credit,0,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3341,334,Phải trả công nhân viên,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+33411,3341,Phải trả công nhân viên,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+33412,3341,Phải trả công nhân viên - Chờ xử lý,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3348,334,Phải trả người lao động khác,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+33481,3348,Phải trả người lao động khác,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+33482,3348,Phải trả người lao động khác - Chờ xử lý,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+335,,Chi phí phải trả,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+336,,Phải trả nội bộ,both,0,1,0,0,0,0,0,,0,0,1,0,0,0,1,1,0
+3361,336,Phải trả nội bộ về vốn kinh doanh,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3362,336,Phải trả nội bộ về chênh lệch tỷ giá,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3363,336,Phải trả nội bộ về chi phí đi vay đủ điều kiện được vốn hoá,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3368,336,Phải trả nội bộ khác,credit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33681,3368,"Phải trả nội bộ: Tiền, hàng hoá, chi phí",credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33688,3368,Phải trả nội bộ khác,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+337,,Thanh toán theo tiến độ hợp đồng xây dựng,both,1,1,0,0,1,0,,,0,0,0,0,0,0,0,1,0
+338,,"Phải trả, phải nộp khác",both,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3381,338,Tài sản thừa chờ xử lý,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3382,338,Kinh phí công đoàn,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3383,338,Bảo hiểm xã hội,credit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33831,3383,Bảo hiểm xã hội,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33838,3383,"Phải trả, phải nộp khác với CQ BHXH",credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3384,338,Bảo hiểm y tế,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3386,338,Bảo hiểm thất nghiệp,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3387,338,Doanh thu chờ phân bổ,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3388,338,"Phải trả, phải nộp khác",credit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33881,3388,Phải trả ngắn hạn khác,both,1,1,0,0,0,1,0,,0,0,0,0,0,0,0,1,0
+33882,3388,Phải trả dài hạn khác,credit,1,1,0,0,0,1,0,,0,0,0,0,0,0,0,1,0
+33883,3388,Tiền đảm bảo thực hiện hợp đồng trách nhiệm,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33887,3388,Thuế GTGT hàng đổi trả NCC 13891,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+33888,3388,Các khoản phải trả khác,credit,1,1,0,0,0,1,0,,0,0,0,0,0,0,0,1,0
+33889,3388,Thuế TNCN tạm trích 10%,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+3389,338,Bảo hiểm tai nạn lao động,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+341,,Vay và nợ thuê tài chính,both,0,1,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3411,341,Các khoản đi vay,credit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+34111,3411,Vay ngắn hạn,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+34112,3411,Vay dài hạn,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+34113,3411,Nợ thẻ tín dụng,credit,1,1,0,0,0,0,0,Nợ thẻ tín dụng,0,0,0,0,0,0,0,1,0
+3412,341,Nợ thuê tài chính,credit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+34121,3412,Nợ thuê tài chính ngắn hạn,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+34122,3412,Nợ thuê tài chính dài hạn,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+343,,Trái phiếu phát hành,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3431,343,Trái phiếu thường,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+34311,3431,Mệnh giá trái phiếu,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+34312,3431,Chiết khấu trái phiếu,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+34313,3431,Phụ trội trái phiếu,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3432,343,Trái phiếu chuyển đổi,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+344,,"Nhận ký quỹ, ký cược",both,1,1,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+347,,Thuế thu nhập hoãn lại phải trả,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+352,,Dự phòng phải trả,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3521,352,Dự phòng bảo hành sản phẩm hàng hóa,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3522,352,Dự phòng bảo hành công trình xây dựng,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3523,352,Dự phòng tái cơ cấu doanh nghiệp,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3525,352,Dự phòng phải trả khác,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+353,,"Quỹ khen thưởng, phúc lợi",credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3531,353,Quỹ khen thưởng,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3532,353,Quỹ phúc lợi,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3533,353,Quỹ phúc lợi đã hình thành TSCĐ,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3534,353,Quỹ thưởng ban quản lý và điều hành công ty,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3539,353,"Quỹ Lương, khen thưởng, phúc lợi",credit,0,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35391,3539,Quỹ phát triển kinh doanh Chi nhánh,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35392,3539,Quỹ điều phối thu nhập cho khối Back toàn Công ty,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35393,3539,Quỹ điều phối thu nhập Chi nhánh,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35394,3539,"Quỹ khen thưởng, phúc lợi Chi nhánh",credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35395,3539,Quỹ dự phòng ổn định thu nhập Chi nhánh,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35396,3539,Quỹ dự phòng rủi ro Chi nhánh,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+35398,3539,"Quỹ lương, khen thưởng, phúc lợi khác",credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+356,,Quỹ phát triển khoa học và công nghệ,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3561,356,Quỹ phát triển khoa học và công nghệ,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+3562,356,Quỹ phát triển khoa học và công nghệ đã hình thành tài sản,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+357,,Quỹ bình ổn giá,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+411,,Vốn đầu tư của chủ sở hữu,both,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+4111,411,Vốn góp của chủ sở hữu,credit,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+41111,4111,Cổ phiếu phổ thông có quyền biểu quyết,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+41112,4111,Cổ phiếu ưu đãi,credit,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+4112,411,Thặng dư vốn,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+4113,411,Quyền chọn chuyển đổi trái phiếu,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+4118,411,Vốn khác,both,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+412,,Chênh lệch đánh giá lại tài sản,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+413,,Chênh lệch tỷ giá hối đoái,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+414,,Quỹ đầu tư phát triển,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+418,,Các quỹ khác thuộc vốn chủ sở hữu,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+419,,Cổ phiếu mua lại của chính mình,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+421,,Lợi nhuận sau thuế chưa phân phối,credit,0,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+4211,421,Lợi nhuận sau thuế chưa phân phối lũy kế đến cuối năm trước,credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+4212,421,Lợi nhuận sau thuế chưa phân phối năm nay,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+511,,Doanh thu bán hàng và cung cấp dịch vụ,credit,0,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+5111,511,Doanh thu bán hàng hóa,credit,0,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+51111,5111,Doanh thu bán lẻ,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+51112,5111,Doanh thu bán buôn,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+51113,5111,Doanh thu bán hàng khuyến mại,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+51116,5111,Doanh thu bán hàng nội bộ,credit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+51118,5111,Doanh thu bán hàng khác,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+5113,511,Doanh thu cung cấp dịch vụ,credit,0,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+51131,5113,"Doanh thu trưng bày, hỗ trợ được hưởng từ NCC",credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+51138,5113,Phải thu từ hoạt động cung cấp dịch vụ khác,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+5118,511,Doanh thu khác,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+515,,Doanh thu hoạt động tài chính,credit,0,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+5151,515,"Lãi tiền gửi, tiền cho vay",credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+5152,515,"Lãi bán hàng trả chậm, chiết khấu thanh toán",credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+5153,515,"Thu nhập từ GD CK, nhượng bán các khoản đầu tư",credit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+5154,515,Thu nhập từ hoạt động đầu tư khác,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+5155,515,Lãi chênh lệch tỷ giá,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+5158,515,Doanh thu hoạt động tài chính khác,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+521,,Các khoản giảm trừ doanh thu,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+5211,521,Chiết khấu thương mại,debit,0,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+52111,5211,Chiết khấu bán lẻ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52112,5211,Chiết khấu bán buôn,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52113,5211,Chiết khấu hàng khuyến mại,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52116,5211,Chiết khấu nội bộ,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+52118,5211,Chiết khấu khác,debit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+5212,521,Giảm giá hàng bán,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52121,5212,Giảm giá bán lẻ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52122,5212,Giảm giá bán buôn,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52123,5212,Giảm giá hàng khuyến mại,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52126,5212,Giảm giá nội bộ,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+52128,5212,Giảm giá khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+5213,521,Hàng bán bị trả lại,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52131,5213,Hàng bán trả lại bán lẻ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52132,5213,Hàng bán trả lại bán buôn,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52133,5213,Hàng bán trả lại hàng khuyến mại,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52136,5213,Hàng bán trả lại nội bộ,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,1,0
+52138,5213,Hàng bán trả lại khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+52139,5213,Hàng bán trả lại HCL1,debit,1,0,1,1,0,0,0,,0,0,0,0,0,0,0,1,0
+621,,Chi phí nguyên vật liệu trực tiếp,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+622,,Chi phí nhân công trực tiếp,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+623,,Chi phí sử dụng máy thi công,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6231,623,Chi phí nhân công,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6232,623,Chi phí vật liệu,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+6233,623,Chi phí dụng cụ sản xuất,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6234,623,Chi phí khấu hao máy thi công,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6237,623,Chi phí dịch vụ mua ngoài,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6238,623,Chi phí bằng tiền khác,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+627,,Chi phí sản xuất chung,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6271,627,Chi phí nhân viên phân xưởng,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6272,627,Chi phí vật liệu,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+6273,627,Chi phí dụng cụ sản xuất,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6274,627,Chi phí khấu hao TSCĐ,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6275,627,"Thuế, phí, lệ phí",debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+6277,627,Chi phí dịch vụ mua ngoài,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6278,627,Chi phí bằng tiền khác,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+632,,Giá vốn hàng bán,debit,0,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6321,632,Giá vốn bán lẻ,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6322,632,Giá vốn bán buôn,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6323,632,Giá vốn hàng khuyến mại,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,1,1,0
+6324,632,Giá vốn dịch vụ sản xuất,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,0,0,0
+6325,632,Giá vốn hàng đã bán đc NCC CK,debit,1,0,0,0,0,,,,0,0,0,0,0,0,1,1,0
+6326,632,Giá vốn nội bộ,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+6328,632,Giá vốn khác (Hỏng/ hủy…),debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+635,,Chi phí tài chính,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6351,635,"Lãi tiền vay, mua hàng trả chậm, thuê TS thuê t",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6352,635,Chiết khấu thanh toán cho người mua,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6353,635,"Lỗ do GD CK, thanh lý, nhượng bán các khoản đầu",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6354,635,"Chi phí hoạt động góp vốn, đầu tư khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6355,635,Lỗ chênh lệch tỷ giá,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6356,635,Dự phòng giảm giá/tổn thất các khoản đầu tư,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6358,635,Chi phí hoạt động đầu tư tài chính khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+641,,Chi phí bán hàng,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6411,641,Chi phí nhân viên,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64111,6411,Chi phí tiền lương,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64112,6411,"Chi phí BHXH, BHYT, BHTN, BHTNLĐ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64113,6411,"Thưởng, Ăn ca, hỗ trợ khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64118,6411,Chi phí nhân viên khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6412,641,"Chi phí vật liệu, bao bì",debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64121,6412,"Chi phí vật liệu, bao bì thường xuyên",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64128,6412,"Chi phi tem, nhãn, băng keo, vật liệu khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6413,641,"Chi phí dụng cụ, đồ dùng",debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64131,6413,"Chi phí hao mòn công cụ, dụng cụ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64138,6413,"Chi phí dụng cụ, đồ dùng khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6414,641,Chi phí khấu hao TSCĐ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6415,641,"Thuế, phí, lệ phí",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6417,641,Chi phí dịch vụ mua ngoài,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64171,6417,"Chi phí XDCB, sửa chữa cơ sở hạ tầng",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64172,6417,Chi phí thuê cửa hàng,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64173,6417,Chi phí điện/ nước/ điện thoại/ Internet ….,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64174,6417,"Chi phí giao nhận, vận chuyển",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64175,6417,"Tiền hoa hồng bán hàng, phí UTXK",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64176,6417,Chi phí thuê bảo vệ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64177,6417,Chi phí bảo hiểm,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64178,6417,Chi phí dịch vụ mua ngoài khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6418,641,Chi phí bằng tiền khác,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64181,6418,"Công tác phí và vé tàu xe, máy bay",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64182,6418,Chi phí ngoại giao/ tiếp khách,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64183,6418,"Chi phí quảng cáo, hội nghị, tổ chức sự kiện",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64184,6418,"Chi phí tờ rơi, quà tặng khách hàng",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64185,6418,"Chi phí đào tạo, tuyển dụng",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64186,6418,"Chi phí Sửa chữa, bảo trì TSCĐ, CCDC",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64187,6418,Chi phí xăng dầu/ vé xe/ rửa xe,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64188,6418,Chi phí bằng tiền khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+642,,Chi phí quản lý doanh nghiệp,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6421,642,Chi phí nhân viên,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64211,6421,Chi phí tiền lương,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64212,6421,"Chi phí BHXH, BHYT, BHTN, BHTNLĐ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64213,6421,"Thưởng, Ăn ca, hỗ trợ khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64218,6421,Chi phí nhân viên khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6422,642,Chi phí vật liệu quản lý,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6423,642,Chi phí đồ dùng văn phòng,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64231,6423,"Chi phí hao mòn công cụ, dụng cụ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64232,6423,"Chi phí vật tư cho kho, hàng hóa",debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+64238,6423,"Chi phí dụng cụ, đồ dùng khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6424,642,Chi phí khấu hao TSCĐ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6425,642,"Thuế, phí và lệ phí",debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64251,6425,Thuế môn bài,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64252,6425,"Lệ phí giao thông, cầu, phà …",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64258,6425,"Thuế phí, lệ phí khác",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6426,642,Chi phí dự phòng,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64261,6426,Chi phí dự phòng giảm giá chứng khoán kinh doanh,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64262,6426,Chi phí dự phòng tổn thất đầu tư vào đơn vị khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64263,6426,Chi phí dự phòng phải thu khó đòi,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64264,6426,Chi phí dự phòng giảm giá hàng tồn kho,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6427,642,Chi phí dịch vụ mua ngoài,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64271,6427,"Chi phí XDCB, sửa chữa cơ sở hạ tầng",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64272,6427,"Chi phí thuê văn phòng, kho, nhà, đất",debit,1,0,0,1,0,0,0,"Chi phí thuê văn phòng, nhà, đất",0,0,0,0,0,0,1,1,0
+64273,6427,Chi phí điện/ nước/ điện thoại/ Internet ….,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64274,6427,"Chi phí giao nhận, vận chuyển",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64275,6427,"Phí ngân hàng, phí chuyển tiền",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64276,6427,Chi phí thuê bảo vệ,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64277,6427,Chi phí Bảo hiểm,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64278,6427,Chi phí dịch vụ mua ngoài khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6428,642,Chi phí bằng tiền khác,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64281,6428,"Công tác phí và vé tàu xe, máy bay",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64282,6428,Chi phí ngoại giao/ tiếp khách/ tài trợ/ ủng hộ ..,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64283,6428,"Chi phí hội thảo, hội nghị, tổ chức sự kiện",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64284,6428,"Chi phí quảng cáo, quảng bá thương hiệu …",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64285,6428,"Chi phí đào tạo, tuyển dụng",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64286,6428,Chi phí xăng dầu/ vé xe/ rửa xe,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64287,6428,"Chi phí Sửa chữa, bảo trì TSCĐ, CCDC",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+64288,6428,Chi phí bằng tiền khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+6429,642,Chi phí quản lý bị loại trừ thuế TNDN,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+711,,Thu nhập khác,credit,0,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+7111,711,"Thu từ nhượng bán, thanh lý TSCÐ",credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+7112,711,Thu tiền phạt khách hàng vi phạm hợp đồng,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+7113,711,Thu các khoản thuế được NSNN hoàn lại,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+7114,711,"Thu các khoản nợ khó đòi đã xử lý, xoá sổ",credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+7115,711,"Thu nhập từ hãng, NCC",credit,0,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+71150,7115,"Thưởng từ hãng, NCC đã xuất HĐ cho TGS",credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+71151,7115,Tiền thưởng liên quan đến tiêu thụ hàng hóa,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+71152,7115,Giá trị hàng thưởng liên quan đến tiêu thụ hàng,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+71153,7115,Giá trị hàng khuyến mại không phải trả lại,credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+71154,7115,"Thưởng, Chiết khấu NCC xuất Hoá đơn",credit,1,0,1,1,0,0,0,,0,0,0,0,0,0,0,1,0
+71159,7115,Các khoản ngoài Chương trình (CL HĐ GTGT ...),credit,1,0,0,1,0,0,0,,0,0,0,0,0,0,0,1,0
+7116,711,"Lãi do đánh giá lại tài sản đem góp vốn, đầu tư",credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+7118,711,Các khoản thu nhập khác,credit,1,0,0,1,0,0,,,0,0,0,0,0,0,0,1,0
+811,,Chi phí khác,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8111,811,"Chi phí nhượng bán, thanh lý TSCÐ",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8112,811,Tiền do phạt vi phạm hợp đồng,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8113,811,"Tiền phạt vi phạm HC thuế, truy thu thuế",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8114,811,Tiền phạt hành chính khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8115,811,Giá trị hàng hóa thất thoát,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8116,811,"Lỗ do đánh giá lại tài sản đem góp vốn, đầu tư",debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8118,811,Các khoản chi phí khác,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8119,811,Các khoản CP khác HĐKD,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+821,,Chi phí thuế thu nhập doanh nghiệp,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+8211,821,Chi phí thuế TNDN hiện hành,debit,0,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+82111,8211,Chi phí thuế TNDN hiện hành theo quy định của Luật thuế TNDN,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+82112,8211,Chi phí thuế TNDN bổ sung theo quy định về thuế tối thiểu toàn cầu,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0
+8212,821,Chi phí thuế TNDN hoãn lại,debit,1,0,0,1,0,0,0,,0,0,0,0,0,0,1,1,0
+911,,Xác định kết quả kinh doanh,debit,1,0,0,0,0,0,,,0,0,0,0,0,0,0,1,0
+999,,Tài khoản Trung gian,debit,1,0,0,0,0,0,0,,0,0,0,0,0,0,1,1,0

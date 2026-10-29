@@ -1,0 +1,144 @@
+{
+  "partners": [
+    {
+      "code": "NCC-TRUNGHAU",
+      "name": "Công ty TNHH Thương Mại Trung Hậu",
+      "taxCode": "2900599615",
+      "group": "NCC hàng hóa",
+      "address": "Số 17 Đường Trần Đăng Ninh, Khối 4, P. Hồng Sơn, TP Vinh, Nghệ An",
+      "phone": "02383847891",
+      "openingDebt": 362057680
+    },
+    {
+      "code": "NCC-HOANGNHI",
+      "name": "Công ty Hoàng Nhi",
+      "taxCode": "0101111222",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NCC-THANGBAO",
+      "name": "Công ty Thắng Bảo",
+      "taxCode": "0102222333",
+      "group": "NCC hàng hóa",
+      "openingDebt": 480000000
+    },
+    {
+      "code": "NCC-ANLENE",
+      "name": "Nhà phân phối Anlene miền Bắc",
+      "taxCode": "0103333444",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NCC-VANTAI",
+      "name": "Công ty vận tải Minh Phát",
+      "taxCode": "0104444555",
+      "group": "NCC dịch vụ",
+      "openingDebt": 0
+    },
+    {
+      "code": "NCC-QUATANG",
+      "name": "Công ty quà tặng Hồng Phát",
+      "taxCode": "0105555666",
+      "group": "NCC quà tặng",
+      "openingDebt": 0
+    },
+    {
+      "code": "NCC-HOABINH",
+      "name": "Công ty TNHH Phân phối Hoà Bình",
+      "taxCode": "0106666777",
+      "group": "NCC hàng hóa",
+      "address": "Số 25 Lê Hồng Phong, TP Nam Định",
+      "phone": "02283666777",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC100227",
+      "name": "Công ty TNHH Thương Mại Vinh Châu",
+      "taxCode": "2900394907",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC100214",
+      "name": "Công ty TNHH Thương Mại và Xây Dựng Bảo Huy",
+      "taxCode": "2901144836",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC100495",
+      "name": "Công ty cổ phần Diana Unicharm",
+      "taxCode": "0100507058",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC209097",
+      "name": "Công ty TNHH Lifesfood",
+      "taxCode": "1102160036",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC208354",
+      "name": "Công ty TNHH Thương Mại Hoàng Tuấn",
+      "taxCode": "2400526707",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC100220",
+      "name": "Công ty TNHH TM & Dịch vụ Vận Tải Hoàng Gia Phú",
+      "taxCode": "2901274151",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    },
+    {
+      "code": "NC100620",
+      "name": "Công ty TNHH DV TM và XNK Đại Thịnh",
+      "taxCode": "0101782441",
+      "group": "NCC hàng hóa",
+      "openingDebt": 0
+    }
+  ],
+  "branches": [
+    {
+      "code": "CN-NA",
+      "name": "CN Nghệ An"
+    },
+    {
+      "code": "CN-ND",
+      "name": "CN Nam Định"
+    },
+    {
+      "code": "CN-PT",
+      "name": "CN Phú Thọ"
+    },
+    {
+      "code": "CN-HCM",
+      "name": "CN Hồ Chí Minh"
+    }
+  ],
+  "holidays": [
+    "2026-01-01",
+    "2026-02-16",
+    "2026-02-17",
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-04-27",
+    "2026-04-30",
+    "2026-05-01",
+    "2026-09-01",
+    "2026-09-02"
+  ],
+  "brandOpeningDebt": {
+    "ANLENE": {
+      "CN-ND": 250000000,
+      "CN-PT": 0,
+      "CN-HCM": 150000000
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "docType": "transfer",
+  "docKey": "kho:transfer:CK0001",
+  "version": 2,
+  "branchCode": "CN01",
+  "toBranchCode": "CN02",
+  "docNo": "CK0001",
+  "docDate": "2026-10-06",
+  "status": "received",
+  "description": "Chuyển hàng cho cửa hàng CN02",
+  "lines": [
+    {
+      "lineKey": "1",
+      "sku": "SUA400",
+      "name": "Sữa bột 400g",
+      "unit": "Lon",
+      "qty": 10,
+      "amount": 3000000
+    },
+    {
+      "lineKey": "2",
+      "sku": "SUA900",
+      "name": "Sữa bột 900g",
+      "unit": "Lon",
+      "qty": 4,
+      "amount": 0
+    }
+  ],
+  "totals": {
+    "total": 3000000
+  }
+}

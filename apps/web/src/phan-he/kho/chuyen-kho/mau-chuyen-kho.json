@@ -1,0 +1,60 @@
+[
+  {
+    "id": "mau-ck-1",
+    "docType": "transfer",
+    "status": "approved",
+    "docNo": "CK2600001",
+    "docDate": "@-4",
+    "branchCode": "00000",
+    "toBranchCode": "00001Premium",
+    "note": "Bổ sung hàng cho Vĩnh Hưng",
+    "lines": [
+      {
+        "lineKey": "L12",
+        "sku": "100021002",
+        "name": "Biomil Plus 1 800g",
+        "unit": "Lon",
+        "qty": 12,
+        "amountBeforeTax": 0
+      },
+      {
+        "lineKey": "L13",
+        "sku": "100021004",
+        "name": "Biomil Plus 2 800g",
+        "unit": "Lon",
+        "qty": 6,
+        "amountBeforeTax": 0
+      }
+    ],
+    "totals": {
+      "beforeTax": 0,
+      "tax": 0,
+      "total": 0
+    }
+  },
+  {
+    "id": "mau-ck-2",
+    "docType": "transfer",
+    "status": "draft",
+    "docNo": "CK2600002",
+    "docDate": "@0",
+    "branchCode": "00000",
+    "toBranchCode": "00002Plus",
+    "note": "Chờ duyệt",
+    "lines": [
+      {
+        "lineKey": "L14",
+        "sku": "100021001",
+        "name": "Biomil Plus 1 400g",
+        "unit": "Lon",
+        "qty": 24,
+        "amountBeforeTax": 0
+      }
+    ],
+    "totals": {
+      "beforeTax": 0,
+      "tax": 0,
+      "total": 0
+    }
+  }
+]

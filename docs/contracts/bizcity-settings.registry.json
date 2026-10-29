@@ -1,0 +1,134 @@
+{
+  "contract": "bizcity_settings@1",
+  "version": "1.0.0-draft",
+  "updated": "2026-10-28",
+  "note": "Ảnh chụp các khoá cấu hình đang có trong code. Thêm khoá mới phải thêm mục ở đây trong cùng PR (R-MATRIX-2). Trường 'gap' ghi chỗ chưa đạt chuẩn.",
+  "scopesOrder": ["install", "tenant", "accounting_unit", "branch", "period", "doc_type", "record"],
+  "settings": [
+    {
+      "key": "bizcity.install.book_mode",
+      "class": "A", "owner": "core", "scopes": ["install"],
+      "storage": "env BOOK_MODE", "schema": "enum internal|tax", "default": "internal",
+      "readBy": "env.BOOK_MODE (config/env.ts)", "writeBy": ".env", "permission": "server", "audit": null, "affectsPosting": true
+    },
+    {
+      "key": "bizcity.install.modules",
+      "class": "B", "owner": "core", "scopes": ["install"],
+      "storage": "env ENABLED_MODULES", "schema": "'*' | danh sách key", "default": "*",
+      "readBy": "enabledModules() (phan-he/index.ts)", "writeBy": ".env", "permission": "server", "audit": null, "affectsPosting": false
+    },
+    {
+      "key": "bizcity.install.addins",
+      "class": "B", "owner": "core", "scopes": ["install"],
+      "storage": "env ADDINS", "schema": "'*' | '-' | danh sách id", "default": "*",
+      "readBy": "selectEnabled() (core/addins.ts)", "writeBy": ".env", "permission": "server", "audit": null, "affectsPosting": false
+    },
+    {
+      "key": "bizcity.install.env_label",
+      "class": "C", "owner": "core", "scopes": ["install"],
+      "storage": "env ENV_LABEL", "schema": "string", "default": "",
+      "readBy": "env.ENV_LABEL", "writeBy": ".env", "permission": "server", "audit": null, "affectsPosting": false
+    },
+    {
+      "key": "bizcity.posting.modes",
+      "class": "A", "owner": "core", "scopes": ["tenant", "doc_type"],
+      "storage": "tenants.settings.postingModes", "schema": "postingModesSchema (@ketoan/contracts)", "default": "mọi loại trong APPROVABLE_DOC_TYPES = approve",
+      "readBy": "readPostingModes() / needsApproval() (core/posting-modes.ts)", "writeBy": "PUT /api/v1/settings/posting-modes",
+      "permission": "settings:write", "audit": "settings.posting-modes", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.lock.data",
+      "class": "A", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.dataLock", "schema": "khoá đến ngày, chỉ sửa trong N ngày, chỉ lập phiếu hôm nay, cấm kế toán viên huỷ",
+      "default": "không khoá", "readBy": "readDataLock() (core/date-rules.ts)", "writeBy": "PUT /api/v1/settings/data-lock",
+      "permission": "settings:write", "audit": "settings.data-lock", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.lock.period",
+      "class": "A", "owner": "core", "scopes": ["tenant", "period", "branch", "doc_type"],
+      "storage": "bảng period_locks + period_lock_events", "schema": "ô khoá (kỳ × chi nhánh × loại chứng từ)", "default": "mở",
+      "readBy": "periodRepository (modules/periods)", "writeBy": "API kỳ kế toán (ACC2)",
+      "permission": "periods:lock", "audit": "period_lock_events (bắt buộc lý do khi mở)", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.posting.default_accounts",
+      "class": "A", "owner": "core", "scopes": ["tenant"],
+      "storage": "bảng posting_defaults", "schema": "key → account_code", "default": "seed tai-khoan-ngam-dinh.jsonl",
+      "readBy": "AccountResolver.fromDefault()", "writeBy": "PUT /api/v1/posting/defaults",
+      "permission": "settings:write", "audit": "có", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.posting.reasons",
+      "class": "A", "owner": "core", "scopes": ["tenant", "record"],
+      "storage": "bảng posting_reasons (+ flags)", "schema": "lý do: tài khoản đối ứng / doanh thu / chi phí, flags", "default": "seed ly-do.jsonl",
+      "readBy": "AccountResolver.reason()", "writeBy": "PUT /api/v1/posting/reasons/:code",
+      "permission": "settings:write", "audit": "có", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.posting.product_groups",
+      "class": "A", "owner": "core", "scopes": ["tenant", "record"],
+      "storage": "bảng product_posting_groups", "schema": "nhóm hạch toán: TK kho, doanh thu, giá vốn, trả lại", "default": "seed nhom-hach-toan.jsonl",
+      "readBy": "AccountResolver.groupForSku()", "writeBy": "PUT /api/v1/posting/groups/:code",
+      "permission": "settings:write", "audit": "có", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.posting.payment_methods",
+      "class": "A", "owner": "core", "scopes": ["tenant", "record"],
+      "storage": "bảng payment_methods", "schema": "TK tiền, tài khoản ngân hàng, đối tượng nhận hộ", "default": "seed hinh-thuc-thanh-toan.jsonl",
+      "readBy": "AccountResolver", "writeBy": "PUT /api/v1/posting/payment-methods/:code",
+      "permission": "settings:write", "audit": "có", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.posting.tax_codes",
+      "class": "A", "owner": "core", "scopes": ["tenant", "record"],
+      "storage": "bảng tax_codes", "schema": "thuế suất, chiều, TK thuế", "default": "seed loai-thue.jsonl",
+      "readBy": "AccountResolver.taxCode()", "writeBy": "POST /api/v1/tax-codes",
+      "permission": "settings:write", "audit": "có", "affectsPosting": true
+    },
+    {
+      "key": "bizcity.payment.approval_thresholds",
+      "class": "B", "owner": "quy", "scopes": ["tenant"],
+      "storage": "bảng payment_request_settings", "schema": "ngưỡng cần duyệt cấp 2", "default": "theo seed",
+      "readBy": "phan-he/quy/payment-requests", "writeBy": "API yêu cầu thanh toán",
+      "permission": "settings:write", "audit": "có", "affectsPosting": false
+    },
+    {
+      "key": "bizcity.connector.connections",
+      "class": "B", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.connections", "schema": "connectionsInputSchema (@ketoan/contracts)", "default": "[]",
+      "readBy": "connectionService (modules/connections)", "writeBy": "PUT /api/v1/connections",
+      "permission": "settings:write", "audit": "có", "affectsPosting": false
+    },
+    {
+      "key": "bizcity.connector.pull_state",
+      "class": "B", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.connectionPulls", "schema": "lần kéo gần nhất mỗi kết nối", "default": "{}",
+      "readBy": "connectionService", "writeBy": "POST /api/v1/connections/:code/pull",
+      "permission": "documents:write", "audit": null, "affectsPosting": false,
+      "gap": "Là trạng thái chạy, không phải cấu hình — chuyển sang bảng riêng (R-DB-12)"
+    },
+    {
+      "key": "bizcity.tenant.logo",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.logo", "schema": "data URL ảnh", "default": null,
+      "readBy": "system.routes.ts", "writeBy": "PUT /api/v1/tenant",
+      "permission": "settings:write", "audit": "có", "affectsPosting": false,
+      "gap": "Đọc trần, chưa qua hàm kiểm khuôn"
+    },
+    {
+      "key": "bizcity.print.templates",
+      "class": "C", "owner": "core", "scopes": ["tenant", "doc_type"],
+      "storage": "modules/print-templates (migration 0028_cau_hinh_mau_in)", "schema": "print-templates.ts (@ketoan/contracts)", "default": "mẫu chuẩn",
+      "readBy": "print-template.routes.ts", "writeBy": "API mẫu in",
+      "permission": "settings:write", "audit": "settings.print-template", "affectsPosting": false
+    },
+    {
+      "key": "bizcity.mua_hang.settings",
+      "class": "B", "owner": "mua-hang", "scopes": ["tenant"],
+      "storage": "tenants.settings.purchase", "schema": "holidays, warnDays, brandOpening, priceWarnPct, requireOrder…", "default": "{}",
+      "readBy": "phan-he/mua-hang/analysis.ts", "writeBy": "PUT /api/v1/purchase/settings",
+      "permission": "settings:write", "audit": "chưa rõ", "affectsPosting": false,
+      "gap": "Ghi bằng jsonb_set trần; tách thành khoá con bizcity.mua_hang.<khoá> và đọc qua hàm kiểm khuôn"
+    }
+  ]
+}

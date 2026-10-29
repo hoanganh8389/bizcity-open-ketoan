@@ -1,0 +1,261 @@
+/* Phân hệ Mua hàng — màn demo (tiền tố mh-). */
+/* Khung phiếu: cao theo MÀN HÌNH (không theo nội dung) để hàng nút Ghi / Duyệt luôn thấy; chừa trên 26px cho dải "BẢN TEST". */
+.mh-sheet { position: fixed; inset: 0; z-index: 90; background: rgba(14, 42, 69, 0.35); display: flex; align-items: center; justify-content: center; padding: 26px 10px 10px; }
+.mh-sheet-box { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow-pop); width: min(1500px, 100%); height: min(940px, calc(100vh - 36px)); height: min(940px, calc(100dvh - 36px)); display: flex; flex-direction: column; overflow: hidden; }
+.mh-sheet-head, .mh-sheet-foot { flex: none; }
+.mh-sheet-head { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.mh-sheet-head h2 { font-size: 16px; margin: 0; flex: 1; }
+.mh-sheet-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+.mh-main { overflow: auto; padding: 10px 14px; }
+.mh-side { overflow: auto; border-left: 1px solid var(--line); background: #f7f9fc; padding: 10px 12px; }
+.mh-sheet-foot { display: flex; gap: 8px; align-items: center; padding: 10px 84px 10px 16px; border-top: 1px solid var(--line); } /* phải chừa chỗ nút trợ lý nổi */
+.mh-sheet-foot .grow { flex: 1; font-size: 12px; }
+
+.mh-head { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 12px; margin-bottom: 8px; }
+.mh-head .field label { font-size: 11px; }
+.mh-head .span2 { grid-column: span 2; }
+.mh-head .span4 { grid-column: 1 / -1; }
+
+.mh-lines { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mh-lines th { background: #f2f5f9; text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; font-weight: 600; }
+.mh-lines td { padding: 3px 6px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.mh-lines td.num, .mh-lines th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.mh-lines tr.sel td { background: var(--brand-50, #eef5ff); }
+.mh-lines tr.warn td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+.mh-lines tr.bad td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+.mh-lines tfoot td { font-weight: 600; background: #fafbfc; }
+.mh-lines .input, .mh-lines .select { height: 26px; font-size: 12.5px; }
+.mh-lines .input.num { text-align: right; }
+
+.mh-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.mh-panel h4 { margin: 0 0 6px; font-size: 12.5px; display: flex; align-items: center; gap: 6px; color: var(--ink-700); }
+.mh-panel h4 .badge { margin-left: auto; }
+.mh-check { display: flex; gap: 6px; font-size: 12px; padding: 4px 6px; border-radius: 5px; margin-bottom: 3px; line-height: 1.35; }
+.mh-check.error { background: var(--bad-bg); color: var(--bad); }
+.mh-check.warn { background: var(--warn-bg); color: #8a5300; }
+.mh-check.info { background: var(--info-bg); color: var(--brand-700); }
+.mh-check.ok { background: var(--ok-bg); color: var(--ok); }
+.mh-mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mh-mini td, .mh-mini th { padding: 3px 4px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+.mh-mini .num { text-align: right; font-variant-numeric: tabular-nums; }
+.mh-kv { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12.5px; }
+.mh-kv > :nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+.mh-kv .total { font-weight: 700; font-size: 14px; border-top: 1px solid var(--line); padding-top: 3px; }
+
+.mh-bar { height: 10px; border-radius: 5px; background: var(--line-soft); overflow: hidden; display: flex; margin: 3px 0 2px; }
+.mh-bar > span { display: block; height: 100%; }
+.mh-bar .used { background: var(--brand-500); }
+.mh-bar .pend { background: #9cc3f5; }
+.mh-bar .this { background: #f0a020; }
+.mh-bar .over { background: var(--bad); }
+.mh-legend { display: flex; gap: 10px; font-size: 11px; color: var(--ink-500); flex-wrap: wrap; }
+.mh-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 3px; vertical-align: -1px; }
+
+.mh-kinds { display: flex; gap: 4px; flex-wrap: wrap; padding: 6px 0; }
+.mh-flow { display: flex; gap: 0; align-items: stretch; flex-wrap: wrap; margin: 6px 0 10px; }
+.mh-flow > div { flex: 1; min-width: 120px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); font-size: 12px; position: relative; }
+.mh-flow > div b { display: block; font-size: 12.5px; margin-bottom: 2px; color: var(--brand-700); }
+.mh-flow > div + div { border-left: 0; }
+.mh-ok { color: var(--ok); font-weight: 700; }
+.mh-bad { color: var(--bad); font-weight: 700; }
+.mh-warn { color: #b06a00; font-weight: 600; }
+.mh-pre { font-family: var(--mono, ui-monospace, Consolas, monospace); font-size: 11.5px; white-space: pre-wrap; background: #0f1d2e; color: #d6e4f5; padding: 8px 10px; border-radius: 6px; max-height: 360px; overflow: auto; margin: 0; }
+.mh-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 1100px) { .mh-sheet-body { grid-template-columns: 1fr; overflow: auto; } .mh-main, .mh-side { overflow: visible; } .mh-side { border-left: 0; border-top: 1px solid var(--line); } .mh-grid2 { grid-template-columns: 1fr; } .mh-head { grid-template-columns: 1fr 1fr; } }
+.mh-pick { display: flex; flex-wrap: wrap; gap: 4px 8px; max-height: 120px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 6px; background: #fff; }
+.mh-pick label { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+.mh-pick label.on { background: var(--brand-100, #e3eefc); }
+.mh-guide { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-600, #44515f); line-height: 1.45; }
+.mh-guide li { margin-bottom: 4px; }
+.mh-guide li.done { color: var(--ok); text-decoration: line-through; }
+.mh-templates { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.mh-templates button { border: 1px dashed var(--brand-500, #2f80ed); background: var(--brand-50, #eef5ff); color: var(--brand-700); border-radius: 14px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.mh-templates button:hover { background: #fff; }
+.mh-price-hint { display: flex; gap: 3px; margin-top: 2px; flex-wrap: wrap; max-width: 170px; }
+.mh-price-hint button { border: 0; background: var(--info-bg); color: var(--brand-700); border-radius: 8px; font-size: 10.5px; padding: 0 5px; cursor: pointer; white-space: nowrap; }
+.mh-price-hint button.on { background: var(--ok-bg, #e6f6ec); color: var(--ok); }
+.mh-price-hint button:hover { text-decoration: underline; }
+/* Khối nạp dữ liệu tình huống */
+.mh-seed { display: flex; gap: 14px; padding: 14px 16px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #c9dcf5; background: linear-gradient(120deg, #eef5ff 0%, #f7fbff 60%, #fff 100%); box-shadow: var(--shadow); }
+.mh-seed-icon { flex: none; width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #2f80ed, #56ccf2); box-shadow: 0 4px 10px rgba(47, 128, 237, 0.3); }
+.mh-seed-body { flex: 1; min-width: 0; }
+.mh-seed h3 { margin: 0 0 4px; font-size: 15px; color: var(--ink-800, #1e2b3a); }
+.mh-seed p { margin: 0 0 6px; font-size: 13px; color: var(--ink-600, #44515f); }
+.mh-seed-list { margin: 0 0 8px; padding-left: 18px; font-size: 12.5px; color: var(--ink-600, #44515f); columns: 2; column-gap: 24px; }
+.mh-seed-list li { break-inside: avoid; margin-bottom: 2px; }
+.mh-seed-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+@media (max-width: 900px) { .mh-seed-list { columns: 1; } }
+.mh-row-new td { background: #fff7d6 !important; transition: background 2s; }
+.mh-drop { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; border: 2px dashed #b8cbe4; border-radius: 8px; background: #f7fbff; color: var(--ink-600, #44515f); font-size: 13px; }
+.mh-drop.on { border-color: var(--brand-500, #2f80ed); background: #eaf3ff; }
+/* Hồ sơ nhà cung cấp */
+.mh-ncc-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; background: linear-gradient(120deg, #eef5ff, #fff 70%); border: 1px solid #d6e4f7; }
+.mh-ncc-id { display: flex; gap: 8px; align-items: flex-start; }
+.mh-ncc-name { font-size: 18px; font-weight: 700; color: var(--ink-800, #1e2b3a); }
+.mh-ncc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.mh-ncc-actions .btn { display: inline-flex; gap: 4px; align-items: center; }
+.mh-h4 { margin: 0 0 6px; font-size: 13px; color: var(--ink-700); }
+.mh-progress { height: 6px; background: #e6edf5; border-radius: 3px; overflow: hidden; width: 120px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+.mh-progress span { display: block; height: 100%; background: linear-gradient(90deg, #27ae60, #6fcf97); }
+.mh-bars { display: flex; gap: 6px; align-items: flex-end; height: 120px; padding: 4px 0; }
+.mh-bars > div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.mh-bars span { width: 70%; max-width: 46px; background: linear-gradient(180deg, #56ccf2, #2f80ed); border-radius: 4px 4px 0 0; min-height: 2px; }
+.mh-bars small { font-size: 10px; color: var(--ink-500); margin-top: 2px; }
+.mh-row-warn td { background: #fff8ec; }
+.mh-row-bad td { background: #fdecec; }
+.mh-share { display: flex; gap: 3px; align-items: center; font-size: 11px; color: var(--ink-600, #44515f); margin-top: 2px; white-space: nowrap; }
+/* Xem nhanh NCC, lịch sử, hướng dẫn Excel */
+.mh-ncc-chip { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.mh-ncc-i { border: 0; background: var(--info-bg); color: var(--brand-700); border-radius: 50%; width: 20px; height: 20px; display: inline-grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
+.mh-ncc-i:hover { background: var(--brand-500, #2f80ed); color: #fff; }
+.mh-ncc-pop { position: fixed; z-index: 1000; width: 380px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(14, 42, 69, 0.18); padding: 10px 12px; font-size: 12.5px; font-weight: 400; text-align: left; white-space: normal; }
+.mh-ncc-pop-head { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.mh-ncc-pop-row { display: grid; grid-template-columns: 130px 1fr; gap: 6px; padding: 2px 0; }
+.mh-ncc-pop-row span { color: var(--ink-500); }
+.mh-ncc-pop-row b { font-weight: 600; }
+.mh-ncc-pop-sep { border-top: 1px dashed var(--line); margin: 6px 0; }
+.mh-timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid #d6e4f7; }
+.mh-timeline > li { position: relative; padding: 0 0 10px 8px; font-size: 12.5px; }
+.mh-timeline > li::before { content: ''; position: absolute; left: -21px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #2f80ed; border: 2px solid #fff; }
+.mh-timeline ul { margin: 2px 0 0; padding-left: 16px; color: var(--ink-600, #44515f); }
+.mh-guide-box { border: 1px solid #d6e4f7; background: #f7fbff; border-radius: 8px; padding: 6px 10px; }
+.mh-row-pick td { background: #f0f8f1; }
+/* Giá mua riêng của sản phẩm (thẻ Mua hàng, form mặt hàng) */
+.gtk-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 10px; }
+@media (max-width: 1000px) { .gtk-grid { grid-template-columns: 1fr 1fr; } }
+.gtk-card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--surface); }
+.gtk-main { border-color: #c9b8ef; background: #faf7ff; }
+.gtk-l { font-size: 11.5px; color: var(--ink-500); text-transform: uppercase; letter-spacing: .02em; }
+.gtk-v { font-size: 18px; font-weight: 700; margin: 2px 0; }
+.gtk-v small { font-size: 12px; font-weight: 400; color: var(--ink-500); }
+.gtk-s { font-size: 12px; color: var(--ink-700); }
+.gtk-form { display: grid; grid-template-columns: 140px 170px 130px 160px 160px; gap: 10px; align-items: end; }
+.gtk-form label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--ink-700); }
+.gtk-quick, .gtk-actions { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Nhãn hàng chính: chip ở hồ sơ NCC và ô trên phiếu */
+.mh-brand-row { font-size: 12.5px; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mh-brand-chip, .mh-brand b { background: #f4f0fc; border: 1px solid #d6c9f2; color: #553c9a; border-radius: 12px; padding: 1px 10px; font-weight: 600; }
+.mh-brand { display: flex; align-items: center; gap: 6px; min-height: 30px; }
+/* Thanh lưu dính đáy (trang cài đặt) */
+.mh-savebar { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 10px; align-items: center; margin-top: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--tbl-line); border-radius: 8px; box-shadow: 0 -4px 12px rgba(14, 42, 69, .06); }
+/* Bảng chiết khấu theo mã hàng (BangChietKhauMa) */
+.ckma { display: flex; flex-direction: column; gap: 8px; }
+.ckma-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: #f4f0fc; border: 1px solid #d6c9f2; border-radius: 8px; padding: 8px 10px; }
+.ckma-count { font-size: 12.5px; color: var(--ink-700); }
+.ckma-bulk { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; }
+.ckma-scroll { max-height: 440px; overflow: auto; border-radius: 6px; }
+.ckma-scroll > table > thead > tr > th { position: sticky !important; top: 0; z-index: 2; }
+.ckma-table .input { width: 100%; min-width: 0; box-sizing: border-box; }
+.ckma-more { margin: 6px auto; display: block; }
+/* Thẻ Hạn trả tiền: câu hỏi – trả lời */
+.mh-qa h4 { font-size: 13.5px; }
+.mh-qa-ans { font-size: 16px; font-weight: 700; margin: 2px 0 4px; }
+
+/* Danh sách chọn mặt hàng: bấm dòng là thêm */
+.ckma-pick tbody tr { cursor: pointer; }
+.ckma-pick tbody tr.is-hi > td { background: #e3eefb !important; }
+.ckma-pick tbody tr.is-added > td { color: var(--ink-500); background: #f2f8f3 !important; cursor: default; }
+.ckma-add { color: var(--brand-600); font-weight: 600; }
+.mh-brand b, .mh-brand-chip { white-space: nowrap; }
+
+/* Khuyến mại của phiếu (tự áp như quầy bán hàng) */
+.km-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 10px; margin-bottom: 6px; border: 1px solid #b9dcc4; border-left: 4px solid #2f9e5b; border-radius: 8px; background: #effaf2; font-size: 12.5px; }
+.km-bar.has-fix { border-color: #f1cf8f; border-left-color: #e08a00; background: #fff8ea; }
+.km-note { color: var(--ink-600, #475569); max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.km-panel .km-group { margin-top: 6px; }
+.km-group-title { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+.km-row { display: flex; gap: 6px; align-items: center; font-size: 12px; padding: 4px 6px; margin-bottom: 3px; border-radius: 6px; border-left: 3px solid transparent; }
+.km-row.km-ok { background: #f0faf3; border-left-color: #2f9e5b; }
+.km-row.km-fix { background: #fff6e6; border-left-color: #e08a00; }
+.km-row.km-hint { background: #eef5ff; border-left-color: #3b82f6; }
+.km-row .km-text { flex: 1; }
+.km-row .km-pol { font-size: 10.5px; color: var(--ink-500, #64748b); }
+.km-table tr.km-fix > td { background: #fff8ea; }
+.km-table tr.km-hint > td { background: #f3f8ff; }
+
+/* Thanh thao tác ngay trên bảng hàng của phiếu */
+.lines-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 8px; margin-bottom: 6px; background: #f2f6fc; border: 1px solid #d5e0ee; border-radius: 8px; }
+.lines-bar kbd { margin-left: 6px; padding: 0 4px; font-size: 10.5px; border-radius: 3px; background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.5); }
+.lines-bar-hint { font-size: 12px; color: var(--ink-500, #64748b); }
+.mh-lines td.lines-empty { text-align: center; padding: 22px 12px; background: #fbfcfe; }
+
+/* <fieldset> mặc định rộng bằng nội dung (min-width: min-content) → bảng hàng rộng kéo cả khối đầu phiếu cuộn ngang theo.
+   Cho fieldset co lại: chỉ bảng hàng cuộn ngang trong khung của nó, khối đầu phiếu và thanh thao tác đứng yên. */
+.mh-main fieldset { min-width: 0; max-width: 100%; }
+.lines-bar-sep { width: 1px; height: 20px; background: #c9d5e6; margin: 0 2px; }
+.lines-bar-check { display: inline-flex; gap: 4px; align-items: center; font-size: 12.5px; padding: 2px 8px; border: 1px dashed #c9d5e6; border-radius: 6px; background: #fff; cursor: pointer; }
+.mh-price-hint .ok { font-size: 10.5px; color: var(--ok, #1f8a4c); }
+.mh-price-hint button.warn { background: #fff4e0; color: #9a5b00; white-space: normal; text-align: left; }
+.mh-price-hint button.bad { background: #fde8e8; color: #b42318; white-space: normal; text-align: left; }
+
+/* Chương trình đã bỏ tích trên phiếu (bảng khuyến mại). */
+.km-off { opacity: 0.6; }
+.km-row.km-off .km-text, tr.km-off td { text-decoration: line-through; text-decoration-color: rgba(0,0,0,.25); }
+
+/* Họ mã (mã cha + mã con đuôi Z / Q / K…) dưới tên hàng: phân tích đặt hàng, đơn đặt. */
+.tm-fam { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; color: var(--ink-600, #4b5563); font-weight: 400; }
+.tm-fam-row { display: block; white-space: nowrap; }
+.tm-fam-row b { font-weight: 600; margin-right: 2px; }
+
+/* Phân tích thông minh trên dòng đơn đặt (như mẫu đơn cũ): nhãn | số, tô màu cột cần nhập / tồn / max. */
+.tm-facts { border-collapse: collapse; width: 100%; font-size: 10.5px; }
+.tm-facts td { padding: 1px 4px; border-bottom: 1px solid var(--line-soft, #eef2f6); white-space: nowrap; }
+.tm-facts td.num b { color: var(--brand-800, #1e3a8a); }
+.tm-facts tr.tm-f-need td { background: #ffe8b3; }
+.tm-facts tr.tm-f-stock td { background: #fff7b3; }
+.tm-facts tr.tm-f-max td { background: #fff4e0; }
+
+/* Bảng hàng trên phiếu mua: khung tự cuộn (dọc + ngang), tiêu đề cột dính trên cùng — danh sách dài vẫn thấy thanh cuộn ngang. */
+.mh-lines-box { overflow: auto; min-height: 140px; border: 1px solid var(--line-soft, #e5e9f0); border-radius: 6px; }
+/* Thẻ Hàng hoá: cột trái là cột dọc — đầu phiếu, thẻ, thanh công cụ giữ nguyên chỗ; khung bảng hàng lấp phần còn lại và tự cuộn
+   (dọc + ngang) → thanh cuộn ngang luôn nằm ở đáy khung nhìn thấy, không phải lăn cả cột xuống mới thấy. */
+.mh-main.mh-main-hang { display: flex; flex-direction: column; overflow: hidden; }
+.mh-main.mh-main-hang > * { flex: none; }
+.mh-main.mh-main-hang > .mh-lines-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.mh-main.mh-main-hang > .mh-lines-wrap > * { flex: none; }
+/* Khung bảng co theo số dòng (ít dòng: thanh cuộn ngang ngay dưới dòng cuối), nhiều dòng thì dừng ở đáy cột và tự cuộn. */
+.mh-main.mh-main-hang > .mh-lines-wrap > .mh-lines-box { flex: 0 1 auto; min-height: 120px; }
+.mh-lines-box table.mh-lines tfoot td { position: sticky; bottom: 0; z-index: 2; background: var(--surface-2, #f4f7fb); }
+/* Màn thấp (đầu phiếu chiếm gần hết): cho cả cột cuộn như cũ để vẫn thao tác được. */
+@media (max-height: 640px) { .mh-main.mh-main-hang { display: block; overflow: auto; } .mh-lines-box { max-height: 70vh; } }
+.mh-lines-box table.mh-lines thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-2, #f4f7fb); }
+
+/* Phân tích tồn gọn: lưới 2 cột "nhãn | số" — dòng hàng thấp, bảng hàng thấy được nhiều dòng. */
+.tm-facts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 6px; font-size: 10.5px; line-height: 1.3; min-width: 250px; }
+.tm-f2 { display: flex; justify-content: space-between; gap: 4px; padding: 0 4px; border-radius: 3px; white-space: nowrap; }
+.tm-f2 b { color: var(--brand-800, #1e3a8a); }
+.tm-f2.tm-f-need { background: #ffe8b3; } .tm-f2.tm-f-stock { background: #fff7b3; } .tm-f2.tm-f-max { background: #fff4e0; }
+/* Đầu phiếu thu gọn: một dòng tóm tắt, bấm để mở. */
+.mh-head-mini { display: flex; align-items: center; gap: 14px; padding: 6px 10px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2, #f7f9fc); cursor: pointer; font-size: 13px; min-width: 0; }
+.mh-head-mini:hover { border-color: var(--brand-300, #93c5fd); }
+
+/* Nút chứng từ ở hồ sơ NCC: menu nhỏ Lập mới / Xem danh sách. */
+.ncc-act { position: relative; display: inline-block; }
+.ncc-act-menu { position: absolute; top: calc(100% + 4px); z-index: 60; min-width: 280px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow-pop); padding: 4px; display: flex; flex-direction: column; }
+.ncc-act-menu button { display: flex; align-items: center; gap: 6px; text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--ink-900); white-space: nowrap; }
+.ncc-act-menu button:hover { background: var(--brand-50, #eef4fb); }
+.ncc-act-sep { height: 1px; background: var(--line); margin: 3px 6px; }
+
+/* Form chính sách: ô tích Áp riêng / Cộng dồn kèm câu nghĩa. */
+.mh-cach-ap { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.mh-tick { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 1.45; cursor: pointer; }
+.mh-tick input { margin-top: 3px; flex: none; }
+.mh-tick.muted { cursor: default; }
+
+/* MH24 Sổ kho / MH25 Tồn kho theo mặt hàng: tô màu từng luồng cả cột (tiêu đề, ô, dòng tổng) như báo cáo kho của hệ thống bán hàng. */
+.dgrid th.kb-open, .dgrid td.kb-open { background: #f1f5f9; }
+.dgrid th.kb-in, .dgrid td.kb-in { background: #eaf7ee; }
+.dgrid th.kb-inret, .dgrid td.kb-inret { background: #e6f4ea; }
+.dgrid th.kb-inb, .dgrid td.kb-inb { background: #fdf2e3; }
+.dgrid th.kb-outb, .dgrid td.kb-outb { background: #fdeef7; }
+.dgrid th.kb-sell, .dgrid td.kb-sell { background: #e8eefc; }
+.dgrid th.kb-ret, .dgrid td.kb-ret { background: #fdf7d8; }
+.dgrid th.kb-adj, .dgrid td.kb-adj { background: #f4f1fa; }
+.dgrid th.kb-other, .dgrid td.kb-other { background: #f1f3f5; color: #6b7280; }
+.dgrid th.kb-close, .dgrid td.kb-close { background: #fdeaea; }
+.dgrid td.kb-close { color: #c00000; font-weight: 700; }
+.dgrid td.kb-qty { color: #c00000; font-weight: 700; }
+.dgrid th.kb-need, .dgrid td.kb-need { background: #eaf7ee; }
+.dgrid td.kb-need { color: #15803d; font-weight: 700; }
+.dgrid td.kb-unit { text-align: center; color: #64748b; }
