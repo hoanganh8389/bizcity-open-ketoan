@@ -12,6 +12,8 @@
 - [ ] T3 Add-in: `<id>`
 - [ ] Chỉ tài liệu / vận hành
 
+**Mức thay đổi Kernel** (bắt buộc nếu đụng T0 — [RULE-KERNEL](../docs/rules/RULE-KERNEL.md)): K0 / K1 / K2 / K3 → `…`
+
 ## Tuân thủ luật (tick cái đã kiểm; bỏ qua cái không liên quan)
 
 - [ ] **R-LEDGER** — Không ghi `ledger_*` ngoài `modules/ledger`; sửa / huỷ bằng bút toán đảo; không thêm cờ bỏ qua kiểm tra vào `post()`.
@@ -26,13 +28,17 @@
 - [ ] **R-WF** — Chỉ trạng thái đã duyệt mới nộp sự việc.
 - [ ] **Hợp đồng** — Đổi `packages/contracts` / API công khai → đã cập nhật `docs/contracts/*` (tăng phiên bản, changelog) và `docs/api/` + JSON mẫu.
 - [ ] **CANON §5** — Đã sửa các tài liệu tương ứng với phần code bị đổi.
+- [ ] **R-SEC** — Không bí mật trong code; không ghép đầu vào vào SQL (`sql.raw`); tệp tải lên có trần; không PII trong log / PR.
+- [ ] **R-REL** — Đã thêm dòng vào `CHANGELOG.md` mục `[Chưa phát hành]` (đổi định khoản K2+ ghi ở mục riêng).
+- [ ] **Bộ kiểm** — `node tests/conformance/selfcheck.mjs` ĐẠT; không thêm nợ vào `baseline.json` (trừ khi nhóm Lõi duyệt, có `ref`).
 
 ## Bằng chứng (bắt buộc với T0 — xem docs/ops/DIAGNOSTICS.md §4)
 
 ```text
 == BẰNG CHỨNG ==
 commit:
-lệnh:        bash scripts/kiem-chuan.sh && npm run typecheck && npm test
+lệnh:        node tests/conformance/selfcheck.mjs && bash scripts/kiem-chuan.sh && npm run typecheck && npm test
+selfcheck:   <dán tests/conformance/output/latest/evidence.txt>
 kiem-chuan:
 typecheck:
 vitest:

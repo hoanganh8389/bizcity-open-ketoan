@@ -21,6 +21,8 @@
 | 0.3 | Sửa hai migration trùng `0028` (A-03) | CI kiểm số migration xanh | 0.3 |
 | 0.4 | Chốt 3 câu hỏi ở [REUSE-MAP.md §6](REUSE-MAP.md#6-việc-cần-chốt-trước-phase-2) | ghi ADR — **xong** 2026-10-29 (ADR-0003, 0004, 0005) | mới |
 | 0.5 | Bộ kiểm chuẩn một chỗ `tests/conformance/`: lane selfcheck + diagnostics song song, bảng điểm, baseline bánh cóc, tự kiểm ([ADR-0006](../adr/ADR-0006-bo-kiem-chuan-mot-cho.md)) | `selfcheck.mjs --self-test` và `--strict` xanh ở CI — **khởi tạo xong** 2026-10-29 | mới |
+| 0.6 | Luật R-KER, R-SEC, R-REL, R-DIAG; `SECURITY.md`, `CHANGELOG.md`; bật GitHub Private Vulnerability Reporting | SC-SEC-*, SC-REL-* xanh — **tài liệu xong** 2026-10-29; còn bật tính năng trên GitHub | mới |
+| 0.7 | Vai trò CSDL `ketoan_app` không superuser cho API (R-SEC-6); header bảo mật ở proxy (R-SEC-11) | DG-SEC-1 đạt | mới |
 
 ## Phase 1 — Audit, phân loại generic / domain
 
@@ -49,7 +51,7 @@
 | 2.7 | `packages/documents`: `nextNumber`, `document_versions`, `document_links`, `attachments` (chuyển `purchase_attachments`), `document_signatures.doc_ref` | Mua hàng dùng đính kèm chung | mới |
 | 2.8 | Tách `packages/contracts/src/mua-hang/*` về phân hệ (A-06) | `packages/contracts` không còn thư mục `mua-hang` | 1.6 |
 | 2.9 | `GET /api/v1/system/capabilities` trả `bizcity-standard.json` + trạng thái thật | test so khớp | mới |
-| 2.10 | Chẩn đoán: `GET /api/v1/system/diagnostics` | [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md) | 1.5 |
+| 2.10 | Chẩn đoán: `GET /api/v1/system/diagnostics` + `/health/ready`; bảng `diagnostic_runs`; khoá kỳ bị chặn khi L3 có error (R-DIAG-4); `health` trả `version`, `kernel`, `standard` (R-REL-1) — dùng lại SQL của `tests/conformance/diagnostics/` | [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md), [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md) | 1.5 |
 | 2.11 | **`platform/mcp` đọc (2b)**: `POST /mcp`, công cụ `ketoan.*` §5.1 bọc route hiện có, khoá `mcp_…` có scope, phong bì + `as_of` ([bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md)) | Claude / ChatGPT đọc được cân đối phát sinh, công nợ của một đơn vị | mới |
 | 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt | mới |
 
@@ -100,7 +102,7 @@
 | 5.8 | Registry gói định khoản công khai + chữ ký ([TEMPLATE-MARKETPLACE.md](TEMPLATE-MARKETPLACE.md)); OCR hoá đơn qua Cell (khuôn `INVOICE_AI_URL`) | 3 gói official, 1 gói verified của đối tác | mới |
 | 5.4 | `adapters/wordpress`: connector hiện có + `bizcity/ledger-php-sdk` + webhook sự kiện; `tgs_accounting_bridge` dùng SDK | plugin WP chạy qua hợp đồng, không gọi URL tự đặt | 2.5 |
 | 5.5 | Hàng đợi trước định khoản (`event_inbox`), partition sổ cái theo năm | tải 30.000 chứng từ / ngày | 3.1, 3.2 |
-| 5.6 | Gói phát hành: image có nhãn, `CHANGELOG.md` 3 mục, `compat-matrix.json` | bản Beta | 3.6 |
+| 5.6 | Gói phát hành theo [RULE-RELEASE](../rules/RULE-RELEASE.md): workflow `release.yml` (cổng R-REL-4, tag ký, image theo digest, SBOM), `compat-matrix.json`, kênh stable / LTS | bản Beta | 3.6 |
 | 5.7 | 2 developer ngoài nhóm cài, viết module, gửi phản hồi | ghi lại ở `docs/audits/` | mới |
 
 ## Thứ tự không được đảo

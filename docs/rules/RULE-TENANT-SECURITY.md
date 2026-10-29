@@ -2,6 +2,7 @@
 
 > **Cấp:** Tier 0 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Mã:** `apps/api/src/core/auth.ts`, `core/audit.ts`, `core/security/*`
+> **Bảo mật toàn hệ thống** (mô hình mối đe doạ, bí mật, SQL, vai trò CSDL, AI / MCP, chuỗi cung ứng, sự cố, sổ rủi ro): [RULE-SECURITY.md](RULE-SECURITY.md)
 
 ## 1. Luật
 

@@ -1009,6 +1009,22 @@
           "message": "ghi bảng lõi reference_documents — đi qua API / service danh mục (A-17)"
         }
       ]
+    },
+    "SC-SEC-2": {
+      "title": "Không ghép chuỗi vào SQL: hạn chế sql.raw / sql.lit, mọi giá trị đi qua tham số",
+      "ref": "R-SEC-3 · đã xem 2026-10-29: chỉ ghép hằng số do code sinh (số thứ tự nhóm, biểu thức cột), không có đầu vào người dùng",
+      "debts": [
+        {
+          "fp": "SC-SEC-2|apps/api/src/modules/reports/control-reports.ts|raw",
+          "file": "apps/api/src/modules/reports/control-reports.ts",
+          "message": "const groupNums = sql.raw(groups.map((_, i) => String(i + 1)).join(', ')); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
+        },
+        {
+          "fp": "SC-SEC-2|apps/api/src/modules/reports/ledger-sql.ts|raw",
+          "file": "apps/api/src/modules/reports/ledger-sql.ts",
+          "message": "return sql.raw<boolean>(`(${side(o)} <> ${side(l)} OR (${side(o)} = 0 AND ${side(l)} = 0 AND ${o}.line_no <> ${l}.line_no))`); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
+        }
+      ]
     }
   }
 }

@@ -35,6 +35,10 @@
 | R-TEN | [rules/RULE-TENANT-SECURITY.md](rules/RULE-TENANT-SECURITY.md) | 0 | Mọi truy vấn lọc `tenant_id`; mọi route khai quyền; mọi thao tác ghi có nhật ký | `access.test.ts`, `edit-permission.test.ts` |
 | R-WF | [rules/RULE-WORKFLOW.md](rules/RULE-WORKFLOW.md) | 1 | Luồng nghiệp vụ là máy trạng thái khai báo; chỉ trạng thái "đã duyệt" mới sinh event | Test luồng của phân hệ |
 | R-QG | [rules/RULE-QUALITY-GATE.md](rules/RULE-QUALITY-GATE.md) | 1 | Typecheck + test PostgreSQL thật + bằng chứng chạy trước khi merge | `.github/workflows/ci.yml` |
+| R-KER | [rules/RULE-KERNEL.md](rules/RULE-KERNEL.md) | 0 | Sửa Kernel theo bốn mức K0–K3; lớp bảo vệ CSDL chỉ thêm chặt; không đổi bút toán đã ghi; tất định | DG-DB-2, test luật định khoản, mẫu PR |
+| R-SEC | [rules/RULE-SECURITY.md](rules/RULE-SECURITY.md) | 0 | Không bí mật trong git; SQL có tham số; API không chạy superuser; AI chỉ ra nháp; chuỗi cung ứng; báo lỗ hổng | SC-SEC-1..4, DG-SEC-1 |
+| R-REL | [rules/RULE-RELEASE.md](rules/RULE-RELEASE.md) | 1 | Cổng phát hành, CHANGELOG, migration chỉ tiến, kênh stable / LTS, vá bảo mật | SC-REL-1..2, [ops/RELEASE.md](ops/RELEASE.md) |
+| R-DIAG | [rules/RULE-SELF-DIAGNOSTICS.md](rules/RULE-SELF-DIAGNOSTICS.md) | 1 | Năm tầng L0–L4, chỉ đọc, lịch chạy, chặn khoá kỳ khi sổ lỗi, cảnh báo không lộ số liệu | lane diagnostics `tests/conformance` |
 
 ## 4. Hợp đồng (contracts)
 
@@ -82,6 +86,9 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Lý do, nhóm hạch toán, tài khoản ngầm định mặc định (`db/seeds/ly-do.jsonl`…) | gói định khoản tương ứng theo `contracts/BIZCITY-POSTING-TEMPLATE-v1.md` |
 | Route / action được AI dùng (`expose.mcp`), công cụ `ketoan.*` | `contracts/BIZCITY-MCP-v1.md` §5 (danh mục công cụ); đổi phá vỡ = công cụ mới |
 | `adapters/cell`, kết nối Hub / Cell | `standard/CELL-CONNECT.md`, `standard/CHANNEL-GATEWAY-PORT.md` |
+| Bất kỳ tệp Kernel (RULE-KERNEL §1) | ghi mức K0–K3 trong PR; K2+ thêm mục "Thay đổi định khoản" trong `CHANGELOG.md` |
+| Thay đổi người dùng thấy được | `CHANGELOG.md` mục `[Chưa phát hành]` (R-REL-2) |
+| Thêm kiểm toàn vẹn / bản cài | `ops/DIAGNOSTICS.md` §2 + check `DG-*` trong `tests/conformance/diagnostics/` (R-DIAG-9) |
 | Sửa xong một nợ đã biết | `node tests/conformance/selfcheck.mjs --update-baseline` trong cùng PR (CI chạy `--strict`) |
 | Tách / chuyển thư mục giữa Kernel, Platform, module | `standard/REUSE-MAP.md`, `standard/TARGET-LAYOUT.md` |
 
