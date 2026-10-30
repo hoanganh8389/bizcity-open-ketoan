@@ -90,6 +90,17 @@
         }
       ]
     },
+    "SC-CMP-2": {
+      "title": "Bảy nguyên tắc kiến trúc AP-1..AP-7 đều có cách thực thi (check có thật) — AP-7",
+      "ref": "AP-6 chờ transactional outbox + consumer idempotent (G2-05, PHASES 3, R-OUTBOX) — nợ có chủ, đã duyệt 2026-10-30",
+      "debts": [
+        {
+          "fp": "SC-CMP-2|docs/standard/bizcity-standard.json|unenforced:AP-6",
+          "file": "docs/standard/bizcity-standard.json",
+          "message": "AP-6 \"Events are replayable, consumers are idempotent\" chưa có cách thực thi (check) — nợ theo AP-7"
+        }
+      ]
+    },
     "SC-CON-7": {
       "title": "Biến môi trường đọc trong code có trong .env.example hoặc settings registry",
       "ref": "R-MATRIX-8 · khai biến vào .env.example hoặc docs/ops/DEPLOY.md",
@@ -844,17 +855,6 @@
         }
       ]
     },
-    "SC-DOC-1": {
-      "title": "Liên kết tương đối và neo (#…) trong tệp .md đều tới được",
-      "ref": "Liên kết gãy có từ trước trong docs/huong-dan",
-      "debts": [
-        {
-          "fp": "SC-DOC-1|docs/huong-dan/tong-hop-ban-hang.md|can-doi-phat-sinh",
-          "file": "docs/huong-dan/tong-hop-ban-hang.md",
-          "message": "liên kết gãy: can-doi-phat-sinh"
-        }
-      ]
-    },
     "SC-EVD-1": {
       "title": "Không ghi nhật ký nghiệp vụ ra tệp (appendFile / createWriteStream / .jsonl)",
       "ref": "Audit A-18 · chuyển nhật ký JSONL vào bằng chứng CSDL (PHASES 2.4)",
@@ -926,98 +926,6 @@
           "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
           "file": "apps/api/src/phan-he/mua-hang/posting.ts",
           "message": "số tài khoản '112' viết cứng: docType: money.startsWith('112') ? 'bank_payment' : 'payment', branchCode: d.branchCode, docDate: d.docDate, docNo: undefined,"
-        }
-      ]
-    },
-    "SC-MOD-2": {
-      "title": "Phân hệ không ghi bảng nhân, bảng danh mục / cấu hình của lõi",
-      "ref": "Audit A-17 · ADR-0005 (danh mục chuẩn ở packages/data, ghi qua API)",
-      "debts": [
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/analysis.ts|core:tenants",
-          "file": "apps/api/src/phan-he/mua-hang/analysis.ts",
-          "message": "ghi bảng lõi tenants — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:branches",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:partners",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi partners — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:item_classes",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi item_classes — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:product_units",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi product_units — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:products",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi products — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:tax_codes",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi tax_codes — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/posting.ts|core:posting_reasons",
-          "file": "apps/api/src/phan-he/mua-hang/posting.ts",
-          "message": "ghi bảng lõi posting_reasons — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/store.ts|kernel:document_sequences",
-          "file": "apps/api/src/phan-he/mua-hang/store.ts",
-          "message": "ghi bảng NHÂN document_sequences — chỉ được nộp sự việc (R-BOUND-2)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/ton-max.ts|core:branches",
-          "file": "apps/api/src/phan-he/mua-hang/ton-max.ts",
-          "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|kernel:document_sequences",
-          "file": "apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts",
-          "message": "ghi bảng NHÂN document_sequences — chỉ được nộp sự việc (R-BOUND-2)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|core:contract_schedules",
-          "file": "apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts",
-          "message": "ghi bảng lõi contract_schedules — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts|core:partners",
-          "file": "apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts",
-          "message": "ghi bảng lõi partners — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts|core:reference_documents",
-          "file": "apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts",
-          "message": "ghi bảng lõi reference_documents — đi qua API / service danh mục (A-17)"
-        }
-      ]
-    },
-    "SC-SEC-2": {
-      "title": "Không ghép chuỗi vào SQL: hạn chế sql.raw / sql.lit, mọi giá trị đi qua tham số",
-      "ref": "R-SEC-3 · đã xem 2026-10-29: chỉ ghép hằng số do code sinh (số thứ tự nhóm, biểu thức cột), không có đầu vào người dùng",
-      "debts": [
-        {
-          "fp": "SC-SEC-2|apps/api/src/modules/reports/control-reports.ts|raw",
-          "file": "apps/api/src/modules/reports/control-reports.ts",
-          "message": "const groupNums = sql.raw(groups.map((_, i) => String(i + 1)).join(', ')); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
-        },
-        {
-          "fp": "SC-SEC-2|apps/api/src/modules/reports/ledger-sql.ts|raw",
-          "file": "apps/api/src/modules/reports/ledger-sql.ts",
-          "message": "return sql.raw<boolean>(`(${side(o)} <> ${side(l)} OR (${side(o)} = 0 AND ${side(l)} = 0 AND ${o}.line_no <> ${l}.line_no))`); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
         }
       ]
     },
@@ -1137,14 +1045,95 @@
         }
       ]
     },
-    "SC-CMP-2": {
-      "title": "Bảy nguyên tắc kiến trúc AP-1..AP-7 đều có cách thực thi (check có thật) — AP-7",
-      "ref": "AP-6 chờ transactional outbox + consumer idempotent (G2-05, PHASES 3, R-OUTBOX) — nợ có chủ, đã duyệt 2026-10-30",
+    "SC-MOD-2": {
+      "title": "Phân hệ không ghi bảng nhân, bảng danh mục / cấu hình của lõi",
+      "ref": "Audit A-17 · ADR-0005 (danh mục chuẩn ở packages/data, ghi qua API)",
       "debts": [
         {
-          "fp": "SC-CMP-2|docs/standard/bizcity-standard.json|unenforced:AP-6",
-          "file": "docs/standard/bizcity-standard.json",
-          "message": "AP-6 \"Events are replayable, consumers are idempotent\" chưa có cách thực thi (check) — nợ theo AP-7"
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/analysis.ts|core:tenants",
+          "file": "apps/api/src/phan-he/mua-hang/analysis.ts",
+          "message": "ghi bảng lõi tenants — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:branches",
+          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
+          "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:partners",
+          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
+          "message": "ghi bảng lõi partners — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:item_classes",
+          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
+          "message": "ghi bảng lõi item_classes — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:product_units",
+          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
+          "message": "ghi bảng lõi product_units — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:products",
+          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
+          "message": "ghi bảng lõi products — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:tax_codes",
+          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
+          "message": "ghi bảng lõi tax_codes — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/posting.ts|core:posting_reasons",
+          "file": "apps/api/src/phan-he/mua-hang/posting.ts",
+          "message": "ghi bảng lõi posting_reasons — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/store.ts|kernel:document_sequences",
+          "file": "apps/api/src/phan-he/mua-hang/store.ts",
+          "message": "ghi bảng NHÂN document_sequences — chỉ được nộp sự việc (R-BOUND-2)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/ton-max.ts|core:branches",
+          "file": "apps/api/src/phan-he/mua-hang/ton-max.ts",
+          "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|kernel:document_sequences",
+          "file": "apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts",
+          "message": "ghi bảng NHÂN document_sequences — chỉ được nộp sự việc (R-BOUND-2)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|core:contract_schedules",
+          "file": "apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts",
+          "message": "ghi bảng lõi contract_schedules — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts|core:partners",
+          "file": "apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts",
+          "message": "ghi bảng lõi partners — đi qua API / service danh mục (A-17)"
+        },
+        {
+          "fp": "SC-MOD-2|apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts|core:reference_documents",
+          "file": "apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts",
+          "message": "ghi bảng lõi reference_documents — đi qua API / service danh mục (A-17)"
+        }
+      ]
+    },
+    "SC-SEC-2": {
+      "title": "Không ghép chuỗi vào SQL: hạn chế sql.raw / sql.lit, mọi giá trị đi qua tham số",
+      "ref": "R-SEC-3 · đã xem 2026-10-29: chỉ ghép hằng số do code sinh (số thứ tự nhóm, biểu thức cột), không có đầu vào người dùng",
+      "debts": [
+        {
+          "fp": "SC-SEC-2|apps/api/src/modules/reports/control-reports.ts|raw",
+          "file": "apps/api/src/modules/reports/control-reports.ts",
+          "message": "const groupNums = sql.raw(groups.map((_, i) => String(i + 1)).join(', ')); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
+        },
+        {
+          "fp": "SC-SEC-2|apps/api/src/modules/reports/ledger-sql.ts|raw",
+          "file": "apps/api/src/modules/reports/ledger-sql.ts",
+          "message": "return sql.raw<boolean>(`(${side(o)} <> ${side(l)} OR (${side(o)} = 0 AND ${side(l)} = 0 AND ${o}.line_no <> ${l}.line_no))`); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
         }
       ]
     }
