@@ -97,6 +97,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Thay đổi người dùng thấy được | `CHANGELOG.md` mục `[Chưa phát hành]` (R-REL-2) |
 | Thêm / đổi yêu cầu tuân thủ, tín hiệu thực thi | [contracts/BIZCITY-COMPLIANCE-v1.md](contracts/BIZCITY-COMPLIANCE-v1.md) §2 + [standard/compliance-matrix.json](standard/compliance-matrix.json) cùng PR (SC-CMP-1) |
 | Thêm cách thực thi cho nguyên tắc AP-* | `bizcity-standard.json#principles[].enforcedBy` (SC-CMP-2; nợ đã hết → `--update-baseline`) |
+| Thêm / chuyển việc lộ trình hoặc mã checklist G | thư mục phase sở hữu nó ở [phases/](phases/README.md): dòng `> **Việc lộ trình:**` / `> **Checklist công bố:**` của README phase (SC-PHASE-1) |
 | Thêm migration | tệp mới số kế tiếp; chạy `scripts/kiem-nang-cap.sh` khi đổi bảng có dữ liệu; khoá checksum khi phát hành (`--update-lock`, R-DB-15) |
 | Thêm / đổi mã lỗi, thông báo, gợi ý | `packages/contracts/src/errors.ts` (ERROR_CATALOG) + [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) §3 + `bizcity-standard.json#errorCodes` (SC-ERR-1, SC-CON-6) |
 | Thêm số đo, trường log, cảnh báo, dashboard | [ops/OBSERVABILITY.md](ops/OBSERVABILITY.md) §2–§4 + `infrastructure/monitoring/` (`prometheus/alerts.yml`, `grafana/dashboards/`) |

@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- Thư mục phase `docs/phases/PHASE-001…017`: mỗi việc lộ trình và mã checklist G thuộc đúng một phase (check SC-PHASE-1). Đánh giá codebase so với kiến trúc: `docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md`. Lộ trình thêm việc 2.14 (chính sách có phiên bản), 2.15 (PITR), 2.16 (MCP ghi).
 - Giấy phép **GPL-2.0-or-later** (`LICENSE`, cùng giấy phép với `bizcity-twin-ai`) và chính sách nhãn hiệu `TRADEMARK.md`. Trước đó repository chưa có giấy phép.
 - Bộ chuẩn framework: CANON, luật `R-*`, hợp đồng `bizcity_*@N`, Bizcity Framework Standard v1 (7 hợp đồng module), ADR-0001..0006.
 - Bộ kiểm chuẩn `tests/conformance/` gồm hai lane chạy song song:
