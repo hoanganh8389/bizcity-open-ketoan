@@ -15,7 +15,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';
 import { errorText } from '@/lib/api';
-import { purchaseApi, today, useNames } from '../du-lieu';
+import { purchaseApi, today, useMuaHang, useNames } from '../du-lieu';
+import { PhieuMuaForm } from '../chung-tu/PhieuMuaForm';
 import { factsText, fold, num, qtyFmt, stockApi, stockSnapshot, useHierarchy, type AnalysisRow } from '../ton-max/api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from '../ton-max/chung';
 import { roundPrice } from '@/lib/format';
@@ -36,6 +37,10 @@ export function DatHangPage() {
   const [buy, setBuy] = useState<Record<string, number>>({});
   const [why, setWhy] = useState<AnalysisRow | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: React.ReactNode } | null>(null);
+  // Lập đơn xong mở xem trước ngay tại chỗ (form đơn đặt: sửa, duyệt, xem mẫu gửi NCC) — không phải sang MH11.
+  const mh = useMuaHang();
+  const [openDoc, setOpenDoc] = useState<PDoc | null>(null);
+  const openById = async (id: string) => { const r = await mh.refetch(); const d = r.data?.docs.find((x) => x.id === id); if (d) setOpenDoc(d); };
   const [busy, setBusy] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const q = useQuery({ queryKey: ['ton-max', 'analysis', parent], enabled: Boolean(parent), queryFn: () => stockApi.analysis(parent) });
@@ -119,7 +124,8 @@ export function DatHangPage() {
         made.push({ id: saved.id, docNo: saved.docNo, ncc, n: lines.length });
       }
       setSel({}); setBuy({});
-      setMsg({ ok: true, text: <>Đã lập {made.length} đơn đặt nháp: {made.map((m) => <Link key={m.id} to={`/mua-hang/chung-tu?mo=${m.id}`} style={{ marginRight: 8 }}>{m.docNo} ({names.partnerName(m.ncc)}, {m.n} mã)</Link>)} — mở đơn để thêm ngân sách, ghi chú, xem mẫu Excel gửi NCC.</> });
+      setMsg({ ok: true, text: <>Đã lập {made.length} đơn đặt nháp: {made.map((m) => <button key={m.id} type="button" className="btn btn-xs" style={{ marginRight: 6 }} onClick={() => void openById(m.id)}>{m.docNo} ({names.partnerName(m.ncc)}, {m.n} mã)</button>)} — bấm để xem lại đơn, thêm ngân sách, ghi chú, xem mẫu Excel gửi NCC.</> });
+      if (made[0]) await openById(made[0].id);
       await qc.invalidateQueries({ queryKey: ['ton-max'] });
       await qc.invalidateQueries({ queryKey: ['mua-hang'] });
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); } finally { setBusy(false); }
@@ -165,6 +171,7 @@ export function DatHangPage() {
           <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>{why.shopsWithMax} shop có max, {why.shopsBelowMax} shop đang dưới max. Đổi cách tính ở <Link to="/mua-hang/cong-thuc">Công thức đặt hàng</Link>.</div>
         </div>
       </Modal>}
+      {openDoc && mh.data && <PhieuMuaForm key={openDoc.id} value={openDoc} data={mh.data} onClose={() => setOpenDoc(null)} onSaved={() => void mh.refresh()} onOpen={(d) => setOpenDoc(d)} />}
     </>
   );
 }

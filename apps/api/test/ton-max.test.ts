@@ -171,6 +171,25 @@ describe('Phân cấp, tồn max, đề xuất chuyển, công thức đặt hà
     expect(saved.config.stockWarehouses).toEqual(['08-HH']);
   });
 
+  it('MH18 kho lấy min: bật Tồn min kho, chọn kho lấy min riêng; không chọn thì lấy min ở kho lấy max', async () => {
+    await ok('PUT', '/api/v1/catalog/products/SUA9?new=true', { name: 'Sữa SUA9 (thử kho lấy min)', unit: 'Lon', taxInCode: 'V08', units: [{ unit: 'Lon', ratio: 1, isDefault: true }] });
+    await ok('PUT', '/api/v1/stock/levels', { items: [
+      { branchCode: '08000', warehouseCode: '08-HH', sku: 'SUA9', max: 50, min: 10 },
+      { branchCode: '08000', warehouseCode: '08-KM', sku: 'SUA9', max: 0, min: 40 },
+    ] });
+    const f = await ok('GET', '/api/v1/stock/formulas/08000');
+    const terms = f.config.terms.map((t: { key: string; on: boolean }) => (t.key === 'maxKho' ? { ...t, on: false } : t.key === 'minKho' ? { ...t, on: true } : t));
+    await ok('PUT', '/api/v1/stock/formulas/08000', { ...f.config, terms, minWarehouses: [] });
+    const macDinh = (await ok('GET', `/api/v1/stock/order-analysis?branchCode=08000&asOf=${AS_OF}&sku=SUA9`)).rows[0];
+    expect(macDinh.minKho).toBe(10); // kho lấy max (08-HH)
+    const saved = await ok('PUT', '/api/v1/stock/formulas/08000', { ...f.config, terms, minWarehouses: ['08-KM'] });
+    expect(saved.config.minWarehouses).toEqual(['08-KM']);
+    const rieng = (await ok('GET', `/api/v1/stock/order-analysis?branchCode=08000&asOf=${AS_OF}&sku=SUA9`)).rows[0];
+    expect(rieng.minKho).toBe(40);
+    expect(rieng.need - macDinh.need).toBe(30); // min 40 thay 10 → cần nhập thêm 30
+    await ok('PUT', '/api/v1/stock/formulas/08000', f.config); // trả công thức về như cũ
+  });
+
   it('shop bỏ ra khỏi công thức (MH18, shop nghỉ): không cộng max / tồn / đi đường / bán của shop đó; tích lại là tính lại; cây phân cấp giữ nguyên', async () => {
     const f = await ok('GET', '/api/v1/stock/formulas/08000');
     const base = (await ok('GET', `/api/v1/stock/order-analysis?branchCode=08000&asOf=${AS_OF}&sku=SUA1`)).rows[0];
@@ -202,6 +221,16 @@ describe('Phân cấp, tồn max, đề xuất chuyển, công thức đặt hà
     await doc({ docType: 'purchase', docKey: 'tm:NMF', branchCode: '08000', docNo: 'NMF', docDate: '2026-10-02', partner: { code: 'NCC-HC', name: 'Hùng Cường' },
       lines: [['110063076', 10], ['110063076Q', 25], ['110063076Z', 20]].map(([sku, qty], i) => ({ lineKey: `f${i}`, sku, name: String(sku), unit: 'Hộp', qty, amountBeforeTax: Number(qty) * 100000, taxCode: 'V08', taxAmount: Number(qty) * 8000, warehouseCode: '08-HH' })),
       totals: { beforeTax: 5500000, tax: 440000, total: 5940000 } });
+    // Mặc định (MH26): đuôi Q, T tách riêng → Q kẹp quà là một dòng riêng; Z gộp vào mã cha (10 + 20).
+    expect((await ok('GET', '/api/v1/purchase/variants')).separate).toEqual(['Q', 'T']);
+    const d = await ok('GET', `/api/v1/stock/order-analysis?branchCode=08000&asOf=${AS_OF}`);
+    const tach = d.rows.filter((r: { sku: string }) => r.sku.startsWith('110063076'));
+    expect(tach.map((r: { sku: string; tonKho: number }) => [r.sku, r.tonKho]).sort()).toEqual([['110063076', 30], ['110063076Q', 25]]);
+    // Chọn gộp mọi đuôi ở MH26 → một dòng mã cha cộng dồn cả họ như trước; lưu MH12 không làm mất cấu hình này.
+    expect((await ok('PUT', '/api/v1/purchase/variants', { separate: [] })).separate).toEqual([]);
+    const st = await ok('GET', '/api/v1/purchase/settings');
+    await ok('PUT', '/api/v1/purchase/settings', { holidays: st.holidays, brandOpening: st.brandOpening, accounts: st.accounts, warnDays: st.warnDays, priceWarnPct: st.priceWarnPct, requireOrder: st.requireOrder });
+    expect((await ok('GET', '/api/v1/purchase/variants')).separate).toEqual([]);
     const a = await ok('GET', `/api/v1/stock/order-analysis?branchCode=08000&asOf=${AS_OF}`);
     const fam = a.rows.filter((r: { sku: string }) => r.sku.startsWith('110063076'));
     expect(fam).toHaveLength(1);

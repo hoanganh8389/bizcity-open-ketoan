@@ -39,6 +39,7 @@ export const muaHangMenu: MenuItem[] = [
     children: [
       { key: 'mh-chinh-sach', label: 'Chính sách mua hàng', path: '/mua-hang/chinh-sach', code: 'MH04' },
       { key: 'mh-cai-dat', label: 'Cài đặt mua hàng', path: '/mua-hang/cai-dat', code: 'MH12' },
+      { key: 'mh-bien-the', label: 'Biến thể mặt hàng', path: '/mua-hang/bien-the', code: 'MH26' },
       { key: 'mh-nhom-doi-tuong', label: 'Nhóm nhà cung cấp', path: '/danh-muc/nhom-doi-tuong', code: 'DM08' },
       { key: 'mh-mat-hang', label: 'Danh mục mặt hàng', path: '/danh-muc/mat-hang', code: 'DM10' },
       { key: 'mh-phan-loai', label: 'Nhóm hàng (ngành → nhãn → nhóm)', path: '/danh-muc/phan-loai-hang', code: 'DM11' },

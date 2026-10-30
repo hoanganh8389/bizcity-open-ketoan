@@ -16,6 +16,7 @@ import { QuaTangPage } from './qua-tang/QuaTangPage';
 import { NhatKyMuaPage } from './nhat-ky/NhatKyMuaPage';
 import { DoiChieuDonPage } from './doi-chieu/DoiChieuDonPage';
 import { CaiDatMuaPage } from './cai-dat/CaiDatMuaPage';
+import { BienTheMatHangPage } from './bien-the/BienTheMatHangPage';
 import { NhaCungCapPage } from './nha-cung-cap/NhaCungCapPage';
 import { HoSoNccPage } from './nha-cung-cap/HoSoNccPage';
 import { DatHangPage } from './dat-hang/DatHangPage';
@@ -57,6 +58,7 @@ export const muaHangRoutes = (
     <Route path="mua-hang/ton-kho" element={<TonKhoTheoMatHangPage />} />
     <Route path="mua-hang/doi-chieu" element={<DoiChieuDonPage />} />
     <Route path="mua-hang/cai-dat" element={<CaiDatMuaPage />} />
+    <Route path="mua-hang/bien-the" element={<BienTheMatHangPage />} />
     <Route path="mua-hang/csdl" element={<CsdlPage />} />
     {/* Đường dẫn cũ (màn nhập nhanh dữ liệu giả, đã bỏ) → màn chứng từ mua hàng */}
     <Route path="mua-hang/phieu-mua" element={<Navigate to="/mua-hang/tong-hop" replace />} />

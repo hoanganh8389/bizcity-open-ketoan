@@ -16,6 +16,8 @@ Số dương nghĩa là cần nhập thêm, số âm nghĩa là đang dư.
 **① Kho của chi nhánh cha**
 - Cột **Tính tồn**: tích những kho cộng vào *Tồn kho* (ví dụ kho hàng + kho khuyến mại, bỏ kho chờ xử lý).
 - Cột **Lấy max**: tích những kho lấy *Tồn max kho*.
+- Cột **Lấy min**: tích những kho lấy *Tồn min kho* — dùng khi đặt hàng theo **min** (ở phần thành phần: tắt *Tồn max kho*, bật *Tồn min kho*). Không tích thì lấy min ở chính các kho lấy max.
+- Không cộng phần dự phòng bán ("bán 0 ngày"): tắt thành phần *Doanh số bán của toàn bộ shop*.
 - Không tích ô nào thì phần mềm tính tồn ở mọi kho đang dùng, và lấy max ở kho mặc định.
 
 **② Kho chuẩn của từng shop**

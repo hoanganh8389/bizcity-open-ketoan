@@ -34,6 +34,8 @@ export interface FormulaConfig {
   stockWarehouses: string[];
   /** Kho lấy "Tồn max kho" (trống = kho mặc định). */
   maxWarehouses: string[];
+  /** Kho lấy "Tồn min kho" (trống = như kho lấy max). Dùng khi công thức bật "Tồn min kho" thay cho max. */
+  minWarehouses?: string[];
   /** Kho của từng shop dùng làm chuẩn (trống = kho mặc định của shop). shopCode → mã kho. */
   shopWarehouses: Record<string, string>;
   /** Shop con KHÔNG tính vào công thức (shop đã nghỉ / tạm dừng…) — vẫn ở cây phân cấp; bỏ tích ở MH18 là tính lại. */
@@ -59,7 +61,7 @@ export interface FormulaConfig {
 
 export const FORMULA_VARS: { key: FormulaVar; label: string; short: string; hint: string }[] = [
   { key: 'maxKho', label: 'Tồn max kho', short: 'Max kho', hint: 'Tổng tồn max của các kho chọn ở mục "Kho lấy max"' },
-  { key: 'minKho', label: 'Tồn min kho', short: 'Min kho', hint: 'Tổng tồn min của các kho lấy max (ít dùng)' },
+  { key: 'minKho', label: 'Tồn min kho', short: 'Min kho', hint: 'Tổng tồn min của các kho chọn ở mục "Lấy min" (không chọn = như kho lấy max) — dùng thay Tồn max kho khi đặt theo min' },
   { key: 'tonKho', label: 'Tồn kho', short: 'Tồn kho', hint: 'Tổng tồn hiện tại của các kho chọn ở mục "Kho tính tồn"' },
   { key: 'diDuongKho', label: 'Hàng đi đường về kho', short: 'Đi đường về kho', hint: 'Đã xuất từ nơi khác về kho chi nhánh cha nhưng kho chưa xác nhận nhận' },
   { key: 'diDuongShop', label: 'Hàng đi đường xuống shop', short: 'Đi đường xuống shop', hint: 'Kho đã xuất xuống shop (đã trừ tồn kho) nhưng shop chưa xác nhận nhận' },
@@ -73,7 +75,7 @@ export const varLabel = (k: FormulaVar) => FORMULA_VARS.find((v) => v.key === k)
 
 /** Công thức chuẩn (cách đang dùng ở chi nhánh): (max kho − tồn kho − đi đường) + (max shop − tồn shop) + bán 7 ngày − chưa nhập. */
 export const DEFAULT_FORMULA: FormulaConfig = {
-  stockWarehouses: [], maxWarehouses: [], shopWarehouses: {}, excludeShops: [],
+  stockWarehouses: [], maxWarehouses: [], minWarehouses: [], shopWarehouses: {}, excludeShops: [],
   terms: [
     { key: 'maxKho', sign: 1, on: true },
     { key: 'tonKho', sign: -1, on: true },

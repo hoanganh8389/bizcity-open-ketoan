@@ -20,12 +20,14 @@ import { invoiceCheck } from './hoa-don.js';
 
 export interface PurchaseSettings { holidays: string[]; brandOpening: Record<string, Record<string, number>>; accounts: Partial<Accounts>; warnDays: number; /** Đơn giá lệch quá % này so với giá NCC / lần nhập trước thì cảnh báo (một mức cho cả đơn vị). */ priceWarnPct: number;
   /** Phiếu nhập mua bắt buộc lập từ đơn đặt đã duyệt (bật: chặn duyệt phiếu nhập không theo đơn; tắt: chỉ cảnh báo). */
-  requireOrder: boolean }
+  requireOrder: boolean;
+  /** Đuôi mã biến thể tách riêng khi phân tích đặt hàng (MH26) — lưu riêng qua /purchase/variants, MH12 lưu giữ nguyên. */
+  variantSeparate?: string[] }
 
 export async function loadSettings(trx: Db, tenantId: string): Promise<PurchaseSettings> {
   const t = await trx.selectFrom('tenants').select('settings').where('id', '=', tenantId).executeTakeFirst();
   const p = ((t?.settings ?? {}) as Record<string, any>).purchase ?? {};
-  return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, accounts: p.accounts ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder) };
+  return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, accounts: p.accounts ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder), ...(Array.isArray(p.variantSeparate) ? { variantSeparate: p.variantSeparate } : {}) };
 }
 
 export async function saveSettings(trx: Db, tenantId: string, s: PurchaseSettings): Promise<void> {

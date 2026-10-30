@@ -18,6 +18,7 @@ import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { listSupplierProducts, unitsForOrders, unitsOf } from './gia-mua.js';
 import { listDocs, listPolicies } from './store.js';
+import { suffixOf, variantSeparate } from './bien-the.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (d: string, n: number) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -251,7 +252,7 @@ export async function getFormula(trx: Db, tenantId: string, branchCode: string):
 }
 const termSchema = z.object({ key: z.enum(['maxKho', 'minKho', 'tonKho', 'diDuongKho', 'diDuongShop', 'maxShop', 'tonShop', 'banShop', 'banThangTruoc', 'dangDat']), sign: z.union([z.literal(1), z.literal(-1)]), on: z.boolean(), factor: z.number().min(0).max(100).optional(), days: z.number().int().min(1).max(90).optional() });
 export const formulaSchema = z.object({
-  stockWarehouses: z.array(z.string()).max(50).default([]), maxWarehouses: z.array(z.string()).max(50).default([]), shopWarehouses: z.record(z.string()).default({}), excludeShops: z.array(z.string().max(64)).max(2000).default([]),
+  stockWarehouses: z.array(z.string()).max(50).default([]), maxWarehouses: z.array(z.string()).max(50).default([]), minWarehouses: z.array(z.string()).max(50).default([]), shopWarehouses: z.record(z.string()).default({}), excludeShops: z.array(z.string().max(64)).max(2000).default([]),
   terms: z.array(termSchema).max(20), shopGapMode: z.enum(['sum', 'positive']).default('sum'), roundBuy: z.enum(['none', 'up', 'nearest']).default('up'),
   skipSuffixes: z.array(z.string().trim().max(3)).max(20).default([]), windowDays: z.number().int().min(1).max(120).default(7), coverDays: z.number().positive().max(365).default(7),
   warehouseBufferPct: z.number().min(0).max(500).default(10), packThreshold: z.number().min(0).max(1).default(0.5), autoApprovePct: z.number().min(0).max(100).default(0),
@@ -271,7 +272,7 @@ interface Snapshot {
   cfg: FormulaConfig;
   asOf: string;
   /** Kho của chi nhánh cha tính tồn / lấy max; kho chuẩn của từng shop. */
-  stockWhs: Set<string>; maxWhs: Set<string>; shopWh: Map<string, string>;
+  stockWhs: Set<string>; maxWhs: Set<string>; minWhs: Set<string>; shopWh: Map<string, string>;
   stock: Map<string, number>; // key `${branchCode}|${wh}|${sku}`
   sales: Map<string, number[]>; // key `${branchCode}|${sku}` → theo ngày lùi
   transit: Map<string, number>; // key `${branchCode}|${sku}` (hàng đang về chi nhánh đó)
@@ -295,6 +296,8 @@ async function snapshot(trx: Db, tenantId: string, parentCode: string, asOf = to
   const active = tree.parent.warehouses.filter((w) => w.isActive).map((w) => w.code);
   const stockWhs = new Set(cfg.stockWarehouses.length ? cfg.stockWarehouses : active);
   const maxWhs = new Set(cfg.maxWarehouses.length ? cfg.maxWarehouses : [defaultWh(tree.parent)]);
+  // Kho lấy tồn min: chọn riêng ở MH18; không chọn thì như kho lấy max (công thức đã lưu trước đây giữ nguyên kết quả).
+  const minWhs = new Set(cfg.minWarehouses?.length ? cfg.minWarehouses : [...maxWhs]);
   const shopWh = new Map(tree.shops.map((s) => [s.code, cfg.shopWarehouses[s.code] || defaultWh(s)]));
   // Dòng không ghi kho, hoặc ghi mã kho không thuộc chi nhánh đó (phiếu chuyển chép mã kho đầu đi), tính vào kho mặc định.
   const whOf = (branchId: string, wh: string) => { const b = tree.all.find((x) => x.id === branchId)!; return wh && b.warehouses.some((w) => w.code === wh) ? wh : defaultWh(b); };
@@ -305,7 +308,7 @@ async function snapshot(trx: Db, tenantId: string, parentCode: string, asOf = to
   const tm = new Map<string, number>();
   for (const r of transit) { const k = `${idToCode.get(r.branchId)}|${r.sku}`; tm.set(k, (tm.get(k) ?? 0) + r.qty); }
   const lm = new Map(levels.map((l) => [`${l.branchCode}|${l.warehouseCode}|${l.sku}`, { max: l.max, min: l.min }]));
-  return { tree, cfg, asOf, stockWhs, maxWhs, shopWh, stock: sm, sales: sl, transit: tm, levels: lm, settings, window };
+  return { tree, cfg, asOf, stockWhs, maxWhs, minWhs, shopWh, stock: sm, sales: sl, transit: tm, levels: lm, settings, window };
 }
 
 /** Phần còn lại chưa về của các đơn đặt đang mở (mọi NCC) trong cây, theo mã (ĐVT nhỏ nhất). */
@@ -359,7 +362,10 @@ export async function orderAnalysis(trx: Db, tenantId: string, parentCode: strin
   for (const k of pend.qty.keys()) skus.add(k);
   // HỌ MÃ (1 cấp, products.parent_sku — quét theo mã hoặc chỉ định tay ở mặt hàng): phân tích theo mã CHA, cộng dồn số của mọi mã con
   // (tồn, max, bán, đi đường, đơn đang đặt) — hàng tặng / kẹp quà còn nhiều thì không nhập thêm mã cha.
-  const parentMap = new Map((await trx.selectFrom('products').select(['sku', 'parent_sku']).where('tenant_id', '=', tenantId).where('parent_sku', 'is not', null).execute()).map((r) => [r.sku, r.parent_sku!]));
+  // Biến thể có đuôi được cấu hình TÁCH RIÊNG ở MH26 (mặc định Q — hàng kẹp quà) thì phân tích như một mã độc lập.
+  const separate = new Set(await variantSeparate(trx, tenantId));
+  const parentMap = new Map((await trx.selectFrom('products').select(['sku', 'parent_sku']).where('tenant_id', '=', tenantId).where('parent_sku', 'is not', null).execute())
+    .filter((r) => !separate.has(suffixOf(r.sku, r.parent_sku!))).map((r) => [r.sku, r.parent_sku!]));
   const parentOf = (s: string) => parentMap.get(s) ?? s;
   const families = familiesBy([...skus].filter(Boolean), parentOf);
   let parents = [...families.keys()];
@@ -386,7 +392,7 @@ export async function orderAnalysis(trx: Db, tenantId: string, parentCode: strin
     for (const s of fShops) { const a = snap.sales.get(`${s.code}|${sku}`); if (a) a.forEach((q, i) => { banShopNgay[i]! += q; }); }
     return {
       maxKho: [...snap.maxWhs].reduce((s, w) => s + (snap.levels.get(`${tree.parent.code}|${w}|${sku}`)?.max ?? 0), 0),
-      minKho: [...snap.maxWhs].reduce((s, w) => s + (snap.levels.get(`${tree.parent.code}|${w}|${sku}`)?.min ?? 0), 0),
+      minKho: [...snap.minWhs].reduce((s, w) => s + (snap.levels.get(`${tree.parent.code}|${w}|${sku}`)?.min ?? 0), 0),
       tonKho: sumWhs(snap.stock, tree.parent.code, snap.stockWhs, sku),
       diDuongKho: snap.transit.get(`${tree.parent.code}|${sku}`) ?? 0,
       diDuongShop: fShops.reduce((s, x) => s + (snap.transit.get(`${x.code}|${sku}`) ?? 0), 0),

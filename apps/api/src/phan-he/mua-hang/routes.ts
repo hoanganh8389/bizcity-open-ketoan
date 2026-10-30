@@ -26,6 +26,7 @@ import { purchaseSchema } from './csdl.js';
 import { deleteSupplierProduct, listSupplierProducts, productCost, saveSupplierProducts, supplierProductSchema, unitsOf } from './gia-mua.js';
 import { purchaseService } from './service.js';
 import { stockLedgerBySku, stockOnHandBySku } from './bao-cao-kho.js';
+import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-the.js';
 import { deletePolicy, listDocs, listPolicies, policyInputSchema, savePolicy } from './store.js';
 
 const tags = ['Mua hàng'];
@@ -212,7 +213,23 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/purchase/settings', { preHandler: read, schema: { tags, summary: 'Cài đặt mua hàng: ngày nghỉ, số dư nhãn đầu kỳ, tài khoản' },
     handler: async (req) => { const a = authOf(req); const s = await loadSettings(db, a.tenantId); return ok({ ...s, resolvedAccounts: await resolveAccounts(db, a.tenantId, s) }); } });
   r.put('/api/v1/purchase/settings', { preHandler: settings, schema: { tags, summary: 'Lưu cài đặt mua hàng', body: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false) }) },
-    handler: async (req) => { const a = authOf(req); await saveSettings(db, a.tenantId, req.body); return ok(req.body); } });
+    handler: async (req) => {
+      const a = authOf(req);
+      // Giữ cấu hình biến thể (MH26) — màn MH12 không gửi trường này.
+      const keep = (await loadSettings(db, a.tenantId)).variantSeparate;
+      await saveSettings(db, a.tenantId, { ...req.body, ...(keep ? { variantSeparate: keep } : {}) });
+      return ok(req.body);
+    } });
+  r.get('/api/v1/purchase/variants', { preHandler: read, schema: { tags, summary: 'Biến thể mặt hàng (MH26): đuôi mã, số mã con, đuôi nào tách riêng khi phân tích đặt hàng' },
+    handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
+  r.put('/api/v1/purchase/variants', { preHandler: settings, schema: { tags, summary: 'Lưu đuôi mã tách riêng khi phân tích đặt hàng', body: z.object({ separate: z.array(z.string().trim().min(1).max(3)).max(30) }) },
+    handler: async (req) => {
+      const a = authOf(req);
+      const before = await variantSeparate(db, a.tenantId);
+      const separate = await saveVariantSeparate(db, a.tenantId, req.body.separate);
+      await logEvents(a.tenantId, [{ event: 'variants_saved', docNo: '', user: a.actorName, data: { before, after: separate } }]);
+      return ok({ separate });
+    } });
   const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });

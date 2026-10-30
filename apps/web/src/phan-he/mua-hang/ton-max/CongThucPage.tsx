@@ -34,8 +34,16 @@ export function CongThucPage() {
   const up = (p: Partial<FormulaConfig>) => setCfg((c) => (c ? { ...c, ...p } : c));
   const upTerm = (key: string, p: Partial<FormulaTerm>) => setCfg((c) => (c ? { ...c, terms: c.terms.map((t) => (t.key === key ? { ...t, ...p } : t)) } : c));
   const move = (i: number, d: -1 | 1) => setCfg((c) => { if (!c) return c; const t = [...c.terms]; const j = i + d; if (j < 0 || j >= t.length) return c; [t[i], t[j]] = [t[j]!, t[i]!]; return { ...c, terms: t }; });
-  const toggleWh = (field: 'stockWarehouses' | 'maxWarehouses', code: string) => setCfg((c) => { if (!c) return c; const cur = c[field].length ? c[field] : field === 'stockWarehouses' ? (node?.warehouses.filter((w) => w.isActive).map((w) => w.code) ?? []) : [node?.warehouses.find((w) => w.isDefault)?.code ?? '']; return { ...c, [field]: cur.includes(code) ? cur.filter((x) => x !== code) : [...cur, code] }; });
-  const effective = (field: 'stockWarehouses' | 'maxWarehouses') => (cfg?.[field].length ? cfg[field] : field === 'stockWarehouses' ? node?.warehouses.filter((w) => w.isActive).map((w) => w.code) ?? [] : [node?.warehouses.find((w) => w.isDefault)?.code ?? node?.warehouses[0]?.code ?? '']);
+  type WhField = 'stockWarehouses' | 'maxWarehouses' | 'minWarehouses';
+  /** Kho đang áp của từng cột khi chưa tích gì: tính tồn = mọi kho đang dùng; lấy max = kho mặc định; lấy min = như lấy max. */
+  const effective = (field: WhField): string[] => {
+    const saved = cfg?.[field] ?? [];
+    if (saved.length) return saved;
+    if (field === 'stockWarehouses') return node?.warehouses.filter((w) => w.isActive).map((w) => w.code) ?? [];
+    if (field === 'minWarehouses') return effective('maxWarehouses');
+    return [node?.warehouses.find((w) => w.isDefault)?.code ?? node?.warehouses[0]?.code ?? ''];
+  };
+  const toggleWh = (field: WhField, code: string) => setCfg((c) => { if (!c) return c; const cur = effective(field); return { ...c, [field]: cur.includes(code) ? cur.filter((x) => x !== code) : [...cur, code] }; });
 
   // Ví dụ: số liệu máy chủ trả theo công thức ĐÃ LƯU; tính lại tại chỗ theo cấu hình đang sửa (các thành phần đã có số).
   const row = ex.data?.rows[0];
@@ -63,7 +71,7 @@ export function CongThucPage() {
           <ChonChiNhanhCha value={parent} onChange={(v) => { setParent(v); setCfg(null); }} />
           {f.data && <span className="muted" style={{ fontSize: 12 }}>{f.data.saved ? `Lưu lần cuối bởi ${f.data.updatedBy} lúc ${new Date(f.data.updatedAt!).toLocaleString('vi-VN')}` : 'Chưa lưu riêng — đang dùng công thức chuẩn'}</span>}
           <span className="grow" />
-          <button className="btn btn-sm" onClick={() => setCfg({ ...DEFAULT_FORMULA, stockWarehouses: cfg?.stockWarehouses ?? [], maxWarehouses: cfg?.maxWarehouses ?? [], shopWarehouses: cfg?.shopWarehouses ?? {} })}>Về công thức chuẩn</button>
+          <button className="btn btn-sm" onClick={() => setCfg({ ...DEFAULT_FORMULA, stockWarehouses: cfg?.stockWarehouses ?? [], maxWarehouses: cfg?.maxWarehouses ?? [], minWarehouses: cfg?.minWarehouses ?? [], shopWarehouses: cfg?.shopWarehouses ?? {} })}>Về công thức chuẩn</button>
           {dirty && <button className="btn btn-sm" onClick={() => setCfg(f.data!.config)}>Bỏ thay đổi</button>}
           <button className="btn btn-primary" disabled={!dirty} onClick={() => void save()}>Lưu công thức</button>
         </div>
@@ -74,12 +82,13 @@ export function CongThucPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <section className="mh-panel">
                 <h4>① Kho của chi nhánh cha</h4>
-                <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Tích kho cộng vào <b>Tồn kho</b> (vd kho hàng + kho khuyến mại) và kho lấy <b>Tồn max kho</b>. Không tích gì = mọi kho đang dùng / kho mặc định.</div>
-                <table className="tm-terms"><thead><tr><th>Kho</th><th>Tính tồn</th><th>Lấy max</th></tr></thead><tbody>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Tích kho cộng vào <b>Tồn kho</b> (vd kho hàng + kho khuyến mại), kho lấy <b>Tồn max kho</b> và kho lấy <b>Tồn min kho</b> (dùng khi công thức bật Tồn min kho thay cho max). Không tích gì = mọi kho đang dùng / kho mặc định / như kho lấy max.</div>
+                <table className="tm-terms"><thead><tr><th>Kho</th><th>Tính tồn</th><th>Lấy max</th><th>Lấy min</th></tr></thead><tbody>
                   {(node?.warehouses ?? []).map((w) => <tr key={w.code} className={w.isActive ? '' : 'off'}>
                     <td><span className="mono">{w.code}</span> · {w.name}{w.isDefault && <span className="tm-chip info" style={{ marginLeft: 6 }}>mặc định</span>}{w.isPromo && <span className="tm-chip warn" style={{ marginLeft: 4 }}>KM</span>}</td>
                     <td><input type="checkbox" checked={effective('stockWarehouses').includes(w.code)} onChange={() => toggleWh('stockWarehouses', w.code)} /></td>
                     <td><input type="checkbox" checked={effective('maxWarehouses').includes(w.code)} onChange={() => toggleWh('maxWarehouses', w.code)} /></td>
+                    <td><input type="checkbox" checked={effective('minWarehouses').includes(w.code)} onChange={() => toggleWh('minWarehouses', w.code)} /></td>
                   </tr>)}
                 </tbody></table>
               </section>
