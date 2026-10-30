@@ -63,6 +63,7 @@ Thêm mã = thay đổi tương thích; đổi nghĩa mã = phá vỡ.
 | Hệ thống | `GET /system/health`, `GET /system/health/ready` (L1; 503 `NOT_READY` khi chưa sẵn sàng) | công khai |
 | Tự chẩn đoán | `GET /system/diagnostics` (L3 toàn vẹn sổ, [DIAGNOSTICS.md §2](../ops/DIAGNOSTICS.md)) | `reports:read` |
 | Năng lực | `GET /system/capabilities` (bảng năng lực Standard của bản đang chạy) | mọi khoá / phiên đăng nhập |
+| MCP | `POST /mcp` (JSON-RPC 2.0 — [bizcity_mcp@1](BIZCITY-MCP-v1.md)); đi qua nginx của container `web` | phiên / khoá API; công cụ lọc theo quyền |
 | Bằng chứng | `GET /evidence/:id` (bản ghi + kiểm băm, nối chuỗi — kiểm biên nhận `meta.receipt` của action ghi) | `documents:read` |
 
 Mọi endpoint khác phục vụ giao diện nội bộ và **có thể đổi không báo** (R-API-8).

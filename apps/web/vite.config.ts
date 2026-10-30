@@ -32,7 +32,10 @@ export default defineConfig({
   server: {
     port: 4180,
     // API_TARGET: chạy chỉ giao diện, gọi API dev dùng chung (scripts/dev.mjs --api=…). Mặc định API trên máy.
-    proxy: { '/api': { target: process.env.API_TARGET || 'http://localhost:4100', changeOrigin: true } },
+    proxy: {
+      '/api': { target: process.env.API_TARGET || 'http://localhost:4100', changeOrigin: true },
+      '/mcp': { target: process.env.API_TARGET || 'http://localhost:4100', changeOrigin: true },
+    },
     fs: { allow: [path.resolve(__dirname, '../..')] },
   },
   build: { outDir: 'dist', sourcemap: false, chunkSizeWarningLimit: 900 },

@@ -57,8 +57,8 @@
 | 2.8 | Tách `packages/contracts/src/mua-hang/*` về phân hệ (A-06) | `packages/contracts` không còn thư mục `mua-hang` | 1.6 |
 | 2.9 | `GET /api/v1/system/capabilities` trả `bizcity-standard.json` + trạng thái thật | test so khớp — **có**: `diagnostics.test.ts` | mới |
 | 2.10 | Chẩn đoán: `GET /api/v1/system/diagnostics` + `/health/ready`; bảng `diagnostic_runs`; khoá kỳ bị chặn khi L3 có error (R-DIAG-4); `health` trả `version`, `kernel`, `standard` (R-REL-1) — dùng lại SQL của `tests/conformance/diagnostics/`; cùng mã kiểm SC-DIAG-1 | **có** (màn xem lịch sử: Phase 3): [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md), [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md) | 1.5 |
-| 2.11 | **`platform/mcp` đọc (2b)**: `POST /mcp`, công cụ `ketoan.*` §5.1 bọc route hiện có, khoá `mcp_…` có scope, phong bì + `as_of` ([bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md)) | Claude / ChatGPT đọc được cân đối phát sinh, công nợ của một đơn vị | mới |
-| 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt | mới |
+| 2.11 | **`platform/mcp` đọc (2b)**: `POST /mcp`, công cụ `ketoan.*` §5.1 bọc route hiện có, khoá `mcp_…` có scope, phong bì + `as_of` ([bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md)) | Claude / ChatGPT đọc được cân đối phát sinh, công nợ của một đơn vị — **có**: `modules/system/mcp.routes.ts`, công cụ `modules/reports/report.actions.ts`, `test/mcp.test.ts` (khoá `mcp_…` riêng: sau) | mới |
+| 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt — **có** (CONF-MCP-1, -3, -4 trong `test/mcp.test.ts`; -5 khi có action chạm sổ phơi cho AI) | mới |
 
 **Rủi ro:** RLS và chuỗi băm bằng chứng tốn hiệu năng. Đo trên dữ liệu thật (30.000 chứng từ / ngày) trước khi bật cho bảng Kernel; bảng module bật ngay vì mới và nhỏ.
 

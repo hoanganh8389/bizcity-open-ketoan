@@ -93,7 +93,7 @@ export function listActions(): AnyActionDef[] {
 }
 
 /** Băm input đã chuẩn hoá (khoá sắp xếp) để so hai lần gửi cùng Idempotency-Key. */
-function requestHash(input: unknown): string {
+export function requestHash(input: unknown): string {
   const norm = (v: unknown): unknown =>
     Array.isArray(v) ? v.map(norm) : v && typeof v === 'object' && !(v instanceof Date)
       ? Object.fromEntries(Object.keys(v as object).sort().map((k) => [k, norm((v as Record<string, unknown>)[k])]))
@@ -112,6 +112,8 @@ export interface ActionCall {
   requestId: string;
   idempotencyKey?: string;
   dryRun?: boolean;
+  /** Gọi qua AI (MCP / Cell): kênh, vd mcp:claude — bằng chứng ghi actor_kind = ai, on_behalf_of = người dùng (STD-MCP-9, STD-EVD-6). */
+  via?: string;
 }
 
 export interface ActionResult<T = unknown> {
@@ -147,7 +149,7 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
   const evidence = (objectId: unknown, result: EvidenceEntry['result'], after: unknown): EvidenceEntry => {
     const oid = objectId == null ? undefined : String(objectId);
     return {
-      tenantId, actor: auth!.actor, actorKind: auth!.kind, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
+      tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via, onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
       subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after,
     };
   };
@@ -225,12 +227,19 @@ const pathParams = (path: string) => [...path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*
  * Gắn route HTTP cho các action có `expose.http`. Tham số đường dẫn + (GET/DELETE: query; còn lại: body) gộp thành input.
  * OpenAPI: params / querystring / body tách từ cùng schema input.
  */
+/** Đưa action vào registry (MCP, CLI) — kể cả action không có route HTTP. */
+export function registerActions(defs: AnyActionDef[]): void {
+  for (const def of defs) {
+    if (registry.has(def.id) && registry.get(def.id) !== def) throw new Error(`Trùng mã action: ${def.id}`);
+    registry.set(def.id, def);
+  }
+}
+
 export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
+  registerActions(defs);
   for (const def of defs) {
     const http = def.expose.http;
     if (!http) continue;
-    if (registry.has(def.id) && registry.get(def.id) !== def) throw new Error(`Trùng mã action: ${def.id}`);
-    registry.set(def.id, def);
     const names = pathParams(http.path);
     const mask = Object.fromEntries(names.map((n) => [n, true])) as Record<string, true>;
     const rest = def.input.omit(mask);

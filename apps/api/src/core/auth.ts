@@ -126,7 +126,8 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
   app.decorateRequest('auth', undefined);
   app.addHook('onRequest', async (req) => {
     if (req.routeOptions.config?.public) return;
-    if (!req.url.startsWith('/api/v1/')) return; // trang tài liệu API (/api/docs) và trang tĩnh: công khai
+    // Trang tài liệu API (/api/docs) và trang tĩnh: công khai. /mcp (bizcity_mcp@1) xác thực như API.
+    if (!req.url.startsWith('/api/v1/') && req.url.split('?')[0] !== '/mcp') return;
     const auth = await resolveAuth(req);
     if (!auth) throw Errors.unauthorized();
     req.auth = auth;

@@ -148,6 +148,19 @@ export interface ActionRequestsTable {
   created_at: TimestampDefault;
 }
 
+/** Token xác nhận trước khi ghi qua MCP (migration 0037, bizcity_mcp@1 STD-MCP-4). */
+export interface McpConfirmTokensTable {
+  jti: string;
+  tenant_id: string;
+  tool: string;
+  actor: string;
+  args_hash: string;
+  expires_at: ColumnType<Date, Date | string, Date | string>;
+  used_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  idempotency_key: string | null;
+  created_at: TimestampDefault;
+}
+
 /** Kết quả tự chẩn đoán, chỉ thêm (migration 0034, R-DIAG-5). */
 export interface DiagnosticRunsTable {
   id: Generated<string>;
@@ -1404,6 +1417,7 @@ export interface Database {
   audit_logs: AuditLogsTable;
   diagnostic_runs: DiagnosticRunsTable;
   action_requests: ActionRequestsTable;
+  mcp_confirm_tokens: McpConfirmTokensTable;
   accounts: AccountsTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;

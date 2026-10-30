@@ -21,6 +21,18 @@ Bizcity Core là phần mềm kế toán **sinh ra để AI dùng**. Mọi việ
 
 Core **không** gọi LLM khi trả lời MCP. Core chỉ: công bố công cụ, kiểm quyền, chạy, ghi bằng chứng. Hiểu câu nói, chọn công cụ, hội thoại là việc của Cell.
 
+### 1.1 Đã có (PHASES 2.11, 2.12 — 2026-10-30)
+
+| Phần | Trạng thái |
+|---|---|
+| `POST /mcp`: `initialize`, `ping`, `tools/list`, `tools/call`; thông báo (không `id`) → 202 | **có**: `apps/api/src/modules/system/mcp.routes.ts`; nginx chuyển `/mcp` sang API |
+| Công cụ sinh từ registry action (§3), lọc theo quyền người gọi, annotations / `confirm` suy từ `expose.ai` | **có** |
+| Công cụ đọc §5.1 | **một phần**: `ketoan.report.trial_balance`, `ketoan.cash.balances`, `ketoan.debts.partner_balances` (`modules/reports/report.actions.ts`); thêm `quy.payment_request.list` / `.get`, `core.evidence.get` |
+| Xác nhận trước khi ghi (STD-MCP-4), một lần (STD-MCP-5), bằng chứng actor `ai` (STD-MCP-9) | **có**: bảng `mcp_confirm_tokens` (0037); mẫu `quy.payment_request.create` / `.update` |
+| Kết quả ghi đã xác nhận | `data = { status: "done", result: <output của action>, as_of }`, `meta = { receipt, replayed }`. `data.status` chỉ nói về luồng xác nhận (`needs_confirmation` → `done`), không lẫn với trạng thái chứng từ |
+| Danh tính | phiên đăng nhập hoặc khoá API hiện có; kênh ghi vào bằng chứng lấy từ `params._meta.client` (`via = mcp:<client>`) |
+| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 (`ketoan.documents.draft`…); `llm_alias` khai tay; trường `pii` |
+
 ## 2. Giao thức (theo hai hợp đồng gốc)
 
 | Mục | Quy định | Gốc |

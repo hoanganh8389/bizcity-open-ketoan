@@ -57,6 +57,11 @@ Mỗi bản ghi đủ sáu mục:
   - **không sửa, xoá, TRUNCATE** được nhật ký thao tác;
   - action ghi trả biên nhận `meta.receipt`, ghi bằng chứng cả khi bị từ chối; `GET /api/v1/evidence/:id` kiểm lại;
   - tự chẩn đoán `EVIDENCE_CHAIN` phát hiện dòng bị sửa ngầm.
+- **MCP cho trợ lý AI** (PHASES 2.11, 2.12, `bizcity_mcp@1`):
+  - `POST /mcp`: Claude, ChatGPT hoặc agent khác đọc cân đối phát sinh, số dư tiền, công nợ theo đối tượng của đơn vị;
+  - công cụ sinh tự động từ action, chỉ hiện công cụ người gọi có quyền;
+  - ghi qua AI **luôn phải xem trước rồi người dùng xác nhận** (`confirm_token` một lần, 15 phút; migration `0037_mcp_xac_nhan.sql`);
+  - bằng chứng ghi rõ "AI làm thay người dùng nào, qua kênh nào".
 
 ### Đổi
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
