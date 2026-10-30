@@ -68,6 +68,8 @@ export function DatHangPage() {
     return out;
   }, [data, search, quick]);
   const qtyOf = (r: AnalysisRow) => buy[r.sku] ?? r.suggest;
+  /** Đủ bán bao nhiêu ngày NẾU đặt đúng SL ở cột SL đặt: hàng hiện có + đi đường về kho + đơn chưa về + SL đặt. */
+  const afterOf = (r: AnalysisRow) => { const d = perDay(r); return d > 0 ? (r.tonKho + r.tonShop + r.diDuongShop + r.diDuongKho + r.dangDat + Math.max(0, qtyOf(r))) / d : null; };
   const chosen = data.filter((r) => sel[r.sku] && qtyOf(r) > 0);
   const stats = { all: data.length, need: data.filter((r) => r.need > 0).length, over: data.filter((r) => r.need < 0).length, pending: data.filter((r) => r.dangDat > 0).length, nopartner: data.filter((r) => !r.partnerCode).length };
   const money = chosen.reduce((s, r) => s + qtyOf(r) * (r.price ?? 0), 0);
@@ -88,10 +90,6 @@ export function DatHangPage() {
       render: (r) => <button className="tm-opt" style={{ border: 0, background: 'transparent', fontWeight: 800, color: r.need < 0 ? '#b45309' : undefined }} title="Bấm xem vì sao ra số này" onClick={() => setWhy(r)}>{r.need < 0 ? `(${qtyFmt(-r.need)})` : qtyFmt(r.need)}</button> },
     { key: 'banThangTruoc', header: 'BH tháng liền kề', type: 'qty', width: 82, className: 'tm-ref', title: 'Bán tháng trước của mọi shop — tham khảo' },
     { key: 'banShop', header: `Doanh số ${banDays} ngày`, type: 'qty', width: 82, className: 'tm-ref', title: `Bán ${banDays} ngày gần nhất của mọi shop (phần dự phòng)` },
-    { key: 'perDay', header: 'Bán / ngày', type: 'qty', width: 70, className: 'tm-ref', value: (r) => Math.round(perDay(r) * 100) / 100, title: `Tốc độ bán: bán ${banDays} ngày của mọi shop ÷ ${banDays}` },
-    { key: 'cover', header: 'Đủ bán (ngày)', type: 'qty', width: 74, value: (r) => coverOf(r) ?? 0,
-      title: `Vòng quay: (tồn kho + tồn shop + đang đi đường xuống shop) ÷ bán / ngày — đỏ: dưới ${coverDays} ngày (số ngày cần đủ hàng ở MH18), vàng: trên ${coverDays * 4} ngày (tồn nhiều)`,
-      render: (r) => { const c = coverOf(r); return c === null ? <span className="muted" title="Chưa bán trong kỳ đo">—</span> : <b style={{ color: c < coverDays ? '#dc2626' : c > coverDays * 4 ? '#b45309' : undefined }}>{c.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}</b>; } },
     { key: 'maxKho', header: 'Tồn max kho', title: 'Tổng tồn max của các kho chọn ở cột "Lấy max" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-ref' },
     { key: 'tonKho', header: 'Tồn kho', title: 'Tồn hiện tại của các kho chi nhánh cha chọn ở cột "Tính tồn" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-stock', showZero: true },
     { key: 'diDuong', header: 'Hàng đang đi đường', title: 'Đã xuất nhưng nơi nhận chưa xác nhận: về kho chi nhánh cha + xuống shop (rê chuột lên ô xem tách)', type: 'qty', width: 82, value: (r) => r.diDuongKho + r.diDuongShop, render: (r) => <span title={`Về kho: ${qtyFmt(r.diDuongKho)} · xuống shop: ${qtyFmt(r.diDuongShop)}`}>{qtyFmt(r.diDuongKho + r.diDuongShop) || ''}</span> },
@@ -103,6 +101,23 @@ export function DatHangPage() {
         <input className={`tm-input${buy[r.sku] !== undefined ? ' dirty' : ''}`} style={{ width: 62 }} value={qtyOf(r) || ''} onChange={(e) => { setBuy({ ...buy, [r.sku]: num(e.target.value) }); setSel({ ...sel, [r.sku]: true }); }} />
         {r.options.map((o) => <button key={o} className={`tm-opt${qtyOf(r) === o ? ' on' : ''}`} title={r.pack ? `${o / r.pack} ${r.packUnit}` : ''} onClick={() => { setBuy({ ...buy, [r.sku]: o }); setSel({ ...sel, [r.sku]: true }); }}>{qtyFmt(o)}</button>)}
       </span> : '') },
+    // Gộp 3 số vòng quay vào một cột nhiều dòng (đỡ nhiều cột): tốc độ bán, đủ bán với hàng hiện có, đủ bán nếu đặt đúng số ở cột SL đặt.
+    { key: 'turn', header: 'Tốc độ & vòng quay', width: 150,
+      title: `Bán/ngày = bán ${banDays} ngày của mọi shop ÷ ${banDays}. Hiện có = (tồn kho + tồn shop + đi đường xuống shop) ÷ bán/ngày. `
+        + `Sau đặt = (hàng hiện có + đi đường về kho + đơn chưa về + SL đặt) ÷ bán/ngày — đổi ngay khi gõ / chọn SL đặt. `
+        + `Màu: đỏ dưới ${coverDays} ngày (số ngày cần đủ hàng ở MH18), xanh vừa đủ, vàng trên ${coverDays * 4} ngày (đặt / tồn nhiều).`,
+      value: (r) => { const c = coverOf(r), a = afterOf(r); return `Bán/ngày ${qtyFmt(Math.round(perDay(r) * 100) / 100)} · hiện có ${c === null ? '—' : dayFmt(c)} · sau đặt ${a === null ? '—' : dayFmt(a)}`; },
+      render: (r) => {
+        const pd = perDay(r);
+        if (!pd) return <span className="muted" title="Chưa bán trong kỳ đo — chưa tính được vòng quay">chưa bán trong {banDays} ngày</span>;
+        return (
+          <span style={{ display: 'grid', gridTemplateColumns: 'auto auto', columnGap: 6, rowGap: 1, fontSize: 11.5, lineHeight: 1.35, whiteSpace: 'nowrap' }}>
+            <span className="muted">Bán/ngày</span><b>{qtyFmt(Math.round(pd * 100) / 100)}</b>
+            <span className="muted">Hiện có</span><DayChip d={coverOf(r)} cover={coverDays} />
+            <span className="muted">Sau đặt</span><DayChip d={afterOf(r)} cover={coverDays} strong={qtyOf(r) > 0} />
+          </span>
+        );
+      } },
     { key: 'pack', header: 'Quy cách', title: 'Số ĐVT nhỏ nhất trong 1 thùng / lốc — SL đặt gợi ý làm tròn theo quy cách này', width: 72, value: (r) => r.pack ?? 0, render: (r) => (r.pack ? `${r.pack}/${r.packUnit}` : r.baseUnit) },
     { key: 'partnerCode', header: 'NCC', title: 'Nhà cung cấp của mã: NCC lần nhập gần nhất; chưa nhập lần nào thì NCC có bảng giá đang hiệu lực', type: 'code', width: 100, hidden: true },
     { key: 'partnerSource', header: 'NCC chọn theo', width: 110, title: 'Mã có lần nhập → NCC lần nhập gần nhất; chưa nhập lần nào → NCC có bảng giá đang hiệu lực mới nhất (hồ sơ NCC → Mặt hàng & giá mua)', value: (r) => (r.partnerSource === 'lan_nhap' ? 'lần nhập gần nhất' : r.partnerSource === 'bang_gia' ? 'bảng giá NCC' : 'chưa rõ') + (r.nccCount > 1 ? ` · ${r.nccCount} NCC` : ''),
@@ -202,4 +217,12 @@ function NccNo({ s }: { s?: SupplierRow }) {
       {s.term && <span> · {s.term}</span>}
     </span>
   );
+}
+
+const dayFmt = (d: number) => `${d.toLocaleString('vi-VN', { maximumFractionDigits: d < 10 ? 1 : 0 })} ngày`;
+/** Số ngày đủ bán, tô màu: đỏ dưới số ngày cần đủ hàng (MH18), xanh vừa đủ, vàng nhiều hơn 4 lần (đặt / tồn nhiều). */
+function DayChip({ d, cover, strong }: { d: number | null; cover: number; strong?: boolean }) {
+  if (d === null) return <span className="muted">—</span>;
+  const [bg, fg] = d < cover ? ['#fee2e2', '#b91c1c'] : d > cover * 4 ? ['#fef3c7', '#92400e'] : ['#dcfce7', '#166534'];
+  return <span style={{ background: bg, color: fg, borderRadius: 8, padding: '0 6px', fontWeight: strong ? 800 : 600, justifySelf: 'start' }}>{dayFmt(d)}</span>;
 }

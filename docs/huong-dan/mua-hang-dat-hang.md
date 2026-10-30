@@ -12,13 +12,12 @@ Luồng chuẩn: **Tồn max (MH16) → Phân tích đặt hàng (MH02) → Đơ
 | **SL cần nhập** (cam) | Theo công thức (MH18). Số âm (trong ngoặc) = đang dư. **Bấm vào số** để xem từng thành phần cộng / trừ ra sao. |
 | BH tháng liền kề | Bán tháng trước của mọi shop — chỉ tham khảo |
 | Doanh số N ngày | Bán N ngày gần nhất của mọi shop — phần dự phòng |
-| Bán / ngày | Tốc độ bán = bán N ngày ÷ N |
-| **Đủ bán (ngày)** | Vòng quay: (tồn kho + tồn shop + đang đi đường xuống shop) ÷ bán / ngày — hàng hiện có đủ bán bao nhiêu ngày. **Đỏ**: dưới số ngày cần đủ hàng (MH18); **vàng**: trên 4 lần số đó (tồn nhiều, xem lại tồn min / max của kho, shop). "—" = chưa bán trong kỳ đo |
 | Tồn max kho · **Tồn kho** (vàng) | Max và tồn của các kho chi nhánh cha chọn ở công thức |
 | Hàng đang đi đường | Đã xuất nhưng nơi nhận chưa xác nhận (về kho + xuống shop; rê chuột xem tách) |
 | **SL mua chưa nhập kho** (xanh) | Phần chưa về của mọi đơn đặt đang mở, **mọi NCC** — trừ để không đặt trùng (rê chuột xem từng đơn) |
 | Tồn max shop · Tồn shop | Tổng max và tồn của mọi shop con |
 | SL đặt | Gợi ý làm tròn theo thùng; bấm một trong hai số (làm tròn xuống / lên, vd **30 / 36**) hoặc gõ số |
+| **Tốc độ & vòng quay** | Một ô 3 dòng: **Bán/ngày** (tốc độ bán = bán N ngày ÷ N) · **Hiện có** (hàng đang có — tồn kho + tồn shop + đi đường xuống shop — đủ bán bao nhiêu ngày) · **Sau đặt** (nếu đặt đúng số ở cột SL đặt thì tổng hàng — hiện có + đi đường về kho + đơn chưa về + SL đặt — đủ bán bao nhiêu ngày; **đổi ngay khi gõ / chọn SL đặt**, thử vài số để chọn mức đặt hợp lý). Màu: **đỏ** dưới số ngày cần đủ hàng (MH18), **xanh** vừa đủ, **vàng** trên 4 lần số đó (đặt / tồn nhiều — xem lại tồn min / max của kho, shop). Chưa bán trong kỳ đo thì không tính được |
 
    - **NCC của mã** chọn theo: mã đã từng nhập → NCC **lần nhập gần nhất**; chưa nhập lần nào → NCC có **bảng giá đang hiệu lực mới nhất** (hồ sơ NCC → Mặt hàng & giá mua). Cột *NCC chọn theo* ghi rõ nguồn và mã có mấy NCC khai bán ("· 2 NCC").
    - Mọi cột số lượng theo **ĐVT nhỏ nhất** (cột *ĐVT*); *Quy cách* cho biết 1 thùng bao nhiêu, lập đơn đúng bội số thùng thì dòng ghi theo Thùng.
