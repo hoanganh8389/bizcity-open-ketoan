@@ -53,7 +53,7 @@ function descriptor(a: AnyActionDef) {
     outputSchema: { type: 'object', properties: { success: { type: 'boolean' }, complete: { type: 'boolean' }, message: { type: 'string' }, data: dataSchema, meta: { type: 'object' } } },
     annotations: read
       ? { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false }
-      : { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      : { readOnlyHint: false, destructiveHint: !!a.expose.destructive, idempotentHint: true, openWorldHint: false },
     _meta: {
       bizcity: {
         contract: 'bizcity-mcp-tool@1.0.0', profile: 'bizcity_mcp@1', action: a.id,

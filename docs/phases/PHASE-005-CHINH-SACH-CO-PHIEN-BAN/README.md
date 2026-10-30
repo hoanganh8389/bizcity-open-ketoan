@@ -1,6 +1,6 @@
 # PHASE-005 — Chính sách kế toán có phiên bản + ngày hiệu lực
 
-> **Trạng thái:** ☐ chưa code · cần ADR (K3: đổi cách định khoản) + kế toán trưởng duyệt
+> **Trạng thái:** ⛔ chưa code · [ADR-0009](../../adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) đã soạn (Đề xuất, 2026-10-30), chờ chủ dự án + kế toán trưởng chốt Q-1…Q-5
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Đổi chế độ / cấu hình định khoản không áp ngược vào chứng từ cũ: mỗi bản chính sách có `policy_version` + `effective_from`, ghi sổ chọn bản theo ngày chứng từ, `posting_log` ghi bản đã dùng.
 > **Việc lộ trình:** 2.14

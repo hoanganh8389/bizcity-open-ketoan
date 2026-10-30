@@ -75,6 +75,8 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
     http?: { method: HttpMethod; path: string; status?: 200 | 201 };
     mcp?: boolean;
     ai?: 'deny' | 'read' | 'propose' | 'execute';
+    /** Công cụ MCP huỷ / đảo cái đã có (annotations.destructiveHint): client cảnh báo rõ hơn trước khi xác nhận. */
+    destructive?: boolean;
   };
   errors?: ErrorCode[];
   /** Đối tượng ghi vào bằng chứng (mặc định: thực thể trong id, mã = output.id). */

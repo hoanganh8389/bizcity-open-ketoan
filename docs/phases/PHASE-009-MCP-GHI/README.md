@@ -1,7 +1,7 @@
 # PHASE-009 — MCP ghi: lập nháp, ghi sổ, đảo bút toán có xem trước + duyệt
 
-> **Trạng thái:** 🟡 khung xác nhận có; chưa có công cụ ghi
-> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 0%
+> **Trạng thái:** 🟡 2/3 công cụ ghi có (2026-10-30): `create_draft`, `entry.reverse`; `journal.post` ⛔ chờ chủ chốt phiếu kế toán nháp (Q009-1)
+> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có (2/3) · **Tiến độ tín hiệu (2026-10-30):** 100% (việc 2.16; G2-04 còn một phần)
 > **Mục tiêu:** AI lập được chứng từ nháp và đề xuất ghi / đảo qua MCP; luôn xem trước, `confirm_token`, người duyệt; AI không tự duyệt, không vượt khoá kỳ.
 > **Việc lộ trình:** 2.16
 > **Checklist công bố:** G2-04
@@ -12,9 +12,10 @@
 
 | Tài liệu | Một câu |
 |---|---|
+| [00-MASTER-PLAN](00-MASTER-PLAN.md) | thiết kế D009-1…6, câu hỏi Q009-1 (`journal.post`) |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
-## Hiện trạng đọc mã
+## Hiện trạng đọc mã (trước khi code)
 
 | # | Sự thật | Ở đâu |
 |---|---|---|

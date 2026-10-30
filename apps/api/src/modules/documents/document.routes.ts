@@ -22,6 +22,8 @@ import { db, toNumber } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok, pageMeta, pageQuerySchema, idParamSchema } from '../../core/http.js';
 import { documentService } from './document.service.js';
+import { registerActions } from '../../core/actions.js';
+import { documentActions } from './document.actions.js';
 
 const tags = ['Chứng từ'];
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -56,6 +58,8 @@ async function voucherListNames(tenantId: string, rows: VoucherInfoRow[]) {
 }
 
 export async function documentRoutes(app: FastifyInstance): Promise<void> {
+  // Công cụ ghi accounting.* cho trợ lý AI (MCP, chỉ đề xuất — luôn chờ duyệt): chỉ vào registry action, không thêm route HTTP.
+  registerActions(documentActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
 
   r.post('/api/v1/documents', {
