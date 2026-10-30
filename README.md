@@ -257,7 +257,12 @@ Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/s
 
 ## Giấy phép và trách nhiệm
 
-Việc sử dụng, sửa đổi và phân phối mã nguồn tuân theo tệp **`LICENSE`** do chủ dự án công bố trong repository (**hiện chưa có**; khi chưa có, không mặc định bất kỳ quyền nào ngoài những gì chủ dự án cho phép bằng văn bản). Không suy diễn quyền sử dụng thương mại, phân phối lại hoặc nghĩa vụ mở mã chỉ từ tên gọi "open-ketoan"; vui lòng đọc giấy phép thực tế.
+Mã nguồn và tài liệu trong repository được cấp phép **GNU GPL phiên bản 2 hoặc mới hơn (GPL-2.0-or-later)**, cùng giấy phép với `bizcity-twin-ai`. Bản quyền © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity. Toàn văn và phạm vi: **[LICENSE](LICENSE)**.
+
+- Bạn được dùng, sửa, phân phối lại, kể cả cho mục đích thương mại, theo điều khoản GPL. Khi **phân phối** bản sửa đổi, bạn phải phân phối kèm mã nguồn theo cùng giấy phép và giữ nguyên ghi nhận tác giả.
+- Dịch vụ Bizcity Cell chạy tại bizcity.vn và các module thương mại phân phối riêng **không** thuộc phạm vi giấy phép này ([LICENSE](LICENSE), mục *Note on scope*).
+- GPL **không** cấp quyền nhãn hiệu. Tên và logo BizCity, Bizcity Core, Bizcity Cell: xem **[TRADEMARK.md](TRADEMARK.md)**. Định danh kỹ thuật như `bizcity.module.json`, `bizcity_*@N` được dùng tự do để tương thích.
+- Phần mềm được cung cấp **không kèm bảo đảm**. Người triển khai tự chịu trách nhiệm đối chiếu chế độ kế toán, thuế và kiểm tra trước khi dùng cho sổ sách thật.
 
 **open-ketoan là tên dự án. Bizcity là đơn vị khởi xướng và phát triển hệ sinh thái xung quanh dự án.** Kiến trúc do **Johnny Chu – Chu Hoàng Anh** thiết kế; tuyên bố tối thượng, bảy nguyên tắc kiến trúc và quy trình quản trị được ghi trong [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md):
 

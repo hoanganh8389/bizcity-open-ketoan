@@ -1,6 +1,7 @@
 {
   "name": "@ketoan/api",
   "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
   "private": true,
   "description": "API phần mềm kế toán: nhận chứng từ, định khoản, sổ cái, báo cáo.",
   "type": "module",

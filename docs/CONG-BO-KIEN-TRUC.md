@@ -2,7 +2,7 @@
 
 > **Phiên bản:** 1.1 · 2026-10-30
 > **Thiết kế kiến trúc:** **Johnny Chu – Chu Hoàng Anh.** Quyền tác giả đối với kiến trúc open-ketoan framework (nền tảng lấy Accounting Core ổn định, module mở rộng) và bộ tài liệu này thuộc về tác giả, theo công bố của chủ dự án.
-> **Mã nguồn:** giấy phép sử dụng mã nguồn công bố riêng ở tệp `LICENSE`.
+> **Giấy phép:** mã nguồn và tài liệu cấp phép GPL-2.0-or-later ([LICENSE](../LICENSE)); GPL không cấp quyền nhãn hiệu BizCity ([TRADEMARK.md](../TRADEMARK.md)).
 >
 > Đây là văn bản **công bố** cho cộng đồng: kiến trúc gồm những lớp nào, luật nào bắt buộc, việc nào thuộc giai đoạn nào. Mọi đóng góp (người hay AI) phải tuân theo. Luật chi tiết ở [00-CANON.md](00-CANON.md); quy trình đóng góp ở [CONTRIBUTING.md](../CONTRIBUTING.md).
 

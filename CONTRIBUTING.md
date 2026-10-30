@@ -4,6 +4,8 @@ Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một
 
 > **Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.** (Johnny Chu – Chu Hoàng Anh, [Bản công bố kiến trúc §0](docs/CONG-BO-KIEN-TRUC.md))
 
+> **Giấy phép:** đóng góp của bạn (code, tài liệu, gói định khoản, preset) được phát hành theo **GPL-2.0-or-later** như phần còn lại của repository ([LICENSE](LICENSE)). Mở PR nghĩa là bạn đồng ý điều đó và có quyền đóng góp nội dung ấy. Không đưa code chép từ nguồn có giấy phép không tương thích, không đưa dữ liệu thật của khách hàng. Đặt tên module: không dùng tiền tố `bizcity` cho tên sản phẩm của bạn ([TRADEMARK.md](TRADEMARK.md) §3).
+
 > Người mới: đọc [docs/00-CANON.md](docs/00-CANON.md) (luật), [docs/architecture/README.md](docs/architecture/README.md) (kiến trúc), [docs/phat-trien.md](docs/phat-trien.md) (chạy máy dev). Agent AI: [AGENTS.md](AGENTS.md).
 
 ## 1. Bốn câu không thương lượng
