@@ -142,7 +142,7 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 | Bất biến kế toán + ACID | P0 | Bắt buộc | **có**: Domain Contract, trigger, kiểm sau mọi tệp test |
 | Cô lập đơn vị + Audit Ledger | P0 | Bắt buộc | **một phần**: `tenant_id` mọi truy vấn, bằng chứng chuỗi băm có; RLS chưa (G1-05) |
 | Contract + SDK + MCP | P0 | Lợi thế chiến lược | **một phần**: 4 lớp hợp đồng, MCP có; SDK là bản nháp (G1-10) |
-| Sao lưu, PITR, kiểm khôi phục | P0 | Bắt buộc | **một phần**: sao lưu + kiểm khôi phục có; PITR chưa (G1-08) |
+| Sao lưu, PITR, kiểm khôi phục | P0 | Bắt buộc | **có cơ chế**: sao lưu, kiểm khôi phục, PITR (`infrastructure/backup/`) + diễn tập máy dev ĐẠT (RTO 8 giây, RPO ≤ 60 giây); còn bật trên bản cài thật (PHASE-008) |
 | Prometheus + Grafana | P1 | Nên triển khai sớm | **có**: `infrastructure/monitoring/` |
 | Transactional outbox | P1 | Cần có trước khi tích hợp sự kiện | **có**: `core/events.ts`, migration 0039 (PHASE-006) |
 | Redis | P1 | Khi đo được nhu cầu | chưa, luật R-CACHE có (G2-06) |
@@ -161,7 +161,7 @@ Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE
 | C-3 | Sửa chữa sổ | Consumer cập nhật trực tiếp bút toán cũ | Chứng từ điều chỉnh, giữ dấu vết | ✔ đạt |
 | C-4 | Khoá kỳ kế toán | Sự kiện đến chậm ghi vào kỳ đã khoá | Period Lock Gate | ✔ đạt |
 | C-5 | Nhất quán dữ liệu | Sự kiện phát ra khi giao dịch chưa commit | Transactional Outbox | ✔ đạt từ 2026-10-30 (PHASE-006) |
-| C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (thiếu PITR, xác nhận thời hạn) |
+| C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (PITR có từ 2026-10-30; còn kế toán trưởng / luật sư xác nhận thời hạn lưu trữ) |
 | C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17; A-01 xong 2026-10-30) |
 | C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ✔ đạt từ 2026-10-30 (`correlation_id` từ X-Correlation-Id vào bằng chứng và sự kiện) |
 | C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✘ thiếu (G2-09) |
@@ -205,7 +205,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G1-05 | Cô lập đơn vị: `tenant_id` + **RLS** + test đơn vị A không đọc được đơn vị B | DG-PLAN-5 thành kiểm thật | **một phần** (thiếu RLS) | 2.4 | _mở_ |
 | G1-06 | RBAC: vai trò, quyền, khoá API có phạm vi; registry quyền mở theo module | `permissions.module` available | **một phần** | 3.x | _mở_ |
 | G1-07 | Audit Ledger: bằng chứng chỉ thêm, chuỗi băm, biên nhận | DG-EVD-1, SC-EVD-2 đạt | **có** | 2.6 | — |
-| G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **một phần** (thiếu PITR) | 2.15 | _mở_ |
+| G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **có** cơ chế + diễn tập máy dev ([biên bản](audits/PITR-2026-10-30.md)); bật trên bản cài thật: việc của chủ | 2.15 | — |
 | G1-09 | Health (L0 / L1 / L3), `/metrics` | `/health/ready`, `/system/diagnostics`, `/metrics` có test | **có** | 2.10, 2.13 | — |
 | G1-10 | SDK TypeScript `@bizcity/module-sdk` | `packages/module-sdk/package.json`; ca chuẩn hợp đồng chạy bằng SDK | **một phần** (bản nháp API) | 1.5, 3.1 | _mở_ |
 | G1-11 | Contract tests: bộ kiểm chuẩn SC-* / DG-*, tự kiểm, bảng điểm | `selfcheck --strict` đạt trong CI | **có** | 0.5 | — |
@@ -239,7 +239,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G3-04 | Bizcity Cell API key + dịch vụ AI (đọc hoá đơn, gợi ý lý do định khoản) | `ai.ocr-invoice`, `posting.reason-suggest` available | **chưa** | 5.3, 5.8 | _mở_ |
 | G3-05 | Benchmark tải | 30.000 chứng từ / ngày, p95 ghi sổ < 1 giây, có báo cáo | **chưa** | 5.5 | _mở_ |
 | G3-06 | Kiểm thử cô lập đơn vị | thử tấn công chéo đơn vị qua API, MCP, RLS: không lọt | **chưa** (sau G1-05) | 2.4 | _mở_ |
-| G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **chưa** (sau G1-08) | 2.15 | _mở_ |
+| G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **một phần**: máy dev ĐẠT ([biên bản](audits/PITR-2026-10-30.md)); còn diễn tập trên máy chủ thật | 2.15 | _mở_ |
 | G3-08 | Kong + Keycloak (`adapters/oidc`), khi cần | đăng nhập OIDC; JWKS; không phụ thuộc khi tắt | **chưa** (P2) | 5.9 | _mở_ |
 | G3-09 | Kubernetes / Helm, khi cần | chart `infrastructure/helm/`; 2 bản API chạy đúng | **để sau** (P3) | — | _mở_ |
 

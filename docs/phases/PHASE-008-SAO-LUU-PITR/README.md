@@ -1,7 +1,7 @@
 # PHASE-008 — Sao lưu PITR (WAL) và diễn tập khôi phục
 
-> **Trạng thái:** 🟡 sao lưu + kiểm khôi phục có; PITR chưa
-> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 0%
+> **Trạng thái:** 🟡 PITR có cơ chế + diễn tập máy dev ĐẠT (2026-10-30, RTO 8 giây, RPO ≤ 60 giây); còn bật + diễn tập trên máy chủ thật, xác nhận thời hạn lưu trữ
+> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Khôi phục được tới một thời điểm bất kỳ, đo được RTO / RPO thật, có biên bản diễn tập; thời hạn lưu trữ được kế toán trưởng / luật sư xác nhận.
 > **Việc lộ trình:** 2.15
 > **Checklist công bố:** G1-08, G3-07

@@ -55,8 +55,8 @@ sequenceDiagram
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
 | **R-BAK-1** *(T0)* | Sao lưu đầy đủ hằng ngày (`scripts/sao-luu.sh`, `pg_dump`). Giữ tối thiểu 14 bản ngày; có bản ngoài máy chủ, mã hoá | cron; [DEPLOY](../ops/DEPLOY.md) |
-| **R-BAK-2** | Bản cài thật bật **PITR**: lưu WAL liên tục (WAL archiving: wal-g / pgBackRest) để khôi phục tới một thời điểm. Mục tiêu RPO ≤ 15 phút, RTO ≤ 4 giờ | `infrastructure/backup/` (PHASES G1-08) |
-| **R-BAK-3** *(T0)* | **Bản sao lưu chưa kiểm khôi phục coi như chưa có.** Mỗi tuần, và trước mỗi lần nâng cấp, khôi phục vào CSDL tạm rồi chạy kiểm toàn vẹn: Nợ = Có, chuỗi bằng chứng, trigger, migration | `scripts/kiem-khoi-phuc.sh` |
+| **R-BAK-2** | Bản cài thật bật **PITR**: lưu WAL liên tục (WAL archiving: wal-g / pgBackRest) để khôi phục tới một thời điểm. Mục tiêu RPO ≤ 15 phút, RTO ≤ 4 giờ | `infrastructure/backup/` (override lưu WAL, runbook), `scripts/sao-luu-goc.sh`, diễn tập `scripts/dien-tap-pitr.sh` + biên bản `docs/audits/PITR-*.md` |
+| **R-BAK-3** *(T0)* | **Bản sao lưu chưa kiểm khôi phục coi như chưa có.** Mỗi tuần, và trước mỗi lần nâng cấp, khôi phục vào CSDL tạm rồi chạy kiểm toàn vẹn: Nợ = Có, chuỗi bằng chứng, trigger, migration | `scripts/kiem-khoi-phuc.sh` (bản `pg_dump`); `scripts/dien-tap-pitr.sh` (bản gốc + WAL) |
 | **R-BAK-4** | Khôi phục không làm chạy lại trigger trên dữ liệu đã ghi. `pg_dump` nạp dữ liệu trước rồi mới tạo trigger, nên chuỗi bằng chứng và sổ giữ nguyên | DG-EVD-1 trên bản khôi phục |
 | **R-BAK-5** | Kết quả mỗi lần kiểm khôi phục ghi vào nhật ký (`backups/kiem-khoi-phuc.log`): ngày, tệp, số dòng, ĐẠT / KHÔNG ĐẠT | script |
 | **R-BAK-6** | Sao lưu chứa dữ liệu kế toán và dữ liệu cá nhân: không đưa lên repo, không gửi qua kênh không mã hoá (R-SEC-10) | `.gitignore` (`backups/`) |

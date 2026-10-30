@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Khôi phục tới một thời điểm (PITR)** (PHASE-008): `infrastructure/backup/docker-compose.pitr.yml` bật lưu WAL liên tục (chỉ cần PostgreSQL), `scripts/sao-luu-goc.sh` sao lưu gốc + dọn WAL cũ, `scripts/dien-tap-pitr.sh` diễn tập trên container tạm (khôi phục tới mốc T, kiểm sổ, đo RTO / RPO). Máy dev: RTO 8 giây, RPO ≤ 60 giây với 13.428 bút toán.
 - **Trợ lý AI lập chứng từ nháp và đề xuất huỷ qua MCP** (PHASE-009): `accounting.document.create_draft` (bán, mua, thu, chi… theo khuôn nạp sổ) và `accounting.entry.reverse`. Luôn xem trước bút toán rồi người dùng xác nhận; kết quả luôn chờ kế toán duyệt ở ACC14, kể cả khi loại chứng từ đặt chế độ "Tự động". AI không duyệt, không khoá kỳ, không đổi cấu hình.
 - **Sự kiện miền — transactional outbox** (PHASE-006, PHASES 3.4, migration `0039`): sự kiện ghi cùng giao dịch với dữ liệu, dispatcher trong tiến trình API giao ít nhất một lần, chống xử lý trùng, thử lại giãn nhịp, hết lượt → `dead` (tự chẩn đoán `EVENT_DEAD`), phát lại có bằng chứng (`POST /api/v1/system/events/replay`), xem tình trạng (`GET /api/v1/system/events`). Kernel phát `bizcity.ledger.entry.posted` / `.reversed`, `bizcity.period.locked` / `.unlocked`; đồng hồ `bizcity.clock.daily` / `.hourly`. Header `X-Correlation-Id` (mặc định mã yêu cầu) được ghi vào bằng chứng và sự kiện.
 - Báo hệ thống bán hàng "danh mục đổi" nay đi qua outbox: không mất khi khởi động lại, tự thử lại khi bên kia lỗi, gửi kèm `Idempotency-Key`.
