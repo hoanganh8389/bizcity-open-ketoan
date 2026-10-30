@@ -175,6 +175,22 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
     },
   },
   {
+    // PHASE-007 (migration 0041), STD-DATA-1: bảng có tenant_id thiếu RLS / FORCE / chính sách là lỗ hổng cô lập đơn vị.
+    code: 'TENANT_ISOLATION', layer: 'L1', level: 'error', scoped: false,
+    title: 'Mọi bảng có tenant_id bật RLS + FORCE + có chính sách (đơn vị A không đọc / ghi được dữ liệu đơn vị B)',
+    fix: 'Bảng mới có tenant_id mà chưa có chính sách RLS: thêm migration ENABLE / FORCE ROW LEVEL SECURITY + CREATE POLICY tenant_isolation theo khuôn 0041. Không tắt RLS để "chữa cháy".',
+    async run(trx) {
+      const r = await sql<{ name: string; rls: boolean; force: boolean; policy: boolean }>`
+        SELECT c.relname AS name, c.relrowsecurity AS rls, c.relforcerowsecurity AS force,
+                 EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid) AS policy
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = 'public' AND c.relkind = 'r'
+             AND EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)`.execute(trx);
+      const bad = r.rows.filter((x) => !(x.rls && x.force && x.policy)).map((x) => x.name);
+      return { examined: r.rows.length, count: bad.length, sample: bad.slice(0, 20) };
+    },
+  },
+  {
     // bizcity_event@1 §5, R-OUTBOX-3: việc giao hết lượt thử thì nằm im — phải có người xem.
     code: 'EVENT_DEAD', layer: 'L3', level: 'warn', scoped: true,
     title: 'Không có sự kiện hết lượt giao (dead) chưa xử lý',

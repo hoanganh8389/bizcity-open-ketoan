@@ -1,7 +1,7 @@
 # PHASE-007 — Cô lập đơn vị: `ctx.data.tx`, RLS, kiểm tấn công chéo đơn vị
 
-> **Trạng thái:** ☐ chưa code · đo hiệu năng trước khi bật RLS cho bảng Kernel
-> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
+> **Trạng thái:** 🟡 RLS 84 bảng + gắn đơn vị theo yêu cầu + thử tấn công chéo: có (2026-10-30). Còn `bizcity_read`, migration theo module; ⛔ bản cài thật chạy API bằng `ketoan_app`
+> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Đơn vị A không đọc / ghi được dữ liệu đơn vị B kể cả khi code quên lọc `tenant_id`: RLS ở CSDL, giao dịch đặt `bizcity.tenant_id`, kiểm chéo qua API, MCP.
 > **Việc lộ trình:** 2.4
 > **Checklist công bố:** G1-05, G3-06
@@ -12,9 +12,10 @@
 
 | Tài liệu | Một câu |
 |---|---|
+| [00-MASTER-PLAN](00-MASTER-PLAN.md) | thiết kế D007-1…6, số đo hiệu năng, giới hạn |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
-## Hiện trạng đọc mã
+## Hiện trạng đọc mã (trước khi code)
 
 | # | Sự thật | Ở đâu |
 |---|---|---|

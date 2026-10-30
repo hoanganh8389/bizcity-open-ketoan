@@ -17,6 +17,8 @@ const envSchema = z.object({
   ENABLED_MODULES: z.string().default('*'),
   HOST: z.string().default('0.0.0.0'),
   DATABASE_URL: z.string().url().default('postgres://ketoan:ketoan@localhost:5434/ketoan'),
+  /** Chuyển sang vai trò này sau khi kết nối (SET ROLE) — chạy test / CI dưới vai trò không superuser để RLS có hiệu lực (PHASE-007). Bản thật: kết nối thẳng bằng DB_APP_USER. */
+  DB_SET_ROLE: z.string().regex(/^[a-z_][a-z0-9_]*$/, 'Tên vai trò CSDL không hợp lệ').optional(),
   /** Khoá ký phiên đăng nhập. Bắt buộc đổi ở môi trường thật. */
   JWT_SECRET: z.string().min(16).default('dev-secret-change-me-please-32chars'),
   JWT_TTL_HOURS: z.coerce.number().int().positive().default(12),

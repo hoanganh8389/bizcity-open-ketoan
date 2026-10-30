@@ -22,7 +22,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [004 Một cửa ghi sổ](PHASE-004-MOT-CUA-GHI-SO/README.md) | 2 | 2.1 | — | có | 100% | ✅ 2026-10-30 |
 | [005 Chính sách có phiên bản](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md) | 2 | 2.14 | G2-09 | có | 100% | ✅ 2026-10-30 (kế toán trưởng chưa ký ADR) |
 | [006 Outbox sự kiện](PHASE-006-OUTBOX-SU-KIEN/README.md) | 3 | 3.4 | G2-05 | có | 100% | ✅ 2026-10-30 |
-| [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | chưa | 0% | ☐ làm song song được |
+| [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | có | 67% | 🟡 RLS 84 bảng; ⛔ API chạy bằng `ketoan_app` |
 | [008 Sao lưu PITR](PHASE-008-SAO-LUU-PITR/README.md) | 2 | 2.15 | G1-08, G3-07 | có | 50% | 🟡 máy dev ĐẠT; ⛔ bật + diễn tập máy chủ thật |
 | [009 MCP ghi](PHASE-009-MCP-GHI/README.md) | 2 | 2.16 | G2-04 | có (2/3) | 100% | 🟡 `journal.post` ⛔ Q009-1 |
 | [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | chưa | 0% | ☐ sau 004 |

@@ -16,6 +16,7 @@ import { db } from '../db/client.js';
 import { Errors } from './errors.js';
 import { hashApiKey } from './security/password.js';
 import { verifySession } from './security/tokens.js';
+import { currentRequest } from './request-context.js';
 import { sessionStillValid } from './security/session-state.js';
 
 /** Danh sách quyền. Thêm quyền mới: khai ở đây và gán cho vai trò bên dưới. */
@@ -131,6 +132,9 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
     const auth = await resolveAuth(req);
     if (!auth) throw Errors.unauthorized();
     req.auth = auth;
+    // Cô lập đơn vị ở tầng CSDL (RLS, PHASE-007): từ đây mọi kết nối của yêu cầu mang bizcity.tenant_id = đơn vị này.
+    const rc = currentRequest();
+    if (rc) rc.tenantId = auth.tenantId;
   });
 });
 

@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Cô lập đơn vị ở tầng CSDL (RLS)** (PHASE-007, migration `0041`): mọi bảng có `tenant_id` (84 bảng) bật Row Level Security + FORCE + chính sách `tenant_isolation`; kết nối của một yêu cầu tự gắn đơn vị đã xác thực, nên một truy vấn quên lọc `tenant_id` cũng không đọc / ghi được dữ liệu đơn vị khác. Việc nền (migration, seed, dispatcher, đăng nhập) chạy như cũ. Tự chẩn đoán `TENANT_ISOLATION`. Migration chạy bằng kết nối riêng, không mượn pool của API.
 - **Chính sách kế toán có phiên bản và ngày hiệu lực** (PHASE-005, ADR-0009, migration `0040`): mỗi bút toán định khoản theo luật và mỗi dòng nhật ký định khoản ghi phiên bản chính sách đã dùng; lịch sử ở `GET /api/v1/posting/policy/versions`; đổi chế độ bằng `POST /api/v1/posting/policy/publish` (ngày hiệu lực, ghi chú, không vào kỳ đã khoá). Tự chẩn đoán `POLICY_VERSION`.
 - **Khôi phục tới một thời điểm (PITR)** (PHASE-008): `infrastructure/backup/docker-compose.pitr.yml` bật lưu WAL liên tục (chỉ cần PostgreSQL), `scripts/sao-luu-goc.sh` sao lưu gốc + dọn WAL cũ, `scripts/dien-tap-pitr.sh` diễn tập trên container tạm (khôi phục tới mốc T, kiểm sổ, đo RTO / RPO). Máy dev: RTO 8 giây, RPO ≤ 60 giây với 13.428 bút toán.
 - **Trợ lý AI lập chứng từ nháp và đề xuất huỷ qua MCP** (PHASE-009): `accounting.document.create_draft` (bán, mua, thu, chi… theo khuôn nạp sổ) và `accounting.entry.reverse`. Luôn xem trước bút toán rồi người dùng xác nhận; kết quả luôn chờ kế toán duyệt ở ACC14, kể cả khi loại chứng từ đặt chế độ "Tự động". AI không duyệt, không khoá kỳ, không đổi cấu hình.
@@ -132,6 +133,9 @@ Mỗi bản ghi đủ sáu mục:
 - Migration `0033_ma_hang_cha_sua_tay.sql`: cột `products.parent_manual` code đã dùng nhưng chưa có migration — thêm / sửa mặt hàng (và Mua hàng, ĐVT, tồn max dùng tới) báo "column parent_manual does not exist".
 - Vé đăng nhập cấp trước khi có cơ chế thu hồi phiên (không ghi `sv`) bị từ chối ngay: code coi thiếu `sv` = 1 trong khi `users.session_version` mặc định 0 (migration 0029). Nay thiếu `sv` = 0, dùng được tới lần thu hồi đầu như thiết kế.
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
+
+### Nâng cấp cần làm
+- **Để RLS có hiệu lực, API phải kết nối bằng `ketoan_app`** (`DB_APP_USER=ketoan_app`, `DB_APP_PASSWORD` ≥ 16 ký tự — R-SEC-6). Vai trò sở hữu mặc định của Docker là superuser và luôn vượt RLS.
 
 ### Thay đổi định khoản
 - **Định khoản theo chính sách của ngày hạch toán (mức K3, ADR-0009):** chứng từ (cả khi định khoản lại) dùng phiên bản cấu hình định khoản có hiệu lực ở ngày hạch toán của nó.

@@ -5,6 +5,8 @@
  *
  * - correlationId = header X-Correlation-Id hợp lệ (Cell / MCP gửi cùng một mã cho cả hội thoại), không thì = mã yêu cầu.
  * - Ngoài yêu cầu HTTP (dispatcher, đồng hồ, script) thì không có ngữ cảnh: người gọi tự truyền, hoặc để NULL.
+ * - tenantId: gán sau khi xác thực (core/auth.ts). Pool CSDL (db/client.ts) đặt bizcity.tenant_id theo giá trị này mỗi lần mượn
+ *   kết nối → RLS (migration 0041) chỉ cho thấy dữ liệu của đơn vị đó, kể cả khi một truy vấn quên lọc tenant_id (PHASE-007).
  */
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { FastifyInstance } from 'fastify';
@@ -12,6 +14,8 @@ import type { FastifyInstance } from 'fastify';
 export interface RequestContext {
   requestId: string;
   correlationId: string;
+  /** Đơn vị của người gọi (đã xác thực); chưa có = chưa xác thực / việc nền. */
+  tenantId?: string;
 }
 
 const store = new AsyncLocalStorage<RequestContext>();

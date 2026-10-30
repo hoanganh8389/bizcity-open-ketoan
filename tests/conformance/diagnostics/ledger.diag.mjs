@@ -154,10 +154,28 @@ export const checks = [
     ['DG-PLAN-2', 'TAX_BOOK_MATCH', 'Sổ hoá đơn = phát sinh thuế GTGT theo kỳ', []],
     ['DG-PLAN-3', 'COST_FILL_OPEN', 'Không còn dòng cost_fill = 0 ở tháng đã qua', []],
     ['DG-PLAN-4', 'TRANSIT_NONZERO', 'Tài khoản trung gian (hàng đi đường, tiền đang chuyển) về 0', []],
-    ['DG-PLAN-5', 'TENANT_ISOLATION', 'Đơn vị A không đọc / ghi được dữ liệu đơn vị B (RLS)', ['STD-DATA-1']],
   ].map(([id, code, title, rules]) => ({
-    id, code, title, gate: 'CONF-RUN', contract: id === 'DG-PLAN-5' ? 'bizcity_data' : 'kernel',
+    id, code, title, gate: 'CONF-RUN', contract: 'kernel',
     rules, conf: [], tier: 1, enforce: 'planned', phase: 'Phase 2', weight: 2,
     run: async () => ({ examined: 0, readiness: 0, findings: [], notes: ['chưa viết — xem docs/ops/DIAGNOSTICS.md §2'] }),
   })),
+  {
+    // PHASE-007 (migration 0041): mọi bảng có tenant_id bật RLS + FORCE + có chính sách. Vai trò kết nối của API không vượt RLS: DG-SEC-1 / -2.
+    id: 'DG-PLAN-5', code: 'TENANT_ISOLATION',
+    title: 'Đơn vị A không đọc / ghi được dữ liệu đơn vị B: mọi bảng có tenant_id bật RLS + FORCE + có chính sách',
+    gate: 'CONF-RUN', contract: 'bizcity_data', rules: ['STD-DATA-1'], conf: ['CONF-MIG-2'], tier: 0, enforce: 'block', weight: 4,
+    async run(ctx) {
+      const rows = await ctx.db.query(`SELECT c.relname AS name, c.relrowsecurity AS rls, c.relforcerowsecurity AS force,
+                 EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid) AS policy
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = 'public' AND c.relkind = 'r'
+             AND EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)`);
+      const bad = rows.filter((r) => !(r.rls && r.force && r.policy));
+      return {
+        examined: rows.length, unitBy: 'key',
+        findings: bad.map((r) => ctx.finding(null, null, `bảng ${r.name}: ${[!r.rls && 'chưa bật RLS', !r.force && 'chưa FORCE', !r.policy && 'chưa có chính sách'].filter(Boolean).join(', ')}`, r.name)),
+        metrics: { code: 'TENANT_ISOLATION' },
+      };
+    },
+  },
 ];

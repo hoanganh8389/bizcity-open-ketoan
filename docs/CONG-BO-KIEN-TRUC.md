@@ -140,7 +140,7 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 | Hạng mục | Ưu tiên | Quyết định | open-ketoan hôm nay |
 |---|---|---|---|
 | Bất biến kế toán + ACID | P0 | Bắt buộc | **có**: Domain Contract, trigger, kiểm sau mọi tệp test |
-| Cô lập đơn vị + Audit Ledger | P0 | Bắt buộc | **một phần**: `tenant_id` mọi truy vấn, bằng chứng chuỗi băm có; RLS chưa (G1-05) |
+| Cô lập đơn vị + Audit Ledger | P0 | Bắt buộc | **có**: `tenant_id` mọi truy vấn + RLS mọi bảng có `tenant_id` (0041, PHASE-007), bằng chứng chuỗi băm. Bản cài phải chạy API bằng `ketoan_app` (R-SEC-6), superuser vượt RLS |
 | Contract + SDK + MCP | P0 | Lợi thế chiến lược | **một phần**: 4 lớp hợp đồng, MCP có; SDK là bản nháp (G1-10) |
 | Sao lưu, PITR, kiểm khôi phục | P0 | Bắt buộc | **có cơ chế**: sao lưu, kiểm khôi phục, PITR (`infrastructure/backup/`) + diễn tập máy dev ĐẠT (RTO 8 giây, RPO ≤ 60 giây); còn bật trên bản cài thật (PHASE-008) |
 | Prometheus + Grafana | P1 | Nên triển khai sớm | **có**: `infrastructure/monitoring/` |
@@ -202,7 +202,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G1-02 | Accounting Ledger: giao dịch ACID, chỉ thêm, Nợ = Có, trigger bảo vệ | DG-LEDGER-1..4, DG-DB-2 đạt | **có** | — | — |
 | G1-03 | Đảo bút toán + phiên bản sự việc | STD-DOM-4, -11 có test | **có** | — | — |
 | G1-04 | Idempotency: `docKey` + `version`; `Idempotency-Key` cho action | CONF-RUN-4 đạt | **có** | 2.5 | — |
-| G1-05 | Cô lập đơn vị: `tenant_id` + **RLS** + test đơn vị A không đọc được đơn vị B | DG-PLAN-5 thành kiểm thật | **một phần** (thiếu RLS) | 2.4 | _mở_ |
+| G1-05 | Cô lập đơn vị: `tenant_id` + **RLS** + test đơn vị A không đọc được đơn vị B | DG-PLAN-5 thành kiểm thật | **có** (RLS 84 bảng + DG-PLAN-5 / `TENANT_ISOLATION` kiểm thật, PHASE-007); bản cài thật đặt `DB_APP_USER=ketoan_app` | 2.4 | — |
 | G1-06 | RBAC: vai trò, quyền, khoá API có phạm vi; registry quyền mở theo module | `permissions.module` available | **một phần** | 3.x | _mở_ |
 | G1-07 | Audit Ledger: bằng chứng chỉ thêm, chuỗi băm, biên nhận | DG-EVD-1, SC-EVD-2 đạt | **có** | 2.6 | — |
 | G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **có** cơ chế + diễn tập máy dev ([biên bản](audits/PITR-2026-10-30.md)); bật trên bản cài thật: việc của chủ | 2.15 | — |
@@ -238,7 +238,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G3-03 | NATS JetStream cho tích hợp liên module (`adapters/nats` chuyển tiếp outbox) | 2 consumer ngoài tiến trình nhận sự kiện, không mất khi NATS tạm ngừng | **chưa** (sau G2-05) | 5.9 | _mở_ |
 | G3-04 | Bizcity Cell API key + dịch vụ AI (đọc hoá đơn, gợi ý lý do định khoản) | `ai.ocr-invoice`, `posting.reason-suggest` available | **chưa** | 5.3, 5.8 | _mở_ |
 | G3-05 | Benchmark tải | 30.000 chứng từ / ngày, p95 ghi sổ < 1 giây, có báo cáo | **chưa** | 5.5 | _mở_ |
-| G3-06 | Kiểm thử cô lập đơn vị | thử tấn công chéo đơn vị qua API, MCP, RLS: không lọt | **chưa** (sau G1-05) | 2.4 | _mở_ |
+| G3-06 | Kiểm thử cô lập đơn vị | thử tấn công chéo đơn vị qua API, MCP, RLS: không lọt | **có** (`test/tenant-isolation.test.ts`: API, MCP, đọc / ghi / sửa chéo qua SQL dưới `ketoan_app`) | 2.4 | — |
 | G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **một phần**: máy dev ĐẠT ([biên bản](audits/PITR-2026-10-30.md)); còn diễn tập trên máy chủ thật | 2.15 | _mở_ |
 | G3-08 | Kong + Keycloak (`adapters/oidc`), khi cần | đăng nhập OIDC; JWKS; không phụ thuộc khi tắt | **chưa** (P2) | 5.9 | _mở_ |
 | G3-09 | Kubernetes / Helm, khi cần | chart `infrastructure/helm/`; 2 bản API chạy đúng | **để sau** (P3) | — | _mở_ |
