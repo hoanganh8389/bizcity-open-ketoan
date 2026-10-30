@@ -190,7 +190,7 @@ Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE
 2. Nhóm Lõi gán người.
 3. PR ghi mã việc trong tiêu đề.
 
-Trạng thái chính thức tính tự động bằng bảng điểm lộ trình (`node tests/conformance/selfcheck.mjs`, [roadmap.json](standard/roadmap.json)). Cột "Trạng thái" dưới đây chụp ngày 2026-10-30.
+Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](phases/README.md) (kế hoạch, checklist con, bằng chứng; SC-PHASE-1 kiểm). Trạng thái chính thức tính tự động bằng bảng điểm lộ trình (`node tests/conformance/selfcheck.mjs`, [roadmap.json](standard/roadmap.json)). Cột "Trạng thái" dưới đây chụp ngày 2026-10-30.
 
 **có** = đủ tiêu chí · **một phần** = có nền, còn việc · **chưa** = mở cho người nhận.
 
@@ -205,7 +205,7 @@ Trạng thái chính thức tính tự động bằng bảng điểm lộ trình
 | G1-05 | Cô lập đơn vị: `tenant_id` + **RLS** + test đơn vị A không đọc được đơn vị B | DG-PLAN-5 thành kiểm thật | **một phần** (thiếu RLS) | 2.4 | _mở_ |
 | G1-06 | RBAC: vai trò, quyền, khoá API có phạm vi; registry quyền mở theo module | `permissions.module` available | **một phần** | 3.x | _mở_ |
 | G1-07 | Audit Ledger: bằng chứng chỉ thêm, chuỗi băm, biên nhận | DG-EVD-1, SC-EVD-2 đạt | **có** | 2.6 | — |
-| G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **một phần** (thiếu PITR) | — | _mở_ |
+| G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **một phần** (thiếu PITR) | 2.15 | _mở_ |
 | G1-09 | Health (L0 / L1 / L3), `/metrics` | `/health/ready`, `/system/diagnostics`, `/metrics` có test | **có** | 2.10, 2.13 | — |
 | G1-10 | SDK TypeScript `@bizcity/module-sdk` | `packages/module-sdk/package.json`; ca chuẩn hợp đồng chạy bằng SDK | **một phần** (bản nháp API) | 1.5, 3.1 | _mở_ |
 | G1-11 | Contract tests: bộ kiểm chuẩn SC-* / DG-*, tự kiểm, bảng điểm | `selfcheck --strict` đạt trong CI | **có** | 0.5 | — |
@@ -221,12 +221,12 @@ Trạng thái chính thức tính tự động bằng bảng điểm lộ trình
 | G2-01 | Domain Contract | `bizcity_domain@1` công bố, mỗi bất biến có cách bảo vệ | **có** | — | — |
 | G2-02 | Capability Contract | `/system/capabilities` công bố schema, quyền, `sideEffects`, idempotency, bằng chứng; `defineAction` chặn khai thiếu | **có** | 2.5 | — |
 | G2-03 | Extension Contract chạy thật: slot, hook, `ctx.actions.call` | ca chuẩn hợp đồng dùng slot + hook | **một phần** (có tài liệu) | 3.x | _mở_ |
-| G2-04 | MCP Server kế toán đủ bộ: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse` | 3 công cụ ghi có xem trước + duyệt; CONF-MCP-5 | **một phần** (đọc + khung xác nhận có) | 2.11, 2.12 | _mở_ |
+| G2-04 | MCP Server kế toán đủ bộ: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse` | 3 công cụ ghi có xem trước + duyệt; CONF-MCP-5 | **một phần** (đọc + khung xác nhận có) | 2.16 | _mở_ |
 | G2-05 | **Transactional outbox + worker** | R-OUTBOX-1..5 có test; `events.outbox` available | **chưa** | 3.x | _mở_ |
 | G2-06 | Đệm cho Accounting Core có huỷ theo phiên bản cấu hình; `adapters/redis` | R-CACHE-3..6 có test; chạy đúng khi tắt Redis | **chưa** | 5.9 | _mở_ |
 | G2-07 | Prometheus + Grafana + cảnh báo cơ bản | `infrastructure/monitoring/` chạy với API thật | **có** (cấu hình đã kiểm) | 2.13 | — |
 | G2-08 | Mã lỗi chuẩn + quan sát (request id, log, số đo) | SC-ERR-1, `test/observability.test.ts` | **có** | 2.13 | — |
-| G2-09 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): `policy_version`, `effective_from`, `posting_log.policy_version` | C-9 của ma trận tuân thủ đạt ([COMPLIANCE §4](contracts/BIZCITY-COMPLIANCE-v1.md)) | **chưa** | 3.x | _mở_ |
+| G2-09 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): `policy_version`, `effective_from`, `posting_log.policy_version` | C-9 của ma trận tuân thủ đạt ([COMPLIANCE §4](contracts/BIZCITY-COMPLIANCE-v1.md)) | **chưa** | 2.14 | _mở_ |
 | G2-10 | Ba lớp kiểm soát + ma trận tuân thủ tính tự động | `bizcity_compliance@1`, SC-CMP-1, mục ma trận trên bảng điểm | **có** | — | — |
 
 ### Giai đoạn 3: Hệ sinh thái
@@ -238,8 +238,8 @@ Trạng thái chính thức tính tự động bằng bảng điểm lộ trình
 | G3-03 | NATS JetStream cho tích hợp liên module (`adapters/nats` chuyển tiếp outbox) | 2 consumer ngoài tiến trình nhận sự kiện, không mất khi NATS tạm ngừng | **chưa** (sau G2-05) | 5.9 | _mở_ |
 | G3-04 | Bizcity Cell API key + dịch vụ AI (đọc hoá đơn, gợi ý lý do định khoản) | `ai.ocr-invoice`, `posting.reason-suggest` available | **chưa** | 5.3, 5.8 | _mở_ |
 | G3-05 | Benchmark tải | 30.000 chứng từ / ngày, p95 ghi sổ < 1 giây, có báo cáo | **chưa** | 5.5 | _mở_ |
-| G3-06 | Kiểm thử cô lập đơn vị | thử tấn công chéo đơn vị qua API, MCP, RLS: không lọt | **chưa** (sau G1-05) | — | _mở_ |
-| G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **chưa** (sau G1-08) | — | _mở_ |
+| G3-06 | Kiểm thử cô lập đơn vị | thử tấn công chéo đơn vị qua API, MCP, RLS: không lọt | **chưa** (sau G1-05) | 2.4 | _mở_ |
+| G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **chưa** (sau G1-08) | 2.15 | _mở_ |
 | G3-08 | Kong + Keycloak (`adapters/oidc`), khi cần | đăng nhập OIDC; JWKS; không phụ thuộc khi tắt | **chưa** (P2) | 5.9 | _mở_ |
 | G3-09 | Kubernetes / Helm, khi cần | chart `infrastructure/helm/`; 2 bản API chạy đúng | **để sau** (P3) | — | _mở_ |
 

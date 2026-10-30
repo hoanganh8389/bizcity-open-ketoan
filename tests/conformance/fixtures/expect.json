@@ -293,6 +293,17 @@
             "wrong:apps/api/src/phan-he/beta/y.ts"
           ]
         },
+        "SC-PHASE-1": {
+          "findings": 6,
+          "keys": [
+            "unknown:PHASE-001-MOT:9.9",
+            "dup:0.1",
+            "checklist:PHASE-002-HAI",
+            "name:PHASE-2-SAI",
+            "unassigned:0.2",
+            "unassigned:1.1"
+          ]
+        },
         "SC-CMP-1": {
           "findings": 4,
           "keys": [
