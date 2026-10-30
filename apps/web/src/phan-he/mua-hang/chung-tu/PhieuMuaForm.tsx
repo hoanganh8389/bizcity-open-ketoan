@@ -17,7 +17,8 @@ import {
 } from '@ketoan/contracts/mua-hang';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
-import { Modal, openNextInEdit } from '@/components/ui';
+import { Modal, NumInput, openNextInEdit } from '@/components/ui';
+import { roundPrice } from '@/lib/format';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { BranchPicker } from '@/components/filters';
 import { ItemPicker, ListPicker, PartnerPicker, useAccountList } from '@/components/pickers';
@@ -46,7 +47,7 @@ import { layPhieuIn, mauInCua } from './mauIn';
 type Tab = 'hang' | 'thanh-toan' | 'hoa-don' | 'hach-toan' | 'gia-von' | 'tep' | 'tep-ncc' | 'lich-su';
 const LINE_TYPE: Record<LineType, string> = { buy: 'Hàng mua', gift_seller: 'KM người bán (chia giá)', gift_consumer: 'KM người tiêu dùng / quà' };
 const num = (s: string) => { const n = Number(s.replace(/\./g, '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
-const fmt = (n: number | undefined) => (n ? n.toLocaleString('vi-VN') : '');
+const fmt = (n: number | undefined) => (n ? n.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) : '');
 let seq = 0;
 const newKey = () => `L${Date.now().toString(36)}${(seq++).toString(36)}`;
 interface CatalogProduct { sku: string; name: string; unit: string; taxInCode: string | null; brandCode?: string | null }
@@ -168,7 +169,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   };
   const fixedOf = (l: { sku: string; unit: string }) => priceFor(prices, { date: v.docDate, partnerCode: v.partnerCode || undefined, sku: l.sku, unit: l.unit }, unitsOf(l.sku));
   /** Đổi ĐVT của dòng: đơn giá quy đổi theo tỉ lệ (Thùng 48 hộp → Hộp chia 48). */
-  const changeUnit = (l: PLine, unit: string) => { const us = unitsOf(l.sku); setLine(l.lineKey, { unit, ...(l.price > 0 && us.length ? { price: Math.round((l.price / ratioOf(us, l.unit)) * ratioOf(us, unit)) } : {}) }); };
+  const changeUnit = (l: PLine, unit: string) => { const us = unitsOf(l.sku); setLine(l.lineKey, { unit, ...(l.price > 0 && us.length ? { price: roundPrice((l.price / ratioOf(us, l.unit)) * ratioOf(us, unit)) } : {}) }); };
   // Phiếu đã duyệt / đã huỷ: khung Kiểm tra hiện kết quả CHỐT lúc duyệt (không còn "chặn duyệt" — đã duyệt rồi, kể cả duyệt ngoại lệ).
   const closed = v.status === 'approved' || v.status === 'cancelled';
   const checks: Check[] = closed
@@ -199,7 +200,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const isBuy = (lt ?? line?.lineType) === 'buy';
       const fixed = priceFor(sp.rows, { date: v.docDate, partnerCode: v.partnerCode || undefined, sku, unit }, us);
       const rate = TAX_RATE[taxCode] ?? 0;
-      const conv = (price: number, inc: boolean) => (inc === v.priceIncludesVat ? price : inc ? Math.round(price / (1 + rate / 100)) : Math.round(price * (1 + rate / 100)));
+      const conv = (price: number, inc: boolean) => (inc === v.priceIncludesVat ? price : inc ? roundPrice(price / (1 + rate / 100)) : roundPrice(price * (1 + rate / 100)));
       const price = isBuy && fixed ? conv(fixed.price, fixed.row.priceIncludesVat) : line?.price ?? 0;
       const kind = skuInfo(sku).kind;
       // Tên, ĐVT, thuế suất, nhãn: theo danh mục mặt hàng (không sửa tay trên phiếu).
@@ -258,7 +259,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     set({ priceIncludesVat: inc, lines: v.lines.map((l) => (l.price > 0 ? { ...l, price: conv(l.price, l.taxCode), ...(l.discountAmt ? { discountAmt: conv(l.discountAmt, l.taxCode) } : {}) } : l)) });
   };
   /** Quy một giá (gồm / chưa VAT) về loại đơn giá của phiếu. */
-  const toDocBasis = (price: number, inc: boolean, taxCode: string) => { const r = TAX_RATE[taxCode] ?? 0; return inc === v.priceIncludesVat ? price : inc ? Math.round(price / (1 + r / 100)) : Math.round(price * (1 + r / 100)); };
+  const toDocBasis = (price: number, inc: boolean, taxCode: string) => { const r = TAX_RATE[taxCode] ?? 0; return inc === v.priceIncludesVat ? price : inc ? roundPrice(price / (1 + r / 100)) : roundPrice(price * (1 + r / 100)); };
   /** Gợi ý giá dưới ô đơn giá: giá cố định (theo ĐVT) và lần nhập gần nhất, bấm để dùng. */
   /**
    * Dòng chữ dưới ô đơn giá — so với GIÁ MUA ĐÃ THOẢ THUẬN với NCC (giá cố định khai ở Mặt hàng & giá mua), không có thì so với
@@ -292,10 +293,10 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     if (!h) return;
     const line = v.lines.find((l) => l.lineKey === key);
     const rate = TAX_RATE[line?.taxCode ?? ''] ?? 0;
-    const p = h.includesVat === v.priceIncludesVat ? h.unitPrice : h.includesVat ? Math.round(h.unitPrice / (1 + rate / 100)) : Math.round(h.unitPrice * (1 + rate / 100));
+    const p = h.includesVat === v.priceIncludesVat ? h.unitPrice : h.includesVat ? roundPrice(h.unitPrice / (1 + rate / 100)) : roundPrice(h.unitPrice * (1 + rate / 100));
     // Lần trước nhập khác ĐVT (Thùng ↔ Hộp): quy về ĐVT của dòng.
     const us = unitsOf(sku);
-    setLine(key, { price: line && h.unit && us.length && h.unit.toLowerCase() !== line.unit.toLowerCase() ? Math.round((p / ratioOf(us, h.unit)) * ratioOf(us, line.unit)) : p });
+    setLine(key, { price: line && h.unit && us.length && h.unit.toLowerCase() !== line.unit.toLowerCase() ? roundPrice((p / ratioOf(us, h.unit)) * ratioOf(us, line.unit)) : p });
   };
   /** Đổi đơn giá: giá 0 = hàng tặng (chia giá hay không theo mã / chính sách KM của NCC), giá > 0 = hàng mua. */
   const setPrice = (l: PLine, price: number) => setLine(l.lineKey, price > 0 ? { price, lineType: 'buy' } : { price: 0, lineType: l.lineType === 'buy' ? autoLineType(l.sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }) : l.lineType });
@@ -640,7 +641,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                           onChange={(e) => set({ orderDiscount: e.target.value === 'policy' ? undefined : e.target.value === 'pct' ? { pct: v.orderDiscount?.pct || 5 } : e.target.value === 'amount' ? { amount: v.orderDiscount?.amount || 1_000_000 } : {} })}>
                           <option value="policy">Theo chính sách</option><option value="pct">%</option><option value="amount">Bằng tiền</option><option value="none">Không</option>
                         </select>
-                        {v.orderDiscount?.pct !== undefined && <input className="input num" style={{ width: 60 }} value={v.orderDiscount.pct} onChange={(e) => set({ orderDiscount: { pct: num(e.target.value) } })} />}
+                        {v.orderDiscount?.pct !== undefined && <NumInput style={{ width: 60 }} value={v.orderDiscount.pct} blankZero={false} onChange={(n) => set({ orderDiscount: { pct: n ?? 0 } })} />}
                         {v.orderDiscount?.amount !== undefined && <input className="input num" style={{ width: 110 }} value={fmt(v.orderDiscount.amount)} onChange={(e) => set({ orderDiscount: { amount: num(e.target.value) } })} />}
                       </div>
                     </div>
@@ -763,7 +764,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                             </select>) : <span title="ĐVT theo danh mục mặt hàng">{l.unit || '—'}</span>; })()}
                             {!readOnly && l.sku && unitsOf(l.sku).length <= 1 && <button type="button" className="btn btn-xs" style={{ marginLeft: 3, padding: '0 6px' }} title="Mặt hàng mới có 1 ĐVT — bấm để khai thêm ĐVT (Lốc, Thùng…) và tỉ lệ ngay tại đây" onClick={(e) => { e.stopPropagation(); setProductSku(l.sku); }}>＋</button>}</td>
                           {showKho && <td style={{ whiteSpace: 'nowrap' }} title="Theo ô Phân kho ở đầu phiếu"><span className="mono">{v.warehouseCode || <span className="muted">mặc định</span>}</span></td>}
-                          <td><input className="input num" style={{ width: 70 }} value={fmt(l.qty)} onChange={(e) => setLine(l.lineKey, { qty: num(e.target.value), ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
+                          <td><NumInput style={{ width: 70 }} value={l.qty} onChange={(n) => setLine(l.lineKey, { qty: n ?? 0, ...(l.autoGift ? { autoGift: false } : {}) })} /></td>
                           {isOrder && <>
                             <td style={{ fontSize: 10.5, minWidth: 230, lineHeight: 1.3, verticalAlign: 'top' }} title="Phân tích thông minh — số liệu chụp lúc thêm hàng / lưu đơn (ĐVT nhỏ nhất); mở lại đơn vẫn là số lúc đặt">{l.stockInfo ? <>
                               <div className="tm-facts2">
@@ -775,9 +776,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                               </div>
                               {l.family?.length ? <span className="tm-fam" title="Họ mã: số ở bảng trên đã cộng dồn mã chính + mã con">{l.family.map((m) => <span key={m.sku} className="tm-fam-row"><b className="mono">{m.sku}</b> {m.kind}: {factsText(m)}</span>)}</span> : null}</> : <span className="muted" style={{ whiteSpace: 'normal' }}>{v.status !== 'draft' ? '—' : !need.parent ? '— chi nhánh chưa thuộc cây chi nhánh cha (MH15) nên chưa có phân tích' : need.loading ? 'đang tải phân tích…' : '— mã chưa có trong phân tích (chưa có max, tồn, bán, đi đường, đơn đang đặt)'}</span>}</td>
                           </>}
-                          <td><input className="input num" style={{ width: 95 }} value={fmt(l.price)} placeholder={isGiftDoc ? '' : '0 = tặng'} onChange={(e) => (isGiftDoc ? setLine(l.lineKey, { price: num(e.target.value) }) : setPrice(l, num(e.target.value)))} />{!readOnly && !isGiftDoc && priceHints(l)}</td>
+                          <td><NumInput style={{ width: 95 }} value={l.price} placeholder={isGiftDoc ? '' : '0 = tặng'} title="Đơn giá có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => (isGiftDoc ? setLine(l.lineKey, { price: n ?? 0 }) : setPrice(l, n ?? 0))} />{!readOnly && !isGiftDoc && priceHints(l)}</td>
                           {!isGiftDoc && <>
-                            <td><input className="input num" style={{ width: 52 }} value={l.discountPct ?? ''} disabled={l.lineType !== 'buy'} placeholder="tự" title="Để trống: tự lấy theo chính sách (bậc số lượng…)" onChange={(e) => setLine(l.lineKey, { discountPct: e.target.value === '' ? undefined : num(e.target.value) })} /></td>
+                            <td><NumInput style={{ width: 52 }} value={l.discountPct} blankZero={false} disabled={l.lineType !== 'buy'} placeholder="tự" title="Để trống: tự lấy theo chính sách (bậc số lượng…). Có thể có số lẻ, vd 2,5" onChange={(n) => setLine(l.lineKey, { discountPct: n ?? undefined })} /></td>
                             <td><select className="select input" style={{ width: 92 }} value={l.taxCode} title="Thuế suất GTGT đầu vào — tự lấy theo danh mục mặt hàng" onChange={(e) => setLine(l.lineKey, { taxCode: e.target.value })}>{Object.entries(TAX_LABEL).map(([k, t]) => <option key={k} value={k}>{t}</option>)}{!TAX_LABEL[l.taxCode] && <option value={l.taxCode}>{l.taxCode}</option>}</select></td>
                             <td className="num">{l.lineType === 'buy' ? fmt(l.beforeTax) : <span className="muted">tặng</span>}</td>
                             <td className="num">{fmt(l.tax)}</td>
@@ -859,7 +860,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                       <div className="muted" style={{ fontSize: 12.5 }}>Nhà cung cấp này không giảm tiền khi trả đúng hạn.</div>
                     </>}
                     {!readOnly && (v.cktt ? (
-                      <div className="row" style={{ gap: 6, alignItems: 'center', marginTop: 6, fontSize: 12.5 }}>Phiếu này giảm <input className="input num" style={{ width: 64 }} value={v.cktt.pct ?? ''} onChange={(e) => set({ cktt: e.target.value === '' ? undefined : { pct: num(e.target.value) } })} /> % nếu trả đúng hạn <button type="button" className="btn btn-xs" onClick={() => set({ cktt: undefined })}>Bỏ — theo hợp đồng</button></div>
+                      <div className="row" style={{ gap: 6, alignItems: 'center', marginTop: 6, fontSize: 12.5 }}>Phiếu này giảm <NumInput style={{ width: 64 }} value={v.cktt.pct} blankZero={false} onChange={(n) => set({ cktt: n === null ? undefined : { pct: n } })} /> % nếu trả đúng hạn <button type="button" className="btn btn-xs" onClick={() => set({ cktt: undefined })}>Bỏ — theo hợp đồng</button></div>
                     ) : <button type="button" className="btn btn-xs" style={{ marginTop: 6 }} onClick={() => set({ cktt: { pct: ckttPct || 1 } })}>Phiếu này có thoả thuận giảm riêng? Ghi %</button>)}
                   </div>
                 </div>
@@ -1011,7 +1012,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   const hist = a?.priceHistory[sel.sku] ?? [];
                   const basis = v.priceIncludesVat ? 'gồm VAT' : 'chưa VAT';
                   const us = unitsOf(sel.sku);
-                  const histPrice = (h: (typeof hist)[number]) => { const p = toDocBasis(h.unitPrice, h.includesVat, sel.taxCode); return h.unit && us.length && h.unit.toLowerCase() !== sel.unit.toLowerCase() ? Math.round((p / ratioOf(us, h.unit)) * ratioOf(us, sel.unit)) : p; };
+                  const histPrice = (h: (typeof hist)[number]) => { const p = toDocBasis(h.unitPrice, h.includesVat, sel.taxCode); return h.unit && us.length && h.unit.toLowerCase() !== sel.unit.toLowerCase() ? roundPrice((p / ratioOf(us, h.unit)) * ratioOf(us, sel.unit)) : p; };
                   const fp = fixed ? toDocBasis(fixed.price, fixed.row.priceIncludesVat, sel.taxCode) : 0;
                   return <>
                     <div style={{ fontSize: 12, marginBottom: 4 }}>Mọi giá dưới đây: <b>{basis}</b>, theo {sel.unit || 'ĐVT của dòng'} (đúng loại giá của phiếu).</div>

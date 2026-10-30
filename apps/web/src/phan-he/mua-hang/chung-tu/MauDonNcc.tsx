@@ -8,6 +8,7 @@
  */
 import { TAX_RATE, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
 import { Modal } from '@/components/ui';
+import { roundPrice } from '@/lib/format';
 
 export interface MauNccInfo { code: string; name: string; address?: string; phone?: string; branchName: string; warehouse?: string }
 interface Row { stt: number; sku: string; barcode: string; name: string; pack: string; unit: string; price: number; buy: number; gift: number; need: number | ''; stock: number | ''; pending: number | ''; analysis: [string, string][]; pct: number | ''; ck: number; after: number; note: string; newItem: boolean }
@@ -23,7 +24,7 @@ function rowsOf(doc: PDoc): { rows: Row[]; before: number; ck: number; after: nu
   let before = 0, ckSum = 0, qty = 0;
   const rows = doc.lines.filter((l) => l.lineType === 'buy').map((l: PLine, i): Row => {
     const rate = TAX_RATE[l.taxCode] ?? 0;
-    const price = doc.priceIncludesVat ? Math.round(l.price / (1 + rate / 100)) : l.price;
+    const price = doc.priceIncludesVat ? roundPrice(l.price / (1 + rate / 100)) : l.price;
     const gross = Math.round(price * l.qty);
     const ck = l.discountPct ? Math.round((gross * l.discountPct) / 100) : Math.round(l.discountAmt ?? 0);
     before += gross; ckSum += ck; qty += l.qty;

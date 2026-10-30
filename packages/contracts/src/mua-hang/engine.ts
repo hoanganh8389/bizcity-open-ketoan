@@ -742,7 +742,7 @@ export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
     const warnPct = c.priceWarnPct ?? 2;
     const rate = TAX_RATE[l.taxCode] ?? 0;
     /** Quy giá về cùng loại với phiếu (gồm / chưa VAT) rồi mới so. */
-    const sameBasis = (price: number, includesVat: boolean) => (includesVat === doc.priceIncludesVat ? price : includesVat ? Math.round(price / (1 + rate / 100)) : Math.round(price * (1 + rate / 100)));
+    const sameBasis = (price: number, includesVat: boolean) => (includesVat === doc.priceIncludesVat ? price : includesVat ? Math.round((price / (1 + rate / 100)) * 10000) / 10000 : Math.round(price * (1 + rate / 100) * 10000) / 10000);
     if (fixed) {
       const fp = sameBasis(fixed.price, Boolean(fixed.row.priceIncludesVat));
       const diff = fp ? ((l.price - fp) / fp) * 100 : 0;

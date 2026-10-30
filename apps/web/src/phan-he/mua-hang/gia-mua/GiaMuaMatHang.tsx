@@ -12,7 +12,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { TAX_RATE, ratioOf, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
 import { api, errorText } from '@/lib/api';
-import { P, purchaseApi, today, useMuaHang, useNames, vnd } from '../du-lieu';
+import { price as donGia, roundPrice } from '@/lib/format';
+import { NumInput } from '@/components/ui';
+import { P, purchaseApi, today, useMuaHang, useNames } from '../du-lieu';
 import { dmy } from '../chung';
 import { TonMinMaxForm } from './TonMinMaxForm';
 import { stockApi, type LevelRow } from '../ton-max/api';
@@ -20,7 +22,6 @@ import { BangGiaMua } from '../thanh-phan/BangGiaMua';
 import '../mua-hang.css';
 
 type Hist = { date: string; partnerCode: string; docNo: string; unitPrice: number; includesVat: boolean; unit?: string; qty?: number };
-const num = (s: string) => { const v = s.replace(/\./g, '').replace(',', '.').trim(); return v === '' ? null : Number(v) || 0; };
 const pct = (a: number, b: number) => Math.round(((a - b) / b) * 1000) / 10;
 
 export function GiaMuaMatHang({ sku, name }: { sku: string; name: string; units: string[] }) {
@@ -59,7 +60,7 @@ export function GiaMuaMatHang({ sku, name }: { sku: string; name: string; units:
           <table className="mh-mini">
             <thead><tr><th>Ngày</th><th>Phiếu</th><th>Nhà cung cấp</th><th>ĐVT</th><th className="num">SL</th><th className="num">Đơn giá thực tế</th></tr></thead>
             <tbody>
-              {(hist.data ?? []).map((h, i) => <tr key={i}><td>{dmy(h.date)}</td><td className="mono">{h.docNo}</td><td>{names.partnerName(h.partnerCode)}</td><td>{h.unit ?? ''}</td><td className="num">{h.qty?.toLocaleString('vi-VN') ?? ''}</td><td className="num">{vnd(h.unitPrice)} <span className="muted" style={{ fontSize: 11 }}>{h.includesVat ? 'gồm thuế' : 'chưa thuế'}</span></td></tr>)}
+              {(hist.data ?? []).map((h, i) => <tr key={i}><td>{dmy(h.date)}</td><td className="mono">{h.docNo}</td><td>{names.partnerName(h.partnerCode)}</td><td>{h.unit ?? ''}</td><td className="num">{h.qty?.toLocaleString('vi-VN') ?? ''}</td><td className="num">{donGia(h.unitPrice)} <span className="muted" style={{ fontSize: 11 }}>{h.includesVat ? 'gồm thuế' : 'chưa thuế'}</span></td></tr>)}
               {!hist.isLoading && !(hist.data ?? []).length && <tr><td colSpan={6} className="muted">Chưa nhập mã này lần nào.</td></tr>}
             </tbody>
           </table>
@@ -97,7 +98,7 @@ function GiaThamKhao({ sku, hist }: { sku: string; hist: Hist[] }) {
   const card = (label: string, v: number | null, sub: string) => (
     <div className="gtk-card">
       <div className="gtk-l">{label}</div>
-      <div className="gtk-v">{v !== null ? vnd(Math.round(v)) : <span className="muted">—</span>}<small> / {showUnit}</small></div>
+      <div className="gtk-v">{v !== null ? donGia(roundPrice(v)) : <span className="muted">—</span>}<small> / {showUnit}</small></div>
       <div className="gtk-s">{sub}{v !== null && refNet ? <b className={Math.abs(pct(v, refNet)) > 2 ? 'mh-warn' : 'mh-ok'}> · {pct(v, refNet) > 0 ? '+' : ''}{pct(v, refNet)}% so với giá mua riêng</b> : null}</div>
     </div>
   );
@@ -109,7 +110,7 @@ function GiaThamKhao({ sku, hist }: { sku: string; hist: Hist[] }) {
       setForm(null); setMsg({ ok: true, text: 'Đã lưu giá mua riêng của sản phẩm' }); await q.refetch();
     } catch (e) { setMsg({ ok: false, text: errorText(e) }); }
   };
-  const start = (fill?: number) => setForm({ unit: showUnit, price: fill !== undefined ? Math.round(fill) : cur?.price ?? null, priceIncludesVat: fill !== undefined ? false : cur?.priceIncludesVat ?? false, warnPct: cur?.warnPct ?? 2, validFrom: cur ? d : undefined, note: '' });
+  const start = (fill?: number) => setForm({ unit: showUnit, price: fill !== undefined ? roundPrice(fill) : cur?.price ?? null, priceIncludesVat: fill !== undefined ? false : cur?.priceIncludesVat ?? false, warnPct: cur?.warnPct ?? 2, validFrom: cur ? d : undefined, note: '' });
 
   return (
     <section className="blk blk-purple">
@@ -124,8 +125,8 @@ function GiaThamKhao({ sku, hist }: { sku: string; hist: Hist[] }) {
             <div className="gtk-card gtk-main">
               <div className="gtk-l">Giá mua riêng hiện hành</div>
               {cur ? <>
-                <div className="gtk-v">{vnd(Number(cur.price))}<small> / {cur.unit} · {cur.priceIncludesVat ? 'gồm thuế' : 'chưa thuế'}</small></div>
-                <div className="gtk-s">{cur.unit !== base && base ? `= ${vnd(Math.round(Number(cur.price) / r))} / ${base} · ` : ''}hiệu lực từ {dmy(cur.validFrom) || 'trước đây'}{cur.updatedBy ? ` · ${cur.updatedBy}` : ''}</div>
+                <div className="gtk-v">{donGia(Number(cur.price))}<small> / {cur.unit} · {cur.priceIncludesVat ? 'gồm thuế' : 'chưa thuế'}</small></div>
+                <div className="gtk-s">{cur.unit !== base && base ? `= ${donGia(roundPrice(Number(cur.price) / r))} / ${base} · ` : ''}hiệu lực từ {dmy(cur.validFrom) || 'trước đây'}{cur.updatedBy ? ` · ${cur.updatedBy}` : ''}</div>
               </> : <div className="gtk-s">Chưa khai. Bấm <b>Khai giá mua riêng</b> — có thể lấy theo giá vốn bình quân hoặc giá nhập gần nhất.</div>}
             </div>
             {card(`Giá vốn bình quân${cost.data?.monthly ? ` tháng ${cost.data.monthly.period.slice(5)}/${cost.data.monthly.period.slice(0, 4)}` : ''}`, avg, cost.data?.monthly ? 'chưa thuế' : 'chưa tính giá vốn tháng')}
@@ -135,13 +136,13 @@ function GiaThamKhao({ sku, hist }: { sku: string; hist: Hist[] }) {
         ) : (
           <div className="gtk-form">
             <label>ĐVT<select className="select input" value={form.unit ?? ''} onChange={(e) => setForm({ ...form, unit: e.target.value })}>{units.map((u) => <option key={u.unit} value={u.unit}>{u.unit}{u.ratio !== 1 ? ` (×${u.ratio})` : ''}</option>)}</select></label>
-            <label>Giá mua<input className="input num" value={form.price === null || form.price === undefined ? '' : Number(form.price).toLocaleString('vi-VN')} onChange={(e) => setForm({ ...form, price: num(e.target.value) })} autoFocus /></label>
+            <label>Giá mua<NumInput value={form.price === null || form.price === undefined ? null : Number(form.price)} title="Có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => setForm({ ...form, price: n })} autoFocus /></label>
             <label>Loại giá<select className="select input" value={form.priceIncludesVat ? '1' : '0'} onChange={(e) => setForm({ ...form, priceIncludesVat: e.target.value === '1' })}><option value="0">Chưa thuế</option><option value="1">Gồm thuế</option></select></label>
             <label>Hiệu lực từ<input className="input" type="date" value={form.validFrom ?? ''} onChange={(e) => setForm({ ...form, validFrom: e.target.value || undefined })} /></label>
             <div className="gtk-quick">
               <span className="muted">Lấy nhanh (chưa thuế, theo {form.unit}):</span>
-              {cost.data?.monthly && <button type="button" className="btn btn-xs" onClick={() => setForm({ ...form, price: Math.round(cost.data!.monthly!.unitCost * (ratioOf(units, form.unit) || 1)), priceIncludesVat: false })}>Giá vốn bình quân</button>}
-              {hist[0] && <button type="button" className="btn btn-xs" onClick={() => setForm({ ...form, price: Math.round(net(hist[0]!.unitPrice, hist[0]!.includesVat) / (ratioOf(units, hist[0]!.unit) || 1) * (ratioOf(units, form.unit) || 1)), priceIncludesVat: false })}>Giá nhập gần nhất</button>}
+              {cost.data?.monthly && <button type="button" className="btn btn-xs" onClick={() => setForm({ ...form, price: roundPrice(cost.data!.monthly!.unitCost * (ratioOf(units, form.unit) || 1)), priceIncludesVat: false })}>Giá vốn bình quân</button>}
+              {hist[0] && <button type="button" className="btn btn-xs" onClick={() => setForm({ ...form, price: roundPrice(net(hist[0]!.unitPrice, hist[0]!.includesVat) / (ratioOf(units, hist[0]!.unit) || 1) * (ratioOf(units, form.unit) || 1)), priceIncludesVat: false })}>Giá nhập gần nhất</button>}
             </div>
             <div className="gtk-actions">
               <button type="button" className="btn btn-primary btn-sm" onClick={() => void save()}>Lưu giá mua riêng</button>
@@ -155,7 +156,7 @@ function GiaThamKhao({ sku, hist }: { sku: string; hist: Hist[] }) {
             <summary className="muted" style={{ fontSize: 12, cursor: 'pointer' }}>Lịch sử giá mua riêng ({general.length} lần)</summary>
             <table className="mh-mini" style={{ marginTop: 4 }}>
               <thead><tr><th>Hiệu lực từ</th><th>ĐVT</th><th className="num">Giá</th><th>Loại giá</th><th>Người sửa</th></tr></thead>
-              <tbody>{general.map((g) => <tr key={g.id} className={g === cur ? 'mh-row-pick' : ''}><td>{dmy(g.validFrom) || 'trước đây'}</td><td>{g.unit}</td><td className="num">{g.price !== null && g.price !== undefined ? vnd(Number(g.price)) : ''}</td><td>{g.priceIncludesVat ? 'gồm thuế' : 'chưa thuế'}</td><td>{g.updatedBy}</td></tr>)}</tbody>
+              <tbody>{general.map((g) => <tr key={g.id} className={g === cur ? 'mh-row-pick' : ''}><td>{dmy(g.validFrom) || 'trước đây'}</td><td>{g.unit}</td><td className="num">{g.price !== null && g.price !== undefined ? donGia(Number(g.price)) : ''}</td><td>{g.priceIncludesVat ? 'gồm thuế' : 'chưa thuế'}</td><td>{g.updatedBy}</td></tr>)}</tbody>
             </table>
           </details>
         )}

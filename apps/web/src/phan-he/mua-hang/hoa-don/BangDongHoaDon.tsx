@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { unitFor, type InvoiceLine, type ProductUnit } from '@ketoan/contracts/mua-hang';
 import { api } from '@/lib/api';
 import { ItemPicker } from '@/components/pickers';
+import { NumInput } from '@/components/ui';
 import { P, vnd } from '../du-lieu';
 import { MATCH_LABEL, invoiceApi } from './api';
 
@@ -62,10 +63,9 @@ export function BangDongHoaDon({ lines, onChange, readOnly, editNcc, partnerCode
   }, [units.data, lines, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (i: number, patch: Partial<InvoiceLine>) => onChange?.(lines.map((l, k) => (k === i ? { ...l, ...patch } : l)));
   const setCalc = (i: number, patch: Partial<InvoiceLine>) => onChange?.(lines.map((l, k) => (k === i ? recalc({ ...l, ...patch }) : l)));
-  const num = (v: string) => Number(v.replace(/\./g, '').replace(',', '.')) || 0;
   const ed = !readOnly && editNcc;
   const txt = (i: number, k: 'nccSku' | 'nccName' | 'nccUnit', w: number) => <input className="input" style={{ width: w, height: 28 }} value={lines[i]![k]} onChange={(e) => set(i, { [k]: e.target.value, candidates: undefined })} />;
-  const nb = (i: number, k: 'qty' | 'price' | 'discountAmount', w = 90) => <input className="input num" style={{ width: w, height: 28 }} value={lines[i]![k] || ''} onChange={(e) => setCalc(i, { [k]: num(e.target.value) })} />;
+  const nb = (i: number, k: 'qty' | 'price' | 'discountAmount', w = 90) => <NumInput style={{ width: w, height: 28 }} value={lines[i]![k]} onChange={(n) => setCalc(i, { [k]: n ?? 0 })} />;
   const choose = (i: number, sku: string, unit?: string) => set(i, { sku: sku || null, unit: sku ? unit ?? null : null, matchSource: sku ? 'manual' : 'none' });
   return (
     <div style={{ overflowX: 'auto' }}>

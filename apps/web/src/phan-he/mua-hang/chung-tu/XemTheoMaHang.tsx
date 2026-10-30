@@ -80,9 +80,9 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
       { key: 'qty', header: 'Số lượng', type: 'qty', width: 80, sum: true, value: (r) => sign(r) * r.l.qty, title: 'Theo ĐVT của dòng; hàng ra (trả NCC, xuất quà, đổi trả đi) ghi âm' },
       { key: 'base', header: 'SL (ĐVT nhỏ nhất)', type: 'qty', width: 110, sum: true, value: (r) => sign(r) * r.base, title: 'Quy về ĐVT tỉ lệ 1 — cộng được giữa Thùng / Lốc / Hộp' },
       { key: 'baseUnit', header: 'ĐVT nhỏ nhất', width: 80, value: (r) => r.baseUnit },
-      { key: 'price', header: 'Đơn giá trên phiếu', type: 'money', width: 110, value: (r) => r.l.price, title: 'Đơn giá đúng như nhập trên phiếu (theo loại giá của phiếu)' },
+      { key: 'price', header: 'Đơn giá trên phiếu', type: 'price', width: 110, value: (r) => r.l.price, title: 'Đơn giá đúng như nhập trên phiếu (theo loại giá của phiếu)' },
       { key: 'priceKind', header: 'Loại giá', width: 90, value: (r) => (r.doc.priceIncludesVat ? 'gồm thuế' : 'chưa thuế') },
-      { key: 'priceEx', header: 'Đơn giá chưa thuế', type: 'money', width: 110, value: (r) => (r.l.qty ? Math.round((r.grossEx / r.l.qty) * 100) / 100 : 0), title: 'Trước chiết khấu, chưa thuế, theo ĐVT của dòng' },
+      { key: 'priceEx', header: 'Đơn giá chưa thuế', type: 'price', width: 110, value: (r) => (r.l.qty ? Math.round((r.grossEx / r.l.qty) * 100) / 100 : 0), title: 'Trước chiết khấu, chưa thuế, theo ĐVT của dòng' },
       { key: 'grossEx', header: 'Tiền hàng trước CK (chưa thuế)', type: 'money', width: 150, sum: true, value: (r) => sign(r) * r.grossEx, title: 'SL × đơn giá, chưa trừ chiết khấu, chưa thuế' },
       { key: 'disc', header: 'Chiết khấu (chưa thuế)', type: 'money', width: 120, sum: true, value: (r) => sign(r) * r.disc, title: 'CK dòng + phần CK trên đơn chia vào dòng' },
       { key: 'beforeTax', header: 'Tiền hàng sau CK (chưa thuế)', type: 'money', width: 150, sum: true, value: (r) => sign(r) * r.l.beforeTax, title: '= Tiền hàng trước CK − chiết khấu. Đây là tiền hàng ghi sổ (giá trị hàng nhập)' },
@@ -125,7 +125,7 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
     { key: 'netValue', header: 'Tiền hàng thuần cuối (chưa thuế)', type: 'money', width: 160, sum: true, value: (r) => Math.round(r.inValue - r.outValue), title: '= nhập sau CK − trả' },
     { key: 'tax', header: 'Thuế GTGT', type: 'money', width: 110, sum: true, value: (r) => Math.round(r.tax) },
     { key: 'totalPay', header: 'Tổng thanh toán (gồm thuế)', type: 'money', width: 150, sum: true, value: (r) => Math.round(r.inValue - r.outValue + r.tax) },
-    { key: 'avg', header: 'Giá nhập BQ / ĐVT nhỏ nhất', type: 'money', width: 140, value: (r) => (r.inQty - r.giftQty > 0 ? Math.round(r.inValue / (r.inQty - r.giftQty)) : 0), title: 'Tiền hàng nhập ÷ SL nhập không kể hàng tặng (chưa thuế, sau CK)' },
+    { key: 'avg', header: 'Giá nhập BQ / ĐVT nhỏ nhất', type: 'price', width: 140, value: (r) => (r.inQty - r.giftQty > 0 ? Math.round((r.inValue / (r.inQty - r.giftQty)) * 10000) / 10000 : 0), title: 'Tiền hàng nhập ÷ SL nhập không kể hàng tặng (chưa thuế, sau CK)' },
   ];
   return <DataGrid storageKey="mh-chung-tu-ma" exportName="chung-tu-mua-hang-theo-ma" rows={sums} rowKey={(r) => r.key} columns={columns} footerLabel="Cộng" emptyText="Không có mã hàng nào trong các phiếu đang lọc" />;
 }

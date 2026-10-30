@@ -11,6 +11,39 @@ export function money(v: number | null | undefined, opts: { blankZero?: boolean;
   return (opts.decimals ? moneyFmt2 : moneyFmt).format(v);
 }
 
+/** Đơn giá: giữ số lẻ (tới 4 chữ số, bỏ số 0 thừa) — 506018.52 → "506.018,52". Thành tiền vẫn tròn đồng (money). */
+const priceFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 });
+export function price(v: number | null | undefined, opts: { blankZero?: boolean } = {}): string {
+  if (v === null || v === undefined || Number.isNaN(v)) return '';
+  if (v === 0 && opts.blankZero) return '';
+  return priceFmt.format(v);
+}
+
+/** Làm tròn đơn giá sau khi quy đổi (gồm / chưa thuế, đổi ĐVT): giữ 4 chữ số lẻ, không ép về đồng. */
+export const roundPrice = (n: number) => Math.round(n * 10000) / 10000;
+
+/**
+ * Đọc số người dùng gõ / dán theo kiểu Việt Nam: dấu chấm hàng nghìn, dấu phẩy thập phân ("506.018,52").
+ * Không có dấu phẩy: "506.019" (nhóm 3 chữ số) là hàng nghìn, còn "506018.52" (dán từ Excel) là thập phân.
+ * Trống → null. Làm tròn tới `decimals` chữ số lẻ.
+ */
+export function parseNum(s: string, decimals = 4): number | null {
+  let t = String(s).replace(/[\s ]/g, '').replace(/[^\d.,-]/g, '');
+  if (t === '' || t === '-') return null;
+  if (t.includes(',')) {
+    t = t.replace(/\./g, '');
+    const i = t.lastIndexOf(',');
+    t = `${t.slice(0, i).replace(/,/g, '')}.${t.slice(i + 1)}`;
+  } else {
+    const parts = t.split('.');
+    if (parts.length > 1 && !(parts.length === 2 && parts[1]!.length !== 3)) t = parts.join('');
+  }
+  const n = Number(t);
+  if (!Number.isFinite(n)) return null;
+  const k = 10 ** decimals;
+  return Math.round(n * k) / k;
+}
+
 /** "2026-10-05" → "05/10/2026" */
 export function date(v: string | null | undefined): string {
   if (!v) return '';

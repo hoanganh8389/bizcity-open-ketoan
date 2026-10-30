@@ -12,10 +12,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileUp, Pencil, Plus } from 'lucide-react';
 import { TAX_RATE, defaultUnitFor, ratioOf, readTable, supplierItemsOf, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
-import { Modal } from '@/components/ui';
+import { Modal, NumInput } from '@/components/ui';
+import { price as donGia, roundPrice } from '@/lib/format';
 import { PartnerPicker } from '@/components/pickers';
 import { errorText } from '@/lib/api';
-import { purchaseApi, today, useNames, useSupplierBrands, vnd, type MhData } from '../du-lieu';
+import { purchaseApi, today, useNames, useSupplierBrands, type MhData } from '../du-lieu';
 import { ChonMatHang } from './ChonMatHang';
 import { ExcelGuide, type GuideColumn } from './ExcelGuide';
 import { ProductEditor } from '../../../features/catalog/ProductsPage';
@@ -23,7 +24,6 @@ import { NccInfo } from './NccInfo';
 
 type Row = SupplierProduct & { key: string; dirty?: boolean; fromHistory?: boolean; lastText?: string };
 const dmy = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
-const num = (s: string) => { const v = s.replace(/\./g, '').replace(',', '.').trim(); return v === '' ? null : Number(v) || 0; };
 let seq = 0;
 const k = () => `n${Date.now().toString(36)}${(seq++).toString(36)}`;
 
@@ -66,8 +66,8 @@ export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged }: { par
     if (!q.data) return;
     setUnits((u) => ({ ...u, ...q.data.units }));
     const declared: Row[] = q.data.rows.filter((r) => byPartner || r.partnerCode).map((r) => ({ ...r, key: r.id ?? k() }));
-    const fromHist: Row[] = hist.filter((h) => !h.declared).map((h) => ({ key: k(), partnerCode, sku: h.sku, unit: h.lastUnit ?? h.unit ?? '', price: null, priceIncludesVat: false, warnPct: 2, isActive: true, fromHistory: true, lastText: h.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${vnd(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }));
-    setRows([...declared.map((r) => { const h = hist.find((x) => x.sku === r.sku); return { ...r, lastText: h?.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${vnd(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }; }), ...fromHist]);
+    const fromHist: Row[] = hist.filter((h) => !h.declared).map((h) => ({ key: k(), partnerCode, sku: h.sku, unit: h.lastUnit ?? h.unit ?? '', price: null, priceIncludesVat: false, warnPct: 2, isActive: true, fromHistory: true, lastText: h.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }));
+    setRows([...declared.map((r) => { const h = hist.find((x) => x.sku === r.sku); return { ...r, lastText: h?.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }; }), ...fromHist]);
     // Mã đã mua nhưng chưa khai giá: tải ĐVT luôn (bấm "Khai" là chọn được ĐVT, không hiện nhầm "Khai ĐVT").
     const miss = fromHist.map((r) => r.sku).filter((x) => x && !q.data.units[x]);
     if (miss.length) void purchaseApi.units(miss).then((u) => setUnits((x) => ({ ...x, ...u })));
@@ -121,14 +121,14 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
   // Thuế suất đầu vào của mặt hàng → quy đổi giá chưa thuế ↔ gồm thuế.
   const taxOf = (s: string) => cat.data?.find((c) => c.sku === s)?.taxInCode ?? 'V08';
   const rateOf = (s: string) => (TAX_RATE[taxOf(s)] ?? 0) / 100;
-  const priceAs = (r: Row, inc: boolean) => (r.price === null || r.price === undefined ? null : Boolean(r.priceIncludesVat) === inc ? r.price : inc ? Math.round(r.price * (1 + rateOf(r.sku))) : Math.round(r.price / (1 + rateOf(r.sku))));
+  const priceAs = (r: Row, inc: boolean) => (r.price === null || r.price === undefined ? null : Boolean(r.priceIncludesVat) === inc ? r.price : inc ? roundPrice(r.price * (1 + rateOf(r.sku))) : roundPrice(r.price / (1 + rateOf(r.sku))));
   // Mã chưa khai giá nhưng đã từng mua của NCC này: điền giá lần mua gần nhất (quy về ĐVT của dòng, giữ loại giá của phiếu đó).
   const lastFill = rows.filter((r) => (r.price === null || r.price === undefined) && hist.some((h) => h.sku === r.sku && h.lastPrice));
   const fillLast = () => setRows((rs) => rs.map((r) => {
     const h = hist.find((x) => x.sku === r.sku);
     if ((r.price !== null && r.price !== undefined) || !h?.lastPrice) return r;
     const us = units[r.sku] ?? [];
-    const price = us.length ? Math.round((h.lastPrice / (ratioOf(us, h.lastUnit) || 1)) * (ratioOf(us, r.unit) || 1)) : h.lastPrice;
+    const price = us.length ? roundPrice((h.lastPrice / (ratioOf(us, h.lastUnit) || 1)) * (ratioOf(us, r.unit) || 1)) : h.lastPrice;
     return { ...r, price, priceIncludesVat: Boolean(h.lastIncludesVat), fromHistory: false, dirty: true };
   }));
   const visible = active.filter((r) => !find || `${r.sku} ${r.nccSku ?? ''} ${r.nccName ?? ''} ${r.partnerCode ?? ''} ${cat.data?.find((c) => c.sku === r.sku)?.name ?? ''}`.toLowerCase().includes(find.toLowerCase()));
@@ -164,9 +164,9 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
                 <td><input className="input" style={{ width: 180 }} value={r.nccName ?? ''} placeholder="tên theo NCC" disabled={r.fromHistory} onChange={(e) => set(r.key, { nccName: e.target.value })} /></td>
                 <td className="muted" style={{ fontSize: 12 }}>{cat.data ? `${TAX_RATE[taxOf(r.sku)] ?? 0}%` : ''}</td>
                 {[false, true].map((inc) => { const v = priceAs(r, inc); return (
-                  <td key={String(inc)}><input className="input num" style={{ width: 110, fontWeight: r.price !== null && r.price !== undefined && Boolean(r.priceIncludesVat) === inc ? 600 : undefined }}
+                  <td key={String(inc)}><NumInput style={{ width: 110, fontWeight: r.price !== null && r.price !== undefined && Boolean(r.priceIncludesVat) === inc ? 600 : undefined }}
                     title={r.price !== null && r.price !== undefined && Boolean(r.priceIncludesVat) !== inc ? `Tự quy đổi từ giá ${inc ? 'chưa' : 'gồm'} thuế (thuế ${TAX_RATE[taxOf(r.sku)] ?? 0}%)` : undefined}
-                    value={v === null ? '' : v.toLocaleString('vi-VN')} placeholder="chưa khai" disabled={r.fromHistory} onChange={(e) => set(r.key, { price: num(e.target.value), priceIncludesVat: inc })} /></td>); })}
+                    value={v} placeholder="chưa khai" disabled={r.fromHistory} onChange={(n) => set(r.key, { price: n, priceIncludesVat: inc })} /></td>); })}
                 <td><input className="input" type="date" style={{ width: 128 }} value={r.validFrom ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { validFrom: e.target.value || undefined })} /></td>
                 <td><input className="input" type="date" style={{ width: 128 }} value={r.validTo ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { validTo: e.target.value || undefined })} /></td>
                 {byPartner && <td style={{ fontSize: 11.5 }}>{r.lastText || <span className="muted">chưa mua</span>}</td>}
@@ -198,7 +198,7 @@ function PreviewTable({ list, check }: { list: { sku: string; unit?: string; pri
   return (
     <div className="full" style={{ maxHeight: 320, overflow: 'auto' }}>
       <table className="mh-mini"><thead><tr><th>Dòng</th><th>Mã</th><th>ĐVT</th><th className="num">Giá mua</th><th>Kiểm tra</th></tr></thead>
-        <tbody>{list.map((r, i) => { const c = check(r); return <tr key={i} className={c && c !== '…' ? 'mh-row-bad' : ''}><td>{r.row ?? i + 1}</td><td className="mono">{r.sku}</td><td>{r.unit || <span className="muted">mua mặc định</span>}</td><td className="num">{r.price ? vnd(r.price) : ''}</td><td>{c ? <span className="mh-bad">{c}</span> : '✓'}</td></tr>; })}</tbody>
+        <tbody>{list.map((r, i) => { const c = check(r); return <tr key={i} className={c && c !== '…' ? 'mh-row-bad' : ''}><td>{r.row ?? i + 1}</td><td className="mono">{r.sku}</td><td>{r.unit || <span className="muted">mua mặc định</span>}</td><td className="num">{r.price ? donGia(r.price) : ''}</td><td>{c ? <span className="mh-bad">{c}</span> : '✓'}</td></tr>; })}</tbody>
       </table>
     </div>
   );

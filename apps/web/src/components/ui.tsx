@@ -1,14 +1,34 @@
 /**
  * Thành phần giao diện nhỏ, dùng chung ở mọi màn hình.
  */
-import { Children, Fragment, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
+import { Children, Fragment, isValidElement, useCallback, useEffect, useRef, useState, type InputHTMLAttributes, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 import { X } from 'lucide-react';
-import { money } from '@/lib/format';
+import { money, parseNum, price as priceText } from '@/lib/format';
 
 /** Ô số tiền: căn phải, số âm màu đỏ, 0 để trống (mặc định). */
 export function Money({ value, blankZero = true, bold }: { value: number | null | undefined; blankZero?: boolean; bold?: boolean }) {
   const v = value ?? 0;
   return <span className={`${v < 0 ? 'neg' : ''}`} style={bold ? { fontWeight: 700 } : undefined}>{money(v, { blankZero })}</span>;
+}
+
+/**
+ * Ô nhập số có số lẻ (đơn giá, số lượng): đang gõ thì giữ nguyên chữ người dùng gõ (gõ được "506.018,52"),
+ * rời ô thì định dạng lại. Ô cũ định dạng lại mỗi phím nên nuốt mất dấu phẩy, không gõ được số lẻ.
+ * Không nhận số âm (trừ khi allowNegative). Trống → onChange(null).
+ */
+export function NumInput({ value, onChange, decimals = 4, allowNegative, blankZero = true, className = 'input num', ...rest }: {
+  value: number | null | undefined; onChange: (v: number | null) => void; decimals?: number; allowNegative?: boolean; blankZero?: boolean;
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
+  const [text, setText] = useState<string | null>(null);
+  const shown = value === null || value === undefined || (value === 0 && blankZero) ? '' : priceText(Math.round(value * 10 ** decimals) / 10 ** decimals);
+  return <input {...rest} className={className} inputMode="decimal" value={text ?? shown}
+    onFocus={(e) => { setText(shown); rest.onFocus?.(e); }}
+    onBlur={(e) => { setText(null); rest.onBlur?.(e); }}
+    onChange={(e) => {
+      const raw = allowNegative ? e.target.value : e.target.value.replace(/-/g, '');
+      setText(raw);
+      onChange(parseNum(raw, decimals));
+    }} />;
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {

@@ -48,7 +48,7 @@ export function TongHopTheoNhom({ from, to }: { from: string; to: string }) {
     { key: 'cost', header: '+ Chi phí phân bổ', type: 'money', width: 120, sum: true },
     { key: 'rebate', header: '− Thưởng / CK sau mua', type: 'money', width: 130, sum: true },
     { key: 'value', header: 'Giá trị thuần', type: 'money', width: 130, sum: true, bold: true },
-    ...(groupBy === 'sku' ? [{ key: 'unitCost', header: 'Giá vốn TT / ĐVT', type: 'money', width: 120 } as Column<Row>] : []),
+    ...(groupBy === 'sku' ? [{ key: 'unitCost', header: 'Giá vốn TT / ĐVT', type: 'price', width: 120 } as Column<Row>] : []),
     { key: 'openDebt', header: 'Còn nợ NCC', type: 'money', width: 120, sum: true },
     { key: 'documents', header: 'Số phiếu', type: 'number', width: 70, render: (r) => <button type="button" className="btn btn-xs" title="Xem các phiếu của dòng này" onClick={() => setSel(r)}>{r.documents}</button> },
   ];

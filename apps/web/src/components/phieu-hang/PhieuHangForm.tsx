@@ -11,7 +11,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { KIND_INFO, TAX_OPTIONS, TAX_RATES, recompute, type TradeDoc, type TradeLine } from '@/lib/tradeDocs';
-import { Field, Modal } from '@/components/ui';
+import { Field, Modal, NumInput } from '@/components/ui';
+import { roundPrice } from '@/lib/format';
 import { BranchPicker } from '@/components/filters';
 import { ItemPicker, ListPicker, PartnerPicker } from '@/components/pickers';
 import { HelpDrawer } from '@/components/HelpDrawer';
@@ -55,7 +56,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
       // Bảng giá bán là giá ĐÃ gồm thuế → quy về đơn giá trước thuế (phiếu tính thuế trên tiền trước thuế). Mua hàng: chưa có
       // giá nhập trong danh mục → để 0 cho người nhập gõ theo hoá đơn.
       const rate = TAX_RATES[taxCode ?? ''] ?? 0;
-      const unitPrice = info.isTransfer ? undefined : info.taxDir === 'output' && price ? Math.round(price / (1 + rate / 100)) : 0;
+      const unitPrice = info.isTransfer ? undefined : info.taxDir === 'output' && price ? roundPrice(price / (1 + rate / 100)) : 0;
       setLine(i, { sku, name: p.name, unit, unitPrice, taxCode });
     } catch { /* mã chỉ có ở kho, chưa có trong danh mục hàng: giữ mã, nhập tay tên */ }
   };
@@ -136,9 +137,9 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
                   <td><input className="input" value={l.name} disabled={readOnly} onChange={(e) => setLine(i, { name: e.target.value })} /></td>
                   <td><input className="input" value={l.unit} disabled={readOnly} onChange={(e) => setLine(i, { unit: e.target.value })} /></td>
                   <td className="muted" style={{ fontSize: 12 }}>{khoName}</td>
-                  <td><input className="input num" value={l.qty || ''} disabled={readOnly} onChange={(e) => setLine(i, { qty: num(e.target.value) })} /></td>
+                  <td><NumInput value={l.qty} disabled={readOnly} onChange={(n) => setLine(i, { qty: n ?? 0 })} /></td>
                   {!info.isTransfer && <>
-                    <td><input className="input num" value={money(l.unitPrice)} disabled={readOnly || l.isGift} onChange={(e) => setLine(i, { unitPrice: num(e.target.value) })} /></td>
+                    <td><NumInput value={l.unitPrice} disabled={readOnly || l.isGift} title="Đơn giá có thể có số lẻ: gõ dấu phẩy, vd 506.018,52" onChange={(n) => setLine(i, { unitPrice: n ?? 0 })} /></td>
                     <td><input className="input num" value={money(l.discount)} disabled={readOnly || l.isGift} onChange={(e) => setLine(i, { discount: num(e.target.value) })} /></td>
                     <td className="num">{l.isGift ? <span className="muted">tặng</span> : money(l.amountBeforeTax)}</td>
                     <td><select className="select input" value={l.taxCode ?? ''} disabled={readOnly} onChange={(e) => setLine(i, { taxCode: e.target.value })}>{taxOptions.map(([c, t]) => <option key={c} value={c}>{t}</option>)}</select></td>

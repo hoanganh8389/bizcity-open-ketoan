@@ -18,6 +18,7 @@ import { errorText } from '@/lib/api';
 import { purchaseApi, today, useNames } from '../du-lieu';
 import { factsText, fold, num, qtyFmt, stockApi, stockSnapshot, useHierarchy, type AnalysisRow } from '../ton-max/api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from '../ton-max/chung';
+import { roundPrice } from '@/lib/format';
 import '../mua-hang.css';
 
 type Row = AnalysisRow & { _group?: string; _key: string };
@@ -68,7 +69,7 @@ export function DatHangPage() {
         // Họ mã: số của dòng đã cộng dồn mọi mã con — chi tiết từng mã để người mua biết hàng tặng / kẹp quà còn bao nhiêu.
         <span className="tm-fam" title="Số của dòng đã cộng dồn cả họ mã (mã chính + mã con có đuôi)">{r.members.map((m) => (
           <span key={m.sku} className="tm-fam-row"><b className="mono">{m.sku}</b> {m.kind}: {factsText(m, banDays)}</span>))}</span>)}</span> },
-    { key: 'price', header: 'Đơn giá chưa VAT', type: 'money', width: 92 },
+    { key: 'price', header: 'Đơn giá chưa VAT', type: 'price', width: 92 },
     { key: 'promo', header: 'CTKM', width: 80, render: (r) => (r.promo ? <span title={r.promo} style={{ fontSize: 11.5 }}>{r.promo}</span> : '-') },
     { key: 'baseUnit', header: 'ĐVT', width: 56, title: 'ĐVT nhỏ nhất (tỉ lệ 1) — các cột số lượng của màn này đều theo ĐVT này; cột Quy cách cho biết 1 thùng bao nhiêu' },
     { key: 'need', header: 'SL cần nhập', type: 'qty', width: 92, showZero: true, className: 'tm-need', bold: true, title: 'Số lượng cần nhập tháng này (theo công thức), theo ĐVT nhỏ nhất',
@@ -107,7 +108,7 @@ export function DatHangPage() {
           const asPack = r.pack && r.pack > 1 && qty % r.pack === 0;
           return {
             lineKey: `A${i}${Date.now().toString(36)}`, sku: r.sku, name: r.name, unit: asPack ? r.packUnit! : r.baseUnit, qty: asPack ? qty / r.pack! : qty,
-            price: Math.round((r.price ?? 0) * (asPack ? r.pack! : 1)), taxCode: r.taxCode || 'V08', lineType: 'buy', note: r.nccNote || undefined, pack: r.pack, barcode: r.barcode || undefined, nccSku: r.nccSku || undefined, nccName: r.nccName || undefined,
+            price: roundPrice((r.price ?? 0) * (asPack ? r.pack! : 1)), taxCode: r.taxCode || 'V08', lineType: 'buy', note: r.nccNote || undefined, pack: r.pack, barcode: r.barcode || undefined, nccSku: r.nccSku || undefined, nccName: r.nccName || undefined,
             // Chụp số liệu tồn lúc lập đơn (cả họ mã) — lưu cùng dòng đơn.
             ...stockSnapshot(new Map([[r.sku, r]]), r.sku),
           };

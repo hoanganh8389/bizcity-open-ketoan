@@ -87,7 +87,7 @@ export function TonKhoTheoMatHangPage() {
     { key: 'name', header: 'Tên hàng', width: 240 },
     { key: 'alias', header: 'Alias', type: 'code', width: 120, title: 'Mã vạch của mặt hàng' },
     { key: 'qty', header: 'Số lượng', type: 'qty', width: 100, sum: true, className: 'kb-qty', title: 'Tồn tại ngày "Đến ngày" (ĐVT nhỏ nhất)' },
-    { key: 'unitCost', header: 'Đơn giá', type: 'money', width: 100, title: 'Thành tiền ÷ số lượng (giá vốn bình quân / giá trị chứng từ)' },
+    { key: 'unitCost', header: 'Đơn giá', type: 'price', width: 100, title: 'Thành tiền ÷ số lượng (giá vốn bình quân / giá trị chứng từ)' },
     { key: 'amount', header: 'Thành tiền', type: 'money', width: 130, sum: true },
     { key: 'inTransit', header: 'SL đi đường', type: 'qty', width: 100, sum: true, title: 'Đã xuất chuyển đến chi nhánh này nhưng chưa nhận — tính vào kho mặc định của chi nhánh nhận' },
     { key: 'max', header: 'Tồn max', type: 'qty', width: 90, sum: true, title: 'Tồn max khai theo kho (MH16)' },

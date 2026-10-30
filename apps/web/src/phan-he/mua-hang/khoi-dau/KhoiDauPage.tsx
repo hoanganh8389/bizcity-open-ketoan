@@ -176,8 +176,8 @@ function GiaMua() {
     { key: 'unit', header: 'ĐVT', width: 60 },
     { key: 'qty', header: 'SL dòng', type: 'qty', width: 70 },
     { key: 'totalBeforeVat', header: 'TT trước VAT', type: 'money', width: 105 },
-    { key: 'price', header: 'Giá mua (chưa VAT)', type: 'money', width: 110, bold: true },
-    { key: 'oldPrice', header: 'Giá đang có', type: 'money', width: 100 },
+    { key: 'price', header: 'Giá mua (chưa VAT)', type: 'price', width: 110, bold: true },
+    { key: 'oldPrice', header: 'Giá đang có', type: 'price', width: 100 },
     { key: 'date', header: 'Ngày dòng', width: 95 },
     { key: 'error', header: 'Lỗi', width: 260, render: (r) => (r.error ? <span className="mh-bad">{r.error}</span> : '') },
   ];

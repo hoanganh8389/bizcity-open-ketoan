@@ -11,12 +11,12 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { TAX_RATE, defaultUnitFor, priceFor, ratioOf, supplierItemsOf, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
-import { Modal } from '@/components/ui';
-import { purchaseApi, vnd, type MhData } from '../du-lieu';
+import { Modal, NumInput } from '@/components/ui';
+import { price as donGia, roundPrice } from '@/lib/format';
+import { purchaseApi, type MhData } from '../du-lieu';
 import { useNeedOf } from '../ton-max/api';
 
 const dmy = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
-const num = (s: string) => Number(s.replace(/\./g, '').replace(',', '.')) || 0;
 
 export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: MhData; onClose: () => void; onAdd: (lines: PLine[]) => void }) {
   const sp = useQuery({ queryKey: ['mua-hang', 'supplier-products', doc.partnerCode, 'general'], queryFn: () => purchaseApi.supplierProducts({ partnerCode: doc.partnerCode, withGeneral: true }) });
@@ -39,7 +39,7 @@ export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: Mh
   const [pick, setPick] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
   const catOf = (sku: string) => cat.data?.find((p) => p.sku === sku);
-  const basis = (p: number, inc: boolean, taxCode: string) => { const r = TAX_RATE[taxCode] ?? 0; return inc === doc.priceIncludesVat ? p : inc ? Math.round(p / (1 + r / 100)) : Math.round(p * (1 + r / 100)); };
+  const basis = (p: number, inc: boolean, taxCode: string) => { const r = TAX_RATE[taxCode] ?? 0; return inc === doc.priceIncludesVat ? p : inc ? roundPrice(p / (1 + r / 100)) : roundPrice(p * (1 + r / 100)); };
   const rows = items.filter((x) => !search || `${x.sku} ${x.nccSku ?? ''} ${catOf(x.sku)?.name ?? x.name ?? ''}`.toLowerCase().includes(search.toLowerCase())).map((x) => {
     const c = catOf(x.sku);
     const tax = c?.taxInCode ?? 'V08';
@@ -47,7 +47,7 @@ export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: Mh
     const unit = unitPick[x.sku] ?? defaultUnitFor(us, prices, doc.partnerCode, x.sku, x.unit || c?.unit || '');
     const f = priceFor(prices, { date: doc.docDate, partnerCode: doc.partnerCode, sku: x.sku, unit }, us);
     // Giá lần trước quy về ĐVT đang chọn (lần trước mua Thùng, giờ đặt Lốc → chia theo tỉ lệ).
-    const last = x.lastPrice ? Math.round((x.lastPrice / ratioOf(us, x.lastUnit)) * ratioOf(us, unit)) : 0;
+    const last = x.lastPrice ? roundPrice((x.lastPrice / ratioOf(us, x.lastUnit)) * ratioOf(us, unit)) : 0;
     const suggestedPrice = f ? basis(f.price, f.row.priceIncludesVat, tax) : last ? basis(last, Boolean(x.lastIncludesVat), tax) : 0;
     const s = need.rows.get(x.sku);
     return { ...x, name: c?.name ?? x.name ?? x.sku, unit, tax, us, priceSource: f ? (f.row.partnerCode ? `giá NCC / ${f.row.unit}` : `giá chung / ${f.row.unit}`) : x.lastPrice ? `lần ${x.lastDocNo}` : '', suggestedPrice, suggest: s && s.suggest > 0 ? Math.ceil(s.suggest / ratioOf(us, unit)) : undefined, lastQtyU: x.lastQty ? Math.ceil((x.lastQty * ratioOf(us, x.lastUnit)) / ratioOf(us, unit)) : undefined, reason: s ? `cần nhập ${s.need} (${s.parts.map((p) => `${p.signed < 0 ? '−' : '+'}${Math.abs(p.signed)} ${p.label}`).join(' ')})` : undefined, inCatalog: Boolean(c) };
@@ -81,10 +81,10 @@ export function DienMatHang({ doc, data, onClose, onAdd }: { doc: PDoc; data: Mh
                   <td>{r.name}{!r.declared && <span className="badge badge-gray" style={{ marginLeft: 4 }} title="Chưa khai trong danh mục mặt hàng của NCC — lấy từ lịch sử mua">lịch sử</span>}{!r.inCatalog && cat.data && <span className="badge badge-warn" style={{ marginLeft: 4 }}>chưa có trong danh mục hàng</span>}</td>
                   <td>{r.us.length > 1 ? <select className="select input" style={{ width: 118 }} value={r.us.find((u) => u.unit.toLowerCase() === r.unit.toLowerCase())?.unit ?? r.unit} onChange={(e) => { setUnitPick({ ...unitPick, [r.sku]: e.target.value }); setPrice(({ [r.sku]: _x, ...rest }) => rest); setQty(({ [r.sku]: _q, ...rest }) => rest); }}>{r.us.map((u) => <option key={u.unit} value={u.unit}>{u.unit}{u.ratio !== 1 ? ` (×${u.ratio})` : ''}</option>)}</select> : r.unit}</td>
                   <td className="num" style={{ whiteSpace: 'nowrap', fontSize: 12 }} title={stockOf(r.sku)?.note || undefined}>{stockOf(r.sku) ? <>{stockOf(r.sku)!.kho.toLocaleString('vi-VN')} · {stockOf(r.sku)!.shop.toLocaleString('vi-VN')}{stockOf(r.sku)!.note ? <span className="muted"> *</span> : null}</> : <span className="muted">—</span>}</td>
-                  <td style={{ fontSize: 11.5 }}>{r.lastDate ? `${dmy(r.lastDate)} · ${r.lastQty?.toLocaleString('vi-VN')} ${r.lastUnit ?? ''} × ${vnd(r.lastPrice)}` : <span className="muted">chưa mua</span>}</td>
+                  <td style={{ fontSize: 11.5 }}>{r.lastDate ? `${dmy(r.lastDate)} · ${r.lastQty?.toLocaleString('vi-VN')} ${r.lastUnit ?? ''} × ${donGia(r.lastPrice)}` : <span className="muted">chưa mua</span>}</td>
                   {doc.kind === 'order' && <td className="num" title={r.reason}>{r.suggest ? <b>{r.suggest.toLocaleString('vi-VN')} {r.unit}</b> : <span className="muted">—</span>}</td>}
-                  <td className="num"><input className="input num" style={{ width: 90 }} value={q(r.sku, r.suggest) || ''} placeholder="0" onChange={(e) => setQty({ ...qty, [r.sku]: num(e.target.value) })} /></td>
-                  <td className="num"><input className="input num" style={{ width: 100 }} value={(price[r.sku] ?? r.suggestedPrice) ? (price[r.sku] ?? r.suggestedPrice).toLocaleString('vi-VN') : ''} onChange={(e) => setPrice({ ...price, [r.sku]: num(e.target.value) })} /></td>
+                  <td className="num"><NumInput style={{ width: 90 }} value={q(r.sku, r.suggest)} placeholder="0" onChange={(n) => setQty({ ...qty, [r.sku]: n ?? 0 })} /></td>
+                  <td className="num"><NumInput style={{ width: 100 }} value={price[r.sku] ?? r.suggestedPrice} onChange={(n) => setPrice({ ...price, [r.sku]: n ?? 0 })} /></td>
                   <td className="muted" style={{ fontSize: 11 }}>{r.priceSource}</td>
                 </tr>
               ))}

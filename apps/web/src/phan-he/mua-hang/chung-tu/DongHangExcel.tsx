@@ -32,11 +32,12 @@ const SPEC: [K, string[]][] = [
   ['sku', ['ma hang', 'ma sp', 'sku']], ['qty', ['so luong', 'sl']], ['unit', ['dvt', 'don vi tinh']], ['price', ['don gia', 'gia', 'gia tri / dvt', 'gia tri/dvt']], ['priceInc', ['don gia gom thue', 'don gia gom vat', 'don gia da gom thue']], ['priceEx', ['don gia chua thue', 'don gia chua vat']], ['pct', ['ck %', 'chiet khau', 'ck']],
   ['gift', ['hang tang', 'tang', 'qua']], ['lot', ['so lo', 'lo']], ['mfg', ['nsx', 'ngay san xuat']], ['exp', ['han dung', 'hsd', 'han su dung']], ['kho', ['phan kho', 'ma kho', 'kho']],
 ];
-/** Số từ Excel: 258711 · 258.711 · 258,711 (dấu ngăn nghìn) · 2,5 / 2.5 (thập phân) · 3% → số; trống → undefined. */
+/** Số từ Excel: 258711 · 258.711 · 258,711 (dấu ngăn nghìn) · 2,5 / 2.5 (thập phân) · 506.018,52 / 506,018.52 (dấu sau cùng là thập phân) · 3% → số; trống → undefined. */
 const n = (v: unknown) => {
   let t = String(v ?? '').replace(/[\s%đ]/g, '');
   if (!t) return undefined;
   if (/^\d{1,3}([.,]\d{3})+$/.test(t)) t = t.replace(/[.,]/g, '');
+  else if (t.includes('.') && t.includes(',')) { const dec = t.lastIndexOf(',') > t.lastIndexOf('.') ? ',' : '.'; t = t.split(dec === ',' ? '.' : ',').join('').replace(',', '.'); }
   else t = t.replace(',', '.');
   return Number(t);
 };

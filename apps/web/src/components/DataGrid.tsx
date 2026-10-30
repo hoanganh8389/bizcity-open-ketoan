@@ -22,10 +22,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Columns3, FileSpreadsheet, Filter, FilterX, X } from 'lucide-react';
-import { date as fmtDate, money } from '@/lib/format';
+import { date as fmtDate, money, price } from '@/lib/format';
 import { Money } from './ui';
 
-export type ColType = 'text' | 'code' | 'number' | 'money' | 'qty' | 'date' | 'check';
+/** price: đơn giá — như money nhưng giữ số lẻ (tới 4 chữ số); thành tiền vẫn dùng money (tròn đồng). */
+export type ColType = 'text' | 'code' | 'number' | 'money' | 'price' | 'qty' | 'date' | 'check';
 
 export interface Column<T> {
   key: string;
@@ -113,7 +114,7 @@ const VIRTUAL_FROM = 400;
 const OVERSCAN = 30;
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
-const isNumeric = (t?: ColType) => t === 'number' || t === 'money' || t === 'qty';
+const isNumeric = (t?: ColType) => t === 'number' || t === 'money' || t === 'price' || t === 'qty';
 const qtyFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 });
 
 function valueOf<T>(c: Column<T>, r: T): string | number | null | undefined {
@@ -158,6 +159,7 @@ function textOf<T>(c: Column<T>, r: T): string {
   if (v === null || v === undefined || v === '') return '';
   if (c.type === 'date') return fmtDate(String(v));
   if (c.type === 'money') return money(Number(v));
+  if (c.type === 'price') return price(Number(v));
   if (c.type === 'number') return Number(v).toLocaleString('vi-VN');
   if (c.type === 'qty') return qtyFmt.format(Number(v));
   return String(v);
@@ -316,6 +318,7 @@ export function DataGrid<T>(p: DataGridProps<T>) {
     const v = valueOf(c, r);
     switch (c.type) {
       case 'money': return <Money value={Number(v ?? 0)} blankZero={!c.showZero} bold={typeof c.bold === 'function' ? c.bold(r) : c.bold} />;
+      case 'price': return v === null || v === undefined || (v === 0 && !c.showZero) ? '' : price(Number(v));
       case 'number': return v === null || v === undefined || (v === 0 && !c.showZero) ? '' : Number(v).toLocaleString('vi-VN');
       case 'qty': return v || (v === 0 && c.showZero) ? qtyFmt.format(Number(v)) : '';
       case 'date': return fmtDate(v === null || v === undefined ? '' : String(v));
@@ -395,7 +398,7 @@ export function DataGrid<T>(p: DataGridProps<T>) {
       if (!isNumeric(c.type)) return;
       for (let ri = start; ri < aoa.length; ri++) {
         const ref = XLSX.utils.encode_cell({ r: ri, c: ci });
-        if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = c.type === 'qty' ? '#,##0.###' : '#,##0';
+        if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = c.type === 'qty' ? '#,##0.###' : c.type === 'price' ? '#,##0.####' : '#,##0';
       }
     });
     const wb = XLSX.utils.book_new();

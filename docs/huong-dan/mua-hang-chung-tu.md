@@ -134,6 +134,10 @@ Máy chủ kiểm tra lại sau mỗi lần sửa phiếu, bằng **số liệu 
 
 ## Đơn giá và thành tiền trên dòng hàng
 
+- **Đơn giá được có số lẻ** (tới 4 chữ số sau dấu phẩy), gõ như trên hoá đơn: dấu chấm ngăn hàng nghìn, **dấu phẩy** trước phần lẻ, ví dụ `506.018,52`. Dán từ Excel dạng `506018.52` cũng nhận đúng. CK % cũng được có số lẻ (`2,5`). Rời ô thì số tự định dạng lại.
+- **Thành tiền và tiền thuế luôn tròn đồng**: thành tiền = SL × đơn giá (giữ nguyên số lẻ khi nhân) rồi mới làm tròn. Ví dụ 72 × 506.018,52 = 36.433.333,44 → **36.433.333**; thuế 8% → **2.914.667**. Công nợ, bút toán, báo cáo tiền đều là số đồng tròn.
+- Áp dụng cho đơn đặt hàng, phiếu nhập, trả / đổi hàng NCC, hoá đơn NCC, giá mua của NCC và giá mua riêng của mặt hàng. Giá quy đổi tự động (gồm ↔ chưa thuế, đổi ĐVT) cũng giữ số lẻ, không ép về đồng.
+
 - Dưới ô **đơn giá**, phần mềm so với **giá đã thoả thuận với NCC** (khai ở Hồ sơ NCC → Mặt hàng & giá mua; không có thì giá mua chung của mặt hàng, rồi tới lần nhập trước):
   - xanh **"✓ đúng giá NCC"**;
   - cam / đỏ **"cao hơn giá NCC 3,2% (431.000)"** — hoá đơn ghi sai giá hoặc NCC tăng giá; bấm vào để đưa về giá đã thoả thuận; mức lệch cho phép khai **một lần** ở Cài đặt mua hàng (MH12), mặc định 2%, lệch quá gấp đôi thì báo đỏ; lệch quá mức cho phép thì Trợ lý báo cảnh báo trước khi duyệt;
