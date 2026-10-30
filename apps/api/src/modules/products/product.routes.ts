@@ -20,7 +20,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
-import { accountRepository } from '../accounts/account.repository.js';
+import { accountRepository } from '../../kernel/public.js';
 import { deleteProduct } from '../catalog/catalog.service.js';
 
 const tags = ['Danh mục: Mặt hàng'];

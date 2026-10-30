@@ -168,6 +168,13 @@
         "SC-KERNEL-3": {
           "findings": 1
         },
+        "SC-KERNEL-6": {
+          "findings": 2,
+          "keys": [
+            "modules/ledger/ledger.diagnostics.ts",
+            "modules/periods/period.repository.ts"
+          ]
+        },
         "SC-KERNEL-5": {
           "findings": 2,
           "keys": [

@@ -34,7 +34,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
-import { voucherService } from '../vouchers/voucher.service.js';
+import { voucherService } from '../../kernel/public.js';
 import { partnerRepository } from '../partners/partner.repository.js';
 import { assetService, buildRevaluations, calcOf, type CalcRow } from './asset.service.js';
 import { chargeFor, effectiveAt, firstChargePeriod, fromIndex, monthIndex, periodLabel, periodOf } from './depreciation.js';

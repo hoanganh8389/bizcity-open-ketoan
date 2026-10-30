@@ -1,7 +1,7 @@
 # PHASE-010 — Tách gói: `packages/kernel`, documents, actions, audit; dọn contracts
 
-> **Trạng thái:** ☐ chưa code · không làm trước PHASE-004 (2.1 trước 2.3)
-> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
+> **Trạng thái:** 🟡 W1 xong 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), 21 tệp chuyển. W2 (dời thư mục sang `packages/kernel`) chờ tách Platform thành gói
+> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có (W1) · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** `apps/api` chỉ import Kernel qua `@bizcity/kernel` công khai; Core khởi động không cần phân hệ nào.
 > **Việc lộ trình:** 2.3, 2.7, 2.8
 > **Checklist công bố:** —
@@ -12,9 +12,10 @@
 
 | Tài liệu | Một câu |
 |---|---|
+| [00-MASTER-PLAN](00-MASTER-PLAN.md) | vì sao chia W1 / W2, bề mặt công khai, thứ tự tách gói |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
-## Hiện trạng đọc mã
+## Hiện trạng đọc mã (trước khi code)
 
 | # | Sự thật | Ở đâu |
 |---|---|---|

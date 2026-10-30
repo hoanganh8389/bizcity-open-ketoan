@@ -47,4 +47,5 @@ Tra bảng §5 trong [docs/00-CANON.md](docs/00-CANON.md). Thêm khoá cấu hì
 - Lỗi: `Errors.*` (`apps/api/src/core/errors.ts`), không `reply.status()`.
 - Migration: tệp mới số kế tiếp, không sửa tệp đã chạy, có `COMMENT ON`.
 - Phân hệ không import phân hệ khác (`apps/*/src/phan-he/<key>/`).
+- Ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts` (SC-KERNEL-6). Cần thêm gì vào cổng đó thì đề xuất, không import thẳng vào `modules/<kernel>/`.
 - Đặt tên mới theo [docs/framework/04-DAT-TEN-BIZCITY.md](docs/framework/04-DAT-TEN-BIZCITY.md).

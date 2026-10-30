@@ -25,9 +25,8 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
+import { LEDGER_DIAGNOSTICS, collectLedgerMetrics } from './kernel/public.js';
 import { registerCollector } from './core/metrics.js';
-import { collectLedgerMetrics } from './modules/ledger/ledger.metrics.js';
 
 
 

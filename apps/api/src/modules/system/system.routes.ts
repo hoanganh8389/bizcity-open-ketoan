@@ -27,7 +27,7 @@ import { db } from '../../db/client.js';
 import { ok } from '../../core/http.js';
 import { readSchema } from './schema.service.js';
 import { postingModesSchema } from '@ketoan/contracts';
-import { readPostingModes } from '../../core/posting-modes.js';
+import { readPostingModes } from '../../kernel/public.js';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';

@@ -23,7 +23,7 @@ import { authOf, requirePermission, type AuthContext } from '../../core/auth.js'
 import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
-import { voucherService } from '../vouchers/voucher.service.js';
+import { voucherService } from '../../kernel/public.js';
 
 const tags = ['Bút toán mẫu, bút toán lặp'];
 const STEP: Record<RecurrenceFrequency, number> = { monthly: 1, quarterly: 3, yearly: 12 };

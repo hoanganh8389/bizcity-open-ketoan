@@ -111,6 +111,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Cổng công khai của Kernel** (PHASE-010 W1): ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts`; 21 tệp đã chuyển; bộ kiểm SC-KERNEL-6 chặn import thẳng mới. Chuẩn bị tách gói `packages/kernel` mà không sửa nơi gọi.
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
   - `POST /api/v1/payment-requests` và `…/:id/pay` **bắt buộc** header `Idempotency-Key`. Giao diện tự gửi: bấm đúp "Ghi" / "Chi" không còn tạo yêu cầu hay phiếu chi trùng;
   - `…/:id/pay?dryRun=1` xem trước phiếu chi rồi huỷ;
@@ -134,9 +135,6 @@ Mỗi bản ghi đủ sáu mục:
 - Vé đăng nhập cấp trước khi có cơ chế thu hồi phiên (không ghi `sv`) bị từ chối ngay: code coi thiếu `sv` = 1 trong khi `users.session_version` mặc định 0 (migration 0029). Nay thiếu `sv` = 0, dùng được tới lần thu hồi đầu như thiết kế.
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
 
-### Nâng cấp cần làm
-- **Để RLS có hiệu lực, API phải kết nối bằng `ketoan_app`** (`DB_APP_USER=ketoan_app`, `DB_APP_PASSWORD` ≥ 16 ký tự — R-SEC-6). Vai trò sở hữu mặc định của Docker là superuser và luôn vượt RLS.
-
 ### Thay đổi định khoản
 - **Định khoản theo chính sách của ngày hạch toán (mức K3, ADR-0009):** chứng từ (cả khi định khoản lại) dùng phiên bản cấu hình định khoản có hiệu lực ở ngày hạch toán của nó.
   - Sửa cấu hình như trước vẫn có tác dụng ngay (hệ thống tự chụp bản bổ sung của chế độ đang áp).
@@ -149,7 +147,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Nâng cấp cần làm
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
-- Khuyên làm trên bản cài thật: đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` trong `.env` rồi `docker compose up -d` (DEPLOY D-9). Không đặt thì mọi thứ chạy như cũ.
+- **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
 - nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).

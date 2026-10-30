@@ -13,7 +13,7 @@ import { db, toNumber } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import type { AuthContext } from '../../core/auth.js';
 import type { Account } from '../../db/types.js';
-import { accountRepository } from '../accounts/account.repository.js';
+import { accountRepository } from '../../kernel/public.js';
 import { reportRepository, type BalanceRow } from './report.repository.js';
 import { incomeStatement } from './income-statement.js';
 import { balanceSheet } from './balance-sheet.js';

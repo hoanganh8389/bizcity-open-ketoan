@@ -25,7 +25,7 @@ import { AppError } from '../../core/errors.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { db } from '../../db/client.js';
-import { postDocumentIn } from '../../modules/documents/document.service.js';
+import { postDocumentIn } from '../../kernel/public.js';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';

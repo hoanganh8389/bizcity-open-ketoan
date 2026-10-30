@@ -25,7 +25,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | có | 67% | 🟡 RLS 84 bảng; ⛔ API chạy bằng `ketoan_app` |
 | [008 Sao lưu PITR](PHASE-008-SAO-LUU-PITR/README.md) | 2 | 2.15 | G1-08, G3-07 | có | 50% | 🟡 máy dev ĐẠT; ⛔ bật + diễn tập máy chủ thật |
 | [009 MCP ghi](PHASE-009-MCP-GHI/README.md) | 2 | 2.16 | G2-04 | có (2/3) | 100% | 🟡 `journal.post` ⛔ Q009-1 |
-| [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | chưa | 0% | ☐ sau 004 |
+| [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | một phần | 0% | 🟡 W1 cổng công khai có; W2 dời sang gói chờ tách Platform |
 | [011 Module SDK](PHASE-011-MODULE-SDK/README.md) | 3 | 3.1, 3.2, 3.3, 3.6, 3.10 | G1-06, G1-10, G2-03 | một phần | 10% | 🟡 |
 | [012 Gói định khoản, workflow](PHASE-012-GOI-DINH-KHOAN-WORKFLOW/README.md) | 3 | 3.5, 3.7, 3.11, 3.12 | — | một phần | 13% | 🟡 |
 | [013 ui-kit, chuyển module](PHASE-013-UI-KIT-CHUYEN-MODULE/README.md) | 3 | 3.8, 3.9 | — | một phần | 25% | 🟡 |

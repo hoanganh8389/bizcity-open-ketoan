@@ -16,7 +16,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
-import { usedDimensionCodes } from '../default-data/default-data.service.js';
+import { usedDimensionCodes } from '../../kernel/public.js';
 
 const tags = ['Danh mục: Khoản mục, bộ phận, hợp đồng'];
 const kindParam = z.object({ kind: z.enum(DIMENSION_KINDS) });

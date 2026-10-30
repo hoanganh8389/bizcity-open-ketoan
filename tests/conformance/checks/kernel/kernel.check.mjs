@@ -1,7 +1,11 @@
 /**
  * Kernel: ranh giới sổ cái. Chuyển từ scripts/kiem-chuan.sh (giữ nguyên nghĩa; danh sách nợ chuyển sang baseline.json).
  */
+import path from 'node:path';
+import { expectedLayer } from '../../lib/layers.mjs';
+
 const SRC = 'apps/api/src';
+const PUBLIC = `${SRC}/kernel/public.ts`;
 const ts = { under: [SRC], ext: ['.ts'] };
 
 const scan = (ctx, re, keep) => {
@@ -73,6 +77,27 @@ export const checks = [
         });
       }
       return { examined: files.length, findings: dedupeBy(findings, (f) => `${f.file}|${f.key}`) };
+    },
+  },
+  {
+    id: 'SC-KERNEL-6',
+    title: 'Ngoài Kernel chỉ import Kernel qua cổng công khai apps/api/src/kernel/public.ts',
+    gate: 'KERNEL', contract: 'kernel', rules: ['R-BOUND-10', 'R-KER-1'], conf: ['CONF-STATIC-2'], tier: 0, enforce: 'block', weight: 4, targets: ['repo'],
+    run(ctx) {
+      // Kernel = tệp có lớp K theo bảng lớp (lib/layers.mjs). Tệp không thuộc K (Platform, phân hệ, add-in, lắp ráp) gọi Kernel qua
+      // public.ts — một chỗ để tách gói packages/kernel (PHASES 2.3, PHASE-010 W2) mà không sửa nơi gọi.
+      const isKernel = (file) => (expectedLayer(file)?.layer ?? '').split('+').includes('K');
+      const files = ctx.repo.files({ under: [SRC], ext: ['.ts'] }).filter((f) => !isKernel(f) && f !== PUBLIC);
+      const findings = [];
+      for (const file of files) {
+        ctx.repo.lines(file).forEach((t, i) => {
+          for (const m of t.matchAll(/(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]/g)) {
+            const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), m[1])).replace(/\.js$/, '.ts');
+            if (target !== PUBLIC && isKernel(target)) findings.push(ctx.finding(file, i + 1, `import thẳng vào Kernel ${target.slice(SRC.length + 1)} — dùng kernel/public.ts`, target.slice(SRC.length + 1)));
+          }
+        });
+      }
+      return { examined: files.length, findings };
     },
   },
   {

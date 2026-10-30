@@ -26,9 +26,8 @@ import { db, toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
-import { accountRepository } from '../accounts/account.repository.js';
-import { eventStore } from '../documents/event-store.js';
-import type { DraftLine } from '../ledger/ledger.types.js';
+import { accountRepository, eventStore } from '../../kernel/public.js';
+import type { DraftLine } from '../../kernel/public.js';
 import {
   addDays, chargeFor, effectiveAt, firstChargePeriod, firstDayOf, fromIndex, lastDayOf, monthIndex, periodLabel, periodOf, scheduleAfter, splitByDays, splitByPercent,
   type DepreciableAsset, type Period, type Revaluation,

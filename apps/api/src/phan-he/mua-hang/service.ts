@@ -8,7 +8,7 @@ import { db, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
-import { documentService } from '../../modules/documents/document.service.js';
+import { documentService } from '../../kernel/public.js';
 import { analyze, isOutsideOrder, loadCtx, withBrands, type Analysis } from './analysis.js';
 import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
 import { logEvents, type LogRow } from './log.js';

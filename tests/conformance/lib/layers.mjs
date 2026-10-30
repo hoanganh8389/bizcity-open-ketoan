@@ -55,6 +55,7 @@ export const LAYER_MAP = [
   // ADR-0004: dòng bán (sales_lines) do Kernel dựng khi ghi sổ; ba tệp ở đây chỉ là báo cáo bán hàng.
   ['modules/sales/', 'D', 'modules/ban-hang'],
   ['modules/closing/', 'K', 'kernel/closing'],
+  ['kernel/', 'K', 'kernel/public'],
   ['modules/vouchers/voucher.service.ts', 'K', 'kernel/intake'],
   ['modules/vouchers/', 'K+D', 'kernel/intake'],
   ['modules/default-data/', 'K', 'kernel/seeds'],

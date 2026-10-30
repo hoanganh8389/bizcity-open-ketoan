@@ -69,7 +69,7 @@ docker compose up -d db && npm test         # PostgreSQL thật; sau mỗi tệp
 - **Tiền:** `numeric(18,2)` ở CSDL, cộng trừ qua `toCents` / `fromCents`.
 - **Lỗi:** `Errors.*`, mã trong danh mục `bizcity_errors@1`, thông báo nói sai gì và làm gì tiếp (R-ERR-3).
 - **Migration:** tệp mới số kế tiếp; không sửa tệp đã chạy; có `COMMENT ON`; cập nhật `db/types.ts` (SC-DATA-7) và `schema-catalog.ts`.
-- **Ranh giới:** phân hệ không import phân hệ khác (R-BOUND-1); import đúng chiều lớp (SC-LAYER-2).
+- **Ranh giới:** phân hệ không import phân hệ khác (R-BOUND-1); import đúng chiều lớp (SC-LAYER-2); ngoài Kernel chỉ dùng cổng `apps/api/src/kernel/public.ts` (SC-KERNEL-6 — thêm mục vào cổng cần nhóm Lõi duyệt).
 - **Thao tác ghi mới:** viết bằng `defineAction` (quyền, idempotency, bằng chứng do runtime lo), không route Fastify tay.
 - **Log và số đo:** không dữ liệu cá nhân, không bí mật (R-SEC-10); số đo không nhãn `tenant` (R-OBS-4).
 - **Đặt tên mới:** [04-DAT-TEN-BIZCITY](docs/framework/04-DAT-TEN-BIZCITY.md).
