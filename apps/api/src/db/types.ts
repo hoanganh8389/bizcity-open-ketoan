@@ -116,6 +116,23 @@ export interface AuditLogsTable {
   before_data: JsonNullable;
   after_data: JsonNullable;
   created_at: TimestampDefault;
+  // Bằng chứng (migration 0036, bizcity_evidence@1 §5). chain_seq / prev_hash / hash do trigger audit_log_chain điền.
+  actor_kind: Generated<'user' | 'apikey' | 'ai' | 'system'>;
+  actor_via: ColumnType<string | null, string | null | undefined, never>;
+  on_behalf_of: ColumnType<string | null, string | null | undefined, never>;
+  module_id: ColumnType<string | null, string | null | undefined, never>;
+  module_version: ColumnType<string | null, string | null | undefined, never>;
+  subject: ColumnType<string | null, string | null | undefined, never>;
+  request_id: ColumnType<string | null, string | null | undefined, never>;
+  correlation_id: ColumnType<string | null, string | null | undefined, never>;
+  idempotency_key: ColumnType<string | null, string | null | undefined, never>;
+  input_hash: ColumnType<string | null, string | null | undefined, never>;
+  result_ok: Generated<boolean>;
+  result_code: ColumnType<string | null, string | null | undefined, never>;
+  dry_run: Generated<boolean>;
+  chain_seq: ColumnType<string | null, never, never>;
+  prev_hash: ColumnType<string | null, never, never>;
+  hash: ColumnType<string | null, never, never>;
 }
 
 /** Idempotency của action ghi (migration 0035, bizcity_action@1 §8). */

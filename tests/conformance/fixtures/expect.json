@@ -293,6 +293,16 @@
             "wrong:apps/api/src/phan-he/beta/y.ts"
           ]
         },
+        "SC-EVD-2": {
+          "findings": 13,
+          "keys": [
+            "column:actor_via",
+            "column:result_ok",
+            "column:chain_seq",
+            "trigger:audit_logs_no_update",
+            "trigger:audit_logs_no_truncate"
+          ]
+        },
         "SC-DIAG-1": {
           "findings": 1,
           "keys": [

@@ -52,6 +52,11 @@ Mỗi bản ghi đủ sáu mục:
   - chạy thử `?dryRun=1`;
   - mã lỗi mới `IDEMPOTENCY_CONFLICT`, `CAPABILITY_MISSING`, `MODULE_DISABLED`, `RATE_LIMITED`;
   - `GET /system/capabilities` liệt kê action.
+- Bằng chứng chỉ thêm, có chuỗi băm (PHASES 2.6, `bizcity_evidence@1`):
+  - migration `0036_bang_chung.sql`: `audit_logs` thêm cột bằng chứng; mọi dòng mới (kể cả nhật ký cũ do service ghi) vào chuỗi băm theo đơn vị;
+  - **không sửa, xoá, TRUNCATE** được nhật ký thao tác;
+  - action ghi trả biên nhận `meta.receipt`, ghi bằng chứng cả khi bị từ chối; `GET /api/v1/evidence/:id` kiểm lại;
+  - tự chẩn đoán `EVIDENCE_CHAIN` phát hiện dòng bị sửa ngầm.
 
 ### Đổi
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
@@ -79,6 +84,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Khuyên làm trên bản cài thật: đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` trong `.env` rồi `docker compose up -d` (DEPLOY D-9). Không đặt thì mọi thứ chạy như cũ.
 
 ### Bảo mật

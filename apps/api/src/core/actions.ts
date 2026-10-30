@@ -3,7 +3,9 @@
  * RUNTIME ACTION (bizcity_action@1, PHASES 2.5) — một khai báo `defineAction` sinh route HTTP + mô tả OpenAPI; registry dùng chung
  * cho MCP (2.12), CLI. Runtime làm thay handler các bước ACTION §4:
  *   quyền → kiểm input (zod) → idempotency (action_requests) → mở giao dịch → handler → bằng chứng (audit_logs) → lưu phản hồi
- *   → commit, hoặc rollback khi dry-run → { ok, data, meta: { requestId, dryRun?, idempotency? } }.
+ *   → commit, hoặc rollback khi dry-run → { ok, data, meta: { requestId, dryRun?, idempotency?, receipt? } }.
+ * Bằng chứng (bizcity_evidence@1): action ghi chạy thật → đúng một bản ghi audit_logs (kể cả khi lỗi nghiệp vụ, ở giao dịch riêng),
+ * biên nhận meta.receipt = { evidenceId, hash, at }; gửi lặp trả lại biên nhận lần đầu.
  * Handler không gọi requirePermission, writeAudit, reply.status, không tự mở giao dịch (ACTION §4).
  *
  * Idempotency (§8): header `Idempotency-Key` (8–128 ký tự). Dòng action_requests ghi trong CÙNG giao dịch với handler: lỗi thì
@@ -17,12 +19,12 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
 import { z } from 'zod';
-import type { ErrorCode } from '@ketoan/contracts';
+import { ERROR_CODES, type ErrorCode } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
-import { writeAudit } from './audit.js';
-import { Errors } from './errors.js';
+import { writeEvidence, type EvidenceEntry, type EvidenceReceipt } from './audit.js';
+import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
 import type { AuthContext, Permission } from './auth.js';
 
@@ -115,7 +117,8 @@ export interface ActionCall {
 export interface ActionResult<T = unknown> {
   data: T;
   status: number;
-  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed' };
+  /** receipt: biên nhận bằng chứng (bizcity_evidence@1 §3) — có với action ghi chạy thật, kể cả khi gửi lặp. */
+  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt };
 }
 
 /** Chạy một action theo ACTION §4. Dùng chung cho HTTP và (sau này) MCP, CLI. */
@@ -136,8 +139,19 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
   const status = def.expose.http?.status ?? 200;
   const meta: ActionResult['meta'] = { requestId: call.requestId };
   const tenantId = auth?.tenantId ?? '';
-  const hash = key ? requestHash(input) : '';
+  const inputHash = def.effect === 'write' ? requestHash(input) : '';
   const notes: Record<string, unknown> = {};
+  // Bằng chứng (STD-EVD-1): action ghi chạy thật → đúng một bản ghi, thành công hay thất bại vì lỗi nghiệp vụ trong handler.
+  const evidenceOn = def.effect === 'write' && !dryRun && !!auth;
+  const objectType = def.evidence?.objectType ?? def.id.split('.')[1]!;
+  const evidence = (objectId: unknown, result: EvidenceEntry['result'], after: unknown): EvidenceEntry => {
+    const oid = objectId == null ? undefined : String(objectId);
+    return {
+      tenantId, actor: auth!.actor, actorKind: auth!.kind, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
+      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after,
+    };
+  };
+  let inHandler = false;
 
   try {
     return await db.transaction().execute(async (trx) => {
@@ -146,14 +160,19 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
         await trx.deleteFrom('action_requests').where('tenant_id', '=', tenantId).where('action_id', '=', def.id).where('idem_key', '=', key)
           .where('created_at', '<', sql<Date>`now() - interval '7 days'`).execute();
         const inserted = await trx.insertInto('action_requests')
-          .values({ tenant_id: tenantId, action_id: def.id, idem_key: key, request_hash: hash, actor: auth?.actor ?? 'public' })
+          .values({ tenant_id: tenantId, action_id: def.id, idem_key: key, request_hash: inputHash, actor: auth?.actor ?? 'public' })
           .onConflict((oc) => oc.columns(['tenant_id', 'action_id', 'idem_key']).doNothing())
           .returning('id').executeTakeFirst();
         if (!inserted) {
           const prev = await trx.selectFrom('action_requests').select(['request_hash', 'status_code', 'response'])
             .where('tenant_id', '=', tenantId).where('action_id', '=', def.id).where('idem_key', '=', key).executeTakeFirstOrThrow();
-          if (prev.request_hash !== hash) throw Errors.idempotencyConflict();
-          return { data: prev.response as z.infer<O>, status: prev.status_code, meta: { ...meta, idempotency: 'replayed' as const } };
+          if (prev.request_hash !== inputHash) throw Errors.idempotencyConflict();
+          // Gửi lặp không ghi bằng chứng mới: trả lại biên nhận của lần đầu.
+          const ev = await trx.selectFrom('audit_logs').select(['id', 'hash', 'created_at'])
+            .where('tenant_id', '=', tenantId).where('action', '=', def.id).where('idempotency_key', '=', key).where('result_ok', '=', true)
+            .orderBy('id', 'desc').executeTakeFirst();
+          const receipt = ev ? { evidenceId: ev.id, hash: ev.hash ?? '', at: new Date(ev.created_at).toISOString() } : undefined;
+          return { data: prev.response as z.infer<O>, status: prev.status_code, meta: { ...meta, idempotency: 'replayed' as const, ...(receipt ? { receipt } : {}) } };
         }
       }
       const ctx: ActionContext = {
@@ -169,6 +188,7 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
           return auth;
         },
       };
+      inHandler = true;
       const output = await def.handler(ctx, input);
       // STD-ACT-3: phản hồi đúng khuôn output — kiểm khi chạy test (CONF-RUN-3), không tốn ở bản chạy thật.
       if (env.NODE_ENV === 'test') {
@@ -176,22 +196,25 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
         if (!checked.success) throw new Error(`Action ${def.id} trả sai khuôn output: ${checked.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
       }
       if (dryRun) throw new DryRunRollback(output);
-      if (def.effect === 'write' && auth) {
+      const result = { data: output, status, meta };
+      if (evidenceOn) {
         const objectId = def.evidence?.objectId?.(input, output) ?? (output as { id?: unknown } | null)?.id;
-        await writeAudit(trx, {
-          tenantId, actor: auth.actor, action: def.id, objectType: def.evidence?.objectType ?? def.id.split('.')[1]!,
-          objectId: objectId == null ? undefined : String(objectId),
-          after: Object.keys(notes).length ? { input, notes, requestId: call.requestId } : { input, requestId: call.requestId },
-        });
+        result.meta = { ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
       }
       if (key) {
         await trx.updateTable('action_requests').set({ response: JSON.stringify(output ?? null), status_code: status })
           .where('tenant_id', '=', tenantId).where('action_id', '=', def.id).where('idem_key', '=', key).execute();
       }
-      return { data: output, status, meta };
+      return result;
     });
   } catch (err) {
     if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...meta, dryRun: true } };
+    // Thất bại trong handler: giao dịch đã huỷ → ghi bằng chứng "result_ok = false" ở giao dịch riêng. Ghi lỗi thì vẫn ném lỗi gốc.
+    if (inHandler && evidenceOn) {
+      const code = err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL;
+      await db.transaction().execute((trx) => writeEvidence(trx, evidence((input as { id?: unknown }).id, { ok: false, code }, { input, message: (err as Error).message })))
+        .catch(() => undefined);
+    }
     throw err;
   }
 }
