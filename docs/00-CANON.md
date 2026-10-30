@@ -64,6 +64,7 @@
 | `bizcity_posting_template@1` | [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) | **Đề xuất** — gói định khoản theo ngành, marketplace ([standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md)) | `posting_reasons`, `account-resolver.ts`; kiểm SC-TPL-1 |
 | `bizcity_mcp@1` | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) | **Đề xuất** — công cụ MCP cho Cell / chatbot; hồ sơ của chuẩn MCP hệ sinh thái ([standard/CELL-CONNECT.md](standard/CELL-CONNECT.md)) | `modules/system/mcp.routes.ts` (PHASES 2.11–2.12) |
 | `bizcity_domain@1` | [contracts/BIZCITY-DOMAIN-v1.md](contracts/BIZCITY-DOMAIN-v1.md) | Chấp nhận — bất biến kế toán (Domain Contract, lớp 1/4 của [CONG-BO-KIEN-TRUC](CONG-BO-KIEN-TRUC.md)); đổi = K3 + ADR | trigger; DG-LEDGER-*, DG-EVENT-*; `assertLedgerInvariants` |
+| `bizcity_compliance@1` | [contracts/BIZCITY-COMPLIANCE-v1.md](contracts/BIZCITY-COMPLIANCE-v1.md) | Chấp nhận — ma trận tuân thủ bắt buộc STD-CMP-1..9, ma trận pháp lý; trạng thái tính tự động trên bảng điểm | [standard/compliance-matrix.json](standard/compliance-matrix.json); kiểm SC-CMP-1 |
 | `bizcity_errors@1` | [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) | Chấp nhận — danh mục mã lỗi, thông báo, gợi ý (R-ERR) | `packages/contracts/src/errors.ts`; kiểm SC-ERR-1 |
 | `bizcity_preset@1` | [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) | Chấp nhận — gói cài nhanh theo ngành, dữ liệu mẫu hư cấu | `presets/`, `scripts/cai-preset.mjs`; kiểm SC-PRESET-1 |
 | ~~`bizcity_workflow@1`~~ | [workflows/README.md](workflows/README.md) | Gộp vào `bizcity_document@1` §5 (năng lực `documents.workflow`) | — |
@@ -94,6 +95,9 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | `adapters/cell`, kết nối Hub / Cell | `standard/CELL-CONNECT.md`, `standard/CHANNEL-GATEWAY-PORT.md` |
 | Bất kỳ tệp Kernel (RULE-KERNEL §1) | ghi mức K0–K3 trong PR; K2+ thêm mục "Thay đổi định khoản" trong `CHANGELOG.md` |
 | Thay đổi người dùng thấy được | `CHANGELOG.md` mục `[Chưa phát hành]` (R-REL-2) |
+| Thêm / đổi yêu cầu tuân thủ, tín hiệu thực thi | [contracts/BIZCITY-COMPLIANCE-v1.md](contracts/BIZCITY-COMPLIANCE-v1.md) §2 + [standard/compliance-matrix.json](standard/compliance-matrix.json) cùng PR (SC-CMP-1) |
+| Thêm cách thực thi cho nguyên tắc AP-* | `bizcity-standard.json#principles[].enforcedBy` (SC-CMP-2; nợ đã hết → `--update-baseline`) |
+| Thêm migration | tệp mới số kế tiếp; chạy `scripts/kiem-nang-cap.sh` khi đổi bảng có dữ liệu; khoá checksum khi phát hành (`--update-lock`, R-DB-15) |
 | Thêm / đổi mã lỗi, thông báo, gợi ý | `packages/contracts/src/errors.ts` (ERROR_CATALOG) + [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) §3 + `bizcity-standard.json#errorCodes` (SC-ERR-1, SC-CON-6) |
 | Thêm số đo, trường log, cảnh báo, dashboard | [ops/OBSERVABILITY.md](ops/OBSERVABILITY.md) §2–§4 + `infrastructure/monitoring/` (`prometheus/alerts.yml`, `grafana/dashboards/`) |
 | Thêm / sửa preset cài nhanh | `presets/<id>/` + [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) §4 (SC-PRESET-1, `test/preset.test.ts`) |

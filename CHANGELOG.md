@@ -62,7 +62,19 @@ Mỗi bản ghi đủ sáu mục:
   - công cụ sinh tự động từ action, chỉ hiện công cụ người gọi có quyền;
   - ghi qua AI **luôn phải xem trước rồi người dùng xác nhận** (`confirm_token` một lần, 15 phút; migration `0037_mcp_xac_nhan.sql`);
   - bằng chứng ghi rõ "AI làm thay người dùng nào, qua kênh nào".
-- **Bản công bố kiến trúc** (`docs/CONG-BO-KIEN-TRUC.md`, thiết kế: Johnny Chu):
+- **Tuyên bố tối thượng và 7 nguyên tắc kiến trúc** (Johnny Chu – Chu Hoàng Anh):
+  - tuyên bố: SQL minh bạch, Accounting Core ổn định, cộng đồng tự do phát triển module nhưng không được thay đổi sự thật kế toán;
+  - nguyên tắc AP-1..AP-7 khoá trong `bizcity-standard.json#principles`. Mỗi nguyên tắc trỏ tới check thực thi (SC-CMP-2). AP-6 là nợ đã biết, chờ outbox.
+- **Ba lớp kiểm soát** Domain / Event / Compliance:
+  - hợp đồng mới `bizcity_compliance@1`: 9 yêu cầu STD-CMP + ma trận pháp lý Việt Nam;
+  - **ma trận tuân thủ tính tự động** trên bảng điểm từ `docs/standard/compliance-matrix.json` (SC-CMP-1). Ngày 2026-10-30: 59% (3 đạt, 4 một phần, 2 thiếu).
+- **ADR-0007 chấp nhận: không dùng Prisma.** ADR-0008 chốt cây thư mục lean: `packages/kernel` một gói, `contracts/` theo ba lớp kiểm soát, sự kiện là gói Platform.
+- **Migration** (R-DB-14..19):
+  - SQL là nguồn sự thật;
+  - migration đã phát hành bất biến (checksum);
+  - `scripts/kiem-nang-cap.sh` + job CI `migrate-upgrade`: thử migration trên CSDL có dữ liệu sổ của bản phát hành trước;
+  - migration do AI sinh không chạy production khi chưa kiểm + duyệt.
+- **Bản công bố kiến trúc** (`docs/CONG-BO-KIEN-TRUC.md`, thiết kế: Johnny Chu – Chu Hoàng Anh):
   - 4 lớp hợp đồng: Domain, Capability, MCP Tool, Extension;
   - trình tự một lệnh ghi; đối chiếu mô hình 10 bước; mức ưu tiên P0–P3;
   - luật bắt buộc và checklist nhận việc 3 giai đoạn (G1–G3), kèm mẫu issue "Nhận việc".
@@ -104,6 +116,10 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
+  - mọi bản trước commit `ccfc341` (gồm `main` 23a834c) **không cài mới được trên CSDL sạch**: code dùng `users.session_version`, `products.parent_manual` khi chưa có migration;
+  - nhánh này sửa bằng migration 0029, 0033 và chặn tái phát bằng SC-DATA-7;
+  - bản phát hành đầu tiên từ nhánh này là mốc nâng cấp đầu tiên dùng được.
 - Lỗi do trigger bảo vệ sổ / bằng chứng ném ra (sửa, xoá bút toán; bút toán không cân) trước đây trả **500 Lỗi hệ thống**; nay trả `CONFLICT` (reason `LEDGER_APPEND_ONLY`) hoặc `UNBALANCED_ENTRY` kèm câu tiếng Việt của trigger (R-ERR-8).
 - Migration `0033_ma_hang_cha_sua_tay.sql`: cột `products.parent_manual` code đã dùng nhưng chưa có migration — thêm / sửa mặt hàng (và Mua hàng, ĐVT, tồn max dùng tới) báo "column parent_manual does not exist".
 - Vé đăng nhập cấp trước khi có cơ chế thu hồi phiên (không ghi `sv`) bị từ chối ngay: code coi thiếu `sv` = 1 trong khi `users.session_version` mặc định 0 (migration 0029). Nay thiếu `sv` = 0, dùng được tới lần thu hồi đầu như thiết kế.

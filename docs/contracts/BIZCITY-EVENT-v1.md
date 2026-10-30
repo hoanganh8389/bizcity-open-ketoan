@@ -2,6 +2,12 @@
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
 > **Năng lực:** `events.outbox`, `events.subscribe`, `events.clock`
+> **Lớp kiểm soát 2/3** của [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md) (Domain · **Event** · Compliance). Sự kiện được phát, phiên bản (`version`), cấu trúc payload (schema theo `type` + `version`), nguồn phát (`source`), ý nghĩa nghiệp vụ.
+> - **AP-2:** sự kiện **báo** việc đã xảy ra sau commit, không dùng để ra lệnh ghi sổ.
+> - **AP-6:** phát lại được; consumer idempotent theo `event_id`; không giả định exactly-once.
+> - **R-OUTBOX:** sự kiện ghi cùng giao dịch, gửi sau commit.
+>
+> Nghiệp vụ nào đồng bộ, nghiệp vụ nào theo sự kiện: [CONG-BO-KIEN-TRUC §3.2](../CONG-BO-KIEN-TRUC.md).
 > **Đừng nhầm:** tên này trước 2026-10-29 dùng cho khuôn nạp sổ, nay là [`bizcity_ledger_intake@1`](BIZCITY-LEDGER-INTAKE-v1.md).
 
 ## 1. Hai khái niệm, hai từ

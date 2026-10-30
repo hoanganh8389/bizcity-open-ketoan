@@ -293,6 +293,15 @@
             "wrong:apps/api/src/phan-he/beta/y.ts"
           ]
         },
+        "SC-CMP-1": {
+          "findings": 4,
+          "keys": [
+            "id:1",
+            "check:C-2:SC-KHONG-CO",
+            "cap:C-2:khong.co",
+            "signals:C-2"
+          ]
+        },
         "SC-PRESET-1": {
           "min": 3,
           "keys": [

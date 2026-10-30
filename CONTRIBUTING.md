@@ -2,6 +2,8 @@
 
 Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một dòng code sai có thể làm sai sổ của doanh nghiệp. Quy trình dưới đây chặt hơn một dự án web thường. Làm đúng thì PR vào nhanh.
 
+> **Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.** (Johnny Chu – Chu Hoàng Anh, [Bản công bố kiến trúc §0](docs/CONG-BO-KIEN-TRUC.md))
+
 > Người mới: đọc [docs/00-CANON.md](docs/00-CANON.md) (luật), [docs/architecture/README.md](docs/architecture/README.md) (kiến trúc), [docs/phat-trien.md](docs/phat-trien.md) (chạy máy dev). Agent AI: [AGENTS.md](AGENTS.md).
 
 ## 1. Bốn câu không thương lượng

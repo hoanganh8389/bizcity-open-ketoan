@@ -1,47 +1,73 @@
 # Bản công bố kiến trúc open-ketoan framework
 
-> **Phiên bản:** 1.0 · 2026-10-30
-> **Thiết kế kiến trúc:** **Johnny Chu.** Quyền tác giả đối với kiến trúc open-ketoan framework và bộ tài liệu này thuộc về tác giả, theo công bố của chủ dự án.
+> **Phiên bản:** 1.1 · 2026-10-30
+> **Thiết kế kiến trúc:** **Johnny Chu – Chu Hoàng Anh.** Quyền tác giả đối với kiến trúc open-ketoan framework (nền tảng lấy Accounting Core ổn định, module mở rộng) và bộ tài liệu này thuộc về tác giả, theo công bố của chủ dự án.
 > **Mã nguồn:** giấy phép sử dụng mã nguồn công bố riêng ở tệp `LICENSE`.
 >
 > Đây là văn bản **công bố** cho cộng đồng: kiến trúc gồm những lớp nào, luật nào bắt buộc, việc nào thuộc giai đoạn nào. Mọi đóng góp (người hay AI) phải tuân theo. Luật chi tiết ở [00-CANON.md](00-CANON.md); quy trình đóng góp ở [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## 1. Tuyên bố
+## 0. Tuyên bố tối thượng
 
-**Accounting Core ổn định, module mở rộng.**
+> **Mục tiêu: SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán.**
+>
+> **Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.**
+>
+> — Johnny Chu – Chu Hoàng Anh
 
-open-ketoan là nền tảng ứng dụng doanh nghiệp lấy **sổ cái kế toán** làm lõi bất biến:
+Mọi luật, hợp đồng, check trong repo là cách thực thi câu trên:
 - **mọi kênh:** giao diện, API, POS, WordPress, Bizcity Cell, Claude / ChatGPT qua MCP;
 - **mọi module:** bán hàng, mua hàng, kho, thuế, nhân sự, sản xuất, dự án, CRM, trợ lý AI.
 
-Tất cả chỉ chạm tiền qua **một luồng**, và luồng đó quy về **Domain Contract**. Module mở rộng được vô hạn. Lõi kế toán chỉ đổi theo quy trình Kernel (K0–K3), không bao giờ vì tiện cho một module.
+Tất cả chạm tiền qua **một luồng** và quy về ba lớp kiểm soát (§2). Module mở rộng được vô hạn. Lõi kế toán chỉ đổi theo quy trình Kernel (K0–K3), không bao giờ vì tiện cho một module.
+
+## 1. Bảy nguyên tắc kiến trúc (khoá vào Standard)
+
+Bảy nguyên tắc do Johnny Chu – Chu Hoàng Anh yêu cầu, khoá trong `bizcity-standard.json#principles`. Mỗi nguyên tắc **phải** có cách thực thi trong runtime hoặc CI (AP-7). Nguyên tắc chỉ có trên giấy là nợ.
+
+| Mã | Nguyên tắc | Nghĩa | Thực thi bằng |
+|---|---|---|---|
+| **AP-1** | **Core owns accounting truth** | Chỉ Accounting Core được quyết định việc ghi sổ chính thức | một cửa ghi (STD-DOM-5): SC-KERNEL-1..3, SC-MOD-2; vai trò CSDL `ketoan_app` (DG-SEC-1); trigger sổ |
+| **AP-2** | **Commands request, Events report** | Command (action) **yêu cầu** hành động, có thể bị từ chối; Event **phản ánh** việc đã xảy ra, không được dùng để ra lệnh ghi sổ | `defineAction` (lệnh, có quyền, idempotency); `bizcity_event@1` (sự kiện sau commit, R-OUTBOX); SC-EVT-1 |
+| **AP-3** | **Contracts before code** | Module khai và tuân hợp đồng trước khi tích hợp | manifest `bizcity.module.json` (SC-CON-2); `defineAction` từ chối khai thiếu; `selfcheck --module` |
+| **AP-4** | **Immutable posted history** | Không sửa âm thầm lịch sử hạch toán đã ghi; sửa sai bằng nghiệp vụ điều chỉnh hợp lệ (đảo + ghi mới) | trigger chỉ thêm (DG-DB-2); DG-LEDGER-3; bằng chứng chuỗi băm (DG-EVD-1) |
+| **AP-5** | **Version everything** | Phiên bản schema, domain contract, chính sách kế toán, nguồn phát phải truy nguyên được | migration khoá checksum (SC-DATA-2); `bizcity_*@N`; sự việc có `version`; sự kiện có `version` + `source`; chính sách kế toán có phiên bản (STD-CMP-9 — **chưa đủ**) |
+| **AP-6** | **Events are replayable, consumers are idempotent** | Có cơ chế phát lại sự kiện, xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end | R-OUTBOX-3..7; consumer khoá `(consumer, event_id)` — **chưa có code** (G2-05) |
+| **AP-7** | **Compliance is enforced, not documented only** | Bất biến được kiểm trong runtime và CI, không chỉ viết trong tài liệu | ma trận tuân thủ tính tự động trên bảng điểm ([compliance-matrix.json](standard/compliance-matrix.json)); `assertLedgerInvariants` sau mọi tệp test; tự chẩn đoán chặn khoá kỳ |
+
+## 2. Ba lớp kiểm soát: điều gì là đúng
+
+| Lớp | Quy định | Hợp đồng | Bản máy đọc / thực thi | Ai được đổi |
+|---|---|---|---|---|
+| **Domain Contracts** | Một nghiệp vụ **được phép làm gì**, điều kiện thực hiện, những **bất biến** không được vi phạm (loại chứng từ, trạng thái, định khoản, đảo bút toán, kho, công nợ) | [`bizcity_domain@1`](contracts/BIZCITY-DOMAIN-v1.md) (STD-DOM-1..22) | trigger CSDL; DG-LEDGER-*, DG-EVENT-*; `assertLedgerInvariants` | nhóm Lõi, mức K3 + ADR |
+| **Event Contracts** | **Sự kiện** nào được phát, **phiên bản**, cấu trúc **payload**, **nguồn phát**, **ý nghĩa nghiệp vụ**; gửi ít nhất một lần, consumer idempotent | [`bizcity_event@1`](contracts/BIZCITY-EVENT-v1.md) + [R-OUTBOX](rules/RULE-INFRASTRUCTURE.md) | `coreEvents` trong `bizcity-standard.json`; manifest `events.emits / subscribes`; SC-EVT-1 | thêm sự kiện: minor; đổi payload = `version` mới |
+| **Compliance Contracts** | Yêu cầu tuân thủ **chế độ kế toán, chứng từ, sổ sách, chỉnh sửa, lưu trữ, kiểm toán** | [`bizcity_compliance@1`](contracts/BIZCITY-COMPLIANCE-v1.md) (STD-CMP-1..9) + ma trận pháp lý | [compliance-matrix.json](standard/compliance-matrix.json) → mục "Ma trận tuân thủ" trên bảng điểm; SC-CMP-1 | nới / bỏ yêu cầu: ADR + chủ dự án |
+
+### 2.0 Ba đường vào: ai gọi Core bằng gì
+
+Ba đường vào đều phải đi qua ba lớp kiểm soát ở trên.
+
+| Đường vào | Nói gì | Hợp đồng | Công bố máy đọc ở | Kiểm bằng | Ai được đổi |
+|---|---|---|---|---|---|
+| **Capability Contract** (command) | Mỗi năng lực công bố: **input schema, output schema, quyền, tác dụng phụ, idempotency, loại bằng chứng trả về**, mã lỗi, chạy thử | [`bizcity_action@1`](contracts/BIZCITY-ACTION-v1.md) + [`bizcity_errors@1`](contracts/BIZCITY-ERRORS-v1.md) | `GET /api/v1/system/capabilities` (`actions[]`: `inputSchema`, `outputSchema`, `permission`, `sideEffects`, `idempotency`, `evidence`) | `defineAction` từ chối khai thiếu lúc nạp; `test/actions.test.ts`; SC-ERR-1 | thêm: minor; đổi phá vỡ: major |
+| **MCP Tool Contract** | Công cụ cho AI: tên ổn định, mô tả cho LLM. Ghi sổ cần **quyền cụ thể + xem trước + người dùng xác nhận**, chờ duyệt khi cần | [`bizcity_mcp@1`](contracts/BIZCITY-MCP-v1.md) | `POST /mcp` → `tools/list` | `test/mcp.test.ts` (CONF-MCP-1, -3, -4) | thêm công cụ: minor; đổi input / output = công cụ mới |
+| **Extension Contract** | Cộng đồng thêm module bán hàng, kho, thuế, CRM, trợ lý AI **mà không sửa ledger engine**: slot giao diện, hook, gọi action, nghe sự kiện | [`bizcity_extension@1`](contracts/BIZCITY-EXTENSION-v1.md) + [`bizcity_module@1`](contracts/BIZCITY-MODULE-v1.md) | manifest `bizcity.module.json`; `extensionPoints` | SC-MOD-1..3, SC-CON-2, SC-LAYER-2 | người phụ trách module |
 
 ```mermaid
 flowchart LR
-  subgraph Kenh["Mọi kênh"]
-    UI["Giao diện"] --- API["HTTP API"] --- POS["POS / WooCommerce"] --- MCPc["AI qua MCP / Cell"]
+  subgraph Vao["Đường vào"]
+    CAP["Capability (command)"] --- TOOL["MCP Tool (AI)"] --- EXT["Extension (module)"]
   end
-  subgraph Mod["Mọi module (Extension Contract)"]
-    BH["bán hàng"] --- KHO["kho"] --- THUE["thuế"] --- NS["nhân sự"] --- CRM["CRM"] --- AIa["trợ lý AI"]
+  subgraph KS["Ba lớp kiểm soát"]
+    DOM["Domain Contracts<br/>được làm gì · bất biến"]
+    EVT["Event Contracts<br/>đã xảy ra gì · phiên bản · nguồn"]
+    CMP["Compliance Contracts<br/>chế độ · chứng từ · lưu trữ · kiểm toán"]
   end
-  CAP["Capability Contract<br/>action: input/output schema · quyền · tác dụng phụ · idempotency · bằng chứng"]
-  TOOL["MCP Tool Contract<br/>công cụ AI · xác nhận trước khi ghi"]
-  DOM["Domain Contract<br/>bất biến kế toán: sự việc · định khoản · đảo · kho · công nợ"]
-  CORE[("Accounting Core<br/>sổ cái chỉ thêm")]
-  Kenh --> CAP
-  MCPc --> TOOL --> CAP
-  Mod --> CAP
-  CAP --> DOM --> CORE
+  CORE[("Accounting Core<br/>sổ cái chỉ thêm · SQL minh bạch")]
+  Vao -->|"command"| DOM --> CORE
+  CORE -->|"sau commit, qua outbox"| EVT --> Vao
+  CMP -. "kiểm trong runtime + CI" .- DOM
+  CMP -. "kiểm" .- EVT
 ```
-
-## 2. Bốn lớp hợp đồng
-
-| Lớp | Nói gì | Hợp đồng | Công bố máy đọc ở | Kiểm bằng | Ai được đổi |
-|---|---|---|---|---|---|
-| **1. Domain Contract** | Bất biến kế toán: loại chứng từ, trạng thái, định khoản, đảo bút toán, kho, công nợ. **Dev / AI không được tự ý phá vỡ** | [`bizcity_domain@1`](contracts/BIZCITY-DOMAIN-v1.md) (STD-DOM-1..22) | trigger CSDL; `bizcity-standard.json` (`ledger.doctype.*`) | trigger; DG-LEDGER-*, DG-EVENT-*, DG-EVD-1; `assertLedgerInvariants` sau mọi tệp test | chỉ nhóm Lõi, mức K3 + ADR |
-| **2. Capability Contract** | Mỗi năng lực công bố: **input schema, output schema, quyền, tác dụng phụ, idempotency, loại bằng chứng trả về**, mã lỗi, chạy thử | [`bizcity_action@1`](contracts/BIZCITY-ACTION-v1.md) + [`bizcity_errors@1`](contracts/BIZCITY-ERRORS-v1.md) | `GET /api/v1/system/capabilities` (`actions[]` có `inputSchema`, `outputSchema`, `permission`, `sideEffects`, `idempotency`, `evidence`) | `defineAction` từ chối khai thiếu lúc nạp; `test/actions.test.ts`; SC-ERR-1 | thêm: minor; đổi phá vỡ: major |
-| **3. MCP Tool Contract** | Công cụ cho AI: tên ổn định, mô tả cho LLM. Ghi sổ cần **quyền cụ thể + xem trước + người dùng xác nhận**, chờ duyệt khi cần | [`bizcity_mcp@1`](contracts/BIZCITY-MCP-v1.md) | `POST /mcp` → `tools/list` | `test/mcp.test.ts` (CONF-MCP-1, -3, -4) | thêm công cụ: minor; đổi input / output = công cụ mới |
-| **4. Extension Contract** | Cộng đồng thêm module bán hàng, kho, thuế, CRM, trợ lý AI **mà không sửa ledger engine**: slot giao diện, hook, gọi action, nghe sự kiện | [`bizcity_extension@1`](contracts/BIZCITY-EXTENSION-v1.md) + [`bizcity_module@1`](contracts/BIZCITY-MODULE-v1.md) | manifest `bizcity.module.json`; `extensionPoints` trong `bizcity-standard.json` | SC-MOD-1..3, SC-CON-2, SC-LAYER-2 | người phụ trách module |
 
 ### 2.1 Bộ công cụ kế toán chuẩn cho AI (MCP Tool Contract)
 
@@ -93,6 +119,22 @@ Mô hình "10 bước" (Client → Kong → Keycloak → handler → Redis → P
 | 9. Phát sự kiện NATS | outbox; `adapters/nats` khi nhiều consumer (P2) | không | dùng transactional outbox để không mất sự kiện |
 | 10. Trả JSON | `{ ok, data, meta: { requestId, receipt } }` | **có** | sự kiện có thể xử lý xong sau khi đã trả phản hồi |
 
+### 3.2 Nghiệp vụ nào đồng bộ, nghiệp vụ nào theo sự kiện
+
+Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID. Sự kiện chỉ dùng cho việc **được phép trễ** và **không quyết định** sự thật kế toán.
+
+| Nghiệp vụ | Cơ chế | Vì sao | Ở open-ketoan |
+|---|---|---|---|
+| Ghi sổ kế toán | Giao dịch ACID | Phải nhất quán tức thời | cửa nạp sổ + `ledgerService` trong một giao dịch |
+| Cân đối Nợ / Có | Domain validation **+** ràng buộc CSDL | Không chấp nhận bút toán mất cân đối | `validateLines()` + trigger `assert_entry_balanced` (R-DB-18) |
+| Khoá kỳ | Giao dịch + Period Lock | Không để ghi sổ trái quy tắc | kiểm khoá trong giao dịch ghi; chặn khoá khi sổ lệch (STD-CMP-4) |
+| Điều chỉnh chứng từ | Command + chứng từ điều chỉnh | Giữ dấu vết, cơ sở pháp lý | phiên bản mới → đảo + ghi mới (STD-DOM-11) |
+| Đồng bộ CRM | Event-driven | Chấp nhận xử lý trễ | sự kiện `bizcity.masterdata.*` qua outbox |
+| Gửi thông báo | Event-driven | Không ảnh hưởng việc ghi sổ | `notify.inapp`; Cell / Zalo qua sự kiện |
+| Cập nhật dashboard | Event-driven hoặc đọc CSDL | Tuỳ yêu cầu độ mới; **số dư luôn đọc thẳng sổ** (R-CACHE-2) | `ledger.query`, `accounting.balance.get` |
+| AI Agent xử lý nghiệp vụ | MCP / Command Contract | AI không được tự xác nhận kết quả kế toán | `POST /mcp`: xem trước + người dùng xác nhận + chờ duyệt (STD-MCP-4, -6) |
+| Module cộng đồng | Contract + đăng ký nghe sự kiện | Không cần truy cập CSDL lõi | `@bizcity/module-sdk`, `bizcity_extension@1`, `events.subscribe` |
+
 ## 4. Mức ưu tiên hạ tầng
 
 | Hạng mục | Ưu tiên | Quyết định | open-ketoan hôm nay |
@@ -108,6 +150,22 @@ Mô hình "10 bước" (Client → Kong → Keycloak → handler → Redis → P
 | Kong + Keycloak | P2 | Khi quản trị API và danh tính phức tạp | chưa (G3-08) |
 | Kubernetes | P3 | Khi có nhu cầu scale / HA thực tế | để sau (G3-09) |
 
+### 4.1 Ma trận tuân thủ bắt buộc
+
+Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **59%**.
+
+| Mã | Yêu cầu | Rủi ro nếu thiết kế sai | Quy tắc Bizcity bắt buộc | Trạng thái |
+|---|---|---|---|---|
+| C-1 | Chứng từ hợp lệ | Sự kiện tạo giao dịch không có chứng từ | Bút toán phải có nguồn chứng từ và căn cứ hạch toán | ◐ một phần (nợ A-01 một cửa ghi) |
+| C-2 | Ghi sổ chính xác | Hai consumer ghi trùng nghiệp vụ | Idempotency và uniqueness tại CSDL | ✔ đạt |
+| C-3 | Sửa chữa sổ | Consumer cập nhật trực tiếp bút toán cũ | Chứng từ điều chỉnh, giữ dấu vết | ✔ đạt |
+| C-4 | Khoá kỳ kế toán | Sự kiện đến chậm ghi vào kỳ đã khoá | Period Lock Gate | ✔ đạt |
+| C-5 | Nhất quán dữ liệu | Sự kiện phát ra khi giao dịch chưa commit | Transactional Outbox | ✘ thiếu (G2-05) |
+| C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (thiếu PITR, xác nhận thời hạn) |
+| C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17, A-01) |
+| C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ◐ một phần (thiếu `correlation_id`) |
+| C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✘ thiếu (G2-09) |
+
 ## 5. Luật bắt buộc cho người đóng góp
 
 | Nhóm | Luật | Ở đâu |
@@ -122,6 +180,8 @@ Mô hình "10 bước" (Client → Kong → Keycloak → handler → Redis → P
 | Sao lưu | kiểm khôi phục trước khi tin bản sao lưu | [RULE-INFRASTRUCTURE §3](rules/RULE-INFRASTRUCTURE.md) |
 | Lỗi, quan sát | mã lỗi trong danh mục; `requestId`; không dữ liệu cá nhân trong log | [BIZCITY-ERRORS-v1](contracts/BIZCITY-ERRORS-v1.md), [OBSERVABILITY](ops/OBSERVABILITY.md) |
 | Bằng chứng tự động | PR chạy `selfcheck`, `kiem-chuan`, typecheck, test PostgreSQL thật | [CONTRIBUTING §5](../CONTRIBUTING.md) |
+| Nguyên tắc | 7 nguyên tắc AP-1..AP-7 (§1); nguyên tắc nào chưa có cách thực thi là nợ | `bizcity-standard.json#principles` |
+| CSDL | SQL là nguồn sự thật; migration đã phát hành bất biến, kiểm trên CSDL sạch + nâng cấp; migration do AI sinh không chạy production khi chưa kiểm + duyệt | [RULE-DATABASE](rules/RULE-DATABASE.md) R-DB-14..19 |
 
 ## 6. Checklist chuẩn hoá theo giai đoạn (nhận việc)
 
@@ -150,8 +210,9 @@ Trạng thái chính thức tính tự động bằng bảng điểm lộ trình
 | G1-10 | SDK TypeScript `@bizcity/module-sdk` | `packages/module-sdk/package.json`; ca chuẩn hợp đồng chạy bằng SDK | **một phần** (bản nháp API) | 1.5, 3.1 | _mở_ |
 | G1-11 | Contract tests: bộ kiểm chuẩn SC-* / DG-*, tự kiểm, bảng điểm | `selfcheck --strict` đạt trong CI | **có** | 0.5 | — |
 | G1-12 | Cell 1API: khoá `biz-…`, kết nối bốn bước, PKCE | đường `/api/v1/cell/mcp` chạy với Hub | **chưa** (cần Hub) | 5.3 | _mở_ |
+| G1-13 | **Kiểm migration**: khoá checksum khi phát hành; thử trên CSDL sạch **và** nâng cấp từ bản phát hành trước có dữ liệu sổ | SC-DATA-2; job CI `test` + `migrate-upgrade`; `scripts/kiem-nang-cap.sh` đạt | **có** (mốc bắt đầu từ tag v* đầu tiên) | — | — |
 
-> **Cần chủ dự án chốt:** bản yêu cầu gốc ghi "PostgreSQL + **Prisma**". Code đang dùng **Kysely + SQL migration**, và ADR-0007 đề xuất giữ như vậy. Lý do: trigger chỉ thêm, cân Nợ = Có, chuỗi băm, RLS cần kiểm soát SQL trực tiếp; Prisma tự sinh migration và che SQL. Muốn đổi sang Prisma thì cần một ADR mới (mức K3).
+> **Đã chốt (2026-10-30, Johnny Chu):** **không dùng Prisma**. Giữ Kysely + SQL migration ([ADR-0007](adr/ADR-0007-goi-chia-se-va-ha-tang.md) chấp nhận; R-DB-14: SQL là nguồn sự thật của schema). Trigger chỉ thêm, cân Nợ = Có, chuỗi băm, RLS cần kiểm soát SQL trực tiếp.
 
 ### Giai đoạn 2: Hợp đồng, AI, sự kiện, giám sát
 
@@ -165,6 +226,8 @@ Trạng thái chính thức tính tự động bằng bảng điểm lộ trình
 | G2-06 | Đệm cho Accounting Core có huỷ theo phiên bản cấu hình; `adapters/redis` | R-CACHE-3..6 có test; chạy đúng khi tắt Redis | **chưa** | 5.9 | _mở_ |
 | G2-07 | Prometheus + Grafana + cảnh báo cơ bản | `infrastructure/monitoring/` chạy với API thật | **có** (cấu hình đã kiểm) | 2.13 | — |
 | G2-08 | Mã lỗi chuẩn + quan sát (request id, log, số đo) | SC-ERR-1, `test/observability.test.ts` | **có** | 2.13 | — |
+| G2-09 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): `policy_version`, `effective_from`, `posting_log.policy_version` | C-9 của ma trận tuân thủ đạt ([COMPLIANCE §4](contracts/BIZCITY-COMPLIANCE-v1.md)) | **chưa** | 3.x | _mở_ |
+| G2-10 | Ba lớp kiểm soát + ma trận tuân thủ tính tự động | `bizcity_compliance@1`, SC-CMP-1, mục ma trận trên bảng điểm | **có** | — | — |
 
 ### Giai đoạn 3: Hệ sinh thái
 

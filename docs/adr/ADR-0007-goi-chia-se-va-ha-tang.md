@@ -1,7 +1,7 @@
 # ADR-0007 · Chuẩn hoá gói chia sẻ và hạ tầng: học từ bộ 27 gói tham chiếu, giữ sổ cái làm lõi
 
-- Trạng thái: Đề xuất
-- Ngày: 2026-10-30 · Người quyết: chủ dự án (chờ duyệt)
+- Trạng thái: Chấp nhận (2026-10-30 — chủ dự án chốt: không dùng Prisma, giữ Kysely + SQL migration)
+- Ngày: 2026-10-30 · Người quyết: chủ dự án (Johnny Chu)
 - Luật / hợp đồng liên quan: [TARGET-LAYOUT](../standard/TARGET-LAYOUT.md) (LAYOUT-1..6), [REUSE-MAP](../standard/REUSE-MAP.md), ADR-0001, ADR-0005, [BIZCITY-ERRORS-v1](../contracts/BIZCITY-ERRORS-v1.md), [OBSERVABILITY](../ops/OBSERVABILITY.md), R-ONE-VERTICAL-CELL
 
 ## Bối cảnh

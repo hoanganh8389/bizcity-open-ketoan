@@ -1,0 +1,4 @@
+{ "contract": "bizcity_compliance_matrix@1", "updated": "2026-10-30", "note": "Ca tự kiểm SC-CMP-1.", "rows": [
+  { "id": "C-2", "std": "STD-CMP-1", "requirement": "x", "risk": "y", "rule": "z", "done": [{ "check": "SC-KHONG-CO" }, { "capability": "khong.co" }] },
+  { "id": "C-2", "std": "STD-CMP-2", "requirement": "x", "risk": "y", "rule": "z", "done": [] }
+] }

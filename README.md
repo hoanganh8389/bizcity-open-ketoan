@@ -6,7 +6,8 @@
 - **Viết module bằng người hoặc AI (vibecode):** theo [Bizcity Framework Standard v1](docs/standard/README.md) (7 hợp đồng), tự kiểm bằng một lệnh.
 - **Kế toán Việt Nam:** hệ thống tài khoản TT99, thuế GTGT / TNDN, hoá đơn điện tử, gói định khoản theo ngành.
 
-> **Kiến trúc do Johnny Chu thiết kế:** Accounting Core ổn định, module mở rộng. Bốn lớp hợp đồng (Domain, Capability, MCP Tool, Extension), luật bắt buộc và checklist nhận việc ở **[Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)**.
+> **Kiến trúc do Johnny Chu – Chu Hoàng Anh thiết kế.** *SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán. Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.*
+> Bảy nguyên tắc kiến trúc, ba lớp kiểm soát (Domain · Event · Compliance), ba đường vào (Capability · MCP Tool · Extension), ma trận tuân thủ và checklist nhận việc: **[Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)**.
 
 > Stack: Node 22 · TypeScript · Fastify 5 · zod · Kysely · PostgreSQL 16 · React 18 + Vite · Docker Compose. Giám sát tuỳ chọn: Prometheus · Grafana · Loki.
 

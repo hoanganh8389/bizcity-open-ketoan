@@ -2,6 +2,10 @@
 
 Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng doanh nghiệp, hạt nhân là sổ cái kế toán. Trước khi sửa code, đọc [docs/00-CANON.md](docs/00-CANON.md). Viết module mới: theo [docs/standard/README.md](docs/standard/README.md).
 
+> **Tuyên bố tối thượng (Johnny Chu – Chu Hoàng Anh):** SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán. **Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.**
+>
+> Bảy nguyên tắc AP-1..AP-7, ba lớp kiểm soát (Domain, Event, Compliance), ma trận tuân thủ: [docs/CONG-BO-KIEN-TRUC.md](docs/CONG-BO-KIEN-TRUC.md). Không dùng Prisma; SQL là nguồn sự thật của schema (R-DB-14).
+
 ## Bốn câu không thương lượng
 
 1. Không sự việc (`accounting_events`), không bút toán.

@@ -1136,6 +1136,17 @@
           "message": "D phan-he/thue import D modules/reports → modules/ke-toan (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         }
       ]
+    },
+    "SC-CMP-2": {
+      "title": "Bảy nguyên tắc kiến trúc AP-1..AP-7 đều có cách thực thi (check có thật) — AP-7",
+      "ref": "AP-6 chờ transactional outbox + consumer idempotent (G2-05, PHASES 3, R-OUTBOX) — nợ có chủ, đã duyệt 2026-10-30",
+      "debts": [
+        {
+          "fp": "SC-CMP-2|docs/standard/bizcity-standard.json|unenforced:AP-6",
+          "file": "docs/standard/bizcity-standard.json",
+          "message": "AP-6 \"Events are replayable, consumers are idempotent\" chưa có cách thực thi (check) — nợ theo AP-7"
+        }
+      ]
     }
   }
 }

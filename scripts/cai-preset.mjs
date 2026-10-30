@@ -8,6 +8,7 @@
  *   node scripts/cai-preset.mjs thuong-mai-ban-le --api http://localhost:8088 --tenant demo --email admin@ketoan.local --password '…'
  *   node scripts/cai-preset.mjs thuong-mai-ban-le --api http://localhost:8088 --token <JWT>
  *   … --no-sample   chỉ cấu hình, không nạp dữ liệu mẫu      … --dry-run   chỉ in việc sẽ làm
+ *   … --skip-capabilities   bỏ kiểm /system/capabilities (Core cũ chưa có điểm này — scripts/kiem-nang-cap.sh dùng)
  * Mật khẩu có thể đặt ở biến BIZCITY_PASSWORD thay cho --password (không lưu vào lịch sử lệnh).
  */
 import fs from 'node:fs';
@@ -70,14 +71,17 @@ if (!token) {
 }
 
 // 1. Năng lực Core + phân hệ
-const cap = await http('GET', '/api/v1/system/capabilities');
-if (cap.status !== 200) { fail('đọc /system/capabilities', cap); process.exit(1); }
-const available = new Set(cap.json.data.capabilities.filter((c) => c.status === 'available').map((c) => c.id));
-const missing = preset.requires.capabilities.filter((c) => !available.has(c));
-if (missing.length) { console.error(`✘ Core chưa có năng lực: ${missing.join(', ')} — nâng cấp Core trước.`); process.exit(1); }
-const off = preset.modules.filter((m) => !cap.json.data.enabledModules.includes(m));
-console.log(`✔ Core ${cap.json.data.build.version}, Standard ${cap.json.data.standard.version}: đủ năng lực ${preset.requires.capabilities.join(', ')}`);
-if (off.length) console.log(`! Phân hệ chưa bật: ${off.join(', ')} — đặt ENABLED_MODULES=${preset.modules.join(',')} trong .env rồi khởi động lại api`);
+const cap = flag('--skip-capabilities') ? null : await http('GET', '/api/v1/system/capabilities');
+if (!cap) console.log('! Bỏ kiểm năng lực Core (--skip-capabilities)');
+else if (cap.status !== 200) { fail('đọc /system/capabilities', cap); process.exit(1); }
+if (cap) {
+  const available = new Set(cap.json.data.capabilities.filter((c) => c.status === 'available').map((c) => c.id));
+  const missing = preset.requires.capabilities.filter((c) => !available.has(c));
+  if (missing.length) { console.error(`✘ Core chưa có năng lực: ${missing.join(', ')} — nâng cấp Core trước.`); process.exit(1); }
+  const off = preset.modules.filter((m) => !cap.json.data.enabledModules.includes(m));
+  console.log(`✔ Core ${cap.json.data.build.version}, Standard ${cap.json.data.standard.version}: đủ năng lực ${preset.requires.capabilities.join(', ')}`);
+  if (off.length) console.log(`! Phân hệ chưa bật: ${off.join(', ')} — đặt ENABLED_MODULES=${preset.modules.join(',')} trong .env rồi khởi động lại api`);
+}
 if (preset.postingPack) console.log(`ℹ Gói định khoản ${preset.postingPack.id}: xem trước / cài ở màn Cấu hình định khoản (cài gói tự động: PHASES 3, templates.posting)`);
 
 const counts = { ok: 0, skipped: 0, failed: 0 };

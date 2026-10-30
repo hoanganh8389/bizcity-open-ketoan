@@ -15,6 +15,7 @@ bizcity-core/                       (repo open-ketoan sau khi tách)
 │   │   ├── ledger/                 sổ cái chỉ thêm, số dư ngày
 │   │   ├── periods/  accounts/  config/  tax/  closing/
 │   │   ├── subledgers/             công nợ, kho + giá vốn, hoá đơn
+│   │   ├── compliance/             cổng tuân thủ chạy thật: khoá kỳ, chính sách kế toán có phiên bản + ngày hiệu lực, lưu trữ
 │   │   ├── projections/            bảng tra cứu dựng lại được (dòng bán…)
 │   │   ├── seeds/                  TT200, tài khoản ngầm định, lý do
 │   │   └── public.ts               API công khai DUY NHẤT: submit, cancel, get, query
@@ -46,7 +47,13 @@ bizcity-core/                       (repo open-ketoan sau khi tách)
 │   └── web/                        vỏ React: đăng nhập, lưới ứng dụng, nạp web/ của module bật
 ├── templates/
 │   └── starter-module/             khuôn `bizcity module new` sinh ra
-├── contracts/                      *.schema.json máy đọc (sinh từ zod), bizcity-standard.json
+├── contracts/                      bản MÁY ĐỌC của ba lớp kiểm soát (ADR-0008); bản người đọc ở docs/contracts/
+│   ├── domain/                     bất biến, loại chứng từ, trạng thái (bizcity_domain@1)
+│   ├── commands/                   khai báo action / capability (bizcity_action@1), sinh từ zod
+│   ├── events/                     schema sự kiện theo type + version (bizcity_event@1), danh mục sinh tự động
+│   ├── compliance/                 ma trận tuân thủ, chính sách kế toán có phiên bản, lưu trữ, bằng chứng (bizcity_compliance@1)
+│   ├── extensions/                 manifest module, slot, hook (bizcity_module@1, bizcity_extension@1)
+│   └── bizcity-standard.json
 └── tests/
     ├── conformance/                bộ kiểm cài module (CONFORMANCE.md)
     └── kernel/                     624 phép thử hiện có + assertLedgerInvariants
