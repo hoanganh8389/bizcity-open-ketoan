@@ -21,7 +21,8 @@ TENANT="${1:-$(envval WP_SSO_TENANT)}"
 [ -n "$TENANT" ] || { echo "Chưa biết đơn vị: truyền mã đơn vị, vd. ./scripts/nap-25-truong-hop.sh tgs" >&2; exit 1; }
 CHAY=0; [ "${2:-}" = "--chay" ] && CHAY=1
 
-docker compose exec -T api test -f /app/db/seeds/mua-hang-25th/kich-ban.json \
+# </dev/null: lệnh kiểm không được đọc stdin (nếu không nó "ăn" mất dòng xác nhận khi đưa vào qua ống, vd printf 'NAP tgs' | …)
+docker compose exec -T api test -f /app/db/seeds/mua-hang-25th/kich-ban.json </dev/null \
   || { echo "Container API chưa có kịch bản 25 trường hợp — chạy ./scripts/cap-nhat.sh trước." >&2; exit 1; }
 
 if [ "$CHAY" = "1" ]; then
