@@ -84,6 +84,13 @@ services:
       WP_SSO_LOGIN_URL: ${WP_SSO_LOGIN_URL:-}
       WP_EMBED_URL: ${WP_EMBED_URL:-}
       SPREADSHEET_AI_URL: ${SPREADSHEET_AI_URL:-}
+      # Tra cứu NCC / khách hàng theo mã số thuế: khoá doanhnghiep.vn (trống = nguồn công khai VietQR); TAX_LOOKUP=off để tắt
+      DOANHNGHIEP_API_KEY: ${DOANHNGHIEP_API_KEY:-}
+      TAX_LOOKUP: ${TAX_LOOKUP:-on}
+      # Đọc hoá đơn NCC bằng dịch vụ AI (Mua hàng → Hoá đơn → Quét); trống = chỉ nhập Excel / gõ tay
+      INVOICE_AI_URL: ${INVOICE_AI_URL:-}
+      INVOICE_AI_KEY: ${INVOICE_AI_KEY:-}
+      INVOICE_AI_TIMEOUT_MS: ${INVOICE_AI_TIMEOUT_MS:-120000}
       SEED_TENANT_CODE: ${SEED_TENANT_CODE:-demo}
       SEED_TENANT_NAME: ${SEED_TENANT_NAME:-Công ty Demo}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
