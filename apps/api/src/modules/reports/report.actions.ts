@@ -1,6 +1,6 @@
 // @bizcity-layer D modules/ke-toan
 /**
- * Công cụ đọc `ketoan.*` cho trợ lý AI (bizcity_mcp@1 §5.1, PHASES 2.11): action chỉ phơi qua MCP (`expose.mcp`, không route HTTP
+ * Công cụ đọc `accounting.*` cho trợ lý AI (bizcity_mcp@1 §5.1, PHASES 2.11): action chỉ phơi qua MCP (`expose.mcp`, không route HTTP
  * mới — màn hình vẫn dùng /api/v1/reports/*). Bọc reportService có sẵn; mô tả viết cho LLM: làm gì, khi nào dùng (STD-MCP-2).
  */
 import { z } from 'zod';
@@ -22,7 +22,29 @@ const tags = ['Báo cáo (AI)'];
 
 export const reportActions: AnyActionDef[] = [
   defineAction({
-    id: 'ketoan.report.trial-balance', title: 'Bảng cân đối số phát sinh', tags,
+    id: 'accounting.balance.get', title: 'Số dư tài khoản tại một ngày', tags,
+    description: 'Số dư cuối ngày asOf của một tài khoản (gồm tài khoản con), vd 1111 tiền mặt, 131 phải thu, 331 phải trả, 156 hàng hoá. '
+      + 'balance > 0 là dư Nợ, < 0 là dư Có. Đọc ngay từ sổ (không qua bộ nhớ đệm): bút toán vừa ghi đã có trong số dư (R-CACHE-2).',
+    permission: 'reports:read', effect: 'read', idempotency: 'none',
+    input: z.object({
+      account: z.string().regex(/^\d{3,10}$/, 'Số tài khoản 3–10 chữ số').describe('Số tài khoản (đầu số), vd 1111, 131'),
+      asOf: date.describe('Ngày tính số dư (cuối ngày), YYYY-MM-DD'),
+      branchCodes: period.branchCodes,
+    }),
+    output: z.object({
+      account: z.string(), asOf: z.string(),
+      balance: z.number().describe('Dư Nợ − dư Có (đồng)'),
+      accounts: z.array(z.object({ code: z.string(), name: z.string(), balance: z.number() })).describe('Từng tài khoản chi tiết'),
+    }),
+    expose: { mcp: true, ai: 'read' },
+    handler: async (ctx, q) => {
+      const tb = await reportService.trialBalance(ctx.legacyAuth, { from: q.asOf, to: q.asOf, account: q.account, branchCodes: q.branchCodes, postingOnly: true });
+      const accounts = tb.rows.map((r) => ({ code: r.code, name: r.name, balance: Math.round((r.closingDebit - r.closingCredit) * 100) / 100 }));
+      return { account: q.account, asOf: q.asOf, balance: Math.round(accounts.reduce((s, r) => s + r.balance * 100, 0)) / 100, accounts };
+    },
+  }),
+  defineAction({
+    id: 'accounting.report.trial-balance', title: 'Bảng cân đối số phát sinh', tags,
     description: 'Số dư đầu kỳ, phát sinh Nợ / Có, số dư cuối kỳ của từng tài khoản trong khoảng ngày. Dùng khi chủ hỏi tình hình chung của sổ, '
       + 'một tài khoản đang dư bao nhiêu, kỳ này phát sinh gì. Lọc một tài khoản bằng account (vd 131, 156).',
     permission: 'reports:read', effect: 'read', idempotency: 'none',
@@ -32,7 +54,7 @@ export const reportActions: AnyActionDef[] = [
     handler: async (ctx, q) => (await reportService.trialBalance(ctx.legacyAuth, q)) as unknown as Report,
   }),
   defineAction({
-    id: 'ketoan.cash.balances', title: 'Số dư tiền mặt, tiền gửi ngân hàng', tags,
+    id: 'accounting.cash.balances', title: 'Số dư tiền mặt, tiền gửi ngân hàng', tags,
     description: 'Tiền đầu kỳ, thu, chi, tiền cuối kỳ theo chi nhánh và tài khoản tiền (111 tiền mặt, 112 ngân hàng, 113 đang chuyển). '
       + 'Dùng khi chủ hỏi "còn bao nhiêu tiền", "quỹ cửa hàng còn bao nhiêu".',
     permission: 'reports:read', effect: 'read', idempotency: 'none',
@@ -42,7 +64,7 @@ export const reportActions: AnyActionDef[] = [
     handler: async (ctx, q) => (await reportService.cashBalances(ctx.legacyAuth, q)) as unknown as Report,
   }),
   defineAction({
-    id: 'ketoan.debts.partner-balances', title: 'Công nợ theo đối tượng', tags,
+    id: 'accounting.debts.partner-balances', title: 'Công nợ theo đối tượng', tags,
     description: 'Số dư đầu kỳ, phát sinh, số dư cuối kỳ của từng khách hàng / nhà cung cấp trên một tài khoản công nợ '
       + '(131 phải thu khách hàng, 331 phải trả nhà cung cấp). Dùng khi chủ hỏi "khách nào còn nợ", "còn nợ nhà cung cấp bao nhiêu".',
     permission: 'reports:read', effect: 'read', idempotency: 'none',

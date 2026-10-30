@@ -117,7 +117,9 @@ describe('Runtime action', () => {
     const d = (await call(ctx, 'GET', '/api/v1/system/capabilities')).body.data;
     expect(d.actions.find((a: { id: string }) => a.id === 'quy.payment-request.pay')).toMatchObject({
       effect: 'write', permission: 'documents:write', idempotency: 'required', dryRun: true, http: { method: 'POST', path: '/api/v1/payment-requests/:id/pay' }, ai: 'deny',
+      sideEffects: ['documents', 'ledger'], evidence: 'receipt', inputSchema: { type: 'object', required: expect.arrayContaining(['id', 'docDate', 'moneyAccount']) },
     });
+    expect(d.actions.find((a: { id: string }) => a.id === 'quy.payment-request.list')).toMatchObject({ effect: 'read', sideEffects: [], evidence: 'none' });
   });
 
   it('luật khai báo: mã sai dạng, action ghi không idempotency, ghi công khai → lỗi lúc nạp', () => {
@@ -126,5 +128,8 @@ describe('Runtime action', () => {
     expect(() => defineAction({ ...base, id: 'quy.x.lap', idempotency: 'none' })).toThrow(/STD-ACT-4/);
     expect(() => defineAction({ ...base, id: 'quy.x.lap', permission: 'public' })).toThrow(/STD-ACT-2/);
     expect(() => defineAction({ ...base, id: 'quy.x.lap', expose: { ai: 'execute' } })).toThrow(/execute/);
+    // Capability Contract: action ghi phải khai tác dụng phụ; action đọc không được có.
+    expect(() => defineAction({ ...base, id: 'quy.x.lap' })).toThrow(/sideEffects/);
+    expect(() => defineAction({ ...base, id: 'quy.x.xem', effect: 'read', idempotency: 'none', sideEffects: ['ledger'] })).toThrow(/sideEffects/);
   });
 });

@@ -39,6 +39,9 @@
 | R-SEC | [rules/RULE-SECURITY.md](rules/RULE-SECURITY.md) | 0 | Không bí mật trong git; SQL có tham số; API không chạy superuser; AI chỉ ra nháp; chuỗi cung ứng; báo lỗ hổng | SC-SEC-1..4, DG-SEC-1 |
 | R-REL | [rules/RULE-RELEASE.md](rules/RULE-RELEASE.md) | 1 | Cổng phát hành, CHANGELOG, migration chỉ tiến, kênh stable / LTS, vá bảo mật | SC-REL-1..2, [ops/RELEASE.md](ops/RELEASE.md) |
 | R-DIAG | [rules/RULE-SELF-DIAGNOSTICS.md](rules/RULE-SELF-DIAGNOSTICS.md) | 1 | Năm tầng L0–L4, chỉ đọc, lịch chạy, chặn khoá kỳ khi sổ lỗi, cảnh báo không lộ số liệu | lane diagnostics `tests/conformance` |
+| R-CACHE | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §1 | 0 | Không cache dữ liệu sổ; đọc nhất quán sau khi ghi; đệm danh mục có huỷ theo phiên bản cấu hình | review; `test/mcp.test.ts` |
+| R-OUTBOX | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §2 | 0 | Sự kiện ghi cùng giao dịch với sổ; gửi sau commit, ít nhất một lần; consumer idempotent; NATS là adapter | SC-EVT-1 |
+| R-BAK | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §3 | 0 | Sao lưu hằng ngày, PITR, kiểm khôi phục hằng tuần trước khi tin bản sao lưu | `scripts/kiem-khoi-phuc.sh` |
 
 ## 4. Hợp đồng (contracts)
 
@@ -60,6 +63,7 @@
 | `bizcity_settings@1` | [contracts/BIZCITY-SETTINGS-MATRIX-v1.md](contracts/BIZCITY-SETTINGS-MATRIX-v1.md) | **Đề xuất** | `core/posting-modes.ts`, `core/date-rules.ts` (rải rác) |
 | `bizcity_posting_template@1` | [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) | **Đề xuất** — gói định khoản theo ngành, marketplace ([standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md)) | `posting_reasons`, `account-resolver.ts`; kiểm SC-TPL-1 |
 | `bizcity_mcp@1` | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) | **Đề xuất** — công cụ MCP cho Cell / chatbot; hồ sơ của chuẩn MCP hệ sinh thái ([standard/CELL-CONNECT.md](standard/CELL-CONNECT.md)) | `modules/system/mcp.routes.ts` (PHASES 2.11–2.12) |
+| `bizcity_domain@1` | [contracts/BIZCITY-DOMAIN-v1.md](contracts/BIZCITY-DOMAIN-v1.md) | Chấp nhận — bất biến kế toán (Domain Contract, lớp 1/4 của [CONG-BO-KIEN-TRUC](CONG-BO-KIEN-TRUC.md)); đổi = K3 + ADR | trigger; DG-LEDGER-*, DG-EVENT-*; `assertLedgerInvariants` |
 | `bizcity_errors@1` | [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) | Chấp nhận — danh mục mã lỗi, thông báo, gợi ý (R-ERR) | `packages/contracts/src/errors.ts`; kiểm SC-ERR-1 |
 | `bizcity_preset@1` | [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) | Chấp nhận — gói cài nhanh theo ngành, dữ liệu mẫu hư cấu | `presets/`, `scripts/cai-preset.mjs`; kiểm SC-PRESET-1 |
 | ~~`bizcity_workflow@1`~~ | [workflows/README.md](workflows/README.md) | Gộp vào `bizcity_document@1` §5 (năng lực `documents.workflow`) | — |

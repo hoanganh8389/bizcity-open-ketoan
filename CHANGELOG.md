@@ -62,6 +62,22 @@ Mỗi bản ghi đủ sáu mục:
   - công cụ sinh tự động từ action, chỉ hiện công cụ người gọi có quyền;
   - ghi qua AI **luôn phải xem trước rồi người dùng xác nhận** (`confirm_token` một lần, 15 phút; migration `0037_mcp_xac_nhan.sql`);
   - bằng chứng ghi rõ "AI làm thay người dùng nào, qua kênh nào".
+- **Bản công bố kiến trúc** (`docs/CONG-BO-KIEN-TRUC.md`, thiết kế: Johnny Chu):
+  - 4 lớp hợp đồng: Domain, Capability, MCP Tool, Extension;
+  - trình tự một lệnh ghi; đối chiếu mô hình 10 bước; mức ưu tiên P0–P3;
+  - luật bắt buộc và checklist nhận việc 3 giai đoạn (G1–G3), kèm mẫu issue "Nhận việc".
+- **Domain Contract** `bizcity_domain@1`: 22 bất biến kế toán (STD-DOM), mỗi bất biến ghi cách được bảo vệ; đổi = K3 + ADR.
+- **Capability Contract**:
+  - action ghi phải khai `sideEffects`;
+  - `GET /api/v1/system/capabilities` công bố input / output schema, quyền, tác dụng phụ, idempotency, loại bằng chứng của từng action (STD-ACT-9).
+- **MCP**:
+  - công cụ của Core kế toán đổi miền `ketoan.*` → `accounting.*`;
+  - thêm `accounting.balance.get` (số dư tài khoản tại một ngày, đọc thẳng sổ).
+- **RULE-INFRASTRUCTURE**:
+  - R-CACHE: không cache dữ liệu sổ, đọc nhất quán sau khi ghi;
+  - R-OUTBOX: sự kiện cùng giao dịch, consumer idempotent;
+  - R-BAK: sao lưu, PITR, kiểm khôi phục.
+- `scripts/kiem-khoi-phuc.sh`: khôi phục bản sao lưu vào CSDL tạm, chạy kiểm toàn vẹn, so số dòng, ghi nhật ký (R-BAK-3).
 - **Chuẩn hoá theo ADR-0007** (học từ bộ 27 gói tham chiếu, giữ sổ cái làm lõi, PostgreSQL là hạ tầng bắt buộc duy nhất):
   - **mã lỗi** `bizcity_errors@1`: danh mục máy đọc `ERROR_CATALOG` (HTTP, thử lại, thông báo, gợi ý), luật R-ERR, `details.reason`. Phản hồi lỗi có `error.requestId`;
   - **quan sát**:

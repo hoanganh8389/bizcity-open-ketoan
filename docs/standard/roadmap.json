@@ -76,7 +76,7 @@
                { "fileContains": { "file": "apps/api/src/modules/system/system.routes.ts", "text": "/api/v1/system/health/ready" } },
                { "label": "cùng mã kiểm với lane diagnostics (R-DIAG-9)", "check": "SC-DIAG-1" },
                { "label": "khoá kỳ bị chặn khi L3 có error (R-DIAG-4)", "fileContains": { "file": "apps/api/src/modules/periods/period.routes.ts", "text": "guardLock" } }] },
-    { "id": "2.11", "phase": "2", "title": "platform/mcp đọc: POST /mcp, công cụ ketoan.* (2b)", "areas": ["mcp-cell"],
+    { "id": "2.11", "phase": "2", "title": "platform/mcp đọc: POST /mcp, công cụ accounting.* (2b)", "areas": ["mcp-cell"],
       "done": [{ "capability": "mcp.read" }] },
     { "id": "2.12", "phase": "2", "title": "MCP sinh từ registry action, xác nhận needs_confirmation", "areas": ["mcp-cell", "action"], "after": ["2.5"],
       "done": [{ "capability": "mcp.tools" }] },

@@ -22,7 +22,7 @@ import { toNumber, type Db } from '../../../db/client.js';
 import type { Permission } from '../../../core/auth.js';
 import { Errors } from '../../../core/errors.js';
 import { idSchema } from '../../../core/http.js';
-import { defineAction, mountActions, type ActionContext, type ActionDef, type AnyActionDef } from '../../../core/actions.js';
+import { defineAction, mountActions, type ActionContext, type ActionDef, type ActionSideEffect, type AnyActionDef } from '../../../core/actions.js';
 import { voucherService } from '../../../modules/vouchers/voucher.service.js';
 
 const tags = ['Yêu cầu thanh toán'];
@@ -155,12 +155,13 @@ type Patch = Record<string, unknown> & { status: string; extra?: Record<string, 
  */
 function transition<B extends z.AnyZodObject>(def: {
   verb: string; title: string; permission: Permission; body: B;
-  idempotency?: 'required' | 'natural'; dryRun?: boolean; errors?: ActionDef['errors'];
+  idempotency?: 'required' | 'natural'; dryRun?: boolean; errors?: ActionDef['errors']; sideEffects?: ActionSideEffect[];
   run: (ctx: ActionContext, cur: Current, body: z.infer<B>) => Promise<Patch>;
 }): AnyActionDef {
   return defineAction({
     id: `quy.payment-request.${def.verb}`, title: def.title, tags, permission: def.permission, effect: 'write',
     idempotency: def.idempotency ?? 'natural', dryRun: def.dryRun, errors: def.errors ?? ['NOT_FOUND', 'CONFLICT', 'FORBIDDEN'],
+    sideEffects: def.sideEffects ?? ['documents'],
     input: idInput.merge(def.body), output: stateSchema.passthrough(),
     expose: { http: { method: 'POST', path: `/api/v1/payment-requests/:id/${def.verb}` }, mcp: true, ai: 'deny' },
     evidence: { objectType: 'payment_request', objectId: (_i, o) => o.requestNo },
@@ -194,7 +195,7 @@ export const paymentRequestActions: AnyActionDef[] = [
     },
   }),
   defineAction({
-    id: 'quy.payment-request.create', title: 'Lập yêu cầu thanh toán', tags, permission: 'documents:write', effect: 'write', idempotency: 'required', dryRun: true,
+    id: 'quy.payment-request.create', title: 'Lập yêu cầu thanh toán', tags, permission: 'documents:write', effect: 'write', idempotency: 'required', dryRun: true, sideEffects: ['documents'],
     description: 'Lập nháp, hoặc gửi duyệt luôn với submit = true.',
     input: bodySchema, output: stateSchema, errors: ['VALIDATION_ERROR', 'CONFLICT', 'IDEMPOTENCY_CONFLICT'],
     expose: { http: { method: 'POST', path: '/api/v1/payment-requests', status: 201 }, mcp: true, ai: 'propose' },
@@ -211,7 +212,7 @@ export const paymentRequestActions: AnyActionDef[] = [
     },
   }),
   defineAction({
-    id: 'quy.payment-request.update', title: 'Sửa yêu cầu thanh toán (nháp hoặc bị từ chối)', tags, permission: 'documents:write', effect: 'write', idempotency: 'natural',
+    id: 'quy.payment-request.update', title: 'Sửa yêu cầu thanh toán (nháp hoặc bị từ chối)', tags, permission: 'documents:write', effect: 'write', idempotency: 'natural', sideEffects: ['documents'],
     input: idInput.merge(bodySchema), output: z.object({ id: z.string(), requestNo: z.string() }), errors: ['NOT_FOUND', 'VALIDATION_ERROR', 'CONFLICT', 'FORBIDDEN'],
     expose: { http: { method: 'PUT', path: '/api/v1/payment-requests/:id' }, mcp: true, ai: 'propose' },
     evidence: { objectType: 'payment_request', objectId: (_i, o) => o.requestNo },
@@ -273,7 +274,7 @@ export const paymentRequestActions: AnyActionDef[] = [
   // Chạm sổ: lập phiếu chi / báo nợ (voucherService → cửa ghi sổ). Gửi lặp sẽ tạo phiếu trùng nên idempotency bắt buộc;
   // ?dryRun=1 = xem trước phiếu và bút toán trong giao dịch rồi huỷ.
   transition({
-    verb: 'pay', title: 'Lập phiếu chi / báo nợ từ yêu cầu đã duyệt', permission: 'documents:write', idempotency: 'required', dryRun: true,
+    verb: 'pay', title: 'Lập phiếu chi / báo nợ từ yêu cầu đã duyệt', permission: 'documents:write', idempotency: 'required', dryRun: true, sideEffects: ['documents', 'ledger'],
     errors: ['NOT_FOUND', 'CONFLICT', 'FORBIDDEN', 'VALIDATION_ERROR', 'IDEMPOTENCY_CONFLICT', 'PERIOD_LOCKED', 'POSTING_FAILED'],
     body: z.object({ docDate: day, moneyAccount: z.string().trim().min(3).max(20), counterparty: z.string().trim().max(255).optional() }),
     run: async (ctx, cur, body) => {
@@ -314,7 +315,7 @@ export const paymentRequestActions: AnyActionDef[] = [
     },
   }),
   defineAction({
-    id: 'quy.payment-request-settings.update', title: 'Đặt ngưỡng cần cấp duyệt thứ hai', tags, permission: 'settings:write', effect: 'write', idempotency: 'natural',
+    id: 'quy.payment-request-settings.update', title: 'Đặt ngưỡng cần cấp duyệt thứ hai', tags, permission: 'settings:write', effect: 'write', idempotency: 'natural', sideEffects: ['settings'],
     input: z.object({ secondLevelFrom: z.number().positive().nullable().describe('null = mọi yêu cầu chỉ một cấp duyệt') }),
     output: z.object({ secondLevelFrom: z.number().nullable() }),
     expose: { http: { method: 'PUT', path: '/api/v1/payment-request-settings' }, ai: 'deny' },

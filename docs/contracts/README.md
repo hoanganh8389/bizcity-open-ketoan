@@ -28,6 +28,7 @@ Hợp đồng = thoả thuận có phiên bản giữa lõi và bên dùng (phâ
 | `bizcity_settings@1` | [BIZCITY-SETTINGS-MATRIX-v1.md](BIZCITY-SETTINGS-MATRIX-v1.md) · [registry](bizcity-settings.registry.json) | lõi, phân hệ | Đề xuất | `core/posting-modes.ts`, `core/date-rules.ts` |
 | `bizcity_posting_template@1` | [BIZCITY-POSTING-TEMPLATE-v1.md](BIZCITY-POSTING-TEMPLATE-v1.md) · [schema](BIZCITY-POSTING-TEMPLATE-v1.schema.json) | gói định khoản theo ngành (marketplace), trợ lý AI chọn lý do | Đề xuất | `posting_reasons` + `db/seeds/ly-do.jsonl`, `modules/posting/account-resolver.ts` |
 | `bizcity_mcp@1` | [BIZCITY-MCP-v1.md](BIZCITY-MCP-v1.md) | Bizcity Cell, chatbot (Claude, ChatGPT), agent | Đề xuất — hồ sơ của `bizcity-mcp-tool@1.0.0` + `bizcity-mcp-bridge@1.0.0` (plugin `bizcity-twin-ai`) | `modules/system/mcp.routes.ts` (`POST /mcp`, PHASES 2.11–2.12); Cell bridge: Phase 5 |
+| `bizcity_domain@1` | [BIZCITY-DOMAIN-v1.md](BIZCITY-DOMAIN-v1.md) | mọi module, kênh, AI chạm tiền | Chấp nhận — Domain Contract (lớp 1/4, [CONG-BO-KIEN-TRUC](../CONG-BO-KIEN-TRUC.md)) | trigger CSDL, `modules/{documents,posting,ledger}` |
 | `bizcity_errors@1` | [BIZCITY-ERRORS-v1.md](BIZCITY-ERRORS-v1.md) | mọi bên gọi HTTP / MCP, giao diện | Chấp nhận | `packages/contracts/src/errors.ts` (ERROR_CATALOG), `core/errors.ts`, `core/http.ts` |
 | `bizcity_preset@1` | [BIZCITY-PRESET-v1.md](BIZCITY-PRESET-v1.md) · [schema](BIZCITY-PRESET-v1.schema.json) | người cài, lập trình viên module (dữ liệu thử) | Chấp nhận | `presets/<id>/`, `scripts/cai-preset.mjs` |
 

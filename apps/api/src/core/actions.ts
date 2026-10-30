@@ -32,6 +32,8 @@ import type { AuthContext, Permission } from './auth.js';
 export type ActionEffect = 'read' | 'write';
 export type ActionIdempotency = 'required' | 'natural' | 'none';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+/** Capability Contract (CONG-BO-KIEN-TRUC §3): action ghi chạm vào đâu — ledger = có thể sinh bút toán (qua một cửa sổ cái). */
+export type ActionSideEffect = 'documents' | 'ledger' | 'masterdata' | 'settings' | 'external';
 
 export interface ActionContext {
   readonly actor: { id: string; name: string; kind: AuthContext['kind'] };
@@ -59,6 +61,8 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
   effect: ActionEffect;
   /** STD-ACT-4: write ⇒ không 'none'. 'natural' = đặt trạng thái tuyệt đối / có kiểm trạng thái, gửi lại không tạo thêm gì. */
   idempotency: ActionIdempotency;
+  /** Tác dụng phụ (bắt buộc với effect write, cấm với read). Bằng chứng: write → biên nhận (receipt), read → không. */
+  sideEffects?: ActionSideEffect[];
   /** Cho phép ?dryRun=1 (STD-ACT-7: không hiệu ứng ngoài giao dịch). */
   dryRun?: boolean;
   expose: {
@@ -85,6 +89,8 @@ export function defineAction<I extends z.AnyZodObject, O extends z.ZodTypeAny>(d
   if (def.effect === 'write' && def.idempotency === 'none') throw new Error(`Action ghi ${def.id} phải có idempotency 'required' hoặc 'natural' (STD-ACT-4)`);
   if (def.effect === 'write' && def.permission === 'public') throw new Error(`Action ghi ${def.id} không được công khai (STD-ACT-2)`);
   if (def.effect === 'write' && def.expose.ai === 'execute') throw new Error(`Action ghi ${def.id} không được expose.ai = 'execute' trong v1 (ACTION §6)`);
+  if (def.effect === 'write' && !def.sideEffects?.length) throw new Error(`Action ghi ${def.id} phải khai sideEffects (Capability Contract)`);
+  if (def.effect === 'read' && def.sideEffects?.length) throw new Error(`Action đọc ${def.id} không được có sideEffects`);
   return def;
 }
 

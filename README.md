@@ -6,6 +6,8 @@
 - **Viết module bằng người hoặc AI (vibecode):** theo [Bizcity Framework Standard v1](docs/standard/README.md) (7 hợp đồng), tự kiểm bằng một lệnh.
 - **Kế toán Việt Nam:** hệ thống tài khoản TT99, thuế GTGT / TNDN, hoá đơn điện tử, gói định khoản theo ngành.
 
+> **Kiến trúc do Johnny Chu thiết kế:** Accounting Core ổn định, module mở rộng. Bốn lớp hợp đồng (Domain, Capability, MCP Tool, Extension), luật bắt buộc và checklist nhận việc ở **[Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)**.
+
 > Stack: Node 22 · TypeScript · Fastify 5 · zod · Kysely · PostgreSQL 16 · React 18 + Vite · Docker Compose. Giám sát tuỳ chọn: Prometheus · Grafana · Loki.
 
 ## Thử nhanh (5 phút)
@@ -66,7 +68,10 @@ Cây đích sau khi tách gói (`packages/kernel`, `packages/*`, `modules/<key>`
 
 | Chủ đề | Tài liệu |
 |---|---|
+| **Bản công bố kiến trúc**: 4 lớp hợp đồng, luật bắt buộc, checklist 3 giai đoạn | [docs/CONG-BO-KIEN-TRUC.md](docs/CONG-BO-KIEN-TRUC.md) |
 | Luật và chỉ mục (bắt đầu ở đây) | [docs/00-CANON.md](docs/00-CANON.md) |
+| Bất biến kế toán (Domain Contract) | [bizcity_domain@1](docs/contracts/BIZCITY-DOMAIN-v1.md) |
+| Cache, outbox, sao lưu / PITR | [RULE-INFRASTRUCTURE](docs/rules/RULE-INFRASTRUCTURE.md) |
 | Viết module | [Standard v1](docs/standard/README.md) · [ca mẫu Hợp đồng](docs/standard/GOLDEN-CASE-HOP-DONG.md) · [bộ kiểm](docs/standard/CONFORMANCE.md) |
 | Nạp chứng từ vào sổ | [bizcity_ledger_intake@1](docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md) |
 | Action, idempotency, dry-run | [bizcity_action@1](docs/contracts/BIZCITY-ACTION-v1.md) |

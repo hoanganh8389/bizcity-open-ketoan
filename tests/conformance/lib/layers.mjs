@@ -19,6 +19,7 @@ export const LAYER_MAP = [
   ['config/', 'P', 'bizcity.config'],
   ['core/errors.ts', 'P', 'actions'],
   ['core/http.ts', 'P', 'actions'],
+  ['core/json-schema.ts', 'P', 'actions'],
   ['core/actions.ts', 'P', 'actions'],
   ['core/metrics.ts', 'P', 'observability'],
   ['core/observability.ts', 'P', 'observability'],

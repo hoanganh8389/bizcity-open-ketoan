@@ -22,7 +22,7 @@ Từ 2026-10-29 repo còn là **Bizcity Core Framework**: hạ tầng ứng dụ
 
 | Bạn là | Đọc theo thứ tự |
 |---|---|
-| **Mọi người** (bắt buộc) | [00-CANON.md](00-CANON.md) → [architecture/README.md](architecture/README.md) (sơ đồ) → [framework/00-TONG-QUAN.md](framework/00-TONG-QUAN.md) → [../CONTRIBUTING.md](../CONTRIBUTING.md) |
+| **Mọi người** (bắt buộc) | [CONG-BO-KIEN-TRUC.md](CONG-BO-KIEN-TRUC.md) (công bố kiến trúc) → [00-CANON.md](00-CANON.md) → [architecture/README.md](architecture/README.md) (sơ đồ) → [framework/00-TONG-QUAN.md](framework/00-TONG-QUAN.md) → [../CONTRIBUTING.md](../CONTRIBUTING.md) |
 | Người / AI viết **module mới** (cộng đồng, vibecode) | [../AGENTS.md](../AGENTS.md) → [standard/README.md](standard/README.md) → [standard/GOLDEN-CASE-HOP-DONG.md](standard/GOLDEN-CASE-HOP-DONG.md) → 7 hợp đồng → [standard/CONFORMANCE.md](standard/CONFORMANCE.md) |
 | Người làm **AI / Cell / chatbot**, gói định khoản theo ngành | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) → [standard/CELL-CONNECT.md](standard/CELL-CONNECT.md) → [standard/CHANNEL-GATEWAY-PORT.md](standard/CHANNEL-GATEWAY-PORT.md) → [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) → [standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md) |
 | Nhóm Lõi **tách Kernel / Platform** | [standard/REUSE-MAP.md](standard/REUSE-MAP.md) → [standard/TARGET-LAYOUT.md](standard/TARGET-LAYOUT.md) → [standard/PHASES.md](standard/PHASES.md) |

@@ -44,7 +44,7 @@ describe('MCP', () => {
   it('tools/list: sinh từ action — tên dạng chấm, confirm / annotations suy từ expose.ai, ẩn action ai = deny và công cụ không có quyền', async () => {
     const tools = (await rpc(ctx, 'tools/list')).body.result.tools as { name: string; annotations: { readOnlyHint: boolean }; _meta: { bizcity: { confirm: string; llm_alias: string; action: string } }; description: string; inputSchema: { type: string } }[];
     const names = tools.map((t) => t.name);
-    expect(names).toEqual(expect.arrayContaining(['ketoan.report.trial_balance', 'ketoan.cash.balances', 'ketoan.debts.partner_balances', 'quy.payment_request.list', 'quy.payment_request.create', 'core.evidence.get']));
+    expect(names).toEqual(expect.arrayContaining(['accounting.balance.get', 'accounting.report.trial_balance', 'accounting.cash.balances', 'accounting.debts.partner_balances', 'quy.payment_request.list', 'quy.payment_request.create', 'core.evidence.get']));
     expect(names).not.toEqual(expect.arrayContaining(['quy.payment_request.approve']));
     expect(names.filter((n) => /pay$|approve|cancel|settings\.update/.test(n))).toEqual([]);
     for (const t of tools) {
@@ -57,21 +57,26 @@ describe('MCP', () => {
     expect(tools.find((t) => t.name === 'quy.payment_request.create')).toMatchObject({ annotations: { readOnlyHint: false }, _meta: { bizcity: { confirm: 'always', action: 'quy.payment-request.create' } } });
     // Người chỉ xem: không thấy công cụ ghi.
     const vnames = ((await rpc(viewer, 'tools/list')).body.result.tools as { name: string }[]).map((t) => t.name);
-    expect(vnames).toContain('ketoan.report.trial_balance');
+    expect(vnames).toContain('accounting.report.trial_balance');
     expect(vnames).not.toContain('quy.payment_request.create');
   });
 
   it('đọc: phong bì success / complete / data.as_of; danh sách có total; lỗi tham số → isError + hint tiếng Việt', async () => {
-    const tb = await tool(ctx, 'ketoan.report.trial_balance', { from: '2026-10-01', to: '2026-10-31' });
+    const tb = await tool(ctx, 'accounting.report.trial_balance', { from: '2026-10-01', to: '2026-10-31' });
     expect(tb.isError).toBeUndefined();
     expect(tb.structuredContent).toMatchObject({ success: true, complete: true, data: { as_of: expect.any(String) } });
     expect(tb.structuredContent.data.rows.length).toBeGreaterThan(0);
     expect(tb.content[0].type).toBe('text');
 
+    // accounting.balance.get: số dư đọc thẳng từ sổ — hoá đơn bán thu tiền mặt vừa ghi đã có trong số dư 1111 (R-CACHE-2).
+    const bal = await tool(ctx, 'accounting.balance.get', { account: '111', asOf: '2026-10-31' });
+    expect(bal.structuredContent).toMatchObject({ success: true, data: { account: '111', balance: 200000, as_of: expect.any(String) } });
+    expect(bal.structuredContent.data.accounts.length).toBeGreaterThan(0);
+
     const list = await tool(ctx, 'quy.payment_request.list', {});
     expect(list.structuredContent).toMatchObject({ success: true, data: { items: [] }, meta: { total: 0 } });
 
-    const bad = await tool(ctx, 'ketoan.report.trial_balance', { from: '10/2026', to: '2026-10-31' });
+    const bad = await tool(ctx, 'accounting.report.trial_balance', { from: '10/2026', to: '2026-10-31' });
     expect(bad.isError).toBe(true);
     expect(bad.structuredContent).toMatchObject({ success: false, code: 'VALIDATION_ERROR', hint: expect.stringContaining('error.details'), error: { retryable: false } });
   });

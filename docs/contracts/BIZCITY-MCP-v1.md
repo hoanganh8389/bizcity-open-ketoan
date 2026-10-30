@@ -27,11 +27,11 @@ Core **không** gọi LLM khi trả lời MCP. Core chỉ: công bố công cụ
 |---|---|
 | `POST /mcp`: `initialize`, `ping`, `tools/list`, `tools/call`; thông báo (không `id`) → 202 | **có**: `apps/api/src/modules/system/mcp.routes.ts`; nginx chuyển `/mcp` sang API |
 | Công cụ sinh từ registry action (§3), lọc theo quyền người gọi, annotations / `confirm` suy từ `expose.ai` | **có** |
-| Công cụ đọc §5.1 | **một phần**: `ketoan.report.trial_balance`, `ketoan.cash.balances`, `ketoan.debts.partner_balances` (`modules/reports/report.actions.ts`); thêm `quy.payment_request.list` / `.get`, `core.evidence.get` |
+| Công cụ đọc §5.1 | **một phần**: `accounting.balance.get`, `accounting.report.trial_balance`, `accounting.cash.balances`, `accounting.debts.partner_balances` (`modules/reports/report.actions.ts`); thêm `quy.payment_request.list` / `.get`, `core.evidence.get` |
 | Xác nhận trước khi ghi (STD-MCP-4), một lần (STD-MCP-5), bằng chứng actor `ai` (STD-MCP-9) | **có**: bảng `mcp_confirm_tokens` (0037); mẫu `quy.payment_request.create` / `.update` |
 | Kết quả ghi đã xác nhận | `data = { status: "done", result: <output của action>, as_of }`, `meta = { receipt, replayed }`. `data.status` chỉ nói về luồng xác nhận (`needs_confirmation` → `done`), không lẫn với trạng thái chứng từ |
 | Danh tính | phiên đăng nhập hoặc khoá API hiện có; kênh ghi vào bằng chứng lấy từ `params._meta.client` (`via = mcp:<client>`) |
-| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 (`ketoan.documents.draft`…); `llm_alias` khai tay; trường `pii` |
+| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 (`accounting.document.create_draft`…); `llm_alias` khai tay; trường `pii` |
 
 ## 2. Giao thức (theo hai hợp đồng gốc)
 
@@ -49,11 +49,11 @@ Core **không** gọi LLM khi trả lời MCP. Core chỉ: công bố công cụ
 ## 3. Công cụ sinh từ action
 
 ```text
-defineAction({ id: 'ketoan.report.trial_balance', input, output, permission: 'reports:read',
+defineAction({ id: 'accounting.report.trial_balance', input, output, permission: 'reports:read',
                expose: { mcp: true, ai: 'read', mode: 'accounting' } })
         │  platform/mcp đọc registry action
         ▼
-{ "name": "ketoan.report.trial_balance",
+{ "name": "accounting.report.trial_balance",
   "title": "Bảng cân đối số phát sinh",
   "description": "Số dư đầu kỳ, phát sinh, số dư cuối kỳ từng tài khoản trong một kỳ. Dùng khi chủ hỏi tình hình tài khoản / tổng quan sổ. Quyền: reports:read.",
   "inputSchema": { …từ zod… }, "outputSchema": { …từ zod, có data.as_of… },
@@ -84,7 +84,7 @@ defineAction({ id: 'ketoan.report.trial_balance', input, output, permission: 're
 |---|---|---|---|
 | `accounting` | `ledger.read`, `report.read`, `masterdata.read`, `posting.read` | chủ, kế toán, người có `reports:read` | §5.1 |
 | `accounting_entry` | `accounting.propose` | người có `documents:write` | §5.2 |
-| `accounting_admin` | `templates.preview` | người có `settings:write` | `ketoan.templates.install_preview` (chỉ xem trước) |
+| `accounting_admin` | `templates.preview` | người có `settings:write` | `accounting.templates.install_preview` (chỉ xem trước) |
 
 ## 5. Danh mục công cụ chuẩn của Core kế toán
 
@@ -92,39 +92,42 @@ defineAction({ id: 'ketoan.report.trial_balance', input, output, permission: 're
 
 ### 5.1 Đọc — `confirm: never`
 
+> Miền của Core kế toán là `accounting` (2026-10-30, trước đó `ketoan`). Bộ công cụ chuẩn và trạng thái: [CONG-BO-KIEN-TRUC §2.1](../CONG-BO-KIEN-TRUC.md).
+
 | Công cụ | `llm_alias` | Làm gì | Bọc route hiện có |
 |---|---|---|---|
-| `ketoan.report.trial_balance` | `kt_trial_balance` | Cân đối số phát sinh | `/reports/trial-balance` |
-| `ketoan.report.balance_sheet` · `.income_statement` · `.cash_flow` | `kt_balance_sheet`… | Báo cáo tài chính | `/reports/*` |
-| `ketoan.ledger.account_detail` | `kt_account_detail` | Sổ chi tiết tài khoản, lọc đối tượng | `/ledger/*` |
-| `ketoan.debts.list` · `ketoan.debts.partner` | `kt_debts` | Công nợ phải thu / phải trả, tuổi nợ | `/debt-items`, `/reports/*` |
-| `ketoan.inventory.stock` | `kt_stock` | Tồn kho theo kho, mặt hàng | `/reports/*` |
-| `ketoan.cash.balances` | `kt_cash` | Số dư tiền mặt, ngân hàng | `/reports/cash-balances` |
-| `ketoan.documents.search` · `ketoan.documents.get` | `kt_documents` | Tìm chứng từ; xem chứng từ + bút toán + nhật ký định khoản | `/documents`, `/posting-log` |
-| `ketoan.masterdata.partner_find` · `.product_find` | `kt_find_partner`… | Tra đối tượng / mặt hàng theo mã, tên, SĐT, MST | danh mục |
-| `ketoan.posting.reasons` | `kt_reasons` | Lý do đang dùng, kèm gợi ý AI của gói | `/posting/reasons` |
-| `ketoan.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | mới |
-| `ketoan.posting.explain` | `kt_explain_entry` | Giải thích một bút toán: lý do, tài khoản lấy từ đâu theo thứ tự AccountResolver | mới, đọc `posting_log` |
+| `accounting.balance.get` | `kt_balance_get` | Số dư một tài khoản tại một ngày, đọc thẳng sổ (R-CACHE-2) | `reportService.trialBalance` |
+| `accounting.report.trial_balance` | `kt_report_trial_balance` | Cân đối số phát sinh | `/reports/trial-balance` |
+| `accounting.report.balance_sheet` · `.income_statement` · `.cash_flow` | `kt_balance_sheet`… | Báo cáo tài chính | `/reports/*` |
+| `accounting.ledger.account_detail` | `kt_account_detail` | Sổ chi tiết tài khoản, lọc đối tượng | `/ledger/*` |
+| `accounting.debts.list` · `accounting.debts.partner` | `kt_debts` | Công nợ phải thu / phải trả, tuổi nợ | `/debt-items`, `/reports/*` |
+| `accounting.inventory.stock` | `kt_stock` | Tồn kho theo kho, mặt hàng | `/reports/*` |
+| `accounting.cash.balances` | `kt_cash` | Số dư tiền mặt, ngân hàng | `/reports/cash-balances` |
+| `accounting.documents.search` · `accounting.documents.get` | `kt_documents` | Tìm chứng từ; xem chứng từ + bút toán + nhật ký định khoản | `/documents`, `/posting-log` |
+| `accounting.masterdata.partner_find` · `.product_find` | `kt_find_partner`… | Tra đối tượng / mặt hàng theo mã, tên, SĐT, MST | danh mục |
+| `accounting.posting.reasons` | `kt_reasons` | Lý do đang dùng, kèm gợi ý AI của gói | `/posting/reasons` |
+| `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | mới |
+| `accounting.posting.explain` | `kt_explain_entry` | Giải thích một bút toán: lý do, tài khoản lấy từ đâu theo thứ tự AccountResolver | mới, đọc `posting_log` |
 
 ### 5.2 Đề xuất ghi — `confirm: always`, gói Pro
 
 | Công cụ | Tạo ra | Sau xác nhận |
 |---|---|---|
-| `ketoan.documents.draft` | sự việc `bizcity_ledger_intake@1` (bán, mua, thu, chi…) | `pending` dù đơn vị đặt chế độ tự động |
-| `ketoan.vouchers.receipt_draft` · `.payment_draft` | phiếu thu / chi theo lý do | nháp chờ duyệt |
-| `ketoan.invoices.to_draft` | hoá đơn đầu vào (Cell OCR ảnh, hoặc XML hoá đơn điện tử) → sự việc mua hàng nháp | nháp |
+| `accounting.document.create_draft` | sự việc `bizcity_ledger_intake@1` (bán, mua, thu, chi…) | `pending` dù đơn vị đặt chế độ tự động |
+| `accounting.vouchers.receipt_draft` · `.payment_draft` | phiếu thu / chi theo lý do | nháp chờ duyệt |
+| `accounting.invoices.to_draft` | hoá đơn đầu vào (Cell OCR ảnh, hoặc XML hoá đơn điện tử) → sự việc mua hàng nháp | nháp |
 
 ### 5.3 Resource và prompt
 
 | Loại | Ví dụ |
 |---|---|
-| Resource | `bizcity://ketoan/reports/trial-balance?period=2026-10`, `bizcity://ketoan/documents/{docKey}`, `bizcity://ketoan/posting/reasons`, `bizcity://ketoan/templates/installed` |
-| Prompt | `ketoan.doc_bao_cao_cho_chu`, `ketoan.giai_thich_but_toan`, `ketoan.kiem_tra_cuoi_thang`, `ketoan.lap_phieu_tu_mo_ta` |
+| Resource | `bizcity://accounting/reports/trial-balance?period=2026-10`, `bizcity://accounting/documents/{docKey}`, `bizcity://accounting/posting/reasons`, `bizcity://accounting/templates/installed` |
+| Prompt | `accounting.doc_bao_cao_cho_chu`, `accounting.giai_thich_but_toan`, `accounting.kiem_tra_cuoi_thang`, `accounting.lap_phieu_tu_mo_ta` |
 
 ## 6. Một lượt ghi sổ qua Cell
 
 ```jsonc
-// 1. Cell → tools/call ketoan.vouchers.payment_draft (không có confirm_token)
+// 1. Cell → tools/call accounting.vouchers.payment_draft (không có confirm_token)
 { "reasonCode": "CDV01", "amount": 3200000, "methodCode": "CK", "description": "Tiền điện T10 CH Cầu Giấy" }
 // ← structuredContent
 { "success": true, "complete": false, "message": "Cần xác nhận",

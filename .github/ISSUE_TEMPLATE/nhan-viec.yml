@@ -1,0 +1,58 @@
+name: Nhận việc
+description: Nhận một việc trong checklist chuẩn hoá (docs/CONG-BO-KIEN-TRUC.md §6) hoặc lộ trình PHASES.
+title: "[Nhận việc] G?-?? "
+labels: ["nhan-viec"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Đọc trước: [Bản công bố kiến trúc](../blob/main/docs/CONG-BO-KIEN-TRUC.md) (4 lớp hợp đồng, luật bắt buộc) và [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md). Việc chạm Kernel phải ghi mức K0–K3.
+  - type: input
+    id: code
+    attributes:
+      label: Mã việc
+      description: "Mã ở CONG-BO-KIEN-TRUC §6 (vd G1-05) và / hoặc PHASES (vd 2.4)"
+      placeholder: "G1-05 / PHASES 2.4"
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Lớp hợp đồng bị đụng
+      multiple: true
+      options:
+        - "Domain Contract (Kernel — K3 cần ADR)"
+        - "Capability Contract (action, mã lỗi)"
+        - "MCP Tool Contract"
+        - "Extension Contract (module)"
+        - "Hạ tầng (cache, outbox, sao lưu, giám sát)"
+        - "Chỉ tài liệu"
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Cách làm dự kiến
+      description: "Tệp / gói sẽ đổi, bảng / migration mới, luật liên quan (STD-DOM, R-CACHE, R-OUTBOX…), có cần ADR không"
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Tiêu chí xong (lấy từ cột "Xong khi")
+    validations:
+      required: true
+  - type: input
+    id: eta
+    attributes:
+      label: Dự kiến xong
+      placeholder: "2026-11-15"
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Cam kết
+      options:
+        - label: Không phá bốn câu không thương lượng và bất biến của Domain Contract
+          required: true
+        - label: PR kèm bằng chứng selfcheck / kiem-chuan / typecheck / test PostgreSQL thật
+          required: true

@@ -34,6 +34,7 @@ export default defineAction({
   output: z.object({ installmentId: z.string(), status: z.literal('paid'), ledgerDocKey: z.string() }),
   permission: 'hop-dong:collect',
   effect: 'write',                                 // read | write
+  sideEffects: ['documents', 'ledger'],            // write bắt buộc: documents | ledger | masterdata | settings | external
   idempotency: 'required',                         // required | natural | none
   dryRun: true,                                    // cho phép ?dryRun=1 / dryRun trong MCP
   expose: { http: { method: 'POST', path: '/installments/:installmentId/payments' }, mcp: true, ai: 'propose' },
@@ -79,6 +80,7 @@ Handler **không** gọi `requirePermission`, `writeAudit`, `reply.status`, khô
 | STD-ACT-6 | 1 | `id` dạng `<key>.<thực thể>.<động từ>`, không đổi sau khi phát hành (đổi = major của module) | CONF-MAN-5 |
 | STD-ACT-7 | 1 | Action có `dryRun: true` phải không gây hiệu ứng ngoài giao dịch (không gửi email, không gọi HTTP ngoài trong handler; việc đó làm ở subscriber) | CONF-RUN-9 |
 | STD-ACT-8 | 1 | Action chạm sổ khai `errors` gồm `PERIOD_LOCKED`, `POSTING_FAILED` | CONF-MAN-6 |
+| STD-ACT-9 | 0 | **Capability Contract**: action ghi khai `sideEffects` (chạm vào đâu; `ledger` = có thể sinh bút toán qua một cửa sổ cái); action đọc không có. Runtime công bố mỗi action ở `GET /system/capabilities` với input / output schema, quyền, `sideEffects`, idempotency, loại bằng chứng (`receipt` cho ghi) | `defineAction` từ chối khi nạp; `test/actions.test.ts` |
 
 ## 6. Phơi ra cho AI (MCP)
 
