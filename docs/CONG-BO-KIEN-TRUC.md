@@ -88,7 +88,7 @@ Tên dạng `<miền>.<thực thể>.<động từ>` (STD-MCP-1). Miền của C
 | `accounting.balance.get` | Số dư tài khoản tại một ngày, đọc thẳng sổ (R-CACHE-2) | `reports:read` | không (đọc) | **có** |
 | `accounting.report.trial_balance` · `accounting.cash.balances` · `accounting.debts.partner_balances` | Cân đối phát sinh, tiền, công nợ | `reports:read` | không | **có** |
 | `accounting.document.create_draft` | Lập chứng từ nháp (bán, mua, thu, chi) → sự việc `pending` ở ACC14 (cả khi chế độ "Tự động"), kế toán duyệt mới vào sổ; xem trước = bút toán dựng thử | `documents:write` | **luôn** xem trước + xác nhận | **có** (PHASE-009) |
-| `accounting.journal.post` | Đề xuất phiếu kế toán theo lý do (không số tài khoản) → `pending`, người có quyền duyệt | `documents:write` + duyệt | **luôn** xác nhận; không AI tự duyệt (STD-MCP-6) | chưa (G2-04, cần `docType` phiếu tay — [API.md §6](../packages/module-sdk/API.md)) |
+| `accounting.journal.post` | Đề xuất phiếu kế toán / thu / chi **nháp** → `pending`, 0 bút toán; tài khoản trên dòng chỉ là đề xuất, người có quyền xem, sửa rồi duyệt (`POST /api/v1/vouchers/:id/approve`, `ai: deny`) mới ghi qua eventStore; xem trước = bút toán dựng thử | `documents:write` + duyệt | **luôn** xác nhận; không AI tự duyệt (STD-MCP-6) | **có** (PHASE-009, Q009-1 a) <!-- [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — journal.post có. --> |
 | `accounting.entry.reverse` | Đề xuất huỷ / đảo một chứng từ đã ghi → "Chờ huỷ" chờ duyệt, sổ giữ nguyên; xem trước = bút toán sẽ đảo | `documents:write` + duyệt | **luôn** xác nhận + lý do; `destructiveHint` | **có** (PHASE-009) |
 
 AI **không bao giờ**: duyệt chứng từ, khoá / mở kỳ, đổi cấu hình định khoản, xoá (STD-MCP-6).
@@ -232,7 +232,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G2-01 | Domain Contract | `bizcity_domain@1` công bố, mỗi bất biến có cách bảo vệ | **có** | — | — |
 | G2-02 | Capability Contract | `/system/capabilities` công bố schema, quyền, `sideEffects`, idempotency, bằng chứng; `defineAction` chặn khai thiếu | **có** | 2.5 | — |
 | G2-03 | Extension Contract chạy thật: slot, hook, `ctx.actions.call` | ca chuẩn hợp đồng dùng slot + hook | **một phần** (có tài liệu) | 3.x | _mở_ |
-| G2-04 | MCP Server kế toán đủ bộ: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse` | 3 công cụ ghi có xem trước + duyệt; CONF-MCP-5 | **một phần** (đọc, `create_draft`, `entry.reverse` có; `journal.post` chờ quyết định phiếu kế toán nháp — PHASE-009 Q009-1) | 2.16 | _mở_ |
+| G2-04 | MCP Server kế toán đủ bộ: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse` | 3 công cụ ghi có xem trước + duyệt; CONF-MCP-5 | **có** (PHASE-009: `create_draft`, `journal.post`, `entry.reverse`; `test/mcp-write.test.ts`, `test/mcp-journal.test.ts`) <!-- [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — G2-04 có. --> | 2.16 | — |
 | G2-05 | **Transactional outbox + worker** | R-OUTBOX-1..5 có test; `events.outbox` available | **có** (PHASE-006) | 3.4 | — |
 | G2-06 | Đệm cho Accounting Core có huỷ theo phiên bản cấu hình; `adapters/redis` | R-CACHE-3..6 có test; chạy đúng khi tắt Redis | **chưa** | 5.9 | _mở_ |
 | G2-07 | Prometheus + Grafana + cảnh báo cơ bản | `infrastructure/monitoring/` chạy với API thật | **có** (cấu hình đã kiểm) | 2.13 | — |

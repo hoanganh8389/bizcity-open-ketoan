@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — phiếu kế toán nháp chờ duyệt (Q009-1 a): draftIn lưu sự việc pending không bút toán, approve ghi qua eventStore; accounting.journal.post.
 /**
  * Chứng từ kế toán nhập tay: phiếu thu, phiếu chi, phiếu báo có, phiếu báo nợ, phiếu kế toán,
  * và số dư tài khoản đầu kỳ.
@@ -17,6 +18,8 @@
  *  - Sửa phiếu: bút toán cũ được đảo bằng ghi số âm, ghi bút toán mới, phiên bản tăng 1.
  *    Loại phiếu và số phiếu không đổi được. Kỳ đã khoá thì không sửa, không huỷ được.
  *  - Huỷ phiếu: dùng chung documentService.cancel().
+ *  - Phiếu nháp (trợ lý AI đề xuất qua accounting.journal.post — PHASE-009 S009-2): sự việc `pending`, chưa bút toán, đã giữ số phiếu.
+ *    Người có quyền duyệt (approve) hoặc sửa rồi lưu (update) thì mới ghi sổ; huỷ nháp dùng chung documentService.cancel().
  */
 import { assertDateRules } from '../../core/date-rules.js';
 import {
@@ -31,6 +34,7 @@ import {
   type OpeningInput,
   type VoucherInput,
   type VoucherType,
+  voucherInputSchema,
 } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, type Db } from '../../db/client.js';
@@ -42,6 +46,7 @@ import type { Account } from '../../db/types.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { documentRepository } from '../documents/document.repository.js';
 import { eventStore } from '../documents/event-store.js';
+import { logPosting } from '../documents/document.service.js';
 import type { DraftLine } from '../ledger/ledger.types.js';
 import { applyTaxFlags } from '../tax-info/tax-patch.js';
 import { isProfitLossAccount } from '../closing/closing.service.js';
@@ -229,41 +234,98 @@ async function createManual(auth: AuthContext, doc: ManualDoc) {
 
 /** Lập chứng từ trong giao dịch có sẵn (bút toán lặp: ghi kỳ đã sinh cùng giao dịch). */
 async function createManualIn(trx: Db, auth: AuthContext, doc: ManualDoc) {
+  const ev = await insertManual(trx, auth, doc);
+  const entryIds = await postManual(trx, auth, ev, doc);
+  await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.create`, objectType: 'source_document', objectId: ev.docKey, after: { total: doc.total } });
+  return { id: ev.id, docKey: ev.docKey, docNo: ev.docNo, version: 1, entryIds };
+}
+
+type ManualEvent = { id: string; docKey: string; docNo: string; branchId: string; version: number };
+
+/** Kiểm ngày, cấp số, lưu sự việc phiên bản 1 (trạng thái mặc định `pending`, chưa bút toán). */
+async function insertManual(trx: Db, auth: AuthContext, doc: ManualDoc): Promise<ManualEvent> {
+  await assertNotFutureDate(trx, auth.tenantId, doc.docDate);
+  await assertDateRules(trx, auth, 'lập', [doc.docDate]);
+  const branchId = await branchIdOf(trx, auth.tenantId, doc.branchCode);
+  const docNo = doc.docNo || (await nextDocNo(trx, auth.tenantId, doc.docType, Number(doc.docDate.slice(0, 4))));
+  const docKey = `manual:${doc.docType}:${docNo}`;
+  if (await documentRepository.findByKey(trx, auth.tenantId, docKey)) throw Errors.conflict(`Số phiếu ${docNo} đã tồn tại. Để trống ô số phiếu để hệ thống tự sinh số mới.`);
+
+  await assertActivePartners(trx, auth.tenantId, doc.partnerCodes);
+  const partners = await resolvePartners(trx, auth.tenantId, [doc.partnerCode ?? '']);
+  const created = await documentRepository.insert(trx, {
+    tenant_id: auth.tenantId,
+    source_system: 'manual',
+    created_by: auth.actor,
+    doc_key: docKey,
+    version: 1,
+    doc_type: doc.docType,
+    branch_id: branchId,
+    doc_no: docNo,
+    doc_date: doc.docDate,
+    partner_id: partners.get(doc.partnerCode ?? '') ?? null,
+    invoice_no: null,
+    total: doc.total,
+    payload: JSON.stringify({ ...doc.payload, docNo }),
+  });
+  return { id: created.id, docKey, docNo, branchId, version: 1 };
+}
+
+/** Ghi sổ phiên bản đang lưu của chứng từ (lập mới hoặc duyệt nháp): bút toán, đối trừ công nợ, chứng từ nguồn, posted_version. */
+async function postManual(trx: Db, auth: AuthContext, ev: ManualEvent, doc: ManualDoc): Promise<string[]> {
+  const entryIds = await postEntries(trx, auth, { docId: ev.id, version: ev.version, branchId: ev.branchId, docNo: ev.docNo, doc });
+  if (doc.settle?.length) await settleFromEvent(trx, auth.tenantId, ev.id, doc.settle, auth.actorName);
+  const sourceDocKey = (doc.payload as { sourceDocKey?: string }).sourceDocKey;
+  if (sourceDocKey) {
+    const res = await trx.updateTable('reference_documents').set({ status: 'used', used_event_id: ev.id, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('doc_key', '=', sourceDocKey).executeTakeFirst();
+    if (!Number(res.numUpdatedRows)) throw Errors.validation(`Chứng từ nguồn ${sourceDocKey} không tồn tại`);
+  }
+  await eventStore.markPosted(trx, auth, { id: ev.id, version: ev.version, docKey: ev.docKey, docType: doc.docType, docNo: ev.docNo, entryIds, total: doc.total, action: 'post' });
+  return entryIds;
+}
+
+/**
+ * Lập phiếu NHÁP chờ duyệt (accounting.journal.post — PHASE-009 S009-2, Q009-1 phương án a): lưu sự việc `pending`, giữ số phiếu,
+ * không bút toán, chưa đối trừ công nợ, chưa đánh dấu chứng từ nguồn. Tài khoản trên dòng chỉ là đề xuất: kế toán xem, sửa (update)
+ * hoặc duyệt (approve) mới vào sổ.
+ * preview: ghi sổ thử trong giao dịch (người gọi huỷ giao dịch) — trả đúng bút toán sẽ ghi khi duyệt.
+ */
+async function draftManualIn(trx: Db, auth: AuthContext, doc: ManualDoc, opts: { preview?: boolean } = {}) {
+  const ev = await insertManual(trx, auth, doc);
+  if (opts.preview) {
+    const entryIds = await postManual(trx, auth, ev, doc);
+    return { id: ev.id, docKey: ev.docKey, docNo: ev.docNo, version: 1, status: 'preview' as const, entryIds };
+  }
+  // Dựng dòng sổ cái (không ghi) để chặn sớm phiếu sai tài khoản / thiếu đối tượng — nháp hỏng không nằm chờ duyệt.
+  doc.buildLines(await loadContext(trx, auth.tenantId, doc));
+  await logPosting(trx, { tenantId: auth.tenantId, eventId: ev.id, docType: doc.docType, docNo: ev.docNo, version: 1, action: 'receive', total: doc.total, message: 'Phiếu nháp chờ duyệt', actor: auth.actor });
+  await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.draft`, objectType: 'source_document', objectId: ev.docKey, after: { total: doc.total } });
+  return { id: ev.id, docKey: ev.docKey, docNo: ev.docNo, version: 1, status: 'pending' as const, entryIds: [] as string[] };
+}
+
+/**
+ * Duyệt phiếu nháp: ghi sổ đúng nội dung đã lưu qua eventStore. Gọi lại khi phiếu đã ghi → `approved: false` (idempotent).
+ * Chỉ người dùng có quyền (action `ai: deny`): trợ lý AI không tự duyệt đề xuất của mình (STD-MCP-6).
+ */
+async function approveDraftIn(trx: Db, auth: AuthContext, id: string) {
   {
+    const found = await documentRepository.findById(trx, auth.tenantId, id);
+    if (!found) throw Errors.notFound('phiếu');
+    const row = (await documentRepository.findByKeyForUpdate(trx, auth.tenantId, found.doc_key))!;
+    if (row.source_system !== 'manual' || !isVoucherType(row.doc_type)) throw Errors.conflict('Chỉ duyệt được phiếu thu, chi, báo có, báo nợ, phiếu kế toán lập trong phần mềm');
+    if (row.status === 'cancelled') throw Errors.conflict(`${row.doc_no}: phiếu đã huỷ`);
+    const base = { id: row.id, docKey: row.doc_key, docNo: row.doc_no, version: row.version };
+    if (row.status === 'posted' && row.posted_version === row.version) return { ...base, approved: false, entryIds: [] as string[] };
+    if (row.posted_version !== null || row.cancel_requested_at) throw Errors.conflict(`${row.doc_no}: không phải phiếu nháp (đã ghi sổ hoặc đang chờ huỷ)`);
+    const parsed = voucherInputSchema.safeParse(row.payload);
+    if (!parsed.success) throw Errors.validation(`${row.doc_no}: nội dung phiếu nháp không đúng khuôn — mở phiếu sửa rồi lưu`, parsed.error.flatten());
+    const doc = fromVoucher(parsed.data);
     await assertNotFutureDate(trx, auth.tenantId, doc.docDate);
     await assertDateRules(trx, auth, 'lập', [doc.docDate]);
-    const branchId = await branchIdOf(trx, auth.tenantId, doc.branchCode);
-    const docNo = doc.docNo || (await nextDocNo(trx, auth.tenantId, doc.docType, Number(doc.docDate.slice(0, 4))));
-    const docKey = `manual:${doc.docType}:${docNo}`;
-    if (await documentRepository.findByKey(trx, auth.tenantId, docKey)) throw Errors.conflict(`Số phiếu ${docNo} đã tồn tại. Để trống ô số phiếu để hệ thống tự sinh số mới.`);
-
     await assertActivePartners(trx, auth.tenantId, doc.partnerCodes);
-    const partners = await resolvePartners(trx, auth.tenantId, [doc.partnerCode ?? '']);
-    const created = await documentRepository.insert(trx, {
-      tenant_id: auth.tenantId,
-      source_system: 'manual',
-      created_by: auth.actor,
-      doc_key: docKey,
-      version: 1,
-      doc_type: doc.docType,
-      branch_id: branchId,
-      doc_no: docNo,
-      doc_date: doc.docDate,
-      partner_id: partners.get(doc.partnerCode ?? '') ?? null,
-      invoice_no: null,
-      total: doc.total,
-      payload: JSON.stringify({ ...doc.payload, docNo }),
-    });
-    const entryIds = await postEntries(trx, auth, { docId: created.id, version: 1, branchId, docNo, doc });
-    if (doc.settle?.length) await settleFromEvent(trx, auth.tenantId, created.id, doc.settle, auth.actorName);
-    const sourceDocKey = (doc.payload as { sourceDocKey?: string }).sourceDocKey;
-    if (sourceDocKey) {
-      const res = await trx.updateTable('reference_documents').set({ status: 'used', used_event_id: created.id, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('doc_key', '=', sourceDocKey).executeTakeFirst();
-      if (!Number(res.numUpdatedRows)) throw Errors.validation(`Chứng từ nguồn ${sourceDocKey} không tồn tại`);
-    }
-    await eventStore.markPosted(trx, auth, { id: created.id, version: 1, docKey, docType: doc.docType, docNo, entryIds, total: doc.total, action: 'post' });
-    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.create`, objectType: 'source_document', objectId: docKey, after: { total: doc.total } });
-    return { id: created.id, docKey, docNo, version: 1, entryIds };
+    const entryIds = await postManual(trx, auth, { ...base, branchId: row.branch_id }, doc);
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.approve`, objectType: 'source_document', objectId: row.doc_key, after: { total: doc.total, proposedBy: row.created_by } });
+    return { ...base, approved: true, entryIds };
   }
 }
 
@@ -464,6 +526,10 @@ export const voucherService = {
   create: (auth: AuthContext, input: VoucherInput) => createManual(auth, fromVoucher(input)),
   createIn: (trx: Db, auth: AuthContext, input: VoucherInput) => createManualIn(trx, auth, fromVoucher(input)),
   update: (auth: AuthContext, id: string, input: VoucherInput) => updateManual(auth, id, fromVoucher(input)),
+  /** Phiếu nháp chờ duyệt (PHASE-009 S009-2). */
+  draftIn: (trx: Db, auth: AuthContext, input: VoucherInput, opts: { preview?: boolean } = {}) => draftManualIn(trx, auth, fromVoucher(input), opts),
+  approveIn: approveDraftIn,
+  approve: (auth: AuthContext, id: string) => db.transaction().execute((trx) => approveDraftIn(trx, auth, id)),
   createOpening: (auth: AuthContext, input: OpeningInput) => createManual(auth, fromOpening(input)),
   updateOpening: (auth: AuthContext, id: string, input: OpeningInput) => updateManual(auth, id, fromOpening(input)),
 };

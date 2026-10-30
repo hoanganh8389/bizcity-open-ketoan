@@ -4,6 +4,7 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — trạm định khoản ACC14 nhận ra phiếu nháp nhập tay (accounting.journal.post), chỉ đường duyệt ở màn phiếu.
 /**
  * Nhận và xử lý chứng từ gốc.
  *
@@ -516,7 +517,12 @@ export const documentService = {
       }
       if (!repost && row.status === 'posted' && row.posted_version === row.version) { skipped.push({ docNo: row.doc_no, message: 'Đã định khoản (dùng Định khoản lại nếu cần)' }); continue; }
       const parsed = ingestDocumentSchema.safeParse(row.payload);
-      if (!parsed.success) { skipped.push({ docNo: row.doc_no, message: 'Phiếu lập trong phần mềm kế toán (thu chi, phiếu kế toán…): sửa và ghi ở chính phiếu' }); continue; }
+      if (!parsed.success) {
+        // Phiếu nháp nhập tay (trợ lý AI đề xuất — accounting.journal.post) không ghi ở trạm: người duyệt mở phiếu, sửa nếu cần, duyệt.
+        const draft = row.source_system === 'manual' && row.posted_version === null;
+        skipped.push({ docNo: row.doc_no, message: draft ? 'Phiếu nháp chờ duyệt: mở phiếu để duyệt (POST /api/v1/vouchers/:id/approve) hoặc sửa rồi lưu' : 'Phiếu lập trong phần mềm kế toán (thu chi, phiếu kế toán…): sửa và ghi ở chính phiếu' });
+        continue;
+      }
       try {
         const res = await db.transaction().execute(async (trx) => {
           await assertDateRules(trx, auth, 'lập', [row.doc_date]);
