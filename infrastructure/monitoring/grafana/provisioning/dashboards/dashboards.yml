@@ -1,0 +1,18 @@
+# =============================================================================
+# Nạp bảng điều khiển từ tệp JSON trong /var/lib/grafana/dashboards (= grafana/dashboards/ trong kho).
+# Sửa bảng trên giao diện sẽ KHÔNG lưu vào tệp: muốn giữ, xuất JSON (Share → Export) rồi ghi đè tệp.
+# =============================================================================
+apiVersion: 1
+
+providers:
+  - name: bizcity
+    orgId: 1
+    folder: Bizcity
+    folderUid: bizcity
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

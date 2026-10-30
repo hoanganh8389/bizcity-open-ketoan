@@ -78,6 +78,8 @@ services:
       BOOK_MODE: ${BOOK_MODE:-internal}
       # Nhãn môi trường (vd. BẢN TEST): dải màu trên đầu giao diện; trống = bản thật, không hiện
       ENV_LABEL: ${ENV_LABEL:-}
+      # GET /metrics (docs/ops/OBSERVABILITY.md): đặt thì Prometheus phải gửi Bearer token (infrastructure/monitoring/).
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
       # Đăng nhập bằng tài khoản hệ thống quản trị: khoá chung (giống bên hệ thống quản trị) + mã đơn vị
       WP_SSO_SECRET: ${WP_SSO_SECRET:-}
       WP_SSO_TENANT: ${WP_SSO_TENANT:-}

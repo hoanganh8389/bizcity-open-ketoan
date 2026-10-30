@@ -22,6 +22,8 @@ import { requireAuthenticated, type AuthContext } from '../../core/auth.js';
 import { AppError } from '../../core/errors.js';
 import { listActions, requestHash, runAction, type AnyActionDef } from '../../core/actions.js';
 import { BUILD_VERSION } from '../../core/version.js';
+import { metrics } from '../../core/metrics.js';
+import { ERROR_CATALOG, MCP_ERROR_CATALOG } from '@ketoan/contracts';
 
 const CONFIRM_TTL_MS = 900_000;
 const LIST_LIMIT = 50;
@@ -116,26 +118,15 @@ function toolOk(title: string, data: unknown, meta: Json, opts: { complete?: boo
   return { content: [{ type: 'text', text: `${message}\n${JSON.stringify(body).slice(0, 20_000)}` }], structuredContent: env };
 }
 
-const HINTS: Record<string, string> = {
-  FORBIDDEN: 'Tài khoản / khoá đang dùng không có quyền này — nhờ chủ đơn vị cấp quyền.',
-  VALIDATION_ERROR: 'Sửa tham số theo error.details rồi gọi lại.',
-  NOT_FOUND: 'Kiểm lại mã (chứng từ, đối tượng, công cụ) rồi gọi lại.',
-  CONFLICT: 'Trạng thái hiện tại không cho phép thao tác này — đọc lại dữ liệu trước khi làm tiếp.',
-  PERIOD_LOCKED: 'Kỳ kế toán đã khoá — nhờ kế toán trưởng mở kỳ hoặc chọn ngày khác.',
-  POSTING_FAILED: 'Thiếu cấu hình định khoản — báo kế toán sửa cấu hình rồi định khoản lại.',
-  IDEMPOTENCY_CONFLICT: 'Khoá chống gửi lặp đã dùng cho nội dung khác — dùng khoá mới.',
-  MCP_CONFIRM_INVALID: 'Token xác nhận không còn dùng được (sai, hết hạn, đã dùng) — gọi lại KHÔNG kèm confirm_token để xem trước và xin xác nhận lại.',
-  MCP_CONFIRM_ARGS_CHANGED: 'Tham số đã khác bản xem trước — gọi lại KHÔNG kèm confirm_token để xem trước bản mới.',
-  INTERNAL_ERROR: 'Lỗi hệ thống — thử lại sau ít phút.',
-};
-const RETRYABLE = new Set(['INTERNAL_ERROR', 'RATE_LIMITED', 'NOT_READY']);
+// Gợi ý / thử lại lấy từ danh mục mã lỗi (bizcity_errors@1) — một nguồn với API và tài liệu.
+const SPEC: Record<string, { hint: string; retryable: boolean }> = { ...ERROR_CATALOG, ...MCP_ERROR_CATALOG };
 
 function toolError(code: string, message: string, details?: unknown) {
-  const hint = HINTS[code] ?? '';
+  const hint = SPEC[code]?.hint ?? '';
   return {
     isError: true,
     content: [{ type: 'text', text: hint ? `${message} ${hint}` : message }],
-    structuredContent: { success: false, code, message, hint, help_code: code, error: { code, retryable: RETRYABLE.has(code), details: details ?? null } },
+    structuredContent: { success: false, code, message, hint, help_code: code, error: { code, retryable: SPEC[code]?.retryable ?? false, details: details ?? null } },
   };
 }
 
@@ -224,8 +215,14 @@ export async function mcpRoutes(app: FastifyInstance): Promise<void> {
           return done({});
         case 'tools/list':
           return done({ tools: visibleTools(auth).map(descriptor) });
-        case 'tools/call':
-          return done(await callTool(req, auth, params as CallParams));
+        case 'tools/call': {
+          const r = await callTool(req, auth, params as CallParams);
+          // Nhãn tool chỉ nhận tên công cụ có thật (R-OBS-4: client gửi tên lạ không làm nổ số chuỗi số đo).
+          const known = listActions().some((a) => isTool(a) && toolName(a) === params.name);
+          const result = 'isError' in r ? 'error' : r.structuredContent.complete === false ? 'needs_confirmation' : 'ok';
+          metrics.mcpCalls.inc({ tool: known ? String(params.name) : 'unknown', result });
+          return done(r);
+        }
         default:
           return rpcError(msg.id, -32601, `Không hỗ trợ phương thức ${msg.method}`);
       }

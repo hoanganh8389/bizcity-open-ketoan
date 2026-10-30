@@ -1,0 +1,132 @@
+# =============================================================================
+# Luật cảnh báo Bizcity / open-ketoan — đúng 8 luật.
+# Mức độ (label severity): critical = cần xử lý ngay; warning = xem trong giờ làm việc.
+# Kiểm cú pháp:  promtool check rules /etc/prometheus/alerts.yml
+#
+# Không có Redis / NATS trong dự án (hàng đợi là bảng outbox trong PostgreSQL), nên hai luật
+# RedisDown / NATSDown của bộ tham chiếu được thay bằng PostingBacklog / LedgerIntegrityError
+# — xem README.md §8.
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  - name: bizcity-api
+    rules:
+      - alert: HighErrorRate
+        # Tỉ lệ phản hồi 5xx trên tổng yêu cầu trong 5 phút.
+        # Điều kiện phụ "> 0.02 yêu cầu/giây" tránh báo động giả khi gần như không có lưu lượng
+        # (vd. 1 lỗi trên 2 yêu cầu lúc nửa đêm).
+        expr: |
+          (
+            sum(rate(bizcity_http_requests_total{job="api", status=~"5.."}[5m]))
+            /
+            sum(rate(bizcity_http_requests_total{job="api"}[5m]))
+          ) > 0.05
+          and
+          sum(rate(bizcity_http_requests_total{job="api"}[5m])) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Tỉ lệ lỗi 5xx của API vượt 5%"
+          description: "{{ $value | humanizePercentage }} yêu cầu API trả lỗi 5xx trong 5 phút qua. Xem bảng 02 — API theo route và nhật ký lỗi (bảng 06) để tìm route / mã lỗi gây ra."
+          dashboard: "/d/bizcity-api"
+
+      - alert: HighLatency
+        # Phân vị 95 thời gian phản hồi của toàn API.
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(bizcity_http_request_duration_seconds_bucket{job="api"}[5m]))
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API chậm: p95 thời gian phản hồi trên 1 giây"
+          description: "p95 thời gian phản hồi API là {{ $value | humanizeDuration }} suốt 10 phút. Kiểm tra truy vấn CSDL chậm (bảng 03 — CSDL), kết nối chờ trong pool, và route chậm nhất (bảng 02)."
+          dashboard: "/d/bizcity-api"
+
+      - alert: ApiDown
+        expr: up{job="api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API không phản hồi /metrics"
+          description: "Prometheus không thu được chỉ số từ {{ $labels.instance }} trong 2 phút. API có thể đã dừng, khởi động lại liên tục, hoặc METRICS_TOKEN không khớp (lỗi 401). Xem: docker compose logs --tail=200 api"
+
+      - alert: HighMemory
+        # Hai nguồn, cái nào vượt cũng báo:
+        #  - RSS tiến trình Node của API > 1,5 GiB (chỉ số từ chính API);
+        #  - bộ nhớ đang dùng của một container > 90% giới hạn (chỉ khi container có đặt giới hạn).
+        expr: |
+          (process_resident_memory_bytes{job="api"} > 1.5 * 1024 * 1024 * 1024)
+          or
+          (
+            container_memory_working_set_bytes{job="cadvisor", name!=""}
+            / (container_spec_memory_limit_bytes{job="cadvisor", name!=""} > 0)
+          ) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Bộ nhớ cao: {{ with $labels.container_label_com_docker_compose_service }}container {{ . }}{{ else }}tiến trình API{{ end }}"
+          description: "Giá trị hiện tại {{ $value | humanize }} (byte nếu là RSS API; tỉ lệ so với giới hạn nếu là container) kéo dài 10 phút. Nguy cơ bị OOM kill. Xem bảng 01 — Tổng quan / 03 — CSDL."
+
+  # ---------------------------------------------------------------------------
+  - name: bizcity-infra
+    rules:
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL không kết nối được"
+          description: "postgres-exporter không kết nối được CSDL {{ $labels.instance }} trong 1 phút. Mọi ghi sổ đều dừng. Xem: docker compose logs --tail=200 db"
+          dashboard: "/d/bizcity-postgresql"
+
+      - alert: DiskUsage
+        expr: |
+          (
+            1 - node_filesystem_avail_bytes{job="node", fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs|fuse.*|iso9660"}
+              / node_filesystem_size_bytes{job="node", fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs|fuse.*|iso9660"}
+          ) > 0.85
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ổ đĩa {{ $labels.mountpoint }} đã dùng trên 85%"
+          description: "Ổ {{ $labels.device }} ({{ $labels.mountpoint }}) đã dùng {{ $value | humanizePercentage }}. Đầy đĩa làm PostgreSQL dừng ghi → sổ cái ngừng nhận bút toán. Dọn bản sao lưu cũ, nhật ký Docker, hoặc mở rộng ổ."
+
+  # ---------------------------------------------------------------------------
+  - name: bizcity-ledger
+    rules:
+      - alert: LedgerIntegrityError
+        # Thay NATSDown. Bộ tự chẩn đoán tầng L3 (đối chiếu sổ: cân đối Nợ = Có, sự việc ↔ bút toán…)
+        # báo lỗi nghĩa là SỔ CÁI có vấn đề toàn vẹn — nghiêm trọng hơn mọi sự cố hạ tầng.
+        # Cả L1 (trigger bảo vệ sổ bị tắt / mất, CSDL chỉ đọc) lẫn L3 (sổ lệch): đều là sổ không còn được bảo vệ.
+        expr: bizcity_diagnostics_errors{job="api"} > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Tự chẩn đoán phát hiện lỗi sổ cái (tầng {{ $labels.layer }})"
+          description: "Lần tự chẩn đoán gần nhất ghi nhận {{ $value }} lỗi ở tầng {{ $labels.layer }}. KHÔNG sửa tay bảng ledger_* — chạy lại bộ chẩn đoán, xem chi tiết lỗi và xử lý bằng bút toán đảo (docs/rules/RULE-LEDGER.md, docs/ops/DIAGNOSTICS.md)."
+          dashboard: "/d/bizcity-so-cai"
+
+      - alert: PostingBacklog
+        # Thay RedisDown. Hàng đợi ghi sổ (sự việc kế toán chờ / lỗi) bị ứ:
+        #  - còn sự việc trạng thái error suốt 30 phút; hoặc
+        #  - sự việc pending lâu nhất đã chờ quá 3 ngày (259200 giây).
+        expr: |
+          (max(bizcity_ledger_events{job="api", status="error"}) > 0)
+          or
+          (max(bizcity_ledger_events_oldest_pending_seconds{job="api"}) > 259200)
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ứ đọng ghi sổ: có sự việc kế toán lỗi hoặc chờ quá lâu"
+          description: "Giá trị {{ $value | humanize }} (số sự việc lỗi, hoặc số giây sự việc chờ lâu nhất). Chứng từ đã nhận nhưng chưa thành bút toán → báo cáo tài chính thiếu số liệu. Xem bảng 04 — Sổ cái & sự việc và nhật ký có errCode POSTING_FAILED / PERIOD_LOCKED."
+          dashboard: "/d/bizcity-so-cai"

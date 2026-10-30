@@ -4,7 +4,7 @@
  */
 import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError, z } from 'zod';
-import { ERROR_CODES, type ApiSuccess, type PageMeta } from '@ketoan/contracts';
+import { ERROR_CATALOG, ERROR_CODES, type ApiSuccess, type ErrorCode, type ErrorReason, type PageMeta } from '@ketoan/contracts';
 import { AppError } from './errors.js';
 
 /** Phản hồi thành công. */
@@ -42,52 +42,58 @@ export function okSchema<T extends z.ZodTypeAny>(data: T) {
   return z.object({ ok: z.literal(true), data, meta: z.record(z.unknown()).optional() });
 }
 
-/** Gắn bộ xử lý lỗi chung: mọi lỗi đều về khuôn { ok:false, error }. */
+/**
+ * Gắn bộ xử lý lỗi chung: mọi lỗi đều về khuôn { ok: false, error: { code, message, requestId, details? } } (bizcity_errors@1).
+ * HTTP status theo ERROR_CATALOG; mọi phản hồi lỗi có requestId (R-ERR-5); lỗi CSDL ánh xạ cố định (R-ERR-8, BIZCITY-ERRORS §5);
+ * 5xx chỉ trả "Lỗi hệ thống", chi tiết vào log (R-ERR-4). Mỗi lỗi ghi log có errCode để Loki / cảnh báo lọc theo mã (R-ERR-9).
+ */
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((err: FastifyError | AppError | ZodError, req, reply) => {
-    if (err instanceof AppError) {
-      return reply.status(err.httpStatus).send({ ok: false, error: { code: err.code, message: err.message, details: err.details } });
-    }
-    if (err instanceof ZodError) {
-      return reply.status(400).send({
-        ok: false,
-        error: { code: ERROR_CODES.VALIDATION, message: 'Dữ liệu gửi lên không hợp lệ', details: err.issues.map(issueText) },
-      });
-    }
+    const send = (code: ErrorCode, message: string, details?: unknown, status = ERROR_CATALOG[code].http) => {
+      reply.errCode = code;
+      if (status >= 500) req.log.error({ err, errCode: code }, 'lỗi hệ thống');
+      else req.log.info({ errCode: code, status }, message);
+      return reply.status(status).send({ ok: false, error: { code, message, requestId: String(req.id), ...(details === undefined ? {} : { details }) } });
+    };
+    const withReason = (reason: ErrorReason, extra?: Record<string, unknown>) => ({ reason, ...extra });
+
+    if (err instanceof AppError) return send(err.code, err.message, err.details, err.httpStatus);
+    if (err instanceof ZodError) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, err.issues.map(issueText));
     // Lỗi kiểm tra dữ liệu của fastify-type-provider-zod
     const anyErr = err as FastifyError & { validation?: unknown };
-    if (anyErr.validation) {
-      return reply.status(400).send({
-        ok: false,
-        error: { code: ERROR_CODES.VALIDATION, message: 'Dữ liệu gửi lên không hợp lệ', details: validationTexts(anyErr.validation) },
-      });
-    }
-    // Lỗi ràng buộc ở database có thông điệp tiếng Việt (bút toán không cân, sổ cái chỉ thêm…)
+    if (anyErr.validation) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, validationTexts(anyErr.validation));
+    // Lỗi ràng buộc / trigger ở CSDL: thông điệp tiếng Việt có chủ đích (bút toán không cân, sổ cái chỉ thêm…)
     const pgCode = (err as { code?: string }).code;
-    if (pgCode === '23514' || pgCode === '42501') {
-      return reply.status(422).send({ ok: false, error: { code: ERROR_CODES.POSTING_FAILED, message: err.message } });
-    }
-    if (pgCode === '23505') {
-      return reply.status(409).send({ ok: false, error: { code: ERROR_CODES.CONFLICT, message: 'Dữ liệu bị trùng (mã đã tồn tại)' } });
-    }
+    if (pgCode === '23514' || pgCode === '42501') return send(ERROR_CODES.POSTING_FAILED, err.message);
+    if (pgCode === '23505') return send(ERROR_CODES.CONFLICT, 'Dữ liệu bị trùng (mã đã tồn tại)', withReason('DB_UNIQUE_VIOLATION'));
     if (pgCode === '23503' && /update or delete/i.test(err.message)) {
       // Xoá một mã còn dữ liệu khác trỏ tới.
-      return reply.status(409).send({ ok: false, error: { code: ERROR_CODES.CONFLICT, message: 'Mã đang được dùng ở dữ liệu khác nên không xoá được: bỏ tích theo dõi / đang dùng để ngừng' } });
+      return send(ERROR_CODES.CONFLICT, 'Mã đang được dùng ở dữ liệu khác nên không xoá được: bỏ tích theo dõi / đang dùng để ngừng', withReason('DB_IN_USE'));
     }
-    if (pgCode === '23503') {
-      return reply.status(422).send({ ok: false, error: { code: ERROR_CODES.VALIDATION, message: 'Tham chiếu tới mã chưa khai báo trong danh mục' } });
+    if (pgCode === '23503') return send(ERROR_CODES.VALIDATION, 'Tham chiếu tới mã chưa khai báo trong danh mục', withReason('DB_REFERENCE_MISSING'), 422);
+    if (pgCode === 'P0001') {
+      // RAISE EXCEPTION của trigger bảo vệ sổ / bằng chứng: câu đã viết cho người dùng, không phải lỗi hệ thống.
+      return /không cân/i.test(err.message)
+        ? send(ERROR_CODES.UNBALANCED, err.message)
+        : send(ERROR_CODES.CONFLICT, err.message, withReason('LEDGER_APPEND_ONLY'));
     }
     const status = anyErr.statusCode && anyErr.statusCode < 500 ? anyErr.statusCode : 500;
-    if (status >= 500) req.log.error(err);
-    return reply.status(status).send({
-      ok: false,
-      error: { code: status >= 500 ? ERROR_CODES.INTERNAL : ERROR_CODES.VALIDATION, message: status >= 500 ? 'Lỗi hệ thống' : err.message },
-    });
+    return status >= 500
+      ? send(ERROR_CODES.INTERNAL, ERROR_CATALOG.INTERNAL_ERROR.message, undefined, 500)
+      : send(ERROR_CODES.VALIDATION, err.message, undefined, status);
   });
 
   app.setNotFoundHandler((req, reply) => {
-    reply.status(404).send({ ok: false, error: { code: ERROR_CODES.NOT_FOUND, message: `Không có đường dẫn ${req.method} ${req.url}` } });
+    reply.errCode = ERROR_CODES.NOT_FOUND;
+    reply.status(404).send({ ok: false, error: { code: ERROR_CODES.NOT_FOUND, message: `Không có đường dẫn ${req.method} ${req.url}`, requestId: String(req.id) } });
   });
+}
+
+declare module 'fastify' {
+  interface FastifyReply {
+    /** Mã lỗi của phản hồi (để log / số đo bizcity_http_errors_total đọc ở onResponse). */
+    errCode?: string;
+  }
 }
 
 /** Tên tiếng Việt của các trường hay gặp trong lỗi kiểm tra dữ liệu. */

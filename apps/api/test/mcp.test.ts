@@ -73,7 +73,7 @@ describe('MCP', () => {
 
     const bad = await tool(ctx, 'ketoan.report.trial_balance', { from: '10/2026', to: '2026-10-31' });
     expect(bad.isError).toBe(true);
-    expect(bad.structuredContent).toMatchObject({ success: false, code: 'VALIDATION_ERROR', hint: expect.stringContaining('tham số'), error: { retryable: false } });
+    expect(bad.structuredContent).toMatchObject({ success: false, code: 'VALIDATION_ERROR', hint: expect.stringContaining('error.details'), error: { retryable: false } });
   });
 
   it('ghi: không token → xem trước + confirm_token, không ghi gì; đổi tham số → ARGS_CHANGED; xác nhận → ghi một lần, biên nhận, bằng chứng actor AI', async () => {

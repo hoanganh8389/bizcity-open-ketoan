@@ -6,6 +6,7 @@
  */
 export * from './enums.js';
 export * from './api.js';
+export * from './errors.js';
 export * from './documents.js';
 export * from './vouchers.js';
 export * from './money.js';

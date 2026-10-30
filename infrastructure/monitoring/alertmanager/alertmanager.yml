@@ -1,0 +1,65 @@
+# =============================================================================
+# Alertmanager — định tuyến cảnh báo Bizcity / open-ketoan.
+#
+# Mặc định: receiver "default" KHÔNG gửi đi đâu (chỉ hiện trên http://127.0.0.1:9093 và Grafana).
+# Thêm kênh nhận: bỏ dấu # ở một khối ví dụ bên dưới, điền thông tin, rồi
+#   curl -X POST http://127.0.0.1:9093/-/reload
+# KHÔNG ghi mật khẩu / token thật vào tệp đã commit — dùng *_file trỏ tới tệp trong secrets/
+# (thư mục đã có trong .gitignore), xem README.md §5.
+# Kiểm cú pháp:  amtool check-config /etc/alertmanager/alertmanager.yml
+# =============================================================================
+
+global:
+  resolve_timeout: 5m
+  # Thư điện tử (bỏ # khi dùng email_configs):
+  # smtp_smarthost: "smtp.example.com:587"
+  # smtp_from: "canh-bao@example.com"
+  # smtp_auth_username: "canh-bao@example.com"
+  # smtp_auth_password_file: /etc/alertmanager/secrets/smtp_password
+  # smtp_require_tls: true
+
+route:
+  receiver: default
+  # Gom theo tên cảnh báo: 10 container cùng HighMemory → một thông báo.
+  group_by: ["alertname"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    # Cảnh báo critical (ApiDown, PostgreSQLDown, LedgerIntegrityError, HighErrorRate) nhắc lại dày hơn.
+    - matchers:
+        - severity="critical"
+      receiver: default
+      group_wait: 10s
+      repeat_interval: 1h
+
+inhibit_rules:
+  # CSDL sập thì API cũng lỗi — chỉ báo nguyên nhân gốc.
+  - source_matchers:
+      - alertname="PostgreSQLDown"
+    target_matchers:
+      - alertname=~"HighErrorRate|HighLatency|PostingBacklog"
+  # API sập thì không cần báo tỉ lệ lỗi / độ trễ của chính nó.
+  - source_matchers:
+      - alertname="ApiDown"
+    target_matchers:
+      - alertname=~"HighErrorRate|HighLatency"
+
+receivers:
+  - name: default
+    # --- Ví dụ 1: webhook (Slack/Teams/Zalo qua cầu nối, hoặc dịch vụ nội bộ) ---
+    # webhook_configs:
+    #   - url_file: /etc/alertmanager/secrets/webhook_url
+    #     send_resolved: true
+    #
+    # --- Ví dụ 2: thư điện tử (cần khối smtp_* ở global) ---
+    # email_configs:
+    #   - to: "van-hanh@example.com"
+    #     send_resolved: true
+    #
+    # --- Ví dụ 3: Telegram ---
+    # telegram_configs:
+    #   - bot_token_file: /etc/alertmanager/secrets/telegram_bot_token
+    #     chat_id: -1001234567890
+    #     parse_mode: HTML
+    #     send_resolved: true

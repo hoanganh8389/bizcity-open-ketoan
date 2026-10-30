@@ -1,0 +1,1 @@
+[{ "docType": "sale", "docKey": "pos:CN01:1", "branchCode": "CN01", "docNo": "1", "docDate": "@today", "lines": [], "totals": { "beforeTax": 0, "tax": 0, "total": 0 } }]

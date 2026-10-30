@@ -20,6 +20,7 @@
 | `./scripts/tao-ban-test.sh …` | Tạo bản cài test riêng từ bản đang chạy |
 | `./scripts/xoa-chung-tu.sh [mã đơn vị]` | Xoá sạch chứng từ + sổ của một đơn vị (chỉ khi `BOOK_MODE=tax`, sau sao lưu) |
 | `node scripts/mau-chuyen-kho.mjs [--xoa]` | Nạp / xoá dữ liệu mẫu chuyển kho |
+| `node scripts/cai-preset.mjs <id> --api <url> (--token … | --tenant … --email …)` | Cài nhanh preset theo ngành qua HTTP API: chế độ ghi sổ + dữ liệu mẫu hư cấu; `--list`, `--dry-run`, `--no-sample` ([bizcity_preset@1](../contracts/BIZCITY-PRESET-v1.md)) |
 | `node scripts/gan-nhan-lop.mjs [--write]` | Đếm / ghi nhãn lớp `// @bizcity-layer` đầu mọi tệp `apps/api/src` theo bảng lớp (R-BOUND-10) |
 | `node scripts/do-thi-phu-thuoc.mjs [--date YYYY-MM-DD]` | Dựng đồ thị phụ thuộc theo lớp → `docs/audits/deps-<ngày>.{svg,md,json}` (PHASES 1.4) |
 

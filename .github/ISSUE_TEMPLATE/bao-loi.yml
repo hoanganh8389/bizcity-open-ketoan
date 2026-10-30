@@ -1,0 +1,73 @@
+name: Báo lỗi
+description: Phần mềm chạy sai, báo lỗi, sổ lệch. KHÔNG dán dữ liệu thật của đơn vị (tên khách, MST, số tiền, khoá, token) — repo công khai.
+title: "[Lỗi] "
+labels: ["bug", "cần-phân-loại"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cách lấy thông tin: [docs/ops/OBSERVABILITY.md §5](../blob/main/docs/ops/OBSERVABILITY.md#5-báo-lỗi-bug). Lỗi bảo mật: **không** mở issue, xem [SECURITY.md](../blob/main/SECURITY.md).
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Mức độ
+      options:
+        - "sev1 — sai sổ, mất dữ liệu, lộ dữ liệu"
+        - "sev2 — chức năng chính không dùng được"
+        - "sev3 — lỗi nhỏ, có cách tránh"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản (version / kernel / standard)
+      description: "GET /api/v1/system/health → version, kernel, standard"
+      placeholder: "0.1.0 / 0.1.0 / 1.0.0-draft"
+    validations:
+      required: true
+  - type: input
+    id: request_id
+    attributes:
+      label: requestId
+      description: "error.requestId trong phản hồi lỗi, hoặc header X-Request-Id"
+      placeholder: "req-1a2b3c4d5e6f7"
+  - type: input
+    id: error_code
+    attributes:
+      label: Mã lỗi (code, details.reason)
+      description: "Theo docs/contracts/BIZCITY-ERRORS-v1.md"
+      placeholder: "PERIOD_LOCKED / LEDGER_DIAGNOSTICS_FAILED"
+  - type: input
+    id: evidence
+    attributes:
+      label: Biên nhận (evidenceId) nếu là thao tác ghi
+      description: "meta.receipt.evidenceId"
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Kết quả tự chẩn đoán
+      description: "GET /api/v1/system/diagnostics — chỉ dán summary và mã các kiểm level=error (không dán sample nếu là dữ liệu thật)"
+      render: json
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước tái hiện
+      placeholder: |
+        1. Mở màn …
+        2. Nhập … (dữ liệu mẫu / hư cấu)
+        3. Bấm …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Mong đợi và thực tế
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Dữ liệu
+      options:
+        - label: Tôi không dán dữ liệu thật của đơn vị, khoá API, token hay mật khẩu
+          required: true

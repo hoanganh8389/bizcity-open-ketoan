@@ -62,6 +62,16 @@ Mỗi bản ghi đủ sáu mục:
   - công cụ sinh tự động từ action, chỉ hiện công cụ người gọi có quyền;
   - ghi qua AI **luôn phải xem trước rồi người dùng xác nhận** (`confirm_token` một lần, 15 phút; migration `0037_mcp_xac_nhan.sql`);
   - bằng chứng ghi rõ "AI làm thay người dùng nào, qua kênh nào".
+- **Chuẩn hoá theo ADR-0007** (học từ bộ 27 gói tham chiếu, giữ sổ cái làm lõi, PostgreSQL là hạ tầng bắt buộc duy nhất):
+  - **mã lỗi** `bizcity_errors@1`: danh mục máy đọc `ERROR_CATALOG` (HTTP, thử lại, thông báo, gợi ý), luật R-ERR, `details.reason`. Phản hồi lỗi có `error.requestId`;
+  - **quan sát**:
+    - mọi phản hồi có `X-Request-Id`; đọc `traceparent`;
+    - log JSON một dòng mỗi yêu cầu (`tenant`, `actor`, `route`, `ms`, `errCode`);
+    - `GET /metrics` Prometheus (HTTP, CSDL, action, MCP, sổ cái, tự chẩn đoán), có `METRICS_TOKEN` tuỳ chọn;
+  - **bộ giám sát tuỳ chọn** `infrastructure/monitoring/`: Prometheus, Alertmanager, Grafana (6 dashboard), Loki + Promtail, exporter; 8 cảnh báo, trong đó có `LedgerIntegrityError`, `PostingBacklog`;
+  - **cài nhanh** `bizcity_preset@1`: preset `thuong-mai-ban-le` + `scripts/cai-preset.mjs` (dữ liệu mẫu hư cấu, nạp qua API);
+  - **tài liệu**: sơ đồ kiến trúc `docs/architecture/`, `CONTRIBUTING.md`, mẫu báo lỗi `.github/ISSUE_TEMPLATE/bao-loi.yml`, README mới, LAYOUT-7 / LAYOUT-8;
+  - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
@@ -78,6 +88,7 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- Lỗi do trigger bảo vệ sổ / bằng chứng ném ra (sửa, xoá bút toán; bút toán không cân) trước đây trả **500 Lỗi hệ thống**; nay trả `CONFLICT` (reason `LEDGER_APPEND_ONLY`) hoặc `UNBALANCED_ENTRY` kèm câu tiếng Việt của trigger (R-ERR-8).
 - Migration `0033_ma_hang_cha_sua_tay.sql`: cột `products.parent_manual` code đã dùng nhưng chưa có migration — thêm / sửa mặt hàng (và Mua hàng, ĐVT, tồn max dùng tới) báo "column parent_manual does not exist".
 - Vé đăng nhập cấp trước khi có cơ chế thu hồi phiên (không ghi `sv`) bị từ chối ngay: code coi thiếu `sv` = 1 trong khi `users.session_version` mặc định 0 (migration 0029). Nay thiếu `sv` = 0, dùng được tới lần thu hồi đầu như thiết kế.
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.

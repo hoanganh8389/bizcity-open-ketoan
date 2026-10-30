@@ -1,0 +1,5 @@
+[
+  { "code": "MAU-NCC-01", "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một", "kind": "supplier", "address": "10 Đường Mẫu, TP Thử Nghiệm" },
+  { "code": "MAU-NCC-02", "name": "Công ty CP Phân Phối Mẫu Hai", "kind": "supplier", "address": "20 Đường Mẫu, TP Thử Nghiệm" },
+  { "code": "MAU-KH-01", "name": "Khách hàng Mẫu (doanh nghiệp)", "kind": "customer", "address": "30 Đường Mẫu, TP Thử Nghiệm" }
+]

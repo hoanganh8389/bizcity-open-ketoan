@@ -15,6 +15,8 @@ import { env } from './config/env.js';
 import { db } from './db/client.js';
 import { authPlugin } from './core/auth.js';
 import { registerErrorHandler } from './core/http.js';
+import { registerObservability } from './core/observability.js';
+import { randomUUID } from 'node:crypto';
 import { selectEnabled } from './core/addins.js';
 import { BUILTIN_ADDINS } from './addins/index.js';
 
@@ -22,18 +24,28 @@ import { enabledModules, routesFor } from './phan-he/index.js';
 import { isCatalogWrite, notifyCatalogChanged } from './modules/catalog/catalog-notify.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
 import { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
+import { registerCollector } from './core/metrics.js';
+import { collectLedgerMetrics } from './modules/ledger/ledger.metrics.js';
 
 
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: env.NODE_ENV === 'test' ? 'silent' : env.LOG_LEVEL },
+    // Mã yêu cầu (OBSERVABILITY §1): nhận X-Request-Id hợp lệ của bên gọi, không thì tự sinh. Log ghi một dòng/yêu cầu ở onResponse.
+    genReqId: (raw) => {
+      const h = raw.headers['x-request-id'];
+      const v = Array.isArray(h) ? h[0] : h;
+      return v && /^[A-Za-z0-9._:-]{8,128}$/.test(v) ? v : `req-${randomUUID().slice(0, 13)}`;
+    },
+    disableRequestLogging: true,
     bodyLimit: 20 * 1024 * 1024,
   });
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   registerErrorHandler(app);
+  registerObservability(app);
 
   await app.register(cors, {
     origin: env.CORS_ORIGINS.split(',').map((s) => s.trim()),
@@ -69,6 +81,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).
   registerDiagnostics(LEDGER_DIAGNOSTICS);
+  registerCollector('ledger', collectLedgerMetrics);
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.
   // Hệ thống (người dùng, kết nối…) thuộc lõi — luôn báo là bật.

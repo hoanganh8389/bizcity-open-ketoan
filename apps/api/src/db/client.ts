@@ -10,6 +10,7 @@ import { Kysely, PostgresDialect, type Transaction } from 'kysely';
 import pg from 'pg';
 import { env } from '../config/env.js';
 import type { Database } from './types.js';
+import { observeDbQuery } from '../core/metrics.js';
 
 // numeric (1700) và int8 (20): giữ dạng chuỗi để không mất chính xác; date (1082): giữ chuỗi YYYY-MM-DD.
 pg.types.setTypeParser(1082, (v) => v);
@@ -21,6 +22,8 @@ export const pool = new pg.Pool({
 
 export const db = new Kysely<Database>({
   dialect: new PostgresDialect({ pool }),
+  // Số đo thời gian / lỗi truy vấn cho Prometheus (bizcity_db_query_duration_seconds) — chỉ loại câu, không nội dung SQL.
+  log: (e) => observeDbQuery(e.query.sql, e.queryDurationMillis, e.level === 'error'),
 });
 
 export type Db = Kysely<Database> | Transaction<Database>;

@@ -1,86 +1,96 @@
-# Phần mềm kế toán
+# Bizcity Core (open-ketoan)
 
-Kế toán doanh nghiệp lấy **sổ cái** làm trung tâm: nhận chứng từ từ hệ thống nghiệp vụ qua API, tự định khoản theo cấu hình, ghi sổ ngay, lên sổ sách và báo cáo thuế. Một cài đặt phục vụ nhiều đơn vị (multi-tenant), mở rộng bằng add-in.
+**Khung ứng dụng doanh nghiệp lấy sổ cái kế toán làm lõi.** Bán hàng, mua hàng, kho, nhân sự, sản xuất, dự án… là các *module* cài / gỡ được. Tiền của mọi module đi vào sổ qua **một cửa**: sự việc có phiên bản → định khoản theo gói ngành → sổ cái chỉ thêm, có bằng chứng chống sửa. AI (Claude, ChatGPT, Bizcity Cell trên Zalo) đọc sổ và lập chứng từ qua **MCP**, luôn xem trước rồi người dùng xác nhận.
 
-- **API**: Node 22, TypeScript, Fastify, PostgreSQL 16 (Kysely)
-- **Giao diện**: React 18, Vite, TypeScript
-- **Chạy**: Docker Compose
+- **Chạy được trên một máy:** chỉ cần PostgreSQL. Redis, NATS, Keycloak, Meilisearch là adapter tuỳ chọn ([ADR-0007](docs/adr/ADR-0007-goi-chia-se-va-ha-tang.md)).
+- **Viết module bằng người hoặc AI (vibecode):** theo [Bizcity Framework Standard v1](docs/standard/README.md) (7 hợp đồng), tự kiểm bằng một lệnh.
+- **Kế toán Việt Nam:** hệ thống tài khoản TT99, thuế GTGT / TNDN, hoá đơn điện tử, gói định khoản theo ngành.
 
-## Chạy nhanh
+> Stack: Node 22 · TypeScript · Fastify 5 · zod · Kysely · PostgreSQL 16 · React 18 + Vite · Docker Compose. Giám sát tuỳ chọn: Prometheus · Grafana · Loki.
+
+## Thử nhanh (5 phút)
 
 ```bash
-cp .env.example .env          # sửa JWT_SECRET, mật khẩu quản trị
-docker compose up -d --build
+cp .env.example .env                       # đổi JWT_SECRET, mật khẩu quản trị
+docker compose up -d --build               # db + migration + api + web
+BIZCITY_PASSWORD='Admin@123' node scripts/cai-preset.mjs thuong-mai-ban-le \
+  --api http://localhost:8088 --tenant demo --email admin@ketoan.local   # cấu hình + dữ liệu mẫu hư cấu
 ```
 
 | Địa chỉ | Nội dung |
 |---|---|
-| http://localhost:8088 | Giao diện (đơn vị `demo`, `admin@ketoan.local` / `Admin@123` — đổi ngay) |
-| http://localhost:8088/api/docs | Tài liệu API (OpenAPI) |
-| http://localhost:8088/api/v1/system/health | Kiểm tra sống |
+| http://localhost:8088 | Giao diện (đơn vị `demo`, `admin@ketoan.local` / `Admin@123` — **đổi ngay**) |
+| http://localhost:8088/api/docs | Tài liệu API (OpenAPI, sinh từ zod) |
+| `/api/v1/system/health` · `/health/ready` | Sống (L0) · sẵn sàng (L1: migration, trigger bảo vệ sổ, CSDL ghi được) |
+| `/api/v1/system/diagnostics` | Tự chẩn đoán toàn vẹn sổ (L3) |
+| `/api/v1/system/capabilities` | Năng lực Standard của bản đang chạy |
+| `POST /mcp` | Công cụ MCP cho trợ lý AI |
 
-Lần chạy đầu tự tạo bảng (migration) và dữ liệu khởi tạo: đơn vị, người quản trị, hệ thống tài khoản TT200, loại thuế, lý do, nhóm hạch toán, hình thức thanh toán. Khoá API cho hệ thống bán hàng: đặt `SEED_API_KEY` trong `.env`, hoặc xem log `docker compose logs api` (khoá sinh ngẫu nhiên chỉ in một lần).
+Giám sát (tuỳ chọn): `docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d` → Grafana http://127.0.0.1:3000. Xem [infrastructure/monitoring](infrastructure/monitoring/README.md).
 
-## Cấu trúc
+## Kiến trúc trong một hình
 
-```
-apps/
-  api/                 API
-    migrations/        Khai báo cơ sở dữ liệu (SQL, đánh số, có chú thích từng bảng)
-    seeds/             Dữ liệu khởi tạo (hệ thống tài khoản)
-    src/
-      config/          Biến môi trường
-      core/            Lõi dùng chung: lỗi, khuôn phản hồi, xác thực, nhật ký, add-in
-      db/              Kết nối, kiểu bảng, chạy migration, seed
-      modules/<ten>/   Mỗi nghiệp vụ một thư mục: schemas · repository · service · routes
-      addins/<ma>/     Phần mở rộng
-    test/              Kiểm thử luồng nghiệp vụ trên PostgreSQL thật
-  web/                 Giao diện
-    src/
-      lib/             Gọi API, đăng nhập, định dạng
-      layout/          Thanh menu ngang, khung trang
-      components/      Thành phần dùng chung
-      features/<nhom>/ Màn hình theo nhóm chức năng
-      addins/<ma>/     Giao diện của add-in
-packages/
-  contracts/           Hợp đồng dữ liệu dùng chung: khuôn chứng từ, khuôn phản hồi, hằng số
-docs/                  Tài liệu (kiến trúc, cơ sở dữ liệu, API tích hợp, add-in, hướng dẫn sử dụng)
-docker/                Dockerfile, nginx
+```mermaid
+flowchart LR
+  SRC["Module · POS · plugin · AI (MCP)"] -->|"docType + reasonCode<br/>(không số tài khoản)"| IN["Kernel: một cửa sự việc"]
+  IN --> POST["Luật định khoản + AccountResolver<br/>gói định khoản theo ngành"]
+  POST --> LED[("Sổ cái chỉ thêm<br/>Nợ = Có, trigger bảo vệ")]
+  LED --> SUB["Sổ phụ: công nợ · kho · hoá đơn"]
+  LED --> EVD["Bằng chứng chuỗi băm · sự kiện"]
+  LED --> REP["Báo cáo · tờ khai · tự chẩn đoán"]
 ```
 
-## Tài liệu
+Sơ đồ đầy đủ (bối cảnh, lớp, luồng chứng từ, module tương lai, AI ghi sổ, triển khai): **[docs/architecture/README.md](docs/architecture/README.md)**.
 
-**Bắt đầu ở [docs/README.md](docs/README.md)** — bản đồ tài liệu theo vai trò. Luật và hợp đồng của framework: [docs/00-CANON.md](docs/00-CANON.md). Agent AI: [AGENTS.md](AGENTS.md).
+## Cấu trúc thư mục
 
-| Tệp | Cho ai |
+```
+apps/api/            API (Fastify). Mỗi tệp có nhãn lớp // @bizcity-layer K|P|M|D|A|U
+  src/core/          Platform: lỗi, xác thực, runtime action (defineAction), bằng chứng, số đo, quan sát
+  src/modules/       Kernel (documents, posting, ledger, periods…) + danh mục + báo cáo + hệ thống (MCP, chẩn đoán)
+  src/phan-he/<key>/ Phân hệ nghiệp vụ (ke-toan, quy, mua-hang, ban-hang, kho, tai-san, thue…)
+  test/              Kiểm thử trên PostgreSQL thật; sau mỗi tệp tự kiểm bất biến sổ
+apps/web/            Giao diện React
+packages/contracts/  Hợp đồng dùng chung: khuôn chứng từ, khuôn phản hồi, danh mục mã lỗi
+packages/module-sdk/ Bản nháp API @bizcity/module-sdk
+db/migrations/       SQL đánh số, có COMMENT từng bảng / cột
+presets/             Gói cài nhanh theo ngành (dữ liệu mẫu hư cấu)
+infrastructure/      Cấu hình vận hành tuỳ chọn: monitoring/ (Prometheus, Grafana, Loki)
+tests/conformance/   Bộ kiểm chuẩn: selfcheck + diagnostics, bảng điểm, lộ trình
+docs/                Luật, hợp đồng, chuẩn, ADR, kiến trúc, vận hành, hướng dẫn
+```
+
+Cây đích sau khi tách gói (`packages/kernel`, `packages/*`, `modules/<key>`, `adapters/*`): [TARGET-LAYOUT](docs/standard/TARGET-LAYOUT.md).
+
+## Chuẩn và hợp đồng
+
+| Chủ đề | Tài liệu |
 |---|---|
-| [docs/kien-truc.md](docs/kien-truc.md) | Lập trình viên mới: các tầng, luồng một chứng từ, quy ước code |
-| [docs/co-so-du-lieu.md](docs/co-so-du-lieu.md) | Bảng, quan hệ, ràng buộc, cách thêm migration |
-| [docs/api-tich-hop.md](docs/api-tich-hop.md) | Hệ thống bên ngoài gửi chứng từ: khuôn dữ liệu, ví dụ, mã lỗi |
-| [docs/add-in.md](docs/add-in.md) | Viết phần mở rộng |
-| [docs/phat-trien.md](docs/phat-trien.md) | Chạy máy dev, kiểm thử, thêm module, thêm màn hình |
-| [docs/huong-dan/](docs/huong-dan/) | Hướng dẫn sử dụng từng chức năng (cũng hiện trong giao diện, nút "Hướng dẫn") |
-
-## Chức năng hiện có
-
-| Nhóm | Chức năng |
-|---|---|
-| Chứng từ | Nhận hoá đơn bán, hàng bán trả lại qua API (chống trùng, có phiên bản); ghi sổ lại; huỷ |
-| Sổ cái | Hai bộ sổ (nội bộ, thuế); chỉ thêm; sửa bằng ghi số âm; số dư cập nhật cùng lúc |
-| Sổ sách | Bút toán, sổ chi tiết tài khoản (có đối ứng), bảng cân đối số phát sinh |
-| Thuế | Sổ hoá đơn, bảng kê hoá đơn bán ra theo thuế suất |
-| Danh mục | Tài khoản, chi nhánh, đối tượng, loại thuế |
-| Cấu hình | Lý do, nhóm hạch toán mặt hàng, hình thức thanh toán, tài khoản ngầm định, kỳ và khoá sổ |
-| Hệ thống | Đăng nhập, vai trò và quyền, khoá API, nhật ký thao tác, add-in (xuất Excel, bảng tính AI) |
+| Luật và chỉ mục (bắt đầu ở đây) | [docs/00-CANON.md](docs/00-CANON.md) |
+| Viết module | [Standard v1](docs/standard/README.md) · [ca mẫu Hợp đồng](docs/standard/GOLDEN-CASE-HOP-DONG.md) · [bộ kiểm](docs/standard/CONFORMANCE.md) |
+| Nạp chứng từ vào sổ | [bizcity_ledger_intake@1](docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md) |
+| Action, idempotency, dry-run | [bizcity_action@1](docs/contracts/BIZCITY-ACTION-v1.md) |
+| Bằng chứng, biên nhận | [bizcity_evidence@1](docs/contracts/BIZCITY-EVIDENCE-v1.md) |
+| Mã lỗi, thông báo, gợi ý | [bizcity_errors@1](docs/contracts/BIZCITY-ERRORS-v1.md) |
+| MCP cho AI | [bizcity_mcp@1](docs/contracts/BIZCITY-MCP-v1.md) |
+| Gói định khoản theo ngành | [bizcity_posting_template@1](docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md) |
+| Cài nhanh | [bizcity_preset@1](docs/contracts/BIZCITY-PRESET-v1.md) |
+| Log, trace, số đo, cảnh báo, báo lỗi | [OBSERVABILITY](docs/ops/OBSERVABILITY.md) · [DIAGNOSTICS](docs/ops/DIAGNOSTICS.md) |
+| Quyết định kiến trúc | [docs/adr/](docs/adr/README.md) |
+| Lộ trình | [PHASES](docs/standard/PHASES.md) · tiến độ máy đọc `docs/standard/roadmap.json` |
 
 ## Lệnh thường dùng
 
 ```bash
-npm install                    # cài thư viện (Node ≥ 22.12)
-docker compose up -d db        # chỉ chạy PostgreSQL (cổng 5434)
-npm run db:seed                # migration + dữ liệu khởi tạo
-npm run dev:api                # API  http://localhost:4100
-npm run dev:web                # Web  http://localhost:4180
-npm test                       # chạy test
-npm run typecheck              # kiểm tra kiểu toàn bộ
+npm install                                # Node ≥ 22.12
+docker compose up -d db                    # chỉ PostgreSQL (cổng 5434)
+npm run dev                                # API :4100 + giao diện :4180
+npm test                                   # kiểm thử (PostgreSQL thật)
+npm run typecheck
+node tests/conformance/selfcheck.mjs       # bộ kiểm chuẩn + bảng điểm + lộ trình (không cần npm install)
+bash scripts/kiem-chuan.sh                 # ranh giới
 ```
+
+## Đóng góp
+
+Đọc **[CONTRIBUTING.md](CONTRIBUTING.md)**: bốn câu không thương lượng, quy trình PR, mức thay đổi Kernel, lệnh kiểm trước khi mở PR. Báo lỗi theo [mẫu](.github/ISSUE_TEMPLATE/bao-loi.yml). Lỗ hổng bảo mật: [SECURITY.md](SECURITY.md). Agent AI: [AGENTS.md](AGENTS.md).

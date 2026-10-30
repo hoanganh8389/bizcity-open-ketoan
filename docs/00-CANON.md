@@ -59,7 +59,9 @@
 | `bizcity_connector@1` | [contracts/BIZCITY-CONNECTOR-v1.md](contracts/BIZCITY-CONNECTOR-v1.md) | Ổn định | `modules/connections`, `packages/contracts/src/connections.ts` |
 | `bizcity_settings@1` | [contracts/BIZCITY-SETTINGS-MATRIX-v1.md](contracts/BIZCITY-SETTINGS-MATRIX-v1.md) | **Đề xuất** | `core/posting-modes.ts`, `core/date-rules.ts` (rải rác) |
 | `bizcity_posting_template@1` | [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) | **Đề xuất** — gói định khoản theo ngành, marketplace ([standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md)) | `posting_reasons`, `account-resolver.ts`; kiểm SC-TPL-1 |
-| `bizcity_mcp@1` | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) | **Đề xuất** — công cụ MCP cho Cell / chatbot; hồ sơ của chuẩn MCP hệ sinh thái ([standard/CELL-CONNECT.md](standard/CELL-CONNECT.md)) | chưa có (Phase 2b) |
+| `bizcity_mcp@1` | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) | **Đề xuất** — công cụ MCP cho Cell / chatbot; hồ sơ của chuẩn MCP hệ sinh thái ([standard/CELL-CONNECT.md](standard/CELL-CONNECT.md)) | `modules/system/mcp.routes.ts` (PHASES 2.11–2.12) |
+| `bizcity_errors@1` | [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) | Chấp nhận — danh mục mã lỗi, thông báo, gợi ý (R-ERR) | `packages/contracts/src/errors.ts`; kiểm SC-ERR-1 |
+| `bizcity_preset@1` | [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) | Chấp nhận — gói cài nhanh theo ngành, dữ liệu mẫu hư cấu | `presets/`, `scripts/cai-preset.mjs`; kiểm SC-PRESET-1 |
 | ~~`bizcity_workflow@1`~~ | [workflows/README.md](workflows/README.md) | Gộp vào `bizcity_document@1` §5 (năng lực `documents.workflow`) | — |
 
 Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`. **Đề xuất** = chuẩn đích, code đang chuyển dần (xem [framework/05-LO-TRINH.md](framework/05-LO-TRINH.md)).
@@ -88,6 +90,10 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | `adapters/cell`, kết nối Hub / Cell | `standard/CELL-CONNECT.md`, `standard/CHANNEL-GATEWAY-PORT.md` |
 | Bất kỳ tệp Kernel (RULE-KERNEL §1) | ghi mức K0–K3 trong PR; K2+ thêm mục "Thay đổi định khoản" trong `CHANGELOG.md` |
 | Thay đổi người dùng thấy được | `CHANGELOG.md` mục `[Chưa phát hành]` (R-REL-2) |
+| Thêm / đổi mã lỗi, thông báo, gợi ý | `packages/contracts/src/errors.ts` (ERROR_CATALOG) + [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) §3 + `bizcity-standard.json#errorCodes` (SC-ERR-1, SC-CON-6) |
+| Thêm số đo, trường log, cảnh báo, dashboard | [ops/OBSERVABILITY.md](ops/OBSERVABILITY.md) §2–§4 + `infrastructure/monitoring/` (`prometheus/alerts.yml`, `grafana/dashboards/`) |
+| Thêm / sửa preset cài nhanh | `presets/<id>/` + [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) §4 (SC-PRESET-1, `test/preset.test.ts`) |
+| Đổi luồng / lớp / thành phần kiến trúc | sơ đồ [architecture/README.md](architecture/README.md); quyết định khó đảo ngược → ADR |
 | Thêm kiểm toàn vẹn / bản cài | `ops/DIAGNOSTICS.md` §2 + check `DG-*` trong `tests/conformance/diagnostics/` trước (R-DIAG-9); đưa vào app: `modules/ledger/ledger.diagnostics.ts` (Kernel) hoặc `modules/system/diagnostics.ts` (Platform), cùng mã (SC-DIAG-1) |
 | Thêm / sửa / xong một việc của lộ trình | `standard/PHASES.md` + `standard/roadmap.json` cùng PR (SC-RMP-1); việc tay xong ghi `doneAt` + `by` |
 | Sửa xong một nợ đã biết | `node tests/conformance/selfcheck.mjs --update-baseline` trong cùng PR (CI chạy `--strict`) |

@@ -1,0 +1,1 @@
+{ "contract": "bizcity_preset@1", "id": "khac-ten", "version": "1.0.0", "title": "Preset xấu", "description": "Ca tự kiểm SC-PRESET-1: id lệch thư mục, dữ liệu thật, phân hệ lạ.", "industries": ["x"], "requires": { "standard": "^1.0", "capabilities": [] }, "modules": ["khong-co"], "sample": { "fictional": false, "documents": "mau/chung-tu.json" } }

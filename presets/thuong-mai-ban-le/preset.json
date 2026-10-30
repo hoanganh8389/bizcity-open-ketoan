@@ -1,0 +1,22 @@
+{
+  "contract": "bizcity_preset@1",
+  "id": "thuong-mai-ban-le",
+  "version": "1.0.0",
+  "title": "Thương mại bán lẻ (cửa hàng, siêu thị mini)",
+  "description": "Cửa hàng mua hàng của nhà cung cấp, bán lẻ thu tiền mặt / chuyển khoản, hoá đơn GTGT 8%. Bật kế toán, quỹ, mua hàng, bán hàng, kho, thuế; chứng từ ghi sổ ngay. Dữ liệu mẫu hư cấu: một cửa hàng, hai nhà cung cấp, ba mặt hàng, một phiếu nhập mua và hai hoá đơn bán để thấy ngay sổ, kho, công nợ.",
+  "industries": ["thuong-mai", "ban-le"],
+  "regime": "vn-tt99",
+  "requires": { "standard": "^1.0", "capabilities": ["ledger.submit", "masterdata.write"] },
+  "modules": ["ke-toan", "quy", "mua-hang", "ban-hang", "kho", "thue"],
+  "postingPack": { "id": "bizcity.vn-tt99.thuong-mai", "file": "../../docs/standard/examples/vn-tt99-thuong-mai.posting-pack.json" },
+  "settings": {
+    "postingModes": { "sale": "auto", "sale_return": "auto", "purchase": "auto", "purchase_return": "auto", "customer_payment": "auto", "supplier_payment": "auto" }
+  },
+  "sample": {
+    "fictional": true,
+    "branches": "mau/chi-nhanh.json",
+    "partners": "mau/doi-tuong.json",
+    "products": "mau/mat-hang.json",
+    "documents": "mau/chung-tu.json"
+  }
+}

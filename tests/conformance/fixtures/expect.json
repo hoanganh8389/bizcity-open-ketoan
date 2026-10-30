@@ -293,6 +293,23 @@
             "wrong:apps/api/src/phan-he/beta/y.ts"
           ]
         },
+        "SC-PRESET-1": {
+          "min": 3,
+          "keys": [
+            "id:presets/xau",
+            "dockey:khac-ten:0",
+            "schema:khac-ten:/sample/fictional"
+          ]
+        },
+        "SC-ERR-1": {
+          "findings": 4,
+          "keys": [
+            "missing:GONE",
+            "diff:VALIDATION_ERROR.http",
+            "doc-extra:EXTRA",
+            "reason:BADREASON"
+          ]
+        },
         "SC-EVD-2": {
           "findings": 13,
           "keys": [

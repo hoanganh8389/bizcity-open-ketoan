@@ -20,7 +20,9 @@
     "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
     "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
     "bizcity_posting_template": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
-    "bizcity_mcp": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] }
+    "bizcity_mcp": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] },
+    "bizcity_errors": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-ERRORS-v1.md", "role": "error catalog of bizcity_api / bizcity_action / bizcity_mcp" },
+    "bizcity_preset": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-PRESET-v1.md", "schema": "docs/contracts/BIZCITY-PRESET-v1.schema.json" }
   },
   "capabilities": [
     { "id": "masterdata.read", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Đọc danh mục chuẩn (đối tượng, mặt hàng, chi nhánh, kho, thuế) qua HTTP. Phase 2: qua ctx.data và view chỉ đọc." },

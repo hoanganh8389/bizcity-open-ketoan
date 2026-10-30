@@ -26,6 +26,7 @@ import { env } from '../config/env.js';
 import { writeEvidence, type EvidenceEntry, type EvidenceReceipt } from './audit.js';
 import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
+import { metrics } from './metrics.js';
 import type { AuthContext, Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
@@ -156,7 +157,7 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
   let inHandler = false;
 
   try {
-    return await db.transaction().execute(async (trx) => {
+    const res = await db.transaction().execute(async (trx) => {
       if (key) {
         // Khoá quá hạn giữ (7 ngày) thì coi như khoá mới.
         await trx.deleteFrom('action_requests').where('tenant_id', '=', tenantId).where('action_id', '=', def.id).where('idem_key', '=', key)
@@ -209,8 +210,11 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
       }
       return result;
     });
+    metrics.actions.inc({ action: def.id, result: 'ok', code: '' });
+    return res;
   } catch (err) {
     if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...meta, dryRun: true } };
+    metrics.actions.inc({ action: def.id, result: 'error', code: err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL });
     // Thất bại trong handler: giao dịch đã huỷ → ghi bằng chứng "result_ok = false" ở giao dịch riêng. Ghi lỗi thì vẫn ném lỗi gốc.
     if (inHandler && evidenceOn) {
       const code = err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL;
