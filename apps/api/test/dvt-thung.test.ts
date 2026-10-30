@@ -79,7 +79,7 @@ describe('ĐVT Thùng đặt hàng (MH27)', () => {
     const p = await preview();
     const by = (s: string) => p.rows.find((r) => r.sku === s)!;
     expect(by('TH-A')).toMatchObject({ action: 'add', ratio: 24 });
-    expect(by('TH-A').ncc[0]).toMatchObject({ fromUnit: 'Lốc_4', toPrice: 240_000, action: 'add' }); // 40.000 / 4 × 24
+    expect(by('TH-A').ncc[0]).toMatchObject({ fromUnit: 'Lốc_4', toPrice: 240_000, action: 'auto' }); // 40.000 / 4 × 24
     expect(by('TH-B')).toMatchObject({ action: 'add', ratio: 48, source: 'Mặc định 48' });
     expect(by('TH-C')).toMatchObject({ action: 'default', ratio: 24, thungUnit: 'Thùng_24' });
     expect(by('TH-C').ncc.find((n) => n.partnerCode === 'NCC-TH2')!.action).toBe('ok');
@@ -109,13 +109,28 @@ describe('ĐVT Thùng đặt hàng (MH27)', () => {
     expect((await unitsOf('TH-C')).find((u) => u.unit === 'Thùng_24')!.isPurchaseDefault).toBe(true);
     const sp = (await call(t, 'GET', '/api/v1/purchase/supplier-products?sku=TH-B')).body.data as { partnerCode: string; unit: string; price: number; isDefaultUnit: boolean }[];
     const rows = Array.isArray(sp) ? sp : (sp as unknown as { rows: typeof sp }).rows;
-    expect(rows.filter((x) => x.partnerCode).map((x) => `${x.partnerCode} ${x.unit} ${x.price} ${x.isDefaultUnit}`).sort()).toEqual(['NCC-TH1 Hộp 7500.5 false', 'NCC-TH1 Thùng null true', 'NCC-TH2 Hộp 7000 false', 'NCC-TH2 Thùng null true']);
+    expect(rows.filter((x) => x.partnerCode).map((x) => `${x.partnerCode} ${x.unit} ${x.price} ${x.isDefaultUnit}`).sort()).toEqual(['NCC-TH1 Hộp 7500.5 false', 'NCC-TH2 Hộp 7000 false']); // mỗi NCC × mã một dòng, không thêm dòng Thùng
     // Dòng giá cũ giữ nguyên ghi chú; dòng Thùng không ghi chú; lập đơn theo Thùng tự quy đổi từ dòng Hộp (7.500,5 × 30).
     expect((rows as unknown as { note: string }[]).every((x) => !/Đổi từ/.test(x.note))).toBe(true);
     const an = await call(t, 'POST', '/api/v1/purchase/analyze', { kind: 'order', docDate: '2026-10-30', branchCode: 'CN01', partnerCode: 'NCC-TH1', priceIncludesVat: false, lines: [{ lineKey: 'a', sku: 'TH-B', name: 'x', unit: 'Thùng', qty: 1, price: 0, taxCode: 'V08', lineType: 'buy' }] });
     expect(JSON.stringify(an.body)).toContain('225.015 / Thùng');
     const again = await preview();
-    expect(again.rows.filter((x) => ['TH-A', 'TH-B', 'TH-C'].includes(x.sku)).every((x) => x.action === 'ok' && x.ncc.every((n) => n.action === 'ok'))).toBe(true);
+    expect(again.rows.filter((x) => ['TH-A', 'TH-B', 'TH-C'].includes(x.sku)).every((x) => x.action === 'ok')).toBe(true);
+  });
+
+  it('dọn dòng Thùng trống giá thừa (bản đầu từng thêm): chỉ xoá dòng trống có dòng có giá cùng NCC × mã; lập đơn vẫn lấy Thùng', async () => {
+    const add = await call(t, 'POST', '/api/v1/purchase/supplier-products', { rows: [{ partnerCode: 'NCC-TH1', sku: 'TH-A', unit: 'Thùng', price: null }, { partnerCode: 'NCC-TH2', sku: 'TH-A', unit: 'Thùng', price: null }] });
+    expect(add.status, JSON.stringify(add.body)).toBe(200);
+    const list = (await call(t, 'GET', '/api/v1/purchase/units/thung/empty-rows')).body.data as { partnerCode: string; sku: string }[];
+    // NCC-TH1 có dòng Lốc_4 có giá → dòng Thùng trống là thừa; NCC-TH2 không có dòng có giá cho TH-A → giữ.
+    expect(list.map((x) => `${x.partnerCode} ${x.sku}`)).toEqual(['NCC-TH1 TH-A']);
+    const del = await call(t, 'POST', '/api/v1/purchase/units/thung/empty-rows/delete', {});
+    expect(del.body.data.count).toBe(1);
+    const left = (await call(t, 'GET', '/api/v1/purchase/supplier-products?sku=TH-A')).body.data.rows as { partnerCode: string; unit: string }[];
+    expect(left.filter((x) => x.partnerCode).map((x) => `${x.partnerCode} ${x.unit}`).sort()).toEqual(['NCC-TH1 Lốc_4', 'NCC-TH2 Thùng']);
+    // Lập đơn NCC-TH1: ĐVT mua mặc định Thùng (24), giá quy đổi từ dòng Lốc_4 40.000 → 240.000 / Thùng.
+    const an = await call(t, 'POST', '/api/v1/purchase/analyze', { kind: 'order', docDate: '2026-10-30', branchCode: 'CN01', partnerCode: 'NCC-TH1', priceIncludesVat: false, lines: [{ lineKey: 'a', sku: 'TH-A', name: 'x', unit: 'Thùng', qty: 1, price: 1, taxCode: 'V08', lineType: 'buy' }] });
+    expect(JSON.stringify(an.body)).toContain('240.000 / Thùng');
   });
 
   it('mã con tạo mới kéo đa ĐVT (cả Thùng, ĐVT mua mặc định) của mã cha', async () => {

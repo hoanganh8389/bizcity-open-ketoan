@@ -3,7 +3,8 @@
  *   ① Phạm vi: mã có tương tác mua gần đây (phiếu mua / đơn đặt, hoặc NCC khai mặt hàng & giá trong N ngày).
  *   ② Quy cách 1 thùng: sửa tay từng dòng hoặc nhập Excel ("12 Lốc", "48 Hộp", "12CAN/THÙNG") — luôn QUY VỀ ĐVT NHỎ NHẤT
  *      (12 Lốc × 4 = 48 Hộp). Không nhập thì phần mềm đoán (tên hàng, họ mã, cùng nhãn + dung tích), không có thì 48.
- *   ③ Chạy: thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định, thêm dòng Thùng cho NCC (để trống giá — tự quy đổi từ dòng giá cũ, dòng cũ giữ nguyên). Máy chủ tính quy cách,
+ *   ③ Chạy: thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định. Dòng giá NCC giữ nguyên (mỗi NCC × mã một dòng) — lập đơn tự quy đổi giá.
+ *   Khối dọn: xoá dòng Thùng trống giá thừa mà bản đầu từng thêm. Máy chủ tính quy cách,
  *      màn này chỉ gửi chữ quy cách và hiện kết quả.
  */
 import { useMemo, useRef, useState } from 'react';
@@ -17,7 +18,7 @@ import { P } from '../du-lieu';
 import '../mua-hang.css';
 import './dvt-thung.css';
 
-interface NccRow { partnerCode: string; fromUnit: string; price: number | null; toPrice: number | null; action: 'add' | 'ok' }
+interface NccRow { partnerCode: string; fromUnit: string; price: number | null; toPrice: number | null; action: 'auto' | 'ok' }
 type Action = 'add' | 'ratio' | 'default' | 'ok' | 'error';
 interface Row {
   sku: string; name: string; baseUnit: string; units: { unit: string; ratio: number; isPurchaseDefault: boolean }[];
@@ -35,7 +36,7 @@ const ACTION: Record<Action, { label: string; cls: string; tip: string }> = {
 };
 const PAGE = 200;
 const n0 = (n: number) => n.toLocaleString('vi-VN');
-const busy = (r: Row) => r.action !== 'error' && (r.action !== 'ok' || r.ncc.some((n) => n.action !== 'ok'));
+const busy = (r: Row) => r.action !== 'error' && r.action !== 'ok';
 const plain = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
 
 /**
@@ -86,7 +87,6 @@ export function DvtThungPage() {
   const sel = pick ?? new Set(todo.map((r) => r.sku));
   const nSel = todo.filter((r) => sel.has(r.sku)).length;
   const count = (a: Action) => rows.filter((r) => r.action === a).length;
-  const nccCount = rows.reduce((n, r) => n + r.ncc.filter((x) => x.action !== 'ok').length, 0);
   const view = rows.filter((r) => (!filter || (filter === 'spec' ? Boolean(r.spec) : r.action === filter))
     && (!search || `${r.sku} ${r.name}`.toLowerCase().includes(search.trim().toLowerCase())));
   const toggle = (sku: string, on: boolean) => setPick(() => { const s = new Set(sel); if (on) s.add(sku); else s.delete(sku); return s; });
@@ -152,18 +152,19 @@ export function DvtThungPage() {
         <section className="th-step s3">
           <div className="th-step-h"><span className="th-num">3</span> Chạy</div>
           <button className="btn btn-primary" disabled={!nSel || run.isPending || q.isFetching}
-            title="Ghi thật cho các mã đang tích: thêm / sửa ĐVT Thùng, đặt ĐVT mua mặc định, thêm dòng Thùng cho NCC (dòng giá cũ giữ nguyên). Ghi vào Nhật ký mua hàng (MH10)"
-            onClick={() => { if (window.confirm(`Chạy cho ${n0(nSel)} mã? Thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định và thêm dòng Thùng cho NCC (dòng giá cũ giữ nguyên).`)) run.mutate(); }}>
+            title="Ghi thật cho các mã đang tích: thêm / sửa ĐVT Thùng, đặt ĐVT mua mặc định; dòng giá NCC giữ nguyên, lập đơn tự quy đổi. Ghi vào Nhật ký mua hàng (MH10)"
+            onClick={() => { if (window.confirm(`Chạy cho ${n0(nSel)} mã? Thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định. Dòng giá NCC giữ nguyên.`)) run.mutate(); }}>
             {run.isPending ? 'Đang chạy…' : `Chạy cho ${n0(nSel)} mã`}</button>
-          <div className="th-step-note">{n0(nccCount)} dòng Thùng sẽ thêm cho NCC (giá cũ giữ nguyên) · dòng lỗi không chạy</div>
+          <div className="th-step-note">Dòng giá NCC giữ nguyên — lập đơn tự lấy Thùng, giá quy đổi · dòng lỗi không chạy</div>
         </section>
       </div>
 
+      <DonDongThungTrong />
       {imp && <div className={`alert ${imp.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 0 8px' }}>{imp.text}</div>}
       {q.data && q.data.unknown.length > 0 && <div className="alert alert-bad" style={{ margin: '0 0 8px' }}>
         {n0(q.data.unknown.length)} mã trong file quy cách chưa có ở danh mục mặt hàng: {q.data.unknown.slice(0, 15).join(', ')}{q.data.unknown.length > 15 ? '…' : ''}</div>}
       {done && <div className="alert alert-ok" style={{ margin: '0 0 8px' }}>
-        Đã chạy: thêm Thùng {n0(done.added)} mã · sửa tỉ lệ {n0(done.ratioFixed)} mã · đặt mua theo thùng {n0(done.defaulted)} mã · thêm {n0(done.nccAdded)} dòng Thùng cho NCC (giá cũ giữ nguyên) · đánh dấu {n0(done.nccMarked)} dòng NCC đã có thùng.
+        Đã chạy: thêm Thùng {n0(done.added)} mã · sửa tỉ lệ {n0(done.ratioFixed)} mã · đặt mua theo thùng {n0(done.defaulted)} mã · đánh dấu {n0(done.nccMarked)} dòng NCC đã có thùng.
       </div>}
 
       <section className="mh-panel">
@@ -185,7 +186,7 @@ export function DvtThungPage() {
               <th title="Quy cách 1 thùng theo ĐVT NCC hay dùng, vd 12 Lốc / 48 Hộp / 12CAN/THÙNG. Gõ xong bấm Enter hoặc rời ô để tính lại. Trống = phần mềm đoán">Quy cách 1 thùng</th>
               <th className="num" title="Kết quả cuối cùng: 1 thùng = bao nhiêu ĐVT NHỎ NHẤT (đây là tỉ lệ được ghi vào ĐVT Thùng)">= ĐVT nhỏ nhất</th>
               <th title="Việc sẽ làm với ĐVT của mặt hàng; dưới là căn cứ tỉ lệ (quy cách nhập, tên hàng, họ mã, cùng nhãn + dung tích, mặc định 48)">Việc làm · căn cứ</th>
-              <th title="Theo từng NCC: dòng giá cũ GIỮ NGUYÊN; thêm dòng Thùng để trống giá — lập đơn tự quy đổi (= giá cũ ÷ tỉ lệ ĐVT cũ × tỉ lệ thùng, số ≈ là để xem). NCC đã có dòng Thùng thì chỉ đánh dấu Đặt theo ĐVT này">Giá NCC theo Thùng</th>
+              <th title="Theo từng NCC: dòng giá giữ nguyên, không thêm dòng. Lập đơn theo Thùng tự quy đổi (= giá ÷ tỉ lệ ĐVT của dòng × tỉ lệ thùng, số ≈ là để xem). NCC đã có dòng Thùng thì đánh dấu Đặt theo ĐVT này">Giá NCC theo Thùng</th>
             </tr></thead>
             <tbody>
               {view.slice(0, shown).map((r) => {
@@ -210,10 +211,10 @@ export function DvtThungPage() {
                     </td>
                     <td><span className={`th-badge ${a.cls}`} title={a.tip}>{a.label}</span><div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{r.source}</div></td>
                     <td style={{ fontSize: 12 }}>{r.ncc.length ? r.ncc.map((n) => (
-                      <div key={n.partnerCode} title={n.action === 'ok' ? 'NCC đã có dòng giá theo thùng' : `Giữ dòng ${n.fromUnit}${n.price !== null ? ` ${fmtPrice(n.price)}` : ''}; thêm dòng ${r.thungUnit} để trống giá — lập đơn tự quy đổi`}>
+                      <div key={n.partnerCode} title={n.action === 'ok' ? 'NCC đã có dòng giá theo thùng' : `Dòng ${n.fromUnit}${n.price !== null ? ` ${fmtPrice(n.price)}` : ''} giữ nguyên — lập đơn theo ${r.thungUnit} tự quy đổi`}>
                         <span className="mono">{n.partnerCode}</span>{' '}
                         {n.action === 'ok' ? <span className="muted">đã có {n.fromUnit}{n.toPrice !== null ? ` · ${fmtPrice(n.toPrice)}` : ''}</span>
-                          : <>{n.fromUnit}{n.price !== null ? ` ${fmtPrice(n.price)}` : ''} · <b>+ {r.thungUnit}</b>{n.toPrice !== null ? <span className="muted"> ≈ {fmtPrice(n.toPrice)}</span> : ''}</>}
+                          : <>{n.fromUnit}{n.price !== null ? ` ${fmtPrice(n.price)}` : ''} → đặt theo <b>{r.thungUnit}</b>{n.toPrice !== null ? <span className="muted"> ≈ {fmtPrice(n.toPrice)}</span> : ''}</>}
                       </div>)) : <span className="muted">chưa NCC nào khai</span>}</td>
                   </tr>
                 );
@@ -225,5 +226,27 @@ export function DvtThungPage() {
         {view.length > shown && <div style={{ marginTop: 8 }}><button className="btn btn-sm" onClick={() => setShown((n) => n + PAGE * 5)}>Xem thêm ({n0(view.length - shown)} mã nữa)</button></div>}
       </section>
     </>
+  );
+}
+
+/** Dọn dòng Thùng trống giá mà bản MH27 đầu (30/10) từng thêm cho NCC — mỗi NCC × mã chỉ giữ dòng có giá. Xem trước, rồi xoá có xác nhận. */
+function DonDongThungTrong() {
+  const q = useQuery({ queryKey: ['mua-hang', 'thung', 'empty-rows'], queryFn: () => api.get<{ id: string; partnerCode: string; sku: string; name: string; unit: string; keepUnit: string; keepPrice: number }[]>(`${P}/units/thung/empty-rows`) });
+  const [open, setOpen] = useState(false);
+  const del = useMutation({ mutationFn: () => api.post<{ count: number }>(`${P}/units/thung/empty-rows/delete`, {}), onSuccess: () => void q.refetch() });
+  const list = q.data ?? [];
+  if (!list.length && !del.data) return null;
+  return (
+    <div className="alert alert-warn" style={{ margin: '0 0 8px' }}>
+      {del.data ? <>Đã xoá {n0(del.data.count)} dòng Thùng trống giá thừa (ghi ở Nhật ký mua hàng MH10, đủ nội dung).</> : <>
+        <b>{n0(list.length)} dòng Thùng trống giá thừa</b> ở <i>Mặt hàng &amp; giá mua</i> của NCC (bản đầu của màn này từng thêm). Mỗi NCC × mã chỉ cần một dòng giá — lập đơn tự lấy Thùng và quy đổi giá từ dòng đó.{' '}
+        <button className="btn btn-sm" onClick={() => setOpen((x) => !x)}>{open ? 'Ẩn danh sách' : 'Xem danh sách'}</button>{' '}
+        <button className="btn btn-sm btn-danger" disabled={del.isPending} title="Xoá vĩnh viễn các dòng trong danh sách; ghi đủ nội dung vào Nhật ký mua hàng (MH10)"
+          onClick={() => { if (window.confirm(`Xoá vĩnh viễn ${n0(list.length)} dòng Thùng trống giá? Dòng có giá của NCC giữ nguyên.`)) del.mutate(); }}>{del.isPending ? 'Đang xoá…' : `Xoá ${n0(list.length)} dòng thừa`}</button>
+        {del.error && <div className="mh-bad">{errorText(del.error)}</div>}
+        {open && <div className="table-wrap" style={{ maxHeight: 260, marginTop: 6 }}><table className="grid"><thead><tr><th>NCC</th><th>Mã</th><th>Tên hàng</th><th title="Dòng trống sẽ xoá">Dòng xoá</th><th title="Dòng có giá của cùng NCC × mã — giữ nguyên">Dòng giữ</th></tr></thead>
+          <tbody>{list.slice(0, 500).map((r) => <tr key={r.id}><td className="mono">{r.partnerCode}</td><td className="mono">{r.sku}</td><td>{r.name}</td><td>{r.unit} (trống giá)</td><td>{r.keepUnit} {fmtPrice(r.keepPrice)}</td></tr>)}</tbody></table></div>}
+      </>}
+    </div>
   );
 }

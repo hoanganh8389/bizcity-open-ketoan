@@ -48,9 +48,16 @@ Bấm **Chạy**. Kết quả ghi vào Nhật ký mua hàng (MH10). Mỗi dòng 
 | 🟩 Đã chuẩn | Đã có thùng và là ĐVT mua mặc định, chỉ rà dòng giá NCC |
 | 🟥 Quy cách lỗi | Sửa ô quy cách, dòng này không chạy |
 
-**Dòng giá NCC:** với mỗi NCC đang bán mã đó:
-- NCC chưa có dòng Thùng: **dòng giá cũ giữ nguyên** (ĐVT, giá, ghi chú). Phần mềm **thêm một dòng Thùng để trống giá**. Lập đơn lấy ĐVT Thùng, đơn giá tự quy đổi từ dòng giá cũ: Hộp 10.000đ, thùng 48 → Thùng 480.000đ. Ở *Mặt hàng & giá mua* của NCC, ô giá của dòng Thùng hiện mờ "≈ 480.000 (từ Hộp)". NCC báo giá theo thùng thì gõ thẳng vào dòng Thùng.
-- NCC đã có dòng Thùng: chỉ đánh dấu *Đặt theo ĐVT này*.
+**Dòng giá NCC:** **giữ nguyên, không thêm dòng.** Mỗi NCC × mã chỉ một dòng giá, ví dụ Lon 528.000.
+- Lập đơn với NCC tự lấy ĐVT mua mặc định là **Thùng**, đơn giá tự quy đổi từ dòng giá đó: Lon 528.000, thùng 48 → Thùng 25.344.000.
+- NCC đã có sẵn dòng giá theo Thùng thì dùng đúng dòng đó và đánh dấu *Đặt theo ĐVT này*.
+- Ở *Mặt hàng & giá mua* của NCC, chỉ một dòng giá cho mỗi mã.
+
+**Dọn dòng Thùng trống (chỉ khi đã chạy bản cũ):** bản đầu của màn này từng thêm cho mỗi NCC một dòng Thùng để trống giá, nhìn như trùng. Đầu màn sẽ hiện khung vàng *"… dòng Thùng trống giá thừa"*:
+- bấm **Xem danh sách** để xem dòng sẽ xoá và dòng có giá được giữ;
+- bấm **Xoá … dòng thừa**: xoá vĩnh viễn, ghi đủ nội dung vào Nhật ký mua hàng (MH10).
+
+Chỉ dòng Thùng **trống giá, không ghi chú, không mã bên NCC** mà cùng NCC × mã **còn dòng khác có giá** mới bị xoá. Dòng NCC tự khai không bị đụng.
 
 **Lỡ sai tỉ lệ:** vào lại màn này ghi quy cách đúng (dòng thành *Sửa tỉ lệ thùng*) rồi Chạy. Hoặc sửa ngay trên đơn đặt / phiếu nhập: bấm nút ✎ cạnh ô ĐVT.
 

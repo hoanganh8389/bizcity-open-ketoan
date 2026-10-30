@@ -34,13 +34,16 @@ const live = (r: SupplierProduct, date: string) => r.isActive && (!r.validFrom |
 
 /** ĐVT mua mặc định của một mã khi lập phiếu cho NCC. */
 export function defaultUnitFor(units: ProductUnit[], rows: SupplierProduct[], partnerCode: string, sku: string, fallback = ''): string {
-  // ĐVT lập đơn / phiếu với NCC = ĐVT trên dòng giá của NCC đó (bảng Mặt hàng & giá mua). NCC khai nhiều ĐVT cho cùng mã:
-  // ưu tiên ĐVT "Mua mặc định" của mặt hàng nếu NCC có khai, không thì dòng giá mới nhất. NCC chưa khai: Mua mặc định → Bán
-  // chính → ĐVT nhỏ nhất. (Không còn ô tích riêng "đặt theo ĐVT" — mỗi dòng giá đã mang ĐVT.)
+  // Thứ tự (30/10/2026 — đặt hàng chuẩn theo Thùng; mỗi ĐVT có thể có giá NCC niêm yết riêng):
+  //   1. ĐVT "Mua mặc định" của mặt hàng (vd Thùng): NCC có dòng giá ĐVT đó thì lấy đúng giá niêm yết, không có thì giá tự quy đổi
+  //      từ dòng ĐVT khác (priceFor) — không cần thêm dòng;
+  //   2. mặt hàng không đặt Mua mặc định: dòng giá mới nhất của NCC; 3. Bán chính → ĐVT nhỏ nhất.
+  // (Ô tích "Đặt theo ĐVT này" của dòng giá đã bỏ từ trước — không dùng, tránh dấu cũ còn sót.)
   const mine = partnerCode ? rows.filter((r) => r.sku === sku && r.isActive && r.partnerCode === partnerCode) : [];
   const buyDefault = units.find((u) => u.isPurchaseDefault)?.unit;
-  const own = mine.find((r) => buyDefault && same(r.unit, buyDefault)) ?? [...mine].sort((a, b) => (b.validFrom ?? '').localeCompare(a.validFrom ?? ''))[0];
-  return own?.unit || buyDefault || units.find((u) => u.isDefault)?.unit || baseUnitOf(units) || fallback;
+  if (buyDefault) return buyDefault;
+  const own = [...mine].sort((a, b) => (b.validFrom ?? '').localeCompare(a.validFrom ?? ''))[0];
+  return own?.unit || units.find((u) => u.isDefault)?.unit || baseUnitOf(units) || fallback;
 }
 
 /** Giá mua cố định áp cho (NCC, mã, ĐVT, ngày). Trả dòng giá + giá đã quy về đúng ĐVT hỏi. */

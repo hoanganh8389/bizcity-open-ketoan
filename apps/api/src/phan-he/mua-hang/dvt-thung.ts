@@ -7,8 +7,9 @@
  *      ("12 Lốc", "48 Hộp", "12CAN/THÙNG") — quy về ĐVT nhỏ nhất theo ĐVT đã khai của mã (12 Lốc × 4 = 48 Hộp). Mã có quy cách nhập
  *      vào thì vào phạm vi dù không có tương tác gần đây; mã đã có thùng mà quy cách khác thì sửa tỉ lệ thùng.
  *   2. ĐVT thùng thành ĐVT MUA MẶC ĐỊNH của mặt hàng (lưu qua Danh mục mặt hàng — catalog.service, không ghi thẳng bảng lõi).
- *   3. Mỗi NCC đang bán mã đó (dòng giá theo NCC, còn dùng) mà chưa có dòng Thùng: THÊM dòng Thùng để trống giá (dòng giá cũ giữ
- *      nguyên) — lập đơn lấy ĐVT Thùng, đơn giá tự quy đổi từ dòng giá cũ (giá vẫn một nguồn). Có dòng Thùng thì chỉ đánh dấu "Đặt theo ĐVT này".
+ *   3. Dòng giá NCC GIỮ NGUYÊN, không thêm dòng (mỗi NCC × mã một dòng giá): lập đơn lấy ĐVT mua mặc định (Thùng), đơn giá tự quy
+ *      đổi từ dòng giá ĐVT khác (defaultUnitFor / priceFor). NCC đã có dòng Thùng thì chỉ đánh dấu "Đặt theo ĐVT này".
+ *   Bản 30/10 đầu tiên từng thêm dòng Thùng trống giá: emptyThungRows / deleteEmptyThungRows dọn các dòng đó (xoá vĩnh viễn, ghi nhật ký).
  * Bỏ qua: mã ngừng theo dõi, hàng quà / KM (tên bắt đầu "KM", "(Z)"), mã có ĐVT nhỏ nhất đã là thùng (hàng combo).
  */
 import { sql } from 'kysely';
@@ -56,8 +57,8 @@ export interface ThungRow {
   thungUnit: string; ratio: number; source: string;
   /** Lý do có trong danh sách: mua gần đây / NCC khai. */
   reason: string;
-  ncc: { partnerCode: string; fromUnit: string; price: number | null; toPrice: number | null; action: 'add' | 'ok' }[];
-  // add = thêm dòng Thùng (để trống giá, toPrice = giá quy đổi từ dòng cũ để xem); ok = NCC đã có dòng thùng (chỉ đánh dấu).
+  ncc: { partnerCode: string; fromUnit: string; price: number | null; toPrice: number | null; action: 'auto' | 'ok' }[];
+  // auto = dòng giá giữ nguyên, lập đơn theo Thùng tự quy đổi (toPrice để xem); ok = NCC đã có dòng thùng (đánh dấu Đặt theo ĐVT này).
 }
 
 interface Ctx { days: number; since: string; specSkus: string[] }
@@ -164,7 +165,7 @@ export async function thungPlan(trx: Db, tenantId: string, opts: ThungOpts = {})
       const from = list.find((r) => oldBuy && r.unit.toLowerCase() === oldBuy.toLowerCase()) ?? list[0]!;
       const fr = ratioOf(from.unit) ?? 1;
       const price = from.price === null ? null : toNumber(from.price);
-      nccRows.push({ partnerCode, fromUnit: from.unit, price, toPrice: price === null ? null : Math.round((price / fr) * g.ratio * 10000) / 10000, action: 'add' });
+      nccRows.push({ partnerCode, fromUnit: from.unit, price, toPrice: price === null ? null : Math.round((price / fr) * g.ratio * 10000) / 10000, action: 'auto' });
     }
     rows.push({ sku: p.sku, name: p.name, baseUnit: base, units: us, action, thungUnit, ratio: g.ratio, source: error ? 'Quy cách lỗi' : g.source, reason: inScope.get(p.sku) ?? '', ncc: nccRows,
       ...(specText ? { spec: specText } : {}), ...(error ? { error } : {}), ...(has && action === 'ratio' ? { oldRatio: has.ratio } : {}) });
@@ -196,15 +197,38 @@ export async function thungApply(trx: Db, tenantId: string, actor: string, opts:
       if (!s) continue;
       if (n.action === 'ok' && s.is_default_unit) continue;
       const iso = (v: unknown) => (v ? String(v instanceof Date ? v.toISOString() : v).slice(0, 10) : null);
-      // Dòng giá cũ GIỮ NGUYÊN (ĐVT, giá, ghi chú). NCC chưa có dòng thùng: THÊM dòng Thùng để trống giá — lập đơn lấy ĐVT Thùng,
-      // đơn giá tự quy đổi từ dòng giá cũ (giá vẫn một nguồn). NCC đã có dòng thùng: chỉ đánh dấu "Đặt theo ĐVT này".
-      const base = { partnerCode: n.partnerCode, sku: r.sku, isDefaultUnit: true, nccSku: s.ncc_sku, nccName: s.ncc_name ?? '', priceIncludesVat: s.price_includes_vat, warnPct: toNumber(s.warn_pct), validFrom: iso(s.valid_from), validTo: iso(s.valid_to), isActive: true };
-      items.push(n.action === 'add'
-        ? { ...base, unit: r.thungUnit, price: null, note: '' }
-        : { ...base, id: String(s.id), unit: s.unit, price: s.price === null ? null : toNumber(s.price), note: s.note });
-      if (n.action === 'add') nccAdded++; else nccMarked++;
+      // Dòng giá NCC giữ nguyên, KHÔNG thêm dòng: lập đơn tự lấy ĐVT mua mặc định (Thùng) và quy đổi giá. NCC đã có dòng thùng:
+      // chỉ đánh dấu "Đặt theo ĐVT này".
+      if (n.action === 'auto') continue;
+      items.push({ id: String(s.id), partnerCode: n.partnerCode, sku: r.sku, isDefaultUnit: true, nccSku: s.ncc_sku, nccName: s.ncc_name ?? '', priceIncludesVat: s.price_includes_vat, warnPct: toNumber(s.warn_pct), validFrom: iso(s.valid_from), validTo: iso(s.valid_to), isActive: true,
+        unit: s.unit, price: s.price === null ? null : toNumber(s.price), note: s.note });
+      nccMarked++;
     }
     if (items.length) await saveSupplierProducts(trx, tenantId, actor, items);
   }
   return { products: plan.rows.length, added, defaulted, ratioFixed, nccAdded, nccMarked, errors, skipped: plan.skipped.length };
+}
+
+/**
+ * Dòng Thùng TRỐNG GIÁ đã tạo ở bản MH27 đầu (30/10/2026): ĐVT kiểu thùng, chưa giá, không ghi chú, còn dùng, và cùng NCC × mã còn dòng
+ * khác ĐÃ CÓ GIÁ (nên dòng thùng chỉ là bản thừa — lập đơn vẫn quy đổi từ dòng có giá). Không đụng dòng NCC tự khai.
+ */
+export async function emptyThungRows(trx: Db, tenantId: string) {
+  const r = await sql<{ id: string; partner_code: string; sku: string; unit: string; name: string | null; keep_unit: string; keep_price: string }>`
+    SELECT e.id, e.partner_code, e.sku, e.unit, p.name, k.unit AS keep_unit, k.price::text AS keep_price
+      FROM supplier_products e
+      LEFT JOIN products p ON p.tenant_id = e.tenant_id AND p.sku = e.sku
+      JOIN LATERAL (SELECT o.unit, o.price FROM supplier_products o WHERE o.tenant_id = e.tenant_id AND o.partner_code = e.partner_code AND o.sku = e.sku
+                     AND o.id <> e.id AND o.is_active AND o.price IS NOT NULL ORDER BY o.valid_from DESC NULLS LAST, o.id DESC LIMIT 1) k ON true
+     WHERE e.tenant_id = ${tenantId} AND e.partner_code IS NOT NULL AND e.price IS NULL AND e.note = '' AND e.ncc_sku = '' AND e.is_active
+     ORDER BY e.partner_code, e.sku`.execute(trx);
+  return r.rows.filter((x) => isThung(x.unit)).map((x) => ({ id: String(x.id), partnerCode: x.partner_code, sku: x.sku, name: x.name ?? '', unit: x.unit, keepUnit: x.keep_unit, keepPrice: toNumber(x.keep_price) }));
+}
+
+/** Xoá vĩnh viễn các dòng Thùng trống giá ở trên; trả lại đủ nội dung các dòng đã xoá để ghi nhật ký. */
+export async function deleteEmptyThungRows(trx: Db, tenantId: string) {
+  const rows = await emptyThungRows(trx, tenantId);
+  const ids = rows.map((r) => r.id);
+  const deleted = ids.length ? await trx.deleteFrom('supplier_products').where('tenant_id', '=', tenantId).where('id', 'in', ids).returningAll().execute() : [];
+  return { count: deleted.length, deleted };
 }

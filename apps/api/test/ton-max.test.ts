@@ -4,7 +4,7 @@
  * phiếu đăng ký max (duyệt tay / tự động / hàng mới gắn mã sau), đơn đặt có dòng hàng mới.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { allocateTransfers, buyOptions, DEFAULT_FORMULA, defaultUnitFor, familiesOf, familyParent, formulaText, orderNeed, roundTransfer, suggestMax, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
+import { allocateTransfers, buyOptions, DEFAULT_FORMULA, defaultUnitFor, familiesOf, familyParent, formulaText, orderNeed, priceFor, roundTransfer, suggestMax, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -64,15 +64,20 @@ describe('Bộ tính dùng chung', () => {
   });
 });
 
-describe('ĐVT lập đơn / phiếu: ĐVT trên dòng giá của NCC → Mua mặc định → Bán chính → nhỏ nhất', () => {
+describe('ĐVT lập đơn / phiếu: Mua mặc định (giá NCC đúng ĐVT hoặc quy đổi) → dòng giá NCC mới nhất → Bán chính → nhỏ nhất', () => {
   const us: ProductUnit[] = [{ unit: 'Lon', ratio: 1, isDefault: true }, { unit: 'Lốc', ratio: 6 }, { unit: 'Thùng', ratio: 24, isPurchaseDefault: true }] as ProductUnit[];
   const sp = (unit: string, o: Partial<SupplierProduct> = {}): SupplierProduct => ({ partnerCode: 'N1', sku: 'A', unit, price: 1, priceIncludesVat: false, warnPct: 2, isActive: true, ...o } as SupplierProduct);
-  it('NCC khai một dòng giá → dùng ĐVT của dòng đó', () => {
-    expect(defaultUnitFor(us, [sp('Lốc')], 'N1', 'A')).toBe('Lốc');
-  });
-  it('NCC khai nhiều ĐVT: ưu tiên ĐVT Mua mặc định của mặt hàng; không có thì dòng giá mới nhất (ô tích cũ không còn tác dụng)', () => {
+  it('mặt hàng có Mua mặc định (Thùng): đặt theo Thùng kể cả khi NCC chỉ khai giá Lốc (giá quy đổi); ô tích cũ không còn tác dụng', () => {
+    expect(defaultUnitFor(us, [sp('Lốc')], 'N1', 'A')).toBe('Thùng');
     expect(defaultUnitFor(us, [sp('Lon', { isDefaultUnit: true }), sp('Thùng')], 'N1', 'A')).toBe('Thùng');
-    expect(defaultUnitFor(us, [sp('Lon', { validFrom: '2026-01-01' }), sp('Lốc', { validFrom: '2026-10-01' })], 'N1', 'A')).toBe('Lốc');
+    expect(priceFor([sp('Lốc', { price: 60_000 })], { date: '2026-10-30', partnerCode: 'N1', sku: 'A', unit: 'Thùng' }, us)!.price).toBe(240_000);
+    // NCC niêm yết riêng giá Thùng → lấy đúng giá Thùng, không quy từ Lốc.
+    expect(priceFor([sp('Lốc', { price: 60_000 }), sp('Thùng', { price: 230_000 })], { date: '2026-10-30', partnerCode: 'N1', sku: 'A', unit: 'Thùng' }, us)!.price).toBe(230_000);
+  });
+  it('mặt hàng không đặt Mua mặc định: ĐVT dòng giá mới nhất của NCC', () => {
+    const noBuy = us.map((u) => ({ ...u, isPurchaseDefault: false }));
+    expect(defaultUnitFor(noBuy, [sp('Lốc')], 'N1', 'A')).toBe('Lốc');
+    expect(defaultUnitFor(noBuy, [sp('Lon', { validFrom: '2026-01-01' }), sp('Lốc', { validFrom: '2026-10-01' })], 'N1', 'A')).toBe('Lốc');
   });
   it('NCC chưa khai / NCC khác → Mua mặc định; mặt hàng không có Mua mặc định → Bán chính → nhỏ nhất', () => {
     expect(defaultUnitFor(us, [sp('Lốc')], 'N2', 'A')).toBe('Thùng');
