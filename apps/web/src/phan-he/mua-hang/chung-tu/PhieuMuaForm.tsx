@@ -216,7 +216,16 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     }),
     del: (key: string) => { setV((x) => ({ ...x, lines: x.lines.filter((l) => l.lineKey !== key) })); setDirty(true); },
   };
-  const changeUnit = (l: PLine, unit: string) => { const us = unitsOf(l.sku); setLine(l.lineKey, { unit, ...(l.price > 0 && us.length ? { price: roundPrice((l.price / ratioOf(us, l.unit)) * ratioOf(us, unit)) } : {}) }); };
+  const changeUnit = (l: PLine, unit: string) => {
+    const us = unitsOf(l.sku);
+    // Dòng đang theo giá NCC (hoặc chưa có giá) → lấy đúng giá niêm yết của ĐVT mới (thùng thường rẻ hơn lẻ × tỉ lệ);
+    // giá gõ tay → quy đổi theo tỉ lệ ĐVT.
+    const was = fixedOf(l), next = fixedOf({ sku: l.sku, unit });
+    const listOld = was ? toDocBasis(was.price, was.row.priceIncludesVat, l.taxCode) : undefined;
+    const fromList = next && (!l.price || (listOld !== undefined && Math.abs(listOld - l.price) < 0.01));
+    const price = fromList ? toDocBasis(next!.price, next!.row.priceIncludesVat, l.taxCode) : l.price > 0 && us.length ? roundPrice((l.price / ratioOf(us, l.unit)) * ratioOf(us, unit)) : undefined;
+    setLine(l.lineKey, { unit, ...(price !== undefined ? { price } : {}) });
+  };
   // Phiếu đã duyệt / đã huỷ: khung Kiểm tra hiện kết quả CHỐT lúc duyệt (không còn "chặn duyệt" — đã duyệt rồi, kể cả duyệt ngoại lệ).
   const closed = v.status === 'approved' || v.status === 'cancelled';
   const checks: Check[] = closed

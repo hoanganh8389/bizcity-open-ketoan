@@ -64,6 +64,14 @@ Một danh sách cho mọi chứng từ phía mua:
   - Hộp **Chọn phiếu nhập** có cột **Đã trả** và **Còn nợ** theo sổ: trả nhiều lần thì thấy ngay phần còn lại trước khi chọn; phiếu trả xong ghi *Đã trả hết*, phiếu chưa duyệt ghi *chưa ghi sổ*.
   - **Tài khoản ngân hàng** (chuyển khoản, 112*) / **Quỹ tiền mặt** (111*): trống = tài khoản mặc định theo cài đặt; chọn tài khoản khác (vd ngân hàng khác) thì bút toán ở thẻ Hạch toán ghi Có đúng tài khoản đó. Đổi hình thức thì ô này tự xoá.
 
+**Sáu cách lập — cùng một kết quả:** phân tích đặt hàng tự động (MH02) · lập đơn tay · nhập Excel đơn · chuyển đơn sang phiếu nhập · nhập tay phiếu nhập · nhập Excel phiếu nhập. Cách nào cũng:
+- ĐVT lấy theo *Mua mặc định* của mặt hàng (vd Thùng);
+- đơn giá lấy theo **giá NCC còn hiệu lực ở ngày chứng từ**, đúng ĐVT; NCC niêm yết riêng giá Thùng thì lấy đúng giá Thùng;
+- chiết khấu % / bằng tiền, quà theo chương trình, CKTT, hạn mức áp theo ngày chứng từ;
+- quà ngoài chương trình thêm bằng **+ Quà ngoài chương trình**; hỗ trợ ngoài của NCC (giảm giá sau mua) lập phiếu **Chi phí / thưởng** gắn phiếu nhập.
+
+Cùng hàng, cùng ngày thì mọi cách ra cùng số tiền.
+
 **Thao tác nhanh trên dòng hàng:**
 - **Chuột phải** vào dòng mở menu:
   - **Nhân đôi dòng** (Ctrl + D);

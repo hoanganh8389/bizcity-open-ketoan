@@ -36,13 +36,18 @@ Mỗi NCC một dòng: STT, mã, tên, MST, **nợ phải trả** (theo sổ), *
 | Tồn max (theo chi nhánh – kho) | Màn **Tồn max (MH16)** hoặc mặt hàng → thẻ *Mua hàng* | phân tích đặt hàng, chia hàng xuống shop tự tính |
 
 **Thẻ Mặt hàng & giá mua** — sửa ngay trên bảng rồi **Lưu thay đổi**:
-- **Tự động:** nút **Khai N mã đã mua** lấy các mã đã từng đặt / nhập của NCC (dòng mờ "chỉ có lịch sử" → bấm *Khai*).
-- **Tay:** chọn một mã → **Thêm mã**; hoặc **Dán nhiều mã** (copy cột mã từ Excel) → xem trước → đưa vào bảng.
+- **Tự động:** dòng mờ ghi *"đã mua, chưa khai giá"* là mã NCC đã từng bán (có phiếu) nhưng chưa có dòng giá. Bấm **Khai giá** ở dòng đó (hoặc **Khai giá N mã đã mua** để làm cả loạt) rồi gõ giá.
+- **Tay:** **Thêm mã từ danh mục**. Mã đã có trong bảng vẫn bấm thêm được, để thêm dòng cho **đợt giá mới hoặc ĐVT khác**; hoặc **Dán nhiều mã** (copy cột mã từ Excel) → xem trước → đưa vào bảng.
 - **Excel:** **Nhập Excel** → *Hướng dẫn các cột* (Mã hàng bắt buộc; ĐVT, Giá mua, Gồm thuế, Mã hàng NCC, Tên hàng NCC, Hiệu lực từ, Ghi chú) + **Tải file mẫu** → chọn tệp → **xem trước** (mã chưa có trong danh mục hoặc ĐVT không có ở mặt hàng báo đỏ, bỏ qua) → đưa vào bảng → kiểm → **Lưu thay đổi**.
 - **Giá:** hai cột **Giá chưa thuế** và **Giá gồm thuế** (theo cột *Thuế* = thuế suất đầu vào của mặt hàng). Gõ ô nào cũng được, ô kia tự quy đổi; ô vừa gõ in đậm. Giá nhập từ *Nhập dữ liệu khởi đầu (MH20)* là giá chưa thuế, giá gồm thuế tự hiện theo.
 - **Điền giá lần mua gần nhất (N mã):** mã đã từng mua của NCC mà chưa khai giá → lấy đơn giá lần mua gần nhất (quy đúng ĐVT), kiểm rồi *Lưu thay đổi*.
-- **ĐVT** chọn trong danh sách ĐVT của mặt hàng. Lập đơn / phiếu với NCC này dùng **đúng ĐVT ghi trên dòng**: NCC bán theo Thùng thì khai dòng ĐVT Thùng (giá theo Thùng). NCC khai nhiều ĐVT cho cùng mã thì ưu tiên ĐVT *Mua mặc định* của mặt hàng, không có thì dòng giá mới nhất. Mã NCC chưa khai thì dùng *Mua mặc định* (thẻ ĐVT của mặt hàng) → Bán chính → nhỏ nhất. Khai giá Thùng mà phiếu nhập theo Lon → phần mềm tự quy đổi giá theo tỉ lệ để so.
-- **Đổi giá theo đợt:** thêm dòng mới cùng mã × ĐVT với *Hiệu lực từ* mới — dòng cũ giữ làm lịch sử. Phần mềm lấy đợt có *Hiệu lực từ* mới nhất. Lưu dòng **trùng** (cùng NCC, mã, ĐVT, cùng giá) với dòng đang có thì phần mềm nhắc — không cần thêm dòng.
+- **ĐVT:** mỗi ĐVT có thể có **giá niêm yết riêng** (vd Lon 528.000, Thùng 24.900.000) — mỗi ĐVT một dòng. Lập đơn với NCC dùng ĐVT *Mua mặc định* của mặt hàng (vd Thùng): NCC có dòng giá Thùng thì lấy đúng giá đó, không có thì quy đổi từ ĐVT khác (ô giá trống hiện mờ "≈ … (từ Lon)"). Mặt hàng không đặt Mua mặc định thì dùng ĐVT dòng giá mới nhất → Bán chính → nhỏ nhất.
+- **Hiệu lực giá — như chính sách, theo NGÀY CHỨNG TỪ của đơn / phiếu:**
+  - không ghi *Hiệu lực từ* = luôn có hiệu lực; không ghi *Đến* = vô hạn;
+  - NCC báo giá mới từ một ngày: thêm dòng cùng mã × ĐVT, ghi *Hiệu lực từ* ngày đó. Đến ngày đó đơn tự lấy giá mới, đơn ghi ngày trước đó vẫn lấy giá cũ;
+  - nhiều dòng cùng hiệu lực (chồng ngày): lấy dòng có *Hiệu lực từ* muộn nhất; cùng ngày bắt đầu thì lấy dòng khai sau cùng;
+  - ví dụ: Lon 100.000 (không ngày) · 90.000 (01/10–15/10) · 95.000 (từ 10/10) → đơn 30/09: 100.000; 05/10: 90.000; 12/10: 95.000; 20/10: 95.000.
+  - Bấm **Lưu** mà có dòng **chồng ngày** hoặc **trùng giá** với dòng đang có thì phần mềm hỏi lại trước khi lưu.
 - **Xoá** (nút đỏ cuối dòng, khi bấm *Sửa bảng*) = **xoá vĩnh viễn** dòng giá (hỏi lại trước khi xoá); phiếu đã lập không bị ảnh hưởng. Dòng chưa lưu thì Xoá chỉ bỏ khỏi bảng.
 - **Nạp dữ liệu mẫu (MH00)** không ghi đè giá đơn vị đã tự khai: NCC × mã × ĐVT đã có giá của đơn vị thì giữ, bỏ qua giá mẫu.
 - **Giá chung** (áp mọi NCC): khai ở mặt hàng → thẻ *Mua hàng*, để trống cột NCC. Giá của đúng NCC luôn thắng giá chung.

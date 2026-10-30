@@ -139,7 +139,7 @@ export function DatHangPage() {
           const asPack = r.pack && r.pack > 1 && qty % r.pack === 0;
           return {
             lineKey: `A${i}${Date.now().toString(36)}`, sku: r.sku, name: r.name, unit: asPack ? r.packUnit! : r.baseUnit, qty: asPack ? qty / r.pack! : qty,
-            price: roundPrice((r.price ?? 0) * (asPack ? r.pack! : 1)), taxCode: r.taxCode || 'V08', lineType: 'buy', note: r.nccNote || undefined, pack: r.pack, barcode: r.barcode || undefined, nccSku: r.nccSku || undefined, nccName: r.nccName || undefined,
+            price: roundPrice(asPack ? (r.packPrice ?? (r.price ?? 0) * r.pack!) : (r.price ?? 0)), taxCode: r.taxCode || 'V08', lineType: 'buy', note: r.nccNote || undefined, pack: r.pack, barcode: r.barcode || undefined, nccSku: r.nccSku || undefined, nccName: r.nccName || undefined,
             // Chụp số liệu tồn lúc lập đơn (cả họ mã) — lưu cùng dòng đơn.
             ...stockSnapshot(new Map([[r.sku, r]]), r.sku),
           };

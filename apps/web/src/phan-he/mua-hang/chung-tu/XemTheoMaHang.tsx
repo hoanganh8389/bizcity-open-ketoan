@@ -36,6 +36,10 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
   const skus = useMemo(() => [...new Set(docs.flatMap((d) => d.lines.map((l) => l.sku)).filter(Boolean))].sort(), [docs]);
   const uq = useQuery({ queryKey: ['mua-hang', 'units', 'xem-ma', skus.join(',')], enabled: skus.length > 0, staleTime: 60_000, queryFn: () => api.post<Record<string, ProductUnit[]>>(`${P}/units`, { skus }) });
   const units = uq.data;
+  // Tên theo danh mục + nhóm hàng (đường dẫn đầy đủ) + ngành · nhãn · nhóm — tên ghi trên dòng phiếu có thể là chữ cũ / mã.
+  const iq = useQuery({ queryKey: ['mua-hang', 'sku-info', skus.join(',')], enabled: skus.length > 0, staleTime: 60_000, queryFn: () => api.post<Record<string, { name: string; groupPath: string; industry: string; brand: string; group: string }>>(`${P}/sku-info`, { skus }) });
+  const info = (sku: string) => iq.data?.[sku];
+  const nameOf = (sku: string, fallback: string) => info(sku)?.name || fallback;
   const rows = useMemo<Row[]>(() => {
     if (!units) return [];
     const out: Row[] = [];
@@ -62,6 +66,9 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
     const sign = (r: Row) => (r.dir === 'out' ? -1 : 1);
     const asOf = today();
     const columns: Column<Row>[] = [
+      { key: 'sku', header: 'Mã hàng', type: 'code', width: 110, value: (r) => r.l.sku },
+      { key: 'name', header: 'Tên hàng', width: 230, value: (r) => nameOf(r.l.sku, r.l.name), title: 'Tên theo danh mục mặt hàng' },
+      { key: 'groupPath', header: 'Nhóm hàng (đầy đủ)', width: 260, title: 'Đường dẫn nhóm hàng đầy đủ theo danh mục, vd Nhóm hàng\Sữa\Sữa bột', value: (r) => info(r.l.sku)?.groupPath ?? '' },
       { key: 'date', header: 'Ngày', width: 90, value: (r) => dmy(r.doc.docDate) },
       { key: 'docNo', header: 'Số phiếu', type: 'code', width: 110, value: (r) => r.doc.docNo, render: (r) => <button type="button" className="btn btn-xs btn-ghost mono" onClick={() => onOpen(r.doc)} title="Mở phiếu">{r.doc.docNo || '(nháp)'}</button> },
       { key: 'kind', header: 'Loại', width: 120, value: (r) => KIND_LABEL[r.doc.kind] + (r.doc.kind === 'exchange' ? (r.dir === 'out' ? ' (trả đi)' : ' (nhận về)') : '') },
@@ -73,13 +80,14 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
       { key: 'invoiceDate', header: 'Ngày HĐ', width: 90, value: (r) => (r.doc.invoice ? dmy(r.doc.invoice.date) : '') },
       { key: 'partner', header: 'Mã NCC', type: 'code', width: 120, value: (r) => r.doc.partnerCode },
       { key: 'partnerName', header: 'Tên NCC', width: 200, value: (r) => partnerName(r.doc.partnerCode) },
-      { key: 'sku', header: 'Mã hàng', type: 'code', width: 110, value: (r) => r.l.sku },
-      { key: 'name', header: 'Tên hàng', width: 230, value: (r) => r.l.name },
       { key: 'lineType', header: 'Loại dòng', width: 110, value: (r) => LINE_TYPE[r.l.lineType] ?? r.l.lineType },
       { key: 'unit', header: 'ĐVT', width: 60, value: (r) => r.l.unit },
       { key: 'qty', header: 'Số lượng', type: 'qty', width: 80, sum: true, value: (r) => sign(r) * r.l.qty, title: 'Theo ĐVT của dòng; hàng ra (trả NCC, xuất quà, đổi trả đi) ghi âm' },
       { key: 'base', header: 'SL (ĐVT nhỏ nhất)', type: 'qty', width: 110, sum: true, value: (r) => sign(r) * r.base, title: 'Quy về ĐVT tỉ lệ 1 — cộng được giữa Thùng / Lốc / Hộp' },
       { key: 'baseUnit', header: 'ĐVT nhỏ nhất', width: 80, value: (r) => r.baseUnit },
+      { key: 'industry', header: 'Ngành hàng', width: 130, title: 'Cấp 1 của phân loại: ngành hàng của mặt hàng', value: (r) => info(r.l.sku)?.industry ?? '' },
+      { key: 'brand', header: 'Nhãn hàng', width: 130, title: 'Cấp 2: nhãn hàng của mặt hàng', value: (r) => info(r.l.sku)?.brand ?? '' },
+      { key: 'group', header: 'Nhóm hàng', width: 150, title: 'Cấp 3: nhóm hàng (nhóm cuối) của mặt hàng', value: (r) => info(r.l.sku)?.group ?? '' },
       { key: 'price', header: 'Đơn giá trên phiếu', type: 'price', width: 110, value: (r) => r.l.price, title: 'Đơn giá đúng như nhập trên phiếu (theo loại giá của phiếu)' },
       { key: 'priceKind', header: 'Loại giá', width: 90, value: (r) => (r.doc.priceIncludesVat ? 'gồm thuế' : 'chưa thuế') },
       { key: 'priceEx', header: 'Đơn giá chưa thuế', type: 'price', width: 110, value: (r) => (r.l.qty ? Math.round((r.grossEx / r.l.qty) * 100) / 100 : 0), title: 'Trước chiết khấu, chưa thuế, theo ĐVT của dòng' },
@@ -110,8 +118,12 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
   const q = (n: number) => Math.round(n * 10000) / 10000;
   const columns: Column<SkuRow>[] = [
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 110 },
-    { key: 'name', header: 'Tên hàng', width: 240 },
+    { key: 'name', header: 'Tên hàng', width: 240, value: (r) => nameOf(r.sku, r.name), title: 'Tên theo danh mục mặt hàng' },
+    { key: 'groupPath', header: 'Nhóm hàng (đầy đủ)', width: 260, title: 'Đường dẫn nhóm hàng đầy đủ theo danh mục', value: (r) => info(r.sku)?.groupPath ?? '' },
     { key: 'baseUnit', header: 'ĐVT nhỏ nhất', width: 80 },
+    { key: 'industry', header: 'Ngành hàng', width: 130, title: 'Cấp 1: ngành hàng', value: (r) => info(r.sku)?.industry ?? '' },
+    { key: 'brand', header: 'Nhãn hàng', width: 130, title: 'Cấp 2: nhãn hàng', value: (r) => info(r.sku)?.brand ?? '' },
+    { key: 'group', header: 'Nhóm hàng', width: 150, title: 'Cấp 3: nhóm hàng (nhóm cuối)', value: (r) => info(r.sku)?.group ?? '' },
     { key: 'docs', header: 'Số phiếu', type: 'number', width: 70, value: (r) => r.docs.size, title: 'Số phiếu có mã này (một phiếu nhiều mã nên không cộng dồn)' },
     { key: 'ordered', header: 'SL đặt', type: 'qty', width: 90, sum: true, value: (r) => q(r.ordered), title: 'Đơn đặt hàng trong các phiếu đang lọc' },
     { key: 'inQty', header: 'SL nhập', type: 'qty', width: 90, sum: true, value: (r) => q(r.inQty), title: 'Nhập mua + nhận quà + đổi hàng (nhận về), quy ĐVT nhỏ nhất' },

@@ -27,6 +27,7 @@ import { deleteSupplierProduct, listSupplierProducts, productCost, saveSupplierP
 import { purchaseService } from './service.js';
 import { stockLedgerBySku, stockOnHandBySku } from './bao-cao-kho.js';
 import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-the.js';
+import { skuInfoRows } from './thong-tin-ma.js';
 import { deleteEmptyThungRows, emptyThungRows, thungApply, thungPlan } from './dvt-thung.js';
 import { deletePolicy, listDocs, listPolicies, policyInputSchema, savePolicy } from './store.js';
 
@@ -202,6 +203,8 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await productCost(db, authOf(req).tenantId, req.params.sku)) });
   r.post('/api/v1/purchase/units', { preHandler: read, schema: { tags, summary: 'ĐVT của nhiều mã (danh sách dài: gửi trong thân)', body: z.object({ skus: z.array(z.string().max(64)).max(20000) }) },
     handler: async (req) => ok(await unitsOf(db, authOf(req).tenantId, req.body.skus)) });
+  r.post('/api/v1/purchase/sku-info', { preHandler: read, schema: { tags, summary: 'Tên theo danh mục, đường dẫn nhóm hàng, ngành · nhãn · nhóm của nhiều mã (báo cáo MH23)', body: z.object({ skus: z.array(z.string().max(64)).max(20000) }) } },
+    async (req) => ok(await skuInfoRows(db, authOf(req).tenantId, req.body.skus)));
   r.get('/api/v1/purchase/units', { preHandler: read, schema: { tags, summary: 'ĐVT của các mã (tỉ lệ, bán chính, mua mặc định)', querystring: z.object({ skus: z.string() }) },
     handler: async (req) => ok(await unitsOf(db, authOf(req).tenantId, req.query.skus.split(',').map((x) => x.trim()))) });
   r.get('/api/v1/purchase/db-schema', { preHandler: read, schema: { tags, summary: 'Cấu trúc CSDL phân hệ Mua hàng đọc thẳng từ PostgreSQL: bảng, cột, chú thích, chỉ mục, trigger, số dòng' },

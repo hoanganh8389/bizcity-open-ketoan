@@ -97,6 +97,16 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
     const key3 = (x: Row) => `${x.partnerCode ?? ''}|${x.sku}|${x.unit.toLowerCase()}`;
     const homNay = today(); // ngày theo giờ máy (giờ VN), không theo UTC
     list = list.map((x) => (!x.id && !x.validFrom && rows.some((o) => o.id && key3(o) === key3(x)) ? { ...x, validFrom: homNay } : x));
+    // Chồng hiệu lực: cùng NCC × mã × ĐVT, khoảng [Từ, Đến] giao nhau (trống = vô hạn). Được phép, nhưng hỏi lại — trong khoảng chồng,
+    // đơn / phiếu lấy dòng có "Hiệu lực từ" muộn hơn (cùng ngày: dòng khai sau).
+    const span = (x: Row) => [x.validFrom || '0000-00-00', x.validTo || '9999-12-31'] as const;
+    const all = [...rows.filter((o) => !o.fromHistory && o.isActive && !list.some((l) => l.key === o.key)), ...list.filter((x) => x.isActive)];
+    const overlap = list.filter((x) => x.isActive).flatMap((x) => all.filter((o) => o.key !== x.key && key3(o) === key3(x) && span(o)[0] <= span(x)[1] && span(x)[0] <= span(o)[1])
+      .map((o) => `${x.sku} · ${x.unit}: ${x.validFrom ? dmy(x.validFrom) : 'không ghi Từ'} → ${x.validTo ? dmy(x.validTo) : 'vô hạn'} chồng với dòng ${o.validFrom ? dmy(o.validFrom) : 'không ghi Từ'} → ${o.validTo ? dmy(o.validTo) : 'vô hạn'}${o.price !== null && o.price !== undefined ? ` (${o.price.toLocaleString('vi-VN')})` : ''}`));
+    if (overlap.length && !window.confirm(`Hiệu lực giá bị chồng ngày:
+${[...new Set(overlap)].slice(0, 8).join('\n')}
+
+Trong khoảng chồng, đơn / phiếu lấy dòng có "Hiệu lực từ" muộn hơn (cùng ngày bắt đầu: dòng khai sau). Vẫn lưu?`)) return;
     if (!byPartner && list.some((x) => !x.partnerCode)) { setMsg({ ok: false, text: 'Chọn nhà cung cấp cho mọi dòng (giá chung của sản phẩm khai ở khối "Giá mua tham khảo")' }); return; }
     setBusy(true); setMsg(null);
     try {
@@ -130,8 +140,12 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
     const us = units[r.sku] ?? [];
     const rt = (u: string) => us.find((x) => x.unit.toLowerCase() === u.toLowerCase())?.ratio;
     const ok = (o: Partial<Row>) => o.sku === r.sku && o.isActive && o.price !== null && o.price !== undefined && Boolean(rt(o.unit ?? ''));
-    const own = rows.find((o) => o.key !== r.key && !o.fromHistory && (o.partnerCode ?? null) === (r.partnerCode ?? null) && ok(o) && o.unit.toLowerCase() !== r.unit.toLowerCase());
-    const src = own ?? general.find((o) => ok(o as Partial<Row>));
+    // Như lúc lập đơn: chỉ dòng còn hiệu lực hôm nay; chồng ngày thì "Hiệu lực từ" muộn nhất, rồi dòng khai sau.
+    const d0 = today();
+    const live = (o: Partial<Row>) => (!o.validFrom || o.validFrom <= d0) && (!o.validTo || o.validTo >= d0);
+    const latest = <T extends Partial<Row>>(xs: T[]) => [...xs].sort((a, b) => (b.validFrom ?? '').localeCompare(a.validFrom ?? '') || (Number(b.id) || 0) - (Number(a.id) || 0))[0];
+    const own = latest(rows.filter((o) => o.key !== r.key && !o.fromHistory && (o.partnerCode ?? null) === (r.partnerCode ?? null) && ok(o) && live(o) && o.unit.toLowerCase() !== r.unit.toLowerCase()));
+    const src = own ?? latest(general.filter((o) => ok(o as Partial<Row>) && live(o as Partial<Row>)));
     const to = rt(r.unit), from = src ? rt(src.unit) : undefined;
     const p = src && to && from ? priceAs(src as Row, inc) : null;
     if (p !== null && src) return { value: roundPrice((p / from!) * to!), label: own ? `từ ${src.unit}` : `giá chung${from === to ? '' : `, từ ${src.unit}`}` };
@@ -163,7 +177,7 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
           <button className="btn btn-sm" onClick={() => setPaste(true)}>Dán nhiều mã…</button>
           <button className="btn btn-sm" onClick={() => setExcel(true)}><FileUp size={13} /> Nhập Excel…</button>
           {lastFill.length > 0 && <button className="btn btn-sm" title="Mã chưa khai giá: lấy đơn giá lần mua gần nhất của NCC này (sửa lại được trước khi Lưu)" onClick={fillLast}>Điền giá lần mua gần nhất ({lastFill.length} mã)</button>}
-          {rows.some((r) => r.fromHistory) && <button className="btn btn-sm" onClick={() => setRows((rs) => rs.map((r) => (r.fromHistory ? { ...r, fromHistory: false, dirty: true } : r)))}>Khai {rows.filter((r) => r.fromHistory).length} mã đã mua</button>}
+          {rows.some((r) => r.fromHistory) && <button className="btn btn-sm" title="Các mã đã từng mua của NCC nhưng chưa khai giá (dòng mờ): đưa hết vào bảng để gõ giá" onClick={() => setRows((rs) => rs.map((r) => (r.fromHistory ? { ...r, fromHistory: false, dirty: true } : r)))}>Khai giá {rows.filter((r) => r.fromHistory).length} mã đã mua</button>}
         </> : <button className="btn btn-sm" onClick={() => setRows((rs) => [{ key: k(), partnerCode: null, sku: sku!, unit: defaultUnitFor(units[sku!] ?? [], [], '', sku!), price: null, priceIncludesVat: false, warnPct: 2, isActive: true, dirty: true }, ...rs])}><Plus size={13} /> Thêm nhà cung cấp</button>}
         {edit && <button className="btn btn-sm btn-primary" disabled={busy || !dirty.length} onClick={() => void save()}>Lưu thay đổi ({dirty.length})</button>}
         {edit && <button className="btn btn-sm" onClick={() => { setEdit(false); setMsg(null); setReset((x) => x + 1); }}>Huỷ sửa</button>}
@@ -194,7 +208,7 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
                 {byPartner && <td style={{ fontSize: 11.5 }}>{r.lastText || <span className="muted">chưa mua</span>}</td>}
                 <td><input className="input" style={{ width: 160 }} value={r.note ?? ''} placeholder="vd giao thứ 3" disabled={r.fromHistory} onChange={(e) => set(r.key, { note: e.target.value })} /></td>
                 <td style={{ fontSize: 11 }}>{r.updatedBy ? `${r.updatedBy} · ${new Date(r.updatedAt!).toLocaleString('vi-VN', { hour12: false })}` : r.dirty ? <span className="mh-warn">chưa lưu</span> : ''}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>{!edit ? (r.isActive ? null : <span className="muted" style={{ fontSize: 11 }}>ngừng áp</span>) : r.fromHistory ? <button className="btn btn-xs" title="Khai mã đã từng mua này vào bảng giá của NCC" onClick={() => set(r.key, { fromHistory: false })}>Khai</button> : <button className="btn btn-xs btn-danger" title={r.id ? 'Xoá vĩnh viễn dòng giá này (hỏi lại trước khi xoá; phiếu đã lập không ảnh hưởng)' : 'Bỏ dòng chưa lưu này'} onClick={() => void removeRow(r)}>Xoá</button>}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{!edit ? (r.isActive ? null : <span className="muted" style={{ fontSize: 11 }}>ngừng áp</span>) : r.fromHistory ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}><span className="muted" style={{ fontSize: 11 }}>đã mua, chưa khai giá</span><button className="btn btn-xs btn-primary" title="Mã này NCC đã bán (có phiếu) nhưng chưa có dòng giá: bấm để mở ô giá, gõ giá rồi Lưu" onClick={() => set(r.key, { fromHistory: false })}>Khai giá</button></span> : <button className="btn btn-xs btn-danger" title={r.id ? 'Xoá vĩnh viễn dòng giá này (hỏi lại trước khi xoá; phiếu đã lập không ảnh hưởng)' : 'Bỏ dòng chưa lưu này'} onClick={() => void removeRow(r)}>Xoá</button>}</td>
               </tr>
             ))}
             {!visible.length && <tr><td colSpan={16} className="muted">{q.isLoading ? 'Đang tải…' : byPartner ? 'NCC chưa có mặt hàng — thêm mã, dán nhiều mã hoặc nhập Excel.' : `Chưa NCC nào khai bán ${skuName ?? 'mã này'} — bấm "+ Thêm NCC / giá".`}</td></tr>}
@@ -203,7 +217,7 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
       </div></fieldset>
       {productSku && <ProductEditor sku={productSku} startTab="units" startEditing onClose={() => void closeProduct()} />}
       {paste && <DanMa onClose={() => setPaste(false)} onAdd={(list) => { setPaste(false); void addRows(list); }} />}
-      {pick && <ChonMatHang title="Thêm mã NCC bán — bấm vào dòng để thêm" prefer={nccBrands} existing={new Map(active.map((r) => [r.sku, 'đã có']))}
+      {pick && <ChonMatHang title="Thêm mã NCC bán — bấm vào dòng để thêm" prefer={nccBrands} repeat existing={new Map(active.map((r) => [r.sku, 'đã có · bấm để thêm dòng (đợt giá / ĐVT khác)']))}
         onPick={(p) => void addRows([{ sku: p.sku }])} onPickAll={(ps) => void addRows(ps.map((p) => ({ sku: p.sku })))} onClose={() => setPick(false)} />}
       {excel && <NhapExcel partnerName={names.partnerName(partnerCode ?? '')} onClose={() => setExcel(false)} onAdd={(list) => { setExcel(false); void addRows(list); }} />}
     </div>

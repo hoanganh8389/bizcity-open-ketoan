@@ -334,6 +334,8 @@ const sumWhs = (m: Map<string, number>, branch: string, whs: Set<string>, sku: s
 export interface AnalysisRow {
   sku: string; name: string; barcode: string; brandCode: string; brandName: string; partnerCode: string; partnerName: string; taxCode: string;
   baseUnit: string; pack?: number; packUnit?: string; price: number | null; priceIncludesVat: boolean; promo: string;
+  /** Đơn giá chưa VAT theo ĐVT thùng (packUnit): NCC niêm yết riêng giá thùng thì đúng giá đó, không thì = price × pack. */
+  packPrice?: number | null;
   need: number; parts: { key: string; label: string; signed: number }[]; options: number[]; suggest: number;
   maxKho: number; minKho: number; tonKho: number; diDuongKho: number; diDuongShop: number; maxShop: number; tonShop: number; banShop: number; banThangTruoc: number; dangDat: number;
   /** NCC chọn theo: lan_nhap = lần nhập gần nhất · bang_gia = NCC có bảng giá đang hiệu lực mới nhất · '' = chưa rõ; nccCount = số NCC khai bán mã. */
@@ -426,6 +428,9 @@ export async function orderAnalysis(trx: Db, tenantId: string, parentCode: strin
     // Đơn giá chưa VAT theo ĐVT nhỏ nhất (giá gồm VAT thì bỏ thuế).
     const rate = TAX_RATE[p?.tax_in_code ?? 'V08'] ?? 0;
     const unitPrice = fixed ? fixed.price / (fixed.row.priceIncludesVat ? 1 + rate / 100 : 1) : null; // priceFor đã quy về ĐVT nhỏ nhất
+    // Giá theo ĐVT thùng: mỗi ĐVT có thể có giá niêm yết riêng (thùng thường rẻ hơn lẻ × tỉ lệ) — lấy đúng dòng giá thùng nếu có.
+    const fixedPack = pk.packUnit ? priceFor(sps, { date: asOf, partnerCode, sku, unit: pk.packUnit }, us ?? []) : undefined;
+    const packPrice = fixedPack ? Math.round((fixedPack.price / (fixedPack.row.priceIncludesVat ? 1 + rate / 100 : 1)) * 100) / 100 : null;
     const promo = policies.filter((x) => x.isActive && ['promo_gift', 'item_discount', 'qty_tier'].includes(x.kind) && (x.scope.sku === sku || (x.kind === 'promo_gift' && giftItemsOf(x).some((i) => i.sku === sku)) || (!x.scope.sku && p?.brand_code && x.scope.brandCode === p.brand_code)) && (!x.validTo || x.validTo >= asOf) && (!x.validFrom || x.validFrom <= asOf))
       .map((x) => x.name).slice(0, 3).join('; ');
     const options = buyOptions(res.need, pk.pack);
@@ -440,7 +445,7 @@ export async function orderAnalysis(trx: Db, tenantId: string, parentCode: strin
     rows.push({
       sku, name: p?.name ?? sku, barcode: p?.barcode ?? '', brandCode: p?.brand_code ?? '', brandName: brands.get(p?.brand_code ?? '') ?? (p?.brand_code ?? ''),
       partnerCode, partnerName: pname.get(partnerCode) ?? '', partnerSource, nccCount, taxCode: p?.tax_in_code ?? 'V08', baseUnit: pk.baseUnit, pack: pk.pack, packUnit: pk.packUnit,
-      price: unitPrice === null ? null : Math.round(unitPrice * 100) / 100, priceIncludesVat: false, promo,
+      price: unitPrice === null ? null : Math.round(unitPrice * 100) / 100, priceIncludesVat: false, promo, packPrice,
       need: res.need, parts: res.parts.map((x) => ({ key: x.key, label: x.label, signed: x.signed })), options, suggest,
       maxKho: input.maxKho, minKho: input.minKho, tonKho: r3(input.tonKho), diDuongKho: r3(input.diDuongKho), diDuongShop: r3(input.diDuongShop),
       maxShop: shopsIn.reduce((t, x) => t + x.max, 0), tonShop: r3(shopsIn.reduce((t, x) => t + x.ton, 0)), banShop: r3(input.banShopNgay.slice(0, banDays).reduce((t, x) => t + x, 0)),

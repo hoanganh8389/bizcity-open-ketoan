@@ -20,6 +20,8 @@ export interface MaxBoard { rows: MaxBoardRow[]; parent: { code: string; name: s
 export interface AnalysisRow {
   sku: string; name: string; barcode: string; brandCode: string; brandName: string; partnerCode: string; partnerName: string; taxCode: string;
   baseUnit: string; pack?: number; packUnit?: string; price: number | null; priceIncludesVat: boolean; promo: string;
+  /** Giá chưa VAT theo ĐVT thùng (NCC niêm yết riêng giá thùng thì đúng giá đó). */
+  packPrice?: number | null;
   need: number; parts: { key: string; label: string; signed: number }[]; options: number[]; suggest: number;
   maxKho: number; minKho: number; tonKho: number; diDuongKho: number; diDuongShop: number; maxShop: number; tonShop: number; banShop: number; banThangTruoc: number; dangDat: number;
   partnerSource: 'lan_nhap' | 'bang_gia' | ''; nccCount: number;
