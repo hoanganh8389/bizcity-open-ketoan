@@ -16,19 +16,33 @@ export function Money({ value, blankZero = true, bold }: { value: number | null 
  * rời ô thì định dạng lại. Ô cũ định dạng lại mỗi phím nên nuốt mất dấu phẩy, không gõ được số lẻ.
  * Không nhận số âm (trừ khi allowNegative). Trống → onChange(null).
  */
-export function NumInput({ value, onChange, decimals = 4, allowNegative, blankZero = true, className = 'input num', ...rest }: {
+export function NumInput({ value, onChange, decimals = 4, allowNegative, blankZero = true, step, className = 'input num', ...rest }: {
   value: number | null | undefined; onChange: (v: number | null) => void; decimals?: number; allowNegative?: boolean; blankZero?: boolean;
+  /** Có step: hiện nút ▲▼ tăng / giảm (bấm, hoặc giữ Ctrl + ↑ ↓ trong ô). Không âm trừ khi allowNegative. */
+  step?: number;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   const [text, setText] = useState<string | null>(null);
   const shown = value === null || value === undefined || (value === 0 && blankZero) ? '' : priceText(Math.round(value * 10 ** decimals) / 10 ** decimals);
-  return <input {...rest} className={className} inputMode="decimal" value={text ?? shown}
+  const bump = (d: number) => { const n = Math.round(((value ?? 0) + d) * 10 ** decimals) / 10 ** decimals; setText(null); onChange(allowNegative ? n : Math.max(0, n)); };
+  const input = <input {...rest} className={className} inputMode="decimal" value={text ?? shown}
     onFocus={(e) => { setText(shown); rest.onFocus?.(e); }}
     onBlur={(e) => { setText(null); rest.onBlur?.(e); }}
+    onKeyDown={(e) => { if (step && e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); bump(e.key === 'ArrowUp' ? step : -step); } rest.onKeyDown?.(e); }}
     onChange={(e) => {
       const raw = allowNegative ? e.target.value : e.target.value.replace(/-/g, '');
       setText(raw);
       onChange(parseNum(raw, decimals));
     }} />;
+  if (!step || rest.disabled) return input;
+  return (
+    <span className="num-step">
+      {input}
+      <span className="num-step-btns">
+        <button type="button" tabIndex={-1} title={`Tăng ${step} (Ctrl + ↑)`} onClick={(e) => { e.stopPropagation(); bump(step); }}>▲</button>
+        <button type="button" tabIndex={-1} title={`Giảm ${step} (Ctrl + ↓)`} onClick={(e) => { e.stopPropagation(); bump(-step); }}>▼</button>
+      </span>
+    </span>
+  );
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {

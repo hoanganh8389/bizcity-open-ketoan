@@ -131,6 +131,35 @@ export async function scanParents(trx: Db, tenantId: string, opts: { overwrite?:
   return { updated: Number(r.rows[0]?.n ?? 0), families: Number(stat?.f ?? 0), children: Number(stat?.c ?? 0) };
 }
 
+async function parentUnits(trx: Db, tenantId: string, sku: string): Promise<UnitInput[]> {
+  const rows = await trx.selectFrom('product_units').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).orderBy('ratio').execute();
+  return rows.map((u) => ({ unit: u.unit, ratio: Number(u.ratio), isDefault: u.is_default, isPurchaseDefault: u.is_purchase_default, weightKg: num(u.weight_kg), note: u.note }));
+}
+
+/**
+ * Bộ ĐVT cho mã con mới tạo: mã con chưa khai (hoặc chỉ khai ĐVT nhỏ nhất) → lấy trọn bộ của mã cha, kể cả ĐVT bán chính / mua mặc
+ * định (đơn vị nhỏ nhất theo tên mã con nếu khác). Mã con đã khai nhiều ĐVT → giữ của mã con, chỉ thêm ĐVT mã cha còn thiếu (trừ tỉ lệ 1)
+ * và lấy ĐVT mua mặc định của mã cha nếu mã con chưa chọn.
+ */
+export function inheritUnits(own: UnitInput[] | undefined, parent: UnitInput[]): UnitInput[] | undefined {
+  if (!parent.length) return own;
+  const mine = (own ?? []).filter((u) => u.unit.trim());
+  const key = (s: string) => s.trim().toLowerCase();
+  if (mine.length <= 1) {
+    const base = mine[0];
+    const rest = parent.filter((u) => Number(u.ratio) !== 1 && (!base || key(u.unit) !== key(base.unit)));
+    const pBase = parent.find((u) => Number(u.ratio) === 1);
+    const b0 = base ? { ...base, ratio: 1, isDefault: pBase?.isDefault ?? base.isDefault, isPurchaseDefault: pBase?.isPurchaseDefault ?? base.isPurchaseDefault } : pBase;
+    return [...(b0 ? [b0] : []), ...rest.map((u) => ({ ...u }))];
+  }
+  const have = new Set(mine.map((u) => key(u.unit)));
+  const add = parent.filter((u) => Number(u.ratio) !== 1 && !have.has(key(u.unit))).map((u) => ({ ...u, isDefault: false, isPurchaseDefault: false }));
+  const out = [...mine, ...add];
+  const buy = parent.find((u) => u.isPurchaseDefault);
+  if (buy && !out.some((u) => u.isPurchaseDefault)) for (const u of out) if (key(u.unit) === key(buy.unit)) u.isPurchaseDefault = true;
+  return out;
+}
+
 // ----------------------------------------------------------------------------------------------- một mặt hàng
 
 export async function getProduct(trx: Db, tenantId: string, sku: string) {
@@ -178,6 +207,12 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     if (par.parent_sku) throw Errors.validation(`${ps} đang là mã con của ${par.parent_sku} — họ mã chỉ 1 cấp, chọn mã cha ${par.parent_sku}`);
     const kids = exists ? await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('parent_sku', '=', sku).limit(3).execute() : [];
     if (kids.length) throw Errors.validation(`${sku} đang là mã cha của ${kids.map((k) => k.sku).join(', ')} — họ mã chỉ 1 cấp`);
+    // Mã con TẠO MỚI kế thừa đa ĐVT của mã cha (Thùng, Lốc…): ĐVT mã con đã khai giữ nguyên, thêm các ĐVT mã cha còn thiếu.
+    if (!exists) {
+      b = { ...b, units: inheritUnits(b.units, await parentUnits(trx, tenantId, ps)) };
+      const err = b.units ? checkUnits(b.units) : null;
+      if (err) throw Errors.validation(err);
+    }
   }
   const now = new Date();
   const patch: Record<string, unknown> = { ...productPatch(b), updated_at: now };

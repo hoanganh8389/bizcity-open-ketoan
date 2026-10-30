@@ -108,6 +108,22 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
     setV({ ...d, units: d.units.length ? d.units : [{ unit: d.unit || '', ratio: 1, isDefault: true, weightKg: null, note: '' }] });
   }, [loaded.data]);
 
+  // Mã con tạo mới: kéo sẵn đa ĐVT của mã cha (Thùng, Lốc…) khi mã con chưa khai thêm ĐVT nào — máy chủ cũng kế thừa khi lưu.
+  const parentData = useQuery({ queryKey: ['catalog-product', v.parentSku], enabled: isNew && Boolean(v.parentSku), staleTime: 60_000,
+    queryFn: () => api.get<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.parentSku!)}`) });
+  useEffect(() => {
+    const pu = parentData.data?.units;
+    if (!isNew || !pu?.length || parentData.data?.sku !== v.parentSku) return;
+    setV((x) => {
+      const mine = x.units.filter((u) => u.unit.trim());
+      if (mine.length > 1) return x;
+      const base = mine[0], pBase = pu.find((u) => Number(u.ratio) === 1);
+      const rest = pu.filter((u) => Number(u.ratio) !== 1 && (!base || u.unit.toLowerCase() !== base.unit.trim().toLowerCase()));
+      const b0 = base ? { ...base, ratio: 1, isDefault: pBase?.isDefault ?? base.isDefault, isPurchaseDefault: pBase?.isPurchaseDefault ?? base.isPurchaseDefault } : pBase;
+      return { ...x, units: [...(b0 ? [b0] : []), ...rest.map((u) => ({ ...u }))] };
+    });
+  }, [isNew, parentData.data, v.parentSku]);
+
   // Cột giá hiện sẵn: bảng giá công ty + bảng giá đã có giá cho mặt hàng này.
   const company = lists.find((l) => l.isCompany);
   useEffect(() => {

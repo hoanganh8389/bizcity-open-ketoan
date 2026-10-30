@@ -138,8 +138,11 @@ export async function priceHistory(trx: Db, tenantId: string, sku: string, befor
     .select(['m.doc_date', 'm.qty', 'm.amount', 'e.doc_no', 'p.code as partner_code'])
     .where('m.tenant_id', '=', tenantId).where('m.sku', '=', sku).where('m.kind', '=', 'purchase').where('m.is_gift', '=', false).where('m.qty', '>', '0').where('m.doc_date', '<=', before)
     .where('e.doc_key', 'not like', 'mh:%').orderBy('m.doc_date', 'desc').limit(limit);
+  // Biến động kho ghi theo ĐVT nhỏ nhất — ghi kèm ĐVT đó để nơi dùng quy đổi về ĐVT của dòng (vd đặt theo Thùng).
+  const base = (await trx.selectFrom('product_units').select('unit').where('tenant_id', '=', tenantId).where('sku', '=', sku).where('ratio', '=', '1').executeTakeFirst())?.unit
+    ?? (await trx.selectFrom('products').select('unit').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst())?.unit;
   const other = (await q.execute()).filter((r) => toNumber(r.amount) > 0).map((r) => ({
-    date: String(r.doc_date).slice(0, 10), partnerCode: r.partner_code ?? '', docNo: r.doc_no, unitPrice: Math.round(toNumber(r.amount) / toNumber(r.qty)), includesVat: false, qty: toNumber(r.qty),
+    date: String(r.doc_date).slice(0, 10), partnerCode: r.partner_code ?? '', docNo: r.doc_no, unitPrice: Math.round((toNumber(r.amount) / toNumber(r.qty)) * 100) / 100, includesVat: false, qty: toNumber(r.qty), ...(base ? { unit: base } : {}),
   }));
   return [...own, ...other].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
 }
@@ -192,7 +195,8 @@ const GOODS = ['order', 'receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
 
 export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): Promise<Analysis> {
   const { policies, docs, settings, accounts } = ctx;
-  const calc = computeDoc(doc, policies, { holidays: settings.holidays });
+  // ĐVT của các mã trên phiếu: bảng chiết khấu theo mã ghi ĐVT khác ĐVT phiếu (vd giảm / Thùng, phiếu theo Lon) quy đổi theo tỉ lệ.
+  const calc = computeDoc(doc, policies, { holidays: settings.holidays, units: await unitsOf(trx, tenantId, doc.lines.map((l) => l.sku).filter(Boolean)) });
   const self = docs.find((d) => d.id === doc.id);
   const selfEvents = self ? evKeys(self) : [];
   const credit: CreditStatus[] = [];

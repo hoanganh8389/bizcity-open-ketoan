@@ -56,16 +56,29 @@ Một danh sách cho mọi chứng từ phía mua:
   - **Xuất Excel**: đúng bộ cột của mẫu nhập (kèm thành tiền, chương trình, phân kho) — sửa xong nhập lại được.
 - Bảng hàng nhiều cột thì chỉ bảng cuộn ngang; khối đầu phiếu và thanh thao tác đứng yên.
 - **Tên hàng, ĐVT (chọn trong ĐVT đã khai), thuế suất, nhãn** lấy theo danh mục mặt hàng — không gõ tay trên phiếu. Sai tên thì sửa ở Danh mục mặt hàng.
+- **Sửa nhanh ĐVT ngay trên phiếu**: nút nhỏ cạnh ô ĐVT (＋ khi mã mới có 1 ĐVT, ✎ khi đã có nhiều) mở thẻ *Đơn vị tính* của mặt hàng để thêm hoặc sửa ĐVT, tỉ lệ (vd sửa 1 Thùng = 24), ĐVT mua mặc định. Lưu xong dòng phiếu tự lấy tỉ lệ mới. ĐVT trên dòng bị xoá / đổi tên thì dòng chuyển sang ĐVT mua mặc định mới, số lượng và đơn giá quy đổi để thành tiền không đổi.
 - Chọn NCC: nút **Chép hàng từ phiếu …** chép mã hàng, số lượng, đơn giá, thuế suất của phiếu gần nhất cùng NCC.
 - Gõ mã hàng: tên, ĐVT, **thuế suất**, nhãn hàng lấy từ danh mục mặt hàng; có giá mua cố định thì tự điền đơn giá.
-- Để trống **CK %**: tự áp theo chính sách (bậc số lượng…).
+- **CK %** và **CK (đ)** đi cặp với nhau: gõ một cột, cột kia tự tính theo tiền hàng của dòng (vd tiền hàng 1.000.000, gõ 5% → CK (đ) 50.000; gõ 50.000 → CK % 5). CK tối đa 100%, tức không quá tiền hàng của dòng. Để trống cả hai: tự áp theo chính sách (bậc số lượng…).
 - Phiếu **Trả tiền NCC**: nút gợi ý **Trả hết** / **Phần đến hạn** / **Theo phiếu đã chọn** theo nợ thật trên sổ.
   - Hộp **Chọn phiếu nhập** có cột **Đã trả** và **Còn nợ** theo sổ: trả nhiều lần thì thấy ngay phần còn lại trước khi chọn; phiếu trả xong ghi *Đã trả hết*, phiếu chưa duyệt ghi *chưa ghi sổ*.
   - **Tài khoản ngân hàng** (chuyển khoản, 112*) / **Quỹ tiền mặt** (111*): trống = tài khoản mặc định theo cài đặt; chọn tài khoản khác (vd ngân hàng khác) thì bút toán ở thẻ Hạch toán ghi Có đúng tài khoản đó. Đổi hình thức thì ô này tự xoá.
 
-**Cột của dòng hàng:** Đơn giá · CK % · **Thuế suất** (0%, 5%, 8%, 10%, không chịu thuế) · Thành tiền chưa thuế · Tiền thuế · Giá vốn / ĐVT · Số lô · NSX · Hạn dùng. Ô **Tổng tiền** bên phải tách tiền thuế theo từng thuế suất khi phiếu có nhiều mức thuế.
+**Thao tác nhanh trên dòng hàng:**
+- **Chuột phải** vào dòng mở menu:
+  - **Nhân đôi dòng** (Ctrl + D);
+  - **Thêm dòng mua lẻ theo Hộp**: cùng mã, ĐVT nhỏ nhất, đơn giá quy đổi; dùng khi vừa mua thùng vừa mua hộp lẻ;
+  - **Chèn dòng trống**;
+  - **Sửa ĐVT / tỉ lệ**;
+  - **Xoá dòng** (Ctrl + Delete).
+- Cuối dòng có nút ⧉ (nhân đôi) và × (xoá).
+- Ô **SL** có nút ▲▼ để tăng giảm 1, hoặc giữ Ctrl rồi bấm ↑ ↓.
+- Phím mũi tên đi lại giữa các ô như Excel: ↑ ↓ sang dòng trên / dưới cùng cột; ← → sang ô bên cạnh khi con trỏ đã ở đầu / cuối chữ.
+- Dưới ô ĐVT hiện quy cách, vd *1 Thùng = 48 Hộp · 16 Thùng = 768 Hộp*.
 
-**Chặn sai:** chiết khấu trên đơn lớn hơn tiền hàng (số phải trả âm), đơn giá âm, CK % ngoài 0–100 — không ghi, không duyệt được.
+**Cột của dòng hàng:** Đơn giá · CK % · CK (đ) · **Thuế suất** (0%, 5%, 8%, 10%, không chịu thuế) · Thành tiền chưa thuế · Tiền thuế · Giá vốn / ĐVT · Số lô · NSX · Hạn dùng. Ô **Tổng tiền** bên phải tách tiền thuế theo từng thuế suất khi phiếu có nhiều mức thuế.
+
+**Chặn sai:** chiết khấu trên đơn lớn hơn tiền hàng (số phải trả âm), đơn giá âm, CK % ngoài 0–100 (CK (đ) tối đa bằng tiền hàng của dòng) — không ghi, không duyệt được.
 
 **Đầu phiếu:**
 - NCC (hiện MST, nhóm, địa chỉ), chi nhánh; **Nhãn hàng (theo mặt hàng)** chỉ để xem — phiếu nhiều nhãn hiện tỉ trọng từng nhãn;

@@ -45,7 +45,7 @@ const isoOf = (s: string) => { const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})/.
 export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged }: { partnerCode?: string; sku?: string; skuName?: string; data: MhData; onChanged?: () => void }) {
   const byPartner = Boolean(partnerCode);
   const names = useNames();
-  const q = useQuery({ queryKey: ['mua-hang', 'supplier-products', partnerCode ?? '', sku ?? ''], queryFn: () => purchaseApi.supplierProducts(byPartner ? { partnerCode } : { sku }) });
+  const q = useQuery({ queryKey: ['mua-hang', 'supplier-products', partnerCode ?? '', sku ?? ''], queryFn: () => purchaseApi.supplierProducts(byPartner ? { partnerCode, withGeneral: true } : { sku }) });
   const [rows, setRows] = useState<Row[]>([]);
   const [units, setUnits] = useState<Record<string, ProductUnit[]>>({});
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -65,7 +65,7 @@ export function BangGiaMua({ partnerCode, sku, skuName, data, onChanged }: { par
   useEffect(() => {
     if (!q.data) return;
     setUnits((u) => ({ ...u, ...q.data.units }));
-    const declared: Row[] = q.data.rows.filter((r) => byPartner || r.partnerCode).map((r) => ({ ...r, key: r.id ?? k() }));
+    const declared: Row[] = q.data.rows.filter((r) => (byPartner ? r.partnerCode === partnerCode : r.partnerCode)).map((r) => ({ ...r, key: r.id ?? k() }));
     const fromHist: Row[] = hist.filter((h) => !h.declared).map((h) => ({ key: k(), partnerCode, sku: h.sku, unit: h.lastUnit ?? h.unit ?? '', price: null, priceIncludesVat: false, warnPct: 2, isActive: true, fromHistory: true, lastText: h.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }));
     setRows([...declared.map((r) => { const h = hist.find((x) => x.sku === r.sku); return { ...r, lastText: h?.lastDate ? `${dmy(h.lastDate)} · ${h.lastQty?.toLocaleString('vi-VN')} ${h.lastUnit} × ${donGia(h.lastPrice)} (${h.lastIncludesVat ? 'gồm' : 'chưa'} thuế)` : '' }; }), ...fromHist]);
     // Mã đã mua nhưng chưa khai giá: tải ĐVT luôn (bấm "Khai" là chọn được ĐVT, không hiện nhầm "Khai ĐVT").
@@ -122,6 +122,27 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
   const taxOf = (s: string) => cat.data?.find((c) => c.sku === s)?.taxInCode ?? 'V08';
   const rateOf = (s: string) => (TAX_RATE[taxOf(s)] ?? 0) / 100;
   const priceAs = (r: Row, inc: boolean) => (r.price === null || r.price === undefined ? null : Boolean(r.priceIncludesVat) === inc ? r.price : inc ? roundPrice(r.price * (1 + rateOf(r.sku))) : roundPrice(r.price / (1 + rateOf(r.sku))));
+  // Ô giá trống (dòng Thùng tạo sẵn ở MH27, mã đã mua chưa khai giá…): lập đơn tự lấy giá theo thứ tự — dòng ĐVT khác của chính NCC
+  // này, rồi giá chung mọi NCC — quy về ĐVT của dòng. Hiện mờ số đó trong ô giá để thấy ngay (giá tham khảo, chưa phải giá đã khai).
+  const general = useMemo(() => (byPartner ? (q.data?.rows ?? []).filter((r) => !r.partnerCode && r.isActive) : []), [byPartner, q.data]);
+  const derivedAs = (r: Row, inc: boolean) => {
+    if (r.price !== null && r.price !== undefined) return null;
+    const us = units[r.sku] ?? [];
+    const rt = (u: string) => us.find((x) => x.unit.toLowerCase() === u.toLowerCase())?.ratio;
+    const ok = (o: Partial<Row>) => o.sku === r.sku && o.isActive && o.price !== null && o.price !== undefined && Boolean(rt(o.unit ?? ''));
+    const own = rows.find((o) => o.key !== r.key && !o.fromHistory && (o.partnerCode ?? null) === (r.partnerCode ?? null) && ok(o) && o.unit.toLowerCase() !== r.unit.toLowerCase());
+    const src = own ?? general.find((o) => ok(o as Partial<Row>));
+    const to = rt(r.unit), from = src ? rt(src.unit) : undefined;
+    const p = src && to && from ? priceAs(src as Row, inc) : null;
+    if (p !== null && src) return { value: roundPrice((p / from!) * to!), label: own ? `từ ${src.unit}` : `giá chung${from === to ? '' : `, từ ${src.unit}`}` };
+    // Không có dòng giá nào: lấy đơn giá lần mua gần nhất của NCC này (trên phiếu / đơn), quy về ĐVT của dòng và đúng loại giá cột.
+    const h = hist.find((x) => x.sku === r.sku && x.lastPrice);
+    const hr = h?.lastUnit ? rt(h.lastUnit) : undefined;
+    if (!h || !to || !hr) return null;
+    const rate = rateOf(r.sku), lp = Number(h.lastPrice);
+    const v = Boolean(h.lastIncludesVat) === inc ? lp : inc ? lp * (1 + rate) : lp / (1 + rate);
+    return { value: roundPrice((v / hr) * to), label: `lần mua ${dmy(h.lastDate!)}` };
+  };
   // Mã chưa khai giá nhưng đã từng mua của NCC này: điền giá lần mua gần nhất (quy về ĐVT của dòng, giữ loại giá của phiếu đó).
   const lastFill = rows.filter((r) => (r.price === null || r.price === undefined) && hist.some((h) => h.sku === r.sku && h.lastPrice));
   const fillLast = () => setRows((rs) => rs.map((r) => {
@@ -163,10 +184,11 @@ Không cần thêm dòng (chỉ thêm khi đổi giá theo đợt). Vẫn lưu =
                 <td><input className="input mono" style={{ width: 110 }} value={r.nccSku ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { nccSku: e.target.value })} /></td>
                 <td><input className="input" style={{ width: 180 }} value={r.nccName ?? ''} placeholder="tên theo NCC" disabled={r.fromHistory} onChange={(e) => set(r.key, { nccName: e.target.value })} /></td>
                 <td className="muted" style={{ fontSize: 12 }}>{cat.data ? `${TAX_RATE[taxOf(r.sku)] ?? 0}%` : ''}</td>
-                {[false, true].map((inc) => { const v = priceAs(r, inc); return (
+                {[false, true].map((inc) => { const v = priceAs(r, inc); const d = derivedAs(r, inc); return (
                   <td key={String(inc)}><NumInput style={{ width: 110, fontWeight: r.price !== null && r.price !== undefined && Boolean(r.priceIncludesVat) === inc ? 600 : undefined }}
-                    title={r.price !== null && r.price !== undefined && Boolean(r.priceIncludesVat) !== inc ? `Tự quy đổi từ giá ${inc ? 'chưa' : 'gồm'} thuế (thuế ${TAX_RATE[taxOf(r.sku)] ?? 0}%)` : undefined}
-                    value={v} placeholder="chưa khai" disabled={r.fromHistory} onChange={(n) => set(r.key, { price: n, priceIncludesVat: inc })} /></td>); })}
+                    title={r.price !== null && r.price !== undefined && Boolean(r.priceIncludesVat) !== inc ? `Tự quy đổi từ giá ${inc ? 'chưa' : 'gồm'} thuế (thuế ${TAX_RATE[taxOf(r.sku)] ?? 0}%)` : d ? `Chưa khai giá theo ${r.unit} cho NCC này: lập đơn tự lấy ≈ ${donGia(d.value)} (${d.label}). NCC báo giá riêng thì gõ thẳng vào đây` : undefined}
+                    value={v} placeholder="chưa khai" disabled={r.fromHistory} onChange={(n) => set(r.key, { price: n, priceIncludesVat: inc })} />
+                    {v === null && d && <div className="muted" style={{ fontSize: 11, marginTop: 2, whiteSpace: 'nowrap' }} title={`Giá tham khảo — lập đơn tự lấy số này (${d.label}). Chưa phải giá đã khai cho NCC`}>≈ {donGia(d.value)} <i>({d.label})</i></div>}</td>); })}
                 <td><input className="input" type="date" style={{ width: 128 }} value={r.validFrom ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { validFrom: e.target.value || undefined })} /></td>
                 <td><input className="input" type="date" style={{ width: 128 }} value={r.validTo ?? ''} disabled={r.fromHistory} onChange={(e) => set(r.key, { validTo: e.target.value || undefined })} /></td>
                 {byPartner && <td style={{ fontSize: 11.5 }}>{r.lastText || <span className="muted">chưa mua</span>}</td>}

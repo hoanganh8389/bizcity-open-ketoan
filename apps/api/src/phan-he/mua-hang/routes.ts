@@ -27,6 +27,7 @@ import { deleteSupplierProduct, listSupplierProducts, productCost, saveSupplierP
 import { purchaseService } from './service.js';
 import { stockLedgerBySku, stockOnHandBySku } from './bao-cao-kho.js';
 import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-the.js';
+import { thungApply, thungPlan } from './dvt-thung.js';
 import { deletePolicy, listDocs, listPolicies, policyInputSchema, savePolicy } from './store.js';
 
 const tags = ['Mua hàng'];
@@ -229,6 +230,17 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
       const separate = await saveVariantSeparate(db, a.tenantId, req.body.separate);
       await logEvents(a.tenantId, [{ event: 'variants_saved', docNo: '', user: a.actorName, data: { before, after: separate } }]);
       return ok({ separate });
+    } });
+  const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
+  r.post('/api/v1/purchase/units/thung/preview', { preHandler: read, schema: { tags, summary: 'ĐVT Thùng đặt hàng (MH27): xem trước — mã có tương tác mua / NCC khai trong N ngày, quy cách nhập vào (specs: 12 Lốc, 12CAN/THÙNG) quy về ĐVT nhỏ nhất; không có thì đoán theo ngữ cảnh (mặc định 48)', body: thungBody },
+    handler: async (req) => ok(await thungPlan(db, authOf(req).tenantId, req.body)) });
+  r.post('/api/v1/purchase/units/thung/apply', { preHandler: settings, schema: { tags, summary: 'ĐVT Thùng đặt hàng (MH27): chạy thật cho các mã chọn — thêm ĐVT Thùng, đặt làm ĐVT mua mặc định, đổi dòng giá NCC sang Thùng', body: thungBody.extend({ skus: z.array(z.string().trim().min(1).max(64)).min(1).max(20000) }) },
+    handler: async (req) => {
+      const a = authOf(req);
+      const res = await db.transaction().execute((trx) => thungApply(trx, a.tenantId, a.actor, req.body));
+      const manual = Object.keys(req.body.specs).filter((k) => req.body.skus.includes(k));
+      await logEvents(a.tenantId, [{ event: 'units_thung', docNo: '', user: a.actorName, data: { ...res, days: req.body.days, manual: manual.slice(0, 200), skus: req.body.skus.slice(0, 500) } }]);
+      return ok(res);
     } });
   const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },

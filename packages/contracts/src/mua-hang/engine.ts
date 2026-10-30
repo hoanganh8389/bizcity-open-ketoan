@@ -390,14 +390,24 @@ export function findPolicy(policies: Policy[], kind: PolicyKind, ctx: Parameters
  * sách phạm vi hẹp hơn / ưu tiên cao hơn thắng; trong một chính sách, dòng có minQty lớn nhất mà SL đạt thắng.
  */
 export interface ItemDiscount { sku: string; pct?: number; amount?: number; unit?: string; minQty?: number; note?: string }
-export function itemDiscountFor(policies: Policy[], ctx: Parameters<typeof policyApplies>[1] & { sku: string; unit?: string; qty: number }): { policy: Policy; item: ItemDiscount } | undefined {
+/**
+ * Dòng chiết khấu theo mã khớp dòng phiếu. Dòng bảng ghi ĐVT khác ĐVT của phiếu (vd giảm 105.000đ / Thùng, phiếu nhập theo Lon)
+ * thì quy đổi theo tỉ lệ ĐVT của mặt hàng (units): factor = tỉ lệ ĐVT phiếu ÷ tỉ lệ ĐVT bảng — số tiền giảm / 1 ĐVT phiếu = amount × factor;
+ * SL tối thiểu so sau khi quy về cùng ĐVT. Dòng đúng ĐVT được ưu tiên.
+ */
+export function itemDiscountFor(policies: Policy[], ctx: Parameters<typeof policyApplies>[1] & { sku: string; unit?: string; qty: number; units?: ProductUnit[] }): { policy: Policy; item: ItemDiscount; factor: number } | undefined {
   const spec = (p: Policy) => Object.values(p.scope).filter(Boolean).length;
   const cands = policies.filter((p) => p.kind === 'item_discount' && policyApplies(p, { ...ctx, sku: undefined })).sort((a, b) => spec(b) - spec(a) || (b.priority ?? 0) - (a.priority ?? 0));
   const same = (a?: string, b?: string) => (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
+  const us = ctx.units ?? [];
+  const r = (u?: string) => (u && us.length ? ratioOf(us, u) : 0);
+  /** Tỉ lệ ĐVT phiếu ÷ ĐVT bảng; 0 = không quy đổi được (ĐVT lạ). */
+  const factorOf = (i: ItemDiscount) => (!i.unit || same(i.unit, ctx.unit) ? 1 : r(ctx.unit) && r(i.unit) ? r(ctx.unit) / r(i.unit) : 0);
   for (const p of cands) {
-    const items = ((p.rule.items as ItemDiscount[] | undefined) ?? []).filter((i) => i.sku === ctx.sku && (!i.unit || same(i.unit, ctx.unit)) && ctx.qty >= (i.minQty ?? 0));
-    const item = items.sort((a, b) => (b.minQty ?? 0) - (a.minQty ?? 0))[0];
-    if (item && (item.pct || item.amount)) return { policy: p, item };
+    const items = ((p.rule.items as ItemDiscount[] | undefined) ?? []).filter((i) => i.sku === ctx.sku && factorOf(i) > 0 && ctx.qty * factorOf(i) >= (i.minQty ?? 0));
+    const exact = (i: ItemDiscount) => (!i.unit || same(i.unit, ctx.unit) ? 1 : 0);
+    const item = items.sort((a, b) => exact(b) - exact(a) || (b.minQty ?? 0) * factorOf(a) - (a.minQty ?? 0) * factorOf(b))[0];
+    if (item && (item.pct || item.amount)) return { policy: p, item, factor: factorOf(item) };
   }
   return undefined;
 }
@@ -525,9 +535,9 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
     let pct = l.discountPct;
     let amt = l.discountAmt;
     if (pct === undefined && amt === undefined && l.lineType === 'buy') {
-      const hit = itemDiscountFor(policies, { ...ctxBase, brandCode: l.brandCode ?? doc.brandCode, sku: l.sku, unit: l.unit, qty: l.qty });
+      const hit = itemDiscountFor(policies, { ...ctxBase, brandCode: l.brandCode ?? doc.brandCode, sku: l.sku, unit: l.unit, qty: l.qty, units: opts.units?.[l.sku] });
       if (hit) {
-        if (hit.item.pct) pct = hit.item.pct; else amt = Math.round((hit.item.amount ?? 0) * l.qty);
+        if (hit.item.pct) pct = hit.item.pct; else amt = Math.round((hit.item.amount ?? 0) * hit.factor * l.qty);
         trace.push({ policy: hit.policy.code, kind: 'item_discount', text: `${l.sku}: ${hit.item.pct ? `CK ${Number(hit.item.pct).toLocaleString('vi-VN')}%` : `giảm ${(hit.item.amount ?? 0).toLocaleString('vi-VN')}đ / ${hit.item.unit || l.unit}`}${hit.item.minQty ? ` (mua từ ${hit.item.minQty})` : ''} — ${hit.policy.name}` });
       }
     }
@@ -546,7 +556,8 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
         if (pct !== undefined || amt !== undefined) trace.push({ policy: own.code, kind: 'item_discount', text: `${l.sku}: ${pct ? `CK ${Number(pct).toLocaleString('vi-VN')}%` : `giảm ${num(own.rule.amount).toLocaleString('vi-VN')}đ`} trên đơn (riêng mã) — ${own.name}` });
       }
     }
-    const lineDiscount = Math.round((gross * (pct ?? 0)) / 100) + Math.round(amt ?? 0);
+    // CK dòng không vượt tiền hàng của dòng (CK % tối đa 100%, CK tiền tối đa bằng tiền hàng).
+    const lineDiscount = Math.min(gross, Math.round((gross * Math.min(100, pct ?? 0)) / 100) + Math.round(amt ?? 0));
     return { ...l, discountPct: pct, gross, lineDiscount, orderDiscount: 0, after: gross - lineDiscount, beforeTax: 0, tax: 0, realUnitCost: 0 };
   });
   // 2. CK đơn: % hoặc tiền, phân bổ vào các dòng mua theo giá trị sau CK dòng.
@@ -750,9 +761,12 @@ export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
     }
     const last = c.priceHistory(l.sku)[0];
     if (last) {
-      const lp = sameBasis(last.unitPrice, last.includesVat);
+      // Lần nhập trước theo ĐVT khác (vd nhập lẻ theo Hộp, nay đặt theo Thùng): quy về ĐVT của dòng rồi mới so.
+      const us = c.units?.[l.sku] ?? [];
+      const k = last.unit && us.length && last.unit.toLowerCase() !== l.unit.toLowerCase() ? (ratioOf(us, l.unit) || 1) / (ratioOf(us, last.unit) || 1) : 1;
+      const lp = Math.round(sameBasis(last.unitPrice, last.includesVat) * k * 10000) / 10000;
       const diff = ((l.price - lp) / lp) * 100;
-      if (Math.abs(diff) > warnPct) out.push({ level: 'warn', code: 'price_last', lineKey: l.lineKey, text: `${l.sku}: đơn giá ${diff > 0 ? 'cao' : 'thấp'} hơn lần nhập gần nhất ${Math.abs(diff).toFixed(1)}% (${lp.toLocaleString('vi-VN')} — phiếu ${last.docNo} ngày ${last.date})` });
+      if (Math.abs(diff) > warnPct) out.push({ level: 'warn', code: 'price_last', lineKey: l.lineKey, text: `${l.sku}: đơn giá ${diff > 0 ? 'cao' : 'thấp'} hơn lần nhập gần nhất ${Math.abs(diff).toFixed(1)}% (${lp.toLocaleString('vi-VN')} / ${l.unit}${k !== 1 ? ` — quy từ ${last.unit}` : ''} — phiếu ${last.docNo} ngày ${last.date})` });
     }
   }
   // Quà theo chương trình (mua X tặng Y): số được tặng so với số trên phiếu — cùng một phép tính với bảng khuyến mại.

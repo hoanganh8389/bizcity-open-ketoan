@@ -5,6 +5,7 @@
  *   - bảng tiêu đề nhiều tầng (gộp cột): cố định độ rộng theo từng cột (<colgroup>) rồi kéo — cũng thu hẹp tới ~1 cm, không nhớ;
  *   - hẹp nhất 32px (~1 cm): chữ dài tự ẩn "…" để xem được nhiều cột không phải cuộn ngang;
  *   - bấm đúp vào mép = trả bảng về độ rộng tự động.
+ * Cột gắn data-minw="72" (vd cột nút nhân đôi / xoá dòng) không bao giờ hẹp hơn số đó, kể cả độ rộng đã nhớ từ trước.
  * Bảng lưới DataGrid có bộ kéo riêng (dgrid-table) nên bỏ qua; bảng nào không muốn kéo thì gắn data-no-resize.
  */
 const EDGE = 6;
@@ -59,8 +60,9 @@ function targetTable(el: EventTarget | null): Target | null {
 }
 const nearEdge = (th: HTMLElement, x: number) => { const r = th.getBoundingClientRect(); return r.right - x <= EDGE && r.right - x >= -2; };
 
+const minOf = (c: HTMLElement) => Math.max(MIN, Number(c.dataset.minw) || 0);
 function freeze(table: HTMLTableElement, cells: HTMLTableCellElement[], widths?: number[]) {
-  const ws = widths ?? cells.map((c) => c.getBoundingClientRect().width);
+  const ws = (widths ?? cells.map((c) => c.getBoundingClientRect().width)).map((w, i) => Math.max(w, minOf(cells[i]!)));
   cells.forEach((c, i) => { c.style.width = `${Math.round(ws[i]!)}px`; });
   table.style.tableLayout = 'fixed';
   table.style.width = `${Math.round(ws.reduce((a, b) => a + b, 0))}px`;
@@ -89,7 +91,7 @@ export function installColumnResize() {
   let drag: (Target & { x: number; w: number; total: number }) | null = null;
   document.addEventListener('mousemove', (e) => {
     if (drag) {
-      const w = Math.max(MIN, drag.w + e.clientX - drag.x);
+      const w = Math.max(minOf(drag.th), drag.w + e.clientX - drag.x);
       if (drag.col) drag.col.style.width = `${w}px`; else drag.th.style.width = `${w}px`;
       drag.table.style.width = `${drag.total - drag.w + w}px`;
       return;

@@ -259,3 +259,12 @@
 .dgrid th.kb-need, .dgrid td.kb-need { background: #eaf7ee; }
 .dgrid td.kb-need { color: #15803d; font-weight: 700; }
 .dgrid td.kb-unit { text-align: center; color: #64748b; }
+
+/* Quy cách ĐVT dưới ô chọn ĐVT trên dòng phiếu: 1 Thùng = 48 Hộp. */
+.mh-unit-spec { font-size: 11.5px; margin-top: 3px; color: #1f6b3a; white-space: nowrap; }
+.mh-unit-spec b { background: var(--ok-bg); border-radius: 4px; padding: 0 4px; }
+
+/* Nút nhân đôi / xoá dòng ở cột STT. */
+.mh-line-acts { display: flex; gap: 2px; margin-top: 4px; }
+.mh-line-acts .btn { padding: 0 5px; min-width: 0; line-height: 18px; }
+.mh-line-acts .mh-del:hover { background: var(--bad-bg); color: var(--bad); }

@@ -93,8 +93,8 @@ export function BangChietKhauMa({ items, onChange, prefer }: { items: ItemDiscou
                   <td>{k + 1}</td>
                   <td className="mono">{it.sku || <span className="mh-bad">—</span>}</td>
                   <td>{nm ?? (bad ? <span className="mh-bad">{bad}</span> : '')}</td>
-                  <td><input className="input num" value={it.pct ?? ''} onChange={(e) => set(idx, { pct: n(e.target.value) })} /></td>
-                  <td><input className="input num" value={it.amount ? it.amount.toLocaleString('vi-VN') : ''} onChange={(e) => set(idx, { amount: n(e.target.value) })} /></td>
+                  <td><input className="input num" value={it.pct ?? ''} title="% chiết khấu trên dòng phiếu (0–100). Gõ % thì ô Giảm tiền tự xoá — mỗi dòng một kiểu" onChange={(e) => { const v = n(e.target.value); set(idx, { pct: v === undefined ? undefined : Math.min(100, v), ...(v ? { amount: undefined } : {}) }); }} /></td>
+                  <td><input className="input num" value={it.amount ? it.amount.toLocaleString('vi-VN') : ''} title="Số tiền giảm trên 1 ĐVT (ĐVT ở cột bên). Gõ tiền thì ô % tự xoá — mỗi dòng một kiểu" onChange={(e) => { const v = n(e.target.value); set(idx, { amount: v, ...(v ? { pct: undefined } : {}) }); }} /></td>
                   <td>{(() => {
                     const us = units.data?.[it.sku] ?? [];
                     const cur = us.find((u) => u.unit.toLowerCase() === (it.unit ?? '').toLowerCase())?.unit ?? it.unit ?? '';

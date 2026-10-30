@@ -15,7 +15,7 @@ import '../mua-hang.css';
 
 const EVENT: Record<string, [string, string]> = {
   price_check: ['Lệch giá mua', 'badge-warn'], limit_check: ['Kiểm hạn mức', 'badge-warn'], invoice_mismatch: ['Đối soát hoá đơn', 'badge-warn'], lot_check: ['Lô / hạn dùng', 'badge-warn'], gift_check: ['Đối chiếu quà', 'badge-warn'],
-  variants_saved: ['Cấu hình biến thể', 'badge-info'], policy_applied: ['Chính sách đã áp', 'badge-info'], override_approved: ['Duyệt ngoại lệ', 'badge-bad'], outside_order_approved: ['Nhập ngoài đơn', 'badge-warn'], outside_order_reviewed: ['Rà soát nhập ngoài đơn', 'badge-ok'], limit_transfer: ['Điều chuyển hạn mức', 'badge-info'], rebate_run: ['Tính thưởng', 'badge-ok'],
+  variants_saved: ['Cấu hình biến thể', 'badge-info'], units_thung: ['ĐVT Thùng đặt hàng', 'badge-info'], policy_applied: ['Chính sách đã áp', 'badge-info'], override_approved: ['Duyệt ngoại lệ', 'badge-bad'], outside_order_approved: ['Nhập ngoài đơn', 'badge-warn'], outside_order_reviewed: ['Rà soát nhập ngoài đơn', 'badge-ok'], limit_transfer: ['Điều chuyển hạn mức', 'badge-info'], rebate_run: ['Tính thưởng', 'badge-ok'],
   cost_allocated: ['Phân bổ chi phí', 'badge-ok'], gift_received: ['Nhận quà', 'badge-ok'], policy_changed: ['Sửa chính sách', 'badge-info'],
   doc_saved: ['Ghi phiếu', 'badge-gray'], doc_submitted: ['Gửi duyệt', 'badge-gray'], doc_approved: ['Duyệt phiếu', 'badge-ok'], doc_unapproved: ['Bỏ duyệt', 'badge-gray'], doc_cancelled: ['Huỷ phiếu', 'badge-gray'], demo_seeded: ['Nạp dữ liệu mẫu', 'badge-gray'], demo_cleared: ['Xoá dữ liệu mẫu', 'badge-gray'], demo_warehouses: ['Thêm kho chi nhánh mẫu', 'badge-gray'],
   invoice_created: ['Thêm hoá đơn NCC', 'badge-info'], invoice_updated: ['Sửa hoá đơn NCC', 'badge-info'], invoice_cancelled: ['Huỷ hoá đơn NCC', 'badge-gray'], invoice_imported: ['Nhập hoá đơn NCC', 'badge-info'],
@@ -35,6 +35,7 @@ function brief(r: LogRow): string {
     case 'outside_order_reviewed': return `Kế toán rà soát phiếu nhập ngoài đơn${d.note ? ` — ${d.note}` : ''} (lý do nhập: ${d.reason ?? ''})`;
     case 'override_approved': return `Duyệt ngoại lệ — lý do: ${d.reason ?? ''}${Array.isArray(d.credit) ? ` (${d.credit.map((c: any) => `${c.scope} vượt ${money(c.exceeded)}`).join('; ')})` : ''}`;
     case 'limit_check': return d.text ?? `${String(d.scope ?? '')}: nợ sau phiếu ${money(d.after)} / hạn mức ${money(d.limit)}, còn ${money(d.remaining)}`;
+    case 'units_thung': return `ĐVT Thùng (MH27): thêm Thùng ${d.added ?? 0} mã · đặt mua theo thùng ${d.defaulted ?? 0} mã · thêm ${d.nccAdded ?? d.nccConverted ?? 0} dòng Thùng cho NCC${d.manual?.length ? ` · ${d.manual.length} mã sửa tay tỉ lệ` : ''}`;
     case 'variants_saved': return `Biến thể tách riêng khi phân tích đặt hàng: ${(d.before ?? []).join(', ') || '(không)'} → ${(d.after ?? []).join(', ') || '(không)'}`;
     case 'limit_transfer': return `Chuyển hạn mức nhãn ${d.brand}: ${d.from} → ${d.to}, ${money(d.amount)}`;
     case 'rebate_run': return `Tính thưởng ${d.policy}: doanh số ${money(d.base)} → ${d.rate ? `${d.rate}%` : 'theo giai đoạn'} = ${money(d.amount)}`;

@@ -23,3 +23,5 @@ Mặc định: **tách riêng Q và T** (hàng kẹp quà, hàng có tem đặt 
 2. Bấm **Lưu cấu hình**. Phân tích đặt hàng và số liệu tồn trên đơn đặt tính theo cấu hình mới ngay.
 
 Mỗi lần lưu được ghi vào Nhật ký mua hàng (MH10), gồm cấu hình trước và sau. Cột *Số mã con* và *Ví dụ* cho biết đuôi đó đang có bao nhiêu mã trong danh mục.
+
+**ĐVT của mã con:** mã con tạo mới tự kéo đủ các ĐVT của mã cha (Thùng, Lốc…) và ĐVT mua mặc định. Mã con đã khai ĐVT riêng thì giữ của mã con, chỉ thêm ĐVT mã cha còn thiếu.

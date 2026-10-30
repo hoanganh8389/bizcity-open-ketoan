@@ -8,7 +8,7 @@ Mọi điều kiện mua hàng khai ở **một nơi**. Mỗi chính sách gồm
 |---|---|
 | Loại | CK thương mại trên đơn · **CK theo mã hàng (bảng nhiều mã)** · bậc số lượng · CKTT · KM mua X tặng Y · thưởng doanh số theo kỳ · chỉ tiêu nhãn · thưởng theo giai đoạn · hạn mức công nợ · điều khoản thanh toán · chỉ tiêu cung ứng (tồn max khai riêng ở màn **Tồn max MH16**) |
 | Phạm vi | NCC, nhãn hàng, mã hàng, chi nhánh (trống = mọi) |
-| Hiệu lực | Từ ngày – đến ngày; trạng thái Đang áp / Tắt |
+| Hiệu lực | Từ ngày – đến ngày; trạng thái Đang áp / Tắt. **Phiếu áp chính sách theo NGÀY CHỨNG TỪ ghi trên phiếu**, không theo ngày bấm (xem mục *Chương trình theo giai đoạn*) |
 | Ưu tiên | Khi hai chính sách cùng phạm vi |
 | Nội dung | Ô nhập theo từng loại: % chiết khấu, bảng bậc số lượng, mua X tặng Y, hạn mức và phần chia cho chi nhánh… — dưới form có câu tóm tắt để kiểm lại |
 
@@ -20,6 +20,27 @@ Mọi điều kiện mua hàng khai ở **một nơi**. Mỗi chính sách gồm
 3. Bấm một **Mẫu nhanh** (ví dụ *CK 7% trên đơn*, *10 ngày làm việc từ ngày HĐ*, *Mua 10 tặng 1*) rồi sửa lại số.
 4. Đọc dòng **Phần mềm sẽ hiểu là…** để kiểm lại.
 5. **Mã** và **Tên** tự đặt theo loại + phạm vi + nội dung (ví dụ `CK-ANLENE`, *Chiết khấu 7% trên tổng đơn — Công ty Trung Hậu*); gõ đè nếu muốn. Hiệu lực mặc định từ đầu tháng này.
+
+## Chương trình theo giai đoạn — áp theo ngày chứng từ
+Mọi chính sách (chiết khấu, bậc số lượng, khuyến mại, CKTT, hạn mức, điều khoản…) chọn theo **ngày chứng từ** ghi trên đơn / phiếu. Đơn mới tự điền ngày hôm nay, **sửa được**: nhập kho muộn cho hàng mua trong chương trình đã qua thì ghi đúng ngày chứng từ, phiếu tự lấy chương trình của ngày đó.
+
+Ví dụ chương trình 2 giai đoạn của một nhãn:
+
+| Sản phẩm | CKTM / thùng · Giai đoạn 1 (01/09–21/09) | Giai đoạn 2 (22/09–28/09) |
+|---|---|---|
+| Similac | 105.000 | 84.000 |
+
+Cách khai: tạo **hai chính sách Chiết khấu theo mã hàng**, mỗi giai đoạn một chính sách:
+- Chính sách 1: hiệu lực 01/09–21/09, dòng mã Similac ghi *Giảm tiền / ĐVT* 105.000, ĐVT **Thùng**.
+- Chính sách 2: hiệu lực 22/09–28/09, cùng mã ghi 84.000 / Thùng.
+
+Chiết khấu theo % (vd 2,5% giai đoạn 1, 1% giai đoạn 2) khai giống vậy ở cột **% CK**. Chương trình cho cả nhãn thì dùng **CK thương mại trên đơn** với phạm vi nhãn hàng.
+
+Kết quả theo ngày chứng từ:
+- Đơn ngày 10/09, 2 thùng: giảm 210.000.
+- Cùng ngày nhưng phiếu ghi 96 Hộp (1 thùng = 48 hộp): vẫn giảm 210.000, vì phần mềm tự quy đổi theo tỉ lệ ĐVT.
+- Đơn ngày 25/09: giảm 84.000 × 2 = 168.000.
+- Ngoài hai giai đoạn: không giảm.
 
 ## Chiết khấu thương mại trên đơn — điều kiện áp
 
@@ -95,8 +116,8 @@ Dùng khi NCC cho chiết khấu **riêng từng mã** (CTKM tháng, bảng giá
    - **Nhập Excel…**: xem bảng *Hướng dẫn các cột*, bấm **Tải file mẫu**, điền vào file, kéo thả lên → **xem trước** (mã chưa có trong danh mục, dòng thiếu %, dòng trùng tô đỏ và bị bỏ qua) → **Đưa … dòng hợp lệ vào bảng**. Tích "Thay toàn bộ bảng" nếu muốn nạp lại từ đầu.
    - **Dán nhiều dòng…**: copy từ Excel theo thứ tự *Mã hàng | % chiết khấu | Giảm tiền | ĐVT | SL tối thiểu | Ghi chú*.
    - **+ Thêm dòng**: gõ tay vài mã.
-3. Mỗi dòng ghi **% chiết khấu** HOẶC **Giảm tiền / ĐVT**, không ghi cả hai.
-   - Ghi **ĐVT** thì chỉ áp khi dòng phiếu đúng ĐVT đó.
+3. Mỗi dòng ghi **% chiết khấu** HOẶC **Giảm tiền / ĐVT**, không ghi cả hai. Gõ ô này thì ô kia tự xoá.
+   - Ghi **ĐVT** cho số tiền giảm, ví dụ 105.000 / **Thùng**. Dòng phiếu theo ĐVT khác của mã đó (Lon, Hộp, Lốc) thì **tự quy đổi** theo tỉ lệ ĐVT: 1 thùng = 48 hộp, phiếu 96 Hộp vẫn giảm 210.000. SL tối thiểu cũng tính theo ĐVT ghi ở dòng.
    - Ghi **SL tối thiểu** thì mua từ số lượng đó mới được.
    - **Một mã ghi nhiều dòng khác SL tối thiểu = bậc chiết khấu theo số lượng của riêng mã đó.**
 4. Sửa nhanh:
