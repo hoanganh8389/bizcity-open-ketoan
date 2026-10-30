@@ -53,7 +53,7 @@ Bấm ô bước → mở danh sách / màn của bước đó. Nút **Lập m�
 - Công nợ → **Chiết khấu sau mua**, **Thưởng cuối kỳ** (MH06).
 - Trả tiền → **Phân bổ & giá vốn thực tế** (MH07).
 
-**In ấn:** mỗi bước in được có dòng **In: …** ghi tên mẫu (đơn đặt: Đơn đặt hàng, Biên bản bàn giao; nhập kho: Phiếu nhập kho 01-VT có giá / A5 / không giá; trả hàng: Phiếu xuất trả, bản 80mm, Phiếu đổi hàng; trả tiền / ứng trước: Phiếu chi, Ủy nhiệm chi; chi phí, CK sau mua, quà…). Cách in: mở phiếu (hoặc chọn phiếu ở danh sách MH03) → bấm **In**, chọn mẫu và khổ giấy. Mẫu mặc định, chữ ký, khổ giấy khai ở ô **Mẫu in chứng từ (HT05)** trên tầng khai báo.
+**In ấn:** mỗi bước in được có dòng **In: …** ghi tên mẫu (đơn đặt: Đơn đặt hàng, Biên bản bàn giao; nhập kho: Phiếu nhập kho 01-VT có giá / A5 / không giá; trả hàng: Phiếu xuất trả, bản 80mm, Phiếu đổi hàng; trả tiền / ứng trước: Phiếu chi, Ủy nhiệm chi; chi phí, CK sau mua, quà…). Cách in: mở phiếu (hoặc chọn phiếu ở danh sách MH11) → bấm **In**, chọn mẫu và khổ giấy. Mẫu mặc định, chữ ký, khổ giấy khai ở ô **Mẫu in chứng từ (HT05)** trên tầng khai báo.
 
 Dải xanh dưới sơ đồ nhắc vòng lặp: hàng bán ở shop làm tồn giảm → Phân tích đặt hàng đề xuất lần đặt kế tiếp.
 

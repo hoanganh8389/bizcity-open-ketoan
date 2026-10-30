@@ -58,7 +58,9 @@ Phản hồi theo [quy ước chung](01-quy-uoc.md): `{ ok: true, data, meta }` 
 | `status` | mọi | `draft` (nháp) · `approved` (đã duyệt, đã vào kế toán). Máy chủ quản lý — chỉ đổi qua approve / unapprove |
 | `docNo` | mọi | Số phiếu, duy nhất theo `docType` + chi nhánh. Trống → tự cấp `<đầu số><năm 2 số><5 số>`: BH, TL, MH, TN, CK |
 | `docDate`, `branchCode` | mọi | Bắt buộc. `branchCode` phải có ở danh mục Chi nhánh (DM02) |
-| `toBranchCode` | transfer | Bắt buộc, khác `branchCode` |
+| `toBranchCode` | transfer | Bắt buộc. Bằng `branchCode` = chuyển giữa hai kho trong cùng chi nhánh (khi đó API phải kiểm `warehouseCode` ≠ `toWarehouseCode`, báo lỗi nếu trùng / thiếu) |
+| `warehouseCode` | mọi | Kho ở đầu phiếu (bán: kho xuất · trả lại / mua: kho nhận · chuyển kho: kho **xuất**). Trống = kho mặc định của chi nhánh. Phải là kho đang dùng của `branchCode`. Khi gửi vào cổng chứng từ: ghi xuống **mọi dòng** `lines[].warehouseCode` |
+| `toWarehouseCode` | transfer | Kho **nhận** của `toBranchCode`; trống = kho mặc định. Ghi xuống `lines[].toWarehouseCode` |
 | `partner` | sale, sale_return (trống = khách lẻ); purchase, purchase_return (bắt buộc) | Mã phải có ở danh mục đối tượng; `name`, `taxCode` để hiện nhanh |
 | `invoice` | sale, sale_return, purchase, purchase_return | Hoá đơn (nếu có) |
 | `originalDocNo` | sale_return, purchase_return | Số phiếu gốc (tham khảo) |

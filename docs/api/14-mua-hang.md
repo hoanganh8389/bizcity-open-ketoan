@@ -1,6 +1,6 @@
 # 14. Phân hệ Mua hàng — API (`/api/v1/purchase/*`)
 
-API **đã chạy**. Các màn MH00, MH03–MH10 gọi trực tiếp.
+API **đã chạy**. Các màn MH00, MH11–MH10 gọi trực tiếp.
 
 - Nghiệp vụ, bảng, hạch toán: [08-mua-hang](../nghiep-vu/08-mua-hang.md).
 - Mã nguồn: `apps/api/src/phan-he/mua-hang/`.
@@ -271,3 +271,22 @@ Nghiệp vụ: `docs/nghiep-vu/09-ton-max-dat-hang.md`. POS / website gọi bằ
 | POST | `/stock/max-requests/:id/{approve,cancel}` | Duyệt = ghi tồn max; hàng mới chưa có mã chờ gắn mã (PUT lại với `sku`) |
 
 Dòng chứng từ mua thêm: `note`, `pack`, `nccSku`, `nccName`, `barcode`, `newItem`, `refLineKey`, `stockInfo`; chứng từ thêm `budget`, `deliveryDate`, `deliveryWarehouse`. Phiếu nhập còn dòng `sku` trống → cảnh báo chặn `new_item_unlinked`; lưu phiếu nhập có `refLineKey` + `sku` thì mã ghi ngược vào dòng của đơn đặt.
+
+## Hoá đơn đầu vào của NCC — MH22 (`/api/v1/purchase/invoices`, migration 0030)
+
+Bảng: `supplier_invoices` (đầu hoá đơn), `supplier_invoice_lines` (dòng theo cách NCC ghi + mã / ĐVT bên mình), `supplier_item_aliases` (nhận diện mã đã học: NCC × mã / tên / ĐVT bên NCC → mã + ĐVT bên mình). Tệp gốc: `purchase_attachments` với `owner_type = 'invoice'`. Phiếu nhập gắn hoá đơn qua NCC + số (+ ký hiệu) hoá đơn — không có cột liên kết cứng. Huỷ, không xoá. Nhật ký JSONL: `invoice_created`, `invoice_updated`, `invoice_cancelled`, `invoice_imported`, `invoice_scanned`, `alias_learned`, `alias_deleted`.
+
+| Phương thức | Đường dẫn | Việc |
+|---|---|---|
+| GET | `/invoices?partnerCode&from&to&status` | Danh sách + `state`: `chua_nhan_dien` · `chua_co_phieu` · `lech` · `khop` · `da_huy`, `issues[]`, phiếu nhập cùng số |
+| GET | `/invoices/:id` | `{ invoice, receipts, reconcile }` — dòng chưa nhận diện kèm `candidates[]` (mã, tên, ĐVT, điểm 0–1, lý do) |
+| POST / PUT | `/invoices` · `/invoices/:id` | Ghi (`invoiceInputSchema`). Trùng NCC × ký hiệu × số (bỏ số 0 đầu) → 409. Mã / ĐVT không có trong danh mục → 400. Dòng `matchSource: 'manual'` → học vào bảng nhận diện |
+| POST | `/invoices/:id/cancel` `{ reason }` | Huỷ (bắt buộc lý do) |
+| POST | `/invoices/prepare` `{ partnerCode, invoices: ParsedInvoice[] }` | Chuẩn hoá (giá gồm thuế → chưa thuế, dòng giá 0 = tặng, tự cộng tổng) + nhận diện + `duplicateOf` + `warnings` — không lưu |
+| POST | `/invoices/import` `{ invoices }` | Ghi nhiều hoá đơn, trùng bỏ qua → `{ saved, skipped }` |
+| GET | `/invoices/scan/config` | `{ configured }` — đã đặt `INVOICE_AI_URL` chưa |
+| POST | `/invoices/scan` `{ partnerCode, fileName, mime, dataBase64 }` | Gửi tệp sang dịch vụ đọc hoá đơn (`INVOICE_AI_URL`, `INVOICE_AI_KEY`) → trả như `prepare`. Khuôn trao đổi: docs/huong-dan/mua-hang-hoa-don-ncc.md |
+| GET | `/invoice-aliases?partnerCode` | Bảng nhận diện mã đã học |
+| DELETE | `/invoice-aliases/:id` | Xoá một cách ghi (nhật ký ghi đủ nội dung) |
+
+Phiếu nhập (`/analyze`, lưu, duyệt): có số hoá đơn trùng một hoá đơn NCC còn hiệu lực → kiểm tra `inv_match` (info) hoặc `inv_diff` (warn, không chặn); NCC đã dùng MH22 mà số hoá đơn chưa có → `inv_not_stored` (info). Đối soát cộng mọi phiếu nhập cùng hoá đơn, SL quy ĐVT nhỏ nhất, giá chưa thuế sau CK (lệch > 1 đ / ĐVT nhỏ nhất và > 10 đ thành tiền), thuế suất, tổng thanh toán (lệch > 10 đ). Lõi tính: `packages/contracts/src/mua-hang/hoa-don.ts` (`matchLine`, `nameScore`, `normalizeParsed`, `reconcileInvoice`, `linesFromInvoice`).

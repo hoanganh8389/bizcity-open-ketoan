@@ -9,7 +9,7 @@
 2. **Kỳ** (YYYY-MM, YYYY-Qn, YYYY) và **doanh số**: phần mềm cộng doanh số mua thuần từ phiếu đã duyệt (nhập − trả, trước thuế). NCC chốt số khác thì nhập vào ô **Doanh số NCC chốt**.
 3. Xem **Cách tính**: ngưỡng đạt, % hoặc tiền. Thưởng theo giai đoạn ghi rõ tính trên doanh số **từng giai đoạn** hay **luỹ kế** (luỹ kế thì trừ phần đã thưởng — không tính trùng).
 4. **Phân bổ theo mã** theo doanh số mua. Khi duyệt: Nợ 331 / Có 1561 theo từng mã (dòng chỉ tiền, SL 0) — giá vốn bình quân tháng tự chia cho phần hàng **còn tồn** và phần **đã bán** (632). Bảng hiện ước tính hai phần này theo tồn kho thật.
-5. **Tạo phiếu thưởng**: phiếu nháp loại *Thưởng / CK cuối kỳ*; duyệt ở MH03 thì giảm công nợ NCC.
+5. **Tạo phiếu thưởng**: phiếu nháp loại *Thưởng / CK cuối kỳ*; duyệt ở MH11 thì giảm công nợ NCC.
    - Một chính sách + một kỳ chỉ tạo **một** phiếu (chặn tính trùng).
    - Có hàng trả / hoá đơn điều chỉnh sau kỳ: huỷ phiếu cũ, tính lại.
 

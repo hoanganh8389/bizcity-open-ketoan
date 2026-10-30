@@ -11,6 +11,8 @@ Khối xanh ở đầu trang đưa **25 tình huống của tài liệu yêu c�
 
 Cách làm: nhập **mật khẩu nạp dữ liệu** → **Nạp dữ liệu** (mất khoảng 10–30 giây). Đã nạp rồi thì có **Nạp lại từ đầu** (xoá bản cũ, nạp lại) và **Xoá dữ liệu tình huống** (đảo bút toán các phiếu đã duyệt; nhà cung cấp, mặt hàng, chi nhánh đã thêm vẫn giữ).
 
+**Kho của chi nhánh mẫu**: chi nhánh mẫu (CN-NA, CN-ND, CN-PT, CN-HCM) được thêm sẵn một kho mặc định `<mã chi nhánh>-HH · Kho hàng` khi nạp. Dữ liệu đã nạp từ trước mà chi nhánh mẫu chưa có kho: nhập mật khẩu → bấm **Thêm kho cho chi nhánh mẫu** — phiếu mẫu tự hiện kho đó ở cột Phân kho, lọc theo mã kho và báo cáo kho (MH24, MH25) tính đúng kho; không sửa phiếu nào, bấm lại nhiều lần không thêm trùng.
+
 Bảng **Ví dụ bổ sung ngoài tài liệu** (NCC Hoà Bình): đơn đặt 3 mã 2 mức thuế → giao 2 lần; khăn ướt tự hưởng bậc chiết khấu; chi phí bốc xếp phân bổ theo số lượng; giá cao hơn giá cố định (cảnh báo); chiết khấu sau mua có hoá đơn điều chỉnh; trả một phần; lô cận date. Bấm **Mở phiếu** để xem từng phiếu.
 
 - **Dải luồng**: Chính sách → Đơn đặt → Nhập mua → Duyệt → Sổ kế toán → Cuối kỳ.
