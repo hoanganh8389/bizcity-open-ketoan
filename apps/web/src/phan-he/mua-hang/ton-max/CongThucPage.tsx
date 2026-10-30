@@ -83,7 +83,7 @@ export function CongThucPage() {
               <section className="mh-panel">
                 <h4>① Kho của chi nhánh cha</h4>
                 <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Tích kho cộng vào <b>Tồn kho</b> (vd kho hàng + kho khuyến mại), kho lấy <b>Tồn max kho</b> và kho lấy <b>Tồn min kho</b> (dùng khi công thức bật Tồn min kho thay cho max). Không tích gì = mọi kho đang dùng / kho mặc định / như kho lấy max.</div>
-                <table className="tm-terms"><thead><tr><th>Kho</th><th>Tính tồn</th><th>Lấy max</th><th>Lấy min</th></tr></thead><tbody>
+                <table className="tm-terms"><thead><tr><th title="Kho của chi nhánh cha (Danh mục kho DM12)">Kho</th><th title="Tích = tồn của kho này cộng vào thành phần Tồn kho">Tính tồn</th><th title="Tích = tồn max khai cho kho này cộng vào thành phần Tồn max kho">Lấy max</th><th title="Tích = tồn min khai cho kho này cộng vào thành phần Tồn min kho (dùng khi đặt theo min). Không tích ô nào = như kho lấy max">Lấy min</th></tr></thead><tbody>
                   {(node?.warehouses ?? []).map((w) => <tr key={w.code} className={w.isActive ? '' : 'off'}>
                     <td><span className="mono">{w.code}</span> · {w.name}{w.isDefault && <span className="tm-chip info" style={{ marginLeft: 6 }}>mặc định</span>}{w.isPromo && <span className="tm-chip warn" style={{ marginLeft: 4 }}>KM</span>}</td>
                     <td><input type="checkbox" checked={effective('stockWarehouses').includes(w.code)} onChange={() => toggleWh('stockWarehouses', w.code)} /></td>
@@ -110,7 +110,7 @@ export function CongThucPage() {
               </section>
               <section className="mh-panel">
                 <h4>③ Thành phần công thức</h4>
-                <table className="tm-terms"><thead><tr><th>Dùng</th><th>Thành phần</th><th>Dấu</th><th>Hệ số</th><th>Số ngày</th><th /></tr></thead><tbody>
+                <table className="tm-terms"><thead><tr><th title="Tích = thành phần này có trong công thức; bỏ tích = không tính (vd bỏ Doanh số bán = không cộng dự phòng bán)">Dùng</th><th title="Cách lấy số của từng thành phần ghi ngay dưới tên">Thành phần</th><th title="+ cộng vào / − trừ đi khỏi SL cần nhập">Dấu</th><th title="Nhân thêm trước khi cộng / trừ, vd doanh số × 1,5 (mặc định 1)">Hệ số</th><th title="Riêng Doanh số bán: số ngày bán gần nhất cộng vào làm dự phòng">Số ngày</th><th title="Đổi thứ tự hiển thị trong công thức bằng chữ" /></tr></thead><tbody>
                   {cfg.terms.map((t, i) => {
                     const v = FORMULA_VARS.find((x) => x.key === t.key)!;
                     return <tr key={t.key} className={t.on ? '' : 'off'}>
@@ -152,7 +152,7 @@ export function CongThucPage() {
                 <div style={{ width: '100%', marginBottom: 6 }}><ItemPicker value={sku} onChange={setSku} placeholder="Gõ mã / tên hàng để xem ví dụ" /></div>
                 {ex.isLoading && <Loading />}
                 {row && live && (
-                  <table className="tm-terms tm-example"><thead><tr><th>Thành phần</th><th className="num">Số</th></tr></thead><tbody>
+                  <table className="tm-terms tm-example"><thead><tr><th title="Các thành phần đang dùng của công thức">Thành phần</th><th className="num" title="Số của mã ví dụ, đã nhân dấu và hệ số">Số</th></tr></thead><tbody>
                     {live.parts.map((p) => <tr key={p.key}><td>{p.sign < 0 ? '−' : '+'} {p.label}</td><td className="num">{qtyFmt(p.value)}</td></tr>)}
                     <tr><td><b>= SL cần nhập</b></td><td className={`num ${live.need > 0 ? 'tm-need' : 'tm-need-neg'}`}><b>{qtyFmt(live.need)}</b> {row.baseUnit}</td></tr>
                     {row.pack && <tr><td>Quy cách</td><td className="num">1 {row.packUnit} = {row.pack} {row.baseUnit}</td></tr>}

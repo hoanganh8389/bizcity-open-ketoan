@@ -48,7 +48,7 @@ export function BienTheMatHangPage() {
             {' '}<b>Tách riêng</b>: mã con thành một dòng riêng trong phân tích, đặt riêng (vd hàng kẹp quà Q đặt riêng với hàng thường).
           </div>
           <div className="table-wrap"><table className="grid">
-            <thead><tr><th>Đuôi</th><th>Ý nghĩa</th><th className="num">Số mã con</th><th>Ví dụ</th><th>Khi phân tích đặt hàng</th></tr></thead>
+            <thead><tr><th title="Phần thêm sau mã gốc để ra mã con, vd 110154035Q">Đuôi</th><th title="Loại hàng của đuôi theo quy tắc mã hàng">Ý nghĩa</th><th className="num" title="Số mặt hàng trong danh mục có mã cha và mang đuôi này">Số mã con</th><th title="Vài mã con ← mã gốc của nó">Ví dụ</th><th title="Gộp vào mã gốc: cộng dồn số của mã con vào mã gốc. Tách riêng: mã con là một dòng riêng, đặt riêng">Khi phân tích đặt hàng</th></tr></thead>
             <tbody>
               {q.data.suffixes.map((r) => {
                 const on = sep.includes(r.suffix);

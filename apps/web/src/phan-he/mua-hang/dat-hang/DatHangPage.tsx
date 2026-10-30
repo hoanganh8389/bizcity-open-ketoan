@@ -75,14 +75,14 @@ export function DatHangPage() {
   const cols: Column<Row>[] = [
     { key: 'pick', header: <input type="checkbox" title="Chọn mọi mã cần nhập đang hiện" checked={rows.some((r) => !r._group && r.need > 0) && rows.filter((r) => !r._group && r.need > 0).every((r) => sel[r.sku])} onChange={(e) => setSel((x) => ({ ...x, ...Object.fromEntries(rows.filter((r) => !r._group && r.need > 0).map((r) => [r.sku, e.target.checked])) }))} />, title: 'Chọn', width: 34, noFilter: true, noSort: true,
       render: (r) => <input type="checkbox" checked={Boolean(sel[r.sku])} onChange={(e) => setSel({ ...sel, [r.sku]: e.target.checked })} /> },
-    { key: 'sku', header: 'Mã hàng', type: 'code', width: 96 },
-    { key: 'name', header: 'Tên hàng', width: 260, value: (r) => r.name + ((r.members ?? []).length ? ` — gồm ${r.members.map((m) => m.sku).join(', ')}` : ''),
+    { key: 'sku', header: 'Mã hàng', title: 'Mã hàng trong danh mục. Mã có đuôi (Q, T…) đặt riêng hay gộp vào mã gốc theo cấu hình Biến thể mặt hàng (MH26)', type: 'code', width: 96 },
+    { key: 'name', header: 'Tên hàng', title: 'Tên hàng; dòng mã gốc có gộp mã con thì ghi thêm từng mã con (tồn kho · shop · bán · đang đặt). Rê chuột lên tên xem tên hàng bên NCC', width: 260, value: (r) => r.name + ((r.members ?? []).length ? ` — gồm ${r.members.map((m) => m.sku).join(', ')}` : ''),
       render: (r) => <span title={r.nccName ? `Tên bên NCC: ${r.nccName}` : undefined}>{r.name}{(r.members ?? []).length > 0 && (
         // Họ mã: số của dòng đã cộng dồn mọi mã con — chi tiết từng mã để người mua biết hàng tặng / kẹp quà còn bao nhiêu.
         <span className="tm-fam" title="Số của dòng đã cộng dồn cả họ mã (mã chính + mã con có đuôi)">{r.members.map((m) => (
           <span key={m.sku} className="tm-fam-row"><b className="mono">{m.sku}</b> {m.kind}: {factsText(m, banDays)}</span>))}</span>)}</span> },
-    { key: 'price', header: 'Đơn giá chưa VAT', type: 'price', width: 92 },
-    { key: 'promo', header: 'CTKM', width: 80, render: (r) => (r.promo ? <span title={r.promo} style={{ fontSize: 11.5 }}>{r.promo}</span> : '-') },
+    { key: 'price', header: 'Đơn giá chưa VAT', title: 'Giá mua chưa thuế theo ĐVT nhỏ nhất: giá đã khai của NCC (hồ sơ NCC → Mặt hàng & giá mua), chưa khai thì lấy lần nhập gần nhất', type: 'price', width: 92 },
+    { key: 'promo', header: 'CTKM', title: 'Chương trình khuyến mại / chiết khấu của NCC đang áp cho mã này (rê chuột lên ô xem đủ)', width: 80, render: (r) => (r.promo ? <span title={r.promo} style={{ fontSize: 11.5 }}>{r.promo}</span> : '-') },
     { key: 'baseUnit', header: 'ĐVT', width: 56, title: 'ĐVT nhỏ nhất (tỉ lệ 1) — các cột số lượng của màn này đều theo ĐVT này; cột Quy cách cho biết 1 thùng bao nhiêu' },
     { key: 'need', header: 'SL cần nhập', type: 'qty', width: 92, showZero: true, className: 'tm-need', bold: true, title: 'Số lượng cần nhập tháng này (theo công thức), theo ĐVT nhỏ nhất',
       render: (r) => <button className="tm-opt" style={{ border: 0, background: 'transparent', fontWeight: 800, color: r.need < 0 ? '#b45309' : undefined }} title="Bấm xem vì sao ra số này" onClick={() => setWhy(r)}>{r.need < 0 ? `(${qtyFmt(-r.need)})` : qtyFmt(r.need)}</button> },
@@ -92,23 +92,23 @@ export function DatHangPage() {
     { key: 'cover', header: 'Đủ bán (ngày)', type: 'qty', width: 74, value: (r) => coverOf(r) ?? 0,
       title: `Vòng quay: (tồn kho + tồn shop + đang đi đường xuống shop) ÷ bán / ngày — đỏ: dưới ${coverDays} ngày (số ngày cần đủ hàng ở MH18), vàng: trên ${coverDays * 4} ngày (tồn nhiều)`,
       render: (r) => { const c = coverOf(r); return c === null ? <span className="muted" title="Chưa bán trong kỳ đo">—</span> : <b style={{ color: c < coverDays ? '#dc2626' : c > coverDays * 4 ? '#b45309' : undefined }}>{c.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}</b>; } },
-    { key: 'maxKho', header: 'Tồn max kho', type: 'qty', width: 80, className: 'tm-ref' },
-    { key: 'tonKho', header: 'Tồn kho', type: 'qty', width: 80, className: 'tm-stock', showZero: true },
-    { key: 'diDuong', header: 'Hàng đang đi đường', type: 'qty', width: 82, value: (r) => r.diDuongKho + r.diDuongShop, render: (r) => <span title={`Về kho: ${qtyFmt(r.diDuongKho)} · xuống shop: ${qtyFmt(r.diDuongShop)}`}>{qtyFmt(r.diDuongKho + r.diDuongShop) || ''}</span> },
-    { key: 'dangDat', header: 'SL mua chưa nhập kho', type: 'qty', width: 86, className: 'tm-pend', render: (r) => (r.dangDat ? <span title={r.orders.map((o) => `${o.docNo} (${o.partnerCode}, ${o.date}) còn ${qtyFmt(o.remaining)}`).join('\n')}>{qtyFmt(r.dangDat)}</span> : '') },
-    { key: 'maxShop', header: 'Tồn max shop', type: 'qty', width: 80, className: 'tm-stock', render: (r) => <span title={`${r.shopsWithMax} shop có max, ${r.shopsBelowMax} shop đang dưới max`}>{qtyFmt(r.maxShop)}</span> },
-    { key: 'tonShop', header: 'Tồn shop', type: 'qty', width: 80 },
+    { key: 'maxKho', header: 'Tồn max kho', title: 'Tổng tồn max của các kho chọn ở cột "Lấy max" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-ref' },
+    { key: 'tonKho', header: 'Tồn kho', title: 'Tồn hiện tại của các kho chi nhánh cha chọn ở cột "Tính tồn" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-stock', showZero: true },
+    { key: 'diDuong', header: 'Hàng đang đi đường', title: 'Đã xuất nhưng nơi nhận chưa xác nhận: về kho chi nhánh cha + xuống shop (rê chuột lên ô xem tách)', type: 'qty', width: 82, value: (r) => r.diDuongKho + r.diDuongShop, render: (r) => <span title={`Về kho: ${qtyFmt(r.diDuongKho)} · xuống shop: ${qtyFmt(r.diDuongShop)}`}>{qtyFmt(r.diDuongKho + r.diDuongShop) || ''}</span> },
+    { key: 'dangDat', header: 'SL mua chưa nhập kho', title: 'Phần chưa về của mọi đơn đặt đang mở, của mọi NCC — trừ đi để không đặt trùng (rê chuột lên ô xem từng đơn)', type: 'qty', width: 86, className: 'tm-pend', render: (r) => (r.dangDat ? <span title={r.orders.map((o) => `${o.docNo} (${o.partnerCode}, ${o.date}) còn ${qtyFmt(o.remaining)}`).join('\n')}>{qtyFmt(r.dangDat)}</span> : '') },
+    { key: 'maxShop', header: 'Tồn max shop', title: 'Tổng tồn max của mọi shop con tính vào công thức (rê chuột lên ô xem số shop có max / đang dưới max)', type: 'qty', width: 80, className: 'tm-stock', render: (r) => <span title={`${r.shopsWithMax} shop có max, ${r.shopsBelowMax} shop đang dưới max`}>{qtyFmt(r.maxShop)}</span> },
+    { key: 'tonShop', header: 'Tồn shop', title: 'Tổng tồn hiện tại của mọi shop con tính vào công thức', type: 'qty', width: 80 },
     { key: 'buy', header: 'SL đặt', type: 'qty', width: 150, value: (r) => qtyOf(r), title: 'SL đặt (gợi ý làm tròn theo thùng — bấm số để chọn)',
       render: (r) => (r.need > 0 || buy[r.sku] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}>
         <input className={`tm-input${buy[r.sku] !== undefined ? ' dirty' : ''}`} style={{ width: 62 }} value={qtyOf(r) || ''} onChange={(e) => { setBuy({ ...buy, [r.sku]: num(e.target.value) }); setSel({ ...sel, [r.sku]: true }); }} />
         {r.options.map((o) => <button key={o} className={`tm-opt${qtyOf(r) === o ? ' on' : ''}`} title={r.pack ? `${o / r.pack} ${r.packUnit}` : ''} onClick={() => { setBuy({ ...buy, [r.sku]: o }); setSel({ ...sel, [r.sku]: true }); }}>{qtyFmt(o)}</button>)}
       </span> : '') },
-    { key: 'pack', header: 'Quy cách', width: 72, value: (r) => r.pack ?? 0, render: (r) => (r.pack ? `${r.pack}/${r.packUnit}` : r.baseUnit) },
-    { key: 'partnerCode', header: 'NCC', type: 'code', width: 100, hidden: true },
+    { key: 'pack', header: 'Quy cách', title: 'Số ĐVT nhỏ nhất trong 1 thùng / lốc — SL đặt gợi ý làm tròn theo quy cách này', width: 72, value: (r) => r.pack ?? 0, render: (r) => (r.pack ? `${r.pack}/${r.packUnit}` : r.baseUnit) },
+    { key: 'partnerCode', header: 'NCC', title: 'Nhà cung cấp của mã: NCC lần nhập gần nhất; chưa nhập lần nào thì NCC có bảng giá đang hiệu lực', type: 'code', width: 100, hidden: true },
     { key: 'partnerSource', header: 'NCC chọn theo', width: 110, title: 'Mã có lần nhập → NCC lần nhập gần nhất; chưa nhập lần nào → NCC có bảng giá đang hiệu lực mới nhất (hồ sơ NCC → Mặt hàng & giá mua)', value: (r) => (r.partnerSource === 'lan_nhap' ? 'lần nhập gần nhất' : r.partnerSource === 'bang_gia' ? 'bảng giá NCC' : 'chưa rõ') + (r.nccCount > 1 ? ` · ${r.nccCount} NCC` : ''),
       render: (r) => <span style={{ fontSize: 11.5 }} className={r.partnerSource ? '' : 'mh-bad'} title={r.nccCount > 1 ? `Có ${r.nccCount} NCC khai bán mã này — đang chọn ${r.partnerCode}` : undefined}>{r.partnerSource === 'lan_nhap' ? 'lần nhập gần nhất' : r.partnerSource === 'bang_gia' ? 'bảng giá NCC' : 'chưa rõ'}{r.nccCount > 1 ? <b> · {r.nccCount} NCC</b> : null}</span> },
-    { key: 'brandName', header: 'Nhãn', width: 110, hidden: true },
-    { key: 'nccNote', header: 'Ghi chú NCC', width: 140, hidden: true },
+    { key: 'brandName', header: 'Nhãn', title: 'Nhãn hàng của mã (Danh mục mặt hàng)', width: 110, hidden: true },
+    { key: 'nccNote', header: 'Ghi chú NCC', title: 'Ghi chú khai ở mặt hàng của NCC — tự chép vào dòng đơn đặt', width: 140, hidden: true },
   ];
 
   const makeOrders = async () => {
@@ -155,10 +155,10 @@ export function DatHangPage() {
           <button className="btn btn-primary" disabled={!chosen.length || busy} onClick={() => void makeOrders()}><ShoppingCart size={15} /> Lập đơn đặt ({chosen.length} mã{money ? ` · ${Math.round(money).toLocaleString('vi-VN')}đ` : ''})</button>
         </div>
         <div className="tm-stats">
-          <KhoiSo label="Tổng mã đang phân tích" value={stats.all.toLocaleString('vi-VN')} active={quick === ''} onClick={() => setQuick('')} />
-          <KhoiSo label="Mã cần nhập" value={stats.need.toLocaleString('vi-VN')} tone="orange" active={quick === 'need'} onClick={() => setQuick('need')} />
-          <KhoiSo label="Mã đang dư" value={stats.over.toLocaleString('vi-VN')} tone="yellow" active={quick === 'over'} onClick={() => setQuick('over')} />
-          <KhoiSo label="Đang có đơn chưa về" value={stats.pending.toLocaleString('vi-VN')} tone="blue" active={quick === 'pending'} onClick={() => setQuick('pending')} />
+          <KhoiSo label="Tổng mã đang phân tích" value={stats.all.toLocaleString('vi-VN')} active={quick === ''} onClick={() => setQuick('')} hint="Mọi mã có max, tồn, bán, hàng đi đường hoặc đơn đang về trong chi nhánh cha — bấm để hiện tất cả" />
+          <KhoiSo label="Mã cần nhập" value={stats.need.toLocaleString('vi-VN')} tone="orange" active={quick === 'need'} onClick={() => setQuick('need')} hint="Mã có SL cần nhập dương (theo công thức MH18) — bấm để lọc" />
+          <KhoiSo label="Mã đang dư" value={stats.over.toLocaleString('vi-VN')} tone="yellow" active={quick === 'over'} onClick={() => setQuick('over')} hint="Mã có SL cần nhập âm: hàng hiện có nhiều hơn mức cần — không đặt thêm; bấm để lọc" />
+          <KhoiSo label="Đang có đơn chưa về" value={stats.pending.toLocaleString('vi-VN')} tone="blue" active={quick === 'pending'} onClick={() => setQuick('pending')} hint="Mã đang có đơn đặt chưa về hết (SL mua chưa nhập kho > 0) — bấm để lọc" />
           <KhoiSo label="Chưa rõ NCC" value={stats.nopartner.toLocaleString('vi-VN')} tone="red" active={quick === 'nopartner'} onClick={() => setQuick('nopartner')} hint="Mã chưa nhập lần nào và chưa khai NCC bán" />
         </div>
         {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}
