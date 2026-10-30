@@ -109,11 +109,16 @@ async function runStep(step) {
       if (has && !has.is_active) {
         await must('PATCH', `/api/v1/branches/${encodeURIComponent(step.code)}`, { isActive: true });
         report.push({ th: curTh, ok: true, lech: true, text: `Chi nhánh ${step.code} đang ngừng sử dụng trong sổ — file dùng chi nhánh này nên đã bật lại (sau khi xem xong có thể tắt lại ở Danh mục chi nhánh DM02).` });
-        return log(true, `Bật lại chi nhánh ${step.code} (đang ngừng sử dụng)`);
-      }
-      if (has) return log(true, `Chi nhánh ${step.code} đã có`);
-      await must('POST', '/api/v1/branches', { code: step.code, name: step.name });
-      return log(true, `Thêm chi nhánh ${step.code} ${step.name}`);
+        log(true, `Bật lại chi nhánh ${step.code} (đang ngừng sử dụng)`);
+      } else if (has) log(true, `Chi nhánh ${step.code} đã có`);
+      else { await must('POST', '/api/v1/branches', { code: step.code, name: step.name }); log(true, `Thêm chi nhánh ${step.code} ${step.name}`); }
+      // Kho mặc định <mã>-HH: phiếu ghi đúng phân kho, lọc / báo cáo theo kho được (chi nhánh đã có kho mặc định thì giữ).
+      const whs = await must('GET', `/api/v1/warehouses?branchCodes=${encodeURIComponent(step.code)}`);
+      if ((whs ?? []).some((w) => w.isDefault)) return;
+      const code = `${step.code}-HH`;
+      if ((await pool.query('SELECT 1 FROM warehouses WHERE tenant_id = $1 AND code = $2', [t.id, code])).rowCount) return;
+      await must('POST', '/api/v1/warehouses', { code, branchCode: step.code, name: 'Kho hàng', address: '', isActive: true, isDefault: true, isPromo: false, account: '', note: 'Kho mặc định của chi nhánh trong bộ 25 trường hợp mua hàng' });
+      return log(true, `Thêm kho mặc định ${code} cho chi nhánh ${step.code}`);
     }
     case 'ncc': {
       const cur = (await pool.query('SELECT name, tax_code, address, phone FROM partners WHERE tenant_id = $1 AND code = $2', [t.id, step.code])).rows[0];

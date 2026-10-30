@@ -158,7 +158,12 @@ export async function clearDemo(auth: AuthContext) {
  */
 export async function ensureDemoWarehouses(auth: AuthContext) {
   const { branches } = await read<Master>('doi-tac.json');
-  const rows = await db.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).where('code', 'in', branches.map((b) => b.code)).execute();
+  // Cả chi nhánh của bộ 25 trường hợp theo Google Sheet (db/seeds/mua-hang-25th — CN01…), nạp bằng scripts/nap-25-truong-hop.sh.
+  const sheet = await readFile(path.join(SEEDS_DIR, 'mua-hang-25th', 'kich-ban.json'), 'utf8')
+    .then((t) => (JSON.parse(t) as { chuanBi: { op: string; code?: string }[] }).chuanBi.filter((s) => s.op === 'chi-nhanh' && s.code).map((s) => s.code!))
+    .catch(() => [] as string[]);
+  const codes = [...new Set([...branches.map((b) => b.code), ...sheet])];
+  const rows = await db.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).where('code', 'in', codes).execute();
   const created: string[] = [];
   for (const b of rows) {
     const has = await db.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', b.id).where('is_default', '=', true).executeTakeFirst();
