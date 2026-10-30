@@ -5,6 +5,29 @@
 
 Bizcity Core (repo open-ketoan) là **hạ tầng ứng dụng doanh nghiệp**, lấy sổ cái kế toán làm hạt nhân. Bộ chuẩn này là những gì một module (do người hay AI viết) phải đáp ứng để được cài vào Core. Người viết module **không cần hiểu sổ cái**: họ dùng SDK, khai manifest, chạy bộ kiểm. Core lo định khoản, bút toán, kết chuyển, số dư, sổ sách và nhật ký.
 
+## 0. Tuyên bố và bảy nguyên tắc khoá trong Standard
+
+> *SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán. Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.* — Johnny Chu – Chu Hoàng Anh
+
+Bảy nguyên tắc **AP-1..AP-7** là phần bất biến của Standard v1, bản máy đọc ở `bizcity-standard.json#principles`:
+
+| Mã | Nguyên tắc |
+|---|---|
+| AP-1 | Core owns accounting truth |
+| AP-2 | Commands request, Events report |
+| AP-3 | Contracts before code |
+| AP-4 | Immutable posted history |
+| AP-5 | Version everything |
+| AP-6 | Events are replayable, consumers are idempotent |
+| AP-7 | Compliance is enforced, not documented only |
+
+- **Thực thi:** mỗi nguyên tắc trỏ tới check thực thi; nguyên tắc chưa có check là nợ (SC-CMP-2).
+- **Ba lớp kiểm soát:**
+  - [Domain](../contracts/BIZCITY-DOMAIN-v1.md);
+  - [Event](../contracts/BIZCITY-EVENT-v1.md);
+  - [Compliance](../contracts/BIZCITY-COMPLIANCE-v1.md), với ma trận tuân thủ tính tự động trên bảng điểm.
+- **Chi tiết:** [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md).
+
 ## 1. Vị trí trong hệ sinh thái
 
 ```

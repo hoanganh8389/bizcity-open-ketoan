@@ -50,6 +50,13 @@ Trả lời được, cho **mọi** thao tác ghi: **ai** (người, khoá API, 
 
 Ai giữ biên nhận (người dùng, Cell, plugin WP) có thể hỏi lại `GET /api/v1/evidence/48213` và kiểm `hash` khớp. Chuỗi băm (`prevHash` → `hash`) theo từng đơn vị cho phép phát hiện sửa / xoá bản ghi ở giữa (`bizcity evidence verify`).
 
+> **Đã có (PHASES 2.6, 2026-10-30):**
+> - **Bảng:** migration `0036_bang_chung.sql` thêm các cột §5, trigger `audit_logs_chain` (tính `chain_seq`, `prev_hash`, `hash` cho **mọi** dòng, kể cả `writeAudit()` cũ) và trigger chỉ thêm. Hàm `audit_log_hash(dòng)` dùng chung cho trigger và kiểm.
+> - **Thứ tự chuỗi:** theo `chain_seq` (cấp dưới khoá theo đơn vị), không theo `id`.
+> - **Runtime action** (`core/actions.ts`) ghi bằng chứng (STD-EVD-1, kể cả lỗi nghiệp vụ) và trả `meta.receipt`.
+> - **Kiểm lại:** `GET /api/v1/evidence/:id` trả `verify.hashValid`, `verify.linked`. Kiểm cả chuỗi: tự chẩn đoán `EVIDENCE_CHAIN` (DG-EVD-1).
+> - **Chưa có:** `correlation_id` từ Cell, actor `ai` + `via` / `onBehalfOf` (Phase 5, Cell); che `pii` trong `changes` (STD-EVD-5); `bizcity evidence verify` (CLI, Phase 4).
+
 ## 4. Luật
 
 | Mã | Cấp | Luật | Kiểm bằng |

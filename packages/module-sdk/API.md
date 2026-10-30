@@ -139,8 +139,9 @@ interface ActionContext {
 
 Phân hệ hiện có không viết lại một lần. Theo thứ tự:
 
-1. **Phase 2 (2.5):** `packages/actions` có `defineAction` + runtime.
-   - Thêm `legacyContext(auth, trx)` **nội bộ** ở `apps/api` (không đưa vào SDK): dựng `ctx` từ `AuthContext` + giao dịch Kysely.
+1. **Phase 2 (2.5) — đã làm:** `defineAction` + runtime ở `apps/api/src/core/actions.ts`; mẫu `phan-he/quy/payment-requests`.
+   - `ctx` hiện có: `actor`, `tenant`, `requestId`, `dryRun`, `can()`, `data.tx`, `evidence.note`.
+   - Cầu nối nội bộ `ctx.legacyAuth` (không đưa vào SDK) cho service cũ cần `AuthContext`, vd `voucherService.createIn`; hết khi có `ctx.ledger.submit` dạng phiếu tay (§6 câu 1).
    - Phân hệ đổi từng route sang `defineAction`. Handler cũ vẫn chạy nhờ `ctx.data.tx = trx`.
 2. **Phase 3 (3.1):** tách `@bizcity/module-sdk` thành gói thật, chỉ `export` các tên ở §3.
    - `ctx.data.tx` chuyển sang kiểu chỉ thấy `mod_<key>.*` + `bizcity_read.*`.

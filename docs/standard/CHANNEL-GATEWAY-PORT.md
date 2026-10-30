@@ -36,7 +36,7 @@ Nhờ vậy Hub và Cell **không phải viết nhánh riêng** cho Core kế to
 
 ## 3. Kênh: Core có cần tự nhận tin Zalo không?
 
-**Không, ở Phase 5.** Đường đúng: Zalo → Zalo Hub / Cell → Cell nhận ra người dùng đã liên kết với Core kế toán → gọi công cụ `ketoan.*` qua Hub → Core.
+**Không, ở Phase 5.** Đường đúng: Zalo → Zalo Hub / Cell → Cell nhận ra người dùng đã liên kết với Core kế toán → gọi công cụ `accounting.*` qua Hub → Core.
 
 Core chỉ cần ba thứ:
 1. cầu MCP;
@@ -71,7 +71,7 @@ Gửi nhóm plugin; Core không tự sửa repo đó.
 |---|---|---|
 | 1 | `hub-client` + lưu khoá mã hoá + bước ① (dán khoá) | màn hiện gói đọc từ Hub |
 | 2 | Kết nối một chạm (bí danh proof) | không cần chép khoá |
-| 3 | `platform/mcp` đọc (Phase 2b) + `/api/v1/cell/mcp` + `cell_principals` | Cell gọi được `ketoan.report.trial_balance` |
+| 3 | `platform/mcp` đọc (Phase 2b) + `/api/v1/cell/mcp` + `cell_principals` | Cell gọi được `accounting.report.trial_balance` |
 | 4 | `/api/v1/cell/turn` web chat SSE trong Core | hỏi sổ ngay trong màn Core |
 | 5 | Bước ③ ④ hoàn chỉnh; công cụ đề xuất ghi (cần `defineAction` Phase 2.3) | lập phiếu chi nháp qua Zalo có xác nhận |
 | 6 | Sự kiện ra Cell (Phase 3 outbox) | nhắc hạn, báo phiếu lỗi qua Zalo |

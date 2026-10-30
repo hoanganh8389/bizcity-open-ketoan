@@ -31,13 +31,28 @@ function buildUrl(path: string, query?: Query): string {
   return url.pathname + url.search;
 }
 
-async function request<T>(method: string, path: string, opts: { query?: Query; body?: unknown; signal?: AbortSignal } = {}): Promise<{ data: T; meta?: Record<string, unknown> }> {
+/**
+ * Khoá chống gửi lặp (Idempotency-Key, bizcity_action@1 §8): một khoá cho một ý định thao tác. crypto.randomUUID chỉ có ở https /
+ * localhost; máy chủ LAN chạy http thì dựng từ getRandomValues.
+ */
+export function newIdempotencyKey(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+interface WriteOptions {
+  /** Khoá giữ nguyên qua các lần bấm của cùng một form (bấm đúp, gửi lại sau lỗi mạng). Không truyền = khoá mới mỗi lần gọi. */
+  idempotencyKey?: string;
+}
+
+async function request<T>(method: string, path: string, opts: { query?: Query; body?: unknown; signal?: AbortSignal } & WriteOptions = {}): Promise<{ data: T; meta?: Record<string, unknown> }> {
   const token = tokenStore.get();
   const res = await fetch(buildUrl(path, opts.query), {
     method,
     headers: {
       ...(opts.body !== undefined ? { 'content-type': 'application/json' } : {}),
       ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(method !== 'GET' ? { 'idempotency-key': opts.idempotencyKey ?? newIdempotencyKey() } : {}),
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     signal: opts.signal,
@@ -62,8 +77,8 @@ export const api = {
   /** signal: huỷ được (react-query truyền vào queryFn) — báo cáo nặng bấm Huỷ thì trình duyệt cắt luôn yêu cầu. */
   get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>('GET', path, { query, signal }).then((r) => r.data),
   getPage: <T>(path: string, query?: Query) => request<T>('GET', path, { query }),
-  post: <T>(path: string, body?: unknown) => request<T>('POST', path, { body: body ?? {} }).then((r) => r.data),
-  put: <T>(path: string, body: unknown) => request<T>('PUT', path, { body }).then((r) => r.data),
+  post: <T>(path: string, body?: unknown, opts?: WriteOptions) => request<T>('POST', path, { body: body ?? {}, ...opts }).then((r) => r.data),
+  put: <T>(path: string, body: unknown, opts?: WriteOptions) => request<T>('PUT', path, { body, ...opts }).then((r) => r.data),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, { body }).then((r) => r.data),
   delete: <T>(path: string) => request<T>('DELETE', path).then((r) => r.data),
   /** Lấy nội dung tệp (có gắn token) để xem ngay trên trang. */

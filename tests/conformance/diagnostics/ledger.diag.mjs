@@ -133,9 +133,8 @@ export const checks = [
     ['DG-PLAN-3', 'COST_FILL_OPEN', 'Không còn dòng cost_fill = 0 ở tháng đã qua', []],
     ['DG-PLAN-4', 'TRANSIT_NONZERO', 'Tài khoản trung gian (hàng đi đường, tiền đang chuyển) về 0', []],
     ['DG-PLAN-5', 'TENANT_ISOLATION', 'Đơn vị A không đọc / ghi được dữ liệu đơn vị B (RLS)', ['STD-DATA-1']],
-    ['DG-PLAN-6', 'EVIDENCE_CHAIN', 'Chuỗi băm bằng chứng liền mạch, không sửa / xoá được', ['STD-EVD-2']],
   ].map(([id, code, title, rules]) => ({
-    id, code, title, gate: 'CONF-RUN', contract: id === 'DG-PLAN-6' ? 'bizcity_evidence' : id === 'DG-PLAN-5' ? 'bizcity_data' : 'kernel',
+    id, code, title, gate: 'CONF-RUN', contract: id === 'DG-PLAN-5' ? 'bizcity_data' : 'kernel',
     rules, conf: [], tier: 1, enforce: 'planned', phase: 'Phase 2', weight: 2,
     run: async () => ({ examined: 0, readiness: 0, findings: [], notes: ['chưa viết — xem docs/ops/DIAGNOSTICS.md §2'] }),
   })),

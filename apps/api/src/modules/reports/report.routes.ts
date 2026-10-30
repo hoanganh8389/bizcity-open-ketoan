@@ -32,6 +32,8 @@ import { z } from 'zod';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
 import { reportService } from './report.service.js';
+import { registerActions } from '../../core/actions.js';
+import { reportActions } from './report.actions.js';
 import { EXPENSE_GROUPS, type ExpenseGroup } from './control-reports.js';
 
 const tags = ['Báo cáo'];
@@ -48,6 +50,8 @@ const postingGroups = z
   .describe('Gom thêm theo: branch, month, docType, costItem, reason (cách nhau dấu phẩy)');
 
 export async function reportRoutes(app: FastifyInstance): Promise<void> {
+  // Công cụ đọc accounting.* cho trợ lý AI (MCP) — chỉ vào registry action, không thêm route HTTP.
+  registerActions(reportActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const pre = requirePermission('reports:read');
 

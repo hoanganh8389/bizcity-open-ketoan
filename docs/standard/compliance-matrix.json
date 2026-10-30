@@ -1,0 +1,97 @@
+{
+  "contract": "bizcity_compliance_matrix@1",
+  "updated": "2026-10-30",
+  "note": "Ma trận tuân thủ bắt buộc (bizcity_compliance@1 §2). Trạng thái tính tự động từ tín hiệu như roadmap.json (check / fileContains / capability / manual…): ĐẠT khi mọi tín hiệu đúng. Nguyên tắc AP-7: tuân thủ được kiểm trong runtime và CI, không chỉ viết trong tài liệu.",
+  "rows": [
+    {
+      "id": "C-1", "std": "STD-CMP-1", "requirement": "Chứng từ hợp lệ",
+      "risk": "Sự kiện tạo giao dịch không có chứng từ",
+      "rule": "Bút toán phải có nguồn chứng từ (sự việc có phiên bản) và căn cứ hạch toán (lý do định khoản)",
+      "done": [
+        { "label": "khoá ngoại bút toán → sự việc; DG-LEDGER-4 LEDGER_ORPHAN đạt", "check": "DG-LEDGER-4" },
+        { "label": "docKey duy nhất trong đơn vị (UNIQUE tại CSDL)", "fileContains": { "file": "db/migrations/0005_goc_chung_tu.sql", "text": "accounting_events_tenant_id_doc_key_key UNIQUE (tenant_id, doc_key)" } },
+        { "label": "một cửa ghi sổ: chỉ posting / documents / ledger gọi ledgerService (hết nợ A-01)", "check": "SC-KERNEL-3" }
+      ]
+    },
+    {
+      "id": "C-2", "std": "STD-CMP-2", "requirement": "Ghi sổ chính xác",
+      "risk": "Hai consumer / hai lần gửi ghi trùng nghiệp vụ",
+      "rule": "Idempotency và uniqueness tại CSDL: docKey + version cho sổ, Idempotency-Key cho action",
+      "done": [
+        { "label": "UNIQUE (tenant_id, action_id, idem_key) cho action", "fileContains": { "file": "db/migrations/0035_action_requests.sql", "text": "UNIQUE (tenant_id, action_id, idem_key)" } },
+        { "label": "gửi lặp / song song → một kết quả (CONF-RUN-4)", "fileContains": { "file": "apps/api/test/actions.test.ts", "text": "hai yêu cầu cùng khoá chạy song song" } },
+        { "label": "sự việc posted đúng phiên bản (DG-EVENT-1)", "check": "DG-EVENT-1" }
+      ]
+    },
+    {
+      "id": "C-3", "std": "STD-CMP-3", "requirement": "Sửa chữa sổ",
+      "risk": "Consumer cập nhật trực tiếp bút toán cũ",
+      "rule": "Sửa bằng chứng từ điều chỉnh / bút toán đảo, giữ dấu vết; sổ chỉ thêm",
+      "done": [
+        { "label": "trigger chỉ thêm còn đủ và bật (DG-DB-2)", "check": "DG-DB-2" },
+        { "label": "đảo đúng một lần (DG-LEDGER-3)", "check": "DG-LEDGER-3" },
+        { "label": "không UPDATE / DELETE ledger_* trong code (SC-KERNEL-1)", "check": "SC-KERNEL-1" }
+      ]
+    },
+    {
+      "id": "C-4", "std": "STD-CMP-4", "requirement": "Khoá kỳ kế toán",
+      "risk": "Sự kiện đến chậm ghi vào kỳ đã khoá",
+      "rule": "Period Lock Gate: ghi sổ kiểm khoá trong giao dịch ghi; khoá kỳ bị chặn khi sổ trong kỳ có lỗi toàn vẹn",
+      "done": [
+        { "label": "ledgerService kiểm khoá kỳ khi ghi (PERIOD_LOCKED)", "fileContains": { "file": "apps/api/src/modules/ledger/ledger.service.ts", "text": "throw Errors.periodLocked()" } },
+        { "label": "khoá kỳ chạy tự chẩn đoán L3 trước (R-DIAG-4)", "fileContains": { "file": "apps/api/src/modules/periods/period.routes.ts", "text": "guardLock" } },
+        { "label": "test khoá kỳ", "file": "apps/api/test/period-locks.test.ts" }
+      ]
+    },
+    {
+      "id": "C-5", "std": "STD-CMP-5", "requirement": "Nhất quán dữ liệu",
+      "risk": "Sự kiện phát ra khi giao dịch chưa commit",
+      "rule": "Transactional Outbox: sự kiện ghi cùng giao dịch, gửi sau commit, consumer idempotent (R-OUTBOX)",
+      "done": [
+        { "label": "năng lực events.outbox available (G2-05)", "capability": "events.outbox" },
+        { "label": "không phát sự kiện bằng setTimeout / gọi ngoài trong handler (SC-EVT-1 hết nợ)", "check": "SC-EVT-1" }
+      ]
+    },
+    {
+      "id": "C-6", "std": "STD-CMP-6", "requirement": "Lưu trữ",
+      "risk": "Message hết hạn, mất lịch sử nghiệp vụ",
+      "rule": "Sổ, chứng từ (mọi phiên bản), bằng chứng lưu riêng trong CSDL theo thời hạn luật định (≥ 10 năm), không phụ thuộc broker",
+      "done": [
+        { "label": "bằng chứng chỉ thêm, có chuỗi băm (SC-EVD-2)", "check": "SC-EVD-2" },
+        { "label": "chuỗi bằng chứng liền mạch (DG-EVD-1)", "check": "DG-EVD-1" },
+        { "label": "kiểm khôi phục bản sao lưu (R-BAK-3)", "file": "scripts/kiem-khoi-phuc.sh" },
+        { "label": "PITR bật trên bản cài thật (R-BAK-2, G1-08)", "glob": "^infrastructure/backup/" },
+        { "manual": "Thời hạn lưu trữ theo §3 được kế toán trưởng / luật sư xác nhận" }
+      ]
+    },
+    {
+      "id": "C-7", "std": "STD-CMP-7", "requirement": "Phân quyền ghi sổ",
+      "risk": "Module tự ghi vào bảng ledger",
+      "rule": "Chỉ Accounting Core có quyền ghi sổ: module nộp sự việc; API chạy bằng vai trò CSDL không superuser",
+      "done": [
+        { "label": "module không ghi bảng nhân (SC-MOD-2 hết nợ A-17)", "check": "SC-MOD-2" },
+        { "label": "vai trò ketoan_app không tắt được trigger, không TRUNCATE (DG-SEC-1)", "check": "DG-SEC-1" },
+        { "label": "một cửa ghi sổ (SC-KERNEL-3)", "check": "SC-KERNEL-3" }
+      ]
+    },
+    {
+      "id": "C-8", "std": "STD-CMP-8", "requirement": "Kiểm toán",
+      "risk": "Không rõ sự kiện do ai tạo",
+      "rule": "Mỗi thao tác ghi có actor (người / khoá / AI + kênh), nguồn, correlation, bằng chứng, phiên bản",
+      "done": [
+        { "label": "cột bằng chứng: actor_kind, actor_via, on_behalf_of, request_id, result (SC-EVD-2)", "check": "SC-EVD-2" },
+        { "label": "runtime ghi request_id + biên nhận cho mọi action ghi", "fileContains": { "file": "apps/api/src/core/actions.ts", "text": "requestId: call.requestId, idempotencyKey: key" } },
+        { "label": "correlation_id điền từ Cell / MCP (một hội thoại nhiều yêu cầu)", "fileContains": { "file": "apps/api/src/core/audit.ts", "text": "correlation_id: e." } }
+      ]
+    },
+    {
+      "id": "C-9", "std": "STD-CMP-9", "requirement": "Thay đổi chế độ kế toán",
+      "risk": "Áp dụng quy tắc mới vào chứng từ cũ",
+      "rule": "Chính sách kế toán (gói định khoản, lý do, nhóm hạch toán, tài khoản ngầm định) có phiên bản và ngày hiệu lực; mỗi lần định khoản ghi phiên bản đã dùng",
+      "done": [
+        { "label": "năng lực posting.policy-version available", "capability": "posting.policy-version" },
+        { "label": "posting_log ghi policy_version", "fileContains": { "file": "apps/api/src/db/types.ts", "text": "policy_version" } }
+      ]
+    }
+  ]
+}

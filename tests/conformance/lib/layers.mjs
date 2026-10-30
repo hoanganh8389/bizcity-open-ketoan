@@ -19,6 +19,10 @@ export const LAYER_MAP = [
   ['config/', 'P', 'bizcity.config'],
   ['core/errors.ts', 'P', 'actions'],
   ['core/http.ts', 'P', 'actions'],
+  ['core/json-schema.ts', 'P', 'actions'],
+  ['core/actions.ts', 'P', 'actions'],
+  ['core/metrics.ts', 'P', 'observability'],
+  ['core/observability.ts', 'P', 'observability'],
   ['core/auth.ts', 'P', 'permissions'],
   ['core/security/', 'P', 'permissions'],
   ['core/audit.ts', 'P', 'audit'],
@@ -79,6 +83,9 @@ export const LAYER_MAP = [
   ['modules/system/presence.ts', 'P', 'permissions'],
   ['modules/system/system.routes.ts', 'P', 'cli'],
   ['modules/system/diagnostics.ts', 'P', 'cli'],
+  ['modules/system/evidence.routes.ts', 'P', 'audit'],
+  ['modules/system/mcp.routes.ts', 'P', 'mcp'],
+  ['modules/system/metrics.routes.ts', 'P', 'observability'],
   ['modules/connections/', 'A', 'adapters/wordpress'],
 
   // Danh sách phân hệ / add-in bật và route lõi: lắp ráp (apps/server, LAYOUT-6), không phải SDK. Kiểu ApiModule mới là SDK.

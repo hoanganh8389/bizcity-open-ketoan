@@ -22,6 +22,7 @@ import { runPool } from './lib/pool.mjs';
 import { renderConsole, renderEvidence, renderHtml, renderMarkdown } from './lib/render.mjs';
 import { createRepo, moduleOf } from './lib/repo.mjs';
 import { evaluateRoadmap, ROADMAP_FILE } from './lib/roadmap.mjs';
+import { evaluateCompliance, COMPLIANCE_FILE } from './lib/compliance.mjs';
 import { buildScoreboard } from './lib/scoreboard.mjs';
 
 const ROOT = path.resolve(SUITE_DIR, '../..');
@@ -272,6 +273,17 @@ async function main() {
       sb.scores.roadmap = { score: sb.roadmap.overall, grade: null, delta: prevRm == null ? null : sb.roadmap.overall - prevRm };
     } catch (e) {
       console.error(`Không tính được lộ trình: ${e.message}`);
+    }
+  }
+  // Ma trận tuân thủ (bizcity_compliance@1 §2): cũng cần kết quả mọi check; tín hiệu DG-* là null khi bỏ qua lane diagnostics.
+  const compliance = createRepo(ROOT).json(COMPLIANCE_FILE);
+  if (mode === 'repo' && !args.only && compliance) {
+    try {
+      sb.compliance = evaluateCompliance({ matrix: compliance, results, standard: createRepo(ROOT).json('docs/standard/bizcity-standard.json'), coverage, repo: createRepo(ROOT) });
+      const prevC = previous?.compliance?.score;
+      sb.scores.compliance = { score: sb.compliance.score, grade: null, delta: prevC == null ? null : sb.compliance.score - prevC };
+    } catch (e) {
+      console.error(`Không tính được ma trận tuân thủ: ${e.message}`);
     }
   }
 

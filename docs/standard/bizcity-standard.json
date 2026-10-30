@@ -20,8 +20,22 @@
     "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
     "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
     "bizcity_posting_template": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
-    "bizcity_mcp": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] }
+    "bizcity_mcp": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] },
+    "bizcity_domain": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-DOMAIN-v1.md", "role": "accounting invariants — Domain Contract (layer 1/4)" },
+    "bizcity_compliance": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-COMPLIANCE-v1.md", "role": "compliance control layer — matrix docs/standard/compliance-matrix.json" },
+    "bizcity_errors": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-ERRORS-v1.md", "role": "error catalog of bizcity_api / bizcity_action / bizcity_mcp" },
+    "bizcity_preset": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-PRESET-v1.md", "schema": "docs/contracts/BIZCITY-PRESET-v1.schema.json" }
   },
+  "supreme": "Mục tiêu: SQL minh bạch, Accounting Core ổn định, cộng đồng tự do vibe-code phần mở rộng mà không làm mất tính toàn vẹn của dữ liệu kế toán. Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán. — Johnny Chu – Chu Hoàng Anh",
+  "principles": [
+    { "id": "AP-1", "name": "Core owns accounting truth", "statement": "Chỉ Accounting Core được quyết định việc ghi sổ chính thức.", "enforcedBy": ["SC-KERNEL-1","SC-KERNEL-3","SC-MOD-2","DG-SEC-1","DG-DB-2"] },
+    { "id": "AP-2", "name": "Commands request, Events report", "statement": "Command yêu cầu hành động; Event phản ánh một sự việc đã xảy ra.", "enforcedBy": ["SC-EVT-1"] },
+    { "id": "AP-3", "name": "Contracts before code", "statement": "Mọi module khai báo và tuân thủ contract trước khi tích hợp.", "enforcedBy": ["SC-CON-2","SC-MOD-1"] },
+    { "id": "AP-4", "name": "Immutable posted history", "statement": "Không sửa âm thầm lịch sử hạch toán đã ghi; sửa sai bằng nghiệp vụ điều chỉnh hợp lệ.", "enforcedBy": ["DG-DB-2","DG-LEDGER-3","DG-EVD-1"] },
+    { "id": "AP-5", "name": "Version everything", "statement": "Phiên bản schema, domain contract, accounting policy và nguồn phát phải truy nguyên được.", "enforcedBy": ["SC-DATA-2","DG-EVENT-1"] },
+    { "id": "AP-6", "name": "Events are replayable, consumers are idempotent", "statement": "Có cơ chế phát lại sự kiện và xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end.", "enforcedBy": [] },
+    { "id": "AP-7", "name": "Compliance is enforced, not documented only", "statement": "Các bất biến phải được kiểm tra trong runtime và CI, không chỉ viết trong tài liệu.", "enforcedBy": ["SC-CMP-1"] }
+  ],
   "capabilities": [
     { "id": "masterdata.read", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Đọc danh mục chuẩn (đối tượng, mặt hàng, chi nhánh, kho, thuế) qua HTTP. Phase 2: qua ctx.data và view chỉ đọc." },
     { "id": "masterdata.write", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Thêm / sửa danh mục chuẩn qua API của Core (không ghi thẳng bảng)." },
@@ -37,10 +51,10 @@
     { "id": "documents.attachments", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Đính kèm tệp chung (thay purchase_attachments riêng của Mua hàng)." },
     { "id": "documents.signatures", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Ký theo vai trên mọi chứng từ (document_signatures hiện chỉ gắn accounting_events)." },
     { "id": "documents.workflow", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_document", "description": "Máy trạng thái khai báo, duyệt nhiều cấp theo ngưỡng." },
-    { "id": "actions.runtime", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "defineAction(): quyền, zod, giao dịch, lỗi chuẩn, sinh HTTP + OpenAPI." },
-    { "id": "actions.idempotency", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "Header Idempotency-Key; gửi lại cùng khoá trả cùng kết quả." },
-    { "id": "actions.dry-run", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "Chạy thử trong giao dịch rồi huỷ (mẫu đã có ở add-in tro-ly /simulate)." },
-    { "id": "evidence.receipt", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_evidence", "description": "Mỗi action ghi có bản ghi bằng chứng chỉ thêm, chuỗi băm, trả biên nhận." },
+    { "id": "actions.runtime", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "defineAction(): quyền, zod, giao dịch, lỗi chuẩn, bằng chứng tự động, sinh HTTP + OpenAPI. Hiện ở apps/api/src/core/actions.ts (phân hệ dùng được; mẫu: quy.payment-request.*); module ngoài dùng qua @bizcity/module-sdk từ Phase 3." },
+    { "id": "actions.idempotency", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "Header Idempotency-Key; gửi lại cùng khoá trả cùng kết quả (bảng action_requests, giữ 7 ngày); khác nội dung → IDEMPOTENCY_CONFLICT." },
+    { "id": "actions.dry-run", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "?dryRun=1: chạy thật trong giao dịch rồi huỷ (kể cả ghi sổ, cấp số); action khai dryRun: true." },
+    { "id": "evidence.receipt", "since": "1.0", "status": "available", "contract": "bizcity_evidence", "description": "Mỗi action ghi có bản ghi bằng chứng chỉ thêm (audit_logs mở rộng, migration 0036), chuỗi băm theo đơn vị, biên nhận meta.receipt; GET /api/v1/evidence/:id kiểm lại." },
     { "id": "permissions.module", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "Module khai quyền mới trong manifest; hiện PERMISSIONS là danh sách đóng trong core/auth.ts." },
     { "id": "events.outbox", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Phát sự kiện miền trong cùng giao dịch; gửi ít nhất một lần." },
     { "id": "events.subscribe", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Đăng ký xử lý sự kiện; chống xử lý trùng theo (consumer, event_id); retry, dead-letter, replay." },
@@ -50,8 +64,8 @@
     { "id": "ui.kit", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit: DataGrid, form, bộ lọc, in, khung trang (tách từ apps/web/src/components)." },
     { "id": "ui.slots", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Chèn tab / panel / widget vào màn của Core." },
     { "id": "ui.menu", "since": "1.0", "status": "available", "contract": "bizcity_extension", "description": "Nhóm menu, màn, biểu tượng phân hệ (WebModule.groups, menu.ts)." },
-    { "id": "mcp.read", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_mcp", "description": "platform/mcp: POST /mcp, công cụ đọc ketoan.* bọc route hiện có, khoá mcp_… có scope (Phase 2b)." },
-    { "id": "mcp.tools", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_mcp", "description": "Sinh công cụ MCP từ registry action (expose.mcp); xác nhận trước khi ghi (needs_confirmation + confirm_token)." },
+    { "id": "mcp.read", "since": "1.0", "status": "available", "contract": "bizcity_mcp", "description": "POST /mcp (JSON-RPC: initialize, tools/list, tools/call), công cụ đọc ketoan.* (cân đối phát sinh, số dư tiền, công nợ theo đối tượng) bọc reportService; xác thực bằng phiên / khoá API hiện có (khoá mcp_… riêng: sau)." },
+    { "id": "mcp.tools", "since": "1.0", "status": "available", "contract": "bizcity_mcp", "description": "Sinh công cụ MCP từ registry action (expose.mcp, expose.ai read | propose); xác nhận trước khi ghi (needs_confirmation + confirm_token, bảng mcp_confirm_tokens); bằng chứng actor ai." },
     { "id": "mcp.cell-bridge", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_mcp", "description": "POST /api/v1/cell/mcp: Cell gọi công cụ Core qua Hub, uỷ quyền X-BizCity-Principal (bizcity-mcp-bridge@1)." },
     { "id": "cell.connect", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_mcp", "description": "Khoá 1API biz-…, bốn bước, kết nối một chạm PKCE, đồng bộ gói từ Hub (CELL-CONNECT.md)." },
     { "id": "ai.ocr-invoice", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_mcp", "description": "Hoá đơn ảnh / PDF / XML → sự việc mua hàng nháp qua Cell (khuôn INVOICE_AI_URL)." },
@@ -61,6 +75,7 @@
     { "id": "ledger.reasons.declare", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "Manifest khai lý do cần cho docType nộp (ledger.submits[].reasons); kiểm khi cài module." },
     { "id": "ledger.doctype.production", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Sản xuất / xây dựng: xuất NVL → 154 → thành phẩm, giá thành, theo công trình." },
     { "id": "ledger.doctype.payroll", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Bảng lương → 334, 338x, chi phí theo bộ phận." },
+    { "id": "posting.policy-version", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_posting_rule", "description": "Chính sách kế toán (gói định khoản, lý do, nhóm hạch toán, tài khoản ngầm định) có policy_version + effective_from; posting_log ghi phiên bản đã dùng (bizcity_compliance@1 STD-CMP-9)." },
     { "id": "ledger.fx", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Ngoại tệ, chênh lệch tỷ giá; thuế nhập khẩu (ledger.doctype.import_duty)." },
     { "id": "ai.cell", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_extension", "description": "Gọi LLM / OCR / RAG qua Cell; vắng Cell thì năng lực này không có, module phải tự lui." }
   ],
@@ -85,10 +100,10 @@
   },
   "errorCodes": {
     "note": "available = có trong ERROR_CODES (packages/contracts/src/api.ts); planned = khai ở BIZCITY-ACTION-v1.md §8, chưa có code.",
-    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR", "NOT_READY"],
-    "planned": ["IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"]
+    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR", "NOT_READY", "IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"],
+    "planned": []
   },
   "changelog": [
-    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)", "Thêm mã lỗi NOT_READY (503, GET /system/health/ready); GET /system/capabilities trả bảng này"] }
+    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)", "Thêm mã lỗi NOT_READY (503, GET /system/health/ready); GET /system/capabilities trả bảng này", "actions.runtime / idempotency / dry-run: available (PHASES 2.5); mã lỗi IDEMPOTENCY_CONFLICT, CAPABILITY_MISSING, MODULE_DISABLED, RATE_LIMITED: available", "evidence.receipt: available (PHASES 2.6)", "mcp.read, mcp.tools: available (PHASES 2.11, 2.12)"] }
   ]
 }

@@ -42,7 +42,8 @@
 |---|---|---|
 | Repo **công khai** chứa dữ liệu thật trong `db/seeds/` (đối tượng, nhân viên, chi nhánh, mặt hàng) — trái R-SEC-10 | **Chủ dự án chấp nhận** 2026-10-29 khi đẩy lên GitHub | Khi đổi ý: chuyển seed thật ra kho riêng, tạo seed ẩn danh; dữ liệu đã đẩy coi như đã công khai |
 | API dùng vai trò CSDL `ketoan` = superuser (Docker mặc định) — trái R-SEC-6 | **có cách sửa** (2026-10-30): migration 0032 tạo `ketoan_app`; đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` là API dùng vai trò thường. Mặc định vẫn như cũ để bản cài đang chạy không gãy | Bật trên từng bản cài thật (DEPLOY D-9); DG-SEC-1 kiểm vai trò, DG-SEC-2 kiểm kết nối |
+| Nhật ký thao tác sửa / xoá được bằng SQL; bằng chứng rải nhiều nơi (A-18) | **đã sửa phần CSDL** (2026-10-30): migration 0036 chặn UPDATE / DELETE / TRUNCATE `audit_logs`, chuỗi băm theo đơn vị; kiểm `EVIDENCE_CHAIN` (DG-EVD-1). Giới hạn: superuser xoá **dòng cuối** chuỗi thì chuỗi không tự lộ — biên nhận `meta.receipt` bên gọi giữ là lớp kiểm thứ hai | Bỏ nhật ký tệp JSONL của Mua hàng (STD-EVD-4, SC-EVD-1) |
 | Chưa có RLS (A-23) | mở | PHASES 2.4–2.5 |
 | Header bảo mật web — R-SEC-11 | **một phần** (2026-10-29): nginx đã gửi `nosniff`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` | HSTS do proxy TLS gửi (DEPLOY D-8); CSP đầy đủ (`script-src`, `frame-src` cho add-in nhúng) cần thử trên giao diện thật trước khi bật |
 | GitHub Action ghim theo nhãn `@v4` | mở (Tier 2) | ghim SHA khi bật bảo vệ nhánh |
-| Chưa có giới hạn tần suất cho đăng nhập / khoá API | mở | PHASES 2.5 (`RATE_LIMITED`) |
+| Chưa có giới hạn tần suất cho đăng nhập / khoá API | mở — mã lỗi `RATE_LIMITED` đã có (2.5), chưa có bộ đếm | runtime action / plugin đăng nhập |

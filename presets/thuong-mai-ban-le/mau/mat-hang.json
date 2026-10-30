@@ -1,0 +1,5 @@
+[
+  { "sku": "MAU-SP-01", "name": "Nước suối mẫu 500ml", "unit": "Chai", "taxOutCode": "R08", "taxInCode": "V08" },
+  { "sku": "MAU-SP-02", "name": "Bánh quy mẫu 200g", "unit": "Gói", "taxOutCode": "R08", "taxInCode": "V08" },
+  { "sku": "MAU-SP-03", "name": "Mì gói mẫu 75g", "unit": "Gói", "taxOutCode": "R08", "taxInCode": "V08" }
+]

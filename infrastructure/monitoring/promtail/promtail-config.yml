@@ -1,0 +1,104 @@
+# =============================================================================
+# Promtail — gom nhật ký container của dự án compose "ketoan" về Loki.
+#
+# Lưu ý: Grafana đã chuyển Promtail sang chế độ chỉ bảo trì (thay bằng Grafana Alloy). Bản 3.3 vẫn
+# chạy tốt; khi nâng cấp hãy chuyển cấu hình này sang Alloy (`alloy convert --source-format=promtail`).
+# =============================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+        filters:
+          # Chỉ container của dự án compose này — khớp `name: ketoan` trong docker-compose.yml.
+          # Đổi tên dự án thì sửa giá trị ở đây.
+          - name: label
+            values: ["com.docker.compose.project=ketoan"]
+    relabel_configs:
+      # service = tên dịch vụ compose (api, db, web, grafana, …) — nhãn chính để lọc.
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: project
+      # Tên container (vd. ketoan-api-1) — vài giá trị, phân biệt bản sao khi scale.
+      - source_labels: [__meta_docker_container_name]
+        regex: "/(.*)"
+        target_label: container
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+
+    pipeline_stages:
+      # --- API: nhật ký pino dạng JSON -----------------------------------------
+      - match:
+          selector: '{service="api"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+                  time: time
+                  tenant: tenant
+                  errCode: errCode
+                  evt: evt
+                  route: route
+                  reqId: reqId
+                  traceId: traceId
+            # pino ghi level bằng số (dòng không phải JSON → không gắn level); đổi sang tên để Grafana tô màu và lọc dễ:
+            #   10 trace · 20 debug · 30 info · 40 warn · 50 error · 60 fatal
+            # "level >= 50" ⇔ level=~"error|fatal".
+            - template:
+                source: level
+                template: '{{ with .Value }}{{ if eq . "10" }}trace{{ else if eq . "20" }}debug{{ else if eq . "30" }}info{{ else if eq . "40" }}warn{{ else if eq . "50" }}error{{ else if eq . "60" }}fatal{{ else }}{{ . }}{{ end }}{{ end }}'
+            # pino `time` là mili-giây Unix → dùng làm dấu thời gian của dòng nhật ký.
+            - timestamp:
+                source: time
+                format: UnixMs
+                action_on_failure: skip
+            # CHỈ đưa lên nhãn (label) các trường ÍT GIÁ TRỊ:
+            #   level   — 6 giá trị;
+            #   errCode — tập mã lỗi cố định trong Errors.* (VALIDATION_ERROR, PERIOD_LOCKED, …);
+            #   evt     — tập tên sự kiện cố định do code định nghĩa (bizcity.ledger.posted, …);
+            #   tenant  — số đơn vị (thường vài chục). Nếu một bản cài phục vụ hàng trăm+ đơn vị,
+            #             XOÁ tenant khỏi khối labels dưới đây và lọc bằng `| json | tenant="..."`.
+            # KHÔNG đưa reqId, traceId, docKey, actor, route lên nhãn: mỗi giá trị mới tạo một luồng (stream)
+            # mới trong Loki → chỉ mục phình, truy vấn chậm, chạm giới hạn max_global_streams_per_user.
+            # Chúng vẫn nằm nguyên trong dòng JSON; tìm bằng `|= "<reqId>"` hoặc `| json | reqId="..."`.
+            - labels:
+                level:
+                tenant:
+                errCode:
+                evt:
+            # reqId / traceId gắn làm structured metadata (Loki 3): lọc nhanh `| traceId="…"` mà không tạo luồng mới.
+            - structured_metadata:
+                reqId:
+                traceId:
+            # Bỏ nhật ký thành công của kiểm tra sức khoẻ (mỗi 10 giây) và lượt thu /metrics — chỉ là nhiễu.
+            - match:
+                selector: '{service="api", level="info"}'
+                stages:
+                  - drop:
+                      source: route
+                      expression: "^/(metrics|api/v1/system/health.*)$"
+
+      # --- PostgreSQL: dòng văn bản "… ERROR: …" -------------------------------
+      - match:
+          selector: '{service="db"}'
+          stages:
+            - regex:
+                expression: '(?P<pglevel>DEBUG\d?|LOG|INFO|NOTICE|WARNING|ERROR|FATAL|PANIC):'
+            - template:
+                source: pglevel
+                template: '{{ with .Value }}{{ if eq . "WARNING" }}warn{{ else if eq . "ERROR" }}error{{ else if eq . "FATAL" }}fatal{{ else if eq . "PANIC" }}fatal{{ else }}info{{ end }}{{ end }}'
+            - labels:
+                level: pglevel

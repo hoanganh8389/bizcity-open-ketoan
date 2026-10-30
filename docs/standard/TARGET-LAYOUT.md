@@ -15,6 +15,7 @@ bizcity-core/                       (repo open-ketoan sau khi tách)
 │   │   ├── ledger/                 sổ cái chỉ thêm, số dư ngày
 │   │   ├── periods/  accounts/  config/  tax/  closing/
 │   │   ├── subledgers/             công nợ, kho + giá vốn, hoá đơn
+│   │   ├── compliance/             cổng tuân thủ chạy thật: khoá kỳ, chính sách kế toán có phiên bản + ngày hiệu lực, lưu trữ
 │   │   ├── projections/            bảng tra cứu dựng lại được (dòng bán…)
 │   │   ├── seeds/                  TT200, tài khoản ngầm định, lý do
 │   │   └── public.ts               API công khai DUY NHẤT: submit, cancel, get, query
@@ -22,7 +23,8 @@ bizcity-core/                       (repo open-ketoan sau khi tách)
 │   ├── permissions/                @bizcity/permissions   — registry quyền mở, vai trò, khoá API
 │   ├── audit/                      @bizcity/audit         — Evidence: nhật ký chỉ thêm, biên nhận
 │   ├── events/                     @bizcity/events        — outbox, dispatcher, subscriber, đồng hồ
-│   ├── actions/                    @bizcity/actions       — defineAction, idempotency, lỗi, HTTP/OpenAPI
+│   ├── actions/                    @bizcity/actions       — defineAction, idempotency, lỗi (bizcity_errors@1), HTTP/OpenAPI, MCP
+│   ├── observability/              @bizcity/observability — log có cấu trúc, request id / trace, /metrics (OBSERVABILITY.md)
 │   ├── documents/                  @bizcity/documents     — số, phiên bản, liên kết, đính kèm, luồng duyệt, ký
 │   ├── module-sdk/                 @bizcity/module-sdk    — defineModule, ctx; mặt tiền DUY NHẤT cho module
 │   ├── cli/                        @bizcity/cli           — bizcity doctor | migrate | module new | module check
@@ -35,13 +37,23 @@ bizcity-core/                       (repo open-ketoan sau khi tách)
 ├── adapters/
 │   ├── postgres/                   kết nối, RLS GUC, role CSDL theo module
 │   ├── cell/                       MCP server, channel gateway, gọi LLM/OCR/RAG (tuỳ chọn)
-│   └── wordpress/                  connector WooCommerce/ACC14 + bizcity/ledger-php-sdk
+│   ├── wordpress/                  connector WooCommerce/ACC14 + bizcity/ledger-php-sdk
+│   └── (tuỳ chọn, ADR-0007)        oidc (Keycloak…) · nats · redis · meilisearch · einvoice-* · vietqr
+├── infrastructure/                 cấu hình vận hành, KHÔNG phải code chạy trong Core (LAYOUT-7)
+│   └── monitoring/                 Prometheus, Alertmanager, Grafana (6 dashboard), Loki — compose phủ thêm
+├── presets/                        gói cài nhanh theo ngành, dữ liệu mẫu hư cấu (bizcity_preset@1)
 ├── apps/
 │   ├── server/                     lắp Kernel + Platform + module bật → Fastify
 │   └── web/                        vỏ React: đăng nhập, lưới ứng dụng, nạp web/ của module bật
 ├── templates/
 │   └── starter-module/             khuôn `bizcity module new` sinh ra
-├── contracts/                      *.schema.json máy đọc (sinh từ zod), bizcity-standard.json
+├── contracts/                      bản MÁY ĐỌC của ba lớp kiểm soát (ADR-0008); bản người đọc ở docs/contracts/
+│   ├── domain/                     bất biến, loại chứng từ, trạng thái (bizcity_domain@1)
+│   ├── commands/                   khai báo action / capability (bizcity_action@1), sinh từ zod
+│   ├── events/                     schema sự kiện theo type + version (bizcity_event@1), danh mục sinh tự động
+│   ├── compliance/                 ma trận tuân thủ, chính sách kế toán có phiên bản, lưu trữ, bằng chứng (bizcity_compliance@1)
+│   ├── extensions/                 manifest module, slot, hook (bizcity_module@1, bizcity_extension@1)
+│   └── bizcity-standard.json
 └── tests/
     ├── conformance/                bộ kiểm cài module (CONFORMANCE.md)
     └── kernel/                     624 phép thử hiện có + assertLedgerInvariants
@@ -70,6 +82,8 @@ Thư mục `docs/` giữ nguyên vị trí; `docs/contracts/*.md` là bản ngư
 | **LAYOUT-4** | `adapters/cell` là tuỳ chọn: xoá thư mục này đi, `apps/server` vẫn build và chạy đủ kế toán | CI job "no-cell" (P1) |
 | **LAYOUT-5** | Một gói = một chủ bảng. Bảng của gói nào thì chỉ gói đó ghi (Kernel: `ledger_*`, `accounting_events*`, `posting_log`, `debt_*`, `inventory_*`, `tax_invoice*`…) | CI grep `insertInto/updateTable/deleteFrom` + role CSDL (Phase 3) |
 | **LAYOUT-6** | `apps/*` chỉ lắp ráp, không chứa luật nghiệp vụ | review |
+| **LAYOUT-7** | `infrastructure/` chỉ chứa cấu hình vận hành (compose phủ thêm, Prometheus, Grafana, sau này Helm / Terraform). Core không import gì từ đó; bỏ cả thư mục thì Core vẫn chạy đủ ([ADR-0007](../adr/ADR-0007-goi-chia-se-va-ha-tang.md)) | review; `docker compose config` không cần `infrastructure/` |
+| **LAYOUT-8** | Mọi `adapters/*` là tuỳ chọn và có mặc định chạy được không cần dịch vụ ngoài (bộ nhớ trong tiến trình, PostgreSQL). PostgreSQL là hạ tầng bắt buộc duy nhất (ADR-0007 G-1) | review; CI job chạy không adapter |
 
 ## 3. Kernel vs module Kế toán
 

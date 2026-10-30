@@ -1,0 +1,199 @@
+# =============================================================================
+# Bộ giám sát TUỲ CHỌN cho Bizcity / open-ketoan — Prometheus + Alertmanager + Grafana + Loki.
+#
+# Đây là tệp GHÉP (override) với docker-compose.yml ở gốc kho. Chạy TỪ GỐC KHO:
+#
+#   docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d
+#   docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml down
+#
+# Vì ghép cùng dự án `ketoan`, các dịch vụ dưới đây nằm chung mạng mặc định với `api`, `db`
+# và gọi được http://api:4100/metrics, db:5432.
+#
+# Đường dẫn gắn ổ (volume) tương đối được tính theo thư mục của tệp -f ĐẦU TIÊN (gốc kho),
+# nên mọi đường dẫn đều bắt đầu bằng ./infrastructure/monitoring/...
+#
+# Cổng chỉ mở trên 127.0.0.1 — giám sát KHÔNG công khai ra Internet. Truy cập từ xa: đường hầm SSH
+# (ssh -L 3000:127.0.0.1:3000 may-chu) hoặc reverse proxy có xác thực.
+#
+#   Grafana       http://127.0.0.1:3000   (admin / GRAFANA_ADMIN_PASSWORD)
+#   Prometheus    http://127.0.0.1:9090
+#   Alertmanager  http://127.0.0.1:9093
+#
+# Xem infrastructure/monitoring/README.md.
+# =============================================================================
+
+services:
+  # --- Thu thập & lưu chỉ số --------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.53.4   # dòng LTS 2.53
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # Giữ chỉ số 15 ngày hoặc tối đa 10 GB, cái nào tới trước.
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --storage.tsdb.retention.size=10GB
+      # Cho phép nạp lại cấu hình: curl -X POST http://127.0.0.1:9090/-/reload
+      - --web.enable-lifecycle
+      - --web.external-url=http://127.0.0.1:9090
+    volumes:
+      # Cả thư mục prometheus/ (prometheus.yml, alerts.yml, secrets/metrics_token nếu có).
+      - ./infrastructure/monitoring/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - alertmanager
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  # --- Định tuyến cảnh báo ----------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.external-url=http://127.0.0.1:9093
+    volumes:
+      - ./infrastructure/monitoring/alertmanager:/etc/alertmanager:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  # --- Bảng điều khiển ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.4.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      # ĐỔI MẬT KHẨU NÀY: đặt GRAFANA_ADMIN_PASSWORD trong .env ở gốc kho. Giá trị mặc định chỉ để thử máy cục bộ.
+      # Lưu ý: mật khẩu chỉ áp dụng lần khởi tạo đầu (ổ grafana-data trống); đổi sau đó dùng
+      #   docker compose ... exec grafana grafana cli admin reset-admin-password <mật-khẩu-mới>
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-doi-mat-khau-ngay}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://127.0.0.1:3000}
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: Asia/Ho_Chi_Minh
+      GF_DEFAULT_LOCALE: vi-VN
+      TZ: Asia/Ho_Chi_Minh
+    volumes:
+      - ./infrastructure/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  # --- Lưu nhật ký ------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.3.2
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./infrastructure/monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    # Không mở cổng ra máy chủ: chỉ Grafana và Promtail (cùng mạng) gọi tới http://loki:3100.
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  # --- Gom nhật ký container → Loki ------------------------------------------
+  promtail:
+    image: grafana/promtail:3.3.2
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./infrastructure/monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      # Đọc danh sách container và nhật ký qua Docker API (chỉ đọc).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/var/lib/promtail
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  # --- Chỉ số PostgreSQL ------------------------------------------------------
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.16.0
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: db:5432/ketoan?sslmode=disable
+      # Bản thật: tạo vai trò chỉ-đọc riêng có quyền pg_monitor (xem README §6) rồi đặt
+      # PG_EXPORTER_USER / PG_EXPORTER_PASSWORD trong .env. Mặc định dùng vai trò sở hữu cho tiện thử.
+      DATA_SOURCE_USER: ${PG_EXPORTER_USER:-ketoan}
+      DATA_SOURCE_PASS: ${PG_EXPORTER_PASSWORD:-${DB_PASSWORD:-ketoan}}
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  # --- Chỉ số máy chủ (CPU, RAM, đĩa) -----------------------------------------
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run|var/lib/docker/.+)($|/)
+    pid: host
+    volumes:
+      # Docker Desktop (Windows/macOS): "máy chủ" là máy ảo của Docker, không phải ổ C:.
+      - /:/host:ro,rslave
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
+  # --- Chỉ số container (RAM, CPU từng dịch vụ) ------------------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=30s
+      # Chỉ giữ hai nhãn compose để tránh bùng số chuỗi (mỗi nhãn container là một nhãn chỉ số).
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service
+      - --disable_metrics=percpu,sched,tcp,udp,disk,diskIO,hugetlb,referenced_memory,cpu_topology,resctrl,process
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:
+  loki-data:
+  promtail-positions:

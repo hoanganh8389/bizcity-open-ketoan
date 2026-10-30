@@ -1,6 +1,7 @@
 {
   "name": "@ketoan/contracts",
   "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
   "private": true,
   "description": "Hợp đồng dữ liệu dùng chung giữa API, giao diện và hệ thống bên ngoài: khuôn chứng từ, kiểu trả về, mã lỗi.",
   "type": "module",

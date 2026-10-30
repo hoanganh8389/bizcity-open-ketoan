@@ -38,6 +38,13 @@ export function renderConsole(sb, results, { verbose = false } = {}) {
     for (const w of rm.orderWarnings) out.push(`  ▲ trái thứ tự: ${w}`);
     out.push('');
   }
+  if (sb.compliance) {
+    const cm = sb.compliance;
+    const icon = { pass: '✔', partial: '◐', missing: '✘', unknown: '?' };
+    out.push(`── MA TRẬN TUÂN THỦ (docs/standard/compliance-matrix.json) — ${cm.score}% · ${cm.counts.pass} đạt · ${cm.counts.partial} một phần · ${cm.counts.missing} thiếu${cm.counts.unknown ? ` · ${cm.counts.unknown} chưa đo` : ''}`);
+    for (const r of cm.rows) out.push(`  ${icon[r.status]} ${r.id.padEnd(4)} ${pad(r.requirement, 26)} ${String(r.progress).padStart(3)}%  ${pad(r.rule, 70)}`);
+    out.push('');
+  }
   out.push('── BẢNG ĐIỂM');
   out.push(`  Tuân chuẩn (conformance) ${fmt(s.conformance.score).padStart(5)}  ${s.conformance.grade}${delta(s.conformance.delta)}`);
   out.push(`  Sẵn sàng Standard v1     ${fmt(s.readiness.score).padStart(5)}  ${s.readiness.grade}${delta(s.readiness.delta)}`);
@@ -108,6 +115,7 @@ export function renderMarkdown(sb) {
     if (c.unmappedStd.length) L.push(`- STD chưa có mã CONF nào: ${c.unmappedStd.join(', ')}.`);
     L.push('');
   }
+  if (sb.compliance) L.push(...renderComplianceMarkdown(sb.compliance));
   if (sb.roadmap) L.push(...renderRoadmapMarkdown(sb.roadmap));
   L.push('## Từng check');
   L.push('');
@@ -166,6 +174,7 @@ ${rows(sb.byContract, [{ f: (g) => esc(g.contract) }, { num: 1, f: (g) => `${fmt
 ${sb.byModule.length ? `<h2>Theo phân hệ / add-in</h2><div class="wrap"><table><tr><th>Phân hệ</th><th class="num">Điểm</th><th class="num">Phát hiện</th><th class="num">Mới</th><th>Check vi phạm</th></tr>
 ${rows(sb.byModule, [{ f: (m) => esc(m.module) }, { num: 1, f: (m) => `${m.score}${bar(m.score)}` }, { num: 1, f: (m) => m.findings }, { num: 1, f: (m) => m.newFindings }, { f: (m) => esc(m.checks.join(', ')) }])}</table></div>` : ''}
 <h2>Sẵn sàng Standard v1</h2><p>Năng lực có sẵn <b>${sb.readiness.capabilities.available}/${sb.readiness.capabilities.total}</b>${sb.readiness.goldenCase ? ` · Ca chuẩn Hợp đồng <b>${sb.readiness.goldenCase.available}/${sb.readiness.goldenCase.required}</b>` : ''}</p>
+${sb.compliance ? renderComplianceHtml(sb.compliance, esc) : ''}
 ${sb.roadmap ? renderRoadmapHtml(sb.roadmap, esc) : ''}
 <h2>Từng check</h2><div class="wrap"><table><tr><th></th><th>Mã</th><th>Check</th><th>Cổng</th><th class="num">Điểm</th><th class="num">Phát hiện</th></tr>
 ${rows(sb.checks, [{ f: (c) => `<span class="s-${c.status}">${ICON[c.status]}</span>` }, { f: (c) => esc(c.id) }, { f: (c) => `${esc(c.title)}${c.notes.length ? `<br><small>${esc(c.notes.join('; '))}</small>` : ''}` }, { f: (c) => esc(c.gate) }, { num: 1, f: (c) => (c.status === 'planned' ? `${fmt(c.readiness)}%` : fmt(c.score)) }, { num: 1, f: (c) => `${c.findings}${c.new ? ` <b class="s-fail">(${c.new} mới)</b>` : ''}` }])}</table></div>
@@ -221,4 +230,28 @@ ${rm.next.length ? `<p><b>Việc kế tiếp:</b> ${rm.next.map((n) => esc(`${n.
 ${rm.orderWarnings.map((w) => `<p class="s-warn">▲ ${esc(w)}</p>`).join('')}
 <h2>Ma trận mảng × Phase</h2><div class="wrap"><table><tr><th>Mảng</th>${rm.phases.map((p) => `<th class="num">P${esc(p.id)}</th>`).join('')}</tr>
 ${rm.matrix.map((r) => `<tr><td>${esc(r.label)}</td>${r.cells.map(cell).join('')}</tr>`).join('')}</table></div>`;
+}
+
+const CM_LABEL = { pass: '✔ đạt', partial: '◐ một phần', missing: '✘ thiếu', unknown: '? chưa đo' };
+const sigIcon = (s) => (s.ok === true ? '✔' : s.ok === false ? '✘' : '?');
+
+/** Ma trận tuân thủ (bizcity_compliance@1 §2) — Markdown. */
+export function renderComplianceMarkdown(cm) {
+  const L = [];
+  L.push('## Ma trận tuân thủ bắt buộc');
+  L.push('');
+  L.push(`> Tính tự động từ [compliance-matrix.json](../../../../docs/standard/compliance-matrix.json) ([bizcity_compliance@1](../../../../docs/contracts/BIZCITY-COMPLIANCE-v1.md)). **${cm.score}%** · ${cm.counts.pass} đạt · ${cm.counts.partial} một phần · ${cm.counts.missing} thiếu. Tín hiệu DG-* chỉ đo khi chạy kèm CSDL (lane diagnostics).`);
+  L.push('');
+  L.push('| | Mã | Yêu cầu | Rủi ro nếu thiết kế sai | Quy tắc bắt buộc | Tín hiệu |');
+  L.push('|---|---|---|---|---|---|');
+  for (const r of cm.rows) {
+    L.push(`| ${CM_LABEL[r.status]} | ${r.id} (${r.std}) | ${r.requirement} | ${r.risk} | ${r.rule} | ${r.signals.map((s) => `${sigIcon(s)} ${s.text}`).join('<br>')} |`);
+  }
+  L.push('');
+  return L;
+}
+
+function renderComplianceHtml(cm, esc) {
+  const rows = cm.rows.map((r) => `<tr><td>${esc(CM_LABEL[r.status])}</td><td>${esc(r.id)}</td><td>${esc(r.requirement)}</td><td>${esc(r.risk)}</td><td>${esc(r.rule)}</td><td class="num">${r.progress}%</td><td><small>${r.signals.map((s) => `${sigIcon(s)} ${esc(s.text)}`).join('<br>')}</small></td></tr>`).join('\n');
+  return `<h2>Ma trận tuân thủ bắt buộc — ${cm.score}%</h2><div class="wrap"><table><tr><th></th><th>Mã</th><th>Yêu cầu</th><th>Rủi ro</th><th>Quy tắc</th><th class="num">Đạt</th><th>Tín hiệu</th></tr>${rows}</table></div>`;
 }

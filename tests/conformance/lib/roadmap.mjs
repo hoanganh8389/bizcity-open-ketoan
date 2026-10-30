@@ -6,7 +6,11 @@
  */
 export const ROADMAP_FILE = 'docs/standard/roadmap.json';
 
-export function evaluateRoadmap({ roadmap, results, standard, coverage, repo }) {
+/**
+ * Bộ đánh giá tín hiệu dùng chung cho lộ trình (roadmap.json) và ma trận tuân thủ (compliance-matrix.json, lib/compliance.mjs):
+ * mỗi tín hiệu → true / false / null (chưa biết), kèm câu mô tả.
+ */
+export function signalEvaluator({ results, standard, coverage, repo }) {
   const byId = new Map(results.map((r) => [r.id, r]));
   const caps = new Map(standard.capabilities.map((c) => [c.id, c.status]));
   const pct = (fam) => {
@@ -57,6 +61,11 @@ export function evaluateRoadmap({ roadmap, results, standard, coverage, repo }) 
     s.standardStable ? 'Standard bỏ -draft' :
     s.manual ? `tay: ${s.manual}${s.doneAt ? ` (${s.by ?? '?'}, ${s.doneAt})` : ''}` : '?');
 
+  return { evalSignal, describe };
+}
+
+export function evaluateRoadmap({ roadmap, results, standard, coverage, repo }) {
+  const { evalSignal, describe } = signalEvaluator({ results, standard, coverage, repo });
   const items = roadmap.items.map((it) => {
     const signals = it.done.map((s) => ({ text: describe(s), ok: evalSignal(s), manual: Boolean(s.manual) }));
     const t = signals.filter((s) => s.ok === true).length;

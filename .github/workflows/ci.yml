@@ -71,3 +71,46 @@ jobs:
           name: test-report
           path: apps/api/test-report.json
           retention-days: 30
+
+  # R-DB-15: migration của PR phải chạy được trên CSDL CÓ DỮ LIỆU của bản phát hành trước (job "test" đã chạy trên CSDL sạch).
+  # Mốc = tag v* mới nhất. Chưa có bản phát hành nào thì bỏ qua (ghi rõ trong log) — mọi commit trước ccfc341 không cài sạch được.
+  migrate-upgrade:
+    name: Migration nâng cấp từ bản phát hành trước
+    runs-on: ubuntu-latest
+    needs: [guard]
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ketoan
+          POSTGRES_USER: ketoan
+          POSTGRES_PASSWORD: ketoan
+          TZ: Asia/Ho_Chi_Minh
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ketoan -d ketoan"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TZ: Asia/Ho_Chi_Minh
+      DB_URL_BASE: postgres://ketoan:ketoan@localhost:5432
+      PSQL: psql postgres://ketoan:ketoan@localhost:5432/ketoan_nang_cap
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Tìm bản phát hành trước
+        id: base
+        run: echo "ref=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+      - name: Chưa có bản phát hành — bỏ qua
+        if: steps.base.outputs.ref == ''
+        run: |
+          echo "::notice::Chưa có tag v* nào — kiểm nâng cấp bắt đầu chạy từ bản phát hành đầu tiên (RELEASE.md)."
+      - if: steps.base.outputs.ref != ''
+        run: npm ci && npm run build -w @ketoan/contracts
+      - name: Nâng cấp ${{ steps.base.outputs.ref }} → PR, kiểm toàn vẹn
+        if: steps.base.outputs.ref != ''
+        run: bash scripts/kiem-nang-cap.sh "${{ steps.base.outputs.ref }}"

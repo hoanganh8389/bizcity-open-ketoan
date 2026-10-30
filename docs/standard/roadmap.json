@@ -76,10 +76,12 @@
                { "fileContains": { "file": "apps/api/src/modules/system/system.routes.ts", "text": "/api/v1/system/health/ready" } },
                { "label": "cùng mã kiểm với lane diagnostics (R-DIAG-9)", "check": "SC-DIAG-1" },
                { "label": "khoá kỳ bị chặn khi L3 có error (R-DIAG-4)", "fileContains": { "file": "apps/api/src/modules/periods/period.routes.ts", "text": "guardLock" } }] },
-    { "id": "2.11", "phase": "2", "title": "platform/mcp đọc: POST /mcp, công cụ ketoan.* (2b)", "areas": ["mcp-cell"],
+    { "id": "2.11", "phase": "2", "title": "platform/mcp đọc: POST /mcp, công cụ accounting.* (2b)", "areas": ["mcp-cell"],
       "done": [{ "capability": "mcp.read" }] },
     { "id": "2.12", "phase": "2", "title": "MCP sinh từ registry action, xác nhận needs_confirmation", "areas": ["mcp-cell", "action"], "after": ["2.5"],
       "done": [{ "capability": "mcp.tools" }] },
+    { "id": "2.13", "phase": "2", "title": "Quan sát + mã lỗi chuẩn: request id, log, /metrics, bizcity_errors@1, bộ giám sát", "areas": ["diagnostics", "quality"],
+      "done": [{ "check": "SC-ERR-1" }, { "fileContains": { "file": "apps/api/src/core/metrics.ts", "text": "bizcity_http_requests_total" } }, { "file": "infrastructure/monitoring/prometheus/alerts.yml" }] },
 
     { "id": "3.1", "phase": "3", "title": "@bizcity/module-sdk: defineModule, ctx", "areas": ["module"], "after": ["2.5", "2.6"],
       "done": [{ "file": "packages/module-sdk/package.json" }] },
@@ -118,6 +120,8 @@
       "done": [{ "manual": "3/3 lần Claude sinh module hop-dong qua module check, 0 sửa tay" }] },
     { "id": "4.6", "phase": "4", "title": "Standard 1.0.0 (bỏ -draft)", "areas": ["release"],
       "done": [{ "standardStable": true }] },
+    { "id": "4.7", "phase": "4", "title": "Preset cài nhanh theo ngành (bizcity_preset@1)", "areas": ["template", "quality"],
+      "done": [{ "check": "SC-PRESET-1" }, { "file": "presets/thuong-mai-ban-le/preset.json" }, { "manual": "≥ 3 preset: thương mại, dịch vụ, sản xuất" }] },
 
     { "id": "5.1", "phase": "5", "title": "Module CRM do người ngoài viết chỉ bằng SDK", "areas": ["module"], "after": ["4.5"],
       "done": [{ "file": "modules/crm/bizcity.module.json" }] },
@@ -136,6 +140,8 @@
     { "id": "5.7", "phase": "5", "title": "2 developer ngoài nhóm cài và viết module", "areas": ["module"],
       "done": [{ "glob": "^docs/audits/.*phan-hoi-developer.*\\.md$" }] },
     { "id": "5.8", "phase": "5", "title": "Registry gói định khoản công khai; OCR hoá đơn qua Cell", "areas": ["template", "mcp-cell"],
-      "done": [{ "capability": "templates.marketplace" }, { "capability": "ai.ocr-invoice" }] }
+      "done": [{ "capability": "templates.marketplace" }, { "capability": "ai.ocr-invoice" }] },
+    { "id": "5.9", "phase": "5", "title": "Adapter tuỳ chọn khi nhiều máy: oidc, nats, redis, meilisearch", "areas": ["event", "security"], "after": ["3.5"],
+      "done": [{ "glob": "^adapters/(oidc|nats|redis|meilisearch)/" }] }
   ]
 }

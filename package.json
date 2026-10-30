@@ -2,6 +2,7 @@
   "name": "tgs-ketoan",
   "private": true,
   "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
   "description": "Phần mềm kế toán doanh nghiệp: sổ cái trung tâm, nhiều đơn vị, nhận chứng từ qua API, mở rộng bằng add-in.",
   "workspaces": [
     "packages/*",

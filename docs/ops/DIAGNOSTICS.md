@@ -43,6 +43,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
+| `EVIDENCE_CHAIN` | L3 | Chuỗi băm `audit_logs` của đơn vị liền mạch: băm tính lại khớp, nối đúng dòng trước, không hở số (bizcity_evidence@1) | error | có | DG-EVD-1 |
 | `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |
 | `DEBT_MATCH_LEDGER` | L3 | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error | chưa | DG-PLAN-1 (giữ chỗ) |
 | `TAX_BOOK_MATCH` | L3 | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn | chưa | DG-PLAN-2 |

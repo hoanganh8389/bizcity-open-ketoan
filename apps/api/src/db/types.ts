@@ -116,6 +116,49 @@ export interface AuditLogsTable {
   before_data: JsonNullable;
   after_data: JsonNullable;
   created_at: TimestampDefault;
+  // Bằng chứng (migration 0036, bizcity_evidence@1 §5). chain_seq / prev_hash / hash do trigger audit_log_chain điền.
+  actor_kind: Generated<'user' | 'apikey' | 'ai' | 'system'>;
+  actor_via: ColumnType<string | null, string | null | undefined, never>;
+  on_behalf_of: ColumnType<string | null, string | null | undefined, never>;
+  module_id: ColumnType<string | null, string | null | undefined, never>;
+  module_version: ColumnType<string | null, string | null | undefined, never>;
+  subject: ColumnType<string | null, string | null | undefined, never>;
+  request_id: ColumnType<string | null, string | null | undefined, never>;
+  correlation_id: ColumnType<string | null, string | null | undefined, never>;
+  idempotency_key: ColumnType<string | null, string | null | undefined, never>;
+  input_hash: ColumnType<string | null, string | null | undefined, never>;
+  result_ok: Generated<boolean>;
+  result_code: ColumnType<string | null, string | null | undefined, never>;
+  dry_run: Generated<boolean>;
+  chain_seq: ColumnType<string | null, never, never>;
+  prev_hash: ColumnType<string | null, never, never>;
+  hash: ColumnType<string | null, never, never>;
+}
+
+/** Idempotency của action ghi (migration 0035, bizcity_action@1 §8). */
+export interface ActionRequestsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  action_id: string;
+  idem_key: string;
+  request_hash: string;
+  status_code: Generated<number>;
+  response: JsonNullable<unknown>;
+  actor: string;
+  created_at: TimestampDefault;
+}
+
+/** Token xác nhận trước khi ghi qua MCP (migration 0037, bizcity_mcp@1 STD-MCP-4). */
+export interface McpConfirmTokensTable {
+  jti: string;
+  tenant_id: string;
+  tool: string;
+  actor: string;
+  args_hash: string;
+  expires_at: ColumnType<Date, Date | string, Date | string>;
+  used_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  idempotency_key: string | null;
+  created_at: TimestampDefault;
 }
 
 /** Kết quả tự chẩn đoán, chỉ thêm (migration 0034, R-DIAG-5). */
@@ -1373,6 +1416,8 @@ export interface Database {
   warehouses: WarehousesTable;
   audit_logs: AuditLogsTable;
   diagnostic_runs: DiagnosticRunsTable;
+  action_requests: ActionRequestsTable;
+  mcp_confirm_tokens: McpConfirmTokensTable;
   accounts: AccountsTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;

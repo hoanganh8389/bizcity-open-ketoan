@@ -28,7 +28,7 @@ Cộng số liệu bán hàng theo một góc nhìn. Chọn góc nhìn ở hàng
 ## Lưu ý
 
 - Chọn thẻ nào thì dòng **Tổng cộng** cũng ra cùng một số.
-- Doanh thu thuần ở đây khớp với sổ cái: phát sinh Có tài khoản 511 trừ phát sinh Nợ tài khoản 521 trên [Bảng cân đối số phát sinh](can-doi-phat-sinh) cùng kỳ. Lệch là có chứng từ đang lỗi chưa ghi sổ: xem ở Danh sách chứng từ, lọc trạng thái "Lỗi".
+- Doanh thu thuần ở đây khớp với sổ cái: phát sinh Có tài khoản 511 trừ phát sinh Nợ tài khoản 521 trên [Bảng cân đối số phát sinh](can-doi-phat-sinh.md) cùng kỳ. Lệch là có chứng từ đang lỗi chưa ghi sổ: xem ở Danh sách chứng từ, lọc trạng thái "Lỗi".
 - Ô **Phạm vi** = "Có hoá đơn" cho số khớp với Bảng kê hoá đơn bán ra.
 - Muốn xem từng dòng hàng tạo nên một con số, mở **Báo cáo bán hàng (BH01)** với cùng điều kiện lọc.
 - Doanh thu trừ giá vốn (lãi gộp) xem ở **Lãi gộp (BH04)**.

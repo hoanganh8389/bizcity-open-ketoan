@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- Giấy phép **GPL-2.0-or-later** (`LICENSE`, cùng giấy phép với `bizcity-twin-ai`) và chính sách nhãn hiệu `TRADEMARK.md`. Trước đó repository chưa có giấy phép.
 - Bộ chuẩn framework: CANON, luật `R-*`, hợp đồng `bizcity_*@N`, Bizcity Framework Standard v1 (7 hợp đồng module), ADR-0001..0006.
 - Bộ kiểm chuẩn `tests/conformance/` gồm hai lane chạy song song:
   - selfcheck: tĩnh, không cần CSDL;
@@ -46,8 +47,66 @@ Mỗi bản ghi đủ sáu mục:
   - mã lỗi mới `NOT_READY` (503).
 - `GET /api/v1/system/capabilities`: bảng năng lực Bizcity Standard của bản đang chạy (PHASES 2.9).
 - Test: `assertLedgerInvariants()` chạy sau mọi tệp test (PHASES 2.2).
+- Runtime action `defineAction` (PHASES 2.5, `bizcity_action@1`):
+  - quyền, kiểm input, giao dịch, bằng chứng tự động;
+  - **chống gửi lặp** bằng header `Idempotency-Key` (bảng `action_requests`, migration `0035_action_requests.sql`);
+  - chạy thử `?dryRun=1`;
+  - mã lỗi mới `IDEMPOTENCY_CONFLICT`, `CAPABILITY_MISSING`, `MODULE_DISABLED`, `RATE_LIMITED`;
+  - `GET /system/capabilities` liệt kê action.
+- Bằng chứng chỉ thêm, có chuỗi băm (PHASES 2.6, `bizcity_evidence@1`):
+  - migration `0036_bang_chung.sql`: `audit_logs` thêm cột bằng chứng; mọi dòng mới (kể cả nhật ký cũ do service ghi) vào chuỗi băm theo đơn vị;
+  - **không sửa, xoá, TRUNCATE** được nhật ký thao tác;
+  - action ghi trả biên nhận `meta.receipt`, ghi bằng chứng cả khi bị từ chối; `GET /api/v1/evidence/:id` kiểm lại;
+  - tự chẩn đoán `EVIDENCE_CHAIN` phát hiện dòng bị sửa ngầm.
+- **MCP cho trợ lý AI** (PHASES 2.11, 2.12, `bizcity_mcp@1`):
+  - `POST /mcp`: Claude, ChatGPT hoặc agent khác đọc cân đối phát sinh, số dư tiền, công nợ theo đối tượng của đơn vị;
+  - công cụ sinh tự động từ action, chỉ hiện công cụ người gọi có quyền;
+  - ghi qua AI **luôn phải xem trước rồi người dùng xác nhận** (`confirm_token` một lần, 15 phút; migration `0037_mcp_xac_nhan.sql`);
+  - bằng chứng ghi rõ "AI làm thay người dùng nào, qua kênh nào".
+- **Tuyên bố tối thượng và 7 nguyên tắc kiến trúc** (Johnny Chu – Chu Hoàng Anh):
+  - tuyên bố: SQL minh bạch, Accounting Core ổn định, cộng đồng tự do phát triển module nhưng không được thay đổi sự thật kế toán;
+  - nguyên tắc AP-1..AP-7 khoá trong `bizcity-standard.json#principles`. Mỗi nguyên tắc trỏ tới check thực thi (SC-CMP-2). AP-6 là nợ đã biết, chờ outbox.
+- **Ba lớp kiểm soát** Domain / Event / Compliance:
+  - hợp đồng mới `bizcity_compliance@1`: 9 yêu cầu STD-CMP + ma trận pháp lý Việt Nam;
+  - **ma trận tuân thủ tính tự động** trên bảng điểm từ `docs/standard/compliance-matrix.json` (SC-CMP-1). Ngày 2026-10-30: 59% (3 đạt, 4 một phần, 2 thiếu).
+- **ADR-0007 chấp nhận: không dùng Prisma.** ADR-0008 chốt cây thư mục lean: `packages/kernel` một gói, `contracts/` theo ba lớp kiểm soát, sự kiện là gói Platform.
+- **Migration** (R-DB-14..19):
+  - SQL là nguồn sự thật;
+  - migration đã phát hành bất biến (checksum);
+  - `scripts/kiem-nang-cap.sh` + job CI `migrate-upgrade`: thử migration trên CSDL có dữ liệu sổ của bản phát hành trước;
+  - migration do AI sinh không chạy production khi chưa kiểm + duyệt.
+- **Bản công bố kiến trúc** (`docs/CONG-BO-KIEN-TRUC.md`, thiết kế: Johnny Chu – Chu Hoàng Anh):
+  - 4 lớp hợp đồng: Domain, Capability, MCP Tool, Extension;
+  - trình tự một lệnh ghi; đối chiếu mô hình 10 bước; mức ưu tiên P0–P3;
+  - luật bắt buộc và checklist nhận việc 3 giai đoạn (G1–G3), kèm mẫu issue "Nhận việc".
+- **Domain Contract** `bizcity_domain@1`: 22 bất biến kế toán (STD-DOM), mỗi bất biến ghi cách được bảo vệ; đổi = K3 + ADR.
+- **Capability Contract**:
+  - action ghi phải khai `sideEffects`;
+  - `GET /api/v1/system/capabilities` công bố input / output schema, quyền, tác dụng phụ, idempotency, loại bằng chứng của từng action (STD-ACT-9).
+- **MCP**:
+  - công cụ của Core kế toán đổi miền `ketoan.*` → `accounting.*`;
+  - thêm `accounting.balance.get` (số dư tài khoản tại một ngày, đọc thẳng sổ).
+- **RULE-INFRASTRUCTURE**:
+  - R-CACHE: không cache dữ liệu sổ, đọc nhất quán sau khi ghi;
+  - R-OUTBOX: sự kiện cùng giao dịch, consumer idempotent;
+  - R-BAK: sao lưu, PITR, kiểm khôi phục.
+- `scripts/kiem-khoi-phuc.sh`: khôi phục bản sao lưu vào CSDL tạm, chạy kiểm toàn vẹn, so số dòng, ghi nhật ký (R-BAK-3).
+- **Chuẩn hoá theo ADR-0007** (học từ bộ 27 gói tham chiếu, giữ sổ cái làm lõi, PostgreSQL là hạ tầng bắt buộc duy nhất):
+  - **mã lỗi** `bizcity_errors@1`: danh mục máy đọc `ERROR_CATALOG` (HTTP, thử lại, thông báo, gợi ý), luật R-ERR, `details.reason`. Phản hồi lỗi có `error.requestId`;
+  - **quan sát**:
+    - mọi phản hồi có `X-Request-Id`; đọc `traceparent`;
+    - log JSON một dòng mỗi yêu cầu (`tenant`, `actor`, `route`, `ms`, `errCode`);
+    - `GET /metrics` Prometheus (HTTP, CSDL, action, MCP, sổ cái, tự chẩn đoán), có `METRICS_TOKEN` tuỳ chọn;
+  - **bộ giám sát tuỳ chọn** `infrastructure/monitoring/`: Prometheus, Alertmanager, Grafana (6 dashboard), Loki + Promtail, exporter; 8 cảnh báo, trong đó có `LedgerIntegrityError`, `PostingBacklog`;
+  - **cài nhanh** `bizcity_preset@1`: preset `thuong-mai-ban-le` + `scripts/cai-preset.mjs` (dữ liệu mẫu hư cấu, nạp qua API);
+  - **tài liệu**: sơ đồ kiến trúc `docs/architecture/`, `CONTRIBUTING.md`, mẫu báo lỗi `.github/ISSUE_TEMPLATE/bao-loi.yml`, README mới, LAYOUT-7 / LAYOUT-8;
+  - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
+  - `POST /api/v1/payment-requests` và `…/:id/pay` **bắt buộc** header `Idempotency-Key`. Giao diện tự gửi: bấm đúp "Ghi" / "Chi" không còn tạo yêu cầu hay phiếu chi trùng;
+  - `…/:id/pay?dryRun=1` xem trước phiếu chi rồi huỷ;
+  - nhật ký thao tác ghi theo mã action (`quy.payment-request.create`…), thay cho `payment_request.create`.
 - **Khoá kỳ bị chặn khi sổ trong kỳ có lỗi toàn vẹn** (R-DIAG-4):
   - lỗi gồm Nợ ≠ Có, số dư ngày lệch, đảo sai, bút toán mồ côi, sự việc lệch phiên bản;
   - muốn vẫn khoá: ghi lý do chấp nhận (ít nhất 10 ký tự), lý do lưu vào nhật ký khoá;
@@ -58,6 +117,11 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
+  - mọi bản trước commit `ccfc341` (gồm `main` 23a834c) **không cài mới được trên CSDL sạch**: code dùng `users.session_version`, `products.parent_manual` khi chưa có migration;
+  - nhánh này sửa bằng migration 0029, 0033 và chặn tái phát bằng SC-DATA-7;
+  - bản phát hành đầu tiên từ nhánh này là mốc nâng cấp đầu tiên dùng được.
+- Lỗi do trigger bảo vệ sổ / bằng chứng ném ra (sửa, xoá bút toán; bút toán không cân) trước đây trả **500 Lỗi hệ thống**; nay trả `CONFLICT` (reason `LEDGER_APPEND_ONLY`) hoặc `UNBALANCED_ENTRY` kèm câu tiếng Việt của trigger (R-ERR-8).
 - Migration `0033_ma_hang_cha_sua_tay.sql`: cột `products.parent_manual` code đã dùng nhưng chưa có migration — thêm / sửa mặt hàng (và Mua hàng, ĐVT, tồn max dùng tới) báo "column parent_manual does not exist".
 - Vé đăng nhập cấp trước khi có cơ chế thu hồi phiên (không ghi `sv`) bị từ chối ngay: code coi thiếu `sv` = 1 trong khi `users.session_version` mặc định 0 (migration 0029). Nay thiếu `sv` = 0, dùng được tới lần thu hồi đầu như thiết kế.
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
@@ -69,6 +133,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Khuyên làm trên bản cài thật: đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` trong `.env` rồi `docker compose up -d` (DEPLOY D-9). Không đặt thì mọi thứ chạy như cũ.
 
 ### Bảo mật

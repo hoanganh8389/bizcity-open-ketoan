@@ -11,7 +11,7 @@
 | Người dùng | `Authorization: Bearer <jwt>` (hạn `JWT_TTL_HOURS`, mặc định 12 giờ) |
 | Hệ thống | `X-Api-Key: <khoá>` — khoá gắn một đơn vị, có phạm vi (R-TEN-4) |
 | Kiểu | JSON UTF-8 |
-| Header tuỳ chọn | `X-Bizcity-Contract: <mã@major>` (Giai đoạn 2), `X-Request-Id` (truy vết) |
+| Header tuỳ chọn | `X-Bizcity-Contract: <mã@major>` (Giai đoạn 2), `X-Request-Id` (truy vết), `Idempotency-Key` (8–128 ký tự; **bắt buộc** với action ghi khai `idempotency: required`, vd lập / chi yêu cầu thanh toán — [ACTION §8](BIZCITY-ACTION-v1.md)) |
 
 ## 2. Khuôn phản hồi
 
@@ -33,6 +33,10 @@
 | `POSTING_FAILED` | 422 | Thiếu cấu hình định khoản | Không cần gửi lại — kế toán sửa rồi định khoản lại |
 | `UNBALANCED_ENTRY` | 422 | Bút toán không cân (lỗi luật) | Báo nhóm Lõi |
 | `INTERNAL_ERROR` | 500 | Lỗi hệ thống | Thử lại sau, có giới hạn |
+| `IDEMPOTENCY_CONFLICT` | 409 | Cùng `Idempotency-Key` cho cùng action nhưng khác nội dung ([ACTION §8](BIZCITY-ACTION-v1.md)) | Sinh khoá mới cho thao tác mới; gửi lại thì giữ nguyên khoá **và** nội dung |
+| `CAPABILITY_MISSING` | 501 | Module cần năng lực Core chưa có (`planned`) | Nâng Core hoặc tắt module |
+| `MODULE_DISABLED` | 403 | Module chưa bật cho đơn vị | Bật module |
+| `RATE_LIMITED` | 429 | Quá hạn mức gọi (khoá API, AI) | Chờ rồi gửi lại, giãn nhịp |
 | `NOT_READY` | 503 | Bản cài chưa sẵn sàng: còn migration chưa áp, mất trigger bảo vệ sổ, CSDL chỉ đọc (`GET /system/health/ready`, L1) | Bộ cân bằng tải ngừng gửi việc; vận hành chạy `db-migrate` |
 
 Thêm mã = thay đổi tương thích; đổi nghĩa mã = phá vỡ.
@@ -59,6 +63,8 @@ Thêm mã = thay đổi tương thích; đổi nghĩa mã = phá vỡ.
 | Hệ thống | `GET /system/health`, `GET /system/health/ready` (L1; 503 `NOT_READY` khi chưa sẵn sàng) | công khai |
 | Tự chẩn đoán | `GET /system/diagnostics` (L3 toàn vẹn sổ, [DIAGNOSTICS.md §2](../ops/DIAGNOSTICS.md)) | `reports:read` |
 | Năng lực | `GET /system/capabilities` (bảng năng lực Standard của bản đang chạy) | mọi khoá / phiên đăng nhập |
+| MCP | `POST /mcp` (JSON-RPC 2.0 — [bizcity_mcp@1](BIZCITY-MCP-v1.md)); đi qua nginx của container `web` | phiên / khoá API; công cụ lọc theo quyền |
+| Bằng chứng | `GET /evidence/:id` (bản ghi + kiểm băm, nối chuỗi — kiểm biên nhận `meta.receipt` của action ghi) | `documents:read` |
 
 Mọi endpoint khác phục vụ giao diện nội bộ và **có thể đổi không báo** (R-API-8).
 

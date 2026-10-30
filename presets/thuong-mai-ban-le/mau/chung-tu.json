@@ -1,0 +1,49 @@
+[
+  {
+    "docType": "purchase",
+    "docKey": "preset:thuong-mai-ban-le:purchase:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-NM-0001",
+    "docDate": "@today-2",
+    "description": "Nhập hàng mẫu đầu kỳ (hư cấu)",
+    "partner": { "code": "MAU-NCC-01", "name": "Công ty TNHH Nhà Cung Cấp Mẫu Một" },
+    "invoice": { "no": "0000001", "serial": "C26MAU", "form": "1", "date": "@today-2", "status": "valid" },
+    "lines": [
+      { "lineKey": "1", "sku": "MAU-SP-01", "name": "Nước suối mẫu 500ml", "unit": "Chai", "qty": 100, "unitPrice": 4000, "amountBeforeTax": 400000, "taxCode": "V08", "taxAmount": 32000 },
+      { "lineKey": "2", "sku": "MAU-SP-02", "name": "Bánh quy mẫu 200g", "unit": "Gói", "qty": 50, "unitPrice": 10000, "amountBeforeTax": 500000, "taxCode": "V08", "taxAmount": 40000 }
+    ],
+    "payments": [],
+    "totals": { "beforeTax": 900000, "tax": 72000, "total": 972000 }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0001",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0001",
+    "docDate": "@today-1",
+    "description": "Bán lẻ tại quầy (hư cấu)",
+    "lines": [
+      { "lineKey": "1", "sku": "MAU-SP-01", "name": "Nước suối mẫu 500ml", "unit": "Chai", "qty": 10, "unitPrice": 5000, "amountBeforeTax": 50000, "taxCode": "R08", "taxAmount": 4000 }
+    ],
+    "payments": [{ "methodCode": "TM", "amount": 54000 }],
+    "totals": { "beforeTax": 50000, "tax": 4000, "total": 54000 }
+  },
+  {
+    "docType": "sale",
+    "docKey": "preset:thuong-mai-ban-le:sale:0002",
+    "version": 1,
+    "branchCode": "MAU01",
+    "docNo": "MAU-HD-0002",
+    "docDate": "@today",
+    "description": "Bán cho doanh nghiệp, ghi công nợ (hư cấu)",
+    "partner": { "code": "MAU-KH-01", "name": "Khách hàng Mẫu (doanh nghiệp)" },
+    "invoice": { "no": "0000002", "serial": "C26MAU", "form": "1", "date": "@today", "status": "valid" },
+    "lines": [
+      { "lineKey": "1", "sku": "MAU-SP-02", "name": "Bánh quy mẫu 200g", "unit": "Gói", "qty": 20, "unitPrice": 15000, "amountBeforeTax": 300000, "taxCode": "R08", "taxAmount": 24000 }
+    ],
+    "payments": [],
+    "totals": { "beforeTax": 300000, "tax": 24000, "total": 324000 }
+  }
+]

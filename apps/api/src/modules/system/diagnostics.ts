@@ -2,7 +2,8 @@
 /**
  * TỰ CHẨN ĐOÁN (RULE-SELF-DIAGNOSTICS, docs/ops/DIAGNOSTICS.md §2) — phần Platform: kiểu một kiểm, sổ đăng ký, bộ chạy, lưu kết quả.
  * Platform không biết kế toán (LAYOUT-1): kiểm sổ (LEDGER_*, EVENT_*, LEDGER_TRIGGERS) do Kernel khai ở
- * modules/ledger/ledger.diagnostics.ts và được đăng ký lúc lắp ráp (app.ts). Ở đây chỉ có kiểm L1 chung: migration, CSDL ghi được.
+ * modules/ledger/ledger.diagnostics.ts và được đăng ký lúc lắp ráp (app.ts). Ở đây có kiểm chung của Platform: L1 (migration, CSDL
+ * ghi được) và chuỗi băm bằng chứng (L3, EVIDENCE_CHAIN).
  *
  *   L1 Sẵn sàng   GET /api/v1/system/health/ready (công khai, chỉ trả mã + đạt / không — không lộ số liệu)
  *   L3 Toàn vẹn   GET /api/v1/system/diagnostics; chạy trước khi khoá kỳ (R-DIAG-4)
@@ -149,6 +150,28 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
     async run(trx) {
       const r = await sql<{ recovery: boolean }>`SELECT pg_is_in_recovery() AS recovery`.execute(trx);
       return { examined: 1, count: r.rows[0]?.recovery ? 1 : 0, sample: r.rows[0]?.recovery ? ['pg_is_in_recovery'] : [] };
+    },
+  },
+  {
+    // bizcity_evidence@1 STD-EVD-2: chuỗi băm theo đơn vị (migration 0036). Có khoảng ngày thì chỉ băm lại dòng trong khoảng
+    // (phần tốn nhất), nhưng nối chuỗi vẫn xét trên cả chuỗi.
+    code: 'EVIDENCE_CHAIN', layer: 'L3', level: 'error', scoped: true,
+    title: 'Chuỗi băm bằng chứng liền mạch: mỗi dòng băm đúng, nối đúng dòng trước, không hở số thứ tự',
+    fix: 'Có dòng nhật ký thao tác bị sửa / xoá ngoài ứng dụng (vượt trigger chỉ thêm). Không sửa lại; khoanh vùng theo mã dòng, đối chiếu bản sao lưu, báo nhóm Lõi (RULE-SECURITY).',
+    run: (trx, s) => {
+      const range = sql.join([
+        sql`true`,
+        ...(s.from ? [sql`a.created_at >= ${s.from}::date`] : []),
+        ...(s.to ? [sql`a.created_at < ${s.to}::date + 1`] : []),
+      ], sql` AND `);
+      return sqlCounts(trx,
+        sql`SELECT count(*)::int AS n FROM audit_logs a WHERE a.tenant_id = ${s.tenantId} AND a.chain_seq IS NOT NULL AND ${range}`,
+        sql`WITH c AS (SELECT id, chain_seq, lag(hash) OVER w AS lag_hash, lag(chain_seq) OVER w AS lag_seq
+                         FROM audit_logs WHERE tenant_id = ${s.tenantId} AND chain_seq IS NOT NULL WINDOW w AS (ORDER BY chain_seq))
+            SELECT a.id::text AS key, count(*) OVER ()::int AS total FROM c JOIN audit_logs a ON a.id = c.id
+             WHERE ${range}
+               AND (a.hash IS DISTINCT FROM audit_log_hash(a) OR a.prev_hash IS DISTINCT FROM c.lag_hash OR c.chain_seq <> coalesce(c.lag_seq, 0) + 1)
+             ORDER BY c.chain_seq LIMIT 20`);
     },
   },
 ];

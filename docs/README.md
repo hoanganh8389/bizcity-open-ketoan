@@ -22,7 +22,7 @@ Từ 2026-10-29 repo còn là **Bizcity Core Framework**: hạ tầng ứng dụ
 
 | Bạn là | Đọc theo thứ tự |
 |---|---|
-| **Mọi người** (bắt buộc) | [00-CANON.md](00-CANON.md) → [framework/00-TONG-QUAN.md](framework/00-TONG-QUAN.md) |
+| **Mọi người** (bắt buộc) | [CONG-BO-KIEN-TRUC.md](CONG-BO-KIEN-TRUC.md) (công bố kiến trúc) → [00-CANON.md](00-CANON.md) → [architecture/README.md](architecture/README.md) (sơ đồ) → [framework/00-TONG-QUAN.md](framework/00-TONG-QUAN.md) → [../CONTRIBUTING.md](../CONTRIBUTING.md) |
 | Người / AI viết **module mới** (cộng đồng, vibecode) | [../AGENTS.md](../AGENTS.md) → [standard/README.md](standard/README.md) → [standard/GOLDEN-CASE-HOP-DONG.md](standard/GOLDEN-CASE-HOP-DONG.md) → 7 hợp đồng → [standard/CONFORMANCE.md](standard/CONFORMANCE.md) |
 | Người làm **AI / Cell / chatbot**, gói định khoản theo ngành | [contracts/BIZCITY-MCP-v1.md](contracts/BIZCITY-MCP-v1.md) → [standard/CELL-CONNECT.md](standard/CELL-CONNECT.md) → [standard/CHANNEL-GATEWAY-PORT.md](standard/CHANNEL-GATEWAY-PORT.md) → [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) → [standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md) |
 | Nhóm Lõi **tách Kernel / Platform** | [standard/REUSE-MAP.md](standard/REUSE-MAP.md) → [standard/TARGET-LAYOUT.md](standard/TARGET-LAYOUT.md) → [standard/PHASES.md](standard/PHASES.md) |
@@ -30,7 +30,9 @@ Từ 2026-10-29 repo còn là **Bizcity Core Framework**: hạ tầng ứng dụ
 | Người phụ trách **phân hệ** (mua hàng, kho, nhân sự…) | [framework/03-MO-RONG.md](framework/03-MO-RONG.md) → [rules/RULE-MODULE-BOUNDARY.md](rules/RULE-MODULE-BOUNDARY.md) → [rules/RULE-EVENT.md](rules/RULE-EVENT.md) → [contracts/BIZCITY-MODULE-v1.md](contracts/BIZCITY-MODULE-v1.md) → [workflows/](workflows/README.md) |
 | Người viết **plugin bên ngoài** (WP, POS, CRM) | [contracts/BIZCITY-LEDGER-INTAKE-v1.md](contracts/BIZCITY-LEDGER-INTAKE-v1.md) → [contracts/BIZCITY-CONNECTOR-v1.md](contracts/BIZCITY-CONNECTOR-v1.md) → [contracts/BIZCITY-MASTER-DATA-v1.md](contracts/BIZCITY-MASTER-DATA-v1.md) → [api/](api/README.md) |
 | Kế toán trưởng / người cấu hình | [rules/RULE-MASTER-DATA.md](rules/RULE-MASTER-DATA.md) → [rules/RULE-SETTINGS-MATRIX.md](rules/RULE-SETTINGS-MATRIX.md) → [nghiep-vu/](nghiep-vu/) |
-| Vận hành, DevOps | [ops/DEPLOY.md](ops/DEPLOY.md) → [ops/CI-CD.md](ops/CI-CD.md) → [ops/CLI.md](ops/CLI.md) → [ops/DIAGNOSTICS.md](ops/DIAGNOSTICS.md) |
+| Vận hành, DevOps | [ops/DEPLOY.md](ops/DEPLOY.md) → [ops/OBSERVABILITY.md](ops/OBSERVABILITY.md) → [../infrastructure/monitoring/README.md](../infrastructure/monitoring/README.md) → [ops/DIAGNOSTICS.md](ops/DIAGNOSTICS.md) → [ops/CI-CD.md](ops/CI-CD.md) → [ops/CLI.md](ops/CLI.md) |
+| Tích hợp, xử lý lỗi API | [contracts/BIZCITY-API-v1.md](contracts/BIZCITY-API-v1.md) → [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) |
+| Người cài đặt, thử nhanh | [../presets/README.md](../presets/README.md) → [contracts/BIZCITY-PRESET-v1.md](contracts/BIZCITY-PRESET-v1.md) |
 | Người duyệt PR | [rules/RULE-QUALITY-GATE.md](rules/RULE-QUALITY-GATE.md) + [.github/PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md) |
 
 ## Cây thư mục

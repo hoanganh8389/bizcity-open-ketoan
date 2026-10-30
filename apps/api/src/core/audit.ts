@@ -1,6 +1,9 @@
 // @bizcity-layer P audit
 /**
- * Ghi nhật ký thao tác. Gọi từ service sau mỗi thao tác ghi (thêm, sửa, xoá, khoá kỳ…).
+ * Bằng chứng thao tác (bizcity_evidence@1) trên bảng audit_logs.
+ *   writeEvidence()  runtime action gọi (core/actions.ts): đủ trường bằng chứng, trả biên nhận { evidenceId, hash, at }.
+ *   writeAudit()     cách cũ, service gọi tay sau thao tác ghi (thêm, sửa, xoá, khoá kỳ…) — vẫn vào chuỗi băm.
+ * Chuỗi băm (chain_seq, prev_hash, hash) và lớp chỉ thêm do trigger CSDL lo (migration 0036): không ai sửa, xoá được dòng đã ghi.
  */
 import type { Db } from '../db/client.js';
 
@@ -27,4 +30,50 @@ export async function writeAudit(trx: Db, e: AuditEntry): Promise<void> {
       after_data: e.after === undefined ? null : JSON.stringify(e.after),
     })
     .execute();
+}
+
+export interface EvidenceEntry extends AuditEntry {
+  actorKind: 'user' | 'apikey' | 'ai' | 'system';
+  actorVia?: string;
+  onBehalfOf?: string;
+  moduleId?: string;
+  subject?: string;
+  requestId?: string;
+  idempotencyKey?: string;
+  inputHash?: string;
+  result: { ok: true } | { ok: false; code: string };
+}
+
+/** Biên nhận trả trong meta.receipt: giữ lại để hỏi GET /api/v1/evidence/:id và kiểm hash. */
+export interface EvidenceReceipt {
+  evidenceId: string;
+  hash: string;
+  at: string;
+}
+
+export async function writeEvidence(trx: Db, e: EvidenceEntry): Promise<EvidenceReceipt> {
+  const row = await trx
+    .insertInto('audit_logs')
+    .values({
+      tenant_id: e.tenantId,
+      actor: e.actor,
+      actor_kind: e.actorKind,
+      actor_via: e.actorVia ?? null,
+      on_behalf_of: e.onBehalfOf ?? null,
+      action: e.action,
+      module_id: e.moduleId ?? null,
+      object_type: e.objectType,
+      object_id: e.objectId ?? null,
+      subject: e.subject ?? null,
+      request_id: e.requestId ?? null,
+      idempotency_key: e.idempotencyKey ?? null,
+      input_hash: e.inputHash ?? null,
+      result_ok: e.result.ok,
+      result_code: e.result.ok ? null : e.result.code,
+      before_data: e.before === undefined ? null : JSON.stringify(e.before),
+      after_data: e.after === undefined ? null : JSON.stringify(e.after),
+    })
+    .returning(['id', 'hash', 'created_at'])
+    .executeTakeFirstOrThrow();
+  return { evidenceId: row.id, hash: row.hash ?? '', at: new Date(row.created_at).toISOString() };
 }

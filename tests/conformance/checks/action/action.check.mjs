@@ -102,12 +102,21 @@ export const checks = [
   {
     id: 'SC-EVD-2',
     title: 'Bằng chứng có chuỗi băm, actor_kind, via, result (audit_logs mở rộng)',
-    gate: 'CONF-MIG', contract: 'bizcity_evidence', rules: ['STD-EVD-1', 'STD-EVD-2'], conf: ['CONF-RUN-11', 'CONF-RUN-12'], tier: 0, enforce: 'planned', phase: 'Phase 2 (2.4)', weight: 3, targets: ['repo'],
+    gate: 'CONF-MIG', contract: 'bizcity_evidence', rules: ['STD-EVD-1', 'STD-EVD-2'], conf: ['CONF-RUN-11', 'CONF-RUN-12'], tier: 0, enforce: 'block', weight: 3, targets: ['repo'],
     run(ctx) {
+      // Cột theo bizcity_evidence@1 §5; trigger chuỗi băm + chỉ thêm (migration 0036). Hành vi chạy thật: test/evidence.test.ts, DG-EVD-1.
       const t = ctx.migrations().tables.get('audit_logs');
-      const want = ['actor_kind', 'via', 'on_behalf_of', 'request_id', 'result', 'prev_hash', 'hash'];
-      const have = want.filter((c) => t?.columns.has(c));
-      return { examined: want.length, readiness: have.length / want.length, findings: [], notes: [`audit_logs có ${have.length}/${want.length} cột chuẩn bằng chứng${have.length < want.length ? '; thiếu: ' + want.filter((c) => !have.includes(c)).join(', ') : ''}`] };
+      if (!t) return { examined: 0, findings: [], notes: ['không có bảng audit_logs'] };
+      const want = ['actor_kind', 'actor_via', 'on_behalf_of', 'module_id', 'subject', 'request_id', 'idempotency_key', 'input_hash', 'result_ok', 'result_code', 'chain_seq', 'prev_hash', 'hash'];
+      const findings = want.filter((c) => !t.columns.has(c))
+        .map((c) => ctx.finding(null, null, `audit_logs thiếu cột bằng chứng ${c} (bizcity_evidence@1 §5)`, `column:${c}`));
+      const sqlText = ctx.migrations().files.map((f) => ctx.repo.read(f) ?? '').join('\n');
+      for (const trig of ['audit_logs_chain', 'audit_logs_no_update', 'audit_logs_no_truncate']) {
+        if (!new RegExp(`CREATE\\s+TRIGGER\\s+${trig}\\b[\\s\\S]*?\\bON\\s+(?:public\\.)?audit_logs\\b`, 'i').test(sqlText)) {
+          findings.push(ctx.finding(null, null, `thiếu trigger ${trig} trên audit_logs (STD-EVD-2: chỉ thêm, chuỗi băm)`, `trigger:${trig}`));
+        }
+      }
+      return { examined: want.length + 3, unitBy: 'key', findings };
     },
   },
 ];

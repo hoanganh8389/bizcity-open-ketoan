@@ -44,7 +44,7 @@ Mỗi bước có năm trạng thái: **Khoá** · **Đang kiểm tra** · **Đ�
 | **① Kết nối tài khoản BizCity** | Bấm "Kết nối một chạm" (PKCE, §4) **hoặc** dán khoá từ `bizcity.vn/my-account/api-keys/` → "Lưu & kiểm tra" | `GET {hub}/wp-json/bizcity/v1/llm/models` bằng khoá; đọc `/account/entitlement` | 200 + đọc được gói. 401 / 403 → Chưa đạt `api_key_rejected` |
 | **② Kiểm đường Cell ↔ Core** | Không làm gì (tự chạy) | Core có địa chỉ **https công khai**; Hub gọi được `GET {core}/api/v1/cell/ping` bằng callback token; Core gọi được Hub | Hai chiều thông. `localhost` / mạng nội bộ → Chưa đạt, kèm hướng dẫn (§6) |
 | **③ Liên kết người dùng ↔ kênh** | Chủ, kế toán quét QR Zalo (số Zalo Hub do Cell cấp) hoặc mở web chat trong Core; chọn người dùng Core tương ứng | Tạo liên kết `principal (user_hash) ↔ users.id` + vai trò Core; kiểm người đó còn hoạt động, có quyền | Có ít nhất một chủ được liên kết |
-| **④ Chọn trợ lý kế toán** | Giữ "Trợ lý kế toán" mặc định (tự tạo nếu chưa có) hoặc chọn Agent Guru khác | Guru có mode `accounting` (`bizcity_mcp@1` §4); `tools/list` qua Cell trả công cụ `ketoan.*` | Cell gọi thử `ketoan.report.trial_balance` qua cầu MCP thành công |
+| **④ Chọn trợ lý kế toán** | Giữ "Trợ lý kế toán" mặc định (tự tạo nếu chưa có) hoặc chọn Agent Guru khác | Guru có mode `accounting` (`bizcity_mcp@1` §4); `tools/list` qua Cell trả công cụ `accounting.*` | Cell gọi thử `accounting.report.trial_balance` qua cầu MCP thành công |
 
 **Trạng thái kết nối** trả ở `GET /api/v1/cell/status`, khuôn giống `bizcity-zalo-connection/1.0` của plugin: từng bước và từng lớp kiểm, lỗi gần nhất, thời điểm kiểm. Kiểm lại tự động mỗi 15 phút và khi bấm "Kiểm tra lại".
 

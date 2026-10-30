@@ -32,6 +32,8 @@ const envSchema = z.object({
   /** Nhãn môi trường hiện thành dải trên đầu giao diện (vd. "BẢN TEST") để không nhầm với bản thật. Trống = không hiện. */
   ENV_LABEL: z.string().default(''),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  /** GET /metrics (Prometheus, docs/ops/OBSERVABILITY.md §3): đặt thì phải gửi Authorization: Bearer <token>. Trống = mở trong mạng nội bộ (nginx không chuyển /metrics ra ngoài). */
+  METRICS_TOKEN: z.string().default(''),
   /**
    * Đăng nhập bằng tài khoản hệ thống quản trị (WordPress multisite): khoá chung ký vé đăng nhập (giống hệt bên hệ thống
    * quản trị). Trống = tắt. WP_SSO_TENANT: mã đơn vị nhận người dùng (trống + chỉ có một đơn vị thì dùng đơn vị đó).

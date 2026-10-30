@@ -1,0 +1,53 @@
+# =============================================================================
+# Nguồn dữ liệu Grafana (nạp tự động khi khởi động). uid cố định để bảng điều khiển tham chiếu.
+# =============================================================================
+apiVersion: 1
+
+deleteDatasources: []
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+      httpMethod: POST
+      manageAlerts: false
+      prometheusType: Prometheus
+      prometheusVersion: 2.53.4
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      # Bấm vào traceId / reqId trong một dòng nhật ký → mở mọi dòng cùng mã (cùng một yêu cầu / chuỗi xử lý).
+      # Chưa có Tempo: liên kết trỏ lại chính Loki. Khi thêm Tempo, đổi datasourceUid của traceId sang uid Tempo.
+      derivedFields:
+        - name: traceId
+          matcherRegex: '"traceId":"([^"]+)"'
+          datasourceUid: loki
+          url: '{project="ketoan"} |= `${__value.raw}`'
+          urlDisplayLabel: "Xem cùng traceId"
+        - name: reqId
+          matcherRegex: '"reqId":"([^"]+)"'
+          datasourceUid: loki
+          url: '{service="api"} |= `${__value.raw}`'
+          urlDisplayLabel: "Xem cùng reqId"
+
+  - name: Alertmanager
+    uid: alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: false
+    jsonData:
+      implementation: prometheus
+      handleGrafanaManagedAlerts: false

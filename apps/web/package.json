@@ -1,6 +1,7 @@
 {
   "name": "@ketoan/web",
   "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
   "private": true,
   "description": "Giao diện web phần mềm kế toán (React + Vite).",
   "type": "module",

@@ -1,6 +1,7 @@
 /**
  * Tiện ích kiểm thử: dựng app, tạo đơn vị riêng cho mỗi lần chạy, gọi API; kiểm bất biến sổ sau mỗi tệp test (test/setup.ts).
  */
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { APPROVABLE_DOC_TYPES } from '@ketoan/contracts';
 import { buildApp } from '../src/app.js';
@@ -73,8 +74,10 @@ export async function setupTenant(): Promise<TestCtx> {
 }
 
 /** Gọi API bằng token người dùng; trả về JSON. */
-export async function call<T = any>(ctx: TestCtx, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, payload?: unknown): Promise<{ status: number; body: T }> {
-  const res = await ctx.app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${ctx.token}` } });
+export async function call<T = any>(ctx: TestCtx, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, payload?: unknown, headers: Record<string, string> = {}): Promise<{ status: number; body: T }> {
+  // Lệnh ghi tự gắn Idempotency-Key mới mỗi lần, như giao diện (action 'required' — bizcity_action@1 §8); phép thử gửi lặp tự truyền khoá.
+  const idem = method === 'GET' ? {} : { 'idempotency-key': `test-${randomUUID()}` };
+  const res = await ctx.app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${ctx.token}`, ...idem, ...headers } });
   return { status: res.statusCode, body: res.json() as T };
 }
 
