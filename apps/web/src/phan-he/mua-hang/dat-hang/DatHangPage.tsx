@@ -15,7 +15,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';
 import { errorText } from '@/lib/api';
-import { purchaseApi, today, useMuaHang, useNames } from '../du-lieu';
+import { purchaseApi, today, useMuaHang, useNames, type SupplierRow } from '../du-lieu';
 import { PhieuMuaForm } from '../chung-tu/PhieuMuaForm';
 import { factsText, fold, num, qtyFmt, stockApi, stockSnapshot, useHierarchy, type AnalysisRow } from '../ton-max/api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from '../ton-max/chung';
@@ -46,6 +46,13 @@ export function DatHangPage() {
   const q = useQuery({ queryKey: ['ton-max', 'analysis', parent], enabled: Boolean(parent), queryFn: () => stockApi.analysis(parent) });
   const data = q.data?.rows ?? [];
   const banDays = q.data?.formula.terms.find((t) => t.key === 'banShop')?.days ?? 7;
+  const coverDays = q.data?.formula.coverDays ?? 7;
+  // Công nợ, hạn mức, điều khoản của từng NCC — hiện ở dòng tiêu đề nhóm để xem trước khi lập đơn (đang vướng nợ / hạn mức thì biết ngay).
+  const sup = useQuery({ queryKey: ['mua-hang', 'suppliers', 'active'], queryFn: () => purchaseApi.suppliers('active') });
+  const supOf = useMemo(() => new Map((sup.data ?? []).map((x) => [x.code, x])), [sup.data]);
+  /** Bán bình quân 1 ngày (mọi shop) và số ngày đủ bán = (tồn kho + tồn shop + đang đi đường xuống shop) ÷ bán / ngày. */
+  const perDay = (r: AnalysisRow) => (banDays > 0 ? r.banShop / banDays : 0);
+  const coverOf = (r: AnalysisRow) => { const d = perDay(r); return d > 0 ? (r.tonKho + r.tonShop + r.diDuongShop) / d : null; };
   const rows = useMemo(() => {
     const f = fold(search.trim());
     const list = data.filter((r) => (!f || fold(`${r.sku} ${r.name} ${r.barcode} ${r.partnerCode} ${r.partnerName} ${r.brandName} ${r.nccSku} ${(r.members ?? []).map((m) => `${m.sku} ${m.name}`).join(' ')}`).includes(f))
@@ -81,6 +88,10 @@ export function DatHangPage() {
       render: (r) => <button className="tm-opt" style={{ border: 0, background: 'transparent', fontWeight: 800, color: r.need < 0 ? '#b45309' : undefined }} title="Bấm xem vì sao ra số này" onClick={() => setWhy(r)}>{r.need < 0 ? `(${qtyFmt(-r.need)})` : qtyFmt(r.need)}</button> },
     { key: 'banThangTruoc', header: 'BH tháng liền kề', type: 'qty', width: 82, className: 'tm-ref', title: 'Bán tháng trước của mọi shop — tham khảo' },
     { key: 'banShop', header: `Doanh số ${banDays} ngày`, type: 'qty', width: 82, className: 'tm-ref', title: `Bán ${banDays} ngày gần nhất của mọi shop (phần dự phòng)` },
+    { key: 'perDay', header: 'Bán / ngày', type: 'qty', width: 70, className: 'tm-ref', value: (r) => Math.round(perDay(r) * 100) / 100, title: `Tốc độ bán: bán ${banDays} ngày của mọi shop ÷ ${banDays}` },
+    { key: 'cover', header: 'Đủ bán (ngày)', type: 'qty', width: 74, value: (r) => coverOf(r) ?? 0,
+      title: `Vòng quay: (tồn kho + tồn shop + đang đi đường xuống shop) ÷ bán / ngày — đỏ: dưới ${coverDays} ngày (số ngày cần đủ hàng ở MH18), vàng: trên ${coverDays * 4} ngày (tồn nhiều)`,
+      render: (r) => { const c = coverOf(r); return c === null ? <span className="muted" title="Chưa bán trong kỳ đo">—</span> : <b style={{ color: c < coverDays ? '#dc2626' : c > coverDays * 4 ? '#b45309' : undefined }}>{c.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}</b>; } },
     { key: 'maxKho', header: 'Tồn max kho', type: 'qty', width: 80, className: 'tm-ref' },
     { key: 'tonKho', header: 'Tồn kho', type: 'qty', width: 80, className: 'tm-stock', showZero: true },
     { key: 'diDuong', header: 'Hàng đang đi đường', type: 'qty', width: 82, value: (r) => r.diDuongKho + r.diDuongShop, render: (r) => <span title={`Về kho: ${qtyFmt(r.diDuongKho)} · xuống shop: ${qtyFmt(r.diDuongShop)}`}>{qtyFmt(r.diDuongKho + r.diDuongShop) || ''}</span> },
@@ -156,7 +167,7 @@ export function DatHangPage() {
           <div className="tm-grid"><DataGrid rows={rows} columns={cols} rowKey={(r) => r._key} storageKey="phan-tich-dat-hang" exportRef={exportRef} exportName={`phan-tich-dat-hang-${parent}-${today()}`}
             exportTitle={`Phân tích đặt hàng ${q.data?.parent.name ?? parent} ngày ${today()}`}
             rowKind={(r) => (r._group ? 'group' : 'data')}
-            groupLabel={(r) => <span className="tm-group-label"><span className="brand">{r.brandName || 'Chưa có nhãn'}</span><span className="ncc">{r.partnerCode ? `${r.partnerCode} - ${r.partnerName || names.partnerName(r.partnerCode)}` : 'Chưa rõ nhà cung cấp'}</span>{!r.partnerCode && <span className="muted" style={{ fontSize: 11.5, fontWeight: 400, marginLeft: 10 }}>— mã chưa nhập lần nào và chưa NCC nào khai bán: vào hồ sơ NCC → thẻ Mặt hàng & giá mua → Thêm mã (hoặc Nhập dữ liệu khởi đầu MH20, thẻ giá mua)</span>}</span>}
+            groupLabel={(r) => <span className="tm-group-label"><span className="brand">{r.brandName || 'Chưa có nhãn'}</span><span className="ncc">{r.partnerCode ? `${r.partnerCode} - ${r.partnerName || names.partnerName(r.partnerCode)}` : 'Chưa rõ nhà cung cấp'}</span>{!r.partnerCode && <span className="muted" style={{ fontSize: 11.5, fontWeight: 400, marginLeft: 10 }}>— mã chưa nhập lần nào và chưa NCC nào khai bán: vào hồ sơ NCC → thẻ Mặt hàng & giá mua → Thêm mã (hoặc Nhập dữ liệu khởi đầu MH20, thẻ giá mua)</span>}{r.partnerCode && <NccNo s={supOf.get(r.partnerCode)} />}</span>}
             emptyText={parent ? (quick === 'need' ? 'Không có mã nào cần nhập theo công thức hiện tại.' : 'Không có mã nào.') : 'Chọn chi nhánh cha.'} /></div>
         )}
       </div>
@@ -173,5 +184,22 @@ export function DatHangPage() {
       </Modal>}
       {openDoc && mh.data && <PhieuMuaForm key={openDoc.id} value={openDoc} data={mh.data} onClose={() => setOpenDoc(null)} onSaved={() => void mh.refresh()} onOpen={(d) => setOpenDoc(d)} />}
     </>
+  );
+}
+
+/** Dòng tiêu đề nhóm NCC: nợ hiện tại, phần quá hạn, hạn mức còn lại, điều khoản thanh toán — xem trước khi lập đơn. */
+function NccNo({ s }: { s?: SupplierRow }) {
+  if (!s) return null;
+  const vn = (n: number) => Math.round(n).toLocaleString('vi-VN');
+  const left = s.creditLimit ? s.creditLimit - s.creditUsed : null;
+  return (
+    <span className="muted" style={{ fontSize: 11.5, fontWeight: 400, marginLeft: 12 }}
+      title="Công nợ của NCC tính đến hôm nay (Hạn mức & công nợ đến hạn MH05); hạn mức đã dùng gồm cả đơn đặt đang chờ giao">
+      Nợ {vn(s.debt)}
+      {s.overdue > 0 && <b style={{ color: '#dc2626' }}> · quá hạn {vn(s.overdue)}</b>}
+      {s.dueSoon > 0 && <span style={{ color: '#b45309' }}> · sắp đến hạn {vn(s.dueSoon)}</span>}
+      {left !== null ? <span style={{ color: left < 0 ? '#dc2626' : undefined }}> · hạn mức {left < 0 ? `vượt ${vn(-left)}` : `còn ${vn(left)}`}</span> : <span> · chưa khai hạn mức</span>}
+      {s.term && <span> · {s.term}</span>}
+    </span>
   );
 }

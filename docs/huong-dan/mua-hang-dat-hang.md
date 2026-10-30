@@ -5,13 +5,15 @@ Luồng chuẩn: **Tồn max (MH16) → Phân tích đặt hàng (MH02) → Đơ
 ## 0. Phân tích đặt hàng — SL cần nhập theo công thức của chi nhánh cha
 
 1. Chọn **Chi nhánh cha** (nơi mua hàng về rồi chia xuống shop). Bảng tính cho mọi mã có tồn max / tồn / bán / đơn đang về trong cây chi nhánh đó.
-2. Bảng nhóm theo **Nhãn │ Mã NCC – Tên NCC** (dòng đỏ), mỗi mã một dòng, các cột tô màu quen dùng:
+2. Bảng nhóm theo **Nhãn │ Mã NCC – Tên NCC** (dòng đỏ), mỗi mã một dòng, các cột tô màu quen dùng. Dòng nhóm ghi luôn **công nợ của NCC**: nợ hiện tại, phần **quá hạn** (đỏ), sắp đến hạn, **hạn mức còn lại** (hoặc vượt bao nhiêu, gồm cả đơn đặt đang chờ giao), **điều khoản thanh toán** — xem trước khi lập đơn, NCC đang vướng nợ / hạn mức thì biết ngay.
 
 | Cột | Nghĩa |
 |---|---|
 | **SL cần nhập** (cam) | Theo công thức (MH18). Số âm (trong ngoặc) = đang dư. **Bấm vào số** để xem từng thành phần cộng / trừ ra sao. |
 | BH tháng liền kề | Bán tháng trước của mọi shop — chỉ tham khảo |
 | Doanh số N ngày | Bán N ngày gần nhất của mọi shop — phần dự phòng |
+| Bán / ngày | Tốc độ bán = bán N ngày ÷ N |
+| **Đủ bán (ngày)** | Vòng quay: (tồn kho + tồn shop + đang đi đường xuống shop) ÷ bán / ngày — hàng hiện có đủ bán bao nhiêu ngày. **Đỏ**: dưới số ngày cần đủ hàng (MH18); **vàng**: trên 4 lần số đó (tồn nhiều, xem lại tồn min / max của kho, shop). "—" = chưa bán trong kỳ đo |
 | Tồn max kho · **Tồn kho** (vàng) | Max và tồn của các kho chi nhánh cha chọn ở công thức |
 | Hàng đang đi đường | Đã xuất nhưng nơi nhận chưa xác nhận (về kho + xuống shop; rê chuột xem tách) |
 | **SL mua chưa nhập kho** (xanh) | Phần chưa về của mọi đơn đặt đang mở, **mọi NCC** — trừ để không đặt trùng (rê chuột xem từng đơn) |
