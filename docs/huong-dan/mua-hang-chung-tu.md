@@ -1,4 +1,8 @@
-# Chứng từ mua hàng (MH03)
+# Tổng hợp mua hàng (MH11)
+
+Màn làm việc chính của mua hàng (gộp màn *Chứng từ mua hàng* cũ): **bộ lọc bên trái** (nhà cung cấp, từ ngày – đến ngày, chi nhánh → mã kho, trạng thái — bấm **Tìm kiếm** để áp; danh sách chi nhánh và mã kho tự chia chỗ, tự cuộn bên trong để các ô khác luôn hiện), **bên phải là các thẻ loại chứng từ** (Tất cả, Đơn đặt hàng, Nhập mua, Trả / đổi hàng, Ứng trước / trả tiền, Quà tặng, Chi phí / thưởng). Lập, sửa, duyệt, in, nhập Excel phiếu đều làm ở đây. **Nhập từ Excel** (tạo nhiều đơn đặt / phiếu nhập): cột **Mã kho** không bắt buộc — trống = kho mặc định của chi nhánh; có thì mỗi kho một phiếu (đơn đặt: kho giao), kho không thuộc chi nhánh của dòng báo lỗi ngay ở bước xem trước. Mở màn mặc định kỳ từ đầu tháng đến hôm nay (mở bằng liên kết có lọc sẵn thì không giới hạn kỳ).
+
+Xem **từng dòng hàng** của phiếu: **Báo cáo mua hàng (MH23)**.
 
 > Số liệu là **số liệu thật** của đơn vị: phiếu mua **duyệt là ghi sổ** (bút toán, công nợ, kho). Ở bản thử muốn có sẵn 25 tình huống để tập: màn **Tổng quan mua hàng (MH00)** → **Nạp dữ liệu mẫu** (xoá được bằng **Xoá dữ liệu mẫu**).
 
@@ -48,14 +52,16 @@ Một danh sách cho mọi chứng từ phía mua:
   - **+ Thêm hàng (F3)** mở danh mục mặt hàng: gõ tên không dấu / mã, lọc theo nhãn (nhãn NCC đang bán xếp đầu), **bấm vào dòng là thêm** (bấm lại = cộng 1), ↑ ↓ Enter cũng được; quét mã vạch + Enter là thêm đúng mã đó và ô tìm trống lại để quét tiếp;
   - **Điền mặt hàng của NCC** (tích chọn, điền số lượng theo gợi ý), **Chép từ phiếu …** (phiếu gần nhất cùng NCC);
   - **+ Quà ngoài chương trình** cho quà NCC tặng thêm — quà theo chương trình phần mềm tự thêm;
-  - **Nhập Excel**: cột Mã hàng (*) · Tên hàng (chỉ để đọc) · ĐVT · Số lượng (*) · Đơn giá · CK % · Hàng tặng · Số lô · NSX · Hạn dùng. Có hướng dẫn cột, file mẫu, xem trước — mã chưa có trong danh mục, ĐVT chưa khai của mã báo đỏ và bị bỏ qua. ĐVT trống = ĐVT mua mặc định, đơn giá trống = giá mua của NCC;
-  - **Xuất Excel**: đúng bộ cột của mẫu nhập (kèm thành tiền, chương trình) — sửa xong nhập lại được.
+  - **Nhập Excel**: cột Mã hàng (*) · Tên hàng (chỉ để đọc) · ĐVT · Số lượng (*) · Đơn giá · CK % · Hàng tặng · Số lô · NSX · Hạn dùng · Phân kho (không bắt buộc, chỉ tham khảo — mọi dòng vào **Phân kho ở đầu phiếu**; kho trong tệp khác đầu phiếu thì xem trước ghi rõ). Có hướng dẫn cột, file mẫu, xem trước — mã chưa có trong danh mục, ĐVT chưa khai của mã báo đỏ và bị bỏ qua. ĐVT trống = ĐVT mua mặc định, đơn giá trống = giá mua của NCC;
+  - **Xuất Excel**: đúng bộ cột của mẫu nhập (kèm thành tiền, chương trình, phân kho) — sửa xong nhập lại được.
 - Bảng hàng nhiều cột thì chỉ bảng cuộn ngang; khối đầu phiếu và thanh thao tác đứng yên.
 - **Tên hàng, ĐVT (chọn trong ĐVT đã khai), thuế suất, nhãn** lấy theo danh mục mặt hàng — không gõ tay trên phiếu. Sai tên thì sửa ở Danh mục mặt hàng.
 - Chọn NCC: nút **Chép hàng từ phiếu …** chép mã hàng, số lượng, đơn giá, thuế suất của phiếu gần nhất cùng NCC.
 - Gõ mã hàng: tên, ĐVT, **thuế suất**, nhãn hàng lấy từ danh mục mặt hàng; có giá mua cố định thì tự điền đơn giá.
 - Để trống **CK %**: tự áp theo chính sách (bậc số lượng…).
 - Phiếu **Trả tiền NCC**: nút gợi ý **Trả hết** / **Phần đến hạn** / **Theo phiếu đã chọn** theo nợ thật trên sổ.
+  - Hộp **Chọn phiếu nhập** có cột **Đã trả** và **Còn nợ** theo sổ: trả nhiều lần thì thấy ngay phần còn lại trước khi chọn; phiếu trả xong ghi *Đã trả hết*, phiếu chưa duyệt ghi *chưa ghi sổ*.
+  - **Tài khoản ngân hàng** (chuyển khoản, 112*) / **Quỹ tiền mặt** (111*): trống = tài khoản mặc định theo cài đặt; chọn tài khoản khác (vd ngân hàng khác) thì bút toán ở thẻ Hạch toán ghi Có đúng tài khoản đó. Đổi hình thức thì ô này tự xoá.
 
 **Cột của dòng hàng:** Đơn giá · CK % · **Thuế suất** (0%, 5%, 8%, 10%, không chịu thuế) · Thành tiền chưa thuế · Tiền thuế · Giá vốn / ĐVT · Số lô · NSX · Hạn dùng. Ô **Tổng tiền** bên phải tách tiền thuế theo từng thuế suất khi phiếu có nhiều mức thuế.
 
@@ -164,3 +170,62 @@ Máy chủ kiểm tra lại sau mỗi lần sửa phiếu, bằng **số liệu 
 ## Số liệu phân tích tồn lưu theo lúc lưu đơn
 
 Đơn đặt còn **nháp**: mỗi lần bấm **Ghi** (hoặc Gửi duyệt / Duyệt) phần mềm chụp lại *Phân tích tồn* của **đúng lúc đó** cho mọi dòng và lưu cùng đơn. Đơn đã gửi duyệt / đã duyệt giữ nguyên số lúc lưu cuối — mở lại, xem mẫu / xuất Excel gửi NCC đều là số đó.
+
+## Phân kho
+
+Hàng của chi nhánh nằm ở các **phân kho** (kho hàng, kho quà, kho khuyến mại, kho luân chuyển…, khai ở DM12 Danh mục kho). Mỗi phân kho có công dụng riêng.
+
+- **Phiếu có hàng ra / vào kho** (nhập mua, trả NCC, đổi hàng, nhận / xuất quà) có ô **Phân kho (\*)** ngay cạnh Chi nhánh:
+  - mặc định là kho mặc định của chi nhánh;
+  - đổi chi nhánh thì phân kho tự về kho mặc định của chi nhánh mới;
+  - **mọi dòng hàng đi theo phân kho này**, cột "Phân kho" ở bảng hàng chỉ để xem, không chọn riêng từng dòng.
+- Phiếu nhập lập từ đơn đặt lấy kho theo **"Giao tại kho"** của đơn. Đơn đặt không có phân kho vì là số tổng theo công thức đặt hàng.
+- Muốn đưa hàng sang phân kho khác (kể cả trong cùng chi nhánh) thì lập **phiếu chuyển kho**. Không sửa phân kho trên phiếu đã duyệt.
+- Chứng từ không ghi kho (phiếu bán từ hệ thống bán hàng, phiếu cũ) được tính vào **kho mặc định** của chi nhánh. Chi nhánh chưa khai kho thì khai ở DM12.
+- **Lọc danh sách:** ô "Mọi chi nhánh, mọi kho" trên thanh lọc → tích chi nhánh → các phân kho của chi nhánh hiện ngay bên dưới để tích tiếp. Không tích kho nào nghĩa là mọi kho của chi nhánh đã tích.
+
+## Kiểu xem: Danh sách phiếu / Gom theo NCC, chi nhánh, mã…
+
+- **Danh sách phiếu** (mặc định): mỗi phiếu một dòng, cột tiền và công nợ như bảng dưới. Bấm đôi để mở phiếu.
+- **Gom theo NCC / chi nhánh / mã / nhóm…**: thay các thẻ loại phiếu bằng các thẻ *Theo mã hàng, nhóm hàng, ngành hàng, nhãn hàng, nhà cung cấp, chi nhánh*.
+
+Các phiếu **đã duyệt** (đã vào sổ) trong kỳ (Từ ngày – Đến ngày bên trái), gom theo một trong các tiêu chí:
+
+| Thẻ | Dùng để |
+|---|---|
+| Theo mã hàng | Giá vốn thực tế / ĐVT từng mã; so giá giữa các lần nhập |
+| Theo nhóm hàng, ngành hàng | Tổng hợp theo cây danh mục hàng |
+| Theo nhãn hàng | Doanh số nhập của nhãn (đối chiếu chỉ tiêu, thưởng) |
+| Theo nhà cung cấp | Giá trị mua, chiết khấu được hưởng, hàng trả, còn nợ từng NCC |
+| Theo chi nhánh | Giá trị nhập từng chi nhánh |
+
+**Các cột** (tiền trước thuế):
+- **SL mua / SL tặng / SL trả**: số lượng hàng mua, hàng khuyến mại nhận, hàng trả lại.
+- **Tiền hàng trước CK**, **Chiết khấu**, **Giá trị nhập**: giá trị nhập = tiền hàng − chiết khấu.
+- **Thuế GTGT**, **Hàng trả lại**.
+- **+ Chi phí phân bổ**: vận chuyển, bốc xếp… đã phân bổ vào mã.
+- **− Thưởng / CK sau mua**: thưởng cuối kỳ, chiết khấu bổ sung đã phân bổ vào mã.
+- **Giá trị thuần** = giá trị nhập − hàng trả + chi phí − thưởng.
+- **Giá vốn TT / ĐVT** (chỉ thẻ mã hàng) = giá trị thuần / (SL mua + SL tặng chia giá − SL trả).
+- **Còn nợ NCC**: phần chưa trả của phiếu nhập, chia theo giá trị từng dòng — biết mã / nhóm / ngành nào còn nợ bao nhiêu.
+
+Kiểu này chỉ lọc theo kỳ (bộ lọc NCC, chi nhánh, trạng thái không áp). Bấm **Xuất Excel** hoặc **In** để lấy file.
+
+- Chi tiết từng dòng hàng và cộng dồn theo mã hàng (số lượng quy ĐVT nhỏ nhất, tiền trước CK − chiết khấu = sau CK, thuế, tổng thanh toán): xem **Báo cáo mua hàng (MH23)**.
+
+### Cột tiền và công nợ ở kiểu "Danh sách phiếu"
+
+| Cột | Ý nghĩa |
+|---|---|
+| Ký hiệu HĐ / Số HĐ / Ngày HĐ | hoá đơn của NCC ghi trên phiếu |
+| Tiền hàng trước CK (chưa thuế) | Σ SL × đơn giá các dòng hàng mua, chưa trừ chiết khấu (phiếu giá gồm thuế được quy về chưa thuế) — chỉ đơn đặt, nhập mua, trả NCC |
+| Chiết khấu (chưa thuế) | trước CK − sau CK (CK dòng + CK trên đơn) |
+| Tiền hàng sau CK (chưa thuế) | tiền hàng ghi sổ |
+| Tiền thuế GTGT | |
+| Tổng thanh toán (gồm thuế) | sau CK + thuế |
+| Công nợ phát sinh | số ghi vào công nợ NCC (TK 331) khi duyệt: phải trả NCC, hoặc NCC nợ lại mình (ứng trước, trả hàng, thưởng) |
+| Đã trả / đã đối trừ | phiếu trả tiền, ứng trước, trả hàng… đã đối trừ vào phiếu này |
+| Còn lại | công nợ phát sinh − đã trả |
+| Tình trạng công nợ | Chưa trả · Trả một phần · Đã trả đủ (thêm "quá hạn" khi qua hạn TT); phiếu NCC nợ lại mình: Chưa đối trừ · Đối trừ một phần · Đã đối trừ hết; phiếu chưa duyệt để trống (chưa ghi sổ) |
+
+Báo cáo mua hàng (MH23) — kiểu "Chi tiết dòng hàng" — cũng có Ký hiệu HĐ / Ngày HĐ và cột "Công nợ của phiếu" (tình trạng của cả phiếu chứa dòng, không chia theo dòng).

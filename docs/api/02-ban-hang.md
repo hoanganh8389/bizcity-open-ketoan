@@ -48,7 +48,8 @@ Một phiếu bán / hoá đơn bán lẻ, bán buôn. Mẫu: [`vi-du/ban-hang.j
 | `lines[].taxAmount` | tiền | | Tiền thuế của dòng. Mặc định 0 |
 | `lines[].isGift` | true / false | | Hàng tặng, khuyến mãi (tiền 0) |
 | `lines[].cost` | tiền | | Giá vốn của dòng nếu đã biết. **Thường bỏ trống**: cuối tháng phần mềm tự tính giá vốn bình quân |
-| `lines[].warehouseCode`, `lotNo` | chuỗi | | Kho, số lô (thông tin) |
+| `lines[].warehouseCode` | chuỗi | | Kho xuất hàng (trả lại: kho nhận hàng trả). Trống = kho mặc định của chi nhánh — sổ kho ghi theo kho này |
+| `lines[].lotNo` | chuỗi | | Số lô (thông tin) |
 | `payments` | mảng | | Các khoản thu. Bỏ trống = bán chịu (ghi công nợ) |
 | `payments[].methodCode` | chuỗi | ✓ | Hình thức thanh toán: `TM`, `CK`, `QR`, `POS`, `VOUCHER`, `CONGNO`, `DOI_TRU`… |
 | `payments[].amount` | tiền | ✓ | |

@@ -36,3 +36,12 @@ Bật thêm ở nút **Cột**: Ngày ghi sổ, Số bút toán, Loại phiếu,
 - Bấm một dòng để mở bút toán, từ đó mở tiếp chứng từ gốc.
 
 Muốn xem riêng một tài khoản kèm số đầu kỳ, cuối kỳ, dùng **Sổ cái (ACC88)** hoặc **Sổ chi tiết tài khoản (ACC12)**.
+
+## Sổ chi tiết định khoản theo mã hàng
+
+Mỗi dòng định khoản có **Mã hàng / Tên hàng**, **Mã đối tượng** và **Số hoá đơn**, nên sổ này xem được định khoản đến từng mã hàng.
+
+- **Loại chứng từ**: lọc một loại, vd *Nhập mua* để xem định khoản của phiếu nhập mua theo từng mã (Nợ 1561 / Có 3312, thuế 1331…).
+- **Mã hàng**: chỉ các dòng định khoản của mã đó (nhập mua, giá vốn…).
+- Menu **Mua hàng → Báo cáo mua hàng → Sổ chi tiết định khoản theo mã hàng** mở sẵn sổ này với loại *Nhập mua*, tài khoản 156 (mỗi mã một dòng; xoá ô Số tài khoản để xem cả vế 3312, 1331).
+- Dòng thuế, công nợ, tiền không gắn mã hàng thì cột mã hàng để trống.

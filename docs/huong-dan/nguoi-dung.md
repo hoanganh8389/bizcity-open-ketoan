@@ -22,3 +22,10 @@ Tài khoản đăng nhập của từng người trong đơn vị. Chỉ **Chủ
 ## Đổi mật khẩu của chính mình
 
 Bấm biểu tượng chìa khoá ở góc trên bên phải, nhập mật khẩu hiện tại và mật khẩu mới.
+
+## Đổi mật khẩu, đăng xuất các thiết bị khác
+
+- **Đổi mật khẩu** (biểu tượng chìa khoá trên thanh trên cùng): mọi máy **khác** đang đăng nhập tài khoản này bị **đăng xuất** — máy đang dùng phần mềm thì thoát ở lần thao tác tiếp theo, máy để yên tự thoát trong khoảng 1 phút. Máy đang đổi mật khẩu vẫn làm việc bình thường.
+- **Đăng xuất các thiết bị khác** (cùng hộp đổi mật khẩu): đá mọi máy khác ra mà **không đổi mật khẩu** — dùng khi tài khoản đã gửi cho nhiều người (vd tài khoản trải nghiệm) và muốn thu hồi ngay.
+- Quản trị **đặt lại mật khẩu**, **khoá** hoặc **đổi vai trò** của một người dùng: mọi máy đang đăng nhập tài khoản đó bị đăng xuất ngay (đổi vai trò thì đăng nhập lại để nhận quyền mới). Chỉ sửa họ tên thì không ai bị đăng xuất.
+- Đăng xuất WordPress (trang quản trị) **không** đăng xuất phần mềm kế toán — phần mềm có phiên đăng nhập riêng.

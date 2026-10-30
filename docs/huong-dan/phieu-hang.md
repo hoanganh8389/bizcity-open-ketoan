@@ -1,6 +1,6 @@
 # Phiếu bán hàng, trả lại, chuyển kho
 
-> Mua hàng, trả hàng nhà cung cấp làm ở **Mua hàng → Chứng từ mua hàng (MH03)**.
+> Mua hàng, trả hàng nhà cung cấp làm ở **Mua hàng → Tổng hợp mua hàng (MH11)**.
 
 Các màn dùng chung một cách làm:
 
@@ -23,7 +23,8 @@ Các màn dùng chung một cách làm:
 | Phần | Cách nhập |
 |---|---|
 | Số phiếu | Để trống: tự cấp khi ghi (BH / TL / MH / TN / CK + năm + số thứ tự) |
-| Ngày, Chi nhánh | Bắt buộc. Chuyển kho: chi nhánh **xuất** và chi nhánh **nhận** (phải khác nhau) |
+| Ngày, Chi nhánh | Bắt buộc. Chuyển kho: chi nhánh **xuất** và chi nhánh **nhận** |
+| Kho | Chọn ở đầu phiếu, **mọi dòng đi theo** (cột Kho trên bảng hàng chỉ để xem): phiếu bán = kho xuất hàng, hàng trả lại = kho nhận hàng trả, chuyển kho = **kho xuất** và **kho nhận**. Tự chọn kho mặc định của chi nhánh; chi nhánh chưa khai kho (DM12) thì ghi vào kho mặc định. Chuyển giữa hai kho trong **cùng chi nhánh**: chọn chi nhánh nhận trùng chi nhánh xuất, kho nhận phải khác kho xuất |
 | Đối tượng | Bán / trả lại: khách hàng (trống = khách lẻ). Mua / trả NCC: nhà cung cấp (bắt buộc) |
 | Phiếu gốc | Trả lại / trả NCC: số phiếu bán / mua gốc (tham khảo) |
 | Hạn thanh toán | Mua / trả NCC |

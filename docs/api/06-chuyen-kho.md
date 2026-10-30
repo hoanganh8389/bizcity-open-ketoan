@@ -34,7 +34,7 @@ Hệ thống gửi không có bước xác nhận thì gửi một lần với `
 | Trường | Kiểu | Bắt buộc | Ghi chú |
 |---|---|---|---|
 | `branchCode` | chuỗi | ✓ | Chi nhánh / kho **xuất** |
-| `toBranchCode` | chuỗi | ✓ | Chi nhánh / cửa hàng **nhận** |
+| `toBranchCode` | chuỗi | ✓ | Chi nhánh / cửa hàng **nhận** (bằng `branchCode` = chuyển giữa hai kho cùng chi nhánh) |
 | `status` | `shipped` · `received` | | Mặc định `received` |
 | `lines` | mảng, 1–2000 | ✓ | |
 | `lines[].lineKey` | chuỗi ≤ 64 | ✓ | |
@@ -42,7 +42,8 @@ Hệ thống gửi không có bước xác nhận thì gửi một lần với `
 | `lines[].name`, `unit` | chuỗi | | |
 | `lines[].qty` | số | ✓ | Số lượng chuyển (dương) |
 | `lines[].amount` | tiền | | Giá trị theo **giá vốn**. Không biết giá vốn thì gửi **0**: cuối tháng phần mềm định giá theo giá vốn bình quân |
-| `lines[].warehouseCode` | chuỗi | | Kho chi tiết (thông tin) |
+| `lines[].warehouseCode` | chuỗi | | Kho **xuất** của chi nhánh xuất. Trống = kho mặc định của chi nhánh |
+| `lines[].toWarehouseCode` | chuỗi | | Kho **nhận** của chi nhánh nhận. Trống = kho mặc định. Chuyển giữa hai kho trong **cùng chi nhánh** (`toBranchCode` = `branchCode`): ghi cả hai, khác nhau (không ghi thì coi như xuất / nhận cùng kho mặc định, tồn không đổi) |
 | `totals.total` | tiền | ✓ | Bằng tổng `amount` các dòng |
 | `partner`, `invoice`, `payments` | | | Không dùng |
 | `docDate` | ngày | ✓ | Ngày xuất kho. Bước 2 giữ nguyên ngày này |

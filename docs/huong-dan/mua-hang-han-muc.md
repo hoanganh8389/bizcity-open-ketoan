@@ -10,7 +10,7 @@
   - **Điều chuyển hạn mức**: từ chi nhánh / phần chưa phân bổ sang chi nhánh khác. Không cho chuyển quá phần còn của nơi chuyển; mỗi lần chuyển ghi nhật ký (trước / sau).
 - **Chỉ tiêu cung ứng**: giá trị đã nhập (trước thuế) so với chỉ tiêu tháng của từng chi nhánh.
 
-Phiếu dùng tới 90% hạn mức → cảnh báo; vượt → chặn duyệt (xem MH03).
+Phiếu dùng tới 90% hạn mức → cảnh báo; vượt → chặn duyệt (xem MH11).
 
 ## Thẻ Đến hạn / quá hạn / tuổi nợ
 

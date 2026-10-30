@@ -29,3 +29,9 @@ Tài khoản (gõ số rồi Enter), khoảng ngày, chi nhánh, **mã đối t�
 - **TK đối ứng**, **Loại chứng từ**: lọc như ở Sổ cái (ACC88).
 - Tích **Khoản mục, bộ phận** để hiện thêm hai cột khoản mục và bộ phận ghi trên từng dòng.
 
+
+## Chi tiết theo mã hàng (TK 156, 152, 153…)
+
+- Sổ các tài khoản hàng hoá (15*) hiện sẵn cột **Mã hàng** và **Tên hàng** trên từng dòng; tài khoản khác bật hai cột này ở nút **Cột**.
+- Ô **Mã hàng** ở bảng lọc: chỉ xem dòng sổ của một mã. **Số dư đầu kỳ, phát sinh và số dư cuối kỳ đều tính riêng cho mã đó**, vd sổ 1561 của mã 110061004 để đối chiếu với tồn kho theo mặt hàng.
+- Dòng không gắn mã hàng (thuế, tiền, công nợ…) để trống cột mã hàng và không hiện khi lọc theo mã.

@@ -32,4 +32,4 @@ Dòng **"Nhập ngoài đơn"** ở cột Đơn đặt: phiếu nhập không th
 - **Đổi mã:** phiếu nhập phải được **Duyệt ngoại lệ** (người có quyền) — xem lại lý do.
 - **Lệch giá:** đối chiếu báo giá / hoá đơn; sai thì báo NCC lập hoá đơn điều chỉnh (CK sau mua).
 
-Phiếu nhập đã duyệt **vẫn giữ dấu lệch đơn**: ở **Chứng từ mua hàng (MH03)** chọn lọc **Lệch đơn đặt** hoặc xem cột *Cần xử lý* ("Lệch đơn: …").
+Phiếu nhập đã duyệt **vẫn giữ dấu lệch đơn**: ở **Tổng hợp mua hàng (MH11)** chọn lọc **Lệch đơn đặt** hoặc xem cột *Cần xử lý* ("Lệch đơn: …").

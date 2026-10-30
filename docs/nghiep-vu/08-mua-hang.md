@@ -42,7 +42,7 @@ Tài liệu dùng để **thuyết trình và bảo vệ** phân hệ Mua hàng.
 ## 3. Luồng nghiệp vụ
 
 ```
- Chính sách (MH04)  ──►  Đơn đặt  ──►  Phiếu nhập (MH03)  ──►  Duyệt  ─────────►  Sổ kế toán (lõi có sẵn)
+ Chính sách (MH04)  ──►  Đơn đặt  ──►  Phiếu nhập (MH11)  ──►  Duyệt  ─────────►  Sổ kế toán (lõi có sẵn)
  CK, bậc, KM, CKTT,      giữ hạn      tự áp chính sách        vượt hạn mức        bút toán, công nợ theo
  hạn mức, hạn trả,       mức; ứng     + Trợ lý mua hàng       → chặn → duyệt      chứng từ, kho, lô,
  giá cố định, thưởng,    trước        (số liệu thật)          ngoại lệ có lý do   sổ hoá đơn mua vào
@@ -200,7 +200,7 @@ Mỗi dòng một sự kiện, ví dụ:
 
 ## 4b. Cơ sở dữ liệu hiện tại (cập nhật 26/10/2026 — xem trực tiếp ở màn **Cơ sở dữ liệu mua hàng (MH13)**) — bao nhiêu bảng, vì sao, mở rộng thế nào
 
-**Phân hệ chỉ có 4 bảng riêng**, mọi thứ còn lại dùng lại lõi kế toán:
+**Bảng riêng của phân hệ** (ngoài các bảng tồn max / công thức / chuyển hàng ở tài liệu 09), mọi thứ còn lại dùng lại lõi kế toán:
 
 | Bảng riêng | Giữ gì | Vì sao không tách thêm |
 |---|---|---|
@@ -208,6 +208,8 @@ Mỗi dòng một sự kiện, ví dụ:
 | `purchase_policies` | Mọi "điều kiện mua" (15 loại: CK đơn, CK theo bảng nhiều mã, bậc SL, CKTT, KM, thưởng ×3, hạn mức, điều khoản, chỉ tiêu, lô, ngân sách quà, hợp đồng, tồn min–max): loại + phạm vi (NCC / nhãn / mã / chi nhánh) + hiệu lực + `rule jsonb` (khuôn kiểm bằng zod theo loại) + người tạo / sửa | Thêm loại chính sách = thêm khuôn zod + câu tóm tắt + ô nhập, **không thêm bảng** |
 | `supplier_products` | Mặt hàng & giá mua: NCC × mã × ĐVT (chọn từ ĐVT của mặt hàng) → mã bên NCC, ĐVT đặt hàng mặc định, giá cố định, ngưỡng cảnh báo, hiệu lực; NCC trống = giá chung (0013) | Hàng nghìn dòng / NCC, cần tra theo mã và theo NCC → tách bảng thật; hồ sơ NCC và form mặt hàng cùng ghi một bảng |
 | `purchase_attachments` | Thông tin tệp đính kèm (nội dung tệp nằm trên ổ dữ liệu ERP) | Tệp không nhét vào CSDL — CSDL nhẹ, sao lưu nhanh |
+| `supplier_invoices` + `supplier_invoice_lines` | **Hoá đơn đầu vào của NCC** (0030, màn MH22): đầu hoá đơn (mẫu số, ký hiệu, số, ngày, MST, tổng tiền, nguồn gõ tay / Excel / AI / API) và từng dòng **đúng như NCC ghi** (mã / tên / ĐVT bên NCC) kèm mã + ĐVT bên mình đã nhận diện | Hoá đơn là chứng từ của NCC, khác phiếu nhập của mình: một hoá đơn có thể ứng với nhiều phiếu nhập (giao nhiều lần), dòng hoá đơn giữ nguyên cách NCC ghi để đối soát và để học. Gắn phiếu nhập qua NCC + số / ký hiệu hoá đơn — không cột liên kết cứng |
+| `supplier_item_aliases` | **Nhận diện mã hàng NCC (dữ liệu học)**: NCC × mã / tên / ĐVT bên NCC → mã + ĐVT bên mình, số lần gặp, ai dạy | NCC đổi tên hàng liên tục, mỗi NCC một cách ghi → bảng riêng tra theo NCC; mỗi lần người dùng chọn mã là thêm một cách ghi, lần sau tự nhận |
 
 **Dùng lại lõi (không làm sổ riêng):** `partners` (NCC, nhóm NCC), `unit_names` (danh mục tên ĐVT, tự thêm bằng trigger — 0014), `products` / `product_units` (mã, ĐVT + tỉ lệ, cờ *mua mặc định*; tồn kho luôn theo ĐVT tỉ lệ 1), `branches`, `document_sequences` (số phiếu), `accounting_events` + `ledger_*` (bút toán), `debt_items` / `debt_allocations` (công nợ, hạn trả từng khoản), `inventory_movements` (kho, giá vốn, lô), `tax_codes`, `tenants.settings.purchase` (ngày lễ, tài khoản…). **Nhật ký** (ai làm gì, đổi gì) ghi tệp JSONL theo tháng — không phình CSDL.
 
@@ -262,22 +264,22 @@ Tài khoản chọn theo thứ tự:
 
 | TH | Nội dung | Giải quyết | Màn |
 |---|---|---|---|
-| 1 | CK thẳng 7%, hạn 10 ngày làm việc | `trade_discount` + `payment_term` (ngày làm việc) | MH03 |
-| 2 | CK tiền trên đơn + quà ngoài HĐ | CK tiền chia dòng; phiếu Nhận quà → 711 | MH03 |
-| 3 | Hạn mức 600 triệu, đặt thêm thì vượt | Nợ theo sổ + đang chờ + phiếu này; chặn + duyệt ngoại lệ | MH03, MH05 |
-| 4 | CK 7% + CKTT 2% nếu đúng hạn | Phiếu trả tiền ghi CKTT, máy chủ kiểm đúng hạn | MH03 |
-| 5 | Ứng trước 100% theo đơn | Phiếu ứng trước gắn đơn → nhập theo đơn tự đối trừ; đối chiếu 3 bên | MH03 |
+| 1 | CK thẳng 7%, hạn 10 ngày làm việc | `trade_discount` + `payment_term` (ngày làm việc) | MH11 |
+| 2 | CK tiền trên đơn + quà ngoài HĐ | CK tiền chia dòng; phiếu Nhận quà → 711 | MH11 |
+| 3 | Hạn mức 600 triệu, đặt thêm thì vượt | Nợ theo sổ + đang chờ + phiếu này; chặn + duyệt ngoại lệ | MH11, MH05 |
+| 4 | CK 7% + CKTT 2% nếu đúng hạn | Phiếu trả tiền ghi CKTT, máy chủ kiểm đúng hạn | MH11 |
+| 5 | Ứng trước 100% theo đơn | Phiếu ứng trước gắn đơn → nhập theo đơn tự đối trừ; đối chiếu 3 bên | MH11 |
 | 6, 7, 9, 10, 11 | Phía bán | Cùng bộ tính — phép thử ở MH00 | MH00 |
 | 8, 15, 16 | Thưởng doanh số / chỉ tiêu / giai đoạn | Doanh số mua thuần từ phiếu đã duyệt (hoặc số NCC chốt) → phiếu thưởng | MH06 |
-| 12, 13 | Trong / vượt hạn mức | `credit_limit`; vượt → chặn duyệt | MH03 |
-| 14 | KM người bán chia giá / KM NTD | Loại dòng; giá vốn đơn vị; sổ quà | MH03, MH09 |
+| 12, 13 | Trong / vượt hạn mức | `credit_limit`; vượt → chặn duyệt | MH11 |
+| 14 | KM người bán chia giá / KM NTD | Loại dòng; giá vốn đơn vị; sổ quà | MH11, MH09 |
 | 17 | Hạn mức nhãn phân bổ chi nhánh, chỉ tiêu cung ứng | `credit_limit.branches` + điều chuyển có vết; `supply_target` | MH05 |
 | 18 | Cách tính hạn, cảnh báo, tuổi nợ | `payment_term` + ngày lễ; công nợ theo chứng từ; 6 nhóm tuổi nợ | MH05 |
 | 19 | Lô / hạn dùng, FEFO | Lô trên dòng nhập; tồn thật chia FEFO; cảnh báo 30-15-7 | MH08 |
 | 20 | Quà NCC / tự mua (có / không VAT) | Nguồn quà trên chứng từ; nhập - xuất - tồn quà; đối chiếu số được hưởng | MH09 |
 | 21 | Phân bổ chi phí | Phiếu chi phí → dòng SL 0 theo mã | MH07 |
 | 22 | Phân bổ thưởng giảm giá vốn | Phiếu thưởng → dòng SL 0 theo mã | MH06, MH07 |
-| 23 | Đổi / trả hàng | `return` / `exchange` gắn phiếu gốc | MH03 |
+| 23 | Đổi / trả hàng | `return` / `exchange` gắn phiếu gốc | MH11 |
 | 24 | NXT & công nợ theo ngành → nhóm → mã | Phiếu duyệt vào kho → báo cáo có sẵn (ACC83) | ACC83 |
 | 25 | Giá thực tế từng dòng | Giá sau CK − quà chia giá + chi phí phân bổ; tổng khớp chứng từ | MH07 |
 
@@ -349,3 +351,41 @@ Tài khoản chọn theo thứ tự:
 | Phân quyền riêng cho duyệt ngoại lệ, điều chuyển hạn mức | Hiện dùng quyền duyệt chi (`payments:approve`) và quyền danh mục (`catalog:write`) |
 | Lịch sử xuất theo từng lô | Hệ thống bán hàng chưa gửi số lô khi bán; tồn lô hiện chia FEFO theo tồn thật |
 | Tình huống phía bán (6, 7, 9, 10) | Bộ tính đã đúng số; màn lập phiếu bán thuộc phân hệ Bán hàng |
+
+
+## 10. Hoá đơn đầu vào của NCC → nhận diện mã → đối soát (MH22, 28/10/2026)
+
+Luồng dữ liệu đầy đủ của phân hệ: **tồn max → phân tích đặt hàng → đơn đặt → phiếu nhập (đối chiếu tiến độ đơn, MH21) → hoá đơn NCC (đối soát từng dòng, MH22) → công nợ → trả tiền**.
+
+1. **Đưa hoá đơn vào** (`supplier_invoices`, `supplier_invoice_lines`):
+   - Excel NCC gửi: gom theo ký hiệu + số.
+   - Ảnh / PDF qua dịch vụ đọc hoá đơn AI (`INVOICE_AI_URL`, khuôn `ParsedInvoice`).
+   - Gõ tay, hoặc API (`/purchase/invoices/prepare` + `/import`).
+
+   Hoá đơn được chuẩn hoá trước khi ghi:
+   - giá gồm thuế quy về chưa thuế;
+   - dòng giá 0 là hàng tặng;
+   - thiếu tổng thì tự cộng;
+   - trùng NCC × ký hiệu × số (bỏ số 0 đầu) thì bỏ qua.
+2. **Nhận diện mã**, theo thứ tự tin cậy:
+   1. `supplier_item_aliases` (đã học, theo mã NCC rồi theo tên);
+   2. `supplier_products.ncc_sku` / `ncc_name` (khai mặt hàng NCC);
+   3. NCC ghi đúng mã mình;
+   4. chỉ **gợi ý** (giống tên, cùng quy cách 400g / 800g, mặt hàng NCC có bán được cộng điểm).
+
+   Người dùng chọn mã → lưu → **học** (thêm / cộng số lần gặp).
+3. **Đối soát**: phiếu nhập có số hoá đơn trùng hoá đơn đã lưu (cùng NCC). Phần mềm cộng mọi phiếu cùng hoá đơn rồi so từng mã:
+   - SL quy ĐVT nhỏ nhất;
+   - đơn giá chưa thuế sau chiết khấu;
+   - thuế suất;
+   - tổng thanh toán.
+
+   Kết quả:
+   - Lệch: kiểm tra `inv_diff` (cảnh báo, không chặn duyệt).
+   - Khớp: `inv_match`.
+   - NCC đã dùng MH22 mà số hoá đơn chưa lưu: `inv_not_stored`.
+
+   Ở MH22 mỗi hoá đơn có một tình trạng: chưa nhận diện mã · chưa có phiếu nhập · lệch · khớp · đã huỷ.
+4. **Lập phiếu nhập từ hoá đơn**: phiếu nhập mới điền sẵn dòng, giá chưa thuế, chiết khấu, thuế suất, số / ngày hoá đơn.
+
+Lõi tính dùng chung: `packages/contracts/src/mua-hang/hoa-don.ts`. Máy chủ: `apps/api/src/phan-he/mua-hang/hoa-don.ts` (+ `hoa-don-routes.ts`). Giao diện: `apps/web/src/phan-he/mua-hang/hoa-don/`. Phép thử: `apps/api/test/hoa-don-ncc.test.ts`. Hướng dẫn người dùng + khuôn trao đổi với dịch vụ AI: `docs/huong-dan/mua-hang-hoa-don-ncc.md`.

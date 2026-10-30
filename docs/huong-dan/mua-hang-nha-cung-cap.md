@@ -21,7 +21,8 @@ Mỗi NCC một dòng: STT, mã, tên, MST, **nợ phải trả** (theo sổ), *
 | Chiết khấu & khuyến mại | CK trên đơn, bậc số lượng, CKTT, mua X tặng Y, ngân sách quà |
 | Thưởng | Thưởng doanh số theo kỳ, chỉ tiêu nhãn, giai đoạn, chỉ tiêu cung ứng |
 | Mặt hàng & giá mua | NCC bán **mã nào, ĐVT nào, giá bao nhiêu**: **mã + tên hàng bên NCC** (để sau quét hoá đơn đỏ tự nhận ra mã của mình), ĐVT đặt hàng (Đặt theo ĐVT này), giá mua cố định (gồm / chưa thuế, hiệu lực), lần mua gần nhất, **ghi chú** (tự điền vào ghi chú dòng khi lập đơn đặt), người sửa lần cuối; dưới bảng: nút mở **Phân tích đặt hàng** lọc sẵn NCC |
-| Chứng từ | Mọi chứng từ của NCC (lọc, xuất Excel, bấm đúp mở); cột **Theo chứng từ** cho biết phiếu nhập lập từ đơn nào, phiếu trả / trả tiền theo phiếu nhập nào |
+| Tổng hợp mua hàng ↗ | Mở màn **Tổng hợp mua hàng (MH11)** ở thẻ mới, lọc sẵn NCC này: mọi phiếu của NCC (mỗi phiếu một dòng, tiền, công nợ từng phiếu), lập / sửa / duyệt |
+| Báo cáo mua hàng ↗ | Mở **Báo cáo mua hàng (MH23)** ở thẻ mới, lọc sẵn NCC này: chi tiết từng dòng hàng |
 | Tệp đính kèm | Hợp đồng, CO, CQ, báo giá, hoá đơn, biên bản… (kéo thả, tối đa 15 MB / tệp). **Bấm tên tệp là xem ngay trên web** (PDF, ảnh, Excel từng sheet) — không phải tải về; nút ⬇ để tải |
 | Nhật ký | Ai tạo / sửa chính sách, gắn tệp, duyệt phiếu — lúc nào |
 
@@ -72,6 +73,8 @@ Hạn rơi vào ngày nghỉ / lễ (khai ở **Cài đặt mua hàng**) thì sa
 
 NCC là doanh nghiệp nên form chỉ có **một bộ thông tin chính thức, đúng như trên hoá đơn**: nhóm, mã, **tên công ty**, MST, tên viết tắt, **địa chỉ theo đăng ký kinh doanh**, điện thoại, email, người liên hệ + chức vụ, di động người liên hệ, website; khối **tài khoản ngân hàng** (để trả tiền); ghi chú. Phiếu mua, báo cáo lấy đúng tên / địa chỉ / MST này.
 
+**Lấy thông tin theo mã số thuế** (cách nhanh): ô **Mã số thuế** nằm ngay dưới mã — gõ MST rồi bấm **Lấy thông tin** (hoặc Enter): phần mềm tra doanh nghiệp theo dữ liệu Cục Thuế và điền sẵn **tên trên hoá đơn, tên viết tắt, địa chỉ đăng ký** (có khoá dịch vụ tra cứu thì thêm người đại diện, ngành nghề, ngày thành lập). Thêm mới mà chưa gõ tên thì rời ô MST là tự tra (chỉ điền ô đang trống); bấm nút là điền lại theo kết quả. Dưới ô MST hiện trạng thái thuế — **⚠ đỏ khi doanh nghiệp đã ngừng hoạt động** (kiểm tra trước khi mua) — và báo ngay nếu MST **đã có ở NCC / khách hàng khác**. Nhận MST 10 số, 10 số-3 số (đơn vị phụ thuộc, gõ liền 13 số cũng được), 12 số (hộ kinh doanh); dấu chấm, khoảng trắng tự bỏ. Không tra được (mất mạng, nguồn giới hạn lượt) thì nhập tay như thường.
+
 - Không có các ô dành cho khách lẻ (ngày sinh, giới tính, khách hàng tiềm năng, loại khách hàng, fax, alias).
 - Không khai hạn mức, hạn thanh toán ở form này — khai ở **Hồ sơ NCC** (chính sách Hạn mức công nợ, Điều khoản thanh toán), một nơi cho mọi điều kiện mua.
 - Chân form ghi **người tạo, ngày giờ tạo**; danh sách NCC (MH01) có cột **Người tạo**, **Ngày giờ tạo**.
@@ -93,8 +96,8 @@ NCC là doanh nghiệp nên form chỉ có **một bộ thông tin chính thức
 
 Các nút **Đơn đặt hàng · Phiếu nhập · Trả hàng · Trả tiền** bấm vào hiện menu nhỏ:
 - **Lập … mới** — mở phiếu mới ngay tại hồ sơ, điền sẵn NCC này và chi nhánh đang làm việc; Thoát là quay lại hồ sơ;
-- **Xem danh sách … của NCC này** — chuyển sang thẻ **Chứng từ** của hồ sơ, đúng loại phiếu (kèm số phiếu, số chưa duyệt);
+- **Xem danh sách … của NCC này** — mở **Tổng hợp mua hàng (MH11)** ở thẻ mới, lọc sẵn NCC và đúng loại phiếu (kèm số phiếu, số chưa duyệt);
 - **Phiếu nhập**: thêm *Lập phiếu nhập từ đơn …* cho đơn đặt đã duyệt còn hàng chưa giao.
 - **Chứng từ khác ▾**: các loại còn lại như ô *+ Thêm chứng từ…* — Đổi hàng NCC, Nhận quà (không HĐ), Xuất quà tặng, Ứng trước NCC, Chi phí mua hàng, Chiết khấu / giảm giá sau mua; mỗi loại *lập mới* hoặc *xem (số phiếu)*.
 
-Thẻ **Chứng từ** của hồ sơ chính là màn *Chứng từ mua hàng (MH03)* đã khoá NCC: đủ các thẻ loại phiếu (Đơn đặt hàng, Nhập mua, Trả / đổi hàng, Ứng trước / trả tiền, Quà tặng, Chi phí / thưởng), lọc trạng thái / ngày / theo đơn – ngoài đơn, **+ Thêm chứng từ…**, Nhập từ Excel, Xuất Excel. Nút **Nhập Excel** ở đầu hồ sơ cũng mở hộp nhập ngay tại đây.
+**Lập … mới**, mở phiếu từ thẻ Tổng quan và nút **Nhập Excel** mở hộp phiếu / hộp nhập ngay trong hồ sơ (không rời trang); nhập Excel xong thì mở MH11 lọc các phiếu nháp của NCC để kiểm lại.

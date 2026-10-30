@@ -45,7 +45,10 @@ Như HTsoft (lấy mã khách hàng theo nhóm): chọn **Thuộc nhóm** thì m
 
 ### Báo trùng số điện thoại, mã số thuế
 
-Khi thêm mới, gõ xong **Mobile**, **Telephone** hoặc **Mã số thuế** mà số đó đã có ở đối tượng khác, phần mềm hỏi có mở đối tượng đó để sửa không (như HTsoft). Chọn **OK** thì form chuyển sang sửa đối tượng đã có; **Cancel** thì vẫn thêm mới.
+Khi thêm mới, gõ xong **Mobile**, **Telephone** hoặc **Mã số thuế** mà số đó đã có ở đối tượng khác, phần mềm hỏi có mở đối tượng đó để sửa không. Chọn **OK** thì form chuyển sang sửa đối tượng đã có; **Cancel** thì vẫn thêm mới.
+
+**Lấy thông tin theo mã số thuế** (cách nhanh): ô **Mã số thuế** (NCC: ngay dưới mã; khách hàng: khối Thông tin công ty) — gõ MST rồi bấm **Lấy thông tin** (hoặc Enter): phần mềm tra doanh nghiệp theo dữ liệu Cục Thuế và điền sẵn **tên trên hoá đơn, tên viết tắt, địa chỉ đăng ký** (có khoá dịch vụ tra cứu thì thêm người đại diện, ngành nghề, ngày thành lập). Thêm mới mà chưa gõ tên thì rời ô MST là tự tra (chỉ điền ô đang trống); bấm nút là điền lại theo kết quả. Dưới ô MST hiện trạng thái thuế — **⚠ đỏ khi doanh nghiệp đã ngừng hoạt động** (kiểm tra trước khi giao dịch) — và báo ngay nếu MST **đã có ở đối tượng khác**. Nhận MST 10 số, 10 số-3 số (đơn vị phụ thuộc, gõ liền 13 số cũng được), 12 số (hộ kinh doanh); dấu chấm, khoảng trắng tự bỏ. Không tra được (mất mạng, nguồn giới hạn lượt) thì nhập tay như thường.
+
 
 Bắt buộc: Thuộc kiểu, Thuộc nhóm (khi kiểu đó có nhóm), Mã. Email nếu nhập phải đúng dạng.
 

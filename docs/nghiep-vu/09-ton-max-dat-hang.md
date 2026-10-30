@@ -137,7 +137,7 @@ Số liệu tồn đều tính từ `inventory_movements`:
 | MH02 | Phân tích đặt hàng | Bảng kiểu Excel nhóm theo nhãn + NCC (thay màn đề xuất cũ); lọc cần nhập / đang dư; chọn → lập đơn đặt. |
 | MH20 | Nhập dữ liệu khởi đầu | ① giá mua NCC từ dòng phiếu nhập ② cân tồn → phiếu điều chỉnh kho +/− từng kho ③ tồn max. Cột Kho = mã kho DM12. |
 | MH19 | Đề xuất chuyển hàng shop | Theo chi nhánh cha: shop nào thiếu bao nhiêu, làm tròn thùng, giới hạn theo tồn kho; chốt thành đề nghị chuyển; danh sách đề nghị để kho quét. |
-| MH03 | Đơn đặt mua (trong Chứng từ) | Thêm cột tồn, ghi chú dòng, ngân sách, dòng hàng mới, xem mẫu Excel NCC, xuất Excel mẫu NCC. |
+| MH11 | Đơn đặt mua (trong Chứng từ) | Thêm cột tồn, ghi chú dòng, ngân sách, dòng hàng mới, xem mẫu Excel NCC, xuất Excel mẫu NCC. |
 
 Màn nào cũng có nút Hướng dẫn (`docs/huong-dan/mua-hang-*.md`), mẫu nhập Excel, xuất Excel và cột kéo giãn (DataGrid).
 
