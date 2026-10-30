@@ -87,4 +87,13 @@ export const checks = [
       return { examined: 3, unitBy: 'key', findings, metrics: r };
     },
   },
+  {
+    id: 'DG-DB-4', code: 'DB_WRITABLE',
+    title: 'CSDL là bản chính, ghi được (không phải bản sao chỉ đọc / đang khôi phục)',
+    gate: 'CONF-RUN', contract: 'kernel', rules: ['R-DIAG-9'], conf: [], tier: 1, enforce: 'block', weight: 2,
+    async run(ctx) {
+      const [r] = await ctx.db.query('SELECT pg_is_in_recovery() AS recovery');
+      return { examined: 1, findings: r.recovery ? [ctx.finding(null, null, 'pg_is_in_recovery() = true: API không ghi chứng từ được', 'recovery')] : [] };
+    },
+  },
 ];

@@ -98,6 +98,7 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 | Mã | HTTP | Khi nào |
 |---|---|---|
 | `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR` | 400, 401, 403, 404, 409, 500 | như hiện nay |
+| `NOT_READY` | 503 | bản cài chưa sẵn sàng (L1, `GET /system/health/ready`); action không trả mã này |
 | `PERIOD_LOCKED`, `POSTING_FAILED`, `UNBALANCED_ENTRY` | 409, 422, 422 | do Kernel đăng ký; module chỉ chuyển tiếp |
 | `IDEMPOTENCY_CONFLICT` *(mới)* | 409 | cùng `Idempotency-Key`, khác nội dung |
 | `CAPABILITY_MISSING` *(mới)* | 501 | module cần năng lực Core chưa có |

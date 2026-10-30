@@ -7,56 +7,76 @@
 
 | Điểm | Trả gì | Ai dùng |
 |---|---|---|
-| `GET /api/v1/system/health` (công khai) | `{ status: "up", time, bookMode, envLabel }` sau khi `select 1` | Docker healthcheck, proxy, CLI |
+| `GET /api/v1/system/health` (công khai) | L0: `{ status: "up", time, bookMode, envLabel, version, kernel, standard }` sau khi `select 1` | Giám sát, CLI |
+| `GET /api/v1/system/health/ready` (công khai) | L1: `{ status: "ready", checks: [{ code, level, count }] }`; chưa sẵn sàng → **503 `NOT_READY`** kèm `details.checks`. Chỉ mã + mức, không số liệu | Docker healthcheck (`docker-compose.yml`), bộ cân bằng tải |
+| `GET /api/v1/system/diagnostics` (`reports:read`) | L3 toàn vẹn sổ của đơn vị (§2); lưu vào `diagnostic_runs` | Kế toán, vận hành, sau triển khai (R-QG-10) |
+| `GET /api/v1/system/diagnostics/runs`, `/runs/:id` (`reports:read`) | Lịch sử các lượt chẩn đoán (R-DIAG-5) | Vận hành |
+| `GET /api/v1/system/capabilities` (đăng nhập / khoá) | Bảng năng lực Standard của bản đang chạy, mã lỗi, sự kiện lõi, điểm mở rộng, phân hệ / add-in bật, mã chẩn đoán đã đăng ký | Module, Cell / AI, bộ kiểm |
+| `GET /api/v1/periods/check?year&month` | Bảng kiểm trước khi khoá kỳ; mục `integrity` = số lỗi L3 trong kỳ (R-DIAG-4) | Kế toán (màn Kỳ kế toán) |
 | `GET /api/v1/system/modules` · `/system/addins` | Phân hệ, add-in đang bật | Vận hành |
 | `GET /api/v1/system/schema` | Cấu trúc CSDL kèm chú thích | Dev, kiểm R-DB-5 |
 | `GET /api/v1/reports/document-checks?from&to` | Kiểm toàn vẹn chứng từ (phiếu trả không nối được phiếu gốc…) — màn ACC93 | Kế toán, vận hành |
 | `GET /api/v1/posting-log` · `GET /api/v1/documents/:id/posting-log` (ACC14) | Nhật ký nhận / định khoản / lỗi / huỷ | Kế toán |
 | `audit_logs` | Ai đổi gì | Kiểm toán |
 
-## 2. Đích: `GET /api/v1/system/diagnostics` (Giai đoạn 1)
+## 2. `GET /api/v1/system/diagnostics` (có từ PHASES 2.10)
 
-Quyền `settings:write` hoặc khoá `reports:read`. Chạy các kiểm sau cho đơn vị của người gọi (tuỳ chọn `from`, `to`), mỗi kiểm một dòng kết quả:
+Quyền `reports:read`. Tuỳ chọn:
+- `from`, `to`: ngày hạch toán (bút toán theo `posting_date`, sự việc theo `doc_date`);
+- `branchCode`;
+- `layer`: `L3` mặc định, hoặc `L1`.
 
-| Mã kiểm | Kiểm | Mức khi sai |
-|---|---|---|
-| `LEDGER_BALANCED` | Mỗi bút toán: Σ Nợ = Σ Có | error |
-| `LEDGER_BALANCES_DAILY` | `ledger_balances_daily` = Σ `ledger_lines` theo (chi nhánh, tài khoản, ngày, đối tượng) | error |
-| `LEDGER_REVERSED_ONCE` | Bút toán `reversed` có đúng một bút toán đảo; bút toán đảo trỏ về bút toán `reversed` | error |
-| `LEDGER_ORPHAN` | Mọi `ledger_entries.event_id` tồn tại | error |
-| `EVENT_POSTED_VERSION` | `status = posted` ⇒ `posted_version = version` và có bút toán hiệu lực | error |
-| `EVENT_PENDING_AGE` | Sự việc `pending` / `error` quá N ngày | warn |
-| `COST_FILL_OPEN` | Dòng `cost_fill` còn 0 ở tháng đã qua | warn |
-| `TRANSIT_NONZERO` | Số dư 1579 / 11319 khác 0 quá N ngày | warn |
-| `DEBT_MATCH_LEDGER` | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error |
-| `TAX_BOOK_MATCH` | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn |
-| `MIGRATIONS_PENDING` | Còn migration chưa áp | error |
-| `SETTINGS_UNKNOWN` | Khoá trong `tenants.settings` không có trong registry | warn |
+Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm một dòng kết quả, rồi lưu lượt chạy vào `diagnostic_runs` (chỉ thêm, migration 0034).
 
-Phản hồi:
+**Ai khai kiểm nào.** Platform (`modules/system/diagnostics.ts`) giữ sổ đăng ký, bộ chạy và các kiểm L1 chung. Kernel (`modules/ledger/ledger.diagnostics.ts`) khai các kiểm sổ, được đăng ký lúc lắp ráp (`app.ts`). Platform không import Kernel (LAYOUT-1).
+
+| Mã kiểm | Tầng | Kiểm | Mức khi sai | Trong app | Lane bộ kiểm |
+|---|---|---|---|---|---|
+| `LEDGER_BALANCED` | L3 | Mỗi bút toán: Σ Nợ = Σ Có | error | có | DG-LEDGER-1 |
+| `LEDGER_BALANCES_DAILY` | L3 | `ledger_balances_daily` = Σ `ledger_lines` theo (chi nhánh, tài khoản, ngày) | error | có | DG-LEDGER-2 |
+| `LEDGER_REVERSED_ONCE` | L3 | Bút toán `reversed` có đúng một bút toán đảo; bút toán đảo trỏ về bút toán `reversed` | error | có | DG-LEDGER-3 |
+| `LEDGER_ORPHAN` | L3 | Mọi `ledger_entries.event_id` tồn tại | error | có | DG-LEDGER-4 |
+| `EVENT_POSTED_VERSION` | L3 | `status = posted` ⇒ `posted_version = version` (trừ sự việc nội bộ) | error | có | DG-EVENT-1 |
+| `EVENT_HAS_ENTRY` | L3 | Sự việc `posted` có bút toán hiệu lực | warn | có | DG-EVENT-2 |
+| `EVENT_PENDING_AGE` | L3 | Sự việc `pending` / `error` quá 3 ngày | warn | có | DG-EVENT-3 |
+| `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version` (nợ A-01, hết ở PHASES 2.1) | info | có | DG-EVENT-4 |
+| `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
+| `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
+| `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
+| `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |
+| `DEBT_MATCH_LEDGER` | L3 | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error | chưa | DG-PLAN-1 (giữ chỗ) |
+| `TAX_BOOK_MATCH` | L3 | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn | chưa | DG-PLAN-2 |
+| `COST_FILL_OPEN` | L3 | Dòng `cost_fill` còn 0 ở tháng đã qua | warn | chưa | DG-PLAN-3 |
+| `TRANSIT_NONZERO` | L3 | Số dư 1579 / 11319 khác 0 quá N ngày | warn | chưa | DG-PLAN-4 |
+
+**Một mã, hai nơi.**
+- Mỗi mã có trong app phải có check DG-* cùng mã ở lane diagnostics (R-DIAG-9). Check **SC-DIAG-1** chặn nếu thiếu.
+- SQL ở app thêm điều kiện đơn vị và phạm vi; lane chạy trên cả CSDL. Đổi SQL một bên thì đổi bên kia.
+
+Phản hồi (mức: `pass` · `empty` (không có gì để xét, R-DIAG-7) · `info` · `warn` · `error`):
 
 ```json
-{ "ok": true, "data": { "tenant": "tgs", "at": "2026-10-28T09:00:00+07:00", "summary": { "pass": 10, "warn": 2, "error": 0 },
-  "checks": [ { "code": "LEDGER_BALANCED", "level": "pass", "count": 0, "sample": [] },
-              { "code": "EVENT_PENDING_AGE", "level": "warn", "count": 14, "sample": ["btsoft:95:sale:3058"] } ] } }
+{ "ok": true, "data": { "runId": "42", "tenant": "tgs", "layer": "L3", "at": "2026-10-30T09:00:00Z",
+  "scope": { "from": "2026-10-01", "to": "2026-10-31" },
+  "summary": { "pass": 5, "empty": 0, "info": 0, "warn": 2, "error": 0 },
+  "checks": [ { "code": "LEDGER_BALANCED", "level": "pass", "title": "…", "fix": "…", "examined": 1250, "count": 0, "sample": [] },
+              { "code": "EVENT_PENDING_AGE", "level": "warn", "title": "…", "fix": "…", "examined": 30, "count": 14, "sample": ["btsoft:95:sale:3058"] } ] } }
 ```
 
-Mỗi kiểm cũng là một hàm trong `@bizcity/test-kit` (`assertLedgerInvariants`) để test gọi ở `afterAll` (R-QG-5).
+`sample` chỉ chứa khoá chứng từ hoặc số bút toán, tối đa 20. Không có số tiền, không có tên khách (R-DIAG-6).
 
-**Đã chạy được ngay (trước khi có endpoint):** lane diagnostics của bộ kiểm chuẩn, [tests/conformance/diagnostics/](../../tests/conformance/README.md). Cùng mã kiểm, chạy trên CSDL thật trong giao dịch `READ ONLY`:
+**Khoá kỳ (R-DIAG-4).**
+- `POST` / `PUT /api/v1/periods/locks` chạy L3 trên tháng đó (và chi nhánh nếu có), lưu lượt chạy với `trigger = period-lock`.
+- Có mục `error` thì trả `CONFLICT`, kèm `details.diagnostics = { runId, errors[] }`.
+- Muốn vẫn khoá: gửi lại kèm `acceptDiagnostics` (lý do, ít nhất 10 ký tự). Lý do và số lượt chạy vào `period_lock_events.reason` và audit. Màn Kỳ kế toán hiện ô lý do này.
+
+**Trong test:** `assertLedgerInvariants()` (`apps/api/test/helpers.ts`) chạy các kiểm mức `error` của L3 trên các đơn vị mà tệp test tạo ra. Nó nằm ở `afterAll` chung của mọi tệp (`apps/api/test/setup.ts`, PHASES 2.2, R-QG-5): test làm lệch sổ thì cả tệp đỏ.
+
+**Lane bộ kiểm (chạy trên bản sao, cả CSDL):**
 
 ```bash
 BIZCITY_PSQL="docker exec -i ketoan-db-1 psql -U ketoan -d ketoan" node tests/conformance/selfcheck.mjs --lane diagnostics
 ```
-
-| Mã ở bảng trên | Check | Trạng thái |
-|---|---|---|
-| `LEDGER_BALANCED`, `LEDGER_BALANCES_DAILY`, `LEDGER_REVERSED_ONCE`, `LEDGER_ORPHAN` | DG-LEDGER-1..4 | có |
-| `EVENT_POSTED_VERSION`, `EVENT_PENDING_AGE` (+ `EVENT_HAS_ENTRY`) | DG-EVENT-1..3 | có |
-| `MIGRATIONS_PENDING`, `SETTINGS_UNKNOWN` | DG-DB-1, DG-SET-1 | có |
-| `DEBT_MATCH_LEDGER`, `TAX_BOOK_MATCH`, `COST_FILL_OPEN`, `TRANSIT_NONZERO` | DG-PLAN-1..4 | giữ chỗ (cần AccountResolver) |
-
-Khi làm endpoint (Phase 2), dùng lại SQL trong `ledger.diag.mjs` để hai nơi ra cùng kết quả.
 
 ## 3. Nhật ký có cấu trúc
 

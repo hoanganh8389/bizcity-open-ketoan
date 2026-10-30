@@ -88,7 +88,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | `adapters/cell`, kết nối Hub / Cell | `standard/CELL-CONNECT.md`, `standard/CHANNEL-GATEWAY-PORT.md` |
 | Bất kỳ tệp Kernel (RULE-KERNEL §1) | ghi mức K0–K3 trong PR; K2+ thêm mục "Thay đổi định khoản" trong `CHANGELOG.md` |
 | Thay đổi người dùng thấy được | `CHANGELOG.md` mục `[Chưa phát hành]` (R-REL-2) |
-| Thêm kiểm toàn vẹn / bản cài | `ops/DIAGNOSTICS.md` §2 + check `DG-*` trong `tests/conformance/diagnostics/` (R-DIAG-9) |
+| Thêm kiểm toàn vẹn / bản cài | `ops/DIAGNOSTICS.md` §2 + check `DG-*` trong `tests/conformance/diagnostics/` trước (R-DIAG-9); đưa vào app: `modules/ledger/ledger.diagnostics.ts` (Kernel) hoặc `modules/system/diagnostics.ts` (Platform), cùng mã (SC-DIAG-1) |
 | Thêm / sửa / xong một việc của lộ trình | `standard/PHASES.md` + `standard/roadmap.json` cùng PR (SC-RMP-1); việc tay xong ghi `doneAt` + `by` |
 | Sửa xong một nợ đã biết | `node tests/conformance/selfcheck.mjs --update-baseline` trong cùng PR (CI chạy `--strict`) |
 | Tách / chuyển thư mục giữa Kernel, Platform, module | `standard/REUSE-MAP.md`, `standard/TARGET-LAYOUT.md`, bảng lớp `tests/conformance/lib/layers.mjs` rồi `node scripts/gan-nhan-lop.mjs --write` (R-BOUND-10) |

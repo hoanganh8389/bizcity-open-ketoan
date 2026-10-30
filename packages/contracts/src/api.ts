@@ -41,6 +41,8 @@ export const ERROR_CODES = {
   POSTING_FAILED: 'POSTING_FAILED',
   UNBALANCED: 'UNBALANCED_ENTRY',
   INTERNAL: 'INTERNAL_ERROR',
+  /** Bản cài chưa sẵn sàng phục vụ (L1: còn migration chưa áp, mất trigger bảo vệ sổ, CSDL chỉ đọc) — GET /system/health/ready. */
+  NOT_READY: 'NOT_READY',
 } as const;
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 

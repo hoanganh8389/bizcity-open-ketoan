@@ -78,6 +78,7 @@ export const LAYER_MAP = [
   ['modules/system/', 'P', 'module-sdk'],
   ['modules/system/presence.ts', 'P', 'permissions'],
   ['modules/system/system.routes.ts', 'P', 'cli'],
+  ['modules/system/diagnostics.ts', 'P', 'cli'],
   ['modules/connections/', 'A', 'adapters/wordpress'],
 
   // Danh sách phân hệ / add-in bật và route lõi: lắp ráp (apps/server, LAYOUT-6), không phải SDK. Kiểu ApiModule mới là SDK.

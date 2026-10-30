@@ -85,10 +85,10 @@
   },
   "errorCodes": {
     "note": "available = có trong ERROR_CODES (packages/contracts/src/api.ts); planned = khai ở BIZCITY-ACTION-v1.md §8, chưa có code.",
-    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR"],
+    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR", "NOT_READY"],
     "planned": ["IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"]
   },
   "changelog": [
-    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)"] }
+    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)", "Thêm mã lỗi NOT_READY (503, GET /system/health/ready); GET /system/capabilities trả bảng này"] }
   ]
 }

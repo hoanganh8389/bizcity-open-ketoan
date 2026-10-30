@@ -33,6 +33,7 @@
 | `POSTING_FAILED` | 422 | Thiếu cấu hình định khoản | Không cần gửi lại — kế toán sửa rồi định khoản lại |
 | `UNBALANCED_ENTRY` | 422 | Bút toán không cân (lỗi luật) | Báo nhóm Lõi |
 | `INTERNAL_ERROR` | 500 | Lỗi hệ thống | Thử lại sau, có giới hạn |
+| `NOT_READY` | 503 | Bản cài chưa sẵn sàng: còn migration chưa áp, mất trigger bảo vệ sổ, CSDL chỉ đọc (`GET /system/health/ready`, L1) | Bộ cân bằng tải ngừng gửi việc; vận hành chạy `db-migrate` |
 
 Thêm mã = thay đổi tương thích; đổi nghĩa mã = phá vỡ.
 
@@ -55,7 +56,9 @@ Thêm mã = thay đổi tương thích; đổi nghĩa mã = phá vỡ.
 | Danh mục đọc | `GET /branches`, `/partners`, `/products`, `/tax-codes`, `/posting/reasons`, `/posting/payment-methods` | `documents:write` hoặc `catalog:write` |
 | Danh mục ghi | `POST /branches`, `PUT /partners/:code`, `PUT /products/:sku` | `catalog:write` |
 | Đối chiếu | `GET /reports/sales-invoices`, `GET /reports/trial-balance` | `reports:read` |
-| Hệ thống | `GET /system/health` | công khai |
+| Hệ thống | `GET /system/health`, `GET /system/health/ready` (L1; 503 `NOT_READY` khi chưa sẵn sàng) | công khai |
+| Tự chẩn đoán | `GET /system/diagnostics` (L3 toàn vẹn sổ, [DIAGNOSTICS.md §2](../ops/DIAGNOSTICS.md)) | `reports:read` |
+| Năng lực | `GET /system/capabilities` (bảng năng lực Standard của bản đang chạy) | mọi khoá / phiên đăng nhập |
 
 Mọi endpoint khác phục vụ giao diện nội bộ và **có thể đổi không báo** (R-API-8).
 

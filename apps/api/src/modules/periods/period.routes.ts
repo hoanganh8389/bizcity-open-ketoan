@@ -14,7 +14,8 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { db } from '../../db/client.js';
-import { authOf, requirePermission } from '../../core/auth.js';
+import { authOf, requirePermission, type AuthContext } from '../../core/auth.js';
+import { runDiagnostics, saveDiagnosticRun } from '../system/diagnostics.js';
 import { ok, idParamSchema } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
@@ -29,6 +30,28 @@ const tags = ['Kỳ kế toán'];
 const ym = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
 const periodQuery = z.object({ year: z.coerce.number().int().min(2000).max(2100), month: z.coerce.number().int().min(1).max(12) });
 const docTypeEnum = z.enum(DOC_TYPE_LIST as [string, ...string[]]);
+const lastDay = (year: number, month: number) => `${ym(year, month)}-${String(new Date(Date.UTC(year, month, 0)).getUTCDate()).padStart(2, '0')}`;
+const acceptSchema = z.string().trim().max(500).optional()
+  .describe('R-DIAG-4: sổ trong kỳ có lỗi toàn vẹn mà vẫn khoá thì ghi lý do chấp nhận (ít nhất 10 ký tự); lý do + lượt chẩn đoán vào nhật ký khoá');
+
+/**
+ * R-DIAG-4: chạy tự chẩn đoán L3 trên kỳ (và chi nhánh) trước khi khoá; có mục error thì chặn, trừ khi người khoá ghi lý do chấp nhận.
+ * Lượt chẩn đoán luôn được lưu (diagnostic_runs, trigger period-lock) làm bằng chứng. Trả nhãn ghi vào period_lock_events.reason.
+ */
+async function guardLock(auth: AuthContext, year: number, month: number, branchId: string | null, accept: string | undefined): Promise<string | null> {
+  const report = await runDiagnostics({ tenantId: auth.tenantId, from: `${ym(year, month)}-01`, to: lastDay(year, month), branchId: branchId ?? undefined }, { layer: 'L3' });
+  const runId = await saveDiagnosticRun(report, { tenantId: auth.tenantId, actor: auth.actor, trigger: 'period-lock' });
+  const errors = report.checks.filter((c) => c.level === 'error');
+  if (!errors.length) return null;
+  if (!accept || accept.length < 10) {
+    throw Errors.conflict(
+      `Không khoá được kỳ ${ym(year, month)}: sổ trong kỳ có lỗi toàn vẹn (${errors.map((c) => `${c.code} ×${c.count}`).join(', ')}). ` +
+        'Sửa trước khi khoá, hoặc ghi lý do chấp nhận (ít nhất 10 ký tự).',
+      { diagnostics: { runId, errors: errors.map((c) => ({ code: c.code, title: c.title, count: c.count, sample: c.sample, fix: c.fix })) } },
+    );
+  }
+  return `Chấp nhận lỗi chẩn đoán lượt #${runId} (${errors.map((c) => c.code).join(', ')}): ${accept}`;
+}
 
 export async function periodRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -81,24 +104,26 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
         month: z.number().int().min(1).max(12),
         branchCode: z.string().optional().describe('Bỏ trống = mọi chi nhánh'),
         docType: z.string().default('*').describe('* = mọi loại chứng từ'),
+        acceptDiagnostics: acceptSchema,
       }),
     },
     handler: async (req) => {
       const auth = authOf(req);
       const b = req.body;
       const date = `${b.year}-${String(b.month).padStart(2, '0')}-01`;
+      let branchId: string | null = null;
+      if (b.branchCode) {
+        const br = await db.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', b.branchCode).executeTakeFirst();
+        if (!br) throw Errors.notFound(`chi nhánh ${b.branchCode}`);
+        branchId = br.id;
+      }
+      const accepted = await guardLock(auth, b.year, b.month, branchId, b.acceptDiagnostics);
       await db.transaction().execute(async (trx) => {
         const period = await periodRepository.ensurePeriodFor(trx, auth.tenantId, date);
-        let branchId: string | null = null;
-        if (b.branchCode) {
-          const br = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', b.branchCode).executeTakeFirst();
-          if (!br) throw Errors.notFound(`chi nhánh ${b.branchCode}`);
-          branchId = br.id;
-        }
         if (await periodRepository.insertLock(trx, { tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, locked_by: auth.actorName })) {
-          await trx.insertInto('period_lock_events').values({ tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, action: 'lock', reason: null, actor: auth.actor, actor_name: auth.actorName }).execute();
+          await trx.insertInto('period_lock_events').values({ tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, action: 'lock', reason: accepted, actor: auth.actor, actor_name: auth.actorName }).execute();
         }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock', objectType: 'period', objectId: period.id, after: b });
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock', objectType: 'period', objectId: period.id, after: { ...b, acceptedDiagnostics: accepted ?? undefined } });
       });
       return ok({ locked: true });
     },
@@ -150,12 +175,15 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
       body: periodQuery.extend({
         changes: z.array(z.object({ branchCode: z.string().min(1), docType: docTypeEnum, locked: z.boolean() })).min(1).max(20000),
         reason: z.string().trim().max(500).default(''),
+        acceptDiagnostics: acceptSchema,
       }),
     },
     handler: async (req) => {
       const auth = authOf(req);
       const b = req.body;
       if (b.changes.some((c) => !c.locked) && b.reason.length < 3) throw Errors.validation('Cần ghi lý do mở khoá (ít nhất 3 ký tự)');
+      // R-DIAG-4: có ô được khoá thì chẩn đoán cả kỳ (mọi chi nhánh) một lần.
+      const accepted = b.changes.some((c) => c.locked) ? await guardLock(auth, b.year, b.month, null, b.acceptDiagnostics) : null;
       const counts = await db.transaction().execute(async (trx) => {
         const period = await periodRepository.ensurePeriodFor(trx, auth.tenantId, `${ym(b.year, b.month)}-01`);
         const branchRows = await trx.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).execute();
@@ -170,7 +198,7 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
           if (c.locked) {
             if (await periodRepository.insertLock(trx, { tenant_id: auth.tenantId, period_id: period.id, branch_id: bid, doc_type: c.docType, locked_by: auth.actorName })) {
               locked++;
-              events.push({ tenant_id: auth.tenantId, period_id: period.id, branch_id: bid, doc_type: c.docType, action: 'lock', reason: b.reason || null, actor: auth.actor, actor_name: auth.actorName });
+              events.push({ tenant_id: auth.tenantId, period_id: period.id, branch_id: bid, doc_type: c.docType, action: 'lock', reason: [accepted, b.reason].filter(Boolean).join(' · ') || null, actor: auth.actor, actor_name: auth.actorName });
             }
           } else {
             const del = await trx.deleteFrom('period_locks').where('tenant_id', '=', auth.tenantId).where('period_id', '=', period.id)
@@ -182,7 +210,7 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
           }
         }
         for (let i = 0; i < events.length; i += 1000) await trx.insertInto('period_lock_events').values(events.slice(i, i + 1000)).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock-batch', objectType: 'period', objectId: period.id, after: { locked, unlocked, reason: b.reason || undefined } });
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock-batch', objectType: 'period', objectId: period.id, after: { locked, unlocked, reason: b.reason || undefined, acceptedDiagnostics: accepted ?? undefined } });
         return { locked, unlocked };
       });
       return ok(counts);
@@ -221,7 +249,10 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
          ORDER BY 1`.execute(db);
       const list = (rows: { code: string }[]) => rows.map((r) => r.code).join(', ');
       const closing = await closingService.periodChecks(tenantId, label);
+      // R-DIAG-4: lỗi toàn vẹn sổ (L3) chặn khoá kỳ — xem trước ở đây, không lưu lượt (lưu khi khoá thật).
+      const diag = (await runDiagnostics({ tenantId, from, to: toDate }, { layer: 'L3' })).checks.filter((c) => c.level === 'error');
       return ok([
+        { key: 'integrity', label: 'Lỗi toàn vẹn sổ (tự chẩn đoán) — chặn khoá kỳ nếu không ghi lý do chấp nhận', count: diag.reduce((s, c) => s + c.count, 0), detail: diag.map((c) => `${c.code} ×${c.count}: ${c.sample.slice(0, 5).join(', ')}`).join('; ') },
         { key: 'errors', label: 'Chứng từ nhận lỗi, chưa ghi sổ', count: checks.errors.count, link: '/bao-cao/kiem-tra-chung-tu' },
         { key: 'entryMismatch', label: 'Chứng từ lệch với bút toán (đã ghi mà không có bút toán, đã huỷ mà còn bút toán)', count: checks.entryMismatch.count, link: '/bao-cao/kiem-tra-chung-tu' },
         { key: 'balanceMismatch', label: 'Số dư lưu sẵn lệch với sổ cái', count: checks.balanceMismatch.count, link: '/bao-cao/kiem-tra-chung-tu' },

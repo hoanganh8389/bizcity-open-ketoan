@@ -118,6 +118,20 @@ export interface AuditLogsTable {
   created_at: TimestampDefault;
 }
 
+/** Kết quả tự chẩn đoán, chỉ thêm (migration 0034, R-DIAG-5). */
+export interface DiagnosticRunsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  layer: 'L1' | 'L3';
+  trigger: Generated<'manual' | 'period-lock' | 'schedule' | 'release'>;
+  scope: JsonDefault<Record<string, unknown>>;
+  summary: Json<Record<string, number>>;
+  checks: Json<unknown[]>;
+  error_count: Generated<number>;
+  actor: string;
+  created_at: TimestampDefault;
+}
+
 export interface AccountsTable {
   id: Generated<string>;
   tenant_id: string;
@@ -1358,6 +1372,7 @@ export interface Database {
   branches: BranchesTable;
   warehouses: WarehousesTable;
   audit_logs: AuditLogsTable;
+  diagnostic_runs: DiagnosticRunsTable;
   accounts: AccountsTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;

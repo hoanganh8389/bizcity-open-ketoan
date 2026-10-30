@@ -74,7 +74,9 @@ describe('Đóng / mở kỳ theo lưới', () => {
     const r = await call(ctx, 'GET', '/api/v1/periods/check?year=2026&month=8');
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const byKey = Object.fromEntries(r.body.data.map((c: { key: string; count: number }) => [c.key, c]));
-    expect(Object.keys(byKey)).toEqual(['errors', 'entryMismatch', 'balanceMismatch', 'orphanReturns', 'paymentRequests', 'cogs', 'closing', 'closingStale', 'closingResidual']);
+    expect(Object.keys(byKey)).toEqual(['integrity', 'errors', 'entryMismatch', 'balanceMismatch', 'orphanReturns', 'paymentRequests', 'cogs', 'closing', 'closingStale', 'closingResidual']);
+    // Sổ đúng: tự chẩn đoán L3 không có lỗi (R-DIAG-4 — có lỗi thì khoá kỳ bị chặn, xem diagnostics.test.ts).
+    expect(byKey.integrity).toMatchObject({ count: 0 });
     // Tháng 8 có phiếu chi ở CN01, CN02 nhưng chưa kết chuyển.
     expect(byKey.closing).toMatchObject({ count: 2, detail: 'CN01, CN02' });
   });

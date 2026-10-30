@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarPlus, Lock, Unlock } from 'lucide-react';
 import { DOC_TYPE_GROUPS, DOC_TYPE_LABELS, type DocType } from '@ketoan/contracts';
-import { api, errorText } from '@/lib/api';
+import { api, ApiError, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { date, dateTime } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
@@ -112,7 +112,10 @@ function GridTab({ year, month }: { year: number; month: number }) {
   const changes = [...draft.entries()].map(([k, locked]) => { const [branchCode, docType] = k.split('|'); return { branchCode: branchCode!, docType: docType!, locked }; });
   const unlocks = changes.filter((c) => !c.locked).length;
   const save = useMutation({
-    mutationFn: (reason: string) => api.put<{ locked: number; unlocked: number }>('/api/v1/periods/locks', { year, month, changes, reason }),
+    mutationFn: (a: { reason: string; accept?: string }) =>
+      api.put<{ locked: number; unlocked: number }>('/api/v1/periods/locks', { year, month, changes, reason: a.reason, acceptDiagnostics: a.accept }),
+    // Bị chặn vì lỗi toàn vẹn sổ (R-DIAG-4): đóng hộp lý do mở khoá, hiện khối chấp nhận ở lưới.
+    onError: (e) => { if (isDiagBlock(e)) setAsking(false); },
     onSuccess: (r) => {
       setAsking(false);
       setDone(`Đã khoá ${r.locked} ô, mở ${r.unlocked} ô.`);
@@ -135,7 +138,7 @@ function GridTab({ year, month }: { year: number; month: number }) {
               </button>
               <button className="btn" disabled={!changes.length} onClick={() => setDraft(new Map())}>Bỏ thay đổi</button>
               <button className="btn btn-primary" disabled={!changes.length || save.isPending}
-                onClick={() => (unlocks ? setAsking(true) : save.mutate(''))}>Ghi{changes.length ? ` (${changes.length} ô)` : ''}</button>
+                onClick={() => (unlocks ? setAsking(true) : save.mutate({ reason: '' }))}>Ghi{changes.length ? ` (${changes.length} ô)` : ''}</button>
             </div>
           </>
         )}
@@ -164,7 +167,8 @@ function GridTab({ year, month }: { year: number; month: number }) {
           Đang có khoá chung: {general.map((l) => `${l.branch ?? 'mọi chi nhánh'} · ${typeLabel(l.docType)}`).join('; ')}. Các ô thuộc khoá chung không đổi được ở lưới; mở ở tab "Danh sách kỳ".
         </div>
       )}
-      <ErrorBox error={q.error ? errorText(q.error) : save.error && !asking ? errorText(save.error) : null} />
+      <ErrorBox error={q.error ? errorText(q.error) : save.error && !asking && !isDiagBlock(save.error) ? errorText(save.error) : null} />
+      <AcceptDiagnostics error={save.error} pending={save.isPending} onAccept={(accept) => save.mutate({ reason: save.variables?.reason ?? '', accept })} />
       {done && <div className="muted" style={{ marginBottom: 8 }}>{done}</div>}
 
       {q.isLoading ? <Loading /> : !branches.length ? <Empty text="Không có chi nhánh" /> : (
@@ -211,7 +215,7 @@ function GridTab({ year, month }: { year: number; month: number }) {
           </table>
         </div>
       )}
-      {asking && <ReasonDialog count={unlocks} pending={save.isPending} error={save.error ? errorText(save.error) : null} onClose={() => setAsking(false)} onOk={(r) => save.mutate(r)} />}
+      {asking && <ReasonDialog count={unlocks} pending={save.isPending} error={save.error ? errorText(save.error) : null} onClose={() => setAsking(false)} onOk={(r) => save.mutate({ reason: r })} />}
     </div>
   );
 }
@@ -286,21 +290,48 @@ function ListTab({ year }: { year: number }) {
   );
 }
 
+interface DiagBlock { diagnostics: { runId: string; errors: { code: string; title: string; count: number; sample: string[]; fix: string }[] } }
+/** API chặn khoá kỳ vì sổ trong kỳ có lỗi toàn vẹn (R-DIAG-4, CONFLICT kèm details.diagnostics). */
+const isDiagBlock = (e: unknown): e is ApiError => e instanceof ApiError && !!(e.details as Partial<DiagBlock> | undefined)?.diagnostics;
+
+/** Khối hiện lỗi toàn vẹn sổ + ô lý do chấp nhận: ghi lý do (≥ 10 ký tự) rồi khoá lại; lý do vào nhật ký khoá kèm số lượt chẩn đoán. */
+function AcceptDiagnostics({ error, pending, onAccept }: { error: unknown; pending: boolean; onAccept: (reason: string) => void }) {
+  const [reason, setReason] = useState('');
+  if (!isDiagBlock(error)) return null;
+  const d = (error.details as DiagBlock).diagnostics;
+  return (
+    <div className="alert alert-bad full" style={{ marginBottom: 10 }}>
+      <div>{error.message}</div>
+      <ul style={{ margin: '6px 0', paddingLeft: 18 }}>
+        {d.errors.map((x) => <li key={x.code}><b>{x.code}</b> ×{x.count}: {x.title}. {x.fix}{x.sample.length ? ` (vd ${x.sample.slice(0, 5).join(', ')})` : ''}</li>)}
+      </ul>
+      <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="field" style={{ flex: 1, minWidth: 240 }}>
+          <label>Lý do chấp nhận (ít nhất 10 ký tự, ghi vào nhật ký khoá, lượt chẩn đoán #{d.runId})</label>
+          <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} />
+        </div>
+        <button className="btn" disabled={pending || reason.trim().length < 10} onClick={() => onAccept(reason.trim())}>Vẫn khoá, chấp nhận lỗi</button>
+      </div>
+    </div>
+  );
+}
+
 function LockForm({ initial, onClose, onDone }: { initial: { year: number; month: number }; onClose: () => void; onDone: () => void }) {
   const [v, setV] = useState({ ...initial, branchCode: '', docType: '*' });
   const save = useMutation({
-    mutationFn: () => api.post('/api/v1/periods/locks', { ...v, branchCode: v.branchCode || undefined }),
+    mutationFn: (accept?: string) => api.post('/api/v1/periods/locks', { ...v, branchCode: v.branchCode || undefined, acceptDiagnostics: accept }),
     onSuccess: () => { onDone(); onClose(); },
   });
   return (
     <Modal title="Khoá chung" onClose={onClose}
-      footer={<><button className="btn" onClick={onClose}>Đóng</button><button className="btn btn-primary" disabled={save.isPending} onClick={() => save.mutate()}>Khoá</button></>}>
+      footer={<><button className="btn" onClick={onClose}>Đóng</button><button className="btn btn-primary" disabled={save.isPending} onClick={() => save.mutate(undefined)}>Khoá</button></>}>
       <div className="full muted">Khoá chung áp cho mọi chi nhánh và/hoặc mọi loại chứng từ, kể cả chi nhánh mở sau này.</div>
       <Field label="Tháng"><input className="input" type="number" min={1} max={12} value={v.month} onChange={(e) => setV({ ...v, month: Number(e.target.value) })} /></Field>
       <Field label="Năm"><input className="input" type="number" value={v.year} onChange={(e) => setV({ ...v, year: Number(e.target.value) })} /></Field>
       <Field label="Loại chứng từ"><select className="select input" value={v.docType} onChange={(e) => setV({ ...v, docType: e.target.value })}><option value="*">Mọi loại</option>{ALL_TYPES.map((t) => <option key={t} value={t}>{DOC_TYPE_LABELS[t]}</option>)}</select></Field>
       <div className="full"><BranchSelect multiple={false} value={v.branchCode} onChange={(branchCode) => setV({ ...v, branchCode })} label="Chi nhánh (trống = mọi chi nhánh)" /></div>
-      {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
+      {save.error && !isDiagBlock(save.error) && <div className="alert alert-bad full">{errorText(save.error)}</div>}
+      <AcceptDiagnostics error={save.error} pending={save.isPending} onAccept={(accept) => save.mutate(accept)} />
     </Modal>
   );
 }

@@ -39,8 +39,19 @@ Mỗi bản ghi đủ sáu mục:
   - nhãn lớp `// @bizcity-layer` ở mọi tệp `apps/api/src` (R-BOUND-10, `scripts/gan-nhan-lop.mjs`, SC-LAYER-1);
   - đồ thị phụ thuộc theo lớp, mốc `docs/audits/deps-2026-10-30.*` (`scripts/do-thi-phu-thuoc.mjs`, SC-LAYER-2);
   - bản nháp API `packages/module-sdk/API.md`.
+- Tự chẩn đoán trong app (PHASES 2.10, RULE-SELF-DIAGNOSTICS):
+  - `GET /api/v1/system/health/ready` (L1: migration, trigger bảo vệ sổ, CSDL ghi được); Docker healthcheck của `api` dùng điểm này;
+  - `GET /api/v1/system/diagnostics` (L3 toàn vẹn sổ, quyền `reports:read`) và lịch sử `…/diagnostics/runs`;
+  - bảng chỉ thêm `diagnostic_runs` (migration `0034_chan_doan.sql`);
+  - mã lỗi mới `NOT_READY` (503).
+- `GET /api/v1/system/capabilities`: bảng năng lực Bizcity Standard của bản đang chạy (PHASES 2.9).
+- Test: `assertLedgerInvariants()` chạy sau mọi tệp test (PHASES 2.2).
 
 ### Đổi
+- **Khoá kỳ bị chặn khi sổ trong kỳ có lỗi toàn vẹn** (R-DIAG-4):
+  - lỗi gồm Nợ ≠ Có, số dư ngày lệch, đảo sai, bút toán mồ côi, sự việc lệch phiên bản;
+  - muốn vẫn khoá: ghi lý do chấp nhận (ít nhất 10 ký tự), lý do lưu vào nhật ký khoá;
+  - bảng kiểm trước khi khoá có thêm mục "Lỗi toàn vẹn sổ".
 - `POST /api/v1/auth/logout-others` khai `requireUser()` (khoá API → `403 FORBIDDEN`, như service vốn kiểm). `/api/v1/presence*` khai `requireAuthenticated()` — hành vi không đổi.
 - Mua hàng → dữ liệu mẫu tạo kho mặc định qua dịch vụ danh mục kho của lõi (có ghi nhật ký), thôi ghi thẳng bảng `warehouses`.
 - `0028_thue_kkkn.sql` đổi số thành `0031_thue_kkkn.sql` (sửa trùng số, A-03); `migrate.ts` ghi nhận tên mới cho bản cài đã áp tên cũ, không chạy lại.
@@ -52,7 +63,10 @@ Mỗi bản ghi đủ sáu mục:
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
 
 ### Thay đổi định khoản
-- Không có.
+- Luật định khoản, tài khoản, giá vốn: không đổi.
+- **Khoá kỳ (mức K2, RULE-KERNEL):** khoá kỳ bị chặn khi tự chẩn đoán L3 có lỗi trong kỳ (R-DIAG-4).
+  - Không đổi bút toán đã ghi, không đổi khoá đã có.
+  - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
 - Khuyên làm trên bản cài thật: đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` trong `.env` rồi `docker compose up -d` (DEPLOY D-9). Không đặt thì mọi thứ chạy như cũ.

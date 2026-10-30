@@ -139,6 +139,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   branches: { group: 'platform', label: 'Chi nhánh / cửa hàng', module: 'branches', purpose: 'Mỗi cửa hàng là một chi nhánh; code là mã cửa hàng dùng để đối chiếu với hệ thống bán hàng.' },
   warehouses: { group: 'platform', label: 'Kho của chi nhánh', module: 'warehouses', purpose: 'Danh mục kho (DM12): mỗi kho thuộc một chi nhánh; mã kho đối chiếu dòng nhập xuất; kho mặc định nhận dòng không ghi mã kho.' },
   audit_logs: { group: 'platform', label: 'Nhật ký thao tác', module: 'access', purpose: 'Ai làm gì, lúc nào, dữ liệu trước / sau.' },
+  diagnostic_runs: { group: 'platform', label: 'Kết quả tự chẩn đoán', term: 'Chẩn đoán', module: 'system', purpose: 'Mỗi lần tự chẩn đoán (L1 sẵn sàng, L3 toàn vẹn sổ) một dòng: mã kiểm, mức, số chỗ sai, mẫu khoá chứng từ. Chạy khi gọi GET /system/diagnostics và trước khi khoá kỳ. Chỉ thêm, giữ 90 ngày.' },
   schema_migrations: { group: 'other', label: 'Lịch sử migration', purpose: 'Các tệp migrations/NNNN_*.sql đã áp vào cơ sở dữ liệu.' },
 };
 
@@ -148,6 +149,7 @@ export const TRIGGER_NOTES: Record<string, string> = {
   forbid_ledger_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Sai thì ghi số âm rồi ghi lại.',
   assert_negative_only_on_reversal: 'Số tiền âm chỉ được ghi trong bút toán ghi số âm (is_reversal = true).',
   forbid_ledger_truncate: 'Chặn xoá sạch bảng sổ cái bằng TRUNCATE.',
+  forbid_diagnostic_run_update: 'Kết quả chẩn đoán chỉ được thêm: chặn sửa dòng đã ghi (R-DIAG-5).',
   unit_names_autoadd: 'Khai ĐVT ở mặt hàng (bất kỳ đường ghi nào: form, Excel, đồng bộ, dữ liệu mẫu) mà tên chưa có thì tự thêm vào Danh mục đơn vị tính (unit_names, nguồn auto).',
   unit_names_seed_tenant: 'Tạo đơn vị (tenant) mới thì tự có sẵn danh sách ĐVT thông dụng (Hộp, Lốc, Lốc_4, Thùng…).',
   guard_ledger_line_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Ngoại lệ duy nhất: tính giá vốn ghi đè số tiền dòng chờ giá vốn (cost_fill) của bút toán còn hiệu lực, không đảo bút toán.',

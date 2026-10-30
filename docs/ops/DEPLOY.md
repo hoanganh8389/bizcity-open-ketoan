@@ -45,8 +45,8 @@ reverse proxy (HTTPS, tên miền) ──► web (nginx, 127.0.0.1:WEB_PORT) ─
 ```bash
 docker compose ps                                   # db, api, web Up; api healthy; db-migrate Exit 0
 docker compose logs db-migrate | tail -20           # migration vừa áp
-curl -s http://127.0.0.1:${WEB_PORT:-8088}/api/v1/system/health
-# Giai đoạn 1: curl -s -H "X-Api-Key: $KEY" …/api/v1/system/diagnostics  → không có mục level=error
+curl -s http://127.0.0.1:${WEB_PORT:-8088}/api/v1/system/health/ready              # L1: status "ready" (503 NOT_READY nếu chưa)
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:${WEB_PORT:-8088}/api/v1/system/diagnostics   # L3, khoá reports:read: summary.error = 0
 ```
 
 Ghi kết quả vào phần "Bằng chứng" của phiếu phát hành theo [DIAGNOSTICS.md](DIAGNOSTICS.md) §4.

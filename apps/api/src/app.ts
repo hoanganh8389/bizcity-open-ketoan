@@ -20,6 +20,8 @@ import { BUILTIN_ADDINS } from './addins/index.js';
 
 import { enabledModules, routesFor } from './phan-he/index.js';
 import { isCatalogWrite, notifyCatalogChanged } from './modules/catalog/catalog-notify.js';
+import { registerDiagnostics } from './modules/system/diagnostics.js';
+import { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
 
 
 
@@ -64,6 +66,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) notifyCatalogChanged(req.auth.tenantId, app.log);
   });
+
+  // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).
+  registerDiagnostics(LEDGER_DIAGNOSTICS);
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.
   // Hệ thống (người dùng, kết nối…) thuộc lõi — luôn báo là bật.

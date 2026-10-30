@@ -1,11 +1,17 @@
 /**
- * Tiện ích kiểm thử: dựng app, tạo đơn vị riêng cho mỗi lần chạy, gọi API.
+ * Tiện ích kiểm thử: dựng app, tạo đơn vị riêng cho mỗi lần chạy, gọi API; kiểm bất biến sổ sau mỗi tệp test (test/setup.ts).
  */
 import type { FastifyInstance } from 'fastify';
 import { APPROVABLE_DOC_TYPES } from '@ketoan/contracts';
 import { buildApp } from '../src/app.js';
 import { runMigrations } from '../src/db/migrate.js';
 import { seed } from '../src/db/seed.js';
+import { Kysely, PostgresDialect } from 'kysely';
+import pg from 'pg';
+import { env } from '../src/config/env.js';
+import type { Database } from '../src/db/types.js';
+import { registerDiagnostics, runDiagnostics } from '../src/modules/system/diagnostics.js';
+import { LEDGER_DIAGNOSTICS } from '../src/modules/ledger/ledger.diagnostics.js';
 
 export interface TestCtx {
   app: FastifyInstance;
@@ -14,9 +20,34 @@ export interface TestCtx {
   tenantCode: string;
 }
 
+/** Đơn vị do tệp test đang chạy tạo bằng setupTenant — afterAll chung (test/setup.ts) kiểm sổ của từng đơn vị. */
+export const createdTenants: string[] = [];
+
+/**
+ * Bất biến sổ (PHASES 2.2, R-QG-5): mọi kiểm mức error của tự chẩn đoán L3 (Nợ = Có, số dư ngày khớp dòng, đảo đúng một lần,
+ * không bút toán mồ côi, posted_version) phải đạt trên các đơn vị test. Cùng bộ kiểm với GET /api/v1/system/diagnostics.
+ * Dùng kết nối riêng (tự đóng): tệp test thường đã closeDb() trong afterAll của mình trước khi afterAll chung chạy.
+ */
+export async function assertLedgerInvariants(tenantCodes: readonly string[] = createdTenants): Promise<void> {
+  if (!tenantCodes.length) return;
+  registerDiagnostics(LEDGER_DIAGNOSTICS);
+  const conn = new Kysely<Database>({ dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: env.DATABASE_URL, max: 2 }) }) });
+  try {
+    const bad: string[] = [];
+    for (const t of await conn.selectFrom('tenants').select(['id', 'code']).where('code', 'in', [...tenantCodes]).execute()) {
+      const r = await runDiagnostics({ tenantId: t.id }, { layer: 'L3', db: conn });
+      for (const c of r.checks.filter((x) => x.level === 'error')) bad.push(`${t.code} ${c.code} ×${c.count} (${c.sample.slice(0, 5).join(', ')})`);
+    }
+    if (bad.length) throw new Error(`Sổ của đơn vị test sai bất biến: ${bad.join('; ')}`);
+  } finally {
+    await conn.destroy();
+  }
+}
+
 export async function setupTenant(): Promise<TestCtx> {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const tenantCode = `t${suffix}`;
+  createdTenants.push(tenantCode);
   const apiKey = `kt_test_${suffix}_key`;
   process.env.SEED_TENANT_CODE = tenantCode;
   process.env.SEED_TENANT_NAME = `Đơn vị kiểm thử ${suffix}`;

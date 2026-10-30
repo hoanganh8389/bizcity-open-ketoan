@@ -48,15 +48,15 @@
 | # | Việc | Xong khi | Từ lộ trình cũ |
 |---|---|---|---|
 | 2.1 | **`eventStore.commit()`**: gom chuỗi sự việc → phiên bản → đảo → ghi. Chuyển `vouchers`, `closing`, `assets`, `inventory/costing` sang (A-01) | `DEBT_LEDGER_CALLERS` trong `kiem-chuan.sh` rỗng | 1.1, 1.2, 1.3 |
-| 2.2 | `assertLedgerInvariants()` trong test-kit, gọi ở `afterAll` mọi tệp test | chạy trong CI | 1.4 |
+| 2.2 | `assertLedgerInvariants()` trong test-kit, gọi ở `afterAll` mọi tệp test | chạy trong CI — **có**: `apps/api/test/helpers.ts` + `test/setup.ts` (setupFiles), dùng chung kiểm L3 của 2.10 | 1.4 |
 | 2.3 | Workspace `packages/kernel`: chuyển `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` + `db/seed.ts`; mở `public.ts` (`submit`, `cancel`, `get`) | `apps/api` chỉ import `@bizcity/kernel` công khai | mới |
 | 2.4 | `packages/data`: `ctx.data.tx` (đặt `bizcity.tenant_id`), runner migration theo module, schema `bizcity_read` + view danh mục | CONF-MIG chạy được | mới |
 | 2.5 | `packages/actions`: `defineAction`, idempotency (`action_requests`), dry-run, mã lỗi mới, sinh route + OpenAPI. Chuyển `phan-he/quy/payment-requests` làm mẫu | CONF-RUN-1/3/4/9 đạt trên yêu cầu thanh toán | mới |
 | 2.6 | `packages/audit`: mở rộng `audit_logs` (Evidence §5), trigger chỉ thêm, chuỗi băm, biên nhận; runtime action ghi tự động | CONF-RUN-11/12 đạt | mới |
 | 2.7 | `packages/documents`: `nextNumber`, `document_versions`, `document_links`, `attachments` (chuyển `purchase_attachments`), `document_signatures.doc_ref` | Mua hàng dùng đính kèm chung | mới |
 | 2.8 | Tách `packages/contracts/src/mua-hang/*` về phân hệ (A-06) | `packages/contracts` không còn thư mục `mua-hang` | 1.6 |
-| 2.9 | `GET /api/v1/system/capabilities` trả `bizcity-standard.json` + trạng thái thật | test so khớp | mới |
-| 2.10 | Chẩn đoán: `GET /api/v1/system/diagnostics` + `/health/ready`; bảng `diagnostic_runs`; khoá kỳ bị chặn khi L3 có error (R-DIAG-4); `health` trả `version`, `kernel`, `standard` (R-REL-1) — dùng lại SQL của `tests/conformance/diagnostics/` | [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md), [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md) | 1.5 |
+| 2.9 | `GET /api/v1/system/capabilities` trả `bizcity-standard.json` + trạng thái thật | test so khớp — **có**: `diagnostics.test.ts` | mới |
+| 2.10 | Chẩn đoán: `GET /api/v1/system/diagnostics` + `/health/ready`; bảng `diagnostic_runs`; khoá kỳ bị chặn khi L3 có error (R-DIAG-4); `health` trả `version`, `kernel`, `standard` (R-REL-1) — dùng lại SQL của `tests/conformance/diagnostics/`; cùng mã kiểm SC-DIAG-1 | **có** (màn xem lịch sử: Phase 3): [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md), [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md) | 1.5 |
 | 2.11 | **`platform/mcp` đọc (2b)**: `POST /mcp`, công cụ `ketoan.*` §5.1 bọc route hiện có, khoá `mcp_…` có scope, phong bì + `as_of` ([bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md)) | Claude / ChatGPT đọc được cân đối phát sinh, công nợ của một đơn vị | mới |
 | 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt | mới |
 

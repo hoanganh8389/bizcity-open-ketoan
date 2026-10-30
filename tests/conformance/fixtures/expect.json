@@ -293,6 +293,12 @@
             "wrong:apps/api/src/phan-he/beta/y.ts"
           ]
         },
+        "SC-DIAG-1": {
+          "findings": 1,
+          "keys": [
+            "GHOST_CHECK"
+          ]
+        },
         "SC-LAYER-2": {
           "findings": 2,
           "keys": [

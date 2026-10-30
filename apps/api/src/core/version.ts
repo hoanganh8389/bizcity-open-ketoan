@@ -12,19 +12,26 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
-function readVersion(file: string): string | null {
+function readJson(file: string): Record<string, unknown> | null {
   try {
-    const v = (JSON.parse(readFileSync(path.join(root, file), 'utf8')) as { version?: unknown }).version;
-    return typeof v === 'string' ? v : null;
+    return JSON.parse(readFileSync(path.join(root, file), 'utf8')) as Record<string, unknown>;
   } catch {
     return null;
   }
 }
+
+function readVersion(file: string): string | null {
+  const v = readJson(file)?.version;
+  return typeof v === 'string' ? v : null;
+}
+
+/** Bảng năng lực Bizcity Standard (bizcity-standard.json) cho GET /api/v1/system/capabilities; không có tệp thì null. */
+export const STANDARD = readJson('docs/standard/bizcity-standard.json');
 
 const version = readVersion('package.json') ?? '0.0.0';
 
 export const BUILD_VERSION = {
   version,
   kernel: version,
-  standard: readVersion('docs/standard/bizcity-standard.json'),
+  standard: typeof STANDARD?.version === 'string' ? STANDARD.version : null,
 } as const;

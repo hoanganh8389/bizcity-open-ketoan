@@ -95,7 +95,8 @@ services:
     volumes:
       - appdata:/app/apps/api/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4100/api/v1/system/health >/dev/null || exit 1"]
+      # L1 sẵn sàng (R-DIAG-3): migration đủ, trigger bảo vệ sổ còn và bật, CSDL ghi được; lỗi → 503 → unhealthy.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4100/api/v1/system/health/ready >/dev/null || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10

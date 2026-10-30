@@ -28,4 +28,5 @@ export const Errors = {
   posting: (message: string, details?: unknown) => new AppError(ERROR_CODES.POSTING_FAILED, message, 422, details),
   unbalanced: (message = 'Tổng nợ và có không bằng nhau, bạn kiểm tra lại thông tin!', details?: unknown) =>
     new AppError(ERROR_CODES.UNBALANCED, message, 422, details),
+  notReady: (message: string, details?: unknown) => new AppError(ERROR_CODES.NOT_READY, message, 503, details),
 };

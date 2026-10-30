@@ -7,5 +7,7 @@ export default defineConfig({
     testTimeout: 60_000,
     hookTimeout: 120_000,
     fileParallelism: false,
+    // Sau mỗi tệp: kiểm bất biến sổ của các đơn vị tệp đó tạo (PHASES 2.2).
+    setupFiles: ['./test/setup.ts'],
   },
 });
