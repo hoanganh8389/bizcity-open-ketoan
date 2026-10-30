@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/config
 /**
  * Cấu hình hạch toán: lý do, nhóm hạch toán mặt hàng, hình thức thanh toán,
  * tài khoản ngầm định, loại thuế, mặt hàng.

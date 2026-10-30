@@ -282,6 +282,23 @@
             "column:branches.extra_col",
             "table:ghost_table"
           ]
+        },
+        "SC-LAYER-1": {
+          "findings": 5,
+          "keys": [
+            "missing:apps/api/src/db/types.ts",
+            "missing:apps/api/src/modules/posting/rules/sale.rule.ts",
+            "missing:apps/api/src/phan-he/alpha/config.ts",
+            "unmapped:apps/api/src/la/z.ts",
+            "wrong:apps/api/src/phan-he/beta/y.ts"
+          ]
+        },
+        "SC-LAYER-2": {
+          "findings": 2,
+          "keys": [
+            "core/audit[P]->modules/periods[K]",
+            "phan-he/alpha[D]->phan-he/beta[D]"
+          ]
         }
       }
     },

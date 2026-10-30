@@ -129,11 +129,13 @@ export default {
 | Nhóm | Check | Thay / bổ sung cho |
 |---|---|---|
 | Kernel | SC-KERNEL-1..5, SC-QG-1 | `scripts/kiem-chuan.sh` (cùng luật, nợ chuyển vào baseline) |
-| Data (CONF-MIG) | SC-DATA-1..6 | kiểm số migration CI; thêm khoá băm, COMMENT, kiểu tiền, tenant_id, RLS |
+| Data (CONF-MIG) | SC-DATA-1..7 | kiểm số migration CI; thêm khoá băm, COMMENT, kiểu tiền, tenant_id, RLS; `db/types.ts` ↔ migration |
 | Module (CONF-STATIC, CONF-MAN) | SC-MOD-1..3, SC-CON-2 | `phan-he-ranh-gioi.test.ts` (giữ nguyên); thêm ghi bảng lõi, manifest |
+| Lớp (CONF-STATIC) | SC-LAYER-1 (nhãn `@bizcity-layer`), SC-LAYER-2 (chiều import giữa lớp, ratchet) | dependency-cruiser ở PHASES 1.4; bảng lớp [`lib/layers.mjs`](lib/layers.mjs), đồ thị [`lib/depgraph.mjs`](lib/depgraph.mjs), mốc `scripts/do-thi-phu-thuoc.mjs` |
 | Action / API / Event / Evidence | SC-API-1..3, SC-ACT-1, SC-EVT-1, SC-EVD-1..2 | grep tay trong review |
+| Bảo mật, phát hành | SC-SEC-1..4, SC-REL-1..2 | review tay theo RULE-SECURITY, RULE-RELEASE |
 | Gói định khoản | SC-TPL-1 (`--module <thư mục gói>` kiểm một gói) | mới — [bizcity_posting_template@1](../../docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md) |
-| Hợp đồng, tài liệu | SC-CON-1..7, SC-DOC-1..2 | kiểm schema tay bằng ajv; kiểm liên kết tay |
-| Diagnostics (CONF-RUN) | DG-LEDGER-1..4, DG-EVENT-1..3, DG-DB-1, DG-SET-1, DG-PLAN-1..6 | `GET /system/diagnostics` (Phase 2) |
+| Hợp đồng, tài liệu, lộ trình | SC-CON-1..7, SC-DOC-1..2, SC-RMP-1 | kiểm schema tay bằng ajv; kiểm liên kết tay; PHASES.md ↔ roadmap.json |
+| Diagnostics (CONF-RUN) | DG-LEDGER-1..4, DG-EVENT-1..4, DG-DB-1..3, DG-SET-1, DG-SEC-1..2, DG-PLAN-1..6 | `GET /system/diagnostics` (Phase 2) |
 
 Test vitest có sẵn (`api-examples.test.ts`, `phan-he-ranh-gioi.test.ts`, `db-rules.test.ts`…) **giữ nguyên**: chúng chạy code thật. Bộ này kiểm phần tĩnh và toàn vẹn CSDL. Phần chạy thật trên Core (CONF-RUN-1..17, CONF-UPG) vào đây ở Phase 4 dưới dạng lane thứ ba `runtime`.

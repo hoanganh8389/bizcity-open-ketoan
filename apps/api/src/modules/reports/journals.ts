@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Các sổ nhật ký và bảng kê đọc thẳng sổ cái:
  *   - cashJournal     Sổ nhật ký thu tiền / chi tiền (mẫu S03a1): mỗi dòng tiền xếp vào cột tài khoản đối ứng

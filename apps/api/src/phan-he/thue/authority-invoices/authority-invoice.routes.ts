@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /**
  * Hoá đơn từ cơ quan thuế (THUE01), cảnh báo hoá đơn rủi ro (THUE02), người nộp thuế rủi ro (THUE02).
  *

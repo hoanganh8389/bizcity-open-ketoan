@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Danh mục kho theo chi nhánh (DM12).
  *   GET    /api/v1/warehouses?branchCodes=A,B   danh sách (lọc theo chi nhánh, trống = tất cả)

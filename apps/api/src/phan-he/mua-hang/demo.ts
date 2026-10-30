@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * DỮ LIỆU TÌNH HUỐNG (db/seeds/mua-hang/*.json): 25 tình huống của tài liệu yêu cầu + ví dụ bổ sung (VD1–VD8) — nạp vào SỔ
  * THẬT của đơn vị đang đăng nhập để cả nhóm xem luồng như vận hành: thêm chi nhánh, nhà cung cấp, mặt hàng còn thiếu (mã đã

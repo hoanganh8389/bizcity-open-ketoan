@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';

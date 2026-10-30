@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * PHIÊN ĐĂNG NHẬP THU HỒI ĐƯỢC. Vé (JWT) mang sv = users.session_version lúc cấp; mỗi lần xác thực đối chiếu với bảng người dùng:
  * khác số (đã đổi / đặt lại mật khẩu, đổi vai trò, đăng xuất các thiết bị khác) hoặc tài khoản bị khoá → từ chối (401, máy đó tự

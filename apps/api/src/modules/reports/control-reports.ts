@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo phân tích và kiểm soát:
  *   - expenseByDimension  Chi phí theo chiều phân tích (khoản mục, bộ phận, hợp đồng, nhân viên, vụ việc, dự án, nguồn vốn)

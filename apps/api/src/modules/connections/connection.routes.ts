@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/wordpress
 /**
  * Kết nối hệ thống khác (trạm ACC14):
  *   GET  /api/v1/connections                 danh sách kết nối (khoá bí mật dạng che) + lần kéo gần nhất

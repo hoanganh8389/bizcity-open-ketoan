@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/kho
 /**
  * Báo cáo kho đọc inventory_movements:
  *   - stockMovement  Báo cáo nhập xuất tồn: theo (chi nhánh, mặt hàng) tồn đầu, nhập, xuất, tồn cuối, kèm phần mua hàng

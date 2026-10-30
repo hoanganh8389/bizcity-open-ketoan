@@ -1,3 +1,4 @@
+// @bizcity-layer P module-sdk
 /**
  * Danh mục bảng: nhóm, tên tiếng Việt, thuật ngữ kế toán, vai trò.
  * Màn "Kiến trúc & Nghiệp vụ" ghép danh mục này với cấu trúc đọc thật từ cơ sở dữ liệu

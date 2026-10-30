@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /**
  * Phân loại dài hạn: phần số dư phải thu, phải trả, vay… có thời hạn còn lại trên 12 tháng tại ngày lập
  * Báo cáo tình hình tài chính. Kế toán khai theo (ngày, tài khoản, đối tượng); báo cáo chuyển số này

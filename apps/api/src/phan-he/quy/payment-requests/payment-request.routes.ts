@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/quy
 /**
  * Yêu cầu thanh toán: đề nghị chi → duyệt một / hai cấp → lập phiếu chi hoặc báo nợ.
  *   GET  /api/v1/payment-requests?status=&partnerCode=&from=&to=

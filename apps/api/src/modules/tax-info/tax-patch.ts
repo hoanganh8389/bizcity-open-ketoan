@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/tax
 /**
  * Thông tin thuế kế toán bổ sung cho chứng từ (ACC78), lưu ở tax_info_patches:
  *   - applyTaxPatch: ghép phần hoá đơn bổ sung vào chứng từ trước khi ghi sổ (chứng từ chưa có hoá đơn mà được

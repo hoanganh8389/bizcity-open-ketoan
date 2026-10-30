@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/hop-dong
 /**
  * Lịch thanh toán hợp đồng.
  *   GET /api/v1/contracts/:code/schedules       các kỳ của một hợp đồng

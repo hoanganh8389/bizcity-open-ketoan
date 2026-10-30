@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Mảnh SQL dùng chung cho báo cáo sổ cái.
  *

@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * Lưu / đọc chứng từ và chính sách mua hàng (bảng purchase_documents, purchase_policies — db/migrations/0010_mua_hang.sql).
  * Khuôn trả ra giao diện là PDoc / Policy của '@ketoan/contracts/mua-hang' (cùng khuôn bộ máy tính).

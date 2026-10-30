@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/ledger
 /**
  * Kiểu dữ liệu của bút toán nháp — đầu ra của bộ định khoản, đầu vào của ledgerService.post().
  */

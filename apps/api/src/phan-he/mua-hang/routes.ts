@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * API phân hệ Mua hàng — hợp đồng: docs/api/14-mua-hang.md.
  *   Chứng từ   GET/POST /api/v1/purchase/documents · GET/PUT /…/:id · POST /…/:id/{submit,approve,override,unapprove,cancel}

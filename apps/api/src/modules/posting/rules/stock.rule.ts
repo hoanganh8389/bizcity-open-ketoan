@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Luật định khoản PHIẾU KHO: chuyển kho và điều chỉnh kho. Giá trị ghi sổ là giá trị hàng theo
  * giá vốn (`amount` của dòng); dòng giá trị 0 vẫn ghi sẵn cặp số 0 theo mặt hàng (dòng chờ giá vốn), tính giá vốn

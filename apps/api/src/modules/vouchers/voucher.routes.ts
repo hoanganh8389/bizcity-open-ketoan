@@ -1,3 +1,4 @@
+// @bizcity-layer K+D kernel/intake
 /**
  * Chứng từ kế toán nhập tay (phiếu thu, phiếu chi, phiếu kế toán).
  *   POST /api/v1/vouchers        lập phiếu và ghi sổ

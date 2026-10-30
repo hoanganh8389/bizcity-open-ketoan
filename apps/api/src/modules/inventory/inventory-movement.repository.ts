@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/subledgers/inventory
 /**
  * Hàng vào / ra kho (inventory_movements): trải phẳng dòng hàng của chứng từ đang hiệu lực,
  * mỗi dòng một lần hàng vào hoặc ra một chi nhánh. Nguồn của nhập xuất tồn và giá vốn bình quân.

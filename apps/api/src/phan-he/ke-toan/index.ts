@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /** Phân hệ KẾ TOÁN: chứng từ, sổ sách, công nợ, kết chuyển, báo cáo, kế hoạch tài chính — bật kèm các phân hệ nghiệp vụ khác (includes). */
 import type { ApiModule } from '../types.js';
 import { LEDGER } from '../loi.js';

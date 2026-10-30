@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * Mặt hàng & giá mua của nhà cung cấp (bảng supplier_products) + ĐVT của mặt hàng (product_units, khai ở Danh mục mặt hàng).
  * Một nơi cho "NCC bán mã nào, theo ĐVT nào, giá bao nhiêu" — hồ sơ NCC và form mặt hàng cùng đọc / ghi bảng này.

@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Xác thực và phân quyền.
  *

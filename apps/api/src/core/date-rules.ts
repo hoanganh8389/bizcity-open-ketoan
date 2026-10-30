@@ -1,3 +1,4 @@
+// @bizcity-layer P documents
 /**
  * Khoá dữ liệu theo ngày (ngoài khoá kỳ). Cấu hình ở tenants.settings.dataLock, sửa ở màn ACC2 tab "Khoá theo ngày":
  *   - lockUntil       : chứng từ có ngày đến hết ngày này thì không lập, sửa, huỷ được.

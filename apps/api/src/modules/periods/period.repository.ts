@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/periods
 /**
  * Kỳ kế toán và khoá sổ.
  */

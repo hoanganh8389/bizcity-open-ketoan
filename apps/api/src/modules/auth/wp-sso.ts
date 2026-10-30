@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/wordpress
 /**
  * Đăng nhập bằng tài khoản hệ thống quản trị (WordPress multisite là gốc tài khoản và phân quyền).
  *

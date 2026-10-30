@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * PHÂN KHO MẶC ĐỊNH — mọi hàng ra / vào phải thuộc một phân kho của chi nhánh:
  *   - chứng từ không ghi kho (phiếu từ hệ thống bán hàng, phiếu cũ…) → kho mặc định của chi nhánh (warehouses.is_default);

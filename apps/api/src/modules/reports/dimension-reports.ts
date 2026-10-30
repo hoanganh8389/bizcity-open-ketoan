@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo theo khoản mục, bộ phận, nhân viên, hợp đồng (Đợt 5.4).
  *   GET /api/v1/reports/expense-detail            ACC47 Chi tiết chi phí theo khoản mục, bộ phận: từng dòng sổ của TK chi phí

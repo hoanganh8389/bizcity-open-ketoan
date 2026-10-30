@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Người dùng và khoá API của một đơn vị.
  */

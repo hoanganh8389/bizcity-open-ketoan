@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/ledger
 /**
  * Đọc/ghi sổ cái: bút toán, dòng, số dư theo ngày, bộ đếm số bút toán.
  * Không chứa luật — luật nằm ở ledger.service.ts.

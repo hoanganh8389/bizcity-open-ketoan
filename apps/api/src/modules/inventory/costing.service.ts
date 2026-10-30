@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/subledgers/inventory
 /**
  * Tính giá vốn bình quân gia quyền theo tháng và ghi sổ giá vốn hàng xuất.
  *

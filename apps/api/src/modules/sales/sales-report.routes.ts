@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ban-hang
 /**
  * Báo cáo bán hàng.
  *   GET /api/v1/reports/sales-detail      Báo cáo bán hàng (chi tiết từng dòng hàng, phân trang)

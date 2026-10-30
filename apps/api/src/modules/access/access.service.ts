@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Luật quản lý truy cập:
  *  - Mật khẩu tối thiểu 8 ký tự; chỉ lưu bản băm.

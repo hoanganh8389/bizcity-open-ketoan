@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * BÁO CÁO KHO của phân hệ mua hàng (đọc inventory_movements — sổ kho của mọi nghiệp vụ, không phụ thuộc hệ thống bán hàng):
  *

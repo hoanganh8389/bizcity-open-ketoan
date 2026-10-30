@@ -44,7 +44,7 @@
     { "id": "1.1", "phase": "1", "title": "Rà REUSE-MAP với người phụ trách từng phân hệ", "areas": ["module"],
       "done": [{ "manual": "Mỗi dòng REUSE-MAP có người xác nhận" }] },
     { "id": "1.2", "phase": "1", "title": "Gắn nhãn @bizcity-layer cho mọi tệp apps/api/src", "areas": ["module", "kernel"],
-      "done": [{ "manual": "Script đếm: 100% tệp có nhãn" }] },
+      "done": [{ "label": "100% tệp có nhãn khớp bảng lớp (scripts/gan-nhan-lop.mjs)", "check": "SC-LAYER-1" }] },
     { "id": "1.3", "phase": "1", "title": "A-17..A-26 thành việc có người nhận", "areas": ["module"],
       "done": [{ "manual": "Danh sách việc có người nhận" }] },
     { "id": "1.4", "phase": "1", "title": "Đồ thị phụ thuộc hiện tại làm mốc", "areas": ["module"],

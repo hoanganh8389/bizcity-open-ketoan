@@ -36,10 +36,10 @@
 | # | Việc | Xong khi |
 |---|---|---|
 | 1.1 | Rà REUSE-MAP với người phụ trách từng phân hệ; sửa phân loại sai | mỗi dòng có người xác nhận |
-| 1.2 | Gắn chú thích đầu tệp `@bizcity-layer K|P|M|D|A|U` cho mọi tệp `apps/api/src/**` | script đếm: 100% tệp có nhãn |
+| 1.2 | Gắn chú thích đầu tệp `@bizcity-layer K|P|M|D|A|U` cho mọi tệp `apps/api/src/**` (R-BOUND-10) | `node scripts/gan-nhan-lop.mjs`: 100% tệp có nhãn khớp bảng lớp; check SC-LAYER-1 |
 | 1.3 | Biến A-17..A-26 thành việc có người nhận; với mỗi chỗ module ghi bảng lõi (A-17) chọn: action của Core thay thế, hay chuyển bảng về module | danh sách việc |
-| 1.4 | Dựng đồ thị phụ thuộc hiện tại (dependency-cruiser) và lưu làm mốc | `docs/audits/deps-<ngày>.svg` |
-| 1.5 | Liệt kê bề mặt SDK tối thiểu từ import thực tế (REUSE-MAP §3.4) → bản nháp API `@bizcity/module-sdk` | `packages/module-sdk/API.md` |
+| 1.4 | Dựng đồ thị phụ thuộc hiện tại và lưu làm mốc (`node scripts/do-thi-phu-thuoc.mjs`, Node thuần thay dependency-cruiser); cạnh ngược chiều lớp đo bằng SC-LAYER-2 (ratchet) | `docs/audits/deps-<ngày>.svg` — mốc [deps-2026-10-30](../audits/deps-2026-10-30.md) |
+| 1.5 | Liệt kê bề mặt SDK tối thiểu từ import thực tế (REUSE-MAP §3.4) → bản nháp API `@bizcity/module-sdk` | [`packages/module-sdk/API.md`](../../packages/module-sdk/API.md) (§6: 5 câu hỏi mở chốt trước 3.1) |
 
 ## Phase 2 — Trích xuất Kernel, Data, Document, Action
 

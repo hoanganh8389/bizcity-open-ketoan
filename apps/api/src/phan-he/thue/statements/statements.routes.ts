@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /**
  * Báo cáo tài chính bổ sung và thuế.
  *   GET  /api/v1/long-term-balances?asOf=     phần dài hạn đã khai tại một ngày (kèm số dư thực tế)

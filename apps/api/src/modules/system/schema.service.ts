@@ -1,3 +1,4 @@
+// @bizcity-layer P module-sdk
 /**
  * Đọc cấu trúc cơ sở dữ liệu thật (catalog của PostgreSQL) và ghép với danh mục giải thích.
  * Chỉ đọc, không có dữ liệu nghiệp vụ: chỉ tên bảng, cột, chú thích, ràng buộc, trigger và số dòng ước lượng.

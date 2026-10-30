@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /**
  * Thuyết minh báo cáo tài chính (mẫu B09-DN, Thông tư 99/2025/TT-BTC) — phần số liệu.
  *

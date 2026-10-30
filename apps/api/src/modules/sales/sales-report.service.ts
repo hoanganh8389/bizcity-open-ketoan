@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ban-hang
 /**
  * Báo cáo bán hàng.
  *

@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Truy vấn số liệu cho báo cáo. Viết SQL rõ ràng bằng `sql` của Kysely để dễ đọc, dễ tối ưu.
  * Báo cáo tổng hợp đọc ledger_balances_daily (nhỏ, nhanh); báo cáo chi tiết đọc ledger_lines.

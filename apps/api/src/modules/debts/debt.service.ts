@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/subledgers/debts
 /**
  * Khoản công nợ theo chứng từ (debt_items) và đối trừ (debt_allocations).
  *

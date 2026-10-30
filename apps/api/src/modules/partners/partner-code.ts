@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Gợi ý mã đối tượng mới — theo cách HTsoft (frmKhachhang2.GetNewCode, tuỳ chọn GetKHCodeByNhomKH): chọn nhóm thì mã tự
  * nhảy theo dãy mã của nhóm đó.

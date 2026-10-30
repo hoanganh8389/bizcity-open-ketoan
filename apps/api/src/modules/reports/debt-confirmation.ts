@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Biên bản đối chiếu công nợ (CN07, KT-18).
  *   GET /api/v1/reports/debt-confirmation?from=&to=&account=&partnerCodes=&detail=

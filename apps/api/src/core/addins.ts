@@ -1,3 +1,4 @@
+// @bizcity-layer P module-sdk
 /**
  * Cơ chế add-in (phần mở rộng).
  *

@@ -35,6 +35,10 @@ Mỗi bản ghi đủ sáu mục:
 - Guard `requireUser()`, `requireAuthenticated()` cho route tự phục vụ (R-API-6).
 - Migration `0030_hoa_don_ncc.sql`: bảng `supplier_invoices`, `supplier_invoice_lines`, `supplier_item_aliases` mà code Hoá đơn NCC đã dùng nhưng chưa có migration (khuôn theo `db/types.ts`).
 - Migration `0032_vai_tro_ung_dung.sql`: vai trò CSDL `ketoan_app` cho API (không superuser, không sở hữu bảng); biến `DB_APP_USER`, `DB_APP_PASSWORD` (R-SEC-6).
+- Phase 1:
+  - nhãn lớp `// @bizcity-layer` ở mọi tệp `apps/api/src` (R-BOUND-10, `scripts/gan-nhan-lop.mjs`, SC-LAYER-1);
+  - đồ thị phụ thuộc theo lớp, mốc `docs/audits/deps-2026-10-30.*` (`scripts/do-thi-phu-thuoc.mjs`, SC-LAYER-2);
+  - bản nháp API `packages/module-sdk/API.md`.
 
 ### Đổi
 - `POST /api/v1/auth/logout-others` khai `requireUser()` (khoá API → `403 FORBIDDEN`, như service vốn kiểm). `/api/v1/presence*` khai `requireAuthenticated()` — hành vi không đổi.

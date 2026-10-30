@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/ledger
 /**
  * Tra cứu sổ cái.
  *   GET /api/v1/ledger/entries        danh sách bút toán (lọc ngày, chi nhánh, tài khoản, số chứng từ)

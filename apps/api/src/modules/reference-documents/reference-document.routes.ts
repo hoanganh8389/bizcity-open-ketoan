@@ -1,3 +1,4 @@
+// @bizcity-layer P documents/links
 /**
  * Chứng từ nguồn (đơn đặt hàng, báo giá, phiếu nhập / xuất…): nhận từ hệ thống khác, chỉ lưu, không ghi sổ.
  *   GET   /api/v1/reference-documents?kind=&status=&partnerCode=&search=&from=&to=

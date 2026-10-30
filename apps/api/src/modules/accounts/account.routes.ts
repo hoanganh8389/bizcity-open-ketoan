@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/accounts
 /**
  * Danh mục tài khoản.
  *   GET   /api/v1/accounts          danh sách (lọc search, postingOnly)

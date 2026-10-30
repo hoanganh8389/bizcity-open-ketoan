@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Cầu nối chi nhánh ↔ website của hệ thống bán hàng (danh mục Chi nhánh DM02).
  * Gọi đầu "sites" của KẾT NỐI CHÍNH (kết nối đầu chuẩn đánh dấu Chính; chỉ có một kết nối đầu chuẩn thì dùng luôn):

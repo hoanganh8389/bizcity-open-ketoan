@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Điều phối định khoản một chứng từ gốc:
  *   1. Quyết định bộ sổ (nội bộ luôn có; thuế nếu có hoá đơn hợp lệ và không phải phiếu nội bộ;

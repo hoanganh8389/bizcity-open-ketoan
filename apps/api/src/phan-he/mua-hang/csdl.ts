@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * Cấu trúc CSDL của phân hệ Mua hàng — đọc THẲNG từ PostgreSQL (information_schema / pg_catalog) nên trang "Cơ sở dữ liệu
  * mua hàng" (MH13) luôn khớp CSDL thật: bảng, cột, kiểu, bắt buộc, mặc định, chú thích (COMMENT ON), chỉ mục, trigger, số dòng

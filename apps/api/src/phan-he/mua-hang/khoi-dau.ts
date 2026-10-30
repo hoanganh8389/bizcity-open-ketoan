@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * NHẬP DỮ LIỆU KHỞI ĐẦU (MH20) — 3 việc từ tệp Excel xuất ở phần mềm cũ, chạy lại bao nhiêu lần cũng được (có rồi thì đè):
  *   1. Giá mua theo NCC: tệp dòng phiếu nhập (Mã NCC, Mã hàng, SL, TT trước VAT, ĐVT…) → mỗi NCC × mã × ĐVT một giá

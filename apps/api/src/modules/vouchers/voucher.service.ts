@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/intake
 /**
  * Chứng từ kế toán nhập tay: phiếu thu, phiếu chi, phiếu báo có, phiếu báo nợ, phiếu kế toán,
  * và số dư tài khoản đầu kỳ.

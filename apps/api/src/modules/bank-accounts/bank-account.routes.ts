@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Tài khoản ngân hàng.
  *   GET /api/v1/bank-accounts?search=      danh sách (kèm tên tài khoản kế toán)

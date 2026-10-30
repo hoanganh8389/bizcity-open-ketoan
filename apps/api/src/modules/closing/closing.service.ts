@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/closing
 /**
  * Kết chuyển lãi lỗ cuối kỳ.
  *

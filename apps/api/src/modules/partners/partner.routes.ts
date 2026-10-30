@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Đối tượng và nhóm đối tượng.
  *   GET /api/v1/partners?search=&groupCode=&kind=&status=&page=&pageSize=

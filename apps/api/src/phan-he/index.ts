@@ -1,3 +1,4 @@
+// @bizcity-layer P apps/api
 /**
  * PHÂN HỆ phía máy chủ. Mỗi phân hệ một thư mục src/phan-he/<key>/ (index.ts khai route + mã nguồn riêng của phân hệ);
  * lõi (luôn bật) ở loi.ts. Biến ENABLED_MODULES chọn phân hệ chạy trong một tiến trình (dev theo phân hệ):

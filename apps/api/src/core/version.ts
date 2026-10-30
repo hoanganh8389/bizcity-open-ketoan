@@ -1,3 +1,4 @@
+// @bizcity-layer P cli
 /**
  * Phiên bản của bản đang chạy (R-REL-1) — trả ở GET /api/v1/system/health để vận hành, bộ kiểm, Cell biết đang nói chuyện với bản nào.
  *   version   sản phẩm Bizcity Core = package.json GỐC (nguồn sự thật khi phát hành, tag vX.Y.Z)

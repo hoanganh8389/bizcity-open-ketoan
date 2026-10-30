@@ -91,7 +91,9 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Thêm kiểm toàn vẹn / bản cài | `ops/DIAGNOSTICS.md` §2 + check `DG-*` trong `tests/conformance/diagnostics/` (R-DIAG-9) |
 | Thêm / sửa / xong một việc của lộ trình | `standard/PHASES.md` + `standard/roadmap.json` cùng PR (SC-RMP-1); việc tay xong ghi `doneAt` + `by` |
 | Sửa xong một nợ đã biết | `node tests/conformance/selfcheck.mjs --update-baseline` trong cùng PR (CI chạy `--strict`) |
-| Tách / chuyển thư mục giữa Kernel, Platform, module | `standard/REUSE-MAP.md`, `standard/TARGET-LAYOUT.md` |
+| Tách / chuyển thư mục giữa Kernel, Platform, module | `standard/REUSE-MAP.md`, `standard/TARGET-LAYOUT.md`, bảng lớp `tests/conformance/lib/layers.mjs` rồi `node scripts/gan-nhan-lop.mjs --write` (R-BOUND-10) |
+| Thêm tệp `apps/api/src/**` | nhãn dòng đầu `// @bizcity-layer`: `node scripts/gan-nhan-lop.mjs --write`; thư mục mới → thêm dòng bảng lớp (SC-LAYER-1) |
+| Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
 
 ## 6. Nhật ký thay đổi CANON
 

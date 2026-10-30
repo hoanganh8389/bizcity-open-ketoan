@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/seeds
 /**
  * Dữ liệu khởi tạo cho một đơn vị mới.
  *

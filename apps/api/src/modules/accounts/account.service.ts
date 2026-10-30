@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/accounts
 /**
  * Luật danh mục tài khoản:
  *  - Tài khoản con phải có tài khoản cha tồn tại; số tài khoản con bắt đầu bằng số cha.

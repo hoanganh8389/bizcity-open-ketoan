@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/wordpress
 /**
  * Kết nối hệ thống khác (trạm ACC14): cấu hình lưu ở tenants.settings.connections, lần kéo gần nhất ở
  * tenants.settings.connectionPulls. Không có bảng riêng.

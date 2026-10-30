@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /**
  * Tờ khai thuế GTGT theo phương pháp khấu trừ (mẫu 01/GTGT; từ 01/7/2026 theo Thông tư 89/2026/TT-BTC, trước đó
  * Thông tư 80/2021/TT-BTC — các chỉ tiêu dưới đây giữ mã số chung của hai mẫu, thêm [32b], [34a] của mẫu mới).

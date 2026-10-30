@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/tai-san
 /**
  * Tài sản cố định, công cụ dụng cụ, chi phí trả trước.
  *   GET    /api/v1/asset-categories            loại tài sản

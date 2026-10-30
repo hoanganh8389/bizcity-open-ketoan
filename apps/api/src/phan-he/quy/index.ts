@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/quy
 /** Phân hệ QUỸ: thu chi tiền mặt, ngân hàng, đề nghị thanh toán. */
 import type { ApiModule } from '../types.js';
 import { LEDGER } from '../loi.js';

@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/closing
 /**
  * Kết chuyển lãi lỗ.
  *   GET  /api/v1/closing/rules      danh sách bút toán kết chuyển mẫu

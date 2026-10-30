@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * Nghiệp vụ chứng từ mua hàng: lưu (máy chủ tự tính tiền, hạn, cảnh báo), gửi duyệt, duyệt (ghi sổ), duyệt ngoại lệ vượt
  * hạn mức, bỏ duyệt (huỷ chứng từ kế toán đã sinh), huỷ. Mỗi bước ghi nhật ký JSONL (log.ts).

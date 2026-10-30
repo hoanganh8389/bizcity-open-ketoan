@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-10-29",
+  "updatedAt": "2026-10-30",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -1018,6 +1018,122 @@
           "fp": "SC-SEC-2|apps/api/src/modules/reports/ledger-sql.ts|raw",
           "file": "apps/api/src/modules/reports/ledger-sql.ts",
           "message": "return sql.raw<boolean>(`(${side(o)} <> ${side(l)} OR (${side(o)} = 0 AND ${side(l)} = 0 AND ${o}.line_no <> ${l}.line_no))`); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
+        }
+      ]
+    },
+    "SC-LAYER-2": {
+      "title": "Import giữa các lớp đúng chiều: Platform không biết Kernel, danh mục không import Kernel, module không import module khác",
+      "ref": "PHASES 1.4 · mốc docs/audits/deps-2026-10-30.md §3 (22 cạnh ngược chiều lớp lúc mở check); gỡ dần ở Phase 2–3 (A-01, A-17, ADR-0003..0005)",
+      "debts": [
+        {
+          "fp": "SC-LAYER-2|apps/api/src/addins/excel-export/index.ts|addins/excel-export[D]->modules/reports[D]",
+          "file": "apps/api/src/addins/excel-export/index.ts",
+          "message": "D addins/excel-export → modules/xuat-excel import D modules/reports → modules/ke-toan (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/addins/excel-export/index.ts|addins/excel-export[D]->modules/sales[D]",
+          "file": "apps/api/src/addins/excel-export/index.ts",
+          "message": "D addins/excel-export → modules/xuat-excel import D modules/sales → modules/ban-hang (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/addins/spreadsheet-ai/index.ts|addins/spreadsheet-ai[A]->modules/reports[D]",
+          "file": "apps/api/src/addins/spreadsheet-ai/index.ts",
+          "message": "A addins/spreadsheet-ai → adapters/cell import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/db/setup.ts|db/setup[A]->phan-he/mua-hang[D]",
+          "file": "apps/api/src/db/setup.ts",
+          "message": "A db/setup → adapters/postgres import D phan-he/mua-hang (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/auth/auth.routes.ts|modules/auth[P]->modules/auth[A]",
+          "file": "apps/api/src/modules/auth/auth.routes.ts",
+          "message": "P modules/auth → permissions import A modules/auth → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/catalog/catalog-notify.ts|modules/catalog[P]->modules/connections[A]",
+          "file": "apps/api/src/modules/catalog/catalog-notify.ts",
+          "message": "P modules/catalog → events import A modules/connections → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/dimensions/dimension.routes.ts|modules/dimensions[P]->modules/default-data[K]",
+          "file": "apps/api/src/modules/dimensions/dimension.routes.ts",
+          "message": "P modules/dimensions → data import K modules/default-data → kernel/seeds (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/documents/document.service.ts|modules/documents[K]->modules/connections[A]",
+          "file": "apps/api/src/modules/documents/document.service.ts",
+          "message": "K modules/documents → kernel/intake import A modules/connections → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/inventory/inventory.routes.ts|modules/inventory[K]->modules/inventory[D]",
+          "file": "apps/api/src/modules/inventory/inventory.routes.ts",
+          "message": "K modules/inventory → kernel/subledgers/inventory import D modules/inventory → modules/kho (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/partners/partner.routes.ts|modules/partners[M]->modules/partners[A]",
+          "file": "apps/api/src/modules/partners/partner.routes.ts",
+          "message": "M modules/partners → data/masterdata import A modules/partners → adapters/tax-lookup (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/periods/period.routes.ts|modules/periods[K]->modules/reports[D]",
+          "file": "apps/api/src/modules/periods/period.routes.ts",
+          "message": "K modules/periods → kernel/periods import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/products/product.routes.ts|modules/products[M]->modules/accounts[K]",
+          "file": "apps/api/src/modules/products/product.routes.ts",
+          "message": "M modules/products → data/masterdata import K modules/accounts → kernel/accounts (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/reports/report.service.ts|modules/reports[D]->modules/assets[D]",
+          "file": "apps/api/src/modules/reports/report.service.ts",
+          "message": "D modules/reports → modules/ke-toan import D modules/assets → modules/tai-san (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/reports/goods-reports.ts|modules/reports[D]->modules/inventory[D]",
+          "file": "apps/api/src/modules/reports/goods-reports.ts",
+          "message": "D modules/reports → modules/ke-toan import D modules/inventory → modules/kho (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/reports/goods-reports.ts|modules/reports[D]->modules/sales[D]",
+          "file": "apps/api/src/modules/reports/goods-reports.ts",
+          "message": "D modules/reports → modules/ke-toan import D modules/sales → modules/ban-hang (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/sales/sales-report.service.ts|modules/sales[D]->modules/reports[D]",
+          "file": "apps/api/src/modules/sales/sales-report.service.ts",
+          "message": "D modules/sales → modules/ban-hang import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/modules/system/system.routes.ts|modules/system[P]->core/posting-modes[K]",
+          "file": "apps/api/src/modules/system/system.routes.ts",
+          "message": "P modules/system → cli import K core/posting-modes → kernel/config (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/phan-he/kho/index.ts|phan-he/kho[D]->modules/reports[D]",
+          "file": "apps/api/src/phan-he/kho/index.ts",
+          "message": "D phan-he/kho import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/phan-he/mua-hang/bao-cao-kho.ts|phan-he/mua-hang[D]->modules/inventory[D]",
+          "file": "apps/api/src/phan-he/mua-hang/bao-cao-kho.ts",
+          "message": "D phan-he/mua-hang import D modules/inventory → modules/kho (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/phan-he/mua-hang/index.ts|phan-he/mua-hang[D]->modules/reports[D]",
+          "file": "apps/api/src/phan-he/mua-hang/index.ts",
+          "message": "D phan-he/mua-hang import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/phan-he/thue/statements/notes.service.ts|phan-he/thue[D]->modules/assets[D]",
+          "file": "apps/api/src/phan-he/thue/statements/notes.service.ts",
+          "message": "D phan-he/thue import D modules/assets → modules/tai-san (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+        },
+        {
+          "fp": "SC-LAYER-2|apps/api/src/phan-he/thue/statements/cit-return.service.ts|phan-he/thue[D]->modules/reports[D]",
+          "file": "apps/api/src/phan-he/thue/statements/cit-return.service.ts",
+          "message": "D phan-he/thue import D modules/reports → modules/ke-toan (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         }
       ]
     }

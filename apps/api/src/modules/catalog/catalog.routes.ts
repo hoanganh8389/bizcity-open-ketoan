@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Danh mục hàng chuẩn — khai ở phần mềm kế toán, hệ thống bán hàng kéo về (xem catalog.service.ts).
  *

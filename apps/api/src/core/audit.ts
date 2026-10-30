@@ -1,3 +1,4 @@
+// @bizcity-layer P audit
 /**
  * Ghi nhật ký thao tác. Gọi từ service sau mỗi thao tác ghi (thêm, sửa, xoá, khoá kỳ…).
  */

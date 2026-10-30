@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * TỒN MAX → CHUYỂN HÀNG SHOP → ĐẶT MUA theo chi nhánh cha (docs/nghiep-vu/09-ton-max-dat-hang.md).
  *

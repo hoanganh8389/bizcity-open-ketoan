@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * Báo cáo phân hệ Mua hàng — đọc SỔ THẬT (công nợ theo chứng từ, biến động kho) + chứng từ mua hàng:
  *   creditOverview   hạn mức NCC / nhãn theo chi nhánh: nợ đã ghi, đang chờ, còn lại; chỉ tiêu cung ứng

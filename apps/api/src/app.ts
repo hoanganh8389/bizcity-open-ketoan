@@ -1,3 +1,4 @@
+// @bizcity-layer P apps/api
 /**
  * Dựng ứng dụng Fastify: plugin chung, xác thực, các module nghiệp vụ, add-in.
  *

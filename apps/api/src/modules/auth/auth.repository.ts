@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Truy vấn dữ liệu cho đăng nhập. Repository chỉ đọc/ghi database, không chứa luật nghiệp vụ.
  */

@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * API Hoá đơn đầu vào của NCC (MH22) — hợp đồng: docs/api/14-mua-hang.md § Hoá đơn NCC.
  *   GET    /api/v1/purchase/invoices                 danh sách + tình trạng (chưa nhận diện / chưa có phiếu / lệch / khớp)

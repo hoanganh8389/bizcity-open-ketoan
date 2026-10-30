@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Các báo cáo tổng hợp nhỏ, mỗi báo cáo một truy vấn:
  *   - taxSummary      Bảng tổng hợp thuế GTGT theo chi nhánh

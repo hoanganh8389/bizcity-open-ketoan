@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/periods
 /**
  * Kỳ kế toán, khoá sổ.
  *   GET    /api/v1/periods?year=        danh sách kỳ và khoá

@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/ledger
 /**
  * Ghi sổ cái — cửa duy nhất để ghi vào ledger_entries / ledger_lines.
  *

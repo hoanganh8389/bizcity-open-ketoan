@@ -1,3 +1,4 @@
+// @bizcity-layer P+A data
 /**
  * Chạy migration: áp lần lượt các file db/migrations/NNNN_ten.sql chưa chạy.
  *

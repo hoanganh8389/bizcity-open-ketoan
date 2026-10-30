@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo.
  *   GET /api/v1/reports/trial-balance     Bảng cân đối số phát sinh

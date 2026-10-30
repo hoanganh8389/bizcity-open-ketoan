@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/tax-lookup
 /**
  * TRA CỨU DOANH NGHIỆP THEO MÃ SỐ THUẾ — điền sẵn form nhà cung cấp / khách hàng (tên trên hoá đơn, địa chỉ đăng ký, tên viết
  * tắt, người đại diện), kèm trạng thái thuế để cảnh báo NCC đã ngừng hoạt động.

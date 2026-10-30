@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ban-hang
 /**
  * Truy vấn báo cáo bán hàng trên sales_lines / sales_payments.
  * Mọi số lượng, số tiền đã nhân sign → hàng trả lại ra số âm, cộng lại là số thuần.

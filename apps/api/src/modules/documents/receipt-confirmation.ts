@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/intake
 /**
  * Kế toán xác nhận đã nhận tiền của phiếu chuyển tiền (bảng cash_transfer_confirmations, migration 0058).
  *

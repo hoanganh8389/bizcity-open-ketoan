@@ -1,3 +1,4 @@
+// @bizcity-layer P apps/api
 /**
  * Điểm khởi động API. Cấu trúc DB do job db-migrate lo (AUTO_MIGRATE=0, Docker): ở đây chỉ kiểm còn migration chưa áp
  * thì dừng, báo rõ. Chạy dev (AUTO_MIGRATE=1, mặc định): tự áp như cũ.

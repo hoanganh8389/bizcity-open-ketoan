@@ -1,3 +1,4 @@
+// @bizcity-layer P documents/signatures
 /**
  * Ký xác nhận trên phiếu (KT-27).
  *   GET    /api/v1/documents/:id/signatures          các chữ ký của phiếu (kèm còn hiệu lực hay đã cũ)

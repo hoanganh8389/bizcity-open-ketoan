@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/config
 /**
  * Chế độ ghi sổ theo loại chứng từ (tenants.settings.postingModes): ghi ngay hay chờ duyệt.
  * Xem APPROVABLE_DOC_TYPES, postingModesSchema ở @ketoan/contracts.

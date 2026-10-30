@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * DUYỆT chứng từ mua hàng = GHI SỔ THẬT qua lõi có sẵn (không có sổ riêng):
  *   nhập mua, chi phí mua hàng    → chứng từ "purchase" qua cổng chứng từ (bút toán, sổ hoá đơn mua vào, công nợ, kho, lô)

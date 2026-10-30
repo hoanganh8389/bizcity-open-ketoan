@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Băm và kiểm mật khẩu bằng scrypt (có sẵn trong Node, không cần thư viện ngoài).
  * Định dạng lưu: scrypt$<salt hex>$<hash hex>

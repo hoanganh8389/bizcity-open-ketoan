@@ -1,3 +1,4 @@
+// @bizcity-layer A+P adapters/cell
 /**
  * Add-in "Trợ lý" (tầng 1 — tra cứu, không dùng AI).
  *

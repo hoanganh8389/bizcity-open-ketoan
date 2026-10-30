@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 import type { Db } from '../../db/client.js';
 import type { BranchDto } from './branch.schemas.js';
 

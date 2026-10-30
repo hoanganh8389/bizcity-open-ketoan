@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Luật định khoản HÀNG BÁN TRẢ LẠI (kể cả hoá đơn điều chỉnh giảm).
  *

@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo công nợ theo nhân viên và theo mặt hàng.
  *   - debtByEmployee  Công nợ theo nhân viên (ACC48): số dư, phát sinh của tài khoản công nợ gom theo

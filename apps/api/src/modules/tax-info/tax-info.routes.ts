@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/tax
 /**
  * Bổ sung thông tin thuế (ACC78).
  *   GET    /api/v1/tax-info               chứng từ mua bán, hoá đơn trong kỳ, kèm các điểm còn thiếu

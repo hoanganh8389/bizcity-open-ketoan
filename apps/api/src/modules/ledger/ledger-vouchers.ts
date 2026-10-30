@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/ledger
 /**
  * Màn Chứng từ kế toán (Tiện ích) — làm lại CtrlLedger của HTsoft. Một màn, bốn chế độ như bốn thủ tục HTsoft:
  *

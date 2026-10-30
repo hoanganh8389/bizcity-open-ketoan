@@ -1,3 +1,4 @@
+// @bizcity-layer P events
 /**
  * Báo hệ thống bán hàng "danh mục hàng vừa đổi" để bên đó kéo về NGAY (GET /api/v1/catalog/feed/*), không đợi lịch.
  *

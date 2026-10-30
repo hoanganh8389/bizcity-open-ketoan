@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Quy tắc sinh MÃ HÀNG từ nhóm hàng (giống phần mềm kế toán cũ của công ty — quy tắc "3 cấp nhóm + số thứ tự").
  *

@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * NGƯỜI DÙNG ĐANG ONLINE — mỗi tab đang mở (và đang hiện) báo về ~1 phút / lần:
  *   POST /api/v1/presence/ping { deviceId, tabId, path, screen, leave? }

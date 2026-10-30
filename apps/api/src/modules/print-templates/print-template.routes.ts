@@ -1,3 +1,4 @@
+// @bizcity-layer U ui-kit/print
 /**
  * Cấu hình mẫu in (màn Hệ thống → Mẫu in, HT05). Bố cục mẫu nằm trong code giao diện; bảng print_template_settings chỉ lưu phần
  * khác mặc định: bật / tắt mẫu, mẫu mặc định, chỉnh nội dung (tiêu đề, số liên, khổ, chữ ký, dòng căn cứ, ghi chú cuối).

@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Tra tài khoản cho bộ định khoản theo thứ tự ưu tiên:
  *

@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Danh mục mặt hàng và phân loại hàng hoá.
  *   GET /api/v1/products?search=&brand=&industry=&group=&type=&postingGroup=&status=&page=&pageSize=

@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * API tồn max / chuyển hàng shop / công thức đặt hàng (docs/nghiep-vu/09-ton-max-dat-hang.md, mục B3). Dùng chung cho POS:
  * gọi bằng khoá API (Bearer) cùng quyền như người dùng.

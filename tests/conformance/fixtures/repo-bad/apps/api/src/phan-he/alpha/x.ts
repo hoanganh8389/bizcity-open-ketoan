@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/alpha
 // Mỗi dòng dưới cài một vi phạm (xem ../../../../../../expect.json).
 import { y } from '../beta/y.js';                                   // SC-MOD-1: import phân hệ khác
 import { appendFile } from 'node:fs/promises';

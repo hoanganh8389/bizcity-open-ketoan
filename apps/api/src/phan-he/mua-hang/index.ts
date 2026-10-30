@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /** Phân hệ MUA HÀNG: nhà cung cấp, mua hàng, trả hàng nhà cung cấp, công nợ phải trả (chứng từ mua đi qua lõi chứng từ). */
 import type { ApiModule } from '../types.js';
 import { LEDGER } from '../loi.js';

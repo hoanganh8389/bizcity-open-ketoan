@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /**
  * Tờ khai quyết toán thuế thu nhập doanh nghiệp (mẫu 03/TNDN, Thông tư 80/2021/TT-BTC) — phần chỉ tiêu chính.
  *

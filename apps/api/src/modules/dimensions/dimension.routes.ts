@@ -1,3 +1,4 @@
+// @bizcity-layer P data
 /**
  * Danh mục chiều phân tích: khoản mục, bộ phận, hợp đồng (phân biệt bằng :kind).
  *   GET /api/v1/dimensions/:kind            danh sách   (kind = cost_item | department | contract)

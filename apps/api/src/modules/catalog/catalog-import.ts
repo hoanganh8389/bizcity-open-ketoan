@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * NHẬP EXCEL MẶT HÀNG (DM10): kiểm tra từng dòng TRƯỚC khi ghi, báo rõ dòng lỗi; bấm ghi thì chỉ ghi dòng đúng.
  *   - Mã hàng là khoá: chưa có → thêm mới (bắt buộc Tên hàng, ĐVT); đã có → cập nhật, ô trống giữ nguyên.

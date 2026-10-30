@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/seeds
 /**
  * Dữ liệu gốc (thư mục db/seeds): bộ danh mục và cấu hình định khoản chuẩn của công ty, lưu bằng tệp JSONL
  * (dòng đầu mô tả tệp, mỗi dòng sau một bản ghi). Người dùng thêm, sửa, xoá trên phần mềm thoải mái; khi cần làm

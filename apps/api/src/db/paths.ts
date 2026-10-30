@@ -1,3 +1,4 @@
+// @bizcity-layer P data
 /**
  * Thư mục CƠ SỞ DỮ LIỆU của dự án: <gốc repo>/db (người phụ trách DB quản lý — xem db/README.md).
  *   db/migrations/NNNN_ten.sql   khai báo bảng (chạy bằng job db-migrate / npm run db:migrate)

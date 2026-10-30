@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Danh mục đơn vị tính (DM15) — bảng unit_names: TÊN ĐVT dùng chung (Hộp, Lốc, Lốc_4, Thùng…), không có tỉ lệ.
  *   GET    /api/v1/unit-names            danh sách + số mặt hàng đang dùng mỗi tên

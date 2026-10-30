@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Người dùng và khoá API.
  *   GET/POST   /api/v1/users            danh sách, thêm            (quyền users:write)

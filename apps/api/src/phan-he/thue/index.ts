@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/thue
 /** Phân hệ THUẾ: tờ khai GTGT / TNDN, thuyết minh, phân loại dài hạn, hoá đơn cơ quan thuế. */
 import type { ApiModule } from '../types.js';
 import { LEDGER } from '../loi.js';

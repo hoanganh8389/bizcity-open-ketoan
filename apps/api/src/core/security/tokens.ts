@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Phiên đăng nhập giao diện: JWT ký HS256 bằng JWT_SECRET.
  */

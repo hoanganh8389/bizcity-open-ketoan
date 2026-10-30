@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 import { z } from 'zod';
 
 const role = z.enum(['owner', 'chief_accountant', 'accountant', 'viewer']);

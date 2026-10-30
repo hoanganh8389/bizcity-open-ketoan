@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/accounts
 /**
  * Đọc/ghi bảng accounts.
  */

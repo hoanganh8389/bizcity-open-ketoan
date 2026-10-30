@@ -1,3 +1,4 @@
+// @bizcity-layer A+P adapters/cell
 /**
  * Dữ liệu huấn luyện của Trợ lý — lưu bằng TỆP JSONL, không dùng bảng cơ sở dữ liệu:
  *   <DATA_DIR>/tro-ly/<tenantId>.jsonl   mỗi dòng một mục (câu hỏi / hướng dẫn) dạng JSON

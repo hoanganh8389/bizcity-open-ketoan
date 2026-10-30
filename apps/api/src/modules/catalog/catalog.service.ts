@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Danh mục hàng chuẩn (22/10/2026): mặt hàng + đơn vị tính / tỉ lệ quy đổi + bảng giá công ty / chi nhánh khai ở phần
  * mềm kế toán; hệ thống bán hàng kéo về qua luồng thay đổi (feed*) để hiển thị và bán.

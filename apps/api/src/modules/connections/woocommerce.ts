@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/wordpress
 /**
  * Đơn hàng WooCommerce (REST API v3) → hoá đơn bán theo khuôn IngestDocument.
  *   - Một đơn = một hoá đơn bán của chi nhánh cấu hình ở kết nối; docKey woo:<mã kết nối>:<id đơn>.

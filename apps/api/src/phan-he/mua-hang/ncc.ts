@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * NHÀ CUNG CẤP — mọi việc mua hàng đi từ NCC:
  *   supplierList     mỗi NCC một dòng: nợ (331 theo sổ), quá hạn / sắp đến hạn, hạn mức đã dùng, điều khoản, số chính sách,

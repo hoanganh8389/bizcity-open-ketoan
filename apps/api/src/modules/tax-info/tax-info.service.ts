@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/tax
 /**
  * Bổ sung thông tin thuế (ACC78): liệt kê chứng từ mua bán và hoá đơn của chúng trong kỳ, chỉ ra chỗ còn thiếu
  * (chưa có hoá đơn, thiếu ký hiệu, thiếu hoặc sai dạng mã số thuế, hoá đơn từ 5 triệu chưa có chứng từ thanh toán

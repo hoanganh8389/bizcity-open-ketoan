@@ -1,3 +1,4 @@
+// @bizcity-layer P cli
 /**
  * Thông tin hệ thống.
  *   GET /api/v1/system/health  — công khai, dùng cho giám sát và Docker healthcheck

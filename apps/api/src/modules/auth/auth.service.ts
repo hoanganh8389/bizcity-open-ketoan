@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Luật đăng nhập: kiểm mật khẩu, trạng thái, cấp phiên.
  */

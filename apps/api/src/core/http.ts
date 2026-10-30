@@ -1,3 +1,4 @@
+// @bizcity-layer P actions
 /**
  * Tiện ích HTTP dùng chung: khuôn phản hồi, phân trang, bộ xử lý lỗi.
  */

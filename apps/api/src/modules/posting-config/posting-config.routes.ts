@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/config
 /**
  * Cấu hình hạch toán.
  *   GET/PUT/DELETE  /api/v1/posting/reasons[/:code]    lý do (xoá: chưa dùng trên chứng từ)

@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/config
 import { z } from 'zod';
 
 const acc = z.string().trim().max(20);

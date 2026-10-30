@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 /**
  * Đường dẫn đăng nhập.
  *   POST /api/v1/auth/login   — công khai

@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * PHÂN TÍCH một chứng từ mua hàng bằng SỐ LIỆU THẬT: bộ máy tính dùng chung ('@ketoan/contracts/mua-hang') + dữ liệu sổ.
  *   - Nợ NCC hiện tại   = công nợ theo chứng từ trên tài khoản 331* tới ngày phiếu (debt_items: ghi Có − ghi Nợ).

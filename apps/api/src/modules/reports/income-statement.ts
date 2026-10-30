@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo kết quả hoạt động kinh doanh (mẫu B02-DN, Thông tư 99/2025/TT-BTC).
  *

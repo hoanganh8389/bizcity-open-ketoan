@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/intake
 /**
  * Chứng từ gốc.
  *   POST /api/v1/documents              gửi một chứng từ (khuôn ở @ketoan/contracts → documents.ts)

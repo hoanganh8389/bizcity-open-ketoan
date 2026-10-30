@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/intake
 /**
  * Đọc/ghi chứng từ gốc.
  */

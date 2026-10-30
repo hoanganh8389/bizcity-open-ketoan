@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/tax
 /**
  * Sổ hoá đơn: ghi lại hoá đơn của chứng từ có hoá đơn (tax_invoices + lines), làm bảng kê bán ra / mua vào.
  *   bán ra (output): hoá đơn bán, hàng bán trả lại (dấu −);

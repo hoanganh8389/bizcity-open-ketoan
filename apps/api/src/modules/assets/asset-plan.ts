@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/tai-san
 /**
  * Kế hoạch khấu hao / phân bổ và hạch toán ghi tăng, ghi giảm / thanh lý tài sản (KT-19, KT-20, KT-21).
  *

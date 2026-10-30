@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo tình hình tài chính (mẫu B01-DN theo Thông tư 99/2025/TT-BTC; trước đây gọi là Bảng cân đối kế toán).
  *

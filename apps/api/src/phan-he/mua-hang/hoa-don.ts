@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * HOÁ ĐƠN ĐẦU VÀO CỦA NCC — lưu riêng từng hoá đơn (đầu + dòng theo cách NCC ghi), nhận diện mã bên mình, học cách ghi của NCC,
  * đối soát với phiếu nhập (gắn qua NCC + số / ký hiệu hoá đơn).

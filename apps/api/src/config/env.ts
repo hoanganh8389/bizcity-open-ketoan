@@ -1,3 +1,4 @@
+// @bizcity-layer P bizcity.config
 /**
  * Cấu hình đọc từ biến môi trường, kiểm tra một lần lúc khởi động.
  * Thiếu biến bắt buộc → dừng ngay với thông báo rõ, thay vì lỗi mơ hồ lúc chạy.

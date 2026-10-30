@@ -82,7 +82,7 @@
 | `phan-he/quy` | 320 | D | `modules/quy` | `payment_requests`: luồng duyệt 2 cấp tự viết (mẫu cho `documents.workflow`); ghi thẳng `contract_schedules` (`:264`), `document_sequences` (`:49`) |
 | `phan-he/ke-toan` | 372 | D | `modules/ke-toan` | Kế hoạch tài chính ghi `cash_plans`, `cost_norms` (bảng tạo ở migration nền của lõi, A-26) |
 | `phan-he/{ban-hang,kho,tai-san,api,he-thong}` | ≈40 | D | `modules/*` | Chỉ là tệp lắp route từ `modules/` |
-| `phan-he/{index,loi,types}.ts` | 96 | P | `module-sdk` (registry) | `CORE_ROUTES`, `LEDGER`, `ApiModule` |
+| `phan-he/{index,loi,types}.ts` | 96 | P | `index`, `loi`: lắp ráp `apps/server` (LAYOUT-6); `types`: `module-sdk` | `CORE_ROUTES`, `LEDGER` là danh sách lắp ráp; `ApiModule` thành `defineModule` |
 | `addins/tro-ly` | 360 | A + P | `adapters/cell` (tri thức) + mẫu `actions.dry-run` | `/simulate` chạy luật thật trong giao dịch rồi huỷ: **mẫu chuẩn cho dry-run**. Kho tri thức là JSONL → về Cell (RAG) |
 | `addins/spreadsheet-ai` | 50 | A | `adapters/cell` | Nhúng ứng dụng bảng tính AI ngoài |
 | `addins/excel-export` | 279 | D | `modules/xuat-excel` (extension) | Xuất Excel từ báo cáo |
@@ -90,6 +90,8 @@
 ### 3.4 Module đang dùng những gì của lõi (bề mặt SDK thực tế)
 
 Đếm import từ `phan-he/**` và `addins/**` (bỏ tệp lắp route): đây là **bề mặt tối thiểu** `@bizcity/module-sdk` phải có ở Phase 3.
+
+> Đếm lại chi tiết từng tên (2026-10-30) và API đề xuất: [packages/module-sdk/API.md](../../packages/module-sdk/API.md). Phân loại ở §3.1–§3.3 được gắn thành nhãn đầu tệp `// @bizcity-layer` (R-BOUND-10, bảng [tests/conformance/lib/layers.mjs](../../tests/conformance/lib/layers.mjs)); chiều import giữa các lớp: [docs/audits/deps-2026-10-30.md](../audits/deps-2026-10-30.md).
 
 | Đang import | Số tệp | Thay bằng SDK |
 |---|---|---|

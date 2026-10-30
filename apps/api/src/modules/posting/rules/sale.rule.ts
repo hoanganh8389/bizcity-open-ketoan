@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Luật định khoản HOÁ ĐƠN BÁN HÀNG.
  *

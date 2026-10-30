@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Luật định khoản PHIẾU TIỀN. Tài khoản tiền mỗi phía lấy theo hình thức thanh toán (TM → 1111, CK → 112…).
  *

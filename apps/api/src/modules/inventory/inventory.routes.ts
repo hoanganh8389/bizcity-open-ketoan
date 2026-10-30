@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/subledgers/inventory
 /**
  * Kho và giá vốn.
  *   POST /api/v1/inventory/costing        tính giá vốn bình quân một tháng và ghi sổ giá vốn hàng xuất (quyền periods:lock)

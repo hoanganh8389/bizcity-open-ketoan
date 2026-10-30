@@ -1,3 +1,4 @@
+// @bizcity-layer P data
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *

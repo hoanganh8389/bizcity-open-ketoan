@@ -1,3 +1,4 @@
+// @bizcity-layer M data/masterdata
 /**
  * Đối tượng (khách hàng, nhà cung cấp…) và nhóm đối tượng.
  */

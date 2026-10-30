@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/postgres
 /**
  * JOB CƠ SỞ DỮ LIỆU (Docker: service db-migrate; dòng lệnh: node dist/db/setup.js): áp migration chưa chạy rồi seed
  * dữ liệu gốc (an toàn khi chạy lại), xong thì thoát. Các container API chỉ khởi động sau khi job này xong

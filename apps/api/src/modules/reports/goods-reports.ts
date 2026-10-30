@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Báo cáo hàng hoá, lãi lỗ theo cửa hàng.
  *   GET /api/v1/reports/gross-profit?from=&to=&groupBy=&branchCodes=&kind=&scope=   lãi gộp (BH04)

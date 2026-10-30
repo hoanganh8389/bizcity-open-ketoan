@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Luật định khoản NHẬP MUA HÀNG và TRẢ HÀNG NHÀ CUNG CẤP.
  *

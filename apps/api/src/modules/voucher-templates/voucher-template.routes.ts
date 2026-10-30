@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/ke-toan
 /**
  * Bút toán mẫu và bút toán lặp.
  *   GET  /api/v1/voucher-templates?docType=&status=     danh sách mẫu

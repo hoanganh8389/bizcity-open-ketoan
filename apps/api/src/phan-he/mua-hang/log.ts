@@ -1,3 +1,4 @@
+// @bizcity-layer D modules/mua-hang
 /**
  * Nhật ký mua hàng — TỆP JSONL, không dùng bảng: <DATA_DIR>/mua-hang/<tenantId>/<yyyy-mm>.jsonl, mỗi dòng một sự kiện
  * { ts, event, docNo, user, data }. Chỉ ghi thêm (append); đọc lại theo tháng. Duyệt ngoại lệ ghi thêm audit_logs.

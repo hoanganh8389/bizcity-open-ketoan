@@ -1,3 +1,4 @@
+// @bizcity-layer P+A data
 /**
  * Kết nối PostgreSQL dùng chung cho toàn ứng dụng.
  *

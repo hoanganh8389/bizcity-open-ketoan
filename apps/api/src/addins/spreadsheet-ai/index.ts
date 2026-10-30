@@ -1,3 +1,4 @@
+// @bizcity-layer A adapters/cell
 /**
  * Add-in "Bảng tính AI": khung tích hợp ứng dụng bảng tính có AI chạy riêng
  * (dịch vụ độc lập, nhúng vào giao diện kế toán).

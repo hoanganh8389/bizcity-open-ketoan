@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/subledgers/debts
 /**
  * Khoản công nợ theo chứng từ và đối trừ.
  *   GET    /api/v1/debt-items                     danh sách khoản (lọc đối tượng, tài khoản, bên, còn mở, đến hạn…) + tổng còn lại

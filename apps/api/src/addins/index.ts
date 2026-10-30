@@ -1,3 +1,4 @@
+// @bizcity-layer P apps/api
 /**
  * Danh sách add-in có sẵn. Thêm add-in mới: tạo thư mục src/addins/<ma>/index.ts
  * export default defineAddIn({...}) rồi thêm vào mảng dưới đây.

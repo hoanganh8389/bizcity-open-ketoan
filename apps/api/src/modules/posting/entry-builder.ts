@@ -1,3 +1,4 @@
+// @bizcity-layer K kernel/posting
 /**
  * Công cụ dựng bút toán: thêm từng cặp Nợ/Có. Mỗi cặp ghi theo TỪNG MẶT HÀNG (mang mã hàng),
  * nên hoá đơn 5 dòng hàng ra 5 cặp tiền hàng + 5 cặp thuế + 5 cặp giá vốn, đúng thói quen
