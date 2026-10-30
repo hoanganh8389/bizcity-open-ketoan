@@ -44,19 +44,19 @@ sequenceDiagram
 |---|---|---|
 | **R-OUTBOX-1** *(T0)* | Sự kiện miền ghi vào bảng outbox **trong cùng giao dịch** với dữ liệu gây ra nó. Không gọi NATS / HTTP / Cell trong handler (STD-EVT-1, STD-ACT-7) | SC-EVT-1 |
 | **R-OUTBOX-2** *(T0)* | Phản hồi "đã ghi sổ" chỉ trả **sau** commit. Gửi sự kiện chạy sau, có thể xong sau khi đã trả phản hồi | runtime action |
-| **R-OUTBOX-3** | Worker đọc bằng `FOR UPDATE SKIP LOCKED` (nhiều worker không gửi trùng một lượt), gửi, xác nhận, rồi đánh dấu. Lỗi thì thử lại có giãn nhịp; quá N lần thì chuyển dead-letter, có cảnh báo | test worker (PHASES 3) |
-| **R-OUTBOX-4** *(T0)* | Gửi **ít nhất một lần**: consumer phải idempotent theo `event_id` (bảng `(consumer, event_id)` đã xử lý) | STD-EVT; test |
+| **R-OUTBOX-3** | Worker đọc bằng `FOR UPDATE SKIP LOCKED` (nhiều worker không gửi trùng một lượt), gửi, xác nhận, rồi đánh dấu. Lỗi thì thử lại có giãn nhịp; quá N lần thì chuyển dead-letter, có cảnh báo | `apps/api/test/events.test.ts`; tự chẩn đoán `EVENT_DEAD` / DG-EVT-1 |
+| **R-OUTBOX-4** *(T0)* | Gửi **ít nhất một lần**: consumer phải idempotent theo `event_id` (bảng `(consumer, event_id)` đã xử lý) | `apps/api/test/events.test.ts` (CONF-RUN-10); SC-EVT-2 |
 | **R-OUTBOX-5** | Thứ tự chỉ bảo đảm trong một chủ thể (`subject`, vd một chứng từ); consumer không giả định thứ tự toàn cục | tài liệu sự kiện |
 | **R-OUTBOX-6** | NATS JetStream là **adapter chuyển tiếp** outbox (`adapters/nats`), bật khi có nhiều consumer / module ngoài tiến trình. Không có NATS thì subscriber trong tiến trình đọc thẳng outbox | ADR-0007; CI chạy không NATS |
-| **R-OUTBOX-7** | Phát lại (replay) từ outbox theo khoảng thời gian / chủ thể, có bằng chứng ai phát lại | CLI `events replay` (PHASES 4) |
+| **R-OUTBOX-7** | Phát lại (replay) từ outbox theo khoảng thời gian / chủ thể, có bằng chứng ai phát lại | action `core.events.replay` (`POST /api/v1/system/events/replay`); CLI `events replay` ở PHASES 4 |
 
 ## 3. Sao lưu, PITR, kiểm khôi phục (R-BAK)
 
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
 | **R-BAK-1** *(T0)* | Sao lưu đầy đủ hằng ngày (`scripts/sao-luu.sh`, `pg_dump`). Giữ tối thiểu 14 bản ngày; có bản ngoài máy chủ, mã hoá | cron; [DEPLOY](../ops/DEPLOY.md) |
-| **R-BAK-2** | Bản cài thật bật **PITR**: lưu WAL liên tục (WAL archiving: wal-g / pgBackRest) để khôi phục tới một thời điểm. Mục tiêu RPO ≤ 15 phút, RTO ≤ 4 giờ | `infrastructure/backup/` (PHASES G1-08) |
-| **R-BAK-3** *(T0)* | **Bản sao lưu chưa kiểm khôi phục coi như chưa có.** Mỗi tuần, và trước mỗi lần nâng cấp, khôi phục vào CSDL tạm rồi chạy kiểm toàn vẹn: Nợ = Có, chuỗi bằng chứng, trigger, migration | `scripts/kiem-khoi-phuc.sh` |
+| **R-BAK-2** | Bản cài thật bật **PITR**: lưu WAL liên tục (WAL archiving: wal-g / pgBackRest) để khôi phục tới một thời điểm. Mục tiêu RPO ≤ 15 phút, RTO ≤ 4 giờ | `infrastructure/backup/` (override lưu WAL, runbook), `scripts/sao-luu-goc.sh`, diễn tập `scripts/dien-tap-pitr.sh` + biên bản `docs/audits/PITR-*.md` |
+| **R-BAK-3** *(T0)* | **Bản sao lưu chưa kiểm khôi phục coi như chưa có.** Mỗi tuần, và trước mỗi lần nâng cấp, khôi phục vào CSDL tạm rồi chạy kiểm toàn vẹn: Nợ = Có, chuỗi bằng chứng, trigger, migration | `scripts/kiem-khoi-phuc.sh` (bản `pg_dump`); `scripts/dien-tap-pitr.sh` (bản gốc + WAL) |
 | **R-BAK-4** | Khôi phục không làm chạy lại trigger trên dữ liệu đã ghi. `pg_dump` nạp dữ liệu trước rồi mới tạo trigger, nên chuỗi bằng chứng và sổ giữ nguyên | DG-EVD-1 trên bản khôi phục |
 | **R-BAK-5** | Kết quả mỗi lần kiểm khôi phục ghi vào nhật ký (`backups/kiem-khoi-phuc.log`): ngày, tệp, số dòng, ĐẠT / KHÔNG ĐẠT | script |
 | **R-BAK-6** | Sao lưu chứa dữ liệu kế toán và dữ liệu cá nhân: không đưa lên repo, không gửi qua kênh không mã hoá (R-SEC-10) | `.gitignore` (`backups/`) |

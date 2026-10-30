@@ -39,10 +39,11 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `EVENT_POSTED_VERSION` | L3 | `status = posted` ⇒ `posted_version = version` (trừ sự việc nội bộ) | error | có | DG-EVENT-1 |
 | `EVENT_HAS_ENTRY` | L3 | Sự việc `posted` có bút toán hiệu lực | warn | có | DG-EVENT-2 |
 | `EVENT_PENDING_AGE` | L3 | Sự việc `pending` / `error` quá 3 ngày | warn | có | DG-EVENT-3 |
-| `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version` (nợ A-01, hết ở PHASES 2.1) | info | có | DG-EVENT-4 |
+| `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version = version` (ghi qua `eventStore`; lệch = có đường ghi vòng qua cửa) | warn | có | DG-EVENT-4 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
+| `EVENT_DEAD` | L3 | Không có việc giao sự kiện hết lượt thử (dead) nằm im (bizcity_event@1, R-OUTBOX-3); xem `GET /api/v1/system/events`, sửa nguyên nhân rồi phát lại | warn | có | DG-EVT-1 |
 | `EVIDENCE_CHAIN` | L3 | Chuỗi băm `audit_logs` của đơn vị liền mạch: băm tính lại khớp, nối đúng dòng trước, không hở số (bizcity_evidence@1) | error | có | DG-EVD-1 |
 | `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |
 | `DEBT_MATCH_LEDGER` | L3 | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error | chưa | DG-PLAN-1 (giữ chỗ) |

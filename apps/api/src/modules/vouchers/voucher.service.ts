@@ -3,8 +3,8 @@
  * Chứng từ kế toán nhập tay: phiếu thu, phiếu chi, phiếu báo có, phiếu báo nợ, phiếu kế toán,
  * và số dư tài khoản đầu kỳ.
  *
- * Dùng chung kho chứng từ gốc (accounting_events, source_system = 'manual') và cùng cửa ghi sổ
- * (ledgerService) với chứng từ nhận qua API, nên mọi sổ sách, báo cáo, khoá kỳ áp dụng như nhau.
+ * Dùng chung kho chứng từ gốc (accounting_events, source_system = 'manual') và ghi sổ qua eventStore (cửa ghi của sự việc
+ * Kernel tự lập: phiên bản, posted_version, posting_log), nên mọi sổ sách, báo cáo, khoá kỳ áp dụng như nhau.
  *
  * Luật:
  *  - Số phiếu để trống thì tự cấp (tiền tố theo loại + năm + số thứ tự); số tự nhập không được trùng.
@@ -37,9 +37,7 @@ import { settleFromEvent } from '../debts/debt.service.js';
 import type { Account } from '../../db/types.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { documentRepository } from '../documents/document.repository.js';
-import { logPosting } from '../documents/document.service.js';
-import { ledgerRepository } from '../ledger/ledger.repository.js';
-import { ledgerService } from '../ledger/ledger.service.js';
+import { eventStore } from '../documents/event-store.js';
 import type { DraftLine } from '../ledger/ledger.types.js';
 import { applyTaxFlags } from '../tax-info/tax-patch.js';
 import { isProfitLossAccount } from '../closing/closing.service.js';
@@ -185,31 +183,25 @@ async function postEntries(trx: Db, auth: AuthContext, a: { docId: string; versi
   const lines = doc.buildLines(ctx);
   await saveTaxInvoices(trx, auth, { docId: a.docId, branchId: a.branchId, docNo: a.docNo, doc, ctx });
   await applyTaxFlags(trx, a.docId);
-  const ids: string[] = [];
-  {
-    const posted = await ledgerService.post(
-      trx,
-      auth.tenantId,
-      auth.actor,
-      {
-        branchId: a.branchId,
-        docType: doc.docType as DocType,
-        docNo: a.docNo,
-        invoiceNo: null,
-        docDate: doc.docDate,
-        postingDate: doc.docDate,
-        partnerId: partners.get(doc.partnerCode ?? '') ?? null,
-        reasonCode: doc.reasonCode ?? null,
-        description: doc.description,
-        sourceDocumentId: a.docId,
-        sourceVersion: a.version,
-        lines,
-      },
-      accounts,
-    );
-    ids.push(posted.id);
-  }
-  return ids;
+  const posted = await eventStore.post(
+    trx,
+    auth,
+    { id: a.docId, version: a.version },
+    {
+      branchId: a.branchId,
+      docType: doc.docType as DocType,
+      docNo: a.docNo,
+      invoiceNo: null,
+      docDate: doc.docDate,
+      postingDate: doc.docDate,
+      partnerId: partners.get(doc.partnerCode ?? '') ?? null,
+      reasonCode: doc.reasonCode ?? null,
+      description: doc.description,
+      lines,
+    },
+    accounts,
+  );
+  return [posted.id];
 }
 
 /**
@@ -265,8 +257,7 @@ async function createManualIn(trx: Db, auth: AuthContext, doc: ManualDoc) {
       const res = await trx.updateTable('reference_documents').set({ status: 'used', used_event_id: created.id, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('doc_key', '=', sourceDocKey).executeTakeFirst();
       if (!Number(res.numUpdatedRows)) throw Errors.validation(`Chứng từ nguồn ${sourceDocKey} không tồn tại`);
     }
-    await documentRepository.update(trx, created.id, { status: 'posted', posted_at: new Date(), posted_version: 1 });
-    await logPosting(trx, { tenantId: auth.tenantId, eventId: created.id, docType: doc.docType, docNo, version: 1, action: 'post', entryIds, total: doc.total, actor: auth.actor });
+    await eventStore.markPosted(trx, auth, { id: created.id, version: 1, docKey, docType: doc.docType, docNo, entryIds, total: doc.total, action: 'post' });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.create`, objectType: 'source_document', objectId: docKey, after: { total: doc.total } });
     return { id: created.id, docKey, docNo, version: 1, entryIds };
   }
@@ -290,10 +281,7 @@ async function updateManual(auth: AuthContext, id: string, doc: ManualDoc) {
     const version = row.version + 1;
     await documentRepository.archiveVersion(trx, row.id, row.version, row.payload, row.received_at);
     const accounts = await accountRepository.mapByCode(trx, auth.tenantId);
-    const active = await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, row.id);
-    for (const e of active) {
-      await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, accounts, `Sửa phiếu sang phiên bản ${version}`);
-    }
+    const reversed = await eventStore.reverseActive(trx, auth, row.id, accounts, `Sửa phiếu sang phiên bản ${version}`);
     const partners = await resolvePartners(trx, auth.tenantId, [doc.partnerCode ?? '']);
     await documentRepository.update(trx, row.id, {
       version,
@@ -306,8 +294,7 @@ async function updateManual(auth: AuthContext, id: string, doc: ManualDoc) {
     });
     const entryIds = await postEntries(trx, auth, { docId: row.id, version, branchId, docNo: row.doc_no, doc });
     if (doc.settle) await settleFromEvent(trx, auth.tenantId, row.id, doc.settle, auth.actorName);
-    await documentRepository.update(trx, row.id, { status: 'posted', posted_at: new Date(), posted_version: version });
-    await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: doc.docType, docNo: row.doc_no, version, action: 'repost', entryIds, reversed: active.length, total: doc.total, actor: auth.actor });
+    await eventStore.markPosted(trx, auth, { id: row.id, version, docKey: row.doc_key, docType: doc.docType, docNo: row.doc_no, entryIds, reversed, total: doc.total, action: 'repost' });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.update`, objectType: 'source_document', objectId: row.doc_key, after: { version, total: doc.total } });
     return { id: row.id, docKey: row.doc_key, docNo: row.doc_no, version, entryIds };
   });

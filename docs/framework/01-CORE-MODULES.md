@@ -29,10 +29,10 @@ Phân hệ nào cũng đọc; thay đổi theo nhu cầu nghiệp vụ nhưng **
 | Danh mục chuẩn | `accounts`, `branches`, `warehouses`, `partners`, `products`, `unit-names`, `tax-codes`, `bank-accounts`, `dimensions`, `catalog`, `default-data` | — | Chủ dữ liệu: R-MD |
 | Cấu hình định khoản | `posting-config` (lý do, nhóm hạch toán, hình thức TT, ngầm định) | — | Thuộc ma trận cấu hình: R-MATRIX |
 | Kỳ, khoá sổ | `periods` | — | `period_locks` (kỳ × chi nhánh × loại chứng từ) |
-| Phiếu kế toán tay | `vouchers`, `voucher-templates`, `signatures`, `print-templates` | `ledgerService.post` trực tiếp ⚠ | Chuyển sang Event Gateway (audit A-01) |
-| Kết chuyển | `closing` | `ledgerService.post/reverse` trực tiếp ⚠ | như trên |
-| Giá vốn | `inventory` (`costing.service.ts`) | `ledgerService.post/reverse` trực tiếp ⚠ | như trên |
-| Tài sản | `assets` | `ledgerService.post/reverse` trực tiếp ⚠ | như trên |
+| Phiếu kế toán tay | `vouchers`, `voucher-templates`, `signatures`, `print-templates` | `eventStore` (một cửa, từ 2026-10-30) | — |
+| Kết chuyển | `closing` | `eventStore` | — |
+| Giá vốn | `inventory` (`costing.service.ts`) | `eventStore` (+ ngoại lệ ghi đè giá vốn E1) | — |
+| Tài sản | `assets` | `eventStore` | — |
 | Công nợ | `debts` | dẫn xuất từ sổ (`debt_items`) | Dựng lại được từ sổ |
 | Thuế | `tax-invoices`, `tax-info` | dẫn xuất (`tax_invoices`) | Thông tin bổ sung qua `tax_info_patches`, không sửa sự việc |
 | Kết nối | `connections` | qua `postDocumentIn` | `bizcity_connector@1` |
@@ -40,7 +40,7 @@ Phân hệ nào cũng đọc; thay đổi theo nhu cầu nghiệp vụ nhưng **
 | Báo cáo | `reports`, `ledger` (routes đọc), `sales` | chỉ đọc | Chỉ đọc sổ và bảng dẫn xuất (R-LEDGER-7) |
 | Hệ thống | `system`, `access`, `auth` | — | `schema-catalog.ts` mô tả mọi bảng |
 
-⚠ = đúng về kết quả (vẫn tạo `accounting_events`, có phiên bản, đảo đúng) nhưng mỗi module **tự viết lại** chuỗi "khoá event → lưu phiên bản → đảo → ghi → log". Chuẩn đích: một hàm nhân `eventStore.commit()` dùng chung (xem [05-LO-TRINH.md](05-LO-TRINH.md) Giai đoạn 1).
+Trước 2026-10-30 bốn dịch vụ trên gọi thẳng `ledgerService`, mỗi nơi tự viết lại chuỗi "khoá sự việc → lưu phiên bản → đảo → ghi → log" (audit A-01). Nay dùng chung `eventStore` (`modules/documents/event-store.ts`, [PHASE-004](../phases/PHASE-004-MOT-CUA-GHI-SO/README.md)).
 
 ## 3. Phân hệ hiện có (T2)
 

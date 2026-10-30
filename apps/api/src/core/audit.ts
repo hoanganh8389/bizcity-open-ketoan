@@ -6,6 +6,7 @@
  * Chuỗi băm (chain_seq, prev_hash, hash) và lớp chỉ thêm do trigger CSDL lo (migration 0036): không ai sửa, xoá được dòng đã ghi.
  */
 import type { Db } from '../db/client.js';
+import { currentRequest } from './request-context.js';
 
 export interface AuditEntry {
   tenantId: string;
@@ -26,6 +27,8 @@ export async function writeAudit(trx: Db, e: AuditEntry): Promise<void> {
       action: e.action,
       object_type: e.objectType,
       object_id: e.objectId ?? null,
+      request_id: currentRequest()?.requestId ?? null,
+      correlation_id: currentRequest()?.correlationId ?? null,
       before_data: e.before === undefined ? null : JSON.stringify(e.before),
       after_data: e.after === undefined ? null : JSON.stringify(e.after),
     })
@@ -39,6 +42,8 @@ export interface EvidenceEntry extends AuditEntry {
   moduleId?: string;
   subject?: string;
   requestId?: string;
+  /** Nối nhiều yêu cầu của một việc (X-Correlation-Id; mặc định lấy từ ngữ cảnh yêu cầu). */
+  correlationId?: string;
   idempotencyKey?: string;
   inputHash?: string;
   result: { ok: true } | { ok: false; code: string };
@@ -65,7 +70,8 @@ export async function writeEvidence(trx: Db, e: EvidenceEntry): Promise<Evidence
       object_type: e.objectType,
       object_id: e.objectId ?? null,
       subject: e.subject ?? null,
-      request_id: e.requestId ?? null,
+      request_id: e.requestId ?? currentRequest()?.requestId ?? null,
+      correlation_id: e.correlationId ?? currentRequest()?.correlationId ?? null,
       idempotency_key: e.idempotencyKey ?? null,
       input_hash: e.inputHash ?? null,
       result_ok: e.result.ok,

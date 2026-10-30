@@ -8,7 +8,7 @@
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
 | **R-EVENT-1** | **Không sự việc, không bút toán.** Mọi thứ có ảnh hưởng tài chính — phiếu từ plugin, phiếu phân hệ duyệt, phiếu kế toán tay, kết chuyển, khấu hao, giá vốn, số dư đầu kỳ — đều có một dòng `accounting_events` | R-LEDGER-12 |
-| **R-EVENT-2** | **Một cửa.** Sự việc vào qua `postDocumentIn()` (khuôn có cấu trúc) hoặc `eventStore.commit()` (sự việc lõi tự sinh — Giai đoạn 1). Không module nào khác `insertInto('accounting_events')` / `'accounting_event_versions'` / `'posting_log'` | Grep CI |
+| **R-EVENT-2** | **Một cửa.** Sự việc vào qua `postDocumentIn()` (khuôn có cấu trúc) hoặc `eventStore` (sự việc lõi tự sinh — Giai đoạn 1). Không module nào khác `insertInto('accounting_events')` / `'accounting_event_versions'` / `'posting_log'` | Grep CI |
 | **R-EVENT-3** | **Khoá tự nhiên** `(tenant_id, doc_key)` duy nhất, **không bao giờ đổi** với một chứng từ ở nguồn. `doc_key` không phải khoá chính; join nội bộ qua `id` | UNIQUE `accounting_events_tenant_id_doc_key_key` |
 | **R-EVENT-4** | **Phiên bản chỉ tăng.** Cùng `version` đã ghi → `unchanged`; nhỏ hơn bản đang có → `409 CONFLICT`; lớn hơn → bản cũ vào `accounting_event_versions` (UNIQUE `(event_id, version)`) rồi chờ / định khoản lại | `ledger-flow.test.ts` |
 | **R-EVENT-5** | **Nguồn gửi sự việc, không gửi định khoản.** Số tiền là số đã chốt ở nguồn (như hoá đơn đã phát hành); lõi chỉ kiểm tổng tới xu, không tính lại thuế, giá | `assertTotals()` |

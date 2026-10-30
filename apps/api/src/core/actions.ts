@@ -24,6 +24,7 @@ import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
 import { writeEvidence, type EvidenceEntry, type EvidenceReceipt } from './audit.js';
+import { emitEvent } from './events.js';
 import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
 import { metrics } from './metrics.js';
@@ -44,6 +45,11 @@ export interface ActionContext {
   can(permission: Permission): boolean;
   data: { tx: Transaction<Database> };
   evidence: { note(key: string, value: unknown): void };
+  /**
+   * Phát sự kiện miền trong giao dịch của action (bizcity_event@1 STD-EVT-1): huỷ / dry-run thì không có sự kiện.
+   * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
+   */
+  events: { emit(type: string, data: Record<string, unknown>, opts: { subject: string; version?: number; dedupeKey?: string }): Promise<string | null> };
   /** @deprecated Cầu nối Phase 2→3 cho service cũ cần AuthContext. Không có trong @bizcity/module-sdk. */
   readonly legacyAuth: AuthContext;
 }
@@ -69,6 +75,8 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
     http?: { method: HttpMethod; path: string; status?: 200 | 201 };
     mcp?: boolean;
     ai?: 'deny' | 'read' | 'propose' | 'execute';
+    /** Công cụ MCP huỷ / đảo cái đã có (annotations.destructiveHint): client cảnh báo rõ hơn trước khi xác nhận. */
+    destructive?: boolean;
   };
   errors?: ErrorCode[];
   /** Đối tượng ghi vào bằng chứng (mặc định: thực thể trong id, mã = output.id). */
@@ -192,6 +200,16 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
         can: (p) => !!auth?.permissions.has(p),
         data: { tx: trx },
         evidence: { note: (k, v) => { notes[k] = v; } },
+        events: {
+          emit: (type, data, o) => {
+            const mod = def.id.split('.')[0]!;
+            if (!type.startsWith(`${mod}.`)) throw new Error(`Action ${def.id} chỉ phát sự kiện ${mod}.* (STD-EVT-3), không phát ${type}`);
+            return emitEvent(trx, {
+              tenantId, type, data, subject: o.subject, version: o.version, dedupeKey: o.dedupeKey, source: mod,
+              actor: { kind: call.via ? 'ai' : auth?.kind ?? 'user', id: auth?.actor ?? 'public' },
+            });
+          },
+        },
         get legacyAuth() {
           if (!auth) throw Errors.unauthorized();
           return auth;

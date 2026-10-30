@@ -148,6 +148,44 @@ export interface ActionRequestsTable {
   created_at: TimestampDefault;
 }
 
+/** Sự kiện miền (migration 0039, bizcity_event@1): outbox ghi cùng giao dịch; chỉ thêm. */
+export interface EventOutboxTable {
+  id: string;
+  seq: Generated<string>;
+  tenant_id: string;
+  type: string;
+  version: Generated<number>;
+  subject: string;
+  source_module: string;
+  actor_kind: 'user' | 'apikey' | 'ai' | 'system';
+  actor_id: string;
+  correlation_id: string | null;
+  causation_id: string | null;
+  dedupe_key: string | null;
+  data: JsonDefault<unknown>;
+  occurred_at: TimestampDefault;
+}
+
+/** Giao sự kiện cho từng subscriber (migration 0039). */
+export interface EventDeliveriesTable {
+  tenant_id: string;
+  consumer: string;
+  event_id: string;
+  status: ColumnType<'pending' | 'done' | 'dead', 'pending' | 'done' | 'dead' | undefined, 'pending' | 'done' | 'dead'>;
+  attempts: Generated<number>;
+  next_at: TimestampDefault;
+  last_error: string | null;
+  done_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+}
+
+/** (consumer, event_id) đã xử lý — chống thực thi trùng (migration 0039). */
+export interface EventConsumptionsTable {
+  tenant_id: string;
+  consumer: string;
+  event_id: string;
+  processed_at: TimestampDefault;
+}
+
 /** Token xác nhận trước khi ghi qua MCP (migration 0037, bizcity_mcp@1 STD-MCP-4). */
 export interface McpConfirmTokensTable {
   jti: string;
@@ -1418,6 +1456,9 @@ export interface Database {
   diagnostic_runs: DiagnosticRunsTable;
   action_requests: ActionRequestsTable;
   mcp_confirm_tokens: McpConfirmTokensTable;
+  event_outbox: EventOutboxTable;
+  event_deliveries: EventDeliveriesTable;
+  event_consumptions: EventConsumptionsTable;
   accounts: AccountsTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;

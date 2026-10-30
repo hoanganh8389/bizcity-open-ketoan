@@ -12,7 +12,7 @@ Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một
 
 1. Không sự việc (`accounting_events`) thì không bút toán.
 2. Sổ cái chỉ thêm. Sửa / huỷ bằng bút toán đảo, không `UPDATE` / `DELETE` bảng `ledger_*`.
-3. Mọi đầu vào tài chính đi `postDocumentIn()` → luật định khoản → `ledgerService.post()`. Module, add-in không gọi thẳng `ledgerService`, không ghi bảng nhân.
+3. Mọi đầu vào tài chính đi `postDocumentIn()` → luật định khoản → `ledgerService.post()`; sự việc Kernel tự lập đi `eventStore`. Module, add-in không gọi thẳng `ledgerService`, không ghi bảng nhân.
 4. Không viết số tài khoản trong code định khoản: tra qua `AccountResolver`.
 
 PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh.

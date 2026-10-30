@@ -87,7 +87,7 @@
     { "id": "2.15", "phase": "2", "title": "Sao lưu PITR (WAL) + diễn tập khôi phục có biên bản (G1-08, G3-07, C-6)", "areas": ["data", "release"],
       "done": [{ "file": "infrastructure/backup/README.md" }, { "manual": "diễn tập PITR tới một thời điểm, đo RTO / RPO, biên bản ở docs/audits/" }] },
     { "id": "2.16", "phase": "2", "title": "MCP ghi: lập nháp, ghi sổ, đảo bút toán có xem trước + duyệt (G2-04)", "areas": ["mcp-cell", "action"], "after": ["2.1", "2.12"],
-      "done": [{ "fileContains": { "file": "apps/api/test/mcp.test.ts", "text": "accounting.document.create_draft" } }, { "fileContains": { "file": "apps/api/test/mcp.test.ts", "text": "accounting.entry.reverse" } }] },
+      "done": [{ "fileContains": { "file": "apps/api/test/mcp-write.test.ts", "text": "accounting.document.create_draft" } }, { "fileContains": { "file": "apps/api/test/mcp-write.test.ts", "text": "accounting.entry.reverse" } }] },
 
     { "id": "3.1", "phase": "3", "title": "@bizcity/module-sdk: defineModule, ctx", "areas": ["module"], "after": ["2.5", "2.6"],
       "done": [{ "file": "packages/module-sdk/package.json" }] },

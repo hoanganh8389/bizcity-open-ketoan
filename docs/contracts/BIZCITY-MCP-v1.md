@@ -31,7 +31,7 @@ Core **không** gọi LLM khi trả lời MCP. Core chỉ: công bố công cụ
 | Xác nhận trước khi ghi (STD-MCP-4), một lần (STD-MCP-5), bằng chứng actor `ai` (STD-MCP-9) | **có**: bảng `mcp_confirm_tokens` (0037); mẫu `quy.payment_request.create` / `.update` |
 | Kết quả ghi đã xác nhận | `data = { status: "done", result: <output của action>, as_of }`, `meta = { receipt, replayed }`. `data.status` chỉ nói về luồng xác nhận (`needs_confirmation` → `done`), không lẫn với trạng thái chứng từ |
 | Danh tính | phiên đăng nhập hoặc khoá API hiện có; kênh ghi vào bằng chứng lấy từ `params._meta.client` (`via = mcp:<client>`) |
-| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 (`accounting.document.create_draft`…); `llm_alias` khai tay; trường `pii` |
+| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 còn lại (`accounting.vouchers.receipt_draft` / `.payment_draft`, `accounting.invoices.to_draft`; `accounting.journal.post` của CONG-BO §2.1) — **đã có** từ 2026-10-30: `accounting.document.create_draft`, `accounting.entry.reverse` (PHASE-009); `llm_alias` khai tay; trường `pii` |
 
 ## 2. Giao thức (theo hai hợp đồng gốc)
 

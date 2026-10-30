@@ -34,7 +34,7 @@ reverse proxy (HTTPS, tên miền) ──► web (nginx, 127.0.0.1:WEB_PORT) ─
 | D-2 | Không mở cổng 8088, 5434 ra Internet; người dùng chỉ đi qua 443 |
 | D-3 | **Không bao giờ** `docker compose down -v` trên bản thật |
 | D-4 | Cập nhật bằng `scripts/cap-nhat.sh` (sao lưu → pull → dựng → chờ khoẻ → in migration vừa áp), ngoài giờ làm việc |
-| D-5 | Sao lưu hằng đêm `scripts/sao-luu.sh` (giữ 14 bản) **và** chép ra ngoài máy chủ; thử khôi phục ít nhất mỗi quý |
+| D-5 | Sao lưu hằng đêm `scripts/sao-luu.sh` (giữ 14 bản) **và** chép ra ngoài máy chủ; thử khôi phục ít nhất mỗi quý. Bật PITR (lưu WAL + bản gốc hằng tuần): [infrastructure/backup/](../../infrastructure/backup/README.md) |
 | D-6 | Một bản cài = một `name:` Docker Compose riêng; không đổi `name:` của bản đang chạy (đổi tên volume) |
 | D-7 | Phát hành gắn nhãn phiên bản (`git tag vX.Y.Z`); image ghi nhãn `org.opencontainers.image.version` (Giai đoạn 3). Bản đang chạy: `GET /api/v1/system/health` trả `version`, `kernel`, `standard` |
 | D-8 | Proxy TLS phía trước (cổng 443) gửi `Strict-Transport-Security: max-age=15552000`. nginx của container `web` đã gửi `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'`. Không đặt `X-Frame-Options` vì phần mềm được nhúng trong trang quản trị WP (R-SEC-11) |

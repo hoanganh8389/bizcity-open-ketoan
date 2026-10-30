@@ -33,7 +33,7 @@
     { "id": "AP-3", "name": "Contracts before code", "statement": "Mọi module khai báo và tuân thủ contract trước khi tích hợp.", "enforcedBy": ["SC-CON-2","SC-MOD-1"] },
     { "id": "AP-4", "name": "Immutable posted history", "statement": "Không sửa âm thầm lịch sử hạch toán đã ghi; sửa sai bằng nghiệp vụ điều chỉnh hợp lệ.", "enforcedBy": ["DG-DB-2","DG-LEDGER-3","DG-EVD-1"] },
     { "id": "AP-5", "name": "Version everything", "statement": "Phiên bản schema, domain contract, accounting policy và nguồn phát phải truy nguyên được.", "enforcedBy": ["SC-DATA-2","DG-EVENT-1"] },
-    { "id": "AP-6", "name": "Events are replayable, consumers are idempotent", "statement": "Có cơ chế phát lại sự kiện và xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end.", "enforcedBy": [] },
+    { "id": "AP-6", "name": "Events are replayable, consumers are idempotent", "statement": "Có cơ chế phát lại sự kiện và xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end.", "enforcedBy": ["SC-EVT-2", "DG-EVT-1"] },
     { "id": "AP-7", "name": "Compliance is enforced, not documented only", "statement": "Các bất biến phải được kiểm tra trong runtime và CI, không chỉ viết trong tài liệu.", "enforcedBy": ["SC-CMP-1"] }
   ],
   "capabilities": [
@@ -56,9 +56,9 @@
     { "id": "actions.dry-run", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "?dryRun=1: chạy thật trong giao dịch rồi huỷ (kể cả ghi sổ, cấp số); action khai dryRun: true." },
     { "id": "evidence.receipt", "since": "1.0", "status": "available", "contract": "bizcity_evidence", "description": "Mỗi action ghi có bản ghi bằng chứng chỉ thêm (audit_logs mở rộng, migration 0036), chuỗi băm theo đơn vị, biên nhận meta.receipt; GET /api/v1/evidence/:id kiểm lại." },
     { "id": "permissions.module", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "Module khai quyền mới trong manifest; hiện PERMISSIONS là danh sách đóng trong core/auth.ts." },
-    { "id": "events.outbox", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Phát sự kiện miền trong cùng giao dịch; gửi ít nhất một lần." },
-    { "id": "events.subscribe", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Đăng ký xử lý sự kiện; chống xử lý trùng theo (consumer, event_id); retry, dead-letter, replay." },
-    { "id": "events.clock", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Sự kiện đồng hồ bizcity.clock.daily / hourly cho nhắc hạn, việc định kỳ." },
+    { "id": "events.outbox", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Phát sự kiện miền trong cùng giao dịch (event_outbox, migration 0039); gửi ít nhất một lần. Hiện ở apps/api/src/core/events.ts (emitEvent) và ctx.events.emit của runtime action; Kernel phát bizcity.ledger.entry.posted / reversed, bizcity.period.locked / unlocked." },
+    { "id": "events.subscribe", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Đăng ký xử lý sự kiện (defineSubscriber); chống xử lý trùng theo (consumer, event_id); retry giãn nhịp, dead-letter (EVENT_DEAD), replay (core.events.replay)." },
+    { "id": "events.clock", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Sự kiện đồng hồ bizcity.clock.daily (01:00 giờ VN) / hourly cho nhắc hạn, việc định kỳ; chỉ phát khi có subscriber, chống trùng theo giờ / ngày." },
     { "id": "notify.inapp", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Action core.notify.send: thông báo trong ứng dụng; có Cell thì chuyển thêm qua kênh (Zalo)." },
     { "id": "settings.registry", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_settings", "description": "settings.get(key, scope) theo registry; module khai khoá riêng." },
     { "id": "ui.kit", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit: DataGrid, form, bộ lọc, in, khung trang (tách từ apps/web/src/components)." },

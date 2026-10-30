@@ -47,7 +47,7 @@
 
 | # | Việc | Xong khi | Từ lộ trình cũ |
 |---|---|---|---|
-| 2.1 | **`eventStore.commit()`**: gom chuỗi sự việc → phiên bản → đảo → ghi. Chuyển `vouchers`, `closing`, `assets`, `inventory/costing` sang (A-01) | `DEBT_LEDGER_CALLERS` trong `kiem-chuan.sh` rỗng | 1.1, 1.2, 1.3 |
+| 2.1 | **`eventStore`** (`modules/documents/event-store.ts`): gom chuỗi sự việc → phiên bản → đảo → ghi → `posted_version`. Chuyển `vouchers`, `closing`, `assets`, `inventory/costing` sang (A-01) — **xong** 2026-10-30, [PHASE-004](../phases/PHASE-004-MOT-CUA-GHI-SO/README.md) | `DEBT_LEDGER_CALLERS` trong `kiem-chuan.sh` rỗng | 1.1, 1.2, 1.3 |
 | 2.2 | `assertLedgerInvariants()` trong test-kit, gọi ở `afterAll` mọi tệp test | chạy trong CI — **có**: `apps/api/test/helpers.ts` + `test/setup.ts` (setupFiles), dùng chung kiểm L3 của 2.10 | 1.4 |
 | 2.3 | Workspace `packages/kernel`: chuyển `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` + `db/seed.ts`; mở `public.ts` (`submit`, `cancel`, `get`) | `apps/api` chỉ import `@bizcity/kernel` công khai | mới |
 | 2.4 | `packages/data`: `ctx.data.tx` (đặt `bizcity.tenant_id`), runner migration theo module, schema `bizcity_read` + view danh mục | CONF-MIG chạy được | mới |
@@ -61,8 +61,8 @@
 | 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt — **có** (CONF-MCP-1, -3, -4 trong `test/mcp.test.ts`; -5 khi có action chạm sổ phơi cho AI) | mới |
 | 2.13 | Quan sát + mã lỗi chuẩn ([ADR-0007](../adr/ADR-0007-goi-chia-se-va-ha-tang.md)): danh mục [`bizcity_errors@1`](../contracts/BIZCITY-ERRORS-v1.md), `X-Request-Id` / `traceparent`, log có cấu trúc, `GET /metrics`, bộ giám sát [`infrastructure/monitoring/`](../../infrastructure/monitoring/README.md) (6 dashboard, 8 cảnh báo) | SC-ERR-1 đạt; `test/observability.test.ts` — **có** | mới |
 | 2.14 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): cấu hình định khoản, lý do, nhóm hạch toán có `policy_version` + `effective_from`; ghi sổ chọn bản theo ngày chứng từ; `posting_log.policy_version` | năng lực `posting.policy-version` available; C-9 của ma trận tuân thủ đạt | mới (G2-09) |
-| 2.15 | **Sao lưu PITR**: WAL archiving (`infrastructure/backup/`, wal-g hoặc pgBackRest), diễn tập khôi phục tới một thời điểm, đo RTO / RPO | `infrastructure/backup/README.md`; biên bản diễn tập ở `docs/audits/` | mới (G1-08, G3-07) |
-| 2.16 | **MCP ghi**: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse`, luôn xem trước + `confirm_token`; AI chỉ tạo nháp / chờ duyệt (STD-MCP-4, -6) | test MCP cho 3 công cụ ghi; CONF-MCP-5 | mới (G2-04) |
+| 2.15 | **Sao lưu PITR**: WAL archiving (`infrastructure/backup/`, chỉ PostgreSQL: `archive_command` + `pg_basebackup`; wal-g / pgBackRest tuỳ chọn), diễn tập khôi phục tới một thời điểm, đo RTO / RPO — **cơ chế có** 2026-10-30, diễn tập máy dev ĐẠT ([PHASE-008](../phases/PHASE-008-SAO-LUU-PITR/README.md)); còn diễn tập trên máy chủ thật | `infrastructure/backup/README.md`; biên bản diễn tập ở `docs/audits/` | mới (G1-08, G3-07) |
+| 2.16 | **MCP ghi**: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse`, luôn xem trước + `confirm_token`; AI chỉ tạo nháp / chờ duyệt (STD-MCP-4, -6) — **có** 2026-10-30 trừ `journal.post` ([PHASE-009](../phases/PHASE-009-MCP-GHI/README.md)) | test MCP cho 3 công cụ ghi; CONF-MCP-5 | mới (G2-04) |
 
 **Rủi ro:** RLS và chuỗi băm bằng chứng tốn hiệu năng. Đo trên dữ liệu thật (30.000 chứng từ / ngày) trước khi bật cho bảng Kernel; bảng module bật ngay vì mới và nhỏ.
 
@@ -75,7 +75,7 @@
 | 3.1 | `@bizcity/module-sdk`: `defineModule`, `ctx` (data, documents, ledger, events, settings, actions, evidence, notify) | API.md ổn định | 2.4 |
 | 3.2 | Manifest `bizcity.module.json` cho 9 phân hệ + 3 add-in; `ApiModule`/`WebModule`/`AddInManifest` sinh từ manifest; A-17 ghi `waivers` có hạn | CONF-MAN đạt (có waiver) | 2.4 |
 | 3.3 | Registry quyền mở: Kernel + module đăng ký; màn Phân quyền nhóm theo module | `permissions.module` available | mới |
-| 3.4 | `packages/events`: outbox, dispatcher, `event_consumptions`, retry, dead-letter, replay, đồng hồ; Kernel phát `bizcity.ledger.*`; thay `catalog-notify.ts` | CONF-RUN-10 đạt | 3.5 |
+| 3.4 | `packages/events`: outbox, dispatcher, `event_consumptions`, retry, dead-letter, replay, đồng hồ; Kernel phát `bizcity.ledger.*`; thay `catalog-notify.ts` — **có** 2026-10-30 ([PHASE-006](../phases/PHASE-006-OUTBOX-SU-KIEN/README.md)): `apps/api/src/core/events.ts` (gói `packages/events` tách cùng 2.3) | CONF-RUN-10 đạt | 3.5 |
 | 3.5 | Workflow khai báo (`documents.workflow`); chuyển `payment_requests`, `purchase_documents` sang | 2 luồng chạy bằng YAML | mới |
 | 3.6 | Settings registry chạy thật (`settings.get`) | khoá trong `tenants.settings` đều có trong registry | 2.3 |
 | 3.7 | `ledger.query`: API đọc sổ cho báo cáo; chuyển `modules/reports` thành `modules/ke-toan/reports` | báo cáo không còn SQL trên `ledger_*` ngoài Kernel | mới |

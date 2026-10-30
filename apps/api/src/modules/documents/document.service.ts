@@ -30,6 +30,7 @@ import { db, toNumber, type Db } from '../../db/client.js';
 import { AppError, Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { assertCanModify, type AuthContext } from '../../core/auth.js';
+import { emitKernelEvent } from './kernel-events.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { ledgerRepository } from '../ledger/ledger.repository.js';
 import { ledgerService } from '../ledger/ledger.service.js';
@@ -217,7 +218,44 @@ async function reverseEntries(trx: Db, tenantId: string, actor: string, ids: str
   return ids.length;
 }
 
-/** Xử lý một chứng từ đã qua kiểm khuôn. */
+/**
+ * Đề xuất huỷ trong giao dịch có sẵn. Loại chứng từ đặt chế độ "Tự động": huỷ luôn (ghi số âm bút toán), như lúc tự định khoản
+ * khi phiếu tới; chế độ "Chờ định khoản": vào cổng chờ (Chờ huỷ), kế toán định khoản huỷ ở ACC14.
+ * hold: luôn vào Chờ huỷ, không theo chế độ (trợ lý AI chỉ được đề xuất — STD-MCP-6).
+ */
+export async function requestCancelIn(trx: Db, auth: AuthContext, docKey: string, reason: string, opts: { hold?: boolean } = {}): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
+  const row = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
+  if (!row) throw Errors.notFound(`chứng từ ${docKey}`);
+  if (row.status === 'cancelled') return { requested: false, reversed: 0 };
+  if (!opts.hold && (await isAutoMode(trx, auth.tenantId, row.doc_type))) {
+    const reversed = await reverseActiveEntries(trx, auth.tenantId, auth.actor, row.id, `Huỷ chứng từ: ${reason}`);
+    await taxInvoiceRepository.removeForDocument(trx, row.id);
+    await inventoryMovementRepository.removeForDocument(trx, row.id);
+    await documentRepository.update(trx, row.id, { status: 'cancelled', error_message: reason, cancel_requested_at: null, cancel_reason: null });
+    await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel', reversed, message: `Tự động huỷ (chế độ Tự động): ${reason}`, actor: auth.actor });
+    if (reversed) await emitReversed(trx, auth, row, reversed, 'cancel');
+    return { requested: true, reversed, cancelled: true };
+  }
+  if (row.cancel_requested_at) return { requested: false, reversed: 0 };
+  await documentRepository.update(trx, row.id, { status: 'pending', cancel_requested_at: new Date(), cancel_reason: reason });
+  await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel_request', message: reason, actor: auth.actor });
+  return { requested: true, reversed: 0 };
+}
+
+/**
+ * Lập chứng từ nháp (trợ lý AI, bizcity_mcp@1 §5.2): luôn chờ ở ACC14 dù loại chứng từ đặt chế độ "Tự động" (hold).
+ * preview: định khoản thử ngay trong giao dịch (người gọi huỷ giao dịch) để trả bút toán xem trước (STD-MCP-4).
+ */
+export async function draftDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { preview?: boolean } = {}): Promise<IngestResult> {
+  assertTotals(doc);
+  return postDocumentIn(trx, auth, doc, opts.preview ? { post: true, force: true } : { hold: true });
+}
+
+/** Phát bizcity.ledger.entry.reversed khi huỷ / bỏ định khoản đảo bút toán mà không ghi phiên bản mới. */
+function emitReversed(trx: Db, auth: AuthContext, row: { doc_key: string; doc_type: string; doc_no: string; version: number }, reversed: number, reason: 'cancel' | 'unpost') {
+  return emitKernelEvent(trx, auth, 'bizcity.ledger.entry.reversed', row.doc_key, { docKey: row.doc_key, docType: row.doc_type, docNo: row.doc_no, version: row.version, reversed, reason });
+}
+
 /** Ghi một dòng nhật ký định khoản (posting_log). */
 export async function logPosting(trx: Db, v: {
   tenantId: string; eventId: string; docType: string; docNo: string; version: number;
@@ -349,6 +387,9 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
     await settleLinkedTo(trx, auth.tenantId, doc.docKey, auth.actor);
   }
   await documentRepository.update(trx, docId, { status: 'posted', posted_at: new Date(), posted_version: doc.version, error_code: null, error_message: null });
+  await emitKernelEvent(trx, auth, 'bizcity.ledger.entry.posted', doc.docKey, {
+    docKey: doc.docKey, docType: doc.docType, docNo: doc.docNo, version: doc.version, entryIds, reversed, kept: kept.length, total: doc.totals.total,
+  });
   const repost = Boolean(active.length);
   await log(repost ? 'repost' : 'post', { entryIds, reversed, message: repost ? (kept.length ? `Giữ ${kept.length} bút toán${updated.length ? ` (cập nhật thông tin đầu ${updated.length}: số hoá đơn, diễn giải…)` : ' không đổi'}${entryIds.length ? `; đảo ${reversed}, ghi ${entryIds.length} bút toán mới` : '; không có gì thay đổi'}` : `Đảo ${reversed}, ghi ${entryIds.length} bút toán mới`) : undefined });
   return { docKey: doc.docKey, version: doc.version, status: 'posted' as const, entryIds, kept: kept.length, updated: updated.length, reversed };
@@ -689,25 +730,7 @@ export const documentService = {
    * ghi nhật ký; kế toán xem trước rồi định khoản mới huỷ. Chứng từ đã huỷ / đã chờ huỷ thì thôi.
    */
   async requestCancel(auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
-    return db.transaction().execute(async (trx) => {
-      const row = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
-      if (!row) throw Errors.notFound(`chứng từ ${docKey}`);
-      if (row.status === 'cancelled') return { requested: false, reversed: 0 };
-      // Loại chứng từ đặt chế độ "Tự động": nguồn báo xoá / bỏ duyệt thì huỷ luôn (ghi số âm bút toán), như lúc tự định
-      // khoản khi phiếu tới. Chế độ "Chờ định khoản": vào cổng chờ (Chờ huỷ), kế toán định khoản huỷ ở ACC14.
-      if (await isAutoMode(trx, auth.tenantId, row.doc_type)) {
-        const reversed = await reverseActiveEntries(trx, auth.tenantId, auth.actor, row.id, `Huỷ chứng từ: ${reason}`);
-        await taxInvoiceRepository.removeForDocument(trx, row.id);
-        await inventoryMovementRepository.removeForDocument(trx, row.id);
-        await documentRepository.update(trx, row.id, { status: 'cancelled', error_message: reason, cancel_requested_at: null, cancel_reason: null });
-        await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel', reversed, message: `Tự động huỷ (chế độ Tự động): ${reason}`, actor: auth.actor });
-        return { requested: true, reversed, cancelled: true };
-      }
-      if (row.cancel_requested_at) return { requested: false, reversed: 0 };
-      await documentRepository.update(trx, row.id, { status: 'pending', cancel_requested_at: new Date(), cancel_reason: reason });
-      await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel_request', message: reason, actor: auth.actor });
-      return { requested: true, reversed: 0 as const };
-    });
+    return db.transaction().execute((trx) => requestCancelIn(trx, auth, docKey, reason));
   },
 
   /** Huỷ chứng từ: đảo bút toán, bỏ khỏi sổ hoá đơn. */
@@ -723,6 +746,7 @@ export const documentService = {
       await inventoryMovementRepository.removeForDocument(trx, row.id);
       await documentRepository.update(trx, row.id, { status: 'cancelled', error_message: reason });
       await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel', reversed, message: reason, actor: auth.actor });
+      if (reversed) await emitReversed(trx, auth, row, reversed, 'cancel');
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.cancel', objectType: 'source_document', objectId: docKey, after: { reason } });
       return { reversed };
     });
@@ -748,6 +772,7 @@ export const documentService = {
       await inventoryMovementRepository.removeForDocument(trx, row.id);
       await documentRepository.update(trx, row.id, { status: 'pending', posted_at: null, posted_version: null, error_message: `Bỏ định khoản: ${reason}` });
       await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'unpost', reversed, message: reason, actor: auth.actor });
+      if (reversed) await emitReversed(trx, auth, row, reversed, 'unpost');
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.unpost', objectType: 'source_document', objectId: row.doc_key, after: { reason, reversed } });
       return { reversed };
     });

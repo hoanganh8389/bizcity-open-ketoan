@@ -38,6 +38,7 @@ export function zodToJson(s: ZodTypeAny): Json {
     case 'ZodArray': return withDesc({ type: 'array', items: zodToJson(d.type as ZodTypeAny) });
     case 'ZodRecord': return withDesc({ type: 'object', additionalProperties: zodToJson(d.valueType as ZodTypeAny) });
     case 'ZodUnion': return withDesc({ anyOf: (d.options as ZodTypeAny[]).map(zodToJson) });
+    case 'ZodDiscriminatedUnion': return withDesc({ oneOf: [...(d.options as Iterable<ZodTypeAny>)].map(zodToJson) });
     case 'ZodOptional': return { ...zodToJson(d.innerType as ZodTypeAny), ...(s.description ? { description: s.description } : {}) };
     case 'ZodNullable': { const inner = zodToJson(d.innerType as ZodTypeAny); return withDesc({ anyOf: [inner, { type: 'null' }] }); }
     case 'ZodDefault': return withDesc({ ...zodToJson(d.innerType as ZodTypeAny), default: (d.defaultValue as () => unknown)() });

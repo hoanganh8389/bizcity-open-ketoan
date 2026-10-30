@@ -1,0 +1,41 @@
+# =============================================================================
+# PITR (R-BAK-2): bật lưu WAL liên tục cho service db — khôi phục được tới một thời điểm bất kỳ sau bản sao lưu gốc.
+#
+#   docker compose -f docker-compose.yml -f infrastructure/backup/docker-compose.pitr.yml up -d db
+#
+# Chỉ dùng PostgreSQL (ADR-0007): archive_command chép từng đoạn WAL vào ổ walbackup:/backup/wal. archive_timeout = 60 giây
+# → mất tối đa khoảng 1 phút dữ liệu khi máy hỏng (RPO), mục tiêu R-BAK-2 là ≤ 15 phút.
+# Đưa /backup ra ngoài máy chủ (rclone / rsync / ổ mạng, có mã hoá — R-BAK-1, R-BAK-6): xem infrastructure/backup/README.md.
+# Đổi wal_level / archive_mode cần khởi động lại db (vài giây); không đổi dữ liệu.
+# =============================================================================
+services:
+  db:
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backup/wal/%f && cp %p /backup/wal/%f
+      - -c
+      - archive_timeout=60
+      - -c
+      - max_wal_senders=4
+    volumes:
+      - walbackup:/backup
+    depends_on:
+      db-backup-init:
+        condition: service_completed_successfully
+
+  # Một lần khi bật PITR: tạo thư mục WAL / bản gốc, giao cho người dùng postgres của container (uid 70 ở image alpine).
+  db-backup-init:
+    image: postgres:16-alpine
+    command: ["sh", "-c", "mkdir -p /backup/wal /backup/base && chown -R postgres:postgres /backup && chmod 700 /backup/wal /backup/base"]
+    volumes:
+      - walbackup:/backup
+    restart: "no"
+
+volumes:
+  # WAL + bản sao lưu gốc. Không chung ổ với pgdata (hỏng ổ dữ liệu thì vẫn còn bản để khôi phục).
+  walbackup:

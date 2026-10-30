@@ -53,9 +53,7 @@ import { db, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
-import { documentRepository } from '../documents/document.repository.js';
-import { ledgerRepository } from '../ledger/ledger.repository.js';
-import { ledgerService } from '../ledger/ledger.service.js';
+import { eventStore } from '../documents/event-store.js';
 import { partnerRepository } from '../partners/partner.repository.js';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { AccountResolver } from '../posting/account-resolver.js';
@@ -496,21 +494,15 @@ async function postBranch(
 ): Promise<CostingResult['branches'][number]> {
   // Khoá cũ là cogs:<internal|tax>:<chi nhánh>:<kỳ>; nay một sổ kế toán: cogs:<chi nhánh>:<kỳ>.
   const docKey = `cogs:${a.branchCode}:${label(a.period)}`;
-  const existing = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
+  const existing = await eventStore.lock(trx, auth.tenantId, docKey);
   const cfg = await postingConfigRepository.loadPostingConfig(trx, auth.tenantId, [...new Set(a.movements.map((m) => m.sku))]);
-  if (existing) {
-    for (const e of await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, existing.id)) {
-      await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, cfg.accounts, 'Tính lại giá vốn');
-    }
-  }
+  const reversed = existing ? await eventStore.reverseActive(trx, auth, existing.id, cfg.accounts, 'Tính lại giá vốn') : 0;
   // Chứng từ giá vốn khoá cũ còn hiệu lực: đảo bút toán và huỷ, để không ghi trùng với chứng từ khoá mới.
   for (const legacyKey of ['internal', 'tax'].map((x) => `cogs:${x}:${a.branchCode}:${label(a.period)}`)) {
-    const legacy = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, legacyKey);
+    const legacy = await eventStore.lock(trx, auth.tenantId, legacyKey);
     if (!legacy || legacy.status === 'cancelled') continue;
-    for (const e of await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, legacy.id)) {
-      await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, cfg.accounts, 'Tính lại giá vốn');
-    }
-    await documentRepository.update(trx, legacy.id, { status: 'cancelled', error_message: 'Thay bằng chứng từ giá vốn khoá mới' });
+    const n = await eventStore.reverseActive(trx, auth, legacy.id, cfg.accounts, 'Tính lại giá vốn');
+    await eventStore.cancel(trx, auth, legacy, { message: 'Thay bằng chứng từ giá vốn khoá mới', reversed: n });
   }
 
   // Dòng chờ giá vốn còn sót trên phiếu định khoản trước 22/10/2026 (bút toán còn hiệu lực, có số tiền): đưa về 0 —
@@ -581,7 +573,7 @@ async function postBranch(
 
   // Dòng chờ cũ về 0 (giá vốn đã nằm trong phiếu giá vốn tháng).
   const overwrite = slotRows.rows.map((r) => ({ entryId: r.entry_id, pairNo: Number(r.pair_no), amount: 0 }));
-  const filled = overwrite.length ? await ledgerService.overwriteCostPairs(trx, auth.tenantId, overwrite, cfg.accounts) : 0;
+  const filled = overwrite.length ? await eventStore.overwriteCostPairs(trx, auth.tenantId, overwrite, cfg.accounts) : 0;
   const filledTotal = 0;
   if (filled) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'costing.clear_slots', objectType: 'branch', objectId: `${a.branchCode}:${label(a.period)}`, after: { pairs: filled } });
 
@@ -594,24 +586,19 @@ async function postBranch(
 
   const p = a.period;
   if (!lines.length) {
-    if (existing) await documentRepository.update(trx, existing.id, { status: 'cancelled', error_message: 'Tính lại giá vốn: không còn hàng xuất cần định giá' });
+    if (existing) await eventStore.cancel(trx, auth, existing, { message: 'Tính lại giá vốn: không còn hàng xuất cần định giá', reversed });
     return { branchCode: a.branchCode, status: 'empty', total: 0, filled, filledTotal };
   }
   const total = fromCents(lines.reduce((s, l) => s + toCents(l.debit), 0));
   const docNo = `GV ${String(p.month).padStart(2, '0')}/${p.year} ${a.branchCode}`;
-  const version = (existing?.version ?? 0) + 1;
   const description = `Giá vốn hàng xuất tháng ${String(p.month).padStart(2, '0')}/${p.year}`;
-  const fields = { version, branch_id: a.branchId, doc_date: lastDay(p), total, payload: JSON.stringify({ period: label(p), branchCode: a.branchCode, description, method: 'binh-quan-thang' }) };
-  let docId: string;
-  if (existing) {
-    docId = existing.id;
-    await documentRepository.archiveVersion(trx, existing.id, existing.version, existing.payload, existing.received_at);
-    await documentRepository.update(trx, existing.id, { ...fields, received_at: new Date() });
-  } else {
-    docId = (await documentRepository.insert(trx, { tenant_id: auth.tenantId, source_system: 'manual', doc_key: docKey, doc_type: 'cogs', doc_no: docNo, partner_id: null, invoice_no: null, ...fields })).id;
-  }
-  await ledgerService.post(trx, auth.tenantId, auth.actor, { branchId: a.branchId, docType: 'cogs', docNo, docDate: lastDay(p), postingDate: lastDay(p), description, sourceDocumentId: docId, sourceVersion: version, lines }, cfg.accounts);
-  await documentRepository.update(trx, docId, { status: 'posted', posted_at: new Date(), error_message: null });
+  const ev = await eventStore.saveVersion(trx, auth, existing, {
+    docKey, docType: 'cogs', docNo,
+    fields: { branch_id: a.branchId, doc_date: lastDay(p), total, payload: JSON.stringify({ period: label(p), branchCode: a.branchCode, description, method: 'binh-quan-thang' }) },
+  });
+  const version = ev.version;
+  const entry = await eventStore.post(trx, auth, ev, { branchId: a.branchId, docType: 'cogs', docNo, docDate: lastDay(p), postingDate: lastDay(p), description, lines }, cfg.accounts);
+  await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'cogs', docNo, entryIds: [entry.id], reversed, total });
   await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'costing.run', objectType: 'source_document', objectId: docKey, after: { version, total } });
   return { branchCode: a.branchCode, status: 'posted', docNo, total, filled, filledTotal };
 }

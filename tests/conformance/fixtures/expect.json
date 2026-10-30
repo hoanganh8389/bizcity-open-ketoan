@@ -371,6 +371,9 @@
         "SC-EVT-1": {
           "findings": 0
         },
+        "SC-EVT-2": {
+          "findings": 0
+        },
         "SC-EVD-1": {
           "findings": 0
         },
@@ -427,6 +430,13 @@
         },
         "SC-EVT-1": {
           "findings": 1
+        },
+        "SC-EVT-2": {
+          "findings": 2,
+          "keys": [
+            "id:3",
+            "idem:3"
+          ]
         }
       }
     },

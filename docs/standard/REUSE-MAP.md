@@ -55,11 +55,11 @@
 | `periods` | 328 | K | `kernel/periods` | Kỳ, khoá sổ |
 | `accounts` | 332 | K | `kernel/accounts` | Hệ thống tài khoản |
 | `debts` | 445 | K | `kernel/subledgers/debts` | Sổ phụ công nợ sinh khi ghi sổ |
-| `inventory` | 1.012 | K | `kernel/subledgers/inventory` | Nhập xuất kho + tính giá vốn. `costing` gọi thẳng `ledgerService` (A-01) |
+| `inventory` | 1.012 | K | `kernel/subledgers/inventory` | Nhập xuất kho + tính giá vốn. `costing` ghi sổ qua `eventStore` (A-01 xong 2026-10-30) |
 | `tax-invoices`, `tax-info`, `tax-codes` | 500 | K | `kernel/tax` | `tax-info.service.ts:168` cập nhật trạng thái thẳng (A-16) |
 | `sales` | 550 | K + D | `kernel/projections` + `modules/ban-hang` | Dòng bán là bảng tra cứu dựng lại được (projection); báo cáo bán hàng là module |
-| `closing` | 939 | K | `kernel/closing` | Kết chuyển, cuối năm. Tự viết chuỗi sự việc → sổ (A-01) |
-| `vouchers` | 526 | K + D | `kernel/intake` (loại `manual`) + `modules/ke-toan` (màn) | Tự viết chuỗi sự việc → sổ (A-01) |
+| `closing` | 939 | K | `kernel/closing` | Kết chuyển, cuối năm. Ghi sổ qua `eventStore` (A-01 xong 2026-10-30) |
+| `vouchers` | 526 | K + D | `kernel/intake` (loại `manual`) + `modules/ke-toan` (màn) | Ghi sổ qua `eventStore` (A-01 xong 2026-10-30) |
 | `default-data` | 675 | K | `kernel/seeds` | Dữ liệu mặc định đơn vị mới |
 | `partners`, `products`, `branches`, `warehouses`, `unit-names`, `bank-accounts` | 1.660 | M | `data/masterdata` + `kernel` (thuộc tính hạch toán) | Thực thể dùng chung; cột tài khoản / nhóm hạch toán thuộc Kernel |
 | `catalog` | 1.066 | M + P | `data/masterdata` + `events` | `catalog-notify.ts` (báo hệ thống bán hàng bằng `setTimeout`) → sự kiện `bizcity.masterdata.product.changed` (A-22) |
@@ -68,7 +68,7 @@
 | `reference-documents` | 119 | P | `documents/links` | Chứng từ tham chiếu; trạng thái `open/used/closed` |
 | `print-templates`, `voucher-templates` | 423 | U + D | `ui-kit/print` + `modules/ke-toan` | Mẫu in chung; mẫu phiếu kế toán thuộc module |
 | `reports` | 3.479 | D | `modules/ke-toan/reports` | Đọc thẳng `ledger_*` bằng SQL → cần `ledger.query` (năng lực `planned`) |
-| `assets` | 1.465 | D | `modules/tai-san` | Khấu hao gọi thẳng `ledgerService` (A-01) → `ctx.ledger.submit` với `docType` khấu hao |
+| `assets` | 1.465 | D | `modules/tai-san` | Khấu hao ghi sổ qua `eventStore` (A-01 xong 2026-10-30); đích: `ctx.ledger.submit` với `docType` khấu hao |
 | `access`, `auth` | 494 | P | `permissions` | Người dùng, vai trò, khoá API |
 | `system` | 511 | P | `cli` (chẩn đoán) + `module-sdk` (registry) | `/system/modules`, `/system/schema`, `schema-catalog.ts` |
 | `connections` | 400 | A | `adapters/wordpress` | Kéo chứng từ WooCommerce / trạm ACC14, đi qua `postDocumentIn` (đúng cửa) |

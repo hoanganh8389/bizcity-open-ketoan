@@ -7,7 +7,7 @@
 
 | ID | Việc | Lộ trình / G | Code | Trạng thái |
 |---|---|---|---|---|
-| S005-1 | ADR: mô hình phiên bản (bảng bản chụp chính sách hay cột phiên bản từng bảng), mức K3 | 2.14 | chưa | ☐ |
+| S005-1 | ADR: mô hình phiên bản (bảng bản chụp chính sách hay cột phiên bản từng bảng), mức K3 | 2.14 | có (tài liệu) | ⛔ [ADR-0009](../../adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) soạn xong, đề xuất phương án A; chờ duyệt |
 | S005-2 | Migration mới: phiên bản + `effective_from`; `posting_log.policy_version`; `COMMENT ON` | 2.14 | chưa | ☐ |
 | S005-3 | Resolver chọn bản theo ngày chứng từ (AccountResolver, lý do, nhóm hạch toán) | 2.14 | chưa | ☐ |
 | S005-4 | Định khoản lại chứng từ cũ dùng bản đúng ngày, không dùng bản mới nhất | 2.14 | chưa | ☐ |
@@ -25,3 +25,4 @@
 | Thời điểm thật | Phiên | Việc |
 |---|---|---|
 | 2026-10-30 | Claude Code | Mở thư mục phase; trạng thái chụp từ bảng điểm (CSDL `ketoan_test`). |
+| 2026-10-30 | Claude Code | Soạn ADR-0009 (Đề xuất): 3 phương án, đề xuất A (bản chụp chính sách có ngày hiệu lực, theo tiền lệ closing_rule_versions); 5 câu hỏi cho chủ dự án / kế toán trưởng. Chưa code. |

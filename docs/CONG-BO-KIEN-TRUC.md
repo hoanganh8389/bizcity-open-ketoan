@@ -31,7 +31,7 @@ Bảy nguyên tắc do Johnny Chu – Chu Hoàng Anh yêu cầu, khoá trong `bi
 | **AP-3** | **Contracts before code** | Module khai và tuân hợp đồng trước khi tích hợp | manifest `bizcity.module.json` (SC-CON-2); `defineAction` từ chối khai thiếu; `selfcheck --module` |
 | **AP-4** | **Immutable posted history** | Không sửa âm thầm lịch sử hạch toán đã ghi; sửa sai bằng nghiệp vụ điều chỉnh hợp lệ (đảo + ghi mới) | trigger chỉ thêm (DG-DB-2); DG-LEDGER-3; bằng chứng chuỗi băm (DG-EVD-1) |
 | **AP-5** | **Version everything** | Phiên bản schema, domain contract, chính sách kế toán, nguồn phát phải truy nguyên được | migration khoá checksum (SC-DATA-2); `bizcity_*@N`; sự việc có `version`; sự kiện có `version` + `source`; chính sách kế toán có phiên bản (STD-CMP-9 — **chưa đủ**) |
-| **AP-6** | **Events are replayable, consumers are idempotent** | Có cơ chế phát lại sự kiện, xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end | R-OUTBOX-3..7; consumer khoá `(consumer, event_id)` — **chưa có code** (G2-05) |
+| **AP-6** | **Events are replayable, consumers are idempotent** | Có cơ chế phát lại sự kiện, xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end | R-OUTBOX-3..7; consumer khoá `(consumer, event_id)`; SC-EVT-2, DG-EVT-1 — **có** từ 2026-10-30 (PHASE-006) |
 | **AP-7** | **Compliance is enforced, not documented only** | Bất biến được kiểm trong runtime và CI, không chỉ viết trong tài liệu | ma trận tuân thủ tính tự động trên bảng điểm ([compliance-matrix.json](standard/compliance-matrix.json)); `assertLedgerInvariants` sau mọi tệp test; tự chẩn đoán chặn khoá kỳ |
 
 ## 2. Ba lớp kiểm soát: điều gì là đúng
@@ -77,9 +77,9 @@ Tên dạng `<miền>.<thực thể>.<động từ>` (STD-MCP-1). Miền của C
 |---|---|---|---|---|
 | `accounting.balance.get` | Số dư tài khoản tại một ngày, đọc thẳng sổ (R-CACHE-2) | `reports:read` | không (đọc) | **có** |
 | `accounting.report.trial_balance` · `accounting.cash.balances` · `accounting.debts.partner_balances` | Cân đối phát sinh, tiền, công nợ | `reports:read` | không | **có** |
-| `accounting.document.create_draft` | Lập chứng từ nháp (bán, mua, thu, chi) → sự việc `pending` ở ACC14, kế toán duyệt mới vào sổ | `documents:write` | **luôn** xem trước + xác nhận | chưa (G2-04) |
+| `accounting.document.create_draft` | Lập chứng từ nháp (bán, mua, thu, chi) → sự việc `pending` ở ACC14 (cả khi chế độ "Tự động"), kế toán duyệt mới vào sổ; xem trước = bút toán dựng thử | `documents:write` | **luôn** xem trước + xác nhận | **có** (PHASE-009) |
 | `accounting.journal.post` | Đề xuất phiếu kế toán theo lý do (không số tài khoản) → `pending`, người có quyền duyệt | `documents:write` + duyệt | **luôn** xác nhận; không AI tự duyệt (STD-MCP-6) | chưa (G2-04, cần `docType` phiếu tay — [API.md §6](../packages/module-sdk/API.md)) |
-| `accounting.entry.reverse` | Đề xuất huỷ / đảo một chứng từ đã ghi → yêu cầu huỷ chờ duyệt | `documents:write` + duyệt | **luôn** xác nhận + lý do; `destructiveHint` | chưa (G2-04) |
+| `accounting.entry.reverse` | Đề xuất huỷ / đảo một chứng từ đã ghi → "Chờ huỷ" chờ duyệt, sổ giữ nguyên; xem trước = bút toán sẽ đảo | `documents:write` + duyệt | **luôn** xác nhận + lý do; `destructiveHint` | **có** (PHASE-009) |
 
 AI **không bao giờ**: duyệt chứng từ, khoá / mở kỳ, đổi cấu hình định khoản, xoá (STD-MCP-6).
 
@@ -142,9 +142,9 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 | Bất biến kế toán + ACID | P0 | Bắt buộc | **có**: Domain Contract, trigger, kiểm sau mọi tệp test |
 | Cô lập đơn vị + Audit Ledger | P0 | Bắt buộc | **một phần**: `tenant_id` mọi truy vấn, bằng chứng chuỗi băm có; RLS chưa (G1-05) |
 | Contract + SDK + MCP | P0 | Lợi thế chiến lược | **một phần**: 4 lớp hợp đồng, MCP có; SDK là bản nháp (G1-10) |
-| Sao lưu, PITR, kiểm khôi phục | P0 | Bắt buộc | **một phần**: sao lưu + kiểm khôi phục có; PITR chưa (G1-08) |
+| Sao lưu, PITR, kiểm khôi phục | P0 | Bắt buộc | **có cơ chế**: sao lưu, kiểm khôi phục, PITR (`infrastructure/backup/`) + diễn tập máy dev ĐẠT (RTO 8 giây, RPO ≤ 60 giây); còn bật trên bản cài thật (PHASE-008) |
 | Prometheus + Grafana | P1 | Nên triển khai sớm | **có**: `infrastructure/monitoring/` |
-| Transactional outbox | P1 | Cần có trước khi tích hợp sự kiện | chưa (G2-05) |
+| Transactional outbox | P1 | Cần có trước khi tích hợp sự kiện | **có**: `core/events.ts`, migration 0039 (PHASE-006) |
 | Redis | P1 | Khi đo được nhu cầu | chưa, luật R-CACHE có (G2-06) |
 | NATS JetStream | P2 | Khi có nhiều consumer / module | chưa (G3-03) |
 | Kong + Keycloak | P2 | Khi quản trị API và danh tính phức tạp | chưa (G3-08) |
@@ -152,18 +152,18 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 
 ### 4.1 Ma trận tuân thủ bắt buộc
 
-Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **59%**.
+Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **81%** (59% trước PHASE-004, 66% sau PHASE-004).
 
 | Mã | Yêu cầu | Rủi ro nếu thiết kế sai | Quy tắc Bizcity bắt buộc | Trạng thái |
 |---|---|---|---|---|
-| C-1 | Chứng từ hợp lệ | Sự kiện tạo giao dịch không có chứng từ | Bút toán phải có nguồn chứng từ và căn cứ hạch toán | ◐ một phần (nợ A-01 một cửa ghi) |
+| C-1 | Chứng từ hợp lệ | Sự kiện tạo giao dịch không có chứng từ | Bút toán phải có nguồn chứng từ và căn cứ hạch toán | ✔ đạt từ 2026-10-30 (một cửa ghi xong, PHASE-004) |
 | C-2 | Ghi sổ chính xác | Hai consumer ghi trùng nghiệp vụ | Idempotency và uniqueness tại CSDL | ✔ đạt |
 | C-3 | Sửa chữa sổ | Consumer cập nhật trực tiếp bút toán cũ | Chứng từ điều chỉnh, giữ dấu vết | ✔ đạt |
 | C-4 | Khoá kỳ kế toán | Sự kiện đến chậm ghi vào kỳ đã khoá | Period Lock Gate | ✔ đạt |
-| C-5 | Nhất quán dữ liệu | Sự kiện phát ra khi giao dịch chưa commit | Transactional Outbox | ✘ thiếu (G2-05) |
-| C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (thiếu PITR, xác nhận thời hạn) |
-| C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17, A-01) |
-| C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ◐ một phần (thiếu `correlation_id`) |
+| C-5 | Nhất quán dữ liệu | Sự kiện phát ra khi giao dịch chưa commit | Transactional Outbox | ✔ đạt từ 2026-10-30 (PHASE-006) |
+| C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (PITR có từ 2026-10-30; còn kế toán trưởng / luật sư xác nhận thời hạn lưu trữ) |
+| C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17; A-01 xong 2026-10-30) |
+| C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ✔ đạt từ 2026-10-30 (`correlation_id` từ X-Correlation-Id vào bằng chứng và sự kiện) |
 | C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✘ thiếu (G2-09) |
 
 ## 5. Luật bắt buộc cho người đóng góp
@@ -205,7 +205,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G1-05 | Cô lập đơn vị: `tenant_id` + **RLS** + test đơn vị A không đọc được đơn vị B | DG-PLAN-5 thành kiểm thật | **một phần** (thiếu RLS) | 2.4 | _mở_ |
 | G1-06 | RBAC: vai trò, quyền, khoá API có phạm vi; registry quyền mở theo module | `permissions.module` available | **một phần** | 3.x | _mở_ |
 | G1-07 | Audit Ledger: bằng chứng chỉ thêm, chuỗi băm, biên nhận | DG-EVD-1, SC-EVD-2 đạt | **có** | 2.6 | — |
-| G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **một phần** (thiếu PITR) | 2.15 | _mở_ |
+| G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **có** cơ chế + diễn tập máy dev ([biên bản](audits/PITR-2026-10-30.md)); bật trên bản cài thật: việc của chủ | 2.15 | — |
 | G1-09 | Health (L0 / L1 / L3), `/metrics` | `/health/ready`, `/system/diagnostics`, `/metrics` có test | **có** | 2.10, 2.13 | — |
 | G1-10 | SDK TypeScript `@bizcity/module-sdk` | `packages/module-sdk/package.json`; ca chuẩn hợp đồng chạy bằng SDK | **một phần** (bản nháp API) | 1.5, 3.1 | _mở_ |
 | G1-11 | Contract tests: bộ kiểm chuẩn SC-* / DG-*, tự kiểm, bảng điểm | `selfcheck --strict` đạt trong CI | **có** | 0.5 | — |
@@ -221,8 +221,8 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G2-01 | Domain Contract | `bizcity_domain@1` công bố, mỗi bất biến có cách bảo vệ | **có** | — | — |
 | G2-02 | Capability Contract | `/system/capabilities` công bố schema, quyền, `sideEffects`, idempotency, bằng chứng; `defineAction` chặn khai thiếu | **có** | 2.5 | — |
 | G2-03 | Extension Contract chạy thật: slot, hook, `ctx.actions.call` | ca chuẩn hợp đồng dùng slot + hook | **một phần** (có tài liệu) | 3.x | _mở_ |
-| G2-04 | MCP Server kế toán đủ bộ: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse` | 3 công cụ ghi có xem trước + duyệt; CONF-MCP-5 | **một phần** (đọc + khung xác nhận có) | 2.16 | _mở_ |
-| G2-05 | **Transactional outbox + worker** | R-OUTBOX-1..5 có test; `events.outbox` available | **chưa** | 3.x | _mở_ |
+| G2-04 | MCP Server kế toán đủ bộ: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse` | 3 công cụ ghi có xem trước + duyệt; CONF-MCP-5 | **một phần** (đọc, `create_draft`, `entry.reverse` có; `journal.post` chờ quyết định phiếu kế toán nháp — PHASE-009 Q009-1) | 2.16 | _mở_ |
+| G2-05 | **Transactional outbox + worker** | R-OUTBOX-1..5 có test; `events.outbox` available | **có** (PHASE-006) | 3.4 | — |
 | G2-06 | Đệm cho Accounting Core có huỷ theo phiên bản cấu hình; `adapters/redis` | R-CACHE-3..6 có test; chạy đúng khi tắt Redis | **chưa** | 5.9 | _mở_ |
 | G2-07 | Prometheus + Grafana + cảnh báo cơ bản | `infrastructure/monitoring/` chạy với API thật | **có** (cấu hình đã kiểm) | 2.13 | — |
 | G2-08 | Mã lỗi chuẩn + quan sát (request id, log, số đo) | SC-ERR-1, `test/observability.test.ts` | **có** | 2.13 | — |
@@ -239,7 +239,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G3-04 | Bizcity Cell API key + dịch vụ AI (đọc hoá đơn, gợi ý lý do định khoản) | `ai.ocr-invoice`, `posting.reason-suggest` available | **chưa** | 5.3, 5.8 | _mở_ |
 | G3-05 | Benchmark tải | 30.000 chứng từ / ngày, p95 ghi sổ < 1 giây, có báo cáo | **chưa** | 5.5 | _mở_ |
 | G3-06 | Kiểm thử cô lập đơn vị | thử tấn công chéo đơn vị qua API, MCP, RLS: không lọt | **chưa** (sau G1-05) | 2.4 | _mở_ |
-| G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **chưa** (sau G1-08) | 2.15 | _mở_ |
+| G3-07 | Diễn tập phục hồi dữ liệu | PITR tới một thời điểm, đo RTO / RPO thật, có biên bản | **một phần**: máy dev ĐẠT ([biên bản](audits/PITR-2026-10-30.md)); còn diễn tập trên máy chủ thật | 2.15 | _mở_ |
 | G3-08 | Kong + Keycloak (`adapters/oidc`), khi cần | đăng nhập OIDC; JWKS; không phụ thuộc khi tắt | **chưa** (P2) | 5.9 | _mở_ |
 | G3-09 | Kubernetes / Helm, khi cần | chart `infrastructure/helm/`; 2 bản API chạy đúng | **để sau** (P3) | — | _mở_ |
 

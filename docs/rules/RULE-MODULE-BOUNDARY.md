@@ -20,7 +20,7 @@
 | Hành động | Nhân | Dịch vụ lõi | Phân hệ | Add-in | Plugin ngoài |
 |---|---|---|---|---|---|
 | Ghi `ledger_*` | `ledgerService` | ✗ (đích) | ✗ | ✗ | ✗ |
-| Tạo / sửa `accounting_events` | Event Gateway | qua `eventStore.commit` | qua `postDocumentIn` | qua `postDocumentIn` | qua `POST /documents` |
+| Tạo / sửa `accounting_events` | Event Gateway | qua `eventStore` | qua `postDocumentIn` | qua `postDocumentIn` | qua `POST /documents` |
 | Sửa danh mục khung kế toán | — | ✓ (màn cấu hình) | ✗ | ✗ | ✗ |
 | Tạo đối tượng, mặt hàng | — | ✓ | ✓ qua service lõi | ✓ qua service lõi | ✓ qua sự việc / `PUT` |
 | Bảng CSDL riêng | — | ✓ | ✓ tiền tố | ✓ `addin_` | — |
