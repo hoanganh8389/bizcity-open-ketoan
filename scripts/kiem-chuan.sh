@@ -13,8 +13,8 @@ cd "$(dirname "$0")/.."
 SRC=apps/api/src
 FAIL=0
 
-# Nợ R-LEDGER-4 / audit A-01: module lõi còn gọi thẳng ledgerService (chuyển sang eventStore.commit ở Giai đoạn 1.1).
-DEBT_LEDGER_CALLERS='modules/vouchers/|modules/closing/|modules/assets/|modules/inventory/costing'
+# Nợ R-LEDGER-4 / audit A-01 (vouchers, closing, assets, costing gọi thẳng ledgerService): hết 2026-10-30, PHASE-004 — các
+# dịch vụ đó ghi sổ qua eventStore (modules/documents/event-store.ts). Không còn danh sách miễn trừ.
 # Nợ R-DB-3 / audit A-03: đã sửa 2026-10-30 (0028_thue_kkkn → 0031). Để trống: mọi trùng số đều chặn.
 DEBT_MIGRATION_DUP=''
 # Ngoại lệ E2 (R-LEDGER): định khoản lại cập nhật thông tin đầu bút toán tại chỗ.
@@ -35,10 +35,9 @@ check "$(grep -rnE "insertInto\('(accounting_events|accounting_event_versions|po
 warn "cập nhật accounting_events ngoài modules/documents (nên qua documentRepository):" \
   "$(grep -rnE "updateTable\('accounting_events'\)" "$SRC" --include=*.ts | grep -v "^$SRC/modules/documents/")"
 
-rule "R-LEDGER-4: chỉ posting / documents / ledger gọi ledgerService.post|reverse"
-check "$(grep -rnE "ledgerService\.(post|reverse)\(" "$SRC" --include=*.ts \
-  | grep -vE "^$SRC/modules/(ledger|posting|documents)/" | grep -vE "^$SRC/($DEBT_LEDGER_CALLERS)")" \
-  "(nợ còn lại: ${DEBT_LEDGER_CALLERS//|/, })"
+rule "R-LEDGER-4: chỉ posting / documents / ledger gọi ledgerService (nơi khác đi postDocumentIn hoặc eventStore)"
+check "$(grep -rnE "ledgerService\.[A-Za-z]+\(" "$SRC" --include=*.ts \
+  | grep -vE "^$SRC/modules/(ledger|posting|documents)/")"
 
 rule "R-LEDGER E1–E4: cờ thoát trigger chỉ ở chỗ được phép"
 check "$( {

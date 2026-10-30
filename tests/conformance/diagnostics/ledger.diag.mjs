@@ -12,6 +12,8 @@ import { sqlCheck } from '../lib/diag.mjs';
  * posted_version. Tách khỏi DG-EVENT-1 để lỗi thật của cửa nạp sổ không bị lẫn; DG-EVENT-4 theo dõi tới khi xong PHASES 2.1.
  */
 const INTERNAL = "('closing', 'cogs', 'depreciation')";
+/** Phiếu kho tổng tiền 0 (chuyển kho, điều chỉnh kho) không có bút toán: giá trị ghi ở phiếu giá vốn tháng — không phải lỗi. */
+const VALUED = "NOT (a.total = 0 AND a.doc_type IN ('transfer', 'stock_adjustment'))";
 
 export const checks = [
   sqlCheck({
@@ -74,7 +76,7 @@ export const checks = [
   }),
   sqlCheck({
     id: 'DG-EVENT-4', code: 'INTERNAL_EVENT_VERSION',
-    title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version — nợ A-01, hết khi có eventStore.commit()',
+    title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version = version (đi eventStore, PHASES 2.1)',
     rules: ['R-EVENT-2', 'R-EVENT-4'], conf: [], tier: 1, enforce: 'info', weight: 2,
     count: `SELECT count(*)::int AS n FROM accounting_events WHERE status = 'posted' AND doc_type IN ${INTERNAL}`,
     sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('doc_type', a.doc_type, 'version', a.version, 'posted_version', a.posted_version) AS detail
@@ -86,10 +88,10 @@ export const checks = [
     id: 'DG-EVENT-2', code: 'EVENT_HAS_ENTRY',
     title: 'Sự việc posted có ít nhất một bút toán hiệu lực của đúng phiên bản',
     rules: ['R-EVENT-1'], conf: [], tier: 1, enforce: 'info', weight: 2,
-    count: "SELECT count(*)::int AS n FROM accounting_events WHERE status = 'posted'",
+    count: `SELECT count(*)::int AS n FROM accounting_events a WHERE status = 'posted' AND ${VALUED}`,
     sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('doc_type', a.doc_type, 'version', a.version) AS detail
           FROM accounting_events a JOIN tenants t ON t.id = a.tenant_id
-          WHERE a.status = 'posted' AND NOT EXISTS (
+          WHERE a.status = 'posted' AND ${VALUED} AND NOT EXISTS (
             SELECT 1 FROM ledger_entries e WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal)
           LIMIT 200`,
   }),

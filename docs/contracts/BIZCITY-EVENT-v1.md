@@ -115,6 +115,6 @@ Module dùng `bizcity.ledger.entry.posted` để biết **chắc chắn** sổ �
 ## 8. Chuyển dần
 
 1. Phase 3: bảng `event_outbox`, `event_deliveries`, `event_consumptions` + dispatcher chạy trong tiến trình API (một worker, `SKIP LOCKED` nên chạy nhiều bản vẫn đúng).
-2. Phase 3: Kernel phát các sự kiện `bizcity.ledger.*` từ `postingService` / `eventStore.commit`.
+2. Phase 3: Kernel phát các sự kiện `bizcity.ledger.*` từ `postingService` / `eventStore`.
 3. Phase 3: thay `catalog-notify.ts` bằng subscriber webhook của `adapters/wordpress`.
 4. Phase 5: tách dispatcher thành tiến trình riêng khi tải lớn (cùng bảng, không đổi hợp đồng).

@@ -1,7 +1,7 @@
 # PHASE-004 — Một cửa ghi sổ: `eventStore.commit()` cho phiếu tay, kết chuyển, khấu hao, giá vốn
 
-> **Trạng thái:** ☐ chưa code · **đề xuất làm kế tiếp** (chặn PHASE-005, 006, 009, 010)
-> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
+> **Trạng thái:** ✅ code xong 2026-10-30 (W0–W5); sổ trước / sau trùng khớp (T004-1). Mở đường cho PHASE-005, 006, 009, 010
+> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Mọi bút toán đi một cửa trong Kernel: bốn dịch vụ nội bộ đang gọi thẳng `ledgerService` chuyển sang `eventStore.commit()`; sự việc nội bộ có phiên bản như chứng từ nhận qua API.
 > **Việc lộ trình:** 2.1
 > **Checklist công bố:** —

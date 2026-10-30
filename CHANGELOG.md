@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Một cửa ghi sổ cho sự việc Kernel tự lập** (PHASE-004, PHASES 2.1): phiếu kế toán tay, số dư đầu kỳ, kết chuyển, khấu hao / phân bổ, giá vốn ghi sổ qua `eventStore` (`modules/documents/event-store.ts`), không gọi thẳng `ledgerService`. Sổ không đổi (so 194 ô sổ cái trước / sau: trùng). Kết chuyển và giá vốn nay có `posted_version` và nhật ký định khoản như chứng từ khác; migration `0038` điền `posted_version` cho dữ liệu cũ. Tự chẩn đoán "sự việc đã ghi sổ có bút toán" không còn báo nhầm phiếu chuyển / điều chỉnh kho tổng tiền 0.
 - Thư mục phase `docs/phases/PHASE-001…017`: mỗi việc lộ trình và mã checklist G thuộc đúng một phase (check SC-PHASE-1). Đánh giá codebase so với kiến trúc: `docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md`. Lộ trình thêm việc 2.14 (chính sách có phiên bản), 2.15 (PITR), 2.16 (MCP ghi).
 - Giấy phép **GPL-2.0-or-later** (`LICENSE`, cùng giấy phép với `bizcity-twin-ai`) và chính sách nhãn hiệu `TRADEMARK.md`. Trước đó repository chưa có giấy phép.
 - Bộ chuẩn framework: CANON, luật `R-*`, hợp đồng `bizcity_*@N`, Bizcity Framework Standard v1 (7 hợp đồng module), ADR-0001..0006.

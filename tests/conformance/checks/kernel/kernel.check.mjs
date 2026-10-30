@@ -27,11 +27,12 @@ export const checks = [
   },
   {
     id: 'SC-KERNEL-3',
-    title: 'Chỉ posting / documents / ledger gọi ledgerService.post|reverse',
-    gate: 'KERNEL', contract: 'kernel', rules: ['R-LEDGER-4', 'R-EVENT-2'], conf: ['CONF-STATIC-2'], tier: 0, enforce: 'ratchet', weight: 5, targets: ['repo'],
+    title: 'Chỉ posting / documents / ledger gọi ledgerService; nơi khác ghi sổ qua postDocumentIn hoặc eventStore',
+    gate: 'KERNEL', contract: 'kernel', rules: ['R-LEDGER-4', 'R-EVENT-2'], conf: ['CONF-STATIC-2'], tier: 0, enforce: 'block', weight: 5, targets: ['repo'],
     run(ctx) {
-      // Nợ A-01 (vouchers, closing, assets, inventory/costing) nằm trong baseline; hết nợ khi xong Phase 2.1 eventStore.commit().
-      const r = scan(ctx, /ledgerService\.(post|reverse)\(/, (h) => !/^apps\/api\/src\/modules\/(ledger|posting|documents)\//.test(h.file));
+      // Nợ A-01 (vouchers, closing, assets, inventory/costing) hết 2026-10-30 (PHASE-004): chặn mọi hàm của ledgerService,
+      // kể cả ngoại lệ ghi đè giá vốn (đi eventStore.overwriteCostPairs).
+      const r = scan(ctx, /ledgerService\.[A-Za-z]+\(/, (h) => !/^apps\/api\/src\/modules\/(ledger|posting|documents)\//.test(h.file));
       for (const f of r.findings) f.key = 'ledgerService call'; // một nợ mỗi tệp, không đếm từng dòng
       r.findings = dedupeBy(r.findings, (f) => f.file);
       return r;

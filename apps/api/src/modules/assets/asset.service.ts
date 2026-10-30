@@ -27,10 +27,7 @@ import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
 import { accountRepository } from '../accounts/account.repository.js';
-import { documentRepository } from '../documents/document.repository.js';
-import { logPosting } from '../documents/document.service.js';
-import { ledgerRepository } from '../ledger/ledger.repository.js';
-import { ledgerService } from '../ledger/ledger.service.js';
+import { eventStore } from '../documents/event-store.js';
 import type { DraftLine } from '../ledger/ledger.types.js';
 import {
   addDays, chargeFor, effectiveAt, firstChargePeriod, firstDayOf, fromIndex, lastDayOf, monthIndex, periodLabel, periodOf, scheduleAfter, splitByDays, splitByPercent,
@@ -693,14 +690,8 @@ async function postBranch(
 ) {
   const label = periodLabel(a.p);
   const docKey = `depreciation:${a.branchCode}:${label}`;
-  const existing = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
-  let reversed = 0;
-  if (existing) {
-    for (const e of await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, existing.id)) {
-      await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, a.accounts, 'Tính lại khấu hao, phân bổ');
-      reversed += 1;
-    }
-  }
+  const existing = await eventStore.lock(trx, auth.tenantId, docKey);
+  const reversed = existing ? await eventStore.reverseActive(trx, auth, existing.id, a.accounts, 'Tính lại khấu hao, phân bổ') : 0;
 
   // Gộp theo (TK chi phí, TK ghi Có, khoản mục, bộ phận, hợp đồng).
   const groups = new Map<string, { expense: string; credit: string; costItem: string | null; department: string | null; contract: string | null; cents: number; kinds: Set<string>; catchUp: boolean }>();
@@ -729,29 +720,20 @@ async function postBranch(
   }
 
   if (!draft.length) {
-    if (existing) {
-      await documentRepository.update(trx, existing.id, { status: 'cancelled', error_message: 'Tính lại: tháng này không còn số trích' });
-      await logPosting(trx, { tenantId: auth.tenantId, eventId: existing.id, docType: 'depreciation', docNo: existing.doc_no, version: existing.version, action: 'cancel', reversed, message: 'Tính lại: tháng này không còn số trích', actor: auth.actor });
-    }
+    if (existing) await eventStore.cancel(trx, auth, existing, { message: 'Tính lại: tháng này không còn số trích', reversed });
     return { branchCode: a.branchCode, status: 'empty' as const, total: 0 };
   }
   const total = fromCents(draft.reduce((s, l) => s + toCents(l.debit), 0));
   const docNo = `KH ${mm} ${a.branchCode}`;
   const docDate = lastDayOf(a.p);
-  const version = (existing?.version ?? 0) + 1;
   const description = `Khấu hao TSCĐ, phân bổ CCDC và chi phí trả trước tháng ${mm}`;
-  const fields = { version, branch_id: a.branchId, doc_date: docDate, total, payload: JSON.stringify({ period: label, branchCode: a.branchCode, description, method: 'duong-thang' }) };
-  let docId: string;
-  if (existing) {
-    docId = existing.id;
-    await documentRepository.archiveVersion(trx, existing.id, existing.version, existing.payload, existing.received_at);
-    await documentRepository.update(trx, existing.id, { ...fields, received_at: new Date() });
-  } else {
-    docId = (await documentRepository.insert(trx, { tenant_id: auth.tenantId, source_system: 'manual', doc_key: docKey, doc_type: 'depreciation', doc_no: docNo, partner_id: null, invoice_no: null, ...fields })).id;
-  }
-  const entry = await ledgerService.post(trx, auth.tenantId, auth.actor, { branchId: a.branchId, docType: 'depreciation', docNo, docDate, postingDate: docDate, description, sourceDocumentId: docId, sourceVersion: version, lines: draft }, a.accounts);
-  await documentRepository.update(trx, docId, { status: 'posted', posted_at: new Date(), posted_version: version, error_message: null });
-  await logPosting(trx, { tenantId: auth.tenantId, eventId: docId, docType: 'depreciation', docNo, version, action: existing ? 'repost' : 'post', entryIds: [entry.id], reversed, total, actor: auth.actor });
+  const ev = await eventStore.saveVersion(trx, auth, existing, {
+    docKey, docType: 'depreciation', docNo,
+    fields: { branch_id: a.branchId, doc_date: docDate, total, payload: JSON.stringify({ period: label, branchCode: a.branchCode, description, method: 'duong-thang' }) },
+  });
+  const version = ev.version;
+  const entry = await eventStore.post(trx, auth, ev, { branchId: a.branchId, docType: 'depreciation', docNo, docDate, postingDate: docDate, description, lines: draft }, a.accounts);
+  await eventStore.markPosted(trx, auth, { ...ev, docType: 'depreciation', docNo, entryIds: [entry.id], reversed, total, action: existing ? 'repost' : 'post' });
   await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'depreciation.run', objectType: 'source_document', objectId: docKey, after: { version, total } });
   return { branchCode: a.branchCode, status: 'posted' as const, docNo, total };
 }

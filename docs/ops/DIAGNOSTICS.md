@@ -39,7 +39,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `EVENT_POSTED_VERSION` | L3 | `status = posted` ⇒ `posted_version = version` (trừ sự việc nội bộ) | error | có | DG-EVENT-1 |
 | `EVENT_HAS_ENTRY` | L3 | Sự việc `posted` có bút toán hiệu lực | warn | có | DG-EVENT-2 |
 | `EVENT_PENDING_AGE` | L3 | Sự việc `pending` / `error` quá 3 ngày | warn | có | DG-EVENT-3 |
-| `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version` (nợ A-01, hết ở PHASES 2.1) | info | có | DG-EVENT-4 |
+| `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version = version` (ghi qua `eventStore`; lệch = có đường ghi vòng qua cửa) | warn | có | DG-EVENT-4 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |

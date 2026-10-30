@@ -37,8 +37,7 @@ import type { AuthContext } from '../../core/auth.js';
 import type { Account } from '../../db/types.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { documentRepository } from '../documents/document.repository.js';
-import { ledgerRepository } from '../ledger/ledger.repository.js';
-import { ledgerService } from '../ledger/ledger.service.js';
+import { eventStore } from '../documents/event-store.js';
 import type { DraftLine } from '../ledger/ledger.types.js';
 
 /**
@@ -236,12 +235,10 @@ const likes = (prefixes: string[]) => [...new Set(prefixes)].map((x) => `${x}%`)
 /** Chứng từ khoá cũ còn hiệu lực: đảo bút toán và huỷ, để không ghi trùng với chứng từ khoá mới. */
 async function retireLegacy(trx: Db, auth: AuthContext, keys: string[], accounts: Map<string, Account>, reason: string) {
   for (const k of keys) {
-    const legacy = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, k);
+    const legacy = await eventStore.lock(trx, auth.tenantId, k);
     if (!legacy || legacy.status === 'cancelled') continue;
-    for (const e of await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, legacy.id)) {
-      await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, accounts, reason);
-    }
-    await documentRepository.update(trx, legacy.id, { status: 'cancelled', error_message: 'Thay bằng chứng từ khoá mới' });
+    const reversed = await eventStore.reverseActive(trx, auth, legacy.id, accounts, reason);
+    await eventStore.cancel(trx, auth, legacy, { message: 'Thay bằng chứng từ khoá mới', reversed });
   }
 }
 
@@ -520,19 +517,15 @@ async function runOne(auth: AuthContext, branchCode: string, period: string): Pr
       };
     }
     const docKey = docKeyOf(b.code, period);
-    const existing = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
-    if (existing) {
-      for (const e of await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, existing.id)) {
-        await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, s.accounts, 'Kết chuyển lại');
-      }
-    }
+    const existing = await eventStore.lock(trx, auth.tenantId, docKey);
+    const reversed = existing ? await eventStore.reverseActive(trx, auth, existing.id, s.accounts, 'Kết chuyển lại') : 0;
     await retireLegacy(trx, auth, legacyKeysOf('closing', b.code, period), s.accounts, 'Kết chuyển lại');
     // Giờ bắt đầu giao dịch (= created_at của bút toán ghi trong giao dịch này), dạng ISO UTC đủ micro giây.
     const asOf = (await sql<{ t: string }>`SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS t`.execute(trx)).rows[0]!.t;
     const inputs = await closingInputs(trx, rules, { tenantId: auth.tenantId, branchId: b.id, from: s.range.from, to: s.range.to });
     const c = compute(rules, inputs, s.accounts, s.range.label);
     if (!c.lines.length) {
-      if (existing) await documentRepository.update(trx, existing.id, { status: 'cancelled', error_message: 'Kết chuyển lại: kỳ không còn số để kết chuyển' });
+      if (existing) await eventStore.cancel(trx, auth, existing, { message: 'Kết chuyển lại: kỳ không còn số để kết chuyển', reversed });
       const residuals = await actualResiduals(trx, rules, { tenantId: auth.tenantId, branchId: b.id, to: s.range.to });
       return { branchCode: b.code, period, status: 'empty', lines: 0, total: 0, profit: c.profit, residuals };
     }
@@ -545,29 +538,24 @@ async function runOne(auth: AuthContext, branchCode: string, period: string): Pr
     const sources: ClosingSources = { asOf, entryCount: Number(entryCount.rows[0]?.n ?? 0), ...sourceFingerprints(rules, inputs) };
 
     const docNo = `KC ${s.range.label} ${b.code}`;
-    const version = (existing?.version ?? 0) + 1;
     const payload = {
       period, branchCode: b.code, profit: c.profit, description: `Kết chuyển lãi lỗ ${s.range.label}`, lines: c.lines,
       rulesVersion: s.ruleSet.version, rulesHash: s.ruleSet.hash, rules, sources, residuals: c.residuals,
     };
-    const fields = { version, branch_id: b.id, doc_date: s.range.to, total: c.total, payload: JSON.stringify(payload) };
-    let docId: string;
-    if (existing) {
-      docId = existing.id;
-      await documentRepository.archiveVersion(trx, existing.id, existing.version, existing.payload, existing.received_at);
-      await documentRepository.update(trx, existing.id, { ...fields, received_at: new Date() });
-    } else {
-      docId = (await documentRepository.insert(trx, { tenant_id: auth.tenantId, source_system: 'manual', doc_key: docKey, doc_type: 'closing', doc_no: docNo, partner_id: null, invoice_no: null, created_by: auth.actor, ...fields })).id;
-    }
+    const ev = await eventStore.saveVersion(trx, auth, existing, {
+      docKey, docType: 'closing', docNo, createdBy: auth.actor,
+      fields: { branch_id: b.id, doc_date: s.range.to, total: c.total, payload: JSON.stringify(payload) },
+    });
+    const { id: docId, version } = ev;
     const lines: DraftLine[] = c.lines.flatMap((l, i) => [
       { accountCode: l.debitAccount, debit: l.amount, credit: 0, pairNo: i + 1, part: 'other' as const, partnerId: partnerFor(s.accounts, l.debitAccount, l.partnerId), description: l.description, dims: dimsForLedger(l) },
       { accountCode: l.creditAccount, debit: 0, credit: l.amount, pairNo: i + 1, part: 'other' as const, partnerId: partnerFor(s.accounts, l.creditAccount, l.partnerId), description: l.description, dims: dimsForLedger(l) },
     ]);
-    await ledgerService.post(
+    const entry = await eventStore.post(
       trx,
-      auth.tenantId,
-      auth.actor,
-      { branchId: b.id, docType: 'closing', docNo, docDate: s.range.to, postingDate: s.range.to, description: `Kết chuyển lãi lỗ ${s.range.label}`, sourceDocumentId: docId, sourceVersion: version, lines },
+      auth,
+      ev,
+      { branchId: b.id, docType: 'closing', docNo, docDate: s.range.to, postingDate: s.range.to, description: `Kết chuyển lãi lỗ ${s.range.label}`, lines },
       s.accounts,
     );
 
@@ -580,7 +568,7 @@ async function runOne(auth: AuthContext, branchCode: string, period: string): Pr
     if (JSON.stringify(residuals) !== JSON.stringify(c.residuals)) {
       await documentRepository.update(trx, docId, { payload: JSON.stringify({ ...payload, residuals }) });
     }
-    await documentRepository.update(trx, docId, { status: 'posted', posted_at: new Date(), error_message: null });
+    await eventStore.markPosted(trx, auth, { ...ev, docType: 'closing', docNo, entryIds: [entry.id], reversed, total: c.total });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'closing.run', objectType: 'source_document', objectId: docKey, after: { version, total: c.total, profit: c.profit, rulesVersion: s.ruleSet.version, entryCount: sources.entryCount, residuals: residuals.length } });
     return { branchCode: b.code, period, status: 'posted', docNo, lines: c.lines.length, total: c.total, profit: c.profit, residuals };
   });
@@ -716,38 +704,29 @@ export const closingService = {
         const total = fromCents(rows.reduce((t, x) => t + Math.abs(x.cents), 0));
         if (input.dryRun) return { branchCode: b.code, status: 'preview' as const, lines, total };
         const docKey = `closing-year:${b.code}:${input.year}`;
-        const existing = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
-        if (existing) {
-          for (const e of await ledgerRepository.findActiveEntriesBySource(trx, auth.tenantId, existing.id)) {
-            await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, s.accounts, 'Kết chuyển lại lợi nhuận năm trước');
-          }
-        }
+        const existing = await eventStore.lock(trx, auth.tenantId, docKey);
+        const reversed = existing ? await eventStore.reverseActive(trx, auth, existing.id, s.accounts, 'Kết chuyển lại lợi nhuận năm trước') : 0;
         await retireLegacy(trx, auth, legacyKeysOf('closing-year', b.code, String(input.year)), s.accounts, 'Kết chuyển lại lợi nhuận năm trước');
         if (!rows.length) {
-          if (existing) await documentRepository.update(trx, existing.id, { status: 'cancelled', error_message: 'Kết chuyển lại: không còn số dư để chuyển' });
+          if (existing) await eventStore.cancel(trx, auth, existing, { message: 'Kết chuyển lại: không còn số dư để chuyển', reversed });
           return { branchCode: b.code, status: 'empty' as const, lines, total: 0 };
         }
         const description = `Kết chuyển lợi nhuận ${label} sang lợi nhuận năm trước`;
         const docNo = `KC LN ${input.year - 1} ${b.code}`;
-        const version = (existing?.version ?? 0) + 1;
         const payloadLines = rows.map((x) => (x.cents > 0
           ? { debitAccount: x.account, creditAccount: input.toAccount, amount: fromCents(x.cents), description }
           : { debitAccount: input.toAccount, creditAccount: x.account, amount: fromCents(-x.cents), description }));
-        const fields = { version, branch_id: b.id, doc_date: docDate, total, payload: JSON.stringify({ kind: 'year-end', period: `${input.year}-01`, branchCode: b.code, description, lines: payloadLines }) };
-        let docId: string;
-        if (existing) {
-          docId = existing.id;
-          await documentRepository.archiveVersion(trx, existing.id, existing.version, existing.payload, existing.received_at);
-          await documentRepository.update(trx, existing.id, { ...fields, received_at: new Date() });
-        } else {
-          docId = (await documentRepository.insert(trx, { tenant_id: auth.tenantId, source_system: 'manual', doc_key: docKey, doc_type: 'closing', doc_no: docNo, partner_id: null, invoice_no: null, created_by: auth.actor, ...fields })).id;
-        }
+        const ev = await eventStore.saveVersion(trx, auth, existing, {
+          docKey, docType: 'closing', docNo, createdBy: auth.actor,
+          fields: { branch_id: b.id, doc_date: docDate, total, payload: JSON.stringify({ kind: 'year-end', period: `${input.year}-01`, branchCode: b.code, description, lines: payloadLines }) },
+        });
+        const version = ev.version;
         const draft: DraftLine[] = payloadLines.flatMap((l, i) => [
           { accountCode: l.debitAccount, debit: l.amount, credit: 0, pairNo: i + 1, part: 'other' as const, partnerId: null, description, dims: {} },
           { accountCode: l.creditAccount, debit: 0, credit: l.amount, pairNo: i + 1, part: 'other' as const, partnerId: null, description, dims: {} },
         ]);
-        await ledgerService.post(trx, auth.tenantId, auth.actor, { branchId: b.id, docType: 'closing', docNo, docDate, postingDate: docDate, description, sourceDocumentId: docId, sourceVersion: version, lines: draft }, s.accounts);
-        await documentRepository.update(trx, docId, { status: 'posted', posted_at: new Date(), error_message: null });
+        const entry = await eventStore.post(trx, auth, ev, { branchId: b.id, docType: 'closing', docNo, docDate, postingDate: docDate, description, lines: draft }, s.accounts);
+        await eventStore.markPosted(trx, auth, { ...ev, docType: 'closing', docNo, entryIds: [entry.id], reversed, total });
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'closing.year_end', objectType: 'source_document', objectId: docKey, after: { version, total } });
         return { branchCode: b.code, status: 'posted' as const, docNo, lines, total };
       });

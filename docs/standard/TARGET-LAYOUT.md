@@ -10,7 +10,7 @@ bizcity-core/                       (repo open-ketoan sau khi tách)
 ├── bizcity.config.ts               cấu hình có kiểu: module bật, BOOK_MODE, Cell, CSDL
 ├── packages/
 │   ├── kernel/                     @bizcity/kernel        — nhân kế toán (K)
-│   │   ├── intake/                 cửa nạp sự việc (từ modules/documents), eventStore.commit
+│   │   ├── intake/                 cửa nạp sự việc (từ modules/documents), eventStore
 │   │   ├── posting/                luật định khoản, AccountResolver
 │   │   ├── ledger/                 sổ cái chỉ thêm, số dư ngày
 │   │   ├── periods/  accounts/  config/  tax/  closing/

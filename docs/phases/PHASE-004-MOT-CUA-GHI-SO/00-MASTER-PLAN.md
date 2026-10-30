@@ -3,7 +3,12 @@
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > **Mức Kernel:** K2 (đổi đường ghi nội bộ, không đổi hợp đồng, không đổi kết quả sổ) → 2 người duyệt, 1 người hiểu nghiệp vụ ([RULE-KERNEL](../../rules/RULE-KERNEL.md)). Nếu W0 cho thấy phải đổi kết quả sổ thì lên K3 + ADR.
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh). Kế hoạch dưới đây là đề xuất, chưa được chủ duyệt; chưa có dòng code nào của phase. -->
+<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh). -->
+<!-- [2026-10-30] Chủ: "ok, code nhé" ⇒ D004-1…5 duyệt; Q004-1…3 chốt theo cột "Gợi ý" (§3.1). -->
+
+> **Đã duyệt 2026-10-30.** Đã code xong W0–W5 (xem [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md)).
+> D004-1 làm thành **chuỗi hàm** `eventStore.lock → reverseActive → saveVersion → post → markPosted` (+ `cancel`, `overwriteCostPairs`), không phải một hàm `commit()` duy nhất.
+> Lý do: kết chuyển phải đảo bút toán cũ **trước** khi tính số mới (số liệu kỳ đọc từ sổ), rồi tự kiểm 911 **sau** khi ghi. Một hàm gói cả chuỗi sẽ buộc tính số trước khi đảo. "Một cửa" giữ nguyên nghĩa: ngoài `modules/{ledger,posting,documents}` không còn chỗ nào gọi `ledgerService`.
 
 ## 0. Vì sao có phase này
 
@@ -46,6 +51,14 @@ Cửa nạp `postDocumentIn` (`modules/documents/document.service.ts:244`) đã 
 | Q004-1 | Phiếu kế toán tay đi `postDocumentIn` đầy đủ (qua luật định khoản), hay `eventStore.commit` với dòng Nợ / Có do người lập? | `eventStore.commit`: định khoản của phiếu tay do kế toán quyết, không qua luật |
 | Q004-2 | Kết chuyển lại / tính lại giá vốn tạo **phiên bản mới của cùng `docKey`**, hay `docKey` mới? | cùng `docKey`, `version + 1` (khớp STD-DOM-11; lịch sử phiên bản đọc được) |
 | Q004-3 | 191 sự việc nội bộ cũ thiếu `posted_version`: điền bằng migration dữ liệu, hay để nguyên và chỉ áp cho sự việc mới? | điền bằng migration mới, có biên bản trước / sau (không đổi bút toán) |
+
+### 3.1 Chủ chốt (2026-10-30: "ok, code nhé")
+
+| # | Áp |
+|---|---|
+| Q004-1 | Phiếu tay đi `eventStore` với dòng Nợ / Có do người lập, không qua luật định khoản |
+| Q004-2 | Kết chuyển lại / tính lại giá vốn / khấu hao: cùng `docKey`, `version + 1` |
+| Q004-3 | Điền `posted_version` cho sự việc nội bộ cũ bằng migration mới `0038` (chỉ dòng có bút toán hiệu lực đúng phiên bản; không đụng sổ) |
 
 ## 4. Thứ tự đợt
 

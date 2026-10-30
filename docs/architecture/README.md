@@ -136,7 +136,7 @@ flowchart LR
 | `mua-hang` | `purchase`, `purchase_return`, `supplier_payment` | có sẵn | thương mại | đang chạy; gỡ nợ A-17 |
 | `kho` | `transfer`, `stock_adjustment` | giá vốn ở Kernel (sổ phụ kho) | mọi ngành có hàng | đang chạy |
 | `hop-dong` / `du-an` | `customer_payment`, `supplier_payment` + chiều `contract` / `project` | `ledger.query` theo chiều phân tích | dịch vụ, xây dựng | ca chuẩn ([GOLDEN-CASE](../standard/GOLDEN-CASE-HOP-DONG.md)) |
-| `tai-san` | khấu hao | `eventStore.commit()` (PHASES 2.1) để khấu hao đi một cửa | mọi ngành | đang chạy, nợ A-01 |
+| `tai-san` | khấu hao | khấu hao đi một cửa qua `eventStore` (PHASES 2.1, xong 2026-10-30) | mọi ngành | đang chạy |
 | `nhan-su` (lương) | `payroll` | năng lực `ledger.doctype.payroll` (planned): lương, BHXH, TNCN theo lý do | HRM | đề xuất |
 | `san-xuat` | `production` (xuất NVL 621, nhân công 622, SXC 627, nhập thành phẩm) | `ledger.doctype.production` + giá thành dở dang ở sổ phụ kho | sản xuất | đề xuất |
 | `xuat-nhap-khau` | như mua / bán, có ngoại tệ | `ledger.fx` (planned): tỉ giá, chênh lệch | XNK | đề xuất |

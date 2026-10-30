@@ -19,7 +19,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [001 Chốt chuẩn](PHASE-001-CHOT-CHUAN/README.md) | 0 | 0.1–0.7 | G1-01, -02, -03, -11, -13, G2-10 | có | 73% | 🟡 còn 3 việc tay của chủ |
 | [002 Audit, phân lớp](PHASE-002-AUDIT-PHAN-LOP/README.md) | 1 | 1.1–1.5 | — | có | 60% | 🟡 1.1, 1.3 cần người |
 | [003 Action, bằng chứng, MCP đọc](PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/README.md) | 2 | 2.2, 2.5, 2.6, 2.9–2.13 | G1-04, -07, -09, G2-01, -02, -07, -08 | có | 100% | ✅ |
-| [**004 Một cửa ghi sổ**](PHASE-004-MOT-CUA-GHI-SO/README.md) | 2 | 2.1 | — | chưa | 0% | ☐ **đề xuất làm kế tiếp** |
+| [004 Một cửa ghi sổ](PHASE-004-MOT-CUA-GHI-SO/README.md) | 2 | 2.1 | — | có | 100% | ✅ 2026-10-30 |
 | [005 Chính sách có phiên bản](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md) | 2 | 2.14 | G2-09 | chưa | 0% | ☐ cần ADR |
 | [006 Outbox sự kiện](PHASE-006-OUTBOX-SU-KIEN/README.md) | 3 | 3.4 | G2-05 | chưa | 0% | ☐ |
 | [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | chưa | 0% | ☐ làm song song được |

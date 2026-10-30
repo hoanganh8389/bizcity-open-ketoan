@@ -152,17 +152,17 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 
 ### 4.1 Ma trận tuân thủ bắt buộc
 
-Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **59%**.
+Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **66%** (59% trước PHASE-004).
 
 | Mã | Yêu cầu | Rủi ro nếu thiết kế sai | Quy tắc Bizcity bắt buộc | Trạng thái |
 |---|---|---|---|---|
-| C-1 | Chứng từ hợp lệ | Sự kiện tạo giao dịch không có chứng từ | Bút toán phải có nguồn chứng từ và căn cứ hạch toán | ◐ một phần (nợ A-01 một cửa ghi) |
+| C-1 | Chứng từ hợp lệ | Sự kiện tạo giao dịch không có chứng từ | Bút toán phải có nguồn chứng từ và căn cứ hạch toán | ✔ đạt từ 2026-10-30 (một cửa ghi xong, PHASE-004) |
 | C-2 | Ghi sổ chính xác | Hai consumer ghi trùng nghiệp vụ | Idempotency và uniqueness tại CSDL | ✔ đạt |
 | C-3 | Sửa chữa sổ | Consumer cập nhật trực tiếp bút toán cũ | Chứng từ điều chỉnh, giữ dấu vết | ✔ đạt |
 | C-4 | Khoá kỳ kế toán | Sự kiện đến chậm ghi vào kỳ đã khoá | Period Lock Gate | ✔ đạt |
 | C-5 | Nhất quán dữ liệu | Sự kiện phát ra khi giao dịch chưa commit | Transactional Outbox | ✘ thiếu (G2-05) |
 | C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (thiếu PITR, xác nhận thời hạn) |
-| C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17, A-01) |
+| C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17; A-01 xong 2026-10-30) |
 | C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ◐ một phần (thiếu `correlation_id`) |
 | C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✘ thiếu (G2-09) |
 

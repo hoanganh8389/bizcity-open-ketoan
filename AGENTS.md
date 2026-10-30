@@ -10,7 +10,7 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 
 1. Không sự việc (`accounting_events`), không bút toán.
 2. Sổ cái chỉ thêm: sửa / huỷ = bút toán đảo. Không `UPDATE/DELETE` `ledger_*` (ngoại lệ đóng danh sách: [docs/rules/RULE-LEDGER.md](docs/rules/RULE-LEDGER.md)).
-3. Mọi đầu vào tài chính đi `postDocumentIn()` → luật định khoản → `ledgerService.post()`. Phân hệ / add-in không gọi thẳng `ledgerService`, không ghi bảng nhân.
+3. Mọi đầu vào tài chính đi `postDocumentIn()` → luật định khoản → `ledgerService.post()`; sự việc Kernel tự lập (phiếu tay, kết chuyển, khấu hao, giá vốn) đi `eventStore` (`modules/documents/event-store.ts`). Phân hệ / add-in không gọi thẳng `ledgerService`, không ghi bảng nhân.
 4. Không viết số tài khoản trong code định khoản — tra qua `AccountResolver`.
 
 ## Tạo module mới (Bizcity Framework Standard v1)

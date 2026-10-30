@@ -887,32 +887,6 @@
         }
       ]
     },
-    "SC-KERNEL-3": {
-      "title": "Chỉ posting / documents / ledger gọi ledgerService.post|reverse",
-      "ref": "Audit A-01 · hết nợ ở PHASES 2.1 (eventStore.commit)",
-      "debts": [
-        {
-          "fp": "SC-KERNEL-3|apps/api/src/modules/assets/asset.service.ts|ledgerService call",
-          "file": "apps/api/src/modules/assets/asset.service.ts",
-          "message": "await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, a.accounts, 'Tính lại khấu hao, phân bổ');"
-        },
-        {
-          "fp": "SC-KERNEL-3|apps/api/src/modules/closing/closing.service.ts|ledgerService call",
-          "file": "apps/api/src/modules/closing/closing.service.ts",
-          "message": "await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, accounts, reason);"
-        },
-        {
-          "fp": "SC-KERNEL-3|apps/api/src/modules/inventory/costing.service.ts|ledgerService call",
-          "file": "apps/api/src/modules/inventory/costing.service.ts",
-          "message": "await ledgerService.reverse(trx, auth.tenantId, auth.actor, e.id, cfg.accounts, 'Tính lại giá vốn');"
-        },
-        {
-          "fp": "SC-KERNEL-3|apps/api/src/modules/vouchers/voucher.service.ts|ledgerService call",
-          "file": "apps/api/src/modules/vouchers/voucher.service.ts",
-          "message": "const posted = await ledgerService.post("
-        }
-      ]
-    },
     "SC-KERNEL-5": {
       "title": "Luật định khoản không viết cứng số tài khoản (tra qua AccountResolver)",
       "ref": "R-POST-2 · chuyển sang AccountResolver / cờ tài khoản",

@@ -13,8 +13,10 @@ import { MIGRATIONS_DIR } from '../../db/paths.js';
 import { sqlCounts, type DiagCheck, type DiagScope } from '../system/diagnostics.js';
 
 const SAMPLE = 20;
-/** Sự việc do service lõi tự sinh, chưa đi một cửa ghi sổ (nợ A-01, hết khi có eventStore.commit — PHASES 2.1). */
+/** Sự việc Kernel tự sinh (kết chuyển, giá vốn, khấu hao): ghi sổ qua eventStore (PHASES 2.1). */
 const INTERNAL = ['closing', 'cogs', 'depreciation'];
+/** Phiếu kho tổng tiền 0 (chuyển kho, điều chỉnh kho) không có bút toán: giá trị ghi ở phiếu giá vốn tháng — không phải lỗi. */
+const STOCK_ZERO = ['transfer', 'stock_adjustment'];
 
 /** Điều kiện đơn vị + phạm vi trên bảng alias `t` có cột ngày `date` và (tuỳ) cột chi nhánh. */
 function scoped(s: DiagScope, t: string, date: string, branch: string | null = 'branch_id'): RawBuilder<boolean> {
@@ -26,6 +28,7 @@ function scoped(s: DiagScope, t: string, date: string, branch: string | null = '
 }
 
 const internal = sql.join(INTERNAL);
+const valued = sql<boolean>`NOT (a.total = 0 AND a.doc_type IN (${sql.join(STOCK_ZERO)}))`;
 
 export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
@@ -95,11 +98,11 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
     code: 'EVENT_HAS_ENTRY', layer: 'L3', level: 'warn', scoped: true,
     title: 'Sự việc đã ghi sổ có ít nhất một bút toán hiệu lực',
-    fix: 'Chứng từ báo "đã ghi sổ" nhưng không còn bút toán hiệu lực (vd mọi dòng tiền bằng 0, hoặc đã đảo hết). Mở chứng từ ở ACC14 để xem.',
+    fix: 'Chứng từ báo "đã ghi sổ" nhưng không còn bút toán hiệu lực (vd mọi dòng tiền bằng 0, hoặc đã đảo hết). Mở chứng từ ở ACC14 để xem. Không tính phiếu chuyển kho / điều chỉnh kho tổng tiền 0: giá trị của chúng ghi ở phiếu giá vốn tháng.',
     run: (trx, s) => sqlCounts(trx,
-      sql`SELECT count(*)::int AS n FROM accounting_events a WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted'`,
+      sql`SELECT count(*)::int AS n FROM accounting_events a WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${valued}`,
       sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total FROM accounting_events a
-           WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted'
+           WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${valued}
              AND NOT EXISTS (SELECT 1 FROM ledger_entries e WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal)
            LIMIT ${SAMPLE}`),
   },
@@ -114,9 +117,9 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY a.received_at LIMIT ${SAMPLE}`),
   },
   {
-    code: 'INTERNAL_EVENT_VERSION', layer: 'L3', level: 'info', scoped: true,
-    title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version',
-    fix: 'Nợ kỹ thuật A-01, không ảnh hưởng số liệu: các service này chưa đi một cửa ghi sổ. Hết khi có eventStore.commit() (PHASES 2.1).',
+    code: 'INTERNAL_EVENT_VERSION', layer: 'L3', level: 'warn', scoped: true,
+    title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version = version',
+    fix: 'Sự việc nội bộ đã vào sổ mà posted_version lệch phiên bản: có đường ghi không đi eventStore.markPosted() (R-LEDGER-4). Chạy lại kết chuyển / tính giá vốn / khấu hao của kỳ đó và báo nhóm Lõi.',
     run: (trx, s) => sqlCounts(trx,
       sql`SELECT count(*)::int AS n FROM accounting_events a WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND a.doc_type IN (${internal})`,
       sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total FROM accounting_events a

@@ -47,7 +47,7 @@
 
 | # | Việc | Xong khi | Từ lộ trình cũ |
 |---|---|---|---|
-| 2.1 | **`eventStore.commit()`**: gom chuỗi sự việc → phiên bản → đảo → ghi. Chuyển `vouchers`, `closing`, `assets`, `inventory/costing` sang (A-01) | `DEBT_LEDGER_CALLERS` trong `kiem-chuan.sh` rỗng | 1.1, 1.2, 1.3 |
+| 2.1 | **`eventStore`** (`modules/documents/event-store.ts`): gom chuỗi sự việc → phiên bản → đảo → ghi → `posted_version`. Chuyển `vouchers`, `closing`, `assets`, `inventory/costing` sang (A-01) — **xong** 2026-10-30, [PHASE-004](../phases/PHASE-004-MOT-CUA-GHI-SO/README.md) | `DEBT_LEDGER_CALLERS` trong `kiem-chuan.sh` rỗng | 1.1, 1.2, 1.3 |
 | 2.2 | `assertLedgerInvariants()` trong test-kit, gọi ở `afterAll` mọi tệp test | chạy trong CI — **có**: `apps/api/test/helpers.ts` + `test/setup.ts` (setupFiles), dùng chung kiểm L3 của 2.10 | 1.4 |
 | 2.3 | Workspace `packages/kernel`: chuyển `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` + `db/seed.ts`; mở `public.ts` (`submit`, `cancel`, `get`) | `apps/api` chỉ import `@bizcity/kernel` công khai | mới |
 | 2.4 | `packages/data`: `ctx.data.tx` (đặt `bizcity.tenant_id`), runner migration theo module, schema `bizcity_read` + view danh mục | CONF-MIG chạy được | mới |
