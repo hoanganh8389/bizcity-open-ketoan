@@ -1,0 +1,3810 @@
+{
+ "nguon": "Google Sheet 25 trường hợp mua hàng (tab 00 Chuẩn bị, TH01–TH25) — mỗi bước làm đúng như cột Thao tác / Nhập của file",
+ "chuanBi": [
+  {
+   "op": "chi-nhanh",
+   "code": "CN01",
+   "name": "Chi nhánh 01"
+  },
+  {
+   "op": "chi-nhanh",
+   "code": "CN-NA",
+   "name": "CN Nghệ An"
+  },
+  {
+   "op": "chi-nhanh",
+   "code": "CN-ND",
+   "name": "CN Nam Định"
+  },
+  {
+   "op": "chi-nhanh",
+   "code": "CN-PT",
+   "name": "CN Phú Thọ"
+  },
+  {
+   "op": "chi-nhanh",
+   "code": "CN-HCM",
+   "name": "CN Hồ Chí Minh"
+  },
+  {
+   "op": "ncc",
+   "code": "NCC-TRUNGHAU",
+   "name": "Công ty TNHH Thương Mại Trung Hậu",
+   "taxCode": "2900599615",
+   "address": "Số 17 Đường Trần Đăng Ninh, Khối 4, Phường Hồng Sơn, TP Vinh, Tỉnh Nghệ An",
+   "phone": "02383847891"
+  },
+  {
+   "op": "ncc",
+   "code": "NCC-THANGBAO",
+   "name": "Công ty Thắng Bảo"
+  },
+  {
+   "op": "ncc",
+   "code": "NCC-HOANGNHI",
+   "name": "Công ty Hoàng Nhi"
+  },
+  {
+   "op": "ncc",
+   "code": "NCC-ANLENE",
+   "name": "Nhà phân phối Anlene miền Bắc"
+  },
+  {
+   "op": "them-dvt",
+   "sku": "140181006",
+   "unit": "Thùng",
+   "ratio": 48,
+   "muaMacDinh": true
+  },
+  {
+   "op": "bo-ngay-le",
+   "ngay": "2026-10-12"
+  }
+ ],
+ "cases": [
+  {
+   "th": "TH01",
+   "ten": "Chiết khấu thẳng 7% trên đơn, theo dõi công nợ và hạn thanh toán",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "NCC-TRUNGHAU-HANTT",
+      "kind": "payment_term",
+      "name": "Điều khoản thanh toán Trung Hậu: 10 ngày làm việc từ ngày nhận đủ hàng và hồ sơ",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-01",
+      "rule": {
+       "basis": "receipt_date",
+       "days": 10,
+       "workingDays": true,
+       "dayType": "working"
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH01-CK7",
+      "kind": "trade_discount",
+      "name": "CK thẳng 7% trên đơn Trung Hậu (TH01)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-02",
+      "rule": {
+       "pct": 7
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th01-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-01",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "note": "TH01 — đơn đặt Trung Hậu, CK thẳng 7% theo chính sách",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th01-nm",
+     "tuDon": "th01-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-01",
+      "receivedDate": "2026-10-01",
+      "invoice": {
+       "no": "3181",
+       "date": "2026-10-01",
+       "total": 39082320
+      },
+      "note": "TH01 — nhập theo HĐ VAT 3181"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền hàng (gồm VAT)",
+     "mong": 42024000,
+     "lay": {
+      "tinh": "th01-nm",
+      "truong": "gross"
+     }
+    },
+    {
+     "ten": "Chiết khấu thẳng 7% trên đơn",
+     "mong": 2941680,
+     "lay": {
+      "tinh": "th01-nm",
+      "truong": "orderDiscount"
+     }
+    },
+    {
+     "ten": "Phải trả NCC = công nợ phát sinh",
+     "mong": 39082320,
+     "lay": {
+      "phieu": "th01-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Tiền trước thuế",
+     "mong": 36187333,
+     "lay": {
+      "phieu": "th01-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "Thuế GTGT 8%",
+     "mong": 2894987,
+     "lay": {
+      "phieu": "th01-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Hạn thanh toán",
+     "mong": "2026-10-15",
+     "lay": {
+      "phieu": "th01-nm",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "Bút toán Nợ 1561",
+     "mong": 36187333,
+     "lay": {
+      "butToan": "th01-nm",
+      "tk": "1561",
+      "ve": "no"
+     }
+    },
+    {
+     "ten": "Bút toán Nợ 1331",
+     "mong": 2894987,
+     "lay": {
+      "butToan": "th01-nm",
+      "tk": "1331",
+      "ve": "no"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH02",
+   "ten": "Chiết khấu bằng tiền 2.000.000 trên tổng đơn, theo dõi công nợ đến hạn, nhận quà tặng không hoá đơn",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH02-CK2TR",
+      "kind": "trade_discount",
+      "name": "CK 2.000.000 trên tổng đơn Trung Hậu (TH02)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-03",
+      "validTo": "2026-10-04",
+      "rule": {
+       "amount": 2000000
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th02-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-03",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "note": "TH02 — đơn đặt Trung Hậu, CK 2.000.000 trên đơn",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 80,
+        "price": 528000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 431000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th02-nm",
+     "tuDon": "th02-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-03",
+      "receivedDate": "2026-10-03",
+      "invoice": {
+       "no": "3182",
+       "date": "2026-10-03",
+       "total": 48860000
+      },
+      "note": "TH02 — nhập theo HĐ VAT 3182"
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th02-qt",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "gift_in",
+      "docDate": "2026-10-03",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "gift": {
+       "source": "ncc_extra",
+       "hasVat": false
+      },
+      "note": "Quà tặng ngoài hợp đồng kèm hàng HĐ 3182 — không có hoá đơn",
+      "lines": [
+       {
+        "lineKey": "q1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 5,
+        "price": 480000,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền hàng (gồm VAT)",
+     "mong": 50860000,
+     "lay": {
+      "tinh": "th02-nm",
+      "truong": "gross"
+     }
+    },
+    {
+     "ten": "Chiết khấu bằng tiền trên tổng đơn",
+     "mong": 2000000,
+     "lay": {
+      "tinh": "th02-nm",
+      "truong": "orderDiscount"
+     }
+    },
+    {
+     "ten": "Phải trả NCC / công nợ của phiếu nhập",
+     "mong": 48860000,
+     "lay": {
+      "phieu": "th02-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Tiền trước thuế",
+     "mong": 45240740,
+     "lay": {
+      "phieu": "th02-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "Thuế GTGT",
+     "mong": 3619260,
+     "lay": {
+      "phieu": "th02-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Hạn thanh toán",
+     "mong": "2026-10-16",
+     "lay": {
+      "phieu": "th02-nm",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "Phiếu nhận quà: Nợ 1561",
+     "mong": 2400000,
+     "lay": {
+      "butToan": "th02-qt",
+      "tk": "1561",
+      "ve": "no"
+     }
+    },
+    {
+     "ten": "Phiếu nhận quà: Có 711* (không ghi Có 331)",
+     "mong": 2400000,
+     "lay": {
+      "butToan": "th02-qt",
+      "tk": "711",
+      "ve": "co"
+     }
+    },
+    {
+     "ten": "Phiếu nhận quà: không phát sinh công nợ (Có 331)",
+     "mong": 0,
+     "lay": {
+      "butToan": "th02-qt",
+      "tk": "331",
+      "ve": "co"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH03",
+   "ten": "Hạn mức công nợ 600 triệu: ghi nhận đơn trong hạn mức, chặn đơn vượt hạn mức",
+   "buoc": [
+    {
+     "op": "so-du",
+     "id": "th03-sd",
+     "branchCode": "CN01",
+     "partnerCode": "NCC-TRUNGHAU",
+     "denTong": 450000000,
+     "ghiChu": "Số dư đầu kỳ phải trả Trung Hậu (TH03 — để tổng nợ trước đơn 05/10 = 450.000.000)"
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH03-HANMUC600",
+      "kind": "credit_limit",
+      "name": "Hạn mức công nợ Trung Hậu 600.000.000 (TH03)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-05",
+      "rule": {
+       "limit": 600000000,
+       "warnPct": 90
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH03-HAN15",
+      "kind": "payment_term",
+      "name": "Hạn thanh toán 15 ngày làm việc — đơn 05/10 (TH03)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-05",
+      "validTo": "2026-10-05",
+      "priority": 10,
+      "rule": {
+       "basis": "receipt_date",
+       "days": 15,
+       "workingDays": true,
+       "dayType": "working"
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th03-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-05",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "note": "TH03 — đơn 117.450.000 trong hạn mức (cảnh báo 95%)",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 528000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 150,
+        "price": 431000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th03-nm",
+     "tuDon": "th03-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-05",
+      "receivedDate": "2026-10-05",
+      "invoice": {
+       "no": "3183",
+       "date": "2026-10-05",
+       "total": 117450000
+      },
+      "note": "TH03 — nhập theo HĐ VAT 3183"
+     }
+    },
+    {
+     "op": "ghi-no",
+     "ghiNhan": "th03-sau",
+     "partnerCode": "NCC-TRUNGHAU"
+    },
+    {
+     "op": "phieu",
+     "id": "th03-dh40",
+     "xuLy": "chan-roi-huy",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-05",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "note": "TH03 — đơn đặt thêm 40.000.000: vượt hạn mức → chặn duyệt, huỷ",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 100,
+        "price": 400000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "tat-chinh-sach",
+     "code": "TH03-HANMUC600"
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Công nợ Trung Hậu trước khi nhập (đến 05/10)",
+     "mong": 450000000,
+     "lay": {
+      "ghiNhan": "th03-truoc"
+     }
+    },
+    {
+     "ten": "Giá trị phiếu nhập HĐ 3183",
+     "mong": 117450000,
+     "lay": {
+      "phieu": "th03-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Trước thuế",
+     "mong": 108750000,
+     "lay": {
+      "phieu": "th03-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "VAT",
+     "mong": 8700000,
+     "lay": {
+      "phieu": "th03-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Tổng công nợ sau nhập",
+     "mong": 567450000,
+     "lay": {
+      "ghiNhan": "th03-sau"
+     }
+    },
+    {
+     "ten": "Hạn thanh toán phiếu nhập",
+     "mong": "2026-10-26",
+     "lay": {
+      "phieu": "th03-nm",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "Đơn thêm 40.000.000: bị chặn duyệt (vượt hạn mức)",
+     "mong": "chặn",
+     "lay": {
+      "ghiNhan": "th03-dh40-chan"
+     }
+    },
+    {
+     "ten": "Đơn thêm 40.000.000: số tiền vượt",
+     "mong": 7450000,
+     "lay": {
+      "ghiNhan": "th03-dh40-vuot"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH04",
+   "ten": "Chiết khấu thẳng 7% + chiết khấu thanh toán 2% khi trả đúng hạn",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH04-CK7",
+      "kind": "trade_discount",
+      "name": "CK thẳng 7% trên đơn Trung Hậu (TH04)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-06",
+      "validTo": "2026-10-06",
+      "rule": {
+       "pct": 7
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH04-CKTT2",
+      "kind": "payment_discount",
+      "name": "CKTT 2% nếu trả đúng hạn — Trung Hậu (TH04)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-10-06",
+      "validTo": "2026-10-06",
+      "rule": {
+       "pct": 2
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th04-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-06",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "note": "TH04 — đơn đặt Trung Hậu, CK 7% + CKTT 2%",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 24,
+        "price": 431000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th04-nm",
+     "tuDon": "th04-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-06",
+      "receivedDate": "2026-10-06",
+      "invoice": {
+       "no": "3184",
+       "date": "2026-10-06",
+       "total": 39082320
+      },
+      "note": "TH04 — nhập theo HĐ VAT 3184"
+     }
+    },
+    {
+     "op": "thu-phieu",
+     "id": "th04-uc-tre",
+     "ghiNhan": "th04-tre",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-21",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "method": "bank",
+      "refIds": [
+       "th04-nm"
+      ],
+      "amount": 38300674,
+      "ckttAmount": 781646,
+      "note": "TH04 — thử trả quá hạn 21/10 (không ghi)"
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th04-uc",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-20",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "method": "bank",
+      "refIds": [
+       "th04-nm"
+      ],
+      "amount": 38300674,
+      "ckttAmount": 781646,
+      "note": "TH04 — trả đúng hạn 20/10, hưởng CKTT 2%"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền hàng",
+     "mong": 42024000,
+     "lay": {
+      "tinh": "th04-nm",
+      "truong": "gross"
+     }
+    },
+    {
+     "ten": "CK thương mại 7%",
+     "mong": 2941680,
+     "lay": {
+      "tinh": "th04-nm",
+      "truong": "orderDiscount"
+     }
+    },
+    {
+     "ten": "Công nợ hoá đơn khi nhập",
+     "mong": 39082320,
+     "lay": {
+      "phieu": "th04-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Hạn thanh toán",
+     "mong": "2026-10-20",
+     "lay": {
+      "phieu": "th04-nm",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "CKTT dự kiến trên phiếu nhập",
+     "mong": 781646,
+     "lay": {
+      "tinh": "th04-nm",
+      "truong": "ckttExpected"
+     }
+    },
+    {
+     "ten": "Trả 20/10: Có 5152 (CKTT được hưởng)",
+     "mong": 781646,
+     "lay": {
+      "butToan": "th04-uc",
+      "tk": "515",
+      "ve": "co"
+     }
+    },
+    {
+     "ten": "Trả 20/10: Có 112 (thực trả)",
+     "mong": 38300674,
+     "lay": {
+      "butToan": "th04-uc",
+      "tk": "112",
+      "ve": "co"
+     }
+    },
+    {
+     "ten": "Trả quá hạn 21/10 kèm CKTT: bị chặn",
+     "mong": "chặn",
+     "lay": {
+      "ghiNhan": "th04-tre"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH05",
+   "ten": "Thanh toán trước 100% theo đơn đặt hàng, đối trừ khi nhận hàng và hoá đơn",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th05-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docNo": "DH005/2026",
+      "docDate": "2026-10-07",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "note": "TH05 — đơn đặt DH005/2026, thanh toán trước 100%",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 30,
+        "price": 528000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 431000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th05-ut",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "prepayment",
+      "docDate": "2026-10-07",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "method": "bank",
+      "refIds": [
+       "th05-dh"
+      ],
+      "amount": 24460000,
+      "note": "TH05 — ứng trước 100% đơn DH005/2026"
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th05-nm",
+     "tuDon": "th05-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-08",
+      "receivedDate": "2026-10-08",
+      "orderDiscount": {},
+      "invoice": {
+       "no": "3185",
+       "date": "2026-10-08",
+       "total": 24460000
+      },
+      "note": "TH05 — nhận hàng theo đơn DH005/2026, HĐ 3185"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tổng đơn DH005/2026",
+     "mong": 24460000,
+     "lay": {
+      "phieu": "th05-dh",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Tiền ứng trước (Có 112)",
+     "mong": 24460000,
+     "lay": {
+      "butToan": "th05-ut",
+      "tk": "112",
+      "ve": "co"
+     }
+    },
+    {
+     "ten": "Phiếu nhập HĐ 3185 – còn phải trả",
+     "mong": 0,
+     "lay": {
+      "conNo": "th05-nm"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH06",
+   "ten": "Chiết khấu trực tiếp trên từng sản phẩm, mỗi sản phẩm một tỷ lệ khác nhau",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH06-CK-MA",
+      "kind": "item_discount",
+      "name": "Trung Hậu – CK theo mã: Anlene Gold 5%, Anlene vani 10% (CN Phú Thọ)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU",
+       "branchCode": "CN-PT"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-31",
+      "rule": {
+       "items": [
+        {
+         "sku": "110154035",
+         "pct": 5
+        },
+        {
+         "sku": "110154036",
+         "pct": 10
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th06-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-01",
+      "receivedDate": "2026-10-01",
+      "branchCode": "CN-PT",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH06 – nhập theo hoá đơn 000101, không qua đơn đặt"
+      },
+      "term": {
+       "basis": "receipt_date",
+       "days": 10,
+       "workingDays": true,
+       "dayType": "working"
+      },
+      "invoice": {
+       "no": "000101",
+       "date": "2026-10-01",
+       "total": 35700000
+      },
+      "note": "TH06 — CK theo mã 5% / 10%",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 500000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 400000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "CK dòng Anlene Gold 5%",
+     "mong": 1500000,
+     "lay": {
+      "tinh": "th06-nm",
+      "dong": 0,
+      "truong": "lineDiscount"
+     }
+    },
+    {
+     "ten": "CK dòng Anlene vani 10%",
+     "mong": 800000,
+     "lay": {
+      "tinh": "th06-nm",
+      "dong": 1,
+      "truong": "lineDiscount"
+     }
+    },
+    {
+     "ten": "Tiền trước thuế",
+     "mong": 33055556,
+     "lay": {
+      "phieu": "th06-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "VAT",
+     "mong": 2644444,
+     "lay": {
+      "phieu": "th06-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Công nợ phải trả NCC",
+     "mong": 35700000,
+     "lay": {
+      "phieu": "th06-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Hạn thanh toán",
+     "mong": "2026-10-15",
+     "lay": {
+      "phieu": "th06-nm",
+      "truong": "dueDate"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH07",
+   "ten": "Chiết khấu theo bậc số lượng mua",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH07-BAC-SL",
+      "kind": "qty_tier",
+      "name": "Trung Hậu – CK bậc số lượng Anlene Gold: <50: 0%, 50–99: 3%, 100–199: 5%, ≥200: 7% (CN Nam Định)",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU",
+       "sku": "110154035",
+       "branchCode": "CN-ND"
+      },
+      "validFrom": "2026-10-03",
+      "validTo": "2026-10-31",
+      "rule": {
+       "tiers": [
+        {
+         "from": 0,
+         "pct": 0
+        },
+        {
+         "from": 50,
+         "pct": 3
+        },
+        {
+         "from": 100,
+         "pct": 5
+        },
+        {
+         "from": 200,
+         "pct": 7
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th07-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-03",
+      "receivedDate": "2026-10-03",
+      "branchCode": "CN-ND",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH07 – Trung Hậu mua 150 lon, nhập không qua đơn đặt"
+      },
+      "note": "TH07 — CK bậc số lượng",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 150,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Bậc CK cho 150 lon (%)",
+     "mong": 5,
+     "lay": {
+      "tinh": "th07-nm",
+      "dong": 0,
+      "truong": "discountPct"
+     }
+    },
+    {
+     "ten": "Tiền chiết khấu",
+     "mong": 3750000,
+     "lay": {
+      "tinh": "th07-nm",
+      "truong": "lineDiscount"
+     }
+    },
+    {
+     "ten": "Tiền sau CK",
+     "mong": 71250000,
+     "lay": {
+      "phieu": "th07-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "VAT",
+     "mong": 5700000,
+     "lay": {
+      "phieu": "th07-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Tổng phải trả",
+     "mong": 76950000,
+     "lay": {
+      "phieu": "th07-nm",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH08",
+   "ten": "Chiết khấu (thưởng) doanh số cuối tháng",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH08-THUONG-DS",
+      "kind": "period_rebate",
+      "name": "Trung Hậu – thưởng doanh số tháng nhãn TH: từ 200tr 2%, từ 300tr 3%",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU",
+       "brandCode": "63"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-31",
+      "rule": {
+       "period": "month",
+       "tiers": [
+        {
+         "from": 200000000,
+         "pct": 2
+        },
+        {
+         "from": 300000000,
+         "pct": 3
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th08-nm1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-10",
+      "receivedDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH08 – doanh số tháng 10 (HĐ 3186), không qua đơn đặt"
+      },
+      "invoice": {
+       "no": "3186",
+       "date": "2026-10-10"
+      },
+      "note": "TH08 — nhập 10/10",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 480,
+        "price": 250000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th08-nm2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-20",
+      "receivedDate": "2026-10-20",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH08 – doanh số tháng 10 (HĐ 3190), không qua đơn đặt"
+      },
+      "invoice": {
+       "no": "3190",
+       "date": "2026-10-20"
+      },
+      "note": "TH08 — nhập 20/10",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 720,
+        "price": 250000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "thuong",
+     "id": "th08-tt",
+     "policyCode": "TH08-THUONG-DS",
+     "period": "2026-10",
+     "ngay": "2026-10-31",
+     "branchCode": "CN01",
+     "taxCode": "V08"
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Doanh số mua thuần tháng 10 (chưa VAT)",
+     "mong": 300000000,
+     "lay": {
+      "thuong": "TH08-THUONG-DS",
+      "period": "2026-10",
+      "truong": "base"
+     }
+    },
+    {
+     "ten": "Mức thưởng (%)",
+     "mong": 3,
+     "lay": {
+      "thuong": "TH08-THUONG-DS",
+      "period": "2026-10",
+      "truong": "rate"
+     }
+    },
+    {
+     "ten": "Tiền thưởng",
+     "mong": 9000000,
+     "lay": {
+      "phieu": "th08-tt",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "VAT điều chỉnh giảm",
+     "mong": 720000,
+     "lay": {
+      "phieu": "th08-tt",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Tổng giảm công nợ NCC",
+     "mong": 9720000,
+     "lay": {
+      "phieu": "th08-tt",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Hoá đơn gốc 10/10 giữ nguyên",
+     "mong": 129600000,
+     "lay": {
+      "phieu": "th08-nm1",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Hoá đơn gốc 20/10 giữ nguyên",
+     "mong": 194400000,
+     "lay": {
+      "phieu": "th08-nm2",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH09",
+   "ten": "Chiết khấu trực tiếp và hàng tặng kèm trên hoá đơn",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th09-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-05",
+      "receivedDate": "2026-10-05",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH09 – hàng mua kèm 10 lon tặng theo chương trình, không qua đơn đặt"
+      },
+      "note": "TH09 — CK 5% + 10 lon tặng",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 500000,
+        "discountPct": 5,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 10,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền hàng sau CK 5%",
+     "mong": 47500000,
+     "lay": {
+      "phieu": "th09-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "VAT 8%",
+     "mong": 3800000,
+     "lay": {
+      "phieu": "th09-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Phải trả NCC",
+     "mong": 51300000,
+     "lay": {
+      "phieu": "th09-nm",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH10",
+   "ten": "Chiết khấu trực tiếp và hỗ trợ chi phí vận chuyển",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th10-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-07",
+      "receivedDate": "2026-10-07",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH10 – Trung Hậu giao 100 lon, không qua đơn đặt"
+      },
+      "note": "TH10 — CK 5%",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 500000,
+        "discountPct": 5,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "ncc",
+     "code": "NCC-VANCHUYEN",
+     "name": "Công ty vận chuyển Bắc Trung (TH10)",
+     "groupCode": "NCC-TSDV"
+    },
+    {
+     "op": "phieu",
+     "id": "th10-cp",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "cost",
+      "docDate": "2026-10-07",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-VANCHUYEN",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th10-nm"
+      ],
+      "amount": 1500000,
+      "costType": "van_chuyen",
+      "basis": "value",
+      "note": "TH10 — phí vận chuyển, không thuế"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Công nợ Trung Hậu của phiếu nhập",
+     "mong": 51300000,
+     "lay": {
+      "conNo": "th10-nm"
+     }
+    },
+    {
+     "ten": "Phí vận chuyển (công nợ đơn vị vận chuyển)",
+     "mong": 1500000,
+     "lay": {
+      "phieu": "th10-cp",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Bút toán phí vận chuyển Nợ 1561",
+     "mong": 1500000,
+     "lay": {
+      "butToan": "th10-cp",
+      "tk": "1561",
+      "ve": "no"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH11",
+   "ten": "Một hoá đơn thanh toán nhiều đợt (3 đợt) – theo dõi đến hạn / quá hạn từng đợt",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th11-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-08",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": false,
+      "note": "TH11",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 200,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th11-nm",
+     "tuDon": "th11-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-08",
+      "receivedDate": "2026-10-08",
+      "invoice": {
+       "no": "TH11-0810",
+       "date": "2026-10-08"
+      },
+      "note": "TH11 — trả 3 đợt",
+      "schedule": [
+       {
+        "seq": 1,
+        "dueDate": "2026-10-10",
+        "amount": 30000000
+       },
+       {
+        "seq": 2,
+        "dueDate": "2026-10-25",
+        "amount": 40000000
+       },
+       {
+        "seq": 3,
+        "dueDate": "2026-11-10",
+        "amount": 38000000
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th11-uc1",
+     "xuLy": "duyet",
+     "lechFile": "File để trống ô Trả cho phiếu nhập (trừ theo hạn sớm trước). Gộp một sổ, Trung Hậu còn nợ của các case khác có hạn sớm hơn nên team gắn phiếu nhập TH11 để tiền trừ đúng đợt.",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "method": "bank",
+      "refIds": [
+       "th11-nm"
+      ],
+      "amount": 30000000,
+      "note": "TH11 trả đợt 1"
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th11-uc2",
+     "xuLy": "duyet",
+     "lechFile": "Như phiếu trả đợt 1: team gắn phiếu nhập TH11.",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-27",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "method": "bank",
+      "refIds": [
+       "th11-nm"
+      ],
+      "amount": 25000000,
+      "note": "TH11 trả trễ, thiếu cho đợt 2"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tổng hoá đơn / công nợ ban đầu",
+     "mong": 108000000,
+     "lay": {
+      "phieu": "th11-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Nợ còn sau 2 lần trả",
+     "mong": 53000000,
+     "lay": {
+      "conNo": "th11-nm"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH12",
+   "ten": "Đơn hàng có công nợ cũ, tổng công nợ không vượt hạn mức 600 triệu – duyệt bình thường",
+   "buoc": [
+    {
+     "op": "so-du",
+     "id": "th12-sd",
+     "branchCode": "CN01",
+     "partnerCode": "NCC-THANGBAO",
+     "amount": 480000000,
+     "ghiChu": "Số dư đầu kỳ phải trả Công ty Thắng Bảo (TH12)"
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "NCC-THANGBAO-HANMUC",
+      "kind": "credit_limit",
+      "name": "Công ty Thắng Bảo: Hạn mức 600 triệu; cảnh báo khi dùng từ 90%",
+      "scope": {
+       "partnerCode": "NCC-THANGBAO"
+      },
+      "validFrom": "2026-10-01",
+      "rule": {
+       "limit": 600000000,
+       "warnPct": 90
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th12-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-09",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "note": "TH12 — đơn 108.000.000 trong hạn mức",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 200,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th12-nm",
+     "tuDon": "th12-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-09",
+      "receivedDate": "2026-10-09",
+      "note": "TH12 — nhập theo đơn"
+     }
+    },
+    {
+     "op": "ghi-no",
+     "ghiNhan": "th12-sau",
+     "partnerCode": "NCC-THANGBAO"
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Công nợ Thắng Bảo sau khi ghi nhận đơn (đến 09/10)",
+     "mong": 588000000,
+     "lay": {
+      "ghiNhan": "th12-sau"
+     }
+    },
+    {
+     "ten": "Tổng đơn mới",
+     "mong": 108000000,
+     "lay": {
+      "phieu": "th12-dh",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH13",
+   "ten": "Đơn hàng vượt hạn mức công nợ 600 triệu – chặn duyệt; trả bớt nợ hoặc duyệt ngoại lệ",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th13-uc1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "method": "bank",
+      "amount": 38000000,
+      "note": "TH13 — trả 38.000.000 để nợ về 550.000.000"
+     }
+    },
+    {
+     "op": "ghi-no",
+     "ghiNhan": "th13-truoc",
+     "partnerCode": "NCC-THANGBAO"
+    },
+    {
+     "op": "phieu",
+     "id": "th13-dh",
+     "xuLy": "ngoai-le",
+     "lyDo": "Giám đốc duyệt giãn hạn mức T10/2026 - Thắng Bảo cam kết thanh toán 60tr ngày 10/10",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "note": "TH13 — đơn vượt hạn mức",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 200,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "bo-duyet",
+     "id": "th13-dh"
+    },
+    {
+     "op": "phieu",
+     "id": "th13-uc2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "method": "bank",
+      "amount": 60000000,
+      "note": "TH13 — cách 2: trả bớt 60.000.000"
+     }
+    },
+    {
+     "op": "duyet",
+     "id": "th13-dh",
+     "ghiNhan": "th13-duyet-thuong"
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Công nợ trước đơn (sau khi trả 38tr)",
+     "mong": 550000000,
+     "lay": {
+      "ghiNhan": "th13-truoc"
+     }
+    },
+    {
+     "ten": "Đơn 108tr bị chặn, vượt hạn mức",
+     "mong": 58000000,
+     "lay": {
+      "ghiNhan": "th13-dh-vuot"
+     }
+    },
+    {
+     "ten": "Sau khi trả bớt 60tr: duyệt bình thường",
+     "mong": "duyệt",
+     "lay": {
+      "ghiNhan": "th13-duyet-thuong"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH14",
+   "ten": "Nhập mua có 2 chương trình KM: KM người bán (chia vào giá) và KM người tiêu dùng (không chia giá)",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "HOANGNHI-TH-10T1",
+      "kind": "promo_gift",
+      "name": "Hoàng Nhi – Sữa chua TH Nha đam: mua 10 tặng 1 (KM người bán, chia giá)",
+      "scope": {
+       "partnerCode": "NCC-HOANGNHI",
+       "sku": "140181006"
+      },
+      "validFrom": "2026-10-01",
+      "rule": {
+       "splitIntoCost": true,
+       "items": [
+        {
+         "sku": "140181006",
+         "buyQty": 10,
+         "buyUnit": "Hộp",
+         "giftSku": "",
+         "getQty": 1,
+         "getUnit": "Hộp",
+         "repeat": true
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "HOANGNHI-TH-10T2",
+      "kind": "promo_gift",
+      "name": "Hoàng Nhi – Sữa chua TH Nha đam: mua 10 tặng 2 (KM người tiêu dùng)",
+      "scope": {
+       "partnerCode": "NCC-HOANGNHI",
+       "sku": "140181006"
+      },
+      "validFrom": "2026-10-01",
+      "rule": {
+       "splitIntoCost": false,
+       "items": [
+        {
+         "sku": "140181006",
+         "buyQty": 10,
+         "buyUnit": "Hộp",
+         "giftSku": "",
+         "getQty": 2,
+         "getUnit": "Hộp",
+         "repeat": true
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th14-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-30",
+      "receivedDate": "2026-10-30",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": true,
+      "outsideOrder": {
+       "reason": "Nhập theo hoá đơn 13209"
+      },
+      "invoice": {
+       "no": "13209",
+       "date": "2026-10-30"
+      },
+      "note": "TH14 — 2 chương trình KM",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Hộp",
+        "qty": 1200,
+        "price": 7787,
+        "discountPct": 1.5,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "g1",
+        "sku": "140181006",
+        "unit": "Hộp",
+        "qty": 120,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller",
+        "program": "HOANGNHI-TH-10T1",
+        "autoGift": true
+       },
+       {
+        "lineKey": "g2",
+        "sku": "140181006",
+        "unit": "Hộp",
+        "qty": 240,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_consumer",
+        "program": "HOANGNHI-TH-10T2",
+        "autoGift": true
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền hàng",
+     "mong": 9344400,
+     "lay": {
+      "tinh": "th14-nm",
+      "truong": "gross"
+     }
+    },
+    {
+     "ten": "CK 1,5%",
+     "mong": 140166,
+     "lay": {
+      "tinh": "th14-nm",
+      "truong": "lineDiscount"
+     }
+    },
+    {
+     "ten": "Tiền trước thuế",
+     "mong": 8522439,
+     "lay": {
+      "phieu": "th14-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "Thuế GTGT 8%",
+     "mong": 681795,
+     "lay": {
+      "phieu": "th14-nm",
+      "truong": "totals.tax"
+     }
+    },
+    {
+     "ten": "Công nợ NCC từ phiếu",
+     "mong": 9204234,
+     "lay": {
+      "phieu": "th14-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Giá vốn / hộp (hàng mua + KM người bán)",
+     "mong": 6456.39,
+     "lay": {
+      "tinh": "th14-nm",
+      "dong": 0,
+      "truong": "realUnitCost"
+     },
+     "saiSo": 0.01
+    }
+   ]
+  },
+  {
+   "th": "TH15",
+   "ten": "Chỉ tiêu doanh số nhãn hàng tháng / quý / năm – thưởng theo ngưỡng hoàn thành",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANLENE-CT-T10",
+      "kind": "target_rebate",
+      "name": "Anlene – chỉ tiêu tháng 10/2026: 500 triệu (100% → 2%, 110% → 3%)",
+      "scope": {
+       "partnerCode": "NCC-ANLENE",
+       "brandCode": "34"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-31",
+      "rule": {
+       "period": "month",
+       "target": 500000000,
+       "tiers": [
+        {
+         "fromPct": 100,
+         "pct": 2
+        },
+        {
+         "fromPct": 110,
+         "pct": 3
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANLENE-CT-Q4",
+      "kind": "target_rebate",
+      "name": "Anlene – chỉ tiêu quý 4/2026: 1,5 tỷ (100% → 2%, 110% → 3%)",
+      "scope": {
+       "partnerCode": "NCC-ANLENE",
+       "brandCode": "34"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-12-31",
+      "rule": {
+       "period": "quarter",
+       "target": 1500000000,
+       "tiers": [
+        {
+         "fromPct": 100,
+         "pct": 2
+        },
+        {
+         "fromPct": 110,
+         "pct": 3
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANLENE-CT-2026",
+      "kind": "target_rebate",
+      "name": "Anlene – chỉ tiêu năm 2026: 6 tỷ (100% → 2%, 110% → 3%)",
+      "scope": {
+       "partnerCode": "NCC-ANLENE",
+       "brandCode": "34"
+      },
+      "validFrom": "2026-01-01",
+      "validTo": "2026-12-31",
+      "rule": {
+       "period": "year",
+       "target": 6000000000,
+       "tiers": [
+        {
+         "fromPct": 100,
+         "pct": 2
+        },
+        {
+         "fromPct": 110,
+         "pct": 3
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th15-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-15",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "note": "TH15 — đơn 550.000.000 chưa VAT",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 1100,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th15-nm",
+     "tuDon": "th15-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-15",
+      "receivedDate": "2026-10-15",
+      "note": "TH15 — nhập theo đơn"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Doanh số mua thuần tháng 10 (ngay sau case)",
+     "mong": 550000000,
+     "lay": {
+      "thuong": "ANLENE-CT-T10",
+      "period": "2026-10",
+      "truong": "base"
+     }
+    },
+    {
+     "ten": "Mức thưởng tháng (%)",
+     "mong": 3,
+     "lay": {
+      "thuong": "ANLENE-CT-T10",
+      "period": "2026-10",
+      "truong": "rate"
+     }
+    },
+    {
+     "ten": "Tiền thưởng tháng",
+     "mong": 16500000,
+     "lay": {
+      "thuong": "ANLENE-CT-T10",
+      "period": "2026-10",
+      "truong": "amount"
+     }
+    },
+    {
+     "ten": "Quý 4: chưa đạt, thưởng 0",
+     "mong": 0,
+     "lay": {
+      "thuong": "ANLENE-CT-Q4",
+      "period": "2026-Q4",
+      "truong": "amount"
+     }
+    },
+    {
+     "ten": "Năm 2026: chưa đạt, thưởng 0",
+     "mong": 0,
+     "lay": {
+      "thuong": "ANLENE-CT-2026",
+      "period": "2026",
+      "truong": "amount"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH16",
+   "ten": "Thưởng nhập hàng theo các giai đoạn trong tháng (Anlene tháng 10/2026)",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANL-GD-T10",
+      "kind": "stage_rebate",
+      "name": "Anlene - thưởng nhập hàng theo giai đoạn tháng 10/2026",
+      "scope": {
+       "partnerCode": "NCC-ANLENE"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-31",
+      "rule": {
+       "mode": "stage",
+       "stages": [
+        {
+         "from": 1,
+         "to": 10,
+         "min": 100000000,
+         "pct": 1
+        },
+        {
+         "from": 11,
+         "to": 20,
+         "min": 150000000,
+         "pct": 2
+        },
+        {
+         "from": 21,
+         "to": 31,
+         "min": 200000000,
+         "pct": 3
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th16-nm1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-05",
+      "receivedDate": "2026-10-05",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "Hàng Anlene NCC giao theo kế hoạch tháng 10"
+      },
+      "invoice": {
+       "no": "0001501",
+       "serial": "AN/26E",
+       "date": "2026-10-05"
+      },
+      "note": "TH16 — giai đoạn 1",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 240,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th16-nm2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-15",
+      "receivedDate": "2026-10-15",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "Hàng Anlene NCC giao theo kế hoạch tháng 10"
+      },
+      "invoice": {
+       "no": "0001502",
+       "serial": "AN/26E",
+       "date": "2026-10-15"
+      },
+      "note": "TH16 — giai đoạn 2",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 280,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th16-nm3",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-25",
+      "receivedDate": "2026-10-25",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "Hàng Anlene NCC giao theo kế hoạch tháng 10"
+      },
+      "invoice": {
+       "no": "0001503",
+       "serial": "AN/26E",
+       "date": "2026-10-25"
+      },
+      "note": "TH16 — giai đoạn 3",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 580,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "thuong",
+     "id": "th16-tt",
+     "policyCode": "ANL-GD-T10",
+     "period": "2026-10",
+     "ngay": "2026-10-31",
+     "branchCode": "CN01"
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền trước thuế GĐ1",
+     "mong": 120000000,
+     "lay": {
+      "phieu": "th16-nm1",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "Tiền trước thuế GĐ2",
+     "mong": 140000000,
+     "lay": {
+      "phieu": "th16-nm2",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "Tiền trước thuế GĐ3",
+     "mong": 290000000,
+     "lay": {
+      "phieu": "th16-nm3",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "Tổng thưởng tháng 10 (phiếu thưởng)",
+     "mong": 9900000,
+     "lay": {
+      "phieu": "th16-tt",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH17",
+   "ten": "Hạn mức công nợ toàn nhãn hàng Anlene và phân bổ cho từng chi nhánh",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANL-HANMUC",
+      "kind": "credit_limit",
+      "name": "Anlene - hạn mức công nợ toàn nhãn 2 tỷ",
+      "scope": {
+       "brandCode": "34"
+      },
+      "validFrom": "2026-10-01",
+      "rule": {
+       "limit": 2000000000,
+       "warnPct": 90,
+       "branches": {
+        "CN-ND": 500000000,
+        "CN-PT": 600000000,
+        "CN-HCM": 400000000
+       }
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th17-nm",
+     "xuLy": "chan-giu-nhap",
+     "ghiNhan": "th17-chan",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-20",
+      "receivedDate": "2026-10-20",
+      "branchCode": "CN-HCM",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "Bổ sung hàng Anlene cho CN HCM"
+      },
+      "invoice": {
+       "no": "0001701",
+       "serial": "AN/26E",
+       "date": "2026-10-20"
+      },
+      "note": "TH17 — phiếu thử CN-HCM",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 850,
+        "price": 500000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "chuyen-han-muc",
+     "code": "ANL-HANMUC",
+     "to": "CN-HCM",
+     "amount": 600000000,
+     "kyVong": "loi",
+     "ghiNhan": "th17-chuyen600"
+    },
+    {
+     "op": "chuyen-han-muc",
+     "code": "ANL-HANMUC",
+     "to": "CN-HCM",
+     "amount": 100000000
+    },
+    {
+     "op": "duyet",
+     "id": "th17-nm"
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANL-CHITIEU-T10",
+      "kind": "supply_target",
+      "name": "Anlene - chỉ tiêu cung ứng tháng 10/2026",
+      "scope": {
+       "brandCode": "34"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-31",
+      "rule": {
+       "period": "2026-10",
+       "branches": {
+        "CN-ND": 400000000,
+        "CN-PT": 500000000,
+        "CN-HCM": 450000000
+       }
+      }
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Phiếu HCM 459.000.000 khi hạn mức 400.000.000: chặn duyệt",
+     "mong": "chặn",
+     "lay": {
+      "ghiNhan": "th17-chan"
+     }
+    },
+    {
+     "ten": "Chuyển 600tr từ phần chưa phân bổ: không cho chuyển",
+     "mong": "lỗi",
+     "lay": {
+      "ghiNhan": "th17-chuyen600"
+     }
+    },
+    {
+     "ten": "Phải trả phiếu HCM",
+     "mong": 459000000,
+     "lay": {
+      "phieu": "th17-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Sau chuyển 100tr: phiếu duyệt được",
+     "mong": "approved",
+     "lay": {
+      "phieu": "th17-nm",
+      "truong": "status"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH18",
+   "ten": "Cảnh báo thanh toán đến hạn, quá hạn và phương thức tính hạn công nợ",
+   "buoc": [
+    {
+     "op": "ngay-le",
+     "ngay": "2026-10-12"
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH-HANTT10",
+      "kind": "payment_term",
+      "name": "Trung Hậu - trả trong 10 ngày làm việc kể từ ngày hoá đơn",
+      "scope": {
+       "partnerCode": "NCC-TRUNGHAU"
+      },
+      "validFrom": "2026-09-01",
+      "rule": {
+       "basis": "invoice_date",
+       "days": 10,
+       "workingDays": true,
+       "dayType": "working"
+      }
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TB-CONGNOCD",
+      "kind": "payment_term",
+      "name": "Thắng Bảo - công nợ cố định (duy trì số dư theo thoả thuận)",
+      "scope": {
+       "partnerCode": "NCC-THANGBAO"
+      },
+      "validFrom": "2026-09-01",
+      "rule": {
+       "basis": "fixed",
+       "days": 0
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th18-nm",
+     "xuLy": "duyet",
+     "lechFile": "File không ghi ô Chiết khấu trên đơn. Gộp một sổ, ngày 01/10 Trung Hậu đang có chính sách CK 7% của TH01 nên team chọn Chiết khấu trên đơn = Không để ra đúng 31.680.000.",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-01",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH18 – phiếu chính tính hạn theo ngày hoá đơn"
+      },
+      "invoice": {
+       "no": "3181",
+       "serial": "TH/26E",
+       "date": "2026-10-01"
+      },
+      "note": "TH18 — phiếu chính",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 528000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th18-p1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-09-15",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH18 – phiếu phụ tạo nhóm tuổi nợ"
+      },
+      "invoice": {
+       "no": "3050",
+       "serial": "TH/26E",
+       "date": "2026-09-15"
+      },
+      "note": "TH18 — phiếu phụ 15/09",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 20,
+        "price": 528000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th18-p2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-16",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH18 – phiếu phụ tạo nhóm tuổi nợ"
+      },
+      "invoice": {
+       "no": "3240",
+       "serial": "TH/26E",
+       "date": "2026-10-16"
+      },
+      "note": "TH18 — phiếu phụ 16/10",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 30,
+        "price": 528000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th18-p3",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-19",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-TRUNGHAU",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH18 – phiếu phụ tạo nhóm tuổi nợ"
+      },
+      "invoice": {
+       "no": "3262",
+       "serial": "TH/26E",
+       "date": "2026-10-19"
+      },
+      "note": "TH18 — phiếu phụ 19/10",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 40,
+        "price": 528000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th18-tb",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-01",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": true,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH18 – công nợ cố định"
+      },
+      "invoice": {
+       "no": "0002201",
+       "date": "2026-10-01"
+      },
+      "note": "TH18 — Thắng Bảo công nợ cố định",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 50,
+        "price": 432000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Phải trả phiếu chính",
+     "mong": 31680000,
+     "lay": {
+      "phieu": "th18-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Hạn thanh toán HĐ 3181 (lễ 12/10)",
+     "mong": "2026-10-16",
+     "lay": {
+      "phieu": "th18-nm",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "Hạn phiếu phụ 15/09",
+     "mong": "2026-09-29",
+     "lay": {
+      "phieu": "th18-p1",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "Hạn phiếu phụ 16/10",
+     "mong": "2026-10-30",
+     "lay": {
+      "phieu": "th18-p2",
+      "truong": "dueDate"
+     }
+    },
+    {
+     "ten": "Phiếu Thắng Bảo: công nợ cố định",
+     "mong": 21600000,
+     "lay": {
+      "phieu": "th18-tb",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH19",
+   "ten": "Quản lý date hàng (hạn sử dụng): nhiều lô, cảnh báo cận date, xuất FEFO",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TH-LO-NHADAM",
+      "kind": "lot_tracking",
+      "name": "Sữa chua TH Nha đam: bắt buộc theo dõi lô / hạn dùng",
+      "scope": {
+       "sku": "140181006"
+      },
+      "validFrom": "2026-10-01",
+      "rule": {
+       "required": true
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th19-a",
+     "xuLy": "duyet",
+     "thuThieuLo": "th19-thieu-lo",
+     "lechFile": "Gộp một sổ, Hoàng Nhi đang có 2 chương trình KM sữa chua của TH14 (mua 10 tặng 1 / tặng 2) — team bỏ tích 2 chương trình trên phiếu này để giữ đúng 25 thùng như file.",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-20",
+      "branchCode": "CN-ND",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": true,
+      "outsideOrder": {
+       "reason": "TH19 – nhập lô A"
+      },
+      "skipPolicies": [
+       "HOANGNHI-TH-10T1",
+       "HOANGNHI-TH-10T2"
+      ],
+      "invoice": {
+       "no": "0004501",
+       "serial": "HN/26E",
+       "date": "2026-10-20"
+      },
+      "note": "TH19 — lô A",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 25,
+        "price": 336000,
+        "taxCode": "V08",
+        "lotNo": "A",
+        "mfgDate": "2026-10-01",
+        "expDate": "2026-11-15"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th19-b",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-22",
+      "branchCode": "CN-ND",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": true,
+      "outsideOrder": {
+       "reason": "TH19 – nhập lô B"
+      },
+      "invoice": {
+       "no": "0002230",
+       "serial": "TB/26E",
+       "date": "2026-10-22"
+      },
+      "note": "TH19 — lô B",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 10,
+        "price": 336000,
+        "taxCode": "V08",
+        "lotNo": "B",
+        "mfgDate": "2026-10-16",
+        "expDate": "2026-11-30"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Thiếu lô / hạn dùng khi nhập: chặn duyệt",
+     "mong": "chặn",
+     "lay": {
+      "ghiNhan": "th19-thieu-lo"
+     }
+    },
+    {
+     "ten": "Phải trả lô A",
+     "mong": 8400000,
+     "lay": {
+      "phieu": "th19-a",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Phải trả lô B",
+     "mong": 3360000,
+     "lay": {
+      "phieu": "th19-b",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH20",
+   "ten": "Quản lý quà tặng theo chương trình mua hàng và quà TGS tự mua (có / không VAT)",
+   "buoc": [
+    {
+     "op": "mat-hang",
+     "sku": "Q03410002",
+     "name": "Bộ quà tặng tri ân khách hàng TGS",
+     "unit": "Bộ",
+     "groupCode": "221",
+     "brandCode": "34",
+     "taxInCode": "V10"
+    },
+    {
+     "op": "mat-hang",
+     "sku": "Q03410001",
+     "name": "Bình giữ nhiệt Anlene (quà chương trình)",
+     "unit": "Cái",
+     "groupCode": "221",
+     "brandCode": "34",
+     "taxInCode": "V10"
+    },
+    {
+     "op": "phieu",
+     "id": "th20-qt",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "gift_in",
+      "docDate": "2026-10-12",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "gift": {
+       "source": "ncc_program",
+       "program": "ANL-T10-BINH",
+       "hasVat": false
+      },
+      "note": "TH20 — nhận 100 bình NCC tặng theo chương trình",
+      "lines": [
+       {
+        "lineKey": "q1",
+        "sku": "Q03410001",
+        "unit": "Cái",
+        "qty": 100,
+        "price": 85000,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer",
+        "program": "ANL-T10-BINH"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th20-nm1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-13",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "Mua quà tặng tri ân khách hàng"
+      },
+      "gift": {
+       "source": "self_buy",
+       "program": "TGS-TRI-AN",
+       "hasVat": true
+      },
+      "invoice": {
+       "no": "0005501",
+       "serial": "HN/26E",
+       "date": "2026-10-13"
+      },
+      "note": "TH20 — mua 50 bộ quà có VAT",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "Q03410002",
+        "unit": "Bộ",
+        "qty": 50,
+        "price": 150000,
+        "taxCode": "V10",
+        "program": "TGS-TRI-AN"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th20-nm2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-13",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "Mua quà tặng tri ân khách hàng (không hoá đơn)"
+      },
+      "gift": {
+       "source": "self_buy",
+       "program": "TGS-TRI-AN",
+       "hasVat": false
+      },
+      "note": "TH20 — mua 30 bộ quà không VAT",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "Q03410002",
+        "unit": "Bộ",
+        "qty": 30,
+        "price": 140000,
+        "taxCode": "KKKN",
+        "program": "TGS-TRI-AN"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th20-xq1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "gift_out",
+      "docDate": "2026-10-20",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "note": "Tặng bình giữ nhiệt cho khách mua Anlene từ 2 lon",
+      "lines": [
+       {
+        "lineKey": "x1",
+        "sku": "Q03410001",
+        "unit": "Cái",
+        "qty": 40,
+        "price": 0,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer",
+        "program": "ANL-T10-BINH"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th20-xq2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "gift_out",
+      "docDate": "2026-10-25",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "note": "Xuất 35 bộ quà tri ân",
+      "lines": [
+       {
+        "lineKey": "x1",
+        "sku": "Q03410002",
+        "unit": "Bộ",
+        "qty": 35,
+        "price": 0,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer",
+        "program": "TGS-TRI-AN"
+       }
+      ]
+     }
+    },
+    {
+     "op": "thu-phieu",
+     "id": "th20-xq3",
+     "ghiNhan": "th20-xuat-vuot",
+     "doc": {
+      "kind": "gift_out",
+      "docDate": "2026-10-28",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "note": "Thử xuất 70 bình (chỉ còn 60) — không lưu",
+      "lines": [
+       {
+        "lineKey": "x1",
+        "sku": "Q03410001",
+        "unit": "Cái",
+        "qty": 70,
+        "price": 0,
+        "taxCode": "KKKN",
+        "lineType": "gift_consumer",
+        "program": "ANL-T10-BINH"
+       }
+      ]
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "NS-TRI-AN",
+      "kind": "gift_budget",
+      "name": "Ngân sách quà tri ân khách hàng Q4/2026",
+      "scope": {},
+      "validFrom": "2026-10-01",
+      "validTo": "2026-12-31",
+      "rule": {
+       "program": "TGS-TRI-AN",
+       "amount": 10000000
+      }
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Nhận quà NCC tặng: giá trị",
+     "mong": 8500000,
+     "lay": {
+      "butToan": "th20-qt",
+      "tk": "1561",
+      "ve": "no"
+     }
+    },
+    {
+     "ten": "Mua 30 bộ không VAT: phải trả",
+     "mong": 4200000,
+     "lay": {
+      "phieu": "th20-nm2",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Xuất vượt tồn (70 khi còn 60): chặn duyệt",
+     "mong": "chặn",
+     "lay": {
+      "ghiNhan": "th20-xuat-vuot"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH21",
+   "ten": "Phân bổ chi phí mua hàng (vận chuyển) làm tăng giá vốn",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th21-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-12",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "Nhập theo hoá đơn NCC giao (TH21)"
+      },
+      "invoice": {
+       "no": "0021001",
+       "date": "2026-10-12"
+      },
+      "note": "TH21 — 500 triệu hàng Anlene",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 500,
+        "price": 480000,
+        "taxCode": "V08",
+        "lotNo": "AG2610",
+        "expDate": "2028-04-30"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 650,
+        "price": 400000,
+        "taxCode": "V08",
+        "lotNo": "AV2610",
+        "expDate": "2028-04-15"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th21-cp",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "cost",
+      "docDate": "2026-10-12",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th21-nm"
+      ],
+      "amount": 10000000,
+      "costType": "van_chuyen",
+      "taxCode": "V08",
+      "basis": "value",
+      "invoice": {
+       "no": "VC21001",
+       "date": "2026-10-12"
+      },
+      "note": "TH21 — cước vận chuyển 10.000.000"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Phải trả phiếu nhập",
+     "mong": 540000000,
+     "lay": {
+      "phieu": "th21-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Chi phí: Nợ 1561",
+     "mong": 10000000,
+     "lay": {
+      "butToan": "th21-cp",
+      "tk": "1561",
+      "ve": "no"
+     }
+    },
+    {
+     "ten": "Chi phí: Nợ 1331",
+     "mong": 800000,
+     "lay": {
+      "butToan": "th21-cp",
+      "tk": "1331",
+      "ve": "no"
+     }
+    },
+    {
+     "ten": "Phân bổ 110154035",
+     "mong": 4800000,
+     "lay": {
+      "phanBo": "th21-cp",
+      "sku": "110154035"
+     }
+    },
+    {
+     "ten": "Phân bổ 110154036",
+     "mong": 5200000,
+     "lay": {
+      "phanBo": "th21-cp",
+      "sku": "110154036"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH22",
+   "ten": "Phân bổ khoản thưởng doanh số làm giảm giá vốn hàng nhập",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th22-dh",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "order",
+      "docDate": "2026-10-20",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-ANLENE",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "note": "TH22 — đặt thêm 50 triệu",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 50,
+        "price": 480000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 65,
+        "price": 400000,
+        "taxCode": "V08"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th22-nm",
+     "tuDon": "th22-dh",
+     "xuLy": "duyet",
+     "lo": {
+      "a1": {
+       "lotNo": "AG2610B",
+       "expDate": "2028-05-31"
+      },
+      "a2": {
+       "lotNo": "AV2610B",
+       "expDate": "2028-05-31"
+      }
+     },
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-20",
+      "receivedDate": "2026-10-20",
+      "orderDiscount": {},
+      "invoice": {
+       "no": "0022001",
+       "date": "2026-10-20"
+      },
+      "note": "TH22 — nhập theo đơn"
+     }
+    },
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "ANL-THUONG-T10",
+      "kind": "period_rebate",
+      "name": "Thưởng doanh số Anlene tháng 10/2026 – 3%",
+      "scope": {
+       "partnerCode": "NCC-ANLENE",
+       "brandCode": "34"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-10-31",
+      "rule": {
+       "period": "month",
+       "tiers": [
+        {
+         "from": 500000000,
+         "pct": 3
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "thuong",
+     "id": "th22-tt",
+     "policyCode": "ANL-THUONG-T10",
+     "period": "2026-10",
+     "ngay": "2026-10-30",
+     "branchCode": "CN01"
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Phiếu nhập thêm",
+     "mong": 54000000,
+     "lay": {
+      "phieu": "th22-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Doanh số mua thuần T10 nhãn Anlene",
+     "mong": 550000000,
+     "lay": {
+      "thuong": "ANL-THUONG-T10",
+      "period": "2026-10",
+      "truong": "base"
+     }
+    },
+    {
+     "ten": "Tiền thưởng 3% (phiếu thưởng)",
+     "mong": 16500000,
+     "lay": {
+      "phieu": "th22-tt",
+      "truong": "totals.total"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH23",
+   "ten": "Đổi / trả hàng nhà cung cấp (4 tình huống)",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th23-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-05",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "TH23 – phiếu nhập gốc"
+      },
+      "invoice": {
+       "no": "0023001",
+       "date": "2026-10-05"
+      },
+      "note": "TH23 — phiếu nhập gốc",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 500000,
+        "taxCode": "V08",
+        "lotNo": "AG-A"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 50,
+        "price": 500000,
+        "taxCode": "V08",
+        "lotNo": "AV-A"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th23-do1",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "exchange",
+      "docDate": "2026-10-07",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th23-nm"
+      ],
+      "settle": "offset",
+      "reason": "Hàng lỗi móp – đổi hàng mới cùng mã",
+      "note": "TH23 — đổi cùng mã",
+      "lines": [
+       {
+        "lineKey": "o1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 3,
+        "price": 500000,
+        "taxCode": "V08",
+        "dir": "out",
+        "lotNo": "AG-A"
+       },
+       {
+        "lineKey": "i1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 3,
+        "price": 500000,
+        "taxCode": "V08",
+        "dir": "in",
+        "lotNo": "AG-B",
+        "expDate": "2028-06-30"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th23-do2",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "exchange",
+      "docDate": "2026-10-08",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th23-nm"
+      ],
+      "settle": "offset",
+      "reason": "Đổi sang mã khác cùng giá trị",
+      "note": "TH23 — đổi khác mã cùng giá trị",
+      "lines": [
+       {
+        "lineKey": "o1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 10,
+        "price": 500000,
+        "taxCode": "V08",
+        "dir": "out",
+        "lotNo": "AG-A"
+       },
+       {
+        "lineKey": "i1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 10,
+        "price": 500000,
+        "taxCode": "V08",
+        "dir": "in",
+        "lotNo": "AV-B"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th23-do3",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "exchange",
+      "docDate": "2026-10-09",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th23-nm"
+      ],
+      "settle": "pay",
+      "method": "bank",
+      "reason": "Đổi sang mã khác giá trị cao hơn",
+      "note": "TH23 — đổi khác mã khác giá trị",
+      "lines": [
+       {
+        "lineKey": "o1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 10,
+        "price": 500000,
+        "taxCode": "V08",
+        "dir": "out",
+        "lotNo": "AV-A"
+       },
+       {
+        "lineKey": "i1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 12,
+        "price": 500000,
+        "taxCode": "V08",
+        "dir": "in",
+        "lotNo": "AG-B"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th23-tn",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "return",
+      "docDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th23-nm"
+      ],
+      "reason": "Hàng lỗi / cận date",
+      "note": "TH23 — trả hàng",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 4,
+        "price": 500000,
+        "taxCode": "V08",
+        "lotNo": "AV-A"
+       }
+      ]
+     }
+    },
+    {
+     "op": "thu-phieu",
+     "id": "th23-tn-qua",
+     "ghiNhan": "th23-tra-qua",
+     "doc": {
+      "kind": "return",
+      "docDate": "2026-10-10",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-HOANGNHI",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th23-nm"
+      ],
+      "reason": "Thử trả quá số đã nhận",
+      "note": "TH23 — thử trả 60 lon (không ghi)",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 60,
+        "price": 500000,
+        "taxCode": "V08",
+        "lotNo": "AV-A"
+       }
+      ]
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Phiếu nhập gốc",
+     "mong": 81000000,
+     "lay": {
+      "phieu": "th23-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Đổi cùng mã: chênh lệch",
+     "mong": 0,
+     "lay": {
+      "tinh": "th23-do1",
+      "truong": "exchange.diff"
+     }
+    },
+    {
+     "ten": "Đổi khác mã cùng giá trị: chênh lệch",
+     "mong": 0,
+     "lay": {
+      "tinh": "th23-do2",
+      "truong": "exchange.diff"
+     }
+    },
+    {
+     "ten": "Đổi khác giá trị: chênh lệch trả bổ sung",
+     "mong": 1080000,
+     "lay": {
+      "tinh": "th23-do3",
+      "truong": "exchange.diff"
+     }
+    },
+    {
+     "ten": "Trả hàng: giảm công nợ",
+     "mong": 2160000,
+     "lay": {
+      "phieu": "th23-tn",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Phiếu nhập gốc còn nợ",
+     "mong": 78840000,
+     "lay": {
+      "conNo": "th23-nm"
+     }
+    },
+    {
+     "ten": "Trả 60 lon (còn 36): chặn duyệt",
+     "mong": "chặn",
+     "lay": {
+      "ghiNhan": "th23-tra-qua"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH24",
+   "ten": "Theo dõi công nợ, số lượng nhập – xuất – tồn theo mã hàng, nhóm hàng, ngành hàng",
+   "buoc": [
+    {
+     "op": "phieu",
+     "id": "th24-nm",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-15",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "outsideOrder": {
+       "reason": "TH24 – nhập sữa chua"
+      },
+      "invoice": {
+       "no": "0024001",
+       "date": "2026-10-15"
+      },
+      "note": "TH24 — nhập 20 thùng",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 20,
+        "price": 288000,
+        "taxCode": "V08",
+        "lotNo": "SC2610",
+        "expDate": "2026-12-15"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th24-tn",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "return",
+      "docDate": "2026-10-18",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th24-nm"
+      ],
+      "reason": "Thùng bị móp, rò rỉ",
+      "note": "TH24 — trả 2 thùng",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 2,
+        "price": 288000,
+        "taxCode": "V08",
+        "lotNo": "SC2610",
+        "expDate": "2026-12-15"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th24-uc",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "payment",
+      "docDate": "2026-10-20",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "method": "bank",
+      "refIds": [
+       "th24-nm"
+      ],
+      "amount": 3000000,
+      "note": "TH24 — trả tiền phiếu nhập sữa chua"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Phiếu nhập sữa chua",
+     "mong": 6220800,
+     "lay": {
+      "phieu": "th24-nm",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Trả 2 thùng: giảm nợ",
+     "mong": 622080,
+     "lay": {
+      "phieu": "th24-tn",
+      "truong": "totals.total"
+     }
+    },
+    {
+     "ten": "Còn nợ phiếu nhập sữa chua",
+     "mong": 2598720,
+     "lay": {
+      "conNo": "th24-nm"
+     }
+    }
+   ]
+  },
+  {
+   "th": "TH25",
+   "ten": "Tính giá thực tế (giá chia hết) từng mã hàng theo điều kiện mua hàng",
+   "buoc": [
+    {
+     "op": "chinh-sach",
+     "p": {
+      "code": "TB-BAC-GOLD",
+      "kind": "qty_tier",
+      "name": "Thắng Bảo: Anlene Gold mua từ 100 lon CK 5%",
+      "scope": {
+       "partnerCode": "NCC-THANGBAO",
+       "sku": "110154035"
+      },
+      "validFrom": "2026-10-01",
+      "validTo": "2026-12-31",
+      "rule": {
+       "tiers": [
+        {
+         "from": 0,
+         "pct": 0
+        },
+        {
+         "from": 100,
+         "pct": 5
+        }
+       ]
+      }
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th25-nm",
+     "xuLy": "duyet",
+     "lechFile": "File không ghi số lô cho dòng sữa chua. Gộp một sổ, TH19 đã khai sữa chua bắt buộc số lô / hạn dùng, nên team ghi lô TH25-SC, hạn 31/12/2026 cho 2 dòng sữa chua (không đổi số tiền).",
+     "doc": {
+      "kind": "receipt",
+      "docDate": "2026-10-22",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "orderDiscount": {},
+      "outsideOrder": {
+       "reason": "TH25 – tính giá thực tế"
+      },
+      "invoice": {
+       "no": "0025001",
+       "date": "2026-10-22"
+      },
+      "note": "TH25 — giá thực tế",
+      "lines": [
+       {
+        "lineKey": "a1",
+        "sku": "110154035",
+        "unit": "Lon",
+        "qty": 100,
+        "price": 500000,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a2",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 50,
+        "price": 420000,
+        "discountPct": 10,
+        "taxCode": "V08"
+       },
+       {
+        "lineKey": "a3",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 10,
+        "price": 288000,
+        "discountPct": 3,
+        "taxCode": "V08",
+        "lotNo": "TH25-SC",
+        "expDate": "2026-12-31"
+       },
+       {
+        "lineKey": "g1",
+        "sku": "110154036",
+        "unit": "Lon",
+        "qty": 5,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller"
+       },
+       {
+        "lineKey": "g2",
+        "sku": "140181006",
+        "unit": "Thùng",
+        "qty": 1,
+        "price": 0,
+        "taxCode": "V08",
+        "lineType": "gift_seller",
+        "lotNo": "TH25-SC",
+        "expDate": "2026-12-31"
+       }
+      ]
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th25-cp",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "cost",
+      "docDate": "2026-10-22",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th25-nm"
+      ],
+      "amount": 1000000,
+      "costType": "van_chuyen",
+      "taxCode": "V08",
+      "basis": "value",
+      "invoice": {
+       "no": "VC25001",
+       "date": "2026-10-22"
+      },
+      "note": "TH25 — chi phí vận chuyển"
+     }
+    },
+    {
+     "op": "phieu",
+     "id": "th25-ck",
+     "xuLy": "duyet",
+     "doc": {
+      "kind": "rebate",
+      "docDate": "2026-10-28",
+      "branchCode": "CN01",
+      "partnerCode": "NCC-THANGBAO",
+      "priceIncludesVat": false,
+      "refIds": [
+       "th25-nm"
+      ],
+      "amount": 2000000,
+      "taxCode": "V08",
+      "basis": "value",
+      "invoice": {
+       "no": "0025101",
+       "date": "2026-10-28"
+      },
+      "note": "TH25 — chiết khấu / giảm giá sau mua"
+     }
+    }
+   ],
+   "kiem": [
+    {
+     "ten": "Tiền trước thuế phiếu nhập",
+     "mong": 69193600,
+     "lay": {
+      "phieu": "th25-nm",
+      "truong": "totals.beforeTax"
+     }
+    },
+    {
+     "ten": "CK dòng",
+     "mong": 4686400,
+     "lay": {
+      "tinh": "th25-nm",
+      "truong": "lineDiscount"
+     }
+    },
+    {
+     "ten": "Giảm giá sau mua: Có 1331",
+     "mong": 160000,
+     "lay": {
+      "butToan": "th25-ck",
+      "tk": "1331",
+      "ve": "co"
+     }
+    },
+    {
+     "ten": "Giảm giá sau mua: Có 1561",
+     "mong": 2000000,
+     "lay": {
+      "butToan": "th25-ck",
+      "tk": "1561",
+      "ve": "co"
+     }
+    }
+   ]
+  }
+ ]
+}
