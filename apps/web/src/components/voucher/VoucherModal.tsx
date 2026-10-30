@@ -10,6 +10,7 @@
  * Sửa giao diện, lời báo, thứ tự nút ở đây là mọi phiếu đổi theo.
  */
 import { useState, type ReactNode } from 'react';
+import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Download, LogOut, Printer, Save, X } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
@@ -51,11 +52,14 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
   children: ReactNode;
 }) {
   const cancelled = existing?.status === 'cancelled';
+  const dock = useDockWindow(onClose);
   return (
-    <div className="modal-mask" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <DockScope>
+    <div className={`modal-mask${dock.minimized ? ' is-min' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal wide vf" role="dialog" aria-modal="true">
-        <div className="modal-head vf-head">
+        <div className="modal-head vf-head" ref={(el) => { dock.headRef.current = el; }}>
           <span>{title}{existing ? ` ${existing.docNo}` : ''}{cancelled ? ' (đã huỷ)' : ''}</span>
+          {dock.top && <MinimizeButton onClick={dock.minimize} />}
           <button className="btn btn-sm btn-ghost" title="Đóng" onClick={onClose}><X size={16} /></button>
         </div>
         <div className="vf-toolbar">
@@ -74,6 +78,7 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
         </div>
       </div>
     </div>
+    </DockScope>
   );
 }
 

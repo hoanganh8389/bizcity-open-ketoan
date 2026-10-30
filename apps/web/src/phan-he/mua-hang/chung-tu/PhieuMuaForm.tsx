@@ -11,6 +11,7 @@
 import { Link } from 'react-router-dom';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { gridNav } from '@/lib/gridNav';
+import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { refOf } from '@ketoan/contracts';
 import {
   COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, orderProgress, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termText,
@@ -84,6 +85,8 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const [promoNote, setPromoNote] = useState<string[]>([]);
   const [err, setErr] = useState('');
   const [dirty, setDirty] = useState(false);
+  // Thu nhỏ xuống thanh dưới (giữ nguyên phiếu đang nhập); chấm cam ở ô = phiếu có thay đổi chưa lưu.
+  const dock = useDockWindow(onClose, dirty, `mh:${value.id}`);
   const names = useNames();
   const brands = useBrands(data.policies);
   const nccBrands = useSupplierBrands(v.partnerCode || undefined);
@@ -533,13 +536,15 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   const refReceipt = receipts.find((r) => (v.refIds ?? []).includes(r.id));
 
   return (
-    <div className="mh-sheet" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <DockScope>
+    <div className={`mh-sheet${dock.minimized ? ' is-min' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="mh-sheet-box" role="dialog" aria-modal="true" onDoubleClick={viewing && !frozen ? (e) => { if (!(e.target as HTMLElement).closest('button, a, .tab, .tabs')) setViewing(false); } : undefined}>
-        <div className="mh-sheet-head">
+        <div className="mh-sheet-head" ref={(el) => { dock.headRef.current = el; }}>
           <h2>{v.kind === 'rebate' && !v.rebate ? 'Chiết khấu / giảm giá sau mua' : KIND_LABEL[v.kind]} {v.docNo || '(mới)'} <span className={`badge ${statusBadge(v.status)}`}>{STATUS_LABEL[v.status]}</span>{v.override && <span className="badge badge-warn" style={{ marginLeft: 6 }}>Duyệt ngoại lệ: {v.override.by}</span>}{outside && <span className="badge badge-warn" style={{ marginLeft: 6 }} title={v.outsideOrder?.by ? `Lý do: ${v.outsideOrder.reason}
 Duyệt: ${v.outsideOrder.by} · ${new Date(v.outsideOrder.at!).toLocaleString('vi-VN', { hour12: false })}${v.outsideOrder.reviewedBy ? `
 Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.outsideOrder.reviewNote}` : ''}` : ''}` : 'Phiếu nhập không theo đơn đặt nào — phải ghi lý do'}>Nhập ngoài đơn{v.outsideOrder?.reviewedBy ? ' · đã rà soát' : v.outsideOrder?.by ? ' · chờ rà soát' : ''}</span>}{dirty && !readOnly && <span className="badge badge-gray" style={{ marginLeft: 6 }}>chưa ghi</span>}{viewing && !frozen && <span className="badge badge-info" style={{ marginLeft: 6 }}>Đang xem — bấm Sửa để thay đổi</span>}</h2>
           <button className="btn btn-sm btn-help" onClick={() => setHelp(true)}>? Hướng dẫn</button>
+          {dock.top && <MinimizeButton onClick={dock.minimize} />}
           <button className="btn btn-sm btn-ghost" onClick={onClose} aria-label="Đóng">✕</button>
         </div>
         {help && <HelpDrawer guideKey="mua-hang-chung-tu" onClose={() => setHelp(false)} />}
@@ -1199,6 +1204,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
         </div>
       </div>
     </div>
+    </DockScope>
   );
 }
 

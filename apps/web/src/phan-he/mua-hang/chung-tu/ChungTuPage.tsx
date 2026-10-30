@@ -7,6 +7,7 @@
  * Nút In (mẫu theo loại phiếu, mauIn.tsx): bảng chưa chọn được nhiều dòng nên in phiếu đang chọn.
  */
 import { workBranch } from '@/lib/workBranch';
+import { restoreDock } from '@/layout/WindowDock';
 import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { invoiceLabel, orderProgress, receiptFromOrder, type PDoc } from '@ketoan/contracts/mua-hang';
@@ -112,8 +113,8 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   const fromLink = () => { backOnClose.current = !embedded && location.key !== 'default'; };
   // Khoá lệnh theo từng lần (màn riêng: mỗi lần chuyển trang; nhúng: mỗi lần hồ sơ NCC gửi lệnh).
   const navKey = embedded ? `cmd-${command?.n ?? 0}` : location.key;
-  const closeForm = () => {
-    setEditing(null);
+  const closeForm = (id: string) => {
+    setForms((fs) => fs.filter((f) => f.id !== id));
     if (backOnClose.current) { backOnClose.current = false; navigate(-1); }
   };
   // Mở từ sơ đồ Quy trình: ?loai=<nhóm | loại phiếu> · ?trang-thai=draft|pending_approval · ?loi=1 · ?moi=<loại phiếu>
@@ -142,7 +143,13 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   const khoFilter: KhoFilter = { branches: branchCodes ? branchCodes.split(',').filter(Boolean) : [], warehouses: whCodes ? whCodes.split(',').filter(Boolean) : [] };
   const { khoOf } = useKhoOf();
   const [sel, setSel] = useState<StoredDoc | null>(null);
-  const [editing, setEditing] = useState<PDoc | null>(null);
+  // Nhiều phiếu mở cùng lúc (thu nhỏ xuống thanh dưới để làm việc khác rồi mở lại). Mở lại phiếu đang mở thì đưa nó lên, không mở trùng.
+  const [forms, setForms] = useState<PDoc[]>([]);
+  const setEditing = (d: PDoc | null) => {
+    if (!d) return;
+    if (forms.some((f) => f.id === d.id)) { restoreDock(`mh:${d.id}`); return; }
+    setForms((fs) => [...fs, d]);
+  };
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -326,7 +333,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
         );
       })()}
       </>}
-      {editing && data && <PhieuMuaForm key={editing.id} value={editing} data={data} onClose={closeForm} onSaved={() => void refresh()} onOpen={(d) => setEditing(d)} />}
+      {data && forms.map((f) => <PhieuMuaForm key={f.id} value={f} data={data} onClose={() => closeForm(f.id)} onSaved={() => void refresh()} onOpen={(d) => setEditing(d)} />)}
       {excel && data && <NhapExcel data={data} partnerCode={partner} onClose={() => setExcel(false)} onDone={(n) => { setExcel(false); if (formsOnly) { navigate(`/mua-hang/tong-hop?ncc=${encodeURIComponent(partner)}&trang-thai=draft`); return; } setStatus('draft'); setNotice(`Đã tạo ${n} phiếu nháp từ Excel — kiểm lại từng phiếu rồi gửi duyệt / duyệt.`); void refresh(); }} />}
     </>
   );

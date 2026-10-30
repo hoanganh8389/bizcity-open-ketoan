@@ -3,6 +3,7 @@
  * thanh menu chức năng bên trái (theo phân hệ đang chọn) và vùng làm việc nhiều thẻ.
  */
 import { useTenant } from '../features/system/TenantPage';
+import { WindowDock } from './WindowDock';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -35,6 +36,14 @@ export function AppLayout() {
   const [mobileNav, setMobileNav] = useState(false);
   const [collapsed, setCollapsed] = useState(sideNavCollapsed.get());
   const collapse = (v: boolean) => { sideNavCollapsed.set(v); setCollapsed(v); };
+  // Ctrl + B: đóng / mở menu trái (như các phần mềm soạn thảo).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'b') { e.preventDefault(); setCollapsed((c) => { sideNavCollapsed.set(!c); return !c; }); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   // Bề rộng menu trái: kéo mép phải menu để đổi, nhớ theo máy.
   const [navWidth, setNavWidth] = useState(sideNavWidth.get());
   const startResize = (e: React.MouseEvent) => {
@@ -142,6 +151,8 @@ export function AppLayout() {
       {sideNav && <SideNav title={<Link to={`/app/${mod.current.key}`} className="sidenav-module" style={{ color: 'inherit' }}><span className="sidenav-module-icon" style={{ background: mod.current.color }}><ModuleIcon name={mod.current.icon} size={14} color="#fff" /></span>{mod.current.label}</Link>} items={mod.items} collapsed={collapsed} onCollapse={collapse} onResizeStart={startResize} />}
       <main className="page">
         <TabWorkspace menu={menu} />
+        {/* Thanh dưới đáy: hộp thoại đang mở / đã thu nhỏ, ô "Màn chính". */}
+        <WindowDock />
         {/* Chỉ hiện khi in sổ, báo cáo: các ô chữ ký cuối trang. */}
         <div className="print-sign">
           <div><b>Người lập biểu</b><span>(Ký, họ tên)</span></div>

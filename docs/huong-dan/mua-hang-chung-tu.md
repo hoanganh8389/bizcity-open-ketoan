@@ -72,6 +72,15 @@ Một danh sách cho mọi chứng từ phía mua:
 
 Cùng hàng, cùng ngày thì mọi cách ra cùng số tiền.
 
+**Thu nhỏ phiếu — làm việc khác rồi quay lại (thanh dưới đáy):**
+- Nút **—** cạnh nút ✕ ở góc phiếu (và ở mọi hộp thoại khác): thu nhỏ phiếu xuống **thanh dưới đáy màn hình**. Mọi thứ đang gõ dở **giữ nguyên**, chưa lưu cũng không mất.
+- Mỗi phiếu đang mở là một ô trên thanh. **Chấm cam** = có thay đổi chưa lưu. Bấm ô để mở lại đúng chỗ đang làm; phiếu ở thẻ khác thì phần mềm tự chuyển sang thẻ đó. Bấm ô đang mở để thu nhỏ; **×** trên ô để đóng phiếu.
+- Ô **Màn chính** luôn đứng đầu: bấm để thu nhỏ hết, quay về màn đang xem (vd mở báo cáo để tra số rồi quay lại phiếu).
+- **Đóng tất cả** ở góc phải thanh. Hoặc **chuột phải** vào ô / vào thanh để chọn: *Mở lại / Thu nhỏ*, *Đóng ô này*, *Đóng các ô khác*, *Thu nhỏ tất cả*, *Đóng tất cả*. Có phiếu chưa lưu thì phần mềm liệt kê và hỏi lại trước khi đóng.
+- Menu trái: nút thu gọn ở trên cùng cạnh tên phân hệ (hoặc nút *Thu gọn* ở đáy, phím **Ctrl + B**).
+- Mở được nhiều phiếu cùng lúc: mở phiếu mới thì phiếu đang mở tự thu nhỏ xuống thanh. Mở lại một phiếu đang có trên thanh thì phần mềm đưa nó lên, không mở thêm bản trùng.
+- Thanh chỉ hiện khi có hộp thoại đang mở hoặc đã thu nhỏ, không chiếm chỗ lúc không dùng.
+
 **Thao tác nhanh trên dòng hàng:**
 - **Chuột phải** vào dòng mở menu:
   - **Nhân đôi dòng** (Ctrl + D);

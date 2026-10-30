@@ -51,7 +51,8 @@ export function SideNav({ title, items, collapsed, onCollapse, onResizeStart }: 
 
   return (
     <aside className="sidenav" aria-label="Menu chức năng">
-      <div className="sidenav-title">{title}</div>
+      {/* Nút thu gọn ở trên cùng (cạnh tên phân hệ) — khỏi phải kéo xuống đáy; nút "Thu gọn" ở đáy vẫn giữ. Phím tắt: Ctrl + B. */}
+      <div className="sidenav-title sidenav-title-row">{title}<button type="button" className="sidenav-top-toggle" title="Thu gọn menu (Ctrl + B) — bấm lại biểu tượng ở mép trái để mở" aria-label="Thu gọn menu" onClick={() => onCollapse(true)}><PanelLeftClose size={16} /></button></div>
       <nav className="sidenav-body">
         {items.map((m) =>
           m.children?.length ? (

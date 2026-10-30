@@ -2,6 +2,7 @@
  * Thành phần giao diện nhỏ, dùng chung ở mọi màn hình.
  */
 import { Children, Fragment, isValidElement, useCallback, useEffect, useRef, useState, type InputHTMLAttributes, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
+import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { X } from 'lucide-react';
 import { money, parseNum, price as priceText } from '@/lib/format';
 
@@ -111,10 +112,12 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
   useEffect(() => { if (viewSignal) setLocked(true); }, [viewSignal]);
   const mask = useRef<HTMLDivElement>(null);
   const edit = () => { setLocked(false); onEdit?.(); };
+  // Thu nhỏ xuống thanh dưới: ẩn bằng CSS, không gỡ — dữ liệu đang nhập còn nguyên.
+  const dock = useDockWindow(onClose);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Hộp thoại lồng nhau: chỉ hộp trên cùng nhận phím.
-      if (mask.current !== [...document.querySelectorAll('.modal-mask')].pop()) return;
+      // Hộp thoại lồng nhau: chỉ hộp trên cùng (đang hiện) nhận phím.
+      if (mask.current !== [...document.querySelectorAll('.modal-mask:not(.is-min)')].pop()) return;
       if (e.key === 'Escape') onClose();
       else if (locked && (e.key === 'F2' || (e.key === 'Enter' && !(e.target as HTMLElement).closest?.('button, a, textarea')))) { e.preventDefault(); edit(); }
     };
@@ -133,9 +136,10 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
     e.preventDefault(); e.stopPropagation();
   };
   return (
-    <div className="modal-mask" ref={mask} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <DockScope>
+    <div className={`modal-mask${dock.minimized ? ' is-min' : ''}`} ref={mask} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal ${wide ? 'wide' : ''} ${locked ? 'is-locked' : ''}`} role="dialog" aria-modal="true">
-        <div className="modal-head">{title}{locked && <span className="badge badge-info modal-viewing">Đang xem</span>}<button type="button" className="modal-x" data-view-ok onClick={onClose} aria-label="Đóng" title="Đóng (Esc)">✕</button></div>
+        <div className="modal-head" ref={(el) => { dock.headRef.current = el; }}>{title}{locked && <span className="badge badge-info modal-viewing">Đang xem</span>}{dock.top && <MinimizeButton onClick={dock.minimize} />}<button type="button" className="modal-x" data-view-ok onClick={onClose} aria-label="Đóng" title="Đóng (Esc)">✕</button></div>
         <div className="modal-body" onClickCapture={guard} onMouseDownCapture={guard} onKeyDownCapture={guard} onPasteCapture={guard} onDropCapture={guard} onCutCapture={guard}>
           {children}
         </div>
@@ -148,6 +152,7 @@ export function Modal({ title, onClose, children, footer, wide, viewFirst, viewA
         </div>
       </div>
     </div>
+    </DockScope>
   );
 }
 
