@@ -8,7 +8,7 @@
 
 **Đi nhanh:** [Cài đặt](#cài-đặt) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)
 
-## Vì sao chúng tôi xây dựng open-ketoan?
+## Vì sao có open-ketoan?
 
 Nhiều doanh nghiệp và hộ kinh doanh Việt Nam đang dùng các phần mềm kế toán đóng hoặc SaaS. Những hệ thống đó có giá trị thực tế. Nhưng khi doanh nghiệp muốn mở rộng một quy trình riêng, kết nối với POS / CRM / kho, tự viết ứng dụng trên dữ liệu kế toán, hay vibe-code thêm module mới để thích ứng với nhu cầu phát triển, họ thường bị giới hạn bởi API, quyền truy cập, chi phí và chính sách của nhà cung cấp.
 
@@ -16,7 +16,7 @@ Trong kỷ nguyên AI, người dùng có thể tạo phần mềm nhanh hơn r�
 
 **open-ketoan chọn việc xây một lõi kế toán chung đủ rõ ràng để mọi người có thể xây dựng phần còn lại.**
 
-Chúng tôi muốn doanh nghiệp sở hữu và chủ động với dữ liệu của mình, còn cộng đồng developer, kế toán và AI builders có thể tạo ra những ứng dụng phù hợp với nhu cầu thực tế, thay vì bắt đầu lại từ sổ cái.
+Doanh nghiệp cần được sở hữu và chủ động với dữ liệu của mình, còn cộng đồng developer, kế toán và AI builders có thể tạo ra những ứng dụng phù hợp với nhu cầu thực tế, thay vì bắt đầu lại từ sổ cái.
 
 ## Tầm nhìn: chuyển đổi số tận gốc bắt đầu từ phần mềm kế toán
 
@@ -30,7 +30,7 @@ Dự án hướng đến ba nhóm cùng tạo giá trị:
 - **Kế toán và chuyên gia nghiệp vụ:** tham gia định nghĩa, phản biện, kiểm thử và duy trì các quy tắc kế toán, gói cấu hình theo ngành.
 - **Developer và AI builders:** sử dụng SDK, API, MCP và các hợp đồng công khai để xây module, không cần và không được sửa trực tiếp sổ cái.
 
-## Bốn nguyên tắc không thương lượng
+## Bốn nguyên tắc quan trọng lưu ý nhé:
 
 1. **Không chứng từ / sự việc hợp lệ thì không có bút toán.** Mọi bút toán truy nguyên được nguồn và phiên bản.
 2. **Sổ cái chỉ thêm.** Không âm thầm sửa hoặc xoá bút toán đã ghi; sai sót được xử lý bằng nghiệp vụ điều chỉnh / đảo phù hợp, giữ lại lịch sử.
@@ -243,7 +243,7 @@ open-ketoan đang trong giai đoạn **xây dựng / chuẩn hoá framework**. K
 | RLS, PITR và hardening cho multi-tenant | Cần tiếp tục hoàn thiện |
 | NATS, Redis, Kong, Kubernetes | Tuỳ chọn ở các giai đoạn sau |
 
-Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/standard/roadmap.json`). Điểm tuân thủ 9 yêu cầu bắt buộc tự tính mỗi lần chạy bộ kiểm: [Bản công bố kiến trúc §4.1](docs/CONG-BO-KIEN-TRUC.md). Thay đổi theo phiên bản: [CHANGELOG.md](CHANGELOG.md).
+Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/standard/roadmap.json`). Việc chia thành **17 thư mục phase** (kế hoạch, checklist con, bằng chứng; phase nào đã có code): [docs/phases/](docs/phases/README.md). Đánh giá codebase so với kiến trúc (khoảng 50% kiến trúc công bố): [AUDIT-2026-10-30-KIEN-TRUC](docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md). Điểm tuân thủ 9 yêu cầu bắt buộc tự tính mỗi lần chạy bộ kiểm: [Bản công bố kiến trúc §4.1](docs/CONG-BO-KIEN-TRUC.md). Thay đổi theo phiên bản: [CHANGELOG.md](CHANGELOG.md).
 
 **Không coi bản công bố kiến trúc là chứng nhận tuân thủ pháp luật hoặc bảo đảm sẵn sàng production.** Các chế độ kế toán và quy định pháp lý cần được đối chiếu theo đối tượng sử dụng, thời điểm áp dụng và kiểm nghiệm thực tế.
 
