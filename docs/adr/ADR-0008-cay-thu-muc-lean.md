@@ -1,4 +1,5 @@
 # ADR-0008 · Cây thư mục lean: đánh giá đề xuất 9 thư mục gốc, chốt ánh xạ vào TARGET-LAYOUT
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 
 - Trạng thái: Chấp nhận
 - Ngày: 2026-10-30 · Người quyết: chủ dự án (Johnny Chu)

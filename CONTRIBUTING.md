@@ -1,4 +1,9 @@
 # Đóng góp cho Bizcity Core (open-ketoan)
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
+<!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 
 Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một dòng code sai có thể làm sai sổ của doanh nghiệp. Quy trình dưới đây chặt hơn một dự án web thường. Làm đúng thì PR vào nhanh.
 
@@ -73,6 +78,10 @@ docker compose up -d db && npm test         # PostgreSQL thật; sau mỗi tệp
 - **Thao tác ghi mới:** viết bằng `defineAction` (quyền, idempotency, bằng chứng do runtime lo), không route Fastify tay.
 - **Log và số đo:** không dữ liệu cá nhân, không bí mật (R-SEC-10); số đo không nhãn `tenant` (R-OBS-4).
 - **Đặt tên mới:** [04-DAT-TEN-BIZCITY](docs/framework/04-DAT-TEN-BIZCITY.md).
+- **Chữ ký và dấu thay đổi (R-SIG):**
+  - sửa có chức năng một tệp framework → thêm dấu `[YYYY-MM-DD HH:MM AM/PM <người chỉ đạo>] <MÃ> — <mô tả>` tại chỗ đổi (`node scripts/ky-dau.mjs`);
+  - không xoá chữ ký kiến trúc Johnny Chu – Chu Hoàng Anh;
+  - không ghi tên agent ([RULE-SIGNATURE](docs/rules/RULE-SIGNATURE.md), SC-SIG-1 / -2).
 
 ## 7. Quyết định kiến trúc (ADR)
 

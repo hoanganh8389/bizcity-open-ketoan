@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * HOÁ ĐƠN ĐẦU VÀO CỦA NHÀ CUNG CẤP — phần tính dùng chung (máy chủ + giao diện):
  *   - Khuôn hoá đơn NCC (đầu phiếu + dòng hàng theo cách NCC ghi: mã / tên / ĐVT của họ) — nguồn: gõ tay, Excel, AI đọc ảnh / PDF, API.

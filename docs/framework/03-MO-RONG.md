@@ -1,4 +1,5 @@
 # 03 · Mở rộng mà không đụng lõi
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 Ba cách mở rộng, chọn theo bảng dưới. Cả ba **chỉ** tác động sổ sách bằng cách nộp sự việc (`bizcity_ledger_intake@1`).
 

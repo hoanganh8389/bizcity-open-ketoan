@@ -1,4 +1,6 @@
 // @bizcity-layer P module-sdk
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Đọc cấu trúc cơ sở dữ liệu thật (catalog của PostgreSQL) và ghép với danh mục giải thích.
  * Chỉ đọc, không có dữ liệu nghiệp vụ: chỉ tên bảng, cột, chú thích, ràng buộc, trigger và số dòng ước lượng.

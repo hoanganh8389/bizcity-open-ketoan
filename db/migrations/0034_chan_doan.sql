@@ -1,3 +1,4 @@
+-- [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 -- =============================================================================
 -- 0034 diagnostic_runs: kết quả mỗi lần tự chẩn đoán (R-DIAG-5, PHASES 2.10) — GET /api/v1/system/diagnostics, trước khi khoá kỳ
 --      (R-DIAG-4), sau cập nhật. Chỉ thêm: không sửa dòng đã ghi (trigger). Xoá chỉ để dọn dòng quá hạn giữ (90 ngày), do lệnh

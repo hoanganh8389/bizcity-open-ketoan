@@ -1,4 +1,6 @@
 # PHASE-004 — Một cửa ghi sổ: `eventStore.commit()` cho phiếu tay, kết chuyển, khấu hao, giá vốn
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 
 > **Trạng thái:** ✅ code xong 2026-10-30 (W0–W5); sổ trước / sau trùng khớp (T004-1). Mở đường cho PHASE-005, 006, 009, 010
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
@@ -8,7 +10,7 @@
 > **Tuân thủ / nguyên tắc:** C-1, C-7 · AP-1, AP-5
 > **Phụ thuộc phase:** 003 (xong)
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|

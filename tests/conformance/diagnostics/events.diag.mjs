@@ -1,3 +1,4 @@
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 /**
  * Lane diagnostics — sự kiện miền (bizcity_event@1, migration 0039): không có việc giao hết lượt thử (dead) nằm im.
  * Cùng mã EVENT_DEAD với kiểm trong app (apps/api/src/modules/system/diagnostics.ts) — SC-DIAG-1. CHỈ ĐỌC.

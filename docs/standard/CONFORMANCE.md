@@ -1,4 +1,6 @@
 # Bộ kiểm cài đặt module (Conformance)
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
 
 > Thực thi nguyên tắc **P3: AI viết code, Core quyết định hợp lệ.** Không module nào được cài nếu chưa có báo cáo kiểm **ĐẠT** khớp với băm mã nguồn của nó.
 > Lệnh hiện có: `node tests/conformance/selfcheck.mjs --module modules/<key>` (Phase 4: `bizcity module check`, gọi cùng các check) · Mã nguồn bộ kiểm: [tests/conformance/](../../tests/conformance/README.md) ([ADR-0006](../adr/ADR-0006-bo-kiem-chuan-mot-cho.md)).

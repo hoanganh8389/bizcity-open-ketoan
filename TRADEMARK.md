@@ -1,4 +1,5 @@
 # Chính sách nhãn hiệu BizCity
+<!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
 
 > **Cập nhật:** 2026-10-30 · **Chủ sở hữu:** Johnny Chu (Chu Hoàng Anh) / BizCity · **Liên hệ:** https://bizcity.vn
 > Áp dụng cho repository `bizcity-open-ketoan`, cùng chính sách với `bizcity-twin-ai`.

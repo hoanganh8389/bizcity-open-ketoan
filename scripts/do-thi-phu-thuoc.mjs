@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Đồ thị phụ thuộc theo lớp của apps/api/src (PHASES 1.4) → docs/audits/deps-<ngày>.{svg,md,json}.
  * Nút tô màu theo lớp (K P M D A U, bảng tests/conformance/lib/layers.mjs); cạnh đỏ = import ngược chiều lớp

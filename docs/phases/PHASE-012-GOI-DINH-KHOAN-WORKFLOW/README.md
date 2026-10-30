@@ -1,4 +1,5 @@
 # PHASE-012 — Workflow khai báo, `ledger.query`, gói định khoản cài / gỡ, gợi ý lý do
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 
 > **Trạng thái:** 🟡 khuôn gói định khoản + SC-TPL-1 có; cài / gỡ, workflow, `ledger.query` chưa
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 13%
@@ -8,7 +9,7 @@
 > **Tuân thủ / nguyên tắc:** AP-1
 > **Phụ thuộc phase:** 005, 011
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|

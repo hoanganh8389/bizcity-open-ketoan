@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Chạy check song song trên worker_threads. Mỗi worker nhận một check, dựng ctx riêng, trả kết quả thuần JSON.
  * Một check treo quá `timeoutMs` → bị cắt, worker được thay mới, kết quả `error`.

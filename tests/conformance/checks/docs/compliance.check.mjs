@@ -1,3 +1,4 @@
+// [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
 /**
  * docs/standard/compliance-matrix.json (bizcity_compliance_matrix@1) đúng khuôn và khớp bizcity_compliance@1 §2 — để ma trận tuân thủ
  * trên bảng điểm đáng tin (AP-7: tuân thủ được kiểm, không chỉ viết): mã C-n liên tục, mỗi dòng trỏ một STD-CMP-n khai trong

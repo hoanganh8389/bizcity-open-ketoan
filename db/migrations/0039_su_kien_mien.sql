@@ -1,3 +1,4 @@
+-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 -- =============================================================================
 -- 0039 Sự kiện miền: transactional outbox (bizcity_event@1, R-OUTBOX-1..7; PHASE-006, PHASES 3.4).
 --      event_outbox        : sự kiện ghi CÙNG giao dịch với dữ liệu gây ra nó (giao dịch huỷ → không có sự kiện).

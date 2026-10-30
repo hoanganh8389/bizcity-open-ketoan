@@ -1,10 +1,12 @@
 # PHASE-004 — Một cửa ghi sổ: `eventStore.commit()`
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > **Mức Kernel:** K2 (đổi đường ghi nội bộ, không đổi hợp đồng, không đổi kết quả sổ) → 2 người duyệt, 1 người hiểu nghiệp vụ ([RULE-KERNEL](../../rules/RULE-KERNEL.md)). Nếu W0 cho thấy phải đổi kết quả sổ thì lên K3 + ADR.
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh). -->
-<!-- [2026-10-30] Chủ: "ok, code nhé" ⇒ D004-1…5 duyệt; Q004-1…3 chốt theo cột "Gợi ý" (§3.1). -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh). -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — Chủ: "ok, code nhé" ⇒ D004-1…5 duyệt; Q004-1…3 chốt theo cột "Gợi ý" (§3.1). -->
 
 > **Đã duyệt 2026-10-30.** Đã code xong W0–W5 (xem [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md)).
 > D004-1 làm thành **chuỗi hàm** `eventStore.lock → reverseActive → saveVersion → post → markPosted` (+ `cancel`, `overwriteCostPairs`), không phải một hàm `commit()` duy nhất.

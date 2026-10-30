@@ -1,4 +1,6 @@
 // @bizcity-layer P apps/api
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * PHÂN HỆ phía máy chủ. Mỗi phân hệ một thư mục src/phan-he/<key>/ (index.ts khai route + mã nguồn riêng của phân hệ);
  * lõi (luôn bật) ở loi.ts. Biến ENABLED_MODULES chọn phân hệ chạy trong một tiến trình (dev theo phân hệ):

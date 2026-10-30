@@ -1,4 +1,9 @@
 # Hướng dẫn cho AI agent (Claude Code, Copilot, Codex, Cursor…)
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 
 Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng doanh nghiệp, hạt nhân là sổ cái kế toán. Trước khi sửa code, đọc [docs/00-CANON.md](docs/00-CANON.md). Viết module mới: theo [docs/standard/README.md](docs/standard/README.md).
 
@@ -39,6 +44,22 @@ Dán khối bằng chứng theo [docs/ops/DIAGNOSTICS.md](docs/ops/DIAGNOSTICS.m
 ## Đổi code X → sửa tài liệu Y
 
 Tra bảng §5 trong [docs/00-CANON.md](docs/00-CANON.md). Thêm khoá cấu hình → [docs/contracts/bizcity-settings.registry.json](docs/contracts/bizcity-settings.registry.json). Đổi khuôn chứng từ → [docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md](docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md) + `docs/api/`.
+
+## Chữ ký và dấu thay đổi (R-SIG — bắt buộc)
+
+<!-- [2026-10-30 09:40 PM Johnny Chu - Chu Hoàng Anh] R-SIG — luật chữ ký kiến trúc + dấu thay đổi theo phase cho mọi tệp framework (cùng R-STAMP của bizcity-twin-ai). -->
+
+Kiến trúc open-ketoan do **Johnny Chu – Chu Hoàng Anh** thiết kế. Mỗi lần sửa **có chức năng** một tệp framework (Kernel, Platform, hợp đồng, migration chưa phát hành, hạ tầng, công cụ framework, tài liệu kiến trúc / luật / hợp đồng / phase) để lại **một dấu** ngay tại chỗ đổi:
+
+```text
+[YYYY-MM-DD HH:MM AM/PM Johnny Chu - Chu Hoàng Anh] <MÃ phase / luật> — <đổi gì, cụ thể>
+```
+
+- `node scripts/ky-dau.mjs PHASE-011 "<mô tả>" --file <tệp>` in sẵn dòng đúng giờ, đúng cú pháp chú thích. TS / JS: đặt **sau** dòng nhãn `// @bizcity-layer`.
+- Người trong dấu là **người chỉ đạo / duyệt**. **Không bao giờ** ghi tên agent / model (Claude, Copilot, Codex, Cursor…).
+- Không xoá, không sửa dấu cũ; đổi lại quyết định thì thêm dấu mới. Migration đã phát hành **không** thêm dấu (không sửa một byte).
+- Trước khi bàn giao: liệt kê tệp framework đã sửa và xác nhận mỗi phần đổi có dấu. Thiếu dấu = **KHÔNG ĐẠT** (SC-SIG-1, SC-SIG-2).
+- Luật đầy đủ, danh sách tệp framework: [docs/rules/RULE-SIGNATURE.md](docs/rules/RULE-SIGNATURE.md).
 
 ## Quy ước
 

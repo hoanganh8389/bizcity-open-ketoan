@@ -1,4 +1,5 @@
 # Bộ giám sát (tuỳ chọn) — Prometheus · Alertmanager · Grafana · Loki
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 
 Bộ giám sát **không bắt buộc**: hệ thống kế toán chạy bình thường khi không bật. Bật lên khi cần theo dõi
 sức khoẻ API, CSDL, hàng đợi ghi sổ và nhật ký trên một máy chủ thật.

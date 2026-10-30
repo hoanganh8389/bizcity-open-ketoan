@@ -1,3 +1,4 @@
+// [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán.
 /**
  * RULE-SECURITY (R-SEC-*) — phần đọc được từ mã nguồn và cấu hình repo.
  */

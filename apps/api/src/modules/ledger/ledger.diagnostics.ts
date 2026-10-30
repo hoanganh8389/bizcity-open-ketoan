@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/ledger
+// [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
+// [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Kiểm toàn vẹn sổ của Kernel (L3) và lớp bảo vệ sổ (L1) — đăng ký vào bộ chẩn đoán của Platform (modules/system/diagnostics.ts)
  * lúc lắp ráp. SQL chép từ lane diagnostics của bộ kiểm chuẩn (tests/conformance/diagnostics/ledger.diag.mjs, install.diag.mjs),

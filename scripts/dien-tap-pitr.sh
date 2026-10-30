@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục.
 # =============================================================================
 # DIỄN TẬP PITR (R-BAK-2, R-BAK-3; G3-07): chứng minh khôi phục được tới MỘT THỜI ĐIỂM và đo RTO / RPO thật — trên container
 # tạm, không đụng CSDL đang chạy.

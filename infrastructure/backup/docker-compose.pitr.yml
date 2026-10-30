@@ -1,3 +1,4 @@
+# [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục.
 # =============================================================================
 # PITR (R-BAK-2): bật lưu WAL liên tục cho service db — khôi phục được tới một thời điểm bất kỳ sau bản sao lưu gốc.
 #

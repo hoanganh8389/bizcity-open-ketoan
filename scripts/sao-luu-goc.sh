@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục.
 # =============================================================================
 # SAO LƯU GỐC cho PITR (R-BAK-2, infrastructure/backup/README.md): pg_basebackup của service db vào ổ walbackup:/backup/base.
 # Cần đã bật lưu WAL (docker-compose.pitr.yml). Khôi phục tới thời điểm T = bản gốc mới nhất trước T + WAL từ đó tới T.

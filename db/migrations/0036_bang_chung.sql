@@ -1,3 +1,4 @@
+-- [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 -- =============================================================================
 -- 0036 Bằng chứng (bizcity_evidence@1 §5, PHASES 2.6): mở rộng audit_logs thành bảng bằng chứng chung — giữ tên, giữ dữ liệu cũ
 --      (ADR-0002). Thêm: loại người gọi, kênh, module, chủ thể, mã yêu cầu, Idempotency-Key, băm input, kết quả, chạy thử,

@@ -1,3 +1,4 @@
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Nhãn lớp đầu tệp (PHASES 1.2, R-BOUND-10): mọi tệp apps/api/src có `// @bizcity-layer <lớp> <đích>` khớp bảng lớp
  * lib/layers.mjs (REUSE-MAP §3). Tệp mới thiếu nhãn → `node scripts/gan-nhan-lop.mjs --write`; bảng chưa phủ → thêm dòng.

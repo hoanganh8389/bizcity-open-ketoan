@@ -1,4 +1,5 @@
 # `bizcity_domain@1` — Domain Contract: bất biến kế toán của Core
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
 > **Phiên bản:** 1.0.0 · 2026-10-30 · **Trạng thái:** Chấp nhận · **Lớp:** 1/4 của [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md)
 > **Tầng:** T0 (Kernel). **Dev và AI không được tự ý phá vỡ.** Đổi bất kỳ dòng nào ở §2–§6 là thay đổi Kernel **mức K3** ([RULE-KERNEL](../rules/RULE-KERNEL.md)): cần ADR, hai người duyệt nhóm Lõi, kế toán trưởng ký phần nghiệp vụ.

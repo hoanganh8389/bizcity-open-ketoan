@@ -1,4 +1,6 @@
 # 01 · Lõi là gì (Core Modules)
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 
 Lõi = mọi thứ **luôn bật** ở mọi tiến trình và mà phân hệ nào cũng dựa vào. Lõi chia hai lớp: **Nhân** (T0, gần như không đổi) và **Dịch vụ lõi** (T1, mở rộng có kiểm soát).
 

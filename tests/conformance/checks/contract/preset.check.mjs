@@ -1,3 +1,4 @@
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * bizcity_preset@1 (docs/contracts/BIZCITY-PRESET-v1.md): mọi presets/<id>/preset.json đúng schema, id = tên thư mục, tệp tham chiếu
  * có thật, dữ liệu mẫu hư cấu (fictional: true — repo công khai), phân hệ có thật, năng lực có trong bảng năng lực, chứng từ mẫu đúng

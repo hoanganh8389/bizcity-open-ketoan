@@ -1,4 +1,5 @@
 # `bizcity_preset@1` — Gói cài nhanh theo ngành
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 
 > **Phiên bản:** 1.0.0 · 2026-10-30 · **Trạng thái:** Chấp nhận · **Schema:** [BIZCITY-PRESET-v1.schema.json](BIZCITY-PRESET-v1.schema.json)
 > **Thư mục:** [`presets/<id>/`](../../presets/README.md) · **Cài:** `node scripts/cai-preset.mjs <id>` (Phase 4: `bizcity init --preset <id>`)

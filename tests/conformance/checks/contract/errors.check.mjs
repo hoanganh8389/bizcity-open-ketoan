@@ -1,3 +1,4 @@
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * bizcity_errors@1 (R-ERR-1, R-ERR-6): danh mục máy đọc packages/contracts/src/errors.ts là nguồn duy nhất —
  * bảng người đọc docs/contracts/BIZCITY-ERRORS-v1.md §3 phải khớp từng mã (HTTP, thử lại, thông báo, gợi ý);

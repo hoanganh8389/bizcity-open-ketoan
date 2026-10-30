@@ -1,3 +1,4 @@
+# [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 # =============================================================================
 # Loki 3.x — chế độ một tiến trình (single binary), lưu trên đĩa (ổ loki-data), giữ nhật ký 30 ngày.
 # Đủ cho một máy chủ; khi cần mở rộng nhiều máy hãy chuyển sang lưu trữ đối tượng (S3/MinIO).

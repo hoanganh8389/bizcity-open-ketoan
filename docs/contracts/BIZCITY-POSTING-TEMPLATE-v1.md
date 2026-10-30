@@ -1,4 +1,5 @@
 # `bizcity_posting_template@1` — Gói định khoản (thư viện lý do, marketplace)
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (hợp đồng dữ liệu cấu hình, không phải code)
 > **Schema:** [BIZCITY-POSTING-TEMPLATE-v1.schema.json](BIZCITY-POSTING-TEMPLATE-v1.schema.json) · **Ví dụ:** [../standard/examples/vn-tt99-thuong-mai.posting-pack.json](../standard/examples/vn-tt99-thuong-mai.posting-pack.json)

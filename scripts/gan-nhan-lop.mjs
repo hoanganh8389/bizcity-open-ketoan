@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Gắn nhãn lớp `// @bizcity-layer <lớp> <đích>` ở dòng đầu mọi tệp apps/api/src (PHASES 1.2), theo bảng
  * tests/conformance/lib/layers.mjs (chép từ REUSE-MAP §3).

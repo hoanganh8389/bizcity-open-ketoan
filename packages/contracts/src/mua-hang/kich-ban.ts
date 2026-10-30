@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * 25 TÌNH HUỐNG của tài liệu yêu cầu mua hàng → phép thử công thức: đưa đúng số liệu tài liệu vào bộ máy, kết quả phải ra
  * đúng con số tài liệu ghi. Chạy ở kiểm thử máy chủ (apps/api/test/mua-hang.test.ts) và màn Tổng quan mua hàng (MH00).

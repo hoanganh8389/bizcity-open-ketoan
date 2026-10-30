@@ -1,4 +1,6 @@
 # PHASE-007 — Cô lập đơn vị: `ctx.data.tx`, RLS, kiểm tấn công chéo đơn vị
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 
 > **Trạng thái:** 🟡 RLS 84 bảng + gắn đơn vị theo yêu cầu + thử tấn công chéo: có (2026-10-30). Còn `bizcity_read`, migration theo module; ⛔ bản cài thật chạy API bằng `ketoan_app`
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
@@ -8,7 +10,7 @@
 > **Tuân thủ / nguyên tắc:** C-7 · DG-PLAN-5
 > **Phụ thuộc phase:** —
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|

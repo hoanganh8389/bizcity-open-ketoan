@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/intake
+// [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
 /**
  * Công cụ GHI `accounting.*` cho trợ lý AI (bizcity_mcp@1 §5.2, CONG-BO-KIEN-TRUC §2.1; PHASE-009, PHASES 2.16). Chỉ ĐỀ XUẤT:
  * kết quả luôn chờ người có quyền duyệt ở ACC14 (STD-MCP-6) — không công cụ nào ghi thẳng sổ, duyệt, khoá kỳ hay xoá.

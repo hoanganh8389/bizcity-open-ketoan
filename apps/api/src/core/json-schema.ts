@@ -1,4 +1,6 @@
 // @bizcity-layer P actions
+// [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc.
+// [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
 /**
  * zod → JSON Schema (draft 2020-12, phần con đủ cho các kiểu action đang dùng; kiểu lạ → {} kèm mô tả). Dùng cho công cụ MCP
  * (inputSchema / outputSchema) và bảng Capability Contract công bố ở GET /api/v1/system/capabilities. Không cần gói ngoài.

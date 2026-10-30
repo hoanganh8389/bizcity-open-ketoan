@@ -1,4 +1,5 @@
 # Phát hành — từng bước
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
 
 > **Luật:** [../rules/RULE-RELEASE.md](../rules/RULE-RELEASE.md) (R-REL) · **Đánh số:** [../standard/VERSIONING.md](../standard/VERSIONING.md) · **Kernel:** [../rules/RULE-KERNEL.md](../rules/RULE-KERNEL.md) · **Tự chẩn đoán:** [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md)
 

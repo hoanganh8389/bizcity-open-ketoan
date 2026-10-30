@@ -1,4 +1,6 @@
 # ADR-0009 · Chính sách kế toán có phiên bản và ngày hiệu lực
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 
 - Trạng thái: **Chấp nhận** — chủ dự án (Johnny Chu) đồng ý 2026-10-30 ("đồng ý ADR-0009"), phương án A + gợi ý Q-2…Q-5. **Kế toán trưởng: chưa ký** — ghi tên + ngày vào đây khi duyệt (RULE-KERNEL K3)
 - Ngày: 2026-10-30 · Mức Kernel: **K3** (đổi cách định khoản) — cần ADR, 2 người nhóm Lõi, kế toán trưởng ([RULE-KERNEL](../rules/RULE-KERNEL.md))

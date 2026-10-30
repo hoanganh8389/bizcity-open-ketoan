@@ -1,9 +1,10 @@
 # PHASE-006 — Transactional outbox, subscriber, đồng hồ, correlation
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
 
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > **Mức:** Platform (P) + điểm phát trong Kernel (K1: thêm ghi outbox trong giao dịch sổ, không đổi kết quả sổ). Hợp đồng: [`bizcity_event@1`](../../contracts/BIZCITY-EVENT-v1.md), luật [R-OUTBOX-1..7](../../rules/RULE-INFRASTRUCTURE.md).
 
-<!-- [2026-10-30] Chủ: "tiếp tục" sau PHASE-004 (đề xuất làm 006) ⇒ thiết kế theo hợp đồng đã công bố, không có câu hỏi mở cần chủ chốt. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — Chủ: "tiếp tục" sau PHASE-004 (đề xuất làm 006) ⇒ thiết kế theo hợp đồng đã công bố, không có câu hỏi mở cần chủ chốt. -->
 
 ## 1. Thiết kế đã chọn (D006-*)
 

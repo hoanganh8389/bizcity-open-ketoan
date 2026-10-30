@@ -1,3 +1,4 @@
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Chiều phụ thuộc giữa các lớp (TARGET-LAYOUT §2: LAYOUT-1, LAYOUT-2, LAYOUT-4; ADR-0005) trên apps/api/src, đo bằng đồ thị
  * import của lib/depgraph.mjs. Cạnh ngược chiều có sẵn lúc mở check (mốc docs/audits/deps-2026-10-30.*) nằm trong baseline;

@@ -1,3 +1,4 @@
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * Danh mục mã lỗi (bizcity_errors@1) — NGUỒN DUY NHẤT cho: HTTP status, có thử lại được không, thông báo mặc định, gợi ý.
  * API (core/errors.ts) lấy thông báo mặc định, MCP lấy hint, giao diện lấy cách xử lý. Bảng người đọc:

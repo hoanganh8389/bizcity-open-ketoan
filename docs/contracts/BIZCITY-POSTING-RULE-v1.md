@@ -1,4 +1,5 @@
 # `bizcity_posting_rule@1` — Hợp đồng luật định khoản
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > **Phiên bản:** 1.0.0 · 2026-10-28 · **Trạng thái:** Ổn định (nội bộ lõi) · **Luật:** [R-POST](../rules/RULE-POSTING.md)
 > **Nguồn sự thật:** `modules/posting/posting.service.ts` (`RULES`), `rules/*.rule.ts`, `account-resolver.ts`, `entry-builder.ts`, `modules/ledger/ledger.types.ts`

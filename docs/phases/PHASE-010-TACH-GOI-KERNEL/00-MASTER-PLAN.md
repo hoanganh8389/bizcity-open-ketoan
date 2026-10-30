@@ -1,9 +1,10 @@
 # PHASE-010 — Tách gói Kernel
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > Quyết định gốc: [ADR-0008](../../adr/ADR-0008-cay-thu-muc-lean.md) (một gói `packages/kernel`), lộ trình 2.3, 2.7, 2.8.
 
-<!-- [2026-10-30] Chủ: "tiếp theo" sau PHASE-007 ⇒ làm 010. -->
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — Chủ: "tiếp theo" sau PHASE-007 ⇒ làm 010. -->
 
 ## 1. Hiện trạng đo được (2026-10-30)
 

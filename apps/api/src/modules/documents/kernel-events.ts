@@ -1,4 +1,6 @@
 // @bizcity-layer K kernel/intake
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Sự kiện Core do Kernel phát (bizcity_event@1 §7), ghi cùng giao dịch với sổ:
  *   bizcity.ledger.entry.posted    — một phiên bản chứng từ đã vào sổ (cửa nạp hoặc eventStore); subject = docKey

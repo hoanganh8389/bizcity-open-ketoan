@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Hoá đơn lấy từ cổng hoá đơn điện tử của cơ quan thuế (THUE01) và cảnh báo rủi ro (THUE02, THUE02).
  * Hàm chuẩn hoá dùng chung cho giao diện (đọc tệp) và máy chủ (đối chiếu với sổ hoá đơn).

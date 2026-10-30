@@ -28,6 +28,7 @@
 - [ ] **R-WF** — Chỉ trạng thái đã duyệt mới nộp sự việc.
 - [ ] **Hợp đồng** — Đổi `packages/contracts` / API công khai → đã cập nhật `docs/contracts/*` (tăng phiên bản, changelog) và `docs/api/` + JSON mẫu.
 - [ ] **CANON §5** — Đã sửa các tài liệu tương ứng với phần code bị đổi.
+- [ ] **R-SIG** — Mỗi phần đổi có chức năng trong tệp framework có dấu `[YYYY-MM-DD HH:MM AM/PM <người chỉ đạo>] <MÃ> — <mô tả>` (`node scripts/ky-dau.mjs`); không xoá dấu cũ, không ghi tên agent ([RULE-SIGNATURE](../docs/rules/RULE-SIGNATURE.md)).
 - [ ] **R-SEC** — Không bí mật trong code; không ghép đầu vào vào SQL (`sql.raw`); tệp tải lên có trần; không PII trong log / PR.
 - [ ] **R-REL** — Đã thêm dòng vào `CHANGELOG.md` mục `[Chưa phát hành]` (đổi định khoản K2+ ghi ở mục riêng).
 - [ ] **Bộ kiểm** — `node tests/conformance/selfcheck.mjs` ĐẠT; không thêm nợ vào `baseline.json` (trừ khi nhóm Lõi duyệt, có `ref`).

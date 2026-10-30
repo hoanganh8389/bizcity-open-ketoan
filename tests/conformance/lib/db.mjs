@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Kết nối CSDL cho lane diagnostics. CHỈ ĐỌC: mọi truy vấn chạy trong giao dịch `READ ONLY`.
  * Không tự dò CSDL — phải chỉ rõ một trong hai cách:

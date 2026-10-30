@@ -1,4 +1,6 @@
 // @bizcity-layer P data
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Thư mục CƠ SỞ DỮ LIỆU của dự án: <gốc repo>/db (người phụ trách DB quản lý — xem db/README.md).
  *   db/migrations/NNNN_ten.sql   khai báo bảng (chạy bằng job db-migrate / npm run db:migrate)

@@ -1,4 +1,5 @@
 # Thư viện gói định khoản (marketplace)
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
 
 > **Hợp đồng gói:** [bizcity_posting_template@1](../contracts/BIZCITY-POSTING-TEMPLATE-v1.md) · **Kiểm:** SC-TPL-1 ([tests/conformance](../../tests/conformance/README.md)) · **AI dùng gói:** [bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md) §5
 > **Mục tiêu:** chủ doanh nghiệp **không cần biết định khoản** vẫn có sổ đúng. Họ chọn ngành, tải gói, rồi để trợ lý AI chọn lý do cho từng nghiệp vụ. Kế toán dịch vụ và cộng đồng chia sẻ gói đã kiểm cho nhau.

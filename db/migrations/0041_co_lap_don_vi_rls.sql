@@ -1,3 +1,4 @@
+-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 -- =============================================================================
 -- 0041 Cô lập đơn vị ở tầng CSDL — Row Level Security (PHASE-007, PHASES 2.4, G1-05; STD-DATA-1, R-SEC; audit A-23).
 --      Mọi bảng có tenant_id (84 bảng): ENABLE + FORCE ROW LEVEL SECURITY (FORCE: áp cả cho vai trò sở hữu bảng) +

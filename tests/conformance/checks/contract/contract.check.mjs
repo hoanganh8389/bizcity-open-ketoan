@@ -1,7 +1,11 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell.
 /**
  * Hợp đồng: schema, manifest (CONF-MAN), JSON mẫu, bảng năng lực, mã luật, mã lỗi, cấu hình.
  * Mọi hợp đồng kiểm ở MỘT chỗ này — không viết test hợp đồng rải rác nơi khác.
  */
+import { STAMP_RE } from '../../lib/framework-files.mjs';
+
 const MODULE_SCHEMA = 'docs/contracts/BIZCITY-MODULE-v1.schema.json';
 const INTAKE_SCHEMA = 'docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json';
 const STANDARD = 'docs/standard/bizcity-standard.json';
@@ -140,7 +144,8 @@ export const checks = [
         if (!readme.includes(`${name}@`)) add(`${name} chưa có trong docs/contracts/README.md`, `readme:${name}`);
         if (!canon.includes(`${name}@`)) add(`${name} chưa có trong docs/00-CANON.md §4`, `canon:${name}`);
         if (c.doc) {
-          const head = (ctx.repo.read(c.doc) ?? '').split('\n').slice(0, 6).join('\n');
+          // Đầu tệp = 6 dòng đầu, không tính dòng dấu thay đổi R-SIG đặt ngay dưới tiêu đề (docs/rules/RULE-SIGNATURE.md).
+          const head = (ctx.repo.read(c.doc) ?? '').split('\n').filter((l) => !STAMP_RE.test(l)).slice(0, 6).join('\n');
           if (c.version && !head.includes(c.version)) add(`${name}: đầu tệp ${c.doc} không ghi phiên bản ${c.version}`, `version:${name}`);
         }
       }

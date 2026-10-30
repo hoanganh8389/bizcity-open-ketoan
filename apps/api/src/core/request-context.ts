@@ -1,4 +1,6 @@
 // @bizcity-layer P observability
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 /**
  * Ngữ cảnh của yêu cầu đang chạy (AsyncLocalStorage): mã yêu cầu + mã tương quan, để bằng chứng (audit_logs.correlation_id)
  * và sự kiện miền (event_outbox.correlation_id) tự gắn mà không phải truyền qua từng hàm (C-8, bizcity_event@1 §3).

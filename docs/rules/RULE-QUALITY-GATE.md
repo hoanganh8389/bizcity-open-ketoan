@@ -1,4 +1,5 @@
 # RULE · Cổng chất lượng (R-QG)
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > **Cấp:** Tier 1 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **CI:** [../ops/CI-CD.md](../ops/CI-CD.md) · **Bằng chứng:** [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md) §4

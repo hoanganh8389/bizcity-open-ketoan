@@ -1,4 +1,6 @@
 # Nối Bizcity Cell: một khoá 1API, bốn bước, bản Pro
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
 > **Cho ai:** nhóm Lõi làm `adapters/cell`; người cài Core muốn bật trợ lý AI.
 > **Tuân:** P1 (Core chạy đủ khi không có Cell), CELL-1..7 ([CELL-MCP.md](CELL-MCP.md)), [bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md).

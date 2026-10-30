@@ -1,4 +1,5 @@
 # Chính sách bảo mật
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
 
 Bizcity Core (open-ketoan) giữ sổ kế toán của doanh nghiệp. Lỗ hổng ở đây có thể làm lộ hoặc làm sai số liệu tài chính, nên xin báo **riêng tư**, đừng mở issue công khai.
 

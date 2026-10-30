@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * BỘ MÁY MUA HÀNG — hàm thuần (không gọi mạng, không cơ sở dữ liệu), dùng chung cho máy chủ (apps/api/src/phan-he/mua-hang)
  * và giao diện (tính tức thời khi sửa phiếu): hai phía ra đúng một con số. Thiết kế: docs/nghiep-vu/08-mua-hang.md.

@@ -1,4 +1,7 @@
 # Bản đồ tái sử dụng: code hiện tại → Kernel / Platform / Module
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
 > Cây đích: [TARGET-LAYOUT.md](TARGET-LAYOUT.md). Phát hiện nền trước đó: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md) (A-01..A-16); phát hiện mới ở §5 (A-17..A-26).

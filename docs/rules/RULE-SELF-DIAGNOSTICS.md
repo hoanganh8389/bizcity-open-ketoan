@@ -1,4 +1,6 @@
 # RULE · Tự chẩn đoán (R-DIAG)
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
+<!-- [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10). -->
 
 > **Cấp:** Tier 0 / 1 (ghi từng luật) · **Phiên bản:** 1.0 · 2026-10-29 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Danh sách mã kiểm và khuôn kết quả:** [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md) · **Bộ kiểm đang chạy được:** [../../tests/conformance/](../../tests/conformance/README.md) (lane diagnostics)

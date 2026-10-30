@@ -1,4 +1,5 @@
 # Ca chuẩn: module Hợp đồng do Claude Code sinh ra
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > Ca này là **phép thử nghiệm thu** của Standard v1. Standard chỉ lên 1.0.0 khi ca này đạt (Phase 4, [PHASES.md](PHASES.md)).
 > Manifest đầy đủ: [examples/hop-dong.bizcity.module.json](examples/hop-dong.bizcity.module.json) (đã kiểm theo schema).

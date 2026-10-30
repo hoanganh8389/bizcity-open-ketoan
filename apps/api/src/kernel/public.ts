@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/public
+// [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 /**
  * CỔNG CÔNG KHAI CỦA KERNEL (PHASE-010, PHASES 2.3; ADR-0008: một gói packages/kernel).
  *

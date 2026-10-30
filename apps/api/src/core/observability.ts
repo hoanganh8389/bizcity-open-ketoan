@@ -1,4 +1,5 @@
 // @bizcity-layer P observability
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * Truy vết + log + số đo HTTP cho mọi yêu cầu (docs/ops/OBSERVABILITY.md §1–§3):
  *   - header X-Request-Id trả lại ở mọi phản hồi (R-OBS-1); mã do app.ts genReqId sinh / nhận;

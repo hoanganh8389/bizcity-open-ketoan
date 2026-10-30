@@ -1,9 +1,10 @@
 # PHASE-007 — Cô lập đơn vị ở tầng CSDL (RLS)
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > Luật: STD-DATA-1, R-SEC-6, audit A-23. Việc: lộ trình 2.4, G1-05, G3-06.
 
-<!-- [2026-10-30] Chủ: "tiếp tục" sau PHASE-005 ⇒ làm 007 (không cần quyết định thêm). -->
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — Chủ: "tiếp tục" sau PHASE-005 ⇒ làm 007 (không cần quyết định thêm). -->
 
 ## 1. Thiết kế (D007-*)
 

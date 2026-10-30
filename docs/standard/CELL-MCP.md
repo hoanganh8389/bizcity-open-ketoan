@@ -1,4 +1,6 @@
 # Core ↔ Bizcity Cell: MCP, channel gateway, chạy độc lập
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
 
 > Thực thi nguyên tắc **P1: Core không phụ thuộc Cell.** Cell bổ sung AI, LLM, OCR, RAG, điều phối; Core vẫn đủ chức năng khi không có Cell.
 > Hợp đồng liên quan: [Action §6](../contracts/BIZCITY-ACTION-v1.md#6-phơi-ra-cho-ai-mcp), [Evidence](../contracts/BIZCITY-EVIDENCE-v1.md), [Event](../contracts/BIZCITY-EVENT-v1.md). Năng lực: `mcp.tools`, `ai.cell` (Phase 5).

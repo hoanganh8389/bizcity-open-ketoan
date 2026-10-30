@@ -1,3 +1,4 @@
+// [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — lộ trình máy đọc bám Phase, ma trận mảng × Phase.
 /**
  * docs/standard/roadmap.json (bizcity_roadmap@1) đúng khuôn và khớp PHASES.md — để tiến độ trên bảng điểm đáng tin.
  */

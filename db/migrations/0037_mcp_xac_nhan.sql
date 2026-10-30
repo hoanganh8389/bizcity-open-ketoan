@@ -1,3 +1,4 @@
+-- [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12).
 -- =============================================================================
 -- 0037 mcp_confirm_tokens: xác nhận trước khi ghi qua MCP (bizcity_mcp@1 STD-MCP-4, bizcity-mcp-tool@1.0.0 §4; PHASES 2.12).
 --      Gọi công cụ ghi không kèm confirm_token → Core chạy thử (dry-run) để xem trước, lưu một dòng ở đây, trả token. Người dùng

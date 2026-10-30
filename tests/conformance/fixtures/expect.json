@@ -168,6 +168,21 @@
         "SC-KERNEL-3": {
           "findings": 1
         },
+        "SC-SIG-1": {
+          "min": 15,
+          "keys": [
+            "apps/api/src/core/audit.ts",
+            "packages/contracts/src/errors.ts",
+            "docs/standard/PHASES.md"
+          ]
+        },
+        "SC-SIG-2": {
+          "findings": 2,
+          "keys": [
+            "agent:docs/standard/PHASES.md:2",
+            "format:docs/standard/PHASES.md:3"
+          ]
+        },
         "SC-KERNEL-6": {
           "findings": 2,
           "keys": [

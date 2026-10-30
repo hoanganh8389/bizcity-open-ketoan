@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/intake
+// [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Cửa ghi sổ cho sự việc do Kernel tự lập (phiếu kế toán tay, số dư đầu kỳ, kết chuyển, khấu hao / phân bổ, giá vốn).
  * Chứng từ nhận từ nguồn ngoài đi postDocumentIn() (luật định khoản); các dịch vụ trên tự dựng dòng Nợ / Có nên không

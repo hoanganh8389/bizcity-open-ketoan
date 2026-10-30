@@ -1,3 +1,4 @@
+# [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 # =============================================================================
 # Nạp bảng điều khiển từ tệp JSON trong /var/lib/grafana/dashboards (= grafana/dashboards/ trong kho).
 # Sửa bảng trên giao diện sẽ KHÔNG lưu vào tệp: muốn giữ, xuất JSON (Share → Export) rồi ghi đè tệp.

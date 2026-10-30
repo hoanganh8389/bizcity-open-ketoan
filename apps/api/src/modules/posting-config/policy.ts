@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/config
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * CHÍNH SÁCH KẾ TOÁN CÓ PHIÊN BẢN (ADR-0009, C-9 / STD-CMP-9; PHASE-005, PHASES 2.14).
  *

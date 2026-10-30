@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * DỮ LIỆU MẪU TEST CHUYỂN HÀNG XUỐNG SHOP (MH16 / MH19) — đơn vị demo (tenant 1), cây 08000 → 08001Premium, 08002Premium, 08003Premium.
  *   node scripts/mau-chuyen-kho.mjs          nạp (chạy lại được: chứng từ cùng docKey không nhân đôi, max ghi đè)

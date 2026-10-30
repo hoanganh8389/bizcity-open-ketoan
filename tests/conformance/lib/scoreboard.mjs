@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Bảng điểm `bizcity_scoreboard@1`: gộp kết quả hai lane (selfcheck + diagnostics) thành điểm theo hợp đồng,
  * cổng, module; độ sẵn sàng của Standard v1; độ phủ luật; xu hướng so với lần chạy trước.

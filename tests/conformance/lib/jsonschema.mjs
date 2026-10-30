@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Bộ kiểm JSON Schema 2020-12 rút gọn, không phụ thuộc gói ngoài (bộ kiểm phải chạy được khi chưa `npm install`).
  * Hỗ trợ đúng tập từ khoá các tệp docs/contracts/*.schema.json đang dùng; từ khoá lạ bị `lintSchema` báo,

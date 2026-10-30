@@ -1,4 +1,5 @@
 # ADR-0005 · Danh mục chuẩn đặt ở `packages/data`, cột tài khoản do Kernel quản
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 - Trạng thái: Chấp nhận
 - Ngày: 2026-10-29 · Người quyết: chủ dự án

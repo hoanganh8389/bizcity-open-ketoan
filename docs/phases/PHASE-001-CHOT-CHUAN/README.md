@@ -1,4 +1,5 @@
 # PHASE-001 — Chốt chuẩn: bộ chuẩn, CI, bộ kiểm, migration sạch
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 
 > **Trạng thái:** 🟡 code xong; còn 3 việc tay của chủ (merge, bật GitHub, bản cài thật)
 > **Giai đoạn:** Phase 0 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 73%
@@ -8,7 +9,7 @@
 > **Tuân thủ / nguyên tắc:** C-2, C-3, C-4 (nền bất biến) · AP-3, AP-7
 > **Phụ thuộc phase:** —
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|

@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * ĐẶT HÀNG TỰ ĐỘNG — mọi việc đi từ ĐƠN ĐẶT MUA của nhà cung cấp:
  *   orderProgress     đơn đã nhận bao nhiêu / còn bao nhiêu từng mã (cộng mọi phiếu nhập giao theo đơn, trừ phiếu huỷ) — so

@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Tìm và nạp check. Một tệp `*.check.mjs` (lane selfcheck) hoặc `*.diag.mjs` (lane diagnostics) xuất
  * `default` (một check) hoặc `checks` (mảng). Khuôn check: schema/check.schema.json (`bizcity_check@1`).

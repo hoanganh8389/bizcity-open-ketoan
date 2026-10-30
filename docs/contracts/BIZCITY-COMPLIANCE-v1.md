@@ -1,4 +1,8 @@
 # `bizcity_compliance@1` — Compliance Contract: tuân thủ chế độ kế toán
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 
 > **Phiên bản:** 1.0.0 · 2026-10-30 · **Trạng thái:** Chấp nhận · **Lớp kiểm soát 3/3** của [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md) (Domain · Event · Compliance)
 > **Bản máy đọc:** [`docs/standard/compliance-matrix.json`](../standard/compliance-matrix.json). Bảng điểm của bộ kiểm chuẩn tính trạng thái từng dòng tự động (mục "Ma trận tuân thủ" trong `SCOREBOARD.md`).

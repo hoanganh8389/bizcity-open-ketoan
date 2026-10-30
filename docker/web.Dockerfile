@@ -1,3 +1,4 @@
+# [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # Giao diện: dựng bằng Vite → phục vụ bằng nginx, chuyển /api sang container api.
 FROM node:22-alpine AS build
 WORKDIR /app

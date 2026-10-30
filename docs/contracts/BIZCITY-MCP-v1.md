@@ -1,4 +1,8 @@
 # `bizcity_mcp@1` — Chuẩn công cụ MCP của Core kế toán (cho Cell, trợ lý AI, chatbot)
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12). -->
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel + Platform (bề mặt AI của Core)
 > **Là hồ sơ (profile) của chuẩn MCP chung hệ sinh thái Bizcity**, không phải chuẩn riêng. Hai hợp đồng gốc nằm ở plugin `bizcity-twin-ai/docs/contracts/`:

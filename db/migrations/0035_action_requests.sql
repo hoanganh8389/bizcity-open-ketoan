@@ -1,3 +1,4 @@
+-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5).
 -- =============================================================================
 -- 0035 action_requests: idempotency cho action ghi (bizcity_action@1 §8, STD-ACT-4, audit A-21; PHASES 2.5).
 --      Gửi lại cùng (đơn vị, action, Idempotency-Key) và cùng nội dung → trả đúng phản hồi lần đầu, không làm lại.

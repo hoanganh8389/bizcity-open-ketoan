@@ -1,4 +1,6 @@
 # PHASE-010 — Tách gói: `packages/kernel`, documents, actions, audit; dọn contracts
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 
 > **Trạng thái:** 🟡 W1 xong 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), 21 tệp chuyển. W2 (dời thư mục sang `packages/kernel`) chờ tách Platform thành gói
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có (W1) · **Tiến độ tín hiệu (2026-10-30):** 0%
@@ -8,7 +10,7 @@
 > **Tuân thủ / nguyên tắc:** C-7
 > **Phụ thuộc phase:** 004
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|

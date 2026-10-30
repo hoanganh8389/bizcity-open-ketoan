@@ -1,4 +1,5 @@
 # PHASE-004 · 70 — Phản tư PHASE-003 và sổ nợ chuyển sang
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 
 > Nguồn: [PHASE-003 · 40-MASTER-CHECKLIST](../PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md). Trạng thái từng dòng vẫn ở đó; tệp này chốt lại và chuyển nợ.
 

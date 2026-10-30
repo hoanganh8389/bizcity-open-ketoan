@@ -1,4 +1,14 @@
 # Bản công bố kiến trúc open-ketoan framework
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
+<!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 
 > **Phiên bản:** 1.1 · 2026-10-30
 > **Thiết kế kiến trúc:** **Johnny Chu – Chu Hoàng Anh.** Quyền tác giả đối với kiến trúc open-ketoan framework (nền tảng lấy Accounting Core ổn định, module mở rộng) và bộ tài liệu này thuộc về tác giả, theo công bố của chủ dự án.
@@ -181,6 +191,7 @@ Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE
 | Lỗi, quan sát | mã lỗi trong danh mục; `requestId`; không dữ liệu cá nhân trong log | [BIZCITY-ERRORS-v1](contracts/BIZCITY-ERRORS-v1.md), [OBSERVABILITY](ops/OBSERVABILITY.md) |
 | Bằng chứng tự động | PR chạy `selfcheck`, `kiem-chuan`, typecheck, test PostgreSQL thật | [CONTRIBUTING §5](../CONTRIBUTING.md) |
 | Nguyên tắc | 7 nguyên tắc AP-1..AP-7 (§1); nguyên tắc nào chưa có cách thực thi là nợ | `bizcity-standard.json#principles` |
+| Chữ ký | mọi tệp framework mang chữ ký kiến trúc Johnny Chu – Chu Hoàng Anh; mỗi lần sửa có chức năng thêm dấu theo phase, không ghi tên agent | [RULE-SIGNATURE](rules/RULE-SIGNATURE.md), SC-SIG-1 / -2 |
 | CSDL | SQL là nguồn sự thật; migration đã phát hành bất biến, kiểm trên CSDL sạch + nâng cấp; migration do AI sinh không chạy production khi chưa kiểm + duyệt | [RULE-DATABASE](rules/RULE-DATABASE.md) R-DB-14..19 |
 
 ## 6. Checklist chuẩn hoá theo giai đoạn (nhận việc)

@@ -1,9 +1,10 @@
 # PHASE-009 — MCP ghi: chỉ đề xuất, luôn chờ người duyệt
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
 
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > Hợp đồng: [`bizcity_mcp@1`](../../contracts/BIZCITY-MCP-v1.md) STD-MCP-4, -6, -9; [Bản công bố §2.1](../../CONG-BO-KIEN-TRUC.md).
 
-<!-- [2026-10-30] Chủ: "tiếp tục" sau PHASE-006 (đề xuất làm 009 + soạn ADR cho 005) ⇒ code. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — Chủ: "tiếp tục" sau PHASE-006 (đề xuất làm 009 + soạn ADR cho 005) ⇒ code. -->
 
 ## 1. Thiết kế đã chọn (D009-*)
 

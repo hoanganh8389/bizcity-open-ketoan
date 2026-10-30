@@ -1,3 +1,4 @@
+-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 -- =============================================================================
 -- 0038 Điền posted_version cho sự việc nội bộ cũ (PHASE-004, PHASES 2.1, Q004-3).
 --      Trước PHASE-004 kết chuyển (closing) và giá vốn (cogs) ghi sổ thẳng qua ledgerService, không đặt posted_version

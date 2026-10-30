@@ -1,3 +1,4 @@
+// [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 /**
  * R-DIAG-9 + R-DIAG-1: mỗi kiểm tự chẩn đoán trong app (apps/api/src: `code: 'X', layer: 'L1' | 'L3'`) có bản cùng mã trong lane
  * diagnostics của bộ kiểm (tests/conformance/diagnostics/*.diag.mjs, `code: 'X'`) — để chạy được trên bản sao trước khi vào endpoint,

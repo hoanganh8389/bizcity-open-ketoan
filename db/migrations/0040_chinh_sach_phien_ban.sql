@@ -1,3 +1,4 @@
+-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 -- =============================================================================
 -- 0040 Chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009, C-9 / STD-CMP-9; PHASE-005, PHASES 2.14).
 --      posting_policy_versions: bản chụp cấu hình định khoản (lý do, nhóm hạch toán, tài khoản ngầm định, phần tài khoản của

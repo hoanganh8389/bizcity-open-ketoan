@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * ĐƠN VỊ TÍNH — các phép tính dùng chung (form mặt hàng, phiếu, báo cáo).
  *   - Lưu: mỗi ĐVT một tỉ lệ về ĐVT nhỏ nhất (product_units.ratio): Lon 1 · Lốc 4 · Thùng 48.
