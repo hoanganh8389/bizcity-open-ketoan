@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Gợi ý lý do định khoản** (PHASE-012 S012-4, PHASES 3.12): `GET /api/v1/posting/reasons/suggest` (công cụ MCP `accounting.posting.reason_suggest`, AI đọc được) xếp hạng lý do tất định từ từ khoá / ví dụ của gói, tên lý do, lịch sử của chính đơn vị; `GET /api/v1/posting/reasons/readiness`. Manifest module khai `ledger.submits[].reasons` (`bizcity_module` 1.1.0-draft), bộ kiểm SC-CON-2 kiểm.
+- **Gói định khoản nền** `db/packs/vn-tt99-nen.posting-pack.json` (S012-3b): cấu hình định khoản mặc định của đơn vị mới chuyển từ `seed.ts` sang gói; đơn vị mới nhận đúng dữ liệu như trước (đã so 49 dòng). `bizcity_posting_template` 1.1.0-draft: `paymentMethods[].receivable`.
 - **Gói định khoản cài / xem trước / gỡ** (PHASE-012 S012-3, PHASES 3.11, `bizcity_posting_template@1` §5): `GET /api/v1/posting/packs`, `POST /api/v1/posting/packs/install` (`?dryRun=1` xem trước từng mục thêm / ghi đè / giữ / xung đột), `POST /api/v1/posting/packs/uninstall`; quyền `settings:write`. Mục đang khác cấu hình của đơn vị được giữ, trừ khi chọn ghi đè. Cài / gỡ phát hành một bản chính sách kế toán (ADR-0009 Q-5) — chứng từ trước ngày hiệu lực vẫn định khoản theo bản cũ. Năng lực `templates.posting` → available.
 - **MCP `accounting.journal.post`** (PHASE-009 S009-2, Q009-1 a): trợ lý AI đề xuất phiếu kế toán / thu / chi **nháp** — sự việc `pending`, 0 bút toán, xem trước là bút toán dựng thử; người có quyền duyệt `POST /api/v1/vouchers/:id/approve` (action `accounting.journal.approve`, `ai: deny`) mới ghi qua eventStore. G2-04 đủ 3 công cụ ghi.
 - **Chữ ký kiến trúc và dấu thay đổi (R-SIG)**: [docs/rules/RULE-SIGNATURE.md](docs/rules/RULE-SIGNATURE.md), bộ kiểm SC-SIG-1 (mọi tệp framework có chữ ký Johnny Chu – Chu Hoàng Anh) và SC-SIG-2 (đúng khuôn, không tên agent), công cụ `scripts/ky-dau.mjs`, `.github/copilot-instructions.md`. Ký bù 694 dấu lên 333 tệp framework theo giờ commit thật của từng phase (biên bản `docs/audits/AUDIT-2026-10-30-CHU-KY.md`).
@@ -151,6 +153,7 @@ Mỗi bản ghi đủ sáu mục:
 ### Nâng cấp cần làm
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.
+- Image API chép thêm `db/packs` (gói nền). Lần chạy job `db-migrate` đầu sau khi nâng cấp: đơn vị seed ghi nhận "đã cài gói nền" (mọi mục giữ nguyên, không đổi cấu hình). Triển khai tự dựng: nhớ chép thư mục `db/packs` (hoặc đặt `PACKS_DIR`).
 - **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
@@ -160,6 +163,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [0.1.0] - 2026-10-29
 
 ### Thêm
+- **Gợi ý lý do định khoản** (PHASE-012 S012-4, PHASES 3.12): `GET /api/v1/posting/reasons/suggest` (công cụ MCP `accounting.posting.reason_suggest`, AI đọc được) xếp hạng lý do tất định từ từ khoá / ví dụ của gói, tên lý do, lịch sử của chính đơn vị; `GET /api/v1/posting/reasons/readiness`. Manifest module khai `ledger.submits[].reasons` (`bizcity_module` 1.1.0-draft), bộ kiểm SC-CON-2 kiểm.
+- **Gói định khoản nền** `db/packs/vn-tt99-nen.posting-pack.json` (S012-3b): cấu hình định khoản mặc định của đơn vị mới chuyển từ `seed.ts` sang gói; đơn vị mới nhận đúng dữ liệu như trước (đã so 49 dòng). `bizcity_posting_template` 1.1.0-draft: `paymentMethods[].receivable`.
 - Mã nguồn đầu tiên đưa lên GitHub:
   - sổ cái chỉ thêm, một cửa nạp chứng từ, luật định khoản, báo cáo;
   - các phân hệ kế toán, quỹ, mua hàng, bán hàng, kho, tài sản, thuế;

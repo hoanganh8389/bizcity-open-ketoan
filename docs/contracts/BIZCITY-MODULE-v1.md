@@ -1,7 +1,8 @@
 # `bizcity_module@1` — Module Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0-draft: ledger.submits[].reasons (kind, default, suggestedPacks). -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
+> **Phiên bản:** 1.1.0-draft · 2026-10-30 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
 > **JSON Schema:** [BIZCITY-MODULE-v1.schema.json](BIZCITY-MODULE-v1.schema.json) · **Ví dụ đầy đủ:** [../standard/examples/hop-dong.bizcity.module.json](../standard/examples/hop-dong.bizcity.module.json)
 > **Thay thế:** `ApiModule` (`apps/api/src/phan-he/types.ts`), `WebModule`/`ModuleMeta` (`apps/web/src/phan-he/types.ts`, `packages/contracts/src/module.ts`), `AddInManifest` (`apps/api/src/core/addins.ts`)
 
@@ -32,7 +33,7 @@ Một phân hệ hiện khai ở 5 nơi (A-25); quyền, bảng sở hữu, sự
 | `documents[]` | | loại chứng từ: `type`, `label`, `numbering`, `workflow`, `ledger` | [Document](BIZCITY-DOCUMENT-v1.md) |
 | `actions[]` | | mã action công khai (chi tiết khai trong code) | đối chiếu code ↔ manifest; sinh MCP |
 | `events.emits[]` / `events.subscribes[]` | | sự kiện phát / nghe | [Event](BIZCITY-EVENT-v1.md) |
-| `ledger.submits[]` | | `docType` kế toán module nộp, khi nào | chặn nộp loại không khai |
+| `ledger.submits[]` | | `docType` kế toán module nộp, khi nào; `reasons: { kind, default?, suggestedPacks? }` = lý do định khoản cần ([POSTING-TEMPLATE §7](BIZCITY-POSTING-TEMPLATE-v1.md)) | chặn nộp loại không khai; `reasons` sai loại / gói gợi ý không có lý do mặc định → SC-CON-2; lúc cài: `posting.reason.readiness` |
 | `settings[]` | | khoá cấu hình `bizcity.<key_>.<tên>` | [Settings](BIZCITY-SETTINGS-MATRIX-v1.md) |
 | `extensions` | | `menu`, `slots`, `hooks`, `print` | [Extension](BIZCITY-EXTENSION-v1.md) |
 | `ui` | | `icon` (lucide), `color`, `order` | lưới ứng dụng |
@@ -70,4 +71,5 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 ## 7. Nhật ký
 
+- **1.1.0-draft (2026-10-30):** thêm `ledger.submits[].reasons` (tuỳ chọn, tương thích): `kind`, `default`, `suggestedPacks` (PHASE-012 S012-4, năng lực `ledger.reasons.declare`).
 - **1.0.0-draft (2026-10-29):** Viết lại cho Standard v1: thêm `id`, `standard`, `requires`, `data`, `documents`, `actions`, `events`, `ledger`, `extensions`, `waivers`; bỏ `requiresCore` (module không khai phiên bản Kernel, xem VERSIONING), bỏ `emits` (thay bằng `ledger.submits` và `events.emits`).

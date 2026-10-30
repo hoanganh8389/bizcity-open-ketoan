@@ -31,6 +31,17 @@ reverse proxy (HTTPS, tên miền) ──► web (nginx, 127.0.0.1:WEB_PORT) ─
 | Bản test | như bản nguồn | `BẢN TEST` | Tạo bằng `scripts/tao-ban-test.sh`; khoá API, JWT riêng |
 | Dev | `internal` | tuỳ | `npm run dev`, `AUTO_MIGRATE=1` |
 
+### 2.1 Thư mục cơ sở dữ liệu
+<!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — khai DB_DIR, SEEDS_DIR, PACKS_DIR (gói định khoản nền db/packs). -->
+
+Image API chép `db/migrations`, `db/seeds`, `db/packs` vào `/app/db` (`apps/api/src/db/paths.ts`). Chỉ đặt các biến dưới khi dựng khác chỗ:
+
+| Biến | Mặc định | Dùng cho |
+|---|---|---|
+| `DB_DIR` | `<gốc repo>/db` (Docker: `/app/db`) | gốc của ba thư mục dưới |
+| `SEEDS_DIR` | `$DB_DIR/seeds` | hệ thống tài khoản, danh mục chuẩn |
+| `PACKS_DIR` | `$DB_DIR/packs` | gói định khoản; seed cài gói nền `vn-tt99-nen.posting-pack.json` (thiếu thư mục → job `db-migrate` lỗi) |
+
 ## 3. Luật triển khai
 
 | Mã | Luật |

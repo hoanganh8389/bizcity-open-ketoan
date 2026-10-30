@@ -26,6 +26,8 @@ COPY --from=build /app/apps/api/dist apps/api/dist
 # Thư mục cơ sở dữ liệu (migrations, seeds) — đường dẫn /app/db (apps/api/src/db/paths.ts).
 COPY db/migrations db/migrations
 COPY db/seeds db/seeds
+# [2026-10-30 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản nền cài khi khởi tạo đơn vị (seed).
+COPY db/packs db/packs
 # Phiên bản Standard trả ở /api/v1/system/health (apps/api/src/core/version.ts, R-REL-1).
 COPY docs/standard/bizcity-standard.json docs/standard/bizcity-standard.json
 COPY docker/api-entrypoint.sh /entrypoint.sh

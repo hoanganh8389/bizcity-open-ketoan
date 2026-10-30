@@ -1,0 +1,460 @@
+{
+  "contract": "bizcity_posting_template@1",
+  "id": "bizcity.vn-tt99.nen",
+  "version": "1.0.0",
+  "title": "Gói nền TT99/2025 — cấu hình định khoản tối thiểu",
+  "description": "Lý do, nhóm hạch toán, hình thức thanh toán, loại thuế, tài khoản ngầm định mà mọi đơn vị mới có (trước đây viết cứng trong apps/api/src/db/seed.ts). Hệ thống tài khoản ở db/seeds/tai-khoan.csv. Cài tự động khi khởi tạo đơn vị; gói ngành extends gói này.",
+  "publisher": {
+    "id": "bizcity",
+    "name": "Bizcity",
+    "url": "https://bizcity.vn"
+  },
+  "license": "GPL-2.0-or-later",
+  "regime": "vn-tt99-2025",
+  "industries": [
+    "nen"
+  ],
+  "requires": {
+    "docTypes": [
+      "sale",
+      "sale_return",
+      "purchase",
+      "purchase_return",
+      "transfer",
+      "stock_adjustment",
+      "cash_transfer",
+      "customer_payment",
+      "supplier_payment"
+    ],
+    "capabilities": [
+      "ledger.submit"
+    ]
+  },
+  "postingDefaults": {
+    "receivable": "1311",
+    "cash": "1111",
+    "tax_output": "33311",
+    "tax_input": "1331",
+    "promotion_expense": "64184",
+    "internal_receivable": "13681",
+    "internal_payable": "33681",
+    "internal_receivable_goods": "13681",
+    "internal_payable_goods": "33681",
+    "internal_cogs": "6326",
+    "commission_debit": "6418",
+    "commission_credit": "33881",
+    "payable": "3312",
+    "goods_in_transit": "1579",
+    "stock_surplus": "3381",
+    "stock_shortage": "1381",
+    "cash_in_transit": "11319"
+  },
+  "reasons": [
+    {
+      "code": "XBA",
+      "name": "Xuất bán hàng",
+      "kind": "out",
+      "counterAccount": "1311",
+      "cashflowCode": "01",
+      "flags": {
+        "default": "sale",
+        "giftCostToPromotion": false
+      },
+      "ai": {
+        "keywords": [
+          "bán hàng",
+          "bán lẻ",
+          "xuất bán",
+          "hoá đơn bán"
+        ],
+        "examples": [
+          "Bán 2 thùng sữa cho khách lẻ",
+          "Xuất bán hàng cho khách buôn"
+        ]
+      }
+    },
+    {
+      "code": "XTA1.4",
+      "name": "Xuất tặng, thưởng khách hàng",
+      "kind": "out",
+      "counterAccount": "1311",
+      "expenseAccount": "64184",
+      "flags": {
+        "costAtSalePrice": true
+      },
+      "ai": {
+        "keywords": [
+          "tặng khách",
+          "quà tặng",
+          "hàng khuyến mãi",
+          "thưởng khách"
+        ],
+        "examples": [
+          "Xuất hàng tặng khách dịp khai trương"
+        ]
+      }
+    },
+    {
+      "code": "NTH1",
+      "name": "Nhập hàng bán bị trả lại",
+      "kind": "in",
+      "counterAccount": "1311",
+      "cashflowCode": "01",
+      "flags": {
+        "default": "sale_return"
+      },
+      "ai": {
+        "keywords": [
+          "trả hàng",
+          "khách trả lại",
+          "hàng bán bị trả lại"
+        ],
+        "examples": [
+          "Khách mang trả 1 hộp sữa bị móp"
+        ]
+      }
+    },
+    {
+      "code": "TTBHK",
+      "name": "Thu tiền bán hàng",
+      "kind": "receipt",
+      "counterAccount": "1311",
+      "cashflowCode": "01",
+      "flags": {
+        "default": "receipt"
+      },
+      "ai": {
+        "keywords": [
+          "thu tiền bán hàng",
+          "thu tiền hàng"
+        ],
+        "examples": [
+          "Thu tiền bán hàng tại quầy"
+        ]
+      }
+    },
+    {
+      "code": "NMH1",
+      "name": "Nhập mua hàng",
+      "kind": "in",
+      "counterAccount": "3312",
+      "flags": {
+        "default": "purchase"
+      },
+      "ai": {
+        "keywords": [
+          "nhập mua",
+          "mua hàng",
+          "nhập hàng"
+        ],
+        "examples": [
+          "Nhập 100 thùng hàng của nhà cung cấp"
+        ]
+      }
+    },
+    {
+      "code": "XTR1",
+      "name": "Xuất trả hàng nhà cung cấp",
+      "kind": "out",
+      "counterAccount": "3312",
+      "flags": {
+        "default": "purchase_return",
+        "returnAtOpeningCost": true
+      },
+      "ai": {
+        "keywords": [
+          "trả hàng nhà cung cấp",
+          "trả lại nhà cung cấp",
+          "xuất trả"
+        ],
+        "examples": [
+          "Xuất trả 5 thùng hàng lỗi cho nhà cung cấp"
+        ]
+      }
+    },
+    {
+      "code": "XCKho",
+      "name": "Xuất chuyển kho",
+      "kind": "out",
+      "flags": {
+        "default": "transfer"
+      },
+      "ai": {
+        "keywords": [
+          "chuyển kho",
+          "điều chuyển hàng"
+        ],
+        "examples": [
+          "Chuyển 20 thùng hàng từ kho tổng sang cửa hàng"
+        ]
+      }
+    },
+    {
+      "code": "NDC",
+      "name": "Nhập điều chỉnh tăng (kiểm kê thừa)",
+      "kind": "in",
+      "counterAccount": "3381",
+      "flags": {
+        "default": "stock_adjustment:increase"
+      },
+      "ai": {
+        "keywords": [
+          "kiểm kê thừa",
+          "điều chỉnh tăng"
+        ],
+        "examples": [
+          "Kiểm kê thừa 3 hộp sữa"
+        ]
+      }
+    },
+    {
+      "code": "TDK",
+      "name": "Tồn kho đầu kỳ",
+      "kind": "in",
+      "counterAccount": "999",
+      "flags": {
+        "default": "stock_adjustment:opening"
+      },
+      "ai": {
+        "keywords": [
+          "tồn kho đầu kỳ",
+          "tồn đầu"
+        ],
+        "examples": [
+          "Nhập tồn kho đầu kỳ khi bắt đầu dùng phần mềm"
+        ]
+      }
+    },
+    {
+      "code": "XDC",
+      "name": "Xuất điều chỉnh giảm (kiểm kê thiếu)",
+      "kind": "out",
+      "counterAccount": "1381",
+      "flags": {
+        "default": "stock_adjustment:decrease"
+      },
+      "ai": {
+        "keywords": [
+          "kiểm kê thiếu",
+          "điều chỉnh giảm",
+          "hao hụt"
+        ],
+        "examples": [
+          "Kiểm kê thiếu 2 thùng nước"
+        ]
+      }
+    },
+    {
+      "code": "CTIEN",
+      "name": "Chuyển tiền giữa chi nhánh",
+      "kind": "payment",
+      "flags": {
+        "default": "cash_transfer"
+      },
+      "ai": {
+        "keywords": [
+          "chuyển tiền chi nhánh",
+          "nộp tiền về công ty",
+          "chuyển tiền nội bộ"
+        ],
+        "examples": [
+          "Cửa hàng nộp tiền bán hàng về văn phòng"
+        ]
+      }
+    },
+    {
+      "code": "TTKH",
+      "name": "Thu tiền khách hàng",
+      "kind": "receipt",
+      "counterAccount": "1311",
+      "cashflowCode": "01",
+      "flags": {
+        "default": "customer_payment"
+      },
+      "ai": {
+        "keywords": [
+          "thu tiền khách",
+          "khách trả nợ",
+          "thu công nợ",
+          "khách chuyển khoản"
+        ],
+        "examples": [
+          "Anh Nam chuyển khoản trả nợ 5 triệu"
+        ]
+      }
+    },
+    {
+      "code": "TTNCC",
+      "name": "Trả tiền nhà cung cấp",
+      "kind": "payment",
+      "counterAccount": "3312",
+      "cashflowCode": "02",
+      "flags": {
+        "default": "supplier_payment"
+      },
+      "ai": {
+        "keywords": [
+          "trả tiền nhà cung cấp",
+          "thanh toán nhà cung cấp",
+          "trả nợ nhà cung cấp"
+        ],
+        "examples": [
+          "Chuyển khoản trả nhà cung cấp 30 triệu tiền hàng"
+        ]
+      }
+    },
+    {
+      "code": "XCN",
+      "name": "Xuất bán hàng chi nhánh khác",
+      "kind": "out",
+      "counterAccount": "13681",
+      "revenueAccount": "51116",
+      "expenseAccount": "6326",
+      "flags": {
+        "costAtSalePrice": true
+      },
+      "ai": {
+        "keywords": [
+          "bán chi nhánh khác",
+          "bán nội bộ"
+        ],
+        "examples": [
+          "Xuất bán hàng cho chi nhánh Hà Nội"
+        ]
+      }
+    }
+  ],
+  "postingGroups": [
+    {
+      "code": "HH-BANLE",
+      "name": "Hàng hoá bán lẻ",
+      "inventoryAccount": "1561",
+      "cogsAccount": "6321",
+      "revenueAccount": "51111",
+      "discountAccount": "52111",
+      "salesReturnAccount": "52131",
+      "isDefault": true
+    }
+  ],
+  "paymentMethods": [
+    {
+      "code": "TM",
+      "name": "Tiền mặt",
+      "account": "1111"
+    },
+    {
+      "code": "CK",
+      "name": "Chuyển khoản",
+      "account": "11210005"
+    },
+    {
+      "code": "QR",
+      "name": "Quét mã QR",
+      "account": "11210007"
+    },
+    {
+      "code": "POS",
+      "name": "Quẹt thẻ (POS)",
+      "account": "11210006"
+    },
+    {
+      "code": "VOUCHER",
+      "name": "Voucher",
+      "account": "13881"
+    },
+    {
+      "code": "CONGNO",
+      "name": "Ghi công nợ",
+      "account": "1311",
+      "receivable": true
+    },
+    {
+      "code": "DOI_TRU",
+      "name": "Đối trừ công nợ",
+      "account": "1311",
+      "receivable": true
+    }
+  ],
+  "taxCodes": [
+    {
+      "code": "KCT",
+      "name": "Không chịu thuế GTGT",
+      "rate": 0,
+      "direction": "output",
+      "account": "33311",
+      "reportGroup": "KCT"
+    },
+    {
+      "code": "R00",
+      "name": "Thuế GTGT đầu ra 0%",
+      "rate": 0,
+      "direction": "output",
+      "account": "33311",
+      "reportGroup": "0"
+    },
+    {
+      "code": "R05",
+      "name": "Thuế GTGT đầu ra 5%",
+      "rate": 5,
+      "direction": "output",
+      "account": "33311",
+      "reportGroup": "5"
+    },
+    {
+      "code": "R08",
+      "name": "Thuế GTGT đầu ra 8%",
+      "rate": 8,
+      "direction": "output",
+      "account": "33311",
+      "reportGroup": "8"
+    },
+    {
+      "code": "R10",
+      "name": "Thuế GTGT đầu ra 10%",
+      "rate": 10,
+      "direction": "output",
+      "account": "33311",
+      "reportGroup": "10"
+    },
+    {
+      "code": "V05",
+      "name": "Thuế GTGT đầu vào 5%",
+      "rate": 5,
+      "direction": "input",
+      "account": "1331",
+      "reportGroup": "5"
+    },
+    {
+      "code": "V08",
+      "name": "Thuế GTGT đầu vào 8%",
+      "rate": 8,
+      "direction": "input",
+      "account": "1331",
+      "reportGroup": "8"
+    },
+    {
+      "code": "V10",
+      "name": "Thuế GTGT đầu vào 10%",
+      "rate": 10,
+      "direction": "input",
+      "account": "1331",
+      "reportGroup": "10"
+    },
+    {
+      "code": "V13K",
+      "name": "Thuế GTGT đầu vào 0% (không chịu VAT)",
+      "rate": 0,
+      "direction": "input",
+      "account": "1331",
+      "reportGroup": "KCT"
+    },
+    {
+      "code": "KKKN",
+      "name": "HH, DV không phải kê khai, tính nộp VAT",
+      "rate": 0,
+      "direction": "input",
+      "account": "1331",
+      "reportGroup": "KKK"
+    }
+  ]
+}

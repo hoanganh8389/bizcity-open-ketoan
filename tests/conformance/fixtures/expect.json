@@ -437,7 +437,10 @@
             "setting-prefix:bizcity.khac.remind_days",
             "data-schema",
             "doctype-unknown:revenue_recognition",
-            "slot:partner.sidebar"
+            "slot:partner.sidebar",
+            "reason-kind:customer_payment",
+            "reason-default:customer_payment",
+            "reason-pack:khong.co.goi"
           ]
         },
         "SC-MOD-1": {

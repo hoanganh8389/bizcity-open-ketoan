@@ -45,7 +45,7 @@ describe('Gói định khoản', () => {
     expect(r.body.meta.dryRun).toBe(true);
     expect(await reason('CMH')).toBeUndefined();
     expect(await versions()).toEqual(before);
-    expect((await call(ctx, 'GET', '/api/v1/posting/packs')).body.data).toEqual([]);
+    expect((await call(ctx, 'GET', '/api/v1/posting/packs')).body.data.map((p: { packId: string }) => p.packId)).toEqual(['bizcity.vn-tt99.nen']);
   });
 
   it('cài: ghi mục add, giữ xung đột, chốt bản cũ rồi phát hành một bản chính sách; bằng chứng core.template.install', async () => {
@@ -63,13 +63,17 @@ describe('Gói định khoản', () => {
     expect(pub).toMatchObject({ version: r.body.data.policyVersion, kind: 'publish', note: NOTE });
     expect(vs.at(-2)!.hash).not.toBe(pub.hash); // bản trước giữ cấu hình cũ cho chứng từ trước ngày hiệu lực
     const list = (await call(ctx, 'GET', '/api/v1/posting/packs')).body.data;
-    expect(list).toEqual([expect.objectContaining({ packId: EXAMPLE.id, status: 'installed', policyVersion: pub.version })]);
+    expect(list).toContainEqual(expect.objectContaining({ packId: EXAMPLE.id, status: 'installed', policyVersion: pub.version }));
+    expect(list).toContainEqual(expect.objectContaining({ packId: 'bizcity.vn-tt99.nen', status: 'installed', policyVersion: null })); // gói nền cài lúc khởi tạo
     const proof = await db.selectFrom('audit_logs').select(['action', 'object_id']).where('id', '=', r.body.meta.receipt.evidenceId).executeTakeFirstOrThrow();
     expect(proof).toEqual({ action: 'core.template.install', object_id: `${EXAMPLE.id}@${EXAMPLE.version}` });
   });
 
-  it('cài lại có chọn ghi đè: chỉ mục được chọn đổi; mục gói đã thêm vẫn tính là của gói', async () => {
-    const r = await call(ctx, 'POST', '/api/v1/posting/packs/install', { pack: EXAMPLE, overwrite: ['reason:TTBHK'] });
+  it('cài lại có chọn ghi đè: mục của gói nền chỉ ghi đè được khi gói khai overrides; mục gói đã thêm vẫn tính là của gói', async () => {
+    const owned = await call(ctx, 'POST', '/api/v1/posting/packs/install', { pack: EXAMPLE, overwrite: ['reason:TTBHK'] });
+    expect(owned.status, JSON.stringify(owned.body)).toBe(201);
+    expect(owned.body.data.items.find((i: { code: string }) => i.code === 'TTBHK')).toMatchObject({ action: 'conflict', note: expect.stringMatching(/bizcity\.vn-tt99\.nen/) });
+    const r = await call(ctx, 'POST', '/api/v1/posting/packs/install', { pack: { ...EXAMPLE, overrides: ['TTBHK'] }, overwrite: ['reason:TTBHK'] });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(item(r.body.data.items, 'reason', 'TTBHK')).toBe('update');
     expect(await reason('TTBHK')).toMatchObject({ cashflow_code: null });
@@ -87,7 +91,7 @@ describe('Gói định khoản', () => {
     expect(await reason('XBA9')).toBeUndefined();
     const cap = await call(ctx, 'POST', '/api/v1/posting/packs/install', { pack: mini({ requires: { docTypes: ['payroll'] } }) });
     expect(cap.body.error.code).toBe('CAPABILITY_MISSING');
-    const base = await call(ctx, 'POST', '/api/v1/posting/packs/install', { pack: mini({ extends: ['bizcity.vn-tt99.nen@^1'] }) });
+    const base = await call(ctx, 'POST', '/api/v1/posting/packs/install', { pack: mini({ extends: ['bizcity.vn-tt99.khong-co@^1'] }) });
     expect(base.body.error.code).toBe('CAPABILITY_MISSING');
   });
 
@@ -105,7 +109,7 @@ describe('Gói định khoản', () => {
     expect(await reason('CDV01')).toMatchObject({ is_active: true });
     expect(item(r.body.data.items, 'group', 'NHT01')).toBe('keep');
     expect((await versions()).at(-1)).toMatchObject({ kind: 'publish', note: `Gỡ gói định khoản ${EXAMPLE.id}@${EXAMPLE.version}` });
-    expect((await call(ctx, 'GET', '/api/v1/posting/packs')).body.data[0]).toMatchObject({ status: 'uninstalled' });
+    expect((await call(ctx, 'GET', '/api/v1/posting/packs')).body.data.find((p: { packId: string }) => p.packId === EXAMPLE.id)).toMatchObject({ status: 'uninstalled' });
     expect((await call(ctx, 'POST', '/api/v1/posting/packs/uninstall', { packId: EXAMPLE.id })).status).toBe(409);
   });
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bizcity.vn/contracts/bizcity_module/1.0.0",
+  "$id": "https://bizcity.vn/contracts/bizcity_module/1.1.0",
   "title": "bizcity_module@1",
   "description": "Manifest module / add-in theo Bizcity Framework Standard v1 (docs/contracts/BIZCITY-MODULE-v1.md).",
   "type": "object",
@@ -97,7 +97,18 @@
             "properties": {
               "docType": { "type": "string", "pattern": "^[a-z][a-z_]*$" },
               "contract": { "type": "string", "pattern": "^bizcity_ledger_intake@\\d+$" },
-              "reasonCodes": { "type": "array", "items": { "type": "string" } }
+              "reasonCodes": { "type": "array", "items": { "type": "string" } },
+              "reasons": {
+                "type": "object",
+                "description": "Lý do định khoản docType này cần (BIZCITY-POSTING-TEMPLATE §7): Core kiểm đơn vị đã có lý do mặc định trước khi cài module",
+                "required": ["kind"],
+                "properties": {
+                  "kind": { "enum": ["in", "out", "receipt", "payment"] },
+                  "default": { "type": "string", "pattern": "^[a-z_]+(:[a-z_]+)?$", "description": "Khoá lý do mặc định (flags.default), mặc định = docType" },
+                  "suggestedPacks": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z0-9-]+\\.[a-z0-9-]+(@\\^?\\d+(\\.\\d+){0,2})?$" } }
+                },
+                "additionalProperties": false
+              }
             },
             "additionalProperties": false
           }

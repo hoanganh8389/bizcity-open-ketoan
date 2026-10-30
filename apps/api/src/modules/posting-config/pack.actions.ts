@@ -1,17 +1,21 @@
 // @bizcity-layer K kernel/config
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
+// [2026-10-30 10:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — action accounting.posting.reason-suggest (MCP, AI đọc) và accounting.posting.reason-readiness (S012-4, PHASES 3.12).
 /**
  * Gói định khoản (bizcity_posting_template@1 §5, PHASES 3.11) — action:
  *   GET  /api/v1/posting/packs            core.template.list       — gói đã cài / đã gỡ
  *   POST /api/v1/posting/packs/install    core.template.install    — ?dryRun=1 xem trước (thêm / sửa / giữ / xung đột + bản chính
  *                                                                   sách sẽ phát hành) → xác nhận = ghi một giao dịch (STD-TPL-5)
  *   POST /api/v1/posting/packs/uninstall  core.template.uninstall  — ngừng dùng mã gói đã thêm mà chưa phát sinh (STD-TPL-8)
+ *   GET  /api/v1/posting/reasons/suggest    accounting.posting.reason-suggest   (MCP accounting.posting.reason_suggest) — xếp hạng lý do tất định cho một câu mô tả nghiệp vụ (§6); AI đọc được
+ *   GET  /api/v1/posting/reasons/readiness  accounting.posting.reason-readiness — docType nào đã có lý do mặc định (manifest ledger.submits[].reasons, §7)
  * Cài / gỡ là việc của người có quyền cấu hình (`settings:write`), không phơi cho AI (STD-MCP-6). Bằng chứng: id action.
  */
 import { z } from 'zod';
 import { defineAction, type AnyActionDef } from '../../core/actions.js';
 import { emitKernelEvent } from '../documents/kernel-events.js';
 import { installPack, listPacks, postingPackSchema, uninstallPack, type PackResult } from './pack.js';
+import { reasonReadiness, suggestReasons } from './reason-suggest.js';
 
 const tags = ['Cấu hình hạch toán'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -30,6 +34,39 @@ const emitPolicy = (ctx: Parameters<AnyActionDef['handler']>[0], r: PackResult, 
   : emitKernelEvent(ctx.data.tx, ctx.legacyAuth, 'bizcity.posting.policy.published', `policy:${r.policyVersion}`, { version: r.policyVersion, pack: r.packId, packVersion: r.version, action });
 
 export const packActions: AnyActionDef[] = [
+  defineAction({
+    id: 'accounting.posting.reason-suggest', title: 'Gợi ý lý do định khoản', tags,
+    description: 'Xếp hạng lý do định khoản đang dùng cho một câu mô tả nghiệp vụ (vd "chuyển khoản trả tiền điện tháng 10 cửa hàng"): từ khoá và ví dụ của gói định khoản, tên lý do, lịch sử của chính đơn vị. '
+      + 'Kết quả tất định. Chỉ chọn trong danh sách này, không tự đặt lý do / tài khoản. confident = false thì hỏi lại người dùng bằng askIf.',
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({
+      text: z.string().trim().min(2).max(500).describe('Câu mô tả nghiệp vụ'),
+      kind: z.enum(['in', 'out', 'receipt', 'payment']).optional().describe('Lọc loại lý do: in nhập · out xuất · receipt thu · payment chi'),
+      docType: z.string().max(40).optional().describe('Loại chứng từ sẽ lập (lý do mặc định của nó được cộng điểm)'),
+      limit: z.coerce.number().int().min(1).max(20).default(5),
+    }),
+    output: z.object({
+      suggestions: z.array(z.object({ code: z.string(), name: z.string(), kind: z.string(), score: z.number(), why: z.array(z.string()), askIf: z.array(z.string()) })),
+      confident: z.boolean().describe('Điểm cao nhất ≥ 0,5'),
+      askIf: z.array(z.string()).describe('Câu nên hỏi lại khi chưa chắc'),
+    }),
+    expose: { http: { method: 'GET', path: '/api/v1/posting/reasons/suggest' }, mcp: true, ai: 'read' },
+    handler: (ctx, input) => suggestReasons(ctx.data.tx, ctx.tenant.id, input),
+  }),
+
+  defineAction({
+    id: 'accounting.posting.reason-readiness', title: 'Lý do mặc định cho loại chứng từ', tags,
+    description: 'Mỗi loại chứng từ (hoặc khoá mặc định như stock_adjustment:increase) đã có lý do mặc định đang dùng chưa — kiểm trước khi cài module nộp các loại chứng từ đó (manifest ledger.submits[].reasons).',
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({ docTypes: z.string().min(1).max(500).describe('Danh sách cách nhau dấu phẩy, vd customer_payment,sale') }),
+    output: z.array(z.object({
+      docType: z.string(), defaultKey: z.string(), ready: z.boolean(), reasonCode: z.string().nullable(),
+      suggestedPacks: z.array(z.object({ id: z.string(), installed: z.boolean() })),
+    })),
+    expose: { http: { method: 'GET', path: '/api/v1/posting/reasons/readiness' }, mcp: false, ai: 'read' },
+    handler: (ctx, input) => reasonReadiness(ctx.data.tx, ctx.tenant.id, input.docTypes.split(',').map((t) => t.trim()).filter(Boolean).map((docType) => ({ docType }))),
+  }),
+
   defineAction({
     id: 'core.template.list', title: 'Gói định khoản đã cài', tags,
     description: 'Gói định khoản theo ngành đã cài / đã gỡ của đơn vị, kèm các mục gói đã thêm và bản chính sách kế toán lần cài phát hành.',

@@ -1,4 +1,5 @@
 # Cơ sở dữ liệu (db/)
+<!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — thêm thư mục packs/ (gói định khoản nền, Q012-1). -->
 
 Khu của **người phụ trách cơ sở dữ liệu**. Mọi phân hệ (Kế toán, Mua hàng, Bán hàng, Kho…) dùng chung **một** PostgreSQL; cấu trúc bảng chỉ đổi ở đây.
 
@@ -6,7 +7,8 @@ Khu của **người phụ trách cơ sở dữ liệu**. Mọi phân hệ (Kế
 |---|---|
 | `migrations/0001_goc_…` → `0009_goc_…` | **Cấu trúc gốc** chia theo mảng: nền tảng, danh mục, cấu hình định khoản, kỳ kế toán, chứng từ, sổ cái, kho & bán hàng, thuế, tài sản. Đọc file của mảng nào là biết mảng đó có bảng gì. |
 | `migrations/0010_…` trở đi | Thay đổi mới, theo số thứ tự. Mỗi bảng, cột mới có `COMMENT ON`. |
-| `seeds/` | Dữ liệu gốc: hệ thống tài khoản (`tai-khoan.csv`), loại thuế, lý do, danh mục chuẩn (JSONL)… |
+| `seeds/` | Dữ liệu gốc: hệ thống tài khoản (`tai-khoan.csv`), danh mục chuẩn (JSONL) cho màn khôi phục dữ liệu ngầm định… |
+| `packs/` | Gói định khoản (`bizcity_posting_template@1`). `vn-tt99-nen.posting-pack.json` = gói nền: loại thuế, lý do, nhóm hạch toán, hình thức thanh toán, tài khoản ngầm định mọi đơn vị mới có; seed cài ở chế độ chỉ thêm mục thiếu. Sửa gói nền = đổi cấu hình mặc định của đơn vị **mới**; đơn vị đang chạy đổi qua `POST /api/v1/posting/packs/install` |
 
 ## Chạy
 

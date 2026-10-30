@@ -111,7 +111,7 @@ defineAction({ id: 'accounting.report.trial_balance', input, output, permission:
 | `accounting.documents.search` · `accounting.documents.get` | `kt_documents` | Tìm chứng từ; xem chứng từ + bút toán + nhật ký định khoản | `/documents`, `/posting-log` |
 | `accounting.masterdata.partner_find` · `.product_find` | `kt_find_partner`… | Tra đối tượng / mặt hàng theo mã, tên, SĐT, MST | danh mục |
 | `accounting.posting.reasons` | `kt_reasons` | Lý do đang dùng, kèm gợi ý AI của gói | `/posting/reasons` |
-| `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | mới |
+| `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | **có** (PHASE-012, action `accounting.posting.reason-suggest`) <!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — reason_suggest có. --> |
 | `accounting.posting.explain` | `kt_explain_entry` | Giải thích một bút toán: lý do, tài khoản lấy từ đâu theo thứ tự AccountResolver | mới, đọc `posting_log` |
 
 ### 5.2 Đề xuất ghi — `confirm: always`, gói Pro

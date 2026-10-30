@@ -1,5 +1,6 @@
 // @bizcity-layer K kernel/config
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
+// [2026-10-30 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — chế độ baseline (khởi tạo đơn vị bằng gói nền db/packs, Q012-1): chỉ thêm mục thiếu, không phát hành bản; hình thức TT có receivable.
 /**
  * GÓI ĐỊNH KHOẢN: cài / xem trước / gỡ (bizcity_posting_template@1 §5, PHASES 3.11; PHASE-012 S012-3).
  *
@@ -11,6 +12,9 @@
  *                      Xem trước = chạy thật trong giao dịch rồi huỷ (dry-run của action, STD-TPL-5).
  *   uninstallPack()  — ngừng dùng mã gói đã THÊM mà chưa phát sinh; mã đã dùng, nhóm hạch toán, tài khoản ngầm định giữ nguyên
  *                      (STD-TPL-8); cấu hình đổi thì phát hành bản chính sách "Gỡ gói …".
+ *   baseline         — khởi tạo đơn vị (seed) bằng gói nền `db/packs/vn-tt99-nen.posting-pack.json` (Q012-1): như seed cũ, chỉ THÊM
+ *                      mục thiếu (không ghi đè, không bật lại mục đã ngừng), không chốt / phát hành bản chính sách (bản `initial` tự
+ *                      chụp ở lần định khoản đầu), không chặn STD-TPL-3; vẫn ghi dòng config_packs → đơn vị đang chạy tự "nhận" gói nền.
  * Gói là dữ liệu: không code, không đổi luật định khoản. Tình huống mẫu (scenarios) và gợi ý AI lưu trong manifest, không cài.
  */
 import { z } from 'zod';
@@ -55,7 +59,7 @@ export const postingPackSchema = z.object({
     code, name: z.string(), inventoryAccount: account, cogsAccount: account, revenueAccount: account,
     discountAccount: account.optional(), salesReturnAccount: account.optional(), isDefault: z.boolean().optional(),
   }).strict()).optional(),
-  paymentMethods: z.array(z.object({ code, name: z.string(), account }).strict()).optional(),
+  paymentMethods: z.array(z.object({ code, name: z.string(), account, receivable: z.boolean().optional() }).strict()).optional(),
   taxCodes: z.array(z.object({ code, name: z.string(), rate: z.number().min(0).max(100), direction: z.enum(['output', 'input']), account, reportGroup: z.string().optional() }).strict()).optional(),
   costItems: z.array(z.object({ code, name: z.string(), parent: code.optional() }).strict()).optional(),
   scenarios: z.array(z.record(z.unknown())).optional(),
@@ -91,7 +95,7 @@ function rowsOf(pack: PostingPack) {
       code: g.code, name: g.name, inventory_account: g.inventoryAccount, cogs_account: g.cogsAccount, revenue_account: g.revenueAccount,
       discount_account: g.discountAccount ?? null, sales_return_account: g.salesReturnAccount ?? g.revenueAccount, isDefault: !!g.isDefault,
     })),
-    methods: (pack.paymentMethods ?? []).map((m) => ({ code: m.code, name: m.name, account_code: m.account })),
+    methods: (pack.paymentMethods ?? []).map((m) => ({ code: m.code, name: m.name, account_code: m.account, is_receivable: !!m.receivable })),
     taxes: (pack.taxCodes ?? []).map((t) => ({ code: t.code, name: t.name, rate: t.rate, direction: t.direction, account_code: t.account, report_group: t.reportGroup ?? String(t.rate) })),
     defaults: Object.entries(pack.postingDefaults ?? {}).map(([key, acc]) => ({ key, account_code: acc })),
   };
@@ -106,7 +110,7 @@ async function ownersOf(trx: Db, tenantId: string, packId: string): Promise<Map<
 }
 
 /** So gói với cấu hình đơn vị. overwrite: các mục "<kind>:<mã>" người cài đồng ý ghi đè (STD-TPL-7). */
-export async function planPack(trx: Db, tenantId: string, pack: PostingPack, overwrite: string[] = []): Promise<PackItem[]> {
+export async function planPack(trx: Db, tenantId: string, pack: PostingPack, overwrite: string[] = [], opts: { baseline?: boolean } = {}): Promise<PackItem[]> {
   // STD-TPL-9: docType / năng lực / gói nền chưa có → không cài được.
   const missing = [
     ...(pack.requires?.docTypes ?? []).filter((t) => !KNOWN_DOC_TYPES.has(t)).map((t) => `docType ${t}`),
@@ -139,7 +143,7 @@ export async function planPack(trx: Db, tenantId: string, pack: PostingPack, ove
   const overrides = new Set(pack.overrides ?? []);
   const decide = (kind: PackItemKind, c: string, changes: string[] | null, inactive = false): PackItem => {
     if (changes === null) return { kind, code: c, action: 'add' };
-    if (!changes.length) return inactive ? { kind, code: c, action: 'update', changes: ['is_active'] } : { kind, code: c, action: 'keep' };
+    if (!changes.length) return inactive && !opts.baseline ? { kind, code: c, action: 'update', changes: ['is_active'] } : { kind, code: c, action: 'keep' };
     const owner = owners.get(`${kind}:${c}`);
     if (owner && !overrides.has(c)) return { kind, code: c, action: 'conflict', changes, note: `thuộc gói ${owner}; gói này không khai overrides` };
     return allow.has(`${kind}:${c}`) ? { kind, code: c, action: 'update', changes } : { kind, code: c, action: 'conflict', changes, note: 'đang khác cấu hình của đơn vị — giữ nguyên trừ khi chọn ghi đè' };
@@ -172,7 +176,7 @@ export async function planPack(trx: Db, tenantId: string, pack: PostingPack, ove
   }
   for (const m of rows.methods) {
     const cur = methods.find((x) => x.code === m.code);
-    items.push(decide('paymentMethod', m.code, cur ? diff([['name', cur.name, m.name], ['account_code', cur.account_code, m.account_code]]) : null, cur ? !cur.is_active : false));
+    items.push(decide('paymentMethod', m.code, cur ? diff([['name', cur.name, m.name], ['account_code', cur.account_code, m.account_code], ['is_receivable', cur.is_receivable, m.is_receivable]]) : null, cur ? !cur.is_active : false));
   }
   for (const t of rows.taxes) {
     const cur = taxes.find((x) => x.code === t.code);
@@ -256,13 +260,17 @@ async function publishIfChanged(trx: Db, tenantId: string, pinned: PolicyVersion
 export interface PackResult { packId: string; version: string; items: PackItem[]; policyVersion: number | null }
 
 /** Cài (hoặc cài lại / nâng cấp) gói. Gọi trong giao dịch của action (dry-run = xem trước). */
-export async function installPack(trx: Db, tenantId: string, pack: PostingPack, a: { overwrite?: string[]; effectiveFrom?: string; actor: string }): Promise<PackResult> {
-  const items = await planPack(trx, tenantId, pack, a.overwrite);
-  // Chốt bản chính sách đang áp TRƯỚC khi ghi: chứng từ trước ngày hiệu lực mới vẫn theo cấu hình cũ (STD-TPL-6).
-  const pinned = await ensureHead(trx, tenantId, await loadPolicyRaw(trx, tenantId), a.actor);
-  await applyPlan(trx, tenantId, pack, items);
-  await assertSingleDefaults(trx, tenantId);
-  const policyVersion = await publishIfChanged(trx, tenantId, pinned, { effectiveFrom: a.effectiveFrom, note: `Cài gói định khoản ${pack.id}@${pack.version}`, actor: a.actor });
+export async function installPack(trx: Db, tenantId: string, pack: PostingPack, a: { overwrite?: string[]; effectiveFrom?: string; actor: string; baseline?: boolean }): Promise<PackResult> {
+  const items = await planPack(trx, tenantId, pack, a.overwrite, { baseline: a.baseline });
+  let policyVersion: number | null = null;
+  if (a.baseline) await applyPlan(trx, tenantId, pack, items);
+  else {
+    // Chốt bản chính sách đang áp TRƯỚC khi ghi: chứng từ trước ngày hiệu lực mới vẫn theo cấu hình cũ (STD-TPL-6).
+    const pinned = await ensureHead(trx, tenantId, await loadPolicyRaw(trx, tenantId), a.actor);
+    await applyPlan(trx, tenantId, pack, items);
+    await assertSingleDefaults(trx, tenantId);
+    policyVersion = await publishIfChanged(trx, tenantId, pinned, { effectiveFrom: a.effectiveFrom, note: `Cài gói định khoản ${pack.id}@${pack.version}`, actor: a.actor });
+  }
   const prev = await trx.selectFrom('config_packs').select(['items', 'status']).where('tenant_id', '=', tenantId).where('pack_id', '=', pack.id).executeTakeFirst();
   // Cài lại: mục gói đã thêm lần trước vẫn tính là "gói thêm" (để gỡ đúng phần gói).
   const added = new Set(prev?.status === 'installed' ? (prev.items as PackItem[]).filter((i) => i.action === 'add').map(itemKey) : []);
@@ -304,6 +312,13 @@ export async function uninstallPack(trx: Db, tenantId: string, packId: string, a
   const policyVersion = await publishIfChanged(trx, tenantId, pinned, { effectiveFrom: a.effectiveFrom, note: `Gỡ gói định khoản ${packId}@${row.version}`, actor: a.actor });
   await trx.updateTable('config_packs').set({ status: 'uninstalled', uninstalled_by: a.actor, uninstalled_at: new Date() }).where('tenant_id', '=', tenantId).where('pack_id', '=', packId).execute();
   return { packId, version: row.version, items: out, policyVersion };
+}
+
+/** Đọc gói từ tệp (gói nền ở db/packs) và kiểm khuôn. */
+export function parsePack(json: unknown, source: string): PostingPack {
+  const r = postingPackSchema.safeParse(json);
+  if (!r.success) throw Errors.validation(`Gói ${source} không đúng khuôn bizcity_posting_template@1`, r.error.flatten());
+  return r.data;
 }
 
 export async function listPacks(db: Db, tenantId: string) {

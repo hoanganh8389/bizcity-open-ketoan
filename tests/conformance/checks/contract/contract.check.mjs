@@ -1,5 +1,6 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell.
+// [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-CON-2 kiểm ledger.submits[].reasons: loại lý do khớp docType, khoá mặc định, gói gợi ý có thật và có lý do mặc định.
 /**
  * Hợp đồng: schema, manifest (CONF-MAN), JSON mẫu, bảng năng lực, mã luật, mã lỗi, cấu hình.
  * Mọi hợp đồng kiểm ở MỘT chỗ này — không viết test hợp đồng rải rác nơi khác.
@@ -9,6 +10,19 @@ import { STAMP_RE } from '../../lib/framework-files.mjs';
 const MODULE_SCHEMA = 'docs/contracts/BIZCITY-MODULE-v1.schema.json';
 const INTAKE_SCHEMA = 'docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json';
 const STANDARD = 'docs/standard/bizcity-standard.json';
+/** Loại lý do hợp với docType nộp (lý do mặc định của gói nền db/packs/vn-tt99-nen). */
+const REASON_KIND = {
+  sale: ['out'], sale_return: ['in'], purchase: ['in'], purchase_return: ['out'], transfer: ['out', 'in'], stock_adjustment: ['in', 'out'],
+  cash_transfer: ['payment', 'receipt'], customer_payment: ['receipt'], supplier_payment: ['payment'],
+};
+/** Gói định khoản Core biết (gói nền + gói mẫu): mã gói → nội dung. */
+function knownPacks(ctx) {
+  const out = new Map();
+  for (const f of ctx.core.files({ under: ['db/packs', 'docs/standard/examples'], match: /posting-pack\.json$/ })) {
+    try { const p = ctx.core.json(f); if (p?.id) out.set(p.id, p); } catch { /* SC-TPL-1 báo JSON sai */ }
+  }
+  return out;
+}
 
 export const checks = [
   {
@@ -48,6 +62,7 @@ export const checks = [
       const groups = new Set(std.documentStatusGroups ?? []);
       const findings = [];
       const metrics = { manifests: 0, capabilitiesRequired: 0, capabilitiesAvailable: 0, blockedBy: [] };
+      let packs = null;
 
       for (const file of files) {
         if (!ctx.repo.exists(file)) {
@@ -99,6 +114,21 @@ export const checks = [
         const submits = new Set((m.ledger?.submits ?? []).map((s) => s.docType));
         for (const s of submits) if (!docTypes.has(s)) add(`docType "${s}" không có trong bizcity_ledger_intake@1`, `doctype-unknown:${s}`);
         for (const d of m.documents ?? []) for (const l of d.ledger ?? []) if (!submits.has(l.docType)) add(`${d.type} nộp "${l.docType}" nhưng ledger.submits không khai`, `doctype-undeclared:${l.docType}`);
+        // ledger.reasons.declare: lý do định khoản docType cần (BIZCITY-POSTING-TEMPLATE §7)
+        for (const s of m.ledger?.submits ?? []) {
+          const rs = s.reasons;
+          if (!rs) continue;
+          const want = REASON_KIND[s.docType];
+          if (want && !want.includes(rs.kind)) add(`${s.docType}: reasons.kind "${rs.kind}" không hợp (cần ${want.join(' / ')})`, `reason-kind:${s.docType}`);
+          const key = rs.default ?? s.docType;
+          if (key !== s.docType && !key.startsWith(`${s.docType}:`)) add(`${s.docType}: reasons.default "${key}" phải là "${s.docType}" hoặc "${s.docType}:<nhánh>"`, `reason-default:${s.docType}`);
+          for (const ref of rs.suggestedPacks ?? []) {
+            const id = ref.split('@')[0];
+            const pack = (packs ??= knownPacks(ctx)).get(id);
+            if (!pack) { add(`gói gợi ý "${ref}" không có trong db/packs hay docs/standard/examples`, `reason-pack:${id}`); continue; }
+            if (!(pack.reasons ?? []).some((r) => r.flags?.default === key)) add(`gói "${id}" không có lý do mặc định cho "${key}"`, `reason-pack-default:${id}`);
+          }
+        }
         // CONF-MAN-7: slot, hook
         for (const s of m.extensions?.slots ?? []) if (!slots.has(s.slot)) add(`slot "${s.slot}" không có trong Extension §3`, `slot:${s.slot}`);
         for (const h of m.extensions?.hooks ?? []) if (!hooks.has(h.hook)) add(`hook "${h.hook}" không có trong Extension §4`, `hook:${h.hook}`);

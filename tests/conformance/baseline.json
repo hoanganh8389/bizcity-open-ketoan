@@ -95,16 +95,6 @@
       "ref": "R-MATRIX-8 · khai biến vào .env.example hoặc docs/ops/DEPLOY.md",
       "debts": [
         {
-          "fp": "SC-CON-7|apps/api/src/db/paths.ts|DB_DIR",
-          "file": "apps/api/src/db/paths.ts",
-          "message": "DB_DIR chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
-          "fp": "SC-CON-7|apps/api/src/db/paths.ts|SEEDS_DIR",
-          "file": "apps/api/src/db/paths.ts",
-          "message": "SEEDS_DIR chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
           "fp": "SC-CON-7|apps/api/src/modules/catalog/catalog.routes.ts|PURCHASE_SEED_PASSWORD",
           "file": "apps/api/src/modules/catalog/catalog.routes.ts",
           "message": "PURCHASE_SEED_PASSWORD chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
