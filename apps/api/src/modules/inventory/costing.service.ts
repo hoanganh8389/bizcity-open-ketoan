@@ -598,7 +598,7 @@ async function postBranch(
   });
   const version = ev.version;
   const entry = await eventStore.post(trx, auth, ev, { branchId: a.branchId, docType: 'cogs', docNo, docDate: lastDay(p), postingDate: lastDay(p), description, lines }, cfg.accounts);
-  await eventStore.markPosted(trx, auth, { ...ev, docType: 'cogs', docNo, entryIds: [entry.id], reversed, total });
+  await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'cogs', docNo, entryIds: [entry.id], reversed, total });
   await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'costing.run', objectType: 'source_document', objectId: docKey, after: { version, total } });
   return { branchCode: a.branchCode, status: 'posted', docNo, total, filled, filledTotal };
 }

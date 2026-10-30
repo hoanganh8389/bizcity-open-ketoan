@@ -174,6 +174,25 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
              ORDER BY c.chain_seq LIMIT 20`);
     },
   },
+  {
+    // bizcity_event@1 §5, R-OUTBOX-3: việc giao hết lượt thử thì nằm im — phải có người xem.
+    code: 'EVENT_DEAD', layer: 'L3', level: 'warn', scoped: true,
+    title: 'Không có sự kiện hết lượt giao (dead) chưa xử lý',
+    fix: 'Một nơi nhận (subscriber) lỗi liên tục nên sự kiện dừng giao. Xem lỗi ở GET /api/v1/system/events, sửa nguyên nhân (kết nối, cấu hình) rồi phát lại: POST /api/v1/system/events/replay.',
+    run: (trx, s) => {
+      const range = sql.join([
+        sql`true`,
+        ...(s.from ? [sql`o.occurred_at >= ${s.from}::date`] : []),
+        ...(s.to ? [sql`o.occurred_at < ${s.to}::date + 1`] : []),
+      ], sql` AND `);
+      return sqlCounts(trx,
+        sql`SELECT count(*)::int AS n FROM event_deliveries d JOIN event_outbox o ON o.id = d.event_id WHERE o.tenant_id = ${s.tenantId} AND ${range}`,
+        sql`SELECT d.consumer || ':' || o.type || ':' || o.subject AS key, count(*) OVER ()::int AS total
+              FROM event_deliveries d JOIN event_outbox o ON o.id = d.event_id
+             WHERE o.tenant_id = ${s.tenantId} AND d.status = 'dead' AND ${range}
+             ORDER BY o.seq LIMIT 20`);
+    },
+  },
 ];
 
 registerDiagnostics(PLATFORM_DIAGNOSTICS);

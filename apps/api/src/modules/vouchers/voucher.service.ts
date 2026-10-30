@@ -257,7 +257,7 @@ async function createManualIn(trx: Db, auth: AuthContext, doc: ManualDoc) {
       const res = await trx.updateTable('reference_documents').set({ status: 'used', used_event_id: created.id, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('doc_key', '=', sourceDocKey).executeTakeFirst();
       if (!Number(res.numUpdatedRows)) throw Errors.validation(`Chứng từ nguồn ${sourceDocKey} không tồn tại`);
     }
-    await eventStore.markPosted(trx, auth, { id: created.id, version: 1, docType: doc.docType, docNo, entryIds, total: doc.total, action: 'post' });
+    await eventStore.markPosted(trx, auth, { id: created.id, version: 1, docKey, docType: doc.docType, docNo, entryIds, total: doc.total, action: 'post' });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.create`, objectType: 'source_document', objectId: docKey, after: { total: doc.total } });
     return { id: created.id, docKey, docNo, version: 1, entryIds };
   }
@@ -294,7 +294,7 @@ async function updateManual(auth: AuthContext, id: string, doc: ManualDoc) {
     });
     const entryIds = await postEntries(trx, auth, { docId: row.id, version, branchId, docNo: row.doc_no, doc });
     if (doc.settle) await settleFromEvent(trx, auth.tenantId, row.id, doc.settle, auth.actorName);
-    await eventStore.markPosted(trx, auth, { id: row.id, version, docType: doc.docType, docNo: row.doc_no, entryIds, reversed, total: doc.total, action: 'repost' });
+    await eventStore.markPosted(trx, auth, { id: row.id, version, docKey: row.doc_key, docType: doc.docType, docNo: row.doc_no, entryIds, reversed, total: doc.total, action: 'repost' });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.update`, objectType: 'source_document', objectId: row.doc_key, after: { version, total: doc.total } });
     return { id: row.id, docKey: row.doc_key, docNo: row.doc_no, version, entryIds };
   });

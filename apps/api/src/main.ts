@@ -7,6 +7,7 @@ import { buildApp } from './app.js';
 import { env } from './config/env.js';
 import { closeDb } from './db/client.js';
 import { pendingMigrations, runMigrations } from './db/migrate.js';
+import { startEventRuntime } from './core/events.js';
 
 async function start(): Promise<void> {
   if (env.AUTO_MIGRATE === '1') {
@@ -16,9 +17,12 @@ async function start(): Promise<void> {
     if (pending.length) throw new Error(`Cơ sở dữ liệu chưa nâng cấp (${pending.length} migration chưa áp, mới nhất ${pending[pending.length - 1]}): chạy job db-migrate trước (docker compose up db-migrate).`);
   }
   const app = await buildApp();
+  // Dispatcher sự kiện + đồng hồ (bizcity_event@1): chạy nhiều bản API cùng lúc vẫn đúng nhờ SKIP LOCKED + khoá chống trùng.
+  const stopEvents = startEventRuntime(app.log);
 
   const shutdown = async (signal: string) => {
     app.log.info(`Nhận ${signal}, đang dừng…`);
+    await stopEvents();
     await app.close();
     await closeDb();
     process.exit(0);

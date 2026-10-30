@@ -8,6 +8,7 @@ import type { Routes } from './types.js';
 import { authRoutes } from '../modules/auth/auth.routes.js';
 import { systemRoutes } from '../modules/system/system.routes.js';
 import { evidenceRoutes } from '../modules/system/evidence.routes.js';
+import { eventRoutes } from '../modules/system/events.routes.js';
 import { mcpRoutes } from '../modules/system/mcp.routes.js';
 import { metricsRoutes } from '../modules/system/metrics.routes.js';
 import { presenceRoutes } from '../modules/system/presence.js';
@@ -38,7 +39,7 @@ import { reportRoutes } from '../modules/reports/report.routes.js';
 import { debtRoutes } from '../modules/debts/debt.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
-  authRoutes, systemRoutes, evidenceRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes,
+  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes,
   accountRoutes, branchRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes,

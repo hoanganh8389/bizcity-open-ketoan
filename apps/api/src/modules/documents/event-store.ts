@@ -7,7 +7,8 @@
  *   lock(docKey) → reverseActive() → saveVersion() → post() → markPosted()      (hoặc cancel() khi không còn số)
  *
  * - Bút toán luôn gắn (sự việc, phiên bản): post() tự điền sourceDocumentId / sourceVersion.
- * - markPosted() đặt posted_version = phiên bản vừa ghi và ghi posting_log — chung một chỗ cho mọi dịch vụ.
+ * - markPosted() đặt posted_version = phiên bản vừa ghi, ghi posting_log và phát bizcity.ledger.entry.posted — chung một chỗ.
+ * - cancel() phát bizcity.ledger.entry.reversed khi có bút toán bị đảo.
  * - Ngoài modules/{ledger,posting,documents} không gọi ledgerService (SC-KERNEL-3, R-LEDGER-4).
  */
 import type { Db } from '../../db/client.js';
@@ -18,6 +19,7 @@ import { ledgerService } from '../ledger/ledger.service.js';
 import type { DraftEntry } from '../ledger/ledger.types.js';
 import { documentRepository } from './document.repository.js';
 import { logPosting } from './document.service.js';
+import { emitKernelEvent } from './kernel-events.js';
 
 type Accounts = Map<string, Account>;
 type EventRow = NonNullable<Awaited<ReturnType<typeof documentRepository.findByKeyForUpdate>>>;
@@ -78,16 +80,19 @@ export const eventStore = {
     return ledgerService.post(trx, auth.tenantId, auth.actor, { ...entry, sourceDocumentId: event.id, sourceVersion: event.version }, accounts);
   },
 
-  /** Chốt phiên bản đã vào sổ: status posted, posted_version = version, một dòng posting_log. */
+  /** Chốt phiên bản đã vào sổ: status posted, posted_version = version, một dòng posting_log, sự kiện entry.posted. */
   async markPosted(
     trx: Db,
     auth: AuthContext,
-    v: { id: string; version: number; docType: string; docNo: string; entryIds: string[]; reversed?: number; total?: number | null; action?: 'post' | 'repost' },
+    v: { id: string; version: number; docKey: string; docType: string; docNo: string; entryIds: string[]; reversed?: number; total?: number | null; action?: 'post' | 'repost' },
   ): Promise<void> {
     await documentRepository.update(trx, v.id, { status: 'posted', posted_at: new Date(), posted_version: v.version, error_code: null, error_message: null });
     await logPosting(trx, {
       tenantId: auth.tenantId, eventId: v.id, docType: v.docType, docNo: v.docNo, version: v.version,
       action: v.action ?? (v.version > 1 ? 'repost' : 'post'), entryIds: v.entryIds, reversed: v.reversed ?? 0, total: v.total, actor: auth.actor,
+    });
+    await emitKernelEvent(trx, auth, 'bizcity.ledger.entry.posted', v.docKey, {
+      docKey: v.docKey, docType: v.docType, docNo: v.docNo, version: v.version, entryIds: v.entryIds, reversed: v.reversed ?? 0, total: v.total ?? null,
     });
   },
 
@@ -98,6 +103,11 @@ export const eventStore = {
       tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version,
       action: 'cancel', reversed: v.reversed ?? 0, message: v.message, actor: auth.actor,
     });
+    if (v.reversed) {
+      await emitKernelEvent(trx, auth, 'bizcity.ledger.entry.reversed', row.doc_key, {
+        docKey: row.doc_key, docType: row.doc_type, docNo: row.doc_no, version: row.version, reversed: v.reversed, reason: 'cancel',
+      });
+    }
   },
 
   /**

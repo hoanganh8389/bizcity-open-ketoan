@@ -21,7 +21,9 @@ import { selectEnabled } from './core/addins.js';
 import { BUILTIN_ADDINS } from './addins/index.js';
 
 import { enabledModules, routesFor } from './phan-he/index.js';
-import { isCatalogWrite, notifyCatalogChanged } from './modules/catalog/catalog-notify.js';
+import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
+import { registerRequestContext } from './core/request-context.js';
+import { registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
 import { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
 import { registerCollector } from './core/metrics.js';
@@ -45,6 +47,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   registerErrorHandler(app);
+  registerRequestContext(app);
   registerObservability(app);
 
   await app.register(cors, {
@@ -74,9 +77,13 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(authPlugin);
 
-  // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → báo hệ thống bán hàng kéo về ngay.
+  // Sự kiện miền (core/events.ts): subscriber của Platform. Vòng dispatcher + đồng hồ chạy ở main.ts, không chạy trong test.
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber]);
+  // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
-    if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) notifyCatalogChanged(req.auth.tenantId, app.log);
+    if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {
+      await emitCatalogChanged(req.auth).catch((err: unknown) => req.log.warn({ err: String(err) }, 'Phát sự kiện danh mục đổi: lỗi (hệ thống bán hàng vẫn tự kéo theo lịch)'));
+    }
   });
 
   // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).

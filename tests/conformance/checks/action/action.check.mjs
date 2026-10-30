@@ -74,9 +74,35 @@ export const checks = [
       // Không tính: hạn giờ của một lời gọi (setTimeout(() => ctl.abort(), …)) và chờ trước khi thử lại (new Promise(r => setTimeout(r, …))).
       // Hai thứ đó là một phần của lời gọi đang chạy, không phải việc định kỳ (STD-EVT-6).
       const benign = /setTimeout\(\s*\(\)\s*=>\s*\w+\.abort\(\)|new Promise\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*setTimeout\(\s*\1\s*,/;
+      // Runtime sự kiện của Platform (dispatcher + đồng hồ) là chỗ hẹn giờ DUY NHẤT được phép — chính nó là events.clock.
       const hits = ctx.repo.grep(/\b(setInterval|setTimeout)\(|from ['"](node-cron|cron|node-schedule)['"]/, { ...opts, skipComments: true })
-        .filter((h) => !benign.test(h.text));
+        .filter((h) => !benign.test(h.text) && h.file !== `${API}/core/events.ts`);
       return { examined: ctx.repo.files(opts).length, findings: hits.map((h) => ctx.finding(h.file, h.line, h.text, /setInterval/.test(h.text) ? 'setInterval' : /setTimeout/.test(h.text) ? 'setTimeout' : 'cron')) };
+    },
+  },
+  {
+    id: 'SC-EVT-2',
+    title: 'Subscriber chịu được giao lại: id cố định, gọi HTTP ra ngoài phải kèm Idempotency-Key — AP-6',
+    gate: 'CONF-STATIC', contract: 'bizcity_event', rules: ['STD-EVT-2', 'R-OUTBOX-4'], conf: ['CONF-RUN-10'], tier: 0, enforce: 'block', weight: 3, targets: ['repo', 'module'], scope: 'module',
+    run(ctx) {
+      // Runtime chống thực thi trùng phía CSDL ((consumer, event_id) cùng giao dịch); hiệu ứng NGOÀI CSDL thì subscriber phải tự
+      // mang khoá idempotency = id sự kiện. id phải là chuỗi cố định: đổi id = mất lịch sử đã xử lý, giao lại từ đầu.
+      const opts = srcOpts(ctx);
+      const findings = [];
+      let examined = 0;
+      for (const file of ctx.repo.files(opts)) {
+        const text = ctx.repo.read(file) ?? '';
+        if (!/defineSubscriber\(\{/.test(text)) continue;
+        for (const m of text.matchAll(/defineSubscriber\(\{([\s\S]*?)\n\}\);/g)) {
+          examined += 1;
+          const body = m[1];
+          const line = text.slice(0, m.index).split('\n').length;
+          const id = /^\s*id:\s*'([a-z0-9.-]+)'/m.exec(body)?.[1];
+          if (!id) findings.push(ctx.finding(file, line, 'defineSubscriber thiếu id dạng chuỗi cố định (id: \'<module>.<việc>\')', `id:${line}`));
+          if (/\bfetch\(/.test(body) && !/idempotency-key/i.test(body)) findings.push(ctx.finding(file, line, `subscriber ${id ?? '?'} gọi HTTP ra ngoài mà không gửi Idempotency-Key = event.id (STD-EVT-2)`, `idem:${id ?? line}`));
+        }
+      }
+      return { examined, unitBy: 'key', findings };
     },
   },
   {

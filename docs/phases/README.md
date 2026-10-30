@@ -21,7 +21,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [003 Action, bằng chứng, MCP đọc](PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/README.md) | 2 | 2.2, 2.5, 2.6, 2.9–2.13 | G1-04, -07, -09, G2-01, -02, -07, -08 | có | 100% | ✅ |
 | [004 Một cửa ghi sổ](PHASE-004-MOT-CUA-GHI-SO/README.md) | 2 | 2.1 | — | có | 100% | ✅ 2026-10-30 |
 | [005 Chính sách có phiên bản](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md) | 2 | 2.14 | G2-09 | chưa | 0% | ☐ cần ADR |
-| [006 Outbox sự kiện](PHASE-006-OUTBOX-SU-KIEN/README.md) | 3 | 3.4 | G2-05 | chưa | 0% | ☐ |
+| [006 Outbox sự kiện](PHASE-006-OUTBOX-SU-KIEN/README.md) | 3 | 3.4 | G2-05 | có | 100% | ✅ 2026-10-30 |
 | [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | chưa | 0% | ☐ làm song song được |
 | [008 Sao lưu PITR](PHASE-008-SAO-LUU-PITR/README.md) | 2 | 2.15 | G1-08, G3-07 | một phần | 0% | 🟡 làm song song được |
 | [009 MCP ghi](PHASE-009-MCP-GHI/README.md) | 2 | 2.16 | G2-04 | một phần | 0% | 🟡 khung xác nhận có |

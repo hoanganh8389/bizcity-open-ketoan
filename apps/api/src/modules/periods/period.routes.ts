@@ -21,6 +21,7 @@ import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { sql } from 'kysely';
 import { DOC_TYPE_LIST } from '@ketoan/contracts';
+import { emitKernelEvent } from '../documents/kernel-events.js';
 import { periodRepository } from './period.repository.js';
 import { closingService } from '../closing/closing.service.js';
 import { documentChecks } from '../reports/control-reports.js';
@@ -52,6 +53,9 @@ async function guardLock(auth: AuthContext, year: number, month: number, branchI
   }
   return `Chấp nhận lỗi chẩn đoán lượt #${runId} (${errors.map((c) => c.code).join(', ')}): ${accept}`;
 }
+
+/** Chủ thể sự kiện khoá / mở kỳ: period:<yyyy-mm> (bizcity_event@1 §7). */
+const periodSubject = (year: number, month: number) => `period:${year}-${String(month).padStart(2, '0')}`;
 
 export async function periodRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -122,6 +126,7 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
         const period = await periodRepository.ensurePeriodFor(trx, auth.tenantId, date);
         if (await periodRepository.insertLock(trx, { tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, locked_by: auth.actorName })) {
           await trx.insertInto('period_lock_events').values({ tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, action: 'lock', reason: accepted, actor: auth.actor, actor_name: auth.actorName }).execute();
+          await emitKernelEvent(trx, auth, 'bizcity.period.locked', periodSubject(b.year, b.month), { year: b.year, month: b.month, locks: [{ branchCode: b.branchCode ?? null, docType: b.docType }] });
         }
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock', objectType: 'period', objectId: period.id, after: { ...b, acceptedDiagnostics: accepted ?? undefined } });
       });
@@ -141,6 +146,9 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
         const removed = await periodRepository.deleteLock(trx, auth.tenantId, req.params.id);
         if (!removed) throw Errors.notFound('khoá sổ');
         await trx.insertInto('period_lock_events').values({ tenant_id: auth.tenantId, period_id: removed.period_id, branch_id: removed.branch_id, doc_type: removed.doc_type, action: 'unlock', reason: req.query.reason, actor: auth.actor, actor_name: auth.actorName }).execute();
+        const p = await trx.selectFrom('fiscal_periods').select(['year', 'month']).where('id', '=', removed.period_id).executeTakeFirstOrThrow();
+        const br = removed.branch_id ? await trx.selectFrom('branches').select('code').where('id', '=', removed.branch_id).executeTakeFirst() : undefined;
+        await emitKernelEvent(trx, auth, 'bizcity.period.unlocked', periodSubject(p.year, p.month), { year: p.year, month: p.month, locks: [{ branchCode: br?.code ?? null, docType: removed.doc_type }] });
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.unlock', objectType: 'period', objectId: removed.period_id, before: removed });
       });
       return ok({ unlocked: true });
@@ -210,6 +218,11 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
           }
         }
         for (let i = 0; i < events.length; i += 1000) await trx.insertInto('period_lock_events').values(events.slice(i, i + 1000)).execute();
+        const codeOf = new Map(branchRows.map((x) => [x.id, x.code]));
+        for (const action of ['lock', 'unlock'] as const) {
+          const locks = events.filter((e) => e.action === action).map((e) => ({ branchCode: codeOf.get(e.branch_id) ?? null, docType: e.doc_type }));
+          if (locks.length) await emitKernelEvent(trx, auth, action === 'lock' ? 'bizcity.period.locked' : 'bizcity.period.unlocked', periodSubject(b.year, b.month), { year: b.year, month: b.month, locks });
+        }
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock-batch', objectType: 'period', objectId: period.id, after: { locked, unlocked, reason: b.reason || undefined, acceptedDiagnostics: accepted ?? undefined } });
         return { locked, unlocked };
       });

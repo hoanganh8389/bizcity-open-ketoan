@@ -29,8 +29,8 @@ Rủi ro ở đây là những gì xảy ra khi thiết kế hướng sự kiệ
 
 Trạng thái hiện tại của từng dòng xem bảng điểm. Ngày 2026-10-30:
 - **đạt:** C-2, C-3, C-4;
-- **một phần:** C-6, C-7, C-8. Nợ A-17 (module ghi bảng lõi), PITR, `correlation_id` chưa xong. C-1 đạt từ 2026-10-30 khi nợ A-01 một cửa ghi hết (PHASE-004);
-- **thiếu:** C-5 (outbox, G2-05), C-9 (phiên bản chính sách).
+- **một phần:** C-6, C-7. Nợ A-17 (module ghi bảng lõi), PITR. C-1 đạt từ 2026-10-30 khi nợ A-01 một cửa ghi hết (PHASE-004); C-5 và C-8 đạt cùng ngày (outbox, `correlation_id` — PHASE-006);
+- **thiếu:** C-9 (phiên bản chính sách, G2-09).
 
 ## 3. Ma trận pháp lý (Việt Nam)
 

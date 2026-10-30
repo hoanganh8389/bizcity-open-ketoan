@@ -568,7 +568,7 @@ async function runOne(auth: AuthContext, branchCode: string, period: string): Pr
     if (JSON.stringify(residuals) !== JSON.stringify(c.residuals)) {
       await documentRepository.update(trx, docId, { payload: JSON.stringify({ ...payload, residuals }) });
     }
-    await eventStore.markPosted(trx, auth, { ...ev, docType: 'closing', docNo, entryIds: [entry.id], reversed, total: c.total });
+    await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'closing', docNo, entryIds: [entry.id], reversed, total: c.total });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'closing.run', objectType: 'source_document', objectId: docKey, after: { version, total: c.total, profit: c.profit, rulesVersion: s.ruleSet.version, entryCount: sources.entryCount, residuals: residuals.length } });
     return { branchCode: b.code, period, status: 'posted', docNo, lines: c.lines.length, total: c.total, profit: c.profit, residuals };
   });
@@ -726,7 +726,7 @@ export const closingService = {
           { accountCode: l.creditAccount, debit: 0, credit: l.amount, pairNo: i + 1, part: 'other' as const, partnerId: null, description, dims: {} },
         ]);
         const entry = await eventStore.post(trx, auth, ev, { branchId: b.id, docType: 'closing', docNo, docDate, postingDate: docDate, description, lines: draft }, s.accounts);
-        await eventStore.markPosted(trx, auth, { ...ev, docType: 'closing', docNo, entryIds: [entry.id], reversed, total });
+        await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'closing', docNo, entryIds: [entry.id], reversed, total });
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'closing.year_end', objectType: 'source_document', objectId: docKey, after: { version, total } });
         return { branchCode: b.code, status: 'posted' as const, docNo, lines, total };
       });

@@ -90,17 +90,6 @@
         }
       ]
     },
-    "SC-CMP-2": {
-      "title": "Bảy nguyên tắc kiến trúc AP-1..AP-7 đều có cách thực thi (check có thật) — AP-7",
-      "ref": "AP-6 chờ transactional outbox + consumer idempotent (G2-05, PHASES 3, R-OUTBOX) — nợ có chủ, đã duyệt 2026-10-30",
-      "debts": [
-        {
-          "fp": "SC-CMP-2|docs/standard/bizcity-standard.json|unenforced:AP-6",
-          "file": "docs/standard/bizcity-standard.json",
-          "message": "AP-6 \"Events are replayable, consumers are idempotent\" chưa có cách thực thi (check) — nợ theo AP-7"
-        }
-      ]
-    },
     "SC-CON-7": {
       "title": "Biến môi trường đọc trong code có trong .env.example hoặc settings registry",
       "ref": "R-MATRIX-8 · khai biến vào .env.example hoặc docs/ops/DEPLOY.md",
@@ -873,17 +862,6 @@
           "fp": "SC-EVD-1|apps/api/src/phan-he/mua-hang/log.ts|appendFile",
           "file": "apps/api/src/phan-he/mua-hang/log.ts",
           "message": "await appendFile(path.join(dir, `${ts.slice(0, 7)}.jsonl`), rows.map((r) => JSON.stringify({ ts, ...r })).join('\\n') + '\\n', 'utf8');"
-        }
-      ]
-    },
-    "SC-EVT-1": {
-      "title": "Không hẹn giờ tự chế (setInterval / setTimeout / cron) — dùng events.clock",
-      "ref": "Audit A-22 · thay bằng events.clock / outbox (PHASES 3)",
-      "debts": [
-        {
-          "fp": "SC-EVT-1|apps/api/src/modules/catalog/catalog-notify.ts|setTimeout",
-          "file": "apps/api/src/modules/catalog/catalog-notify.ts",
-          "message": "timers.set(tenantId, setTimeout(() => {"
         }
       ]
     },

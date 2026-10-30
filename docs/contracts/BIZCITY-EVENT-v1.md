@@ -22,7 +22,18 @@
 
 ## 2. Hiện trạng
 
-Chưa có sự kiện miền. Chỗ gần nhất là `modules/catalog/catalog-notify.ts`: báo hệ thống bán hàng "danh mục đổi" bằng `setTimeout` trong bộ nhớ, mất khi khởi động lại, không retry (A-22). Không có lịch chạy việc định kỳ, nên nhắc hạn hợp đồng chỉ là màn xem (`GET /contract-schedules?from=&to=`), không tự nhắc.
+**Có từ 2026-10-30 (PHASE-006, migration 0039):** runtime `apps/api/src/core/events.ts`. Gói `packages/events` tách cùng Kernel ở PHASES 2.3.
+
+| Phần | Hiện có |
+|---|---|
+| Phát | `emitEvent(trx, …)` (Kernel, Platform); `ctx.events.emit(type, data, { subject })` trong action (kiểm tiền tố module, STD-EVT-3). Việc giao tạo lúc phát cho mọi subscriber đang đăng ký: subscriber mới chỉ nhận sự kiện phát sau khi nó đăng ký, sự kiện cũ thì phát lại |
+| Nghe | `defineSubscriber({ id, module, on, retry, handle })` + `registerSubscribers`; handler nhận `ctx.tx` (cùng giao dịch với dấu đã xử lý) và `ctx.emit` (tự gắn `causationId`) |
+| Giao | Dispatcher trong tiến trình API (`main.ts`, mỗi giây): `SKIP LOCKED`, một giao dịch mỗi việc, thứ tự theo `seq` trong cùng (đơn vị, subject), thử lại giãn nhịp (mặc định 8 lần, 5 giây → 1 giờ), hết lượt → `dead` |
+| Đồng hồ | `bizcity.clock.hourly`, `bizcity.clock.daily` (01:00 giờ VN); chỉ phát khi có subscriber; khoá chống trùng `dedupe_key` theo giờ / ngày |
+| Vận hành | `GET /api/v1/system/events` (`core.events.status`), `POST /api/v1/system/events/replay` (`core.events.replay`, có bằng chứng), tự chẩn đoán `EVENT_DEAD`; dọn outbox quá 90 ngày bằng subscriber `core.events-retention` |
+| Tương quan | `correlation_id` = header `X-Correlation-Id` (mặc định mã yêu cầu), gắn vào cả sự kiện lẫn bằng chứng (`audit_logs`) |
+
+Nhắc hạn hợp đồng vẫn chỉ là màn xem (`GET /contract-schedules?from=&to=`) cho tới khi module hợp đồng có subscriber `bizcity.clock.daily`.
 
 ## 3. Phong bì sự kiện
 
@@ -106,7 +117,8 @@ Gửi ra ngoài (webhook tới WooCommerce, Cell) là một subscriber đặc bi
 | `bizcity.ledger.event.failed` | định khoản lỗi (`status = error`) | `docKey` |
 | `bizcity.period.locked` / `.unlocked` | khoá / mở kỳ | `period:<yyyy-mm>` |
 | `bizcity.masterdata.partner.changed` | thêm / sửa / ngừng đối tượng | `partner:<code>` |
-| `bizcity.masterdata.product.changed` | thay `catalog-notify.ts` | `product:<sku>` |
+| `bizcity.masterdata.product.changed` | thêm / sửa / ngừng một mặt hàng (khi route danh mục thành action) | `product:<sku>` |
+| `bizcity.masterdata.catalog.changed` | danh mục hàng đổi (gom khung 5 giây; đang phát từ hook sau commit) | `catalog` |
 | `bizcity.clock.daily` / `bizcity.clock.hourly` | 01:00 giờ đơn vị / mỗi giờ | `clock` |
 | `bizcity.module.enabled` / `.disabled` | bật / tắt module cho đơn vị | `module:<id>` |
 
@@ -114,7 +126,7 @@ Module dùng `bizcity.ledger.entry.posted` để biết **chắc chắn** sổ �
 
 ## 8. Chuyển dần
 
-1. Phase 3: bảng `event_outbox`, `event_deliveries`, `event_consumptions` + dispatcher chạy trong tiến trình API (một worker, `SKIP LOCKED` nên chạy nhiều bản vẫn đúng).
-2. Phase 3: Kernel phát các sự kiện `bizcity.ledger.*` từ `postingService` / `eventStore`.
-3. Phase 3: thay `catalog-notify.ts` bằng subscriber webhook của `adapters/wordpress`.
+1. ✅ 2026-10-30: bảng `event_outbox`, `event_deliveries`, `event_consumptions` + dispatcher chạy trong tiến trình API (`SKIP LOCKED` nên chạy nhiều bản vẫn đúng).
+2. ✅ 2026-10-30: Kernel phát `bizcity.ledger.entry.posted` / `.reversed` (cửa nạp + `eventStore`), `bizcity.period.locked` / `.unlocked`. Chưa phát: `bizcity.ledger.event.received` / `.failed`, `bizcity.masterdata.partner.changed`, `bizcity.module.enabled` / `.disabled`.
+3. ✅ 2026-10-30: `catalog-notify.ts` thành subscriber `catalog.notify-sales` của sự kiện `bizcity.masterdata.catalog.changed` (subject `catalog`, gom khung 5 giây; thay `bizcity.masterdata.product.changed` theo mã hàng khi route danh mục thành action). Chuyển vào `adapters/wordpress` ở Phase 5.
 4. Phase 5: tách dispatcher thành tiến trình riêng khi tải lớn (cùng bảng, không đổi hợp đồng).

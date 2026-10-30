@@ -31,7 +31,7 @@ async function run(amount: number) {
       fields: { branch_id: branchId, doc_date: '2026-10-31', total: amount, payload: JSON.stringify({ amount }) },
     });
     const entry = await eventStore.post(trx, auth, ev, { branchId, docType: 'closing', docNo, docDate: '2026-10-31', postingDate: '2026-10-31', description: 'Thử eventStore', lines: lines(amount) }, accounts);
-    await eventStore.markPosted(trx, auth, { ...ev, docType: 'closing', docNo, entryIds: [entry.id], reversed, total: amount });
+    await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'closing', docNo, entryIds: [entry.id], reversed, total: amount });
     return { ...ev, entryId: entry.id, reversed };
   });
 }

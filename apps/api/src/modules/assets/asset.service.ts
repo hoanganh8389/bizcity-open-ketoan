@@ -733,7 +733,7 @@ async function postBranch(
   });
   const version = ev.version;
   const entry = await eventStore.post(trx, auth, ev, { branchId: a.branchId, docType: 'depreciation', docNo, docDate, postingDate: docDate, description, lines: draft }, a.accounts);
-  await eventStore.markPosted(trx, auth, { ...ev, docType: 'depreciation', docNo, entryIds: [entry.id], reversed, total, action: existing ? 'repost' : 'post' });
+  await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'depreciation', docNo, entryIds: [entry.id], reversed, total, action: existing ? 'repost' : 'post' });
   await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'depreciation.run', objectType: 'source_document', objectId: docKey, after: { version, total } });
   return { branchCode: a.branchCode, status: 'posted' as const, docNo, total };
 }
