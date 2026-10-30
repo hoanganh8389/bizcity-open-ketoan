@@ -43,6 +43,14 @@ export const ERROR_CODES = {
   INTERNAL: 'INTERNAL_ERROR',
   /** Bản cài chưa sẵn sàng phục vụ (L1: còn migration chưa áp, mất trigger bảo vệ sổ, CSDL chỉ đọc) — GET /system/health/ready. */
   NOT_READY: 'NOT_READY',
+  /** bizcity_action@1 §7–8: cùng Idempotency-Key, khác nội dung. */
+  IDEMPOTENCY_CONFLICT: 'IDEMPOTENCY_CONFLICT',
+  /** Module cần năng lực Core chưa có (bizcity-standard.json: planned). */
+  CAPABILITY_MISSING: 'CAPABILITY_MISSING',
+  /** Module chưa bật cho đơn vị. */
+  MODULE_DISABLED: 'MODULE_DISABLED',
+  /** Quá hạn mức gọi (khoá API, AI). */
+  RATE_LIMITED: 'RATE_LIMITED',
 } as const;
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 

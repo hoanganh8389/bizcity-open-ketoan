@@ -37,9 +37,9 @@
     { "id": "documents.attachments", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Đính kèm tệp chung (thay purchase_attachments riêng của Mua hàng)." },
     { "id": "documents.signatures", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Ký theo vai trên mọi chứng từ (document_signatures hiện chỉ gắn accounting_events)." },
     { "id": "documents.workflow", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_document", "description": "Máy trạng thái khai báo, duyệt nhiều cấp theo ngưỡng." },
-    { "id": "actions.runtime", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "defineAction(): quyền, zod, giao dịch, lỗi chuẩn, sinh HTTP + OpenAPI." },
-    { "id": "actions.idempotency", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "Header Idempotency-Key; gửi lại cùng khoá trả cùng kết quả." },
-    { "id": "actions.dry-run", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_action", "description": "Chạy thử trong giao dịch rồi huỷ (mẫu đã có ở add-in tro-ly /simulate)." },
+    { "id": "actions.runtime", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "defineAction(): quyền, zod, giao dịch, lỗi chuẩn, bằng chứng tự động, sinh HTTP + OpenAPI. Hiện ở apps/api/src/core/actions.ts (phân hệ dùng được; mẫu: quy.payment-request.*); module ngoài dùng qua @bizcity/module-sdk từ Phase 3." },
+    { "id": "actions.idempotency", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "Header Idempotency-Key; gửi lại cùng khoá trả cùng kết quả (bảng action_requests, giữ 7 ngày); khác nội dung → IDEMPOTENCY_CONFLICT." },
+    { "id": "actions.dry-run", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "?dryRun=1: chạy thật trong giao dịch rồi huỷ (kể cả ghi sổ, cấp số); action khai dryRun: true." },
     { "id": "evidence.receipt", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_evidence", "description": "Mỗi action ghi có bản ghi bằng chứng chỉ thêm, chuỗi băm, trả biên nhận." },
     { "id": "permissions.module", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "Module khai quyền mới trong manifest; hiện PERMISSIONS là danh sách đóng trong core/auth.ts." },
     { "id": "events.outbox", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_event", "description": "Phát sự kiện miền trong cùng giao dịch; gửi ít nhất một lần." },
@@ -85,10 +85,10 @@
   },
   "errorCodes": {
     "note": "available = có trong ERROR_CODES (packages/contracts/src/api.ts); planned = khai ở BIZCITY-ACTION-v1.md §8, chưa có code.",
-    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR", "NOT_READY"],
-    "planned": ["IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"]
+    "available": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "CONFLICT", "PERIOD_LOCKED", "POSTING_FAILED", "UNBALANCED_ENTRY", "INTERNAL_ERROR", "NOT_READY", "IDEMPOTENCY_CONFLICT", "CAPABILITY_MISSING", "MODULE_DISABLED", "RATE_LIMITED"],
+    "planned": []
   },
   "changelog": [
-    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)", "Thêm mã lỗi NOT_READY (503, GET /system/health/ready); GET /system/capabilities trả bảng này"] }
+    { "version": "1.0.0-draft", "date": "2026-10-29", "changes": ["Khởi tạo 7 hợp đồng Standard v1", "Đổi tên bizcity_event@1 (khuôn nạp sổ) thành bizcity_ledger_intake@1", "Thêm danh sách máy đọc: documentStatusGroups, extensionPoints, coreEvents, errorCodes (cho bộ kiểm tests/conformance)", "Thêm hợp đồng bizcity_posting_template@1, bizcity_mcp@1 và các năng lực mcp.*, cell.connect, templates.*, ledger.doctype.* (đề xuất)", "Thêm mã lỗi NOT_READY (503, GET /system/health/ready); GET /system/capabilities trả bảng này", "actions.runtime / idempotency / dry-run: available (PHASES 2.5); mã lỗi IDEMPOTENCY_CONFLICT, CAPABILITY_MISSING, MODULE_DISABLED, RATE_LIMITED: available"] }
   ]
 }

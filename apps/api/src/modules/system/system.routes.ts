@@ -31,6 +31,7 @@ import { readPostingModes } from '../../core/posting-modes.js';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
+import { listActions } from '../../core/actions.js';
 
 export async function systemRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -222,6 +223,8 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
         enabledModules: app.enabledModules,
         addins: app.addins.map((a) => a.manifest.id),
         diagnostics: listDiagnostics().map((c) => ({ code: c.code, layer: c.layer, level: c.level })),
+        // Action đã khai bằng defineAction (bizcity_action@1) — nguồn cho MCP (PHASES 2.12).
+        actions: listActions().map((a) => ({ id: a.id, title: a.title, effect: a.effect, permission: a.permission, idempotency: a.idempotency, dryRun: !!a.dryRun, http: a.expose.http, mcp: !!a.expose.mcp, ai: a.expose.ai ?? 'deny', errors: a.errors ?? [] })),
       });
     },
   });

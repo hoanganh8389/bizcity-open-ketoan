@@ -118,6 +118,19 @@ export interface AuditLogsTable {
   created_at: TimestampDefault;
 }
 
+/** Idempotency của action ghi (migration 0035, bizcity_action@1 §8). */
+export interface ActionRequestsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  action_id: string;
+  idem_key: string;
+  request_hash: string;
+  status_code: Generated<number>;
+  response: JsonNullable<unknown>;
+  actor: string;
+  created_at: TimestampDefault;
+}
+
 /** Kết quả tự chẩn đoán, chỉ thêm (migration 0034, R-DIAG-5). */
 export interface DiagnosticRunsTable {
   id: Generated<string>;
@@ -1373,6 +1386,7 @@ export interface Database {
   warehouses: WarehousesTable;
   audit_logs: AuditLogsTable;
   diagnostic_runs: DiagnosticRunsTable;
+  action_requests: ActionRequestsTable;
   accounts: AccountsTable;
   fiscal_periods: FiscalPeriodsTable;
   period_locks: PeriodLocksTable;

@@ -139,6 +139,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   branches: { group: 'platform', label: 'Chi nhánh / cửa hàng', module: 'branches', purpose: 'Mỗi cửa hàng là một chi nhánh; code là mã cửa hàng dùng để đối chiếu với hệ thống bán hàng.' },
   warehouses: { group: 'platform', label: 'Kho của chi nhánh', module: 'warehouses', purpose: 'Danh mục kho (DM12): mỗi kho thuộc một chi nhánh; mã kho đối chiếu dòng nhập xuất; kho mặc định nhận dòng không ghi mã kho.' },
   audit_logs: { group: 'platform', label: 'Nhật ký thao tác', module: 'access', purpose: 'Ai làm gì, lúc nào, dữ liệu trước / sau.' },
+  action_requests: { group: 'platform', label: 'Chống gửi lặp thao tác', term: 'Idempotency', module: 'system', purpose: 'Mỗi lần gọi action ghi kèm Idempotency-Key một dòng: băm nội dung + phản hồi. Gửi lại cùng khoá, cùng nội dung → trả đúng phản hồi cũ, không tạo trùng; khác nội dung → báo lỗi. Giữ 7 ngày.' },
   diagnostic_runs: { group: 'platform', label: 'Kết quả tự chẩn đoán', term: 'Chẩn đoán', module: 'system', purpose: 'Mỗi lần tự chẩn đoán (L1 sẵn sàng, L3 toàn vẹn sổ) một dòng: mã kiểm, mức, số chỗ sai, mẫu khoá chứng từ. Chạy khi gọi GET /system/diagnostics và trước khi khoá kỳ. Chỉ thêm, giữ 90 ngày.' },
   schema_migrations: { group: 'other', label: 'Lịch sử migration', purpose: 'Các tệp migrations/NNNN_*.sql đã áp vào cơ sở dữ liệu.' },
 };

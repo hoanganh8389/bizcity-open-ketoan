@@ -46,8 +46,18 @@ Mỗi bản ghi đủ sáu mục:
   - mã lỗi mới `NOT_READY` (503).
 - `GET /api/v1/system/capabilities`: bảng năng lực Bizcity Standard của bản đang chạy (PHASES 2.9).
 - Test: `assertLedgerInvariants()` chạy sau mọi tệp test (PHASES 2.2).
+- Runtime action `defineAction` (PHASES 2.5, `bizcity_action@1`):
+  - quyền, kiểm input, giao dịch, bằng chứng tự động;
+  - **chống gửi lặp** bằng header `Idempotency-Key` (bảng `action_requests`, migration `0035_action_requests.sql`);
+  - chạy thử `?dryRun=1`;
+  - mã lỗi mới `IDEMPOTENCY_CONFLICT`, `CAPABILITY_MISSING`, `MODULE_DISABLED`, `RATE_LIMITED`;
+  - `GET /system/capabilities` liệt kê action.
 
 ### Đổi
+- Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
+  - `POST /api/v1/payment-requests` và `…/:id/pay` **bắt buộc** header `Idempotency-Key`. Giao diện tự gửi: bấm đúp "Ghi" / "Chi" không còn tạo yêu cầu hay phiếu chi trùng;
+  - `…/:id/pay?dryRun=1` xem trước phiếu chi rồi huỷ;
+  - nhật ký thao tác ghi theo mã action (`quy.payment-request.create`…), thay cho `payment_request.create`.
 - **Khoá kỳ bị chặn khi sổ trong kỳ có lỗi toàn vẹn** (R-DIAG-4):
   - lỗi gồm Nợ ≠ Có, số dư ngày lệch, đảo sai, bút toán mồ côi, sự việc lệch phiên bản;
   - muốn vẫn khoá: ghi lý do chấp nhận (ít nhất 10 ký tự), lý do lưu vào nhật ký khoá;

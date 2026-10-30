@@ -29,4 +29,9 @@ export const Errors = {
   unbalanced: (message = 'Tổng nợ và có không bằng nhau, bạn kiểm tra lại thông tin!', details?: unknown) =>
     new AppError(ERROR_CODES.UNBALANCED, message, 422, details),
   notReady: (message: string, details?: unknown) => new AppError(ERROR_CODES.NOT_READY, message, 503, details),
+  idempotencyConflict: (message = 'Idempotency-Key này đã dùng cho một yêu cầu có nội dung khác — sinh khoá mới cho thao tác mới') =>
+    new AppError(ERROR_CODES.IDEMPOTENCY_CONFLICT, message, 409),
+  capabilityMissing: (capability: string) => new AppError(ERROR_CODES.CAPABILITY_MISSING, `Core chưa có năng lực ${capability}`, 501, { capability }),
+  moduleDisabled: (moduleKey: string) => new AppError(ERROR_CODES.MODULE_DISABLED, `Phân hệ ${moduleKey} chưa bật cho đơn vị`, 403, { module: moduleKey }),
+  rateLimited: (message = 'Gọi quá nhiều lần, thử lại sau') => new AppError(ERROR_CODES.RATE_LIMITED, message, 429),
 };

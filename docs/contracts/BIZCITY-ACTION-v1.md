@@ -114,5 +114,12 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 ## 9. Chuyển dần
 
 1. Phase 2: viết `@bizcity/actions` bọc Fastify; chuyển trước các route **ghi** của `phan-he/quy` (yêu cầu thanh toán) làm mẫu vì có luồng duyệt và chạm sổ.
+   - **Đã làm (PHASES 2.5):**
+     - runtime ở `apps/api/src/core/actions.ts` (tách thành gói `packages/actions` cùng 2.3);
+     - bảng `action_requests` (migration 0035);
+     - 11 action `quy.payment-request.*`, giữ nguyên đường dẫn;
+     - test `apps/api/test/actions.test.ts` (CONF-RUN-1, -4, -9).
+   - Giao diện gửi `Idempotency-Key` cho mọi lệnh ghi; form giữ một khoá mỗi lần mở.
+   - Còn thiếu cho đủ §4: biên nhận bằng chứng (2.6), outbox sự kiện (Phase 3), kiểm module bật / năng lực (Phase 3).
 2. Phase 3: chuyển mọi route `phan-he/*`; route `modules/*` của Kernel chuyển khi tách Kernel.
 3. Phase 5: `adapters/cell` đọc registry action → MCP.

@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
-import { api, errorText } from '@/lib/api';
+import { api, errorText, newIdempotencyKey } from '@/lib/api';
 import { date, dateTime, money, today } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
@@ -130,10 +130,13 @@ function RequestForm({ value, onClose, onOpenDoc }: { value: Partial<Req>; onClo
   });
   const done = () => { void qc.invalidateQueries({ queryKey: ['payment-requests'] }); void qc.invalidateQueries({ queryKey: ['debt-items'] }); onClose(); };
   const viewAgain = useViewAgain();
+  // Một khoá chống gửi lặp cho mỗi lần mở form: bấm đúp Ghi / Chi, hay gửi lại sau lỗi mạng không tạo yêu cầu, phiếu chi trùng.
+  const [createKey] = useState(newIdempotencyKey);
+  const [payKey] = useState(newIdempotencyKey);
   // Sửa rồi Ghi (không trình duyệt): ở lại, quay về chế độ xem. Thêm mới / trình duyệt: đóng như cũ.
-  const save = useMutation({ mutationFn: (submit: boolean) => (isNew ? api.post('/api/v1/payment-requests', body(submit)) : api.put(`/api/v1/payment-requests/${value.id}`, body(submit))),
+  const save = useMutation({ mutationFn: (submit: boolean) => (isNew ? api.post('/api/v1/payment-requests', body(submit), { idempotencyKey: createKey }) : api.put(`/api/v1/payment-requests/${value.id}`, body(submit))),
     onSuccess: (_r, submit) => { if (isNew || submit) done(); else { void qc.invalidateQueries({ queryKey: ['payment-requests'] }); void qc.invalidateQueries({ queryKey: ['debt-items'] }); viewAgain[1](); } } });
-  const act = useMutation({ mutationFn: (a: { action: string; body?: unknown }) => api.post(`/api/v1/payment-requests/${value.id}/${a.action}`, a.body ?? {}), onSuccess: done });
+  const act = useMutation({ mutationFn: (a: { action: string; body?: unknown }) => api.post(`/api/v1/payment-requests/${value.id}/${a.action}`, a.body ?? {}, a.action === 'pay' ? { idempotencyKey: payKey } : undefined), onSuccess: done });
   const canApprove = (value.status === 'submitted' && can('payments:approve')) || (value.status === 'approved1' && can('payments:approve-final'));
   const error = save.error ?? act.error;
   return (

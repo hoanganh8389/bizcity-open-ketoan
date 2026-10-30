@@ -51,7 +51,7 @@
 | 2.2 | `assertLedgerInvariants()` trong test-kit, gọi ở `afterAll` mọi tệp test | chạy trong CI — **có**: `apps/api/test/helpers.ts` + `test/setup.ts` (setupFiles), dùng chung kiểm L3 của 2.10 | 1.4 |
 | 2.3 | Workspace `packages/kernel`: chuyển `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` + `db/seed.ts`; mở `public.ts` (`submit`, `cancel`, `get`) | `apps/api` chỉ import `@bizcity/kernel` công khai | mới |
 | 2.4 | `packages/data`: `ctx.data.tx` (đặt `bizcity.tenant_id`), runner migration theo module, schema `bizcity_read` + view danh mục | CONF-MIG chạy được | mới |
-| 2.5 | `packages/actions`: `defineAction`, idempotency (`action_requests`), dry-run, mã lỗi mới, sinh route + OpenAPI. Chuyển `phan-he/quy/payment-requests` làm mẫu | CONF-RUN-1/3/4/9 đạt trên yêu cầu thanh toán | mới |
+| 2.5 | `packages/actions`: `defineAction`, idempotency (`action_requests`), dry-run, mã lỗi mới, sinh route + OpenAPI. Chuyển `phan-he/quy/payment-requests` làm mẫu | CONF-RUN-1/3/4/9 đạt trên yêu cầu thanh toán — **có**: runtime `apps/api/src/core/actions.ts` (gói `packages/actions` tách cùng 2.3), `test/actions.test.ts` | mới |
 | 2.6 | `packages/audit`: mở rộng `audit_logs` (Evidence §5), trigger chỉ thêm, chuỗi băm, biên nhận; runtime action ghi tự động | CONF-RUN-11/12 đạt | mới |
 | 2.7 | `packages/documents`: `nextNumber`, `document_versions`, `document_links`, `attachments` (chuyển `purchase_attachments`), `document_signatures.doc_ref` | Mua hàng dùng đính kèm chung | mới |
 | 2.8 | Tách `packages/contracts/src/mua-hang/*` về phân hệ (A-06) | `packages/contracts` không còn thư mục `mua-hang` | 1.6 |
