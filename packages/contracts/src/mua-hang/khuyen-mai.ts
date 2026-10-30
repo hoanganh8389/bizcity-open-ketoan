@@ -82,12 +82,12 @@ export function promoBoard(doc: PDoc, policies: Policy[], calc: DocCalc): PromoR
     // CK trên đơn khai riêng mã này (đứng sau bảng CK theo mã và bậc SL, như bộ tính computeDoc).
     const own = !hit && !t ? policies.filter((p) => p.kind === 'trade_discount' && p.scope.sku === l.sku && policyApplies(p, ctx))
       .sort((a, b) => Object.values(b.scope).filter(Boolean).length - Object.values(a.scope).filter(Boolean).length || (b.priority ?? 0) - (a.priority ?? 0))[0] : undefined;
-    const policyText = hit ? (hit.item.pct ? `CK ${hit.item.pct}%` : `giảm ${vn(hit.item.amount ?? 0)}đ / ${hit.item.unit || l.unit}`) : t ? `CK ${t.pct}% (bậc từ ${t.from})`
-      : own ? (Number(own.rule.pct) ? `CK ${Number(own.rule.pct)}% riêng mã` : `giảm ${vn(Number(own.rule.amount) || 0)}đ riêng mã`) : '';
+    const policyText = hit ? (hit.item.pct ? `CK ${Number(hit.item.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(hit.item.amount ?? 0)}đ / ${hit.item.unit || l.unit}`) : t ? `CK ${Number(t.pct).toLocaleString('vi-VN')}% (bậc từ ${t.from})`
+      : own ? (Number(own.rule.pct) ? `CK ${Number(Number(own.rule.pct)).toLocaleString('vi-VN')}% riêng mã` : `giảm ${vn(Number(own.rule.amount) || 0)}đ riêng mã`) : '';
     const policyOf = hit ? hit.policy : t ? tier! : own;
     if (manual && policyOf) {
       const same = hit ? (hit.item.pct ?? undefined) === src?.discountPct : t ? t.pct === src?.discountPct : (Number(own?.rule.pct) || undefined) === src?.discountPct;
-      if (!same) rows.push({ key: `manual|${l.lineKey}`, status: 'fix', kind: 'manual', policy: policyOf.code, name: policyOf.name, sku: l.sku, lineKey: l.lineKey, text: `${l.sku}: đang ghi tay ${src?.discountPct !== undefined ? `CK ${src.discountPct}%` : `giảm ${vn(src?.discountAmt ?? 0)}`}, chính sách là ${policyText}`, action: { label: 'Dùng theo chính sách', type: 'use_policy' } });
+      if (!same) rows.push({ key: `manual|${l.lineKey}`, status: 'fix', kind: 'manual', policy: policyOf.code, name: policyOf.name, sku: l.sku, lineKey: l.lineKey, text: `${l.sku}: đang ghi tay ${src?.discountPct !== undefined ? `CK ${Number(src.discountPct).toLocaleString('vi-VN')}%` : `giảm ${vn(src?.discountAmt ?? 0)}`}, chính sách là ${policyText}`, action: { label: 'Dùng theo chính sách', type: 'use_policy' } });
     } else if (!manual && policyOf) {
       rows.push({ key: `disc|${l.lineKey}`, status: 'applied', kind: hit ? 'item_discount' : t ? 'qty_tier' : 'trade_discount', policy: policyOf.code, name: policyOf.name, sku: l.sku, lineKey: l.lineKey, text: `${l.sku}: ${policyText}${l.lineDiscount ? ` = −${vn(l.lineDiscount)}` : ''}` });
     }
@@ -97,8 +97,8 @@ export function promoBoard(doc: PDoc, policies: Policy[], calc: DocCalc): PromoR
       const items = hit || !tier ? (((itemDiscountFor(policies, { ...ctx, unit: l.unit, qty: Number.MAX_SAFE_INTEGER })?.policy.rule.items as ItemDiscount[] | undefined) ?? [])
         .filter((i) => i.sku === l.sku && (!i.unit || i.unit.toLowerCase() === l.unit.toLowerCase()) && (i.minQty ?? 0) > l.qty)) : [];
       const nextItem = items.sort((a, b) => (a.minQty ?? 0) - (b.minQty ?? 0))[0];
-      const next = nextItem ? { from: nextItem.minQty!, text: nextItem.pct ? `CK ${nextItem.pct}%` : `giảm ${vn(nextItem.amount ?? 0)}đ`, p: itemDiscountFor(policies, { ...ctx, unit: l.unit, qty: nextItem.minQty! })?.policy }
-        : nextTier ? { from: nextTier.from, text: `CK ${nextTier.pct}%`, p: tier } : undefined;
+      const next = nextItem ? { from: nextItem.minQty!, text: nextItem.pct ? `CK ${Number(nextItem.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(nextItem.amount ?? 0)}đ`, p: itemDiscountFor(policies, { ...ctx, unit: l.unit, qty: nextItem.minQty! })?.policy }
+        : nextTier ? { from: nextTier.from, text: `CK ${Number(nextTier.pct).toLocaleString('vi-VN')}%`, p: tier } : undefined;
       if (next?.p) rows.push({ key: `next|${l.lineKey}`, status: 'hint', kind: next.p.kind, policy: next.p.code, name: next.p.name, sku: l.sku, lineKey: l.lineKey, text: `${l.sku}: mua thêm ${vn(next.from - l.qty)} ${l.unit} (đủ ${vn(next.from)}) để được ${next.text}`, action: { label: `Lên ${vn(next.from)}`, type: 'add_qty', qty: next.from } });
     }
   }
@@ -120,7 +120,7 @@ export function promoBoard(doc: PDoc, policies: Policy[], calc: DocCalc): PromoR
     const p = findPolicy(policies, 'trade_discount', ctxBase);
     const net = calc.lines.filter((l) => l.lineType === 'buy').reduce((s, l) => s + l.after + l.orderDiscount, 0);
     if (p && !tradeDiscountReady(p, net)) {
-      const what = Number(p.rule.pct) ? `CK ${Number(p.rule.pct)}% trên đơn` : `CK ${vn(Number(p.rule.amount) || 0)}đ trên đơn`;
+      const what = Number(p.rule.pct) ? `CK ${Number(Number(p.rule.pct)).toLocaleString('vi-VN')}% trên đơn` : `CK ${vn(Number(p.rule.amount) || 0)}đ trên đơn`;
       rows.push({ key: `hint|trade|${p.code}`, status: 'hint', kind: 'trade_discount', policy: p.code, name: p.name, text: `${p.name}: tổng đơn từ ${vn(tradeDiscountMin(p))} mới được ${what} — đơn đang ${vn(net)}, mua thêm ${vn(tradeDiscountMin(p) - net)}` });
     }
   }

@@ -3,6 +3,7 @@
  * Nghiệp vụ chứng từ mua hàng: lưu (máy chủ tự tính tiền, hạn, cảnh báo), gửi duyệt, duyệt (ghi sổ), duyệt ngoại lệ vượt
  * hạn mức, bỏ duyệt (huỷ chứng từ kế toán đã sinh), huỷ. Mỗi bước ghi nhật ký JSONL (log.ts).
  */
+import { sql } from 'kysely';
 import { computeDoc, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
 import { db, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
@@ -148,7 +149,7 @@ export const purchaseService = {
       // Nhập ngoài đơn: đóng dấu người duyệt + thời điểm cùng lý do (giữ mãi trên phiếu, lọc / rà soát riêng).
       const outside = isOutsideOrder(d, a.refOrder) ? { reason: d.outsideOrder!.reason.trim(), by: auth.actorName, at: new Date().toISOString() } : undefined;
       const links = await postPurchase(trx, auth, d, a.calc, a.accounts, docs);
-      const data = { ...(await trx.selectFrom('purchase_documents').select('data').where('id', '=', id).executeTakeFirstOrThrow()).data as Record<string, unknown>, checks: checksOf(a), policyTrace: a.calc.trace, ...((FREEZE_KINDS as readonly string[]).includes(d.kind) ? { frozen: freezeOf(d, a.calc, ctx.policies) } : {}), ...(ov ? { override: ov } : {}), outsideOrder: outside, approvedActor: auth.actor };
+      const data = { ...(await trx.selectFrom('purchase_documents').select('data').where('id', '=', id).executeTakeFirstOrThrow()).data as Record<string, unknown>, checks: checksOf(a), policyTrace: a.calc.trace, ...((FREEZE_KINDS as readonly string[]).includes(d.kind) ? { frozen: freezeOf(d, a.calc, ctx.policies) } : {}), override: ov, outsideOrder: outside, approvedActor: auth.actor }; // duyệt thường: không mang dấu duyệt ngoại lệ của lần trước
       await trx.updateTable('purchase_documents').set({
         status: 'approved', revision: d.revision + 1, links: JSON.stringify(links), data: JSON.stringify(data), approved_by: auth.actorName, approved_at: new Date(),
         due_date: a.calc.dueDate ?? null, updated_at: new Date(),
@@ -185,7 +186,8 @@ export const purchaseService = {
     const dependents = (await dependentsOf(db, auth.tenantId, id)).filter((x) => x.kind !== 'payment');
     if (dependents.length) throw Errors.conflict(`Phiếu ${dependents.map((x) => x.docNo).join(', ')} đang dựa trên phiếu này — bỏ duyệt các phiếu đó trước`);
     for (const l of [...d.links].reverse()) await documentService.cancel(auth, l.docKey, `${reason} ${d.docNo}`);
-    await db.updateTable('purchase_documents').set({ status: 'draft', links: '[]', approved_by: null, approved_at: null, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    // Về nháp: xoá dấu duyệt ngoại lệ (lịch sử vẫn ở nhật ký mua hàng MH10 và nhật ký thao tác).
+    await db.updateTable('purchase_documents').set({ status: 'draft', links: '[]', approved_by: null, approved_at: null, data: sql`data - 'override'`, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'doc_unapproved', docNo: d.docNo, user: auth.actorName, data: { reason, cancelled: d.links.map((l) => l.docNo) } }]);
     return getDoc(db, auth.tenantId, id);
   },

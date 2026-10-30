@@ -10,7 +10,7 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { sql } from 'kysely';
-import { creditStatus, orderProgress, termFromRule, termText } from '@ketoan/contracts/mua-hang';
+import { creditStatus, findPolicy, orderProgress, termFromRule, termText } from '@ketoan/contracts/mua-hang';
 import { unitsForOrders } from './gia-mua.js';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -61,7 +61,7 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
     const docs = ctx.docs.filter((d) => d.partnerCode === p.code && d.status !== 'cancelled');
     const d = debtOf.get(p.code);
     const debt = toNumber(d?.debt ?? 0);
-    const lim = pols.find((x) => x.kind === 'credit_limit' && !x.scope.brandCode);
+    const lim = findPolicy(pols.filter((x) => !x.scope.brandCode), 'credit_limit', { date: asOf, partnerCode: p.code });
     const limit = lim ? (Number(lim.rule.limit) || 0) : p.credit_limit ? toNumber(p.credit_limit) : null;
     const openOrders = docs.filter((x) => x.kind === 'order' && x.status === 'approved' && !orderProgress(x, ctx.docs, undefined, orderUnits).done);
     const pending = docs.filter((x) => x.status === 'pending_approval' && (x.kind === 'receipt' || x.kind === 'order')).reduce((s, x) => s + x.totals.total, 0)
@@ -86,7 +86,7 @@ export async function supplierProfile(trx: Db, tenantId: string, ctx: Ctx, code:
   const row = (await supplierList(trx, tenantId, { ...ctx }, 'all')).find((r) => r.code === code);
   const p = await trx.selectFrom('partners').selectAll().where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
   if (!p) throw Errors.notFound('nhà cung cấp');
-  const lim = ctx.policies.find((x) => x.kind === 'credit_limit' && x.isActive && x.scope.partnerCode === code && !x.scope.brandCode);
+  const lim = findPolicy(ctx.policies.filter((x) => x.scope.partnerCode === code && !x.scope.brandCode), 'credit_limit', { date: today(), partnerCode: code });
   const credit = row?.creditLimit ? creditStatus(lim ?? { id: 'dm13', code: 'DM13', kind: 'credit_limit', name: 'Hạn mức ở danh mục', scope: { partnerCode: code }, isActive: true, rule: { limit: row.creditLimit, warnPct: 90 } }, row.debt, row.creditUsed - row.debt, 0) : undefined;
   // Mua theo tháng (12 tháng gần nhất) từ phiếu nhập đã duyệt.
   const byMonth = new Map<string, number>();

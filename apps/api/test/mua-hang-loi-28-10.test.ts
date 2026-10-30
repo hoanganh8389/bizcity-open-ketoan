@@ -67,7 +67,7 @@ describe('Đợt test 28/10', () => {
     const p = { code: 'CT', kind: 'target_rebate', rule: { target: 500_000_000, tiers: [{ fromPct: 100, pct: 2 }, { fromPct: 110, pct: 3 }] } } as unknown as Policy;
     const thieu = rebateFor(p, { total: 549_990_000 });
     expect(thieu.rate).toBe(2);
-    expect(thieu.detail.join(' ')).toContain('109,99%'.replace(',', '.'));
+    expect(thieu.detail.join(' ')).toContain('109,99%'); // số lẻ in kiểu Việt Nam (đợt 30/10)
     expect(rebateFor(p, { total: 550_000_000 }).rate).toBe(3);
   });
 

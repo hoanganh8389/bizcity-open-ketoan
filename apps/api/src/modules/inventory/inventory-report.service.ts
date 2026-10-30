@@ -84,12 +84,16 @@ const STOCK_GROUP_SQL: Record<StockGroupBy, { key: ReturnType<typeof sql>; label
   supplier: { key: sql`COALESCE(p.code, '')`, label: sql`COALESCE(MAX(p.name), '')`, join: partnerJoin, purchaseOnly: true },
   supplierGroup: { key: sql`COALESCE(p.group_code, '')`, label: sql`COALESCE(MAX(pg.name), '')`, join: sql`${partnerJoin} LEFT JOIN partner_groups pg ON pg.tenant_id = p.tenant_id AND pg.code = p.group_code`, purchaseOnly: true },
 };
-/** Cột tổng hợp chung: tồn đầu, nhập, xuất trong kỳ; mua hàng (nhập mua − trả NCC); giá vốn hàng bán (xuất bán − khách trả lại). */
+/**
+ * Cột tổng hợp chung: tồn đầu, nhập, xuất trong kỳ; mua hàng (nhập mua − trả NCC); giá vốn hàng bán (xuất bán − khách trả lại).
+ * Dòng chỉ điều chỉnh giá trị (SL 0: phân bổ chi phí mua +, thưởng / giảm giá sau mua −) tính vào TT nhập (có dấu) — nếu bỏ
+ * qua thì TT tồn cuối lệch sổ 1561 đúng bằng các khoản đó, trong khi cột Mua hàng vẫn có.
+ */
 const sums = (from: string) => sql`
              SUM(mv.qty) FILTER (WHERE mv.doc_date < ${from}::date) AS oq,
              SUM(mv.val) FILTER (WHERE mv.doc_date < ${from}::date) AS ov,
              SUM(mv.qty) FILTER (WHERE mv.doc_date >= ${from}::date AND mv.qty > 0) AS iq,
-             SUM(mv.val) FILTER (WHERE mv.doc_date >= ${from}::date AND mv.qty > 0) AS iv,
+             SUM(mv.val) FILTER (WHERE mv.doc_date >= ${from}::date AND (mv.qty > 0 OR (mv.qty = 0 AND mv.val <> 0))) AS iv,
              -SUM(mv.qty) FILTER (WHERE mv.doc_date >= ${from}::date AND mv.qty < 0) AS xq,
              -SUM(mv.val) FILTER (WHERE mv.doc_date >= ${from}::date AND mv.qty < 0) AS xv,
              SUM(mv.qty) FILTER (WHERE mv.doc_date >= ${from}::date AND mv.kind IN ('purchase', 'purchase_return')) AS pq,
@@ -117,7 +121,7 @@ export const inventoryReportService = {
        ORDER BY b.code, mv.sku`.execute(db);
     const rows = res.rows
       .map((r) => ({ branchCode: r.branch_code, branchName: r.branch_name, sku: r.sku, name: r.name, unit: r.unit, ...figures(r) }))
-      .filter((r) => r.openingQty || r.inQty || r.outQty);
+      .filter((r) => r.openingQty || r.inQty || r.outQty || r.openingValue || r.inValue);
     const sum = (k: keyof (typeof rows)[number]) => rows.reduce((s2, r) => s2 + (r[k] as number), 0);
     return {
       rows,
@@ -140,7 +144,7 @@ export const inventoryReportService = {
        ORDER BY 1`.execute(db);
     const rows = res.rows
       .map((r) => ({ key: r.key, label: r.key ? r.label : g.purchaseOnly ? '(không có nhà cung cấp)' : q.groupBy === 'branch' ? r.label : '(chưa phân loại)', skuCount: Number(r.skus), ...figures(r) }))
-      .filter((r) => r.openingQty || r.inQty || r.outQty);
+      .filter((r) => r.openingQty || r.inQty || r.outQty || r.openingValue || r.inValue);
     const sum = (k: keyof (typeof rows)[number]) => rows.reduce((s2, r) => s2 + (r[k] as number), 0);
     return {
       groupBy: q.groupBy, purchaseOnly: Boolean(g.purchaseOnly), rows,

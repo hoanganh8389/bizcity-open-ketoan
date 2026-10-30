@@ -55,6 +55,7 @@ export function QuaTangPage() {
           <div className="card kpi"><div className="label">Đã xuất tặng</div><div className="value">{rows.reduce((s, r) => s + r.outQty, 0)}</div></div>
           <div className="card kpi"><div className="label">Giá trị tồn quà</div><div className="value">{vnd(rows.reduce((s, r) => s + Math.max(0, r.onHand) * r.unitValue, 0))}</div></div>
         </div>
+        {budgets.filter((b) => b.bought > b.amount).map((b) => <div key={`vuot-${b.policy}`} className="alert alert-warn" style={{ marginBottom: 6 }}>Chương trình {b.program}: đã mua / nhận {vnd(b.bought)} vượt ngân sách {vnd(b.amount)} ({vnd(b.bought - b.amount)})</div>)}
         {budgets.length > 0 && (
           <div className="card card-body" style={{ marginBottom: 8 }}>
             <h4 style={{ margin: '0 0 6px' }}>Ngân sách quà theo chương trình</h4>

@@ -31,7 +31,8 @@ export async function brandBranchUsage(trx: Db, tenantId: string, ctx: Ctx, bran
 }
 
 export async function creditOverview(trx: Db, tenantId: string, ctx: Ctx, asOf = today()) {
-  const limits = ctx.policies.filter((p) => p.kind === 'credit_limit' && p.isActive);
+  // Hạn mức còn hiệu lực ở ngày xem (từ / đến), không chỉ đang bật.
+  const limits = ctx.policies.filter((p) => p.kind === 'credit_limit' && p.isActive && (!p.validFrom || p.validFrom <= asOf) && (!p.validTo || p.validTo >= asOf));
   const partners = [];
   for (const p of limits.filter((x) => x.scope.partnerCode && !x.scope.brandCode)) {
     const code = p.scope.partnerCode!;
@@ -365,9 +366,14 @@ export async function purchaseSummary(trx: Db, tenantId: string, ctx: Ctx, f: { 
     }
     if ((d.kind === 'cost' || d.kind === 'rebate') && d.allocation?.length) {
       const ref = refReceipts(d, ctx.docs)[0] as StoredDoc | undefined;
+      // Còn nợ NCC của chính phiếu này: cước chưa trả (+), thưởng / giảm giá chưa trừ vào hoá đơn nào (−) — chia theo phân bổ;
+      // gom theo NCC thì ghi vào NCC của phiếu (người được trả / người giảm nợ), không phải NCC của phiếu nhập gốc.
+      const open = await openOf(trx, tenantId, d.links.map((l) => l.eventId));
+      const allocTotal = d.allocation.reduce((s, x) => s + x.amount, 0);
       for (const al of d.allocation) {
         const a = agg(f.groupBy === 'partner' && ref ? ref : d, al.sku);
         if (d.kind === 'cost') a.cost += al.amount; else a.rebate += al.amount;
+        if (open && allocTotal) agg(d, al.sku).openDebt += Math.round((open * al.amount) / allocTotal);
       }
     }
   }

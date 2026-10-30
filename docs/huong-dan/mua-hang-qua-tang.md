@@ -8,7 +8,7 @@
 |---|---|
 | NCC tặng theo chương trình | Phiếu *Nhận quà* hoặc dòng KM trên phiếu nhập |
 | NCC tặng ngoài hợp đồng (không hoá đơn) | Phiếu *Nhận quà* |
-| TGS tự mua | Phiếu nhập — đánh dấu **có / không VAT** |
+| TGS tự mua | Phiếu nhập (mọi dòng là mã quà Q…) — chọn ở ô **Quà mua có VAT?** trên đầu phiếu (mặc định theo việc phiếu có số hoá đơn hay không, sửa được bất cứ lúc nào) |
 | KM người tiêu dùng kèm hoá đơn mua | Dòng *KM người tiêu dùng / quà* trên phiếu nhập |
 | Xuất tặng khách | Phiếu *Xuất quà tặng* (ghi chương trình trên dòng) |
 
@@ -17,7 +17,8 @@
 - **Tổng hợp**: theo nguồn & VAT, theo chương trình.
 - **Cảnh báo**:
   - **xuất vượt tồn** (đỏ): thường do phiếu nhập quà chưa duyệt hoặc xuất sai chương trình;
-  - **thiếu / thừa quà** so với số được hưởng theo chương trình mua X tặng Y.
+  - **thiếu / thừa quà** so với số được hưởng theo chương trình mua X tặng Y;
+  - **vượt ngân sách**: tổng giá trị quà đã mua / nhận của chương trình lớn hơn ngân sách — báo trên màn này và ngay trên phiếu nhập / nhận quà lúc lập (vàng, không chặn).
 
 **Hạch toán:**
 - quà NCC tặng không hoá đơn: Nợ 1561 (kho quà) / Có 711 theo giá trị hợp lý;

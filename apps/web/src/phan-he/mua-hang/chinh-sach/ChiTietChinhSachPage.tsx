@@ -34,22 +34,22 @@ export function detailsOf(p: Policy): Detail[] {
   switch (p.kind as PolicyKind) {
     case 'item_discount': return ((r.items ?? []) as ItemDiscount[]).map((i) => ({
       sku: i.sku, unit: i.unit || 'mọi ĐVT', cond: i.minQty ? `mua từ ${vn(i.minQty)}` : 'mọi số lượng',
-      benefit: i.pct ? `CK ${i.pct}%` : `giảm ${vn(i.amount)}đ / ${i.unit || 'ĐVT'}`, value: i.pct ?? i.amount, valueUnit: i.pct ? '%' : 'đ / ĐVT', note: i.note,
+      benefit: i.pct ? `CK ${Number(i.pct).toLocaleString('vi-VN')}%` : `giảm ${vn(i.amount)}đ / ${i.unit || 'ĐVT'}`, value: i.pct ?? i.amount, valueUnit: i.pct ? '%' : 'đ / ĐVT', note: i.note,
     }));
-    case 'qty_tier': return ((r.tiers ?? []) as R[]).filter((t) => t.pct).map((t) => ({ sku: p.scope.sku, cond: `mua từ ${vn(t.from)}`, benefit: `CK ${t.pct}% cả dòng`, value: t.pct, valueUnit: '%' }));
+    case 'qty_tier': return ((r.tiers ?? []) as R[]).filter((t) => t.pct).map((t) => ({ sku: p.scope.sku, cond: `mua từ ${vn(t.from)}`, benefit: `CK ${Number(t.pct).toLocaleString('vi-VN')}% cả dòng`, value: t.pct, valueUnit: '%' }));
     case 'trade_discount': { const min = Number(r.minOrder) ? `đơn / phiếu nhập có tổng từ ${vn(r.minOrder)}đ` : ''; return [p.scope.sku
-      ? { sku: p.scope.sku, cond: min ? `${min}, có mã này` : 'mọi đơn / phiếu nhập có mã này', benefit: r.pct ? `CK ${r.pct}% trên dòng mã` : `giảm ${vn(r.amount)}đ trên dòng mã`, value: r.pct ?? r.amount, valueUnit: r.pct ? '%' : 'đ' }
-      : { cond: min || 'mọi đơn / phiếu nhập', benefit: r.pct ? `CK ${r.pct}% trên tổng đơn` : `giảm ${vn(r.amount)}đ / đơn`, value: r.pct ?? r.amount, valueUnit: r.pct ? '%' : 'đ' }]; }
-    case 'payment_discount': return [{ cond: 'trả đúng hạn', benefit: `CK thanh toán ${r.pct}%`, value: r.pct, valueUnit: '%' }];
+      ? { sku: p.scope.sku, cond: min ? `${min}, có mã này` : 'mọi đơn / phiếu nhập có mã này', benefit: r.pct ? `CK ${Number(r.pct).toLocaleString('vi-VN')}% trên dòng mã` : `giảm ${vn(r.amount)}đ trên dòng mã`, value: r.pct ?? r.amount, valueUnit: r.pct ? '%' : 'đ' }
+      : { cond: min || 'mọi đơn / phiếu nhập', benefit: r.pct ? `CK ${Number(r.pct).toLocaleString('vi-VN')}% trên tổng đơn` : `giảm ${vn(r.amount)}đ / đơn`, value: r.pct ?? r.amount, valueUnit: r.pct ? '%' : 'đ' }]; }
+    case 'payment_discount': return [{ cond: 'trả đúng hạn', benefit: `CK thanh toán ${Number(r.pct).toLocaleString('vi-VN')}%`, value: r.pct, valueUnit: '%' }];
     case 'promo_gift': return giftItemsOf(p).map((i) => ({ sku: i.sku || p.scope.sku, unit: i.buyUnit || undefined, cond: `mua ${vn(i.buyQty)} ${i.buyUnit || 'ĐVT trên phiếu'}`, benefit: `tặng ${vn(i.getQty)} ${i.getUnit || i.buyUnit || ''}${i.giftSku && i.giftSku !== i.sku ? ` × ${i.giftSku}` : ''} — ${r.splitIntoCost ? 'chia vào giá vốn' : 'quà cho người tiêu dùng'}${i.repeat === false ? ', một lần' : ', cộng dồn'}${i.apply === 'exclusive' || r.apply === 'exclusive' ? ', áp riêng' : ''}`, value: i.getQty, valueUnit: 'SL tặng', note: i.note }));
-    case 'period_rebate': return ((r.tiers ?? []) as R[]).map((t) => ({ cond: `doanh số ${PERIOD[r.period] ?? 'kỳ'} từ ${vn(t.from)}đ`, benefit: `thưởng ${t.pct}%`, value: t.pct, valueUnit: '%' }));
-    case 'target_rebate': return ((r.tiers ?? []) as R[]).map((t) => ({ cond: `chỉ tiêu ${PERIOD[r.period] ?? ''} ${vn(r.target)}đ, đạt từ ${t.fromPct}%`, benefit: `thưởng ${t.pct}%`, value: t.pct, valueUnit: '%' }));
+    case 'period_rebate': return ((r.tiers ?? []) as R[]).map((t) => ({ cond: `doanh số ${PERIOD[r.period] ?? 'kỳ'} từ ${vn(t.from)}đ`, benefit: `thưởng ${Number(t.pct).toLocaleString('vi-VN')}%`, value: t.pct, valueUnit: '%' }));
+    case 'target_rebate': return ((r.tiers ?? []) as R[]).map((t) => ({ cond: `chỉ tiêu ${PERIOD[r.period] ?? ''} ${vn(r.target)}đ, đạt từ ${Number(t.fromPct).toLocaleString('vi-VN')}%`, benefit: `thưởng ${Number(t.pct).toLocaleString('vi-VN')}%`, value: t.pct, valueUnit: '%' }));
     case 'stage_rebate': return ((r.stages ?? []) as R[]).map((s) => ({
-      cond: `ngày ${s.from}–${s.to}, doanh số từ ${vn(s.min)}đ${r.mode === 'cumulative' ? ' (cộng dồn)' : ''}`, benefit: s.amount ? `thưởng ${vn(s.amount)}đ` : `thưởng ${s.pct}%`, value: s.amount ?? s.pct, valueUnit: s.amount ? 'đ' : '%',
+      cond: `ngày ${s.from}–${s.to}, doanh số từ ${vn(s.min)}đ${r.mode === 'cumulative' ? ' (cộng dồn)' : ''}`, benefit: s.amount ? `thưởng ${vn(s.amount)}đ` : `thưởng ${Number(s.pct).toLocaleString('vi-VN')}%`, value: s.amount ?? s.pct, valueUnit: s.amount ? 'đ' : '%',
     }));
     case 'credit_limit': {
       const br = Object.entries((r.branches ?? {}) as Record<string, number>);
-      return [{ cond: `toàn ${p.scope.brandCode ? `nhãn ${p.scope.brandCode}` : 'NCC'}`, benefit: `hạn mức ${vn(r.limit)}đ, cảnh báo từ ${r.warnPct ?? 90}%`, value: r.limit, valueUnit: 'đ' },
+      return [{ cond: `toàn ${p.scope.brandCode ? `nhãn ${p.scope.brandCode}` : 'NCC'}`, benefit: `hạn mức ${vn(r.limit)}đ, cảnh báo từ ${Number(r.warnPct ?? 90).toLocaleString('vi-VN')}%`, value: r.limit, valueUnit: 'đ' },
         ...br.map(([b, v]) => ({ branch: b, cond: 'phân bổ cho chi nhánh', benefit: `hạn mức ${vn(v)}đ`, value: v, valueUnit: 'đ' }))];
     }
     case 'supply_target': return Object.entries((r.branches ?? {}) as Record<string, number>).map(([b, v]) => ({ branch: b, cond: `chỉ tiêu cung ứng ${r.period ?? ''}`, benefit: `${vn(v)}đ`, value: v, valueUnit: 'đ' }));

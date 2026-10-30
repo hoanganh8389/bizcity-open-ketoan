@@ -8,6 +8,8 @@
 - **Thẻ trên đầu**: số lô đã hết hạn, còn ≤ 7 / ≤ 15 / ≤ 30 ngày, kèm số lượng và giá trị.
 - **Lọc**: chi nhánh, mã hàng, *Chỉ lô cần xử lý*.
 - Cột **Xuất trước**: cùng mã, cùng chi nhánh, phần mềm tự đánh thứ tự lô nên xuất — lô hạn dùng sớm hơn ghi **xuất lô này trước**, các lô sau ghi "thứ 2 / 3…" (hết hạn trước xuất trước — FEFO). Không phải chọn hay thử gì.
+- Lô **đã hết hạn** (tính đến ngày ở ô *Tính đến*) không xếp vào thứ tự xuất, cột Xuất trước ghi **hết hạn — không xuất bán** (trả NCC hoặc huỷ).
+- **Cảnh báo FEFO trên phiếu**: phiếu Trả hàng NCC, Xuất quà tặng, chiều *Trả đi* của phiếu Đổi hàng mà chọn lô hạn xa trong khi cùng chi nhánh còn lô hạn gần hơn (chưa hết hạn) → khung Kiểm tra báo vàng *nên xuất lô … trước*. Chỉ cảnh báo, vẫn duyệt được.
 
 **Khi nhập hàng:** mặt hàng có chính sách *Theo dõi lô / hạn dùng* (MH04) bắt buộc nhập **số lô + hạn dùng** (không có thì không duyệt được); hàng còn ≤ 30 ngày được cảnh báo ngay trên phiếu.
 

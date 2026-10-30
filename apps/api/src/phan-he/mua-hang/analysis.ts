@@ -10,7 +10,7 @@
  */
 import { sql } from 'kysely';
 import {
-  ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
+  ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, fefoCheck, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
   type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product,
 } from '@ketoan/contracts/mua-hang';
 import { toNumber, type Db } from '../../db/client.js';
@@ -196,7 +196,8 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   const credit: CreditStatus[] = [];
   const affectsDebt = doc.kind === 'receipt' || doc.kind === 'order' || (doc.kind === 'exchange' && calc.payable > 0);
   if (affectsDebt && doc.partnerCode) {
-    let pp = policies.find((p) => p.kind === 'credit_limit' && p.isActive && p.scope.partnerCode === doc.partnerCode && !p.scope.brandCode);
+    // Hạn mức theo NCC: chỉ chính sách đang bật VÀ còn hiệu lực ở ngày phiếu (từ / đến), như hạn mức theo nhãn bên dưới.
+    let pp = findPolicy(policies.filter((p) => p.scope.partnerCode === doc.partnerCode && !p.scope.brandCode), 'credit_limit', { date: doc.docDate, partnerCode: doc.partnerCode, branchCode: doc.branchCode });
     const partner = await trx.selectFrom('partners').select(['credit_limit', 'name']).where('tenant_id', '=', tenantId).where('code', '=', doc.partnerCode).executeTakeFirst();
     if (!pp) {
       // Không khai chính sách: dùng hạn mức ở danh mục đối tượng (DM13) nếu có.
@@ -224,6 +225,10 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   // ĐVT của mọi mã trong phiếu + đơn gốc + các phiếu giao theo đơn: mọi so sánh số lượng quy về ĐVT nhỏ nhất.
   const unitSkus = [...new Set([doc, ...(refOrder ? [refOrder, ...receiptsOfOrder(refOrder, docs)] : [])].flatMap((d) => d.lines.map((l) => l.sku)).filter(Boolean))];
   const units = await unitsOf(trx, tenantId, unitSkus);
+  // Giá vốn thực tế từng dòng quy về ĐVT của dòng (mã nhiều ĐVT: dòng Thùng + quà theo Hộp chia đúng theo tỉ lệ) — tính lại khi đã
+  // có bảng ĐVT; tiền, thuế, chiết khấu của phiếu không phụ thuộc ĐVT nên giữ nguyên.
+  const withUnits = computeDoc(doc, policies, { holidays: settings.holidays, units });
+  calc.lines.forEach((l, i) => { l.realUnitCost = withUnits.lines[i]?.realUnitCost ?? l.realUnitCost; });
   // Đúng quy trình mua hàng: khai mã + giá của NCC → đơn đặt (duyệt, giữ hạn mức) → phiếu nhập lập từ đơn.
   // Ngoại lệ được phép: phiếu nhập NGOÀI ĐƠN — bắt buộc ghi lý do để duyệt, đóng dấu lúc duyệt, kế toán rà soát riêng.
   if (isOutsideOrder(doc, refOrder)) {
@@ -294,6 +299,31 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   if (doc.kind === 'rebate' && !doc.rebate && !doc.allocation?.length && !refRcpt.length) checks.push({ level: 'error', code: 'rebate_unassigned', blocking: true, text: 'Chiết khấu bổ sung chưa gắn phiếu nhập — chọn phiếu nhập được giảm giá để phân bổ giảm giá vốn' });
   checks.push(...orderChecks);
   checks.push(...(await extraChecks(trx, tenantId, doc, docs, settings)));
+  // Ngân sách quà theo chương trình: phiếu mua / nhận quà làm tổng giá trị quà đã mua / nhận của chương trình vượt ngân sách → cảnh báo.
+  if (doc.kind === 'receipt' || doc.kind === 'gift_in') {
+    const progOf = (d: PDoc, l: PDoc['lines'][number]) => l.program ?? d.gift?.program ?? '';
+    const isGift = (d: PDoc, l: PDoc['lines'][number]) => Boolean(d.gift) || d.kind === 'gift_in' || l.lineType === 'gift_consumer';
+    const mine = [...new Set(doc.lines.filter((l) => isGift(doc, l) && progOf(doc, l)).map((l) => progOf(doc, l)))];
+    for (const program of mine) {
+      const bp = policies.find((p) => p.kind === 'gift_budget' && p.isActive && String(p.rule.program) === program && (!p.validFrom || p.validFrom <= doc.docDate) && (!p.validTo || p.validTo >= doc.docDate));
+      if (!bp) continue;
+      const valueOf = (d: PDoc) => d.lines.filter((l) => isGift(d, l) && progOf(d, l) === program).reduce((s, l) => s + l.qty * (l.price || 0), 0);
+      const before = docs.filter((d) => d.id !== doc.id && d.status === 'approved' && (d.kind === 'receipt' || d.kind === 'gift_in')).reduce((s, d) => s + valueOf(d), 0);
+      const after = before + valueOf(doc), amount = Number(bp.rule.amount);
+      if (after > amount) checks.push({ level: 'warn', code: 'gift_budget_over', text: `Chương trình quà ${program}: đã mua / nhận ${Math.round(after).toLocaleString('vi-VN')} (kể cả phiếu này) vượt ngân sách ${amount.toLocaleString('vi-VN')} (${bp.code}) ${Math.round(after - amount).toLocaleString('vi-VN')}` });
+    }
+  }
+  // FEFO: phiếu xuất theo lô (trả NCC, xuất quà, chiều Trả đi của phiếu đổi) chọn lô hạn xa trong khi cùng chi nhánh còn lô hạn
+  // gần hơn (chưa hết hạn) → cảnh báo, không chặn. Lô đã hết hạn không tính là "nên xuất trước".
+  const outLots = doc.lines.filter((l) => l.sku && l.lotNo && (doc.kind === 'return' || doc.kind === 'gift_out' || (doc.kind === 'exchange' && l.dir === 'out')));
+  if (outLots.length) {
+    const { lotStock } = await import('./reports.js');
+    const lots = (await lotStock(trx, tenantId, ctx, doc.docDate)).lots.filter((l) => !l.expDate || l.expDate >= doc.docDate);
+    for (const l of outLots) {
+      const why = fefoCheck(lots, { sku: l.sku, lotNo: l.lotNo!, branchCode: doc.branchCode });
+      if (why) checks.push({ level: 'warn', code: 'fefo', lineKey: l.lineKey, text: `${l.sku}: ${why}` });
+    }
+  }
   // Đối soát với hoá đơn NCC đã lưu (MH22) cùng số hoá đơn: từng mã, SL, giá chưa thuế, thuế suất, tổng tiền.
   checks.push(...(await invoiceCheck(trx, tenantId, doc, docs, policies)));
   // Quy định quy tắc mã hàng: không nhập đổi mã so với đơn đặt (vd đặt mã thường, nhập mã K/M/Q/T) — phải được duyệt.
@@ -313,7 +343,7 @@ export async function ckttCheck(trx: Db, tenantId: string, doc: PDoc, docs: Stor
   if (!pct) return `Phiếu nhập ${r.docNo} không có chiết khấu thanh toán`;
   if (!r.dueDate || doc.docDate > r.dueDate) return `Trả ngày ${doc.docDate.split('-').reverse().join('/')} quá hạn ${r.dueDate?.split('-').reverse().join('/') ?? ''}: không được hưởng CKTT`;
   const expect = Math.round((r.totals.total * pct) / 100);
-  if (Math.abs((doc.ckttAmount ?? 0) - expect) > 1) return `CKTT của phiếu ${r.docNo} là ${expect.toLocaleString('vi-VN')} (${pct}%), phiếu ghi ${(doc.ckttAmount ?? 0).toLocaleString('vi-VN')}`;
+  if (Math.abs((doc.ckttAmount ?? 0) - expect) > 1) return `CKTT của phiếu ${r.docNo} là ${expect.toLocaleString('vi-VN')} (${Number(pct).toLocaleString('vi-VN')}%), phiếu ghi ${(doc.ckttAmount ?? 0).toLocaleString('vi-VN')}`;
   const open = await openOf(trx, tenantId, evKeys(r));
   if ((doc.amount ?? 0) + expect < open - 1) return `Chưa trả đủ: còn nợ ${open.toLocaleString('vi-VN')}, trả ${(doc.amount ?? 0).toLocaleString('vi-VN')} + CKTT ${expect.toLocaleString('vi-VN')}`;
   return null;

@@ -173,7 +173,9 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   // Phiếu đã duyệt / đã huỷ: khung Kiểm tra hiện kết quả CHỐT lúc duyệt (không còn "chặn duyệt" — đã duyệt rồi, kể cả duyệt ngoại lệ).
   const closed = v.status === 'approved' || v.status === 'cancelled';
   const checks: Check[] = closed
-    ? [...(stored?.override ? [{ level: 'info' as const, code: 'override', text: `Đã duyệt ngoại lệ bởi ${stored.override.by}: ${stored.override.reason}` }] : []), ...((stored?.checks ?? a?.checks ?? []) as Check[]).map((c) => ({ ...c, blocking: false }))]
+    ? [...(stored?.override ? [{ level: 'info' as const, code: 'override', text: `Đã duyệt ngoại lệ bởi ${stored.override.by}: ${stored.override.reason}` }] : []), ...((stored?.checks ?? a?.checks ?? []) as Check[]).map((c) => ({ ...c, blocking: false,
+      // Đã duyệt ngoại lệ: dòng chặn cũ (vượt hạn mức) không còn là lỗi — hạ về cảnh báo, ghi rõ, không hiện ⛔ nữa.
+      ...(stored?.override && c.level === 'error' ? { level: 'warn' as const, text: `${c.text} (đã duyệt ngoại lệ)` } : {}) }))]
     : a?.checks ?? [];
   const blocking = closed ? [] : a?.blocking ?? [];
   const sel = calc.lines.find((l) => l.lineKey === selKey);
@@ -228,10 +230,13 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       }));
     }
   };
-  /** Thêm mặt hàng từ bộ chọn / ô gõ mã: mã đã có (cùng loại dòng) thì cộng 1, chưa có thì thêm dòng (giá, ĐVT tự lấy). */
+  /**
+   * Thêm mặt hàng từ bộ chọn / ô gõ mã: mã đã có (cùng loại dòng) thì cộng 1, chưa có thì thêm dòng (giá, ĐVT tự lấy).
+   * Phiếu đổi hàng: dòng thêm mới là chiều Nhận về — mã đang có ở chiều Trả đi (đổi cùng mã) thì thêm dòng riêng, không cộng dồn.
+   */
   const addProduct = (p: CatalogItem, lineType: LineType = 'buy') => {
     const type: LineType = isGiftDoc ? 'gift_consumer' : lineType;
-    const same = v.lines.find((l) => l.sku === p.sku && l.lineType === type && !l.autoGift);
+    const same = v.lines.find((l) => l.sku === p.sku && l.lineType === type && !l.autoGift && (v.kind !== 'exchange' || (l.dir ?? 'in') === 'in'));
     if (same) { setLine(same.lineKey, { qty: same.qty + 1 }); setSelKey(same.lineKey); return; }
     const key = newKey();
     setV((x) => ({ ...x, lines: [...x.lines.filter((l) => l.sku), { lineKey: key, sku: p.sku, name: p.name, unit: p.unit, qty: 1, price: 0, taxCode: p.taxInCode ?? 'V08', lineType: type, brandCode: p.brandCode ?? undefined, ...(v.kind === 'exchange' ? { dir: 'in' as const } : {}) }] }));
@@ -390,7 +395,7 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
   useEffect(() => {
     if (readOnly || v.kind !== 'receipt' || v.gift) return;
     const buy = v.lines.filter((l) => l.sku && l.lineType === 'buy');
-    if (buy.length && buy.every((l) => skuInfo(l.sku).kind === 'gift')) setV((x) => ({ ...x, gift: { source: 'self_buy', hasVat: Boolean(x.invoice) } }));
+    if (buy.length && buy.every((l) => skuInfo(l.sku).kind === 'gift')) setV((x) => ({ ...x, gift: { ...x.gift, source: 'self_buy', hasVat: x.gift?.hasVat ?? Boolean(x.invoice) } }));
   }, [v.lines, v.kind, readOnly]); // eslint-disable-line react-hooks/exhaustive-deps
   // F3: mở danh mục mặt hàng để thêm (đang sửa phiếu có dòng hàng, chưa mở hộp chọn nào).
   useEffect(() => {
@@ -572,7 +577,9 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
             <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, display: headOpen ? undefined : 'none' }}>
               <div className="mh-head">
                 <div className="field"><label>Số phiếu</label><input className="input mono" value={v.docNo} placeholder="Tự cấp khi ghi" onChange={(e) => set({ docNo: e.target.value.trim() })} /></div>
-                <div className="field"><label>Ngày (*)</label><input className="input" type="date" value={v.docDate} onChange={(e) => set({ docDate: e.target.value })} /></div>
+                <div className="field"><label>Ngày (*)</label><input className="input" type="date" value={v.docDate} onChange={(e) => set({ docDate: e.target.value,
+                  // Ngày nhận đủ hàng & hồ sơ đang bằng ngày phiếu (chưa sửa riêng) thì chạy theo ngày phiếu — không để hạn thanh toán tính từ ngày cũ.
+                  ...(v.receivedDate && v.receivedDate === v.docDate ? { receivedDate: e.target.value } : {}) })} /></div>
                 <div className="field"><label>Chi nhánh (*)</label><BranchPicker value={v.branchCode} onChange={(c) => { set({ branchCode: c }); if (c) lastUsed.set({ branchCode: c }); }} activeOnly disabled={readOnly} /></div>
                 {showKho && <div className="field"><label title="Mọi dòng hàng của phiếu vào / ra phân kho này (cột Phân kho ở bảng hàng đi theo). Mặc định là kho mặc định của chi nhánh. Hàng cần sang phân kho khác thì lập phiếu chuyển kho.">Phân kho (*)</label>
                   <select className="select input" value={v.warehouseCode ?? ''} disabled={readOnly || !v.branchCode} onChange={(e) => set({ warehouseCode: e.target.value || undefined })}>
@@ -652,9 +659,10 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 {v.kind === 'receipt' && (
                   <div className="field"><label title="Mốc tính hạn thanh toán theo hợp đồng: ngày nhận đủ hàng và hồ sơ giao hàng hợp lệ">Ngày nhận đủ hàng & hồ sơ</label><input className="input" type="date" value={v.receivedDate ?? v.docDate} onChange={(e) => set({ receivedDate: e.target.value || undefined })} /></div>
                 )}
-                {(v.kind === 'gift_in' || (v.kind === 'receipt' && v.gift)) && (
-                  <div className="field"><label>Chương trình quà</label><input className="input mono" value={v.gift?.program ?? ''} placeholder="Ví dụ TGS-TRI-AN" onChange={(e) => set({ gift: { source: v.gift?.source ?? (v.kind === 'gift_in' ? 'ncc_extra' : 'self_buy'), program: e.target.value.trim() || undefined, hasVat: v.kind === 'receipt' ? Boolean(v.invoice) : false } })} /></div>
-                )}
+                {(v.kind === 'gift_in' || (v.kind === 'receipt' && v.gift)) && (<>
+                  <div className="field"><label>Chương trình quà</label><input className="input mono" value={v.gift?.program ?? ''} placeholder="Ví dụ TGS-TRI-AN" onChange={(e) => set({ gift: { source: v.gift?.source ?? (v.kind === 'gift_in' ? 'ncc_extra' : 'self_buy'), program: e.target.value.trim() || undefined, hasVat: v.kind === 'receipt' ? (v.gift?.hasVat ?? Boolean(v.invoice)) : false } })} /></div>
+                  {v.kind === 'receipt' && v.gift?.source === 'self_buy' && <div className="field"><label title="Quà TGS tự mua: có hoá đơn VAT (thuế được khấu trừ) hay không — chọn rõ, không phụ thuộc thứ tự nhập số hoá đơn">Quà mua có VAT?</label><select className="select input" value={v.gift.hasVat ? '1' : '0'} onChange={(e) => set({ gift: { ...v.gift!, hasVat: e.target.value === '1' } })}><option value="1">Có hoá đơn VAT</option><option value="0">Không VAT (không hoá đơn)</option></select></div>}
+                </>)}
                 {v.kind === 'gift_in' && (
                   <div className="field"><label>Nguồn quà</label><select className="select input" value={v.gift?.source ?? 'ncc_extra'} onChange={(e) => set({ gift: { source: e.target.value as 'ncc_extra', program: v.gift?.program, hasVat: false } })}><option value="ncc_extra">NCC tặng ngoài hợp đồng</option><option value="ncc_program">NCC tặng theo chương trình</option></select></div>
                 )}
@@ -691,7 +699,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   <div className="field"><label>Chiết khấu thanh toán</label>
                     <div className="row" style={{ gap: 4 }}>
                       <input className="input num" style={{ width: 120 }} value={fmt(v.ckttAmount)} onChange={(e) => set({ ckttAmount: num(e.target.value) || undefined })} />
-                      {refReceipt?.cktt?.pct && <button type="button" className="btn btn-xs" title="Tính CKTT của phiếu nhập được chọn" onClick={() => { const c = Math.round((refReceipt.totals.total * refReceipt.cktt!.pct) / 100); set({ ckttAmount: c, amount: refReceipt.totals.total - c }); }}>Tính {refReceipt.cktt.pct}%</button>}
+                      {refReceipt?.cktt?.pct && <button type="button" className="btn btn-xs" title="Tính CKTT của phiếu nhập được chọn" onClick={() => { const c = Math.round((refReceipt.totals.total * refReceipt.cktt!.pct) / 100); set({ ckttAmount: c, amount: refReceipt.totals.total - c }); }}>Tính {Number(refReceipt.cktt.pct).toLocaleString('vi-VN')}%</button>}
                     </div>
                   </div>
                 )}
@@ -851,7 +859,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                   <div className="mh-panel mh-qa">
                     <h4>② Trả đúng hạn có được giảm tiền không?</h4>
                     {calc.ckttExpected ? <>
-                      <div className="mh-qa-ans mh-ok">Có — giảm {ckttPct}% nếu trả trước {due ? dmy(due) : 'hạn'}</div>
+                      <div className="mh-qa-ans mh-ok">Có — giảm {Number(ckttPct).toLocaleString('vi-VN')}% nếu trả trước {due ? dmy(due) : 'hạn'}</div>
                       <div style={{ fontSize: 13 }}>Được giảm <b>{vnd(calc.ckttExpected)}</b> → chỉ phải trả <b>{vnd(calc.payable - calc.ckttExpected)}</b>. Phần giảm ghi khi lập phiếu <i>Trả tiền NCC</i>.</div>
                       <div className="row" style={{ gap: 6, alignItems: 'center', marginTop: 6, fontSize: 12.5 }}>Dự kiến trả ngày <input className="input" type="date" style={{ width: 150 }} value={payDate} onChange={(e) => setPayDate(e.target.value)} />
                         {payDate && (() => { const r = ckttFor(calc.payable, ckttPct, calc.dueDate, payDate, calc.payable - calc.ckttExpected); return <span className={r.eligible ? 'mh-ok' : 'mh-bad'}>{r.eligible ? `kịp hạn — được giảm ${vnd(r.amount)}` : r.reason}</span>; })()}</div>
@@ -981,7 +989,7 @@ Rà soát: ${v.outsideOrder.reviewedBy}${v.outsideOrder.reviewNote ? ` — ${v.o
                 <table className="mh-mini"><thead><tr><th>Mã</th><th className="num">Đặt</th><th className="num" title="Phiếu nhập đã duyệt">Đã nhận</th><th className="num" title="Phiếu nhập nháp / chờ duyệt">Chờ</th><th>Tình trạng</th></tr></thead><tbody>
                   {(recon ?? []).map((x) => <tr key={x.sku} className={x.state === 'ngoai_don' || x.state === 'thua' || x.state === 'doi_ma' ? 'mh-row-warn' : ''} title={x.receipts.map((r) => `${r.docNo || '(nháp)'} ${r.qty} ${r.unit}`).join(' · ')}>
                     <td className="mono">{x.sku}</td><td className="num">{x.ordered || ''}</td><td className="num">{x.received || ''}</td><td className="num">{x.pending || ''}</td>
-                    <td style={{ fontSize: 11 }}>{x.state === 'ngoai_don' ? <span className="mh-bad">giao ngoài đơn</span> : x.state === 'thua' ? <span className="mh-bad">thừa {x.diff}</span> : x.state === 'doi_ma' ? <span className="mh-bad">đổi mã → {x.swappedTo.join(', ')}</span> : x.state === 'thieu' ? <span className="mh-warn">thiếu {-x.diff}</span> : 'đủ'}{x.priceDiffPct !== null && Math.abs(x.priceDiffPct) >= 0.01 ? <span className="mh-warn"> · giá {x.priceDiffPct > 0 ? '+' : ''}{x.priceDiffPct}%</span> : null}</td></tr>)}
+                    <td style={{ fontSize: 11 }}>{x.state === 'ngoai_don' ? <span className="mh-bad">giao ngoài đơn</span> : x.state === 'thua' ? <span className="mh-bad">thừa {x.diff}</span> : x.state === 'doi_ma' ? <span className="mh-bad">đổi mã → {x.swappedTo.join(', ')}</span> : x.state === 'thieu' ? <span className="mh-warn">thiếu {-x.diff}</span> : 'đủ'}{x.priceDiffPct !== null && Math.abs(x.priceDiffPct) >= 0.01 ? <span className="mh-warn"> · giá {x.priceDiffPct > 0 ? '+' : ''}{Number(x.priceDiffPct).toLocaleString('vi-VN')}%</span> : null}</td></tr>)}
                   {/* Hàng tặng trên đơn: đặt / đã nhận (mọi phiếu nhập theo đơn) — thiếu quà thì đơn chưa "đã nhận đủ". */}
                   {prog.gifts.map((g) => <tr key={`qua-${g.sku}`} className={g.remaining > 0 ? 'mh-row-warn' : ''} title={`${g.name} — hàng tặng (${g.unit})`}>
                     <td className="mono">{g.sku} <span className="badge badge-ok" style={{ fontSize: 10, padding: '0 4px' }}>tặng</span></td><td className="num">{g.ordered || ''}</td><td className="num">{g.received || ''}</td><td className="num"></td>

@@ -365,7 +365,7 @@ function ChietKhauSheet({ p, ctx }: { p: PhieuIn; ctx: PrintCtx }) {
       {r?.detail.length ? <ul className="mh-p">{r.detail.map((x, i) => <li key={i}>{x}</li>)}</ul> : null}
       <Table rows={[d]} cols={[
         { h: 'Nội dung', v: () => d.note || (r ? `Thưởng doanh số kỳ ${r.period}` : 'Chiết khấu / giảm giá sau mua') },
-        ...(r ? [{ h: 'Doanh số căn cứ', w: 110, num: true, v: () => mb(r.base) }, { h: 'Tỷ lệ', w: 50, center: true, v: () => (r.rate ? `${r.rate}%` : '') }] : []),
+        ...(r ? [{ h: 'Doanh số căn cứ', w: 110, num: true, v: () => mb(r.base) }, { h: 'Tỷ lệ', w: 50, center: true, v: () => (r.rate ? `${Number(r.rate).toLocaleString('vi-VN')}%` : '') }] : []),
         { h: 'Số tiền trước thuế', w: 110, num: true, v: () => m(d.amount) },
         { h: 'Thuế GTGT', w: 80, num: true, v: () => mb(tax) },
         { h: 'Cộng', w: 110, num: true, v: () => <b>{m(total)}</b> },

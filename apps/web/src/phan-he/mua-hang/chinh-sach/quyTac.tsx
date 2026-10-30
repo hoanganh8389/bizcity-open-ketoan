@@ -28,20 +28,20 @@ export function ruleText(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['sc
 function ruleTextCore(p: Pick<Policy, 'kind' | 'rule'> & { scope?: Policy['scope'] }): string {
   const r = p.rule as R;
   switch (p.kind) {
-    case 'trade_discount': { const on = p.scope?.sku ? `trên dòng mã ${p.scope.sku}` : 'trên tổng đơn'; const min = Number(r.minOrder) ? ` khi tổng đơn từ ${Number(r.minOrder).toLocaleString('vi-VN')}đ` : ''; return r.pct ? `Chiết khấu ${r.pct}% ${on}${min}` : `Chiết khấu ${Number(r.amount ?? 0).toLocaleString('vi-VN')}đ ${on}${min}`; }
-    case 'item_discount': { const it = (r.items ?? []) as R[]; return `${it.length.toLocaleString('vi-VN')} mã hàng có chiết khấu riêng${it[0] ? ` — ví dụ ${it[0].sku}: ${it[0].pct ? `${it[0].pct}%` : `giảm ${Number(it[0].amount ?? 0).toLocaleString('vi-VN')}đ / ${it[0].unit || 'ĐVT'}`}${it[0].minQty ? ` từ ${it[0].minQty}` : ''}` : ''}`; }
-    case 'qty_tier': return (r.tiers ?? []).map((t: R) => `từ ${t.from}: ${t.pct}%`).join(' · ');
-    case 'payment_discount': return `Chiết khấu thanh toán ${r.pct}% nếu trả đúng hạn`;
+    case 'trade_discount': { const on = p.scope?.sku ? `trên dòng mã ${p.scope.sku}` : 'trên tổng đơn'; const min = Number(r.minOrder) ? ` khi tổng đơn từ ${Number(r.minOrder).toLocaleString('vi-VN')}đ` : ''; return r.pct ? `Chiết khấu ${Number(r.pct).toLocaleString('vi-VN')}% ${on}${min}` : `Chiết khấu ${Number(r.amount ?? 0).toLocaleString('vi-VN')}đ ${on}${min}`; }
+    case 'item_discount': { const it = (r.items ?? []) as R[]; return `${it.length.toLocaleString('vi-VN')} mã hàng có chiết khấu riêng${it[0] ? ` — ví dụ ${it[0].sku}: ${it[0].pct ? `${Number(it[0].pct).toLocaleString('vi-VN')}%` : `giảm ${Number(it[0].amount ?? 0).toLocaleString('vi-VN')}đ / ${it[0].unit || 'ĐVT'}`}${it[0].minQty ? ` từ ${it[0].minQty}` : ''}` : ''}`; }
+    case 'qty_tier': return (r.tiers ?? []).map((t: R) => `từ ${t.from}: ${Number(t.pct).toLocaleString('vi-VN')}%`).join(' · ');
+    case 'payment_discount': return `Chiết khấu thanh toán ${Number(r.pct).toLocaleString('vi-VN')}% nếu trả đúng hạn`;
     case 'promo_gift': {
       const it = giftItemsOf({ rule: r, scope: p.scope ?? {} });
       const one = (i: GiftItem) => `mua ${i.buyQty} ${i.buyUnit || ''}${i.sku ? ` ${i.sku}` : ''} tặng ${i.getQty} ${i.getUnit || i.buyUnit || ''}${i.giftSku && i.giftSku !== i.sku ? ` ${i.giftSku}` : ''}`.replace(/\s+/g, ' ');
       const head = it.length > 1 ? `${it.length} dòng mua – tặng, ví dụ ${one(it[0]!)}` : it[0] ? one(it[0]).replace(/^m/, 'M') : 'Chưa có dòng mua – tặng';
       return `${head}${r.splitIntoCost ? ' — KM cho người bán, chia vào giá' : ' — KM cho người tiêu dùng, không chia giá'}`;
     }
-    case 'period_rebate': return `Theo ${PERIOD[r.period] ?? 'kỳ'}: ` + (r.tiers ?? []).map((t: R) => `từ ${tr(t.from)}: ${t.pct}%`).join(' · ');
-    case 'target_rebate': return `Chỉ tiêu ${PERIOD[r.period] ?? ''} ${tr(r.target)} — ` + (r.tiers ?? []).map((t: R) => `đạt ${t.fromPct}%: thưởng ${t.pct}%`).join(' · ');
-    case 'stage_rebate': return (r.stages ?? []).map((s: R) => `ngày ${s.from}–${s.to}: từ ${tr(s.min)} → ${s.amount ? `${Number(s.amount).toLocaleString('vi-VN')}đ` : `${s.pct}%`}`).join(' · ') + (r.mode === 'cumulative' ? ' (cộng dồn từ đầu tháng)' : ' (tính riêng từng giai đoạn)');
-    case 'credit_limit': return `Hạn mức ${tr(r.limit)}${r.branches && Object.keys(r.branches).length ? ` — ${Object.entries(r.branches).map(([k, v]) => `${branchName(k)} ${tr(v as number)}`).join(', ')}` : ''}; cảnh báo khi dùng từ ${r.warnPct ?? 90}%`;
+    case 'period_rebate': return `Theo ${PERIOD[r.period] ?? 'kỳ'}: ` + (r.tiers ?? []).map((t: R) => `từ ${tr(t.from)}: ${Number(t.pct).toLocaleString('vi-VN')}%`).join(' · ');
+    case 'target_rebate': return `Chỉ tiêu ${PERIOD[r.period] ?? ''} ${tr(r.target)} — ` + (r.tiers ?? []).map((t: R) => `đạt ${Number(t.fromPct).toLocaleString('vi-VN')}%: thưởng ${Number(t.pct).toLocaleString('vi-VN')}%`).join(' · ');
+    case 'stage_rebate': return (r.stages ?? []).map((s: R) => `ngày ${s.from}–${s.to}: từ ${tr(s.min)} → ${s.amount ? `${Number(s.amount).toLocaleString('vi-VN')}đ` : `${Number(s.pct).toLocaleString('vi-VN')}%`}`).join(' · ') + (r.mode === 'cumulative' ? ' (cộng dồn từ đầu tháng)' : ' (tính riêng từng giai đoạn)');
+    case 'credit_limit': return `Hạn mức ${tr(r.limit)}${r.branches && Object.keys(r.branches).length ? ` — ${Object.entries(r.branches).map(([k, v]) => `${branchName(k)} ${tr(v as number)}`).join(', ')}` : ''}; cảnh báo khi dùng từ ${Number(r.warnPct ?? 90).toLocaleString('vi-VN')}%`;
     case 'payment_term': return termText(termFromRule(r));
     case 'supply_target': return Object.entries(r.branches ?? {}).map(([k, v]) => `${branchName(k)} ${tr(v as number)}`).join(' · ');
     case 'lot_tracking': return r.required === false ? 'Không bắt buộc số lô' : 'Bắt buộc nhập số lô + hạn dùng khi nhập hàng; cảnh báo cận date 30-15-7 ngày';

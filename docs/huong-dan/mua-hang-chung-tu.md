@@ -30,7 +30,7 @@ Một danh sách cho mọi chứng từ phía mua:
 | Đơn đặt hàng | Đặt hàng, giữ hạn mức (chưa ghi nợ) |
 | Nhập mua | Nhận hàng + hoá đơn |
 | Trả hàng NCC | Trả một phần / toàn bộ (lỗi, cận date, sai quy cách) |
-| Đổi hàng NCC | Dòng **trả đi** và **nhận về**; chênh lệch: bù trừ công nợ / thanh toán bổ sung / NCC hoàn tiền |
+| Đổi hàng NCC | Dòng **trả đi** và **nhận về**; chênh lệch: bù trừ công nợ / thanh toán bổ sung / NCC hoàn tiền. **Đổi cùng mã**: bấm *+ Thêm hàng* mã đang có ở chiều Trả đi → phần mềm thêm dòng *Nhận về* riêng (không cộng dồn vào dòng Trả đi) |
 | Nhận quà (không HĐ) | Quà NCC tặng ngoài hợp đồng / theo chương trình, không hoá đơn — nhập **giá trị hợp lý** / ĐVT |
 | Xuất quà tặng | Xuất quà tặng khách theo chương trình |
 | Ứng trước NCC | Trả trước theo đơn đặt — phiếu nhập theo đơn tự đối trừ khi duyệt |

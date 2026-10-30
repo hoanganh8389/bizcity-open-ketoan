@@ -30,11 +30,12 @@ export function LoHanPage() {
   const sum = (lv: string[]) => lots.filter((l) => lv.includes(l.level));
   const skus = useMemo(() => [...new Set(lots.map((l) => l.sku))], [lots]);
   const branches = useMemo(() => [...new Set(lots.map((l) => l.branchCode))], [lots]);
-  // Thứ tự xuất (FEFO): cùng mã, cùng chi nhánh, còn tồn → lô hạn dùng sớm hơn xuất trước. Không phải chọn / thử gì.
+  // Thứ tự xuất (FEFO): cùng mã, cùng chi nhánh, còn tồn, CHƯA hết hạn → lô hạn dùng sớm hơn xuất trước. Lô đã hết hạn không xếp
+  // (không xuất bán — trả NCC / huỷ). Không phải chọn / thử gì.
   const order = useMemo(() => {
     const m = new Map<string, { rank: number; of: number }>();
     const groups = new Map<string, Lot[]>();
-    for (const l of lots.filter((x) => x.qty > 0)) groups.set(`${l.sku}|${l.branchCode}`, [...(groups.get(`${l.sku}|${l.branchCode}`) ?? []), l]);
+    for (const l of lots.filter((x) => x.qty > 0 && x.level !== 'expired')) groups.set(`${l.sku}|${l.branchCode}`, [...(groups.get(`${l.sku}|${l.branchCode}`) ?? []), l]);
     for (const g of groups.values()) g.sort((a, b) => a.expDate.localeCompare(b.expDate)).forEach((l, i) => m.set(`${l.sku}|${l.branchCode}|${l.lotNo}`, { rank: i + 1, of: g.length }));
     return m;
   }, [lots]);
@@ -60,7 +61,7 @@ export function LoHanPage() {
             {rows.map((l, i) => (
               <tr key={i}><td className="mono">{l.sku}</td><td className="mono">{l.lotNo}</td><td>{dmy(l.mfgDate)}</td><td>{dmy(l.expDate)}</td><td className="num">{l.days}</td><td>{names.branchName(l.branchCode)}</td>
                 <td className="num">{l.received}</td><td className="num"><b>{l.qty}</b></td>
-                <td>{(() => { const o = order.get(`${l.sku}|${l.branchCode}|${l.lotNo}`); return !o ? <span className="muted">hết tồn</span> : o.of === 1 ? <span className="muted">lô duy nhất</span> : o.rank === 1 ? <span className="badge badge-info">xuất lô này trước</span> : <span className="muted">thứ {o.rank} / {o.of}</span>; })()}</td>
+                <td>{(() => { const o = order.get(`${l.sku}|${l.branchCode}|${l.lotNo}`); return l.qty > 0 && l.level === 'expired' ? <span className="badge badge-bad">hết hạn — không xuất bán</span> : !o ? <span className="muted">hết tồn</span> : o.of === 1 ? <span className="muted">lô duy nhất</span> : o.rank === 1 ? <span className="badge badge-info">xuất lô này trước</span> : <span className="muted">thứ {o.rank} / {o.of}</span>; })()}</td>
                 <td className="num">{vnd(l.qty * l.unitCost)}</td><td style={{ fontSize: 12 }}>{l.docNo} · {dmy(l.receivedAt)} · {names.partnerName(l.partnerCode)}</td>
                 <td><span className={`badge ${LEVEL[l.level]![1]}`}>{LEVEL[l.level]![0]}</span></td></tr>
             ))}

@@ -60,7 +60,7 @@ function Limits({ asOf }: { asOf: string }) {
         <div key={s.policy} className="mh-panel">
           <h4>Chỉ tiêu cung ứng — {s.name} ({s.period})</h4>
           <table className="mh-mini"><thead><tr><th>Chi nhánh</th><th className="num">Chỉ tiêu</th><th className="num">Đã nhập (trước thuế)</th><th className="num">Tỷ lệ</th><th style={{ width: '35%' }} /></tr></thead><tbody>
-            {s.branches.map((r) => <tr key={r.branchCode}><td>{names.branchName(r.branchCode)}</td><td className="num">{vnd(r.target)}</td><td className="num">{vnd(r.done)}</td><td className="num">{r.pct}%</td><td><div className="mh-bar"><span className="used" style={{ width: `${Math.min(100, r.pct)}%` }} /></div></td></tr>)}
+            {s.branches.map((r) => <tr key={r.branchCode}><td>{names.branchName(r.branchCode)}</td><td className="num">{vnd(r.target)}</td><td className="num">{vnd(r.done)}</td><td className="num">{Number(r.pct).toLocaleString('vi-VN')}%</td><td><div className="mh-bar"><span className="used" style={{ width: `${Math.min(100, r.pct)}%` }} /></div></td></tr>)}
           </tbody></table>
         </div>
       ))}

@@ -528,13 +528,13 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
       const hit = itemDiscountFor(policies, { ...ctxBase, brandCode: l.brandCode ?? doc.brandCode, sku: l.sku, unit: l.unit, qty: l.qty });
       if (hit) {
         if (hit.item.pct) pct = hit.item.pct; else amt = Math.round((hit.item.amount ?? 0) * l.qty);
-        trace.push({ policy: hit.policy.code, kind: 'item_discount', text: `${l.sku}: ${hit.item.pct ? `CK ${hit.item.pct}%` : `giảm ${(hit.item.amount ?? 0).toLocaleString('vi-VN')}đ / ${hit.item.unit || l.unit}`}${hit.item.minQty ? ` (mua từ ${hit.item.minQty})` : ''} — ${hit.policy.name}` });
+        trace.push({ policy: hit.policy.code, kind: 'item_discount', text: `${l.sku}: ${hit.item.pct ? `CK ${Number(hit.item.pct).toLocaleString('vi-VN')}%` : `giảm ${(hit.item.amount ?? 0).toLocaleString('vi-VN')}đ / ${hit.item.unit || l.unit}`}${hit.item.minQty ? ` (mua từ ${hit.item.minQty})` : ''} — ${hit.policy.name}` });
       }
     }
     if (pct === undefined && amt === undefined && l.lineType === 'buy') {
       const tier = findPolicy(policies, 'qty_tier', { ...ctxBase, brandCode: l.brandCode ?? doc.brandCode, sku: l.sku });
       const t = tier ? pickTier((tier.rule.tiers as { from: number; pct: number }[]) ?? [], l.qty) : undefined;
-      if (tier && t && t.pct) { pct = t.pct; trace.push({ policy: tier.code, kind: 'qty_tier', text: `${l.sku}: SL ${l.qty} → bậc từ ${t.from}, CK ${t.pct}%` }); }
+      if (tier && t && t.pct) { pct = t.pct; trace.push({ policy: tier.code, kind: 'qty_tier', text: `${l.sku}: SL ${l.qty} → bậc từ ${t.from}, CK ${Number(t.pct).toLocaleString('vi-VN')}%` }); }
     }
     // CK trên đơn khai cho RIÊNG một mã (phạm vi có mã hàng): áp vào dòng mã đó như CK dòng (sau CK tay, bảng CK theo mã, bậc SL
     // — không cộng trùng). CK trên đơn không ghi mã vẫn áp cả đơn ở bước 2. Ghi vết là item_discount để không lẫn với CK đơn.
@@ -543,7 +543,7 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
         .sort((a, b) => Object.values(b.scope).filter(Boolean).length - Object.values(a.scope).filter(Boolean).length || (b.priority ?? 0) - (a.priority ?? 0))[0];
       if (own) {
         if (num(own.rule.pct)) pct = num(own.rule.pct); else if (num(own.rule.amount)) amt = num(own.rule.amount);
-        if (pct !== undefined || amt !== undefined) trace.push({ policy: own.code, kind: 'item_discount', text: `${l.sku}: ${pct ? `CK ${pct}%` : `giảm ${num(own.rule.amount).toLocaleString('vi-VN')}đ`} trên đơn (riêng mã) — ${own.name}` });
+        if (pct !== undefined || amt !== undefined) trace.push({ policy: own.code, kind: 'item_discount', text: `${l.sku}: ${pct ? `CK ${Number(pct).toLocaleString('vi-VN')}%` : `giảm ${num(own.rule.amount).toLocaleString('vi-VN')}đ`} trên đơn (riêng mã) — ${own.name}` });
       }
     }
     const lineDiscount = Math.round((gross * (pct ?? 0)) / 100) + Math.round(amt ?? 0);
@@ -579,7 +579,7 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
     buyIdx.forEach((i, k) => { lines[i]!.orderDiscount = parts[k]!; lines[i]!.after -= parts[k]!; });
     // Một vết cho một khoản CK: theo chính sách (mã + tên) hoặc ghi trên phiếu.
     const times = fromPolicy && !od?.pct ? tradeTimes(fromPolicy, net) : 1;
-    const what = od?.pct ? `CK ${od.pct}% trên đơn × ${net.toLocaleString('vi-VN')}` : times > 1 ? `CK bằng tiền trên tổng đơn × ${times} lần (cộng dồn: mỗi đủ ${num(fromPolicy!.rule.minOrder).toLocaleString('vi-VN')}đ)` : 'CK bằng tiền trên tổng đơn';
+    const what = od?.pct ? `CK ${Number(od.pct).toLocaleString('vi-VN')}% trên đơn × ${net.toLocaleString('vi-VN')}` : times > 1 ? `CK bằng tiền trên tổng đơn × ${times} lần (cộng dồn: mỗi đủ ${num(fromPolicy!.rule.minOrder).toLocaleString('vi-VN')}đ)` : 'CK bằng tiền trên tổng đơn';
     trace.push(fromPolicy ? { policy: fromPolicy.code, kind: 'trade_discount', text: `${fromPolicy.name}: ${what}`, amount: orderDisc } : { policy: 'Trên phiếu', kind: 'trade_discount', text: `${what} (ghi trên phiếu)`, amount: orderDisc });
   }
   // 3. Thuế: giá gồm VAT → tách ngược; giá chưa VAT → tính thuế trên tiền sau CK.
@@ -618,7 +618,7 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
   // 6. CKTT dự kiến (chỉ hưởng nếu trả đúng hạn).
   const ckttPct = doc.cktt?.pct ?? (commercial ? num(findPolicy(policies, 'payment_discount', ctxBase)?.rule.pct) : 0);
   const ckttExpected = ckttPct ? Math.round((payable * ckttPct) / 100) : undefined;
-  if (ckttPct) trace.push({ policy: doc.cktt ? 'Trên phiếu' : findPolicy(policies, 'payment_discount', ctxBase)?.code ?? '', kind: 'payment_discount', text: `CKTT ${ckttPct}% nếu trả đúng hạn${dueDate ? ` (đến ${dueDate.split('-').reverse().join('/')})` : ''}`, amount: ckttExpected });
+  if (ckttPct) trace.push({ policy: doc.cktt ? 'Trên phiếu' : findPolicy(policies, 'payment_discount', ctxBase)?.code ?? '', kind: 'payment_discount', text: `CKTT ${Number(ckttPct).toLocaleString('vi-VN')}% nếu trả đúng hạn${dueDate ? ` (đến ${dueDate.split('-').reverse().join('/')})` : ''}`, amount: ckttExpected });
   return {
     lines, gross: sum((l) => l.gross), lineDiscount: sum((l) => l.lineDiscount), orderDiscount: orderDisc, beforeTax: sum((l) => l.beforeTax), tax: sum((l) => l.tax), payable,
     buyQty: sum((l) => (l.lineType === 'buy' ? l.qty : 0)), giftSellerQty: sum((l) => (l.lineType === 'gift_seller' ? l.qty : 0)), giftConsumerQty: sum((l) => (l.lineType === 'gift_consumer' ? l.qty : 0)),
@@ -632,7 +632,7 @@ export function ckttFor(payable: number, pct: number, dueDate: string | undefine
   if (payDate > dueDate) return { eligible: false, amount: 0, reason: `Trả ngày ${payDate} quá hạn ${dueDate}: không được hưởng CKTT` };
   const amount = Math.round((payable * pct) / 100);
   if (paid + amount < payable) return { eligible: false, amount: 0, reason: 'Chưa trả đủ số phải trả sau CKTT' };
-  return { eligible: true, amount, reason: `Trả đúng hạn (≤ ${dueDate}): được CKTT ${pct}%` };
+  return { eligible: true, amount, reason: `Trả đúng hạn (≤ ${dueDate}): được CKTT ${Number(pct).toLocaleString('vi-VN')}%` };
 }
 
 /* ------------------------------------------------------------------ hạn mức công nợ */
@@ -807,7 +807,7 @@ export function rebateFor(p: Policy, sales: { total: number; byDay?: Record<numb
   if (p.kind === 'period_rebate') {
     const t = pickTier((p.rule.tiers as { from: number; pct: number }[]) ?? [], sales.total);
     const rate = t?.pct ?? 0;
-    detail.push(`Doanh số ${sales.total.toLocaleString('vi-VN')} → bậc ${t ? `từ ${t.from.toLocaleString('vi-VN')}` : 'chưa đạt'}: ${rate}%`);
+    detail.push(`Doanh số ${sales.total.toLocaleString('vi-VN')} → bậc ${t ? `từ ${t.from.toLocaleString('vi-VN')}` : 'chưa đạt'}: ${Number(rate).toLocaleString('vi-VN')}%`);
     return { policy: p.code, kind: p.kind, base: sales.total, rate, amount: Math.round((sales.total * rate) / 100), detail };
   }
   if (p.kind === 'target_rebate') {
@@ -817,7 +817,7 @@ export function rebateFor(p: Policy, sales: { total: number; byDay?: Record<numb
     const pct = target ? Math.floor((sales.total / target) * 10000) / 100 : 0;
     const t = [...((p.rule.tiers as { fromPct: number; pct: number }[]) ?? [])].sort((a, b) => b.fromPct - a.fromPct).find((x) => target > 0 && sales.total * 100 >= x.fromPct * target);
     const rate = t?.pct ?? 0;
-    detail.push(`Hoàn thành ${sales.total.toLocaleString('vi-VN')} / ${target.toLocaleString('vi-VN')} = ${pct}% → ${t ? `ngưỡng ${t.fromPct}%: thưởng ${rate}%` : 'chưa đạt ngưỡng'}`);
+    detail.push(`Hoàn thành ${sales.total.toLocaleString('vi-VN')} / ${target.toLocaleString('vi-VN')} = ${Number(pct).toLocaleString('vi-VN')}% → ${t ? `ngưỡng ${Number(t.fromPct).toLocaleString('vi-VN')}%: thưởng ${Number(rate).toLocaleString('vi-VN')}%` : 'chưa đạt ngưỡng'}`);
     return { policy: p.code, kind: p.kind, base: sales.total, rate, amount: Math.round((sales.total * rate) / 100), detail };
   }
   // stage_rebate: mỗi giai đoạn tính trên doanh số CỦA giai đoạn đó (mode=stage) hoặc luỹ kế từ đầu tháng (mode=cumulative,
@@ -836,7 +836,7 @@ export function rebateFor(p: Policy, sales: { total: number; byDay?: Record<numb
     if (amt) parts.push({ from: cumulative ? paidTo + 1 : s.from, to: s.to, amount: amt });
     if (ok && cumulative) { paidBase = base; paidTo = s.to; }
     total += amt;
-    detail.push(`Giai đoạn ${s.from}–${s.to}: doanh số ${base.toLocaleString('vi-VN')} ${ok ? `≥ ${s.min.toLocaleString('vi-VN')} → ${s.amount ? `${s.amount.toLocaleString('vi-VN')}đ` : `${s.pct}%`} = ${amt.toLocaleString('vi-VN')}` : `< ${s.min.toLocaleString('vi-VN')} → không thưởng`}`);
+    detail.push(`Giai đoạn ${s.from}–${s.to}: doanh số ${base.toLocaleString('vi-VN')} ${ok ? `≥ ${s.min.toLocaleString('vi-VN')} → ${s.amount ? `${s.amount.toLocaleString('vi-VN')}đ` : `${Number(s.pct).toLocaleString('vi-VN')}%`} = ${amt.toLocaleString('vi-VN')}` : `< ${s.min.toLocaleString('vi-VN')} → không thưởng`}`);
   }
   return { policy: p.code, kind: p.kind, base: sales.total, rate: 0, amount: total, detail, stages: parts };
 }

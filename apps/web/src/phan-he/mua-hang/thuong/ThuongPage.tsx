@@ -65,7 +65,7 @@ export function ThuongPage() {
             {(ov.data ?? []).map((o) => (
               <tr key={o.policy + o.period} style={{ cursor: 'pointer' }} className={o.policy === p?.code ? 'selected' : ''} onClick={() => { setCode(o.policy); setPeriod(o.period); setManual(undefined); setMsg(null); }}>
                 <td>{o.policy} <span className="muted">{o.name}</span></td><td className="mono">{o.period}</td><td className="num">{vnd(o.base)}</td><td className="num">{o.target ? vnd(o.target) : ''}</td>
-                <td className="num">{o.completion !== null ? `${o.completion}%` : ''}</td><td className="num">{o.kind === 'stage_rebate' ? 'giai đoạn' : `${o.rate}%`}</td><td className="num"><b>{vnd(o.amount)}</b></td>
+                <td className="num">{o.completion !== null ? `${Number(o.completion).toLocaleString('vi-VN')}%` : ''}</td><td className="num">{o.kind === 'stage_rebate' ? 'giai đoạn' : `${Number(o.rate).toLocaleString('vi-VN')}%`}</td><td className="num"><b>{vnd(o.amount)}</b></td>
                 <td>{o.doc ? <span>{o.doc.docNo} · {o.doc.status === 'approved' ? <span className="mh-ok">đã hạch toán</span> : <span className="mh-warn">chưa duyệt</span>}{o.doc.diff ? <span className="mh-bad"> · chênh {vnd(o.doc.diff)}</span> : null}</span> : o.amount ? <span className="mh-warn">chưa lập</span> : <span className="muted">chưa đạt</span>}</td>
               </tr>
             ))}
@@ -93,7 +93,7 @@ export function ThuongPage() {
             {q.isLoading || !r ? <Loading /> : <>
               <div className="kpis">
                 <div className="card kpi"><div className="label">Doanh số mua thuần {manual !== undefined ? '(NCC chốt)' : '(từ phiếu)'}</div><div className="value">{vnd(r.base)}</div><div className="hint">{r.from.split('-').reverse().join('/')} – {r.to.split('-').reverse().join('/')} · từ phiếu: {vnd(r.docsTotal)}</div></div>
-                <div className="card kpi"><div className="label">Mức thưởng</div><div className="value">{p.kind === 'stage_rebate' ? 'theo giai đoạn' : `${r.rate}%`}</div></div>
+                <div className="card kpi"><div className="label">Mức thưởng</div><div className="value">{p.kind === 'stage_rebate' ? 'theo giai đoạn' : `${Number(r.rate).toLocaleString('vi-VN')}%`}</div></div>
                 <div className="card kpi"><div className="label">Tiền thưởng</div><div className="value mh-ok">{vnd(r.amount)}</div><div className="hint">{vat ? `VAT ${vat.slice(1)}%: ${vnd(Math.round(r.amount * Number(vat.slice(1)) / 100))} · tổng giảm công nợ ${vnd(r.amount + Math.round(r.amount * Number(vat.slice(1)) / 100))}` : 'Không có hoá đơn điều chỉnh: giảm công nợ đúng số thưởng'}</div></div>
               </div>
               <div className="card card-body" style={{ marginBottom: 10 }}>
