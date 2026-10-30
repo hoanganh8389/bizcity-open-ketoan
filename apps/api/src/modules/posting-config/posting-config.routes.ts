@@ -18,11 +18,15 @@ import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { Errors } from '../../core/errors.js';
 import { DEFAULT_KEYS, FORM_KEYS, defaultsSchema, groupSchema, paymentMethodSchema, reasonSchema } from './posting-config.schemas.js';
+import { mountActions } from '../../core/actions.js';
+import { policyActions } from './policy.actions.js';
 
 const tags = ['Cấu hình hạch toán'];
 const codeParam = z.object({ code: z.string() });
 
 export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
+  // Chính sách kế toán có phiên bản (ADR-0009): lịch sử + phát hành chế độ mới.
+  mountActions(app, policyActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('catalog:read');
   const write = requirePermission('settings:write');

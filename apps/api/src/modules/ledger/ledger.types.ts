@@ -40,5 +40,7 @@ export interface DraftEntry {
   isReversal?: boolean;
   /** Bút toán gốc bị đảo (chỉ khi isReversal). */
   reversesEntryId?: string | null;
+  /** Phiên bản chính sách kế toán đã dùng để dựng bút toán (ADR-0009); không có = không theo chính sách. */
+  policyVersion?: number | null;
   lines: DraftLine[];
 }

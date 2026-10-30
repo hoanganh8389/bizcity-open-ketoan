@@ -43,6 +43,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
+| `POLICY_VERSION` | L3 | Bút toán định khoản theo luật (chứng từ nhận từ nguồn) ghi đúng phiên bản chính sách kế toán áp cho ngày hạch toán (ADR-0009, C-9) | warn | có | DG-POL-1 |
 | `EVENT_DEAD` | L3 | Không có việc giao sự kiện hết lượt thử (dead) nằm im (bizcity_event@1, R-OUTBOX-3); xem `GET /api/v1/system/events`, sửa nguyên nhân rồi phát lại | warn | có | DG-EVT-1 |
 | `EVIDENCE_CHAIN` | L3 | Chuỗi băm `audit_logs` của đơn vị liền mạch: băm tính lại khớp, nối đúng dòng trước, không hở số (bizcity_evidence@1) | error | có | DG-EVD-1 |
 | `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |

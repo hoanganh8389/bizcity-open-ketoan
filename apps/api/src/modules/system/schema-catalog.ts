@@ -45,6 +45,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
   // ② Quy tắc
   posting_reasons: { group: 'rules', label: 'Lý do nhập / xuất', term: 'Nghiệp vụ', module: 'posting-config', purpose: 'Mỗi lý do (bán, trả lại, tặng, chuyển kho…) chỉ định tài khoản dùng khi định khoản.' },
+  posting_policy_versions: { group: 'rules', label: 'Phiên bản chính sách kế toán', term: 'Chính sách kế toán', module: 'posting-config', purpose: 'Bản chụp cấu hình định khoản kèm ngày hiệu lực: chứng từ định khoản theo bản của ngày hạch toán, nên đổi chế độ không làm đổi số chứng từ cũ. Sửa cấu hình tự chụp bản bổ sung; đổi chế độ thì phát hành. Chỉ thêm.' },
   product_posting_groups: { group: 'rules', label: 'Nhóm hạch toán hàng hoá', module: 'posting-config', purpose: 'Nhóm hàng quyết định tài khoản doanh thu, giá vốn, kho riêng (ví dụ sữa bột khác đồ dùng).' },
   posting_defaults: { group: 'rules', label: 'Tài khoản ngầm định', module: 'posting-config', purpose: 'Tài khoản dùng khi các tầng trên không chỉ định (phải thu khách, thuế đầu ra…).' },
   closing_rules: { group: 'rules', label: 'Quy tắc kết chuyển', term: 'Kết chuyển cuối kỳ', module: 'closing', purpose: 'Thứ tự đổ doanh thu, chi phí về 911 rồi lãi lỗ về 421.' },

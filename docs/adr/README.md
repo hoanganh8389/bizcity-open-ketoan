@@ -12,7 +12,7 @@ Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại 
 | [0006](ADR-0006-bo-kiem-chuan-mot-cho.md) | Một bộ kiểm chuẩn `tests/conformance/`: hai lane song song, bảng điểm, baseline bánh cóc | Chấp nhận |
 | [0007](ADR-0007-goi-chia-se-va-ha-tang.md) | Chuẩn hoá gói chia sẻ và hạ tầng: học từ bộ 27 gói tham chiếu, PostgreSQL là hạ tầng bắt buộc duy nhất, adapter tuỳ chọn, `infrastructure/` riêng, không Prisma | Chấp nhận |
 | [0008](ADR-0008-cay-thu-muc-lean.md) | Cây thư mục lean: nhận ý đề xuất 9 thư mục gốc, gộp theo tiêu chí lean (`packages/kernel` một gói, `contracts/` theo ba lớp kiểm soát, sự kiện là gói Platform) | Chấp nhận |
-| [0009](ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) | Chính sách kế toán có phiên bản + ngày hiệu lực (C-9): đề xuất bản chụp chính sách `posting_policy_versions`, định khoản theo bản của ngày hạch toán | **Đề xuất** |
+| [0009](ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) | Chính sách kế toán có phiên bản + ngày hiệu lực (C-9): đề xuất bản chụp chính sách `posting_policy_versions`, định khoản theo bản của ngày hạch toán; sửa cấu hình tự chụp bản amend, đổi chế độ thì phát hành | Chấp nhận (chủ dự án 2026-10-30; kế toán trưởng chưa ký) |
 
 ## Khuôn
 

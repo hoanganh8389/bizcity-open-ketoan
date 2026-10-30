@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Chính sách kế toán có phiên bản và ngày hiệu lực** (PHASE-005, ADR-0009, migration `0040`): mỗi bút toán định khoản theo luật và mỗi dòng nhật ký định khoản ghi phiên bản chính sách đã dùng; lịch sử ở `GET /api/v1/posting/policy/versions`; đổi chế độ bằng `POST /api/v1/posting/policy/publish` (ngày hiệu lực, ghi chú, không vào kỳ đã khoá). Tự chẩn đoán `POLICY_VERSION`.
 - **Khôi phục tới một thời điểm (PITR)** (PHASE-008): `infrastructure/backup/docker-compose.pitr.yml` bật lưu WAL liên tục (chỉ cần PostgreSQL), `scripts/sao-luu-goc.sh` sao lưu gốc + dọn WAL cũ, `scripts/dien-tap-pitr.sh` diễn tập trên container tạm (khôi phục tới mốc T, kiểm sổ, đo RTO / RPO). Máy dev: RTO 8 giây, RPO ≤ 60 giây với 13.428 bút toán.
 - **Trợ lý AI lập chứng từ nháp và đề xuất huỷ qua MCP** (PHASE-009): `accounting.document.create_draft` (bán, mua, thu, chi… theo khuôn nạp sổ) và `accounting.entry.reverse`. Luôn xem trước bút toán rồi người dùng xác nhận; kết quả luôn chờ kế toán duyệt ở ACC14, kể cả khi loại chứng từ đặt chế độ "Tự động". AI không duyệt, không khoá kỳ, không đổi cấu hình.
 - **Sự kiện miền — transactional outbox** (PHASE-006, PHASES 3.4, migration `0039`): sự kiện ghi cùng giao dịch với dữ liệu, dispatcher trong tiến trình API giao ít nhất một lần, chống xử lý trùng, thử lại giãn nhịp, hết lượt → `dead` (tự chẩn đoán `EVENT_DEAD`), phát lại có bằng chứng (`POST /api/v1/system/events/replay`), xem tình trạng (`GET /api/v1/system/events`). Kernel phát `bizcity.ledger.entry.posted` / `.reversed`, `bizcity.period.locked` / `.unlocked`; đồng hồ `bizcity.clock.daily` / `.hourly`. Header `X-Correlation-Id` (mặc định mã yêu cầu) được ghi vào bằng chứng và sự kiện.
@@ -133,6 +134,10 @@ Mỗi bản ghi đủ sáu mục:
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
 
 ### Thay đổi định khoản
+- **Định khoản theo chính sách của ngày hạch toán (mức K3, ADR-0009):** chứng từ (cả khi định khoản lại) dùng phiên bản cấu hình định khoản có hiệu lực ở ngày hạch toán của nó.
+  - Sửa cấu hình như trước vẫn có tác dụng ngay (hệ thống tự chụp bản bổ sung của chế độ đang áp).
+  - Chỉ khi **phát hành** chế độ mới kèm ngày hiệu lực thì chứng từ trước ngày đó mới tiếp tục theo chế độ cũ.
+  - Bản đầu = cấu hình đang dùng: sổ đã có không đổi (đã so 128 ô sổ cái trước / sau: trùng).
 - Luật định khoản, tài khoản, giá vốn: không đổi.
 - **Khoá kỳ (mức K2, RULE-KERNEL):** khoá kỳ bị chặn khi tự chẩn đoán L3 có lỗi trong kỳ (R-DIAG-4).
   - Không đổi bút toán đã ghi, không đổi khoá đã có.

@@ -82,6 +82,8 @@ export interface PostContext {
   kept?: string[];
   /** Bút toán được giữ nhưng cập nhật thông tin đầu tại chỗ (đếm là có thay đổi). */
   updated?: string[];
+  /** Ra: phiên bản chính sách kế toán đã dùng (ADR-0009) — ghi vào posting_log. */
+  policyVersion?: number | null;
 }
 
 /** Lấy một id khỏi map theo khoá và bỏ id đó khỏi các map còn lại (một bút toán chỉ được giữ một lần). */
@@ -100,7 +102,9 @@ export const postingService = {
     if (!rule) throw Errors.posting(`Chưa có luật định khoản cho loại chứng từ ${doc.docType}`);
 
     const skus = skusOf(doc);
-    const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus);
+    // Chính sách kế toán áp cho NGÀY HẠCH TOÁN của chứng từ (ADR-0009): định khoản lại chứng từ cũ không theo quy tắc mới.
+    const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus, { asOf: doc.docDate.slice(0, 10), actor: ctx.actor });
+    ctx.policyVersion = cfg.policyVersion;
     const resolver = new AccountResolver(cfg);
     const parts = rule(doc, { resolver, partnerId: ctx.partnerId, stock: ctx.stock }).filter((p) => p.lines.length);
     if (!parts.length) return []; // chứng từ 0 đồng: không có gì để ghi
@@ -137,6 +141,7 @@ export const postingService = {
           description: part.description ?? (doc.description || defaultDescription(doc)),
           sourceDocumentId: ctx.sourceDocumentId,
           sourceVersion: ctx.sourceVersion,
+          policyVersion: cfg.policyVersion,
           lines: enrich(part.lines, part.branchId ?? ctx.branchId),
         };
         const full = entryContentHash(draft);

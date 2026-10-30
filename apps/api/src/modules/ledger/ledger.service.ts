@@ -126,6 +126,7 @@ export const ledgerService = {
       reverses_entry_id: entry.reversesEntryId ?? null,
       content_hash: entry.isReversal ? null : entryContentHash(entry),
       body_hash: entry.isReversal ? null : entryBodyHash(entry),
+      policy_version: entry.isReversal ? null : entry.policyVersion ?? null,
       created_by: actor,
     });
 

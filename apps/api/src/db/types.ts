@@ -774,6 +774,19 @@ export interface PostingDefaultsTable {
   account_code: string;
 }
 
+/** Chính sách kế toán có phiên bản (migration 0040, ADR-0009). Chỉ thêm. */
+export interface PostingPolicyVersionsTable {
+  tenant_id: string;
+  version: number;
+  effective_from: ColumnType<string, string, string>;
+  kind: 'initial' | 'amend' | 'publish';
+  snapshot: Json<unknown>;
+  hash: string;
+  note: Generated<string>;
+  created_by: string;
+  created_at: TimestampDefault;
+}
+
 export interface PostingLogTable {
   id: Generated<string>;
   tenant_id: string;
@@ -787,6 +800,8 @@ export interface PostingLogTable {
   total: Numeric | null;
   message: string | null;
   actor: string;
+  /** Phiên bản chính sách kế toán đã dùng (0040, ADR-0009). */
+  policy_version: ColumnType<number | null, number | null | undefined, number | null>;
   created_at: TimestampDefault;
 }
 
@@ -845,6 +860,8 @@ export interface LedgerEntriesTable {
   content_hash: string | null;
   /** Mã băm phần số liệu (migration 0062). */
   body_hash: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Phiên bản chính sách kế toán bút toán được dựng theo (0040, ADR-0009). */
+  policy_version: ColumnType<number | null, number | null | undefined, number | null>;
   is_reversal: Generated<boolean>;
   created_by: string;
   created_at: TimestampDefault;
@@ -1480,6 +1497,7 @@ export interface Database {
   posting_log: PostingLogTable;
   accounting_event_versions: AccountingEventVersionsTable;
   ledger_entries: LedgerEntriesTable;
+  posting_policy_versions: PostingPolicyVersionsTable;
   ledger_lines: LedgerLinesTable;
   ledger_balances_daily: LedgerBalancesDailyTable;
   ledger_links: LedgerLinksTable;

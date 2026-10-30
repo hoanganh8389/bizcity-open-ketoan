@@ -36,7 +36,7 @@ import { ledgerRepository } from '../ledger/ledger.repository.js';
 import { ledgerService } from '../ledger/ledger.service.js';
 import { partnerRepository } from '../partners/partner.repository.js';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
-import { hasTaxInvoice, isStockDocument, needsBranchContext, postingService } from '../posting/posting.service.js';
+import { hasTaxInvoice, isStockDocument, needsBranchContext, postingService, type PostContext } from '../posting/posting.service.js';
 import type { StockContext } from '../posting/rules/sale.rule.js';
 import { inventoryMovementRepository } from '../inventory/inventory-movement.repository.js';
 import { taxInvoiceRepository } from '../tax-invoices/tax-invoice.repository.js';
@@ -260,10 +260,12 @@ function emitReversed(trx: Db, auth: AuthContext, row: { doc_key: string; doc_ty
 export async function logPosting(trx: Db, v: {
   tenantId: string; eventId: string; docType: string; docNo: string; version: number;
   action: 'receive' | 'post' | 'repost' | 'error' | 'cancel' | 'cancel_request' | 'unpost'; entryIds?: string[]; reversed?: number; total?: number | null; message?: string | null; actor: string;
+  /** Phiên bản chính sách kế toán đã dùng (ADR-0009). */
+  policyVersion?: number | null;
 }): Promise<void> {
   await trx.insertInto('posting_log').values({
     tenant_id: v.tenantId, event_id: v.eventId, doc_type: v.docType, doc_no: v.docNo, version: v.version, action: v.action,
-    entry_ids: v.entryIds ?? [], reversed: v.reversed ?? 0, total: v.total === undefined || v.total === null ? null : String(v.total), message: v.message ?? null, actor: v.actor,
+    entry_ids: v.entryIds ?? [], reversed: v.reversed ?? 0, total: v.total === undefined || v.total === null ? null : String(v.total), message: v.message ?? null, actor: v.actor, policy_version: v.policyVersion ?? null,
   }).execute();
 }
 
@@ -325,7 +327,7 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   } else {
     docId = (await documentRepository.insert(trx, { tenant_id: auth.tenantId, doc_key: doc.docKey, created_by: auth.actor, ...fields })).id;
   }
-  const log = (action: 'receive' | 'post' | 'repost', extra: { entryIds?: string[]; reversed?: number; message?: string } = {}) =>
+  const log = (action: 'receive' | 'post' | 'repost', extra: { entryIds?: string[]; reversed?: number; message?: string; policyVersion?: number | null } = {}) =>
     logPosting(trx, { tenantId: auth.tenantId, eventId: docId, docType: doc.docType, docNo: doc.docNo, version: doc.version, action, total: doc.totals.total, actor: auth.actor, ...extra });
 
   // Chưa định khoản: chờ ở trạm ACC14.
@@ -352,7 +354,7 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   for (const e of active) if (e.body_hash) reuseBody.set(e.body_hash, [...(reuseBody.get(e.body_hash) ?? []), String(e.id)]);
   const kept: string[] = [];
   const updated: string[] = [];
-  const entryIds = await postingService.post(trx, eff, {
+  const postCtx: PostContext = {
     tenantId: auth.tenantId,
     actor: auth.actor,
     sourceDocumentId: docId,
@@ -364,7 +366,8 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
     reuseBody,
     kept,
     updated,
-  });
+  };
+  const entryIds = await postingService.post(trx, eff, postCtx);
   const keptSet = new Set(kept);
   const reversed = await reverseEntries(trx, auth.tenantId, auth.actor, active.map((e) => String(e.id)).filter((x) => !keptSet.has(x)), `Định khoản lại theo phiên bản ${doc.version}`);
   await linkReturnToOriginal(trx, auth, doc, entryIds);
@@ -391,7 +394,7 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
     docKey: doc.docKey, docType: doc.docType, docNo: doc.docNo, version: doc.version, entryIds, reversed, kept: kept.length, total: doc.totals.total,
   });
   const repost = Boolean(active.length);
-  await log(repost ? 'repost' : 'post', { entryIds, reversed, message: repost ? (kept.length ? `Giữ ${kept.length} bút toán${updated.length ? ` (cập nhật thông tin đầu ${updated.length}: số hoá đơn, diễn giải…)` : ' không đổi'}${entryIds.length ? `; đảo ${reversed}, ghi ${entryIds.length} bút toán mới` : '; không có gì thay đổi'}` : `Đảo ${reversed}, ghi ${entryIds.length} bút toán mới`) : undefined });
+  await log(repost ? 'repost' : 'post', { entryIds, reversed, policyVersion: postCtx.policyVersion ?? null, message: repost ? (kept.length ? `Giữ ${kept.length} bút toán${updated.length ? ` (cập nhật thông tin đầu ${updated.length}: số hoá đơn, diễn giải…)` : ' không đổi'}${entryIds.length ? `; đảo ${reversed}, ghi ${entryIds.length} bút toán mới` : '; không có gì thay đổi'}` : `Đảo ${reversed}, ghi ${entryIds.length} bút toán mới`) : undefined });
   return { docKey: doc.docKey, version: doc.version, status: 'posted' as const, entryIds, kept: kept.length, updated: updated.length, reversed };
 }
 

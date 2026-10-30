@@ -152,7 +152,7 @@ Nguyên tắc AP-2: ghi sổ là **lệnh đồng bộ** trong giao dịch ACID.
 
 ### 4.1 Ma trận tuân thủ bắt buộc
 
-Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **81%** (59% trước PHASE-004, 66% sau PHASE-004).
+Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE-v1.md). Trạng thái **tính tự động** mỗi lần chạy `node tests/conformance/selfcheck.mjs`, ở mục "Ma trận tuân thủ" của bảng điểm (AP-7). Bảng dưới là ảnh chụp ngày 2026-10-30, chạy kèm CSDL; điểm tổng **94%** (59% trước PHASE-004 → 66% → 81% sau PHASE-006 → 94% sau PHASE-005; còn một phần: C-6 xác nhận thời hạn lưu trữ, C-7 nợ A-17).
 
 | Mã | Yêu cầu | Rủi ro nếu thiết kế sai | Quy tắc Bizcity bắt buộc | Trạng thái |
 |---|---|---|---|---|
@@ -164,7 +164,7 @@ Chín yêu cầu của [`bizcity_compliance@1` §2](contracts/BIZCITY-COMPLIANCE
 | C-6 | Lưu trữ | Message hết hạn, mất lịch sử nghiệp vụ | Lưu sổ / chứng từ / bằng chứng riêng theo thời hạn áp dụng | ◐ một phần (PITR có từ 2026-10-30; còn kế toán trưởng / luật sư xác nhận thời hạn lưu trữ) |
 | C-7 | Phân quyền | Module tự ghi vào bảng ledger | Chỉ Accounting Core có quyền ghi sổ | ◐ một phần (nợ A-17; A-01 xong 2026-10-30) |
 | C-8 | Kiểm toán | Không rõ sự kiện do ai tạo | Actor, source, correlation, evidence, version | ✔ đạt từ 2026-10-30 (`correlation_id` từ X-Correlation-Id vào bằng chứng và sự kiện) |
-| C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✘ thiếu (G2-09) |
+| C-9 | Thay đổi chế độ kế toán | Áp dụng quy tắc mới vào chứng từ cũ | Phiên bản chính sách và ngày hiệu lực | ✔ đạt từ 2026-10-30 (ADR-0009, PHASE-005) |
 
 ## 5. Luật bắt buộc cho người đóng góp
 
@@ -226,7 +226,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G2-06 | Đệm cho Accounting Core có huỷ theo phiên bản cấu hình; `adapters/redis` | R-CACHE-3..6 có test; chạy đúng khi tắt Redis | **chưa** | 5.9 | _mở_ |
 | G2-07 | Prometheus + Grafana + cảnh báo cơ bản | `infrastructure/monitoring/` chạy với API thật | **có** (cấu hình đã kiểm) | 2.13 | — |
 | G2-08 | Mã lỗi chuẩn + quan sát (request id, log, số đo) | SC-ERR-1, `test/observability.test.ts` | **có** | 2.13 | — |
-| G2-09 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): `policy_version`, `effective_from`, `posting_log.policy_version` | C-9 của ma trận tuân thủ đạt ([COMPLIANCE §4](contracts/BIZCITY-COMPLIANCE-v1.md)) | **chưa** | 2.14 | _mở_ |
+| G2-09 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): `policy_version`, `effective_from`, `posting_log.policy_version` | C-9 của ma trận tuân thủ đạt ([COMPLIANCE §4](contracts/BIZCITY-COMPLIANCE-v1.md)) | **có** ([ADR-0009](adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md), PHASE-005) | 2.14 | — |
 | G2-10 | Ba lớp kiểm soát + ma trận tuân thủ tính tự động | `bizcity_compliance@1`, SC-CMP-1, mục ma trận trên bảng điểm | **có** | — | — |
 
 ### Giai đoạn 3: Hệ sinh thái

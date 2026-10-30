@@ -12,6 +12,15 @@ import { sqlCheck } from '../lib/diag.mjs';
  * posted_version. Tách khỏi DG-EVENT-1 để lỗi thật của cửa nạp sổ không bị lẫn; DG-EVENT-4 theo dõi tới khi xong PHASES 2.1.
  */
 const INTERNAL = "('closing', 'cogs', 'depreciation')";
+/** POLICY_VERSION — cùng chữ với apps/api/src/modules/ledger/ledger.diagnostics.ts. */
+const POLICY_SCOPE = `NOT e.is_reversal AND a.source_system <> 'manual'
+             AND e.created_at >= (SELECT min(p.created_at) FROM posting_policy_versions p WHERE p.tenant_id = e.tenant_id)`;
+const POLICY_BAD = `(e.policy_version IS NULL OR NOT EXISTS (
+               SELECT 1 FROM posting_policy_versions v
+                WHERE v.tenant_id = e.tenant_id AND v.version = e.policy_version AND v.effective_from <= e.posting_date
+                  AND NOT EXISTS (SELECT 1 FROM posting_policy_versions v2
+                                   WHERE v2.tenant_id = e.tenant_id AND v2.effective_from <= e.posting_date AND v2.created_at <= e.created_at
+                                     AND (v2.effective_from, v2.version) > (v.effective_from, v.version))))`;
 /** Phiếu kho tổng tiền 0 (chuyển kho, điều chỉnh kho) không có bút toán: giá trị ghi ở phiếu giá vốn tháng — không phải lỗi. */
 const VALUED = "NOT (a.total = 0 AND a.doc_type IN ('transfer', 'stock_adjustment'))";
 
@@ -72,6 +81,17 @@ export const checks = [
     sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('version', a.version, 'posted_version', a.posted_version) AS detail
           FROM accounting_events a JOIN tenants t ON t.id = a.tenant_id
           WHERE a.status = 'posted' AND a.doc_type NOT IN ${INTERNAL} AND a.posted_version IS DISTINCT FROM a.version
+          LIMIT 200`,
+  }),
+  sqlCheck({
+    id: 'DG-POL-1', code: 'POLICY_VERSION',
+    title: 'Bút toán định khoản theo luật ghi đúng phiên bản chính sách kế toán của ngày hạch toán (ADR-0009, C-9)',
+    rules: ['STD-CMP-9'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id
+            WHERE ${POLICY_SCOPE}`,
+    sql: `SELECT t.code AS tenant, e.entry_no AS key, json_build_object('posting_date', e.posting_date, 'policy_version', e.policy_version) AS detail
+          FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id JOIN tenants t ON t.id = e.tenant_id
+          WHERE ${POLICY_SCOPE} AND ${POLICY_BAD}
           LIMIT 200`,
   }),
   sqlCheck({
