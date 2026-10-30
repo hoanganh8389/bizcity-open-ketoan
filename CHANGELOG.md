@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Gói định khoản cài / xem trước / gỡ** (PHASE-012 S012-3, PHASES 3.11, `bizcity_posting_template@1` §5): `GET /api/v1/posting/packs`, `POST /api/v1/posting/packs/install` (`?dryRun=1` xem trước từng mục thêm / ghi đè / giữ / xung đột), `POST /api/v1/posting/packs/uninstall`; quyền `settings:write`. Mục đang khác cấu hình của đơn vị được giữ, trừ khi chọn ghi đè. Cài / gỡ phát hành một bản chính sách kế toán (ADR-0009 Q-5) — chứng từ trước ngày hiệu lực vẫn định khoản theo bản cũ. Năng lực `templates.posting` → available.
 - **MCP `accounting.journal.post`** (PHASE-009 S009-2, Q009-1 a): trợ lý AI đề xuất phiếu kế toán / thu / chi **nháp** — sự việc `pending`, 0 bút toán, xem trước là bút toán dựng thử; người có quyền duyệt `POST /api/v1/vouchers/:id/approve` (action `accounting.journal.approve`, `ai: deny`) mới ghi qua eventStore. G2-04 đủ 3 công cụ ghi.
 - **Chữ ký kiến trúc và dấu thay đổi (R-SIG)**: [docs/rules/RULE-SIGNATURE.md](docs/rules/RULE-SIGNATURE.md), bộ kiểm SC-SIG-1 (mọi tệp framework có chữ ký Johnny Chu – Chu Hoàng Anh) và SC-SIG-2 (đúng khuôn, không tên agent), công cụ `scripts/ky-dau.mjs`, `.github/copilot-instructions.md`. Ký bù 694 dấu lên 333 tệp framework theo giờ commit thật của từng phase (biên bản `docs/audits/AUDIT-2026-10-30-CHU-KY.md`).
 - **Cô lập đơn vị ở tầng CSDL (RLS)** (PHASE-007, migration `0041`): mọi bảng có `tenant_id` (84 bảng) bật Row Level Security + FORCE + chính sách `tenant_isolation`; kết nối của một yêu cầu tự gắn đơn vị đã xác thực, nên một truy vấn quên lọc `tenant_id` cũng không đọc / ghi được dữ liệu đơn vị khác. Việc nền (migration, seed, dispatcher, đăng nhập) chạy như cũ. Tự chẩn đoán `TENANT_ISOLATION`. Migration chạy bằng kết nối riêng, không mượn pool của API.
@@ -149,6 +150,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Nâng cấp cần làm
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
+- Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.
 - **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật

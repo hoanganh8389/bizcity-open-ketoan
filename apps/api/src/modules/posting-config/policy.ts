@@ -1,5 +1,6 @@
 // @bizcity-layer K kernel/config
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — publishPolicy nhận bản đã chốt (pinned): cài / gỡ gói định khoản chốt cấu hình cũ trước khi ghi, rồi phát hành một bản (ADR-0009 Q-5).
 /**
  * CHÍNH SÁCH KẾ TOÁN CÓ PHIÊN BẢN (ADR-0009, C-9 / STD-CMP-9; PHASE-005, PHASES 2.14).
  *
@@ -12,6 +13,7 @@
  *     2. chọn bản áp cho ngày hạch toán asOf: effective_from ≤ asOf lớn nhất, bằng nhau thì version lớn nhất;
  *     3. bản đó là bản đứng đầu → dùng live (cùng nội dung); không thì dùng bản chụp của nó.
  *   publishPolicy()  — đổi chế độ: chụp live thành bản `publish` với ngày hiệu lực mới (không rơi vào kỳ đã khoá).
+ *                      Cài / gỡ gói định khoản (pack.ts) cũng phát hành qua đây (ADR-0009 Q-5).
  * Chứng từ cũ định khoản lại vẫn theo bản của ngày hạch toán → không bị quy tắc mới làm đổi số (rủi ro C-9).
  */
 import { createHash } from 'node:crypto';
@@ -90,13 +92,14 @@ export async function selectPolicy(trx: Db, tenantId: string, live: PolicyRaw, a
 }
 
 /** Phát hành chế độ mới: chụp cấu hình đang dùng, hiệu lực từ effectiveFrom (không rơi vào kỳ đã khoá). */
-export async function publishPolicy(trx: Db, tenantId: string, live: PolicyRaw, a: { effectiveFrom: string; note: string; actor: string }): Promise<PolicyVersionRow> {
+export async function publishPolicy(trx: Db, tenantId: string, live: PolicyRaw, a: { effectiveFrom: string; note: string; actor: string; pinned?: PolicyVersionRow }): Promise<PolicyVersionRow> {
   const [y, m] = a.effectiveFrom.split('-').map(Number) as [number, number];
   const locked = await trx.selectFrom('period_locks as l').innerJoin('fiscal_periods as p', 'p.id', 'l.period_id')
     .select('l.id').where('l.tenant_id', '=', tenantId).where('p.year', '=', y).where('p.month', '=', m).limit(1).executeTakeFirst();
   if (locked) throw Errors.validation(`Kỳ ${String(m).padStart(2, '0')}/${y} đã khoá (một phần hoặc toàn bộ): ngày hiệu lực của chính sách mới phải ở kỳ chưa khoá`);
   // Bảo đảm có bản đầu (từ 1900-01-01) trước bản phát hành: chứng từ trước ngày hiệu lực mới vẫn có chính sách để theo.
-  const cur = await ensureHead(trx, tenantId, live, a.actor);
+  // pinned: người gọi đã chốt bản đứng đầu TRƯỚC khi sửa cấu hình (cài / gỡ gói) — không chụp amend cấu hình mới vào ngày cũ.
+  const cur = a.pinned ?? await ensureHead(trx, tenantId, live, a.actor);
   await insertVersion(trx, tenantId, { version: cur.version + 1, effectiveFrom: a.effectiveFrom, kind: 'publish', raw: live, hash: policyHash(live), note: a.note, actor: a.actor });
   return (await head(trx, tenantId))!;
 }

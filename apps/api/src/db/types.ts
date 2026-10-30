@@ -7,6 +7,7 @@
 // [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -795,6 +796,23 @@ export interface PostingPolicyVersionsTable {
   created_at: TimestampDefault;
 }
 
+/** Gói định khoản đã cài (migration 0042, bizcity_posting_template@1 §5). */
+export interface ConfigPacksTable {
+  tenant_id: string;
+  pack_id: string;
+  version: string;
+  title: string;
+  regime: string;
+  status: Generated<'installed' | 'uninstalled'>;
+  manifest: Json<unknown>;
+  items: JsonDefault<unknown>;
+  policy_version: number | null;
+  installed_by: string;
+  installed_at: TimestampDefault;
+  uninstalled_by: string | null;
+  uninstalled_at: Date | null;
+}
+
 export interface PostingLogTable {
   id: Generated<string>;
   tenant_id: string;
@@ -1506,6 +1524,7 @@ export interface Database {
   accounting_event_versions: AccountingEventVersionsTable;
   ledger_entries: LedgerEntriesTable;
   posting_policy_versions: PostingPolicyVersionsTable;
+  config_packs: ConfigPacksTable;
   ledger_lines: LedgerLinesTable;
   ledger_balances_daily: LedgerBalancesDailyTable;
   ledger_links: LedgerLinksTable;

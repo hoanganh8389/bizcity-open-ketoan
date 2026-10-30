@@ -17,7 +17,8 @@
 | S005-5 | Màn Cấu hình định khoản: lịch sử bản, phát hành | 2.14 | API có | 🟡 `GET /api/v1/posting/policy/versions`, `POST …/publish`; màn hình chưa (giao diện) |
 | S005-6 | Bật năng lực `posting.policy-version`; C-9 đạt; tự chẩn đoán `POLICY_VERSION` + DG-POL-1 | 2.14 · G2-09 | có | ✅ |
 | S005-7 | Q-2: kế toán chọn "bản mới nhất" khi định khoản lại (quyền `settings:write`, lý do, bằng chứng) | — | chưa | ☐ (mặc định luôn theo ngày) |
-| S005-8 | Q-5: cài gói định khoản = phát hành một bản | — | chưa | ☐ cùng PHASE-012 |
+<!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — Q-5 làm cùng PHASE-012 S012-3. -->
+| S005-8 | Q-5: cài gói định khoản = phát hành một bản | — | có | ✅ PHASE-012 S012-3: `installPack` chốt bản cũ rồi `publishPolicy({ pinned })`, note "Cài gói <id>@<phiên bản>"; gỡ gói phát hành "Gỡ gói …" (`test/posting-pack.test.ts`) |
 
 ## Ca bằng chứng
 

@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gắn action gói định khoản core.template.list / install / uninstall.
 /**
  * Cấu hình hạch toán.
  *   GET/PUT/DELETE  /api/v1/posting/reasons[/:code]    lý do (xoá: chưa dùng trên chứng từ)
@@ -23,6 +24,7 @@ import { Errors } from '../../core/errors.js';
 import { DEFAULT_KEYS, FORM_KEYS, defaultsSchema, groupSchema, paymentMethodSchema, reasonSchema } from './posting-config.schemas.js';
 import { mountActions } from '../../core/actions.js';
 import { policyActions } from './policy.actions.js';
+import { packActions } from './pack.actions.js';
 
 const tags = ['Cấu hình hạch toán'];
 const codeParam = z.object({ code: z.string() });
@@ -30,6 +32,8 @@ const codeParam = z.object({ code: z.string() });
 export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
   // Chính sách kế toán có phiên bản (ADR-0009): lịch sử + phát hành chế độ mới.
   mountActions(app, policyActions);
+  // Gói định khoản (bizcity_posting_template@1): cài / xem trước / gỡ — PHASE-012.
+  mountActions(app, packActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('catalog:read');
   const write = requirePermission('settings:write');

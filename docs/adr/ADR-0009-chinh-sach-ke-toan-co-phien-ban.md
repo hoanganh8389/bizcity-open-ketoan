@@ -63,7 +63,7 @@ PHASE-004 đã đưa mọi đường ghi về hai chỗ: cửa nạp `postDocume
 | Q-2 | Định khoản lại chứng từ cũ: **luôn** dùng bản theo ngày hạch toán, hay cho kế toán chọn "dùng bản mới nhất" khi cố ý sửa cấu hình sai? | Mặc định theo ngày. Cho chọn bản mới nhất chỉ với quyền `settings:write`, bắt buộc lý do, ghi bằng chứng |
 | Q-3 | Phạm vi bản chụp như mục 2 (không gồm hệ thống tài khoản, không gồm gán mặt hàng → nhóm)? | Đồng ý |
 | Q-4 | Ngày hiệu lực có được lùi về quá khứ (kỳ chưa khoá) không? | Được, nếu kỳ chưa khoá. Màn phát hành báo số chứng từ đã ghi sẽ khác nếu định khoản lại |
-| Q-5 | Gói định khoản theo ngành (PHASE-012) cài vào sẽ thành một phiên bản chính sách mới? | Có: cài gói = phát hành một bản, `note` ghi tên gói + phiên bản gói |
+| Q-5 | Gói định khoản theo ngành (PHASE-012) cài vào sẽ thành một phiên bản chính sách mới? | Có: cài gói = phát hành một bản, `note` ghi tên gói + phiên bản gói — **đã làm** (PHASE-012 S012-3, `pack.ts`; cấu hình cũ được chốt trước khi ghi qua `publishPolicy({ pinned })`) <!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — Q-5 đã làm. --> |
 
 ## Quyết định khi làm (2026-10-30, PHASE-005)
 

@@ -1,7 +1,8 @@
 # PHASE-012 — Workflow khai báo, `ledger.query`, gói định khoản cài / gỡ, gợi ý lý do
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 
-> **Trạng thái:** 🟡 khuôn gói định khoản + SC-TPL-1 có; cài / gỡ, workflow, `ledger.query` chưa
+<!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cài / xem trước / gỡ gói định khoản có (S012-3). -->
+> **Trạng thái:** 🟡 gói định khoản cài / xem trước / gỡ **có** (2026-10-30, S012-3); seed thành gói nền (S012-3b), workflow, `ledger.query`, gợi ý lý do chưa
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 13%
 > **Mục tiêu:** Kế toán sở hữu cấu hình dưới dạng gói cài / gỡ được; báo cáo đọc sổ qua API; luồng duyệt chứng từ khai báo thay vì viết tay.
 > **Việc lộ trình:** 3.5, 3.7, 3.11, 3.12
@@ -13,6 +14,7 @@
 
 | Tài liệu | Một câu |
 |---|---|
+| [00-MASTER-PLAN](00-MASTER-PLAN.md) | thiết kế D012-1…5, câu hỏi Q012-1 (gói nền) |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
 ## Hiện trạng đọc mã
@@ -25,4 +27,4 @@
 
 ## Xong khi
 
-Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 3.5 ☐ · 3.7 ☐ · 3.11 🟡 · 3.12 ☐.
+Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 3.5 ☐ · 3.7 ☐ · 3.11 ☑ (tín hiệu: năng lực `templates.posting` + SC-TPL-1; còn S012-3b) · 3.12 ☐.

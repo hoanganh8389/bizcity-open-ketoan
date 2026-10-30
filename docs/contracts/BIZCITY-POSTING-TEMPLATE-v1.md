@@ -1,5 +1,6 @@
 # `bizcity_posting_template@1` — Gói định khoản (thư viện lý do, marketplace)
 <!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — hiện trạng cài / xem trước / gỡ (§5.1), config_packs ở migration 0042. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (hợp đồng dữ liệu cấu hình, không phải code)
 > **Schema:** [BIZCITY-POSTING-TEMPLATE-v1.schema.json](BIZCITY-POSTING-TEMPLATE-v1.schema.json) · **Ví dụ:** [../standard/examples/vn-tt99-thuong-mai.posting-pack.json](../standard/examples/vn-tt99-thuong-mai.posting-pack.json)
@@ -37,7 +38,7 @@ Một tệp JSON (hoặc thư mục có `posting-pack.json`), khuôn trong schem
 
 | Phần | Nội dung | Bảng đích khi cài |
 |---|---|---|
-| `id`, `version`, `title`, `publisher`, `license` | Định danh `<publisher>.<chế độ>.<ngành>`, SemVer | `config_packs` (Phase 3) |
+| `id`, `version`, `title`, `publisher`, `license` | Định danh `<publisher>.<chế độ>.<ngành>`, SemVer | `config_packs` (migration `0042`) |
 | `regime` | Chế độ kế toán: `vn-tt99-2025` (doanh nghiệp), `vn-tt133-2016` (nhỏ và vừa) | — |
 | `industries` | Thẻ ngành: `thuong-mai`, `dich-vu`, `san-xuat`, `xay-dung`, `xuat-nhap-khau`, `nha-may`, `nhan-su-luong`, `nong-nghiep`, `fnb`, `ban-le` | — |
 | `extends` | Gói nền phải cài trước (vd `bizcity.vn-tt99.nen`) | — |
@@ -104,11 +105,23 @@ gói nền                     (bizcity.vn-tt99.nen: hệ thống TK, ngầm đ�
 | **STD-TPL-2** | Mọi tài khoản gói dùng tồn tại trong hệ thống tài khoản của `regime` hoặc trong `accounts` của gói (tài khoản con có cha) | SC-TPL-1 |
 | **STD-TPL-3** | Mỗi `docType` / khoá mặc định có **đúng một** lý do `flags.default` trong toàn bộ chuỗi gói đã cài | SC-TPL-1; kiểm lúc cài |
 | **STD-TPL-4** | Mọi tình huống mẫu cân Nợ = Có và chỉ dùng lý do có trong gói (hoặc gói nền) | SC-TPL-1 (tĩnh); chạy thật ở lane `runtime` (Phase 4) |
-| **STD-TPL-5** | Cài = **xem trước** (dry-run, liệt kê thêm / đổi / giữ) → người có quyền `settings:write` xác nhận → ghi trong một giao dịch, có bằng chứng `core.template.install` | CONF-RUN (Phase 4) |
+| **STD-TPL-5** | Cài = **xem trước** (dry-run, liệt kê thêm / đổi / giữ) → người có quyền `settings:write` xác nhận → ghi trong một giao dịch, có bằng chứng `core.template.install` | `test/posting-pack.test.ts`; CONF-RUN (Phase 4) |
 | **STD-TPL-6** | Cài / nâng cấp **không** đổi bút toán đã ghi (R-POST-8, R-MATRIX-6). Áp cho lần định khoản sau | Kernel |
 | **STD-TPL-7** | Không ghi đè cấu hình đơn vị đã sửa tay, trừ khi người cài chọn từng mục | màn cài |
 | **STD-TPL-8** | Gỡ gói = **ngừng dùng** (`is_active = false`) các mã chưa phát sinh; mã đã dùng giữ nguyên (R-MD) | Kernel |
 | **STD-TPL-9** | Gói yêu cầu `docType` / năng lực Core chưa có → **không cài được**, báo `CAPABILITY_MISSING` kèm danh sách | kiểm lúc cài |
+
+### 5.1 Hiện trạng (2026-10-30, PHASE-012 S012-3)
+
+<!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cài / xem trước / gỡ chạy thật. -->
+
+| Phần | Trạng thái |
+|---|---|
+| `GET /api/v1/posting/packs` (`core.template.list`), `POST /api/v1/posting/packs/install` (`core.template.install`, `?dryRun=1` = xem trước), `POST /api/v1/posting/packs/uninstall` (`core.template.uninstall`) | **có** — `settings:write`, không phơi cho AI |
+| STD-TPL-2, -3, -5, -6, -7, -8, -9 | **có** lúc cài (`modules/posting-config/pack.ts`). Mục khác cấu hình đơn vị → `conflict`, giữ nguyên; ghi đè từng mục bằng `overwrite: ["<kind>:<mã>"]` |
+| Cài / gỡ = phát hành một bản chính sách kế toán (ADR-0009 Q-5), hiệu lực từ `effectiveFrom` (mặc định hôm nay) | **có** |
+| `costItems`, `scenarios` | lưu trong `config_packs.manifest`, **chưa** cài khoản mục, **chưa** chạy tình huống mẫu ở lane runtime |
+| `extends` | kiểm gói nền đã cài (chưa so khoảng phiên bản `@^1`); gói nền `bizcity.vn-tt99.nen` **chưa** tách khỏi `db/seed.ts` (PHASE-012 S012-3b) |
 
 ## 6. Trợ lý AI chọn lý do (định khoản tự động)
 

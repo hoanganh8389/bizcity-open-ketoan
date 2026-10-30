@@ -6,6 +6,7 @@
 // [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
 /**
  * Danh mục bảng: nhóm, tên tiếng Việt, thuật ngữ kế toán, vai trò.
  * Màn "Kiến trúc & Nghiệp vụ" ghép danh mục này với cấu trúc đọc thật từ cơ sở dữ liệu
@@ -53,6 +54,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // ② Quy tắc
   posting_reasons: { group: 'rules', label: 'Lý do nhập / xuất', term: 'Nghiệp vụ', module: 'posting-config', purpose: 'Mỗi lý do (bán, trả lại, tặng, chuyển kho…) chỉ định tài khoản dùng khi định khoản.' },
   posting_policy_versions: { group: 'rules', label: 'Phiên bản chính sách kế toán', term: 'Chính sách kế toán', module: 'posting-config', purpose: 'Bản chụp cấu hình định khoản kèm ngày hiệu lực: chứng từ định khoản theo bản của ngày hạch toán, nên đổi chế độ không làm đổi số chứng từ cũ. Sửa cấu hình tự chụp bản bổ sung; đổi chế độ thì phát hành. Chỉ thêm.' },
+  config_packs: { group: 'rules', label: 'Gói định khoản đã cài', term: 'Gói định khoản', module: 'posting-config', purpose: 'Gói theo ngành (lý do, nhóm hạch toán, tài khoản ngầm định, thuế, hình thức thanh toán) đã cài: cài có xem trước và phát hành một bản chính sách kế toán; gỡ chỉ ngừng dùng mã gói đã thêm mà chưa phát sinh.' },
   product_posting_groups: { group: 'rules', label: 'Nhóm hạch toán hàng hoá', module: 'posting-config', purpose: 'Nhóm hàng quyết định tài khoản doanh thu, giá vốn, kho riêng (ví dụ sữa bột khác đồ dùng).' },
   posting_defaults: { group: 'rules', label: 'Tài khoản ngầm định', module: 'posting-config', purpose: 'Tài khoản dùng khi các tầng trên không chỉ định (phải thu khách, thuế đầu ra…).' },
   closing_rules: { group: 'rules', label: 'Quy tắc kết chuyển', term: 'Kết chuyển cuối kỳ', module: 'closing', purpose: 'Thứ tự đổ doanh thu, chi phí về 911 rồi lãi lỗ về 421.' },
