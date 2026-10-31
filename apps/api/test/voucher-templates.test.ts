@@ -54,7 +54,9 @@ describe('Bút toán lặp', () => {
       ['2026-08', 'Chi tiền thuê nhà tháng 08/2026'], ['2026-09', 'Chi tiền thuê nhà tháng 09/2026'], ['2026-10', 'Chi tiền thuê nhà tháng 10/2026'],
     ]);
 
-    const gen = await call(ctx, 'POST', '/api/v1/voucher-recurrences/generate', { items: [{ recurrenceId: rid, period: '2026-08' }, { recurrenceId: rid, period: '2026-09' }, { recurrenceId: rid, period: '2026-08' }, { recurrenceId: rid, period: '2026-11' }] });
+    // Kỳ sau tháng hiện tại bị chặn (ngày chứng từ sau cuối tháng hiện tại) — lấy kỳ cách hôm nay 2 tháng để test không phụ thuộc ngày chạy.
+    const ahead = new Date(); ahead.setUTCDate(1); ahead.setUTCMonth(ahead.getUTCMonth() + 2);
+    const gen = await call(ctx, 'POST', '/api/v1/voucher-recurrences/generate', { items: [{ recurrenceId: rid, period: '2026-08' }, { recurrenceId: rid, period: '2026-09' }, { recurrenceId: rid, period: '2026-08' }, { recurrenceId: rid, period: ahead.toISOString().slice(0, 7) }] });
     expect(gen.status).toBe(200);
     expect(gen.body.data.map((x: { ok: boolean }) => x.ok)).toEqual([true, true, false, false]);
     expect(gen.body.data[2].error).toContain('đã sinh phiếu');

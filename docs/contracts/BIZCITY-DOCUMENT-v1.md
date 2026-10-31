@@ -1,8 +1,9 @@
 # `bizcity_document@1` — Document Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-31 03:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bizcity_document 1.1.0-draft: §5.1 hiện trạng runtime documents.workflow (khoá YAML, levels, sod, owner, ledger), hai luồng đã chuyển. -->
+<!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — bizcity_document 1.2.0-draft: §7.1 hiện trạng ctx.documents (số, phiên bản, liên kết, đính kèm), §8 đánh số một chỗ. -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-10-31 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
+> **Phiên bản:** 1.2.0-draft · 2026-11-01 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
 > **Luật nền:** [R-WF](../rules/RULE-WORKFLOW.md), [R-EVENT](../rules/RULE-EVENT.md) · **Năng lực:** `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments`, `documents.signatures`, `documents.workflow`, `ledger.submit`
 
 ## 1. Mục đích
@@ -117,19 +118,36 @@ ctx.documents.attach(docRef, file, { kind: 'contract-scan' })
 ctx.ledger.submit({ docKey: `${docRef}:payment`, version, docType: 'customer_payment', … })  // bizcity_ledger_intake@1
 ```
 
+### 7.1 Hiện trạng (1.2.0-draft, 2026-11-01)
+
+Runtime `apps/api/src/core/documents.ts` (Platform, sẽ về `packages/documents`); bảng `document_versions`, `document_links`, `document_attachments` (migration `0045`, RLS). Kiểu dùng chung ở `@ketoan/contracts` (`docRefSchema`, `DOC_LINK_ROLES`, `AttachmentRef`…).
+
+| Hàm (`ctx.documents.`) | Có | Ghi chú |
+|---|---|---|
+| `nextNumber(series, { date?, width? })` | ✅ | `<DÃY>-<năm>-<số>`, dãy chữ hoa (vd `HD`); bộ đếm `(đơn vị, <module>:<dãy>, năm)` trên `document_sequences` của Kernel; giao dịch huỷ thì số không bị dùng |
+| `saveVersion(docRef, snapshot)` → số phiên bản | ✅ | chỉ thêm; băm JSON đã chuẩn hoá; trùng nội dung bản mới nhất thì trả lại số cũ. Runtime **chưa** tự gọi khi khai `versioned: true` |
+| `versions(docRef)` | ✅ | cũ → mới, không kèm nội dung; HTTP `GET /api/v1/document-versions[/:version]?docRef=` |
+| `link(from, to, role)`, `links(docRef)` | ✅ | gắn lặp giữ một dòng; sự việc kế toán: `ledger.event:<docKey>` |
+| `attach(docRef, file, { kind?, note? })`, `attachments(docRef)` | ✅ | tệp trên `DATA_DIR/attachments/<đơn vị>/`, sha256 kiểm khi tải, tối đa 15 MB; cùng tệp gửi lại → tệp cũ; gỡ = `archived_at`. HTTP `/api/v1/document-attachments` |
+| `transition(docRef, action)` | ⏳ | luồng duyệt hiện chạy qua `documents.workflow` (§5.1) trong action của phân hệ |
+
+Ghi (`saveVersion`, `link` phía `from`, `attach`) chỉ trên docRef của chính module của action (`<module>.…`) — như `ctx.events.emit`; đọc được mọi docRef của đơn vị.
+
 ## 8. Ánh xạ từ code hiện tại
 
 | Hiện có | Thành |
 |---|---|
 | `accounting_events` (`doc_key`, `version`, `posted_version`, `status`) | giữ nguyên, là sự việc kế toán của Kernel; mẫu cho §4 |
-| `accounting_event_versions` | mẫu cho `document_versions` chung |
+| `accounting_event_versions` | mẫu cho `document_versions` chung (có từ 0045) |
+| `document_sequences` (phiếu tay, `quy`, `mua-hang` tự ghi) | **đã** một chỗ cấp số 2026-11-01: `documentNumbers.next` của Kernel; khoá dãy cũ giữ nguyên |
 | `payment_requests.status` 7 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, submitted(pending), approved1(pending), approved(approved), rejected(draft), paid(done), cancelled` |
 | `purchase_documents.status` 4 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, pending_approval(pending), approved(approved), cancelled`; chuyển `submit, approve, override, unapprove, cancel` |
 | `document_signatures` (gắn `event_id`) | thêm cột `doc_ref`; ký được mọi chứng từ |
 | `reference_documents` (`open/used/closed`) | một loại chứng từ của module Thuế dùng `document_links` |
-| `purchase_attachments` | chuyển sang `attachments` chung (A-19) |
+| `purchase_attachments` | chuyển sang `document_attachments` chung (A-19) — **chưa**: cần chép tệp `DATA_DIR/dinh-kem` trên bản cài thật |
 
 ## 9. Nhật ký
 
+- **1.2.0-draft (2026-11-01):** thêm §7.1 hiện trạng `ctx.documents` — `nextNumber`, `saveVersion`, `versions`, `link`, `links`, `attach`, `attachments` có; `transition` vẫn qua `documents.workflow`. §8: đánh số một chỗ, `document_versions` có. Chỉ thêm, tương thích.
 - **1.1.0-draft (2026-10-31):** thêm §5.1 hiện trạng runtime `documents.workflow` — khoá YAML tuỳ chọn, tương thích: `label`, `title`, `levels`, `owner`, `blocked`, `denied`, `ledger`; ghi rõ phần chưa có (`by: event`, quyền riêng của module). Ánh xạ §8: `payment_requests`, `purchase_documents` đã chạy theo YAML (PHASE-012 S012-1).
 - **1.0.0-draft (2026-10-29):** bản đầu của Standard v1.

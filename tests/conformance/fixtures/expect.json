@@ -437,7 +437,7 @@
             "read-view:bizcity_read.khong_co",
             "key-dir",
             "standard",
-            "cap-planned:documents.attachments",
+            "cap-planned:documents.signatures",
             "cap-unknown:ledger.anything",
             "perm-prefix:contracts:read",
             "action-prefix:khac.contract.list",

@@ -7,6 +7,7 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — danh mục bảng: document_versions, document_links, document_attachments (0045); document_sequences là bộ đếm chung
 /**
  * Danh mục bảng: nhóm, tên tiếng Việt, thuật ngữ kế toán, vai trò.
  * Màn "Kiến trúc & Nghiệp vụ" ghép danh mục này với cấu trúc đọc thật từ cơ sở dữ liệu
@@ -65,7 +66,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   ledger_lines: { group: 'ledger', label: 'Dòng bút toán', term: 'Định khoản Nợ / Có', module: 'ledger', purpose: 'Mỗi dòng ghi một bên Nợ hoặc Có của một tài khoản. Tổng Nợ = tổng Có trong mỗi bút toán (cơ sở dữ liệu tự kiểm). Chỉ thêm.' },
   ledger_balances_daily: { group: 'ledger', label: 'Số phát sinh theo ngày', term: 'Số dư / phát sinh', module: 'ledger', purpose: 'Cộng dồn Nợ / Có theo chi nhánh × tài khoản × ngày × đối tượng, để báo cáo tổng hợp khỏi quét toàn bộ dòng sổ.' },
   ledger_entry_sequences: { group: 'ledger', label: 'Bộ đếm số bút toán', term: 'Đánh số liên tục', module: 'ledger', purpose: 'Cấp số bút toán liền mạch, không trùng, không nhảy số theo năm.' },
-  document_sequences: { group: 'ledger', label: 'Bộ đếm số phiếu nhập tay', term: 'Đánh số chứng từ', module: 'vouchers', purpose: 'Cấp số cho chứng từ lập trong ERP (số dư đầu kỳ, phiếu kế toán).' },
+  document_sequences: { group: 'ledger', label: 'Bộ đếm số chứng từ', term: 'Đánh số chứng từ', module: 'documents', purpose: 'Cấp số cho chứng từ lập trong ERP: phiếu kế toán tay, đề nghị thanh toán, phiếu mua hàng, chứng từ của module (ctx.documents.nextNumber). Chỉ Kernel ghi (documentNumbers).' },
 
   // ④ Thuế
   ledger_links: { group: 'ledger', label: 'Liên kết bút toán', term: 'Bút toán đảo, trả hàng ↔ bút toán gốc', module: 'ledger', purpose: 'Mỗi dòng nối một bút toán mới (đảo, trả hàng, điều chỉnh, quà tặng, thay thế) với bút toán gốc. Chỉ thêm, không sửa, không xoá; mỗi bút toán chỉ bị đảo một lần.' },
@@ -87,6 +88,9 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   purchase_attachments: { group: 'rules', label: 'Tệp đính kèm mua hàng', term: 'Hồ sơ, chứng từ đính kèm', module: 'mua-hang', purpose: 'Hợp đồng, CO, CQ, báo giá, hoá đơn, biên bản… của nhà cung cấp, chứng từ mua hàng hay chính sách; nội dung tệp nằm trên ổ dữ liệu ERP, bảng giữ tên, loại, dung lượng, người gửi, thời gian.' },
   payment_requests: { group: 'events', label: 'Yêu cầu thanh toán', term: 'Đề nghị chi', module: 'payment-requests', purpose: 'Đề nghị chi tiền cho một đối tượng (từ khoản phải trả đang mở, kỳ thanh toán hợp đồng, hoặc khoản chưa ghi công nợ): nháp → chờ duyệt → duyệt một / hai cấp → lập phiếu chi. Giữ người lập, người duyệt, thời điểm.' },
   payment_request_settings: { group: 'rules', label: 'Cấu hình duyệt yêu cầu thanh toán', module: 'payment-requests', purpose: 'Số tiền từ bao nhiêu thì cần cấp duyệt thứ hai.' },
+  document_versions: { group: 'events', label: 'Phiên bản chứng từ', term: 'Lịch sử sửa chứng từ', module: 'documents', purpose: 'Ảnh chụp nội dung mỗi phiên bản chứng từ nghiệp vụ (docRef); chỉ thêm, có băm nội dung.' },
+  document_links: { group: 'events', label: 'Liên kết chứng từ', term: 'Chứng từ liên quan', module: 'documents', purpose: 'Chứng từ này lập từ, đảo, thay, thanh toán cho chứng từ kia; hoặc sinh ra sự việc kế toán nào.' },
+  document_attachments: { group: 'events', label: 'Tệp đính kèm chứng từ', term: 'Đính kèm', module: 'documents', purpose: 'Tệp (scan hợp đồng, hoá đơn, báo giá…) đính vào chứng từ; nội dung trên ổ dữ liệu, ở đây siêu dữ liệu và băm sha256. Gỡ tệp = lưu trữ, không xoá cứng.' },
   reference_documents: { group: 'events', label: 'Chứng từ nguồn', term: 'Đơn đặt hàng, báo giá, phiếu nhập / xuất', module: 'reference-documents', purpose: 'Chứng từ của hệ thống mua hàng, bán hàng gửi sang để kế toán chọn khi lập phiếu đặt cọc, ghi tăng / giảm công nợ. Chỉ lưu, không ghi sổ.' },
   voucher_templates: { group: 'events', label: 'Bút toán mẫu', term: 'Phiếu mẫu', module: 'voucher-templates', purpose: 'Phiếu thu / chi / báo có / báo nợ / phiếu kế toán dựng sẵn (dòng TK Nợ / Có, đối tượng, chiều phân tích; số tiền có thể để 0) để lập nhanh hoặc lặp định kỳ.' },
   voucher_recurrences: { group: 'events', label: 'Bút toán lặp', term: 'Phiếu định kỳ', module: 'voucher-templates', purpose: 'Lịch sinh phiếu từ một bút toán mẫu: hằng tháng / quý / năm, ngày trong tháng, từ tháng – đến tháng, chi nhánh.' },

@@ -9,6 +9,7 @@
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → P documents (máy trạng thái khai báo documents.workflow).
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bỏ modules/reports/: báo cáo đã về phan-he/ke-toan/reports (lớp D modules/ke-toan theo quy tắc phan-he/); documentChecks về modules/periods (K)
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — core/documents.ts, modules/doc-refs/ → P documents (documents.*, PHASES 2.7)
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -42,6 +43,7 @@ export const LAYER_MAP = [
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/date-rules.ts', 'P', 'documents'],
   ['core/workflow.ts', 'P', 'documents'],
+  ['core/documents.ts', 'P', 'documents'],
   ['core/posting-modes.ts', 'K', 'kernel/config'],
   ['core/version.ts', 'P', 'cli'],
   ['db/client.ts', 'P+A', 'data'],
@@ -87,6 +89,7 @@ export const LAYER_MAP = [
   ['modules/dimensions/contract-schedule.routes.ts', 'D', 'modules/hop-dong'],
   ['modules/signatures/', 'P', 'documents/signatures'],
   ['modules/reference-documents/', 'P', 'documents/links'],
+  ['modules/doc-refs/', 'P', 'documents'],
   ['modules/print-templates/', 'U', 'ui-kit/print'],
   ['modules/voucher-templates/', 'D', 'modules/ke-toan'],
   ['modules/assets/', 'D', 'modules/tai-san'],

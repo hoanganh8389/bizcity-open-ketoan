@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/quy
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — số đề nghị lấy từ documentNumbers.next của Kernel (documents.numbering), khoá dãy payment_request giữ nguyên; thôi ghi document_sequences (A-17)
 /**
  * Yêu cầu thanh toán: đề nghị chi → duyệt một / hai cấp → lập phiếu chi hoặc báo nợ.
  * Mẫu đầu tiên chuyển sang defineAction (PHASES 2.5, bizcity_action@1 §9): mỗi thao tác là một action, runtime (core/actions.ts)
@@ -16,7 +17,6 @@
  *   GET / PUT /api/v1/payment-request-settings                        quy.payment-request-settings.get / .update — ngưỡng cấp duyệt thứ hai
  */
 import type { FastifyInstance } from 'fastify';
-import { sql } from 'kysely';
 import { z } from 'zod';
 import { fromCents, toCents, voucherInputSchema } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../../db/client.js';
@@ -24,7 +24,7 @@ import { Errors } from '../../../core/errors.js';
 import { idSchema } from '../../../core/http.js';
 import { defineAction, mountActions, type ActionContext, type ActionDef, type ActionSideEffect, type AnyActionDef } from '../../../core/actions.js';
 import { loadWorkflow, type WorkflowStep } from '../../../core/workflow.js';
-import { voucherService } from '../../../kernel/public.js';
+import { documentNumbers, voucherService } from '../../../kernel/public.js';
 
 const tags = ['Yêu cầu thanh toán'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -49,14 +49,10 @@ const bodySchema = z.object({
 type Body = z.infer<typeof bodySchema>;
 interface StoredItem { debtItemId: string; docNo: string; accountCode: string; amount: number }
 
+/** Số đề nghị: bộ đếm của Kernel (documents.numbering), khoá dãy payment_request giữ như cũ để không nhảy số. */
 async function nextNo(trx: Db, tenantId: string, year: number): Promise<string> {
-  const row = await trx
-    .insertInto('document_sequences')
-    .values({ tenant_id: tenantId, doc_type: 'payment_request', year, last_no: 1 })
-    .onConflict((oc) => oc.columns(['tenant_id', 'doc_type', 'year']).doUpdateSet({ last_no: sql`document_sequences.last_no + 1` }))
-    .returning('last_no')
-    .executeTakeFirstOrThrow();
-  return `YC${String(year).slice(2)}-${String(row.last_no).padStart(5, '0')}`;
+  const n = await documentNumbers.next(trx, tenantId, 'payment_request', year);
+  return `YC${String(year).slice(2)}-${String(n).padStart(5, '0')}`;
 }
 
 /** Kiểm nội dung yêu cầu và dựng các trường lưu. */

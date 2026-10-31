@@ -10,6 +10,7 @@
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
 // [2026-10-31 08:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): kiểu khung nhìn chỉ đọc bizcity_read.ledger_* (migration 0043).
 // [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — data.read-views (PHASES 2.4): kiểu tám khung nhìn danh mục bizcity_read.* (migration 0044).
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): kiểu document_versions / document_links / document_attachments (migration 0045).
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1484,6 +1485,47 @@ export interface DocumentSequencesTable {
   last_no: Generated<number>;
 }
 
+/** 0045 (documents.versions): ảnh chụp phiên bản chứng từ, chỉ thêm. */
+export interface DocumentVersionsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  doc_ref: string;
+  version: number;
+  snapshot: Json<unknown>;
+  content_hash: string;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+}
+
+/** 0045 (documents.links): tham chiếu giữa chứng từ. */
+export interface DocumentLinksTable {
+  id: Generated<string>;
+  tenant_id: string;
+  from_ref: string;
+  to_ref: string;
+  role: string;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+}
+
+/** 0045 (documents.attachments): tệp đính kèm chung; nội dung trên ổ DATA_DIR/attachments. */
+export interface DocumentAttachmentsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  doc_ref: string;
+  kind: Generated<string>;
+  file_name: string;
+  content_type: Generated<string>;
+  size_bytes: ColumnType<string, number | string, number | string>;
+  sha256: string;
+  storage_path: string;
+  note: Generated<string>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  archived_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  archived_by: string | null;
+}
+
 export interface SchemaMigrationsTable {
   name: string;
   applied_at: TimestampDefault;
@@ -1570,6 +1612,9 @@ export interface Database {
   long_term_balances: LongTermBalancesTable;
   ledger_entry_sequences: LedgerEntrySequencesTable;
   document_sequences: DocumentSequencesTable;
+  document_versions: DocumentVersionsTable;
+  document_links: DocumentLinksTable;
+  document_attachments: DocumentAttachmentsTable;
   closing_rules: ClosingRulesTable;
   closing_rule_versions: ClosingRuleVersionsTable;
   dimensions: DimensionsTable;

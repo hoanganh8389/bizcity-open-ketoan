@@ -15,6 +15,8 @@
 export { postDocumentIn, documentService } from '../modules/documents/document.service.js';
 export { eventStore } from '../modules/documents/event-store.js';
 export { voucherService } from '../modules/vouchers/voucher.service.js';
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.numbering (PHASES 2.7): bộ đếm số chứng từ một chỗ; Platform nhận qua registerDocumentNumberer ở app.ts
+export { documentNumbers } from '../modules/documents/numbering.js';
 export type { DraftLine } from '../modules/ledger/ledger.types.js';
 
 // ── Đọc sổ (ledger.query, PHASES 3.7): ngoài Kernel không đọc bảng ledger_* (SC-KERNEL-7) ─────────────────────────────────

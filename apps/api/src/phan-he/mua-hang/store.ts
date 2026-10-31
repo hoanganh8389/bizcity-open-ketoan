@@ -1,9 +1,11 @@
 // @bizcity-layer D modules/mua-hang
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — số phiếu mua lấy từ documentNumbers.next của Kernel (documents.numbering), khoá dãy mh:<loại> giữ nguyên; thôi ghi document_sequences (A-17)
 /**
  * Lưu / đọc chứng từ và chính sách mua hàng (bảng purchase_documents, purchase_policies — db/migrations/0010_mua_hang.sql).
  * Khuôn trả ra giao diện là PDoc / Policy của '@ketoan/contracts/mua-hang' (cùng khuôn bộ máy tính).
  */
 import { sql } from 'kysely';
+import { documentNumbers } from '../../kernel/public.js';
 import { z } from 'zod';
 import { unitsOf } from './gia-mua.js';
 import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind } from '@ketoan/contracts/mua-hang';
@@ -285,13 +287,10 @@ export async function getDoc(trx: Db, tenantId: string, id: string, lock = false
 }
 
 const PREFIX: Record<string, string> = { order: 'DH', receipt: 'NM', return: 'TN', exchange: 'DO', gift_in: 'QT', gift_out: 'XQ', cost: 'CP', rebate: 'TT', prepayment: 'UT', payment: 'UC' };
-/** Số phiếu tự cấp: <tiền tố><yy><mm><4 số>, bộ đếm theo loại + năm (document_sequences). */
+/** Số phiếu tự cấp: <tiền tố><yy><mm><4 số>, bộ đếm của Kernel (documents.numbering) theo loại + năm, khoá dãy mh:<loại> như cũ. */
 export async function nextDocNo(trx: Db, tenantId: string, kind: string, docDate: string): Promise<string> {
-  const year = Number(docDate.slice(0, 4));
-  const row = await trx.insertInto('document_sequences').values({ tenant_id: tenantId, doc_type: `mh:${kind}`, year, last_no: 1 })
-    .onConflict((oc) => oc.columns(['tenant_id', 'doc_type', 'year']).doUpdateSet({ last_no: sql`document_sequences.last_no + 1` }))
-    .returning('last_no').executeTakeFirstOrThrow();
-  return `${PREFIX[kind] ?? 'MH'}${docDate.slice(2, 4)}${docDate.slice(5, 7)}${String(row.last_no).padStart(4, '0')}`;
+  const n = await documentNumbers.next(trx, tenantId, `mh:${kind}`, Number(docDate.slice(0, 4)));
+  return `${PREFIX[kind] ?? 'MH'}${docDate.slice(2, 4)}${docDate.slice(5, 7)}${String(n).padStart(4, '0')}`;
 }
 
 /** Ghi các cột + data từ chứng từ đã tính. */
