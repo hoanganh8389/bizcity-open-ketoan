@@ -6,6 +6,7 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 08:14 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): đăng ký bộ đọc sổ của Kernel cho ctx.ledger.query.
+// [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — đăng ký bộ thu ghi sổ (60 s), outbox (60 s), đơn vị theo dải (15 phút).
 /**
  * Dựng ứng dụng Fastify: plugin chung, xác thực, các module nghiệp vụ, add-in.
  *
@@ -30,9 +31,9 @@ import { BUILTIN_ADDINS } from './addins/index.js';
 import { enabledModules, routesFor } from './phan-he/index.js';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
-import { registerSubscribers, retentionSubscriber } from './core/events.js';
+import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, ledgerQuery } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, ledgerQuery } from './kernel/public.js';
 import { registerLedgerReader } from './core/actions.js';
 import { registerCollector } from './core/metrics.js';
 
@@ -96,6 +97,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).
   registerDiagnostics(LEDGER_DIAGNOSTICS);
   registerCollector('ledger', collectLedgerMetrics);
+  registerCollector('postings', () => collectPostingMetrics());
+  registerCollector('outbox', collectOutboxMetrics);
+  registerCollector('tenants', collectTenantMetrics, 15 * 60_000);
   registerLedgerReader((tx, tenantId, q) => ledgerQuery.query(tx, tenantId, q));
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.

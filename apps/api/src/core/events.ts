@@ -1,5 +1,6 @@
 // @bizcity-layer P events
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — số đo outbox: lượt giao theo subscriber (dispatchOnce), việc chờ / chết, tuổi chờ lâu nhất (collectOutboxMetrics)
 /**
  * SỰ KIỆN MIỀN (bizcity_event@1, R-OUTBOX-1..7; PHASE-006, PHASES 3.4) — transactional outbox, chạy chỉ với PostgreSQL.
  *
@@ -22,8 +23,9 @@
  */
 import { randomBytes } from 'node:crypto';
 import { sql } from 'kysely';
-import { db, type Db } from '../db/client.js';
+import { db, readWithTimeout, type Db } from '../db/client.js';
 import { currentRequest, withRequestContext } from './request-context.js';
+import { COLLECTOR_TIMEOUT_MS, metrics } from './metrics.js';
 
 export type EventActorKind = 'user' | 'apikey' | 'ai' | 'system';
 
@@ -202,6 +204,7 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
       });
       if (r === 'done') out.done += 1;
       else if (r === 'duplicate') out.duplicate += 1;
+      if (r !== 'skip') metrics.outboxAttempts.inc({ consumer: d.consumer, result: r });
     } catch (err) {
       const n = attempts + 1;
       const max = def.retry?.maxAttempts ?? DEFAULT_RETRY.maxAttempts;
@@ -210,12 +213,27 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
         .set({ attempts: n, status: dead ? 'dead' : 'pending', last_error: String((err as Error)?.message ?? err).slice(0, 500), next_at: new Date(Date.now() + retryDelayMs(def, n)) })
         .where('consumer', '=', d.consumer).where('event_id', '=', d.event_id).where('status', '=', 'pending').execute();
       if (dead) out.dead += 1; else out.failed += 1;
+      metrics.outboxAttempts.inc({ consumer: d.consumer, result: dead ? 'dead' : 'retry' });
     }
   }
   return out;
 }
 
 /** Ngày giờ theo giờ Việt Nam: { date: YYYY-MM-DD, hour: 0..23 }. */
+/** Số đo outbox mọi đơn vị (R-OBS-4: không nhãn đơn vị). `dead` phải có người xem (R-OUTBOX-3) → cảnh báo OutboxDeadLetter. */
+export async function collectOutboxMetrics(): Promise<void> {
+  const r = await readWithTimeout(COLLECTOR_TIMEOUT_MS, (tx) => sql<{ pending: number; dead: number; oldest: number | null }>`
+    SELECT count(*) FILTER (WHERE d.status = 'pending')::int AS pending,
+           count(*) FILTER (WHERE d.status = 'dead')::int AS dead,
+           extract(epoch FROM now() - min(o.occurred_at) FILTER (WHERE d.status = 'pending'))::float AS oldest
+      FROM event_deliveries d JOIN event_outbox o ON o.id = d.event_id
+     WHERE d.status IN ('pending', 'dead')`.execute(tx));
+  const row = r.rows[0];
+  metrics.outboxDeliveries.set({ status: 'pending' }, row?.pending ?? 0);
+  metrics.outboxDeliveries.set({ status: 'dead' }, row?.dead ?? 0);
+  metrics.outboxOldestPending.set({}, Number(row?.oldest ?? 0));
+}
+
 export function localClock(now: Date): { date: string; hour: number } {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: CLOCK_TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' })
     .formatToParts(now).map((x) => [x.type, x.value]));
