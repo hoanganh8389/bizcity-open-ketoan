@@ -1,58 +1,79 @@
-# Người phụ trách từng phần (GitHub tự gắn người duyệt PR theo thư mục bị sửa).
-# Điền tài khoản GitHub của người / nhóm phụ trách thay cho @Thuy2k; dòng sau ghi đè dòng trước.
-# Xem docs/phat-trien.md mục "Cấu trúc theo phân hệ".
+# Người phụ trách từng phần (GitHub tự gắn người duyệt PR theo thư mục bị sửa). Dòng sau ghi đè dòng trước.
+# [2026-10-31 11:10 PM Johnny Chu - Chu Hoàng Anh] R-REV — phân vai theo RULE-REVIEW §1 / R-REV-2: framework do chủ dự án duyệt; phân hệ, giao diện, hướng dẫn do người đóng góp phụ trách (vẫn qua Nhóm Lõi rà §7).
+# Người đóng góp không tự duyệt PR của chính mình (GitHub chặn). Thêm người phụ trách phân hệ: thêm tài khoản vào đúng dòng phân hệ.
+# Có hiệu lực khi bật bảo vệ nhánh main: "Require review from Code Owners".
 
-*                                   @Thuy2k
+# Mặc định: tệp nào không khớp dòng dưới đều là framework → chủ dự án
+*                                   @hoanganh8389
 
-# Cơ sở dữ liệu (migrations, seeds, job db-migrate)
-/db/                                @Thuy2k
-/apps/api/src/db/                   @Thuy2k
+# ── Framework (Nhóm Lõi, RULE-SIGNATURE §3, R-KER-2) ─────────────────────────
+# Kernel, Platform, cổng Kernel, danh mục chuẩn (lớp M), add-in (R2, R-REV-6)
+/apps/api/src/kernel/               @hoanganh8389
+/apps/api/src/core/                 @hoanganh8389
+/apps/api/src/modules/              @hoanganh8389
+/apps/api/src/addins/               @hoanganh8389
+/apps/api/src/phan-he/loi.ts        @hoanganh8389
+/packages/                          @hoanganh8389
 
-# Lõi: khuôn API, xác thực, chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo, danh mục dùng chung
-/packages/contracts/                @Thuy2k
-/apps/api/src/core/                 @Thuy2k
-/apps/api/src/modules/              @Thuy2k
-/apps/api/src/phan-he/loi.ts        @Thuy2k
-/apps/web/src/features/             @Thuy2k
-/apps/web/src/components/           @Thuy2k
-/apps/web/src/layout/               @Thuy2k
+# Cơ sở dữ liệu: migration, seed, kiểu bảng
+/db/                                @hoanganh8389
+/apps/api/src/db/                   @hoanganh8389
 
-# Phân hệ — mỗi phân hệ hai thư mục cùng tên (máy chủ + giao diện). Thay @Thuy2k bằng người phụ trách.
-/apps/api/src/phan-he/ke-toan/      @Thuy2k
-/apps/web/src/phan-he/ke-toan/      @Thuy2k
-/apps/api/src/phan-he/quy/          @Thuy2k
-/apps/web/src/phan-he/quy/          @Thuy2k
-/apps/api/src/phan-he/mua-hang/     @Thuy2k
-/apps/web/src/phan-he/mua-hang/     @Thuy2k
-/apps/api/src/phan-he/ban-hang/     @Thuy2k
-/apps/web/src/phan-he/ban-hang/     @Thuy2k
-/apps/api/src/phan-he/kho/          @Thuy2k
-/apps/web/src/phan-he/kho/          @Thuy2k
-/apps/api/src/phan-he/tai-san/      @Thuy2k
-/apps/web/src/phan-he/tai-san/      @Thuy2k
-/apps/api/src/phan-he/thue/         @Thuy2k
-/apps/web/src/phan-he/thue/         @Thuy2k
-/apps/api/src/phan-he/api/          @Thuy2k
-/apps/web/src/phan-he/api/          @Thuy2k
-/docs/api/                          @Thuy2k
-/apps/api/src/phan-he/he-thong/     @Thuy2k
-/apps/web/src/phan-he/he-thong/     @Thuy2k
+# Luật, hợp đồng, chuẩn, kiến trúc, phase, kiểm toán
+/docs/00-CANON.md                   @hoanganh8389
+/docs/CONG-BO-KIEN-TRUC.md          @hoanganh8389
+/docs/rules/                        @hoanganh8389
+/docs/contracts/                    @hoanganh8389
+/docs/framework/                    @hoanganh8389
+/docs/standard/                     @hoanganh8389
+/docs/adr/                          @hoanganh8389
+/docs/architecture/                 @hoanganh8389
+/docs/phases/                       @hoanganh8389
+/docs/audits/                       @hoanganh8389
 
-# Bộ chuẩn framework: luật, hợp đồng, CANON, CI — nhóm Lõi duyệt (docs/00-CANON.md)
-/docs/00-CANON.md                   @Thuy2k
-/docs/rules/                        @Thuy2k
-/docs/contracts/                    @Thuy2k
-/docs/framework/                    @Thuy2k
-/docs/adr/                          @Thuy2k
-/docs/standard/                     @Thuy2k
-/.github/workflows/                  @Thuy2k
-/scripts/kiem-chuan.sh              @Thuy2k
-# Bộ kiểm chuẩn: thêm nợ vào baseline hoặc sửa khoá băm migration phải qua nhóm Lõi (ADR-0006)
-/tests/conformance/                 @Thuy2k
-/tests/conformance/baseline.json    @Thuy2k
-/tests/conformance/locks/           @Thuy2k
+# Bộ kiểm chuẩn: baseline, khoá băm migration (ADR-0006)
+/tests/conformance/                 @hoanganh8389
 
-# Docker, triển khai
-/docker/                            @Thuy2k
-/docker-compose.yml                 @Thuy2k
-/scripts/                           @Thuy2k
+# Hạ tầng, CI, công cụ framework, hướng dẫn agent
+/docker/                            @hoanganh8389
+/docker-compose*.yml                @hoanganh8389
+/.github/                           @hoanganh8389
+/scripts/                           @hoanganh8389
+/AGENTS.md                          @hoanganh8389
+/CLAUDE.md                          @hoanganh8389
+/CONTRIBUTING.md                    @hoanganh8389
+/SECURITY.md                        @hoanganh8389
+/LICENSE                            @hoanganh8389
+/TRADEMARK.md                       @hoanganh8389
+
+# ── Người đóng góp (lớp D / U, R-REV-2) — Nhóm Lõi vẫn rà theo RULE-REVIEW §7 ──
+# Phân hệ: mỗi phân hệ hai thư mục cùng tên (máy chủ + giao diện)
+/apps/api/src/phan-he/ke-toan/      @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/ke-toan/      @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/quy/          @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/quy/          @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/mua-hang/     @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/mua-hang/     @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/ban-hang/     @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/ban-hang/     @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/kho/          @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/kho/          @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/tai-san/      @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/tai-san/      @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/thue/         @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/thue/         @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/api/          @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/api/          @Thuy2k @hoanganh8389
+/apps/api/src/phan-he/he-thong/     @Thuy2k @hoanganh8389
+/apps/web/src/phan-he/he-thong/     @Thuy2k @hoanganh8389
+
+# Giao diện dùng chung, hướng dẫn, tài liệu API, nghiệp vụ
+/apps/web/src/features/             @Thuy2k @hoanganh8389
+/apps/web/src/components/           @Thuy2k @hoanganh8389
+/apps/web/src/layout/               @Thuy2k @hoanganh8389
+/docs/huong-dan/                    @Thuy2k @hoanganh8389
+/docs/api/                          @Thuy2k @hoanganh8389
+/docs/nghiep-vu/                    @Thuy2k @hoanganh8389
+
+# Công cụ của phân hệ (R-REV-12) — đặt sau /scripts/ để ghi đè
+/scripts/mua-hang/                  @Thuy2k @hoanganh8389

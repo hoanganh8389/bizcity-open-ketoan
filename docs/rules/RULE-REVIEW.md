@@ -1,7 +1,6 @@
 # RULE · Rà soát việc của người đóng góp (R-REV)
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — luật rà soát việc của người đóng góp: phân vai, quy trình PR, biên bản, dữ liệu kế toán, mã hàng, công cụ ra-soat-dong-gop.mjs. -->
 <!-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — 1.1: R-REV-11 (không làm sạch sổ để chạy lại), R-REV-12 (công cụ phân hệ ở scripts/<phân hệ>/), R-REV-13 (tra cứu cho tiền không có giá trị mặc định ngầm), §5 đoạn nhãn mã hàng, §6 cảnh báo các trường hợp đã gặp. -->
-
 <!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — 1.2: R-REV-14..16, §7 thang chấm đóng góp 11 trục, §8 mẫu báo cáo rà PR / rà repo. -->
 
 > **Cấp:** Tier 0 (R-REV-1, -5, -6, -7, -11, -13, -14) · Tier 1 (còn lại) · **Phiên bản:** 1.2 · 2026-10-31 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
@@ -154,7 +153,7 @@ Mục tiêu của thang: hàng chục người đóng góp cùng lúc mà Core *
 | Kết luận | Điều kiện |
 |---|---|
 | **KHÔNG ĐẠT** | bất kỳ trục cổng (T1, T2, T4, T5) = 0 · hoặc có phát hiện mức **chặn** §4 chưa sửa · hoặc selfcheck / test đỏ do phần đóng góp |
-| **ĐẠT có điều kiện** | không trục cổng nào = 0, nhưng có trục khác = 0 hoặc ≥ 3 trục = 1 → ghi việc, người nhận, hạn; merge được khi việc chặn đã xong |
+| **ĐẠT có điều kiện** | không trục cổng nào = 0, nhưng: có trục cổng = 1, hoặc trục khác = 0, hoặc ≥ 3 trục = 1 → ghi việc, người nhận, hạn; merge được khi không còn phát hiện chặn, việc còn lại theo dõi đến hạn |
 | **ĐẠT** | mọi trục ≥ 1, trục cổng = 2 (hoặc —), không phát hiện chặn |
 
 Điểm tổng = tổng điểm / (2 × số trục được chấm), báo theo %, kèm điểm từng trục. **So với lần rà trước** của cùng người / cùng phân hệ: trục nào đi xuống thì nêu rõ (R-REV-10 — lỗi lặp lại thành luật dò).
