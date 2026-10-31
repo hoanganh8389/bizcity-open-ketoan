@@ -1,4 +1,6 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 10:35 PM Nguyễn Văn Thủy] R-REV — ĐVT lập phiếu theo "Mua mặc định" của mặt hàng; giá NCC chọn dòng còn hiệu lực ở ngày chứng từ, chồng ngày lấy "Hiệu lực từ" muộn nhất rồi dòng khai sau (commit 37b41bb, eca1200, đóng góp).
+// [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — duyệt thay đổi của Nguyễn Văn Thủy (commit 37b41bb, eca1200), biên bản docs/audits/REVIEW-2026-10-31-THUY.md §7.
 /**
  * MẶT HÀNG & GIÁ MUA CỦA NHÀ CUNG CẤP (bảng supplier_products) + ĐƠN VỊ TÍNH của mặt hàng (product_units):
  *   - ĐVT chỉ khai ở Mặt hàng (tỉ lệ quy đổi về ĐVT nhỏ nhất); mọi chỗ khác CHỌN trong danh sách đó.

@@ -1,4 +1,6 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:17 PM Nguyễn Văn Thủy] R-REV — so giá lần nhập trước 4 chữ số lẻ và quy về ĐVT dòng; % hiển thị kiểu Việt Nam; CK theo mã quy đổi ĐVT bảng ↔ ĐVT phiếu; CK dòng không vượt tiền hàng (commit 6cd9908, f03e8e6, 3e45f20, đóng góp).
+// [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — duyệt có sửa: ĐVT bảng CK chưa khai → không áp thay đổi của Nguyễn Văn Thủy (commit 6cd9908, f03e8e6, 3e45f20), biên bản docs/audits/REVIEW-2026-10-31-THUY.md §7.
 /**
  * BỘ MÁY MUA HÀNG — hàm thuần (không gọi mạng, không cơ sở dữ liệu), dùng chung cho máy chủ (apps/api/src/phan-he/mua-hang)
  * và giao diện (tính tức thời khi sửa phiếu): hai phía ra đúng một con số. Thiết kế: docs/nghiep-vu/08-mua-hang.md.
@@ -401,7 +403,9 @@ export function itemDiscountFor(policies: Policy[], ctx: Parameters<typeof polic
   const cands = policies.filter((p) => p.kind === 'item_discount' && policyApplies(p, { ...ctx, sku: undefined })).sort((a, b) => spec(b) - spec(a) || (b.priority ?? 0) - (a.priority ?? 0));
   const same = (a?: string, b?: string) => (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
   const us = ctx.units ?? [];
-  const r = (u?: string) => (u && us.length ? ratioOf(us, u) : 0);
+  // [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — sửa lỗi chặn (REVIEW-2026-10-31-THUY §7): ĐVT bảng CK chưa khai ở mặt hàng → 0 (không quy đổi), không lấy tỉ lệ 1 của ratioOf.
+  // Tra đúng ĐVT, không dùng ratioOf (ĐVT lạ ở đó trả 1): ĐVT bảng chưa khai ở mặt hàng → 0 → dòng CK không áp, không quy đổi sai tỉ lệ.
+  const r = (u?: string) => Number(us.find((x) => same(x.unit, u))?.ratio ?? 0);
   /** Tỉ lệ ĐVT phiếu ÷ ĐVT bảng; 0 = không quy đổi được (ĐVT lạ). */
   const factorOf = (i: ItemDiscount) => (!i.unit || same(i.unit, ctx.unit) ? 1 : r(ctx.unit) && r(i.unit) ? r(ctx.unit) / r(i.unit) : 0);
   for (const p of cands) {

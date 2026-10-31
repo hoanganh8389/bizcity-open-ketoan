@@ -1,4 +1,5 @@
 -- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — đối chiếu dữ liệu kế toán một đơn vị (R-REV-6): cân sổ, công nợ ↔ 331, sổ hoá đơn ↔ 1331, kho ↔ 156, làm tròn, mã hàng, ĐVT.
+-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — §8 cảnh báo: cùng đoạn ngành + nhãn trong mã hàng mà khác nhãn danh mục (việc j).
 -- Chỉ đọc. Dùng khi rà soát việc của người đóng góp (docs/rules/RULE-REVIEW.md), sau khi nạp bộ tình huống của phân hệ:
 --   docker exec -i <db> psql -U ketoan -d <csdl> -v tenant=<mã đơn vị> -P pager=off < scripts/doi-chieu-ke-toan.sql
 -- Mỗi mục in "lech" — khác 0 là phải giải thích trong biên bản. Mục 3b liệt kê sự việc ghi 1331 mà không có hoá đơn.
@@ -57,3 +58,9 @@ from products p left join product_units u on u.tenant_id = p.tenant_id and u.sku
 where p.tenant_id = :t group by p.sku
 having count(u.*) > 0 and (count(u.*) filter (where u.ratio = 1) <> 1 or count(u.*) filter (where u.is_purchase_default) > 1)
 order by p.sku;
+
+\echo '== 8. Cùng đoạn ngành + nhãn trong mã hàng nhưng khác nhãn danh mục (cảnh báo — RULE-REVIEW §5: đoạn cấp 2 là số thứ tự nhóm trong ngành, không phải mã nhãn)'
+select case when sku ~ '^Q' then left(sku, 4) else left(sku, 5) end doan_nganh_nhan, count(distinct brand_code) so_nhan,
+       string_agg(distinct coalesce(brand_code, '∅'), ', ') nhan_danh_muc, count(*) so_ma
+from products where tenant_id = :t and sku ~ '^([0-9]{9}|Q[0-9]{8})[A-Z]{0,2}$'
+group by 1 having count(distinct coalesce(brand_code, '∅')) > 1 order by 1;

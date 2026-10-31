@@ -41,6 +41,11 @@ const policyBad = sql<boolean>`(e.policy_version IS NULL OR NOT EXISTS (
                                    WHERE v2.tenant_id = e.tenant_id AND v2.effective_from <= e.posting_date AND v2.created_at <= e.created_at
                                      AND (v2.effective_from, v2.version) > (v.effective_from, v.version))))`;
 const valued = sql<boolean>`NOT (a.total = 0 AND a.doc_type IN (${sql.join(STOCK_ZERO)}))`;
+/** Sự việc `a` có bút toán hiệu lực phát sinh trên tài khoản thuế GTGT đầu vào của đơn vị (loại thuế đầu vào + ngầm định tax_input). */
+const inputTaxPosted = sql<boolean>`EXISTS (SELECT 1 FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
+  WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal AND l.debit <> l.credit
+    AND l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = a.tenant_id AND tc.direction = 'input' AND tc.account_code IS NOT NULL
+                           UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key = 'tax_input'))`;
 
 export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
@@ -127,6 +132,19 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
       sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total FROM accounting_events a
            WHERE ${scoped(s, 'a', 'doc_date')} AND a.status IN ('pending', 'error') AND a.received_at < now() - interval '3 days'
            ORDER BY a.received_at LIMIT ${SAMPLE}`),
+  },
+  {
+    // [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — TAX_INPUT_NO_INVOICE (K0, chỉ đọc): thuế đầu vào đã vào sổ mà chưa có hoá đơn quá 30 ngày (REVIEW-2026-10-31-THUY việc h, bước 1).
+    // Tài khoản thuế đầu vào lấy từ cấu hình của đơn vị (loại thuế đầu vào + ngầm định tax_input), không viết số tài khoản.
+    code: 'TAX_INPUT_NO_INVOICE', layer: 'L3', level: 'warn', scoped: true,
+    title: 'Thuế GTGT đầu vào đã ghi sổ có hoá đơn trong sổ hoá đơn (chờ hoá đơn không quá 30 ngày)',
+    fix: 'Phiếu mua chưa có số hoá đơn mà thuế đã vào tài khoản thuế đầu vào: bảng kê mua vào sẽ thiếu so với sổ. Nhận hoá đơn thì nhập số / ký hiệu / ngày hoá đơn vào phiếu (sổ hoá đơn tự ghi). Quá hạn mà không có hoá đơn: báo kế toán trưởng — thuế chưa đủ điều kiện khấu trừ.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM accounting_events a WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${inputTaxPosted}`,
+      sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total FROM accounting_events a
+           WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${inputTaxPosted} AND a.doc_date < current_date - 30
+             AND NOT EXISTS (SELECT 1 FROM tax_invoices i WHERE i.event_id = a.id)
+           ORDER BY a.doc_date LIMIT ${SAMPLE}`),
   },
   {
     // ADR-0009, C-9: bút toán dựng theo luật định khoản ghi đúng phiên bản chính sách áp cho ngày hạch toán.

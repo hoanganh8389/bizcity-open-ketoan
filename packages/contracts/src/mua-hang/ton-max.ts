@@ -1,4 +1,6 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 06:18 PM Nguyễn Văn Thủy] R-REV — công thức đặt hàng: thêm "Kho lấy min" (minWarehouses, tuỳ chọn) (commit 6c085e9, đóng góp).
+// [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — duyệt thay đổi của Nguyễn Văn Thủy (commit 6c085e9), biên bản docs/audits/REVIEW-2026-10-31-THUY.md §7.
 /**
  * TỒN MAX → CHUYỂN HÀNG SHOP → ĐẶT MUA (docs/nghiep-vu/09-ton-max-dat-hang.md). Hàm thuần, dùng chung máy chủ + giao diện.
  *

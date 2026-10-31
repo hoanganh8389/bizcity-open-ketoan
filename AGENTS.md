@@ -55,6 +55,7 @@ node tests/conformance/selfcheck.mjs --strict && npm run typecheck && npm test
 
 - Kết luận từng phát hiện (đúng / dương tính giả / đã sửa), phân mức rủi ro R0–R3. R2+: nạp bộ tình huống của phân hệ vào một đơn vị sạch trên CSDL test, chạy diagnostics và `psql -v tenant=<mã> < scripts/doi-chieu-ke-toan.sql` (sổ cân, công nợ ↔ 131 / 331, sổ hoá đơn ↔ 133, kho ↔ 156, làm tròn, mã hàng, ĐVT). Kết luận ĐẠT / ĐẠT có điều kiện / KHÔNG ĐẠT.
 - Phát hiện **chặn** → báo người dùng, ghi việc cho người đóng góp; **không âm thầm sửa** việc của họ (lỗi khẩn thì sửa và ghi rõ).
+- **Đọc [RULE-REVIEW §6](docs/rules/RULE-REVIEW.md) (cảnh báo W-1…W-11, các lỗi đã gặp thật) trước mỗi lần rà.** Đặc biệt: script "làm sạch" / tắt trigger / xoá sổ là **chặn** (R-REV-11); tra cứu cho tiền không được trả mặc định khi không tìm thấy (R-REV-13); công cụ phân hệ ở `scripts/<phân hệ>/` (R-REV-12).
 - Lỗi lặp lại → thêm luật dò H-* vào `scripts/ra-soat-dong-gop.mjs` hoặc check SC-* / DG-* (R-REV-10).
 
 ## Tạo module mới (Bizcity Framework Standard v1)
