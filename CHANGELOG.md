@@ -121,6 +121,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Đính kèm Mua hàng chạy trên đính kèm chung** (migration `0046`, PHASES 2.7, A-19): dòng `purchase_attachments` chép sang `document_attachments` (docRef `mua-hang.<loại chủ>:<mã>`, `legacy_ref` đối chiếu), tệp giữ nguyên chỗ trên ổ (`DATA_DIR/dinh-kem`), băm sha256 ở lần tải đầu. API `/api/v1/purchase/attachments` giữ khuôn; xoá tệp nay là gỡ (lưu trữ, không xoá cứng). Bảng `purchase_attachments` khoá thêm / sửa, giữ để đối chiếu.
 - **Một chỗ cấp số chứng từ**: phiếu kế toán tay, đề nghị thanh toán (`quy`), phiếu mua hàng lấy số từ `documentNumbers.next` của Kernel thay vì tự ghi `document_sequences`. Khoá dãy và khuôn số giữ nguyên — không nhảy số.
 - **Báo cáo về phân hệ Kế toán** (PHASE-012 Q012-2): `apps/api/src/modules/reports` → `apps/api/src/phan-he/ke-toan/reports`. `documentChecks` (kiểm trước khoá kỳ) về Kernel `modules/periods/document-checks.ts`. Thuế đọc B02 / bảng dài hạn qua action, add-in Bảng tính AI qua `accounting.report.trial-balance`; báo cáo hàng hoá tách: lãi gộp → `phan-he/ban-hang/gross-profit.ts`, chuyển kho → `phan-he/kho/stock-transfers.ts`, kết quả theo cửa hàng ở lại `ke-toan/reports`; `kho`, `mua-hang` lấy route qua `GOODS` (`phan-he/loi.ts`). Đường dẫn API, số liệu báo cáo không đổi. Chi phí theo chiều phân tích gom theo bí danh cột, bỏ `sql.raw`.
 - **Cổng công khai của Kernel** (PHASE-010 W1): ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts`; 21 tệp đã chuyển; bộ kiểm SC-KERNEL-6 chặn import thẳng mới. Chuẩn bị tách gói `packages/kernel` mà không sửa nơi gọi.
@@ -138,6 +139,7 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- Đính tệp vào hoá đơn NCC (`ownerType: invoice`) báo lỗi CSDL: bảng `purchase_attachments` chỉ nhận partner / document / policy. Hết lỗi khi chuyển sang đính kèm chung (0046).
 - Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
   - mọi bản trước commit `ccfc341` (gồm `main` 23a834c) **không cài mới được trên CSDL sạch**: code dùng `users.session_version`, `products.parent_manual` khi chưa có migration;
   - nhánh này sửa bằng migration 0029, 0033 và chặn tái phát bằng SC-DATA-7;

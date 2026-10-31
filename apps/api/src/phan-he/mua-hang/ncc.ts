@@ -1,19 +1,19 @@
 // @bizcity-layer D modules/mua-hang
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — đính kèm NCC / chứng từ / chính sách / hoá đơn đi qua đính kèm chung (documents.attachments, 0046); gỡ = lưu trữ
 /**
  * NHÀ CUNG CẤP — mọi việc mua hàng đi từ NCC:
  *   supplierList     mỗi NCC một dòng: nợ (331 theo sổ), quá hạn / sắp đến hạn, hạn mức đã dùng, điều khoản, số chính sách,
  *                    hợp đồng còn hiệu lực đến ngày, lần nhập gần nhất, mua tháng này, số chứng từ, số tệp đính kèm
  *   supplierProfile  hồ sơ một NCC: thông tin danh mục + các con số trên + mua theo tháng + nhật ký thay đổi của NCC
- *   attachments      tệp đính kèm (hợp đồng, CO, CQ, báo giá, chứng từ…) — nội dung lưu trên ổ dữ liệu ERP
+ *   attachments      tệp đính kèm (hợp đồng, CO, CQ, báo giá, chứng từ…) — đính kèm chung documents.attachments (0046), docRef
+ *                    mua-hang.<partner|document|policy|invoice>:<mã>; gỡ tệp = lưu trữ, không xoá cứng
  */
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { randomBytes } from 'node:crypto';
 import { sql } from 'kysely';
 import { creditStatus, findPolicy, orderProgress, termFromRule, termText } from '@ketoan/contracts/mua-hang';
 import { unitsForOrders } from './gia-mua.js';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
+import { documents } from '../../core/documents.js';
 import { openDueOf, type Ctx } from './analysis.js';
 import { readLog } from './log.js';
 
@@ -48,8 +48,8 @@ export async function supplierList(trx: Db, tenantId: string, ctx: Ctx, scope: '
   }
   const itemRows = await trx.selectFrom('supplier_products').select(['partner_code', sql<string>`COUNT(DISTINCT sku)`.as('n')]).where('tenant_id', '=', tenantId).where('is_active', '=', true).where('partner_code', 'is not', null).groupBy('partner_code').execute();
   const itemsOf = new Map(itemRows.map((r) => [r.partner_code!, toNumber(r.n)]));
-  const atts = await trx.selectFrom('purchase_attachments').select(['owner_id', sql<string>`COUNT(*)`.as('n')]).where('tenant_id', '=', tenantId).where('owner_type', '=', 'partner').groupBy('owner_id').execute();
-  const attOf = new Map(atts.map((a) => [a.owner_id, toNumber(a.n)]));
+  const atts = await trx.selectFrom('document_attachments').select(['doc_ref', sql<string>`COUNT(*)`.as('n')]).where('tenant_id', '=', tenantId).where('doc_ref', 'like', 'mua-hang.partner:%').where('archived_at', 'is', null).groupBy('doc_ref').execute();
+  const attOf = new Map(atts.map((a) => [a.doc_ref.slice('mua-hang.partner:'.length), toNumber(a.n)]));
   const active = new Set<string>([...ctx.policies.map((p) => p.scope.partnerCode ?? ''), ...ctx.docs.map((d) => d.partnerCode), ...debts.filter((d) => Math.abs(toNumber(d.debt)) > 0.5).map((d) => d.code), ...attOf.keys(), ...itemsOf.keys()].filter(Boolean));
   let q = trx.selectFrom('partners').select(['code', 'name', 'company_name', 'tax_code', 'group_code', 'phone', 'address', 'company_address', 'is_active', 'credit_limit', 'payment_term_days', 'kind', 'created_by', 'created_at']).where('tenant_id', '=', tenantId);
   q = scope === 'all' ? q.where((eb) => eb.or([eb('kind', '=', 'supplier'), sql<boolean>`'supplier' = ANY(also_kinds)`, eb('code', 'in', [...active, ''])])) : q.where('code', 'in', [...active, '']);
@@ -121,37 +121,34 @@ export async function supplierBrandList(trx: Db, tenantId: string, code: string)
 /* ------------------------------------------------------------------ tệp đính kèm */
 
 export const ATTACHMENT_KINDS: Record<string, string> = { hop_dong: 'Hợp đồng / phụ lục', co: 'CO (xuất xứ)', cq: 'CQ (chất lượng)', bao_gia: 'Báo giá', hoa_don: 'Hoá đơn (ảnh / PDF)', hoa_don_xml: 'Hoá đơn XML gốc', chung_tu_10: 'Chứng từ số 10', chung_tu_11: 'Chứng từ số 11', bien_ban: 'Biên bản', khac: 'Khác' };
-const attDir = (tenantId: string) => path.resolve(process.env.DATA_DIR ?? './data', 'dinh-kem', tenantId);
-const MAX = 15 * 1024 * 1024;
+/** Đính kèm đi qua đính kèm chung (documents.attachments, 0046): chứng từ mua-hang.<loại chủ>:<mã chủ>. */
+const docRefOf = (ownerType: string, ownerId: string) => `mua-hang.${ownerType}:${ownerId.trim().replace(/\s+/g, '_').slice(0, 200)}`;
+/** Tệp phải thuộc Mua hàng — API này không đọc / gỡ tệp của module khác. */
+async function ownAttachment(trx: Db, tenantId: string, id: string) {
+  const r = await trx.selectFrom('document_attachments').select(['id', 'doc_ref']).where('tenant_id', '=', tenantId).where('id', '=', id).executeTakeFirst();
+  if (!r || !r.doc_ref.startsWith('mua-hang.')) throw Errors.notFound('tệp đính kèm');
+}
 
 export async function listAttachments(trx: Db, tenantId: string, ownerType: string, ownerId: string) {
-  const rows = await trx.selectFrom('purchase_attachments').select(['id', 'kind', 'file_name', 'mime', 'size', 'note', 'uploaded_by', 'created_at'])
-    .where('tenant_id', '=', tenantId).where('owner_type', '=', ownerType).where('owner_id', '=', ownerId).orderBy('created_at', 'desc').execute();
-  return rows.map((r) => ({ id: String(r.id), kind: r.kind, kindLabel: ATTACHMENT_KINDS[r.kind] ?? r.kind, fileName: r.file_name, mime: r.mime, size: toNumber(r.size), note: r.note, uploadedBy: r.uploaded_by, createdAt: new Date(r.created_at as unknown as string).toISOString() }));
+  const files = await documents.attachments(trx, tenantId, docRefOf(ownerType, ownerId));
+  return files.reverse().map((a) => ({ id: a.id, kind: a.kind, kindLabel: ATTACHMENT_KINDS[a.kind] ?? a.kind, fileName: a.fileName, mime: a.contentType, size: a.sizeBytes, note: a.note, uploadedBy: a.createdBy, createdAt: a.createdAt }));
 }
 
 export async function addAttachment(trx: Db, tenantId: string, actor: string, a: { ownerType: 'partner' | 'document' | 'policy' | 'invoice'; ownerId: string; kind: string; fileName: string; mime: string; dataBase64: string; note?: string }) {
-  const buf = Buffer.from(a.dataBase64, 'base64');
-  if (!buf.length) throw Errors.validation('Tệp rỗng');
-  if (buf.length > MAX) throw Errors.validation('Tệp quá 15 MB');
-  const safe = a.fileName.replace(/[^\p{L}\p{N}._ -]/gu, '_').slice(-120) || 'tep';
-  const rel = path.join(new Date().toISOString().slice(0, 7), `${randomBytes(8).toString('hex')}-${safe}`);
-  const full = path.join(attDir(tenantId), rel);
-  await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, buf);
-  const r = await trx.insertInto('purchase_attachments').values({ tenant_id: tenantId, owner_type: a.ownerType, owner_id: a.ownerId, kind: ATTACHMENT_KINDS[a.kind] ? a.kind : 'khac', file_name: a.fileName.slice(0, 200), mime: a.mime || 'application/octet-stream', size: String(buf.length), path: rel, note: a.note ?? '', uploaded_by: actor }).returning('id').executeTakeFirstOrThrow();
-  return { id: String(r.id) };
+  const out = await documents.attach(trx, tenantId, docRefOf(a.ownerType, a.ownerId), { fileName: a.fileName.slice(0, 200), contentType: a.mime || 'application/octet-stream', data: Buffer.from(a.dataBase64, 'base64') },
+    { kind: ATTACHMENT_KINDS[a.kind] ? a.kind : 'khac', note: a.note }, actor);
+  return { id: out.id };
 }
 
 export async function readAttachment(trx: Db, tenantId: string, id: string) {
-  const r = await trx.selectFrom('purchase_attachments').selectAll().where('tenant_id', '=', tenantId).where('id', '=', id).executeTakeFirst();
-  if (!r) throw Errors.notFound('tệp đính kèm');
-  return { fileName: r.file_name, mime: r.mime, data: await readFile(path.join(attDir(tenantId), r.path)) };
+  await ownAttachment(trx, tenantId, id);
+  const f = await documents.readAttachment(trx, tenantId, id);
+  return { fileName: f.fileName, mime: f.contentType, data: f.data };
 }
 
-export async function deleteAttachment(trx: Db, tenantId: string, id: string) {
-  const r = await trx.deleteFrom('purchase_attachments').where('tenant_id', '=', tenantId).where('id', '=', id).returning(['path']).executeTakeFirst();
-  if (!r) throw Errors.notFound('tệp đính kèm');
-  await unlink(path.join(attDir(tenantId), r.path)).catch(() => undefined);
+/** Gỡ tệp: ghi archived_at (không xoá cứng, STD-DATA-9); tệp trên ổ giữ lại. */
+export async function deleteAttachment(trx: Db, tenantId: string, id: string, actor = '') {
+  await ownAttachment(trx, tenantId, id);
+  await documents.archiveAttachment(trx, tenantId, id, actor);
 }
 

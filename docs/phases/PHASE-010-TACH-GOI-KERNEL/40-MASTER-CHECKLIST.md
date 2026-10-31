@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | S010-1a | W1: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block, ca tự kiểm), chuyển 21 tệp / 36 import | 2.3 | có | ✅ |
 | S010-1b | W2: workspace `packages/kernel` (sau S010-4) | 2.3 | chưa | ☐ |
-| S010-2 | `packages/documents`: số, phiên bản, liên kết, đính kèm chung, chữ ký | 2.7 | một phần | ✅ 2026-11-01: năng lực `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments` (D010-4); HTTP `/api/v1/document-versions`, `/document-links`, `/document-attachments` (6 action `core.document-*` + tải tệp kiểm sha256); `test/documents-common.test.ts` 6 ca; hết 2 nợ SC-MOD-2 (`quy`, `mua-hang` ghi `document_sequences`). ☐ chuyển `purchase_attachments` sang đính kèm chung (A-19), ☐ `documents.signatures` |
+| S010-2 | `packages/documents`: số, phiên bản, liên kết, đính kèm chung, chữ ký | 2.7 | một phần | ✅ 2026-11-01: năng lực `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments` (D010-4); HTTP `/api/v1/document-versions`, `/document-links`, `/document-attachments` (6 action `core.document-*` + tải tệp kiểm sha256); `test/documents-common.test.ts` 6 ca; hết 2 nợ SC-MOD-2 (`quy`, `mua-hang` ghi `document_sequences`). ✅ chuyển `purchase_attachments` sang đính kèm chung (0046, D010-6; `test/mua-hang-dinh-kem.test.ts` 4 ca), ☐ `documents.signatures` |
 | S010-3 | Tách `packages/contracts/src/mua-hang` về phân hệ | 2.8 | chưa | ☐ |
 | S010-4 | Tách Platform (`core/*`: errors, http, auth, audit, actions, events, request-context…) thành gói — điều kiện của S010-1b | 2.3 | chưa | ☐ |
 
@@ -24,3 +24,4 @@
 | 2026-10-30 | Claude Code | Chủ "tiếp theo" ⇒ đo phụ thuộc (36 import vào Kernel; Kernel dùng `core/*` ~70 chỗ) → chia W1 / W2 (00 §2). Code W1: `kernel/public.ts`, SC-KERNEL-6, chuyển 21 tệp; baseline SC-LAYER-2 đổi khoá 3 nợ cũ (204 → 204). |
 | 2026-10-30 | Claude Code | vitest đầy đủ: 728 + `debt-reports` chạy riêng 7/7 (worker tinypool sập giữa chừng) ⇒ 735 xanh, 1 bỏ qua; không lỗi vòng import do barrel `public.ts`. |
 | 2026-11-01 00:16 | Claude Code | Chủ "ok tiếp" ⇒ 2.7 (S010-2, D010-4). 2.7 ☑ trên bảng điểm (ba năng lực lộ trình). |
+| 2026-11-01 00:47 | Claude Code | Chủ "tiếp nhé" ⇒ D010-6: đính kèm Mua hàng chạy trên đính kèm chung (0046). Sửa kèm lỗi sẵn: bảng cũ không nhận owner_type invoice nên đính tệp vào hoá đơn NCC lỗi. |

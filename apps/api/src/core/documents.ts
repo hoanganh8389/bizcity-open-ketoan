@@ -1,5 +1,6 @@
 // @bizcity-layer P documents
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): đánh số, phiên bản, liên kết, đính kèm chung cho mọi chứng từ (bizcity_document@1 §3, §7)
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — đính kèm: storage_root (tệp Mua hàng cũ ở dinh-kem, 0046), băm tệp cũ ở lần tải đầu, loại tệp nhận gạch dưới
 /**
  * Chứng từ dùng chung (năng lực documents.numbering / versions / links / attachments; gói đích packages/documents).
  * Chứng từ gọi bằng docRef = <module>.<loại>:<id>; sự việc kế toán = ledger.event:<docKey>.
@@ -30,8 +31,9 @@ export function registerDocumentNumberer(fn: DocumentNumberer): void {
 /** Tệp đính kèm tối đa 15 MB (như đính kèm Mua hàng trước đây). */
 export const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 const SERIES_RE = /^[A-Z][A-Z0-9]{0,9}$/;
-const KIND_RE = /^[a-z][a-z0-9-]{0,39}$/;
-const attachmentRoot = (tenantId: string) => path.resolve(process.env.DATA_DIR ?? './data', 'attachments', tenantId);
+const KIND_RE = /^[a-z][a-z0-9_-]{0,39}$/;
+/** Thư mục tệp của đơn vị: attachments (tệp gửi từ 0045) hoặc dinh-kem (tệp Mua hàng gửi trước 0046, giữ nguyên chỗ). */
+const attachmentRoot = (tenantId: string, root: 'attachments' | 'dinh-kem' = 'attachments') => path.resolve(process.env.DATA_DIR ?? './data', root, tenantId);
 
 function assertRef(ref: string, what = 'docRef'): asserts ref is DocRef {
   if (!DOC_REF_RE.test(ref)) throw Errors.validation(`${what} không đúng dạng <module>.<loại>:<id>: ${ref}`);
@@ -48,7 +50,7 @@ function contentHash(value: unknown): string {
 
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
 
-type AttachmentRow = { id: string; doc_ref: string; kind: string; file_name: string; content_type: string; size_bytes: string; sha256: string; note: string; created_by: string; created_at: unknown };
+type AttachmentRow = { id: string; doc_ref: string; kind: string; file_name: string; content_type: string; size_bytes: string; sha256: string | null; note: string; created_by: string; created_at: unknown };
 const toAttachment = (r: AttachmentRow): AttachmentRef => ({
   id: String(r.id), docRef: r.doc_ref, kind: r.kind, fileName: r.file_name, contentType: r.content_type, sizeBytes: Number(r.size_bytes),
   sha256: r.sha256, note: r.note, createdBy: r.created_by, createdAt: iso(r.created_at),
@@ -130,7 +132,7 @@ export const documents = {
   async attach(tx: Db, tenantId: string, docRef: string, file: FileInput, meta: { kind?: string; note?: string }, actor: string): Promise<AttachmentRef & { created: boolean }> {
     assertRef(docRef);
     const kind = meta.kind ?? 'other';
-    if (!KIND_RE.test(kind)) throw Errors.validation(`Loại tệp "${kind}" chỉ gồm chữ thường, số, gạch ngang (vd contract-scan)`);
+    if (!KIND_RE.test(kind)) throw Errors.validation(`Loại tệp "${kind}" chỉ gồm chữ thường, số, gạch ngang / gạch dưới (vd contract-scan)`);
     const fileName = file.fileName.trim();
     if (!fileName || fileName.length > 200) throw Errors.validation('Tên tệp 1–200 ký tự');
     const data = Buffer.from(file.data);
@@ -160,13 +162,21 @@ export const documents = {
     return (await q.orderBy('created_at').orderBy('id').execute()).map(toAttachment);
   },
 
-  /** Nội dung tệp; băm không khớp (tệp trên ổ bị đổi / hỏng) → CONFLICT, không trả nội dung sai. */
+  /**
+   * Nội dung tệp; băm không khớp (tệp trên ổ bị đổi / hỏng) → CONFLICT, không trả nội dung sai.
+   * Tệp chuyển từ purchase_attachments (0046) chưa có băm: băm lần tải đầu và ghi lại, các lần sau kiểm như tệp mới.
+   */
   async readAttachment(tx: Db, tenantId: string, id: string): Promise<AttachmentRef & { data: Buffer }> {
-    const r = await tx.selectFrom('document_attachments').select([...ATTACHMENT_COLS, 'storage_path']).where('tenant_id', '=', tenantId).where('id', '=', id).executeTakeFirst();
+    const r = await tx.selectFrom('document_attachments').select([...ATTACHMENT_COLS, 'storage_path', 'storage_root']).where('tenant_id', '=', tenantId).where('id', '=', id).executeTakeFirst();
     if (!r) throw Errors.notFound('tệp đính kèm');
-    const data = await readFile(path.join(attachmentRoot(tenantId), r.storage_path)).catch(() => null);
+    const data = await readFile(path.join(attachmentRoot(tenantId, r.storage_root as 'attachments' | 'dinh-kem'), r.storage_path)).catch(() => null);
     if (!data) throw Errors.notFound(`nội dung tệp ${r.file_name} trên ổ dữ liệu`);
-    if (createHash('sha256').update(data).digest('hex') !== r.sha256) throw Errors.conflict(`Tệp ${r.file_name} trên ổ không khớp băm lúc gửi — tệp đã bị đổi hoặc hỏng`);
+    const sha256 = createHash('sha256').update(data).digest('hex');
+    if (r.sha256 === null) {
+      await tx.updateTable('document_attachments').set({ sha256 }).where('tenant_id', '=', tenantId).where('id', '=', id).where('sha256', 'is', null).execute();
+      return { ...toAttachment({ ...r, sha256 }), data };
+    }
+    if (sha256 !== r.sha256) throw Errors.conflict(`Tệp ${r.file_name} trên ổ không khớp băm lúc gửi — tệp đã bị đổi hoặc hỏng`);
     return { ...toAttachment(r), data };
   },
 

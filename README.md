@@ -10,7 +10,7 @@
 
 **Kế toán mở. Dữ liệu thuộc về doanh nghiệp. Cộng đồng tự do xây dựng ứng dụng.**
 
-> **open-ketoan** là dự án Accounting Core Framework do **Bizcity** khởi xướng, hướng tới một nền tảng kế toán mở, có thể tự triển khai, kết nối và phát triển các module nghiệp vụ bằng code truyền thống hoặc AI-assisted development (*vibe coding*).
+> **open-ketoan** là dự án Accounting Core Framework hướng tới một nền tảng kế toán mở đã chuẩn hóa, tuân thủ nguyên tắc kế toán để bất cứ ai cũng có thể tự triển khai, kết nối và phát triển các module nghiệp vụ kinh doanh, bán hàng, các ứng dụng mới nhưng luôn chắc chắn rằng, số liệu kinh doanh, marketing được phản ánh minh bạch, đúng nghiệp vụ kế toán dù bằng việc tự code hay dùng AI-assisted development (*vibe coding*).
 >
 > **Định hướng kiến trúc:** *Accounting Core ổn định — Module mở rộng — Hợp đồng rõ ràng — Dữ liệu do người dùng kiểm soát.*
 
@@ -222,11 +222,6 @@ npm test                                   # PostgreSQL thật; sau mỗi tệp 
 | Dòng lệnh | [CLI](docs/ops/CLI.md) |
 | Bảo mật, báo lỗ hổng | [SECURITY.md](SECURITY.md) · [RULE-SECURITY](docs/rules/RULE-SECURITY.md) |
 
-## Tự chủ dữ liệu và mối quan hệ với Bizcity Cell
-
-**open-ketoan phải có khả năng vận hành độc lập cho nghiệp vụ kế toán cốt lõi.** Dữ liệu kế toán lưu trong PostgreSQL do đơn vị triển khai quản lý, không bắt buộc gửi về Bizcity Cell để ghi sổ, đọc báo cáo hay xuất dữ liệu.
-
-Bizcity Cell có thể cung cấp **dịch vụ tuỳ chọn** như API key, AI, OCR, RAG và orchestration. Đây là các lớp giá trị gia tăng, không phải điều kiện để sở hữu hay sử dụng Accounting Core.
 
 ## Ai có thể tham gia?
 

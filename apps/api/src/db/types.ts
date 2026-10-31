@@ -11,6 +11,7 @@
 // [2026-10-31 08:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): kiểu khung nhìn chỉ đọc bizcity_read.ledger_* (migration 0043).
 // [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — data.read-views (PHASES 2.4): kiểu tám khung nhìn danh mục bizcity_read.* (migration 0044).
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): kiểu document_versions / document_links / document_attachments (migration 0045).
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_attachments.storage_root, legacy_ref, sha256 null (0046).
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1517,8 +1518,10 @@ export interface DocumentAttachmentsTable {
   file_name: string;
   content_type: Generated<string>;
   size_bytes: ColumnType<string, number | string, number | string>;
-  sha256: string;
+  sha256: string | null;
   storage_path: string;
+  storage_root: Generated<string>;
+  legacy_ref: string | null;
   note: Generated<string>;
   created_by: Generated<string>;
   created_at: TimestampDefault;

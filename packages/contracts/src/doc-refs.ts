@@ -1,4 +1,5 @@
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): docRef, vai trò liên kết, kiểu phiên bản / đính kèm dùng chung API, runtime action, giao diện
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — AttachmentRef.sha256 có thể null (tệp Mua hàng chuyển ở 0046)
 /**
  * Chứng từ dùng chung (bizcity_document@1 §3, §7). Mọi chứng từ gọi bằng docRef = <module>.<loại>:<id>
  * (vd hop-dong.contract:42); sự việc kế toán của Kernel = ledger.event:<docKey>.
@@ -41,7 +42,8 @@ export interface AttachmentRef {
   fileName: string;
   contentType: string;
   sizeBytes: number;
-  sha256: string;
+  /** null: tệp chuyển từ đính kèm Mua hàng cũ (0046), chưa tải lần nào — máy chủ băm ở lần tải đầu. */
+  sha256: string | null;
   note: string;
   createdBy: string;
   createdAt: string;

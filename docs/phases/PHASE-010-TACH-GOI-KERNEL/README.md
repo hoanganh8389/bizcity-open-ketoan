@@ -3,7 +3,7 @@
 <!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.7 documents.* có (S010-2) -->
 
-> **Trạng thái:** 🟡 W1 xong 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), 21 tệp chuyển. 2.7 `documents.*` (số, phiên bản, liên kết, đính kèm) có 2026-11-01 — còn chuyển đính kèm Mua hàng, chữ ký. W2 (dời thư mục sang `packages/kernel`) chờ tách Platform thành gói
+> **Trạng thái:** 🟡 W1 xong 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), 21 tệp chuyển. 2.7 `documents.*` (số, phiên bản, liên kết, đính kèm) có 2026-11-01 — đính kèm Mua hàng đã chuyển (0046); còn chữ ký. W2 (dời thư mục sang `packages/kernel`) chờ tách Platform thành gói
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có (W1) · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** `apps/api` chỉ import Kernel qua `@bizcity/kernel` công khai; Core khởi động không cần phân hệ nào.
 > **Việc lộ trình:** 2.3, 2.7, 2.8

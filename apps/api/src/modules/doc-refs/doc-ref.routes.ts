@@ -1,5 +1,6 @@
 // @bizcity-layer P documents
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): HTTP xem phiên bản / liên kết / đính kèm, gửi / gỡ tệp, tải tệp cho mọi chứng từ
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — sha256 có thể null (tệp Mua hàng chuyển ở 0046); loại tệp nhận gạch dưới
 /**
  * Chứng từ dùng chung qua HTTP (bizcity_document@1 §7) — cho giao diện; module dùng ctx.documents.* trong action của mình.
  *   GET  /api/v1/document-versions?docRef=                core.document-version.list      các phiên bản (không kèm nội dung)
@@ -25,7 +26,7 @@ const tags = ['Chứng từ dùng chung'];
 const versionOut = z.object({ version: z.number(), contentHash: z.string(), createdBy: z.string(), createdAt: z.string(), snapshot: z.unknown().optional() });
 const attachmentOut = z.object({
   id: z.string(), docRef: z.string(), kind: z.string(), fileName: z.string(), contentType: z.string(), sizeBytes: z.number(),
-  sha256: z.string(), note: z.string(), createdBy: z.string(), createdAt: z.string(),
+  sha256: z.string().nullable(), note: z.string(), createdBy: z.string(), createdAt: z.string(),
 });
 
 const versionList = defineAction({
@@ -74,7 +75,7 @@ const attachmentAdd = defineAction({
   permission: 'documents:write', effect: 'write', idempotency: 'natural', sideEffects: ['documents'],
   input: z.object({
     docRef: docRefSchema,
-    kind: z.string().regex(/^[a-z][a-z0-9-]{0,39}$/).default('other').describe('Loại tệp, vd contract-scan, invoice, quote'),
+    kind: z.string().regex(/^[a-z][a-z0-9_-]{0,39}$/).default('other').describe('Loại tệp, vd contract-scan, invoice, quote'),
     fileName: z.string().trim().min(1).max(200),
     contentType: z.string().max(120).default('application/octet-stream'),
     dataBase64: z.string().min(1).describe('Nội dung tệp mã hoá base64'),
@@ -109,7 +110,7 @@ export async function docRefRoutes(app: FastifyInstance): Promise<void> {
       return reply
         .header('content-type', f.contentType)
         .header('content-disposition', `attachment; filename*=UTF-8''${encodeURIComponent(f.fileName)}`)
-        .header('x-content-sha256', f.sha256)
+        .header('x-content-sha256', f.sha256 ?? '')
         .send(f.data);
     },
   });

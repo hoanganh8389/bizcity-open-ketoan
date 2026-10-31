@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/mua-hang
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gỡ tệp đính kèm = lưu trữ (đính kèm chung, 0046), ghi người gỡ
 /**
  * API phân hệ Mua hàng — hợp đồng: docs/api/14-mua-hang.md.
  *   Chứng từ   GET/POST /api/v1/purchase/documents · GET/PUT /…/:id · POST /…/:id/{submit,approve,override,unapprove,cancel}
@@ -91,8 +92,8 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
       const f = await readAttachment(db, authOf(req).tenantId, req.params.id);
       return reply.header('content-type', f.mime).header('content-disposition', `inline; filename*=UTF-8''${encodeURIComponent(f.fileName)}`).send(f.data);
     } });
-  r.delete('/api/v1/purchase/attachments/:id', { preHandler: write, schema: { tags, summary: 'Xoá tệp', params: idParamSchema },
-    handler: async (req) => { await deleteAttachment(db, authOf(req).tenantId, req.params.id); return ok({ deleted: true }); } });
+  r.delete('/api/v1/purchase/attachments/:id', { preHandler: write, schema: { tags, summary: 'Gỡ tệp khỏi hồ sơ (lưu trữ, không xoá cứng — tệp vẫn trên ổ)', params: idParamSchema },
+    handler: async (req) => { const a = authOf(req); await deleteAttachment(db, a.tenantId, req.params.id, a.actorName); return ok({ deleted: true }); } });
 
   // ---------------- Chính sách
   r.get('/api/v1/purchase/policies', { preHandler: read, schema: { tags, summary: 'Danh sách chính sách mua hàng' }, handler: async (req) => ok(await listPolicies(db, authOf(req).tenantId)) });

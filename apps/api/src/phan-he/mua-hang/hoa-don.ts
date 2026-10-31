@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/mua-hang
+// [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — số tệp của hoá đơn đếm trên đính kèm chung (document_attachments, 0046)
 /**
  * HOÁ ĐƠN ĐẦU VÀO CỦA NCC — lưu riêng từng hoá đơn (đầu + dòng theo cách NCC ghi), nhận diện mã bên mình, học cách ghi của NCC,
  * đối soát với phiếu nhập (gắn qua NCC + số / ký hiệu hoá đơn).
@@ -180,8 +181,10 @@ export interface InvoiceListRow extends Omit<SupplierInvoice, 'lines'> {
 /** Danh sách hoá đơn + tình trạng: chưa nhận diện mã / chưa có phiếu nhập / lệch phiếu / khớp. */
 export async function listInvoices(trx: Db, tenantId: string, docs: StoredDoc[], policies: Policy[], f: { partnerCode?: string; from?: string; to?: string; status?: string } = {}): Promise<InvoiceListRow[]> {
   const list = await loadInvoices(trx, tenantId, f);
-  const atts = list.length ? await trx.selectFrom('purchase_attachments').select(['owner_id', sql<string>`COUNT(*)`.as('n')]).where('tenant_id', '=', tenantId).where('owner_type', '=', 'invoice').where('owner_id', 'in', list.map((x) => x.id!)).groupBy('owner_id').execute() : [];
-  const attOf = new Map(atts.map((a) => [a.owner_id, toNumber(a.n)]));
+  // Tệp của hoá đơn: đính kèm chung (0046), docRef mua-hang.invoice:<id>.
+  const atts = list.length ? await trx.selectFrom('document_attachments').select(['doc_ref', sql<string>`COUNT(*)`.as('n')]).where('tenant_id', '=', tenantId).where('archived_at', 'is', null)
+    .where('doc_ref', 'in', list.map((x) => `mua-hang.invoice:${x.id!}`)).groupBy('doc_ref').execute() : [];
+  const attOf = new Map(atts.map((a) => [a.doc_ref.slice('mua-hang.invoice:'.length), toNumber(a.n)]));
   const out: InvoiceListRow[] = [];
   for (const inv of list) {
     const recs = receiptsOfInvoice(inv, docs);
