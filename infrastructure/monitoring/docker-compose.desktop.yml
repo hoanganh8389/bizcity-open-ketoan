@@ -1,0 +1,12 @@
+# [2026-11-01 01:01 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — tệp ghép cho Docker Desktop: node-exporter không gắn rslave (lỗi "path / is mounted on / but it is not a shared or slave mount").
+# =============================================================================
+# CHỈ dùng trên Docker Desktop (Windows / macOS), ghép SAU docker-compose.monitoring.yml:
+#   docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml \
+#                  -f infrastructure/monitoring/docker-compose.desktop.yml up -d
+# scripts/cai-nhanh.sh --giam-sat tự ghép khi phát hiện Docker Desktop. Máy chủ Linux: KHÔNG dùng tệp này.
+# Cần Docker Compose ≥ 2.24 (thẻ !override).
+# =============================================================================
+services:
+  node-exporter:
+    volumes: !override
+      - /:/host:ro

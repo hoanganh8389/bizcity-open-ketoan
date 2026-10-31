@@ -260,7 +260,7 @@ Chỉ số Prometheus **không** có nhãn `tenant` (tránh bùng số chuỗi) 
 
 - `node-exporter` và `cadvisor` đo **máy ảo của Docker Desktop**, không phải ổ C: / máy Mac. Số đĩa, RAM ở
   bảng 01 vì vậy là của máy ảo — bình thường khi thử trên máy cá nhân.
-- Nếu `node-exporter` không khởi động với lỗi về `rslave`, xoá `,rslave` ở dòng gắn `/:/host` (chỉ trên Docker Desktop).
+- `node-exporter` gắn `/:/host` kiểu `rslave` — Docker Desktop báo lỗi *"path / is mounted on / but it is not a shared or slave mount"* và **dừng cả lệnh `up`**. Ghép thêm tệp [`docker-compose.desktop.yml`](docker-compose.desktop.yml) (bỏ `rslave`, không sửa tệp chính): `docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml -f infrastructure/monitoring/docker-compose.desktop.yml up -d`. `bash scripts/cai-nhanh.sh --giam-sat` tự làm việc này.
 - `cadvisor` cần `privileged`. Nếu môi trường cấm, bỏ dịch vụ này — chỉ mất bảng RAM theo container và nửa
   điều kiện "container" của `HighMemory` (nửa "RSS API" vẫn chạy).
 

@@ -7,6 +7,7 @@
 <!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 <!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
+<!-- [2026-11-01 01:01 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — ảnh kiến trúc Core, cài nhanh 3 bước (scripts/cai-nhanh.sh), giám sát Prometheus / Grafana / Loki, kết nối API + MCP để trợ lý AI ghi nhận sổ sách và đọc báo cáo. -->
 
 **Kế toán mở. Dữ liệu thuộc về doanh nghiệp. Cộng đồng tự do xây dựng ứng dụng.**
 
@@ -14,7 +15,7 @@
 >
 > **Định hướng kiến trúc:** *Accounting Core ổn định — Module mở rộng — Hợp đồng rõ ràng — Dữ liệu do người dùng kiểm soát.*
 
-**Đi nhanh:** [Cài đặt](#cài-đặt) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)
+**Đi nhanh:** [Cài nhanh 3 bước](#cài-nhanh-3-bước-trên-máy-của-bạn) · [Kết nối API và trợ lý AI](#kết-nối-api-và-trợ-lý-ai-với-bizcity) · [Giám sát](#giám-sát-vận-hành-prometheus--grafana--loki) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)
 
 ## Vì sao có open-ketoan?
 
@@ -48,6 +49,12 @@ Dự án hướng đến ba nhóm cùng tạo giá trị:
 Luật chi tiết và cấp độ kiểm soát: [00-CANON.md](docs/00-CANON.md) · [Domain Contract](docs/contracts/BIZCITY-DOMAIN-v1.md) · [RULE-LEDGER](docs/rules/RULE-LEDGER.md).
 
 ## Kiến trúc: lõi ổn định, phần mở rộng tự do
+
+![Kiến trúc Core open-ketoan — Bizcity Core Framework](https://media.bizcity.vn/uploads/sites/1258/2026/11/b2ec2082-fe48-4ec3-a216-e53ccd3e83b1.png)
+
+*Kiến trúc Core open-ketoan (Bizcity Core Framework) — © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity.*
+
+Sơ đồ rút gọn dạng văn bản:
 
 ```mermaid
 flowchart TB
@@ -118,14 +125,32 @@ Dự án ưu tiên **Modular Monolith + Contracts + Adapters** trước, mở r�
 
 ## Cài đặt
 
-### Thử nhanh trên một máy (Docker)
+### Cài nhanh 3 bước trên máy của bạn
 
-Cần Docker. Không cần cài Node nếu chỉ chạy thử.
+Chỉ cần **Docker** (Docker Desktop trên Windows / macOS, Docker Engine trên Linux) và **Git** (Windows: chạy lệnh trong Git Bash). Không cần cài Node, PostgreSQL, Grafana hay Prometheus — tất cả chạy trong Docker.
 
 ```bash
-cp .env.example .env                       # đổi JWT_SECRET, mật khẩu quản trị
+# 1. Lấy mã nguồn
+git clone https://github.com/hoanganh8389/bizcity-open-ketoan.git && cd bizcity-open-ketoan
+
+# 2. Cài và chạy (tự tạo .env với khoá bí mật ngẫu nhiên, build, chờ sẵn sàng)
+bash scripts/cai-nhanh.sh                  # chỉ ứng dụng kế toán
+bash scripts/cai-nhanh.sh --giam-sat       # hoặc: kèm Prometheus + Grafana + Loki
+
+# 3. Mở http://localhost:8088 — đơn vị demo · admin@ketoan.local · Admin@123 (đổi mật khẩu ngay)
+```
+
+Script [`scripts/cai-nhanh.sh`](scripts/cai-nhanh.sh) **không ghi đè** `.env` đã có, tự nhận Docker Desktop để dùng tệp ghép phù hợp, và in ra mọi địa chỉ + nơi lấy mật khẩu khi xong. Lần đầu build mất vài phút. Đây là cách cài cho **máy thử / máy cá nhân**; máy chủ thật xem [trien-khai.md](docs/trien-khai.md).
+
+<details>
+<summary>Tự chạy từng lệnh thay cho script</summary>
+
+```bash
+cp .env.example .env                       # đổi JWT_SECRET (≥ 32 ký tự ngẫu nhiên), mật khẩu quản trị
 docker compose up -d --build               # db + migration + api + web
 ```
+
+</details>
 
 Nạp cấu hình ngành và dữ liệu mẫu **hư cấu** (cần Node ≥ 22.12):
 
@@ -141,7 +166,8 @@ BIZCITY_PASSWORD='Admin@123' node scripts/cai-preset.mjs thuong-mai-ban-le \
 | `/api/v1/system/health` · `/health/ready` | Sống · sẵn sàng (migration, trigger bảo vệ sổ, CSDL ghi được) |
 | `/api/v1/system/diagnostics` | Tự chẩn đoán toàn vẹn sổ |
 | `/api/v1/system/capabilities` | Năng lực Standard của bản đang chạy |
-| `POST /mcp` | Công cụ MCP cho trợ lý AI |
+| `POST /mcp` | Công cụ MCP cho trợ lý AI ([kết nối](#kết-nối-api-và-trợ-lý-ai-với-bizcity)) |
+| http://127.0.0.1:3000 · :9090 | Grafana · Prometheus (khi cài `--giam-sat`, [xem dưới](#giám-sát-vận-hành-prometheus--grafana--loki)) |
 
 ### Tài liệu cài đặt
 
@@ -152,6 +178,63 @@ BIZCITY_PASSWORD='Admin@123' node scripts/cai-preset.mjs thuong-mai-ban-le \
 | Cài nhanh theo ngành, dữ liệu mẫu | [presets/README.md](presets/README.md) · [bizcity_preset@1](docs/contracts/BIZCITY-PRESET-v1.md) |
 | Bật giám sát Prometheus / Grafana / Loki | [infrastructure/monitoring](infrastructure/monitoring/README.md) |
 | Cơ sở dữ liệu, migration | [db/README.md](db/README.md) · [RULE-DATABASE](docs/rules/RULE-DATABASE.md) |
+
+## Giám sát vận hành: Prometheus · Grafana · Loki
+
+Bộ giám sát **đi kèm trong repo, chạy bằng Docker, không phải cài riêng** và **không bắt buộc**: không bật thì phần mềm kế toán vẫn chạy bình thường. Bật bằng `bash scripts/cai-nhanh.sh --giam-sat`, hoặc ghép tệp compose:
+
+```bash
+# .env cần GRAFANA_ADMIN_PASSWORD (bắt buộc — thiếu thì docker compose dừng và báo)
+docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d
+# Docker Desktop (Windows / macOS): ghép thêm  -f infrastructure/monitoring/docker-compose.desktop.yml
+```
+
+| Thành phần | Việc | Địa chỉ |
+|---|---|---|
+| **Prometheus** | thu số đo `bizcity_*` từ `GET /metrics` của API, PostgreSQL, máy chủ, container; tính 14 luật cảnh báo | http://127.0.0.1:9090 |
+| **Grafana** | 9 bảng điều khiển tự nạp (thư mục **Bizcity**), đăng nhập `admin` + `GRAFANA_ADMIN_PASSWORD` | http://127.0.0.1:3000 |
+| **Loki + Promtail** | nhật ký JSON của API, tra theo mã yêu cầu `reqId` / mã lỗi | qua Grafana (bảng 06) |
+| **Alertmanager** | gom, lọc trùng, gửi cảnh báo (webhook, email…) — mặc định không gửi đi đâu | http://127.0.0.1:9093 |
+| postgres-exporter · node-exporter · cAdvisor | số đo CSDL, máy chủ, container | — |
+
+**Giám sát trả lời được gì:** dịch vụ có khoẻ không (01 Tổng quan, 02 API, 03 CSDL) · ghi sổ có trễ / lỗi không, tách **từ chối đúng luật** (kỳ khoá, không cân, thiếu cấu hình) khỏi **lỗi kỹ thuật** (04, 09 Toàn vẹn sổ) · sự kiện có dồn / chết không (07 Đường sự kiện) · lần đối soát sổ gần nhất là khi nào (09) · tải phân bố theo đơn vị mà không lộ đơn vị nào (08). Cảnh báo `LedgerIntegrityError`, `PostingBacklog`, `OutboxDeadLetter`, `ReconciliationStale`… kèm [sổ tay xử lý](docs/ops/RUNBOOK-CANH-BAO.md).
+
+**Nguyên tắc:** giám sát **chỉ quan sát** — Prometheus không phải nguồn sự thật kế toán, cảnh báo không bao giờ tự sửa sổ; số đo không có nhãn đơn vị / chứng từ / người dùng; `/metrics`, Grafana, Prometheus chỉ mở trong máy (`127.0.0.1`), ra ngoài phải qua proxy có HTTPS + đăng nhập. Chi tiết: [infrastructure/monitoring](infrastructure/monitoring/README.md) · [OBSERVABILITY](docs/ops/OBSERVABILITY.md) · [PHASE-018](docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/README.md).
+
+## Kết nối API và trợ lý AI với Bizcity
+
+Doanh nghiệp có thể nối phần mềm của mình và trợ lý AI vào open-ketoan để **ghi nhận sổ sách** (gửi chứng từ, lập phiếu nháp từ mô tả) và **đọc báo cáo kế toán, quản trị** (cân đối phát sinh, kết quả kinh doanh, công nợ, tiền) — dữ liệu vẫn nằm trong PostgreSQL của doanh nghiệp.
+
+### Bước 1 — Tạo khoá API
+
+Đăng nhập bằng tài khoản quản trị → **Hệ thống → Khoá API (HT02)** → *Tạo khoá API*, chọn quyền (`reports:read` để đọc báo cáo; `documents:write` để gửi chứng từ). Khoá dạng `kt_…` **chỉ hiện một lần** — lưu vào kho bí mật của bạn. Mỗi khoá gắn với một đơn vị; thu hồi bất cứ lúc nào ở cùng màn.
+
+### Bước 2 — Chọn cách kết nối
+
+| Cách | Dùng khi | Gọi | Trạng thái |
+|---|---|---|---|
+| **REST API** | POS, WooCommerce / WordPress, ERP, app riêng **gửi chứng từ** bán, mua, thu, chi, chuyển kho | `POST /api/v1/documents` với header `X-Api-Key` — [API tích hợp](docs/api-tich-hop.md), [JSON mẫu](docs/api/README.md), thử tại `/api/docs` | có |
+| **MCP** (Model Context Protocol) | **Trợ lý AI** — Claude, ChatGPT, agent tự viết — hỏi báo cáo, lập phiếu nháp bằng lời | `POST /mcp` (JSON-RPC 2.0) với `X-Api-Key` hoặc phiên đăng nhập — [bizcity_mcp@1](docs/contracts/BIZCITY-MCP-v1.md) | có — 17 công cụ |
+| **Bizcity Cell** | trợ lý kế toán qua **Zalo / web chat** do bizcity.vn vận hành (AI, OCR hoá đơn), một khoá 1API `biz-…` | Cell gọi ngược MCP của Core — [CELL-CONNECT](docs/standard/CELL-CONNECT.md), [CELL-MCP](docs/standard/CELL-MCP.md) | **đang phát triển** ([PHASE-015](docs/phases/PHASE-015-CELL-WORDPRESS/README.md)) |
+
+Ví dụ trợ lý AI đọc bảng cân đối số phát sinh tháng 10 qua MCP:
+
+```bash
+curl -s https://<máy-chủ>/mcp -H "X-Api-Key: kt_…" -H "Content-Type: application/json" -d '{
+  "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+  "params": { "name": "accounting.report.trial_balance", "arguments": { "from": "2026-10-01", "to": "2026-10-31" } } }'
+# "method": "tools/list" → danh sách công cụ đúng với bản đang chạy và quyền của khoá
+```
+
+**Công cụ MCP hiện có (bản 2026-11-01):**
+
+| Nhóm | Công cụ |
+|---|---|
+| **Đọc báo cáo, số dư** | `accounting.report.trial_balance` (cân đối phát sinh) · `accounting.report.income_statement` (kết quả kinh doanh B02) · `accounting.balance.get` (số dư tài khoản tại một ngày) · `accounting.cash.balances` (tiền mặt, ngân hàng) · `accounting.debts.partner_balances` (công nợ theo đối tượng) |
+| **Tra cứu, giải thích** | `accounting.posting.reason_suggest` (gợi ý lý do định khoản từ câu mô tả) · `accounting.policy.list` · `core.template.list` · `core.evidence.get` (kiểm biên nhận) |
+| **Đề xuất ghi — luôn chờ duyệt** | `accounting.document.create_draft` (chứng từ nháp) · `accounting.journal.post` (phiếu kế toán nháp) · `accounting.entry.reverse` (đề xuất huỷ) · `quy.payment_request.create` / `.update` (yêu cầu thanh toán; `.list` / `.get` để đọc) |
+
+**Luật an toàn khi cho AI ghi sổ:** công cụ ghi trả **bút toán xem trước** + `confirm_token`, người dùng xác nhận thì mới lập phiếu, và phiếu luôn ở trạng thái **chờ kế toán duyệt** tại màn ACC14. AI **không** tự duyệt, không vượt khoá kỳ, không đổi cấu hình, không ghi thẳng sổ cái. Mọi lần gọi ghi có bằng chứng (`audit_logs`, chuỗi băm) và quyền theo khoá — AI chỉ làm được những gì khoá cho phép.
 
 ## Sử dụng
 
@@ -214,7 +297,8 @@ npm test                                   # PostgreSQL thật; sau mỗi tệp 
 
 | Việc | Tài liệu |
 |---|---|
-| Log, trace, số đo `/metrics`, cảnh báo | [OBSERVABILITY](docs/ops/OBSERVABILITY.md) |
+| Log, trace, số đo `/metrics`, cảnh báo | [OBSERVABILITY](docs/ops/OBSERVABILITY.md) · [bộ giám sát](infrastructure/monitoring/README.md) |
+| Xử lý từng cảnh báo (an toàn, không sửa sổ tay) | [RUNBOOK-CANH-BAO](docs/ops/RUNBOOK-CANH-BAO.md) |
 | Tự chẩn đoán, khối bằng chứng khi báo lỗi | [DIAGNOSTICS](docs/ops/DIAGNOSTICS.md) |
 | Sao lưu, thử khôi phục, PITR | [RULE-INFRASTRUCTURE](docs/rules/RULE-INFRASTRUCTURE.md) (R-BAK) · `scripts/kiem-khoi-phuc.sh` |
 | Nâng cấp phiên bản, kiểm migration trên CSDL nâng cấp | [RELEASE](docs/ops/RELEASE.md) · `scripts/kiem-nang-cap.sh` |
@@ -249,9 +333,11 @@ open-ketoan đang trong giai đoạn **xây dựng / chuẩn hoá framework**. K
 | MCP tools | Có công cụ đọc; một số công cụ ghi / đề xuất còn dự kiến |
 | Transactional outbox, domain event runtime | Chưa hoàn thành; nằm trong lộ trình |
 | RLS, PITR và hardening cho multi-tenant | Cần tiếp tục hoàn thiện |
+| Giám sát Prometheus / Grafana / Loki: ghi sổ, sự kiện, đối soát, 9 dashboard, 14 cảnh báo (PHASE-018, 01/11/2026) | Có trên nhánh `feat/phase-018-giam-sat`; trace OpenTelemetry, SLO, widget CEO còn trong lộ trình |
+| Kết nối một chạm với Bizcity Cell (Zalo / web chat) | Đặc tả xong, chưa code (PHASE-015) |
 | NATS, Redis, Kong, Kubernetes | Tuỳ chọn ở các giai đoạn sau |
 
-Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/standard/roadmap.json`). Việc chia thành **17 thư mục phase** (kế hoạch, checklist con, bằng chứng; phase nào đã có code): [docs/phases/](docs/phases/README.md). Đánh giá codebase so với kiến trúc (khoảng 50% kiến trúc công bố): [AUDIT-2026-10-30-KIEN-TRUC](docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md). Điểm tuân thủ 9 yêu cầu bắt buộc tự tính mỗi lần chạy bộ kiểm: [Bản công bố kiến trúc §4.1](docs/CONG-BO-KIEN-TRUC.md). Thay đổi theo phiên bản: [CHANGELOG.md](CHANGELOG.md).
+Tiến độ chi tiết: [PHASES](docs/standard/PHASES.md) (máy đọc: `docs/standard/roadmap.json`). Việc chia thành **18 thư mục phase** (kế hoạch, checklist con, bằng chứng; phase nào đã có code): [docs/phases/](docs/phases/README.md). Đánh giá codebase so với kiến trúc (khoảng 50% kiến trúc công bố): [AUDIT-2026-10-30-KIEN-TRUC](docs/audits/AUDIT-2026-10-30-KIEN-TRUC.md). Điểm tuân thủ 9 yêu cầu bắt buộc tự tính mỗi lần chạy bộ kiểm: [Bản công bố kiến trúc §4.1](docs/CONG-BO-KIEN-TRUC.md). Thay đổi theo phiên bản: [CHANGELOG.md](CHANGELOG.md).
 
 **Không coi bản công bố kiến trúc là chứng nhận tuân thủ pháp luật hoặc bảo đảm sẵn sàng production.** Các chế độ kế toán và quy định pháp lý cần được đối chiếu theo đối tượng sử dụng, thời điểm áp dụng và kiểm nghiệm thực tế.
 
