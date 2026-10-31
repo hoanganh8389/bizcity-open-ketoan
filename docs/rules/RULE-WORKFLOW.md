@@ -1,12 +1,13 @@
 # RULE · Luồng nghiệp vụ (R-WF)
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-31 03:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — R-WF-1 khai bằng *.workflow.yaml (documents.workflow), kiểm bằng test/workflow.test.ts. -->
 
 > **Cấp:** Tier 1 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Khuôn + danh mục luồng:** [../workflows/README.md](../workflows/README.md)
 
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
-| **R-WF-1** | Mỗi phiếu nghiệp vụ của phân hệ có **máy trạng thái khai báo** (danh sách trạng thái, chuyển hợp lệ, quyền cho từng chuyển). Không đổi trạng thái bằng `UPDATE` tuỳ ý ngoài hàm chuyển | Test luồng của phân hệ |
+| **R-WF-1** | Mỗi phiếu nghiệp vụ của phân hệ có **máy trạng thái khai báo** (danh sách trạng thái, chuyển hợp lệ, quyền cho từng chuyển). Không đổi trạng thái bằng `UPDATE` tuỳ ý ngoài hàm chuyển. Khai bằng tệp `<loại>.workflow.yaml` (năng lực `documents.workflow`, [bizcity_document@1 §5.1](../contracts/BIZCITY-DOCUMENT-v1.md)) | `test/workflow.test.ts` + test luồng của phân hệ |
 | **R-WF-2** | Trạng thái chuẩn: `draft` → `submitted` → `approved` (1 hoặc 2 cấp) → `done` / `cancelled`. Phân hệ được thêm trạng thái giữa nhưng phải ánh xạ về một trạng thái chuẩn | Khai báo luồng |
 | **R-WF-3** | **Chỉ chuyển sang `approved`** (hoặc trạng thái nguồn tương đương "đã duyệt") mới nộp sự việc; bỏ duyệt / huỷ → nộp yêu cầu huỷ (R-EVENT-8). Phiếu nháp không bao giờ có bút toán | `mua-hang.test.ts`, `payment-requests.test.ts` |
 | **R-WF-4** | Sửa phiếu đã duyệt = **phiên bản mới** của cùng `docKey`; không tạo `docKey` mới | R-EVENT-3 |

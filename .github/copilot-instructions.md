@@ -12,6 +12,16 @@
 3. Mọi đầu vào tài chính đi `postDocumentIn()` (chứng từ nhận từ nguồn) hoặc `eventStore` (sự việc Kernel tự lập). Ngoài Kernel chỉ dùng cổng `apps/api/src/kernel/public.ts`.
 4. Không viết số tài khoản trong code định khoản — tra qua `AccountResolver`.
 
+## Trước khi code: đồng bộ với `main`
+<!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — nhắc đồng bộ main trước khi code, ký bù đúng tên người đóng góp. -->
+
+`git fetch` → có việc dở thì `git stash push -u` → `git merge --ff-only origin/main` → `git stash pop` (xung đột: gộp cả hai ý) → `npm run build -w @ketoan/contracts` nếu `packages/contracts` đổi → `node tests/conformance/selfcheck.mjs` phải ĐẠT rồi mới sửa tiếp. Không rebase nhánh đã đẩy, không `push --force`. Chi tiết: AGENTS.md "Trước khi code".
+
+## Rà soát việc của người đóng góp (R-REV)
+<!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — nhắc phân vai và rà soát mỗi lần nhận việc của người đóng góp. -->
+
+Người đóng góp làm phân hệ / giao diện qua PR (không đẩy thẳng `main`); đụng tệp framework thì chủ dự án duyệt. Nhóm Lõi rà mỗi lần nhận việc: `node scripts/ra-soat-dong-gop.mjs --range <từ>..<đến> --author "<tên>"` + selfcheck + test + diagnostics, dữ liệu kế toán, mã hàng theo `SKU_RULE`. Chi tiết: [docs/rules/RULE-REVIEW.md](../docs/rules/RULE-REVIEW.md).
+
 ## Chữ ký và dấu thay đổi (R-SIG)
 
 Mỗi lần sửa có chức năng một tệp framework thêm một dòng dấu tại chỗ đổi:
@@ -22,6 +32,7 @@ Mỗi lần sửa có chức năng một tệp framework thêm một dòng dấu
 
 - In sẵn dòng đúng giờ: `node scripts/ky-dau.mjs <MÃ> "<mô tả>" --file <tệp>`.
 - Người = người chỉ đạo thay đổi, **không** phải Copilot / agent.
+- Ký bù tệp người khác làm: tên **tác giả commit trong git**, giờ commit đó, ghi `ký bù (commit <hash>, đóng góp)`; không ghi tên chủ dự án, không bịa dấu duyệt.
 - Không xoá dấu cũ; migration đã phát hành không sửa.
 - Bộ kiểm: SC-SIG-1, SC-SIG-2. Chi tiết: [docs/rules/RULE-SIGNATURE.md](../docs/rules/RULE-SIGNATURE.md).
 

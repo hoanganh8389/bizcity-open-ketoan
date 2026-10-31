@@ -1,0 +1,47 @@
+# Luồng chứng từ mua hàng (đơn đặt, phiếu nhập, trả NCC, chi phí, thưởng…) — bizcity_document@1 §5, năng lực documents.workflow.
+# Duyệt = ghi sổ (R-WF-3); bỏ duyệt = huỷ các sự việc kế toán đã sinh (bút toán đảo) rồi về nháp.
+# Runtime: apps/api/src/core/workflow.ts. Thực thi: service.ts (purchaseService.submit / approve / unapprove / cancel).
+type: mua-hang.purchase-document
+label: Chứng từ mua hàng
+states:
+  draft:            { group: draft,     label: Nháp }
+  pending_approval: { group: pending,   label: Chờ duyệt }
+  approved:         { group: approved,  label: Đã duyệt }
+  cancelled:        { group: cancelled, label: Đã huỷ }
+transitions:
+  submit:
+    title: Gửi duyệt
+    from: [draft]
+    to: pending_approval
+    permission: documents:write
+    blocked: { '*': Chỉ phiếu nháp mới gửi duyệt được }
+  approve:
+    title: Duyệt
+    from: [draft, pending_approval]
+    to: approved
+    permission: documents:write
+    ledger: true
+    blocked: { approved: Phiếu đã duyệt, cancelled: Phiếu đã huỷ }
+  # Duyệt ngoại lệ: chỉ khi mọi cảnh báo chặn là loại được bỏ qua (vượt hạn mức, đổi mã, nhập ngoài đơn) — service.ts kiểm phần đó.
+  override:
+    title: Duyệt ngoại lệ
+    from: [draft, pending_approval]
+    to: approved
+    permission: payments:approve
+    requires: [reason]
+    ledger: true
+    denied: Duyệt ngoại lệ vượt hạn mức cần quyền duyệt (kế toán trưởng / chủ đơn vị)
+    blocked: { approved: Phiếu đã duyệt, cancelled: Phiếu đã huỷ }
+  unapprove:
+    title: Bỏ duyệt
+    from: [approved]
+    to: draft
+    permission: documents:write
+    ledger: true
+    blocked: { '*': Phiếu chưa duyệt }
+  cancel:
+    title: Huỷ
+    from: [draft, pending_approval]
+    to: cancelled
+    permission: documents:write
+    blocked: { approved: 'Phiếu đã duyệt: bỏ duyệt trước khi huỷ' }

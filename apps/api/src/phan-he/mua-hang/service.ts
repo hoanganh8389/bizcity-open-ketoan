@@ -2,6 +2,8 @@
 /**
  * Nghiệp vụ chứng từ mua hàng: lưu (máy chủ tự tính tiền, hạn, cảnh báo), gửi duyệt, duyệt (ghi sổ), duyệt ngoại lệ vượt
  * hạn mức, bỏ duyệt (huỷ chứng từ kế toán đã sinh), huỷ. Mỗi bước ghi nhật ký JSONL (log.ts).
+ * Trạng thái và chuyển (ai được gửi / duyệt / bỏ duyệt / huỷ, từ trạng thái nào): purchase-document.workflow.yaml
+ * (documents.workflow, PHASES 3.5) — runtime core/workflow.ts.
  */
 import { sql } from 'kysely';
 import { computeDoc, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
@@ -9,6 +11,7 @@ import { db, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
+import { loadWorkflow, workflowActor } from '../../core/workflow.js';
 import { documentService } from '../../kernel/public.js';
 import { analyze, isOutsideOrder, loadCtx, withBrands, type Analysis } from './analysis.js';
 import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
@@ -19,7 +22,11 @@ import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js'
 /** Phiếu mua có hàng ra / vào kho (đơn đặt chưa vào kho; chi phí, thưởng chỉ điều chỉnh giá trị). */
 const STOCK_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
 
-const LOCKED = new Set(['approved', 'cancelled']);
+/** Máy trạng thái khai báo của chứng từ mua hàng. */
+export const purchaseWorkflow = loadWorkflow(new URL('./purchase-document.workflow.yaml', import.meta.url));
+const wf = purchaseWorkflow;
+/** Không sửa nội dung được: đã duyệt / hoàn tất / huỷ. Phiếu chờ duyệt vẫn sửa được (như trước khi khai workflow). */
+const LOCKED = new Set([...wf.statesIn('approved'), ...wf.statesIn('done'), ...wf.statesIn('cancelled')]);
 
 function toPDoc(input: DocInput, id = 'new'): PDoc {
   return { ...(input as unknown as PDoc), id, status: 'draft', docNo: input.docNo ?? '', refIds: input.refIds ?? [] };
@@ -120,9 +127,9 @@ export const purchaseService = {
       const docs = await listDocsFor(trx, auth.tenantId, await getDoc(trx, auth.tenantId, id));
       const d = docs.find((x) => x.id === id);
       if (!d) throw Errors.notFound('chứng từ mua hàng');
-      if (d.status !== 'draft') throw Errors.conflict('Chỉ phiếu nháp mới gửi duyệt được');
+      const step = wf.plan('submit', d, workflowActor(auth));
       const a = await analyze(trx, auth.tenantId, d, await loadCtx(trx, auth.tenantId, docs));
-      await trx.updateTable('purchase_documents').set({ status: 'pending_approval', updated_at: new Date() }).where('id', '=', id).execute();
+      await trx.updateTable('purchase_documents').set({ status: step.to, updated_at: new Date() }).where('id', '=', id).execute();
       return { doc: await getDoc(trx, auth.tenantId, id), a };
     }).catch((e: { code?: string }) => { if (e?.code === '23505') throw Errors.conflict('Hoá đơn này đã có ở chứng từ khác đang chờ duyệt / đã duyệt'); throw e; });
     await logEvents(auth.tenantId, [{ event: 'doc_submitted', docNo: out.doc.docNo, user: auth.actorName, data: { payable: out.doc.totals.total } }, ...logRowsFor(out.doc, out.a, auth.actorName, false)]);
@@ -131,12 +138,12 @@ export const purchaseService = {
 
   /** Duyệt = ghi sổ. override: duyệt ngoại lệ vượt hạn mức (chỉ khi mọi cảnh báo chặn là vượt hạn mức), bắt buộc lý do. */
   async approve(auth: AuthContext, id: string, override?: { reason: string }): Promise<StoredDoc> {
-    if (override && !auth.permissions.has('payments:approve')) throw Errors.forbidden('Duyệt ngoại lệ vượt hạn mức cần quyền duyệt (kế toán trưởng / chủ đơn vị)');
     const out = await db.transaction().execute(async (trx: Db) => {
       const docs = await listDocsFor(trx, auth.tenantId, await getDoc(trx, auth.tenantId, id, true));
       const d = docs.find((x) => x.id === id);
       if (!d) throw Errors.notFound('chứng từ mua hàng');
-      if (LOCKED.has(d.status)) throw Errors.conflict(d.status === 'approved' ? 'Phiếu đã duyệt' : 'Phiếu đã huỷ');
+      // Duyệt ngoại lệ: quyền payments:approve + lý do bắt buộc (khai ở workflow).
+      const step = wf.plan(override ? 'override' : 'approve', d, workflowActor(auth), override);
       const ctx = await loadCtx(trx, auth.tenantId, docs);
       const a = await analyze(trx, auth.tenantId, d, ctx);
       // Được duyệt ngoại lệ (có lý do, người có quyền): vượt hạn mức, nhập đổi mã so với đơn đặt.
@@ -144,14 +151,13 @@ export const purchaseService = {
       if (a.blocking.length && !(override && creditOnly)) {
         throw Errors.conflict(a.blocking.map((c) => c.text).join('; '), { checks: checksOf(a), canOverride: creditOnly });
       }
-      if (override && !override.reason.trim()) throw Errors.validation('Duyệt ngoại lệ phải ghi lý do');
       const ov = override && creditOnly ? { by: auth.actorName, at: new Date().toISOString(), reason: override.reason.trim() } : undefined;
       // Nhập ngoài đơn: đóng dấu người duyệt + thời điểm cùng lý do (giữ mãi trên phiếu, lọc / rà soát riêng).
       const outside = isOutsideOrder(d, a.refOrder) ? { reason: d.outsideOrder!.reason.trim(), by: auth.actorName, at: new Date().toISOString() } : undefined;
       const links = await postPurchase(trx, auth, d, a.calc, a.accounts, docs);
       const data = { ...(await trx.selectFrom('purchase_documents').select('data').where('id', '=', id).executeTakeFirstOrThrow()).data as Record<string, unknown>, checks: checksOf(a), policyTrace: a.calc.trace, ...((FREEZE_KINDS as readonly string[]).includes(d.kind) ? { frozen: freezeOf(d, a.calc, ctx.policies) } : {}), override: ov, outsideOrder: outside, approvedActor: auth.actor }; // duyệt thường: không mang dấu duyệt ngoại lệ của lần trước
       await trx.updateTable('purchase_documents').set({
-        status: 'approved', revision: d.revision + 1, links: JSON.stringify(links), data: JSON.stringify(data), approved_by: auth.actorName, approved_at: new Date(),
+        status: step.to, revision: d.revision + 1, links: JSON.stringify(links), data: JSON.stringify(data), approved_by: auth.actorName, approved_at: new Date(),
         due_date: a.calc.dueDate ?? null, updated_at: new Date(),
       }).where('id', '=', id).execute();
       if (ov) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'purchase.override_credit', objectType: 'purchase_document', objectId: id, after: { docNo: d.docNo, reason: ov.reason, credit: a.credit } });
@@ -182,21 +188,21 @@ export const purchaseService = {
   /** Bỏ duyệt: huỷ các chứng từ kế toán đã sinh (đảo bút toán, gỡ kho, gỡ đối trừ) rồi về nháp. */
   async unapprove(auth: AuthContext, id: string, reason = 'Bỏ duyệt phiếu mua hàng'): Promise<StoredDoc> {
     const d = await getDoc(db, auth.tenantId, id);
-    if (d.status !== 'approved') throw Errors.conflict('Phiếu chưa duyệt');
+    const step = wf.plan('unapprove', d, workflowActor(auth));
     const dependents = (await dependentsOf(db, auth.tenantId, id)).filter((x) => x.kind !== 'payment');
     if (dependents.length) throw Errors.conflict(`Phiếu ${dependents.map((x) => x.docNo).join(', ')} đang dựa trên phiếu này — bỏ duyệt các phiếu đó trước`);
     for (const l of [...d.links].reverse()) await documentService.cancel(auth, l.docKey, `${reason} ${d.docNo}`);
     // Về nháp: xoá dấu duyệt ngoại lệ (lịch sử vẫn ở nhật ký mua hàng MH10 và nhật ký thao tác).
-    await db.updateTable('purchase_documents').set({ status: 'draft', links: '[]', approved_by: null, approved_at: null, data: sql`data - 'override'`, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    await db.updateTable('purchase_documents').set({ status: step.to, links: '[]', approved_by: null, approved_at: null, data: sql`data - 'override'`, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'doc_unapproved', docNo: d.docNo, user: auth.actorName, data: { reason, cancelled: d.links.map((l) => l.docNo) } }]);
     return getDoc(db, auth.tenantId, id);
   },
 
   async cancel(auth: AuthContext, id: string): Promise<StoredDoc> {
     const d = await getDoc(db, auth.tenantId, id);
-    if (d.status === 'approved') throw Errors.conflict('Phiếu đã duyệt: bỏ duyệt trước khi huỷ');
     if (d.status === 'cancelled') return d;
-    await db.updateTable('purchase_documents').set({ status: 'cancelled', updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    const step = wf.plan('cancel', d, workflowActor(auth));
+    await db.updateTable('purchase_documents').set({ status: step.to, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'doc_cancelled', docNo: d.docNo, user: auth.actorName, data: {} }]);
     return getDoc(db, auth.tenantId, id);
   },

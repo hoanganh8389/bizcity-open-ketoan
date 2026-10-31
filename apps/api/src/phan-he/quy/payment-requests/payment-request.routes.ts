@@ -3,6 +3,7 @@
  * Yêu cầu thanh toán: đề nghị chi → duyệt một / hai cấp → lập phiếu chi hoặc báo nợ.
  * Mẫu đầu tiên chuyển sang defineAction (PHASES 2.5, bizcity_action@1 §9): mỗi thao tác là một action, runtime (core/actions.ts)
  * lo quyền, kiểm input, idempotency, giao dịch, bằng chứng, dry-run. Đường dẫn và khuôn phản hồi giữ như cũ.
+ * Trạng thái, chuyển, cấp duyệt: payment-request.workflow.yaml (documents.workflow, PHASES 3.5) — runtime core/workflow.ts.
  *   GET  /api/v1/payment-requests?status=&partnerCode=&from=&to=      quy.payment-request.list
  *   GET  /api/v1/payment-requests/:id                                 quy.payment-request.get
  *   POST /api/v1/payment-requests                 (Idempotency-Key)   quy.payment-request.create — nháp, hoặc gửi duyệt luôn với submit = true
@@ -19,15 +20,17 @@ import { sql } from 'kysely';
 import { z } from 'zod';
 import { fromCents, toCents, voucherInputSchema } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../../db/client.js';
-import type { Permission } from '../../../core/auth.js';
 import { Errors } from '../../../core/errors.js';
 import { idSchema } from '../../../core/http.js';
 import { defineAction, mountActions, type ActionContext, type ActionDef, type ActionSideEffect, type AnyActionDef } from '../../../core/actions.js';
+import { loadWorkflow, type WorkflowStep } from '../../../core/workflow.js';
 import { voucherService } from '../../../kernel/public.js';
 
 const tags = ['Yêu cầu thanh toán'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-export const PAYMENT_REQUEST_STATUS = { draft: 'Nháp', submitted: 'Chờ duyệt', approved1: 'Đã duyệt cấp 1', approved: 'Đã duyệt', rejected: 'Bị từ chối', paid: 'Đã chi', cancelled: 'Đã huỷ' } as const;
+/** Máy trạng thái khai báo (documents.workflow): trạng thái, nhóm chuẩn, chuyển, quyền, cấp duyệt — payment-request.workflow.yaml. */
+export const paymentRequestWorkflow = loadWorkflow(new URL('./payment-request.workflow.yaml', import.meta.url));
+const wf = paymentRequestWorkflow;
 
 const bodySchema = z.object({
   requestDate: day,
@@ -121,7 +124,7 @@ async function list(trx: Db, tenantId: string, f: { status?: string; partnerCode
     .select(['p.code as partner_code', 'p.name as partner_name', 'p.bank_account_no', 'p.bank_account_holder', 'p.bank_name', 'd.doc_no as paid_doc_no'])
     .where('r.tenant_id', '=', tenantId);
   if (f.id) q = q.where('r.id', '=', f.id);
-  if (f.status === 'pending') q = q.where('r.status', 'in', ['submitted', 'approved1']);
+  if (f.status === 'pending') q = q.where('r.status', 'in', wf.statesIn('pending'));
   else if (f.status) q = q.where('r.status', '=', f.status);
   if (f.partnerCode) q = q.where('p.code', '=', f.partnerCode);
   if (f.from) q = q.where('r.request_date', '>=', f.from);
@@ -132,7 +135,7 @@ async function list(trx: Db, tenantId: string, f: { status?: string; partnerCode
     partnerBank: { accountNo: x.bank_account_no, holder: x.bank_account_holder, bankName: x.bank_name },
     amount: toNumber(x.amount), dueDate: x.due_date, method: x.method, debitAccount: x.debit_account, description: x.description, sourceRef: x.source_ref,
     items: x.items as unknown as StoredItem[], contractScheduleId: x.contract_schedule_id,
-    status: x.status, statusLabel: PAYMENT_REQUEST_STATUS[x.status as keyof typeof PAYMENT_REQUEST_STATUS] ?? x.status, levelsRequired: x.levels_required,
+    status: x.status, statusLabel: wf.label(x.status), levelsRequired: x.levels_required,
     createdBy: x.created_by, createdByName: x.created_by_name, submittedAt: x.submitted_at,
     approved1By: x.approved1_by, approved1At: x.approved1_at, approved2By: x.approved2_by, approved2At: x.approved2_at,
     rejectedBy: x.rejected_by, rejectedReason: x.rejected_reason, paidDocumentId: x.paid_event_id, paidDocNo: x.paid_doc_no,
@@ -147,31 +150,38 @@ const prSchema = z.object({
 const stateSchema = z.object({ id: z.string(), requestNo: z.string(), status: z.string() });
 
 type Current = Awaited<ReturnType<typeof load>>;
-type Patch = Record<string, unknown> & { status: string; extra?: Record<string, unknown> };
+type Patch = Record<string, unknown> & { extra?: Record<string, unknown> };
+const reasonBody = z.object({ reason: z.string().trim().min(1, 'Cần ghi lý do').max(500) });
 
 /**
- * Đổi trạng thái có kiểm trạng thái hiện tại. Mặc định idempotency 'natural': gửi lại thì trạng thái đã đổi, kiểm chặn, không tạo
- * thêm gì. Bằng chứng (audit_logs, mã action) do runtime ghi.
+ * Một chuyển của workflow thành một action (STD-DOC-3). Runtime workflow quyết định trạng thái nguồn hợp lệ, quyền (theo cấp /
+ * theo trạng thái), chỉ người lập, lý do bắt buộc, trạng thái đích; `run` chỉ thêm cột riêng của chuyển (người duyệt, lúc duyệt…)
+ * và việc chạm sổ. Mặc định idempotency 'natural': gửi lại thì trạng thái đã đổi, workflow chặn, không tạo thêm gì. Bằng chứng
+ * (audit_logs, mã action, chuyển "từ → sang") do runtime action ghi.
  */
 function transition<B extends z.AnyZodObject>(def: {
-  verb: string; title: string; permission: Permission; body: B;
+  verb: string; body?: B;
   idempotency?: 'required' | 'natural'; dryRun?: boolean; errors?: ActionDef['errors']; sideEffects?: ActionSideEffect[];
-  run: (ctx: ActionContext, cur: Current, body: z.infer<B>) => Promise<Patch>;
+  run?: (ctx: ActionContext, cur: Current, body: z.infer<B>, step: WorkflowStep) => Promise<Patch>;
 }): AnyActionDef {
+  const t = wf.transition(def.verb);
+  const body = (def.body ?? (wf.requiresReason(def.verb) ? reasonBody : z.object({}))) as z.AnyZodObject;
   return defineAction({
-    id: `quy.payment-request.${def.verb}`, title: def.title, tags, permission: def.permission, effect: 'write',
+    id: `quy.payment-request.${def.verb}`, title: t.title, tags, permission: wf.gate(def.verb), effect: 'write',
     idempotency: def.idempotency ?? 'natural', dryRun: def.dryRun, errors: def.errors ?? ['NOT_FOUND', 'CONFLICT', 'FORBIDDEN'],
     sideEffects: def.sideEffects ?? ['documents'],
-    input: idInput.merge(def.body), output: stateSchema.passthrough(),
+    input: idInput.merge(body), output: stateSchema.passthrough(),
     expose: { http: { method: 'POST', path: `/api/v1/payment-requests/:id/${def.verb}` }, mcp: true, ai: 'deny' },
     evidence: { objectType: 'payment_request', objectId: (_i, o) => o.requestNo },
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
       const { id, ...body } = input as { id: string } & Record<string, unknown>;
       const cur = await load(trx, ctx.tenant.id, id, true);
-      const { extra, ...set } = await def.run(ctx, cur, body as z.infer<B>);
-      await trx.updateTable('payment_requests').set({ ...set, updated_at: new Date() }).where('id', '=', cur.id).execute();
-      return { id: cur.id, requestNo: cur.request_no, status: set.status, ...extra };
+      const step = wf.plan(def.verb, { status: cur.status, createdBy: cur.created_by, levelsRequired: cur.levels_required }, { id: ctx.actor.id, can: (p) => ctx.can(p) }, body as { reason?: string });
+      const { extra, ...set } = (await def.run?.(ctx, cur, body as z.infer<B>, step)) ?? {};
+      await trx.updateTable('payment_requests').set({ ...set, status: step.to, updated_at: new Date() }).where('id', '=', cur.id).execute();
+      ctx.evidence.note('transition', `${step.from} → ${step.to}`);
+      return { id: cur.id, requestNo: cur.request_no, status: step.to, ...extra };
     },
   });
 }
@@ -220,7 +230,7 @@ export const paymentRequestActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const { id, ...b } = input;
       const cur = await load(trx, ctx.tenant.id, id, true);
-      if (!['draft', 'rejected'].includes(cur.status)) throw Errors.conflict('Chỉ sửa được yêu cầu còn nháp hoặc bị từ chối');
+      if (!wf.editable(cur.status)) throw Errors.conflict('Chỉ sửa được yêu cầu còn nháp hoặc bị từ chối');
       if (cur.created_by !== ctx.actor.id && !ctx.can('documents:edit-all')) throw Errors.forbidden('Bạn chỉ sửa được yêu cầu do chính mình lập');
       const values = await resolve(trx, ctx.tenant.id, b, cur.id);
       await trx.updateTable('payment_requests').set({
@@ -231,54 +241,26 @@ export const paymentRequestActions: AnyActionDef[] = [
     },
   }),
   transition({
-    verb: 'submit', title: 'Gửi duyệt', permission: 'documents:write', body: z.object({}),
-    run: async (ctx, cur) => {
-      if (!['draft', 'rejected'].includes(cur.status)) throw Errors.conflict('Yêu cầu đã được gửi duyệt');
-      return { status: 'submitted', submitted_at: new Date(), levels_required: await levelsFor(ctx.data.tx, ctx.tenant.id, toNumber(cur.amount)), rejected_by: null, rejected_reason: '' };
-    },
+    verb: 'submit',
+    run: async (ctx, cur) => ({ submitted_at: new Date(), levels_required: await levelsFor(ctx.data.tx, ctx.tenant.id, toNumber(cur.amount)), rejected_by: null, rejected_reason: '' }),
   }),
-  // Quyền vào là documents:read; cấp duyệt kiểm trong handler (payments:approve / payments:approve-final theo trạng thái).
+  // Cấp 1 (payments:approve) hay cấp 2 (payments:approve-final) do workflow chọn theo trạng thái; đủ số cấp thì sang "Đã duyệt".
   transition({
-    verb: 'approve', title: 'Duyệt (cấp 1 hoặc cấp 2 tuỳ trạng thái)', permission: 'documents:read', body: z.object({}),
-    run: async (ctx, cur) => {
-      if (cur.status === 'submitted') {
-        if (!ctx.can('payments:approve')) throw Errors.forbidden('Bạn không có quyền duyệt yêu cầu thanh toán');
-        return cur.levels_required === 2
-          ? { status: 'approved1', approved1_by: ctx.actor.name, approved1_at: new Date() }
-          : { status: 'approved', approved1_by: ctx.actor.name, approved1_at: new Date() };
-      }
-      if (cur.status === 'approved1') {
-        if (!ctx.can('payments:approve-final')) throw Errors.forbidden('Yêu cầu vượt ngưỡng: cần người có quyền duyệt cấp 2');
-        return { status: 'approved', approved2_by: ctx.actor.name, approved2_at: new Date() };
-      }
-      throw Errors.conflict('Yêu cầu không ở trạng thái chờ duyệt');
-    },
+    verb: 'approve',
+    run: async (ctx, _cur, _b, step) => (step.level === 1 ? { approved1_by: ctx.actor.name, approved1_at: new Date() } : { approved2_by: ctx.actor.name, approved2_at: new Date() }),
   }),
   transition({
-    verb: 'reject', title: 'Từ chối', permission: 'documents:read', body: z.object({ reason: z.string().trim().min(1, 'Cần ghi lý do từ chối').max(500) }),
-    run: async (ctx, cur, body) => {
-      if (!['submitted', 'approved1'].includes(cur.status)) throw Errors.conflict('Yêu cầu không ở trạng thái chờ duyệt');
-      if (!ctx.can(cur.status === 'approved1' ? 'payments:approve-final' : 'payments:approve')) throw Errors.forbidden('Bạn không có quyền duyệt yêu cầu thanh toán');
-      return { status: 'rejected', rejected_by: ctx.actor.name, rejected_reason: body.reason };
-    },
+    verb: 'reject', body: z.object({ reason: z.string().trim().min(1, 'Cần ghi lý do từ chối').max(500) }),
+    run: async (ctx, _cur, body) => ({ rejected_by: ctx.actor.name, rejected_reason: body.reason }),
   }),
-  transition({
-    verb: 'cancel', title: 'Huỷ yêu cầu chưa chi', permission: 'documents:write', body: z.object({}),
-    run: async (ctx, cur) => {
-      if (cur.status === 'paid') throw Errors.conflict('Yêu cầu đã chi; muốn huỷ thì huỷ phiếu chi trước');
-      if (cur.status === 'cancelled') throw Errors.conflict('Yêu cầu đã huỷ');
-      if (cur.created_by !== ctx.actor.id && !ctx.can('documents:edit-all')) throw Errors.forbidden('Bạn chỉ huỷ được yêu cầu do chính mình lập');
-      return { status: 'cancelled' };
-    },
-  }),
+  transition({ verb: 'cancel' }),
   // Chạm sổ: lập phiếu chi / báo nợ (voucherService → cửa ghi sổ). Gửi lặp sẽ tạo phiếu trùng nên idempotency bắt buộc;
   // ?dryRun=1 = xem trước phiếu và bút toán trong giao dịch rồi huỷ.
   transition({
-    verb: 'pay', title: 'Lập phiếu chi / báo nợ từ yêu cầu đã duyệt', permission: 'documents:write', idempotency: 'required', dryRun: true, sideEffects: ['documents', 'ledger'],
+    verb: 'pay', idempotency: 'required', dryRun: true, sideEffects: ['documents', 'ledger'],
     errors: ['NOT_FOUND', 'CONFLICT', 'FORBIDDEN', 'VALIDATION_ERROR', 'IDEMPOTENCY_CONFLICT', 'PERIOD_LOCKED', 'POSTING_FAILED'],
     body: z.object({ docDate: day, moneyAccount: z.string().trim().min(3).max(20), counterparty: z.string().trim().max(255).optional() }),
     run: async (ctx, cur, body) => {
-      if (cur.status !== 'approved') throw Errors.conflict('Yêu cầu chưa được duyệt xong, chưa lập phiếu chi được');
       const trx = ctx.data.tx;
       const partner = await trx.selectFrom('partners').select(['code', 'name']).where('id', '=', cur.partner_id).executeTakeFirstOrThrow();
       const items = cur.items as unknown as StoredItem[];
@@ -302,7 +284,7 @@ export const paymentRequestActions: AnyActionDef[] = [
         await trx.updateTable('contract_schedules').set({ status: 'paid', paid_date: body.docDate, paid_ref: created.docNo, updated_by: ctx.actor.id, updated_at: new Date() }).where('id', '=', cur.contract_schedule_id).execute();
       }
       ctx.evidence.note('voucher', created.docNo);
-      return { status: 'paid', paid_event_id: created.id, extra: { paidDocumentId: created.id, paidDocNo: created.docNo } };
+      return { paid_event_id: created.id, extra: { paidDocumentId: created.id, paidDocNo: created.docNo } };
     },
   }),
   defineAction({

@@ -2,6 +2,7 @@
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → packages/documents (máy trạng thái khai báo, PHASES 3.5). -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
 > Cây đích: [TARGET-LAYOUT.md](TARGET-LAYOUT.md). Phát hiện nền trước đó: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md) (A-01..A-16); phát hiện mới ở §5 (A-17..A-26).
@@ -41,6 +42,7 @@
 | `core/audit.ts` | 29 | P | `packages/audit` | Thành lõi của Evidence; thêm `actor_kind`, `request_id`, `result`, biên nhận |
 | `core/addins.ts` | 57 | P | `packages/module-sdk` | Gộp với `phan-he/types.ts` thành `defineModule()` |
 | `core/date-rules.ts` | 58 | P | `packages/documents` (khoá theo ngày) | Khoá theo ngày là luật chung của chứng từ; đọc `tenants.settings.dataLock` → chuyển sang settings registry |
+| `core/workflow.ts` | 190 | P | `packages/documents` (máy trạng thái) | Đọc `*.workflow.yaml` (năng lực `documents.workflow`); `PERMISSIONS` đóng → khi quyền thành registry mở (A-23), YAML khai quyền module |
 | `core/posting-modes.ts` | 28 | K | `packages/kernel` | Chế độ ghi ngay / chờ duyệt theo `docType` |
 | `config/env.ts` | — | P | `bizcity.config.ts` + `packages/data` | `ENABLED_MODULES`, `ADDINS`, `BOOK_MODE` chuyển thành cấu hình có kiểu |
 | `db/client.ts`, `db/migrate.ts` | ≈175 | P + A | `packages/data` (giao dịch, runner) + `adapters/postgres` | Runner hiện đọc một thư mục `db/migrations`; cần runner theo module (A-26) |

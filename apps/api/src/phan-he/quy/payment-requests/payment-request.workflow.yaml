@@ -1,0 +1,48 @@
+# Luồng yêu cầu thanh toán (bizcity_document@1 §5, năng lực documents.workflow, R-WF-1…7).
+# Đề nghị chi → duyệt một hoặc hai cấp (số cấp theo ngưỡng payment_request_settings.second_level_from, R-WF-6) → lập phiếu chi / báo nợ.
+# Runtime: apps/api/src/core/workflow.ts. Action thực thi từng chuyển: payment-request.routes.ts (quy.payment-request.<chuyển>).
+type: quy.payment-request
+label: Yêu cầu thanh toán
+states:
+  draft:     { group: draft,     label: Nháp }
+  submitted: { group: pending,   label: Chờ duyệt }
+  approved1: { group: pending,   label: Đã duyệt cấp 1 }
+  approved:  { group: approved,  label: Đã duyệt }
+  rejected:  { group: draft,     label: Bị từ chối }
+  paid:      { group: done,      label: Đã chi }
+  cancelled: { group: cancelled, label: Đã huỷ }
+transitions:
+  submit:
+    title: Gửi duyệt
+    from: [draft, rejected]
+    to: submitted
+    permission: documents:write
+    blocked: { '*': Yêu cầu đã được gửi duyệt }
+  approve:
+    title: Duyệt
+    levels:
+      - { from: submitted, to: approved1, permission: payments:approve, denied: Bạn không có quyền duyệt yêu cầu thanh toán }
+      - { from: approved1, to: approved, permission: payments:approve-final, denied: 'Yêu cầu vượt ngưỡng: cần người có quyền duyệt cấp 2' }
+    blocked: { '*': Yêu cầu không ở trạng thái chờ duyệt }
+  reject:
+    title: Từ chối
+    from: [submitted, approved1]
+    to: rejected
+    permission: { submitted: payments:approve, approved1: payments:approve-final }
+    requires: [reason]
+    denied: Bạn không có quyền duyệt yêu cầu thanh toán
+    blocked: { '*': Yêu cầu không ở trạng thái chờ duyệt }
+  cancel:
+    title: Huỷ
+    from: [draft, submitted, approved1, approved, rejected]
+    to: cancelled
+    permission: documents:write
+    owner: documents:edit-all
+    blocked: { paid: 'Yêu cầu đã chi; muốn huỷ thì huỷ phiếu chi trước', cancelled: Yêu cầu đã huỷ }
+  pay:
+    title: Lập phiếu chi
+    from: [approved]
+    to: paid
+    permission: documents:write
+    ledger: true
+    blocked: { '*': 'Yêu cầu chưa được duyệt xong, chưa lập phiếu chi được' }

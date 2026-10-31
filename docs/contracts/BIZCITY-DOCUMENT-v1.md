@@ -1,7 +1,8 @@
 # `bizcity_document@1` — Document Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-31 03:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bizcity_document 1.1.0-draft: §5.1 hiện trạng runtime documents.workflow (khoá YAML, levels, sod, owner, ledger), hai luồng đã chuyển. -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
+> **Phiên bản:** 1.1.0-draft · 2026-10-31 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
 > **Luật nền:** [R-WF](../rules/RULE-WORKFLOW.md), [R-EVENT](../rules/RULE-EVENT.md) · **Năng lực:** `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments`, `documents.signatures`, `documents.workflow`, `ledger.submit`
 
 ## 1. Mục đích
@@ -72,6 +73,26 @@ transitions:
 
 `sod: true` (tách nhiệm): người duyệt khác người lập. Transition `by: event, on: "<loại sự kiện>"` không gọi được từ ngoài; runtime chạy nó khi subscriber nhận sự kiện khớp `subject` (actor `system`, vẫn có bằng chứng). Ví dụ: kỳ thanh toán sang "đã thu" khi nhận `bizcity.ledger.entry.posted`. Duyệt nhiều cấp theo ngưỡng tiền như `payment_requests` (`approved1` → `approved`) khai bằng `levels` (năng lực `documents.workflow`).
 
+### 5.1 Hiện trạng runtime (1.1.0-draft, 2026-10-31)
+
+Runtime `apps/api/src/core/workflow.ts` (Platform, sẽ về `packages/documents`) đọc tệp `<loại>.workflow.yaml` đặt cạnh mã: `loadWorkflow(new URL('./x.workflow.yaml', import.meta.url))`. Khi dựng, tệp được chép sang `dist`. Tệp sai khuôn / sai nghĩa thì tiến trình không khởi động (lỗi lập trình, không phải lỗi người dùng).
+
+| Khoá | Bắt buộc | Nghĩa |
+|---|---|---|
+| `type`, `states.<tên>.group` | có | như §5 |
+| `label`, `states.<tên>.label`, `transitions.<chuyển>.title` | không (mặc định = tên) | chữ cho thông báo, nút, `statusLabel` |
+| `from`, `to`, `permission` | có (trừ khi khai `levels`) | `permission` là một quyền, hoặc `{ <trạng thái nguồn>: <quyền> }` |
+| `levels: [{ from, to, permission, denied? }]` | | duyệt nhiều cấp: cấp sau `from` = `to` của cấp trước; cấp giữa thuộc nhóm `pending`, cấp cuối sang nhóm `approved`. Chứng từ mang `levelsRequired` (phân hệ tính từ ngưỡng cấu hình, R-WF-6); đủ cấp thì nhảy thẳng sang đích cấp cuối |
+| `sod: true` | | người chuyển khác người lập |
+| `owner: <quyền>` | | chỉ người lập được chuyển, trừ khi có quyền này (vd `documents:edit-all`) |
+| `requires: [reason]` | | bắt buộc lý do |
+| `ledger: true` | | chuyển chạm sổ; chỉ hợp lệ khi đích thuộc `approved` / `done` / `cancelled` hoặc nguồn đều thuộc `approved` / `done` (R-WF-3) |
+| `blocked: { <trạng thái> \| '*': <thông báo> }`, `denied` | | thông báo riêng khi trạng thái không cho chuyển / thiếu quyền |
+
+`wf.plan(chuyển, { status, createdBy, levelsRequired }, người, { reason })` trả trạng thái đích (CONFLICT / FORBIDDEN / VALIDATION_ERROR nếu không được); `wf.allowed(...)` liệt kê chuyển làm được; `wf.statesIn(nhóm)`, `wf.editable(trạng thái)`. Ghi trạng thái, cột riêng và nộp sổ là việc của action phân hệ (STD-DOC-3).
+
+Đang chạy theo YAML: `phan-he/quy/payment-requests/payment-request.workflow.yaml`, `phan-he/mua-hang/purchase-document.workflow.yaml`. **Chưa có:** chuyển `by: event` (runtime từ chối khoá này); quyền riêng của module (`hop-dong:approve`…) — `permission` hiện chỉ nhận quyền trong `PERMISSIONS` của Core, chờ registry quyền mở (PHASES 3.3); manifest `documents[].workflow` chưa được runtime tự nạp (module tự gọi `loadWorkflow`). Phiếu mua hàng `pending_approval` vẫn sửa được như trước (lệch §5 nhóm `pending`, giữ để không đổi hành vi).
+
 ## 6. Luật
 
 | Mã | Cấp | Luật | Kiểm bằng |
@@ -102,7 +123,13 @@ ctx.ledger.submit({ docKey: `${docRef}:payment`, version, docType: 'customer_pay
 |---|---|
 | `accounting_events` (`doc_key`, `version`, `posted_version`, `status`) | giữ nguyên, là sự việc kế toán của Kernel; mẫu cho §4 |
 | `accounting_event_versions` | mẫu cho `document_versions` chung |
-| `payment_requests.status` 7 trạng thái | khai lại bằng workflow YAML: `draft, submitted(pending), approved1(pending), approved(approved), rejected(draft), paid(done), cancelled` |
+| `payment_requests.status` 7 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, submitted(pending), approved1(pending), approved(approved), rejected(draft), paid(done), cancelled` |
+| `purchase_documents.status` 4 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, pending_approval(pending), approved(approved), cancelled`; chuyển `submit, approve, override, unapprove, cancel` |
 | `document_signatures` (gắn `event_id`) | thêm cột `doc_ref`; ký được mọi chứng từ |
 | `reference_documents` (`open/used/closed`) | một loại chứng từ của module Thuế dùng `document_links` |
 | `purchase_attachments` | chuyển sang `attachments` chung (A-19) |
+
+## 9. Nhật ký
+
+- **1.1.0-draft (2026-10-31):** thêm §5.1 hiện trạng runtime `documents.workflow` — khoá YAML tuỳ chọn, tương thích: `label`, `title`, `levels`, `owner`, `blocked`, `denied`, `ledger`; ghi rõ phần chưa có (`by: event`, quyền riêng của module). Ánh xạ §8: `payment_requests`, `purchase_documents` đã chạy theo YAML (PHASE-012 S012-1).
+- **1.0.0-draft (2026-10-29):** bản đầu của Standard v1.

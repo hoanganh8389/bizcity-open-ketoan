@@ -89,6 +89,8 @@ Bộ kiểm SC-SIG-1 dùng đúng danh sách này (`tests/conformance/lib/framew
 Quy ước có từ 2026-10-30. Các tệp framework làm trước đó được **ký bù**:
 - Giờ ký = giờ commit thật trong git của từng phase.
 - Chỉ ký các commit của tài khoản chủ dự án; commit của người đóng góp khác không ghi tên Johnny Chu.
+<!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — ký bù tệp của người đóng góp: tên tác giả commit, đánh dấu "đóng góp", không bịa dấu duyệt. -->
+- Tệp framework do người đóng góp tạo mà thiếu dấu (thường thấy khi kéo `main` về): ký bù bằng **tên tác giả commit trong git**, giờ commit tạo tệp, mô tả `ký bù (commit <hash>, đóng góp): …`. Ví dụ `[2026-10-30 04:56 PM Nguyễn Văn Thủy] R-SIG — ký bù (commit 392d97e, đóng góp): …`. Không ghi tên chủ dự án, không ghi dấu "đã duyệt" khi không có PR được duyệt; dấu chủ dự án (R-SIG-7) chỉ thêm khi chủ thật sự duyệt, ghi giờ duyệt.
 - Không ký migration đã phát hành.
 
 Bảng commit → mã phase và kết quả: [AUDIT-2026-10-30-CHU-KY](../audits/AUDIT-2026-10-30-CHU-KY.md).
