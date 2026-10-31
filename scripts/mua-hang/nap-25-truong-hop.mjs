@@ -4,7 +4,8 @@
 // giao diện (khai chính sách, lập phiếu, duyệt, tính thưởng…), theo thứ tự TH01 → TH25 như kế toán bấm tay; xong thì
 // kiểm từng số "Kết quả mong đợi" của file và ghi kết quả ra tệp JSON (để lập bảng Excel các chỗ lệch).
 //
-// Chạy qua scripts/nap-25-truong-hop.sh (trong container API). Biến môi trường:
+// [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — chuyển về scripts/mua-hang/; đơn vị nạp phải là đơn vị mới, không làm sạch sổ.
+// Chạy qua scripts/mua-hang/nap-25-truong-hop.sh (trong container API). Biến môi trường:
 //   NAP_TENANT   mã đơn vị (vd tgs)            NAP_CHAY=1  ghi thật (thiếu = chỉ xem trước, không ghi gì)
 //   NAP_API      địa chỉ API (mặc định http://127.0.0.1:4100)
 //   NAP_KICH_BAN tệp kịch bản (mặc định /app/db/seeds/mua-hang-25th/kich-ban.json)
@@ -46,7 +47,7 @@ const must = async (method, path, body) => {
   return r.data;
 };
 
-// ---------- trạng thái ban đầu: phải sạch (đã chạy lam-sach-mua-hang.sh)
+// ---------- trạng thái ban đầu: đơn vị MỚI (chưa có chứng từ / chính sách mua hàng): lập bằng seed (SEED_TENANT_CODE=<mã> npm run db:seed -w @ketoan/api) hoặc trên bản test (scripts/tao-ban-test.sh). Không làm sạch sổ để nạp lại — sổ chỉ thêm (R-LEDGER-1, docs/audits/REVIEW-2026-10-31-THUY.md §8)
 const existing = (await pool.query('SELECT count(*)::int AS n FROM purchase_documents WHERE tenant_id = $1', [t.id])).rows[0].n;
 const existingPol = (await pool.query('SELECT count(*)::int AS n FROM purchase_policies WHERE tenant_id = $1', [t.id])).rows[0].n;
 console.log(`Đơn vị ${TENANT} (id ${t.id}) — nạp nhân danh: ${u.full_name}`);
@@ -57,10 +58,10 @@ const nDoc = plan.cases.reduce((s, c) => s + c.buoc.filter((b) => b.op === 'phie
 console.log(`Kịch bản: ${plan.cases.length} trường hợp, ${nSteps} bước — ${nPol} chính sách, ${nDoc} chứng từ, ${plan.cases.reduce((s, c) => s + c.kiem.length, 0)} số cần kiểm.`);
 if (!RUN) {
   for (const c of plan.cases) console.log(`  ${c.th}  ${c.ten}  (${c.buoc.length} bước)`);
-  console.log(existing || existingPol ? '\n⚠ Đơn vị còn dữ liệu mua hàng: chạy ./scripts/lam-sach-mua-hang.sh trước rồi mới nạp.' : '\nChỉ là xem trước. Nạp thật: thêm --chay.');
+  console.log(existing || existingPol ? '\n⚠ Đơn vị đã có dữ liệu mua hàng: nạp vào một đơn vị MỚI (seed hoặc bản test) — không làm sạch sổ.' : '\nChỉ là xem trước. Nạp thật: thêm --chay.');
   await pool.end(); process.exit(0);
 }
-if (existing || existingPol) { console.error('Đơn vị còn dữ liệu mua hàng — chạy ./scripts/lam-sach-mua-hang.sh <đơn vị> --chay trước.'); await pool.end(); process.exit(1); }
+if (existing || existingPol) { console.error('Đơn vị đã có dữ liệu mua hàng — nạp vào một đơn vị MỚI (seed hoặc bản test); không làm sạch sổ (R-LEDGER-1).'); await pool.end(); process.exit(1); }
 
 // ---------- chạy
 const ids = new Map();      // id trong kịch bản → id phiếu

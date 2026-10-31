@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo tình hình tài chính (mẫu B01-DN theo Thông tư 99/2025/TT-BTC; trước đây gọi là Bảng cân đối kế toán).
  *
@@ -25,7 +26,7 @@
  */
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
-import { db, toNumber, type Db } from '../../db/client.js';
+import { db, toNumber, type Db } from '../../../db/client.js';
 
 type Kind = 'debit' | 'credit' | 'contra' | 'debitByPartner' | 'creditByPartner';
 interface LineDef {
@@ -214,7 +215,7 @@ async function balancesAt(trx: Db, a: { tenantId: string; branchIds: string[] | 
   const dateFilter = a.inclusive ? sql`posting_date <= ${a.date}::date` : sql`posting_date < ${a.date}::date`;
   const res = await sql<{ account_code: string; partner_id: string; net: string }>`
     SELECT account_code, partner_id, SUM(debit - credit) AS net
-      FROM ledger_balances_daily
+      FROM bizcity_read.ledger_balances_daily
      WHERE tenant_id = ${a.tenantId} AND ${dateFilter} ${branchFilter}
      GROUP BY account_code, partner_id
     HAVING SUM(debit - credit) <> 0`.execute(trx);

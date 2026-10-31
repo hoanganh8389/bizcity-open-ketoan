@@ -2,6 +2,7 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
 # [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+# [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — grep allow_ledger_purge / session_replication_role dò cả tệp .sql (lam-sach-mua-hang.sql lọt, REVIEW-2026-10-31-THUY §8).
 # =============================================================================
 # Kiểm chuẩn framework bằng grep (không cần CSDL) — bước "guard" của CI, chạy được trên máy dev.
 #
@@ -46,9 +47,9 @@ rule "R-LEDGER E1–E4: cờ thoát trigger chỉ ở chỗ được phép"
 check "$( {
   grep -rnE "cost_overwrite" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh \
     | grep -vE "^($SRC/modules/ledger/|apps/api/test/|scripts/kiem-chuan.sh)"
-  grep -rnE "allow_ledger_purge" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh \
+  grep -rnE "allow_ledger_purge" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(apps/api/test/|scripts/kiem-chuan.sh)"
-  grep -rnE "session_replication_role" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh \
+  grep -rnE "session_replication_role" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/kiem-chuan.sh|apps/api/test/)"
 } )"
 

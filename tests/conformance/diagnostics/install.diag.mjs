@@ -1,18 +1,23 @@
 // [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán.
 // [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
+// [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — DG-DB-2 hiểu schema: trigger trên khung nhìn bizcity_read.* (0043) cũng phải có và bật
 /**
  * Lane diagnostics — kiểm BẢN CÀI (chỉ đọc pg_catalog / cấu hình CSDL), khác ledger.diag.mjs (kiểm dữ liệu sổ).
  * Trả lời: lớp bảo vệ Kernel ở tầng CSDL có còn nguyên trên máy này không? (RULE-SELF-DIAGNOSTICS, RULE-KERNEL)
  */
 
-/** Trigger khai trong migration (đọc tĩnh) — nguồn sự thật để so với CSDL đang chạy. */
+/**
+ * Trigger khai trong migration (đọc tĩnh) — nguồn sự thật để so với CSDL đang chạy. Tên bảng: `bảng` khi ở public,
+ * `schema.bảng` khi ở schema khác (vd trigger chỉ đọc trên khung nhìn bizcity_read.*, migration 0043).
+ */
+const qualify = (schema, table) => (!schema || schema === 'public' ? table : `${schema}.${table}`);
 function declaredTriggers(repo) {
   const out = [];
   for (const f of repo.list('db/migrations').filter((x) => x.endsWith('.sql'))) {
     const t = repo.read(`db/migrations/${f}`) ?? '';
-    for (const m of t.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+(\w+)[\s\S]*?\bON\s+(?:public\.)?(\w+)/gi)) {
-      out.push({ name: m[1], table: m[2], file: f });
+    for (const m of t.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+(\w+)[\s\S]*?\bON\s+(?:(\w+)\.)?(\w+)/gi)) {
+      out.push({ name: m[1], table: qualify(m[2], m[3]), file: f });
     }
   }
   return out;
@@ -25,11 +30,11 @@ export const checks = [
     gate: 'CONF-RUN', contract: 'kernel', rules: ['R-LEDGER-1', 'R-DB-2', 'R-KER-3', 'R-DIAG-2'], conf: ['CONF-RUN-17'], tier: 0, enforce: 'block', weight: 5,
     async run(ctx) {
       const want = declaredTriggers(ctx.repo);
-      const rows = await ctx.db.query(`SELECT t.tgname AS name, c.relname AS "table", t.tgenabled AS enabled
+      const rows = await ctx.db.query(`SELECT t.tgname AS name, n.nspname AS schema, c.relname AS "table", t.tgenabled AS enabled
                                        FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
                                        JOIN pg_namespace n ON n.oid = c.relnamespace
-                                       WHERE NOT t.tgisinternal AND n.nspname = 'public'`);
-      const have = new Map(rows.map((r) => [`${r.table}.${r.name}`, r.enabled]));
+                                       WHERE NOT t.tgisinternal AND n.nspname NOT IN ('pg_catalog', 'information_schema')`);
+      const have = new Map(rows.map((r) => [`${qualify(r.schema, r.table)}.${r.name}`, r.enabled]));
       const findings = [];
       for (const w of want) {
         const k = `${w.table}.${w.name}`;

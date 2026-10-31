@@ -1,4 +1,5 @@
 // @bizcity-layer M data/masterdata
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Đối tượng và nhóm đối tượng.
  *   GET /api/v1/partners?search=&groupCode=&kind=&status=&page=&pageSize=
@@ -131,7 +132,7 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
       const p = await db.selectFrom('partners').select(['id', 'code', 'name']).where('tenant_id', '=', auth.tenantId).where('code', '=', req.params.code).executeTakeFirst();
       if (!p) throw Errors.notFound(`đối tượng ${req.params.code}`);
       let q = db
-        .selectFrom('ledger_balances_daily as g')
+        .selectFrom('bizcity_read.ledger_balances_daily as g')
         .leftJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 'g.tenant_id').onRef('a.code', '=', 'g.account_code'))
         .select(['g.account_code', 'a.name as account_name', (eb) => eb.fn.sum<string>(eb('g.debit', '-', eb.ref('g.credit'))).as('balance')])
         .where('g.tenant_id', '=', auth.tenantId)
@@ -254,7 +255,7 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
       await db.transaction().execute(async (trx) => {
         const before = await partnerRepository.findByCode(trx, auth.tenantId, req.params.code);
         if (!before) throw Errors.notFound(`đối tượng ${req.params.code}`);
-        const used = await trx.selectFrom('ledger_lines').select('id').where('tenant_id', '=', auth.tenantId).where('partner_id', '=', before.id).limit(1).executeTakeFirst();
+        const used = await trx.selectFrom('bizcity_read.ledger_lines').select('id').where('tenant_id', '=', auth.tenantId).where('partner_id', '=', before.id).limit(1).executeTakeFirst();
         if (used) throw Errors.conflict(`Đối tượng ${before.code} đã có trên sổ: bỏ tích "Theo dõi" để khoá`);
         // Còn chứng từ, công nợ, hợp đồng… trỏ tới thì khoá ngoại chặn (báo trùng / đang dùng).
         await trx.deleteFrom('partners').where('id', '=', before.id).execute();

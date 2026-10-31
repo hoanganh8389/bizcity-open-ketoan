@@ -1,4 +1,6 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 04:56 PM Nguyễn Văn Thủy] R-REV — % chiết khấu trong bảng khuyến mại hiển thị kiểu Việt Nam (số lẻ) (commit f03e8e6, đóng góp).
+// [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — duyệt thay đổi của Nguyễn Văn Thủy (commit f03e8e6), biên bản docs/audits/REVIEW-2026-10-31-THUY.md §7.
 /**
  * NHÃN HÀNG & KHUYẾN MẠI CỦA PHIẾU — hàm thuần dùng chung máy chủ + giao diện.
  *

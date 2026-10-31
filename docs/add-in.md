@@ -1,4 +1,5 @@
 # Viết add-in
+<!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — add-in đọc số liệu qua action accounting.* (callAction), không import báo cáo; không ghi sổ trực tiếp -->
 
 Add-in thêm chức năng mà không sửa lõi: báo cáo riêng, xuất số liệu, tích hợp ứng dụng khác. Một add-in gồm phần API (bắt buộc) và phần giao diện (tuỳ chọn).
 
@@ -12,7 +13,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { defineAddIn } from '../../core/addins.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
-import { reportService } from '../../modules/reports/report.service.js';
+import { callAction } from '../../core/actions.js';
 
 export default defineAddIn({
   manifest: {
@@ -29,7 +30,8 @@ export default defineAddIn({
     r.get('/data', {
       preHandler: requirePermission('reports:read'),
       schema: { tags: ['Add-in: Doanh thu ngày'], querystring: z.object({ from: z.string(), to: z.string() }) },
-      handler: async (req) => ok(await reportService.dashboard(authOf(req), req.query)),
+      // Số liệu kế toán lấy qua action công khai của ke-toan (không import code phân hệ — SC-MOD-1, SC-LAYER-2).
+      handler: async (req) => ok(await callAction('accounting.cash.balances', req.query, authOf(req))),
     });
   },
 });
@@ -45,9 +47,9 @@ export const BUILTIN_ADDINS = [excelExport, spreadsheetAi, doanhThuNgay];
 Quy tắc:
 
 - Luôn khai `preHandler: requirePermission(...)`; dữ liệu luôn lọc theo `authOf(req).tenantId` (dịch vụ lõi đã làm).
-- Dùng lại `reportService`, `documentService`… thay vì tự truy vấn sổ cái.
+- Đọc số liệu kế toán qua action công khai `accounting.*` (`callAction`, trong action là `ctx.actions.call`) hoặc khung nhìn chỉ đọc `bizcity_read.*`; không import code trong `phan-he/*`, không đọc thẳng bảng `ledger_*` (SC-KERNEL-7).
 - Cần bảng riêng: thêm migration, đặt tên bảng có tiền tố `addin_<ma>_`.
-- Không ghi thẳng vào `gl_*`; muốn ghi sổ thì gọi `ledgerService.post()`.
+- Không ghi sổ trực tiếp: muốn ghi thì nộp chứng từ qua cửa nạp của Kernel (`POST /api/v1/documents`); add-in không gọi `ledgerService`, không ghi bảng `ledger_*` (AGENTS.md, câu 3).
 
 ## 2. Phần giao diện
 

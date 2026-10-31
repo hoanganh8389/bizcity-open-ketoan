@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo kết quả hoạt động kinh doanh (mẫu B02-DN, Thông tư 99/2025/TT-BTC).
  *
@@ -17,7 +18,7 @@
  */
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
-import { db, toNumber, type Db } from '../../db/client.js';
+import { db, toNumber, type Db } from '../../../db/client.js';
 
 interface LineDef {
   code: string;
@@ -59,8 +60,8 @@ async function turnover(trx: Db, a: { tenantId: string; from: string; to: string
   const branchFilter = a.branchIds ? sql`AND l.branch_id = ANY(${a.branchIds}::bigint[])` : sql``;
   const res = await sql<{ account_code: string; debit: string; credit: string }>`
     SELECT l.account_code, SUM(l.debit) AS debit, SUM(l.credit) AS credit
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
      WHERE l.tenant_id = ${a.tenantId}
        AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND l.account_code ~ '^[5678]'

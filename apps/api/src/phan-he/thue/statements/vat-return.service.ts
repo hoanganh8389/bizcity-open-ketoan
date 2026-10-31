@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/thue
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Tờ khai thuế GTGT theo phương pháp khấu trừ (mẫu 01/GTGT; từ 01/7/2026 theo Thông tư 89/2026/TT-BTC, trước đó
  * Thông tư 80/2021/TT-BTC — các chỉ tiêu dưới đây giữ mã số chung của hai mẫu, thêm [32b], [34a] của mẫu mới).
@@ -215,7 +216,7 @@ export const vatReturnService = {
       SELECT COALESCE(SUM(CASE WHEN g.account_code LIKE '133%' AND g.posting_date >= ${from}::date THEN g.debit - g.credit END), 0) AS input,
              COALESCE(SUM(CASE WHEN g.account_code LIKE '33311%' AND g.posting_date >= ${from}::date THEN g.credit - g.debit END), 0) AS output,
              COALESCE(SUM(CASE WHEN g.account_code LIKE '133%' AND g.posting_date < ${from}::date THEN g.debit - g.credit END), 0) AS carried
-        FROM ledger_balances_daily g
+        FROM bizcity_read.ledger_balances_daily g
        WHERE g.tenant_id = ${auth.tenantId} AND g.posting_date <= ${to}::date ${glFilter}`.execute(db);
     const ledger = { input: Math.round(toNumber(gl.rows[0]?.input)), output: Math.round(toNumber(gl.rows[0]?.output)), carried: Math.max(Math.round(toNumber(gl.rows[0]?.carried)), 0) };
 

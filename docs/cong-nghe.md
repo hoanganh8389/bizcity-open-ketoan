@@ -102,7 +102,7 @@ Biết một module là đọc được mọi module khác.
 
 | Muốn thêm | Làm gì |
 |---|---|
-| Một báo cáo | Thêm hàm truy vấn + một đường dẫn ở `modules/reports`, một trang ở `features/reports`, một dòng trong `layout/menu.ts` và `App.tsx`, một bài hướng dẫn |
+| Một báo cáo | Thêm hàm truy vấn (đọc `bizcity_read.*`) + một đường dẫn ở `phan-he/ke-toan/reports`, một trang ở `features/reports`, một dòng trong `layout/menu.ts` và `App.tsx`, một bài hướng dẫn |
 | Một loại chứng từ tự động | Thêm khuôn ở `packages/contracts`, một luật định khoản ở `modules/posting/rules/` |
 | Một cột, một bảng | Thêm file migration mới (không sửa file cũ), cập nhật `db/types.ts` |
 | Một tiện ích ngoài lõi (bảng tính AI, xuất file…) | Viết thành **add-in**: thư mục riêng, đường dẫn riêng, tự gắn mục vào menu, bật tắt bằng cấu hình. Xem `docs/add-in.md` |

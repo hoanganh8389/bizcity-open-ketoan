@@ -1,7 +1,8 @@
 # `bizcity_ledger_intake@1` — Khuôn sự việc gửi vào sổ
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0: §7.1 đọc sổ — ledger.query (ctx.ledger.query, ledgerQuery, khung nhìn bizcity_read.*) -->
 
-> **Phiên bản:** 1.0.0 · 2026-10-28 · **Trạng thái:** Ổn định
+> **Phiên bản:** 1.1.0 · 2026-10-31 · **Trạng thái:** Ổn định (§7.1 mới, bổ sung)
 > **Nguồn sự thật:** `packages/contracts/src/documents.ts` (`ingestDocumentSchema`) · **JSON Schema:** [BIZCITY-LEDGER-INTAKE-v1.schema.json](BIZCITY-LEDGER-INTAKE-v1.schema.json)
 > **Luật:** [R-EVENT](../rules/RULE-EVENT.md) · **Hướng dẫn chi tiết từng loại kèm JSON mẫu:** [../api/](../api/README.md)
 > **Đổi tên (2026-10-29, trước khi phát hành):** trước đây gọi là `bizcity_event@1`. Tên `bizcity_event` nay dành cho **sự kiện miền** của Standard v1 ([BIZCITY-EVENT-v1.md](BIZCITY-EVENT-v1.md)). Hợp đồng này là **cửa nạp của nhân sổ cái**: phân hệ trong tiến trình gọi qua `ctx.ledger.submit()` của SDK, không gọi thẳng.
@@ -84,6 +85,26 @@ Phiên bản nhỏ hơn bản đang có → HTTP `409 CONFLICT` (không phải `
 - Phiên bản mới thay hẳn phiên bản cũ trên sổ (đảo + ghi mới) khi được định khoản; lịch sử giữ ở `accounting_event_versions`.
 - Không bao giờ xoá sự việc đã nhận; huỷ để lại dấu vết đầy đủ.
 
+### 7.1 Đọc sổ (`ledger.query`, từ 1.1.0)
+
+Nộp vào bằng cửa nạp thì đọc ra cũng qua bề mặt của lõi — không ai ngoài Kernel đọc bảng `ledger_*` (R-BOUND-3, SC-KERNEL-7 chặn).
+
+| Ai đọc | Bằng gì | Ở đâu |
+|---|---|---|
+| Module, action | `ctx.ledger.query(q)` trong giao dịch của action | `apps/api/src/core/actions.ts`; Kernel đăng ký ở `app.ts` |
+| Mã nội bộ ngoài Kernel (phân hệ, add-in) | `ledgerQuery.query(db, tenantId, q)` | `apps/api/src/kernel/public.ts` |
+| Báo cáo cần SQL riêng | SQL trên khung nhìn chỉ đọc `bizcity_read.ledger_entries`, `bizcity_read.ledger_lines`, `bizcity_read.ledger_balances_daily`; tài khoản đối ứng bằng `otherSide()` | migration `0043_doc_so_cai.sql` |
+
+Câu hỏi `q` (`ledgerQuerySchema`, `packages/contracts/src/ledger-query.ts`) hỏi theo **mã**: `to` (bắt buộc), `from`, `accounts` (đầu số), `partnerCode`, `branchCodes`, `dimension` ({mã chiều: mã giá trị}), `sku`, `groupBy` (`account` | `partner` | `branch`, mặc định `account`). Kết quả mỗi dòng: mã theo `groupBy` + `opening` (Nợ − Có trước `from`), `debit`, `credit`, `closing`, số đồng, cộng trừ bằng xu.
+
+Bảo đảm:
+- Mã không tồn tại → `NOT_FOUND`, không trả 0 (R-REV-13). Sai khuôn ngày, `from` sau `to` → `VALIDATION_ERROR`.
+- Bút toán đã đảo và bút toán đảo đều được cộng — chúng triệt tiêu nhau, số dư bằng số đang hiệu lực.
+- Có `dimension` hoặc `sku` → đọc dòng sổ; còn lại đọc số dư ngày (nhanh). Hai đường cho cùng số.
+- Khung nhìn chạy bằng quyền người gọi (`security_invoker`): RLS theo đơn vị vẫn áp. Ghi qua khung nhìn bị trigger chặn. Không đưa `content_hash` / `body_hash` ra.
+- Kernel đổi cấu trúc bảng sổ thì sửa khung nhìn trong migration mới; cột của khung nhìn chỉ **thêm**, không bớt / đổi nghĩa trong `@1`.
+
 ## 8. Changelog
 
+- **1.1.0 (2026-10-31):** §7.1 đọc sổ — năng lực `ledger.query` (PHASES 3.7, PHASE-012 S012-2): `ctx.ledger.query`, `ledgerQuery`, khung nhìn chỉ đọc `bizcity_read.*`. Khuôn nộp không đổi.
 - **1.0.0 (2026-10-28):** Đặt tên hợp đồng cho khuôn `IngestDocument` đang chạy; nội dung không đổi.

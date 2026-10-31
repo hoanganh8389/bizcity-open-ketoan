@@ -18,6 +18,10 @@ export async function routes(r: any, db: any, ledgerService: any, reply: any, z:
   const ctl = new AbortController(); setTimeout(() => ctl.abort(), 5000); // KHÔNG tính: hạn giờ lời gọi
   await new Promise((ok) => setTimeout(ok, 1500));                   // KHÔNG tính: chờ thử lại
   await appendFile('nhat-ky.jsonl', '{}');                           // SC-EVD-1
+  await db.selectFrom('ledger_entries').selectAll().execute();      // SC-KERNEL-7: đọc thẳng bảng sổ
+  await db.raw(`SELECT SUM(debit)
+                  FROM ledger_balances_daily`);                     // SC-KERNEL-7: câu SQL xuống dòng
+  await db.raw('SELECT 1 FROM bizcity_read.ledger_lines');           // KHÔNG tính: khung nhìn chỉ đọc của Kernel
 }
 declare function requirePermission(p: string): unknown;
 declare function requireUser(): unknown;

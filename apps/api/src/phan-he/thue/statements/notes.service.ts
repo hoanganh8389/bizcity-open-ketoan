@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/thue
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Thuyết minh báo cáo tài chính (mẫu B09-DN, Thông tư 99/2025/TT-BTC) — phần số liệu.
  *
@@ -36,7 +37,7 @@ async function accountMovements(s: Scope, prefixes: string[]) {
            SUM(CASE WHEN g.posting_date < ${s.from}::date THEN g.debit - g.credit ELSE 0 END) AS opening,
            SUM(CASE WHEN g.posting_date >= ${s.from}::date THEN g.debit ELSE 0 END) AS debit,
            SUM(CASE WHEN g.posting_date >= ${s.from}::date THEN g.credit ELSE 0 END) AS credit
-      FROM ledger_balances_daily g
+      FROM bizcity_read.ledger_balances_daily g
       LEFT JOIN accounts ac ON ac.tenant_id = g.tenant_id AND ac.code = g.account_code
      WHERE g.tenant_id = ${s.tenantId} AND g.posting_date <= ${s.to}::date
        AND g.account_code LIKE ANY(${likes}::text[])
@@ -77,8 +78,8 @@ async function flowTable(s: Scope, key: string, title: string, prefixes: string[
   const likes = prefixes.map((p) => `${p}%`);
   const res = await sql<{ account_code: string; name: string | null; amount: string }>`
     SELECT l.account_code, MAX(ac.name) AS name, SUM(${side === 'credit' ? sql`l.credit - l.debit` : sql`l.debit - l.credit`}) AS amount
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
       LEFT JOIN accounts ac ON ac.tenant_id = e.tenant_id AND ac.code = l.account_code
      WHERE e.tenant_id = ${s.tenantId} AND e.posting_date BETWEEN ${s.from}::date AND ${s.to}::date
        AND e.doc_type <> 'closing' AND l.account_code LIKE ANY(${likes}::text[])
@@ -94,7 +95,7 @@ async function partnerTable(s: Scope, key: string, title: string, prefix: string
     SELECT p.code, p.name,
            SUM(CASE WHEN g.posting_date < ${s.from}::date THEN g.debit - g.credit ELSE 0 END) AS opening,
            SUM(g.debit - g.credit) AS closing
-      FROM ledger_balances_daily g
+      FROM bizcity_read.ledger_balances_daily g
       LEFT JOIN partners p ON p.id = g.partner_id
      WHERE g.tenant_id = ${s.tenantId} AND g.posting_date <= ${s.to}::date AND g.account_code LIKE ${prefix + '%'}
      GROUP BY p.code, p.name`.execute(db);

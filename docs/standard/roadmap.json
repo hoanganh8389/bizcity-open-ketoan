@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_roadmap@1",
-  "updated": "2026-10-30",
+  "updated": "2026-10-31",
   "note": "Bản máy đọc của PHASES.md. Mỗi việc 'xong' khi MỌI tín hiệu trong 'done' đúng; một phần đúng = đang làm. Việc tay chỉ tính xong khi ghi doneAt + by. Sửa PHASES.md thì sửa tệp này trong cùng PR (SC-RMP-1 so hai bên).",
   "areas": {
     "kernel": "Kernel sổ cái",
@@ -101,8 +101,8 @@
       "done": [{ "capability": "documents.workflow" }] },
     { "id": "3.6", "phase": "3", "title": "Settings registry chạy thật", "areas": ["module"],
       "done": [{ "capability": "settings.registry" }, { "check": "DG-SET-1" }] },
-    { "id": "3.7", "phase": "3", "title": "ledger.query; báo cáo thành module ke-toan", "areas": ["kernel", "module"],
-      "done": [{ "manual": "Báo cáo không còn SQL trên ledger_* ngoài Kernel" }] },
+    { "id": "3.7", "phase": "3", "title": "ledger.query: báo cáo đọc sổ qua Kernel; báo cáo về phan-he/ke-toan/reports", "areas": ["kernel", "module"],
+      "done": [{ "capability": "ledger.query" }, { "check": "SC-KERNEL-7" }] },
     { "id": "3.8", "phase": "3", "title": "@bizcity/ui-kit + slot", "areas": ["module"],
       "done": [{ "capability": "ui.kit" }, { "capability": "ui.slots" }] },
     { "id": "3.9", "phase": "3", "title": "phan-he/* → modules/*; hết A-17", "areas": ["module"],

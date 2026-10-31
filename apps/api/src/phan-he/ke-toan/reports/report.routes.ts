@@ -29,10 +29,10 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { authOf, requirePermission } from '../../core/auth.js';
-import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
+import { authOf, requirePermission } from '../../../core/auth.js';
+import { ok, pageMeta, pageQuerySchema, queryBool } from '../../../core/http.js';
 import { reportService } from './report.service.js';
-import { registerActions } from '../../core/actions.js';
+import { registerActions } from '../../../core/actions.js';
 import { reportActions } from './report.actions.js';
 import { EXPENSE_GROUPS, type ExpenseGroup } from './control-reports.js';
 

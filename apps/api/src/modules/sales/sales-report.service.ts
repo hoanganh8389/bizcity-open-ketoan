@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ban-hang
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — toFilter tự tra chi nhánh, bỏ import báo cáo ke-toan (chuyển modules/reports → phan-he/ke-toan/reports)
 /**
  * Báo cáo bán hàng.
  *
@@ -13,7 +14,6 @@ import { db, toNumber } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import type { AuthContext } from '../../core/auth.js';
 import type { PageQuery } from '../../core/http.js';
-import { reportRepository } from '../reports/report.repository.js';
 import { salesReportRepository, type SalesFilter, type SalesGroupBy } from './sales-report.repository.js';
 
 export interface SalesQuery {
@@ -28,7 +28,8 @@ export interface SalesQuery {
 export async function toFilter(auth: AuthContext, q: SalesQuery): Promise<SalesFilter> {
   let branchIds: string[] | null = null;
   if (q.branchCodes?.length) {
-    branchIds = (await reportRepository.branchIds(db, auth.tenantId, q.branchCodes)).map((r) => r.id);
+    // Tra chi nhánh trong danh mục chuẩn (không mượn kho báo cáo của ke-toan — SC-LAYER-2).
+    branchIds = (await db.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', 'in', q.branchCodes).execute()).map((r) => r.id);
     if (!branchIds.length) throw Errors.validation('Chi nhánh không tồn tại');
   }
   return { tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, kind: q.kind ?? 'all', scope: q.scope ?? 'all', search: q.search?.trim() || undefined };

@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Các báo cáo tổng hợp nhỏ, mỗi báo cáo một truy vấn:
  *   - taxSummary      Bảng tổng hợp thuế GTGT theo chi nhánh
@@ -7,7 +8,7 @@
  */
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
-import { db, toNumber } from '../../db/client.js';
+import { db, toNumber } from '../../../db/client.js';
 
 interface Scope { tenantId: string; from: string; to: string; branchIds: string[] | null }
 
@@ -32,7 +33,7 @@ export async function taxSummary(a: Scope) {
       SELECT g.branch_id, m.ms,
              SUM(CASE WHEN g.posting_date < m.fs THEN g.debit - g.credit ELSE 0 END) AS carried,
              SUM(CASE WHEN g.posting_date >= m.fs THEN g.debit - g.credit ELSE 0 END) AS input_tax
-        FROM ledger_balances_daily g
+        FROM bizcity_read.ledger_balances_daily g
         JOIN m ON g.posting_date <= m.me
        WHERE g.tenant_id = ${a.tenantId}
          AND g.account_code LIKE '133%' ${branchGl}
@@ -85,7 +86,7 @@ export async function cashBalances(a: Scope & { prefixes: string[] }) {
            SUM(CASE WHEN g.posting_date <  ${a.from}::date THEN g.debit - g.credit ELSE 0 END) AS opening,
            SUM(CASE WHEN g.posting_date >= ${a.from}::date THEN g.debit  ELSE 0 END) AS debit,
            SUM(CASE WHEN g.posting_date >= ${a.from}::date THEN g.credit ELSE 0 END) AS credit
-      FROM ledger_balances_daily g
+      FROM bizcity_read.ledger_balances_daily g
       JOIN branches b ON b.id = g.branch_id
       LEFT JOIN accounts ac ON ac.tenant_id = g.tenant_id AND ac.code = g.account_code
      WHERE g.tenant_id = ${a.tenantId}
@@ -128,10 +129,10 @@ export async function postingSummary(a: Scope & { docType?: string; groups: Post
            ${on('reason') ? sql`COALESCE(e.reason_code, '')` : sql`''`} AS reason_code,
            d.account_code AS debit_account, c.account_code AS credit_account,
            SUM(d.debit) AS amount, COUNT(DISTINCT d.entry_id) AS entries
-      FROM ledger_lines d
-      JOIN ledger_entries e ON e.id = d.entry_id
+      FROM bizcity_read.ledger_lines d
+      JOIN bizcity_read.ledger_entries e ON e.id = d.entry_id
       JOIN branches br ON br.id = d.branch_id
-      JOIN ledger_lines c ON c.entry_id = d.entry_id AND c.pair_no = d.pair_no AND c.credit <> 0
+      JOIN bizcity_read.ledger_lines c ON c.entry_id = d.entry_id AND c.pair_no = d.pair_no AND c.credit <> 0
      WHERE d.tenant_id = ${a.tenantId} AND d.debit <> 0
        AND d.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND e.status = 'posted' AND NOT e.is_reversal

@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/thue
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — /long-term-balances/rules lấy bảng qua callAction theo quyền người gọi
 /**
  * Báo cáo tài chính bổ sung và thuế.
  *   GET  /api/v1/long-term-balances?asOf=     phần dài hạn đã khai tại một ngày (kèm số dư thực tế)
@@ -40,7 +41,7 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/long-term-balances/rules', {
     preHandler: requirePermission('reports:read'),
     schema: { tags: ['Báo cáo tài chính'], summary: 'Nhóm tài khoản có phần dài hạn và cặp chỉ tiêu B01 tương ứng' },
-    handler: async () => ok(longTermService.rules()),
+    handler: async (req) => ok(await longTermService.rules(authOf(req))),
   });
   r.get('/api/v1/long-term-balances', {
     preHandler: requirePermission('reports:read'),

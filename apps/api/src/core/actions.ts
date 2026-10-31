@@ -6,6 +6,7 @@
 // [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
+// [2026-10-31 08:14 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): ctx.ledger.query trong giao dịch của action, Kernel đăng ký bằng registerLedgerReader ở app.ts
 /**
  * RUNTIME ACTION (bizcity_action@1, PHASES 2.5) — một khai báo `defineAction` sinh route HTTP + mô tả OpenAPI; registry dùng chung
  * cho MCP (2.12), CLI. Runtime làm thay handler các bước ACTION §4:
@@ -26,7 +27,7 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
 import { z } from 'zod';
-import { ERROR_CODES, type ErrorCode } from '@ketoan/contracts';
+import { ERROR_CODES, type ErrorCode, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
@@ -35,6 +36,7 @@ import { emitEvent } from './events.js';
 import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
 import { metrics } from './metrics.js';
+import { currentRequest } from './request-context.js';
 import type { AuthContext, Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
@@ -57,6 +59,11 @@ export interface ActionContext {
    * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
    */
   events: { emit(type: string, data: Record<string, unknown>, opts: { subject: string; version?: number; dedupeKey?: string }): Promise<string | null> };
+  /** Đọc sổ theo mã trong giao dịch của action (ledger.query, BIZCITY-DATA §7) — module không đọc bảng ledger_*. */
+  ledger: { query(q: LedgerQuery): Promise<LedgerQueryRow[]> };
+  // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call (module-sdk API.md §2, câu hỏi mở 3): gọi action đọc của module khác
+  /** Gọi action đọc công khai của module khác theo mã, với quyền của người gọi (STD-MOD-3; xem callAction). */
+  actions: { call<O = unknown>(id: string, input: unknown): Promise<O> };
   /** @deprecated Cầu nối Phase 2→3 cho service cũ cần AuthContext. Không có trong @bizcity/module-sdk. */
   readonly legacyAuth: AuthContext;
 }
@@ -93,6 +100,16 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
 
 /** Action bất kỳ (đã xoá kiểu input / output) — cho registry và danh sách action của một module. */
 export type AnyActionDef = ActionDef<any, any>;
+
+/**
+ * Bộ đọc sổ cho ctx.ledger.query. Platform không import Kernel (SC-LAYER-2) nên Kernel đăng ký lúc lắp ráp (app.ts), như
+ * tự chẩn đoán và số đo sổ. Chưa đăng ký mà action gọi → lỗi rõ, không trả rỗng (rỗng trông như "sổ không có số").
+ */
+export type LedgerReader = (tx: Transaction<Database>, tenantId: string, q: LedgerQuery) => Promise<LedgerQueryRow[]>;
+let ledgerReader: LedgerReader | null = null;
+export function registerLedgerReader(fn: LedgerReader): void {
+  ledgerReader = fn;
+}
 
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
 const registry = new Map<string, AnyActionDef>();
@@ -217,6 +234,18 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
             });
           },
         },
+        ledger: {
+          query: (q) => {
+            if (!ledgerReader) throw new Error('Chưa đăng ký bộ đọc sổ (registerLedgerReader ở app.ts)');
+            return ledgerReader(trx, tenantId, q);
+          },
+        },
+        actions: {
+          call: (id, input) => {
+            if (!auth) throw Errors.unauthorized();
+            return callAction(id, input, auth);
+          },
+        },
         get legacyAuth() {
           if (!auth) throw Errors.unauthorized();
           return auth;
@@ -256,7 +285,20 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
   }
 }
 
-const pathParams = (path: string) => [...path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!);
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — callAction: module gọi action đọc công khai của module khác theo mã (STD-MOD-3), thay import code chéo
+/**
+ * Gọi action công khai của module khác theo mã (BIZCITY-MODULE §2 `requires.modules`, STD-MOD-3: phụ thuộc module chỉ qua action /
+ * sự kiện, không import code). Chạy đủ ACTION §4 với quyền của chính người gọi. Mã chưa đăng ký → NOT_FOUND, không trả rỗng ngầm.
+ * v1 chỉ action đọc: action ghi cần khoá idempotency của lời gọi gốc, chưa có cách truyền.
+ */
+export async function callAction<T = unknown>(id: string, input: unknown, auth: AuthContext): Promise<T> {
+  const def = registry.get(id);
+  if (!def) throw Errors.notFound(`action ${id} (module cung cấp chưa bật)`);
+  if (def.effect !== 'read') throw Errors.validation(`callAction chỉ gọi action đọc; ${id} là action ghi`);
+  return (await runAction(def, input, { auth, requestId: currentRequest()?.requestId ?? `call:${id}` })).data as T;
+}
+
+const pathParams = (path: string) =>[...path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!);
 
 /**
  * Gắn route HTTP cho các action có `expose.http`. Tham số đường dẫn + (GET/DELETE: query; còn lại: body) gộp thành input.

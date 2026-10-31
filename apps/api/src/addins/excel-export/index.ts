@@ -15,8 +15,8 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { defineAddIn } from '../../core/addins.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import type { FastifyReply } from 'fastify';
-import { reportService } from '../../modules/reports/report.service.js';
-import type { PostingSummaryGroup } from '../../modules/reports/extra-reports.js';
+import { reportService } from '../../phan-he/ke-toan/reports/report.service.js';
+import type { PostingSummaryGroup } from '../../phan-he/ke-toan/reports/extra-reports.js';
 import { salesPaymentsQuerySchema, salesQuerySchema, salesSummaryQuerySchema } from '../../modules/sales/sales-report.routes.js';
 import { salesReportService } from '../../modules/sales/sales-report.service.js';
 

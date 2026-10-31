@@ -8,6 +8,7 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
+// [2026-10-31 08:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): kiểu khung nhìn chỉ đọc bizcity_read.ledger_* (migration 0043).
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1528,6 +1529,10 @@ export interface Database {
   ledger_lines: LedgerLinesTable;
   ledger_balances_daily: LedgerBalancesDailyTable;
   ledger_links: LedgerLinksTable;
+  /** Khung nhìn chỉ đọc của Kernel (0043, ledger.query): ngoài Kernel đọc sổ qua đây, không qua bảng ledger_* (SC-KERNEL-7). */
+  'bizcity_read.ledger_entries': Omit<LedgerEntriesTable, 'content_hash' | 'body_hash'>;
+  'bizcity_read.ledger_lines': LedgerLinesTable;
+  'bizcity_read.ledger_balances_daily': LedgerBalancesDailyTable;
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;

@@ -2,6 +2,7 @@
 // [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
+// [2026-10-31 08:18 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-KERNEL-7: ngoài Kernel không đọc thẳng bảng ledger_* (đọc bizcity_read.* / ledgerQuery)
 /**
  * Kernel: ranh giới sổ cái. Chuyển từ scripts/kiem-chuan.sh (giữ nguyên nghĩa; danh sách nợ chuyển sang baseline.json).
  */
@@ -100,6 +101,28 @@ export const checks = [
             if (target !== PUBLIC && isKernel(target)) findings.push(ctx.finding(file, i + 1, `import thẳng vào Kernel ${target.slice(SRC.length + 1)} — dùng kernel/public.ts`, target.slice(SRC.length + 1)));
           }
         });
+      }
+      return { examined: files.length, findings };
+    },
+  },
+  {
+    id: 'SC-KERNEL-7',
+    title: 'Ngoài Kernel không đọc thẳng bảng ledger_*: đọc khung nhìn bizcity_read.* hoặc ledgerQuery (ledger.query)',
+    gate: 'KERNEL', contract: 'kernel', rules: ['R-BOUND-3'], conf: ['CONF-STATIC-2'], tier: 0, enforce: 'block', weight: 4, targets: ['repo'],
+    run(ctx) {
+      // PHASES 3.7: bảng ledger_* là chỗ Kernel giữ bất biến; bề mặt đọc là khung nhìn chỉ đọc bizcity_read.* (migration 0043) và
+      // ledgerQuery ở kernel/public.ts. Dò cả câu SQL xuống dòng (FROM\n ledger_lines) nên đọc nguyên tệp, không theo dòng.
+      const isKernel = (file) => (expectedLayer(file)?.layer ?? '').split('+').includes('K');
+      const files = ctx.repo.files(ts).filter((f) => !isKernel(f) && f !== `${SRC}/db/types.ts`);
+      const re = /\b(?:FROM|JOIN)\s+(?:public\.)?(ledger_[a-z_]+)\b|\b(?:selectFrom|innerJoin|leftJoin|rightJoin|fullJoin)\(\s*'(?:public\.)?(ledger_[a-z_]+)/g;
+      const findings = [];
+      for (const file of files) {
+        const text = ctx.repo.read(file) ?? '';
+        for (const m of text.matchAll(re)) {
+          const table = m[1] ?? m[2];
+          const line = text.slice(0, m.index).split('\n').length;
+          findings.push(ctx.finding(file, line, `đọc thẳng bảng sổ ${table} — dùng bizcity_read.${table} hoặc ledgerQuery (kernel/public.ts)`, `read:${table}`));
+        }
       }
       return { examined: files.length, findings };
     },

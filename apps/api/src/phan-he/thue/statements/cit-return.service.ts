@@ -1,4 +1,6 @@
 // @bizcity-layer D modules/thue
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — B02 lấy qua action accounting.report.income-statement (callAction), không import báo cáo của ke-toan (SC-MOD-1)
 /**
  * Tờ khai quyết toán thuế thu nhập doanh nghiệp (mẫu 03/TNDN, Thông tư 80/2021/TT-BTC) — phần chỉ tiêu chính.
  *
@@ -21,7 +23,10 @@ import { db, toNumber } from '../../../db/client.js';
 import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import type { AuthContext } from '../../../core/auth.js';
-import { incomeStatement } from '../../../modules/reports/income-statement.js';
+import { callAction } from '../../../core/actions.js';
+
+/** Phần B02 thuế cần (action công khai accounting.report.income-statement của ke-toan). */
+interface IncomeStatement { rows: { code: string; current: number }[] }
 
 export const CIT_MANUAL_KEYS = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B9', 'B10', 'B11', 'B14', 'C2', 'C3a', 'C3b', 'C5', 'rate', 'C11', 'C12', 'C13', 'C14', 'D2', 'E'] as const;
 export type CitManualKey = (typeof CIT_MANUAL_KEYS)[number];
@@ -100,12 +105,12 @@ export const citReturnService = {
   async build(auth: AuthContext, q: { year: number }) {
     const from = `${q.year}-01-01`;
     const to = `${q.year}-12-31`;
-    const is = await incomeStatement({ tenantId: auth.tenantId, from, to, branchIds: null });
+    const is = await callAction<IncomeStatement>('accounting.report.income-statement', { from, to }, auth);
     const line = (code: string) => is.rows.find((r) => r.code === code)?.current ?? 0;
     // Tổng doanh thu để gợi ý thuế suất: doanh thu thuần + doanh thu tài chính + thu nhập khác.
     const revenue = line('10') + line('22') + line('31');
     const paid = await sql<{ v: string | null }>`
-      SELECT SUM(l.debit) AS v FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+      SELECT SUM(l.debit) AS v FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
        WHERE l.tenant_id = ${auth.tenantId} AND l.account_code LIKE '3334%'
          AND l.posting_date BETWEEN ${from}::date AND ${to}::date AND e.doc_type <> 'closing'`.execute(db);
     const auto: Record<string, number> = { A1: Math.round(line('50')), rate: suggestedRate(revenue), E: Math.round(toNumber(paid.rows[0]?.v ?? 0)) };

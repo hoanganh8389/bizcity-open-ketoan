@@ -1,11 +1,14 @@
 # Rà soát việc của người đóng góp — Nguyễn Văn Thủy · 2026-10-31
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — biên bản rà soát đầu tiên: 14 commit của Nguyễn Văn Thủy (e2ada98..149a1bd), ĐẠT có điều kiện. -->
 <!-- [2026-10-31 04:29 PM Johnny Chu - Chu Hoàng Anh] R-REV — điều kiện b: nạp 25 trường hợp vào đơn vị sạch, đối chiếu sổ / công nợ / kho / thuế / mã hàng / ĐVT; thêm việc f–j. -->
+<!-- [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — §7: rà và duyệt packages/contracts/src/mua-hang (6 commit); sửa lỗi chặn CK theo mã khi ĐVT bảng chưa khai. -->
+<!-- [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — §8: lam-sach-mua-hang.sql tắt trigger, xoá thẳng ledger_* ngoài E3 → KHÔNG ĐẠT; vá kiem-chuan.sh và ra-soat-dong-gop.mjs dò cả .sql. -->
+<!-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — chủ đồng ý đề xuất e, h, j: gỡ lam-sach, chuyển nap-25 về scripts/mua-hang/, TAX_INPUT_NO_INVOICE, đoạn nhãn mã hàng tách nhãn danh mục. -->
 
 > **Luật:** [RULE-REVIEW](../rules/RULE-REVIEW.md) · **Khoảng:** `e2ada98..149a1bd` (`origin/main`), chỉ commit tác giả "Thủy" · **Công cụ:** `node scripts/ra-soat-dong-gop.mjs --range e2ada98..origin/main --author "Thủy"`
 > **Nội dung:** mua hàng (ĐVT thùng MH27, CK % ⇄ CK đ, chương trình theo giai đoạn, giá NCC hiệu lực theo ngày, biến thể MH26, đơn giá số lẻ, sửa lỗi đợt test 25 trường hợp), giao diện cửa sổ / menu, bộ nạp 25 trường hợp
-> **Mức rủi ro (R-REV-9):** **R2** — đổi giá, chiết khấu, ĐVT, hạn mức, công nợ NCC → số tiền vào sổ
-> **Kết luận:** 🟡 **ĐẠT có điều kiện** (§6)
+> **Kết luận:** 🟡 **ĐẠT có điều kiện** (§6) — mã phân hệ đạt sau khi sửa lỗi CK (§7); `scripts/lam-sach-mua-hang.{sh,sql}` KHÔNG ĐẠT, **đã gỡ** (§8). Còn việc a, f, g, h (bước 2), i, k
+> **Kết luận:** 🔴 **KHÔNG ĐẠT một phần** — mã phân hệ mua hàng: ĐẠT có điều kiện (§6); `scripts/lam-sach-mua-hang.{sh,sql}`: **KHÔNG ĐẠT** (§8, xoá thẳng sổ cái ngoài ngoại lệ E3)
 
 ## 1. Lượt đầu tự động — kết luận từng phát hiện
 
@@ -129,10 +132,66 @@ Dữ liệu kế toán của bộ 25 trường hợp **đúng ở mọi phép đ
 | a | Bật bảo vệ nhánh `main` (PR, CI xanh, 1 người duyệt); từ nay Thủy làm qua PR | chủ dự án · Thủy | ☐ |
 | b | Rà dữ liệu kế toán R-REV-6 (§3) | Nhóm Lõi | ✅ 2026-10-31 |
 | c | Rà sâu `modules/catalog/catalog.service.ts` | Nhóm Lõi | ✅ — còn cảnh báo kế thừa tỉ lệ ĐVT (§4) → việc f |
-| d | Duyệt thay đổi `packages/contracts/src/mua-hang/*`; xếp lịch PHASES 2.8 (tách bộ máy mua hàng khỏi contracts) | chủ dự án | ☐ |
-| e | Chọn cách cho SC-SIG-1 với 3 script (§1) | chủ dự án | ☐ |
+| d | Duyệt thay đổi `packages/contracts/src/mua-hang/*`; xếp lịch PHASES 2.8 (tách bộ máy mua hàng khỏi contracts) | chủ dự án | ✅ duyệt 2026-10-31, có **sửa một lỗi chặn** (§7); PHASES 2.8 còn ☐ |
+| e | Chọn cách cho SC-SIG-1 với 3 script (§1) | chủ dự án | ✅ 2026-10-31 (chủ đồng ý đề xuất): gỡ `lam-sach-mua-hang.{sh,sql}` (§8), chuyển `nap-25-truong-hop.{sh,mjs}` về `scripts/mua-hang/` (R-REV-12), nạp vào đơn vị mới. SC-SIG-1, `kiem-chuan.sh` xanh |
 | f | Mã con kế thừa tỉ lệ ĐVT của mã cha: hỏi người dùng xác nhận khi ĐVT gốc khác nhau (hoặc không kế thừa tỉ lệ ≠ 1) + test | Thủy | ☐ |
 | g | Kịch bản 25 trường hợp chạy được trên đơn vị sạch: `chuanBi` khai đủ mặt hàng gốc, nhãn `63` / `34`, nhóm `221`, chế độ định khoản; số "mong đợi" của chính sách cộng dồn (TH15, TH16, TH22) tính trên đúng các phiếu cùng sổ, hoặc mỗi case một kỳ / một NCC riêng | Thủy | ☐ |
-| h | **Chính sách kế toán:** phiếu nhập chưa có số hoá đơn vẫn ghi Nợ 1331 (Kernel), nên sổ hoá đơn / bảng kê mua vào ≠ 1331 (lệch 64,45tr ở bộ này). Chọn: giữ (bảng kê đối chiếu phải tính phần chờ hoá đơn) hay ghi thuế chờ hoá đơn ở tài khoản tạm, chuyển 1331 khi có hoá đơn | chủ dự án · kế toán trưởng | ☐ |
+| h | **Chính sách kế toán:** phiếu nhập chưa có số hoá đơn vẫn ghi Nợ 1331 (Kernel), nên sổ hoá đơn / bảng kê mua vào ≠ 1331 (lệch 64,45tr ở bộ này). Chọn: giữ (bảng kê đối chiếu phải tính phần chờ hoá đơn) hay ghi thuế chờ hoá đơn ở tài khoản tạm, chuyển 1331 khi có hoá đơn | chủ dự án · kế toán trưởng | 🟡 2026-10-31 (chủ đồng ý hướng): **bước 1 có** — tự chẩn đoán `TAX_INPUT_NO_INVOICE` / DG-TAX-1; **bước 2** (`tax_input_pending`, K2 + ADR) chờ kế toán trưởng duyệt (RULE-REVIEW §5) |
 | i | Cột `total_before_tax` / `total_tax` của phiếu đổi hàng: ghi ròng (khớp `total`) hoặc ghi rõ nghĩa trong `COMMENT ON` | Nhóm Lõi | ☐ |
-| j | Xác nhận đoạn nhãn trong mã hàng (`015`) có phải trùng mã nhãn danh mục (`34`) không (§4) | chủ dự án | ☐ |
+| j | Xác nhận đoạn nhãn trong mã hàng (`015`) có phải trùng mã nhãn danh mục (`34`) không (§4) | chủ dự án | ✅ 2026-10-31: **không phải lỗi** — đoạn cấp 2 là số thứ tự nhóm trong ngành, tách khỏi nhãn danh mục; không suy nhãn từ mã, không đổi mã (RULE-REVIEW §5, W-8); cảnh báo `doi-chieu-ke-toan.sql` §8 |
+
+## 7. Rà và duyệt `packages/contracts/src/mua-hang/*` (điều kiện d, 2026-10-31)
+
+Chủ dự án chỉ đạo "rà soát và duyệt". 6 commit, 4 tệp, khoảng 90 dòng. Đã đọc từng dòng diff.
+
+| Commit | Tệp | Thay đổi | Ảnh hưởng tiền / sổ | Kết luận |
+|---|---|---|---|---|
+| 6cd9908 | `engine.ts` | so giá với lần nhập trước giữ 4 chữ số lẻ (đơn giá được lẻ) | không — chỉ cảnh báo `checkDoc` | **duyệt** |
+| f03e8e6 | `engine.ts`, `khuyen-mai.ts` | `%` trong vết chính sách / bảng khuyến mại hiển thị kiểu Việt Nam (`2,5%`) | không — chuỗi hiển thị | **duyệt** |
+| 6c085e9 | `ton-max.ts` | công thức đặt hàng: thêm `minWarehouses` (tuỳ chọn, mặc định như kho lấy max) | không chạm sổ (gợi ý số lượng đặt) | **duyệt** |
+| 3e45f20 | `engine.ts` | (1) CK theo mã quy đổi ĐVT bảng ↔ ĐVT phiếu (`factor`); (2) CK dòng không vượt tiền hàng (`Math.min(gross, …)`, % tối đa 100); (3) so giá lần trước quy về ĐVT dòng | **có** — tiền CK dòng → tiền hàng, công nợ 331, giá trị kho | (2), (3) **duyệt**; (1) **lỗi chặn → đã sửa**, xem dưới |
+| 37b41bb | `gia-mua.ts` | ĐVT lập phiếu = "Mua mặc định" của mặt hàng nếu có (trước: ĐVT dòng giá NCC) | gián tiếp (giá theo ĐVT) | **duyệt** — có `priceFor` quy đổi khi NCC không khai giá ĐVT đó |
+| eca1200 | `gia-mua.ts` | giá NCC: chỉ dòng còn hiệu lực ở **ngày chứng từ**; chồng ngày → "Hiệu lực từ" muộn nhất, rồi dòng khai sau (`id`) | gián tiếp (cảnh báo giá cố định) | **duyệt** — tất định |
+
+**Lỗi chặn (3e45f20, R2).**
+- `itemDiscountFor` tính tỉ lệ ĐVT bằng `ratioOf`. Chú thích ghi "0 = không quy đổi được (ĐVT lạ)", nhưng `ratioOf` (`gia-mua.ts:32`) trả **1** khi mặt hàng không có ĐVT đó.
+- Hệ quả: bảng CK "giảm 105.000đ / Thùng", mặt hàng chưa khai ĐVT Thùng, phiếu nhập 48 Lon → CK dòng **5.040.000đ thay vì 105.000đ** (gấp 48). Đã tái hiện bằng `computeDoc`.
+- Trước commit này, dòng bảng khác ĐVT không áp. Lỗi đang ở `main`; giới hạn "CK ≤ tiền hàng" chỉ chặn khi CK vượt tiền hàng.
+
+**Đã sửa ngay theo R-REV-5** (lỗi chặn khẩn, ghi rõ):
+- `engine.ts`: tra đúng ĐVT trong bảng ĐVT của mặt hàng; không có → 0 → dòng CK không áp.
+- Test hồi quy mới trong `apps/api/test/dvt-thung.test.ts` (ĐVT đã khai: 105.000; chưa khai / không có bảng: 0).
+- Test liên quan xanh: `dvt-thung`, `ck-dong`, `ket-hop-6-cach`, `mua-hang-25-tinh-huong` (52 ca).
+
+**Việc cho Thủy:** rà dữ liệu thật ở `tgs` từ 30/10 21:17 (commit 3e45f20): phiếu mua có dòng CK theo mã mà bảng CK ghi ĐVT mặt hàng chưa khai → CK đã bị nhân theo số lượng ĐVT nhỏ. Phiếu đã duyệt thì bỏ duyệt rồi duyệt lại (Kernel tự đảo và ghi lại bút toán).
+
+**Ký:** mỗi tệp thêm một dấu của Nguyễn Văn Thủy (đóng góp, giờ commit cuối) và một dấu duyệt của chủ dự án (R-SIG-7).
+
+## 8. Lỗi chặn: `scripts/lam-sach-mua-hang.sql` xoá thẳng sổ cái (2026-10-31)
+
+**Phát hiện khi rà để đề xuất việc e.**
+- `lam-sach-mua-hang.sql` (commit 392d97e, gọi từ `lam-sach-mua-hang.sh <đơn vị> --chay`) **tắt mọi trigger** bảo vệ sổ: `SET LOCAL session_replication_role = replica`, dòng 62.
+- Rồi xoá chọn lọc theo phân hệ:
+  - `DELETE` `ledger_entries`, `ledger_lines`, `ledger_links`;
+  - `UPDATE` / `DELETE` `ledger_balances_daily`;
+  - `DELETE` `posting_log`, `accounting_events`, `accounting_event_versions`, `tax_invoices`, `debt_items`, `inventory_movements`, `document_signatures`.
+- Đích là một đơn vị có thể là **sổ thật** (ví dụ trong script: `tgs`). Script có sao lưu trước và có câu xác nhận.
+
+**Vi phạm:**
+- câu 2 (sổ chỉ thêm) và R-LEDGER-1: không `UPDATE` / `DELETE` `ledger_lines`, `posting_log`;
+- danh sách ngoại lệ đóng **E1–E4**: E3 chỉ cho `scripts/xoa-chung-tu.sh` xoá **trọn** một đơn vị; thêm ngoại lệ phải có ADR.
+
+Xoá chọn lọc còn để lại sổ có số bút toán hở, công nợ / bằng chứng của phân hệ khác trỏ tới sự việc đã mất. Không bút toán đảo nào ghi lại việc xoá.
+
+**Vì sao lọt.** Grep ở `scripts/kiem-chuan.sh` chỉ dò `.ts` / `.mjs` / `.sh`, không dò `.sql`. Luật H-LEDGER của `scripts/ra-soat-dong-gop.mjs` chỉ dò `apps/api/src`.
+
+**Đã vá (R-REV-10):**
+- `kiem-chuan.sh` dò cả `.sql`, nên nay **báo KHÔNG ĐẠT đúng chỗ này**.
+- `ra-soat-dong-gop.mjs`: H-LEDGER dò cả `scripts/` và `.sql`; luật mới **H-TRIGGER-OFF**. Lượt đầu đợt này nay ra **6 chặn**.
+
+**Việc:**
+
+| # | Việc | Người | Trạng thái |
+|---|---|---|---|
+| k | **Khẩn:** xác nhận `lam-sach-mua-hang.sh --chay` đã chạy trên bản cài nào. Nếu là sổ thật (`tgs`): đối chiếu bản sao lưu script tạo trước khi xoá, chạy diagnostics (`LEDGER_*`, `EVIDENCE_CHAIN`) và `scripts/doi-chieu-ke-toan.sql` trên đơn vị đó | chủ dự án | ☐ |
+| l | Thay cách "làm sạch rồi nạp lại": nạp 25 trường hợp vào **đơn vị mới** mỗi lần (như lần rà này), hoặc **bản test** (`scripts/tao-ban-test.sh`) rồi xoá trọn bằng E3. Gỡ `lam-sach-mua-hang.{sh,sql}`; không thêm ngoại lệ mới | Thủy (Nhóm Lõi hỗ trợ) | ✅ phần gỡ + chuyển (2026-10-31); còn: `chuanBi` chạy được trên đơn vị mới (việc g) |

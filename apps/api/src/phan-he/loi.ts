@@ -6,10 +6,13 @@
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — báo cáo về phan-he/ke-toan/reports; GOODS (nhập xuất tồn + báo cáo hàng hoá tách theo miền) lắp ở đây cho kho, mua-hang — phân hệ không import báo cáo của ke-toan (SC-MOD-1)
 /**
  * LÕI máy chủ — luôn bật ở mọi tiến trình: đăng nhập, hệ thống, người dùng, danh mục dùng chung, cổng nhận chứng từ, kết nối.
  * Mã nguồn lõi ở src/core + src/modules (chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo…).
  * LEDGER: sổ sách, báo cáo, công nợ dùng chung — phân hệ nghiệp vụ nào cũng cần.
+ * GOODS: nhập xuất tồn (Kernel) + báo cáo hàng hoá: lãi gộp (ban-hang), chuyển kho (kho), kết quả theo cửa hàng (ke-toan) —
+ *   phân hệ có hàng (kho, mua-hang) cùng cần; lắp ở đây để phân hệ không import nhau (SC-MOD-1).
  */
 import type { Routes } from './types.js';
 import { authRoutes } from '../modules/auth/auth.routes.js';
@@ -20,7 +23,7 @@ import { mcpRoutes } from '../modules/system/mcp.routes.js';
 import { metricsRoutes } from '../modules/system/metrics.routes.js';
 import { presenceRoutes } from '../modules/system/presence.js';
 import { accessRoutes } from '../modules/access/access.routes.js';
-import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes } from '../kernel/public.js';
+import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes } from '../kernel/public.js';
 import { branchRoutes } from '../modules/branches/branch.routes.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
 import { unitNameRoutes } from '../modules/unit-names/unit-name.routes.js';
@@ -35,7 +38,10 @@ import { voucherTemplateRoutes } from '../modules/voucher-templates/voucher-temp
 import { signatureRoutes } from '../modules/signatures/signature.routes.js';
 import { printTemplateRoutes } from '../modules/print-templates/print-template.routes.js';
 import { referenceDocumentRoutes } from '../modules/reference-documents/reference-document.routes.js';
-import { reportRoutes } from '../modules/reports/report.routes.js';
+import { reportRoutes } from './ke-toan/reports/report.routes.js';
+import { departmentReportRoutes } from './ke-toan/reports/department-reports.js';
+import { grossProfitRoutes } from './ban-hang/gross-profit.js';
+import { stockTransferRoutes } from './kho/stock-transfers.js';
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes,
@@ -45,3 +51,4 @@ export const CORE_ROUTES: Routes[] = [
 ];
 
 export const LEDGER: Routes[] = [ledgerRoutes, reportRoutes, debtRoutes];
+export const GOODS: Routes[] = [inventoryRoutes, grossProfitRoutes, stockTransferRoutes, departmentReportRoutes];

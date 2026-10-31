@@ -131,6 +131,24 @@ export const checks = [
           WHERE a.status IN ('pending','error') AND a.received_at < now() - interval '3 days'
           ORDER BY a.received_at LIMIT 200`,
   }),
+  // [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — DG-TAX-1 TAX_INPUT_NO_INVOICE: thuế đầu vào đã vào sổ mà chưa có hoá đơn quá 30 ngày (cùng mã với app).
+  sqlCheck({
+    id: 'DG-TAX-1', code: 'TAX_INPUT_NO_INVOICE',
+    title: 'Thuế GTGT đầu vào đã ghi sổ có hoá đơn trong sổ hoá đơn (chờ không quá 30 ngày)',
+    rules: ['R-REV-6'], conf: [], tier: 2, enforce: 'info', weight: 1,
+    count: `SELECT count(DISTINCT e.event_id)::int AS n FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
+            WHERE e.status = 'posted' AND l.account_code IN (SELECT account_code FROM tax_codes WHERE direction = 'input' AND account_code IS NOT NULL
+                                                             UNION SELECT account_code FROM posting_defaults WHERE key = 'tax_input')`,
+    sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('doc_type', a.doc_type, 'doc_date', a.doc_date) AS detail
+          FROM accounting_events a JOIN tenants t ON t.id = a.tenant_id
+          WHERE a.status = 'posted' AND a.doc_date < current_date - 30
+            AND EXISTS (SELECT 1 FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
+                        WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal AND l.debit <> l.credit
+                          AND l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = a.tenant_id AND tc.direction = 'input' AND tc.account_code IS NOT NULL
+                                                 UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key = 'tax_input'))
+            AND NOT EXISTS (SELECT 1 FROM tax_invoices i WHERE i.event_id = a.id)
+          ORDER BY a.doc_date LIMIT 200`,
+  }),
   {
     id: 'DG-DB-1', code: 'MIGRATIONS_PENDING',
     title: 'Mọi tệp db/migrations đã áp vào CSDL',

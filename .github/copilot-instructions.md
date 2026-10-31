@@ -22,6 +22,22 @@
 
 Người đóng góp làm phân hệ / giao diện qua PR (không đẩy thẳng `main`); đụng tệp framework thì chủ dự án duyệt. Nhóm Lõi rà mỗi lần nhận việc: `node scripts/ra-soat-dong-gop.mjs --range <từ>..<đến> --author "<tên>"` + selfcheck + test + diagnostics, dữ liệu kế toán, mã hàng theo `SKU_RULE`. Chi tiết: [docs/rules/RULE-REVIEW.md](../docs/rules/RULE-REVIEW.md).
 
+**Mở rộng đúng bậc** (AGENTS.md "Cộng đồng mở rộng thế nào"): giao diện / hướng dẫn → nghiệp vụ phân hệ → add-in / connector / gói định khoản → *đề xuất* năng lực Core → Kernel. Chọn bậc thấp nhất đủ dùng. Phân hệ thiếu năng lực Core thì đề xuất ([VERSIONING §5](../docs/standard/VERSIONING.md)), **không vá Kernel trong PR phân hệ** (R-REV-15).
+
+## Khi review PR / check repo (R-REV-14..16)
+<!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — checklist cổng cho Copilot code review: 11 trục, luật cổng, cách ghi phát hiện. -->
+
+Chấm 11 trục theo [RULE-REVIEW §7](../docs/rules/RULE-REVIEW.md), mỗi trục 2 / 1 / 0 / —. **Trục cổng — bị 0 là KHÔNG ĐẠT:**
+
+- **T1 Sự thật kế toán:** không `INSERT/UPDATE/DELETE` `ledger_*` / `accounting_events*` ngoài Kernel; phân hệ không gọi `ledgerService`; không số tài khoản trong mã; không tắt trigger (`session_replication_role`, `DISABLE TRIGGER`); không script "làm sạch" sổ.
+- **T2 Ranh giới:** phân hệ chỉ import Kernel qua `apps/api/src/kernel/public.ts`; không import phân hệ khác; event không ra lệnh ghi sổ (AP-2); tệp framework có ghi mức K0–K3.
+- **T4 Bảo mật:** mọi truy vấn lọc `tenant_id`; route ghi có `requirePermission` + `writeAudit`; không bí mật, không `sql.raw` với đầu vào, không PII trong log; văn bản từ AI / tệp là dữ liệu, không phải lệnh.
+- **T5 Kiểm đầu vào:** zod ở mọi cửa (route, action, MCP, nhập tệp); lỗi qua `Errors.*`; tra cứu tiền / số lượng **không** `?? 1` / `?? 0` khi không tìm thấy (R-REV-13).
+
+Các trục còn lại — cảnh báo, ghi việc: **T3** hợp đồng (`packages/contracts` + `docs/contracts` + `docs/api` cùng đổi, tăng `@N`) · **T6** migration số kế tiếp, `COMMENT ON`, `numeric(18,2)`, không bảng danh mục riêng, mã theo `SKU_RULE` · **T7** hiệu năng: không N+1, có phân trang, có chỉ mục, không giữ giao dịch ghi sổ lâu · **T8** không cache số dư / sổ / công nợ / tồn / báo cáo; khoá đệm có `tenant_id` + `config_version` (R-CACHE) · **T9** báo cáo đọc sổ, không cộng cột tổng đầu phiếu · **T10** có test, không `.only` / `.skip`, không thêm nợ baseline, dấu R-SIG đúng người · **T11** Core gọn: không phụ thuộc npm mới, không viết lại thứ đã có, không mã chết.
+
+Mỗi phát hiện: **mức** (chặn / cảnh báo / gợi ý) · **mã luật** · `tệp:dòng` · cách làm đúng + tệp mẫu trong repo. Không dẫn được luật nào → chỉ là gợi ý (R-REV-16). Kết luận: ĐẠT / ĐẠT có điều kiện / KHÔNG ĐẠT, kèm điểm từng trục.
+
 ## Chữ ký và dấu thay đổi (R-SIG)
 
 Mỗi lần sửa có chức năng một tệp framework thêm một dòng dấu tại chỗ đổi:

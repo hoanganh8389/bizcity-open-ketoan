@@ -1,11 +1,13 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — thêm accounting.report.income-statement (MCP + module thue gọi qua callAction) và accounting.report.term-rules (bảng ngắn / dài hạn B01 cho thue)
 /**
  * Công cụ đọc `accounting.*` cho trợ lý AI (bizcity_mcp@1 §5.1, PHASES 2.11): action chỉ phơi qua MCP (`expose.mcp`, không route HTTP
  * mới — màn hình vẫn dùng /api/v1/reports/*). Bọc reportService có sẵn; mô tả viết cho LLM: làm gì, khi nào dùng (STD-MCP-2).
  */
 import { z } from 'zod';
-import { defineAction, type AnyActionDef } from '../../core/actions.js';
+import { defineAction, type AnyActionDef } from '../../../core/actions.js';
 import { reportService } from './report.service.js';
+import { TERM_MAP } from './balance-sheet.js';
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 const period = {
@@ -76,5 +78,30 @@ export const reportActions: AnyActionDef[] = [
     output: report,
     expose: { mcp: true, ai: 'read' },
     handler: async (ctx, q) => (await reportService.partnerBalances(ctx.legacyAuth, q)) as unknown as Report,
+  }),
+  defineAction({
+    id: 'accounting.report.income-statement', title: 'Báo cáo kết quả hoạt động kinh doanh (B02)', tags,
+    description: 'Từng chỉ tiêu B02 (mã 01…60) kỳ này và cùng kỳ năm trước: doanh thu, giảm trừ, giá vốn, lãi gộp, doanh thu / chi phí tài chính, '
+      + 'chi phí bán hàng, quản lý, lợi nhuận trước thuế (50), thuế TNDN (51), lợi nhuận sau thuế (60). Dùng khi chủ hỏi lãi lỗ, kết quả kinh doanh.',
+    permission: 'reports:read', effect: 'read', idempotency: 'none',
+    input: z.object(period),
+    output: z.object({
+      period: z.object({ from: z.string(), to: z.string() }),
+      previous: z.object({ from: z.string(), to: z.string() }),
+      rows: z.array(z.object({ code: z.string(), name: z.string(), note: z.string(), bold: z.boolean(), accounts: z.string(), current: z.number(), previous: z.number() }))
+        .describe('Chỉ tiêu B02; current = kỳ này, previous = cùng kỳ năm trước (đồng)'),
+    }),
+    expose: { mcp: true, ai: 'read' },
+    handler: (ctx, q) => reportService.incomeStatement(ctx.legacyAuth, q),
+  }),
+  defineAction({
+    id: 'accounting.report.term-rules', title: 'Nhóm tài khoản có phần ngắn hạn / dài hạn trên B01', tags,
+    description: 'Đầu tài khoản nào tách ngắn hạn / dài hạn trên bảng cân đối kế toán, lên chỉ tiêu nào (tài sản, nợ phải trả). '
+      + 'Dữ liệu mẫu biểu, không theo đơn vị; module thuế dùng khi kiểm màn Phân loại dài hạn.',
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({}),
+    output: z.array(z.object({ prefix: z.string(), label: z.string(), asset: z.tuple([z.string(), z.string()]).nullable(), liability: z.tuple([z.string(), z.string()]).nullable() })),
+    expose: {},
+    handler: async () => TERM_MAP.map((r) => ({ prefix: r.prefix, label: r.label, asset: r.asset ?? null, liability: r.liability ?? null })),
   }),
 ];

@@ -1,4 +1,5 @@
 // @bizcity-layer A adapters/cell
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cân đối phát sinh lấy qua action accounting.report.trial-balance (callAction): adapter không import module báo cáo (SC-LAYER-2)
 /**
  * Add-in "Bảng tính AI": khung tích hợp ứng dụng bảng tính có AI chạy riêng
  * (dịch vụ độc lập, nhúng vào giao diện kế toán).
@@ -13,7 +14,9 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { defineAddIn } from '../../core/addins.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
-import { reportService } from '../../modules/reports/report.service.js';
+import { callAction } from '../../core/actions.js';
+
+interface TrialBalanceRow { code: string; name: string; openingDebit: number; openingCredit: number; debit: number; credit: number; closingDebit: number; closingCredit: number }
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -40,7 +43,7 @@ export default defineAddIn({
       preHandler: requirePermission('reports:read'),
       schema: { tags, querystring: z.object({ kind: z.enum(['trial-balance']), from: date, to: date }) },
       handler: async (req) => {
-        const data = await reportService.trialBalance(authOf(req), { from: req.query.from, to: req.query.to });
+        const data = await callAction<{ rows: TrialBalanceRow[] }>('accounting.report.trial-balance', { from: req.query.from, to: req.query.to }, authOf(req));
         return ok({
           columns: ['Số TK', 'Tên tài khoản', 'Dư Nợ đầu', 'Dư Có đầu', 'PS Nợ', 'PS Có', 'Dư Nợ cuối', 'Dư Có cuối'],
           rows: data.rows.map((x) => [x.code, x.name, x.openingDebit, x.openingCredit, x.debit, x.credit, x.closingDebit, x.closingCredit]),

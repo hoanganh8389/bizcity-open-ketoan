@@ -6,6 +6,7 @@
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm mục "Rà soát việc của người đóng góp (R-REV)". -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
+<!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm "Cộng đồng mở rộng thế nào" (bậc thang mở rộng) và "Khi được yêu cầu check repo / review" (thang 11 trục, R-REV-14..16). -->
 
 Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng doanh nghiệp, hạt nhân là sổ cái kế toán. Trước khi sửa code, đọc [docs/00-CANON.md](docs/00-CANON.md). Viết module mới: theo [docs/standard/README.md](docs/standard/README.md).
 
@@ -55,7 +56,36 @@ node tests/conformance/selfcheck.mjs --strict && npm run typecheck && npm test
 
 - Kết luận từng phát hiện (đúng / dương tính giả / đã sửa), phân mức rủi ro R0–R3. R2+: nạp bộ tình huống của phân hệ vào một đơn vị sạch trên CSDL test, chạy diagnostics và `psql -v tenant=<mã> < scripts/doi-chieu-ke-toan.sql` (sổ cân, công nợ ↔ 131 / 331, sổ hoá đơn ↔ 133, kho ↔ 156, làm tròn, mã hàng, ĐVT). Kết luận ĐẠT / ĐẠT có điều kiện / KHÔNG ĐẠT.
 - Phát hiện **chặn** → báo người dùng, ghi việc cho người đóng góp; **không âm thầm sửa** việc của họ (lỗi khẩn thì sửa và ghi rõ).
+- **Đọc [RULE-REVIEW §6](docs/rules/RULE-REVIEW.md) (cảnh báo W-1…W-11, các lỗi đã gặp thật) trước mỗi lần rà.** Đặc biệt: script "làm sạch" / tắt trigger / xoá sổ là **chặn** (R-REV-11); tra cứu cho tiền không được trả mặc định khi không tìm thấy (R-REV-13); công cụ phân hệ ở `scripts/<phân hệ>/` (R-REV-12).
 - Lỗi lặp lại → thêm luật dò H-* vào `scripts/ra-soat-dong-gop.mjs` hoặc check SC-* / DG-* (R-REV-10).
+
+## Cộng đồng mở rộng thế nào (bậc thang mở rộng)
+
+Framework mở để hàng chục người cùng phát triển, nhưng **mỗi loại thay đổi có một chỗ đặt và một người duyệt**. Chọn bậc **thấp nhất** làm được việc; chỉ lên bậc trên khi bậc dưới thật sự không đủ (R-REV-15).
+
+| Bậc | Đặt ở đâu | Ai làm / ai duyệt | Rủi ro |
+|---|---|---|---|
+| 1. Giao diện, hướng dẫn, dữ liệu mẫu | `apps/web/src/phan-he/<key>/`, `docs/huong-dan/`, `scripts/<phân hệ>/` | người đóng góp / 1 người duyệt | R0 |
+| 2. Nghiệp vụ phân hệ | `apps/api/src/phan-he/<key>/` (đích: `modules/<key>/`), dùng `ctx.ledger.submit` + `reasonCode`, danh mục chuẩn, `defineAction` | người đóng góp / Nhóm Lõi rà §7 | R1–R2 |
+| 3. Add-in, connector, gói định khoản, preset | `apps/api/src/addins/<id>/`, hợp đồng EXTENSION / CONNECTOR / POSTING-TEMPLATE / PRESET | người đóng góp / Nhóm Lõi rà §7 + R-REV-6 | R2 |
+| 4. Đề xuất năng lực Core | issue / ADR theo [VERSIONING §5](docs/standard/VERSIONING.md) — **chưa viết mã** | ai cũng đề xuất được / chủ dự án quyết | — |
+| 5. Kernel, Platform, `packages/*`, hợp đồng, migration, bộ kiểm | tệp framework (RULE-SIGNATURE §3) | Nhóm Lõi / mức K0–K3 theo R-KER-2, dấu R-SIG | R3 |
+
+Phân hệ cần thứ Core chưa có → **dừng phần đó, làm đề xuất bậc 4**, không vá Kernel trong PR phân hệ. Core nhận thêm khi ≥ 2 phân hệ cần, không trùng [REUSE-MAP](docs/standard/REUSE-MAP.md), không thêm phụ thuộc (R-KER-8).
+
+## Khi được yêu cầu "check repo", "review", "đánh giá đóng góp"
+
+Luật: [RULE-REVIEW §7–§8](docs/rules/RULE-REVIEW.md) (R-REV-14..16). Mục tiêu: Core ngày càng **chắc, gọn, an toàn, kiểm đầu vào chặt, nhanh, cache đúng, báo cáo khớp sổ**.
+
+1. **Xác định phạm vi:** một PR (`gh pr diff <số>` / `git diff origin/main...<nhánh>`), một người (`--author`), hay cả repo. Đồng bộ trước ("Trước khi code"). Không review trên nhánh cũ.
+2. **Lượt đầu tự động:** `node scripts/ra-soat-dong-gop.mjs --range <từ>..<đến> --author "<tên>"` + `node tests/conformance/selfcheck.mjs --strict` + `bash scripts/kiem-chuan.sh` + `npm run typecheck` + `npm test`. Đọc RULE-REVIEW §6 (W-1…W-11) trước.
+3. **Đọc diff thật**, chấm **11 trục** (T1 sự thật kế toán, T2 ranh giới Kernel, T3 hợp đồng, T4 bảo mật & đa đơn vị, T5 kiểm đầu vào, T6 CSDL & danh mục, T7 hiệu năng, T8 bộ nhớ đệm, T9 báo cáo, T10 kiểm thử & bằng chứng, T11 Core gọn). Mỗi điểm < 2 dẫn **mã luật + `tệp:dòng`**; không dẫn được luật nào thì chỉ là "gợi ý" (R-REV-16).
+4. **R2+** (chạm sổ, công nợ, kho, thuế, giá): chạy bộ tình huống trên đơn vị sạch, diagnostics, `scripts/doi-chieu-ke-toan.sql` (R-REV-6).
+5. **Kết luận theo luật cổng §7.2:** T1 / T2 / T4 / T5 = 0 → KHÔNG ĐẠT dù điểm tổng cao. So điểm với lần rà trước.
+6. **Báo cáo** theo mẫu §8 (cả repo: thêm §7.3 — ma trận tuân thủ, AP-1..AP-7, nợ baseline, xu hướng từng người). Ghi `docs/audits/` khi được yêu cầu lưu biên bản.
+7. **Không âm thầm sửa** việc của người đóng góp (R-REV-5): liệt kê việc, người nhận, cách làm đúng kèm tệp mẫu. Lỗi lặp lại / lọt công cụ → đề xuất luật dò mới (R-REV-10).
+
+Trả lời ngắn trước (kết luận + điểm + phát hiện chặn), chi tiết sau. Không khen chung chung; chỉ nói điều kiểm được.
 
 ## Tạo module mới (Bizcity Framework Standard v1)
 

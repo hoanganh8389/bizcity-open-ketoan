@@ -6,6 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseSpec, ratioFromName, sizeOf, isThung } from '../src/phan-he/mua-hang/dvt-thung.js';
 import { inheritUnits } from '../src/modules/catalog/catalog.service.js';
+import { computeDoc } from '@ketoan/contracts/mua-hang';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;
@@ -71,6 +72,25 @@ describe('Đọc ngữ cảnh thùng', () => {
     const own = inheritUnits([{ unit: 'Hộp', ratio: 1, isDefault: true }, { unit: 'Thùng', ratio: 24 }], parent)!;
     expect(own.map((u) => `${u.unit}${u.ratio}${u.isPurchaseDefault ? '*' : ''}`)).toEqual(['Hộp1', 'Thùng24*', 'Lốc4']);
     expect(inheritUnits([{ unit: 'Hộp', ratio: 1 }], [])).toEqual([{ unit: 'Hộp', ratio: 1 }]);
+  });
+});
+
+describe('Bảng CK theo mã ghi ĐVT khác ĐVT phiếu (REVIEW-2026-10-31-THUY §7)', () => {
+  const policy = {
+    code: 'CK-THUNG', name: 'Giảm 105.000đ / Thùng', kind: 'item_discount', scope: { partnerCode: 'NCC-X' }, validFrom: '2026-10-01', isActive: true,
+    rule: { items: [{ sku: 'M1', amount: 105000, unit: 'Thùng' }] },
+  } as never;
+  const lineDiscount = (units: { unit: string; ratio: number }[]) => computeDoc({
+    id: 'x', kind: 'receipt', status: 'draft', docNo: 'X', docDate: '2026-10-15', branchCode: 'CN01', partnerCode: 'NCC-X', priceIncludesVat: false,
+    lines: [{ lineKey: 'a', sku: 'M1', name: 'x', unit: 'Lon', qty: 48, price: 500000, taxCode: 'V08', lineType: 'buy' }],
+  } as never, [policy], { units: { M1: units } } as never).lines[0]!.lineDiscount;
+
+  it('ĐVT bảng đã khai: quy đổi đúng tỉ lệ (48 Lon = 1 Thùng → giảm 105.000)', () => {
+    expect(lineDiscount([{ unit: 'Lon', ratio: 1 }, { unit: 'Thùng', ratio: 48 }])).toBe(105000);
+  });
+  it('ĐVT bảng CHƯA khai ở mặt hàng: không áp (trước đây lấy tỉ lệ 1 → giảm 105.000 × 48 Lon)', () => {
+    expect(lineDiscount([{ unit: 'Lon', ratio: 1 }])).toBe(0);
+    expect(lineDiscount([])).toBe(0);
   });
 });
 

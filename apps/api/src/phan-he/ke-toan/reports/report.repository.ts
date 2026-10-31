@@ -1,11 +1,13 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Truy vấn số liệu cho báo cáo. Viết SQL rõ ràng bằng `sql` của Kysely để dễ đọc, dễ tối ưu.
- * Báo cáo tổng hợp đọc ledger_balances_daily (nhỏ, nhanh); báo cáo chi tiết đọc ledger_lines.
+ * Báo cáo tổng hợp đọc bizcity_read.ledger_balances_daily (nhỏ, nhanh); báo cáo chi tiết đọc bizcity_read.ledger_lines —
+ * khung nhìn chỉ đọc của Kernel (ledger.query, migration 0043), không đọc thẳng bảng ledger_* (SC-KERNEL-7).
  */
 import { sql } from 'kysely';
-import type { Db } from '../../db/client.js';
-import { otherSide } from './ledger-sql.js';
+import type { Db } from '../../../db/client.js';
+import { otherSide } from '../../../kernel/public.js';
 
 export interface BalanceRow {
   account_code: string;
@@ -31,7 +33,7 @@ export const reportRepository = {
              SUM(CASE WHEN posting_date <  ${a.from}::date THEN debit - credit ELSE 0 END) AS opening,
              SUM(CASE WHEN posting_date >= ${a.from}::date THEN debit  ELSE 0 END)        AS debit,
              SUM(CASE WHEN posting_date >= ${a.from}::date THEN credit ELSE 0 END)        AS credit
-        FROM ledger_balances_daily
+        FROM bizcity_read.ledger_balances_daily
        WHERE tenant_id = ${a.tenantId}
          AND posting_date <= ${a.to}::date
          ${branchFilter} ${accFilter}
@@ -45,7 +47,7 @@ export const reportRepository = {
     const partnerFilter = a.partnerId ? sql`AND partner_id = ${a.partnerId}` : sql``;
     const res = await sql<{ partner_id: string; net: string }>`
       SELECT partner_id, SUM(debit - credit) AS net
-        FROM ledger_balances_daily
+        FROM bizcity_read.ledger_balances_daily
        WHERE tenant_id = ${a.tenantId}
          AND account_code LIKE ${a.accountPrefix + '%'}
          AND posting_date < ${a.from}::date
@@ -63,7 +65,7 @@ export const reportRepository = {
     const partnerFilter = a.partnerId ? sql`AND partner_id = ${a.partnerId}` : sql``;
     const res = await sql<{ partner_id: string | null; net: string }>`
       SELECT partner_id, SUM(debit - credit) AS net
-        FROM ledger_lines
+        FROM bizcity_read.ledger_lines
        WHERE tenant_id = ${a.tenantId}
          AND account_code LIKE ${a.accountPrefix + '%'}
          AND product_sku = ${a.sku}
@@ -86,7 +88,7 @@ export const reportRepository = {
     const partnerFilter = a.partnerId ? sql`AND l.partner_id = ${a.partnerId}` : sql``;
     const typeFilter = a.docType ? sql`AND e.doc_type = ${a.docType}` : sql``;
     const counterFilter = a.counterPrefix
-      ? sql`AND EXISTS (SELECT 1 FROM ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
+      ? sql`AND EXISTS (SELECT 1 FROM bizcity_read.ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                         AND ${otherSide()} AND o.account_code LIKE ${a.counterPrefix + '%'})`
       : sql``;
     // Bút toán gốc đã sửa và bút toán ghi số âm của nó triệt tiêu nhau (cùng ngày, cùng tài khoản)
@@ -122,18 +124,18 @@ export const reportRepository = {
              COALESCE(NULLIF(l.description, ''), e.description) AS description, e.description AS entry_description,
              l.account_code, l.debit, l.credit,
              (SELECT string_agg(DISTINCT o.account_code, ', ')
-                FROM ledger_lines o
+                FROM bizcity_read.ledger_lines o
                WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                  AND ${otherSide()}) AS counter_accounts,
              (SELECT NULLIF(o.description, '')
-                FROM ledger_lines o
+                FROM bizcity_read.ledger_lines o
                WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                  AND ${otherSide()}
                ORDER BY o.line_no LIMIT 1) AS counter_note,
              l.partner_id, p.code AS partner_code, p.name AS partner_name, br.code AS branch_code, e.reason_code, l.dims,
              l.product_sku, pr.name AS product_name
-        FROM ledger_lines l
-        JOIN ledger_entries e ON e.id = l.entry_id
+        FROM bizcity_read.ledger_lines l
+        JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
         JOIN branches br ON br.id = l.branch_id
         LEFT JOIN partners p ON p.id = l.partner_id
         LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.product_sku
@@ -156,7 +158,7 @@ export const reportRepository = {
       a.sku ? sql`AND l.product_sku = ${a.sku}` : sql``,
       // TK đối ứng: dòng phía bên kia của cùng cặp định khoản.
       a.counterPrefix
-        ? sql`AND EXISTS (SELECT 1 FROM ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
+        ? sql`AND EXISTS (SELECT 1 FROM bizcity_read.ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                             AND ${otherSide()} AND o.account_code LIKE ${a.counterPrefix + '%'})`
         : sql``,
       a.docType ? sql`AND e.doc_type = ${a.docType}` : sql``,
@@ -167,8 +169,8 @@ export const reportRepository = {
       a.search ? sql`AND (e.doc_no ILIKE ${'%' + a.search + '%'} OR e.entry_no ILIKE ${'%' + a.search + '%'} OR e.description ILIKE ${'%' + a.search + '%'} OR l.account_code LIKE ${a.search + '%'})` : sql``,
     ];
     const where = sql`
-        FROM ledger_lines l
-        JOIN ledger_entries e ON e.id = l.entry_id
+        FROM bizcity_read.ledger_lines l
+        JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
         JOIN branches br ON br.id = l.branch_id
         LEFT JOIN partners p ON p.id = l.partner_id
         LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.product_sku
@@ -187,7 +189,7 @@ export const reportRepository = {
              COALESCE(NULLIF(l.description, ''), e.description) AS description,
              l.account_code, l.debit, l.credit,
              (SELECT string_agg(DISTINCT o.account_code, ', ')
-                FROM ledger_lines o
+                FROM bizcity_read.ledger_lines o
                WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                  AND ${otherSide()}) AS counter_accounts,
              p.code AS partner_code, p.name AS partner_name, br.code AS branch_code, e.is_reversal, e.status AS entry_status,
@@ -258,7 +260,7 @@ export const reportRepository = {
              SUM(CASE WHEN account_code LIKE '521%' THEN debit ELSE 0 END) AS returns,
              SUM(CASE WHEN account_code LIKE '3331%' THEN credit - debit ELSE 0 END) AS tax,
              SUM(CASE WHEN account_code LIKE '11%' THEN debit - credit ELSE 0 END) AS cash_in
-        FROM ledger_balances_daily
+        FROM bizcity_read.ledger_balances_daily
        WHERE tenant_id = ${a.tenantId}
          AND posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        GROUP BY posting_date ORDER BY posting_date`.execute(db);

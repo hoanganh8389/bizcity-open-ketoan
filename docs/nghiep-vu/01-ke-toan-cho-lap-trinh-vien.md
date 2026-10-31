@@ -214,7 +214,7 @@ ngoài phần mềm (sao chứng từ bán, trả lại có số hoá đơn sang
 | Kỳ, khoá sổ | `fiscal_periods`, `period_locks` | `modules/periods` |
 | Kết chuyển | `closing_rules` | `modules/closing` |
 | Sổ hoá đơn | `tax_invoices`, `tax_invoice_lines` | `modules/tax-invoices` |
-| Báo cáo | đọc các bảng trên | `modules/reports`, `modules/sales` |
+| Báo cáo | đọc các bảng trên (sổ cái qua khung nhìn `bizcity_read.*`) | `phan-he/ke-toan/reports`, `modules/sales` |
 
 ---
 

@@ -77,5 +77,5 @@ processDocument(doc)
 | Liên kết bút toán | `apps/api/src/modules/ledger` (`ledger.service.ts`, `ledger.repository.ts`) |
 | Bổ sung thông tin thuế | `apps/api/src/modules/tax-info` |
 | Tờ khai GTGT, khai bổ sung, TNDN, người nộp thuế | `apps/api/src/modules/statements` |
-| Công nợ theo nhân viên, mặt hàng | `apps/api/src/modules/reports/debt-reports.ts` |
+| Công nợ theo nhân viên, mặt hàng | `apps/api/src/phan-he/ke-toan/reports/debt-reports.ts` |
 | Test | `apps/api/test/ledger-links.test.ts`, `tax-info.test.ts`, `tax-returns.test.ts`, `debt-reports.test.ts` |

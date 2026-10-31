@@ -12,6 +12,8 @@ export * from './errors.js';
 export * from './documents.js';
 export * from './vouchers.js';
 export * from './money.js';
+// [2026-10-31 08:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): xuất kiểu câu hỏi đọc sổ.
+export * from './ledger-query.js';
 export * from './invoices.js';
 export * from './connections.js';
 export * from './module.js';

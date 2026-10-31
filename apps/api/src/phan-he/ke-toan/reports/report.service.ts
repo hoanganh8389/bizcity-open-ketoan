@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — về phan-he/ke-toan/reports; documentChecks lấy từ Kernel qua kernel/public.ts
 /**
  * Tính báo cáo từ số liệu repository.
  *
@@ -9,18 +10,18 @@
  *  - Tài khoản mẹ = tổng các tài khoản con (cuộn theo parent_code).
  */
 import { fromCents, toCents } from '@ketoan/contracts';
-import { db, toNumber } from '../../db/client.js';
-import { Errors } from '../../core/errors.js';
-import type { AuthContext } from '../../core/auth.js';
-import type { Account } from '../../db/types.js';
-import { accountRepository } from '../../kernel/public.js';
+import { db, toNumber } from '../../../db/client.js';
+import { Errors } from '../../../core/errors.js';
+import type { AuthContext } from '../../../core/auth.js';
+import type { Account } from '../../../db/types.js';
+import { accountRepository, documentChecks } from '../../../kernel/public.js';
 import { reportRepository, type BalanceRow } from './report.repository.js';
 import { incomeStatement } from './income-statement.js';
 import { balanceSheet } from './balance-sheet.js';
-import { assetService } from '../assets/asset.service.js';
+import { assetService } from '../../../modules/assets/asset.service.js';
 import { cashBalances, postingSummary, taxSummary, type PostingSummaryGroup } from './extra-reports.js';
 import { cashFlow, cashJournal, purchaseJournal, salesJournal, voucherListing } from './journals.js';
-import { aging, documentChecks, expenseByDimension, profitByContract, type ExpenseGroup, agingByDue, debtByTerm } from './control-reports.js';
+import { aging, expenseByDimension, profitByContract, type ExpenseGroup, agingByDue, debtByTerm } from './control-reports.js';
 import { debtByEmployee, debtByItem } from './debt-reports.js';
 
 /** Một dòng của báo cáo thuế ra / thuế vào. */

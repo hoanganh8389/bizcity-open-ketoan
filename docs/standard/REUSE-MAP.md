@@ -3,6 +3,8 @@
 <!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → packages/documents (máy trạng thái khai báo, PHASES 3.5). -->
+<!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
+<!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — modules/reports → phan-he/ke-toan/reports (Q012-2); documentChecks về Kernel; callAction / ctx.actions.call thay import chéo -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
 > Cây đích: [TARGET-LAYOUT.md](TARGET-LAYOUT.md). Phát hiện nền trước đó: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md) (A-01..A-16); phát hiện mới ở §5 (A-17..A-26).
@@ -72,7 +74,7 @@
 | `signatures` | 107 | P | `documents/signatures` | `document_signatures.event_id` → `accounting_events`: chỉ ký được chứng từ kế toán (A-20) |
 | `reference-documents` | 119 | P | `documents/links` | Chứng từ tham chiếu; trạng thái `open/used/closed` |
 | `print-templates`, `voucher-templates` | 423 | U + D | `ui-kit/print` + `modules/ke-toan` | Mẫu in chung; mẫu phiếu kế toán thuộc module |
-| `reports` | 3.479 | D | `modules/ke-toan/reports` | Đọc thẳng `ledger_*` bằng SQL → cần `ledger.query` (năng lực `planned`) |
+| ~~`reports`~~ | — | D | `modules/ke-toan/reports` | **Đã chuyển** 2026-10-31 về `phan-he/ke-toan/reports` (xem §3.3). `documentChecks` (kiểm trước khoá kỳ) về Kernel `modules/periods/document-checks.ts`; lãi gộp → `phan-he/ban-hang/gross-profit.ts`, chuyển kho → `phan-he/kho/stock-transfers.ts` |
 | `assets` | 1.465 | D | `modules/tai-san` | Khấu hao ghi sổ qua `eventStore` (A-01 xong 2026-10-30); đích: `ctx.ledger.submit` với `docType` khấu hao |
 | `access`, `auth` | 494 | P | `permissions` | Người dùng, vai trò, khoá API |
 | `system` | 511 | P | `cli` (chẩn đoán) + `module-sdk` (registry) | `/system/modules`, `/system/schema`, `schema-catalog.ts` |
@@ -86,11 +88,12 @@
 | `phan-he/thue` | 1.160 | D | `modules/thue` | Ghi thẳng `partners`, `reference_documents` (`authority-invoice.routes.ts:170,174`) (A-17) |
 | `phan-he/quy` | 320 | D | `modules/quy` | `payment_requests`: luồng duyệt 2 cấp tự viết (mẫu cho `documents.workflow`); ghi thẳng `contract_schedules` (`:264`), `document_sequences` (`:49`) |
 | `phan-he/ke-toan` | 372 | D | `modules/ke-toan` | Kế hoạch tài chính ghi `cash_plans`, `cost_norms` (bảng tạo ở migration nền của lõi, A-26) |
-| `phan-he/{ban-hang,kho,tai-san,api,he-thong}` | ≈40 | D | `modules/*` | Chỉ là tệp lắp route từ `modules/` |
-| `phan-he/{index,loi,types}.ts` | 96 | P | `index`, `loi`: lắp ráp `apps/server` (LAYOUT-6); `types`: `module-sdk` | `CORE_ROUTES`, `LEDGER` là danh sách lắp ráp; `ApiModule` thành `defineModule` |
+| `phan-he/ke-toan/reports` | ≈3.400 | D | `modules/ke-toan/reports` | Báo cáo kế toán (chuyển từ `modules/reports` 2026-10-31). Đọc sổ qua `bizcity_read.*` (SC-KERNEL-7). Mở cho module khác bằng action `accounting.report.*` (`callAction` / `ctx.actions.call`), không cho import. Còn nợ: B01 gọi `assetService.prepaidSplit` của `tai-san` |
+| `phan-he/{ban-hang,kho,tai-san,api,he-thong}` | ≈40 | D | `modules/*` | Tệp lắp route từ `modules/`; `ban-hang/gross-profit.ts` (lãi gộp), `kho/stock-transfers.ts` (bảng kê chuyển kho) |
+| `phan-he/{index,loi,types}.ts` | 96 | P | `index`, `loi`: lắp ráp `apps/server` (LAYOUT-6); `types`: `module-sdk` | `CORE_ROUTES`, `LEDGER`, `GOODS` là danh sách lắp ráp (route dùng chung của nhiều phân hệ gắn ở đây, phân hệ không import nhau); `ApiModule` thành `defineModule` |
 | `addins/tro-ly` | 360 | A + P | `adapters/cell` (tri thức) + mẫu `actions.dry-run` | `/simulate` chạy luật thật trong giao dịch rồi huỷ: **mẫu chuẩn cho dry-run**. Kho tri thức là JSONL → về Cell (RAG) |
-| `addins/spreadsheet-ai` | 50 | A | `adapters/cell` | Nhúng ứng dụng bảng tính AI ngoài |
-| `addins/excel-export` | 279 | D | `modules/xuat-excel` (extension) | Xuất Excel từ báo cáo |
+| `addins/spreadsheet-ai` | 50 | A | `adapters/cell` | Nhúng ứng dụng bảng tính AI ngoài; số liệu qua action `accounting.report.trial-balance` |
+| `addins/excel-export` | 279 | D | `modules/xuat-excel` (extension) | Xuất Excel từ báo cáo; còn import `reportService` của `ke-toan/reports` (14 hàm) — gỡ khi báo cáo có đủ action `accounting.report.*` |
 
 ### 3.4 Module đang dùng những gì của lõi (bề mặt SDK thực tế)
 
@@ -109,7 +112,7 @@
 | `modules/vouchers/voucher.service.js` | 3 | `ctx.ledger.submit({ docType: 'manual' … })` |
 | `modules/debts/debt.service.js` (`allocate`) | 1 | `ctx.ledger.allocateDebt()` (năng lực mới) |
 | `modules/partners/partner.repository.js` | 1 | `ctx.data.masterdata.partners` |
-| `modules/reports/*`, `modules/assets/asset.service.js` | 3 | `ctx.ledger.query` (năng lực `planned`) |
+| `modules/reports/*` (nay `phan-he/ke-toan/reports`), `modules/assets/asset.service.js` | 3 → 1 (`addins/excel-export`) | `ctx.ledger.query` (có từ 2026-10-31); Thuế đọc B02 / bảng dài hạn B01 qua `callAction('accounting.report.*')` (2026-10-31) |
 | `modules/system/schema-catalog.js` | 1 | `ctx.data.describe()` |
 
 Quyền module đang dùng: chỉ các quyền chung `catalog:*`, `documents:*`, `reports:read`, `settings:write`, `payments:approve`. Không module nào có quyền riêng (vd duyệt phiếu mua = `documents:write`) vì danh sách quyền đóng.

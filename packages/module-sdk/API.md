@@ -1,6 +1,8 @@
 # `@bizcity/module-sdk` — bản nháp API (v0)
 <!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
+<!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
+<!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call có (action đọc); báo cáo về phan-he/ke-toan/reports; câu hỏi mở 3 chốt cách hai -->
 
 > **Trạng thái: bản nháp, chưa có code.** Kết quả PHASES 1.5. Gói thật dựng ở Phase 3 (3.1), sau khi có `packages/actions` (2.5) và `packages/audit` (2.6).
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
@@ -32,12 +34,12 @@
 | `modules/documents/document.service` | 5 | `postDocumentIn` 3, `documentService.cancel` 3 | `ctx.ledger.submit`, `ctx.ledger.cancel` | `ledger.submit`, `ledger.cancel` ✅ |
 | `modules/vouchers/voucher.service` | 3 | `voucherService.createIn` 2, `createOpening` 1 | `ctx.ledger.submit({ docType: 'manual' })` | **thiếu**, xem §6 câu 1 |
 | `core/addins` | 3 | `defineAddIn` 3 | `defineModule` (add-in và phân hệ chung một cơ chế, A-25) | có (đổi tên) |
-| `modules/reports/*` (`report.service`, `income-statement`, `balance-sheet`, `extra-reports`) | 9 | `reportService.*` 14 hàm (cân đối, sổ cái, nhật ký, KQKD…), `incomeStatement`, `termRuleFor`, `TERM_MAP` | `ctx.ledger.query(...)` | `ledger.query` ⏳ (Phase 3) |
+| `modules/reports/*` → `phan-he/ke-toan/reports` (2026-10-31) | 9 → 1 | `reportService.*` 14 hàm (cân đối, sổ cái, nhật ký, KQKD…), `incomeStatement`, `termRuleFor`, `TERM_MAP`. Còn `addins/excel-export` | `ctx.ledger.query(...)`; báo cáo SQL đọc `bizcity_read.*`; module khác gọi `ctx.actions.call('accounting.report.*')` (Thuế: `income-statement`, `term-rules`) | `ledger.query` ✅, `ctx.actions.call` ✅ đọc (2026-10-31) |
 | `modules/{sales,inventory,closing,assets,vouchers}/*.routes`, `reports/goods-reports`, `debt-confirmation`, `dimension-reports` | 11 | gắn route lõi vào menu phân hệ (`closingRoutes`, `inventoryRoutes`…) | không qua SDK: lắp ráp ở `apps/server` theo manifest `includes` (R-BOUND-4) | — |
 | `modules/warehouses/*` | 3 | `warehouseService.create`, `warehouseScope`, `resolveWarehouse` | `ctx.actions.call('core.warehouse.upsert')`, `ctx.data.masterdata.warehouses` | `masterdata.*` ✅ (HTTP) |
 | `modules/partners/partner.repository` | 1 | `partnerRepository.upsert` | `ctx.actions.call('core.partner.upsert')` | `masterdata.write` ✅ |
 | `modules/debts/debt.service` | 1 | `allocate` (đối trừ công nợ) | `ctx.ledger.allocateDebt()` | **thiếu**, xem §6 câu 2 |
-| `modules/inventory/inventory-report.service` | 1 | `valuedMovements` | `ctx.ledger.query({ kind: 'stock-movements' })` | `ledger.query` ⏳ |
+| `modules/inventory/inventory-report.service` | 1 | `valuedMovements` | `ctx.ledger.query({ kind: 'stock-movements' })` | `ledger.query` ✅ số dư theo mã; `kind: 'stock-movements'` chưa có (đề xuất) |
 | `modules/assets/asset.service` | 1 | `assetService.register` | không mở: tài sản là module `tai-san`; gọi `ctx.actions.call('tai-san.asset.register')` | `actions.runtime` ⏳ |
 | `modules/system/schema-catalog` | 1 | `SCHEMA_TABLES`, `COLUMN_NOTES`, `TRIGGER_NOTES` | `ctx.data.describe()` | `data.read-views` ⏳ |
 | `db/paths` | 1 | `SEEDS_DIR` | `ctx.module.assetPath('seeds/…')` (tệp trong thư mục module) | — |
@@ -99,7 +101,7 @@ interface ActionContext {
     submit(doc: LedgerIntakeDoc): Promise<IngestResult>;           // bizcity_ledger_intake@1; reasonCode, không tài khoản
     cancel(docKey: string, reason: string): Promise<IngestResult>;
     get(docKey: string): Promise<LedgerDocStatus | null>;          // trạng thái + số chứng từ sổ, không trả dòng ledger_*
-    query(q: LedgerQuery): Promise<LedgerQueryResult>;             // ⏳ Phase 3: số dư, phát sinh, công nợ theo mã / chiều
+    query(q: LedgerQuery): Promise<LedgerQueryRow[]>;              // ✅ 3.7: đầu kỳ / phát sinh / cuối kỳ theo mã, chiều, mã hàng (@ketoan/contracts ledgerQuerySchema)
   };
   documents: {                      // ⏳ 2.7
     nextNumber(series: string): Promise<string>;
@@ -111,7 +113,7 @@ interface ActionContext {
   events: { emit(type: string, data: unknown, opts?: { subject?: DocRef }): Promise<void> };  // ⏳ outbox, cùng giao dịch
   settings: { get<T>(key: `bizcity.${string}`, scope?: SettingScope): T };                     // ⏳ registry
   evidence: { note(key: string, value: unknown): void };                                         // ⏳ ghi vào changes.notes
-  actions: { call<I, O>(id: string, input: I, opts?: { idempotencyKey?: string }): Promise<O> }; // qua quyền + bằng chứng như gọi ngoài
+  actions: { call<I, O>(id: string, input: I, opts?: { idempotencyKey?: string }): Promise<O> }; // ✅ action đọc (2026-10-31, core/actions.ts); ghi ⏳ cần khoá idempotency
   module: { id: string; version: string; assetPath(rel: string): string };
 }
 ```
@@ -149,13 +151,13 @@ Phân hệ hiện có không viết lại một lần. Theo thứ tự:
    - `ctx.data.tx` chuyển sang kiểu chỉ thấy `mod_<key>.*` + `bizcity_read.*`.
    - Module nào còn đọc bảng lõi thì lỗi biên dịch: đó chính là danh sách việc A-17.
 3. **Đo tiến độ:**
-   - SC-MOD-1 (import), SC-MOD-2 (ghi bảng lõi), SC-LAYER-2 (chiều lớp: cạnh `D → D` qua `modules/reports`) trên [bảng điểm](../../tests/conformance/README.md);
+   - SC-MOD-1 (import), SC-MOD-2 (ghi bảng lõi), SC-LAYER-2 (chiều lớp: cạnh `D → D`, còn `excel-export → ke-toan/reports`, `ke-toan/reports → modules/assets`) trên [bảng điểm](../../tests/conformance/README.md);
    - mốc đồ thị [docs/audits/deps-2026-10-30.md](../../docs/audits/deps-2026-10-30.md).
 
 ## 6. Câu hỏi mở (cần chốt trước 3.1)
 
 1. **Phiếu kế toán nhập tay từ module** (`voucherService.createIn` ×2, `createOpening` ×1, ở `ke-toan` và `quy`). `bizcity_ledger_intake@1` chưa có `docType: 'manual'`. Khuyên thêm `docType` `manual_journal` có `reasonCode` bắt buộc, đề xuất theo [VERSIONING §5](../../docs/standard/VERSIONING.md). Trái với câu 4 nếu module tự ghi tài khoản: dòng phiếu phải là mã lý do / đối tượng, không là số tài khoản. Nếu cần tự do tài khoản thì chỉ module `ke-toan` (lõi) được dùng.
 2. **Đối trừ công nợ** (`debt.service.allocate`, 1 chỗ ở `quy`). Khuyên năng lực mới `ledger.allocate-debt`: `ctx.ledger.allocateDebt({ partnerCode, from: docKey, to: docKey, amount })`, Kernel kiểm số dư.
-3. **Báo cáo tài chính trong phân hệ Thuế** (`incomeStatement`, `termRuleFor`, `TERM_MAP` ở `thue/statements`). Hoặc `ledger.query` có báo cáo dựng sẵn (`kind: 'income-statement'`), hoặc Thuế gọi action đọc `ke-toan.report.*` qua `ctx.actions.call`. Khuyên cách hai: báo cáo là module ([REUSE-MAP §3.2](../../docs/standard/REUSE-MAP.md)).
+3. ✅ **Chốt 2026-10-31 — cách hai** (`accounting.report.income-statement`, `accounting.report.term-rules` qua `callAction` / `ctx.actions.call`). **Báo cáo tài chính trong phân hệ Thuế** (`incomeStatement`, `termRuleFor`, `TERM_MAP` ở `thue/statements`). Hoặc `ledger.query` có báo cáo dựng sẵn (`kind: 'income-statement'`), hoặc Thuế gọi action đọc `ke-toan.report.*` qua `ctx.actions.call`. Khuyên cách hai: báo cáo là module ([REUSE-MAP §3.2](../../docs/standard/REUSE-MAP.md)).
 4. **Tạo danh mục khi dựng dữ liệu mẫu** (`mua-hang/demo.ts`). Khuyên `seed` trong manifest gọi `core.*.upsert`, không ghi bảng.
 5. **Tên gói con giao diện:** `@bizcity/module-sdk/web` hay để `defineWebModule` ở `@bizcity/ui-kit`. Khuyên `module-sdk/web`: một gói danh tính, ui-kit chỉ là thành phần.

@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Add-in "Trợ lý" (tầng 1 — tra cứu, không dùng AI).
  *
@@ -204,8 +205,8 @@ export default defineAddIn({
           await db.transaction().execute(async (trx) => {
             const res = await postDocumentIn(trx, auth, doc, { post: true, force: true });
             const ids = res.entryIds ?? [];
-            const lines = ids.length ? await trx.selectFrom('ledger_lines as l')
-              .innerJoin('ledger_entries as e', 'e.id', 'l.entry_id')
+            const lines = ids.length ? await trx.selectFrom('bizcity_read.ledger_lines as l')
+              .innerJoin('bizcity_read.ledger_entries as e', 'e.id', 'l.entry_id')
               .innerJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 'l.tenant_id').onRef('a.code', '=', 'l.account_code'))
               .select(['l.entry_id', 'e.doc_type', 'e.reason_code', 'l.pair_no', 'l.part', 'l.account_code', 'a.name as account_name', 'l.debit', 'l.credit', 'l.description', 'l.tax_code'])
               .where('l.entry_id', 'in', ids).orderBy('l.entry_id').orderBy('l.line_no').execute() : [];
