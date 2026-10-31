@@ -70,7 +70,7 @@
   },
   "ledger": {
     "submits": [
-      { "docType": "customer_payment", "contract": "bizcity_ledger_intake@1" }
+      { "docType": "customer_payment", "contract": "bizcity_ledger_intake@1", "reasons": { "kind": "receipt", "default": "customer_payment", "suggestedPacks": ["bizcity.vn-tt99.nen@^1"] } }
     ]
   },
   "settings": ["bizcity.hop_dong.remind_days", "bizcity.hop_dong.second_approval_amount"],

@@ -1,4 +1,14 @@
 # CANON — Chỉ mục luật BizCity Ledger Framework
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
+<!-- [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — lộ trình máy đọc bám Phase, ma trận mảng × Phase. -->
+<!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
+<!-- [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10). -->
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
+<!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
@@ -41,6 +51,7 @@
 | R-DIAG | [rules/RULE-SELF-DIAGNOSTICS.md](rules/RULE-SELF-DIAGNOSTICS.md) | 1 | Năm tầng L0–L4, chỉ đọc, lịch chạy, chặn khoá kỳ khi sổ lỗi, cảnh báo không lộ số liệu | lane diagnostics `tests/conformance` |
 | R-CACHE | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §1 | 0 | Không cache dữ liệu sổ; đọc nhất quán sau khi ghi; đệm danh mục có huỷ theo phiên bản cấu hình | review; `test/mcp.test.ts` |
 | R-OUTBOX | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §2 | 0 | Sự kiện ghi cùng giao dịch với sổ; gửi sau commit, ít nhất một lần; consumer idempotent; NATS là adapter | SC-EVT-1 |
+| R-SIG | [rules/RULE-SIGNATURE.md](rules/RULE-SIGNATURE.md) | 0 | Tệp framework mang chữ ký kiến trúc Johnny Chu – Chu Hoàng Anh; mỗi lần sửa có chức năng thêm dấu theo phase; không xoá dấu cũ, không ghi tên agent | SC-SIG-1, SC-SIG-2 |
 | R-BAK | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §3 | 0 | Sao lưu hằng ngày, PITR, kiểm khôi phục hằng tuần trước khi tin bản sao lưu | `scripts/kiem-khoi-phuc.sh` |
 
 ## 4. Hợp đồng (contracts)
@@ -97,6 +108,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Thay đổi người dùng thấy được | `CHANGELOG.md` mục `[Chưa phát hành]` (R-REL-2) |
 | Thêm / đổi yêu cầu tuân thủ, tín hiệu thực thi | [contracts/BIZCITY-COMPLIANCE-v1.md](contracts/BIZCITY-COMPLIANCE-v1.md) §2 + [standard/compliance-matrix.json](standard/compliance-matrix.json) cùng PR (SC-CMP-1) |
 | Thêm cách thực thi cho nguyên tắc AP-* | `bizcity-standard.json#principles[].enforcedBy` (SC-CMP-2; nợ đã hết → `--update-baseline`) |
+| Sửa có chức năng bất kỳ tệp framework (mã, migration chưa phát hành, hạ tầng, tài liệu kiến trúc / luật / hợp đồng / phase) | thêm dấu R-SIG tại chỗ đổi ([rules/RULE-SIGNATURE.md](rules/RULE-SIGNATURE.md)) |
 | Thêm / chuyển việc lộ trình hoặc mã checklist G | thư mục phase sở hữu nó ở [phases/](phases/README.md): dòng `> **Việc lộ trình:**` / `> **Checklist công bố:**` của README phase (SC-PHASE-1) |
 | Thêm migration | tệp mới số kế tiếp; chạy `scripts/kiem-nang-cap.sh` khi đổi bảng có dữ liệu; khoá checksum khi phát hành (`--update-lock`, R-DB-15) |
 | Thêm / đổi mã lỗi, thông báo, gợi ý | `packages/contracts/src/errors.ts` (ERROR_CATALOG) + [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) §3 + `bizcity-standard.json#errorCodes` (SC-ERR-1, SC-CON-6) |

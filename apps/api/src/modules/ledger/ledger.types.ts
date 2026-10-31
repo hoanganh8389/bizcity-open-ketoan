@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/ledger
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Kiểu dữ liệu của bút toán nháp — đầu ra của bộ định khoản, đầu vào của ledgerService.post().
  */
@@ -40,5 +43,7 @@ export interface DraftEntry {
   isReversal?: boolean;
   /** Bút toán gốc bị đảo (chỉ khi isReversal). */
   reversesEntryId?: string | null;
+  /** Phiên bản chính sách kế toán đã dùng để dựng bút toán (ADR-0009); không có = không theo chính sách. */
+  policyVersion?: number | null;
   lines: DraftLine[];
 }

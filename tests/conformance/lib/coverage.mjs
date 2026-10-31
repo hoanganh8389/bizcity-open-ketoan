@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Độ phủ luật: mỗi mã luật (R-*, STD-*, CONF-*) đang được kiểm bằng gì.
  * "Đo bằng test, không đo bằng tài liệu" (framework/05-LO-TRINH.md, tư vấn 5): luật không có gì kiểm tự động thì lộ ra ở đây.

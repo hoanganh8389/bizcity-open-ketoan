@@ -1,4 +1,7 @@
 # RULE · Hạ tầng: bộ nhớ đệm, outbox, sao lưu (R-CACHE, R-OUTBOX, R-BAK)
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
+<!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
 
 > **Cấp:** Tier 0 / 1 (ghi từng luật) · **Phiên bản:** 1.0 · 2026-10-30 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Quyết định nền:** [ADR-0007](../adr/ADR-0007-goi-chia-se-va-ha-tang.md) — PostgreSQL là hạ tầng bắt buộc duy nhất. Redis, NATS là adapter tuỳ chọn, bật khi đo được nhu cầu. · **Công bố:** [CONG-BO-KIEN-TRUC §5](../CONG-BO-KIEN-TRUC.md)

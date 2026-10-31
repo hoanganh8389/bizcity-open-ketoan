@@ -1,6 +1,8 @@
 # ADR-0009 · Chính sách kế toán có phiên bản và ngày hiệu lực
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 
-- Trạng thái: **Đề xuất** — chờ chủ dự án (Johnny Chu) và kế toán trưởng duyệt
+- Trạng thái: **Chấp nhận** — chủ dự án (Johnny Chu) đồng ý 2026-10-30 ("đồng ý ADR-0009"), phương án A + gợi ý Q-2…Q-5. **Kế toán trưởng: chưa ký** — ghi tên + ngày vào đây khi duyệt (RULE-KERNEL K3)
 - Ngày: 2026-10-30 · Mức Kernel: **K3** (đổi cách định khoản) — cần ADR, 2 người nhóm Lõi, kế toán trưởng ([RULE-KERNEL](../rules/RULE-KERNEL.md))
 - Luật / hợp đồng liên quan: [`bizcity_compliance@1`](../contracts/BIZCITY-COMPLIANCE-v1.md) C-9 / STD-CMP-9, AP-5 (Version everything), [PHASE-005](../phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md), lộ trình 2.14, checklist G2-09
 
@@ -61,7 +63,18 @@ PHASE-004 đã đưa mọi đường ghi về hai chỗ: cửa nạp `postDocume
 | Q-2 | Định khoản lại chứng từ cũ: **luôn** dùng bản theo ngày hạch toán, hay cho kế toán chọn "dùng bản mới nhất" khi cố ý sửa cấu hình sai? | Mặc định theo ngày. Cho chọn bản mới nhất chỉ với quyền `settings:write`, bắt buộc lý do, ghi bằng chứng |
 | Q-3 | Phạm vi bản chụp như mục 2 (không gồm hệ thống tài khoản, không gồm gán mặt hàng → nhóm)? | Đồng ý |
 | Q-4 | Ngày hiệu lực có được lùi về quá khứ (kỳ chưa khoá) không? | Được, nếu kỳ chưa khoá. Màn phát hành báo số chứng từ đã ghi sẽ khác nếu định khoản lại |
-| Q-5 | Gói định khoản theo ngành (PHASE-012) cài vào sẽ thành một phiên bản chính sách mới? | Có: cài gói = phát hành một bản, `note` ghi tên gói + phiên bản gói |
+| Q-5 | Gói định khoản theo ngành (PHASE-012) cài vào sẽ thành một phiên bản chính sách mới? | Có: cài gói = phát hành một bản, `note` ghi tên gói + phiên bản gói — **đã làm** (PHASE-012 S012-3, `pack.ts`; cấu hình cũ được chốt trước khi ghi qua `publishPolicy({ pinned })`) <!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — Q-5 đã làm. --> |
+
+## Quyết định khi làm (2026-10-30, PHASE-005)
+
+Phương án A, với một **tinh chỉnh** so với mục 4 ("sửa cấu hình xong mà chưa phát hành thì chưa có hiệu lực"):
+- **Sửa cấu hình hằng ngày không cần bấm phát hành.** Lần định khoản sau, nếu cấu hình đang dùng khác bản đứng đầu, hệ thống tự chụp một bản `amend` **cùng ngày hiệu lực** với bản đứng đầu. Sửa có tác dụng ngay như trước; mỗi bút toán vẫn ghi đúng bản đã dùng.
+- **Phát hành** (`accounting.policy.publish`) chỉ dùng khi **đổi chế độ**: bản `publish` mang ngày hiệu lực mới. Sửa sau đó là sửa chế độ mới (bản `amend` cùng ngày hiệu lực đó). Chế độ cũ giữ nguyên cho chứng từ trước ngày hiệu lực.
+- **Lý do:** giữ nguyên thói quen làm việc và hơn trăm phép thử đang dựa vào "sửa xong là định khoản theo cấu hình mới"; vẫn đạt C-9.
+- **Giới hạn đã biết:** khi đã phát hành chế độ hiệu lực ở tương lai, mọi chỉnh sửa áp cho chế độ tương lai đó, không sửa được chế độ đang áp hôm nay. Đúng cho quy trình chuẩn bị chuyển chế độ; nếu cần sửa cả hai thì phát hành lại.
+- **Q-2** (cho chọn "bản mới nhất" khi định khoản lại): chưa làm — mặc định luôn theo ngày hạch toán. Ghi ở PHASE-005 (S005-7).
+
+Hiện thực: migration `0040`, `modules/posting-config/policy.ts`, `policy.actions.ts`, tự chẩn đoán `POLICY_VERSION` / DG-POL-1, `test/policy.test.ts`. Sổ không đổi: cùng 9 tệp test định khoản trên code cũ / mới → 128 ô sổ cái trùng.
 
 ## Hệ quả
 

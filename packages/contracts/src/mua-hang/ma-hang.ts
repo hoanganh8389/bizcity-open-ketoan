@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * MÃ HÀNG theo quy tắc mã hàng của công ty:
  *   Hàng thường: 9 ký tự = ngành (2) + nhãn (3) + nhóm (1) + số tự sinh (3). Nhóm 8 = hàng Combo.

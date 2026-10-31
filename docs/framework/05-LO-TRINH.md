@@ -1,4 +1,5 @@
 # 05 · Lộ trình thành framework chuẩn
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 Đánh giá hiện trạng (chi tiết: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md)): **phần nhân đã tốt hơn mức trung bình** — sổ cái chỉ thêm được bảo vệ ở tầng CSDL, một cửa ghi sổ, idempotent theo `docKey`/`version`, 624 phép thử trên PostgreSQL thật, test ranh giới phân hệ. Thứ còn thiếu để gọi là *framework* không nằm ở sổ cái mà ở **bề mặt mở rộng**: hợp đồng chưa có phiên bản, cấu hình chưa có registry, phân hệ chưa có manifest đầy đủ, không có CI, không có SDK cho plugin.
 

@@ -1,4 +1,5 @@
 # RULE · Ma trận cấu hình (R-MATRIX)
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > **Cấp:** Tier 1 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Hợp đồng:** [bizcity_settings@1](../contracts/BIZCITY-SETTINGS-MATRIX-v1.md) · **Registry:** [../contracts/bizcity-settings.registry.json](../contracts/bizcity-settings.registry.json)

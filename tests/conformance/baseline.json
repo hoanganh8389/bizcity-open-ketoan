@@ -95,16 +95,6 @@
       "ref": "R-MATRIX-8 · khai biến vào .env.example hoặc docs/ops/DEPLOY.md",
       "debts": [
         {
-          "fp": "SC-CON-7|apps/api/src/db/paths.ts|DB_DIR",
-          "file": "apps/api/src/db/paths.ts",
-          "message": "DB_DIR chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
-          "fp": "SC-CON-7|apps/api/src/db/paths.ts|SEEDS_DIR",
-          "file": "apps/api/src/db/paths.ts",
-          "message": "SEEDS_DIR chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
           "fp": "SC-CON-7|apps/api/src/modules/catalog/catalog.routes.ts|PURCHASE_SEED_PASSWORD",
           "file": "apps/api/src/modules/catalog/catalog.routes.ts",
           "message": "PURCHASE_SEED_PASSWORD chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
@@ -916,9 +906,9 @@
           "message": "P modules/catalog → events import A modules/connections → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
-          "fp": "SC-LAYER-2|apps/api/src/modules/dimensions/dimension.routes.ts|modules/dimensions[P]->modules/default-data[K]",
+          "fp": "SC-LAYER-2|apps/api/src/modules/dimensions/dimension.routes.ts|modules/dimensions[P]->kernel/public[K]",
           "file": "apps/api/src/modules/dimensions/dimension.routes.ts",
-          "message": "P modules/dimensions → data import K modules/default-data → kernel/seeds (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+          "message": "P modules/dimensions → data import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
           "fp": "SC-LAYER-2|apps/api/src/modules/documents/document.service.ts|modules/documents[K]->modules/connections[A]",
@@ -941,9 +931,9 @@
           "message": "K modules/periods → kernel/periods import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
-          "fp": "SC-LAYER-2|apps/api/src/modules/products/product.routes.ts|modules/products[M]->modules/accounts[K]",
+          "fp": "SC-LAYER-2|apps/api/src/modules/products/product.routes.ts|modules/products[M]->kernel/public[K]",
           "file": "apps/api/src/modules/products/product.routes.ts",
-          "message": "M modules/products → data/masterdata import K modules/accounts → kernel/accounts (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+          "message": "M modules/products → data/masterdata import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
           "fp": "SC-LAYER-2|apps/api/src/modules/reports/report.service.ts|modules/reports[D]->modules/assets[D]",
@@ -966,9 +956,9 @@
           "message": "D modules/sales → modules/ban-hang import D modules/reports → modules/ke-toan (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
-          "fp": "SC-LAYER-2|apps/api/src/modules/system/system.routes.ts|modules/system[P]->core/posting-modes[K]",
+          "fp": "SC-LAYER-2|apps/api/src/modules/system/system.routes.ts|modules/system[P]->kernel/public[K]",
           "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "P modules/system → cli import K core/posting-modes → kernel/config (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
+          "message": "P modules/system → cli import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
           "fp": "SC-LAYER-2|apps/api/src/phan-he/kho/index.ts|phan-he/kho[D]->modules/reports[D]",

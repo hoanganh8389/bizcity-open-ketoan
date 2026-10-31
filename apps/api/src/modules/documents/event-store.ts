@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/intake
+// [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Cửa ghi sổ cho sự việc do Kernel tự lập (phiếu kế toán tay, số dư đầu kỳ, kết chuyển, khấu hao / phân bổ, giá vốn).
  * Chứng từ nhận từ nguồn ngoài đi postDocumentIn() (luật định khoản); các dịch vụ trên tự dựng dòng Nợ / Có nên không
@@ -84,12 +87,12 @@ export const eventStore = {
   async markPosted(
     trx: Db,
     auth: AuthContext,
-    v: { id: string; version: number; docKey: string; docType: string; docNo: string; entryIds: string[]; reversed?: number; total?: number | null; action?: 'post' | 'repost' },
+    v: { id: string; version: number; docKey: string; docType: string; docNo: string; entryIds: string[]; reversed?: number; total?: number | null; action?: 'post' | 'repost'; policyVersion?: number | null },
   ): Promise<void> {
     await documentRepository.update(trx, v.id, { status: 'posted', posted_at: new Date(), posted_version: v.version, error_code: null, error_message: null });
     await logPosting(trx, {
       tenantId: auth.tenantId, eventId: v.id, docType: v.docType, docNo: v.docNo, version: v.version,
-      action: v.action ?? (v.version > 1 ? 'repost' : 'post'), entryIds: v.entryIds, reversed: v.reversed ?? 0, total: v.total, actor: auth.actor,
+      action: v.action ?? (v.version > 1 ? 'repost' : 'post'), entryIds: v.entryIds, reversed: v.reversed ?? 0, total: v.total, actor: auth.actor, policyVersion: v.policyVersion ?? null,
     });
     await emitKernelEvent(trx, auth, 'bizcity.ledger.entry.posted', v.docKey, {
       docKey: v.docKey, docType: v.docType, docNo: v.docNo, version: v.version, entryIds: v.entryIds, reversed: v.reversed ?? 0, total: v.total ?? null,

@@ -1,4 +1,5 @@
 // @bizcity-layer P observability
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * GET /metrics — số đo Prometheus (docs/ops/OBSERVABILITY.md §3). Không qua nginx ra ngoài (chỉ /api/ và /mcp được chuyển);
  * đặt METRICS_TOKEN thì phải gửi Authorization: Bearer <token> (R-OBS-3). Trước khi trả: chạy các bộ thu đến hạn

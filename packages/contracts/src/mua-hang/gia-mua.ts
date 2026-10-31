@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * MẶT HÀNG & GIÁ MUA CỦA NHÀ CUNG CẤP (bảng supplier_products) + ĐƠN VỊ TÍNH của mặt hàng (product_units):
  *   - ĐVT chỉ khai ở Mặt hàng (tỉ lệ quy đổi về ĐVT nhỏ nhất); mọi chỗ khác CHỌN trong danh sách đó.

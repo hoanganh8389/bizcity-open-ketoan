@@ -1,4 +1,5 @@
 # PHASE-006 · 70 — Phản tư PHASE-004 và nợ chuyển sang
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
 
 > Nguồn: [PHASE-004 · 40-MASTER-CHECKLIST](../PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md).
 

@@ -15,7 +15,7 @@ import { ingestDocumentSchema, type IngestDocument } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
-import { postDocumentIn } from '../../modules/documents/document.service.js';
+import { postDocumentIn } from '../../kernel/public.js';
 import { partnerRepository } from '../../modules/partners/partner.repository.js';
 import { saveSupplierProducts, unitsOf } from './gia-mua.js';
 import { listLevels, saveLevels } from './ton-max.js';

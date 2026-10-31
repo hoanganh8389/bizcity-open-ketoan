@@ -1,20 +1,25 @@
 # PHASE-005 — Chính sách kế toán có phiên bản + ngày hiệu lực
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 
-> **Trạng thái:** ⛔ chưa code · [ADR-0009](../../adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) đã soạn (Đề xuất, 2026-10-30), chờ chủ dự án + kế toán trưởng chốt Q-1…Q-5
-> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** chưa · **Tiến độ tín hiệu (2026-10-30):** 0%
+> **Trạng thái:** ✅ code xong 2026-10-30 theo [ADR-0009](../../adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) (chủ dự án đồng ý; kế toán trưởng chưa ký). C-9 đạt
+> **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 100%
 > **Mục tiêu:** Đổi chế độ / cấu hình định khoản không áp ngược vào chứng từ cũ: mỗi bản chính sách có `policy_version` + `effective_from`, ghi sổ chọn bản theo ngày chứng từ, `posting_log` ghi bản đã dùng.
 > **Việc lộ trình:** 2.14
 > **Checklist công bố:** G2-09
 > **Tuân thủ / nguyên tắc:** C-9 (0% hôm nay) · AP-5
 > **Phụ thuộc phase:** 004 (khuyến nghị: mọi đường ghi đi một cửa thì ghi `policy_version` một chỗ)
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|
+| [ADR-0009](../../adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) | phương án, câu hỏi đã chốt, tinh chỉnh khi làm (bản amend tự chụp) |
+| [evidence/T005-1-2026-10-30.md](evidence/T005-1-2026-10-30.md) | sổ trước / sau trùng khớp |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
-## Hiện trạng đọc mã
+## Hiện trạng đọc mã (trước khi code)
 
 | # | Sự thật | Ở đâu |
 |---|---|---|
@@ -25,4 +30,4 @@
 
 ## Xong khi
 
-Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 2.14 ☐.
+Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái: 2.14 ✅ (`posting.policy-version` available, `db/types.ts` có `policy_version`); G2-09 **có**; C-9 đạt.

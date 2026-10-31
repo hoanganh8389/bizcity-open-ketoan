@@ -1,3 +1,6 @@
+// [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán.
+// [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
+// [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 /**
  * Lane diagnostics — kiểm BẢN CÀI (chỉ đọc pg_catalog / cấu hình CSDL), khác ledger.diag.mjs (kiểm dữ liệu sổ).
  * Trả lời: lớp bảo vệ Kernel ở tầng CSDL có còn nguyên trên máy này không? (RULE-SELF-DIAGNOSTICS, RULE-KERNEL)

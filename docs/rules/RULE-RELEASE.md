@@ -1,4 +1,5 @@
 # RULE · Phát hành phiên bản (R-REL)
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
 
 > **Cấp:** Tier 0 / 1 (ghi từng luật) · **Phiên bản:** 1.0 · 2026-10-29 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Cách đánh số** (bốn trục: Standard, hợp đồng, năng lực, Kernel): [../standard/VERSIONING.md](../standard/VERSIONING.md). **Tệp này nói cách phát hành.**

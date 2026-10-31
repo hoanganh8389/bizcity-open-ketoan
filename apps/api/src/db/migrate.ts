@@ -1,4 +1,8 @@
 // @bizcity-layer P+A data
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 /**
  * Chạy migration: áp lần lượt các file db/migrations/NNNN_ten.sql chưa chạy.
  *
@@ -11,6 +15,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import pg from 'pg';
+import { env } from '../config/env.js';
 import { pool } from './client.js';
 import { MIGRATIONS_DIR } from './paths.js';
 
@@ -61,7 +67,10 @@ async function adoptBaseline(client: { query: typeof pool.query }, done: Set<str
 }
 
 export async function runMigrations(log: (msg: string) => void = console.log): Promise<string[]> {
-  const client = await pool.connect();
+  // Kết nối RIÊNG bằng vai trò của DATABASE_URL (chủ sở hữu bảng), không mượn pool của API: kết nối trong pool có thể đã chuyển
+  // sang vai trò ứng dụng (DB_SET_ROLE) hoặc gắn đơn vị (RLS, PHASE-007) — migration cần quyền DDL và thấy đủ mọi đơn vị.
+  const client = new pg.Client({ connectionString: env.DATABASE_URL });
+  await client.connect();
   const applied: string[] = [];
   try {
     await client.query(`
@@ -95,7 +104,7 @@ export async function runMigrations(log: (msg: string) => void = console.log): P
     await client.query('SELECT pg_advisory_unlock(727001)');
     return applied;
   } finally {
-    client.release();
+    await client.end();
   }
 }
 

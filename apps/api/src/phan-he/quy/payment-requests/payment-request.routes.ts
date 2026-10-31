@@ -23,7 +23,7 @@ import type { Permission } from '../../../core/auth.js';
 import { Errors } from '../../../core/errors.js';
 import { idSchema } from '../../../core/http.js';
 import { defineAction, mountActions, type ActionContext, type ActionDef, type ActionSideEffect, type AnyActionDef } from '../../../core/actions.js';
-import { voucherService } from '../../../modules/vouchers/voucher.service.js';
+import { voucherService } from '../../../kernel/public.js';
 
 const tags = ['Yêu cầu thanh toán'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);

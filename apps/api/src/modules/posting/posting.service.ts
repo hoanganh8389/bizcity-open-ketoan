@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/posting
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Điều phối định khoản một chứng từ gốc:
  *   1. Quyết định bộ sổ (nội bộ luôn có; thuế nếu có hoá đơn hợp lệ và không phải phiếu nội bộ;
@@ -82,6 +85,8 @@ export interface PostContext {
   kept?: string[];
   /** Bút toán được giữ nhưng cập nhật thông tin đầu tại chỗ (đếm là có thay đổi). */
   updated?: string[];
+  /** Ra: phiên bản chính sách kế toán đã dùng (ADR-0009) — ghi vào posting_log. */
+  policyVersion?: number | null;
 }
 
 /** Lấy một id khỏi map theo khoá và bỏ id đó khỏi các map còn lại (một bút toán chỉ được giữ một lần). */
@@ -100,7 +105,9 @@ export const postingService = {
     if (!rule) throw Errors.posting(`Chưa có luật định khoản cho loại chứng từ ${doc.docType}`);
 
     const skus = skusOf(doc);
-    const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus);
+    // Chính sách kế toán áp cho NGÀY HẠCH TOÁN của chứng từ (ADR-0009): định khoản lại chứng từ cũ không theo quy tắc mới.
+    const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus, { asOf: doc.docDate.slice(0, 10), actor: ctx.actor });
+    ctx.policyVersion = cfg.policyVersion;
     const resolver = new AccountResolver(cfg);
     const parts = rule(doc, { resolver, partnerId: ctx.partnerId, stock: ctx.stock }).filter((p) => p.lines.length);
     if (!parts.length) return []; // chứng từ 0 đồng: không có gì để ghi
@@ -137,6 +144,7 @@ export const postingService = {
           description: part.description ?? (doc.description || defaultDescription(doc)),
           sourceDocumentId: ctx.sourceDocumentId,
           sourceVersion: ctx.sourceVersion,
+          policyVersion: cfg.policyVersion,
           lines: enrich(part.lines, part.branchId ?? ctx.branchId),
         };
         const full = entryContentHash(draft);

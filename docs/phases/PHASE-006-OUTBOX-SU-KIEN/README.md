@@ -1,4 +1,6 @@
 # PHASE-006 — Transactional outbox, subscriber, đồng hồ, correlation
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
 
 > **Trạng thái:** ✅ code xong 2026-10-30. Gỡ nợ AP-6 (SC-CMP-2: 7/7 nguyên tắc có cách thực thi); C-5, C-8 đạt
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 100% (trước khi code: 0%)
@@ -8,8 +10,8 @@
 > **Tuân thủ / nguyên tắc:** C-5 (0% → 100%), C-8 (67% → 100%) · AP-2, AP-6
 > **Phụ thuộc phase:** 004 (Kernel phát sự kiện từ một cửa ghi)
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
-<!-- [2026-10-30] Chủ: "tiếp tục" (sau PHASE-004, đề xuất làm 006 kế tiếp) ⇒ code W0–W4. -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — Chủ: "tiếp tục" (sau PHASE-004, đề xuất làm 006 kế tiếp) ⇒ code W0–W4. -->
 
 | Tài liệu | Một câu |
 |---|---|

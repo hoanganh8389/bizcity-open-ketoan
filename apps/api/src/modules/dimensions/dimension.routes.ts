@@ -1,4 +1,7 @@
 // @bizcity-layer P data
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 /**
  * Danh mục chiều phân tích: khoản mục, bộ phận, hợp đồng (phân biệt bằng :kind).
  *   GET /api/v1/dimensions/:kind            danh sách   (kind = cost_item | department | contract)
@@ -16,7 +19,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
-import { usedDimensionCodes } from '../default-data/default-data.service.js';
+import { usedDimensionCodes } from '../../kernel/public.js';
 
 const tags = ['Danh mục: Khoản mục, bộ phận, hợp đồng'];
 const kindParam = z.object({ kind: z.enum(DIMENSION_KINDS) });

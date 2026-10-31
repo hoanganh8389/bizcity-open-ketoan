@@ -1,4 +1,24 @@
 # Lộ trình Standard v1: Phase 1 → 6
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
+<!-- [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — lộ trình máy đọc bám Phase, ma trận mảng × Phase. -->
+<!-- [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh. -->
+<!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
+<!-- [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10). -->
+<!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
+<!-- [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6). -->
+<!-- [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12). -->
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 
 > Thay phần "Giai đoạn 0–3" của [../framework/05-LO-TRINH.md](../framework/05-LO-TRINH.md) (tệp đó giữ phần tư vấn và trỏ về đây). Mỗi việc cũ có mã (vd `1.1`) được ghi lại ở cột "Từ lộ trình cũ".
 > **Bản máy đọc:** [roadmap.json](roadmap.json) (`bizcity_roadmap@1`). Mỗi việc dưới đây có điều kiện "xong" là **tín hiệu đo được**: check SC- / DG- đạt, năng lực `available`, tệp có mặt, độ phủ CONF, hoặc việc tay có người và ngày xác nhận.
@@ -49,8 +69,8 @@
 |---|---|---|---|
 | 2.1 | **`eventStore`** (`modules/documents/event-store.ts`): gom chuỗi sự việc → phiên bản → đảo → ghi → `posted_version`. Chuyển `vouchers`, `closing`, `assets`, `inventory/costing` sang (A-01) — **xong** 2026-10-30, [PHASE-004](../phases/PHASE-004-MOT-CUA-GHI-SO/README.md) | `DEBT_LEDGER_CALLERS` trong `kiem-chuan.sh` rỗng | 1.1, 1.2, 1.3 |
 | 2.2 | `assertLedgerInvariants()` trong test-kit, gọi ở `afterAll` mọi tệp test | chạy trong CI — **có**: `apps/api/test/helpers.ts` + `test/setup.ts` (setupFiles), dùng chung kiểm L3 của 2.10 | 1.4 |
-| 2.3 | Workspace `packages/kernel`: chuyển `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` + `db/seed.ts`; mở `public.ts` (`submit`, `cancel`, `get`) | `apps/api` chỉ import `@bizcity/kernel` công khai | mới |
-| 2.4 | `packages/data`: `ctx.data.tx` (đặt `bizcity.tenant_id`), runner migration theo module, schema `bizcity_read` + view danh mục | CONF-MIG chạy được | mới |
+| 2.3 | Workspace `packages/kernel`: chuyển `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` + `db/seed.ts`; mở `public.ts` (`submit`, `cancel`, `get`) — **W1 có** 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), mọi nơi gọi đã chuyển ([PHASE-010](../phases/PHASE-010-TACH-GOI-KERNEL/README.md)); W2 dời thư mục sang gói sau khi tách Platform | `apps/api` chỉ import `@bizcity/kernel` công khai | mới |
+| 2.4 | `packages/data`: `ctx.data.tx` (đặt `bizcity.tenant_id`), runner migration theo module, schema `bizcity_read` + view danh mục — **RLS + gắn đơn vị có** 2026-10-30 ([PHASE-007](../phases/PHASE-007-CO-LAP-DON-VI-RLS/README.md)); còn `bizcity_read`, migration theo module | CONF-MIG chạy được | mới |
 | 2.5 | `packages/actions`: `defineAction`, idempotency (`action_requests`), dry-run, mã lỗi mới, sinh route + OpenAPI. Chuyển `phan-he/quy/payment-requests` làm mẫu | CONF-RUN-1/3/4/9 đạt trên yêu cầu thanh toán — **có**: runtime `apps/api/src/core/actions.ts` (gói `packages/actions` tách cùng 2.3), `test/actions.test.ts` | mới |
 | 2.6 | `packages/audit`: mở rộng `audit_logs` (Evidence §5), trigger chỉ thêm, chuỗi băm, biên nhận; runtime action ghi tự động | CONF-RUN-11/12 đạt — **có**: migration 0036, `core/audit.ts` `writeEvidence`, `GET /evidence/:id`, `EVIDENCE_CHAIN`, `test/evidence.test.ts` (gói `packages/audit` tách cùng 2.3) | mới |
 | 2.7 | `packages/documents`: `nextNumber`, `document_versions`, `document_links`, `attachments` (chuyển `purchase_attachments`), `document_signatures.doc_ref` | Mua hàng dùng đính kèm chung | mới |
@@ -60,7 +80,7 @@
 | 2.11 | **`platform/mcp` đọc (2b)**: `POST /mcp`, công cụ `accounting.*` §5.1 bọc route hiện có, khoá `mcp_…` có scope, phong bì + `as_of` ([bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md)) | Claude / ChatGPT đọc được cân đối phát sinh, công nợ của một đơn vị — **có**: `modules/system/mcp.routes.ts`, công cụ `modules/reports/report.actions.ts`, `test/mcp.test.ts` (khoá `mcp_…` riêng: sau) | mới |
 | 2.12 | MCP sinh từ registry action; `needs_confirmation` + `confirm_token` (sau 2.5) | CONF-MCP-1..5 đạt — **có** (CONF-MCP-1, -3, -4 trong `test/mcp.test.ts`; -5 khi có action chạm sổ phơi cho AI) | mới |
 | 2.13 | Quan sát + mã lỗi chuẩn ([ADR-0007](../adr/ADR-0007-goi-chia-se-va-ha-tang.md)): danh mục [`bizcity_errors@1`](../contracts/BIZCITY-ERRORS-v1.md), `X-Request-Id` / `traceparent`, log có cấu trúc, `GET /metrics`, bộ giám sát [`infrastructure/monitoring/`](../../infrastructure/monitoring/README.md) (6 dashboard, 8 cảnh báo) | SC-ERR-1 đạt; `test/observability.test.ts` — **có** | mới |
-| 2.14 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): cấu hình định khoản, lý do, nhóm hạch toán có `policy_version` + `effective_from`; ghi sổ chọn bản theo ngày chứng từ; `posting_log.policy_version` | năng lực `posting.policy-version` available; C-9 của ma trận tuân thủ đạt | mới (G2-09) |
+| 2.14 | **Chính sách kế toán có phiên bản + ngày hiệu lực** (`posting.policy-version`): cấu hình định khoản, lý do, nhóm hạch toán có `policy_version` + `effective_from`; ghi sổ chọn bản theo ngày chứng từ; `posting_log.policy_version` | năng lực `posting.policy-version` available; C-9 của ma trận tuân thủ đạt — **có** 2026-10-30 ([PHASE-005](../phases/PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md), [ADR-0009](../adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md)) | mới (G2-09) |
 | 2.15 | **Sao lưu PITR**: WAL archiving (`infrastructure/backup/`, chỉ PostgreSQL: `archive_command` + `pg_basebackup`; wal-g / pgBackRest tuỳ chọn), diễn tập khôi phục tới một thời điểm, đo RTO / RPO — **cơ chế có** 2026-10-30, diễn tập máy dev ĐẠT ([PHASE-008](../phases/PHASE-008-SAO-LUU-PITR/README.md)); còn diễn tập trên máy chủ thật | `infrastructure/backup/README.md`; biên bản diễn tập ở `docs/audits/` | mới (G1-08, G3-07) |
 | 2.16 | **MCP ghi**: `accounting.document.create_draft`, `accounting.journal.post`, `accounting.entry.reverse`, luôn xem trước + `confirm_token`; AI chỉ tạo nháp / chờ duyệt (STD-MCP-4, -6) — **có** 2026-10-30 trừ `journal.post` ([PHASE-009](../phases/PHASE-009-MCP-GHI/README.md)) | test MCP cho 3 công cụ ghi; CONF-MCP-5 | mới (G2-04) |
 

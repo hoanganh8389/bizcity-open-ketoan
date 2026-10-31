@@ -1,4 +1,5 @@
 # PHASE-003 — Action runtime, bằng chứng chuỗi băm, tự chẩn đoán, MCP đọc, mã lỗi + quan sát
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 
 > **Trạng thái:** ✅ đủ tín hiệu lộ trình; nợ nhỏ chuyển sang PHASE-004 / 006 / 009 / 010 (xem 70-REFLECT-003 ở PHASE-004)
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 100%
@@ -8,7 +9,7 @@
 > **Tuân thủ / nguyên tắc:** C-2, C-3, C-4 đạt · C-8 một phần · AP-1, AP-4, AP-7
 > **Phụ thuộc phase:** 001
 
-<!-- [2026-10-30] Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 
 | Tài liệu | Một câu |
 |---|---|

@@ -1,4 +1,5 @@
 # Audit nền — 2026-10-28
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > Rà soát mã nguồn so với bộ chuẩn [../00-CANON.md](../00-CANON.md) v1.0. Phương pháp: đọc nhân (`core/`, `modules/{documents,posting,ledger}`, `packages/contracts`, `db/migrations/000x_goc_*`), grep toàn `apps/api/src`, đối chiếu tài liệu cũ. **Chưa** chạy test trong lần rà này.
 

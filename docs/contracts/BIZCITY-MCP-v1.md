@@ -1,4 +1,9 @@
 # `bizcity_mcp@1` — Chuẩn công cụ MCP của Core kế toán (cho Cell, trợ lý AI, chatbot)
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12). -->
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — journal.post đã có (phiếu nhập tay nháp chờ duyệt), thay receipt_draft / payment_draft. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel + Platform (bề mặt AI của Core)
 > **Là hồ sơ (profile) của chuẩn MCP chung hệ sinh thái Bizcity**, không phải chuẩn riêng. Hai hợp đồng gốc nằm ở plugin `bizcity-twin-ai/docs/contracts/`:
@@ -31,7 +36,7 @@ Core **không** gọi LLM khi trả lời MCP. Core chỉ: công bố công cụ
 | Xác nhận trước khi ghi (STD-MCP-4), một lần (STD-MCP-5), bằng chứng actor `ai` (STD-MCP-9) | **có**: bảng `mcp_confirm_tokens` (0037); mẫu `quy.payment_request.create` / `.update` |
 | Kết quả ghi đã xác nhận | `data = { status: "done", result: <output của action>, as_of }`, `meta = { receipt, replayed }`. `data.status` chỉ nói về luồng xác nhận (`needs_confirmation` → `done`), không lẫn với trạng thái chứng từ |
 | Danh tính | phiên đăng nhập hoặc khoá API hiện có; kênh ghi vào bằng chứng lấy từ `params._meta.client` (`via = mcp:<client>`) |
-| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 còn lại (`accounting.vouchers.receipt_draft` / `.payment_draft`, `accounting.invoices.to_draft`; `accounting.journal.post` của CONG-BO §2.1) — **đã có** từ 2026-10-30: `accounting.document.create_draft`, `accounting.entry.reverse` (PHASE-009); `llm_alias` khai tay; trường `pii` |
+| **Chưa có** | đường Cell `/api/v1/cell/mcp` + `X-BizCity-Principal` (cần kết nối bốn bước); khoá `mcp_…` riêng + OAuth; mode / scope §4; resources, prompts §5.3; công cụ đề xuất ghi §5.2 còn lại (`accounting.invoices.to_draft`) — **đã có** từ 2026-10-30: `accounting.document.create_draft`, `accounting.entry.reverse`, `accounting.journal.post` (PHASE-009; phiếu thu / chi nháp đi `journal.post` với `docType` receipt / payment, thay cho `accounting.vouchers.receipt_draft` / `.payment_draft`); `llm_alias` khai tay; trường `pii` |
 
 ## 2. Giao thức (theo hai hợp đồng gốc)
 
@@ -106,7 +111,7 @@ defineAction({ id: 'accounting.report.trial_balance', input, output, permission:
 | `accounting.documents.search` · `accounting.documents.get` | `kt_documents` | Tìm chứng từ; xem chứng từ + bút toán + nhật ký định khoản | `/documents`, `/posting-log` |
 | `accounting.masterdata.partner_find` · `.product_find` | `kt_find_partner`… | Tra đối tượng / mặt hàng theo mã, tên, SĐT, MST | danh mục |
 | `accounting.posting.reasons` | `kt_reasons` | Lý do đang dùng, kèm gợi ý AI của gói | `/posting/reasons` |
-| `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | mới |
+| `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | **có** (PHASE-012, action `accounting.posting.reason-suggest`) <!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — reason_suggest có. --> |
 | `accounting.posting.explain` | `kt_explain_entry` | Giải thích một bút toán: lý do, tài khoản lấy từ đâu theo thứ tự AccountResolver | mới, đọc `posting_log` |
 
 ### 5.2 Đề xuất ghi — `confirm: always`, gói Pro

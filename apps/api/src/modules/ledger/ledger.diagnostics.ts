@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/ledger
+// [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
+// [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Kiểm toàn vẹn sổ của Kernel (L3) và lớp bảo vệ sổ (L1) — đăng ký vào bộ chẩn đoán của Platform (modules/system/diagnostics.ts)
  * lúc lắp ráp. SQL chép từ lane diagnostics của bộ kiểm chuẩn (tests/conformance/diagnostics/ledger.diag.mjs, install.diag.mjs),
@@ -28,6 +31,15 @@ function scoped(s: DiagScope, t: string, date: string, branch: string | null = '
 }
 
 const internal = sql.join(INTERNAL);
+/** POLICY_VERSION: phạm vi + điều kiện sai — câu SQL cố định, không ghép giá trị (cùng chữ với lane DG-POL-1). */
+const policyScope = sql<boolean>`NOT e.is_reversal AND a.source_system <> 'manual'
+             AND e.created_at >= (SELECT min(p.created_at) FROM posting_policy_versions p WHERE p.tenant_id = e.tenant_id)`;
+const policyBad = sql<boolean>`(e.policy_version IS NULL OR NOT EXISTS (
+               SELECT 1 FROM posting_policy_versions v
+                WHERE v.tenant_id = e.tenant_id AND v.version = e.policy_version AND v.effective_from <= e.posting_date
+                  AND NOT EXISTS (SELECT 1 FROM posting_policy_versions v2
+                                   WHERE v2.tenant_id = e.tenant_id AND v2.effective_from <= e.posting_date AND v2.created_at <= e.created_at
+                                     AND (v2.effective_from, v2.version) > (v.effective_from, v.version))))`;
 const valued = sql<boolean>`NOT (a.total = 0 AND a.doc_type IN (${sql.join(STOCK_ZERO)}))`;
 
 export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
@@ -115,6 +127,18 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
       sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total FROM accounting_events a
            WHERE ${scoped(s, 'a', 'doc_date')} AND a.status IN ('pending', 'error') AND a.received_at < now() - interval '3 days'
            ORDER BY a.received_at LIMIT ${SAMPLE}`),
+  },
+  {
+    // ADR-0009, C-9: bút toán dựng theo luật định khoản ghi đúng phiên bản chính sách áp cho ngày hạch toán.
+    code: 'POLICY_VERSION', layer: 'L3', level: 'warn', scoped: true,
+    title: 'Bút toán định khoản theo luật ghi đúng phiên bản chính sách kế toán của ngày hạch toán',
+    fix: 'Bút toán thiếu policy_version hoặc theo bản không áp cho ngày hạch toán của nó: có đường định khoản không đi loadPostingConfig({ asOf }). Định khoản lại chứng từ ở ACC14 và báo nhóm Lõi (ADR-0009).',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id
+           WHERE ${scoped(s, 'e', 'posting_date')} AND ${policyScope}`,
+      sql`SELECT e.entry_no AS key, count(*) OVER ()::int AS total FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id
+           WHERE ${scoped(s, 'e', 'posting_date')} AND ${policyScope} AND ${policyBad}
+           ORDER BY e.id LIMIT ${SAMPLE}`),
   },
   {
     code: 'INTERNAL_EVENT_VERSION', layer: 'L3', level: 'warn', scoped: true,

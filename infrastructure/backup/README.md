@@ -1,4 +1,5 @@
 # Sao lưu và khôi phục tới một thời điểm (PITR)
+<!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
 
 Luật: [R-BAK-1..6](../../docs/rules/RULE-INFRASTRUCTURE.md). Phase: [PHASE-008](../../docs/phases/PHASE-008-SAO-LUU-PITR/README.md).
 **Chỉ dùng PostgreSQL**: lưu WAL bằng `archive_command`, sao lưu gốc bằng `pg_basebackup`, khôi phục bằng `recovery_target_time`. Không cần wal-g / pgBackRest ([ADR-0007](../../docs/adr/ADR-0007-goi-chia-se-va-ha-tang.md)); dùng chúng khi muốn đẩy thẳng lên S3.

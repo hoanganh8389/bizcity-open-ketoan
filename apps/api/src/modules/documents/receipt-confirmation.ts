@@ -1,4 +1,6 @@
 // @bizcity-layer K kernel/intake
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Kế toán xác nhận đã nhận tiền của phiếu chuyển tiền (bảng cash_transfer_confirmations, migration 0058).
  *

@@ -1,4 +1,9 @@
 # Quyết định kiến trúc (ADR)
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 
 Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại lệ Tier 1. Chỉ thêm; quyết định bị thay thì ghi "Thay bởi ADR-xxxx" ở đầu tệp cũ.
 
@@ -12,7 +17,7 @@ Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại 
 | [0006](ADR-0006-bo-kiem-chuan-mot-cho.md) | Một bộ kiểm chuẩn `tests/conformance/`: hai lane song song, bảng điểm, baseline bánh cóc | Chấp nhận |
 | [0007](ADR-0007-goi-chia-se-va-ha-tang.md) | Chuẩn hoá gói chia sẻ và hạ tầng: học từ bộ 27 gói tham chiếu, PostgreSQL là hạ tầng bắt buộc duy nhất, adapter tuỳ chọn, `infrastructure/` riêng, không Prisma | Chấp nhận |
 | [0008](ADR-0008-cay-thu-muc-lean.md) | Cây thư mục lean: nhận ý đề xuất 9 thư mục gốc, gộp theo tiêu chí lean (`packages/kernel` một gói, `contracts/` theo ba lớp kiểm soát, sự kiện là gói Platform) | Chấp nhận |
-| [0009](ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) | Chính sách kế toán có phiên bản + ngày hiệu lực (C-9): đề xuất bản chụp chính sách `posting_policy_versions`, định khoản theo bản của ngày hạch toán | **Đề xuất** |
+| [0009](ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) | Chính sách kế toán có phiên bản + ngày hiệu lực (C-9): đề xuất bản chụp chính sách `posting_policy_versions`, định khoản theo bản của ngày hạch toán; sửa cấu hình tự chụp bản amend, đổi chế độ thì phát hành | Chấp nhận (chủ dự án 2026-10-30; kế toán trưởng chưa ký) |
 
 ## Khuôn
 

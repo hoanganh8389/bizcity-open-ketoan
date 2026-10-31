@@ -1,4 +1,6 @@
 # ADR-0007 · Chuẩn hoá gói chia sẻ và hạ tầng: học từ bộ 27 gói tham chiếu, giữ sổ cái làm lõi
+<!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 
 - Trạng thái: Chấp nhận (2026-10-30 — chủ dự án chốt: không dùng Prisma, giữ Kysely + SQL migration)
 - Ngày: 2026-10-30 · Người quyết: chủ dự án (Johnny Chu)

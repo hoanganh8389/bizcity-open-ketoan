@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Cấu hình mẫu in (màn Hệ thống → Mẫu in, HT05; bảng print_template_settings).
  * Bố cục mẫu nằm trong code giao diện; cấu hình chỉ ghi phần khác mặc định: bật / tắt, mẫu mặc định, chỉnh nội dung.

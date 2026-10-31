@@ -1,4 +1,8 @@
 // @bizcity-layer P cli
+// [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
+// [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 /**
  * TỰ CHẨN ĐOÁN (RULE-SELF-DIAGNOSTICS, docs/ops/DIAGNOSTICS.md §2) — phần Platform: kiểu một kiểm, sổ đăng ký, bộ chạy, lưu kết quả.
  * Platform không biết kế toán (LAYOUT-1): kiểm sổ (LEDGER_*, EVENT_*, LEDGER_TRIGGERS) do Kernel khai ở
@@ -172,6 +176,22 @@ export const PLATFORM_DIAGNOSTICS: DiagCheck[] = [
              WHERE ${range}
                AND (a.hash IS DISTINCT FROM audit_log_hash(a) OR a.prev_hash IS DISTINCT FROM c.lag_hash OR c.chain_seq <> coalesce(c.lag_seq, 0) + 1)
              ORDER BY c.chain_seq LIMIT 20`);
+    },
+  },
+  {
+    // PHASE-007 (migration 0041), STD-DATA-1: bảng có tenant_id thiếu RLS / FORCE / chính sách là lỗ hổng cô lập đơn vị.
+    code: 'TENANT_ISOLATION', layer: 'L1', level: 'error', scoped: false,
+    title: 'Mọi bảng có tenant_id bật RLS + FORCE + có chính sách (đơn vị A không đọc / ghi được dữ liệu đơn vị B)',
+    fix: 'Bảng mới có tenant_id mà chưa có chính sách RLS: thêm migration ENABLE / FORCE ROW LEVEL SECURITY + CREATE POLICY tenant_isolation theo khuôn 0041. Không tắt RLS để "chữa cháy".',
+    async run(trx) {
+      const r = await sql<{ name: string; rls: boolean; force: boolean; policy: boolean }>`
+        SELECT c.relname AS name, c.relrowsecurity AS rls, c.relforcerowsecurity AS force,
+                 EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid) AS policy
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = 'public' AND c.relkind = 'r'
+             AND EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)`.execute(trx);
+      const bad = r.rows.filter((x) => !(x.rls && x.force && x.policy)).map((x) => x.name);
+      return { examined: r.rows.length, count: bad.length, sample: bad.slice(0, 20) };
     },
   },
   {

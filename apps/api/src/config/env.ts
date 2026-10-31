@@ -1,4 +1,8 @@
 // @bizcity-layer P bizcity.config
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
+// [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 /**
  * Cấu hình đọc từ biến môi trường, kiểm tra một lần lúc khởi động.
  * Thiếu biến bắt buộc → dừng ngay với thông báo rõ, thay vì lỗi mơ hồ lúc chạy.
@@ -17,6 +21,8 @@ const envSchema = z.object({
   ENABLED_MODULES: z.string().default('*'),
   HOST: z.string().default('0.0.0.0'),
   DATABASE_URL: z.string().url().default('postgres://ketoan:ketoan@localhost:5434/ketoan'),
+  /** Chuyển sang vai trò này sau khi kết nối (SET ROLE) — chạy test / CI dưới vai trò không superuser để RLS có hiệu lực (PHASE-007). Bản thật: kết nối thẳng bằng DB_APP_USER. */
+  DB_SET_ROLE: z.string().regex(/^[a-z_][a-z0-9_]*$/, 'Tên vai trò CSDL không hợp lệ').optional(),
   /** Khoá ký phiên đăng nhập. Bắt buộc đổi ở môi trường thật. */
   JWT_SECRET: z.string().min(16).default('dev-secret-change-me-please-32chars'),
   JWT_TTL_HOURS: z.coerce.number().int().positive().default(12),

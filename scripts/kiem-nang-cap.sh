@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
 # =============================================================================
 # KIỂM NÂNG CẤP (R-DB-15, docs/rules/RULE-DATABASE.md): migration của bản mới phải chạy được trên CSDL ĐÃ CÓ DỮ LIỆU
 # của bản trước, và sổ sau nâng cấp vẫn đúng. Bổ sung cho job CI "test" (migration trên CSDL sạch).

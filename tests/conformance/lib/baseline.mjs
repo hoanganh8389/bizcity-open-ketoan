@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Baseline = danh sách nợ đã biết (thay các biến DEBT_* của scripts/kiem-chuan.sh). Cơ chế "bánh cóc":
  *  - phát hiện có trong baseline  → `known` (nợ, không làm đỏ)

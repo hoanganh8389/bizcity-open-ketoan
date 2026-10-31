@@ -1,6 +1,9 @@
 # `bizcity_posting_template@1` — Gói định khoản (thư viện lý do, marketplace)
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — hiện trạng cài / xem trước / gỡ (§5.1), config_packs ở migration 0042. -->
+<!-- [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0-draft: paymentMethods[].receivable; gói nền db/packs; reason.suggest / readiness chạy thật. -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (hợp đồng dữ liệu cấu hình, không phải code)
+> **Phiên bản:** 1.1.0-draft · 2026-10-30 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (hợp đồng dữ liệu cấu hình, không phải code)
 > **Schema:** [BIZCITY-POSTING-TEMPLATE-v1.schema.json](BIZCITY-POSTING-TEMPLATE-v1.schema.json) · **Ví dụ:** [../standard/examples/vn-tt99-thuong-mai.posting-pack.json](../standard/examples/vn-tt99-thuong-mai.posting-pack.json)
 > **Liên quan:** [BIZCITY-POSTING-RULE-v1.md](BIZCITY-POSTING-RULE-v1.md) (luật là code), [BIZCITY-LEDGER-INTAKE-v1.md](BIZCITY-LEDGER-INTAKE-v1.md) (sự việc), [BIZCITY-MCP-v1.md](BIZCITY-MCP-v1.md) (AI dùng gói), [../standard/TEMPLATE-MARKETPLACE.md](../standard/TEMPLATE-MARKETPLACE.md) (phát hành, duyệt, cài)
 
@@ -36,7 +39,7 @@ Một tệp JSON (hoặc thư mục có `posting-pack.json`), khuôn trong schem
 
 | Phần | Nội dung | Bảng đích khi cài |
 |---|---|---|
-| `id`, `version`, `title`, `publisher`, `license` | Định danh `<publisher>.<chế độ>.<ngành>`, SemVer | `config_packs` (Phase 3) |
+| `id`, `version`, `title`, `publisher`, `license` | Định danh `<publisher>.<chế độ>.<ngành>`, SemVer | `config_packs` (migration `0042`) |
 | `regime` | Chế độ kế toán: `vn-tt99-2025` (doanh nghiệp), `vn-tt133-2016` (nhỏ và vừa) | — |
 | `industries` | Thẻ ngành: `thuong-mai`, `dich-vu`, `san-xuat`, `xay-dung`, `xuat-nhap-khau`, `nha-may`, `nhan-su-luong`, `nong-nghiep`, `fnb`, `ban-le` | — |
 | `extends` | Gói nền phải cài trước (vd `bizcity.vn-tt99.nen`) | — |
@@ -45,7 +48,7 @@ Một tệp JSON (hoặc thư mục có `posting-pack.json`), khuôn trong schem
 | `postingDefaults` | Khoá ngầm định → tài khoản (`cash`, `receivable`, `promotion_expense`…) | `posting_defaults` |
 | `reasons` | Lý do: mã, tên, `kind` (`in`/`out`/`receipt`/`payment`), tài khoản đối ứng / doanh thu / chi phí, khoản mục dòng tiền, cờ, **gợi ý AI** | `posting_reasons` |
 | `postingGroups` | Nhóm hạch toán mặt hàng (kho, giá vốn, doanh thu, chiết khấu, trả lại) | `product_posting_groups` |
-| `paymentMethods` | Hình thức thanh toán → tài khoản tiền | `payment_methods` |
+| `paymentMethods` | Hình thức thanh toán → tài khoản tiền; `receivable: true` = ghi công nợ, không có tiền vào | `payment_methods` |
 | `taxCodes` | Loại thuế → tài khoản thuế, nhóm bảng kê | `tax_codes` |
 | `costItems` | Khoản mục chi phí (cây) | `dimensions` loại khoản mục |
 | `scenarios` | **Tình huống mẫu**: sự việc vào → bút toán mong đợi | không cài; dùng để kiểm và dạy AI |
@@ -103,11 +106,25 @@ gói nền                     (bizcity.vn-tt99.nen: hệ thống TK, ngầm đ�
 | **STD-TPL-2** | Mọi tài khoản gói dùng tồn tại trong hệ thống tài khoản của `regime` hoặc trong `accounts` của gói (tài khoản con có cha) | SC-TPL-1 |
 | **STD-TPL-3** | Mỗi `docType` / khoá mặc định có **đúng một** lý do `flags.default` trong toàn bộ chuỗi gói đã cài | SC-TPL-1; kiểm lúc cài |
 | **STD-TPL-4** | Mọi tình huống mẫu cân Nợ = Có và chỉ dùng lý do có trong gói (hoặc gói nền) | SC-TPL-1 (tĩnh); chạy thật ở lane `runtime` (Phase 4) |
-| **STD-TPL-5** | Cài = **xem trước** (dry-run, liệt kê thêm / đổi / giữ) → người có quyền `settings:write` xác nhận → ghi trong một giao dịch, có bằng chứng `core.template.install` | CONF-RUN (Phase 4) |
+| **STD-TPL-5** | Cài = **xem trước** (dry-run, liệt kê thêm / đổi / giữ) → người có quyền `settings:write` xác nhận → ghi trong một giao dịch, có bằng chứng `core.template.install` | `test/posting-pack.test.ts`; CONF-RUN (Phase 4) |
 | **STD-TPL-6** | Cài / nâng cấp **không** đổi bút toán đã ghi (R-POST-8, R-MATRIX-6). Áp cho lần định khoản sau | Kernel |
 | **STD-TPL-7** | Không ghi đè cấu hình đơn vị đã sửa tay, trừ khi người cài chọn từng mục | màn cài |
 | **STD-TPL-8** | Gỡ gói = **ngừng dùng** (`is_active = false`) các mã chưa phát sinh; mã đã dùng giữ nguyên (R-MD) | Kernel |
 | **STD-TPL-9** | Gói yêu cầu `docType` / năng lực Core chưa có → **không cài được**, báo `CAPABILITY_MISSING` kèm danh sách | kiểm lúc cài |
+
+### 5.1 Hiện trạng (2026-10-30, PHASE-012 S012-3)
+
+<!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cài / xem trước / gỡ chạy thật. -->
+
+| Phần | Trạng thái |
+|---|---|
+| `GET /api/v1/posting/packs` (`core.template.list`), `POST /api/v1/posting/packs/install` (`core.template.install`, `?dryRun=1` = xem trước), `POST /api/v1/posting/packs/uninstall` (`core.template.uninstall`) | **có** — `settings:write`, không phơi cho AI |
+| STD-TPL-2, -3, -5, -6, -7, -8, -9 | **có** lúc cài (`modules/posting-config/pack.ts`). Mục khác cấu hình đơn vị → `conflict`, giữ nguyên; ghi đè từng mục bằng `overwrite: ["<kind>:<mã>"]` |
+| Cài / gỡ = phát hành một bản chính sách kế toán (ADR-0009 Q-5), hiệu lực từ `effectiveFrom` (mặc định hôm nay) | **có** |
+| `costItems`, `scenarios` | lưu trong `config_packs.manifest`, **chưa** cài khoản mục, **chưa** chạy tình huống mẫu ở lane runtime |
+| `extends` | kiểm gói nền đã cài (chưa so khoảng phiên bản `@^1`) |
+| Gói nền `bizcity.vn-tt99.nen` (`db/packs/vn-tt99-nen.posting-pack.json`) | **có** (S012-3b): khởi tạo đơn vị cài gói này ở chế độ baseline — chỉ thêm mục thiếu, không phát hành bản chính sách; đơn vị đang chạy được ghi nhận "đã cài" ở lần chạy job `db-migrate` (seed) kế tiếp |
+| Gợi ý lý do (§6), kiểm lý do mặc định (§7) | **có** (S012-4): action `accounting.posting.reason-suggest` (`GET /api/v1/posting/reasons/suggest`, công cụ MCP `accounting.posting.reason_suggest`) và `accounting.posting.reason-readiness` (`GET /api/v1/posting/reasons/readiness`). Gợi ý AI của mục gói bị `conflict` không dùng. Chưa ghi bằng chứng `core.posting.reason.chosen`: lịch sử lấy từ lý do trên bút toán đã ghi của đơn vị |
 
 ## 6. Trợ lý AI chọn lý do (định khoản tự động)
 
@@ -160,3 +177,4 @@ Các năng lực trên ghi trong [bizcity-standard.json](../standard/bizcity-sta
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
 | 1.0.0-draft | 2026-10-29 | Khởi tạo: khuôn gói, phân tầng, luật cài, gợi ý AI, phạm vi ngành |
+| 1.1.0-draft | 2026-10-30 | Thêm `paymentMethods[].receivable` (tuỳ chọn, tương thích). Gói nền `bizcity.vn-tt99.nen` ở `db/packs/`; gợi ý lý do và kiểm lý do mặc định chạy thật (PHASE-012) |

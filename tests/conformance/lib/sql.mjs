@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Đọc thô các tệp migration SQL (không chạy CSDL): bảng, cột, chú thích, RLS.
  * Đủ cho kiểm tĩnh CONF-MIG; kiểm chính xác trên pg_catalog là phần CONF-MIG chạy thật (Phase 4).

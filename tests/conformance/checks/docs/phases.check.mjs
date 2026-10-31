@@ -1,3 +1,4 @@
+// [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1.
 /**
  * docs/phases/PHASE-NNN-*: mỗi việc lộ trình (roadmap.json) và mỗi mã checklist công bố (CONG-BO-KIEN-TRUC §6, G1-..G3-..) thuộc
  * đúng một thư mục phase — để kế hoạch, checklist con và bằng chứng của một việc có một chỗ, không trùng, không sót.

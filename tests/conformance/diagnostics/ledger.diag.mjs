@@ -1,3 +1,9 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
+// [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
+// [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 /**
  * Lane diagnostics: kiểm toàn vẹn trên CSDL thật, CHỈ ĐỌC. Cùng mã với GET /api/v1/system/diagnostics
  * (docs/ops/DIAGNOSTICS.md §2) để khi endpoint có (Phase 2), hai nơi cho cùng một kết quả.
@@ -12,6 +18,15 @@ import { sqlCheck } from '../lib/diag.mjs';
  * posted_version. Tách khỏi DG-EVENT-1 để lỗi thật của cửa nạp sổ không bị lẫn; DG-EVENT-4 theo dõi tới khi xong PHASES 2.1.
  */
 const INTERNAL = "('closing', 'cogs', 'depreciation')";
+/** POLICY_VERSION — cùng chữ với apps/api/src/modules/ledger/ledger.diagnostics.ts. */
+const POLICY_SCOPE = `NOT e.is_reversal AND a.source_system <> 'manual'
+             AND e.created_at >= (SELECT min(p.created_at) FROM posting_policy_versions p WHERE p.tenant_id = e.tenant_id)`;
+const POLICY_BAD = `(e.policy_version IS NULL OR NOT EXISTS (
+               SELECT 1 FROM posting_policy_versions v
+                WHERE v.tenant_id = e.tenant_id AND v.version = e.policy_version AND v.effective_from <= e.posting_date
+                  AND NOT EXISTS (SELECT 1 FROM posting_policy_versions v2
+                                   WHERE v2.tenant_id = e.tenant_id AND v2.effective_from <= e.posting_date AND v2.created_at <= e.created_at
+                                     AND (v2.effective_from, v2.version) > (v.effective_from, v.version))))`;
 /** Phiếu kho tổng tiền 0 (chuyển kho, điều chỉnh kho) không có bút toán: giá trị ghi ở phiếu giá vốn tháng — không phải lỗi. */
 const VALUED = "NOT (a.total = 0 AND a.doc_type IN ('transfer', 'stock_adjustment'))";
 
@@ -75,6 +90,17 @@ export const checks = [
           LIMIT 200`,
   }),
   sqlCheck({
+    id: 'DG-POL-1', code: 'POLICY_VERSION',
+    title: 'Bút toán định khoản theo luật ghi đúng phiên bản chính sách kế toán của ngày hạch toán (ADR-0009, C-9)',
+    rules: ['STD-CMP-9'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id
+            WHERE ${POLICY_SCOPE}`,
+    sql: `SELECT t.code AS tenant, e.entry_no AS key, json_build_object('posting_date', e.posting_date, 'policy_version', e.policy_version) AS detail
+          FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id JOIN tenants t ON t.id = e.tenant_id
+          WHERE ${POLICY_SCOPE} AND ${POLICY_BAD}
+          LIMIT 200`,
+  }),
+  sqlCheck({
     id: 'DG-EVENT-4', code: 'INTERNAL_EVENT_VERSION',
     title: 'Sự việc nội bộ (kết chuyển, giá vốn, khấu hao) có posted_version = version (đi eventStore, PHASES 2.1)',
     rules: ['R-EVENT-2', 'R-EVENT-4'], conf: [], tier: 1, enforce: 'info', weight: 2,
@@ -134,10 +160,28 @@ export const checks = [
     ['DG-PLAN-2', 'TAX_BOOK_MATCH', 'Sổ hoá đơn = phát sinh thuế GTGT theo kỳ', []],
     ['DG-PLAN-3', 'COST_FILL_OPEN', 'Không còn dòng cost_fill = 0 ở tháng đã qua', []],
     ['DG-PLAN-4', 'TRANSIT_NONZERO', 'Tài khoản trung gian (hàng đi đường, tiền đang chuyển) về 0', []],
-    ['DG-PLAN-5', 'TENANT_ISOLATION', 'Đơn vị A không đọc / ghi được dữ liệu đơn vị B (RLS)', ['STD-DATA-1']],
   ].map(([id, code, title, rules]) => ({
-    id, code, title, gate: 'CONF-RUN', contract: id === 'DG-PLAN-5' ? 'bizcity_data' : 'kernel',
+    id, code, title, gate: 'CONF-RUN', contract: 'kernel',
     rules, conf: [], tier: 1, enforce: 'planned', phase: 'Phase 2', weight: 2,
     run: async () => ({ examined: 0, readiness: 0, findings: [], notes: ['chưa viết — xem docs/ops/DIAGNOSTICS.md §2'] }),
   })),
+  {
+    // PHASE-007 (migration 0041): mọi bảng có tenant_id bật RLS + FORCE + có chính sách. Vai trò kết nối của API không vượt RLS: DG-SEC-1 / -2.
+    id: 'DG-PLAN-5', code: 'TENANT_ISOLATION',
+    title: 'Đơn vị A không đọc / ghi được dữ liệu đơn vị B: mọi bảng có tenant_id bật RLS + FORCE + có chính sách',
+    gate: 'CONF-RUN', contract: 'bizcity_data', rules: ['STD-DATA-1'], conf: ['CONF-MIG-2'], tier: 0, enforce: 'block', weight: 4,
+    async run(ctx) {
+      const rows = await ctx.db.query(`SELECT c.relname AS name, c.relrowsecurity AS rls, c.relforcerowsecurity AS force,
+                 EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid) AS policy
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = 'public' AND c.relkind = 'r'
+             AND EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)`);
+      const bad = rows.filter((r) => !(r.rls && r.force && r.policy));
+      return {
+        examined: rows.length, unitBy: 'key',
+        findings: bad.map((r) => ctx.finding(null, null, `bảng ${r.name}: ${[!r.rls && 'chưa bật RLS', !r.force && 'chưa FORCE', !r.policy && 'chưa có chính sách'].filter(Boolean).join(', ')}`, r.name)),
+        metrics: { code: 'TENANT_ISOLATION' },
+      };
+    },
+  },
 ];

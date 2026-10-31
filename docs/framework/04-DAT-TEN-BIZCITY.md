@@ -1,4 +1,5 @@
 # 04 · Đặt tên chuẩn `bizcity_`
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 Mục tiêu: nhìn một tên là biết nó thuộc framework, thuộc tầng nào, phiên bản nào — mà **không** phải đổi tên hàng loạt bảng CSDL đang chạy. Quyết định: [../adr/ADR-0002-tien-to-bizcity.md](../adr/ADR-0002-tien-to-bizcity.md).
 

@@ -19,7 +19,7 @@ import { db } from '../../db/client.js';
 import { Errors, AppError } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
-import { documentService, postDocumentIn } from '../documents/document.service.js';
+import { documentService, postDocumentIn } from '../../kernel/public.js';
 import { fetchWooPage, wooOrderToDocument } from './woocommerce.js';
 import { env } from '../../config/env.js';
 

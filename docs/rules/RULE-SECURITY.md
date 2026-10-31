@@ -1,4 +1,9 @@
 # RULE · Bảo mật (R-SEC)
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
+<!-- [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — bộ kiểm chuẩn xanh, gia cố R-API-6, R-BOUND-2, R-SEC-11, R-REL-1. -->
+<!-- [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh. -->
+<!-- [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6). -->
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 
 > **Cấp:** Tier 0 / 1 (ghi từng luật) · **Phiên bản:** 1.0 · 2026-10-29 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Phạm vi:** toàn Core: Kernel, Platform, adapter, CI, bản cài.
@@ -41,7 +46,7 @@
 | Rủi ro | Trạng thái | Việc |
 |---|---|---|
 | Repo **công khai** chứa dữ liệu thật trong `db/seeds/` (đối tượng, nhân viên, chi nhánh, mặt hàng) — trái R-SEC-10 | **Chủ dự án chấp nhận** 2026-10-29 khi đẩy lên GitHub | Khi đổi ý: chuyển seed thật ra kho riêng, tạo seed ẩn danh; dữ liệu đã đẩy coi như đã công khai |
-| API dùng vai trò CSDL `ketoan` = superuser (Docker mặc định) — trái R-SEC-6 | **có cách sửa** (2026-10-30): migration 0032 tạo `ketoan_app`; đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` là API dùng vai trò thường. Mặc định vẫn như cũ để bản cài đang chạy không gãy | Bật trên từng bản cài thật (DEPLOY D-9); DG-SEC-1 kiểm vai trò, DG-SEC-2 kiểm kết nối |
+| API dùng vai trò CSDL `ketoan` = superuser (Docker mặc định) — trái R-SEC-6. **Từ 0041 (RLS) việc này quan trọng hơn: superuser vượt RLS, nên cô lập đơn vị ở tầng CSDL chỉ có hiệu lực khi API chạy bằng `ketoan_app`** | **có cách sửa** (2026-10-30): migration 0032 tạo `ketoan_app`; đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` là API dùng vai trò thường. Mặc định vẫn như cũ để bản cài đang chạy không gãy | Bật trên từng bản cài thật (DEPLOY D-9); DG-SEC-1 kiểm vai trò, DG-SEC-2 kiểm kết nối |
 | Nhật ký thao tác sửa / xoá được bằng SQL; bằng chứng rải nhiều nơi (A-18) | **đã sửa phần CSDL** (2026-10-30): migration 0036 chặn UPDATE / DELETE / TRUNCATE `audit_logs`, chuỗi băm theo đơn vị; kiểm `EVIDENCE_CHAIN` (DG-EVD-1). Giới hạn: superuser xoá **dòng cuối** chuỗi thì chuỗi không tự lộ — biên nhận `meta.receipt` bên gọi giữ là lớp kiểm thứ hai | Bỏ nhật ký tệp JSONL của Mua hàng (STD-EVD-4, SC-EVD-1) |
 | Chưa có RLS (A-23) | mở | PHASES 2.4–2.5 |
 | Header bảo mật web — R-SEC-11 | **một phần** (2026-10-29): nginx đã gửi `nosniff`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` | HSTS do proxy TLS gửi (DEPLOY D-8); CSP đầy đủ (`script-src`, `frame-src` cho add-in nhúng) cần thử trên giao diện thật trước khi bật |

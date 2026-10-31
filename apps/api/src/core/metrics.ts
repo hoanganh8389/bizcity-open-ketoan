@@ -1,4 +1,5 @@
 // @bizcity-layer P observability
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * Số đo Prometheus (docs/ops/OBSERVABILITY.md §3) — bộ đếm / gauge / histogram tối thiểu, định dạng văn bản Prometheus 0.0.4,
  * không cần gói ngoài. Không import CSDL (db/client.ts gọi observeDbQuery ở đây — tránh vòng import).

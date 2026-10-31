@@ -1,4 +1,9 @@
 // @bizcity-layer K kernel/subledgers/inventory
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Tính giá vốn bình quân gia quyền theo tháng và ghi sổ giá vốn hàng xuất.
  *
@@ -495,7 +500,7 @@ async function postBranch(
   // Khoá cũ là cogs:<internal|tax>:<chi nhánh>:<kỳ>; nay một sổ kế toán: cogs:<chi nhánh>:<kỳ>.
   const docKey = `cogs:${a.branchCode}:${label(a.period)}`;
   const existing = await eventStore.lock(trx, auth.tenantId, docKey);
-  const cfg = await postingConfigRepository.loadPostingConfig(trx, auth.tenantId, [...new Set(a.movements.map((m) => m.sku))]);
+  const cfg = await postingConfigRepository.loadPostingConfig(trx, auth.tenantId, [...new Set(a.movements.map((m) => m.sku))], { asOf: lastDay(a.period), actor: auth.actor });
   const reversed = existing ? await eventStore.reverseActive(trx, auth, existing.id, cfg.accounts, 'Tính lại giá vốn') : 0;
   // Chứng từ giá vốn khoá cũ còn hiệu lực: đảo bút toán và huỷ, để không ghi trùng với chứng từ khoá mới.
   for (const legacyKey of ['internal', 'tax'].map((x) => `cogs:${x}:${a.branchCode}:${label(a.period)}`)) {
@@ -597,8 +602,8 @@ async function postBranch(
     fields: { branch_id: a.branchId, doc_date: lastDay(p), total, payload: JSON.stringify({ period: label(p), branchCode: a.branchCode, description, method: 'binh-quan-thang' }) },
   });
   const version = ev.version;
-  const entry = await eventStore.post(trx, auth, ev, { branchId: a.branchId, docType: 'cogs', docNo, docDate: lastDay(p), postingDate: lastDay(p), description, lines }, cfg.accounts);
-  await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'cogs', docNo, entryIds: [entry.id], reversed, total });
+  const entry = await eventStore.post(trx, auth, ev, { branchId: a.branchId, docType: 'cogs', docNo, docDate: lastDay(p), postingDate: lastDay(p), description, lines, policyVersion: cfg.policyVersion }, cfg.accounts);
+  await eventStore.markPosted(trx, auth, { ...ev, docKey, docType: 'cogs', docNo, entryIds: [entry.id], reversed, total, policyVersion: cfg.policyVersion });
   await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'costing.run', objectType: 'source_document', objectId: docKey, after: { version, total } });
   return { branchCode: a.branchCode, status: 'posted', docNo, total, filled, filledTotal };
 }

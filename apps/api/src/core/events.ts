@@ -1,4 +1,5 @@
 // @bizcity-layer P events
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 /**
  * SỰ KIỆN MIỀN (bizcity_event@1, R-OUTBOX-1..7; PHASE-006, PHASES 3.4) — transactional outbox, chạy chỉ với PostgreSQL.
  *

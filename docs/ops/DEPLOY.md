@@ -1,4 +1,9 @@
 # Triển khai — chuẩn
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — bộ kiểm chuẩn xanh, gia cố R-API-6, R-BOUND-2, R-SEC-11, R-REL-1. -->
+<!-- [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh. -->
+<!-- [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10). -->
+<!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
 
 > Runbook cụ thể cho máy chủ aaPanel hiện tại: [../trien-khai.md](../trien-khai.md). Tệp này là **chuẩn** mọi bản cài phải theo.
 
@@ -25,6 +30,17 @@ reverse proxy (HTTPS, tên miền) ──► web (nginx, 127.0.0.1:WEB_PORT) ─
 | Sổ thuế (thật) | `tax` | trống | Thư mục, Docker project, CSDL riêng; chỉ phiếu bán / hoàn có hoá đơn; `consumer=tax` |
 | Bản test | như bản nguồn | `BẢN TEST` | Tạo bằng `scripts/tao-ban-test.sh`; khoá API, JWT riêng |
 | Dev | `internal` | tuỳ | `npm run dev`, `AUTO_MIGRATE=1` |
+
+### 2.1 Thư mục cơ sở dữ liệu
+<!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — khai DB_DIR, SEEDS_DIR, PACKS_DIR (gói định khoản nền db/packs). -->
+
+Image API chép `db/migrations`, `db/seeds`, `db/packs` vào `/app/db` (`apps/api/src/db/paths.ts`). Chỉ đặt các biến dưới khi dựng khác chỗ:
+
+| Biến | Mặc định | Dùng cho |
+|---|---|---|
+| `DB_DIR` | `<gốc repo>/db` (Docker: `/app/db`) | gốc của ba thư mục dưới |
+| `SEEDS_DIR` | `$DB_DIR/seeds` | hệ thống tài khoản, danh mục chuẩn |
+| `PACKS_DIR` | `$DB_DIR/packs` | gói định khoản; seed cài gói nền `vn-tt99-nen.posting-pack.json` (thiếu thư mục → job `db-migrate` lỗi) |
 
 ## 3. Luật triển khai
 

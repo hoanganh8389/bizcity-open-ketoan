@@ -1,4 +1,5 @@
 // @bizcity-layer P events
+// [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 /**
  * Sự kiện miền (bizcity_event@1 §5) — vận hành:
  *   GET  /api/v1/system/events          core.events.status — subscriber đang đăng ký + tình trạng giao theo nơi nhận

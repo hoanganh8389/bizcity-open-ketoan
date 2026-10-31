@@ -1,3 +1,4 @@
+// [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell.
 /**
  * bizcity_posting_template@1 — gói định khoản (STD-TPL-1..4, 9). Quét mọi `*.posting-pack.json` của gốc đang kiểm;
  * kiểm một gói đơn lẻ: --module <thư mục chứa posting-pack.json>.

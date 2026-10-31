@@ -1,4 +1,6 @@
 # Phiên bản của Standard, hợp đồng và Kernel
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
 
 > Mục tiêu: **nâng cấp chuẩn hay nâng cấp Kernel mà module đã cài không gãy.** Module chỉ hứa với *Standard* và *năng lực*, không bao giờ hứa với phiên bản Kernel.
 > Tệp này nói **đánh số thế nào**. Còn **phát hành thế nào** (cổng chặn, kênh stable / LTS, CHANGELOG, vá bảo mật, quay lui): [../rules/RULE-RELEASE.md](../rules/RULE-RELEASE.md), [../ops/RELEASE.md](../ops/RELEASE.md). Mức thay đổi Kernel K0–K3: [../rules/RULE-KERNEL.md](../rules/RULE-KERNEL.md).

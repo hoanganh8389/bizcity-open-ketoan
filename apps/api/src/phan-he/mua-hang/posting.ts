@@ -16,9 +16,7 @@ import { ingestDocumentSchema, voucherInputSchema, type IngestDocument } from '@
 import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
-import { postDocumentIn } from '../../modules/documents/document.service.js';
-import { voucherService } from '../../modules/vouchers/voucher.service.js';
-import { allocate as allocateDebt } from '../../modules/debts/debt.service.js';
+import { postDocumentIn, voucherService, allocateDebt } from '../../kernel/public.js';
 import type { Accounts } from '@ketoan/contracts/mua-hang';
 import type { StoredDoc } from './store.js';
 

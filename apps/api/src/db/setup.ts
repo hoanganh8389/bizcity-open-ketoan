@@ -6,7 +6,7 @@
  */
 import { pool } from './client.js';
 import { runMigrations } from './migrate.js';
-import { seed } from './seed.js';
+import { seed } from '../kernel/public.js';
 import { db } from './client.js';
 import { freezeApproved } from '../phan-he/mua-hang/analysis.js';
 

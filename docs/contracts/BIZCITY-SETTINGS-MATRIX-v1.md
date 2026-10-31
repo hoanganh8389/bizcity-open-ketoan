@@ -1,4 +1,5 @@
 # `bizcity_settings@1` — Registry và cách đọc cấu hình
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-28 · **Trạng thái:** Đề xuất (registry đã có, hàm đọc chung ở Giai đoạn 2)
 > **Luật:** [R-MATRIX](../rules/RULE-SETTINGS-MATRIX.md) · **Registry:** [bizcity-settings.registry.json](bizcity-settings.registry.json)

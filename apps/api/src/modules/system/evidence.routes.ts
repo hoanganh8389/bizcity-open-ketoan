@@ -1,4 +1,5 @@
 // @bizcity-layer P audit
+// [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 /**
  * Bằng chứng (bizcity_evidence@1 §3): ai giữ biên nhận (người dùng, Cell, plugin WP) hỏi lại một bản ghi và tự kiểm.
  *   GET /api/v1/evidence/:id   core.evidence.get — bản ghi + kiểm: hash tính lại có khớp không, có nối đúng dòng liền trước không

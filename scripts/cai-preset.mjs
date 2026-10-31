@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
+// [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
 /**
  * Cài nhanh một preset theo ngành (bizcity_preset@1, docs/contracts/BIZCITY-PRESET-v1.md): cấu hình chế độ ghi sổ + dữ liệu mẫu
  * hư cấu (chi nhánh, đối tượng, mặt hàng, chứng từ). CHỈ đi qua HTTP API — chứng từ mẫu vào sổ qua đúng một cửa POST /documents,

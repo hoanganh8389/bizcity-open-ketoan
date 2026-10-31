@@ -1,4 +1,7 @@
 # Bizcity Framework Standard v1
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 
 > **Mã:** `bizcity_standard@1` · **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Người giữ:** nhóm Lõi
 > **Bản máy đọc:** [bizcity-standard.json](bizcity-standard.json) (danh sách hợp đồng + năng lực theo phiên bản) · **Cách tăng phiên bản:** [VERSIONING.md](VERSIONING.md)

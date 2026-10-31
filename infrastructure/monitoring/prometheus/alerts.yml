@@ -1,3 +1,4 @@
+# [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 # =============================================================================
 # Luật cảnh báo Bizcity / open-ketoan — đúng 8 luật.
 # Mức độ (label severity): critical = cần xử lý ngay; warning = xem trong giờ làm việc.

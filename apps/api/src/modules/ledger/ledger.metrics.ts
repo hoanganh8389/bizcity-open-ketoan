@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/ledger
+// [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 /**
  * Số đo sổ cái cho Prometheus (docs/ops/OBSERVABILITY.md §3) — Kernel đăng ký vào bộ thu của Platform lúc lắp ráp (app.ts).
  * Đếm trên MỌI đơn vị, không nhãn tenant (R-OBS-4). Chạy tối đa một lần / 60 giây khi Prometheus đọc /metrics.

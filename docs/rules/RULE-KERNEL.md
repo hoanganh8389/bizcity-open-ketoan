@@ -1,4 +1,5 @@
 # RULE · Thay đổi Kernel (R-KER)
+<!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
 
 > **Cấp:** Tier 0 / 1 (ghi từng luật) · **Phiên bản:** 1.0 · 2026-10-29 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Vì sao có tệp này:** RULE-LEDGER, RULE-POSTING, RULE-EVENT nói *Kernel phải đúng thế nào*. Tệp này nói *được sửa Kernel thế nào*: phân loại mức thay đổi, ai duyệt, phải chứng minh gì. Module cộng đồng không sửa Kernel (P2). Luật này áp cho nhóm Lõi.

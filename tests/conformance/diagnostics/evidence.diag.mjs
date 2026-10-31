@@ -1,3 +1,4 @@
+// [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 /**
  * Lane diagnostics — bằng chứng (bizcity_evidence@1, migration 0036): chuỗi băm audit_logs của từng đơn vị liền mạch.
  * Cùng mã EVIDENCE_CHAIN với kiểm trong app (apps/api/src/modules/system/diagnostics.ts) — SC-DIAG-1. CHỈ ĐỌC.

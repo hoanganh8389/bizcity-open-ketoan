@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Chỉ mục tệp của một gốc (repo hoặc thư mục module) + trợ giúp đọc / grep. Mỗi worker tự dựng một bản, có cache.
  * Đường dẫn trả ra luôn là tương đối, dấu '/'.

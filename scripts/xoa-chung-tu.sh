@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # =============================================================================
 # Xoá SẠCH chứng từ và sổ sách của MỘT đơn vị để kéo lại từ đầu — dùng cho cả sổ nội bộ lẫn sổ thuế.
 #

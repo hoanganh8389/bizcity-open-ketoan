@@ -1,9 +1,12 @@
 // @bizcity-layer K kernel/intake
+// [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
+// [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — mở activeLines / entryLine cho accounting.journal.post; công cụ ghi thứ ba ở voucher.actions.ts.
 /**
  * Công cụ GHI `accounting.*` cho trợ lý AI (bizcity_mcp@1 §5.2, CONG-BO-KIEN-TRUC §2.1; PHASE-009, PHASES 2.16). Chỉ ĐỀ XUẤT:
  * kết quả luôn chờ người có quyền duyệt ở ACC14 (STD-MCP-6) — không công cụ nào ghi thẳng sổ, duyệt, khoá kỳ hay xoá.
  *   accounting.document.create_draft — chứng từ theo bizcity_ledger_intake@1 (bán, mua, thu, chi…) → `pending` dù chế độ "Tự động"
  *   accounting.entry.reverse         — đề xuất huỷ chứng từ đã ghi → "Chờ huỷ", sổ giữ nguyên tới khi kế toán duyệt
+ *   accounting.journal.post          — phiếu nhập tay nháp chờ duyệt: modules/vouchers/voucher.actions.ts (S009-2)
  * Qua MCP: lần gọi đầu chạy thử (dryRun) → bản xem trước gồm BÚT TOÁN dựng thử bằng luật định khoản thật rồi huỷ (STD-MCP-4),
  * kèm confirm_token; người dùng đồng ý → gọi lại với token → runtime action ghi, bằng chứng actor_kind = ai (STD-MCP-9).
  * Không số tài khoản trong tham số: tài khoản do luật định khoản + cấu hình của đơn vị quyết.
@@ -20,7 +23,7 @@ const tags = ['Chứng từ (AI)'];
 /** Sự việc do Kernel tự lập: huỷ ở màn của chúng, không qua đề xuất huỷ. */
 const NOT_BY_REQUEST = ['closing', 'cogs', 'depreciation', 'opening'];
 
-const entryLine = z.object({
+export const entryLine = z.object({
   entryNo: z.string(),
   accountCode: z.string(),
   accountName: z.string(),
@@ -31,7 +34,7 @@ const entryLine = z.object({
 });
 
 /** Dòng bút toán còn hiệu lực của chứng từ (trong giao dịch đang mở — bản xem trước thấy cả bút toán dựng thử). */
-async function activeLines(trx: Db, tenantId: string, docKey: string): Promise<z.infer<typeof entryLine>[]> {
+export async function activeLines(trx: Db, tenantId: string, docKey: string): Promise<z.infer<typeof entryLine>[]> {
   const r = await sql<{ entry_no: string; account_code: string; account_name: string | null; debit: string; credit: string; partner_code: string | null; description: string }>`
     SELECT e.entry_no, l.account_code, a.name AS account_name, l.debit, l.credit, p.code AS partner_code, l.description
       FROM accounting_events d

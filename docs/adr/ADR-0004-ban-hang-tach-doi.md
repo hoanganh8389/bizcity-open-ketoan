@@ -1,4 +1,5 @@
 # ADR-0004 · Bán hàng tách đôi: dòng bán thuộc Kernel, báo cáo bán hàng là module
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 - Trạng thái: Chấp nhận
 - Ngày: 2026-10-29 · Người quyết: chủ dự án

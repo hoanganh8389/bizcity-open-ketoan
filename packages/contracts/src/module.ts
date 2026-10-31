@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * PHÂN HỆ (ứng dụng) của phần mềm — Kế toán, Quỹ, Mua hàng, Bán hàng, Kho, Tài sản, Thuế, Hệ thống…
  *

@@ -1,3 +1,4 @@
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Đồ thị phụ thuộc theo lớp (PHASES 1.4, TARGET-LAYOUT §2): nút = thư mục / tệp lõi của apps/api/src kèm lớp ở bảng
  * lib/layers.mjs; cạnh = import tương đối giữa hai nút. Cạnh ngược chiều lớp là nợ cần gỡ ở Phase 2–3 (SC-LAYER-2).

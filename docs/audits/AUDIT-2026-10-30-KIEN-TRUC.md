@@ -1,4 +1,5 @@
 # Đánh giá 2026-10-30: codebase đáp ứng bao nhiêu % kiến trúc công bố
+<!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
 
 > Theo yêu cầu của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu, code base đáp ứng bao nhiêu % so với kiến trúc".
 > Số đo chạy ngày 2026-10-30 trên nhánh `feat/phase-0-tiep`, CSDL `ketoan_test` (đủ migration 0001–0037): `node tests/conformance/selfcheck.mjs` với lane diagnostics.

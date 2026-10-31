@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bizcity.vn/contracts/bizcity_posting_template/1.0.0",
+  "$id": "https://bizcity.vn/contracts/bizcity_posting_template/1.1.0",
   "title": "bizcity_posting_template@1",
   "description": "Gói định khoản: lý do, nhóm hạch toán, tài khoản ngầm định, hình thức thanh toán, loại thuế, khoản mục, tình huống mẫu. Dữ liệu cấu hình, không chứa code. Xem BIZCITY-POSTING-TEMPLATE-v1.md.",
   "type": "object",
@@ -84,7 +84,8 @@
         "properties": {
           "code": { "$ref": "#/$defs/code" },
           "name": { "type": "string" },
-          "account": { "$ref": "#/$defs/account" }
+          "account": { "$ref": "#/$defs/account" },
+          "receivable": { "type": "boolean", "description": "Hình thức ghi công nợ (không có tiền vào): CONGNO, đối trừ" }
         },
         "additionalProperties": false
       }

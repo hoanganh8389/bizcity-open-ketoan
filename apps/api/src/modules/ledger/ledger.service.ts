@@ -1,4 +1,7 @@
 // @bizcity-layer K kernel/ledger
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 /**
  * Ghi sổ cái — cửa duy nhất để ghi vào ledger_entries / ledger_lines.
  *
@@ -126,6 +129,7 @@ export const ledgerService = {
       reverses_entry_id: entry.reversesEntryId ?? null,
       content_hash: entry.isReversal ? null : entryContentHash(entry),
       body_hash: entry.isReversal ? null : entryBodyHash(entry),
+      policy_version: entry.isReversal ? null : entry.policyVersion ?? null,
       created_by: actor,
     });
 

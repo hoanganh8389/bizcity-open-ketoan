@@ -1,3 +1,4 @@
+// [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
 /**
  * db/types.ts (kiểu Kysely) khớp migration: code biên dịch được nhờ types.ts, nhưng CSDL chỉ có những gì migration tạo.
  * Khai cột trong types.ts mà quên migration → typecheck xanh, chạy thật lỗi "column … does not exist" (0029, 0030 đã gặp).

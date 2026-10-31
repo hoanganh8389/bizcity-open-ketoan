@@ -15,7 +15,7 @@
   ],
   "data": { "schema": "mod_hop_dong_mini", "tables": ["contracts"], "reads": ["bizcity_read.partners"] },
   "actions": ["hop-dong-mini.contract.list", "hop-dong-mini.installment.record-payment"],
-  "ledger": { "submits": [{ "docType": "customer_payment", "contract": "bizcity_ledger_intake@1" }] },
+  "ledger": { "submits": [{ "docType": "customer_payment", "contract": "bizcity_ledger_intake@1", "reasons": { "kind": "receipt", "suggestedPacks": ["bizcity.vn-tt99.nen@^1"] } }] },
   "settings": ["bizcity.hop_dong_mini.remind_days"],
   "extensions": { "menu": [{ "key": "hop-dong-mini", "label": "Hợp đồng", "path": "/app/hop-dong-mini", "code": "HM01", "permission": "hop-dong-mini:read" }] }
 }

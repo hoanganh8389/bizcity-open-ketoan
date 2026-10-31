@@ -1,4 +1,6 @@
 // @bizcity-layer K kernel/config
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Chế độ ghi sổ theo loại chứng từ (tenants.settings.postingModes): ghi ngay hay chờ duyệt.
  * Xem APPROVABLE_DOC_TYPES, postingModesSchema ở @ketoan/contracts.

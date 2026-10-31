@@ -2,8 +2,7 @@
 /** Phân hệ KẾ TOÁN: chứng từ, sổ sách, công nợ, kết chuyển, báo cáo, kế hoạch tài chính — bật kèm các phân hệ nghiệp vụ khác (includes). */
 import type { ApiModule } from '../types.js';
 import { LEDGER } from '../loi.js';
-import { voucherRoutes } from '../../modules/vouchers/voucher.routes.js';
-import { closingRoutes } from '../../modules/closing/closing.routes.js';
+import { voucherRoutes, closingRoutes } from '../../kernel/public.js';
 import { debtConfirmationRoutes } from '../../modules/reports/debt-confirmation.js';
 import { dimensionReportRoutes } from '../../modules/reports/dimension-reports.js';
 import { planningRoutes } from './planning/planning.routes.js';

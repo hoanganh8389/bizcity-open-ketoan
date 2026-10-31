@@ -1,4 +1,6 @@
 # Port `core/channel-gateway` vào Core kế toán
+<!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
+<!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
 > **Quyết định:** dùng lại nguyên các **hợp đồng và luồng** của `bizcity-twin-ai/core/channel-gateway` (PHP, WordPress) để Core kế toán dùng khoá Cell cho trợ lý AI. Viết lại bằng TypeScript trong `adapters/cell` và `adapters/channel-gateway`. **Không** viết chuẩn mới.
 > **Đọc kèm:** [CELL-CONNECT.md](CELL-CONNECT.md), [../contracts/BIZCITY-MCP-v1.md](../contracts/BIZCITY-MCP-v1.md).

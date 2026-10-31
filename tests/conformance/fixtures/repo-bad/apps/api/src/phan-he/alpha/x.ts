@@ -2,9 +2,11 @@
 // Mỗi dòng dưới cài một vi phạm (xem ../../../../../../expect.json).
 import { y } from '../beta/y.js';                                   // SC-MOD-1: import phân hệ khác
 import { appendFile } from 'node:fs/promises';
+import { LEDGER_DIAGNOSTICS } from '../../modules/ledger/ledger.diagnostics.js'; // SC-KERNEL-6: vào thẳng bên trong Kernel
+import { postDocumentIn } from '../../kernel/public.js';                       // KHÔNG tính: cổng công khai của Kernel
 
 export async function routes(r: any, db: any, ledgerService: any, reply: any, z: any) {
-  r.get('/api/v1/alpha', { handler: async () => y });                // SC-API-3: không requirePermission
+  r.get('/api/v1/alpha', { handler: async () => [y, LEDGER_DIAGNOSTICS, postDocumentIn] });                // SC-API-3: không requirePermission
   r.post('/api/v1/alpha', { preHandler: requirePermission('documents:write'), handler: async () => 1 });
   r.post('/api/v1/alpha/me', { preHandler: requireUser(), handler: async () => 2 }); // KHÔNG tính: route tự phục vụ khai requireUser()
   await db.insertInto('ledger_lines').values({}).execute();          // SC-KERNEL-1, SC-MOD-2 (bảng nhân)

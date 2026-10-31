@@ -13,7 +13,10 @@
   "data": { "schema": "mod_khac", "tables": ["ledger_lines"] },
   "actions": ["khac.contract.list"],
   "events": { "subscribes": [{ "type": "bizcity.ledger.khong-co", "version": 1 }] },
-  "ledger": { "submits": [{ "docType": "revenue_recognition", "contract": "bizcity_ledger_intake@1" }] },
+  "ledger": { "submits": [
+    { "docType": "revenue_recognition", "contract": "bizcity_ledger_intake@1" },
+    { "docType": "customer_payment", "contract": "bizcity_ledger_intake@1", "reasons": { "kind": "payment", "default": "sale", "suggestedPacks": ["khong.co.goi@^1"] } }
+  ] },
   "settings": ["bizcity.khac.remind_days"],
   "extensions": { "slots": [{ "slot": "partner.sidebar", "component": "web/slots/X", "permission": "contracts:read" }] }
 }

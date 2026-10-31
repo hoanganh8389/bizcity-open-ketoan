@@ -1,4 +1,5 @@
 # `bizcity_data@1` — Data Contract
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 2/7)
 > **Luật nền:** [R-DB](../rules/RULE-DATABASE.md), [R-TEN](../rules/RULE-TENANT-SECURITY.md), [R-MD](../rules/RULE-MASTER-DATA.md) · **Năng lực:** `data.tenant-tx`, `data.read-views`, `data.migrations.module`, `masterdata.read`, `masterdata.write`

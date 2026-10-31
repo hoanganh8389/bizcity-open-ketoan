@@ -13,6 +13,13 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Gợi ý lý do định khoản** (PHASE-012 S012-4, PHASES 3.12): `GET /api/v1/posting/reasons/suggest` (công cụ MCP `accounting.posting.reason_suggest`, AI đọc được) xếp hạng lý do tất định từ từ khoá / ví dụ của gói, tên lý do, lịch sử của chính đơn vị; `GET /api/v1/posting/reasons/readiness`. Manifest module khai `ledger.submits[].reasons` (`bizcity_module` 1.1.0-draft), bộ kiểm SC-CON-2 kiểm.
+- **Gói định khoản nền** `db/packs/vn-tt99-nen.posting-pack.json` (S012-3b): cấu hình định khoản mặc định của đơn vị mới chuyển từ `seed.ts` sang gói; đơn vị mới nhận đúng dữ liệu như trước (đã so 49 dòng). `bizcity_posting_template` 1.1.0-draft: `paymentMethods[].receivable`.
+- **Gói định khoản cài / xem trước / gỡ** (PHASE-012 S012-3, PHASES 3.11, `bizcity_posting_template@1` §5): `GET /api/v1/posting/packs`, `POST /api/v1/posting/packs/install` (`?dryRun=1` xem trước từng mục thêm / ghi đè / giữ / xung đột), `POST /api/v1/posting/packs/uninstall`; quyền `settings:write`. Mục đang khác cấu hình của đơn vị được giữ, trừ khi chọn ghi đè. Cài / gỡ phát hành một bản chính sách kế toán (ADR-0009 Q-5) — chứng từ trước ngày hiệu lực vẫn định khoản theo bản cũ. Năng lực `templates.posting` → available.
+- **MCP `accounting.journal.post`** (PHASE-009 S009-2, Q009-1 a): trợ lý AI đề xuất phiếu kế toán / thu / chi **nháp** — sự việc `pending`, 0 bút toán, xem trước là bút toán dựng thử; người có quyền duyệt `POST /api/v1/vouchers/:id/approve` (action `accounting.journal.approve`, `ai: deny`) mới ghi qua eventStore. G2-04 đủ 3 công cụ ghi.
+- **Chữ ký kiến trúc và dấu thay đổi (R-SIG)**: [docs/rules/RULE-SIGNATURE.md](docs/rules/RULE-SIGNATURE.md), bộ kiểm SC-SIG-1 (mọi tệp framework có chữ ký Johnny Chu – Chu Hoàng Anh) và SC-SIG-2 (đúng khuôn, không tên agent), công cụ `scripts/ky-dau.mjs`, `.github/copilot-instructions.md`. Ký bù 694 dấu lên 333 tệp framework theo giờ commit thật của từng phase (biên bản `docs/audits/AUDIT-2026-10-30-CHU-KY.md`).
+- **Cô lập đơn vị ở tầng CSDL (RLS)** (PHASE-007, migration `0041`): mọi bảng có `tenant_id` (84 bảng) bật Row Level Security + FORCE + chính sách `tenant_isolation`; kết nối của một yêu cầu tự gắn đơn vị đã xác thực, nên một truy vấn quên lọc `tenant_id` cũng không đọc / ghi được dữ liệu đơn vị khác. Việc nền (migration, seed, dispatcher, đăng nhập) chạy như cũ. Tự chẩn đoán `TENANT_ISOLATION`. Migration chạy bằng kết nối riêng, không mượn pool của API.
+- **Chính sách kế toán có phiên bản và ngày hiệu lực** (PHASE-005, ADR-0009, migration `0040`): mỗi bút toán định khoản theo luật và mỗi dòng nhật ký định khoản ghi phiên bản chính sách đã dùng; lịch sử ở `GET /api/v1/posting/policy/versions`; đổi chế độ bằng `POST /api/v1/posting/policy/publish` (ngày hiệu lực, ghi chú, không vào kỳ đã khoá). Tự chẩn đoán `POLICY_VERSION`.
 - **Khôi phục tới một thời điểm (PITR)** (PHASE-008): `infrastructure/backup/docker-compose.pitr.yml` bật lưu WAL liên tục (chỉ cần PostgreSQL), `scripts/sao-luu-goc.sh` sao lưu gốc + dọn WAL cũ, `scripts/dien-tap-pitr.sh` diễn tập trên container tạm (khôi phục tới mốc T, kiểm sổ, đo RTO / RPO). Máy dev: RTO 8 giây, RPO ≤ 60 giây với 13.428 bút toán.
 - **Trợ lý AI lập chứng từ nháp và đề xuất huỷ qua MCP** (PHASE-009): `accounting.document.create_draft` (bán, mua, thu, chi… theo khuôn nạp sổ) và `accounting.entry.reverse`. Luôn xem trước bút toán rồi người dùng xác nhận; kết quả luôn chờ kế toán duyệt ở ACC14, kể cả khi loại chứng từ đặt chế độ "Tự động". AI không duyệt, không khoá kỳ, không đổi cấu hình.
 - **Sự kiện miền — transactional outbox** (PHASE-006, PHASES 3.4, migration `0039`): sự kiện ghi cùng giao dịch với dữ liệu, dispatcher trong tiến trình API giao ít nhất một lần, chống xử lý trùng, thử lại giãn nhịp, hết lượt → `dead` (tự chẩn đoán `EVENT_DEAD`), phát lại có bằng chứng (`POST /api/v1/system/events/replay`), xem tình trạng (`GET /api/v1/system/events`). Kernel phát `bizcity.ledger.entry.posted` / `.reversed`, `bizcity.period.locked` / `.unlocked`; đồng hồ `bizcity.clock.daily` / `.hourly`. Header `X-Correlation-Id` (mặc định mã yêu cầu) được ghi vào bằng chứng và sự kiện.
@@ -109,6 +116,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Cổng công khai của Kernel** (PHASE-010 W1): ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts`; 21 tệp đã chuyển; bộ kiểm SC-KERNEL-6 chặn import thẳng mới. Chuẩn bị tách gói `packages/kernel` mà không sửa nơi gọi.
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
   - `POST /api/v1/payment-requests` và `…/:id/pay` **bắt buộc** header `Idempotency-Key`. Giao diện tự gửi: bấm đúp "Ghi" / "Chi" không còn tạo yêu cầu hay phiếu chi trùng;
   - `…/:id/pay?dryRun=1` xem trước phiếu chi rồi huỷ;
@@ -133,6 +141,10 @@ Mỗi bản ghi đủ sáu mục:
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
 
 ### Thay đổi định khoản
+- **Định khoản theo chính sách của ngày hạch toán (mức K3, ADR-0009):** chứng từ (cả khi định khoản lại) dùng phiên bản cấu hình định khoản có hiệu lực ở ngày hạch toán của nó.
+  - Sửa cấu hình như trước vẫn có tác dụng ngay (hệ thống tự chụp bản bổ sung của chế độ đang áp).
+  - Chỉ khi **phát hành** chế độ mới kèm ngày hiệu lực thì chứng từ trước ngày đó mới tiếp tục theo chế độ cũ.
+  - Bản đầu = cấu hình đang dùng: sổ đã có không đổi (đã so 128 ô sổ cái trước / sau: trùng).
 - Luật định khoản, tài khoản, giá vốn: không đổi.
 - **Khoá kỳ (mức K2, RULE-KERNEL):** khoá kỳ bị chặn khi tự chẩn đoán L3 có lỗi trong kỳ (R-DIAG-4).
   - Không đổi bút toán đã ghi, không đổi khoá đã có.
@@ -140,7 +152,9 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Nâng cấp cần làm
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
-- Khuyên làm trên bản cài thật: đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` trong `.env` rồi `docker compose up -d` (DEPLOY D-9). Không đặt thì mọi thứ chạy như cũ.
+- Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.
+- Image API chép thêm `db/packs` (gói nền). Lần chạy job `db-migrate` đầu sau khi nâng cấp: đơn vị seed ghi nhận "đã cài gói nền" (mọi mục giữ nguyên, không đổi cấu hình). Triển khai tự dựng: nhớ chép thư mục `db/packs` (hoặc đặt `PACKS_DIR`).
+- **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
 - nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).
@@ -149,6 +163,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [0.1.0] - 2026-10-29
 
 ### Thêm
+- **Gợi ý lý do định khoản** (PHASE-012 S012-4, PHASES 3.12): `GET /api/v1/posting/reasons/suggest` (công cụ MCP `accounting.posting.reason_suggest`, AI đọc được) xếp hạng lý do tất định từ từ khoá / ví dụ của gói, tên lý do, lịch sử của chính đơn vị; `GET /api/v1/posting/reasons/readiness`. Manifest module khai `ledger.submits[].reasons` (`bizcity_module` 1.1.0-draft), bộ kiểm SC-CON-2 kiểm.
+- **Gói định khoản nền** `db/packs/vn-tt99-nen.posting-pack.json` (S012-3b): cấu hình định khoản mặc định của đơn vị mới chuyển từ `seed.ts` sang gói; đơn vị mới nhận đúng dữ liệu như trước (đã so 49 dòng). `bizcity_posting_template` 1.1.0-draft: `paymentMethods[].receivable`.
 - Mã nguồn đầu tiên đưa lên GitHub:
   - sổ cái chỉ thêm, một cửa nạp chứng từ, luật định khoản, báo cáo;
   - các phân hệ kế toán, quỹ, mua hàng, bán hàng, kho, tài sản, thuế;

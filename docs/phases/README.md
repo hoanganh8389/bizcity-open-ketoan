@@ -1,4 +1,12 @@
 # Thư mục phase
+<!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
+<!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-30 08:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — PITR: lưu WAL, sao lưu gốc, diễn tập khôi phục. -->
+<!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
+<!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
+<!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 
 Mỗi phase là **một gói việc** có thư mục riêng: kế hoạch, sự thật đọc mã, checklist con, bằng chứng. Phase gom các việc của hai danh sách đã có:
 - **Lộ trình** [PHASES.md](../standard/PHASES.md) / [roadmap.json](../standard/roadmap.json): mã `0.1`…`5.9`, trạng thái do máy tính.
@@ -20,12 +28,12 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [002 Audit, phân lớp](PHASE-002-AUDIT-PHAN-LOP/README.md) | 1 | 1.1–1.5 | — | có | 60% | 🟡 1.1, 1.3 cần người |
 | [003 Action, bằng chứng, MCP đọc](PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/README.md) | 2 | 2.2, 2.5, 2.6, 2.9–2.13 | G1-04, -07, -09, G2-01, -02, -07, -08 | có | 100% | ✅ |
 | [004 Một cửa ghi sổ](PHASE-004-MOT-CUA-GHI-SO/README.md) | 2 | 2.1 | — | có | 100% | ✅ 2026-10-30 |
-| [005 Chính sách có phiên bản](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md) | 2 | 2.14 | G2-09 | chưa | 0% | ⛔ ADR-0009 chờ duyệt |
+| [005 Chính sách có phiên bản](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/README.md) | 2 | 2.14 | G2-09 | có | 100% | ✅ 2026-10-30 (kế toán trưởng chưa ký ADR) |
 | [006 Outbox sự kiện](PHASE-006-OUTBOX-SU-KIEN/README.md) | 3 | 3.4 | G2-05 | có | 100% | ✅ 2026-10-30 |
-| [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | chưa | 0% | ☐ làm song song được |
+| [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | có | 67% | 🟡 RLS 84 bảng; ⛔ API chạy bằng `ketoan_app` |
 | [008 Sao lưu PITR](PHASE-008-SAO-LUU-PITR/README.md) | 2 | 2.15 | G1-08, G3-07 | có | 50% | 🟡 máy dev ĐẠT; ⛔ bật + diễn tập máy chủ thật |
 | [009 MCP ghi](PHASE-009-MCP-GHI/README.md) | 2 | 2.16 | G2-04 | có (2/3) | 100% | 🟡 `journal.post` ⛔ Q009-1 |
-| [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | chưa | 0% | ☐ sau 004 |
+| [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | một phần | 0% | 🟡 W1 cổng công khai có; W2 dời sang gói chờ tách Platform |
 | [011 Module SDK](PHASE-011-MODULE-SDK/README.md) | 3 | 3.1, 3.2, 3.3, 3.6, 3.10 | G1-06, G1-10, G2-03 | một phần | 10% | 🟡 |
 | [012 Gói định khoản, workflow](PHASE-012-GOI-DINH-KHOAN-WORKFLOW/README.md) | 3 | 3.5, 3.7, 3.11, 3.12 | — | một phần | 13% | 🟡 |
 | [013 ui-kit, chuyển module](PHASE-013-UI-KIT-CHUYEN-MODULE/README.md) | 3 | 3.8, 3.9 | — | một phần | 25% | 🟡 |

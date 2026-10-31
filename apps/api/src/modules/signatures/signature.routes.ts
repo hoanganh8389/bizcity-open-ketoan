@@ -1,4 +1,6 @@
 // @bizcity-layer P documents/signatures
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Ký xác nhận trên phiếu (KT-27).
  *   GET    /api/v1/documents/:id/signatures          các chữ ký của phiếu (kèm còn hiệu lực hay đã cũ)

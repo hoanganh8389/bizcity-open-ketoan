@@ -1,4 +1,6 @@
 // @bizcity-layer K kernel/subledgers/inventory
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Hàng vào / ra kho (inventory_movements): trải phẳng dòng hàng của chứng từ đang hiệu lực,
  * mỗi dòng một lần hàng vào hoặc ra một chi nhánh. Nguồn của nhập xuất tồn và giá vốn bình quân.

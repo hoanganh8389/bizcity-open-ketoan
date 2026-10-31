@@ -1,3 +1,4 @@
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * TỒN MAX → CHUYỂN HÀNG SHOP → ĐẶT MUA (docs/nghiep-vu/09-ton-max-dat-hang.md). Hàm thuần, dùng chung máy chủ + giao diện.
  *

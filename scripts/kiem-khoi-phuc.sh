@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc.
 # =============================================================================
 # KIỂM KHÔI PHỤC (R-BAK-3, docs/rules/RULE-INFRASTRUCTURE.md): bản sao lưu chỉ có giá trị khi khôi phục được và sổ còn đúng.
 # Khôi phục một bản vào CSDL TẠM (không đụng CSDL đang chạy), chạy lane diagnostics của bộ kiểm chuẩn trên bản đó

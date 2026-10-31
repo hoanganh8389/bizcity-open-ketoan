@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 /**
  * Chạy dev theo PHÂN HỆ (máy Windows / Mac / Linux, không cần cài thêm gói):
  *

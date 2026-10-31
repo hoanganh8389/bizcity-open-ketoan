@@ -1,3 +1,5 @@
+// [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — lộ trình máy đọc bám Phase, ma trận mảng × Phase.
+// [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
 /**
  * Tính lộ trình (`bizcity_roadmap@1`, docs/standard/roadmap.json) từ kết quả bộ kiểm: trạng thái từng việc, tiến độ Phase,
  * ma trận Phase × mảng, cảnh báo làm trái thứ tự. Không tự đánh dấu "xong" bằng tay — chỉ tín hiệu đo được (trừ việc tay có doneAt).

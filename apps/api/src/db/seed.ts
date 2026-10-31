@@ -1,10 +1,13 @@
 // @bizcity-layer K kernel/seeds
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-10-30 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cấu hình định khoản (thuế, lý do, nhóm hạch toán, hình thức TT, ngầm định) chuyển sang gói nền db/packs/vn-tt99-nen, cài bằng installPack baseline (S012-3b, Q012-1).
 /**
  * Dữ liệu khởi tạo cho một đơn vị mới.
  *
  * Tạo (nếu chưa có): đơn vị, 2 bộ sổ, người dùng quản trị, khoá API, hệ thống tài khoản
- * (db/seeds/tai-khoan.csv), loại thuế, lý do, nhóm hạch toán, hình thức thanh toán,
- * tài khoản ngầm định, một chi nhánh mẫu.
+ * (db/seeds/tai-khoan.csv), gói định khoản nền (db/packs/vn-tt99-nen.posting-pack.json: loại thuế, lý do,
+ * nhóm hạch toán, hình thức thanh toán, tài khoản ngầm định — ghi nhận ở config_packs), một chi nhánh mẫu.
  *
  * Chạy lại an toàn: chỉ thêm cái còn thiếu, không ghi đè cấu hình người dùng đã sửa.
  *
@@ -21,7 +24,11 @@ import { fileURLToPath } from 'node:url';
 import { db, closeDb } from './client.js';
 import { runMigrations } from './migrate.js';
 import { generateApiKey, hashApiKey, hashPassword } from '../core/security/password.js';
-import { SEEDS_DIR } from './paths.js';
+import { PACKS_DIR, SEEDS_DIR } from './paths.js';
+import { installPack, parsePack } from '../modules/posting-config/pack.js';
+
+/** Gói định khoản nền mọi đơn vị có (PHASE-012 S012-3b). */
+export const BASE_PACK_FILE = 'vn-tt99-nen.posting-pack.json';
 
 
 /** Đọc CSV đơn giản (có ô bọc nháy kép). */
@@ -51,74 +58,6 @@ function parseCsv(text: string): Record<string, string>[] {
 }
 
 const flag = (v: string | undefined) => v === '1';
-
-/** Loại thuế mặc định. report_group là nhóm trên bảng kê. */
-const TAX_CODES = [
-  { code: 'KCT', name: 'Không chịu thuế GTGT', rate: 0, direction: 'output', account_code: '33311', report_group: 'KCT' },
-  { code: 'R00', name: 'Thuế GTGT đầu ra 0%', rate: 0, direction: 'output', account_code: '33311', report_group: '0' },
-  { code: 'R05', name: 'Thuế GTGT đầu ra 5%', rate: 5, direction: 'output', account_code: '33311', report_group: '5' },
-  { code: 'R08', name: 'Thuế GTGT đầu ra 8%', rate: 8, direction: 'output', account_code: '33311', report_group: '8' },
-  { code: 'R10', name: 'Thuế GTGT đầu ra 10%', rate: 10, direction: 'output', account_code: '33311', report_group: '10' },
-  { code: 'V05', name: 'Thuế GTGT đầu vào 5%', rate: 5, direction: 'input', account_code: '1331', report_group: '5' },
-  { code: 'V08', name: 'Thuế GTGT đầu vào 8%', rate: 8, direction: 'input', account_code: '1331', report_group: '8' },
-  { code: 'V10', name: 'Thuế GTGT đầu vào 10%', rate: 10, direction: 'input', account_code: '1331', report_group: '10' },
-  { code: 'V13K', name: 'Thuế GTGT đầu vào 0% (không chịu VAT)', rate: 0, direction: 'input', account_code: '1331', report_group: 'KCT' },
-  { code: 'KKKN', name: 'HH, DV không phải kê khai, tính nộp VAT', rate: 0, direction: 'input', account_code: '1331', report_group: 'KKK' },
-];
-
-/** Lý do mặc định. flags.default = loại chứng từ dùng lý do này khi chứng từ không ghi lý do. */
-const REASONS = [
-  { code: 'XBA', name: 'Xuất bán hàng', kind: 'out', counter_account: '1311', revenue_account: null, expense_account: null, cashflow_code: '01', flags: { default: 'sale', giftCostToPromotion: false } },
-  { code: 'XTA1.4', name: 'Xuất tặng, thưởng khách hàng', kind: 'out', counter_account: '1311', revenue_account: null, expense_account: '64184', cashflow_code: null, flags: { costAtSalePrice: true } },
-  { code: 'NTH1', name: 'Nhập hàng bán bị trả lại', kind: 'in', counter_account: '1311', revenue_account: null, expense_account: null, cashflow_code: '01', flags: { default: 'sale_return' } },
-  { code: 'TTBHK', name: 'Thu tiền bán hàng', kind: 'receipt', counter_account: '1311', revenue_account: null, expense_account: null, cashflow_code: '01', flags: { default: 'receipt' } },
-  { code: 'NMH1', name: 'Nhập mua hàng', kind: 'in', counter_account: '3312', revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'purchase' } },
-  { code: 'XTR1', name: 'Xuất trả hàng nhà cung cấp', kind: 'out', counter_account: '3312', revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'purchase_return', returnAtOpeningCost: true } },
-  { code: 'XCKho', name: 'Xuất chuyển kho', kind: 'out', counter_account: null, revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'transfer' } },
-  { code: 'NDC', name: 'Nhập điều chỉnh tăng (kiểm kê thừa)', kind: 'in', counter_account: '3381', revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'stock_adjustment:increase' } },
-  { code: 'TDK', name: 'Tồn kho đầu kỳ', kind: 'in', counter_account: '999', revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'stock_adjustment:opening' } },
-  { code: 'XDC', name: 'Xuất điều chỉnh giảm (kiểm kê thiếu)', kind: 'out', counter_account: '1381', revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'stock_adjustment:decrease' } },
-  { code: 'CTIEN', name: 'Chuyển tiền giữa chi nhánh', kind: 'payment', counter_account: null, revenue_account: null, expense_account: null, cashflow_code: null, flags: { default: 'cash_transfer' } },
-  { code: 'TTKH', name: 'Thu tiền khách hàng', kind: 'receipt', counter_account: '1311', revenue_account: null, expense_account: null, cashflow_code: '01', flags: { default: 'customer_payment' } },
-  { code: 'TTNCC', name: 'Trả tiền nhà cung cấp', kind: 'payment', counter_account: '3312', revenue_account: null, expense_account: null, cashflow_code: '02', flags: { default: 'supplier_payment' } },
-  // Bán cho chi nhánh khác: doanh thu nội bộ, giá vốn ghi theo giá bán và không tính vào đơn giá bình quân.
-  { code: 'XCN', name: 'Xuất bán hàng chi nhánh khác', kind: 'out', counter_account: '13681', revenue_account: '51116', expense_account: '6326', cashflow_code: null, flags: { costAtSalePrice: true } },
-];
-
-const GROUPS = [
-  { code: 'HH-BANLE', name: 'Hàng hoá bán lẻ', inventory_account: '1561', cogs_account: '6321', revenue_account: '51111', discount_account: '52111', sales_return_account: '52131', is_default: true },
-];
-
-const PAYMENT_METHODS = [
-  { code: 'TM', name: 'Tiền mặt', account_code: '1111', is_receivable: false },
-  { code: 'CK', name: 'Chuyển khoản', account_code: '11210005', is_receivable: false },
-  { code: 'QR', name: 'Quét mã QR', account_code: '11210007', is_receivable: false },
-  { code: 'POS', name: 'Quẹt thẻ (POS)', account_code: '11210006', is_receivable: false },
-  { code: 'VOUCHER', name: 'Voucher', account_code: '13881', is_receivable: false },
-  { code: 'CONGNO', name: 'Ghi công nợ', account_code: '1311', is_receivable: true },
-  // Đối trừ: khách dùng khoản đã trả trước / tiền hàng trả lại để trả đơn → không có tiền vào, để nguyên trên công nợ.
-  { code: 'DOI_TRU', name: 'Đối trừ công nợ', account_code: '1311', is_receivable: true },
-];
-
-const DEFAULTS: Record<string, string> = {
-  receivable: '1311',
-  cash: '1111',
-  tax_output: '33311',
-  tax_input: '1331',
-  promotion_expense: '64184',
-  internal_receivable: '13681',
-  internal_payable: '33681',
-  internal_receivable_goods: '13681',
-  internal_payable_goods: '33681',
-  internal_cogs: '6326',
-  commission_debit: '6418',
-  commission_credit: '33881',
-  payable: '3312',
-  goods_in_transit: '1579',
-  stock_surplus: '3381',
-  stock_shortage: '1381',
-  cash_in_transit: '11319',
-};
 
 /** Nhóm đối tượng mặc định (giống migration 0022). */
 const PARTNER_GROUPS: [string, string, string, string?][] = [
@@ -228,26 +167,11 @@ export async function seed(): Promise<void> {
         .execute();
     }
 
-    for (const t of TAX_CODES) {
-      await trx.insertInto('tax_codes').values({ tenant_id: tid, ...t }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
-    }
-    for (const r of REASONS) {
-      await trx.insertInto('posting_reasons').values({ tenant_id: tid, ...r, flags: JSON.stringify(r.flags) }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
-    }
-    const hasDefaultGroup = await trx.selectFrom('product_posting_groups').select('id').where('tenant_id', '=', tid).where('is_default', '=', true).executeTakeFirst();
-    for (const g of GROUPS) {
-      await trx
-        .insertInto('product_posting_groups')
-        .values({ tenant_id: tid, ...g, is_default: g.is_default && !hasDefaultGroup })
-        .onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing())
-        .execute();
-    }
-    for (const m of PAYMENT_METHODS) {
-      await trx.insertInto('payment_methods').values({ tenant_id: tid, ...m }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
-    }
-    for (const [key, account_code] of Object.entries(DEFAULTS)) {
-      await trx.insertInto('posting_defaults').values({ tenant_id: tid, key, account_code }).onConflict((oc) => oc.columns(['tenant_id', 'key']).doNothing()).execute();
-    }
+    // Cấu hình định khoản: gói nền, chế độ baseline = chỉ thêm mục thiếu, không ghi đè cấu hình người dùng đã sửa.
+    const base = parsePack(JSON.parse(await readFile(path.join(PACKS_DIR, BASE_PACK_FILE), 'utf8')), BASE_PACK_FILE);
+    const installed = await installPack(trx, tid, base, { actor: 'seed', baseline: true });
+    const added = installed.items.filter((i) => i.action === 'add').length;
+    if (added) console.log(`+ Gói định khoản ${base.id}@${base.version}: thêm ${added} mục`);
 
     const accountCodes = new Set(accounts.map((a) => a.code));
     for (const c of ASSET_CATEGORIES) {

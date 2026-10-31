@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # =============================================================================
 # Tạo một bản cài phần mềm kế toán RIÊNG (vd. bản test cho trang quản trị test) từ bản cài đang chạy:
 # dùng chung code (cùng git), KHÁC dữ liệu (ổ Docker riêng theo tên dự án), cổng, khoá bí mật, tên miền.

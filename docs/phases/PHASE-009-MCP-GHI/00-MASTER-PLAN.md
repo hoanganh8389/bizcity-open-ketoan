@@ -1,9 +1,10 @@
 # PHASE-009 — MCP ghi: chỉ đề xuất, luôn chờ người duyệt
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
 
 > **Ký hiệu:** ☐ chưa làm · 🟡 có mã + test · ✅ có bằng chứng · ⛔ chờ chủ · ❌ huỷ.
 > Hợp đồng: [`bizcity_mcp@1`](../../contracts/BIZCITY-MCP-v1.md) STD-MCP-4, -6, -9; [Bản công bố §2.1](../../CONG-BO-KIEN-TRUC.md).
 
-<!-- [2026-10-30] Chủ: "tiếp tục" sau PHASE-006 (đề xuất làm 009 + soạn ADR cho 005) ⇒ code. -->
+<!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — Chủ: "tiếp tục" sau PHASE-006 (đề xuất làm 009 + soạn ADR cho 005) ⇒ code. -->
 
 ## 1. Thiết kế đã chọn (D009-*)
 
@@ -15,10 +16,14 @@
 | D009-4 | `accounting.entry.reverse` = `requestCancelIn(…, { hold: true })`: luôn vào "Chờ huỷ", không theo chế độ Tự động; bắt buộc lý do ≥ 5 ký tự; không áp cho kết chuyển / giá vốn / khấu hao / số dư đầu (huỷ ở màn của chúng); `destructiveHint` | huỷ là việc của kế toán; AI chỉ đề xuất |
 | D009-5 | Thêm `expose.destructive` vào ActionDef → `annotations.destructiveHint` | client MCP cảnh báo rõ trước khi xác nhận |
 | D009-6 | `zodToJson` hỗ trợ `ZodDiscriminatedUnion` (`oneOf`) | AI thấy đủ khuôn từng loại chứng từ trong `inputSchema` |
+<!-- [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — Q009-1 chốt phương án (a): phiếu nhập tay nháp chờ duyệt (D009-7…9). -->
+| D009-7 | Q009-1 → **(a)**. `accounting.journal.post` (`modules/vouchers/voucher.actions.ts`) nhận phiếu theo khuôn `POST /api/v1/vouchers` (phiếu kế toán, thu, chi, báo có, báo nợ) → `voucherService.draftIn`: sự việc `manual` **`pending`**, `posted_version` NULL, 0 bút toán, đã giữ số phiếu; chưa đối trừ công nợ, chưa đánh dấu chứng từ nguồn | tài khoản trên phiếu kế toán tay là việc của kế toán: AI chỉ **đề xuất**, người duyệt xem / sửa trước khi ghi |
+| D009-8 | Xem trước = ghi sổ thử trong giao dịch rồi huỷ (như D009-3); xác nhận vẫn dựng thử dòng sổ cái để nháp sai tài khoản / thiếu đối tượng bị chặn ngay, không nằm chờ | STD-MCP-4; hàng chờ không chứa phiếu không duyệt được |
+| D009-9 | Duyệt = action `accounting.journal.approve` (`POST /api/v1/vouchers/:id/approve`, `documents:write`, `mcp: false`, `ai: deny`, idempotency `natural`): ghi đúng nội dung đã lưu qua `eventStore` (`post` → `markPosted`); phiếu đã ghi → `approved: false`. Sửa nháp = `PUT /api/v1/vouchers/:id` (lưu là ghi sổ). Huỷ nháp = `documents/cancel` (không đảo gì). Trạm ACC14 không tự ghi nháp nhập tay, chỉ đường tới màn phiếu | STD-MCP-6: AI không tự duyệt; một cửa ghi (AP-1) |
 
 ## 2. Câu hỏi cần chủ chốt
 
 | # | Câu hỏi | Gợi ý |
 |---|---|---|
-| Q009-1 | `accounting.journal.post` (phiếu kế toán AI đề xuất): phiếu kế toán tay hiện **ghi sổ ngay** khi lập (`vouchers`), chưa có trạng thái nháp. Làm (a) thêm trạng thái "nháp chờ duyệt" cho phiếu tay (sự việc `pending`, người có quyền bấm duyệt mới ghi qua `eventStore`), hay (b) chỉ cho AI lập phiếu theo **lý do** (`reasonCode`, không số tài khoản) qua một `docType` khuôn nạp mới (vd `journal`) để luật định khoản quyết tài khoản? | (a) trước — phiếu kế toán tay có tài khoản là do kế toán quyết; AI đề xuất, người duyệt sửa được trước khi ghi. (b) cần gói định khoản có lý do cho từng nghiệp vụ (PHASE-012) |
+| Q009-1 ✅ (a), D009-7 | `accounting.journal.post` (phiếu kế toán AI đề xuất): phiếu kế toán tay hiện **ghi sổ ngay** khi lập (`vouchers`), chưa có trạng thái nháp. Làm (a) thêm trạng thái "nháp chờ duyệt" cho phiếu tay (sự việc `pending`, người có quyền bấm duyệt mới ghi qua `eventStore`), hay (b) chỉ cho AI lập phiếu theo **lý do** (`reasonCode`, không số tài khoản) qua một `docType` khuôn nạp mới (vd `journal`) để luật định khoản quyết tài khoản? | (a) trước — phiếu kế toán tay có tài khoản là do kế toán quyết; AI đề xuất, người duyệt sửa được trước khi ghi. (b) cần gói định khoản có lý do cho từng nghiệp vụ (PHASE-012) |
 | Q009-2 | Khoá `mcp_…` riêng có phạm vi (S009-5): làm cùng kết nối Cell bốn bước (PHASE-015) hay làm trước? | cùng PHASE-015 — dùng chung luồng cấp khoá |

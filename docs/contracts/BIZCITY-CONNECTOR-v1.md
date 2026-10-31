@@ -1,4 +1,5 @@
 # `bizcity_connector@1` — Cổng để lõi kéo sự việc từ plugin
+<!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > **Phiên bản:** 1.0.0 · 2026-10-28 · **Trạng thái:** Ổn định
 > **Nguồn sự thật:** `packages/contracts/src/connections.ts`, `modules/connections/*` · **Bản tường thuật cho đội WP:** [../cong-ket-noi.md](../cong-ket-noi.md)

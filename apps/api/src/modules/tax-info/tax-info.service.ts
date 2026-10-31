@@ -1,4 +1,6 @@
 // @bizcity-layer K kernel/tax
+// [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 /**
  * Bổ sung thông tin thuế (ACC78): liệt kê chứng từ mua bán và hoá đơn của chúng trong kỳ, chỉ ra chỗ còn thiếu
  * (chưa có hoá đơn, thiếu ký hiệu, thiếu hoặc sai dạng mã số thuế, hoá đơn từ 5 triệu chưa có chứng từ thanh toán
