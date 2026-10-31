@@ -7,6 +7,7 @@
 <!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 <!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 <!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
+<!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — thêm dòng phase giám sát vận hành, toàn vẹn sổ. -->
 
 Mỗi phase là **một gói việc** có thư mục riêng: kế hoạch, sự thật đọc mã, checklist con, bằng chứng. Phase gom các việc của hai danh sách đã có:
 - **Lộ trình** [PHASES.md](../standard/PHASES.md) / [roadmap.json](../standard/roadmap.json): mã `0.1`…`5.9`, trạng thái do máy tính.
@@ -41,6 +42,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [015 Cell, WordPress](PHASE-015-CELL-WORDPRESS/README.md) | 5 | 5.3, 5.3b, 5.4 | G1-12, G3-04 | chưa | 0% | ☐ cần Hub |
 | [016 Tải lớn, adapter](PHASE-016-TAI-LON-ADAPTER/README.md) | 5 | 5.5, 5.9 | G2-06, G3-03, -05, -08, -09 | chưa | 0% | ☐ khi đo được nhu cầu |
 | [017 Beta hệ sinh thái](PHASE-017-BETA-HE-SINH-THAI/README.md) | 5 | 5.1, 5.2, 5.6, 5.7, 5.8 | G3-01 | chưa | 0% | ☐ |
+| [018 Giám sát vận hành, toàn vẹn sổ](PHASE-018-GIAM-SAT-VAN-HANH/README.md) | mở rộng 2.13 (PHASE-003) | — (chờ Q018-1) | — | nền có | — | 🟡 W0 thiết kế + bản mẫu 2026-10-31 |
 
 Thứ tự và đường găng: [AUDIT §4](../audits/AUDIT-2026-10-30-KIEN-TRUC.md). Ba luật thứ tự của PHASES vẫn giữ:
 - 2.1 (PHASE-004) trước 2.3 (PHASE-010);

@@ -1,0 +1,327 @@
+<!doctype html>
+<!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bản mẫu dashboard giám sát đích (W0, S018-3): 6 màn, số liệu giả lập, ghi số đo nguồn từng panel. -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bizcity Giám sát</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;
+  --s1:#1f5fbf;--s2:#1a9e8f;--s3:#d9822b;--s4:#8e44ad;--s5:#c62828;--s6:#6b7280;
+  --accent:#0b5cad;--banner:#fff4d6;--banner-ink:#6b4a00;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;
+  --s1:#5b9cf0;--s2:#38c2b0;--s3:#f0a35b;--s4:#b07cd8;--s5:#ef5350;--s6:#9aa1ae;
+  --accent:#5b9cf0;--banner:#3a2f12;--banner-ink:#f3d58b;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;
+  --s1:#5b9cf0;--s2:#38c2b0;--s3:#f0a35b;--s4:#b07cd8;--s5:#ef5350;--s6:#9aa1ae;
+  --accent:#5b9cf0;--banner:#3a2f12;--banner-ink:#f3d58b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button,.btn{background:transparent;color:var(--ink);border:0;padding:6px 11px;font:inherit;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--soft);font-weight:600}
+.btn{border:1px solid var(--line);border-radius:8px}
+nav{display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:9px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.banner{background:var(--banner);color:var(--banner-ink);padding:7px 16px;font-size:12.5px}
+main{padding:16px;max-width:1400px;margin:0 auto}
+.lead{color:var(--muted);margin:0 0 14px}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));margin-bottom:12px}
+html,body{overflow-x:hidden}
+.cols{grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.card h3{margin:0 0 2px;font-size:13.5px;font-weight:600}
+.src{font:11.5px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);word-break:break-word}
+.kpi .v{font-size:26px;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.kpi .u{font-size:13px;font-weight:500;color:var(--muted);margin-left:3px}
+.kpi .d{font-size:12px;color:var(--muted)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.none{color:var(--none)}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid currentColor}
+.chart{width:100%;height:190px;display:block;margin-top:8px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.nodata{display:grid;place-items:center;height:150px;border:1px dashed var(--line);border-radius:8px;margin-top:8px;color:var(--none);text-align:center;font-size:13px}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+.ceo{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.ceo .card{padding:16px}
+.ceo .v{font-size:30px;font-weight:700;margin:8px 0 4px}
+.asof{font-size:12px;color:var(--muted)}
+.runbook{font-size:12px;color:var(--accent);text-decoration:none}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:18px 16px 28px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo" aria-hidden="true">BC</div><div>Bizcity Core · Giám sát vận hành<small>open-ketoan · PHASE-018 · bản mẫu dashboard đích</small></div></div>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="Khoảng thời gian" id="range">
+      <button data-r="1h">1 giờ</button><button data-r="24h" aria-pressed="true">24 giờ</button><button data-r="7d">7 ngày</button>
+    </div>
+    <button class="btn" id="theme" aria-label="Đổi sáng / tối">Sáng / tối</button>
+  </div>
+  <nav role="tablist" id="tabs">
+    <button role="tab" data-t="ops" aria-selected="true">01 Tổng quan Ops</button>
+    <button role="tab" data-t="kernel">04 Kernel kế toán</button>
+    <button role="tab" data-t="events">07 Đường sự kiện</button>
+    <button role="tab" data-t="integrity">09 Toàn vẹn sổ</button>
+    <button role="tab" data-t="tenants">08 Đa đơn vị</button>
+    <button role="tab" data-t="ceo">Widget CEO (W7)</button>
+  </nav>
+  <div class="banner"><b>BẢN MẪU</b> — mọi con số là <b>dữ liệu giả lập</b> để duyệt bố cục, không phải số đo thật. Số đo có dấu ✱ chưa có trong mã (đề xuất W1–W3, xem 20-KIEN-TRUC §2.2).</div>
+</header>
+
+<main>
+<!-- 01 Tổng quan Ops -->
+<section data-p="ops">
+  <p class="lead">Dịch vụ có khoẻ không? Dải KPI chuẩn cho mọi dashboard: trạng thái, tải, độ trễ, lỗi kỹ thuật, bão hoà, cảnh báo.</p>
+  <div class="grid kpis">
+    <div class="card kpi"><h3>API</h3><div class="v ok">ĐANG CHẠY</div><div class="src">up{job="api"}</div></div>
+    <div class="card kpi"><h3>Yêu cầu / giây</h3><div class="v" id="k-rps">—</div><div class="src">rate(bizcity_http_requests_total[5m])</div></div>
+    <div class="card kpi"><h3>p95 HTTP</h3><div class="v" id="k-p95">—</div><div class="src">bizcity_http_request_duration_seconds</div></div>
+    <div class="card kpi"><h3>Lỗi kỹ thuật (5xx)</h3><div class="v" id="k-5xx">—</div><div class="src">status=~"5.."</div></div>
+    <div class="card kpi"><h3>Pool CSDL đang dùng</h3><div class="v" id="k-pool">—</div><div class="src">bizcity_db_pool_connections / bizcity_db_pool_max ✱</div></div>
+    <div class="card kpi"><h3>Cảnh báo đang bắn</h3><div class="v warn">1</div><div class="d">0 critical · 1 warning</div><div class="src">ALERTS{alertstate="firing"}</div></div>
+  </div>
+  <div class="grid cols">
+    <div class="card"><h3>Yêu cầu theo nhóm trạng thái</h3><div class="src">sum by (status) (rate(bizcity_http_requests_total[5m]))</div><svg class="chart" id="c-req"></svg><div class="legend" id="l-req"></div></div>
+    <div class="card"><h3>Độ trễ HTTP p50 / p95 / p99</h3><div class="src">histogram_quantile(…, bizcity_http_request_duration_seconds_bucket)</div><svg class="chart" id="c-lat"></svg><div class="legend" id="l-lat"></div></div>
+    <div class="card"><h3>Kết nối pool CSDL</h3><div class="src">bizcity_db_pool_connections{state} · trần bizcity_db_pool_max ✱</div><svg class="chart" id="c-pool"></svg><div class="legend" id="l-pool"></div></div>
+    <div class="card"><h3>Cảnh báo gần đây</h3><div class="src">Alertmanager · link runbook docs/ops/RUNBOOK-CANH-BAO.md</div>
+      <table><thead><tr><th>Cảnh báo</th><th>Mức</th><th>Trạng thái</th><th>Từ</th><th></th></tr></thead><tbody>
+        <tr><td>OutboxBacklog ✱</td><td><span class="pill warn">warning</span></td><td>đang bắn</td><td>12 phút</td><td><a class="runbook" href="#">runbook</a></td></tr>
+        <tr><td>HighLatency</td><td><span class="pill warn">warning</span></td><td>đã hết</td><td>hôm qua 14:20</td><td><a class="runbook" href="#">runbook</a></td></tr>
+        <tr><td>ApiDown</td><td><span class="pill bad">critical</span></td><td>đã hết</td><td>3 ngày trước</td><td><a class="runbook" href="#">runbook</a></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- 04 Kernel kế toán -->
+<section data-p="kernel" hidden>
+  <p class="lead">Luồng ghi sổ có trễ / lỗi không? Tách <b>từ chối đúng luật</b> (kỳ khoá, không cân, thiếu cấu hình) khỏi <b>lỗi kỹ thuật</b> — chỉ lỗi kỹ thuật là sự cố.</p>
+  <div class="grid kpis">
+    <div class="card kpi"><h3>Lượt ghi sổ / phút</h3><div class="v" id="k-ppm">—</div><div class="src">bizcity_postings_total ✱</div></div>
+    <div class="card kpi"><h3>Từ chối nghiệp vụ</h3><div class="v" id="k-rej">—</div><div class="d">không phải sự cố</div><div class="src">result="rejected" ✱</div></div>
+    <div class="card kpi"><h3>Lỗi kỹ thuật ghi sổ</h3><div class="v ok">0</div><div class="d">trong khoảng đã chọn</div><div class="src">result="error" ✱</div></div>
+    <div class="card kpi"><h3>p95 ghi sổ</h3><div class="v" id="k-pp95">—</div><div class="src">bizcity_posting_duration_seconds ✱</div></div>
+    <div class="card kpi"><h3>Bút toán 24 giờ</h3><div class="v" id="k-e24">—</div><div class="src">bizcity_ledger_entries_last_24h</div></div>
+    <div class="card kpi"><h3>Sự việc chờ lâu nhất</h3><div class="v">4<span class="u">phút</span></div><div class="src">bizcity_ledger_events_oldest_pending_seconds</div></div>
+  </div>
+  <div class="grid cols">
+    <div class="card"><h3>Ghi sổ theo kết quả</h3><div class="src">sum by (result) (rate(bizcity_postings_total[5m])) ✱</div><svg class="chart" id="c-post"></svg><div class="legend" id="l-post"></div></div>
+    <div class="card"><h3>Từ chối theo mã lỗi</h3><div class="src">sum by (code) (increase(bizcity_posting_rejections_total[$range])) ✱</div><svg class="chart" id="c-rejc"></svg></div>
+    <div class="card"><h3>Thời gian ghi sổ p50 / p95 / p99</h3><div class="src">histogram_quantile(…, bizcity_posting_duration_seconds_bucket) ✱</div><svg class="chart" id="c-pdur"></svg><div class="legend" id="l-pdur"></div></div>
+    <div class="card"><h3>Lượt ghi theo loại chứng từ (top 8)</h3><div class="src">topk(8, sum by (doc_type) (increase(bizcity_postings_total[$range]))) ✱</div><svg class="chart" id="c-doc"></svg></div>
+  </div>
+</section>
+
+<!-- 07 Đường sự kiện -->
+<section data-p="events" hidden>
+  <p class="lead">Sự kiện miền trong outbox có dồn / chết không? Ghi sổ là đồng bộ (AP-2) — tồn đọng chỉ có ở sự việc <code>pending</code>/<code>error</code> và việc giao sự kiện.</p>
+  <div class="grid kpis">
+    <div class="card kpi"><h3>Việc giao đang chờ</h3><div class="v warn" id="k-obp">—</div><div class="src">bizcity_outbox_deliveries{status="pending"} ✱</div></div>
+    <div class="card kpi"><h3>Việc giao đã chết</h3><div class="v ok">0</div><div class="src">{status="dead"} ✱</div></div>
+    <div class="card kpi"><h3>Chờ lâu nhất</h3><div class="v warn">6<span class="u">phút</span></div><div class="d">ngưỡng OutboxBacklog 5 phút</div><div class="src">bizcity_outbox_oldest_pending_seconds ✱</div></div>
+    <div class="card kpi"><h3>Gửi lặp được trả lại</h3><div class="v" id="k-rep">—</div><div class="src">idempotency{result="replayed"} ✱</div></div>
+    <div class="card kpi"><h3>Xung đột khoá gửi lặp</h3><div class="v">2</div><div class="src">idempotency{result="conflict"} ✱</div></div>
+    <div class="card kpi"><h3>Sự việc lỗi</h3><div class="v ok">0</div><div class="src">bizcity_ledger_events{status="error"}</div></div>
+  </div>
+  <div class="grid cols">
+    <div class="card"><h3>Outbox chờ theo thời gian</h3><div class="src">bizcity_outbox_deliveries{status} ✱</div><svg class="chart" id="c-ob"></svg><div class="legend" id="l-ob"></div></div>
+    <div class="card"><h3>Sự việc kế toán theo trạng thái</h3><div class="src">bizcity_ledger_events{status}</div><svg class="chart" id="c-ev"></svg><div class="legend" id="l-ev"></div></div>
+    <div class="card"><h3>Lượt giao theo subscriber</h3><div class="src">sum by (subscriber, result) (increase(bizcity_outbox_attempts_total[$range])) ✱</div>
+      <table><thead><tr><th>Subscriber</th><th class="n">done</th><th class="n">retry</th><th class="n">dead</th></tr></thead><tbody id="t-sub"></tbody></table>
+      <p class="note">Tên subscriber là tập cố định do mã đăng ký (<code>app.ts:88</code>) — được làm nhãn.</p>
+    </div>
+    <div class="card"><h3>Gửi lặp (idempotency)</h3><div class="src">sum by (result) (rate(bizcity_idempotency_requests_total[5m])) ✱</div><svg class="chart" id="c-idem"></svg><div class="legend" id="l-idem"></div></div>
+  </div>
+</section>
+
+<!-- 09 Toàn vẹn sổ -->
+<section data-p="integrity" hidden>
+  <p class="lead">Sổ có toàn vẹn, đối soát được không? Chi tiết sai lệch nằm ở <code>diagnostic_runs</code> (có quyền); ở đây chỉ có mốc, số đếm, trạng thái.</p>
+  <div class="grid kpis">
+    <div class="card kpi"><h3>Đối soát L3 thành công gần nhất</h3><div class="v ok">3<span class="u">giờ trước</span></div><div class="d">ngưỡng ReconciliationStale 26 giờ</div><div class="src">bizcity_diagnostics_last_success_timestamp_seconds ✱</div></div>
+    <div class="card kpi"><h3>Đối soát L1 gần nhất</h3><div class="v none">Chưa thu</div><div class="d">không có dữ liệu ≠ 0 — kiểm bộ thu</div><div class="src">{layer="L1"} ✱</div></div>
+    <div class="card kpi"><h3>Kiểm mức error</h3><div class="v ok">0</div><div class="src">bizcity_diagnostics_errors</div></div>
+    <div class="card kpi"><h3>LedgerIntegrityError</h3><div class="v ok">Không bắn</div><div class="src">alerts.yml</div></div>
+    <div class="card kpi"><h3>Từ chối do kỳ khoá</h3><div class="v" id="k-pl">—</div><div class="src">rejections{code="PERIOD_LOCKED"} ✱</div></div>
+    <div class="card kpi"><h3>Từ chối không cân</h3><div class="v" id="k-ub">—</div><div class="d">trigger chặn trước commit</div><div class="src">{code="UNBALANCED_ENTRY"} ✱</div></div>
+  </div>
+  <div class="grid cols">
+    <div class="card"><h3>Kết quả kiểm lượt gần nhất</h3><div class="src">bizcity_diagnostics_checks{layer, result} ✱</div>
+      <table><thead><tr><th>Tầng</th><th class="n">ok</th><th class="n">warn</th><th class="n">error</th><th>Lượt</th></tr></thead><tbody>
+        <tr><td>L3 · sổ</td><td class="n">24</td><td class="n warn">1</td><td class="n ok">0</td><td>hôm nay 02:00</td></tr>
+        <tr><td>L1 · cài đặt</td><td class="n none">—</td><td class="n none">—</td><td class="n none">—</td><td class="none">chưa thu</td></tr>
+      </tbody></table>
+      <p class="note">Chi tiết từng kiểm (DG-*) xem ở <code>GET /api/v1/system/diagnostics</code> theo quyền đơn vị.</p>
+    </div>
+    <div class="card"><h3>Từ chối nghiệp vụ theo mã</h3><div class="src">sum by (code) (rate(bizcity_posting_rejections_total[15m])) ✱</div><svg class="chart" id="c-rejt"></svg><div class="legend" id="l-rejt"></div></div>
+    <div class="card"><h3>Mốc đối soát</h3><div class="src">bizcity_diagnostics_last_run_timestamp_seconds ✱</div><svg class="chart" id="c-diag"></svg><p class="note">Mỗi cột = một lượt tự chẩn đoán L3; đỏ = có kiểm mức error.</p></div>
+  </div>
+</section>
+
+<!-- 08 Đa đơn vị -->
+<section data-p="tenants" hidden>
+  <p class="lead">Sự cố nằm ở nhóm đơn vị nào? Prometheus <b>không</b> có nhãn đơn vị (R-OBS-4) — chỉ có số đơn vị theo dải tải. Xem từng đơn vị qua API có phân quyền (W7, Q018-6).</p>
+  <div class="grid kpis">
+    <div class="card kpi"><h3>Đơn vị hoạt động 24 giờ</h3><div class="v">412</div><div class="src">sum(bizcity_tenants{band!="idle"}) ✱</div></div>
+    <div class="card kpi"><h3>Đơn vị có tồn đọng &gt; 1 giờ</h3><div class="v warn">3</div><div class="src">bizcity_tenants_with_backlog ✱</div></div>
+    <div class="card kpi"><h3>Đơn vị không hoạt động</h3><div class="v">88</div><div class="src">bizcity_tenants{band="idle"} ✱</div></div>
+  </div>
+  <div class="grid cols">
+    <div class="card"><h3>Phân bố đơn vị theo dải tải</h3><div class="src">bizcity_tenants{band} ✱ — idle 0 · small 1–100 · medium 101–1000 · large &gt; 1000 sự việc / 24 giờ</div><svg class="chart" id="c-band"></svg></div>
+    <div class="card"><h3>Đơn vị theo dải qua thời gian</h3><div class="src">bizcity_tenants{band} ✱</div><svg class="chart" id="c-bandt"></svg><div class="legend" id="l-bandt"></div></div>
+  </div>
+  <p class="note">Không có bảng "top đơn vị" ở đây — danh sách đơn vị là dữ liệu có quyền, không đưa vào Grafana.</p>
+</section>
+
+<!-- Widget CEO -->
+<section data-p="ceo" hidden>
+  <p class="lead">Bốn chỉ số cho người quản trị trong app / Cell. Đọc qua API backend có phân quyền theo đơn vị — <b>không</b> nhúng Grafana, không phải báo cáo tài chính tức thời.</p>
+  <div class="grid ceo">
+    <div class="card"><h3>Tình trạng hệ thống</h3><div class="v ok">Bình thường</div><div class="asof">cập nhật 30 giây trước</div></div>
+    <div class="card"><h3>Chứng từ đang chờ</h3><div class="v">7</div><div class="asof">của đơn vị bạn · chờ lâu nhất 4 phút</div></div>
+    <div class="card"><h3>Đối soát gần nhất</h3><div class="v ok">Khớp</div><div class="asof">hôm nay 02:00 · 25 kiểm, 0 lỗi</div></div>
+    <div class="card"><h3>Sự cố cần xử lý</h3><div class="v warn">1</div><div class="asof">hàng chờ sự kiện chậm — đang xử lý</div></div>
+  </div>
+  <div class="grid cols" style="margin-top:12px">
+    <div class="card"><h3>Trạng thái dữ liệu cũ</h3><div class="v none" style="font-size:20px;margin:6px 0">Dữ liệu cũ hơn 5 phút</div><div class="asof">Widget hiện rõ khi nguồn không cập nhật, không hiện số cũ như số mới.</div></div>
+    <div class="card"><h3>Dev / Ops</h3><p class="note" style="margin-top:4px">Nút "Mở Grafana" chỉ hiện với vai trò vận hành, đi qua đăng nhập của Grafana — không truyền mật khẩu qua trình duyệt.</p><button class="btn" disabled>Mở Grafana (vai trò Ops)</button></div>
+  </div>
+  <p class="note">Nguồn đề xuất: <code>GET /api/v1/system/health/summary</code> (W7) trả <code>{ status, pendingDocs, lastReconciliation, openIncidents, asOf, stale }</code>.</p>
+</section>
+</main>
+
+<footer>© 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — Kiến trúc Bizcity Core Framework · open-ketoan · Mã nguồn GPL-2.0-or-later · Nhãn hiệu BizCity theo TRADEMARK.md · Bản mẫu PHASE-018, số liệu giả lập</footer>
+
+<script>
+(function(){
+  var RANGES={'1h':{n:60,label:'phút'},'24h':{n:96,label:'15 phút'},'7d':{n:84,label:'2 giờ'}};
+  var range='24h';
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function series(seed,base,amp,noise,n){var r=rng(seed),out=[];for(var i=0;i<n;i++){var w=Math.sin(i/n*Math.PI*2-1.2);out.push(Math.max(0,base+amp*w+(r()-.5)*noise));}return out;}
+  function fmt(v,d){return v.toLocaleString('vi-VN',{maximumFractionDigits:d==null?1:d});}
+
+  function line(id,list,opt){
+    var svg=document.getElementById(id);if(!svg)return;opt=opt||{};
+    var W=svg.clientWidth||600,H=svg.clientHeight||190,pl=44,pr=8,pt=8,pb=20;
+    var n=list[0].data.length,max=opt.max||0;
+    if(!opt.stack)list.forEach(function(s){s.data.forEach(function(v){if(v>max)max=v;});});
+    if(opt.stack){for(var i=0;i<n;i++){var t=0;list.forEach(function(s){t+=s.data[i];});if(t>max)max=t;}}
+    if(opt.threshold&&opt.threshold>max)max=opt.threshold;
+    max=max*1.12||1;
+    var x=function(i){return pl+(W-pl-pr)*i/(n-1);},y=function(v){return pt+(H-pt-pb)*(1-v/max);};
+    var g='';
+    for(var k=0;k<=4;k++){var yy=pt+(H-pt-pb)*k/4;g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+css('--line')+'"/>';
+      g+='<text x="'+(pl-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10.5" fill="'+css('--muted')+'">'+fmt(max*(1-k/4),opt.dp)+(opt.unit||'')+'</text>';}
+    var acc=new Array(n).fill(0);
+    list.forEach(function(s){
+      var pts=s.data.map(function(v,i){var base=opt.stack?acc[i]:0;return [x(i),y(base+v),y(base)];});
+      var col=css(s.color);
+      if(opt.stack){var top=pts.map(function(p){return p[0]+','+p[1];}).join(' ');var bot=pts.slice().reverse().map(function(p){return p[0]+','+p[2];}).join(' ');
+        g+='<polygon points="'+top+' '+bot+'" fill="'+col+'" fill-opacity=".55" stroke="'+col+'" stroke-width="1"/>';
+        s.data.forEach(function(v,i){acc[i]+=v;});}
+      else{g+='<polyline points="'+pts.map(function(p){return p[0]+','+p[1];}).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="1.8"/>';}
+    });
+    if(opt.threshold){var ty=y(opt.threshold);g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+ty+'" y2="'+ty+'" stroke="'+css('--bad')+'" stroke-dasharray="4 4"/><text x="'+(W-pr)+'" y="'+(ty-4)+'" text-anchor="end" font-size="10.5" fill="'+css('--bad')+'">'+opt.threshold+(opt.unit||'')+' ngưỡng</text>';}
+    g+='<text x="'+pl+'" y="'+(H-4)+'" font-size="10.5" fill="'+css('--muted')+'">'+(range==='1h'?'60 phút trước':range==='24h'?'24 giờ trước':'7 ngày trước')+'</text><text x="'+(W-pr)+'" y="'+(H-4)+'" text-anchor="end" font-size="10.5" fill="'+css('--muted')+'">bây giờ</text>';
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML=g;
+    if(opt.legend){document.getElementById(opt.legend).innerHTML=list.map(function(s){return '<span><i style="background:'+css(s.color)+'"></i>'+s.name+'</span>';}).join('');}
+  }
+  function bars(id,items,opt){
+    var svg=document.getElementById(id);if(!svg)return;opt=opt||{};
+    var W=svg.clientWidth||600,H=svg.clientHeight||190,pr=40,pt=6,pb=6,max=0,longest=0;
+    items.forEach(function(it){if(it[0].length>longest)longest=it[0].length;});
+    var pl=Math.min(W*0.45,longest*7.2+16);
+    items.forEach(function(it){if(it[1]>max)max=it[1];});max=max||1;
+    var bh=(H-pt-pb)/items.length,g='';
+    items.forEach(function(it,i){var w=(W-pl-pr)*it[1]/max,yy=pt+i*bh+bh*.18;
+      g+='<text x="'+(pl-8)+'" y="'+(yy+bh*.42)+'" text-anchor="end" font-size="11.5" fill="'+css('--ink')+'">'+it[0]+'</text>';
+      g+='<rect x="'+pl+'" y="'+yy+'" width="'+Math.max(w,1)+'" height="'+bh*.64+'" rx="3" fill="'+css(it[2]||'--s1')+'"/>';
+      g+='<text x="'+(pl+w+6)+'" y="'+(yy+bh*.42)+'" font-size="11.5" fill="'+css('--muted')+'">'+fmt(it[1],0)+'</text>';});
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML=g;
+  }
+  function cols(id,vals,bad){
+    var svg=document.getElementById(id);if(!svg)return;
+    var W=svg.clientWidth||600,H=svg.clientHeight||190,n=vals.length,bw=(W-20)/n,g='';
+    vals.forEach(function(v,i){var h=(H-30)*v;g+='<rect x="'+(10+i*bw+bw*.2)+'" y="'+(H-20-h)+'" width="'+bw*.6+'" height="'+h+'" rx="2" fill="'+css(bad.indexOf(i)>=0?'--bad':'--ok')+'"/>';});
+    g+='<text x="10" y="'+(H-4)+'" font-size="10.5" fill="'+css('--muted')+'">'+n+' lượt gần nhất</text>';
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.innerHTML=g;
+  }
+  function set(id,html){var el=document.getElementById(id);if(el)el.innerHTML=html;}
+
+  function render(){
+    var n=RANGES[range].n,m=range==='1h'?1:range==='24h'?24:168;
+    // Tổng quan
+    var s2=series(1,38,14,6,n),s4=series(2,2.4,.8,1.2,n),s5=series(3,.05,.04,.08,n);
+    line('c-req',[{name:'2xx',color:'--s2',data:s2},{name:'4xx',color:'--s3',data:s4},{name:'5xx',color:'--s5',data:s5}],{stack:true,unit:'/s',legend:'l-req'});
+    line('c-lat',[{name:'p50',color:'--s2',data:series(4,.045,.01,.01,n)},{name:'p95',color:'--s1',data:series(5,.21,.06,.05,n)},{name:'p99',color:'--s4',data:series(6,.55,.15,.18,n)}],{unit:'s',dp:2,threshold:1,legend:'l-lat'});
+    line('c-pool',[{name:'đang dùng',color:'--s1',data:series(7,3.2,1.6,1.4,n)},{name:'rảnh',color:'--s2',data:series(8,4,1,1,n)},{name:'chờ',color:'--s5',data:series(9,.05,.05,.1,n)}],{max:10,dp:0,threshold:8,legend:'l-pool'});
+    set('k-rps',fmt(41.6)+'<span class="u">req/s</span>');set('k-p95','0,21<span class="u">s</span>');set('k-5xx','<span class="ok">0,12</span><span class="u">%</span>');set('k-pool','34<span class="u">%</span>');
+    // Kernel
+    line('c-post',[{name:'đã ghi (posted)',color:'--s2',data:series(10,22,9,4,n)},{name:'từ chối nghiệp vụ (rejected)',color:'--s3',data:series(11,1.6,.6,.9,n)},{name:'lỗi kỹ thuật (error)',color:'--s5',data:new Array(n).fill(0)}],{stack:true,unit:'/ph',legend:'l-post'});
+    bars('c-rejc',[['PERIOD_LOCKED',38*m/24|0,'--s3'],['VALIDATION_ERROR',27*m/24|0,'--s3'],['POSTING_FAILED',9*m/24|0,'--s3'],['IDEMPOTENCY_CONFLICT',2,'--s3'],['UNBALANCED_ENTRY',1,'--s3']]);
+    line('c-pdur',[{name:'p50',color:'--s2',data:series(12,.06,.015,.01,n)},{name:'p95',color:'--s1',data:series(13,.18,.05,.04,n)},{name:'p99',color:'--s4',data:series(14,.42,.1,.12,n)}],{unit:'s',dp:2,legend:'l-pdur'});
+    bars('c-doc',[['sale',1840*m/24|0],['receipt',620*m/24|0],['purchase',410*m/24|0],['cogs',388*m/24|0],['customer_payment',205*m/24|0],['transfer',96*m/24|0],['bank_receipt',74*m/24|0],['manual',31*m/24|0]].map(function(x){x[2]='--s1';return x;}));
+    set('k-ppm',fmt(23.4)+'<span class="u">/ph</span>');set('k-rej','6,4<span class="u">%</span>');set('k-pp95','0,18<span class="u">s</span>');set('k-e24',fmt(31872,0));
+    // Sự kiện
+    var ob=series(15,9,4,4,n);
+    line('c-ob',[{name:'pending',color:'--s3',data:ob},{name:'dead',color:'--s5',data:new Array(n).fill(0)}],{dp:0,legend:'l-ob'});
+    line('c-ev',[{name:'pending',color:'--s3',data:series(16,6,4,3,n)},{name:'error',color:'--s5',data:new Array(n).fill(0)}],{dp:0,legend:'l-ev'});
+    line('c-idem',[{name:'mới (new)',color:'--s2',data:series(17,9,4,2,n)},{name:'trả lại (replayed)',color:'--s1',data:series(18,.6,.3,.4,n)},{name:'xung đột (conflict)',color:'--s5',data:series(19,.02,.01,.04,n)}],{unit:'/s',dp:1,legend:'l-idem'});
+    set('t-sub',[['retention',96*m/24|0,0,0],['catalog-notify',1240*m/24|0,14*m/24|0,0]].map(function(r){return '<tr><td>'+r[0]+'</td><td class="n">'+fmt(r[1],0)+'</td><td class="n warn">'+fmt(r[2],0)+'</td><td class="n ok">'+r[3]+'</td></tr>';}).join(''));
+    set('k-obp',String(Math.round(ob[n-1])));set('k-rep',fmt(52*m/24|0,0));
+    // Toàn vẹn
+    line('c-rejt',[{name:'PERIOD_LOCKED',color:'--s3',data:series(20,1.2,.6,.8,n)},{name:'VALIDATION_ERROR',color:'--s1',data:series(21,.9,.4,.6,n)},{name:'UNBALANCED_ENTRY',color:'--s5',data:series(22,.02,.01,.04,n)}],{unit:'/ph',dp:1,legend:'l-rejt'});
+    cols('c-diag',[.72,.7,.74,.71,.73,.75,.72,.7,.76,.74,.73,.95,.72,.71],[11]);
+    set('k-pl',fmt(38*m/24|0,0));set('k-ub','1');
+    // Đa đơn vị
+    bars('c-band',[['idle (0)',88,'--s6'],['small (1–100)',301,'--s2'],['medium (101–1000)',97,'--s1'],['large (> 1000)',14,'--s4']]);
+    line('c-bandt',[{name:'small',color:'--s2',data:series(23,300,8,6,n)},{name:'medium',color:'--s1',data:series(24,96,5,4,n)},{name:'large',color:'--s4',data:series(25,14,2,2,n)}],{stack:true,dp:0,legend:'l-bandt'});
+  }
+
+  document.getElementById('tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+    document.querySelectorAll('#tabs button').forEach(function(x){x.setAttribute('aria-selected',x===b?'true':'false');});
+    document.querySelectorAll('main section').forEach(function(s){s.hidden=s.getAttribute('data-p')!==b.getAttribute('data-t');});
+    try{localStorage.setItem('bc-mock-tab',b.getAttribute('data-t'));}catch(_){}
+    render();});
+  document.getElementById('range').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;range=b.getAttribute('data-r');
+    document.querySelectorAll('#range button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});render();});
+  document.getElementById('theme').addEventListener('click',function(){var r=document.documentElement,cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    r.setAttribute('data-theme',cur==='dark'?'light':'dark');render();});
+  window.addEventListener('resize',render);
+  var t=(location.hash||'').slice(1);
+  if(!t){try{t=localStorage.getItem('bc-mock-tab')||'';}catch(_){}}
+  var tb=t&&document.querySelector('#tabs button[data-t="'+t+'"]');if(tb)tb.click();
+  render();
+})();
+</script>
+</body>
+</html>
