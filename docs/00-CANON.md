@@ -9,6 +9,7 @@
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 <!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
+<!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm R-REV: rà soát việc của người đóng góp (phân vai, PR, biên bản, dữ liệu kế toán, mã hàng). -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
@@ -53,6 +54,7 @@
 | R-OUTBOX | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §2 | 0 | Sự kiện ghi cùng giao dịch với sổ; gửi sau commit, ít nhất một lần; consumer idempotent; NATS là adapter | SC-EVT-1 |
 | R-SIG | [rules/RULE-SIGNATURE.md](rules/RULE-SIGNATURE.md) | 0 | Tệp framework mang chữ ký kiến trúc Johnny Chu – Chu Hoàng Anh; mỗi lần sửa có chức năng thêm dấu theo phase; không xoá dấu cũ, không ghi tên agent | SC-SIG-1, SC-SIG-2 |
 | R-BAK | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §3 | 0 | Sao lưu hằng ngày, PITR, kiểm khôi phục hằng tuần trước khi tin bản sao lưu | `scripts/kiem-khoi-phuc.sh` |
+| R-REV | [rules/RULE-REVIEW.md](rules/RULE-REVIEW.md) | 0 | Người đóng góp làm phân hệ / giao diện qua PR; Nhóm Lõi rà soát mỗi lần nhận việc: kiến trúc, lỗi, rủi ro, dữ liệu kế toán, mã hàng; biên bản ở `docs/audits/REVIEW-*` | `scripts/ra-soat-dong-gop.mjs` |
 
 ## 4. Hợp đồng (contracts)
 

@@ -7,6 +7,7 @@
 // [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
+// [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → P documents (máy trạng thái khai báo documents.workflow).
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -39,6 +40,7 @@ export const LAYER_MAP = [
   ['core/audit.ts', 'P', 'audit'],
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/date-rules.ts', 'P', 'documents'],
+  ['core/workflow.ts', 'P', 'documents'],
   ['core/posting-modes.ts', 'K', 'kernel/config'],
   ['core/version.ts', 'P', 'cli'],
   ['db/client.ts', 'P+A', 'data'],

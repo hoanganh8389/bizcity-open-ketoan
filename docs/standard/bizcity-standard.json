@@ -6,7 +6,7 @@
   "contracts": {
     "bizcity_module": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
     "bizcity_data": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-DATA-v1.md" },
-    "bizcity_document": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
+    "bizcity_document": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
     "bizcity_action": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
     "bizcity_event": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EVENT-v1.md" },
     "bizcity_evidence": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EVIDENCE-v1.md" },
@@ -50,7 +50,7 @@
     { "id": "documents.links", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Tham chiếu giữa chứng từ (kể cả tới sự việc kế toán)." },
     { "id": "documents.attachments", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Đính kèm tệp chung (thay purchase_attachments riêng của Mua hàng)." },
     { "id": "documents.signatures", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Ký theo vai trên mọi chứng từ (document_signatures hiện chỉ gắn accounting_events)." },
-    { "id": "documents.workflow", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_document", "description": "Máy trạng thái khai báo, duyệt nhiều cấp theo ngưỡng." },
+    { "id": "documents.workflow", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_document", "description": "Máy trạng thái khai báo bằng tệp <loại>.workflow.yaml (apps/api/src/core/workflow.ts): trạng thái thuộc 5 nhóm chuẩn, chuyển có quyền (một quyền hoặc theo trạng thái nguồn), levels (duyệt nhiều cấp, số cấp theo ngưỡng cấu hình), sod, owner, requires: [reason], ledger. Yêu cầu thanh toán và chứng từ mua hàng chạy theo YAML. Chưa: chuyển by: event, quyền riêng của module (chờ registry quyền 3.3)." },
     { "id": "actions.runtime", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "defineAction(): quyền, zod, giao dịch, lỗi chuẩn, bằng chứng tự động, sinh HTTP + OpenAPI. Hiện ở apps/api/src/core/actions.ts (phân hệ dùng được; mẫu: quy.payment-request.*); module ngoài dùng qua @bizcity/module-sdk từ Phase 3." },
     { "id": "actions.idempotency", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "Header Idempotency-Key; gửi lại cùng khoá trả cùng kết quả (bảng action_requests, giữ 7 ngày); khác nội dung → IDEMPOTENCY_CONFLICT." },
     { "id": "actions.dry-run", "since": "1.0", "status": "available", "contract": "bizcity_action", "description": "?dryRun=1: chạy thật trong giao dịch rồi huỷ (kể cả ghi sổ, cấp số); action khai dryRun: true." },

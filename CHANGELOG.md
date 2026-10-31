@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Workflow khai báo** (PHASE-012 S012-1, PHASES 3.5, năng lực `documents.workflow`): luồng duyệt chứng từ khai bằng tệp `<loại>.workflow.yaml` (trạng thái thuộc 5 nhóm chuẩn, chuyển, quyền, duyệt nhiều cấp theo ngưỡng, tách nhiệm, chỉ người lập, bắt buộc lý do). Yêu cầu thanh toán và chứng từ mua hàng chạy theo YAML; hành vi, thông báo, đường dẫn giữ nguyên. `bizcity_document` 1.1.0-draft (§5.1).
 - **Gợi ý lý do định khoản** (PHASE-012 S012-4, PHASES 3.12): `GET /api/v1/posting/reasons/suggest` (công cụ MCP `accounting.posting.reason_suggest`, AI đọc được) xếp hạng lý do tất định từ từ khoá / ví dụ của gói, tên lý do, lịch sử của chính đơn vị; `GET /api/v1/posting/reasons/readiness`. Manifest module khai `ledger.submits[].reasons` (`bizcity_module` 1.1.0-draft), bộ kiểm SC-CON-2 kiểm.
 - **Gói định khoản nền** `db/packs/vn-tt99-nen.posting-pack.json` (S012-3b): cấu hình định khoản mặc định của đơn vị mới chuyển từ `seed.ts` sang gói; đơn vị mới nhận đúng dữ liệu như trước (đã so 49 dòng). `bizcity_posting_template` 1.1.0-draft: `paymentMethods[].receivable`.
 - **Gói định khoản cài / xem trước / gỡ** (PHASE-012 S012-3, PHASES 3.11, `bizcity_posting_template@1` §5): `GET /api/v1/posting/packs`, `POST /api/v1/posting/packs/install` (`?dryRun=1` xem trước từng mục thêm / ghi đè / giữ / xung đột), `POST /api/v1/posting/packs/uninstall`; quyền `settings:write`. Mục đang khác cấu hình của đơn vị được giữ, trừ khi chọn ghi đè. Cài / gỡ phát hành một bản chính sách kế toán (ADR-0009 Q-5) — chứng từ trước ngày hiệu lực vẫn định khoản theo bản cũ. Năng lực `templates.posting` → available.
@@ -151,6 +152,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.
 - Image API chép thêm `db/packs` (gói nền). Lần chạy job `db-migrate` đầu sau khi nâng cấp: đơn vị seed ghi nhận "đã cài gói nền" (mọi mục giữ nguyên, không đổi cấu hình). Triển khai tự dựng: nhớ chép thư mục `db/packs` (hoặc đặt `PACKS_DIR`).

@@ -19,6 +19,7 @@
 <!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 <!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 <!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
+<!-- [2026-10-31 03:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — PHASES 3.5 có: workflow khai báo, hai luồng chạy bằng YAML (S012-1). -->
 
 > Thay phần "Giai đoạn 0–3" của [../framework/05-LO-TRINH.md](../framework/05-LO-TRINH.md) (tệp đó giữ phần tư vấn và trỏ về đây). Mỗi việc cũ có mã (vd `1.1`) được ghi lại ở cột "Từ lộ trình cũ".
 > **Bản máy đọc:** [roadmap.json](roadmap.json) (`bizcity_roadmap@1`). Mỗi việc dưới đây có điều kiện "xong" là **tín hiệu đo được**: check SC- / DG- đạt, năng lực `available`, tệp có mặt, độ phủ CONF, hoặc việc tay có người và ngày xác nhận.
@@ -96,7 +97,7 @@
 | 3.2 | Manifest `bizcity.module.json` cho 9 phân hệ + 3 add-in; `ApiModule`/`WebModule`/`AddInManifest` sinh từ manifest; A-17 ghi `waivers` có hạn | CONF-MAN đạt (có waiver) | 2.4 |
 | 3.3 | Registry quyền mở: Kernel + module đăng ký; màn Phân quyền nhóm theo module | `permissions.module` available | mới |
 | 3.4 | `packages/events`: outbox, dispatcher, `event_consumptions`, retry, dead-letter, replay, đồng hồ; Kernel phát `bizcity.ledger.*`; thay `catalog-notify.ts` — **có** 2026-10-30 ([PHASE-006](../phases/PHASE-006-OUTBOX-SU-KIEN/README.md)): `apps/api/src/core/events.ts` (gói `packages/events` tách cùng 2.3) | CONF-RUN-10 đạt | 3.5 |
-| 3.5 | Workflow khai báo (`documents.workflow`); chuyển `payment_requests`, `purchase_documents` sang | 2 luồng chạy bằng YAML | mới |
+| 3.5 | Workflow khai báo (`documents.workflow`); chuyển `payment_requests`, `purchase_documents` sang — **có** 2026-10-31 ([PHASE-012](../phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/README.md) S012-1): `apps/api/src/core/workflow.ts` + `payment-request.workflow.yaml`, `purchase-document.workflow.yaml` | 2 luồng chạy bằng YAML | mới |
 | 3.6 | Settings registry chạy thật (`settings.get`) | khoá trong `tenants.settings` đều có trong registry | 2.3 |
 | 3.7 | `ledger.query`: API đọc sổ cho báo cáo; chuyển `modules/reports` thành `modules/ke-toan/reports` | báo cáo không còn SQL trên `ledger_*` ngoài Kernel | mới |
 | 3.8 | `@bizcity/ui-kit` từ `apps/web/src/components` + `layout` + `lib`; slot `partner.detail.tab`, `dashboard.widget`… | `apps/web/src/phan-he/*` chỉ import ui-kit | mới |

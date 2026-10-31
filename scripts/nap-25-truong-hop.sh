@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-30 04:56 PM Nguyễn Văn Thủy] R-SIG — ký bù (commit 392d97e, đóng góp): nạp 25 trường hợp mua hàng (db/seeds/mua-hang-25th) vào một đơn vị qua API, kiểm kết quả mong đợi.
 # =============================================================================
 # Nạp 25 trường hợp mua hàng (db/seeds/mua-hang-25th/kich-ban.json — chép từ Google Sheet 25 trường hợp) vào MỘT đơn vị:
 # khai chính sách, lập + duyệt phiếu qua đúng API của giao diện, theo thứ tự TH01 → TH25; xong thì kiểm từng số

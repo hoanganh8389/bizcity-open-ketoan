@@ -8,7 +8,8 @@
 
 | ID | Việc | Lộ trình / G | Code | Trạng thái |
 |---|---|---|---|---|
-| S012-1 | Workflow khai báo; chuyển `payment_requests`, `purchase_documents` | 3.5 | chưa | ☐ |
+<!-- [2026-10-31 03:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — Chủ "tiếp tục" ⇒ S012-1 workflow khai báo. -->
+| S012-1 | Workflow khai báo; chuyển `payment_requests`, `purchase_documents` | 3.5 | có | ✅ `core/workflow.ts` (`loadWorkflow` / `parseWorkflow`, `plan`, `allowed`, `statesIn`, `editable`); `payment-request.workflow.yaml` (7 trạng thái, `levels` 2 cấp, `reject` quyền theo trạng thái, `cancel` `owner`, `pay` `ledger`), `purchase-document.workflow.yaml` (4 trạng thái, 5 chuyển); hai phân hệ bỏ kiểm trạng thái viết tay. `test/workflow.test.ts` 8 ca (mọi tệp YAML đúng khuôn + nghĩa, khai sai bị từ chối, cấp duyệt, quyền theo trạng thái, lý do, sod, owner, thông báo chặn, mỗi chuyển có action / route); `payment-requests.test.ts` 4, `mua-hang*.test.ts` 107 giữ nguyên xanh |
 | S012-2 | `ledger.query`; báo cáo thành `modules/ke-toan/reports` | 3.7 | chưa | ☐ |
 <!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — Chủ "code tiếp các phase tiếp" ⇒ code S012-3 (cài / xem trước / gỡ); tách seed thành gói tách riêng S012-3b. -->
 | S012-3 | Bảng `config_packs`, xem trước / cài / gỡ | 3.11 | có | ✅ migration `0042`; `modules/posting-config/pack.ts` + `pack.actions.ts` (`core.template.list` / `.install` / `.uninstall`); `test/posting-pack.test.ts` 6 ca: xem trước không ghi gì; cài gói mẫu TT99 thương mại — mục khác cấu hình đơn vị GIỮ (STD-TPL-7), chọn ghi đè từng mục; chốt bản cũ rồi phát hành MỘT bản chính sách (ADR-0009 Q-5, STD-TPL-6); STD-TPL-2 / -3 / -9 chặn gói hỏng; gỡ chỉ ngừng dùng mã gói thêm mà chưa phát sinh (STD-TPL-8); AI không cài / gỡ |
@@ -22,4 +23,5 @@
 |---|---|---|
 | 2026-10-30 | Claude Code | Mở thư mục phase; trạng thái chụp từ bảng điểm (CSDL `ketoan_test`). |
 | 2026-10-30 22:20 | Claude Code | Chủ "code tiếp các phase tiếp" ⇒ S012-3 cài / xem trước / gỡ (D012-1…5). Năng lực `templates.posting` → available. S012-3b (seed thành gói nền) mở câu hỏi Q012-1. |
+| 2026-10-31 15:36 | Claude Code | Chủ "tiếp tục" ⇒ S012-1 (D012-10…12). Năng lực `documents.workflow` → available; `bizcity_document` 1.1.0-draft (§5.1 hiện trạng runtime). Phụ thuộc trực tiếp `yaml@2.9.1` (ISC, đã có sẵn qua `@fastify/swagger`). |
 | 2026-10-30 23:12 | Claude Code | Chủ "làm tiếp S012-4 và đồng ý đặt tệp gói ở db/packs/" ⇒ S012-3b (D012-6, -7) + S012-4 (D012-8, -9). Năng lực `posting.reason-suggest`, `ledger.reasons.declare` → available; 3.11, 3.12 ☑ trên bảng điểm. Hợp đồng `bizcity_module`, `bizcity_posting_template` → 1.1.0-draft (chỉ thêm trường tuỳ chọn). |

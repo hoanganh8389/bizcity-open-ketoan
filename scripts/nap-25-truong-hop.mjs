@@ -1,3 +1,4 @@
+// [2026-10-30 04:56 PM Nguyễn Văn Thủy] R-SIG — ký bù (commit 392d97e, đóng góp): trình nạp 25 trường hợp mua hàng theo thứ tự TH01 → TH25, ghi kết quả đối chiếu ra JSON.
 // =============================================================================
 // NẠP 25 TRƯỜNG HỢP MUA HÀNG (db/seeds/mua-hang-25th/kich-ban.json) vào sổ thật của MỘT đơn vị — làm qua đúng API của
 // giao diện (khai chính sách, lập phiếu, duyệt, tính thưởng…), theo thứ tự TH01 → TH25 như kế toán bấm tay; xong thì

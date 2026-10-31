@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [2026-10-30 04:56 PM Nguyễn Văn Thủy] R-SIG — ký bù (commit 392d97e, đóng góp): xoá sạch dữ liệu phân hệ mua hàng của một đơn vị trước khi nạp lại 25 trường hợp.
 # =============================================================================
 # Làm sạch dữ liệu phân hệ MUA HÀNG của một đơn vị — trước khi nạp lại 25 trường hợp (scripts/nap-25-truong-hop.sh).
 #
