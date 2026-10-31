@@ -9,6 +9,7 @@
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
 // [2026-10-31 08:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): kiểu khung nhìn chỉ đọc bizcity_read.ledger_* (migration 0043).
+// [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — data.read-views (PHASES 2.4): kiểu tám khung nhìn danh mục bizcity_read.* (migration 0044).
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1533,6 +1534,15 @@ export interface Database {
   'bizcity_read.ledger_entries': Omit<LedgerEntriesTable, 'content_hash' | 'body_hash'>;
   'bizcity_read.ledger_lines': LedgerLinesTable;
   'bizcity_read.ledger_balances_daily': LedgerBalancesDailyTable;
+  /** Danh mục chuẩn chỉ đọc (0044, data.read-views): module JOIN theo mã; không có thuộc tính hạch toán của Kernel. */
+  'bizcity_read.partners': Pick<PartnersTable, 'tenant_id' | 'code' | 'name' | 'short_name' | 'kind' | 'also_kinds' | 'customer_type' | 'is_prospect' | 'group_code' | 'tax_code' | 'company_name' | 'company_address' | 'address' | 'contact_name' | 'position' | 'phone' | 'mobile' | 'email' | 'website' | 'payment_term_days' | 'credit_limit' | 'manager_code' | 'branch_code' | 'is_active' | 'note' | 'created_at' | 'updated_at'>;
+  'bizcity_read.products': Pick<ProductsTable, 'tenant_id' | 'sku' | 'parent_sku' | 'name' | 'unit' | 'barcode' | 'group_code' | 'type_code' | 'brand_code' | 'industry_code' | 'tax_out_code' | 'tax_in_code' | 'is_active' | 'no_sale' | 'track_identifier' | 'description' | 'image_url' | 'weight_kg' | 'origin' | 'updated_at'>;
+  'bizcity_read.branches': Pick<BranchesTable, 'tenant_id' | 'code' | 'name' | 'level' | 'department_code' | 'address' | 'company_name' | 'tax_code' | 'phone' | 'is_active' | 'note' | 'created_at'> & { parent_code: string | null };
+  'bizcity_read.warehouses': Pick<WarehousesTable, 'tenant_id' | 'code' | 'name' | 'address' | 'is_active' | 'is_default' | 'is_promo' | 'note' | 'created_at' | 'updated_at'> & { branch_code: string };
+  'bizcity_read.unit_names': Pick<UnitNamesTable, 'tenant_id' | 'name' | 'is_active' | 'note'>;
+  'bizcity_read.tax_codes': Pick<TaxCodesTable, 'tenant_id' | 'code' | 'name' | 'rate' | 'direction' | 'report_group' | 'is_active'>;
+  'bizcity_read.payment_methods': Pick<PaymentMethodsTable, 'tenant_id' | 'code' | 'name' | 'is_receivable' | 'bank_account_code' | 'partner_code' | 'discount_rate' | 'sort_order' | 'is_active' | 'note'>;
+  'bizcity_read.dimensions': Pick<DimensionsTable, 'tenant_id' | 'kind' | 'code' | 'name' | 'parent_code' | 'is_active' | 'note'>;
   tax_invoices: TaxInvoicesTable;
   partner_groups: PartnerGroupsTable;
   item_classes: ItemClassesTable;

@@ -1,5 +1,6 @@
 # `bizcity_data@1` — Data Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — §8 bước 1: bizcity_read có view danh mục (0044), data.read-views available -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 2/7)
 > **Luật nền:** [R-DB](../rules/RULE-DATABASE.md), [R-TEN](../rules/RULE-TENANT-SECURITY.md), [R-MD](../rules/RULE-MASTER-DATA.md) · **Năng lực:** `data.tenant-tx`, `data.read-views`, `data.migrations.module`, `masterdata.read`, `masterdata.write`
@@ -101,6 +102,6 @@ Module không bao giờ thấy bảng `ledger_*`. Số liệu kế toán liên q
 
 ## 8. Chuyển dần
 
-1. Phase 2: `ctx.data.tx` đặt `SET LOCAL bizcity.tenant_id`; runner migration đọc `modules/*/migrations`; tạo schema `bizcity_read` với view danh mục.
+1. Phase 2: `ctx.data.tx` đặt `SET LOCAL bizcity.tenant_id`; runner migration đọc `modules/*/migrations`; tạo schema `bizcity_read` với view danh mục. — **có** 2026-10-31: gắn đơn vị + RLS (0041); `bizcity_read` có khung nhìn sổ cái (0043) và 8 khung nhìn danh mục (0044): `partners`, `products`, `branches`, `warehouses`, `unit_names`, `tax_codes`, `payment_methods`, `dimensions` — theo mã, chỉ đọc, không có thuộc tính hạch toán của Kernel. Manifest `data.reads` chỉ được trỏ khung nhìn có thật (SC-CON-2). Còn runner migration theo module.
 2. Phase 2: bảng **mới** của mọi module theo luật này ngay. Bảng cũ của phân hệ hiện có (`purchase_*`…) giữ ở `public`, ghi `waivers` STD-DATA-1/7 kèm ADR, chuyển dần.
 3. Phase 3: role CSDL theo module; bật RLS cho bảng danh mục chuẩn và Kernel (cần đo hiệu năng trước).

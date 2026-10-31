@@ -1,6 +1,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell.
 // [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-CON-2 kiểm ledger.submits[].reasons: loại lý do khớp docType, khoá mặc định, gói gợi ý có thật và có lý do mặc định.
+// [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — SC-CON-2 kiểm data.reads: mỗi khung nhìn bizcity_read.* phải có trong migration của Core (data.read-views, 0043 / 0044)
 /**
  * Hợp đồng: schema, manifest (CONF-MAN), JSON mẫu, bảng năng lực, mã luật, mã lỗi, cấu hình.
  * Mọi hợp đồng kiểm ở MỘT chỗ này — không viết test hợp đồng rải rác nơi khác.
@@ -20,6 +21,15 @@ function knownPacks(ctx) {
   const out = new Map();
   for (const f of ctx.core.files({ under: ['db/packs', 'docs/standard/examples'], match: /posting-pack\.json$/ })) {
     try { const p = ctx.core.json(f); if (p?.id) out.set(p.id, p); } catch { /* SC-TPL-1 báo JSON sai */ }
+  }
+  return out;
+}
+
+/** Khung nhìn bizcity_read.* Core đã tạo (CREATE VIEW trong db/migrations) — đích hợp lệ của manifest data.reads. */
+function knownReadViews(ctx) {
+  const out = new Set();
+  for (const f of ctx.core.files({ under: ['db/migrations'], match: /\.sql$/ })) {
+    for (const m of (ctx.core.read(f) ?? '').matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(bizcity_read\.[a-z][a-z0-9_]*)/gi)) out.add(m[1]);
   }
   return out;
 }
@@ -63,6 +73,7 @@ export const checks = [
       const findings = [];
       const metrics = { manifests: 0, capabilitiesRequired: 0, capabilitiesAvailable: 0, blockedBy: [] };
       let packs = null;
+      let views = null;
 
       for (const file of files) {
         if (!ctx.repo.exists(file)) {
@@ -110,6 +121,8 @@ export const checks = [
         for (const e of m.events?.subscribes ?? []) if (String(e.type).startsWith('bizcity.') && !coreEvents.has(e.type)) add(`sự kiện lõi "${e.type}" không có trong coreEvents`, `sub-unknown:${e.type}`);
         for (const s of m.settings ?? []) if (!String(s).startsWith(`bizcity.${under}.`)) add(`khoá cấu hình "${s}" phải dưới "bizcity.${under}." (R-MATRIX-3)`, `setting-prefix:${s}`);
         if (m.data?.schema && m.data.schema !== `mod_${under}`) add(`data.schema phải là "mod_${under}"`, 'data-schema');
+        // data.read-views: chỉ đọc được khung nhìn Core đã có (BIZCITY-DATA §3)
+        for (const r of m.data?.reads ?? []) if (!(views ??= knownReadViews(ctx)).has(r)) add(`data.reads "${r}" không có trong db/migrations của Core (khung nhìn bizcity_read.*)`, `read-view:${r}`);
         // CONF-MAN-6: sổ cái
         const submits = new Set((m.ledger?.submits ?? []).map((s) => s.docType));
         for (const s of submits) if (!docTypes.has(s)) add(`docType "${s}" không có trong bizcity_ledger_intake@1`, `doctype-unknown:${s}`);

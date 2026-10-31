@@ -17,6 +17,9 @@
 | D007-5 | `DB_SET_ROLE` (test / CI): pool chuyển sang `ketoan_app` sau khi kết nối (`set_config('role', $1, false)`) | superuser luôn vượt RLS — không có cách này thì test không kiểm được RLS thật mà không phải bật đăng nhập cho vai trò trong cluster |
 | D007-6 | `runMigrations` dùng kết nối riêng (`pg.Client`), không mượn pool của API | kết nối trong pool có thể đã đổi vai trò / gắn đơn vị; migration cần quyền DDL và thấy đủ mọi đơn vị |
 
+| D007-7 | View danh mục `bizcity_read.*` (0044) cùng khuôn sổ cái (0043): `security_invoker` (RLS bảng gốc vẫn áp), trigger `INSTEAD OF` chặn ghi, cột tường minh. Theo **mã** (kho → `branch_code`, chi nhánh → `parent_code`), không `id`. Không đưa thuộc tính hạch toán của Kernel (nhóm hạch toán, tài khoản kho / thuế / phương thức thanh toán, nhóm giá vốn) và dữ liệu cá nhân không cần cho nghiệp vụ chung (tài khoản ngân hàng, ngày sinh, giới tính); liên hệ có, chú thích PII | BIZCITY-DATA §3, STD-DATA-6, STD-DATA-10; AGENTS câu 4 |
+<!-- [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — D007-7: khung nhìn danh mục bizcity_read (0044) -->
+
 ## 2. Số đo hiệu năng (S007-3)
 
 Bảng thử 1 triệu dòng, một đơn vị 600.000 dòng, đúng chính sách của 0041, PostgreSQL 16 (máy dev), trung vị 5 lần `EXPLAIN ANALYZE`:
