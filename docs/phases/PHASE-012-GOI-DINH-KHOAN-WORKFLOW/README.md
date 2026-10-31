@@ -4,7 +4,8 @@
 <!-- [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cài / xem trước / gỡ gói định khoản có (S012-3). -->
 <!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói nền db/packs + gợi ý lý do có (S012-3b, S012-4). -->
 <!-- [2026-10-31 08:26 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query có (S012-2, PHASES 3.7): đủ 4 việc lộ trình. -->
-> **Trạng thái:** 🟡 gói định khoản cài / xem trước / gỡ, gói nền `db/packs`, gợi ý lý do **có** (2026-10-30, S012-3, -3b, -4); workflow khai báo **có** (2026-10-31, S012-1); `ledger.query` **có** (2026-10-31, S012-2) — đủ 4 việc lộ trình; chuyển thư mục báo cáo dời sang 3.9 (Q012-2)
+<!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — Q012-2 ✅: báo cáo về phan-he/ke-toan/reports, callAction / ctx.actions.call -->
+> **Trạng thái:** 🟡 gói định khoản cài / xem trước / gỡ, gói nền `db/packs`, gợi ý lý do **có** (2026-10-30, S012-3, -3b, -4); workflow khai báo **có** (2026-10-31, S012-1); `ledger.query` **có** (2026-10-31, S012-2) — đủ 4 việc lộ trình; báo cáo đã về `phan-he/ke-toan/reports` (Q012-2 ✅, 2026-10-31)
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 13%
 > **Mục tiêu:** Kế toán sở hữu cấu hình dưới dạng gói cài / gỡ được; báo cáo đọc sổ qua API; luồng duyệt chứng từ khai báo thay vì viết tay.
 > **Việc lộ trình:** 3.5, 3.7, 3.11, 3.12

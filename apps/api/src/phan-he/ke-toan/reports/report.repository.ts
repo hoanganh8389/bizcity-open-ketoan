@@ -6,8 +6,8 @@
  * khung nhìn chỉ đọc của Kernel (ledger.query, migration 0043), không đọc thẳng bảng ledger_* (SC-KERNEL-7).
  */
 import { sql } from 'kysely';
-import type { Db } from '../../db/client.js';
-import { otherSide } from '../../kernel/public.js';
+import type { Db } from '../../../db/client.js';
+import { otherSide } from '../../../kernel/public.js';
 
 export interface BalanceRow {
   account_code: string;

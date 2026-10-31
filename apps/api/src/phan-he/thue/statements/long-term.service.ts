@@ -1,9 +1,10 @@
 // @bizcity-layer D modules/thue
 // [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bảng ngắn / dài hạn B01 lấy qua action accounting.report.term-rules (callAction), không import báo cáo của ke-toan (SC-MOD-1)
 /**
  * Phân loại dài hạn: phần số dư phải thu, phải trả, vay… có thời hạn còn lại trên 12 tháng tại ngày lập
  * Báo cáo tình hình tài chính. Kế toán khai theo (ngày, tài khoản, đối tượng); báo cáo chuyển số này
- * từ chỉ tiêu ngắn hạn sang chỉ tiêu dài hạn tương ứng (xem TERM_MAP ở balance-sheet.ts).
+ * từ chỉ tiêu ngắn hạn sang chỉ tiêu dài hạn tương ứng (bảng nhóm tài khoản: action accounting.report.term-rules của ke-toan).
  * Lưu kiểu "thay cả danh sách của một ngày": gửi lại toàn bộ dòng của ngày đó.
  */
 import { fromCents, toCents } from '@ketoan/contracts';
@@ -12,15 +13,21 @@ import { db, toNumber } from '../../../db/client.js';
 import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import type { AuthContext } from '../../../core/auth.js';
-import { TERM_MAP, termRuleFor } from '../../../modules/reports/balance-sheet.js';
+import { callAction } from '../../../core/actions.js';
+
+export interface TermRule { prefix: string; label: string; asset: [string, string] | null; liability: [string, string] | null }
+const termRules = (auth: AuthContext) => callAction<TermRule[]>('accounting.report.term-rules', {}, auth);
+/** Nhóm của một tài khoản: khớp đầu số dài nhất (như balance-sheet.ts của ke-toan). */
+const ruleFor = (rules: TermRule[], account: string) => rules.filter((r) => account.startsWith(r.prefix)).sort((a, b) => b.prefix.length - a.prefix.length)[0];
 
 export interface LongTermLine { accountCode: string; partnerCode?: string | null; amount: number; note?: string }
 
 export const longTermService = {
-  rules: () => TERM_MAP.map((r) => ({ prefix: r.prefix, label: r.label, asset: r.asset ?? null, liability: r.liability ?? null })),
+  rules: (auth: AuthContext) => termRules(auth),
 
   /** Dòng đã khai tại một ngày, kèm số dư thực tế của tài khoản / đối tượng tại ngày đó để đối chiếu. */
   async list(auth: AuthContext, q: { asOf: string }) {
+    const rules = await termRules(auth);
     const res = await sql<{ account_code: string; partner_code: string | null; partner_name: string | null; amount: string; note: string; account_name: string | null; balance: string }>`
       SELECT l.account_code, p.code AS partner_code, p.name AS partner_name, l.amount, l.note, ac.name AS account_name,
              COALESCE((SELECT SUM(g.debit - g.credit) FROM bizcity_read.ledger_balances_daily g
@@ -37,7 +44,7 @@ export const longTermService = {
     return {
       asOf: q.asOf,
       rows: res.rows.map((r) => {
-        const rule = termRuleFor(r.account_code);
+        const rule = ruleFor(rules, r.account_code);
         const net = toNumber(r.balance);
         return {
           accountCode: r.account_code, accountName: r.account_name ?? '', partnerCode: r.partner_code, partnerName: r.partner_name, amount: toNumber(r.amount), note: r.note,
@@ -49,6 +56,7 @@ export const longTermService = {
   },
 
   async save(auth: AuthContext, q: { asOf: string; lines: LongTermLine[] }) {
+    const rules = await termRules(auth);
     return db.transaction().execute(async (trx) => {
       const problems: string[] = [];
       const partnerCodes = [...new Set(q.lines.map((l) => l.partnerCode).filter((c): c is string => Boolean(c)))];
@@ -57,7 +65,7 @@ export const longTermService = {
       const seen = new Set<string>();
       const rows = q.lines.map((l, i) => {
         const n = i + 1;
-        if (!termRuleFor(l.accountCode)) problems.push(`Dòng ${n}: tài khoản ${l.accountCode} không thuộc nhóm có phần dài hạn trên B01`);
+        if (!ruleFor(rules, l.accountCode)) problems.push(`Dòng ${n}: tài khoản ${l.accountCode} không thuộc nhóm có phần dài hạn trên B01`);
         if (l.accountCode.startsWith('34112')) problems.push(`Dòng ${n}: 34112 (vay dài hạn) đã tự lên chỉ tiêu dài hạn, không cần khai`);
         if (l.partnerCode && !pmap.has(l.partnerCode)) problems.push(`Dòng ${n}: đối tượng ${l.partnerCode} không có trong danh mục`);
         if (!(l.amount > 0)) problems.push(`Dòng ${n}: số tiền dài hạn phải lớn hơn 0`);

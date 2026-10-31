@@ -101,7 +101,7 @@
       "done": [{ "capability": "documents.workflow" }] },
     { "id": "3.6", "phase": "3", "title": "Settings registry chạy thật", "areas": ["module"],
       "done": [{ "capability": "settings.registry" }, { "check": "DG-SET-1" }] },
-    { "id": "3.7", "phase": "3", "title": "ledger.query: báo cáo đọc sổ qua Kernel (chuyển thư mục cùng 3.9)", "areas": ["kernel", "module"],
+    { "id": "3.7", "phase": "3", "title": "ledger.query: báo cáo đọc sổ qua Kernel; báo cáo về phan-he/ke-toan/reports", "areas": ["kernel", "module"],
       "done": [{ "capability": "ledger.query" }, { "check": "SC-KERNEL-7" }] },
     { "id": "3.8", "phase": "3", "title": "@bizcity/ui-kit + slot", "areas": ["module"],
       "done": [{ "capability": "ui.kit" }, { "capability": "ui.slots" }] },

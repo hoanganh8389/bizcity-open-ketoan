@@ -13,9 +13,9 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { sql } from 'kysely';
 import { fromCents, toCents } from '@ketoan/contracts';
-import { db, toNumber } from '../../db/client.js';
-import { authOf, requirePermission } from '../../core/auth.js';
-import { ok } from '../../core/http.js';
+import { db, toNumber } from '../../../db/client.js';
+import { authOf, requirePermission } from '../../../core/auth.js';
+import { ok } from '../../../core/http.js';
 import { resolveScope } from './report.service.js';
 
 const tags = ['Báo cáo'];

@@ -513,7 +513,7 @@ const TERMS: { term: string; plain: string; dev: string; tables: string[]; code:
   { term: 'Hạch toán (ghi sổ)', plain: 'Hành động ghi bút toán vào sổ', dev: 'INSERT vào log (ledgerService.post)', tables: ['ledger_entries', 'ledger_lines'], code: 'ledger.service.ts' },
   { term: 'Tài khoản đối ứng', plain: 'Tài khoản ở phía bên kia của cùng một cặp Nợ / Có', dev: 'Hai dòng cùng pair_no', tables: ['ledger_lines'], code: 'cột pair_no' },
   { term: 'Sổ nhật ký chung', plain: 'Mọi bút toán xếp theo thời gian', dev: 'Log sắp theo posting_date', tables: ['ledger_lines'], code: 'reports/journals.ts' },
-  { term: 'Sổ cái (một tài khoản)', plain: 'Mọi dòng của một hộp', dev: 'Log lọc theo account_code', tables: ['ledger_lines'], code: 'modules/reports' },
+  { term: 'Sổ cái (một tài khoản)', plain: 'Mọi dòng của một hộp', dev: 'Log lọc theo account_code', tables: ['ledger_lines'], code: 'phan-he/ke-toan/reports' },
   { term: 'Phát sinh, số dư', plain: 'Trong kỳ tăng / giảm bao nhiêu; trong hộp đang có bao nhiêu', dev: 'SUM theo khoảng thời gian / SUM tới một ngày', tables: ['ledger_balances_daily'], code: 'report.repository.ts' },
   { term: 'Ghi số âm', plain: 'Sửa sai: ghi lại bút toán cũ với số âm, rồi ghi bút toán đúng', dev: 'git revert', tables: ['ledger_entries', 'ledger_links'], code: 'ledger.service.ts → reverse' },
   { term: 'Liên kết bút toán', plain: 'Bút toán đảo, bút toán trả hàng… trỏ về bút toán gốc để truy vết', dev: 'Bảng cạnh (edge table) chỉ thêm: entry_id → target_entry_id, kèm loại liên kết', tables: ['ledger_links'], code: 'ledger.repository.ts → addLink, linksOf' },

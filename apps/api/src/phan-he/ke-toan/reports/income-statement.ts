@@ -18,7 +18,7 @@
  */
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
-import { db, toNumber, type Db } from '../../db/client.js';
+import { db, toNumber, type Db } from '../../../db/client.js';
 
 interface LineDef {
   code: string;

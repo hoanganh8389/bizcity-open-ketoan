@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Gọi action của module khác** (năng lực `actions.call`, PHASE-012 D012-16): `ctx.actions.call(id, input)` trong action, `callAction(id, input, auth)` cho service cũ — chỉ action đọc, quyền của người gọi, mã chưa đăng ký → `NOT_FOUND`. Action mới `accounting.report.income-statement` (B02, công cụ MCP `accounting.report.income_statement`) và `accounting.report.term-rules` (nhóm tài khoản ngắn / dài hạn B01).
 - **Đọc sổ qua Kernel** (PHASE-012 S012-2, PHASES 3.7, năng lực `ledger.query`): schema `bizcity_read` với ba khung nhìn chỉ đọc `ledger_entries`, `ledger_lines`, `ledger_balances_daily` (migration 0043; RLS bảng gốc vẫn áp, ghi qua khung nhìn bị chặn); `ledgerQuery.query` hỏi số dư / phát sinh theo mã tài khoản, đối tượng, chi nhánh, chiều phân tích, mã hàng; `ctx.ledger.query` trong action. Mọi báo cáo, phân hệ, add-in, danh mục chuyển sang đọc khung nhìn; bộ kiểm SC-KERNEL-7 chặn đọc thẳng bảng `ledger_*` ngoài Kernel. `bizcity_ledger_intake` 1.1.0 (§7.1). Số liệu báo cáo không đổi.
 - **Workflow khai báo** (PHASE-012 S012-1, PHASES 3.5, năng lực `documents.workflow`): luồng duyệt chứng từ khai bằng tệp `<loại>.workflow.yaml` (trạng thái thuộc 5 nhóm chuẩn, chuyển, quyền, duyệt nhiều cấp theo ngưỡng, tách nhiệm, chỉ người lập, bắt buộc lý do). Yêu cầu thanh toán và chứng từ mua hàng chạy theo YAML; hành vi, thông báo, đường dẫn giữ nguyên. `bizcity_document` 1.1.0-draft (§5.1).
 - **Gợi ý lý do định khoản** (PHASE-012 S012-4, PHASES 3.12): `GET /api/v1/posting/reasons/suggest` (công cụ MCP `accounting.posting.reason_suggest`, AI đọc được) xếp hạng lý do tất định từ từ khoá / ví dụ của gói, tên lý do, lịch sử của chính đơn vị; `GET /api/v1/posting/reasons/readiness`. Manifest module khai `ledger.submits[].reasons` (`bizcity_module` 1.1.0-draft), bộ kiểm SC-CON-2 kiểm.
@@ -118,6 +119,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Báo cáo về phân hệ Kế toán** (PHASE-012 Q012-2): `apps/api/src/modules/reports` → `apps/api/src/phan-he/ke-toan/reports`. `documentChecks` (kiểm trước khoá kỳ) về Kernel `modules/periods/document-checks.ts`. Thuế đọc B02 / bảng dài hạn qua action, add-in Bảng tính AI qua `accounting.report.trial-balance`; báo cáo hàng hoá tách: lãi gộp → `phan-he/ban-hang/gross-profit.ts`, chuyển kho → `phan-he/kho/stock-transfers.ts`, kết quả theo cửa hàng ở lại `ke-toan/reports`; `kho`, `mua-hang` lấy route qua `GOODS` (`phan-he/loi.ts`). Đường dẫn API, số liệu báo cáo không đổi. Chi phí theo chiều phân tích gom theo bí danh cột, bỏ `sql.raw`.
 - **Cổng công khai của Kernel** (PHASE-010 W1): ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts`; 21 tệp đã chuyển; bộ kiểm SC-KERNEL-6 chặn import thẳng mới. Chuẩn bị tách gói `packages/kernel` mà không sửa nơi gọi.
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
   - `POST /api/v1/payment-requests` và `…/:id/pay` **bắt buộc** header `Idempotency-Key`. Giao diện tự gửi: bấm đúp "Ghi" / "Chi" không còn tạo yêu cầu hay phiếu chi trùng;

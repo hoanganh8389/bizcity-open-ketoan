@@ -3,6 +3,7 @@
 <!-- [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 <!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
+<!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — thêm công cụ đọc accounting.report.income_statement (B02); action báo cáo về phan-he/ke-toan/reports -->
 <!-- [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — journal.post đã có (phiếu nhập tay nháp chờ duyệt), thay receipt_draft / payment_draft. -->
 
 > **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel + Platform (bề mặt AI của Core)
@@ -32,7 +33,7 @@ Core **không** gọi LLM khi trả lời MCP. Core chỉ: công bố công cụ
 |---|---|
 | `POST /mcp`: `initialize`, `ping`, `tools/list`, `tools/call`; thông báo (không `id`) → 202 | **có**: `apps/api/src/modules/system/mcp.routes.ts`; nginx chuyển `/mcp` sang API |
 | Công cụ sinh từ registry action (§3), lọc theo quyền người gọi, annotations / `confirm` suy từ `expose.ai` | **có** |
-| Công cụ đọc §5.1 | **một phần**: `accounting.balance.get`, `accounting.report.trial_balance`, `accounting.cash.balances`, `accounting.debts.partner_balances` (`modules/reports/report.actions.ts`); thêm `quy.payment_request.list` / `.get`, `core.evidence.get` |
+| Công cụ đọc §5.1 | **một phần**: `accounting.balance.get`, `accounting.report.trial_balance`, `accounting.cash.balances`, `accounting.debts.partner_balances`, `accounting.report.income_statement` (`phan-he/ke-toan/reports/report.actions.ts`); thêm `quy.payment_request.list` / `.get`, `core.evidence.get` |
 | Xác nhận trước khi ghi (STD-MCP-4), một lần (STD-MCP-5), bằng chứng actor `ai` (STD-MCP-9) | **có**: bảng `mcp_confirm_tokens` (0037); mẫu `quy.payment_request.create` / `.update` |
 | Kết quả ghi đã xác nhận | `data = { status: "done", result: <output của action>, as_of }`, `meta = { receipt, replayed }`. `data.status` chỉ nói về luồng xác nhận (`needs_confirmation` → `done`), không lẫn với trạng thái chứng từ |
 | Danh tính | phiên đăng nhập hoặc khoá API hiện có; kênh ghi vào bằng chứng lấy từ `params._meta.client` (`via = mcp:<client>`) |

@@ -8,7 +8,7 @@
  */
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
-import { db, toNumber } from '../../db/client.js';
+import { db, toNumber } from '../../../db/client.js';
 
 interface Scope { tenantId: string; from: string; to: string; branchIds: string[] | null }
 

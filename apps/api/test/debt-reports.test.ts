@@ -7,7 +7,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { call, setupTenant, type TestCtx } from './helpers.js';
-import { splitCents } from '../src/modules/reports/debt-reports.js';
+import { splitCents } from '../src/phan-he/ke-toan/reports/debt-reports.js';
 
 let ctx: TestCtx;
 const partner = { code: 'KH-A', name: 'Khách A' };

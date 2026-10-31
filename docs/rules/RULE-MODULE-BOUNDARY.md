@@ -3,12 +3,13 @@
 <!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-31 08:18 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — R-BOUND-3 thêm chặt: ngoài Kernel đọc sổ qua bizcity_read.* / ledgerQuery, SC-KERNEL-7 chặn -->
+<!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — R-BOUND-1: dùng chung qua action đọc công khai (callAction / ctx.actions.call) hoặc route lắp ở phan-he/loi.ts -->
 
 > **Cấp:** Tier 1 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
-| **R-BOUND-1** | Phân hệ **không import** phân hệ khác (máy chủ lẫn giao diện). Cần dùng chung → đưa về lõi theo tiêu chí [../framework/01-CORE-MODULES.md](../framework/01-CORE-MODULES.md) §4 | `phan-he-ranh-gioi.test.ts` |
+| **R-BOUND-1** | Phân hệ **không import** phân hệ khác (máy chủ lẫn giao diện). Cần dùng chung → đưa về lõi theo tiêu chí [../framework/01-CORE-MODULES.md](../framework/01-CORE-MODULES.md) §4, **gọi action đọc công khai** của phân hệ kia (`callAction` / `ctx.actions.call`, STD-MOD-3), hoặc route dùng chung lắp ở `phan-he/loi.ts` (`LEDGER`, `GOODS`) | `phan-he-ranh-gioi.test.ts` |
 | **R-BOUND-2** | Phân hệ **không ghi** bảng nhân: `accounting_events*`, `posting_log`, `ledger_*`, `document_sequences`, `tax_invoices*`, `inventory_movements`, `inventory_costs`, `debt_*`. Ghi sổ chỉ bằng nộp sự việc | Grep CI |
 | **R-BOUND-3** | Phân hệ **đọc** dữ liệu lõi qua service lõi hoặc view (`sales_lines`, `posted_event_payloads`…); không join trực tiếp vào cột nội bộ có thể đổi. **Sổ cái** (từ 2026-10-31, PHASES 3.7): mọi tệp ngoài Kernel — báo cáo, phân hệ, add-in, danh mục — đọc khung nhìn chỉ đọc `bizcity_read.ledger_entries` / `ledger_lines` / `ledger_balances_daily` (migration 0043) hoặc `ledgerQuery` / `ctx.ledger.query` (kernel/public.ts), **không** `FROM ledger_*` | Duyệt PR; SC-KERNEL-7 (chặn) |
 | **R-BOUND-4** | Phân hệ chạy được **một mình** với lõi: `ENABLED_MODULES=<key>`; muốn số liệu phân hệ khác thì khai `includes`, không import | `phan-he.test.ts` |

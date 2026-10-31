@@ -22,6 +22,8 @@ export type { DraftLine } from '../modules/ledger/ledger.types.js';
 // Truy vấn có sẵn theo mã; SQL viết tay của báo cáo đọc khung nhìn bizcity_read.* (migration 0043), dùng otherSide() lấy TK đối ứng.
 export { ledgerQuery, otherSide } from '../modules/ledger/ledger-query.js';
 export type { LedgerQuery, LedgerQueryRow, LedgerQueryGroup } from '../modules/ledger/ledger-query.js';
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — documentChecks về Kernel kỳ kế toán (kiểm trước khoá kỳ); báo cáo ke-toan đọc qua cổng
+export { documentChecks } from '../modules/periods/document-checks.js';
 
 // ── Sổ phụ, danh mục của Kernel ───────────────────────────────────────────────────────────────────────────────────────────
 export { allocate as allocateDebt } from '../modules/debts/debt.service.js';

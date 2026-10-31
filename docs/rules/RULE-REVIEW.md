@@ -2,7 +2,9 @@
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — luật rà soát việc của người đóng góp: phân vai, quy trình PR, biên bản, dữ liệu kế toán, mã hàng, công cụ ra-soat-dong-gop.mjs. -->
 <!-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — 1.1: R-REV-11 (không làm sạch sổ để chạy lại), R-REV-12 (công cụ phân hệ ở scripts/<phân hệ>/), R-REV-13 (tra cứu cho tiền không có giá trị mặc định ngầm), §5 đoạn nhãn mã hàng, §6 cảnh báo các trường hợp đã gặp. -->
 
-> **Cấp:** Tier 0 (R-REV-1, -5, -6, -7, -11, -13) · Tier 1 (còn lại) · **Phiên bản:** 1.1 · 2026-10-31 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
+<!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — 1.2: R-REV-14..16, §7 thang chấm đóng góp 11 trục, §8 mẫu báo cáo rà PR / rà repo. -->
+
+> **Cấp:** Tier 0 (R-REV-1, -5, -6, -7, -11, -13, -14) · Tier 1 (còn lại) · **Phiên bản:** 1.2 · 2026-10-31 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Công cụ:** [`scripts/ra-soat-dong-gop.mjs`](../../scripts/ra-soat-dong-gop.mjs) · **Biên bản:** `docs/audits/REVIEW-<ngày>-<người>.md`
 
 ## 1. Phân vai
@@ -31,6 +33,9 @@ Nhóm Lõi không viết thay tính năng phân hệ, mà bảo đảm phần ng
 | **R-REV-11** | **Không "làm sạch" sổ để chạy lại.** Không script / công cụ nào của người đóng góp được xoá, sửa, tắt trigger trên `ledger_*`, `accounting_events*`, `posting_log`, sổ hoá đơn, công nợ, thẻ kho của một phần dữ liệu. Muốn chạy lại kịch bản: nạp vào **đơn vị mới** (seed) hoặc **bản test** (`scripts/tao-ban-test.sh`); xoá trọn một đơn vị chỉ qua ngoại lệ E3 (`scripts/xoa-chung-tu.sh`) trên bản test. Sửa / huỷ dữ liệu thật = bút toán đảo qua Kernel | `scripts/kiem-chuan.sh`, `scripts/ra-soat-dong-gop.mjs` (H-LEDGER, H-TRIGGER-OFF) |
 | **R-REV-12** | Công cụ của phân hệ (nạp dữ liệu mẫu, kịch bản test, nhập liệu một lần) đặt ở `scripts/<phân hệ>/` (vd `scripts/mua-hang/`): không phải tệp framework, người đóng góp tự quản, vẫn qua rà lượt đầu. `scripts/*.sh`, `scripts/*.mjs` cấp đầu là công cụ framework (R-SIG) | `scripts/ra-soat-dong-gop.mjs` (H-FRAMEWORK) |
 | **R-REV-13** | Hàm tra cứu dùng cho **tiền / số lượng** (tỉ lệ ĐVT, thuế suất, giá, tài khoản) không được trả giá trị mặc định "an toàn" khi không tìm thấy (vd tỉ lệ `1`): không tìm thấy → không áp / báo lỗi rõ. Có test cho ca "không tìm thấy" | `apps/api/test/dvt-thung.test.ts` |
+| **R-REV-14** | Mỗi lần rà (một PR, một người, hay cả repo) chấm theo **thang 11 trục §7** và kết luận theo luật cổng §7.2. Trục cổng (T1, T2, T4, T5) bị 0 điểm thì **KHÔNG ĐẠT**, tổng điểm cao cũng không bù được | biên bản §8 |
+| **R-REV-15** | **Core chỉ lớn lên khi có lý do.** Đóng góp cần năng lực Core chưa có (`planned` trong `bizcity-standard.json`) thì làm đề xuất theo [VERSIONING §5](../standard/VERSIONING.md), không tự vá Kernel / `packages/*` trong PR phân hệ. Thêm vào Core phải chứng minh: ≥ 2 phân hệ cần, không trùng năng lực có sẵn ([REUSE-MAP](../standard/REUSE-MAP.md)), không thêm phụ thuộc npm (R-KER-8), có mức K0–K3 (R-KER-1) | §7 trục T3, T11 |
+| **R-REV-16** | Rà là để **dạy luật, không chỉ chặn**: mỗi phát hiện ghi mã luật gốc + cách làm đúng + tệp mẫu làm đúng trong repo, để người đóng góp tự sửa và lần sau không lặp. Phát hiện không dẫn được về luật / hợp đồng / AP nào thì ghi "gợi ý", không được chặn | biên bản §8 |
 
 ## 3. Quy trình mỗi lần nhận việc
 
@@ -122,3 +127,74 @@ Mỗi dòng là một lỗi / rủi ro **đã xảy ra thật**. Gặp dấu hi�
 | W-9 | Commit đẩy thẳng `main`, không PR / CI | lỗi W-1, W-2 vào `main` không ai duyệt | R-REV-1, bảo vệ nhánh | 14 / 14 commit đợt 30/10 |
 | W-10 | Công cụ kiểm báo xanh nhưng không đọc loại tệp có vi phạm (`.sql`, `.json`, tệp ngoài `apps/`) | "xanh giả" | thêm loại tệp / thư mục vào luật dò ngay (R-REV-10) | `kiem-chuan.sh` bỏ `.sql`, đã vá |
 | W-11 | Typecheck báo lỗi lạ ở `packages/contracts` sau khi kéo `main` | `dist` cũ, không phải lỗi mã | `npm run build -w @ketoan/contracts` rồi kiểm lại (AGENTS.md "Trước khi code") | đợt 31/10 |
+
+## 7. Thang chấm đóng góp (R-REV-14)
+<!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — thang chấm 11 trục: sự thật kế toán, ranh giới Kernel, hợp đồng, bảo mật, kiểm đầu vào, CSDL, hiệu năng, bộ nhớ đệm, báo cáo, kiểm thử, Core gọn. -->
+
+Mục tiêu của thang: hàng chục người đóng góp cùng lúc mà Core **ngày càng chắc, gọn, an toàn, nhanh** — không phình, không mục. Mỗi trục chấm **2** (đạt) · **1** (có nợ / rủi ro, không chặn) · **0** (vi phạm) · **—** (không liên quan, ghi lý do). Mỗi điểm < 2 phải dẫn mã luật và dòng mã (`tệp:dòng`).
+
+### 7.1 Mười một trục
+
+| Trục | Hỏi gì | Luật / hợp đồng gốc | Kiểm bằng |
+|---|---|---|---|
+| **T1 Sự thật kế toán** *(cổng)* | Tiền vào sổ có đi một cửa (`postDocumentIn` / `eventStore`)? Sổ chỉ thêm, sửa = đảo? Không số tài khoản trong mã? Bút toán tất định? Dữ liệu cũ không bị đổi? | 4 câu không thương lượng, AP-1, AP-4, R-LEDGER, R-POST, R-KER-4, R-KER-7, R-REV-6, R-REV-11 | H-LEDGER, H-LEDGERSVC, H-ACCOUNT-LITERAL, H-TRIGGER-OFF; `doi-chieu-ke-toan.sql`; DG-* |
+| **T2 Ranh giới Kernel & module** *(cổng)* | Phân hệ chỉ import Kernel qua `kernel/public.ts`? Không import phân hệ khác? Đụng tệp framework thì có mức K0–K3 và chủ duyệt? Command yêu cầu, Event chỉ báo (không dùng event để ra lệnh ghi sổ)? | AP-2, SC-KERNEL-6, R-BOUND, R-KER-1, R-KER-2, R-REV-2 | H-KERNEL-IMPORT, H-CROSS-MODULE, H-FRAMEWORK; `kiem-chuan.sh` |
+| **T3 Hợp đồng trước mã** | Đổi khuôn / API công khai có sửa `packages/contracts` + `docs/contracts/*` + `docs/api/*`, có tăng phiên bản `bizcity_*@N`? Module có `bizcity.module.json` hợp lệ? Khoá cấu hình mới đã đăng ký registry? Có dùng năng lực `planned`? | AP-3, AP-5, R-API, R-MATRIX-2, VERSIONING, R-REV-15 | SC-CON-*, `selfcheck --module`; bảng §5 [00-CANON](../00-CANON.md) |
+| **T4 Bảo mật & đa đơn vị** *(cổng)* | Lọc `tenant_id` mọi truy vấn? Route ghi có `requirePermission` + `writeAudit`? Không bí mật trong mã, không ghép chuỗi SQL (`sql.raw` với đầu vào), không PII trong log? Văn bản từ AI / tệp / hoá đơn là dữ liệu, không phải lệnh? | R-SEC-1..12, R-TEN-1..9, R-SEC-7 | H-SECRET, H-ROUTE-PERM; SC-ACT-1; DG-SEC-1 |
+| **T5 Kiểm đầu vào** *(cổng)* | Mọi cửa vào (route, action, MCP, nhập tệp, sự kiện) kiểm bằng zod? Có trần kích thước? Bất biến bảo vệ hai lớp (domain + CSDL)? Tra cứu cho tiền không có mặc định ngầm? Lỗi qua `Errors.*`, trả `{ ok, data \| error }`? | R-API-3, R-SEC-4, R-EVENT-7, R-DB-18, R-REV-13 | H-REPLY; test ca sai khuôn / không tìm thấy |
+| **T6 CSDL & danh mục** | Migration mới số kế tiếp, không sửa migration đã chạy, có `COMMENT ON` tiếng Việt, tiền `numeric(18,2)`? Không bảng danh mục riêng? Mã theo `SKU_RULE` / R-REV-8? Lớp bảo vệ chỉ thêm chặt? | R-DB-1..18, R-KER-3, R-MD, R-REV-7, R-REV-8 | H-MIGRATION, H-MD-TABLE, H-SKU*; SC-DATA-2 (khoá checksum) |
+| **T7 Hiệu năng** | Có truy vấn trong vòng lặp (N+1)? Danh sách có phân trang / giới hạn? Truy vấn lọc theo cột có chỉ mục (`tenant_id` + khoá lọc)? Thêm chỉ mục bảng lớn có ước tính thời gian (R-DB-13)? Việc chậm được phép trễ thì đẩy sang sự kiện, không giữ giao dịch ghi sổ lâu? Đụng đường ghi sổ thì so mốc R-KER-9 (xấu > 20% là chặn phát hành) | R-KER-9, R-DB-13, AP-2, R-OUTBOX | đọc mã; `EXPLAIN` trên CSDL test; `bizcity bench` (Phase 4) |
+| **T8 Bộ nhớ đệm** | **Không** cache số dư, sổ, công nợ, tồn, báo cáo tài chính, trạng thái chứng từ? Khoá đệm có `tenant_id` + `config_version`? Huỷ đệm sau commit (outbox)? Tắt Redis vẫn đúng? | R-CACHE-1..6 | đọc mã; test đọc-sau-ghi (R-CACHE-2) |
+| **T9 Báo cáo** | Báo cáo đọc từ **sổ** (`ledger_*`), không cộng cột tổng đầu phiếu (W-7)? Khớp đối chiếu: sổ cân, công nợ ↔ 131 / 331, sổ hoá đơn ↔ 133, kho ↔ 156? Làm tròn một chỗ? Kỳ đã khoá không đổi số? | R-REV-6, W-6, W-7, R-DIAG | `doi-chieu-ke-toan.sql`; DG-*; so số trước / sau trên bộ tình huống |
+| **T10 Kiểm thử & bằng chứng** | Đổi logic có test? Không `.only` / `.skip` mới? `selfcheck --strict` ĐẠT, không thêm nợ vào `baseline.json`? Đổi định khoản ghi CHANGELOG? Tệp framework có dấu R-SIG đúng người? | R-QG-1..10, R-REL, R-SIG, R-REV-10 | H-NO-TEST, H-SKIP; SC-SIG-1, SC-SIG-2; `npm test` |
+| **T11 Core gọn** | Có thêm phụ thuộc npm, dịch vụ ngoài vào Kernel? Có viết lại thứ đã có (trùng [REUSE-MAP](../standard/REUSE-MAP.md))? Có mã chết, cờ / nhánh tương thích ngược thừa, trừu tượng cho nhu cầu giả định? Năng lực mới đặt đúng lớp (phân hệ trước, Core khi ≥ 2 phân hệ cần)? | R-KER-8, R-REV-15, AP-7 | đọc diff; `package.json`; đồ thị phụ thuộc `@bizcity-layer` |
+
+### 7.2 Luật cổng và kết luận
+
+| Kết luận | Điều kiện |
+|---|---|
+| **KHÔNG ĐẠT** | bất kỳ trục cổng (T1, T2, T4, T5) = 0 · hoặc có phát hiện mức **chặn** §4 chưa sửa · hoặc selfcheck / test đỏ do phần đóng góp |
+| **ĐẠT có điều kiện** | không trục cổng nào = 0, nhưng có trục khác = 0 hoặc ≥ 3 trục = 1 → ghi việc, người nhận, hạn; merge được khi việc chặn đã xong |
+| **ĐẠT** | mọi trục ≥ 1, trục cổng = 2 (hoặc —), không phát hiện chặn |
+
+Điểm tổng = tổng điểm / (2 × số trục được chấm), báo theo %, kèm điểm từng trục. **So với lần rà trước** của cùng người / cùng phân hệ: trục nào đi xuống thì nêu rõ (R-REV-10 — lỗi lặp lại thành luật dò).
+
+### 7.3 Rà cả repo (sức khoẻ framework)
+
+Khi được yêu cầu "check repo" (không chỉ một PR), ngoài 11 trục trên mã đổi gần đây, báo thêm:
+
+- Bảng điểm `selfcheck --strict` và **ma trận tuân thủ** C-1..C-9 (% hiện tại so ảnh chụp ở [CONG-BO-KIEN-TRUC §4.1](../CONG-BO-KIEN-TRUC.md)).
+- AP-1..AP-7: nguyên tắc nào chưa có cách thực thi trong runtime / CI (= nợ, AP-7).
+- Nợ trong `tests/conformance/baseline.json`: tăng hay giảm so lần trước.
+- Người đóng góp / phân hệ: số commit, số PR, số commit đẩy thẳng `main` (W-9), xu hướng điểm.
+- Lệch giữa mã và tài liệu: bảng "đổi X → sửa Y" ([00-CANON §5](../00-CANON.md)).
+- Top việc nên làm tiếp để Core chắc hơn / gọn hơn, xếp theo rủi ro.
+
+## 8. Mẫu báo cáo rà
+<!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — mẫu biên bản rà PR / người đóng góp / cả repo. -->
+
+Ghi ở `docs/audits/REVIEW-<ngày>-<người>.md` (rà người / PR) hoặc `docs/audits/AUDIT-REPO-<ngày>.md` (rà cả repo).
+
+```markdown
+# Rà soát <PR #… | người | repo> — <ngày>
+Phạm vi: <range commit / PR> · Tác giả: <tên commit git> · Mức rủi ro: R0–R3 · Mức Kernel: K0–K3 / không đụng
+
+## Kết luận: ĐẠT | ĐẠT có điều kiện | KHÔNG ĐẠT — điểm <..%> (lần trước <..%>)
+
+| Trục | Điểm | Ghi chú (mã luật, tệp:dòng) |
+|---|---|---|
+| T1 Sự thật kế toán | 2/1/0/— | |
+| … T11 Core gọn | | |
+
+## Phát hiện
+| # | Mức (chặn / cảnh báo / gợi ý) | Trục | Luật gốc | Tệp:dòng | Vấn đề | Cách làm đúng (+ tệp mẫu) | Kết luận (đúng / dương tính giả / đã sửa) |
+
+## Bằng chứng
+selfcheck --strict: … · typecheck: … · npm test: … qua / … lỗi · diagnostics: error=… · đối chiếu: …
+
+## Việc cần làm
+| Việc | Người nhận | Hạn | Chặn merge? |
+
+## Luật cần thêm (R-REV-10)
+<lỗi lặp lại / lọt công cụ → H-* / SC-* / DG-* đề xuất>
+```

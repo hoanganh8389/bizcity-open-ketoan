@@ -3,7 +3,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeDb } from '../src/db/client.js';
-import { yearBefore } from '../src/modules/reports/income-statement.js';
+import { yearBefore } from '../src/phan-he/ke-toan/reports/income-statement.js';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;

@@ -8,6 +8,7 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → P documents (máy trạng thái khai báo documents.workflow).
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bỏ modules/reports/: báo cáo đã về phan-he/ke-toan/reports (lớp D modules/ke-toan theo quy tắc phan-he/); documentChecks về modules/periods (K)
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -88,7 +89,6 @@ export const LAYER_MAP = [
   ['modules/reference-documents/', 'P', 'documents/links'],
   ['modules/print-templates/', 'U', 'ui-kit/print'],
   ['modules/voucher-templates/', 'D', 'modules/ke-toan'],
-  ['modules/reports/', 'D', 'modules/ke-toan'],
   ['modules/assets/', 'D', 'modules/tai-san'],
   ['modules/access/', 'P', 'permissions'],
   ['modules/auth/', 'P', 'permissions'],

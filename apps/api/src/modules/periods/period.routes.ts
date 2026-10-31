@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — documentChecks lấy từ ./document-checks.ts (Kernel), thôi import module báo cáo (SC-LAYER-2 K → D)
 /**
  * Kỳ kế toán, khoá sổ.
  *   GET    /api/v1/periods?year=        danh sách kỳ và khoá
@@ -28,7 +29,7 @@ import { DOC_TYPE_LIST } from '@ketoan/contracts';
 import { emitKernelEvent } from '../documents/kernel-events.js';
 import { periodRepository } from './period.repository.js';
 import { closingService } from '../closing/closing.service.js';
-import { documentChecks } from '../reports/control-reports.js';
+import { documentChecks } from './document-checks.js';
 import { toNumber } from '../../db/client.js';
 
 const tags = ['Kỳ kế toán'];

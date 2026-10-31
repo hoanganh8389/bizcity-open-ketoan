@@ -36,6 +36,7 @@ import { emitEvent } from './events.js';
 import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
 import { metrics } from './metrics.js';
+import { currentRequest } from './request-context.js';
 import type { AuthContext, Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
@@ -60,6 +61,9 @@ export interface ActionContext {
   events: { emit(type: string, data: Record<string, unknown>, opts: { subject: string; version?: number; dedupeKey?: string }): Promise<string | null> };
   /** Đọc sổ theo mã trong giao dịch của action (ledger.query, BIZCITY-DATA §7) — module không đọc bảng ledger_*. */
   ledger: { query(q: LedgerQuery): Promise<LedgerQueryRow[]> };
+  // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call (module-sdk API.md §2, câu hỏi mở 3): gọi action đọc của module khác
+  /** Gọi action đọc công khai của module khác theo mã, với quyền của người gọi (STD-MOD-3; xem callAction). */
+  actions: { call<O = unknown>(id: string, input: unknown): Promise<O> };
   /** @deprecated Cầu nối Phase 2→3 cho service cũ cần AuthContext. Không có trong @bizcity/module-sdk. */
   readonly legacyAuth: AuthContext;
 }
@@ -236,6 +240,12 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
             return ledgerReader(trx, tenantId, q);
           },
         },
+        actions: {
+          call: (id, input) => {
+            if (!auth) throw Errors.unauthorized();
+            return callAction(id, input, auth);
+          },
+        },
         get legacyAuth() {
           if (!auth) throw Errors.unauthorized();
           return auth;
@@ -275,7 +285,20 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
   }
 }
 
-const pathParams = (path: string) => [...path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!);
+// [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — callAction: module gọi action đọc công khai của module khác theo mã (STD-MOD-3), thay import code chéo
+/**
+ * Gọi action công khai của module khác theo mã (BIZCITY-MODULE §2 `requires.modules`, STD-MOD-3: phụ thuộc module chỉ qua action /
+ * sự kiện, không import code). Chạy đủ ACTION §4 với quyền của chính người gọi. Mã chưa đăng ký → NOT_FOUND, không trả rỗng ngầm.
+ * v1 chỉ action đọc: action ghi cần khoá idempotency của lời gọi gốc, chưa có cách truyền.
+ */
+export async function callAction<T = unknown>(id: string, input: unknown, auth: AuthContext): Promise<T> {
+  const def = registry.get(id);
+  if (!def) throw Errors.notFound(`action ${id} (module cung cấp chưa bật)`);
+  if (def.effect !== 'read') throw Errors.validation(`callAction chỉ gọi action đọc; ${id} là action ghi`);
+  return (await runAction(def, input, { auth, requestId: currentRequest()?.requestId ?? `call:${id}` })).data as T;
+}
+
+const pathParams = (path: string) =>[...path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!);
 
 /**
  * Gắn route HTTP cho các action có `expose.http`. Tham số đường dẫn + (GET/DELETE: query; còn lại: body) gộp thành input.

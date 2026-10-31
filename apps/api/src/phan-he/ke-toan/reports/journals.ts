@@ -13,9 +13,9 @@
  */
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
-import { db, toNumber } from '../../db/client.js';
-import { Errors } from '../../core/errors.js';
-import { otherSide } from '../../kernel/public.js';
+import { db, toNumber } from '../../../db/client.js';
+import { Errors } from '../../../core/errors.js';
+import { otherSide } from '../../../kernel/public.js';
 
 interface Scope { tenantId: string; from: string; to: string; branchIds: string[] | null }
 
