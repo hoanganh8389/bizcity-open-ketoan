@@ -6,6 +6,7 @@
 // [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
+// [2026-10-31 08:14 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): ctx.ledger.query trong giao dịch của action, Kernel đăng ký bằng registerLedgerReader ở app.ts
 /**
  * RUNTIME ACTION (bizcity_action@1, PHASES 2.5) — một khai báo `defineAction` sinh route HTTP + mô tả OpenAPI; registry dùng chung
  * cho MCP (2.12), CLI. Runtime làm thay handler các bước ACTION §4:
@@ -26,7 +27,7 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
 import { z } from 'zod';
-import { ERROR_CODES, type ErrorCode } from '@ketoan/contracts';
+import { ERROR_CODES, type ErrorCode, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
@@ -57,6 +58,8 @@ export interface ActionContext {
    * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
    */
   events: { emit(type: string, data: Record<string, unknown>, opts: { subject: string; version?: number; dedupeKey?: string }): Promise<string | null> };
+  /** Đọc sổ theo mã trong giao dịch của action (ledger.query, BIZCITY-DATA §7) — module không đọc bảng ledger_*. */
+  ledger: { query(q: LedgerQuery): Promise<LedgerQueryRow[]> };
   /** @deprecated Cầu nối Phase 2→3 cho service cũ cần AuthContext. Không có trong @bizcity/module-sdk. */
   readonly legacyAuth: AuthContext;
 }
@@ -93,6 +96,16 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
 
 /** Action bất kỳ (đã xoá kiểu input / output) — cho registry và danh sách action của một module. */
 export type AnyActionDef = ActionDef<any, any>;
+
+/**
+ * Bộ đọc sổ cho ctx.ledger.query. Platform không import Kernel (SC-LAYER-2) nên Kernel đăng ký lúc lắp ráp (app.ts), như
+ * tự chẩn đoán và số đo sổ. Chưa đăng ký mà action gọi → lỗi rõ, không trả rỗng (rỗng trông như "sổ không có số").
+ */
+export type LedgerReader = (tx: Transaction<Database>, tenantId: string, q: LedgerQuery) => Promise<LedgerQueryRow[]>;
+let ledgerReader: LedgerReader | null = null;
+export function registerLedgerReader(fn: LedgerReader): void {
+  ledgerReader = fn;
+}
 
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
 const registry = new Map<string, AnyActionDef>();
@@ -215,6 +228,12 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
               tenantId, type, data, subject: o.subject, version: o.version, dedupeKey: o.dedupeKey, source: mod,
               actor: { kind: call.via ? 'ai' : auth?.kind ?? 'user', id: auth?.actor ?? 'public' },
             });
+          },
+        },
+        ledger: {
+          query: (q) => {
+            if (!ledgerReader) throw new Error('Chưa đăng ký bộ đọc sổ (registerLedgerReader ở app.ts)');
+            return ledgerReader(trx, tenantId, q);
           },
         },
         get legacyAuth() {

@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo phân tích và kiểm soát:
  *   - expenseByDimension  Chi phí theo chiều phân tích (khoản mục, bộ phận, hợp đồng, nhân viên, vụ việc, dự án, nguồn vốn)
@@ -28,8 +29,8 @@ export async function expenseByDimension(a: Scope & { accountPrefix: string; gro
   const groupNums = sql.raw(groups.map((_, i) => String(i + 1)).join(', '));
   const res = await sql<Record<string, string>>`
     SELECT ${selects}, SUM(l.debit - l.credit) AS amount
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
      WHERE l.tenant_id = ${a.tenantId}
        AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND l.account_code LIKE ${a.accountPrefix + '%'}
@@ -72,8 +73,8 @@ export async function profitByContract(a: Scope & { detail: boolean; contract?: 
     SELECT l.dims->>'contract' AS contract, ${a.detail ? sql`l.account_code` : sql`''`} AS account_code,
            SUM(CASE WHEN left(l.account_code, 1) IN ('5', '7') THEN l.credit - l.debit ELSE 0 END) AS revenue,
            SUM(CASE WHEN left(l.account_code, 1) IN ('6', '8') THEN l.debit - l.credit ELSE 0 END) AS cost
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
      WHERE l.tenant_id = ${a.tenantId}
        AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND COALESCE(l.dims->>'contract', '') <> '' AND left(l.account_code, 1) IN ('5', '6', '7', '8')
@@ -124,7 +125,7 @@ export async function aging(a: { tenantId: string; asOf: string; branchIds: stri
   const down = payable ? sql`g.debit` : sql`g.credit`;
   const res = await sql<{ partner_id: string; day: string; up: string; down: string }>`
     SELECT g.partner_id, g.posting_date::text AS day, SUM(${up}) AS up, SUM(${down}) AS down
-      FROM ledger_balances_daily g
+      FROM bizcity_read.ledger_balances_daily g
      WHERE g.tenant_id = ${a.tenantId}
        AND g.account_code LIKE ${a.accountPrefix + '%'} AND g.posting_date <= ${a.asOf}::date
        ${branchFilter}
@@ -274,7 +275,7 @@ export async function documentChecks(a: { tenantId: string; from: string; to: st
     SELECT ${docCols}, x.active
       FROM accounting_events d JOIN branches b ON b.id = d.branch_id
       CROSS JOIN LATERAL (
-        SELECT COUNT(*) AS active FROM ledger_entries e
+        SELECT COUNT(*) AS active FROM bizcity_read.ledger_entries e
          WHERE e.event_id = d.id AND e.status = 'posted' AND e.reverses_entry_id IS NULL) x
      WHERE d.tenant_id = ${a.tenantId} AND d.doc_date BETWEEN ${a.from}::date AND ${a.to}::date ${branchDoc}
        AND ((d.status = 'posted' AND x.active = 0 AND d.total <> 0) OR (d.status = 'cancelled' AND x.active > 0))
@@ -286,12 +287,12 @@ export async function documentChecks(a: { tenantId: string; from: string; to: st
   const balanceMismatch = await sql<{ branch_code: string; account_code: string; day: string; line_debit: string; line_credit: string; bal_debit: string; bal_credit: string }>`
     WITH li AS (
       SELECT l.branch_id, l.account_code, l.posting_date, SUM(l.debit) AS debit, SUM(l.credit) AS credit
-        FROM ledger_lines l
+        FROM bizcity_read.ledger_lines l
        WHERE l.tenant_id = ${a.tenantId} AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date ${branchLine}
        GROUP BY 1, 2, 3
     ), ba AS (
       SELECT g.branch_id, g.account_code, g.posting_date, SUM(g.debit) AS debit, SUM(g.credit) AS credit
-        FROM ledger_balances_daily g
+        FROM bizcity_read.ledger_balances_daily g
        WHERE g.tenant_id = ${a.tenantId} AND g.posting_date BETWEEN ${a.from}::date AND ${a.to}::date ${branchBal}
        GROUP BY 1, 2, 3
     )

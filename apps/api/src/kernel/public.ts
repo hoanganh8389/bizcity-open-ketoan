@@ -17,6 +17,12 @@ export { eventStore } from '../modules/documents/event-store.js';
 export { voucherService } from '../modules/vouchers/voucher.service.js';
 export type { DraftLine } from '../modules/ledger/ledger.types.js';
 
+// ── Đọc sổ (ledger.query, PHASES 3.7): ngoài Kernel không đọc bảng ledger_* (SC-KERNEL-7) ─────────────────────────────────
+// [2026-10-31 08:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): mở ledgerQuery + otherSide ra cổng công khai
+// Truy vấn có sẵn theo mã; SQL viết tay của báo cáo đọc khung nhìn bizcity_read.* (migration 0043), dùng otherSide() lấy TK đối ứng.
+export { ledgerQuery, otherSide } from '../modules/ledger/ledger-query.js';
+export type { LedgerQuery, LedgerQueryRow, LedgerQueryGroup } from '../modules/ledger/ledger-query.js';
+
 // ── Sổ phụ, danh mục của Kernel ───────────────────────────────────────────────────────────────────────────────────────────
 export { allocate as allocateDebt } from '../modules/debts/debt.service.js';
 export { accountRepository } from '../modules/accounts/account.repository.js';

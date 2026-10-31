@@ -2,6 +2,7 @@
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
+// [2026-10-31 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — LEDGER_TRIGGERS hiểu schema như DG-DB-2: trigger chỉ đọc trên khung nhìn bizcity_read.* (0043)
 /**
  * Kiểm toàn vẹn sổ của Kernel (L3) và lớp bảo vệ sổ (L1) — đăng ký vào bộ chẩn đoán của Platform (modules/system/diagnostics.ts)
  * lúc lắp ráp. SQL chép từ lane diagnostics của bộ kiểm chuẩn (tests/conformance/diagnostics/ledger.diag.mjs, install.diag.mjs),
@@ -176,9 +177,9 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
     async run(trx) {
       const want = await declaredTriggers();
       const rows = await sql<{ name: string; table: string; enabled: string }>`
-        SELECT t.tgname AS name, c.relname AS "table", t.tgenabled AS enabled
+        SELECT t.tgname AS name, CASE WHEN n.nspname = 'public' THEN c.relname ELSE n.nspname || '.' || c.relname END AS "table", t.tgenabled AS enabled
           FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
-         WHERE NOT t.tgisinternal AND n.nspname = 'public'`.execute(trx);
+         WHERE NOT t.tgisinternal AND n.nspname NOT IN ('pg_catalog', 'information_schema')`.execute(trx);
       const have = new Map(rows.rows.map((r) => [`${r.table}.${r.name}`, r.enabled]));
       const bad = want.filter((k) => !have.has(k) || have.get(k) === 'D').map((k) => (have.has(k) ? `tắt:${k}` : `thiếu:${k}`));
       return { examined: want.length, count: bad.length, sample: bad };
@@ -188,13 +189,15 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
 
 let triggerCache: string[] | null = null;
 
-/** `<bảng>.<trigger>` khai trong db/migrations (CREATE TRIGGER … ON …) — cùng cách đọc với DG-DB-2. */
+/** `<bảng>.<trigger>` khai trong db/migrations (CREATE TRIGGER … ON …) — cùng cách đọc với DG-DB-2; bảng ngoài public ghi `schema.bảng`. */
 async function declaredTriggers(): Promise<string[]> {
   if (triggerCache) return triggerCache;
   const out = new Set<string>();
   for (const f of (await readdir(MIGRATIONS_DIR)).filter((x) => x.endsWith('.sql')).sort()) {
     const text = await readFile(path.join(MIGRATIONS_DIR, f), 'utf8');
-    for (const m of text.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+(\w+)[\s\S]*?\bON\s+(?:public\.)?(\w+)/gi)) out.add(`${m[2]}.${m[1]}`);
+    for (const m of text.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+(\w+)[\s\S]*?\bON\s+(?:(\w+)\.)?(\w+)/gi)) {
+      out.add(`${!m[2] || m[2] === 'public' ? m[3] : `${m[2]}.${m[3]}`}.${m[1]}`);
+    }
   }
   return (triggerCache = [...out]);
 }

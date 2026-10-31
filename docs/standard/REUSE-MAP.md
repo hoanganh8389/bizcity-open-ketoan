@@ -3,6 +3,7 @@
 <!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → packages/documents (máy trạng thái khai báo, PHASES 3.5). -->
+<!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
 > Cây đích: [TARGET-LAYOUT.md](TARGET-LAYOUT.md). Phát hiện nền trước đó: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md) (A-01..A-16); phát hiện mới ở §5 (A-17..A-26).
@@ -72,7 +73,7 @@
 | `signatures` | 107 | P | `documents/signatures` | `document_signatures.event_id` → `accounting_events`: chỉ ký được chứng từ kế toán (A-20) |
 | `reference-documents` | 119 | P | `documents/links` | Chứng từ tham chiếu; trạng thái `open/used/closed` |
 | `print-templates`, `voucher-templates` | 423 | U + D | `ui-kit/print` + `modules/ke-toan` | Mẫu in chung; mẫu phiếu kế toán thuộc module |
-| `reports` | 3.479 | D | `modules/ke-toan/reports` | Đọc thẳng `ledger_*` bằng SQL → cần `ledger.query` (năng lực `planned`) |
+| `reports` | 3.479 | D | `modules/ke-toan/reports` | Đọc sổ qua khung nhìn chỉ đọc `bizcity_read.*` (`ledger.query`, 2026-10-31; SC-KERNEL-7); chuyển thư mục cùng 3.9 |
 | `assets` | 1.465 | D | `modules/tai-san` | Khấu hao ghi sổ qua `eventStore` (A-01 xong 2026-10-30); đích: `ctx.ledger.submit` với `docType` khấu hao |
 | `access`, `auth` | 494 | P | `permissions` | Người dùng, vai trò, khoá API |
 | `system` | 511 | P | `cli` (chẩn đoán) + `module-sdk` (registry) | `/system/modules`, `/system/schema`, `schema-catalog.ts` |
@@ -109,7 +110,7 @@
 | `modules/vouchers/voucher.service.js` | 3 | `ctx.ledger.submit({ docType: 'manual' … })` |
 | `modules/debts/debt.service.js` (`allocate`) | 1 | `ctx.ledger.allocateDebt()` (năng lực mới) |
 | `modules/partners/partner.repository.js` | 1 | `ctx.data.masterdata.partners` |
-| `modules/reports/*`, `modules/assets/asset.service.js` | 3 | `ctx.ledger.query` (năng lực `planned`) |
+| `modules/reports/*`, `modules/assets/asset.service.js` | 3 | `ctx.ledger.query` (năng lực `ledger.query` có từ 2026-10-31) |
 | `modules/system/schema-catalog.js` | 1 | `ctx.data.describe()` |
 
 Quyền module đang dùng: chỉ các quyền chung `catalog:*`, `documents:*`, `reports:read`, `settings:write`, `payments:approve`. Không module nào có quyền riêng (vd duyệt phiếu mua = `documents:write`) vì danh sách quyền đóng.

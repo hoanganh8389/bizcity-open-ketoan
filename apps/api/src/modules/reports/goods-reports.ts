@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo hàng hoá, lãi lỗ theo cửa hàng.
  *   GET /api/v1/reports/gross-profit?from=&to=&groupBy=&branchCodes=&kind=&scope=   lãi gộp (BH04)
@@ -165,8 +166,8 @@ export async function goodsReportRoutes(app: FastifyInstance): Promise<void> {
       const keyExpr = q.by === 'department' ? sql`COALESCE(l.dims->>'department', '')` : sql`br.code`;
       const res = await sql<{ key: string; prefix: string; debit: string; credit: string }>`
         SELECT ${keyExpr} AS key, left(l.account_code, 3) AS prefix, SUM(l.debit) AS debit, SUM(l.credit) AS credit
-          FROM ledger_lines l
-          JOIN ledger_entries e ON e.id = l.entry_id
+          FROM bizcity_read.ledger_lines l
+          JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
           JOIN branches br ON br.id = l.branch_id
          WHERE l.tenant_id = ${tenantId} AND e.doc_type <> 'closing'
            AND l.posting_date BETWEEN ${q.from}::date AND ${q.to}::date

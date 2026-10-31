@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/thue
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Phân loại dài hạn: phần số dư phải thu, phải trả, vay… có thời hạn còn lại trên 12 tháng tại ngày lập
  * Báo cáo tình hình tài chính. Kế toán khai theo (ngày, tài khoản, đối tượng); báo cáo chuyển số này
@@ -22,7 +23,7 @@ export const longTermService = {
   async list(auth: AuthContext, q: { asOf: string }) {
     const res = await sql<{ account_code: string; partner_code: string | null; partner_name: string | null; amount: string; note: string; account_name: string | null; balance: string }>`
       SELECT l.account_code, p.code AS partner_code, p.name AS partner_name, l.amount, l.note, ac.name AS account_name,
-             COALESCE((SELECT SUM(g.debit - g.credit) FROM ledger_balances_daily g
+             COALESCE((SELECT SUM(g.debit - g.credit) FROM bizcity_read.ledger_balances_daily g
                         WHERE g.tenant_id = l.tenant_id AND g.posting_date <= l.as_of
                           AND g.account_code LIKE l.account_code || '%'
                           AND (l.partner_id IS NULL OR g.partner_id = l.partner_id)), 0) AS balance

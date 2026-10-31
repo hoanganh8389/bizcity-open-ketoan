@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo công nợ theo nhân viên và theo mặt hàng.
  *   - debtByEmployee  Công nợ theo nhân viên (ACC48): số dư, phát sinh của tài khoản công nợ gom theo
@@ -27,7 +28,7 @@ export async function debtByEmployee(a: Scope & { accountPrefix: string; employe
            SUM(CASE WHEN l.posting_date < ${a.from}::date THEN l.debit - l.credit ELSE 0 END) AS opening,
            SUM(CASE WHEN l.posting_date >= ${a.from}::date THEN l.debit ELSE 0 END) AS debit,
            SUM(CASE WHEN l.posting_date >= ${a.from}::date THEN l.credit ELSE 0 END) AS credit
-      FROM ledger_lines l
+      FROM bizcity_read.ledger_lines l
      WHERE l.tenant_id = ${a.tenantId}
        AND l.account_code LIKE ${a.accountPrefix + '%'}
        AND l.posting_date <= ${a.to}::date
@@ -124,8 +125,8 @@ export async function debtByItem(a: Scope & { accountPrefix: string; partnerCode
     SELECT l.partner_id, p.code AS partner_code, p.name AS partner_name,
            COALESCE(e.event_id::text, 'entry:' || e.id::text) AS group_key, e.event_id,
            MIN(l.posting_date)::text AS day, MIN(e.doc_no) AS doc_no, SUM(l.debit - l.credit) AS net
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
       LEFT JOIN partners p ON p.id = l.partner_id
      WHERE l.tenant_id = ${a.tenantId}
        AND l.account_code LIKE ${a.accountPrefix + '%'}

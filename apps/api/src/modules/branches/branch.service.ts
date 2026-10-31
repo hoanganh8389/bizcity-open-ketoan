@@ -1,4 +1,5 @@
 // @bizcity-layer M data/masterdata
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
@@ -47,7 +48,7 @@ export const branchService = {
     return db.transaction().execute(async (trx) => {
       const before = await branchRepository.findByCode(trx, auth.tenantId, code);
       if (!before) throw Errors.notFound(`chi nhánh ${code}`);
-      const used = await trx.selectFrom('ledger_entries').select('id').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(1).executeTakeFirst();
+      const used = await trx.selectFrom('bizcity_read.ledger_entries').select('id').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(1).executeTakeFirst();
       if (used) throw Errors.conflict(`Chi nhánh ${code} đã có chứng từ: bỏ tích "Theo dõi" để ngừng dùng`);
       const wh = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(3).execute();
       if (wh.length) throw Errors.conflict(`Chi nhánh ${code} còn kho (${wh.map((w) => w.code).join(', ')}…): xoá hoặc chuyển kho ở Danh mục kho (DM12) trước`);

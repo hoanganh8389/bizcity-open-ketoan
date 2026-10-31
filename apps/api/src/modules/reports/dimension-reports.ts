@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo theo khoản mục, bộ phận, nhân viên, hợp đồng (Đợt 5.4).
  *   GET /api/v1/reports/expense-detail            ACC47 Chi tiết chi phí theo khoản mục, bộ phận: từng dòng sổ của TK chi phí
@@ -44,10 +45,10 @@ export async function dimensionReportRoutes(app: FastifyInstance): Promise<void>
       const { branchIds } = await resolveScope(auth, q.branchCodes);
       const res = await sql<{ posting_date: string; doc_no: string; invoice_no: string | null; event_id: string | null; account_code: string; counter: string | null; description: string; entry_description: string; debit: string; credit: string; branch_code: string; cost_item: string | null; department: string | null; employee: string | null; contract: string | null }>`
         SELECT l.posting_date::text, e.doc_no, e.invoice_no, e.event_id, l.account_code,
-               (SELECT string_agg(DISTINCT o.account_code, ', ') FROM ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND (o.debit > 0) <> (l.debit > 0)) AS counter,
+               (SELECT string_agg(DISTINCT o.account_code, ', ') FROM bizcity_read.ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND (o.debit > 0) <> (l.debit > 0)) AS counter,
                l.description, e.description AS entry_description, l.debit, l.credit, b.code AS branch_code,
                l.dims->>'costItem' AS cost_item, l.dims->>'department' AS department, l.dims->>'employee' AS employee, l.dims->>'contract' AS contract
-          FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
+          FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
          WHERE l.tenant_id = ${auth.tenantId} AND l.posting_date BETWEEN ${q.from}::date AND ${q.to}::date
            AND l.account_code LIKE ${q.account + '%'} AND e.doc_type <> 'closing'
            ${branchIds ? sql`AND l.branch_id = ANY(${branchIds}::bigint[])` : sql``}
@@ -77,7 +78,7 @@ export async function dimensionReportRoutes(app: FastifyInstance): Promise<void>
       const { branchIds } = await resolveScope(auth, q.branchCodes);
       const res = await sql<{ code: string; account_code: string; debit: string; credit: string }>`
         SELECT l.dims->>${q.dimension} AS code, l.account_code, SUM(l.debit) AS debit, SUM(l.credit) AS credit
-          FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+          FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
          WHERE l.tenant_id = ${auth.tenantId} AND l.posting_date BETWEEN ${q.from}::date AND ${q.to}::date
            AND COALESCE(l.dims->>${q.dimension}, '') <> '' AND e.doc_type <> 'closing'
            ${q.account ? sql`AND l.account_code LIKE ${q.account + '%'}` : sql``}
@@ -107,10 +108,10 @@ export async function dimensionReportRoutes(app: FastifyInstance): Promise<void>
       const res = await sql<{ entry_id: string; posting_date: string; doc_no: string; event_id: string | null; description: string; branch_code: string; partner_name: string | null; cash_account: string; debit_account: string; cost_item: string | null; amount: string }>`
         SELECT l.entry_id, l.posting_date::text, e.doc_no, e.event_id, COALESCE(NULLIF(d.description, ''), e.description) AS description, b.code AS branch_code, p.name AS partner_name,
                l.account_code AS cash_account, d.account_code AS debit_account, d.dims->>'costItem' AS cost_item,
-               CASE WHEN (SELECT COUNT(*) FROM ledger_lines x WHERE x.entry_id = l.entry_id AND x.pair_no = l.pair_no AND x.debit > 0) = 1 THEN l.credit ELSE d.debit END AS amount
-          FROM ledger_lines l
-          JOIN ledger_entries e ON e.id = l.entry_id
-          JOIN ledger_lines d ON d.entry_id = l.entry_id AND d.pair_no = l.pair_no AND d.debit > 0
+               CASE WHEN (SELECT COUNT(*) FROM bizcity_read.ledger_lines x WHERE x.entry_id = l.entry_id AND x.pair_no = l.pair_no AND x.debit > 0) = 1 THEN l.credit ELSE d.debit END AS amount
+          FROM bizcity_read.ledger_lines l
+          JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
+          JOIN bizcity_read.ledger_lines d ON d.entry_id = l.entry_id AND d.pair_no = l.pair_no AND d.debit > 0
           JOIN branches b ON b.id = l.branch_id
           LEFT JOIN partners p ON p.id = COALESCE(d.partner_id, e.partner_id)
          WHERE l.tenant_id = ${auth.tenantId} AND l.credit > 0 AND ${CASH}
@@ -153,7 +154,7 @@ export async function dimensionReportRoutes(app: FastifyInstance): Promise<void>
       const res = await sql<{ account_code: string; cost_item: string; department: string; branch_code: string; amount: string }>`
         SELECT l.account_code, COALESCE(l.dims->>'costItem', '') AS cost_item, ${q.byDepartment ? sql`COALESCE(l.dims->>'department', '')` : sql`''`} AS department,
                b.code AS branch_code, SUM(l.debit - l.credit) AS amount
-          FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
+          FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
          WHERE l.tenant_id = ${auth.tenantId} AND l.posting_date BETWEEN ${q.from}::date AND ${q.to}::date
            AND l.account_code LIKE ${q.account + '%'} AND e.doc_type <> 'closing'
            ${branchIds ? sql`AND l.branch_id = ANY(${branchIds}::bigint[])` : sql``}

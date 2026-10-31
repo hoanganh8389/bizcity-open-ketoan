@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/thue
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Tờ khai quyết toán thuế thu nhập doanh nghiệp (mẫu 03/TNDN, Thông tư 80/2021/TT-BTC) — phần chỉ tiêu chính.
  *
@@ -105,7 +106,7 @@ export const citReturnService = {
     // Tổng doanh thu để gợi ý thuế suất: doanh thu thuần + doanh thu tài chính + thu nhập khác.
     const revenue = line('10') + line('22') + line('31');
     const paid = await sql<{ v: string | null }>`
-      SELECT SUM(l.debit) AS v FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+      SELECT SUM(l.debit) AS v FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
        WHERE l.tenant_id = ${auth.tenantId} AND l.account_code LIKE '3334%'
          AND l.posting_date BETWEEN ${from}::date AND ${to}::date AND e.doc_type <> 'closing'`.execute(db);
     const auto: Record<string, number> = { A1: Math.round(line('50')), rate: suggestedRate(revenue), E: Math.round(toNumber(paid.rows[0]?.v ?? 0)) };

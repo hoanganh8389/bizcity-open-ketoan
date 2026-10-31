@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ban-hang
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Truy vấn báo cáo bán hàng trên sales_lines / sales_payments.
  * Mọi số lượng, số tiền đã nhân sign → hàng trả lại ra số âm, cộng lại là số thuần.
@@ -229,7 +230,7 @@ export const salesReportRepository = {
              l.j->>'amount' AS amount, pa.code AS partner_code, pa.name AS partner_name,
              b.name AS branch_name, ib.name AS inv_branch_name,
              pm.bank_account_code AS bank, pay.payload->>'methodCode' AS method_code, pm.name AS method_name,
-             (SELECT e.reason_code FROM ledger_entries e WHERE e.event_id = pay.id AND e.reverses_entry_id IS NULL ORDER BY e.id DESC LIMIT 1) AS reason_code,
+             (SELECT e.reason_code FROM bizcity_read.ledger_entries e WHERE e.event_id = pay.id AND e.reverses_entry_id IS NULL ORDER BY e.id DESC LIMIT 1) AS reason_code,
              COALESCE(NULLIF(l.j->>'note', ''), pay.payload->>'description') AS note
         FROM posted_event_payloads pay
         JOIN accounting_events ev ON ev.id = pay.id

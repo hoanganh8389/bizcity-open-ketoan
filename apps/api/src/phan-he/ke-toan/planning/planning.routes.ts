@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Kế hoạch tài chính (KT-30), định mức chi phí (KT-32), cảnh báo (KT-31).
  *
@@ -182,7 +183,7 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
          GROUP BY 1, 2, 3`.execute(db);
       const actual = await sql<{ period: string; branch: string; inflow: string; outflow: string }>`
         SELECT to_char(l.posting_date, 'YYYY-MM') AS period, b.code AS branch, SUM(l.debit) AS inflow, SUM(l.credit) AS outflow
-          FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
+          FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
          WHERE l.tenant_id = ${tenantId} AND (l.account_code LIKE '111%' OR l.account_code LIKE '112%' OR l.account_code LIKE '113%')
            AND l.posting_date BETWEEN ${`${q.from}-01`}::date AND ${lastDay(q.to)}::date AND e.doc_type NOT IN ('cash_transfer', 'closing', 'opening')
          GROUP BY 1, 2`.execute(db);
@@ -288,7 +289,7 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
          GROUP BY 1, 2, 3`.execute(db);
       const actual = await sql<{ branch: string; dep: string; item: string; amount: string }>`
         SELECT b.code AS branch, COALESCE(l.dims->>'department', '') AS dep, COALESCE(l.dims->>'costItem', '') AS item, SUM(l.debit - l.credit) AS amount
-          FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
+          FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id JOIN branches b ON b.id = l.branch_id
          WHERE l.tenant_id = ${tenantId} AND l.account_code LIKE ${q.account + '%'} AND e.doc_type <> 'closing'
            AND l.posting_date BETWEEN ${`${q.from}-01`}::date AND ${lastDay(q.to)}::date
          GROUP BY 1, 2, 3`.execute(db);

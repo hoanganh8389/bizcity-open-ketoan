@@ -190,6 +190,13 @@
             "modules/periods/period.repository.ts"
           ]
         },
+        "SC-KERNEL-7": {
+          "findings": 2,
+          "keys": [
+            "read:ledger_entries",
+            "read:ledger_balances_daily"
+          ]
+        },
         "SC-KERNEL-5": {
           "findings": 2,
           "keys": [

@@ -13,7 +13,7 @@
     "bizcity_extension": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
   },
   "kernelContracts": {
-    "bizcity_ledger_intake": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
+    "bizcity_ledger_intake": { "version": "1.1.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
     "bizcity_posting_rule": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-POSTING-RULE-v1.md", "internal": true },
     "bizcity_master_data": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-MASTER-DATA-v1.md" },
     "bizcity_connector": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-CONNECTOR-v1.md" },
@@ -41,9 +41,9 @@
     { "id": "masterdata.write", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Thêm / sửa danh mục chuẩn qua API của Core (không ghi thẳng bảng)." },
     { "id": "ledger.submit", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Nộp sự việc kế toán; Core định khoản, ghi sổ, đảo khi sửa. Hiện là postDocumentIn() / POST /documents; Phase 2 là ctx.ledger.submit()." },
     { "id": "ledger.cancel", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Huỷ sự việc đã nộp (bút toán đảo)." },
-    { "id": "ledger.query", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_ledger_intake", "description": "Đọc sổ, số dư, công nợ qua API đọc của Kernel thay vì SQL trên bảng ledger_*." },
+    { "id": "ledger.query", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_ledger_intake", "description": "Đọc sổ theo mã (tài khoản, đối tượng, chi nhánh, chiều phân tích, mã hàng): ctx.ledger.query trong action, ledgerQuery ở kernel/public.ts; báo cáo SQL đọc khung nhìn chỉ đọc bizcity_read.ledger_entries / ledger_lines / ledger_balances_daily (migration 0043). Ngoài Kernel không đọc bảng ledger_* (SC-KERNEL-7)." },
     { "id": "data.tenant-tx", "since": "1.0", "status": "available", "phase": 2, "contract": "bizcity_data", "description": "Kết nối CSDL của một yêu cầu tự gắn bizcity.tenant_id theo đơn vị đã xác thực (apps/api/src/db/client.ts); mọi bảng có tenant_id có RLS + FORCE + chính sách tenant_isolation (migration 0041). Có hiệu lực khi API kết nối bằng vai trò không superuser (DB_APP_USER=ketoan_app, R-SEC-6)." },
-    { "id": "data.read-views", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_data", "description": "Schema bizcity_read: view chỉ đọc danh mục chuẩn cho module JOIN." },
+    { "id": "data.read-views", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_data", "description": "Schema bizcity_read: view chỉ đọc danh mục chuẩn cho module JOIN. Schema đã có từ migration 0043 (khung nhìn sổ cái của ledger.query); còn thiếu view danh mục." },
     { "id": "data.migrations.module", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_data", "description": "Migration riêng mỗi module, schema mod_<key>, có kiểm lint." },
     { "id": "documents.numbering", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Cấp số chứng từ theo dãy (document_sequences hiện có, chưa mở cho module)." },
     { "id": "documents.versions", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_document", "description": "Lưu ảnh chụp mỗi phiên bản chứng từ module." },

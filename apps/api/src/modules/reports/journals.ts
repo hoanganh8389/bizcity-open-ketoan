@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Các sổ nhật ký và bảng kê đọc thẳng sổ cái:
  *   - cashJournal     Sổ nhật ký thu tiền / chi tiền (mẫu S03a1): mỗi dòng tiền xếp vào cột tài khoản đối ứng
@@ -14,7 +15,7 @@ import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, toNumber } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
-import { otherSide } from './ledger-sql.js';
+import { otherSide } from '../../kernel/public.js';
 
 interface Scope { tenantId: string; from: string; to: string; branchIds: string[] | null }
 
@@ -44,11 +45,11 @@ export async function cashJournal(a: Scope & { accountPrefix: string; direction:
            COALESCE(NULLIF(l.description, ''), e.description) AS description,
            p.code AS partner_code, p.name AS partner_name, br.code AS branch_code,
            CASE WHEN l.debit <> 0 THEN l.debit ELSE l.credit END AS amount,
-           (SELECT o.account_code FROM ledger_lines o
+           (SELECT o.account_code FROM bizcity_read.ledger_lines o
              WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND ${otherSide()} AND o.account_code <> l.account_code
              ORDER BY o.line_no LIMIT 1) AS counter
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
       JOIN branches br ON br.id = l.branch_id
       LEFT JOIN partners p ON p.id = COALESCE(l.partner_id, e.partner_id)
      WHERE l.tenant_id = ${a.tenantId}
@@ -106,8 +107,8 @@ export async function salesJournal(a: Scope & { partnerCode?: string; account?: 
   const res = await sql<{ entry_id: string; event_id: string; posting_date: string; doc_date: string; created_date: string; doc_no: string; invoice_no: string | null; description: string; reason_code: string | null; partner_code: string | null; partner_name: string | null; branch_code: string; counter: string; revenue: string; amount: string }>`
     WITH l AS (
       SELECT l.entry_id, l.pair_no, l.part, l.account_code, l.debit, l.credit, l.partner_id
-        FROM ledger_lines l
-        JOIN ledger_entries e ON e.id = l.entry_id
+        FROM bizcity_read.ledger_lines l
+        JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
        WHERE l.tenant_id = ${a.tenantId}
          AND e.doc_type = 'sale' AND l.part IN ('goods', 'tax')
          AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
@@ -145,7 +146,7 @@ export async function salesJournal(a: Scope & { partnerCode?: string; account?: 
            e.doc_no, e.invoice_no, e.description, e.reason_code, p.code AS partner_code, p.name AS partner_name, br.code AS branch_code,
            g.counter, g.revenue, SUM(g.amount) AS amount
       FROM g2 g
-      JOIN ledger_entries e ON e.id = g.entry_id
+      JOIN bizcity_read.ledger_entries e ON e.id = g.entry_id
       JOIN branches br ON br.id = e.branch_id
       LEFT JOIN partners p ON p.id = COALESCE(g.partner_id, e.partner_id)
      WHERE TRUE ${accountFilter} ${partnerFilter}
@@ -214,9 +215,9 @@ export async function purchaseJournal(a: Scope & { partnerCode?: string }) {
     SELECT d.entry_id, d.posting_date::text AS posting_date, e.doc_no, e.invoice_no, e.description,
            p.code AS partner_code, p.name AS partner_name, br.code AS branch_code,
            c.account_code AS credit_account, d.account_code AS debit_account, SUM(d.debit) AS amount
-      FROM ledger_lines d
-      JOIN ledger_entries e ON e.id = d.entry_id
-      JOIN ledger_lines c ON c.entry_id = d.entry_id AND c.pair_no = d.pair_no AND c.credit <> 0
+      FROM bizcity_read.ledger_lines d
+      JOIN bizcity_read.ledger_entries e ON e.id = d.entry_id
+      JOIN bizcity_read.ledger_lines c ON c.entry_id = d.entry_id AND c.pair_no = d.pair_no AND c.credit <> 0
       JOIN branches br ON br.id = d.branch_id
       LEFT JOIN partners p ON p.id = COALESCE(c.partner_id, e.partner_id)
      WHERE d.tenant_id = ${a.tenantId}
@@ -267,9 +268,9 @@ export async function voucherListing(a: Scope & { accountPrefix?: string; docTyp
     a.accountPrefix ? sql`AND (d.account_code LIKE ${a.accountPrefix + '%'} OR c.account_code LIKE ${a.accountPrefix + '%'})` : sql``,
   ];
   const from = sql`
-      FROM ledger_lines d
-      JOIN ledger_entries e ON e.id = d.entry_id
-      JOIN ledger_lines c ON c.entry_id = d.entry_id AND c.pair_no = d.pair_no AND c.credit <> 0
+      FROM bizcity_read.ledger_lines d
+      JOIN bizcity_read.ledger_entries e ON e.id = d.entry_id
+      JOIN bizcity_read.ledger_lines c ON c.entry_id = d.entry_id AND c.pair_no = d.pair_no AND c.credit <> 0
       JOIN branches br ON br.id = d.branch_id
       LEFT JOIN partners pd ON pd.id = d.partner_id
       LEFT JOIN partners pc ON pc.id = c.partner_id
@@ -380,10 +381,10 @@ export async function cashFlow(a: Scope) {
 
   const lines = await sql<{ debit: string; credit: string; code: string | null; reason_code: string | null; counter: string | null; counter_is_cash: boolean | null }>`
     SELECT l.debit, l.credit, l.dims->>'cashflow' AS code, e.reason_code,
-           (SELECT o.account_code FROM ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND ${otherSide()} ORDER BY o.line_no LIMIT 1) AS counter,
-           (SELECT bool_and(${isCounterCash}) FROM ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND ${otherSide()}) AS counter_is_cash
-      FROM ledger_lines l
-      JOIN ledger_entries e ON e.id = l.entry_id
+           (SELECT o.account_code FROM bizcity_read.ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND ${otherSide()} ORDER BY o.line_no LIMIT 1) AS counter,
+           (SELECT bool_and(${isCounterCash}) FROM bizcity_read.ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND ${otherSide()}) AS counter_is_cash
+      FROM bizcity_read.ledger_lines l
+      JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
      WHERE l.tenant_id = ${a.tenantId}
        AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND ${isCashSql} AND e.doc_type <> 'opening' ${branchOf(a)}`.execute(db);
@@ -409,13 +410,13 @@ export async function cashFlow(a: Scope) {
   const bal = await sql<{ opening: string; closing: string }>`
     SELECT COALESCE(SUM(CASE WHEN g.posting_date < ${a.from}::date THEN g.debit - g.credit ELSE 0 END), 0) AS opening,
            COALESCE(SUM(g.debit - g.credit), 0) AS closing
-      FROM ledger_balances_daily g
+      FROM bizcity_read.ledger_balances_daily g
      WHERE g.tenant_id = ${a.tenantId} AND g.posting_date <= ${a.to}::date AND ${isCashBal}
        ${a.branchIds ? sql`AND g.branch_id = ANY(${a.branchIds}::bigint[])` : sql``}`.execute(db);
   // Số dư đầu nhập trong kỳ (phiếu số dư đầu kỳ) cũng là tiền đầu kỳ, không phải dòng tiền.
   const openingInPeriod = await sql<{ net: string }>`
     SELECT COALESCE(SUM(l.debit - l.credit), 0) AS net
-      FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+      FROM bizcity_read.ledger_lines l JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
      WHERE l.tenant_id = ${a.tenantId} AND e.doc_type = 'opening'
        AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date AND ${isCashSql} ${branchOf(a)}`.execute(db);
   values.set('60', toCents(toNumber(bal.rows[0]!.opening)) + toCents(toNumber(openingInPeriod.rows[0]!.net)));

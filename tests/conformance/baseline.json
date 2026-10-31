@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-10-30",
+  "updatedAt": "2026-10-31",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -1071,11 +1071,6 @@
           "fp": "SC-SEC-2|apps/api/src/modules/reports/control-reports.ts|raw",
           "file": "apps/api/src/modules/reports/control-reports.ts",
           "message": "const groupNums = sql.raw(groups.map((_, i) => String(i + 1)).join(', ')); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
-        },
-        {
-          "fp": "SC-SEC-2|apps/api/src/modules/reports/ledger-sql.ts|raw",
-          "file": "apps/api/src/modules/reports/ledger-sql.ts",
-          "message": "return sql.raw<boolean>(`(${side(o)} <> ${side(l)} OR (${side(o)} = 0 AND ${side(l)} = 0 AND ${o}.line_no <> ${l}.line_no))`); — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng"
         }
       ]
     }
