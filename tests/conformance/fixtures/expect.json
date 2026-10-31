@@ -431,9 +431,10 @@
       "mode": "module",
       "checks": {
         "SC-CON-2": {
-          "min": 11,
+          "min": 12,
           "keys": [
             "schema:/data/tables/0",
+            "read-view:bizcity_read.khong_co",
             "key-dir",
             "standard",
             "cap-planned:documents.attachments",

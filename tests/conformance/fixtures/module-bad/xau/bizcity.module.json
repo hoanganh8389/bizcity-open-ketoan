@@ -10,7 +10,7 @@
   "standard": "^2.0",
   "requires": { "capabilities": ["ledger.submit", "documents.attachments", "ledger.anything"] },
   "permissions": [{ "key": "contracts:read", "label": "Xem", "roles": ["owner"], "risk": "low" }],
-  "data": { "schema": "mod_khac", "tables": ["ledger_lines"] },
+  "data": { "schema": "mod_khac", "tables": ["ledger_lines"], "reads": ["bizcity_read.partners", "bizcity_read.khong_co"] },
   "actions": ["khac.contract.list"],
   "events": { "subscribes": [{ "type": "bizcity.ledger.khong-co", "version": 1 }] },
   "ledger": { "submits": [

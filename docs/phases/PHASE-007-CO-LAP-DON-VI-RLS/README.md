@@ -1,8 +1,9 @@
 # PHASE-007 — Cô lập đơn vị: `ctx.data.tx`, RLS, kiểm tấn công chéo đơn vị
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 <!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
+<!-- [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — view danh mục bizcity_read có (2.4 ☑) -->
 
-> **Trạng thái:** 🟡 RLS 84 bảng + gắn đơn vị theo yêu cầu + thử tấn công chéo: có (2026-10-30). Còn `bizcity_read`, migration theo module; ⛔ bản cài thật chạy API bằng `ketoan_app`
+> **Trạng thái:** 🟡 RLS 84 bảng + gắn đơn vị theo yêu cầu + thử tấn công chéo: có (2026-10-30). View danh mục `bizcity_read.*` có (2026-10-31, 0044). Còn migration theo module; ⛔ bản cài thật chạy API bằng `ketoan_app`
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** Đơn vị A không đọc / ghi được dữ liệu đơn vị B kể cả khi code quên lọc `tenant_id`: RLS ở CSDL, giao dịch đặt `bizcity.tenant_id`, kiểm chéo qua API, MCP.
 > **Việc lộ trình:** 2.4
@@ -23,7 +24,7 @@
 |---|---|---|
 | F1 | Mọi truy vấn lọc `tenant_id` trong code; chưa có `ENABLE ROW LEVEL SECURITY` trong migration nào | `db/migrations/` |
 | F2 | Vai trò `ketoan_app` không superuser, không BYPASSRLS (DG-SEC-1 đạt) — sẵn để bật RLS | migration `0032` |
-| F3 | Năng lực `data.tenant-tx`, `data.read-views` đang `planned`; DG-PLAN-5 chưa sẵn sàng | `bizcity-standard.json` |
+| F3 | ~~Năng lực `data.tenant-tx`, `data.read-views` đang `planned`~~ (cả hai available 2026-10-31); DG-PLAN-5 chưa sẵn sàng | `bizcity-standard.json` |
 
 ## Xong khi
 
