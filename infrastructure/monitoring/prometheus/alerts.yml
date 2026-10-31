@@ -1,8 +1,11 @@
 # [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
+# [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — nhóm bizcity-pipeline: 6 luật outbox, đối soát, pool, bộ thu, từ chối nghiệp vụ (14 luật)
 # =============================================================================
-# Luật cảnh báo Bizcity / open-ketoan — đúng 8 luật.
+# Luật cảnh báo Bizcity / open-ketoan — 14 luật (8 nền + 6 PHASE-018).
 # Mức độ (label severity): critical = cần xử lý ngay; warning = xem trong giờ làm việc.
+# Runbook từng luật: docs/ops/RUNBOOK-CANH-BAO.md. Cảnh báo CHỈ báo — không tự sửa dữ liệu kế toán.
 # Kiểm cú pháp:  promtool check rules /etc/prometheus/alerts.yml
+# Kiểm bắn / hết bắn:  promtool test rules /etc/prometheus/alerts.test.yml
 #
 # Không có Redis / NATS trong dự án (hàng đợi là bảng outbox trong PostgreSQL), nên hai luật
 # RedisDown / NATSDown của bộ tham chiếu được thay bằng PostingBacklog / LedgerIntegrityError
@@ -130,4 +133,87 @@ groups:
         annotations:
           summary: "Ứ đọng ghi sổ: có sự việc kế toán lỗi hoặc chờ quá lâu"
           description: "Giá trị {{ $value | humanize }} (số sự việc lỗi, hoặc số giây sự việc chờ lâu nhất). Chứng từ đã nhận nhưng chưa thành bút toán → báo cáo tài chính thiếu số liệu. Xem bảng 04 — Sổ cái & sự việc và nhật ký có errCode POSTING_FAILED / PERIOD_LOCKED."
+          dashboard: "/d/bizcity-so-cai"
+
+  # ---------------------------------------------------------------------------
+  # PHASE-018. Số đo đọc từ CSDL (outbox, đối soát, ghi sổ) giống nhau trên mọi máy API → gộp bằng max, không sum.
+  # Số đo pool là của từng tiến trình → tính theo instance.
+  - name: bizcity-pipeline
+    rules:
+      - alert: OutboxDeadLetter
+        # Việc giao sự kiện đã hết lượt thử (R-OUTBOX-3): hiệu ứng phụ (thông báo, đồng bộ) bị bỏ — phải có người xem.
+        expr: max(bizcity_outbox_deliveries{job="api", status="dead"}) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Có {{ $value }} việc giao sự kiện đã chết (dead)"
+          description: "Subscriber lỗi quá số lần thử. Sổ cái KHÔNG bị ảnh hưởng (ghi sổ đồng bộ, AP-2) nhưng việc phía sau (thông báo, đồng bộ) chưa chạy. Xem GET /api/v1/system/events, sửa nguyên nhân rồi phát lại có người duyệt (action core.events.replay). Runbook: docs/ops/RUNBOOK-CANH-BAO.md#outboxdeadletter"
+          dashboard: "/d/bizcity-su-kien"
+
+      - alert: OutboxBacklog
+        expr: max(bizcity_outbox_oldest_pending_seconds{job="api"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Việc giao sự kiện chờ quá 5 phút"
+          description: "Việc chờ lâu nhất đã {{ $value | humanizeDuration }}. Vòng dispatcher có thể dừng, hoặc một subscriber chậm / lỗi lặp lại. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#outboxbacklog"
+          dashboard: "/d/bizcity-su-kien"
+
+      - alert: ReconciliationStale
+        # Lượt tự chẩn đoán L3 (đối soát sổ) gần nhất đã quá 26 giờ — lịch chạy đêm không chạy (Q018-3).
+        # Bản cài chưa từng chạy L3 thì không có số đo → không báo (xem runbook để bật lịch).
+        expr: time() - max(bizcity_diagnostics_last_run_timestamp_seconds{job="api", layer="L3"}) > 26 * 3600
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Đối soát sổ (tự chẩn đoán L3) quá hạn"
+          description: "Lượt L3 gần nhất cách đây {{ $value | humanizeDuration }}. Không có đối soát mới thì lỗi sổ (nếu có) sẽ không được phát hiện. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#reconciliationstale"
+          dashboard: "/d/bizcity-toan-ven"
+
+      - alert: DbPoolSaturation
+        expr: |
+          (
+            (max by (instance) (bizcity_db_pool_connections{job="api", state="total"}) - max by (instance) (bizcity_db_pool_connections{job="api", state="idle"}))
+            / max by (instance) (bizcity_db_pool_max{job="api"})
+          ) > 0.8
+          or
+          max by (instance) (bizcity_db_pool_connections{job="api", state="waiting"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pool kết nối CSDL của {{ $labels.instance }} gần cạn"
+          description: "Giá trị {{ $value | humanize }} (tỉ lệ kết nối đang dùng, hoặc số yêu cầu đang chờ kết nối). Yêu cầu sẽ chậm rồi lỗi. Xem truy vấn chậm (bảng 03), giao dịch dài, lời gọi action lồng nhau. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#dbpoolsaturation"
+          dashboard: "/d/bizcity-postgresql"
+
+      - alert: MetricsCollectorFailing
+        # Bộ thu số đo lỗi / quá giờ: các số đo của nó giữ giá trị cũ → dashboard có thể "đúng giả".
+        expr: increase(bizcity_collector_errors_total{job="api"}[15m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Bộ thu số đo {{ $labels.collector }} lỗi liên tục"
+          description: "{{ $value | humanize }} lần lỗi / quá giờ trong 15 phút. Số đo của bộ {{ $labels.collector }} đang cũ. Xem nhật ký API 'bộ thu số đo lỗi'. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#metricscollectorfailing"
+
+      - alert: PostingRejectionSpike
+        # Từ chối NGHIỆP VỤ (kỳ khoá, không cân, thiếu cấu hình) tăng vọt — không phải sự cố hệ thống, báo kế toán.
+        expr: |
+          (
+            sum(max without (instance) (rate(bizcity_posting_failures_total{job="api", kind="rejected"}[15m])))
+            /
+            sum(max without (instance) (rate(bizcity_postings_total{job="api", action=~"post|repost|error"}[15m])))
+          ) > 0.3
+          and
+          sum(max without (instance) (rate(bizcity_postings_total{job="api", action=~"post|repost|error"}[15m]))) > 0.01
+        for: 15m
+        labels:
+          severity: warning
+          team: ke-toan
+        annotations:
+          summary: "Trên 30% chứng từ bị từ chối định khoản"
+          description: "{{ $value | humanizePercentage }} lượt định khoản 15 phút qua bị từ chối theo luật (thường do kỳ đã khoá hoặc thiếu cấu hình định khoản sau khi đổi chính sách). Kế toán xem trạm ACC14. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#postingrejectionspike"
           dashboard: "/d/bizcity-so-cai"

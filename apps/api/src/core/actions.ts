@@ -271,9 +271,12 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
       return result;
     });
     metrics.actions.inc({ action: def.id, result: 'ok', code: '' });
+    // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bizcity_idempotency_requests_total: đếm sau commit (new / replayed), xung đột khoá ở nhánh lỗi
+    if (key) metrics.idempotency.inc({ result: res.meta.idempotency === 'replayed' ? 'replayed' : 'new' });
     return res;
   } catch (err) {
     if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...meta, dryRun: true } };
+    if (key && err instanceof AppError && err.code === ERROR_CODES.IDEMPOTENCY_CONFLICT) metrics.idempotency.inc({ result: 'conflict' });
     metrics.actions.inc({ action: def.id, result: 'error', code: err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL });
     // Thất bại trong handler: giao dịch đã huỷ → ghi bằng chứng "result_ok = false" ở giao dịch riêng. Ghi lỗi thì vẫn ném lỗi gốc.
     if (inHandler && evidenceOn) {

@@ -1,5 +1,6 @@
 # Bộ giám sát (tuỳ chọn) — Prometheus · Alertmanager · Grafana · Loki
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
+<!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — 9 bảng điều khiển (07 Đường sự kiện, 08 Đa đơn vị, 09 Toàn vẹn sổ), 14 luật + alerts.test.yml, mật khẩu Grafana bắt buộc, runbook. -->
 
 Bộ giám sát **không bắt buộc**: hệ thống kế toán chạy bình thường khi không bật. Bật lên khi cần theo dõi
 sức khoẻ API, CSDL, hàng đợi ghi sổ và nhật ký trên một máy chủ thật.
@@ -13,7 +14,7 @@ outbox trong PostgreSQL, nên giám sát tập trung vào **sổ cái và hàng 
 |---|---|---|---|
 | `prometheus` | `prom/prometheus:v2.53.4` (LTS) | Thu và lưu chỉ số 15 ngày, tính luật cảnh báo | 127.0.0.1:9090 |
 | `alertmanager` | `prom/alertmanager:v0.27.0` | Gom, lọc trùng, gửi cảnh báo đi (webhook, email, Telegram…) | 127.0.0.1:9093 |
-| `grafana` | `grafana/grafana:11.4.0` | 6 bảng điều khiển (thư mục **Bizcity**) | 127.0.0.1:3000 |
+| `grafana` | `grafana/grafana:11.4.0` | 9 bảng điều khiển (thư mục **Bizcity**) | 127.0.0.1:3000 |
 | `loki` | `grafana/loki:3.3.2` | Lưu nhật ký 30 ngày | chỉ trong mạng Docker |
 | `promtail` | `grafana/promtail:3.3.2` | Đọc nhật ký container của dự án `ketoan` → Loki | — |
 | `postgres-exporter` | `prometheuscommunity/postgres-exporter:v0.16.0` | Chỉ số PostgreSQL (`pg_up`, kết nối, dung lượng…) | — |
@@ -26,14 +27,15 @@ Cấu trúc thư mục:
 infrastructure/monitoring/
 ├── docker-compose.monitoring.yml      tệp ghép với docker-compose.yml ở gốc
 ├── prometheus/prometheus.yml          job thu chỉ số
-├── prometheus/alerts.yml              8 luật cảnh báo
+├── prometheus/alerts.yml              14 luật cảnh báo (runbook: docs/ops/RUNBOOK-CANH-BAO.md)
+├── prometheus/alerts.test.yml         test bắn / hết bắn (promtool test rules)
 ├── alertmanager/alertmanager.yml      định tuyến cảnh báo, ví dụ kênh nhận
 ├── loki/loki-config.yml               Loki một tiến trình, lưu đĩa, giữ 30 ngày
 ├── promtail/promtail-config.yml       đọc nhật ký Docker, tách JSON của pino
 └── grafana/
     ├── provisioning/datasources/      Prometheus (uid prometheus), Loki (uid loki), Alertmanager
     ├── provisioning/dashboards/       nạp bảng từ grafana/dashboards/
-    └── dashboards/01…06-*.json        6 bảng điều khiển
+    └── dashboards/01…09-*.json        9 bảng điều khiển
 ```
 
 Các bảng điều khiển:
@@ -46,6 +48,11 @@ Các bảng điều khiển:
 | `04-so-cai-su-viec.json` | 04 — Sổ cái & sự việc | Sự việc theo trạng thái, tuổi sự việc chờ lâu nhất, bút toán 24h, lỗi ghi sổ (POSTING_FAILED / PERIOD_LOCKED / UNBALANCED_ENTRY), tự chẩn đoán L1/L3 |
 | `05-nghiep-vu-kpi.json` | 05 — KPI nghiệp vụ | Chứng từ ghi sổ theo giờ / ngày / loại, action thành công vs lỗi, MCP theo công cụ, đơn vị (tenant) hoạt động nhiều nhất (từ Loki) |
 | `06-nhat-ky-canh-bao.json` | 06 — Nhật ký & cảnh báo | Bảng cảnh báo đang bật, nhật ký lỗi (level ≥ 50) lọc theo dịch vụ / tenant / mã lỗi / chữ tìm |
+| `07-duong-su-kien.json` | 07 — Đường sự kiện | Outbox: việc giao chờ / chết, tuổi chờ lâu nhất, lượt giao theo subscriber; gửi lặp (new / replayed / conflict); sự việc chờ / lỗi |
+| `08-da-don-vi.json` | 08 — Đa đơn vị | Số đơn vị theo dải hoạt động 24 giờ, số đơn vị tồn đọng — **không** liệt kê đơn vị nào |
+| `09-toan-ven-so.json` | 09 — Toàn vẹn sổ | Mốc đối soát L1 / L3 gần nhất ("Chưa thu" khác 0), kết quả kiểm, ghi sổ đã commit theo hành động / loại chứng từ, từ chối nghiệp vụ theo mã, lỗi kỹ thuật định khoản |
+
+07–09 do PHASE-018 thêm; bản mẫu thiết kế ở [docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/mockups/](../../docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/mockups/README.md), ảnh chụp có dữ liệu ở `evidence/`.
 
 ## 2. Bật / tắt
 
@@ -94,7 +101,7 @@ Cổng chỉ mở trên `127.0.0.1` — **giám sát không công khai**. Từ m
 Thêm vào `.env` ở gốc kho (cùng tệp với `JWT_SECRET`):
 
 ```dotenv
-# Mật khẩu quản trị Grafana — BẮT BUỘC đổi trên máy chủ thật.
+# Mật khẩu quản trị Grafana — BẮT BUỘC: thiếu thì docker compose dừng và báo (không còn mật khẩu mặc định).
 GRAFANA_ADMIN_PASSWORD=mot-mat-khau-dai-va-kho-doan
 # (tuỳ chọn) GRAFANA_ADMIN_USER=admin  GRAFANA_ROOT_URL=https://giam-sat.example.com
 # (tuỳ chọn) PROMETHEUS_RETENTION=30d
@@ -183,7 +190,7 @@ Máy chủ dưới 2 GB RAM: cân nhắc bỏ `loki` + `promtail` (vẫn còn ch
 
 ## 8. Luật cảnh báo — đối chiếu với bộ tham chiếu
 
-`prometheus/alerts.yml` có **đúng 8 luật**. Sáu luật giữ nguyên ý của bộ tham chiếu; hai luật về Redis/NATS
+`prometheus/alerts.yml` có **14 luật**: 8 luật nền dưới đây + 6 luật PHASE-018 (bảng sau). Trong 8 luật nền, sáu luật giữ nguyên ý của bộ tham chiếu; hai luật về Redis/NATS
 được thay vì dự án **không có Redis, không có NATS** (hàng đợi là bảng outbox / `accounting_events` trong
 PostgreSQL — nếu PostgreSQL sống thì "hàng đợi" sống). Điều đáng lo với phần mềm kế toán không phải một
 dịch vụ trung gian sập, mà là **sổ cái sai** hoặc **chứng từ nhận rồi nhưng không thành bút toán**.
@@ -203,12 +210,26 @@ Xử lý `LedgerIntegrityError`: **không** sửa tay bảng `ledger_*`. Chạy 
 sửa bằng bút toán đảo theo [docs/rules/RULE-LEDGER.md](../../docs/rules/RULE-LEDGER.md) và
 [docs/ops/DIAGNOSTICS.md](../../docs/ops/DIAGNOSTICS.md).
 
-Kiểm luật khi sửa:
+**Sáu luật PHASE-018** (nhóm `bizcity-pipeline`). Số đo đọc từ CSDL giống nhau trên mọi máy API nên gộp bằng `max`; số đo pool là của từng tiến trình nên tính theo `instance`.
+
+| Luật | Điều kiện | Mức |
+|---|---|---|
+| `OutboxDeadLetter` | có việc giao sự kiện `dead` (hết lượt thử) | warning |
+| `OutboxBacklog` | việc giao chờ lâu nhất > 5 phút, suốt 5 phút | warning |
+| `ReconciliationStale` | lượt tự chẩn đoán L3 gần nhất > 26 giờ (chưa từng chạy thì không báo) | warning |
+| `DbPoolSaturation` | > 80% kết nối pool đang dùng, hoặc có yêu cầu chờ kết nối, suốt 5 phút | warning |
+| `MetricsCollectorFailing` | bộ thu số đo lỗi / quá giờ > 3 lần trong 15 phút | warning |
+| `PostingRejectionSpike` | > 30% lượt định khoản bị từ chối nghiệp vụ, suốt 15 phút — nhãn `team="ke-toan"`, đi kênh kế toán | warning |
+
+Xử lý từng luật: [docs/ops/RUNBOOK-CANH-BAO.md](../../docs/ops/RUNBOOK-CANH-BAO.md). Alertmanager ức chế các luật này khi
+`PostgreSQLDown` / `ApiDown` đang bắn (chỉ báo nguyên nhân gốc).
+
+Kiểm luật khi sửa — cú pháp và test bắn / hết bắn:
 
 ```bash
-docker run --rm -v "$(pwd -W)/infrastructure/monitoring/prometheus:/etc/prometheus" \
-  --entrypoint promtool prom/prometheus:v2.53.4 check rules /etc/prometheus/alerts.yml
-# Linux/macOS: thay $(pwd -W) bằng $(pwd). Git Bash có thể cần MSYS_NO_PATHCONV=1.
+M="$(pwd -W)/infrastructure/monitoring/prometheus"; export MSYS_NO_PATHCONV=1   # Linux/macOS: M="$(pwd)/infrastructure/monitoring/prometheus"
+docker run --rm -v "$M:/etc/prometheus" --entrypoint promtool prom/prometheus:v2.53.4 check rules /etc/prometheus/alerts.yml
+docker run --rm -v "$M:/etc/prometheus" --entrypoint promtool prom/prometheus:v2.53.4 test rules /etc/prometheus/alerts.test.yml
 ```
 
 ## 9. Nhật ký: nhãn nào được đưa lên Loki

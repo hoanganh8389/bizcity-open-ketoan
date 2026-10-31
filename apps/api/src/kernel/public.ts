@@ -35,6 +35,8 @@ export { seed } from '../db/seed.js';
 // ── Đăng ký vào Platform (lắp ráp ở app.ts) ──────────────────────────────────────────────────────────────────────────────
 export { LEDGER_DIAGNOSTICS } from '../modules/ledger/ledger.diagnostics.js';
 export { collectLedgerMetrics } from '../modules/ledger/ledger.metrics.js';
+// [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bộ thu số đo ghi sổ (posting_log) và đơn vị theo dải cho app.ts đăng ký
+export { collectPostingMetrics, collectTenantMetrics } from '../modules/documents/posting.metrics.js';
 
 // ── Route HTTP của Kernel (lắp ráp ở phan-he/) ───────────────────────────────────────────────────────────────────────────
 export { accountRoutes } from '../modules/accounts/account.routes.js';
