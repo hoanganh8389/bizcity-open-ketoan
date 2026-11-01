@@ -26,6 +26,14 @@ BEFORE="$(git rev-parse --short HEAD)"
 git pull --ff-only
 echo "   $BEFORE → $(git rev-parse --short HEAD)"
 
+# [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 (AUDIT-2026-11-01): bản cài cũ chưa có DB_APP_PASSWORD thì thêm (sau git pull, trước compose) — API chuyển sang ketoan_app
+# Từ P0-3 API luôn chạy bằng vai trò thường ketoan_app; docker-compose.yml dừng nếu thiếu DB_APP_PASSWORD. Thêm một lần, không ghi đè.
+if ! grep -q '^DB_APP_PASSWORD=..*' .env; then
+  sed -i.bak '/^DB_APP_PASSWORD=$/d' .env && rm -f .env.bak
+  printf 'DB_APP_PASSWORD=%s\n' "$(head -c 48 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | cut -c1-32)" >> .env
+  echo "   Thêm DB_APP_PASSWORD vào .env — API chạy bằng vai trò ketoan_app (không superuser, RLS có hiệu lực)"
+fi
+
 echo "== 3. Dựng lại, nâng cấp cơ sở dữ liệu (db-migrate), khởi động"
 if ! docker compose up -d --build; then
   echo "LỖI khi khởi động. Nhật ký nâng cấp cơ sở dữ liệu (db-migrate):" >&2

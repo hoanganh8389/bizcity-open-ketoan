@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Bản mẫu tĩnh Phân hệ và app** ([phan-he.html](docs/phases/PHASE-011-MODULE-SDK/mockups/phan-he.html)): launcher "＋ Thêm phân hệ", trang Phân hệ theo đơn vị / bản cài / app ngoài, chi tiết và tắt module, app ngoài trong iframe; checklist code CK-1…CK-20 cho 3.13, 3.14.
 <!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — plugin ba mức tin cậy, không drop-in; lộ trình 3.13, 3.14; năng lực modules.lifecycle, apps.external (planned) -->
 - **Quyết định kiến trúc plugin** ([ADR-0011](docs/adr/ADR-0011-plugin-ba-muc-tin-cay.md), chủ dự án duyệt 01/11/2026; chưa đổi mã chạy): ba mức tin cậy — module trong mã nguồn bản cài (tự host, trong tiến trình, bộ kiểm bắt buộc) · app ngoài tiến trình (khoá API có phạm vi, webhook sự kiện ký HMAC, nhúng iframe) · gói ký (Phase 5). Không drop-in (chép thư mục là chạy). Hai mức bật (bản cài × đơn vị), chỉ nạp module đúng hash bản build, migration module chạy bằng vai trò `mod_<key>_owner`, ghi sổ chỉ qua `submit`. Lộ trình thêm 3.13 (registry + vòng đời), 3.14 (app ngoài tiến trình); năng lực `modules.lifecycle`, `apps.external` (planned).
 - **Ký theo vai trên mọi chứng từ** (năng lực `documents.signatures`, migration `0048`, PHASES 2.7): `ctx.documents.sign / signatures / unsign` — chữ ký gắn phiên bản hiện tại (phiên bản mới thì chữ ký cũ hết hiệu lực), chỉ người dùng đăng nhập ký (khoá API, AI không ký thay người), huỷ: người đã ký hoặc chủ đơn vị; `GET /api/v1/document-signatures`. Phiếu kế toán giữ luồng ký 4 vai cũ.
@@ -186,6 +187,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- **Bắt buộc `DB_APP_PASSWORD` trong `.env`** (P0-3): `docker compose` dừng nếu thiếu. `bash scripts/cap-nhat.sh` / `bash scripts/cai-nhanh.sh` tự sinh cho bản cài cũ; tự cập nhật bằng tay thì thêm `DB_APP_PASSWORD=<openssl rand -hex 24>`. API chuyển từ vai trò sở hữu sang `ketoan_app` — tích hợp tự viết đang dựa vào quyền superuser của API (tắt trigger, TRUNCATE) sẽ bị từ chối.
+- Migration `0049` chặn mọi `UPDATE` / `DELETE` trực tiếp vào `ledger_entries`, `accounting_events` ngoài các lối của Kernel. Script vận hành tự viết sửa thẳng hai bảng này sẽ lỗi `insufficient_privilege` — dùng bút toán đảo / cửa nạp (xoá sạch một đơn vị vẫn qua `scripts/xoa-chung-tu.sh`).
 - CSDL đã chạy nhánh `feat/phase-0-tiep` **trước** khi gộp `main` (có dòng `0047_ky_chung_tu_chung.sql` trong `schema_migrations`): đổi tên dòng đó thành `0048_ky_chung_tu_chung.sql` rồi `npm run db:migrate` (áp `0047_truy_vet.sql`). Bản cài từ `main` không bị ảnh hưởng.
 - Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`, `@bizcity/kernel`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
 - Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.
@@ -196,6 +199,10 @@ Mỗi bản ghi đủ sáu mục:
 - **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
+<!-- [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 / PHASE-006 / PHASE-001 — PR-P0 (AUDIT-2026-11-01): 0049 khoá đầu bút toán + sự việc, subscriber gắn đơn vị, API mặc định ketoan_app; bản mẫu Phân hệ -->
+- **Đầu bút toán và sự việc kế toán khoá ở tầng CSDL** (P0-1, migration `0049_khoa_dau_but_toan.sql`): `ledger_entries` không xoá được; sửa chỉ ba lối của Kernel (đảo `posted` → `reversed`, cập nhật thông tin đầu E2, điền giá vốn E1). `accounting_events` không xoá, không đổi `doc_key` / nguồn / người lập, không lùi phiên bản; `accounting_event_versions` chỉ thêm. Trước đây chỉ chặn TRUNCATE (A-07).
+- **Subscriber chạy gắn đơn vị của sự kiện** (P0-2): trước đây giao sự kiện với `bizcity.tenant_id` rỗng → RLS mở, subscriber đọc được dữ liệu mọi đơn vị (thử thật: 33.896 sự việc của đơn vị khác). Nay pool đặt đơn vị cho cả giao dịch giao.
+- **API mặc định chạy bằng vai trò `ketoan_app`** (P0-3, R-SEC-6): không superuser, RLS có hiệu lực, không tắt được trigger sổ. CI chạy toàn bộ test dưới `DB_SET_ROLE=ketoan_app`.
 - Bộ giám sát: `GRAFANA_ADMIN_PASSWORD` thành biến **bắt buộc** — thiếu thì `docker compose` dừng và báo, không còn mật khẩu mặc định `doi-mat-khau-ngay` (PHASE-018). Bản cài đã bật giám sát mà chưa đặt biến: thêm vào `.env` trước khi `up`.
 - Trace (ADR-0010): thuộc tính span qua danh sách cho phép trước khi rời tiến trình (không số tiền, tên, MST, câu / tham số SQL, header xác thực, token); Collector xoá thêm `url.full`, `db.statement`, `exception.message`; Collector, Tempo không mở cổng ra máy chủ. Check SC-OBS-2 chặn module import thẳng `@opentelemetry/*`.
 - nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).
