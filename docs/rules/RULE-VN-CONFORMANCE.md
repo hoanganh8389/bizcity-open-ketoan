@@ -3,7 +3,7 @@
 <!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm R-VNC-10: Engine phục vụ quyết định, không thêm luật kế toán / đường ghi sổ vào Core; cảnh báo không chặn, xác nhận là bằng chứng (ADR-0012) -->
 
 > **Cấp:** Tier 1 (R-VNC-3, R-VNC-7 là Tier 0) · **Phiên bản:** 1.0 · 2026-11-01 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
-> **Dữ liệu:** `tests/conformance/vietnam/` (registry, catalog, rulepacks, schemas) · **Kiểm:** `tests/conformance/checks/vietnam/vn-conformance.check.mjs` (SC-VNC-1, SC-VNC-2)
+> **Dữ liệu:** `packages/vn-rulepacks/` (registry, catalog, rulepacks, schemas) · **Kiểm:** `tests/conformance/checks/vietnam/vn-conformance.check.mjs` (SC-VNC-1, SC-VNC-2)
 > **Quy trình:** [../compliance/RULEPACK-GOVERNANCE.md](../compliance/RULEPACK-GOVERNANCE.md) · [../compliance/LEGAL-SOURCE-REGISTRY.md](../compliance/LEGAL-SOURCE-REGISTRY.md) · **Phase:** [PHASE-020](../phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/README.md)
 > **Tuyên bố:** bộ kiểm là **kiểm thử độc lập có truy vết căn cứ**, không phải chứng nhận nhà nước, không phải ý kiến pháp lý. Kết quả chỉ có giá trị trong phạm vi, ngày, phiên bản phần mềm, phiên bản rulepack và bộ test đã chạy.
 

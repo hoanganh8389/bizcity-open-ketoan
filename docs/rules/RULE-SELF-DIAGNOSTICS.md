@@ -15,6 +15,7 @@
 | **L2 Bản cài** | đủ biến môi trường; múi giờ; vai trò CSDL không superuser; sao lưu gần nhất < 26 giờ; dung lượng đĩa > 15%; chứng chỉ https còn > 14 ngày; khoá Cell còn hiệu lực (nếu có) | `bizcity doctor`, màn Hệ thống → Chẩn đoán | một phần: DG-DB-3, DG-SEC-1 |
 | **L3 Toàn vẹn sổ** | Nợ = Có; số dư ngày khớp dòng; đảo đúng một lần; không bút toán mồ côi; sự việc treo; công nợ, thuế khớp sổ | `GET /api/v1/system/diagnostics`; trước khi khoá kỳ; `afterAll` mọi tệp test | **có**: `LEDGER_*`, `EVENT_*` (bộ kiểm DG-LEDGER-*, DG-EVENT-*); công nợ, thuế khớp sổ (DG-PLAN-*) chưa viết |
 | **L4 Tuân chuẩn** | code, migration, hợp đồng, module tuân Standard | CI, `selfcheck.mjs` | **có**: SC-* |
+| **L5 Tuân thủ** <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — tầng L5 của Conformance Engine (ADR-0012 T1). --> | cấu hình của đơn vị theo quy định có hiệu lực: đã khai hồ sơ kế toán, gói định khoản cùng chế độ (lớp Cấu hình); dữ liệu vận hành theo kỳ (lớp Doanh nghiệp, S020-19) | `POST /api/v1/conformance/runs` (Hệ thống → Kiểm chuẩn); ảnh chụp ở `conformance_runs`, không ở `diagnostic_runs` | **có**: `PROFILE_DECLARED`, `PROFILE_PACK_REGIME` (bộ kiểm DG-PROFILE-1, -2); mức warn — phân tích để người dùng quyết định, không chặn (R-VNC-10) |
 
 L0–L3 chạy **trên bản cài** (cả bản offline, không cần Cell, không cần mạng ngoài). L4 chạy trên mã nguồn (CI, máy dev, trước khi cài module).
 

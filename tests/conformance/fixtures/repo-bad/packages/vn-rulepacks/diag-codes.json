@@ -1,0 +1,5 @@
+{
+  "contract": "bizcity_vn_diag_codes@1",
+  "note": "Fixture xấu: DG-KHONG-9 không có trong lane; DG-LEDGER-1 ghi sai mã; ca mo-coi dẫn SC-KERNEL-1 (không phải DG) nên không đòi ánh xạ.",
+  "codes": { "DG-KHONG-9": "KHONG_CO", "DG-LEDGER-1": "SAI_MA" }
+}

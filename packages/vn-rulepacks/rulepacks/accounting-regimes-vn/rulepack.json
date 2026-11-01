@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_vn_rulepack@1",
   "id": "accounting-regimes-vn",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "catalog_id": "C02",
   "title": "Chế độ kế toán Việt Nam: chọn TT99 / TT133 theo năm tài chính, hệ thống tài khoản, chuyển chế độ có kiểm soát",
   "description": "Áp dụng chế độ theo NĂM TÀI CHÍNH của đơn vị, không theo ngày dương lịch; tài khoản ngoài danh mục bị từ chối; không tự sinh tài khoản; chuyển chế độ có audit và không sửa lịch sử.",
@@ -69,6 +69,11 @@
         "version": "0.2.0",
         "date": "2026-11-02",
         "note": "C02.1, C02.2 có bằng chứng chạy thật accounting-profile.test.ts (ADR-0013); vẫn draft"
+      },
+      {
+        "version": "0.3.0",
+        "date": "2026-11-02",
+        "note": "C02.1 thêm bằng chứng chạy trên bản cài DG-PROFILE-1, DG-PROFILE-2 (Conformance Engine S020-18); vẫn draft"
       }
     ]
   }

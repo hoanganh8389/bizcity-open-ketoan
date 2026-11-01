@@ -1,8 +1,9 @@
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — dữ liệu về packages/vn-rulepacks; SC-VNC-2 kiểm diag-codes.json (DG-* ↔ mã tự chẩn đoán trong app) cho Conformance Engine trên bản cài.
 // [2026-11-02 01:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — SC-VNC-2 nhận cả check khai dạng bảng bộ (DG-PLAN-1..4 trong ledger.diag.mjs); trước đây báo nhầm verified_by không có thật.
 // [2026-11-02 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — SC-VNC-1 kiểm thêm profile.schema.json và profiles/*.json (hồ sơ đơn vị giả lập cho --certify).
 // [2026-11-01 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ kiểm chuẩn pháp lý Việt Nam (VNCONF-002): kho nguồn pháp lý, rulepack, ca, báo cáo đúng schema; cổng phê duyệt fail-closed (SC-VNC-1, SC-VNC-2).
 /**
- * Bộ kiểm chuẩn Việt Nam — lớp DỮ LIỆU (tests/conformance/vietnam/), PHASE-020, luật R-VNC (docs/rules/RULE-VN-CONFORMANCE.md).
+ * Bộ kiểm chuẩn Việt Nam — lớp DỮ LIỆU (packages/vn-rulepacks/), PHASE-020, luật R-VNC (docs/rules/RULE-VN-CONFORMANCE.md).
  *
  *   SC-VNC-1  Schema: 4 schema hợp lệ với bộ kiểm JSON Schema rút gọn; registry, catalog, rulepack, case, báo cáo mẫu đúng schema.
  *   SC-VNC-2  Cổng phê duyệt (fail closed): status approved chỉ khi căn cứ đã rà (không REVIEW_REQUIRED, nguồn registry reviewed),
@@ -17,7 +18,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { AGENT_RE } from '../../lib/framework-files.mjs';
 
-const VN = 'tests/conformance/vietnam';
+const VN = 'packages/vn-rulepacks';
 const SCHEMAS = {
   registry: `${VN}/schemas/legal-source.schema.json`,
   rulepack: `${VN}/schemas/rulepack.schema.json`,
@@ -27,6 +28,7 @@ const SCHEMAS = {
 };
 const REGISTRY = `${VN}/registry/legal-sources.json`;
 const CATALOG = `${VN}/catalog.json`;
+const DIAG_CODES = `${VN}/diag-codes.json`;
 const TAX_DOMAINS = new Set(['tax', 'invoice', 'tax_admin', 'payroll']);
 const P0_PASSING = new Set(['PASS', 'NOT_APPLICABLE']);
 
@@ -61,6 +63,17 @@ function knownCheckIds(ctx) {
     for (const m of (ctx.core.read(f) ?? '').matchAll(/(?:\bid:\s*|\[\s*)'((?:SC|DG)-[A-Z]+-\d+)'/g)) ids.add(m[1]);
   }
   return ids;
+}
+
+/** Mã code của từng check DG-* trong lane diagnostics (hai dạng khai: sqlCheck({ id, code }) và bảng bộ ['DG-X', 'CODE', …]). */
+function laneCodes(ctx) {
+  const m = new Map();
+  for (const f of ctx.core.files({ under: ['tests/conformance/diagnostics'], match: /\.diag\.mjs$/ })) {
+    const t = ctx.core.read(f) ?? '';
+    for (const x of t.matchAll(/id:\s*'(DG-[A-Z]+-\d+)',\s*code:\s*'([A-Z][A-Z0-9_]+)'/g)) m.set(x[1], x[2]);
+    for (const x of t.matchAll(/\[\s*'(DG-[A-Z]+-\d+)',\s*'([A-Z][A-Z0-9_]+)'/g)) m.set(x[1], x[2]);
+  }
+  return m;
 }
 
 /** Số thực (có phần lẻ) trong một cây JSON → đường dẫn JSON pointer. */
@@ -248,6 +261,23 @@ export const checks = [
           agentGate(c.file, k);
           if (k.status === 'approved') reviewGate(c.file, k, `ca ${k.id}`, pack.domain);
           if (k.status === 'approved' && pack.status !== 'approved') add(c.file, `ca ${k.id} approved trong rulepack ${pack.id} còn ${pack.status}`, `approved-in-draft:${k.id}`);
+        }
+      }
+
+      // diag-codes.json: mỗi DG-* có thật và khớp mã của nó; mọi DG-* mà ca dẫn đều có ánh xạ (Engine trên bản cài cần).
+      if (ctx.repo.exists(DIAG_CODES)) {
+        const { data: dc, error } = readJson(ctx.repo, DIAG_CODES);
+        if (error) add(DIAG_CODES, error, `json:${DIAG_CODES}`);
+        else {
+          const lane = laneCodes(ctx);
+          for (const [id, code] of Object.entries(dc.codes ?? {})) {
+            examined++;
+            if (!lane.has(id)) add(DIAG_CODES, `${id} không có trong lane diagnostics`, `diag-unknown:${id}`);
+            else if (lane.get(id) !== code) add(DIAG_CODES, `${id} có mã ${lane.get(id)}, ánh xạ ghi ${code}`, `diag-code:${id}`);
+          }
+          const used = new Set();
+          for (const { dir, pack } of packs) if (pack) for (const c of loadCases(ctx, dir)) for (const r of c.kase?.scenario?.verified_by ?? []) if (r.startsWith('DG-')) used.add(r);
+          for (const id of used) if (!(id in (dc.codes ?? {}))) add(DIAG_CODES, `ca dẫn ${id} nhưng diag-codes.json không có ánh xạ — Engine trên bản cài không lấy được bằng chứng`, `diag-missing:${id}`);
         }
       }
 

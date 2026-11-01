@@ -41,6 +41,8 @@ Image API chép `db/migrations`, `db/seeds`, `db/packs` vào `/app/db` (`apps/ap
 | `DB_DIR` | `<gốc repo>/db` (Docker: `/app/db`) | gốc của ba thư mục dưới |
 | `SEEDS_DIR` | `$DB_DIR/seeds` | hệ thống tài khoản, danh mục chuẩn |
 | `PACKS_DIR` | `$DB_DIR/packs` | gói định khoản; seed cài gói nền `vn-tt99-nen.posting-pack.json` (thiếu thư mục → job `db-migrate` lỗi) |
+| `VN_RULEPACKS_DIR` <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine: gói @bizcity/vn-rulepacks trong image. --> | gói `packages/vn-rulepacks` (image chép nguyên thư mục) | kho rulepack + nguồn pháp lý cho Kiểm chuẩn (ADR-0012); chỉ đặt khi dùng kho khác |
+| `BIZCITY_GIT_SHA` | trống | mã commit ghi vào báo cáo Kiểm chuẩn; đặt lúc build image (`--build-arg` → `ENV`) |
 
 ## 3. Luật triển khai
 

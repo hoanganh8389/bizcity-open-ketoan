@@ -53,7 +53,7 @@ Dùng: node tests/conformance/selfcheck.mjs [tuỳ chọn]
   --json                               in bảng điểm JSON ra stdout
   --certify                            CHỨNG NHẬN: chạy đủ hai lane + đánh giá tuân thủ VN theo rulepack (chọn theo hồ sơ, phiên bản, ngày hiệu lực);
                                        ghi vn-conformance-report.json, vn-junit.xml, CERTIFICATE.md. Với --module: kiểm module VÀ Core nó cài vào
-  --profile <tệp.json>                 hồ sơ đơn vị giả lập (bizcity_vn_profile@1; mặc định tests/conformance/vietnam/profiles/default.json)
+  --profile <tệp.json>                 hồ sơ đơn vị giả lập (bizcity_vn_profile@1; mặc định packages/vn-rulepacks/profiles/default.json)
   --as-of <YYYY-MM-DD>                 ngày đánh giá / ngày giao dịch giả định (đè as_of của hồ sơ)
   --runtime                            thêm lane runtime: chạy đúng các tệp vitest mà ca rulepack dẫn (cần DATABASE_URL = CSDL test)
   --require-certified                  mã thoát 1 nếu chưa CERTIFIED (mặc định: COMPATIBLE cũng là 0)
@@ -366,8 +366,10 @@ async function certify({ args, mode, root, all, results, sb, where, db, baseline
     say(runtime.ran ? `lane runtime: ${runtime.summary} (${runtime.ms} ms)` : `lane runtime bỏ qua: ${runtime.reason}`);
   }
 
-  // Đánh giá tuân thủ VN.
-  const evaluation = evaluate({ kit, profile, evidence: { checks, tests: runtime.tests, runtime: runtime.ran } });
+  // Đánh giá tuân thủ VN. Lớp Cấu hình: chỉ bằng chứng build — kiểm DG-* của lớp này đọc cấu hình các đơn vị trong CSDL test,
+  // không nói gì về mã (hồ sơ ở đây là giả lập). Trên bản cài, Kernel dùng chúng với hồ sơ thật (core.conformance.run).
+  // [2026-11-02 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — --certify: lớp Cấu hình chỉ tính bằng chứng build (buildOnlyLayers)
+  const evaluation = evaluate({ kit, profile, evidence: { checks, tests: runtime.tests, runtime: runtime.ran }, buildOnlyLayers: ['configuration'] });
   const diag = coreResults.filter((r) => r.lane === 'diagnostics');
   const diagRan = diag.some((r) => !['skip', 'planned'].includes(r.status));
   const gates = [

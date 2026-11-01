@@ -1,5 +1,6 @@
 // @bizcity-layer P data
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng accounting_profiles (0049, ADR-0013).
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng conformance_runs (0051, ADR-0012).
 // [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
@@ -825,6 +826,22 @@ export interface AccountingProfilesTable {
   created_at: TimestampDefault;
 }
 
+/** Lượt Kiểm chuẩn của đơn vị (migration 0051, ADR-0012). Chỉ thêm. */
+export interface ConformanceRunsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  as_of: ColumnType<string, string, string>;
+  layers: string[];
+  profile_version: number | null;
+  kit_version: string | null;
+  kit_hash: string;
+  result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED';
+  counts: Json<unknown>;
+  report: Json<unknown>;
+  actor: string;
+  created_at: TimestampDefault;
+}
+
 /** Gói định khoản đã cài (migration 0042, bizcity_posting_template@1 §5). */
 export interface ConfigPacksTable {
   tenant_id: string;
@@ -1597,6 +1614,7 @@ export interface Database {
   ledger_entries: LedgerEntriesTable;
   posting_policy_versions: PostingPolicyVersionsTable;
   accounting_profiles: AccountingProfilesTable;
+  conformance_runs: ConformanceRunsTable;
   config_packs: ConfigPacksTable;
   ledger_lines: LedgerLinesTable;
   ledger_balances_daily: LedgerBalancesDailyTable;

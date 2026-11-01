@@ -408,7 +408,7 @@
           ]
         },
         "SC-VNC-2": {
-          "min": 28,
+          "min": 30,
           "keys": [
             "dup-source:vn.law.xau-1",
             "dates:vn.law.xau-1",
@@ -434,7 +434,9 @@
             "catalog-id:C01",
             "report-result:report-xau.json",
             "report-reason:report-xau.json:vn.xau.thue.sai.001",
-            "report-rulepack:report-xau.json"
+            "report-rulepack:report-xau.json",
+            "diag-unknown:DG-KHONG-9",
+            "diag-code:DG-LEDGER-1"
           ]
         },
         "SC-MOD-3": {

@@ -1,7 +1,7 @@
 # Quản trị rulepack — soạn, duyệt, phát hành, cập nhật
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — quy trình 8 bước cập nhật pháp luật, vai trò, trạng thái và cổng phê duyệt fail-closed cho rulepack / ca (R-VNC-3, R-VNC-9). -->
 
-> Luật: [R-VNC-2, R-VNC-3, R-VNC-9](../rules/RULE-VN-CONFORMANCE.md) · Schema: `tests/conformance/vietnam/schemas/{rulepack,case}.schema.json` · Kiểm: SC-VNC-2 (block)
+> Luật: [R-VNC-2, R-VNC-3, R-VNC-9](../rules/RULE-VN-CONFORMANCE.md) · Schema: `packages/vn-rulepacks/schemas/{rulepack,case}.schema.json` · Kiểm: SC-VNC-2 (block)
 
 ## 1. Vai trò
 

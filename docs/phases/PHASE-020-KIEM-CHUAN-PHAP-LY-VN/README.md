@@ -21,7 +21,7 @@
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S020-*`, ca bằng chứng `T020-*`, log |
 | [RULE-VN-CONFORMANCE](../../rules/RULE-VN-CONFORMANCE.md) | luật R-VNC-1..9 |
 | [docs/compliance/](../../compliance/README.md) | quản trị rulepack (8 bước), kho nguồn pháp lý |
-| [tests/conformance/vietnam/](../../../tests/conformance/vietnam/README.md) | dữ liệu: registry, catalog, schema, rulepack / ca nháp |
+| [packages/vn-rulepacks/](../../../packages/vn-rulepacks/README.md) | dữ liệu: registry, catalog, schema, rulepack / ca nháp |
 
 ## Trả lời ngắn
 

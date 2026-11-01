@@ -78,6 +78,8 @@ export const LAYER_MAP = [
   // ADR-0004: dòng bán (sales_lines) do Kernel dựng khi ghi sổ; ba tệp ở đây chỉ là báo cáo bán hàng.
   ['modules/sales/', 'D', 'modules/ban-hang'],
   ['modules/closing/', 'K', 'kernel/closing'],
+  // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine (ADR-0012): trụ cột Kernel, chỉ đọc sổ
+  ['modules/conformance/', 'K', 'kernel/conformance'],
   ['kernel/', 'K', 'kernel/public'],
   ['modules/vouchers/voucher.service.ts', 'K', 'kernel/intake'],
   ['modules/vouchers/', 'K+D', 'kernel/intake'],

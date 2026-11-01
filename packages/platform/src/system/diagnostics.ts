@@ -3,6 +3,7 @@
 // [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — tầng L5 (Tuân thủ, Conformance Engine ADR-0012 T1): chạy được bằng runDiagnostics, không lưu vào diagnostic_runs (ảnh chụp ở conformance_runs).
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/system/diagnostics.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
 /**
  * TỰ CHẨN ĐOÁN (RULE-SELF-DIAGNOSTICS, docs/ops/DIAGNOSTICS.md §2) — phần Platform: kiểu một kiểm, sổ đăng ký, bộ chạy, lưu kết quả.
@@ -23,7 +24,8 @@ import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { pendingMigrations } from '../db/migrate.js';
 
-export type DiagLayer = 'L1' | 'L3';
+/** L1 sẵn sàng · L3 toàn vẹn sổ · L5 tuân thủ cấu hình (Conformance Engine, ADR-0012) — RULE-SELF-DIAGNOSTICS §1. */
+export type DiagLayer = 'L1' | 'L3' | 'L5';
 export type DiagLevel = 'error' | 'warn' | 'info';
 export type DiagOutcome = 'pass' | 'empty' | DiagLevel;
 
@@ -110,11 +112,13 @@ export async function runDiagnostics(scope: DiagScope, opts: { layer: DiagLayer;
 
 /** Lưu một lượt vào diagnostic_runs (chỉ thêm, R-DIAG-5). */
 export async function saveDiagnosticRun(report: DiagReport, meta: { tenantId: string; actor: string; trigger: 'manual' | 'period-lock' | 'schedule' | 'release' }): Promise<string> {
+  // L5 lưu ở conformance_runs (ảnh chụp báo cáo Kiểm chuẩn), không ở diagnostic_runs (CHECK layer IN ('L1','L3'), migration 0034).
+  if (report.layer === 'L5') throw new Error('Lượt L5 lưu ở conformance_runs, không ở diagnostic_runs');
   const row = await db
     .insertInto('diagnostic_runs')
     .values({
       tenant_id: meta.tenantId,
-      layer: report.layer,
+      layer: report.layer as 'L1' | 'L3',
       trigger: meta.trigger,
       scope: JSON.stringify(report.scope),
       summary: JSON.stringify(report.summary),

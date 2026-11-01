@@ -3,8 +3,22 @@
 <!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — chủ duyệt ADR-0012 + tinh chỉnh T1–T8; thêm §0a nguyên tắc Core đơn giản, lean, chặt chẽ; sửa nơi đặt dữ liệu (vn-rulepacks), Posting Gate có xác nhận, không điểm % -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-> **Trạng thái:** **chấp nhận** 2026-11-02 qua [ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md) kèm tinh chỉnh T1–T8 (bảng trong ADR; chỗ nào ở dưới khác T1–T8 thì theo ADR). Luật: [R-VNC](../../rules/RULE-VN-CONFORMANCE.md), [R-DIAG](../../rules/RULE-SELF-DIAGNOSTICS.md). Kế hoạch: [00-MASTER-PLAN](00-MASTER-PLAN.md). Nền đã có: [tests/conformance/](../../../tests/conformance/README.md), [vietnam/](../../../tests/conformance/vietnam/README.md).
+> **Trạng thái:** **chấp nhận** 2026-11-02 qua [ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md) kèm tinh chỉnh T1–T8 (bảng trong ADR; chỗ nào ở dưới khác T1–T8 thì theo ADR). Luật: [R-VNC](../../rules/RULE-VN-CONFORMANCE.md), [R-DIAG](../../rules/RULE-SELF-DIAGNOSTICS.md). Kế hoạch: [00-MASTER-PLAN](00-MASTER-PLAN.md). Nền đã có: [tests/conformance/](../../../tests/conformance/README.md), [vietnam/](../../../packages/vn-rulepacks/README.md).
 > **Một câu:** Conformance Engine là chức năng **nằm trong Core, bật mặc định, hiện ở menu Hệ thống**, trả lời ba câu hỏi khác nhau bằng cùng một bộ quy định có hiệu lực, cùng một cách chấm điểm, cùng một kho bằng chứng — và **không bao giờ** tự quyết thay người dùng việc ghi sổ hay tiến hành.
+
+## 0b. Đã làm (2026-11-02, S020-18)
+<!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ghi phần Engine đã chạy được trên bản cài. -->
+
+| Thành phần | Có gì |
+|---|---|
+| Bộ đánh giá | `@bizcity/vn-rulepacks/engine` — một bộ cho `--certify` và Kernel (T7) |
+| Bằng chứng trên bản cài | tự chẩn đoán L1 + L3 + **L5** của chính đơn vị; L5 mới: `PROFILE_DECLARED`, `PROFILE_PACK_REGIME` (T1); ánh xạ DG-* ↔ mã ở `packages/vn-rulepacks/diag-codes.json` (SC-VNC-2 kiểm) |
+| Hồ sơ | hồ sơ kế toán thật của đơn vị (ADR-0013); chưa khai → ca lớp Cấu hình REVIEW_REQUIRED "chưa khai", không đoán |
+| Lưu | `conformance_runs` (migration 0051, chỉ thêm, RLS): báo cáo nguyên văn, phiên bản + băm kho rulepack, phiên bản hồ sơ |
+| Action | `core.conformance.run` (quyền `conformance:run`, AI không dùng) · `core.conformance.latest` (quyền `conformance:read`, AI đọc được) |
+| Chưa làm | lớp Doanh nghiệp (S020-19), màn Hệ thống → Kiểm chuẩn (S020-20), cảnh báo ở màn lập chứng từ (S020-21), lịch chạy đêm |
+
+Luật đánh giá chốt khi làm: ở lớp Cấu hình và Doanh nghiệp, kiểm mức warn có phát hiện là không đạt; ở lớp Module, kiểm mức info chỉ là ngữ cảnh. Phạm vi chưa xác định (hồ sơ chưa khai) thì không kết luận FAIL. Khi chứng nhận bằng `--certify` (hồ sơ giả lập), lớp Cấu hình chỉ tính bằng chứng build; kiểm DG-* của lớp này chỉ dùng trên bản cài với hồ sơ thật.
 
 ## 0a. Nguyên tắc chủ chốt
 
@@ -58,7 +72,7 @@ Quy tắc **không trộn**: một plugin đạt lớp 1 không làm doanh nghi�
 
 ### 2.1 Regulatory Registry — quy định có hiệu lực ở cấp điều khoản
 
-Đã có nền: `tests/conformance/vietnam/registry/legal-sources.json` (`bizcity_vn_legal_registry@1`, R-VNC-1). Engine dùng **cùng tệp** (đóng gói theo bản phát hành, không bảng CSDL ở MVP — D020-2).
+Đã có nền: `packages/vn-rulepacks/registry/legal-sources.json` (`bizcity_vn_legal_registry@1`, R-VNC-1). Engine dùng **cùng tệp** (đóng gói theo bản phát hành, không bảng CSDL ở MVP — D020-2).
 
 Registry **không** là công tắc `TT200 = disabled, TT99 = enabled`. Nó mô hình bốn thứ tách nhau:
 

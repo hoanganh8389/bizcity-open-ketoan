@@ -2,6 +2,7 @@
 # [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — bộ kiểm chuẩn xanh, gia cố R-API-6, R-BOUND-2, R-SEC-11, R-REL-1.
 # [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gói @bizcity/platform: cài, build, chép dist cùng contracts (D010-7 chặng 2)
 # [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gói @bizcity/kernel: cài, build sau platform, chép dist (D010-7 chặng 3)
+# [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gói dữ liệu luật @bizcity/vn-rulepacks (JSON + engine.mjs, không build) cho Conformance Engine (ADR-0012 T7)
 # API: dựng TypeScript → chạy Node. Cùng image chạy job db-migrate (node dist/db/setup.js: migration + seed) và máy chủ API.
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -9,6 +10,7 @@ COPY package.json package-lock.json ./
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/
 COPY packages/kernel/package.json packages/kernel/
+COPY packages/vn-rulepacks packages/vn-rulepacks
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN npm ci --no-audit --no-fund
@@ -26,9 +28,10 @@ COPY package.json package-lock.json ./
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/
 COPY packages/kernel/package.json packages/kernel/
+COPY packages/vn-rulepacks packages/vn-rulepacks
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-RUN npm ci --omit=dev --no-audit --no-fund -w @ketoan/api -w @ketoan/contracts -w @bizcity/platform -w @bizcity/kernel && npm cache clean --force
+RUN npm ci --omit=dev --no-audit --no-fund -w @ketoan/api -w @ketoan/contracts -w @bizcity/platform -w @bizcity/kernel -w @bizcity/vn-rulepacks && npm cache clean --force
 COPY --from=build /app/packages/contracts/dist packages/contracts/dist
 COPY --from=build /app/packages/platform/dist packages/platform/dist
 COPY --from=build /app/packages/kernel/dist packages/kernel/dist

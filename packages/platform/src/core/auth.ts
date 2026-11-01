@@ -1,4 +1,5 @@
 // @bizcity-layer P permissions
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — quyền conformance:read (xem Kiểm chuẩn) và conformance:run (chạy một lượt, lưu ảnh chụp) cho Conformance Engine (ADR-0012, D020-7).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — bộ kiểm chuẩn xanh, gia cố R-API-6, R-BOUND-2, R-SEC-11, R-REL-1.
 // [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
@@ -44,20 +45,24 @@ export const PERMISSIONS = [
   'periods:lock',
   'settings:write',
   'users:write',
+  /** Xem kết quả Kiểm chuẩn (Conformance Engine, ADR-0012). */
+  'conformance:read',
+  /** Chạy một lượt Kiểm chuẩn và lưu ảnh chụp (chỉ đọc sổ; không đổi sổ, không đổi cấu hình). */
+  'conformance:run',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: PERMISSIONS,
-  chief_accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'documents:edit-all', 'documents:bypass-date-lock', 'payments:approve', 'ledger:read', 'reports:read', 'periods:lock', 'settings:write'],
-  accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'ledger:read', 'reports:read'],
-  viewer: ['catalog:read', 'documents:read', 'ledger:read', 'reports:read'],
+  chief_accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'documents:edit-all', 'documents:bypass-date-lock', 'payments:approve', 'ledger:read', 'reports:read', 'periods:lock', 'settings:write', 'conformance:read', 'conformance:run'],
+  accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'ledger:read', 'reports:read', 'conformance:read', 'conformance:run'],
+  viewer: ['catalog:read', 'documents:read', 'ledger:read', 'reports:read', 'conformance:read'],
 };
 
 /** Phạm vi của khoá API → quyền tương ứng. */
 const SCOPE_PERMISSIONS: Record<string, readonly Permission[]> = {
   'documents:write': ['documents:write', 'documents:edit-all', 'documents:read', 'catalog:read'],
-  'reports:read': ['reports:read', 'ledger:read', 'catalog:read'],
+  'reports:read': ['reports:read', 'ledger:read', 'catalog:read', 'conformance:read'],
   'catalog:write': ['catalog:write', 'catalog:read'],
 };
 

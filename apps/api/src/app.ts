@@ -33,7 +33,7 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, PROFILE_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
 import { registerLedgerReader } from './core/actions.js';
 import { registerDocumentNumberer } from './core/documents.js';
@@ -98,6 +98,8 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).
   registerDiagnostics(LEDGER_DIAGNOSTICS);
+  // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 (hồ sơ kế toán, gói cùng chế độ) cho Conformance Engine (ADR-0012)
+  registerDiagnostics(PROFILE_DIAGNOSTICS);
   registerCollector('ledger', collectLedgerMetrics);
   registerCollector('postings', () => collectPostingMetrics());
   registerCollector('outbox', collectOutboxMetrics);

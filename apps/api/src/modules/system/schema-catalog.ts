@@ -1,5 +1,6 @@
 // @bizcity-layer P module-sdk
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm accounting_profiles (0049).
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm conformance_runs (0051).
 // [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
@@ -56,6 +57,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
   // ② Quy tắc
   posting_reasons: { group: 'rules', label: 'Lý do nhập / xuất', term: 'Nghiệp vụ', module: 'posting-config', purpose: 'Mỗi lý do (bán, trả lại, tặng, chuyển kho…) chỉ định tài khoản dùng khi định khoản.' },
+  conformance_runs: { group: 'rules', label: 'Lượt Kiểm chuẩn', term: 'Kiểm chuẩn', module: 'conformance', purpose: 'Ảnh chụp mỗi lượt Conformance Engine của đơn vị: báo cáo, kết quả, số ca theo trạng thái, phiên bản kho rulepack và hồ sơ kế toán đã dùng. Lượt chạy chỉ đọc sổ; kết luận để người dùng quyết định. Chỉ thêm.' },
   accounting_profiles: { group: 'rules', label: 'Hồ sơ kế toán của đơn vị', term: 'Hồ sơ kế toán', module: 'posting-config', purpose: 'Năm tài chính, chế độ kế toán, loại pháp nhân có phiên bản, hiệu lực từ đầu năm tài chính; hồ sơ cũ giữ cho các năm trước. Chưa có dòng = chưa khai, Core không đoán chế độ. Chỉ thêm.' },
   posting_policy_versions: { group: 'rules', label: 'Phiên bản chính sách kế toán', term: 'Chính sách kế toán', module: 'posting-config', purpose: 'Bản chụp cấu hình định khoản kèm ngày hiệu lực: chứng từ định khoản theo bản của ngày hạch toán, nên đổi chế độ không làm đổi số chứng từ cũ. Sửa cấu hình tự chụp bản bổ sung; đổi chế độ thì phát hành. Chỉ thêm.' },
   config_packs: { group: 'rules', label: 'Gói định khoản đã cài', term: 'Gói định khoản', module: 'posting-config', purpose: 'Gói theo ngành (lý do, nhóm hạch toán, tài khoản ngầm định, thuế, hình thức thanh toán) đã cài: cài có xem trước và phát hành một bản chính sách kế toán; gỡ chỉ ngừng dùng mã gói đã thêm mà chưa phát sinh.' },

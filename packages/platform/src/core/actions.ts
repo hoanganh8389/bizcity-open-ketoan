@@ -45,8 +45,12 @@ import type { AuthContext, Permission } from './auth.js';
 export type ActionEffect = 'read' | 'write';
 export type ActionIdempotency = 'required' | 'natural' | 'none';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-/** Capability Contract (CONG-BO-KIEN-TRUC §3): action ghi chạm vào đâu — ledger = có thể sinh bút toán (qua một cửa sổ cái). */
-export type ActionSideEffect = 'documents' | 'ledger' | 'masterdata' | 'settings' | 'external';
+/**
+ * Capability Contract (CONG-BO-KIEN-TRUC §3): action ghi chạm vào đâu — ledger = có thể sinh bút toán (qua một cửa sổ cái).
+ * analysis = chỉ lưu kết quả phân tích của Core (vd lượt Kiểm chuẩn); không đổi chứng từ, sổ, danh mục, cấu hình.
+ */
+// [2026-11-02 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm sideEffect 'analysis' cho action chỉ lưu kết quả phân tích (core.conformance.run, ADR-0012)
+export type ActionSideEffect = 'documents' | 'ledger' | 'masterdata' | 'settings' | 'external' | 'analysis';
 
 export interface ActionContext {
   readonly actor: { id: string; name: string; kind: AuthContext['kind'] };

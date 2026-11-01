@@ -1,7 +1,7 @@
 # Kho nguồn pháp lý — cách thêm và rà một văn bản
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — hướng dẫn kho nguồn pháp lý máy đọc: hồ sơ một văn bản, hiệu lực theo điều khoản và theo năm tài chính, ảnh chụp có băm, thế nào là đã rà (R-VNC-1). -->
 
-> Luật: [R-VNC-1, R-VNC-5](../rules/RULE-VN-CONFORMANCE.md) · Tệp: `tests/conformance/vietnam/registry/legal-sources.json` · Schema: `tests/conformance/vietnam/schemas/legal-source.schema.json` (`bizcity_vn_legal_registry@1`) · Kiểm: SC-VNC-1, SC-VNC-2
+> Luật: [R-VNC-1, R-VNC-5](../rules/RULE-VN-CONFORMANCE.md) · Tệp: `packages/vn-rulepacks/registry/legal-sources.json` · Schema: `packages/vn-rulepacks/schemas/legal-source.schema.json` (`bizcity_vn_legal_registry@1`) · Kiểm: SC-VNC-1, SC-VNC-2
 
 ## 1. Một văn bản = một hồ sơ
 

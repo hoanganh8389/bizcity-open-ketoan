@@ -55,6 +55,8 @@ export { seed } from './db/seed.js';
 
 // ── Đăng ký vào Platform (lắp ráp ở app.ts) ──────────────────────────────────────────────────────────────────────────────
 export { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 (hồ sơ kế toán, gói định khoản cùng chế độ) cho Conformance Engine (ADR-0012)
+export { PROFILE_DIAGNOSTICS } from './modules/posting-config/profile.diagnostics.js';
 export { collectLedgerMetrics } from './modules/ledger/ledger.metrics.js';
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bộ thu số đo ghi sổ (posting_log) và đơn vị theo dải cho app.ts đăng ký
 export { collectPostingMetrics, collectTenantMetrics } from './modules/documents/posting.metrics.js';
@@ -72,3 +74,5 @@ export { postingConfigRoutes } from './modules/posting-config/posting-config.rou
 export { taxCodeRoutes } from './modules/tax-codes/tax-code.routes.js';
 export { taxInfoRoutes } from './modules/tax-info/tax-info.routes.js';
 export { voucherRoutes } from './modules/vouchers/voucher.routes.js';
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn (Conformance Engine, ADR-0012): core.conformance.run / latest
+export { conformanceRoutes } from './modules/conformance/conformance.routes.js';

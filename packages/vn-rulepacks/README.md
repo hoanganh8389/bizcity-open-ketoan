@@ -1,13 +1,13 @@
-# Bộ kiểm chuẩn pháp lý Việt Nam — dữ liệu (`tests/conformance/vietnam/`)
+# Bộ kiểm chuẩn pháp lý Việt Nam — dữ liệu (`packages/vn-rulepacks/`)
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — lớp dữ liệu của bộ kiểm chuẩn VN: kho nguồn pháp lý, catalog, rulepack / ca có phiên bản, schema, báo cáo mẫu (VNCONF-002). -->
 
-> Luật: [RULE-VN-CONFORMANCE](../../../docs/rules/RULE-VN-CONFORMANCE.md) · Quy trình: [docs/compliance/](../../../docs/compliance/README.md) · Kiểm: `checks/vietnam/vn-conformance.check.mjs` (SC-VNC-1, SC-VNC-2) · Phase: [PHASE-020](../../../docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/README.md)
-> Đây là **dữ liệu** (JSON trong Git, phát hành bất biến). Runner chạy thật qua cổng công khai là lane `runtime` (VNCONF-003), chưa có. Không phải chứng nhận nhà nước, không phải ý kiến pháp lý.
+> Luật: [RULE-VN-CONFORMANCE](../../docs/rules/RULE-VN-CONFORMANCE.md) · Quy trình: [docs/compliance/](../../docs/compliance/README.md) · Kiểm: `checks/vietnam/vn-conformance.check.mjs` (SC-VNC-1, SC-VNC-2) · Phase: [PHASE-020](../../docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/README.md)
+> Gói `@bizcity/vn-rulepacks` <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thành gói workspace, có engine.mjs và diag-codes.json. -->: **dữ liệu luật** (JSON, phát hành bất biến, phiên bản theo nhịp luật) + **bộ đánh giá thuần `engine.mjs`** dùng chung cho `selfcheck.mjs --certify` (CI) và Conformance Engine trong Kernel (`core.conformance.run`). `diag-codes.json` ánh xạ kiểm DG-* sang mã tự chẩn đoán trong app. Không phải chứng nhận nhà nước, không phải ý kiến pháp lý.
 
 ## Cây thư mục
 
 ```text
-tests/conformance/vietnam/
+packages/vn-rulepacks/
 ├── catalog.json                 C01…C08: rulepack nào, ưu tiên, trạng thái, ticket
 ├── registry/legal-sources.json  kho nguồn pháp lý (bizcity_vn_legal_registry@1) — 17 văn bản, tất cả pending
 ├── schemas/                     4 schema (bộ kiểm JSON Schema rút gọn, lib/jsonschema.mjs)
@@ -38,6 +38,6 @@ Mỗi ca ghi `scenario.verified_by` (check / test **đang có** trong repo) và 
 ## Thêm / sửa
 
 1. Sửa JSON theo schema; chạy `node tests/conformance/selfcheck.mjs --only SC-VNC`.
-2. Thêm nguồn pháp lý: [LEGAL-SOURCE-REGISTRY.md](../../../docs/compliance/LEGAL-SOURCE-REGISTRY.md). Thêm / duyệt rulepack: [RULEPACK-GOVERNANCE.md](../../../docs/compliance/RULEPACK-GOVERNANCE.md).
-3. Đổi check: thêm vi phạm vào `fixtures/repo-bad/tests/conformance/vietnam/` và dòng trong `fixtures/expect.json`, chạy `--self-test`.
+2. Thêm nguồn pháp lý: [LEGAL-SOURCE-REGISTRY.md](../../docs/compliance/LEGAL-SOURCE-REGISTRY.md). Thêm / duyệt rulepack: [RULEPACK-GOVERNANCE.md](../../docs/compliance/RULEPACK-GOVERNANCE.md).
+3. Đổi check: thêm vi phạm vào `fixtures/repo-bad/packages/vn-rulepacks/` và dòng trong `fixtures/expect.json`, chạy `--self-test`.
 4. `status: approved` không đặt bằng tay khi chưa đủ điều kiện R-VNC-3 — SC-VNC-2 (block) sẽ đỏ, không có baseline.
