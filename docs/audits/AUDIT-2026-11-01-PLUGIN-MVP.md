@@ -1,5 +1,6 @@
 # Đánh giá 2026-11-01: Accounting Kernel ổn định + hệ sinh thái Drop-in Plugin — đạt bao nhiêu %, chuẩn hoá thế nào
 <!-- [2026-11-01 09:52 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá Kernel + plugin runtime so với mục tiêu "drop-in plugin kiểu WordPress", phản biện yêu cầu, lộ trình PR nhỏ theo phase. -->
+<!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — chủ duyệt: §6.2 D1–D6 chốt ở ADR-0011 (D3 ba mức tin cậy, D4 chặn bằng vai trò CSDL), §7 thêm PR-2b app ngoài tiến trình, §9 đã quyết -->
 
 > Theo yêu cầu của chủ dự án (Johnny Chu – Chu Hoàng Anh): *"Mô hình kiến trúc hiện tại đã đạt bao nhiêu % so với yêu cầu tiến tới Accounting Kernel ổn định + hệ sinh thái Drop-in Plugin giống trải nghiệm WordPress, nhưng tuân thủ bất biến kế toán và an toàn multi-tenant; phản biện yêu cầu; chuẩn hoá từ kiến trúc đến phase việc cụ thể."*
 > Đo ngày 2026-11-01 trên nhánh `feat/phase-0-tiep` **sau khi gộp `main` tới `62e44cd`** (PHASE-018 W5 OpenTelemetry, PHASE-019 W0), CSDL `ketoan_test` đủ migration 0001–0048. Mọi con số là kết quả chạy hôm nay, không lấy lại số lịch sử (xem §5). Bằng chứng mã ghi `tệp:dòng`; đường dẫn Kernel / Platform là gói mới `packages/kernel/src`, `packages/platform/src` (PHASES 2.3 xong 2026-11-01).
@@ -168,7 +169,9 @@ Kiểm tay bổ sung: `pg_trigger` trên `ledger_entries` / `accounting_events` 
                           ghi hash gói             └──────────────────────┘
 ```
 
-Quyết định thiết kế (đề nghị chủ duyệt — mục 9):
+> **Đã chốt 2026-11-01 ở [ADR-0011](../adr/ADR-0011-plugin-ba-muc-tin-cay.md)** (chủ duyệt; Core hướng tới developer tự host). Bảng dưới là bản đề nghị ban đầu, giữ để đối chiếu; hai chỗ đã đổi: **D3** thành ba mức tin cậy — module trong mã nguồn bản cài (repo gốc, fork hoặc monorepo của người tự host) · app ngoài tiến trình (khoá có phạm vi, webhook từ outbox, **iframe**) · gói ký chỉ từ Phase 5; **D4** chặn migration module bằng vai trò `mod_<key>_owner` của PostgreSQL, phân tích SQL chỉ còn là lint.
+
+Bản đề nghị ban đầu:
 
 | # | Quyết | Vì |
 |---|---|---|
@@ -205,16 +208,17 @@ Launcher hiện tại (ảnh 2) giữ nguyên. Chuẩn hoá ba điểm, **tất 
 
 ## 7. Lộ trình: PR nhỏ theo phase (không PR nào đổi toàn bộ kiến trúc)
 
-Thứ tự bắt buộc: PR-0 → PR-1 → PR-2 → PR-3 → PR-4 → PR-5; PR-P0 độc lập, làm ngay. Mỗi PR có bộ kiểm riêng, baseline không tăng.
+Thứ tự bắt buộc: PR-0 → PR-1 → PR-2 → PR-2b → PR-3 → PR-4 → PR-5 (PR-2b đi ngay sau PR-2 vì dùng chung `core.document.submit` và receipt); PR-P0 độc lập, làm ngay. Mỗi PR có bộ kiểm riêng, baseline không tăng.
 
 | PR | Phase | Việc | Xong khi (tín hiệu máy) | Ước |
 |---|---|---|---|---|
 | **PR-P0** | 004 / 006 / 001 | P0-1 trigger `ledger_entries` + `accounting_event*`; P0-2 tenant context cho subscriber; P0-3 `DB_APP_USER=ketoan_app` mặc định, CI chạy test pool | DG-DB-2 +3 dòng; test `events.test.ts` "subscriber A không thấy B"; `tenant-isolation.test.ts:86` chạy trong CI | 1–2 ngày |
 | **PR-0** | 001 | Luật dò: SC-RMP-1 kiểm `fileContains.file` tồn tại; ghim SHA Action (P2-1) | SC-RMP-1, SC-SEC-4 | ½ ngày |
 | **PR-1** | 011 (3.2) | **Manifest cho 9 phân hệ + 3 add-in** (sinh từ `ApiModule` / `WebModule` / `AddInManifest` hiện có, `waivers` có hạn cho A-17); `GET /system/modules` đọc từ manifest | SC-MOD-3 `enforce: block`, 12/12 manifest; SC-CON-2 đạt | 2 ngày |
+| **PR-2b** | 011 (3.14) | **App ngoài tiến trình** (ADR-0011 mức 2): phạm vi khoá theo module, subscriber `core.webhook` ký HMAC, vé iframe + giao thức `postMessage`, slot iframe | năng lực `apps.external`; test: app chỉ gọi được action trong phạm vi, webhook phát lại không trùng | 3–4 ngày |
 | **PR-2** | 011 (3.1) | **`@bizcity/module-sdk` v0.1**: `defineModule`, re-export `defineAction` / `defineSubscriber` / kiểu ctx; **`ctx.ledger.submit`** = action `core.document.submit` (P1-2, receipt); `ctx.settings.get` (P1-5) | `packages/module-sdk/package.json`; `actions.test.ts` receipt cho ingest; `mua-hang` chuyển sang `ctx.ledger.submit` làm mẫu | 3–4 ngày |
-| **PR-3** | 011 (mới: 3.13) | **Registry + vòng đời**: migration `module_registry`, `tenant_modules`; `bizcity module install / activate / deactivate / upgrade` (lệnh trong `scripts/` trước, `packages/cli` ở PR-5); nạp theo `status=active` + hash (D2); `Errors.moduleDisabled` **được gọi** ở `requirePermission` khi module tắt cho đơn vị | test: cài → bật → tắt → gọi route trả MODULE_DISABLED → bật lại; nâng cấp version ghi lịch sử | 4–5 ngày |
-| **PR-4** | 011 (3.10, mới 3.14) | **Migration theo module** (`data.migrations.module` available): thư mục `modules/<key>/migrations`, cột `module` trong `schema_migrations`, runner từ chối chạm Kernel (D4); schema `mod_<key>`; role `mod_<key>_rw` | DG-DB-5 (migration module không chạm Kernel); `tro-ly` chuyển vào CSDL (P2-2) | 4–5 ngày |
+| **PR-3** | 011 (3.13) | **Registry + vòng đời**: migration `module_registry`, `tenant_modules`; `bizcity module install / activate / deactivate / upgrade` (lệnh trong `scripts/` trước, `packages/cli` ở PR-5); nạp theo `status=active` + hash (D2); `Errors.moduleDisabled` **được gọi** ở `requirePermission` khi module tắt cho đơn vị | test: cài → bật → tắt → gọi route trả MODULE_DISABLED → bật lại; nâng cấp version ghi lịch sử | 4–5 ngày |
+| **PR-4** | 011 (3.10) | **Migration theo module** (`data.migrations.module` available): thư mục `modules/<key>/migrations`, cột `module` trong `schema_migrations`, runner từ chối chạm Kernel (D4); schema `mod_<key>`; role `mod_<key>_rw` | DG-DB-5 (migration module không chạm Kernel); `tro-ly` chuyển vào CSDL (P2-2) | 4–5 ngày |
 | **PR-5** | 014 (4.1, 4.2, 4.3) | `templates/starter-module` + **`modules/pos-mini`** (một chứng từ bán lẻ, `ctx.ledger.submit`, một subscriber, một slot menu); `packages/cli` (`doctor`, `module new/check/install`); lane `runtime` CONF-RUN trong CI | GOLDEN-CASE §8 đạt với pos-mini; CI job `plugin-compat` xanh | 5–6 ngày |
 | **PR-6** | 013 | UI: ô "＋ Thêm phân hệ", trang Phân hệ, launcher đọc `tenant_modules` (§6.3) | e2e: chủ đơn vị bật POS, ô hiện; người thường không thấy nút ＋ | 2–3 ngày |
 | PR-7 | 005 | P1-1 hash mã luật vào `policy_version` | SC-* so hash | 1–2 ngày |
@@ -235,6 +239,9 @@ Việc **không làm** trong lộ trình này (trả lời "không tạo trừu 
 | CI, conformance, typecheck, integration đạt | ✅ hôm nay | lane runtime → PR-5 |
 
 ## 9. Chủ dự án cần quyết
+
+> Mục 1 **đã quyết** 2026-11-01 → [ADR-0011](../adr/ADR-0011-plugin-ba-muc-tin-cay.md). Mục 2–4 còn mở.
+
 
 1. D1–D6 §6.2 (đặc biệt D3: MVP chỉ gói trong repo / gói ký — không tải gói lạ).
 2. PR-P0 làm ngay trên nhánh này hay nhánh riêng (chạm Kernel mức K2 — migration trigger).

@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — plugin ba mức tin cậy, không drop-in; lộ trình 3.13, 3.14; năng lực modules.lifecycle, apps.external (planned) -->
+- **Quyết định kiến trúc plugin** ([ADR-0011](docs/adr/ADR-0011-plugin-ba-muc-tin-cay.md), chủ dự án duyệt 01/11/2026; chưa đổi mã chạy): ba mức tin cậy — module trong mã nguồn bản cài (tự host, trong tiến trình, bộ kiểm bắt buộc) · app ngoài tiến trình (khoá API có phạm vi, webhook sự kiện ký HMAC, nhúng iframe) · gói ký (Phase 5). Không drop-in (chép thư mục là chạy). Hai mức bật (bản cài × đơn vị), chỉ nạp module đúng hash bản build, migration module chạy bằng vai trò `mod_<key>_owner`, ghi sổ chỉ qua `submit`. Lộ trình thêm 3.13 (registry + vòng đời), 3.14 (app ngoài tiến trình); năng lực `modules.lifecycle`, `apps.external` (planned).
 - **Ký theo vai trên mọi chứng từ** (năng lực `documents.signatures`, migration `0048`, PHASES 2.7): `ctx.documents.sign / signatures / unsign` — chữ ký gắn phiên bản hiện tại (phiên bản mới thì chữ ký cũ hết hiệu lực), chỉ người dùng đăng nhập ký (khoá API, AI không ký thay người), huỷ: người đã ký hoặc chủ đơn vị; `GET /api/v1/document-signatures`. Phiếu kế toán giữ luồng ký 4 vai cũ.
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 - **Truy vết OpenTelemetry từ lõi** (PHASE-018 W5, ADR-0010; mức Kernel K1 — chỉ bọc cổng `kernel/public.ts`, hành vi ghi sổ không đổi):

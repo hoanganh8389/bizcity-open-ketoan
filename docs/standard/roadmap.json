@@ -113,6 +113,10 @@
       "done": [{ "capability": "templates.posting" }, { "check": "SC-TPL-1" }] },
     { "id": "3.12", "phase": "3", "title": "posting.reason.suggest + manifest ledger.submits[].reasons", "areas": ["template", "mcp-cell"],
       "done": [{ "capability": "posting.reason-suggest" }, { "capability": "ledger.reasons.declare" }] },
+    { "id": "3.13", "phase": "3", "title": "Registry module + vòng đời: install / activate / deactivate / upgrade, nạp theo hash (ADR-0011 D1, D2)", "areas": ["module", "security"], "after": ["3.2"],
+      "done": [{ "capability": "modules.lifecycle" }] },
+    { "id": "3.14", "phase": "3", "title": "App ngoài tiến trình: khoá có phạm vi, webhook từ outbox, iframe (ADR-0011 mức 2)", "areas": ["module", "event", "security"], "after": ["3.4"],
+      "done": [{ "capability": "apps.external" }] },
 
     { "id": "4.1", "phase": "4", "title": "@bizcity/cli: doctor, module check, ledger verify…", "areas": ["quality", "diagnostics"],
       "done": [{ "file": "packages/cli/package.json" }] },

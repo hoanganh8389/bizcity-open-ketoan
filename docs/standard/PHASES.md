@@ -26,6 +26,7 @@
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.7: documents.numbering / versions / links / attachments có (0045, core/documents.ts) -->
 <!-- [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — 2.4: view danh mục bizcity_read (0044), data.read-views available -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — chủ duyệt chuyển ngay (Q012-2): modules/reports → phan-he/ke-toan/reports; 3.9 còn excel-export và B01 → tai-san -->
+<!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — thêm 3.13 registry module + vòng đời, 3.14 app ngoài tiến trình -->
 <!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.3 có: packages/platform + packages/kernel (D010-7…9) -->
 
 > Thay phần "Giai đoạn 0–3" của [../framework/05-LO-TRINH.md](../framework/05-LO-TRINH.md) (tệp đó giữ phần tư vấn và trỏ về đây). Mỗi việc cũ có mã (vd `1.1`) được ghi lại ở cột "Từ lộ trình cũ".
@@ -112,6 +113,8 @@
 | 3.10 | Role CSDL theo module (`mod_<key>_rw`) | module không `INSERT` được bảng Kernel ở tầng CSDL | 3.4 |
 | 3.11 | **Gói định khoản**: bảng `config_packs`, xem trước + cài + gỡ (STD-TPL-5..9), tách `db/seeds` thành `bizcity.vn-tt99.nen` + gói thương mại; màn Gói định khoản | cài gói lên đơn vị trống → mọi `docType` hiện có ghi sổ được | mới |
 | 3.12 | `posting.reason.suggest` tất định (từ khoá, ví dụ, lịch sử đơn vị) + manifest `ledger.submits[].reasons` | gợi ý đúng ≥ 80% trên tình huống mẫu của gói | mới |
+| 3.13 | **Registry module + vòng đời** ([ADR-0011](../adr/ADR-0011-plugin-ba-muc-tin-cay.md) D1, D2): `module_registry` (phiên bản, hash bản build, trạng thái) × `tenant_modules` (bật theo đơn vị); `bizcity module install / activate / deactivate / upgrade`; chỉ nạp module `active` đúng hash; tắt = `MODULE_DISABLED`, sổ không đổi | năng lực `modules.lifecycle` available | mới |
+| 3.14 | **App ngoài tiến trình** ([ADR-0011](../adr/ADR-0011-plugin-ba-muc-tin-cay.md) mức 2): khoá API có phạm vi theo manifest app, webhook sự kiện outbox ký HMAC (thử lại theo `event_deliveries`), iframe ở menu / slot với vé ngắn hạn qua `postMessage`; ghi sổ qua `core.document.submit` | năng lực `apps.external` available | mới |
 
 ## Phase 4 — AGENTS.md, CLI, starter template, test
 

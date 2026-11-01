@@ -4,6 +4,7 @@
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 <!-- [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất. -->
 <!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
+<!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — thêm ADR-0011 vào chỉ mục -->
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại lệ Tier 1. Chỉ thêm; quyết định bị thay thì ghi "Thay bởi ADR-xxxx" ở đầu tệp cũ.
@@ -20,6 +21,7 @@ Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại 
 | [0008](ADR-0008-cay-thu-muc-lean.md) | Cây thư mục lean: nhận ý đề xuất 9 thư mục gốc, gộp theo tiêu chí lean (`packages/kernel` một gói, `contracts/` theo ba lớp kiểm soát, sự kiện là gói Platform) | Chấp nhận |
 | [0009](ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) | Chính sách kế toán có phiên bản + ngày hiệu lực (C-9): đề xuất bản chụp chính sách `posting_policy_versions`, định khoản theo bản của ngày hạch toán; sửa cấu hình tự chụp bản amend, đổi chế độ thì phát hành | Chấp nhận (chủ dự án 2026-10-30; kế toán trưởng chưa ký) |
 | [0010](ADR-0010-opentelemetry-tu-loi.md) | OpenTelemetry từ lõi kiến trúc: sáu lớp bảo đảm (Kernel · PostgreSQL + Audit Ledger · OpenTelemetry · Prometheus · Grafana + Tempo + Loki · Alertmanager); span chỉ ở khớp nối Platform + bọc một lần cổng `kernel/public.ts`, thuộc tính theo danh sách cho phép; module cộng đồng tự có trace, không sửa Kernel | Chấp nhận (chủ dự án 2026-11-01) |
+| [0011](ADR-0011-plugin-ba-muc-tin-cay.md) | Plugin theo ba mức tin cậy: module trong mã nguồn bản cài (tự host, trong tiến trình) · app ngoài tiến trình (khoá có phạm vi, webhook từ outbox, iframe) · gói ký (Phase 5); **không drop-in**; hai mức bật, nạp theo hash, migration module bằng vai trò `mod_<key>_owner`, ghi sổ chỉ qua `submit` | Chấp nhận 2026-11-01 |
 
 ## Khuôn
 
