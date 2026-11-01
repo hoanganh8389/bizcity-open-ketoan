@@ -1,0 +1,10 @@
+{
+  "contract": "bizcity_vn_profile@1",
+  "name": "Doanh nghiệp năm tài chính 01/07/2025–30/06/2026 — không tự chuyển TT99 ngày 01/01/2026 (ca C02.2)",
+  "jurisdiction": "VN",
+  "accounting_regime": "vn-tt99-2025",
+  "fiscal_year_start": "07-01",
+  "entity_type": "enterprise",
+  "as_of": "2026-03-15",
+  "currency": "VND"
+}

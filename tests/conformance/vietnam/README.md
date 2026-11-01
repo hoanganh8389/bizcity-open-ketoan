@@ -9,7 +9,7 @@
 ```text
 tests/conformance/vietnam/
 ├── catalog.json                 C01…C08: rulepack nào, ưu tiên, trạng thái, ticket
-├── registry/legal-sources.json  kho nguồn pháp lý (bizcity_vn_legal_registry@1) — 16 văn bản, tất cả pending
+├── registry/legal-sources.json  kho nguồn pháp lý (bizcity_vn_legal_registry@1) — 17 văn bản, tất cả pending
 ├── schemas/                     4 schema (bộ kiểm JSON Schema rút gọn, lib/jsonschema.mjs)
 │   ├── legal-source.schema.json · rulepack.schema.json · case.schema.json · report.schema.json
 │   └── examples/report.example.json   báo cáo mẫu đúng khuôn (result REVIEW_REQUIRED)

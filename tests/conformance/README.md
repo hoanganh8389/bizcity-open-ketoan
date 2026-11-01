@@ -12,8 +12,12 @@ node tests/conformance/selfcheck.mjs --module modules/x # kiểm một module tr
 node tests/conformance/selfcheck.mjs --self-test        # bộ kiểm tự kiểm trên fixtures (chạy khi sửa bộ kiểm)
 node tests/conformance/selfcheck.mjs --list             # danh sách check
 node tests/conformance/selfcheck.mjs --only SC-KERNEL   # chạy một phần (không ghi latest/)
+node tests/conformance/selfcheck.mjs --certify [--module modules/x] [--profile vietnam/profiles/fy-offset-2025-07.json] [--runtime]
+                                                        # MỘT LỆNH chứng nhận: ba cổng (tĩnh · CSDL · runtime) + tuân thủ VN theo rulepack chọn theo hồ sơ, phiên bản, ngày hiệu lực
+                                                        # → latest/vn-conformance-report.json · vn-junit.xml · CERTIFICATE.md (PHASE-020, ADR-0012)
 node tests/conformance/selfcheck.mjs --help
 ```
+<!-- [2026-11-02 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm lệnh --certify. -->
 
 Mã thoát: `0` ĐẠT · `1` KHÔNG ĐẠT · `2` lỗi dùng lệnh / lỗi bộ kiểm.
 

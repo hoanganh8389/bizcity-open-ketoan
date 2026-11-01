@@ -1,219 +1,740 @@
 {
   "contract": "bizcity_vn_legal_registry@1",
-  "updated_at": "2026-11-01",
+  "updated_at": "2026-11-02",
   "notice": "Kho khởi tạo PHASE-020 (VNCONF-002). Mọi mục chép từ docs/can-cu (rà soát 13/10/2026) và đặc tả OKT-SPEC-VNCONF-001 §3.1 / §15; CHƯA người có trách nhiệm nào rà lại văn bản gốc, CHƯA có ảnh chụp + băm. Vì vậy mọi review.status = pending và không rulepack nào được approved trên các nguồn này (R-VNC-1, R-VNC-3). Ngày tháng ghi theo tài liệu nguồn, cần đối chiếu Công báo trước khi dùng.",
   "sources": [
     {
       "id": "vn.law.88-2015-qh13",
-      "kind": "law", "domain": "accounting",
-      "number": "88/2015/QH13", "title": "Luật Kế toán", "issuer": "Quốc hội",
-      "issued_on": "2015-11-20", "effective_from": "2017-01-01", "effective_to": null, "status": "amended",
-      "applies_to": { "entity_types": ["any"], "fiscal_year_start_from": null, "note": "Nền tảng kế toán; chế độ hạch toán chi tiết ở thông tư" },
-      "replaces": [], "amended_by": ["vn.law.56-2024-qh15", "vn.law.108-2025-qh15"], "related": ["vn.decree.174-2016-nd-cp"],
-      "official_url": null,
-      "secondary_urls": ["https://luatvietnam.vn/ke-toan/van-ban-hop-nhat-41-vbhn-vpqh-2026-hop-nhat-luat-ke-toan-430728-d5.html"],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": "41/VBHN-VPQH ngày 31/3/2026 (theo docs/can-cu, cần đối chiếu)" },
-      "provisions": [
-        { "ref": "Điều 26", "summary": "Khoá sổ kế toán cuối kỳ; sổ điện tử phải an toàn, bảo mật, tra cứu được", "effective_from": null, "effective_to": null, "review_status": "pending" },
-        { "ref": "Điều 27", "summary": "Sửa sai không tẩy xoá: ghi cải chính, ghi số âm, lập chứng từ điều chỉnh", "effective_from": null, "effective_to": null, "review_status": "pending" },
-        { "ref": "REVIEW_REQUIRED", "summary": "Điều về chứng từ kế toán: mọi nghiệp vụ phát sinh phải có chứng từ (chưa dẫn số điều từ văn bản gốc)", "effective_from": null, "effective_to": null, "review_status": "pending" },
-        { "ref": "Điều 70a", "summary": "Bổ sung bởi Luật 108/2025/QH15, hiệu lực 01/7/2026 (theo docs/can-cu, cần đối chiếu)", "effective_from": "2026-07-01", "effective_to": null, "review_status": "pending" }
+      "kind": "law",
+      "domain": "accounting",
+      "number": "88/2015/QH13",
+      "title": "Luật Kế toán",
+      "issuer": "Quốc hội",
+      "issued_on": "2015-11-20",
+      "effective_from": "2017-01-01",
+      "effective_to": null,
+      "status": "amended",
+      "applies_to": {
+        "entity_types": [
+          "any"
+        ],
+        "fiscal_year_start_from": null,
+        "note": "Nền tảng kế toán; chế độ hạch toán chi tiết ở thông tư"
+      },
+      "replaces": [],
+      "amended_by": [
+        "vn.law.56-2024-qh15",
+        "vn.law.108-2025-qh15"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Chép từ docs/can-cu/01-danh-muc-van-ban.md" }
+      "related": [
+        "vn.decree.174-2016-nd-cp"
+      ],
+      "official_url": null,
+      "secondary_urls": [
+        "https://luatvietnam.vn/ke-toan/van-ban-hop-nhat-41-vbhn-vpqh-2026-hop-nhat-luat-ke-toan-430728-d5.html"
+      ],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": "41/VBHN-VPQH ngày 31/3/2026 (theo docs/can-cu, cần đối chiếu)"
+      },
+      "provisions": [
+        {
+          "ref": "Điều 26",
+          "summary": "Khoá sổ kế toán cuối kỳ; sổ điện tử phải an toàn, bảo mật, tra cứu được",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "Điều 27",
+          "summary": "Sửa sai không tẩy xoá: ghi cải chính, ghi số âm, lập chứng từ điều chỉnh",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Điều về chứng từ kế toán: mọi nghiệp vụ phát sinh phải có chứng từ (chưa dẫn số điều từ văn bản gốc)",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "Điều 70a",
+          "summary": "Bổ sung bởi Luật 108/2025/QH15, hiệu lực 01/7/2026 (theo docs/can-cu, cần đối chiếu)",
+          "effective_from": "2026-07-01",
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Chép từ docs/can-cu/01-danh-muc-van-ban.md"
+      }
     },
     {
       "id": "vn.law.56-2024-qh15",
-      "kind": "law", "domain": "accounting",
-      "number": "56/2024/QH15", "title": "Luật sửa đổi, bổ sung một số điều của 9 luật (gồm Luật Kế toán)", "issuer": "Quốc hội",
-      "issued_on": null, "effective_from": "2025-01-01", "effective_to": null, "status": "unverified",
-      "replaces": [], "amended_by": [], "related": ["vn.law.88-2015-qh13"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "law",
+      "domain": "accounting",
+      "number": "56/2024/QH15",
+      "title": "Luật sửa đổi, bổ sung một số điều của 9 luật (gồm Luật Kế toán)",
+      "issuer": "Quốc hội",
+      "issued_on": null,
+      "effective_from": "2025-01-01",
+      "effective_to": null,
+      "status": "unverified",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.law.88-2015-qh13"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Chỉ biết qua ghi chú trong docs/can-cu; chưa đọc văn bản" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Chỉ biết qua ghi chú trong docs/can-cu; chưa đọc văn bản"
+      }
     },
     {
       "id": "vn.decree.174-2016-nd-cp",
-      "kind": "decree", "domain": "accounting",
-      "number": "174/2016/NĐ-CP", "title": "Quy định chi tiết một số điều của Luật Kế toán", "issuer": "Chính phủ",
-      "issued_on": "2016-12-30", "effective_from": "2017-01-01", "effective_to": null, "status": "in_force",
-      "replaces": [], "amended_by": [], "related": ["vn.law.88-2015-qh13"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [
-        { "ref": "Điều 12", "summary": "Tài liệu lưu trữ tối thiểu 5 năm", "effective_from": null, "effective_to": null, "review_status": "pending" },
-        { "ref": "Điều 13", "summary": "Sổ kế toán, báo cáo tài chính, chứng từ ghi sổ lưu trữ tối thiểu 10 năm", "effective_from": null, "effective_to": null, "review_status": "pending" }
+      "kind": "decree",
+      "domain": "accounting",
+      "number": "174/2016/NĐ-CP",
+      "title": "Quy định chi tiết một số điều của Luật Kế toán",
+      "issuer": "Chính phủ",
+      "issued_on": "2016-12-30",
+      "effective_from": "2017-01-01",
+      "effective_to": null,
+      "status": "in_force",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.law.88-2015-qh13"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "Điều 12",
+          "summary": "Tài liệu lưu trữ tối thiểu 5 năm",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "Điều 13",
+          "summary": "Sổ kế toán, báo cáo tài chính, chứng từ ghi sổ lưu trữ tối thiểu 10 năm",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": ""
+      }
     },
     {
       "id": "vn.circular.99-2025-tt-btc",
-      "kind": "circular", "domain": "accounting",
-      "number": "99/2025/TT-BTC", "title": "Chế độ kế toán doanh nghiệp (hệ thống tài khoản, sổ kế toán, báo cáo tài chính)", "issuer": "Bộ Tài chính",
-      "issued_on": "2025-10-27", "effective_from": "2026-01-01", "effective_to": null, "status": "in_force",
-      "applies_to": { "entity_types": ["enterprise"], "fiscal_year_start_from": "2026-01-01", "note": "Áp dụng cho NĂM TÀI CHÍNH bắt đầu từ hoặc sau 01/01/2026 (Hỏi đáp Bộ Tài chính 159102). Năm tài chính 01/7/2025–30/6/2026 không tự chuyển ngày 01/01/2026" },
-      "replaces": ["vn.circular.200-2014-tt-btc"], "amended_by": [], "related": [],
-      "official_url": "https://congbao.chinhphu.vn/van-ban/thong-tu-so-99-2025-tt-btc-46529.htm",
-      "secondary_urls": ["https://portal.mof.gov.vn/hoidapcstc/home/cthoidap/159102", "https://kpmg.com/vn/vi/home/phan-tich-chuyen-sau/2025/11/key-changes-in-vietnamese-accounting-system-for-enterprises.html"],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [
-        { "ref": "Phụ lục II", "summary": "Hệ thống tài khoản kế toán doanh nghiệp", "effective_from": "2026-01-01", "effective_to": null, "review_status": "pending" },
-        { "ref": "Phụ lục III", "summary": "Sổ kế toán", "effective_from": "2026-01-01", "effective_to": null, "review_status": "pending" },
-        { "ref": "Phụ lục IV", "summary": "Báo cáo tài chính B01-DN, B02-DN, B03-DN, B09-DN", "effective_from": "2026-01-01", "effective_to": null, "review_status": "pending" },
-        { "ref": "REVIEW_REQUIRED", "summary": "Điều khoản hiệu lực và chuyển tiếp theo năm tài chính (chưa dẫn số điều)", "effective_from": null, "effective_to": null, "review_status": "pending" }
+      "kind": "circular",
+      "domain": "accounting",
+      "number": "99/2025/TT-BTC",
+      "title": "Chế độ kế toán doanh nghiệp (hệ thống tài khoản, sổ kế toán, báo cáo tài chính)",
+      "issuer": "Bộ Tài chính",
+      "issued_on": "2025-10-27",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "status": "in_force",
+      "applies_to": {
+        "entity_types": [
+          "enterprise"
+        ],
+        "fiscal_year_start_from": "2026-01-01",
+        "note": "Áp dụng cho NĂM TÀI CHÍNH bắt đầu từ hoặc sau 01/01/2026 (Hỏi đáp Bộ Tài chính 159102). Năm tài chính 01/7/2025–30/6/2026 không tự chuyển ngày 01/01/2026"
+      },
+      "replaces": [
+        "vn.circular.200-2014-tt-btc"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Repo đang có hệ thống tài khoản + gói nền vn-tt99-nen theo thông tư này" }
+      "amended_by": [],
+      "related": [],
+      "official_url": "https://congbao.chinhphu.vn/van-ban/thong-tu-so-99-2025-tt-btc-46529.htm",
+      "secondary_urls": [
+        "https://portal.mof.gov.vn/hoidapcstc/home/cthoidap/159102",
+        "https://kpmg.com/vn/vi/home/phan-tich-chuyen-sau/2025/11/key-changes-in-vietnamese-accounting-system-for-enterprises.html"
+      ],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "Phụ lục II",
+          "summary": "Hệ thống tài khoản kế toán doanh nghiệp",
+          "effective_from": "2026-01-01",
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "Phụ lục III",
+          "summary": "Sổ kế toán",
+          "effective_from": "2026-01-01",
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "Phụ lục IV",
+          "summary": "Báo cáo tài chính B01-DN, B02-DN, B03-DN, B09-DN",
+          "effective_from": "2026-01-01",
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Điều khoản hiệu lực và chuyển tiếp theo năm tài chính (chưa dẫn số điều)",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Repo đang có hệ thống tài khoản + gói nền vn-tt99-nen theo thông tư này"
+      }
     },
     {
       "id": "vn.circular.200-2014-tt-btc",
-      "kind": "circular", "domain": "accounting",
-      "number": "200/2014/TT-BTC", "title": "Chế độ kế toán doanh nghiệp (trước Thông tư 99/2025)", "issuer": "Bộ Tài chính",
-      "issued_on": null, "effective_from": "2015-01-01", "effective_to": null, "status": "replaced",
-      "applies_to": { "entity_types": ["enterprise"], "fiscal_year_start_from": null, "note": "Vẫn chi phối năm tài chính bắt đầu trước 01/01/2026 (vd 01/7/2025–30/6/2026). effective_to để null vì phụ thuộc năm tài chính từng đơn vị" },
-      "replaces": [], "amended_by": [], "related": ["vn.circular.99-2025-tt-btc"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Cần cho ca C02.2 (năm tài chính lệch năm dương lịch)" }
+      "kind": "circular",
+      "domain": "accounting",
+      "number": "200/2014/TT-BTC",
+      "title": "Chế độ kế toán doanh nghiệp (trước Thông tư 99/2025)",
+      "issuer": "Bộ Tài chính",
+      "issued_on": null,
+      "effective_from": "2015-01-01",
+      "effective_to": null,
+      "status": "replaced",
+      "applies_to": {
+        "entity_types": [
+          "enterprise"
+        ],
+        "fiscal_year_start_from": null,
+        "note": "Vẫn chi phối năm tài chính bắt đầu trước 01/01/2026 (vd 01/7/2025–30/6/2026). effective_to để null vì phụ thuộc năm tài chính từng đơn vị"
+      },
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.circular.99-2025-tt-btc"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Nội dung về kế toán cổ phần hoá doanh nghiệp nhà nước còn áp dụng trong giai đoạn chuyển tiếp sau khi TT99/2025 thay thế phần lớn TT200 — provision còn hiệu lực riêng, không phải TT200 tắt (theo nguồn thứ cấp, cần đối chiếu điều khoản chuyển tiếp của TT99)",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Cần cho ca C02.2 (năm tài chính lệch năm dương lịch) và provision chuyển tiếp cổ phần hoá DNNN; registry mô hình hiệu lực ở cấp điều khoản, không bật / tắt cả văn bản"
+      }
     },
     {
       "id": "vn.circular.133-2016-tt-btc",
-      "kind": "circular", "domain": "accounting",
-      "number": "133/2016/TT-BTC", "title": "Chế độ kế toán doanh nghiệp nhỏ và vừa", "issuer": "Bộ Tài chính",
-      "issued_on": null, "effective_from": "2017-01-01", "effective_to": null, "status": "unverified",
-      "applies_to": { "entity_types": ["sme", "micro"], "fiscal_year_start_from": null, "note": "Điều kiện lựa chọn và các sửa đổi hiện hành chưa kiểm" },
-      "replaces": [], "amended_by": [], "related": [],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "circular",
+      "domain": "accounting",
+      "number": "133/2016/TT-BTC",
+      "title": "Chế độ kế toán doanh nghiệp nhỏ và vừa",
+      "issuer": "Bộ Tài chính",
+      "issued_on": null,
+      "effective_from": "2017-01-01",
+      "effective_to": null,
+      "status": "unverified",
+      "applies_to": {
+        "entity_types": [
+          "sme",
+          "micro"
+        ],
+        "fiscal_year_start_from": null,
+        "note": "Điều kiện lựa chọn và các sửa đổi hiện hành chưa kiểm"
+      },
+      "replaces": [],
+      "amended_by": [],
+      "related": [],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Repo chỉ có mã chế độ vn-tt133-2016 trong enum gói định khoản; chưa có hệ thống tài khoản, chưa có gói" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Repo chỉ có mã chế độ vn-tt133-2016 trong enum gói định khoản; chưa có hệ thống tài khoản, chưa có gói"
+      }
+    },
+    {
+      "id": "vn.circular.152-2025-tt-btc",
+      "kind": "circular",
+      "domain": "accounting",
+      "number": "152/2025/TT-BTC",
+      "title": "Chế độ kế toán hộ kinh doanh, cá nhân kinh doanh",
+      "issuer": "Bộ Tài chính",
+      "issued_on": null,
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "status": "unverified",
+      "applies_to": {
+        "entity_types": [
+          "household"
+        ],
+        "fiscal_year_start_from": "2026-01-01",
+        "note": "Hộ, cá nhân kinh doanh từ 01/01/2026 (theo tài liệu Conformance Engine của chủ dự án; chưa đọc văn bản gốc). Liên quan điều khoản hiệu lực sớm của Luật Quản lý thuế 108/2025"
+      },
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.law.108-2025-qh15"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Chưa có trong docs/can-cu; cần số hiệu, ngày ban hành, link Công báo"
+      }
     },
     {
       "id": "vn.law.48-2024-qh15",
-      "kind": "law", "domain": "tax",
-      "number": "48/2024/QH15", "title": "Luật Thuế giá trị gia tăng", "issuer": "Quốc hội",
-      "issued_on": "2024-11-26", "effective_from": "2025-07-01", "effective_to": null, "status": "amended",
-      "replaces": [], "amended_by": ["vn.law.149-2025-qh15"], "related": ["vn.decree.181-2025-nd-cp", "vn.resolution.204-2025-qh15"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [
-        { "ref": "REVIEW_REQUIRED", "summary": "Điều kiện khấu trừ thuế đầu vào: hoá đơn hợp pháp; chứng từ thanh toán không dùng tiền mặt từ 5 triệu đồng", "effective_from": "2025-07-01", "effective_to": null, "review_status": "pending" },
-        { "ref": "REVIEW_REQUIRED", "summary": "Đối tượng không chịu thuế, thuế suất 0% / 5% / 10%", "effective_from": "2025-07-01", "effective_to": null, "review_status": "pending" }
+      "kind": "law",
+      "domain": "tax",
+      "number": "48/2024/QH15",
+      "title": "Luật Thuế giá trị gia tăng",
+      "issuer": "Quốc hội",
+      "issued_on": "2024-11-26",
+      "effective_from": "2025-07-01",
+      "effective_to": null,
+      "status": "amended",
+      "replaces": [],
+      "amended_by": [
+        "vn.law.149-2025-qh15"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Phân kỳ từng chính sách theo thời điểm; không suy tính hợp lệ về thuế từ bút toán hợp lệ (R-VNC-5)" }
+      "related": [
+        "vn.decree.181-2025-nd-cp",
+        "vn.resolution.204-2025-qh15"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Điều kiện khấu trừ thuế đầu vào: hoá đơn hợp pháp; chứng từ thanh toán không dùng tiền mặt từ 5 triệu đồng",
+          "effective_from": "2025-07-01",
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Đối tượng không chịu thuế, thuế suất 0% / 5% / 10%",
+          "effective_from": "2025-07-01",
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Phân kỳ từng chính sách theo thời điểm; không suy tính hợp lệ về thuế từ bút toán hợp lệ (R-VNC-5)"
+      }
     },
     {
       "id": "vn.law.149-2025-qh15",
-      "kind": "law", "domain": "tax",
-      "number": "149/2025/QH15", "title": "Luật sửa đổi, bổ sung Luật Thuế giá trị gia tăng", "issuer": "Quốc hội",
-      "issued_on": "2025-12-11", "effective_from": "2026-01-01", "effective_to": null, "status": "unverified",
-      "replaces": [], "amended_by": [], "related": ["vn.law.48-2024-qh15"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "law",
+      "domain": "tax",
+      "number": "149/2025/QH15",
+      "title": "Luật sửa đổi, bổ sung Luật Thuế giá trị gia tăng",
+      "issuer": "Quốc hội",
+      "issued_on": "2025-12-11",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "status": "unverified",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.law.48-2024-qh15"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Theo docs/can-cu; đặc tả VNCONF không nhắc, cần đối chiếu" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Theo docs/can-cu; đặc tả VNCONF không nhắc, cần đối chiếu"
+      }
     },
     {
       "id": "vn.decree.181-2025-nd-cp",
-      "kind": "decree", "domain": "tax",
-      "number": "181/2025/NĐ-CP", "title": "Quy định chi tiết thi hành Luật Thuế giá trị gia tăng", "issuer": "Chính phủ",
-      "issued_on": null, "effective_from": "2025-07-01", "effective_to": null, "status": "unverified",
-      "replaces": [], "amended_by": [], "related": ["vn.law.48-2024-qh15"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "decree",
+      "domain": "tax",
+      "number": "181/2025/NĐ-CP",
+      "title": "Quy định chi tiết thi hành Luật Thuế giá trị gia tăng",
+      "issuer": "Chính phủ",
+      "issued_on": null,
+      "effective_from": "2025-07-01",
+      "effective_to": null,
+      "status": "unverified",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.law.48-2024-qh15"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": ""
+      }
     },
     {
       "id": "vn.resolution.204-2025-qh15",
-      "kind": "resolution", "domain": "tax",
-      "number": "204/2025/QH15", "title": "Giảm 2% thuế suất thuế GTGT cho một số nhóm hàng hoá, dịch vụ", "issuer": "Quốc hội",
-      "issued_on": "2025-06-17", "effective_from": "2025-07-01", "effective_to": "2026-12-31", "status": "in_force",
-      "applies_to": { "entity_types": ["any"], "fiscal_year_start_from": null, "note": "Áp theo NGÀY GIAO DỊCH / hoá đơn, không theo năm tài chính. Hết hạn 31/12/2026: loại thuế 8% phải rà trước năm 2027" },
-      "replaces": [], "amended_by": [], "related": ["vn.decree.174-2025-nd-cp"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "resolution",
+      "domain": "tax",
+      "number": "204/2025/QH15",
+      "title": "Giảm 2% thuế suất thuế GTGT cho một số nhóm hàng hoá, dịch vụ",
+      "issuer": "Quốc hội",
+      "issued_on": "2025-06-17",
+      "effective_from": "2025-07-01",
+      "effective_to": "2026-12-31",
+      "status": "in_force",
+      "applies_to": {
+        "entity_types": [
+          "any"
+        ],
+        "fiscal_year_start_from": null,
+        "note": "Áp theo NGÀY GIAO DỊCH / hoá đơn, không theo năm tài chính. Hết hạn 31/12/2026: loại thuế 8% phải rà trước năm 2027"
+      },
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.decree.174-2025-nd-cp"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Ví dụ điển hình của quy tắc có hạn dùng: rulepack VAT phải chọn theo transaction_date" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Ví dụ điển hình của quy tắc có hạn dùng: rulepack VAT phải chọn theo transaction_date"
+      }
     },
     {
       "id": "vn.decree.174-2025-nd-cp",
-      "kind": "decree", "domain": "tax",
-      "number": "174/2025/NĐ-CP", "title": "Quy định chính sách giảm thuế GTGT theo Nghị quyết 204/2025/QH15 (danh mục loại trừ)", "issuer": "Chính phủ",
-      "issued_on": null, "effective_from": "2025-07-01", "effective_to": "2026-12-31", "status": "unverified",
-      "replaces": [], "amended_by": [], "related": ["vn.resolution.204-2025-qh15"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "decree",
+      "domain": "tax",
+      "number": "174/2025/NĐ-CP",
+      "title": "Quy định chính sách giảm thuế GTGT theo Nghị quyết 204/2025/QH15 (danh mục loại trừ)",
+      "issuer": "Chính phủ",
+      "issued_on": null,
+      "effective_from": "2025-07-01",
+      "effective_to": "2026-12-31",
+      "status": "unverified",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.resolution.204-2025-qh15"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": ""
+      }
     },
     {
       "id": "vn.decree.123-2020-nd-cp",
-      "kind": "decree", "domain": "invoice",
-      "number": "123/2020/NĐ-CP", "title": "Quy định về hoá đơn, chứng từ", "issuer": "Chính phủ",
-      "issued_on": "2020-10-19", "effective_from": "2022-07-01", "effective_to": null, "status": "amended",
-      "replaces": [], "amended_by": ["vn.decree.70-2025-nd-cp"], "related": ["vn.circular.32-2025-tt-btc"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [
-        { "ref": "REVIEW_REQUIRED", "summary": "Thời điểm lập hoá đơn; nội dung bắt buộc theo loại hoá đơn", "effective_from": null, "effective_to": null, "review_status": "pending" },
-        { "ref": "REVIEW_REQUIRED", "summary": "Xử lý hoá đơn sai sót: điều chỉnh / thay thế, tham chiếu hoá đơn gốc", "effective_from": null, "effective_to": null, "review_status": "pending" }
+      "kind": "decree",
+      "domain": "invoice",
+      "number": "123/2020/NĐ-CP",
+      "title": "Quy định về hoá đơn, chứng từ",
+      "issuer": "Chính phủ",
+      "issued_on": "2020-10-19",
+      "effective_from": "2022-07-01",
+      "effective_to": null,
+      "status": "amended",
+      "replaces": [],
+      "amended_by": [
+        "vn.decree.70-2025-nd-cp"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Phần mềm không phát hành hoá đơn; nhận dữ liệu hoá đơn kèm chứng từ (docs/can-cu/05)" }
+      "related": [
+        "vn.circular.32-2025-tt-btc"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Thời điểm lập hoá đơn; nội dung bắt buộc theo loại hoá đơn",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Xử lý hoá đơn sai sót: điều chỉnh / thay thế, tham chiếu hoá đơn gốc",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Phần mềm không phát hành hoá đơn; nhận dữ liệu hoá đơn kèm chứng từ (docs/can-cu/05)"
+      }
     },
     {
       "id": "vn.decree.70-2025-nd-cp",
-      "kind": "decree", "domain": "invoice",
-      "number": "70/2025/NĐ-CP", "title": "Sửa đổi, bổ sung Nghị định 123/2020/NĐ-CP về hoá đơn, chứng từ", "issuer": "Chính phủ",
-      "issued_on": "2025-03-20", "effective_from": "2025-06-01", "effective_to": null, "status": "in_force",
-      "replaces": [], "amended_by": [], "related": ["vn.decree.123-2020-nd-cp"],
+      "kind": "decree",
+      "domain": "invoice",
+      "number": "70/2025/NĐ-CP",
+      "title": "Sửa đổi, bổ sung Nghị định 123/2020/NĐ-CP về hoá đơn, chứng từ",
+      "issuer": "Chính phủ",
+      "issued_on": "2025-03-20",
+      "effective_from": "2025-06-01",
+      "effective_to": null,
+      "status": "in_force",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.decree.123-2020-nd-cp"
+      ],
       "official_url": "https://chinhphu.vn/?classid=1&docid=213179&pageid=27160",
       "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [
-        { "ref": "REVIEW_REQUIRED", "summary": "Hoá đơn khởi tạo từ máy tính tiền; xử lý hoá đơn sai sót, hoá đơn điều chỉnh / thay thế", "effective_from": "2025-06-01", "effective_to": null, "review_status": "pending" }
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Hoá đơn khởi tạo từ máy tính tiền; xử lý hoá đơn sai sót, hoá đơn điều chỉnh / thay thế",
+          "effective_from": "2025-06-01",
+          "effective_to": null,
+          "review_status": "pending"
+        }
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": ""
+      }
     },
     {
       "id": "vn.circular.32-2025-tt-btc",
-      "kind": "circular", "domain": "invoice",
-      "number": "32/2025/TT-BTC", "title": "Hướng dẫn về hoá đơn, chứng từ (thay Thông tư 78/2021/TT-BTC)", "issuer": "Bộ Tài chính",
-      "issued_on": "2025-05-31", "effective_from": "2025-06-01", "effective_to": null, "status": "unverified",
-      "replaces": [], "amended_by": [], "related": ["vn.decree.123-2020-nd-cp"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "kind": "circular",
+      "domain": "invoice",
+      "number": "32/2025/TT-BTC",
+      "title": "Hướng dẫn về hoá đơn, chứng từ (thay Thông tư 78/2021/TT-BTC)",
+      "issuer": "Bộ Tài chính",
+      "issued_on": "2025-05-31",
+      "effective_from": "2025-06-01",
+      "effective_to": null,
+      "status": "unverified",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.decree.123-2020-nd-cp"
+      ],
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
       "provisions": [],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": ""
+      }
     },
     {
       "id": "vn.law.108-2025-qh15",
-      "kind": "law", "domain": "tax_admin",
-      "number": "108/2025/QH15", "title": "Luật Quản lý thuế", "issuer": "Quốc hội",
-      "issued_on": "2025-12-10", "effective_from": "2026-07-01", "effective_to": null, "status": "pending_effect",
-      "applies_to": { "entity_types": ["any"], "fiscal_year_start_from": null, "note": "Hiệu lực chung 01/7/2026, CÓ ngoại lệ hiệu lực sớm (một số điều cho hộ kinh doanh từ 01/01/2026): phải model đến điều / khoản" },
-      "replaces": [], "amended_by": [], "related": ["vn.law.88-2015-qh13"],
-      "official_url": "https://vanban.chinhphu.vn/?docid=216541&orggroupid=1&pageid=27160",
-      "secondary_urls": ["https://congbao.chinhphu.vn/van-ban/luat-so-108-2025-qh15-468670.htm", "https://xaydungchinhsach.chinhphu.vn/nhung-diem-moi-noi-dung-trong-tam-cua-luat-quan-ly-thue-so-108-2025-qh15-119260713105610538.htm"],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [
-        { "ref": "REVIEW_REQUIRED", "summary": "Điều khoản hiệu lực sớm cho hộ kinh doanh từ 01/01/2026 (chưa dẫn số điều)", "effective_from": "2026-01-01", "effective_to": null, "review_status": "pending" },
-        { "ref": "REVIEW_REQUIRED", "summary": "Điều khoản bổ sung Điều 70a Luật Kế toán", "effective_from": "2026-07-01", "effective_to": null, "review_status": "pending" }
+      "kind": "law",
+      "domain": "tax_admin",
+      "number": "108/2025/QH15",
+      "title": "Luật Quản lý thuế",
+      "issuer": "Quốc hội",
+      "issued_on": "2025-12-10",
+      "effective_from": "2026-07-01",
+      "effective_to": null,
+      "status": "pending_effect",
+      "applies_to": {
+        "entity_types": [
+          "any"
+        ],
+        "fiscal_year_start_from": null,
+        "note": "Hiệu lực chung 01/7/2026, CÓ ngoại lệ hiệu lực sớm (một số điều cho hộ kinh doanh từ 01/01/2026): phải model đến điều / khoản"
+      },
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.law.88-2015-qh13"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+      "official_url": "https://vanban.chinhphu.vn/?docid=216541&orggroupid=1&pageid=27160",
+      "secondary_urls": [
+        "https://congbao.chinhphu.vn/van-ban/luat-so-108-2025-qh15-468670.htm",
+        "https://xaydungchinhsach.chinhphu.vn/nhung-diem-moi-noi-dung-trong-tam-cua-luat-quan-ly-thue-so-108-2025-qh15-119260713105610538.htm"
+      ],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Điều khoản hiệu lực sớm cho hộ kinh doanh từ 01/01/2026 (chưa dẫn số điều)",
+          "effective_from": "2026-01-01",
+          "effective_to": null,
+          "review_status": "pending"
+        },
+        {
+          "ref": "REVIEW_REQUIRED",
+          "summary": "Điều khoản bổ sung Điều 70a Luật Kế toán",
+          "effective_from": "2026-07-01",
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": ""
+      }
     },
     {
       "id": "vn.decision.149-2001-qd-btc",
-      "kind": "decision", "domain": "standard",
-      "number": "149/2001/QĐ-BTC", "title": "Ban hành 4 chuẩn mực kế toán đợt 1, gồm VAS 02 Hàng tồn kho", "issuer": "Bộ Tài chính",
-      "issued_on": "2001-12-31", "effective_from": "2002-01-01", "effective_to": null, "status": "in_force",
-      "replaces": [], "amended_by": [], "related": ["vn.circular.99-2025-tt-btc"],
-      "official_url": null, "secondary_urls": [],
-      "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
-      "provisions": [
-        { "ref": "VAS 02", "summary": "Giá gốc hàng tồn kho; phương pháp tính giá xuất kho (đích danh, bình quân gia quyền, FIFO)", "effective_from": null, "effective_to": null, "review_status": "pending" }
+      "kind": "decision",
+      "domain": "standard",
+      "number": "149/2001/QĐ-BTC",
+      "title": "Ban hành 4 chuẩn mực kế toán đợt 1, gồm VAS 02 Hàng tồn kho",
+      "issuer": "Bộ Tài chính",
+      "issued_on": "2001-12-31",
+      "effective_from": "2002-01-01",
+      "effective_to": null,
+      "status": "in_force",
+      "replaces": [],
+      "amended_by": [],
+      "related": [
+        "vn.circular.99-2025-tt-btc"
       ],
-      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "Dùng cho C07 inventory-costing (P1)" }
+      "official_url": null,
+      "secondary_urls": [],
+      "snapshot": {
+        "retrieved_at": null,
+        "sha256": null,
+        "consolidated_version": null
+      },
+      "provisions": [
+        {
+          "ref": "VAS 02",
+          "summary": "Giá gốc hàng tồn kho; phương pháp tính giá xuất kho (đích danh, bình quân gia quyền, FIFO)",
+          "effective_from": null,
+          "effective_to": null,
+          "review_status": "pending"
+        }
+      ],
+      "review": {
+        "status": "pending",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "notes": "Dùng cho C07 inventory-costing (P1)"
+      }
     }
   ]
 }

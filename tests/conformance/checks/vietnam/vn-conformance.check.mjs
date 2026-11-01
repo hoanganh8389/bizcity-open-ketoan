@@ -1,3 +1,4 @@
+// [2026-11-02 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — SC-VNC-1 kiểm thêm profile.schema.json và profiles/*.json (hồ sơ đơn vị giả lập cho --certify).
 // [2026-11-01 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ kiểm chuẩn pháp lý Việt Nam (VNCONF-002): kho nguồn pháp lý, rulepack, ca, báo cáo đúng schema; cổng phê duyệt fail-closed (SC-VNC-1, SC-VNC-2).
 /**
  * Bộ kiểm chuẩn Việt Nam — lớp DỮ LIỆU (tests/conformance/vietnam/), PHASE-020, luật R-VNC (docs/rules/RULE-VN-CONFORMANCE.md).
@@ -21,6 +22,7 @@ const SCHEMAS = {
   rulepack: `${VN}/schemas/rulepack.schema.json`,
   case: `${VN}/schemas/case.schema.json`,
   report: `${VN}/schemas/report.schema.json`,
+  profile: `${VN}/schemas/profile.schema.json`,
 };
 const REGISTRY = `${VN}/registry/legal-sources.json`;
 const CATALOG = `${VN}/catalog.json`;
@@ -125,6 +127,12 @@ export const checks = [
           if (c.error) { add(c.file, c.error, `json:${c.file}`); continue; }
           validate(SCHEMAS.case, c.kase, c.file, `case:${c.rel}`);
         }
+      }
+      // 5b. Hồ sơ đơn vị giả lập (profiles/*.json).
+      for (const f of ctx.repo.files({ under: [`${VN}/profiles`], ext: ['.json'] })) {
+        examined++;
+        const { data, error } = readJson(ctx.repo, f);
+        if (error) add(f, error, `json:${f}`); else validate(SCHEMAS.profile, data, f, `profile:${path.posix.basename(f)}`);
       }
       // 5. Báo cáo mẫu (schemas/examples/*.json của repo đang kiểm).
       for (const f of ctx.repo.files({ under: [`${VN}/schemas/examples`], ext: ['.json'] })) {

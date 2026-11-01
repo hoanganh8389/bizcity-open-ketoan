@@ -13,6 +13,12 @@
 | S020-4 | Catalog C01–C08 + 3 rulepack nháp (C01 8 ca, C02 5 ca, C08 6 ca) ánh xạ `verified_by` / `gap` | W0 / VNCONF-002 | P0 | có | ✅ 2026-11-01 — tất cả `draft` |
 | S020-5 | Check SC-VNC-1 (schema) + SC-VNC-2 (cổng phê duyệt fail-closed) + fixture `repo-bad/tests/conformance/vietnam/` + `expect.json` — ca T020-1 | W0 / VNCONF-002 | P0 | có | ✅ 2026-11-01 — `--self-test` ĐẠT (SC-VNC-1: 4, SC-VNC-2: 28 phát hiện mẫu) |
 | S020-6 | Luật R-VNC-1..9 + CANON §3; quy trình `docs/compliance/` (governance 8 bước, registry) | W0 / VNCONF-002 | P0 | — | ✅ 2026-11-01 |
+| S020-16 | Kiến trúc Conformance Engine (ba lớp, bốn thành phần, ba cổng, hiệu lực cấp điều khoản, ma trận BizCity, menu Hệ thống) + ADR-0012 đề xuất + registry TT152 / chuyển tiếp TT200 | W1 / — | P0 | — | ✅ 2026-11-02 — ⛔ chủ duyệt ADR-0012, D020-7..10 |
+| S020-17 | `selfcheck.mjs --certify`: một lệnh ba cổng + tuân thủ VN (lib/certify.mjs, lib/runtime.mjs, profile.schema.json, profiles/) — ca T020-9 | W1a / VNCONF-003 | P0 | có | 🟡 2026-11-02 chạy được: module-good → COMPATIBLE, module-bad → FAIL, hồ sơ fy-offset chạy; SC-VNC-1 kiểm profile; ca tự kiểm T020-9 trong --self-test chưa viết |
+| S020-18 | Module Kernel `conformance` + `conformance_runs` + action run / status / report (lớp 1 + 2 trên bản cài) | W2 | P0 | chưa | ☐ ⛔ ADR-0012 |
+| S020-19 | Ca lớp 3 Doanh nghiệp (Q020-6) với oracle rõ | W3 | P0 | chưa | ☐ |
+| S020-20 | Màn Hệ thống → Kiểm chuẩn (ma trận, Vì sao, Việc cần làm, xu hướng); MCP `conformance.status` | W4 | P1 | chưa | ☐ |
+| S020-21 | Posting Gate advisory (chỉ thông tin) ở màn lập / duyệt chứng từ và trước khoá kỳ | W5 | P1 | chưa | ☐ ⛔ D020-8 |
 | S020-7 | Lane `runtime`: runner đọc rulepack / ca, chọn rulepack 4 bước (R-VNC-4), chạy ca `kind: runtime` qua cổng công khai trên PostgreSQL test (2 đơn vị A / B, đồng hồ cố định), ra `conformance-report.json` (+ `junit.xml`) — ca T020-2, T020-3 | W1 / VNCONF-003 | P0 | chưa | ☐ |
 | S020-8 | C01 golden: test C01.4 (cùng docKey hai đơn vị); chốt G4 (Q020-3); mọi ca C01 có bằng chứng — ca T020-4 | W1 / VNCONF-004 | P0 | chưa | ☐ |
 | S020-9 | C08: ca runtime cho vai trò module / RBAC; C08.4, C08.6 chờ ADR-0011 (G3) — ca T020-5 | W1 / VNCONF-005 | P0 | chưa | ☐ |
@@ -34,6 +40,7 @@
 | T020-5 | plugin / module với quyền hạn chế không ghi được `ledger_*`, không đổi `tenant_id` | `evidence/W1-<ngày>.md` — chưa |
 | T020-6 | năm tài chính 01/7/2025–30/6/2026 không tự chuyển TT99 ngày 01/01/2026 (sau khi có năng lực G1) | `evidence/W2-<ngày>.md` — chưa |
 | T020-7 | ca VAT thiếu thông tin ⇒ `REVIEW_REQUIRED`, không đoán; mock hoá đơn ghi rõ không là bằng chứng cơ quan thuế | `evidence/W3-<ngày>.md` — chưa |
+| T020-9 | `--certify` trên module mẫu `fixtures/module-good/hop-dong-mini` ra COMPATIBLE (cổng 1 đạt, VN REVIEW_REQUIRED), trên `module-bad/xau` ra FAIL; hồ sơ `fy-offset-2025-07` không chọn TT99 cho năm tài chính 01/7 | chạy tay 2026-11-02 ✅ (good → COMPATIBLE, bad → FAIL); đưa vào `--self-test`: chưa |
 | T020-8 | PR có ca P0 FAIL bị CI chặn; báo cáo REVIEW_REQUIRED không được nhãn Passed | `evidence/W4-<ngày>.md` — chưa |
 
 ## Log
@@ -42,3 +49,4 @@
 |---|---|---|
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | mở phase theo đặc tả OKT-SPEC-VNCONF-001; W0: S020-1..6. Nhánh `feat/phase-020-vn-conformance`. Baseline @ `91b8c92`: selfcheck ĐẠT (41 đạt · 10 nợ cũ · 1 cảnh báo), diagnostics `ketoan_test` ĐẠT (17 đạt · 3 cảnh báo), vitest 112 tệp: 110 đạt, 1 lỗi (`tro-ly.test.ts`, 36901 ≠ 36900 — làm tròn mô phỏng, không chạm sổ) |
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W0 nghiệm thu trước PR: `selfcheck --lane selfcheck --strict` ĐẠT (43 đạt · 10 nợ cũ · 1 cảnh báo · Tuân chuẩn 98 A); `--self-test` ĐẠT (SC-VNC-1: 4, SC-VNC-2: 28); `kiem-chuan.sh` ĐẠT; `npm run typecheck` ĐẠT (0 lỗi TS); `npm test` không chạy lại (không đổi mã chạy) |
+| 2026-11-02 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | chỉ đạo mở rộng: Conformance Engine là trụ cột Kernel trong Core (ba lớp, ba cổng, ma trận BizCity, người dùng quyết định ghi sổ) → S020-16 tài liệu + ADR-0012; S020-17 mã `--certify` đang dở |

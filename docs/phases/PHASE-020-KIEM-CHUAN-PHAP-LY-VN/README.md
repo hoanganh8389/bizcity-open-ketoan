@@ -1,7 +1,7 @@
 # PHASE-020 — Bộ kiểm chuẩn pháp lý Việt Nam (VN Accounting & Tax Conformance Kit)
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — mở phase bộ kiểm chuẩn kế toán / thuế / hoá đơn Việt Nam theo đặc tả OKT-SPEC-VNCONF-001: W0 audit nền + kho nguồn pháp lý + schema + check SC-VNC (VNCONF-001/002). -->
 
-> **Trạng thái:** 🟡 W0 xong 2026-11-01 (audit nền, registry, 4 schema, 3 rulepack nháp, SC-VNC-1/2 có ca tự kiểm) · chờ chủ duyệt D020-1..6, trả Q020-1..5 · W1 (runner) chưa bắt đầu
+> **Trạng thái:** 🟡 W0 xong 2026-11-01 · W1 tài liệu kiến trúc Conformance Engine + ADR-0012 (đề xuất) 2026-11-02 (audit nền, registry, 4 schema, 3 rulepack nháp, SC-VNC-1/2 có ca tự kiểm) · chờ chủ duyệt D020-1..6, trả Q020-1..5 · W1 (runner) chưa bắt đầu
 > **Giai đoạn:** mở rộng lộ trình 4.3 (lane `runtime` của bộ kiểm, [PHASE-014](../PHASE-014-CLI-TEMPLATE-CA-CHUAN/README.md)) · **Code:** nền có (lớp dữ liệu + check tĩnh) · **Mức Kernel:** K0 — không đụng Kernel, không đụng đường ghi sổ; runner chỉ đi cổng công khai
 > **Mục tiêu:** bộ kiểm thử **độc lập, có truy vết căn cứ pháp lý**, áp cho Accounting Kernel và plugin cộng đồng (POS, ERP, HRM, WMS, MRP); kết quả chỉ có giá trị trong phạm vi / ngày / phiên bản / rulepack / bộ test đã chạy; **không** tự nhận chứng nhận nhà nước.
 > **Việc lộ trình:** —
@@ -15,6 +15,8 @@
 | Tài liệu | Một câu |
 |---|---|
 | [Audit nền VNCONF-001](../../audits/VN-CONFORMANCE-BASELINE-2026-11-01.md) | sự thật đọc mã @ `91b8c92`: có gì, thiếu gì, ánh xạ đặc tả → đường dẫn / hợp đồng / người giữ / khoảng trống / việc / ca nghiệm thu |
+| [20-KIEN-TRUC-CONFORMANCE-ENGINE](20-KIEN-TRUC-CONFORMANCE-ENGINE.md) <!-- [2026-11-02 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm kiến trúc Conformance Engine + ADR-0012. --> | **trụ cột Kernel**: ba lớp Module · Cấu hình · Doanh nghiệp, Registry cấp điều khoản, ba cổng (Build chặn · Posting chỉ thông tin · Compliance Report), ma trận BizCity, menu Hệ thống |
+| [ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md) | quyết định đề xuất: Engine trong Core, bật mặc định, chỉ đọc, người dùng quyết định ghi sổ |
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | vì sao, phạm vi, ràng buộc, quyết định D020-*, câu hỏi Q020-*, đợt W0–W5 = ticket VNCONF-001…010 |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S020-*`, ca bằng chứng `T020-*`, log |
 | [RULE-VN-CONFORMANCE](../../rules/RULE-VN-CONFORMANCE.md) | luật R-VNC-1..9 |

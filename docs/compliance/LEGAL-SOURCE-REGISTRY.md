@@ -27,15 +27,17 @@
 
 Quá **6 tháng** chưa rà lại ⇒ Nhóm Lõi mở issue "Detect" (RULEPACK-GOVERNANCE §3 bước 1). Khi bản phát hành rulepack dựa trên nguồn đã quá hạn rà, kết quả ca là `REVIEW_REQUIRED` (duyệt hết hạn, R-VNC-4).
 
-## 3. Hiện trạng kho (2026-11-01)
+## 3. Hiện trạng kho (2026-11-02)
 
-16 văn bản chép từ [`docs/can-cu/01-danh-muc-van-ban.md`](../can-cu/01-danh-muc-van-ban.md) (rà 13/10/2026 bởi người viết tài liệu) và đặc tả OKT-SPEC-VNCONF-001 §3.1. **Tất cả `pending`**: chưa ảnh chụp, chưa băm, phần lớn chưa có link chính thức. Vì vậy chưa rulepack nào có thể `approved` — đúng nguyên tắc fail-closed.
+17 văn bản chép từ [`docs/can-cu/01-danh-muc-van-ban.md`](../can-cu/01-danh-muc-van-ban.md) (rà 13/10/2026 bởi người viết tài liệu) và đặc tả OKT-SPEC-VNCONF-001 §3.1. **Tất cả `pending`**: chưa ảnh chụp, chưa băm, phần lớn chưa có link chính thức. Vì vậy chưa rulepack nào có thể `approved` — đúng nguyên tắc fail-closed.
 
 Điểm cần người duyệt chú ý khi rà đợt đầu:
 
 | Văn bản | Việc cần làm |
 |---|---|
 | Thông tư 99/2025/TT-BTC | Dẫn đúng điều khoản hiệu lực + chuyển tiếp theo năm tài chính (hiện `REVIEW_REQUIRED`); xác nhận với Hỏi đáp Bộ Tài chính 159102 |
+| Thông tư 152/2025/TT-BTC | Hộ, cá nhân kinh doanh từ 01/01/2026: xác nhận số hiệu, ngày ban hành, link Công báo (mới thêm 02/11, chưa có trong docs/can-cu) |
+| Thông tư 200/2014/TT-BTC | Dẫn điều khoản chuyển tiếp của TT99 cho phần TT200 còn áp dụng (cổ phần hoá DNNN); năm tài chính lệch năm dương lịch |
 | Thông tư 133/2016/TT-BTC | Repo chỉ có mã chế độ trong enum gói định khoản; cần điều kiện lựa chọn và các sửa đổi hiện hành trước khi làm ca C02 cho SME |
 | Luật Quản lý thuế 108/2025/QH15 | Tách provision hiệu lực sớm (hộ kinh doanh 01/01/2026) khỏi hiệu lực chung 01/7/2026 |
 | Nghị quyết 204/2025/QH15 + NĐ 174/2025 | Giảm 2% hết 31/12/2026: rulepack VAT phải có `transaction_date_to` |
