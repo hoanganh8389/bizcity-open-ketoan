@@ -1,0 +1,45 @@
+# PHASE-019 · 40 — Master checklist
+<!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — Bàn điều tra cho nhà phát triển: sổ tay điều tra lỗi theo tình huống + thiết kế UI/UX dev trên Prometheus, Loki, Tempo, Grafana, Alertmanager -->
+
+> Nguồn trạng thái **việc con** duy nhất của phase. Nhiều phiên: chỉ sửa đúng dòng theo ID; Log chỉ nối thêm.
+> Ký hiệu: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài nhóm · ❌ huỷ.
+> © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
+
+| ID | Việc | Đợt | Ưu tiên | Code | Trạng thái |
+|---|---|---|---|---|---|
+| S019-1 | [Sổ tay điều tra lỗi](../../ops/SO-TAY-DIEU-TRA-LOI.md): 14 tình huống, khuôn chung, ba ngôn ngữ truy vấn, luật an toàn | W0 | P0 | — | ✅ 2026-11-01 (nhãn, số đo, thuộc tính, cột đối chiếu với mã `main` @ e9bde0e) |
+| S019-2 | Khảo sát app cho dev: có / thiếu ([10-HIEN-TRANG](10-HIEN-TRANG.md)) | W0 | P0 | — | ✅ 2026-11-01 |
+| S019-3 | Kiến trúc: hai chế độ, API trung gian, mẫu truy vấn đóng, bảo mật, bản đồ màn, luật UX, ma trận test ([20-KIEN-TRUC](20-KIEN-TRUC.md)) | W0 | P0 | — | 🟡 2026-11-01 viết xong, ⛔ chờ chủ duyệt D019-* |
+| S019-4 | Bản mẫu UI tĩnh ([mockups/](mockups/README.md)) | W0 | P0 | — | 🟡 2026-11-01 có, chờ duyệt bố cục |
+| S019-5 | `ApiError` giữ `requestId`, `traceId` (+ header `X-Request-Id` khi thân hỏng); thông báo lỗi hiện Mã tra cứu + nút Chép — ca T019-1 | W1 | P0 | chưa | ☐ |
+| S019-6 | Nút **Báo lỗi** dựng nội dung theo `bao-loi.yml`, chỉ mã, không dữ liệu (Q019-5) | W1 | P1 | chưa | ☐ |
+| S019-7 | Quyền `devtools:read` (+ vai trò `developer` nếu Q019-1 = b) ở `core/auth.ts` + `@ketoan/contracts` + màn Người dùng — ca T019-8 | W2 | P1 | chưa | ⛔ Q019-1 |
+| S019-8 | Biến `DEVTOOLS_*` (`config/env.ts`, `.env.example`, `docker-compose.monitoring.yml` đặt URL nội bộ) | W2 | P1 | chưa | ☐ |
+| S019-9 | `core.devtools.status`, `.trace`, `.request`, `.evidence` + bộ gác đơn vị (D019-5) + lọc trường lần hai + giới hạn — ca T019-2, T019-3, T019-6, T019-7 | W2 | P1 | chưa | ☐ |
+| S019-10 | Phân hệ web `dev`: khung, menu, quyền; màn **Tra mã** (tóm tắt, cây span, log cùng trace, bằng chứng) — ca T019-4 | W3 | P1 | chưa | ☐ |
+| S019-11 | `core.devtools.logs`, `.traces`, `.summary`; màn **Nhật ký**, **Tổng quan** | W3 | P1 | chưa | ☐ |
+| S019-12 | `core.devtools.module-errors`; màn **Lỗi theo module** | W4 | P2 | chưa | ☐ |
+| S019-13 | Màn **Ghi sổ**, **Sự kiện**, **Toàn vẹn** (dùng lại API sẵn có; link sang thao tác ghi sẵn có) | W4 | P2 | chưa | ☐ |
+| S019-14 | Màn **Kịch bản** đọc Sổ tay; mỗi TH có nút mở màn với bộ lọc điền sẵn — ca T019-5 | W4 | P2 | chưa | ☐ |
+| S019-15 | Chế độ **Vận hành**: `ops.health` (PromQL cố định), `ops.alerts`, link sâu 9 dashboard + Explore | W5 | P3 | chưa | ⛔ Q019-2 |
+| S019-16 | Check **SC-DEV-1** + ca tự kiểm | W5 | P2 | chưa | ☐ |
+| S019-17 | Cập nhật OBSERVABILITY.md (mục Bàn điều tra), Sổ tay (cột "Trên Bàn điều tra"), `docs/huong-dan/` (hướng dẫn trong app cho phân hệ `dev`) | W1–W5 | P1 | — | ☐ theo từng đợt |
+
+## Ca bằng chứng
+
+| Ca | Chứng minh | Lưu ở |
+|---|---|---|
+| T019-1 | thông báo lỗi có đủ hai mã; nội dung Báo lỗi không có dữ liệu | `evidence/W1-<ngày>.md` — chưa |
+| T019-2 | chéo đơn vị → 404 giống "không có" | `evidence/W2-<ngày>.md` — chưa |
+| T019-3 | nguồn tắt / không trả lời → "chưa bật", không 500 | `evidence/W2-<ngày>.md` — chưa |
+| T019-4 | mã của TH-01 → tóm tắt đúng chỗ hỏng, ≤ 3 lần bấm (chạy thật với Tempo) | `evidence/W3-<ngày>.md` — chưa |
+| T019-5 | kịch bản mở đúng màn, bộ lọc điền sẵn | `evidence/W4-<ngày>.md` — chưa |
+| T019-6 | tham số chèn bị chặn | `evidence/W2-<ngày>.md` — chưa |
+| T019-7 | không trường ngoài danh sách cho phép | `evidence/W2…W4` — chưa |
+| T019-8 | không quyền → không thấy, API 403 | `evidence/W2-<ngày>.md` — chưa |
+
+## Log
+
+| Ngày | Ai | Việc |
+|---|---|---|
+| 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | mở phase: sổ tay điều tra lỗi (S019-1), hiện trạng (S019-2), kiến trúc (S019-3), bản mẫu (S019-4). Nhánh `docs/phase-019-ban-dieu-tra` |
