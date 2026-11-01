@@ -131,6 +131,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Gói `@bizcity/platform`** (`packages/platform`, PHASE-010 D010-8, bước của PHASES 2.3): 22 tệp Platform Kernel cần (lỗi chuẩn, HTTP, quyền, bằng chứng, runtime action, sự kiện, số đo, kết nối / migration / kiểu CSDL, cấu hình, chẩn đoán, ký, hai hàm danh mục) dời khỏi `apps/api/src`; đường cũ là tệp chuyển tiếp nên mã của phân hệ / nhánh đang mở không phải đổi. Dev / test chạy thẳng mã nguồn của gói (điều kiện `development`); bản chạy thật build `dist`.
 - **Đính kèm Mua hàng chạy trên đính kèm chung** (migration `0046`, PHASES 2.7, A-19): dòng `purchase_attachments` chép sang `document_attachments` (docRef `mua-hang.<loại chủ>:<mã>`, `legacy_ref` đối chiếu), tệp giữ nguyên chỗ trên ổ (`DATA_DIR/dinh-kem`), băm sha256 ở lần tải đầu. API `/api/v1/purchase/attachments` giữ khuôn; xoá tệp nay là gỡ (lưu trữ, không xoá cứng). Bảng `purchase_attachments` khoá thêm / sửa, giữ để đối chiếu.
 - **Một chỗ cấp số chứng từ**: phiếu kế toán tay, đề nghị thanh toán (`quy`), phiếu mua hàng lấy số từ `documentNumbers.next` của Kernel thay vì tự ghi `document_sequences`. Khoá dãy và khuôn số giữ nguyên — không nhảy số.
 - **Báo cáo về phân hệ Kế toán** (PHASE-012 Q012-2): `apps/api/src/modules/reports` → `apps/api/src/phan-he/ke-toan/reports`. `documentChecks` (kiểm trước khoá kỳ) về Kernel `modules/periods/document-checks.ts`. Thuế đọc B02 / bảng dài hạn qua action, add-in Bảng tính AI qua `accounting.report.trial-balance`; báo cáo hàng hoá tách: lãi gộp → `phan-he/ban-hang/gross-profit.ts`, chuyển kho → `phan-he/kho/stock-transfers.ts`, kết quả theo cửa hàng ở lại `ke-toan/reports`; `kho`, `mua-hang` lấy route qua `GOODS` (`phan-he/loi.ts`). Đường dẫn API, số liệu báo cáo không đổi. Chi phí theo chiều phân tích gom theo bí danh cột, bỏ `sql.raw`.
@@ -170,6 +171,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
 - Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.

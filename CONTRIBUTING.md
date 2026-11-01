@@ -4,6 +4,7 @@
 <!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
+<!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — T0 gồm packages/platform -->
 
 Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một dòng code sai có thể làm sai sổ của doanh nghiệp. Quy trình dưới đây chặt hơn một dự án web thường. Làm đúng thì PR vào nhanh.
 
@@ -49,7 +50,7 @@ PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh.
 
 | Tầng | Đường dẫn | Duyệt |
 |---|---|---|
-| T0 Nhân | `apps/api/src/core/`, `modules/{documents,posting,ledger,periods}`, `packages/contracts`, trigger sổ cái, `db/migrations` | 2 người, 1 nhóm Lõi ([CODEOWNERS](.github/CODEOWNERS)) |
+| T0 Nhân | `packages/platform/` (Platform, từ 01/11/2026), `apps/api/src/core/`, `modules/{documents,posting,ledger,periods}`, `packages/contracts`, trigger sổ cái, `db/migrations` | 2 người, 1 nhóm Lõi ([CODEOWNERS](.github/CODEOWNERS)) |
 | T1 Dịch vụ lõi | `apps/api/src/modules/*` khác, `apps/web/src/{features,components}` | 1 nhóm Lõi |
 | T2 Phân hệ / module | `apps/*/src/phan-he/<key>/`, sau này `modules/<key>/` | người phụ trách module |
 | T3 Add-in, preset, gói định khoản | `apps/*/src/addins/<id>/`, `presets/`, gói | người phụ trách |

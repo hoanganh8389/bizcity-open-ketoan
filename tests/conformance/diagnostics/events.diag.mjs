@@ -1,7 +1,8 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — chú thích: diagnostics.ts nay ở packages/platform/src/system
 /**
  * Lane diagnostics — sự kiện miền (bizcity_event@1, migration 0039): không có việc giao hết lượt thử (dead) nằm im.
- * Cùng mã EVENT_DEAD với kiểm trong app (apps/api/src/modules/system/diagnostics.ts) — SC-DIAG-1. CHỈ ĐỌC.
+ * Cùng mã EVENT_DEAD với kiểm trong app (packages/platform/src/system/diagnostics.ts) — SC-DIAG-1. CHỈ ĐỌC.
  * Là một nửa cách thực thi AP-6 (sự kiện phát lại được, consumer idempotent); nửa kia: SC-EVT-2.
  */
 export const checks = [

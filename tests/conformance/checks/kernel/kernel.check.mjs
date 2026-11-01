@@ -3,15 +3,16 @@
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 08:18 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-KERNEL-7: ngoài Kernel không đọc thẳng bảng ledger_* (đọc bizcity_read.* / ledgerQuery)
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét mã trên LAYER_ROOTS (gồm packages/platform); db/types.ts của gói miễn SC-KERNEL-7 như bản cũ
 /**
  * Kernel: ranh giới sổ cái. Chuyển từ scripts/kiem-chuan.sh (giữ nguyên nghĩa; danh sách nợ chuyển sang baseline.json).
  */
 import path from 'node:path';
-import { expectedLayer } from '../../lib/layers.mjs';
+import { LAYER_ROOTS, expectedLayer } from '../../lib/layers.mjs';
 
 const SRC = 'apps/api/src';
 const PUBLIC = `${SRC}/kernel/public.ts`;
-const ts = { under: [SRC], ext: ['.ts'] };
+const ts = { under: LAYER_ROOTS, ext: ['.ts'] };
 
 const scan = (ctx, re, keep) => {
   const hits = ctx.repo.grep(re, ts).filter(keep);
@@ -92,7 +93,7 @@ export const checks = [
       // Kernel = tệp có lớp K theo bảng lớp (lib/layers.mjs). Tệp không thuộc K (Platform, phân hệ, add-in, lắp ráp) gọi Kernel qua
       // public.ts — một chỗ để tách gói packages/kernel (PHASES 2.3, PHASE-010 W2) mà không sửa nơi gọi.
       const isKernel = (file) => (expectedLayer(file)?.layer ?? '').split('+').includes('K');
-      const files = ctx.repo.files({ under: [SRC], ext: ['.ts'] }).filter((f) => !isKernel(f) && f !== PUBLIC);
+      const files = ctx.repo.files({ under: LAYER_ROOTS, ext: ['.ts'] }).filter((f) => !isKernel(f) && f !== PUBLIC);
       const findings = [];
       for (const file of files) {
         ctx.repo.lines(file).forEach((t, i) => {
@@ -113,7 +114,7 @@ export const checks = [
       // PHASES 3.7: bảng ledger_* là chỗ Kernel giữ bất biến; bề mặt đọc là khung nhìn chỉ đọc bizcity_read.* (migration 0043) và
       // ledgerQuery ở kernel/public.ts. Dò cả câu SQL xuống dòng (FROM\n ledger_lines) nên đọc nguyên tệp, không theo dòng.
       const isKernel = (file) => (expectedLayer(file)?.layer ?? '').split('+').includes('K');
-      const files = ctx.repo.files(ts).filter((f) => !isKernel(f) && f !== `${SRC}/db/types.ts`);
+      const files = ctx.repo.files(ts).filter((f) => !isKernel(f) && f !== `${SRC}/db/types.ts` && f !== 'packages/platform/src/db/types.ts');
       const re = /\b(?:FROM|JOIN)\s+(?:public\.)?(ledger_[a-z_]+)\b|\b(?:selectFrom|innerJoin|leftJoin|rightJoin|fullJoin)\(\s*'(?:public\.)?(ledger_[a-z_]+)/g;
       const findings = [];
       for (const file of files) {

@@ -1,4 +1,5 @@
 // [2026-10-30 09:40 PM Johnny Chu - Chu Hoàng Anh] R-SIG — danh sách tệp framework phải mang chữ ký kiến trúc (R-SIG-1, docs/rules/RULE-SIGNATURE.md §3).
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — tệp K / P trong packages/platform/src cũng là tệp framework (SC-SIG)
 /**
  * Tệp FRAMEWORK của open-ketoan (docs/rules/RULE-SIGNATURE.md §3): Kernel + Platform, hợp đồng dùng chung, migration chưa phát
  * hành, hạ tầng, công cụ framework, tài liệu kiến trúc / luật / hợp đồng / chuẩn / vận hành / phase, tệp gốc.
@@ -20,7 +21,7 @@ const ROOT = new Set(['AGENTS.md', 'CONTRIBUTING.md', 'README.md', 'SECURITY.md'
 export function isFrameworkFile(file, locked = new Set()) {
   if (/(^|\/)(fixtures|output|node_modules)\//.test(file)) return false;
   if (ROOT.has(file) || DOCS.test(file)) return true;
-  if (file.startsWith('apps/api/src/')) {
+  if (file.startsWith('apps/api/src/') || file.startsWith('packages/platform/src/')) {
     if (!/\.(ts|mjs)$/.test(file)) return false;
     const layer = expectedLayer(file)?.layer ?? '';
     return layer.split('+').some((l) => l === 'K' || l === 'P');

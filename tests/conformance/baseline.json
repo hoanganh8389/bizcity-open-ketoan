@@ -98,16 +98,6 @@
           "fp": "SC-CON-7|apps/api/src/modules/catalog/catalog.routes.ts|PURCHASE_SEED_PASSWORD",
           "file": "apps/api/src/modules/catalog/catalog.routes.ts",
           "message": "PURCHASE_SEED_PASSWORD chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
-          "fp": "SC-CON-7|apps/api/src/config/env.ts|HOST",
-          "file": "apps/api/src/config/env.ts",
-          "message": "HOST chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
-          "fp": "SC-CON-7|apps/api/src/config/env.ts|JWT_TTL_HOURS",
-          "file": "apps/api/src/config/env.ts",
-          "message": "JWT_TTL_HOURS chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
         }
       ]
     },

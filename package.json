@@ -9,7 +9,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w @ketoan/contracts && npm run build -w @ketoan/api && npm run build -w @ketoan/web",
+    "build": "npm run build -w @ketoan/contracts && npm run build -w @bizcity/platform && npm run build -w @ketoan/api && npm run build -w @ketoan/web",
     "dev": "node scripts/dev.mjs",
     "dev:ke-toan": "node scripts/dev.mjs ke-toan",
     "dev:quy": "node scripts/dev.mjs quy",

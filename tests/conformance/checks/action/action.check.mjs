@@ -3,11 +3,16 @@
 // [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — bộ kiểm chuẩn xanh, gia cố R-API-6, R-BOUND-2, R-SEC-11, R-REL-1.
 // [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét cả packages/platform/src (LAYER_ROOTS); chỗ hẹn giờ được phép: packages/platform/src/core/events.ts
 /**
  * bizcity_action@1, bizcity_api@1, bizcity_event@1, bizcity_evidence@1 — phần đọc được từ mã nguồn.
  */
+import { LAYER_ROOTS } from '../../lib/layers.mjs';
+
 const API = 'apps/api/src';
-const srcOpts = (ctx) => (ctx.mode === 'module' ? { ext: ['.ts', '.mjs', '.js'], not: /(^|\/)(test|tests)\// } : { under: [API], ext: ['.ts'] });
+/** Mã nguồn quét: apps/api/src + gói Platform (D010-7). */
+const SRC = LAYER_ROOTS;
+const srcOpts = (ctx) => (ctx.mode === 'module' ? { ext: ['.ts', '.mjs', '.js'], not: /(^|\/)(test|tests)\// } : { under: SRC, ext: ['.ts'] });
 const ROUTE_RE = /\b(?:r|app|fastify|server|router|api)\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]*)['"`]/;
 
 export const checks = [
@@ -17,7 +22,7 @@ export const checks = [
     gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['R-API-2', 'STD-ACT-5'], conf: ['CONF-STATIC-9'], tier: 1, enforce: 'ratchet', weight: 3, targets: ['repo', 'module'], scope: 'module',
     run(ctx) {
       const opts = srcOpts(ctx);
-      const hits = ctx.repo.grep(/reply\.(status|code)\(\s*[45]\d\d\s*\)/, { ...opts, skipComments: true }).filter((h) => !h.file.startsWith(`${API}/core/`));
+      const hits = ctx.repo.grep(/reply\.(status|code)\(\s*[45]\d\d\s*\)/, { ...opts, skipComments: true }).filter((h) => !h.file.startsWith(`${API}/core/`) && !h.file.startsWith('packages/platform/src/core/'));
       return { examined: ctx.repo.files(opts).length, findings: hits.map((h) => ctx.finding(h.file, h.line, h.text, h.text.replace(/\s+/g, ''))) };
     },
   },
@@ -36,7 +41,7 @@ export const checks = [
     gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['R-API-6', 'R-TEN-3', 'STD-ACT-2'], conf: ['CONF-MAN-3'], tier: 0, enforce: 'ratchet', weight: 5, targets: ['repo'], scope: 'module',
     run(ctx) {
       const findings = []; let routes = 0;
-      for (const file of ctx.repo.files({ under: [API], ext: ['.ts'] })) {
+      for (const file of ctx.repo.files({ under: SRC, ext: ['.ts'] })) {
         const ls = ctx.repo.lines(file);
         const text = ctx.repo.read(file);
         const fileGuard = /addHook\(\s*['"](preHandler|onRequest)['"][^)]*requirePermission/.test(text);
@@ -63,7 +68,7 @@ export const checks = [
     gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['STD-ACT-1', 'STD-ACT-4'], conf: ['CONF-STATIC-8', 'CONF-RUN-4'], tier: 1, enforce: 'planned', phase: 'Phase 2 (2.3)', weight: 4, targets: ['repo'], scope: 'module',
     run(ctx) {
       let writes = 0; let viaAction = 0;
-      for (const file of ctx.repo.files({ under: [API], ext: ['.ts'] })) {
+      for (const file of ctx.repo.files({ under: SRC, ext: ['.ts'] })) {
         for (const t of ctx.repo.lines(file)) { const m = ROUTE_RE.exec(t); if (m && m[1] !== 'get') writes++; }
         viaAction += (ctx.repo.read(file).match(/\bdefineAction\(/g) ?? []).length;
       }
@@ -81,7 +86,7 @@ export const checks = [
       const benign = /setTimeout\(\s*\(\)\s*=>\s*\w+\.abort\(\)|new Promise\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*setTimeout\(\s*\1\s*,/;
       // Runtime sự kiện của Platform (dispatcher + đồng hồ) là chỗ hẹn giờ DUY NHẤT được phép — chính nó là events.clock.
       const hits = ctx.repo.grep(/\b(setInterval|setTimeout)\(|from ['"](node-cron|cron|node-schedule)['"]/, { ...opts, skipComments: true })
-        .filter((h) => !benign.test(h.text) && h.file !== `${API}/core/events.ts`);
+        .filter((h) => !benign.test(h.text) && h.file !== 'packages/platform/src/core/events.ts');
       return { examined: ctx.repo.files(opts).length, findings: hits.map((h) => ctx.finding(h.file, h.line, h.text, /setInterval/.test(h.text) ? 'setInterval' : /setTimeout/.test(h.text) ? 'setTimeout' : 'cron')) };
     },
   },

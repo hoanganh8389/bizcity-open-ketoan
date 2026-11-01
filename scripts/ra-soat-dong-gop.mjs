@@ -2,6 +2,7 @@
 // [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — rà soát lượt đầu việc của người đóng góp: commit theo tác giả, tệp theo lớp, dò vi phạm kiến trúc / dữ liệu kế toán / mã hàng trên dòng THÊM.
 // [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — H-LEDGER dò cả scripts/ và .sql; thêm H-TRIGGER-OFF (tắt trigger bảo vệ sổ ngoài ngoại lệ E3).
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — thêm H-METRIC-LABEL (chặn): nhãn số đo theo đơn vị / chứng từ / người / yêu cầu (R-OBS-4, S018-20).
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — luật dò H-* áp cả packages/platform/src
 /**
  * Rà soát việc của người đóng góp — lượt đầu tự động (docs/rules/RULE-REVIEW.md §3, R-REV-3).
  *
@@ -49,12 +50,12 @@ const RULES = [
   { id: 'H-ACCOUNT-LITERAL', level: 'chặn', rule: 'Câu 4, R-POST-2', files: /^apps\/api\/src\/.*(posting|dinh-khoan|hach-toan)[^/]*\.ts$/, re: /['"`](1[1-5]\d|2[1-4]\d|3[3-5]\d|4[1-2]\d|5[1-2]\d|6[1-4]\d|711|811|911)\d{0,5}['"`]/, msg: 'viết số tài khoản trong mã định khoản — tra qua AccountResolver / gói định khoản' },
   { id: 'H-SEQ', level: 'cảnh báo', rule: 'STD-DOC-6', files: API_D, re: /['"]document_sequences['"]/, msg: 'phân hệ tự đếm số chứng từ — dùng cấp số chung (documents.numbering)' },
   { id: 'H-STATUS', level: 'cảnh báo', rule: 'R-WF-1', files: API_D, re: /\.set\(\{[^}]*\bstatus:\s*['"`]/, msg: 'đổi trạng thái bằng UPDATE viết cứng — đi qua workflow (*.workflow.yaml, wf.plan)' },
-  { id: 'H-REPLY', level: 'chặn', rule: 'R-API', files: /^apps\/api\/src\//, re: /\breply\.status\(/, msg: 'reply.status() — lỗi qua Errors.*' },
+  { id: 'H-REPLY', level: 'chặn', rule: 'R-API', files: /^(apps\/api\/src|packages\/platform\/src)\//, re: /\breply\.status\(/, msg: 'reply.status() — lỗi qua Errors.*' },
   { id: 'H-MONEY', level: 'cảnh báo', rule: 'Quy ước tiền', files: /^apps\/api\/src\/|^packages\/contracts\/src\//, re: /\b(parseFloat|toFixed)\(|\*\s*0\.1\b/, check: (_f, l) => !/\$\{[^}]*toFixed\(/.test(l), msg: 'tính tiền bằng số thực — cộng trừ qua toCents / fromCents, làm tròn một chỗ' },
-  { id: 'H-FETCH', level: 'cảnh báo', rule: 'R-OUTBOX', files: /^apps\/api\/src\//, re: /\b(fetch|axios)\s*\(/, msg: 'gọi HTTP ra ngoài — trong giao dịch ghi phải qua outbox (core/events.ts)' },
+  { id: 'H-FETCH', level: 'cảnh báo', rule: 'R-OUTBOX', files: /^(apps\/api\/src|packages\/platform\/src)\//, re: /\b(fetch|axios)\s*\(/, msg: 'gọi HTTP ra ngoài — trong giao dịch ghi phải qua outbox (core/events.ts)' },
   { id: 'H-ROUTE-PERM', level: 'cảnh báo', rule: 'R-TEN, SC-ACT-1', files: API_D, re: /\br\.(post|put|patch|delete)\(\s*['"`]\/api\//, check: (_f, line) => !/preHandler/.test(line), msg: 'route ghi mới không khai preHandler quyền — ưu tiên defineAction (quyền, zod, Idempotency-Key, bằng chứng)' },
   { id: 'H-SKIP', level: 'chặn', rule: 'R-QG-8', files: /\.test\.ts$/, re: /\b(it|describe|test)\.(skip|only)\(/, msg: 'test .skip / .only mới' },
-  { id: 'H-METRIC-LABEL', level: 'chặn', rule: 'R-OBS-4', files: /^apps\/api\/src\//, re: /\bmetrics\.\w+\.(inc|set|observe)\(\s*\{[^}]*\b(tenant|tenantId|tenant_id|tenantCode|docKey|doc_key|docNo|doc_no|reqId|requestId|request_id|actor|userId|user_id|eventId|event_id|entryId|entry_id|traceId|trace_id)\s*:/, msg: 'nhãn số đo theo đơn vị / chứng từ / người / yêu cầu — số chuỗi không giới hạn; đưa vào log (Loki) hoặc đếm theo dải (bizcity_tenants)' },
+  { id: 'H-METRIC-LABEL', level: 'chặn', rule: 'R-OBS-4', files: /^(apps\/api\/src|packages\/platform\/src)\//, re: /\bmetrics\.\w+\.(inc|set|observe)\(\s*\{[^}]*\b(tenant|tenantId|tenant_id|tenantCode|docKey|doc_key|docNo|doc_no|reqId|requestId|request_id|actor|userId|user_id|eventId|event_id|entryId|entry_id|traceId|trace_id)\s*:/, msg: 'nhãn số đo theo đơn vị / chứng từ / người / yêu cầu — số chuỗi không giới hạn; đưa vào log (Loki) hoặc đếm theo dải (bizcity_tenants)' },
   { id: 'H-SECRET', level: 'chặn', rule: 'R-SEC', files: /./, re: /(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*['"][A-Za-z0-9_\-+/=]{12,}['"]/i, check: (f) => !/\.test\.ts$|\.example$|fixtures\//.test(f), msg: 'giống bí mật viết trong mã' },
   { id: 'H-MD-TABLE', level: 'chặn', rule: 'R-MD-1, Standard §5', files: /^db\/migrations\/.*\.sql$/, re: /CREATE\s+TABLE[^(]*\b\w*(customer|khach|product|mat_hang|item|branch|chi_nhanh|partner|supplier|ncc)\w*\s*\(/i, msg: 'bảng danh mục riêng (khách, hàng, chi nhánh, đối tượng) — dùng danh mục chuẩn' },
   { id: 'H-MIGRATION', level: 'ghi chú', rule: 'R-DB', files: /^db\/migrations\/.*\.sql$/, re: /^/, once: true, msg: 'migration mới — rà COMMENT ON, numeric(18,2) cho tiền, RLS cho bảng có tenant_id, chỉ thêm' },

@@ -2,11 +2,13 @@
 // [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell.
 // [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-CON-2 kiểm ledger.submits[].reasons: loại lý do khớp docType, khoá mặc định, gói gợi ý có thật và có lý do mặc định.
 // [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — SC-CON-2 kiểm data.reads: mỗi khung nhìn bizcity_read.* phải có trong migration của Core (data.read-views, 0043 / 0044)
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — SC-CON-7 đọc env.ts ở packages/platform, quét process.env trên LAYER_ROOTS
 /**
  * Hợp đồng: schema, manifest (CONF-MAN), JSON mẫu, bảng năng lực, mã luật, mã lỗi, cấu hình.
  * Mọi hợp đồng kiểm ở MỘT chỗ này — không viết test hợp đồng rải rác nơi khác.
  */
 import { STAMP_RE } from '../../lib/framework-files.mjs';
+import { LAYER_ROOTS } from '../../lib/layers.mjs';
 
 const MODULE_SCHEMA = 'docs/contracts/BIZCITY-MODULE-v1.schema.json';
 const INTAKE_SCHEMA = 'docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json';
@@ -266,11 +268,11 @@ export const checks = [
       const known = ['.env.example', 'docs/contracts/bizcity-settings.registry.json', 'docker-compose.yml', ...ctx.repo.files({ under: ['docs/ops'], ext: ['.md'] })]
         .map((f) => ctx.repo.read(f) ?? '').join('\n');
       const vars = new Map();
-      for (const h of ctx.repo.grep(/process\.env\.[A-Z_]+/, { under: ['apps/api/src'], ext: ['.ts'] })) {
+      for (const h of ctx.repo.grep(/process\.env\.[A-Z_]+/, { under: LAYER_ROOTS, ext: ['.ts'] })) {
         for (const m of h.text.matchAll(/process\.env\.([A-Z][A-Z0-9_]+)/g)) if (!vars.has(m[1])) vars.set(m[1], h);
       }
-      const envTs = ctx.repo.read('apps/api/src/config/env.ts') ?? '';
-      for (const m of envTs.matchAll(/^\s+([A-Z][A-Z0-9_]+):/gm)) if (!vars.has(m[1])) vars.set(m[1], { file: 'apps/api/src/config/env.ts', line: null });
+      const envTs = ctx.repo.read('packages/platform/src/config/env.ts') ?? '';
+      for (const m of envTs.matchAll(/^\s+([A-Z][A-Z0-9_]+):/gm)) if (!vars.has(m[1])) vars.set(m[1], { file: 'packages/platform/src/config/env.ts', line: null });
       const findings = [];
       for (const [v, h] of vars) if (!new RegExp(`\\b${v}\\b`).test(known)) findings.push(ctx.finding(h.file, h.line, `${v} chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops`, v));
       return { examined: vars.size, findings };
