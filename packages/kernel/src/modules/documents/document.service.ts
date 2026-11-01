@@ -268,6 +268,22 @@ export async function draftDocumentIn(trx: Db, auth: AuthContext, doc: IngestDoc
   return postDocumentIn(trx, auth, doc, opts.preview ? { post: true, force: true } : { hold: true });
 }
 
+// [2026-11-02 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — submitDocumentIn: cửa nạp trong giao dịch của người gọi (ctx.ledger.submit, action core.document.submit — ADR-0011 D5)
+/**
+ * Nộp một chứng từ vào sổ TRONG giao dịch của người gọi (action của module / core.document.submit): cùng khuôn với cửa nạp HTTP
+ * (chuẩn hoá chứng từ khoá API đẩy vào, kiểm khuôn bizcity_ledger_intake@1, kiểm tổng, postDocumentIn) nhưng KHÁC ở lỗi: lỗi định khoản
+ * ném ra để cả giao dịch huỷ — dữ liệu module và sổ cùng commit hoặc cùng huỷ, dry-run huỷ được, bằng chứng ghi thất bại. Cửa nạp
+ * HTTP cũ (documentService.ingest) vẫn lưu chứng từ ở trạng thái lỗi trong giao dịch riêng để kế toán sửa ở ACC14.
+ */
+export async function submitDocumentIn(trx: Db, auth: AuthContext, raw: unknown): Promise<IngestResult> {
+  const prep: { doc: unknown; skip?: string } = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, raw) : { doc: raw };
+  if (prep.skip) return { docKey: String((prep.doc as { docKey?: unknown })?.docKey ?? '?'), version: Number((prep.doc as { version?: unknown })?.version ?? 1), status: 'unchanged' };
+  const parsed = ingestDocumentSchema.safeParse(prep.doc);
+  if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', parsed.error.flatten());
+  assertTotals(parsed.data);
+  return postDocumentIn(trx, auth, parsed.data);
+}
+
 /** Phát bizcity.ledger.entry.reversed khi huỷ / bỏ định khoản đảo bút toán mà không ghi phiên bản mới. */
 function emitReversed(trx: Db, auth: AuthContext, row: { doc_key: string; doc_type: string; doc_no: string; version: number }, reversed: number, reason: 'cancel' | 'unpost') {
   return emitKernelEvent(trx, auth, 'bizcity.ledger.entry.reversed', row.doc_key, { docKey: row.doc_key, docType: row.doc_type, docNo: row.doc_no, version: row.version, reversed, reason });

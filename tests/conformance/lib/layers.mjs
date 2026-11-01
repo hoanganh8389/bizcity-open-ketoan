@@ -15,6 +15,7 @@
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/kernel/src; index.ts (cổng công khai) và fastify-swagger.d.ts của gói là K
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 // [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — core/module-manifest.ts → P module-sdk (nạp bizcity.module.json, PHASES 3.2)
+// [2026-11-02 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — LAYER_ROOTS thêm packages/module-sdk/src (khoá có tiền tố gốc packages/… so đường dẫn đầy đủ); core/settings.ts → P bizcity.config
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -24,7 +25,7 @@
 /** K Kernel kế toán · P Platform chung · M Danh mục chuẩn · D Module nghiệp vụ · A Adapter · U UI kit (REUSE-MAP §1). */
 export const LAYERS = ['K', 'P', 'M', 'D', 'A', 'U'];
 /** Gốc mã nguồn có nhãn lớp. Khoá LAYER_MAP là đường dẫn tương đối với gốc (cùng bảng cho mọi gốc). packages/platform: D010-7 chặng 2. */
-export const LAYER_ROOTS = ['apps/api/src', 'packages/platform/src', 'packages/kernel/src'];
+export const LAYER_ROOTS = ['apps/api/src', 'packages/platform/src', 'packages/kernel/src', 'packages/module-sdk/src'];
 export const TAG_RE = /^\/\/ @bizcity-layer ([KPMDAU](?:\+[KPMDAU])*) (\S+)\s*$/;
 
 /**
@@ -49,6 +50,9 @@ export const LAYER_MAP = [
   ['core/audit.ts', 'P', 'audit'],
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/module-manifest.ts', 'P', 'module-sdk'],
+  ['core/settings.ts', 'P', 'bizcity.config'],
+  // Khoá có tiền tố gốc (packages/…) so với đường dẫn đầy đủ — gói có tên tệp trùng gói khác (index.ts của Kernel là K).
+  ['packages/module-sdk/src/', 'P', 'module-sdk'],
   ['core/date-rules.ts', 'P', 'documents'],
   ['core/workflow.ts', 'P', 'documents'],
   ['core/documents.ts', 'P', 'documents'],
@@ -140,7 +144,8 @@ export function expectedLayer(file) {
   const rel = file.slice(root.length + 1);
   let best = null;
   for (const [prefix, layer, target] of LAYER_MAP) {
-    const hit = prefix.endsWith('/') ? rel.startsWith(prefix) : rel === prefix;
+    const key = prefix.startsWith('packages/') ? file : rel;
+    const hit = prefix.endsWith('/') ? key.startsWith(prefix) : key === prefix;
     if (hit && (!best || prefix.length > best.prefix.length)) best = { prefix, layer, target };
   }
   if (!best) return null;

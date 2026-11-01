@@ -13,7 +13,7 @@
     "bizcity_extension": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
   },
   "kernelContracts": {
-    "bizcity_ledger_intake": { "version": "1.1.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
+    "bizcity_ledger_intake": { "version": "1.2.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
     "bizcity_posting_rule": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-POSTING-RULE-v1.md", "internal": true },
     "bizcity_master_data": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-MASTER-DATA-v1.md" },
     "bizcity_connector": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-CONNECTOR-v1.md" },
@@ -39,7 +39,7 @@
   "capabilities": [
     { "id": "masterdata.read", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Đọc danh mục chuẩn (đối tượng, mặt hàng, chi nhánh, kho, thuế) qua HTTP. Phase 2: qua ctx.data và view chỉ đọc." },
     { "id": "masterdata.write", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Thêm / sửa danh mục chuẩn qua API của Core (không ghi thẳng bảng)." },
-    { "id": "ledger.submit", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Nộp sự việc kế toán; Core định khoản, ghi sổ, đảo khi sửa. Hiện là postDocumentIn() / POST /documents; Phase 2 là ctx.ledger.submit()." },
+    { "id": "ledger.submit", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Nộp sự việc kế toán; Core định khoản, ghi sổ, đảo khi sửa. Module: ctx.ledger.submit() trong giao dịch của action (docKey tiền tố <module>:, sourceSystem = module). Ngoài tiến trình: action core.document.submit (POST /api/v1/documents/submit, Idempotency-Key, biên nhận, dry-run). Cửa nạp cũ POST /documents giữ nguyên." },
     { "id": "ledger.cancel", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Huỷ sự việc đã nộp (bút toán đảo)." },
     { "id": "ledger.query", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_ledger_intake", "description": "Đọc sổ theo mã (tài khoản, đối tượng, chi nhánh, chiều phân tích, mã hàng): ctx.ledger.query trong action, ledgerQuery ở kernel/public.ts; báo cáo SQL đọc khung nhìn chỉ đọc bizcity_read.ledger_entries / ledger_lines / ledger_balances_daily (migration 0043). Ngoài Kernel không đọc bảng ledger_* (SC-KERNEL-7)." },
     { "id": "data.tenant-tx", "since": "1.0", "status": "available", "phase": 2, "contract": "bizcity_data", "description": "Kết nối CSDL của một yêu cầu tự gắn bizcity.tenant_id theo đơn vị đã xác thực (apps/api/src/db/client.ts); mọi bảng có tenant_id có RLS + FORCE + chính sách tenant_isolation (migration 0041). Có hiệu lực khi API kết nối bằng vai trò không superuser (DB_APP_USER=ketoan_app, R-SEC-6)." },
@@ -63,7 +63,7 @@
     { "id": "events.subscribe", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Đăng ký xử lý sự kiện (defineSubscriber); chống xử lý trùng theo (consumer, event_id); retry giãn nhịp, dead-letter (EVENT_DEAD), replay (core.events.replay)." },
     { "id": "events.clock", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Sự kiện đồng hồ bizcity.clock.daily (01:00 giờ VN) / hourly cho nhắc hạn, việc định kỳ; chỉ phát khi có subscriber, chống trùng theo giờ / ngày." },
     { "id": "notify.inapp", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Action core.notify.send: thông báo trong ứng dụng; có Cell thì chuyển thêm qua kênh (Zalo)." },
-    { "id": "settings.registry", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_settings", "description": "settings.get(key, scope) theo registry; module khai khoá riêng." },
+    { "id": "settings.registry", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_settings", "description": "ctx.settings.get(key) theo registry (core/settings.ts): khoá phải có trong bizcity-settings.registry.json, phạm vi đơn vị (tenants.settings.<đường>), module chỉ đọc khoá mình sở hữu; chưa đặt thì trả mặc định của registry. Ghi qua ctx chưa có (route / action riêng của module)." },
     { "id": "ui.kit", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit: DataGrid, form, bộ lọc, in, khung trang (tách từ apps/web/src/components)." },
     { "id": "ui.slots", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Chèn tab / panel / widget vào màn của Core." },
     { "id": "ui.menu", "since": "1.0", "status": "available", "contract": "bizcity_extension", "description": "Nhóm menu, màn, biểu tượng phân hệ (WebModule.groups, menu.ts)." },
