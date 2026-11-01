@@ -102,7 +102,7 @@
 | # | Việc | Xong khi | Từ lộ trình cũ |
 |---|---|---|---|
 | 3.1 | `@bizcity/module-sdk`: `defineModule`, `ctx` (data, documents, ledger, events, settings, actions, evidence, notify) | API.md ổn định | 2.4 |
-| 3.2 | Manifest `bizcity.module.json` cho 9 phân hệ + 3 add-in; `ApiModule`/`WebModule`/`AddInManifest` sinh từ manifest; A-17 ghi `waivers` có hạn | CONF-MAN đạt (có waiver) | 2.4 |
+| 3.2 | Manifest `bizcity.module.json` cho 9 phân hệ + 3 add-in; `ApiModule`/`WebModule`/`AddInManifest` sinh từ manifest; A-17 ghi `waivers` có hạn — **có** 2026-11-01: 12 manifest, SC-MOD-3 block (key, kind, owners ↔ CODEOWNERS), SC-CON-2 nhận waiver có hạn, API nạp + khớp mã lúc khởi động, `GET /system/modules?detail=true`; sinh `ApiModule`/`WebModule` từ manifest dời sang 3.13 <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.2 có --> | CONF-MAN đạt (có waiver) | 2.4 |
 | 3.3 | Registry quyền mở: Kernel + module đăng ký; màn Phân quyền nhóm theo module | `permissions.module` available | mới |
 | 3.4 | `packages/events`: outbox, dispatcher, `event_consumptions`, retry, dead-letter, replay, đồng hồ; Kernel phát `bizcity.ledger.*`; thay `catalog-notify.ts` — **có** 2026-10-30 ([PHASE-006](../phases/PHASE-006-OUTBOX-SU-KIEN/README.md)): `apps/api/src/core/events.ts` (gói `packages/events` tách cùng 2.3) | CONF-RUN-10 đạt | 3.5 |
 | 3.5 | Workflow khai báo (`documents.workflow`); chuyển `payment_requests`, `purchase_documents` sang — **có** 2026-10-31 ([PHASE-012](../phases/PHASE-012-GOI-DINH-KHOAN-WORKFLOW/README.md) S012-1): `apps/api/src/core/workflow.ts` + `payment-request.workflow.yaml`, `purchase-document.workflow.yaml` | 2 luồng chạy bằng YAML | mới |

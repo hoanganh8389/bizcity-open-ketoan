@@ -87,7 +87,8 @@ export const checks = [
   {
     id: 'SC-MOD-3',
     title: 'Mỗi phân hệ / add-in có bizcity.module.json hợp lệ',
-    gate: 'CONF-MAN', contract: 'bizcity_module', rules: ['STD-MOD-1'], conf: ['CONF-MAN-1'], tier: 1, enforce: 'planned', phase: 'Phase 3 (3.2)', weight: 3, targets: ['repo'], scope: 'module',
+    // [2026-11-01 11:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — SC-MOD-3 planned → block (PHASES 3.2): 12/12 thư mục có manifest; key trùng thư mục, kind đúng chỗ
+    gate: 'CONF-MAN', contract: 'bizcity_module', rules: ['STD-MOD-1'], conf: ['CONF-MAN-1'], tier: 1, enforce: 'block', weight: 3, targets: ['repo'], scope: 'module',
     run(ctx) {
       const keys = [
         ...ctx.repo.list('apps/api/src/phan-he').filter((k) => ctx.repo.isDir(`apps/api/src/phan-he/${k}`)).map((k) => `apps/api/src/phan-he/${k}`),
@@ -95,7 +96,23 @@ export const checks = [
         ...ctx.repo.list('modules').filter((k) => ctx.repo.isDir(`modules/${k}`)).map((k) => `modules/${k}`),
       ];
       const have = keys.filter((d) => ctx.repo.exists(`${d}/bizcity.module.json`));
-      return { examined: keys.length, readiness: keys.length ? have.length / keys.length : 0, findings: [], notes: [`${have.length}/${keys.length} thư mục có manifest (audit A-25)`] };
+      const findings = [];
+      // owners khớp CODEOWNERS (BIZCITY-MODULE §6 bước 2): dòng khớp sau cùng của thư mục thắng, như GitHub.
+      const codeowners = (ctx.repo.read('.github/CODEOWNERS') ?? '').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+        .map((l) => l.split(/\s+/)).map(([p, ...o]) => [p.replace(/^\//, ''), o]);
+      const ownersOf = (d) => codeowners.filter(([p]) => p !== '*' && `${d}/`.startsWith(p.endsWith('/') ? p : `${p}/`)).pop()?.[1];
+      for (const d of keys) {
+        const file = `${d}/bizcity.module.json`;
+        if (!have.includes(d)) { findings.push(ctx.finding(d, null, 'thiếu bizcity.module.json (STD-MOD-1) — khai manifest theo docs/contracts/BIZCITY-MODULE-v1.md', `missing:${d}`)); continue; }
+        const m = ctx.repo.json(file);
+        const dir = d.split('/').pop();
+        if (m?.key !== dir) findings.push(ctx.finding(file, null, `key "${m?.key}" phải trùng tên thư mục "${dir}"`, `key-dir:${d}`));
+        const want = d.startsWith('apps/api/src/addins/') ? 'addin' : 'module';
+        if (m?.kind !== want) findings.push(ctx.finding(file, null, `kind "${m?.kind}" sai — thư mục này là ${want}`, `kind:${d}`));
+        const co = ownersOf(d);
+        if (co && [...(m?.owners ?? [])].sort().join(' ') !== [...co].sort().join(' ')) findings.push(ctx.finding(file, null, `owners ${JSON.stringify(m?.owners)} lệch CODEOWNERS (${co.join(' ')})`, `owners:${d}`));
+      }
+      return { examined: keys.length, readiness: keys.length ? have.length / keys.length : 0, findings, notes: [`${have.length}/${keys.length} thư mục có manifest (audit A-25)`] };
     },
   },
 ];

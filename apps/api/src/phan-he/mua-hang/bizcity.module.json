@@ -1,0 +1,79 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.mua-hang",
+  "key": "mua-hang",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Mua hàng",
+  "description": "Nhà cung cấp, mua hàng, trả hàng nhà cung cấp, công nợ phải trả",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "ledger.submit",
+      "masterdata.read",
+      "masterdata.write",
+      "documents.numbering",
+      "documents.attachments",
+      "documents.workflow"
+    ]
+  },
+  "data": {
+    "tables": [
+      "purchase_documents",
+      "purchase_policies",
+      "purchase_attachments",
+      "supplier_products",
+      "supplier_invoices",
+      "supplier_invoice_lines",
+      "supplier_item_aliases",
+      "stock_levels",
+      "stock_sku_settings",
+      "stock_max_requests",
+      "order_formulas",
+      "transfer_requests"
+    ]
+  },
+  "documents": [
+    {
+      "type": "mua-hang.purchase-document",
+      "label": "Phiếu mua hàng",
+      "workflow": "apps/api/src/phan-he/mua-hang/purchase-document.workflow.yaml"
+    }
+  ],
+  "ledger": {
+    "submits": [
+      {
+        "docType": "purchase",
+        "contract": "bizcity_ledger_intake@1"
+      },
+      {
+        "docType": "purchase_return",
+        "contract": "bizcity_ledger_intake@1"
+      },
+      {
+        "docType": "stock_adjustment",
+        "contract": "bizcity_ledger_intake@1"
+      }
+    ]
+  },
+  "settings": [
+    "bizcity.mua_hang.settings"
+  ],
+  "ui": {
+    "icon": "Truck",
+    "color": "#e8710a",
+    "order": 30
+  },
+  "waivers": [
+    {
+      "rule": "STD-MOD-2",
+      "reason": "Phân hệ còn ghi thẳng bảng danh mục / cấu hình của lõi (audit A-17, nợ SC-MOD-2 trong baseline); chuyển sang action / service danh mục ở PHASES 3.9",
+      "adr": "ADR-0005",
+      "expires": "2027-03-31"
+    }
+  ]
+}

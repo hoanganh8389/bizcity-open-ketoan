@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const src = path.join(root, 'src');
 const dist = path.join(root, 'dist');
-const DECLARATIONS = /\.workflow\.yaml$/;
+// [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — chép thêm bizcity.module.json (manifest phân hệ / add-in, nạp lúc khởi động)
+const DECLARATIONS = /(\.workflow\.yaml|(^|[\\/])bizcity\.module\.json)$/;
 
 let n = 0;
 for (const rel of readdirSync(src, { recursive: true, encoding: 'utf8' })) {
