@@ -1,5 +1,6 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
+# [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 (AUDIT-2026-11-01): bước vitest chạy dưới vai trò ketoan_app (DB_SET_ROLE) — RLS có hiệu lực, test pool RLS không còn bị bỏ qua
 # CI BizCity Ledger Framework — xem docs/ops/CI-CD.md
 name: ci
 
@@ -66,6 +67,8 @@ jobs:
       - run: npm run build -w @ketoan/contracts
       - run: npm run db:seed
       - name: vitest (+ báo cáo JSON làm bằng chứng)
+        env:
+          DB_SET_ROLE: ketoan_app
         run: npm test -- --reporter=default --reporter=json --outputFile=test-report.json
       - uses: actions/upload-artifact@v4
         if: always()

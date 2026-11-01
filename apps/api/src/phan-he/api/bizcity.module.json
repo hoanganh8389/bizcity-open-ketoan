@@ -1,0 +1,22 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.api",
+  "key": "api",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "API",
+  "description": "Thử API ngay trên giao diện, hướng dẫn tích hợp, khoá API, nguồn dữ liệu màn hình (giả / thật)",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": []
+  },
+  "ui": {
+    "icon": "Braces",
+    "color": "#3949ab",
+    "order": 80
+  }
+}

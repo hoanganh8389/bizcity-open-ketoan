@@ -39,7 +39,7 @@ Bảng thử 1 triệu dòng, một đơn vị 600.000 dòng, đúng chính sác
 
 | # | Giới hạn | Gỡ khi nào |
 |---|---|---|
-| L007-1 | **Bản cài dùng vai trò sở hữu mặc định (superuser) thì RLS không có hiệu lực** | chủ đặt `DB_APP_USER=ketoan_app` (S001-7) |
+| L007-1 | **Bản cài dùng vai trò sở hữu mặc định (superuser) thì RLS không có hiệu lực** | **đã gỡ 2026-11-01** (P0-3): compose mặc định `ketoan_app`, `DB_APP_PASSWORD` bắt buộc; subscriber chạy gắn đơn vị (P0-2) <!-- [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 / P0-2 --> |
 | L007-2 | Kết nối chưa gắn đơn vị thì thấy mọi đơn vị (D007-3) | khi tách tiến trình nền có vai trò riêng (Phase 5) |
 | L007-3 | Bảng con không có `tenant_id` (SC-DATA-5: 4 bảng) chỉ được bảo vệ qua bảng cha | thêm cột khi đụng tới |
 | L007-4 | Chạy cả bộ test dưới `DB_SET_ROLE=ketoan_app`: 6 test cần quyền sở hữu (TRUNCATE ra "permission denied" — còn chặt hơn; giả lập sửa ngầm cần superuser) | là đặc tính của vai trò, không phải lỗi; CI chạy bằng vai trò sở hữu, RLS kiểm ở `tenant-isolation.test.ts` |

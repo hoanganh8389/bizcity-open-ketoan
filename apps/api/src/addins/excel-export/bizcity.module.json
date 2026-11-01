@@ -1,0 +1,16 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.excel-export",
+  "key": "excel-export",
+  "kind": "addin",
+  "version": "1.0.0",
+  "label": "Xuất Excel",
+  "description": "Xuất các báo cáo ra tệp Excel (CSV).",
+  "owners": [
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": []
+  }
+}

@@ -36,10 +36,16 @@ dat_bien() { # dat_bien TÊN GIÁ_TRỊ — thay dòng TÊN=… nếu có, khôn
 if [ ! -f .env ]; then
   cp .env.example .env
   dat_bien JWT_SECRET "$(ngau_nhien 48)"
-  echo "✓ Tạo .env, JWT_SECRET ngẫu nhiên"
+  dat_bien DB_APP_PASSWORD "$(ngau_nhien 32)"
+  echo "✓ Tạo .env, JWT_SECRET và DB_APP_PASSWORD ngẫu nhiên"
 else
   echo "• Đã có .env — giữ nguyên"
   if grep -q '^JWT_SECRET=doi-thanh-chuoi' .env; then echo "  ! JWT_SECRET vẫn là giá trị mẫu — nên đổi trước khi dùng thật"; fi
+  # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3: bản cài cũ chưa có DB_APP_PASSWORD → thêm, API chuyển sang vai trò ketoan_app ở lần chạy này
+  if ! grep -q '^DB_APP_PASSWORD=..*' .env; then
+    dat_bien DB_APP_PASSWORD "$(ngau_nhien 32)"
+    echo "✓ Thêm DB_APP_PASSWORD ngẫu nhiên — API chạy bằng vai trò ketoan_app (không superuser, RLS có hiệu lực)"
+  fi
 fi
 
 FILES=(-f docker-compose.yml)

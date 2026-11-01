@@ -14,6 +14,7 @@
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/platform/src; nhãn masterdata/, system/diagnostics.ts, documents/signature.routes.ts của gói
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/kernel/src; index.ts (cổng công khai) và fastify-swagger.d.ts của gói là K
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+// [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — core/module-manifest.ts → P module-sdk (nạp bizcity.module.json, PHASES 3.2)
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -47,6 +48,7 @@ export const LAYER_MAP = [
   ['core/security/', 'P', 'permissions'],
   ['core/audit.ts', 'P', 'audit'],
   ['core/addins.ts', 'P', 'module-sdk'],
+  ['core/module-manifest.ts', 'P', 'module-sdk'],
   ['core/date-rules.ts', 'P', 'documents'],
   ['core/workflow.ts', 'P', 'documents'],
   ['core/documents.ts', 'P', 'documents'],

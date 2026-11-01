@@ -3,6 +3,7 @@
 // [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-CON-2 kiểm ledger.submits[].reasons: loại lý do khớp docType, khoá mặc định, gói gợi ý có thật và có lý do mặc định.
 // [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — SC-CON-2 kiểm data.reads: mỗi khung nhìn bizcity_read.* phải có trong migration của Core (data.read-views, 0043 / 0044)
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — SC-CON-7 đọc env.ts ở packages/platform, quét process.env trên LAYER_ROOTS
+// [2026-11-01 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — SC-CON-2 nhận waivers có hạn (PHASES 3.2): miễn đúng luật đã khai; waiver thiếu hạn / quá hạn là phát hiện
 /**
  * Hợp đồng: schema, manifest (CONF-MAN), JSON mẫu, bảng năng lực, mã luật, mã lỗi, cấu hình.
  * Mọi hợp đồng kiểm ở MỘT chỗ này — không viết test hợp đồng rải rác nơi khác.
@@ -14,6 +15,25 @@ const MODULE_SCHEMA = 'docs/contracts/BIZCITY-MODULE-v1.schema.json';
 const INTAKE_SCHEMA = 'docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json';
 const STANDARD = 'docs/standard/bizcity-standard.json';
 /** Loại lý do hợp với docType nộp (lý do mặc định của gói nền db/packs/vn-tt99-nen). */
+/**
+ * Phát hiện miễn được bằng waiver của manifest (STD-MOD-1 §waivers, PHASES 3.2 "CONF-MAN đạt (có waiver)"): tiền tố khoá phát hiện → mã luật.
+ * Chỉ các luật về đặt tên / phạm vi khai báo; luật về sự thật kế toán (docType, năng lực, schema) không miễn được.
+ */
+const WAIVABLE = [['action-prefix:', 'STD-ACT-6']];
+
+/** Waiver đang hiệu lực của manifest; waiver thiếu hạn (trừ ví dụ trong docs/) hoặc quá hạn thì báo và không miễn. */
+function activeWaivers(m, isExample, report) {
+  const today = new Date().toISOString().slice(0, 10);
+  const out = new Set();
+  for (const w of Array.isArray(m?.waivers) ? m.waivers : []) {
+    if (!w?.rule) continue;
+    if (!w.expires) { if (!isExample) { report(`waiver ${w.rule} phải có "expires" (miễn có hạn)`, `waiver-no-expiry:${w.rule}`); continue; } }
+    else if (w.expires < today) { report(`waiver ${w.rule} đã quá hạn ${w.expires} — sửa vi phạm hoặc chủ dự án gia hạn có lý do`, `waiver-expired:${w.rule}`); continue; }
+    out.add(w.rule);
+  }
+  return out;
+}
+
 const REASON_KIND = {
   sale: ['out'], sale_return: ['in'], purchase: ['in'], purchase_return: ['out'], transfer: ['out', 'in'], stock_adjustment: ['in', 'out'],
   cash_transfer: ['payment', 'receipt'], customer_payment: ['receipt'], supplier_payment: ['payment'],
@@ -76,6 +96,7 @@ export const checks = [
       const metrics = { manifests: 0, capabilitiesRequired: 0, capabilitiesAvailable: 0, blockedBy: [] };
       let packs = null;
       let views = null;
+      const waivedNotes = [];
 
       for (const file of files) {
         if (!ctx.repo.exists(file)) {
@@ -86,7 +107,14 @@ export const checks = [
         const isExample = file.startsWith('docs/');
         const m = ctx.repo.json(file);
         metrics.manifests++;
-        const add = (msg, key) => findings.push(ctx.finding(file, null, msg, key ?? msg));
+        const report = (msg, key) => findings.push(ctx.finding(file, null, msg, key ?? msg));
+        const waived = activeWaivers(m, isExample, report);
+        const add = (msg, key) => {
+          const k = key ?? msg;
+          const rule = WAIVABLE.find(([p]) => k.startsWith(p))?.[1];
+          if (rule && waived.has(rule)) { waivedNotes.push(`${file}: ${k} — miễn theo waiver ${rule}`); return; }
+          report(msg, k);
+        };
 
         for (const e of ctx.validate(MODULE_SCHEMA, m)) add(`schema ${e.path}: ${e.message}`, `schema:${e.path}:${e.keyword}`);
         if (typeof m !== 'object' || !m) continue;
@@ -155,7 +183,7 @@ export const checks = [
           for (const g of wf.matchAll(/group:\s*([a-z_]+)/g)) if (!groups.has(g[1])) add(`${d.workflow}: nhóm trạng thái "${g[1]}" ngoài 5 nhóm chuẩn`, `wf-group:${g[1]}`);
         }
       }
-      return { examined: metrics.manifests, findings, metrics };
+      return { examined: metrics.manifests, findings, metrics, notes: waivedNotes };
     },
   },
   {

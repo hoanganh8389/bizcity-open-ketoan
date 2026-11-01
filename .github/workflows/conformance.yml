@@ -88,7 +88,10 @@ jobs:
       - run: npm run build -w @ketoan/contracts
       - run: npm run db:seed
       # Chạy bộ test để CSDL có bút toán thật, rồi kiểm toàn vẹn trên chính dữ liệu đó (thay tạm R-QG-5 tới khi có test-kit).
+      # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3: test chạy dưới vai trò ketoan_app (DB_SET_ROLE) — như API thật, RLS có hiệu lực
       - run: npm test
+        env:
+          DB_SET_ROLE: ketoan_app
       - run: node tests/conformance/selfcheck.mjs --lane diagnostics
       - name: Bảng điểm vào trang tóm tắt
         if: always()

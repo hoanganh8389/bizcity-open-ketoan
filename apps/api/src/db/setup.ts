@@ -20,12 +20,13 @@ async function enableAppRole(): Promise<void> {
   if (password.length < 16) throw new Error('DB_APP_PASSWORD phải dài ít nhất 16 ký tự');
   const role = await pool.query<{ ok: boolean }>("SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ketoan_app') AS ok");
   if (!role.rows[0]?.ok) {
-    console.log('Vai trò ketoan_app chưa có (vai trò chạy migration không tạo được vai trò) — API vẫn dùng vai trò sở hữu');
+    // [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3: API mặc định ketoan_app, thiếu vai trò thì API không đăng nhập được — báo rõ cách sửa
+    console.error('Vai trò ketoan_app chưa có (vai trò chạy migration không tạo được vai trò): người quản trị CSDL tạo theo db/migrations/0032_vai_tro_ung_dung.sql — API kết nối bằng ketoan_app sẽ lỗi tới khi có');
     return;
   }
   const q = await pool.query<{ q: string }>("SELECT format('ALTER ROLE ketoan_app WITH LOGIN PASSWORD %L', $1::text) AS q", [password]);
   await pool.query(q.rows[0]!.q);
-  console.log('Vai trò ketoan_app: đã bật đăng nhập (API dùng khi DB_APP_USER=ketoan_app)');
+  console.log('Vai trò ketoan_app: đã bật đăng nhập (API kết nối bằng vai trò này)');
 }
 
 // [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — vai trò ketoan_monitor cho postgres-exporter (S018-5b): chỉ pg_monitor + CONNECT, tạo khi có PG_EXPORTER_PASSWORD

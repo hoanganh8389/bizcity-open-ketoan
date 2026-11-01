@@ -54,8 +54,9 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@ketoan.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123}
       SEED_API_KEY: ${SEED_API_KEY:-}
-      # Có giá trị: job bật đăng nhập cho vai trò ketoan_app (migration 0032) — API dùng vai trò thường (R-SEC-6).
-      DB_APP_PASSWORD: ${DB_APP_PASSWORD:-}
+      # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 (AUDIT-2026-11-01): DB_APP_PASSWORD bắt buộc — job bật đăng nhập cho ketoan_app, API luôn dùng vai trò thường.
+      # Job bật đăng nhập cho vai trò ketoan_app (migration 0032) — API dùng vai trò thường (R-SEC-6).
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Đặt DB_APP_PASSWORD trong .env (≥ 16 ký tự chữ và số; bash scripts/cai-nhanh.sh tự sinh) — API chạy bằng vai trò ketoan_app (R-SEC-6)}
       # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — có giá trị: job tạo / cập nhật vai trò chỉ đọc thống kê ketoan_monitor cho postgres-exporter.
       PG_EXPORTER_PASSWORD: ${PG_EXPORTER_PASSWORD:-}
       TZ: Asia/Ho_Chi_Minh
@@ -74,9 +75,10 @@ services:
       NODE_ENV: production
       PORT: 4100
       AUTO_MIGRATE: "0"
-      # Vai trò CSDL của API (R-SEC-6): mặc định vai trò sở hữu (như cũ). Bản thật: đặt DB_APP_USER=ketoan_app + DB_APP_PASSWORD
-      # trong .env → API không tắt được trigger bảo vệ sổ. Job db-migrate vẫn dùng vai trò sở hữu.
-      DATABASE_URL: postgres://${DB_APP_USER:-ketoan}:${DB_APP_PASSWORD:-${DB_PASSWORD:-ketoan}}@db:5432/ketoan
+      # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3: mặc định ketoan_app (trước: vai trò sở hữu ketoan = superuser, vượt RLS, tắt được trigger sổ).
+      # Vai trò CSDL của API (R-SEC-6): ketoan_app — không superuser, không sở hữu bảng → RLS có hiệu lực, không tắt được trigger
+      # bảo vệ sổ. Job db-migrate vẫn dùng vai trò sở hữu. DB_APP_USER chỉ để đổi tên vai trò thường; không dùng để quay về ketoan.
+      DATABASE_URL: postgres://${DB_APP_USER:-ketoan_app}:${DB_APP_PASSWORD:?Đặt DB_APP_PASSWORD trong .env (≥ 16 ký tự chữ và số; bash scripts/cai-nhanh.sh tự sinh) — API chạy bằng vai trò ketoan_app (R-SEC-6)}@db:5432/ketoan
       JWT_SECRET: ${JWT_SECRET:?Đặt JWT_SECRET trong .env}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8088}
       ADDINS: ${ADDINS:-*}

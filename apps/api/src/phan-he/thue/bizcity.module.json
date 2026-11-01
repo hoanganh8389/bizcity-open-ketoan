@@ -1,0 +1,48 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.thue",
+  "key": "thue",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Thuế",
+  "description": "Hoá đơn, bảng kê, tờ khai thuế GTGT, TNDN",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "data.read-views",
+      "masterdata.read"
+    ]
+  },
+  "data": {
+    "tables": [
+      "vat_returns",
+      "cit_returns",
+      "taxpayer_profiles",
+      "long_term_balances",
+      "authority_invoices",
+      "risky_taxpayers"
+    ],
+    "reads": [
+      "bizcity_read.ledger_entries",
+      "bizcity_read.ledger_lines",
+      "bizcity_read.ledger_balances_daily"
+    ]
+  },
+  "ui": {
+    "icon": "Landmark",
+    "color": "#5d4037",
+    "order": 70
+  },
+  "waivers": [
+    {
+      "rule": "STD-MOD-2",
+      "reason": "Phân hệ còn ghi thẳng bảng danh mục / cấu hình của lõi (audit A-17, nợ SC-MOD-2 trong baseline); chuyển sang action / service danh mục ở PHASES 3.9",
+      "adr": "ADR-0005",
+      "expires": "2027-03-31"
+    }
+  ]
+}

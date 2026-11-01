@@ -54,7 +54,7 @@ Image API chép `db/migrations`, `db/seeds`, `db/packs` vào `/app/db` (`apps/ap
 | D-6 | Một bản cài = một `name:` Docker Compose riêng; không đổi `name:` của bản đang chạy (đổi tên volume) |
 | D-7 | Phát hành gắn nhãn phiên bản (`git tag vX.Y.Z`); image ghi nhãn `org.opencontainers.image.version` (Giai đoạn 3). Bản đang chạy: `GET /api/v1/system/health` trả `version`, `kernel`, `standard` |
 | D-8 | Proxy TLS phía trước (cổng 443) gửi `Strict-Transport-Security: max-age=15552000`. nginx của container `web` đã gửi `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'`. Không đặt `X-Frame-Options` vì phần mềm được nhúng trong trang quản trị WP (R-SEC-11) |
-| D-9 | API dùng vai trò CSDL thường `ketoan_app` (R-SEC-6): trong `.env` đặt `DB_APP_USER=ketoan_app` và `DB_APP_PASSWORD=<openssl rand -hex 24>` → `docker compose up -d` (job `db-migrate` bật đăng nhập cho vai trò, API kết nối bằng nó). Kiểm: `BIZCITY_PSQL="docker exec -i <db> psql -U ketoan_app -d ketoan" node tests/conformance/selfcheck.mjs --lane diagnostics` → DG-SEC-2 đạt |
+| D-9 | API dùng vai trò CSDL thường `ketoan_app` (R-SEC-6) — **mặc định từ 2026-11-01** (P0-3): `.env` phải có `DB_APP_PASSWORD` (≥ 16 ký tự chữ và số; `scripts/cai-nhanh.sh` / `scripts/cap-nhat.sh` tự sinh nếu thiếu), thiếu thì `docker compose` dừng; job `db-migrate` bật đăng nhập cho vai trò, API kết nối bằng nó. <!-- [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 -->  Kiểm: `BIZCITY_PSQL="docker exec -i <db> psql -U ketoan_app -d ketoan" node tests/conformance/selfcheck.mjs --lane diagnostics` → DG-SEC-2 đạt |
 
 ## 4. Kiểm sau triển khai (bắt buộc — R-QG-10)
 

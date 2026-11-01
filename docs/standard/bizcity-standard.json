@@ -4,7 +4,7 @@
   "released": null,
   "notes": "Bản máy đọc của Bizcity Framework Standard. Sửa cùng docs/standard/VERSIONING.md. status: available = có trong code; planned = chưa có (phase = Phase dự kiến trong docs/standard/PHASES.md).",
   "contracts": {
-    "bizcity_module": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
+    "bizcity_module": { "version": "1.1.1-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
     "bizcity_data": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-DATA-v1.md" },
     "bizcity_document": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
     "bizcity_action": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },

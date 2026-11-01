@@ -54,6 +54,56 @@ describe('Sổ cái chỉ được thêm (trigger)', () => {
     await expect(sql`DELETE FROM ledger_lines WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ được thêm/);
   });
 
+  // P0-1 (AUDIT-2026-11-01, migration 0049): đầu bút toán và sự việc kế toán bị khoá ở tầng CSDL.
+  it('không xoá được đầu bút toán, không đổi tiền / ngày / trạng thái ngoài ba lối của Kernel', async () => {
+    const e = await db.selectFrom('ledger_entries').select(['id', 'posting_date']).where('tenant_id', '=', tenantId).executeTakeFirstOrThrow();
+    const deny = /chỉ được thêm/;
+    await expect(sql`DELETE FROM ledger_entries WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE ledger_entries SET total = total + 1 WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE ledger_entries SET posting_date = posting_date + 1 WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE ledger_entries SET status = 'draft' WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE ledger_entries SET entry_no = entry_no || 'X' WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE ledger_entries SET is_reversal = true WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    // E2 đổi thông tin đầu kèm tiền: chặn
+    await expect(sql`UPDATE ledger_entries SET description = 'x', total = total + 1 WHERE id = ${e.id}`.execute(db)).rejects.toThrow(deny);
+    // E1 không bật cost_overwrite: không đổi được total
+    await expect(db.transaction().execute(async (trx) => {
+      await sql`SELECT set_config('ketoan.cost_overwrite', 'off', true)`.execute(trx);
+      await sql`UPDATE ledger_entries SET total = total WHERE id = ${e.id}`.execute(trx); // không đổi gì — được
+      await sql`UPDATE ledger_entries SET total = total + 1 WHERE id = ${e.id}`.execute(trx);
+    })).rejects.toThrow(deny);
+  });
+
+  it('ba lối của Kernel vẫn chạy: thông tin đầu (E2), điền giá vốn (E1), đảo posted → reversed', async () => {
+    // Chạy trong giao dịch rồi huỷ: không để lại thay đổi trên sổ của tệp test.
+    const rollback = new Error('rollback');
+    await expect(db.transaction().execute(async (trx) => {
+      const e = await trx.selectFrom('ledger_entries').select(['id', 'total']).where('tenant_id', '=', tenantId).where('status', '=', 'posted').where('is_reversal', '=', false).executeTakeFirstOrThrow();
+      await sql`UPDATE ledger_entries SET description = 'Thông tin đầu mới', invoice_no = 'HD-1' WHERE id = ${e.id}`.execute(trx);
+      await sql`SELECT set_config('ketoan.cost_overwrite', 'on', true)`.execute(trx);
+      await sql`UPDATE ledger_entries SET total = total + 0 WHERE id = ${e.id}`.execute(trx);
+      await sql`SELECT set_config('ketoan.cost_overwrite', 'off', true)`.execute(trx);
+      await sql`UPDATE ledger_entries SET status = 'reversed' WHERE id = ${e.id}`.execute(trx);
+      // đã reversed thì không quay lại posted
+      await expect(sql`UPDATE ledger_entries SET status = 'posted' WHERE id = ${e.id}`.execute(trx)).rejects.toThrow(/chỉ được thêm/);
+      throw rollback;
+    })).rejects.toBe(rollback);
+  });
+
+  it('sự việc kế toán không xoá được, không đổi doc_key, không lùi phiên bản; bản cất phiên bản cũ chỉ thêm', async () => {
+    const ev = await db.selectFrom('accounting_events').select(['id', 'version']).where('tenant_id', '=', tenantId).executeTakeFirstOrThrow();
+    const deny = /không được xoá|chỉ được thêm/;
+    await expect(sql`DELETE FROM accounting_events WHERE id = ${ev.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE accounting_events SET doc_key = doc_key || ':x' WHERE id = ${ev.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`UPDATE accounting_events SET version = ${ev.version - 1} WHERE id = ${ev.id}`.execute(db)).rejects.toThrow(deny);
+    await expect(sql`TRUNCATE accounting_events CASCADE`.execute(db)).rejects.toThrow(/TRUNCATE|permission denied/);
+    await expect(sql`UPDATE accounting_event_versions SET payload = '{}'::jsonb WHERE event_id = ${ev.id}`.execute(db)).resolves.toBeDefined(); // không dòng nào: không lỗi
+    await expect(db.transaction().execute(async (trx) => {
+      await trx.insertInto('accounting_event_versions').values({ event_id: ev.id, version: 999999, payload: '{}', received_at: new Date() }).execute();
+      await sql`UPDATE accounting_event_versions SET payload = '{"x":1}'::jsonb WHERE event_id = ${ev.id} AND version = 999999`.execute(trx);
+    })).rejects.toThrow(/chỉ được thêm/);
+  });
+
   it('số âm chỉ được ghi trong bút toán đảo', async () => {
     const line = await db.selectFrom('ledger_lines').selectAll().where('tenant_id', '=', tenantId).where('debit', '>', '0').executeTakeFirstOrThrow();
     await expect(
@@ -65,8 +115,8 @@ describe('Sổ cái chỉ được thêm (trigger)', () => {
   });
 
   it('không TRUNCATE được sổ cái', async () => {
-    await expect(sql`TRUNCATE ledger_lines`.execute(db)).rejects.toThrow(/TRUNCATE/);
-    await expect(sql`TRUNCATE ledger_entries CASCADE`.execute(db)).rejects.toThrow(/TRUNCATE/);
+    await expect(sql`TRUNCATE ledger_lines`.execute(db)).rejects.toThrow(/TRUNCATE|permission denied/);
+    await expect(sql`TRUNCATE ledger_entries CASCADE`.execute(db)).rejects.toThrow(/TRUNCATE|permission denied/);
   });
 
   it('một bút toán chỉ bị đảo (ghi số âm) một lần', async () => {

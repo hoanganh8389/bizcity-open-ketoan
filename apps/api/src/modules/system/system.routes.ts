@@ -31,7 +31,8 @@ import { writeAudit } from '../../core/audit.js';
 import { dataLockSchema, readDataLock, todayVN } from '../../core/date-rules.js';
 import { Errors } from '../../core/errors.js';
 import { db } from '../../db/client.js';
-import { ok } from '../../core/http.js';
+import { ok, queryBool } from '../../core/http.js';
+import { summarize } from '../../core/module-manifest.js';
 import { readSchema } from './schema.service.js';
 import { postingModesSchema } from '@ketoan/contracts';
 import { readPostingModes } from '../../kernel/public.js';
@@ -248,9 +249,14 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     handler: async () => ok(app.addins.map((a) => a.manifest)),
   });
 
+  // [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ?detail=true trả manifest (bizcity.module.json) của phân hệ + add-in đang bật; mặc định giữ mảng mã (giao diện cũ)
   app.get('/api/v1/system/modules', {
-    schema: { tags: ['Hệ thống'], summary: 'Phân hệ máy chủ đang bật' },
-    handler: async () => ok(app.enabledModules),
+    schema: {
+      tags: ['Hệ thống'], summary: 'Phân hệ máy chủ đang bật',
+      description: 'Mặc định: mảng mã phân hệ đang bật. detail=true: manifest tóm tắt (id, key, kind, version, label, mô tả, năng lực cần, action, docType nộp sổ, giao diện) của phân hệ và add-in đang bật.',
+      querystring: z.object({ detail: queryBool.optional() }),
+    },
+    handler: async (req) => ok((req.query as { detail?: boolean }).detail ? app.moduleManifests.map(summarize) : app.enabledModules),
   });
 
   app.get('/api/v1/system/schema', {
