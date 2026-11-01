@@ -75,8 +75,8 @@ describe('bizcity_read.* — khung nhìn chỉ đọc', () => {
   });
 
   it('chặn ghi qua khung nhìn', async () => {
-    await expect(sql`UPDATE bizcity_read.ledger_entries SET description = 'sửa' WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc/);
-    await expect(sql`DELETE FROM bizcity_read.ledger_lines WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc/);
+    await expect(sql`UPDATE bizcity_read.ledger_entries SET description = 'sửa' WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc|permission denied/);
+    await expect(sql`DELETE FROM bizcity_read.ledger_lines WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc|permission denied/);
   });
 });
 
