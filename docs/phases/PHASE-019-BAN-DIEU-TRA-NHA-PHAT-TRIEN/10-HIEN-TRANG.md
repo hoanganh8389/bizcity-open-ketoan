@@ -9,7 +9,7 @@
 |---|---|---|
 | Phản hồi lỗi có `error.requestId`, `error.traceId` | `apps/api/src/core/http.ts`; [BIZCITY-ERRORS-v1](../../contracts/BIZCITY-ERRORS-v1.md) | Mã tra cứu (W1) |
 | Header `X-Request-Id` ở mọi phản hồi | `apps/api/src/core/observability.ts` (R-OBS-1) | Mã tra cứu khi thân phản hồi hỏng (504 từ proxy) |
-| `GET /api/v1/system/health` → `version`, `kernel`, `standard`, `envLabel`, `bookMode` | `modules/system/system.routes.ts:141`; web đọc ở `layout/AppLayout.tsx:68` | Báo lỗi (phiên bản), chế độ Vận hành (`envLabel`) |
+| `GET /api/v1/system/health` → `version`, `kernel`, `standard`, `envLabel`, `bookMode` | `modules/system/system.routes.ts:141`; web đọc ở `layout/AppLayout.tsx:68` | Báo lỗi (phiên bản); dải đầu trang hiện `envLabel` (chế độ Vận hành **không** dựa vào `envLabel` — Q019-2) |
 | `GET /api/v1/system/events` (`reports:read`) — subscriber, chờ / xong / chết theo nơi nhận | `modules/system/events.routes.ts:15-29` | Sự kiện |
 | `POST /api/v1/system/events/replay` (`settings:write`, bằng chứng) | `modules/system/events.routes.ts:31-48` | Sự kiện — **chỉ link**, không làm lại |
 | `GET /api/v1/system/diagnostics` + `/runs`, `/runs/:id` (`reports:read`) | `modules/system/system.routes.ts:165,195,211` | Toàn vẹn |
