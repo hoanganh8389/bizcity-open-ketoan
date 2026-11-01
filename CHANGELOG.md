@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — hồ sơ kế toán của đơn vị (ADR-0013, migration 0049) -->
+- **Hồ sơ kế toán của đơn vị có phiên bản** ([ADR-0013](docs/adr/ADR-0013-ho-so-ke-toan-co-phien-ban.md), mức Kernel K1, migration `0049_ho_so_ke_toan`): năm tài chính (tháng bắt đầu), chế độ kế toán (TT200 / TT99 / TT133 / TT152), loại pháp nhân; hiệu lực từ ngày đầu một năm tài chính, không phát hành vào năm đã có kỳ khoá, chỉ thêm, có bằng chứng. `GET /api/v1/accounting/profile` (`accounting.profile.get`, AI đọc được), `POST /api/v1/accounting/profile/publish` (`accounting.profile.publish`, `settings:write`). Chưa khai thì trả `current: null` — Core không đoán chế độ. Báo cáo năm, kết chuyển cuối năm vẫn theo năm dương lịch (chưa đổi).
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ kiểm chuẩn pháp lý Việt Nam: kho nguồn pháp lý, 4 schema, 3 rulepack nháp, check SC-VNC-1/2, luật R-VNC, audit nền VNCONF-001 -->
 <!-- [2026-11-02 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine (ADR-0012 đề xuất) + lệnh --certify -->
 <!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0012 chấp nhận + T1–T8, R-VNC-10, rulepack C09 -->
@@ -193,6 +195,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+<!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — migration 0049 -->
+- Chạy migration `0049_ho_so_ke_toan` (chỉ thêm bảng `accounting_profiles`, không đổi dữ liệu cũ). Sau cập nhật, mỗi đơn vị khai hồ sơ kế toán một lần (`accounting.profile.publish`); chưa khai thì mọi việc ghi sổ vẫn như cũ, chỉ Conformance báo "chưa khai".
 - CSDL đã chạy nhánh `feat/phase-0-tiep` **trước** khi gộp `main` (có dòng `0047_ky_chung_tu_chung.sql` trong `schema_migrations`): đổi tên dòng đó thành `0048_ky_chung_tu_chung.sql` rồi `npm run db:migrate` (áp `0047_truy_vet.sql`). Bản cài từ `main` không bị ảnh hưởng.
 - Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`, `@bizcity/kernel`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
 - Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.

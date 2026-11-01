@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_vn_case@1",
   "id": "vn.accounting-regimes-vn.tt99.fiscal_year_calendar_2026.001",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "rulepack": "accounting-regimes-vn",
   "spec_ref": "C02.1",
   "title": "Đơn vị năm tài chính 01/01/2026–31/12/2026 áp TT99 theo cấu hình được duyệt",
@@ -27,7 +27,8 @@
     "kind": "runtime",
     "verified_by": [
       "posting-pack.test.ts",
-      "policy.test.ts"
+      "policy.test.ts",
+      "accounting-profile.test.ts"
     ],
     "input_fixture": null,
     "expected_fixture": null,
@@ -35,7 +36,7 @@
       "regime_tt99_selected",
       "selection_from_approved_config"
     ],
-    "gap": "Đơn vị chưa có trường năm tài chính / chế độ kế toán (tenants.settings không có khoá; fiscal_periods chỉ theo tháng dương lịch). Chế độ hiện nằm trên gói định khoản (config_packs.regime). Cần đề xuất năng lực Core (VERSIONING §5) trước khi test được."
+    "gap": "Hồ sơ kế toán của đơn vị có từ ADR-0013 (accounting.profile): chế độ + năm tài chính khai được và chọn được theo ngày. Còn thiếu: kiểm hồ sơ khai khớp gói định khoản đang cài (Conformance lớp Cấu hình, W2) và căn cứ TT99 chưa được rà."
   },
   "on_missing_basis": "REVIEW_REQUIRED",
   "review": {

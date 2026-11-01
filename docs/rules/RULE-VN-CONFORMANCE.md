@@ -39,4 +39,4 @@ Khác với bảng điểm Tuân chuẩn (`pass · debt · warn · fail · error
 
 - `bizcity_compliance@1` §3 (ma trận pháp lý) là **định hướng thiết kế**; kho nguồn pháp lý R-VNC-1 là **dữ liệu máy đọc** cùng nội dung, có trạng thái rà soát. Sửa một bên phải sửa bên kia (CANON §5).
 - `docs/can-cu/` là bản tóm tắt cho kế toán; registry là nguồn cho máy. `review.status` của registry chỉ `reviewed` khi người có trách nhiệm đã đọc văn bản gốc, không phải khi `docs/can-cu` đã ghi.
-- C-9 / ADR-0009 (chính sách kế toán có phiên bản) là cơ chế của Core cho R-VNC-4 bước 2; năng lực "năm tài chính của đơn vị" **chưa có** (xem khoảng trống ở ca `vn.accounting-regimes-vn.tt99.*`).
+- C-9 / ADR-0009 (chính sách kế toán có phiên bản) và hồ sơ kế toán của đơn vị (ADR-0013, năng lực `accounting.profile`: năm tài chính, chế độ, loại pháp nhân) là cơ chế của Core cho R-VNC-4 bước 1–2. <!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — R-VNC-4 dùng hồ sơ kế toán ADR-0013 -->

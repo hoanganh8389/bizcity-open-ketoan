@@ -6,7 +6,7 @@
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — thêm công cụ đọc accounting.report.income_statement (B02); action báo cáo về phan-he/ke-toan/reports -->
 <!-- [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — journal.post đã có (phiếu nhập tay nháp chờ duyệt), thay receipt_draft / payment_draft. -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel + Platform (bề mặt AI của Core)
+> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel + Platform (bề mặt AI của Core)
 > **Là hồ sơ (profile) của chuẩn MCP chung hệ sinh thái Bizcity**, không phải chuẩn riêng. Hai hợp đồng gốc nằm ở plugin `bizcity-twin-ai/docs/contracts/`:
 > - `bizcity-mcp-tool@1.0.0`: descriptor, kết quả, xác nhận trước khi ghi, idempotency;
 > - `bizcity-mcp-bridge@1.0.0`: uỷ quyền Cell → Hub → site;
@@ -113,6 +113,7 @@ defineAction({ id: 'accounting.report.trial_balance', input, output, permission:
 | `accounting.masterdata.partner_find` · `.product_find` | `kt_find_partner`… | Tra đối tượng / mặt hàng theo mã, tên, SĐT, MST | danh mục |
 | `accounting.posting.reasons` | `kt_reasons` | Lý do đang dùng, kèm gợi ý AI của gói | `/posting/reasons` |
 | `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | **có** (PHASE-012, action `accounting.posting.reason-suggest`) <!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — reason_suggest có. --> |
+| `accounting.profile.get` | `kt_profile` | Hồ sơ kế toán của đơn vị tại một ngày: năm tài chính, chế độ kế toán, loại pháp nhân, lịch sử; `current = null` = chưa khai | **có** (ADR-0013, action `accounting.profile.get`) <!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm công cụ accounting.profile.get --> |
 | `accounting.posting.explain` | `kt_explain_entry` | Giải thích một bút toán: lý do, tài khoản lấy từ đâu theo thứ tự AccountResolver | mới, đọc `posting_log` |
 
 ### 5.2 Đề xuất ghi — `confirm: always`, gói Pro
@@ -175,4 +176,5 @@ MCP server là một phần của Core (`platform/mcp`), **không** nằm trong 
 
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
+| 1.1.0-draft | 2026-11-02 | Thêm công cụ đọc `accounting.profile.get` (hồ sơ kế toán của đơn vị, ADR-0013); `accounting.profile.publish` không phơi cho AI |
 | 1.0.0-draft | 2026-10-29 | Khởi tạo, làm hồ sơ của `bizcity-mcp-tool@1.0.0` + `bizcity-mcp-bridge@1.0.0`; danh mục công cụ kế toán; mode `accounting*` |

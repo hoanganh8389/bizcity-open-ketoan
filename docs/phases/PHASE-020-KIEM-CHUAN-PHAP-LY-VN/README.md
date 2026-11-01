@@ -31,7 +31,7 @@
 
 | # | Khoảng trống | Ảnh hưởng | Ở đâu |
 |---|---|---|---|
-| G1 | Đơn vị **không có** năm tài chính / chế độ kế toán; `fiscal_periods` theo tháng dương lịch, CHECK năm bắt đầu = năm kết thúc | C02.1, C02.2 (năm tài chính lệch năm dương lịch) không test được | `db/migrations/0004_goc_ky_ke_toan.sql:22`, `tenants.settings` không có khoá |
+| G1 | ~~Đơn vị không có năm tài chính / chế độ kế toán~~ — **đã lấp 2026-11-02** bằng hồ sơ kế toán có phiên bản ([ADR-0013](../../adr/ADR-0013-ho-so-ke-toan-co-phien-ban.md)); còn: báo cáo năm / kết chuyển cuối năm theo năm tài chính <!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — G1 đã lấp (ADR-0013) --> | C02.1, C02.2 có bằng chứng chạy thật | `db/migrations/0049_ho_so_ke_toan.sql` |
 | G2 | Hệ thống tài khoản không nằm trong bản chụp chính sách | chuyển TT133 → TT99 chưa có phiên bản cho hệ thống tài khoản | ADR-0009 §2 |
 | G3 | Vòng đời module (`modules.lifecycle`), vai trò `mod_<key>_owner` còn `planned` | C08.4, C08.6 NOT_TESTED | ADR-0011, `bizcity-standard.json` |
 | G4 | Khoá idempotency sự việc = (tenant_id, doc_key) + version, không có `source` | C01.3 cần người duyệt chốt docKey có tiền tố nguồn là đủ | `db/migrations/0005_goc_chung_tu.sql` |

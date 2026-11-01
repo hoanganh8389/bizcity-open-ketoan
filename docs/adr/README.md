@@ -7,6 +7,7 @@
 <!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — thêm ADR-0011 vào chỉ mục -->
 <!-- [2026-11-02 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm ADR-0012 (đề xuất) Conformance Engine trụ cột Kernel vào chỉ mục -->
 <!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0012 chấp nhận -->
+<!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm ADR-0013 hồ sơ kế toán có phiên bản -->
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại lệ Tier 1. Chỉ thêm; quyết định bị thay thì ghi "Thay bởi ADR-xxxx" ở đầu tệp cũ.
@@ -25,6 +26,7 @@ Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại 
 | [0010](ADR-0010-opentelemetry-tu-loi.md) | OpenTelemetry từ lõi kiến trúc: sáu lớp bảo đảm (Kernel · PostgreSQL + Audit Ledger · OpenTelemetry · Prometheus · Grafana + Tempo + Loki · Alertmanager); span chỉ ở khớp nối Platform + bọc một lần cổng `kernel/public.ts`, thuộc tính theo danh sách cho phép; module cộng đồng tự có trace, không sửa Kernel | Chấp nhận (chủ dự án 2026-11-01) |
 | [0011](ADR-0011-plugin-ba-muc-tin-cay.md) | Plugin theo ba mức tin cậy: module trong mã nguồn bản cài (tự host, trong tiến trình) · app ngoài tiến trình (khoá có phạm vi, webhook từ outbox, iframe) · gói ký (Phase 5); **không drop-in**; hai mức bật, nạp theo hash, migration module bằng vai trò `mod_<key>_owner`, ghi sổ chỉ qua `submit` | Chấp nhận 2026-11-01 |
 | [0012](ADR-0012-conformance-engine-tru-cot-kernel.md) | Conformance Engine là trụ cột cấp Kernel: ba lớp (Module · Cấu hình · Doanh nghiệp), bốn thành phần (Registry cấp điều khoản · Test Packs · Oracle · Evidence), ba cổng (Build chặn · Posting chỉ thông tin — người dùng quyết · Compliance Report); bảng điểm theo ma trận BizCity; chỉ đọc | Chấp nhận 2026-11-02 (kèm T1–T8) |
+| [0013](ADR-0013-ho-so-ke-toan-co-phien-ban.md) | Hồ sơ kế toán của đơn vị có phiên bản: năm tài chính, chế độ kế toán, loại pháp nhân; bảng chỉ thêm `accounting_profiles`, hiệu lực từ đầu năm tài chính; Core giữ cấu trúc, Conformance phân tích; chưa khai thì không đoán | Chấp nhận 2026-11-02 |
 
 ## Khuôn
 

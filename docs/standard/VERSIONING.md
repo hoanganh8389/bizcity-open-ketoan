@@ -82,4 +82,6 @@ CI dựng bảng **module × phiên bản Core** từ kết quả bộ tương t
 
 ## 7. Nhật ký
 
+<!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — năng lực accounting.profile -->
+- **1.0.0-draft (2026-11-02):** thêm năng lực `accounting.profile` (available) — hồ sơ kế toán của đơn vị có phiên bản ([ADR-0013](../adr/ADR-0013-ho-so-ke-toan-co-phien-ban.md)); chưa phát hành nên không đổi số phiên bản Standard.
 - **1.0.0-draft (2026-10-29):** Khởi tạo Standard v1 với 7 hợp đồng; đổi tên khuôn nạp sổ `bizcity_event@1` thành `bizcity_ledger_intake@1` (chưa phát hành nên không cần thời gian chạy song song).
