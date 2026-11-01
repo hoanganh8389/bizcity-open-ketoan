@@ -58,7 +58,10 @@ export async function getJson(b: Backend, path: string, query: Record<string, st
 export async function ping(b: Backend): Promise<SourceState> {
   const base = baseUrl(b);
   if (!base) return 'off';
-  const path = b === 'alertmanager' ? '/-/ready' : b === 'prometheus' ? '/-/ready' : '/ready';
+  // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: Tempo / Loki: hỏi API truy vấn, không hỏi /ready
+  // /ready của Tempo / Loki đo bộ ghi (ingester) — trả 503 "waiting for 15s after being ready" từng lúc trong khi truy vấn vẫn chạy
+  // (đo trên bản 2.6.1 / 3.3.2, 2026-11-01). Bàn điều tra chỉ đọc nên hỏi đường nhẹ của API truy vấn.
+  const path = { tempo: '/api/echo', loki: '/loki/api/v1/status/buildinfo', prometheus: '/-/ready', alertmanager: '/-/ready' }[b];
   try {
     const res = await fetch(base + path, { signal: AbortSignal.timeout(PING_TIMEOUT_MS) });
     return res.ok ? 'up' : 'down';
@@ -74,10 +77,34 @@ export function quote(s: string): string {
 
 // ---------------------------------------------------------------- Loki ----
 
+/** Bộ lọc tuỳ chọn của màn Nhật ký — mọi giá trị đã qua khuôn Zod ở route. */
+export interface LogFilter {
+  level?: 'error' | 'warn' | 'info';
+  errCode?: string;
+  evt?: string;
+  route?: string;
+  traceId?: string;
+}
+
 /** Mẫu LogQL đóng (20-KIEN-TRUC §3.1). `tenant` luôn do máy chủ gắn từ phiên. */
 export const LOGQL = {
   byRequest: (requestId: string, tenant: string) => `{service="api"} | reqId=${quote(requestId)} | json | tenant=${quote(tenant)}`,
   byTrace: (traceId: string, tenant: string) => `{service="api"} | traceId=${quote(traceId)} | json | tenant=${quote(tenant)}`,
+  // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: mẫu Nhật ký (bộ lọc tuỳ chọn) + số đo lỗi theo mã / yêu cầu chậm cho Tổng quan
+  /** Nhật ký: nhãn `level` (promtail gắn) lọc ở bộ chọn luồng; còn lại lọc sau `| json`. Dòng không phải JSON bị bỏ (`__error__`). */
+  list: (tenant: string, f: LogFilter) =>
+    `{service="api"${f.level ? `, level=${quote(f.level)}` : ''}}` +
+    (f.traceId ? ` | traceId=${quote(f.traceId)}` : '') +
+    ` | json | __error__="" | tenant=${quote(tenant)}` +
+    (f.errCode ? ` | errCode=${quote(f.errCode)}` : '') +
+    (f.evt ? ` | evt=${quote(f.evt)}` : '') +
+    (f.route ? ` | route=${quote(f.route)}` : ''),
+  /** Số yêu cầu có mã lỗi trong khung, theo mã (truy vấn số đo, không trả dòng log). */
+  errorsByCode: (tenant: string, range: string) =>
+    `sum by (errCode) (count_over_time({service="api"} | json | __error__="" | tenant=${quote(tenant)} | errCode != "" [${range}]))`,
+  /** Số dòng "xong yêu cầu" chậm hơn 1 giây trong khung. */
+  slowRequests: (tenant: string, range: string) =>
+    `sum(count_over_time({service="api"} | json | __error__="" | tenant=${quote(tenant)} | ms > 1000 [${range}]))`,
 };
 
 export interface LogLine {
@@ -121,14 +148,17 @@ export function filterLogLine(raw: string, tenant: string, opts: { ops: boolean 
   return line;
 }
 
-/** Loki query_range theo mẫu → dòng đã lọc, cũ trước mới sau. */
-export async function queryLogs(query: string, tenant: string, range: { from: Date; to: Date }, opts: { ops: boolean; limit?: number }): Promise<LogLine[]> {
+/**
+ * Loki query_range theo mẫu → dòng đã lọc. Mặc định cũ trước mới sau (tra một yêu cầu); `newest: true` lấy N dòng MỚI NHẤT của
+ * khung và trả mới trước (màn Nhật ký — không thì khung 24 giờ chỉ thấy 200 dòng đầu ngày).
+ */
+export async function queryLogs(query: string, tenant: string, range: { from: Date; to: Date }, opts: { ops: boolean; limit?: number; newest?: boolean }): Promise<LogLine[]> {
   const { body } = await getJson('loki', '/loki/api/v1/query_range', {
     query,
     start: String(BigInt(range.from.getTime()) * 1_000_000n),
     end: String(BigInt(range.to.getTime()) * 1_000_000n),
     limit: String(Math.min(opts.limit ?? LIMITS.logLines, LIMITS.logLines)),
-    direction: 'forward',
+    direction: opts.newest ? 'backward' : 'forward',
   });
   const result = ((body as { data?: { result?: unknown } } | null)?.data?.result ?? null) as { values?: [string, string][] }[] | null;
   if (!Array.isArray(result)) throw unavailable('loki', 'bad-response');
@@ -139,9 +169,85 @@ export async function queryLogs(query: string, tenant: string, range: { from: Da
       if (line) rows.push({ ns: BigInt(String(v[0] ?? '0')), line });
     }
   }
-  rows.sort((a, b) => (a.ns < b.ns ? -1 : a.ns > b.ns ? 1 : 0));
+  rows.sort((a, b) => (a.ns < b.ns ? -1 : a.ns > b.ns ? 1 : 0) * (opts.newest ? -1 : 1));
   return rows.slice(0, LIMITS.logLines).map((r) => r.line);
 }
+
+/** Truy vấn số đo tức thời của Loki (vector) → [{ nhãn, giá trị }]. */
+export async function queryLogMetric(query: string, at = new Date()): Promise<{ metric: Record<string, string>; value: number }[]> {
+  const { body } = await getJson('loki', '/loki/api/v1/query', { query, time: String(BigInt(at.getTime()) * 1_000_000n) });
+  const result = (body as { data?: { result?: unknown } } | null)?.data?.result;
+  if (!Array.isArray(result)) throw unavailable('loki', 'bad-response');
+  return (result as { metric?: Record<string, string>; value?: [number, string] }[]).map((r) => ({ metric: r.metric ?? {}, value: Number(r.value?.[1] ?? 0) }));
+}
+
+// --------------------------------------------------------------- Tempo ----
+
+/** Bộ lọc tìm trace — giá trị đã qua khuôn Zod ở route. */
+export interface TraceFilter {
+  outcome?: 'error' | 'rejected' | 'failed';
+  module?: string;
+  minDurationMs?: number;
+}
+
+/**
+ * Mẫu TraceQL đóng (20-KIEN-TRUC §3.1): điều kiện đặt trên CÙNG một span mang `bizcity.tenant` (span HTTP sau xác thực, span
+ * action) — máy chủ gắn đơn vị. `select` chỉ xin các thuộc tính cần hiện; kết quả vẫn lọc lại bằng TRACE_ATTRIBUTES.
+ */
+export function traceSearchQuery(tenant: string, f: TraceFilter): string {
+  const cond = [`span.bizcity.tenant = ${quote(tenant)}`];
+  if (f.outcome === 'failed') cond.push('span.bizcity.outcome != "ok"');
+  else if (f.outcome) cond.push(`span.bizcity.outcome = ${quote(f.outcome)}`);
+  if (f.module) cond.push(`span.bizcity.module = ${quote(f.module)}`);
+  if (f.minDurationMs) cond.push(`duration > ${Math.trunc(f.minDurationMs)}ms`);
+  return `{ ${cond.join(' && ')} } | select(span.bizcity.module, span.bizcity.action.id, span.bizcity.error.code, span.bizcity.outcome, span.http.route, span.http.response.status_code)`;
+}
+
+export interface TraceHit {
+  traceId: string;
+  rootName: string;
+  startedAt: string;
+  durationMs: number;
+  /** Thuộc tính của span khớp (đã lọc) — gộp các span khớp của trace. */
+  attributes: Record<string, string | number | boolean>;
+}
+
+/** Tempo /api/search → danh sách trace. Tempo bỏ số 0 đầu của traceID → đệm trái đủ 32 ký tự (20-KIEN-TRUC §2.5). */
+export async function searchTraces(query: string, range: { from: Date; to: Date }, limit: number, allowed: ReadonlySet<string>): Promise<TraceHit[]> {
+  const { body } = await getJson('tempo', '/api/search', {
+    q: query,
+    start: String(Math.floor(range.from.getTime() / 1000)),
+    end: String(Math.ceil(range.to.getTime() / 1000)),
+    limit: String(Math.min(limit, LIMITS.traces)),
+    spss: '3',
+  });
+  const traces = (body as { traces?: unknown } | null)?.traces;
+  if (!Array.isArray(traces)) throw unavailable('tempo', 'bad-response');
+  return (traces as Record<string, unknown>[])
+    .filter((t) => typeof t.traceID === 'string' && /^[0-9a-f]{1,32}$/i.test(t.traceID))
+    .map((t) => {
+      const attributes: Record<string, string | number | boolean> = {};
+      const sets = (Array.isArray(t.spanSets) ? t.spanSets : t.spanSet ? [t.spanSet] : []) as { spans?: { attributes?: { key: string; value: Record<string, unknown> }[] }[] }[];
+      for (const set of sets) for (const sp of set.spans ?? []) for (const a of sp.attributes ?? []) {
+        if (!allowed.has(a.key) || a.key === 'bizcity.tenant' || attributes[a.key] !== undefined) continue;
+        const v = a.value ?? {};
+        const val = typeof v.stringValue === 'string' ? v.stringValue : v.intValue !== undefined ? Number(v.intValue) : typeof v.boolValue === 'boolean' ? v.boolValue : undefined;
+        if (val !== undefined) attributes[a.key] = val;
+      }
+      return {
+        traceId: (t.traceID as string).toLowerCase().padStart(32, '0'),
+        rootName: typeof t.rootTraceName === 'string' ? t.rootTraceName : '',
+        startedAt: new Date(Number(BigInt(String(t.startTimeUnixNano ?? '0')) / 1_000_000n)).toISOString(),
+        durationMs: typeof t.durationMs === 'number' ? t.durationMs : 0,
+        attributes,
+      };
+    });
+}
+
+/** Khung thời gian theo tên: Nhật ký ≤ 24 giờ, trace ≤ 7 ngày (D019-4). */
+export const WINDOWS = { '1h': 3600_000, '6h': 6 * 3600_000, '24h': 24 * 3600_000, '7d': 7 * 24 * 3600_000 } as const;
+export type WindowKey = keyof typeof WINDOWS;
+export const windowRange = (w: WindowKey, now = new Date()) => ({ from: new Date(now.getTime() - WINDOWS[w]), to: now });
 
 /** Khung thời gian tra log ≤ 24 giờ (D019-4): có mốc `at` thì ±12 giờ quanh mốc, không thì 24 giờ gần nhất; không vượt hiện tại. */
 export function logWindow(at?: string, now = new Date()): { from: Date; to: Date } {

@@ -25,6 +25,12 @@ let base = '';
 const traces = new Map<string, unknown>();
 let lokiLines: [string, string][] = [];
 const lokiQueries: string[] = [];
+const lokiDirections: string[] = [];
+// [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: Loki số đo + Tempo tìm kiếm giả cho logs / traces / summary
+let lokiVector: { metric: Record<string, string>; value: [number, string] }[] = [];
+const lokiMetricQueries: string[] = [];
+let tempoSearch: unknown[] = [];
+const tempoQueries: { q: string; limit: string; start: string; end: string }[] = [];
 
 const b64 = (hex: string) => Buffer.from(hex, 'hex').toString('base64');
 const T_A = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1';
@@ -87,11 +93,21 @@ beforeAll(async () => {
   server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
     const send = (status: number, body?: unknown) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(body === undefined ? '' : JSON.stringify(body)); };
-    if (url.pathname === '/ready') return send(200, 'ready');
+    if (url.pathname === '/api/echo' || url.pathname === '/loki/api/v1/status/buildinfo') return send(200, 'echo');
     const m = /^\/api\/traces\/([0-9a-f]{32})$/.exec(url.pathname);
     if (m) return traces.has(m[1]!) ? send(200, traces.get(m[1]!)) : send(404, 'trace not found');
+    if (url.pathname === '/api/search') {
+      tempoQueries.push({ q: url.searchParams.get('q') ?? '', limit: url.searchParams.get('limit') ?? '', start: url.searchParams.get('start') ?? '', end: url.searchParams.get('end') ?? '' });
+      return send(200, { traces: tempoSearch, metrics: {} });
+    }
+    if (url.pathname === '/loki/api/v1/query') {
+      lokiMetricQueries.push(url.searchParams.get('query') ?? '');
+      const q = url.searchParams.get('query') ?? '';
+      return send(200, { status: 'success', data: { resultType: 'vector', result: q.startsWith('sum by (errCode)') ? lokiVector : [{ metric: {}, value: [0, '3'] }] } });
+    }
     if (url.pathname === '/loki/api/v1/query_range') {
       lokiQueries.push(url.searchParams.get('query') ?? '');
+      lokiDirections.push(url.searchParams.get('direction') ?? '');
       return send(200, { status: 'success', data: { resultType: 'streams', result: [{ stream: { service: 'api' }, values: lokiLines }] } });
     }
     return send(404);
@@ -269,5 +285,99 @@ describe('Bàn điều tra — API trung gian (PHASE-019 W2)', () => {
     expect(over.status).toBe(429);
     expect(over.body.error.code).toBe('RATE_LIMITED');
     expect((await call(owner, 'GET', `/api/v1/system/devtools/evidence?traceId=${T_A}`)).status).toBe(200);
+  });
+});
+
+describe('Bàn điều tra — Nhật ký, tìm trace, Tổng quan (PHASE-019 W3)', () => {
+  it('logs: mẫu LogQL có bộ lọc, đơn vị máy chủ gắn; lấy dòng MỚI NHẤT (backward), trả mới trước; dòng đơn vị khác bị bỏ', async () => {
+    const t0 = Date.now() - 60_000;
+    lokiLines = [
+      [String(BigInt(t0) * 1_000_000n), JSON.stringify({ level: 40, time: t0, tenant: tenantA, reqId: 'req-1', route: '/api/v1/vouchers', status: 409, errCode: 'PERIOD_LOCKED', msg: 'xong yêu cầu' })],
+      [String(BigInt(t0 + 5) * 1_000_000n), JSON.stringify({ level: 40, time: t0 + 5, tenant: tenantA, reqId: 'req-2', route: '/api/v1/vouchers', status: 409, errCode: 'PERIOD_LOCKED', msg: 'xong yêu cầu' })],
+      [String(BigInt(t0 + 9) * 1_000_000n), JSON.stringify({ level: 40, time: t0 + 9, tenant: tenantB, reqId: 'req-3', msg: 'của B' })],
+    ];
+    lokiQueries.length = 0;
+    lokiDirections.length = 0;
+    const r = await call(dev, 'GET', `/api/v1/system/devtools/logs?window=6h&level=warn&errCode=PERIOD_LOCKED&route=${encodeURIComponent('/api/v1/vouchers')}&traceId=${T_A}`);
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(lokiQueries).toEqual([`{service="api", level="warn"} | traceId="${T_A}" | json | __error__="" | tenant="${tenantA}" | errCode="PERIOD_LOCKED" | route="/api/v1/vouchers"`]);
+    expect(lokiDirections).toEqual(['backward']);
+    expect(r.body.data.lines.map((l: { reqId: string }) => l.reqId)).toEqual(['req-2', 'req-1']);
+    expect(r.body.data.window).toBe('6h');
+    // Khung > 24 giờ, mức lạ, mã lỗi chữ thường / chèn → 400, không tới Loki.
+    lokiQueries.length = 0;
+    for (const q of ['window=7d', 'level=fatal', 'errCode=period_locked', `errCode=${encodeURIComponent('X" | tenant=~".*')}`, `route=${encodeURIComponent('/a" or "')}`, `evt=${encodeURIComponent('a b')}`, 'limit=201']) {
+      expect((await call(dev, 'GET', `/api/v1/system/devtools/logs?${q}`)).status, q).toBe(400);
+    }
+    expect(lokiQueries).toEqual([]);
+  });
+
+  it('traces: mẫu TraceQL đóng trên span mang đơn vị; đệm traceID; thuộc tính chỉ trong danh sách, không lộ đơn vị', async () => {
+    tempoSearch = [{
+      traceID: '904127dd2944f22c086c236c5ceb5af', rootServiceName: 'bizcity-core-api', rootTraceName: 'HTTP POST /api/v1/payment-requests/:id/pay',
+      startTimeUnixNano: '1793543476669000000', durationMs: 12,
+      spanSets: [{ spans: [{ spanID: 'x', attributes: [
+        { key: 'bizcity.tenant', value: { stringValue: tenantA } }, { key: 'bizcity.outcome', value: { stringValue: 'rejected' } },
+        { key: 'bizcity.module', value: { stringValue: 'quy' } }, { key: 'http.response.status_code', value: { intValue: '409' } },
+        { key: 'so_tien', value: { intValue: '1234567' } },
+      ] }] }],
+    }];
+    tempoQueries.length = 0;
+    const r = await call(dev, 'GET', '/api/v1/system/devtools/traces?window=7d&outcome=failed&module=quy&minDurationMs=1000&limit=5');
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(tempoQueries[0]!.q).toBe(`{ span.bizcity.tenant = "${tenantA}" && span.bizcity.outcome != "ok" && span.bizcity.module = "quy" && duration > 1000ms } | select(span.bizcity.module, span.bizcity.action.id, span.bizcity.error.code, span.bizcity.outcome, span.http.route, span.http.response.status_code)`);
+    expect(tempoQueries[0]!.limit).toBe('5');
+    expect(Number(tempoQueries[0]!.end) - Number(tempoQueries[0]!.start)).toBeLessThanOrEqual(7 * 86400 + 1);
+    expect(r.body.data.traces).toEqual([{
+      traceId: '0904127dd2944f22c086c236c5ceb5af', rootName: 'HTTP POST /api/v1/payment-requests/:id/pay', startedAt: new Date(1_793_543_476_669).toISOString(), durationMs: 12,
+      attributes: { 'bizcity.outcome': 'rejected', 'bizcity.module': 'quy', 'http.response.status_code': 409 },
+    }]);
+    for (const q of ['window=30d', 'outcome=ok', `module=${encodeURIComponent('quy" || true')}`, 'limit=51', 'minDurationMs=0']) {
+      expect((await call(dev, 'GET', `/api/v1/system/devtools/traces?${q}`)).status, q).toBe(400);
+    }
+  });
+
+  it('summary: câu kết luận trước; lỗi theo mã chia từ chối đúng luật / lỗi kỹ thuật; nguồn tắt thì ô đó báo, phần CSDL vẫn có', async () => {
+    lokiVector = [
+      { metric: { errCode: 'CONFLICT' }, value: [0, '5'] },
+      { metric: { errCode: 'INTERNAL_ERROR' }, value: [0, '2'] },
+      { metric: { errCode: 'không phải mã' }, value: [0, '9'] },
+    ];
+    tempoSearch = [{ traceID: T_A, rootTraceName: 'HTTP POST /api/v1/x', startTimeUnixNano: '1793543476669000000', durationMs: 30,
+      spanSets: [{ spans: [{ attributes: [{ key: 'bizcity.outcome', value: { stringValue: 'error' } }, { key: 'bizcity.module', value: { stringValue: 'vat' } }] }] }] }];
+    lokiMetricQueries.length = 0;
+    const r = await call(dev, 'GET', '/api/v1/system/devtools/summary?window=1h');
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    const d = r.body.data;
+    expect(lokiMetricQueries).toContain(`sum by (errCode) (count_over_time({service="api"} | json | __error__="" | tenant="${tenantA}" | errCode != "" [1h]))`);
+    expect(d.errors).toEqual({ state: 'up', rejected: 5, error: 2, byCode: [{ code: 'CONFLICT', count: 5, kind: 'rejected' }, { code: 'INTERNAL_ERROR', count: 2, kind: 'error' }] });
+    expect(d.slow).toEqual({ state: 'up', count: 3 });
+    expect(d.recent.traces[0].traceId).toBe(T_A);
+    expect(d.level).toBe('bad');
+    expect(d.lines[0]).toBe('2 lỗi kỹ thuật trong 1 giờ qua — module vat.');
+    expect(d.lines).toContain('5 lần từ chối đúng luật trong 1 giờ qua (CONFLICT 5) — không phải sự cố.');
+    expect(d.events).toMatchObject({ dead: 0 });
+
+    env.DEVTOOLS_LOKI_URL = '';
+    env.DEVTOOLS_TEMPO_URL = 'http://127.0.0.1:1';
+    const off = await call(dev, 'GET', '/api/v1/system/devtools/summary');
+    expect(off.status).toBe(200);
+    expect(off.body.data).toMatchObject({ errors: { state: 'off', error: 0 }, slow: { state: 'off' }, recent: { state: 'down', traces: [] }, level: 'ok' });
+    expect(off.body.data.lines).toEqual(['Không thấy lỗi trong CSDL; Loki chưa bật nên chưa đếm được lỗi theo yêu cầu.']);
+  });
+
+  it('summary: log không ghi nhận lỗi nhưng Tempo có trace khác ok → kết luận vẫn nói (không "ổn" khi bảng dưới có lỗi)', async () => {
+    lokiVector = [];
+    tempoSearch = [
+      { traceID: T_A, rootTraceName: 'HTTP POST /api/v1/payment-requests/:id/pay', startTimeUnixNano: '1793543476669000000', durationMs: 51,
+        spanSets: [{ spans: [{ attributes: [{ key: 'bizcity.outcome', value: { stringValue: 'rejected' } }, { key: 'bizcity.module', value: { stringValue: 'quy' } }] }] }] },
+      { traceID: T_LEDGER, rootTraceName: 'HTTP POST /api/v1/x', startTimeUnixNano: '1793543476669000000', durationMs: 9,
+        spanSets: [{ spans: [{ attributes: [{ key: 'bizcity.outcome', value: { stringValue: 'error' } }, { key: 'bizcity.module', value: { stringValue: 'vat' } }] }] }] },
+    ];
+    const d = (await call(dev, 'GET', '/api/v1/system/devtools/summary')).body.data;
+    expect(d.errors).toMatchObject({ state: 'up', error: 0, rejected: 0 });
+    expect(d.level).toBe('bad');
+    expect(d.lines).toContain('1 trace lỗi kỹ thuật gần đây — module vat (theo Tempo; nhật ký chưa ghi nhận).');
+    expect(d.lines).toContain('1 trace bị từ chối đúng luật gần đây — module quy (theo Tempo) — không phải sự cố.');
   });
 });

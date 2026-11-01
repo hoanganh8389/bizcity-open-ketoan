@@ -7,6 +7,9 @@
  *   GET /api/v1/system/devtools/traces/:traceId        core.devtools.trace     cây span đã lọc + tóm tắt "chuyện gì đã xảy ra"
  *   GET /api/v1/system/devtools/requests/:requestId    core.devtools.request   log của yêu cầu (Loki) → traceId → trace nếu có
  *   GET /api/v1/system/devtools/evidence               core.devtools.evidence  bằng chứng theo traceId / requestId — chỉ cột mô tả
+ *   GET /api/v1/system/devtools/logs                   core.devtools.logs      nhật ký mới nhất (≤ 24 giờ, ≤ 200 dòng) theo bộ lọc     (W3)
+ *   GET /api/v1/system/devtools/traces                 core.devtools.traces    tìm trace theo kết quả / module / thời gian (≤ 7 ngày)   (W3)
+ *   GET /api/v1/system/devtools/summary                core.devtools.summary   câu kết luận + ô lỗi, chậm, trace lỗi, sự kiện, chẩn đoán (W3)
  *
  * Bất biến (00-MASTER-PLAN §3): chỉ đọc; quyền devtools:read (chủ đơn vị + vai trò developer; không khoá API, không AI, không MCP);
  * bộ lọc đơn vị do máy chủ gắn từ phiên; không nhận truy vấn tự do; trace của đơn vị khác → 404 giống hệt "không có" (D019-5);
@@ -19,7 +22,10 @@ import { env } from '@bizcity/platform/config/env';
 import { Errors } from '@bizcity/platform/core/errors';
 import { defineAction, mountActions, type ActionContext } from '@bizcity/platform/core/actions';
 import { currentRequest } from '@bizcity/platform/core/request-context';
-import { getJson, LIMITS, LOGQL, logWindow, ping, queryLogs, takeQuota, type SourceState } from './devtools.sources.js';
+import { TRACE_ATTRIBUTES } from '@bizcity/platform/core/tracing';
+import { errorKind } from '@bizcity/platform/core/errors';
+import { eventStatus } from '@bizcity/platform/core/events';
+import { getJson, LIMITS, LOGQL, logWindow, ping, queryLogMetric, queryLogs, searchTraces, takeQuota, traceSearchQuery, windowRange, type SourceState } from './devtools.sources.js';
 import { ownsTrace, parseTempoTrace, summarize, viewTrace } from './devtools.trace.js';
 
 const TRACE_ID = z.string().trim().toLowerCase().regex(/^[0-9a-f]{32}$/, 'traceId gồm 32 ký tự hex');
@@ -199,7 +205,148 @@ const evidenceAction = defineAction({
   },
 });
 
-export const DEVTOOLS_ACTIONS = [statusAction, traceAction, requestAction, evidenceAction];
+// [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: core.devtools.logs / traces / summary cho màn Nhật ký, Tổng quan, Tra mã
+
+/** Khuôn chặt cho giá trị chèn vào LogQL / TraceQL (lớp một; quote() là lớp hai). */
+const ERR_CODE = z.string().regex(/^[A-Z][A-Z0-9_]{1,63}$/, 'Mã lỗi viết hoa, số, gạch dưới');
+const EVT = z.string().regex(/^[a-z0-9][a-z0-9._-]{0,63}$/, 'evt: chữ thường, số, chấm, gạch');
+const ROUTE = z.string().regex(/^\/[A-Za-z0-9/_:.-]{0,200}$/, 'route mẫu, vd /api/v1/payment-requests/:id/pay');
+const MODULE = z.string().regex(/^[a-z][a-z0-9-]{0,63}$/, 'mã module chữ thường');
+
+/** NOT_READY của nguồn → trạng thái cho từng ô (Tổng quan vẫn trả phần còn lại — N5). */
+async function part<T>(fn: () => Promise<T>): Promise<{ state: 'up'; data: T } | { state: 'off' | 'down' }> {
+  try {
+    return { state: 'up', data: await fn() };
+  } catch (e) {
+    const err = e as { code?: string; details?: { reason?: string } };
+    if (err.code !== 'NOT_READY') throw e;
+    return { state: err.details?.reason === 'off' ? 'off' : 'down' };
+  }
+}
+
+const logsAction = defineAction({
+  id: 'core.devtools.logs', title: 'Bàn điều tra: nhật ký kỹ thuật của đơn vị', tags: ['Bàn điều tra'],
+  description: 'Dòng log mới nhất của đơn vị (Loki) trong khung ≤ 24 giờ, ≤ 200 dòng, mới trước; lọc theo mức, mã lỗi, evt, route, traceId. Trường theo danh sách cho phép (20-KIEN-TRUC §3.3).',
+  permission: 'devtools:read', effect: 'read', idempotency: 'none',
+  input: z.object({
+    window: z.enum(['1h', '6h', '24h']).default('1h'),
+    level: z.enum(['error', 'warn', 'info']).optional(),
+    errCode: ERR_CODE.optional(), evt: EVT.optional(), route: ROUTE.optional(), traceId: TRACE_ID.optional(),
+    limit: z.coerce.number().int().min(1).max(LIMITS.logLines).default(LIMITS.logLines),
+  }),
+  output: z.object({ window: z.string(), from: z.string(), to: z.string(), lines: z.array(logSchema) }),
+  errors: ['NOT_READY', 'RATE_LIMITED'],
+  expose: { http: { method: 'GET', path: '/api/v1/system/devtools/logs' }, mcp: false, ai: 'deny' },
+  handler: async (ctx, input) => {
+    takeQuota(ctx.actor.id);
+    const range = windowRange(input.window);
+    const lines = await queryLogs(LOGQL.list(ctx.tenant.id, input), ctx.tenant.id, range, { ops: (await opsMode(ctx)).on, limit: input.limit, newest: true });
+    noteSize(lines.length);
+    return { window: input.window, from: range.from.toISOString(), to: range.to.toISOString(), lines };
+  },
+});
+
+const hitSchema = z.object({ traceId: z.string(), rootName: z.string(), startedAt: z.string(), durationMs: z.number(), attributes: z.record(attrValue) });
+
+const tracesAction = defineAction({
+  id: 'core.devtools.traces', title: 'Bàn điều tra: tìm trace của đơn vị', tags: ['Bàn điều tra'],
+  description: 'Trace của đơn vị (Tempo, khung ≤ 7 ngày, ≤ 50 trace) theo kết quả (error / rejected / failed = khác ok), module, thời gian tối thiểu. Mẫu TraceQL đóng, đơn vị do máy chủ gắn.',
+  permission: 'devtools:read', effect: 'read', idempotency: 'none',
+  input: z.object({
+    window: z.enum(['1h', '6h', '24h', '7d']).default('24h'),
+    outcome: z.enum(['error', 'rejected', 'failed']).optional(),
+    module: MODULE.optional(),
+    minDurationMs: z.coerce.number().int().min(1).max(600_000).optional(),
+    limit: z.coerce.number().int().min(1).max(LIMITS.traces).default(20),
+  }),
+  output: z.object({ window: z.string(), traces: z.array(hitSchema) }),
+  errors: ['NOT_READY', 'RATE_LIMITED'],
+  expose: { http: { method: 'GET', path: '/api/v1/system/devtools/traces' }, mcp: false, ai: 'deny' },
+  handler: async (ctx, input) => {
+    takeQuota(ctx.actor.id);
+    const traces = await searchTraces(traceSearchQuery(ctx.tenant.id, input), windowRange(input.window), input.limit, TRACE_ATTRIBUTES);
+    noteSize(traces.length);
+    return { window: input.window, traces };
+  },
+});
+
+const partState = z.enum(['up', 'off', 'down']);
+const summaryAction = defineAction({
+  id: 'core.devtools.summary', title: 'Bàn điều tra: tổng quan của đơn vị', tags: ['Bàn điều tra'],
+  description: 'Một câu kết luận trước (U1) + các ô: lỗi theo mã (từ chối đúng luật / lỗi kỹ thuật), yêu cầu chậm, trace lỗi gần đây, sự kiện chờ / chết, tự chẩn đoán gần nhất. Nguồn nào chưa bật thì ô đó báo, phần CSDL vẫn có.',
+  permission: 'devtools:read', effect: 'read', idempotency: 'none',
+  input: z.object({ window: z.enum(['1h', '24h']).default('1h') }),
+  output: z.object({
+    window: z.string(), generatedAt: z.string(), level: z.enum(['ok', 'warn', 'bad']), lines: z.array(z.string()),
+    errors: z.object({ state: partState, rejected: z.number(), error: z.number(), byCode: z.array(z.object({ code: z.string(), count: z.number(), kind: z.enum(['rejected', 'error']) })) }),
+    slow: z.object({ state: partState, count: z.number() }),
+    recent: z.object({ state: partState, traces: z.array(hitSchema) }),
+    events: z.object({ pending: z.number(), dead: z.number(), oldestPendingAt: z.string().nullable(), deadConsumers: z.array(z.string()) }),
+    diagnostics: z.object({ at: z.string(), layer: z.string(), errorCount: z.number() }).nullable(),
+  }),
+  errors: ['RATE_LIMITED'],
+  expose: { http: { method: 'GET', path: '/api/v1/system/devtools/summary' }, mcp: false, ai: 'deny' },
+  handler: async (ctx, input) => {
+    takeQuota(ctx.actor.id);
+    const tenant = ctx.tenant.id;
+    const range = windowRange(input.window);
+    const [codes, slowP, recentP] = await Promise.all([
+      part(() => queryLogMetric(LOGQL.errorsByCode(tenant, input.window), range.to)),
+      part(() => queryLogMetric(LOGQL.slowRequests(tenant, input.window), range.to)),
+      part(() => searchTraces(traceSearchQuery(tenant, { outcome: 'failed' }), range, 10, TRACE_ATTRIBUTES)),
+    ]);
+    const byCode = codes.state === 'up'
+      ? codes.data.filter((r) => /^[A-Z][A-Z0-9_]{1,63}$/.test(r.metric.errCode ?? '') && r.value > 0)
+        .map((r) => ({ code: r.metric.errCode!, count: Math.round(r.value), kind: errorKind(r.metric.errCode) }))
+        .sort((a, b) => b.count - a.count)
+      : [];
+    const errors = {
+      state: codes.state, byCode,
+      rejected: byCode.filter((c) => c.kind === 'rejected').reduce((s, c) => s + c.count, 0),
+      error: byCode.filter((c) => c.kind === 'error').reduce((s, c) => s + c.count, 0),
+    };
+    const slow = { state: slowP.state, count: slowP.state === 'up' ? Math.round(slowP.data.reduce((s, r) => s + r.value, 0)) : 0 };
+    const recent = { state: recentP.state, traces: recentP.state === 'up' ? recentP.data : [] };
+
+    const ev = await eventStatus(ctx.data.tx, tenant);
+    const events = {
+      pending: ev.reduce((s, c) => s + c.pending, 0), dead: ev.reduce((s, c) => s + c.dead, 0),
+      oldestPendingAt: ev.map((c) => c.oldestPendingAt).filter((x): x is string => Boolean(x)).sort()[0] ?? null,
+      deadConsumers: ev.filter((c) => c.dead > 0).map((c) => c.consumer),
+    };
+    const diag = await ctx.data.tx.selectFrom('diagnostic_runs').select(['created_at', 'layer', 'error_count'])
+      .where('tenant_id', '=', tenant).where('layer', '=', 'L3').orderBy('created_at', 'desc').limit(1).executeTakeFirst();
+    const diagnostics = diag ? { at: new Date(diag.created_at).toISOString(), layer: diag.layer, errorCount: Number(diag.error_count) } : null;
+
+    // Câu kết luận (U1) — luật cố định, nặng trước nhẹ sau.
+    const label = input.window === '1h' ? '1 giờ qua' : '24 giờ qua';
+    const lines: string[] = [];
+    if (diagnostics && diagnostics.errorCount > 0) lines.push(`Tự chẩn đoán sổ gần nhất có ${diagnostics.errorCount} lỗi — xem ngay (Sổ tay TH-10, sev1).`);
+    // Trace có kết quả khác ok (Tempo): dùng khi log không ghi nhận (Loki chưa bật, log mất / chậm) — kết luận không được nói "ổn"
+    // trong khi bảng trace ngay dưới có lỗi (lệch thấy khi chạy thật 2026-11-01).
+    const traceErr = recent.traces.filter((t) => t.attributes['bizcity.outcome'] === 'error');
+    const traceRej = recent.traces.filter((t) => t.attributes['bizcity.outcome'] === 'rejected');
+    const modsOf = (ts: typeof recent.traces) => [...new Set(ts.map((t) => t.attributes['bizcity.module']).filter((m): m is string => typeof m === 'string'))];
+    if (errors.error > 0) {
+      const mods = modsOf(traceErr);
+      lines.push(`${errors.error} lỗi kỹ thuật trong ${label}${mods.length ? ` — module ${mods.join(', ')}` : ''}.`);
+    } else if (traceErr.length) {
+      const mods = modsOf(traceErr);
+      lines.push(`${traceErr.length} trace lỗi kỹ thuật gần đây${mods.length ? ` — module ${mods.join(', ')}` : ''} (theo Tempo; nhật ký chưa ghi nhận).`);
+    }
+    if (events.dead > 0) lines.push(`${events.dead} việc giao sự kiện đã hết lượt thử (nơi nhận ${events.deadConsumers.join(', ')}) — Sổ tay TH-06.`);
+    if (errors.rejected > 0) lines.push(`${errors.rejected} lần từ chối đúng luật trong ${label} (${errors.byCode.filter((c) => c.kind === 'rejected').slice(0, 3).map((c) => `${c.code} ${c.count}`).join(', ')}) — không phải sự cố.`);
+    else if (traceRej.length) lines.push(`${traceRej.length} trace bị từ chối đúng luật gần đây${modsOf(traceRej).length ? ` — module ${modsOf(traceRej).join(', ')}` : ''} (theo Tempo) — không phải sự cố.`);
+    if (slow.count > 0) lines.push(`${slow.count} yêu cầu chậm hơn 1 giây — Sổ tay TH-03.`);
+    if (!lines.length) lines.push(errors.state === 'up' ? `Không có lỗi trong ${label}.` : 'Không thấy lỗi trong CSDL; Loki chưa bật nên chưa đếm được lỗi theo yêu cầu.');
+    const level = (diagnostics?.errorCount ?? 0) > 0 || errors.error > 0 || traceErr.length > 0 ? 'bad' as const : events.dead > 0 || slow.count > 0 ? 'warn' as const : 'ok' as const;
+
+    noteSize(byCode.length + recent.traces.length);
+    return { window: input.window, generatedAt: new Date().toISOString(), level, lines, errors, slow, recent, events, diagnostics };
+  },
+});
+
+export const DEVTOOLS_ACTIONS = [statusAction, traceAction, requestAction, evidenceAction, logsAction, tracesAction, summaryAction];
 
 export async function devtoolsRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, DEVTOOLS_ACTIONS);

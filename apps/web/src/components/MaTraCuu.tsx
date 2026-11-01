@@ -6,12 +6,14 @@
  * - Hai loại, có chữ chứ không chỉ màu (U2): "Từ chối đúng luật" (cam) / "Lỗi kỹ thuật" (đỏ).
  * - **Chép**: mã + thời điểm + màn. **Báo lỗi**: nội dung theo bao-loi.yml, chỉ mã, không dữ liệu (Q019-5: chỉ chép, không mở GitHub).
  * - Lỗi mới thay lỗi cũ; mũi tên xem lại tối đa 5 lỗi gần nhất của tab. Bấm × thì ẩn đến lỗi kế tiếp.
- * - "Mở trong Bàn điều tra" có khi phân hệ dev xong (W3).
+ * - "Mở trong Bàn điều tra" (W3): chỉ người có devtools:read (chủ đơn vị, Nhà phát triển); mở Tra mã với traceId (không có thì requestId).
  */
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Bug, ChevronLeft, ChevronRight, Copy, X } from 'lucide-react';
+import { AlertTriangle, Bug, ChevronLeft, ChevronRight, Copy, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { khoMaTraCuu, loaiLoi, moTaLyDo, noiDungBaoLoi, noiDungChep, tomTatMa, type PhienBan } from '@/lib/maTraCuu';
 
 /** navigator.clipboard chỉ có ở https / localhost; máy chủ LAN chạy http thì chép bằng ô chữ ẩn. */
@@ -40,6 +42,8 @@ export function MaTraCuu() {
   const pb = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<PhienBan & { bookMode?: string; envLabel?: string; bugReportUrl?: string | null }>('/api/v1/system/health'), staleTime: Infinity }).data;
   // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: bản cài đặt BUG_REPORT_URL → Báo lỗi chép nội dung rồi mở trang báo lỗi (Q019-5)
   const bugUrl = pb?.bugReportUrl && /^https?:\/\//i.test(pb.bugReportUrl) ? pb.bugReportUrl : null;
+  const { can } = useAuth();
+  const navigate = useNavigate();
 
   // Lỗi mới về: quay lại lỗi mới nhất, hiện lại khay.
   const moiNhat = ds[0] ? `${ds[0].at}|${ds[0].requestId ?? ''}` : undefined;
@@ -78,6 +82,12 @@ export function MaTraCuu() {
           <button type="button" className="btn btn-xs" onClick={() => void bam('bao-loi')} title={bugUrl ? 'Chép nội dung báo lỗi (chỉ mã, không dữ liệu) rồi mở trang báo lỗi — dán vào form' : 'Chép nội dung báo lỗi theo mẫu (chỉ mã, không dữ liệu) — dán vào issue hoặc gửi cho dev'}>
             <Bug size={12} /> {daChep === 'bao-loi' ? 'Đã chép nội dung' : 'Báo lỗi'}
           </button>
+          {/* [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: mở thẳng màn Tra mã (người có devtools:read) */}
+          {can('devtools:read') && (e.traceId || e.requestId) && (
+            <button type="button" className="btn btn-xs" onClick={() => navigate(`/dev/tra-ma?ma=${encodeURIComponent(e.traceId ?? e.requestId!)}`)} title="Mở mã này ở Bàn điều tra → Tra mã">
+              <Search size={12} /> Bàn điều tra
+            </button>
+          )}
           {daChep === 'loi' && <span className="mtc-note">Trình duyệt chặn chép — rê chuột lên mã để xem đủ</span>}
           {ds.length > 1 && (
             <span className="mtc-nav">

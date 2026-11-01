@@ -109,7 +109,8 @@ Mọi tình huống kết thúc giống nhau: **viết test tái hiện trước
 
 - **Triệu chứng:** người dùng gửi ảnh / tin nhắn có `requestId` (`req-…`) hoặc `traceId` (32 ký tự hex).
 - **Người dùng lấy mã ở đâu** (PHASE-019 W1): mọi lỗi API hiện khay **Mã tra cứu** ở góc dưới trái màn hình. Nút **Chép** chép `requestId`, `traceId`, thời điểm, màn; nút **Báo lỗi** chép sẵn nội dung theo mẫu `bao-loi.yml` (chỉ mã, không dữ liệu). Ảnh chụp khay chỉ có mã rút gọn — xin người dùng bấm **Chép** rồi dán. <!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: khay Mã tra cứu: chỗ người dùng lấy mã. -->
-- **Bắt đầu ở:** Tempo → **Search** → ô **Trace ID** → dán `traceId`. Chỉ có `requestId`: Loki `{service="api"} | reqId="<req-…>"` → mở dòng log → bấm **Tempo** bên cạnh `traceId`.
+- **Trên Bàn điều tra** (PHASE-019 W3, chủ đơn vị / vai trò Nhà phát triển, không cần Grafana): menu **Nhà phát triển → Tra mã** (DEV02), dán `traceId` hoặc `requestId` — khối "Chuyện gì đã xảy ra" làm sẵn các bước 1–3 dưới đây. Tự gặp lỗi thì bấm **Bàn điều tra** trên khay Mã tra cứu. <!-- [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: TH-01 trên Bàn điều tra. -->
+- **Bắt đầu ở (Grafana, người vận hành):** Tempo → **Search** → ô **Trace ID** → dán `traceId`. Chỉ có `requestId`: Loki `{service="api"} | reqId="<req-…>"` → mở dòng log → bấm **Tempo** bên cạnh `traceId`.
 - **Các bước:**
   1. Đọc span gốc `HTTP <method> <route>`: mã trạng thái, `bizcity.error.code`, `bizcity.outcome`.
   2. Đi xuống cây span, tìm span **đầu tiên** có `outcome` khác `ok` — đó là chỗ hỏng. Đọc `bizcity.module`, `bizcity.action.id`, `bizcity.step`.

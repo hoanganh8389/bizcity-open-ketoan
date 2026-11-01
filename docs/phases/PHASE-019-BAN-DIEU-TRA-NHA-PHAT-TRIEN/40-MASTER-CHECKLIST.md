@@ -16,8 +16,8 @@
 | S019-7 | Quyền `devtools:read` + vai trò mới `developer` (= `viewer` + `devtools:read`; Q019-1 chủ chọn b) ở `core/auth.ts` + `@ketoan/contracts` + màn Người dùng — ca T019-8 | W2 | P1 | có | ✅ 2026-11-01 — migration 0049; màn Người dùng lấy vai trò từ `ROLE_LABELS` |
 | S019-8 | Biến `DEVTOOLS_*` (`config/env.ts`, `.env.example`, `docker-compose.monitoring.yml` đặt URL nội bộ) | W2 | P1 | có | ✅ 2026-11-01 — thêm `BUG_REPORT_URL` (Q019-5) |
 | S019-9 | `core.devtools.status`, `.trace`, `.request`, `.evidence` + bộ gác đơn vị (D019-5) + lọc trường lần hai + giới hạn — ca T019-2, T019-3, T019-6, T019-7 | W2 | P1 | có | ✅ 2026-11-01 — `modules/system/devtools.{routes,sources,trace}.ts`; [`evidence/W2-2026-11-01.md`](evidence/W2-2026-11-01.md) |
-| S019-10 | Phân hệ web `dev`: khung, menu, quyền; màn **Tra mã** (tóm tắt, cây span, log cùng trace, bằng chứng) — ca T019-4 | W3 | P1 | chưa | ☐ |
-| S019-11 | `core.devtools.logs`, `.traces`, `.summary`; màn **Nhật ký**, **Tổng quan** | W3 | P1 | chưa | ☐ |
+| S019-10 | Phân hệ web `dev`: khung, menu, quyền; màn **Tra mã** (tóm tắt, cây span, log cùng trace, bằng chứng) — ca T019-4 | W3 | P1 | có | ✅ 2026-11-01 — `apps/web/src/phan-he/dev/`; khay Mã tra cứu có nút Bàn điều tra; [`evidence/W3-2026-11-01.md`](evidence/W3-2026-11-01.md) |
+| S019-11 | `core.devtools.logs`, `.traces`, `.summary`; màn **Nhật ký**, **Tổng quan** | W3 | P1 | có | ✅ 2026-11-01 — [`evidence/W3-2026-11-01.md`](evidence/W3-2026-11-01.md) |
 | S019-12 | `core.devtools.module-errors`; màn **Lỗi theo module** | W4 | P2 | chưa | ☐ |
 | S019-13 | Màn **Ghi sổ**, **Sự kiện**, **Toàn vẹn** (dùng lại API sẵn có; link sang thao tác ghi sẵn có) | W4 | P2 | chưa | ☐ |
 | S019-14 | Màn **Kịch bản** đọc Sổ tay; mỗi TH có nút mở màn với bộ lọc điền sẵn — ca T019-5 | W4 | P2 | chưa | ☐ |
@@ -32,7 +32,7 @@
 | T019-1 | thông báo lỗi có đủ hai mã; nội dung Báo lỗi không có dữ liệu | [`evidence/W1-2026-11-01.md`](evidence/W1-2026-11-01.md) — ✅ |
 | T019-2 | chéo đơn vị → 404 giống "không có" | [`evidence/W2-2026-11-01.md`](evidence/W2-2026-11-01.md) — ✅ |
 | T019-3 | nguồn tắt / không trả lời → "chưa bật", không 500 | [`evidence/W2-2026-11-01.md`](evidence/W2-2026-11-01.md) — ✅ |
-| T019-4 | mã của TH-01 → tóm tắt đúng chỗ hỏng, ≤ 3 lần bấm (chạy thật với Tempo) | `evidence/W3-<ngày>.md` — chưa |
+| T019-4 | mã của TH-01 → tóm tắt đúng chỗ hỏng, ≤ 3 lần bấm (chạy thật với Tempo) | [`evidence/W3-2026-11-01.md`](evidence/W3-2026-11-01.md) — ✅ chạy thật với Tempo 2.6.1, 1 lần bấm |
 | T019-5 | kịch bản mở đúng màn, bộ lọc điền sẵn | `evidence/W4-<ngày>.md` — chưa |
 | T019-6 | tham số chèn bị chặn | [`evidence/W2-2026-11-01.md`](evidence/W2-2026-11-01.md) — ✅ |
 | T019-7 | không trường ngoài danh sách cho phép | [`evidence/W2-2026-11-01.md`](evidence/W2-2026-11-01.md) — ✅ phần W2 (trace, log, bằng chứng); W3–W4 còn |
@@ -46,3 +46,4 @@
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chủ duyệt) | D019-1 không nhúng Grafana ✅; Q019-1 = (b) thêm vai trò `developer` ✅; Q019-2 = Vận hành chỉ bản cài một đơn vị qua `DEVTOOLS_OPS=true` ✅. Gỡ ⛔ ở S019-7, S019-15 |
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W1: khay Mã tra cứu (S019-5), Báo lỗi chép nội dung (S019-6), ca T019-1 đạt. Nhánh `feat/phase-019-w1-ma-tra-cuu` |
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W2: vai trò `developer` + `devtools:read` (S019-7), biến `DEVTOOLS_*` + `BUG_REPORT_URL` (S019-8), API trung gian status / trace / request / evidence (S019-9); ca T019-2, -3, -6, -7, -8 đạt. Nhánh `feat/phase-019-w2-api-trung-gian` |
+| 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W3: phân hệ web `dev` (Tổng quan, Tra mã, Nhật ký — S019-10), API `logs` / `traces` / `summary` (S019-11); ca T019-4 chạy thật đạt; sửa `ping` (`/ready` 503 từng lúc) và câu kết luận Tổng quan (lệch log / trace). Nhánh `feat/phase-019-w3-ban-dieu-tra-web` |

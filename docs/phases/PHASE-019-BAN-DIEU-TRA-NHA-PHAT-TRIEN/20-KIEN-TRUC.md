@@ -140,6 +140,13 @@ Máy chủ dựng từ cây span, theo luật cố định (không AI, không đ
 
 Còn lại: `links.grafana` (chỉ chế độ Vận hành) dựng link Explore với trace id — kiểm trên Grafana 11.4 ở W5 trước khi bật.
 
+### 2.6 Đã làm (W3, 2026-11-01)
+<!-- [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: logs / traces / summary + phân hệ web dev; điều đo được khi chạy thật. -->
+
+- API: `core.devtools.logs` (khung `1h | 6h | 24h`, đọc `backward` lấy dòng mới nhất), `core.devtools.traces` (`1h | 6h | 24h | 7d`, TraceQL `{ span.bizcity.tenant = … && … } | select(…)`, đệm traceID), `core.devtools.summary` (`1h | 24h`; Loki số đo theo `errCode` + yêu cầu > 1 s, Tempo trace khác ok, CSDL sự kiện + `diagnostic_runs` L3).
+- Web: phân hệ `apps/web/src/phan-he/dev/` (DEV01 Tổng quan, DEV02 Tra mã, DEV03 Nhật ký); phía web luôn coi `dev` là bật (route API thuộc lõi), menu gắn `devtools:read`; khay Mã tra cứu có nút **Bàn điều tra**. Hướng dẫn trong app: `docs/huong-dan/ban-dieu-tra.md`.
+- Đo khi chạy thật: `/ready` của Tempo / Loki trả 503 từng lúc ("waiting for 15s after being ready") dù truy vấn vẫn chạy → `ping` hỏi `/api/echo`, `/loki/api/v1/status/buildinfo`. Câu kết luận Tổng quan lấy thêm trace khác ok của Tempo khi log không ghi nhận (không nói "ổn" khi bảng dưới có lỗi).
+
 ## 3. Bảo mật và cô lập đơn vị
 
 ### 3.1 Mẫu truy vấn đóng
