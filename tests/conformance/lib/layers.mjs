@@ -10,6 +10,9 @@
 // [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → P documents (máy trạng thái khai báo documents.workflow).
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bỏ modules/reports/: báo cáo đã về phan-he/ke-toan/reports (lớp D modules/ke-toan theo quy tắc phan-he/); documentChecks về modules/periods (K)
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — core/documents.ts, modules/doc-refs/ → P documents (documents.*, PHASES 2.7)
+// [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — modules/inventory/inventory-report.routes.ts → D modules/kho (route báo cáo kho tách khỏi Kernel)
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/platform/src; nhãn masterdata/, system/diagnostics.ts, documents/signature.routes.ts của gói
+// [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/kernel/src; index.ts (cổng công khai) và fastify-swagger.d.ts của gói là K
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
@@ -19,7 +22,8 @@
 
 /** K Kernel kế toán · P Platform chung · M Danh mục chuẩn · D Module nghiệp vụ · A Adapter · U UI kit (REUSE-MAP §1). */
 export const LAYERS = ['K', 'P', 'M', 'D', 'A', 'U'];
-export const LAYER_ROOTS = ['apps/api/src'];
+/** Gốc mã nguồn có nhãn lớp. Khoá LAYER_MAP là đường dẫn tương đối với gốc (cùng bảng cho mọi gốc). packages/platform: D010-7 chặng 2. */
+export const LAYER_ROOTS = ['apps/api/src', 'packages/platform/src', 'packages/kernel/src'];
 export const TAG_RE = /^\/\/ @bizcity-layer ([KPMDAU](?:\+[KPMDAU])*) (\S+)\s*$/;
 
 /**
@@ -65,6 +69,7 @@ export const LAYER_MAP = [
   ['modules/inventory/', 'K', 'kernel/subledgers/inventory'],
   // Báo cáo nhập xuất tồn chỉ đọc inventory_movements: module, không phải sổ phụ.
   ['modules/inventory/inventory-report.service.ts', 'D', 'modules/kho'],
+  ['modules/inventory/inventory-report.routes.ts', 'D', 'modules/kho'],
   ['modules/tax-invoices/', 'K', 'kernel/tax'],
   ['modules/tax-info/', 'K', 'kernel/tax'],
   ['modules/tax-codes/', 'K', 'kernel/tax'],
@@ -102,6 +107,13 @@ export const LAYER_MAP = [
   ['modules/system/presence.ts', 'P', 'permissions'],
   ['modules/system/system.routes.ts', 'P', 'cli'],
   ['modules/system/diagnostics.ts', 'P', 'cli'],
+  // packages/platform/src (D010-7 chặng 2): core/, db/, config/ dùng chung dòng ở trên; ba thư mục riêng của gói:
+  ['masterdata/', 'M', 'data/masterdata'],
+  ['system/diagnostics.ts', 'P', 'cli'],
+  ['documents/signature.routes.ts', 'P', 'documents/signatures'],
+  // packages/kernel/src (D010-7 chặng 3): modules/…, core/posting-modes.ts, db/seed.ts dùng chung dòng ở trên; gốc gói là cổng công khai.
+  ['index.ts', 'K', 'kernel/public'],
+  ['fastify-swagger.d.ts', 'K', 'kernel/public'],
   ['modules/system/evidence.routes.ts', 'P', 'audit'],
   ['modules/system/events.routes.ts', 'P', 'events'],
   ['modules/system/mcp.routes.ts', 'P', 'mcp'],

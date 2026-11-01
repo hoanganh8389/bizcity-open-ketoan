@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
-import { taxIssues } from '../src/modules/tax-info/tax-info.service.js';
+import { taxIssues } from '@bizcity/kernel/modules/tax-info/tax-info.service';
 
 let ctx: TestCtx;
 let tenantId: string;

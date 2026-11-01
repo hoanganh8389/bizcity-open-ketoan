@@ -1,10 +1,12 @@
 // [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — SC-OBS-1: số đo bizcity_* trong dashboard / luật cảnh báo phải được khai trong mã; dashboard JSON đọc được, uid không trùng.
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — số đo khai ở LAYER_ROOTS (core/metrics.ts nay ở packages/platform)
 /**
  * Bộ giám sát (infrastructure/monitoring) — R-OBS-6: số đo, dashboard, cảnh báo đổi cùng nhau. Bắt lỗi "panel trống / cảnh báo
  * không bao giờ bắn" do gõ sai tên số đo, ngay ở PR, không cần chạy Prometheus. Số đo khai bằng new Counter / Gauge / Histogram
  * ('bizcity_…') trong apps/api/src; histogram được thêm hậu tố _bucket / _sum / _count. Chỉ xét tiền tố bizcity_ (số đo của
  * exporter — pg_, node_, container_ — không do repo khai). Tên theo sau bởi "@" là tên hợp đồng (bizcity_errors@1), không phải số đo.
  */
+import { LAYER_ROOTS } from '../../lib/layers.mjs';
 const MON = 'infrastructure/monitoring';
 const DECL = /new\s+(Counter|Gauge|Histogram)\(\s*['"](bizcity_[a-z0-9_]+)['"]/g;
 const USE = /\bbizcity_[a-z0-9_]+\b(?![@.])/g;
@@ -19,7 +21,7 @@ export default {
     if (!dashboards.length && !rules.length) return { examined: 0, findings: [], notes: [`chưa có ${MON}`] };
 
     const declared = new Set();
-    for (const f of ctx.repo.files({ under: ['apps/api/src'], ext: ['.ts'] })) {
+    for (const f of ctx.repo.files({ under: LAYER_ROOTS, ext: ['.ts'] })) {
       for (const m of (ctx.repo.read(f) ?? '').matchAll(DECL)) {
         declared.add(m[2]);
         if (m[1] === 'Histogram') for (const s of ['_bucket', '_sum', '_count']) declared.add(m[2] + s);

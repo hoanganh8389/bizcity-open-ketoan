@@ -1,0 +1,37 @@
+{
+  "name": "@bizcity/kernel",
+  "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "description": "Accounting Kernel của Bizcity Core: cửa nạp sự việc, định khoản, sổ cái chỉ thêm, kỳ, sổ phụ công nợ / kho, thuế, kết chuyển. Bề mặt công khai là gốc gói (src/index.ts, trước là apps/api/src/kernel/public.ts); đường con chỉ cho test của Core.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "development": "./src/*.ts",
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@bizcity/platform": "0.1.0",
+    "@ketoan/contracts": "0.1.0",
+    "fastify": "5.1.0",
+    "fastify-type-provider-zod": "4.0.2",
+    "kysely": "0.27.4",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@fastify/swagger": "9.4.0",
+    "@types/node": "20.17.6",
+    "typescript": "5.6.3"
+  }
+}

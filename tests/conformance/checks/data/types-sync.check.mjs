@@ -1,9 +1,11 @@
 // [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — db/types.ts nay ở packages/platform (D010-7 chặng 2)
 /**
  * db/types.ts (kiểu Kysely) khớp migration: code biên dịch được nhờ types.ts, nhưng CSDL chỉ có những gì migration tạo.
  * Khai cột trong types.ts mà quên migration → typecheck xanh, chạy thật lỗi "column … does not exist" (0029, 0030 đã gặp).
  */
-const TYPES = 'apps/api/src/db/types.ts';
+/** Chỗ mới (D010-7) trước, chỗ cũ sau — repo mẫu của bộ tự kiểm và bản cũ vẫn đọc được. */
+const TYPES_AT = ['packages/platform/src/db/types.ts', 'apps/api/src/db/types.ts'];
 /** Bảng do code tạo, không qua migration: schema_migrations (runner migrate.ts tự tạo trước khi áp tệp đầu tiên). */
 const RUNNER_TABLES = new Set(['schema_migrations']);
 
@@ -32,6 +34,7 @@ export default {
   title: 'db/types.ts khớp migration: mọi bảng / cột kiểu Kysely khai đều có migration tạo',
   gate: 'CONF-MIG', contract: 'bizcity_data', rules: ['R-DB-5', 'R-DB-1'], conf: ['CONF-MIG-1'], tier: 0, enforce: 'ratchet', weight: 5, targets: ['repo'],
   run(ctx) {
+    const TYPES = TYPES_AT.find((p) => ctx.repo.read(p)?.includes('interface Database')) ?? TYPES_AT[0];
     const text = ctx.repo.read(TYPES);
     if (text == null) return { examined: 0, findings: [], notes: [`không có ${TYPES}`] };
     const declared = parseTypes(text);

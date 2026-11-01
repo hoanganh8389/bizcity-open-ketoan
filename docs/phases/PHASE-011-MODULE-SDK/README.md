@@ -4,7 +4,7 @@
 > **Trạng thái:** 🟡 bản nháp API + registry settings có; SDK, manifest, quyền theo module chưa
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 10%
 > **Mục tiêu:** Module viết chỉ bằng `@bizcity/module-sdk`; mỗi phân hệ có `bizcity.module.json`; quyền đăng ký theo module; module không ghi được bảng Kernel ở tầng CSDL.
-> **Việc lộ trình:** 3.1, 3.2, 3.3, 3.6, 3.10
+> **Việc lộ trình:** 3.1, 3.2, 3.3, 3.6, 3.10, 3.13, 3.14
 > **Checklist công bố:** G1-06, G1-10, G2-03
 > **Tuân thủ / nguyên tắc:** C-7 (33%) · AP-1, AP-3
 > **Phụ thuộc phase:** 010
@@ -26,4 +26,7 @@
 
 ## Xong khi
 
-Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 3.1 ☐ · 3.2 ☐ · 3.3 ☐ · 3.6 🟡 · 3.10 ☐.
+Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 3.1 ☐ · 3.2 ☐ · 3.3 ☐ · 3.6 🟡 · 3.10 ☐ · 3.13 ☐ · 3.14 ☐.
+
+<!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — phạm vi phase thêm 3.13, 3.14; quyết định thiết kế plugin ở ADR-0011 -->
+**Quyết định thiết kế:** [ADR-0011](../../adr/ADR-0011-plugin-ba-muc-tin-cay.md) — plugin ba mức tin cậy (module trong mã nguồn bản cài · app ngoài tiến trình + iframe · gói ký Phase 5), không drop-in; thứ tự PR ở mục "Việc phải làm" của ADR.

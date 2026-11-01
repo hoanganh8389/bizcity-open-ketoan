@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-10-31",
+  "updatedAt": "2026-11-01",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -11,11 +11,6 @@
           "fp": "SC-API-2|apps/api/src/modules/catalog/catalog.routes.ts|params:z.object({sku}),querystring:z.object({new:z.coerce.boolean().optional()}),body:productSchema,",
           "file": "apps/api/src/modules/catalog/catalog.routes.ts",
           "message": "params: z.object({ sku }), querystring: z.object({ new: z.coerce.boolean().optional() }), body: productSchema,"
-        },
-        {
-          "fp": "SC-API-2|apps/api/src/modules/documents/document.routes.ts|voucherInfo:z.coerce.boolean().optional().describe('Kèmlýdo,nhânviên,điệnthoại,địachỉ,tàikhoảntiền,ngày/ngườitạo,sửa(danhsáchphiếuthuchi)'),",
-          "file": "apps/api/src/modules/documents/document.routes.ts",
-          "message": "voucherInfo: z.coerce.boolean().optional().describe('Kèm lý do, nhân viên, điện thoại, địa chỉ, tài khoản tiền, ngày / người tạo, sửa (danh sách phiếu thu chi)'),"
         },
         {
           "fp": "SC-API-2|apps/api/src/phan-he/mua-hang/routes.ts|r.get('/api/v1/purchase/supplier-products',{preHandler:read,schema:{tags,summary:'Mặthàng&giámua:theoNCC(kèmgiáchungnếuwithGeneral=1)hoặctheomã;units=1trảkèmĐVTcácmã',quer",
@@ -98,16 +93,6 @@
           "fp": "SC-CON-7|apps/api/src/modules/catalog/catalog.routes.ts|PURCHASE_SEED_PASSWORD",
           "file": "apps/api/src/modules/catalog/catalog.routes.ts",
           "message": "PURCHASE_SEED_PASSWORD chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
-          "fp": "SC-CON-7|apps/api/src/config/env.ts|HOST",
-          "file": "apps/api/src/config/env.ts",
-          "message": "HOST chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        },
-        {
-          "fp": "SC-CON-7|apps/api/src/config/env.ts|JWT_TTL_HOURS",
-          "file": "apps/api/src/config/env.ts",
-          "message": "JWT_TTL_HOURS chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
         }
       ]
     },
@@ -309,7 +294,7 @@
         {
           "fp": "SC-DATA-3|db/migrations/0005_goc_chung_tu.sql|columns:document_signatures",
           "file": "db/migrations/0005_goc_chung_tu.sql",
-          "message": "bảng nền document_signatures: 8 cột thiếu COMMENT ON COLUMN"
+          "message": "bảng nền document_signatures: 5 cột thiếu COMMENT ON COLUMN"
         },
         {
           "fp": "SC-DATA-3|db/migrations/0005_goc_chung_tu.sql|columns:payment_requests",
@@ -860,9 +845,11 @@
       "ref": "R-POST-2 · chuyển sang AccountResolver / cờ tài khoản",
       "debts": [
         {
-          "fp": "SC-KERNEL-5|apps/api/src/modules/posting/rules/stock.rule.ts|account '157'",
-          "file": "apps/api/src/modules/posting/rules/stock.rule.ts",
-          "message": "số tài khoản '157' viết cứng: const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));"
+          "fp": "SC-KERNEL-5|packages/kernel/src/modules/posting/rules/stock.rule.ts|account '157'",
+          "file": "packages/kernel/src/modules/posting/rules/stock.rule.ts",
+          "message": "số tài khoản '157' viết cứng: const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));",
+          "why": "Nợ cũ đổi đường dẫn (trước: apps/api/src/modules/posting/rules/stock.rule.ts) khi dời Kernel sang packages/kernel 2026-11-01 (D010-7 chặng 3). 157 nằm trong hàm phân loại tài khoản tồn kho (đầu 15 trừ 157), không phải chỗ định khoản; gỡ khi danh mục tài khoản có thuộc tính tồn kho / hàng đang đi đường.",
+          "ref": "PHASE-010 D010-7"
         },
         {
           "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
@@ -906,16 +893,6 @@
           "fp": "SC-LAYER-2|apps/api/src/modules/dimensions/dimension.routes.ts|modules/dimensions[P]->kernel/public[K]",
           "file": "apps/api/src/modules/dimensions/dimension.routes.ts",
           "message": "P modules/dimensions → data import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/documents/document.service.ts|modules/documents[K]->modules/connections[A]",
-          "file": "apps/api/src/modules/documents/document.service.ts",
-          "message": "K modules/documents → kernel/intake import A modules/connections → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/inventory/inventory.routes.ts|modules/inventory[K]->modules/inventory[D]",
-          "file": "apps/api/src/modules/inventory/inventory.routes.ts",
-          "message": "K modules/inventory → kernel/subledgers/inventory import D modules/inventory → modules/kho (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
           "fp": "SC-LAYER-2|apps/api/src/modules/partners/partner.routes.ts|modules/partners[M]->modules/partners[A]",

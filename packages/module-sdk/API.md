@@ -111,6 +111,7 @@ interface ActionContext {
     saveVersion(docRef: DocRef, snapshot: unknown): Promise<number>;
     link(from: DocRef, to: DocRef, role: 'source'|'reverses'|'replaces'|'settles'|'attachesTo'|'ledger'): Promise<void>;
     attach(docRef: DocRef, file: FileInput, meta?: { kind?: string; note?: string }): Promise<AttachmentRef>;
+    sign(docRef: DocRef, role: string): Promise<DocumentSignature>;  signatures(docRef: DocRef): Promise<DocumentSignature[]>;  unsign(docRef: DocRef, role: string): Promise<void>;  // ✅ 0047
     versions(docRef: DocRef): Promise<DocumentVersion[]>;  links(docRef: DocRef): Promise<DocumentLink[]>;  attachments(docRef: DocRef): Promise<AttachmentRef[]>;
   };
   events: { emit(type: string, data: unknown, opts?: { subject?: DocRef }): Promise<void> };  // ⏳ outbox, cùng giao dịch

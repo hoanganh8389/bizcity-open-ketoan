@@ -10,6 +10,7 @@
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 <!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm R-REV: rà soát việc của người đóng góp (phân vai, PR, biên bản, dữ liệu kế toán, mã hàng). -->
+<!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §5: core/errors.ts, core/http.ts nay ở packages/platform -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
@@ -89,7 +90,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Khi sửa | Phải cập nhật |
 |---|---|
 | `packages/contracts/src/documents.ts` (khuôn chứng từ) | `contracts/BIZCITY-LEDGER-INTAKE-v1.md`, `docs/api/<loại>.md`, JSON mẫu `docs/api/vi-du/`, CHANGELOG hợp đồng |
-| `packages/contracts/src/api.ts`, `core/errors.ts`, `core/http.ts` | `contracts/BIZCITY-API-v1.md` |
+| `packages/contracts/src/api.ts`, `core/errors.ts`, `core/http.ts` (nay `packages/platform/src/core/`) | `contracts/BIZCITY-API-v1.md` |
 | `modules/posting/**`, `account-resolver.ts` | `contracts/BIZCITY-POSTING-RULE-v1.md`, `nghiep-vu/06-tinh-huong-ghi-so.md` |
 | `modules/ledger/**`, trigger sổ cái | `rules/RULE-LEDGER.md`; người duyệt thứ hai bắt buộc |
 | `modules/documents/document.service.ts` (cửa nhận) | `rules/RULE-EVENT.md` |

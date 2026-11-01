@@ -13,9 +13,12 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — plugin ba mức tin cậy, không drop-in; lộ trình 3.13, 3.14; năng lực modules.lifecycle, apps.external (planned) -->
+- **Quyết định kiến trúc plugin** ([ADR-0011](docs/adr/ADR-0011-plugin-ba-muc-tin-cay.md), chủ dự án duyệt 01/11/2026; chưa đổi mã chạy): ba mức tin cậy — module trong mã nguồn bản cài (tự host, trong tiến trình, bộ kiểm bắt buộc) · app ngoài tiến trình (khoá API có phạm vi, webhook sự kiện ký HMAC, nhúng iframe) · gói ký (Phase 5). Không drop-in (chép thư mục là chạy). Hai mức bật (bản cài × đơn vị), chỉ nạp module đúng hash bản build, migration module chạy bằng vai trò `mod_<key>_owner`, ghi sổ chỉ qua `submit`. Lộ trình thêm 3.13 (registry + vòng đời), 3.14 (app ngoài tiến trình); năng lực `modules.lifecycle`, `apps.external` (planned).
+- **Ký theo vai trên mọi chứng từ** (năng lực `documents.signatures`, migration `0048`, PHASES 2.7): `ctx.documents.sign / signatures / unsign` — chữ ký gắn phiên bản hiện tại (phiên bản mới thì chữ ký cũ hết hiệu lực), chỉ người dùng đăng nhập ký (khoá API, AI không ký thay người), huỷ: người đã ký hoặc chủ đơn vị; `GET /api/v1/document-signatures`. Phiếu kế toán giữ luồng ký 4 vai cũ.
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 - **Truy vết OpenTelemetry từ lõi** (PHASE-018 W5, ADR-0010; mức Kernel K1 — chỉ bọc cổng `kernel/public.ts`, hành vi ghi sổ không đổi):
-  - `apps/api/src/core/tracing.ts` (tệp duy nhất import `@opentelemetry/*`): span ở mọi khớp nối — HTTP, MCP, `runAction`, cổng Kernel, câu CSDL (chỉ loại câu + bảng), phát / giao sự kiện outbox, gọi ra ngoài bằng `fetch`. Mọi span mang `bizcity.module` và `bizcity.outcome` (`ok` · `rejected` = từ chối đúng luật, không phải sự cố · `error`).
+  - `packages/platform/src/core/tracing.ts` (tệp duy nhất import `@opentelemetry/*`): span ở mọi khớp nối — HTTP, MCP, `runAction`, cổng Kernel, câu CSDL (chỉ loại câu + bảng), phát / giao sự kiện outbox, gọi ra ngoài bằng `fetch`. Mọi span mang `bizcity.module` và `bizcity.outcome` (`ok` · `rejected` = từ chối đúng luật, không phải sự cố · `error`).
   - Thuộc tính đi qua danh sách cho phép ngay ở bộ xuất: không số tiền, tên, MST, câu SQL, token rời tiến trình.
   - `traceId` trong log, trong phản hồi lỗi (`error.traceId`, `bizcity_errors` 1.1.0-draft) và trong bằng chứng (`audit_logs.trace_id`); sự kiện outbox lưu `trace_parent` để span giao nối (link) về yêu cầu gốc — migration `0047` chỉ thêm hai cột cho phép NULL.
   - `ctx.trace.step(name, fn)` cho module tự chia bước; check SC-OBS-2 chặn module import thẳng SDK truy vết và thuộc tính ngoài danh sách.
@@ -136,6 +139,13 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-01 09:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gộp main (ADR-0010 OTel) vào gói: tracing / version sang @bizcity/platform, cổng @bizcity/kernel bọc trace; migration ký theo vai đổi số 0047 → 0048; 7 tín hiệu lộ trình / tuân thủ trỏ đường dẫn gói; AUDIT-2026-11-01-PLUGIN-MVP -->
+- **Truy vết OpenTelemetry theo gói** (PHASE-010 + ADR-0010): `core/tracing.ts`, `core/version.ts` thuộc `@bizcity/platform` (`packages/platform/src/core/`), phụ thuộc `@opentelemetry/*` chuyển sang gói Platform; cổng `@bizcity/kernel` (`packages/kernel/src/index.ts`) bọc `traceKernelApi / traceKernelFn` như `kernel/public.ts` của main. Check SC-OBS-2 quét cả `packages/platform`, `packages/kernel`.
+- **Migration ký theo vai đổi số `0047` → `0048_ky_chung_tu_chung.sql`** (số `0047` đã phát hành trên `main` cho `0047_truy_vet.sql`). Nội dung không đổi; CSDL đã chạy nhánh này trước khi gộp xem "Nâng cấp cần làm".
+- **Tín hiệu máy của lộ trình / ma trận tuân thủ trỏ đường dẫn gói**: 7 tín hiệu `fileContains` (C-4 ×2, C-8 ×2, C-9, 2.10, 2.13, 2.14) còn trỏ `apps/api/src/...` sau tách gói nên báo ✘ giả — trỏ sang `packages/kernel`, `packages/platform`; C-4 / C-8 / C-9 về đạt, Phase 2 13/16.
+- **Biên bản [AUDIT-2026-11-01-PLUGIN-MVP](docs/audits/AUDIT-2026-11-01-PLUGIN-MVP.md)**: Kernel ổn định ~85%, plugin runtime ~15%; phản biện "drop-in kiểu WordPress"; P0-1..P0-3, P1-1..P1-5; lộ trình PR-P0, PR-0…PR-8 theo phase 011 / 013 / 014; mockup launcher "＋ Thêm phân hệ".
+- **Gói `@bizcity/kernel`** (`packages/kernel`, PHASES 2.3, PHASE-010 D010-9): toàn bộ Accounting Kernel (60 tệp: cửa nạp, định khoản, sổ cái, kỳ, sổ phụ, thuế, kết chuyển, dữ liệu gốc) dời khỏi `apps/api/src`; gốc gói là cổng công khai (trước là `apps/api/src/kernel/public.ts`, nay là tệp chuyển tiếp). Phân hệ, add-in không phải đổi import. Kernel không còn import adapter kết nối / báo cáo kho (bộ chuẩn hoá chứng từ đẩy vào đăng ký ở `app.ts`; route báo cáo kho tách sang module kho, đường dẫn API như cũ).
+- **Gói `@bizcity/platform`** (`packages/platform`, PHASE-010 D010-8, bước của PHASES 2.3): 22 tệp Platform Kernel cần (lỗi chuẩn, HTTP, quyền, bằng chứng, runtime action, sự kiện, số đo, kết nối / migration / kiểu CSDL, cấu hình, chẩn đoán, ký, hai hàm danh mục) dời khỏi `apps/api/src`; đường cũ là tệp chuyển tiếp nên mã của phân hệ / nhánh đang mở không phải đổi. Dev / test chạy thẳng mã nguồn của gói (điều kiện `development`); bản chạy thật build `dist`.
 - **Đính kèm Mua hàng chạy trên đính kèm chung** (migration `0046`, PHASES 2.7, A-19): dòng `purchase_attachments` chép sang `document_attachments` (docRef `mua-hang.<loại chủ>:<mã>`, `legacy_ref` đối chiếu), tệp giữ nguyên chỗ trên ổ (`DATA_DIR/dinh-kem`), băm sha256 ở lần tải đầu. API `/api/v1/purchase/attachments` giữ khuôn; xoá tệp nay là gỡ (lưu trữ, không xoá cứng). Bảng `purchase_attachments` khoá thêm / sửa, giữ để đối chiếu.
 - **Một chỗ cấp số chứng từ**: phiếu kế toán tay, đề nghị thanh toán (`quy`), phiếu mua hàng lấy số từ `documentNumbers.next` của Kernel thay vì tự ghi `document_sequences`. Khoá dãy và khuôn số giữ nguyên — không nhảy số.
 - **Báo cáo về phân hệ Kế toán** (PHASE-012 Q012-2): `apps/api/src/modules/reports` → `apps/api/src/phan-he/ke-toan/reports`. `documentChecks` (kiểm trước khoá kỳ) về Kernel `modules/periods/document-checks.ts`. Thuế đọc B02 / bảng dài hạn qua action, add-in Bảng tính AI qua `accounting.report.trial-balance`; báo cáo hàng hoá tách: lãi gộp → `phan-he/ban-hang/gross-profit.ts`, chuyển kho → `phan-he/kho/stock-transfers.ts`, kết quả theo cửa hàng ở lại `ke-toan/reports`; `kho`, `mua-hang` lấy route qua `GOODS` (`phan-he/loi.ts`). Đường dẫn API, số liệu báo cáo không đổi. Chi phí theo chiều phân tích gom theo bí danh cột, bỏ `sql.raw`.
@@ -154,6 +164,7 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- `GET /api/v1/documents?voucherInfo=false` trước vẫn kèm thông tin phiếu (`z.coerce.boolean()` coi chuỗi "false" là true); nay dùng `queryBool`.
 - Đính tệp vào hoá đơn NCC (`ownerType: invoice`) báo lỗi CSDL: bảng `purchase_attachments` chỉ nhận partner / document / policy. Hết lỗi khi chuyển sang đính kèm chung (0046).
 - Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
   - mọi bản trước commit `ccfc341` (gồm `main` 23a834c) **không cài mới được trên CSDL sạch**: code dùng `users.session_version`, `products.parent_manual` khi chưa có migration;
@@ -175,6 +186,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- CSDL đã chạy nhánh `feat/phase-0-tiep` **trước** khi gộp `main` (có dòng `0047_ky_chung_tu_chung.sql` trong `schema_migrations`): đổi tên dòng đó thành `0048_ky_chung_tu_chung.sql` rồi `npm run db:migrate` (áp `0047_truy_vet.sql`). Bản cài từ `main` không bị ảnh hưởng.
+- Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`, `@bizcity/kernel`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
 - Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.

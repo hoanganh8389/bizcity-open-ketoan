@@ -36,7 +36,7 @@ Bản kế hoạch PHASE-018 trước đây để trace là tuỳ chọn, làm s
 |---|---|---|---|---|
 | 1 | **Accounting Kernel** | Ghi sổ **đúng**: một cửa sự việc, Nợ = Có, kỳ khoá, sổ chỉ thêm, định khoản tất định | **Có** — quyết định | `apps/api/src/kernel/public.ts` → `modules/{documents,posting,ledger,periods}` |
 | 2 | **PostgreSQL + Audit Ledger** | Lưu **bằng chứng nghiệp vụ**: bút toán, `posting_log`, `audit_logs` chuỗi băm, `diagnostic_runs`; trigger chặn sửa / xoá | **Có** — lưu giữ ≥ 10 năm | `db/migrations/`, `core/audit.ts` |
-| 3 | **OpenTelemetry** | Theo dõi **hành trình thực thi**: yêu cầu đi qua module nào, action nào, cổng Kernel nào, câu CSDL nào, subscriber nào; mất bao lâu, hỏng ở đâu | Không — quan sát | `apps/api/src/core/tracing.ts` (Platform) |
+| 3 | **OpenTelemetry** | Theo dõi **hành trình thực thi**: yêu cầu đi qua module nào, action nào, cổng Kernel nào, câu CSDL nào, subscriber nào; mất bao lâu, hỏng ở đâu | Không — quan sát | `packages/platform/src/core/tracing.ts` (Platform) |
 | 4 | **Prometheus** | Đo **sức khoẻ và hiệu năng**: tốc độ, độ trễ, tỉ lệ lỗi, ghi sổ đã commit, outbox, pool, đối soát | Không — tổng hợp | `GET /metrics` (`core/metrics.ts`) |
 | 5 | **Grafana + Tempo + Loki** | **Quan sát, điều tra lỗi**: dashboard → trace → log của đúng yêu cầu đó, nối bằng `traceId` | Không — giao diện điều tra | `infrastructure/monitoring/` |
 | 6 | **Alertmanager** | **Thông báo khi bất thường**: định tuyến theo mức / nhóm, ức chế, im lặng khi bảo trì | Không — chỉ báo, không bao giờ sửa dữ liệu | `infrastructure/monitoring/alertmanager/` |

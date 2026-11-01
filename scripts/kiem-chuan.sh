@@ -3,6 +3,7 @@
 # [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
 # [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 # [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — grep allow_ledger_purge / session_replication_role dò cả tệp .sql (lam-sach-mua-hang.sql lọt, REVIEW-2026-10-31-THUY §8).
+# [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét cả packages/kernel/src, packages/platform/src; chỗ được phép nhận Kernel ở gói (D010-7 chặng 3)
 # =============================================================================
 # Kiểm chuẩn framework bằng grep (không cần CSDL) — bước "guard" của CI, chạy được trên máy dev.
 #
@@ -15,6 +16,9 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 SRC=apps/api/src
+# Mã nguồn quét (D010-7): ứng dụng + gói Kernel + gói Platform. K = thư mục Kernel, ở gói hay ở đường cũ.
+SRCS="apps/api/src packages/kernel/src packages/platform/src"
+K="(apps/api/src|packages/kernel/src)"
 FAIL=0
 
 # Nợ R-LEDGER-4 / audit A-01 (vouchers, closing, assets, costing gọi thẳng ledgerService): hết 2026-10-30, PHASE-004 — các
@@ -22,7 +26,7 @@ FAIL=0
 # Nợ R-DB-3 / audit A-03: đã sửa 2026-10-30 (0028_thue_kkkn → 0031). Để trống: mọi trùng số đều chặn.
 DEBT_MIGRATION_DUP=''
 # Ngoại lệ E2 (R-LEDGER): định khoản lại cập nhật thông tin đầu bút toán tại chỗ.
-E2_HEADER_UPDATE="^$SRC/modules/posting/posting.service.ts:[0-9]+:.*updateTable\('ledger_entries'\)"
+E2_HEADER_UPDATE="^$K/modules/posting/posting.service.ts:[0-9]+:.*updateTable\('ledger_entries'\)"
 
 rule() { echo; echo "── $1"; }
 # check <tên> <kết quả grep đã lọc>: rỗng = đạt.
@@ -30,26 +34,26 @@ check() { if [ -n "$1" ]; then echo "$1"; FAIL=1; else echo "  ok${2:+ $2}"; fi;
 warn() { [ -n "$2" ] && { echo "  (cảnh báo) $1"; echo "$2"; }; }
 
 rule "R-LEDGER-4: chỉ modules/ledger ghi bảng ledger_* (trừ E2)"
-check "$(grep -rnE "(insertInto|updateTable|deleteFrom)\('ledger_|(INSERT INTO|UPDATE|DELETE FROM) ledger_" "$SRC" --include=*.ts \
-  | grep -v "^$SRC/modules/ledger/" | grep -vE "$E2_HEADER_UPDATE")"
+check "$(grep -rnE "(insertInto|updateTable|deleteFrom)\('ledger_|(INSERT INTO|UPDATE|DELETE FROM) ledger_" $SRCS --include=*.ts \
+  | grep -vE "^$K/modules/ledger/" | grep -vE "$E2_HEADER_UPDATE")"
 
 rule "R-EVENT-2: chỉ modules/documents thêm accounting_events / accounting_event_versions / posting_log"
-check "$(grep -rnE "insertInto\('(accounting_events|accounting_event_versions|posting_log)'\)|INSERT INTO (accounting_events|accounting_event_versions|posting_log)\b" "$SRC" --include=*.ts \
-  | grep -v "^$SRC/modules/documents/")"
+check "$(grep -rnE "insertInto\('(accounting_events|accounting_event_versions|posting_log)'\)|INSERT INTO (accounting_events|accounting_event_versions|posting_log)\b" $SRCS --include=*.ts \
+  | grep -vE "^$K/modules/documents/")"
 warn "cập nhật accounting_events ngoài modules/documents (nên qua documentRepository):" \
-  "$(grep -rnE "updateTable\('accounting_events'\)" "$SRC" --include=*.ts | grep -v "^$SRC/modules/documents/")"
+  "$(grep -rnE "updateTable\('accounting_events'\)" $SRCS --include=*.ts | grep -vE "^$K/modules/documents/")"
 
 rule "R-LEDGER-4: chỉ posting / documents / ledger gọi ledgerService (nơi khác đi postDocumentIn hoặc eventStore)"
-check "$(grep -rnE "ledgerService\.[A-Za-z]+\(" "$SRC" --include=*.ts \
-  | grep -vE "^$SRC/modules/(ledger|posting|documents)/")"
+check "$(grep -rnE "ledgerService\.[A-Za-z]+\(" $SRCS --include=*.ts \
+  | grep -vE "^$K/modules/(ledger|posting|documents)/")"
 
 rule "R-LEDGER E1–E4: cờ thoát trigger chỉ ở chỗ được phép"
 check "$( {
-  grep -rnE "cost_overwrite" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh \
-    | grep -vE "^($SRC/modules/ledger/|apps/api/test/|scripts/kiem-chuan.sh)"
-  grep -rnE "allow_ledger_purge" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
+  grep -rnE "cost_overwrite" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh \
+    | grep -vE "^($K/modules/ledger/|apps/api/test/|scripts/kiem-chuan.sh)"
+  grep -rnE "allow_ledger_purge" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(apps/api/test/|scripts/kiem-chuan.sh)"
-  grep -rnE "session_replication_role" apps packages scripts --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
+  grep -rnE "session_replication_role" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/kiem-chuan.sh|apps/api/test/)"
 } )"
 

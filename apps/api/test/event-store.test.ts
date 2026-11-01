@@ -5,8 +5,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
 import type { AuthContext } from '../src/core/auth.js';
-import { accountRepository } from '../src/modules/accounts/account.repository.js';
-import { eventStore } from '../src/modules/documents/event-store.js';
+import { accountRepository } from '@bizcity/kernel/modules/accounts/account.repository';
+import { eventStore } from '@bizcity/kernel/modules/documents/event-store';
 import { setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;

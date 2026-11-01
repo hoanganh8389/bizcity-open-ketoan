@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
+# [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — runner migration nay ở packages/platform/src/db/migrate.ts (npm run db:migrate qua tệp chuyển tiếp)
 # =============================================================================
 # KIỂM NÂNG CẤP (R-DB-15, docs/rules/RULE-DATABASE.md): migration của bản mới phải chạy được trên CSDL ĐÃ CÓ DỮ LIỆU
 # của bản trước, và sổ sau nâng cấp vẫn đúng. Bổ sung cho job CI "test" (migration trên CSDL sạch).
 #
 #   1. Lấy mã nguồn bản trước bằng git worktree (mặc định: tag v* mới nhất; chưa có tag thì origin/main, rồi main).
 #   2. CSDL tạm ketoan_nang_cap: chạy migration + dữ liệu khởi tạo CỦA BẢN TRƯỚC.
-#   3. Chạy migration CỦA BẢN NÀY lên trên (runner apps/api/src/db/migrate.ts: tệp đổi tên, tệp nền… — R-DB-3).
+#   3. Chạy migration CỦA BẢN NÀY lên trên (runner packages/platform/src/db/migrate.ts: tệp đổi tên, tệp nền… — R-DB-3).
 #   4. Lane diagnostics của bộ kiểm chuẩn trên CSDL đã nâng cấp (migration đủ, trigger bảo vệ, Nợ = Có, chuỗi bằng chứng…).
 #   5. Xoá worktree và CSDL tạm.
 #

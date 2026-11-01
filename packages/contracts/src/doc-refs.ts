@@ -1,5 +1,6 @@
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): docRef, vai trò liên kết, kiểu phiên bản / đính kèm dùng chung API, runtime action, giao diện
 // [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — AttachmentRef.sha256 có thể null (tệp Mua hàng chuyển ở 0046)
+// [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — DocumentSignature, SIGN_ROLE_RE (documents.signatures, 0047)
 /**
  * Chứng từ dùng chung (bizcity_document@1 §3, §7). Mọi chứng từ gọi bằng docRef = <module>.<loại>:<id>
  * (vd hop-dong.contract:42); sự việc kế toán của Kernel = ledger.event:<docKey>.
@@ -48,6 +49,19 @@ export interface AttachmentRef {
   createdBy: string;
   createdAt: string;
 }
+
+/** Chữ ký theo vai trên chứng từ (documents.signatures, 0047); valid = ký đúng phiên bản hiện tại. */
+export interface DocumentSignature {
+  role: string;
+  version: number;
+  signer: string;
+  signerName: string;
+  signedAt: string;
+  valid: boolean;
+}
+
+/** Vai ký của chứng từ module: chữ thường, số, gạch dưới (vd preparer, legal). */
+export const SIGN_ROLE_RE = /^[a-z][a-z0-9_]{1,39}$/;
 
 /** Tệp gửi lên: nội dung base64 (HTTP) hoặc Buffer (máy chủ). */
 export interface FileInput {

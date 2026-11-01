@@ -1,4 +1,5 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
+// [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — đồ thị đi theo import gói @bizcity/platform, @bizcity/kernel (SC-LAYER-2 vẫn thấy Platform → Kernel)
 /**
  * Đồ thị phụ thuộc theo lớp (PHASES 1.4, TARGET-LAYOUT §2): nút = thư mục / tệp lõi của apps/api/src kèm lớp ở bảng
  * lib/layers.mjs; cạnh = import tương đối giữa hai nút. Cạnh ngược chiều lớp là nợ cần gỡ ở Phase 2–3 (SC-LAYER-2).
@@ -19,7 +20,11 @@ export const ALLOW = {
 /** Đích lắp ráp (LAYOUT-6): được import mọi lớp. */
 export const ASSEMBLY = new Set(['apps/api']);
 
-const IMPORT_RE = /(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?(?:[^'";]*?\s+from\s+)?['"](\.{1,2}\/[^'"]+)['"]|import\(\s*['"](\.{1,2}\/[^'"]+)['"]\s*\)/g;
+const IMPORT_RE = /(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?(?:[^'";]*?\s+from\s+)?['"]((?:\.{1,2}\/|@bizcity\/(?:platform|kernel))[^'"]*)['"]|import\(\s*['"]((?:\.{1,2}\/|@bizcity\/(?:platform|kernel))[^'"]*)['"]\s*\)/g;
+/** Import gói workspace → tệp nguồn (D010-7): '@bizcity/platform/<đường>', '@bizcity/kernel' (gốc), '@bizcity/kernel/<đường>'. */
+const packageTarget = (spec) => (spec === '@bizcity/kernel' ? 'packages/kernel/src/index.ts'
+  : spec.startsWith('@bizcity/kernel/') ? 'packages/kernel/src/' + spec.slice('@bizcity/kernel/'.length) + '.ts'
+  : spec.startsWith('@bizcity/platform/') ? 'packages/platform/src/' + spec.slice('@bizcity/platform/'.length) + '.ts' : null);
 
 /** Nhóm: modules/<x>, phan-he/<x>, addins/<x>, core/security; tệp lẻ ở gốc / core / db là một nút. */
 export function groupOf(file) {
@@ -69,7 +74,8 @@ export function buildGraph({ files, read }) {
     const text = read(file) ?? '';
     for (const m of text.matchAll(IMPORT_RE)) {
       const spec = m[1] ?? m[2];
-      const base = path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
+      const pkg = packageTarget(spec);
+      const base = pkg ?? path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
       const target = [base.replace(/\.js$/, '.ts'), base.replace(/\.js$/, '.tsx'), base, `${base}.ts`, `${base}/index.ts`].find((c) => known.has(c));
       const to = target && nodeOf.get(target);
       if (!to || to === from) continue;

@@ -28,7 +28,7 @@ Chỉ số đo, trace, log là **quan sát**. Sự thật về sổ nằm ở Ke
 | Mã yêu cầu | API nhận `X-Request-Id` từ bên gọi nếu hợp lệ (8–128 ký tự `[A-Za-z0-9._:-]`), không thì tự sinh. Trả lại ở header `X-Request-Id` của mọi phản hồi |
 | W3C Trace Context | API nhận `traceparent` của bên gọi: span HTTP nối tiếp trace của Cell / plugin / proxy. Mọi yêu cầu (trừ `/metrics`, health) có `traceId` (32 hex) trong log, trong `error.traceId` và trong bằng chứng (`audit_logs.trace_id`) |
 | Gọi ra ngoài | Gọi Hub, Cell, tra MST, AI đọc hoá đơn… bằng `fetch`: span con + `traceparent` tự chuyển tiếp (S8); `X-Request-Id` chuyển tiếp tay |
-| OpenTelemetry | **Từ lõi** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), thay "Để sau"), mã ở `apps/api/src/core/tracing.ts`. SDK luôn có trong Core. Chỉ xuất trace khi đặt `OTEL_EXPORTER_OTLP_ENDPOINT` (bộ giám sát tự đặt = Collector nội bộ); `OTEL_SDK_DISABLED=true` tắt hẳn |
+| OpenTelemetry | **Từ lõi** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), thay "Để sau"), mã ở `packages/platform/src/core/tracing.ts`. SDK luôn có trong Core. Chỉ xuất trace khi đặt `OTEL_EXPORTER_OTLP_ENDPOINT` (bộ giám sát tự đặt = Collector nội bộ); `OTEL_SDK_DISABLED=true` tắt hẳn |
 
 ### 1.1 Trace (ADR-0010)
 

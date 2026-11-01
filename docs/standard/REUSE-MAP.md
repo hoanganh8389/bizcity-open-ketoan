@@ -5,6 +5,7 @@
 <!-- [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → packages/documents (máy trạng thái khai báo, PHASES 3.5). -->
 <!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — modules/reports → phan-he/ke-toan/reports (Q012-2); documentChecks về Kernel; callAction / ctx.actions.call thay import chéo -->
+<!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §3.1: 22 tệp Platform dời sang packages/platform (D010-7 chặng 2) -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
 > Cây đích: [TARGET-LAYOUT.md](TARGET-LAYOUT.md). Phát hiện nền trước đó: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md) (A-01..A-16); phát hiện mới ở §5 (A-17..A-26).
@@ -36,6 +37,8 @@
 ## 3. Bản đồ API (`apps/api/src`)
 
 ### 3.1 `core/`, `config/`, `db/`
+
+> **2026-11-01 (PHASE-010 D010-7 chặng 2):** 22 tệp Platform Kernel cần (`config/env`, `core/{actions,audit,auth,date-rules,documents,errors,events,http,metrics,request-context}`, `core/security/{password,session-state,tokens}`, `db/{client,migrate,paths,types}`, `modules/system/diagnostics`, `modules/signatures/signature.routes`, `partners/partner.repository`, `warehouses/default-warehouse`) đã dời sang gói **`packages/platform`** (`@bizcity/platform`), một gói đệm trước khi chia `packages/{data,permissions,audit,events,actions,documents,observability}` theo ADR-0008. Đường cũ trong `apps/api/src` là tệp chuyển tiếp một dòng.
 
 | Đường dẫn | Dòng | Lớp | Đích | Ghi chú tách |
 |---|---|---|---|---|

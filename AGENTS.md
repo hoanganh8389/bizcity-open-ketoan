@@ -24,6 +24,8 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 ## Trước khi code: đồng bộ với `main`
 
 <!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — đồng bộ main trước mỗi lượt code (nhánh feat đứng sau main 18 commit, xung đột mua-hang/service.ts, dist contracts cũ). -->
+<!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — Errors / Platform nay ở packages/platform (@bizcity/platform), đường cũ là tệp chuyển tiếp -->
+<!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng Kernel nay là gói @bizcity/kernel (packages/kernel), đường con chỉ cho test -->
 
 Nhiều người cùng đẩy lên `main` (phân hệ, giao diện). Nhánh đứng lại sau `main` thì sửa chồng lên mã cũ, xung đột khi gộp, bộ kiểm báo lỗi không phải của mình. Mỗi lượt code:
 
@@ -135,8 +137,8 @@ Kiến trúc open-ketoan do **Johnny Chu – Chu Hoàng Anh** thiết kế. Mỗ
 
 - Tên bảng, cột, biến: tiếng Anh. Chú thích, thông báo người dùng, tài liệu: tiếng Việt có dấu.
 - Tiền: `numeric(18,2)` ở CSDL, cộng trừ qua `toCents/fromCents`.
-- Lỗi: `Errors.*` (`apps/api/src/core/errors.ts`), không `reply.status()`.
+- Lỗi: `Errors.*` (`@bizcity/platform/core/errors` — `packages/platform/src/core/errors.ts`; đường cũ `apps/api/src/core/errors.ts` là tệp chuyển tiếp), không `reply.status()`. Mã mới import Platform qua `@bizcity/platform/<đường>` (`core/*`, `db/*`, `config/env`).
 - Migration: tệp mới số kế tiếp, không sửa tệp đã chạy, có `COMMENT ON`.
 - Phân hệ không import phân hệ khác (`apps/*/src/phan-he/<key>/`).
-- Ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts` (SC-KERNEL-6). Cần thêm gì vào cổng đó thì đề xuất, không import thẳng vào `modules/<kernel>/`.
+- Ngoài Kernel chỉ import Kernel qua gốc gói `@bizcity/kernel` (`packages/kernel/src/index.ts`; đường cũ `apps/api/src/kernel/public.ts` là tệp chuyển tiếp) — SC-KERNEL-6. Không import đường con `@bizcity/kernel/<đường>` (chỉ test của Core). Cần thêm gì vào cổng thì đề xuất.
 - Đặt tên mới theo [docs/framework/04-DAT-TEN-BIZCITY.md](docs/framework/04-DAT-TEN-BIZCITY.md).

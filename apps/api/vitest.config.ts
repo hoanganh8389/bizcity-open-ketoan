@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // Gói workspace (@bizcity/platform…) nạp thẳng mã nguồn qua điều kiện 'development' của exports — không cần build trước khi chạy test.
+  resolve: { conditions: ['development'] },
+  ssr: { resolve: { conditions: ['development'] } },
   test: {
     // Kiểm thử chạy trên PostgreSQL thật (DATABASE_URL), mỗi lần tạo một đơn vị riêng nên không đụng dữ liệu khác.
     env: { NODE_ENV: 'test' },

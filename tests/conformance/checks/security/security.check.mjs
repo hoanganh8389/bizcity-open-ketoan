@@ -1,7 +1,9 @@
 // [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán.
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét bảo mật trên LAYER_ROOTS (gồm packages/platform)
 /**
  * RULE-SECURITY (R-SEC-*) — phần đọc được từ mã nguồn và cấu hình repo.
  */
+import { LAYER_ROOTS } from '../../lib/layers.mjs';
 
 /** Mẫu bí mật thật. Giá trị giữ chỗ (.env.example, "ci-only", "doi-thanh") không tính. */
 const SECRET_PATTERNS = [
@@ -45,7 +47,7 @@ export const checks = [
     title: 'Không ghép chuỗi vào SQL: hạn chế sql.raw / sql.lit, mọi giá trị đi qua tham số',
     gate: 'CONF-STATIC', contract: 'kernel', rules: ['R-SEC-3'], conf: ['CONF-STATIC-3'], tier: 1, enforce: 'ratchet', weight: 3, targets: ['repo', 'module'], scope: 'module',
     run(ctx) {
-      const opts = ctx.mode === 'module' ? { ext: ['.ts', '.mjs', '.js'] } : { under: ['apps/api/src'], ext: ['.ts'] };
+      const opts = ctx.mode === 'module' ? { ext: ['.ts', '.mjs', '.js'] } : { under: LAYER_ROOTS, ext: ['.ts'] };
       const hits = ctx.repo.grep(/\bsql\.(raw|lit)(<[^>]*>)?\(|\.query\(\s*`[^`]*\$\{/, { ...opts, skipComments: true });
       return { examined: ctx.repo.files(opts).length, findings: hits.map((h) => ctx.finding(h.file, h.line, `${h.text} — chỉ được ghép hằng số do code sinh, không ghép đầu vào người dùng`, /raw|lit/.exec(h.text)?.[0] ?? 'template')) };
     },

@@ -12,7 +12,7 @@ import pg from 'pg';
 import { env } from '../src/config/env.js';
 import type { Database } from '../src/db/types.js';
 import { registerDiagnostics, runDiagnostics } from '../src/modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS } from '../src/modules/ledger/ledger.diagnostics.js';
+import { LEDGER_DIAGNOSTICS } from '@bizcity/kernel/modules/ledger/ledger.diagnostics';
 
 export interface TestCtx {
   app: FastifyInstance;

@@ -3,15 +3,23 @@
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 08:18 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — SC-KERNEL-7: ngoài Kernel không đọc thẳng bảng ledger_* (đọc bizcity_read.* / ledgerQuery)
+// [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét mã trên LAYER_ROOTS (gồm packages/platform); db/types.ts của gói miễn SC-KERNEL-7 như bản cũ
+// [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — Kernel ở packages/kernel/src: chỗ được phép của SC-KERNEL-1…5 nhận cả gói; SC-KERNEL-6 coi gốc gói là cổng, chặn đường con @bizcity/kernel/<đường> ngoài Kernel
 /**
  * Kernel: ranh giới sổ cái. Chuyển từ scripts/kiem-chuan.sh (giữ nguyên nghĩa; danh sách nợ chuyển sang baseline.json).
  */
 import path from 'node:path';
-import { expectedLayer } from '../../lib/layers.mjs';
+import { LAYER_ROOTS, expectedLayer } from '../../lib/layers.mjs';
 
 const SRC = 'apps/api/src';
 const PUBLIC = `${SRC}/kernel/public.ts`;
-const ts = { under: [SRC], ext: ['.ts'] };
+/** Gói Kernel (D010-7 chặng 3); repo mẫu của bộ tự kiểm vẫn để Kernel ở apps/api/src. */
+const KSRC = 'packages/kernel/src';
+/** Cổng công khai: gốc gói và tệp chuyển tiếp ở đường cũ. */
+const PUBLICS = new Set([PUBLIC, `${KSRC}/index.ts`]);
+/** Tệp nằm trong thư mục Kernel \`rel\` (vd 'modules/ledger/'), ở gói hay ở đường cũ. */
+const inK = (file, rel) => file.startsWith(`${SRC}/${rel}`) || file.startsWith(`${KSRC}/${rel}`);
+const ts = { under: LAYER_ROOTS, ext: ['.ts'] };
 
 const scan = (ctx, re, keep) => {
   const hits = ctx.repo.grep(re, ts).filter(keep);
@@ -24,15 +32,15 @@ export const checks = [
     title: 'Chỉ modules/ledger ghi bảng ledger_* (trừ ngoại lệ E2)',
     gate: 'KERNEL', contract: 'kernel', rules: ['R-LEDGER-4'], conf: ['CONF-STATIC-2'], tier: 0, enforce: 'block', weight: 5, targets: ['repo'],
     run: (ctx) => scan(ctx, /(insertInto|updateTable|deleteFrom)\('ledger_|(INSERT INTO|UPDATE|DELETE FROM) ledger_/,
-      (h) => !h.file.startsWith(`${SRC}/modules/ledger/`) &&
-        !(h.file === `${SRC}/modules/posting/posting.service.ts` && /updateTable\('ledger_entries'\)/.test(h.text))),
+      (h) => !inK(h.file, 'modules/ledger/') &&
+        !((h.file === `${SRC}/modules/posting/posting.service.ts` || h.file === `${KSRC}/modules/posting/posting.service.ts`) && /updateTable\('ledger_entries'\)/.test(h.text))),
   },
   {
     id: 'SC-KERNEL-2',
     title: 'Chỉ modules/documents thêm accounting_events / accounting_event_versions / posting_log',
     gate: 'KERNEL', contract: 'kernel', rules: ['R-EVENT-2'], conf: ['CONF-STATIC-2'], tier: 0, enforce: 'block', weight: 5, targets: ['repo'],
     run: (ctx) => scan(ctx, /insertInto\('(accounting_events|accounting_event_versions|posting_log)'\)|INSERT INTO (accounting_events|accounting_event_versions|posting_log)\b/,
-      (h) => !h.file.startsWith(`${SRC}/modules/documents/`)),
+      (h) => !inK(h.file, 'modules/documents/')),
   },
   {
     id: 'SC-KERNEL-3',
@@ -41,7 +49,7 @@ export const checks = [
     run(ctx) {
       // Nợ A-01 (vouchers, closing, assets, inventory/costing) hết 2026-10-30 (PHASE-004): chặn mọi hàm của ledgerService,
       // kể cả ngoại lệ ghi đè giá vốn (đi eventStore.overwriteCostPairs).
-      const r = scan(ctx, /ledgerService\.[A-Za-z]+\(/, (h) => !/^apps\/api\/src\/modules\/(ledger|posting|documents)\//.test(h.file));
+      const r = scan(ctx, /ledgerService\.[A-Za-z]+\(/, (h) => !/^(apps\/api\/src|packages\/kernel\/src)\/modules\/(ledger|posting|documents)\//.test(h.file));
       for (const f of r.findings) f.key = 'ledgerService call'; // một nợ mỗi tệp, không đếm từng dòng
       r.findings = dedupeBy(r.findings, (f) => f.file);
       return r;
@@ -54,7 +62,7 @@ export const checks = [
     run(ctx) {
       const opts = { under: ['apps', 'packages', 'scripts'], ext: ['.ts', '.mjs', '.sh'] };
       const allow = {
-        cost_overwrite: /^(apps\/api\/src\/modules\/ledger\/|apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
+        cost_overwrite: /^(apps\/api\/src\/modules\/ledger\/|packages\/kernel\/src\/modules\/ledger\/|apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
         allow_ledger_purge: /^(apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
         // test được nhắc tên cờ để chứng minh vai trò ứng dụng KHÔNG đặt được (app-role.test.ts)
         session_replication_role: /^(scripts\/xoa-chung-tu\.sh|scripts\/kiem-chuan\.sh|apps\/api\/test\/)/,
@@ -71,7 +79,7 @@ export const checks = [
     title: 'Luật định khoản không viết cứng số tài khoản (tra qua AccountResolver)',
     gate: 'KERNEL', contract: 'kernel', rules: ['R-POST-2'], conf: [], tier: 0, enforce: 'ratchet', weight: 4, targets: ['repo'],
     run(ctx) {
-      const opts = { under: [`${SRC}/modules/posting/rules`], ext: ['.ts'] };
+      const opts = { under: [`${SRC}/modules/posting/rules`, `${KSRC}/modules/posting/rules`], ext: ['.ts'] };
       const add = ctx.repo.files({ under: [`${SRC}/phan-he`], ext: ['.ts'], match: /posting[^/]*\.ts$/ });
       const files = [...ctx.repo.files(opts), ...add];
       const findings = [];
@@ -92,13 +100,15 @@ export const checks = [
       // Kernel = tệp có lớp K theo bảng lớp (lib/layers.mjs). Tệp không thuộc K (Platform, phân hệ, add-in, lắp ráp) gọi Kernel qua
       // public.ts — một chỗ để tách gói packages/kernel (PHASES 2.3, PHASE-010 W2) mà không sửa nơi gọi.
       const isKernel = (file) => (expectedLayer(file)?.layer ?? '').split('+').includes('K');
-      const files = ctx.repo.files({ under: [SRC], ext: ['.ts'] }).filter((f) => !isKernel(f) && f !== PUBLIC);
+      const files = ctx.repo.files({ under: LAYER_ROOTS, ext: ['.ts'] }).filter((f) => !isKernel(f) && !PUBLICS.has(f));
       const findings = [];
       for (const file of files) {
         ctx.repo.lines(file).forEach((t, i) => {
+          // Đường con của gói (@bizcity/kernel/<đường>) là bên trong Kernel — chỉ test của Core được dùng.
+          for (const m of t.matchAll(/(?:from|import)\s*\(?\s*['"](@bizcity\/kernel\/[^'"]+)['"]/g)) findings.push(ctx.finding(file, i + 1, `import đường con của gói Kernel ${m[1]} — dùng '@bizcity/kernel'`, m[1]));
           for (const m of t.matchAll(/(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]/g)) {
             const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), m[1])).replace(/\.js$/, '.ts');
-            if (target !== PUBLIC && isKernel(target)) findings.push(ctx.finding(file, i + 1, `import thẳng vào Kernel ${target.slice(SRC.length + 1)} — dùng kernel/public.ts`, target.slice(SRC.length + 1)));
+            if (!PUBLICS.has(target) && isKernel(target)) findings.push(ctx.finding(file, i + 1, `import thẳng vào Kernel ${target.slice(SRC.length + 1)} — dùng kernel/public.ts`, target.slice(SRC.length + 1)));
           }
         });
       }
@@ -113,7 +123,7 @@ export const checks = [
       // PHASES 3.7: bảng ledger_* là chỗ Kernel giữ bất biến; bề mặt đọc là khung nhìn chỉ đọc bizcity_read.* (migration 0043) và
       // ledgerQuery ở kernel/public.ts. Dò cả câu SQL xuống dòng (FROM\n ledger_lines) nên đọc nguyên tệp, không theo dòng.
       const isKernel = (file) => (expectedLayer(file)?.layer ?? '').split('+').includes('K');
-      const files = ctx.repo.files(ts).filter((f) => !isKernel(f) && f !== `${SRC}/db/types.ts`);
+      const files = ctx.repo.files(ts).filter((f) => !isKernel(f) && f !== `${SRC}/db/types.ts` && f !== 'packages/platform/src/db/types.ts');
       const re = /\b(?:FROM|JOIN)\s+(?:public\.)?(ledger_[a-z_]+)\b|\b(?:selectFrom|innerJoin|leftJoin|rightJoin|fullJoin)\(\s*'(?:public\.)?(ledger_[a-z_]+)/g;
       const findings = [];
       for (const file of files) {
