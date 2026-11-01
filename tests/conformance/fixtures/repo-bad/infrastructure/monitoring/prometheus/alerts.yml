@@ -1,0 +1,6 @@
+# [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — ca tự kiểm SC-OBS-1: luật dùng số đo sai tên.
+groups:
+  - name: mau
+    rules:
+      - alert: SaiTen
+        expr: bizcity_sai_ten > 0
