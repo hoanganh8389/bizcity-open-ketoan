@@ -11,8 +11,8 @@
 | S019-2 | Khảo sát app cho dev: có / thiếu ([10-HIEN-TRANG](10-HIEN-TRANG.md)) | W0 | P0 | — | ✅ 2026-11-01 |
 | S019-3 | Kiến trúc: hai chế độ, API trung gian, mẫu truy vấn đóng, bảo mật, bản đồ màn, luật UX, ma trận test ([20-KIEN-TRUC](20-KIEN-TRUC.md)) | W0 | P0 | — | 🟡 2026-11-01 viết xong; chủ duyệt D019-1..3, Q019-1, Q019-2 cùng ngày; D019-4..7 theo đề xuất |
 | S019-4 | Bản mẫu UI tĩnh ([mockups/](mockups/README.md)) | W0 | P0 | — | 🟡 2026-11-01 có, chờ duyệt bố cục |
-| S019-5 | `ApiError` giữ `requestId`, `traceId` (+ header `X-Request-Id` khi thân hỏng); thông báo lỗi hiện Mã tra cứu + nút Chép — ca T019-1 | W1 | P0 | chưa | ☐ |
-| S019-6 | Nút **Báo lỗi** dựng nội dung theo `bao-loi.yml`, chỉ mã, không dữ liệu (Q019-5) | W1 | P1 | chưa | ☐ |
+| S019-5 | `ApiError` giữ `requestId`, `traceId` (+ header `X-Request-Id` khi thân hỏng); thông báo lỗi hiện Mã tra cứu + nút Chép — ca T019-1 | W1 | P0 | có | ✅ 2026-11-01 — khay chung `components/MaTraCuu.tsx` ([20-KIEN-TRUC §4.4](20-KIEN-TRUC.md)); ca T019-1 đạt |
+| S019-6 | Nút **Báo lỗi** dựng nội dung theo `bao-loi.yml`, chỉ mã, không dữ liệu (Q019-5) | W1 | P1 | có | ✅ 2026-11-01 chép nội dung; nút mở `BUG_REPORT_URL` dời sang W2 (cần khoá cấu hình) |
 | S019-7 | Quyền `devtools:read` + vai trò mới `developer` (= `viewer` + `devtools:read`; Q019-1 chủ chọn b) ở `core/auth.ts` + `@ketoan/contracts` + màn Người dùng — ca T019-8 | W2 | P1 | chưa | ☐ |
 | S019-8 | Biến `DEVTOOLS_*` (`config/env.ts`, `.env.example`, `docker-compose.monitoring.yml` đặt URL nội bộ) | W2 | P1 | chưa | ☐ |
 | S019-9 | `core.devtools.status`, `.trace`, `.request`, `.evidence` + bộ gác đơn vị (D019-5) + lọc trường lần hai + giới hạn — ca T019-2, T019-3, T019-6, T019-7 | W2 | P1 | chưa | ☐ |
@@ -29,7 +29,7 @@
 
 | Ca | Chứng minh | Lưu ở |
 |---|---|---|
-| T019-1 | thông báo lỗi có đủ hai mã; nội dung Báo lỗi không có dữ liệu | `evidence/W1-<ngày>.md` — chưa |
+| T019-1 | thông báo lỗi có đủ hai mã; nội dung Báo lỗi không có dữ liệu | [`evidence/W1-2026-11-01.md`](evidence/W1-2026-11-01.md) — ✅ |
 | T019-2 | chéo đơn vị → 404 giống "không có" | `evidence/W2-<ngày>.md` — chưa |
 | T019-3 | nguồn tắt / không trả lời → "chưa bật", không 500 | `evidence/W2-<ngày>.md` — chưa |
 | T019-4 | mã của TH-01 → tóm tắt đúng chỗ hỏng, ≤ 3 lần bấm (chạy thật với Tempo) | `evidence/W3-<ngày>.md` — chưa |
@@ -44,3 +44,4 @@
 |---|---|---|
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | mở phase: sổ tay điều tra lỗi (S019-1), hiện trạng (S019-2), kiến trúc (S019-3), bản mẫu (S019-4). Nhánh `docs/phase-019-ban-dieu-tra` |
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chủ duyệt) | D019-1 không nhúng Grafana ✅; Q019-1 = (b) thêm vai trò `developer` ✅; Q019-2 = Vận hành chỉ bản cài một đơn vị qua `DEVTOOLS_OPS=true` ✅. Gỡ ⛔ ở S019-7, S019-15 |
+| 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W1: khay Mã tra cứu (S019-5), Báo lỗi chép nội dung (S019-6), ca T019-1 đạt. Nhánh `feat/phase-019-w1-ma-tra-cuu` |

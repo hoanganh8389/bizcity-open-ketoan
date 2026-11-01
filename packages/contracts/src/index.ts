@@ -21,3 +21,5 @@ export * from './connections.js';
 export * from './module.js';
 export * from './dvt.js';
 export * from './print-templates.js';
+// [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: mã tra cứu: đọc requestId / traceId, nội dung Chép / Báo lỗi chỉ gồm mã.
+export * from './ma-tra-cuu.js';

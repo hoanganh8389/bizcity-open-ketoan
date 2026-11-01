@@ -1,6 +1,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 // [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5).
+// [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: ApiFailure khai requestId, traceId (máy chủ đã trả từ PHASE-018).
 /**
  * Khuôn phản hồi chung của API.
  *
@@ -21,6 +22,10 @@ export interface ApiFailure {
   error: {
     code: ErrorCode;
     message: string;
+    /** Mã yêu cầu — mọi phản hồi lỗi đều có (R-ERR-5), trùng header X-Request-Id. */
+    requestId?: string;
+    /** Mã trace W3C — có khi truy vết bật (ADR-0010). Web hiện cả hai ở khay Mã tra cứu (PHASE-019 W1). */
+    traceId?: string;
     details?: unknown;
   };
 }

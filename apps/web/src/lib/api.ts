@@ -1,15 +1,29 @@
+// [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: ApiError giữ requestId, traceId; mọi lỗi API ghi vào khay Mã tra cứu.
 /**
  * Gọi API. Mọi màn hình gọi qua đây để thống nhất: gắn token, đọc khuôn { ok, data | error },
  * hết phiên thì đưa về trang đăng nhập.
  */
 import type { ApiFailure, ApiSuccess } from '@ketoan/contracts';
+import { docMaTuPhanHoi, khoMaTraCuu } from './maTraCuu';
 
 const TOKEN_KEY = 'ketoan.token';
 
 export class ApiError extends Error {
-  constructor(public code: string, message: string, public status: number, public details?: unknown) {
+  /** Mã tra cứu (PHASE-019 W1): requestId luôn có khi máy chủ trả lời; traceId khi truy vết bật. */
+  public requestId?: string;
+  public traceId?: string;
+  constructor(public code: string, message: string, public status: number, public details?: unknown, ids?: { requestId?: string; traceId?: string }) {
     super(message);
+    this.requestId = ids?.requestId;
+    this.traceId = ids?.traceId;
   }
+}
+
+/** Dựng ApiError + ghi khay Mã tra cứu. 401 không ghi (đã đưa về trang đăng nhập). */
+function failure(res: Response, method: string, path: string, code: string, message: string, error?: ApiFailure['error'] | null, details?: unknown): ApiError {
+  const ma = docMaTuPhanHoi({ status: res.status, method, path, screen: window.location.pathname, error: error ?? { code }, headerRequestId: res.headers.get('x-request-id') });
+  if (res.status !== 401) khoMaTraCuu.ghi(ma);
+  return new ApiError(code, message, res.status, details, { requestId: ma.requestId, traceId: ma.traceId });
 }
 
 export const tokenStore = {
@@ -61,16 +75,23 @@ async function request<T>(method: string, path: string, opts: { query?: Query; b
   try {
     json = await res.json();
   } catch {
-    throw new ApiError('INTERNAL_ERROR', res.status === 504 ? 'Quá thời gian chờ (504): báo cáo chạy lâu hơn giới hạn của máy chủ — thu hẹp chi nhánh / kho / kỳ rồi tìm lại' : `Máy chủ trả lỗi ${res.status}`, res.status);
+    // Thân hỏng (proxy 502/504): requestId lấy từ header X-Request-Id nếu proxy chuyển lại.
+    throw failure(res, method, path, 'INTERNAL_ERROR', res.status === 504 ? 'Quá thời gian chờ (504): báo cáo chạy lâu hơn giới hạn của máy chủ — thu hẹp chi nhánh / kho / kỳ rồi tìm lại' : `Máy chủ trả lỗi ${res.status}`);
   }
   if (!json.ok) {
     if (res.status === 401 && path !== '/api/v1/auth/login' && path !== '/api/v1/auth/wp-sso') {
       tokenStore.clear();
       window.dispatchEvent(new Event('ketoan:logout'));
     }
-    throw new ApiError(json.error.code, json.error.message, res.status, json.error.details);
+    throw failure(res, method, path, json.error.code, json.error.message, json.error, json.error.details);
   }
   return { data: json.data, meta: json.meta as Record<string, unknown> | undefined };
+}
+
+/** Tải tệp hỏng: thân lỗi vẫn là JSON của API thì lấy mã tra cứu từ đó. */
+async function downloadFailure(res: Response, path: string): Promise<ApiError> {
+  const json = (await res.json().catch(() => null)) as ApiFailure | null;
+  return failure(res, 'GET', path, 'DOWNLOAD_FAILED', 'Không tải được tệp', json?.error ?? null);
 }
 
 export const api = {
@@ -84,13 +105,13 @@ export const api = {
   /** Lấy nội dung tệp (có gắn token) để xem ngay trên trang. */
   async blob(path: string, query: Query = {}): Promise<Blob> {
     const res = await fetch(buildUrl(path, query), { headers: { authorization: `Bearer ${tokenStore.get() ?? ''}` } });
-    if (!res.ok) throw new ApiError('DOWNLOAD_FAILED', 'Không tải được tệp', res.status);
+    if (!res.ok) throw await downloadFailure(res, path);
     return res.blob();
   },
   /** Tải tệp (CSV…) có gắn token. */
   async download(path: string, query: Query, filename: string): Promise<void> {
     const res = await fetch(buildUrl(path, query), { headers: { authorization: `Bearer ${tokenStore.get() ?? ''}` } });
-    if (!res.ok) throw new ApiError('DOWNLOAD_FAILED', 'Không tải được tệp', res.status);
+    if (!res.ok) throw await downloadFailure(res, path);
     const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
