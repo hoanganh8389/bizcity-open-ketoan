@@ -4,6 +4,8 @@ import { y } from '../beta/y.js';                                   // SC-MOD-1:
 import { appendFile } from 'node:fs/promises';
 import { LEDGER_DIAGNOSTICS } from '../../modules/ledger/ledger.diagnostics.js'; // SC-KERNEL-6: vào thẳng bên trong Kernel
 import { postDocumentIn } from '../../kernel/public.js';                       // KHÔNG tính: cổng công khai của Kernel
+import { context } from '@opentelemetry/api';                                    // SC-OBS-2: module import thẳng SDK truy vết
+import { withSpan } from '../../core/tracing.js';
 
 export async function routes(r: any, db: any, ledgerService: any, reply: any, z: any) {
   r.get('/api/v1/alpha', { handler: async () => [y, LEDGER_DIAGNOSTICS, postDocumentIn] });                // SC-API-3: không requirePermission
@@ -22,6 +24,7 @@ export async function routes(r: any, db: any, ledgerService: any, reply: any, z:
   await db.raw(`SELECT SUM(debit)
                   FROM ledger_balances_daily`);                     // SC-KERNEL-7: câu SQL xuống dòng
   await db.raw('SELECT 1 FROM bizcity_read.ledger_lines');           // KHÔNG tính: khung nhìn chỉ đọc của Kernel
+  await withSpan('step alpha.tinh', { attributes: { 'bizcity.module': 'alpha', 'bizcity.so_tien': 1 } }, async () => context); // SC-OBS-2: bizcity.so_tien ngoài danh sách
 }
 declare function requirePermission(p: string): unknown;
 declare function requireUser(): unknown;

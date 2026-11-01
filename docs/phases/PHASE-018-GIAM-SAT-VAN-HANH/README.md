@@ -2,9 +2,10 @@
 <!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — mở phase giám sát vận hành: kế hoạch, hiện trạng đọc mã, kiến trúc, bản mẫu dashboard -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — trạng thái sau W1–W4 (có mã, có bằng chứng chạy thật). -->
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 
-> **Trạng thái:** 🟡 W0–W4 (P0/P1) **có mã + bằng chứng** 2026-11-01 ([evidence](evidence/W1-W4-2026-11-01.md)) · còn: mốc đo máy chủ thật (S018-4) · **W5 OpenTelemetry từ lõi: đã chốt thiết kế ([ADR-0010](../../adr/ADR-0010-opentelemetry-tu-loi.md), Q018-2 ✅), đang code** · W6–W7 chờ Q018-5 / Q018-6
-> **Giai đoạn:** mở rộng của việc lộ trình 2.13 (đã xong ở bộ giám sát nền) · **Code:** có (nhánh `feat/phase-018-giam-sat`) · **Mức Kernel:** K0 (không đổi hành vi ghi sổ) · **Tiến độ tín hiệu (2026-11-01):** —
+> **Trạng thái:** 🟡 W0–W4 (P0/P1) **có mã + bằng chứng** 2026-11-01 ([evidence](evidence/W1-W4-2026-11-01.md)) · còn: mốc đo máy chủ thật (S018-4) · **W5 OpenTelemetry từ lõi ([ADR-0010](../../adr/ADR-0010-opentelemetry-tu-loi.md)): có mã + bằng chứng** 2026-11-01 ([evidence W5](evidence/W5-2026-11-01.md)) · W6–W7 chờ Q018-5 / Q018-6
+> **Giai đoạn:** mở rộng của việc lộ trình 2.13 (đã xong ở bộ giám sát nền) · **Code:** có (W1–W4 đã gộp `main`; W5 nhánh `feat/phase-018-w5-otel`) · **Mức Kernel:** K0 cho W1–W4; **K1 một lần** cho W5 (bọc cổng `kernel/public.ts` để quan sát — không đổi hành vi ghi sổ) · **Tiến độ tín hiệu (2026-11-01):** —
 > **Mục tiêu:** Dev/Ops và người quản trị trả lời được bốn câu: (1) dịch vụ có khoẻ không, (2) luồng sự việc → định khoản → sổ có trễ / lỗi không, (3) sổ có toàn vẹn, đối soát được không, (4) sự cố nằm ở đơn vị, dịch vụ, việc nền nào — **mà không** biến giám sát thành nguồn sự thật kế toán.
 > **Việc lộ trình:** —
 > **Checklist công bố:** —

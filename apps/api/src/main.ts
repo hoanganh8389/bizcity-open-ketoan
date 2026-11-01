@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
  * Điểm khởi động API. Cấu trúc DB do job db-migrate lo (AUTO_MIGRATE=0, Docker): ở đây chỉ kiểm còn migration chưa áp
  * thì dừng, báo rõ. Chạy dev (AUTO_MIGRATE=1, mặc định): tự áp như cũ.
@@ -11,8 +12,12 @@ import { env } from './config/env.js';
 import { closeDb } from './db/client.js';
 import { pendingMigrations, runMigrations } from './db/migrate.js';
 import { startEventRuntime } from './core/events.js';
+import { initTracing, shutdownTracing } from './core/tracing.js';
 
 async function start(): Promise<void> {
+  // Truy vết (ADR-0010) bật trước mọi việc: span lấy tracer qua proxy nên module đã nạp trước vẫn ghi đúng. Không đặt
+  // OTEL_EXPORTER_OTLP_ENDPOINT thì không gửi đi đâu; OTEL_SDK_DISABLED=true thì tắt hẳn.
+  initTracing();
   if (env.AUTO_MIGRATE === '1') {
     await runMigrations((m) => console.log(m));
   } else {
@@ -27,6 +32,7 @@ async function start(): Promise<void> {
     app.log.info(`Nhận ${signal}, đang dừng…`);
     await stopEvents();
     await app.close();
+    await shutdownTracing();
     await closeDb();
     process.exit(0);
   };

@@ -40,6 +40,15 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   /** GET /metrics (Prometheus, docs/ops/OBSERVABILITY.md §3): đặt thì phải gửi Authorization: Bearer <token>. Trống = mở trong mạng nội bộ (nginx không chuyển /metrics ra ngoài). */
   METRICS_TOKEN: z.string().default(''),
+  // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+  /**
+   * Trace OpenTelemetry (ADR-0010, core/tracing.ts). Trống = vẫn sinh traceId cho log / phản hồi lỗi / bằng chứng, KHÔNG gửi đi đâu.
+   * Đặt (vd http://otel-collector:4318) = gửi OTLP/HTTP tới Collector (đường /v1/traces tự thêm). Tên biến theo chuẩn OpenTelemetry.
+   */
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().default(''),
+  /** 'true' = tắt hẳn SDK (API no-op): không traceId, không span. */
+  OTEL_SDK_DISABLED: z.enum(['true', 'false', '']).default(''),
+  OTEL_SERVICE_NAME: z.string().default('bizcity-core-api'),
   /**
    * Đăng nhập bằng tài khoản hệ thống quản trị (WordPress multisite): khoá chung ký vé đăng nhập (giống hệt bên hệ thống
    * quản trị). Trống = tắt. WP_SSO_TENANT: mã đơn vị nhận người dùng (trống + chỉ có một đơn vị thì dùng đơn vị đó).

@@ -86,6 +86,11 @@ services:
       ENV_LABEL: ${ENV_LABEL:-}
       # GET /metrics (docs/ops/OBSERVABILITY.md): đặt thì Prometheus phải gửi Bearer token (infrastructure/monitoring/).
       METRICS_TOKEN: ${METRICS_TOKEN:-}
+      # [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+      # Truy vết (ADR-0010): trống = có traceId trong log / lỗi / bằng chứng, không gửi trace. Bật bộ giám sát thì tệp ghép
+      # infrastructure/monitoring/docker-compose.monitoring.yml đặt endpoint = otel-collector. OTEL_SDK_DISABLED=true tắt hẳn.
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-}
       # Đăng nhập bằng tài khoản hệ thống quản trị: khoá chung (giống bên hệ thống quản trị) + mã đơn vị
       WP_SSO_SECRET: ${WP_SSO_SECRET:-}
       WP_SSO_TENANT: ${WP_SSO_TENANT:-}

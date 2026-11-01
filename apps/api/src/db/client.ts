@@ -4,6 +4,7 @@
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 // [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — readWithTimeout: giao dịch chỉ đọc có statement_timeout cho bộ thu số đo (trần thời gian ở CSDL, không hẹn giờ — SC-EVT-1)
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
  * Kết nối PostgreSQL dùng chung cho toàn ứng dụng.
  *
@@ -17,6 +18,7 @@ import { env } from '../config/env.js';
 import type { Database } from './types.js';
 import { observeDbQuery } from '../core/metrics.js';
 import { currentRequest } from '../core/request-context.js';
+import { traceDbQuery } from '../core/tracing.js';
 
 // numeric (1700) và int8 (20): giữ dạng chuỗi để không mất chính xác; date (1082): giữ chuỗi YYYY-MM-DD.
 pg.types.setTypeParser(1082, (v) => v);
@@ -57,7 +59,11 @@ const tenantPool = {
 export const db = new Kysely<Database>({
   dialect: new PostgresDialect({ pool: tenantPool }),
   // Số đo thời gian / lỗi truy vấn cho Prometheus (bizcity_db_query_duration_seconds) — chỉ loại câu, không nội dung SQL.
-  log: (e) => observeDbQuery(e.query.sql, e.queryDurationMillis, e.level === 'error'),
+  // Span CSDL (S5, ADR-0010): loại câu + bảng, chỉ khi đang có span cha; không câu SQL, không tham số.
+  log: (e) => {
+    observeDbQuery(e.query.sql, e.queryDurationMillis, e.level === 'error');
+    traceDbQuery(e.query.sql, e.queryDurationMillis, e.level === 'error');
+  },
 });
 
 export type Db = Kysely<Database> | Transaction<Database>;

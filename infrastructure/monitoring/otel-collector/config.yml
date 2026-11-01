@@ -1,0 +1,62 @@
+# [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+# =============================================================================
+# OpenTelemetry Collector (ADR-0010 §5): nhận OTLP/HTTP từ API, LẤY MẪU ĐUÔI, gửi Tempo.
+#
+#   - Ứng dụng gửi mọi trace (đã lọc thuộc tính theo danh sách cho phép trong core/tracing.ts) vào mạng nội bộ.
+#   - tail_sampling chờ đủ trace rồi mới quyết: giữ MỌI trace có span lỗi hoặc dài hơn 1 giây, cộng TRACE_SAMPLE_PERCENT%
+#     (mặc định 10) số còn lại. Chỉnh tỉ lệ sau khi đo tải (PHASE-018 W6).
+#   - Lớp phòng thủ thứ hai: xoá các thuộc tính hay chứa dữ liệu nếu thư viện nào đó lọt qua (url.full, url.query, db.statement…).
+#   - memory_limiter: Collector không ăn quá bộ nhớ khi Tempo chậm — bỏ dữ liệu, không làm chậm API.
+# =============================================================================
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 300
+    spike_limit_mib: 64
+  attributes/an-toan:
+    actions:
+      - { key: url.full, action: delete }
+      - { key: url.query, action: delete }
+      - { key: http.url, action: delete }
+      - { key: db.statement, action: delete }
+      - { key: db.query.text, action: delete }
+      - { key: exception.message, action: delete }
+      - { key: exception.stacktrace, action: delete }
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 20000
+    policies:
+      - name: giu-trace-loi
+        type: status_code
+        status_code: { status_codes: [ERROR] }
+      - name: giu-trace-cham
+        type: latency
+        latency: { threshold_ms: 1000 }
+      - name: mau-con-lai
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: ${env:TRACE_SAMPLE_PERCENT}
+  batch:
+    timeout: 5s
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  telemetry:
+    logs:
+      level: warn
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/an-toan, tail_sampling, batch]
+      exporters: [otlp/tempo]
