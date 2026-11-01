@@ -1,0 +1,431 @@
+<!doctype html>
+<!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — Bàn điều tra cho nhà phát triển: sổ tay điều tra lỗi theo tình huống + thiết kế UI/UX dev trên Prometheus, Loki, Tempo, Grafana, Alertmanager -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bàn điều tra</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
+  --accent:#0b5cad;--banner:#fff4d6;--banner-ink:#6b4a00;--rej-bg:#fff3e0;--err-bg:#fdecea;--ok-bg:#e8f5ee;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--banner:#3a2f12;--banner-ink:#f3d58b;--rej-bg:#33260f;--err-bg:#3a1717;--ok-bg:#12301f;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--banner:#3a2f12;--banner-ink:#f3d58b;--rej-bg:#33260f;--err-bg:#3a1717;--ok-bg:#12301f;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button,.btn{background:transparent;color:var(--ink);border:0;padding:6px 11px;font:inherit;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--soft);font-weight:600}
+.btn{border:1px solid var(--line);border-radius:8px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12px}
+.banner{padding:7px 16px;font-size:12.5px;background:var(--soft);color:var(--muted)}
+.banner.ops{background:var(--banner);color:var(--banner-ink)}
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:calc(100vh - 90px)}
+aside{min-width:0;background:var(--panel);border-right:1px solid var(--line);padding:10px 8px}
+aside h4{margin:10px 8px 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+aside a{display:flex;gap:8px;align-items:baseline;padding:7px 10px;border-radius:7px;color:var(--ink);text-decoration:none;font-size:13.5px}
+aside a small{color:var(--muted);font:11px ui-monospace,Consolas,monospace;margin-left:auto}
+aside a[aria-current="page"]{background:var(--soft);font-weight:600}
+aside a.locked{color:var(--none)}
+main{padding:16px;max-width:1280px;width:100%;min-width:0}
+h2{margin:0 0 4px;font-size:18px}
+.lead{color:var(--muted);margin:0 0 14px}
+.answer{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.answer.rej{border-left-color:var(--warn)}.answer.err{border-left-color:var(--bad)}
+.answer b{font-weight:650}
+.answer ul{margin:6px 0 0;padding-left:18px}
+.answer li{margin:3px 0}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));margin-bottom:12px}
+.cols{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0;overflow-x:auto}
+.card h3{margin:0 0 6px;font-size:13.5px;font-weight:600}
+.kpi .v{font-size:26px;font-weight:700;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;color:var(--muted)}
+.kpi a{font-size:12px;color:var(--accent)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.none{color:var(--none)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg)}.tag.rej{background:var(--rej-bg);color:var(--warn)}.tag.err{background:var(--err-bg);color:var(--bad)}
+.tag.k{border:1px solid var(--k);color:var(--k)}
+.src{font:11.5px ui-monospace,Consolas,monospace;color:var(--muted);word-break:break-word;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.search{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.search input,.search select{flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:13px ui-monospace,Consolas,monospace}
+.search select{flex:0 0 auto;min-width:0;font-family:inherit}
+.wf{font-size:12.5px}
+.wf .row{display:grid;grid-template-columns:minmax(0,46%) 1fr 56px;gap:8px;align-items:center;padding:4px 6px;border-radius:6px;cursor:pointer}
+.wf .row:hover,.wf .row[aria-selected="true"]{background:var(--soft)}
+.wf .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf .bar{position:relative;height:14px;background:transparent}
+.wf .bar i{position:absolute;top:2px;height:10px;border-radius:3px;background:var(--info)}
+.wf .bar i.rej{background:var(--warn)}.wf .bar i.err{background:var(--bad)}.wf .bar i.k{background:var(--k)}.wf .bar i.db{background:var(--none)}
+.wf .dur{text-align:right;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;font-size:12.5px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font:12px ui-monospace,Consolas,monospace;word-break:break-all}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:10px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:7px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.nodata{display:grid;place-items:center;min-height:90px;border:1px dashed var(--line);border-radius:8px;color:var(--none);text-align:center;font-size:13px;padding:10px}
+.toast{max-width:520px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.toast .code{margin-top:8px;padding:6px 8px;background:var(--soft);border-radius:6px;font:12px ui-monospace,Consolas,monospace;color:var(--muted);word-break:break-all}
+.toast .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.th{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.th .card h3 small{color:var(--muted);font-weight:500;margin-right:6px;font-family:ui-monospace,Consolas,monospace}
+.th .card p{margin:4px 0 8px;color:var(--muted);font-size:13px}
+.bars{display:grid;gap:6px}
+.bars div{display:grid;grid-template-columns:150px 1fr 40px;gap:8px;align-items:center;font-size:12.5px}
+.bars b{display:block;height:10px;border-radius:3px;background:var(--bad)}
+.bars b.rej{background:var(--warn)}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+section[hidden]{display:none}
+@media (max-width:760px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  aside{border-right:0;border-bottom:1px solid var(--line);display:flex;overflow-x:auto;padding:6px}
+  aside h4{display:none}
+  aside a{white-space:nowrap}
+  aside a small{display:none}
+  .wf .row{grid-template-columns:minmax(0,1fr) 52px}
+  .wf .bar{grid-column:1 / -1;grid-row:2}
+  .bars div{grid-template-columns:110px 1fr 32px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">BC</div><div>Nhà phát triển — Bàn điều tra<small>Bản mẫu tĩnh PHASE-019 · số liệu giả lập</small></div></div>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="Chế độ">
+      <button type="button" data-mode="unit" aria-pressed="true">Đơn vị</button>
+      <button type="button" data-mode="ops" aria-pressed="false">Vận hành</button>
+    </div>
+    <button type="button" class="btn" id="theme" aria-label="Đổi giao diện sáng / tối">◐</button>
+  </div>
+  <div class="banner" id="banner">Đơn vị: <b>Công ty TNHH Demo (mã nội bộ 12)</b> · chỉ thấy dữ liệu của đơn vị này · nguồn: Tempo ✓ · Loki ✓ · CSDL ✓</div>
+</header>
+<div class="shell">
+  <aside aria-label="Menu Nhà phát triển">
+    <h4>Điều tra</h4>
+    <a href="#tong-quan">Tổng quan<small>DV01</small></a>
+    <a href="#tra-ma">Tra mã<small>DV02</small></a>
+    <a href="#nhat-ky">Nhật ký<small>DV03</small></a>
+    <a href="#loi-module">Lỗi theo module<small>DV04</small></a>
+    <h4>Đường dữ liệu</h4>
+    <a href="#ghi-so">Ghi sổ<small>DV05</small></a>
+    <a href="#su-kien">Sự kiện<small>DV06</small></a>
+    <a href="#toan-ven">Toàn vẹn<small>DV07</small></a>
+    <h4>Trợ giúp</h4>
+    <a href="#kich-ban">Kịch bản<small>DV08</small></a>
+    <a href="#thong-bao">Thông báo lỗi (W1)<small>—</small></a>
+    <a href="#van-hanh" id="nav-ops" class="locked">Vận hành<small>DV09</small></a>
+  </aside>
+  <main>
+
+<!-- DV01 Tổng quan -->
+<section id="tong-quan">
+  <h2>Tổng quan</h2>
+  <p class="lead">Đơn vị mình 1 giờ qua · cập nhật 19:42:10 (30 giây trước)</p>
+  <div class="answer err"><b>Cần xem:</b> 3 lỗi kỹ thuật trong 1 giờ qua, <b>đều ở module <code>vat</code></b> (bước <code>vat.tinh-thue</code>). Kernel không bị gọi trong các lần lỗi — sổ không đổi. <a href="#tra-ma">Mở trace mới nhất →</a></div>
+  <div class="grid kpis">
+    <div class="card kpi"><h3>Lỗi kỹ thuật</h3><div class="v bad">3</div><div class="d">1 giờ · <span class="tag err">lỗi kỹ thuật</span></div><a href="#loi-module">theo module →</a></div>
+    <div class="card kpi"><h3>Từ chối đúng luật</h3><div class="v warn">7</div><div class="d"><code>PERIOD_LOCKED</code> 5 · <code>CONFLICT</code> 2</div><a href="#ghi-so">ghi sổ →</a></div>
+    <div class="card kpi"><h3>Yêu cầu chậm &gt; 1 s</h3><div class="v">1</div><div class="d">p95 đơn vị 180 ms</div><a href="#nhat-ky">xem →</a></div>
+    <div class="card kpi"><h3>Chứng từ treo</h3><div class="v ok">0</div><div class="d">pending / error quá 1 giờ</div></div>
+    <div class="card kpi"><h3>Sự kiện chết</h3><div class="v warn">1</div><div class="d">nơi nhận <code>crm.khach-hang</code></div><a href="#su-kien">xem →</a></div>
+    <div class="card kpi"><h3>Tự chẩn đoán L3</h3><div class="v ok">ĐẠT</div><div class="d">02:00 hôm nay · 12 đạt · 2 cảnh báo</div><a href="#toan-ven">xem →</a></div>
+  </div>
+  <div class="card">
+    <h3>Gần đây</h3>
+    <table>
+      <thead><tr><th>Lúc</th><th>Yêu cầu</th><th>Kết quả</th><th>Module</th><th>Mã</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>19:41:02</td><td><code>POST /api/v1/phan-he/vat/hoa-don</code></td><td><span class="tag err">lỗi kỹ thuật</span></td><td>vat</td><td><code>INTERNAL_ERROR</code></td><td><a href="#tra-ma">mở</a></td></tr>
+        <tr><td>19:37:44</td><td><code>POST /api/v1/payment-requests/:id/pay</code></td><td><span class="tag rej">từ chối đúng luật</span></td><td>quy</td><td><code>CONFLICT</code></td><td><a href="#tra-ma">mở</a></td></tr>
+        <tr><td>19:30:12</td><td><code>POST /api/v1/documents</code></td><td><span class="tag rej">từ chối đúng luật</span></td><td>ke-toan</td><td><code>PERIOD_LOCKED</code></td><td><a href="#tra-ma">mở</a></td></tr>
+      </tbody>
+    </table>
+    <div class="src">nguồn: core.devtools.summary — CSDL (posting_log, event_deliveries, diagnostic_runs) + Tempo/Loki có bộ lọc đơn vị</div>
+  </div>
+</section>
+
+<!-- DV02 Tra mã -->
+<section id="tra-ma" hidden>
+  <h2>Tra mã</h2>
+  <p class="lead">Dán <code>traceId</code> (32 ký tự) hoặc <code>requestId</code> (<code>req-…</code>) từ thông báo lỗi. Phím tắt: <code>/</code></p>
+  <div class="search"><input value="7f3a91c2e04b4d0e9a1c55d2b8e6f013" aria-label="Mã tra cứu"><button type="button" class="btn pri">Tra</button></div>
+  <div class="answer err">
+    <b>Chuyện gì đã xảy ra</b>
+    <ul>
+      <li><code>POST /api/v1/phan-he/vat/hoa-don</code> → <b>500</b>, <span class="tag err">lỗi kỹ thuật</span> · 19:41:02 (1 phút trước) · 412 ms</li>
+      <li>Dừng ở <b>bước <code>vat.tinh-thue</code></b> của action <code>vat.hoa-don.lap</code> (module <code>vat</code>) · <code>exception.type = TypeError</code></li>
+      <li><span class="tag k">Kernel</span> <b>không được gọi — sổ không đổi.</b></li>
+      <li>Chậm nhất: <code>db select tax_codes</code> 3 lần liền nhau (nghi N+1) — 96 ms</li>
+      <li>Giống <a href="#kich-ban"><b>TH-11</b> — Module cộng đồng mới gây lỗi</a></li>
+    </ul>
+  </div>
+  <div class="grid cols">
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">Cây span (9)</button><button role="tab" aria-selected="false">Log cùng trace (4)</button><button role="tab" aria-selected="false">Bằng chứng (0)</button>
+      </div>
+      <div class="wf" id="wf"></div>
+      <div class="src">nguồn: core.devtools.trace → Tempo /api/traces/{id}; đã kiểm mọi span <code>bizcity.tenant = 12</code>; thuộc tính lọc theo TRACE_ATTRIBUTES</div>
+    </div>
+    <div class="card">
+      <h3 id="sp-name">step vat.tinh-thue</h3>
+      <dl class="kv" id="sp-kv"></dl>
+      <p class="note">Chế độ Đơn vị không hiện <code>err.message</code> / <code>err.stack</code> (D019-7). Cần thì gửi mã cho vận hành.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button type="button" class="btn sm">Chép traceId</button><button type="button" class="btn sm">Log của span</button><button type="button" class="btn sm" id="gf" hidden>Mở trong Grafana ↗</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DV03 Nhật ký -->
+<section id="nhat-ky" hidden>
+  <h2>Nhật ký</h2>
+  <p class="lead">Log của đơn vị mình · tối đa 24 giờ, 200 dòng mỗi lần</p>
+  <div class="search">
+    <select aria-label="Khoảng"><option>1 giờ</option><option>6 giờ</option><option>24 giờ</option></select>
+    <select aria-label="Mức"><option>mọi mức</option><option>error</option><option>warn</option></select>
+    <input placeholder="mã lỗi, evt, route… vd PERIOD_LOCKED" aria-label="Lọc">
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Lúc</th><th>Mức</th><th>Sự việc / route</th><th>Mã</th><th class="n">ms</th><th>Trace</th></tr></thead>
+      <tbody>
+        <tr><td>19:41:02</td><td class="bad">error</td><td><code>POST /api/v1/phan-he/vat/hoa-don</code> · 500</td><td><code>INTERNAL_ERROR</code></td><td class="n">412</td><td><a href="#tra-ma"><code>7f3a91c2…</code></a></td></tr>
+        <tr><td>19:37:44</td><td class="warn">warn</td><td><code>POST /api/v1/payment-requests/:id/pay</code> · 409</td><td><code>CONFLICT</code></td><td class="n">2</td><td><a href="#tra-ma"><code>0904127d…</code></a></td></tr>
+        <tr><td>19:35:20</td><td>info</td><td><code>bizcity.ledger.posted</code> · <code>sale</code> · BT26-0001234</td><td></td><td class="n">41</td><td><a href="#tra-ma"><code>a11c03e9…</code></a></td></tr>
+        <tr><td>19:30:12</td><td class="warn">warn</td><td><code>bizcity.event.rejected</code> · <code>sale</code></td><td><code>PERIOD_LOCKED</code></td><td class="n">18</td><td><a href="#tra-ma"><code>5be20d77…</code></a></td></tr>
+      </tbody>
+    </table>
+    <div class="src">nguồn: core.devtools.logs → Loki <code>{service="api"} | json | tenant="12"</code> (máy chủ gắn) · trường theo danh sách cho phép</div>
+  </div>
+</section>
+
+<!-- DV04 Lỗi theo module -->
+<section id="loi-module" hidden>
+  <h2>Lỗi theo module</h2>
+  <p class="lead">Trace có kết quả khác <code>ok</code> của đơn vị, gom theo module → action → bước · 24 giờ</p>
+  <div class="answer err">Module <code>vat</code> chiếm <b>3/3 lỗi kỹ thuật</b>, cùng một bước <code>vat.tinh-thue</code>. Từ chối đúng luật phân bố bình thường.</div>
+  <div class="grid cols">
+    <div class="card"><h3>Lỗi kỹ thuật</h3><div class="bars">
+      <div><code>vat · tinh-thue</code><b style="width:100%"></b><span>3</span></div>
+    </div></div>
+    <div class="card"><h3>Từ chối đúng luật</h3><div class="bars">
+      <div><code>ke-toan · documents</code><b class="rej" style="width:100%"></b><span>5</span></div>
+      <div><code>quy · pay</code><b class="rej" style="width:40%"></b><span>2</span></div>
+    </div></div>
+  </div>
+  <p class="note">Module chưa chia bước bằng <code>ctx.trace.step</code> thì chỉ gom tới action. Gợi ý cho người viết module: Sổ tay TH-11.</p>
+</section>
+
+<!-- DV05 Ghi sổ -->
+<section id="ghi-so" hidden>
+  <h2>Ghi sổ</h2>
+  <p class="lead">Nhật ký định khoản (ACC14) của đơn vị · dùng lại <code>/api/v1/posting-log</code></p>
+  <div class="answer rej">7 lần từ chối đúng luật trong 24 giờ — <b>không phải sự cố</b>. 5 lần <code>PERIOD_LOCKED</code> từ cùng nguồn <code>connector:btsoft</code> → nguồn đang gửi chứng từ tháng 9 (đã khoá). Xem <a href="#kich-ban">TH-04</a>.</div>
+  <div class="card"><table>
+    <thead><tr><th>Lúc</th><th>Chứng từ</th><th>Hành động</th><th>Mã</th><th>Thiếu / lý do</th></tr></thead>
+    <tbody>
+      <tr><td>19:30:12</td><td><code>btsoft:95:sale:3058</code></td><td>error</td><td><code>PERIOD_LOCKED</code></td><td>kỳ 2026-09 đã khoá</td></tr>
+      <tr><td>18:02:40</td><td><code>btsoft:95:sale:3041</code></td><td>error</td><td><code>PERIOD_LOCKED</code></td><td>kỳ 2026-09 đã khoá</td></tr>
+    </tbody>
+  </table><div class="src">Định khoản lại / sửa cấu hình: ở màn Chứng từ (đã có quyền + bằng chứng) — Bàn điều tra không có nút ghi</div></div>
+</section>
+
+<!-- DV06 Sự kiện -->
+<section id="su-kien" hidden>
+  <h2>Sự kiện</h2>
+  <p class="lead">Việc giao sự kiện theo nơi nhận · dùng lại <code>/api/v1/system/events</code></p>
+  <div class="card"><table>
+    <thead><tr><th>Nơi nhận</th><th class="n">Chờ</th><th class="n">Xong</th><th class="n">Chết</th><th>Chờ lâu nhất</th><th></th></tr></thead>
+    <tbody>
+      <tr><td><code>crm.khach-hang</code></td><td class="n">0</td><td class="n">1 204</td><td class="n bad">1</td><td>—</td><td><a href="#tra-ma">trace giao lỗi</a></td></tr>
+      <tr><td><code>vat.bang-ke</code></td><td class="n">2</td><td class="n">980</td><td class="n">0</td><td>12 giây</td><td></td></tr>
+    </tbody>
+  </table><div class="src">Phát lại: màn Hệ thống → Sự kiện (quyền <code>settings:write</code>, ghi bằng chứng) — Sổ tay TH-06</div></div>
+</section>
+
+<!-- DV07 Toàn vẹn -->
+<section id="toan-ven" hidden>
+  <h2>Toàn vẹn</h2>
+  <p class="lead">Tự chẩn đoán L1 / L3 của đơn vị · dùng lại <code>/api/v1/system/diagnostics</code></p>
+  <div class="answer">Lượt L3 gần nhất <b>02:00 hôm nay</b>: 12 đạt, 2 cảnh báo, <b class="ok">0 lỗi</b>. Sổ toàn vẹn.</div>
+  <div class="card"><table>
+    <thead><tr><th>Mã kiểm</th><th>Kết quả</th><th class="n">Số</th><th>Mẫu</th></tr></thead>
+    <tbody>
+      <tr><td><code>LEDGER_BALANCED</code></td><td class="ok">đạt</td><td class="n">0</td><td></td></tr>
+      <tr><td><code>EVENT_DEAD</code></td><td class="warn">cảnh báo</td><td class="n">1</td><td><code>crm.khach-hang</code></td></tr>
+      <tr><td><code>TAX_INPUT_NO_INVOICE</code></td><td class="warn">cảnh báo</td><td class="n">3</td><td><code>btsoft:95:purchase:812</code> …</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- DV08 Kịch bản -->
+<section id="kich-ban" hidden>
+  <h2>Kịch bản</h2>
+  <p class="lead">Từ Sổ tay điều tra lỗi (<code>docs/ops/SO-TAY-DIEU-TRA-LOI.md</code>) · mỗi kịch bản mở đúng màn với bộ lọc điền sẵn</p>
+  <div class="th" id="th"></div>
+</section>
+
+<!-- Thông báo lỗi W1 -->
+<section id="thong-bao" hidden>
+  <h2>Thông báo lỗi có Mã tra cứu (W1)</h2>
+  <p class="lead">Áp cho <b>mọi màn</b> của app, không riêng Bàn điều tra. Người dùng gửi mã, không gửi ảnh dữ liệu.</p>
+  <div class="toast" role="alert">
+    <b>Không chi được: yêu cầu thanh toán này đã chi.</b>
+    <div class="code">Mã tra cứu: req-3acc9667-41ae · 0904127dd2944f22c086c236c5ceb5af</div>
+    <div class="acts"><button type="button" class="btn sm">Chép mã</button><button type="button" class="btn sm">Báo lỗi</button><a class="btn sm" href="#tra-ma">Mở trong Bàn điều tra</a></div>
+  </div>
+  <p class="note">Nút "Mở trong Bàn điều tra" chỉ hiện với người có <code>devtools:read</code>. "Báo lỗi" chép: phiên bản, màn, thời điểm, hai mã, mã lỗi — không thân yêu cầu.</p>
+</section>
+
+<!-- DV09 Vận hành -->
+<section id="van-hanh" hidden>
+  <h2>Vận hành</h2>
+  <div id="ops-off" class="nodata">Chế độ Vận hành chưa bật cho phiên này.<br>Cần <code>DEVTOOLS_OPS=true</code> + chủ đơn vị + bản cài một đơn vị (Q019-2). Bấm "Vận hành" ở góc trên để xem bản mẫu.</div>
+  <div id="ops-on" hidden>
+    <p class="lead">Toàn hệ thống · Prometheus + Alertmanager · PromQL cố định (không nhận truy vấn)</p>
+    <div class="grid kpis">
+      <div class="card kpi"><h3>API</h3><div class="v ok">UP</div><div class="d"><code>up{job="api"}</code></div></div>
+      <div class="card kpi"><h3>Tỉ lệ 5xx</h3><div class="v">0,4%</div><div class="d">ngưỡng cảnh báo 5%</div></div>
+      <div class="card kpi"><h3>p95</h3><div class="v">210 ms</div><div class="d">ngưỡng 1 s</div></div>
+      <div class="card kpi"><h3>Pool CSDL</h3><div class="v">35%</div><div class="d">0 đang chờ</div></div>
+      <div class="card kpi"><h3>Outbox</h3><div class="v warn">1 chết</div><div class="d">chờ lâu nhất 12 giây</div></div>
+      <div class="card kpi"><h3>Đối soát L3</h3><div class="v ok">17 giờ</div><div class="d">cảnh báo khi &gt; 26 giờ</div></div>
+    </div>
+    <div class="grid cols">
+      <div class="card"><h3>Cảnh báo đang bắn</h3><table>
+        <thead><tr><th>Cảnh báo</th><th>Mức</th><th>Từ</th><th></th></tr></thead>
+        <tbody><tr><td><code>OutboxDeadLetter</code></td><td class="warn">warning</td><td>18:55</td><td><a href="#kich-ban">runbook / TH-06</a></td></tr></tbody>
+      </table></div>
+      <div class="card"><h3>Mở trong Grafana ↗</h3><table><tbody>
+        <tr><td>01 — Tổng quan</td><td><code>/d/bizcity-tong-quan</code></td></tr>
+        <tr><td>02 — API theo route</td><td><code>/d/bizcity-api</code></td></tr>
+        <tr><td>07 — Đường sự kiện</td><td><code>/d/bizcity-su-kien</code></td></tr>
+        <tr><td>09 — Toàn vẹn sổ</td><td><code>/d/bizcity-toan-ven</code></td></tr>
+        <tr><td>Explore → Tempo</td><td><code>/explore</code> nguồn <code>tempo</code></td></tr>
+      </tbody></table><div class="src">link dựng từ DEVTOOLS_GRAFANA_URL; mở tab mới; Grafana tự đăng nhập — không nhúng iframe</div></div>
+    </div>
+  </div>
+</section>
+
+  </main>
+</div>
+<script>
+(function(){
+  // Cây span giả lập của trace lỗi module vat (TH-11)
+  var spans=[
+    {d:0,n:'HTTP POST /api/v1/phan-he/vat/hoa-don',s:0,t:412,c:'err',a:{'http.route':'/api/v1/phan-he/vat/hoa-don','http.response.status_code':500,'bizcity.tenant':'12','bizcity.outcome':'error','bizcity.error.code':'INTERNAL_ERROR'}},
+    {d:1,n:'action vat.hoa-don.lap',s:4,t:404,c:'err',a:{'bizcity.action.id':'vat.hoa-don.lap','bizcity.module':'vat','bizcity.action.effect':'write','bizcity.outcome':'error'}},
+    {d:2,n:'db select partners',s:8,t:9,c:'db',a:{'db.operation.name':'select','db.collection.name':'partners'}},
+    {d:2,n:'step vat.doc-hoa-don',s:20,t:180,c:'',a:{'bizcity.step':'doc-hoa-don','bizcity.module':'vat','bizcity.outcome':'ok'}},
+    {d:3,n:'POST (client)',s:24,t:170,c:'',a:{'server.address':'ai.bizcity.vn','http.response.status_code':200}},
+    {d:2,n:'step vat.tinh-thue',s:205,t:200,c:'err',a:{'bizcity.step':'tinh-thue','bizcity.module':'vat','bizcity.outcome':'error','bizcity.error.code':'INTERNAL_ERROR','exception.type':'TypeError'}},
+    {d:3,n:'db select tax_codes',s:210,t:31,c:'db',a:{'db.operation.name':'select','db.collection.name':'tax_codes'}},
+    {d:3,n:'db select tax_codes',s:243,t:33,c:'db',a:{'db.operation.name':'select','db.collection.name':'tax_codes'}},
+    {d:3,n:'db select tax_codes',s:278,t:32,c:'db',a:{'db.operation.name':'select','db.collection.name':'tax_codes'}}
+  ];
+  var total=412,wf=document.getElementById('wf'),kv=document.getElementById('sp-kv'),nm=document.getElementById('sp-name');
+  function show(i){
+    var sp=spans[i];nm.textContent=sp.n;kv.innerHTML='';
+    var rows=[['bắt đầu','+'+sp.s+' ms'],['thời gian',sp.t+' ms']];
+    for(var k in sp.a)rows.push([k,String(sp.a[k])]);
+    rows.forEach(function(r){var dt=document.createElement('dt');dt.textContent=r[0];var dd=document.createElement('dd');dd.textContent=r[1];kv.appendChild(dt);kv.appendChild(dd)});
+    Array.prototype.forEach.call(wf.children,function(el,j){el.setAttribute('aria-selected',j===i?'true':'false')});
+  }
+  spans.forEach(function(sp,i){
+    var row=document.createElement('div');row.className='row';row.tabIndex=0;
+    var n=document.createElement('div');n.className='nm';n.style.paddingLeft=(sp.d*14)+'px';n.textContent=sp.n;
+    var bar=document.createElement('div');bar.className='bar';
+    var b=document.createElement('i');b.className=sp.c;b.style.left=(sp.s/total*100)+'%';b.style.width=Math.max(.8,sp.t/total*100)+'%';
+    var lab=document.createElement('div');lab.className='dur';lab.textContent=sp.t+' ms';
+    bar.appendChild(b);row.appendChild(n);row.appendChild(bar);row.appendChild(lab);
+    row.addEventListener('click',function(){show(i)});row.addEventListener('keydown',function(e){if(e.key==='Enter')show(i)});
+    wf.appendChild(row);
+  });
+  show(5);
+
+  // Kịch bản (rút từ Sổ tay)
+  var th=[
+    ['TH-01','Người dùng báo lỗi, có mã','Dán requestId / traceId → chỗ hỏng, Kernel có bị gọi không','Tra mã'],
+    ['TH-02','Lỗi 5xx tăng','Route nào, từ khi nào, trace mẫu','Lỗi theo module'],
+    ['TH-03','Chậm','Span tự thân dài nhất; N+1; chỉ mục','Nhật ký (ms > 1000)'],
+    ['TH-04','Ghi sổ bị từ chối','PERIOD_LOCKED · UNBALANCED_ENTRY · POSTING_FAILED — hệ thống làm đúng','Ghi sổ'],
+    ['TH-05','Chứng từ treo','Nhật ký định khoản, chỗ thiếu danh mục / cấu hình','Ghi sổ (pending)'],
+    ['TH-06','Sự kiện không tới nơi nhận','Nơi nhận nào, trace giao, link về yêu cầu gốc','Sự kiện'],
+    ['TH-07','Gửi lặp','replayed là đúng; conflict là khoá dùng lại','Nhật ký (IDEMPOTENCY_CONFLICT)'],
+    ['TH-08','Hết kết nối CSDL','Gọi ra ngoài trong giao dịch','Vận hành'],
+    ['TH-09','Gọi ra ngoài lỗi / chậm','Span client: server.address, mã trạng thái','Tra mã'],
+    ['TH-10','Sổ lỗi (sev1)','Báo Nhóm Lõi; KHÔNG tự đảo / mở khoá / tắt trigger','Toàn vẹn'],
+    ['TH-11','Module cộng đồng gây lỗi','Lỗi ở span của module hay Kernel; ctx.trace.step','Lỗi theo module'],
+    ['TH-12','AI / MCP gọi công cụ lỗi','Pha read · preview · confirm','Nhật ký (mcp)'],
+    ['TH-13','"No data" / số đo đứng yên','Bộ thu nào lỗi; không dữ liệu khác 0','Vận hành'],
+    ['TH-14','Không thấy trace / log','Lấy mẫu, chờ 20 giây, nguồn Tempo chưa nạp','Tổng quan (nguồn)']
+  ],box=document.getElementById('th');
+  th.forEach(function(t){
+    var c=document.createElement('div');c.className='card';
+    c.innerHTML='<h3><small></small><span></span></h3><p></p><button type="button" class="btn sm"></button>';
+    c.querySelector('small').textContent=t[0];c.querySelector('span').textContent=t[1];c.querySelector('p').textContent=t[2];c.querySelector('button').textContent='Mở: '+t[3]+' →';
+    box.appendChild(c);
+  });
+
+  // Điều hướng theo hash
+  var secs=document.querySelectorAll('main section'),links=document.querySelectorAll('aside a');
+  function route(){
+    var id=(location.hash||'#tong-quan').slice(1);if(!document.getElementById(id))id='tong-quan';
+    secs.forEach(function(s){s.hidden=s.id!==id});
+    links.forEach(function(a){if(a.getAttribute('href')==='#'+id)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  }
+  window.addEventListener('hashchange',function(){route();window.scrollTo(0,0)});route();window.scrollTo(0,0);
+
+  // Chế độ
+  var banner=document.getElementById('banner'),bannerUnit=banner.innerHTML;
+  document.querySelectorAll('[data-mode]').forEach(function(btn){btn.addEventListener('click',function(){
+    var ops=btn.dataset.mode==='ops';
+    document.querySelectorAll('[data-mode]').forEach(function(b){b.setAttribute('aria-pressed',b===btn?'true':'false')});
+    banner.className='banner'+(ops?' ops':'');
+    banner.innerHTML=ops?'<b>Chế độ Vận hành</b> — đang xem toàn hệ thống · có ngăn xếp lỗi và link Grafana · chỉ bản cài tự quản (Q019-2)':bannerUnit;
+    document.getElementById('ops-off').hidden=ops;document.getElementById('ops-on').hidden=!ops;
+    document.getElementById('nav-ops').classList.toggle('locked',!ops);document.getElementById('gf').hidden=!ops;
+  })});
+
+  // Sáng / tối
+  document.getElementById('theme').addEventListener('click',function(){
+    var r=document.documentElement,cur=r.getAttribute('data-theme');
+    var dark=cur?cur==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    r.setAttribute('data-theme',dark?'light':'dark');
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='/'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();location.hash='#tra-ma';setTimeout(function(){document.querySelector('#tra-ma input').focus()},0)}});
+})();
+</script>
+</body>
+</html>

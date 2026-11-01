@@ -43,6 +43,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [016 Tải lớn, adapter](PHASE-016-TAI-LON-ADAPTER/README.md) | 5 | 5.5, 5.9 | G2-06, G3-03, -05, -08, -09 | chưa | 0% | ☐ khi đo được nhu cầu |
 | [017 Beta hệ sinh thái](PHASE-017-BETA-HE-SINH-THAI/README.md) | 5 | 5.1, 5.2, 5.6, 5.7, 5.8 | G3-01 | chưa | 0% | ☐ |
 | [018 Giám sát vận hành, toàn vẹn sổ](PHASE-018-GIAM-SAT-VAN-HANH/README.md) | mở rộng 2.13 (PHASE-003) | — (chờ Q018-1) | — | nền có | — | 🟡 W0 thiết kế + bản mẫu 2026-10-31 |
+| [019 Bàn điều tra cho nhà phát triển](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/README.md) <!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — thêm dòng phase Bàn điều tra (Dev Console) + sổ tay điều tra lỗi. --> | mở rộng PHASE-018 | — (chờ Q019-4) | — | chưa | — | 🟡 W0 sổ tay + thiết kế + bản mẫu 2026-11-01 |
 
 Thứ tự và đường găng: [AUDIT §4](../audits/AUDIT-2026-10-30-KIEN-TRUC.md). Ba luật thứ tự của PHASES vẫn giữ:
 - 2.1 (PHASE-004) trước 2.3 (PHASE-010);
