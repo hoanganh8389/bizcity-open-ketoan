@@ -13,12 +13,13 @@
 | S020-4 | Catalog C01–C08 + 3 rulepack nháp (C01 8 ca, C02 5 ca, C08 6 ca) ánh xạ `verified_by` / `gap` | W0 / VNCONF-002 | P0 | có | ✅ 2026-11-01 — tất cả `draft` |
 | S020-5 | Check SC-VNC-1 (schema) + SC-VNC-2 (cổng phê duyệt fail-closed) + fixture `repo-bad/tests/conformance/vietnam/` + `expect.json` — ca T020-1 | W0 / VNCONF-002 | P0 | có | ✅ 2026-11-01 — `--self-test` ĐẠT (SC-VNC-1: 4, SC-VNC-2: 28 phát hiện mẫu) |
 | S020-6 | Luật R-VNC-1..9 + CANON §3; quy trình `docs/compliance/` (governance 8 bước, registry) | W0 / VNCONF-002 | P0 | — | ✅ 2026-11-01 |
-| S020-16 | Kiến trúc Conformance Engine (ba lớp, bốn thành phần, ba cổng, hiệu lực cấp điều khoản, ma trận BizCity, menu Hệ thống) + ADR-0012 đề xuất + registry TT152 / chuyển tiếp TT200 | W1 / — | P0 | — | ✅ 2026-11-02 — ⛔ chủ duyệt ADR-0012, D020-7..10 |
+| S020-16 | Kiến trúc Conformance Engine (ba lớp, bốn thành phần, ba cổng, hiệu lực cấp điều khoản, ma trận BizCity, menu Hệ thống) + ADR-0012 đề xuất + registry TT152 / chuyển tiếp TT200 | W1 / — | P0 | — | ✅ 2026-11-02 — chủ duyệt ADR-0012 + T1–T8, D020-7..10 cùng ngày |
 | S020-17 | `selfcheck.mjs --certify`: một lệnh ba cổng + tuân thủ VN (lib/certify.mjs, lib/runtime.mjs, profile.schema.json, profiles/) — ca T020-9 | W1a / VNCONF-003 | P0 | có | 🟡 2026-11-02 chạy được: module-good → COMPATIBLE, module-bad → FAIL, hồ sơ fy-offset chạy; SC-VNC-1 kiểm profile; ca tự kiểm T020-9 trong --self-test chưa viết |
-| S020-18 | Module Kernel `conformance` + `conformance_runs` + action run / status / report (lớp 1 + 2 trên bản cài) | W2 | P0 | chưa | ☐ ⛔ ADR-0012 |
-| S020-19 | Ca lớp 3 Doanh nghiệp (Q020-6) với oracle rõ | W3 | P0 | chưa | ☐ |
+| S020-18 | Module Kernel `conformance` + `conformance_runs` + action run / status / report (lớp 1 + 2 trên bản cài) | W2 | P0 | chưa | ☐ — kèm di chuyển dữ liệu sang `packages/vn-rulepacks/` (T7), tầng L5 dùng lại DiagCheck (T1) |
+| S020-19 | Ca lớp 3 Doanh nghiệp (Q020-6 chốt 4 ca) với oracle rõ | W3 | P0 | nháp | 🟡 2026-11-02 rulepack nháp `enterprise-period-vn` (C09, 4 ca) — chạy thật chờ W3 |
+| S020-22 | Đề xuất năng lực năm tài chính / chế độ kế toán của đơn vị (G1, Q020-2) — ADR riêng | W2 | P0 | — | ☐ |
 | S020-20 | Màn Hệ thống → Kiểm chuẩn (ma trận, Vì sao, Việc cần làm, xu hướng); MCP `conformance.status` | W4 | P1 | chưa | ☐ |
-| S020-21 | Posting Gate advisory (chỉ thông tin) ở màn lập / duyệt chứng từ và trước khoá kỳ | W5 | P1 | chưa | ☐ ⛔ D020-8 |
+| S020-21 | Posting Gate advisory (chỉ thông tin) ở màn lập / duyệt chứng từ và trước khoá kỳ | W5 | P1 | chưa | ☐ — kèm T3 (xác nhận là bằng chứng), T4 (ngoài giao dịch ghi sổ) |
 | S020-7 | Lane `runtime`: runner đọc rulepack / ca, chọn rulepack 4 bước (R-VNC-4), chạy ca `kind: runtime` qua cổng công khai trên PostgreSQL test (2 đơn vị A / B, đồng hồ cố định), ra `conformance-report.json` (+ `junit.xml`) — ca T020-2, T020-3 | W1 / VNCONF-003 | P0 | chưa | ☐ |
 | S020-8 | C01 golden: test C01.4 (cùng docKey hai đơn vị); chốt G4 (Q020-3); mọi ca C01 có bằng chứng — ca T020-4 | W1 / VNCONF-004 | P0 | chưa | ☐ |
 | S020-9 | C08: ca runtime cho vai trò module / RBAC; C08.4, C08.6 chờ ADR-0011 (G3) — ca T020-5 | W1 / VNCONF-005 | P0 | chưa | ☐ |
@@ -50,3 +51,4 @@
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | mở phase theo đặc tả OKT-SPEC-VNCONF-001; W0: S020-1..6. Nhánh `feat/phase-020-vn-conformance`. Baseline @ `91b8c92`: selfcheck ĐẠT (41 đạt · 10 nợ cũ · 1 cảnh báo), diagnostics `ketoan_test` ĐẠT (17 đạt · 3 cảnh báo), vitest 112 tệp: 110 đạt, 1 lỗi (`tro-ly.test.ts`, 36901 ≠ 36900 — làm tròn mô phỏng, không chạm sổ) |
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W0 nghiệm thu trước PR: `selfcheck --lane selfcheck --strict` ĐẠT (43 đạt · 10 nợ cũ · 1 cảnh báo · Tuân chuẩn 98 A); `--self-test` ĐẠT (SC-VNC-1: 4, SC-VNC-2: 28); `kiem-chuan.sh` ĐẠT; `npm run typecheck` ĐẠT (0 lỗi TS); `npm test` không chạy lại (không đổi mã chạy) |
 | 2026-11-02 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | chỉ đạo mở rộng: Conformance Engine là trụ cột Kernel trong Core (ba lớp, ba cổng, ma trận BizCity, người dùng quyết định ghi sổ) → S020-16 tài liệu + ADR-0012; S020-17 mã `--certify` đang dở |
+| 2026-11-02 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | duyệt ADR-0012 + T1–T8, D020-1 (sửa), D020-7..10; chốt Q020-2, Q020-6, Q020-7; nguyên tắc "Core đơn giản, lean, chặt chẽ — phân tích để người dùng quyết định" → R-VNC-10; schema thêm `layer`, miền `internal`; rulepack nháp C09 |

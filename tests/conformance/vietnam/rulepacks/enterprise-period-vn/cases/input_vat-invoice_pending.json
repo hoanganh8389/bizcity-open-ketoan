@@ -1,0 +1,50 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.enterprise-period-vn.input_vat.invoice_pending.001",
+  "version": "0.1.0",
+  "rulepack": "enterprise-period-vn",
+  "spec_ref": "E-1",
+  "title": "Thuế GTGT đầu vào đã ghi sổ có hoá đơn trong sổ hoá đơn, không chờ quá 30 ngày",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.48-2024-qh15",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "điều kiện khấu trừ cần hoá đơn hợp pháp"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-TAX-1"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "input_vat_has_invoice_within_threshold"
+    ],
+    "gap": "Ngưỡng 30 ngày là quy chế nội bộ (miền internal), chưa có căn cứ pháp lý về số ngày; điều kiện khấu trừ thật thuộc rulepack vat-vn (C03)"
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — ngưỡng là quy chế nội bộ, kế toán trưởng chốt (Q020-6)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

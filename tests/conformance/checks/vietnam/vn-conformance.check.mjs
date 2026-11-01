@@ -1,3 +1,4 @@
+// [2026-11-02 01:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — SC-VNC-2 nhận cả check khai dạng bảng bộ (DG-PLAN-1..4 trong ledger.diag.mjs); trước đây báo nhầm verified_by không có thật.
 // [2026-11-02 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — SC-VNC-1 kiểm thêm profile.schema.json và profiles/*.json (hồ sơ đơn vị giả lập cho --certify).
 // [2026-11-01 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ kiểm chuẩn pháp lý Việt Nam (VNCONF-002): kho nguồn pháp lý, rulepack, ca, báo cáo đúng schema; cổng phê duyệt fail-closed (SC-VNC-1, SC-VNC-2).
 /**
@@ -56,7 +57,8 @@ function loadCases(ctx, dir) {
 function knownCheckIds(ctx) {
   const ids = new Set();
   for (const f of ctx.core.files({ under: ['tests/conformance/checks', 'tests/conformance/diagnostics'], match: /\.(check|diag)\.mjs$/ })) {
-    for (const m of (ctx.core.read(f) ?? '').matchAll(/\bid:\s*'((?:SC|DG)-[A-Z]+-\d+)'/g)) ids.add(m[1]);
+    // Hai dạng khai: { id: 'SC-X-1', … } và bảng bộ [ ['DG-PLAN-3', 'CODE', …], … ] (ledger.diag.mjs).
+    for (const m of (ctx.core.read(f) ?? '').matchAll(/(?:\bid:\s*|\[\s*)'((?:SC|DG)-[A-Z]+-\d+)'/g)) ids.add(m[1]);
   }
   return ids;
 }

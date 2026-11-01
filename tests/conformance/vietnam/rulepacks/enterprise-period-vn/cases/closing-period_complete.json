@@ -1,0 +1,51 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.enterprise-period-vn.closing.period_complete.004",
+  "version": "0.1.0",
+  "rulepack": "enterprise-period-vn",
+  "spec_ref": "E-4",
+  "title": "Kỳ đã qua có đủ việc cuối kỳ theo thứ tự: tính giá vốn, kết chuyển, khoá sổ",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-PLAN-3"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "cost_filled",
+      "closing_posted",
+      "period_locked"
+    ],
+    "gap": "DG-PLAN-3 (dòng chờ giá vốn) còn planned; trạng thái kết chuyển / khoá kỳ đọc được nhưng chưa có check; viết ở W3"
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — ngưỡng là quy chế nội bộ, kế toán trưởng chốt (Q020-6)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

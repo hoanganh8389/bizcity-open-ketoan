@@ -9,6 +9,7 @@
   "domain": "accounting",
   "regime": "neutral",
   "priority": "P0",
+  "layer": "module",
   "status": "draft",
   "applies_to": {
     "entity_types": [

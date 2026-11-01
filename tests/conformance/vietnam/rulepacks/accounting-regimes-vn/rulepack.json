@@ -9,6 +9,7 @@
   "domain": "accounting",
   "regime": "vn-tt99-2025",
   "priority": "P0",
+  "layer": "configuration",
   "status": "draft",
   "applies_to": {
     "entity_types": [

@@ -1,9 +1,16 @@
 # PHASE-020 · 20 — Kiến trúc Conformance Engine: trụ cột kiểm chuẩn kế toán, pháp lý và trạng thái tuân thủ doanh nghiệp
 <!-- [2026-11-02 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiến trúc Conformance Engine là trụ cột cấp Kernel: ba lớp (Module · Cấu hình · Doanh nghiệp), bốn thành phần (Registry · Test Packs · Evidence · Audit), ba cổng (Build · Posting · Compliance Report); bảng điểm theo ma trận BizCity; người dùng quyết định ghi sổ. -->
+<!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — chủ duyệt ADR-0012 + tinh chỉnh T1–T8; thêm §0a nguyên tắc Core đơn giản, lean, chặt chẽ; sửa nơi đặt dữ liệu (vn-rulepacks), Posting Gate có xác nhận, không điểm % -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-> **Trạng thái:** đề xuất kiến trúc, chờ chủ duyệt qua [ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md). Luật: [R-VNC](../../rules/RULE-VN-CONFORMANCE.md), [R-DIAG](../../rules/RULE-SELF-DIAGNOSTICS.md). Kế hoạch: [00-MASTER-PLAN](00-MASTER-PLAN.md). Nền đã có: [tests/conformance/](../../../tests/conformance/README.md), [vietnam/](../../../tests/conformance/vietnam/README.md).
+> **Trạng thái:** **chấp nhận** 2026-11-02 qua [ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md) kèm tinh chỉnh T1–T8 (bảng trong ADR; chỗ nào ở dưới khác T1–T8 thì theo ADR). Luật: [R-VNC](../../rules/RULE-VN-CONFORMANCE.md), [R-DIAG](../../rules/RULE-SELF-DIAGNOSTICS.md). Kế hoạch: [00-MASTER-PLAN](00-MASTER-PLAN.md). Nền đã có: [tests/conformance/](../../../tests/conformance/README.md), [vietnam/](../../../tests/conformance/vietnam/README.md).
 > **Một câu:** Conformance Engine là chức năng **nằm trong Core, bật mặc định, hiện ở menu Hệ thống**, trả lời ba câu hỏi khác nhau bằng cùng một bộ quy định có hiệu lực, cùng một cách chấm điểm, cùng một kho bằng chứng — và **không bao giờ** tự quyết thay người dùng việc ghi sổ hay tiến hành.
+
+## 0a. Nguyên tắc chủ chốt
+
+Core giữ **đơn giản, lean, chặt chẽ, đúng nguyên tắc kế toán**. Conformance Engine **không thêm luật kế toán vào Core**, không thêm đường ghi sổ, không thêm phụ thuộc: mọi phân tích, cảnh báo, đánh giá chỉ để **phục vụ người dùng ra quyết định**. Quyết định ghi sổ, tiến hành hay dừng luôn là của người dùng; chỉ bất biến Tier 0 sẵn có của Kernel mới chặn.
+
+Hệ quả cụ thể: Engine **dùng lại** khung tự chẩn đoán (tầng L5), bằng chứng (`audit_logs`), chính sách có phiên bản, check của bộ kiểm — không dựng khung song song (ADR-0012 T1); mỗi kết luận đều có căn cứ, phiên bản, bằng chứng để người dùng tự đánh giá.
 
 ## 0. Vị trí trong kiến trúc
 
@@ -88,7 +95,7 @@ Hệ quả thiết kế: **mọi kết luận ghi cặp (nguồn, điều khoả
 | Cổng | Khi nào | Lớp | Hành vi | Ai quyết |
 |---|---|---|---|---|
 | **Build Gate** | CI của module; `bizcity module check`; trước khi cài / bật module | 1 | **Chặn**: `check-report.json` phải `pass`, `sourceHash` khớp (CONFORMANCE §4). Rulepack C01 / C08 `approved` là một phần của cổng; `REVIEW_REQUIRED` không chặn cài nhưng ghi "chưa chứng nhận" | Core (máy) — đúng như hôm nay |
-| **Posting Gate** | khi người dùng lập / duyệt / ghi sổ chứng từ; trước khoá kỳ | 2, 3 | **Thông tin, không chặn**: Engine trả `advisories[]` cho chứng từ / kỳ đang thao tác (vd "loại thuế R08 hết hiệu lực sau 31/12/2026", "chế độ kế toán của đơn vị chưa khai, rulepack không chọn được", "kỳ này chưa đối chiếu ngân hàng"). Màn hiện cảnh báo + "Vì sao" + "Việc cần làm"; người dùng xác nhận tiếp hay dừng. **Không có cấu hình nào biến advisory thành tự từ chối** | **Người dùng** (kế toán, kế toán trưởng) |
+| **Posting Gate** | khi người dùng lập / duyệt chứng từ; trước khoá kỳ — **không** trong giao dịch ghi sổ (T4) | 2, 3 | **Thông tin, không chặn**; người dùng tiếp tục thì ghi một dòng bằng chứng xác nhận, AI không xác nhận thay (T3): Engine trả `advisories[]` cho chứng từ / kỳ đang thao tác (vd "loại thuế R08 hết hiệu lực sau 31/12/2026", "chế độ kế toán của đơn vị chưa khai, rulepack không chọn được", "kỳ này chưa đối chiếu ngân hàng"). Màn hiện cảnh báo + "Vì sao" + "Việc cần làm"; người dùng xác nhận tiếp hay dừng. **Không có cấu hình nào biến advisory thành tự từ chối** | **Người dùng** (kế toán, kế toán trưởng) |
 | Bất biến Kernel *(đã có, không thuộc Engine)* | mọi lần ghi | — | **Chặn tuyệt đối** như hôm nay: Nợ = Có, kỳ khoá (`PERIOD_LOCKED`), tài khoản không có, RLS, trigger chỉ thêm (Tier 0) | Core |
 | **Compliance Report** | theo lịch (đêm, sau sao lưu — R-DIAG-3), theo yêu cầu, cuối kỳ, trước khoá kỳ | 2, 3 | Báo cáo trạng thái doanh nghiệp theo chế độ, kỳ hiệu lực, thuế, sổ: nhãn `PASS / FAIL / REVIEW_REQUIRED` theo ca; nhãn tổng "Passed Bizcity VN Conformance [scope/version/date]" **chỉ** khi mọi ca P0 áp dụng PASS trên rulepack approved; xu hướng theo kỳ | chủ đơn vị đọc; **không** tự sửa gì |
 
@@ -146,7 +153,7 @@ Luật UX (kế thừa Matrix UI của BizCity và Bàn điều tra PHASE-019): 
 | MCP | `conformance.status` chỉ đọc (Cell / chatbot hỏi "đơn vị tôi đạt đến đâu") — không có công cụ ghi | `bizcity_mcp@1`, AI chỉ đọc |
 | Sự kiện | nghe `bizcity.module.installed`, `bizcity.period.locked`, `bizcity.ledger.entry.posted` (gom theo khung); phát `bizcity.conformance.evaluated` (mã, số lượng, không số liệu) | R-OUTBOX, R-DIAG-6 |
 | Lịch | lớp 3 mỗi đêm sau sao lưu; lớp 2 khi đổi cấu hình / phát hành chính sách; lớp 1 khi cài module | R-DIAG-3 |
-| Nơi đặt mã | `packages/kernel/src/modules/conformance/` (đọc qua cổng công khai, không import `ledger.service`); dữ liệu rulepack / registry đóng gói cùng bản phát hành (`packages/kernel/conformance/` — Q020-7), bộ kiểm `tests/conformance/vietnam/` tham chiếu cùng tệp | SC-KERNEL-6/7, R-VNC-7 |
+| Nơi đặt mã | mã: `packages/kernel/src/modules/conformance/` (đọc qua cổng công khai, không import `ledger.service`); dữ liệu rulepack / registry: gói chỉ chứa dữ liệu `packages/vn-rulepacks/` (ADR-0012 T7), bộ kiểm đọc cùng tệp | SC-KERNEL-6/7, R-VNC-7 |
 | Tự chẩn đoán | thêm tầng **L5 Tuân thủ** vào RULE-SELF-DIAGNOSTICS §1 (L4 = tuân Standard trên mã; L5 = tuân quy định trên dữ liệu + cấu hình) | R-DIAG-1..9 áp dụng nguyên |
 
 ## 7. Ranh giới — Engine KHÔNG làm gì

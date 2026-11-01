@@ -1,4 +1,6 @@
 // [2026-11-02 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — chế độ --certify: một lệnh kiểm tương thích + bảo mật (lane tĩnh), bất biến kế toán (lane diagnostics), tuân thủ VN theo rulepack đã công bố, chọn theo phiên bản + ngày hiệu lực (R-VNC-4); báo cáo bizcity_vn_conformance_report@1 + JUnit + chứng chỉ (VNCONF-003 W1a).
+// [2026-11-02 01:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — evaluate() chỉ gồm lớp Module + Cấu hình khi chứng nhận; lớp Doanh nghiệp ra NOT_APPLICABLE có lý do (đánh giá trên bản cài theo đơn vị).
+// [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — lớp enterprise (ADR-0012): check mức info có phát hiện (warn) là ca KHÔNG đạt — ở lớp này phát hiện chính là tình trạng doanh nghiệp
 /**
  * CHỨNG NHẬN (certify) — thuần dữ liệu, không ghi gì, không mở CSDL. selfcheck.mjs gọi sau khi đã có kết quả hai lane.
  *
@@ -115,7 +117,7 @@ export function resolve(kit, profile) {
 /* ───────────── đánh giá ca ───────────── */
 
 /** Một bằng chứng: trả 'ok' | 'bad' | 'error' | 'unknown' kèm chữ. */
-function evidenceOf(ref, ev) {
+function evidenceOf(ref, ev, layer) {
   if (ref.endsWith('.test.ts')) {
     if (!ev.runtime) return ['unknown', `${ref}: lane runtime chưa chạy (--runtime)`];
     const s = ev.tests.get(ref);
@@ -126,6 +128,7 @@ function evidenceOf(ref, ev) {
   }
   const s = ev.checks.get(ref);
   if (!s) return ['unknown', `${ref}: check không chạy trong lượt này`];
+  if (s === 'warn' && layer === 'enterprise') return ['bad', `${ref}: có phát hiện (lớp Doanh nghiệp)`];
   if (OK.has(s)) return ['ok', `${ref}: ${s}`];
   if (s === 'fail') return ['bad', `${ref}: fail`];
   if (s === 'error') return ['error', `${ref}: error`];
@@ -138,13 +141,16 @@ function evidenceOf(ref, ev) {
  * Trả { fyStart, resolution, cases: [{ id, version, priority, status, reason, evidence, legal_basis_ids, rulepack, technical }] }.
  * `technical` = kết luận kỹ thuật thuần (PASS/FAIL/ERROR/NOT_TESTED) bất kể trạng thái duyệt — để người đọc thấy "kỹ thuật đạt, pháp lý chưa".
  */
-export function evaluate({ kit, profile, evidence }) {
+export function evaluate({ kit, profile, evidence, layers = ['module', 'configuration'] }) {
   const resolution = resolve(kit, profile);
   const cases = [];
   for (const row of resolution.rows) {
     const { pack } = row;
     for (const k of pack._cases ?? []) {
       const base = { id: k.id, version: k.version ?? '0.0.0', priority: k.priority ?? pack.priority, rulepack: pack.id, legal_basis_ids: (k.legal_basis?.length ? k.legal_basis : pack.legal_basis ?? []).map((b) => b.source_id), evidence: [] };
+      // Chứng nhận module / Kernel chỉ gồm lớp Module + Cấu hình. Lớp Doanh nghiệp đánh giá dữ liệu MỘT đơn vị trên bản cài
+      // (Hệ thống → Kiểm chuẩn, ADR-0012) — dữ liệu của CSDL test không nói gì về chất lượng module.
+      if (pack.layer && !layers.includes(pack.layer)) { cases.push({ ...base, status: 'NOT_APPLICABLE', reason: `lớp ${pack.layer} đánh giá dữ liệu một đơn vị trên bản cài (Hệ thống → Kiểm chuẩn), không thuộc lượt chứng nhận này`, technical: 'NOT_TESTED' }); continue; }
       if (k._missing) { cases.push({ ...base, status: 'ERROR', reason: `tệp ca ${k._file} không có`, technical: 'ERROR' }); continue; }
       if (k.status === 'deprecated') { cases.push({ ...base, status: 'NOT_APPLICABLE', reason: 'ca đã deprecated', technical: 'NOT_TESTED' }); continue; }
       if (row.applies === false) { cases.push({ ...base, status: 'NOT_APPLICABLE', reason: `rulepack không áp: ${row.reason}`, technical: 'NOT_TESTED' }); continue; }
@@ -156,7 +162,7 @@ export function evaluate({ kit, profile, evidence }) {
       const lines = [];
       let technical;
       if (!refs.length) technical = k.scenario?.expected_fixture ? 'NOT_TESTED' : 'NOT_TESTED';
-      const states = refs.map((r) => { const [s, t] = evidenceOf(r, evidence); lines.push(t); return s; });
+      const states = refs.map((r) => { const [s, t] = evidenceOf(r, evidence, pack.layer); lines.push(t); return s; });
       if (refs.length) technical = states.includes('error') ? 'ERROR' : states.includes('bad') ? 'FAIL' : states.includes('unknown') ? 'NOT_TESTED' : 'PASS';
       if (k.scenario?.expected_fixture && refs.length === 0) lines.push(`${k.scenario.expected_fixture}: runner fixture chưa có (VNCONF-003)`);
       if (!refs.length) lines.push('verified_by rỗng — không có bằng chứng' + (k.scenario?.gap ? `; khoảng trống: ${k.scenario.gap}` : ''));

@@ -27,6 +27,9 @@ Phase này đưa ba thứ vào repo: **kho nguồn pháp lý có trạng thái r
 
 ## 3. Phạm vi
 
+<!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — chủ duyệt D020-1 (sửa), D020-7..10, chốt Q020-2, Q020-6, Q020-7; nguyên tắc Core đơn giản, lean, chặt chẽ -->
+**Nguyên tắc chủ chốt (2026-11-02):** Core giữ **đơn giản, lean, chặt chẽ, đúng nguyên tắc kế toán**. Conformance Engine **không thêm luật kế toán vào Core**, không thêm đường ghi sổ, không thêm phụ thuộc: mọi phân tích, cảnh báo, đánh giá chỉ để **phục vụ người dùng ra quyết định**. Quyết định ghi sổ, tiến hành hay dừng luôn là của người dùng; chỉ bất biến Tier 0 sẵn có của Kernel mới chặn.
+
 <!-- [2026-11-02 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — mở rộng phạm vi theo chỉ đạo của chủ: Conformance Engine là trụ cột Kernel trong Core, menu Hệ thống, ba lớp Module · Cấu hình · Doanh nghiệp; bảng điểm theo ma trận BizCity; người dùng quyết định ghi sổ (ADR-0012, 20-KIEN-TRUC). -->
 **Mở rộng 2026-11-02 (chủ chỉ đạo):** Conformance không chỉ là bộ kiểm CI cho module. Nó là **Conformance Engine — trụ cột cấp Kernel**, nằm trong Core, bật mặc định, hiện ở **Hệ thống → Kiểm chuẩn**, trả lời ba câu hỏi khác nhau: (1) module / plugin có đạt chuẩn không; (2) cấu hình cho doanh nghiệp này có đúng quy định đang có hiệu lực với nó không; (3) tình trạng thực tế của doanh nghiệp kỳ này có tuân thủ không. Kiến trúc: [20-KIEN-TRUC-CONFORMANCE-ENGINE](20-KIEN-TRUC-CONFORMANCE-ENGINE.md), quyết định: [ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md).
 
@@ -52,15 +55,15 @@ Phase này đưa ba thứ vào repo: **kho nguồn pháp lý có trạng thái r
 
 | ID | Quyết định đề xuất | Trạng thái |
 |---|---|---|
-| D020-1 | Bộ kiểm VN là **một phần của `tests/conformance/`** (dữ liệu `vietnam/`, check `checks/vietnam/`, runner = lane `runtime` của 4.3), không tạo `packages/vn-conformance` trước W5 | ☐ |
+| D020-1 | Bộ kiểm VN là **một phần của `tests/conformance/`** (dữ liệu `vietnam/`, check `checks/vietnam/`, runner = lane `runtime` của 4.3), không tạo `packages/vn-conformance` trước W5 | ✅ chủ duyệt 2026-11-02 — sửa: "không tạo gói" chỉ áp cho SDK; dữ liệu luật là gói chỉ chứa dữ liệu `packages/vn-rulepacks/` (ADR-0012 T7) |
 | D020-2 | Kho nguồn pháp lý là **tệp JSON trong Git** phát hành bất biến cùng rulepack; không bảng CSDL ở MVP | ☐ |
 | D020-3 | **Fail closed** là luật Tier 0 (R-VNC-3): SC-VNC-2 `block`, không baseline, không cờ bỏ qua; `REVIEW_REQUIRED` / `NOT_TESTED` không tính PASS | ☐ |
 | D020-4 | Hai lớp trạng thái tách riêng: bảng điểm giữ 7 trạng thái **mã nguồn**; báo cáo VN có 6 trạng thái **ca pháp lý** | ☐ |
 | D020-5 | Khoảng trống Core G1–G5 đi đường **đề xuất năng lực** (VERSIONING §5, ADR khi cần); phase này không vá | ☐ |
-| D020-7 | **Conformance Engine là trụ cột Kernel trong Core** (K1): module `packages/kernel/src/modules/conformance/`, bật mặc định, menu Hệ thống → Kiểm chuẩn (`HT06`), quyền `conformance:read / run`; ba lớp Module · Cấu hình · Doanh nghiệp dùng chung Registry · Test Packs · Oracle · Evidence ([ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md)) | ☐ |
-| D020-8 | **Posting Gate chỉ thông tin, người dùng quyết định ghi sổ**: advisory kèm Vì sao + Việc cần làm; không cấu hình nào biến advisory thành tự từ chối; chỉ bất biến Tier 0 của Kernel mới chặn | ☐ |
-| D020-9 | **Bảng điểm và UI theo ma trận BizCity**: giữ `bizcity_scoreboard@1` (ba điểm không cộng lẫn, A–F, kết luận không theo điểm, đạt rỗng ≠ đạt); 6 trạng thái ca pháp lý không quy về điểm; ma trận hàng = ca, cột = trạng thái; không nút sửa sổ / bỏ qua | ☐ |
-| D020-10 | **Registry mô hình hiệu lực ở cấp điều khoản** (effective_from/to của provision, phạm vi pháp nhân, năm tài chính áp dụng, chuyển tiếp) — không có công tắc TT200 tắt / TT99 bật; thêm TT152/2025 (hộ, cá nhân kinh doanh) và provision chuyển tiếp của TT200 | ☐ |
+| D020-7 | **Conformance Engine là trụ cột Kernel trong Core** (K1): module `packages/kernel/src/modules/conformance/`, bật mặc định, menu Hệ thống → Kiểm chuẩn (`HT06`), quyền `conformance:read / run`; ba lớp Module · Cấu hình · Doanh nghiệp dùng chung Registry · Test Packs · Oracle · Evidence ([ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md)) | ✅ chủ duyệt 2026-11-02 — kèm T1 (tầng L5, dùng lại DiagCheck), T2 (lớp Module trên bản cài đọc check-report + sourceHash) |
+| D020-8 | **Posting Gate chỉ thông tin, người dùng quyết định ghi sổ**: advisory kèm Vì sao + Việc cần làm; không cấu hình nào biến advisory thành tự từ chối; chỉ bất biến Tier 0 của Kernel mới chặn | ✅ chủ duyệt 2026-11-02 — kèm T3 (xác nhận là bằng chứng, AI không xác nhận thay), T4 (không tính trong giao dịch ghi sổ) |
+| D020-9 | **Bảng điểm và UI theo ma trận BizCity**: giữ `bizcity_scoreboard@1` (ba điểm không cộng lẫn, A–F, kết luận không theo điểm, đạt rỗng ≠ đạt); 6 trạng thái ca pháp lý không quy về điểm; ma trận hàng = ca, cột = trạng thái; không nút sửa sổ / bỏ qua | ✅ chủ duyệt 2026-11-02 — kèm T5 (không "điểm tuân thủ %"; độ phủ bằng chứng + số ca theo trạng thái) |
+| D020-10 | **Registry mô hình hiệu lực ở cấp điều khoản** (effective_from/to của provision, phạm vi pháp nhân, năm tài chính áp dụng, chuyển tiếp) — không có công tắc TT200 tắt / TT99 bật; thêm TT152/2025 (hộ, cá nhân kinh doanh) và provision chuyển tiếp của TT200 | ✅ chủ duyệt 2026-11-02 — kèm T6 (khai điều khoản dần theo ca P0) |
 | D020-6 | Nhãn công bố duy nhất **"Passed Bizcity VN Conformance [scope/version/date]"**; trang chứng nhận plugin (VNCONF-010) chỉ hiện nhãn này + phạm vi + `known_exclusions` | ☐ |
 
 ## 6. Câu hỏi cần chủ quyết (Q020-*)
@@ -68,11 +71,11 @@ Phase này đưa ba thứ vào repo: **kho nguồn pháp lý có trạng thái r
 | ID | Câu hỏi | Đề xuất |
 |---|---|---|
 | Q020-1 | Đưa phase vào `PHASES.md` / `roadmap.json` với mã việc mới (4.3b?) hay gắn vào 4.3 của PHASE-014? | Gắn 4.3 (lane runtime) + thêm 4.3b "rulepack pháp lý VN" khi W1 bắt đầu |
-| Q020-2 | Năm tài chính / chế độ kế toán của đơn vị (G1): mở đề xuất năng lực ngay (ADR) hay chờ khách hàng có năm tài chính lệch? | Mở đề xuất ngay vì TT99 áp theo năm tài chính — không có trường này thì C02 không bao giờ PASS |
+| Q020-2 | Năm tài chính / chế độ kế toán của đơn vị (G1): mở đề xuất năng lực ngay (ADR) hay chờ khách hàng có năm tài chính lệch? | ✅ **chủ chốt 2026-11-02:** mở đề xuất năng lực năm tài chính / chế độ kế toán của đơn vị ngay (ADR riêng, S020-22) — thiếu nó lớp Cấu hình chỉ ra REVIEW_REQUIRED |
 | Q020-3 | Idempotency sự việc (G4): docKey có tiền tố nguồn (`pos:…`, `wp:…`) là đủ, hay thêm cột `source`? | docKey có tiền tố là đủ cho C01.3; ghi vào `bizcity_ledger_intake@1` thành quy ước |
 | Q020-4 | Ai là người duyệt kế toán / thuế đợt đầu? Có thuê ngoài không? | Chủ dự án chỉ định; ADR-0009 đang chờ kế toán trưởng ký — cùng người |
-| Q020-6 | Lớp 3 (Doanh nghiệp): ca đầu tiên nào và oracle là gì? Đề xuất 6 ca: đối chiếu ngân hàng theo tháng, chứng từ gốc thiếu, tồn kho âm, giá vốn / kết chuyển / khoá kỳ chưa xong, hoá đơn đầu vào chờ > 30 ngày (DG-TAX-1), sự việc treo > 3 ngày (DG-EVENT-3) | Kế toán trưởng chọn ngưỡng và căn cứ (quy chế nội bộ ghi rõ là nội bộ) |
-| Q020-7 | Dữ liệu rulepack / registry đóng gói cho runtime ở đâu? `packages/kernel/conformance/` (phát hành cùng Kernel) hay giữ `tests/conformance/vietnam/` và Kernel đọc tương đối? | `packages/kernel/conformance/` là nguồn; `tests/conformance/vietnam/` thành liên kết / chép lúc build — tránh hai bản |
+| Q020-6 | Lớp 3 (Doanh nghiệp): ca đầu tiên nào và oracle là gì? Đề xuất 6 ca: đối chiếu ngân hàng theo tháng, chứng từ gốc thiếu, tồn kho âm, giá vốn / kết chuyển / khoá kỳ chưa xong, hoá đơn đầu vào chờ > 30 ngày (DG-TAX-1), sự việc treo > 3 ngày (DG-EVENT-3) | ✅ **chủ chốt 2026-11-02:** đợt đầu 4 ca đã có cách kiểm sẵn: hoá đơn đầu vào chờ > 30 ngày (DG-TAX-1), sự việc treo > 3 ngày (DG-EVENT-3), tồn kho âm (SQL trên `inventory_movements`), cuối kỳ chưa xong (giá vốn, kết chuyển, khoá kỳ). Hoãn đối chiếu ngân hàng (chưa thấy dữ liệu sao kê) và chứng từ gốc thiếu (đính kèm mới có ở mua hàng). Ngưỡng là quy chế nội bộ, miền `internal`, kế toán trưởng chốt |
+| Q020-7 | Dữ liệu rulepack / registry đóng gói cho runtime ở đâu? `packages/kernel/conformance/` (phát hành cùng Kernel) hay giữ `tests/conformance/vietnam/` và Kernel đọc tương đối? | ✅ **chủ chốt 2026-11-02:** gói chỉ chứa dữ liệu `packages/vn-rulepacks/` (JSON + schema, SemVer riêng); di chuyển cùng S020-18 |
 | Q020-5 | Có mở nguồn kho pháp lý (Apache/GPL cùng repo) hay giữ riêng? | Cùng repo GPL: cộng đồng cùng rà; nhưng `reviewed` chỉ do người được chỉ định |
 
 ## 7. Sáu đợt = ticket VNCONF
