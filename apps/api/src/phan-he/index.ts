@@ -7,9 +7,10 @@
  *   ENABLED_MODULES=*            mọi phân hệ (mặc định — máy chủ thật)
  *   ENABLED_MODULES=mua-hang,kho chỉ Mua hàng + Kho (+ lõi)
  * Một route được nằm ở nhiều phân hệ — bật nhiều phân hệ thì chỉ đăng ký một lần.
- * Thêm phân hệ: tạo thư mục <key>/index.ts rồi thêm vào API_MODULES (xem docs/phat-trien.md).
+ * Thêm phân hệ: tạo thư mục <key>/index.ts + <key>/bizcity.module.json rồi thêm vào API_MODULES (xem docs/phat-trien.md).
  */
 import type { ApiModule, Routes } from './types.js';
+import { loadModuleManifest, type ModuleManifest } from '../core/module-manifest.js';
 import { CORE_ROUTES } from './loi.js';
 import { keToan } from './ke-toan/index.js';
 import { quy } from './quy/index.js';
@@ -25,6 +26,12 @@ export type { ApiModule } from './types.js';
 export { CORE_ROUTES } from './loi.js';
 
 export const API_MODULES: ApiModule[] = [keToan, quy, muaHang, banHang, kho, taiSan, thue, apiModule, heThong];
+
+// [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — manifest mỗi phân hệ (PHASES 3.2): nạp khi khởi động, lệch key / label với ApiModule thì dừng
+/** Manifest (bizcity.module.json) của mọi phân hệ, theo mã. Thiếu / lệch → lỗi khi nạp tệp này (bản cài hỏng). */
+export const MODULE_MANIFESTS: ReadonlyMap<string, ModuleManifest> = new Map(
+  API_MODULES.map((m) => [m.key, loadModuleManifest(new URL(`./${m.key}/bizcity.module.json`, import.meta.url), { key: m.key, kind: 'module', label: m.label })]),
+);
 
 /** Phân hệ được bật theo ENABLED_MODULES ('*' hoặc trống = tất cả). Mã lạ → lỗi khởi động. */
 export function enabledModules(spec: string): ApiModule[] {

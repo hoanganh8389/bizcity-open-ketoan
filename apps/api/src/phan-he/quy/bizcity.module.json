@@ -1,0 +1,63 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.quy",
+  "key": "quy",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Quỹ",
+  "description": "Thu chi tiền mặt, ngân hàng, đề nghị thanh toán, sổ quỹ",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "actions.runtime",
+      "actions.idempotency",
+      "evidence.receipt",
+      "data.tenant-tx",
+      "documents.numbering",
+      "documents.workflow"
+    ]
+  },
+  "data": {
+    "tables": [
+      "payment_requests",
+      "payment_request_settings"
+    ]
+  },
+  "documents": [
+    {
+      "type": "quy.payment-request",
+      "label": "Đề nghị thanh toán",
+      "workflow": "apps/api/src/phan-he/quy/payment-requests/payment-request.workflow.yaml"
+    }
+  ],
+  "actions": [
+    "quy.payment-request.list",
+    "quy.payment-request.get",
+    "quy.payment-request.create",
+    "quy.payment-request.update",
+    "quy.payment-request.submit",
+    "quy.payment-request.approve",
+    "quy.payment-request.reject",
+    "quy.payment-request.cancel",
+    "quy.payment-request.pay",
+    "quy.payment-request-settings.get",
+    "quy.payment-request-settings.update"
+  ],
+  "ui": {
+    "icon": "Wallet",
+    "color": "#0f9d58",
+    "order": 20
+  },
+  "waivers": [
+    {
+      "rule": "STD-MOD-2",
+      "reason": "Phân hệ còn ghi thẳng bảng danh mục / cấu hình của lõi (audit A-17, nợ SC-MOD-2 trong baseline); chuyển sang action / service danh mục ở PHASES 3.9",
+      "adr": "ADR-0005",
+      "expires": "2027-03-31"
+    }
+  ]
+}

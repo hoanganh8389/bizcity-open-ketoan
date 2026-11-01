@@ -1,0 +1,22 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.he-thong",
+  "key": "he-thong",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Hệ thống",
+  "description": "Đơn vị, người dùng & phân quyền, khoá API, kết nối, cài đặt",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": []
+  },
+  "ui": {
+    "icon": "Settings",
+    "color": "#546e7a",
+    "order": 90
+  }
+}

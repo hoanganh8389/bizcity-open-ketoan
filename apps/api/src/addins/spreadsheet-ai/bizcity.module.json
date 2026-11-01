@@ -1,0 +1,16 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.spreadsheet-ai",
+  "key": "spreadsheet-ai",
+  "kind": "addin",
+  "version": "0.1.0",
+  "label": "Bảng tính AI",
+  "description": "Mở số liệu kế toán trong bảng tính có trợ lý AI để phân tích, lập biểu tuỳ ý.",
+  "owners": [
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": []
+  }
+}

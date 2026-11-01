@@ -1,0 +1,30 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.ban-hang",
+  "key": "ban-hang",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Bán hàng",
+  "description": "Khách hàng, bán hàng, hàng bán trả lại, công nợ phải thu",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "data.read-views",
+      "masterdata.read"
+    ]
+  },
+  "data": {
+    "reads": [
+      "bizcity_read.ledger_entries"
+    ]
+  },
+  "ui": {
+    "icon": "ShoppingCart",
+    "color": "#d93025",
+    "order": 40
+  }
+}

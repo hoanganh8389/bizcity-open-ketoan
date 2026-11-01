@@ -1,0 +1,24 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.kho",
+  "key": "kho",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Kho",
+  "description": "Nhập xuất, chuyển kho, tồn kho, giá vốn, mặt hàng & bảng giá",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "masterdata.read"
+    ]
+  },
+  "ui": {
+    "icon": "Warehouse",
+    "color": "#7b1fa2",
+    "order": 50
+  }
+}

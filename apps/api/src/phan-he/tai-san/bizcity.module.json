@@ -1,0 +1,34 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.tai-san",
+  "key": "tai-san",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Tài sản",
+  "description": "Tài sản cố định, khấu hao, công cụ dụng cụ",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "masterdata.read"
+    ]
+  },
+  "data": {
+    "tables": [
+      "assets",
+      "asset_categories",
+      "asset_events",
+      "asset_allocations",
+      "asset_depreciations",
+      "asset_depreciation_overrides"
+    ]
+  },
+  "ui": {
+    "icon": "Building2",
+    "color": "#00838f",
+    "order": 60
+  }
+}

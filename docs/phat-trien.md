@@ -107,7 +107,7 @@ Mã nguồn chỉ một phân hệ dùng: tạo trong `apps/api/src/phan-he/<ph�
 ## 4b. Thêm một phân hệ
 
 1. Giao diện: tạo thư mục `apps/web/src/phan-he/<key>/` với `manifest.ts` (`key`, `label`, `description`, `icon` tên biểu tượng lucide — thêm vào `phan-he/icons.tsx` nếu mới, `color`, `order`, `groups`), `menu.ts`, `routes.tsx`; thêm vào `WEB_MODULES` (`phan-he/index.ts`), `layout/menu.ts` (nhóm menu) và `pages.tsx` (routes).
-2. Máy chủ: tạo `apps/api/src/phan-he/<key>/index.ts` (cùng `key`, liệt kê routes phân hệ cần), thêm vào `API_MODULES` trong `phan-he/index.ts`.
+2. Máy chủ: tạo `apps/api/src/phan-he/<key>/index.ts` (cùng `key`, liệt kê routes phân hệ cần) **và** `apps/api/src/phan-he/<key>/bizcity.module.json` (manifest `bizcity_module@1`, `label` trùng `ApiModule.label`, `owners` trùng CODEOWNERS), thêm vào `API_MODULES` trong `phan-he/index.ts`. Thiếu / lệch manifest thì API không khởi động và SC-MOD-3 đỏ. <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — manifest bắt buộc khi thêm phân hệ -->
 3. `package.json` gốc: thêm `"dev:<key>": "node scripts/dev.mjs <key>"`; `.github/CODEOWNERS`: thêm người phụ trách.
 
 ## 5a. Phiếu nghiệp vụ và trạm định khoản

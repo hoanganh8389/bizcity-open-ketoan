@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | S011-1 | Chốt 5 câu hỏi mở của API.md | 3.1 | chưa | ☐ |
 | S011-2 | `@bizcity/module-sdk`: `defineModule`, `ctx` | 3.1 · G1-10 | chưa | ☐ |
-| S011-3 | Manifest cho 9 phân hệ + 3 add-in, waiver A-17 có hạn | 3.2 | chưa | ☐ |
+| S011-3 | Manifest cho 9 phân hệ + 3 add-in, waiver A-17 có hạn | 3.2 | có | ✅ 2026-11-01: 12 manifest, SC-MOD-3 block, waiver STD-MOD-2 / STD-ACT-6 hạn 2027-03-31; sinh `ApiModule` từ manifest → S011-8 <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — S011-3 --> |
 | S011-4 | Registry quyền mở theo module, màn Phân quyền nhóm theo module | 3.3 · G1-06 | chưa | ☐ |
 | S011-5 | `settings.get` chạy thật | 3.6 | một phần | 🟡 registry + DG-SET-1 có |
 | S011-6 | Vai trò CSDL `mod_<key>_rw` | 3.10 | chưa | ☐ |
@@ -26,3 +26,4 @@
 |---|---|---|
 | 2026-10-30 | Claude Code | Mở thư mục phase; trạng thái chụp từ bảng điểm (CSDL `ketoan_test`). |
 | 2026-11-01 22:16 | Claude Code | Chủ duyệt ADR-0011 (plugin ba mức tin cậy, không drop-in, iframe cho app ngoài tiến trình). Thêm 3.13, 3.14 vào lộ trình; S011-8…10. |
+| 2026-11-01 23:55 | Claude Code | PR-1: manifest 9 phân hệ + 3 add-in; SC-MOD-3 planned → block (thêm key / kind / owners); SC-CON-2 nhận waiver có hạn (+ ca tự kiểm); API nạp manifest, `GET /system/modules?detail=true`; test `module-manifests.test.ts`. |
