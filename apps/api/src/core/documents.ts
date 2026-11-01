@@ -16,7 +16,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { DOC_LINK_ROLES, DOC_REF_RE, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentVersion, type FileInput } from '@ketoan/contracts';
+import { DOC_LINK_ROLES, DOC_REF_RE, SIGN_ROLE_RE, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type FileInput } from '@ketoan/contracts';
 import type { Db } from '../db/client.js';
 import { Errors } from './errors.js';
 import { todayVN } from './date-rules.js';
@@ -188,5 +188,48 @@ export const documents = {
     const u = await tx.updateTable('document_attachments').set({ archived_at: new Date().toISOString(), archived_by: actor })
       .where('tenant_id', '=', tenantId).where('id', '=', id).returning('archived_at').executeTakeFirstOrThrow();
     return { ...toAttachment(r), archivedAt: iso(u.archived_at) };
+  },
+
+  // [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.signatures (STD-DOC-8, 0047): ký theo vai trên chứng từ module, gắn phiên bản lúc ký
+  /** Phiên bản hiện tại của chứng từ: bản mới nhất ở document_versions, chưa lưu bản nào = 1. */
+  async currentVersion(tx: Db, tenantId: string, docRef: string): Promise<number> {
+    assertRef(docRef);
+    const r = await tx.selectFrom('document_versions').select((eb) => eb.fn.max('version').as('v')).where('tenant_id', '=', tenantId).where('doc_ref', '=', docRef).executeTakeFirst();
+    return Number(r?.v ?? 0) || 1;
+  },
+
+  /**
+   * Ký chứng từ với một vai ở phiên bản hiện tại. Chỉ người dùng đăng nhập ký được (khoá API, AI không ký thay người).
+   * Ai được ký vai nào là việc của module (quyền của action). Vai đã ký ở phiên bản này → CONFLICT.
+   */
+  async sign(tx: Db, tenantId: string, docRef: string, role: string, signer: { actor: string; name: string; kind: string }): Promise<DocumentSignature> {
+    assertRef(docRef);
+    if (!SIGN_ROLE_RE.test(role)) throw Errors.validation(`Vai ký "${role}" chỉ gồm chữ thường, số, gạch dưới (vd preparer, legal)`);
+    if (signer.kind !== 'user') throw Errors.forbidden('Chỉ người dùng đăng nhập mới ký được chứng từ');
+    const version = await documents.currentVersion(tx, tenantId, docRef);
+    const dup = await tx.selectFrom('document_signatures').select('id').where('tenant_id', '=', tenantId).where('doc_ref', '=', docRef).where('role', '=', role)
+      .where('version', '=', version).where('revoked_at', 'is', null).executeTakeFirst();
+    if (dup) throw Errors.conflict(`${docRef} đã có chữ ký vai ${role} ở phiên bản ${version}`);
+    const r = await tx.insertInto('document_signatures').values({ tenant_id: tenantId, doc_ref: docRef, event_id: null, version, role, signer: signer.actor, signer_name: signer.name })
+      .returning(['signed_at']).executeTakeFirstOrThrow();
+    return { role, version, signer: signer.actor, signerName: signer.name, signedAt: iso(r.signed_at), valid: true };
+  },
+
+  /** Chữ ký còn hiệu lực (chưa huỷ) của chứng từ, mới → cũ; valid = ký đúng phiên bản hiện tại. */
+  async signatures(tx: Db, tenantId: string, docRef: string): Promise<DocumentSignature[]> {
+    const current = await documents.currentVersion(tx, tenantId, docRef);
+    const rows = await tx.selectFrom('document_signatures').select(['role', 'version', 'signer', 'signer_name', 'signed_at']).where('tenant_id', '=', tenantId)
+      .where('doc_ref', '=', docRef).where('revoked_at', 'is', null).orderBy('signed_at', 'desc').orderBy('id', 'desc').execute();
+    return rows.map((s) => ({ role: s.role, version: s.version, signer: s.signer, signerName: s.signer_name, signedAt: iso(s.signed_at), valid: s.version === current }));
+  },
+
+  /** Huỷ chữ ký của vai ở phiên bản hiện tại: chỉ người đã ký hoặc chủ đơn vị. */
+  async unsign(tx: Db, tenantId: string, docRef: string, role: string, by: { actor: string; role: string | null }): Promise<void> {
+    const version = await documents.currentVersion(tx, tenantId, docRef);
+    const sig = await tx.selectFrom('document_signatures').select(['id', 'signer']).where('tenant_id', '=', tenantId).where('doc_ref', '=', docRef).where('role', '=', role)
+      .where('version', '=', version).where('revoked_at', 'is', null).executeTakeFirst();
+    if (!sig) throw Errors.notFound(`chữ ký vai ${role} của ${docRef}`);
+    if (sig.signer !== by.actor && by.role !== 'owner') throw Errors.forbidden('Chỉ người đã ký hoặc chủ đơn vị huỷ được chữ ký');
+    await tx.updateTable('document_signatures').set({ revoked_at: new Date(), revoked_by: by.actor }).where('id', '=', sig.id).execute();
   },
 };

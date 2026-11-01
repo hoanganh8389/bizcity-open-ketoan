@@ -1,6 +1,7 @@
 // @bizcity-layer P documents
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): HTTP xem phiên bản / liên kết / đính kèm, gửi / gỡ tệp, tải tệp cho mọi chứng từ
 // [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — sha256 có thể null (tệp Mua hàng chuyển ở 0046); loại tệp nhận gạch dưới
+// [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — core.document-signature.list (documents.signatures, 0047)
 /**
  * Chứng từ dùng chung qua HTTP (bizcity_document@1 §7) — cho giao diện; module dùng ctx.documents.* trong action của mình.
  *   GET  /api/v1/document-versions?docRef=                core.document-version.list      các phiên bản (không kèm nội dung)
@@ -10,6 +11,7 @@
  *   POST /api/v1/document-attachments                     core.document-attachment.add    gửi tệp (base64); cùng tệp gửi lại → tệp cũ
  *   POST /api/v1/document-attachments/:id/archive         core.document-attachment.archive gỡ tệp (không xoá cứng)
  *   GET  /api/v1/document-attachments/:id/file            tải nội dung (kiểm sha256 trước khi trả)
+ *   GET  /api/v1/document-signatures?docRef=              core.document-signature.list    chữ ký theo vai (ký / huỷ ký: ctx.documents trong action của module)
  * Gửi qua HTTP giới hạn bởi bodyLimit 20 MB của máy chủ (base64 ≈ 4/3 tệp) — tệp gần 15 MB nên gửi từ action của module.
  */
 import type { FastifyInstance } from 'fastify';
@@ -98,7 +100,17 @@ const attachmentArchive = defineAction({
   handler: (ctx, q) => documents.archiveAttachment(ctx.data.tx, ctx.tenant.id, q.id, ctx.actor.id),
 });
 
-export const docRefActions = [versionList, versionGet, linkList, attachmentList, attachmentAdd, attachmentArchive];
+const signatureList = defineAction({
+  id: 'core.document-signature.list', title: 'Chữ ký trên chứng từ', tags,
+  description: 'Chữ ký theo vai còn hiệu lực của chứng từ (docRef), mới → cũ; valid = ký đúng phiên bản hiện tại (phiên bản mới thì chữ ký cũ hết hiệu lực).',
+  permission: 'documents:read', effect: 'read', idempotency: 'none',
+  input: z.object({ docRef: docRefSchema }),
+  output: z.object({ docRef: z.string(), currentVersion: z.number(), signatures: z.array(z.object({ role: z.string(), version: z.number(), signer: z.string(), signerName: z.string(), signedAt: z.string(), valid: z.boolean() })) }),
+  expose: { http: { method: 'GET', path: '/api/v1/document-signatures' }, mcp: false, ai: 'read' },
+  handler: async (ctx, q) => ({ docRef: q.docRef, currentVersion: await documents.currentVersion(ctx.data.tx, ctx.tenant.id, q.docRef), signatures: await documents.signatures(ctx.data.tx, ctx.tenant.id, q.docRef) }),
+});
+
+export const docRefActions = [versionList, versionGet, linkList, attachmentList, attachmentAdd, attachmentArchive, signatureList];
 
 export async function docRefRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, docRefActions);

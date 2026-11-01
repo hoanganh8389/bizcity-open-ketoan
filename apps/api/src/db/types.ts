@@ -12,6 +12,7 @@
 // [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — data.read-views (PHASES 2.4): kiểu tám khung nhìn danh mục bizcity_read.* (migration 0044).
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): kiểu document_versions / document_links / document_attachments (migration 0045).
 // [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_attachments.storage_root, legacy_ref, sha256 null (0046).
+// [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_signatures.doc_ref, event_id null (0047, documents.signatures).
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -300,7 +301,10 @@ export interface CostNormsTable {
 export interface DocumentSignaturesTable {
   id: Generated<string>;
   tenant_id: string;
-  event_id: string;
+  /** Phiếu kế toán; NULL khi ký chứng từ module (doc_ref) — 0047. */
+  event_id: string | null;
+  /** Chứng từ module <module>.<loại>:<id>; NULL khi ký phiếu kế toán — 0047. */
+  doc_ref: string | null;
   version: number;
   role: string;
   signer: string;

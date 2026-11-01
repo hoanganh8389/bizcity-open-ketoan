@@ -21,13 +21,13 @@ const oldDataDir = process.env.DATA_DIR;
 const auth = (): AuthContext => ({ tenantId, actor: 'user:test', actorName: 'Test', kind: 'user', role: null, permissions: new Set<Permission>(['documents:write', 'documents:read']) });
 
 /** Action giả của module hop-dong: chạy hàm f với ctx thật trong giao dịch của action. */
-function run<T>(f: (c: ActionContext) => Promise<T>, opts: { dryRun?: boolean } = {}) {
+function run<T>(f: (c: ActionContext) => Promise<T>, opts: { dryRun?: boolean; auth?: AuthContext; via?: string } = {}) {
   const def = defineAction({
     id: 'hop-dong.contract.thu', title: 'Thử chứng từ chung', permission: 'documents:write', effect: 'write', idempotency: 'natural', sideEffects: ['documents'], dryRun: true,
     input: z.object({}), output: z.any(), expose: {},
     handler: (c) => f(c),
   });
-  return runAction(def, {}, { auth: auth(), requestId: `dc-${Math.random()}`, dryRun: opts.dryRun });
+  return runAction(def, {}, { auth: opts.auth ?? auth(), requestId: `dc-${Math.random()}`, dryRun: opts.dryRun, via: opts.via });
 }
 
 beforeAll(async () => {
@@ -122,5 +122,37 @@ describe('documents.attachments', () => {
     expect(att).not.toHaveProperty('created');
     await expect(run((c) => c.documents.attach('hop-dong.contract:2', { fileName: 'r.txt', data: Buffer.alloc(0) }))).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
     await expect(run((c) => c.documents.attach('hop-dong.contract:2', { fileName: 'r.txt', data: Buffer.from('x') }, { kind: 'Sai Loai' }))).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+});
+
+describe('documents.signatures', () => {
+  const other = (over: Partial<AuthContext> = {}): AuthContext => ({ ...auth(), actor: 'user:khac', actorName: 'Người khác', ...over });
+  it('ký theo vai gắn phiên bản; phiên bản mới thì chữ ký cũ hết hiệu lực; ký lặp cùng phiên bản bị chặn', async () => {
+    const ref = 'hop-dong.contract:50';
+    await run((c) => c.documents.saveVersion(ref, { total: 1 }));
+    const s = (await run((c) => c.documents.sign(ref, 'preparer'))).data;
+    expect(s).toMatchObject({ role: 'preparer', version: 1, signer: 'user:test', valid: true });
+    await expect(run((c) => c.documents.sign(ref, 'preparer'))).rejects.toMatchObject({ code: 'CONFLICT' });
+    await run((c) => c.documents.saveVersion(ref, { total: 2 }));
+    const list = await call(ctx, 'GET', `/api/v1/document-signatures?docRef=${encodeURIComponent(ref)}`);
+    expect(list.body.data).toMatchObject({ currentVersion: 2, signatures: [{ role: 'preparer', version: 1, valid: false }] });
+    expect((await run((c) => c.documents.sign(ref, 'preparer'))).data).toMatchObject({ version: 2, valid: true });
+  });
+
+  it('khoá API, AI không ký thay người; vai sai khuôn bị từ chối; chỉ ký chứng từ của chính module', async () => {
+    await expect(run((c) => c.documents.sign('hop-dong.contract:51', 'legal'), { auth: other({ kind: 'apikey' }) })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(run((c) => c.documents.sign('hop-dong.contract:51', 'legal'), { via: 'mcp:test' })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(run((c) => c.documents.sign('hop-dong.contract:51', 'Phap Che'))).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    await expect(run((c) => c.documents.sign('quy.payment-request:1', 'legal'))).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+  });
+
+  it('huỷ chữ ký: người khác không huỷ được, chủ đơn vị huỷ được', async () => {
+    const ref = 'hop-dong.contract:52';
+    await run((c) => c.documents.sign(ref, 'legal'));
+    await expect(run((c) => c.documents.unsign(ref, 'legal'), { auth: other() })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await run((c) => c.documents.unsign(ref, 'legal'), { auth: other({ role: 'owner' }) });
+    expect((await run((c) => c.documents.signatures(ref))).data).toEqual([]);
+    const row = await db.selectFrom('document_signatures').select(['revoked_by', 'event_id']).where('doc_ref', '=', ref).executeTakeFirstOrThrow();
+    expect(row).toEqual({ revoked_by: 'user:khac', event_id: null });
   });
 });

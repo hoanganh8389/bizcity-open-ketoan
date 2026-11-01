@@ -27,7 +27,7 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
 import { z } from 'zod';
-import { ERROR_CODES, docRefModule, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
+import { ERROR_CODES, docRefModule, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
@@ -78,6 +78,10 @@ export interface ActionContext {
     links(docRef: DocRef): Promise<DocumentLink[]>;
     attach(docRef: DocRef, file: FileInput, meta?: { kind?: string; note?: string }): Promise<AttachmentRef>;
     attachments(docRef: DocRef): Promise<AttachmentRef[]>;
+    // [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.signatures: ký / huỷ ký theo vai ở phiên bản hiện tại (chỉ người dùng đăng nhập)
+    sign(docRef: DocRef, role: string): Promise<DocumentSignature>;
+    signatures(docRef: DocRef): Promise<DocumentSignature[]>;
+    unsign(docRef: DocRef, role: string): Promise<void>;
   };
   /** @deprecated Cầu nối Phase 2→3 cho service cũ cần AuthContext. Không có trong @bizcity/module-sdk. */
   readonly legacyAuth: AuthContext;
@@ -275,6 +279,9 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
             links: (ref) => documents.links(trx, tenantId, ref),
             attach: async (ref, file, m) => { own(ref); const { created: _c, ...a } = await documents.attach(trx, tenantId, ref, file, m ?? {}, actor); return a; },
             attachments: (ref) => documents.attachments(trx, tenantId, ref),
+            sign: (ref, role) => { own(ref); return documents.sign(trx, tenantId, ref, role, { actor, name: auth?.actorName ?? actor, kind: call.via ? 'ai' : auth?.kind ?? 'public' }); },
+            signatures: (ref) => documents.signatures(trx, tenantId, ref),
+            unsign: (ref, role) => { own(ref); return documents.unsign(trx, tenantId, ref, role, { actor, role: auth?.role ?? null }); },
           } satisfies ActionContext['documents'];
         })(),
         get legacyAuth() {
