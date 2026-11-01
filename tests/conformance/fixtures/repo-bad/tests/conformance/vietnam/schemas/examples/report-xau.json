@@ -1,0 +1,19 @@
+{
+  "contract": "bizcity_vn_conformance_report@1",
+  "run_id": "20261101-000000-xau",
+  "executed_at": "2026-11-01T00:00:00Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "runtime": { "os": "linux", "node": "v22.12.0", "postgres": null },
+  "target": { "kind": "plugin", "package": "pos-xau", "version": "0.0.1" },
+  "tenant_profile": { "jurisdiction": "VN", "accounting_regime": "unknown", "fiscal_year_start": "01-01", "entity_type": "enterprise", "simulated": true },
+  "scope": ["C03"],
+  "rulepacks": [{ "id": "xau", "version": "1.0.0", "status": "draft", "rules_hash": null }],
+  "cases": [
+    { "id": "vn.xau.thue.sai.001", "version": "1.0.0", "priority": "P0", "status": "FAIL", "reason": "", "evidence": [] },
+    { "id": "vn.xau.thue.sai.002", "version": "1.0.0", "priority": "P0", "status": "NOT_TESTED", "reason": "", "evidence": [] }
+  ],
+  "known_exclusions": [],
+  "result": "PASS",
+  "label": "Passed Bizcity VN Conformance [C03/1.0.0/2026-11-01]",
+  "disclaimer": "Fixture xấu: báo cáo ghi PASS dù ca P0 FAIL / NOT_TESTED và không có lý do; rulepack chưa approved."
+}

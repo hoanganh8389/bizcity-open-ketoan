@@ -1,0 +1,51 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-integrity.idempotency.same_event_once.003",
+  "version": "0.1.0",
+  "rulepack": "accounting-integrity",
+  "spec_ref": "C01.3",
+  "title": "Cùng đơn vị + docKey + version gửi nhiều lần chỉ ghi sổ một lần; action ghi cùng Idempotency-Key chỉ có một tác động",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "ledger-flow.test.ts",
+      "actions.test.ts",
+      "DG-EVENT-1"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "duplicate_submit_no_double_post",
+      "idempotency_key_single_effect"
+    ],
+    "gap": "Khoá idempotency của sự việc là (tenant_id, doc_key) + version, không có trường source riêng như đặc tả (tenant_id + source + idempotency_key). Cần người duyệt chốt docKey có tiền tố nguồn là đủ hay phải thêm cột."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.xau.thue.sai.001",
+  "version": "1.0.0",
+  "rulepack": "khac",
+  "title": "Ca xấu: approved, khai rulepack khác, bằng chứng trỏ check / test không có, golden hash null, người duyệt là agent",
+  "status": "approved",
+  "priority": "P0",
+  "applies_to": { "entity_types": ["any"], "fiscal_year_start_from": null, "transaction_date_from": null, "transaction_date_to": null },
+  "legal_basis": [],
+  "scenario": {
+    "kind": "fixture",
+    "verified_by": ["SC-KHONG-CO-9", "khong-co.test.ts"],
+    "input_fixture": "fixtures/a.input.json",
+    "expected_fixture": "fixtures/a.expected.json",
+    "assertions": ["tax_amount_matches"],
+    "gap": null
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": { "accounting_reviewer": "Claude", "tax_reviewer": null, "approved_at": "2026-11-01", "notes": "" },
+  "golden": { "hash": null, "approved_at": null }
+}

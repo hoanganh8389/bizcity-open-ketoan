@@ -1,0 +1,20 @@
+{
+  "contract": "bizcity_vn_rulepack@1",
+  "id": "xau",
+  "version": "1.0",
+  "catalog_id": "C03",
+  "title": "Rulepack xấu: approved mà căn cứ còn pending, thiếu người duyệt, chưa phát hành, ca thiếu tệp",
+  "jurisdiction": "VN",
+  "domain": "tax",
+  "regime": "neutral",
+  "priority": "P0",
+  "status": "approved",
+  "applies_to": { "entity_types": ["any"], "fiscal_year_start_from": null, "transaction_date_from": "2026-12-31", "transaction_date_to": "2026-01-01" },
+  "legal_basis": [
+    { "source_id": "vn.law.xau-1", "provision_ref": "REVIEW_REQUIRED", "review_status": "pending" },
+    { "source_id": "vn.law.khong-co", "provision_ref": "Điều 1", "review_status": "reviewed" }
+  ],
+  "cases": ["cases/a.json", "cases/thieu.json"],
+  "review": { "accounting_reviewer": null, "tax_reviewer": null, "approved_at": null, "notes": "" },
+  "release": { "rules_hash": null, "released_at": null, "changelog": [] }
+}

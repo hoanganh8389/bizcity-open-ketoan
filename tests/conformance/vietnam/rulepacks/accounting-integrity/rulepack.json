@@ -1,0 +1,66 @@
+{
+  "contract": "bizcity_vn_rulepack@1",
+  "id": "accounting-integrity",
+  "version": "0.1.0",
+  "catalog_id": "C01",
+  "title": "Toàn vẹn kế toán: Nợ = Có, ghi sổ atomic, khoá kỳ, bút toán đảo, truy vết, idempotency, outbox",
+  "description": "Bất biến của Accounting Kernel (bizcity_domain@1). Phần lớn ca đã có kiểm tự động trong repo (DG-LEDGER-*, db-rules.test.ts…); rulepack này đặt chúng dưới một căn cứ pháp lý và một trạng thái duyệt chung.",
+  "jurisdiction": "VN",
+  "domain": "accounting",
+  "regime": "neutral",
+  "priority": "P0",
+  "status": "draft",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    },
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 27",
+      "review_status": "pending"
+    },
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "Điều về chứng từ kế toán"
+    }
+  ],
+  "cases": [
+    "cases/double_entry-balanced.json",
+    "cases/double_entry-unbalanced_rejected.json",
+    "cases/idempotency-same_event_once.json",
+    "cases/tenant-same_dockey_two_tenants.json",
+    "cases/period_lock-posting_rejected.json",
+    "cases/reversal-new_entry_not_mutation.json",
+    "cases/trace-rule_version_and_source_event.json",
+    "cases/outbox-publish_after_commit_only.json"
+  ],
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "release": {
+    "rules_hash": null,
+    "released_at": null,
+    "changelog": [
+      {
+        "version": "0.1.0",
+        "date": "2026-11-01",
+        "note": "Khởi tạo nháp từ đặc tả OKT-SPEC-VNCONF-001 §5; ánh xạ sang kiểm tự động đang có; chưa duyệt"
+      }
+    ]
+  }
+}

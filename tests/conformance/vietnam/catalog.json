@@ -1,0 +1,15 @@
+{
+  "contract": "bizcity_vn_catalog@1",
+  "updated_at": "2026-11-01",
+  "note": "Danh mục kiểm chuẩn Việt Nam (đặc tả OKT-SPEC-VNCONF-001 §3). status: planned = chưa có thư mục rulepack; draft = có rulepack + ca, chưa duyệt; approved = SC-VNC-2 đạt. Thứ tự ticket: VNCONF-004 (C01), -005 (C08), -006 (C02), -007 (C03, C04).",
+  "items": [
+    { "id": "C01", "rulepack": "accounting-integrity", "title": "Toàn vẹn kế toán: Nợ/Có, ghi sổ atomic, khoá kỳ, đảo, truy vết, idempotency, outbox", "priority": "P0", "status": "draft", "ticket": "VNCONF-004" },
+    { "id": "C02", "rulepack": "accounting-regimes-vn", "title": "Chế độ kế toán: chọn TT99 / TT133 theo năm tài chính, hệ thống tài khoản, chuyển chế độ", "priority": "P0", "status": "draft", "ticket": "VNCONF-006" },
+    { "id": "C03", "rulepack": "vat-vn", "title": "Thuế GTGT: loại thuế, thuế suất theo ngày và đối tượng, khấu trừ, làm tròn (phạm vi hẹp)", "priority": "P0", "status": "planned", "ticket": "VNCONF-007" },
+    { "id": "C04", "rulepack": "einvoice-vn", "title": "Hoá đơn điện tử: mốc lập, loại, điều chỉnh / thay thế, tham chiếu, đối soát (phạm vi hẹp, mock)", "priority": "P0", "status": "planned", "ticket": "VNCONF-007" },
+    { "id": "C05", "rulepack": "financial-reporting-vn", "title": "Báo cáo tài chính: mapping, reconcile, kết chuyển, so sánh kỳ", "priority": "P1", "status": "planned", "ticket": null },
+    { "id": "C06", "rulepack": "payroll-pit-vn", "title": "Lương, thuế TNCN, trích nộp theo phạm vi duyệt", "priority": "P1", "status": "planned", "ticket": null },
+    { "id": "C07", "rulepack": "inventory-costing", "title": "Nhập xuất, giá vốn, chi phí sản xuất dở dang, phân bổ", "priority": "P1", "status": "planned", "ticket": null },
+    { "id": "C08", "rulepack": "plugin-boundary-security", "title": "Ranh giới plugin: RBAC, cô lập đơn vị, sổ cái được bảo vệ, retry / replay sự kiện", "priority": "P0", "status": "draft", "ticket": "VNCONF-005" }
+  ]
+}

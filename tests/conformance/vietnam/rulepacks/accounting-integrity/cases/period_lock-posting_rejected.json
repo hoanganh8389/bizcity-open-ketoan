@@ -1,0 +1,52 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-integrity.period_lock.posting_rejected.005",
+  "version": "0.1.0",
+  "rulepack": "accounting-integrity",
+  "spec_ref": "C01.5",
+  "title": "Ghi vào kỳ đã khoá bị từ chối (PERIOD_LOCKED); mở khoá bắt buộc lý do và ghi nhật ký",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "period-locks.test.ts",
+      "ledger-flow.test.ts",
+      "closing-controls.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "locked_period_rejected",
+      "unlock_requires_reason",
+      "unlock_audited"
+    ],
+    "gap": "Quy trình điều chỉnh được uỷ quyền trong kỳ khoá: hiện chỉ có documents:bypass-date-lock cho khoá dữ liệu theo ngày; khoá kỳ không có đường vòng, cần người duyệt xác nhận đây là hành vi mong muốn."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}
