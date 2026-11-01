@@ -181,6 +181,20 @@ BIZCITY_PASSWORD='Admin@123' node scripts/cai-preset.mjs thuong-mai-ban-le \
 
 ## Giám sát vận hành: Prometheus · Grafana · Loki
 
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
+**Sáu lớp bảo đảm** của Bizcity Core ([ADR-0010](docs/adr/ADR-0010-opentelemetry-tu-loi.md)). Chỉ hai lớp đầu quyết định và lưu sự thật; bốn lớp sau chỉ quan sát, tắt hay hỏng cũng không ảnh hưởng sổ.
+
+| Lớp | Bảo đảm |
+|---|---|
+| 1. **Accounting Kernel** | ghi sổ đúng |
+| 2. **PostgreSQL + Audit Ledger** | lưu bằng chứng nghiệp vụ |
+| 3. **OpenTelemetry** | theo dõi hành trình thực thi: yêu cầu đi qua module, action, Kernel, CSDL, sự kiện nào |
+| 4. **Prometheus** | đo sức khoẻ và hiệu năng |
+| 5. **Grafana + Tempo + Loki** | quan sát, điều tra lỗi |
+| 6. **Alertmanager** | thông báo khi có bất thường |
+
+Khi cộng đồng viết module VAT, công nợ, CRM, kho hay agent AI trên cùng Core, mỗi span đã mang sẵn tên module (`bizcity.module`). Một module lỗi thì hệ thống chỉ ra được **module nào, bước nào, ảnh hưởng tới luồng nào**, mà không cần sửa Accounting Kernel. Truy vết OpenTelemetry đang được code (PHASE-018 W5); thiết kế xem [kiến trúc §7–§8](docs/architecture/README.md).
+
 Bộ giám sát **đi kèm trong repo, chạy bằng Docker, không phải cài riêng** và **không bắt buộc**: không bật thì phần mềm kế toán vẫn chạy bình thường. Bật bằng `bash scripts/cai-nhanh.sh --giam-sat`, hoặc ghép tệp compose:
 
 ```bash
@@ -328,7 +342,7 @@ open-ketoan đang trong giai đoạn **xây dựng / chuẩn hoá framework**. K
 | MCP tools | Có công cụ đọc; một số công cụ ghi / đề xuất còn dự kiến |
 | Transactional outbox, domain event runtime | Chưa hoàn thành; nằm trong lộ trình |
 | RLS, PITR và hardening cho multi-tenant | Cần tiếp tục hoàn thiện |
-| Giám sát Prometheus / Grafana / Loki: ghi sổ, sự kiện, đối soát, 9 dashboard, 14 cảnh báo (PHASE-018, 01/11/2026) | Có trên nhánh `feat/phase-018-giam-sat`; trace OpenTelemetry, SLO, widget CEO còn trong lộ trình |
+| Giám sát Prometheus / Grafana / Loki: ghi sổ, sự kiện, đối soát, 9 dashboard, 14 cảnh báo (PHASE-018, 01/11/2026) | Có trên nhánh `feat/phase-018-giam-sat`; trace OpenTelemetry đã chốt thiết kế từ lõi (ADR-0010), đang code; SLO, widget CEO còn trong lộ trình |
 | Kết nối một chạm với Bizcity Cell (Zalo / web chat) | Đặc tả xong, chưa code (PHASE-015) |
 | NATS, Redis, Kong, Kubernetes | Tuỳ chọn ở các giai đoạn sau |
 

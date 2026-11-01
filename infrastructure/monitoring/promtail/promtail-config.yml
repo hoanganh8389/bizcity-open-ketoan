@@ -70,8 +70,8 @@ scrape_configs:
             #   level   — 6 giá trị;
             #   errCode — tập mã lỗi cố định trong Errors.* (VALIDATION_ERROR, PERIOD_LOCKED, …);
             #   evt     — tập tên sự kiện cố định do code định nghĩa (bizcity.ledger.posted, …);
-            #   tenant  — số đơn vị (thường vài chục). Nếu một bản cài phục vụ hàng trăm+ đơn vị,
-            #             XOÁ tenant khỏi khối labels dưới đây và lọc bằng `| json | tenant="..."`.
+            #   tenant  — số đơn vị (thường vài chục). Bản cài phục vụ hàng trăm+ đơn vị: đặt LOKI_LABELDROP=tenant trong .env
+            #             (bước labeldrop dưới) và lọc bằng `| json | tenant="..."` — không phải sửa tệp này.
             # KHÔNG đưa reqId, traceId, docKey, actor, route lên nhãn: mỗi giá trị mới tạo một luồng (stream)
             # mới trong Loki → chỉ mục phình, truy vấn chậm, chạm giới hạn max_global_streams_per_user.
             # Chúng vẫn nằm nguyên trong dòng JSON; tìm bằng `|= "<reqId>"` hoặc `| json | reqId="..."`.
@@ -80,6 +80,10 @@ scrape_configs:
                 tenant:
                 errCode:
                 evt:
+            # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bỏ nhãn theo biến LOKI_LABELDROP (S018-13b); mặc định bỏ nhãn không tồn tại = giữ nguyên.
+            # Cần promtail chạy với -config.expand-env=true (docker-compose.monitoring.yml). Trường vẫn nằm trong dòng JSON.
+            - labeldrop:
+                - ${LOKI_LABELDROP:-khong_bo_nhan_nao}
             # reqId / traceId gắn làm structured metadata (Loki 3): lọc nhanh `| traceId="…"` mà không tạo luồng mới.
             - structured_metadata:
                 reqId:

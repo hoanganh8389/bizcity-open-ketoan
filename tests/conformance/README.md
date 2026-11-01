@@ -135,6 +135,7 @@ export default {
 | Action / API / Event / Evidence | SC-API-1..3, SC-ACT-1, SC-EVT-1, SC-EVD-1..2 | grep tay trong review |
 | Bảo mật, phát hành | SC-SEC-1..4, SC-REL-1..2 | review tay theo RULE-SECURITY, RULE-RELEASE |
 | Gói định khoản | SC-TPL-1 (`--module <thư mục gói>` kiểm một gói) | mới — [bizcity_posting_template@1](../../docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md) |
+| Bộ giám sát (CONF-STATIC) | SC-OBS-1 (số đo `bizcity_*` trong dashboard / luật cảnh báo có khai trong mã; dashboard JSON hợp lệ, `uid` không trùng) <!-- [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — thêm SC-OBS-1. --> | panel trống / cảnh báo không bao giờ bắn do sai tên số đo; job CI `monitoring` chạy thêm `promtool test rules`, `amtool check-config` |
 | Hợp đồng, tài liệu, lộ trình | SC-CON-1..7, SC-DOC-1..2, SC-RMP-1, SC-DIAG-1 (mã chẩn đoán app ↔ lane) | kiểm schema tay bằng ajv; kiểm liên kết tay; PHASES.md ↔ roadmap.json |
 | Diagnostics (CONF-RUN) | DG-LEDGER-1..4, DG-EVENT-1..4, DG-DB-1..4, DG-SET-1, DG-SEC-1..2, DG-PLAN-1..6 | `GET /system/diagnostics` (Phase 2) |
 

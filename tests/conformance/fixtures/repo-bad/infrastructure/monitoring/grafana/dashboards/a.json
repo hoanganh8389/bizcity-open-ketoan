@@ -1,0 +1,1 @@
+{ "uid": "trung", "title": "A", "panels": [ { "type": "stat", "targets": [ { "expr": "sum(bizcity_khong_co_total)" } ], "description": "mã lỗi theo bizcity_errors@1" } ] }

@@ -1,6 +1,7 @@
 # PHASE-018 · 40 — Master checklist
 <!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — checklist việc con S018-*, ca bằng chứng T018-*, log. -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — cập nhật trạng thái sau khi code W1–W4 (nhánh feat/phase-018-giam-sat). -->
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 > Nguồn trạng thái **việc con** duy nhất của phase (thay `PHASE-STATUS.md` của bản giao việc). Nhiều phiên: chỉ sửa đúng dòng theo ID; Log chỉ nối thêm.
 > Ký hiệu: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài nhóm · ❌ huỷ.
@@ -13,7 +14,7 @@
 | S018-3 | Bản mẫu dashboard đích ([mockups/](mockups/README.md)) | W0 | P0 | — | ✅ 2026-11-01 |
 | S018-4 | Đo mốc trên **máy chủ thật**: p50/p95/p99, pool, bộ nhớ, 5xx, R-KER-9 (a)–(d) — ca T018-1 | W0 | P0 | — | ☐ máy dev đã có số chi phí `/metrics` (evidence W1-W4); máy chủ thật chưa đo |
 | S018-5 | Mật khẩu Grafana thành biến bắt buộc | W1 | P0 | có | ✅ 2026-11-01 (`docker compose config` báo lỗi khi thiếu) |
-| S018-5b | Exporter dùng `ketoan_monitor` chỉ đọc trên máy chủ thật | W1 | P1 | — | ☐ hướng dẫn có ở README §6, chưa bắt buộc |
+| S018-5b | Exporter dùng `ketoan_monitor` chỉ đọc (job `db-migrate` tự tạo khi có `PG_EXPORTER_PASSWORD`; `cai-nhanh.sh --giam-sat` tự sinh) | W1 | P1 | có | ✅ 2026-11-01 (chạy thật: exporter = `ketoan_monitor`, `pg_up = 1`, đọc `ledger_entries` bị từ chối) |
 | S018-6 | Số đo ghi sổ `bizcity_postings_total`, `bizcity_posting_failures_total` (đọc `posting_log`, D018-3 sửa) | W1 | P1 | có | ✅ 2026-11-01 |
 | S018-7 | Đường ghi sổ không có lời gọi giám sát; bộ thu chỉ đọc + `statement_timeout` — ca T018-2 | W1 | P1 | có | ✅ 2026-11-01 |
 | S018-8 | `bizcity_db_pool_max` + cảnh báo `DbPoolSaturation` | W1 | P1 | có | ✅ 2026-11-01 |
@@ -21,14 +22,15 @@
 | S018-10 | `bizcity_idempotency_requests_total` trong `runAction` | W2 | P1 | có | ✅ 2026-11-01 |
 | S018-11 | Mốc + kết quả tự chẩn đoán (`bizcity_diagnostics_last_*`, `bizcity_diagnostics_checks`) — ca T018-3 | W2 | P1 | có | ✅ 2026-11-01 |
 | S018-12 | Thêm dashboard 07 Đường sự kiện, 08 Đa đơn vị, 09 Toàn vẹn sổ — ca T018-4 | W3 | P1 | có | ✅ 2026-11-01 (27/28 truy vấn có dữ liệu thật; 1 "Chưa thu" đúng chủ đích) |
-| S018-12b | Nâng dashboard 01 (dải KPI), 03 (bão hoà pool), 04 (ghi sổ theo hành động) | W3 | P2 | chưa | ☐ số đo đã có, bảng 09 đã hiển thị; gộp vào 01/03/04 sau |
+| S018-12b | Nâng dashboard 01 (dải KPI sổ & sự kiện), 03 (bão hoà pool), 04 (ghi sổ theo hành động, từ chối vs lỗi kỹ thuật) | W3 | P2 | có | ✅ 2026-11-01 (11 truy vấn mới đúng cú pháp trên Prometheus chạy thật; 8 có dữ liệu, 3 chờ phát sinh) |
 | S018-13 | `bizcity_tenants{band}`, `bizcity_tenants_with_backlog` | W3 | P1 | có | ✅ 2026-11-01 |
-| S018-13b | Tắt nhãn `tenant` Loki trên máy chủ thật (> 100 đơn vị), bảng 05 đổi sang `bizcity_tenants` | W3 | P1 | chưa | ☐ |
+| S018-13b | Tắt nhãn `tenant` Loki khi > 100 đơn vị: `LOKI_LABELDROP=tenant` (promtail `-config.expand-env`), không sửa tệp; số đơn vị xem bảng 08 | W3 | P1 | có | ✅ 2026-11-01 (kiểm cấu hình sau thế biến: mặc định giữ, `tenant` thì bỏ; Loki chạy thật nhận nhãn bình thường) |
 | S018-14 | 6 cảnh báo mới + định tuyến kế toán, ức chế; `promtool test rules` — ca T018-5 | W4 | P1 | có | ✅ 2026-11-01 |
-| S018-14b | Đưa `promtool check / test rules` vào CI | W4 | P2 | chưa | ☐ |
+| S018-14b | CI: job `monitoring` (`promtool check config`, `test rules`, `amtool check-config`) + check tĩnh SC-OBS-1 (tên số đo trong dashboard / luật phải có trong mã) | W4 | P2 | có | ✅ 2026-11-01 (lệnh CI chạy cục bộ SUCCESS; SC-OBS-1 tự kiểm bắt 3/3 vi phạm mẫu) |
 | S018-15 | `docs/ops/RUNBOOK-CANH-BAO.md`: runbook 14 cảnh báo | W4 | P1 | — | ✅ 2026-11-01 |
 | S018-16 | Cập nhật bảng §3 / §4 `docs/ops/OBSERVABILITY.md` + `infrastructure/monitoring/README.md` (R-OBS-6) | W1–W4 | P1 | — | ✅ 2026-11-01 |
-| S018-17 | ADR-0010 OpenTelemetry + Tempo tuỳ chọn; trace HTTP → action → ghi sổ → CSDL — ca T018-6 | W5 | P2 | chưa | ⛔ Q018-2 |
+| S018-17a | ADR-0010 OpenTelemetry từ lõi: sáu lớp bảo đảm, khớp nối S1–S9, danh sách thuộc tính, Tempo; ghi vào [architecture §7–§8](../../architecture/README.md), OBSERVABILITY §1.1 + R-OBS-7/8 | W5 | P1 | — | ✅ 2026-11-01 (chủ quyết Q018-2) |
+| S018-17 | Code theo ADR-0010: `core/tracing.ts`, span S1–S9 + bọc cổng Kernel (K1), lọc thuộc tính, migration `event_outbox.trace_parent` + `audit_logs.trace_id`, `ctx.trace.step`, SC-OBS-2, Collector + Tempo, Grafana trace ↔ log ↔ số đo — ca T018-6 | W5 | P1 | chưa | ☐ mở (không còn chờ Q018-2) |
 | S018-18 | SLI / SLO, đo tải theo Q018-5, kịch bản sập, lint cấu hình giám sát trong CI | W6 | P2 | chưa | ⛔ Q018-5 |
 | S018-19 | API tóm tắt sức khoẻ có phân quyền + widget CEO 4 chỉ số — ca T018-7 | W7 | P3 | chưa | ⛔ PHASE-015, Q018-6 |
 | S018-20 | Luật dò `H-METRIC-LABEL` trong `scripts/ra-soat-dong-gop.mjs` + RULE-REVIEW §4 | W1 | P1 | có | ✅ 2026-11-01 |
@@ -51,3 +53,5 @@
 |---|---|---|
 | 2026-10-31 23:40 | Claude Code (theo chỉ đạo Johnny Chu – Chu Hoàng Anh) | Mở phase từ bản giao việc observability; khảo sát repo (S018-1); kiến trúc + đặc tả (S018-2); bản mẫu dashboard (S018-3). Chưa sửa mã chạy. |
 | 2026-11-01 00:04–01:10 | Claude Code (theo chỉ đạo "ok code") | Nhánh `feat/phase-018-giam-sat` (worktree riêng). W1–W4: bộ thu `posting_log` / outbox / đối soát / đơn vị theo dải, bộ đếm gửi lặp / lượt giao, `readWithTimeout`, mật khẩu Grafana bắt buộc, 3 dashboard, 6 cảnh báo + test promtool, runbook, `H-METRIC-LABEL`. D018-3 / D018-4 sửa theo mã thật. Kiểm: typecheck, selfcheck, vitest, promtool, chạy thật API + Prometheus + Grafana tạm. |
+| 2026-11-01 01:14–01:50 | Claude Code (theo chỉ đạo "code tiếp") | Nhánh `feat/phase-018-tiep`: S018-14b (job CI `monitoring` + check SC-OBS-1 kèm ca tự kiểm), S018-12b (hàng PHASE-018 ở dashboard 01 / 03 / 04), S018-13b (`LOKI_LABELDROP`), S018-5b (vai trò `ketoan_monitor` do job `db-migrate` tạo). Kiểm chạy thật trên stack local. |
+| 2026-11-01 15:01 | Claude Code (theo chỉ đạo "cần có OpenTelemetry … ngay từ lõi kiến trúc") | Q018-2 đã quyết. ADR-0010 (sáu lớp bảo đảm, span ở khớp nối, bọc cổng Kernel K1, danh sách thuộc tính, Tempo); architecture §7–§8; OBSERVABILITY §1.1 + R-OBS-7/8; D018-7 sửa; W5 nâng P1. Chưa sửa mã chạy. |

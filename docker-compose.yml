@@ -56,6 +56,8 @@ services:
       SEED_API_KEY: ${SEED_API_KEY:-}
       # Có giá trị: job bật đăng nhập cho vai trò ketoan_app (migration 0032) — API dùng vai trò thường (R-SEC-6).
       DB_APP_PASSWORD: ${DB_APP_PASSWORD:-}
+      # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — có giá trị: job tạo / cập nhật vai trò chỉ đọc thống kê ketoan_monitor cho postgres-exporter.
+      PG_EXPORTER_PASSWORD: ${PG_EXPORTER_PASSWORD:-}
       TZ: Asia/Ho_Chi_Minh
 
   api:

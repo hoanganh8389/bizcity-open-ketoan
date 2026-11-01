@@ -1,5 +1,6 @@
 # PHASE-018 · 20 — Kiến trúc giám sát Bizcity Core Framework
 <!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — kiến trúc giám sát: cổng quan sát Kernel, danh mục số đo + ngân sách nhãn, 9 dashboard, cảnh báo + runbook, cô lập đơn vị, triển khai / quay lui, ma trận test. -->
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework, thiết kế bởi Johnny Chu – Chu Hoàng Anh. Tài liệu này là **thiết kế đề xuất** (D018-*, chờ duyệt). Số liệu và ngưỡng là mục tiêu ban đầu, chỉnh lại sau mốc đo W0.
 > Gộp các tệp `01-ARCHITECTURE-ADR` … `07-TEST-AND-ACCEPTANCE` của bản giao việc (ánh xạ: [00-MASTER-PLAN §2](00-MASTER-PLAN.md)).
@@ -16,6 +17,7 @@
 | O-4 | **Nhãn có ngân sách.** Mỗi số đo khai tập giá trị nhãn và số chuỗi tối đa (§2.3); vượt ngân sách là lỗi review | R-OBS-4 |
 | O-5 | **Chi tiết ở nguồn có quyền, tổng hợp ở Prometheus.** Sai lệch đối soát nằm ở `diagnostic_runs`; ID nằm ở log / trace; Prometheus chỉ có đếm, trạng thái, mốc thời gian | AP-1, O-1 |
 | O-6 | **Mỗi số đo một bảng.** Code + bảng §3 `OBSERVABILITY.md` + dashboard + cảnh báo đổi cùng PR | R-OBS-6 |
+| O-7 | **Truy vết từ lõi, đặt ở khớp nối.** OpenTelemetry là lớp 3 của sáu lớp bảo đảm. Span chỉ ở khớp nối Platform (HTTP, MCP, `runAction`, outbox, CSDL, gọi ra ngoài) + bọc một lần cổng `kernel/public.ts`; module không import `@opentelemetry/*`; thuộc tính theo danh sách cho phép | [ADR-0010](../../adr/ADR-0010-opentelemetry-tu-loi.md), R-OBS-7/8 |
 
 ### 1.2 Sơ đồ thành phần
 
@@ -52,7 +54,7 @@ flowchart TB
     LOKI["Loki"] --> GRAF
     PT["Promtail"] --> LOKI
     PGX["postgres-exporter<br/>ketoan_monitor (chỉ đọc)"] --> PROM
-    TEMPO["Tempo + OTel Collector<br/>(W5, ADR-0010)"]:::opt --> GRAF
+    TEMPO["Tempo + OTel Collector<br/>(W5, ADR-0010 — SDK luôn có trong Core)"]:::opt --> GRAF
   end
   MET -->|scrape 15 s| PROM
   APP -->|pino JSON stdout| PT
@@ -201,7 +203,7 @@ Tự động hoá cảnh báo **chỉ báo**, không bao giờ sửa dữ liệu
 |---|---|
 | Số đo | không nhãn ID (R-OBS-4); số đơn vị chỉ dạng dải (D018-6) |
 | Log | ID nằm trong dòng JSON, không làm nhãn Loki; **bỏ nhãn `tenant` Loki** khi số đơn vị > 100 (cấu hình, mặc định tắt trên máy chủ thật) |
-| Trace (W5) | thuộc tính được phép: route, action id, `doc_type`, kết quả, mã lỗi, mã đơn vị; cấm: tham số SQL, payload chứng từ, header xác thực, tên / MST / số tiền |
+| Trace (W5) | **danh sách cho phép** ([ADR-0010 §4](../../adr/ADR-0010-opentelemetry-tu-loi.md)), bộ lọc `SpanProcessor` bỏ mọi thuộc tính khác trước khi xuất: route mẫu, action id, `bizcity.module`, `doc_type`, kết quả, mã lỗi, mã nội bộ đơn vị; cấm: câu / tham số SQL, payload chứng từ, header xác thực, token, tên / MST / số tiền |
 | Grafana | chỉ vai trò Ops (Viewer / Editor nội bộ); **người dùng đơn vị không vào Grafana**; mật khẩu admin là biến bắt buộc (P0) |
 | Exporter | `ketoan_monitor` chỉ đọc, bắt buộc trên máy chủ thật |
 | Cổng | Prometheus / Alertmanager / Grafana bind `127.0.0.1`; ra ngoài chỉ qua proxy có TLS + đăng nhập |
@@ -216,7 +218,7 @@ Tự động hoá cảnh báo **chỉ báo**, không bao giờ sửa dữ liệu
 | W2 | bộ thu outbox / tự chẩn đoán, bộ đếm gửi lặp / lượt giao | gỡ đăng ký bộ thu; không migration |
 | W3 | dashboard JSON | revert commit; Grafana tự nạp lại |
 | W4 | luật cảnh báo + định tuyến | revert `alerts.yml` / `alertmanager.yml`, `POST /-/reload` |
-| W5 | OTel (tuỳ chọn, cờ `OTEL_EXPORTER_OTLP_ENDPOINT`) | bỏ biến → không xuất trace |
+| W5 | OTel từ lõi (ADR-0010): SDK luôn có; xuất khi đặt `OTEL_EXPORTER_OTLP_ENDPOINT`; migration chỉ thêm `event_outbox.trace_parent`, `audit_logs.trace_id` | bỏ biến → không xuất trace; `OTEL_SDK_DISABLED=true` → no-op; hai cột mới để `NULL` được, không gỡ |
 | W7 | API tóm tắt sức khoẻ + widget | ẩn widget; API chỉ đọc, gỡ không ảnh hưởng ghi sổ |
 
 Không đợt nào cần migration đổi bảng sổ. Nếu W2 cần chỉ mục cho truy vấn đếm, đó là migration **chỉ thêm** có ước tính thời gian (R-DB-13).

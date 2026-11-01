@@ -1,5 +1,6 @@
 # PHASE-018 · 00 — Kế hoạch tổng
 <!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — kế hoạch tổng: ánh xạ bản giao việc observability vào repo, quyết định D018-*, câu hỏi Q018-*, đợt W0–W7, cổng nghiệm thu. -->
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. Phase chỉ mở rộng trên nền đã chuẩn hoá: hợp đồng `docs/contracts/`, luật `docs/rules/`, bộ kiểm `tests/conformance/`.
 
@@ -55,14 +56,14 @@ Bản giao việc đề xuất tạo `/docs/observability/`, `/infra/monitoring/
 | D018-4 | ~~Đo chi phí trên đường ghi sổ~~ → đường ghi sổ không có lời gọi giám sát nào; bộ thu chạy giao dịch **chỉ đọc**, `statement_timeout` 5 s ở CSDL (không hẹn giờ — SC-EVT-1). Đo: `/metrics` trung bình 8 ms, lớn nhất 56 ms qua 97 lượt, 0 lỗi bộ thu (evidence W1-W4) | ✅ sửa khi làm 2026-11-01 |
 | D018-5 | Phân loại theo `category` của `bizcity_errors@1`: `ledger` / `input` / `state` / `auth` = **từ chối nghiệp vụ**; `server` / `platform` / mã lạ = **lỗi kỹ thuật** | ✅ 2026-11-01 (thêm `auth`) |
 | D018-6 | Số đo cấp đơn vị chỉ ở dạng **đếm theo dải**, drill-down từng đơn vị qua API backend có phân quyền, không qua nhãn Prometheus | ✅ 2026-11-01 |
-| D018-7 | Trace OpenTelemetry là **tuỳ chọn** (W5), cần ADR-0010 vì thêm phụ thuộc npm ở Platform (R-KER-8 áp cho Kernel; Platform cũng phải qua duyệt) | chờ Q018-2 |
+| D018-7 | ~~Trace OpenTelemetry là tuỳ chọn, làm sau~~ → **OpenTelemetry từ lõi kiến trúc** ([ADR-0010](../../adr/ADR-0010-opentelemetry-tu-loi.md)): sáu lớp bảo đảm; SDK luôn có trong Core, xuất trace tuỳ chọn (`OTEL_EXPORTER_OTLP_ENDPOINT`); span chỉ ở khớp nối Platform + bọc một lần cổng `kernel/public.ts` (K1); thuộc tính theo danh sách cho phép; module cộng đồng tự có trace, không sửa Kernel <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo --> | ✅ chủ quyết 2026-11-01 ("cần có OpenTelemetry … triển khai ngay từ lõi kiến trúc") |
 
 ## 5. Câu hỏi cần chủ quyết (Q018-*)
 
 | Mã | Câu hỏi | Gợi ý |
 |---|---|---|
 | Q018-1 | Đưa phase vào lộ trình chính thức (`docs/standard/PHASES.md`, `roadmap.json`) với mã việc mới (vd 2.17–2.20 cho W1–W4, 5.10–5.12 cho W5–W7), hay giữ ngoài lộ trình? | Thêm mã — để bảng điểm tự tính tiến độ (SC-PHASE-1). Tệp lộ trình đang được phiên khác sửa: thêm sau khi phiên đó commit. |
-| Q018-2 | Chấp nhận OpenTelemetry SDK (`@opentelemetry/*`) ở Platform + Tempo tuỳ chọn? | Có, nhưng sau W4 và qua ADR-0010; MVP không cần |
+| Q018-2 | Chấp nhận OpenTelemetry SDK (`@opentelemetry/*`) ở Platform + Tempo tuỳ chọn? | ✅ **Đã quyết 2026-11-01: có, từ lõi kiến trúc** → ADR-0010, D018-7. W5 mở ngay (W4 đã đạt) |
 | Q018-3 | Chu kỳ tự chẩn đoán / đối soát định kỳ trên máy chủ thật (để đặt ngưỡng `ReconciliationStale`) | mỗi đêm + trước khoá kỳ; cảnh báo khi > 26 giờ |
 | Q018-4 | Kênh nhận cảnh báo thật (email / webhook Zalo qua cầu nối / Telegram) và người trực | chủ chọn; mặc định Alertmanager không gửi đi đâu |
 | Q018-5 | Mục tiêu tải để đo năng lực (bản giao việc nêu 500 cửa hàng / 11 kho) — xác nhận số liệu và cơ cấu đơn vị | cần số thật trước W6 |
@@ -79,7 +80,7 @@ Thứ tự bắt buộc W0 → W1 → W2 → W3 → W4; W5–W7 mở khi W4 đ�
 | **W2** | Phase 2 sự kiện + toàn vẹn | P1 | số đo outbox (chờ, tuổi, chết, lượt giao), idempotency (gửi lặp / xung đột), mốc + kết quả tự chẩn đoán | ca không cân bị từ chối có số đo; gửi lặp không ghi đôi; outbox giả lập dồn / chết phản ánh đúng |
 | **W3** | Phase 3 dashboard | P1 | nâng 6 dashboard + thêm 07 Đường sự kiện, 08 Đa đơn vị, 09 Toàn vẹn sổ theo bản mẫu | dashboard tự nạp từ repo; không panel trống do sai tên; ảnh chụp với dữ liệu demo |
 | **W4** | Phase 4 cảnh báo + runbook | P1 | thêm cảnh báo §4, runbook từng cảnh báo critical, định tuyến / im lặng / gom nhóm | test bắn / hết bắn bằng `promtool test rules`; không gửi dữ liệu tài chính |
-| **W5** | Phase 5 log + trace | P2 | trace OTel tuỳ chọn (ADR-0010), Tempo tuỳ chọn, liên kết cảnh báo → panel → trace → log | một ca lỗi ghi sổ điều tra đầu-cuối không lộ chứng từ |
+| **W5** | Phase 5 log + trace | **P1** (nâng từ P2 theo ADR-0010) | `core/tracing.ts`, span S1–S9 ở khớp nối + bọc cổng Kernel, lọc thuộc tính, `traceparent` qua outbox, `trace_id` trong bằng chứng, `ctx.trace.step`, SC-OBS-2, OTel Collector + Tempo, liên kết cảnh báo → panel → trace → log | một lỗi của module điều tra đầu-cuối không lộ chứng từ (T018-6); không đặt endpoint → không kết nối ra ngoài; chi phí ≤ 5% p95 ghi sổ khi xuất, ≤ 1% khi không |
 | **W6** | Phase 6 SLO + năng lực | P2 | SLI/SLO, đo tải, kịch bản sập (Prometheus / Grafana / CSDL chậm), lint cấu hình trong CI | có kết quả đo; ghi sổ vẫn đúng khi giám sát sập |
 | **W7** | Phase 7 widget CEO | P3 | API `health summary` có phân quyền; widget 4 chỉ số trong app / Cell | test chéo đơn vị, không dữ liệu / dữ liệu cũ hiển thị đúng |
 
