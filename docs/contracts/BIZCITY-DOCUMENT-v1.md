@@ -3,7 +3,7 @@
 <!-- [2026-10-31 03:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bizcity_document 1.1.0-draft: §5.1 hiện trạng runtime documents.workflow (khoá YAML, levels, sod, owner, ledger), hai luồng đã chuyển. -->
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — bizcity_document 1.2.0-draft: §7.1 hiện trạng ctx.documents (số, phiên bản, liên kết, đính kèm), §8 đánh số một chỗ. -->
 <!-- [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §8: purchase_attachments đã chuyển sang document_attachments (0046) -->
-<!-- [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1 / §8: documents.signatures (doc_ref, 0047) -->
+<!-- [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1 / §8: documents.signatures (doc_ref, 0048) -->
 
 > **Phiên bản:** 1.2.0-draft · 2026-11-01 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
 > **Luật nền:** [R-WF](../rules/RULE-WORKFLOW.md), [R-EVENT](../rules/RULE-EVENT.md) · **Năng lực:** `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments`, `documents.signatures`, `documents.workflow`, `ledger.submit`
@@ -145,13 +145,13 @@ Ghi (`saveVersion`, `link` phía `from`, `attach`) chỉ trên docRef của chí
 | `document_sequences` (phiếu tay, `quy`, `mua-hang` tự ghi) | **đã** một chỗ cấp số 2026-11-01: `documentNumbers.next` của Kernel; khoá dãy cũ giữ nguyên |
 | `payment_requests.status` 7 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, submitted(pending), approved1(pending), approved(approved), rejected(draft), paid(done), cancelled` |
 | `purchase_documents.status` 4 trạng thái | **đã** khai bằng workflow YAML (2026-10-31): `draft, pending_approval(pending), approved(approved), cancelled`; chuyển `submit, approve, override, unapprove, cancel` |
-| `document_signatures` (gắn `event_id`) | **đã** thêm cột `doc_ref` (migration 0047, 2026-11-01): ký được mọi chứng từ; mỗi dòng gắn đúng một trong `event_id` / `doc_ref`; phiếu kế toán giữ 4 vai cũ |
+| `document_signatures` (gắn `event_id`) | **đã** thêm cột `doc_ref` (migration 0048, 2026-11-01): ký được mọi chứng từ; mỗi dòng gắn đúng một trong `event_id` / `doc_ref`; phiếu kế toán giữ 4 vai cũ |
 | `reference_documents` (`open/used/closed`) | một loại chứng từ của module Thuế dùng `document_links` |
 | `purchase_attachments` | **đã** chuyển sang `document_attachments` (migration 0046, 2026-11-01): docRef `mua-hang.<loại chủ>:<mã>` (partner, document, policy, invoice), tệp cũ giữ chỗ (`storage_root = dinh-kem`), băm ở lần tải đầu, `legacy_ref` đối chiếu; bảng cũ khoá thêm / sửa |
 
 ## 9. Nhật ký
 
-- **1.2.0-draft (2026-11-01, bổ sung 2):** §7.1 thêm `sign` / `signatures` / `unsign` (documents.signatures, 0047); §8 `document_signatures.doc_ref` có.
+- **1.2.0-draft (2026-11-01, bổ sung 2):** §7.1 thêm `sign` / `signatures` / `unsign` (documents.signatures, 0048); §8 `document_signatures.doc_ref` có.
 - **1.2.0-draft (2026-11-01, bổ sung):** §8 — đính kèm Mua hàng đã chạy trên đính kèm chung (0046); `AttachmentRef.sha256` có thể `null` với tệp chuyển sang chưa tải lần nào.
 - **1.2.0-draft (2026-11-01):** thêm §7.1 hiện trạng `ctx.documents` — `nextNumber`, `saveVersion`, `versions`, `link`, `links`, `attach`, `attachments` có; `transition` vẫn qua `documents.workflow`. §8: đánh số một chỗ, `document_versions` có. Chỉ thêm, tương thích.
 - **1.1.0-draft (2026-10-31):** thêm §5.1 hiện trạng runtime `documents.workflow` — khoá YAML tuỳ chọn, tương thích: `label`, `title`, `levels`, `owner`, `blocked`, `denied`, `ledger`; ghi rõ phần chưa có (`by: event`, quyền riêng của module). Ánh xạ §8: `payment_requests`, `purchase_documents` đã chạy theo YAML (PHASE-012 S012-1).

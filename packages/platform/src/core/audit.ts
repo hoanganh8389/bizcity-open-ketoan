@@ -4,14 +4,17 @@
 // [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/core/audit.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
  * Bằng chứng thao tác (bizcity_evidence@1) trên bảng audit_logs.
  *   writeEvidence()  runtime action gọi (core/actions.ts): đủ trường bằng chứng, trả biên nhận { evidenceId, hash, at }.
  *   writeAudit()     cách cũ, service gọi tay sau thao tác ghi (thêm, sửa, xoá, khoá kỳ…) — vẫn vào chuỗi băm.
  * Chuỗi băm (chain_seq, prev_hash, hash) và lớp chỉ thêm do trigger CSDL lo (migration 0036): không ai sửa, xoá được dòng đã ghi.
+ * trace_id (migration 0047, ADR-0010): mã trace của yêu cầu — nối bằng chứng với trace / log; quan sát, không thuộc chuỗi băm.
  */
 import type { Db } from '../db/client.js';
 import { currentRequest } from './request-context.js';
+import { currentTraceId } from './tracing.js';
 
 export interface AuditEntry {
   tenantId: string;
@@ -34,6 +37,7 @@ export async function writeAudit(trx: Db, e: AuditEntry): Promise<void> {
       object_id: e.objectId ?? null,
       request_id: currentRequest()?.requestId ?? null,
       correlation_id: currentRequest()?.correlationId ?? null,
+      trace_id: currentTraceId() ?? null,
       before_data: e.before === undefined ? null : JSON.stringify(e.before),
       after_data: e.after === undefined ? null : JSON.stringify(e.after),
     })
@@ -77,6 +81,7 @@ export async function writeEvidence(trx: Db, e: EvidenceEntry): Promise<Evidence
       subject: e.subject ?? null,
       request_id: e.requestId ?? currentRequest()?.requestId ?? null,
       correlation_id: e.correlationId ?? currentRequest()?.correlationId ?? null,
+      trace_id: currentTraceId() ?? null,
       idempotency_key: e.idempotencyKey ?? null,
       input_hash: e.inputHash ?? null,
       result_ok: e.result.ok,

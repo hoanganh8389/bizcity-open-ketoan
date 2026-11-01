@@ -392,6 +392,13 @@
             "uid:trung",
             "metric:bizcity_sai_ten"
           ]
+        },
+        "SC-OBS-2": {
+          "findings": 2,
+          "keys": [
+            "import:apps/api/src/phan-he/alpha/x.ts",
+            "attr:bizcity.so_tien"
+          ]
         }
       }
     },

@@ -1,6 +1,6 @@
 -- [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.signatures (PHASES 2.7): ký theo vai trên mọi chứng từ (doc_ref), không chỉ phiếu kế toán
 -- =============================================================================
--- 0047 Ký theo vai trên mọi chứng từ (năng lực documents.signatures, bizcity_document@1 STD-DOC-8, §8).
+-- 0048 Ký theo vai trên mọi chứng từ (năng lực documents.signatures, bizcity_document@1 STD-DOC-8, §8).
 --      document_signatures trước chỉ gắn sự việc kế toán (event_id). Thêm doc_ref (<module>.<loại>:<id>): mỗi dòng gắn ĐÚNG MỘT
 --      trong hai. Phiếu kế toán giữ nguyên 4 vai (người lập, thủ quỹ, kế toán trưởng, giám đốc) và luồng ký cũ; chứng từ của
 --      module đặt vai riêng (chữ thường, số, gạch dưới — vd preparer, legal, customer), module quyết ai ký được vai nào trong

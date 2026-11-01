@@ -1,6 +1,7 @@
 // @bizcity-layer P events
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — số đo outbox: lượt giao theo subscriber (dispatchOnce), việc chờ / chết, tuổi chờ lâu nhất (collectOutboxMetrics)
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/core/events.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
 /**
  * SỰ KIỆN MIỀN (bizcity_event@1, R-OUTBOX-1..7; PHASE-006, PHASES 3.4) — transactional outbox, chạy chỉ với PostgreSQL.
@@ -27,6 +28,7 @@ import { sql } from 'kysely';
 import { db, readWithTimeout, type Db } from '../db/client.js';
 import { currentRequest, withRequestContext } from './request-context.js';
 import { COLLECTOR_TIMEOUT_MS, metrics } from './metrics.js';
+import { currentTraceparent, linksFrom, markError, SpanKind, withSpan, type Span } from './tracing.js';
 
 export type EventActorKind = 'user' | 'apikey' | 'ai' | 'system';
 
@@ -122,25 +124,31 @@ export function uuidv7(now = Date.now()): string {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
-/** Ghi sự kiện vào outbox trong giao dịch của người gọi. Trả id, hoặc null nếu dedupeKey đã có. */
+/**
+ * Ghi sự kiện vào outbox trong giao dịch của người gọi. Trả id, hoặc null nếu dedupeKey đã có.
+ * Span `event publish <type>` (S6, ADR-0010); traceparent của span này lưu cùng dòng để span giao nối (link) về.
+ */
 export async function emitEvent(trx: Db, e: EmitInput): Promise<string | null> {
   if (!TYPE_RE.test(e.type)) throw new Error(`Loại sự kiện "${e.type}" sai khuôn <module>.<thực thể>.<việc>`);
-  const req = currentRequest();
-  const id = uuidv7();
-  const row = await trx
-    .insertInto('event_outbox')
-    .values({
-      id, tenant_id: e.tenantId, type: e.type, version: e.version ?? 1, subject: e.subject, source_module: e.source,
-      actor_kind: e.actor.kind, actor_id: e.actor.id, correlation_id: e.correlationId ?? req?.correlationId ?? null,
-      causation_id: e.causationId ?? null, dedupe_key: e.dedupeKey ?? null, data: JSON.stringify(e.data ?? {}),
-    })
-    .onConflict((oc) => oc.columns(['tenant_id', 'dedupe_key']).where('dedupe_key', 'is not', null).doNothing())
-    .returning('id')
-    .executeTakeFirst();
-  if (!row) return null;
-  const subs = subscribersOf(e.type);
-  if (subs.length) await trx.insertInto('event_deliveries').values(subs.map((s) => ({ tenant_id: e.tenantId, consumer: s.id, event_id: id }))).execute();
-  return id;
+  return withSpan(`event publish ${e.type}`, { kind: SpanKind.PRODUCER, requireParent: true, attributes: { 'bizcity.event.type': e.type, 'bizcity.module': e.source } }, async () => {
+    const req = currentRequest();
+    const id = uuidv7();
+    const row = await trx
+      .insertInto('event_outbox')
+      .values({
+        id, tenant_id: e.tenantId, type: e.type, version: e.version ?? 1, subject: e.subject, source_module: e.source,
+        actor_kind: e.actor.kind, actor_id: e.actor.id, correlation_id: e.correlationId ?? req?.correlationId ?? null,
+        causation_id: e.causationId ?? null, dedupe_key: e.dedupeKey ?? null, data: JSON.stringify(e.data ?? {}),
+        trace_parent: currentTraceparent(),
+      })
+      .onConflict((oc) => oc.columns(['tenant_id', 'dedupe_key']).where('dedupe_key', 'is not', null).doNothing())
+      .returning('id')
+      .executeTakeFirst();
+    if (!row) return null;
+    const subs = subscribersOf(e.type);
+    if (subs.length) await trx.insertInto('event_deliveries').values(subs.map((s) => ({ tenant_id: e.tenantId, consumer: s.id, event_id: id }))).execute();
+    return id;
+  });
 }
 
 type OutboxRow = { id: string; seq: string; tenant_id: string; type: string; version: number; subject: string; source_module: string; actor_kind: EventActorKind; actor_id: string; correlation_id: string | null; causation_id: string | null; data: unknown; occurred_at: Date };
@@ -164,8 +172,8 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
   const consumers = (opts.consumers ?? [...registry.keys()]).filter((c) => registry.has(c));
   if (!consumers.length) return out;
   // Việc đến hạn, bỏ việc còn việc cũ hơn (cùng consumer, đơn vị, subject) chưa xong — giữ thứ tự trong một subject.
-  const due = await sql<{ consumer: string; event_id: string; tenant_id: string }>`
-    SELECT d.consumer, d.event_id::text, d.tenant_id::text
+  const due = await sql<{ consumer: string; event_id: string; tenant_id: string; type: string; trace_parent: string | null }>`
+    SELECT d.consumer, d.event_id::text, d.tenant_id::text, o.type, o.trace_parent
       FROM event_deliveries d JOIN event_outbox o ON o.id = d.event_id
      WHERE d.status = 'pending' AND d.next_at <= now() AND d.consumer = ANY(${consumers}::text[])
        AND (${opts.tenantId ?? null}::bigint IS NULL OR d.tenant_id = ${opts.tenantId ?? null}::bigint)
@@ -176,6 +184,19 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
      LIMIT ${opts.limit ?? 100}`.execute(db);
   for (const d of due.rows) {
     const def = registry.get(d.consumer)!;
+    // Span giao (S7, ADR-0010): trace MỚI (việc giao chạy sau, có thể thử lại nhiều lần), NỐI (link) về span phát đã lưu ở outbox.
+    // bizcity.module = module của subscriber → lỗi của một module (vd crm) khoanh được mà không lẫn với yêu cầu gốc đã commit.
+    await withSpan(`event deliver ${d.type} → ${d.consumer}`, {
+      root: true, kind: SpanKind.CONSUMER, links: linksFrom(d.trace_parent),
+      attributes: { 'bizcity.event.type': d.type, 'bizcity.consumer': d.consumer, 'bizcity.module': def.module, 'bizcity.tenant': d.tenant_id },
+    }, (span) => deliverOne(d, def, out, span));
+  }
+  return out;
+}
+
+/** Giao một việc (một giao dịch). Lỗi không ném ra ngoài: ghi lần thử, hẹn lại hoặc dead. */
+async function deliverOne(d: { consumer: string; event_id: string; tenant_id: string }, def: SubscriberDef, out: DispatchResult, span: Span): Promise<void> {
+  {
     let attempts = 0;
     try {
       const r = await db.transaction().execute(async (trx) => {
@@ -206,10 +227,14 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
       if (r === 'done') out.done += 1;
       else if (r === 'duplicate') out.duplicate += 1;
       if (r !== 'skip') metrics.outboxAttempts.inc({ consumer: d.consumer, result: r });
+      span.setAttributes({ 'bizcity.delivery.result': r, 'bizcity.delivery.attempt': attempts + 1 });
     } catch (err) {
       const n = attempts + 1;
       const max = def.retry?.maxAttempts ?? DEFAULT_RETRY.maxAttempts;
       const dead = n >= max;
+      // Lỗi của subscriber lên span TRƯỚC khi ghi lần thử: ghi lần thử có hỏng thì trace vẫn chỉ đúng module / mã lỗi.
+      markError(span, err);
+      span.setAttributes({ 'bizcity.delivery.result': dead ? 'dead' : 'retry', 'bizcity.delivery.attempt': n });
       await db.updateTable('event_deliveries')
         .set({ attempts: n, status: dead ? 'dead' : 'pending', last_error: String((err as Error)?.message ?? err).slice(0, 500), next_at: new Date(Date.now() + retryDelayMs(def, n)) })
         .where('consumer', '=', d.consumer).where('event_id', '=', d.event_id).where('status', '=', 'pending').execute();
@@ -217,7 +242,6 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
       metrics.outboxAttempts.inc({ consumer: d.consumer, result: dead ? 'dead' : 'retry' });
     }
   }
-  return out;
 }
 
 /** Ngày giờ theo giờ Việt Nam: { date: YYYY-MM-DD, hour: 0..23 }. */

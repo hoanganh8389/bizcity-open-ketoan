@@ -14,20 +14,20 @@ import { DOC_TYPE_LIST, ERROR_CATALOG, type ErrorCode } from '@ketoan/contracts'
 import { readWithTimeout } from '@bizcity/platform/db/client';
 import type { Database } from '@bizcity/platform/db/types';
 import { COLLECTOR_TIMEOUT_MS, metrics } from '@bizcity/platform/core/metrics';
+import { errorKind } from '@bizcity/platform/core/errors';
 
 type Tx = Transaction<Database>;
 
 const LAG_SECONDS = 60;
 const ACTIONS = new Set(['receive', 'post', 'repost', 'error', 'cancel', 'cancel_request', 'unpost']);
 const DOC_TYPES = new Set<string>(DOC_TYPE_LIST);
-/** Từ chối đúng luật (kỳ khoá, không cân, thiếu cấu hình, dữ liệu sai, không có quyền) — không phải sự cố (D018-5). */
-const BUSINESS = new Set(['ledger', 'input', 'state', 'auth']);
 
 let watermark: number | null = null;
 
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+/** Từ chối đúng luật (kỳ khoá, không cân, thiếu cấu hình, dữ liệu sai, không có quyền) — không phải sự cố (D018-5). Một quy tắc với trace: core/errors.ts. */
 export function failureKind(code: string | null): 'rejected' | 'error' {
-  const entry = code ? (ERROR_CATALOG as Record<string, { category: string } | undefined>)[code] : undefined;
-  return entry && BUSINESS.has(entry.category) ? 'rejected' : 'error';
+  return errorKind(code);
 }
 
 const docTypeLabel = (t: string) => (DOC_TYPES.has(t) ? t : 'other');

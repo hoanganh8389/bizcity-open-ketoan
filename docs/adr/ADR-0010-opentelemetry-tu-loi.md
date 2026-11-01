@@ -36,7 +36,7 @@ Bản kế hoạch PHASE-018 trước đây để trace là tuỳ chọn, làm s
 |---|---|---|---|---|
 | 1 | **Accounting Kernel** | Ghi sổ **đúng**: một cửa sự việc, Nợ = Có, kỳ khoá, sổ chỉ thêm, định khoản tất định | **Có** — quyết định | `apps/api/src/kernel/public.ts` → `modules/{documents,posting,ledger,periods}` |
 | 2 | **PostgreSQL + Audit Ledger** | Lưu **bằng chứng nghiệp vụ**: bút toán, `posting_log`, `audit_logs` chuỗi băm, `diagnostic_runs`; trigger chặn sửa / xoá | **Có** — lưu giữ ≥ 10 năm | `db/migrations/`, `core/audit.ts` |
-| 3 | **OpenTelemetry** | Theo dõi **hành trình thực thi**: yêu cầu đi qua module nào, action nào, cổng Kernel nào, câu CSDL nào, subscriber nào; mất bao lâu, hỏng ở đâu | Không — quan sát | `apps/api/src/core/tracing.ts` (Platform) |
+| 3 | **OpenTelemetry** | Theo dõi **hành trình thực thi**: yêu cầu đi qua module nào, action nào, cổng Kernel nào, câu CSDL nào, subscriber nào; mất bao lâu, hỏng ở đâu | Không — quan sát | `packages/platform/src/core/tracing.ts` (Platform) |
 | 4 | **Prometheus** | Đo **sức khoẻ và hiệu năng**: tốc độ, độ trễ, tỉ lệ lỗi, ghi sổ đã commit, outbox, pool, đối soát | Không — tổng hợp | `GET /metrics` (`core/metrics.ts`) |
 | 5 | **Grafana + Tempo + Loki** | **Quan sát, điều tra lỗi**: dashboard → trace → log của đúng yêu cầu đó, nối bằng `traceId` | Không — giao diện điều tra | `infrastructure/monitoring/` |
 | 6 | **Alertmanager** | **Thông báo khi bất thường**: định tuyến theo mức / nhóm, ức chế, im lặng khi bảo trì | Không — chỉ báo, không bao giờ sửa dữ liệu | `infrastructure/monitoring/alertmanager/` |
@@ -67,12 +67,14 @@ Mọi module đi qua cùng một số khớp nối. Vì vậy chỉ cần đặt
 | S1 | Yêu cầu HTTP vào | `HTTP {method} {route}` (route mẫu Fastify, không URL thật) | `http.request.method`, `http.route`, `http.response.status_code`, `bizcity.error.code` | `core/observability.ts` (hook có sẵn) |
 | S2 | Lời gọi công cụ MCP | `mcp tools/call {tool}` | `bizcity.mcp.tool`, `bizcity.mcp.via` (client), `bizcity.mcp.phase` (preview · confirm) | `modules/system/mcp.routes.ts` |
 | S3 | Runtime action | `action {action.id}` | `bizcity.action.id`, **`bizcity.module`** (tiền tố của id, STD-ACT-6), `bizcity.action.effect`, `bizcity.dry_run`, `bizcity.idempotency` (new · replayed · conflict), `bizcity.error.code` | `core/actions.ts` (`runAction`) |
-| S4 | **Cổng Kernel** | `kernel {thao tác}` (vd `kernel postDocumentIn`, `kernel eventStore.post`, `kernel ledgerQuery`) | `bizcity.layer=K`, `bizcity.doc_type`, `bizcity.kernel.outcome` (posted · unchanged · rejected · error), `bizcity.error.code` | `kernel/public.ts` — bọc **một lần**, mức K1 |
-| S5 | Câu CSDL | `db {operation} {table}` | `db.system=postgresql`, `db.operation.name`, `db.collection.name`; **không** có câu SQL đầy đủ, **không** có tham số | `@opentelemetry/instrumentation-pg`, `requireParentSpan: true` |
+| S4 | **Cổng Kernel** | `kernel {thao tác}` (vd `kernel postDocumentIn`, `kernel voucherService.createIn`, `kernel ledgerQuery.query`) | `bizcity.layer=K`, `bizcity.kernel.op`, `bizcity.doc_type`, `bizcity.outcome` (ok · rejected · error), `bizcity.error.code` | `kernel/public.ts` — bọc **một lần**, mức K1 |
+| S5 | Câu CSDL | `db {operation} {table}` | `db.system.name=postgresql`, `db.operation.name`, `db.collection.name`; **không** có câu SQL đầy đủ, **không** có tham số | dựng từ log của Kysely (`db/client.ts`), chỉ khi có span cha |
 | S6 | Phát sự kiện (outbox) | `event publish {type}` | `bizcity.event.type`, `bizcity.module` (nguồn) | `core/events.ts` (`emitEvent`) |
 | S7 | Giao sự kiện cho subscriber | `event deliver {type} → {consumer}` — **span mới, nối (link) với span phát** | `bizcity.event.type`, `bizcity.consumer`, **`bizcity.module`** (module của subscriber), `bizcity.delivery.result` (done · duplicate · retry · dead), `bizcity.delivery.attempt` | `core/events.ts` (`dispatchOnce`) |
-| S8 | Gọi ra ngoài (Hub, Cell, tra MST, AI đọc hoá đơn) | `HTTP {method}` client | `server.address`, `http.response.status_code`; chuyển tiếp `traceparent` + `X-Request-Id` | `@opentelemetry/instrumentation-undici` / `-http` |
-| S9 | Việc định kỳ, bộ thu số đo | `job {tên}` | `bizcity.job` | `core/events.ts` (đồng hồ), `core/metrics.ts` (bộ thu) |
+| S8 | Gọi ra ngoài (Hub, Cell, tra MST, AI đọc hoá đơn) | `{method}` client | `server.address`, `http.response.status_code`; chuyển tiếp `traceparent` | `@opentelemetry/instrumentation-undici` (mọi `fetch`) |
+| ~~S9~~ | ~~Việc định kỳ, bộ thu số đo~~ — **bỏ khi code** (xem "Khi code") | — | — | — |
+
+Mọi span mang `bizcity.outcome`: `ok` · `rejected` (từ chối đúng luật — **không** đặt trạng thái ERROR) · `error` (lỗi kỹ thuật — trạng thái ERROR). Phân loại theo `category` của `bizcity_errors@1`, cùng một hàm với số đo ghi sổ (`errorKind`, `core/errors.ts`).
 
 Chi tiết thiết kế:
 
@@ -98,7 +100,7 @@ Trace đi ra khỏi CSDL nên phải an toàn như log (R-SEC-10, R-TEN-8). `cor
 | Được phép | Không bao giờ |
 |---|---|
 | Thuộc tính chuẩn OTel về HTTP, CSDL, RPC đã liệt kê ở §3 (route mẫu, không URL có tham số) | Payload chứng từ, dòng hàng, số tiền, số dư |
-| `bizcity.module`, `bizcity.layer`, `bizcity.action.id`, `bizcity.action.effect`, `bizcity.doc_type`, `bizcity.kernel.outcome`, `bizcity.event.type`, `bizcity.consumer`, `bizcity.delivery.*`, `bizcity.mcp.*`, `bizcity.job`, `bizcity.dry_run`, `bizcity.idempotency`, `bizcity.error.code` | Câu SQL đầy đủ, tham số SQL |
+| `bizcity.module`, `bizcity.layer`, `bizcity.kernel.op`, `bizcity.outcome`, `bizcity.action.id`, `bizcity.action.effect`, `bizcity.doc_type`, `bizcity.step`, `bizcity.event.type`, `bizcity.consumer`, `bizcity.delivery.*`, `bizcity.mcp.*`, `bizcity.dry_run`, `bizcity.idempotency`, `bizcity.error.code` — danh sách máy đọc: `TRACE_ATTRIBUTES` ở `core/tracing.ts` | Câu SQL đầy đủ, tham số SQL |
 | `bizcity.tenant` = **mã nội bộ** đơn vị (giống trường `tenant` của log, Ops mới xem được) | Tên đơn vị, tên khách / nhà cung cấp, MST, SĐT, email, số tài khoản ngân hàng |
 | `bizcity.request_id` | Header `Authorization`, cookie, token, khoá API, `confirm_token`, `Idempotency-Key` |
 | Sự kiện span `exception` chỉ có `exception.type` + `bizcity.error.code`; stack trace giữ trong log 5xx như hiện nay | `docKey`, mã chứng từ, mã bút toán (đã có trong log và bằng chứng; tra theo `traceId`) |
@@ -116,18 +118,19 @@ apps/api ──OTLP/HTTP──▶ OTel Collector ──▶ Tempo ──▶ Grafa
    └──stdout JSON (có traceId)──▶ Promtail ──▶ Loki ─────────┘
 ```
 
-- **Gói npm** (chỉ ở Platform, khoá phiên bản cụ thể khi code):
-  - `@opentelemetry/api`
-  - `@opentelemetry/sdk-node`
-  - `@opentelemetry/exporter-trace-otlp-http`
-  - `@opentelemetry/instrumentation-http`
-  - `@opentelemetry/instrumentation-undici`
-  - `@opentelemetry/instrumentation-pg`
+- **Gói npm** (chỉ ở Platform, `apps/api/package.json`, khoá phiên bản cụ thể — bộ 2.12 / 0.223 phát hành 06/10/2026):
+  - `@opentelemetry/api` 1.9.1
+  - `@opentelemetry/sdk-trace` 2.12.0 (gói gộp, thay `sdk-trace-base` / `sdk-trace-node` đã lỗi thời)
+  - `@opentelemetry/context-async-hooks` 2.12.0 (ngữ cảnh theo AsyncLocalStorage)
+  - `@opentelemetry/core` 2.12.0 (lan truyền W3C `traceparent`)
+  - `@opentelemetry/resources` 2.12.0
+  - `@opentelemetry/exporter-trace-otlp-http` 0.223.0
+  - `@opentelemetry/instrumentation` 0.223.0 + `@opentelemetry/instrumentation-undici` 0.33.0 (S8)
 
-  Span HTTP lấy từ hook Fastify sẵn có thay vì thêm gói instrumentation Fastify. Không dùng gói tự dò mọi thư viện (`auto-instrumentations-node`), để biết chính xác cái gì bị đo.
+  Span HTTP lấy từ hook Fastify sẵn có, span CSDL dựng từ log của Kysely — không vá `http`, `pg`. Không dùng gói tự dò mọi thư viện (`auto-instrumentations-node`), để biết chính xác cái gì bị đo.
 - **Lấy mẫu.** Ứng dụng gửi mọi trace tới Collector trên mạng nội bộ. Collector lấy mẫu đuôi (`tail_sampling`): giữ mọi trace có lỗi hoặc chậm hơn 1 giây, cộng 10% số còn lại. Tỉ lệ chỉnh sau khi đo tải (W6, Q018-5). Trace có `traceparent` từ ngoài đến thì theo quyết định lấy mẫu của bên gọi (`parentbased`).
 - **Hạ tầng.**
-  - `otel-collector` và `tempo` vào `infrastructure/monitoring/docker-compose.monitoring.yml`, cổng bind `127.0.0.1` như Prometheus.
+  - `otel-collector` và `tempo` vào `infrastructure/monitoring/docker-compose.monitoring.yml`, **không mở cổng ra máy chủ** (chỉ API và Grafana trong mạng nội bộ gọi tới).
   - Tempo lưu trên đĩa local, giữ 7 ngày.
   - Grafana thêm nguồn dữ liệu Tempo:
     - trace → log: Loki theo `traceId`;
@@ -157,6 +160,22 @@ Vì sao không cần sửa Kernel:
 - Subscriber lỗi chỉ làm việc giao của chính nó thử lại / chết, không huỷ giao dịch đã commit (transactional outbox, PHASE-006).
 
 OpenTelemetry làm cho các ranh giới **đã có** này **nhìn thấy được**. Nó không thêm ranh giới mới vào Kernel.
+
+## Khi code (2026-11-01, PHASE-018 W5) — khác bản quyết định ở đâu, vì sao
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
+
+| Điểm | Bản quyết định | Đã làm | Lý do |
+|---|---|---|---|
+| Span CSDL (S5) | `instrumentation-pg` | dựng từ log của Kysely (`traceDbQuery`) | không vá module `pg` (ESM cần loader riêng); chỉ có loại câu + bảng — không bao giờ có câu SQL, kể cả khi thư viện đổi mặc định |
+| Gói SDK | `sdk-node`, `instrumentation-http`, `instrumentation-pg` | `sdk-trace` + `context-async-hooks` + `core` + `resources`, không vá `http` / `pg` | ít mã chạy ngầm; `sdk-trace-base` / `sdk-trace-node` đã báo lỗi thời |
+| Bộ lọc thuộc tính | `SpanProcessor` | `AllowlistExporter` bọc mọi bộ xuất | thuộc tính của span là của SDK, sửa ở processor phụ thuộc chi tiết nội bộ; lọc ở bộ xuất chép span sạch, chắc chắn chạy trước khi rời tiến trình. Collector có lớp xoá thứ hai (`url.full`, `db.statement`, `exception.message`…) |
+| S9 việc nền | span `job …` | bỏ | lượt đồng hồ chạy mỗi phút, bộ thu số đo 15 giây / lần: trace rác. Việc nền thật — giao sự kiện — đã là span gốc S7. Phát sự kiện ngoài yêu cầu (đồng hồ) không sinh span (`requireParent`) |
+| `/metrics`, health | — | không có span | Prometheus / Docker gọi liên tục; đã có số đo và nhật ký |
+| Thuộc tính kết quả | `bizcity.kernel.outcome` | `bizcity.outcome` trên mọi span + `bizcity.kernel.op` | một khoá cho mọi khớp nối: tìm `{ span.bizcity.outcome = "error" }` khắp hệ thống |
+| Route HTTP nằm trong Kernel (vd `POST /api/v1/documents`) | — | span HTTP + CSDL, không span `kernel …` | lời gọi nội bộ Kernel không qua cổng — đúng chủ đích: span `kernel` đánh dấu chỗ **module bên ngoài** đi vào Kernel |
+| Phân loại lỗi | — | `errorCodeOf` / `errorKind` ở `core/errors.ts`, bộ đếm ghi sổ (`failureKind`) dùng lại | một quy tắc "từ chối đúng luật hay sự cố" cho số đo, trace, phản hồi |
+
+Kiểm: `apps/api/test/truy-vet.test.ts` (11 ca); chạy thật API → Collector → Tempo: [evidence W5](../phases/PHASE-018-GIAM-SAT-VAN-HANH/evidence/W5-2026-11-01.md).
 
 ## Hệ quả
 

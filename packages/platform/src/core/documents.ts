@@ -191,7 +191,7 @@ export const documents = {
     return { ...toAttachment(r), archivedAt: iso(u.archived_at) };
   },
 
-  // [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.signatures (STD-DOC-8, 0047): ký theo vai trên chứng từ module, gắn phiên bản lúc ký
+  // [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.signatures (STD-DOC-8, 0048): ký theo vai trên chứng từ module, gắn phiên bản lúc ký
   /** Phiên bản hiện tại của chứng từ: bản mới nhất ở document_versions, chưa lưu bản nào = 1. */
   async currentVersion(tx: Db, tenantId: string, docRef: string): Promise<number> {
     assertRef(docRef);

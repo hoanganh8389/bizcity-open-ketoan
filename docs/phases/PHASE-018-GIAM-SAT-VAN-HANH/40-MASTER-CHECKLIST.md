@@ -2,6 +2,7 @@
 <!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — checklist việc con S018-*, ca bằng chứng T018-*, log. -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — cập nhật trạng thái sau khi code W1–W4 (nhánh feat/phase-018-giam-sat). -->
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 
 > Nguồn trạng thái **việc con** duy nhất của phase (thay `PHASE-STATUS.md` của bản giao việc). Nhiều phiên: chỉ sửa đúng dòng theo ID; Log chỉ nối thêm.
 > Ký hiệu: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài nhóm · ❌ huỷ.
@@ -30,7 +31,7 @@
 | S018-15 | `docs/ops/RUNBOOK-CANH-BAO.md`: runbook 14 cảnh báo | W4 | P1 | — | ✅ 2026-11-01 |
 | S018-16 | Cập nhật bảng §3 / §4 `docs/ops/OBSERVABILITY.md` + `infrastructure/monitoring/README.md` (R-OBS-6) | W1–W4 | P1 | — | ✅ 2026-11-01 |
 | S018-17a | ADR-0010 OpenTelemetry từ lõi: sáu lớp bảo đảm, khớp nối S1–S9, danh sách thuộc tính, Tempo; ghi vào [architecture §7–§8](../../architecture/README.md), OBSERVABILITY §1.1 + R-OBS-7/8 | W5 | P1 | — | ✅ 2026-11-01 (chủ quyết Q018-2) |
-| S018-17 | Code theo ADR-0010: `core/tracing.ts`, span S1–S9 + bọc cổng Kernel (K1), lọc thuộc tính, migration `event_outbox.trace_parent` + `audit_logs.trace_id`, `ctx.trace.step`, SC-OBS-2, Collector + Tempo, Grafana trace ↔ log ↔ số đo — ca T018-6 | W5 | P1 | chưa | ☐ mở (không còn chờ Q018-2) |
+| S018-17 | Code theo ADR-0010: `core/tracing.ts`, span S1–S8 + bọc cổng Kernel (K1), lọc thuộc tính ở bộ xuất, migration `0047` (`event_outbox.trace_parent`, `audit_logs.trace_id`), `error.traceId`, `ctx.trace.step`, SC-OBS-2, Collector + Tempo, Grafana trace ↔ log ↔ số đo — ca T018-6 | W5 | P1 | có | ✅ 2026-11-01 (11 test; chạy thật API → Collector → Tempo: trace 34 span, không lộ dữ liệu; chi phí xuất +2,5% / p95 +3,4%; ≤ 1% khi không xuất chờ đo máy chủ thật — [evidence W5](evidence/W5-2026-11-01.md)) |
 | S018-18 | SLI / SLO, đo tải theo Q018-5, kịch bản sập, lint cấu hình giám sát trong CI | W6 | P2 | chưa | ⛔ Q018-5 |
 | S018-19 | API tóm tắt sức khoẻ có phân quyền + widget CEO 4 chỉ số — ca T018-7 | W7 | P3 | chưa | ⛔ PHASE-015, Q018-6 |
 | S018-20 | Luật dò `H-METRIC-LABEL` trong `scripts/ra-soat-dong-gop.mjs` + RULE-REVIEW §4 | W1 | P1 | có | ✅ 2026-11-01 |
@@ -44,7 +45,7 @@
 | T018-3 | outbox dồn / chết, mốc tự chẩn đoán hiện đúng trên số đo (dữ liệu thật) | [evidence/W1-W4-2026-11-01.md](evidence/W1-W4-2026-11-01.md) §3 |
 | T018-4 | 9 dashboard tự nạp, ảnh chụp dữ liệu thật, không panel trống do sai tên | [evidence/W1-W4-2026-11-01.md](evidence/W1-W4-2026-11-01.md) §5 + 3 ảnh `W3-2026-11-01-*.png` |
 | T018-5 | cảnh báo bắn / hết bắn, định tuyến, không gửi dữ liệu tài chính | [evidence/W1-W4-2026-11-01.md](evidence/W1-W4-2026-11-01.md) §6 |
-| T018-6 | một ca lỗi ghi sổ điều tra đầu-cuối không lộ chứng từ | `evidence/W5-<ngày>.md` — chưa |
+| T018-6 | một ca lỗi ghi sổ điều tra đầu-cuối không lộ chứng từ | [evidence/W5-2026-11-01.md](evidence/W5-2026-11-01.md) §3, §4 |
 | T018-7 | test chéo đơn vị, không dữ liệu / dữ liệu cũ hiển thị đúng | `evidence/W7-<ngày>.md` — chưa |
 
 ## Log
@@ -55,3 +56,4 @@
 | 2026-11-01 00:04–01:10 | Claude Code (theo chỉ đạo "ok code") | Nhánh `feat/phase-018-giam-sat` (worktree riêng). W1–W4: bộ thu `posting_log` / outbox / đối soát / đơn vị theo dải, bộ đếm gửi lặp / lượt giao, `readWithTimeout`, mật khẩu Grafana bắt buộc, 3 dashboard, 6 cảnh báo + test promtool, runbook, `H-METRIC-LABEL`. D018-3 / D018-4 sửa theo mã thật. Kiểm: typecheck, selfcheck, vitest, promtool, chạy thật API + Prometheus + Grafana tạm. |
 | 2026-11-01 01:14–01:50 | Claude Code (theo chỉ đạo "code tiếp") | Nhánh `feat/phase-018-tiep`: S018-14b (job CI `monitoring` + check SC-OBS-1 kèm ca tự kiểm), S018-12b (hàng PHASE-018 ở dashboard 01 / 03 / 04), S018-13b (`LOKI_LABELDROP`), S018-5b (vai trò `ketoan_monitor` do job `db-migrate` tạo). Kiểm chạy thật trên stack local. |
 | 2026-11-01 15:01 | Claude Code (theo chỉ đạo "cần có OpenTelemetry … ngay từ lõi kiến trúc") | Q018-2 đã quyết. ADR-0010 (sáu lớp bảo đảm, span ở khớp nối, bọc cổng Kernel K1, danh sách thuộc tính, Tempo); architecture §7–§8; OBSERVABILITY §1.1 + R-OBS-7/8; D018-7 sửa; W5 nâng P1. Chưa sửa mã chạy. |
+| 2026-11-01 16:13–17:00 | Claude Code (theo chỉ đạo "ok, tiếp tục") | Nhánh `feat/phase-018-w5-otel` (worktree riêng). S018-17: `core/tracing.ts` + span S1–S8, bọc cổng Kernel (K1), migration `0047`, `error.traceId`, `ctx.trace.step`, SC-OBS-2, Collector + Tempo + nguồn Grafana, job CI kiểm Collector. Khác ADR (ghi ở mục "Khi code" của ADR-0010): span CSDL từ log Kysely thay `instrumentation-pg`, bỏ S9, lọc ở bộ xuất. Kiểm: typecheck, selfcheck + self-test, 11 test truy vết, chạy thật API → Collector → Tempo, đo chi phí 3 chế độ. |

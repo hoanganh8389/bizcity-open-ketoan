@@ -4,6 +4,7 @@
 <!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call có (action đọc); báo cáo về phan-he/ke-toan/reports; câu hỏi mở 3 chốt cách hai -->
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — ctx.documents có (2.7): nextNumber, saveVersion, versions, link, links, attach, attachments -->
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 
 > **Trạng thái: bản nháp, chưa có code.** Kết quả PHASES 1.5. Gói thật dựng ở Phase 3 (3.1), sau khi có `packages/actions` (2.5) và `packages/audit` (2.6).
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
@@ -117,6 +118,7 @@ interface ActionContext {
   settings: { get<T>(key: `bizcity.${string}`, scope?: SettingScope): T };                     // ⏳ registry
   evidence: { note(key: string, value: unknown): void };                                         // ⏳ ghi vào changes.notes
   actions: { call<I, O>(id: string, input: I, opts?: { idempotencyKey?: string }): Promise<O> }; // ✅ action đọc (2026-10-31, core/actions.ts); ghi ⏳ cần khoá idempotency
+  trace: { step<T>(name: string, fn: () => Promise<T>): Promise<T> };  // ✅ 2026-11-01 (ADR-0010): span `step <module>.<tên>`; module KHÔNG import @opentelemetry/* (R-OBS-7)
   module: { id: string; version: string; assetPath(rel: string): string };
 }
 ```
@@ -138,6 +140,7 @@ interface ActionContext {
 | `requirePermission`, `authOf` | Kiểm quyền là bước 3 của runtime; module khai `permission` | `defineAction({ permission })` |
 | `writeAudit` | Bằng chứng do runtime ghi, module không tắt được (STD-EVD-3) | tự động + `ctx.evidence.note` |
 | `ok`, `reply.status` | Khuôn phản hồi do runtime | giá trị trả về của `handler` |
+| `@opentelemetry/*`, `core/tracing` | Span của module tự đặt tên / thuộc tính thì không đồng đều và có thể lộ số tiền, MST. Runtime đã có span cho action, cổng Kernel, CSDL, sự kiện, gọi ra ngoài, mang sẵn `bizcity.module` (ADR-0010) | tự động + `ctx.trace.step(name, fn)` |
 | `postDocumentIn`, `documentService`, `ledgerService`, `voucherService` | Câu 3: chỉ một cửa vào sổ | `ctx.ledger.*` |
 | `reportService.*`, SQL trên `ledger_*` | Module không thấy bảng sổ (DATA §7) | `ctx.ledger.query` |
 | route lõi (`closingRoutes`, `inventoryRoutes`…) | Lắp ráp, không phải API | manifest `includes` |

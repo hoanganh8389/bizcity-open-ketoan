@@ -38,8 +38,8 @@
       "risk": "Sự kiện đến chậm ghi vào kỳ đã khoá",
       "rule": "Period Lock Gate: ghi sổ kiểm khoá trong giao dịch ghi; khoá kỳ bị chặn khi sổ trong kỳ có lỗi toàn vẹn",
       "done": [
-        { "label": "ledgerService kiểm khoá kỳ khi ghi (PERIOD_LOCKED)", "fileContains": { "file": "apps/api/src/modules/ledger/ledger.service.ts", "text": "throw Errors.periodLocked()" } },
-        { "label": "khoá kỳ chạy tự chẩn đoán L3 trước (R-DIAG-4)", "fileContains": { "file": "apps/api/src/modules/periods/period.routes.ts", "text": "guardLock" } },
+        { "label": "ledgerService kiểm khoá kỳ khi ghi (PERIOD_LOCKED)", "fileContains": { "file": "packages/kernel/src/modules/ledger/ledger.service.ts", "text": "throw Errors.periodLocked()" } },
+        { "label": "khoá kỳ chạy tự chẩn đoán L3 trước (R-DIAG-4)", "fileContains": { "file": "packages/kernel/src/modules/periods/period.routes.ts", "text": "guardLock" } },
         { "label": "test khoá kỳ", "file": "apps/api/test/period-locks.test.ts" }
       ]
     },
@@ -80,8 +80,8 @@
       "rule": "Mỗi thao tác ghi có actor (người / khoá / AI + kênh), nguồn, correlation, bằng chứng, phiên bản",
       "done": [
         { "label": "cột bằng chứng: actor_kind, actor_via, on_behalf_of, request_id, result (SC-EVD-2)", "check": "SC-EVD-2" },
-        { "label": "runtime ghi request_id + biên nhận cho mọi action ghi", "fileContains": { "file": "apps/api/src/core/actions.ts", "text": "requestId: call.requestId, idempotencyKey: key" } },
-        { "label": "correlation_id điền từ Cell / MCP (một hội thoại nhiều yêu cầu)", "fileContains": { "file": "apps/api/src/core/audit.ts", "text": "correlation_id: e." } }
+        { "label": "runtime ghi request_id + biên nhận cho mọi action ghi", "fileContains": { "file": "packages/platform/src/core/actions.ts", "text": "requestId: call.requestId, idempotencyKey: key" } },
+        { "label": "correlation_id điền từ Cell / MCP (một hội thoại nhiều yêu cầu)", "fileContains": { "file": "packages/platform/src/core/audit.ts", "text": "correlation_id: e." } }
       ]
     },
     {
@@ -90,7 +90,7 @@
       "rule": "Chính sách kế toán (gói định khoản, lý do, nhóm hạch toán, tài khoản ngầm định) có phiên bản và ngày hiệu lực; mỗi lần định khoản ghi phiên bản đã dùng",
       "done": [
         { "label": "năng lực posting.policy-version available", "capability": "posting.policy-version" },
-        { "label": "posting_log ghi policy_version", "fileContains": { "file": "apps/api/src/db/types.ts", "text": "policy_version" } }
+        { "label": "posting_log ghi policy_version", "fileContains": { "file": "packages/platform/src/db/types.ts", "text": "policy_version" } }
       ]
     }
   ]

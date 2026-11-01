@@ -12,7 +12,7 @@
 // [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — data.read-views (PHASES 2.4): kiểu tám khung nhìn danh mục bizcity_read.* (migration 0044).
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.* (PHASES 2.7): kiểu document_versions / document_links / document_attachments (migration 0045).
 // [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_attachments.storage_root, legacy_ref, sha256 null (0046).
-// [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_signatures.doc_ref, event_id null (0047, documents.signatures).
+// [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_signatures.doc_ref, event_id null (0048, documents.signatures).
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/db/types.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
@@ -148,6 +148,9 @@ export interface AuditLogsTable {
   chain_seq: ColumnType<string | null, never, never>;
   prev_hash: ColumnType<string | null, never, never>;
   hash: ColumnType<string | null, never, never>;
+  // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+  /** Mã trace OpenTelemetry của yêu cầu (migration 0047): nối bằng chứng ↔ trace ↔ log. Quan sát, không vào chuỗi băm. */
+  trace_id: ColumnType<string | null, string | null | undefined, never>;
 }
 
 /** Idempotency của action ghi (migration 0035, bizcity_action@1 §8). */
@@ -179,6 +182,8 @@ export interface EventOutboxTable {
   dedupe_key: string | null;
   data: JsonDefault<unknown>;
   occurred_at: TimestampDefault;
+  /** W3C traceparent của span phát (migration 0047): span giao nối (link) về đây — lần ngược từ subscriber lỗi về yêu cầu gốc. */
+  trace_parent: ColumnType<string | null, string | null | undefined, never>;
 }
 
 /** Giao sự kiện cho từng subscriber (migration 0039). */
@@ -302,9 +307,9 @@ export interface CostNormsTable {
 export interface DocumentSignaturesTable {
   id: Generated<string>;
   tenant_id: string;
-  /** Phiếu kế toán; NULL khi ký chứng từ module (doc_ref) — 0047. */
+  /** Phiếu kế toán; NULL khi ký chứng từ module (doc_ref) — 0048. */
   event_id: string | null;
-  /** Chứng từ module <module>.<loại>:<id>; NULL khi ký phiếu kế toán — 0047. */
+  /** Chứng từ module <module>.<loại>:<id>; NULL khi ký phiếu kế toán — 0048. */
   doc_ref: string | null;
   version: number;
   role: string;

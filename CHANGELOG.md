@@ -13,9 +13,15 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
-- **Ký theo vai trên mọi chứng từ** (năng lực `documents.signatures`, migration `0047`, PHASES 2.7): `ctx.documents.sign / signatures / unsign` — chữ ký gắn phiên bản hiện tại (phiên bản mới thì chữ ký cũ hết hiệu lực), chỉ người dùng đăng nhập ký (khoá API, AI không ký thay người), huỷ: người đã ký hoặc chủ đơn vị; `GET /api/v1/document-signatures`. Phiếu kế toán giữ luồng ký 4 vai cũ.
-<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
-- **Thiết kế OpenTelemetry từ lõi kiến trúc** ([ADR-0010](docs/adr/ADR-0010-opentelemetry-tu-loi.md), chủ dự án quyết 01/11/2026; chưa đổi mã chạy):
+- **Ký theo vai trên mọi chứng từ** (năng lực `documents.signatures`, migration `0048`, PHASES 2.7): `ctx.documents.sign / signatures / unsign` — chữ ký gắn phiên bản hiện tại (phiên bản mới thì chữ ký cũ hết hiệu lực), chỉ người dùng đăng nhập ký (khoá API, AI không ký thay người), huỷ: người đã ký hoặc chủ đơn vị; `GET /api/v1/document-signatures`. Phiếu kế toán giữ luồng ký 4 vai cũ.
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
+- **Truy vết OpenTelemetry từ lõi** (PHASE-018 W5, ADR-0010; mức Kernel K1 — chỉ bọc cổng `kernel/public.ts`, hành vi ghi sổ không đổi):
+  - `packages/platform/src/core/tracing.ts` (tệp duy nhất import `@opentelemetry/*`): span ở mọi khớp nối — HTTP, MCP, `runAction`, cổng Kernel, câu CSDL (chỉ loại câu + bảng), phát / giao sự kiện outbox, gọi ra ngoài bằng `fetch`. Mọi span mang `bizcity.module` và `bizcity.outcome` (`ok` · `rejected` = từ chối đúng luật, không phải sự cố · `error`).
+  - Thuộc tính đi qua danh sách cho phép ngay ở bộ xuất: không số tiền, tên, MST, câu SQL, token rời tiến trình.
+  - `traceId` trong log, trong phản hồi lỗi (`error.traceId`, `bizcity_errors` 1.1.0-draft) và trong bằng chứng (`audit_logs.trace_id`); sự kiện outbox lưu `trace_parent` để span giao nối (link) về yêu cầu gốc — migration `0047` chỉ thêm hai cột cho phép NULL.
+  - `ctx.trace.step(name, fn)` cho module tự chia bước; check SC-OBS-2 chặn module import thẳng SDK truy vết và thuộc tính ngoài danh sách.
+  - Bộ giám sát thêm OTel Collector (lấy mẫu đuôi: mọi trace lỗi / chậm > 1 s + `TRACE_SAMPLE_PERCENT`%) và Tempo (7 ngày); Grafana nối trace ↔ log ↔ số đo. Không bật bộ giám sát: không gửi trace đi đâu.
+- **Thiết kế OpenTelemetry từ lõi kiến trúc** ([ADR-0010](docs/adr/ADR-0010-opentelemetry-tu-loi.md), chủ dự án quyết 01/11/2026):
   - Sáu lớp bảo đảm: Accounting Kernel (ghi sổ đúng) · PostgreSQL + Audit Ledger (bằng chứng) · OpenTelemetry (hành trình thực thi) · Prometheus (sức khoẻ, hiệu năng) · Grafana + Tempo + Loki (điều tra) · Alertmanager (thông báo).
   - Span chỉ đặt ở khớp nối Platform (HTTP, MCP, `runAction`, outbox, CSDL, gọi ra ngoài), cộng một lần bọc cổng `kernel/public.ts` (K1). Mọi span mang `bizcity.module`, nên module cộng đồng tự có trace và lỗi được khoanh tới module / bước mà không sửa Kernel.
   - Thuộc tính theo danh sách cho phép; luật R-OBS-7 / R-OBS-8.
@@ -131,6 +137,11 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-01 09:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gộp main (ADR-0010 OTel) vào gói: tracing / version sang @bizcity/platform, cổng @bizcity/kernel bọc trace; migration ký theo vai đổi số 0047 → 0048; 7 tín hiệu lộ trình / tuân thủ trỏ đường dẫn gói; AUDIT-2026-11-01-PLUGIN-MVP -->
+- **Truy vết OpenTelemetry theo gói** (PHASE-010 + ADR-0010): `core/tracing.ts`, `core/version.ts` thuộc `@bizcity/platform` (`packages/platform/src/core/`), phụ thuộc `@opentelemetry/*` chuyển sang gói Platform; cổng `@bizcity/kernel` (`packages/kernel/src/index.ts`) bọc `traceKernelApi / traceKernelFn` như `kernel/public.ts` của main. Check SC-OBS-2 quét cả `packages/platform`, `packages/kernel`.
+- **Migration ký theo vai đổi số `0047` → `0048_ky_chung_tu_chung.sql`** (số `0047` đã phát hành trên `main` cho `0047_truy_vet.sql`). Nội dung không đổi; CSDL đã chạy nhánh này trước khi gộp xem "Nâng cấp cần làm".
+- **Tín hiệu máy của lộ trình / ma trận tuân thủ trỏ đường dẫn gói**: 7 tín hiệu `fileContains` (C-4 ×2, C-8 ×2, C-9, 2.10, 2.13, 2.14) còn trỏ `apps/api/src/...` sau tách gói nên báo ✘ giả — trỏ sang `packages/kernel`, `packages/platform`; C-4 / C-8 / C-9 về đạt, Phase 2 13/16.
+- **Biên bản [AUDIT-2026-11-01-PLUGIN-MVP](docs/audits/AUDIT-2026-11-01-PLUGIN-MVP.md)**: Kernel ổn định ~85%, plugin runtime ~15%; phản biện "drop-in kiểu WordPress"; P0-1..P0-3, P1-1..P1-5; lộ trình PR-P0, PR-0…PR-8 theo phase 011 / 013 / 014; mockup launcher "＋ Thêm phân hệ".
 - **Gói `@bizcity/kernel`** (`packages/kernel`, PHASES 2.3, PHASE-010 D010-9): toàn bộ Accounting Kernel (60 tệp: cửa nạp, định khoản, sổ cái, kỳ, sổ phụ, thuế, kết chuyển, dữ liệu gốc) dời khỏi `apps/api/src`; gốc gói là cổng công khai (trước là `apps/api/src/kernel/public.ts`, nay là tệp chuyển tiếp). Phân hệ, add-in không phải đổi import. Kernel không còn import adapter kết nối / báo cáo kho (bộ chuẩn hoá chứng từ đẩy vào đăng ký ở `app.ts`; route báo cáo kho tách sang module kho, đường dẫn API như cũ).
 - **Gói `@bizcity/platform`** (`packages/platform`, PHASE-010 D010-8, bước của PHASES 2.3): 22 tệp Platform Kernel cần (lỗi chuẩn, HTTP, quyền, bằng chứng, runtime action, sự kiện, số đo, kết nối / migration / kiểu CSDL, cấu hình, chẩn đoán, ký, hai hàm danh mục) dời khỏi `apps/api/src`; đường cũ là tệp chuyển tiếp nên mã của phân hệ / nhánh đang mở không phải đổi. Dev / test chạy thẳng mã nguồn của gói (điều kiện `development`); bản chạy thật build `dist`.
 - **Đính kèm Mua hàng chạy trên đính kèm chung** (migration `0046`, PHASES 2.7, A-19): dòng `purchase_attachments` chép sang `document_attachments` (docRef `mua-hang.<loại chủ>:<mã>`, `legacy_ref` đối chiếu), tệp giữ nguyên chỗ trên ổ (`DATA_DIR/dinh-kem`), băm sha256 ở lần tải đầu. API `/api/v1/purchase/attachments` giữ khuôn; xoá tệp nay là gỡ (lưu trữ, không xoá cứng). Bảng `purchase_attachments` khoá thêm / sửa, giữ để đối chiếu.
@@ -173,15 +184,18 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- CSDL đã chạy nhánh `feat/phase-0-tiep` **trước** khi gộp `main` (có dòng `0047_ky_chung_tu_chung.sql` trong `schema_migrations`): đổi tên dòng đó thành `0048_ky_chung_tu_chung.sql` rồi `npm run db:migrate` (áp `0047_truy_vet.sql`). Bản cài từ `main` không bị ảnh hưởng.
 - Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`, `@bizcity/kernel`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
 - Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.
 - Image API chép thêm `db/packs` (gói nền). Lần chạy job `db-migrate` đầu sau khi nâng cấp: đơn vị seed ghi nhận "đã cài gói nền" (mọi mục giữ nguyên, không đổi cấu hình). Triển khai tự dựng: nhớ chép thư mục `db/packs` (hoặc đặt `PACKS_DIR`).
+- Migration `0047` thêm `event_outbox.trace_parent`, `audit_logs.trace_id` (cho phép NULL, chỉ đổi catalog — chạy tức thì; không vào chuỗi băm bằng chứng). Bộ giám sát có thêm hai dịch vụ `otel-collector`, `tempo` (+ `tempo-init` chạy một lần): `docker compose … up -d` như cũ (ADR-0010).
 - **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
 - Bộ giám sát: `GRAFANA_ADMIN_PASSWORD` thành biến **bắt buộc** — thiếu thì `docker compose` dừng và báo, không còn mật khẩu mặc định `doi-mat-khau-ngay` (PHASE-018). Bản cài đã bật giám sát mà chưa đặt biến: thêm vào `.env` trước khi `up`.
+- Trace (ADR-0010): thuộc tính span qua danh sách cho phép trước khi rời tiến trình (không số tiền, tên, MST, câu / tham số SQL, header xác thực, token); Collector xoá thêm `url.full`, `db.statement`, `exception.message`; Collector, Tempo không mở cổng ra máy chủ. Check SC-OBS-2 chặn module import thẳng `@opentelemetry/*`.
 - nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).
 - API có thể chạy bằng vai trò CSDL thường `ketoan_app`: không tắt được trigger bảo vệ sổ, không TRUNCATE (R-SEC-6, R-KER-3). Bật bằng biến môi trường (xem Nâng cấp cần làm).
 

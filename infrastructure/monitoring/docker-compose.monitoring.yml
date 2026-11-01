@@ -1,6 +1,6 @@
 # [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 # =============================================================================
-# Bộ giám sát TUỲ CHỌN cho Bizcity / open-ketoan — Prometheus + Alertmanager + Grafana + Loki.
+# Bộ giám sát TUỲ CHỌN cho Bizcity / open-ketoan — Prometheus + Alertmanager + Grafana + Loki + Tempo (OTel Collector).
 #
 # Đây là tệp GHÉP (override) với docker-compose.yml ở gốc kho. Chạy TỪ GỐC KHO:
 #
@@ -24,6 +24,13 @@
 # =============================================================================
 
 services:
+  # [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+  # --- API gửi trace cho Collector khi bật bộ giám sát (ADR-0010) --------------
+  # Không bật bộ giám sát: API vẫn có traceId trong log / phản hồi lỗi / bằng chứng nhưng không gửi trace đi đâu.
+  api:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+
   # --- Thu thập & lưu chỉ số --------------------------------------------------
   prometheus:
     image: prom/prometheus:v2.53.4   # dòng LTS 2.53
@@ -96,6 +103,7 @@ services:
     depends_on:
       - prometheus
       - loki
+      - tempo
     deploy:
       resources:
         limits:
@@ -138,6 +146,49 @@ services:
       resources:
         limits:
           memory: 256m
+
+  # --- Truy vết: API → OTel Collector → Tempo (ADR-0010) -----------------------
+  # Collector lấy mẫu ĐUÔI: giữ mọi trace có lỗi hoặc chậm > 1 s, cộng TRACE_SAMPLE_PERCENT% còn lại (mặc định 10).
+  # Không mở cổng ra máy chủ: chỉ API (cùng mạng) gửi vào http://otel-collector:4318.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.115.1
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yml"]
+    environment:
+      TRACE_SAMPLE_PERCENT: ${TRACE_SAMPLE_PERCENT:-10}
+    volumes:
+      - ./infrastructure/monitoring/otel-collector/config.yml:/etc/otelcol/config.yml:ro
+    depends_on:
+      - tempo
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+  # Ổ tempo-data tạo mới thuộc root; Tempo chạy bằng người dùng 10001 → chỉnh quyền một lần trước khi chạy.
+  tempo-init:
+    image: busybox:1.36.1
+    user: root
+    command: ["chown", "-R", "10001:10001", "/var/tempo"]
+    volumes:
+      - tempo-data:/var/tempo
+    restart: "no"
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./infrastructure/monitoring/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+    # Không mở cổng ra máy chủ: Grafana đọc http://tempo:3200, Collector gửi tempo:4317.
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   # --- Chỉ số PostgreSQL ------------------------------------------------------
   postgres-exporter:
@@ -205,3 +256,4 @@ volumes:
   grafana-data:
   loki-data:
   promtail-positions:
+  tempo-data:
