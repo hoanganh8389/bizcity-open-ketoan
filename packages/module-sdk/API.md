@@ -3,6 +3,7 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call có (action đọc); báo cáo về phan-he/ke-toan/reports; câu hỏi mở 3 chốt cách hai -->
+<!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — ctx.documents có (2.7): nextNumber, saveVersion, versions, link, links, attach, attachments -->
 
 > **Trạng thái: bản nháp, chưa có code.** Kết quả PHASES 1.5. Gói thật dựng ở Phase 3 (3.1), sau khi có `packages/actions` (2.5) và `packages/audit` (2.6).
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
@@ -103,12 +104,13 @@ interface ActionContext {
     get(docKey: string): Promise<LedgerDocStatus | null>;          // trạng thái + số chứng từ sổ, không trả dòng ledger_*
     query(q: LedgerQuery): Promise<LedgerQueryRow[]>;              // ✅ 3.7: đầu kỳ / phát sinh / cuối kỳ theo mã, chiều, mã hàng (@ketoan/contracts ledgerQuerySchema)
   };
-  documents: {                      // ⏳ 2.7
-    nextNumber(series: string): Promise<string>;
-    transition(docRef: DocRef, action: string, opts?: { reason?: string }): Promise<void>;
+  documents: {                      // ✅ 2.7 (2026-11-01, core/documents.ts) trừ transition — xem DOCUMENT §7.1
+    nextNumber(series: string, opts?: { date?: string; width?: number }): Promise<string>;   // HD-2026-0001
+    transition(docRef: DocRef, action: string, opts?: { reason?: string }): Promise<void>;     // ⏳ hiện qua documents.workflow trong action
     saveVersion(docRef: DocRef, snapshot: unknown): Promise<number>;
     link(from: DocRef, to: DocRef, role: 'source'|'reverses'|'replaces'|'settles'|'attachesTo'|'ledger'): Promise<void>;
-    attach(docRef: DocRef, file: FileInput, meta: { kind: string }): Promise<AttachmentRef>;
+    attach(docRef: DocRef, file: FileInput, meta?: { kind?: string; note?: string }): Promise<AttachmentRef>;
+    versions(docRef: DocRef): Promise<DocumentVersion[]>;  links(docRef: DocRef): Promise<DocumentLink[]>;  attachments(docRef: DocRef): Promise<AttachmentRef[]>;
   };
   events: { emit(type: string, data: unknown, opts?: { subject?: DocRef }): Promise<void> };  // ⏳ outbox, cùng giao dịch
   settings: { get<T>(key: `bizcity.${string}`, scope?: SettingScope): T };                     // ⏳ registry

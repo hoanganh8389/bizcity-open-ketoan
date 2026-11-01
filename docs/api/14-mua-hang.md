@@ -201,7 +201,7 @@ Giá áp cho dòng phiếu (`priceFor`): dòng của đúng NCC thắng giá chu
 | GET | `/api/v1/purchase/suppliers/:code` | Hồ sơ NCC: thông tin danh mục, các con số trên, trạng thái hạn mức, mua theo tháng, nhật ký của NCC | `documents:read` |
 | POST | `/api/v1/purchase/products-lookup` | `{ skus }` → tên, ĐVT, thuế đầu vào, nhãn (nhập Excel) | `documents:read` |
 | GET / POST | `/api/v1/purchase/attachments` | Liệt kê (`ownerType` partner \| document \| policy, `ownerId`) / gửi tệp `{ ownerType, ownerId, kind, fileName, mime, dataBase64 }` (≤ 15 MB) | đọc / `documents:write` |
-| GET / DELETE | `/api/v1/purchase/attachments/:id/file` · `/api/v1/purchase/attachments/:id` | Tải nội dung / xoá tệp | đọc / `documents:write` |
+| GET / DELETE | `/api/v1/purchase/attachments/:id/file` · `/api/v1/purchase/attachments/:id` | Tải nội dung / gỡ tệp (lưu trữ, không xoá cứng). Từ 0046 tệp nằm ở đính kèm chung (`document_attachments`, docRef `mua-hang.<loại chủ>:<mã>`); `ownerType` nhận cả `invoice` | đọc / `documents:write` |
 
 **Chính sách mới:** `contract` (`{ no, signedOn, note }`, hiệu lực = validFrom/validTo). Mọi chính sách trả thêm `createdBy`, `createdAt`, `updatedBy`, `updatedAt`.
 

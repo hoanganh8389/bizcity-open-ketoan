@@ -7,6 +7,7 @@
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — báo cáo về phan-he/ke-toan/reports; GOODS (nhập xuất tồn + báo cáo hàng hoá tách theo miền) lắp ở đây cho kho, mua-hang — phân hệ không import báo cáo của ke-toan (SC-MOD-1)
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — CORE_ROUTES thêm docRefRoutes (documents.* — phiên bản, liên kết, đính kèm chung)
 /**
  * LÕI máy chủ — luôn bật ở mọi tiến trình: đăng nhập, hệ thống, người dùng, danh mục dùng chung, cổng nhận chứng từ, kết nối.
  * Mã nguồn lõi ở src/core + src/modules (chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo…).
@@ -38,6 +39,7 @@ import { voucherTemplateRoutes } from '../modules/voucher-templates/voucher-temp
 import { signatureRoutes } from '../modules/signatures/signature.routes.js';
 import { printTemplateRoutes } from '../modules/print-templates/print-template.routes.js';
 import { referenceDocumentRoutes } from '../modules/reference-documents/reference-document.routes.js';
+import { docRefRoutes } from '../modules/doc-refs/doc-ref.routes.js';
 import { reportRoutes } from './ke-toan/reports/report.routes.js';
 import { departmentReportRoutes } from './ke-toan/reports/department-reports.js';
 import { grossProfitRoutes } from './ban-hang/gross-profit.js';
@@ -47,7 +49,7 @@ export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes,
   accountRoutes, branchRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
-  productRoutes, catalogRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes,
+  productRoutes, catalogRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
 ];
 
 export const LEDGER: Routes[] = [ledgerRoutes, reportRoutes, debtRoutes];

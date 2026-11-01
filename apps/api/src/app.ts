@@ -33,8 +33,9 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, ledgerQuery } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery } from './kernel/public.js';
 import { registerLedgerReader } from './core/actions.js';
+import { registerDocumentNumberer } from './core/documents.js';
 import { registerCollector } from './core/metrics.js';
 
 
@@ -101,6 +102,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerCollector('outbox', collectOutboxMetrics);
   registerCollector('tenants', collectTenantMetrics, 15 * 60_000);
   registerLedgerReader((tx, tenantId, q) => ledgerQuery.query(tx, tenantId, q));
+  // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.numbering: bộ đếm document_sequences của Kernel cho ctx.documents.nextNumber
+  registerDocumentNumberer((tx, tenantId, key, year) => documentNumbers.next(tx, tenantId, key, year));
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.
   // Hệ thống (người dùng, kết nối…) thuộc lõi — luôn báo là bật.

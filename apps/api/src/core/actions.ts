@@ -27,7 +27,7 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
 import { z } from 'zod';
-import { ERROR_CODES, type ErrorCode, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
+import { ERROR_CODES, docRefModule, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
@@ -37,6 +37,7 @@ import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
 import { metrics } from './metrics.js';
 import { currentRequest } from './request-context.js';
+import { documents } from './documents.js';
 import type { AuthContext, Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
@@ -64,6 +65,20 @@ export interface ActionContext {
   // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call (module-sdk API.md §2, câu hỏi mở 3): gọi action đọc của module khác
   /** Gọi action đọc công khai của module khác theo mã, với quyền của người gọi (STD-MOD-3; xem callAction). */
   actions: { call<O = unknown>(id: string, input: unknown): Promise<O> };
+  // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — ctx.documents (bizcity_document@1 §7, PHASES 2.7): số, phiên bản, liên kết, đính kèm trong giao dịch của action
+  /**
+   * Chứng từ dùng chung trong giao dịch của action (core/documents.ts). Ghi (saveVersion, link, attach) chỉ trên docRef của
+   * chính module (`<module>.…`, như ctx.events.emit); dãy số tự gắn tiền tố module. Đọc được mọi docRef của đơn vị.
+   */
+  documents: {
+    nextNumber(series: string, opts?: { date?: string; width?: number }): Promise<string>;
+    saveVersion(docRef: DocRef, snapshot: unknown): Promise<number>;
+    versions(docRef: DocRef): Promise<DocumentVersion[]>;
+    link(from: DocRef, to: DocRef, role: DocLinkRole): Promise<void>;
+    links(docRef: DocRef): Promise<DocumentLink[]>;
+    attach(docRef: DocRef, file: FileInput, meta?: { kind?: string; note?: string }): Promise<AttachmentRef>;
+    attachments(docRef: DocRef): Promise<AttachmentRef[]>;
+  };
   /** @deprecated Cầu nối Phase 2→3 cho service cũ cần AuthContext. Không có trong @bizcity/module-sdk. */
   readonly legacyAuth: AuthContext;
 }
@@ -246,6 +261,22 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
             return callAction(id, input, auth);
           },
         },
+        documents: (() => {
+          const mod = def.id.split('.')[0]!;
+          const actor = auth?.actor ?? 'public';
+          const own = (ref: DocRef, what = 'docRef') => {
+            if (docRefModule(ref) !== mod) throw Errors.validation(`Action ${def.id} chỉ ghi chứng từ của module ${mod} (${what} ${ref})`);
+          };
+          return {
+            nextNumber: (series, o) => documents.nextNumber(trx, tenantId, mod, series, o),
+            saveVersion: async (ref, snapshot) => { own(ref); return (await documents.saveVersion(trx, tenantId, ref, snapshot, actor)).version; },
+            versions: (ref) => documents.versions(trx, tenantId, ref),
+            link: (from, to, role) => { own(from, 'from'); return documents.link(trx, tenantId, from, to, role, actor); },
+            links: (ref) => documents.links(trx, tenantId, ref),
+            attach: async (ref, file, m) => { own(ref); const { created: _c, ...a } = await documents.attach(trx, tenantId, ref, file, m ?? {}, actor); return a; },
+            attachments: (ref) => documents.attachments(trx, tenantId, ref),
+          } satisfies ActionContext['documents'];
+        })(),
         get legacyAuth() {
           if (!auth) throw Errors.unauthorized();
           return auth;
