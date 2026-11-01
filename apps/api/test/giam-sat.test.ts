@@ -8,7 +8,7 @@ import { sql } from 'kysely';
 import { db, readWithTimeout } from '../src/db/client.js';
 import { collect, renderMetrics } from '../src/core/metrics.js';
 import { collectOutboxMetrics } from '../src/core/events.js';
-import { collectPostingMetrics, collectTenantMetrics, failureKind, resetPostingWatermark, tenantBand } from '../src/modules/documents/posting.metrics.js';
+import { collectPostingMetrics, collectTenantMetrics, failureKind, resetPostingWatermark, tenantBand } from '@bizcity/kernel/modules/documents/posting.metrics';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;

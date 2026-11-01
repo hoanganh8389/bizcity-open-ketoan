@@ -1,6 +1,7 @@
 # `bizcity_ledger_intake@1` — Khuôn sự việc gửi vào sổ
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0: §7.1 đọc sổ — ledger.query (ctx.ledger.query, ledgerQuery, khung nhìn bizcity_read.*) -->
+<!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1: ledgerQuery mở ở gốc gói @bizcity/kernel -->
 
 > **Phiên bản:** 1.1.0 · 2026-10-31 · **Trạng thái:** Ổn định (§7.1 mới, bổ sung)
 > **Nguồn sự thật:** `packages/contracts/src/documents.ts` (`ingestDocumentSchema`) · **JSON Schema:** [BIZCITY-LEDGER-INTAKE-v1.schema.json](BIZCITY-LEDGER-INTAKE-v1.schema.json)
@@ -92,7 +93,7 @@ Nộp vào bằng cửa nạp thì đọc ra cũng qua bề mặt của lõi —
 | Ai đọc | Bằng gì | Ở đâu |
 |---|---|---|
 | Module, action | `ctx.ledger.query(q)` trong giao dịch của action | `apps/api/src/core/actions.ts`; Kernel đăng ký ở `app.ts` |
-| Mã nội bộ ngoài Kernel (phân hệ, add-in) | `ledgerQuery.query(db, tenantId, q)` | `apps/api/src/kernel/public.ts` |
+| Mã nội bộ ngoài Kernel (phân hệ, add-in) | `ledgerQuery.query(db, tenantId, q)` | `@bizcity/kernel` (trước: `apps/api/src/kernel/public.ts` |
 | Báo cáo cần SQL riêng | SQL trên khung nhìn chỉ đọc `bizcity_read.ledger_entries`, `bizcity_read.ledger_lines`, `bizcity_read.ledger_balances_daily`; tài khoản đối ứng bằng `otherSide()` | migration `0043_doc_so_cai.sql` |
 
 Câu hỏi `q` (`ledgerQuerySchema`, `packages/contracts/src/ledger-query.ts`) hỏi theo **mã**: `to` (bắt buộc), `from`, `accounts` (đầu số), `partnerCode`, `branchCodes`, `dimension` ({mã chiều: mã giá trị}), `sku`, `groupBy` (`account` | `partner` | `branch`, mặc định `account`). Kết quả mỗi dòng: mã theo `groupBy` + `opening` (Nợ − Có trước `from`), `debit`, `credit`, `closing`, số đồng, cộng trừ bằng xu.

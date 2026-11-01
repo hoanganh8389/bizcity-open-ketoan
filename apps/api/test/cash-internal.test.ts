@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
-import { returnValue } from '../src/modules/inventory/costing.service.js';
+import { returnValue } from '@bizcity/kernel/modules/inventory/costing.service';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;

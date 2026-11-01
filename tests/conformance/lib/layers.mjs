@@ -12,6 +12,7 @@
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — core/documents.ts, modules/doc-refs/ → P documents (documents.*, PHASES 2.7)
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — modules/inventory/inventory-report.routes.ts → D modules/kho (route báo cáo kho tách khỏi Kernel)
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/platform/src; nhãn masterdata/, system/diagnostics.ts, documents/signature.routes.ts của gói
+// [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — LAYER_ROOTS thêm packages/kernel/src; index.ts (cổng công khai) và fastify-swagger.d.ts của gói là K
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -21,7 +22,7 @@
 /** K Kernel kế toán · P Platform chung · M Danh mục chuẩn · D Module nghiệp vụ · A Adapter · U UI kit (REUSE-MAP §1). */
 export const LAYERS = ['K', 'P', 'M', 'D', 'A', 'U'];
 /** Gốc mã nguồn có nhãn lớp. Khoá LAYER_MAP là đường dẫn tương đối với gốc (cùng bảng cho mọi gốc). packages/platform: D010-7 chặng 2. */
-export const LAYER_ROOTS = ['apps/api/src', 'packages/platform/src'];
+export const LAYER_ROOTS = ['apps/api/src', 'packages/platform/src', 'packages/kernel/src'];
 export const TAG_RE = /^\/\/ @bizcity-layer ([KPMDAU](?:\+[KPMDAU])*) (\S+)\s*$/;
 
 /**
@@ -108,6 +109,9 @@ export const LAYER_MAP = [
   ['masterdata/', 'M', 'data/masterdata'],
   ['system/diagnostics.ts', 'P', 'cli'],
   ['documents/signature.routes.ts', 'P', 'documents/signatures'],
+  // packages/kernel/src (D010-7 chặng 3): modules/…, core/posting-modes.ts, db/seed.ts dùng chung dòng ở trên; gốc gói là cổng công khai.
+  ['index.ts', 'K', 'kernel/public'],
+  ['fastify-swagger.d.ts', 'K', 'kernel/public'],
   ['modules/system/evidence.routes.ts', 'P', 'audit'],
   ['modules/system/events.routes.ts', 'P', 'events'],
   ['modules/system/mcp.routes.ts', 'P', 'mcp'],

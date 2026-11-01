@@ -184,8 +184,10 @@
           ]
         },
         "SC-KERNEL-6": {
-          "findings": 2,
+          "findings": 4,
           "keys": [
+            "@bizcity/kernel/modules/ledger/ledger.service",
+            "@bizcity/kernel/modules/periods/khoa-ky",
             "modules/ledger/ledger.diagnostics.ts",
             "modules/periods/period.repository.ts"
           ]
@@ -376,9 +378,10 @@
           ]
         },
         "SC-LAYER-2": {
-          "findings": 2,
+          "findings": 3,
           "keys": [
             "core/audit[P]->modules/periods[K]",
+            "core/metrics[P]->modules/periods[K]",
             "phan-he/alpha[D]->phan-he/beta[D]"
           ]
         },

@@ -3,6 +3,7 @@
 // [2026-10-31 04:53 PM Johnny Chu - Chu Hoàng Anh] R-REV — H-LEDGER dò cả scripts/ và .sql; thêm H-TRIGGER-OFF (tắt trigger bảo vệ sổ ngoài ngoại lệ E3).
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — thêm H-METRIC-LABEL (chặn): nhãn số đo theo đơn vị / chứng từ / người / yêu cầu (R-OBS-4, S018-20).
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — luật dò H-* áp cả packages/platform/src
+// [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — H-KERNEL-IMPORT bắt cả đường con @bizcity/kernel/<đường>
 /**
  * Rà soát việc của người đóng góp — lượt đầu tự động (docs/rules/RULE-REVIEW.md §3, R-REV-3).
  *
@@ -45,7 +46,7 @@ const RULES = [
   { id: 'H-LEDGER', level: 'chặn', rule: 'Câu 2, R-LEDGER', files: /^(apps\/api\/src\/|scripts\/|packages\/)|\.sql$/, check: (f) => !/^db\/migrations\//.test(f), re: /(insertInto|updateTable|deleteFrom)\(\s*['"]ledger_|\b(INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+ledger_/i, msg: 'ghi thẳng bảng ledger_* — sổ chỉ ghi qua Kernel (bút toán đảo khi sửa / huỷ)' },
   { id: 'H-TRIGGER-OFF', level: 'chặn', rule: 'R-LEDGER-1 E3', files: /./, re: TRIGGER_OFF_RE, check: (f) => !/^(scripts\/xoa-chung-tu\.sh|scripts\/kiem-chuan\.sh|scripts\/ra-soat-dong-gop\.mjs|db\/migrations\/|apps\/api\/test\/|docs\/)/.test(f), msg: 'tắt trigger bảo vệ sổ — ngoại lệ đóng chỉ scripts/xoa-chung-tu.sh (E3); thêm ngoại lệ = ADR' },
   { id: 'H-LEDGERSVC', level: 'chặn', rule: 'Câu 3, R-BOUND', files: API_D, re: /\bledgerService\b/, msg: 'phân hệ gọi ledgerService — phải nộp sự việc qua documentService / ctx.ledger.submit' },
-  { id: 'H-KERNEL-IMPORT', level: 'chặn', rule: 'SC-KERNEL-6', files: API_D, re: /from\s+['"][^'"]*\/modules\/(ledger|posting|posting-config|documents|vouchers|periods|closing)\//, msg: 'phân hệ import thẳng mô-đun Kernel — chỉ qua apps/api/src/kernel/public.ts' },
+  { id: 'H-KERNEL-IMPORT', level: 'chặn', rule: 'SC-KERNEL-6', files: API_D, re: /from\s+['"](?:[^'"]*\/modules\/(?:ledger|posting|posting-config|documents|vouchers|periods|closing)\/|@bizcity\/kernel\/)/, msg: 'phân hệ import thẳng mô-đun Kernel — chỉ qua apps/api/src/kernel/public.ts' },
   { id: 'H-CROSS-MODULE', level: 'chặn', rule: 'R-BOUND', files: /^apps\/(api|web)\/src\/phan-he\/([^/]+)\//, re: /from\s+['"]\.\.\//, check: (file, line) => { const own = file.split('/')[4]; const m = /from\s+['"](?:\.\.\/)+(?:phan-he\/)?([a-z-]+)\//.exec(line); return m && m[1] !== own && /^(ban-hang|mua-hang|kho|quy|thue|tai-san|ke-toan|he-thong|api)$/.test(m[1]); }, msg: 'phân hệ import phân hệ khác — nối bằng khoá tham chiếu / sự kiện (R-WF-8)' },
   { id: 'H-ACCOUNT-LITERAL', level: 'chặn', rule: 'Câu 4, R-POST-2', files: /^apps\/api\/src\/.*(posting|dinh-khoan|hach-toan)[^/]*\.ts$/, re: /['"`](1[1-5]\d|2[1-4]\d|3[3-5]\d|4[1-2]\d|5[1-2]\d|6[1-4]\d|711|811|911)\d{0,5}['"`]/, msg: 'viết số tài khoản trong mã định khoản — tra qua AccountResolver / gói định khoản' },
   { id: 'H-SEQ', level: 'cảnh báo', rule: 'STD-DOC-6', files: API_D, re: /['"]document_sequences['"]/, msg: 'phân hệ tự đếm số chứng từ — dùng cấp số chung (documents.numbering)' },

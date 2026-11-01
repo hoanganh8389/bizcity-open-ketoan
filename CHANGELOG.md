@@ -131,6 +131,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Gói `@bizcity/kernel`** (`packages/kernel`, PHASES 2.3, PHASE-010 D010-9): toàn bộ Accounting Kernel (60 tệp: cửa nạp, định khoản, sổ cái, kỳ, sổ phụ, thuế, kết chuyển, dữ liệu gốc) dời khỏi `apps/api/src`; gốc gói là cổng công khai (trước là `apps/api/src/kernel/public.ts`, nay là tệp chuyển tiếp). Phân hệ, add-in không phải đổi import. Kernel không còn import adapter kết nối / báo cáo kho (bộ chuẩn hoá chứng từ đẩy vào đăng ký ở `app.ts`; route báo cáo kho tách sang module kho, đường dẫn API như cũ).
 - **Gói `@bizcity/platform`** (`packages/platform`, PHASE-010 D010-8, bước của PHASES 2.3): 22 tệp Platform Kernel cần (lỗi chuẩn, HTTP, quyền, bằng chứng, runtime action, sự kiện, số đo, kết nối / migration / kiểu CSDL, cấu hình, chẩn đoán, ký, hai hàm danh mục) dời khỏi `apps/api/src`; đường cũ là tệp chuyển tiếp nên mã của phân hệ / nhánh đang mở không phải đổi. Dev / test chạy thẳng mã nguồn của gói (điều kiện `development`); bản chạy thật build `dist`.
 - **Đính kèm Mua hàng chạy trên đính kèm chung** (migration `0046`, PHASES 2.7, A-19): dòng `purchase_attachments` chép sang `document_attachments` (docRef `mua-hang.<loại chủ>:<mã>`, `legacy_ref` đối chiếu), tệp giữ nguyên chỗ trên ổ (`DATA_DIR/dinh-kem`), băm sha256 ở lần tải đầu. API `/api/v1/purchase/attachments` giữ khuôn; xoá tệp nay là gỡ (lưu trữ, không xoá cứng). Bảng `purchase_attachments` khoá thêm / sửa, giữ để đối chiếu.
 - **Một chỗ cấp số chứng từ**: phiếu kế toán tay, đề nghị thanh toán (`quy`), phiếu mua hàng lấy số từ `documentNumbers.next` của Kernel thay vì tự ghi `document_sequences`. Khoá dãy và khuôn số giữ nguyên — không nhảy số.
@@ -150,6 +151,7 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- `GET /api/v1/documents?voucherInfo=false` trước vẫn kèm thông tin phiếu (`z.coerce.boolean()` coi chuỗi "false" là true); nay dùng `queryBool`.
 - Đính tệp vào hoá đơn NCC (`ownerType: invoice`) báo lỗi CSDL: bảng `purchase_attachments` chỉ nhận partner / document / policy. Hết lỗi khi chuyển sang đính kèm chung (0046).
 - Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
   - mọi bản trước commit `ccfc341` (gồm `main` 23a834c) **không cài mới được trên CSDL sạch**: code dùng `users.session_version`, `products.parent_manual` khi chưa có migration;
@@ -171,7 +173,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
-- Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
+- Dựng từ mã nguồn: `npm install` (liên kết gói mới `@bizcity/platform`, `@bizcity/kernel`), rồi `npm run build` (đã gồm build gói). Image Docker tự làm.
 - Bản dựng API chép thêm tệp `*.workflow.yaml` vào `dist` (`npm run build -w @ketoan/api` tự làm; image Docker dựng như cũ). Tự dựng không qua `npm run build` thì phải chép tệp này, thiếu thì API không khởi động.
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.

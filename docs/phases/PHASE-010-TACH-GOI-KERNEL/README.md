@@ -3,7 +3,7 @@
 <!-- [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng. -->
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.7 documents.* có (S010-2) -->
 
-> **Trạng thái:** 🟡 W1 xong 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), 21 tệp chuyển. 2.7 `documents.*` (số, phiên bản, liên kết, đính kèm) có 2026-11-01 — đính kèm Mua hàng đã chuyển (0046), ký theo vai trên mọi chứng từ (0047): 2.7 đủ. W2 (dời thư mục sang `packages/kernel`) chờ tách Platform thành gói
+> **Trạng thái:** 🟡 W1 xong 2026-10-30: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block), 21 tệp chuyển. 2.7 `documents.*` (số, phiên bản, liên kết, đính kèm) có 2026-11-01 — đính kèm Mua hàng đã chuyển (0046), ký theo vai trên mọi chứng từ (0047): 2.7 đủ. W2 có 2026-11-01: `packages/platform` (`@bizcity/platform`) + `packages/kernel` (`@bizcity/kernel`), 2.3 ☑
 > **Giai đoạn:** Phase 2 của [PHASES](../../standard/PHASES.md) · **Code:** có (W1) · **Tiến độ tín hiệu (2026-10-30):** 0%
 > **Mục tiêu:** `apps/api` chỉ import Kernel qua `@bizcity/kernel` công khai; Core khởi động không cần phân hệ nào.
 > **Việc lộ trình:** 2.3, 2.7, 2.8
@@ -12,6 +12,7 @@
 > **Phụ thuộc phase:** 004
 
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
+<!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.3 có: packages/kernel -->
 
 | Tài liệu | Một câu |
 |---|---|

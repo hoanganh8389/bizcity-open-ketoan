@@ -13,11 +13,6 @@
           "message": "params: z.object({ sku }), querystring: z.object({ new: z.coerce.boolean().optional() }), body: productSchema,"
         },
         {
-          "fp": "SC-API-2|apps/api/src/modules/documents/document.routes.ts|voucherInfo:z.coerce.boolean().optional().describe('Kèmlýdo,nhânviên,điệnthoại,địachỉ,tàikhoảntiền,ngày/ngườitạo,sửa(danhsáchphiếuthuchi)'),",
-          "file": "apps/api/src/modules/documents/document.routes.ts",
-          "message": "voucherInfo: z.coerce.boolean().optional().describe('Kèm lý do, nhân viên, điện thoại, địa chỉ, tài khoản tiền, ngày / người tạo, sửa (danh sách phiếu thu chi)'),"
-        },
-        {
           "fp": "SC-API-2|apps/api/src/phan-he/mua-hang/routes.ts|r.get('/api/v1/purchase/supplier-products',{preHandler:read,schema:{tags,summary:'Mặthàng&giámua:theoNCC(kèmgiáchungnếuwithGeneral=1)hoặctheomã;units=1trảkèmĐVTcácmã',quer",
           "file": "apps/api/src/phan-he/mua-hang/routes.ts",
           "message": "r.get('/api/v1/purchase/supplier-products', { preHandler: read, schema: { tags, summary: 'Mặt hàng & giá mua: theo NCC (kèm giá chung nếu withGeneral=1) hoặc theo mã; units=1 trả kèm ĐVT các mã', quer"
@@ -850,9 +845,11 @@
       "ref": "R-POST-2 · chuyển sang AccountResolver / cờ tài khoản",
       "debts": [
         {
-          "fp": "SC-KERNEL-5|apps/api/src/modules/posting/rules/stock.rule.ts|account '157'",
-          "file": "apps/api/src/modules/posting/rules/stock.rule.ts",
-          "message": "số tài khoản '157' viết cứng: const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));"
+          "fp": "SC-KERNEL-5|packages/kernel/src/modules/posting/rules/stock.rule.ts|account '157'",
+          "file": "packages/kernel/src/modules/posting/rules/stock.rule.ts",
+          "message": "số tài khoản '157' viết cứng: const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));",
+          "why": "Nợ cũ đổi đường dẫn (trước: apps/api/src/modules/posting/rules/stock.rule.ts) khi dời Kernel sang packages/kernel 2026-11-01 (D010-7 chặng 3). 157 nằm trong hàm phân loại tài khoản tồn kho (đầu 15 trừ 157), không phải chỗ định khoản; gỡ khi danh mục tài khoản có thuộc tính tồn kho / hàng đang đi đường.",
+          "ref": "PHASE-010 D010-7"
         },
         {
           "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
