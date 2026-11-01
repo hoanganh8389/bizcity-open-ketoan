@@ -1,6 +1,7 @@
 # Kiến trúc Bizcity Core (open-ketoan): sổ cái là lõi
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 > **Đọc cùng:** [TARGET-LAYOUT](../standard/TARGET-LAYOUT.md) (cây thư mục, luật phụ thuộc) · [REUSE-MAP](../standard/REUSE-MAP.md) (code hiện tại về đâu) · [ADR](../adr/README.md) (vì sao) · [PHASES](../standard/PHASES.md) (lộ trình)
 > Sơ đồ viết bằng Mermaid: GitHub hiển thị trực tiếp. Đổi kiến trúc thì sửa sơ đồ trong cùng PR (CANON §5).
@@ -25,7 +26,7 @@ flowchart LR
     KER["Kernel kế toán<br/>một cửa sự việc → định khoản → sổ cái"]
   end
   DB[("PostgreSQL 16<br/>sổ chỉ thêm, trigger bảo vệ")]
-  MON["infrastructure/monitoring<br/>Prometheus · Grafana · Loki<br/>(tuỳ chọn)"]
+  MON["infrastructure/monitoring<br/>Prometheus · Alertmanager · Grafana<br/>Loki · Tempo + OTel Collector<br/>(tuỳ chọn)"]
 
   U --> WEB --> API
   POS -->|POST /documents| API
@@ -39,7 +40,7 @@ flowchart LR
   KER --> PLAT
   PLAT --> DB
   KER --> DB
-  MON -.->|"/metrics, log"| Core
+  MON -.->|"/metrics, log, trace OTLP"| Core
 ```
 
 ## 2. Các lớp và chiều phụ thuộc
@@ -178,24 +179,115 @@ sequenceDiagram
 flowchart LR
   subgraph Compose["docker compose (bản cài)"]
     NG["web: nginx<br/>/ → SPA · /api/ · /mcp → api"]
-    APIc["api: Node<br/>/metrics (nội bộ)"]
+    APIc["api: Node<br/>/metrics (nội bộ) · OpenTelemetry SDK"]
     MIG["db-migrate (job)"]
     PG[("db: PostgreSQL 16")]
   end
   subgraph Mon["infrastructure/monitoring (tuỳ chọn)"]
-    PR["Prometheus + 8 cảnh báo"]
+    PR["Prometheus + 14 cảnh báo"]
     AM["Alertmanager"]
-    GR["Grafana: 6 dashboard"]
+    GR["Grafana: 9 dashboard"]
     LO["Loki + Promtail"]
-    EX["postgres-exporter · node-exporter · cAdvisor"]
+    OC["OTel Collector<br/>(lấy mẫu đuôi)"]
+    TE["Tempo (trace, 7 ngày)"]
+    EX["postgres-exporter (ketoan_monitor) · node-exporter · cAdvisor"]
   end
   NG --> APIc --> PG
   MIG --> PG
   PR -->|scrape| APIc & EX
   EX --> PG
-  LO -->|"log container"| APIc
+  LO -->|"log container (có traceId)"| APIc
+  APIc -.->|"OTLP/HTTP khi đặt OTEL_EXPORTER_OTLP_ENDPOINT"| OC --> TE
   PR --> AM
-  GR --> PR & LO
+  GR --> PR & LO & TE
 ```
 
 Chi tiết: [OBSERVABILITY.md](../ops/OBSERVABILITY.md), [DEPLOY.md](../ops/DEPLOY.md), [infrastructure/monitoring/README.md](../../infrastructure/monitoring/README.md).
+
+## 7. Sáu lớp bảo đảm ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md))
+
+Mỗi lớp trả lời đúng một câu hỏi. Chỉ hai lớp đầu **quyết định và lưu sự thật**; bốn lớp sau **chỉ quan sát**. Hỏng lớp quan sát không bao giờ làm hỏng hay làm chậm việc ghi sổ.
+
+| # | Lớp | Bảo đảm | Vai trò |
+|---|---|---|---|
+| 1 | **Accounting Kernel** | Ghi sổ **đúng**: một cửa sự việc, Nợ = Có, kỳ khoá, sổ chỉ thêm, định khoản tất định | quyết định |
+| 2 | **PostgreSQL + Audit Ledger** | Lưu **bằng chứng nghiệp vụ**: bút toán, `posting_log`, `audit_logs` chuỗi băm, `diagnostic_runs`; trigger chặn sửa / xoá | sự thật, giữ ≥ 10 năm |
+| 3 | **OpenTelemetry** | Theo dõi **hành trình thực thi**: yêu cầu đi qua module, action, cổng Kernel, CSDL, subscriber nào; chậm / hỏng ở bước nào | quan sát |
+| 4 | **Prometheus** | Đo **sức khoẻ và hiệu năng**: tốc độ, độ trễ, lỗi, ghi sổ đã commit, outbox, pool, đối soát | quan sát (tổng hợp) |
+| 5 | **Grafana + Tempo + Loki** | **Quan sát, điều tra lỗi**: dashboard → trace → log của đúng yêu cầu, nối bằng `traceId` | điều tra |
+| 6 | **Alertmanager** | **Thông báo khi bất thường**: định tuyến theo mức / nhóm, ức chế, im lặng khi bảo trì | báo, không bao giờ sửa dữ liệu |
+
+```mermaid
+flowchart TB
+  subgraph Truth["Quyết định + sự thật"]
+    L1["1 · Accounting Kernel<br/>ghi sổ đúng"]
+    L2[("2 · PostgreSQL + Audit Ledger<br/>bằng chứng nghiệp vụ")]
+  end
+  subgraph Observe["Chỉ quan sát — tắt được, hỏng không ảnh hưởng sổ"]
+    L3["3 · OpenTelemetry<br/>hành trình thực thi"]
+    L4["4 · Prometheus<br/>sức khoẻ, hiệu năng"]
+    L5["5 · Grafana + Tempo + Loki<br/>quan sát, điều tra"]
+    L6["6 · Alertmanager<br/>thông báo bất thường"]
+  end
+  L1 -->|"cùng giao dịch"| L2
+  L1 -.->|"span ở cổng Kernel"| L3
+  L2 -.->|"bộ thu chỉ đọc (posting_log, outbox, diagnostic_runs)"| L4
+  L3 -->|"trace"| L5
+  L4 -->|"số đo"| L5
+  L4 -->|"luật cảnh báo"| L6
+  L6 -.->|"link runbook, dashboard"| L5
+  L5 -.->|"tra theo trace_id / request_id"| L2
+```
+
+Hai luật không được quên:
+- **Span không chứng minh việc đã ghi.** Giao dịch bọc ngoài có thể rollback. Chứng minh sổ đã commit chỉ bằng lớp 2 (`posting_log`, `ledger_entries`, `audit_logs`).
+- **Không số đo, span hay cảnh báo nào được đọc ngược** vào định khoản, khoá kỳ hay quyền (R-KER-7, AP-1).
+
+## 8. Module cộng đồng lỗi: tìm ra chỗ lỗi mà không sửa Kernel
+
+Cộng đồng viết module VAT, công nợ phải thu / phải trả, CRM, kho, agent AI trên cùng Core. Không module nào tự viết mã truy vết. Span đặt sẵn ở **khớp nối** mà mọi module bắt buộc đi qua:
+
+| Khớp nối | Span | Khoanh vùng bằng |
+|---|---|---|
+| HTTP / MCP vào | `HTTP {method} {route}` · `mcp tools/call {tool}` | route mẫu, tên công cụ |
+| Runtime action (`runAction`) | `action {action.id}` | **`bizcity.module`** = tiền tố của `action.id` |
+| Cổng Kernel (`kernel/public.ts`, bọc một lần — K1) | `kernel postDocumentIn` · `kernel eventStore.*` · `kernel ledgerQuery` | `bizcity.kernel.outcome`, `bizcity.error.code` |
+| CSDL | `db {operation} {table}` | không có câu SQL, không tham số |
+| Outbox phát / giao | `event publish {type}` → link → `event deliver {type} → {consumer}` | **`bizcity.module`** của subscriber, `bizcity.delivery.result` |
+| Gọi ra ngoài | `HTTP {method}` client | chuyển tiếp `traceparent` |
+
+Ví dụ minh hoạ (tên action và module là ví dụ): một hoá đơn bán hàng, hai subscriber của hai module cộng đồng, một subscriber lỗi.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant H as HTTP POST /api/v1/sales (span S1)
+  participant A as action ban-hang.invoice.issue (span S3, module=ban-hang)
+  participant K as kernel postDocumentIn (span S4, cổng Kernel)
+  participant D as PostgreSQL (span S5)
+  participant O as outbox (span S6)
+  participant V as event deliver → vat.* (span S7, module=vat)
+  participant C as event deliver → crm.* (span S7, module=crm)
+  H->>A: runAction
+  A->>K: ctx → cổng Kernel
+  K->>D: bút toán + posting_log + audit_logs (cùng giao dịch)
+  K->>O: phát bizcity.ledger.entry.posted (lưu traceparent, cùng giao dịch)
+  K-->>A: outcome = posted
+  Note over A,D: commit — sổ đúng, bằng chứng đã lưu
+  O-)V: giao (span mới, link về span phát)
+  V-->>O: result = done
+  O-)C: giao (span mới, link về span phát)
+  C--xO: lỗi ở module crm → retry → dead
+  Note over C: Tempo: { span.bizcity.module = "crm" && status = error }<br/>ảnh hưởng: chỉ việc giao của crm, sổ và vat không đổi
+```
+
+Từ một cảnh báo (`OutboxDeadLetter`) người vận hành đi:
+1. dashboard 07;
+2. trace của việc giao `crm.*` (module, bước, mã lỗi);
+3. span link về phiếu bán hàng gốc;
+4. log theo `traceId`;
+5. bằng chứng theo `request_id`.
+
+Sổ không phải đụng tới. Ranh giới đã có: một cửa vào sổ, mỗi action một giao dịch, outbox giao riêng từng subscriber. OpenTelemetry chỉ làm các ranh giới đó **nhìn thấy được**.
+
+Module muốn thấy bước riêng (vd "tính thuế") dùng `ctx.trace.step(name, fn)` của `@bizcity/module-sdk`. Module **không** import `@opentelemetry/*` trực tiếp (check SC-OBS-2), và mọi thuộc tính đi qua danh sách cho phép: không số tiền, MST, tên, payload (ADR-0010 §4).

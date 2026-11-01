@@ -1,6 +1,7 @@
 # PHASE-018 · 40 — Master checklist
 <!-- [2026-10-31 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — checklist việc con S018-*, ca bằng chứng T018-*, log. -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — cập nhật trạng thái sau khi code W1–W4 (nhánh feat/phase-018-giam-sat). -->
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 > Nguồn trạng thái **việc con** duy nhất của phase (thay `PHASE-STATUS.md` của bản giao việc). Nhiều phiên: chỉ sửa đúng dòng theo ID; Log chỉ nối thêm.
 > Ký hiệu: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài nhóm · ❌ huỷ.
@@ -28,7 +29,8 @@
 | S018-14b | CI: job `monitoring` (`promtool check config`, `test rules`, `amtool check-config`) + check tĩnh SC-OBS-1 (tên số đo trong dashboard / luật phải có trong mã) | W4 | P2 | có | ✅ 2026-11-01 (lệnh CI chạy cục bộ SUCCESS; SC-OBS-1 tự kiểm bắt 3/3 vi phạm mẫu) |
 | S018-15 | `docs/ops/RUNBOOK-CANH-BAO.md`: runbook 14 cảnh báo | W4 | P1 | — | ✅ 2026-11-01 |
 | S018-16 | Cập nhật bảng §3 / §4 `docs/ops/OBSERVABILITY.md` + `infrastructure/monitoring/README.md` (R-OBS-6) | W1–W4 | P1 | — | ✅ 2026-11-01 |
-| S018-17 | ADR-0010 OpenTelemetry + Tempo tuỳ chọn; trace HTTP → action → ghi sổ → CSDL — ca T018-6 | W5 | P2 | chưa | ⛔ Q018-2 |
+| S018-17a | ADR-0010 OpenTelemetry từ lõi: sáu lớp bảo đảm, khớp nối S1–S9, danh sách thuộc tính, Tempo; ghi vào [architecture §7–§8](../../architecture/README.md), OBSERVABILITY §1.1 + R-OBS-7/8 | W5 | P1 | — | ✅ 2026-11-01 (chủ quyết Q018-2) |
+| S018-17 | Code theo ADR-0010: `core/tracing.ts`, span S1–S9 + bọc cổng Kernel (K1), lọc thuộc tính, migration `event_outbox.trace_parent` + `audit_logs.trace_id`, `ctx.trace.step`, SC-OBS-2, Collector + Tempo, Grafana trace ↔ log ↔ số đo — ca T018-6 | W5 | P1 | chưa | ☐ mở (không còn chờ Q018-2) |
 | S018-18 | SLI / SLO, đo tải theo Q018-5, kịch bản sập, lint cấu hình giám sát trong CI | W6 | P2 | chưa | ⛔ Q018-5 |
 | S018-19 | API tóm tắt sức khoẻ có phân quyền + widget CEO 4 chỉ số — ca T018-7 | W7 | P3 | chưa | ⛔ PHASE-015, Q018-6 |
 | S018-20 | Luật dò `H-METRIC-LABEL` trong `scripts/ra-soat-dong-gop.mjs` + RULE-REVIEW §4 | W1 | P1 | có | ✅ 2026-11-01 |
@@ -52,3 +54,4 @@
 | 2026-10-31 23:40 | Claude Code (theo chỉ đạo Johnny Chu – Chu Hoàng Anh) | Mở phase từ bản giao việc observability; khảo sát repo (S018-1); kiến trúc + đặc tả (S018-2); bản mẫu dashboard (S018-3). Chưa sửa mã chạy. |
 | 2026-11-01 00:04–01:10 | Claude Code (theo chỉ đạo "ok code") | Nhánh `feat/phase-018-giam-sat` (worktree riêng). W1–W4: bộ thu `posting_log` / outbox / đối soát / đơn vị theo dải, bộ đếm gửi lặp / lượt giao, `readWithTimeout`, mật khẩu Grafana bắt buộc, 3 dashboard, 6 cảnh báo + test promtool, runbook, `H-METRIC-LABEL`. D018-3 / D018-4 sửa theo mã thật. Kiểm: typecheck, selfcheck, vitest, promtool, chạy thật API + Prometheus + Grafana tạm. |
 | 2026-11-01 01:14–01:50 | Claude Code (theo chỉ đạo "code tiếp") | Nhánh `feat/phase-018-tiep`: S018-14b (job CI `monitoring` + check SC-OBS-1 kèm ca tự kiểm), S018-12b (hàng PHASE-018 ở dashboard 01 / 03 / 04), S018-13b (`LOKI_LABELDROP`), S018-5b (vai trò `ketoan_monitor` do job `db-migrate` tạo). Kiểm chạy thật trên stack local. |
+| 2026-11-01 15:01 | Claude Code (theo chỉ đạo "cần có OpenTelemetry … ngay từ lõi kiến trúc") | Q018-2 đã quyết. ADR-0010 (sáu lớp bảo đảm, span ở khớp nối, bọc cổng Kernel K1, danh sách thuộc tính, Tempo); architecture §7–§8; OBSERVABILITY §1.1 + R-OBS-7/8; D018-7 sửa; W5 nâng P1. Chưa sửa mã chạy. |

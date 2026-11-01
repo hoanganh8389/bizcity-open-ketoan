@@ -1,20 +1,24 @@
 # Quan sát hệ thống: log, truy vết, số đo, báo lỗi
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — §3 thêm 15 số đo (ghi sổ, outbox, gửi lặp, đối soát, đơn vị theo dải, bộ thu); §4 9 dashboard, 14 cảnh báo, runbook (R-OBS-6). -->
+<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
 
 > **Luật:** R-OBS (§6) · **Quyết định:** [ADR-0007](../adr/ADR-0007-goi-chia-se-va-ha-tang.md) (G-5: quan sát được là bắt buộc, công cụ quan sát là tuỳ chọn) · **Mở rộng:** [PHASE-018](../phases/PHASE-018-GIAM-SAT-VAN-HANH/README.md)
 > **Bộ giám sát chạy thật:** [`infrastructure/monitoring/`](../../infrastructure/monitoring/README.md) (Prometheus, Alertmanager, Grafana 9 dashboard, Loki, exporter) · **Xử lý cảnh báo:** [RUNBOOK-CANH-BAO.md](RUNBOOK-CANH-BAO.md)
 > **Mã lỗi:** [BIZCITY-ERRORS-v1](../contracts/BIZCITY-ERRORS-v1.md) · **Tự chẩn đoán:** [DIAGNOSTICS.md](DIAGNOSTICS.md) · **Bằng chứng:** [BIZCITY-EVIDENCE-v1](../contracts/BIZCITY-EVIDENCE-v1.md)
 
-Ba câu hỏi, ba nguồn, một khoá nối:
+Bốn câu hỏi, bốn nguồn, hai khoá nối (`requestId`, `traceId`). Đây là các lớp 2–5 của **sáu lớp bảo đảm** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), [architecture §7](../architecture/README.md)):
 
 | Hỏi | Nguồn | Giữ ở | Khoá nối |
 |---|---|---|---|
 | Hệ thống có khoẻ không, chậm ở đâu? | **số đo** `GET /metrics` (Prometheus) | Prometheus 15 ngày | `route`, `code` |
-| Yêu cầu này đã chạy thế nào, lỗi gì? | **log** pino JSON (stdout → Loki) | Loki 30 ngày | `reqId` = `requestId` |
-| Ai đã làm gì với sổ, có bị sửa không? | **bằng chứng** `audit_logs` (chuỗi băm) | CSDL ≥ 10 năm | `request_id`, `subject`, `docKey` |
+| Yêu cầu này đi qua những đâu, chậm / hỏng ở bước nào, module nào? | **trace** OpenTelemetry (OTLP → Collector → Tempo) | Tempo 7 ngày | `traceId`, `bizcity.module` |
+| Yêu cầu này đã chạy thế nào, lỗi gì? | **log** pino JSON (stdout → Loki) | Loki 30 ngày | `reqId` = `requestId`, `traceId` |
+| Ai đã làm gì với sổ, có bị sửa không? | **bằng chứng** `audit_logs` (chuỗi băm) | CSDL ≥ 10 năm | `request_id`, `trace_id` (W5), `subject`, `docKey` |
 
-`requestId` có ở phản hồi lỗi (`error.requestId`, R-ERR-5), trong log (`reqId`), trong bằng chứng (`request_id`) và trong biên nhận. Người dùng báo lỗi chỉ cần gửi mã đó.
+`requestId` có ở phản hồi lỗi (`error.requestId`, R-ERR-5), trong log (`reqId`), trong bằng chứng (`request_id`) và trong biên nhận. Người dùng báo lỗi chỉ cần gửi mã đó. Từ W5, `traceId` đi cùng ở các chỗ đó.
+
+Chỉ số đo, trace, log là **quan sát**. Sự thật về sổ nằm ở Kernel và PostgreSQL (lớp 1–2). Span "ghi sổ xong" không chứng minh giao dịch đã commit, `posting_log` mới chứng minh.
 
 ## 1. Truy vết yêu cầu
 
@@ -23,7 +27,26 @@ Ba câu hỏi, ba nguồn, một khoá nối:
 | Mã yêu cầu | API nhận `X-Request-Id` từ bên gọi nếu hợp lệ (8–128 ký tự `[A-Za-z0-9._:-]`), không thì tự sinh. Trả lại ở header `X-Request-Id` của mọi phản hồi |
 | W3C Trace Context | API đọc `traceparent`. Nếu có, `traceId` (32 hex) vào log của yêu cầu, để nối với trace của Cell / plugin / proxy |
 | Gọi ra ngoài | Gọi Hub, Cell, tra MST, AI đọc hoá đơn… phải chuyển tiếp `X-Request-Id` + `traceparent` |
-| OpenTelemetry | Để sau (ADR-0007): khi bật, exporter OTLP là adapter; tên span = route Fastify / mã action |
+| OpenTelemetry | **Từ lõi** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), thay "Để sau"). SDK luôn có trong Core. Chỉ xuất trace khi đặt `OTEL_EXPORTER_OTLP_ENDPOINT`; `OTEL_SDK_DISABLED=true` tắt hẳn. Code ở PHASE-018 W5 (S018-17) |
+
+### 1.1 Trace (ADR-0010)
+
+Span đặt ở **khớp nối** mà mọi module đi qua. Module không tự viết mã truy vết:
+
+| # | Khớp nối | Tên span | Thuộc tính chính |
+|---|---|---|---|
+| S1 | HTTP vào | `HTTP {method} {route}` | `http.route` (mẫu), `http.response.status_code`, `bizcity.error.code` |
+| S2 | MCP | `mcp tools/call {tool}` | `bizcity.mcp.tool`, `bizcity.mcp.via`, `bizcity.mcp.phase` |
+| S3 | `runAction` | `action {action.id}` | `bizcity.action.id`, `bizcity.module`, `bizcity.action.effect`, `bizcity.dry_run`, `bizcity.idempotency` |
+| S4 | cổng Kernel `kernel/public.ts` | `kernel {thao tác}` | `bizcity.layer=K`, `bizcity.doc_type`, `bizcity.kernel.outcome` |
+| S5 | CSDL | `db {operation} {table}` | không câu SQL, không tham số |
+| S6 / S7 | outbox phát / giao | `event publish {type}` → link → `event deliver {type} → {consumer}` | `bizcity.event.type`, `bizcity.consumer`, `bizcity.module`, `bizcity.delivery.result` |
+| S8 | gọi ra ngoài | `HTTP {method}` client | chuyển tiếp `traceparent` + `X-Request-Id` |
+| S9 | việc định kỳ, bộ thu | `job {tên}` | `bizcity.job` |
+
+Thuộc tính đi qua **danh sách cho phép**: bộ lọc ở `core/tracing.ts` bỏ mọi thuộc tính khác trước khi xuất. Không bao giờ có trong trace: payload, số tiền, tên, MST, SĐT, số tài khoản ngân hàng, câu / tham số SQL, header xác thực, token, `confirm_token`, `Idempotency-Key`. `bizcity.tenant` chỉ là mã nội bộ, như trường `tenant` của log.
+
+Lấy mẫu ở Collector: giữ 100% trace lỗi hoặc chậm > 1 s, 10% còn lại; chỉnh sau đo tải W6.
 
 ## 2. Log có cấu trúc
 
@@ -140,3 +163,5 @@ Quy trình xử lý:
 | **R-OBS-4** | Số đo không có nhãn số lượng không giới hạn (`tenant`, `docKey`, `reqId`, `actor`) | review `core/metrics.ts` |
 | **R-OBS-5** | Cảnh báo dựa trên số đo + mã lỗi, không trên câu chữ log | `infrastructure/monitoring/prometheus/alerts.yml` |
 | **R-OBS-6** | Thêm số đo / cảnh báo / dashboard: sửa bảng §3 / §4 cùng PR | CANON §5 |
+| **R-OBS-7** | Chỉ `core/tracing.ts` (Platform) import `@opentelemetry/*`. Kernel, module, add-in tạo span qua Platform (`withSpan`, `ctx.trace.step`), không import trực tiếp | check SC-OBS-2 (W5) |
+| **R-OBS-8** | Thuộc tính span theo danh sách cho phép §1.1. Thêm thuộc tính `bizcity.*` mới thì sửa danh sách và bảng §1.1 cùng PR. Trace, số đo, log không bao giờ đọc ngược vào định khoản / khoá kỳ / quyền | SC-OBS-2; test lọc thuộc tính (W5) |
