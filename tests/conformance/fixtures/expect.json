@@ -381,6 +381,14 @@
             "core/audit[P]->modules/periods[K]",
             "phan-he/alpha[D]->phan-he/beta[D]"
           ]
+        },
+        "SC-OBS-1": {
+          "findings": 3,
+          "keys": [
+            "metric:bizcity_khong_co_total",
+            "uid:trung",
+            "metric:bizcity_sai_ten"
+          ]
         }
       }
     },

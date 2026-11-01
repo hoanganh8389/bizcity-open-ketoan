@@ -1,6 +1,8 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+# [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — job monitoring: promtool check / test rules, check config, amtool check-config (S018-14b).
 # Bộ kiểm chuẩn Bizcity Core — tests/conformance/README.md · docs/adr/ADR-0006
 # Hai lane: selfcheck (tĩnh, không cần npm ci) và diagnostics (PostgreSQL thật, chỉ đọc, sau khi chạy test).
+# Thêm job monitoring: cấu hình bộ giám sát (infrastructure/monitoring) — luật cảnh báo bắn / hết bắn đúng, cấu hình nạp được.
 name: conformance
 
 on:
@@ -34,6 +36,21 @@ jobs:
           name: conformance-selfcheck
           path: tests/conformance/output/
           retention-days: 30
+
+  monitoring:
+    name: Bộ giám sát (promtool, amtool)
+    runs-on: ubuntu-latest
+    env:
+      M: ${{ github.workspace }}/infrastructure/monitoring
+      PROM: prom/prometheus:v2.53.4
+      AM: prom/alertmanager:v0.27.0
+    steps:
+      - uses: actions/checkout@v4
+      # Cú pháp + nạp cấu hình Prometheus (kéo theo alerts.yml)
+      - run: docker run --rm -v "$M/prometheus:/etc/prometheus:ro" --entrypoint promtool "$PROM" check config /etc/prometheus/prometheus.yml
+      # Luật cảnh báo bắn / không bắn / hết bắn đúng (alerts.test.yml, S018-14)
+      - run: docker run --rm -v "$M/prometheus:/etc/prometheus:ro" --entrypoint promtool "$PROM" test rules /etc/prometheus/alerts.test.yml
+      - run: docker run --rm -v "$M/alertmanager:/etc/alertmanager:ro" --entrypoint amtool "$AM" check-config /etc/alertmanager/alertmanager.yml
 
   diagnostics:
     name: Bộ kiểm chuẩn (diagnostics trên PostgreSQL 16)

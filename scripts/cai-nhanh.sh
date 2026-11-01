@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # [2026-11-01 01:01 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — cài nhanh localhost: tạo .env có bí mật ngẫu nhiên, tự nhận Docker Desktop, bật giám sát tuỳ chọn, chờ sẵn sàng.
+# [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — --giam-sat tự sinh vai trò exporter chỉ đọc ketoan_monitor (S018-5b).
 # =============================================================================
 # Cài nhanh open-ketoan trên một máy (localhost) bằng Docker.
 #
@@ -47,6 +48,13 @@ if [ "$GIAM_SAT" = 1 ]; then
     { echo; echo "# Mật khẩu quản trị Grafana (đăng nhập admin tại http://127.0.0.1:3000)"; } >> .env
     dat_bien GRAFANA_ADMIN_PASSWORD "$(ngau_nhien 24)"
     echo "✓ Thêm GRAFANA_ADMIN_PASSWORD ngẫu nhiên vào .env"
+  fi
+  # postgres-exporter dùng vai trò chỉ đọc thống kê ketoan_monitor (job db-migrate tạo), không dùng vai trò sở hữu.
+  if ! grep -q '^PG_EXPORTER_PASSWORD=..*' .env; then
+    { echo; echo "# postgres-exporter: vai trò chỉ đọc thống kê (pg_monitor), job db-migrate tự tạo"; } >> .env
+    dat_bien PG_EXPORTER_USER ketoan_monitor
+    dat_bien PG_EXPORTER_PASSWORD "$(ngau_nhien 24)"
+    echo "✓ Thêm vai trò exporter chỉ đọc ketoan_monitor vào .env"
   fi
   FILES+=(-f infrastructure/monitoring/docker-compose.monitoring.yml)
   if docker info --format '{{.OperatingSystem}}' 2>/dev/null | grep -qi 'docker desktop'; then

@@ -28,10 +28,41 @@ async function enableAppRole(): Promise<void> {
   console.log('Vai trò ketoan_app: đã bật đăng nhập (API dùng khi DB_APP_USER=ketoan_app)');
 }
 
+// [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — vai trò ketoan_monitor cho postgres-exporter (S018-5b): chỉ pg_monitor + CONNECT, tạo khi có PG_EXPORTER_PASSWORD
+/**
+ * Vai trò của postgres-exporter (bộ giám sát, PHASE-018): có PG_EXPORTER_PASSWORD thì tạo / cập nhật ketoan_monitor — LOGIN,
+ * chỉ pg_monitor (đọc thống kê pg_stat_*) + CONNECT; không quyền trên bảng nghiệp vụ, không ghi, không vượt RLS. Không có biến
+ * thì bỏ qua (máy thử dùng vai trò sở hữu). Không cần migration: vai trò thuộc hạ tầng giám sát, không thuộc cấu trúc dữ liệu.
+ */
+async function enableMonitorRole(): Promise<void> {
+  const password = process.env.PG_EXPORTER_PASSWORD ?? '';
+  if (!password) return;
+  if (password.length < 16) throw new Error('PG_EXPORTER_PASSWORD phải dài ít nhất 16 ký tự');
+  const me = await pool.query<{ can: boolean; exists: boolean }>(`
+    SELECT (SELECT rolsuper OR rolcreaterole FROM pg_roles WHERE rolname = current_user) AS can,
+           EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ketoan_monitor') AS exists`);
+  const { can, exists } = me.rows[0]!;
+  if (!exists && !can) {
+    console.log('Vai trò ketoan_monitor chưa có và vai trò chạy job không tạo được vai trò — tạo tay theo infrastructure/monitoring/README.md §6');
+    return;
+  }
+  const verb = exists ? 'ALTER' : 'CREATE';
+  const q = await pool.query<{ q: string }>(
+    `SELECT format('${verb} ROLE ketoan_monitor WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', $1::text) AS q`,
+    [password],
+  );
+  await pool.query(q.rows[0]!.q);
+  await pool.query('GRANT pg_monitor TO ketoan_monitor');
+  const g = await pool.query<{ q: string }>("SELECT format('GRANT CONNECT ON DATABASE %I TO ketoan_monitor', current_database()) AS q");
+  await pool.query(g.rows[0]!.q);
+  console.log(`Vai trò ketoan_monitor: ${exists ? 'đã cập nhật mật khẩu' : 'đã tạo'} (postgres-exporter dùng khi PG_EXPORTER_USER=ketoan_monitor)`);
+}
+
 async function main(): Promise<void> {
   const applied = await runMigrations((m) => console.log(m));
   console.log(applied.length ? `Đã áp ${applied.length} migration.` : 'Cơ sở dữ liệu đã mới nhất.');
   await enableAppRole();
+  await enableMonitorRole();
   await seed();
   // Phiếu mua hàng đã duyệt từ trước: chốt chiết khấu tự áp từ chính sách vào phiếu (một lần, chạy lại bỏ qua).
   const fz = await freezeApproved(db);

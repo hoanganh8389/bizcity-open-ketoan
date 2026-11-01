@@ -105,10 +105,14 @@ Thêm vào `.env` ở gốc kho (cùng tệp với `JWT_SECRET`):
 GRAFANA_ADMIN_PASSWORD=mot-mat-khau-dai-va-kho-doan
 # (tuỳ chọn) GRAFANA_ADMIN_USER=admin  GRAFANA_ROOT_URL=https://giam-sat.example.com
 # (tuỳ chọn) PROMETHEUS_RETENTION=30d
-# (tuỳ chọn, khuyến nghị) vai trò chỉ-đọc cho postgres-exporter — xem §6
-# PG_EXPORTER_USER=ketoan_monitor
-# PG_EXPORTER_PASSWORD=...
+# (khuyến nghị) vai trò chỉ đọc thống kê cho postgres-exporter — job db-migrate tự tạo, xem §6
+PG_EXPORTER_USER=ketoan_monitor
+PG_EXPORTER_PASSWORD=chuoi-ngau-nhien-it-nhat-16-ky-tu
+# (bản cài hàng trăm+ đơn vị) bỏ nhãn tenant khỏi Loki — xem §9
+# LOKI_LABELDROP=tenant
 ```
+
+`bash scripts/cai-nhanh.sh --giam-sat` tự sinh `GRAFANA_ADMIN_PASSWORD`, `PG_EXPORTER_USER`, `PG_EXPORTER_PASSWORD` ngẫu nhiên nếu `.env` chưa có.
 
 `GRAFANA_ADMIN_PASSWORD` chỉ có tác dụng ở **lần khởi tạo đầu** (ổ `grafana-data` còn trống). Đổi sau đó:
 
@@ -160,19 +164,27 @@ Muốn tách kênh theo mức độ (vd. critical → điện thoại trực, wa
 Cảnh báo được gom theo `alertname`; `PostgreSQLDown` chặn các cảnh báo hệ quả (`HighErrorRate`,
 `HighLatency`, `PostingBacklog`), `ApiDown` chặn `HighErrorRate` / `HighLatency`.
 
-## 6. Vai trò CSDL cho postgres-exporter (khuyến nghị trên máy chủ thật)
+## 6. Vai trò CSDL cho postgres-exporter
 
-Mặc định exporter dùng vai trò sở hữu `ketoan` cho tiện thử. Trên máy chủ thật nên tạo vai trò chỉ có quyền
-đọc thống kê (chạy một lần, bằng `psql` với vai trò sở hữu):
+Đặt trong `.env` (≥ 16 ký tự, chỉ chữ và số):
+
+```dotenv
+PG_EXPORTER_USER=ketoan_monitor
+PG_EXPORTER_PASSWORD=<chuỗi ngẫu nhiên>
+```
+
+Job `db-migrate` (`apps/api/src/db/setup.ts`) **tự tạo / cập nhật** vai trò `ketoan_monitor`: LOGIN, chỉ `pg_monitor` (đọc
+thống kê `pg_stat_*`) + `CONNECT` — không đọc được bảng nghiệp vụ, không ghi được gì, không vượt RLS. Đổi mật khẩu: sửa
+`.env` rồi `docker compose … up -d db-migrate postgres-exporter`. `bash scripts/cai-nhanh.sh --giam-sat` tự làm cả việc này.
+
+Không đặt hai biến: exporter dùng vai trò sở hữu `ketoan` — **chỉ cho máy thử**. Vai trò chạy job không có quyền tạo vai
+trò (CSDL do nhà cung cấp quản lý): job báo và bỏ qua; người quản trị CSDL tạo tay một lần:
 
 ```sql
 CREATE ROLE ketoan_monitor LOGIN PASSWORD '<mật-khẩu>';
 GRANT pg_monitor TO ketoan_monitor;
 GRANT CONNECT ON DATABASE ketoan TO ketoan_monitor;
 ```
-
-rồi đặt `PG_EXPORTER_USER=ketoan_monitor` và `PG_EXPORTER_PASSWORD=<mật-khẩu>` trong `.env`.
-Vai trò này không đọc được bảng nghiệp vụ, không ghi được gì.
 
 ## 7. Tài nguyên cần
 
@@ -245,7 +257,7 @@ Với API (pino JSON), Promtail tách JSON và chỉ đưa lên **nhãn** các t
 | `level` | trace · debug · info · warn · error · fatal | đổi từ số pino 10…60; "level ≥ 50" = `level=~"error\|fatal"` |
 | `errCode` | mã trong `Errors.*` | tập cố định |
 | `evt` | `bizcity.ledger.posted`, … | tập cố định do code định nghĩa |
-| `tenant` | mã đơn vị | ổn khi vài chục đơn vị; **hàng trăm+ đơn vị thì bỏ nhãn này** |
+| `tenant` | mã đơn vị | ổn khi vài chục đơn vị; **hàng trăm+ đơn vị: đặt `LOKI_LABELDROP=tenant`** trong `.env` rồi `up -d promtail` — trường vẫn trong dòng JSON, lọc bằng `\| json \| tenant="…"`; bảng 05 phần "theo đơn vị" khi đó không còn số, xem bảng 08 (`bizcity_tenants`) |
 
 `reqId`, `traceId`, `docKey`, `actor`, `route` **không** làm nhãn: mỗi giá trị mới tạo một luồng (stream)
 mới trong Loki → chỉ mục phình, truy vấn chậm, chạm giới hạn. Chúng vẫn nằm nguyên trong dòng JSON

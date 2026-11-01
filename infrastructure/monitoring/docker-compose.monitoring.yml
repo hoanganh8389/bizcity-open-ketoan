@@ -122,6 +122,11 @@ services:
     restart: unless-stopped
     command:
       - -config.file=/etc/promtail/promtail-config.yml
+      # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — thế biến môi trường vào cấu hình (LOKI_LABELDROP, S018-13b)
+      - -config.expand-env=true
+    environment:
+      # Bản cài hàng trăm+ đơn vị: LOKI_LABELDROP=tenant — bỏ nhãn tenant để Loki không phình luồng (README §9).
+      LOKI_LABELDROP: ${LOKI_LABELDROP:-}
     volumes:
       - ./infrastructure/monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
       # Đọc danh sách container và nhật ký qua Docker API (chỉ đọc).
@@ -140,8 +145,9 @@ services:
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: db:5432/ketoan?sslmode=disable
-      # Bản thật: tạo vai trò chỉ-đọc riêng có quyền pg_monitor (xem README §6) rồi đặt
-      # PG_EXPORTER_USER / PG_EXPORTER_PASSWORD trong .env. Mặc định dùng vai trò sở hữu cho tiện thử.
+      # Vai trò chỉ đọc thống kê ketoan_monitor (pg_monitor, không đọc bảng nghiệp vụ): đặt PG_EXPORTER_USER=ketoan_monitor +
+      # PG_EXPORTER_PASSWORD (≥ 16 ký tự) trong .env — job db-migrate tự tạo vai trò (db/setup.ts). scripts/cai-nhanh.sh --giam-sat
+      # tự sinh. Không đặt: dùng vai trò sở hữu (chỉ cho máy thử).
       DATA_SOURCE_USER: ${PG_EXPORTER_USER:-ketoan}
       DATA_SOURCE_PASS: ${PG_EXPORTER_PASSWORD:-${DB_PASSWORD:-ketoan}}
     depends_on:
