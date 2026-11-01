@@ -236,6 +236,11 @@ Người dùng có `devtools:read` thấy thêm nút **Mở trong Bàn điều t
 | Nút **Báo lỗi** | dựng nội dung theo `bao-loi.yml`: phiên bản (`/system/health`), màn, thời điểm, `requestId`, `traceId`, mã lỗi — **không** thân yêu cầu, không dữ liệu trên màn; chép vào bộ nhớ tạm (Q019-5) |
 | Nút **Mở trong Bàn điều tra** | chỉ khi có `devtools:read` và có `traceId` |
 
+**Đã làm (W1, 2026-11-01)** — khác thiết kế ở hai chỗ: <!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: ghi cách làm thật của mã tra cứu. -->
+- **Khay chung thay cho dòng dưới từng thông báo.** App có 264 chỗ gọi `errorText()` ở 123 tệp, câu lỗi đã thành chuỗi trước khi hiện. Thay vì sửa từng chỗ, `lib/api.ts` ghi mọi lỗi API (trừ 401) vào kho trong bộ nhớ tab (`lib/maTraCuu.ts`, 5 lỗi gần nhất); khay `components/MaTraCuu.tsx` gắn một lần ở `AppLayout` (cả khi nhúng). Câu lỗi vẫn hiện ở màn như cũ.
+- **Hàm đọc mã / dựng nội dung ở `@ketoan/contracts`** (`ma-tra-cuu.ts`), không DOM — web dùng, API kiểm (T019-1). Làm sạch: mã sai khuôn bị bỏ; đường dẫn bỏ query, đoạn không phải chữ thường thay `:x`; nội dung dùng **câu mặc định của danh mục lỗi** thay câu của máy chủ (câu máy chủ có thể nêu tên khách, số chứng từ).
+- Chưa làm: nút **Mở trong Bàn điều tra** (cần phân hệ `dev`, W3); nút mở `BUG_REPORT_URL` (Q019-5, cần khoá cấu hình — làm cùng W2).
+
 ## 5. Test và bằng chứng
 
 | Ca | Kỳ vọng | Ở đâu | Đợt |

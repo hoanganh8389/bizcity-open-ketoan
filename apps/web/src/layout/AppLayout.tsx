@@ -25,6 +25,7 @@ import { ModuleIcon } from '../phan-he/icons';
 import { NutChiNhanh } from '@/components/ChiNhanhLamViec';
 import { DangOnline } from './DangOnline';
 import { workBranch } from '@/lib/workBranch';
+import { MaTraCuu } from '@/components/MaTraCuu';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
@@ -109,6 +110,7 @@ export function AppLayout() {
             <div><b>Giám đốc</b><span>(Ký, họ tên, đóng dấu)</span></div>
           </div>
         </main>
+        <MaTraCuu />
       </div>
     );
   }
@@ -165,6 +167,8 @@ export function AppLayout() {
       {addins.some((a) => a.id === 'tro-ly') && <AssistantBubble menu={menu} />}
       {mobileNav && <MobileNav modules={mod.modules} current={mod.current.key} menu={menu} onChoose={mod.choose} onClose={() => setMobileNav(false)} />}
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
+      {/* Mã tra cứu của lỗi API gần nhất (PHASE-019 W1): người dùng chép gửi dev. */}
+      <MaTraCuu />
     </>
   );
 }
