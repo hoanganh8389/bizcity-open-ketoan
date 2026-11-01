@@ -74,10 +74,11 @@ services:
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      # ĐỔI MẬT KHẨU NÀY: đặt GRAFANA_ADMIN_PASSWORD trong .env ở gốc kho. Giá trị mặc định chỉ để thử máy cục bộ.
+      # BẮT BUỘC: đặt GRAFANA_ADMIN_PASSWORD trong .env ở gốc kho — thiếu thì docker compose dừng và báo (cùng kiểu JWT_SECRET).
       # Lưu ý: mật khẩu chỉ áp dụng lần khởi tạo đầu (ổ grafana-data trống); đổi sau đó dùng
       #   docker compose ... exec grafana grafana cli admin reset-admin-password <mật-khẩu-mới>
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-doi-mat-khau-ngay}
+      # [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bỏ mật khẩu dự phòng "doi-mat-khau-ngay" (P0 khảo sát W0): biến bắt buộc
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Đặt GRAFANA_ADMIN_PASSWORD trong .env ở gốc kho (infrastructure/monitoring/README.md §4)}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"

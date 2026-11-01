@@ -2,6 +2,7 @@
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — luật rà soát việc của người đóng góp: phân vai, quy trình PR, biên bản, dữ liệu kế toán, mã hàng, công cụ ra-soat-dong-gop.mjs. -->
 <!-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — 1.1: R-REV-11 (không làm sạch sổ để chạy lại), R-REV-12 (công cụ phân hệ ở scripts/<phân hệ>/), R-REV-13 (tra cứu cho tiền không có giá trị mặc định ngầm), §5 đoạn nhãn mã hàng, §6 cảnh báo các trường hợp đã gặp. -->
 <!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — 1.2: R-REV-14..16, §7 thang chấm đóng góp 11 trục, §8 mẫu báo cáo rà PR / rà repo. -->
+<!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — §4 thêm luật dò H-METRIC-LABEL (S018-20). -->
 
 > **Cấp:** Tier 0 (R-REV-1, -5, -6, -7, -11, -13, -14) · Tier 1 (còn lại) · **Phiên bản:** 1.2 · 2026-10-31 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Công cụ:** [`scripts/ra-soat-dong-gop.mjs`](../../scripts/ra-soat-dong-gop.mjs) · **Biên bản:** `docs/audits/REVIEW-<ngày>-<người>.md`
@@ -61,6 +62,7 @@ Chạy trên **dòng thêm** của từng commit. Đây là gợi ý, người r
 | H-SKIP | chặn | `it.only` / `.skip` mới | R-QG-8 |
 | H-SECRET | chặn | chuỗi giống bí mật | R-SEC |
 | H-MD-TABLE | chặn | migration tạo bảng khách / hàng / chi nhánh / đối tượng riêng | R-MD-1 |
+| H-METRIC-LABEL | chặn | số đo (`metrics.*.inc / set / observe`) có nhãn theo đơn vị / chứng từ / người / yêu cầu | R-OBS-4 |
 | H-SEQ | cảnh báo | phân hệ tự đếm `document_sequences` | STD-DOC-6 |
 | H-STATUS | cảnh báo | đổi trạng thái bằng UPDATE viết cứng | R-WF-1 |
 | H-MONEY | cảnh báo | tiền tính bằng `parseFloat` / `toFixed` | quy ước tiền |

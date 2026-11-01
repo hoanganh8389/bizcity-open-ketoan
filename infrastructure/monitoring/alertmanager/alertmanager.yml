@@ -33,18 +33,24 @@ route:
       receiver: default
       group_wait: 10s
       repeat_interval: 1h
+    # [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — cảnh báo nghiệp vụ (team="ke-toan", vd PostingRejectionSpike) đi kênh kế toán, không gọi trực ban.
+    # Đổi receiver sang kênh của kế toán khi có (Q018-4); nhắc lại thưa — đây không phải sự cố hệ thống.
+    - matchers:
+        - team="ke-toan"
+      receiver: default
+      repeat_interval: 12h
 
 inhibit_rules:
   # CSDL sập thì API cũng lỗi — chỉ báo nguyên nhân gốc.
   - source_matchers:
       - alertname="PostgreSQLDown"
     target_matchers:
-      - alertname=~"HighErrorRate|HighLatency|PostingBacklog"
-  # API sập thì không cần báo tỉ lệ lỗi / độ trễ của chính nó.
+      - alertname=~"HighErrorRate|HighLatency|PostingBacklog|OutboxBacklog|DbPoolSaturation|MetricsCollectorFailing|PostingRejectionSpike"
+  # API sập thì không cần báo tỉ lệ lỗi / độ trễ của chính nó, cũng không báo việc nền trong tiến trình API (dispatcher, bộ thu).
   - source_matchers:
       - alertname="ApiDown"
     target_matchers:
-      - alertname=~"HighErrorRate|HighLatency"
+      - alertname=~"HighErrorRate|HighLatency|OutboxBacklog|MetricsCollectorFailing"
 
 receivers:
   - name: default

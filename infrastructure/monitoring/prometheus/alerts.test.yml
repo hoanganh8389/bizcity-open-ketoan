@@ -1,0 +1,134 @@
+# [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — test bắn / hết bắn cho luật cảnh báo (S018-14, ca T018-5)
+# Chạy (từ gốc kho, Git Bash):
+#   M="$(pwd -W)/infrastructure/monitoring"; export MSYS_NO_PATHCONV=1
+#   docker run --rm -v "$M/prometheus:/etc/prometheus" --entrypoint promtool prom/prometheus:v2.53.4 test rules /etc/prometheus/alerts.test.yml
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # Outbox có việc chết → bắn ngay; hai máy API cùng báo một số (gộp max) → một cảnh báo.
+  - interval: 1m
+    input_series:
+      - series: 'bizcity_outbox_deliveries{job="api", instance="api-1:4100", status="dead"}'
+        values: '0 0 2 2'
+      - series: 'bizcity_outbox_deliveries{job="api", instance="api-2:4100", status="dead"}'
+        values: '0 0 2 2'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: OutboxDeadLetter
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: OutboxDeadLetter
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations:
+              summary: "Có 2 việc giao sự kiện đã chết (dead)"
+              description: "Subscriber lỗi quá số lần thử. Sổ cái KHÔNG bị ảnh hưởng (ghi sổ đồng bộ, AP-2) nhưng việc phía sau (thông báo, đồng bộ) chưa chạy. Xem GET /api/v1/system/events, sửa nguyên nhân rồi phát lại có người duyệt (action core.events.replay). Runbook: docs/ops/RUNBOOK-CANH-BAO.md#outboxdeadletter"
+              dashboard: "/d/bizcity-su-kien"
+
+  # Việc giao chờ 10 phút, phải kéo dài 5 phút mới bắn; về 0 thì hết.
+  - interval: 1m
+    input_series:
+      - series: 'bizcity_outbox_oldest_pending_seconds{job="api", instance="api-1:4100"}'
+        values: '0 600 600 600 600 600 600 600 0'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: OutboxBacklog
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: OutboxBacklog
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations:
+              summary: "Việc giao sự kiện chờ quá 5 phút"
+              description: "Việc chờ lâu nhất đã 10m 0s. Vòng dispatcher có thể dừng, hoặc một subscriber chậm / lỗi lặp lại. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#outboxbacklog"
+              dashboard: "/d/bizcity-su-kien"
+      - eval_time: 9m
+        alertname: OutboxBacklog
+        exp_alerts: []
+
+  # Lượt L3 gần nhất ở giây Unix 0, không có lượt mới: sau 26 giờ + 30 phút thì bắn. Mẫu mỗi phút (mẫu thưa hơn 5 phút bị coi là cũ).
+  - interval: 1m
+    input_series:
+      - series: 'bizcity_diagnostics_last_run_timestamp_seconds{job="api", instance="api-1:4100", layer="L3"}'
+        values: '0x1700'
+    alert_rule_test:
+      - eval_time: 25h
+        alertname: ReconciliationStale
+        exp_alerts: []
+      - eval_time: 27h
+        alertname: ReconciliationStale
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations:
+              summary: "Đối soát sổ (tự chẩn đoán L3) quá hạn"
+              description: "Lượt L3 gần nhất cách đây 1d 3h 0m 0s. Không có đối soát mới thì lỗi sổ (nếu có) sẽ không được phát hiện. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#reconciliationstale"
+              dashboard: "/d/bizcity-toan-ven"
+
+  # Pool 9/10 kết nối đang dùng suốt 5 phút → bắn cho đúng máy đó.
+  - interval: 1m
+    input_series:
+      - series: 'bizcity_db_pool_connections{job="api", instance="api-1:4100", state="total"}'
+        values: '10x10'
+      - series: 'bizcity_db_pool_connections{job="api", instance="api-1:4100", state="idle"}'
+        values: '1x10'
+      - series: 'bizcity_db_pool_connections{job="api", instance="api-1:4100", state="waiting"}'
+        values: '0x10'
+      - series: 'bizcity_db_pool_max{job="api", instance="api-1:4100"}'
+        values: '10x10'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: DbPoolSaturation
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: DbPoolSaturation
+        exp_alerts:
+          - exp_labels: { severity: warning, instance: "api-1:4100" }
+            exp_annotations:
+              summary: "Pool kết nối CSDL của api-1:4100 gần cạn"
+              description: "Giá trị 900m (tỉ lệ kết nối đang dùng, hoặc số yêu cầu đang chờ kết nối). Yêu cầu sẽ chậm rồi lỗi. Xem truy vấn chậm (bảng 03), giao dịch dài, lời gọi action lồng nhau. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#dbpoolsaturation"
+              dashboard: "/d/bizcity-postgresql"
+
+  # Bộ thu lỗi 5 lần trong 15 phút → bắn, nhãn collector giữ lại.
+  - interval: 1m
+    input_series:
+      - series: 'bizcity_collector_errors_total{job="api", instance="api-1:4100", collector="postings"}'
+        values: '0 1 2 3 4 5 5 5'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: MetricsCollectorFailing
+        exp_alerts:
+          - exp_labels: { severity: warning, collector: postings, job: api, instance: "api-1:4100" }
+            exp_annotations:
+              summary: "Bộ thu số đo postings lỗi liên tục"
+              description: "5 lần lỗi / quá giờ trong 15 phút. Số đo của bộ postings đang cũ. Xem nhật ký API 'bộ thu số đo lỗi'. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#metricscollectorfailing"
+
+  # Từ chối nghiệp vụ chiếm 50% lượt định khoản suốt 15 phút → báo kế toán (team="ke-toan"); hai máy API không làm gấp đôi.
+  - interval: 1m
+    input_series:
+      - series: 'bizcity_postings_total{job="api", instance="api-1:4100", doc_type="sale", action="post"}'
+        values: '0+1x40'
+      - series: 'bizcity_postings_total{job="api", instance="api-1:4100", doc_type="sale", action="error"}'
+        values: '0+1x40'
+      - series: 'bizcity_posting_failures_total{job="api", instance="api-1:4100", code="PERIOD_LOCKED", kind="rejected"}'
+        values: '0+1x40'
+      - series: 'bizcity_postings_total{job="api", instance="api-2:4100", doc_type="sale", action="post"}'
+        values: '0+1x40'
+      - series: 'bizcity_postings_total{job="api", instance="api-2:4100", doc_type="sale", action="error"}'
+        values: '0+1x40'
+      - series: 'bizcity_posting_failures_total{job="api", instance="api-2:4100", code="PERIOD_LOCKED", kind="rejected"}'
+        values: '0+1x40'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: PostingRejectionSpike
+        exp_alerts: []
+      - eval_time: 32m
+        alertname: PostingRejectionSpike
+        exp_alerts:
+          - exp_labels: { severity: warning, team: ke-toan }
+            exp_annotations:
+              summary: "Trên 30% chứng từ bị từ chối định khoản"
+              description: "50% lượt định khoản 15 phút qua bị từ chối theo luật (thường do kỳ đã khoá hoặc thiếu cấu hình định khoản sau khi đổi chính sách). Kế toán xem trạm ACC14. Runbook: docs/ops/RUNBOOK-CANH-BAO.md#postingrejectionspike"
+              dashboard: "/d/bizcity-so-cai"

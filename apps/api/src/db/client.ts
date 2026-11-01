@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 // [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
+// [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — readWithTimeout: giao dịch chỉ đọc có statement_timeout cho bộ thu số đo (trần thời gian ở CSDL, không hẹn giờ — SC-EVT-1)
 /**
  * Kết nối PostgreSQL dùng chung cho toàn ứng dụng.
  *
@@ -10,7 +11,7 @@
  * - `Db`   : kiểu của db HOẶC một giao dịch (Transaction) — các repository nhận
  *            tham số kiểu này để chạy được cả trong và ngoài giao dịch.
  */
-import { Kysely, PostgresDialect, type Transaction } from 'kysely';
+import { Kysely, PostgresDialect, sql, type Transaction } from 'kysely';
 import pg from 'pg';
 import { env } from '../config/env.js';
 import type { Database } from './types.js';
@@ -60,6 +61,18 @@ export const db = new Kysely<Database>({
 });
 
 export type Db = Kysely<Database> | Transaction<Database>;
+
+/**
+ * Giao dịch CHỈ ĐỌC có trần thời gian ở CSDL (statement_timeout cục bộ của giao dịch): câu quá giờ bị PostgreSQL huỷ, kết nối
+ * trả về pool. Bộ thu số đo dùng để một câu đếm chậm không treo lượt đọc /metrics, không giữ kết nối của đường ghi sổ.
+ */
+export async function readWithTimeout<T>(ms: number, fn: (tx: Transaction<Database>) => Promise<T>): Promise<T> {
+  return db.transaction().execute(async (trx) => {
+    await sql`SET TRANSACTION READ ONLY`.execute(trx);
+    await sql`SELECT set_config('statement_timeout', ${String(ms)}, true)`.execute(trx);
+    return fn(trx);
+  });
+}
 
 /** Đổi giá trị numeric (chuỗi) sang number. Dùng ở tầng repository. */
 export function toNumber(value: string | number | null | undefined): number {

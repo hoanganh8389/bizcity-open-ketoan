@@ -1,5 +1,6 @@
 // @bizcity-layer P observability
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
+// [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — số đo ghi sổ / outbox / gửi lặp / đối soát / đơn vị theo dải; bộ thu có trần thời gian + bizcity_collector_errors_total
 /**
  * Số đo Prometheus (docs/ops/OBSERVABILITY.md §3) — bộ đếm / gauge / histogram tối thiểu, định dạng văn bản Prometheus 0.0.4,
  * không cần gói ngoài. Không import CSDL (db/client.ts gọi observeDbQuery ở đây — tránh vòng import).
@@ -78,6 +79,19 @@ export const metrics = {
   ledgerOldestPending: new Gauge('bizcity_ledger_events_oldest_pending_seconds', 'Tuổi sự việc chờ định khoản / lỗi lâu nhất (giây)'),
   ledgerEntries24h: new Gauge('bizcity_ledger_entries_last_24h', 'Bút toán ghi trong 24 giờ qua'),
   diagnosticsErrors: new Gauge('bizcity_diagnostics_errors', 'Số kiểm mức error của lượt tự chẩn đoán gần nhất theo tầng'),
+  diagnosticsChecks: new Gauge('bizcity_diagnostics_checks', 'Số kiểm theo kết quả (pass, empty, info, warn, error) của lượt gần nhất mỗi đơn vị, cộng theo tầng'),
+  diagnosticsLastRun: new Gauge('bizcity_diagnostics_last_run_timestamp_seconds', 'Lúc có lượt tự chẩn đoán gần nhất (mọi đơn vị) theo tầng (giây Unix)'),
+  diagnosticsLastSuccess: new Gauge('bizcity_diagnostics_last_success_timestamp_seconds', 'Lúc có lượt tự chẩn đoán gần nhất không có kiểm mức error, theo tầng (giây Unix)'),
+  dbPoolMax: new Gauge('bizcity_db_pool_max', 'Trần số kết nối của pool CSDL'),
+  postings: new Counter('bizcity_postings_total', 'Dòng nhật ký định khoản ĐÃ COMMIT theo loại chứng từ, hành động (đọc từ posting_log; mọi máy API thấy cùng số — cộng bằng max)'),
+  postingFailures: new Counter('bizcity_posting_failures_total', 'Chứng từ ghi lỗi định khoản theo mã lỗi; kind = rejected (từ chối nghiệp vụ) | error (lỗi kỹ thuật)'),
+  outboxDeliveries: new Gauge('bizcity_outbox_deliveries', 'Việc giao sự kiện theo trạng thái (pending, dead), mọi đơn vị'),
+  outboxOldestPending: new Gauge('bizcity_outbox_oldest_pending_seconds', 'Tuổi việc giao sự kiện chờ lâu nhất (giây)'),
+  outboxAttempts: new Counter('bizcity_outbox_attempts_total', 'Lượt giao sự kiện theo subscriber, kết quả (done, duplicate, retry, dead)'),
+  idempotency: new Counter('bizcity_idempotency_requests_total', 'Action ghi có Idempotency-Key theo kết quả (new, replayed, conflict)'),
+  tenants: new Gauge('bizcity_tenants', 'Số đơn vị theo dải hoạt động 24 giờ (idle 0 · small 1–100 · medium 101–1000 · large > 1000 dòng posting_log) — không lộ đơn vị nào'),
+  tenantsWithBacklog: new Gauge('bizcity_tenants_with_backlog', 'Số đơn vị có sự việc pending / error quá 1 giờ'),
+  collectorErrors: new Counter('bizcity_collector_errors_total', 'Bộ thu số đo lỗi hoặc quá giờ (số đo của bộ đó giữ giá trị cũ)'),
   heapUsed: new Gauge('nodejs_heap_used_bytes', 'Heap V8 đang dùng'),
   heapTotal: new Gauge('nodejs_heap_total_bytes', 'Heap V8 đã cấp'),
   eventLoopLag: new Gauge('nodejs_eventloop_lag_seconds', 'Độ trễ event loop p99 (giây)'),
@@ -101,6 +115,11 @@ const collectors = new Map<string, { fn: () => Promise<void>; everyMs: number; l
 export function registerCollector(name: string, fn: () => Promise<void>, everyMs = 60_000): void {
   collectors.set(name, { fn, everyMs, last: 0 });
 }
+/**
+ * Trần thời gian câu đếm của bộ thu (ms) — đặt ở CSDL qua readWithTimeout (db/client.ts), không hẹn giờ trong tiến trình (SC-EVT-1).
+ * Bộ thu lỗi / quá giờ: số đo của bộ đó giữ giá trị cũ, tăng bizcity_collector_errors_total (cảnh báo MetricsCollectorFailing).
+ */
+export const COLLECTOR_TIMEOUT_MS = 5_000;
 export async function collect(log?: { warn(o: unknown, m: string): void }): Promise<void> {
   const now = Date.now();
   await Promise.all([...collectors.entries()].filter(([, c]) => now - c.last >= c.everyMs).map(async ([name, c]) => {
@@ -108,6 +127,7 @@ export async function collect(log?: { warn(o: unknown, m: string): void }): Prom
     try {
       await c.fn();
     } catch (err) {
+      metrics.collectorErrors.inc({ collector: name });
       log?.warn({ err, collector: name }, 'bộ thu số đo lỗi');
     }
   }));
