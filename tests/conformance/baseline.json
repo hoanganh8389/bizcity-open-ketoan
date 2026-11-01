@@ -996,19 +996,9 @@
           "message": "ghi bảng lõi posting_reasons — đi qua API / service danh mục (A-17)"
         },
         {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/store.ts|kernel:document_sequences",
-          "file": "apps/api/src/phan-he/mua-hang/store.ts",
-          "message": "ghi bảng NHÂN document_sequences — chỉ được nộp sự việc (R-BOUND-2)"
-        },
-        {
           "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/ton-max.ts|core:branches",
           "file": "apps/api/src/phan-he/mua-hang/ton-max.ts",
           "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|kernel:document_sequences",
-          "file": "apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts",
-          "message": "ghi bảng NHÂN document_sequences — chỉ được nộp sự việc (R-BOUND-2)"
         },
         {
           "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|core:contract_schedules",

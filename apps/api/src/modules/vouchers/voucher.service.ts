@@ -4,6 +4,7 @@
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — phiếu kế toán nháp chờ duyệt (Q009-1 a): draftIn lưu sự việc pending không bút toán, approve ghi qua eventStore; accounting.journal.post.
+// [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — số phiếu tay lấy từ documentNumbers.next (documents.numbering), không tự ghi document_sequences
 /**
  * Chứng từ kế toán nhập tay: phiếu thu, phiếu chi, phiếu báo có, phiếu báo nợ, phiếu kế toán,
  * và số dư tài khoản đầu kỳ.
@@ -36,7 +37,6 @@ import {
   type VoucherType,
   voucherInputSchema,
 } from '@ketoan/contracts';
-import { sql } from 'kysely';
 import { db, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
@@ -46,6 +46,7 @@ import type { Account } from '../../db/types.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { documentRepository } from '../documents/document.repository.js';
 import { eventStore } from '../documents/event-store.js';
+import { documentNumbers } from '../documents/numbering.js';
 import { logPosting } from '../documents/document.service.js';
 import type { DraftLine } from '../ledger/ledger.types.js';
 import { applyTaxFlags } from '../tax-info/tax-patch.js';
@@ -109,13 +110,8 @@ interface TaxInvoiceDraft {
 const tracksPartner = (a: Account | undefined) => Boolean(a && (a.track_partner || a.is_debt || a.normal_side === 'both'));
 
 async function nextDocNo(trx: Db, tenantId: string, docType: ManualType, year: number): Promise<string> {
-  const row = await trx
-    .insertInto('document_sequences')
-    .values({ tenant_id: tenantId, doc_type: docType, year, last_no: 1 })
-    .onConflict((oc) => oc.columns(['tenant_id', 'doc_type', 'year']).doUpdateSet({ last_no: sql`document_sequences.last_no + 1` }))
-    .returning('last_no')
-    .executeTakeFirstOrThrow();
-  return `${VOUCHER_PREFIX[docType]}${String(year).slice(2)}-${String(row.last_no).padStart(6, '0')}`;
+  const n = await documentNumbers.next(trx, tenantId, docType, year);
+  return `${VOUCHER_PREFIX[docType]}${String(year).slice(2)}-${String(n).padStart(6, '0')}`;
 }
 
 /** Tra mã đối tượng → id; mã không có trong danh mục thì báo lỗi rõ. */

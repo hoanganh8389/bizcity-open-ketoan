@@ -13,6 +13,7 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+- **Chứng từ dùng chung** (năng lực `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments`; PHASES 2.7, PHASE-010 S010-2): `ctx.documents.nextNumber / saveVersion / versions / link / links / attach / attachments` trong action (ghi chỉ trên docRef của chính module); migration `0045` thêm `document_versions` (chỉ thêm, băm nội dung), `document_links`, `document_attachments` (tệp trên `DATA_DIR/attachments`, sha256, gỡ = `archived_at`), có RLS. HTTP cho giao diện: `/api/v1/document-versions`, `/api/v1/document-links`, `/api/v1/document-attachments` (gửi, gỡ, tải tệp).
 - **Giám sát ghi sổ, sự kiện, đối soát** (PHASE-018 W1–W4, mức Kernel K0): số đo `bizcity_postings_total` / `bizcity_posting_failures_total` đọc từ `posting_log` (chỉ phần đã commit; tách **từ chối nghiệp vụ** — kỳ khoá, không cân, thiếu cấu hình — khỏi **lỗi kỹ thuật**), outbox (`bizcity_outbox_*`), gửi lặp (`bizcity_idempotency_requests_total`), mốc + kết quả tự chẩn đoán, số đơn vị theo dải hoạt động (không lộ đơn vị), trần pool, lỗi bộ thu. Bộ thu chạy giao dịch chỉ đọc có `statement_timeout` 5 s. Dashboard mới 07 Đường sự kiện, 08 Đa đơn vị, 09 Toàn vẹn sổ; 6 cảnh báo mới (`OutboxDeadLetter`, `OutboxBacklog`, `ReconciliationStale`, `DbPoolSaturation`, `MetricsCollectorFailing`, `PostingRejectionSpike` → kênh kế toán) có test `promtool`; sổ tay xử lý [docs/ops/RUNBOOK-CANH-BAO.md](docs/ops/RUNBOOK-CANH-BAO.md); luật dò `H-METRIC-LABEL`. Đường ghi sổ không đổi.
 - **Cài nhanh 3 bước** `bash scripts/cai-nhanh.sh [--giam-sat]`: tạo `.env` với `JWT_SECRET` / mật khẩu Grafana ngẫu nhiên (không ghi đè `.env` đã có), tự ghép `infrastructure/monitoring/docker-compose.desktop.yml` trên Docker Desktop, chờ `/health/ready`, in địa chỉ đăng nhập. README thêm ảnh kiến trúc Core, mục giám sát Prometheus / Grafana / Loki, mục kết nối REST API + MCP cho trợ lý AI (17 công cụ).
 - **Danh mục chuẩn đọc qua `bizcity_read`** (năng lực `data.read-views`, PHASES 2.4, PHASE-007 S007-4): migration `0044` tạo 8 khung nhìn chỉ đọc `partners`, `products`, `branches`, `warehouses`, `unit_names`, `tax_codes`, `payment_methods`, `dimensions` — theo mã (kho trả `branch_code`, cửa hàng trả `parent_code`), RLS bảng gốc vẫn áp, chặn ghi, không có tài khoản / nhóm hạch toán của Kernel, không có tài khoản ngân hàng / ngày sinh / giới tính. SC-CON-2 kiểm manifest `data.reads` trỏ khung nhìn có thật.
@@ -122,6 +123,8 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Đính kèm Mua hàng chạy trên đính kèm chung** (migration `0046`, PHASES 2.7, A-19): dòng `purchase_attachments` chép sang `document_attachments` (docRef `mua-hang.<loại chủ>:<mã>`, `legacy_ref` đối chiếu), tệp giữ nguyên chỗ trên ổ (`DATA_DIR/dinh-kem`), băm sha256 ở lần tải đầu. API `/api/v1/purchase/attachments` giữ khuôn; xoá tệp nay là gỡ (lưu trữ, không xoá cứng). Bảng `purchase_attachments` khoá thêm / sửa, giữ để đối chiếu.
+- **Một chỗ cấp số chứng từ**: phiếu kế toán tay, đề nghị thanh toán (`quy`), phiếu mua hàng lấy số từ `documentNumbers.next` của Kernel thay vì tự ghi `document_sequences`. Khoá dãy và khuôn số giữ nguyên — không nhảy số.
 - **Báo cáo về phân hệ Kế toán** (PHASE-012 Q012-2): `apps/api/src/modules/reports` → `apps/api/src/phan-he/ke-toan/reports`. `documentChecks` (kiểm trước khoá kỳ) về Kernel `modules/periods/document-checks.ts`. Thuế đọc B02 / bảng dài hạn qua action, add-in Bảng tính AI qua `accounting.report.trial-balance`; báo cáo hàng hoá tách: lãi gộp → `phan-he/ban-hang/gross-profit.ts`, chuyển kho → `phan-he/kho/stock-transfers.ts`, kết quả theo cửa hàng ở lại `ke-toan/reports`; `kho`, `mua-hang` lấy route qua `GOODS` (`phan-he/loi.ts`). Đường dẫn API, số liệu báo cáo không đổi. Chi phí theo chiều phân tích gom theo bí danh cột, bỏ `sql.raw`.
 - **Cổng công khai của Kernel** (PHASE-010 W1): ngoài Kernel chỉ import Kernel qua `apps/api/src/kernel/public.ts`; 21 tệp đã chuyển; bộ kiểm SC-KERNEL-6 chặn import thẳng mới. Chuẩn bị tách gói `packages/kernel` mà không sửa nơi gọi.
 - Yêu cầu thanh toán chạy trên runtime action (mẫu đầu tiên). Đường dẫn và khuôn phản hồi giữ nguyên, nhưng:
@@ -138,6 +141,7 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+- Đính tệp vào hoá đơn NCC (`ownerType: invoice`) báo lỗi CSDL: bảng `purchase_attachments` chỉ nhận partner / document / policy. Hết lỗi khi chuyển sang đính kèm chung (0046).
 - Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
   - mọi bản trước commit `ccfc341` (gồm `main` 23a834c) **không cài mới được trên CSDL sạch**: code dùng `users.session_version`, `products.parent_manual` khi chưa có migration;
   - nhánh này sửa bằng migration 0029, 0033 và chặn tái phát bằng SC-DATA-7;

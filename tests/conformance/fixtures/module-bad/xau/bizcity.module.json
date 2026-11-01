@@ -8,7 +8,7 @@
   "description": "Mỗi trường dưới cài một lỗi CONF-MAN (xem ../../expect.json).",
   "owners": ["@acme"],
   "standard": "^2.0",
-  "requires": { "capabilities": ["ledger.submit", "documents.attachments", "ledger.anything"] },
+  "requires": { "capabilities": ["ledger.submit", "documents.signatures", "ledger.anything"] },
   "permissions": [{ "key": "contracts:read", "label": "Xem", "roles": ["owner"], "risk": "low" }],
   "data": { "schema": "mod_khac", "tables": ["ledger_lines"], "reads": ["bizcity_read.partners", "bizcity_read.khong_co"] },
   "actions": ["khac.contract.list"],
