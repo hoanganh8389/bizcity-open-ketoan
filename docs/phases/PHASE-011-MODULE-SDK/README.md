@@ -29,4 +29,7 @@
 Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 3.1 ☐ · 3.2 ☐ · 3.3 ☐ · 3.6 🟡 · 3.10 ☐ · 3.13 ☐ · 3.14 ☐.
 
 <!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — phạm vi phase thêm 3.13, 3.14; quyết định thiết kế plugin ở ADR-0011 -->
+<!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — trỏ bản mẫu tĩnh mockups/phan-he.html (chủ yêu cầu vẽ trước để định hướng checklist code) -->
+**Bản mẫu giao diện:** [mockups/phan-he.html](mockups/phan-he.html) — launcher "＋ Thêm phân hệ", trang Phân hệ, chi tiết / tắt module, app ngoài trong iframe; checklist code CK-1…CK-20 ở [mockups/README](mockups/README.md).
+
 **Quyết định thiết kế:** [ADR-0011](../../adr/ADR-0011-plugin-ba-muc-tin-cay.md) — plugin ba mức tin cậy (module trong mã nguồn bản cài · app ngoài tiến trình + iframe · gói ký Phase 5), không drop-in; thứ tự PR ở mục "Việc phải làm" của ADR.

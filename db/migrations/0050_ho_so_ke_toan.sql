@@ -1,6 +1,7 @@
 -- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — hồ sơ kế toán của đơn vị có phiên bản: năm tài chính, chế độ kế toán, loại pháp nhân, hiệu lực từ đầu năm tài chính (ADR-0013, S020-22, khoảng trống G1).
+-- [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 -- =============================================================================
--- 0049 Hồ sơ kế toán của đơn vị (ADR-0013; PHASE-020 S020-22).
+-- 0050 Hồ sơ kế toán của đơn vị (ADR-0013; PHASE-020 S020-22).
 --      accounting_profiles: mỗi dòng là MỘT phiên bản hồ sơ, hiệu lực từ ngày đầu một năm tài chính. Chỉ thêm.
 --        fiscal_year_start_month — tháng bắt đầu năm tài chính (1 = năm dương lịch); kỳ kế toán tháng giữ nguyên (fiscal_periods);
 --        regime                  — chế độ kế toán đơn vị áp dụng cho các năm tài chính từ effective_from;

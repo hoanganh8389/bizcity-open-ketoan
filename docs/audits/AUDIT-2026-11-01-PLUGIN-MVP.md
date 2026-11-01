@@ -97,9 +97,12 @@ Ký hiệu: ✅ có · ◐ một phần · ✘ chưa có · ⚠ sai chuẩn so v
 
 | # | Phát hiện | Bằng chứng | Cách sửa (nhỏ, không viết lại) | Phase |
 |---|---|---|---|---|
-| P0-1 | `ledger_entries` sửa / xoá được ở tầng CSDL (chỉ chặn TRUNCATE); `accounting_events`, `accounting_event_versions` không trigger | `0006_goc_so_cai.sql:640`; `pg_trigger` trên `ketoan_test` hôm nay | Migration `0049`: trigger BEFORE UPDATE/DELETE trên `ledger_entries` **chỉ cho phép** cột header mà `posting.service.ts:160` đang sửa (liệt kê rõ) và nhánh `cost_overwrite` như `ledger_lines`; `accounting_event_versions` chỉ thêm; `accounting_events` chặn DELETE. DG-DB-2 thêm 3 dòng. | 004 (W-bổ sung) |
-| P0-2 | Subscriber (sẽ là mã plugin) chạy với GUC đơn vị rỗng → RLS mở, plugin đọc được dữ liệu đơn vị khác nếu quên lọc | `events.ts:221`; `0041:13-16` | `withRequestContext({..., tenantId: evt.tenantId})`; test: subscriber của A `select` không thấy dòng của B. | 006 (W-bổ sung) |
-| P0-3 | Bản cài mặc định nối CSDL bằng owner `ketoan` → bypass RLS, tắt được trigger | `docker-compose.yml:25,79`; `tenant-isolation.test.ts:86` chỉ chạy khi `DB_SET_ROLE` | `DB_APP_USER` mặc định `ketoan_app` trong compose + `cai-nhanh.sh`; CI đặt `DB_SET_ROLE=ketoan_app` để test pool chạy. | 001 S001-? (việc tay chủ đã ghi 30/10, A-6) |
+| P0-1 ✅ | `ledger_entries` sửa / xoá được ở tầng CSDL (chỉ chặn TRUNCATE); `accounting_events`, `accounting_event_versions` không trigger | `0006_goc_so_cai.sql:640`; `pg_trigger` trên `ketoan_test` hôm nay | Migration `0049`: trigger BEFORE UPDATE/DELETE trên `ledger_entries` **chỉ cho phép** cột header mà `posting.service.ts:160` đang sửa (liệt kê rõ) và nhánh `cost_overwrite` như `ledger_lines`; `accounting_event_versions` chỉ thêm; `accounting_events` chặn DELETE. DG-DB-2 thêm 3 dòng. | 004 (W-bổ sung) |
+| P0-2 ✅ | Subscriber (sẽ là mã plugin) chạy với GUC đơn vị rỗng → RLS mở, plugin đọc được dữ liệu đơn vị khác nếu quên lọc | `events.ts:221`; `0041:13-16` | `withRequestContext({..., tenantId: evt.tenantId})`; test: subscriber của A `select` không thấy dòng của B. | 006 (W-bổ sung) |
+| P0-3 ✅ | Bản cài mặc định nối CSDL bằng owner `ketoan` → bypass RLS, tắt được trigger | `docker-compose.yml:25,79`; `tenant-isolation.test.ts:86` chỉ chạy khi `DB_SET_ROLE` | `DB_APP_USER` mặc định `ketoan_app` trong compose + `cai-nhanh.sh`; CI đặt `DB_SET_ROLE=ketoan_app` để test pool chạy. | 001 S001-? (việc tay chủ đã ghi 30/10, A-6) |
+
+<!-- [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] AUDIT — PR-P0 xong trên feat/phase-0-tiep: 0049 trigger, subscriber gắn đơn vị, ketoan_app mặc định -->
+> **PR-P0 xong 2026-11-01** (nhánh `feat/phase-0-tiep`): P0-1 migration `0049_khoa_dau_but_toan.sql` + 3 ca `db-rules.test.ts`; P0-2 `deliverOne` chạy trong ngữ cảnh đơn vị (`packages/platform/src/core/events.ts`) + ca `events.test.ts` — **kiểm ngược: bỏ bản vá thì subscriber thấy 33.896 sự việc của đơn vị khác, có bản vá thấy 0**; P0-3 compose mặc định `ketoan_app`, CI chạy test dưới `DB_SET_ROLE=ketoan_app` (ca RLS của pool hết bị bỏ qua).
 
 **P1 — chặn "plugin đúng sổ, có bằng chứng":**
 
@@ -108,7 +111,7 @@ Ký hiệu: ✅ có · ◐ một phần · ✘ chưa có · ⚠ sai chuẩn so v
 | P1-1 | Mã luật định khoản không có version / hash → đổi code là đổi chính sách không dấu | `posting.service.ts:33`; `posting_log` không cột rule version | Hash nội dung `rules/*.ts` lúc build vào `policy_version` snapshot (`policy.ts` kind `publish`), ghi `rule_hash` vào `posting_log`; SC-* so hash với snapshot đầu. | 005 |
 | P1-2 | Cửa nạp `POST /api/v1/documents` ngoài `runAction`: không `Idempotency-Key`, không receipt — plugin POS không "truy xuất biên nhận" được | `document.routes.ts:70-79`; receipt chỉ ở `defineAction` | Bọc ingest thành action `core.document.submit` (`defineAction`, effect write, idempotency `optional`) giữ route cũ làm alias; receipt = `audit_logs` hash. **Đây chính là `ctx.ledger.submit`.** | 011 |
 | P1-3 | Module có toàn bộ CSDL qua `ctx.data.tx`; chặn chỉ bằng grep (SC-MOD-2, còn nợ A-17) | `actions.ts:51-95` | Roadmap 3.10 role `mod_<key>_rw` + schema `mod_<key>`; trước mắt: `ctx.data.tx` giữ nguyên, nhưng manifest `data.tables` + SC-MOD-2 **block** cho module có manifest. | 011 |
-| P1-4 | `eventStore.overwriteCostPairs`, `eventStore.*` lộ ở cổng cho mọi module | `packages/kernel/src/index.ts:35`; `asset.service.ts:692-735` | Tách `eventStore` thành cổng **nội bộ Core** (`@bizcity/kernel/internal`, chỉ `modules/` của apps/api được import — SC-KERNEL-6 mở rộng), plugin chỉ có `submit`. | 010 |
+| P1-4 | `eventStore.overwriteCostPairs`, `eventStore.*` lộ ở cổng cho mọi module (**chủ quyết 01/11:** tài sản giữ `eventStore`; việc còn lại là không xuất lại `eventStore` trong `@bizcity/module-sdk`, SC-* chặn module mức 1 import nó) | `packages/kernel/src/index.ts:35`; `asset.service.ts:692-735` | Tách `eventStore` thành cổng **nội bộ Core** (`@bizcity/kernel/internal`, chỉ `modules/` của apps/api được import — SC-KERNEL-6 mở rộng), plugin chỉ có `submit`. | 010 |
 | P1-5 | `tenants.settings` jsonb đọc rải rác 6+ chỗ; không `settings.get` theo registry | `date-rules.ts:59`, `posting-modes.ts:30`, `system.routes.ts:55…` | `settingsService.get(trx, tenantId, key)` kiểm key theo registry + manifest `settings[]`; DG-SET-1 đã kiểm key lạ. | 011 (3.6) |
 
 **P2 — chất lượng / DX:**
@@ -214,7 +217,7 @@ Thứ tự bắt buộc: PR-0 → PR-1 → PR-2 → PR-2b → PR-3 → PR-4 → 
 |---|---|---|---|---|
 | **PR-P0** | 004 / 006 / 001 | P0-1 trigger `ledger_entries` + `accounting_event*`; P0-2 tenant context cho subscriber; P0-3 `DB_APP_USER=ketoan_app` mặc định, CI chạy test pool | DG-DB-2 +3 dòng; test `events.test.ts` "subscriber A không thấy B"; `tenant-isolation.test.ts:86` chạy trong CI | 1–2 ngày |
 | **PR-0** | 001 | Luật dò: SC-RMP-1 kiểm `fileContains.file` tồn tại; ghim SHA Action (P2-1) | SC-RMP-1, SC-SEC-4 | ½ ngày |
-| **PR-1** | 011 (3.2) | **Manifest cho 9 phân hệ + 3 add-in** (sinh từ `ApiModule` / `WebModule` / `AddInManifest` hiện có, `waivers` có hạn cho A-17); `GET /system/modules` đọc từ manifest | SC-MOD-3 `enforce: block`, 12/12 manifest; SC-CON-2 đạt | 2 ngày |
+| **PR-1** ✅ | 011 (3.2) | **Manifest cho 9 phân hệ + 3 add-in** (sinh từ `ApiModule` / `WebModule` / `AddInManifest` hiện có, `waivers` có hạn cho A-17); `GET /system/modules` đọc từ manifest | SC-MOD-3 `enforce: block`, 12/12 manifest; SC-CON-2 đạt | 2 ngày |
 | **PR-2b** | 011 (3.14) | **App ngoài tiến trình** (ADR-0011 mức 2): phạm vi khoá theo module, subscriber `core.webhook` ký HMAC, vé iframe + giao thức `postMessage`, slot iframe | năng lực `apps.external`; test: app chỉ gọi được action trong phạm vi, webhook phát lại không trùng | 3–4 ngày |
 | **PR-2** | 011 (3.1) | **`@bizcity/module-sdk` v0.1**: `defineModule`, re-export `defineAction` / `defineSubscriber` / kiểu ctx; **`ctx.ledger.submit`** = action `core.document.submit` (P1-2, receipt); `ctx.settings.get` (P1-5) | `packages/module-sdk/package.json`; `actions.test.ts` receipt cho ingest; `mua-hang` chuyển sang `ctx.ledger.submit` làm mẫu | 3–4 ngày |
 | **PR-3** | 011 (3.13) | **Registry + vòng đời**: migration `module_registry`, `tenant_modules`; `bizcity module install / activate / deactivate / upgrade` (lệnh trong `scripts/` trước, `packages/cli` ở PR-5); nạp theo `status=active` + hash (D2); `Errors.moduleDisabled` **được gọi** ở `requirePermission` khi module tắt cho đơn vị | test: cài → bật → tắt → gọi route trả MODULE_DISABLED → bật lại; nâng cấp version ghi lịch sử | 4–5 ngày |
@@ -240,7 +243,8 @@ Việc **không làm** trong lộ trình này (trả lời "không tạo trừu 
 
 ## 9. Chủ dự án cần quyết
 
-> Mục 1 **đã quyết** 2026-11-01 → [ADR-0011](../adr/ADR-0011-plugin-ba-muc-tin-cay.md). Mục 2–4 còn mở.
+<!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] AUDIT — §9 đủ: PR-P0 làm trên feat/phase-0-tiep; mockup tĩnh trước; tài sản giữ eventStore (P1-4 thu hẹp) -->
+> **Đã quyết đủ 2026-11-01:** (1) → [ADR-0011](../adr/ADR-0011-plugin-ba-muc-tin-cay.md); (2) PR-P0 làm trên nhánh `feat/phase-0-tiep`; (3) vẽ bản mẫu tĩnh trước để định hướng checklist code → [mockups/phan-he.html](../phases/PHASE-011-MODULE-SDK/mockups/phan-he.html), checklist CK-1…CK-20 ở [README](../phases/PHASE-011-MODULE-SDK/mockups/README.md); (4) **tài sản tiếp tục dùng `eventStore`** — tài sản cố định coi là Core (khấu hao là sự việc Kernel tự lập, câu không thương lượng 3), P1-4 thu hẹp: chỉ không để `eventStore` lọt vào `@bizcity/module-sdk`.
 
 
 1. D1–D6 §6.2 (đặc biệt D3: MVP chỉ gói trong repo / gói ký — không tải gói lạ).

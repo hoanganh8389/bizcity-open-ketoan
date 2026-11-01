@@ -1,5 +1,6 @@
 # ADR-0013 · Hồ sơ kế toán của đơn vị có phiên bản: năm tài chính, chế độ kế toán, loại pháp nhân
 <!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0013 chấp nhận: bảng chỉ thêm accounting_profiles (0049), hiệu lực từ đầu năm tài chính, Core giữ cấu trúc, Conformance phân tích; lấp khoảng trống G1 (S020-22). -->
+<!-- [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18). -->
 
 - Trạng thái: **Chấp nhận** — chủ dự án (Johnny Chu) 2026-11-02 ("ok, code nhé", sau khi chốt Q020-2: mở năng lực năm tài chính / chế độ kế toán của đơn vị ngay)
 - Ngày: 2026-11-02 · Người quyết: chủ dự án · Mức Kernel: **K1** — thêm bảng chỉ thêm + hai action; **không** đổi luật định khoản, cửa nạp, sổ cái, kỳ kế toán
@@ -14,7 +15,7 @@ Audit [VN-CONFORMANCE-BASELINE-2026-11-01](../audits/VN-CONFORMANCE-BASELINE-202
 
 ## Quyết định
 
-1. **Bảng chỉ thêm `accounting_profiles`** (migration 0049): mỗi dòng là một phiên bản hồ sơ gồm `fiscal_year_start_month`, `regime` (`vn-tt200-2014` · `vn-tt99-2025` · `vn-tt133-2016` · `vn-tt152-2025`), `entity_type` (`enterprise` · `sme` · `micro` · `household`), `note` bắt buộc, người phát hành. Trigger chặn sửa / xoá; RLS cùng khuôn 0041.
+1. **Bảng chỉ thêm `accounting_profiles`** (migration 0050): mỗi dòng là một phiên bản hồ sơ gồm `fiscal_year_start_month`, `regime` (`vn-tt200-2014` · `vn-tt99-2025` · `vn-tt133-2016` · `vn-tt152-2025`), `entity_type` (`enterprise` · `sme` · `micro` · `household`), `note` bắt buộc, người phát hành. Trigger chặn sửa / xoá; RLS cùng khuôn 0041.
 2. **Hiệu lực từ đầu năm tài chính**: `effective_from` là ngày 01 của tháng bắt đầu năm tài chính của chính hồ sơ đó (CHECK ở CSDL). Hồ sơ áp cho ngày D = bản có `effective_from ≤ D` lớn nhất. Hồ sơ mới không bao giờ đổi chế độ giữa một năm tài chính.
 3. **Không phát hành vào năm đã có kỳ khoá** (kỳ khoá ở hoặc sau ngày hiệu lực).
 4. **Chưa khai = chưa khai.** Không có dòng thì `current = null`; Core không suy chế độ từ gói định khoản hay từ ngày. Không tự tạo hồ sơ khi khởi tạo đơn vị.
@@ -28,7 +29,7 @@ Audit [VN-CONFORMANCE-BASELINE-2026-11-01](../audits/VN-CONFORMANCE-BASELINE-202
 
 **Chưa làm (cố ý, giữ Core lean):** báo cáo năm, kết chuyển cuối năm, số dư đầu năm **chưa** đọc năm tài chính từ hồ sơ — vẫn theo năm dương lịch như hôm nay. Chuyển chúng sang năm tài chính là việc riêng có ADR khi có đơn vị cần (đơn vị năm dương lịch không bị ảnh hưởng). Màn khai hồ sơ ở *Hệ thống → Thông tin đơn vị* làm cùng màn Kiểm chuẩn (S020-20). Hệ thống tài khoản theo chế độ (G2) và TT133 / TT152 (G5) vẫn mở.
 
-**Việc phải làm:** migration 0049 chưa phát hành, số có thể đổi khi gộp cùng nhánh khác đang giữ 0049 (đổi tên tệp, không đổi nội dung).
+**Việc phải làm:** migration chưa phát hành; đã đổi 0049 → **0050** khi gộp `main` (PR #18 giữ 0049). Nhánh `feat/phase-019-w2-api-trung-gian` cũng giữ 0049 nên phải đổi số khi gộp.
 
 ## Phương án đã cân nhắc
 

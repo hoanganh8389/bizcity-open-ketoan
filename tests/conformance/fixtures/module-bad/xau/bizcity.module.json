@@ -18,5 +18,9 @@
     { "docType": "customer_payment", "contract": "bizcity_ledger_intake@1", "reasons": { "kind": "payment", "default": "sale", "suggestedPacks": ["khong.co.goi@^1"] } }
   ] },
   "settings": ["bizcity.khac.remind_days"],
-  "extensions": { "slots": [{ "slot": "partner.sidebar", "component": "web/slots/X", "permission": "contracts:read" }] }
+  "extensions": { "slots": [{ "slot": "partner.sidebar", "component": "web/slots/X", "permission": "contracts:read" }] },
+  "waivers": [
+    { "rule": "STD-ACT-6", "reason": "Waiver thiếu hạn: không được miễn", "adr": "ADR-0011" },
+    { "rule": "STD-MOD-2", "reason": "Waiver quá hạn: phải báo", "adr": "ADR-0005", "expires": "2020-01-01" }
+  ]
 }

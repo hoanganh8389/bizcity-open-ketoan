@@ -4,7 +4,7 @@
   "released": null,
   "notes": "Bản máy đọc của Bizcity Framework Standard. Sửa cùng docs/standard/VERSIONING.md. status: available = có trong code; planned = chưa có (phase = Phase dự kiến trong docs/standard/PHASES.md).",
   "contracts": {
-    "bizcity_module": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
+    "bizcity_module": { "version": "1.1.1-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
     "bizcity_data": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-DATA-v1.md" },
     "bizcity_document": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
     "bizcity_action": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
@@ -78,7 +78,7 @@
     { "id": "ledger.reasons.declare", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_module", "description": "Manifest khai lý do cần cho docType nộp (ledger.submits[].reasons: kind, default, suggestedPacks — bizcity_module 1.1.0-draft). Tĩnh: SC-CON-2 kiểm loại lý do khớp docType, gói gợi ý có thật và có lý do mặc định. Lúc cài: accounting.posting.reason-readiness (GET /api/v1/posting/reasons/readiness)." },
     { "id": "ledger.doctype.production", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Sản xuất / xây dựng: xuất NVL → 154 → thành phẩm, giá thành, theo công trình." },
     { "id": "ledger.doctype.payroll", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Bảng lương → 334, 338x, chi phí theo bộ phận." },
-    { "id": "accounting.profile", "since": "1.0", "status": "available", "contract": "bizcity_compliance", "description": "Hồ sơ kế toán của đơn vị có phiên bản (ADR-0013, migration 0049): năm tài chính, chế độ kế toán, loại pháp nhân, hiệu lực từ đầu năm tài chính; chỉ thêm. Đọc: action accounting.profile.get (MCP đọc được); phát hành: accounting.profile.publish (settings:write, AI không dùng). Chưa khai = null, Core không đoán chế độ." },
+    { "id": "accounting.profile", "since": "1.0", "status": "available", "contract": "bizcity_compliance", "description": "Hồ sơ kế toán của đơn vị có phiên bản (ADR-0013, migration 0050): năm tài chính, chế độ kế toán, loại pháp nhân, hiệu lực từ đầu năm tài chính; chỉ thêm. Đọc: action accounting.profile.get (MCP đọc được); phát hành: accounting.profile.publish (settings:write, AI không dùng). Chưa khai = null, Core không đoán chế độ." },
     { "id": "posting.policy-version", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_posting_rule", "description": "Chính sách kế toán (gói định khoản, lý do, nhóm hạch toán, tài khoản ngầm định) có policy_version + effective_from; posting_log và ledger_entries ghi phiên bản đã dùng (bizcity_compliance@1 STD-CMP-9, ADR-0009, migration 0040). Định khoản theo bản của ngày hạch toán; sửa cấu hình tự chụp bản amend; đổi chế độ: accounting.policy.publish." },
     { "id": "ledger.fx", "since": "1.0", "status": "planned", "phase": 6, "contract": "bizcity_ledger_intake", "description": "Ngoại tệ, chênh lệch tỷ giá; thuế nhập khẩu (ledger.doctype.import_duty)." },
     { "id": "ai.cell", "since": "1.0", "status": "planned", "phase": 5, "contract": "bizcity_extension", "description": "Gọi LLM / OCR / RAG qua Cell; vắng Cell thì năng lực này không có, module phải tự lui." }

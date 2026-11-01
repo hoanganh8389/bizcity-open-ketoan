@@ -436,6 +436,16 @@
             "report-reason:report-xau.json:vn.xau.thue.sai.001",
             "report-rulepack:report-xau.json"
           ]
+        },
+        "SC-MOD-3": {
+          "findings": 2,
+          "keys": [
+            "missing:apps/api/src/phan-he/beta",
+            "key-dir:apps/api/src/phan-he/alpha"
+          ]
+        },
+        "SC-CON-2": {
+          "findings": 0
         }
       }
     },
@@ -486,7 +496,7 @@
       "mode": "module",
       "checks": {
         "SC-CON-2": {
-          "min": 12,
+          "min": 14,
           "keys": [
             "schema:/data/tables/0",
             "read-view:bizcity_read.khong_co",
@@ -503,7 +513,9 @@
             "slot:partner.sidebar",
             "reason-kind:customer_payment",
             "reason-default:customer_payment",
-            "reason-pack:khong.co.goi"
+            "reason-pack:khong.co.goi",
+            "waiver-no-expiry:STD-ACT-6",
+            "waiver-expired:STD-MOD-2"
           ]
         },
         "SC-MOD-1": {

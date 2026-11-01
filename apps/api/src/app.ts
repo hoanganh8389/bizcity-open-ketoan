@@ -26,9 +26,9 @@ import { registerErrorHandler } from './core/http.js';
 import { registerObservability } from './core/observability.js';
 import { randomUUID } from 'node:crypto';
 import { selectEnabled } from './core/addins.js';
-import { BUILTIN_ADDINS } from './addins/index.js';
+import { BUILTIN_ADDINS, ADDIN_MANIFESTS } from './addins/index.js';
 
-import { enabledModules, routesFor } from './phan-he/index.js';
+import { enabledModules, routesFor, MODULE_MANIFESTS } from './phan-he/index.js';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
@@ -127,6 +127,11 @@ export async function buildApp(): Promise<FastifyInstance> {
     app.log.info(`Add-in bật: ${addin.manifest.id} ${addin.manifest.version}`);
   }
   app.decorate('addins', addins);
+  // [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — manifest của phân hệ / add-in đang bật (GET /api/v1/system/modules?detail=true)
+  app.decorate('moduleManifests', [
+    ...app.enabledModules.map((k) => MODULE_MANIFESTS.get(k)).filter((m) => m !== undefined),
+    ...addins.map((a) => ADDIN_MANIFESTS.get(a.manifest.id)).filter((m) => m !== undefined),
+  ]);
 
   return app;
 }
@@ -136,5 +141,7 @@ declare module 'fastify' {
     addins: import('./core/addins.js').ApiAddIn[];
     /** Mã các phân hệ bật trong tiến trình này (ENABLED_MODULES). */
     enabledModules: string[];
+    /** Manifest bizcity.module.json của phân hệ + add-in đang bật (PHASES 3.2). */
+    moduleManifests: import('./core/module-manifest.js').ModuleManifest[];
   }
 }

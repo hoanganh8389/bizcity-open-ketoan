@@ -72,7 +72,7 @@ describe('Bằng chứng', () => {
     const id = (await db.selectFrom('audit_logs').select('id').where('tenant_id', '=', tenantId).executeTakeFirstOrThrow()).id;
     await expect(sql`UPDATE audit_logs SET action = 'sua' WHERE id = ${id}`.execute(db)).rejects.toThrow(/chỉ được thêm/);
     await expect(sql`DELETE FROM audit_logs WHERE id = ${id}`.execute(db)).rejects.toThrow(/chỉ được thêm/);
-    await expect(sql`TRUNCATE audit_logs`.execute(db)).rejects.toThrow(/chỉ được thêm/);
+    await expect(sql`TRUNCATE audit_logs`.execute(db)).rejects.toThrow(/chỉ được thêm|permission denied/);
   });
 
   it('EVIDENCE_CHAIN: chuỗi của đơn vị đạt; dòng bị sửa ngầm (vượt trigger) thì lộ ngay dòng đó', async () => {
@@ -83,6 +83,8 @@ describe('Bằng chứng', () => {
     // Mô phỏng kẻ có quyền superuser sửa thẳng CSDL, trong một giao dịch rồi huỷ (không để lại gì).
     let tampered: Awaited<ReturnType<typeof chain.run>> | undefined;
     await db.transaction().execute(async (trx) => {
+      // ROLE NONE: trở về vai trò đăng nhập (superuser) khi pool đã hạ xuống ketoan_app (DB_SET_ROLE) — đúng "kẻ có quyền superuser".
+      await sql`SET LOCAL ROLE NONE`.execute(trx);
       await sql`SET LOCAL session_replication_role = replica`.execute(trx);
       await sql`UPDATE audit_logs SET after_data = '{"sua":true}'::jsonb WHERE id = ${victim}`.execute(trx);
       tampered = await chain.run(trx, { tenantId });

@@ -52,8 +52,8 @@ describe('bizcity_read — danh mục chuẩn', () => {
   });
 
   it('chặn ghi qua khung nhìn', async () => {
-    await expect(sql`UPDATE bizcity_read.partners SET name = 'sửa' WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc/);
-    await expect(sql`DELETE FROM bizcity_read.products WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc/);
-    await expect(sql`INSERT INTO bizcity_read.unit_names (tenant_id, name) VALUES (${tenantId}, 'Hộp')`.execute(db)).rejects.toThrow(/chỉ đọc/);
+    await expect(sql`UPDATE bizcity_read.partners SET name = 'sửa' WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc|permission denied/);
+    await expect(sql`DELETE FROM bizcity_read.products WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ đọc|permission denied/);
+    await expect(sql`INSERT INTO bizcity_read.unit_names (tenant_id, name) VALUES (${tenantId}, 'Hộp')`.execute(db)).rejects.toThrow(/chỉ đọc|permission denied/);
   });
 });

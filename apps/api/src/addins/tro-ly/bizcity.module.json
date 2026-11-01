@@ -1,0 +1,34 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.tro-ly",
+  "key": "tro-ly",
+  "kind": "addin",
+  "version": "0.1.0",
+  "label": "Trợ lý",
+  "description": "Tra cứu luồng bút toán theo cấu hình hạch toán hiện tại, tìm tính năng, hỏi đáp thường gặp.",
+  "owners": [
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "ledger.submit"
+    ]
+  },
+  "ledger": {
+    "submits": [
+      {
+        "docType": "transfer",
+        "contract": "bizcity_ledger_intake@1"
+      },
+      {
+        "docType": "stock_adjustment",
+        "contract": "bizcity_ledger_intake@1"
+      },
+      {
+        "docType": "cash_transfer",
+        "contract": "bizcity_ledger_intake@1"
+      }
+    ]
+  }
+}

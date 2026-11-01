@@ -1,5 +1,6 @@
 // @bizcity-layer P data
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng accounting_profiles (0049, ADR-0013).
+// [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
@@ -811,7 +812,7 @@ export interface PostingPolicyVersionsTable {
   created_at: TimestampDefault;
 }
 
-/** Hồ sơ kế toán của đơn vị có phiên bản (migration 0049, ADR-0013). Chỉ thêm. */
+/** Hồ sơ kế toán của đơn vị có phiên bản (migration 0050, ADR-0013). Chỉ thêm. */
 export interface AccountingProfilesTable {
   tenant_id: string;
   version: number;

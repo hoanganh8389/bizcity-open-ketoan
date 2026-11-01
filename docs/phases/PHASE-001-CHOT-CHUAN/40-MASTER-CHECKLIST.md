@@ -14,7 +14,7 @@
 | S001-4 | ADR-0003..0005 chốt REUSE-MAP §6 | 0.4 | có | ✅ |
 | S001-5 | Bộ kiểm chuẩn một chỗ (ADR-0006) | 0.5 | có | ✅ |
 | S001-6 | Luật R-KER / R-SEC / R-REL / R-DIAG, `SECURITY.md`, `CHANGELOG.md` | 0.6 | có | ⛔ chủ bật GitHub Private Vulnerability Reporting |
-| S001-7 | Vai trò CSDL `ketoan_app` + header bảo mật nginx | 0.7 | có | ⛔ bản cài thật đặt `DB_APP_USER` / `DB_APP_PASSWORD` |
+| S001-7 | Vai trò CSDL `ketoan_app` + header bảo mật nginx | 0.7 | có | ✅ 2026-11-01 (P0-3): mặc định `ketoan_app` trong compose, `DB_APP_PASSWORD` bắt buộc, CI test dưới `ketoan_app` <!-- [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 --> |
 | S001-8 | Kiểm migration sạch + nâng cấp | G1-13 | có | 🟡 chờ tag `v*` đầu tiên làm mốc |
 | S001-9 | Ba lớp kiểm soát + ma trận tuân thủ tính tự động | G2-10 | có | ✅ |
 | S001-10 | Giấy phép GPL-2.0-or-later + `TRADEMARK.md` | — | có | ✅ |

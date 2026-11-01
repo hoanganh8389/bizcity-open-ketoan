@@ -1,7 +1,8 @@
 // @bizcity-layer K kernel/config
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — hồ sơ kế toán của đơn vị có phiên bản: năm tài chính, chế độ kế toán, loại pháp nhân (ADR-0013, S020-22).
+// [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 /**
- * HỒ SƠ KẾ TOÁN CỦA ĐƠN VỊ (ADR-0013; bảng accounting_profiles, migration 0049).
+ * HỒ SƠ KẾ TOÁN CỦA ĐƠN VỊ (ADR-0013; bảng accounting_profiles, migration 0050).
  *
  *   profileAt(db, tenant, asOf)   hồ sơ áp cho ngày asOf: effective_from ≤ asOf lớn nhất, bằng nhau thì version lớn nhất; null = chưa khai
  *   fiscalYearOf(month, date)     năm tài chính chứa một ngày, theo tháng bắt đầu

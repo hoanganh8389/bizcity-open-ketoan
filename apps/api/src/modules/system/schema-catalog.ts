@@ -1,5 +1,6 @@
 // @bizcity-layer P module-sdk
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm accounting_profiles (0049).
+// [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
@@ -173,6 +174,9 @@ export const TRIGGER_NOTES: Record<string, string> = {
   forbid_diagnostic_run_update: 'Kết quả chẩn đoán chỉ được thêm: chặn sửa dòng đã ghi (R-DIAG-5).',
   unit_names_autoadd: 'Khai ĐVT ở mặt hàng (bất kỳ đường ghi nào: form, Excel, đồng bộ, dữ liệu mẫu) mà tên chưa có thì tự thêm vào Danh mục đơn vị tính (unit_names, nguồn auto).',
   unit_names_seed_tenant: 'Tạo đơn vị (tenant) mới thì tự có sẵn danh sách ĐVT thông dụng (Hộp, Lốc, Lốc_4, Thùng…).',
+  // [2026-11-01 10:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — P0-1: giải thích trigger 0049 (đầu bút toán, sự việc kế toán)
+  guard_ledger_entry_mutation: 'Đầu bút toán không xoá được; chỉ đổi theo ba lối của Kernel: đảo (posted → reversed), cập nhật thông tin đầu khi định khoản lại mà dòng không đổi, điền giá vốn đổi tổng tiền.',
+  guard_accounting_event_mutation: 'Sự việc kế toán không xoá được, không đổi doc_key / nguồn / người lập, không lùi phiên bản. Huỷ = trạng thái cancelled qua cửa nạp.',
   guard_ledger_line_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Ngoại lệ duy nhất: tính giá vốn ghi đè số tiền dòng chờ giá vốn (cost_fill) của bút toán còn hiệu lực, không đảo bút toán.',
 };
 

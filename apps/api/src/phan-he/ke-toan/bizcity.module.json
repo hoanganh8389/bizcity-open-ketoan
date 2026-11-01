@@ -1,0 +1,55 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.ke-toan",
+  "key": "ke-toan",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Kế toán",
+  "description": "Chứng từ, định khoản, sổ sách, công nợ, báo cáo tài chính, khoá sổ",
+  "owners": [
+    "@Thuy2k",
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "ledger.query",
+      "data.read-views",
+      "masterdata.read",
+      "actions.runtime",
+      "mcp.read"
+    ]
+  },
+  "data": {
+    "tables": [
+      "cash_plans",
+      "cost_norms"
+    ],
+    "reads": [
+      "bizcity_read.ledger_entries",
+      "bizcity_read.ledger_lines",
+      "bizcity_read.ledger_balances_daily"
+    ]
+  },
+  "actions": [
+    "accounting.balance.get",
+    "accounting.report.trial-balance",
+    "accounting.cash.balances",
+    "accounting.debts.partner-balances",
+    "accounting.report.income-statement",
+    "accounting.report.term-rules"
+  ],
+  "ui": {
+    "icon": "Calculator",
+    "color": "#1f66a3",
+    "order": 10
+  },
+  "waivers": [
+    {
+      "rule": "STD-ACT-6",
+      "reason": "Action đọc mang tên công cụ MCP accounting.* đã công bố (BIZCITY-MCP §5.1); đổi sang ke-toan.* là đổi tên công khai — làm cùng bảng bí danh MCP khi chuyển phan-he → modules (PHASES 3.9)",
+      "adr": "ADR-0011",
+      "expires": "2027-03-31"
+    }
+  ]
+}

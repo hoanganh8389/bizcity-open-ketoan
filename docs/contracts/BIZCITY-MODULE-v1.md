@@ -1,8 +1,9 @@
 # `bizcity_module@1` — Module Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0-draft: ledger.submits[].reasons (kind, default, suggestedPacks). -->
+<!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.1-draft: waivers bắt buộc expires, chỉ miễn luật đặt tên; §6 bước 1–3 có (12 manifest, SC-MOD-3 block, GET /system/modules?detail=true) -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-10-30 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
+> **Phiên bản:** 1.1.1-draft · 2026-11-01 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
 > **JSON Schema:** [BIZCITY-MODULE-v1.schema.json](BIZCITY-MODULE-v1.schema.json) · **Ví dụ đầy đủ:** [../standard/examples/hop-dong.bizcity.module.json](../standard/examples/hop-dong.bizcity.module.json)
 > **Thay thế:** `ApiModule` (`apps/api/src/phan-he/types.ts`), `WebModule`/`ModuleMeta` (`apps/web/src/phan-he/types.ts`, `packages/contracts/src/module.ts`), `AddInManifest` (`apps/api/src/core/addins.ts`)
 
@@ -37,7 +38,7 @@ Một phân hệ hiện khai ở 5 nơi (A-25); quyền, bảng sở hữu, sự
 | `settings[]` | | khoá cấu hình `bizcity.<key_>.<tên>` | [Settings](BIZCITY-SETTINGS-MATRIX-v1.md) |
 | `extensions` | | `menu`, `slots`, `hooks`, `print` | [Extension](BIZCITY-EXTENSION-v1.md) |
 | `ui` | | `icon` (lucide), `color`, `order` | lưới ứng dụng |
-| `waivers[]` | | miễn trừ luật Tier 1: `rule`, `reason`, `adr` | bộ kiểm bỏ qua đúng luật đó, in ra báo cáo |
+| `waivers[]` | | miễn trừ luật Tier 1: `rule`, `reason`, `adr`, `expires` (**bắt buộc** ngoài ví dụ trong `docs/`) | bộ kiểm (SC-CON-2) bỏ qua đúng phát hiện của luật đó và in vào ghi chú bảng điểm; thiếu `expires` hoặc quá hạn thì báo, không miễn. Hiện miễn được: `STD-ACT-6` (tiền tố action). Luật về sự thật kế toán (docType, năng lực, schema) không miễn được |
 
 ## 4. Luật
 
@@ -64,12 +65,14 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 ## 6. Chuyển dần từ code hiện tại
 
-1. Thêm `bizcity.module.json` cho 9 phân hệ hiện có (`ke-toan`, `quy`, `mua-hang`, `ban-hang`, `kho`, `tai-san`, `thue`, `api`, `he-thong`) và 3 add-in; `id` dạng `bizcity.<key>`. Chưa ai đọc: chỉ để test so khớp.
-2. Test: mỗi `phan-he/<key>/` có manifest hợp lệ; `owners` khớp `CODEOWNERS`; bảng bị ghi (grep) nằm trong `data.tables`. Bước này sẽ **đỏ** cho A-17 → liệt vào `waivers` có hạn kèm ADR.
-3. `GET /api/v1/system/modules` trả manifest; `ApiModule` / `WebModule` / `AddInManifest` sinh từ manifest.
+1. **Có (2026-11-01):** `bizcity.module.json` cho 9 phân hệ (`ke-toan`, `quy`, `mua-hang`, `ban-hang`, `kho`, `tai-san`, `thue`, `api`, `he-thong`) và 3 add-in; `id` dạng `bizcity.<key>`. API nạp lúc khởi động (`apps/api/src/core/module-manifest.ts`), lệch `key` / `label` / `kind` / `version` với mã thì dừng.
+2. **Có, trừ so bảng:** SC-MOD-3 (block) — mỗi thư mục có manifest, `key` trùng thư mục, `kind` đúng chỗ, `owners` khớp `CODEOWNERS`; test `module-manifests.test.ts` — action khai = action đăng ký. A-17 ghi `waivers` STD-MOD-2 hạn 2027-03-31. **Chưa:** so bảng bị ghi (grep) với `data.tables` — làm cùng 3.13.
+3. **Một phần:** `GET /api/v1/system/modules?detail=true` trả manifest tóm tắt (mặc định giữ mảng mã). **Chưa:** sinh `ApiModule` / `WebModule` / `AddInManifest` từ manifest — làm ở registry module (3.13, ADR-0011 D1–D2).
 4. Registry quyền đọc `permissions[]` (năng lực `permissions.module`).
 
 ## 7. Nhật ký
+
+- **1.1.1-draft (2026-11-01):** `waivers[].expires` bắt buộc ngoài ví dụ (schema giữ tuỳ chọn để ví dụ cũ hợp lệ; bộ kiểm ép); bộ kiểm miễn đúng luật đã khai, báo waiver thiếu hạn / quá hạn. §6 bước 1–2 có, bước 3 một phần (PHASES 3.2).
 
 - **1.1.0-draft (2026-10-30):** thêm `ledger.submits[].reasons` (tuỳ chọn, tương thích): `kind`, `default`, `suggestedPacks` (PHASE-012 S012-4, năng lực `ledger.reasons.declare`).
 - **1.0.0-draft (2026-10-29):** Viết lại cho Standard v1: thêm `id`, `standard`, `requires`, `data`, `documents`, `actions`, `events`, `ledger`, `extensions`, `waivers`; bỏ `requiresCore` (module không khai phiên bản Kernel, xem VERSIONING), bỏ `emits` (thay bằng `ledger.submits` và `events.emits`).

@@ -194,8 +194,18 @@ export async function dispatchOnce(opts: { limit?: number; consumers?: string[];
   return out;
 }
 
-/** Giao một việc (một giao dịch). Lỗi không ném ra ngoài: ghi lần thử, hẹn lại hoặc dead. */
-async function deliverOne(d: { consumer: string; event_id: string; tenant_id: string }, def: SubscriberDef, out: DispatchResult, span: Span): Promise<void> {
+// [2026-11-01 10:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — P0-2 (AUDIT-2026-11-01): giao sự kiện trong ngữ cảnh đơn vị của sự kiện → pool đặt bizcity.tenant_id, RLS đóng cho subscriber
+/**
+ * Giao một việc (một giao dịch). Lỗi không ném ra ngoài: ghi lần thử, hẹn lại hoặc dead.
+ * Chạy trong ngữ cảnh đơn vị của sự kiện: pool (db/client.ts) đặt bizcity.tenant_id khi mượn kết nối, nên RLS chỉ cho
+ * subscriber thấy dữ liệu của đơn vị đó. Không có bước này GUC rỗng = RLS mở (0041) — subscriber (sẽ là mã module) đọc
+ * được đơn vị khác nếu quên lọc.
+ */
+function deliverOne(d: { consumer: string; event_id: string; tenant_id: string }, def: SubscriberDef, out: DispatchResult, span: Span): Promise<void> {
+  return withRequestContext({ requestId: `evt-${d.event_id}`, correlationId: d.event_id, tenantId: d.tenant_id }, () => deliverInTenant(d, def, out, span));
+}
+
+async function deliverInTenant(d: { consumer: string; event_id: string; tenant_id: string }, def: SubscriberDef, out: DispatchResult, span: Span): Promise<void> {
   {
     let attempts = 0;
     try {
@@ -218,7 +228,7 @@ async function deliverOne(d: { consumer: string; event_id: string; tenant_id: st
               actor: { kind: 'system', id: `subscriber:${def.id}` }, correlationId: evt.correlationId ?? evt.id, causationId: evt.id,
             }),
           };
-          await withRequestContext({ requestId: `evt-${evt.id}`, correlationId: evt.correlationId ?? evt.id }, () => def.handle(ctx, evt));
+          await withRequestContext({ requestId: `evt-${evt.id}`, tenantId: evt.tenantId, correlationId: evt.correlationId ?? evt.id }, () => def.handle(ctx, evt));
         }
         await trx.updateTable('event_deliveries').set({ status: 'done', attempts: attempts + 1, done_at: new Date(), last_error: null })
           .where('consumer', '=', d.consumer).where('event_id', '=', d.event_id).execute();

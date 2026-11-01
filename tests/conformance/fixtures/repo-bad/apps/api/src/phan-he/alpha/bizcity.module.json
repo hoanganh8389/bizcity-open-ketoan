@@ -1,0 +1,29 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "acme.alfa",
+  "key": "alfa",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Phân hệ mẫu CỐ Ý SAI",
+  "description": "SC-MOD-3: key \"alfa\" lệch thư mục alpha (xem ../../../../../../expect.json). Action khac.* sai tiền tố nhưng có waiver còn hạn → SC-CON-2 không tính.",
+  "owners": [
+    "@acme"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "masterdata.read"
+    ]
+  },
+  "actions": [
+    "khac.thing.list"
+  ],
+  "waivers": [
+    {
+      "rule": "STD-ACT-6",
+      "reason": "Ca tự kiểm: waiver còn hạn miễn đúng phát hiện action-prefix",
+      "adr": "ADR-0011",
+      "expires": "2099-12-31"
+    }
+  ]
+}

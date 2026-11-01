@@ -9,7 +9,7 @@ import { db } from '../src/db/client.js';
 import type { AuthContext } from '../src/core/auth.js';
 import { defineSubscriber, dispatchOnce, emitEvent, registerSubscribers, tickClock, type EventEnvelope } from '../src/core/events.js';
 import { runDiagnostics } from '../src/modules/system/diagnostics.js';
-import { call, setupTenant, type TestCtx } from './helpers.js';
+import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -29,6 +29,23 @@ const probe = defineSubscriber({
   },
 });
 
+// P0-2 (AUDIT-2026-11-01): subscriber chạy trong ngữ cảnh đơn vị của sự kiện — ghi lại GUC và số dòng đơn vị khác thấy được
+// dưới vai trò ketoan_app (superuser luôn vượt RLS nên phải hạ vai trò mới kiểm được).
+const tenantSeen: { guc: string; foreign: number }[] = [];
+const tenantProbe = defineSubscriber({
+  id: 'test.tenant-probe',
+  module: 'test',
+  on: ['test.tenant.checked'],
+  async handle(c) {
+    await sql`SET LOCAL ROLE ketoan_app`.execute(c.tx);
+    const r = await sql<{ guc: string; foreign: number }>`
+      SELECT current_setting('bizcity.tenant_id', true) AS guc,
+             (SELECT count(*)::int FROM accounting_events WHERE tenant_id <> ${c.tenantId}) AS foreign`.execute(c.tx);
+    await sql`RESET ROLE`.execute(c.tx);
+    tenantSeen.push(r.rows[0]!);
+  },
+});
+
 const emit = (subject: string, extra: Record<string, unknown> = {}) =>
   db.transaction().execute((trx) => emitEvent(trx, { tenantId, type: 'test.thing.happened', subject, source: 'test', actor: { kind: 'system', id: 'test' }, data: extra }));
 const delivery = (eventId: string) => db.selectFrom('event_deliveries').selectAll().where('consumer', '=', 'test.probe').where('event_id', '=', eventId).executeTakeFirstOrThrow();
@@ -39,7 +56,7 @@ beforeAll(async () => {
   ctx = await setupTenant();
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
   auth = { tenantId, actor: 'system:events-test', actorName: 'Thử sự kiện', kind: 'user', role: null, permissions: new Set() };
-  registerSubscribers([probe]);
+  registerSubscribers([probe, tenantProbe]);
 });
 afterAll(async () => {
   await ctx.app.close();
@@ -104,6 +121,19 @@ describe('Sự kiện miền', () => {
     expect(r.duplicate).toBeGreaterThanOrEqual(1);
     expect(seen.filter((s) => s.id === id)).toHaveLength(1);
     expect(await delivery(id)).toMatchObject({ status: 'done' });
+  });
+
+  it('subscriber chạy gắn đơn vị của sự kiện: RLS chỉ cho thấy dữ liệu đơn vị đó (P0-2)', async () => {
+    const other = await setupTenant();
+    try {
+      expect((await call(other, 'POST', '/api/v1/documents', saleDoc({ docKey: 'pos:CN01:HD-EVT-B', docNo: 'HD-EVT-B' }))).body.data.status).toBe('posted');
+      await db.transaction().execute((trx) => emitEvent(trx, { tenantId, type: 'test.tenant.checked', subject: 'rls', source: 'test', actor: { kind: 'system', id: 'test' } }));
+      const r = await dispatchOnce({ consumers: ['test.tenant-probe'], tenantId, limit: 10 });
+      expect(r.done).toBe(1);
+      expect(tenantSeen).toEqual([{ guc: tenantId, foreign: 0 }]);
+    } finally {
+      await other.app.close();
+    }
   });
 
   it('lỗi thì thử lại; hết lượt → dead, hiện ở tự chẩn đoán EVENT_DEAD; sự kiện sau cùng subject chờ, subject khác vẫn giao', async () => {
