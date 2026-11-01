@@ -122,6 +122,24 @@ Máy chủ dựng từ cây span, theo luật cố định (không AI, không đ
 
 `links.grafana` chỉ có giá trị ở chế độ Vận hành.
 
+### 2.5 Đã làm (W2, 2026-11-01)
+<!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: ghi cách làm thật của API trung gian và điều đọc được từ Tempo / Loki thật. -->
+
+| Tệp | Việc |
+|---|---|
+| `apps/api/src/modules/system/devtools.routes.ts` | 4 action `status`, `trace`, `request`, `evidence`; chế độ Vận hành (Q019-2: đếm bảng `tenants` — không có RLS — phải = 1); nhật ký truy cập `evt=bizcity.devtools.query` ở móc `onResponse` của riêng plugin này |
+| `apps/api/src/modules/system/devtools.sources.ts` | gọi Tempo / Loki (`fetch`, chờ ≤ 5 giây; `ping` ≤ 2 giây), NOT_READY `{ backend, reason: off \| down \| bad-response }`, mẫu LogQL, `quote()` thoát ký tự, lọc trường log, giới hạn 30 / phút / người (bộ nhớ trong tiến trình) |
+| `apps/api/src/modules/system/devtools.trace.ts` | hàm thuần: đọc OTLP JSON của Tempo, `ownsTrace` (D019-5), lọc thuộc tính bằng chính `TRACE_ATTRIBUTES`, tóm tắt §2.3 |
+| `db/migrations/0049_vai_tro_nha_phat_trien.sql` | `users_role_check` thêm `developer` |
+
+Đọc từ bản thật (Tempo 2.6.1, Loki 3.3.2 đang chạy, 2026-11-01):
+- `GET /api/traces/{id}` trả `{ batches: [{ resource, scopeSpans: [{ spans }] }] }`; `traceId` / `spanId` **base64**; `intValue` là chuỗi. Bộ đọc đổi về hex, nhận cả khuôn `resourceSpans`.
+- `bizcity.tenant` chỉ có trên span HTTP (sau xác thực) và span action — span CSDL không có. Trace của yêu cầu chưa đăng nhập (401) không có đơn vị → 404 với mọi người (đúng D019-5).
+- **Tìm kiếm (`/api/search`) trả `traceID` bỏ số 0 đầu** (vd `904127dd…` 31 ký tự cho `0904127d…`) → W3 (`core.devtools.traces`) phải đệm trái đủ 32 ký tự.
+- Loki: dòng là JSON của pino (`level` số, `time` ms); `reqId`, `traceId` lọc được trước `| json`; nhãn `tenant` còn thì `| json` tách thành `tenant_extracted` — bộ lọc `tenant="…"` sau `| json` vẫn khớp nhãn. API lọc lại theo trường `tenant` của từng dòng (không tin riêng bộ lọc của Loki).
+
+Còn lại: `links.grafana` (chỉ chế độ Vận hành) dựng link Explore với trace id — kiểm trên Grafana 11.4 ở W5 trước khi bật.
+
 ## 3. Bảo mật và cô lập đơn vị
 
 ### 3.1 Mẫu truy vấn đóng

@@ -143,7 +143,8 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags: ['Hệ thống'], summary: 'Kiểm tra sống', security: [] },
     handler: async () => {
       await sql`select 1`.execute(db);
-      return ok({ status: 'up', time: new Date().toISOString(), bookMode: env.BOOK_MODE, envLabel: env.ENV_LABEL, ...BUILD_VERSION });
+      // bugReportUrl (PHASE-019 Q019-5): khay Mã tra cứu thêm nút mở trang báo lỗi của bản cài; null = chỉ chép nội dung.
+      return ok({ status: 'up', time: new Date().toISOString(), bookMode: env.BOOK_MODE, envLabel: env.ENV_LABEL, bugReportUrl: env.BUG_REPORT_URL || null, ...BUILD_VERSION });
     },
   });
 

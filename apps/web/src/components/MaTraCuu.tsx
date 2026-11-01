@@ -37,7 +37,9 @@ export function MaTraCuu() {
   const [i, setI] = useState(0);
   const [daChep, setDaChep] = useState<'' | 'chep' | 'bao-loi' | 'loi'>('');
   // Cùng khoá với AppLayout → dùng chung một lần gọi /system/health.
-  const pb = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<PhienBan & { bookMode?: string; envLabel?: string }>('/api/v1/system/health'), staleTime: Infinity }).data;
+  const pb = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<PhienBan & { bookMode?: string; envLabel?: string; bugReportUrl?: string | null }>('/api/v1/system/health'), staleTime: Infinity }).data;
+  // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: bản cài đặt BUG_REPORT_URL → Báo lỗi chép nội dung rồi mở trang báo lỗi (Q019-5)
+  const bugUrl = pb?.bugReportUrl && /^https?:\/\//i.test(pb.bugReportUrl) ? pb.bugReportUrl : null;
 
   // Lỗi mới về: quay lại lỗi mới nhất, hiện lại khay.
   const moiNhat = ds[0] ? `${ds[0].at}|${ds[0].requestId ?? ''}` : undefined;
@@ -51,7 +53,12 @@ export function MaTraCuu() {
   const e = ds[Math.min(i, ds.length - 1)];
   if (!e || an === moiNhat) return null;
   const loai = loaiLoi(e);
-  const bam = async (kieu: 'chep' | 'bao-loi') => setDaChep((await chep(kieu === 'chep' ? noiDungChep(e) : noiDungBaoLoi(e, pb))) ? kieu : 'loi');
+  const bam = async (kieu: 'chep' | 'bao-loi') => {
+    const ok = await chep(kieu === 'chep' ? noiDungChep(e) : noiDungBaoLoi(e, pb));
+    setDaChep(ok ? kieu : 'loi');
+    // Chép trước (cần trang đang được focus), mở tab sau; người báo dán nội dung vào form của trang báo lỗi.
+    if (kieu === 'bao-loi' && bugUrl) window.open(bugUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className={`ma-tra-cuu ${loai}`} role="status" aria-live="polite">
@@ -68,7 +75,7 @@ export function MaTraCuu() {
           <button type="button" className="btn btn-xs" onClick={() => void bam('chep')} title="Chép requestId, traceId, thời điểm, màn">
             <Copy size={12} /> {daChep === 'chep' ? 'Đã chép' : 'Chép'}
           </button>
-          <button type="button" className="btn btn-xs" onClick={() => void bam('bao-loi')} title="Chép nội dung báo lỗi theo mẫu (chỉ mã, không dữ liệu) — dán vào issue hoặc gửi cho dev">
+          <button type="button" className="btn btn-xs" onClick={() => void bam('bao-loi')} title={bugUrl ? 'Chép nội dung báo lỗi (chỉ mã, không dữ liệu) rồi mở trang báo lỗi — dán vào form' : 'Chép nội dung báo lỗi theo mẫu (chỉ mã, không dữ liệu) — dán vào issue hoặc gửi cho dev'}>
             <Bug size={12} /> {daChep === 'bao-loi' ? 'Đã chép nội dung' : 'Báo lỗi'}
           </button>
           {daChep === 'loi' && <span className="mtc-note">Trình duyệt chặn chép — rê chuột lên mã để xem đủ</span>}

@@ -50,6 +50,25 @@ const envSchema = z.object({
   /** 'true' = tắt hẳn SDK (API no-op): không traceId, không span. */
   OTEL_SDK_DISABLED: z.enum(['true', 'false', '']).default(''),
   OTEL_SERVICE_NAME: z.string().default('bizcity-core-api'),
+  // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: nguồn của Bàn điều tra (API trung gian chỉ đọc) + chế độ Vận hành + trang báo lỗi
+  /**
+   * Bàn điều tra cho nhà phát triển (PHASE-019, modules/system/devtools/). Địa chỉ NỘI BỘ mà API gọi tới — trình duyệt không bao giờ
+   * gọi thẳng (N1). Trống = nguồn đó "chưa bật": màn cần nó báo chưa bật, phần đọc CSDL vẫn chạy. Bộ giám sát đặt sẵn tên dịch vụ.
+   */
+  DEVTOOLS_TEMPO_URL: z.string().default(''),
+  DEVTOOLS_LOKI_URL: z.string().default(''),
+  /** Chỉ chế độ Vận hành (W5). */
+  DEVTOOLS_PROMETHEUS_URL: z.string().default(''),
+  DEVTOOLS_ALERTMANAGER_URL: z.string().default(''),
+  /** Địa chỉ Grafana người vận hành mở được (vd http://127.0.0.1:3000) — chỉ để dựng link sâu ở chế độ Vận hành; API không gọi Grafana. */
+  DEVTOOLS_GRAFANA_URL: z.string().default(''),
+  /**
+   * Chế độ Vận hành của Bàn điều tra (Q019-2): 'true' + người dùng là chủ đơn vị + bản cài có ĐÚNG MỘT đơn vị. Bản cài nhiều đơn vị
+   * thì bỏ qua (kể cả môi trường thử) — chờ vai trò vận hành liên đơn vị (Q018-6).
+   */
+  DEVTOOLS_OPS: z.enum(['true', 'false', '']).default(''),
+  /** Trang báo lỗi của bản cài (vd https://github.com/<tổ chức>/<repo>/issues/new?template=bao-loi.yml). Có thì khay Mã tra cứu thêm nút mở (Q019-5). */
+  BUG_REPORT_URL: z.string().default(''),
   /**
    * Đăng nhập bằng tài khoản hệ thống quản trị (WordPress multisite): khoá chung ký vé đăng nhập (giống hệt bên hệ thống
    * quản trị). Trống = tắt. WP_SSO_TENANT: mã đơn vị nhận người dùng (trống + chỉ có một đơn vị thì dùng đơn vị đó).
