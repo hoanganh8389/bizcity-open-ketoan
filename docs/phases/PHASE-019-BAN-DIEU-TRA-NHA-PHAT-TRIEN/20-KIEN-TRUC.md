@@ -130,7 +130,7 @@ Máy chủ dựng từ cây span, theo luật cố định (không AI, không đ
 | `apps/api/src/modules/system/devtools.routes.ts` | 4 action `status`, `trace`, `request`, `evidence`; chế độ Vận hành (Q019-2: đếm bảng `tenants` — không có RLS — phải = 1); nhật ký truy cập `evt=bizcity.devtools.query` ở móc `onResponse` của riêng plugin này |
 | `apps/api/src/modules/system/devtools.sources.ts` | gọi Tempo / Loki (`fetch`, chờ ≤ 5 giây; `ping` ≤ 2 giây), NOT_READY `{ backend, reason: off \| down \| bad-response }`, mẫu LogQL, `quote()` thoát ký tự, lọc trường log, giới hạn 30 / phút / người (bộ nhớ trong tiến trình) |
 | `apps/api/src/modules/system/devtools.trace.ts` | hàm thuần: đọc OTLP JSON của Tempo, `ownsTrace` (D019-5), lọc thuộc tính bằng chính `TRACE_ATTRIBUTES`, tóm tắt §2.3 |
-| `db/migrations/0049_vai_tro_nha_phat_trien.sql` | `users_role_check` thêm `developer` |
+| `db/migrations/0050_vai_tro_nha_phat_trien.sql` | `users_role_check` thêm `developer` |
 
 Đọc từ bản thật (Tempo 2.6.1, Loki 3.3.2 đang chạy, 2026-11-01):
 - `GET /api/traces/{id}` trả `{ batches: [{ resource, scopeSpans: [{ spans }] }] }`; `traceId` / `spanId` **base64**; `intValue` là chuỗi. Bộ đọc đổi về hex, nhận cả khuôn `resourceSpans`.
