@@ -8,6 +8,7 @@
 // [2026-10-30 09:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng công khai apps/api/src/kernel/public.ts, SC-KERNEL-6: ngoài Kernel chỉ import qua cổng.
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — báo cáo về phan-he/ke-toan/reports; GOODS (nhập xuất tồn + báo cáo hàng hoá tách theo miền) lắp ở đây cho kho, mua-hang — phân hệ không import báo cáo của ke-toan (SC-MOD-1)
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — CORE_ROUTES thêm docRefRoutes (documents.* — phiên bản, liên kết, đính kèm chung)
+// [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — GOODS thêm inventoryReportRoutes (báo cáo kho tách khỏi route Kernel)
 /**
  * LÕI máy chủ — luôn bật ở mọi tiến trình: đăng nhập, hệ thống, người dùng, danh mục dùng chung, cổng nhận chứng từ, kết nối.
  * Mã nguồn lõi ở src/core + src/modules (chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo…).
@@ -44,6 +45,7 @@ import { reportRoutes } from './ke-toan/reports/report.routes.js';
 import { departmentReportRoutes } from './ke-toan/reports/department-reports.js';
 import { grossProfitRoutes } from './ban-hang/gross-profit.js';
 import { stockTransferRoutes } from './kho/stock-transfers.js';
+import { inventoryReportRoutes } from '../modules/inventory/inventory-report.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
   authRoutes, systemRoutes, evidenceRoutes, eventRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes,
@@ -53,4 +55,4 @@ export const CORE_ROUTES: Routes[] = [
 ];
 
 export const LEDGER: Routes[] = [ledgerRoutes, reportRoutes, debtRoutes];
-export const GOODS: Routes[] = [inventoryRoutes, grossProfitRoutes, stockTransferRoutes, departmentReportRoutes];
+export const GOODS: Routes[] = [inventoryRoutes, inventoryReportRoutes, grossProfitRoutes, stockTransferRoutes, departmentReportRoutes];

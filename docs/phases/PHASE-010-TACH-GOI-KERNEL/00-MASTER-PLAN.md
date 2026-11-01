@@ -8,6 +8,7 @@
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — D010-4 / S010-2: documents.numbering / versions / links / attachments có -->
 <!-- [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — D010-6 -->
 <!-- [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — D010-4 đủ: documents.signatures -->
+<!-- [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — D010-7: kế hoạch ba chặng tách gói Kernel; chặng 1 gỡ Kernel → adapter / báo cáo kho -->
 
 ## 1. Hiện trạng đo được (2026-10-30)
 
@@ -28,6 +29,7 @@ Dời Kernel sang `packages/kernel` ngay thì gói đó phải import ngược `
 | D010-4 | 2.7 | `packages/documents`: số chứng từ, phiên bản, liên kết, đính kèm chung, chữ ký | ✅ 2026-11-01 (trừ chữ ký): `core/documents.ts` (P, đích `packages/documents`) + `ctx.documents.*`; bảng `document_versions` (chỉ thêm, băm nội dung), `document_links`, `document_attachments` (tệp trên `DATA_DIR/attachments`, sha256, gỡ = `archived_at`) — migration 0045, RLS. Đánh số: bộ đếm `document_sequences` vẫn của Kernel (`modules/documents/numbering.ts`, `documentNumbers` qua `kernel/public.ts`), Platform nhận qua `registerDocumentNumberer` ở `app.ts`; phiếu tay, `quy`, `mua-hang` chuyển sang, giữ khoá dãy cũ (không nhảy số). Ghi qua `ctx.documents` chỉ trên docRef của chính module. ✅ chuyển `purchase_attachments` (0046, D010-6), ✅ `document_signatures.doc_ref` (0047: `ctx.documents.sign / signatures / unsign`, chỉ người dùng đăng nhập ký, chữ ký gắn phiên bản) |
 | D010-5 | 2.8 | Tách `packages/contracts/src/mua-hang` về phân hệ | ☐ |
 | D010-6 | 2.7 / A-19 | Đính kèm Mua hàng → đính kèm chung **không chép tệp**: 0046 chép siêu dữ liệu, dòng mới trỏ tệp cũ (`storage_root = dinh-kem`), `sha256` NULL → máy chủ băm ở lần tải đầu; `legacy_ref` đối chiếu; `purchase_attachments` khoá thêm / sửa (không xoá dòng nào). API `/api/v1/purchase/attachments` giữ khuôn, giao diện không đổi; xoá → gỡ (lưu trữ). Lý do: chép tệp cần chạy tay trên từng bản cài và có khoảng hở dữ liệu | ✅ 2026-11-01 |
+| D010-7 | 2.3 | Chủ "tách gói kernel" (2026-11-01). Đo: Kernel 60 tệp, ~140 import ra Platform (`db/client` 43, `core/errors` 25, `core/auth` 22…), 2 import danh mục (`partner.repository`, `default-warehouse`), 2 nợ Kernel → adapter / module; 22 tệp bộ kiểm / script giả định `apps/api/src`; 49 nợ baseline theo đường dẫn. Chia ba chặng, chặng nào cũng xanh mới commit: **(1)** gỡ Kernel → `connections` (adapter đăng ký `registerIncomingPreparer` ở `app.ts`) và Kernel → báo cáo kho (route tách sang `inventory/inventory-report.routes.ts`, lắp ở `GOODS`) — ✅; **(2)** `packages/platform` (`core`, `db`, `config`, `system/diagnostics`, `signatures`, hai hàm danh mục) + tệp chuyển tiếp ở đường dẫn cũ để nhánh người đóng góp không vỡ; **(3)** `packages/kernel` (`public.ts` → `@bizcity/kernel`), build theo project references, Dockerfile / CI / bộ kiểm cập nhật | 🟡 chặng 1 xong |
 
 ## 3. Bề mặt công khai là hợp đồng
 

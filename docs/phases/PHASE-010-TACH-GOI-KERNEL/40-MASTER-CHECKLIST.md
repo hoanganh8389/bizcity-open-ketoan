@@ -26,3 +26,4 @@
 | 2026-11-01 00:16 | Claude Code | Chủ "ok tiếp" ⇒ 2.7 (S010-2, D010-4). 2.7 ☑ trên bảng điểm (ba năng lực lộ trình). |
 | 2026-11-01 00:47 | Claude Code | Chủ "tiếp nhé" ⇒ D010-6: đính kèm Mua hàng chạy trên đính kèm chung (0046). Sửa kèm lỗi sẵn: bảng cũ không nhận owner_type invoice nên đính tệp vào hoá đơn NCC lỗi. |
 | 2026-11-01 15:13 | Claude Code | Chủ chọn "làm signatures trước" (2.3 chờ báo người đóng góp, vì tách Platform đổi import 34 tệp phân hệ) ⇒ documents.signatures (0047). S010-2 đủ. |
+| 2026-11-01 15:40 | Claude Code | Chủ "tách gói kernel nhé" ⇒ D010-7 chặng 1: Kernel không còn import adapter kết nối / báo cáo kho (hết 2 nợ SC-LAYER-2, baseline 190 → 188). |

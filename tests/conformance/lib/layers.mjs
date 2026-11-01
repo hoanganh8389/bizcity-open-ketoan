@@ -10,6 +10,7 @@
 // [2026-10-31 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — core/workflow.ts → P documents (máy trạng thái khai báo documents.workflow).
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — bỏ modules/reports/: báo cáo đã về phan-he/ke-toan/reports (lớp D modules/ke-toan theo quy tắc phan-he/); documentChecks về modules/periods (K)
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — core/documents.ts, modules/doc-refs/ → P documents (documents.*, PHASES 2.7)
+// [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — modules/inventory/inventory-report.routes.ts → D modules/kho (route báo cáo kho tách khỏi Kernel)
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -63,6 +64,7 @@ export const LAYER_MAP = [
   ['modules/inventory/', 'K', 'kernel/subledgers/inventory'],
   // Báo cáo nhập xuất tồn chỉ đọc inventory_movements: module, không phải sổ phụ.
   ['modules/inventory/inventory-report.service.ts', 'D', 'modules/kho'],
+  ['modules/inventory/inventory-report.routes.ts', 'D', 'modules/kho'],
   ['modules/tax-invoices/', 'K', 'kernel/tax'],
   ['modules/tax-info/', 'K', 'kernel/tax'],
   ['modules/tax-codes/', 'K', 'kernel/tax'],

@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-10-31",
+  "updatedAt": "2026-11-01",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -309,7 +309,7 @@
         {
           "fp": "SC-DATA-3|db/migrations/0005_goc_chung_tu.sql|columns:document_signatures",
           "file": "db/migrations/0005_goc_chung_tu.sql",
-          "message": "bảng nền document_signatures: 8 cột thiếu COMMENT ON COLUMN"
+          "message": "bảng nền document_signatures: 5 cột thiếu COMMENT ON COLUMN"
         },
         {
           "fp": "SC-DATA-3|db/migrations/0005_goc_chung_tu.sql|columns:payment_requests",
@@ -906,16 +906,6 @@
           "fp": "SC-LAYER-2|apps/api/src/modules/dimensions/dimension.routes.ts|modules/dimensions[P]->kernel/public[K]",
           "file": "apps/api/src/modules/dimensions/dimension.routes.ts",
           "message": "P modules/dimensions → data import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/documents/document.service.ts|modules/documents[K]->modules/connections[A]",
-          "file": "apps/api/src/modules/documents/document.service.ts",
-          "message": "K modules/documents → kernel/intake import A modules/connections → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/inventory/inventory.routes.ts|modules/inventory[K]->modules/inventory[D]",
-          "file": "apps/api/src/modules/inventory/inventory.routes.ts",
-          "message": "K modules/inventory → kernel/subledgers/inventory import D modules/inventory → modules/kho (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
         },
         {
           "fp": "SC-LAYER-2|apps/api/src/modules/partners/partner.routes.ts|modules/partners[M]->modules/partners[A]",

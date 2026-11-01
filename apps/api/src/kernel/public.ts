@@ -13,6 +13,8 @@
 
 // ── Nạp chứng từ, ghi sổ (một cửa — bizcity_ledger_intake@1, R-LEDGER-4) ─────────────────────────────────────────────────
 export { postDocumentIn, documentService } from '../modules/documents/document.service.js';
+// [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — adapter kết nối đăng ký bộ chuẩn hoá chứng từ đẩy vào (Kernel không import adapter)
+export { registerIncomingPreparer, type IncomingPreparer } from '../modules/documents/document.service.js';
 export { eventStore } from '../modules/documents/event-store.js';
 export { voucherService } from '../modules/vouchers/voucher.service.js';
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.numbering (PHASES 2.7): bộ đếm số chứng từ một chỗ; Platform nhận qua registerDocumentNumberer ở app.ts

@@ -51,7 +51,17 @@ import { documentRepository, type DocumentListFilter } from './document.reposito
 import { applyTaxFlags, applyTaxPatch, loadTaxPatch } from '../tax-info/tax-patch.js';
 import { applyReceiptConfirmation, confirmationMatches, isoTime, loadReceiptConfirmation } from './receipt-confirmation.js';
 import { sql } from 'kysely';
-import { connectionService } from '../connections/connection.service.js';
+
+// [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cửa nạp không import adapter kết nối: adapter đăng ký bộ chuẩn hoá chứng từ đẩy vào (registerIncomingPreparer ở app.ts)
+/**
+ * Bộ chuẩn hoá chứng từ đẩy vào bằng khoá API (đổi hình thức thanh toán theo kết nối, bỏ phiếu không hợp sổ thuế…).
+ * Kernel không biết adapter (LAYOUT-4): adapter kết nối đăng ký lúc lắp ráp (app.ts); chưa đăng ký thì nhận nguyên chứng từ.
+ */
+export type IncomingPreparer = (tenantId: string, raw: unknown) => Promise<{ doc: unknown; skip?: string }>;
+let prepareIncoming: IncomingPreparer = async (_tenantId, raw) => ({ doc: raw });
+export function registerIncomingPreparer(fn: IncomingPreparer): void {
+  prepareIncoming = fn;
+}
 
 export const RETAIL_PARTNER = { code: 'KHACH-LE', name: 'Khách lẻ' };
 export const RETAIL_SUPPLIER = { code: 'NCC-LE', name: 'Nhà cung cấp lẻ' };
@@ -464,7 +474,7 @@ export const documentService = {
   /** Nhận một chứng từ (dữ liệu thô từ API). */
   async ingest(auth: AuthContext, input: unknown): Promise<IngestResult> {
     // Đẩy vào bằng khoá API: chuẩn hoá như chứng từ kéo qua kết nối cùng mã nguồn (đổi hình thức thanh toán…).
-    const prep = auth.kind === 'apikey' ? await connectionService.prepareIncoming(auth.tenantId, input) : { doc: input };
+    const prep = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, input) : { doc: input };
     const raw = prep.doc;
     if (prep.skip) return { docKey: String((raw as { docKey?: unknown })?.docKey ?? '?'), version: Number((raw as { version?: unknown })?.version ?? 1), status: 'unchanged' };
     const parsed = ingestDocumentSchema.safeParse(raw);
