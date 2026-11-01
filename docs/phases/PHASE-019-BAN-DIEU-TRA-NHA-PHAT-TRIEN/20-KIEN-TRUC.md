@@ -1,7 +1,7 @@
 # PHASE-019 · 20 — Kiến trúc Bàn điều tra cho nhà phát triển
 <!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — Bàn điều tra cho nhà phát triển: sổ tay điều tra lỗi theo tình huống + thiết kế UI/UX dev trên Prometheus, Loki, Tempo, Grafana, Alertmanager -->
 
-> © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. Thiết kế chờ chủ duyệt D019-* ([00-MASTER-PLAN §4](00-MASTER-PLAN.md)).
+> © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. Chủ đã duyệt D019-1..3 (2026-11-01); D019-4..7 theo đề xuất ([00-MASTER-PLAN §4](00-MASTER-PLAN.md)).
 
 ## 1. Kiến trúc
 
@@ -56,7 +56,7 @@ flowchart LR
 
 | | Chế độ **Đơn vị** (mặc định) | Chế độ **Vận hành** |
 |---|---|---|
-| Ai | người có `devtools:read` (Q019-1) | `owner` + `DEVTOOLS_OPS=true` + bản cài một đơn vị hoặc không phải production (Q019-2); sau này: vai trò vận hành (Q018-6) |
+| Ai | người có `devtools:read`: `owner` hoặc vai trò `developer` (Q019-1, chủ chọn b) | `owner` + `DEVTOOLS_OPS=true` + bản cài **đúng một** đơn vị (Q019-2, chủ chốt 2026-11-01 — không có ngoại lệ cho môi trường thử); sau này: vai trò vận hành (Q018-6) <!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — chủ chốt Q019-1 (b), Q019-2 chỉ bản cài một đơn vị. --> |
 | Thấy | trace / log / ghi sổ / sự kiện / tự chẩn đoán **của đơn vị trong phiên** | thêm: sức khoẻ toàn hệ (Prometheus), cảnh báo (Alertmanager), `err.stack`, link Grafana |
 | Không thấy | đơn vị khác; số đo toàn hệ; ngăn xếp lỗi | — (vẫn không có nút ghi) |
 | Dải màu đầu trang | trung tính, ghi "Đơn vị: <tên>" | dải vàng "Chế độ Vận hành — đang xem toàn hệ thống" |
@@ -91,7 +91,7 @@ Màn **Ghi sổ**, **Sự kiện**, **Toàn vẹn** dùng lại API sẵn có (`
 | `DEVTOOLS_PROMETHEUS_URL` | rỗng | `http://prometheus:9090` — chỉ dùng ở chế độ Vận hành |
 | `DEVTOOLS_ALERTMANAGER_URL` | rỗng | `http://alertmanager:9093` — chỉ Vận hành |
 | `DEVTOOLS_GRAFANA_URL` | rỗng | địa chỉ người vận hành mở được (vd `http://127.0.0.1:3000`, hoặc proxy có TLS); **chỉ** dùng để dựng link, API không gọi Grafana |
-| `DEVTOOLS_OPS` | `false` | Q019-2 |
+| `DEVTOOLS_OPS` | `false` | Q019-2: chỉ có tác dụng khi bản cài có đúng một đơn vị (máy chủ đếm `tenants` lúc gọi `ops/*`); nhiều đơn vị → bỏ qua, ghi cảnh báo lúc khởi động |
 
 Bộ giám sát (`docker-compose.monitoring.yml`) đặt bốn URL nội bộ cho dịch vụ `api`, như đã làm với `OTEL_EXPORTER_OTLP_ENDPOINT`.
 

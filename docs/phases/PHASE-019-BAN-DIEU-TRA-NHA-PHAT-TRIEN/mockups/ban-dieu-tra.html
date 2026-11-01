@@ -413,7 +413,7 @@ section[hidden]{display:none}
     var ops=btn.dataset.mode==='ops';
     document.querySelectorAll('[data-mode]').forEach(function(b){b.setAttribute('aria-pressed',b===btn?'true':'false')});
     banner.className='banner'+(ops?' ops':'');
-    banner.innerHTML=ops?'<b>Chế độ Vận hành</b> — đang xem toàn hệ thống · có ngăn xếp lỗi và link Grafana · chỉ bản cài tự quản (Q019-2)':bannerUnit;
+    banner.innerHTML=ops?'<b>Chế độ Vận hành</b> — đang xem toàn hệ thống · có ngăn xếp lỗi và link Grafana · chỉ bản cài một đơn vị (Q019-2)':bannerUnit;
     document.getElementById('ops-off').hidden=ops;document.getElementById('ops-on').hidden=!ops;
     document.getElementById('nav-ops').classList.toggle('locked',!ops);document.getElementById('gf').hidden=!ops;
   })});

@@ -36,9 +36,9 @@ Khi cộng đồng bắt đầu vibe-code VAT, AR/AP, CRM, kho, agent AI trên c
 
 | ID | Quyết định | Trạng thái |
 |---|---|---|
-| D019-1 | **Không nhúng Grafana.** Bàn điều tra là phân hệ web của Core, đọc qua API trung gian; Grafana chỉ xuất hiện dưới dạng **link sâu** ở chế độ Vận hành | ☐ chờ chủ duyệt |
-| D019-2 | **Hai chế độ:** Đơn vị (mặc định, theo `tenant` của phiên) và Vận hành (sức khoẻ toàn hệ, cảnh báo, Grafana). Chế độ Vận hành chỉ bật khi Q019-2 trả lời | ☐ |
-| D019-3 | **Quyền mới `devtools:read`** (Platform, `core/auth.ts`): mặc định chỉ `owner`; không cấp cho khoá API; không cấp cho AI | ☐ — xem Q019-1 |
+| D019-1 | **Không nhúng Grafana.** Bàn điều tra là phân hệ web của Core, đọc qua API trung gian; Grafana chỉ xuất hiện dưới dạng **link sâu** ở chế độ Vận hành | ✅ chủ duyệt 2026-11-01 <!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — chủ duyệt D019-1, Q019-1 (b), Q019-2 (chỉ bản cài một đơn vị). --> |
+| D019-2 | **Hai chế độ:** Đơn vị (mặc định, theo `tenant` của phiên) và Vận hành (sức khoẻ toàn hệ, cảnh báo, Grafana). Chế độ Vận hành bật theo Q019-2 | ✅ 2026-11-01 (theo Q019-2) |
+| D019-3 | **Quyền mới `devtools:read`** (Platform, `core/auth.ts`): cấp cho `owner` và vai trò mới **`developer`** (Q019-1); không cấp cho khoá API; không cấp cho AI | ✅ 2026-11-01 (theo Q019-1) |
 | D019-4 | **Mẫu truy vấn đóng:** mỗi màn một mẫu TraceQL / LogQL / PromQL có tham số; máy chủ gắn `bizcity.tenant` / `tenant`; khung thời gian ≤ 24 giờ (log), ≤ 7 ngày (trace); ≤ 200 dòng / 50 trace; giới hạn tần suất theo người | ☐ |
 | D019-5 | **Trace thuộc đơn vị khi:** có ít nhất một span `bizcity.tenant` = đơn vị của phiên **và** không span nào mang đơn vị khác. Không đạt → trả **404 `NOT_FOUND`** (không 403 — không xác nhận trace tồn tại) | ☐ |
 | D019-6 | **Mã tra cứu ở mọi thông báo lỗi** (`requestId`, `traceId`), có nút chép; nút "Báo lỗi" dựng nội dung theo mẫu `bao-loi.yml` **chỉ gồm mã**, không dữ liệu | ☐ |
@@ -46,10 +46,10 @@ Khi cộng đồng bắt đầu vibe-code VAT, AR/AP, CRM, kho, agent AI trên c
 
 ## 5. Câu hỏi cần chủ quyết (Q019-*)
 
-| ID | Câu hỏi | Đề xuất |
+| ID | Câu hỏi | Đề xuất / Trả lời |
 |---|---|---|
-| Q019-1 | Ai được `devtools:read`? (a) chỉ `owner`; (b) thêm vai trò **`developer`** = `viewer` + `devtools:read` (đổi `Role` trong `@ketoan/contracts`, màn Người dùng) | **(b)** — chủ đơn vị không phải lúc nào cũng là người sửa lỗi; dev không cần quyền ghi chứng từ |
-| Q019-2 | Chế độ Vận hành bật thế nào khi chưa có vai trò vận hành liên đơn vị (Q018-6)? | Biến môi trường `DEVTOOLS_OPS=true` **và** người dùng là `owner` **và** bản cài chỉ có một đơn vị (tự quản) hoặc `envLabel` ≠ production. Bản nhiều đơn vị: chờ ADR của Q018-6 |
+| Q019-1 | Ai được `devtools:read`? (a) chỉ `owner`; (b) thêm vai trò **`developer`** = `viewer` + `devtools:read` (đổi `Role` trong `@ketoan/contracts`, màn Người dùng) | ✅ **chủ chọn (b)** 2026-11-01 — vai trò `developer` chỉ xem (như `viewer`) + Bàn điều tra; không quyền ghi chứng từ |
+| Q019-2 | Chế độ Vận hành bật thế nào khi chưa có vai trò vận hành liên đơn vị (Q018-6)? | ✅ **chủ chốt** 2026-11-01 — **chỉ bản cài một đơn vị**, qua `DEVTOOLS_OPS=true` (+ người dùng là `owner`). Bỏ nhánh "`envLabel` ≠ production": bản cài nhiều đơn vị **không** bật được, kể cả môi trường thử. Bản nhiều đơn vị: chờ ADR của Q018-6 |
 | Q019-3 | Chế độ Đơn vị có được xem `err.stack` không? | Không (D019-7). Dev đơn vị cần thì gửi mã cho vận hành |
 | Q019-4 | Đưa phase vào lộ trình (`PHASES.md`, `roadmap.json`) với mã việc mới? | Có, sau khi chủ duyệt D019-*, cùng lượt với Q018-1 |
 | Q019-5 | Nút "Báo lỗi" mở thẳng GitHub issue (repo công khai) hay chỉ chép nội dung? | Chỉ **chép** nội dung (mặc định); bản cài cấu hình `BUG_REPORT_URL` thì thêm nút mở |
@@ -63,7 +63,7 @@ Khi cộng đồng bắt đầu vibe-code VAT, AR/AP, CRM, kho, agent AI trên c
 | **W2** | API trung gian: `devtools/status`, `traces/:traceId`, `requests/:requestId`, `evidence?traceId=`; kiểm đơn vị (D019-5); quyền `devtools:read`; giới hạn | P1 | **T019-2** chéo đơn vị trả 404; T019-3 Tempo / Loki tắt → "chưa bật", không 500; test không lộ trường |
 | **W3** | Màn **Tra mã** (cây span, tóm tắt "chuyện gì đã xảy ra", log cùng trace, bằng chứng) + **Nhật ký** + **Tổng quan** | P1 | T019-4 dán mã của TH-01 ra đúng chỗ hỏng trong ≤ 3 lần bấm |
 | **W4** | **Lỗi theo module**, **Ghi sổ**, **Sự kiện**, **Toàn vẹn** (dùng lại API sẵn có) + **Kịch bản** trong app (TH-01…TH-14 thành thẻ có link vào màn) | P2 | T019-5 mỗi kịch bản mở đúng màn với bộ lọc điền sẵn |
-| **W5** | Chế độ **Vận hành**: sức khoẻ toàn hệ (mẫu PromQL cố định), cảnh báo đang bắn (Alertmanager), link sâu 9 dashboard + Explore; check **SC-DEV-1** | P3 | ⛔ Q019-2; SC-DEV-1 tự kiểm bắt vi phạm mẫu |
+| **W5** | Chế độ **Vận hành**: sức khoẻ toàn hệ (mẫu PromQL cố định), cảnh báo đang bắn (Alertmanager), link sâu 9 dashboard + Explore; check **SC-DEV-1** | P3 | bản cài hai đơn vị + `DEVTOOLS_OPS=true` → `ops/*` vẫn 403 (Q019-2); SC-DEV-1 tự kiểm bắt vi phạm mẫu |
 
 Thứ tự: W1 không phụ thuộc gì, làm trước (lợi ngay cho mọi người dùng). W2 trước W3–W5.
 

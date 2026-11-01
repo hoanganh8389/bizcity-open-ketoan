@@ -1,7 +1,8 @@
 # PHASE-019 — Bàn điều tra cho nhà phát triển (Dev Console)
 <!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — Bàn điều tra cho nhà phát triển: sổ tay điều tra lỗi theo tình huống + thiết kế UI/UX dev trên Prometheus, Loki, Tempo, Grafana, Alertmanager -->
 
-> **Trạng thái:** 🟡 W0 thiết kế + sổ tay + bản mẫu 2026-11-01 · W1–W5 chờ chủ duyệt D019-* / Q019-*
+> **Trạng thái:** 🟡 W0 thiết kế + sổ tay + bản mẫu 2026-11-01 · chủ duyệt D019-1..3, Q019-1 (vai trò `developer`), Q019-2 (Vận hành chỉ bản cài một đơn vị) 2026-11-01 · W1 sẵn sàng làm
+<!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — ghi quyết định của chủ: D019-1..3, Q019-1 (b), Q019-2. -->
 > **Giai đoạn:** mở rộng của PHASE-018 (giám sát vận hành) · **Code:** chưa · **Mức Kernel:** K0 (không đụng Kernel, không đụng đường ghi sổ)
 > **Mục tiêu:** dev của phân hệ / add-in (người đóng góp, dev của đơn vị) **tự tìm ra lỗi của mình ngay trong app**, từ một mã lỗi đến đúng module, đúng bước, đúng câu CSDL — mà **không** vào Grafana, **không** thấy dữ liệu của đơn vị khác, **không** có đường nào sửa sổ.
 > **Việc lộ trình:** —
@@ -27,7 +28,7 @@
 
 - App có phân hệ **Nhà phát triển** (Bàn điều tra). Màn nào cũng đọc qua **API trung gian của Core**: API gắn bộ lọc đơn vị phía máy chủ, chỉ chạy **mẫu truy vấn có sẵn** (không nhận PromQL / LogQL / TraceQL tự do), cắt khung thời gian và cỡ kết quả, lọc trường lần nữa trước khi trả.
 - **Chế độ Đơn vị** (mặc định): dev chỉ thấy trace, log, ghi sổ, sự kiện, tự chẩn đoán **của đơn vị mình**.
-- **Chế độ Vận hành** (chỉ bản cài tự quản hoặc vai trò vận hành — Q019-2): thêm sức khoẻ toàn hệ thống từ Prometheus, cảnh báo đang bắn từ Alertmanager và **link sâu** sang 9 dashboard / Explore của Grafana.
+- **Chế độ Vận hành** (chỉ bản cài một đơn vị, `DEVTOOLS_OPS=true` — Q019-2, chủ chốt): thêm sức khoẻ toàn hệ thống từ Prometheus, cảnh báo đang bắn từ Alertmanager và **link sâu** sang 9 dashboard / Explore của Grafana.
 - Thông báo lỗi ở mọi màn hiện **Mã tra cứu** (`requestId` + `traceId`) có nút chép và nút "Mở trong Bàn điều tra" — việc đầu tiên (W1), vì hôm nay app **bỏ mất** hai mã này.
 
 ## Hiện trạng đọc mã
