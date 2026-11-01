@@ -8,6 +8,7 @@
  * Lỗi nghiệp vụ có mã ổn định. Service ném các lỗi này; bộ xử lý lỗi chung
  * (core/http.ts) đổi thành phản hồi { ok: false, error: {...} } với mã HTTP phù hợp.
  */
+import { ZodError } from 'zod';
 import { ERROR_CATALOG, ERROR_CODES, type ErrorCode } from '@ketoan/contracts';
 
 export class AppError extends Error {
@@ -40,3 +41,28 @@ export const Errors = {
   moduleDisabled: (moduleKey: string) => make(ERROR_CODES.MODULE_DISABLED, `Phân hệ ${moduleKey} chưa bật cho đơn vị`, { module: moduleKey }),
   rateLimited: (message?: string) => make(ERROR_CODES.RATE_LIMITED, message),
 };
+
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+/** Nhóm category của bizcity_errors@1 là từ chối nghiệp vụ đúng luật (D018-5); còn lại / mã lạ là lỗi kỹ thuật. */
+const BUSINESS_CATEGORIES = new Set(['ledger', 'input', 'state', 'auth']);
+
+/** Từ chối nghiệp vụ (kỳ khoá, không cân, thiếu cấu hình, không quyền…) hay lỗi kỹ thuật — một quy tắc cho số đo ghi sổ và trace. */
+export function errorKind(code: string | null | undefined): 'rejected' | 'error' {
+  const entry = code ? (ERROR_CATALOG as Record<string, { category: string } | undefined>)[code] : undefined;
+  return entry && BUSINESS_CATEGORIES.has(entry.category) ? 'rejected' : 'error';
+}
+
+/**
+ * Mã lỗi (bizcity_errors@1) của một lỗi bất kỳ, khớp cách core/http.ts trả cho người gọi: AppError giữ mã; lỗi kiểm dữ liệu →
+ * VALIDATION_ERROR; lỗi trigger / ràng buộc của CSDL theo SQLSTATE; còn lại INTERNAL_ERROR. Dùng cho trace (core/tracing.ts).
+ */
+export function errorCodeOf(err: unknown): ErrorCode {
+  if (err instanceof AppError) return err.code;
+  if (err instanceof ZodError || (err as { validation?: unknown } | null)?.validation) return ERROR_CODES.VALIDATION;
+  const pg = (err as { code?: unknown } | null)?.code;
+  if (pg === '23514' || pg === '42501') return ERROR_CODES.POSTING_FAILED;
+  if (pg === 'P0001') return /không cân/i.test(String((err as Error).message)) ? ERROR_CODES.UNBALANCED : ERROR_CODES.CONFLICT;
+  if (pg === '23505') return ERROR_CODES.CONFLICT;
+  if (pg === '23503') return /update or delete/i.test(String((err as Error).message)) ? ERROR_CODES.CONFLICT : ERROR_CODES.VALIDATION;
+  return ERROR_CODES.INTERNAL;
+}

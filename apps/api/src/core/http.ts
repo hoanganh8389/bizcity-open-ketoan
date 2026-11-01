@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
  * Tiện ích HTTP dùng chung: khuôn phản hồi, phân trang, bộ xử lý lỗi.
  */
@@ -9,6 +10,7 @@ import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError, z } from 'zod';
 import { ERROR_CATALOG, ERROR_CODES, type ApiSuccess, type ErrorCode, type ErrorReason, type PageMeta } from '@ketoan/contracts';
 import { AppError } from './errors.js';
+import { currentTraceId } from './tracing.js';
 
 /** Phản hồi thành công. */
 export function ok<T>(data: T, meta?: ApiSuccess<T>['meta']): ApiSuccess<T> {
@@ -56,7 +58,9 @@ export function registerErrorHandler(app: FastifyInstance): void {
       reply.errCode = code;
       if (status >= 500) req.log.error({ err, errCode: code }, 'lỗi hệ thống');
       else req.log.info({ errCode: code, status }, message);
-      return reply.status(status).send({ ok: false, error: { code, message, requestId: String(req.id), ...(details === undefined ? {} : { details }) } });
+      // traceId (ADR-0010): tra trace trong Tempo, log trong Loki; chỉ có khi truy vết bật.
+      const traceId = currentTraceId();
+      return reply.status(status).send({ ok: false, error: { code, message, requestId: String(req.id), ...(traceId ? { traceId } : {}), ...(details === undefined ? {} : { details }) } });
     };
     const withReason = (reason: ErrorReason, extra?: Record<string, unknown>) => ({ reason, ...extra });
 

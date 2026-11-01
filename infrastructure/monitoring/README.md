@@ -1,6 +1,7 @@
-# Bộ giám sát (tuỳ chọn) — Prometheus · Alertmanager · Grafana · Loki
+# Bộ giám sát (tuỳ chọn) — Prometheus · Alertmanager · Grafana · Loki · Tempo
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — 9 bảng điều khiển (07 Đường sự kiện, 08 Đa đơn vị, 09 Toàn vẹn sổ), 14 luật + alerts.test.yml, mật khẩu Grafana bắt buộc, runbook. -->
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 
 Bộ giám sát **không bắt buộc**: hệ thống kế toán chạy bình thường khi không bật. Bật lên khi cần theo dõi
 sức khoẻ API, CSDL, hàng đợi ghi sổ và nhật ký trên một máy chủ thật.
@@ -20,6 +21,8 @@ outbox trong PostgreSQL, nên giám sát tập trung vào **sổ cái và hàng 
 | `postgres-exporter` | `prometheuscommunity/postgres-exporter:v0.16.0` | Chỉ số PostgreSQL (`pg_up`, kết nối, dung lượng…) | — |
 | `node-exporter` | `prom/node-exporter:v1.8.2` | CPU, RAM, ổ đĩa của máy chủ | — |
 | `cadvisor` | `gcr.io/cadvisor/cadvisor:v0.49.1` | RAM / CPU từng container | — |
+| `otel-collector` | `otel/opentelemetry-collector-contrib:0.115.1` | Nhận trace OTLP từ API, lấy mẫu đuôi, xoá thuộc tính nhạy cảm còn sót, gửi Tempo (§13) | chỉ trong mạng Docker |
+| `tempo` (+ `tempo-init` chỉnh quyền ổ một lần) | `grafana/tempo:2.6.1` | Lưu trace 7 ngày, Grafana tra bằng TraceQL | chỉ trong mạng Docker |
 
 Cấu trúc thư mục:
 
@@ -32,8 +35,10 @@ infrastructure/monitoring/
 ├── alertmanager/alertmanager.yml      định tuyến cảnh báo, ví dụ kênh nhận
 ├── loki/loki-config.yml               Loki một tiến trình, lưu đĩa, giữ 30 ngày
 ├── promtail/promtail-config.yml       đọc nhật ký Docker, tách JSON của pino
+├── otel-collector/config.yml          nhận OTLP, lấy mẫu đuôi, xoá thuộc tính nhạy cảm, gửi Tempo
+├── tempo/tempo.yml                    Tempo một tiến trình, lưu đĩa, giữ 7 ngày
 └── grafana/
-    ├── provisioning/datasources/      Prometheus (uid prometheus), Loki (uid loki), Alertmanager
+    ├── provisioning/datasources/      Prometheus (uid prometheus), Loki (uid loki), Tempo (uid tempo), Alertmanager
     ├── provisioning/dashboards/       nạp bảng từ grafana/dashboards/
     └── dashboards/01…09-*.json        9 bảng điều khiển
 ```
@@ -196,9 +201,10 @@ GRANT CONNECT ON DATABASE ketoan TO ketoan_monitor;
 | Loki | ~200–500 MB (giới hạn 1 GB) | tuỳ lượng nhật ký, thường 1–5 GB / 30 ngày |
 | Grafana | ~150 MB (giới hạn 512 MB) | < 100 MB |
 | Promtail, exporter, cAdvisor, Alertmanager | ~250 MB tổng | không đáng kể |
-| **Tổng** | **~1–1,5 GB RAM, 0,5 lõi CPU** | **~5–10 GB** |
+| Tempo + OTel Collector | ~200–500 MB (giới hạn 1 GB + 384 MB) | ~0,5–3 GB / 7 ngày (lấy mẫu 10% + mọi trace lỗi / chậm) |
+| **Tổng** | **~1,5–2 GB RAM, 0,5–1 lõi CPU** | **~6–13 GB** |
 
-Máy chủ dưới 2 GB RAM: cân nhắc bỏ `loki` + `promtail` (vẫn còn chỉ số và cảnh báo), hoặc đặt giám sát ở máy khác.
+Máy chủ dưới 2 GB RAM: cân nhắc bỏ `loki` + `promtail` và / hoặc `tempo` + `otel-collector` (vẫn còn chỉ số và cảnh báo; API vẫn ghi `traceId` vào log), hoặc đặt giám sát ở máy khác.
 
 ## 8. Luật cảnh báo — đối chiếu với bộ tham chiếu
 
@@ -262,7 +268,7 @@ Với API (pino JSON), Promtail tách JSON và chỉ đưa lên **nhãn** các t
 `reqId`, `traceId`, `docKey`, `actor`, `route` **không** làm nhãn: mỗi giá trị mới tạo một luồng (stream)
 mới trong Loki → chỉ mục phình, truy vấn chậm, chạm giới hạn. Chúng vẫn nằm nguyên trong dòng JSON
 (`reqId`, `traceId` còn được gắn làm *structured metadata*). Tìm một yêu cầu: gõ reqId/traceId vào ô
-**Tìm chữ** ở bảng 06, hoặc bấm *Xem cùng traceId* trong chi tiết một dòng nhật ký.
+**Tìm chữ** ở bảng 06, hoặc bấm *Mở trace (Tempo)* trong chi tiết một dòng nhật ký (§13).
 
 Dòng kiểm tra sức khoẻ (`/api/v1/system/health*`) và lượt thu `/metrics` mức info bị bỏ để đỡ nhiễu.
 
@@ -309,4 +315,15 @@ docker run --rm -v "$M/loki/loki-config.yml:/etc/loki/loki-config.yml" grafana/l
 docker run --rm -v "$M/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml" grafana/promtail:3.3.2 -config.file=/etc/promtail/promtail-config.yml -check-syntax
 docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml config --quiet
 for f in infrastructure/monitoring/grafana/dashboards/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "OK $f"; done
+docker run --rm -e TRACE_SAMPLE_PERCENT=10 -v "$M/otel-collector/config.yml:/etc/otelcol/config.yml" otel/opentelemetry-collector-contrib:0.115.1 validate --config=/etc/otelcol/config.yml
 ```
+
+## 13. Trace — OTel Collector + Tempo (ADR-0010)
+
+Sáu lớp bảo đảm ([ADR-0010](../../docs/adr/ADR-0010-opentelemetry-tu-loi.md)): Kernel + PostgreSQL quyết định và lưu sự thật; OpenTelemetry, Prometheus, Grafana + Tempo + Loki, Alertmanager **chỉ quan sát**. Tắt hay hỏng phần trace không ảnh hưởng ghi sổ.
+
+- **Không bật bộ giám sát:** API vẫn sinh `traceId` (log, `error.traceId`, `audit_logs.trace_id`), không gửi trace đi đâu.
+- **Bật bộ giám sát:** tệp ghép đặt `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318` cho `api`. Trỏ sang Collector khác: đặt biến này trong `.env`. Tắt hẳn SDK: `OTEL_SDK_DISABLED=true`.
+- **Lấy mẫu đuôi** (`otel-collector/config.yml`): giữ mọi trace có span lỗi kỹ thuật hoặc dài hơn 1 giây, cộng `TRACE_SAMPLE_PERCENT`% (mặc định 10) còn lại. Máy thử muốn thấy mọi trace: `TRACE_SAMPLE_PERCENT=100` trong `.env` rồi `up -d otel-collector`.
+- **An toàn:** ứng dụng đã lọc thuộc tính theo danh sách cho phép trước khi gửi; Collector xoá thêm `url.full`, `url.query`, `db.statement`, `exception.message`, `exception.stacktrace` nếu có thư viện nào lọt. Collector và Tempo không mở cổng ra máy chủ.
+- **Tra trace:** Grafana → Explore → **Tempo**. TraceQL mẫu: `{ span.bizcity.module = "quy" && span.bizcity.outcome = "error" }`. Từ một dòng log (Loki) bấm *Mở trace (Tempo)*; từ một span bấm *Logs for this span* hoặc xem độ trễ p95 của route. Danh sách span và thuộc tính: [OBSERVABILITY §1.1](../../docs/ops/OBSERVABILITY.md).

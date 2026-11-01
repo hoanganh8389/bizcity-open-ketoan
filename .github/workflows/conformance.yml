@@ -38,12 +38,13 @@ jobs:
           retention-days: 30
 
   monitoring:
-    name: Bộ giám sát (promtool, amtool)
+    name: Bộ giám sát (promtool, amtool, otelcol)
     runs-on: ubuntu-latest
     env:
       M: ${{ github.workspace }}/infrastructure/monitoring
       PROM: prom/prometheus:v2.53.4
       AM: prom/alertmanager:v0.27.0
+      OTELCOL: otel/opentelemetry-collector-contrib:0.115.1
     steps:
       - uses: actions/checkout@v4
       # Cú pháp + nạp cấu hình Prometheus (kéo theo alerts.yml)
@@ -51,6 +52,9 @@ jobs:
       # Luật cảnh báo bắn / không bắn / hết bắn đúng (alerts.test.yml, S018-14)
       - run: docker run --rm -v "$M/prometheus:/etc/prometheus:ro" --entrypoint promtool "$PROM" test rules /etc/prometheus/alerts.test.yml
       - run: docker run --rm -v "$M/alertmanager:/etc/alertmanager:ro" --entrypoint amtool "$AM" check-config /etc/alertmanager/alertmanager.yml
+      # [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+      # Cấu hình OTel Collector nạp được (lấy mẫu đuôi, xoá thuộc tính nhạy cảm, gửi Tempo)
+      - run: docker run --rm -e TRACE_SAMPLE_PERCENT=10 -v "$M/otel-collector/config.yml:/etc/otelcol/config.yml:ro" "$OTELCOL" validate --config=/etc/otelcol/config.yml
 
   diagnostics:
     name: Bộ kiểm chuẩn (diagnostics trên PostgreSQL 16)

@@ -182,6 +182,7 @@ BIZCITY_PASSWORD='Admin@123' node scripts/cai-preset.mjs thuong-mai-ban-le \
 ## Giám sát vận hành: Prometheus · Grafana · Loki
 
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 **Sáu lớp bảo đảm** của Bizcity Core ([ADR-0010](docs/adr/ADR-0010-opentelemetry-tu-loi.md)). Chỉ hai lớp đầu quyết định và lưu sự thật; bốn lớp sau chỉ quan sát, tắt hay hỏng cũng không ảnh hưởng sổ.
 
 | Lớp | Bảo đảm |
@@ -193,7 +194,7 @@ BIZCITY_PASSWORD='Admin@123' node scripts/cai-preset.mjs thuong-mai-ban-le \
 | 5. **Grafana + Tempo + Loki** | quan sát, điều tra lỗi |
 | 6. **Alertmanager** | thông báo khi có bất thường |
 
-Khi cộng đồng viết module VAT, công nợ, CRM, kho hay agent AI trên cùng Core, mỗi span đã mang sẵn tên module (`bizcity.module`). Một module lỗi thì hệ thống chỉ ra được **module nào, bước nào, ảnh hưởng tới luồng nào**, mà không cần sửa Accounting Kernel. Truy vết OpenTelemetry đang được code (PHASE-018 W5); thiết kế xem [kiến trúc §7–§8](docs/architecture/README.md).
+Khi cộng đồng viết module VAT, công nợ, CRM, kho hay agent AI trên cùng Core, mỗi span đã mang sẵn tên module (`bizcity.module`). Một module lỗi thì hệ thống chỉ ra được **module nào, bước nào, ảnh hưởng tới luồng nào**, mà không cần sửa Accounting Kernel. Module không viết mã truy vết: span có sẵn ở HTTP, MCP, action, cổng Kernel, CSDL, sự kiện; chi tiết thêm thì dùng `ctx.trace.step(...)`. Thiết kế: [kiến trúc §7–§8](docs/architecture/README.md) · danh sách span và cách tra: [OBSERVABILITY §1.1](docs/ops/OBSERVABILITY.md).
 
 Bộ giám sát **đi kèm trong repo, chạy bằng Docker, không phải cài riêng** và **không bắt buộc**: không bật thì phần mềm kế toán vẫn chạy bình thường. Bật bằng `bash scripts/cai-nhanh.sh --giam-sat`, hoặc ghép tệp compose:
 
@@ -208,6 +209,7 @@ docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose
 | **Prometheus** | thu số đo `bizcity_*` từ `GET /metrics` của API, PostgreSQL, máy chủ, container; tính 14 luật cảnh báo | http://127.0.0.1:9090 |
 | **Grafana** | 9 bảng điều khiển tự nạp (thư mục **Bizcity**), đăng nhập `admin` + `GRAFANA_ADMIN_PASSWORD` | http://127.0.0.1:3000 |
 | **Loki + Promtail** | nhật ký JSON của API, tra theo mã yêu cầu `reqId` / mã lỗi | qua Grafana (bảng 06) |
+| **Tempo + OTel Collector** | trace OpenTelemetry: một yêu cầu đi qua module, action, Kernel, CSDL, sự kiện nào; giữ mọi trace lỗi / chậm + 10% còn lại, 7 ngày | qua Grafana (Explore → Tempo) |
 | **Alertmanager** | gom, lọc trùng, gửi cảnh báo (webhook, email…) — mặc định không gửi đi đâu | http://127.0.0.1:9093 |
 | postgres-exporter · node-exporter · cAdvisor | số đo CSDL, máy chủ, container | — |
 
@@ -342,7 +344,7 @@ open-ketoan đang trong giai đoạn **xây dựng / chuẩn hoá framework**. K
 | MCP tools | Có công cụ đọc; một số công cụ ghi / đề xuất còn dự kiến |
 | Transactional outbox, domain event runtime | Chưa hoàn thành; nằm trong lộ trình |
 | RLS, PITR và hardening cho multi-tenant | Cần tiếp tục hoàn thiện |
-| Giám sát Prometheus / Grafana / Loki: ghi sổ, sự kiện, đối soát, 9 dashboard, 14 cảnh báo (PHASE-018, 01/11/2026) | Có trên nhánh `feat/phase-018-giam-sat`; trace OpenTelemetry đã chốt thiết kế từ lõi (ADR-0010), đang code; SLO, widget CEO còn trong lộ trình |
+| Giám sát Prometheus / Grafana / Loki: ghi sổ, sự kiện, đối soát, 9 dashboard, 14 cảnh báo (PHASE-018, 01/11/2026) | Đã có; trace OpenTelemetry từ lõi (ADR-0010) + Tempo trên nhánh `feat/phase-018-w5-otel`; SLO, widget CEO còn trong lộ trình |
 | Kết nối một chạm với Bizcity Cell (Zalo / web chat) | Đặc tả xong, chưa code (PHASE-015) |
 | NATS, Redis, Kong, Kubernetes | Tuỳ chọn ở các giai đoạn sau |
 

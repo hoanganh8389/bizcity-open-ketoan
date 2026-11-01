@@ -1,0 +1,35 @@
+# [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+# =============================================================================
+# Grafana Tempo (ADR-0010 §5) — một tiến trình, lưu trace trên đĩa local (ổ tempo-data), giữ 7 ngày.
+# Chỉ nhận OTLP gRPC từ Collector trong mạng nội bộ; Grafana đọc qua http://tempo:3200. Không mở cổng ra máy chủ.
+# =============================================================================
+stream_over_http_enabled: true
+
+server:
+  http_listen_port: 3200
+  log_level: warn
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 168h
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+
+usage_report:
+  reporting_enabled: false

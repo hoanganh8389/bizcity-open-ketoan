@@ -14,6 +14,15 @@
 
 Tra cứu nhanh: Prometheus `http://127.0.0.1:9090` · Alertmanager `http://127.0.0.1:9093` · Grafana `http://127.0.0.1:3000` · log API: Grafana bảng 06 hoặc `{service="api"} | json | errCode="<MÃ>"` trên Loki.
 
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
+**Khoanh vùng bằng trace (ADR-0010)** — Grafana → Explore → Tempo:
+1. Từ cảnh báo, tìm trace cùng khoảng thời gian: `{ span.bizcity.outcome = "error" }`, hoặc theo module nghi ngờ `{ span.bizcity.module = "<module>" && span.bizcity.outcome = "error" }`.
+2. Đọc cây span: lỗi ở span `action <module>.*` / `step <module>.*` **trước** span `kernel …` = lỗi của module; ở span `kernel …` có `bizcity.outcome = "rejected"` = Kernel từ chối đúng luật (không phải sự cố); ở span `db …` = CSDL.
+3. Ảnh hưởng: span `event deliver … → <consumer>` nối (link) về span phát — subscriber nào hỏng, subscriber nào vẫn `done`.
+4. Bấm "Logs for this span" (Loki theo `traceId`) để xem chi tiết; bằng chứng tra theo `audit_logs.trace_id` / `request_id`.
+
+**Trace chỉ là quan sát.** Span "thành công" không chứng minh sổ đã ghi (giao dịch có thể huỷ sau đó) — xác nhận ở `posting_log`, `ledger_entries`, tự chẩn đoán. Người dùng báo lỗi gửi `error.requestId` (và `error.traceId` nếu có).
+
 ## Cảnh báo critical
 
 ### ApiDown
@@ -51,7 +60,7 @@ Tra cứu nhanh: Prometheus `http://127.0.0.1:9090` · Alertmanager `http://127.
 ### OutboxDeadLetter
 
 - **Triệu chứng:** thông báo / đồng bộ phía sau (catalog, Cell, webhook) không chạy. **Sổ cái không bị ảnh hưởng** (ghi sổ đồng bộ, AP-2).
-- **Xác nhận:** bảng 07 — Đường sự kiện; `max(bizcity_outbox_deliveries{status="dead"})`; `GET /api/v1/system/events` (subscriber nào có `dead`, `last_error`).
+- **Xác nhận:** bảng 07 — Đường sự kiện; `max(bizcity_outbox_deliveries{status="dead"})`; `GET /api/v1/system/events` (subscriber nào có `dead`, `last_error`); Tempo `{ span.bizcity.delivery.result = "dead" }` → module của subscriber + link về yêu cầu gốc.
 - **Bước an toàn:** sửa nguyên nhân (cấu hình nơi nhận, lỗi mã subscriber), rồi phát lại **có người duyệt** bằng `POST /api/v1/system/events/replay` (action `core.events.replay`, ghi bằng chứng ai phát lại). Subscriber idempotent (`event_consumptions`) nên phát lại không làm đôi.
 - **Không được làm:** sửa tay `event_deliveries.status`.
 

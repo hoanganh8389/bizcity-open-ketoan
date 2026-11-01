@@ -3,6 +3,7 @@
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 // [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc.
 // [2026-10-30 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-009 — MCP ghi: lập nháp, đề xuất huỷ, luôn chờ duyệt; ADR-0009 đề xuất.
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
  * MCP của Core kế toán (bizcity_mcp@1 — hồ sơ của bizcity-mcp-tool@1.0.0; PHASES 2.11, 2.12).
  *   POST /mcp   JSON-RPC 2.0, một đối tượng, không giữ phiên: initialize, ping, tools/list, tools/call
@@ -28,6 +29,7 @@ import { AppError } from '../../core/errors.js';
 import { listActions, requestHash, runAction, type AnyActionDef } from '../../core/actions.js';
 import { BUILD_VERSION } from '../../core/version.js';
 import { metrics } from '../../core/metrics.js';
+import { markError, withSpan } from '../../core/tracing.js';
 import { ERROR_CATALOG, MCP_ERROR_CATALOG } from '@ketoan/contracts';
 
 const CONFIRM_TTL_MS = 900_000;
@@ -112,6 +114,11 @@ async function callTool(req: FastifyRequest, auth: AuthContext, params: CallPara
   delete args.confirm_token;
   const via = `mcp:${String(meta.client ?? 'client').replace(/[^\w.-]/g, '').slice(0, 40) || 'client'}`;
   const base = { auth, requestId: String(req.id), via };
+  // Span MCP (S2, ADR-0010): chỉ tên công cụ ĐÃ ĐĂNG KÝ (tên lạ trả NOT_FOUND ở trên, không thành tên span), kênh, pha xác nhận.
+  const phase = def.effect === 'read' ? 'read' : confirmToken ? 'confirm' : 'preview';
+  return withSpan(`mcp tools/call ${name}`, {
+    attributes: { 'bizcity.mcp.tool': name, 'bizcity.mcp.via': via, 'bizcity.mcp.phase': phase, 'bizcity.module': def.id.split('.')[0]! },
+  }, async (span) => {
   try {
     if (def.effect === 'read') {
       const r = await runAction(def, args, base);
@@ -141,9 +148,11 @@ async function callTool(req: FastifyRequest, auth: AuthContext, params: CallPara
     // data.status nói về luồng xác nhận (needs_confirmation → done); kết quả của action nằm riêng ở data.result.
     return toolOk(def.title, { status: 'done', result: r.data }, { requestId: r.meta.requestId, receipt: r.meta.receipt, replayed: r.meta.idempotency === 'replayed' });
   } catch (err) {
+    markError(span, err);
     if (!(err instanceof AppError) && !(err instanceof ZodError)) req.log.error({ err, tool: name }, 'mcp tools/call lỗi');
     return errorOf(err);
   }
+  });
 }
 
 // ── Endpoint ──────────────────────────────────────────────────────────────────────────────────────────────────────────────

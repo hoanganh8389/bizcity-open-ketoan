@@ -11,24 +11,40 @@
  * thao tác có kiểm bất biến (ghi qua cửa nạp / eventStore), không phải lối tắt vào bảng sổ.
  */
 
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+// ── Truy vết ở cổng (S4, ADR-0010 §3, mức K1 — chỉ thêm quan sát, KHÔNG đổi hành vi ghi sổ) ───────────────────────────────
+// Mọi lối vào Kernel từ bên ngoài đi qua tệp này (SC-KERNEL-6), nên bọc ở đây là đủ: mỗi lời gọi ghi / đọc sổ của module,
+// phân hệ, add-in, MCP thành span `kernel <thao tác>` (bizcity.layer = K, bizcity.doc_type, bizcity.outcome). Lời gọi nội bộ giữa
+// các phần của Kernel không qua cổng nên không sinh span thừa. Kernel không import @opentelemetry/* (R-KER-8, R-OBS-7): hàm bọc
+// ở Platform (core/tracing.ts, chiều K → P được phép). Module mới không phải sửa Kernel để có trace.
+import { traceKernelApi, traceKernelFn } from '../core/tracing.js';
+import { postDocumentIn as postDocumentInRaw, documentService as documentServiceRaw } from '../modules/documents/document.service.js';
+import { eventStore as eventStoreRaw } from '../modules/documents/event-store.js';
+import { voucherService as voucherServiceRaw } from '../modules/vouchers/voucher.service.js';
+import { documentNumbers as documentNumbersRaw } from '../modules/documents/numbering.js';
+import { ledgerQuery as ledgerQueryRaw } from '../modules/ledger/ledger-query.js';
+import { allocate as allocateRaw } from '../modules/debts/debt.service.js';
+
 // ── Nạp chứng từ, ghi sổ (một cửa — bizcity_ledger_intake@1, R-LEDGER-4) ─────────────────────────────────────────────────
-export { postDocumentIn, documentService } from '../modules/documents/document.service.js';
-export { eventStore } from '../modules/documents/event-store.js';
-export { voucherService } from '../modules/vouchers/voucher.service.js';
+export const postDocumentIn = traceKernelFn('postDocumentIn', postDocumentInRaw);
+export const documentService = traceKernelApi('documentService', documentServiceRaw);
+export const eventStore = traceKernelApi('eventStore', eventStoreRaw);
+export const voucherService = traceKernelApi('voucherService', voucherServiceRaw);
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — documents.numbering (PHASES 2.7): bộ đếm số chứng từ một chỗ; Platform nhận qua registerDocumentNumberer ở app.ts
-export { documentNumbers } from '../modules/documents/numbering.js';
+export const documentNumbers = traceKernelApi('documentNumbers', documentNumbersRaw);
 export type { DraftLine } from '../modules/ledger/ledger.types.js';
 
 // ── Đọc sổ (ledger.query, PHASES 3.7): ngoài Kernel không đọc bảng ledger_* (SC-KERNEL-7) ─────────────────────────────────
 // [2026-10-31 08:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7, S012-2): mở ledgerQuery + otherSide ra cổng công khai
 // Truy vấn có sẵn theo mã; SQL viết tay của báo cáo đọc khung nhìn bizcity_read.* (migration 0043), dùng otherSide() lấy TK đối ứng.
-export { ledgerQuery, otherSide } from '../modules/ledger/ledger-query.js';
+export const ledgerQuery = traceKernelApi('ledgerQuery', ledgerQueryRaw);
+export { otherSide } from '../modules/ledger/ledger-query.js';
 export type { LedgerQuery, LedgerQueryRow, LedgerQueryGroup } from '../modules/ledger/ledger-query.js';
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — documentChecks về Kernel kỳ kế toán (kiểm trước khoá kỳ); báo cáo ke-toan đọc qua cổng
 export { documentChecks } from '../modules/periods/document-checks.js';
 
 // ── Sổ phụ, danh mục của Kernel ───────────────────────────────────────────────────────────────────────────────────────────
-export { allocate as allocateDebt } from '../modules/debts/debt.service.js';
+export const allocateDebt = traceKernelFn('allocateDebt', allocateRaw);
 export { accountRepository } from '../modules/accounts/account.repository.js';
 export { usedDimensionCodes } from '../modules/default-data/default-data.service.js';
 export { readPostingModes } from '../core/posting-modes.js';

@@ -37,6 +37,7 @@ import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
 import { metrics } from './metrics.js';
 import { currentRequest } from './request-context.js';
+import { withSpan } from './tracing.js';
 import { documents } from './documents.js';
 import type { AuthContext, Permission } from './auth.js';
 
@@ -65,6 +66,11 @@ export interface ActionContext {
   // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call (module-sdk API.md §2, câu hỏi mở 3): gọi action đọc của module khác
   /** Gọi action đọc công khai của module khác theo mã, với quyền của người gọi (STD-MOD-3; xem callAction). */
   actions: { call<O = unknown>(id: string, input: unknown): Promise<O> };
+  /**
+   * Bước riêng của module trong trace (ADR-0010 §3): span `step <module>.<tên>` con của span action. Module KHÔNG import
+   * @opentelemetry/* (R-OBS-7). Tên: chữ thường, số, gạch ngang, chấm. Thuộc tính đi qua danh sách cho phép — không gắn dữ liệu.
+   */
+  trace: { step<T>(name: string, fn: () => Promise<T>): Promise<T> };
   // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — ctx.documents (bizcity_document@1 §7, PHASES 2.7): số, phiên bản, liên kết, đính kèm trong giao dịch của action
   /**
    * Chứng từ dùng chung trong giao dịch của action (core/documents.ts). Ghi (saveVersion, link, attach) chỉ trên docRef của
@@ -155,6 +161,9 @@ export function requestHash(input: unknown): string {
   return createHash('sha256').update(JSON.stringify(norm(input))).digest('hex');
 }
 
+/** Tên bước của ctx.trace.step (thành tên span — không chứa dữ liệu). */
+const STEP_RE = /^[a-z0-9-]+(\.[a-z0-9-]+)*$/;
+
 class DryRunRollback extends Error {
   constructor(readonly output: unknown) {
     super('dry-run');
@@ -177,8 +186,28 @@ export interface ActionResult<T = unknown> {
   meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt };
 }
 
-/** Chạy một action theo ACTION §4. Dùng chung cho HTTP và (sau này) MCP, CLI. */
-export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny>(def: ActionDef<I, O>, rawInput: unknown, call: ActionCall): Promise<ActionResult<z.infer<O>>> {
+// [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+/**
+ * Chạy một action theo ACTION §4. Dùng chung cho HTTP, MCP, CLI, callAction.
+ * Span `action <id>` (S3, ADR-0010): bizcity.module = tiền tố của id (STD-ACT-6) — module không tự khai nên không khai sai; mọi
+ * span con (cổng Kernel, CSDL, sự kiện, bước ctx.trace.step) nằm dưới nó → lỗi khoanh được tới module / bước.
+ */
+export function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny>(def: ActionDef<I, O>, rawInput: unknown, call: ActionCall): Promise<ActionResult<z.infer<O>>> {
+  const dryRun = call.dryRun === true;
+  return withSpan(`action ${def.id}`, {
+    attributes: {
+      'bizcity.action.id': def.id, 'bizcity.module': def.id.split('.')[0]!, 'bizcity.action.effect': def.effect, 'bizcity.dry_run': dryRun,
+      ...(call.auth ? { 'bizcity.tenant': call.auth.tenantId } : {}),
+      ...(call.via ? { 'bizcity.mcp.via': call.via } : {}),
+    },
+  }, async (span) => {
+    const res = await runActionUntraced(def, rawInput, call);
+    if (def.effect === 'write' && !dryRun && call.idempotencyKey) span.setAttribute('bizcity.idempotency', res.meta.idempotency === 'replayed' ? 'replayed' : 'new');
+    return res;
+  });
+}
+
+async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAny>(def: ActionDef<I, O>, rawInput: unknown, call: ActionCall): Promise<ActionResult<z.infer<O>>> {
   const auth = call.auth;
   if (def.permission !== 'public') {
     if (!auth) throw Errors.unauthorized();
@@ -277,6 +306,13 @@ export async function runAction<I extends z.AnyZodObject, O extends z.ZodTypeAny
             attachments: (ref) => documents.attachments(trx, tenantId, ref),
           } satisfies ActionContext['documents'];
         })(),
+        trace: {
+          step: (name, fn) => {
+            const mod = def.id.split('.')[0]!;
+            if (!STEP_RE.test(name)) throw new Error(`ctx.trace.step: tên bước "${name}" phải dạng chữ thường, số, gạch ngang, chấm (vd tinh-thue)`);
+            return withSpan(`step ${mod}.${name}`, { attributes: { 'bizcity.module': mod, 'bizcity.step': name } }, () => fn());
+          },
+        },
         get legacyAuth() {
           if (!auth) throw Errors.unauthorized();
           return auth;

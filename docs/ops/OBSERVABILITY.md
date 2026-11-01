@@ -25,9 +25,9 @@ Chỉ số đo, trace, log là **quan sát**. Sự thật về sổ nằm ở Ke
 | Việc | Quy định |
 |---|---|
 | Mã yêu cầu | API nhận `X-Request-Id` từ bên gọi nếu hợp lệ (8–128 ký tự `[A-Za-z0-9._:-]`), không thì tự sinh. Trả lại ở header `X-Request-Id` của mọi phản hồi |
-| W3C Trace Context | API đọc `traceparent`. Nếu có, `traceId` (32 hex) vào log của yêu cầu, để nối với trace của Cell / plugin / proxy |
-| Gọi ra ngoài | Gọi Hub, Cell, tra MST, AI đọc hoá đơn… phải chuyển tiếp `X-Request-Id` + `traceparent` |
-| OpenTelemetry | **Từ lõi** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), thay "Để sau"). SDK luôn có trong Core. Chỉ xuất trace khi đặt `OTEL_EXPORTER_OTLP_ENDPOINT`; `OTEL_SDK_DISABLED=true` tắt hẳn. Code ở PHASE-018 W5 (S018-17) |
+| W3C Trace Context | API nhận `traceparent` của bên gọi: span HTTP nối tiếp trace của Cell / plugin / proxy. Mọi yêu cầu (trừ `/metrics`, health) có `traceId` (32 hex) trong log, trong `error.traceId` và trong bằng chứng (`audit_logs.trace_id`) |
+| Gọi ra ngoài | Gọi Hub, Cell, tra MST, AI đọc hoá đơn… bằng `fetch`: span con + `traceparent` tự chuyển tiếp (S8); `X-Request-Id` chuyển tiếp tay |
+| OpenTelemetry | **Từ lõi** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), thay "Để sau"), mã ở `apps/api/src/core/tracing.ts`. SDK luôn có trong Core. Chỉ xuất trace khi đặt `OTEL_EXPORTER_OTLP_ENDPOINT` (bộ giám sát tự đặt = Collector nội bộ); `OTEL_SDK_DISABLED=true` tắt hẳn |
 
 ### 1.1 Trace (ADR-0010)
 
@@ -35,18 +35,29 @@ Span đặt ở **khớp nối** mà mọi module đi qua. Module không tự vi
 
 | # | Khớp nối | Tên span | Thuộc tính chính |
 |---|---|---|---|
-| S1 | HTTP vào | `HTTP {method} {route}` | `http.route` (mẫu), `http.response.status_code`, `bizcity.error.code` |
-| S2 | MCP | `mcp tools/call {tool}` | `bizcity.mcp.tool`, `bizcity.mcp.via`, `bizcity.mcp.phase` |
-| S3 | `runAction` | `action {action.id}` | `bizcity.action.id`, `bizcity.module`, `bizcity.action.effect`, `bizcity.dry_run`, `bizcity.idempotency` |
-| S4 | cổng Kernel `kernel/public.ts` | `kernel {thao tác}` | `bizcity.layer=K`, `bizcity.doc_type`, `bizcity.kernel.outcome` |
-| S5 | CSDL | `db {operation} {table}` | không câu SQL, không tham số |
-| S6 / S7 | outbox phát / giao | `event publish {type}` → link → `event deliver {type} → {consumer}` | `bizcity.event.type`, `bizcity.consumer`, `bizcity.module`, `bizcity.delivery.result` |
-| S8 | gọi ra ngoài | `HTTP {method}` client | chuyển tiếp `traceparent` + `X-Request-Id` |
-| S9 | việc định kỳ, bộ thu | `job {tên}` | `bizcity.job` |
+| S1 | HTTP vào (trừ `/metrics`, health) | `HTTP {method} {route}` | `http.request.method`, `http.route` (mẫu), `http.response.status_code`, `bizcity.request_id`, `bizcity.tenant`, `bizcity.error.code` |
+| S2 | MCP | `mcp tools/call {tool}` | `bizcity.mcp.tool`, `bizcity.mcp.via`, `bizcity.mcp.phase` (read · preview · confirm), `bizcity.module` |
+| S3 | `runAction` | `action {action.id}` | `bizcity.action.id`, `bizcity.module`, `bizcity.action.effect`, `bizcity.dry_run`, `bizcity.idempotency` (new · replayed) |
+| S3a | `ctx.trace.step` (module tự chia bước) | `step {module}.{tên}` | `bizcity.module`, `bizcity.step` |
+| S4 | cổng Kernel `kernel/public.ts` | `kernel {thao tác}` | `bizcity.layer=K`, `bizcity.kernel.op`, `bizcity.doc_type` |
+| S5 | CSDL (chỉ khi có span cha) | `db {operation} {table}` | `db.system.name`, `db.operation.name`, `db.collection.name` — không câu SQL, không tham số |
+| S6 / S7 | outbox phát / giao | `event publish {type}` → link → `event deliver {type} → {consumer}` (trace mới) | `bizcity.event.type`, `bizcity.consumer`, `bizcity.module`, `bizcity.delivery.result`, `bizcity.delivery.attempt` |
+| S8 | gọi ra ngoài (`fetch`) | `{method}` client | `server.address`, `http.response.status_code`; chuyển tiếp `traceparent` |
 
-Thuộc tính đi qua **danh sách cho phép**: bộ lọc ở `core/tracing.ts` bỏ mọi thuộc tính khác trước khi xuất. Không bao giờ có trong trace: payload, số tiền, tên, MST, SĐT, số tài khoản ngân hàng, câu / tham số SQL, header xác thực, token, `confirm_token`, `Idempotency-Key`. `bizcity.tenant` chỉ là mã nội bộ, như trường `tenant` của log.
+Mọi span có `bizcity.outcome`: `ok` · `rejected` (từ chối đúng luật: kỳ khoá, không cân, xung đột trạng thái… — **không** phải sự cố, không trạng thái ERROR) · `error` (lỗi kỹ thuật, trạng thái ERROR). Cùng quy tắc với `bizcity_posting_failures_total{kind}` (`errorKind`, `core/errors.ts`).
 
-Lấy mẫu ở Collector: giữ 100% trace lỗi hoặc chậm > 1 s, 10% còn lại; chỉnh sau đo tải W6.
+Thuộc tính đi qua **danh sách cho phép** (`TRACE_ATTRIBUTES`, `core/tracing.ts`): bộ xuất bỏ mọi thuộc tính khác, thông điệp trạng thái và thông điệp ngoại lệ trước khi span rời tiến trình; Collector xoá thêm `url.full`, `db.statement`, `exception.message`… Không bao giờ có trong trace: payload, số tiền, tên, MST, SĐT, số tài khoản ngân hàng, câu / tham số SQL, header xác thực, token, `confirm_token`, `Idempotency-Key`. `bizcity.tenant` chỉ là mã nội bộ, như trường `tenant` của log.
+
+Lấy mẫu ở Collector (`infrastructure/monitoring/otel-collector/config.yml`): giữ 100% trace lỗi hoặc chậm > 1 s, cộng `TRACE_SAMPLE_PERCENT`% (mặc định 10) còn lại; chỉnh sau đo tải W6. Tempo giữ 7 ngày.
+
+**Tra trace** (Grafana → Explore → Tempo, TraceQL):
+
+| Muốn biết | TraceQL |
+|---|---|
+| Module nào đang lỗi kỹ thuật | `{ span.bizcity.module = "vat" && span.bizcity.outcome = "error" }` |
+| Lời gọi Kernel bị từ chối đúng luật | `{ span.bizcity.layer = "K" && span.bizcity.outcome = "rejected" }` |
+| Việc giao sự kiện chết / thử lại | `{ span.bizcity.delivery.result =~ "dead|retry" }` |
+| Một yêu cầu người dùng báo | dán `error.traceId` vào ô tìm trace; hoặc bấm `traceId` trong một dòng log Loki |
 
 ## 2. Log có cấu trúc
 
@@ -58,7 +69,7 @@ Fastify pino, JSON một dòng, ra stdout. Docker / promtail đưa vào Loki. M�
 |---|---|---|
 | `time`, `level`, `msg` | `30` | pino |
 | `reqId` | `req-1a2b` | = `X-Request-Id` |
-| `traceId` | `4bf92f…` | khi có `traceparent` |
+| `traceId` | `4bf92f…` | mọi yêu cầu khi truy vết bật (ADR-0010); tắt SDK thì chỉ khi bên gọi gửi `traceparent` |
 | `tenant` | `12` | mã nội bộ đơn vị, **không** tên đơn vị |
 | `actor`, `actorKind` | `user:5`, `user` | `apikey:3` / `ai` |
 | `route`, `method`, `status`, `ms` | `/api/v1/documents`, `POST`, `201`, `41` | dòng "xong yêu cầu" |
@@ -127,6 +138,7 @@ docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose
   8. Đa đơn vị (đơn vị theo dải, không lộ đơn vị — PHASE-018);
   9. Toàn vẹn sổ (đối soát, ghi sổ đã commit, từ chối nghiệp vụ vs lỗi kỹ thuật — PHASE-018).
 - **14 cảnh báo:** `HighErrorRate`, `HighLatency`, `ApiDown`, `HighMemory`, `PostgreSQLDown`, `DiskUsage`, `LedgerIntegrityError`, `PostingBacklog` + PHASE-018: `OutboxDeadLetter`, `OutboxBacklog`, `ReconciliationStale`, `DbPoolSaturation`, `MetricsCollectorFailing`, `PostingRejectionSpike` (nhãn `team="ke-toan"`, báo kế toán, không gọi trực ban). Test bắn / hết bắn: `prometheus/alerts.test.yml` (`promtool test rules`).
+- **Trace:** OTel Collector (lấy mẫu đuôi) → Tempo (7 ngày) → Grafana: từ log bấm `traceId` mở trace; từ span mở log cùng `traceId` và độ trễ của route (§1.1).
 - **Xử lý từng cảnh báo:** [RUNBOOK-CANH-BAO.md](RUNBOOK-CANH-BAO.md). Cảnh báo chỉ báo — không tự sửa dữ liệu kế toán.
 
 So với bộ tham chiếu: không có `RedisDown` / `NATSDown`, vì Core không dùng Redis / NATS (ADR-0007 G-1). Chỗ đó thay bằng hai cảnh báo của sổ cái, thứ quan trọng nhất của phần mềm kế toán.
@@ -139,6 +151,7 @@ Mẫu [`.github/ISSUE_TEMPLATE/bao-loi.yml`](../../.github/ISSUE_TEMPLATE/bao-lo
 |---|---|
 | Phiên bản (`version`, `kernel`, `standard`) | `GET /api/v1/system/health` |
 | `requestId` | phản hồi lỗi `error.requestId` / header `X-Request-Id` |
+| `traceId` (nếu có) | phản hồi lỗi `error.traceId` — Ops mở thẳng trace trong Tempo |
 | Mã lỗi (`code`, `details.reason`) | phản hồi lỗi |
 | Biên nhận (`evidenceId`) nếu là thao tác ghi | `meta.receipt` |
 | Kết quả tự chẩn đoán | `GET /api/v1/system/diagnostics` (chỉ `summary` + mã kiểm lỗi) |
@@ -163,5 +176,5 @@ Quy trình xử lý:
 | **R-OBS-4** | Số đo không có nhãn số lượng không giới hạn (`tenant`, `docKey`, `reqId`, `actor`) | review `core/metrics.ts` |
 | **R-OBS-5** | Cảnh báo dựa trên số đo + mã lỗi, không trên câu chữ log | `infrastructure/monitoring/prometheus/alerts.yml` |
 | **R-OBS-6** | Thêm số đo / cảnh báo / dashboard: sửa bảng §3 / §4 cùng PR | CANON §5 |
-| **R-OBS-7** | Chỉ `core/tracing.ts` (Platform) import `@opentelemetry/*`. Kernel, module, add-in tạo span qua Platform (`withSpan`, `ctx.trace.step`), không import trực tiếp | check SC-OBS-2 (W5) |
-| **R-OBS-8** | Thuộc tính span theo danh sách cho phép §1.1. Thêm thuộc tính `bizcity.*` mới thì sửa danh sách và bảng §1.1 cùng PR. Trace, số đo, log không bao giờ đọc ngược vào định khoản / khoá kỳ / quyền | SC-OBS-2; test lọc thuộc tính (W5) |
+| **R-OBS-7** | Chỉ `core/tracing.ts` (Platform) import `@opentelemetry/*`. Kernel, module, add-in tạo span qua Platform (`withSpan`, `ctx.trace.step`), không import trực tiếp | check SC-OBS-2 |
+| **R-OBS-8** | Thuộc tính span theo danh sách cho phép §1.1. Thêm thuộc tính `bizcity.*` mới thì sửa danh sách và bảng §1.1 cùng PR. Trace, số đo, log không bao giờ đọc ngược vào định khoản / khoá kỳ / quyền | SC-OBS-2; `apps/api/test/truy-vet.test.ts` |

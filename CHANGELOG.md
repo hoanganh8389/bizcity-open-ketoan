@@ -13,8 +13,14 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
-<!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
-- **Thiết kế OpenTelemetry từ lõi kiến trúc** ([ADR-0010](docs/adr/ADR-0010-opentelemetry-tu-loi.md), chủ dự án quyết 01/11/2026; chưa đổi mã chạy):
+<!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
+- **Truy vết OpenTelemetry từ lõi** (PHASE-018 W5, ADR-0010; mức Kernel K1 — chỉ bọc cổng `kernel/public.ts`, hành vi ghi sổ không đổi):
+  - `apps/api/src/core/tracing.ts` (tệp duy nhất import `@opentelemetry/*`): span ở mọi khớp nối — HTTP, MCP, `runAction`, cổng Kernel, câu CSDL (chỉ loại câu + bảng), phát / giao sự kiện outbox, gọi ra ngoài bằng `fetch`. Mọi span mang `bizcity.module` và `bizcity.outcome` (`ok` · `rejected` = từ chối đúng luật, không phải sự cố · `error`).
+  - Thuộc tính đi qua danh sách cho phép ngay ở bộ xuất: không số tiền, tên, MST, câu SQL, token rời tiến trình.
+  - `traceId` trong log, trong phản hồi lỗi (`error.traceId`, `bizcity_errors` 1.1.0-draft) và trong bằng chứng (`audit_logs.trace_id`); sự kiện outbox lưu `trace_parent` để span giao nối (link) về yêu cầu gốc — migration `0047` chỉ thêm hai cột cho phép NULL.
+  - `ctx.trace.step(name, fn)` cho module tự chia bước; check SC-OBS-2 chặn module import thẳng SDK truy vết và thuộc tính ngoài danh sách.
+  - Bộ giám sát thêm OTel Collector (lấy mẫu đuôi: mọi trace lỗi / chậm > 1 s + `TRACE_SAMPLE_PERCENT`%) và Tempo (7 ngày); Grafana nối trace ↔ log ↔ số đo. Không bật bộ giám sát: không gửi trace đi đâu.
+- **Thiết kế OpenTelemetry từ lõi kiến trúc** ([ADR-0010](docs/adr/ADR-0010-opentelemetry-tu-loi.md), chủ dự án quyết 01/11/2026):
   - Sáu lớp bảo đảm: Accounting Kernel (ghi sổ đúng) · PostgreSQL + Audit Ledger (bằng chứng) · OpenTelemetry (hành trình thực thi) · Prometheus (sức khoẻ, hiệu năng) · Grafana + Tempo + Loki (điều tra) · Alertmanager (thông báo).
   - Span chỉ đặt ở khớp nối Platform (HTTP, MCP, `runAction`, outbox, CSDL, gọi ra ngoài), cộng một lần bọc cổng `kernel/public.ts` (K1). Mọi span mang `bizcity.module`, nên module cộng đồng tự có trace và lỗi được khoanh tới module / bước mà không sửa Kernel.
   - Thuộc tính theo danh sách cho phép; luật R-OBS-7 / R-OBS-8.
@@ -173,10 +179,12 @@ Mỗi bản ghi đủ sáu mục:
 - Migration `0036` cập nhật cột `actor_kind` cho toàn bộ `audit_logs` cũ một lần: bảng lớn thì job `db-migrate` chạy lâu hơn thường. Sau đó nhật ký thao tác **chỉ thêm**: không xoá được đơn vị đã có nhật ký (như sổ cái).
 - Migration `0042` thêm bảng `config_packs` (gói định khoản đã cài, có RLS). Không đổi dữ liệu cũ.
 - Image API chép thêm `db/packs` (gói nền). Lần chạy job `db-migrate` đầu sau khi nâng cấp: đơn vị seed ghi nhận "đã cài gói nền" (mọi mục giữ nguyên, không đổi cấu hình). Triển khai tự dựng: nhớ chép thư mục `db/packs` (hoặc đặt `PACKS_DIR`).
+- Migration `0047` thêm `event_outbox.trace_parent`, `audit_logs.trace_id` (cho phép NULL, chỉ đổi catalog — chạy tức thì; không vào chuỗi băm bằng chứng). Bộ giám sát có thêm hai dịch vụ `otel-collector`, `tempo` (+ `tempo-init` chạy một lần): `docker compose … up -d` như cũ (ADR-0010).
 - **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
 - Bộ giám sát: `GRAFANA_ADMIN_PASSWORD` thành biến **bắt buộc** — thiếu thì `docker compose` dừng và báo, không còn mật khẩu mặc định `doi-mat-khau-ngay` (PHASE-018). Bản cài đã bật giám sát mà chưa đặt biến: thêm vào `.env` trước khi `up`.
+- Trace (ADR-0010): thuộc tính span qua danh sách cho phép trước khi rời tiến trình (không số tiền, tên, MST, câu / tham số SQL, header xác thực, token); Collector xoá thêm `url.full`, `db.statement`, `exception.message`; Collector, Tempo không mở cổng ra máy chủ. Check SC-OBS-2 chặn module import thẳng `@opentelemetry/*`.
 - nginx (container `web`) gửi header bảo mật: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP `object-src 'none'; base-uri 'self'` (R-SEC-11).
 - API có thể chạy bằng vai trò CSDL thường `ketoan_app`: không tắt được trigger bảo vệ sổ, không TRUNCATE (R-SEC-6, R-KER-3). Bật bằng biến môi trường (xem Nâng cấp cần làm).
 

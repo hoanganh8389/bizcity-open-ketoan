@@ -146,6 +146,9 @@ export interface AuditLogsTable {
   chain_seq: ColumnType<string | null, never, never>;
   prev_hash: ColumnType<string | null, never, never>;
   hash: ColumnType<string | null, never, never>;
+  // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
+  /** Mã trace OpenTelemetry của yêu cầu (migration 0047): nối bằng chứng ↔ trace ↔ log. Quan sát, không vào chuỗi băm. */
+  trace_id: ColumnType<string | null, string | null | undefined, never>;
 }
 
 /** Idempotency của action ghi (migration 0035, bizcity_action@1 §8). */
@@ -177,6 +180,8 @@ export interface EventOutboxTable {
   dedupe_key: string | null;
   data: JsonDefault<unknown>;
   occurred_at: TimestampDefault;
+  /** W3C traceparent của span phát (migration 0047): span giao nối (link) về đây — lần ngược từ subscriber lỗi về yêu cầu gốc. */
+  trace_parent: ColumnType<string | null, string | null | undefined, never>;
 }
 
 /** Giao sự kiện cho từng subscriber (migration 0039). */
