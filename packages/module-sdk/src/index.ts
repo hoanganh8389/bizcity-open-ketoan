@@ -28,6 +28,9 @@ export type { ErrorCode } from '@ketoan/contracts';
 
 // ── Tiện ích thuần ────────────────────────────────────────────────────────────────────────────────────────────────────────
 export { z } from 'zod';
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: sql — câu SQL có tham số cho bảng của chính module (mod_<key>.*) trong ctx.data.module(tx => …); kiểu Database của Core không biết bảng module.
+/** Câu SQL có tham số (`${giá trị}` thành tham số, không ghép chuỗi — R-SEC). Dùng trong ctx.data.module cho bảng mod_<key>.*. */
+export { sql } from 'kysely';
 /** Tiền numeric(18,2): cộng trừ bằng xu, không cộng số thực. */
 export { toCents, fromCents, sumMoney, roundDong, moneyEquals } from '@ketoan/contracts';
 export type { DocRef, IngestResult, LedgerQuery, LedgerQueryRow } from '@ketoan/contracts';

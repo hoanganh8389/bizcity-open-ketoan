@@ -34,10 +34,11 @@ export const MODULE_MANIFESTS: ReadonlyMap<string, ModuleManifest> = new Map(
 );
 
 /** Phân hệ được bật theo ENABLED_MODULES ('*' hoặc trống = tất cả). Mã lạ → lỗi khởi động. */
-export function enabledModules(spec: string): ApiModule[] {
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: `others` = mã hợp lệ ngoài phân hệ (module SDK) — không báo "không tồn tại"
+export function enabledModules(spec: string, others: readonly string[] = []): ApiModule[] {
   const want = spec.split(',').map((s) => s.trim()).filter(Boolean);
   if (!want.length || want.includes('*')) return API_MODULES;
-  const bad = want.filter((k) => !API_MODULES.some((m) => m.key === k));
+  const bad = want.filter((k) => !API_MODULES.some((m) => m.key === k) && !others.includes(k));
   if (bad.length) throw new Error(`ENABLED_MODULES có phân hệ không tồn tại: ${bad.join(', ')} (có: ${API_MODULES.map((m) => m.key).join(', ')})`);
   // Kèm các phân hệ được khai ở includes (vd Kế toán).
   const keys = new Set(want);

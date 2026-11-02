@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1 -->
+- **Nạp module viết bằng `@bizcity/module-sdk`** (PHASE-014 W1, [BIZCITY-EXTENSION](docs/contracts/BIZCITY-EXTENSION-v1.md) §3): thư mục `modules/<key>/` có `bizcity.module.json` + `api/index.ts` (`export default defineModule(...)`) được API tìm và nạp như phân hệ — registry, băm thư mục, bật / tắt theo đơn vị; route sinh từ action nằm dưới `/api/v1/m/<key>/`; quyền khai trong manifest vào registry quyền; subscriber vào bộ sự kiện. Mã module lỗi hoặc khoá trùng phân hệ của Core thì dừng khởi động. Biến mới `BIZCITY_MODULES_DIR` (mặc định `<gốc repo>/modules`). SDK xuất thêm `sql` cho bảng của chính module.
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 manual_journal (K2); PHASE-010 2.8 gói mua-hang-domain -->
 - **Phiếu kế toán module lập — `docType: manual_journal`** (PHASES 3.15, [ADR-0015](docs/adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md) Q1, `bizcity_ledger_intake@1` 1.3.0, năng lực `ledger.manual-journal` → available): module nộp qua `ctx.ledger.submit` dòng `{ reasonCode, amount, partnerCode? }`, **không** số tài khoản, không thuế, không hoá đơn (khuôn đóng). Lý do có loại mới **`journal`** với tài khoản Nợ / Có (migration `0058_ly_do_phieu_ke_toan`; màn Lý do – tài khoản ACC18; gói định khoản `debitAccount` / `creditAccount`, SC-TPL-1 kiểm). Chưa có lý do journal nào trong gói nền — kế toán trưởng chốt danh sách (đặc tả K2).
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->

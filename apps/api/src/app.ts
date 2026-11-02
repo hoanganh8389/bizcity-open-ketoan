@@ -32,6 +32,8 @@ import { enabledModules, CORE_ROUTES, MODULE_MANIFESTS } from './phan-he/index.j
 import type { Routes } from './phan-he/types.js';
 import { decideLoad, hashModuleDir, moduleGate, readRegistry, recordLoad, type LoadDecision } from '@bizcity/platform/core/module-registry';
 import { bundledModules } from './core/module-lifecycle.js';
+import { discoverSdkModules, importSdkModule } from './core/sdk-modules.js';
+import { mountActions } from '@bizcity/platform/core/actions';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
@@ -48,7 +50,8 @@ import { registerCollector } from './core/metrics.js';
 
 
 
-export async function buildApp(): Promise<FastifyInstance> {
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: modulesDir — thư mục module SDK (test dựng module mẫu ở thư mục tạm)
+export async function buildApp(opts: { modulesDir?: string } = {}): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: env.NODE_ENV === 'test' ? 'silent' : env.LOG_LEVEL },
     // Mã yêu cầu (OBSERVABILITY §1): nhận X-Request-Id hợp lệ của bên gọi, không thì tự sinh. Log ghi một dòng/yêu cầu ở onResponse.
@@ -130,7 +133,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerLedgerCancelGate({ cancel: (tx, auth, docKey, reason) => requestCancelIn(tx, auth, docKey, reason), get: (tx, tenantId, docKey) => documentStatusIn(tx, tenantId, docKey),
     allocate: (tx, tenantId, input, actor) => allocateByDocKeysIn(tx, tenantId, input, actor) });
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: app ngoài tiến trình cài trong bản này (manifest kind "app") → registry + subscriber webhook; khoá trùng phân hệ / add-in → dừng
-  registerAppManifests([...APP_MANIFESTS], [...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys()]);
+  const sdkModules = discoverSdkModules(opts.modulesDir);
+  registerAppManifests([...APP_MANIFESTS], [...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys(), ...sdkModules.map((m) => m.key)]);
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.
   // Hệ thống (người dùng, kết nối…) thuộc lõi — luôn báo là bật.
@@ -138,7 +142,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Registry bản cài (module_registry): chỉ nạp module active, hash thư mục khớp (bản thật). Trống → nạp như cũ + cảnh báo.
   const registry = await readRegistry();
   const enforceHash = env.NODE_ENV === 'production' && !env.BIZCITY_DEV_MODULES;
-  const bundled = new Map(bundledModules().map((b) => [b.key, b]));
+  const bundled = new Map(bundledModules(opts.modulesDir).map((b) => [b.key, b]));
   const decisions = new Map<string, LoadDecision>();
   const decide = (key: string) => {
     const b = bundled.get(key);
@@ -147,7 +151,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     decisions.set(key, d);
     return d.load;
   };
-  const loaded = enabledModules(env.ENABLED_MODULES).filter((m) => decide(m.key));
+  const loaded = enabledModules(env.ENABLED_MODULES, sdkModules.map((m) => m.key)).filter((m) => decide(m.key));
   // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: quyền module khai trong manifest permissions[] vào registry quyền (trước khi gắn route)
   for (const m of loaded) registerModulePermissions(m.key, MODULE_MANIFESTS.get(m.key)?.permissions ?? []);
   app.decorate('enabledModules', [...new Set([...loaded.map((m) => m.key), 'he-thong'])]);
@@ -175,10 +179,28 @@ export async function buildApp(): Promise<FastifyInstance> {
     app.log.info(`Add-in bật: ${addin.manifest.id} ${addin.manifest.version}`);
   }
   app.decorate('addins', addins);
+
+  // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: module SDK (modules/<key>/, BIZCITY-EXTENSION §3) — registry + cổng theo đơn vị như phân hệ; route sinh từ action dưới
+  // /api/v1/m/<key>/; quyền manifest vào registry quyền; subscriber vào bộ sự kiện (dispatcher bỏ qua đơn vị tắt module).
+  // Mã module lỗi (thiếu, defineModule sai) → dừng khởi động như manifest phân hệ hỏng.
+  const wantSdk = env.ENABLED_MODULES.split(',').map((s) => s.trim()).filter(Boolean);
+  const sdkLoaded = sdkModules.filter((m) => (!wantSdk.length || wantSdk.includes('*') || wantSdk.includes(m.key)) && decide(m.key));
+  for (const m of sdkLoaded) {
+    const def = await importSdkModule(m);
+    registerModulePermissions(m.key, m.manifest.permissions ?? []);
+    await app.register(async (scope) => {
+      scope.addHook('preHandler', moduleGate([m.key]));
+      mountActions(scope, def.actions);
+    }, { prefix: `/api/v1/m/${m.key}` });
+    registerSubscribers(def.subscribers);
+    app.log.info(`Module bật: ${m.key} ${m.manifest.version}`);
+  }
+  app.enabledModules.push(...sdkLoaded.map((m) => m.key));
   // [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — manifest của phân hệ / add-in đang bật (GET /api/v1/system/modules?detail=true)
   app.decorate('moduleManifests', [
     ...app.enabledModules.map((k) => MODULE_MANIFESTS.get(k)).filter((m) => m !== undefined),
     ...addins.map((a) => ADDIN_MANIFESTS.get(a.manifest.id)).filter((m) => m !== undefined),
+    ...sdkLoaded.map((m) => m.manifest),
   ]);
   // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: action khai quyền không có trong Core / manifest → dừng khởi động (gõ sai, module chưa khai quyền)
   const unknownPerms = unknownActionPermissions();

@@ -133,6 +133,7 @@ interface ActionContext {
 |---|---|---|
 | `Errors` | `core/errors` | `validation`, `notFound`, `conflict`, `forbidden`, `posting`, … mã chuẩn ACTION §7. Module không tự đặt HTTP status |
 | `z` | `zod` | Re-export để module và runtime cùng một bản zod (kiểm `input`, sinh OpenAPI / MCP) |
+| `sql` <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1 --> | `kysely` | Câu SQL có tham số cho bảng của chính module (`mod_<key>.*`) trong `ctx.data.module(tx => sql`…`.execute(tx))` — kiểu `Database` của Core không biết bảng module. `${giá trị}` luôn thành tham số, không ghép chuỗi (R-SEC) |
 | `money.toCents`, `money.fromCents`, `money.toNumber` | `db/client.toNumber`, `@ketoan/contracts` money | Tiền `numeric(18,2)`, cộng trừ bằng xu |
 | `docRef(type, id)` | — | Khoá chứng từ `<key>.<loại>:<id>` dùng cho `docKey`, sự kiện, liên kết |
 

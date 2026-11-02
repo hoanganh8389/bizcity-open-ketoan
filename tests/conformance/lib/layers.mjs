@@ -58,6 +58,8 @@ export const LAYER_MAP = [
   ['core/apps.ts', 'P', 'apps.external'],
   ['core/module-registry.ts', 'P', 'module-sdk'],
   ['core/module-lifecycle.ts', 'P', 'module-sdk'],
+  // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: chỗ nạp module SDK (modules/<key>/)
+  ['core/sdk-modules.ts', 'P', 'module-sdk'],
   ['db/module-db.ts', 'P', 'data'],
   ['cli/', 'P', 'cli'],
   // Khoá có tiền tố gốc (packages/…) so với đường dẫn đầy đủ — gói có tên tệp trùng gói khác (index.ts của Kernel là K).
