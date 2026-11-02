@@ -200,7 +200,7 @@ Khung chi tiết một mục bể:
 - Xu hướng theo tuần.
 - Câu dẫn cố định: "Bảng này để cùng học cách nhập đúng, không để đánh giá cá nhân."
 
-Bản mẫu tĩnh: `mockups/tram-kiem-tra.html` (S021-3).
+Bản mẫu tĩnh: [mockups/tram-kiem-tra.html](mockups/tram-kiem-tra.html) (S021-3). <!-- [2026-11-02 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-3: bản mẫu đã có -->
 
 ## 8. Chấm điểm và chỉ số
 

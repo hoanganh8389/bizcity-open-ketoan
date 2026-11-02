@@ -1,0 +1,370 @@
+<!doctype html>
+<!-- [2026-11-02 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-3: bản mẫu tĩnh Trạm kiểm tra đầu vào (ACC14: Cần sửa, khung chi tiết theo lớp, sửa tại bể, Kiểm thử, so lần) + Bảng điểm đầu vào (Q3) — chờ chủ duyệt bố cục trước W3 -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trạm kiểm tra</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;
+  --accent:#0b5cad;--warn-bg:#fff3e0;--bad-bg:#fdecea;--ok-bg:#e8f5ee;--info-bg:#e8f0fb;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;
+  --accent:#5b9cf0;--warn-bg:#33260f;--bad-bg:#3a1717;--ok-bg:#12301f;--info-bg:#15243a;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;
+  --accent:#5b9cf0;--warn-bg:#33260f;--bad-bg:#3a1717;--ok-bg:#12301f;--info-bg:#15243a;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button,.btn{background:transparent;color:var(--ink);border:0;padding:6px 11px;font:inherit;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--soft);font-weight:600}
+.btn{border:1px solid var(--line);border-radius:8px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.note{padding:7px 16px;font-size:12.5px;background:var(--soft);color:var(--muted)}
+main{padding:16px;max-width:1320px;margin:0 auto;min-width:0}
+h2{margin:0 0 4px;font-size:18px}
+h3{margin:0 0 8px;font-size:15px}
+.lead{color:var(--muted);margin:0 0 14px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:12px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;font:inherit;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.count{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--soft);font-size:12px;text-align:center;margin-left:4px}
+.count.bad{background:var(--bad-bg);color:var(--bad)}
+.split{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.filters select,.filters input{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);min-width:0}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding:9px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:6px}
+.list li:first-child{border-top:0}
+.list li[aria-current="true"]{background:var(--soft)}
+.score{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;border:3px solid var(--bad);color:var(--bad)}
+.score.mid{border-color:var(--warn);color:var(--warn)}
+.score.hi{border-color:var(--ok);color:var(--ok)}
+.li-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-sub{color:var(--muted);font-size:12.5px}
+.chip{display:inline-block;padding:1px 7px;border-radius:10px;font:11.5px ui-monospace,Consolas,monospace;margin:2px 3px 0 0;border:1px solid var(--line)}
+.chip.block{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.chip.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.chip.hint{background:var(--info-bg);color:var(--info);border-color:transparent}
+.verdict{border-left:4px solid var(--bad);background:var(--bad-bg);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.verdict b{font-size:15px}
+.verdict .meta{color:var(--muted);font-size:12.5px;margin-top:4px}
+.layer{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);display:flex;gap:8px;align-items:center}
+.layer::after{content:"";flex:1;border-top:1px solid var(--line)}
+.finding{border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.finding.warn{border-left-color:var(--warn)}
+.finding.hint{border-left-color:var(--info)}
+.f-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.f-head b{flex:1;min-width:180px}
+.diff{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:8px 0;font-size:13px}
+.diff span:nth-child(odd){color:var(--muted)}
+.why{font-size:13px;margin:4px 0}
+.why b{font-weight:600}
+details summary{cursor:pointer;color:var(--accent);font-size:13px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 12px}
+.form label{display:block;font-size:12px;color:var(--muted)}
+.form input{width:100%;font:inherit;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.form input.bad{border:2px solid var(--bad);background:var(--bad-bg)}
+.form input.warn{border:2px solid var(--warn);background:var(--warn-bg)}
+.form input.patched{border:2px dashed var(--accent)}
+.reason{margin-top:10px}
+.reason textarea{width:100%;min-height:52px;font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.drift{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--info-bg);color:var(--info);font-size:12px;font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.actions .hint{color:var(--muted);font-size:12px;flex-basis:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+.good{color:var(--ok)}.badc{color:var(--bad)}.warnc{color:var(--warn)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.tile .k{color:var(--muted);font-size:12.5px}
+.tile .d{font-size:12px;color:var(--muted)}
+.pledge{border:1px dashed var(--line);border-radius:8px;padding:8px 12px;color:var(--muted);margin-bottom:12px;font-size:13px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:110px;padding-top:6px}
+.bars div{flex:1;background:var(--accent);border-radius:4px 4px 0 0;position:relative;min-width:0}
+.bars div span{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted)}
+.bars-x{display:flex;gap:6px;font-size:11px;color:var(--muted)}
+.bars-x span{flex:1;text-align:center;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px}
+.annot{font-size:12px;color:var(--muted);border-left:3px solid var(--accent);padding:2px 8px;margin:8px 0}
+[hidden]{display:none!important}
+@media (max-width:820px){.split{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">K</div><div>Chứng từ<small>ACC14 · Trạm kiểm tra đầu vào</small></div></div>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="Màn">
+      <button type="button" aria-pressed="true" data-view="tram">Trạm kiểm tra</button>
+      <button type="button" aria-pressed="false" data-view="diem">Bảng điểm đầu vào</button>
+    </div>
+    <div class="seg" role="group" aria-label="Giao diện">
+      <button type="button" aria-pressed="false" data-theme-btn="light">Sáng</button>
+      <button type="button" aria-pressed="false" data-theme-btn="dark">Tối</button>
+    </div>
+  </div>
+  <div class="note">Bản mẫu tĩnh (PHASE-021 S021-3) — dữ liệu giả. Chờ chủ dự án duyệt bố cục trước khi làm W3 / W4. Đường xanh có nét đứt là ghi chú thiết kế, không có trên màn thật.</div>
+</header>
+
+<main>
+<!-- ============ TRẠM KIỂM TRA ============ -->
+<section id="view-tram">
+  <h2>Trạm kiểm tra đầu vào</h2>
+  <p class="lead">Chứng từ bị cửa nạp từ chối nằm ở đây, chưa vào sổ. Sửa ở nguồn rồi gửi lại là tốt nhất; sửa tại bể khi nguồn không sửa kịp (có dấu lệch nguồn).</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true">Cần sửa <span class="count bad">7</span></button>
+    <button role="tab" aria-selected="false">Chờ định khoản <span class="count">12</span></button>
+    <button role="tab" aria-selected="false">Lỗi định khoản <span class="count">2</span></button>
+    <button role="tab" aria-selected="false">Đã xử lý <span class="count">31</span></button>
+    <button role="tab" aria-selected="false">Thử của tôi <span class="count">3</span></button>
+  </div>
+  <div class="annot">Hai thẻ giữa giữ nguyên như ACC14 hôm nay (sự việc <code>pending</code> / <code>error</code>). Ba thẻ còn lại đọc bể chờ: <code>open</code>, đã đóng 7 ngày gần nhất, <code>trial</code> của người đang xem.</div>
+
+  <div class="split">
+    <!-- danh sách -->
+    <div class="card">
+      <div class="filters">
+        <select aria-label="Nguồn"><option>Mọi nguồn</option><option>pos-demo</option><option>app: kho-ngoai</option><option>Nhập tay</option></select>
+        <select aria-label="Loại"><option>Mọi loại</option><option>Bán hàng</option><option>Mua hàng</option><option>Thu tiền</option></select>
+        <input type="search" placeholder="Mã lỗi / số chứng từ" aria-label="Tìm">
+      </div>
+      <ul class="list" id="list">
+        <li aria-current="true">
+          <div class="score">0</div>
+          <div><div class="li-title">HD-0012 · Bán hàng · CN-HN01</div>
+            <div class="li-sub">pos-demo · lần 3 · 2 giờ trước</div>
+            <span class="chip block">IN-SHAPE-003</span><span class="chip block">IN-SUM-006</span><span class="chip warn">IN-MD-005</span></div>
+        </li>
+        <li>
+          <div class="score">0</div>
+          <div><div class="li-title">PN-0458 · Mua hàng · CN-HCM02</div>
+            <div class="li-sub">app: kho-ngoai · lần 1 · 5 giờ trước</div>
+            <span class="chip block">IN-MD-001</span></div>
+        </li>
+        <li>
+          <div class="score">0</div>
+          <div><div class="li-title">HD-0019 · Bán hàng · CN-HN01</div>
+            <div class="li-sub">pos-demo · lần 1 · hôm qua</div>
+            <span class="chip block">IN-BIZ-004</span></div>
+        </li>
+        <li>
+          <div class="score mid">65</div>
+          <div><div class="li-title">PT-0077 · Thu tiền · CN-HN01</div>
+            <div class="li-sub">Nhập tay · lần 2 · hôm qua · <b>chỉ còn cảnh báo</b></div>
+            <span class="chip warn">IN-BIZ-006</span><span class="chip warn">IN-SUM-003</span></div>
+        </li>
+        <li>
+          <div class="score mid">80</div>
+          <div><div class="li-title">HD-0021 · Bán hàng · CN-DN01</div>
+            <div class="li-sub">pos-demo · lần 1 · 2 ngày trước</div>
+            <span class="chip warn">IN-BIZ-005</span><span class="chip hint">IN-BIZ-007</span></div>
+        </li>
+      </ul>
+      <div class="annot">Sắp điểm tăng dần rồi mới nhất. Điểm 0 = còn lỗi chặn; 1–99 = chỉ còn cảnh báo (chấp nhận được có lý do); thẻ "lần N" là số lần nguồn gửi cùng nguyên văn (gộp, không thêm dòng).</div>
+    </div>
+
+    <!-- chi tiết -->
+    <div class="card">
+      <div class="verdict">
+        <b>Chứng từ HD-0012 chưa vào sổ: 2 lỗi phải sửa, 1 cảnh báo. Điểm 0/100.</b>
+        <div class="meta">Nguồn <code>pos-demo</code> · docKey <code>pos:CN-HN01:HD-0012</code> · nhận lần đầu 08:12, lần gần nhất 10:40 (lần 3) · mã yêu cầu <code>req-7c1e90ab</code> · mục bể #1042</div>
+      </div>
+
+      <div class="layer">Khuôn (L1)</div>
+      <div class="finding">
+        <div class="f-head"><b>Ngày không đúng định dạng YYYY-MM-DD</b><span class="chip block">IN-SHAPE-003</span><a href="#" data-jump="docDate">Ngày chứng từ →</a></div>
+        <div class="diff"><span>Đã gửi</span><code>05/10/2026</code><span>Đúng phải là</span><code>2026-10-05</code></div>
+        <p class="why"><b>Vì sao kế toán cần:</b> ngày quyết định kỳ ghi sổ và kỳ khoá; đọc "05/10" có thể là 5 tháng 10 hay 10 tháng 5.</p>
+        <p class="why"><b>Sửa ở nguồn:</b> cấu hình xuất của máy bán hàng → định dạng ngày ISO.</p>
+        <details><summary>Bài học IN-SHAPE-003</summary><p class="why">Trang <code>docs/huong-dan/loi-dau-vao/IN-SHAPE-003.md</code> mở trong ngăn bên (ví dụ đúng / sai, câu hỏi tự kiểm).</p></details>
+      </div>
+
+      <div class="layer">Số học (L2)</div>
+      <div class="finding">
+        <div class="f-head"><b>Tổng thuế khác cộng thuế các dòng</b><span class="chip block">IN-SUM-006</span><a href="#" data-jump="tax">Tổng thuế →</a></div>
+        <div class="diff"><span>Đã gửi</span><code>31 850</code><span>Cộng các dòng</span><code>31 852</code></div>
+        <p class="why"><b>Vì sao kế toán cần:</b> thuế trên chứng từ phải khớp sổ hoá đơn (TK 3331); lệch 2 đ là lệch tờ khai.</p>
+        <p class="why"><b>Sửa ở nguồn:</b> làm tròn thuế theo từng dòng rồi cộng, không làm tròn trên tổng.</p>
+      </div>
+
+      <div class="layer">Danh mục (L3)</div>
+      <div class="finding warn">
+        <div class="f-head"><b>Mã số thuế đối tượng sai định dạng</b><span class="chip warn">IN-MD-005</span><a href="#" data-jump="taxCode">MST khách →</a></div>
+        <div class="diff"><span>Đã gửi</span><code>01234567</code><span>Cần</span><code>10 hoặc 13 chữ số</code></div>
+        <p class="why"><b>Vì sao:</b> hoá đơn xuất cho MST sai sẽ bị cơ quan thuế từ chối. Cảnh báo: chứng từ vẫn vào sổ được nếu người có quyền chấp nhận kèm lý do.</p>
+      </div>
+
+      <div class="layer">Nghiệp vụ (L4) · Định khoản (L5)</div>
+      <p class="why" style="color:var(--muted)">Không có phát hiện. Định khoản thử (L5) có ở W5.</p>
+
+      <h3 style="margin-top:16px">Chứng từ <span class="drift">sửa tại bể = lệch nguồn</span></h3>
+      <div class="form">
+        <div><label for="docNo">Số chứng từ</label><input id="docNo" value="HD-0012" readonly></div>
+        <div><label for="docDate">Ngày chứng từ</label><input id="docDate" class="patched" value="2026-10-05"></div>
+        <div><label for="branch">Chi nhánh</label><input id="branch" value="CN-HN01" readonly></div>
+        <div><label for="taxCode">MST khách</label><input id="taxCode" class="warn" value="01234567"></div>
+        <div><label for="before">Tiền trước thuế</label><input id="before" value="398 150" readonly></div>
+        <div><label for="tax">Tổng thuế</label><input id="tax" class="bad" value="31 850"></div>
+        <div><label for="total">Tổng thanh toán</label><input id="total" value="430 000" readonly></div>
+      </div>
+      <div class="annot">Ô viền đỏ = lỗi chặn, vàng = cảnh báo, nét đứt xanh = đã sửa tại bể (bản vá chồng lên nguyên văn, nguyên văn không đổi). Có nút chuyển sang xem JSON nguyên văn.</div>
+      <div class="reason">
+        <label for="why">Lý do sửa tại bể (bắt buộc)</label>
+        <textarea id="why">Máy bán hàng CN-HN01 xuất ngày dd/mm; đã báo bên POS sửa cấu hình (phiếu hỗ trợ giả định #88).</textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn" type="button">Kiểm thử</button>
+        <button class="btn pri" type="button" disabled title="Còn lỗi chặn IN-SUM-006">Nộp lại</button>
+        <button class="btn" type="button" disabled title="Còn lỗi chặn — chỉ chấp nhận được khi chỉ còn cảnh báo">Chấp nhận cảnh báo…</button>
+        <button class="btn" type="button">Bỏ mục…</button>
+        <span class="hint">Nộp lại đi đúng cửa nạp (nguyên văn + bản vá). "Chấp nhận cảnh báo" chỉ cho mã <code>warn</code> và vai trò được cấu hình; mã <code>block</code> không ai chấp nhận được, kể cả chủ đơn vị. "Bỏ mục" dành cho kế toán trưởng, có lý do.</span>
+      </div>
+
+      <h3 style="margin-top:16px">Lịch sử lần thử</h3>
+      <div class="tbl">
+      <table>
+        <thead><tr><th>So</th><th>Lần</th><th>Lúc</th><th>Ai / nguồn</th><th class="num">Điểm</th><th>Hết lỗi</th><th>Lỗi mới</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" aria-label="Chọn lần 4"></td><td>4 · Kiểm thử</td><td>10:52</td><td>Lê Minh An (sửa tại bể)</td><td class="num">0</td><td><span class="chip block">IN-SHAPE-003</span></td><td>—</td></tr>
+          <tr><td><input type="checkbox" checked aria-label="Chọn lần 3"></td><td>3 · nguồn gửi</td><td>10:40</td><td>pos-demo</td><td class="num">0</td><td>—</td><td>—</td></tr>
+          <tr><td><input type="checkbox" aria-label="Chọn lần 2"></td><td>2 · nguồn gửi</td><td>09:05</td><td>pos-demo</td><td class="num">0</td><td>—</td><td>—</td></tr>
+          <tr><td><input type="checkbox" checked aria-label="Chọn lần 1"></td><td>1 · nguồn gửi</td><td>08:12</td><td>pos-demo</td><td class="num">0</td><td>—</td><td><span class="chip block">IN-SHAPE-003</span><span class="chip block">IN-SUM-006</span><span class="chip warn">IN-MD-005</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="annot">Chọn hai lần để so (A/B): trường đổi, lỗi hết, lỗi mới. Lần 1–3 cùng nguyên văn nên gộp; nguồn chưa sửa gì sau ba lần gửi → đáng gọi bên POS.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BẢNG ĐIỂM ============ -->
+<section id="view-diem" hidden>
+  <h2>Bảng điểm đầu vào</h2>
+  <p class="lead">Kỳ: 30 ngày gần nhất · mọi kế toán của đơn vị xem được (ADR-0014 Q3).</p>
+  <div class="pledge">Bảng này để cùng học cách nhập đúng, không để đánh giá cá nhân. Chỉ có mã lỗi, điểm và số mục — không có nội dung chứng từ.</div>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Đạt lần đầu (30 ngày)</div><div class="v good">91,4%</div><div class="d">7 ngày: 93,0% · ▲ 1,6 điểm</div></div>
+    <div class="tile"><div class="k">Điểm trung bình mục bể</div><div class="v">38</div><div class="d">0 = còn lỗi chặn</div></div>
+    <div class="tile"><div class="k">Mục đang mở</div><div class="v badc">7</div><div class="d">lâu nhất 4 ngày (PN-0441)</div></div>
+    <div class="tile"><div class="k">Thời gian xử lý (trung vị)</div><div class="v">3,2 giờ</div><div class="d">từ nhận tới đóng</div></div>
+    <div class="tile"><div class="k">Sửa tại bể (lệch nguồn)</div><div class="v warnc">6</div><div class="d">trên 38 mục đã đóng · 16%</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Theo nguồn</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Nguồn</th><th class="num">Gửi</th><th class="num">Đạt lần đầu</th><th class="num">Điểm TB</th><th>Hay gặp</th></tr></thead>
+        <tbody>
+          <tr><td>pos-demo</td><td class="num">318</td><td class="num">93,4%</td><td class="num">31</td><td><span class="chip block">IN-SHAPE-003</span></td></tr>
+          <tr><td>app: kho-ngoai</td><td class="num">96</td><td class="num">84,4%</td><td class="num">12</td><td><span class="chip block">IN-MD-001</span></td></tr>
+          <tr><td>Nhập tay</td><td class="num">41</td><td class="num">90,2%</td><td class="num">62</td><td><span class="chip warn">IN-BIZ-006</span></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Theo người lập</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Người lập</th><th class="num">Gửi</th><th class="num">Đạt lần đầu</th><th class="num">Điểm TB</th><th>Hay gặp</th></tr></thead>
+        <tbody>
+          <tr><td>Lê Minh An</td><td class="num">22</td><td class="num">95,5%</td><td class="num">65</td><td><span class="chip warn">IN-SUM-003</span></td></tr>
+          <tr><td>Trần Bảo Ngọc</td><td class="num">19</td><td class="num">84,2%</td><td class="num">58</td><td><span class="chip warn">IN-BIZ-006</span></td></tr>
+          <tr><td>khoá API pos-demo</td><td class="num">318</td><td class="num">93,4%</td><td class="num">31</td><td><span class="chip block">IN-SHAPE-003</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="annot">Q3: hiện cho mọi người có <code>documents:write</code>; người chỉ xem không thấy bảng theo người.</div>
+    </div>
+    <div class="card">
+      <h3>Mười mã lỗi nhiều nhất</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Mã</th><th>Tên</th><th class="num">Mục</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip block">IN-SHAPE-003</span></td><td>Ngày không đúng định dạng</td><td class="num">14</td><td><a href="#">Bài học</a></td></tr>
+          <tr><td><span class="chip block">IN-MD-001</span></td><td>Chi nhánh chưa có</td><td class="num">9</td><td><a href="#">Bài học</a></td></tr>
+          <tr><td><span class="chip block">IN-SUM-006</span></td><td>Tổng thuế khác cộng thuế dòng</td><td class="num">7</td><td><a href="#">Bài học</a></td></tr>
+          <tr><td><span class="chip warn">IN-BIZ-006</span></td><td>Số hoá đơn đã có ở chứng từ khác</td><td class="num">5</td><td><a href="#">Bài học</a></td></tr>
+          <tr><td><span class="chip warn">IN-SUM-003</span></td><td>Thuế dòng khác trước thuế × thuế suất</td><td class="num">4</td><td><a href="#">Bài học</a></td></tr>
+          <tr><td><span class="chip block">IN-BIZ-004</span></td><td>Phiên bản cũ hơn bản đã nhận</td><td class="num">3</td><td><a href="#">Bài học</a></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Đạt lần đầu theo tuần</h3>
+      <div class="bars" aria-label="Tỷ lệ đạt lần đầu 6 tuần">
+        <div style="height:62%"><span>86%</span></div><div style="height:70%"><span>88%</span></div><div style="height:66%"><span>87%</span></div>
+        <div style="height:78%"><span>90%</span></div><div style="height:84%"><span>92%</span></div><div style="height:88%"><span>93%</span></div>
+      </div>
+      <div class="bars-x"><span>T39</span><span>T40</span><span>T41</span><span>T42</span><span>T43</span><span>T44</span></div>
+      <div class="annot">Trục đứng bắt đầu từ 70% để thấy xu hướng; màn thật ghi rõ mốc trục.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+(function () {
+  var views = { tram: document.getElementById('view-tram'), diem: document.getElementById('view-diem') };
+  document.querySelectorAll('[data-view]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-view]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      Object.keys(views).forEach(function (k) { views[k].hidden = k !== b.dataset.view; });
+    });
+  });
+  document.querySelectorAll('[data-theme-btn]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.documentElement.setAttribute('data-theme', b.dataset.themeBtn);
+      document.querySelectorAll('[data-theme-btn]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+  });
+  document.querySelectorAll('#list li').forEach(function (li) {
+    li.addEventListener('click', function () {
+      document.querySelectorAll('#list li').forEach(function (x) { x.setAttribute('aria-current', String(x === li)); });
+    });
+  });
+  document.querySelectorAll('.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tabs button').forEach(function (x) { x.setAttribute('aria-selected', String(x === b)); });
+    });
+  });
+  document.querySelectorAll('[data-jump]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var el = document.getElementById(a.dataset.jump);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
