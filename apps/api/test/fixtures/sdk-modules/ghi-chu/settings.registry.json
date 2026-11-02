@@ -1,0 +1,6 @@
+{
+  "settings": [
+    { "key": "bizcity.ghi_chu.max_len", "class": "C", "owner": "ghi-chu", "scopes": ["tenant"], "storage": "tenants.settings.ghi_chu.max_len",
+      "schema": "integer 1..500", "default": "40", "readBy": "ctx.settings.get (ghi-chu.note.create)", "writeBy": "—", "permission": "settings:write", "audit": null, "affectsPosting": false }
+  ]
+}

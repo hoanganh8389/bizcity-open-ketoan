@@ -29,7 +29,23 @@ export interface WebMenuItem {
 }
 
 export interface WebRoute<C> { path: string; component: C; permission?: string }
-export interface WebSlotDef<C> { slot: WebSlot; component: C; permission?: string }
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): nhãn thẻ (tab) + props mỗi điểm cắm nhận
+/**
+ * Props khung giao diện truyền vào thành phần của slot:
+ *   partner.detail.tab      { code, name }   thẻ trong hồ sơ khách hàng (đối tượng đã lưu)
+ *   product.detail.tab      { sku, name }    thẻ trong form mặt hàng (chưa vẽ)
+ *   dashboard.widget        {}               ô trên trang Tổng quan
+ *   document.detail.panel   { docRef }       (chưa vẽ)
+ *   ledger.drilldown.source { docKey }       (chưa vẽ)
+ */
+export interface SlotProps {
+  'partner.detail.tab': { code: string; name: string };
+  'product.detail.tab': { sku: string; name: string };
+  'dashboard.widget': Record<string, never>;
+  'document.detail.panel': { docRef: string };
+  'ledger.drilldown.source': { docKey: string };
+}
+export interface WebSlotDef<C> { slot: WebSlot; component: C; permission?: string; /** Nhãn thẻ / tiêu đề ô (mặc định nhãn module). */ label?: string }
 
 export interface WebModuleDef<C = unknown> {
   key: string;

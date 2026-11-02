@@ -16,6 +16,9 @@ import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): thẻ do module SDK cắm vào hồ sơ khách hàng (partner.detail.tab)
+import { sdkSlots } from '../../phan-he/sdk-modules';
+import { useEnabledModules } from '../../layout/useAppMenu';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ListPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
@@ -200,7 +203,10 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
   const [codeTouched, setCodeTouched] = useState(Boolean(value.code));
   const [codeHint, setCodeHint] = useState('');
   const [invalid, setInvalid] = useState<string[]>([]);
-  const [tab, setTab] = useState<'general' | 'trade' | 'internal'>('general');
+  const [tab, setTab] = useState<string>('general');
+  const enabledMods = useEnabledModules();
+  const { can } = useAuth();
+  const slotTabs = isNew ? [] : sdkSlots('partner.detail.tab').filter((s) => (!enabledMods || enabledMods.has(s.module)) && (!s.permission || can(s.permission)));
   const set = (p: Partial<Partner>) => setV((x) => ({ ...x, ...p }));
   const kind = v.kind ?? 'customer';
   const noun = NOUN[kind] ?? 'đối tượng';
@@ -329,7 +335,9 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
         <button role="tab" className={`tab ${tab === 'general' ? 'active' : ''}`} onClick={() => setTab('general')}>Thông tin chung</button>
         <button role="tab" className={`tab ${tab === 'trade' ? 'active' : ''}`} onClick={() => setTab('trade')}>Mua bán hàng</button>
         <button role="tab" className={`tab ${tab === 'internal' ? 'active' : ''}`} onClick={() => setTab('internal')}>Nội bộ quản lý</button>
+        {slotTabs.map((s) => <button key={s.module} role="tab" className={`tab ${tab === `mod:${s.module}` ? 'active' : ''}`} onClick={() => setTab(`mod:${s.module}`)}>{s.label}</button>)}
       </div>}
+      {kind !== 'supplier' && slotTabs.filter((s) => tab === `mod:${s.module}`).map((s) => <s.component key={s.module} code={v.code ?? ''} name={v.name ?? ''} />)}
       {kind !== 'supplier' && tab === 'general' && (
         <>
           <div style={{ ...half, display: 'grid', gap: 8 }}>

@@ -13,12 +13,13 @@
  *
  * Tìm và đọc manifest là đồng bộ (registry, lệnh `module` dùng); nạp mã là bất đồng bộ (app.ts). Khoá trùng phân hệ / add-in → dừng.
  */
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { ModuleDef } from '@bizcity/module-sdk';
 import { env } from '../config/env.js';
 import { loadModuleManifest, type ModuleManifest } from './module-manifest.js';
+import type { SettingEntry } from '@bizcity/platform/core/settings';
 
 export interface SdkModule {
   key: string;
@@ -43,6 +44,14 @@ export function discoverSdkModules(root = modulesRoot()): SdkModule[] {
     out.push({ key: e.name, dir, manifest: loadModuleManifest(pathToFileURL(file), { key: e.name, kind: 'module' }) });
   }
   return out.sort((a, b) => (a.key < b.key ? -1 : 1));
+}
+
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G2)
+/** Khoá cấu hình module khai chi tiết ở settings.registry.json (cùng khuôn registry Core: { settings: [...] }); không có tệp → []. */
+export function sdkModuleSettings(m: SdkModule): SettingEntry[] {
+  const f = path.join(m.dir, 'settings.registry.json');
+  if (!existsSync(f)) return [];
+  return (JSON.parse(readFileSync(f, 'utf8')) as { settings?: SettingEntry[] }).settings ?? [];
 }
 
 /** Mã module: dist/api/index.js (bản dựng); chưa dựng thì api/index.ts (vitest, tsx khi dev). */

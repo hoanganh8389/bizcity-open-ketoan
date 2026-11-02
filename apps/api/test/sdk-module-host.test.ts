@@ -6,6 +6,11 @@
  *   T014-4  tắt module ở một đơn vị → MODULE_DISABLED ở đơn vị đó, đơn vị khác vẫn chạy
  *   T014-5  manifest có trong danh sách module bật; subscriber đã đăng ký
  *   T014-6  lỗi là dừng: mã không export defineModule; khoá trùng phân hệ của Core
+ * PHASE-014 W4 — khe hở ca chuẩn Hợp đồng (G1–G6), cùng module thử, chạy ở đơn vị B (đơn vị A đã tắt module ở T014-4):
+ *   T014-9   G1 workflow YAML của module dùng quyền <module>:<việc>; quyền Core gõ sai vẫn bị bắt
+ *   T014-10  G2 khoá cấu hình module tự khai (settings.registry.json): ctx.settings.get đọc mặc định
+ *   T014-11  G3 hook masterdata.referenceCheck: đối tượng có ghi chú → Core không cho xoá; không ghi chú → xoá được
+ *   T014-12  G4 + G6 subscriber đọc bảng module (ctx.module), gửi thông báo (ctx.notify); giao lại không gửi trùng; người dùng xem, đánh dấu đã đọc
  */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -16,7 +21,8 @@ import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { forgetTenantModules } from '@bizcity/platform/core/module-registry';
 import { runModuleMigrations } from '@bizcity/platform/db/module-db';
-import { listSubscribers } from '../src/core/events.js';
+import { dispatchOnce, emitEvent, listSubscribers } from '../src/core/events.js';
+import { parseWorkflow } from '@bizcity/module-sdk';
 import { buildApp } from '../src/app.js';
 import { bundledModules, syncBundled } from '../src/core/module-lifecycle.js';
 import { discoverSdkModules, importSdkModule } from '../src/core/sdk-modules.js';
@@ -32,7 +38,7 @@ const asOwner = <T>(fn: (trx: typeof db) => Promise<T>) => db.transaction().exec
   await sql`SET LOCAL ROLE NONE`.execute(trx);
   return fn(trx as unknown as typeof db);
 });
-const req = (method: 'GET' | 'POST', url: string, token: string, payload?: unknown) =>
+const req = (method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string, token: string, payload?: unknown) =>
   app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${token}`, 'idempotency-key': `w1-${Math.random().toString(36).slice(2, 12)}` } });
 const login = async (email: string, password: string) =>
   (await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { tenantCode: a.tenantCode, email, password } })).json().data.token as string;
@@ -107,5 +113,50 @@ describe('Chỗ nạp module SDK', () => {
     mkdirSync(path.join(root, 'kho'));
     writeFileSync(path.join(root, 'kho', 'bizcity.module.json'), manifest('kho'));
     expect(() => bundledModules(root)).toThrow(/trùng mã phân hệ/);
+  });
+
+  it('T014-9: G1 workflow của module dùng quyền <module>:<việc>; quyền Core gõ sai bị bắt', () => {
+    const yaml = (perm: string) => `type: ghi-chu.note
+label: Ghi chú
+states:
+  draft: { group: draft }
+  done: { group: done }
+transitions:
+  close: { title: Đóng, from: [draft], to: done, permission: ${perm}, sod: true }
+`;
+    const wf = parseWorkflow(yaml('ghi-chu:write'), 'ghi-chu.note.workflow.yaml');
+    expect(wf.plan('close', { status: 'draft', createdBy: 'user:1' }, { id: 'user:2', can: (p) => p === 'ghi-chu:write' }).to).toBe('done');
+    expect(() => wf.plan('close', { status: 'draft', createdBy: 'user:1' }, { id: 'user:1', can: () => true })).toThrow(/tách nhiệm/);
+    expect(() => parseWorkflow(yaml('documents:fly'), 'x.workflow.yaml')).toThrow();
+  });
+
+  it('T014-10: G2 khoá cấu hình của module — mặc định 40 ký tự chặn ghi chú dài', async () => {
+    const long = await req('POST', '/api/v1/m/ghi-chu/notes', b.token, { body: 'x'.repeat(41) });
+    expect(long.json().error?.message, long.body).toMatch(/40 ký tự/);
+    expect((await req('POST', '/api/v1/m/ghi-chu/notes', b.token, { body: 'x'.repeat(40) })).statusCode).toBe(200);
+  });
+
+  it('T014-11: G3 đối tượng có ghi chú → Core không cho xoá (referenceCheck); không có → xoá được', async () => {
+    for (const code of ['KH-GHICHU', 'KH-TRONG']) expect((await req('PUT', `/api/v1/partners/${code}`, b.token, { name: code, kind: 'customer' })).statusCode).toBeLessThan(300);
+    expect((await req('POST', '/api/v1/m/ghi-chu/notes', b.token, { body: 'Hỏi lại báo giá', partnerCode: 'KH-GHICHU' })).statusCode).toBe(200);
+    const del = await req('DELETE', '/api/v1/partners/KH-GHICHU', b.token);
+    expect(del.statusCode, del.body).toBe(409);
+    expect(del.json().error.message).toMatch(/ghi-chu: 1 ghi chú/);
+    expect((await req('DELETE', '/api/v1/partners/KH-TRONG', b.token)).statusCode).toBe(200);
+  });
+
+  it('T014-12: G4 + G6 đồng hồ ngày → subscriber đếm bảng module, gửi thông báo một lần; người dùng xem, đánh dấu đã đọc', async () => {
+    const tB = (await db.selectFrom('tenants').select('id').where('code', '=', b.tenantCode).executeTakeFirstOrThrow()).id;
+    await db.transaction().execute((trx) => emitEvent(trx, { tenantId: tB, type: 'bizcity.clock.daily', subject: 'clock:test', source: 'bizcity.platform', actor: { kind: 'system', id: 'test' } }));
+    await dispatchOnce({ consumers: ['ghi-chu.daily'], tenantId: tB, limit: 10 });
+    await dispatchOnce({ consumers: ['ghi-chu.daily'], tenantId: tB, limit: 10 });
+    const list = await req('GET', '/api/v1/notifications', b.token);
+    expect(list.statusCode, list.body).toBe(200);
+    const mine = list.json().data.items.filter((i: { source: string }) => i.source === 'ghi-chu');
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ title: 'Có 2 ghi chú', link: '/app/ghi-chu/danh-sach', read: false });
+    expect((await req('POST', '/api/v1/notifications/read', b.token, { ids: [mine[0].id] })).json().data.marked).toBe(1);
+    expect((await req('GET', '/api/v1/notifications', b.token)).json().data.unread).toBe(0);
+    expect((await req('GET', '/api/v1/notifications', a.token)).json().data.items).toEqual([]);
   });
 });

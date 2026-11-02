@@ -32,7 +32,9 @@ import { enabledModules, CORE_ROUTES, MODULE_MANIFESTS } from './phan-he/index.j
 import type { Routes } from './phan-he/types.js';
 import { decideLoad, hashModuleDir, moduleGate, readRegistry, recordLoad, type LoadDecision } from '@bizcity/platform/core/module-registry';
 import { bundledModules } from './core/module-lifecycle.js';
-import { discoverSdkModules, importSdkModule } from './core/sdk-modules.js';
+import { discoverSdkModules, importSdkModule, sdkModuleSettings } from './core/sdk-modules.js';
+import { registerModuleSettings } from '@bizcity/platform/core/settings';
+import { registerHooks } from '@bizcity/platform/core/hooks';
 import { mountActions } from '@bizcity/platform/core/actions';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
@@ -188,11 +190,14 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   for (const m of sdkLoaded) {
     const def = await importSdkModule(m);
     registerModulePermissions(m.key, m.manifest.permissions ?? []);
+    // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G2): khoá cấu hình của module (ctx.settings.get)
+    registerModuleSettings(m.key, sdkModuleSettings(m), (m.manifest.settings as string[] | undefined) ?? []);
     await app.register(async (scope) => {
       scope.addHook('preHandler', moduleGate([m.key]));
       mountActions(scope, def.actions);
     }, { prefix: `/api/v1/m/${m.key}` });
     registerSubscribers(def.subscribers);
+    registerHooks(def.hooks ?? []);
     app.log.info(`Module bật: ${m.key} ${m.manifest.version}`);
   }
   app.enabledModules.push(...sdkLoaded.map((m) => m.key));

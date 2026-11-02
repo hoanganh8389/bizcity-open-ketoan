@@ -537,7 +537,7 @@
             "read-view:bizcity_read.khong_co",
             "key-dir",
             "standard",
-            "cap-planned:ui.slots",
+            "cap-planned:ui.account-card",
             "cap-unknown:ledger.anything",
             "perm-prefix:contracts:read",
             "action-prefix:khac.contract.list",

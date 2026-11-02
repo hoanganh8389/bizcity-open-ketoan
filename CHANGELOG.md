@@ -13,6 +13,10 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
+- **Năng lực cho module SDK theo ca chuẩn Hợp đồng** (PHASE-014 W4): workflow YAML dùng được cho chứng từ của module (`@bizcity/module-sdk` xuất `loadWorkflow`; quyền `<module>:<việc>`; mã dời sang `@bizcity/platform/core/workflow`, `apps/api/src/core/workflow.ts` chuyển tiếp); khoá cấu hình module tự khai (`modules/<key>/settings.registry.json`); hook `masterdata.referenceCheck` (xoá đối tượng còn được module dùng → `CONFLICT`); subscriber có `ctx.module`, `ctx.settings`, `ctx.notify`.
+- **Thông báo trong ứng dụng** (`notify.inapp`, migration `0060_thong_bao`): `ctx.notify.send` cho module, chuông trên thanh trên cùng, `GET /api/v1/notifications`, `POST /api/v1/notifications/read`.
+- **Slot giao diện** (`ui.slots`): `partner.detail.tab` (thẻ trong hồ sơ khách), `dashboard.widget` (ô trên Tổng quan).
 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 -->
 - **Lệnh `bizcity`** (gói `@bizcity/cli`, PHASES 4.1): `npx bizcity module new <key>` sinh module từ `templates/starter-module`; `module check <key>` chạy luật module, typecheck, test hợp đồng module trên CSDL test; `migrate`, `ledger verify`, `doctor`. [docs/ops/CLI.md](docs/ops/CLI.md) §1b.
 - **Template module** `templates/starter-module/` (PHASES 4.2) kèm AGENTS.md riêng; **`@bizcity/ui-kit`** (PHASES 3.8, năng lực `ui.kit` → available): màn của module dùng thành phần và client API của Core qua gói này, không import `apps/web`.
@@ -256,6 +260,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
+- Chạy migration `0060_thong_bao` (chỉ thêm hai bảng `notifications`, `notification_reads`). Hợp đồng `bizcity_extension` 1.3.0-draft: hook `document.beforeTransition` bỏ (chưa module nào dùng).
 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3 -->
 - Workspace npm thêm `modules/*` (mỗi module SDK là một gói) và hai gói `packages/ui-kit`, `packages/cli`: chạy `npm install`. Image API / web nay chép thư mục `modules/`; job cài đặt (`db-migrate`) tự chạy migration của từng module SDK trước khi ghi registry. Bản cài không có module SDK: không đổi gì.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->

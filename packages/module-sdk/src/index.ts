@@ -20,10 +20,19 @@ import type { ModuleManifestLike } from './manifest.js';
 export { defineAction } from '@bizcity/platform/core/actions';
 export type { ActionContext, ActionDef, AnyActionDef, ActionEffect, ActionIdempotency, ActionSideEffect } from '@bizcity/platform/core/actions';
 export { defineSubscriber } from '@bizcity/platform/core/events';
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G3): điểm móc của Core (masterdata.referenceCheck)
+export { defineHook, HOOKS } from '@bizcity/platform/core/hooks';
+export type { HookDef, HookContext, ReferenceCheckInput } from '@bizcity/platform/core/hooks';
+export type { NotifyInput } from '@bizcity/platform/core/notify';
+import type { HookDef } from '@bizcity/platform/core/hooks';
 export type { SubscriberDef, SubscriberContext, EventEnvelope } from '@bizcity/platform/core/events';
 
 // ── Lỗi chuẩn (bizcity_errors@1): module ném Errors.*, không tự đặt mã HTTP ────────────────────────────────────────────────
 export { Errors, AppError } from '@bizcity/platform/core/errors';
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G1): máy trạng thái khai báo (documents.workflow) cho chứng từ của module — tệp <loại>.workflow.yaml cạnh mã
+/** Nạp `<loại>.workflow.yaml` (`loadWorkflow(new URL('./x.workflow.yaml', import.meta.url))`); `wf.plan(doc, transition, workflowActor(...))` quyết được chuyển không. */
+export { loadWorkflow, parseWorkflow, Workflow, STATUS_GROUPS } from '@bizcity/platform/core/workflow';
+export type { WorkflowDoc, WorkflowActor, WorkflowStep, StatusGroup } from '@bizcity/platform/core/workflow';
 export type { ErrorCode } from '@ketoan/contracts';
 
 // ── Tiện ích thuần ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -49,6 +58,7 @@ export interface ModuleDef {
   manifest: ModuleManifestLike;
   actions: AnyActionDef[];
   subscribers: SubscriberDef[];
+  hooks: HookDef[];
 }
 
 /**
@@ -58,7 +68,7 @@ export interface ModuleDef {
  *   - mỗi subscriber có module = key, id `<key>.…`.
  * Schema đầy đủ, năng lực, docType: bộ kiểm (SC-CON-2) — không lặp ở đây.
  */
-export function defineModule(def: { manifest: ModuleManifestLike; actions?: AnyActionDef[]; subscribers?: SubscriberDef[] }): ModuleDef {
+export function defineModule(def: { manifest: ModuleManifestLike; actions?: AnyActionDef[]; subscribers?: SubscriberDef[]; hooks?: HookDef[] }): ModuleDef {
   const m = def.manifest;
   const bad: string[] = [];
   if (m.contract !== 'bizcity_module@1') bad.push(`contract "${m.contract}" (cần bizcity_module@1)`);
@@ -74,6 +84,7 @@ export function defineModule(def: { manifest: ModuleManifestLike; actions?: AnyA
     if (s.module !== m.key) bad.push(`subscriber ${s.id}: module "${s.module}" ≠ "${m.key}"`);
     if (!s.id.startsWith(`${m.key}.`)) bad.push(`subscriber ${s.id} phải bắt đầu "${m.key}."`);
   }
+  for (const h of def.hooks ?? []) if (h.module !== m.key) bad.push(`hook ${h.id}: module "${h.module}" ≠ "${m.key}"`);
   if (bad.length) throw new Error(`Module ${m.id ?? m.key}: ${bad.join('; ')}`);
-  return Object.freeze({ manifest: m, actions: def.actions ?? [], subscribers: def.subscribers ?? [] });
+  return Object.freeze({ manifest: m, actions: def.actions ?? [], subscribers: def.subscribers ?? [], hooks: def.hooks ?? [] });
 }

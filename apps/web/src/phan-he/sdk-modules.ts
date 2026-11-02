@@ -5,7 +5,7 @@
  * thì dựng lại web (ADR-0011 D3). Máy chủ tắt module ở đơn vị → /api/v1/system/modules không trả → giao diện ẩn như phân hệ.
  */
 import type { ComponentType } from 'react';
-import { webModuleParts, type WebModuleDef, type WebModuleParts } from '@bizcity/module-sdk/web';
+import { webModuleParts, type WebModuleDef, type WebModuleParts, type WebSlot } from '@bizcity/module-sdk/web';
 
 type Manifest = { key: string; description?: string; ui?: { icon?: string; color?: string; order?: number } };
 
@@ -15,8 +15,18 @@ const inBrowser = typeof window !== 'undefined';
 const defs = inBrowser ? import.meta.glob<{ default: WebModuleDef<ComponentType> }>('../../../../modules/*/web/index.tsx', { eager: true }) : {};
 const manifests = inBrowser ? import.meta.glob<Manifest>('../../../../modules/*/bizcity.module.json', { eager: true, import: 'default' }) : {};
 
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5)
+export interface SdkSlot { module: string; label: string; component: ComponentType<Record<string, unknown>>; permission?: string }
+const SLOTS: Record<string, SdkSlot[]> = {};
+
 export const SDK_WEB: WebModuleParts<ComponentType>[] = Object.entries(defs).map(([file, mod]) => {
   const m = manifests[file.replace(/web\/index\.tsx$/, 'bizcity.module.json')];
   if (!m || m.key !== mod.default.key) throw new Error(`Module ${file}: thiếu bizcity.module.json hoặc key khác defineWebModule`);
+  for (const s of mod.default.slots ?? []) (SLOTS[s.slot] ??= []).push({ module: mod.default.key, label: s.label ?? mod.default.label, component: s.component as ComponentType<Record<string, unknown>>, permission: s.permission });
   return webModuleParts(mod.default, { description: m.description, ...m.ui });
 });
+
+/** Thành phần module cắm vào một điểm (slot) của màn Core. Khung giao diện lọc theo module bật + quyền. */
+export function sdkSlots(slot: WebSlot): SdkSlot[] {
+  return SLOTS[slot] ?? [];
+}

@@ -181,4 +181,14 @@ Phân hệ hiện có không viết lại một lần. Theo thứ tự:
 - **Nạp:** `modules/<key>/` có `bizcity.module.json` + `api/index.ts` (`export default defineModule(...)`) → API nạp như phân hệ (registry, hash, bật / tắt theo đơn vị), route sinh từ action dưới `/api/v1/m/<key>/`. `web/index.tsx` (`export default defineWebModule(...)`) → web gom lúc dựng: mục Tổng quan (biểu tượng / màu / thứ tự ở manifest `ui`), nhóm menu `mod-<key>`, route dưới `/app/<key>` (trang chủ) hoặc `/app/<key>/…`.
 - **`@bizcity/module-sdk/web`:** `defineWebModule`, `webModuleParts` (khung giao diện dùng), `WEB_SLOTS`. Xuất thẳng mã nguồn (không phụ thuộc gì) — bộ đóng gói của web dùng, không cần dựng SDK.
 - **`@bizcity/ui-kit`:** thành phần + `useApi` / `useCan` / `useQuery` cho màn của module; bản thật do `apps/web` cung cấp (`provideUiKit`). Màn của module không import `apps/web/src/*`.
-- **Chưa có:** slot (`partner.detail.tab`…) phía web — khai được ở `defineWebModule` nhưng khung giao diện chưa vẽ.
+- **Slot** (W4): `partner.detail.tab` (props `{ code, name }`, thẻ trong hồ sơ khách đã lưu) và `dashboard.widget` (ô trên Tổng quan) vẽ được; `label` của slot là nhãn thẻ. Ba slot còn lại khai được nhưng chưa vẽ.
+
+## Đợt W4 — năng lực cho ca chuẩn <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
+
+| Cần | Dùng |
+|---|---|
+| Trạng thái duyệt chứng từ của module | `loadWorkflow(new URL('./x.workflow.yaml', import.meta.url))` + `wf.plan(verb, { status, createdBy, levelsRequired }, { id: ctx.actor.id, can: ctx.can })`; quyền trong YAML được là `<key>:<việc>` |
+| Cấu hình của module | khai khoá ở `settings` (manifest) **và** chi tiết ở `modules/<key>/settings.registry.json` (cùng khuôn registry Core, `owner` = key, `storage: tenants.settings.*`, `scopes: [tenant]`); đọc `ctx.settings.get(key)` |
+| Core hỏi "khách này còn dùng không" | `defineHook({ id: '<key>.…', module: '<key>', hook: 'masterdata.referenceCheck', handle: async (ctx, { kind, code }) => câu | null })`, khai ở `defineModule({ hooks })` và `extensions.hooks` |
+| Thông báo | `ctx.notify.send({ to: { permission: '<key>:…' }, title, link, dedupeKey })` (action, subscriber) |
+| Subscriber đọc / ghi bảng module | `ctx.module(tx => …)` (vai trò `mod_<key>_rw`), `ctx.settings.get`, `ctx.notify` |

@@ -20,8 +20,26 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import pg from 'pg';
 import { env } from '../config/env.js';
+import { sql } from 'kysely';
+import type { Db } from './client.js';
+import { Errors } from '../core/errors.js';
 
 const KEY_RE = /^[a-z][a-z0-9-]{1,31}$/;
+
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G3/G6): chạy fn bằng vai trò mod_<key>_rw trong giao dịch đang mở — dùng chung cho action (ctx.data.module), subscriber, hook
+/** Chạy `fn` bằng vai trò mod_<key>_rw (bảng của module + khung nhìn đọc khai trong manifest), xong trả vai trò cũ. Chưa cài CSDL module → NOT_READY. */
+export async function asModuleRole<T>(trx: Db, key: string, fn: (tx: Db) => Promise<T>): Promise<T> {
+  const { rw } = moduleRoles(key);
+  const has = await sql<{ ok: boolean }>`SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ${rw}) AS ok`.execute(trx);
+  if (!has.rows[0]?.ok) throw Errors.notReady(`Module ${key} chưa có CSDL riêng (vai trò ${rw}): chạy "module migrate" khi cài module`);
+  const prev = (await sql<{ u: string }>`SELECT current_user AS u`.execute(trx)).rows[0]!.u;
+  await sql`SET LOCAL ROLE ${sql.id(rw)}`.execute(trx);
+  try {
+    return await fn(trx);
+  } finally {
+    await sql`SET LOCAL ROLE ${sql.id(prev)}`.execute(trx).catch(() => {});
+  }
+}
 
 export function moduleRoles(key: string): { schema: string; owner: string; rw: string } {
   if (!KEY_RE.test(key)) throw new Error(`Khoá module "${key}" sai khuôn`);
