@@ -1,11 +1,4 @@
-# PHASE-022 · 40 — Master checklist
-<!-- [2026-11-02 07:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — master checklist: S022-1..16, ca bằng chứng T022-1..10, log -->
-
-> Nguồn trạng thái **việc con** duy nhất của phase. Nhiều phiên: chỉ sửa đúng dòng theo ID; Log chỉ nối thêm.
-> Ký hiệu: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài nhóm · ❌ huỷ.
-> © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-
-## Việc con
+có | 🟡 2026-11-02 — cảnh báo kiểm chuẩn (API + dải cảnh báo) dùng `RemedyView`; màn Toàn vẹn, Trạm tiền kiểm theo sau || ✅ 2026-11-02 — `tests/conformance/checks/remedy/remedy.check.mjs`; tự kiểm 3 phát hiện ở repo-bad || ✅ 2026-11-02 — 24 kiểm tự chẩn đoán + 10 mục bảng kiểm khoá kỳ (`period-check.remedies.ts`); Tier 0 có stopTheLine || ✅ 2026-11-02 — [BIZCITY-REMEDY-v1](../../contracts/BIZCITY-REMEDY-v1.md), `packages/contracts/src/remedy.ts` (Remedy, SCREENS, STOP_THE_LINE_STEP) <!-- [2026-11-02 08:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1 --> || ✅ 2026-11-02 — chủ duyệt bản mẫu; làm theo đề xuất D022-1..6 và phương án đề xuất của Q022-1..5 (vai trò auditor có) || ✅ 2026-11-02 — chủ duyệt bố cục ("mockup ok rồi, code nhé") |con
 
 | ID | Việc | Đợt | Ưu tiên | Code | Trạng thái |
 |---|---|---|---|---|---|
@@ -46,3 +39,4 @@
 | Lúc | Ai | Việc |
 |---|---|---|
 | 2026-11-02 19:00 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "duy trì 2 phương án, cảnh báo và phương án xử lý… chạy 1 loạt các giả định lỗi… đóng vai kế toán trưởng, audit – ban kiểm soát, thanh tra thuế… scoreboard checklist… warning lỗi phải kèm phương án khắc phục cụ thể" → mở PHASE-022, W0 tài liệu + bản mẫu |
+| 2026-11-02 20:20 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "mockup ok rồi, code nhé" → W1: bizcity_remedy@1, remedy cho mọi kiểm + bảng kiểm khoá kỳ, SC-FIX-1, RemedyView ở dải cảnh báo |

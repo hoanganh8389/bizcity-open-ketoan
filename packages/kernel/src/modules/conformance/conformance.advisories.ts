@@ -11,9 +11,11 @@
  * Kết quả chỉ để người dùng đọc "Vì sao" và quyết định tiếp hay dừng; không có cấu hình nào biến cảnh báo thành từ chối.
  * Người tiếp tục thì màn gọi core.conformance.acknowledge (bằng chứng, T3). Không số tiền trong cảnh báo (R-DIAG-6).
  */
+// [2026-11-02 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: cảnh báo trả kèm remedy có cấu trúc của kiểm (bizcity_remedy@1).
+import type { Remedy } from '@ketoan/contracts';
 import { runDiagnostics, type DiagResult } from '@bizcity/platform/system/diagnostics';
 import type { Db } from '@bizcity/platform/db/client';
-import { periodCloseGaps } from '../periods/period.diagnostics.js';
+import { PERIOD_DIAGNOSTICS, periodCloseGaps } from '../periods/period.diagnostics.js';
 import { latestRun } from './conformance.service.js';
 
 /** Kiểm L3 trạng thái theo kỳ dùng cho cảnh báo trước khoá kỳ (lớp Doanh nghiệp, C09). */
@@ -24,6 +26,8 @@ export interface Advisory {
   title: string;
   /** Hậu quả + cách xử lý (câu `fix` của kiểm). */
   why: string;
+  /** Phương án khắc phục có cấu trúc (bizcity_remedy@1). */
+  remedy?: Remedy;
   count: number;
   /** Khoá chứng từ / mã hàng / chi nhánh:kỳ — không số tiền. */
   sample: string[];
@@ -36,7 +40,7 @@ export type AdvisoryContext =
 const pad = (n: number) => String(n).padStart(2, '0');
 const lastDay = (y: number, m: number) => `${y}-${pad(m)}-${pad(new Date(Date.UTC(y, m, 0)).getUTCDate())}`;
 const flagged = (c: DiagResult) => c.count > 0 && c.level !== 'pass' && c.level !== 'empty';
-const fromCheck = (c: DiagResult): Advisory => ({ code: c.code, title: c.title, why: c.fix, count: c.count, sample: c.sample.slice(0, 10) });
+const fromCheck = (c: DiagResult): Advisory => ({ code: c.code, title: c.title, why: c.fix, remedy: c.remedy, count: c.count, sample: c.sample.slice(0, 10) });
 
 export async function advisoriesFor(trx: Db, tenantId: string, c: AdvisoryContext) {
   const advisories: Advisory[] = [];
@@ -55,6 +59,7 @@ export async function advisoriesFor(trx: Db, tenantId: string, c: AdvisoryContex
         code: 'PERIOD_CLOSE_OPEN',
         title: 'Việc cuối kỳ của tháng chưa xong theo thứ tự: tính giá vốn, kết chuyển',
         why: 'Mẫu: <chi nhánh>:<YYYY-MM>:<việc còn thiếu>. gia-von: có hàng xuất mà chưa có phiếu giá vốn tháng. ket-chuyen: còn số doanh thu / chi phí theo bộ quy tắc kết chuyển. thu-tu: giá vốn tính lại sau kết chuyển, cần chạy lại kết chuyển. Khoá kỳ khi còn thiếu thì báo cáo tháng này sai cho tới khi mở khoá làm lại.',
+        remedy: PERIOD_DIAGNOSTICS.find((d) => d.code === 'PERIOD_CLOSE_OPEN')?.remedy,
         count: gaps.length, sample: gaps.slice(0, 10),
       });
     }

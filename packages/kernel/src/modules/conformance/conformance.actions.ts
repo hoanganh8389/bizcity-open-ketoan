@@ -72,7 +72,9 @@ const view = (r: ConformanceRunRow) => {
 };
 const today = () => ymd(new Date());
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
-const advisory = z.object({ code: z.string(), title: z.string(), why: z.string(), count: z.number(), sample: z.array(z.string()) });
+// [2026-11-02 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: cảnh báo kèm remedy (bizcity_remedy@1).
+export const remedySchema = z.object({ steps: z.array(z.object({ text: z.string(), screen: z.object({ code: z.string(), path: z.string(), label: z.string() }).optional(), role: z.string().optional() })), owner: z.string(), verify: z.object({ code: z.string().optional(), screen: z.object({ code: z.string(), path: z.string(), label: z.string() }).optional() }), stopTheLine: z.boolean().optional(), forbid: z.array(z.string()).optional() });
+const advisory = z.object({ code: z.string(), title: z.string(), why: z.string(), remedy: remedySchema.optional(), count: z.number(), sample: z.array(z.string()) });
 
 /** Chi nhánh theo mã (tuỳ chọn) — cảnh báo kỳ theo chi nhánh khi khoá theo chi nhánh. */
 async function branchIdOf(tx: Parameters<typeof latestRun>[0], tenantId: string, code: string | undefined): Promise<string | undefined> {
