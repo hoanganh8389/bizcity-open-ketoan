@@ -807,6 +807,10 @@ export interface PostingReasonsTable {
   cashflow_code: string | null;
   flags: JsonDefault;
   is_active: Generated<boolean>;
+  // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: cặp tài khoản của lý do journal (0058)
+  /** Lý do journal: tài khoản Nợ / Có của mỗi dòng manual_journal (0058); loại khác NULL. */
+  debit_account: string | null;
+  credit_account: string | null;
 }
 
 export interface PaymentMethodsTable {

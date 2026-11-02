@@ -5,6 +5,8 @@
  * Thanh nút Ghi · Huỷ thay đổi · Thêm · Sửa (form đủ tuỳ chọn) · Xoá · Nạp · Xuất, Tìm file excel để nhập, Tạo mẫu nhập liệu.
  * Các giá trị VAT, nhập khẩu, khoản mục lưu trong flags (vatOut, vatIn, importVatAccount, importDutyAccount,
  * importVatDebitAccount, costItem); khoản mục được gắn vào mọi dòng bút toán của chứng từ mang lý do.
+ * Lý do loại "Phiếu kế toán module lập" (journal, PHASE-011 3.15): cặp tài khoản Nợ / Có cho mỗi dòng manual_journal — module chỉ
+ * chọn lý do và số tiền, không chọn tài khoản.
  */
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,7 +20,7 @@ import { ExcelImport, type ImportResult } from '@/components/ExcelImport';
 import { AccountPicker, ListPicker, useAccountList } from '@/components/pickers';
 import { Save, Undo2 } from 'lucide-react';
 
-interface Reason { code: string; name: string; kind: string; counterAccount: string | null; revenueAccount: string | null; expenseAccount: string | null; cashflowCode: string | null; flags: Record<string, unknown>; isActive: boolean }
+interface Reason { code: string; name: string; kind: string; counterAccount: string | null; revenueAccount: string | null; expenseAccount: string | null; cashflowCode: string | null; debitAccount?: string | null; creditAccount?: string | null; flags: Record<string, unknown>; isActive: boolean }
 interface TaxCode { code: string; name: string; direction: string }
 interface Dim { code: string; name: string; isActive: boolean }
 /** Module của lý do (loại chứng từ dùng lý do). */
@@ -27,6 +29,7 @@ const MODULE: Record<string, string> = {
   in: 'Phiếu nhập kho/ Hàng bán trả lại',
   payment: 'Phiếu chi/ Trả tiền nhà cung cấp',
   receipt: 'Phiếu thu/ Thu tiền khách hàng',
+  journal: 'Phiếu kế toán module lập (manual_journal)',
 };
 const DOC_DEFAULT: Record<string, string> = { sale: 'Hoá đơn bán hàng', sale_return: 'Hàng bán trả lại', receipt: 'Phiếu thu' };
 const flag = (r: Reason, k: string) => (r.flags?.[k] ? String(r.flags[k]) : '');
@@ -44,6 +47,8 @@ const COLUMNS: Column<Reason>[] = [
   { key: 'revenueAccount', header: 'Tài khoản doanh thu', type: 'code', width: 130 },
   { key: 'expenseAccount', header: 'Tài khoản chi phí', type: 'code', width: 120 },
   { key: 'cashflowCode', header: 'Mã lưu chuyển tiền tệ', type: 'code', width: 140 },
+  { key: 'debitAccount', header: 'TK Nợ (phiếu kế toán)', type: 'code', width: 150, hidden: true },
+  { key: 'creditAccount', header: 'TK Có (phiếu kế toán)', type: 'code', width: 150, hidden: true },
   { key: 'module', header: 'Thuộc module', width: 260, value: (r) => MODULE[r.kind] ?? r.kind },
   { key: 'default', header: 'Mặc định cho', width: 130, hidden: true, value: (r) => (r.flags?.default ? DOC_DEFAULT[String(r.flags.default)] ?? String(r.flags.default) : '') },
   { key: 'postToLedger', header: 'Ghi sổ', type: 'check', width: 65, hidden: true, value: (r) => r.flags?.postToLedger !== false },
@@ -74,7 +79,8 @@ function applyEdits(r: Reason, p: Partial<Record<EditKey, string>>): Reason {
 }
 
 function bodyOf(r: Reason) {
-  return { name: r.name, kind: r.kind, counterAccount: r.counterAccount || undefined, revenueAccount: r.revenueAccount || undefined, expenseAccount: r.expenseAccount || undefined, cashflowCode: r.cashflowCode || undefined, flags: r.flags ?? {}, isActive: r.isActive !== false };
+  return { name: r.name, kind: r.kind, counterAccount: r.counterAccount || undefined, revenueAccount: r.revenueAccount || undefined, expenseAccount: r.expenseAccount || undefined, cashflowCode: r.cashflowCode || undefined,
+    debitAccount: r.debitAccount || undefined, creditAccount: r.creditAccount || undefined, flags: r.flags ?? {}, isActive: r.isActive !== false };
 }
 
 export function ReasonsPage() {
@@ -157,6 +163,8 @@ export function ReasonsPage() {
       if (x.revenueAccount) next.revenueAccount = x.revenueAccount;
       if (x.expenseAccount) next.expenseAccount = x.expenseAccount;
       if (x.cashflowCode) next.cashflowCode = x.cashflowCode;
+      if (x.debitAccount) next.debitAccount = x.debitAccount;
+      if (x.creditAccount) next.creditAccount = x.creditAccount;
       for (const k of FLAG_KEYS) if (x[k]) next.flags[k] = x[k];
       if (cur && JSON.stringify(bodyOf(cur)) === JSON.stringify(bodyOf(next))) { res.skipped!++; continue; }
       try { await api.put(`/api/v1/posting/reasons/${encodeURIComponent(next.code)}`, bodyOf(next)); res.updated++; } catch (e) { res.errors.push(`${x.code}: ${errorText(e)}`); }
@@ -222,7 +230,9 @@ function ReasonForm({ value, onClose }: { value: Partial<Reason> & { isNew?: boo
   const save = useMutation({
     mutationFn: () => api.put(`/api/v1/posting/reasons/${encodeURIComponent(v.code ?? '')}`, {
       name: v.name, kind: v.kind, counterAccount: v.counterAccount || undefined, revenueAccount: v.revenueAccount || undefined,
-      expenseAccount: v.expenseAccount || undefined, cashflowCode: v.cashflowCode || undefined, flags, isActive: v.isActive !== false,
+      expenseAccount: v.expenseAccount || undefined, cashflowCode: v.cashflowCode || undefined,
+      debitAccount: v.kind === 'journal' ? v.debitAccount || undefined : undefined, creditAccount: v.kind === 'journal' ? v.creditAccount || undefined : undefined,
+      flags, isActive: v.isActive !== false,
     }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['reasons'] }); if (value.isNew) onClose(); else viewAgain[1](); },
   });
@@ -236,6 +246,10 @@ function ReasonForm({ value, onClose }: { value: Partial<Reason> & { isNew?: boo
       <Field label="Mã lý do (*)"><input className="input mono" value={v.code ?? ''} disabled={!value.isNew} onChange={(e) => set({ code: e.target.value.trim() })} /></Field>
       <Field label="Lý do (*)"><input className="input" value={v.name ?? ''} onChange={(e) => set({ name: e.target.value })} /></Field>
       <Field label="Thuộc module"><select className="select input" value={v.kind} onChange={(e) => set({ kind: e.target.value })}>{Object.entries(MODULE).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
+      {v.kind === 'journal' && <>
+        <Field label="Tài khoản Nợ (*)" hint="Mỗi dòng phiếu kế toán module lập ghi Nợ tài khoản này"><AccountPicker postingOnly value={v.debitAccount ?? ''} onChange={(debitAccount) => set({ debitAccount })} /></Field>
+        <Field label="Tài khoản Có (*)" hint="… và Có tài khoản này (khác tài khoản Nợ)"><AccountPicker postingOnly value={v.creditAccount ?? ''} onChange={(creditAccount) => set({ creditAccount })} /></Field>
+      </>}
       <Field label="Tài khoản ngầm định" hint="Đối ứng công nợ / tiền; trống = ngầm định"><AccountPicker postingOnly value={v.counterAccount ?? ''} onChange={(counterAccount) => set({ counterAccount })} placeholder="Ngầm định" /></Field>
       <Field label="Mã VAT ra"><ListPicker items={taxItems('output')} value={flag(v as Reason, 'vatOut')} onChange={(x) => setFlag('vatOut', x)} placeholder="Theo mặt hàng" /></Field>
       <Field label="Mã VAT vào"><ListPicker items={taxItems('input')} value={flag(v as Reason, 'vatIn')} onChange={(x) => setFlag('vatIn', x)} placeholder="Theo mặt hàng" /></Field>

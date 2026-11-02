@@ -586,8 +586,10 @@
       "mode": "module",
       "checks": {
         "SC-TPL-1": {
-          "min": 9,
+          "min": 11,
           "keys": [
+            "journal:PB1",
+            "journal:XB3",
             "acc-dup:1111",
             "acc-parent:99901",
             "acc:1119",

@@ -34,8 +34,8 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [007 Cô lập đơn vị (RLS)](PHASE-007-CO-LAP-DON-VI-RLS/README.md) | 2 | 2.4 | G1-05, G3-06 | có | 100% | ✅ RLS mọi bảng có `tenant_id` (DG-PLAN-5 đạt); hiệu lực ở bản cài thật khi xong 0.7 (PHASE-001) |
 | [008 Sao lưu PITR](PHASE-008-SAO-LUU-PITR/README.md) | 2 | 2.15 | G1-08, G3-07 | có | 50% | 🟡 máy dev ĐẠT; ⛔ bật + diễn tập máy chủ thật |
 | [009 MCP ghi](PHASE-009-MCP-GHI/README.md) | 2 | 2.16 | G2-04 | có (2/3) | 100% | 🟡 `journal.post` ⛔ Q009-1 |
-| [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | một phần | 67% | 🟡 gói `@bizcity/platform`, `@bizcity/kernel` có (2.3, 2.7); còn 2.8 tách `packages/contracts/src/mua-hang` về phân hệ |
-| [011 Module SDK](PHASE-011-MODULE-SDK/README.md) | 3 | 3.1–3.3, 3.6, 3.10, 3.13–3.18 | G1-06, G1-10, G2-03 | có | 91% | 🟡 10/11 việc đủ tín hiệu (SDK, manifest, quyền, settings, CSDL theo module, registry, app ngoài, seed, web); còn 3.15 `manual_journal` (ADR-0015 Q1, K2) |
+| [010 Tách gói Kernel](PHASE-010-TACH-GOI-KERNEL/README.md) | 2 | 2.3, 2.7, 2.8 | — | có | 100% | ✅ gói `@bizcity/platform`, `@bizcity/kernel` (2.3), đính kèm / phiên bản / chữ ký chung (2.7), bộ máy mua hàng thành `@bizcity/mua-hang-domain` (2.8, 02/11) |
+| [011 Module SDK](PHASE-011-MODULE-SDK/README.md) | 3 | 3.1–3.3, 3.6, 3.10, 3.13–3.18 | G1-06, G1-10, G2-03 | có | 100% | ✅ 11/11 việc đủ tín hiệu; 3.15 `manual_journal` có mã (02/11, K1 / K3 / K4 duyệt) — còn K2: danh sách lý do journal cho gói nền chờ kế toán trưởng |
 | [012 Gói định khoản, workflow](PHASE-012-GOI-DINH-KHOAN-WORKFLOW/README.md) | 3 | 3.5, 3.7, 3.11, 3.12 | — | có | 100% | ✅ 3.5, 3.7, 3.11, 3.12 đủ tín hiệu |
 | [013 ui-kit, chuyển module](PHASE-013-UI-KIT-CHUYEN-MODULE/README.md) | 3 | 3.8, 3.9 | — | một phần | 25% | 🟡 3.8 `@bizcity/ui-kit` chưa; 3.9 `phan-he` → `modules` 50% |
 | [014 CLI, template, ca chuẩn](PHASE-014-CLI-TEMPLATE-CA-CHUAN/README.md) | 4 | 4.1–4.7 | G3-02 | một phần | 17% | 🟡 4.7 preset 67%, 4.4 AGENTS.md trong template 50%; CLI, starter template, ca chuẩn, lane runtime chưa |

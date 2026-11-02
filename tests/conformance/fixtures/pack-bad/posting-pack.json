@@ -15,7 +15,9 @@
   "reasons": [
     { "code": "XB1", "name": "Bán 1", "kind": "out", "counterAccount": "1311", "flags": { "default": "sale" } },
     { "code": "XB2", "name": "Bán 2", "kind": "out", "counterAccount": "1311", "flags": { "default": "sale" } },
-    { "code": "XB2", "name": "Bán 2 trùng mã", "kind": "out" }
+    { "code": "XB2", "name": "Bán 2 trùng mã", "kind": "out" },
+    { "code": "PB1", "name": "Phân bổ thiếu tài khoản Có", "kind": "journal", "debitAccount": "6427" },
+    { "code": "XB3", "name": "Xuất có cặp journal", "kind": "out", "debitAccount": "6427", "creditAccount": "242" }
   ],
   "scenarios": [
     { "id": "S-1", "title": "Lý do không có trong gói", "document": { "docType": "sale", "reasonCode": "KHONGCO" },

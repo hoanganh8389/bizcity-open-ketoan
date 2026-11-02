@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting/posting.service.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: luật manual_journal; lý do của bút toán = lý do dòng đầu khi chứng từ không ghi; tra đối tượng theo dòng
 /**
  * Điều phối định khoản một chứng từ gốc:
  *   1. Quyết định bộ sổ (nội bộ luôn có; thuế nếu có hoá đơn hợp lệ và không phải phiếu nội bộ;
@@ -25,6 +26,7 @@ import { buildSaleReturnParts } from './rules/sale-return.rule.js';
 import { buildPurchaseParts, buildPurchaseReturnParts } from './rules/purchase.rule.js';
 import { buildStockAdjustmentLines, buildTransferParts, type PostingPart } from './rules/stock.rule.js';
 import { buildCashTransferParts, buildPaymentParts } from './rules/cash.rule.js';
+import { buildManualJournalParts } from './rules/journal.rule.js';
 
 type Doc<T extends IngestDocument['docType']> = Extract<IngestDocument, { docType: T }>;
 type RuleFn = (doc: IngestDocument, ctx: RuleContext) => PostingPart[];
@@ -40,6 +42,7 @@ const RULES: Record<IngestDocument['docType'], RuleFn> = {
   cash_transfer: (doc, ctx) => buildCashTransferParts(doc as Doc<'cash_transfer'>, ctx),
   customer_payment: (doc, ctx) => buildPaymentParts(doc as Doc<'customer_payment'>, ctx),
   supplier_payment: (doc, ctx) => buildPaymentParts(doc as Doc<'supplier_payment'>, ctx),
+  manual_journal: (doc, ctx) => buildManualJournalParts(doc as Doc<'manual_journal'>, ctx),
 };
 
 /** Phiếu kho: chỉ có số lượng và giá trị, không có hoá đơn. */
@@ -90,6 +93,17 @@ export interface PostContext {
   policyVersion?: number | null;
 }
 
+/** Đối tượng theo dòng của phiếu kế toán module lập: mã → id. Chỉ tra đối tượng có sẵn (không tự thêm); mã lạ → lỗi khuôn. */
+async function linePartners(trx: Db, tenantId: string, lines: { lineKey: string; partnerCode?: string }[]): Promise<Map<string, string>> {
+  const codes = [...new Set(lines.map((l) => l.partnerCode).filter((c): c is string => Boolean(c)))];
+  if (!codes.length) return new Map();
+  const rows = await trx.selectFrom('partners').select(['id', 'code']).where('tenant_id', '=', tenantId).where('code', 'in', codes).execute();
+  const map = new Map(rows.map((r) => [r.code, String(r.id)]));
+  const missing = codes.filter((c) => !map.has(c));
+  if (missing.length) throw Errors.validation(`Đối tượng chưa có trong danh mục: ${missing.join(', ')}`, missing.map((c) => `dòng ${lines.filter((l) => l.partnerCode === c).map((l) => l.lineKey).join(', ')}: ${c}`));
+  return map;
+}
+
 /** Lấy một id khỏi map theo khoá và bỏ id đó khỏi các map còn lại (một bút toán chỉ được giữ một lần). */
 function takeReuse(key: string, from: Map<string, string[]> | undefined, others: (Map<string, string[]> | undefined)[]): string | undefined {
   const list = from?.get(key);
@@ -110,16 +124,19 @@ export const postingService = {
     const cfg = await postingConfigRepository.loadPostingConfig(trx, ctx.tenantId, skus, { asOf: doc.docDate.slice(0, 10), actor: ctx.actor });
     ctx.policyVersion = cfg.policyVersion;
     const resolver = new AccountResolver(cfg);
-    const parts = rule(doc, { resolver, partnerId: ctx.partnerId, stock: ctx.stock }).filter((p) => p.lines.length);
+    const partners = doc.docType === 'manual_journal' ? await linePartners(trx, ctx.tenantId, doc.lines) : undefined;
+    const parts = rule(doc, { resolver, partnerId: ctx.partnerId, stock: ctx.stock, partners }).filter((p) => p.lines.length);
     if (!parts.length) return []; // chứng từ 0 đồng: không có gì để ghi
     // Ghi mã lý do đã dùng (kể cả lý do mặc định) để sổ, bảng tổng hợp chứng từ tách được theo lý do.
-    const reasonCode = doc.reasonCode ?? resolver.reason(undefined, defaultReasonKey(doc)).code;
+    // Phiếu kế toán module lập không có lý do mặc định: chứng từ không ghi lý do thì lấy lý do của dòng đầu.
+    const headReason = doc.reasonCode ?? (doc.docType === 'manual_journal' ? doc.lines[0]?.reasonCode : undefined);
+    const reasonCode = headReason ?? resolver.reason(undefined, defaultReasonKey(doc)).code;
 
     const date = doc.docDate.slice(0, 10);
     const ids: string[] = [];
     // Bộ phận của chi nhánh và khoản mục của lý do: ghi vào mọi dòng của bút toán (dòng chưa có sẵn), để báo cáo
     // lãi lỗ, công nợ, chi phí lọc được theo cửa hàng, khoản mục.
-    const reason = resolver.reason(doc.reasonCode, defaultReasonKey(doc));
+    const reason = resolver.reason(headReason, defaultReasonKey(doc));
     const costItem = typeof (reason.flags as Record<string, unknown>)?.costItem === 'string' ? String((reason.flags as Record<string, unknown>).costItem) : undefined;
     const branchIds = [...new Set(parts.map((p) => p.branchId ?? ctx.branchId))];
     const depOf = new Map((await trx.selectFrom('branches').select(['id', 'department_code']).where('id', 'in', branchIds).execute()).map((b) => [b.id, b.department_code]));
@@ -183,6 +200,7 @@ const DESCRIPTION: Record<IngestDocument['docType'], string> = {
   cash_transfer: 'Chuyển tiền',
   customer_payment: 'Thu tiền khách hàng',
   supplier_payment: 'Trả tiền nhà cung cấp',
+  manual_journal: 'Phiếu kế toán',
 };
 
 function defaultDescription(doc: IngestDocument): string {

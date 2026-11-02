@@ -1,4 +1,5 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: loại chứng từ manual_journal (phiếu kế toán module lập)
 /**
  * Hằng số nghiệp vụ dùng chung.
  * Khai báo dạng `as const` để vừa dùng làm giá trị lúc chạy, vừa sinh kiểu TypeScript.
@@ -36,6 +37,8 @@ export const DOC_TYPES = {
   SUPPLIER_PAYMENT: 'supplier_payment',
   /** Khấu hao tài sản cố định, phân bổ công cụ dụng cụ / chi phí trả trước trong tháng (phần mềm tự sinh). */
   DEPRECIATION: 'depreciation',
+  /** Phiếu kế toán module lập qua cửa nạp (ADR-0015 Q1): dòng theo lý do journal, không số tài khoản. Khác `manual` (kế toán tự lập). */
+  MANUAL_JOURNAL: 'manual_journal',
 } as const;
 export type DocType = (typeof DOC_TYPES)[keyof typeof DOC_TYPES];
 
@@ -58,6 +61,7 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
   customer_payment: 'Thanh toán khách hàng',
   supplier_payment: 'Thanh toán nhà cung cấp',
   depreciation: 'Khấu hao, phân bổ',
+  manual_journal: 'Phiếu kế toán (module)',
 };
 
 /** Nhóm loại chứng từ ở màn đóng / mở kỳ (ACC2): mỗi nhóm một dải cột trên lưới khoá. */
@@ -65,7 +69,7 @@ export const DOC_TYPE_GROUPS: { label: string; types: DocType[] }[] = [
   { label: 'Bán hàng', types: ['sale', 'sale_return', 'customer_payment'] },
   { label: 'Mua hàng, kho', types: ['purchase', 'purchase_return', 'supplier_payment', 'transfer', 'stock_adjustment', 'cogs'] },
   { label: 'Tiền', types: ['receipt', 'payment', 'bank_receipt', 'bank_payment', 'cash_transfer'] },
-  { label: 'Kế toán', types: ['manual', 'depreciation', 'closing', 'opening'] },
+  { label: 'Kế toán', types: ['manual', 'manual_journal', 'depreciation', 'closing', 'opening'] },
 ];
 
 /** Thứ tự loại chứng từ dùng cho bộ lọc ở các sổ. */

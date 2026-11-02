@@ -4,7 +4,9 @@
 <!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1: ledgerQuery mở ở gốc gói @bizcity/kernel -->
 <!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0: §2 thêm cửa core.document.submit (runtime action) và ctx.ledger.submit (module, ADR-0011 D5) -->
 
-> **Phiên bản:** 1.2.0 · 2026-11-02 · **Trạng thái:** Ổn định (§2 thêm hai cửa, khuôn chứng từ không đổi)
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.3.0: docType manual_journal (PHASES 3.15, ADR-0015 Q1, K2) -->
+
+> **Phiên bản:** 1.3.0 · 2026-11-02 · **Trạng thái:** Ổn định (thêm `docType` `manual_journal`; các loại cũ không đổi)
 > **Nguồn sự thật:** `packages/contracts/src/documents.ts` (`ingestDocumentSchema`) · **JSON Schema:** [BIZCITY-LEDGER-INTAKE-v1.schema.json](BIZCITY-LEDGER-INTAKE-v1.schema.json)
 > **Luật:** [R-EVENT](../rules/RULE-EVENT.md) · **Hướng dẫn chi tiết từng loại kèm JSON mẫu:** [../api/](../api/README.md)
 > **Đổi tên (2026-10-29, trước khi phát hành):** trước đây gọi là `bizcity_event@1`. Tên `bizcity_event` nay dành cho **sự kiện miền** của Standard v1 ([BIZCITY-EVENT-v1.md](BIZCITY-EVENT-v1.md)). Hợp đồng này là **cửa nạp của nhân sổ cái**: phân hệ trong tiến trình gọi qua `ctx.ledger.submit()` của SDK, không gọi thẳng.
@@ -60,10 +62,13 @@ Xác thực: `X-Api-Key` có phạm vi `documents:write`. Header tuỳ chọn `X
 | `stock_adjustment` | **`direction`** (`increase`/`decrease`/`mixed`), **`lines[]`** (dòng kho; `mixed` thì `qty` có dấu) | **`totals{total}`** |
 | `cash_transfer` | **`toBranchCode`**, `fromMethodCode`, `toMethodCode`, `fromBankCode`, `toBankCode`, `toReasonCode`, `status` (`sent`/`received`) | **`totals{total > 0}`** |
 | `customer_payment`, `supplier_payment` | **`methodCode`**, `direction` (`in`/`out`), `lines[]` phân bổ `{lineKey, amount, branchCode?, invoiceDocKey?}` | **`totals{total > 0}`**, tổng phân bổ ≤ tổng |
+| `manual_journal` (từ 1.3.0) | **`lines[]`** ≥ 1 dòng `{**lineKey**, **reasonCode**, **amount** > 0, partnerCode?, description?}` — **khuôn đóng**: dòng / phiếu có trường lạ (số tài khoản, `taxCode`…) hay có `invoice` → `VALIDATION_ERROR` | **`totals{total > 0}`** = Σ `amount` |
 
 Dòng hàng (`sale`…`purchase_return`): **`lineKey`**, `sku`, `name`, `unit`, `qty` (ĐVT nhỏ nhất), `unitQty`, `unitRatio`, `unitPrice`, **`amountBeforeTax`** (đã trừ chiết khấu, tròn như hoá đơn), `discount`, **`taxCode`**, `taxAmount`, `warehouseCode`, `isGift`, `excludeFromCost`, `lotNo`, `expDate`, `note`, `cost`.
 
 Dòng kho (`transfer`, `stock_adjustment`): **`lineKey`**, **`sku`**, `name`, `unit`, **`qty`**, `amount` (giá vốn; 0 = định giá cuối tháng), `warehouseCode`.
+
+**Phiếu kế toán module lập (`manual_journal`, [ADR-0015](../adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md) Q1, đặc tả [50-DAC-TA-MANUAL-JOURNAL](../phases/PHASE-011-MODULE-SDK/50-DAC-TA-MANUAL-JOURNAL.md)):** module (`ctx.ledger.submit`) nộp phân bổ trả trước, trích trước, kết chuyển doanh thu chưa thực hiện… Mỗi dòng ghi **Nợ** `debit_account` / **Có** `credit_account` của lý do loại `journal` (kế toán khai ở Lý do – tài khoản, ACC18, hoặc gói định khoản), cả phiếu một bút toán. Lý do lạ / khác loại `journal` → lỗi định khoản. `partnerCode` phải có sẵn (không tự thêm); không có thì dùng `partner` của phiếu; tài khoản theo dõi đối tượng mà thiếu → sổ chặn. Chế độ định khoản mặc định **chờ duyệt** như mọi loại. Lõi `ke-toan` tự chọn tài khoản bằng phiếu kế toán của mình (`/api/v1/vouchers`), không qua loại này.
 
 ## 5. Kiểm ở cửa
 
@@ -110,6 +115,7 @@ Bảo đảm:
 
 ## 8. Changelog
 
+- **1.3.0 (2026-11-02):** thêm `docType` `manual_journal` (§4): dòng theo lý do `journal`, không số tài khoản, không thuế, khuôn đóng; năng lực `ledger.manual-journal` available (PHASES 3.15, K2). Lý do có thêm `kind: journal` + `debitAccount` / `creditAccount` (migration 0058, `bizcity_posting_template@1`).
 - **1.2.0 (2026-11-02):** §2 thêm hai cửa cùng đường vào Kernel (`submitDocumentIn` → `postDocumentIn`): action `core.document.submit` (Idempotency-Key, biên nhận, dry-run; lỗi không lưu chứng từ) và `ctx.ledger.submit` cho module (tiền tố `docKey`, `sourceSystem` = module). Khuôn chứng từ không đổi (PHASE-011, ADR-0011 D5).
 
 - **1.1.0 (2026-10-31):** §7.1 đọc sổ — năng lực `ledger.query` (PHASES 3.7, PHASE-012 S012-2): `ctx.ledger.query`, `ledgerQuery`, khung nhìn chỉ đọc `bizcity_read.*`. Khuôn nộp không đổi.

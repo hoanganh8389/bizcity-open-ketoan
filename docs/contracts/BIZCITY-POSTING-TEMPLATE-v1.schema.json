@@ -128,8 +128,10 @@
       "properties": {
         "code": { "$ref": "#/$defs/code" },
         "name": { "type": "string", "minLength": 2, "maxLength": 200 },
-        "kind": { "enum": ["in", "out", "receipt", "payment"] },
+        "kind": { "enum": ["in", "out", "receipt", "payment", "journal"] },
         "counterAccount": { "$ref": "#/$defs/account" },
+        "debitAccount": { "$ref": "#/$defs/account", "description": "kind journal (manual_journal): tài khoản Nợ của mỗi dòng" },
+        "creditAccount": { "$ref": "#/$defs/account", "description": "kind journal (manual_journal): tài khoản Có của mỗi dòng" },
         "revenueAccount": { "$ref": "#/$defs/account" },
         "expenseAccount": { "$ref": "#/$defs/account" },
         "cashflowCode": { "type": "string" },

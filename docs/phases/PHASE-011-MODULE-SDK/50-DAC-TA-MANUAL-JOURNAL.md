@@ -1,7 +1,8 @@
-# PHASE-011 · 50 — Đặc tả định khoản `manual_journal` (chờ kế toán trưởng ký)
+# PHASE-011 · 50 — Đặc tả định khoản `manual_journal`
 <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 (ADR-0015 Q1): đặc tả định khoản manual_journal theo lý do loại journal — bản để kế toán trưởng ký trước khi viết mã (K2) -->
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — duyệt K1, K3, K4 (chủ dự án, theo ý kiến kế toán trưởng); K2 còn chờ; mã + bộ tình huống xong -->
 
-> **Trạng thái:** ⛔ **chờ kế toán trưởng ký** — chưa viết mã định khoản. Mức Kernel **K2** (luật định khoản mới): ký xong mới làm, có người duyệt thứ hai, mục "Thay đổi định khoản" trong CHANGELOG, bộ tình huống trên đơn vị sạch + `scripts/doi-chieu-ke-toan.sql` (R-REV-6).
+> **Trạng thái:** ✅ **K1, K3, K4 duyệt 2026-11-02** (chủ dự án, theo ý kiến kế toán trưởng) — có mã + bộ tình huống ([`apps/api/test/manual-journal.test.ts`](../../../apps/api/test/manual-journal.test.ts), 9 ca). ⛔ **K2 còn chờ**: danh sách lý do `journal` cho gói nền — tới khi có, gói nền không khai lý do journal nào, đơn vị tự khai ở ACC18. Mức Kernel **K2**: PR cần người duyệt thứ hai; mục "Thay đổi định khoản" trong CHANGELOG có.
 > **Nguồn:** [ADR-0015](../../adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md) Q1 · luật [R-EVENT-14](../../rules/RULE-EVENT.md) · lộ trình **3.15** · năng lực `ledger.manual-journal`.
 
 ## 1. Bài toán
@@ -93,5 +94,17 @@ Như mọi chứng từ qua cửa nạp: phiên bản mới → đảo bút toá
 
 | Vai trò | Họ tên | Ngày | Ý kiến |
 |---|---|---|---|
-| Kế toán trưởng | | | |
-| Chủ dự án | Johnny Chu – Chu Hoàng Anh | | |
+| Kế toán trưởng | (ý kiến chuyển qua chủ dự án) | 2026-11-02 | K1 phương án A, K3 chờ duyệt, K4 theo cờ theo dõi đối tượng: đồng ý. K2: gửi sau |
+| Chủ dự án | Johnny Chu – Chu Hoàng Anh | 2026-11-02 | "Duyệt K1, K3, K4; K2 sau" |
+
+## 6. Thi hành (2026-11-02)
+
+| Phần | Ở đâu |
+|---|---|
+| Bảng lý do: `kind` `journal`, `debit_account`, `credit_account` + ràng buộc cặp | `db/migrations/0058_ly_do_phieu_ke_toan.sql` |
+| Khuôn nạp `manual_journal` (khuôn đóng: không số tài khoản, không thuế, không hoá đơn) | `packages/contracts/src/documents.ts`, `bizcity_ledger_intake@1` 1.3.0 |
+| Luật định khoản | `packages/kernel/src/modules/posting/rules/journal.rule.ts`; đối tượng theo dòng ở `posting.service.ts` |
+| Cấu hình lý do (API, màn ACC18, gói định khoản, SC-TPL-1) | `posting-config.routes.ts`, `ReasonsPage.tsx`, `pack.ts`, `template.check.mjs` |
+| K4 | không thêm mã: sổ đã chặn tài khoản `track_partner` / `is_debt` thiếu đối tượng (`ledger.service.ts`) |
+| K3 | `manual_journal` vào `APPROVABLE_DOC_TYPES`, mặc định `approve` |
+| Bộ tình huống §3.6 (1–7) + cấu hình + K3 | `apps/api/test/manual-journal.test.ts` |

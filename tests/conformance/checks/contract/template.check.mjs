@@ -1,4 +1,5 @@
 // [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell.
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: kiểm tài khoản debitAccount / creditAccount của lý do journal
 /**
  * bizcity_posting_template@1 — gói định khoản (STD-TPL-1..4, 9). Quét mọi `*.posting-pack.json` của gốc đang kiểm;
  * kiểm một gói đơn lẻ: --module <thư mục chứa posting-pack.json>.
@@ -42,7 +43,7 @@ export default {
         const known = (code) => chart.has(code) || own.has(code);
         const refs = [
           ...Object.entries(pack.postingDefaults ?? {}).map(([k, v]) => [v, `postingDefaults.${k}`]),
-          ...pack.reasons.flatMap((r) => ['counterAccount', 'revenueAccount', 'expenseAccount'].filter((k) => r[k]).map((k) => [r[k], `lý do ${r.code}.${k}`])),
+          ...pack.reasons.flatMap((r) => ['counterAccount', 'revenueAccount', 'expenseAccount', 'debitAccount', 'creditAccount'].filter((k) => r[k]).map((k) => [r[k], `lý do ${r.code}.${k}`])),
           ...(pack.postingGroups ?? []).flatMap((g) => ['inventoryAccount', 'cogsAccount', 'revenueAccount', 'discountAccount', 'salesReturnAccount'].filter((k) => g[k]).map((k) => [g[k], `nhóm ${g.code}.${k}`])),
           ...(pack.paymentMethods ?? []).map((m) => [m.account, `hình thức ${m.code}`]),
           ...(pack.taxCodes ?? []).map((t) => [t.account, `thuế ${t.code}`]),
@@ -55,6 +56,11 @@ export default {
       for (const [list, name] of [[pack.reasons, 'lý do'], [pack.postingGroups, 'nhóm hạch toán'], [pack.paymentMethods, 'hình thức TT'], [pack.taxCodes, 'loại thuế'], [pack.scenarios, 'tình huống']]) {
         const seen = new Set();
         for (const x of list ?? []) { const c = x.code ?? x.id; if (seen.has(c)) add(`${name} ${c} khai hai lần`, `dup:${c}`); seen.add(c); }
+      }
+      // Lý do journal (manual_journal, 0059): đủ cặp Nợ / Có khác nhau; loại khác không khai cặp này
+      for (const r of pack.reasons ?? []) {
+        const pair = Boolean(r.debitAccount && r.creditAccount);
+        if (r.kind === 'journal' ? !pair || r.debitAccount === r.creditAccount : Boolean(r.debitAccount || r.creditAccount)) add(`lý do ${r.code}: kind journal cần debitAccount và creditAccount khác nhau; loại khác không khai hai trường này`, `journal:${r.code}`);
       }
       // STD-TPL-3: một lý do mặc định cho mỗi khoá
       const defaults = new Map();

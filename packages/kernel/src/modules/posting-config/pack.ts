@@ -2,6 +2,7 @@
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gói định khoản cài / xem trước / gỡ: bảng config_packs, cài = phát hành một bản chính sách (ADR-0009 Q-5).
 // [2026-10-30 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — chế độ baseline (khởi tạo đơn vị bằng gói nền db/packs, Q012-1): chỉ thêm mục thiếu, không phát hành bản; hình thức TT có receivable.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting-config/pack.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: lý do kind "journal" có debitAccount / creditAccount (manual_journal, 0058)
 /**
  * GÓI ĐỊNH KHOẢN: cài / xem trước / gỡ (bizcity_posting_template@1 §5, PHASES 3.11; PHASE-012 S012-3).
  *
@@ -48,8 +49,10 @@ export const postingPackSchema = z.object({
   }).strict()).optional(),
   postingDefaults: z.record(z.string().regex(/^[a-z][a-z0-9_]*$/), account).optional(),
   reasons: z.array(z.object({
-    code, name: z.string().min(2).max(200), kind: z.enum(['in', 'out', 'receipt', 'payment']),
+    code, name: z.string().min(2).max(200), kind: z.enum(['in', 'out', 'receipt', 'payment', 'journal']),
     counterAccount: account.optional(), revenueAccount: account.optional(), expenseAccount: account.optional(), cashflowCode: z.string().optional(),
+    /** Lý do journal (phiếu kế toán module lập, manual_journal): cặp tài khoản Nợ / Có của mỗi dòng — bắt buộc cả hai, khác nhau. */
+    debitAccount: account.optional(), creditAccount: account.optional(),
     flags: z.object({
       default: z.string().regex(/^[a-z_]+(:[a-z_]+)?$/).optional(), postToLedger: z.boolean().optional(), returnAtOpeningCost: z.boolean().optional(),
       excludeFromCost: z.boolean().optional(), costAtSalePrice: z.boolean().optional(), giftCostToPromotion: z.boolean().optional(), costItem: z.string().optional(),
@@ -91,6 +94,7 @@ function rowsOf(pack: PostingPack) {
     reasons: pack.reasons.map((r) => ({
       code: r.code, name: r.name, kind: r.kind, counter_account: r.counterAccount ?? null, revenue_account: r.revenueAccount ?? null,
       expense_account: r.expenseAccount ?? null, cashflow_code: r.cashflowCode ?? null, flags: r.flags ?? {},
+      debit_account: r.debitAccount ?? null, credit_account: r.creditAccount ?? null,
     })),
     groups: (pack.postingGroups ?? []).map((g) => ({
       code: g.code, name: g.name, inventory_account: g.inventoryAccount, cogs_account: g.cogsAccount, revenue_account: g.revenueAccount,
@@ -129,7 +133,7 @@ export async function planPack(trx: Db, tenantId: string, pack: PostingPack, ove
   const packAccounts = new Set((pack.accounts ?? []).map((a) => a.code));
   const rows = rowsOf(pack);
   const used = new Set<string>([
-    ...rows.reasons.flatMap((r) => [r.counter_account, r.revenue_account, r.expense_account]),
+    ...rows.reasons.flatMap((r) => [r.counter_account, r.revenue_account, r.expense_account, r.debit_account, r.credit_account]),
     ...rows.groups.flatMap((g) => [g.inventory_account, g.cogs_account, g.revenue_account, g.discount_account, g.sales_return_account]),
     ...rows.methods.map((m) => m.account_code), ...rows.taxes.map((t) => t.account_code), ...rows.defaults.map((d) => d.account_code),
   ].filter((c): c is string => !!c));
@@ -138,6 +142,10 @@ export async function planPack(trx: Db, tenantId: string, pack: PostingPack, ove
   if (unknown.length || orphans.length) {
     throw Errors.validation(`Gói ${pack.id} dùng tài khoản đơn vị chưa có: ${[...unknown, ...orphans.map((a) => `${a.code} (cha ${a.parent})`)].join(', ')}`, { unknown, orphans: orphans.map((a) => a.code) });
   }
+
+  // Lý do journal (manual_journal): đủ cặp tài khoản Nợ / Có, khác nhau; loại khác không dùng cặp này (ràng buộc 0058).
+  const badJournal = pack.reasons.filter((r) => (r.kind === 'journal') !== Boolean(r.debitAccount && r.creditAccount) || (r.kind !== 'journal' && (r.debitAccount || r.creditAccount)) || (r.debitAccount && r.debitAccount === r.creditAccount));
+  if (badJournal.length) throw Errors.validation(`Gói ${pack.id}: lý do journal phải có debitAccount và creditAccount khác nhau; loại khác không khai hai trường này`, { reasons: badJournal.map((r) => r.code) });
 
   const owners = await ownersOf(trx, tenantId, pack.id);
   const allow = new Set(overwrite);
@@ -168,7 +176,8 @@ export async function planPack(trx: Db, tenantId: string, pack: PostingPack, ove
     const cur = reasons.find((x) => x.code === r.code);
     items.push(decide('reason', r.code, cur ? diff([['name', cur.name, r.name], ['kind', cur.kind, r.kind], ['counter_account', cur.counter_account, r.counter_account],
       ['revenue_account', cur.revenue_account, r.revenue_account], ['expense_account', cur.expense_account, r.expense_account],
-      ['cashflow_code', cur.cashflow_code, r.cashflow_code], ['flags', sortKeys(cur.flags), sortKeys(r.flags)]]) : null, cur ? !cur.is_active : false));
+      ['cashflow_code', cur.cashflow_code, r.cashflow_code], ['flags', sortKeys(cur.flags), sortKeys(r.flags)],
+      ['debit_account', cur.debit_account, r.debit_account], ['credit_account', cur.credit_account, r.credit_account]]) : null, cur ? !cur.is_active : false));
   }
   for (const g of rows.groups) {
     const cur = groups.find((x) => x.code === g.code);
