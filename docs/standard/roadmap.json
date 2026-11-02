@@ -98,6 +98,10 @@
       "done": [{ "capability": "intake.score" }] },
     { "id": "2.21", "phase": "2", "title": "Tiền kiểm L5 định khoản thử, gợi ý cấu hình, AI đọc chẩn đoán (PHASE-021 W5)", "areas": ["document", "mcp-cell"], "after": ["2.19"],
       "done": [{ "capability": "intake.preflight.posting" }] },
+    { "id": "2.22", "phase": "2", "title": "Item Master & phân loại hạch toán: items / item_codes / item_classification, Item Resolver, bizcity_item_master@1 (PHASE-024 W1–W2, ADR-0017)", "areas": ["data", "kernel", "document"], "after": ["2.18"],
+      "done": [{ "capability": "item.master" }, { "file": "docs/contracts/BIZCITY-ITEM-MASTER-v1.md" }] },
+    { "id": "2.23", "phase": "2", "title": "Validator danh mục hàng: IN-ITEM-*, DG-ITEM-*, SC-ITEM-*, số đo bizcity_item_* (PHASE-024 W3)", "areas": ["data", "diagnostics", "quality"], "after": ["2.22"],
+      "done": [{ "capability": "item.validation" }, { "file": "tests/conformance/checks/data/item.check.mjs" }] },
 
     { "id": "3.1", "phase": "3", "title": "@bizcity/module-sdk: defineModule, ctx", "areas": ["module"], "after": ["2.5", "2.6"],
       "done": [{ "file": "packages/module-sdk/package.json" }, { "manual": "API.md ổn định (bỏ bản nháp): defineModule nạp qua registry 3.13, ctx.data.tx giới hạn mod_<key> (3.10), ctx.ledger.cancel / get", "doneAt": "2026-11-02", "by": "Johnny Chu – Chu Hoàng Anh (ADR-0015)" }] },
@@ -148,6 +152,8 @@
       "done": [{ "manual": "3/3 lần Claude sinh module hop-dong qua module check, 0 sửa tay" }] },
     { "id": "4.6", "phase": "4", "title": "Standard 1.0.0 (bỏ -draft)", "areas": ["release"],
       "done": [{ "standardStable": true }] },
+    { "id": "4.8", "phase": "4", "title": "Thẻ tài khoản: giải nghĩa máy đọc đã duyệt, core.account.card, chú giải tại chỗ, chế độ học (PHASE-023)", "areas": ["quality", "template"],
+      "done": [{ "capability": "ui.account-card" }, { "file": "data/giai-nghia-tai-khoan/vn-tt99.json" }] },
     { "id": "4.7", "phase": "4", "title": "Preset cài nhanh theo ngành (bizcity_preset@1)", "areas": ["template", "quality"],
       "done": [{ "check": "SC-PRESET-1" }, { "file": "presets/thuong-mai-ban-le/preset.json" }, { "manual": "≥ 3 preset: thương mại, dịch vụ, sản xuất" }] },
 

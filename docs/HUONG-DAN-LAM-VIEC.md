@@ -57,6 +57,8 @@ Ví dụ làm đúng: [apps/api/src/phan-he/mua-hang/posting.ts](../apps/api/src
 | 8 | Bỏ lọc `tenant_id` ở truy vấn | mọi truy vấn lọc theo `auth.tenantId` |
 | 9 | `reply.status(...)` tự chế, ném chuỗi lỗi | `Errors.*` (`@bizcity/platform/core/errors`) |
 | 10 | Sửa Kernel / `packages/*` / migration trong việc của phân hệ | dừng phần đó, viết đề xuất (§5 bậc 4) |
+| 11 | Khoá dữ liệu bằng **mã** (`sku`, `partners.code`) hoặc suy tài khoản từ tiền tố / đuôi mã hàng <!-- [2026-11-02 09:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0017 / 0018 --> | trỏ định danh (`item_id`, `partner_id`); tài khoản qua phân loại + chính sách hạch toán |
+| 12 | Để danh mục tự sinh bút toán, hay sửa danh mục để "sửa sổ" (đổi nhóm hạch toán, gộp mã có số dư mà không có chứng từ) | hạng 3: phân loại mới từ ngày + kế toán trưởng duyệt + chứng từ phân loại lại qua cửa nạp |
 
 ## 4. Bản đồ thư mục — code đặt ở đâu
 
