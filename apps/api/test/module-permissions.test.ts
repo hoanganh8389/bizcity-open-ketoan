@@ -52,10 +52,19 @@ const huyTrongDoc = defineAction({
   handler: async (c) => { await c.ledger.cancel('thu-quyen:CN01:X', 'không được'); return { ok: true }; },
 });
 
+const DT = { code: 'KH-DT01', name: 'Khách đối trừ (thử)' };
 const doiTru = defineAction({
   id: 'thu-quyen.cong-no.doi-tru', title: 'Đối trừ công nợ', permission: 'documents:write', effect: 'write', idempotency: 'required', sideEffects: ['ledger'],
-  input: z.object({}), output: z.object({ allocated: z.number() }), expose: {},
-  handler: async (c) => c.ledger.allocateDebt({ partnerCode: 'KH01', from: 'thu-quyen:A', to: 'thu-quyen:B', amount: 1 }),
+  input: z.object({ from: z.string(), to: z.string(), amount: z.number(), seed: z.boolean().optional() }), output: z.object({ allocated: z.number() }), expose: {},
+  handler: async (c, i) => {
+    if (i.seed) {
+      await c.ledger.submit({ docType: 'sale', docKey: 'thu-quyen:CN01:BC1', branchCode: 'CN01', docNo: 'BC1', docDate: '2026-10-05', partner: DT,
+        lines: [{ lineKey: 'l1', sku: 'SUA01', name: 'Sữa bột 900g', unit: 'Hộp', qty: 1, amountBeforeTax: 100000, taxCode: 'R08', taxAmount: 8000 }],
+        payments: [], totals: { beforeTax: 100000, tax: 8000, total: 108000 } });
+      await c.ledger.submit({ docType: 'customer_payment', docKey: 'thu-quyen:CN01:PT1', branchCode: 'CN01', docNo: 'PT1', docDate: '2026-10-06', partner: DT, methodCode: 'TM', totals: { total: 50000 } });
+    }
+    return c.ledger.allocateDebt({ partnerCode: DT.code, from: i.from, to: i.to, amount: i.amount });
+  },
 });
 
 beforeAll(async () => {
@@ -102,8 +111,14 @@ describe('ctx.ledger.get / cancel (3.1)', () => {
     expect(r.data.after === 'cancelled' || r.data.cancelRequested).toBe(true);
   });
 
-  it('allocateDebt có chữ ký v1, năng lực còn planned → CAPABILITY_MISSING (ADR-0015 Q2)', async () => {
-    await expect(run(doiTru, {}, auth(['documents:write']))).rejects.toMatchObject({ code: 'CAPABILITY_MISSING' });
+  it('allocateDebt (3.16): đối trừ cùng đối tượng, cùng tài khoản giữa hai chứng từ của module; quá phần còn lại / docKey nguồn khác → VALIDATION', async () => {
+    const before = await db.selectFrom('debt_allocations').select(db.fn.countAll().as('n')).where('tenant_id', '=', tenantId).executeTakeFirstOrThrow();
+    const r = await run(doiTru, { from: 'thu-quyen:CN01:BC1', to: 'thu-quyen:CN01:PT1', amount: 20000, seed: true }, auth(['documents:write']));
+    expect(r.data).toEqual({ allocated: 1 });
+    const after = await db.selectFrom('debt_allocations').select(db.fn.countAll().as('n')).where('tenant_id', '=', tenantId).executeTakeFirstOrThrow();
+    expect(Number(after.n) - Number(before.n)).toBe(1);
+    await expect(run(doiTru, { from: 'thu-quyen:CN01:BC1', to: 'thu-quyen:CN01:PT1', amount: 999999 }, auth(['documents:write']))).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    await expect(run(doiTru, { from: 'thu-quyen:CN01:BC1', to: 'pos:CN01:PT9', amount: 1 }, auth(['documents:write']))).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 
   it('get chứng từ của nguồn khác → VALIDATION; cancel trong action đọc → lỗi', async () => {

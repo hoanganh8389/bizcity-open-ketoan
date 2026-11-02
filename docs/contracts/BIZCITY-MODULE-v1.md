@@ -4,8 +4,9 @@
 <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.1-draft: waivers bắt buộc expires, chỉ miễn luật đặt tên; §6 bước 1–3 có (12 manifest, SC-MOD-3 block, GET /system/modules?detail=true) -->
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: kind "app" (app ngoài tiến trình, ADR-0011 mức 2): app.scopes, app.webhook.url, ui.origin / ui.entry; §3a -->
 <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.3.0-draft: §5 vòng đời chạy thật (module_registry × tenant_modules, nạp theo hash, MODULE_DISABLED, skipped) -->
+<!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.4.0-draft: trường seed[] (dữ liệu mẫu qua core.*.upsert, ADR-0015 Q4) -->
 
-> **Phiên bản:** 1.3.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
+> **Phiên bản:** 1.4.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
 > **JSON Schema:** [BIZCITY-MODULE-v1.schema.json](BIZCITY-MODULE-v1.schema.json) · **Ví dụ đầy đủ:** [../standard/examples/hop-dong.bizcity.module.json](../standard/examples/hop-dong.bizcity.module.json)
 > **Thay thế:** `ApiModule` (`apps/api/src/phan-he/types.ts`), `WebModule`/`ModuleMeta` (`apps/web/src/phan-he/types.ts`, `packages/contracts/src/module.ts`), `AddInManifest` (`apps/api/src/core/addins.ts`)
 
@@ -40,6 +41,7 @@ Một phân hệ hiện khai ở 5 nơi (A-25); quyền, bảng sở hữu, sự
 | `settings[]` | | khoá cấu hình `bizcity.<key_>.<tên>` | [Settings](BIZCITY-SETTINGS-MATRIX-v1.md) |
 | `extensions` | | `menu`, `slots`, `hooks`, `print` | [Extension](BIZCITY-EXTENSION-v1.md) |
 | `ui` | | `icon` (lucide), `color`, `order`; **chỉ app:** `origin`, `entry` (§3a) | lưới ứng dụng; khung nhúng app |
+| `seed[]` | | dữ liệu mẫu hư cấu: `{ action: core.partner.upsert \| core.product.upsert, input }` (ADR-0015 Q4) | `POST /api/v1/system/modules/:key/seed` (quyền `catalog:write`, dry-run được) gọi từng action — có bằng chứng, chạy lại không trùng; module không ghi bảng danh mục |
 | `app` | ✓ khi `kind: "app"` | `scopes[]`, `webhook.url` (§3a) | phạm vi khoá app, webhook |
 | `waivers[]` | | miễn trừ luật Tier 1: `rule`, `reason`, `adr`, `expires` (**bắt buộc** ngoài ví dụ trong `docs/`) | bộ kiểm (SC-CON-2) bỏ qua đúng phát hiện của luật đó và in vào ghi chú bảng điểm; thiếu `expires` hoặc quá hạn thì báo, không miễn. Hiện miễn được: `STD-ACT-6` (tiền tố action). Luật về sự thật kế toán (docType, năng lực, schema) không miễn được |
 
@@ -99,6 +101,7 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 ## 7. Nhật ký
 
+- **1.4.0-draft (2026-11-02):** thêm `seed[]` (tuỳ chọn, tương thích) — ADR-0015 Q4, PHASES 3.17.
 - **1.3.0-draft (2026-11-02):** §5 vòng đời chạy thật: `module_registry` × `tenant_modules`, nạp theo hash, `MODULE_DISABLED`, sự kiện `skipped`, lệnh `module` (PHASES 3.13). Không đổi trường manifest.
 - **1.2.0-draft (2026-11-02):** thêm `kind: "app"` (tương thích): `app.scopes`, `app.webhook.url`, `ui.origin`, `ui.entry`; schema chặn app khai `data` / `documents` / `actions` / `settings` / `extensions`, chặn module / add-in khai `app` / `ui.origin` (PHASES 3.14, ADR-0011 mức 2). SC-MOD-3 phủ `apps/api/src/ung-dung/<key>`.
 - **1.1.1-draft (2026-11-01):** `waivers[].expires` bắt buộc ngoài ví dụ (schema giữ tuỳ chọn để ví dụ cũ hợp lệ; bộ kiểm ép); bộ kiểm miễn đúng luật đã khai, báo waiver thiếu hạn / quá hạn. §6 bước 1–2 có, bước 3 một phần (PHASES 3.2).

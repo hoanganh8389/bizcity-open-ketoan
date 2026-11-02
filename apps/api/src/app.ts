@@ -36,7 +36,7 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
 import { registerLedgerCancelGate, registerLedgerReader, registerLedgerSubmitter, unknownActionPermissions } from './core/actions.js';
 import { registerModulePermissions } from '@bizcity/platform/core/auth';
@@ -116,7 +116,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ctx.ledger.submit đi đúng một cửa vào sổ của Kernel (submitDocumentIn → postDocumentIn), ADR-0011 D5
   registerLedgerSubmitter((tx, auth, doc) => submitDocumentIn(tx, auth, doc));
   // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: ctx.ledger.cancel / get đi cổng Kernel (requestCancelIn, documentStatusIn)
-  registerLedgerCancelGate({ cancel: (tx, auth, docKey, reason) => requestCancelIn(tx, auth, docKey, reason), get: (tx, tenantId, docKey) => documentStatusIn(tx, tenantId, docKey) });
+  registerLedgerCancelGate({ cancel: (tx, auth, docKey, reason) => requestCancelIn(tx, auth, docKey, reason), get: (tx, tenantId, docKey) => documentStatusIn(tx, tenantId, docKey),
+    allocate: (tx, tenantId, input, actor) => allocateByDocKeysIn(tx, tenantId, input, actor) });
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: app ngoài tiến trình cài trong bản này (manifest kind "app") → registry + subscriber webhook; khoá trùng phân hệ / add-in → dừng
   registerAppManifests([...APP_MANIFESTS], [...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys()]);
 

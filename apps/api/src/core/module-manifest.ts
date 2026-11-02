@@ -26,6 +26,8 @@ export interface ModuleManifest {
   actions?: string[];
   /** Quyền mới module khai (`<key>:<việc>`); app.ts đăng ký vào registry quyền (PHASES 3.3). */
   permissions?: { key: string; label: string; roles?: string[]; risk?: 'low' | 'high' }[];
+  /** Dữ liệu mẫu: lời gọi action danh mục chuẩn (ADR-0015 Q4, PHASES 3.17); chạy bằng POST /system/modules/:key/seed. */
+  seed?: { action: 'core.partner.upsert' | 'core.product.upsert'; input: Record<string, unknown> }[];
   ledger?: { submits?: { docType: string; contract: string }[] };
   ui?: { icon?: string; color?: string; order?: number };
   waivers?: { rule: string; reason: string; adr: string; expires?: string }[];

@@ -1,8 +1,9 @@
 # `bizcity_extension@1` — Extension Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §3a khung nhúng app ngoài tiến trình (ADR-0011 mức 2) — iframe sandbox, vé ≤ 5 phút, giao thức postMessage đóng, kiểm origin hai chiều -->
+<!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: core.partner.upsert / core.product.upsert có; @bizcity/module-sdk/web (defineWebModule, WEB_SLOTS) -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
+> **Phiên bản:** 1.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
 > **Luật nền:** [R-BOUND](../rules/RULE-MODULE-BOUNDARY.md) · **Năng lực:** `ui.menu`, `ui.kit`, `ui.slots`, `permissions.module`, `settings.registry`, `ai.cell`
 
 ## 1. Mục đích
@@ -30,6 +31,8 @@ Liệt kê **đóng** các chỗ module được cắm vào Core: giao diện, A
 | Slot `dashboard.widget` | | `{ branchCode? }` | "Kỳ thu đến hạn tuần này" |
 | Slot `ledger.drilldown.source` | | `{ docKey }` | mở chứng từ gốc của module từ sổ chi tiết |
 | `print` | `extensions.print` | mẫu in cho loại chứng từ của module | mẫu in hợp đồng |
+
+Khai báo phía giao diện: `defineWebModule` ở `@bizcity/module-sdk/web` (ADR-0015 Q5) — kiểm đường dẫn dưới `/app/<key>/`, slot trong danh sách đóng `WEB_SLOTS` (đúng bảng trên), quyền đúng khuôn, ngay lúc nạp.
 
 Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗi trong slot bị bắt (error boundary) và **không** làm hỏng màn của Core; slot không đọc state của màn chủ ngoài props được truyền.
 
@@ -65,7 +68,7 @@ Không có hook nào cho phép module: đổi bút toán, đổi tài khoản, c
 
 - Mọi route của module sinh từ action, nằm dưới `/api/v1/m/<key>/…` (phân hệ hiện có giữ đường dẫn cũ trong major 1).
 - Module gọi action của module khác hoặc của Core bằng `ctx.actions.call(id, input)`: vẫn qua quyền, idempotency, bằng chứng như gọi từ ngoài, với `actor` là người dùng gốc và `via: 'module:<id>'`.
-- Action công khai của Core cho module (v1): `core.partner.upsert`, `core.product.upsert`, `core.partner.get`, `core.product.get`, `core.branch.list`, `core.payment-method.list`, `core.notify.send` (thông báo trong ứng dụng; qua Cell nếu có).
+- Action công khai của Core cho module (v1): `core.partner.upsert`, `core.product.upsert` (**có** 2026-11-02 — `POST /api/v1/partners/upsert`, `/products/upsert`, quyền `catalog:write`, dùng cho `seed[]`), `core.partner.get`, `core.product.get`, `core.branch.list`, `core.payment-method.list`, `core.notify.send` (thông báo trong ứng dụng; qua Cell nếu có).
 
 ## 6. Quyền và cấu hình
 
