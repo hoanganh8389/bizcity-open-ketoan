@@ -12,6 +12,7 @@ import { createServer, type IncomingHttpHeaders, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { appManifestProblems, registerAppManifests, type AppManifest } from '@bizcity/platform/core/apps';
+import { assertAppRoute } from '@bizcity/platform/core/auth';
 import { db } from '../src/db/client.js';
 import { dispatchOnce } from '../src/core/events.js';
 import { saleDoc, setupTenant, type TestCtx } from './helpers.js';
@@ -95,6 +96,48 @@ describe('Khoá app', () => {
   it('quyền ngoài phạm vi → FORBIDDEN (khoá app không quản trị được người dùng / khoá API)', async () => {
     const res = await ctx.app.inject({ method: 'GET', url: '/api/v1/api-keys', headers: asApp() });
     expect(res.statusCode).toBe(403);
+  });
+});
+
+describe('Cổng route khoá app: chỉ ghi qua cửa nạp', () => {
+  const call = (method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'GET', url: string, payload: unknown = {}) =>
+    ctx.app.inject({ method, url, payload: payload as never, headers: asApp() });
+
+  it('route ghi ngoài cửa nạp → FORBIDDEN dù khoá có documents:write (phiếu tay, số dư đầu, tài khoản, trạm định khoản, MCP)', async () => {
+    for (const [m, url] of [
+      ['POST', '/api/v1/vouchers'], ['PUT', '/api/v1/vouchers/1'], ['POST', '/api/v1/opening-balances'],
+      ['POST', '/api/v1/accounts'], ['DELETE', '/api/v1/accounts/111'], ['POST', '/api/v1/documents/post'],
+      ['POST', '/mcp'], ['POST', '/api/v1/apps/pos-ngoai/rotate'],
+    ] as const) {
+      const res = await call(m, url, {});
+      expect(res.statusCode, `${m} ${url}: ${res.body}`).toBe(403);
+    }
+  });
+
+  it('GET theo quyền của route: đọc chứng từ được', async () => {
+    expect((await call('GET', '/api/v1/documents')).statusCode).toBe(200);
+  });
+
+  it('báo huỷ: chứng từ của app được, chứng từ nguồn khác → VALIDATION', async () => {
+    await submit(appDoc('C1'));
+    const own = await call('POST', '/api/v1/documents/cancel', { docKey: 'pos-ngoai:CN01:C1', reason: 'Khách trả lại (thử)' });
+    expect(own.statusCode, own.body).toBe(200);
+    const other = await call('POST', '/api/v1/documents/cancel', { docKey: 'pos:CN01:HD0001', reason: 'Thử huỷ chứng từ của nguồn khác' });
+    expect(other.json().error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('nạp lô: dòng sai tiền tố không thành sự việc, dòng đúng vẫn vào', async () => {
+    const res = await call('POST', '/api/v1/documents/batch', { documents: [appDoc('B1'), saleDoc({ docKey: 'pos:CN01:B2', docNo: 'B2' })] });
+    expect(res.statusCode, res.body).toBeLessThan(500);
+    const keys = (await db.selectFrom('accounting_events').select('doc_key').where('tenant_id', '=', tenantId).where('doc_key', 'in', ['pos-ngoai:CN01:B1', 'pos:CN01:B2']).execute()).map((r) => r.doc_key);
+    expect(keys).toEqual(['pos-ngoai:CN01:B1']);
+  });
+
+  it('assertAppRoute: route ghi lạ / route mới mặc định bị từ chối, GET luôn qua cổng', () => {
+    expect(() => assertAppRoute('POST', '/api/v1/route-moi-chua-co')).toThrow(/chỉ ghi qua cửa nạp/);
+    expect(() => assertAppRoute('POST', undefined)).toThrow();
+    expect(() => assertAppRoute('GET', '/api/v1/bat-ky')).not.toThrow();
+    expect(() => assertAppRoute('POST', '/api/v1/documents/submit')).not.toThrow();
   });
 });
 
@@ -187,6 +230,7 @@ describe('Manifest app', () => {
     const base = manifest('https://pos.example.test/hook');
     expect(appManifestProblems(base)).toEqual([]);
     expect(appManifestProblems({ ...base, app: { ...base.app, scopes: ['users:write'] } }).join()).toMatch(/users:write/);
+    expect(appManifestProblems({ ...base, app: { ...base.app, scopes: ['catalog:write'] } }).join()).toMatch(/catalog:write/);
     expect(appManifestProblems({ ...base, ui: { origin: 'https://pos.example.test/nhung' } }).join()).toMatch(/phải là origin/);
     expect(appManifestProblems({ ...base, app: { scopes: [] } }).join()).toMatch(/cần app.webhook.url/);
     expect(() => registerAppManifests([{ ...base, key: 'ke-toan' }], ['ke-toan'])).toThrow(/trùng phân hệ/);

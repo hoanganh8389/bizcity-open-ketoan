@@ -30,6 +30,13 @@ services:
   api:
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      # [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: Bàn điều tra đọc Tempo / Loki qua mạng nội bộ (trình duyệt không gọi thẳng)
+      DEVTOOLS_TEMPO_URL: ${DEVTOOLS_TEMPO_URL:-http://tempo:3200}
+      DEVTOOLS_LOKI_URL: ${DEVTOOLS_LOKI_URL:-http://loki:3100}
+      DEVTOOLS_PROMETHEUS_URL: ${DEVTOOLS_PROMETHEUS_URL:-http://prometheus:9090}
+      DEVTOOLS_ALERTMANAGER_URL: ${DEVTOOLS_ALERTMANAGER_URL:-http://alertmanager:9093}
+      DEVTOOLS_GRAFANA_URL: ${DEVTOOLS_GRAFANA_URL:-http://127.0.0.1:3000}
+      DEVTOOLS_OPS: ${DEVTOOLS_OPS:-}
 
   # --- Thu thập & lưu chỉ số --------------------------------------------------
   prometheus:

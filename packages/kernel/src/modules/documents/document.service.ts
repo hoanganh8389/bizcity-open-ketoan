@@ -778,6 +778,8 @@ export const documentService = {
    * ghi nhật ký; kế toán xem trước rồi định khoản mới huỷ. Chứng từ đã huỷ / đã chờ huỷ thì thôi.
    */
   async requestCancel(auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
+    // [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá app chỉ báo huỷ chứng từ của app (docKey `<app>:…`, ADR-0011 D5)
+    if (auth.app) ownDocument(auth.app, { docKey }, 'app');
     return db.transaction().execute((trx) => requestCancelIn(trx, auth, docKey, reason));
   },
 

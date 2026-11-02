@@ -48,7 +48,7 @@ App là dịch vụ riêng (ngôn ngữ bất kỳ, máy khác) nói chuyện v�
 
 | Trường | Nghĩa | Core dùng để |
 |---|---|---|
-| `app.scopes[]` | quyền **Core** app xin: chỉ `catalog:read`, `catalog:write`, `documents:read`, `documents:write`, `ledger:read`, `reports:read` | chủ đơn vị đồng ý lúc kết nối → quyền của khoá app (`app_installations.permissions`). Quyền quản trị / duyệt / khoá kỳ không bao giờ cấp cho app |
+| `app.scopes[]` | quyền **Core** app xin: chỉ `catalog:read`, `documents:read`, `documents:write`, `ledger:read`, `reports:read` | chủ đơn vị đồng ý lúc kết nối → quyền của khoá app (`app_installations.permissions`). Quyền quản trị / duyệt / khoá kỳ / ghi danh mục không bao giờ cấp cho app. Dù quyền là gì, khoá app chỉ **ghi** qua cửa nạp (`POST /documents`, `/documents/batch`, `/documents/submit`, `/documents/cancel`) và đổi vé; route ghi khác trả `FORBIDDEN` (`APP_WRITE_ROUTES`, `core/auth.ts`) |
 | `events.subscribes[]` | sự kiện app nhận qua webhook | subscriber `<key>.webhook` trên outbox ([Event §7a](BIZCITY-EVENT-v1.md)) |
 | `app.webhook.url` | URL nhận webhook; bắt buộc khi có `events.subscribes` | POST phong bì sự kiện, ký HMAC |
 | `ui.origin`, `ui.entry` | origin giao diện app (`https://host[:port]`, không đường dẫn) + đường vào (mặc định `/`) | khung nhúng ([Extension §3a](BIZCITY-EXTENSION-v1.md)); mục menu ở Tiện ích |

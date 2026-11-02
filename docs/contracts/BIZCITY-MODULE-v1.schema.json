@@ -165,7 +165,7 @@
       "properties": {
         "scopes": {
           "type": "array", "uniqueItems": true,
-          "items": { "enum": ["catalog:read", "catalog:write", "documents:read", "documents:write", "ledger:read", "reports:read"] }
+          "items": { "enum": ["catalog:read", "documents:read", "documents:write", "ledger:read", "reports:read"] }
         },
         "webhook": {
           "type": "object", "required": ["url"],

@@ -6,7 +6,7 @@
  *   Manifest      bizcity.module.json `kind: "app"` trong mã nguồn bản cài (apps/api/src/ung-dung/<key>/), không có mã chạy.
  *                 `app.scopes` = quyền Core app xin (chỉ trong APP_SCOPES), `events.subscribes[]` = sự kiện nhận qua webhook,
  *                 `app.webhook.url`, `ui.origin` + `ui.entry` = giao diện nhúng iframe.
- *   Kết nối       chủ đơn vị kết nối app (apps/api/src/modules/apps) → app_installations + khoá API gắn app (0050). Khoá app:
+ *   Kết nối       chủ đơn vị kết nối app (apps/api/src/modules/apps) → app_installations + khoá API gắn app (0051). Khoá app:
  *                 quyền = phạm vi đã đồng ý (core/auth.ts), cửa nạp buộc docKey `<app>:…` (Kernel), bằng chứng via `app:<key>`.
  *   Webhook       mỗi app một subscriber `<key>.webhook` trên outbox có sẵn (thử lại, dead, replay như mọi subscriber): chỉ
  *                 tạo việc giao cho đơn vị đã kết nối và nhận loại sự kiện đó (SubscriberDef.accepts), gửi POST JSON phong bì
@@ -23,7 +23,8 @@ import type { Db } from '../db/client.js';
 import { defineSubscriber, registerSubscribers, type EventEnvelope, type SubscriberDef } from './events.js';
 
 /** Quyền Core cấp được cho khoá app. Quyền quản trị / duyệt / khoá kỳ / sửa phiếu người khác: không bao giờ (risk high). */
-export const APP_SCOPES = ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'ledger:read', 'reports:read'] as const;
+// [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: bỏ catalog:write khỏi phạm vi app (app không ghi danh mục; cổng route chỉ mở cửa nạp)
+export const APP_SCOPES = ['catalog:read', 'documents:read', 'documents:write', 'ledger:read', 'reports:read'] as const;
 /** Thời hạn vé iframe (ADR-0011: ≤ 5 phút). */
 export const APP_TICKET_TTL_SECONDS = 300;
 const TICKET_AUDIENCE = 'bizcity.app-ticket';

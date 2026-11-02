@@ -1,6 +1,7 @@
 -- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): app ngoài tiến trình — app_installations (kết nối app với đơn vị: phạm vi quyền + sự kiện), api_keys.app_key (khoá có phạm vi theo app)
+-- [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — đổi số 0050 → 0051 (main đã có 0050_vai_tro_nha_phat_trien); chưa phát hành nên đổi được
 -- =============================================================================
--- 0050 App ngoài tiến trình (ADR-0011 mức 2, PHASES 3.14).
+-- 0051 App ngoài tiến trình (ADR-0011 mức 2, PHASES 3.14).
 --      App mức 2 là dịch vụ riêng, nói chuyện với Core chỉ qua API công khai. Manifest app (`kind: "app"`) nằm trong mã
 --      nguồn bản cài (apps/api/src/ung-dung/<key>/bizcity.module.json, không có mã chạy); chủ đơn vị KẾT NỐI app với đơn vị
 --      của mình → một dòng app_installations + một khoá API gắn app (api_keys.app_key).

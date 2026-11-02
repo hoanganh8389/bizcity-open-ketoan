@@ -7,6 +7,7 @@
 > **Bộ giám sát chạy thật:** [`infrastructure/monitoring/`](../../infrastructure/monitoring/README.md) (Prometheus, Alertmanager, Grafana 9 dashboard, Loki, exporter) · **Xử lý cảnh báo:** [RUNBOOK-CANH-BAO.md](RUNBOOK-CANH-BAO.md)
 > **Mã lỗi:** [BIZCITY-ERRORS-v1](../contracts/BIZCITY-ERRORS-v1.md) · **Tự chẩn đoán:** [DIAGNOSTICS.md](DIAGNOSTICS.md) · **Bằng chứng:** [BIZCITY-EVIDENCE-v1](../contracts/BIZCITY-EVIDENCE-v1.md)
 > **Điều tra lỗi theo tình huống (cho dev):** [SO-TAY-DIEU-TRA-LOI.md](SO-TAY-DIEU-TRA-LOI.md) · **Đưa vào app:** [PHASE-019 Bàn điều tra](../phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/README.md) <!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — link sổ tay điều tra lỗi + Bàn điều tra. -->
+> **Bàn điều tra — API trung gian** (PHASE-019 W2): `GET /api/v1/system/devtools/{status, traces/:traceId, requests/:requestId, evidence}`, quyền `devtools:read` (chủ đơn vị, vai trò `developer`). API đọc Tempo / Loki qua `DEVTOOLS_TEMPO_URL` / `DEVTOOLS_LOKI_URL` (bộ giám sát đặt sẵn tên dịch vụ nội bộ), gắn bộ lọc đơn vị phía máy chủ, trace của đơn vị khác → 404. Người dùng đơn vị vẫn **không** vào Grafana. <!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: API trung gian của Bàn điều tra. -->
 
 Bốn câu hỏi, bốn nguồn, hai khoá nối (`requestId`, `traceId`). Đây là các lớp 2–5 của **sáu lớp bảo đảm** ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md), [architecture §7](../architecture/README.md)):
 

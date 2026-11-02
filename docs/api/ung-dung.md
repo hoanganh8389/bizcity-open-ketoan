@@ -48,7 +48,7 @@ Nhập `apiKey` và `webhookSecret` vào cấu hình của app. Phần mềm k�
 
 ## 3. App gọi API
 
-Gửi `X-Api-Key: <apiKey>`. Quyền đúng bằng `app.scopes` đã đồng ý. Nộp chứng từ:
+Gửi `X-Api-Key: <apiKey>`. Quyền đọc đúng bằng `app.scopes` đã đồng ý. **Ghi** chỉ qua cửa nạp: `POST /api/v1/documents`, `/documents/batch`, `/documents/submit`, `/documents/cancel` (báo huỷ chứng từ của app) và đổi vé; route ghi khác trả `403 FORBIDDEN` dù khoá có quyền. Nộp chứng từ:
 
 ```bash
 curl -X POST https://<máy chủ>/api/v1/documents/submit \
@@ -56,7 +56,7 @@ curl -X POST https://<máy chủ>/api/v1/documents/submit \
   --data '{ "document": { "docType": "sale", "docKey": "pos-mini:CN01:HD0001", "version": 1, ... } }'
 ```
 
-- `docKey` **phải** bắt đầu `pos-mini:`; `sourceSystem` bỏ trống hoặc `pos-mini`. Sai → `400 VALIDATION_ERROR`, không lưu gì (ở cả `POST /api/v1/documents`).
+- `docKey` **phải** bắt đầu `pos-mini:`; `sourceSystem` bỏ trống hoặc `pos-mini`. Sai → `400 VALIDATION_ERROR`, không lưu gì (cả `POST /api/v1/documents`); trong lô `/documents/batch`, dòng sai báo `status: "error"` riêng, dòng khác vẫn xử lý (R-EVENT-12).
 - Kết quả có biên nhận `meta.receipt` `{ evidenceId, hash, at }`; `?dryRun=1` trả bút toán dựng thử, không ghi.
 - Khuôn chứng từ: [bizcity_ledger_intake@1](../contracts/BIZCITY-LEDGER-INTAKE-v1.md), ví dụ ở [vi-du/](vi-du/).
 

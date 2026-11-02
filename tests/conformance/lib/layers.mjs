@@ -127,6 +127,10 @@ export const LAYER_MAP = [
   ['modules/system/events.routes.ts', 'P', 'events'],
   ['modules/system/mcp.routes.ts', 'P', 'mcp'],
   ['modules/system/metrics.routes.ts', 'P', 'observability'],
+  // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: Bàn điều tra (API trung gian đọc trace / log) → P observability
+  ['modules/system/devtools.routes.ts', 'P', 'observability'],
+  ['modules/system/devtools.sources.ts', 'P', 'observability'],
+  ['modules/system/devtools.trace.ts', 'P', 'observability'],
   ['modules/connections/', 'A', 'adapters/wordpress'],
 
   // Danh sách phân hệ / add-in bật và route lõi: lắp ráp (apps/server, LAYOUT-6), không phải SDK. Kiểu ApiModule mới là SDK.

@@ -40,5 +40,7 @@ export function useEnabledModules(): Set<string> | null {
   // Phân hệ chỉ có ở giao diện (không có phần máy chủ riêng) đi theo phân hệ máy chủ nó dựa vào: Danh mục ← Kế toán.
   const on = new Set(q.data);
   if (on.has('ke-toan')) on.add('danh-muc');
+  // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: Bàn điều tra là của lõi (route API luôn bật) — ai thấy do quyền devtools:read.
+  on.add('dev');
   return on;
 }

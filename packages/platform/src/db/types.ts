@@ -15,6 +15,7 @@
 // [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_signatures.doc_ref, event_id null (0048, documents.signatures).
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/db/types.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): app_installations + api_keys.app_key (migration 0050)
+// [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — migration app ngoài tiến trình đổi số 0050 → 0051
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -74,11 +75,11 @@ export interface ApiKeysTable {
   last_used_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   revoked_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   created_at: TimestampDefault;
-  /** Khoá của app ngoài tiến trình (0050): quyền theo app_installations. NULL = khoá tích hợp thường. */
+  /** Khoá của app ngoài tiến trình (0051): quyền theo app_installations. NULL = khoá tích hợp thường. */
   app_key: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
-/** App ngoài tiến trình đã kết nối với đơn vị (0050, ADR-0011 mức 2). */
+/** App ngoài tiến trình đã kết nối với đơn vị (0051, ADR-0011 mức 2). */
 export interface AppInstallationsTable {
   tenant_id: string;
   app_key: string;

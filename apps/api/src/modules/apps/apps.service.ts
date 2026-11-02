@@ -1,7 +1,7 @@
 // @bizcity-layer P apps.external
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): kết nối app với đơn vị — khoá có phạm vi, bí mật webhook, bật / tắt, cập nhật phạm vi, xoay khoá, vé iframe
 /**
- * Kết nối app ngoài tiến trình với đơn vị (ADR-0011 mức 2). Dữ liệu: app_installations + api_keys.app_key (0050).
+ * Kết nối app ngoài tiến trình với đơn vị (ADR-0011 mức 2). Dữ liệu: app_installations + api_keys.app_key (0051).
  *
  * Khoá API và bí mật webhook chỉ trả về MỘT lần (lúc kết nối / xoay khoá), như khoá API thường. Không qua runtime action:
  * bản lưu idempotency của action sẽ giữ bí mật trong CSDL. Mỗi thay đổi ghi nhật ký (audit) với người làm.

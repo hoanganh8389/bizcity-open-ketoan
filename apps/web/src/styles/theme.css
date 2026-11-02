@@ -1484,3 +1484,73 @@ body.has-dock .page { padding-bottom: calc(var(--dock-h) + 6px); }
 .ma-tra-cuu .mtc-close { flex: none; }
 body.has-dock .ma-tra-cuu { bottom: calc(var(--dock-h) + 8px); }
 @media print { .ma-tra-cuu { display: none; } }
+
+/* [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: Bàn điều tra (phan-he/dev): câu kết luận, thẻ kết quả có chữ (U2), cây span,
+   ô số; khổ hẹp: một cột, cây span bỏ thanh thời gian (U10). */
+.dev-banner { margin: -4px 0 10px; padding: 6px 10px; border-radius: 6px; background: var(--info-bg); color: var(--ink-700); font-size: 12.5px; }
+.dev-banner.ops { background: var(--warn-bg); color: var(--warn); }
+.dev-search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.dev-search .input { flex: 1 1 320px; min-width: 0; }
+.dev-answer { margin-bottom: 12px; padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--line); border-left: 4px solid var(--ok); background: var(--surface); font-size: 13px; }
+.dev-answer > b { display: block; margin-bottom: 4px; }
+.dev-answer ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.dev-answer p { margin: 0 0 4px; }
+.dev-answer.warn, .dev-answer.rej { border-left-color: var(--warn); background: var(--warn-bg); }
+.dev-answer.bad { border-left-color: var(--bad); background: var(--bad-bg); }
+.dev-tag { display: inline-block; padding: 0 6px; border-radius: 10px; font-size: 11.5px; font-weight: 600; line-height: 18px; background: var(--line-soft); color: var(--ink-500); white-space: nowrap; }
+.dev-tag.ok { background: var(--ok-bg); color: var(--ok); }
+.dev-tag.rej { background: var(--warn-bg); color: var(--warn); }
+.dev-tag.err { background: var(--bad-bg); color: var(--bad); }
+.dev-tag.k { background: var(--brand-100); color: var(--brand-700); margin-right: 6px; }
+.dev-code { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.dev-code code { font-size: 12px; }
+.dev-copy { border: 0; background: none; padding: 2px; cursor: pointer; color: var(--ink-400); display: inline-grid; place-items: center; border-radius: 3px; }
+.dev-copy:hover { color: var(--brand-700); background: var(--info-bg); }
+.dev-off { margin: 10px 16px; padding: 10px 12px; border-radius: 6px; border: 1px dashed var(--line); color: var(--ink-500); font-size: 13px; }
+.dev-src { padding: 6px 16px 10px; color: var(--ink-400); font-size: 11.5px; }
+.dev-cols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.dev-cols > .card + .card { margin-top: 0; }
+.dev-span h3 { font-size: 14px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.dev-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 10px; margin: 0 0 8px; font-size: 12.5px; }
+.dev-kv dt { color: var(--ink-500); }
+.dev-kv dd { margin: 0; overflow-wrap: anywhere; }
+.dev-wf { display: grid; padding: 6px 0; }
+.dev-wf-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 64px; gap: 8px; align-items: center; padding: 3px 12px; border: 0; background: none; text-align: left; cursor: pointer; font-size: 12.5px; color: var(--ink-700); }
+.dev-wf-row:hover { background: var(--brand-50); }
+.dev-wf-row.on { background: var(--info-bg); }
+.dev-wf-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dev-wf-row.error .dev-wf-name { color: var(--bad); font-weight: 600; }
+.dev-wf-row.rejected .dev-wf-name { color: var(--warn); font-weight: 600; }
+.dev-wf-track { position: relative; height: 10px; background: var(--line-soft); border-radius: 3px; }
+.dev-wf-bar { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--brand-500); }
+.dev-wf-row.error .dev-wf-bar { background: var(--bad); }
+.dev-wf-row.rejected .dev-wf-bar { background: var(--warn); }
+.dev-wf-dur { text-align: right; color: var(--ink-500); font-variant-numeric: tabular-nums; }
+.dev-lv.error { color: var(--bad); font-weight: 600; }
+.dev-lv.warn { color: var(--warn); font-weight: 600; }
+.dev-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.dev-kpis > .card + .card { margin-top: 0; }
+.dev-kpi { position: relative; }
+.dev-kpi .value.bad { color: var(--bad); }
+.dev-kpi .value.warn { color: var(--warn); }
+.dev-kpi .value.ok { color: var(--ok); }
+.dev-kpi-link { position: absolute; top: 8px; right: 12px; font-size: 12px; }
+.dev-chip { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; padding: 3px 4px 3px 10px; border-radius: 14px; background: var(--info-bg); font-size: 12.5px; }
+/* [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Lỗi theo module, Toàn vẹn, Kịch bản */
+.dev-mod-head { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; }
+.dev-code-chip { display: inline-block; margin: 0 6px 2px 0; font-size: 12px; white-space: nowrap; }
+table.grid > tbody > tr.dev-row-on > td, table.grid > tbody > tr.dev-row-on:nth-child(even) > td { background: var(--info-bg); }
+.dev-kb { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; align-items: start; }
+.dev-kb > .card + .card { margin-top: 0; }
+.dev-kb-card.on { grid-column: 1 / -1; border-color: var(--brand-500); }
+.dev-kb-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.dev-kb-sym { font-size: 12.5px; margin-bottom: 8px; }
+.dev-kb-links { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.dev-kb-note { font-size: 12px; color: var(--ink-500); margin-bottom: 6px; }
+.dev-kb-body { border-top: 1px solid var(--line-soft); font-size: 13px; }
+@media (max-width: 760px) {
+  .dev-cols { grid-template-columns: minmax(0, 1fr); }
+  .dev-wf-row { grid-template-columns: minmax(0, 1fr) 56px; }
+  .dev-wf-track { display: none; }
+  .dev-kb { grid-template-columns: minmax(0, 1fr); }
+}

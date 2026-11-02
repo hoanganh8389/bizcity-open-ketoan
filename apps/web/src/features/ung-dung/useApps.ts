@@ -35,7 +35,6 @@ export const SCOPE_LABELS: Record<string, string> = {
   'documents:write': 'Nộp chứng từ vào sổ (chỉ chứng từ của app)',
   'documents:read': 'Xem chứng từ',
   'catalog:read': 'Xem danh mục (hàng, đối tượng, chi nhánh)',
-  'catalog:write': 'Thêm / sửa danh mục',
   'ledger:read': 'Xem sổ sách',
   'reports:read': 'Xem báo cáo',
 };

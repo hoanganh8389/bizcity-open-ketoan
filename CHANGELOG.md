@@ -201,7 +201,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
-- Migration `0050_ung_dung_ngoai.sql` (bảng `app_installations`, cột `api_keys.app_key`): chạy tự động khi cập nhật. Đổi `JWT_SECRET` từ nay đổi luôn bí mật webhook và vé iframe của app: sau khi đổi, xoay khoá từng app đã kết nối.
+- Migration `0051_ung_dung_ngoai.sql` (bảng `app_installations`, cột `api_keys.app_key`): chạy tự động khi cập nhật. Đổi `JWT_SECRET` từ nay đổi luôn bí mật webhook và vé iframe của app: sau khi đổi, xoay khoá từng app đã kết nối.
 - **Bắt buộc `DB_APP_PASSWORD` trong `.env`** (P0-3): `docker compose` dừng nếu thiếu. `bash scripts/cap-nhat.sh` / `bash scripts/cai-nhanh.sh` tự sinh cho bản cài cũ; tự cập nhật bằng tay thì thêm `DB_APP_PASSWORD=<openssl rand -hex 24>`. API chuyển từ vai trò sở hữu sang `ketoan_app` — tích hợp tự viết đang dựa vào quyền superuser của API (tắt trigger, TRUNCATE) sẽ bị từ chối.
 - Migration `0049` chặn mọi `UPDATE` / `DELETE` trực tiếp vào `ledger_entries`, `accounting_events` ngoài các lối của Kernel. Script vận hành tự viết sửa thẳng hai bảng này sẽ lỗi `insufficient_privilege` — dùng bút toán đảo / cửa nạp (xoá sạch một đơn vị vẫn qua `scripts/xoa-chung-tu.sh`).
 - CSDL đã chạy nhánh `feat/phase-0-tiep` **trước** khi gộp `main` (có dòng `0047_ky_chung_tu_chung.sql` trong `schema_migrations`): đổi tên dòng đó thành `0048_ky_chung_tu_chung.sql` rồi `npm run db:migrate` (áp `0047_truy_vet.sql`). Bản cài từ `main` không bị ảnh hưởng.
@@ -214,6 +214,7 @@ Mỗi bản ghi đủ sáu mục:
 - **Bắt buộc trên bản cài thật từ migration `0041` (RLS):** đặt `DB_APP_USER=ketoan_app` + `DB_APP_PASSWORD` (≥ 16 ký tự) trong `.env` rồi `docker compose up -d` (DEPLOY D-9, R-SEC-6). Không đặt thì API chạy bằng vai trò sở hữu mặc định của Docker — superuser, luôn vượt RLS: cô lập đơn vị ở tầng CSDL không có hiệu lực.
 
 ### Bảo mật
+- **Khoá app chỉ ghi qua cửa nạp** (PR-2b, cổng `APP_WRITE_ROUTES`): khoá app gọi mọi route đọc theo quyền nhưng chỉ ghi được `POST /documents`, `/documents/batch`, `/documents/submit`, `/documents/cancel` (chứng từ của app) và đổi vé; phiếu tay, số dư đầu kỳ, tài khoản, thuế, MCP và route ghi thêm sau này đều trả 403. App không xin được `catalog:write`.
 - **Khoá app có phạm vi** (PR-2b): khoá của app ngoài tiến trình không bao giờ có quyền quản trị, duyệt chi, khoá kỳ, sửa phiếu người khác; kết nối tắt hoặc bản cài gỡ app → khoá bị từ chối. Vé iframe ký bằng khoá dẫn xuất riêng, không dùng làm phiên đăng nhập được. Bí mật webhook không lưu ở CSDL.
 <!-- [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 / PHASE-006 / PHASE-001 — PR-P0 (AUDIT-2026-11-01): 0049 khoá đầu bút toán + sự việc, subscriber gắn đơn vị, API mặc định ketoan_app; bản mẫu Phân hệ -->
 - **Đầu bút toán và sự việc kế toán khoá ở tầng CSDL** (P0-1, migration `0049_khoa_dau_but_toan.sql`): `ledger_entries` không xoá được; sửa chỉ ba lối của Kernel (đảo `posted` → `reversed`, cập nhật thông tin đầu E2, điền giá vốn E1). `accounting_events` không xoá, không đổi `doc_key` / nguồn / người lập, không lùi phiên bản; `accounting_event_versions` chỉ thêm. Trước đây chỉ chặn TRUNCATE (A-07).
