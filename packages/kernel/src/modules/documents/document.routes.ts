@@ -27,8 +27,8 @@ import { db, toNumber } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcity/platform/core/http';
 import { documentService } from './document.service.js';
-import { registerActions } from '@bizcity/platform/core/actions';
-import { documentActions } from './document.actions.js';
+import { mountActions, registerActions } from '@bizcity/platform/core/actions';
+import { documentActions, submitActions } from './document.actions.js';
 
 const tags = ['Chứng từ'];
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -65,6 +65,8 @@ async function voucherListNames(tenantId: string, rows: VoucherInfoRow[]) {
 export async function documentRoutes(app: FastifyInstance): Promise<void> {
   // Công cụ ghi accounting.* cho trợ lý AI (MCP, chỉ đề xuất — luôn chờ duyệt): chỉ vào registry action, không thêm route HTTP.
   registerActions(documentActions);
+  // [2026-11-02 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — core.document.submit có route HTTP (POST /api/v1/documents/submit), trước route /documents/:id
+  mountActions(app, submitActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
 
   r.post('/api/v1/documents', {

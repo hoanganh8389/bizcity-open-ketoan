@@ -93,6 +93,8 @@ export const checks = [
       const keys = [
         ...ctx.repo.list('apps/api/src/phan-he').filter((k) => ctx.repo.isDir(`apps/api/src/phan-he/${k}`)).map((k) => `apps/api/src/phan-he/${k}`),
         ...ctx.repo.list('apps/api/src/addins').filter((k) => ctx.repo.isDir(`apps/api/src/addins/${k}`)).map((k) => `apps/api/src/addins/${k}`),
+        // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: thư mục app ngoài tiến trình apps/api/src/ung-dung/<key> → manifest kind "app"
+        ...ctx.repo.list('apps/api/src/ung-dung').filter((k) => ctx.repo.isDir(`apps/api/src/ung-dung/${k}`)).map((k) => `apps/api/src/ung-dung/${k}`),
         ...ctx.repo.list('modules').filter((k) => ctx.repo.isDir(`modules/${k}`)).map((k) => `modules/${k}`),
       ];
       const have = keys.filter((d) => ctx.repo.exists(`${d}/bizcity.module.json`));
@@ -107,7 +109,7 @@ export const checks = [
         const m = ctx.repo.json(file);
         const dir = d.split('/').pop();
         if (m?.key !== dir) findings.push(ctx.finding(file, null, `key "${m?.key}" phải trùng tên thư mục "${dir}"`, `key-dir:${d}`));
-        const want = d.startsWith('apps/api/src/addins/') ? 'addin' : 'module';
+        const want = d.startsWith('apps/api/src/addins/') ? 'addin' : d.startsWith('apps/api/src/ung-dung/') ? 'app' : 'module';
         if (m?.kind !== want) findings.push(ctx.finding(file, null, `kind "${m?.kind}" sai — thư mục này là ${want}`, `kind:${d}`));
         const co = ownersOf(d);
         if (co && [...(m?.owners ?? [])].sort().join(' ') !== [...co].sort().join(' ')) findings.push(ctx.finding(file, null, `owners ${JSON.stringify(m?.owners)} lệch CODEOWNERS (${co.join(' ')})`, `owners:${d}`));

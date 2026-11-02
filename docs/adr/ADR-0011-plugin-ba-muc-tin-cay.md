@@ -115,9 +115,23 @@ App mức 2 tuân **cùng luật** với module trong tiến trình; chỉ khác
 | PR-P0 | P0-1 trigger `ledger_entries` / `accounting_event*`; P0-2 đơn vị cho subscriber; P0-3 `ketoan_app` mặc định | K2 | 2.1 / 3.4 / 0.7 |
 | PR-1 | manifest cho 9 phân hệ + 3 add-in; `GET /system/modules` đọc manifest | K0 | 3.2 |
 | PR-2 | `@bizcity/module-sdk` v0.1 (D6), action `core.document.submit` + receipt, `ctx.ledger.submit` (D5), `ctx.settings.get` | K1 | 3.1, 3.6 |
-| PR-2b | **app mức 2**: phạm vi khoá theo module, subscriber `core.webhook` (HMAC), vé iframe + giao thức `postMessage`, slot iframe | K0 | **3.14** |
-| PR-3 | `module_registry`, `tenant_modules`, lệnh install / activate / deactivate / upgrade, nạp theo hash (D1, D2) | K0 | **3.13** |
-| PR-4 | migration theo module bằng `mod_<key>_owner` / `_rw` (D4) | K0 | 3.10 |
+| PR-2b | **app mức 2**: phạm vi khoá theo module, subscriber `core.webhook` (HMAC), vé iframe + giao thức `postMessage`, slot iframe | K1 (thực tế: thêm luật chủ chứng từ ở `postDocumentIn`) | **3.14** ✅ 2026-11-02 |
+
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] ADR-0011 — PR-2b thi hành mức 2; ghi ba chỗ chi tiết khác văn bản trên (không đổi quyết định) -->
+**PR-2b thi hành (2026-11-02), chi tiết khác văn bản trên — quyết định không đổi:**
+- Phạm vi khoá app lấy từ trường mới `app.scopes` (quyền Core app xin, danh sách đóng 6 quyền), không từ `permissions[]`: `permissions[]` đã có nghĩa "quyền mới module định nghĩa" ([Module §3](../contracts/BIZCITY-MODULE-v1.md)).
+- Webhook là một subscriber cho mỗi app (`<app>.webhook`), không phải một subscriber `core.webhook` chung: thử lại / `dead` / phát lại tách riêng từng app, một app hỏng không làm chậm app khác. Lọc theo đơn vị lúc phát bằng `SubscriberDef.accepts`.
+- Kiểm `docKey <app>:` đặt trong Kernel (`postDocumentIn`, `processDocument`) để phủ cả cửa nạp cũ `POST /documents` → mức K1, không K0. CSP `frame-src` theo app và slot iframe chưa làm (giao diện phục vụ tĩnh; slot chờ 3.8).
+<!-- [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — rà soát PR-2b: thêm cổng route cho khoá app (chỉ ghi qua cửa nạp), bỏ catalog:write khỏi phạm vi app -->
+- **Cổng route cho khoá app** (rà soát 2026-11-02): quyền `documents:write` / `catalog:write` còn mở phiếu tay, số dư đầu kỳ, hệ thống tài khoản… nên phạm vi quyền một mình không đủ giữ "app chỉ ghi sổ qua cửa nạp". Thêm `APP_WRITE_ROUTES` (`core/auth.ts`): khoá app chỉ ghi qua `POST /documents`, `/documents/batch`, `/documents/submit`, `/documents/cancel` (Kernel kiểm docKey `<app>:`) và đổi vé; route ghi khác, kể cả route thêm sau, trả `FORBIDDEN`. `catalog:write` bỏ khỏi phạm vi app.
+| PR-3 | `module_registry`, `tenant_modules`, lệnh install / activate / deactivate / upgrade, nạp theo hash (D1, D2) | K0 | **3.13** ✅ 2026-11-02 |
+
+<!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — PR-3 thi hành D1, D2; ghi chi tiết khác văn bản trên (không đổi quyết định) -->
+**PR-3 thi hành (2026-11-02), chi tiết khác văn bản trên:**
+- Hash tính trên **thư mục module** (mã đã dựng ở bản thật, mã nguồn ở máy dev), không riêng `dist`. Job cài đặt (`db/setup.ts`) đồng bộ hash của module đi kèm mỗi lần triển khai; sửa tệp module sau đó mà không triển khai → API bỏ module (D2). Hash chỉ chặn ở bản thật; máy dev cảnh báo.
+- Lệnh tạm là `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`; `bizcity module` (gói CLI) ở PR-5. `install / upgrade` của module đi kèm gộp vào `sync`; module local cài theo PR-5.
+- App ngoài tiến trình bật / tắt ở `app_installations` (PR-2b), không ở `tenant_modules`. Module lõi `ke-toan`, `he-thong` không tắt được.
+| PR-4 ✅ 2026-11-02 <!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — PR-4 thi hành D4 (vai trò mod_<key>_owner / _rw, kiểm RLS sau migration, ctx.data.module) --> | migration theo module bằng `mod_<key>_owner` / `_rw` (D4) | K0 | 3.10 |
 | PR-5 | starter + `modules/pos-mini` (mức 1) + app mẫu mức 2 tối thiểu; lane `runtime` trong CI | K0 | 4.1–4.3 |
 | PR-6 | launcher "＋ Thêm phân hệ", trang Phân hệ (mức 1 + app mức 2 cùng một danh sách) | — | 3.8 |
 

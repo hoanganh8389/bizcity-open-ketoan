@@ -57,6 +57,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `TENANT_ISOLATION` | L1 | Mọi bảng có `tenant_id` bật RLS + FORCE + có chính sách (migration 0041, STD-DATA-1). Vai trò kết nối không vượt RLS: DG-SEC-1 / -2 | error | có | DG-PLAN-5 |
 | `POLICY_VERSION` | L3 | Bút toán định khoản theo luật (chứng từ nhận từ nguồn) ghi đúng phiên bản chính sách kế toán áp cho ngày hạch toán (ADR-0009, C-9) | warn | có | DG-POL-1 |
 | `EVENT_DEAD` | L3 | Không có việc giao sự kiện hết lượt thử (dead) nằm im (bizcity_event@1, R-OUTBOX-3); xem `GET /api/v1/system/events`, sửa nguyên nhân rồi phát lại | warn | có | DG-EVT-1 |
+| `MODULE_REGISTRY` <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — DG-MOD-1 --> | L1 | Module `active` trong `module_registry` được API nạp ở lần khởi động gần nhất: hash thư mục khớp, mã có (ADR-0011 D2). Lệch → API bỏ riêng module đó; sửa: dựng lại + `npm run module -w @ketoan/api -- sync`, hoặc khôi phục mã | error | chưa (lane) | DG-MOD-1 |
 | `EVIDENCE_CHAIN` | L3 | Chuỗi băm `audit_logs` của đơn vị liền mạch: băm tính lại khớp, nối đúng dòng trước, không hở số (bizcity_evidence@1) | error | có | DG-EVD-1 |
 | `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |
 | `DEBT_MATCH_LEDGER` | L3 | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error | chưa | DG-PLAN-1 (giữ chỗ) |

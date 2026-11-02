@@ -21,6 +21,13 @@
 | **R-EVENT-10** | Mọi thao tác trên sự việc ghi `posting_log` (`receive`, `post`, `repost`, `error`, `cancel`, `cancel_request`, `unpost`) với `actor` | `posting-modes.test.ts` |
 | **R-EVENT-11** | **Xem trước = ghi thật rồi huỷ.** `GET /documents/:id/preview` chạy đúng đường định khoản trong giao dịch và rollback; không có bộ định khoản thứ hai cho xem trước | Mã `preview()` |
 | **R-EVENT-12** | Lô tối đa **200** sự việc; mỗi sự việc xử lý độc lập — một cái lỗi không chặn cái khác | `ingestBatch()` |
+| **R-EVENT-13** | **Chủ chứng từ.** Module mức 1 (`ctx.ledger.submit`) và khoá app ngoài tiến trình (ADR-0011 mức 2) chỉ nộp `docKey` dạng `<chủ>:…`, `sourceSystem` = chủ; kiểm ở đầu `postDocumentIn` / `processDocument` nên mọi cửa (`POST /documents`, `/documents/submit`, lô) cùng một luật (`ownDocument`, ADR-0011 D5). Sai → `VALIDATION_ERROR`, không lưu | `module-sdk.test.ts`, `apps.test.ts` |
+| **R-EVENT-14** | **Mọi thứ chạm sổ qua bể sự kiện** (ADR-0015). Thay đổi số liệu sổ từ module — phiếu kế toán (`manual_journal`, dòng theo `reasonCode`, không số tài khoản; chỉ `ke-toan` tự chọn tài khoản), cấn trừ công nợ khác tài khoản — phải thành sự việc qua cửa nạp trước, luật định khoản rồi mới ghi sổ. Đối trừ cùng đối tượng, cùng tài khoản chỉ ghép khoản (`debt_allocations`), không là sự việc | PHASE-011 3.15, 3.16 (planned) |
+
+<!-- [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — R-EVENT-14: nguyên tắc mọi thứ chạm sổ qua bể sự kiện (phiếu kế toán từ module, cấn trừ khác tài khoản) -->
+
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — R-EVENT-13: chủ chứng từ (module mức 1, khoá app mức 2) kiểm ở cửa nạp Kernel -->
+
 
 <!-- [2026-11-02 02:38 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — định hướng cho R-EVENT-7: "không lưu" nghĩa là không thành sự việc; đầu vào bị từ chối sẽ vào bể chờ (R-INTAKE) -->
 **Định hướng ([ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md), chấp nhận 2026-11-02, thi hành ở PHASE-021):** "không lưu" ở R-EVENT-7 nghĩa là **không thành sự việc**: đầu vào sai khuôn không bao giờ vào `accounting_events`. Khi PR-I2 xong, cửa nạp vẫn trả cùng mã lỗi nhưng giữ nguyên văn + chẩn đoán ở bể chờ `intake_inbox`, có `meta.intake` trong phản hồi ([RULE-INTAKE](RULE-INTAKE.md)). Luật chặn của cửa nạp không đổi.

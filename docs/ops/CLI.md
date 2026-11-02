@@ -15,7 +15,7 @@
 | `npm run dev -- <phân hệ> --api=<url>` | Chỉ giao diện, gọi API dev dùng chung |
 | `npm run dev -- <phân hệ> --api-only` | Chỉ API |
 | `npm run db:migrate` · `npm run db:seed` | Áp migration · migration + dữ liệu khởi tạo |
-| `npm test` | Test API trên PostgreSQL thật |
+| `npm test` | Test API trên PostgreSQL thật — CSDL riêng `ketoan_test` (tự tạo); `DATABASE_URL` phải trỏ CSDL tên có "test", không thì dừng |
 | `npm run typecheck` | Kiểm kiểu cả ba gói |
 | `npm run build` | Build contracts → api → web |
 | `docker compose up -d --build` | Dựng và chạy bản cài |
@@ -28,6 +28,8 @@
 | `./scripts/kiem-nang-cap.sh [git-ref]` | Kiểm nâng cấp (R-DB-15): CSDL tạm chạy migration + dữ liệu mẫu của bản trước (mặc định tag v* mới nhất), rồi migration bản này, rồi kiểm toàn vẹn; CI job `migrate-upgrade` |
 | `./scripts/kiem-khoi-phuc.sh [tệp hoặc --fresh]` | Kiểm khôi phục (R-BAK-3): khôi phục bản sao lưu vào CSDL tạm, chạy kiểm toàn vẹn (Nợ = Có, chuỗi bằng chứng, trigger, migration), so số dòng, xoá CSDL tạm; ghi `backups/kiem-khoi-phuc.log` |
 | `node scripts/cai-preset.mjs <id> --api <url> (--token … | --tenant … --email …)` | Cài nhanh preset theo ngành qua HTTP API: chế độ ghi sổ + dữ liệu mẫu hư cấu; `--list`, `--dry-run`, `--no-sample` ([bizcity_preset@1](../contracts/BIZCITY-PRESET-v1.md)) |
+| `npm run module -w @ketoan/api -- list | sync | activate <key> | deactivate <key> | verify` <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — lệnh module (3.13) --> | Registry module của bản cài (ADR-0011 D2): xem trạng thái + hash; đồng bộ module đi kèm bản dựng (job `db-migrate` tự chạy); bật / tắt trên cả bản cài; `verify` thoát mã 1 khi hash lệch. Chạy bằng vai trò sở hữu CSDL. Dev: `module:dev` |
+| `npm run module -w @ketoan/api -- migrate <key> [dir]` <!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — module migrate (3.10) --> | Migration của module (`modules/<key>/migrations`) bằng vai trò `mod_<key>_owner` (ADR-0011 D4): tạo vai trò + schema `mod_<key>` nếu chưa có, mỗi tệp một giao dịch, chạm bảng Kernel bị từ chối, thiếu RLS → huỷ. Cần vai trò sở hữu có CREATEROLE |
 | `node scripts/gan-nhan-lop.mjs [--write]` | Đếm / ghi nhãn lớp `// @bizcity-layer` đầu mọi tệp `apps/api/src` theo bảng lớp (R-BOUND-10) |
 | `node scripts/do-thi-phu-thuoc.mjs [--date YYYY-MM-DD]` | Dựng đồ thị phụ thuộc theo lớp → `docs/audits/deps-<ngày>.{svg,md,json}` (PHASES 1.4) |
 

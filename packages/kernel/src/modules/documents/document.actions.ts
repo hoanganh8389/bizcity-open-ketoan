@@ -18,7 +18,7 @@ import { ingestDocumentSchema } from '@ketoan/contracts';
 import { defineAction, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { Errors } from '@bizcity/platform/core/errors';
 import type { Db } from '@bizcity/platform/db/client';
-import { draftDocumentIn, requestCancelIn } from './document.service.js';
+import { draftDocumentIn, requestCancelIn, submitDocumentIn } from './document.service.js';
 
 const tags = ['Chứng từ (AI)'];
 /** Sự việc do Kernel tự lập: huỷ ở màn của chúng, không qua đề xuất huỷ. */
@@ -101,6 +101,42 @@ export const documentActions: AnyActionDef[] = [
       const willReverse = await activeLines(ctx.data.tx, auth.tenantId, input.docKey);
       const r = await requestCancelIn(ctx.data.tx, auth, input.docKey, input.reason, { hold: true });
       return { docKey: input.docKey, requested: r.requested, willReverse };
+    },
+  }),
+];
+
+// [2026-11-02 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — core.document.submit: nộp chứng từ qua runtime action (Idempotency-Key, biên nhận, dry-run) — ADR-0011 D5, app ngoài tiến trình
+/**
+ * NỘP CHỨNG TỪ QUA RUNTIME ACTION (ADR-0011 D5, PHASES 3.14): cùng đường vào Kernel với ctx.ledger.submit của module
+ * (submitDocumentIn → postDocumentIn → luật định khoản → ledgerService.post), thêm cái cửa nạp HTTP cũ (POST /api/v1/documents) không có:
+ * Idempotency-Key (gửi lặp / song song → một kết quả), biên nhận bằng chứng (meta.receipt), dry-run (bút toán dựng thử rồi huỷ).
+ * Lỗi định khoản trả mã lỗi (PERIOD_LOCKED, UNBALANCED…) thay vì lưu chứng từ trạng thái error. Không mở cho AI (ai: deny) —
+ * AI lập nháp qua accounting.document.create-draft.
+ */
+export const submitActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.document.submit', title: 'Nộp chứng từ vào sổ (có biên nhận)', tags: ['Chứng từ'],
+    description: 'Nộp một chứng từ theo bizcity_ledger_intake@1. Idempotent theo Idempotency-Key và theo docKey + version. '
+      + 'Trả trạng thái như cửa nạp (posted / pending / unchanged) kèm biên nhận bằng chứng ở meta.receipt; ?dryRun=1 trả bút toán dựng thử rồi huỷ. '
+      + 'Lỗi định khoản (kỳ khoá, không cân, thiếu cấu hình) trả mã lỗi, không lưu chứng từ.',
+    permission: 'documents:write', effect: 'write', idempotency: 'natural', sideEffects: ['documents', 'ledger'], dryRun: true,
+    input: z.object({ document: ingestDocumentSchema.describe('Chứng từ theo bizcity_ledger_intake@1; docType quyết định khuôn') }),
+    output: z.object({
+      docKey: z.string(), version: z.number(),
+      status: z.enum(['posted', 'pending', 'unchanged', 'error']),
+      entryIds: z.array(z.string()).optional(),
+      entries: z.array(entryLine).describe('Bút toán còn hiệu lực của chứng từ sau khi nộp (dry-run: bút toán dựng thử)'),
+    }),
+    expose: { http: { method: 'POST', path: '/api/v1/documents/submit' }, ai: 'deny' },
+    evidence: { objectType: 'source_document', objectId: (input) => input.document.docKey },
+    handler: async (ctx, { document }) => {
+      const auth = ctx.legacyAuth;
+      const r = await submitDocumentIn(ctx.data.tx, auth, document);
+      return {
+        docKey: r.docKey, version: r.version, status: r.status,
+        ...(r.entryIds ? { entryIds: r.entryIds.map(String) } : {}),
+        entries: await activeLines(ctx.data.tx, auth.tenantId, r.docKey),
+      };
     },
   }),
 ];

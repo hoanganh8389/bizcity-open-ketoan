@@ -1,8 +1,9 @@
 # `bizcity_data@1` — Data Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — §8 bước 1: bizcity_read có view danh mục (0044), data.read-views available -->
+<!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §8 bước 3 có — migration module bằng mod_<key>_owner, ctx.data.module bằng mod_<key>_rw, kiểm RLS sau migration (ADR-0011 D4, PHASES 3.10) -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 2/7)
+> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 2/7)
 > **Luật nền:** [R-DB](../rules/RULE-DATABASE.md), [R-TEN](../rules/RULE-TENANT-SECURITY.md), [R-MD](../rules/RULE-MASTER-DATA.md) · **Năng lực:** `data.tenant-tx`, `data.read-views`, `data.migrations.module`, `masterdata.read`, `masterdata.write`
 
 ## 1. Mục đích
@@ -104,4 +105,4 @@ Module không bao giờ thấy bảng `ledger_*`. Số liệu kế toán liên q
 
 1. Phase 2: `ctx.data.tx` đặt `SET LOCAL bizcity.tenant_id`; runner migration đọc `modules/*/migrations`; tạo schema `bizcity_read` với view danh mục. — **có** 2026-10-31: gắn đơn vị + RLS (0041); `bizcity_read` có khung nhìn sổ cái (0043) và 8 khung nhìn danh mục (0044): `partners`, `products`, `branches`, `warehouses`, `unit_names`, `tax_codes`, `payment_methods`, `dimensions` — theo mã, chỉ đọc, không có thuộc tính hạch toán của Kernel. Manifest `data.reads` chỉ được trỏ khung nhìn có thật (SC-CON-2). Còn runner migration theo module.
 2. Phase 2: bảng **mới** của mọi module theo luật này ngay. Bảng cũ của phân hệ hiện có (`purchase_*`…) giữ ở `public`, ghi `waivers` STD-DATA-1/7 kèm ADR, chuyển dần.
-3. Phase 3: role CSDL theo module; bật RLS cho bảng danh mục chuẩn và Kernel (cần đo hiệu năng trước).
+3. Phase 3: role CSDL theo module; bật RLS cho bảng danh mục chuẩn và Kernel (cần đo hiệu năng trước). — **Role theo module có** 2026-11-02 (ADR-0011 D4, PHASES 3.10): `module migrate <key>` tạo `mod_<key>_owner` (sở hữu schema `mod_<key>`, không quyền trên `public`) + `mod_<key>_rw`; mỗi tệp migration chạy bằng `SET LOCAL ROLE mod_<key>_owner` — chạm bảng Kernel bị PostgreSQL từ chối; sau migration mọi bảng `mod_<key>` phải có `tenant_id` + RLS + FORCE + chính sách, thiếu → huỷ; `schema_migrations.module` (0053). Lúc chạy: `ctx.data.module(fn)` chạy `fn` bằng `mod_<key>_rw` (chỉ bảng của module + khung nhìn `bizcity_read` khai trong `data.reads`), xong trả vai trò API. Phân hệ đi kèm vẫn ở `public` (waiver STD-MOD-2).

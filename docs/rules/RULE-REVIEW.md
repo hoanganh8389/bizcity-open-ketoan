@@ -129,6 +129,7 @@ Mỗi dòng là một lỗi / rủi ro **đã xảy ra thật**. Gặp dấu hi�
 | W-9 | Commit đẩy thẳng `main`, không PR / CI | lỗi W-1, W-2 vào `main` không ai duyệt | R-REV-1, bảo vệ nhánh | 14 / 14 commit đợt 30/10 |
 | W-10 | Công cụ kiểm báo xanh nhưng không đọc loại tệp có vi phạm (`.sql`, `.json`, tệp ngoài `apps/`) | "xanh giả" | thêm loại tệp / thư mục vào luật dò ngay (R-REV-10) | `kiem-chuan.sh` bỏ `.sql`, đã vá |
 | W-11 | Typecheck báo lỗi lạ ở `packages/contracts` sau khi kéo `main` | `dist` cũ, không phải lỗi mã | `npm run build -w @ketoan/contracts` rồi kiểm lại (AGENTS.md "Trước khi code") | đợt 31/10 |
+| W-12 | Chạy `npm test` / `vitest` mà `DATABASE_URL` trỏ CSDL của bản cài (`ketoan`) — hoặc bỏ trống khi mặc định của API là `ketoan` <!-- [2026-11-02 04:00 PM Johnny Chu - Chu Hoàng Anh] FIX — W-12: test chạy vào CSDL bản cài. --> | bộ test tạo hàng trăm đơn vị và **cố ý** để lại sổ lỗi (`diagnostics.test.ts`) — sổ chỉ ghi thêm nên không xoá được; bản cài mang đơn vị rác, cảnh báo `LedgerIntegrityError` (sev1) bật mãi | `vitest.config.ts` mặc định `ketoan_test` (tự tạo) và **dừng** khi tên CSDL không có "test"; CI dùng `ketoan_test`. Dọn bản cài đã dính: sao lưu, dựng lại CSDL (`db-migrate`) — không xoá chọn lọc (W-1) | 01/11: 324 đơn vị test vào `ketoan` trên máy dev; 02/11 dựng lại CSDL |
 
 ## 7. Thang chấm đóng góp (R-REV-14)
 <!-- [2026-10-31 10:57 PM Johnny Chu - Chu Hoàng Anh] R-REV — thang chấm 11 trục: sự thật kế toán, ranh giới Kernel, hợp đồng, bảo mật, kiểm đầu vào, CSDL, hiệu năng, bộ nhớ đệm, báo cáo, kiểm thử, Core gọn. -->

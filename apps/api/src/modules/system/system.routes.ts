@@ -39,7 +39,11 @@ import { readPostingModes } from '../../kernel/public.js';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
-import { listActions } from '../../core/actions.js';
+import { listActions, mountActions } from '../../core/actions.js';
+import { disabledModules } from '@bizcity/platform/core/module-registry';
+import { listModulePermissions, PERMISSIONS } from '@bizcity/platform/core/auth';
+import { REQUIRED_MODULES, runModuleSeed } from '../../core/module-lifecycle.js';
+import { moduleActions } from './module.actions.js';
 import { zodToJson } from '../../core/json-schema.js';
 
 export async function systemRoutes(app: FastifyInstance): Promise<void> {
@@ -254,9 +258,46 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ['Hệ thống'], summary: 'Phân hệ máy chủ đang bật',
       description: 'Mặc định: mảng mã phân hệ đang bật. detail=true: manifest tóm tắt (id, key, kind, version, label, mô tả, năng lực cần, action, docType nộp sổ, giao diện) của phân hệ và add-in đang bật.',
-      querystring: z.object({ detail: queryBool.optional() }),
+      querystring: z.object({ detail: queryBool.optional(), view: z.enum(['tenant']).optional() }),
     },
-    handler: async (req) => ok((req.query as { detail?: boolean }).detail ? app.moduleManifests.map(summarize) : app.enabledModules),
+    // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13 (CK-1): trừ module đơn vị đã tắt; view=tenant trả danh sách theo đơn vị (enabled, required); người không quản trị chỉ thấy module bật
+    handler: async (req) => {
+      const auth = authOf(req);
+      const off = await disabledModules(auth.tenantId);
+      const q = req.query as { detail?: boolean; view?: 'tenant' };
+      if (q.view === 'tenant') {
+        const admin = auth.permissions.has('users:write');
+        const rows = app.moduleManifests.map((m) => ({
+          key: m.key, kind: m.kind, label: m.label, description: m.description, version: m.version,
+          icon: m.ui?.icon ?? null, color: m.ui?.color ?? null, order: m.ui?.order ?? null,
+          source: m.kind, enabled: !off.has(m.key), required: REQUIRED_MODULES.has(m.key),
+        }));
+        return ok(admin ? rows : rows.filter((r) => r.enabled));
+      }
+      return ok(q.detail ? app.moduleManifests.filter((m) => !off.has(m.key)).map(summarize) : app.enabledModules.filter((k) => !off.has(k)));
+    },
+  });
+  mountActions(app, moduleActions);
+
+  // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: chạy seed[] của manifest cho đơn vị (dữ liệu mẫu qua core.*.upsert)
+  app.post('/api/v1/system/modules/:key/seed', {
+    preHandler: requirePermission('catalog:write'),
+    schema: { tags: ['Hệ thống'], summary: 'Nạp dữ liệu mẫu của module (seed[] trong manifest) qua action danh mục chuẩn', params: z.object({ key: z.string().regex(/^[a-z][a-z0-9-]*$/) }), querystring: z.object({ dryRun: queryBool.optional() }) },
+    handler: async (req) => {
+      const { key } = req.params as { key: string };
+      return ok(await runModuleSeed(key, authOf(req), { dryRun: (req.query as { dryRun?: boolean }).dryRun === true, requestId: req.id }));
+    },
+  });
+
+  // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: registry quyền — quyền Core + quyền module (nhóm theo module, vai trò mặc định, rủi ro)
+  app.get('/api/v1/system/permissions', {
+    preHandler: requirePermission('users:write'),
+    schema: { tags: ['Hệ thống'], summary: 'Registry quyền: quyền Core và quyền module (nhóm theo module, vai trò mặc định, rủi ro)' },
+    handler: async () => {
+      const byModule = new Map<string, { key: string; label: string; roles: string[]; risk: string }[]>();
+      for (const p of listModulePermissions()) byModule.set(p.module, [...(byModule.get(p.module) ?? []), { key: p.key, label: p.label, roles: p.roles ?? [], risk: p.risk ?? 'low' }]);
+      return ok({ core: [...PERMISSIONS], modules: [...byModule].map(([module, permissions]) => ({ module, permissions })) });
+    },
   });
 
   app.get('/api/v1/system/schema', {
