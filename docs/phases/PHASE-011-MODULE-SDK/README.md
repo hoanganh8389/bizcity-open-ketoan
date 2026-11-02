@@ -14,6 +14,7 @@
 
 | Tài liệu | Một câu |
 |---|---|
+| [50-DAC-TA-MANUAL-JOURNAL](50-DAC-TA-MANUAL-JOURNAL.md) <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — trỏ đặc tả 3.15 --> | đặc tả định khoản `manual_journal` (3.15) — chờ kế toán trưởng ký |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
 ## Hiện trạng đọc mã

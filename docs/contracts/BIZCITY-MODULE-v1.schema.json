@@ -160,6 +160,14 @@
       },
       "additionalProperties": false
     },
+    "seed": {
+      "type": "array", "maxItems": 500,
+      "items": {
+        "type": "object", "required": ["action", "input"],
+        "properties": { "action": { "enum": ["core.partner.upsert", "core.product.upsert"] }, "input": { "type": "object" } },
+        "additionalProperties": false
+      }
+    },
     "app": {
       "type": "object",
       "properties": {

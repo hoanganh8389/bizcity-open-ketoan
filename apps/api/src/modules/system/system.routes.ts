@@ -42,7 +42,7 @@ import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostic
 import { listActions, mountActions } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
 import { listModulePermissions, PERMISSIONS } from '@bizcity/platform/core/auth';
-import { REQUIRED_MODULES } from '../../core/module-lifecycle.js';
+import { REQUIRED_MODULES, runModuleSeed } from '../../core/module-lifecycle.js';
 import { moduleActions } from './module.actions.js';
 import { zodToJson } from '../../core/json-schema.js';
 
@@ -278,6 +278,16 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
   mountActions(app, moduleActions);
+
+  // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: chạy seed[] của manifest cho đơn vị (dữ liệu mẫu qua core.*.upsert)
+  app.post('/api/v1/system/modules/:key/seed', {
+    preHandler: requirePermission('catalog:write'),
+    schema: { tags: ['Hệ thống'], summary: 'Nạp dữ liệu mẫu của module (seed[] trong manifest) qua action danh mục chuẩn', params: z.object({ key: z.string().regex(/^[a-z][a-z0-9-]*$/) }), querystring: z.object({ dryRun: queryBool.optional() }) },
+    handler: async (req) => {
+      const { key } = req.params as { key: string };
+      return ok(await runModuleSeed(key, authOf(req), { dryRun: (req.query as { dryRun?: boolean }).dryRun === true, requestId: req.id }));
+    },
+  });
 
   // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: registry quyền — quyền Core + quyền module (nhóm theo module, vai trò mặc định, rủi ro)
   app.get('/api/v1/system/permissions', {

@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — giai đoạn 2: allocateDebt, core.*.upsert + seed, module-sdk/web -->
+- **SDK 1.0.0 — giai đoạn 2** (PHASES 3.16–3.18): `ctx.ledger.allocateDebt` (đối trừ công nợ cùng tài khoản giữa hai chứng từ của module); action `core.partner.upsert` / `core.product.upsert` (`POST /api/v1/partners/upsert`, `/products/upsert`) và `seed[]` trong manifest (`POST /api/v1/system/modules/:key/seed`, chạy thử được); `@bizcity/module-sdk/web` (`defineWebModule`). Phiếu kế toán từ module (`manual_journal`, 3.15): đặc tả định khoản chờ kế toán trưởng ký.
 <!-- [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — chốt SDK v1 -->
 - **SDK v1 chốt** ([ADR-0015](docs/adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md), chủ duyệt): phiếu kế toán từ module là `manual_journal` theo lý do (chỉ Kế toán tự chọn tài khoản), `ctx.ledger.allocateDebt` cho đối trừ cùng tài khoản, `seed[]` trong manifest, `@bizcity/module-sdk/web`. Nguyên tắc: **mọi thứ chạm sổ qua bể sự kiện** (R-EVENT-14). Bốn năng lực này có kiểu, đang ở lộ trình 3.15–3.18.
 <!-- [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3 quyền module + ctx.ledger.cancel / get -->

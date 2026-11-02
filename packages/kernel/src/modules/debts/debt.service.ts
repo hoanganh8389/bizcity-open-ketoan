@@ -118,6 +118,31 @@ export async function allocate(trx: Db, tenantId: string, pairs: AllocationPair[
   return n;
 }
 
+// [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16 (ADR-0015 Q2): đối trừ theo docKey cho ctx.ledger.allocateDebt — đúng một cặp khoản Nợ / Có cùng đối tượng, cùng tài khoản giữa hai chứng từ
+/**
+ * Đối trừ giữa hai chứng từ theo docKey (ctx.ledger.allocateDebt, ADR-0015 Q2): tìm ĐÚNG MỘT cặp khoản công nợ — một ghi Nợ, một
+ * ghi Có — của đối tượng `partnerCode`, cùng tài khoản, mỗi khoản thuộc một chứng từ; rồi đối trừ `amount` bằng allocate().
+ * Không có cặp cùng tài khoản → lỗi (cấn trừ khác tài khoản là chứng từ, nộp qua submit — R-EVENT-14). Nhiều cặp → lỗi (mơ hồ).
+ */
+export async function allocateByDocKeysIn(trx: Db, tenantId: string, i: { partnerCode: string; from: string; to: string; amount: number }, actor: string): Promise<{ allocated: number }> {
+  if (!(i.amount > 0)) throw Errors.validation('Số đối trừ phải lớn hơn 0');
+  const events = await trx.selectFrom('accounting_events').select(['id', 'doc_key']).where('tenant_id', '=', tenantId).where('doc_key', 'in', [i.from, i.to]).execute();
+  const from = events.find((e) => e.doc_key === i.from);
+  const to = events.find((e) => e.doc_key === i.to);
+  if (!from || !to) throw Errors.notFound(`chứng từ ${!from ? i.from : i.to}`);
+  const partner = await trx.selectFrom('partners').select('id').where('tenant_id', '=', tenantId).where('code', '=', i.partnerCode).executeTakeFirst();
+  if (!partner) throw Errors.notFound(`đối tượng ${i.partnerCode}`);
+  const items = await trx.selectFrom('debt_items').select(['id', 'event_id', 'side', 'account_code'])
+    .where('tenant_id', '=', tenantId).where('partner_id', '=', partner.id).where('event_id', 'in', [from.id, to.id]).execute();
+  const pairs: { debitItemId: string; creditItemId: string }[] = [];
+  for (const d of items.filter((x) => x.side === 'debit')) {
+    for (const c of items.filter((x) => x.side === 'credit' && x.event_id !== d.event_id && x.account_code === d.account_code)) pairs.push({ debitItemId: d.id, creditItemId: c.id });
+  }
+  if (!pairs.length) throw Errors.validation(`Hai chứng từ ${i.from}, ${i.to} không có khoản Nợ / Có cùng tài khoản của đối tượng ${i.partnerCode} — cấn trừ khác tài khoản thì lập chứng từ, nộp qua submit`);
+  if (pairs.length > 1) throw Errors.validation(`Hai chứng từ có ${pairs.length} cặp khoản công nợ cùng tài khoản — không xác định được cặp cần đối trừ`);
+  return { allocated: await allocate(trx, tenantId, [{ ...pairs[0]!, amount: i.amount }], { actor, note: `ctx.ledger.allocateDebt ${i.from} ↔ ${i.to}` }) };
+}
+
 /** Gỡ một đối trừ. */
 export async function unallocate(trx: Db, tenantId: string, allocationId: string): Promise<void> {
   const row = await trx.selectFrom('debt_allocations').select(['debit_item_id', 'credit_item_id']).where('tenant_id', '=', tenantId).where('id', '=', allocationId).executeTakeFirst();

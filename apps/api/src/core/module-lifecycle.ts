@@ -11,6 +11,7 @@
  *
  * Bật / tắt theo ĐƠN VỊ là action core.module.enable / disable (modules/system/module.actions.ts), không ở đây.
  */
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { sql } from 'kysely';
 import { db, type Db } from '../db/client.js';
@@ -18,6 +19,9 @@ import { STANDARD } from '@bizcity/platform/core/version';
 import { hashModuleDir } from '@bizcity/platform/core/module-registry';
 import { MODULE_MANIFESTS } from '../phan-he/index.js';
 import { ADDIN_MANIFESTS } from '../addins/index.js';
+import { listActions, runAction } from '@bizcity/platform/core/actions';
+import { Errors } from '@bizcity/platform/core/errors';
+import type { AuthContext } from '@bizcity/platform/core/auth';
 
 /** Module không tắt được ở đơn vị (lõi kế toán, hệ thống); tắt cả bản cài cũng không. */
 export const REQUIRED_MODULES: ReadonlySet<string> = new Set(['ke-toan', 'he-thong']);
@@ -72,6 +76,33 @@ export async function syncBundled(by: string, trx: Db = db): Promise<SyncChange[
     }
   }
   return changes;
+}
+
+// [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17 (ADR-0015 Q4): chạy seed[] của manifest — từng lời gọi core.*.upsert qua runAction (quyền, bằng chứng, idempotency riêng)
+/** Action được phép trong `seed[]` (danh mục chuẩn; module không ghi bảng danh mục). */
+export const SEED_ACTIONS: ReadonlySet<string> = new Set(['core.partner.upsert', 'core.product.upsert']);
+
+/**
+ * Chạy `seed[]` của module cho đơn vị của người gọi. Mỗi lời gọi là một runAction riêng (giao dịch, bằng chứng, khoá
+ * idempotency `seed:<module>:<thứ tự>:<băm nội dung>` — chạy lại không tạo trùng, đổi nội dung seed không xung đột). `dryRun` → chạy thử từng lời gọi, không lưu.
+ */
+export async function runModuleSeed(key: string, auth: AuthContext, opts: { dryRun?: boolean; requestId: string }): Promise<{ key: string; calls: number; results: { action: string; ok: boolean; error?: string }[] }> {
+  const m = MODULE_MANIFESTS.get(key) ?? ADDIN_MANIFESTS.get(key);
+  if (!m) throw Errors.notFound(`module "${key}"`);
+  const seed = m.seed ?? [];
+  const results: { action: string; ok: boolean; error?: string }[] = [];
+  for (const [n, s] of seed.entries()) {
+    if (!SEED_ACTIONS.has(s.action)) throw Errors.validation(`seed của ${key}: action ${s.action} không được phép (chỉ ${[...SEED_ACTIONS].join(', ')})`);
+    const def = listActions().find((a) => a.id === s.action);
+    if (!def) throw Errors.notReady(`Chưa đăng ký action ${s.action}`);
+    try {
+      await runAction(def, s.input, { auth, requestId: opts.requestId, dryRun: opts.dryRun, idempotencyKey: `seed:${key}:${n}:${createHash('sha256').update(JSON.stringify(s)).digest('hex').slice(0, 16)}${opts.dryRun ? ':thu' : ''}` });
+      results.push({ action: s.action, ok: true });
+    } catch (err) {
+      results.push({ action: s.action, ok: false, error: (err as Error).message });
+    }
+  }
+  return { key, calls: seed.length, results };
 }
 
 /** activate / deactivate module trên cả bản cài. activate kiểm năng lực (CK-5); module bắt buộc không deactivate được. */

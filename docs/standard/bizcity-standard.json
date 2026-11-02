@@ -4,13 +4,13 @@
   "released": null,
   "notes": "Bản máy đọc của Bizcity Framework Standard. Sửa cùng docs/standard/VERSIONING.md. status: available = có trong code; planned = chưa có (phase = Phase dự kiến trong docs/standard/PHASES.md).",
   "contracts": {
-    "bizcity_module": { "version": "1.3.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
+    "bizcity_module": { "version": "1.4.0-draft", "doc": "docs/contracts/BIZCITY-MODULE-v1.md", "schema": "docs/contracts/BIZCITY-MODULE-v1.schema.json" },
     "bizcity_data": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-DATA-v1.md" },
     "bizcity_document": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-DOCUMENT-v1.md" },
     "bizcity_action": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
     "bizcity_event": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EVENT-v1.md" },
     "bizcity_evidence": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EVIDENCE-v1.md" },
-    "bizcity_extension": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
+    "bizcity_extension": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
   },
   "kernelContracts": {
     "bizcity_ledger_intake": { "version": "1.2.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
@@ -45,9 +45,9 @@
     { "id": "intake.score", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Bảng điểm đầu vào cho mọi kế toán (tỷ lệ đạt lần đầu, theo nguồn / người lập / loại / mã), DG-INTAKE-1, sự kiện bizcity.intake.rejected / resolved (PHASE-021 W4)." },
     { "id": "intake.preflight.posting", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Tiền kiểm L5: định khoản thử trong giao dịch huỷ cho chứng từ chưa nhận; gợi ý cấu hình từ lỗi lặp; action đọc core.intake.* cho AI (PHASE-021 W5)." },
     { "id": "ledger.manual-journal", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_ledger_intake", "description": "docType manual_journal: phiếu kế toán module lập, dòng theo reasonCode bắt buộc, không số tài khoản; qua bể sự kiện → luật định khoản manual_journal. Chỉ ke-toan tự chọn tài khoản (ADR-0015 Q1, PHASES 3.15, K2 — cần đặc tả kế toán trưởng ký)." },
-    { "id": "ledger.allocate-debt", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_ledger_intake", "description": "ctx.ledger.allocateDebt({ partnerCode, from, to, amount }): đối trừ hai khoản công nợ cùng đối tượng, cùng tài khoản của chính module qua cổng Kernel; khác tài khoản = chứng từ qua submit (ADR-0015 Q2, PHASES 3.16)." },
-    { "id": "module.seed", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_module", "description": "seed[] trong manifest: dữ liệu mẫu hư cấu qua action core.*.upsert, module không ghi bảng danh mục (ADR-0015 Q4, PHASES 3.17)." },
-    { "id": "ui.web-module", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/module-sdk/web: defineWebModule, kiểu menu / slot / màn của module (ADR-0015 Q5, PHASES 3.18)." },
+    { "id": "ledger.allocate-debt", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_ledger_intake", "description": "ctx.ledger.allocateDebt({ partnerCode, from, to, amount }): đối trừ đúng một cặp khoản Nợ / Có cùng đối tượng, cùng tài khoản giữa hai chứng từ của chính module, qua cổng Kernel (allocateByDocKeysIn), cùng giao dịch action; khác tài khoản = chứng từ qua submit (ADR-0015 Q2, PHASES 3.16)." },
+    { "id": "module.seed", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_module", "description": "seed[] trong manifest (core.partner.upsert / core.product.upsert): POST /api/v1/system/modules/:key/seed chạy từng lời gọi qua runAction (quyền, bằng chứng, idempotency theo băm nội dung), dry-run được; module không ghi bảng danh mục (ADR-0015 Q4, PHASES 3.17)." },
+    { "id": "ui.web-module", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/module-sdk/web: defineWebModule (menu, màn dưới /app/<key>/, slot trong danh sách đóng WEB_SLOTS, quyền đúng khuôn), kiểm lúc nạp; web nạp module theo PR-6 (ADR-0015 Q5, PHASES 3.18)." },
     { "id": "ledger.submit", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Nộp sự việc kế toán; Core định khoản, ghi sổ, đảo khi sửa. Module: ctx.ledger.submit() trong giao dịch của action (docKey tiền tố <module>:, sourceSystem = module). Ngoài tiến trình: action core.document.submit (POST /api/v1/documents/submit, Idempotency-Key, biên nhận, dry-run). Cửa nạp cũ POST /documents giữ nguyên." },
     { "id": "ledger.cancel", "since": "1.0", "status": "available", "contract": "bizcity_ledger_intake", "description": "Huỷ sự việc đã nộp (bút toán đảo)." },
     { "id": "ledger.query", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_ledger_intake", "description": "Đọc sổ theo mã (tài khoản, đối tượng, chi nhánh, chiều phân tích, mã hàng): ctx.ledger.query trong action, ledgerQuery ở kernel/public.ts; báo cáo SQL đọc khung nhìn chỉ đọc bizcity_read.ledger_entries / ledger_lines / ledger_balances_daily (migration 0043). Ngoài Kernel không đọc bảng ledger_* (SC-KERNEL-7)." },

@@ -180,6 +180,8 @@ export interface LedgerDocStatus { docKey: string; version: number; status: stri
 export interface LedgerCancelGate {
   cancel(tx: Transaction<Database>, auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }>;
   get(tx: Transaction<Database>, tenantId: string, docKey: string): Promise<LedgerDocStatus | null>;
+  // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16: đối trừ theo docKey (Kernel allocateByDocKeysIn)
+  allocate(tx: Transaction<Database>, tenantId: string, input: { partnerCode: string; from: string; to: string; amount: number }, actor: string): Promise<{ allocated: number }>;
 }
 let ledgerCancelGate: LedgerCancelGate | null = null;
 export function registerLedgerCancelGate(g: LedgerCancelGate): void {
@@ -387,8 +389,15 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
             ownDocument(mod, { docKey }, 'module');
             return ledgerCancelGate.cancel(trx, auth, docKey, reason);
           },
-          allocateDebt: async () => {
-            throw Errors.capabilityMissing('ledger.allocate-debt');
+          // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16: allocateDebt chạy thật (ledger.allocate-debt available)
+          allocateDebt: async (input) => {
+            const mod = def.id.split('.')[0]!;
+            if (def.effect !== 'write') throw new Error(`Action đọc ${def.id} không được đối trừ công nợ (ctx.ledger.allocateDebt chỉ trong action ghi)`);
+            if (!ledgerCancelGate) throw new Error('Chưa đăng ký cửa sổ của Kernel (registerLedgerCancelGate ở app.ts)');
+            if (!auth) throw Errors.unauthorized();
+            ownDocument(mod, { docKey: input.from }, 'module');
+            ownDocument(mod, { docKey: input.to }, 'module');
+            return ledgerCancelGate.allocate(trx, tenantId, input, auth.actor);
           },
           get: async (docKey) => {
             const mod = def.id.split('.')[0]!;
