@@ -1,4 +1,5 @@
 // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21: kiểu, hook, nhãn 6 trạng thái và "Việc cần làm" dùng chung cho màn Kiểm chuẩn (HT06), Hồ sơ kế toán (HT07), cảnh báo ở màn lập chứng từ và khoá kỳ.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: kiểu + hook cho duyệt rulepack tại bản cài (useRulepacks), cơ sở duyệt của ca / lượt.
 /**
  * Dữ liệu Kiểm chuẩn phía giao diện (ADR-0012). Nhãn trạng thái luôn có CHỮ, không chỉ màu; không có điểm % (T5).
  * "Việc cần làm" chỉ là link sang màn thao tác sẵn có — không có nút nào sửa sổ, tắt kiểm hay "bỏ qua" (20-KIEN-TRUC §5).
@@ -12,11 +13,11 @@ export type Layer = 'module' | 'configuration' | 'enterprise';
 
 export interface ConformanceCase {
   id: string; version: string; priority: string; status: CaseStatus; reason: string; evidence: string[];
-  layer?: Layer | null; title?: string | null; rulepack?: string;
+  layer?: Layer | null; title?: string | null; rulepack?: string; approval?: 'upstream' | 'local' | null;
   legal_basis?: { source_id: string; label: string; provision_ref: string | null; review_status: string }[];
 }
 export interface ConformanceRun {
-  id: string; asOf: string; result: RunResult; layerResults: Partial<Record<Layer, RunResult>>; label: string; counts: Record<string, number>;
+  id: string; asOf: string; result: RunResult; layerResults: Partial<Record<Layer, RunResult>>; approvalBasis: 'upstream' | 'local' | 'mixed' | 'none'; label: string; counts: Record<string, number>;
   profileVersion: number | null; kitVersion: string | null; kitHash: string; rulepacks: { id: string; version: string; status: string }[];
   cases: ConformanceCase[]; knownExclusions: { scope: string; reason: string }[]; disclaimer: string; actor: string; createdAt: string;
 }
@@ -29,6 +30,11 @@ export interface ProfileReply { asOf: string; current: AccountingProfile | null;
 
 export const useLatestRun = () => useQuery({ queryKey: ['conformance', 'latest'], queryFn: () => api.get<ConformanceRun | null>('/api/v1/conformance/runs/latest') });
 export const useRuns = () => useQuery({ queryKey: ['conformance', 'runs'], queryFn: () => api.get<RunSummary[]>('/api/v1/conformance/runs', { limit: 12 }) });
+export interface RulepackState {
+  id: string; version: string; catalogId: string; title: string; domain: string; layer: string | null; upstreamStatus: string; needsTaxReviewer: boolean; hash: string; cases: number;
+  local: null | { action: 'approve' | 'revoke'; version: string; accountingReviewer: string | null; taxReviewer: string | null; note: string; actor: string; at: string; effective: boolean; stale: boolean };
+}
+export const useRulepacks = () => useQuery({ queryKey: ['conformance', 'rulepacks'], queryFn: () => api.get<RulepackState[]>('/api/v1/conformance/rulepacks') });
 export const useProfile = () => useQuery({ queryKey: ['accounting-profile'], queryFn: () => api.get<ProfileReply>('/api/v1/accounting/profile') });
 
 export const LAYERS: { key: Layer; label: string; question: string }[] = [

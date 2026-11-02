@@ -2,6 +2,7 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine trên bản cài (S020-18): hồ sơ kế toán thật + kết quả tự chẩn đoán L1/L3/L5 → bộ đánh giá dùng chung @bizcity/vn-rulepacks/engine → ảnh chụp conformance_runs (ADR-0012 T1, T2, T7).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: thêm lớp Doanh nghiệp (C09: hoá đơn đầu vào chờ, sự việc treo, tồn kho âm, việc cuối kỳ) — bằng chứng từ kiểm L3 của chính đơn vị.
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: listRuns (xu hướng ở màn Kiểm chuẩn); lịch đêm: subscriber core.conformance-nightly nghe bizcity.clock.daily (01:00 giờ VN), mỗi đơn vị một lượt, actor system:nightly (R-DIAG-3, STD-EVT-6).
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: lượt chạy dùng lượt duyệt rulepack tại bản cài của đơn vị.
 /**
  * CONFORMANCE ENGINE (ADR-0012) — ba lớp Module · Cấu hình · Doanh nghiệp trên bản cài.
  *
@@ -28,6 +29,7 @@ import { runDiagnostics } from '@bizcity/platform/system/diagnostics';
 import { defineSubscriber } from '@bizcity/platform/core/events';
 import { BUILD_VERSION } from '@bizcity/platform/core/version';
 import { profileAt } from '../posting-config/profile.js';
+import { approvalsOf } from './conformance.approvals.js';
 
 export const LAYERS = ['module', 'configuration', 'enterprise'] as const;
 const STATUSES = ['PASS', 'FAIL', 'ERROR', 'NOT_APPLICABLE', 'NOT_TESTED', 'REVIEW_REQUIRED'] as const;
@@ -74,7 +76,9 @@ export async function runConformance(trx: Db, tenantId: string, a: { asOf: strin
     ...(await runDiagnostics(scope, { layer: 'L3' })).checks,
     ...(await runDiagnostics({ tenantId, to: a.asOf }, { layer: 'L5' })).checks,
   ];
-  const evaluation = evaluate({ kit, profile, evidence: { checks: evidenceFromDiagnostics(diag, kit.diagCodes) }, layers: [...LAYERS], runtimeOnly: true });
+  // ADR-0015: lượt duyệt tại bản cài của đơn vị (bộ đánh giá tự bỏ lượt lệch phiên bản / băm).
+  const approvals = await approvalsOf(trx, tenantId);
+  const evaluation = evaluate({ kit, profile, evidence: { checks: evidenceFromDiagnostics(diag, kit.diagCodes) }, layers: [...LAYERS], runtimeOnly: true, approvals });
 
   const at = new Date();
   const runId = `${at.toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-')}-${randomBytes(3).toString('hex')}`;

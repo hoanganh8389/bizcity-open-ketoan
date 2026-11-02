@@ -2,6 +2,7 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — action Kiểm chuẩn: core.conformance.run (chạy + lưu ảnh chụp, quyền conformance:run, AI không dùng) và core.conformance.latest (đọc, AI đọc được) (ADR-0012, S020-18).
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21: core.conformance.list (xu hướng), core.conformance.advisories (Posting Gate chỉ thông tin), core.conformance.acknowledge (người xác nhận tiếp tục = bằng chứng; AI / khoá API không xác nhận thay, T3); ca mang layer, title, rulepack, căn cứ; lượt có layerResults.
 // [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: ngữ cảnh 'documents' cho xác nhận khi định khoản hàng loạt ở ACC14 (một dòng bằng chứng cho cả lô, kèm danh sách khoá chứng từ).
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: duyệt rulepack tại bản cài — core.conformance.rulepacks / approve / revoke (quyền conformance:approve, chỉ người đăng nhập); ca có approval, lượt có approvalBasis.
 /**
  * Conformance Engine (ADR-0012) — action:
  *   POST /api/v1/conformance/runs              core.conformance.run          — chạy một lượt ba lớp cho đơn vị, lưu ảnh chụp
@@ -9,6 +10,9 @@
  *   GET  /api/v1/conformance/runs              core.conformance.list         — các lượt gần đây (kết quả theo lớp) cho xu hướng
  *   GET  /api/v1/conformance/advisories        core.conformance.advisories   — cảnh báo cho ngày chứng từ (?date) hoặc kỳ sắp khoá (?year&month)
  *   POST /api/v1/conformance/advisories/ack    core.conformance.acknowledge  — người dùng đã xem cảnh báo và tiếp tục: một dòng bằng chứng
+ *   GET  /api/v1/conformance/rulepacks         core.conformance.rulepacks    — rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị
+ *   POST /api/v1/conformance/rulepacks/approve core.conformance.approve      — đơn vị tự duyệt một rulepack (ADR-0015)
+ *   POST /api/v1/conformance/rulepacks/revoke  core.conformance.revoke       — thu hồi lượt duyệt tại đơn vị
  * Lượt chạy chỉ đọc sổ và cấu hình. Không có action nào sửa / bỏ qua / tắt kết luận; cảnh báo không bao giờ thành từ chối (R-VNC-10).
  */
 import { z } from 'zod';
@@ -17,6 +21,7 @@ import { Errors } from '@bizcity/platform/core/errors';
 import { ymd } from '../posting-config/profile.js';
 import { latestRun, listRuns, runConformance, type ConformanceRunRow } from './conformance.service.js';
 import { advisoriesFor } from './conformance.advisories.js';
+import { approveRulepack, revokeRulepack, rulepackStates } from './conformance.approvals.js';
 
 const tags = ['Kiểm chuẩn'];
 const result = z.enum(['PASS', 'FAIL', 'REVIEW_REQUIRED']);
@@ -28,6 +33,7 @@ const caseSchema = z.object({
   layer: z.enum(['module', 'configuration', 'enterprise']).nullable().optional(),
   title: z.string().nullable().optional(),
   rulepack: z.string().optional(),
+  approval: z.enum(['upstream', 'local']).nullable().optional().describe('Cơ sở duyệt của ca: upstream = kho rulepack; local = duyệt tại bản cài (ADR-0015)'),
   legal_basis: z.array(z.object({ source_id: z.string(), label: z.string(), provision_ref: z.string().nullable(), review_status: z.string() })).optional(),
 });
 const runSchema = z.object({
@@ -35,6 +41,7 @@ const runSchema = z.object({
   asOf: z.string(),
   result: result.describe('REVIEW_REQUIRED và NOT_TESTED không bao giờ tính là PASS'),
   layerResults,
+  approvalBasis: z.enum(['upstream', 'local', 'mixed', 'none']).describe('Các ca PASS dựa trên duyệt nào; local / mixed ⇒ nhãn "Đạt theo duyệt của đơn vị", không phải nhãn Bizcity'),
   label: z.string().describe('Nhãn duy nhất được công bố: Passed Bizcity VN Conformance [...] — không phải chứng nhận nhà nước'),
   counts: z.record(z.number()),
   profileVersion: z.number().nullable().describe('Phiên bản hồ sơ kế toán đã dùng; null = đơn vị chưa khai'),
@@ -48,14 +55,14 @@ const runSchema = z.object({
   createdAt: z.string(),
 });
 type Report = {
-  label: string; layer_results?: Record<string, z.infer<typeof result>>; cases: z.infer<typeof caseSchema>[];
+  label: string; layer_results?: Record<string, z.infer<typeof result>>; approval_basis?: 'upstream' | 'local' | 'mixed' | 'none'; cases: z.infer<typeof caseSchema>[];
   rulepacks: { id: string; version: string; status: string }[]; known_exclusions: { scope: string; reason: string }[]; disclaimer: string;
 };
 const json = <T>(v: unknown): T => (typeof v === 'string' ? JSON.parse(v) : v) as T;
 const view = (r: ConformanceRunRow) => {
   const rep = json<Report>(r.report);
   return {
-    id: String(r.id), asOf: ymd(r.as_of), result: r.result, layerResults: rep.layer_results ?? {}, label: rep.label,
+    id: String(r.id), asOf: ymd(r.as_of), result: r.result, layerResults: rep.layer_results ?? {}, approvalBasis: rep.approval_basis ?? 'none', label: rep.label,
     counts: json<Record<string, number>>(r.counts),
     profileVersion: r.profile_version, kitVersion: r.kit_version, kitHash: r.kit_hash,
     rulepacks: (rep.rulepacks ?? []).map((p) => ({ id: p.id, version: p.version, status: p.status })),
@@ -172,6 +179,49 @@ export const conformanceActions: AnyActionDef[] = [
       ctx.evidence.note('context', c);
       if (input.note) ctx.evidence.note('note', input.note);
       return { acknowledged: true as const, codes, context: key };
+    },
+  }),
+  defineAction({
+    id: 'core.conformance.rulepacks', title: 'Rulepack và trạng thái duyệt', tags,
+    description: 'Mọi rulepack trong kho của bản cài: phiên bản, miền, lớp, trạng thái duyệt ở thượng nguồn, và lượt duyệt tại đơn vị (ai duyệt, còn hiệu lực '
+      + 'hay đã lệch phiên bản / nội dung sau khi cập nhật gói — lệch thì phải duyệt lại).',
+    permission: 'conformance:read', effect: 'read', idempotency: 'none',
+    input: z.object({}),
+    output: z.array(z.object({
+      id: z.string(), version: z.string(), catalogId: z.string(), title: z.string(), domain: z.string(), layer: z.string().nullable(),
+      upstreamStatus: z.string(), needsTaxReviewer: z.boolean(), hash: z.string(), cases: z.number(),
+      local: z.object({ action: z.enum(['approve', 'revoke']), version: z.string(), accountingReviewer: z.string().nullable(), taxReviewer: z.string().nullable(), note: z.string(), actor: z.string(), at: z.string(), effective: z.boolean(), stale: z.boolean() }).nullable(),
+    })),
+    expose: { http: { method: 'GET', path: '/api/v1/conformance/rulepacks' }, mcp: false, ai: 'read' },
+    handler: async (ctx) => rulepackStates(ctx.data.tx, ctx.tenant.id),
+  }),
+  defineAction({
+    id: 'core.conformance.approve', title: 'Duyệt rulepack tại đơn vị', tags,
+    description: 'Bản cài tự chủ (ADR-0015): đơn vị tự duyệt một rulepack còn nháp, nhận trách nhiệm về căn cứ thay cho duyệt ở thượng nguồn. '
+      + 'Ghi người duyệt kế toán (+ người duyệt thuế với miền thuế / hoá đơn / quản lý thuế / lương), phạm vi đã rà. Lượt duyệt gắn phiên bản + băm nội dung: '
+      + 'cập nhật gói rulepack thì phải duyệt lại. Kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị", không mang nhãn Bizcity. '
+      + 'Không đổi sổ, không đổi cấu hình kế toán. Chỉ người đăng nhập; khoá API / AI không duyệt được.',
+    permission: 'conformance:approve', effect: 'write', idempotency: 'required', sideEffects: ['settings'],
+    input: z.object({ rulepackId: z.string().min(1).max(100), accountingReviewer: z.string().trim().min(3, 'Ghi họ tên người duyệt (ít nhất 3 ký tự)').max(200), taxReviewer: z.string().trim().min(3, 'Ghi họ tên người duyệt (ít nhất 3 ký tự)').max(200).optional(), note: z.string().trim().min(10, 'Ghi phạm vi đã rà / căn cứ (ít nhất 10 ký tự)').max(1000) }),
+    output: z.object({ rulepackId: z.string(), version: z.string(), hash: z.string() }),
+    expose: { http: { method: 'POST', path: '/api/v1/conformance/rulepacks/approve' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'rulepack_approval', objectId: (_i, o) => `${o.rulepackId}@${o.version}` },
+    handler: async (ctx, input) => {
+      if (ctx.actor.kind !== 'user') throw Errors.forbidden('Chỉ người đăng nhập duyệt được rulepack; khoá API / AI không duyệt thay (ADR-0015)');
+      return approveRulepack(ctx.data.tx, ctx.tenant.id, { ...input, actor: ctx.actor.id });
+    },
+  }),
+  defineAction({
+    id: 'core.conformance.revoke', title: 'Thu hồi duyệt rulepack tại đơn vị', tags,
+    description: 'Thu hồi lượt duyệt tại đơn vị của một rulepack (thêm một dòng, không xoá lượt cũ). Các ca của rulepack đó trở lại "Chờ duyệt" ở lượt kiểm sau.',
+    permission: 'conformance:approve', effect: 'write', idempotency: 'required', sideEffects: ['settings'],
+    input: z.object({ rulepackId: z.string().min(1).max(100), note: z.string().trim().min(10, 'Ghi lý do thu hồi (ít nhất 10 ký tự)').max(1000) }),
+    output: z.object({ rulepackId: z.string(), version: z.string(), hash: z.string() }),
+    expose: { http: { method: 'POST', path: '/api/v1/conformance/rulepacks/revoke' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'rulepack_approval', objectId: (_i, o) => `${o.rulepackId}@${o.version}` },
+    handler: async (ctx, input) => {
+      if (ctx.actor.kind !== 'user') throw Errors.forbidden('Chỉ người đăng nhập thu hồi được (ADR-0015)');
+      return revokeRulepack(ctx.data.tx, ctx.tenant.id, { ...input, actor: ctx.actor.id });
     },
   }),
 ];

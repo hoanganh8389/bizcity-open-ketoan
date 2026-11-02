@@ -1,6 +1,7 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ đánh giá thuần dùng chung cho --certify (CI) và Conformance Engine trên bản cài (Kernel): chọn rulepack 4 bước, 6 trạng thái ca, fail closed; tách từ tests/conformance/lib/certify.mjs để không có hai bộ đánh giá (ADR-0012 T1, T7).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: báo cáo giữ lớp của từng ca và thêm layer_results (kết quả riêng cho Module · Cấu hình · Doanh nghiệp, cùng luật overall).
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: ca trong báo cáo mang title, rulepack, legal_basis (nguồn + điều khoản + trạng thái rà) cho màn Kiểm chuẩn.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: duyệt tại bản cài (self-host) — packHash, approvals trong resolve/evaluate, nhãn "Đạt theo duyệt của đơn vị", approval_basis.
 /**
  * @bizcity/vn-rulepacks/engine — BỘ ĐÁNH GIÁ THUẦN (ADR-0012 T7: gói chứa dữ liệu luật + một bộ đánh giá không phụ thuộc gói ngoài).
  *
@@ -15,13 +16,14 @@
  * REVIEW_REQUIRED và NOT_TESTED không bao giờ là PASS (R-VNC-8).
  */
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const PACKAGE_DIR = path.dirname(fileURLToPath(import.meta.url));
 /** Nguồn pháp lý đã rà quá số ngày này tính là duyệt hết hạn (LEGAL-SOURCE-REGISTRY §2). */
 export const REVIEW_VALID_DAYS = 365;
-const TAX_DOMAINS = new Set(['tax', 'invoice', 'tax_admin', 'payroll']);
+export const TAX_DOMAINS = new Set(['tax', 'invoice', 'tax_admin', 'payroll']);
 const OK = new Set(['pass', 'debt', 'warn']);
 export const DISCLAIMER = 'Kết quả chỉ có giá trị trong phạm vi, ngày, phiên bản phần mềm, phiên bản rulepack và bộ test đã thực thi. Không phải chứng nhận của Bộ Tài chính hay cơ quan Thuế; không phải ý kiến pháp lý.';
 
@@ -99,18 +101,38 @@ export function applies(app, { profile, fyStart, domain, regime }) {
 
 /* ───────────── bốn bước chọn rulepack (R-VNC-4) ───────────── */
 
+/** Băm nội dung một rulepack đã nạp (rulepack + mọi ca): đổi một chữ trong ca là đổi băm ⇒ lượt duyệt tại đơn vị hết hiệu lực. */
+export function packHash(pack) {
+  return 'sha256:' + createHash('sha256').update(JSON.stringify(pack)).digest('hex');
+}
+
 /**
- * Trả cho mỗi rulepack: { pack, applies: true|false|null, reason, selected, blocked } — blocked là lý do REVIEW_REQUIRED:
+ * Lượt duyệt tại bản cài (ADR-0015) còn hiệu lực cho rulepack này không: đúng phiên bản + đúng băm nội dung, có người duyệt kế toán,
+ * miền thuế / hoá đơn / quản lý thuế / lương có thêm người duyệt thuế. approvals = Map(id rulepack → lượt duyệt mới nhất chưa thu hồi).
+ */
+export function localApproval(approvals, pack) {
+  const a = approvals?.get(pack.id);
+  if (!a || a.version !== pack.version || a.hash !== packHash(pack) || !a.accounting_reviewer) return null;
+  if (TAX_DOMAINS.has(pack.domain) && !a.tax_reviewer) return null;
+  return a;
+}
+
+/**
+ * Trả cho mỗi rulepack: { pack, applies: true|false|null, reason, selected, blocked, local } — local = lượt duyệt tại bản cài còn hiệu lực (ADR-0015); blocked là lý do REVIEW_REQUIRED:
  * chưa approved · nhiều bản approved cùng catalog · nguồn pháp lý chưa rà / rà quá hạn · thiếu nguồn · hồ sơ chưa khai.
  */
-export function resolve(kit, profile) {
+export function resolve(kit, profile, approvals = null) {
   const fyStart = fiscalYearStart(profile.fiscal_year_start, profile.as_of);
   const rows = kit.rulepacks.map((pack) => {
     const a = applies(pack.applies_to, { profile, fyStart, domain: pack.domain, regime: pack.regime });
-    const row = { pack, applies: a.applies, reason: a.reason, selected: false, blocked: null };
+    const row = { pack, applies: a.applies, reason: a.reason, selected: false, blocked: null, local: null };
     if (a.applies === null) row.blocked = a.reason;
     if (a.applies === false) return row;
     if (pack.status === 'deprecated') { row.applies = false; row.reason = 'rulepack đã deprecated'; return row; }
+    // Duyệt tại bản cài: người duyệt của đơn vị nhận trách nhiệm thay cho duyệt thượng nguồn và nguồn chưa rà (ADR-0015).
+    // Phạm vi chưa xác định (hồ sơ chưa khai) vẫn chặn như cũ: không ai duyệt được cho một quy định chưa biết có áp hay không.
+    row.local = pack.status === 'approved' ? null : localApproval(approvals, pack);
+    if (row.local) return row;
     if (pack.status !== 'approved') row.blocked ??= `rulepack ${pack.id}@${pack.version} còn ${pack.status} — chưa được chuyên gia duyệt`;
     for (const b of pack.legal_basis ?? []) {
       const src = kit.sources.get(b.source_id);
@@ -177,8 +199,8 @@ function evidenceOf(ref, ev, layer) {
  * runtimeOnly — bản cài: chỉ tính bằng chứng có được lúc chạy (DG-*); SC-* / test là bằng chứng build, liệt kê nhưng không tính
  * Trả { fyStart, resolution, cases: [{ id, version, priority, status, reason, evidence, legal_basis_ids, rulepack, layer, technical }] }.
  */
-export function evaluate({ kit, profile, evidence, layers = ['module', 'configuration'], runtimeOnly = false, buildOnlyLayers = [] }) {
-  const resolution = resolve(kit, profile);
+export function evaluate({ kit, profile, evidence, layers = ['module', 'configuration'], runtimeOnly = false, buildOnlyLayers = [], approvals = null }) {
+  const resolution = resolve(kit, profile, approvals);
   const cases = [];
   for (const row of resolution.rows) {
     const { pack } = row;
@@ -219,15 +241,17 @@ export function evaluate({ kit, profile, evidence, layers = ['module', 'configur
       // Phạm vi chưa xác định (hồ sơ chưa khai chế độ / loại pháp nhân): không kết luận FAIL cho quy định chưa biết có áp hay không —
       // REVIEW_REQUIRED kèm việc cần làm (ADR-0013 §4: không đoán). FAIL / ERROR kỹ thuật chỉ nâng lên khi phạm vi đã rõ.
       const undetermined = row.applies === null || ca.applies === null;
-      if (blocked || k.status !== 'approved') {
+      const approvedHere = k.status === 'approved' || Boolean(row.local);
+      if (blocked || !approvedHere) {
         status = !undetermined && (technical === 'FAIL' || technical === 'ERROR') ? technical : 'REVIEW_REQUIRED';
         reason = blocked ?? `ca còn ${k.status} — chưa được duyệt`;
         if (status === 'REVIEW_REQUIRED') reason += ` · kỹ thuật: ${technical}`;
       } else {
         status = technical;
-        reason = status === 'PASS' ? '' : status === 'NOT_TESTED' ? (k.scenario?.gap ?? 'không có bằng chứng đủ') : lines.filter((l) => /KHÔNG|fail|error|lỗi|phát hiện/i.test(l)).join('; ');
+        reason = row.local ? `duyệt tại đơn vị: ${[row.local.accounting_reviewer, row.local.tax_reviewer].filter(Boolean).join(', ')} (${String(row.local.approved_at).slice(0, 10)})${status === 'PASS' ? '' : ' · '}` : '';
+        reason += status === 'PASS' ? '' : status === 'NOT_TESTED' ? (k.scenario?.gap ?? 'không có bằng chứng đủ') : lines.filter((l) => /KHÔNG|fail|error|lỗi|phát hiện/i.test(l)).join('; ');
       }
-      cases.push({ ...base, status, reason, technical, evidence: lines, evaluated_at: profile.as_of });
+      cases.push({ ...base, status, reason, technical, evidence: lines, evaluated_at: profile.as_of, approval: row.local && approvedHere && !blocked ? 'local' : k.status === 'approved' && row.pack.status === 'approved' ? 'upstream' : null });
     }
   }
   return { fyStart: resolution.fyStart, resolution, cases, layers: [...layers] };
@@ -247,6 +271,8 @@ export function overall(cases) {
  */
 export function buildReport({ kit, profile, evaluation, run, target, exclusions = [] }) {
   const result = overall(evaluation.cases);
+  const pass = evaluation.cases.filter((c) => c.status === 'PASS');
+  const basis = !pass.length ? 'none' : pass.every((c) => c.approval === 'upstream') ? 'upstream' : pass.some((c) => c.approval === 'upstream') ? 'mixed' : 'local';
   const scope = profile.scope?.length ? profile.scope : [...new Set(kit.rulepacks.map((p) => p.catalog_id))].sort();
   const known = [
     ...(kit.catalog.items ?? []).filter((i) => i.status === 'planned').map((i) => ({ scope: i.id, reason: `rulepack ${i.rulepack} chưa có (${i.ticket ?? 'chưa có ticket'})` })),
@@ -269,7 +295,11 @@ export function buildReport({ kit, profile, evaluation, run, target, exclusions 
     result,
     // Ba câu hỏi khác nhau (ADR-0012): mỗi lớp được đánh giá một kết quả, cùng luật overall; lớp không thuộc lượt thì không có khoá.
     layer_results: Object.fromEntries((evaluation.layers ?? []).map((l) => [l, overall(evaluation.cases.filter((c) => c.layer === l))])),
-    label: result === 'PASS' ? `Passed Bizcity VN Conformance [${scope.join(',')}/${kit.rulepacks.map((p) => `${p.id}@${p.version}`).join(',')}/${profile.as_of}]` : result === 'FAIL' ? 'Not passed' : 'Review required',
+    // ADR-0015: PASS dựa trên duyệt tại đơn vị (dù một ca) KHÔNG mang nhãn Bizcity — nhãn đó chỉ cho rulepack duyệt ở thượng nguồn.
+    approval_basis: basis,
+    label: result === 'PASS'
+      ? `${basis === 'upstream' ? 'Passed Bizcity VN Conformance' : 'Đạt theo duyệt của đơn vị'} [${scope.join(',')}/${kit.rulepacks.map((p) => `${p.id}@${p.version}`).join(',')}/${profile.as_of}]`
+      : result === 'FAIL' ? 'Not passed' : 'Review required',
     disclaimer: DISCLAIMER,
   };
 }

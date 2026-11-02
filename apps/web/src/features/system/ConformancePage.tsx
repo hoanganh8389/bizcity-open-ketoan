@@ -1,4 +1,5 @@
 // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: màn Hệ thống → Kiểm chuẩn (HT06) — ba lớp, ma trận ca theo 6 trạng thái, Vì sao, Việc cần làm, xu hướng; theo ma trận BizCity, không điểm %.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: khối "Rulepack và duyệt tại đơn vị" — bản cài tự chủ tự duyệt / thu hồi (quyền conformance:approve); ca duyệt tại đơn vị có thẻ riêng; nhãn không phải Bizcity.
 /**
  * KIỂM CHUẨN (HT06, ADR-0012 §5). Ba câu hỏi, ba thẻ: Module · Cấu hình · Doanh nghiệp — mỗi lớp một kết quả riêng (layer_results).
  * Ma trận: hàng = ca, cột = căn cứ (điều khoản + trạng thái rà) / trạng thái (6 mức, có chữ) / Vì sao / Việc cần làm.
@@ -9,13 +10,13 @@ import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Loading } from '@/components/ui';
+import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { dateTime } from '@/lib/format';
 import {
-  ENTITY_LABEL, LAYERS, REGIME_LABEL, RESULT, STATUS, STATUS_ORDER, hasEvidence, todoForCase, useLatestRun, useProfile, useRuns,
-  type ConformanceCase, type ConformanceRun, type Layer, type RunSummary,
+  ENTITY_LABEL, LAYERS, REGIME_LABEL, RESULT, STATUS, STATUS_ORDER, hasEvidence, todoForCase, useLatestRun, useProfile, useRulepacks, useRuns,
+  type ConformanceCase, type ConformanceRun, type Layer, type RulepackState, type RunSummary,
 } from './conformance';
 
 const who = (actor: string) => (actor === 'system:nightly' ? 'lịch đêm' : actor.startsWith('user:') ? 'chạy tay' : actor);
@@ -51,7 +52,7 @@ export function ConformancePage() {
       ) : (
         <>
           <div className="cf-head card card-body">
-            <div><span className={`badge ${RESULT[r.result].cls}`}>{RESULT[r.result].text}</span> <span className="muted">· nhãn: {r.label}</span></div>
+            <div><span className={`badge ${RESULT[r.result].cls}`}>{RESULT[r.result].text}</span> <span className="muted">· nhãn: {r.label}</span>{(r.approvalBasis === 'local' || r.approvalBasis === 'mixed') && <span className="badge badge-info" style={{ marginLeft: 6 }} title="Có ca đạt dựa trên duyệt tại đơn vị (ADR-0015)">có duyệt tại đơn vị</span>}</div>
             <div className="muted">
               Lượt {dateTime(r.createdAt)} ({who(r.actor)}) · ngày đánh giá {r.asOf} · kho rulepack {r.kitVersion ?? '—'}
               {' · '}{r.rulepacks.filter((p) => p.status === 'approved').length}/{r.rulepacks.length} rulepack đã duyệt
@@ -68,6 +69,8 @@ export function ConformancePage() {
           <Matrix cases={r.cases.filter((c) => c.layer === layer)} rulepacks={r.rulepacks} />
 
           <Trend list={runs.data ?? []} />
+
+          <Rulepacks />
 
           <div className="card card-body cf-foot">
             {r.knownExclusions.length > 0 && (
@@ -137,7 +140,7 @@ function Matrix({ cases, rulepacks }: { cases: ConformanceCase[]; rulepacks: Con
                 <td>{(c.legal_basis ?? []).map((b) => (
                   <div key={`${b.source_id}${b.provision_ref}`}>{b.label}{b.provision_ref && b.provision_ref !== 'REVIEW_REQUIRED' ? ` · ${b.provision_ref}` : ''} <span className={`badge ${b.review_status === 'reviewed' ? 'badge-ok' : 'badge-gray'}`}>{b.review_status === 'reviewed' ? 'đã rà' : 'chưa rà'}</span></div>
                 ))}</td>
-                <td><span className={`badge ${STATUS[c.status].cls}`} title={STATUS[c.status].hint}>{STATUS[c.status].text}</span></td>
+                <td><span className={`badge ${STATUS[c.status].cls}`} title={STATUS[c.status].hint}>{STATUS[c.status].text}</span>{c.approval === 'local' && <div><span className="badge badge-info" title="Rulepack được duyệt tại đơn vị (ADR-0015)">duyệt tại đơn vị</span></div>}</td>
                 <td><button type="button" className="btn btn-xs btn-ghost" onClick={() => setOpen(open === c.id ? null : c.id)} aria-expanded={open === c.id}>{open === c.id ? 'Ẩn' : 'Vì sao'}</button></td>
                 <td>{todo.length ? todo.map((t) => <Link key={t.path} className="cf-todo" to={t.path}>{t.label}</Link>) : <span className="muted">—</span>}</td>
               </tr>
@@ -154,5 +157,78 @@ function Matrix({ cases, rulepacks }: { cases: ConformanceCase[]; rulepacks: Con
         })}</tbody>
       </table></div>
     </div>
+  );
+}
+
+/** Rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị (ADR-0015). Duyệt / thu hồi: quyền conformance:approve. */
+function Rulepacks() {
+  const { can } = useAuth();
+  const q = useRulepacks();
+  const [act, setAct] = useState<{ kind: 'approve' | 'revoke'; pack: RulepackState } | null>(null);
+  const local = (p: RulepackState) => {
+    if (p.upstreamStatus === 'approved') return <span className="badge badge-ok">đã duyệt ở thượng nguồn</span>;
+    if (!p.local || p.local.action === 'revoke') return <span className="badge badge-gray">{p.local ? 'đã thu hồi' : 'chưa duyệt'}</span>;
+    if (p.local.stale) return <span className="badge badge-warn" title="Gói rulepack đã cập nhật sau lần duyệt">lệch nội dung — cần duyệt lại</span>;
+    return <span className="badge badge-info">duyệt tại đơn vị</span>;
+  };
+  return (
+    <div className="card">
+      <div className="card-body" style={{ paddingBottom: 0 }}>
+        <b>Rulepack và duyệt tại đơn vị</b>
+        <p className="muted" style={{ margin: '4px 0 0' }}>Bản cài tự chủ được tự duyệt rulepack còn nháp: đơn vị nhận trách nhiệm về căn cứ. Kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị", không phải nhãn Bizcity. Cập nhật gói rulepack thì phải duyệt lại.</p>
+      </div>
+      {q.isLoading ? <Loading /> : q.error ? <ErrorBox error={errorText(q.error)} /> : (
+        <div className="table-wrap"><table className="grid">
+          <thead><tr><th>Rulepack</th><th>Miền · lớp</th><th>Số ca</th><th>Trạng thái duyệt</th><th>Người duyệt</th><th /></tr></thead>
+          <tbody>{(q.data ?? []).map((p) => (
+            <tr key={p.id}>
+              <td><div>{p.title}</div><code className="muted cf-id">{p.id}@{p.version} · {p.catalogId}</code></td>
+              <td>{p.domain}{p.layer ? ` · ${p.layer}` : ''}{p.needsTaxReviewer && <div className="muted">cần người duyệt thuế</div>}</td>
+              <td>{p.cases}</td>
+              <td>{local(p)}</td>
+              <td className="muted">{p.local && p.local.action === 'approve' ? <>{[p.local.accountingReviewer, p.local.taxReviewer].filter(Boolean).join(' · ')}<div>{dateTime(p.local.at)}</div></> : '—'}</td>
+              <td>{can('conformance:approve') && p.upstreamStatus !== 'approved' && p.upstreamStatus !== 'deprecated' && (
+                <>
+                  {(!p.local || p.local.action === 'revoke' || p.local.stale) && <button type="button" className="btn btn-xs" onClick={() => setAct({ kind: 'approve', pack: p })}>Duyệt</button>}
+                  {p.local?.action === 'approve' && <button type="button" className="btn btn-xs btn-ghost" onClick={() => setAct({ kind: 'revoke', pack: p })}>Thu hồi</button>}
+                </>
+              )}</td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+      )}
+      {act && <ApproveDialog kind={act.kind} pack={act.pack} onClose={() => setAct(null)} />}
+    </div>
+  );
+}
+
+function ApproveDialog({ kind, pack, onClose }: { kind: 'approve' | 'revoke'; pack: RulepackState; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [v, setV] = useState({ accountingReviewer: '', taxReviewer: '', note: '', agree: false });
+  const send = useMutation({
+    mutationFn: () => kind === 'approve'
+      ? api.post('/api/v1/conformance/rulepacks/approve', { rulepackId: pack.id, accountingReviewer: v.accountingReviewer.trim(), taxReviewer: v.taxReviewer.trim() || undefined, note: v.note.trim() })
+      : api.post('/api/v1/conformance/rulepacks/revoke', { rulepackId: pack.id, note: v.note.trim() }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['conformance'] }); onClose(); },
+  });
+  const ok = kind === 'revoke'
+    ? v.note.trim().length >= 10
+    : v.agree && v.accountingReviewer.trim().length >= 3 && v.note.trim().length >= 10 && (!pack.needsTaxReviewer || v.taxReviewer.trim().length >= 3);
+  return (
+    <Modal title={`${kind === 'approve' ? 'Duyệt tại đơn vị' : 'Thu hồi duyệt'} — ${pack.id}@${pack.version}`} onClose={onClose}
+      footer={<><button className="btn" onClick={onClose}>Đóng</button><button className="btn btn-primary" disabled={!ok || send.isPending} onClick={() => send.mutate()}>{kind === 'approve' ? 'Duyệt' : 'Thu hồi'}</button></>}>
+      {kind === 'approve' && (
+        <>
+          <div className="full muted">Duyệt áp cho đúng phiên bản và nội dung đang nạp ({pack.cases} ca). Lần kiểm chuẩn sau, ca của rulepack này được kết luận theo bằng chứng thay vì "Chờ duyệt".</div>
+          <Field label="Người duyệt kế toán (họ tên, chứng chỉ nếu có)" full><input className="input" value={v.accountingReviewer} onChange={(e) => setV({ ...v, accountingReviewer: e.target.value })} /></Field>
+          <Field label={`Người duyệt thuế${pack.needsTaxReviewer ? ' (bắt buộc với miền này)' : ' (tuỳ chọn)'}`} full><input className="input" value={v.taxReviewer} onChange={(e) => setV({ ...v, taxReviewer: e.target.value })} /></Field>
+        </>
+      )}
+      <Field label={kind === 'approve' ? 'Phạm vi đã rà, căn cứ (ít nhất 10 ký tự)' : 'Lý do thu hồi (ít nhất 10 ký tự)'} full><input className="input" value={v.note} onChange={(e) => setV({ ...v, note: e.target.value })} /></Field>
+      {kind === 'approve' && (
+        <label className="checkbox full"><input type="checkbox" checked={v.agree} onChange={(e) => setV({ ...v, agree: e.target.checked })} /> Đơn vị chịu trách nhiệm về căn cứ của rulepack này; kết quả mang nhãn "Đạt theo duyệt của đơn vị", không phải chứng nhận của Bizcity hay cơ quan nhà nước.</label>
+      )}
+      {send.error && <div className="full"><ErrorBox error={errorText(send.error)} /></div>}
+    </Modal>
   );
 }
