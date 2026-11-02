@@ -1,5 +1,5 @@
 // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: màn Hệ thống → Kiểm chuẩn (HT06) — ba lớp, ma trận ca theo 6 trạng thái, Vì sao, Việc cần làm, xu hướng; theo ma trận BizCity, không điểm %.
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: khối "Rulepack và duyệt tại đơn vị" — bản cài tự chủ tự duyệt / thu hồi (quyền conformance:approve); ca duyệt tại đơn vị có thẻ riêng; nhãn không phải Bizcity.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: khối "Rulepack và duyệt tại đơn vị" — bản cài tự chủ tự duyệt / thu hồi (quyền conformance:approve); ca duyệt tại đơn vị có thẻ riêng; nhãn không phải Bizcity.
 /**
  * KIỂM CHUẨN (HT06, ADR-0012 §5). Ba câu hỏi, ba thẻ: Module · Cấu hình · Doanh nghiệp — mỗi lớp một kết quả riêng (layer_results).
  * Ma trận: hàng = ca, cột = căn cứ (điều khoản + trạng thái rà) / trạng thái (6 mức, có chữ) / Vì sao / Việc cần làm.

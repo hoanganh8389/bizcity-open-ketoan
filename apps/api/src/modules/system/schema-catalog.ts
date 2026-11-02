@@ -1,7 +1,7 @@
 // @bizcity-layer P module-sdk
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm accounting_profiles (0049).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm conformance_runs (0051).
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: thêm rulepack_approvals (0053).
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: thêm rulepack_approvals (0053).
 // [2026-11-02 02:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration hồ sơ kế toán 0049 → 0050 (main đã có 0049_khoa_dau_but_toan từ PR #18).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.

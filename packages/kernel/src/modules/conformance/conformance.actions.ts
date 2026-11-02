@@ -2,7 +2,7 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — action Kiểm chuẩn: core.conformance.run (chạy + lưu ảnh chụp, quyền conformance:run, AI không dùng) và core.conformance.latest (đọc, AI đọc được) (ADR-0012, S020-18).
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21: core.conformance.list (xu hướng), core.conformance.advisories (Posting Gate chỉ thông tin), core.conformance.acknowledge (người xác nhận tiếp tục = bằng chứng; AI / khoá API không xác nhận thay, T3); ca mang layer, title, rulepack, căn cứ; lượt có layerResults.
 // [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: ngữ cảnh 'documents' cho xác nhận khi định khoản hàng loạt ở ACC14 (một dòng bằng chứng cho cả lô, kèm danh sách khoá chứng từ).
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: duyệt rulepack tại bản cài — core.conformance.rulepacks / approve / revoke (quyền conformance:approve, chỉ người đăng nhập); ca có approval, lượt có approvalBasis.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: duyệt rulepack tại bản cài — core.conformance.rulepacks / approve / revoke (quyền conformance:approve, chỉ người đăng nhập); ca có approval, lượt có approvalBasis.
 /**
  * Conformance Engine (ADR-0012) — action:
  *   POST /api/v1/conformance/runs              core.conformance.run          — chạy một lượt ba lớp cho đơn vị, lưu ảnh chụp

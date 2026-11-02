@@ -1,7 +1,7 @@
 # RULE · Bộ kiểm chuẩn pháp lý Việt Nam (R-VNC)
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — luật R-VNC-1..9 cho bộ kiểm chuẩn kế toán / thuế / hoá đơn Việt Nam: kho nguồn pháp lý, rulepack có phiên bản, cổng phê duyệt fail-closed, báo cáo bằng chứng (VNCONF-002). -->
 <!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm R-VNC-10: Engine phục vụ quyết định, không thêm luật kế toán / đường ghi sổ vào Core; cảnh báo không chặn, xác nhận là bằng chứng (ADR-0012) -->
-<!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: thêm R-VNC-11 duyệt tại bản cài; R-VNC-3 áp cho kho thượng nguồn. -->
+<!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: thêm R-VNC-11 duyệt tại bản cài; R-VNC-3 áp cho kho thượng nguồn. -->
 
 > **Cấp:** Tier 1 (R-VNC-3, R-VNC-7 là Tier 0) · **Phiên bản:** 1.0 · 2026-11-01 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Dữ liệu:** `packages/vn-rulepacks/` (registry, catalog, rulepacks, schemas) · **Kiểm:** `tests/conformance/checks/vietnam/vn-conformance.check.mjs` (SC-VNC-1, SC-VNC-2)

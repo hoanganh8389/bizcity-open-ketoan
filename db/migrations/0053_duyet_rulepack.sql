@@ -1,5 +1,4 @@
--- [2026-11-02 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi tham chiếu ADR-0014 → ADR-0015 khi gộp main (PR #22); chưa phát hành nên sửa tại chỗ.
--- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: lượt duyệt rulepack tại bản cài (self-host): đơn vị tự duyệt, chỉ thêm, gắn phiên bản + băm nội dung rulepack; thu hồi bằng dòng mới.
+-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: lượt duyệt rulepack tại bản cài (self-host): đơn vị tự duyệt, chỉ thêm, gắn phiên bản + băm nội dung rulepack; thu hồi bằng dòng mới.
 -- =============================================================================
 -- 0053 Duyệt rulepack tại bản cài — rulepack_approvals (ADR-0015; PHASE-020).
 --      Bản cài tự chủ (self-host): chủ đơn vị / kế toán trưởng duyệt một rulepack cho đơn vị mình, ghi tên người duyệt kế toán

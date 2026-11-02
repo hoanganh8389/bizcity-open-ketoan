@@ -1,5 +1,5 @@
 // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21: kiểu, hook, nhãn 6 trạng thái và "Việc cần làm" dùng chung cho màn Kiểm chuẩn (HT06), Hồ sơ kế toán (HT07), cảnh báo ở màn lập chứng từ và khoá kỳ.
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: kiểu + hook cho duyệt rulepack tại bản cài (useRulepacks), cơ sở duyệt của ca / lượt.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: kiểu + hook cho duyệt rulepack tại bản cài (useRulepacks), cơ sở duyệt của ca / lượt.
 /**
  * Dữ liệu Kiểm chuẩn phía giao diện (ADR-0012). Nhãn trạng thái luôn có CHỮ, không chỉ màu; không có điểm % (T5).
  * "Việc cần làm" chỉ là link sang màn thao tác sẵn có — không có nút nào sửa sổ, tắt kiểm hay "bỏ qua" (20-KIEN-TRUC §5).

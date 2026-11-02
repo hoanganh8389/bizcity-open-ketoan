@@ -1,6 +1,5 @@
 # ADR-0015 · Duyệt rulepack tại bản cài: bản cài tự chủ tự duyệt, nhãn tách khỏi nhãn Bizcity
-<!-- [2026-11-02 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số ADR-0014 → ADR-0015 khi gộp main (PR #22 có ADR-0014 Trạm tiền kiểm và bể chờ đầu vào). -->
-<!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014 chấp nhận: bản cài self-host (dev, CEO) tự duyệt rulepack cho đơn vị mình; lượt duyệt gắn phiên bản + băm nội dung; nhãn "Đạt theo duyệt của đơn vị" tách khỏi nhãn Bizcity; chốt Q020-4. -->
+<!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015 chấp nhận: bản cài self-host (dev, CEO) tự duyệt rulepack cho đơn vị mình; lượt duyệt gắn phiên bản + băm nội dung; nhãn "Đạt theo duyệt của đơn vị" tách khỏi nhãn Bizcity; chốt Q020-4. -->
 
 - Trạng thái: **Chấp nhận** — chủ dự án (Johnny Chu) 2026-11-02: "chúng ta làm code, cho dev, và CEO tự chủ selfhost, cho nên việc này hãy để họ có quyền quản lý là tự duyệt"
 - Ngày: 2026-11-02 · Người quyết: chủ dự án · Mức Kernel: **K1** — thêm bảng chỉ thêm `rulepack_approvals` (migration 0053), ba action, một quyền; **không** đổi sổ, luật định khoản, cửa nạp, kỳ kế toán

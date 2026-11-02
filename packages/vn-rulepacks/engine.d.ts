@@ -52,7 +52,7 @@ export interface EvaluatedCase {
   evaluated_at?: string;
 }
 
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015
 export interface LocalApproval { version: string; hash: string; accounting_reviewer: string; tax_reviewer: string | null; approved_at: string; approved_by?: string }
 export type Approvals = Map<string, LocalApproval>;
 export const TAX_DOMAINS: Set<string>;

@@ -1,7 +1,7 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ đánh giá thuần dùng chung cho --certify (CI) và Conformance Engine trên bản cài (Kernel): chọn rulepack 4 bước, 6 trạng thái ca, fail closed; tách từ tests/conformance/lib/certify.mjs để không có hai bộ đánh giá (ADR-0012 T1, T7).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: báo cáo giữ lớp của từng ca và thêm layer_results (kết quả riêng cho Module · Cấu hình · Doanh nghiệp, cùng luật overall).
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: ca trong báo cáo mang title, rulepack, legal_basis (nguồn + điều khoản + trạng thái rà) cho màn Kiểm chuẩn.
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: duyệt tại bản cài (self-host) — packHash, approvals trong resolve/evaluate, nhãn "Đạt theo duyệt của đơn vị", approval_basis.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: duyệt tại bản cài (self-host) — packHash, approvals trong resolve/evaluate, nhãn "Đạt theo duyệt của đơn vị", approval_basis.
 /**
  * @bizcity/vn-rulepacks/engine — BỘ ĐÁNH GIÁ THUẦN (ADR-0012 T7: gói chứa dữ liệu luật + một bộ đánh giá không phụ thuộc gói ngoài).
  *
