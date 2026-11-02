@@ -3,7 +3,7 @@
 
 > **Trạng thái:** 🟡 W0 tài liệu + bản mẫu 2026-11-02 · chờ chủ duyệt D023-1..5, kế toán trưởng duyệt nội dung giải nghĩa · **Code:** chưa
 > **Giai đoạn:** Phase 4 của [PHASES](../../standard/PHASES.md) (tài liệu, template, công cụ cho người dùng) · **Mức Kernel:** K0 — không đổi định khoản, không đổi sổ; chỉ thêm danh mục giải nghĩa, một API đọc, màn, check tài liệu
-> **Mục tiêu:** Người dùng hiểu **bản chất** của tài khoản (tăng bên nào, dư bên nào, vì sao lưỡng tính, vì sao bắt buộc đối tượng) **ngay chỗ đang thao tác**, bằng **số thật của đơn vị mình**; mọi lần bị chặn hay cảnh báo đều có nút "Vì sao?" dẫn về bản chất; có chế độ học và bài theo vai.
+> **Mục tiêu:** Khai báo danh mục có **validator mềm** nhắc – hướng dẫn – cảnh báo trước khi sai (20); người dùng hiểu **bản chất** của tài khoản (tăng bên nào, dư bên nào, vì sao lưỡng tính, vì sao bắt buộc đối tượng) **ngay chỗ đang thao tác**, bằng **số thật của đơn vị mình**; mọi lần bị chặn hay cảnh báo đều có nút "Vì sao?" dẫn về bản chất; có chế độ học và bài theo vai.
 > **Việc lộ trình:** 4.8
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** R-FIX (PHASE-022: cảnh báo nào cũng có phương án) · R-DIAG-6 (cảnh báo không lộ số liệu ngoài phạm vi quyền) · R-VNC-10 (giải thích để người dùng quyết, không chặn ngoài Tier 0) · nội dung giải nghĩa do **kế toán trưởng duyệt** như rulepack (ADR-0016)
@@ -13,6 +13,8 @@
 | Tài liệu | Một câu |
 |---|---|
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | ba lớp của thẻ, năm chỗ đặt, danh mục giải nghĩa máy đọc, chế độ học, bài theo vai, D023-*, Q023-*, đợt W0–W3 |
+| [20-VALIDATOR-MEM](20-VALIDATOR-MEM.md) <!-- [2026-11-02 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — validator mềm trong form danh mục --> | **khung "Vì sao" trong mọi form danh mục** (tài khoản, đối tượng, hàng hoá, lý do, nhóm hạch toán, hình thức TT, thuế, kho, chi nhánh): nhắc · hướng dẫn · cảnh báo mềm (lưu được, ghi lý do) · chặn; luật máy đọc, một action validate dùng cho form / Excel / API |
+| [mockups/form-danh-muc.html](mockups/form-danh-muc.html) | bản mẫu khung Vì sao: form tài khoản, đối tượng, nhóm hạch toán — đổi ô để thấy nhắc / cảnh báo đổi theo |
 | [30-UI-UX](30-UI-UX.md) | thẻ tài khoản (chữ T, số thật tách dư Nợ / dư Có), ô chọn tài khoản có chú giải, nút "Vì sao?" ở lỗi, chế độ học, trang bài học |
 | [mockups/the-tai-khoan.html](mockups/the-tai-khoan.html) | bản mẫu tĩnh: thẻ 131 (lưỡng tính) · thẻ 1111 · nút Vì sao ở lỗi · ô chọn có chú giải |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S023-*`, ca bằng chứng `T023-*`, log |

@@ -1,0 +1,135 @@
+<!doctype html>
+<!-- [2026-11-02 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — bản mẫu tĩnh khung "Vì sao" trong form danh mục: validator mềm bốn mức (nhắc · hướng dẫn · cảnh báo mềm · chặn), ghi nhận lý do khi lưu có cảnh báo -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Form danh mục — khung Vì sao</title>
+<style>
+:root{--bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--warn-bg:#fff4e0;--bad-bg:#fdecea;--info-bg:#eef3fb;--guide-bg:#f3f0fb;--guide:#4a3aa8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+.tabs button.on{background:#e3edfb;border-color:var(--accent);color:var(--accent);font-weight:700}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.head{border-bottom:1px solid var(--line);padding:10px 14px;font-weight:700}
+.pad{padding:12px 14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px}
+.f label{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+.f input,.f select{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
+.mono{font-family:ui-monospace,Consolas,monospace}
+.chk{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.chk label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.why{margin-top:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.why>.t{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 12px;background:var(--soft);border-bottom:1px solid var(--line)}
+.ln{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+.ln:first-of-type{border-top:0}
+.ln.info{background:var(--info-bg)}.ln.guide{background:var(--guide-bg)}.ln.warn{background:var(--warn-bg)}.ln.block{background:var(--bad-bg)}
+.ln .i{font-weight:700}.info .i{color:var(--accent)}.guide .i{color:var(--guide)}.warn .i{color:var(--warn)}.block .i{color:var(--bad)}
+.ln .more{display:none;margin-top:4px;color:var(--muted)}
+.ln.open .more{display:block}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:5px 10px;font:inherit;cursor:pointer;color:var(--ink)}
+.btn.xs{padding:2px 8px;font-size:12px}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.ack{display:none;margin:0 14px 12px;border:1px solid #f0c98a;background:var(--warn-bg);border-radius:8px;padding:10px 12px}
+.ack.on{display:block}.ack input{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;margin-top:6px}
+.note{font-size:12px;color:var(--muted)}
+.rule{font:11px ui-monospace,Consolas,monospace;color:var(--muted);margin-left:6px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Khung "Vì sao" trong form danh mục <span class="note">bản mẫu tĩnh · PHASE-023 · 20</span></h1>
+<div class="sub">Bốn mức: <b>ℹ nhắc · ▶ hướng dẫn · ⚠ cảnh báo mềm (lưu được, ghi lý do) · ✘ chặn</b>. Thử: đổi các ô, bấm "Ghi".</div>
+<div class="tabs"><button class="on" data-v="vacc">Tài khoản (ACC1)</button><button data-v="vpart">Đối tượng (DM03)</button><button data-v="vgrp">Nhóm hạch toán</button></div>
+
+<section class="view on" id="vacc">
+<div class="card">
+  <div class="head">Tài khoản · thêm mới</div>
+  <div class="pad">
+    <div class="grid">
+      <div class="f"><label>Mã (*)</label><input class="mono" id="accCode" value="1311"></div>
+      <div class="f"><label>Tên (*)</label><input value="Phải thu khách hàng ngắn hạn"></div>
+      <div class="f"><label>Cấp cha</label><select><option>131 — Phải thu của khách hàng</option></select></div>
+    </div>
+    <div class="chk">
+      <label><input type="radio" name="side" id="sideD"> Dư Nợ</label><label><input type="radio" name="side" id="sideC"> Dư Có</label><label><input type="radio" name="side" id="sideB" checked> Lưỡng tính</label>
+      <label><input type="checkbox" id="trackP" checked> Theo dõi đối tượng</label><label><input type="checkbox" id="isDebt"> Là công nợ</label>
+    </div>
+    <div class="why"><div class="t">Vì sao</div>
+      <div class="ln info"><span class="i">ℹ</span><div>Kế thừa từ <b>131</b>: lưỡng tính, theo dõi đối tượng. Sổ sẽ bắt buộc chọn khách ở mọi dòng dùng tài khoản này.<span class="rule">ACC-HINT-001</span></div></div>
+      <div class="ln guide" id="gBoth" onclick="this.classList.toggle('open')"><span class="i">▶</span><div>Lưỡng tính nghĩa là gì? <span class="note">(bấm để mở)</span><div class="more">Mỗi khách có thể đang <b>nợ</b> (dư Nợ) hoặc đã <b>trả trước</b> (dư Có) — hai sự thật khác nhau, theo dõi riêng từng khách, không bù trừ. Lên báo cáo: dư Nợ → CĐKT 131 · dư Có → CĐKT 312. <button class="btn xs">Thẻ 131 ▸</button></div><span class="rule">ACC-HINT-002</span></div></div>
+      <div class="ln warn" id="wDebt"><span class="i">⚠</span><div>Bạn chưa tích <b>"Là công nợ"</b>: tài khoản sẽ không vào sổ phụ công nợ — không có tuổi nợ, không đối trừ hoá đơn. Với tài khoản phải thu điều này gần như luôn sai.<div style="margin-top:4px"><button class="btn xs" onclick="document.getElementById('isDebt').checked=true;refreshAcc()">Tích "Là công nợ"</button> <span class="note">hoặc ghi lý do khi lưu</span></div><span class="rule">ACC-HINT-003 · R-MD-4</span></div></div>
+      <div class="ln warn" id="wSide" style="display:none"><span class="i">⚠</span><div>Tài khoản nhóm <b>1xx</b> (tài sản) thường <b>dư Nợ</b>. Đặt "Dư Có" làm kiểm <span class="mono">ACCOUNT_WRONG_SIDE</span> báo mỗi đêm và số dư lên sai bên của CĐKT.<span class="rule">ACC-HINT-004</span></div></div>
+      <div class="ln block" id="bCode" style="display:none"><span class="i">✘</span><div>Mã <b>phải bắt đầu bằng mã cấp cha</b> (131…). Đây là toàn vẹn hệ thống tài khoản — không lưu được.<span class="rule">ACC-BLOCK-001</span></div></div>
+    </div>
+  </div>
+  <div class="ack" id="ackAcc"><b>1 cảnh báo mềm.</b> Lý do bạn vẫn lưu (<b>bắt buộc</b>, ≥ 5 ký tự, ghi vào nhật ký). Bạn đã được cảnh báo; lưu là tự chịu trách nhiệm về khai báo này:<input placeholder="vd: tài khoản tạm theo dõi phải thu không qua hoá đơn, kế toán trưởng đồng ý"><div style="margin-top:6px"><button class="btn primary xs">Ghi và ghi nhận</button> <button class="btn xs" onclick="document.getElementById('ackAcc').classList.remove('on')">Quay lại sửa</button></div></div>
+  <div class="foot"><span class="note" id="accCount">1 cảnh báo mềm</span><button class="btn">Huỷ</button><button class="btn primary" id="accSave" onclick="saveAcc()">Ghi (có 1 cảnh báo)</button></div>
+</div>
+</section>
+
+<section class="view" id="vpart">
+<div class="card">
+  <div class="head">Đối tượng · thêm mới</div>
+  <div class="pad">
+    <div class="grid">
+      <div class="f"><label>Mã (*)</label><input class="mono" value="NCC-DIEN"></div>
+      <div class="f"><label>Tên (*)</label><input value="Công ty Điện lực Hà Nội"></div>
+      <div class="f"><label>Loại</label><select><option>Nhà cung cấp</option><option>Khách hàng</option><option>Cả hai</option></select></div>
+      <div class="f"><label>Mã số thuế</label><input class="mono" id="mst" value=""></div>
+      <div class="f"><label>Hạn thanh toán (ngày)</label><input value="30"></div>
+      <div class="f"><label>TK công nợ mặc định</label><select id="pAcc"><option>331 — Phải trả cho người bán</option><option>131 — Phải thu của khách hàng</option><option>6427 — Chi phí dịch vụ mua ngoài</option></select></div>
+    </div>
+    <div class="why"><div class="t">Vì sao</div>
+      <div class="ln info"><span class="i">ℹ</span><div>Nhà cung cấp: hoá đơn đầu vào kê khai khấu trừ cần <b>MST người bán</b>; không có MST thì hoá đơn vào bảng kê "không đủ điều kiện".<span class="rule">PART-HINT-001</span></div></div>
+      <div class="ln warn" id="wMst"><span class="i">⚠</span><div>Chưa có MST. Có thể lưu (NCC cá nhân, hộ kinh doanh), nhưng mọi hoá đơn của NCC này sẽ bị kiểm <span class="mono">TAX_INPUT_NO_INVOICE</span> / thiếu MST cảnh báo. <button class="btn xs">Tra MST trên tổng cục thuế ▸</button><span class="rule">PART-HINT-002</span></div></div>
+      <div class="ln warn" id="wDup"><span class="i">⚠</span><div>Có đối tượng <b>NCC-DIENLUC</b> trùng tên gần giống ("Cty Điện lực HN", MST 0100101114). Nếu là một, hãy dùng mã đó hoặc <b>gộp</b> sau khi tạo (hạng 2, có xem trước công nợ). <button class="btn xs">Mở NCC-DIENLUC ▸</button><span class="rule">PART-HINT-003 · R-MD-2</span></div></div>
+      <div class="ln warn" id="wAcc" style="display:none"><span class="i">⚠</span><div>TK công nợ mặc định là <b>6427</b> (chi phí) — không phải tài khoản theo dõi đối tượng. Phiếu mua / chi của NCC sẽ không ghi công nợ, không có tuổi nợ. Thường là 331.<span class="rule">PART-HINT-004</span></div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="note" id="pCount">2 cảnh báo mềm</span><button class="btn">Huỷ</button><button class="btn primary">Ghi (có 2 cảnh báo)</button></div>
+</div>
+</section>
+
+<section class="view" id="vgrp">
+<div class="card">
+  <div class="head">Nhóm hạch toán mặt hàng · sửa HH-THUC-PHAM</div>
+  <div class="pad">
+    <div class="grid">
+      <div class="f"><label>TK kho</label><select id="gInv"><option>1561 — Giá mua hàng hoá</option><option>152 — Nguyên liệu, vật liệu</option><option>642 — Chi phí QLDN</option></select></div>
+      <div class="f"><label>TK giá vốn</label><select><option>632 — Giá vốn hàng bán</option></select></div>
+      <div class="f"><label>TK doanh thu</label><select><option>51111 — DT bán hàng hoá</option></select></div>
+    </div>
+    <div class="why"><div class="t">Vì sao</div>
+      <div class="ln guide" onclick="this.classList.toggle('open')"><span class="i">▶</span><div>Ba tài khoản này đi vào bút toán nào? <span class="note">(bấm để mở)</span><div class="more">Nhập mua: Nợ <b>TK kho</b> / Có 331 · Bán: Nợ 131 / Có <b>TK doanh thu</b>; Nợ <b>TK giá vốn</b> / Có <b>TK kho</b>. 412 mặt hàng đang dùng nhóm này.</div><span class="rule">GRP-HINT-001</span></div></div>
+      <div class="ln warn" id="wInv" style="display:none"><span class="i">⚠</span><div>TK kho <b>642</b> là chi phí, không phải tài khoản hàng tồn kho (15x). Hàng nhập sẽ vào chi phí ngay, tồn kho trên sổ bằng 0, giá vốn không tính được.<span class="rule">GRP-HINT-002</span></div></div>
+      <div class="ln warn" id="wReclass" style="display:none"><span class="i">⚠</span><div>Đổi TK kho từ 1561 sang <b>152</b> cho nhóm có <b>412 mặt hàng đang tồn 1,28 tỷ</b> là <b>đổi bản chất (hạng 3)</b>: cần ngày hiệu lực, kế toán trưởng duyệt và một chứng từ phân loại lại Nợ 152 / Có 1561. Sổ cũ không đổi. <button class="btn xs">Xem tác động ▸</button><span class="rule">GRP-HINT-003 · ADR-0018</span></div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="note" id="gCount"></span><button class="btn">Huỷ</button><button class="btn primary" id="gSave">Ghi</button></div>
+</div>
+</section>
+
+<div class="note">Luật: cảnh báo mềm luôn lưu được nhưng phải ghi lý do (vào nhật ký, không có nút "tắt loại cảnh báo này"); chặn chỉ cho bất biến và toàn vẹn dữ liệu; mỗi dòng ≤ 3 câu, hậu quả trước, cách sửa sau.</div>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));});
+function refreshAcc(){const debt=document.getElementById('isDebt').checked,side=document.getElementById('sideC').checked,code=document.getElementById('accCode').value;
+  document.getElementById('wDebt').style.display=debt?'none':'';document.getElementById('wSide').style.display=side?'':'none';
+  const block=!code.startsWith('131');document.getElementById('bCode').style.display=block?'':'none';
+  const n=(debt?0:1)+(side?1:0);document.getElementById('accCount').textContent=block?'1 lỗi chặn':(n?n+' cảnh báo mềm':'Không có cảnh báo');
+  const s=document.getElementById('accSave');s.textContent=n?`Ghi (có ${n} cảnh báo)`:'Ghi';s.disabled=block;}
+['isDebt','sideD','sideC','sideB'].forEach(id=>document.getElementById(id).onchange=refreshAcc);document.getElementById('accCode').oninput=refreshAcc;
+function saveAcc(){const n=document.getElementById('isDebt').checked?0:1;if(n)document.getElementById('ackAcc').classList.add('on');else alert('Đã ghi (bản mẫu).');}
+document.getElementById('mst').oninput=e=>{document.getElementById('wMst').style.display=e.target.value.length>=10?'none':'';upP();};
+document.getElementById('pAcc').onchange=e=>{document.getElementById('wAcc').style.display=e.target.value.startsWith('6427')?'':'none';upP();};
+function upP(){const n=['wMst','wDup','wAcc'].filter(i=>document.getElementById(i).style.display!=='none').length;document.getElementById('pCount').textContent=n?n+' cảnh báo mềm':'Không có cảnh báo';}
+document.getElementById('gInv').onchange=e=>{const v=e.target.value;document.getElementById('wInv').style.display=v.startsWith('642')?'':'none';document.getElementById('wReclass').style.display=v.startsWith('152')?'':'none';const n=(v.startsWith('642')?1:0)+(v.startsWith('152')?1:0);document.getElementById('gCount').textContent=n?n+' cảnh báo mềm':'';document.getElementById('gSave').textContent=n?`Ghi (có ${n} cảnh báo)`:'Ghi';};
+</script>
+</body></html>
