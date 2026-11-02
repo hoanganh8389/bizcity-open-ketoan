@@ -1,0 +1,48 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.plugin-boundary-security.lifecycle.disabled_plugin_no_new_events.004",
+  "version": "0.1.0",
+  "rulepack": "plugin-boundary-security",
+  "spec_ref": "C08.4",
+  "title": "Plugin bị vô hiệu hoá không nhận sự kiện mới; job đã tạo có vòng đời rõ",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 27",
+      "review_status": "pending",
+      "note": "Giữ dấu vết, không tẩy xoá: cơ sở của sổ chỉ thêm và một cửa ghi"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "disabled_module_not_delivered",
+      "pending_jobs_lifecycle"
+    ],
+    "gap": "Năng lực modules.lifecycle đang planned (ADR-0011, lộ trình 3.13). NOT_TESTED."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

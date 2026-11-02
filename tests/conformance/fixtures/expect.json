@@ -409,6 +409,45 @@
             "attr:bizcity.so_tien"
           ]
         },
+        "SC-VNC-1": {
+          "min": 2,
+          "keys": [
+            "registry:/sources/2",
+            "pack:xau:/version"
+          ]
+        },
+        "SC-VNC-2": {
+          "min": 30,
+          "keys": [
+            "dup-source:vn.law.xau-1",
+            "dates:vn.law.xau-1",
+            "source-url:vn.law.xau-1",
+            "agent-name:vn.law.xau-1",
+            "source-missing:xau:vn.law.khong-co",
+            "approved-basis:xau",
+            "approved-review:xau",
+            "approved-golden:xau",
+            "dates:xau",
+            "case-missing:xau:cases/thieu.json",
+            "case-orphan:cases/mo-coi.json",
+            "case-pack:cases/a.json",
+            "dup:vn.xau.thue.sai.001",
+            "verified:vn.xau.thue.sai.001:SC-KHONG-CO-9",
+            "verified:vn.xau.thue.sai.001:khong-co.test.ts",
+            "fixture-missing:vn.xau.thue.sai.001:input_fixture",
+            "float:fixtures/a.expected.json:/lines/0/debit",
+            "approved-golden:vn.xau.thue.sai.001",
+            "approved-review:vn.xau.thue.sai.001",
+            "agent-name:vn.xau.thue.sai.001:accounting_reviewer",
+            "catalog-pack:C09",
+            "catalog-id:C01",
+            "report-result:report-xau.json",
+            "report-reason:report-xau.json:vn.xau.thue.sai.001",
+            "report-rulepack:report-xau.json",
+            "diag-unknown:DG-KHONG-9",
+            "diag-code:DG-LEDGER-1"
+          ]
+        },
         "SC-MOD-3": {
           "findings": 3,
           "keys": [

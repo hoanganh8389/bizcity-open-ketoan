@@ -1,0 +1,60 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.einvoice-vn.book.required_fields.001",
+  "version": "0.1.0",
+  "rulepack": "einvoice-vn",
+  "spec_ref": "EINV-1",
+  "title": "Hoá đơn trong sổ có đủ ký hiệu, tên và mã số thuế người bán (mua vào), mã số thuế đúng dạng",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.decree.123-2020-nd-cp",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "nội dung của hoá đơn"
+    },
+    {
+      "source_id": "vn.circular.32-2025-tt-btc",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "ký hiệu mẫu số, ký hiệu hoá đơn"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-EINV-1",
+      "tax-info.test.ts",
+      "vat-einvoice.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "invoice_has_serial",
+      "input_invoice_has_seller",
+      "tax_code_format"
+    ],
+    "gap": "Chỉ kiểm các trường sổ hoá đơn đang lưu (ký hiệu, tên, mã số thuế); mẫu số, địa chỉ, mã của cơ quan thuế chưa kiểm"
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — bản cài tự duyệt được (ADR-0016) hoặc chờ duyệt thượng nguồn"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

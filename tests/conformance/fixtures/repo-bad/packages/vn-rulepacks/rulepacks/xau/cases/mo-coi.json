@@ -1,0 +1,15 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.xau.thue.sai.001",
+  "version": "0.1.0",
+  "rulepack": "xau",
+  "title": "Ca mồ côi: không được khai trong rulepack.cases, trùng id với a.json",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": { "entity_types": ["any"], "fiscal_year_start_from": null, "transaction_date_from": null, "transaction_date_to": null },
+  "legal_basis": [{ "source_id": "vn.law.xau-1", "provision_ref": "Điều 2", "review_status": "pending" }],
+  "scenario": { "kind": "static", "verified_by": ["SC-KERNEL-1"], "input_fixture": null, "expected_fixture": null, "assertions": ["no_direct_ledger_insert"], "gap": null },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": { "accounting_reviewer": null, "tax_reviewer": null, "approved_at": null, "notes": "" },
+  "golden": { "hash": null, "approved_at": null }
+}

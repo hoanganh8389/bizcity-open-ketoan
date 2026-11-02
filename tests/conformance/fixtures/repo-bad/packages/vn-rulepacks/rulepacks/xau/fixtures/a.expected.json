@@ -1,0 +1,6 @@
+{
+  "lines": [
+    { "account": "1111", "debit": 100.5, "credit": 0 },
+    { "account": "5111", "debit": 0, "credit": "100.50" }
+  ]
+}

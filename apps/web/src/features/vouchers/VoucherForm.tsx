@@ -22,6 +22,8 @@ import { api, errorText } from '@/lib/api';
 import { date as showDate, money, today } from '@/lib/format';
 import { useBranches, BranchPicker } from '@/components/filters';
 import { Field, Modal, useViewAgain } from '@/components/ui';
+// [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: cảnh báo kiểm chuẩn theo ngày phiếu; lưu khi còn cảnh báo thì ghi bằng chứng
+import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
 import { VOUCHER_SCREEN, VOUCHER_TEMPLATES, signRolesOf, type PrintSheet } from './VoucherPrint';
 import { PrintButton } from '@/components/print';
 import { SignaturePanel, useSignatures } from './Signatures';
@@ -191,6 +193,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
   });
 
   const viewAgain = useViewAgain();
+  const gate = useDocumentGate(template ? undefined : h.docDate);
   const save = useMutation({
     mutationFn: async () => {
       if (template) {
@@ -204,6 +207,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
       void qc.invalidateQueries({ queryKey: ['voucher-templates'] });
       void qc.invalidateQueries({ queryKey: ['documents'] });
       void qc.invalidateQueries({ queryKey: ['document'] });
+      if (!template) gate.acknowledge({ docType: type, docDate: h.docDate, docNo: r.docNo, docKey: existing?.docKey });
       if (existing || (template && !template.isNew)) viewAgain[1](); else onSaved(r.docNo, h.docDate);
     },
   });
@@ -241,6 +245,7 @@ export function VoucherForm({ type, existing, initial, template, onClose, onSave
         </>
       }
     >
+      {!template && !readOnly && <DocumentGateBanner advisories={gate.advisories} />}
       {template && (
         <>
           <Field label="Mã mẫu"><input className="input mono" value={tpl.code} disabled={!template.isNew} onChange={(e) => setTpl((x) => ({ ...x, code: e.target.value.trim() }))} /></Field>

@@ -1,0 +1,10 @@
+{
+  "contract": "bizcity_vn_profile@1",
+  "name": "Doanh nghiệp TT99, năm tài chính dương lịch (mặc định --certify)",
+  "jurisdiction": "VN",
+  "accounting_regime": "vn-tt99-2025",
+  "fiscal_year_start": "01-01",
+  "entity_type": "enterprise",
+  "as_of": null,
+  "currency": "VND"
+}

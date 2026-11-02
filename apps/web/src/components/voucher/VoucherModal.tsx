@@ -1,3 +1,4 @@
+// [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: cảnh báo kiểm chuẩn theo ngày phiếu (chỉ thông tin) ở thân phiếu; lưu khi còn cảnh báo thì ghi bằng chứng (ADR-0012 T3 / T4).
 /**
  * Khung form phiếu dùng chung cho mọi chứng từ lập trong phần mềm (phiếu thu chi, phiếu kế toán, phiếu kho,
  * hoá đơn bán, hàng bán trả lại…), xếp như form chứng từ của phần mềm kế toán để bàn:
@@ -5,7 +6,8 @@
  *   VoucherModal  hộp phiếu: dòng tiêu đề, thanh nút (Ghi, Ghi và thêm mới, In, Xuất, Xóa, Đóng + nút riêng của phiếu),
  *                 thân phiếu, lời báo lỗi, lời báo "chỉ xem" (phiếu người khác lập, kỳ đã khoá, phiếu nhận từ hệ thống khác).
  *   L / C         nhãn và ô của lưới đầu phiếu 3 cột (lớp .vf-head-grid): L c r = nhãn cột c hàng r; C c r = ô; pair: chia đôi; wide: kéo hết hàng.
- *   useVoucherSave  luồng Ghi / Xóa chung: kiểm tra → hỏi xác nhận → gửi → làm mới danh sách → báo về màn danh sách.
+ *   useVoucherSave  luồng Ghi / Xóa chung: kiểm tra → hỏi xác nhận → gửi → làm mới danh sách → báo về màn danh sách;
+ *                 kèm cảnh báo kiểm chuẩn của ngày phiếu (advisories) — lưu xong mà còn cảnh báo thì ghi một dòng bằng chứng.
  *   readOnlyReason  lý do phiếu chỉ xem (null = sửa được).
  * Sửa giao diện, lời báo, thứ tự nút ở đây là mọi phiếu đổi theo.
  */
@@ -14,6 +16,8 @@ import { DockScope, MinimizeButton, useDockWindow } from '@/layout/WindowDock';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Download, LogOut, Printer, Save, X } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
+import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
+import type { Advisory } from '@/features/system/conformance';
 
 /** Phần chung của phiếu đã lưu (GET /api/v1/documents/:id). */
 export interface SavedVoucher {
@@ -32,7 +36,7 @@ export function readOnlyReason(existing: SavedVoucher | undefined, opts: { exter
 
 export interface ToolButton { key: string; label: ReactNode; icon?: ReactNode; onClick: () => void; disabled?: boolean; title?: string }
 
-export function VoucherModal({ title, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, children }: {
+export function VoucherModal({ title, existing, readOnly, saving, onSave, onSaveNew, onPrint, printSlot, onExport, onDelete, onClose, extraButtons, error, readOnlyText, advisories, children }: {
   title: string;
   existing?: SavedVoucher;
   readOnly: boolean;
@@ -49,6 +53,8 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
   extraButtons?: ToolButton[];
   error?: string | null;
   readOnlyText?: string | null;
+  /** Cảnh báo kiểm chuẩn của ngày phiếu (useVoucherSave) — chỉ thông tin, không chặn Ghi. */
+  advisories?: Advisory[];
   children: ReactNode;
 }) {
   const cancelled = existing?.status === 'cancelled';
@@ -72,6 +78,7 @@ export function VoucherModal({ title, existing, readOnly, saving, onSave, onSave
           <button onClick={onClose}><LogOut size={15} /> Đóng</button>
         </div>
         <div className="vf-body">
+          {!readOnly && advisories && <DocumentGateBanner advisories={advisories} />}
           {children}
           {error && <div className="alert alert-bad" style={{ margin: '6px 0 0' }}>{error}</div>}
           {readOnlyText && !cancelled && <div className="alert alert-warn" style={{ margin: '6px 0 0' }}>{readOnlyText}</div>}
@@ -99,7 +106,7 @@ export function C({ c, r, pair, wide, children }: { c: number; r: number; pair?:
  *   invalidate: các khoá dữ liệu cần làm mới sau khi ghi / xóa (danh sách…)
  * Lỗi máy chủ có details.duplicate (trùng chứng từ): hỏi "vẫn ghi?" rồi gửi lại với force = true.
  */
-export function useVoucherSave<T extends { docNo: string; status?: string }>({ existing, check, submit, confirm, invalidate, onSaved, onClose, docDate }: {
+export function useVoucherSave<T extends { docNo: string; status?: string }>({ existing, check, submit, confirm, invalidate, onSaved, onClose, docDate, docType }: {
   existing?: SavedVoucher;
   check: () => string | null;
   submit: (force: boolean) => Promise<T>;
@@ -109,15 +116,18 @@ export function useVoucherSave<T extends { docNo: string; status?: string }>({ e
   onSaved: (docNo: string, docDate: string, addNew: boolean, status?: string) => void;
   onClose: () => void;
   docDate: string;
+  /** Loại chứng từ — ghi vào bằng chứng khi lưu lúc còn cảnh báo kiểm chuẩn. */
+  docType?: string;
 }) {
   const qc = useQueryClient();
+  const gate = useDocumentGate(docDate);
   const [problem, setProblem] = useState<string | null>(null);
   const refresh = () => { for (const k of [...invalidate, ['document']]) void qc.invalidateQueries({ queryKey: k }); };
   const save = useMutation({ mutationFn: ({ force }: { addNew: boolean; force: boolean }) => submit(force) });
   const remove = useMutation({ mutationFn: (reason: string) => api.post('/api/v1/documents/cancel', { docKey: existing!.docKey, reason }) });
   const run = (addNew: boolean, force = false) => {
     save.mutate({ addNew, force }, {
-      onSuccess: (r) => { refresh(); onSaved(r.docNo, docDate, addNew, r.status); },
+      onSuccess: (r) => { refresh(); gate.acknowledge({ docType: docType ?? 'voucher', docDate, docNo: r.docNo, docKey: existing?.docKey }); onSaved(r.docNo, docDate, addNew, r.status); },
       onError: (e) => {
         const dup = (e as { details?: { duplicate?: boolean } }).details?.duplicate;
         if (dup && window.confirm(`${errorText(e)}\n\nVẫn ghi phiếu này?`)) { save.reset(); run(addNew, true); }
@@ -138,5 +148,5 @@ export function useVoucherSave<T extends { docNo: string; status?: string }>({ e
     if (reason) remove.mutate(reason, { onSuccess: () => { refresh(); onClose(); } });
   };
   const error = problem ?? (save.error ? errorText(save.error) : remove.error ? errorText(remove.error) : null);
-  return { doSave, doDelete, saving: save.isPending || remove.isPending, error, setProblem };
+  return { doSave, doDelete, saving: save.isPending || remove.isPending, error, setProblem, advisories: gate.advisories };
 }

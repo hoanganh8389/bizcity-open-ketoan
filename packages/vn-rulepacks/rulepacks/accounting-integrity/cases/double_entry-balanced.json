@@ -1,0 +1,52 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-integrity.double_entry.balanced.001",
+  "version": "0.1.0",
+  "rulepack": "accounting-integrity",
+  "spec_ref": "C01.1",
+  "title": "Bút toán hợp lệ: tổng Nợ = tổng Có, mỗi dòng đúng một bên, không âm ngoài bút toán đảo, đúng tiền tệ",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-LEDGER-1",
+      "db-rules.test.ts",
+      "ledger-flow.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "debit_equals_credit",
+      "one_side_per_line",
+      "no_negative_outside_reversal"
+    ],
+    "gap": "Chính sách tiền tệ (currency policy) chưa có ca riêng: sổ chỉ VND, numeric(18,2); ca đa tiền tệ để NOT_APPLICABLE có lý do."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

@@ -1,0 +1,44 @@
+# Bộ kiểm chuẩn pháp lý Việt Nam — dữ liệu (`packages/vn-rulepacks/`)
+<!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — lớp dữ liệu của bộ kiểm chuẩn VN: kho nguồn pháp lý, catalog, rulepack / ca có phiên bản, schema, báo cáo mẫu (VNCONF-002). -->
+
+> Luật: [RULE-VN-CONFORMANCE](../../docs/rules/RULE-VN-CONFORMANCE.md) · Quy trình: [docs/compliance/](../../docs/compliance/README.md) · Kiểm: `checks/vietnam/vn-conformance.check.mjs` (SC-VNC-1, SC-VNC-2) · Phase: [PHASE-020](../../docs/phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/README.md)
+> Gói `@bizcity/vn-rulepacks` <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thành gói workspace, có engine.mjs và diag-codes.json. -->: **dữ liệu luật** (JSON, phát hành bất biến, phiên bản theo nhịp luật) + **bộ đánh giá thuần `engine.mjs`** dùng chung cho `selfcheck.mjs --certify` (CI) và Conformance Engine trong Kernel (`core.conformance.run`). `diag-codes.json` ánh xạ kiểm DG-* sang mã tự chẩn đoán trong app. Không phải chứng nhận nhà nước, không phải ý kiến pháp lý.
+
+## Cây thư mục
+
+```text
+packages/vn-rulepacks/
+├── catalog.json                 C01…C08: rulepack nào, ưu tiên, trạng thái, ticket
+├── registry/legal-sources.json  kho nguồn pháp lý (bizcity_vn_legal_registry@1) — 17 văn bản, tất cả pending
+├── schemas/                     4 schema (bộ kiểm JSON Schema rút gọn, lib/jsonschema.mjs)
+│   ├── legal-source.schema.json · rulepack.schema.json · case.schema.json · report.schema.json
+│   └── examples/report.example.json   báo cáo mẫu đúng khuôn (result REVIEW_REQUIRED)
+├── rulepacks/<id>/
+│   ├── rulepack.json            bizcity_vn_rulepack@1
+│   ├── cases/*.json             bizcity_vn_case@1
+│   └── fixtures/                input / expected vàng (khi có); tiền = số nguyên hoặc chuỗi thập phân
+├── fixtures/                    fixture dùng chung nhiều rulepack (chưa có)
+└── reviewer-approvals/          biên bản duyệt <pack>-<version>.md (chưa có)
+```
+
+Báo cáo chạy thật ghi vào `tests/conformance/output/` (đã gitignore), **không** vào thư mục này.
+
+## Rulepack đang có (2026-11-01, tất cả `draft`)
+
+| Catalog | Rulepack | Ca | Bằng chứng đang có | Khoảng trống chính |
+|---|---|---|---|---|
+| C01 | `accounting-integrity` | 8 | DG-LEDGER-1..4, DG-POL-1, DG-EVT-1, SC-KERNEL-1, SC-EVT-1/2, `db-rules`, `ledger-flow`, `ledger-links`, `period-locks`, `events`, `policy`, `event-store`, `actions` | C01.4 chưa có test cùng docKey hai đơn vị; khoá idempotency là (tenant, docKey)+version, không có `source` riêng |
+| C02 | `accounting-regimes-vn` | 5 | `posting-pack`, `policy`, DG-POL-1, SC-TPL-1 | đơn vị **chưa có** năm tài chính / chế độ kế toán; `fiscal_periods` theo tháng dương lịch (migration 0004) ⇒ C02.1, C02.2 chặn bởi đề xuất năng lực Core |
+| C08 | `plugin-boundary-security` | 6 | SC-KERNEL-1/3, SC-MOD-2, SC-CON-2, SC-DATA-2, DG-SEC-1, DG-DB-2, DG-PLAN-5, `tenant-isolation`, `access`, `app-role`, `events` | vòng đời module (`modules.lifecycle`) và vai trò `mod_<key>_owner` còn planned (ADR-0011) ⇒ C08.4, C08.6 NOT_TESTED |
+| C09 | `enterprise-period-vn` (lớp Doanh nghiệp) | 4 | DG-TAX-1, DG-EVENT-3, DG-INV-1, DG-CLOSE-1, `enterprise-layer` <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19 --> | ngưỡng (30 ngày, 3 ngày, âm ở bất kỳ ngày nào) là quy chế nội bộ, kế toán trưởng chốt; chưa xét kết chuyển cuối năm <!-- [2026-11-02 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm C09 lớp Doanh nghiệp --> |
+| C03 | `vat-vn` (lớp Doanh nghiệp, miền thuế) <!-- [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11 --> | 2 | DG-VAT-1 (thuế suất giảm theo tham số ca), DG-VAT-2, `tax-info`, `vat-einvoice` | danh mục loại trừ NĐ 174/2025 chưa kiểm; điều khoản để REVIEW_REQUIRED |
+| C04 | `einvoice-vn` (lớp Doanh nghiệp, miền hoá đơn) | 2 | DG-EINV-1, DG-EINV-2, `tax-info`, `vat-einvoice` | không nối cơ quan thuế, giả lập nhà cung cấp chưa làm; dịch vụ chưa xét thời điểm lập |
+
+Mỗi ca ghi `scenario.verified_by` (check / test **đang có** trong repo) và `scenario.gap` (điều chưa chứng minh được). Ca `verified_by` rỗng = `NOT_TESTED`.
+
+## Thêm / sửa
+
+1. Sửa JSON theo schema; chạy `node tests/conformance/selfcheck.mjs --only SC-VNC`.
+2. Thêm nguồn pháp lý: [LEGAL-SOURCE-REGISTRY.md](../../docs/compliance/LEGAL-SOURCE-REGISTRY.md). Thêm / duyệt rulepack: [RULEPACK-GOVERNANCE.md](../../docs/compliance/RULEPACK-GOVERNANCE.md).
+3. Đổi check: thêm vi phạm vào `fixtures/repo-bad/packages/vn-rulepacks/` và dòng trong `fixtures/expect.json`, chạy `--self-test`.
+4. `status: approved` không đặt bằng tay khi chưa đủ điều kiện R-VNC-3 — SC-VNC-2 (block) sẽ đỏ, không có baseline.

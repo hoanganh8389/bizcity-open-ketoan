@@ -9,6 +9,7 @@
 <!-- [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009). -->
 <!-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm TAX_INPUT_NO_INVOICE / DG-TAX-1 (thuế đầu vào chờ hoá đơn). -->
 <!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
+<!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: thêm INVENTORY_NEGATIVE / DG-INV-1, PERIOD_CLOSE_OPEN / DG-CLOSE-1 (lớp Doanh nghiệp); COST_FILL_OPEN không viết nữa. -->
 
 > **Luật tự chẩn đoán** (năm tầng L0–L4, chỉ đọc, lịch chạy, chặn khoá kỳ, cảnh báo, gói hỗ trợ): [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md). Tệp này giữ danh sách mã kiểm và khuôn kết quả.
 > Kiểm bản cài đã có trong bộ kiểm: `LEDGER_TRIGGERS` (DG-DB-2: trigger bảo vệ sổ còn và đang bật), `DB_APP_ROLE` (DG-SEC-1: vai trò `ketoan_app` đúng chuẩn), `DB_CONNECTION_ROLE` (DG-SEC-2: kết nối đang dùng không superuser), `DB_SETTINGS` (DG-DB-3: phiên bản PostgreSQL, múi giờ, UTF8).
@@ -51,10 +52,18 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `EVENT_PENDING_AGE` | L3 | Sự việc `pending` / `error` quá 3 ngày | warn | có | DG-EVENT-3 |
 | `TAX_INPUT_NO_INVOICE` | L3 | Thuế GTGT đầu vào đã vào sổ (tài khoản của loại thuế đầu vào / ngầm định `tax_input`) mà sự việc chưa có hoá đơn trong sổ hoá đơn quá 30 ngày — bảng kê mua vào thiếu so với sổ | warn | có | DG-TAX-1 |
 | `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version = version` (ghi qua `eventStore`; lệch = có đường ghi vòng qua cửa) | warn | có | DG-EVENT-4 |
+| `INVENTORY_NEGATIVE` <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19 --> | L3 | Tồn kho âm cuối ngày theo (chi nhánh, kho, mã hàng), số dư luỹ kế từ dòng kho đầu tiên; mẫu `<chi nhánh>:<kho>:<mã>@<ngày âm đầu>` (lớp Doanh nghiệp, C09) | warn | có | DG-INV-1 |
+| `PERIOD_CLOSE_OPEN` | L3 | Tháng kết thúc quá 30 ngày (ngưỡng nội bộ) thiếu việc cuối kỳ: `gia-von` (hàng xuất chưa có phiếu giá vốn tháng), `ket-chuyen` (còn số theo bộ quy tắc kết chuyển của đơn vị, chưa lưu bộ riêng thì bộ mặc định), `thu-tu` (giá vốn tính lại sau kết chuyển), `khoa-so`; không chặn khoá kỳ (lớp Doanh nghiệp, C09) | warn | có | DG-CLOSE-1 |
+| `VAT_REDUCED_RATE` <!-- [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11 --> | L3 | Dòng bán ra dùng loại thuế có thuế suất giảm (8%) ngoài thời gian giảm; thuế suất + khoảng ngày là tham số của ca `vn.vat-vn.rate.reduced_window.001` (rulepack), không viết cứng | warn | có | DG-VAT-1 |
+| `VAT_INPUT_NONCASH` | L3 | Hoá đơn mua vào ≥ 5 triệu (gồm thuế), được khấu trừ, chưa ghi chứng từ thanh toán không dùng tiền mặt — dùng lại `taxIssues` / `NON_CASH_THRESHOLD` của ACC78 | warn | có | DG-VAT-2 |
+| `INVOICE_FIELDS` | L3 | Hoá đơn trong sổ thiếu ký hiệu, thiếu tên / mã số thuế người bán (mua vào), mã số thuế sai dạng — dùng lại `taxIssues`; mẫu `<số chứng từ>: <điểm thiếu>` | warn | có | DG-EINV-1 |
+| `INVOICE_ISSUE_DATE` | L3 | Hoá đơn bán hàng hoá có ngày lập sau ngày chứng từ bán (thời điểm chuyển giao) | warn | có | DG-EINV-2 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
 | `TENANT_ISOLATION` | L1 | Mọi bảng có `tenant_id` bật RLS + FORCE + có chính sách (migration 0041, STD-DATA-1). Vai trò kết nối không vượt RLS: DG-SEC-1 / -2 | error | có | DG-PLAN-5 |
+| `PROFILE_DECLARED` <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — hai kiểm L5 của Conformance Engine. --> | L5 | Đơn vị đã khai hồ sơ kế toán (năm tài chính, chế độ, loại pháp nhân) áp cho ngày xét (ADR-0013) | warn | có | DG-PROFILE-1 |
+| `PROFILE_PACK_REGIME` | L5 | Gói định khoản đang cài cùng chế độ kế toán với hồ sơ của đơn vị | warn | có | DG-PROFILE-2 |
 | `POLICY_VERSION` | L3 | Bút toán định khoản theo luật (chứng từ nhận từ nguồn) ghi đúng phiên bản chính sách kế toán áp cho ngày hạch toán (ADR-0009, C-9) | warn | có | DG-POL-1 |
 | `EVENT_DEAD` | L3 | Không có việc giao sự kiện hết lượt thử (dead) nằm im (bizcity_event@1, R-OUTBOX-3); xem `GET /api/v1/system/events`, sửa nguyên nhân rồi phát lại | warn | có | DG-EVT-1 |
 | `MODULE_REGISTRY` <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — DG-MOD-1 --> | L1 | Module `active` trong `module_registry` được API nạp ở lần khởi động gần nhất: hash thư mục khớp, mã có (ADR-0011 D2). Lệch → API bỏ riêng module đó; sửa: dựng lại + `npm run module -w @ketoan/api -- sync`, hoặc khôi phục mã | error | chưa (lane) | DG-MOD-1 |
@@ -62,7 +71,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |
 | `DEBT_MATCH_LEDGER` | L3 | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error | chưa | DG-PLAN-1 (giữ chỗ) |
 | `TAX_BOOK_MATCH` | L3 | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn | chưa | DG-PLAN-2 |
-| `COST_FILL_OPEN` | L3 | Dòng `cost_fill` còn 0 ở tháng đã qua | warn | chưa | DG-PLAN-3 |
+| `COST_FILL_OPEN` | L3 | Dòng `cost_fill` còn 0 ở tháng đã qua | warn | không viết: từ khi có phiếu giá vốn tháng, dòng chờ về 0 là bình thường; việc giá vốn tháng đã qua xem `PERIOD_CLOSE_OPEN` | DG-PLAN-3 (giữ chỗ) |
 | `TRANSIT_NONZERO` | L3 | Số dư 1579 / 11319 khác 0 quá N ngày | warn | chưa | DG-PLAN-4 |
 
 **Một mã, hai nơi.**

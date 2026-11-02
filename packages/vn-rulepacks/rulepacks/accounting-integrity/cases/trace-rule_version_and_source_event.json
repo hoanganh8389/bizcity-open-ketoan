@@ -1,0 +1,52 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-integrity.trace.rule_version_and_source_event.007",
+  "version": "0.1.0",
+  "rulepack": "accounting-integrity",
+  "spec_ref": "C01.7",
+  "title": "Sau commit truy vết được phiên bản chính sách định khoản và sự việc nguồn của mỗi bút toán",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-POL-1",
+      "DG-LEDGER-4",
+      "policy.test.ts",
+      "event-store.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "entry_has_policy_version",
+      "entry_links_source_event"
+    ],
+    "gap": "policy_version là phiên bản cấu hình định khoản của đơn vị, chưa gồm phiên bản rulepack pháp lý; runner (VNCONF-003) ghi rulepack_id / version / rules_hash vào báo cáo thay cho sổ."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

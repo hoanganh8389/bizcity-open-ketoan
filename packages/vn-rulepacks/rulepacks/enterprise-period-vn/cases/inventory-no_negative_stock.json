@@ -1,0 +1,50 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.enterprise-period-vn.inventory.no_negative_stock.003",
+  "version": "0.2.0",
+  "rulepack": "enterprise-period-vn",
+  "spec_ref": "E-3",
+  "title": "Không có tồn kho âm theo mặt hàng × kho × ngày trong kỳ",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.decision.149-2001-qd-btc",
+      "provision_ref": "VAS 02",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-INV-1",
+      "enterprise-layer.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "no_negative_stock"
+    ],
+    "gap": "Ngưỡng: âm ở bất kỳ ngày nào (cuối ngày, theo mặt hàng × kho) là phát hiện; đơn vị cho phép bán trước nhập thì kế toán trưởng chốt lại (miền internal)"
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — ngưỡng là quy chế nội bộ, kế toán trưởng chốt (Q020-6)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

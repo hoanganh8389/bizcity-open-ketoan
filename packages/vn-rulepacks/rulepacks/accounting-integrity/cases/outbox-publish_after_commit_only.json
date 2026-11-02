@@ -1,0 +1,53 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-integrity.outbox.publish_after_commit_only.008",
+  "version": "0.1.0",
+  "rulepack": "accounting-integrity",
+  "spec_ref": "C01.8",
+  "title": "Sự kiện miền chỉ phát khi giao dịch commit; retry và replay không tạo hiệu ứng trùng",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "events.test.ts",
+      "SC-EVT-1",
+      "SC-EVT-2",
+      "DG-EVT-1"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "no_event_on_rollback",
+      "redelivery_single_effect",
+      "replay_audited"
+    ],
+    "gap": null
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

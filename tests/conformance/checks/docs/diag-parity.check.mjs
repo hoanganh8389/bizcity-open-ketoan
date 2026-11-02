@@ -1,12 +1,13 @@
 // [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10).
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét mã chẩn đoán trên LAYER_ROOTS (gồm packages/platform)
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — nhận cả mã tầng L5 (Conformance Engine): kiểm L5 trong app cũng phải có bản lane DG-*
 /**
  * R-DIAG-9 + R-DIAG-1: mỗi kiểm tự chẩn đoán trong app (apps/api/src: `code: 'X', layer: 'L1' | 'L3'`) có bản cùng mã trong lane
  * diagnostics của bộ kiểm (tests/conformance/diagnostics/*.diag.mjs, `code: 'X'`) — để chạy được trên bản sao trước khi vào endpoint,
  * và hai nơi nói cùng một mã. Mã chỉ có ở lane (chưa vào endpoint) thì không sao.
  */
 import { LAYER_ROOTS } from '../../lib/layers.mjs';
-const APP_CODE = /\bcode:\s*'([A-Z][A-Z0-9_]+)',\s*layer:\s*'L[0-4]'/g;
+const APP_CODE = /\bcode:\s*'([A-Z][A-Z0-9_]+)',\s*layer:\s*'L[0-5]'/g;
 const LANE_CODE = /\bcode:\s*'([A-Z][A-Z0-9_]+)'/g;
 
 export default {

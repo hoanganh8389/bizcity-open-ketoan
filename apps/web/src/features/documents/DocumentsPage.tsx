@@ -1,3 +1,4 @@
+// [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: cảnh báo kiểm chuẩn cho các chứng từ đang chọn (chỉ thông tin) — hiện trên lưới và trong hộp xác nhận; định khoản xong thì một dòng bằng chứng cho cả lô.
 /**
  * Định khoản tự động (ACC14) — trạm điều khiển chứng từ trước khi vào sổ nhật ký chung.
  * Phiếu mua, bán, chuyển kho, điều chỉnh lập ở hệ thống bán hàng (multisite, WooCommerce…). Đường chính: hệ thống nguồn
@@ -30,6 +31,7 @@ import { dateTimeShort } from '@/components/voucher/VoucherListPage';
 import { DocumentDetail } from './DocumentDetail';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ConnectionsModal, PullModal, useConnections } from './Connections';
+import { DocumentGateBanner, advisoryText, useBatchGate } from '@/components/PostingGate';
 
 /** Phiếu xuất điều chỉnh: chứng từ bán nội bộ có lý do (sourceRef.type = export_adjust), hiện thành loại riêng. */
 const EXPORT_ADJUST = 'export_adjust';
@@ -87,6 +89,7 @@ export function DocumentsPage() {
   const rows = q.data?.data ?? [];
   const picked = rows.filter((r) => selected.has(r.id));
   const canPost = can('documents:write');
+  const gate = useBatchGate(picked);
 
   // Chi nhánh đang chọn cho nút Kéo chứng từ: rỗng = tất cả (null: nguồn quét mọi cửa hàng), BRANCH_NONE = chưa chọn ([]).
   const pickedBranches: string[] | null = f.branchCodes === BRANCH_NONE ? [] : f.branchCodes ? f.branchCodes.split(',').map((x) => x.trim()).filter(Boolean) : null;
@@ -110,7 +113,9 @@ export function DocumentsPage() {
       }
       return { posted, unchanged, skipped, errors, repost };
     },
-    onSuccess: (r) => {
+    onSuccess: (r, vars) => {
+      const notPosted = new Set([...r.skipped, ...r.errors].map((x) => x.docNo));
+      gate.acknowledge(vars.list.filter((d) => !notPosted.has(d.docNo)));
       const few = (xs: { docNo: string; message: string }[]) => xs.slice(0, 5).map((x) => `${x.docNo} (${x.message})`).join('; ') + (xs.length > 5 ? '…' : '');
       setNotice(`Đã ${r.repost ? 'định khoản lại' : 'định khoản'} ${r.posted.toLocaleString('vi-VN')} chứng từ.${r.unchanged ? ` Không có thay đổi (giữ nguyên bút toán): ${r.unchanged.toLocaleString('vi-VN')}.` : ''}${r.skipped.length ? ` Bỏ qua ${r.skipped.length}: ${few(r.skipped)}.` : ''}${r.errors.length ? ` Lỗi ${r.errors.length}: ${few(r.errors)}.` : ''}`);
       setSelected(new Set());
@@ -121,7 +126,7 @@ export function DocumentsPage() {
     if (!list.length) return setNotice('Chưa tích ô Chọn ở chứng từ nào.');
     if (window.confirm(repost
       ? `Định khoản lại ${list.length} chứng từ theo cấu hình hiện tại?\nBút toán nào thay đổi thì ghi số âm để đảo (lưu vết) rồi ghi bút toán mới; bút toán không đổi giữ nguyên.`
-      : `Định khoản ${list.length} chứng từ vào sổ nhật ký chung?`)) post.mutate({ list, repost });
+      : `Định khoản ${list.length} chứng từ vào sổ nhật ký chung?`) + advisoryText(gate.advisories)) post.mutate({ list, repost });
   };
   const remove = useMutation({
     mutationFn: async ({ list, reason }: { list: DocRow[]; reason: string }) => { for (const r of list) await api.post('/api/v1/documents/cancel', { docKey: r.docKey, reason }); return list.length; },
@@ -236,6 +241,7 @@ export function DocumentsPage() {
             </div>
           )}
           {notice && <div className="alert alert-ok" style={{ margin: '6px 0' }}>{notice}</div>}
+          {canPost && picked.length > 0 && <DocumentGateBanner advisories={gate.advisories} subject={`${picked.length} chứng từ đang chọn`} />}
           {tab === 'auto' && <div className="muted" style={{ margin: '4px 0', fontSize: 12 }}>Phiếu hệ thống nguồn đẩy vào ngay khi lưu / sửa và tự ghi sổ theo Chế độ định khoản "Tự động". Bấm một dòng để xem chứng từ và thẻ Bút toán.</div>}
           <ErrorBox error={(tab === 'log' ? logQ.error : q.error) ? errorText(tab === 'log' ? logQ.error : q.error) : post.error ? errorText(post.error) : remove.error ? errorText(remove.error) : null} />
           {tab === 'log' ? (

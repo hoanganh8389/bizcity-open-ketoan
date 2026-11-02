@@ -1,0 +1,53 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-regimes-vn.regime.change_versioned_audited.005",
+  "version": "0.1.0",
+  "rulepack": "accounting-regimes-vn",
+  "spec_ref": "C02.5",
+  "title": "Chuyển chế độ = phát hành bản chính sách mới có ngày hiệu lực; chứng từ cũ giữ bản cũ; có bằng chứng",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "Phụ lục II",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "policy.test.ts",
+      "DG-POL-1",
+      "posting-pack.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "policy_version_effective_date",
+      "old_docs_keep_old_policy",
+      "change_audited"
+    ],
+    "gap": "Hệ thống tài khoản không nằm trong bản chụp chính sách (ADR-0009 §2); đổi hệ thống tài khoản khi chuyển TT133 → TT99 chưa có cơ chế phiên bản."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

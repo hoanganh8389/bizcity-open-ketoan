@@ -1,0 +1,46 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-integrity.tenant.same_dockey_two_tenants.004",
+  "version": "0.1.0",
+  "rulepack": "accounting-integrity",
+  "spec_ref": "C01.4",
+  "title": "Hai đơn vị có cùng docKey ngoài không bị coi là trùng",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 26",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "same_dockey_two_tenants_both_posted"
+    ],
+    "gap": "UNIQUE (tenant_id, doc_key) có ở migration 0005 nhưng chưa có test gửi cùng docKey vào hai đơn vị. NOT_TESTED cho tới VNCONF-004."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

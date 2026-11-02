@@ -4,7 +4,7 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -38,7 +38,7 @@ export default defineAction({
   output: z.object({ installmentId: z.string(), status: z.literal('paid'), ledgerDocKey: z.string() }),
   permission: 'hop-dong:collect',
   effect: 'write',                                 // read | write
-  sideEffects: ['documents', 'ledger'],            // write bắt buộc: documents | ledger | masterdata | settings | external
+  sideEffects: ['documents', 'ledger'],            // write bắt buộc: documents | ledger | masterdata | settings | external | analysis
   idempotency: 'required',                         // required | natural | none
   dryRun: true,                                    // cho phép ?dryRun=1 / dryRun trong MCP
   expose: { http: { method: 'POST', path: '/installments/:installmentId/payments' }, mcp: true, ai: 'propose' },
@@ -129,3 +129,11 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
    - Còn thiếu cho đủ §4: biên nhận bằng chứng (2.6), outbox sự kiện (Phase 3), kiểm module bật / năng lực (Phase 3).
 2. Phase 3: chuyển mọi route `phan-he/*`; route `modules/*` của Kernel chuyển khi tách Kernel.
 3. Phase 5: `adapters/cell` đọc registry action → MCP.
+
+## 10. Nhật ký thay đổi
+<!-- [2026-11-02 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — mở nhật ký thay đổi; 1.1.0-draft thêm sideEffect analysis. -->
+
+| Phiên bản | Ngày | Thay đổi |
+|---|---|---|
+| 1.0.0-draft | 2026-10-29 | Khởi tạo (Standard v1, hợp đồng 4/7) |
+| 1.1.0-draft | 2026-11-02 | Thêm `sideEffects: 'analysis'` — action chỉ lưu kết quả phân tích của Core (vd `core.conformance.run`, ADR-0012), không đổi chứng từ, sổ, danh mục, cấu hình |

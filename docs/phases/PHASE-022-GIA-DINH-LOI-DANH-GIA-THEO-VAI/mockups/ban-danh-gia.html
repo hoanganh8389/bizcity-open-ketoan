@@ -1,0 +1,168 @@
+<!doctype html>
+<!-- [2026-11-02 07:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — bản mẫu tĩnh Bàn đánh giá (HT08): ba vai, checklist theo nhóm, bốn khối Hiện tượng · Vì sao · Cách khắc phục · Kiểm lại; dữ liệu mẫu, không gọi API. -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bàn đánh giá</title>
+<style>
+:root{
+  --bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--none:#8a919e;--ok-bg:#e8f5ee;--warn-bg:#fff4e0;--bad-bg:#fdecea;--block:#4a3aa8;--block-bg:#efecfb;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+h1{font-size:20px;margin:0}
+.code{font:600 12px ui-monospace,Consolas,monospace;color:var(--muted);margin-left:6px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer;color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.xs{padding:2px 8px;font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.pad{padding:12px 14px}
+.personas{display:flex;flex-wrap:wrap;gap:6px}
+.personas label{border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;background:var(--soft)}
+.personas input{display:none}
+.personas input:checked+span{font-weight:700;color:var(--accent)}
+.personas label:has(input:checked){background:#e3edfb;border-color:var(--accent)}
+.intro{color:var(--muted);margin-top:6px}
+.counts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tag{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.t-ok{background:var(--ok-bg);color:var(--ok)}.t-warn{background:var(--warn-bg);color:var(--warn)}.t-bad{background:var(--bad-bg);color:var(--bad)}
+.t-block{background:var(--block-bg);color:var(--block)}.t-none{background:#eef0f3;color:var(--none)}
+.grow{flex:1}
+details.group{border-top:1px solid var(--line)}
+details.group>summary{list-style:none;cursor:pointer;padding:10px 14px;font-weight:700;display:flex;gap:8px;align-items:center}
+details.group>summary::-webkit-details-marker{display:none}
+details.group>summary::before{content:"▸";color:var(--muted)}
+details.group[open]>summary::before{content:"▾"}
+.case{border-top:1px dashed var(--line);padding:8px 14px 8px 30px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cid{font:600 12px ui-monospace,Consolas,monospace;color:var(--muted)}
+.ctitle{flex:1 1 280px}
+.meta{color:var(--muted);font-size:12.5px}
+.blocks{display:none;margin:8px 0 4px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
+.case.open .blocks{display:block}
+.blk{display:grid;grid-template-columns:130px 1fr;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+.blk:first-child{border-top:0}
+.blk>b{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.steps{margin:0;padding-left:0;list-style:none;display:grid;gap:6px}
+.steps li{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.steps .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px}
+.steps .no .n{background:var(--bad)}
+.role{font-size:12px;color:var(--muted)}
+.stop{background:var(--bad-bg);color:var(--bad);border-radius:6px;padding:6px 10px;font-weight:600;margin-bottom:6px}
+.chip{font:12px ui-monospace,Consolas,monospace;background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 5px;margin:0 4px 2px 0;display:inline-block}
+.note{font-size:12px;color:var(--muted);padding:8px 14px}
+.hidden{display:none!important}
+@media (max-width:640px){.blk{grid-template-columns:1fr}.case{padding-left:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Bàn đánh giá<span class="code">HT08</span></h1>
+    <div class="row"><button class="btn" id="recheckAll">Kiểm lại tất cả</button><button class="btn" onclick="window.print()">In biên bản</button></div>
+  </header>
+
+  <div class="card pad">
+    <div class="personas" role="radiogroup" aria-label="Vai">
+      <label><input type="radio" name="p" value="ktt" checked><span>Kế toán trưởng</span></label>
+      <label><input type="radio" name="p" value="ks"><span>Kiểm soát / ban kiểm soát</span></label>
+      <label><input type="radio" name="p" value="tt"><span>Thanh tra thuế — tự rà trước</span></label>
+    </div>
+    <div class="intro" id="intro"></div>
+    <div class="meta">Kỳ 10/2026 · Lượt tự chẩn đoán 01:00 hôm nay · Kiểm chuẩn 01:02 hôm nay · Dữ liệu mẫu (bản mẫu tĩnh, không gọi API)</div>
+  </div>
+
+  <div class="card pad counts" id="counts"></div>
+
+  <div class="card" id="board"></div>
+  <div class="note">Không phải kết luận của cơ quan nhà nước. Không có điểm tuân thủ %; "Chưa kiểm được" không tính là đạt. Không có nút sửa sổ, tắt kiểm hay bỏ qua.</div>
+</div>
+
+<script>
+const GROUPS = { DOC: 'Chứng từ', STK: 'Kho, giá vốn', CLOSE: 'Cuối kỳ', TAX: 'Thuế, hoá đơn', DEBT: 'Công nợ', CASH: 'Tiền', FA: 'Tài sản', LEDGER: 'Sổ, lệch sổ', ENV: 'Môi trường', SEC: 'Phân quyền, bằng chứng' };
+const PERSONAS = {
+  ktt: { intro: 'Việc còn tồn trước khi khoá kỳ, nộp tờ khai.', order: ['DOC', 'STK', 'CLOSE', 'TAX', 'DEBT', 'CASH', 'FA', 'LEDGER', 'ENV', 'SEC'], onlyTodo: true },
+  ks: { intro: 'Sổ có toàn vẹn, bằng chứng liền mạch, phân quyền đúng. Hiện cả mục đạt và rào chắn còn.', order: ['LEDGER', 'ENV', 'SEC', 'CLOSE', 'DOC', 'DEBT', 'CASH', 'STK', 'TAX', 'FA'], onlyTodo: false },
+  tt: { intro: 'Điểm sẽ bị hỏi khi thanh tra — đơn vị tự rà trước. Không phải kết luận của cơ quan thuế.', order: ['TAX', 'STK', 'CASH', 'FA', 'DEBT', 'DOC', 'CLOSE', 'LEDGER'], onlyTodo: true },
+};
+const ST = { warn: ['Cảnh báo', 't-warn', '⚠'], bad: ['Lỗi', 't-bad', '✘'], ok: ['Đạt', 't-ok', '✔'], block: ['Chặn đúng', 't-block', '⛔'], none: ['Chưa kiểm được', 't-none', '○'] };
+const CASES = [
+  { id: 'F22-DOC-11', g: 'DOC', p: ['ktt'], s: 'warn', t: 'Chứng từ chờ định khoản quá 3 ngày', who: 'kế toán viên', n: '14 chứng từ',
+    what: 'Mẫu: <span class="chip">pos:CN01:HD0412</span><span class="chip">pos:CN02:HD0398</span> … (14)', why: 'Chứng từ chưa vào sổ thì báo cáo thiếu số. Ngưỡng 3 ngày là quy chế nội bộ.',
+    steps: [['Mở Định khoản tự động, thẻ Chờ / Lỗi', 'ACC14'], ['Xem trước bút toán; thiếu cấu hình thì bổ sung (lý do, tài khoản)', 'ACC18'], ['Định khoản, hoặc huỷ có lý do', null]], verify: 'EVENT_PENDING_AGE' },
+  { id: 'F22-DOC-13', g: 'DOC', p: ['ktt', 'ks'], s: 'ok', t: 'Chứng từ đã ghi sổ có bút toán hiệu lực', verify: 'EVENT_HAS_ENTRY' },
+  { id: 'F22-STK-01', g: 'STK', p: ['ktt', 'tt'], s: 'warn', t: 'Tồn kho âm theo mặt hàng × kho × ngày', who: 'kế toán kho', n: '2 mã hàng',
+    what: '<span class="chip">CN01:kho chính:SUA01@2026-10-03</span><span class="chip">CN02:kho chính:QUA01@2026-10-12</span>',
+    why: 'Hàng xuất trước khi có phiếu nhập: giá vốn bình quân của mã đó sai, chi phí không có cơ sở khi thanh tra.',
+    steps: [['Mở Nhập xuất tồn tại ngày âm đầu tiên', 'ACC83'], ['Tìm phiếu nhập thiếu / trễ / sai kho / sai mã; bổ sung hoặc sửa ở nguồn', null], ['Tính lại giá vốn tháng 10', 'ACC49', 'kế toán trưởng']], no: 'Không điều chỉnh kho cho "khớp"', verify: 'INVENTORY_NEGATIVE' },
+  { id: 'F22-STK-02', g: 'STK', p: ['ktt'], s: 'warn', t: 'Tháng có hàng xuất mà chưa có phiếu giá vốn', who: 'kế toán trưởng', n: '1 chi nhánh',
+    what: '<span class="chip">CN02:2026-09:gia-von</span>', why: 'Lợi nhuận tháng 9 của CN02 sai cho tới khi tính giá vốn.', steps: [['Tính giá vốn tháng 9 cho CN02', 'ACC49'], ['Kết chuyển lại tháng 9', 'ACC6']], verify: 'PERIOD_CLOSE_OPEN' },
+  { id: 'F22-STK-05', g: 'STK', p: ['ktt', 'ks'], s: 'none', t: 'Hàng đang chuyển giữa chi nhánh không về 0', reason: 'Chưa có kiểm TRANSIT_NONZERO — làm ở W2 (S022-9)' },
+  { id: 'F22-CLOSE-04', g: 'CLOSE', p: ['ktt', 'ks'], s: 'warn', t: 'Tháng đã qua quá 30 ngày chưa khoá sổ', who: 'kế toán trưởng', n: '2 kỳ',
+    what: '<span class="chip">CN01:2026-08:khoa-so</span><span class="chip">CN01:2026-09:khoa-so</span>', why: 'Kỳ chưa khoá thì số liệu cũ còn bị sửa. Ngưỡng 30 ngày là quy chế nội bộ.',
+    steps: [['Làm xong giá vốn, kết chuyển của kỳ', 'ACC6'], ['Khoá kỳ; còn cảnh báo thì ghi lý do ≥ 10 ký tự (lưu bằng chứng)', 'ACC2', 'kế toán trưởng']], verify: 'PERIOD_CLOSE_OPEN' },
+  { id: 'F22-CLOSE-06', g: 'CLOSE', p: ['ks'], s: 'ok', t: 'Khoá kỳ khi còn cảnh báo có lý do và người xác nhận', note: 'Kỳ 09/2026: N.V.A (KTT) 05/10 — "Tồn âm SUA01, bổ sung phiếu nhập kỳ sau"', verify: '(bằng chứng)' },
+  { id: 'F22-TAX-04', g: 'TAX', p: ['ktt', 'tt'], s: 'warn', t: 'Hoá đơn mua vào ≥ 5 triệu chưa có chứng từ thanh toán không dùng tiền mặt', who: 'kế toán thuế', n: '3 hoá đơn',
+    what: '<span class="chip">NM2610051</span><span class="chip">NM2610077</span><span class="chip">NM2610090</span>', why: 'Thuế đầu vào của các hoá đơn này chưa đủ điều kiện khấu trừ. Căn cứ: Luật Thuế GTGT 2024 (chờ rà điều khoản).',
+    steps: [['Mở Bổ sung thông tin thuế, cột Chứng từ thanh toán', 'ACC78'], ['Nhập số chứng từ ngân hàng', null], ['Chưa trả: theo dõi tới hạn; không trả bằng chuyển khoản thì bỏ đánh dấu được khấu trừ', null, 'kế toán trưởng']], verify: 'VAT_INPUT_NONCASH' },
+  { id: 'F22-TAX-02', g: 'TAX', p: ['tt'], s: 'ok', t: 'Thuế suất giảm 8% chỉ dùng trong thời gian giảm', verify: 'VAT_REDUCED_RATE' },
+  { id: 'F22-CASH-01', g: 'CASH', p: ['ktt', 'tt'], s: 'none', t: 'Quỹ tiền mặt âm cuối ngày', reason: 'Chưa có kiểm CASH_NEGATIVE — làm ở W2 (S022-9)' },
+  { id: 'F22-LEDGER-02', g: 'LEDGER', p: ['ks'], s: 'bad', t: 'Số dư lưu sẵn theo ngày ≠ tổng dòng sổ', who: 'nhóm Lõi', n: '1 tài khoản', stop: 'LDG-7Q2K-91',
+    what: '<span class="chip">CN01:1561:2026-10-14</span>', why: 'Báo cáo số dư sai. Không khoá kỳ khi còn lỗi này.',
+    steps: [['Dừng khoá kỳ', null], ['Báo nhóm Lõi kèm mã tra cứu (công cụ dựng lại số dư từ sổ)', null, 'vận hành']], no: 'Không sửa tay bảng số dư', verify: 'LEDGER_BALANCES_DAILY' },
+  { id: 'F22-LEDGER-01', g: 'LEDGER', p: ['ks'], s: 'block', t: 'Bút toán Nợ ≠ Có bị chặn bởi trigger', note: 'Lần thử gần nhất của bộ chạy giả định lỗi: bị từ chối UNBALANCED_ENTRY' },
+  { id: 'F22-ENV-02', g: 'ENV', p: ['ks'], s: 'ok', t: 'Trigger bảo vệ sổ còn đủ và đang bật', verify: 'LEDGER_TRIGGERS' },
+  { id: 'F22-ENV-09', g: 'ENV', p: ['ktt', 'ks'], s: 'ok', t: 'Đơn vị đã khai hồ sơ kế toán cho hôm nay', verify: 'PROFILE_DECLARED' },
+  { id: 'F22-SEC-01', g: 'SEC', p: ['ks'], s: 'block', t: 'Khoá API / AI không xác nhận cảnh báo thay người', note: 'Bộ chạy: FORBIDDEN đúng mong đợi' },
+  { id: 'F22-DEBT-01', g: 'DEBT', p: ['ks', 'ktt'], s: 'none', t: 'Tổng khoản công nợ mở ≠ số dư tài khoản công nợ', reason: 'Chưa có kiểm DEBT_MATCH_LEDGER — làm ở W2 (S022-9)' },
+];
+const screen = (c) => ({ ACC14: 'Định khoản tự động', ACC18: 'Lý do – Tài khoản', ACC83: 'Nhập xuất tồn', ACC49: 'Tính giá vốn', ACC6: 'Kết chuyển', ACC2: 'Khoá kỳ', ACC78: 'Bổ sung thông tin thuế' })[c] ?? c;
+
+function render() {
+  const pk = document.querySelector('input[name=p]:checked').value;
+  const P = PERSONAS[pk];
+  document.getElementById('intro').textContent = P.intro;
+  const mine = CASES.filter((c) => c.p.includes(pk));
+  const todo = document.getElementById('onlyTodo')?.checked ?? P.onlyTodo;
+  const cnt = Object.fromEntries(Object.keys(ST).map((k) => [k, mine.filter((c) => c.s === k).length]));
+  document.getElementById('counts').innerHTML = ['bad', 'warn', 'ok', 'block', 'none'].map((k) => `<span class="tag ${ST[k][1]}">${ST[k][2]} ${cnt[k]} ${ST[k][0].toLowerCase()}</span>`).join('')
+    + `<span class="grow"></span><label><input type="checkbox" id="onlyTodo" ${todo ? 'checked' : ''}> Chỉ hiện việc cần làm</label>`;
+  document.getElementById('onlyTodo').onchange = render;
+  const board = document.getElementById('board');
+  board.innerHTML = P.order.map((g) => {
+    const list = mine.filter((c) => c.g === g && (!todo || c.s === 'warn' || c.s === 'bad'));
+    if (!list.length) return '';
+    const w = list.filter((c) => c.s === 'warn' || c.s === 'bad').length;
+    return `<details class="group" open><summary>${GROUPS[g]} ${w ? `<span class="tag t-warn">${w} việc</span>` : ''}</summary>${list.map(caseHtml).join('')}</details>`;
+  }).join('') || '<div class="pad">Không có việc cần làm với vai này. Bỏ "Chỉ hiện việc cần làm" để xem mục đã đạt.</div>';
+  board.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { const el = b.closest('.case'); el.classList.toggle('open'); b.textContent = el.classList.contains('open') ? 'Ẩn' : 'Cách khắc phục'; }));
+  board.querySelectorAll('[data-recheck]').forEach((b) => (b.onclick = () => { b.textContent = 'Đã kiểm lại (bản mẫu)'; b.disabled = true; }));
+}
+function caseHtml(c) {
+  const [txt, cls, icon] = ST[c.s];
+  const actionable = c.s === 'warn' || c.s === 'bad';
+  const head = `<div class="row"><span class="tag ${cls}">${icon} ${txt}</span><span class="cid">${c.id}</span><span class="ctitle">${c.t}</span>`
+    + (c.n ? `<span class="meta">${c.n}</span>` : '') + (c.who ? `<span class="meta">Ai làm: ${c.who}</span>` : '')
+    + (actionable ? `<button class="btn xs" data-open>Cách khắc phục</button>` : '') + `</div>`;
+  const sub = c.reason ? `<div class="meta">Lý do: ${c.reason}</div>` : c.note ? `<div class="meta">${c.note}</div>` : '';
+  if (!actionable) return `<div class="case">${head}${sub}</div>`;
+  const steps = c.steps.map((s, i) => `<li><span class="n">${i + 1}</span><span>${s[0]}</span>${s[1] ? `<button class="btn xs">Mở ${screen(s[1])} (${s[1]}) →</button>` : ''}${s[2] ? `<span class="role">(${s[2]})</span>` : ''}</li>`).join('')
+    + (c.no ? `<li class="no"><span class="n">✗</span><span>${c.no}</span></li>` : '');
+  return `<div class="case">${head}<div class="blocks">
+    <div class="blk"><b>Hiện tượng</b><div>${c.what}</div></div>
+    <div class="blk"><b>Vì sao</b><div>${c.why}</div></div>
+    <div class="blk"><b>Cách khắc phục</b><div>${c.stop ? `<div class="stop">Dừng ghi sổ · báo nhóm Lõi kèm mã tra cứu <span class="chip">${c.stop}</span></div>` : ''}<ol class="steps">${steps}</ol></div></div>
+    <div class="blk"><b>Kiểm lại</b><div><button class="btn xs primary" data-recheck>Kiểm lại ${c.verify}</button> <span class="meta">lần trước 01:00 hôm nay</span></div></div>
+  </div></div>`;
+}
+document.querySelectorAll('input[name=p]').forEach((r) => (r.onchange = () => { const t = document.getElementById('onlyTodo'); if (t) t.remove(); render(); }));
+document.getElementById('recheckAll').onclick = (e) => { e.target.textContent = 'Đã kiểm lại (bản mẫu)'; };
+render();
+</script>
+</body>
+</html>

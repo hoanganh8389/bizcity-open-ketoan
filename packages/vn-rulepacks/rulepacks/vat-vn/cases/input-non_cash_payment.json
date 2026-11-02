@@ -1,0 +1,58 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.vat-vn.input.non_cash_payment.002",
+  "version": "0.1.0",
+  "rulepack": "vat-vn",
+  "spec_ref": "VAT-2",
+  "title": "Hoá đơn mua vào từ 5 triệu đồng (gồm thuế) được khấu trừ có chứng từ thanh toán không dùng tiền mặt",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.48-2024-qh15",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "điều kiện khấu trừ thuế đầu vào"
+    },
+    {
+      "source_id": "vn.decree.181-2025-nd-cp",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "hướng dẫn chứng từ thanh toán không dùng tiền mặt"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-VAT-2",
+      "tax-info.test.ts",
+      "vat-einvoice.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "input_over_threshold_has_noncash_payment"
+    ],
+    "gap": "Ngưỡng 5 triệu đã có sẵn ở Core (NON_CASH_THRESHOLD, màn ACC78) — đổi luật thì sửa hằng số đó; mua trả chậm theo hợp đồng (chưa đến hạn thanh toán) chưa phân biệt"
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — bản cài tự duyệt được (ADR-0016) hoặc chờ duyệt thượng nguồn"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

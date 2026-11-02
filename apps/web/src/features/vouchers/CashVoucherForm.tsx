@@ -225,8 +225,9 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     };
   };
 
-  const { doSave, doDelete, saving, error, setProblem } = useVoucherSave({
-    existing, check, docDate: h.docDate, onSaved, onClose,
+  // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: cảnh báo kiểm chuẩn của ngày phiếu
+  const { doSave, doDelete, saving, error, setProblem, advisories } = useVoucherSave({
+    existing, check, docDate: h.docDate, docType: type, onSaved, onClose,
     confirm: 'Bạn có chắc chắn muốn Ghi phiếu này không?',
     invalidate: [['documents']],
     submit: () => (existing ? api.put<{ docNo: string }>(`/api/v1/vouchers/${existing.id}`, body()) : api.post<{ docNo: string }>('/api/v1/vouchers', body())),
@@ -265,7 +266,7 @@ export function CashVoucherForm({ type, existing, initial, onClose, onSaved }: {
     <VoucherModal
       title={meta.title} existing={existing} readOnly={dis} saving={saving}
       onSave={() => doSave(false)} onSaveNew={() => doSave(true)} printSlot={<PrintButton bare screen={VOUCHER_SCREEN[type]} templates={VOUCHER_TEMPLATES[type]} disabled={!existing} getDocs={(): PrintSheet[] => (existing ? [{ type: type, docNo: existing.docNo, voucher: existing.payload, signatures, banks, branchName: branches?.find((b) => b.code === existing.payload.branchCode)?.name ?? existing.payload.branchCode }] : [])} />} onExport={exportRows} onDelete={doDelete} onClose={onClose}
-      error={error} readOnlyText={readOnlyReason(existing, { external: false })}
+      error={error} readOnlyText={readOnlyReason(existing, { external: false })} advisories={advisories}
     >
           {/* Đầu phiếu: lưới 6 cột (nhãn, ô) × 3; Địa chỉ, Diễn giải kéo dài từ cột 2 sang hết cột 3. */}
           <div className="vf-head-grid">

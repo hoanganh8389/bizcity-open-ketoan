@@ -33,6 +33,7 @@
 | S021-22 | L5 định khoản thử (`IN-POST-*`), giao dịch huỷ, giới hạn thời gian + lượt — ca T021-16 | W5 | P0 | ☐ | ☐ |
 | S021-23 | Gợi ý cấu hình từ lỗi lặp (ĐVT, ánh xạ mã hàng, lý do) để kế toán trưởng duyệt, không tự sửa | W5 | P1 | ☐ | ☐ |
 | S021-24 | Action đọc `core.intake.list / get / explain` (`expose.ai: read`, không trả nguyên văn) — ca T021-18 | W5 | P2 | ☐ | ☐ |
+| S021-25 | Tiền kiểm L4 dùng hàm kiểm theo một chứng từ của ca kiểm chuẩn (PHASE-022 S022-8): `IN-VAT-001` thuế suất giảm ngoài thời gian (tham số rulepack), `IN-INV-001` hoá đơn thiếu trường (`taxIssues`), `IN-INV-002` lập hoá đơn sau ngày giao, `IN-CFG-001` chưa khai hồ sơ kế toán cho ngày chứng từ — mức `warn`, có `remedy` <!-- [2026-11-02 07:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — chủ đồng ý duy trì hai phương án: cảnh báo lúc nhập + lượt định kỳ, một nguồn luật. --> | W1 | P1 | ☐ | ☐ |
 
 ## Ca bằng chứng
 
@@ -62,3 +63,4 @@
 | Thời điểm thật | Phiên | Việc |
 |---|---|---|
 | 2026-11-02 15:34 | Claude Code | Chủ duyệt ADR-0014 (Q1 có, Q2 90 / 7 ngày, Q3 bảng điểm cho mọi kế toán — khác đề xuất, Q4 phase riêng). Mở PHASE-021: kế hoạch, hiện trạng, kiến trúc, checklist; lộ trình 2.17–2.21; năng lực `intake.*` planned. |
+| 2026-11-02 19:00 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | đồng ý duy trì hai phương án (cảnh báo lúc nhập + lượt định kỳ, một nguồn luật) → thêm S021-25 (tiền kiểm L4 dùng hàm kiểm của ca kiểm chuẩn, mức warn); chi tiết ở PHASE-022 |
