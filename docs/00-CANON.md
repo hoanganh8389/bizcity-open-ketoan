@@ -58,6 +58,7 @@
 | R-BAK | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §3 | 0 | Sao lưu hằng ngày, PITR, kiểm khôi phục hằng tuần trước khi tin bản sao lưu | `scripts/kiem-khoi-phuc.sh` |
 | R-REV | [rules/RULE-REVIEW.md](rules/RULE-REVIEW.md) | 0 | Người đóng góp làm phân hệ / giao diện qua PR; Nhóm Lõi rà soát mỗi lần nhận việc: kiến trúc, lỗi, rủi ro, dữ liệu kế toán, mã hàng; biên bản ở `docs/audits/REVIEW-*` | `scripts/ra-soat-dong-gop.mjs` |
 | R-VNC | [rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md) | 1 (R-VNC-3, -7: 0) | Bộ kiểm chuẩn pháp lý VN: kho nguồn pháp lý có trạng thái rà, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo 6 trạng thái, không tự nhận chứng nhận nhà nước | SC-VNC-1, SC-VNC-2; runner lane runtime (PHASE-020) |
+| R-ITEM | [rules/RULE-ITEM.md](rules/RULE-ITEM.md) | 0 (R-ITEM-0), 1 (R-ITEM-1..9) | **Chấp nhận về nguyên tắc, chưa có mã** ([ADR-0017](adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), PHASE-024): định danh hàng hoá bất biến, mã có phiên bản, sổ đã ghi không đổi theo danh mục; tài khoản từ chính sách, không từ tiền tố mã; dữ liệu ngoài qua validation <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-ITEM --> | trigger, DG-ITEM-1..5, SC-ITEM-1..3 (sẽ có) |
 
 ## 4. Hợp đồng (contracts)
 
