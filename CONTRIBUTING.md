@@ -64,7 +64,7 @@ node tests/conformance/selfcheck.mjs --strict   # như CI
 bash scripts/kiem-chuan.sh                  # ranh giới: ĐẠT
 node scripts/gan-nhan-lop.mjs --write       # tệp mới trong apps/api/src có nhãn lớp (R-BOUND-10)
 npm run typecheck
-docker compose up -d db && npm test         # PostgreSQL thật; sau mỗi tệp test tự kiểm bất biến sổ
+docker compose up -d db && npm test         # PostgreSQL thật, CSDL riêng ketoan_test (tự tạo; tên CSDL phải có "test"); sau mỗi tệp tự kiểm bất biến sổ
 ```
 
 - **Nợ mới** bộ kiểm báo thì sửa, **không** thêm vào `tests/conformance/baseline.json`. Nợ cũ đã hết thì chạy `--update-baseline`.
