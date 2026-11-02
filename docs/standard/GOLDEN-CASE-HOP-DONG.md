@@ -112,7 +112,7 @@ Chạy bằng `bizcity module check modules/hop-dong` (toàn bộ [CONFORMANCE.m
 | GC-9 | Huỷ thu kỳ 1 | bút toán đảo đúng một lần; kỳ `scheduled` |
 | GC-10 | Ghi nhận thu trong kỳ đã khoá | `PERIOD_LOCKED`; kỳ không đổi |
 | GC-11 | Xoá khách hàng đang có hợp đồng ở màn Danh mục | Core từ chối (`referenceCheck`) |
-| GC-12 | Gọi `record-payment` qua actor AI (`expose.ai: propose`) | chỉ tạo bản nháp chờ người duyệt; bằng chứng `kind: ai` |
+| GC-12 | Gọi `record-payment` qua MCP bằng actor AI | không tự ghi: quyền `risk: high` (như `hop-dong:collect`) thì Core chặn AI (`FORBIDDEN`); quyền thường thì chỉ đề xuất chờ người xác nhận (`needs_confirmation`). Kỳ không đổi |
 
 ## 7. Quan hệ với code hiện có
 
@@ -132,6 +132,8 @@ Khuyên: ca chuẩn sinh module mới độc lập (đo được "Claude tạo �
 
 ## 8. Đo thế nào là đạt
 
+Bộ kịch bản GC-1..GC-12 có sẵn: `apps/api/test/golden-hop-dong.test.ts` (chỉ gọi HTTP / MCP như người dùng, đối chiếu bảng của Core; chưa có `modules/hop-dong` thì bỏ qua). Chạy: `npx bizcity module check hop-dong` rồi `npx vitest run test/golden-hop-dong.test.ts` trong `apps/api`.
+
 | Tiêu chí | Ngưỡng |
 |---|---|
 | Lặp lại | 3 lần chạy Claude Code độc lập trên repo sạch, cùng lời yêu cầu |
@@ -142,3 +144,9 @@ Khuyên: ca chuẩn sinh module mới độc lập (đo được "Claude tạo �
 | Sửa tay | 0 dòng sửa tay sau khi Claude báo xong (được phép trả lời câu hỏi làm rõ của Claude) |
 
 Lần nào không đạt: ghi lại Claude vấp ở đâu (đọc thiếu tài liệu nào, SDK thiếu gì), sửa **tài liệu / SDK / starter template**, không sửa kết quả của lần chạy.
+
+## 9. Nhật ký các lần chạy <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
+
+| Lần | Ngày | Ai | Kết quả | Vấp ở đâu → sửa gì (tài liệu / SDK / Core) |
+|---|---|---|---|---|
+| 0 (diễn tập, không tính) | 2026-11-02 | Claude Code (phiên PHASE-014) | `module check` ĐẠT; GC-1..12 đạt sau khi vá Core | G1 workflow YAML không nhận quyền của module → dời workflow sang Platform, xuất qua SDK · G2 cấu hình module phải sửa tệp registry của Core → `settings.registry.json` trong module · G3 chưa có hook → `defineHook` + `masterdata.referenceCheck` · G4 `notify.inapp` chưa có → `ctx.notify` + chuông · G5 slot chưa vẽ → `partner.detail.tab`, `dashboard.widget` · G6 subscriber không đọc được bảng module → `ctx.module` · G7 `data.reads` báo "permission denied" (khung nhìn security_invoker) → cấp SELECT đúng các cột trên bảng gốc · G8 bản dựng module không chép `*.workflow.yaml` → script build của template chép tệp không phải `.ts`. Ca chuẩn: bỏ hook `document.beforeTransition`, nhắc hạn bằng `ctx.notify`, GC-12 theo luật AI của Core |

@@ -41,7 +41,9 @@
     "tables": [
       "notes"
     ],
-    "reads": []
+    "reads": [
+      "bizcity_read.partners"
+    ]
   },
   "actions": [
     "ghi-chu.note.create",

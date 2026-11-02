@@ -10,6 +10,7 @@
  *   T014-9   G1 workflow YAML của module dùng quyền <module>:<việc>; quyền Core gõ sai vẫn bị bắt
  *   T014-10  G2 khoá cấu hình module tự khai (settings.registry.json): ctx.settings.get đọc mặc định
  *   T014-11  G3 hook masterdata.referenceCheck: đối tượng có ghi chú → Core không cho xoá; không ghi chú → xoá được
+ *   T014-11b G7 module đọc danh mục chuẩn qua data.reads (khung nhìn security_invoker): có đối tượng → ghi được; không có → VALIDATION_ERROR
  *   T014-12  G4 + G6 subscriber đọc bảng module (ctx.module), gửi thông báo (ctx.notify); giao lại không gửi trùng; người dùng xem, đánh dấu đã đọc
  */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -47,7 +48,7 @@ beforeAll(async () => {
   a = await setupTenant();
   b = await setupTenant();
   tA = (await db.selectFrom('tenants').select('id').where('code', '=', a.tenantCode).executeTakeFirstOrThrow()).id;
-  await runModuleMigrations('ghi-chu', path.join(MODS, 'ghi-chu', 'migrations'));
+  await runModuleMigrations('ghi-chu', path.join(MODS, 'ghi-chu', 'migrations'), { reads: ['bizcity_read.partners'] });
   await asOwner((trx) => syncBundled('test:sdk-module-host', trx, MODS));
   app = await buildApp({ modulesDir: MODS });
 });
@@ -139,6 +140,9 @@ transitions:
   it('T014-11: G3 đối tượng có ghi chú → Core không cho xoá (referenceCheck); không có → xoá được', async () => {
     for (const code of ['KH-GHICHU', 'KH-TRONG']) expect((await req('PUT', `/api/v1/partners/${code}`, b.token, { name: code, kind: 'customer' })).statusCode).toBeLessThan(300);
     expect((await req('POST', '/api/v1/m/ghi-chu/notes', b.token, { body: 'Hỏi lại báo giá', partnerCode: 'KH-GHICHU' })).statusCode).toBe(200);
+    // G7: đọc bizcity_read.partners bằng vai trò module — đối tượng không có thì từ chối (trước đây: permission denied)
+    const none = await req('POST', '/api/v1/m/ghi-chu/notes', b.token, { body: 'x', partnerCode: 'KHONG-CO' });
+    expect(none.json().error?.code, none.body).toBe('VALIDATION_ERROR');
     const del = await req('DELETE', '/api/v1/partners/KH-GHICHU', b.token);
     expect(del.statusCode, del.body).toBe(409);
     expect(del.json().error.message).toMatch(/ghi-chu: 1 ghi chú/);

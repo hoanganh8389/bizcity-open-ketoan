@@ -10,6 +10,8 @@ const create = defineAction({
     const max = Number(await ctx.settings.get('bizcity.ghi_chu.max_len'));
     if (body.length > max) throw Errors.validation(`Ghi chú dài quá ${max} ký tự (cấu hình bizcity.ghi_chu.max_len)`);
     return ctx.data.module(async (tx) => {
+      // đọc danh mục chuẩn qua khung nhìn khai ở data.reads (G7)
+      if (partnerCode && !(await sql<{ ok: boolean }>`SELECT EXISTS (SELECT 1 FROM bizcity_read.partners WHERE code = ${partnerCode}) AS ok`.execute(tx)).rows[0]?.ok) throw Errors.validation(`Không có đối tượng ${partnerCode}`);
       const r = await sql<{ id: string }>`INSERT INTO mod_ghi_chu.notes (tenant_id, body, created_by, partner_code) VALUES (${ctx.tenant.id}, ${body}, ${ctx.actor.id}, ${partnerCode ?? null}) RETURNING id::text`.execute(tx);
       return { id: r.rows[0]!.id };
     });

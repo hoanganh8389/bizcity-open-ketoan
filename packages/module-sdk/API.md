@@ -98,7 +98,7 @@ interface ActionContext {
   data: {
     tx: ModuleTransaction;          // Kysely chỉ thấy bảng mod_<key>.* + view bizcity_read.* (kiểu sinh theo module)
     module<T>(fn: (tx) => Promise<T>): Promise<T>;  // ✅ 2026-11-02 (3.10): chạy fn bằng vai trò mod_<key>_rw — PostgreSQL chặn bảng Kernel; gọi ctx.ledger / documents NGOÀI fn
-    masterdata: MasterdataReader;   // partners / products / branches / warehouses / units / taxCodes: get(code), list(filter)
+    masterdata: MasterdataReader;   // ⏳ CHƯA CÓ (W4 lần 0): đọc danh mục qua khung nhìn khai ở data.reads, vd bizcity_read.partners trong ctx.data.module —   // partners / products / branches / warehouses / units / taxCodes: get(code), list(filter)
     describe(): SchemaDescription;  // thay schema-catalog
   };
   ledger: {

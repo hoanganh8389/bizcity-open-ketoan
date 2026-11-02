@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
+- **Bộ kịch bản nghiệm thu ca chuẩn Hợp đồng** `apps/api/test/golden-hop-dong.test.ts` (GC-1..GC-12, PHASES 4.5): chấm module `modules/hop-dong` do Claude sinh ra chỉ qua HTTP / MCP; chưa có module thì bỏ qua.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
 - **Năng lực cho module SDK theo ca chuẩn Hợp đồng** (PHASE-014 W4): workflow YAML dùng được cho chứng từ của module (`@bizcity/module-sdk` xuất `loadWorkflow`; quyền `<module>:<việc>`; mã dời sang `@bizcity/platform/core/workflow`, `apps/api/src/core/workflow.ts` chuyển tiếp); khoá cấu hình module tự khai (`modules/<key>/settings.registry.json`); hook `masterdata.referenceCheck` (xoá đối tượng còn được module dùng → `CONFLICT`); subscriber có `ctx.module`, `ctx.settings`, `ctx.notify`.
 - **Thông báo trong ứng dụng** (`notify.inapp`, migration `0060_thong_bao`): `ctx.notify.send` cho module, chuông trên thanh trên cùng, `GET /api/v1/notifications`, `POST /api/v1/notifications/read`.
@@ -237,6 +239,9 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
+- **Module đọc danh mục qua `data.reads`** (khung nhìn `bizcity_read.*`, `security_invoker`): trước đây báo "permission denied for table …" vì vai trò `mod_<key>_rw` chỉ có quyền trên khung nhìn. Nay trình cài cấp SELECT đúng các cột khung nhìn dùng trên bảng gốc (RLS vẫn lọc theo đơn vị). Chạy lại `module migrate <key>` cho module đã cài.
+- **Template module**: `npm run build` chép tệp không phải `.ts` của `api/` (workflow YAML) sang `dist/api`.
 - `GET /api/v1/documents?voucherInfo=false` trước vẫn kèm thông tin phiếu (`z.coerce.boolean()` coi chuỗi "false" là true); nay dùng `queryBool`.
 - Đính tệp vào hoá đơn NCC (`ownerType: invoice`) báo lỗi CSDL: bảng `purchase_attachments` chỉ nhận partner / document / policy. Hết lỗi khi chuyển sang đính kèm chung (0046).
 - Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:

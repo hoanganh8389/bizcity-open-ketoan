@@ -19,6 +19,9 @@ Bạn đang làm trong **một module** của Bizcity Core. Phạm vi sửa: **c
 | `bizcity.module.json` | Manifest — viết / sửa **trước** code. `key` = tên thư mục; mọi action, quyền, bảng, sự kiện, docType phải khai ở đây |
 | `migrations/NNNN_*.sql` | Bảng trong schema `mod_mau_module`; mỗi bảng có `tenant_id`, RLS (`ENABLE` + `FORCE` + policy `bizcity_tenant_visible`), `COMMENT ON` mọi cột. Không chạm bảng Core |
 | `api/actions/*.ts` | Một action một tệp (`defineAction`): id `mau-module.<thực thể>.<động từ>`, quyền `mau-module:<việc>`, action ghi có `idempotency: 'required'` |
+| `api/documents/<loại>.workflow.yaml` | Trạng thái duyệt của chứng từ module: `loadWorkflow(new URL('./documents/x.workflow.yaml', import.meta.url))`, `wf.plan(verb, { status, createdBy, levelsRequired }, { id: ctx.actor.id, can: ctx.can })`; quyền trong YAML là `mau-module:<việc>`. `npm run build` tự chép YAML sang `dist/` |
+| `settings.registry.json` | Khoá cấu hình của module (khai cả ở `settings` của manifest): `owner` = mã module, `storage: tenants.settings.…`, `scopes: [tenant]`; đọc `ctx.settings.get` |
+| `api/hooks/*.ts` | `defineHook` — vd `masterdata.referenceCheck`: Core hỏi trước khi xoá khách / mặt hàng |
 | `api/subscribers/*.ts` | `defineSubscriber`: id `mau-module.<việc>`, `module: 'mau-module'`; lịch chạy = nghe `bizcity.clock.daily`, không `setInterval` |
 | `api/index.ts` | `export default defineModule({ manifest, actions, subscribers })` |
 | `web/index.tsx` | `export default defineWebModule({ key, label, menu, routes })` — đường dẫn dưới `/app/mau-module/` |

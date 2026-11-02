@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Module mẫu — module Bizcity (bizcity_module@1).",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('api','dist/api',{recursive:true,filter:(s)=>!s.endsWith('.ts')})\"",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit"
   },
   "dependencies": {

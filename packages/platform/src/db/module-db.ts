@@ -76,7 +76,18 @@ export async function ensureModuleDb(c: Q, key: string, reads: string[] = []): P
     await ddl(c, 'GRANT USAGE ON SCHEMA bizcity_read TO %I, %I', r.owner, r.rw);
     for (const v of reads) {
       const [, name] = /^bizcity_read\.([a-z_]+)$/.exec(v) ?? [];
-      if (name) await ddl(c, 'GRANT SELECT ON bizcity_read.%I TO %I', name, r.rw);
+      if (!name) continue;
+      await ddl(c, 'GRANT SELECT ON bizcity_read.%I TO %I', name, r.rw);
+      // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G7): khung nhìn security_invoker chạy bằng quyền người gọi →
+      // cấp SELECT đúng các cột khung nhìn dùng trên bảng gốc (không thêm cột nào); RLS của bảng gốc vẫn lọc theo đơn vị.
+      // Trước đây chỉ cấp trên khung nhìn: đọc báo "permission denied for table …" — data.reads không dùng được.
+      const used = await c.query<{ s: string; t: string; cols: string[] }>(
+        `SELECT table_schema AS s, table_name AS t, array_agg(DISTINCT column_name::text) AS cols FROM information_schema.view_column_usage
+          WHERE view_schema = 'bizcity_read' AND view_name = $1 AND table_schema <> 'bizcity_read' GROUP BY 1, 2`, [name]);
+      for (const u of used.rows) {
+        const q = await c.query<{ q: string }>(`SELECT format('GRANT SELECT (%s) ON %I.%I TO %I', (SELECT string_agg(quote_ident(x), ', ') FROM unnest($1::text[]) x), $2::text, $3::text, $4::text) AS q`, [u.cols, u.s, u.t, r.rw]);
+        await c.query(q.rows[0]!.q);
+      }
     }
   }
   const app = (await c.query(`SELECT 1 FROM pg_roles WHERE rolname = 'ketoan_app'`)).rowCount;
