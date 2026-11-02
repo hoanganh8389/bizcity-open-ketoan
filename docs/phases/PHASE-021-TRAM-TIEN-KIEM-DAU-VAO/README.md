@@ -43,3 +43,5 @@ Chi tiết ở [10-HIEN-TRANG](10-HIEN-TRANG.md). Tóm tắt:
 ## Xong khi
 
 Phase xong khi 2.17–2.21 **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)): năm năng lực `intake.*` chuyển `available`, ca bằng chứng T021-1…T021-18 đạt, cổng nghiệm thu từng đợt ở [00-MASTER-PLAN §5](00-MASTER-PLAN.md) có biên bản trong `evidence/`. Trạng thái hôm nay: 2.17 ☐ · 2.18 ☐ · 2.19 ☐ · 2.20 ☐ · 2.21 ☐.
+<!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — trạng thái sau W1 -->
+Trạng thái 2026-11-02 (sau W1): 2.17 ✅ · 2.18 ☐ · 2.19 ☐ · 2.20 ☐ · 2.21 ☐.

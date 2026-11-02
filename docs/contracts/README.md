@@ -26,6 +26,7 @@ Hợp đồng = thoả thuận có phiên bản giữa lõi và bên dùng (phâ
 | Mã | Tệp | Bên dùng | Trạng thái | Nguồn sự thật trong code |
 |---|---|---|---|---|
 | `bizcity_ledger_intake@1` (trước 2026-10-29: `bizcity_event@1`) | [BIZCITY-LEDGER-INTAKE-v1.md](BIZCITY-LEDGER-INTAKE-v1.md) · [schema](BIZCITY-LEDGER-INTAKE-v1.schema.json) | plugin, phân hệ (qua `ctx.ledger.submit`) | Ổn định | `packages/contracts/src/documents.ts` |
+| `bizcity_intake_findings@1` <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1 --> | [BIZCITY-INTAKE-FINDINGS-v1.md](BIZCITY-INTAKE-FINDINGS-v1.md) | Trạm tiền kiểm, giao diện, bên gửi chứng từ (đọc phát hiện) | Đề xuất 0.1 | `packages/contracts/src/intake-findings.ts` |
 | `bizcity_api@1` | [BIZCITY-API-v1.md](BIZCITY-API-v1.md) | mọi bên gọi HTTP | Ổn định | `packages/contracts/src/api.ts`, `core/http.ts`, `core/errors.ts` |
 | `bizcity_posting_rule@1` | [BIZCITY-POSTING-RULE-v1.md](BIZCITY-POSTING-RULE-v1.md) | người viết luật (lõi) | Ổn định | `modules/posting/*`, `modules/ledger/ledger.types.ts` |
 | `bizcity_master_data@1` | [BIZCITY-MASTER-DATA-v1.md](BIZCITY-MASTER-DATA-v1.md) | plugin | Ổn định | `modules/{branches,partners,products,tax-codes,posting-config}` |

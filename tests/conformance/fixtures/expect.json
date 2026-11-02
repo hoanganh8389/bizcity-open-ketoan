@@ -409,6 +409,13 @@
             "attr:bizcity.so_tien"
           ]
         },
+        "SC-INTAKE-1": {
+          "findings": 2,
+          "keys": [
+            "doc-missing:IN-XAU-001",
+            "lesson:IN-XAU-001"
+          ]
+        },
         "SC-MOD-3": {
           "findings": 3,
           "keys": [

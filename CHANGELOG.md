@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1 tiền kiểm -->
+- **Tiền kiểm chứng từ — W1** (PHASE-021, PHASES 2.17, ADR-0014, năng lực `intake.findings` → available): danh mục 20 mã lỗi đầu vào `IN-*` (khuôn, số học, danh mục, nghiệp vụ) viết cho người mới — vì sao kế toán cần, sửa ở nguồn thế nào, trang bài học `docs/huong-dan/loi-dau-vao/`; bộ tiền kiểm gom **mọi** lỗi của một chứng từ trong một lần bằng chính luật cửa nạp, chấm điểm 0–100. Chưa lưu bể chờ / chưa có màn (W2, W3).
 <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — giai đoạn 2: allocateDebt, core.*.upsert + seed, module-sdk/web -->
 - **SDK 1.0.0 — giai đoạn 2** (PHASES 3.16–3.18): `ctx.ledger.allocateDebt` (đối trừ công nợ cùng tài khoản giữa hai chứng từ của module); action `core.partner.upsert` / `core.product.upsert` (`POST /api/v1/partners/upsert`, `/products/upsert`) và `seed[]` trong manifest (`POST /api/v1/system/modules/:key/seed`, chạy thử được); `@bizcity/module-sdk/web` (`defineWebModule`). Phiếu kế toán từ module (`manual_journal`, 3.15): đặc tả định khoản chờ kế toán trưởng ký.
 <!-- [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — chốt SDK v1 -->

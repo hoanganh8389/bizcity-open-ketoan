@@ -83,6 +83,9 @@ interface IntakeCodeSpec {
 }
 ```
 
+<!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: danh mục thật ở hợp đồng; thêm trường stage -->
+> **W1 xong (2026-11-02):** danh mục thật ở [BIZCITY-INTAKE-FINDINGS-v1](../../contracts/BIZCITY-INTAKE-FINDINGS-v1.md) (20 mã). Thêm trường **`stage`** (`door` cửa nạp từ chối · `posting` thành sự việc nhưng chưa ghi sổ được · `advice` chỉ hướng dẫn) vì đọc mã cho thấy kỳ khoá chặn ở bước ghi sổ, không ở cửa nạp — R-INTAKE-4 kiểm theo `stage`. Thêm IN-SUM-006 (tổng thuế); bảng dưới giữ làm nháp lịch sử.
+
 Danh mục **nháp** cho W1. Mức có dấu ⚑ phải xác minh với Kernel ở W1 (10-HIEN-TRANG §3); không xác minh được thì để `warn`.
 
 | Mã | Lớp | Mức | Phát hiện | Nguồn kiểm |
