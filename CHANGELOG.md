@@ -13,6 +13,11 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — chốt SDK v1 -->
+- **SDK v1 chốt** ([ADR-0015](docs/adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md), chủ duyệt): phiếu kế toán từ module là `manual_journal` theo lý do (chỉ Kế toán tự chọn tài khoản), `ctx.ledger.allocateDebt` cho đối trừ cùng tài khoản, `seed[]` trong manifest, `@bizcity/module-sdk/web`. Nguyên tắc: **mọi thứ chạm sổ qua bể sự kiện** (R-EVENT-14). Bốn năng lực này có kiểu, đang ở lộ trình 3.15–3.18.
+<!-- [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3 quyền module + ctx.ledger.cancel / get -->
+- **Quyền theo module** (PHASES 3.3, năng lực `permissions.module` → available): module khai quyền mới trong `permissions[]` của manifest; vai trò nhận theo `roles`; quyền rủi ro cao không cho trợ lý AI làm thay; action khai quyền lạ thì API dừng khởi động; `GET /api/v1/system/permissions` liệt kê theo module.
+- **`ctx.ledger.cancel` / `ctx.ledger.get`** (SDK v0.2): module báo huỷ / xem trạng thái chứng từ của chính mình, đi cổng Kernel.
 <!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-4: CSDL theo module (3.10) -->
 - **CSDL riêng cho module** (PHASES 3.10, ADR-0011 D4, năng lực `data.migrations.module` → available): `npm run module -w @ketoan/api -- migrate <key>` chạy migration của module bằng vai trò `mod_<key>_owner` — chỉ sở hữu schema `mod_<key>`, PostgreSQL từ chối mọi lệnh chạm bảng sổ / Kernel; bảng module thiếu `tenant_id` / RLS / FORCE / chính sách thì huỷ. Lúc chạy, `ctx.data.module(fn)` đọc ghi bảng của module bằng `mod_<key>_rw`.
 <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-3: registry module + vòng đời (3.13) -->

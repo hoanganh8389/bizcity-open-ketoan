@@ -42,7 +42,7 @@ import { currentRequest } from './request-context.js';
 import { withSpan } from './tracing.js';
 import { documents } from './documents.js';
 import { readSetting } from './settings.js';
-import type { AuthContext, Permission } from './auth.js';
+import { isHighRiskPermission, isKnownPermission, type AuthContext, type Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
 export type ActionIdempotency = 'required' | 'natural' | 'none';
@@ -83,6 +83,14 @@ export interface ActionContext {
   ledger: {
     query(q: LedgerQuery): Promise<LedgerQueryRow[]>;
     submit(doc: Record<string, unknown> & { docKey: string; docType: string }): Promise<IngestResult>;
+    // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: ctx.ledger.cancel / get (API.md §3.2) — chỉ chứng từ của chính module
+    /** Báo huỷ chứng từ của module (`<module>:…`): chế độ ghi ngay → đảo bút toán + huỷ; chế độ chờ → Chờ huỷ ở ACC14. Chỉ action ghi. */
+    cancel(docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }>;
+    /** Trạng thái chứng từ của module theo docKey (không trả nội dung); không có → null. */
+    get(docKey: string): Promise<LedgerDocStatus | null>;
+    // [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — Q2: chữ ký v1 ctx.ledger.allocateDebt; năng lực ledger.allocate-debt còn planned → CAPABILITY_MISSING (API.md nguyên tắc 2)
+    /** Đối trừ hai khoản công nợ cùng đối tượng, cùng tài khoản của chính module (PHASES 3.16). Khác tài khoản: nộp chứng từ qua submit. */
+    allocateDebt(input: { partnerCode: string; from: string; to: string; amount: number }): Promise<{ allocated: number }>;
   };
   /** Cấu hình đơn vị theo registry (settings.registry, core/settings.ts): chỉ khoá module sở hữu, khoá lạ là lỗi. */
   settings: { get<T = unknown>(key: string): Promise<T> };
@@ -165,6 +173,22 @@ export type LedgerSubmitter = (tx: Transaction<Database>, auth: AuthContext, doc
 let ledgerSubmitter: LedgerSubmitter | null = null;
 export function registerLedgerSubmitter(fn: LedgerSubmitter): void {
   ledgerSubmitter = fn;
+}
+
+// [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: cửa huỷ / đọc trạng thái chứng từ cho ctx.ledger.cancel / get; Kernel đăng ký ở app.ts
+export interface LedgerDocStatus { docKey: string; version: number; status: string; postedVersion: number | null; cancelRequested: boolean; errorMessage: string | null }
+export interface LedgerCancelGate {
+  cancel(tx: Transaction<Database>, auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }>;
+  get(tx: Transaction<Database>, tenantId: string, docKey: string): Promise<LedgerDocStatus | null>;
+}
+let ledgerCancelGate: LedgerCancelGate | null = null;
+export function registerLedgerCancelGate(g: LedgerCancelGate): void {
+  ledgerCancelGate = g;
+}
+
+/** Action khai quyền không có trong Core lẫn manifest module (gõ sai / module chưa khai) — app.ts dừng khởi động. */
+export function unknownActionPermissions(): { action: string; permission: string }[] {
+  return [...registry.values()].filter((d) => d.permission !== 'public' && !isKnownPermission(d.permission)).map((d) => ({ action: d.id, permission: d.permission }));
 }
 /** Mã chứng từ của module: `<module>:<phần còn lại>`. */
 const SUBMIT_KEY_RE = /^([a-z][a-z0-9-]*):\S+$/;
@@ -261,6 +285,8 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   if (def.permission !== 'public') {
     if (!auth) throw Errors.unauthorized();
     if (!auth.permissions.has(def.permission)) throw Errors.forbidden();
+    // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: quyền module risk high không cho trợ lý AI (BIZCITY-MODULE §3)
+    if (call.via && isHighRiskPermission(def.permission)) throw Errors.forbidden(`Quyền ${def.permission} rủi ro cao: trợ lý AI không làm thay được, người dùng tự làm`);
   }
   const input = def.input.parse(rawInput) as z.infer<I>; // ZodError → VALIDATION_ERROR (core/http.ts)
   const dryRun = call.dryRun === true;
@@ -352,6 +378,23 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
             if (!ledgerSubmitter) throw new Error('Chưa đăng ký cửa nộp chứng từ (registerLedgerSubmitter ở app.ts)');
             if (!auth) throw Errors.unauthorized();
             return ledgerSubmitter(trx, auth, ownDocument(mod, doc, 'module'));
+          },
+          cancel: async (docKey, reason) => {
+            const mod = def.id.split('.')[0]!;
+            if (def.effect !== 'write') throw new Error(`Action đọc ${def.id} không được huỷ chứng từ (ctx.ledger.cancel chỉ trong action ghi)`);
+            if (!ledgerCancelGate) throw new Error('Chưa đăng ký cửa huỷ chứng từ (registerLedgerCancelGate ở app.ts)');
+            if (!auth) throw Errors.unauthorized();
+            ownDocument(mod, { docKey }, 'module');
+            return ledgerCancelGate.cancel(trx, auth, docKey, reason);
+          },
+          allocateDebt: async () => {
+            throw Errors.capabilityMissing('ledger.allocate-debt');
+          },
+          get: async (docKey) => {
+            const mod = def.id.split('.')[0]!;
+            if (!ledgerCancelGate) throw new Error('Chưa đăng ký cửa đọc chứng từ (registerLedgerCancelGate ở app.ts)');
+            ownDocument(mod, { docKey }, 'module');
+            return ledgerCancelGate.get(trx, tenantId, docKey);
           },
         },
         settings: { get: (key) => readSetting(trx, tenantId, def.id.split('.')[0]!, key) },

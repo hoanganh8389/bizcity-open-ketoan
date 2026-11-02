@@ -7,7 +7,7 @@
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 <!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — v0.1 có code (packages/module-sdk/src): defineModule, xuất lại chọn lọc, ctx.ledger.submit, ctx.settings.get; core.document.submit -->
 
-> **Trạng thái: v0.1 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.query`, `settings.get`, `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`. Chưa: `ledger.cancel` / `get`, `data.masterdata`, `module.*`, `defineHook`, `data.masterdata`, `module.*`. Có từ 2026-11-02: `ctx.data.module(fn)` giới hạn `mod_<key>` (3.10), nạp module theo registry (3.13). Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu.
+> **Trạng thái: v0.2 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.cancel`, `ledger.get`, `ledger.query`, `settings.get`, `data.module` (vai trò `mod_<key>_rw`, 3.10), `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`; quyền module (`permissions[]`, 3.3); nạp theo registry (3.13). **Hợp đồng v1 (ADR-0015, chủ duyệt 2026-11-02):** §6 đã chốt, chữ ký §3 ổn định. Năng lực còn `planned` có kiểu nhưng runtime ném `CAPABILITY_MISSING`: `ledger.manual-journal` (3.15), `ledger.allocate-debt` (3.16), `module.seed` (3.17), `ui.web-module` (3.18). **Chưa:** `data.masterdata`, `data.describe`, `module.*`, `defineHook`. Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu. <!-- [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — v0.2: ledger.cancel / get, data.module, quyền module -->
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
 > Gói workspace `@bizcity/module-sdk` (chỉ phụ thuộc `@bizcity/platform`, `@ketoan/contracts`, `zod`; không phụ thuộc Kernel). Ví dụ module viết chỉ bằng SDK: `apps/api/test/module-sdk.test.ts`.
 
@@ -103,7 +103,9 @@ interface ActionContext {
   };
   ledger: {
     submit(doc: LedgerIntakeDoc): Promise<IngestResult>;           // ✅ v0.1: bizcity_ledger_intake@1; docKey `<module>:…`, sourceSystem = module; chỉ action ghi; cùng giao dịch (lỗi → huỷ cả action)
-    cancel(docKey: string, reason: string): Promise<IngestResult>;
+    cancel(docKey: string, reason: string): Promise<{ requested; reversed; cancelled? }>;  // ✅ v0.2: chỉ docKey `<module>:…`, chỉ action ghi; chế độ ghi ngay → đảo + huỷ, chế độ chờ → Chờ huỷ (ACC14)
+    get(docKey: string): Promise<{ docKey; version; status; postedVersion; cancelRequested; errorMessage } | null>;  // ✅ v0.2: chỉ chứng từ của module, không trả nội dung
+    allocateDebt(i: { partnerCode; from: docKey; to: docKey; amount }): Promise<{ allocated: number }>;  // v1 (planned ledger.allocate-debt, 3.16): cùng đối tượng + tài khoản; hiện ném CAPABILITY_MISSING
     get(docKey: string): Promise<LedgerDocStatus | null>;          // trạng thái + số chứng từ sổ, không trả dòng ledger_*
     query(q: LedgerQuery): Promise<LedgerQueryRow[]>;              // ✅ 3.7: đầu kỳ / phát sinh / cuối kỳ theo mã, chiều, mã hàng (@ketoan/contracts ledgerQuerySchema)
   };
@@ -162,10 +164,13 @@ Phân hệ hiện có không viết lại một lần. Theo thứ tự:
    - SC-MOD-1 (import), SC-MOD-2 (ghi bảng lõi), SC-LAYER-2 (chiều lớp: cạnh `D → D`, còn `excel-export → ke-toan/reports`, `ke-toan/reports → modules/assets`) trên [bảng điểm](../../tests/conformance/README.md);
    - mốc đồ thị [docs/audits/deps-2026-10-30.md](../../docs/audits/deps-2026-10-30.md).
 
-## 6. Câu hỏi mở (cần chốt trước 3.1)
+## 6. Câu hỏi mở — đã chốt (ADR-0015, 2026-11-02)
+<!-- [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — chủ chốt câu 1, 2, 4, 5 theo đề xuất + nguyên tắc mọi thứ chạm sổ qua bể sự kiện -->
 
-1. **Phiếu kế toán nhập tay từ module** (`voucherService.createIn` ×2, `createOpening` ×1, ở `ke-toan` và `quy`). `bizcity_ledger_intake@1` chưa có `docType: 'manual'`. Khuyên thêm `docType` `manual_journal` có `reasonCode` bắt buộc, đề xuất theo [VERSIONING §5](../../docs/standard/VERSIONING.md). Trái với câu 4 nếu module tự ghi tài khoản: dòng phiếu phải là mã lý do / đối tượng, không là số tài khoản. Nếu cần tự do tài khoản thì chỉ module `ke-toan` (lõi) được dùng.
-2. **Đối trừ công nợ** (`debt.service.allocate`, 1 chỗ ở `quy`). Khuyên năng lực mới `ledger.allocate-debt`: `ctx.ledger.allocateDebt({ partnerCode, from: docKey, to: docKey, amount })`, Kernel kiểm số dư.
+> **Nguyên tắc chủ dự án:** "mọi thứ phải vào bể sự kiện — accounting event qua thì mới vào được" (R-EVENT-14).
+
+1. ✅ **Chốt 2026-11-02 — `docType: manual_journal`, `reasonCode` bắt buộc, chỉ `ke-toan` tự chọn tài khoản, qua bể sự kiện (3.15).** **Phiếu kế toán nhập tay từ module** (`voucherService.createIn` ×2, `createOpening` ×1, ở `ke-toan` và `quy`). `bizcity_ledger_intake@1` chưa có `docType: 'manual'`. Khuyên thêm `docType` `manual_journal` có `reasonCode` bắt buộc, đề xuất theo [VERSIONING §5](../../docs/standard/VERSIONING.md). Trái với câu 4 nếu module tự ghi tài khoản: dòng phiếu phải là mã lý do / đối tượng, không là số tài khoản. Nếu cần tự do tài khoản thì chỉ module `ke-toan` (lõi) được dùng.
+2. ✅ **Chốt 2026-11-02 — `ctx.ledger.allocateDebt` (cùng đối tượng, cùng tài khoản); khác tài khoản = chứng từ qua `submit` (3.16).** **Đối trừ công nợ** (`debt.service.allocate`, 1 chỗ ở `quy`). Khuyên năng lực mới `ledger.allocate-debt`: `ctx.ledger.allocateDebt({ partnerCode, from: docKey, to: docKey, amount })`, Kernel kiểm số dư.
 3. ✅ **Chốt 2026-10-31 — cách hai** (`accounting.report.income-statement`, `accounting.report.term-rules` qua `callAction` / `ctx.actions.call`). **Báo cáo tài chính trong phân hệ Thuế** (`incomeStatement`, `termRuleFor`, `TERM_MAP` ở `thue/statements`). Hoặc `ledger.query` có báo cáo dựng sẵn (`kind: 'income-statement'`), hoặc Thuế gọi action đọc `ke-toan.report.*` qua `ctx.actions.call`. Khuyên cách hai: báo cáo là module ([REUSE-MAP §3.2](../../docs/standard/REUSE-MAP.md)).
-4. **Tạo danh mục khi dựng dữ liệu mẫu** (`mua-hang/demo.ts`). Khuyên `seed` trong manifest gọi `core.*.upsert`, không ghi bảng.
-5. **Tên gói con giao diện:** `@bizcity/module-sdk/web` hay để `defineWebModule` ở `@bizcity/ui-kit`. Khuyên `module-sdk/web`: một gói danh tính, ui-kit chỉ là thành phần.
+4. ✅ **Chốt 2026-11-02 — `seed[]` trong manifest gọi `core.*.upsert` (3.17).** **Tạo danh mục khi dựng dữ liệu mẫu** (`mua-hang/demo.ts`). Khuyên `seed` trong manifest gọi `core.*.upsert`, không ghi bảng.
+5. ✅ **Chốt 2026-11-02 — `@bizcity/module-sdk/web` (3.18).** **Tên gói con giao diện:** `@bizcity/module-sdk/web` hay để `defineWebModule` ở `@bizcity/ui-kit`. Khuyên `module-sdk/web`: một gói danh tính, ui-kit chỉ là thành phần.

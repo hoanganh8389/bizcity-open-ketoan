@@ -36,9 +36,10 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
-import { registerLedgerReader, registerLedgerSubmitter } from './core/actions.js';
+import { registerLedgerCancelGate, registerLedgerReader, registerLedgerSubmitter, unknownActionPermissions } from './core/actions.js';
+import { registerModulePermissions } from '@bizcity/platform/core/auth';
 import { registerAppManifests } from '@bizcity/platform/core/apps';
 import { APP_MANIFESTS } from './ung-dung/index.js';
 import { registerDocumentNumberer } from './core/documents.js';
@@ -114,6 +115,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerIncomingPreparer((tenantId, raw) => connectionService.prepareIncoming(tenantId, raw));
   // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ctx.ledger.submit đi đúng một cửa vào sổ của Kernel (submitDocumentIn → postDocumentIn), ADR-0011 D5
   registerLedgerSubmitter((tx, auth, doc) => submitDocumentIn(tx, auth, doc));
+  // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: ctx.ledger.cancel / get đi cổng Kernel (requestCancelIn, documentStatusIn)
+  registerLedgerCancelGate({ cancel: (tx, auth, docKey, reason) => requestCancelIn(tx, auth, docKey, reason), get: (tx, tenantId, docKey) => documentStatusIn(tx, tenantId, docKey) });
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: app ngoài tiến trình cài trong bản này (manifest kind "app") → registry + subscriber webhook; khoá trùng phân hệ / add-in → dừng
   registerAppManifests([...APP_MANIFESTS], [...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys()]);
 
@@ -133,6 +136,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     return d.load;
   };
   const loaded = enabledModules(env.ENABLED_MODULES).filter((m) => decide(m.key));
+  // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: quyền module khai trong manifest permissions[] vào registry quyền (trước khi gắn route)
+  for (const m of loaded) registerModulePermissions(m.key, MODULE_MANIFESTS.get(m.key)?.permissions ?? []);
   app.decorate('enabledModules', [...new Set([...loaded.map((m) => m.key), 'he-thong'])]);
   // Lõi: không cổng. Route của phân hệ: cổng theo đơn vị — route dùng chung chỉ bị chặn khi mọi phân hệ sở hữu đều tắt.
   const owners = new Map<Routes, string[]>();
@@ -163,6 +168,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     ...app.enabledModules.map((k) => MODULE_MANIFESTS.get(k)).filter((m) => m !== undefined),
     ...addins.map((a) => ADDIN_MANIFESTS.get(a.manifest.id)).filter((m) => m !== undefined),
   ]);
+  // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3: action khai quyền không có trong Core / manifest → dừng khởi động (gõ sai, module chưa khai quyền)
+  const unknownPerms = unknownActionPermissions();
+  if (unknownPerms.length) throw new Error(`Action khai quyền chưa đăng ký: ${unknownPerms.map((u) => `${u.action} → ${u.permission}`).join(', ')} (khai ở permissions[] của manifest module)`);
   // Kết quả nạp vào registry (DG-MOD-1 đọc); module có trong registry mà mã không có → skipped_missing.
   await recordLoad([...decisions.values()].filter((d) => d.hash), registry ? [...registry.keys()].filter((k) => !bundled.has(k)) : []);
 
