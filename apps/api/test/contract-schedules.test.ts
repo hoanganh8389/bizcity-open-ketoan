@@ -3,6 +3,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { dispatchOnce } from '../src/core/events.js';
 
 let ctx: TestCtx;
 
@@ -81,6 +82,8 @@ describe('Hợp đồng và lịch thanh toán', () => {
     if ((await call(ctx, 'GET', `/api/v1/payment-requests/${id}`)).body.data.status === 'approved1') await call(ctx, 'POST', `/api/v1/payment-requests/${id}/approve`);
     const paid = await call(kt, 'POST', `/api/v1/payment-requests/${id}/pay`, { docDate: '2026-10-05', moneyAccount: '1111' });
     expect(paid.status, JSON.stringify(paid.body)).toBe(200);
+    // kỳ hợp đồng chuyển "đã chi" khi bên lịch hợp đồng nhận sự kiện quy.payment-request.paid (W5, SC-MOD-2)
+    await dispatchOnce({ consumers: ['ke-toan.contract-schedule-paid'], limit: 100 });
     const k2after = (await call(ctx, 'GET', '/api/v1/contract-schedules?to=2026-10-31&status=all')).body.data.find((s: { id: string }) => s.id === k2.id);
     expect(k2after).toMatchObject({ status: 'paid', paidDate: '2026-10-05' });
   });

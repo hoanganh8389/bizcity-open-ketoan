@@ -32,6 +32,7 @@ import { enabledModules, CORE_ROUTES, MODULE_MANIFESTS } from './phan-he/index.j
 import type { Routes } from './phan-he/types.js';
 import { decideLoad, hashModuleDir, moduleGate, readRegistry, recordLoad, type LoadDecision } from '@bizcity/platform/core/module-registry';
 import { bundledModules } from './core/module-lifecycle.js';
+import { contractSchedulePaidSubscriber } from './modules/dimensions/contract-schedule.routes.js';
 import { discoverSdkModules, importSdkModule, sdkModuleSettings } from './core/sdk-modules.js';
 import { registerModuleSettings } from '@bizcity/platform/core/settings';
 import { registerHooks } from '@bizcity/platform/core/hooks';
@@ -102,7 +103,8 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   // Sự kiện miền (core/events.ts): subscriber của Platform. Vòng dispatcher + đồng hồ chạy ở main.ts, không chạy trong test.
   // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)
   // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: dọn bể chờ theo hạn giữ (bizcity.clock.daily)
-  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber]);
+  // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): kỳ hợp đồng "đã chi" theo sự kiện yêu cầu thanh toán
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber, contractSchedulePaidSubscriber]);
   // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {

@@ -51,5 +51,13 @@
       "adr": "ADR-0011",
       "expires": "2027-03-31"
     }
-  ]
+  ],
+  "events": {
+    "subscribes": [
+      {
+        "type": "quy.payment-request.paid",
+        "version": 1
+      }
+    ]
+  }
 }

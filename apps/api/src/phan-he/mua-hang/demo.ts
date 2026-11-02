@@ -16,6 +16,8 @@ import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { voucherService, documentService } from '../../kernel/public.js';
 import { warehouseService } from '../../modules/warehouses/warehouse.routes.js';
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): danh mục mẫu qua catalogEnsure của lõi (không ghi thẳng bảng danh mục)
+import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
 import { loadSettings, resolveAccounts, saveSettings } from './analysis.js';
 import { purchaseService } from './service.js';
 import { policyInputSchema, savePolicy } from './store.js';
@@ -45,28 +47,23 @@ export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}
   ]);
   const supplierRows = await read<Record<string, unknown>[]>('gia-mua.json');
   // 1. Danh mục còn thiếu.
-  for (const b of master.branches) await db.insertInto('branches').values({ tenant_id: auth.tenantId, code: b.code, name: b.name }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
+  for (const b of master.branches) await catalogEnsure.branch(db, auth.tenantId, b);
   await ensureDemoWarehouses(auth);
   for (const p of master.partners) {
-    await db.insertInto('partners').values({ tenant_id: auth.tenantId, code: p.code, name: p.name, kind: 'supplier', tax_code: p.taxCode ?? null, address: p.address ?? null, phone: p.phone ?? null })
-      .onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
+    await catalogEnsure.partner(db, auth.tenantId, { code: p.code, name: p.name, kind: 'supplier', taxCode: p.taxCode, address: p.address, phone: p.phone });
   }
   // Nhãn hàng của mặt hàng mẫu phải có trong danh mục nhãn (DM11) — dữ liệu nhất quán, chọn được ở hồ sơ NCC / phiếu.
   const BRAND_NAMES: Record<string, string> = { ANLENE: 'Anlene', TH: 'TH true MILK', VINAMILK: 'Vinamilk', NEWIS: 'Newis', SMARTKIDS: 'Smartkids', QUA: 'Quà khuyến mại' };
   for (const b of [...new Set(products.map((p) => p.brandCode).filter(Boolean))]) {
-    const has = await db.selectFrom('item_classes').select('id').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'brand').where('code', '=', b).executeTakeFirst();
-    if (!has) await db.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind: 'brand', code: b, name: BRAND_NAMES[b] ?? b }).execute();
+    await catalogEnsure.itemClass(db, auth.tenantId, { kind: 'brand', code: b!, name: BRAND_NAMES[b!] ?? b! });
   }
   for (const p of products) {
     // ĐVT nhiều cấp (Hộp / Lốc / Thùng) chỉ thêm khi mặt hàng chưa có ĐVT nào — không đụng ĐVT của danh mục thật.
-    const hasUnits = await db.selectFrom('product_units').select('id').where('tenant_id', '=', auth.tenantId).where('sku', '=', p.sku).limit(1).executeTakeFirst();
-    if (!hasUnits && p.units) for (const u of p.units) await db.insertInto('product_units').values({ tenant_id: auth.tenantId, sku: p.sku, unit: u.unit, ratio: String(u.ratio), is_default: Boolean(u.isDefault), is_purchase_default: Boolean(u.isPurchaseDefault) }).onConflict((oc) => oc.columns(['tenant_id', 'sku', 'unit']).doNothing()).execute();
-    await db.insertInto('products').values({ tenant_id: auth.tenantId, sku: p.sku, name: p.name, unit: p.unit, brand_code: p.brandCode, group_code: p.groupCode ?? null, industry_code: p.industry ?? null, tax_in_code: p.taxCode === 'KKKN' ? null : p.taxCode })
-      .onConflict((oc) => oc.columns(['tenant_id', 'sku']).doNothing()).execute();
+    if (p.units) await catalogEnsure.productUnitsIfNone(db, auth.tenantId, p.sku, p.units.map((u) => ({ unit: u.unit, ratio: String(u.ratio), is_default: Boolean(u.isDefault), is_purchase_default: Boolean(u.isPurchaseDefault) })));
+    await catalogEnsure.product(db, auth.tenantId, { sku: p.sku, name: p.name, unit: p.unit, brand_code: p.brandCode, group_code: p.groupCode ?? null, industry_code: p.industry ?? null, tax_in_code: p.taxCode === 'KKKN' ? null : p.taxCode });
   }
   // Mã thuế đầu vào "không kê khai" cho hàng / quà không có hoá đơn VAT (hệ thống tài khoản chuẩn đã có; bản trống thì thêm).
-  await db.insertInto('tax_codes').values({ tenant_id: auth.tenantId, code: 'KKKN', name: 'Không kê khai, nộp thuế GTGT', rate: '0', direction: 'input', account_code: null, report_group: 'KKKN' })
-    .onConflict((oc) => oc.columns(['tenant_id', 'code']).doNothing()).execute();
+  await catalogEnsure.taxCode(db, auth.tenantId, { code: 'KKKN', name: 'Không kê khai, nộp thuế GTGT', rate: '0', direction: 'input', account_code: null, report_group: 'KKKN' });
   const settings = await loadSettings(db, auth.tenantId);
   await saveSettings(db, auth.tenantId, { ...settings, holidays: [...new Set([...settings.holidays, ...master.holidays])], brandOpening: { ...settings.brandOpening, ...master.brandOpeningDebt } });
   // 2. Số dư đầu kỳ công nợ NCC (30/09/2026). Dọn số dư mẫu còn sót của lượt nạp trước bị dừng giữa chừng — không bao giờ ghi trùng.

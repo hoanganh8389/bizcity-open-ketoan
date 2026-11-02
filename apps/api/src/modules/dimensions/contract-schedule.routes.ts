@@ -14,6 +14,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
+import { defineSubscriber } from '../../core/events.js';
 
 const tags = ['Danh mục: Hợp đồng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -28,6 +29,18 @@ async function contractOf(tenantId: string, code: string) {
 const toDto = (s: { id: string; contract_code: string; seq: number; due_date: string; amount: string; tax_amount: string; description: string; status: string; paid_date: string | null; paid_ref: string }) => ({
   id: s.id, contractCode: s.contract_code, seq: s.seq, dueDate: s.due_date, amount: toNumber(s.amount), taxAmount: toNumber(s.tax_amount),
   description: s.description, status: s.status, paidDate: s.paid_date, paidRef: s.paid_ref,
+});
+
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2)
+/** Yêu cầu thanh toán gắn kỳ hợp đồng đã chi (quy.payment-request.paid) → kỳ "đã chi" + ngày + số phiếu. Giao lại không đổi gì. */
+export const contractSchedulePaidSubscriber = defineSubscriber({
+  id: 'ke-toan.contract-schedule-paid', module: 'ke-toan', on: ['quy.payment-request.paid'],
+  handle: async (ctx, evt) => {
+    const d = evt.data as { contractScheduleId: string; paidDate: string; paidRef: string };
+    await ctx.tx.updateTable('contract_schedules')
+      .set({ status: 'paid', paid_date: d.paidDate, paid_ref: d.paidRef, updated_by: `subscriber:ke-toan.contract-schedule-paid`, updated_at: new Date() })
+      .where('tenant_id', '=', ctx.tenantId).where('id', '=', d.contractScheduleId).where('status', '<>', 'paid').execute();
+  },
 });
 
 export async function contractScheduleRoutes(app: FastifyInstance): Promise<void> {

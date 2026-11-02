@@ -27,6 +27,8 @@ import { authOf, requirePermission } from '../../../core/auth.js';
 import { ok, idParamSchema } from '../../../core/http.js';
 import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
+import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
+import { ensureReferenceDocument } from '../../../modules/reference-documents/reference-document.routes.js';
 
 const tags = ['Hoá đơn cơ quan thuế'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -166,18 +168,15 @@ export async function authorityInvoiceRoutes(app: FastifyInstance): Promise<void
           const taxCode = input ? x.seller_tax_code : x.buyer_tax_code;
           const name = input ? x.seller_name : x.buyer_name;
           let partnerId: string | null = null;
-          if (taxCode) {
-            const found = await trx.selectFrom('partners').select('id').where('tenant_id', '=', auth.tenantId).where('tax_code', '=', taxCode).orderBy('id').executeTakeFirst();
-            partnerId = found?.id ?? (await trx.insertInto('partners').values({ tenant_id: auth.tenantId, code: taxCode, name, kind: input ? 'supplier' : 'customer', tax_code: taxCode })
-              .onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet({ tax_code: taxCode })).returning('id').executeTakeFirstOrThrow()).id;
-          }
+          // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): đối tượng + chứng từ tham chiếu qua hàm của lõi
+          if (taxCode) partnerId = await catalogEnsure.partnerByTaxCode(trx, auth.tenantId, { taxCode, name, kind: input ? 'supplier' : 'customer' });
           const docKey = `hddt:${x.direction}:${x.seller_tax_code}:${x.invoice_serial}:${x.invoice_no}`;
-          await trx.insertInto('reference_documents').values({
-            tenant_id: auth.tenantId, kind: input ? 'purchase_invoice' : 'sales_invoice', doc_key: docKey, doc_no: `${x.invoice_serial}-${x.invoice_no}`,
+          await ensureReferenceDocument(trx, auth.tenantId, {
+            kind: input ? 'purchase_invoice' : 'sales_invoice', doc_key: docKey, doc_no: `${x.invoice_serial}-${x.invoice_no}`,
             doc_date: x.invoice_date, partner_id: partnerId, branch_code: b.branchCode, total: x.total_amount,
             description: `Hoá đơn ${x.invoice_serial} số ${x.invoice_no} ngày ${vn(x.invoice_date)} — ${name}`, source_system: 'authority',
             payload: JSON.stringify({ invoiceForm: x.invoice_form, invoiceSerial: x.invoice_serial, invoiceNo: x.invoice_no, invoiceDate: x.invoice_date, taxCode, name, totalBeforeTax: toNumber(x.total_before_tax), totalTax: toNumber(x.total_tax) }),
-          }).onConflict((oc) => oc.columns(['tenant_id', 'doc_key']).doNothing()).execute();
+          });
           await trx.updateTable('authority_invoices').set({ reference_doc_key: docKey }).where('id', '=', x.id).execute();
           created++;
         }

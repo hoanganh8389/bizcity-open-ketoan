@@ -95,6 +95,8 @@ export { inventoryRoutes } from './modules/inventory/inventory.routes.js';
 export { ledgerRoutes } from './modules/ledger/ledger.routes.js';
 export { periodRoutes } from './modules/periods/period.routes.js';
 export { postingConfigRoutes } from './modules/posting-config/posting-config.routes.js';
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): phân hệ nhờ Kernel thêm lý do riêng
+export { ensurePostingReason, type EnsureReasonInput } from './modules/posting-config/reason-ensure.js';
 export { taxCodeRoutes } from './modules/tax-codes/tax-code.routes.js';
 export { taxInfoRoutes } from './modules/tax-info/tax-info.routes.js';
 export { voucherRoutes } from './modules/vouchers/voucher.routes.js';

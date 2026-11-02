@@ -11,7 +11,9 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { REFERENCE_DOC_KINDS } from '@ketoan/contracts';
-import { db, toNumber } from '../../db/client.js';
+import { db, toNumber, type Db } from '../../db/client.js';
+import type { Insertable } from 'kysely';
+import type { Database } from '@bizcity/platform/db/types';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok, pageMeta, pageQuerySchema } from '../../core/http.js';
@@ -37,6 +39,13 @@ const item = z.object({
   payload: z.record(z.unknown()).default({}).describe('Nội dung gốc (dòng hàng…) lưu nguyên để xem'),
   status: z.enum(['open', 'closed']).optional().describe('closed = đơn đã huỷ / đóng ở hệ thống nguồn'),
 });
+
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): phân hệ thêm chứng từ tham chiếu qua hàm của module sở hữu bảng (không ghi thẳng reference_documents)
+/** Thêm chứng từ tham chiếu theo docKey (đã có thì giữ nguyên). Trả true khi vừa thêm. */
+export async function ensureReferenceDocument(trx: Db, tenantId: string, v: Omit<Insertable<Database['reference_documents']>, 'tenant_id'>): Promise<boolean> {
+  const r = await trx.insertInto('reference_documents').values({ ...v, tenant_id: tenantId }).onConflict((oc) => oc.columns(['tenant_id', 'doc_key']).doNothing()).returning('id').executeTakeFirst();
+  return Boolean(r);
+}
 
 export async function referenceDocumentRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
