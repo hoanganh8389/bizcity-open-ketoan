@@ -26,6 +26,8 @@ interface ItemClass { code: string; name: string; parentCode: string | null; isA
 interface Product {
   sku: string; name: string; unit: string; postingGroupCode: string | null;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
+  /** Nháp (PHASE-024 S024-28): còn lỗi chặn, chưa dùng được trên chứng từ. */
+  isDraft?: boolean; draftCodes?: string[];
   note: string; exciseRate: number | null; taxOutCode: string | null; taxInCode: string | null;
   /** Mã hàng cha (họ mã 1 cấp). */
   parentSku?: string | null;
@@ -155,7 +157,7 @@ export function ProductsPage() {
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
-    { key: 'name', header: 'Tên hàng', width: 280, render: (p) => (isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name) },
+    { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
     { key: 'unit', header: 'ĐVT', width: 70 },
@@ -220,7 +222,7 @@ export function ProductsPage() {
                   {(groups.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
                 </select>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                  <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="inactive">Ngừng</option>
+                  <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="draft">Nháp (chưa kích hoạt)</option><option value="inactive">Ngừng</option>
                 </select>
               </>
             }

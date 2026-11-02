@@ -20,6 +20,7 @@ import { AppError } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import type { Db } from '@bizcity/platform/db/client';
 import { findBranch, totalsProblems } from '../documents/document.service.js';
+import { draftItemFindings } from './draft-items.js';
 
 export interface PreflightResult {
   findings: IntakeFinding[];
@@ -137,6 +138,8 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown): Promi
   if (skus.length) {
     const have = new Set((await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('sku', 'in', skus).execute()).map((p) => p.sku));
     for (const s of skus) if (!have.has(s)) findings.push(intakeFinding('IN-MD-004', 'lines[].sku', { got: s }));
+    // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: mặt hàng nháp → IN-ITEM-009 (cùng luật cửa nạp, R-INTAKE-4)
+    findings.push(...(await draftItemFindings(trx, auth.tenantId, skus)));
   }
   const taxCode = (r.partner as { taxCode?: unknown } | undefined)?.taxCode;
   if (typeof taxCode === 'string' && taxCode.trim() && !MST_RE.test(taxCode.trim())) findings.push(intakeFinding('IN-MD-005', 'partner.taxCode', { got: taxCode, expected: '10 chữ số hoặc 10 chữ số-3 chữ số' }));

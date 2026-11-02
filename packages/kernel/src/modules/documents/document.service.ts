@@ -21,6 +21,7 @@
  *   4. Định khoản lỗi (thiếu cấu hình, kỳ khoá…) → giao dịch huỷ hết, rồi lưu chứng từ ở
  *      trạng thái "error" kèm lý do để kế toán sửa cấu hình và bấm "Ghi sổ lại".
  */
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: cửa nạp từ chối chứng từ có mặt hàng nháp (IN-ITEM-009, R-GATE-6)
 import { listSignatures } from '@bizcity/platform/documents/signature.routes';
 import { assertDateRules, dateRuleViolation, readDataLock } from '@bizcity/platform/core/date-rules';
 import { isAutoMode, needsApproval } from '../../core/posting-modes.js';
@@ -48,6 +49,7 @@ import { ledgerService } from '../ledger/ledger.service.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { hasTaxInvoice, isStockDocument, needsBranchContext, postingService, type PostContext } from '../posting/posting.service.js';
+import { assertNoDraftItems } from '../intake/draft-items.js';
 import type { StockContext } from '../posting/rules/sale.rule.js';
 import { inventoryMovementRepository } from '../inventory/inventory-movement.repository.js';
 import { taxInvoiceRepository } from '../tax-invoices/tax-invoice.repository.js';
@@ -340,6 +342,8 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   // Khoá app ngoài tiến trình (ADR-0011 mức 2): như module mức 1, chỉ nộp / sửa chứng từ mang tiền tố của app. Đặt ở đây để
   // mọi cửa (POST /documents, /documents/submit, nhận theo lô) cùng một luật.
   if (auth.app) doc = ownDocument(auth.app, doc, 'app');
+  // Mặt hàng còn nháp (Gate A chưa kích hoạt) thì không nhận vào sổ — bể chờ giữ nguyên văn với IN-ITEM-009 (ADR-0019).
+  await assertNoDraftItems(trx, auth.tenantId, doc);
   const branch = await findBranch(trx, auth.tenantId, doc.branchCode);
   const branchId = branch.id;
   const partnerId = await documentPartnerId(trx, auth.tenantId, doc);

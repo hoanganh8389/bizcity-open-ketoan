@@ -1,3 +1,4 @@
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: luật nhắc mặt hàng ITEM-* (thiếu ĐVT, thiếu nhóm hạch toán) — còn ✘ thì mặt hàng lưu NHÁP (ADR-0019)
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27: thêm `fix` (cách sửa) cho mức warn / block — khuôn chung bizcity_findings@1
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-13 / 14: bizcity_catalog_hint@1 — danh mục luật nhắc · hướng dẫn · cảnh báo mềm · chặn cho form danh mục (D023-6..8)
 /**
@@ -18,7 +19,7 @@
  */
 
 export type CatalogHintLevel = 'info' | 'guide' | 'warn' | 'block';
-export type CatalogEntity = 'account' | 'partner';
+export type CatalogEntity = 'account' | 'partner' | 'item';
 
 export interface CatalogHintDef {
   id: string;
@@ -109,6 +110,25 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     title: 'Số tài khoản con phải bắt đầu bằng số tài khoản cha ({parent}).',
     why: 'Cây hệ thống tài khoản dựa vào tiền tố số hiệu để cộng dồn lên tài khoản cha và lên báo cáo; sai tiền tố làm số liệu cộng sai chỗ.',
     fix: 'Đổi số tài khoản cho bắt đầu bằng số tài khoản cha, hoặc chọn đúng tài khoản cha.',
+  },
+  // ── Mặt hàng (DM, PHASE-024 S024-28): còn ✘ → lưu NHÁP, chưa dùng được trên chứng từ (Gate B giữ với IN-ITEM-009) ──
+  'ITEM-BLOCK-001': {
+    id: 'ITEM-BLOCK-001', entity: 'item', level: 'block', status: 'draft', rule: 'R-GATE-3',
+    title: 'Mặt hàng {sku} chưa có đơn vị tính gốc.',
+    why: 'Sổ kho đếm theo đơn vị tính gốc (đơn vị nhỏ nhất); không có thì không quy đổi được số lượng nhập / xuất, tồn kho và giá vốn sai.',
+    fix: 'Nhập đơn vị tính gốc (vd hộp, cái, kg). Mặt hàng được lưu nháp tới khi có, rồi tự kích hoạt.',
+  },
+  'ITEM-BLOCK-002': {
+    id: 'ITEM-BLOCK-002', entity: 'item', level: 'block', status: 'draft', rule: 'R-ITEM-4',
+    title: 'Mặt hàng {sku} chưa có nhóm hạch toán và đơn vị chưa có nhóm mặc định.',
+    why: 'Nhóm hạch toán quyết định tài khoản kho, giá vốn, doanh thu; không có nhóm thì không định khoản được chứng từ có mặt hàng này.',
+    fix: 'Chọn nhóm hạch toán cho mặt hàng, hoặc khai một nhóm mặc định ở Cấu hình hạch toán.',
+  },
+  'ITEM-HINT-001': {
+    id: 'ITEM-HINT-001', entity: 'item', level: 'warn', status: 'draft', rule: 'R-ITEM-8',
+    title: 'Mặt hàng {sku} chưa gán nhóm hạch toán — sẽ ghi theo nhóm mặc định {group}.',
+    why: 'Nhóm mặc định thường là hàng hoá (kho 156, giá vốn 632, doanh thu 511). Nếu đây là dịch vụ, nguyên vật liệu hay công cụ dụng cụ thì tồn kho, giá vốn và lãi gộp sẽ sai.',
+    fix: 'Chọn nhóm hạch toán đúng loại; nếu đúng là hàng hoá theo nhóm mặc định, ghi lý do khi lưu.',
   },
   // ── Đối tượng (DM03) ───────────────────────────────────────────────────────────────────────────────
   'PART-HINT-001': {

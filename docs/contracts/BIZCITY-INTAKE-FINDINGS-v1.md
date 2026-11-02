@@ -1,6 +1,7 @@
 # `bizcity_intake_findings@1` — Danh mục phát hiện tiền kiểm
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
+<!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
 
 > **Phiên bản:** 0.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
@@ -45,6 +46,7 @@
 | `IN-MD-001` | L3 | block | door | 0 | Chi nhánh (mã cửa hàng) chưa có | [bài học](../huong-dan/loi-dau-vao/IN-MD-001.md) |
 | `IN-MD-004` | L3 | hint | advice | 0 | Mã hàng chưa có trong danh mục | [bài học](../huong-dan/loi-dau-vao/IN-MD-004.md) |
 | `IN-MD-005` | L3 | warn | advice | 10 | Mã số thuế đối tượng sai định dạng | [bài học](../huong-dan/loi-dau-vao/IN-MD-005.md) |
+| `IN-ITEM-009` | L3 | block | door | 0 | Mặt hàng còn nháp, chưa kích hoạt (Gate A, R-GATE-6) | [bài học](../huong-dan/loi-dau-vao/IN-ITEM-009.md) |
 | `IN-BIZ-003` | L4 | block | door | 0 | Mã chứng từ không thuộc nguồn gửi | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-003.md) |
 | `IN-BIZ-004` | L4 | block | door | 0 | Phiên bản cũ hơn bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-004.md) |
 | `IN-BIZ-005` | L4 | warn | advice | 20 | Cùng phiên bản nhưng nội dung khác bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-005.md) |

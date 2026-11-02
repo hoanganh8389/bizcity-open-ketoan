@@ -570,6 +570,11 @@ export interface ProductsTable {
   /** Mã hàng cha (họ mã 1 cấp). */
   parent_sku: string | null;
   parent_manual: Generated<boolean>;
+  // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: mặt hàng nháp (0061)
+  /** Nháp: khai báo còn lỗi chặn Gate A — chưa dùng được trên chứng từ (IN-ITEM-009). */
+  is_draft: Generated<boolean>;
+  /** Mã lỗi chặn khiến còn nháp (ITEM-BLOCK-*). */
+  draft_codes: Generated<string[]>;
 }
 
 export interface ProductUnitsTable {

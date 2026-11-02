@@ -41,11 +41,14 @@ const PAIRS: Record<string, () => Record<string, unknown>> = {
   'IN-SUM-005': () => sale({ totals: { beforeTax: 185185, tax: 14815, total: 210000 } }),
   'IN-SUM-006': () => sale({ totals: { beforeTax: 185185, tax: 10000, total: 195185 } }),
   'IN-MD-001': () => sale({ branchCode: 'KHONG-CO-CN' }),
+  // PHASE-024 S024-28: mặt hàng còn nháp (Gate A) → cửa nạp từ chối, tiền kiểm báo cùng mã
+  'IN-ITEM-009': () => sale({ lines: [{ ...base.lines[0], sku: 'NHAP01' }, ...base.lines.slice(1)] }),
 };
 
 beforeAll(async () => {
   ctx = await setupTenant();
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
+  await db.insertInto('products').values({ tenant_id: tenantId, sku: 'NHAP01', name: 'Mặt hàng nháp thử', unit: '', is_draft: true, draft_codes: ['ITEM-BLOCK-001'] }).execute();
   auth = { tenantId, actor: 'system:preflight-test', actorName: 'Thử tiền kiểm', kind: 'user', role: 'owner', permissions: new Set(['documents:write', 'documents:read']) } as AuthContext;
 });
 afterAll(async () => {

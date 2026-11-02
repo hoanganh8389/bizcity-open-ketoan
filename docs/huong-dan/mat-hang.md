@@ -189,3 +189,13 @@ Khai hàng loạt, xem gợi ý theo tốc độ bán: màn **Tồn max (MH16)**
 ## Hàng không chịu thuế GTGT (KCT)
 
 Khai **thuế bán ra KCT** (hoặc R00K) thì **thuế mua vào tự là V13K** — "Thuế GTGT đầu vào 0% (không chịu VAT)" — nếu để trống: phiếu mua không tự lấy 8%. Phiếu mua / đơn đặt: ô thuế suất chọn **KCT (không chịu thuế)**, tiền thuế 0; bán ra dùng mã KCT. Khác với **Không kê khai (KKKN)** — dùng cho quà / hàng không có hoá đơn.
+
+## Mặt hàng nháp <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->
+
+Khi bạn Ghi mặt hàng mà khai báo còn **lỗi chặn** (khung **Vì sao** dưới form có dấu ✘), mặt hàng vẫn được lưu nhưng ở trạng thái **Nháp**:
+
+- nút Ghi đổi thành **"Lưu nháp (còn n lỗi chặn)"**; danh sách mặt hàng hiện nhãn **Nháp**, lọc được bằng "Nháp (chưa kích hoạt)";
+- mặt hàng nháp **không** có ở ô chọn mặt hàng của phiếu; chứng từ từ POS / hệ thống khác có mặt hàng này được giữ ở **Trạm kiểm tra đầu vào** với mã [IN-ITEM-009](loi-dau-vao/IN-ITEM-009.md);
+- sửa hết lỗi chặn rồi Ghi → mặt hàng **tự kích hoạt**; các chứng từ đang chờ vì nó được kiểm lại tự động.
+
+Lỗi chặn hiện có: thiếu đơn vị tính gốc (`ITEM-BLOCK-001`); thiếu nhóm hạch toán khi đơn vị chưa có nhóm mặc định (`ITEM-BLOCK-002`). Thiếu nhóm hạch toán nhưng có nhóm mặc định chỉ là **cảnh báo mềm** (`ITEM-HINT-001`): lưu được ngay sau khi ghi lý do. Tra mọi mã ở [Tra mã phát hiện](ma-loi/README.md).

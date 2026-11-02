@@ -40,6 +40,9 @@ export const preflight = traceKernelFn('preflight', preflightRaw);
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route + subscriber bể chờ qua cổng
 export { intakeRoutes } from './modules/intake/intake.routes.js';
 export { intakeRetentionSubscriber, deleteExpired as deleteExpiredIntake } from './modules/intake/inbox.js';
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: bể chờ kiểm lại khi mặt hàng nháp được kích hoạt (R-GATE-6)
+import { recheckInboxForSkus as recheckInboxForSkusRaw } from './modules/intake/inbox.js';
+export const recheckInboxForSkus = traceKernelFn('recheckInboxForSkus', recheckInboxForSkusRaw);
 // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16: allocateByDocKeysIn qua cổng (ctx.ledger.allocateDebt, app.ts đăng ký)
 export const allocateByDocKeysIn = traceKernelFn('allocateByDocKeysIn', allocateByDocKeysInRaw);
 export const documentService = traceKernelApi('documentService', documentServiceRaw);

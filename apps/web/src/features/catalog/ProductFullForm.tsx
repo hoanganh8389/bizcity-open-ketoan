@@ -20,6 +20,8 @@ import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
 import { SKU_SUFFIXES, skuInfo, variantName } from '@bizcity/mua-hang-domain';
+import { useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+import type { CatalogWarnAck } from '@ketoan/contracts';
 
 type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 export interface ItemClassLite { code: string; name: string; parentCode: string | null; isActive: boolean; skuCode?: string }
@@ -37,6 +39,8 @@ interface FullProduct {
   /** Mã hàng cha (họ mã 1 cấp); null = không có. */
   parentSku?: string | null;
   units: Unit[]; prices: Price[];
+  /** Nháp (PHASE-024): khai báo còn lỗi chặn, chưa dùng được trên chứng từ. */
+  isDraft?: boolean; draftCodes?: string[];
 }
 interface SkuPreview { sku: string; prefix: string; segments: { level: number; code: string; name: string; skuCode: string; source?: 'declared' | 'inferred' | 'new' }[]; industryCode: string; brandCode: string }
 
@@ -199,13 +203,18 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
   }, [classes.group]);
 
   const viewAgain = useViewAgain();
+  // Cổng danh mục (PHASE-024 S024-28): còn lỗi chặn → lưu NHÁP (chưa dùng được trên chứng từ); cảnh báo mềm → ghi lý do.
+  const baseUnit = v.units.find((u) => Number(u.ratio) === 1 && u.unit.trim())?.unit.trim() ?? v.unit;
+  const why = useCatalogWhy('/api/v1/products/validate', { sku: v.sku.trim(), unit: baseUnit || null, postingGroupCode: v.postingGroupCode || null }, Boolean(v.sku.trim()));
+  const ack = useWarnAck(why.findings);
+  const blockCount = why.findings.filter((f) => f.level === 'block').length;
   const save = useMutation({
-    mutationFn: () => {
+    mutationFn: (warnAck?: CatalogWarnAck) => {
       const units = v.units.filter((u) => u.unit.trim()).map((u) => ({ unit: u.unit.trim(), ratio: Number(u.ratio), isDefault: u.isDefault, isPurchaseDefault: Boolean(u.isPurchaseDefault), weightKg: u.weightKg, note: u.note }));
       const unitNames = new Set(units.map((u) => u.unit));
       const prices = v.prices.filter((p) => unitNames.has(p.unit)).map((p) => ({ priceListCode: p.priceListCode, unit: p.unit, price: p.price, isDefaultUnit: p.isDefaultUnit, note: p.note }));
       const { sku: _s, unit: _u, units: _us, prices: _ps, ...rest } = v;
-      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, units, prices });
+      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['products'] });
@@ -233,7 +242,8 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} onClose={onClose}
       footer={<>
         {!isNew && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Tạo mã mới = mã này + chữ đuôi (K chia giá, M khuyến mại, Q kẹp quà, T có tem, Z / B…): chép nhóm, nhãn, ĐVT, thuế; tên đặt theo quy định" onClick={() => setChooseVariant(true)}>Tạo mã biến thể…</button>}
-        <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim()} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
+        <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim()} title={blockCount ? 'Còn lỗi chặn: mặt hàng được lưu NHÁP, chưa dùng được trên chứng từ cho tới khi sửa xong' : undefined}
+          onClick={() => ack.request((a) => save.mutate(a))}>{blockCount ? `Lưu nháp (còn ${blockCount} lỗi chặn)` : ack.label}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
       <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
         {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{tabBtn('acc', 'Kế toán')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}
@@ -341,6 +351,9 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
           {classes.type.length > 0 && <Field label="Loại hàng"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
         </fieldset>
       )}
+      {v.isDraft && <div className="alert alert-warn full"><b>Nháp</b> — mặt hàng chưa kích hoạt, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
+      <WhyPanel findings={why.findings} onFix={(p) => set(p as Partial<FullProduct>)} />
+      <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
     {chooseVariant && <ChonDuoiMa base={baseOf(v.sku)} name={v.name} onClose={() => setChooseVariant(false)} onPick={(sf) => { setChooseVariant(false); setVariant(sf); }} />}

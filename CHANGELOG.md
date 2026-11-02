@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->
+- **Mặt hàng nháp** (PHASE-024, [ADR-0019](docs/adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md), migration `0061_mat_hang_nhap`): khai báo mặt hàng còn lỗi chặn — thiếu đơn vị tính gốc, hoặc thiếu nhóm hạch toán khi đơn vị không có nhóm mặc định — được **lưu nháp** thay vì báo lỗi (không mất bản khai). Mặt hàng nháp không có ở ô chọn của phiếu; chứng từ dùng nó bị cửa nạp giữ ở Trạm kiểm tra với mã **IN-ITEM-009**. Sửa xong → mặt hàng tự kích hoạt và các chứng từ đang chờ vì nó được **kiểm lại tự động**. Áp cho mọi đường lưu (form, nhập Excel, đồng bộ từ POS, `core.product.upsert`). Danh sách mặt hàng có nhãn và bộ lọc "Nháp"; `POST /api/v1/products/validate`.
 <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 -->
 - **Thư viện mã phát hiện của hai cổng kiểm chuẩn** ([ADR-0019](docs/adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md), [`bizcity_findings@1`](docs/contracts/BIZCITY-FINDINGS-v1.md)): mọi mã của Gate A (khai báo danh mục) và Gate B (trạm tiền kiểm) một khuôn — mức, bước, vì sao, cách sửa, luật gốc. Tra: trang [Tra mã phát hiện](docs/huong-dan/ma-loi/README.md), `GET /api/v1/findings[/:code]`, công cụ MCP `core.findings.explain` cho trợ lý AI. Check SC-FIND-1: mã không trùng, cảnh báo / chặn phải có cách sửa.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15 -->

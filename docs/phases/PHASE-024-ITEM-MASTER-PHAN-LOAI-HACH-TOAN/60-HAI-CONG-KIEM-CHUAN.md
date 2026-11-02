@@ -5,6 +5,16 @@
 > Quyết định: [ADR-0019](../../adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md) · Luật: [R-GATE](../../rules/RULE-GATE.md) · Gate B chi tiết: [PHASE-021](../PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md) / [R-INTAKE](../../rules/RULE-INTAKE.md).
 > Bản mẫu bấm thử: [mockups/hai-cong.html](mockups/hai-cong.html).
 
+## 0. Đã thi hành (2026-11-03) <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->
+
+| Phần | Ở đâu |
+|---|---|
+| Thư viện mã `bizcity_findings@1` (36 mã), tra qua API / MCP / trang | S024-27 — `packages/contracts/src/findings.ts`, `/api/v1/findings`, [ma-loi](../../huong-dan/ma-loi/README.md) |
+| Mặt hàng nháp: `products.is_draft` + `draft_codes` (0061); `applyItemGate` / `applyItemGateBulk` cho mọi đường lưu | `apps/api/src/modules/products/item.hints.ts` |
+| Gate B: `IN-ITEM-009` ở cửa nạp và tiền kiểm | `packages/kernel/src/modules/intake/draft-items.ts` |
+| Kích hoạt → bể chờ kiểm lại | `recheckInboxForSkus` (`intake/inbox.ts`), đăng ký ở `app.ts` qua `registerItemsActivatedHook` |
+| Chưa: Commit Guard, nháp cho đối tượng, bỏ tự thêm mặt hàng từ chứng từ (D024-3) | — |
+
 ## 1. Toàn cảnh
 
 ```text

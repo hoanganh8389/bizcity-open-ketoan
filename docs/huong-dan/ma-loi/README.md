@@ -9,7 +9,7 @@
 > **Mức:** ✘ chặn — giữ lại (danh mục → bản nháp; chứng từ → bể chờ), hết khi dữ liệu đúng · ⚠ cảnh báo — qua cổng khi ghi lý do,
 > có bằng chứng · ℹ nhắc — chỉ để biết. *(nháp)* = nội dung chờ kế toán trưởng duyệt.
 
-## Gate A — khai báo danh mục (12 mã)
+## Gate A — khai báo danh mục (15 mã)
 
 | Mã | Mức | Bước | Nghĩa | Vì sao | Cách sửa | Luật |
 |---|---|---|---|---|---|---|
@@ -21,12 +21,15 @@
 | `ACC-HINT-006` | ⚠ cảnh báo | account | Tài khoản {code} còn số dư {balance} — ngừng sử dụng sẽ để số dư treo. *(nháp)* | Ngừng dùng không xoá số dư: số dư vẫn lên báo cáo nhưng không ghi tiếp để tất toán được. Thường nên chuyển số dư sang tài khoản thay thế bằng một phiếu kế toán trước, rồi mới ngừng. | Lập phiếu kế toán chuyển số dư sang tài khoản thay thế, rồi ngừng dùng; nếu cố ý giữ số dư treo, ghi lý do khi lưu. | R-MD-4 |
 | `ACC-HINT-007` | ⚠ cảnh báo | account | Tài khoản cấp 1 {code} không có trong hệ thống tài khoản chuẩn. *(nháp)* | Tài khoản cấp 1 do chế độ kế toán quy định; tự thêm tài khoản cấp 1 làm báo cáo tài chính không có chỉ tiêu cho nó. Thường nên thêm làm tài khoản con của một tài khoản chuẩn. | Thêm làm tài khoản con của một tài khoản chuẩn; nếu chế độ kế toán của đơn vị có tài khoản này, ghi lý do khi lưu. | R-MD-7 |
 | `ACC-BLOCK-001` | ✘ chặn | account | Số tài khoản con phải bắt đầu bằng số tài khoản cha ({parent}). | Cây hệ thống tài khoản dựa vào tiền tố số hiệu để cộng dồn lên tài khoản cha và lên báo cáo; sai tiền tố làm số liệu cộng sai chỗ. | Đổi số tài khoản cho bắt đầu bằng số tài khoản cha, hoặc chọn đúng tài khoản cha. | R-MD-8 |
+| `ITEM-BLOCK-001` | ✘ chặn | item | Mặt hàng {sku} chưa có đơn vị tính gốc. *(nháp)* | Sổ kho đếm theo đơn vị tính gốc (đơn vị nhỏ nhất); không có thì không quy đổi được số lượng nhập / xuất, tồn kho và giá vốn sai. | Nhập đơn vị tính gốc (vd hộp, cái, kg). Mặt hàng được lưu nháp tới khi có, rồi tự kích hoạt. | R-GATE-3 |
+| `ITEM-BLOCK-002` | ✘ chặn | item | Mặt hàng {sku} chưa có nhóm hạch toán và đơn vị chưa có nhóm mặc định. *(nháp)* | Nhóm hạch toán quyết định tài khoản kho, giá vốn, doanh thu; không có nhóm thì không định khoản được chứng từ có mặt hàng này. | Chọn nhóm hạch toán cho mặt hàng, hoặc khai một nhóm mặc định ở Cấu hình hạch toán. | R-ITEM-4 |
+| `ITEM-HINT-001` | ⚠ cảnh báo | item | Mặt hàng {sku} chưa gán nhóm hạch toán — sẽ ghi theo nhóm mặc định {group}. *(nháp)* | Nhóm mặc định thường là hàng hoá (kho 156, giá vốn 632, doanh thu 511). Nếu đây là dịch vụ, nguyên vật liệu hay công cụ dụng cụ thì tồn kho, giá vốn và lãi gộp sẽ sai. | Chọn nhóm hạch toán đúng loại; nếu đúng là hàng hoá theo nhóm mặc định, ghi lý do khi lưu. | R-ITEM-8 |
 | `PART-HINT-001` | ℹ nhắc | partner | Nhà cung cấp: hoá đơn đầu vào cần mã số thuế người bán. *(nháp)* | Hoá đơn đầu vào kê khai khấu trừ thuế GTGT phải có MST người bán khớp hoá đơn điện tử; thiếu MST thì hoá đơn bị kiểm cảnh báo khi nhập. | — | R-GATE-2 |
 | `PART-HINT-002` | ⚠ cảnh báo | partner | Nhà cung cấp {code} chưa có mã số thuế. *(nháp)* | Lưu được với nhà cung cấp cá nhân / hộ kinh doanh không có MST, nhưng mọi hoá đơn đầu vào của đối tượng này sẽ bị cảnh báo khi kê khai và không đối chiếu được với hoá đơn điện tử của cơ quan thuế. | Nhập mã số thuế (nút tra MST điền sẵn tên, địa chỉ); hộ kinh doanh / cá nhân không có MST thì ghi lý do khi lưu. | R-GATE-2 |
 | `PART-HINT-003` | ⚠ cảnh báo | partner | Đã có đối tượng {other} cùng tên "{name}". *(nháp)* | Hai mã cho cùng một khách / nhà cung cấp làm công nợ tách đôi: hoá đơn ghi một mã, phiếu thu ghi mã kia, đối chiếu không khớp. Nếu là một, dùng mã {other}; nếu khác người, phân biệt bằng tên viết tắt hoặc địa chỉ. | Mở đối tượng đã có và dùng mã đó; nếu là người khác, phân biệt bằng tên viết tắt hoặc địa chỉ rồi ghi lý do khi lưu. | R-MD-3 |
 | `PART-HINT-004` | ⚠ cảnh báo | partner | Mã số thuế "{taxCode}" không đúng định dạng (10 số, hoặc 10 số - 3 số chi nhánh). *(nháp)* | MST sai định dạng không tra được với cơ quan thuế; hoá đơn điện tử mang MST đúng sẽ không khớp với đối tượng này. | Sửa MST: 10 số, hoặc 10 số - 3 số cho đơn vị phụ thuộc, hoặc 12 số (cá nhân). | R-GATE-2 |
 
-## Gate B — chứng từ trước khi ghi sổ (20 mã)
+## Gate B — chứng từ trước khi ghi sổ (21 mã)
 
 Bước L1 khuôn · L2 số học · L3 danh mục · L4 nghiệp vụ · L5 định khoản thử ([R-INTAKE](../../rules/RULE-INTAKE.md)).
 
@@ -46,6 +49,7 @@ Bước L1 khuôn · L2 số học · L3 danh mục · L4 nghiệp vụ · L5 đ
 | `IN-SUM-004` | ⚠ cảnh báo | L2 | Đơn giá × số lượng − chiết khấu khác thành tiền dòng | Thành tiền lệch đơn giá thì giá vốn, lãi gộp, đối chiếu với đơn hàng sẽ khó giải thích. | Kiểm đơn giá, số lượng, chiết khấu của dòng ở hệ thống nguồn. | R-EVENT-5 · [học](../../../docs/huong-dan/loi-dau-vao/IN-SUM-004.md) |
 | `IN-MD-001` | ✘ chặn | L3 | Chi nhánh (mã cửa hàng) chưa có | Sổ, kho, báo cáo theo chi nhánh; mã lạ thì không biết ghi cho cửa hàng nào. | Dùng mã chi nhánh đã khai ở Danh mục chi nhánh, hoặc nhờ kế toán thêm chi nhánh trước. | R-MD, findBranch · [học](../../../docs/huong-dan/loi-dau-vao/IN-MD-001.md) |
 | `IN-MD-004` | ℹ nhắc | L3 | Mã hàng chưa có trong danh mục | Mặt hàng mới chưa có nhóm hạch toán thì doanh thu, giá vốn theo mặc định — kế toán nên gắn nhóm sớm. | Đồng bộ danh mục mặt hàng trước (PUT /api/v1/products) hoặc nhờ kế toán thêm và gắn nhóm hạch toán. | R-MD · [học](../../../docs/huong-dan/loi-dau-vao/IN-MD-004.md) |
+| `IN-ITEM-009` | ✘ chặn | L3 | Mặt hàng còn nháp, chưa kích hoạt | Mặt hàng lưu nháp vì khai báo còn thiếu (đơn vị tính, nhóm hạch toán); ghi sổ với nó thì kho, giá vốn hoặc tài khoản sẽ sai. | Mở mặt hàng ở danh mục, sửa phần còn thiếu để mặt hàng tự kích hoạt; chứng từ ở Trạm kiểm tra được kiểm lại tự động, rồi nộp lại. | R-GATE-6, ADR-0019 · [học](../../../docs/huong-dan/loi-dau-vao/IN-ITEM-009.md) |
 | `IN-MD-005` | ⚠ cảnh báo | L3 | Mã số thuế đối tượng sai định dạng | Mã số thuế sai thì hoá đơn, bảng kê và tra cứu doanh nghiệp đều sai; cơ quan thuế loại hoá đơn. | Mã số thuế gồm 10 chữ số, hoặc 10 chữ số + "-" + 3 chữ số (chi nhánh); không khoảng trắng. | R-MD · [học](../../../docs/huong-dan/loi-dau-vao/IN-MD-005.md) |
 | `IN-BIZ-003` | ✘ chặn | L4 | Mã chứng từ không thuộc nguồn gửi | Mỗi nguồn (module, app) chỉ được nộp / sửa chứng từ của mình, để không ghi đè chứng từ của nơi khác. | Mã chứng từ (docKey) phải bắt đầu bằng mã của nguồn, vd "pos-mini:CN01:HD0001". | ADR-0011 D5, R-EVENT-13 · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-003.md) |
 | `IN-BIZ-004` | ✘ chặn | L4 | Phiên bản cũ hơn bản đã nhận | Sổ đang theo phiên bản mới hơn; nhận bản cũ sẽ ghi đè thông tin mới bằng thông tin cũ. | Gửi phiên bản lớn hơn phiên bản đã nhận; sửa chứng từ thì tăng version. | R-EVENT-4 · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-004.md) |
