@@ -64,17 +64,18 @@ jobs:
       db:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: ketoan
+          # [2026-11-02 04:00 PM Johnny Chu - Chu Hoàng Anh] FIX — test chạy trên CSDL tên có "test" (vitest.config.ts chặn tên khác)
+          POSTGRES_DB: ketoan_test
           POSTGRES_USER: ketoan
           POSTGRES_PASSWORD: ketoan
           TZ: Asia/Ho_Chi_Minh
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U ketoan -d ketoan"
+          --health-cmd "pg_isready -U ketoan -d ketoan_test"
           --health-interval 5s --health-timeout 3s --health-retries 20
     env:
       NODE_ENV: test
-      DATABASE_URL: postgres://ketoan:ketoan@localhost:5432/ketoan
+      DATABASE_URL: postgres://ketoan:ketoan@localhost:5432/ketoan_test
       JWT_SECRET: ci-only-secret-not-for-production-0123456789
       ENABLED_MODULES: "*"
       TZ: Asia/Ho_Chi_Minh

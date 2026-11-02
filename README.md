@@ -306,7 +306,7 @@ Module **không sửa Kernel, không sửa module khác**. Làm theo thứ tự:
 node tests/conformance/selfcheck.mjs       # bộ kiểm chuẩn + bảng điểm + ma trận tuân thủ (không cần npm install)
 bash scripts/kiem-chuan.sh                 # ranh giới
 npm run typecheck
-npm test                                   # PostgreSQL thật; sau mỗi tệp test tự kiểm bất biến sổ
+npm test                                   # PostgreSQL thật, CSDL riêng ketoan_test (tự tạo; không chạy vào CSDL của bản cài); sau mỗi tệp tự kiểm bất biến sổ
 ```
 
 ## Vận hành
