@@ -1,0 +1,19 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.mau-module",
+  "key": "mau-module",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Module mẫu",
+  "description": "Module mẫu — module viết bằng @bizcity/module-sdk (sinh từ templates/starter-module). Sửa câu này cho đúng nghiệp vụ.",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": { "capabilities": [] },
+  "permissions": [
+    { "key": "mau-module:read", "label": "Xem Module mẫu", "roles": ["owner", "chief_accountant", "accountant", "viewer"], "risk": "low" },
+    { "key": "mau-module:write", "label": "Lập, sửa Module mẫu", "roles": ["owner", "chief_accountant", "accountant"], "risk": "low" }
+  ],
+  "data": { "schema": "mod_mau_module", "tables": ["records"], "reads": [] },
+  "actions": ["mau-module.record.create", "mau-module.record.list"],
+  "ui": { "icon": "Puzzle", "color": "#475569", "order": 60 }
+}

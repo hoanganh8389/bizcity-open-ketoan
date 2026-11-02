@@ -175,3 +175,10 @@ Phân hệ hiện có không viết lại một lần. Theo thứ tự:
 3. ✅ **Chốt 2026-10-31 — cách hai** (`accounting.report.income-statement`, `accounting.report.term-rules` qua `callAction` / `ctx.actions.call`). **Báo cáo tài chính trong phân hệ Thuế** (`incomeStatement`, `termRuleFor`, `TERM_MAP` ở `thue/statements`). Hoặc `ledger.query` có báo cáo dựng sẵn (`kind: 'income-statement'`), hoặc Thuế gọi action đọc `ke-toan.report.*` qua `ctx.actions.call`. Khuyên cách hai: báo cáo là module ([REUSE-MAP §3.2](../../docs/standard/REUSE-MAP.md)).
 4. ✅ **Chốt 2026-11-02 — `seed[]` trong manifest gọi `core.*.upsert` (3.17).** **Tạo danh mục khi dựng dữ liệu mẫu** (`mua-hang/demo.ts`). Khuyên `seed` trong manifest gọi `core.*.upsert`, không ghi bảng.
 5. ✅ **Chốt 2026-11-02 — `@bizcity/module-sdk/web` (3.18).** **Tên gói con giao diện:** `@bizcity/module-sdk/web` hay để `defineWebModule` ở `@bizcity/ui-kit`. Khuyên `module-sdk/web`: một gói danh tính, ui-kit chỉ là thành phần.
+
+## Phần giao diện và nạp module <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1–W3 -->
+
+- **Nạp:** `modules/<key>/` có `bizcity.module.json` + `api/index.ts` (`export default defineModule(...)`) → API nạp như phân hệ (registry, hash, bật / tắt theo đơn vị), route sinh từ action dưới `/api/v1/m/<key>/`. `web/index.tsx` (`export default defineWebModule(...)`) → web gom lúc dựng: mục Tổng quan (biểu tượng / màu / thứ tự ở manifest `ui`), nhóm menu `mod-<key>`, route dưới `/app/<key>` (trang chủ) hoặc `/app/<key>/…`.
+- **`@bizcity/module-sdk/web`:** `defineWebModule`, `webModuleParts` (khung giao diện dùng), `WEB_SLOTS`. Xuất thẳng mã nguồn (không phụ thuộc gì) — bộ đóng gói của web dùng, không cần dựng SDK.
+- **`@bizcity/ui-kit`:** thành phần + `useApi` / `useCan` / `useQuery` cho màn của module; bản thật do `apps/web` cung cấp (`provideUiKit`). Màn của module không import `apps/web/src/*`.
+- **Chưa có:** slot (`partner.detail.tab`…) phía web — khai được ở `defineWebModule` nhưng khung giao diện chưa vẽ.

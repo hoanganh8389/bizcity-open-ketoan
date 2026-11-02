@@ -13,6 +13,11 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 -->
+- **Lệnh `bizcity`** (gói `@bizcity/cli`, PHASES 4.1): `npx bizcity module new <key>` sinh module từ `templates/starter-module`; `module check <key>` chạy luật module, typecheck, test hợp đồng module trên CSDL test; `migrate`, `ledger verify`, `doctor`. [docs/ops/CLI.md](docs/ops/CLI.md) §1b.
+- **Template module** `templates/starter-module/` (PHASES 4.2) kèm AGENTS.md riêng; **`@bizcity/ui-kit`** (PHASES 3.8, năng lực `ui.kit` → available): màn của module dùng thành phần và client API của Core qua gói này, không import `apps/web`.
+- **Web nạp phần giao diện của module SDK** (`modules/<key>/web/index.tsx`): mục Tổng quan, menu, route dưới `/app/<key>/` chặn theo quyền. Chưa có slot.
+- Test hợp đồng cho mọi module trong `modules/` (`apps/api/test/sdk-modules.contract.test.ts`): bảng có RLS + COMMENT, action manifest = code, quyền mang tiền tố module, GET trả 200, viewer không ghi được.
 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1 -->
 - **Nạp module viết bằng `@bizcity/module-sdk`** (PHASE-014 W1, [BIZCITY-EXTENSION](docs/contracts/BIZCITY-EXTENSION-v1.md) §3): thư mục `modules/<key>/` có `bizcity.module.json` + `api/index.ts` (`export default defineModule(...)`) được API tìm và nạp như phân hệ — registry, băm thư mục, bật / tắt theo đơn vị; route sinh từ action nằm dưới `/api/v1/m/<key>/`; quyền khai trong manifest vào registry quyền; subscriber vào bộ sự kiện. Mã module lỗi hoặc khoá trùng phân hệ của Core thì dừng khởi động. Biến mới `BIZCITY_MODULES_DIR` (mặc định `<gốc repo>/modules`). SDK xuất thêm `sql` cho bảng của chính module.
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 manual_journal (K2); PHASE-010 2.8 gói mua-hang-domain -->
@@ -251,6 +256,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3 -->
+- Workspace npm thêm `modules/*` (mỗi module SDK là một gói) và hai gói `packages/ui-kit`, `packages/cli`: chạy `npm install`. Image API / web nay chép thư mục `modules/`; job cài đặt (`db-migrate`) tự chạy migration của từng module SDK trước khi ghi registry. Bản cài không có module SDK: không đổi gì.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->
 - Chạy migration `0057_vai_tro_kiem_soat` (chỉ nới ràng buộc `users_role_check` thêm `auditor`). Kế toán trưởng, kế toán có thêm quyền `review:read` (Bàn đánh giá); `viewer` không có.
 <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016 -->

@@ -99,7 +99,9 @@ Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa 
 4. Viết `bizcity.module.json` trước, kiểm theo [docs/contracts/BIZCITY-MODULE-v1.schema.json](docs/contracts/BIZCITY-MODULE-v1.schema.json).
 5. Khách hàng, mặt hàng, chi nhánh: dùng danh mục chuẩn, **không** tạo bảng riêng. Tiền vào sổ: nộp `docType` có sẵn qua `ctx.ledger.submit` kèm `reasonCode` (lý do lấy từ gói định khoản, [BIZCITY-POSTING-TEMPLATE-v1.md](docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md) §7), **không** viết tài khoản. Action cho AI dùng: `expose.mcp` theo [BIZCITY-MCP-v1.md](docs/contracts/BIZCITY-MCP-v1.md).
 6. Thiếu năng lực thì **dừng phần đó**, nói rõ với người dùng và soạn đề xuất theo [docs/standard/VERSIONING.md §5](docs/standard/VERSIONING.md). Không tự vá Core.
-7. Chạy bộ kiểm [docs/standard/CONFORMANCE.md](docs/standard/CONFORMANCE.md): `node tests/conformance/selfcheck.mjs --module <thư mục module>` phải **ĐẠT** (Phase 4: `bizcity module check`).
+7. Chạy bộ kiểm [docs/standard/CONFORMANCE.md](docs/standard/CONFORMANCE.md): `npx bizcity module check <key>` phải **ĐẠT** (gồm `selfcheck --module`, typecheck, test hợp đồng module trên CSDL test).
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3: module SDK có chỗ nạp (API + web), template, CLI -->
+8. Bắt đầu module mới bằng `npx bizcity module new <key> --label "Tên"` (khung từ [templates/starter-module/](templates/starter-module/)), rồi đọc `modules/<key>/AGENTS.md`. Module nằm ở `modules/<key>/`: API tự nạp (route `/api/v1/m/<key>/…`), web tự gom (`/app/<key>/…`); màn chỉ dùng `@bizcity/ui-kit`.
 
 ## Trước khi xong việc
 

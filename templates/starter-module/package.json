@@ -1,0 +1,20 @@
+{
+  "name": "@bizcity-module/mau-module",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Module mẫu — module Bizcity (bizcity_module@1).",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@bizcity/module-sdk": "1.0.0",
+    "@bizcity/ui-kit": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "react": "18.3.1",
+    "typescript": "5.6.3"
+  }
+}
