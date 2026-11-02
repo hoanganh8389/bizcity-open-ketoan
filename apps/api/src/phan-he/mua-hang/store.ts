@@ -2,13 +2,13 @@
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — số phiếu mua lấy từ documentNumbers.next của Kernel (documents.numbering), khoá dãy mh:<loại> giữ nguyên; thôi ghi document_sequences (A-17)
 /**
  * Lưu / đọc chứng từ và chính sách mua hàng (bảng purchase_documents, purchase_policies — db/migrations/0010_mua_hang.sql).
- * Khuôn trả ra giao diện là PDoc / Policy của '@ketoan/contracts/mua-hang' (cùng khuôn bộ máy tính).
+ * Khuôn trả ra giao diện là PDoc / Policy của '@bizcity/mua-hang-domain' (cùng khuôn bộ máy tính).
  */
 import { sql } from 'kysely';
 import { documentNumbers } from '../../kernel/public.js';
 import { z } from 'zod';
 import { unitsOf } from './gia-mua.js';
-import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind } from '@ketoan/contracts/mua-hang';
+import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { db, toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 

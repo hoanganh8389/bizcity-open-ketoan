@@ -1,6 +1,7 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
 # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 (AUDIT-2026-11-01): bước vitest chạy dưới vai trò ketoan_app (DB_SET_ROLE) — RLS có hiệu lực, test pool RLS không còn bị bỏ qua
+# [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: build gói @bizcity/mua-hang-domain sau contracts
 # CI BizCity Ledger Framework — xem docs/ops/CI-CD.md
 name: ci
 
@@ -31,8 +32,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # @ketoan/contracts trỏ vào dist/ — build trước để api, web thấy kiểu
-      - run: npm run build -w @ketoan/contracts
+      # @ketoan/contracts, @bizcity/mua-hang-domain trỏ vào dist/ — build trước để api, web thấy kiểu
+      - run: npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain
       - run: npm run typecheck
 
   test:
@@ -65,7 +66,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build -w @ketoan/contracts
+      - run: npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain
       - run: npm run db:seed
       - name: vitest (+ báo cáo JSON làm bằng chứng)
         env:
@@ -116,7 +117,7 @@ jobs:
         run: |
           echo "::notice::Chưa có tag v* nào — kiểm nâng cấp bắt đầu chạy từ bản phát hành đầu tiên (RELEASE.md)."
       - if: steps.base.outputs.ref != ''
-        run: npm ci && npm run build -w @ketoan/contracts
+        run: npm ci && npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain
       - name: Nâng cấp ${{ steps.base.outputs.ref }} → PR, kiểm toàn vẹn
         if: steps.base.outputs.ref != ''
         run: bash scripts/kiem-nang-cap.sh "${{ steps.base.outputs.ref }}"

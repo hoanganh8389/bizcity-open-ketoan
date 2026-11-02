@@ -4,7 +4,7 @@
  * Mã SKU của nhóm chưa khai thì tự suy từ mã hàng đang có / tự cấp số kế tiếp; ngành, nhãn trả về theo cây nhóm.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { skuInfo, variantName } from '@ketoan/contracts/mua-hang';
+import { skuInfo, variantName } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

@@ -4,7 +4,7 @@
  * chính sách: nội dung / hiệu lực / trạng thái trước → sau.
  */
 import { useQuery } from '@tanstack/react-query';
-import { POLICY_LABEL, type Policy } from '@ketoan/contracts/mua-hang';
+import { POLICY_LABEL, type Policy } from '@bizcity/mua-hang-domain';
 import { ruleText } from '../chinh-sach/quyTac';
 import { purchaseApi, vnd, type LogRow } from '../du-lieu';
 

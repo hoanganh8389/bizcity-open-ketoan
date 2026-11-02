@@ -163,7 +163,7 @@ Làm xong hoặc làm thêm một phần yêu cầu nào thì **sửa mục đó
 ### 6c. Đơn vị tính (mọi phân hệ)
 
 - Tên ĐVT nằm ở `unit_names` (DM15). Tỉ lệ nằm ở `product_units`, đúng một dòng tỉ lệ 1 = ĐVT nhỏ nhất = ĐVT tồn kho.
-- Phiếu giữ ĐVT người dùng chọn. **So sánh, cộng dồn, ghi kho đều quy về ĐVT nhỏ nhất.** Dùng các hàm chung: `ratioOf`, `priceFor`, `defaultUnitFor` (`packages/contracts/src/mua-hang/gia-mua.ts`); `orderProgress(…, units)`, `ratioIn` (`dat-hang.ts`).
+- Phiếu giữ ĐVT người dùng chọn. **So sánh, cộng dồn, ghi kho đều quy về ĐVT nhỏ nhất.** Dùng các hàm chung: `ratioOf`, `priceFor`, `defaultUnitFor` (`modules/mua-hang/domain/src/gia-mua.ts`); `orderProgress(…, units)`, `ratioIn` (`dat-hang.ts`).
 - Khai / hiển thị theo ĐVT trung gian ("1 Thùng = 12 Lốc"), chuỗi quy đổi, giá gợi ý, kiểm bộ ĐVT: `refOf`, `chainText`, `suggestPrice`, `unitProblems` (`packages/contracts/src/dvt.ts`). Ô chọn tên ĐVT dùng `UnitNameInput`; thẻ Đơn vị tính là `DvtQuyDoi`, thẻ Giá bán là `GiaBan` (`features/catalog/DvtGiaBan.tsx`). Giá mua không đặt ở thẻ ĐVT: giá mua riêng của sản phẩm (`supplier_products` NCC trống) và giá theo từng NCC nằm ở thẻ Mua hàng.
 - Form dài chia thành **khối màu** dùng chung `.blk blk-blue | blk-green | blk-purple | blk-orange` (theme.css).
 - Không viết lại phép quy đổi ở chỗ khác.

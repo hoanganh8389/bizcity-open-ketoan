@@ -9,7 +9,7 @@
  *                    mua-hang.<partner|document|policy|invoice>:<mã>; gỡ tệp = lưu trữ, không xoá cứng
  */
 import { sql } from 'kysely';
-import { creditStatus, findPolicy, orderProgress, termFromRule, termText } from '@ketoan/contracts/mua-hang';
+import { creditStatus, findPolicy, orderProgress, termFromRule, termText } from '@bizcity/mua-hang-domain';
 import { unitsForOrders } from './gia-mua.js';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';

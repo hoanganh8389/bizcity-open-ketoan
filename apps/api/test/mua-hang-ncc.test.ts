@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   autoLineType, brandShare, computeDoc, promoBoard, syncGifts, docsFromImport, dueDateFor, importRows, orderProgress, readTable, receiptFromOrder, skuInfo, supplierItemsOf, termText,
   defaultUnitFor, priceFor, type PDoc, type PaymentTerm, type Policy, type SupplierProduct,
-} from '@ketoan/contracts/mua-hang';
+} from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';

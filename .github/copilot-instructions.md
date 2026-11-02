@@ -15,7 +15,7 @@
 ## Trước khi code: đồng bộ với `main`
 <!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — nhắc đồng bộ main trước khi code, ký bù đúng tên người đóng góp. -->
 
-`git fetch` → có việc dở thì `git stash push -u` → `git merge --ff-only origin/main` → `git stash pop` (xung đột: gộp cả hai ý) → `npm run build -w @ketoan/contracts` nếu `packages/contracts` đổi → `node tests/conformance/selfcheck.mjs` phải ĐẠT rồi mới sửa tiếp. Không rebase nhánh đã đẩy, không `push --force`. Chi tiết: AGENTS.md "Trước khi code".
+`git fetch` → có việc dở thì `git stash push -u` → `git merge --ff-only origin/main` → `git stash pop` (xung đột: gộp cả hai ý) → `npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain` nếu `packages/contracts` hoặc `modules/*/domain` đổi → `node tests/conformance/selfcheck.mjs` phải ĐẠT rồi mới sửa tiếp. Không rebase nhánh đã đẩy, không `push --force`. Chi tiết: AGENTS.md "Trước khi code".
 
 ## Rà soát việc của người đóng góp (R-REV)
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — nhắc phân vai và rà soát mỗi lần nhận việc của người đóng góp. -->

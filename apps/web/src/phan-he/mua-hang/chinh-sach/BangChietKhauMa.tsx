@@ -9,7 +9,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Download, FileUp, Plus } from 'lucide-react';
-import { readTable, type ItemDiscount, type ProductUnit } from '@ketoan/contracts/mua-hang';
+import { readTable, type ItemDiscount, type ProductUnit } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
 import { api } from '@/lib/api';
 import { P, purchaseApi } from '../du-lieu';

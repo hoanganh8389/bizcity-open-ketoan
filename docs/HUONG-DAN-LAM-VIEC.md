@@ -96,7 +96,7 @@ Chọn bậc **thấp nhất** làm được việc:
 ```bash
 git fetch --all --prune
 git merge --ff-only origin/main
-npm install && npm run build -w @ketoan/contracts
+npm install && npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain
 node tests/conformance/selfcheck.mjs      # phải ĐẠT rồi mới sửa tiếp
 ```
 

@@ -5,7 +5,7 @@
  * Lưu ở cài đặt mua hàng của đơn vị (tenants.settings.purchase.variantSeparate). Mặc định tách riêng Q (hàng kẹp quà) và T (hàng có tem) —
  * hai loại này đặt riêng với hàng thường.
  */
-import { SKU_SUFFIXES } from '@ketoan/contracts/mua-hang';
+import { SKU_SUFFIXES } from '@bizcity/mua-hang-domain';
 import type { Db } from '../../db/client.js';
 import { loadSettings, saveSettings } from './analysis.js';
 

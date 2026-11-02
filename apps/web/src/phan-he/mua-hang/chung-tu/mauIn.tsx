@@ -12,7 +12,7 @@
  *   Thưởng / CK cuối kỳ     Biên bản xác nhận chiết khấu / thưởng (không có mẫu HTsoft)
  * Số liệu in lấy từ máy chủ (purchaseApi.get: phiếu đã ghi + bảng tính, bút toán) — in đúng bản đã ghi, không phải bản đang sửa.
  */
-import { COST_TYPES, TAX_RATE, amountTax, giftLineValue, termText, type DocCalc, type Entry, type LineCalc, type PDoc } from '@ketoan/contracts/mua-hang';
+import { COST_TYPES, TAX_RATE, amountTax, giftLineValue, termText, type DocCalc, type Entry, type LineCalc, type PDoc } from '@bizcity/mua-hang-domain';
 import { date } from '@/lib/format';
 import { BillForm, CASH_SIGNS, CashForm, Dots, Fields, Foot, OrgHead, Signs, StockForm, Table, Title, UncForm, invoiceText, m, mb, opt, qty, sumQty, words, type BillData, type CashData, type Col, type PrintCtx, type PrintTemplate, type StockData, type UncData } from '@/components/print';
 import { GIFT_SOURCE, KIND_LABEL, purchaseApi, type StoredDoc, type useNames } from '../du-lieu';

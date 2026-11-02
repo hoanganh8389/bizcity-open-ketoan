@@ -6,10 +6,11 @@
   "description": "Phần mềm kế toán doanh nghiệp: sổ cái trung tâm, nhiều đơn vị, nhận chứng từ qua API, mở rộng bằng add-in.",
   "workspaces": [
     "packages/*",
+    "modules/*/domain",
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w @ketoan/contracts && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @bizcity/module-sdk && npm run build -w @ketoan/api && npm run build -w @ketoan/web",
+    "build": "npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @bizcity/module-sdk && npm run build -w @ketoan/api && npm run build -w @ketoan/web",
     "dev": "node scripts/dev.mjs",
     "dev:ke-toan": "node scripts/dev.mjs ke-toan",
     "dev:quy": "node scripts/dev.mjs quy",

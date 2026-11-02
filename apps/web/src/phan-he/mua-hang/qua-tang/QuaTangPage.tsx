@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { giftPlan } from '@ketoan/contracts/mua-hang';
+import { giftPlan } from '@bizcity/mua-hang-domain';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';

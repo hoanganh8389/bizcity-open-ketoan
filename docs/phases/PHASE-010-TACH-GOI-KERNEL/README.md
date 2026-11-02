@@ -13,6 +13,7 @@
 
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 <!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.3 có: packages/kernel -->
+<!-- [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: bộ máy mua hàng thành gói @bizcity/mua-hang-domain (modules/mua-hang/domain) -->
 
 | Tài liệu | Một câu |
 |---|---|
@@ -25,9 +26,9 @@
 |---|---|---|
 | F1 | Kernel nằm trong `apps/api/src/modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,…}` | ADR-0008 (một gói `packages/kernel`) |
 | F2 | `packages/` mới có `contracts` và bản nháp `module-sdk/API.md` | `packages/` |
-| F3 | `packages/contracts/src/mua-hang` thuộc phân hệ (A-06) | `packages/contracts/src/mua-hang/` |
+| F3 | `packages/contracts/src/mua-hang` thuộc phân hệ (A-06) — ✅ 2026-11-02 thành `@bizcity/mua-hang-domain` | `modules/mua-hang/domain/` |
 | F4 | Runtime action và bằng chứng còn ở `apps/api/src/core/` | `core/actions.ts`, `core/audit.ts` |
 
 ## Xong khi
 
-Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 2.3 ☐ · 2.7 ☐ · 2.8 ☐.
+Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái 2026-11-02: 2.3 ☑ · 2.7 ☑ · 2.8 ☑.

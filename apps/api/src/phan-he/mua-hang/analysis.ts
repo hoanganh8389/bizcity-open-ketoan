@@ -1,6 +1,6 @@
 // @bizcity-layer D modules/mua-hang
 /**
- * PHÂN TÍCH một chứng từ mua hàng bằng SỐ LIỆU THẬT: bộ máy tính dùng chung ('@ketoan/contracts/mua-hang') + dữ liệu sổ.
+ * PHÂN TÍCH một chứng từ mua hàng bằng SỐ LIỆU THẬT: bộ máy tính dùng chung ('@bizcity/mua-hang-domain') + dữ liệu sổ.
  *   - Nợ NCC hiện tại   = công nợ theo chứng từ trên tài khoản 331* tới ngày phiếu (debt_items: ghi Có − ghi Nợ).
  *   - Đang chờ          = phiếu mua chờ duyệt + đơn đặt đã duyệt chưa nhận hàng.
  *   - Nợ nhãn tại CN    = số dư đầu khai ở cài đặt + phần CHƯA TRẢ của các phiếu nhập đã duyệt của nhãn tại chi nhánh.
@@ -12,7 +12,7 @@ import { sql } from 'kysely';
 import {
   ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, fefoCheck, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
   type Accounts, type Check, type CreditStatus, type ProductUnit, type SupplierProduct, type DocCalc, type Entry, type PDoc, type Policy, type PriceRow, type Product,
-} from '@ketoan/contracts/mua-hang';
+} from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { FREEZE_KINDS, FREEZE_VERSION, freezeOf, listPolicies, noDueDate, receiptsWithSku, toDoc, type StoredDoc } from './store.js';
 import { listSupplierProducts, unitsOf } from './gia-mua.js';

@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { POLICY_LABEL, termFromRule, termText, type ItemDiscount, type Policy, type PolicyKind, giftItemsOf } from '@ketoan/contracts/mua-hang';
+import { POLICY_LABEL, termFromRule, termText, type ItemDiscount, type Policy, type PolicyKind, giftItemsOf } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';

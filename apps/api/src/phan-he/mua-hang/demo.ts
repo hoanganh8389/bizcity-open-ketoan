@@ -9,7 +9,7 @@
 import { readFile } from 'node:fs/promises';
 import { sql } from 'kysely';
 import path from 'node:path';
-import type { PDoc, Policy } from '@ketoan/contracts/mua-hang';
+import type { PDoc, Policy } from '@bizcity/mua-hang-domain';
 import { db } from '../../db/client.js';
 import { SEEDS_DIR } from '../../db/paths.js';
 import type { AuthContext } from '../../core/auth.js';

@@ -3,7 +3,7 @@
  * chồng ngày → dòng có "Hiệu lực từ" muộn nhất; cùng ngày bắt đầu → dòng khai sau. Mỗi ĐVT giá niêm yết riêng.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { priceFor, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
+import { priceFor, type ProductUnit, type SupplierProduct } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

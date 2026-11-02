@@ -4,7 +4,7 @@
  * Mở từ hồ sơ NCC thì NCC khoá sẵn và chỉ chọn các loại thuộc thẻ đang mở.
  */
 import { useEffect, useState } from 'react';
-import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, type Policy, type PolicyKind } from '@ketoan/contracts/mua-hang';
+import { POLICY_LABEL, STACK_KINDS, canRepeat, giftItemsOf, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { Field, Modal, useViewAgain } from '@/components/ui';
 import { errorText } from '@/lib/api';
 import { BranchPicker } from '@/components/filters';

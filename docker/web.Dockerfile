@@ -2,6 +2,7 @@
 # [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — chép package.json của @bizcity/platform để npm ci khớp lockfile workspace
 # [2026-11-02 01:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — workspace @bizcity/module-sdk: chép package.json để npm ci khớp lockfile; image api chép registry cấu hình (ctx.settings.get)
 # [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — thêm package.json của @bizcity/kernel
+# [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: gói @bizcity/mua-hang-domain: cài, build trước web
 # Giao diện: dựng bằng Vite → phục vụ bằng nginx, chuyển /api sang container api.
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -10,14 +11,16 @@ COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/
 COPY packages/kernel/package.json packages/kernel/
 COPY packages/module-sdk/package.json packages/module-sdk/
+COPY modules/mua-hang/domain/package.json modules/mua-hang/domain/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN npm ci --no-audit --no-fund
 COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
+COPY modules/mua-hang/domain modules/mua-hang/domain
 COPY apps/web apps/web
 COPY docs docs
-RUN npm run build -w @ketoan/contracts && npm run build -w @ketoan/web
+RUN npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain && npm run build -w @ketoan/web
 
 FROM nginx:1.27-alpine
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf

@@ -10,14 +10,14 @@
  * Mỗi chứng từ kế toán sinh ra lưu ở links; bỏ duyệt = huỷ đúng các chứng từ đó (đảo bút toán bằng số âm, không xoá).
  */
 import { sql } from 'kysely';
-import { allocate as allocateParts, amountTax, baseUnitOf, computeDoc, giftLineValue, moneyAccountOf, ratioOf, type DocCalc, type PDoc, type ProductUnit } from '@ketoan/contracts/mua-hang';
+import { allocate as allocateParts, amountTax, baseUnitOf, computeDoc, giftLineValue, moneyAccountOf, ratioOf, type DocCalc, type PDoc, type ProductUnit } from '@bizcity/mua-hang-domain';
 import { unitsOf } from './gia-mua.js';
 import { ingestDocumentSchema, voucherInputSchema, type IngestDocument } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { postDocumentIn, voucherService, allocateDebt } from '../../kernel/public.js';
-import type { Accounts } from '@ketoan/contracts/mua-hang';
+import type { Accounts } from '@bizcity/mua-hang-domain';
 import type { StoredDoc } from './store.js';
 
 export interface Link { docKey: string; docNo: string; eventId: string; role: string }

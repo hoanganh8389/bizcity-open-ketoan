@@ -7,7 +7,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Download, FileUp, Plus } from 'lucide-react';
-import type { GiftItem, ProductUnit } from '@ketoan/contracts/mua-hang';
+import type { GiftItem, ProductUnit } from '@bizcity/mua-hang-domain';
 import { api } from '@/lib/api';
 import { ItemPicker } from '@/components/pickers';
 import { P, purchaseApi } from '../du-lieu';

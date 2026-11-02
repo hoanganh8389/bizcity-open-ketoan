@@ -1,7 +1,7 @@
 /**
  * Mảnh giao diện dùng chung của các màn Mua hàng: danh sách cảnh báo, thanh hạn mức.
  */
-import type { Check, CreditStatus } from '@ketoan/contracts/mua-hang';
+import type { Check, CreditStatus } from '@bizcity/mua-hang-domain';
 import { ListPicker } from '@/components/pickers';
 import { vnd } from './du-lieu';
 import './mua-hang.css';

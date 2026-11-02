@@ -50,6 +50,8 @@ git worktree add --detach "$WT" "$REF" >/dev/null
   cd "$WT"
   npm ci --no-audit --no-fund --loglevel=error >/dev/null
   npm run build -w @ketoan/contracts >/dev/null
+  # [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: bản có gói mua-hang-domain thì build gói đó
+  if [ -d modules/mua-hang/domain ]; then npm run build -w @bizcity/mua-hang-domain >/dev/null; fi
   DATABASE_URL="$URL" SEED_TENANT_CODE=nangcap SEED_ADMIN_PASSWORD='NangCap@123' npm run db:seed >/dev/null
 )
 OLD="$(cd "$WT" && git ls-files db/migrations | grep -c '\.sql$' || true)"

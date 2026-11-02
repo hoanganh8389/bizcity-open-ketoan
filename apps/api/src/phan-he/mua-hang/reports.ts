@@ -12,7 +12,7 @@ import { sql } from 'kysely';
 import {
   AGING_BUCKETS, agingBucket, allocate, baseUnitOf, ratioOf, brandMix, brandShare, computeDoc, creditStatus, daysBetween, expiryState, orderProgress, orderReconcile, rebateFor, sameInvoice, scheduleStatus,
   type LotStock, type Policy,
-} from '@ketoan/contracts/mua-hang';
+} from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { apBalance, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.js';

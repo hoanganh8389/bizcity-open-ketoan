@@ -7,7 +7,7 @@
  */
 import { useRef, useState } from 'react';
 import { FileUp, ScanLine } from 'lucide-react';
-import { invoiceLabel, readTable, type ParsedInvoice } from '@ketoan/contracts/mua-hang';
+import { invoiceLabel, readTable, type ParsedInvoice } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
 import { PartnerPicker } from '@/components/pickers';
 import { errorText } from '@/lib/api';

@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { CreditStatus } from '@ketoan/contracts/mua-hang';
+import type { CreditStatus } from '@bizcity/mua-hang-domain';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';

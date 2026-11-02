@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { unitFor, type InvoiceLine, type ProductUnit } from '@ketoan/contracts/mua-hang';
+import { unitFor, type InvoiceLine, type ProductUnit } from '@bizcity/mua-hang-domain';
 import { api } from '@/lib/api';
 import { ItemPicker } from '@/components/pickers';
 import { NumInput } from '@/components/ui';

@@ -16,7 +16,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import type { ParsedInvoice } from '@ketoan/contracts/mua-hang';
+import type { ParsedInvoice } from '@bizcity/mua-hang-domain';
 import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { idParamSchema, ok } from '../../core/http.js';

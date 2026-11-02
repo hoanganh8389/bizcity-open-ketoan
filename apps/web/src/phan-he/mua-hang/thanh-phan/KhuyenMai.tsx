@@ -9,7 +9,7 @@
  * tích lại = áp lại. Tự động nhưng linh hoạt.
  */
 import { useEffect } from 'react';
-import { POLICY_LABEL, type PromoRow, type PromoStatus } from '@ketoan/contracts/mua-hang';
+import { POLICY_LABEL, type PromoRow, type PromoStatus } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
 
 const GROUP: Record<PromoStatus, { title: string; cls: string; badge: string }> = {

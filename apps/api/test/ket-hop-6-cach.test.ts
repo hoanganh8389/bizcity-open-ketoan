@@ -6,7 +6,7 @@
  * con đường ghi sổ: đơn → phiếu nhập theo đơn, và phiếu nhập ngoài đơn. Mọi con đường phải ra CÙNG một số tiền.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { defaultUnitFor, giftPlan, priceFor, receiptFromOrder, syncGifts, type PDoc, type PLine, type Policy, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
+import { defaultUnitFor, giftPlan, priceFor, receiptFromOrder, syncGifts, type PDoc, type PLine, type Policy, type ProductUnit, type SupplierProduct } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

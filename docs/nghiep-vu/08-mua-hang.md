@@ -28,7 +28,7 @@ Tài liệu dùng để **thuyết trình và bảo vệ** phân hệ Mua hàng.
 3. **Một bộ máy chính sách thay cho nhiều bảng cấu hình.**
    - Mọi loại chính sách cùng khuôn: *loại + phạm vi + hiệu lực + quy tắc (JSON)*.
    - Thêm loại = thêm một khuôn kiểm tra + một nhánh tính, **không thêm bảng**.
-4. **Bộ tính dùng chung, một nguồn sự thật** (`packages/contracts/src/mua-hang/engine.ts`).
+4. **Bộ tính dùng chung, một nguồn sự thật** (`modules/mua-hang/domain/src/engine.ts`).
    - Hàm thuần, chạy cả ở máy chủ (khi lưu, duyệt) lẫn trình duyệt (tổng tiền hiện ngay khi gõ), nên hai phía ra đúng một con số.
    - Máy chủ **tính lại** mọi tổng tiền, không nhận số gửi lên.
 5. **Số liệu thật lấy từ sổ.**
@@ -221,7 +221,7 @@ Mỗi dòng một sự kiện, ví dụ:
 
 | Lớp | Thư mục | Việc |
 |---|---|---|
-| Bộ máy dùng chung (máy chủ + giao diện) | `packages/contracts/src/mua-hang/` | `engine.ts` tính tiền / chính sách / hạn / kiểm tra; `ma-hang.ts` quy định mã hàng; `dat-hang.ts` đơn → phiếu nhập, Excel, min–max, mặt hàng NCC; `kich-ban.ts` 25 tình huống |
+| Bộ máy dùng chung (máy chủ + giao diện) | `modules/mua-hang/domain/src/` | `engine.ts` tính tiền / chính sách / hạn / kiểm tra; `ma-hang.ts` quy định mã hàng; `dat-hang.ts` đơn → phiếu nhập, Excel, min–max, mặt hàng NCC; `kich-ban.ts` 25 tình huống |
 | Máy chủ | `apps/api/src/phan-he/mua-hang/` | `store` (bảng), `analysis` (kiểm tra theo sổ), `posting` (ghi sổ qua lõi), `service` (lưu / duyệt), `ncc` (NCC, đính kèm, đề xuất đặt), `reports`, `demo`, `log`, `routes` |
 | Giao diện | `apps/web/src/phan-he/mua-hang/<màn>/` | mỗi màn một thư mục; `thanh-phan/` dùng chung (xem nhanh NCC, lịch sử, hướng dẫn Excel); `dinh-kem/` |
 
@@ -388,4 +388,4 @@ Luồng dữ liệu đầy đủ của phân hệ: **tồn max → phân tích �
    Ở MH22 mỗi hoá đơn có một tình trạng: chưa nhận diện mã · chưa có phiếu nhập · lệch · khớp · đã huỷ.
 4. **Lập phiếu nhập từ hoá đơn**: phiếu nhập mới điền sẵn dòng, giá chưa thuế, chiết khấu, thuế suất, số / ngày hoá đơn.
 
-Lõi tính dùng chung: `packages/contracts/src/mua-hang/hoa-don.ts`. Máy chủ: `apps/api/src/phan-he/mua-hang/hoa-don.ts` (+ `hoa-don-routes.ts`). Giao diện: `apps/web/src/phan-he/mua-hang/hoa-don/`. Phép thử: `apps/api/test/hoa-don-ncc.test.ts`. Hướng dẫn người dùng + khuôn trao đổi với dịch vụ AI: `docs/huong-dan/mua-hang-hoa-don-ncc.md`.
+Lõi tính dùng chung: `modules/mua-hang/domain/src/hoa-don.ts`. Máy chủ: `apps/api/src/phan-he/mua-hang/hoa-don.ts` (+ `hoa-don-routes.ts`). Giao diện: `apps/web/src/phan-he/mua-hang/hoa-don/`. Phép thử: `apps/api/test/hoa-don-ncc.test.ts`. Hướng dẫn người dùng + khuôn trao đổi với dịch vụ AI: `docs/huong-dan/mua-hang-hoa-don-ncc.md`.
