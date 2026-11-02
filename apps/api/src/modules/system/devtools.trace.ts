@@ -234,3 +234,94 @@ export function summarize(spans: readonly SpanView[]): TraceSummary {
     kernel: { state: kernelState, ops: kernelOps }, slowest, events, playbook, lines,
   };
 }
+
+// [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: gom trace lỗi theo module → chỗ hỏng (step / Kernel / action / span HTTP)
+
+export type PlaceKind = 'step' | 'kernel' | 'action' | 'request';
+
+export interface ModulePlace {
+  kind: PlaceKind;
+  /** "step vat.tinh-thue", "kernel voucherService.createIn", "action quy.payment-request.pay", "HTTP GET /api/v1/…". */
+  place: string;
+  count: number;
+  codes: { code: string; count: number }[];
+  /** Span CSDL lỗi bên dưới chỗ hỏng (chỉ loại câu + bảng), nếu có. */
+  via: string | null;
+  lastAt: string;
+  traceId: string;
+}
+
+export interface ModuleErrors {
+  module: string | null;
+  count: number;
+  places: ModulePlace[];
+}
+
+interface MatchedTrace {
+  traceId: string;
+  rootName: string;
+  startedAt: string;
+  spans: { name: string; attributes: Record<string, AttrValue> }[];
+}
+
+/**
+ * Chỗ hỏng của một trace từ các span khớp. Kết quả tìm kiếm của Tempo không có quan hệ cha–con nên chọn theo bậc: span step (module tự
+ * chia bước — hẹp nhất) → span Kernel → span action → span HTTP. Span CSDL (`db …`) là chi tiết bên dưới, không thành chỗ hỏng riêng.
+ */
+export function placeOf(t: MatchedTrace): { module: string | null; kind: PlaceKind; place: string; code: string | null; via: string | null } {
+  const s = (sp: MatchedTrace['spans'][number], k: string) => (typeof sp.attributes[k] === 'string' ? sp.attributes[k] as string : null);
+  const step = t.spans.find((sp) => s(sp, 'bizcity.step'));
+  const kernel = t.spans.find((sp) => s(sp, 'bizcity.layer') === 'K');
+  const action = t.spans.find((sp) => s(sp, 'bizcity.action.id'));
+  const chosen = step ?? kernel ?? action ?? t.spans[0];
+  const kind: PlaceKind = step ? 'step' : kernel ? 'kernel' : action ? 'action' : 'request';
+  const place = step ? `step ${s(step, 'bizcity.step')}` : kernel ? kernel.name : action ? `action ${s(action, 'bizcity.action.id')}` : (chosen?.name || t.rootName || '(không tên)');
+  const module = (chosen && s(chosen, 'bizcity.module')) ?? t.spans.map((sp) => s(sp, 'bizcity.module')).find(Boolean) ?? null;
+  const code = t.spans.map((sp) => s(sp, 'bizcity.error.code')).find(Boolean) ?? null;
+  const via = t.spans.find((sp) => sp.name.startsWith('db '))?.name ?? null;
+  return { module, kind, place, code, via };
+}
+
+/** Gom theo module → chỗ hỏng; nhiều trước. Trace đầu vào mới trước (Tempo trả mới trước) → `traceId` / `lastAt` là lần gần nhất. */
+export function groupModuleErrors(traces: MatchedTrace[]): ModuleErrors[] {
+  const mods = new Map<string | null, ModuleErrors>();
+  for (const t of traces) {
+    const p = placeOf(t);
+    const m = mods.get(p.module) ?? { module: p.module, count: 0, places: [] };
+    mods.set(p.module, m);
+    m.count++;
+    let place = m.places.find((x) => x.place === p.place);
+    if (!place) {
+      place = { kind: p.kind, place: p.place, count: 0, codes: [], via: p.via, lastAt: t.startedAt, traceId: t.traceId };
+      m.places.push(place);
+    }
+    place.count++;
+    if (t.startedAt > place.lastAt) { place.lastAt = t.startedAt; place.traceId = t.traceId; }
+    place.via ??= p.via;
+    if (p.code) {
+      const c = place.codes.find((x) => x.code === p.code);
+      if (c) c.count++; else place.codes.push({ code: p.code, count: 1 });
+    }
+  }
+  const out = [...mods.values()].sort((a, b) => b.count - a.count);
+  for (const m of out) {
+    m.places.sort((a, b) => b.count - a.count);
+    for (const p of m.places) p.codes.sort((a, b) => b.count - a.count);
+  }
+  return out;
+}
+
+/** Câu kết luận của màn Lỗi theo module (U1, U7). */
+export function moduleErrorLines(groups: ModuleErrors[], o: { outcome: 'error' | 'rejected'; window: string; truncated: boolean }): string[] {
+  const what = o.outcome === 'error' ? 'lỗi kỹ thuật' : 'bị từ chối đúng luật';
+  const total = groups.reduce((n, g) => n + g.count, 0);
+  if (!total) return [`Không có trace ${what} nào trong ${o.window}.`];
+  const top = groups[0]!;
+  const place = top.places[0]!;
+  const lines = [`${total} trace ${what} trong ${o.window}${o.truncated ? ' (đọc 50 trace mới nhất — có thể còn nữa)' : ''}.`];
+  lines.push(`Nhiều nhất: module ${top.module ?? '(không rõ)'} — ${top.count} trace; chỗ hỏng hay gặp nhất ${place.place} (${place.count})${place.codes[0] ? `, mã ${place.codes[0].code}` : ''}.`);
+  if (o.outcome === 'rejected') lines.push('Từ chối đúng luật — không phải sự cố. Việc của dev là tìm vì sao dữ liệu sai tới được đây (Sổ tay TH-04, TH-01).');
+  else if (place.kind === 'step' || (place.kind === 'action' && top.module && top.module !== 'core')) lines.push(`Lỗi trong mã của module ${top.module} — sửa trong thư mục của module (Sổ tay TH-11).`);
+  else lines.push('Xem Sổ tay TH-02 (lỗi 5xx tăng).');
+  return lines;
+}

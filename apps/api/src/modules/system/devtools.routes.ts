@@ -10,6 +10,7 @@
  *   GET /api/v1/system/devtools/logs                   core.devtools.logs      nhật ký mới nhất (≤ 24 giờ, ≤ 200 dòng) theo bộ lọc     (W3)
  *   GET /api/v1/system/devtools/traces                 core.devtools.traces    tìm trace theo kết quả / module / thời gian (≤ 7 ngày)   (W3)
  *   GET /api/v1/system/devtools/summary                core.devtools.summary   câu kết luận + ô lỗi, chậm, trace lỗi, sự kiện, chẩn đoán (W3)
+ *   GET /api/v1/system/devtools/module-errors          core.devtools.module-errors  trace lỗi gom theo module → chỗ hỏng (W4)
  *
  * Bất biến (00-MASTER-PLAN §3): chỉ đọc; quyền devtools:read (chủ đơn vị + vai trò developer; không khoá API, không AI, không MCP);
  * bộ lọc đơn vị do máy chủ gắn từ phiên; không nhận truy vấn tự do; trace của đơn vị khác → 404 giống hệt "không có" (D019-5);
@@ -25,8 +26,8 @@ import { currentRequest } from '@bizcity/platform/core/request-context';
 import { TRACE_ATTRIBUTES } from '@bizcity/platform/core/tracing';
 import { errorKind } from '@bizcity/platform/core/errors';
 import { eventStatus } from '@bizcity/platform/core/events';
-import { getJson, LIMITS, LOGQL, logWindow, ping, queryLogMetric, queryLogs, searchTraces, takeQuota, traceSearchQuery, windowRange, type SourceState } from './devtools.sources.js';
-import { ownsTrace, parseTempoTrace, summarize, viewTrace } from './devtools.trace.js';
+import { getJson, LIMITS, LOGQL, logWindow, moduleErrorsQuery, ping, queryLogMetric, queryLogs, searchSpans, searchTraces, takeQuota, traceSearchQuery, windowRange, type SourceState } from './devtools.sources.js';
+import { groupModuleErrors, moduleErrorLines, ownsTrace, parseTempoTrace, summarize, viewTrace } from './devtools.trace.js';
 
 const TRACE_ID = z.string().trim().toLowerCase().regex(/^[0-9a-f]{32}$/, 'traceId gồm 32 ký tự hex');
 /** Khuôn mã yêu cầu R-OBS-1 (app.ts genReqId / X-Request-Id hợp lệ): không có ngoặc kép, khoảng trắng, dấu ngoặc nhọn. */
@@ -346,7 +347,44 @@ const summaryAction = defineAction({
   },
 });
 
-export const DEVTOOLS_ACTIONS = [statusAction, traceAction, requestAction, evidenceAction, logsAction, tracesAction, summaryAction];
+// [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: core.devtools.module-errors cho màn Lỗi theo module (DEV04)
+
+const WINDOW_LABEL = { '1h': '1 giờ qua', '6h': '6 giờ qua', '24h': '24 giờ qua', '7d': '7 ngày qua' } as const;
+
+const moduleErrorsAction = defineAction({
+  id: 'core.devtools.module-errors', title: 'Bàn điều tra: lỗi theo module', tags: ['Bàn điều tra'],
+  description: 'Trace của đơn vị có kết quả `error` (lỗi kỹ thuật, mặc định) hoặc `rejected` (từ chối đúng luật) trong khung ≤ 7 ngày, ≤ 50 trace mới nhất, gom theo module → chỗ hỏng (step / Kernel / action / yêu cầu) kèm mã lỗi và trace gần nhất. Mẫu TraceQL đóng, đơn vị do máy chủ gắn.',
+  permission: 'devtools:read', effect: 'read', idempotency: 'none',
+  input: z.object({
+    window: z.enum(['1h', '6h', '24h', '7d']).default('24h'),
+    outcome: z.enum(['error', 'rejected']).default('error'),
+  }),
+  output: z.object({
+    window: z.string(), outcome: z.enum(['error', 'rejected']), traces: z.number(), truncated: z.boolean(), lines: z.array(z.string()),
+    modules: z.array(z.object({
+      module: z.string().nullable(), count: z.number(),
+      places: z.array(z.object({
+        kind: z.enum(['step', 'kernel', 'action', 'request']), place: z.string(), count: z.number(),
+        codes: z.array(z.object({ code: z.string(), count: z.number() })), via: z.string().nullable(), lastAt: z.string(), traceId: z.string(),
+      })),
+    })),
+  }),
+  errors: ['NOT_READY', 'RATE_LIMITED'],
+  expose: { http: { method: 'GET', path: '/api/v1/system/devtools/module-errors' }, mcp: false, ai: 'deny' },
+  handler: async (ctx, input) => {
+    takeQuota(ctx.actor.id);
+    const hits = await searchSpans(moduleErrorsQuery(ctx.tenant.id, input.outcome), windowRange(input.window), LIMITS.traces, TRACE_ATTRIBUTES);
+    const modules = groupModuleErrors(hits);
+    const truncated = hits.length >= LIMITS.traces;
+    noteSize(hits.length);
+    return {
+      window: input.window, outcome: input.outcome, traces: hits.length, truncated, modules,
+      lines: moduleErrorLines(modules, { outcome: input.outcome, window: WINDOW_LABEL[input.window], truncated }),
+    };
+  },
+});
+
+export const DEVTOOLS_ACTIONS = [statusAction, traceAction, requestAction, evidenceAction, logsAction, tracesAction, summaryAction, moduleErrorsAction];
 
 export async function devtoolsRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, DEVTOOLS_ACTIONS);

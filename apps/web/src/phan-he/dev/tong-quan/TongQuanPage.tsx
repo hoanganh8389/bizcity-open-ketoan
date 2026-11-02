@@ -3,8 +3,8 @@
  * TỔNG QUAN (DEV01): core.devtools.summary. Câu kết luận trước (U1); sáu ô, ô nào cũng dẫn sang màn chi tiết; bảng trace có kết
  * quả khác ok gần đây (mở Tra mã). Nguồn nào chưa bật thì ô đó nói rõ (U5) — phần đọc CSDL (sự kiện, tự chẩn đoán) vẫn có.
  */
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { devParams } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { errorText } from '@/lib/api';
@@ -12,7 +12,10 @@ import { useSummary, type DevSummary } from '../api';
 import { Answer, CopyCode, DevBanner, DevGuard, OutcomeTag, SourceOff, Src, when } from '../ui';
 
 export function TongQuanPage() {
-  const [win, setWin] = useState<'1h' | '24h'>('1h');
+  // [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: khoảng trên địa chỉ (?window=24h) — Kịch bản TH-03, TH-08 mở 24 giờ
+  const [params, setParams] = useSearchParams();
+  const win = devParams('/dev/tong-quan', params).window as '1h' | '24h';
+  const setWin = (w: '1h' | '24h') => setParams(w === '1h' ? {} : { window: w });
   const q = useSummary(win);
   return (
     <DevGuard>

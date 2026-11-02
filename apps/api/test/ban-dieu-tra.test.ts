@@ -98,6 +98,8 @@ beforeAll(async () => {
     if (m) return traces.has(m[1]!) ? send(200, traces.get(m[1]!)) : send(404, 'trace not found');
     if (url.pathname === '/api/search') {
       tempoQueries.push({ q: url.searchParams.get('q') ?? '', limit: url.searchParams.get('limit') ?? '', start: url.searchParams.get('start') ?? '', end: url.searchParams.get('end') ?? '' });
+      // Như Tempo 2.6.1 (max_search_duration 168h): khoảng dài hơn 168 giờ dù 1 giây → 400 (lỗi thật đo được ở W4, 2026-11-02).
+      if (Number(url.searchParams.get('end')) - Number(url.searchParams.get('start')) > 7 * 86400) return send(400, 'range specified by start and end exceeds 168h0m0s');
       return send(200, { traces: tempoSearch, metrics: {} });
     }
     if (url.pathname === '/loki/api/v1/query') {
@@ -327,7 +329,7 @@ describe('Bàn điều tra — Nhật ký, tìm trace, Tổng quan (PHASE-019 W3
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     expect(tempoQueries[0]!.q).toBe(`{ span.bizcity.tenant = "${tenantA}" && span.bizcity.outcome != "ok" && span.bizcity.module = "quy" && duration > 1000ms } | select(span.bizcity.module, span.bizcity.action.id, span.bizcity.error.code, span.bizcity.outcome, span.http.route, span.http.response.status_code)`);
     expect(tempoQueries[0]!.limit).toBe('5');
-    expect(Number(tempoQueries[0]!.end) - Number(tempoQueries[0]!.start)).toBeLessThanOrEqual(7 * 86400 + 1);
+    expect(Number(tempoQueries[0]!.end) - Number(tempoQueries[0]!.start)).toBe(7 * 86400);
     expect(r.body.data.traces).toEqual([{
       traceId: '0904127dd2944f22c086c236c5ceb5af', rootName: 'HTTP POST /api/v1/payment-requests/:id/pay', startedAt: new Date(1_793_543_476_669).toISOString(), durationMs: 12,
       attributes: { 'bizcity.outcome': 'rejected', 'bizcity.module': 'quy', 'http.response.status_code': 409 },
@@ -379,5 +381,70 @@ describe('Bàn điều tra — Nhật ký, tìm trace, Tổng quan (PHASE-019 W3
     expect(d.level).toBe('bad');
     expect(d.lines).toContain('1 trace lỗi kỹ thuật gần đây — module vat (theo Tempo; nhật ký chưa ghi nhận).');
     expect(d.lines).toContain('1 trace bị từ chối đúng luật gần đây — module quy (theo Tempo) — không phải sự cố.');
+  });
+});
+
+// [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Lỗi theo module; màn Ghi sổ / Sự kiện / Toàn vẹn đọc API sẵn có bằng vai trò developer
+describe('Bàn điều tra — Lỗi theo module, màn đọc API sẵn có (PHASE-019 W4)', () => {
+  const sp = (spanID: string, name: string, a: Record<string, string | number>) => ({ spanID, name, attributes: attrs(a) });
+
+  it('module-errors: mẫu TraceQL đóng (>> và ||); gom module → chỗ hỏng theo bậc step → action → yêu cầu; không lộ đơn vị / trường ngoài danh sách', async () => {
+    tempoSearch = [
+      // Trace mới nhất trước (như Tempo). Lỗi ở bước của module vat: span step không mang đơn vị, span db bên dưới.
+      { traceID: '1'.repeat(32), rootTraceName: 'HTTP POST /api/v1/vat/declarations', startTimeUnixNano: '1793600000000000000', durationMs: 40,
+        spanSets: [{ spans: [
+          sp('a1', 'HTTP POST /api/v1/vat/declarations', { 'bizcity.tenant': tenantA, 'bizcity.outcome': 'error', 'bizcity.module': 'vat' }),
+          sp('a2', 'action vat.declaration.create', { 'bizcity.tenant': tenantA, 'bizcity.outcome': 'error', 'bizcity.module': 'vat', 'bizcity.action.id': 'vat.declaration.create', 'bizcity.error.code': 'INTERNAL_ERROR', so_tien: 1234567 }),
+          sp('a3', 'step vat.tinh-thue', { 'bizcity.outcome': 'error', 'bizcity.module': 'vat', 'bizcity.step': 'vat.tinh-thue' }),
+          sp('a4', 'db insert vat_lines', { 'bizcity.outcome': 'error', 'bizcity.module': 'vat' }),
+        ] }] },
+      { traceID: '2'.repeat(32), rootTraceName: 'HTTP POST /api/v1/vat/declarations', startTimeUnixNano: '1793590000000000000', durationMs: 30,
+        spanSets: [{ spans: [sp('b2', 'step vat.tinh-thue', { 'bizcity.outcome': 'error', 'bizcity.module': 'vat', 'bizcity.step': 'vat.tinh-thue' })] }] },
+      // Route không qua action: chỉ span HTTP mang đơn vị.
+      { traceID: '3'.repeat(32), rootTraceName: 'HTTP GET /api/v1/reports/trial-balance', startTimeUnixNano: '1793580000000000000', durationMs: 900,
+        spanSets: [{ spans: [sp('c1', 'HTTP GET /api/v1/reports/trial-balance', { 'bizcity.tenant': tenantA, 'bizcity.outcome': 'error', 'bizcity.module': 'core' })] }] },
+    ];
+    tempoQueries.length = 0;
+    const r = await call(dev, 'GET', '/api/v1/system/devtools/module-errors?window=7d');
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    const t = `span.bizcity.tenant = "${tenantA}"`;
+    expect(tempoQueries[0]!.q).toBe(`({ ${t} } >> { span.bizcity.outcome = "error" }) || { ${t} && span.bizcity.outcome = "error" } | select(name, span.bizcity.module, span.bizcity.action.id, span.bizcity.step, span.bizcity.layer, span.bizcity.error.code)`);
+    expect(Number(tempoQueries[0]!.end) - Number(tempoQueries[0]!.start)).toBe(7 * 86400);
+    const d = r.body.data;
+    expect(d).toMatchObject({ window: '7d', outcome: 'error', traces: 3, truncated: false });
+    expect(d.modules.map((m: { module: string; count: number }) => [m.module, m.count])).toEqual([['vat', 2], ['core', 1]]);
+    expect(d.modules[0].places).toEqual([{
+      kind: 'step', place: 'step vat.tinh-thue', count: 2, codes: [{ code: 'INTERNAL_ERROR', count: 1 }], via: 'db insert vat_lines',
+      lastAt: new Date(1_793_600_000_000).toISOString(), traceId: '1'.repeat(32),
+    }]);
+    expect(d.modules[1].places[0]).toMatchObject({ kind: 'request', place: 'HTTP GET /api/v1/reports/trial-balance', count: 1 });
+    expect(d.lines).toEqual([
+      '3 trace lỗi kỹ thuật trong 7 ngày qua.',
+      'Nhiều nhất: module vat — 2 trace; chỗ hỏng hay gặp nhất step vat.tinh-thue (2), mã INTERNAL_ERROR.',
+      'Lỗi trong mã của module vat — sửa trong thư mục của module (Sổ tay TH-11).',
+    ]);
+    const text = JSON.stringify(d);
+    for (const secret of [tenantA, 'so_tien', '1234567']) expect(text).not.toContain(secret);
+
+    // Từ chối đúng luật: mẫu đổi outcome; không có trace → câu "không có".
+    tempoSearch = [];
+    const rej = await call(dev, 'GET', '/api/v1/system/devtools/module-errors?outcome=rejected&window=1h');
+    expect(tempoQueries.at(-1)!.q).toContain('span.bizcity.outcome = "rejected"');
+    expect(rej.body.data.lines).toEqual(['Không có trace bị từ chối đúng luật nào trong 1 giờ qua.']);
+
+    for (const q of ['window=30d', 'outcome=ok', 'outcome=failed']) expect((await call(dev, 'GET', `/api/v1/system/devtools/module-errors?${q}`)).status, q).toBe(400);
+    expect((await call(viewer, 'GET', '/api/v1/system/devtools/module-errors')).status).toBe(403);
+    env.DEVTOOLS_TEMPO_URL = '';
+    const off = await call(dev, 'GET', '/api/v1/system/devtools/module-errors');
+    expect(off.status).toBe(503);
+    expect(off.body.error.details).toMatchObject({ backend: 'tempo', reason: 'off' });
+  });
+
+  it('Ghi sổ, Sự kiện, Toàn vẹn: vai trò developer đọc được API sẵn có mà các màn dùng; không ghi được', async () => {
+    for (const path of ['/api/v1/posting-log?from=2026-10-27&to=2026-11-02&action=error','/api/v1/documents?status=error&pageSize=100', '/api/v1/system/events', '/api/v1/system/diagnostics/runs?limit=20']) {
+      expect((await call(dev, 'GET', path)).status, path).toBe(200);
+    }
+    // Phát lại sự kiện cần settings:write — không có ở developer (màn Sự kiện không có nút ghi, U8).
+    expect((await call(dev, 'POST', '/api/v1/system/events/replay', { consumer: 'x.y', from: new Date().toISOString() }, { 'idempotency-key': 'w4-replay' })).status).toBe(403);
   });
 });

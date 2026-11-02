@@ -212,36 +212,83 @@ export interface TraceHit {
   attributes: Record<string, string | number | boolean>;
 }
 
-/** Tempo /api/search → danh sách trace. Tempo bỏ số 0 đầu của traceID → đệm trái đủ 32 ký tự (20-KIEN-TRUC §2.5). */
-export async function searchTraces(query: string, range: { from: Date; to: Date }, limit: number, allowed: ReadonlySet<string>): Promise<TraceHit[]> {
+type Attr = string | number | boolean;
+type SearchSpan = { spanID?: string; name?: string; attributes?: { key: string; value: Record<string, unknown> }[] };
+
+/** Span khớp của một trace trong kết quả /api/search: chỉ thuộc tính được phép, bỏ bizcity.tenant; cùng spanID (spanSet và spanSets) gộp một. */
+function matchedSpans(t: Record<string, unknown>, allowed: ReadonlySet<string>): { name: string; attributes: Record<string, Attr> }[] {
+  const sets = (Array.isArray(t.spanSets) ? t.spanSets : t.spanSet ? [t.spanSet] : []) as { spans?: SearchSpan[] }[];
+  const seen = new Set<string>();
+  const out: { name: string; attributes: Record<string, Attr> }[] = [];
+  for (const set of sets) for (const sp of set.spans ?? []) {
+    if (sp.spanID && seen.has(sp.spanID)) continue;
+    if (sp.spanID) seen.add(sp.spanID);
+    const attributes: Record<string, Attr> = {};
+    for (const a of sp.attributes ?? []) {
+      if (!allowed.has(a.key) || a.key === 'bizcity.tenant') continue;
+      const v = a.value ?? {};
+      const val = typeof v.stringValue === 'string' ? v.stringValue : v.intValue !== undefined ? Number(v.intValue) : typeof v.boolValue === 'boolean' ? v.boolValue : undefined;
+      if (val !== undefined) attributes[a.key] = val;
+    }
+    out.push({ name: typeof sp.name === 'string' ? sp.name : '', attributes });
+  }
+  return out;
+}
+
+/**
+ * Tempo /api/search → trace thô đã kiểm khuôn traceID. Hai mốc cùng làm tròn LÊN giây: khoảng giữ đúng bằng khung (7 ngày = 168 giờ).
+ * Làm tròn start xuống + end lên thành 168 giờ 1 giây → Tempo trả 400 "exceeds 168h0m0s" (đo trên Tempo 2.6.1, 2026-11-02).
+ */
+async function search(query: string, range: { from: Date; to: Date }, limit: number, spss: number): Promise<Record<string, unknown>[]> {
   const { body } = await getJson('tempo', '/api/search', {
     q: query,
-    start: String(Math.floor(range.from.getTime() / 1000)),
+    start: String(Math.ceil(range.from.getTime() / 1000)),
     end: String(Math.ceil(range.to.getTime() / 1000)),
     limit: String(Math.min(limit, LIMITS.traces)),
-    spss: '3',
+    spss: String(spss),
   });
   const traces = (body as { traces?: unknown } | null)?.traces;
   if (!Array.isArray(traces)) throw unavailable('tempo', 'bad-response');
-  return (traces as Record<string, unknown>[])
-    .filter((t) => typeof t.traceID === 'string' && /^[0-9a-f]{1,32}$/i.test(t.traceID))
-    .map((t) => {
-      const attributes: Record<string, string | number | boolean> = {};
-      const sets = (Array.isArray(t.spanSets) ? t.spanSets : t.spanSet ? [t.spanSet] : []) as { spans?: { attributes?: { key: string; value: Record<string, unknown> }[] }[] }[];
-      for (const set of sets) for (const sp of set.spans ?? []) for (const a of sp.attributes ?? []) {
-        if (!allowed.has(a.key) || a.key === 'bizcity.tenant' || attributes[a.key] !== undefined) continue;
-        const v = a.value ?? {};
-        const val = typeof v.stringValue === 'string' ? v.stringValue : v.intValue !== undefined ? Number(v.intValue) : typeof v.boolValue === 'boolean' ? v.boolValue : undefined;
-        if (val !== undefined) attributes[a.key] = val;
-      }
-      return {
-        traceId: (t.traceID as string).toLowerCase().padStart(32, '0'),
-        rootName: typeof t.rootTraceName === 'string' ? t.rootTraceName : '',
-        startedAt: new Date(Number(BigInt(String(t.startTimeUnixNano ?? '0')) / 1_000_000n)).toISOString(),
-        durationMs: typeof t.durationMs === 'number' ? t.durationMs : 0,
-        attributes,
-      };
-    });
+  return (traces as Record<string, unknown>[]).filter((t) => typeof t.traceID === 'string' && /^[0-9a-f]{1,32}$/i.test(t.traceID));
+}
+
+/** Phần chung của một trace tìm được. Tempo bỏ số 0 đầu của traceID → đệm trái đủ 32 ký tự (20-KIEN-TRUC §2.5). */
+const hitHead = (t: Record<string, unknown>) => ({
+  traceId: (t.traceID as string).toLowerCase().padStart(32, '0'),
+  rootName: typeof t.rootTraceName === 'string' ? t.rootTraceName : '',
+  startedAt: new Date(Number(BigInt(String(t.startTimeUnixNano ?? '0')) / 1_000_000n)).toISOString(),
+  durationMs: typeof t.durationMs === 'number' ? t.durationMs : 0,
+});
+
+/** Danh sách trace; thuộc tính của các span khớp gộp lại (span đầu thắng). */
+export async function searchTraces(query: string, range: { from: Date; to: Date }, limit: number, allowed: ReadonlySet<string>): Promise<TraceHit[]> {
+  return (await search(query, range, limit, 3)).map((t) => {
+    const attributes: Record<string, Attr> = {};
+    for (const sp of matchedSpans(t, allowed)) for (const [k, v] of Object.entries(sp.attributes)) if (attributes[k] === undefined) attributes[k] = v;
+    return { ...hitHead(t), attributes };
+  });
+}
+
+// [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Lỗi theo module — từng span khớp của trace, kể cả span không mang đơn vị (step, db)
+
+export interface SpanHit extends Omit<TraceHit, 'attributes'> {
+  spans: { name: string; attributes: Record<string, Attr> }[];
+}
+
+/**
+ * Mẫu TraceQL đóng cho Lỗi theo module: span có kết quả `outcome` là CON CHÁU của span mang đơn vị (`>>`: Tempo trả span vế phải,
+ * gồm cả span step / db không mang bizcity.tenant), hợp (`||`) với chính span mang đơn vị (route không qua action chỉ có span HTTP).
+ * Đã chạy đúng trên Tempo 2.6.1 (2026-11-02).
+ */
+export function moduleErrorsQuery(tenant: string, outcome: 'error' | 'rejected'): string {
+  const t = `span.bizcity.tenant = ${quote(tenant)}`;
+  const o = `span.bizcity.outcome = ${quote(outcome)}`;
+  return `({ ${t} } >> { ${o} }) || { ${t} && ${o} } | select(name, span.bizcity.module, span.bizcity.action.id, span.bizcity.step, span.bizcity.layer, span.bizcity.error.code)`;
+}
+
+/** Trace kèm từng span khớp (≤ 10 span mỗi trace). */
+export async function searchSpans(query: string, range: { from: Date; to: Date }, limit: number, allowed: ReadonlySet<string>): Promise<SpanHit[]> {
+  return (await search(query, range, limit, 10)).map((t) => ({ ...hitHead(t), spans: matchedSpans(t, allowed) }));
 }
 
 /** Khung thời gian theo tên: Nhật ký ≤ 24 giờ, trace ≤ 7 ngày (D019-4). */

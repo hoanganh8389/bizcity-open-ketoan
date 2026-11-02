@@ -107,6 +107,8 @@ function TraceBody({ t, tab: tab0, onTab, logsOverride }: { t: TraceView; tab: T
           <li><OutcomeTag outcome={s.outcome} /> {when(t.startedAt)} · {Math.round(t.durationMs * 10) / 10} ms · trace <CopyCode value={t.traceId} short={8} /></li>
           {s.lines.map((l, i) => <li key={i}>{l}</li>)}
         </ul>
+        {/* [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: tình huống khớp → màn Kịch bản (U7) */}
+        {s.playbook && <Link to={`/dev/kich-ban?th=${s.playbook}`}>Làm gì tiếp — kịch bản {s.playbook} →</Link>}
       </Answer>
       <div className="dev-cols">
         <div className="card">

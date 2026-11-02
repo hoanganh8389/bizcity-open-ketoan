@@ -9,28 +9,21 @@ import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { errorText } from '@/lib/api';
+import { devParams, nhatKyFilter } from '@ketoan/contracts';
 import { TRACE_RE, useLogs, type LogQuery } from '../api';
 import { CopyCode, DevBanner, DevGuard, Src } from '../ui';
 import { LogTable } from '../tra-ma/TraMaPage';
 
-/** Ô lọc chung → đúng một bộ lọc của API; sai khuôn → null (báo người dùng, không gửi). */
-export function parseFilter(q: string): Pick<LogQuery, 'errCode' | 'evt' | 'route'> | null {
-  const v = q.trim();
-  if (!v) return {};
-  if (v.startsWith('/')) return /^\/[A-Za-z0-9/_:.-]{0,200}$/.test(v) ? { route: v } : null;
-  if (/^[A-Z][A-Z0-9_]{1,63}$/.test(v)) return { errCode: v };
-  if (/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return { evt: v };
-  return null;
-}
-
 export function NhatKyPage() {
   const [params, setParams] = useSearchParams();
-  const window_ = (['1h', '6h', '24h'].includes(params.get('window') ?? '') ? params.get('window') : '1h') as LogQuery['window'];
-  const level = params.get('level') ?? '';
+  // [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: bộ lọc đọc bằng devParams / nhatKyFilter chung (@ketoan/contracts) — Kịch bản điền sẵn đúng khuôn này
+  const f = devParams('/dev/nhat-ky', params);
+  const window_ = f.window as LogQuery['window'];
+  const level = f.level ?? '';
   const q = params.get('q') ?? '';
   const traceId = params.get('traceId') ?? '';
   const [text, setText] = useState(q);
-  const filter = parseFilter(q);
+  const filter = nhatKyFilter(q);
   const query: LogQuery | null = filter && (!traceId || TRACE_RE.test(traceId))
     ? { window: window_, ...(level ? { level } : {}), ...filter, ...(traceId ? { traceId: traceId.toLowerCase() } : {}) }
     : null;

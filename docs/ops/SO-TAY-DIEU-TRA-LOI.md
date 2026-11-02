@@ -103,6 +103,8 @@ docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose
 
 Mọi tình huống kết thúc giống nhau: **viết test tái hiện trước khi sửa** (§4).
 
+Trong app: màn **Nhà phát triển → Kịch bản** (DEV08) đọc chính tài liệu này — mỗi `### TH-xx · Tên` thành một thẻ có nút mở màn với bộ lọc điền sẵn (bảng `KICH_BAN`, `packages/contracts/src/ban-dieu-tra.ts`). Thêm tình huống mới thì thêm kịch bản ở đó — ca T019-5 báo thiếu. <!-- [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Sổ tay thành màn Kịch bản. -->
+
 ## 2. Các tình huống
 
 ### TH-01 · Người dùng báo lỗi, có mã trong thông báo

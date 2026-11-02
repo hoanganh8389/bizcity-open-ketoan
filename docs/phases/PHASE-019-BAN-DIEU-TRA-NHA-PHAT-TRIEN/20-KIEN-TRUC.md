@@ -147,6 +147,14 @@ Còn lại: `links.grafana` (chỉ chế độ Vận hành) dựng link Explore 
 - Web: phân hệ `apps/web/src/phan-he/dev/` (DEV01 Tổng quan, DEV02 Tra mã, DEV03 Nhật ký); phía web luôn coi `dev` là bật (route API thuộc lõi), menu gắn `devtools:read`; khay Mã tra cứu có nút **Bàn điều tra**. Hướng dẫn trong app: `docs/huong-dan/ban-dieu-tra.md`.
 - Đo khi chạy thật: `/ready` của Tempo / Loki trả 503 từng lúc ("waiting for 15s after being ready") dù truy vấn vẫn chạy → `ping` hỏi `/api/echo`, `/loki/api/v1/status/buildinfo`. Câu kết luận Tổng quan lấy thêm trace khác ok của Tempo khi log không ghi nhận (không nói "ổn" khi bảng dưới có lỗi).
 
+### 2.7 Đã làm (W4, 2026-11-02)
+<!-- [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: module-errors, màn DEV04–DEV08, Kịch bản → màn; điều đo được trên Tempo thật. -->
+
+- API `core.devtools.module-errors` (`1h | 6h | 24h | 7d`, `outcome = error | rejected`): mẫu đóng `({ span.bizcity.tenant = T } >> { span.bizcity.outcome = O }) || { span.bizcity.tenant = T && span.bizcity.outcome = O } | select(name, …)`. Vế `>>` lấy cả span step / db **không mang đơn vị** nhưng là con cháu của span mang đơn vị (đúng D019-5: chỉ trace có span của đơn vị mới khớp); vế `||` giữ route không qua action. Kết quả tìm kiếm không có quan hệ cha–con nên chỗ hỏng chọn theo bậc step → Kernel → action → yêu cầu (`devtools.trace.ts placeOf`); span `db …` là chi tiết bên dưới.
+- Màn DEV04 Lỗi theo module, DEV05 Ghi sổ (`/api/v1/posting-log?action=error`, `/api/v1/documents?status=pending|error`), DEV06 Sự kiện (`/api/v1/system/events`), DEV07 Toàn vẹn (`/api/v1/system/diagnostics/runs*`; nút Chạy lại gọi `GET /system/diagnostics` — giao dịch READ ONLY, chỉ lưu thêm một lượt), DEV08 Kịch bản (Sổ tay đọc lúc dựng). Ba màn đọc API sẵn có không tính vào hạn 30 / phút.
+- Màn đọc bộ lọc từ địa chỉ bằng `devParams` chung (`@ketoan/contracts ban-dieu-tra.ts`): giá trị sai khuôn về mặc định, không gửi lên API. Bảng `KICH_BAN` (TH → màn + bộ lọc) cùng chỗ; ca T019-5 đối chiếu với Sổ tay, `routes.tsx`, `menu.ts`.
+- **Đo trên Tempo thật:** `/api/search` từ chối khoảng dài hơn `max_search_duration` (168 giờ) dù 1 giây. Làm tròn `start` xuống + `end` lên biến khung 7 ngày thành 168 giờ 1 giây → 400 — lỗi có từ W3 (`traces?window=7d`). Sửa: cả hai mốc làm tròn lên; Tempo giả trong test chặn như bản thật.
+
 ## 3. Bảo mật và cô lập đơn vị
 
 ### 3.1 Mẫu truy vấn đóng

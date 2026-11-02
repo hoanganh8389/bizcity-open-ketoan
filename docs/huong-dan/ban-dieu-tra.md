@@ -11,6 +11,11 @@ Dành cho người viết phân hệ, tích hợp, add-in. Ai thấy: **chủ đ
 | Chính mình vừa gặp lỗi | trên khay Mã tra cứu bấm **Bàn điều tra** |
 | Không có mã, chỉ nghe "hôm nay hay lỗi" | **Tổng quan** (DEV01) |
 | Muốn xem log theo mã lỗi / route | **Nhật ký** (DEV03) |
+| Muốn biết module / bước nào hỏng nhiều nhất | **Lỗi theo module** (DEV04) |
+| Chứng từ không vào sổ, bị từ chối | **Ghi sổ** (DEV05) |
+| Module nhận sự kiện không cập nhật | **Sự kiện** (DEV06) |
+| Nghi sổ sai | **Toàn vẹn** (DEV07) |
+| Có triệu chứng, chưa biết bắt đầu ở đâu | **Kịch bản** (DEV08) |
 
 ## Tra mã (DEV02)
 
@@ -28,9 +33,33 @@ Câu kết luận ở đầu, rồi sáu ô: lỗi kỹ thuật, từ chối đ�
 
 Chọn khoảng (tối đa 24 giờ), mức, và **một** ô lọc: mã lỗi VIẾT_HOA (`PERIOD_LOCKED`), sự việc chữ thường (`bizcity.ledger.posted`) hoặc route bắt đầu bằng `/` (`/api/v1/vouchers`). Mỗi lần 200 dòng mới nhất. Bộ lọc nằm trên địa chỉ trang — chép địa chỉ gửi cho người khác là họ thấy đúng bộ lọc đó (nếu cùng đơn vị).
 
+<!-- [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: hướng dẫn DEV04–DEV08. -->
+
+## Lỗi theo module (DEV04)
+
+Chọn **Lỗi kỹ thuật** hoặc **Từ chối đúng luật** và khoảng (tối đa 7 ngày). Mỗi module một khối: **chỗ hỏng** (bước `step …` module tự chia, `kernel …`, `action …`, hoặc cả yêu cầu khi route không qua action), số trace, mã lỗi, câu CSDL lỗi bên dưới nếu có, trace gần nhất (bấm để mở Tra mã). Đọc 50 trace mới nhất mỗi lần. Module chia bước bằng `ctx.trace.step` thì chỗ hỏng chỉ thẳng tới bước.
+
+## Ghi sổ (DEV05)
+
+- **Định khoản lỗi**: các lần Kernel từ chối định khoản (hôm nay / 7 / 30 ngày) kèm lý do — sổ không đổi.
+- **Chờ / lỗi chưa vào sổ**: chứng từ đang chờ hoặc lỗi định khoản, chờ lâu nhất trước.
+- Định khoản lại làm ở màn **Định khoản tự động** (ACC14) — có link; Bàn điều tra không có nút ghi.
+
+## Sự kiện (DEV06)
+
+Mỗi nơi nhận sự kiện: module, loại sự kiện nghe, số việc chờ / xong / chết, việc chờ lâu nhất. Có việc chết → sửa subscriber của module, rồi người có quyền cấu hình phát lại cho đúng nơi nhận đó.
+
+## Toàn vẹn (DEV07)
+
+Lượt tự chẩn đoán sổ gần nhất: từng mã kiểm, đạt / lỗi, số đã xét, mẫu (chỉ khoá chứng từ / số bút toán), cách sửa. **Chạy lại** chỉ đọc sổ (lưu thêm một lượt chẩn đoán). Có mã kiểm báo lỗi là sự cố nghiêm trọng: báo Nhóm Lõi, không tự sửa sổ.
+
+## Kịch bản (DEV08)
+
+Các tình huống của Sổ tay điều tra lỗi thành thẻ: triệu chứng, nút mở thẳng màn cần xem với bộ lọc điền sẵn, phần Bàn điều tra chưa trả lời được (số đo toàn hệ — người vận hành xem trên Grafana), và toàn văn các bước khi bấm **Xem đủ**. Tra mã nhận ra tình huống thì có link **Làm gì tiếp** tới đúng thẻ.
+
 ## Giới hạn
 
-- Tối đa 30 lần tra mỗi phút mỗi người.
+- Tối đa 30 lần tra mỗi phút mỗi người (Tổng quan, Tra mã, Nhật ký, Lỗi theo module; Ghi sổ, Sự kiện, Toàn vẹn đọc cơ sở dữ liệu, không tính).
 - Không có ô gõ truy vấn tự do; không thấy thông điệp / ngăn xếp lỗi chi tiết (có thể chứa dữ liệu) — cần thì gửi mã cho người vận hành.
 - Bộ giám sát (Tempo, Loki) chưa bật: màn báo "chưa bật"; phần đọc từ cơ sở dữ liệu vẫn chạy.
 

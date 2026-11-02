@@ -145,3 +145,99 @@ export function useLogs(q: LogQuery | null) {
 export function useSummary(window: '1h' | '24h') {
   return useQuery({ queryKey: ['devtools', 'summary', window], queryFn: () => api.get<DevSummary>(`${BASE}/summary`, { window }), staleTime: 30_000, ...OPTS });
 }
+
+// [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Lỗi theo module (API trung gian) + Ghi sổ, Sự kiện, Toàn vẹn (API sẵn có)
+
+export interface ModulePlace {
+  kind: 'step' | 'kernel' | 'action' | 'request';
+  place: string;
+  count: number;
+  codes: { code: string; count: number }[];
+  via: string | null;
+  lastAt: string;
+  traceId: string;
+}
+
+export interface ModuleErrorsView {
+  window: string;
+  outcome: 'error' | 'rejected';
+  traces: number;
+  truncated: boolean;
+  lines: string[];
+  modules: { module: string | null; count: number; places: ModulePlace[] }[];
+}
+
+export function useModuleErrors(window: string, outcome: string) {
+  return useQuery({ queryKey: ['devtools', 'module-errors', window, outcome], queryFn: () => api.get<ModuleErrorsView>(`${BASE}/module-errors`, { window, outcome }), staleTime: 30_000, ...OPTS });
+}
+
+/*
+ * Ba màn dưới đọc API SẴN CÓ (20-KIEN-TRUC §2.1 — không viết lại): quyền documents:read / reports:read, vai trò developer có sẵn (như
+ * viewer). Không tính vào hạn 30 / phút của Bàn điều tra; vẫn không thử lại, không tự tải khi quay lại tab.
+ */
+
+export interface PostingLogRow {
+  id: string;
+  eventId: string;
+  docType: string;
+  docNo: string | null;
+  version: number;
+  action: 'receive' | 'post' | 'repost' | 'error' | 'cancel';
+  branchCode: string;
+  message: string | null;
+  createdAt: string;
+  docStatus: string;
+}
+
+export function usePostingLog(q: { from: string; to: string; action?: string } | null) {
+  return useQuery({ queryKey: ['devtools', 'posting-log', q], queryFn: () => api.get<PostingLogRow[]>('/api/v1/posting-log', { ...q }), enabled: Boolean(q), staleTime: 30_000, ...OPTS });
+}
+
+export interface StuckDoc {
+  id: string;
+  docKey: string;
+  docType: string;
+  docNo: string | null;
+  docDate: string;
+  status: string;
+  errorMessage: string | null;
+  receivedAt: string;
+  sourceSystem: string;
+  branchCode: string;
+}
+
+/** Chứng từ chờ / lỗi định khoản — 100 dòng mỗi trạng thái (màn ACC14 có đủ và có nút định khoản). */
+export function useStuckDocs(enabled: boolean) {
+  return useQuery({
+    queryKey: ['devtools', 'stuck-docs'],
+    queryFn: async () => {
+      const [pending, error] = await Promise.all(['pending', 'error'].map((status) => api.getPage<StuckDoc[]>('/api/v1/documents', { status, pageSize: 100 })));
+      return {
+        pending: pending!.data, pendingTotal: Number(pending!.meta?.total ?? pending!.data.length),
+        error: error!.data, errorTotal: Number(error!.meta?.total ?? error!.data.length),
+      };
+    },
+    enabled, staleTime: 30_000, ...OPTS,
+  });
+}
+
+export interface EventsStatus {
+  subscribers: { id: string; module: string; on: string[] }[];
+  consumers: { consumer: string; pending: number; done: number; dead: number; oldestPendingAt: string | null }[];
+}
+
+export function useEvents() {
+  return useQuery({ queryKey: ['devtools', 'events'], queryFn: () => api.get<EventsStatus>('/api/v1/system/events'), staleTime: 30_000, ...OPTS });
+}
+
+export interface DiagRunRow { id: string; layer: string; trigger: string; errorCount: number; at: string; summary: Record<string, number> }
+export interface DiagCheckResult { code: string; level: 'pass' | 'empty' | 'info' | 'warn' | 'error'; title: string; fix: string; examined: number; count: number; sample: string[] }
+export interface DiagRun extends DiagRunRow { checks: DiagCheckResult[] }
+
+export function useDiagRuns() {
+  return useQuery({ queryKey: ['devtools', 'diag-runs'], queryFn: () => api.get<DiagRunRow[]>('/api/v1/system/diagnostics/runs', { limit: 20 }), staleTime: 30_000, ...OPTS });
+}
+
+export function useDiagRun(id: string | null) {
+  return useQuery({ queryKey: ['devtools', 'diag-run', id], queryFn: () => api.get<DiagRun>(`/api/v1/system/diagnostics/runs/${id}`), enabled: Boolean(id), staleTime: 300_000, ...OPTS });
+}

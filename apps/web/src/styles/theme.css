@@ -1536,8 +1536,21 @@ body.has-dock .ma-tra-cuu { bottom: calc(var(--dock-h) + 8px); }
 .dev-kpi .value.ok { color: var(--ok); }
 .dev-kpi-link { position: absolute; top: 8px; right: 12px; font-size: 12px; }
 .dev-chip { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; padding: 3px 4px 3px 10px; border-radius: 14px; background: var(--info-bg); font-size: 12.5px; }
+/* [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Lỗi theo module, Toàn vẹn, Kịch bản */
+.dev-mod-head { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; }
+.dev-code-chip { display: inline-block; margin: 0 6px 2px 0; font-size: 12px; white-space: nowrap; }
+table.grid > tbody > tr.dev-row-on > td, table.grid > tbody > tr.dev-row-on:nth-child(even) > td { background: var(--info-bg); }
+.dev-kb { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; align-items: start; }
+.dev-kb > .card + .card { margin-top: 0; }
+.dev-kb-card.on { grid-column: 1 / -1; border-color: var(--brand-500); }
+.dev-kb-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.dev-kb-sym { font-size: 12.5px; margin-bottom: 8px; }
+.dev-kb-links { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.dev-kb-note { font-size: 12px; color: var(--ink-500); margin-bottom: 6px; }
+.dev-kb-body { border-top: 1px solid var(--line-soft); font-size: 13px; }
 @media (max-width: 760px) {
   .dev-cols { grid-template-columns: minmax(0, 1fr); }
   .dev-wf-row { grid-template-columns: minmax(0, 1fr) 56px; }
   .dev-wf-track { display: none; }
+  .dev-kb { grid-template-columns: minmax(0, 1fr); }
 }
