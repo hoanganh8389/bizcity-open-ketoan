@@ -35,7 +35,7 @@ git status -sb                                  # có việc dở chưa commit �
 git rev-list --left-right --count HEAD...origin/main   # "<của nhánh> <của main>"; số bên phải > 0 = đang lệch
 git merge --ff-only origin/main                 # nhánh chỉ đứng sau main: đưa lên thẳng, không sinh commit gộp
 git stash pop                                   # nếu đã stash; xung đột thì gộp CẢ HAI ý (không bỏ phần của người khác)
-npm install && npm run build -w @ketoan/contracts   # main đổi package.json / packages/contracts thì build lại, tránh typecheck báo lỗi giả
+npm install && npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain   # main đổi package.json / packages/contracts / modules/*/domain thì build lại, tránh typecheck báo lỗi giả
 node tests/conformance/selfcheck.mjs            # phải ĐẠT trước khi sửa tiếp — báo đỏ từ phần vừa kéo về thì xử lý / báo chủ trước
 ```
 

@@ -8,7 +8,7 @@
  */
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { TAX_RATE, computeDoc, ratioOf, type LineCalc, type ProductUnit } from '@ketoan/contracts/mua-hang';
+import { TAX_RATE, computeDoc, ratioOf, type LineCalc, type ProductUnit } from '@bizcity/mua-hang-domain';
 import { api } from '@/lib/api';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { Loading } from '@/components/ui';

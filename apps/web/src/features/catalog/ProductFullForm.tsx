@@ -19,7 +19,7 @@ import { HelpDrawer } from '@/components/HelpDrawer';
 import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
-import { SKU_SUFFIXES, skuInfo, variantName } from '@ketoan/contracts/mua-hang';
+import { SKU_SUFFIXES, skuInfo, variantName } from '@bizcity/mua-hang-domain';
 
 type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 export interface ItemClassLite { code: string; name: string; parentCode: string | null; isActive: boolean; skuCode?: string }

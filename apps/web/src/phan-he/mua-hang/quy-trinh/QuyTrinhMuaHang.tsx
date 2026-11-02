@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as Icons from 'lucide-react';
 import { api } from '@/lib/api';
 import { workBranch } from '@/lib/workBranch';
-import { DEFAULT_FORMULA, normalizeFormula, varLabel, type FormulaConfig } from '@ketoan/contracts/mua-hang';
+import { DEFAULT_FORMULA, normalizeFormula, varLabel, type FormulaConfig } from '@bizcity/mua-hang-domain';
 import { lastParent, stockApi, useHierarchy } from '../ton-max/api';
 import { P, vnd } from '../du-lieu';
 import { MAU_IN } from '../chung-tu/mauIn';

@@ -5,7 +5,7 @@
  */
 import { useRef, useState, type ReactNode } from 'react';
 import { FileUp } from 'lucide-react';
-import { readTable } from '@ketoan/contracts/mua-hang';
+import { readTable } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
 import { ExcelGuide, type GuideColumn } from './ExcelGuide';
 

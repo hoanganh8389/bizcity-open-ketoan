@@ -1,11 +1,11 @@
 /**
  * DỮ LIỆU PHÂN HỆ MUA HÀNG — gọi API thật (/api/v1/purchase/*, hợp đồng docs/api/14-mua-hang.md). Máy chủ lưu bảng
  * purchase_documents / purchase_policies, duyệt = ghi sổ thật, báo cáo đọc từ sổ. Bộ máy tính dùng chung
- * ('@ketoan/contracts/mua-hang') chạy cả ở đây để tổng tiền hiện ngay khi gõ; cảnh báo, hạn mức, giá mua do máy chủ trả.
+ * ('@bizcity/mua-hang-domain') chạy cả ở đây để tổng tiền hiện ngay khi gõ; cảnh báo, hạn mức, giá mua do máy chủ trả.
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Accounts, Check, CreditStatus, DocCalc, Entry, PDoc, Policy, PriceRow, ProductUnit, SupplierProduct } from '@ketoan/contracts/mua-hang';
+import type { Accounts, Check, CreditStatus, DocCalc, Entry, PDoc, Policy, PriceRow, ProductUnit, SupplierProduct } from '@bizcity/mua-hang-domain';
 
 export interface StoredDoc extends PDoc {
   revision: number;

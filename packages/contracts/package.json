@@ -11,10 +11,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./mua-hang": {
-      "types": "./dist/mua-hang/index.d.ts",
-      "import": "./dist/mua-hang/index.js"
     }
   },
   "scripts": {

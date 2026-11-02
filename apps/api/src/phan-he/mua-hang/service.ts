@@ -6,7 +6,7 @@
  * (documents.workflow, PHASES 3.5) — runtime core/workflow.ts.
  */
 import { sql } from 'kysely';
-import { computeDoc, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
+import { computeDoc, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
 import { db, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';

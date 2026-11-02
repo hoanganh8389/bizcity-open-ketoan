@@ -7,13 +7,14 @@
 
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — Mở thư mục phase theo chỉ đạo của chủ dự án (Johnny Chu – Chu Hoàng Anh): "rà soát lại kiến trúc và checklist đã làm đến đâu … chia phase cụ thể theo từng folder phase". Trạng thái chụp từ bảng điểm cùng ngày (CSDL ketoan_test, đủ migration). -->
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — S010-2: documents.* có (trừ chuyển purchase_attachments, chữ ký) -->
+<!-- [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: bộ máy mua hàng thành gói @bizcity/mua-hang-domain (modules/mua-hang/domain) -->
 
 | ID | Việc | Lộ trình / G | Code | Trạng thái |
 |---|---|---|---|---|
 | S010-1a | W1: cổng `apps/api/src/kernel/public.ts` + SC-KERNEL-6 (block, ca tự kiểm), chuyển 21 tệp / 36 import | 2.3 | có | ✅ |
 | S010-1b | W2: workspace `packages/kernel` (sau S010-4) | 2.3 | có | ✅ 2026-11-01 (D010-9): 60 tệp Kernel → `packages/kernel/src` (cấu trúc thư mục giữ nguyên, import Platform qua `@bizcity/platform/…`), `kernel/public.ts` → `src/index.ts`; tệp chuyển tiếp `apps/api/src/kernel/public.ts`, `db/seed.ts`; test dùng `@bizcity/kernel/<đường>`; build / Docker / bộ kiểm cập nhật |
 | S010-2 | `packages/documents`: số, phiên bản, liên kết, đính kèm chung, chữ ký | 2.7 | có | ✅ 2026-11-01: năng lực `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments` (D010-4); HTTP `/api/v1/document-versions`, `/document-links`, `/document-attachments` (6 action `core.document-*` + tải tệp kiểm sha256); `test/documents-common.test.ts` 6 ca; hết 2 nợ SC-MOD-2 (`quy`, `mua-hang` ghi `document_sequences`). ✅ chuyển `purchase_attachments` sang đính kèm chung (0046, D010-6; `test/mua-hang-dinh-kem.test.ts` 4 ca), ✅ `documents.signatures` (0047; `documents-common.test.ts` +3 ca) |
-| S010-3 | Tách `packages/contracts/src/mua-hang` về phân hệ | 2.8 | chưa | ☐ |
+| S010-3 | Tách `packages/contracts/src/mua-hang` về phân hệ | 2.8 | có | ✅ 2026-11-02 (D010-5): `modules/mua-hang/domain` = `@bizcity/mua-hang-domain`; 2.8 ☑ trên bảng điểm |
 | S010-4 | Tách Platform (`core/*`: errors, http, auth, audit, actions, events, request-context…) thành gói — điều kiện của S010-1b | 2.3 | có | ✅ 2026-11-01 (D010-8): gói đệm `packages/platform` cho 22 tệp Kernel cần; phần còn lại của `core/*` ở `apps/api` chờ chia `packages/{data,permissions,audit,events,actions,documents,observability}` |
 
 ## Log
@@ -28,4 +29,5 @@
 | 2026-11-01 15:13 | Claude Code | Chủ chọn "làm signatures trước" (2.3 chờ báo người đóng góp, vì tách Platform đổi import 34 tệp phân hệ) ⇒ documents.signatures (0047). S010-2 đủ. |
 | 2026-11-01 15:40 | Claude Code | Chủ "tách gói kernel nhé" ⇒ D010-7 chặng 1: Kernel không còn import adapter kết nối / báo cáo kho (hết 2 nợ SC-LAYER-2, baseline 190 → 188). |
 | 2026-11-01 16:20 | Claude Code | D010-8 chặng 2: `packages/platform` (22 tệp, tệp chuyển tiếp ở đường cũ), build / Docker / bộ kiểm cập nhật; baseline 188 → 186 (khai `HOST`, `JWT_TTL_HOURS`). |
+| 2026-11-02 20:12 | Claude Code | Chủ "hoàn thiện nốt 010" ⇒ D010-5: bộ máy mua hàng thành gói `@bizcity/mua-hang-domain` ở `modules/mua-hang/domain`. 2.8 ☑ — đủ ba việc lộ trình của phase. |
 | 2026-11-01 16:39 | Claude Code | D010-9 chặng 3: `packages/kernel` (`@bizcity/kernel`). 2.3 ☑. Sửa kèm `voucherInfo` dùng `queryBool` (SC-API-2); 1 nợ đổi đường dẫn có why / ref (SC-KERNEL-5 `157`, phân loại tài khoản tồn kho); baseline 186 → 185. |

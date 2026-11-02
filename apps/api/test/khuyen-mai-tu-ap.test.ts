@@ -8,7 +8,7 @@
  *   - qua API: lưu / đọc lại lựa chọn, phân tích máy chủ khớp, duyệt được.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeDoc, promoBoard, syncGifts, type PDoc, type PLine, type Policy } from '@ketoan/contracts/mua-hang';
+import { computeDoc, promoBoard, syncGifts, type PDoc, type PLine, type Policy } from '@bizcity/mua-hang-domain';
 import { freezeOf } from '../src/phan-he/mua-hang/store.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 

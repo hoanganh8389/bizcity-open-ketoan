@@ -9,7 +9,7 @@ import type { GuideColumn } from '../thanh-phan/ExcelGuide';
 import { docNgay, xuatExcel, type ExcelImportSpec } from '../thanh-phan/NhapExcelChung';
 import { P, purchaseApi } from '../du-lieu';
 import { api } from '@/lib/api';
-import type { LineCalc, ProductUnit } from '@ketoan/contracts/mua-hang';
+import type { LineCalc, ProductUnit } from '@bizcity/mua-hang-domain';
 
 export interface DongNhap { sku: string; qty: number; unit?: string; price?: number; /** Cột giá trong tệp ghi rõ gồm / chưa thuế (tệp xuất từ phiếu) — để quy đổi về loại giá của phiếu đang nhập. */ priceIncludesVat?: boolean; pct?: number; gift?: boolean; lotNo?: string; mfgDate?: string; expDate?: string; /** Cột Phân kho trong tệp — chỉ tham khảo. */ kho?: string }
 export type DongHangCot = 'sku' | 'qty' | 'unit' | 'price' | 'priceInc' | 'priceEx' | 'pct' | 'gift' | 'lot' | 'mfg' | 'exp' | 'kho';

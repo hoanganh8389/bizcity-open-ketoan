@@ -354,7 +354,7 @@ function Dvt({ onOpen }: { onOpen: (n: string) => void }) {
             <tr><td>Đổi ĐVT trên dòng phiếu</td><td>Đơn giá quy theo tỉ lệ</td><td>Thùng 258.711 → Hộp 5.390</td></tr>
           </tbody>
         </table>
-        <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hàm dùng chung (máy chủ + giao diện): <code>ratioOf</code>, <code>priceFor</code>, <code>defaultUnitFor</code> (packages/contracts/src/mua-hang/gia-mua.ts), <code>orderProgress</code> / <code>ratioIn</code> (dat-hang.ts), <code>toBase</code> (apps/api/src/phan-he/mua-hang/posting.ts). Bảng: <T n="unit_names" onOpen={onOpen} /> <T n="product_units" onOpen={onOpen} /> <T n="inventory_movements" onOpen={onOpen} /></div>
+        <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>Hàm dùng chung (máy chủ + giao diện): <code>ratioOf</code>, <code>priceFor</code>, <code>defaultUnitFor</code> (modules/mua-hang/domain/src/gia-mua.ts), <code>orderProgress</code> / <code>ratioIn</code> (dat-hang.ts), <code>toBase</code> (apps/api/src/phan-he/mua-hang/posting.ts). Bảng: <T n="unit_names" onOpen={onOpen} /> <T n="product_units" onOpen={onOpen} /> <T n="inventory_movements" onOpen={onOpen} /></div>
       </Panel>
       <Panel title="ĐVT mặc định khi lập phiếu (thứ tự ưu tiên)">
         <ol className="db-list">
@@ -440,7 +440,7 @@ function JsonMau() {
       </Panel>
       <Panel title="Khuôn hoá đơn đọc được (Excel / AI / API) → POST /purchase/invoices/prepare · /scan">
         <pre className="db-code">{JSON_INVOICE}</pre>
-        <div className="muted" style={{ fontSize: 12 }}>Đơn giá <b>chưa thuế</b> (trừ khi <code>priceIncludesVat: true</code>); <code>taxRate: null</code> = không chịu thuế; dòng giá 0 = hàng tặng. Dịch vụ AI (<code>INVOICE_AI_URL</code>) trả <code>{'{ invoices: [ … ] }'}</code> đúng khuôn này. Lõi tính: <code>packages/contracts/src/mua-hang/hoa-don.ts</code>.</div>
+        <div className="muted" style={{ fontSize: 12 }}>Đơn giá <b>chưa thuế</b> (trừ khi <code>priceIncludesVat: true</code>); <code>taxRate: null</code> = không chịu thuế; dòng giá 0 = hàng tặng. Dịch vụ AI (<code>INVOICE_AI_URL</code>) trả <code>{'{ invoices: [ … ] }'}</code> đúng khuôn này. Lõi tính: <code>modules/mua-hang/domain/src/hoa-don.ts</code>.</div>
       </Panel>
       <Panel title="Nhật ký JSONL (mỗi dòng một sự kiện)">
         <pre className="db-code">{`{"ts":"2026-10-26T09:12:18Z","event":"supplier_products","user":"Quản trị","docNo":"","data":{"partnerCode":"NC100227","added":1,"updated":0,"rows":["130181002 Thùng 258.711đ"]}}

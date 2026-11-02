@@ -5,7 +5,7 @@
  */
 import { sql } from 'kysely';
 import { z } from 'zod';
-import type { ProductUnit, SupplierProduct } from '@ketoan/contracts/mua-hang';
+import type { ProductUnit, SupplierProduct } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 

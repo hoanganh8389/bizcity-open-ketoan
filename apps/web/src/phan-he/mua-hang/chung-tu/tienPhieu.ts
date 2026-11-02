@@ -1,7 +1,7 @@
 /**
  * Số tiền & công nợ của MỘT phiếu mua hàng — dùng chung cho danh sách chứng từ (xem theo phiếu) và xem theo dòng hàng.
  */
-import { TAX_RATE, type PDoc } from '@ketoan/contracts/mua-hang';
+import { TAX_RATE, type PDoc } from '@bizcity/mua-hang-domain';
 import type { StoredDoc } from '../du-lieu';
 
 /** Tiền hàng TRƯỚC chiết khấu, CHƯA thuế của phiếu (dòng hàng mua; phiếu giá gồm thuế quy về chưa thuế) và chiết khấu = trước CK − tiền hàng sau CK.

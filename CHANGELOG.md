@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 manual_journal (K2); PHASE-010 2.8 gói mua-hang-domain -->
+- **Phiếu kế toán module lập — `docType: manual_journal`** (PHASES 3.15, [ADR-0015](docs/adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md) Q1, `bizcity_ledger_intake@1` 1.3.0, năng lực `ledger.manual-journal` → available): module nộp qua `ctx.ledger.submit` dòng `{ reasonCode, amount, partnerCode? }`, **không** số tài khoản, không thuế, không hoá đơn (khuôn đóng). Lý do có loại mới **`journal`** với tài khoản Nợ / Có (migration `0058_ly_do_phieu_ke_toan`; màn Lý do – tài khoản ACC18; gói định khoản `debitAccount` / `creditAccount`, SC-TPL-1 kiểm). Chưa có lý do journal nào trong gói nền — kế toán trưởng chốt danh sách (đặc tả K2).
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->
 - **Mọi cảnh báo kèm phương án khắc phục có cấu trúc** (PHASE-022 W1, [bizcity_remedy@1](docs/contracts/BIZCITY-REMEDY-v1.md)): mỗi kiểm tự chẩn đoán và mỗi mục bảng kiểm khoá kỳ có `remedy` — các bước (màn cần mở, ai làm), mã kiểm lại, `stopTheLine` cho lỗi toàn vẹn sổ, việc không được làm. Check **SC-FIX-1** (chặn) bắt kiểm thiếu remedy hoặc trỏ màn không có trong menu. Dải cảnh báo ở màn lập chứng từ hiện từng bước kèm nút mở màn.
 - **8 kiểm mới cho khoảng trống** (PHASE-022 W2, chỉ đọc, mức warn): `CASH_NEGATIVE`, `ACCOUNT_WRONG_SIDE`, `TRANSIT_NONZERO`, `DEBT_MATCH_LEDGER`, `COGS_STALE`, `STOCK_ADJUST_NO_REASON`, `DEPRECIATION_OPEN`, `CONFORMANCE_STALE` (L3). Tài khoản đọc từ tài khoản ngầm định / công nợ / quy tắc kết chuyển của đơn vị, không viết cứng.
@@ -194,6 +196,7 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+- **Bộ máy tính Mua hàng thành gói riêng `@bizcity/mua-hang-domain`** (`modules/mua-hang/domain`, PHASES 2.8, A-06): `@ketoan/contracts/mua-hang` không còn. Code ngoài repo nhập `@ketoan/contracts/mua-hang` đổi sang `@bizcity/mua-hang-domain`; build thêm `npm run build -w @bizcity/mua-hang-domain` sau contracts.
 <!-- [2026-11-01 09:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gộp main (ADR-0010 OTel) vào gói: tracing / version sang @bizcity/platform, cổng @bizcity/kernel bọc trace; migration ký theo vai đổi số 0047 → 0048; 7 tín hiệu lộ trình / tuân thủ trỏ đường dẫn gói; AUDIT-2026-11-01-PLUGIN-MVP -->
 - **Truy vết OpenTelemetry theo gói** (PHASE-010 + ADR-0010): `core/tracing.ts`, `core/version.ts` thuộc `@bizcity/platform` (`packages/platform/src/core/`), phụ thuộc `@opentelemetry/*` chuyển sang gói Platform; cổng `@bizcity/kernel` (`packages/kernel/src/index.ts`) bọc `traceKernelApi / traceKernelFn` như `kernel/public.ts` của main. Check SC-OBS-2 quét cả `packages/platform`, `packages/kernel`.
 - **Migration ký theo vai đổi số `0047` → `0048_ky_chung_tu_chung.sql`** (số `0047` đã phát hành trên `main` cho `0047_truy_vet.sql`). Nội dung không đổi; CSDL đã chạy nhánh này trước khi gộp xem "Nâng cấp cần làm".
@@ -231,6 +234,7 @@ Mỗi bản ghi đủ sáu mục:
 - Bộ kiểm thêm SC-DATA-7 (`db/types.ts` ↔ migration) để lỗi "khai kiểu mà quên migration" bị chặn ở CI.
 
 ### Thay đổi định khoản
+- **Luật định khoản mới `manual_journal` (mức K2, PHASES 3.15; đặc tả [50-DAC-TA-MANUAL-JOURNAL](docs/phases/PHASE-011-MODULE-SDK/50-DAC-TA-MANUAL-JOURNAL.md) phương án A, chủ dự án duyệt K1 / K3 / K4 theo ý kiến kế toán trưởng 02/11/2026):** mỗi dòng Nợ `debit_account` / Có `credit_account` của lý do journal, cả phiếu một bút toán; đối tượng theo dòng hoặc theo phiếu, tài khoản theo dõi đối tượng thiếu đối tượng → chặn; chế độ mặc định **chờ duyệt** ở ACC14. Chỉ áp cho loại chứng từ mới này — sổ và chứng từ đã có không đổi.
 - **Định khoản theo chính sách của ngày hạch toán (mức K3, ADR-0009):** chứng từ (cả khi định khoản lại) dùng phiên bản cấu hình định khoản có hiệu lực ở ngày hạch toán của nó.
   - Sửa cấu hình như trước vẫn có tác dụng ngay (hệ thống tự chụp bản bổ sung của chế độ đang áp).
   - Chỉ khi **phát hành** chế độ mới kèm ngày hiệu lực thì chứng từ trước ngày đó mới tiếp tục theo chế độ cũ.

@@ -13,7 +13,7 @@ import { sql } from 'kysely';
 import { z } from 'zod';
 import {
   TAX_RATE, allocateTransfers, avgPerDay, buyOptions, canAutoApprove, normalizeFormula, familiesBy, orderNeed, orderProgress, priceFor, roundPack, skuInfo, suggestMax, suggestWarehouseMax,
-  type FormulaConfig, type MaxRequestItem, type NeedInput, type ProductUnit, type TransferMode, giftItemsOf } from '@ketoan/contracts/mua-hang';
+  type FormulaConfig, type MaxRequestItem, type NeedInput, type ProductUnit, type TransferMode, giftItemsOf } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { listSupplierProducts, unitsForOrders, unitsOf } from './gia-mua.js';

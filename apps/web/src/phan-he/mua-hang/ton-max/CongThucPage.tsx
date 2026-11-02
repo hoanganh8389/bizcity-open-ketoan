@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { DEFAULT_FORMULA, FORMULA_VARS, formulaText, orderNeed, varLabel, type FormulaConfig, type FormulaTerm } from '@ketoan/contracts/mua-hang';
+import { DEFAULT_FORMULA, FORMULA_VARS, formulaText, orderNeed, varLabel, type FormulaConfig, type FormulaTerm } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { ItemPicker } from '@/components/pickers';

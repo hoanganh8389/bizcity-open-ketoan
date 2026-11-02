@@ -4,6 +4,7 @@
 # [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gói @bizcity/kernel: cài, build sau platform, chép dist (D010-7 chặng 3)
 # [2026-11-02 01:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — workspace @bizcity/module-sdk: chép package.json để npm ci khớp lockfile; image api chép registry cấu hình (ctx.settings.get)
 # [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gói dữ liệu luật @bizcity/vn-rulepacks (JSON + engine.mjs, không build) cho Conformance Engine (ADR-0012 T7)
+# [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: gói @bizcity/mua-hang-domain (modules/mua-hang/domain) tách khỏi contracts: cài, build, chép dist
 # API: dựng TypeScript → chạy Node. Cùng image chạy job db-migrate (node dist/db/setup.js: migration + seed) và máy chủ API.
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -12,6 +13,7 @@ COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/
 COPY packages/kernel/package.json packages/kernel/
 COPY packages/module-sdk/package.json packages/module-sdk/
+COPY modules/mua-hang/domain/package.json modules/mua-hang/domain/
 COPY packages/vn-rulepacks packages/vn-rulepacks
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
@@ -20,8 +22,9 @@ COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
 COPY packages/platform packages/platform
 COPY packages/kernel packages/kernel
+COPY modules/mua-hang/domain modules/mua-hang/domain
 COPY apps/api apps/api
-RUN npm run build -w @ketoan/contracts && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @ketoan/api
+RUN npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @ketoan/api
 
 FROM node:22-alpine
 WORKDIR /app
@@ -31,11 +34,13 @@ COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/
 COPY packages/kernel/package.json packages/kernel/
 COPY packages/module-sdk/package.json packages/module-sdk/
+COPY modules/mua-hang/domain/package.json modules/mua-hang/domain/
 COPY packages/vn-rulepacks packages/vn-rulepacks
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-RUN npm ci --omit=dev --no-audit --no-fund -w @ketoan/api -w @ketoan/contracts -w @bizcity/platform -w @bizcity/kernel -w @bizcity/vn-rulepacks && npm cache clean --force
+RUN npm ci --omit=dev --no-audit --no-fund -w @ketoan/api -w @ketoan/contracts -w @bizcity/mua-hang-domain -w @bizcity/platform -w @bizcity/kernel -w @bizcity/vn-rulepacks && npm cache clean --force
 COPY --from=build /app/packages/contracts/dist packages/contracts/dist
+COPY --from=build /app/modules/mua-hang/domain/dist modules/mua-hang/domain/dist
 COPY --from=build /app/packages/platform/dist packages/platform/dist
 COPY --from=build /app/packages/kernel/dist packages/kernel/dist
 COPY --from=build /app/apps/api/dist apps/api/dist

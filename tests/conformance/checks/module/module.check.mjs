@@ -95,7 +95,10 @@ export const checks = [
         ...ctx.repo.list('apps/api/src/addins').filter((k) => ctx.repo.isDir(`apps/api/src/addins/${k}`)).map((k) => `apps/api/src/addins/${k}`),
         // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: thư mục app ngoài tiến trình apps/api/src/ung-dung/<key> → manifest kind "app"
         ...ctx.repo.list('apps/api/src/ung-dung').filter((k) => ctx.repo.isDir(`apps/api/src/ung-dung/${k}`)).map((k) => `apps/api/src/ung-dung/${k}`),
-        ...ctx.repo.list('modules').filter((k) => ctx.repo.isDir(`modules/${k}`)).map((k) => `modules/${k}`),
+        // [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: modules/<key> chỉ chứa phần dời trước (vd domain/) trong khi phân hệ còn ở phan-he/<key> có manifest → không tính là module thứ hai
+        ...ctx.repo.list('modules').filter((k) => ctx.repo.isDir(`modules/${k}`))
+          .filter((k) => ctx.repo.exists(`modules/${k}/bizcity.module.json`) || !ctx.repo.exists(`apps/api/src/phan-he/${k}/bizcity.module.json`))
+          .map((k) => `modules/${k}`),
       ];
       const have = keys.filter((d) => ctx.repo.exists(`${d}/bizcity.module.json`));
       const findings = [];

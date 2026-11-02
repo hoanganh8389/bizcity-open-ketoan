@@ -16,7 +16,7 @@ API **đã chạy**. Các màn MH00, MH11–MH10 gọi trực tiếp.
 | `demo.ts` | Dữ liệu mẫu |
 | `routes.ts` | Route |
 
-- **Bộ tính dùng chung** (máy chủ + giao diện): `packages/contracts/src/mua-hang/engine.ts`, nhập bằng `@ketoan/contracts/mua-hang`. Khuôn `PDoc`, `PLine`, `Policy`.
+- **Bộ tính dùng chung** (máy chủ + giao diện): `modules/mua-hang/domain/src/engine.ts`, nhập bằng `@bizcity/mua-hang-domain`. Khuôn `PDoc`, `PLine`, `Policy`.
 - **Bảng:** `db/migrations/0010_mua_hang.sql`.
 - **Kiểm thử:** `apps/api/test/mua-hang.test.ts`.
 
@@ -289,4 +289,4 @@ Bảng: `supplier_invoices` (đầu hoá đơn), `supplier_invoice_lines` (dòng
 | GET | `/invoice-aliases?partnerCode` | Bảng nhận diện mã đã học |
 | DELETE | `/invoice-aliases/:id` | Xoá một cách ghi (nhật ký ghi đủ nội dung) |
 
-Phiếu nhập (`/analyze`, lưu, duyệt): có số hoá đơn trùng một hoá đơn NCC còn hiệu lực → kiểm tra `inv_match` (info) hoặc `inv_diff` (warn, không chặn); NCC đã dùng MH22 mà số hoá đơn chưa có → `inv_not_stored` (info). Đối soát cộng mọi phiếu nhập cùng hoá đơn, SL quy ĐVT nhỏ nhất, giá chưa thuế sau CK (lệch > 1 đ / ĐVT nhỏ nhất và > 10 đ thành tiền), thuế suất, tổng thanh toán (lệch > 10 đ). Lõi tính: `packages/contracts/src/mua-hang/hoa-don.ts` (`matchLine`, `nameScore`, `normalizeParsed`, `reconcileInvoice`, `linesFromInvoice`).
+Phiếu nhập (`/analyze`, lưu, duyệt): có số hoá đơn trùng một hoá đơn NCC còn hiệu lực → kiểm tra `inv_match` (info) hoặc `inv_diff` (warn, không chặn); NCC đã dùng MH22 mà số hoá đơn chưa có → `inv_not_stored` (info). Đối soát cộng mọi phiếu nhập cùng hoá đơn, SL quy ĐVT nhỏ nhất, giá chưa thuế sau CK (lệch > 1 đ / ĐVT nhỏ nhất và > 10 đ thành tiền), thuế suất, tổng thanh toán (lệch > 10 đ). Lõi tính: `modules/mua-hang/domain/src/hoa-don.ts` (`matchLine`, `nameScore`, `normalizeParsed`, `reconcileInvoice`, `linesFromInvoice`).

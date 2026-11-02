@@ -1,5 +1,6 @@
 # Người phụ trách từng phần (GitHub tự gắn người duyệt PR theo thư mục bị sửa). Dòng sau ghi đè dòng trước.
 # [2026-10-31 11:10 PM Johnny Chu - Chu Hoàng Anh] R-REV — phân vai theo RULE-REVIEW §1 / R-REV-2: framework do chủ dự án duyệt; phân hệ, giao diện, hướng dẫn do người đóng góp phụ trách (vẫn qua Nhóm Lõi rà §7).
+# [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: bộ máy mua hàng thành gói @bizcity/mua-hang-domain (modules/mua-hang/domain)
 # Người đóng góp không tự duyệt PR của chính mình (GitHub chặn). Thêm người phụ trách phân hệ: thêm tài khoản vào đúng dòng phân hệ.
 # Có hiệu lực khi bật bảo vệ nhánh main: "Require review from Code Owners".
 
@@ -54,6 +55,7 @@
 /apps/web/src/phan-he/quy/          @Thuy2k @hoanganh8389
 /apps/api/src/phan-he/mua-hang/     @Thuy2k @hoanganh8389
 /apps/web/src/phan-he/mua-hang/     @Thuy2k @hoanganh8389
+/modules/mua-hang/                  @Thuy2k @hoanganh8389
 /apps/api/src/phan-he/ban-hang/     @Thuy2k @hoanganh8389
 /apps/web/src/phan-he/ban-hang/     @Thuy2k @hoanganh8389
 /apps/api/src/phan-he/kho/          @Thuy2k @hoanganh8389

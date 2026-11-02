@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseSpec, ratioFromName, sizeOf, isThung } from '../src/phan-he/mua-hang/dvt-thung.js';
 import { inheritUnits } from '../src/modules/catalog/catalog.service.js';
-import { computeDoc } from '@ketoan/contracts/mua-hang';
+import { computeDoc } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

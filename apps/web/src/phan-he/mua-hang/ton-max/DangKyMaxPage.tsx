@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileDown, FileUp, Plus } from 'lucide-react';
-import { MAX_REQUEST_STATUS, type MaxRequestItem, type MaxRequestKind, type MaxRequestStatus } from '@ketoan/contracts/mua-hang';
+import { MAX_REQUEST_STATUS, type MaxRequestItem, type MaxRequestKind, type MaxRequestStatus } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';

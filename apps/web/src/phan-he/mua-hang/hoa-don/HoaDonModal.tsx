@@ -8,7 +8,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { RECONCILE_LABEL, invoiceLabel, type InvoiceLine } from '@ketoan/contracts/mua-hang';
+import { RECONCILE_LABEL, invoiceLabel, type InvoiceLine } from '@bizcity/mua-hang-domain';
 import { Field, Modal, useViewAgain } from '@/components/ui';
 import { PartnerPicker } from '@/components/pickers';
 import { errorText } from '@/lib/api';

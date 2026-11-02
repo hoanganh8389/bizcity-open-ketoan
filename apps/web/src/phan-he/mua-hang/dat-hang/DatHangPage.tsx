@@ -10,7 +10,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileSpreadsheet, ShoppingCart } from 'lucide-react';
-import type { PDoc, PLine } from '@ketoan/contracts/mua-hang';
+import type { PDoc, PLine } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';
