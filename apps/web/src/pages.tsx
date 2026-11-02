@@ -46,6 +46,8 @@ import { thueRoutes } from './phan-he/thue/routes';
 import { muaHangRoutes } from './phan-he/mua-hang/routes';
 import { apiRoutes } from './phan-he/api/routes';
 import { ADDIN_ROUTES } from './addins/registry';
+import { UngDungPage } from './features/ung-dung/UngDungPage';
+import { AppFramePage } from './features/ung-dung/AppFramePage';
 
 export const pageRoutes = (
   <>
@@ -102,6 +104,8 @@ export const pageRoutes = (
     <Route path="cau-hinh/nguoi-dung" element={<UsersPage />} />
     <Route path="cau-hinh/khoa-api" element={<ApiKeysPage />} />
     <Route path="tien-ich/add-in" element={<AddInsPage />} />
+    <Route path="tien-ich/ung-dung" element={<UngDungPage />} />
+    <Route path="ung-dung/:key" element={<AppFramePage />} />
     <Route path="tien-ich/huong-dan" element={<GuidesPage />} />
     <Route path="tien-ich/can-cu" element={<LegalDocsPage />} />
     <Route path="tien-ich/kien-truc" element={<ArchitecturePage />} />

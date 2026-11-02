@@ -9,6 +9,7 @@
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — báo cáo về phan-he/ke-toan/reports; GOODS (nhập xuất tồn + báo cáo hàng hoá tách theo miền) lắp ở đây cho kho, mua-hang — phân hệ không import báo cáo của ke-toan (SC-MOD-1)
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — CORE_ROUTES thêm docRefRoutes (documents.* — phiên bản, liên kết, đính kèm chung)
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — GOODS thêm inventoryReportRoutes (báo cáo kho tách khỏi route Kernel)
+// [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — CORE_ROUTES thêm appsRoutes (app ngoài tiến trình, PHASES 3.14)
 /**
  * LÕI máy chủ — luôn bật ở mọi tiến trình: đăng nhập, hệ thống, người dùng, danh mục dùng chung, cổng nhận chứng từ, kết nối.
  * Mã nguồn lõi ở src/core + src/modules (chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo…).
@@ -25,6 +26,7 @@ import { mcpRoutes } from '../modules/system/mcp.routes.js';
 import { metricsRoutes } from '../modules/system/metrics.routes.js';
 import { presenceRoutes } from '../modules/system/presence.js';
 import { accessRoutes } from '../modules/access/access.routes.js';
+import { appsRoutes } from '../modules/apps/apps.routes.js';
 import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes } from '../kernel/public.js';
 import { branchRoutes } from '../modules/branches/branch.routes.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
@@ -48,7 +50,7 @@ import { stockTransferRoutes } from './kho/stock-transfers.js';
 import { inventoryReportRoutes } from '../modules/inventory/inventory-report.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
-  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes,
+  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
   accountRoutes, branchRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,

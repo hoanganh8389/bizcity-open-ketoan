@@ -17,7 +17,7 @@
 | S011-6 | Vai trò CSDL `mod_<key>_rw` | 3.10 | chưa | ☐ |
 | S011-7 | Extension chạy thật: slot, hook, `ctx.actions.call` | G2-03 | chưa | ☐ |
 | S011-8 | Registry module + vòng đời, nạp theo hash (ADR-0011 D1, D2) — PR-3 | 3.13 | chưa | ☐ |
-| S011-9 | App ngoài tiến trình: khoá phạm vi, webhook HMAC, vé iframe + `postMessage` (ADR-0011 mức 2) — PR-2b | 3.14 | chưa | ☐ |
+| S011-9 | App ngoài tiến trình: khoá phạm vi, webhook HMAC, vé iframe + `postMessage` (ADR-0011 mức 2) — PR-2b | 3.14 | có | ✅ 2026-11-02: manifest `kind: "app"`, `app_installations` + khoá app (0050), docKey `<app>:` ở mọi cửa nạp, subscriber `<app>.webhook` ký HMAC, vé iframe + `postMessage` đóng, màn TI13; test `apps.test.ts`. Còn: CSP `frame-src` theo app (CK-17), slot iframe (3.8) <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — S011-9 PR-2b --> |
 | S011-10 | Migration module bằng vai trò `mod_<key>_owner`, kiểm RLS bảng module trước khi bật (ADR-0011 D4) — PR-4 | 3.10 | chưa | ☐ |
 
 ## Log
@@ -28,3 +28,4 @@
 | 2026-11-01 22:16 | Claude Code | Chủ duyệt ADR-0011 (plugin ba mức tin cậy, không drop-in, iframe cho app ngoài tiến trình). Thêm 3.13, 3.14 vào lộ trình; S011-8…10. |
 | 2026-11-01 23:55 | Claude Code | PR-1: manifest 9 phân hệ + 3 add-in; SC-MOD-3 planned → block (thêm key / kind / owners); SC-CON-2 nhận waiver có hạn (+ ca tự kiểm); API nạp manifest, `GET /system/modules?detail=true`; test `module-manifests.test.ts`. |
 | 2026-11-02 01:10 | Claude Code | PR-2: `@bizcity/module-sdk` v0.1, `ctx.ledger.submit` (docKey tiền tố module, một giao dịch), action `core.document.submit` (Idempotency-Key, biên nhận, dry-run), `ctx.settings.get`. Chuyển `mua-hang` sang `ctx.ledger.submit` là việc của người phụ trách phân hệ (R-REV-5) — không làm trong PR này. |
+| 2026-11-02 10:43 | Claude Code | PR-2b: app ngoài tiến trình (3.14) — manifest `kind: "app"` (`app.scopes`, `app.webhook.url`, `ui.origin` / `entry`), migration `0050_ung_dung_ngoai` (`app_installations`, `api_keys.app_key`), khoá app có phạm vi, `ownDocument` ở `postDocumentIn` (mọi cửa nạp), subscriber `<app>.webhook` + `SubscriberDef.accepts`, vé iframe khoá dẫn xuất, màn Ứng dụng kết nối (TI13) + `/ung-dung/<key>`; hợp đồng Module 1.2.0, Event 1.1.0, Extension 1.1.0. Lệch bản mẫu: CK-8, CK-9, CK-17, CK-18, CK-20 (ghi ở mockups/README). |

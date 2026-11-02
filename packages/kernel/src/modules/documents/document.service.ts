@@ -37,6 +37,7 @@ import { db, toNumber, type Db } from '@bizcity/platform/db/client';
 import { AppError, Errors } from '@bizcity/platform/core/errors';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
+import { ownDocument } from '@bizcity/platform/core/actions';
 import { emitKernelEvent } from './kernel-events.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { ledgerRepository } from '../ledger/ledger.repository.js';
@@ -315,6 +316,10 @@ export async function logPosting(trx: Db, v: {
  * Mỗi bước ghi nhật ký định khoản (posting_log).
  */
 export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; hold?: boolean } = {}): Promise<IngestResult> {
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 D5 mức 2): khoá app chỉ nộp chứng từ của app — docKey `<app>:…`, sourceSystem = app; một chỗ chặn cho mọi cửa nạp
+  // Khoá app ngoài tiến trình (ADR-0011 mức 2): như module mức 1, chỉ nộp / sửa chứng từ mang tiền tố của app. Đặt ở đây để
+  // mọi cửa (POST /documents, /documents/submit, nhận theo lô) cùng một luật.
+  if (auth.app) doc = ownDocument(auth.app, doc, 'app');
   const branch = await findBranch(trx, auth.tenantId, doc.branchCode);
   const branchId = branch.id;
   const partnerId = await documentPartnerId(trx, auth.tenantId, doc);
@@ -432,6 +437,8 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
 }
 
 async function processDocument(auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean } = {}): Promise<IngestResult> {
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá app — áp luật chủ chứng từ trước, để bản lưu lỗi (recordFailure) cũng mang nguồn = app
+  if (auth.app) doc = ownDocument(auth.app, doc, 'app');
   assertTotals(doc);
   try {
     return await db.transaction().execute((trx) => postDocumentIn(trx, auth, doc, opts));

@@ -14,6 +14,7 @@
 // [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_attachments.storage_root, legacy_ref, sha256 null (0046).
 // [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — document_signatures.doc_ref, event_id null (0048, documents.signatures).
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/db/types.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
+// [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): app_installations + api_keys.app_key (migration 0050)
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -73,6 +74,23 @@ export interface ApiKeysTable {
   last_used_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   revoked_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   created_at: TimestampDefault;
+  /** Khoá của app ngoài tiến trình (0050): quyền theo app_installations. NULL = khoá tích hợp thường. */
+  app_key: ColumnType<string | null, string | null | undefined, string | null>;
+}
+
+/** App ngoài tiến trình đã kết nối với đơn vị (0050, ADR-0011 mức 2). */
+export interface AppInstallationsTable {
+  tenant_id: string;
+  app_key: string;
+  app_version: string;
+  status: Generated<"active" | "disabled">;
+  permissions: Generated<string[]>;
+  events: Generated<string[]>;
+  webhook_salt: string;
+  installed_by: string;
+  installed_at: TimestampDefault;
+  updated_by: ColumnType<string | null, string | null | undefined, string | null>;
+  updated_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
 }
 
 export interface AccountingUnitsTable {
@@ -1549,6 +1567,7 @@ export interface Database {
   tenants: TenantsTable;
   users: UsersTable;
   api_keys: ApiKeysTable;
+  app_installations: AppInstallationsTable;
   accounting_units: AccountingUnitsTable;
   branches: BranchesTable;
   warehouses: WarehousesTable;

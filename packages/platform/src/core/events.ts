@@ -3,6 +3,7 @@
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — số đo outbox: lượt giao theo subscriber (dispatchOnce), việc chờ / chết, tuổi chờ lâu nhất (collectOutboxMetrics)
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/core/events.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
+// [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): SubscriberDef.accepts — lọc theo đơn vị lúc phát (webhook app chỉ cho đơn vị đã kết nối)
 /**
  * SỰ KIỆN MIỀN (bizcity_event@1, R-OUTBOX-1..7; PHASE-006, PHASES 3.4) — transactional outbox, chạy chỉ với PostgreSQL.
  *
@@ -80,6 +81,12 @@ export interface SubscriberDef {
   module: string;
   on: string[];
   retry?: { maxAttempts?: number; baseDelayMs?: number; maxDelayMs?: number };
+  /**
+   * Lọc theo đơn vị lúc phát (cùng giao dịch phát): false → không tạo việc giao cho đơn vị này. Bỏ trống = nhận mọi đơn vị.
+   * Dùng cho subscriber chỉ có nghĩa ở một số đơn vị (webhook app ngoài tiến trình: đơn vị đã kết nối app). Handler vẫn
+   * phải tự kiểm lại lúc giao (trạng thái có thể đổi giữa lúc phát và lúc giao).
+   */
+  accepts?(trx: Db, tenantId: string, type: string): Promise<boolean>;
   handle(ctx: SubscriberContext, event: EventEnvelope): Promise<void>;
 }
 
@@ -145,7 +152,8 @@ export async function emitEvent(trx: Db, e: EmitInput): Promise<string | null> {
       .returning('id')
       .executeTakeFirst();
     if (!row) return null;
-    const subs = subscribersOf(e.type);
+    const subs: SubscriberDef[] = [];
+    for (const s of subscribersOf(e.type)) if (!s.accepts || await s.accepts(trx, e.tenantId, e.type)) subs.push(s);
     if (subs.length) await trx.insertInto('event_deliveries').values(subs.map((s) => ({ tenant_id: e.tenantId, consumer: s.id, event_id: id }))).execute();
     return id;
   });

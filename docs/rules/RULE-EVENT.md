@@ -21,6 +21,10 @@
 | **R-EVENT-10** | Mọi thao tác trên sự việc ghi `posting_log` (`receive`, `post`, `repost`, `error`, `cancel`, `cancel_request`, `unpost`) với `actor` | `posting-modes.test.ts` |
 | **R-EVENT-11** | **Xem trước = ghi thật rồi huỷ.** `GET /documents/:id/preview` chạy đúng đường định khoản trong giao dịch và rollback; không có bộ định khoản thứ hai cho xem trước | Mã `preview()` |
 | **R-EVENT-12** | Lô tối đa **200** sự việc; mỗi sự việc xử lý độc lập — một cái lỗi không chặn cái khác | `ingestBatch()` |
+| **R-EVENT-13** | **Chủ chứng từ.** Module mức 1 (`ctx.ledger.submit`) và khoá app ngoài tiến trình (ADR-0011 mức 2) chỉ nộp `docKey` dạng `<chủ>:…`, `sourceSystem` = chủ; kiểm ở đầu `postDocumentIn` / `processDocument` nên mọi cửa (`POST /documents`, `/documents/submit`, lô) cùng một luật (`ownDocument`, ADR-0011 D5). Sai → `VALIDATION_ERROR`, không lưu | `module-sdk.test.ts`, `apps.test.ts` |
+
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — R-EVENT-13: chủ chứng từ (module mức 1, khoá app mức 2) kiểm ở cửa nạp Kernel -->
+
 
 ## Trạng thái sự việc
 

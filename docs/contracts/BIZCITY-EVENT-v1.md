@@ -3,8 +3,9 @@
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §7a webhook cho app ngoài tiến trình (ADR-0011 mức 2) — subscriber <app>.webhook, chữ ký HMAC-SHA256, Idempotency-Key = id sự kiện; SubscriberDef.accepts lọc theo đơn vị lúc phát -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
+> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
 > **Năng lực:** `events.outbox`, `events.subscribe`, `events.clock`
 > **Lớp kiểm soát 2/3** của [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md) (Domain · **Event** · Compliance). Sự kiện được phát, phiên bản (`version`), cấu trúc payload (schema theo `type` + `version`), nguồn phát (`source`), ý nghĩa nghiệp vụ.
 > - **AP-2:** sự kiện **báo** việc đã xảy ra sau commit, không dùng để ra lệnh ghi sổ.
@@ -128,9 +129,27 @@ Gửi ra ngoài (webhook tới WooCommerce, Cell) là một subscriber đặc bi
 
 Module dùng `bizcity.ledger.entry.posted` để biết **chắc chắn** sổ đã ghi (ví dụ đổi kỳ hợp đồng sang "đã thu" chỉ khi bút toán thu tiền đã vào sổ, kể cả ở chế độ chờ duyệt của kế toán).
 
+## 7a. Webhook cho app ngoài tiến trình (ADR-0011 mức 2)
+
+App `kind: "app"` ([Module §3a](BIZCITY-MODULE-v1.md)) nhận sự kiện bằng webhook, đi trên **cùng** outbox (thử lại, `dead`, `replay` như mọi subscriber; không có hàng đợi thứ hai).
+
+- Mỗi app có `events.subscribes` + `app.webhook.url` → một subscriber `<key>.webhook` (module = khoá app).
+- **Chỉ đơn vị đã kết nối app** và đồng ý loại sự kiện đó mới có việc giao: `SubscriberDef.accepts(trx, tenantId, type)` chạy trong giao dịch phát. Lúc giao, handler kiểm lại: kết nối đã tắt / bỏ loại sự kiện → không gửi, việc giao xong (bật lại không tự gửi bù; quản trị dùng `core.events.replay`).
+- Yêu cầu: `POST <app.webhook.url>`, thân = phong bì §3 (JSON), không theo chuyển hướng, quá 5 giây = lỗi.
+
+| Header | Giá trị |
+|---|---|
+| `Idempotency-Key`, `Bizcity-Event-Id` | `id` sự kiện: app chống xử lý trùng theo khoá này (giao ít nhất một lần, STD-EVT-2) |
+| `Bizcity-Event-Type` | `type` |
+| `Bizcity-Signature` | `t=<giây unix>,v1=<hex HMAC-SHA256(bí mật, "<t>.<thân>")>` |
+
+- App kiểm chữ ký bằng so sánh thời gian hằng và từ chối `t` lệch quá 5 phút. Bí mật webhook (`whsec_…`) trả **một lần** lúc kết nối / xoay khoá; Core không lưu bí mật, chỉ lưu muối (`app_installations.webhook_salt`) và tính lại từ khoá máy chủ.
+- Mã trả 2xx = xong; khác 2xx / quá giờ / lỗi mạng → thử lại giãn nhịp (10 lần, 10 s … 1 giờ) rồi `dead`. Nhật ký lỗi chỉ ghi máy chủ + mã HTTP, không ghi thân trả về.
+
 ## 8. Chuyển dần
 
 1. ✅ 2026-10-30: bảng `event_outbox`, `event_deliveries`, `event_consumptions` + dispatcher chạy trong tiến trình API (`SKIP LOCKED` nên chạy nhiều bản vẫn đúng).
 2. ✅ 2026-10-30: Kernel phát `bizcity.ledger.entry.posted` / `.reversed` (cửa nạp + `eventStore`), `bizcity.period.locked` / `.unlocked`. Chưa phát: `bizcity.ledger.event.received` / `.failed`, `bizcity.masterdata.partner.changed`, `bizcity.module.enabled` / `.disabled`.
 3. ✅ 2026-10-30: `catalog-notify.ts` thành subscriber `catalog.notify-sales` của sự kiện `bizcity.masterdata.catalog.changed` (subject `catalog`, gom khung 5 giây; thay `bizcity.masterdata.product.changed` theo mã hàng khi route danh mục thành action). Chuyển vào `adapters/wordpress` ở Phase 5.
 4. Phase 5: tách dispatcher thành tiến trình riêng khi tải lớn (cùng bảng, không đổi hợp đồng).
+5. ✅ 2026-11-02: webhook cho app ngoài tiến trình (§7a, PHASES 3.14); `SubscriberDef.accepts` lọc theo đơn vị lúc phát.

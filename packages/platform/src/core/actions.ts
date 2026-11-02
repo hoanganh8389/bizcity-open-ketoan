@@ -159,6 +159,18 @@ export function registerLedgerSubmitter(fn: LedgerSubmitter): void {
 /** Mã chứng từ của module: `<module>:<phần còn lại>`. */
 const SUBMIT_KEY_RE = /^([a-z][a-z0-9-]*):\S+$/;
 
+// [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: luật chủ chứng từ dùng chung cho module (ctx.ledger.submit) và app ngoài tiến trình (Kernel, khoá app)
+/**
+ * Chứng từ do một chủ nộp (module mức 1 qua ctx.ledger.submit, app mức 2 qua khoá app — ADR-0011 D5): docKey phải
+ * `<chủ>:…`; sourceSystem = chủ (bỏ trống hoặc mặc định 'external' → đặt bằng chủ, khác → từ chối).
+ */
+export function ownDocument<T extends { docKey?: unknown; sourceSystem?: unknown }>(owner: string, doc: T, who: 'module' | 'app'): T & { sourceSystem: string } {
+  const k = SUBMIT_KEY_RE.exec(String(doc?.docKey ?? ''));
+  if (k?.[1] !== owner) throw Errors.validation(`docKey "${String(doc?.docKey)}" phải bắt đầu "${owner}:" — ${who} chỉ nộp chứng từ của mình (ADR-0011 D5)`);
+  if (doc.sourceSystem !== undefined && doc.sourceSystem !== 'external' && doc.sourceSystem !== owner) throw Errors.validation(`sourceSystem của chứng từ ${who} ${owner} phải là "${owner}"`);
+  return { ...doc, sourceSystem: owner };
+}
+
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
 const registry = new Map<string, AnyActionDef>();
 
@@ -259,7 +271,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const evidence = (objectId: unknown, result: EvidenceEntry['result'], after: unknown): EvidenceEntry => {
     const oid = objectId == null ? undefined : String(objectId);
     return {
-      tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via, onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
+      tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via ?? (auth!.app ? `app:${auth!.app}` : undefined), onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
       subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after,
     };
   };
@@ -315,10 +327,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
             if (def.effect !== 'write') throw new Error(`Action đọc ${def.id} không được nộp chứng từ (ctx.ledger.submit chỉ trong action ghi)`);
             if (!ledgerSubmitter) throw new Error('Chưa đăng ký cửa nộp chứng từ (registerLedgerSubmitter ở app.ts)');
             if (!auth) throw Errors.unauthorized();
-            const k = SUBMIT_KEY_RE.exec(String(doc?.docKey ?? ''));
-            if (k?.[1] !== mod) throw Errors.validation(`docKey "${doc?.docKey}" phải bắt đầu "${mod}:" — module chỉ nộp chứng từ của mình (ADR-0011 D5)`);
-            if (doc.sourceSystem !== undefined && doc.sourceSystem !== mod) throw Errors.validation(`sourceSystem của chứng từ module ${mod} phải là "${mod}"`);
-            return ledgerSubmitter(trx, auth, { ...doc, sourceSystem: mod });
+            return ledgerSubmitter(trx, auth, ownDocument(mod, doc, 'module'));
           },
         },
         settings: { get: (key) => readSetting(trx, tenantId, def.id.split('.')[0]!, key) },

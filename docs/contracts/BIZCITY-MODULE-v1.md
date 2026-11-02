@@ -2,8 +2,9 @@
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0-draft: ledger.submits[].reasons (kind, default, suggestedPacks). -->
 <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.1-draft: waivers bắt buộc expires, chỉ miễn luật đặt tên; §6 bước 1–3 có (12 manifest, SC-MOD-3 block, GET /system/modules?detail=true) -->
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: kind "app" (app ngoài tiến trình, ADR-0011 mức 2): app.scopes, app.webhook.url, ui.origin / ui.entry; §3a -->
 
-> **Phiên bản:** 1.1.1-draft · 2026-11-01 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
+> **Phiên bản:** 1.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
 > **JSON Schema:** [BIZCITY-MODULE-v1.schema.json](BIZCITY-MODULE-v1.schema.json) · **Ví dụ đầy đủ:** [../standard/examples/hop-dong.bizcity.module.json](../standard/examples/hop-dong.bizcity.module.json)
 > **Thay thế:** `ApiModule` (`apps/api/src/phan-he/types.ts`), `WebModule`/`ModuleMeta` (`apps/web/src/phan-he/types.ts`, `packages/contracts/src/module.ts`), `AddInManifest` (`apps/api/src/core/addins.ts`)
 
@@ -22,7 +23,7 @@ Một phân hệ hiện khai ở 5 nơi (A-25); quyền, bảng sở hữu, sự
 | `contract` | ✓ | `"bizcity_module@1"` | chọn bộ kiểm |
 | `id` | ✓ | `<nhà phát hành>.<key>`, vd `bizcity.mua-hang`, `acme.hop-dong`. Duy nhất toàn cục, không đổi suốt đời module | khoá đăng ký, bảng tương thích |
 | `key` | ✓ | `^[a-z][a-z0-9-]{1,31}$`; trùng tên thư mục | đường dẫn `/api/v1/m/<key>/`, schema CSDL `mod_<key>` (gạch ngang → gạch dưới), tiền tố quyền, sự kiện |
-| `kind` | ✓ | `module` \| `addin` | add-in không có `data`, `documents` |
+| `kind` | ✓ | `module` \| `addin` \| `app` | add-in không có `data`, `documents`; app ngoài tiến trình: §3a |
 | `version` | ✓ | SemVer | nâng cấp, migration |
 | `label`, `description` | ✓ | tiếng Việt | lưới ứng dụng, `/system/modules` |
 | `owners` | ✓ | tài khoản GitHub | sinh / kiểm `CODEOWNERS` |
@@ -37,8 +38,24 @@ Một phân hệ hiện khai ở 5 nơi (A-25); quyền, bảng sở hữu, sự
 | `ledger.submits[]` | | `docType` kế toán module nộp, khi nào; `reasons: { kind, default?, suggestedPacks? }` = lý do định khoản cần ([POSTING-TEMPLATE §7](BIZCITY-POSTING-TEMPLATE-v1.md)) | chặn nộp loại không khai; `reasons` sai loại / gói gợi ý không có lý do mặc định → SC-CON-2; lúc cài: `posting.reason.readiness` |
 | `settings[]` | | khoá cấu hình `bizcity.<key_>.<tên>` | [Settings](BIZCITY-SETTINGS-MATRIX-v1.md) |
 | `extensions` | | `menu`, `slots`, `hooks`, `print` | [Extension](BIZCITY-EXTENSION-v1.md) |
-| `ui` | | `icon` (lucide), `color`, `order` | lưới ứng dụng |
+| `ui` | | `icon` (lucide), `color`, `order`; **chỉ app:** `origin`, `entry` (§3a) | lưới ứng dụng; khung nhúng app |
+| `app` | ✓ khi `kind: "app"` | `scopes[]`, `webhook.url` (§3a) | phạm vi khoá app, webhook |
 | `waivers[]` | | miễn trừ luật Tier 1: `rule`, `reason`, `adr`, `expires` (**bắt buộc** ngoài ví dụ trong `docs/`) | bộ kiểm (SC-CON-2) bỏ qua đúng phát hiện của luật đó và in vào ghi chú bảng điểm; thiếu `expires` hoặc quá hạn thì báo, không miễn. Hiện miễn được: `STD-ACT-6` (tiền tố action). Luật về sự thật kế toán (docType, năng lực, schema) không miễn được |
+
+## 3a. App ngoài tiến trình (`kind: "app"`, ADR-0011 mức 2)
+
+App là dịch vụ riêng (ngôn ngữ bất kỳ, máy khác) nói chuyện với Core **chỉ** qua API công khai. Manifest nằm ở `apps/api/src/ung-dung/<key>/bizcity.module.json` của bản cài, không có mã chạy trong Core; thêm `<key>` vào `APP_KEYS` (`apps/api/src/ung-dung/index.ts`) rồi dựng lại. Không quét thư mục, không nạp manifest từ ngoài mã nguồn (ADR-0011 D3).
+
+| Trường | Nghĩa | Core dùng để |
+|---|---|---|
+| `app.scopes[]` | quyền **Core** app xin: chỉ `catalog:read`, `catalog:write`, `documents:read`, `documents:write`, `ledger:read`, `reports:read` | chủ đơn vị đồng ý lúc kết nối → quyền của khoá app (`app_installations.permissions`). Quyền quản trị / duyệt / khoá kỳ không bao giờ cấp cho app |
+| `events.subscribes[]` | sự kiện app nhận qua webhook | subscriber `<key>.webhook` trên outbox ([Event §7a](BIZCITY-EVENT-v1.md)) |
+| `app.webhook.url` | URL nhận webhook; bắt buộc khi có `events.subscribes` | POST phong bì sự kiện, ký HMAC |
+| `ui.origin`, `ui.entry` | origin giao diện app (`https://host[:port]`, không đường dẫn) + đường vào (mặc định `/`) | khung nhúng ([Extension §3a](BIZCITY-EXTENSION-v1.md)); mục menu ở Tiện ích |
+
+- App **không** khai `data`, `documents`, `actions`, `settings`, `extensions` (schema chặn). `permissions[]` (quyền mới) giữ nghĩa cũ; app xin quyền Core qua `app.scopes`.
+- Khoá app nộp chứng từ chỉ `docKey` dạng `<key>:…`, `sourceSystem` = `<key>`, ở **mọi** cửa nạp (Kernel `postDocumentIn`), như `ctx.ledger.submit` của module mức 1 (ADR-0011 D5). Bằng chứng ghi `actor_kind: apikey`, `actor_via: app:<key>`.
+- Kết nối, tắt / bật, đồng ý phạm vi mới, xoay khoá: [docs/api/ung-dung.md](../api/ung-dung.md). Khoá app trùng phân hệ / add-in → dừng khởi động. Bản cài gỡ manifest app → khoá app bị từ chối.
 
 ## 4. Luật
 
@@ -72,6 +89,7 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 ## 7. Nhật ký
 
+- **1.2.0-draft (2026-11-02):** thêm `kind: "app"` (tương thích): `app.scopes`, `app.webhook.url`, `ui.origin`, `ui.entry`; schema chặn app khai `data` / `documents` / `actions` / `settings` / `extensions`, chặn module / add-in khai `app` / `ui.origin` (PHASES 3.14, ADR-0011 mức 2). SC-MOD-3 phủ `apps/api/src/ung-dung/<key>`.
 - **1.1.1-draft (2026-11-01):** `waivers[].expires` bắt buộc ngoài ví dụ (schema giữ tuỳ chọn để ví dụ cũ hợp lệ; bộ kiểm ép); bộ kiểm miễn đúng luật đã khai, báo waiver thiếu hạn / quá hạn. §6 bước 1–2 có, bước 3 một phần (PHASES 3.2).
 
 - **1.1.0-draft (2026-10-30):** thêm `ledger.submits[].reasons` (tuỳ chọn, tương thích): `kind`, `default`, `suggestedPacks` (PHASE-012 S012-4, năng lực `ledger.reasons.declare`).
