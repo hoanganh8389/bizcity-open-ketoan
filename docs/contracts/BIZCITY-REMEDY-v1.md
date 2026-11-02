@@ -26,15 +26,16 @@ Một cảnh báo chỉ có ích khi người đọc biết **làm gì tiếp**.
 |---|---|
 | Tự chẩn đoán `DiagCheck` | thuộc tính `remedy` của check; `DiagResult.remedy` trả ra API |
 | Bảng kiểm trước khoá kỳ | `PERIOD_CHECK_REMEDIES` (`packages/kernel/src/modules/periods/period-check.remedies.ts`), mỗi mục `GET /api/v1/periods/check` có `remedy` |
-| Tiền kiểm `IN-*` (PHASE-021) | mục danh mục mã tiền kiểm (khi có mã) |
+| Tiền kiểm `IN-*` (PHASE-021) | `INTAKE_REMEDIES` cạnh danh mục (`packages/contracts/src/intake-findings.ts` — danh mục giữ khuôn một dòng cho SC-INTAKE-1); mọi mã `block` / `warn` bắt buộc, kiểu TypeScript ép đủ mã; mỗi phát hiện trả `remedy` <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26 --> |
 
 ## 4. Luật
 
 - Không trường nào chứa lệnh sửa dữ liệu: phương án đi qua màn / API công khai có quyền và bằng chứng (R-FIX-2).
-- SC-FIX-1 (block): thiếu `remedy` ở kiểm `warn` / `error`; thiếu `steps` / `owner` / `verify`; Tier 0 thiếu `stopTheLine`; `SCREENS.X` không có trong sổ màn; đường dẫn sổ màn không có trong menu; `verify.code` không có; mục bảng kiểm khoá kỳ thiếu phương án.
+- SC-FIX-1 (block): thiếu `remedy` ở kiểm `warn` / `error` hoặc mã `IN-*` mức `block` / `warn`; thiếu `steps` / `owner` / `verify`; Tier 0 thiếu `stopTheLine`; `SCREENS.X` không có trong sổ màn; đường dẫn sổ màn không có trong menu; `verify.code` không có; mục bảng kiểm khoá kỳ thiếu phương án.
 
 ## 5. Nhật ký thay đổi
 
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
+| 1.1.0-draft | 2026-11-02 | Mã tiền kiểm `IN-*`: phương án cho 18 mã block / warn + `IN-MD-004`; sổ màn thêm DM02 / DM03 / DM10; SC-FIX-1 quét `INTAKE_REMEDIES` <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26 --> |
 | 1.0.0-draft | 2026-11-02 | Khởi tạo (PHASE-022 W1): khuôn `Remedy`, `SCREENS`, `STOP_THE_LINE_STEP`; phương án cho mọi kiểm tự chẩn đoán hiện có và 10 mục bảng kiểm khoá kỳ |
