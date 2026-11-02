@@ -393,6 +393,15 @@
             "metric:bizcity_sai_ten"
           ]
         },
+        "SC-DEV-1": {
+          "findings": 4,
+          "keys": [
+            "tenant:apps/api/src/modules/system/devtools.sources.ts:noTenant",
+            "interp:apps/api/src/modules/system/devtools.sources.ts:q",
+            "promql:apps/api/src/modules/system/devtools.sources.ts",
+            "web:apps/web/src/phan-he/dev/bad.ts"
+          ]
+        },
         "SC-OBS-2": {
           "findings": 2,
           "keys": [

@@ -155,6 +155,14 @@ Còn lại: `links.grafana` (chỉ chế độ Vận hành) dựng link Explore 
 - Màn đọc bộ lọc từ địa chỉ bằng `devParams` chung (`@ketoan/contracts ban-dieu-tra.ts`): giá trị sai khuôn về mặc định, không gửi lên API. Bảng `KICH_BAN` (TH → màn + bộ lọc) cùng chỗ; ca T019-5 đối chiếu với Sổ tay, `routes.tsx`, `menu.ts`.
 - **Đo trên Tempo thật:** `/api/search` từ chối khoảng dài hơn `max_search_duration` (168 giờ) dù 1 giây. Làm tròn `start` xuống + `end` lên biến khung 7 ngày thành 168 giờ 1 giây → 400 — lỗi có từ W3 (`traces?window=7d`). Sửa: cả hai mốc làm tròn lên; Tempo giả trong test chặn như bản thật.
 
+### 2.8 Đã làm (W5, 2026-11-02)
+<!-- [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: chế độ Vận hành, link Grafana đã mở thử, SC-DEV-1, Chép cho AI (D019-8). -->
+
+- **Chế độ Vận hành** (Q019-2): `core.devtools.ops.health` — 10 số đo theo `PROMQL` (hằng trong `devtools.sources.ts`, cùng biểu thức các cảnh báo trong `alerts.yml`: `ApiDown`, `HighErrorRate`, `HighLatency`, `PostgreSQLDown`, `DbPoolSaturation`, `LedgerIntegrityError`, `ReconciliationStale`, `PostingBacklog`, `OutboxDeadLetter`, `OutboxBacklog`), mức theo ngưỡng cảnh báo, vector rỗng / `NaN` / `Inf` = "không có dữ liệu" (khác 0); link 9 bảng Grafana. `core.devtools.ops.alerts` — cảnh báo đang bật (`active=true`, không tắt tiếng / ức chế), chỉ lấy `alertname`, `severity`, tóm tắt, mô tả, đường bảng `/d/<uid>`. Chưa mở chế độ → 403 kèm lý do; không truy vấn nào ra Prometheus / Alertmanager.
+- **Link Grafana:** Explore khuôn `panes` của Grafana 10+ (`schemaVersion=1`, nguồn `tempo`, `queryType: traceql`, truy vấn = mã trace). Đã mở thử trên Grafana 11.4 bằng phiên đăng nhập thật: trang Explore hiện đúng trace (khuôn `left=` cũ ở W2 thay bằng khuôn này).
+- **SC-DEV-1** (`tests/conformance/checks/release/ban-dieu-tra.check.mjs`, R-OBS-9): chèn vào LogQL / TraceQL phải qua `quote()` (hoặc mảnh an toàn đã liệt kê); mỗi mẫu dựng truy vấn có `quote(tenant)`; PromQL là chuỗi cố định; `apps/web/src` không chứa `:3100`, `:3200`, `:9090`, `:9093`, `/loki/api/`, `/api/v2/alerts`, `/api/traces/`. Ca tự kiểm: 4 vi phạm mẫu trong `fixtures/repo-bad`.
+- **Chép cho AI** (D019-8 (1)): `noiDungChoAI` (`@ketoan/contracts ban-dieu-tra.ts`) dựng từ output của `core.devtools.trace` — thuộc tính lọc thêm lần nữa theo danh sách chỉ tới mã nguồn (module, action, bước, bảng, route, mã lỗi; không `bizcity.tenant`). `AGENTS.md` mục "Sửa lỗi bằng AI từ Bàn điều tra" (D019-8 (3)). MCP cho máy dev (D019-8 (2)) để sau.
+
 ## 3. Bảo mật và cô lập đơn vị
 
 ### 3.1 Mẫu truy vấn đóng

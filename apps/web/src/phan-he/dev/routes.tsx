@@ -1,5 +1,6 @@
 // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: route các màn Bàn điều tra (/dev/…)
 // [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: Lỗi theo module, Ghi sổ, Sự kiện, Toàn vẹn, Kịch bản
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: Vận hành
 /**
  * Màn của phân hệ Nhà phát triển. Đường dẫn /dev/… trùng DEV_SCREENS ở @ketoan/contracts (ca T019-5 đối chiếu tệp này); link trong
  * phản hồi của core.devtools.trace dùng đúng các đường này.
@@ -13,6 +14,7 @@ import { GhiSoPage } from './ghi-so/GhiSoPage';
 import { SuKienPage } from './su-kien/SuKienPage';
 import { ToanVenPage } from './toan-ven/ToanVenPage';
 import { KichBanPage } from './kich-ban/KichBanPage';
+import { VanHanhPage } from './van-hanh/VanHanhPage';
 
 export const devRoutes = (
   <>
@@ -24,5 +26,6 @@ export const devRoutes = (
     <Route path="dev/su-kien" element={<SuKienPage />} />
     <Route path="dev/toan-ven" element={<ToanVenPage />} />
     <Route path="dev/kich-ban" element={<KichBanPage />} />
+    <Route path="dev/van-hanh" element={<VanHanhPage />} />
   </>
 );

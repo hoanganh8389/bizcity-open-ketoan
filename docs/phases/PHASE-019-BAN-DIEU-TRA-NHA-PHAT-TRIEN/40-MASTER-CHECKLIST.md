@@ -21,9 +21,11 @@
 | S019-12 | `core.devtools.module-errors`; màn **Lỗi theo module** | W4 | P2 | có | ✅ 2026-11-02 — TraceQL `>>` / `||` chạy đúng trên Tempo 2.6.1; [`evidence/W4-2026-11-02.md`](evidence/W4-2026-11-02.md) |
 | S019-13 | Màn **Ghi sổ**, **Sự kiện**, **Toàn vẹn** (dùng lại API sẵn có; link sang thao tác ghi sẵn có) | W4 | P2 | có | ✅ 2026-11-02 — `posting-log`, `documents`, `system/events`, `system/diagnostics*`; vai trò developer đọc được, phát lại → 403 |
 | S019-14 | Màn **Kịch bản** đọc Sổ tay; mỗi TH có nút mở màn với bộ lọc điền sẵn — ca T019-5 | W4 | P2 | có | ✅ 2026-11-02 — `KICH_BAN` ở `@ketoan/contracts`; ca T019-5 đạt |
-| S019-15 | Chế độ **Vận hành** (chỉ bản cài một đơn vị + `DEVTOOLS_OPS=true` + `owner` — Q019-2): `ops.health` (PromQL cố định), `ops.alerts`, link sâu 9 dashboard + Explore | W5 | P3 | chưa | ☐ |
-| S019-16 | Check **SC-DEV-1** + ca tự kiểm | W5 | P2 | chưa | ☐ |
-| S019-17 | Cập nhật OBSERVABILITY.md (mục Bàn điều tra), Sổ tay (cột "Trên Bàn điều tra"), `docs/huong-dan/` (hướng dẫn trong app cho phân hệ `dev`) | W1–W5 | P1 | — | ☐ theo từng đợt |
+| S019-15 | Chế độ **Vận hành** (chỉ bản cài một đơn vị + `DEVTOOLS_OPS=true` + `owner` — Q019-2): `ops.health` (PromQL cố định), `ops.alerts`, link sâu 9 dashboard + Explore | W5 | P3 | có | ✅ 2026-11-02 — chạy thật với Prometheus / Alertmanager / Grafana 11.4; [`evidence/W5-2026-11-02.md`](evidence/W5-2026-11-02.md) |
+| S019-16 | Check **SC-DEV-1** + ca tự kiểm | W5 | P2 | có | ✅ 2026-11-02 — luật R-OBS-9; 4 vi phạm mẫu trong `fixtures/repo-bad` |
+| S019-17 | Cập nhật OBSERVABILITY.md (mục Bàn điều tra), Sổ tay (cột "Trên Bàn điều tra"), `docs/huong-dan/` (hướng dẫn trong app cho phân hệ `dev`) | W1–W5 | P1 | — | ✅ 2026-11-02 — W1–W5 |
+| S019-18 | Nút **Chép cho AI** ở Tra mã + mục "Sửa lỗi bằng AI từ Bàn điều tra" trong `AGENTS.md` (D019-8 (1), (3)) <!-- [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: S019-18, S019-19 (D019-8). --> | W5 | P2 | có | ✅ 2026-11-02 |
+| S019-19 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | sau | P3 | chưa | ⏸ chủ để sau |
 
 ## Ca bằng chứng
 
@@ -48,3 +50,5 @@
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W2: vai trò `developer` + `devtools:read` (S019-7), biến `DEVTOOLS_*` + `BUG_REPORT_URL` (S019-8), API trung gian status / trace / request / evidence (S019-9); ca T019-2, -3, -6, -7, -8 đạt. Nhánh `feat/phase-019-w2-api-trung-gian` |
 | 2026-11-01 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W3: phân hệ web `dev` (Tổng quan, Tra mã, Nhật ký — S019-10), API `logs` / `traces` / `summary` (S019-11); ca T019-4 chạy thật đạt; sửa `ping` (`/ready` 503 từng lúc) và câu kết luận Tổng quan (lệch log / trace). Nhánh `feat/phase-019-w3-ban-dieu-tra-web` |
 | 2026-11-02 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W4: Lỗi theo module (S019-12), Ghi sổ / Sự kiện / Toàn vẹn (S019-13), Kịch bản (S019-14); ca T019-5 đạt. Sửa lỗi W3 đo trên Tempo thật: khung 7 ngày thành 168 giờ 1 giây → Tempo 400. Nhánh `feat/phase-019-w4-ban-dieu-tra-man-con` |
+| 2026-11-02 | Johnny Chu – Chu Hoàng Anh (chủ duyệt) | D019-8: làm "Chép cho AI" + mục AI trong AGENTS.md cùng W5; MCP cho máy dev để sau |
+| 2026-11-02 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W5: chế độ Vận hành (S019-15), SC-DEV-1 (S019-16), tài liệu (S019-17), Chép cho AI + AGENTS.md (S019-18). Nhánh `feat/phase-019-w5-van-hanh` |
