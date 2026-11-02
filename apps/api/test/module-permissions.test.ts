@@ -52,6 +52,12 @@ const huyTrongDoc = defineAction({
   handler: async (c) => { await c.ledger.cancel('thu-quyen:CN01:X', 'không được'); return { ok: true }; },
 });
 
+const doiTru = defineAction({
+  id: 'thu-quyen.cong-no.doi-tru', title: 'Đối trừ công nợ', permission: 'documents:write', effect: 'write', idempotency: 'required', sideEffects: ['ledger'],
+  input: z.object({}), output: z.object({ allocated: z.number() }), expose: {},
+  handler: async (c) => c.ledger.allocateDebt({ partnerCode: 'KH01', from: 'thu-quyen:A', to: 'thu-quyen:B', amount: 1 }),
+});
+
 beforeAll(async () => {
   ctx = await setupTenant();
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
@@ -94,6 +100,10 @@ describe('ctx.ledger.get / cancel (3.1)', () => {
     const r = await run(nopVaHuy, { no: 'Q1' }, auth(['documents:write']));
     expect(r.data.before).toBe('posted');
     expect(r.data.after === 'cancelled' || r.data.cancelRequested).toBe(true);
+  });
+
+  it('allocateDebt có chữ ký v1, năng lực còn planned → CAPABILITY_MISSING (ADR-0015 Q2)', async () => {
+    await expect(run(doiTru, {}, auth(['documents:write']))).rejects.toMatchObject({ code: 'CAPABILITY_MISSING' });
   });
 
   it('get chứng từ của nguồn khác → VALIDATION; cancel trong action đọc → lỗi', async () => {

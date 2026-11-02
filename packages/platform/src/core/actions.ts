@@ -88,6 +88,9 @@ export interface ActionContext {
     cancel(docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }>;
     /** Trạng thái chứng từ của module theo docKey (không trả nội dung); không có → null. */
     get(docKey: string): Promise<LedgerDocStatus | null>;
+    // [2026-11-02 05:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0015 — Q2: chữ ký v1 ctx.ledger.allocateDebt; năng lực ledger.allocate-debt còn planned → CAPABILITY_MISSING (API.md nguyên tắc 2)
+    /** Đối trừ hai khoản công nợ cùng đối tượng, cùng tài khoản của chính module (PHASES 3.16). Khác tài khoản: nộp chứng từ qua submit. */
+    allocateDebt(input: { partnerCode: string; from: string; to: string; amount: number }): Promise<{ allocated: number }>;
   };
   /** Cấu hình đơn vị theo registry (settings.registry, core/settings.ts): chỉ khoá module sở hữu, khoá lạ là lỗi. */
   settings: { get<T = unknown>(key: string): Promise<T> };
@@ -383,6 +386,9 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
             if (!auth) throw Errors.unauthorized();
             ownDocument(mod, { docKey }, 'module');
             return ledgerCancelGate.cancel(trx, auth, docKey, reason);
+          },
+          allocateDebt: async () => {
+            throw Errors.capabilityMissing('ledger.allocate-debt');
           },
           get: async (docKey) => {
             const mod = def.id.split('.')[0]!;
