@@ -13,6 +13,12 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->
+- **Mọi cảnh báo kèm phương án khắc phục có cấu trúc** (PHASE-022 W1, [bizcity_remedy@1](docs/contracts/BIZCITY-REMEDY-v1.md)): mỗi kiểm tự chẩn đoán và mỗi mục bảng kiểm khoá kỳ có `remedy` — các bước (màn cần mở, ai làm), mã kiểm lại, `stopTheLine` cho lỗi toàn vẹn sổ, việc không được làm. Check **SC-FIX-1** (chặn) bắt kiểm thiếu remedy hoặc trỏ màn không có trong menu. Dải cảnh báo ở màn lập chứng từ hiện từng bước kèm nút mở màn.
+- **8 kiểm mới cho khoảng trống** (PHASE-022 W2, chỉ đọc, mức warn): `CASH_NEGATIVE`, `ACCOUNT_WRONG_SIDE`, `TRANSIT_NONZERO`, `DEBT_MATCH_LEDGER`, `COGS_STALE`, `STOCK_ADJUST_NO_REASON`, `DEPRECIATION_OPEN`, `CONFORMANCE_STALE` (L3). Tài khoản đọc từ tài khoản ngầm định / công nợ / quy tắc kết chuyển của đơn vị, không viết cứng.
+- **Danh mục giả định lỗi F22 + bộ chạy** (PHASE-022 W3): 92 ca trong 10 nhóm (môi trường, chứng từ, thuế, kho, cuối kỳ, sổ, công nợ, tiền, tài sản, phân quyền), mỗi ca có bằng chứng (test, lane, công thức gây lỗi) hoặc lý do chưa làm; bảng điểm `scenario-board.json`.
+- **Bàn đánh giá theo vai** (PHASE-022 W4, menu Hệ thống → Bàn đánh giá HT08): checklist giả định lỗi theo ba vai — kế toán trưởng, kiểm soát / ban kiểm soát, thanh tra thuế (tự rà trước, không phải kết luận của cơ quan thuế); trạng thái Đạt / Cảnh báo / Lỗi / Chặn đúng / Chưa kiểm được / Kiểm ở màn khác, không điểm %; mỗi ca bốn khối Hiện tượng · Vì sao · Cách khắc phục · Kiểm lại; in biên bản. API `GET /api/v1/system/review-board?persona=` (`core.review.board`), `GET …/review-board/recheck?code=` (`core.review.recheck`, chạy lại đúng một mã), quyền mới `review:read`. Không có nút sửa sổ, tắt kiểm hay bỏ qua.
+- **Vai trò `auditor` (Kiểm soát / ban kiểm soát)** (migration `0057_vai_tro_kiem_soat`): chỉ xem như `viewer` + Bàn đánh giá; không ghi, không cấu hình.
 <!-- [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11 -->
 - **Rulepack nháp thuế GTGT (C03 `vat-vn`) và hoá đơn (C04 `einvoice-vn`)**, phạm vi hẹp (S020-11): bốn kiểm tự chẩn đoán L3 mới, chỉ đọc, mức warn — `VAT_REDUCED_RATE` (8% ngoài thời gian giảm; thời gian là tham số của ca trong rulepack), `VAT_INPUT_NONCASH` và `INVOICE_FIELDS` (dùng lại `taxIssues` của màn Bổ sung thông tin thuế), `INVOICE_ISSUE_DATE`. Schema ca `bizcity_vn_case` 1.1.0 thêm `scenario.params`. Gói `@bizcity/vn-rulepacks` 0.3.0. Mọi căn cứ còn chờ rà; bản cài tự duyệt được (cần người duyệt thuế).
 <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016 -->
@@ -235,6 +241,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->
+- Chạy migration `0057_vai_tro_kiem_soat` (chỉ nới ràng buộc `users_role_check` thêm `auditor`). Kế toán trưởng, kế toán có thêm quyền `review:read` (Bàn đánh giá); `viewer` không có.
 <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016 -->
 - Chạy migration `0056_duyet_rulepack` (chỉ thêm bảng `rulepack_approvals`). Muốn có kết luận PASS / FAIL thay vì "Chờ duyệt" thì chủ đơn vị / kế toán trưởng duyệt rulepack ở Hệ thống → Kiểm chuẩn.
 <!-- [2026-11-02 02:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số khi gộp main: hồ sơ kế toán 0051, kiểm chuẩn 0052 (0050 là vai trò developer của PHASE-019). -->

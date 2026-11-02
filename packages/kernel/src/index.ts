@@ -94,3 +94,6 @@ export { taxInfoRoutes } from './modules/tax-info/tax-info.routes.js';
 export { voucherRoutes } from './modules/vouchers/voucher.routes.js';
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn (Conformance Engine, ADR-0012): core.conformance.run / latest
 export { conformanceRoutes } from './modules/conformance/conformance.routes.js';
+// [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (route, danh mục giả định lỗi)
+export { reviewRoutes } from './modules/review/review.routes.js';
+export { FAULT_CATALOG, type FaultCase } from './modules/review/fault-catalog.js';

@@ -1,4 +1,10 @@
-{
+// @bizcity-layer K kernel/review
+// [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — danh mục giả định lỗi F22 (bizcity_fault_catalog@1) — SINH TỪ 10-DANH-MUC-GIA-DINH.md bằng script, không sửa tay; module TS để có trong dist khi triển khai.
+export type FaultLevel = 'block' | 'error' | 'warn' | 'hint' | 'none';
+export type FaultStatus = 'done' | 'blocked' | 'planned-021' | 'todo' | 'deferred';
+export interface FaultCase { id: string; group: string; title: string; detectors: string[]; detectText: string; level: FaultLevel; personas: string[]; primary: string[]; consequence: string; remedyText: string; verifyText: string; status: FaultStatus; statusNote?: string }
+export interface FaultCatalog { contract: string; source: string; groups: Record<string, string>; cases: FaultCase[] }
+export const FAULT_CATALOG: FaultCatalog = {
   "contract": "bizcity_fault_catalog@1",
   "source": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/10-DANH-MUC-GIA-DINH.md",
   "groups": {
@@ -270,8 +276,7 @@
       "consequence": "chứng từ không vào hệ thống",
       "remedyText": "① Mở chứng từ ở Trạm kiểm tra (PHASE-021). ② Sửa đúng trường được chỉ (đường dẫn `lines[2].qty`…) ở nguồn hoặc tại bể. ③ Bấm Kiểm thử rồi Nộp lại",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-DOC-02",
@@ -289,8 +294,7 @@
       "consequence": "sổ sai tổng",
       "remedyText": "① Sửa dòng hoặc tổng ở nguồn cho khớp. ② Nếu nguồn làm tròn theo dòng: bật làm tròn tổng ở nguồn",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-DOC-03",
@@ -309,8 +313,7 @@
       "consequence": "thuế kê khai lệch hoá đơn",
       "remedyText": "① So với hoá đơn gốc. ② Sửa tiền thuế hoặc loại thuế của dòng. ③ Hoá đơn sai thì lập hoá đơn điều chỉnh",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-DOC-04",
@@ -328,8 +331,7 @@
       "consequence": "tồn kho, giá vốn tách sai mã",
       "remedyText": "① Thêm mã ở Danh mục mặt hàng, hoặc ② sửa mã ở nguồn cho đúng quy tắc mã hàng",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-DOC-05",
@@ -347,8 +349,7 @@
       "consequence": "không quy đổi số lượng, tồn kho / giá vốn sai",
       "remedyText": "① Khai ĐVT và tỉ lệ quy đổi ở mặt hàng. ② Hoặc sửa ĐVT ở nguồn",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-DOC-06",
@@ -367,8 +368,7 @@
       "consequence": "công nợ không theo dõi được",
       "remedyText": "① Gắn khách hàng / nhà cung cấp ở nguồn. ② Bán lẻ thu tiền ngay thì ghi đủ dòng thanh toán",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-DOC-07",
@@ -386,8 +386,7 @@
       "consequence": "một nguồn ghi đè chứng từ của nguồn khác",
       "remedyText": "① Sửa cấu hình nguồn dùng đúng tiền tố được cấp. ② Không đổi tiền tố của chứng từ đã gửi",
       "verifyText": "— (bị chặn)",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-DOC-08",
@@ -405,8 +404,7 @@
       "consequence": "ghi đè bản mới bằng bản cũ",
       "remedyText": "① Nguồn gửi lại với `version` lớn hơn bản đang có. ② Kiểm đồng hồ / hàng đợi của nguồn",
       "verifyText": "— (bị chặn)",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-DOC-09",
@@ -424,8 +422,7 @@
       "consequence": "bản sửa bị bỏ qua như \"không đổi\"",
       "remedyText": "① Nguồn tăng `version` khi sửa. ② Gửi lại",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-DOC-10",
@@ -445,8 +442,7 @@
       "consequence": "không ghi được",
       "remedyText": "① Ghi vào kỳ đang mở (điều chỉnh kỳ sau), hoặc ② kế toán trưởng mở khoá kỳ có lý do (ACC2, `/cau-hinh/ky-ke-toan`), ghi xong khoá lại",
       "verifyText": "—",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-DOC-11",
@@ -707,8 +703,7 @@
       "consequence": "kê trùng, khấu trừ hai lần",
       "remedyText": "① So hai chứng từ. ② Trùng thật: huỷ một bản; khác nhà cung cấp: kiểm ký hiệu",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-TAX-08",
@@ -724,8 +719,7 @@
       "consequence": "kê sai kỳ",
       "remedyText": "① Chọn kỳ kê khai từ tháng của ngày hoá đơn trở đi",
       "verifyText": "— (bị chặn)",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-TAX-09",
@@ -798,8 +792,7 @@
       "consequence": "dấu hiệu nhập muộn / sai ngày",
       "remedyText": "① Kiểm ngày chứng từ hoặc ngày hoá đơn, sửa ở nguồn nếu nhập nhầm",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-STK-01",
@@ -918,8 +911,7 @@
       "consequence": "tồn sai kho",
       "remedyText": "① Sửa kho ở nguồn, hoặc khai kho cho chi nhánh (Danh mục kho)",
       "verifyText": "Kiểm thử ở Trạm",
-      "status": "planned-021",
-      "statusNote": "\udccb"
+      "status": "planned-021"
     },
     {
       "id": "F22-STK-07",
@@ -1091,8 +1083,7 @@
       "consequence": "khoá một kỳ có sổ sai",
       "remedyText": "① Sửa lỗi toàn vẹn trước (nhóm LEDGER). ② Nếu chấp nhận có lý do: ghi lý do ≥ 10 ký tự, lưu kèm lượt chẩn đoán",
       "verifyText": "— (cần lý do)",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-CLOSE-06",
@@ -1127,8 +1118,7 @@
       "consequence": "mất dấu vết sửa kỳ cũ",
       "remedyText": "① Ghi lý do; nhật ký khoá / mở lưu ai, lúc nào",
       "verifyText": "nhật ký khoá kỳ",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-CLOSE-08",
@@ -1209,8 +1199,7 @@
       "consequence": "bảng cân đối sai",
       "remedyText": "① Không ghi được (trigger chặn). ② Nếu kiểm vẫn báo: trigger đã bị vượt (F22-ENV-02) — dừng ghi sổ, báo nhóm Lõi kèm mã tra cứu, không tự sửa sổ",
       "verifyText": "`LEDGER_BALANCED`",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-LEDGER-02",
@@ -1290,8 +1279,7 @@
       "consequence": "(bị chặn)",
       "remedyText": "① Không có đường hợp lệ: sửa bằng chứng từ đảo / điều chỉnh. ② Tìm script vận hành tự viết và gỡ",
       "verifyText": "— (bị chặn)",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-LEDGER-06",
@@ -1733,8 +1721,7 @@
       "consequence": "quyết định không có người chịu trách nhiệm",
       "remedyText": "① Người có quyền đăng nhập để xác nhận",
       "verifyText": "—",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-SEC-02",
@@ -1750,8 +1737,7 @@
       "consequence": "AI tự ghi sổ / đổi cấu hình",
       "remedyText": "① AI chỉ đọc; người làm thao tác ghi",
       "verifyText": "—",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-SEC-03",
@@ -1769,8 +1755,7 @@
       "consequence": "ghi sổ ngoài phân quyền",
       "remedyText": "① Chủ đơn vị cấp vai trò phù hợp ở Người dùng (HT01)",
       "verifyText": "—",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-SEC-04",
@@ -1790,8 +1775,7 @@
       "consequence": "lộ dữ liệu",
       "remedyText": "① (bị chặn) Nếu kiểm báo bảng thiếu RLS: F22-ENV-05",
       "verifyText": "`TENANT_ISOLATION`",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-SEC-05",
@@ -1809,8 +1793,7 @@
       "consequence": "vượt cấp duyệt",
       "remedyText": "① Kế toán trưởng / chủ đơn vị làm",
       "verifyText": "—",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     },
     {
       "id": "F22-SEC-06",
@@ -1828,8 +1811,7 @@
       "consequence": "ghi trùng / ghi nhầm khi mạng chập chờn",
       "remedyText": "① Nguồn sinh khoá mới cho thao tác mới; gửi lại thì giữ nguyên cả khoá lẫn nội dung",
       "verifyText": "—",
-      "status": "blocked",
-      "statusNote": "\udee1"
+      "status": "blocked"
     }
   ]
-}
+};

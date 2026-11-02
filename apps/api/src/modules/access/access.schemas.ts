@@ -4,7 +4,8 @@
 // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: thêm vai trò developer (Q019-1).
 import { z } from 'zod';
 
-const role = z.enum(['owner', 'chief_accountant', 'accountant', 'viewer', 'developer']);
+// [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: vai trò auditor
+const role = z.enum(['owner', 'chief_accountant', 'accountant', 'viewer', 'developer', 'auditor']);
 const password = z.string().min(8, 'Mật khẩu tối thiểu 8 ký tự').max(200);
 
 export const userCreateSchema = z.object({

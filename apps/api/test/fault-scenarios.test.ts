@@ -1,5 +1,5 @@
 /**
- * PHASE-022 W3 — bộ chạy giả định lỗi (R-FIX-5). Đọc danh mục ca F22 (packages/kernel/src/modules/review/fault-catalog.json) và bằng chứng
+ * PHASE-022 W3 — bộ chạy giả định lỗi (R-FIX-5). Đọc danh mục ca F22 (FAULT_CATALOG, packages/kernel/src/modules/review/fault-catalog.ts) và bằng chứng
  * (tests/conformance/scenarios/f22-evidence.json):
  *   test     — tệp vitest có thật và nhắc mã phát hiện / từ khoá của ca (ca đã được chứng minh ở test riêng)
  *   lane     — kiểm có ở lane diagnostics của bộ kiểm (chưa có kiểm trong app)
@@ -15,11 +15,10 @@ import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { runDiagnostics } from '../src/modules/system/diagnostics.js';
 import { setupTenant, type TestCtx } from './helpers.js';
+import { FAULT_CATALOG } from '../src/kernel/public.js';
 
 const ROOT = path.resolve(__dirname, '../../..');
-const catalog = JSON.parse(fs.readFileSync(path.join(ROOT, 'packages/kernel/src/modules/review/fault-catalog.json'), 'utf8')) as {
-  cases: { id: string; group: string; title: string; detectors: string[]; status: string; level: string; personas: string[] }[];
-};
+const catalog = FAULT_CATALOG;
 type Step = { http?: string; body?: unknown; headers?: Record<string, string>; expectStatus?: number; expectCode?: string; sql?: string; expectError?: string;
   diag?: string; layer?: 'L1' | 'L3' | 'L5'; level?: string; count?: number; sampleMatch?: string };
 type Evidence = { kind: 'test' | 'lane' | 'design' | 'recipe' | 'planned'; test?: string; alsoTest?: string; mentions?: string; lane?: string; code?: string; note?: string; reason?: string;
