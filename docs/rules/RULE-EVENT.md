@@ -26,6 +26,9 @@
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — R-EVENT-13: chủ chứng từ (module mức 1, khoá app mức 2) kiểm ở cửa nạp Kernel -->
 
 
+<!-- [2026-11-02 02:38 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — định hướng cho R-EVENT-7: "không lưu" nghĩa là không thành sự việc; đầu vào bị từ chối sẽ vào bể chờ (R-INTAKE) -->
+**Định hướng ([ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md), chấp nhận 2026-11-02, thi hành ở PHASE-021):** "không lưu" ở R-EVENT-7 nghĩa là **không thành sự việc**: đầu vào sai khuôn không bao giờ vào `accounting_events`. Khi PR-I2 xong, cửa nạp vẫn trả cùng mã lỗi nhưng giữ nguyên văn + chẩn đoán ở bể chờ `intake_inbox`, có `meta.intake` trong phản hồi ([RULE-INTAKE](RULE-INTAKE.md)). Luật chặn của cửa nạp không đổi.
+
 ## Trạng thái sự việc
 
 ```

@@ -112,6 +112,29 @@ npm test                       # cần PostgreSQL: docker compose up -d db
 
 Dán khối bằng chứng theo [docs/ops/DIAGNOSTICS.md](docs/ops/DIAGNOSTICS.md) §4 khi đụng nhân (`tests/conformance/output/latest/evidence.txt` có sẵn phần bộ kiểm). Bộ kiểm báo nợ mới → sửa, **không** thêm vào `baseline.json`; nợ cũ đã hết → `--update-baseline`. Viết check mới: [tests/conformance/README.md](tests/conformance/README.md) §7.
 
+## Sửa lỗi bằng AI từ Bàn điều tra
+
+<!-- [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: luật khi dùng AI sửa lỗi từ Bàn điều tra; nút "Chép cho AI" ở Tra mã. -->
+
+Dev (chủ đơn vị / vai trò Nhà phát triển) tra lỗi ở **Nhà phát triển → Tra mã** (DEV02), bấm **Chép cho AI** rồi dán vào agent. Khối chép gồm tóm tắt, cây span rút gọn, chỗ tìm mã, việc phải làm — **chỉ mã và tên bước**, không dữ liệu kế toán, không mã đơn vị. Agent nhận khối đó thì:
+
+1. **Tìm mã theo tên span**, không đoán:
+
+   | Trong trace | Ở đâu trong repo |
+   |---|---|
+   | `action <module>.<việc>` | `defineAction({ id: '<module>.<việc>' … })` trong `apps/api/src/phan-he/<module>/` (lõi: `apps/api/src/modules/`) |
+   | `step <module>.<bước>` | `ctx.trace.step('<bước>', …)` trong module đó |
+   | `kernel <op>` (`bizcity.layer = K`) | Kernel — **không sửa** trong PR phân hệ; Kernel từ chối = dữ liệu sai đã tới được đây, sửa ở chỗ gửi |
+   | `db <lệnh> <bảng>` | câu SQL chạm bảng đó trong module / repository của span cha |
+   | `TH-xx` | mục đó trong [docs/ops/SO-TAY-DIEU-TRA-LOI.md](docs/ops/SO-TAY-DIEU-TRA-LOI.md) |
+
+2. **Test tái hiện trước khi sửa** (Sổ tay §4): test trong `apps/api/test/` bằng `setupTenant` / `call` (`apps/api/test/helpers.ts`), phải **đỏ đúng mã lỗi, đúng bước** trong khối chép; dữ liệu trong test là dữ liệu giả. Cho người duyệt xem test đỏ rồi mới sửa.
+3. `outcome = rejected` (**từ chối đúng luật**) là hệ thống làm đúng: sửa chỗ để dữ liệu sai đi tới đây (kiểm sớm ở giao diện / module, báo người dùng), **không** nới luật. `outcome = error` (**lỗi kỹ thuật**): sửa ở đúng tầng chỗ hỏng.
+4. Giữ bốn câu không thương lượng: không vá Kernel, không `UPDATE` / `DELETE` `ledger_*`, không viết số tài khoản trong code, không tắt trigger / "làm sạch" sổ.
+5. **Không** xin người dùng thêm dữ liệu thật (thân yêu cầu, ảnh màn có số tiền / tên khách, MST) và không chép những thứ đó vào test / commit / PR — repo công khai (R-SEC-10). Mã (`traceId`, `requestId`, `docKey`, mã lỗi, tên bước) là đủ.
+6. Agent **không** tự gọi `/api/v1/system/devtools/*`: các action đó `ai: 'deny'`, `mcp: false` (D019-3). Cần thêm trace thì nhờ dev chép tiếp. Công cụ MCP chỉ đọc cho máy dev là việc để sau (D019-8, chờ quyết).
+7. Xong: chạy lại test, `npm run typecheck`, `node tests/conformance/selfcheck.mjs`; dev kiểm lại trên **Lỗi theo module** (DEV04) — chỗ hỏng không còn tăng.
+
 ## Đổi code X → sửa tài liệu Y
 
 Tra bảng §5 trong [docs/00-CANON.md](docs/00-CANON.md). Thêm khoá cấu hình → [docs/contracts/bizcity-settings.registry.json](docs/contracts/bizcity-settings.registry.json). Đổi khuôn chứng từ → [docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md](docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md) + `docs/api/`.

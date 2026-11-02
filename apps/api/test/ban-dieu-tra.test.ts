@@ -15,7 +15,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
 import { env } from '../src/config/env.js';
 import { TRACE_ATTRIBUTES } from '../src/core/tracing.js';
-import { quote, resetQuota } from '../src/modules/system/devtools.sources.js';
+import { quote, resetQuota, PROMQL, probeLevel, queryProm, listAlerts, grafanaTraceLink } from '../src/modules/system/devtools.sources.js';
+import { noiDungChoAI } from '@ketoan/contracts';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let owner: TestCtx, dev: TestCtx, viewer: TestCtx, ownerB: TestCtx;
@@ -31,6 +32,10 @@ let lokiVector: { metric: Record<string, string>; value: [number, string] }[] = 
 const lokiMetricQueries: string[] = [];
 let tempoSearch: unknown[] = [];
 const tempoQueries: { q: string; limit: string; start: string; end: string }[] = [];
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: Prometheus / Alertmanager giả cho chế độ Vận hành
+const promQueries: string[] = [];
+let promValues: Record<string, string | null> = {};
+let amAlerts: unknown[] = [];
 
 const b64 = (hex: string) => Buffer.from(hex, 'hex').toString('base64');
 const T_A = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1';
@@ -102,6 +107,13 @@ beforeAll(async () => {
       if (Number(url.searchParams.get('end')) - Number(url.searchParams.get('start')) > 7 * 86400) return send(400, 'range specified by start and end exceeds 168h0m0s');
       return send(200, { traces: tempoSearch, metrics: {} });
     }
+    if (url.pathname === '/api/v1/query') {
+      const q = url.searchParams.get('query') ?? '';
+      promQueries.push(q);
+      const v = promValues[q];
+      return send(200, { status: 'success', data: { resultType: 'vector', result: v === null || v === undefined ? [] : [{ metric: {}, value: [1793600000, v] }] } });
+    }
+    if (url.pathname === '/api/v2/alerts') return send(200, amAlerts);
     if (url.pathname === '/loki/api/v1/query') {
       lokiMetricQueries.push(url.searchParams.get('query') ?? '');
       const q = url.searchParams.get('query') ?? '';
@@ -446,5 +458,100 @@ describe('Bàn điều tra — Lỗi theo module, màn đọc API sẵn có (PHA
     }
     // Phát lại sự kiện cần settings:write — không có ở developer (màn Sự kiện không có nút ghi, U8).
     expect((await call(dev, 'POST', '/api/v1/system/events/replay', { consumer: 'x.y', from: new Date().toISOString() }, { 'idempotency-key': 'w4-replay' })).status).toBe(403);
+  });
+});
+
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: chế độ Vận hành (ops.health / ops.alerts, link Grafana) + "Chép cho AI"
+describe('Bàn điều tra — Vận hành, Chép cho AI (PHASE-019 W5)', () => {
+  it('ops.health / ops.alerts: chưa mở chế độ Vận hành → 403 kèm lý do; không truy vấn nào tới Prometheus / Alertmanager', async () => {
+    env.DEVTOOLS_PROMETHEUS_URL = base;
+    env.DEVTOOLS_ALERTMANAGER_URL = base;
+    try {
+      promQueries.length = 0;
+      for (const path of ['/api/v1/system/devtools/ops/health', '/api/v1/system/devtools/ops/alerts']) {
+        // DEVTOOLS_OPS tắt.
+        const off = await call(owner, 'GET', path);
+        expect(off.status, path).toBe(403);
+        expect(off.body.error.message).toMatch(/Vận hành chưa bật/);
+        // Bật nhưng CSDL thử có nhiều đơn vị (Q019-2).
+        env.DEVTOOLS_OPS = 'true';
+        const many = await call(owner, 'GET', path);
+        expect(many.status, path).toBe(403);
+        expect(many.body.error.message).toMatch(/nhiều đơn vị/);
+        // developer không phải chủ đơn vị.
+        expect((await call(dev, 'GET', path)).body.error.message).toMatch(/chủ đơn vị/);
+        expect((await call(viewer, 'GET', path)).status).toBe(403);
+        env.DEVTOOLS_OPS = '';
+      }
+      expect(promQueries).toEqual([]);
+    } finally {
+      env.DEVTOOLS_PROMETHEUS_URL = '';
+      env.DEVTOOLS_ALERTMANAGER_URL = '';
+    }
+  });
+
+  it('nguồn Vận hành: PromQL cố định gửi đúng nguyên văn; mức theo ngưỡng cảnh báo; rỗng = "không có dữ liệu" (khác 0); cảnh báo chỉ lấy alertname / severity', async () => {
+    env.DEVTOOLS_PROMETHEUS_URL = base;
+    env.DEVTOOLS_ALERTMANAGER_URL = base;
+    try {
+      // Không biểu thức nào có tham số / đơn vị (số đo toàn hệ, mẫu đóng — SC-DEV-1 kiểm tĩnh cùng điều này).
+      for (const p of PROMQL) expect(p.expr, p.key).not.toMatch(/\$\{|tenant/);
+      const byKey = Object.fromEntries(PROMQL.map((p) => [p.key, p]));
+      promValues = { [byKey['error-rate']!.expr]: '0.08', [byKey['api-up']!.expr]: '1', [byKey['outbox-dead']!.expr]: '0' };
+      promQueries.length = 0;
+      expect(await queryProm(byKey['error-rate']!.expr)).toBe(0.08);
+      expect(await queryProm(byKey['recon-age']!.expr)).toBeNull();
+      expect(promQueries).toEqual([byKey['error-rate']!.expr, byKey['recon-age']!.expr]);
+      expect(probeLevel(byKey['error-rate']!, 0.08)).toBe('bad');
+      expect(probeLevel(byKey['error-rate']!, 0.01)).toBe('ok');
+      expect(probeLevel(byKey['api-up']!, 0)).toBe('bad');
+      expect(probeLevel(byKey['outbox-dead']!, 0)).toBe('ok');
+      expect(probeLevel(byKey['outbox-dead']!, 2)).toBe('warn');
+      expect(probeLevel(byKey['recon-age']!, null)).toBe('none');
+
+      amAlerts = [
+        { labels: { alertname: 'OutboxBacklog', severity: 'warning', tenant: '42', instance: 'api:4100' }, annotations: { summary: 'Việc giao chờ lâu', description: 'd', dashboard: '/d/bizcity-su-kien' }, status: { state: 'active' }, startsAt: '2026-11-02T03:00:00Z' },
+        { labels: { alertname: 'LedgerIntegrityError', severity: 'critical' }, annotations: { summary: 'Sổ lỗi', dashboard: 'javascript:alert(1)' }, status: { state: 'active' }, startsAt: '2026-11-02T04:00:00Z' },
+        { labels: {}, annotations: {}, status: { state: 'active' } },
+      ];
+      const alerts = await listAlerts();
+      expect(alerts.map((a) => a.name)).toEqual(['LedgerIntegrityError', 'OutboxBacklog']);
+      expect(alerts[0]!.dashboard).toBeNull();
+      expect(alerts[1]).toEqual({ name: 'OutboxBacklog', severity: 'warning', state: 'active', startsAt: '2026-11-02T03:00:00Z', summary: 'Việc giao chờ lâu', description: 'd', dashboard: '/d/bizcity-su-kien' });
+      expect(JSON.stringify(alerts)).not.toContain('api:4100');
+    } finally {
+      env.DEVTOOLS_PROMETHEUS_URL = '';
+      env.DEVTOOLS_ALERTMANAGER_URL = '';
+    }
+  });
+
+  it('link Grafana: Explore khuôn panes (Grafana 11), nguồn tempo, mã trace; mở được trên 11.4', () => {
+    const url = new URL(grafanaTraceLink('http://127.0.0.1:3000/', T_A));
+    expect(url.pathname).toBe('/explore');
+    expect(url.searchParams.get('schemaVersion')).toBe('1');
+    const panes = JSON.parse(url.searchParams.get('panes')!);
+    expect(panes.a.datasource).toBe('tempo');
+    expect(panes.a.queries[0]).toMatchObject({ queryType: 'traceql', query: T_A, datasource: { uid: 'tempo' } });
+  });
+
+  it('Chép cho AI: từ trace thật của API — tóm tắt, cây span, chỗ tìm mã, việc phải làm; không đơn vị, không trường ngoài danh sách', async () => {
+    const r = await call(dev, 'GET', `/api/v1/system/devtools/traces/${T_A}`);
+    expect(r.status).toBe(200);
+    const text = noiDungChoAI(r.body.data);
+    expect(text).toContain(`## Lỗi cần sửa — trace ${T_A}`);
+    expect(text).toContain('Kernel không được gọi — sổ không đổi.');
+    // Cây span thụt lề cha → con, thuộc tính rút gọn.
+    expect(text).toContain('- `HTTP POST /api/v1/payment-requests/:id/pay` — rejected');
+    expect(text).toContain('  - `action quy.payment-request.pay` — rejected');
+    expect(text).toContain('action=quy.payment-request.pay');
+    expect(text).toContain('table=payment_requests');
+    expect(text).toContain('(ngoại lệ AppError)');
+    // Chỗ tìm mã + việc phải làm.
+    expect(text).toContain("`defineAction({ id: 'quy.payment-request.pay' … })` trong `apps/api/src/phan-he/quy/`");
+    expect(text).toContain('docs/ops/SO-TAY-DIEU-TRA-LOI.md` mục TH-01');
+    expect(text).toContain('Viết test tái hiện');
+    expect(text).toContain('mã `CONFLICT`');
+    expect(text).toContain('từ chối đúng luật');
+    for (const secret of [tenantA, 'so_tien', '1234567', 'mst', 'Nguyễn Văn Bí Mật', 'PC-0099', 'bizcity.tenant']) expect(text).not.toContain(secret);
   });
 });

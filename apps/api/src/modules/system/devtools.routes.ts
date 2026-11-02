@@ -11,6 +11,8 @@
  *   GET /api/v1/system/devtools/traces                 core.devtools.traces    tìm trace theo kết quả / module / thời gian (≤ 7 ngày)   (W3)
  *   GET /api/v1/system/devtools/summary                core.devtools.summary   câu kết luận + ô lỗi, chậm, trace lỗi, sự kiện, chẩn đoán (W3)
  *   GET /api/v1/system/devtools/module-errors          core.devtools.module-errors  trace lỗi gom theo module → chỗ hỏng (W4)
+ *   GET /api/v1/system/devtools/ops/health             core.devtools.ops.health     Vận hành: PromQL cố định + link bảng Grafana (W5)
+ *   GET /api/v1/system/devtools/ops/alerts             core.devtools.ops.alerts     Vận hành: cảnh báo đang bật (Alertmanager) (W5)
  *
  * Bất biến (00-MASTER-PLAN §3): chỉ đọc; quyền devtools:read (chủ đơn vị + vai trò developer; không khoá API, không AI, không MCP);
  * bộ lọc đơn vị do máy chủ gắn từ phiên; không nhận truy vấn tự do; trace của đơn vị khác → 404 giống hệt "không có" (D019-5);
@@ -26,7 +28,7 @@ import { currentRequest } from '@bizcity/platform/core/request-context';
 import { TRACE_ATTRIBUTES } from '@bizcity/platform/core/tracing';
 import { errorKind } from '@bizcity/platform/core/errors';
 import { eventStatus } from '@bizcity/platform/core/events';
-import { getJson, LIMITS, LOGQL, logWindow, moduleErrorsQuery, ping, queryLogMetric, queryLogs, searchSpans, searchTraces, takeQuota, traceSearchQuery, windowRange, type SourceState } from './devtools.sources.js';
+import { DASHBOARDS, getJson, grafanaTraceLink, LIMITS, listAlerts, LOGQL, logWindow, moduleErrorsQuery, ping, probeLevel, PROMQL, queryLogMetric, queryLogs, queryProm, searchSpans, searchTraces, takeQuota, traceSearchQuery, windowRange, type SourceState } from './devtools.sources.js';
 import { groupModuleErrors, moduleErrorLines, ownsTrace, parseTempoTrace, summarize, viewTrace } from './devtools.trace.js';
 
 const TRACE_ID = z.string().trim().toLowerCase().regex(/^[0-9a-f]{32}$/, 'traceId gồm 32 ký tự hex');
@@ -78,9 +80,8 @@ async function loadTrace(ctx: ActionContext, traceId: string, ops: boolean): Pro
   const spans = status === 404 ? [] : parseTempoTrace(body);
   if (!spans.length || !ownsTrace(spans, ctx.tenant.id)) throw Errors.notFound('trace (chưa có trong Tempo — chờ ~20 giây rồi thử lại — hoặc không thuộc đơn vị của bạn)');
   const view = viewTrace(spans);
-  const grafana = ops && env.DEVTOOLS_GRAFANA_URL
-    ? `${env.DEVTOOLS_GRAFANA_URL.replace(/\/+$/, '')}/explore?left=${encodeURIComponent(JSON.stringify({ datasource: 'tempo', queries: [{ refId: 'A', queryType: 'traceql', query: traceId }] }))}`
-    : null;
+  // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: link Explore khuôn `panes` của Grafana 11 (đã mở thử trên 11.4)
+  const grafana = ops && env.DEVTOOLS_GRAFANA_URL ? grafanaTraceLink(env.DEVTOOLS_GRAFANA_URL, traceId) : null;
   return {
     traceId, startedAt: view.startedAt, durationMs: view.durationMs, summary: summarize(view.spans), spans: view.spans,
     links: { logs: `/dev/nhat-ky?traceId=${traceId}`, evidence: `/dev/tra-ma?tab=bang-chung&traceId=${traceId}`, grafana },
@@ -384,7 +385,78 @@ const moduleErrorsAction = defineAction({
   },
 });
 
-export const DEVTOOLS_ACTIONS = [statusAction, traceAction, requestAction, evidenceAction, logsAction, tracesAction, summaryAction, moduleErrorsAction];
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: chế độ Vận hành — ops.health (PromQL cố định), ops.alerts (Alertmanager)
+
+/** Chỉ khi chế độ Vận hành mở (Q019-2); không thì 403 kèm lý do — người gọi thấy vì sao, không đoán. */
+async function requireOps(ctx: ActionContext): Promise<void> {
+  const ops = await opsMode(ctx);
+  if (!ops.on) throw Errors.forbidden(ops.blocked ?? 'Chế độ Vận hành chưa bật (DEVTOOLS_OPS=true, bản cài một đơn vị, chủ đơn vị — Q019-2)');
+}
+
+const grafanaBase = () => (env.DEVTOOLS_GRAFANA_URL ? env.DEVTOOLS_GRAFANA_URL.replace(/\/+$/, '') : null);
+
+const opsHealthAction = defineAction({
+  id: 'core.devtools.ops.health', title: 'Bàn điều tra: sức khoẻ toàn hệ (Vận hành)', tags: ['Bàn điều tra'],
+  description: 'Chế độ Vận hành (bản cài một đơn vị + DEVTOOLS_OPS=true + chủ đơn vị, Q019-2): danh sách PromQL CỐ ĐỊNH — cùng biểu thức các cảnh báo trong alerts.yml — không nhận tham số truy vấn; kèm link 9 bảng Grafana.',
+  permission: 'devtools:read', effect: 'read', idempotency: 'none',
+  input: z.object({}),
+  output: z.object({
+    generatedAt: z.string(), level: z.enum(['ok', 'warn', 'bad']), lines: z.array(z.string()),
+    probes: z.array(z.object({
+      key: z.string(), label: z.string(), unit: z.enum(['bool', 'ratio', 'seconds', 'count']), value: z.number().nullable(),
+      level: z.enum(['ok', 'warn', 'bad', 'none']), alert: z.string(), dashboard: z.string().nullable(),
+    })),
+    dashboards: z.array(z.object({ uid: z.string(), title: z.string(), url: z.string().nullable() })),
+  }),
+  errors: ['FORBIDDEN', 'NOT_READY', 'RATE_LIMITED'],
+  expose: { http: { method: 'GET', path: '/api/v1/system/devtools/ops/health' }, mcp: false, ai: 'deny' },
+  handler: async (ctx) => {
+    await requireOps(ctx);
+    takeQuota(ctx.actor.id);
+    const g = grafanaBase();
+    const values = await Promise.all(PROMQL.map((p) => queryProm(p.expr)));
+    const probes = PROMQL.map((p, i) => ({
+      key: p.key, label: p.label, unit: p.unit, value: values[i]!, level: probeLevel(p, values[i]!), alert: p.alert, dashboard: g ? `${g}/d/${p.dashboard}` : null,
+    }));
+    const bad = probes.filter((p) => p.level === 'bad');
+    const warn = probes.filter((p) => p.level === 'warn');
+    const none = probes.filter((p) => p.level === 'none');
+    const lines = [
+      ...bad.map((p) => `${p.label}: vượt ngưỡng cảnh báo ${p.alert} — xem RUNBOOK-CANH-BAO § ${p.alert}.`),
+      ...warn.map((p) => `${p.label}: cần xem (${p.alert}).`),
+    ];
+    if (!lines.length) lines.push('Toàn hệ ổn — không số đo nào vượt ngưỡng cảnh báo.');
+    if (none.length) lines.push(`Chưa có dữ liệu: ${none.map((p) => p.label).join(', ')} — "không có dữ liệu" khác 0 (Sổ tay TH-13).`);
+    noteSize(probes.length);
+    return {
+      generatedAt: new Date().toISOString(), level: bad.length ? 'bad' as const : warn.length ? 'warn' as const : 'ok' as const, lines, probes,
+      dashboards: DASHBOARDS.map((d) => ({ uid: d.uid, title: d.title, url: g ? `${g}/d/${d.uid}` : null })),
+    };
+  },
+});
+
+const opsAlertsAction = defineAction({
+  id: 'core.devtools.ops.alerts', title: 'Bàn điều tra: cảnh báo đang bật (Vận hành)', tags: ['Bàn điều tra'],
+  description: 'Chế độ Vận hành: cảnh báo đang bật của Alertmanager (không tính cảnh báo đã tắt tiếng / bị ức chế) — tên, mức, từ khi nào, tóm tắt, mô tả, link bảng Grafana và mục RUNBOOK-CANH-BAO.',
+  permission: 'devtools:read', effect: 'read', idempotency: 'none',
+  input: z.object({}),
+  output: z.array(z.object({
+    name: z.string(), severity: z.string(), state: z.string(), startsAt: z.string(), summary: z.string(), description: z.string(),
+    dashboard: z.string().nullable(), runbook: z.string(),
+  })),
+  errors: ['FORBIDDEN', 'NOT_READY', 'RATE_LIMITED'],
+  expose: { http: { method: 'GET', path: '/api/v1/system/devtools/ops/alerts' }, mcp: false, ai: 'deny' },
+  handler: async (ctx) => {
+    await requireOps(ctx);
+    takeQuota(ctx.actor.id);
+    const g = grafanaBase();
+    const alerts = (await listAlerts()).map((a) => ({ ...a, dashboard: a.dashboard && g ? g + a.dashboard : null, runbook: `docs/ops/RUNBOOK-CANH-BAO.md § ${a.name}` }));
+    noteSize(alerts.length);
+    return alerts;
+  },
+});
+
+export const DEVTOOLS_ACTIONS = [statusAction, traceAction, requestAction, evidenceAction, logsAction, tracesAction, summaryAction, moduleErrorsAction, opsHealthAction, opsAlertsAction];
 
 export async function devtoolsRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, DEVTOOLS_ACTIONS);
