@@ -113,6 +113,17 @@ npm test                       # cần PostgreSQL: docker compose up -d db — c
 <!-- [2026-11-02 04:00 PM Johnny Chu - Chu Hoàng Anh] FIX — test không bao giờ chạy vào CSDL của bản cài (RULE-REVIEW W-12). -->
 **Test không bao giờ chạy vào CSDL của bản cài** (`ketoan`): bộ test tạo đơn vị rác và cố ý để lại sổ lỗi. `vitest.config.ts` tự dùng `ketoan_test` khi `DATABASE_URL` trống và dừng khi tên CSDL không có "test" — đừng đổi chốt này để "cho chạy được" ([RULE-REVIEW §6 W-12](docs/rules/RULE-REVIEW.md)).
 
+<!-- [2026-11-02 06:49 PM Johnny Chu - Chu Hoàng Anh] SO-DANG-KY — giữ chỗ số migration / ADR, đổi số trước khi merge (RULE-REVIEW W-13); cột Tiến độ của phase sinh từ lộ trình. -->
+**Số migration / ADR** (nhiều nhánh song song — RULE-REVIEW W-13):
+
+```bash
+node scripts/so-tiep-theo.mjs migration    # trước khi tạo migration (adr: trước khi tạo ADR) — số kế tiếp chưa nhánh nào giữ
+node scripts/so-tiep-theo.mjs kiem         # trước khi mở / merge PR (đã gộp origin/main): số của nhánh nối tiếp main, không trùng
+node scripts/so-tiep-theo.mjs kiem --doi-so    # lệch thì tự đổi tên tệp + dẫn chiếu trên dòng của nhánh; dòng nhập nhằng in ra để sửa tay
+```
+
+Tạo tệp với số vừa lấy rồi đẩy nhánh lên sớm — nhánh khác chạy script là thấy số đã có người giữ. Đổi số xong: thêm dấu R-SIG ghi lần đổi số (không sửa dấu cũ), chạy selfcheck (SC-DATA-1 hở / trùng migration, SC-DOC-3 trùng ADR). Đổi trạng thái việc lộ trình: `node scripts/tien-do-phase.mjs --write` cập nhật cột Tiến độ của [docs/phases/README.md](docs/phases/README.md).
+
 Dán khối bằng chứng theo [docs/ops/DIAGNOSTICS.md](docs/ops/DIAGNOSTICS.md) §4 khi đụng nhân (`tests/conformance/output/latest/evidence.txt` có sẵn phần bộ kiểm). Bộ kiểm báo nợ mới → sửa, **không** thêm vào `baseline.json`; nợ cũ đã hết → `--update-baseline`. Viết check mới: [tests/conformance/README.md](tests/conformance/README.md) §7.
 
 ## Sửa lỗi bằng AI từ Bàn điều tra
@@ -164,7 +175,7 @@ Kiến trúc open-ketoan do **Johnny Chu – Chu Hoàng Anh** thiết kế. Mỗ
 - Tên bảng, cột, biến: tiếng Anh. Chú thích, thông báo người dùng, tài liệu: tiếng Việt có dấu.
 - Tiền: `numeric(18,2)` ở CSDL, cộng trừ qua `toCents/fromCents`.
 - Lỗi: `Errors.*` (`@bizcity/platform/core/errors` — `packages/platform/src/core/errors.ts`; đường cũ `apps/api/src/core/errors.ts` là tệp chuyển tiếp), không `reply.status()`. Mã mới import Platform qua `@bizcity/platform/<đường>` (`core/*`, `db/*`, `config/env`).
-- Migration: tệp mới số kế tiếp, không sửa tệp đã chạy, có `COMMENT ON`.
+- Migration: tệp mới số kế tiếp (lấy bằng `node scripts/so-tiep-theo.mjs migration`), không sửa tệp đã chạy, có `COMMENT ON`.
 - Phân hệ không import phân hệ khác (`apps/*/src/phan-he/<key>/`).
 - Ngoài Kernel chỉ import Kernel qua gốc gói `@bizcity/kernel` (`packages/kernel/src/index.ts`; đường cũ `apps/api/src/kernel/public.ts` là tệp chuyển tiếp) — SC-KERNEL-6. Không import đường con `@bizcity/kernel/<đường>` (chỉ test của Core). Cần thêm gì vào cổng thì đề xuất.
 - Đặt tên mới theo [docs/framework/04-DAT-TEN-BIZCITY.md](docs/framework/04-DAT-TEN-BIZCITY.md).

@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/periods
+// [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: remedy có cấu trúc cho từng kiểm (bizcity_remedy@1, R-FIX-1).
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: periodCloseGaps — việc cuối kỳ còn thiếu của MỘT tháng cho cảnh báo trước khoá kỳ (không ngưỡng 30 ngày, không tính khoa-so).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm L3 cho lớp Doanh nghiệp của Conformance Engine (S020-19, Q020-6): INVENTORY_NEGATIVE, PERIOD_CLOSE_OPEN; cùng mã với lane DG-INV-1, DG-CLOSE-1.
 /**
@@ -14,6 +15,7 @@ import { sql, type RawBuilder } from 'kysely';
 import type { Db } from '@bizcity/platform/db/client';
 import { sqlCounts, type DiagCheck, type DiagScope } from '@bizcity/platform/system/diagnostics';
 import { DEFAULT_CLOSING_RULES } from '../closing/closing.service.js';
+import { SCREENS } from '@ketoan/contracts';
 
 const SAMPLE = 20;
 /** Loại dòng kho được định giá ở phiếu giá vốn tháng (giống unvaluedMovements của costing.service). */
@@ -78,6 +80,7 @@ const closeState = (s: DiagScope, month?: string) => sql`
 export const PERIOD_DIAGNOSTICS: DiagCheck[] = [
   {
     code: 'INVENTORY_NEGATIVE', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở Nhập xuất tồn tại ngày âm đầu tiên trong mẫu', screen: SCREENS.ACC83 }, { text: 'Tìm phiếu nhập thiếu / trễ / sai kho / sai mã; bổ sung hoặc sửa ở nguồn', role: 'creator' }, { text: 'Tính lại giá vốn tháng đó', screen: SCREENS.ACC49, role: 'chief_accountant' }], owner: 'accountant', verify: { code: 'INVENTORY_NEGATIVE' }, forbid: ['Không điều chỉnh kho cho "khớp"'] },
     title: 'Không có tồn kho âm theo mặt hàng × kho × ngày',
     fix: 'Tồn âm nghĩa là hàng xuất trước khi có chứng từ nhập (thiếu / trễ phiếu nhập, nhập sai kho, sai mã hàng): giá vốn bình quân của mã đó sai theo. Mẫu: <chi nhánh>:<kho>:<mã hàng>@<ngày âm đầu tiên>. Bổ sung hoặc sửa chứng từ nhập rồi tính lại giá vốn tháng đó; không điều chỉnh sổ cho "khớp".',
     run: (trx, s) => sqlCounts(trx,
@@ -92,6 +95,7 @@ export const PERIOD_DIAGNOSTICS: DiagCheck[] = [
   },
   {
     code: 'PERIOD_CLOSE_OPEN', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'gia-von: tính giá vốn tháng / chi nhánh trong mẫu', screen: SCREENS.ACC49, role: 'chief_accountant' }, { text: 'ket-chuyen hoặc thu-tu: chạy (lại) kết chuyển', screen: SCREENS.ACC6, role: 'chief_accountant' }, { text: 'khoa-so: khoá kỳ; còn cảnh báo thì ghi lý do ≥ 10 ký tự', screen: SCREENS.ACC2, role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'PERIOD_CLOSE_OPEN' } },
     title: 'Tháng đã qua quá 30 ngày có đủ việc cuối kỳ theo thứ tự: tính giá vốn, kết chuyển, khoá sổ',
     fix: 'Mẫu: <chi nhánh>:<YYYY-MM>:<việc còn thiếu>. gia-von: có hàng xuất mà chưa có phiếu giá vốn tháng. ket-chuyen: còn số doanh thu / chi phí theo bộ quy tắc kết chuyển. thu-tu: giá vốn tính lại sau kết chuyển, cần chạy lại kết chuyển. khoa-so: kỳ chưa khoá. Làm theo thứ tự ở Cuối kỳ; khoá sổ là quyết định của kế toán trưởng.',
     run: (trx, s) => sqlCounts(trx,

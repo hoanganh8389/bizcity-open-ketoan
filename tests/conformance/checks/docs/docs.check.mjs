@@ -72,6 +72,34 @@ export const checks = [
       return { examined: rules, findings };
     },
   },
+  // [2026-11-02 06:49 PM Johnny Chu - Chu Hoàng Anh] SO-DANG-KY — SC-DOC-3: số ADR không trùng, chỉ mục khớp tệp (trùng ADR-0014, ADR-0015 ngày 2026-11-02)
+  {
+    id: 'SC-DOC-3',
+    title: 'ADR: số không trùng; mỗi tệp ADR có đúng một dòng ở docs/adr/README.md, số ở dòng chỉ mục khớp số tệp',
+    gate: 'DOCS', contract: 'docs', rules: [], conf: [], tier: 1, enforce: 'block', weight: 2, targets: ['repo'],
+    run(ctx) {
+      const DIR = 'docs/adr';
+      const files = ctx.repo.list(DIR).filter((f) => /^ADR-\d{4}-.+\.md$/.test(f));
+      if (!files.length) return { examined: 0, findings: [], notes: [`chưa có ${DIR}/ADR-*.md`] };
+      const findings = [];
+      const byNo = new Map();
+      for (const f of files) byNo.set(f.slice(4, 8), [...(byNo.get(f.slice(4, 8)) ?? []), f]);
+      for (const [no, fs] of byNo) if (fs.length > 1) findings.push(ctx.finding(DIR, null, `trùng số ADR-${no}: ${fs.join(', ')} — đổi số tệp mới: node scripts/so-tiep-theo.mjs kiem --doi-so`, `dup:${no}`));
+      const index = `${DIR}/README.md`;
+      const rows = new Map();
+      ctx.repo.lines(index).forEach((t, i) => {
+        const m = /^\| \[(\d{4})\]\((ADR-(\d{4})-[^)]+\.md)\)/.exec(t);
+        if (!m) return;
+        if (m[1] !== m[3]) findings.push(ctx.finding(index, i + 1, `dòng chỉ mục ghi [${m[1]}] nhưng trỏ ${m[2]}`, `row:${m[2]}`));
+        rows.set(m[2], (rows.get(m[2]) ?? 0) + 1);
+      });
+      for (const f of files) {
+        const n = rows.get(f) ?? 0;
+        if (n !== 1) findings.push(ctx.finding(index, null, n ? `${f} có ${n} dòng chỉ mục` : `${f} chưa có dòng trong chỉ mục`, `index:${f}`));
+      }
+      return { examined: files.length, findings };
+    },
+  },
 ];
 
 /** Neo theo cách GitHub: chữ thường, bỏ dấu câu, khoảng trắng → '-'; giữ chữ có dấu tiếng Việt. */

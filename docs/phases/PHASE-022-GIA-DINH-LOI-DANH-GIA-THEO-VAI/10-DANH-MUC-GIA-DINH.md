@@ -1,4 +1,5 @@
 # PHASE-022 · 10 — Danh mục giả định lỗi (mỗi ca kèm phương án khắc phục)
+<!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: 9 ca có kiểm + test (CASH_NEGATIVE, ACCOUNT_WRONG_SIDE, TRANSIT_NONZERO, DEBT_MATCH_LEDGER, COGS_STALE, STOCK_ADJUST_NO_REASON, DEPRECIATION_OPEN, CONFORMANCE_STALE). -->
 <!-- [2026-11-02 07:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — danh mục 92 giả định lỗi trong 10 nhóm: môi trường, chứng từ, thuế / hoá đơn, kho / giá vốn, cuối kỳ, sổ / lệch sổ, công nợ, tiền, tài sản, phân quyền / bằng chứng; mỗi ca có phát hiện, mức, vai, hậu quả, phương án khắc phục từng bước, kiểm lại, trạng thái. -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
@@ -22,17 +23,17 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 
 | Nhóm | Số ca | ✔ | 🛡 | 📋 | ☐ | ○ |
 |---|---|---|---|---|---|---|
-| [ENV · Môi trường, bản cài](#2-env--môi-trường-bản-cài) | 12 | 11 | 0 | 0 | 1 | 0 |
+| [ENV · Môi trường, bản cài](#2-env--môi-trường-bản-cài) | 12 | 12 | 0 | 0 | 0 | 0 |
 | [DOC · Chứng từ, cửa nạp](#3-doc--chứng-từ-cửa-nạp) | 16 | 6 | 4 | 6 | 0 | 0 |
 | [TAX · Thuế, hoá đơn](#4-tax--thuế-hoá-đơn) | 12 | 5 | 1 | 2 | 4 | 0 |
-| [STK · Kho, giá vốn](#5-stk--kho-giá-vốn) | 10 | 5 | 0 | 1 | 4 | 0 |
-| [CLOSE · Cuối kỳ, kết chuyển, khoá kỳ](#6-close--cuối-kỳ-kết-chuyển-khoá-kỳ) | 10 | 6 | 2 | 0 | 2 | 0 |
-| [LEDGER · Sổ, lệch sổ](#7-ledger--sổ-lệch-sổ) | 10 | 6 | 2 | 0 | 2 | 0 |
-| [DEBT · Công nợ](#8-debt--công-nợ) | 6 | 0 | 0 | 0 | 6 | 0 |
-| [CASH · Tiền](#9-cash--tiền) | 6 | 0 | 0 | 0 | 5 | 1 |
+| [STK · Kho, giá vốn](#5-stk--kho-giá-vốn) | 10 | 8 | 0 | 1 | 1 | 0 |
+| [CLOSE · Cuối kỳ, kết chuyển, khoá kỳ](#6-close--cuối-kỳ-kết-chuyển-khoá-kỳ) | 10 | 7 | 2 | 0 | 1 | 0 |
+| [LEDGER · Sổ, lệch sổ](#7-ledger--sổ-lệch-sổ) | 10 | 7 | 2 | 0 | 1 | 0 |
+| [DEBT · Công nợ](#8-debt--công-nợ) | 6 | 1 | 0 | 0 | 5 | 0 |
+| [CASH · Tiền](#9-cash--tiền) | 6 | 2 | 0 | 0 | 3 | 1 |
 | [FA · Tài sản, chi phí trả trước](#10-fa--tài-sản-chi-phí-trả-trước) | 4 | 0 | 0 | 0 | 4 | 0 |
 | [SEC · Phân quyền, bằng chứng](#11-sec--phân-quyền-bằng-chứng) | 6 | 0 | 6 | 0 | 0 | 0 |
-| **Cộng** | **92** | **39** | **15** | **9** | **28** | **1** |
+| **Cộng** | **92** | **48** | **15** | **9** | **19** | **1** |
 
 ## 2. ENV · Môi trường, bản cài
 
@@ -49,7 +50,7 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 | F22-ENV-09 | Đơn vị chưa khai hồ sơ kế toán cho ngày đang xét | `PROFILE_DECLARED` (DG-PROFILE-1) | ⚠ | **KTT**, KS | Kiểm chuẩn không chọn được bộ quy định, ca "Chờ duyệt" | ① Kế toán trưởng / chủ mở Hệ thống → Hồ sơ kế toán (HT07, `/he-thong/ho-so-ke-toan`). ② Chọn năm tài chính, chế độ, loại pháp nhân, ghi căn cứ. ③ Phát hành | `PROFILE_DECLARED` | ✔ |
 | F22-ENV-10 | Gói định khoản đang cài khác chế độ của hồ sơ | `PROFILE_PACK_REGIME` (DG-PROFILE-2) | ⚠ | **KTT** | hệ thống tài khoản / luật định khoản không đúng chế độ | ① Kiểm lại hồ sơ ở HT07 (chế độ có đúng không). ② Nếu đúng: cài gói định khoản của chế độ đó cho năm tài chính kế tiếp (không đổi giữa năm). ③ Nếu hồ sơ sai: phát hành hồ sơ mới | `PROFILE_PACK_REGIME` | ✔ |
 | F22-ENV-11 | Rulepack đã duyệt tại đơn vị, sau đó cập nhật gói rulepack (lệch nội dung) | `core.conformance.rulepacks` (`local.stale`) | ⚠ | **KTT**, KS | ca của rulepack quay về "Chờ duyệt" | ① Mở Hệ thống → Kiểm chuẩn (HT06), khối "Rulepack và duyệt tại đơn vị". ② Đọc nhật ký thay đổi rulepack. ③ Người duyệt kế toán (+ thuế) duyệt lại | trạng thái rulepack ở HT06 | ✔ |
-| F22-ENV-12 | Lịch đêm không chạy (lượt kiểm chuẩn gần nhất quá 2 ngày) | *`CONFORMANCE_STALE`* | ⚠ | KS | bảng điểm cũ, lỗi theo thời gian không được bắt | ① Vận hành kiểm tiến trình API (đồng hồ sự kiện chạy trong API). ② Xem `EVENT_DEAD` của `core.conformance-nightly`. ③ Bấm "Chạy kiểm chuẩn" ở HT06 | `CONFORMANCE_STALE` | ☐ |
+| F22-ENV-12 | Lịch đêm không chạy (lượt kiểm chuẩn gần nhất quá 2 ngày) | `CONFORMANCE_STALE` | ⚠ | KS | bảng điểm cũ, lỗi theo thời gian không được bắt | ① Vận hành kiểm tiến trình API (đồng hồ sự kiện chạy trong API). ② Xem `EVENT_DEAD` của `core.conformance-nightly`. ③ Bấm "Chạy kiểm chuẩn" ở HT06 | `CONFORMANCE_STALE` | ✔ |
 
 ## 3. DOC · Chứng từ, cửa nạp
 
@@ -96,12 +97,12 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 | F22-STK-01 | Tồn kho âm theo mặt hàng × kho × ngày | `INVENTORY_NEGATIVE` (DG-INV-1); cảnh báo trước khoá kỳ | ⚠ | KTT, **TT** | giá vốn bình quân sai, chi phí không có cơ sở | ① Mẫu `<chi nhánh>:<kho>:<mã>@<ngày âm đầu>`: mở BC nhập xuất tồn (ACC83, `/bao-cao/nhap-xuat-ton`) tại ngày đó. ② Tìm phiếu nhập thiếu / trễ / sai kho / sai mã; bổ sung hoặc sửa ở nguồn. ③ Tính lại giá vốn tháng đó (ACC49). Không điều chỉnh kho cho "khớp" | `INVENTORY_NEGATIVE` | ✔ |
 | F22-STK-02 | Tháng có hàng xuất mà chưa có phiếu giá vốn | `PERIOD_CLOSE_OPEN` (`gia-von`); bảng kiểm `cogs` | ⚠ | **KTT** | lợi nhuận tháng sai | ① Tính giá vốn (ACC49, `/nghiep-vu/tinh-gia-von`) cho tháng và chi nhánh trong mẫu. ② Kết chuyển lại nếu đã kết chuyển (F22-STK-03) | `PERIOD_CLOSE_OPEN` | ✔ |
 | F22-STK-03 | Tính lại giá vốn sau khi đã kết chuyển | `PERIOD_CLOSE_OPEN` (`thu-tu`); bảng kiểm `closingStale` | ⚠ | **KTT**, KS | kết chuyển dùng số giá vốn cũ | ① Chạy lại Kết chuyển (ACC6, `/nghiep-vu/ket-chuyen`) cho tháng đó | `PERIOD_CLOSE_OPEN` | ✔ |
-| F22-STK-04 | Phiếu nhập về / sửa sau khi đã tính giá vốn tháng | *`COGS_STALE`* (dòng kho tạo sau phiếu giá vốn tháng) | ⚠ | **KTT** | đơn giá vốn của tháng lỗi thời | ① Tính lại giá vốn tháng đó (ACC49). ② Kết chuyển lại (ACC6) | `COGS_STALE` | ☐ |
-| F22-STK-05 | Hàng đang chuyển giữa chi nhánh không về 0 | *`TRANSIT_NONZERO`* (DG-PLAN-4) | ⚠ | KTT, **KS** | hàng "mất" giữa hai kho | ① Sổ chi tiết tài khoản hàng đang chuyển (ACC12) theo chi nhánh. ② Chi nhánh nhận chưa nhập: nhập phiếu chuyển đến. ③ Lệch đơn giá giữa nhóm tính giá: tính lại giá vốn nhóm gửi trước | `TRANSIT_NONZERO` | ☐ |
+| F22-STK-04 | Phiếu nhập về / sửa sau khi đã tính giá vốn tháng | `COGS_STALE` (dòng kho tạo sau phiếu giá vốn tháng) | ⚠ | **KTT** | đơn giá vốn của tháng lỗi thời | ① Tính lại giá vốn tháng đó (ACC49). ② Kết chuyển lại (ACC6) | `COGS_STALE` | ✔ |
+| F22-STK-05 | Hàng đang chuyển giữa chi nhánh không về 0 | `TRANSIT_NONZERO` (DG-PLAN-4) | ⚠ | KTT, **KS** | hàng "mất" giữa hai kho | ① Sổ chi tiết tài khoản hàng đang chuyển (ACC12) theo chi nhánh. ② Chi nhánh nhận chưa nhập: nhập phiếu chuyển đến. ③ Lệch đơn giá giữa nhóm tính giá: tính lại giá vốn nhóm gửi trước | `TRANSIT_NONZERO` | ✔ |
 | F22-STK-06 | Kho không thuộc chi nhánh của chứng từ | `IN-MD-006` | ⛔ | KTT | tồn sai kho | ① Sửa kho ở nguồn, hoặc khai kho cho chi nhánh (Danh mục kho) | Kiểm thử ở Trạm | 📋 |
 | F22-STK-07 | Đơn giá vốn bất thường (bằng 0 khi có hàng, hoặc gấp nhiều lần tháng trước) | *`COST_UNIT_SPIKE`* (ngưỡng nội bộ) | ⚠ | **TT**, KTT | giá vốn bị đội / thiếu | ① Mở bảng đơn giá vốn tháng (ACC49). ② Kiểm phiếu nhập giá bất thường (đơn giá, ĐVT quy đổi). ③ Sửa ở nguồn, tính lại | `COST_UNIT_SPIKE` | ☐ |
 | F22-STK-08 | Nhập bảng giá vốn từ Excel thiếu mã đang xuất | kết quả tính giá vốn `imported.missing` | ⚠ | KTT | mã thiếu tính theo bình quân, lẫn hai cách | ① Bổ sung mã vào tệp, nhập lại. ② Hoặc bỏ giá nhập, quay về bình quân | màn ACC49 | ✔ |
-| F22-STK-09 | Phiếu điều chỉnh kho (kiểm kê) không ghi lý do | *`STOCK_ADJUST_NO_REASON`* | ⚠ | **KS**, TT | chênh lệch kiểm kê không có cơ sở | ① Ghi lý do + biên bản kiểm kê ở nguồn. ② Chọn lý do có tài khoản đối ứng (ACC18) | `STOCK_ADJUST_NO_REASON` | ☐ |
+| F22-STK-09 | Phiếu điều chỉnh kho (kiểm kê) không ghi lý do | `STOCK_ADJUST_NO_REASON` | ⚠ | **KS**, TT | chênh lệch kiểm kê không có cơ sở | ① Ghi lý do + biên bản kiểm kê ở nguồn. ② Chọn lý do có tài khoản đối ứng (ACC18) | `STOCK_ADJUST_NO_REASON` | ✔ |
 | F22-STK-10 | Dòng chờ giá vốn kiểu cũ còn số tiền | phiếu giá vốn tháng đưa về 0 (`overwriteCostPairs`) | — | KS | (đã xử lý theo thiết kế) | Không cần làm gì: tính giá vốn tháng tự đưa dòng chờ cũ về 0 | — | ✔ |
 
 ## 6. CLOSE · Cuối kỳ, kết chuyển, khoá kỳ
@@ -115,7 +116,7 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 | F22-CLOSE-05 | Khoá kỳ khi sổ có lỗi toàn vẹn | `LEDGER_DIAGNOSTICS_FAILED` (R-DIAG-4) | ⛔ | **KS** | khoá một kỳ có sổ sai | ① Sửa lỗi toàn vẹn trước (nhóm LEDGER). ② Nếu chấp nhận có lý do: ghi lý do ≥ 10 ký tự, lưu kèm lượt chẩn đoán | — (cần lý do) | 🛡 |
 | F22-CLOSE-06 | Khoá kỳ khi còn cảnh báo (tồn âm, chưa giá vốn…) | `core.conformance.advisories` + xác nhận | ⚠ | **KTT**, KS | khoá với việc chưa xong | ① Đọc khối cảnh báo ở ACC2. ② Xử lý, hoặc ghi lý do ≥ 10 ký tự rồi khoá (bằng chứng `core.conformance.acknowledge`) | bằng chứng ở nhật ký | ✔ |
 | F22-CLOSE-07 | Mở khoá kỳ không ghi lý do | bắt buộc lý do khi mở khoá | ⛔ | KS | mất dấu vết sửa kỳ cũ | ① Ghi lý do; nhật ký khoá / mở lưu ai, lúc nào | nhật ký khoá kỳ | 🛡 |
-| F22-CLOSE-08 | Khấu hao / phân bổ chi phí tháng chưa chạy | *`DEPRECIATION_OPEN`* | ⚠ | **KTT**, TT | chi phí tháng thiếu | ① Tính khấu hao, phân bổ (ACC31, `/tai-san/khau-hao`) cho tháng. ② Kết chuyển lại nếu đã kết chuyển | `DEPRECIATION_OPEN` | ☐ |
+| F22-CLOSE-08 | Khấu hao / phân bổ chi phí tháng chưa chạy | `DEPRECIATION_OPEN` | ⚠ | **KTT**, TT | chi phí tháng thiếu | ① Tính khấu hao, phân bổ (ACC31, `/tai-san/khau-hao`) cho tháng. ② Kết chuyển lại nếu đã kết chuyển | `DEPRECIATION_OPEN` | ✔ |
 | F22-CLOSE-09 | Năm tài chính đã qua chưa kết chuyển lãi / lỗ năm | *`YEAR_END_OPEN`* | ⚠ | **KTT**, KS | lợi nhuận chưa phân phối sai | ① Kết chuyển cuối năm (ACC6, chọn năm). ② Khoá các kỳ của năm | `YEAR_END_OPEN` | ☐ |
 | F22-CLOSE-10 | Yêu cầu thanh toán chờ duyệt / chưa chi cuối kỳ | bảng kiểm `paymentRequests` | ⚠ | **KTT** | công nợ, tiền cuối kỳ chưa đúng | ① Yêu cầu thanh toán (CN05, `/cong-no/yeu-cau-thanh-toan`): duyệt hoặc từ chối. ② Lập phiếu chi cho yêu cầu đã duyệt | `GET /periods/check` | ✔ |
 
@@ -130,7 +131,7 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 | F22-LEDGER-05 | Ai đó `UPDATE` / `DELETE` thẳng vào sổ cái hoặc bằng chứng | `LEDGER_APPEND_ONLY` (trigger) | ⛔ | **KS** | (bị chặn) | ① Không có đường hợp lệ: sửa bằng chứng từ đảo / điều chỉnh. ② Tìm script vận hành tự viết và gỡ | — (bị chặn) | 🛡 |
 | F22-LEDGER-06 | Kết chuyển / giá vốn / khấu hao ghi vòng qua cửa ghi sổ | `INTERNAL_EVENT_VERSION` (DG-EVENT-4) | ⚠ | **KS** | sự việc nội bộ lệch phiên bản | ① Chạy lại kết chuyển / tính giá vốn / khấu hao của kỳ đó. ② Còn lỗi: báo nhóm Lõi | `INTERNAL_EVENT_VERSION` | ✔ |
 | F22-LEDGER-07 | Bút toán theo phiên bản chính sách kế toán không áp cho ngày hạch toán | `POLICY_VERSION` (DG-POL-1) | ⚠ | **KS** | định khoản theo luật cũ / chưa hiệu lực | ① Định khoản lại chứng từ ở ACC14. ② Báo nhóm Lõi (có đường định khoản không đọc chính sách theo ngày) | `POLICY_VERSION` | ✔ |
-| F22-LEDGER-08 | Tài khoản dư sai bên (tiền, hàng tồn dư Có; tài khoản chỉ dư Nợ lại dư Có) | *`ACCOUNT_WRONG_SIDE`* (theo `normal_side` của tài khoản) | ⚠ | KTT, **KS**, TT | dấu hiệu ghi thiếu chứng từ / ghi nhầm tài khoản | ① Sổ chi tiết tài khoản (ACC12) tại ngày đầu tiên sai bên. ② Tìm chứng từ thiếu (phiếu thu, phiếu nhập) hoặc ghi nhầm. ③ Sửa ở nguồn / lập chứng từ điều chỉnh | `ACCOUNT_WRONG_SIDE` | ☐ |
+| F22-LEDGER-08 | Tài khoản dư sai bên (tiền, hàng tồn dư Có; tài khoản chỉ dư Nợ lại dư Có) | `ACCOUNT_WRONG_SIDE` (theo `normal_side` của tài khoản) | ⚠ | KTT, **KS**, TT | dấu hiệu ghi thiếu chứng từ / ghi nhầm tài khoản | ① Sổ chi tiết tài khoản (ACC12) tại ngày đầu tiên sai bên. ② Tìm chứng từ thiếu (phiếu thu, phiếu nhập) hoặc ghi nhầm. ③ Sửa ở nguồn / lập chứng từ điều chỉnh | `ACCOUNT_WRONG_SIDE` | ✔ |
 | F22-LEDGER-09 | Bảng cân đối phát sinh không cân / không khớp số dư đầu kỳ | Nợ = Có theo bút toán (trigger) + `LEDGER_BALANCES_DAILY` | ✘ | **KS** | báo cáo tài chính sai | ① Như F22-LEDGER-02 | `LEDGER_BALANCES_DAILY` | ✔ |
 | F22-LEDGER-10 | Phiếu kế toán tay ghi vào tài khoản thuế / doanh thu không qua chứng từ gốc | *`MANUAL_SENSITIVE`* (tài khoản lấy từ cấu hình loại thuế / ngầm định, không viết cứng) | ⚠ | **KS**, TT | sổ thuế / doanh thu lệch hoá đơn | ① Mở phiếu (ACC16). ② Có chứng từ gốc: đính kèm, ghi căn cứ. ③ Không có: huỷ phiếu, lập đúng chứng từ (hoá đơn điều chỉnh, phiếu bán) | `MANUAL_SENSITIVE` | ☐ |
 
@@ -138,7 +139,7 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 
 | Mã ca | Giả định lỗi | Phát hiện | Mức | Vai | Hậu quả | Phương án khắc phục | Kiểm lại | TT |
 |---|---|---|---|---|---|---|---|---|
-| F22-DEBT-01 | Tổng khoản công nợ mở ≠ số dư tài khoản công nợ theo đối tượng | *`DEBT_MATCH_LEDGER`* (DG-PLAN-1) | ✘ | **KS**, KTT | sổ công nợ và sổ cái nói hai số | ① Sổ chi tiết công nợ (ACC40) theo đối tượng lệch. ② Tìm thanh toán chưa phân bổ / phân bổ sai (CN01). ③ Phiếu kế toán tay vào tài khoản công nợ thiếu đối tượng: sửa phiếu | `DEBT_MATCH_LEDGER` | ☐ |
+| F22-DEBT-01 | Tổng khoản công nợ mở ≠ số dư tài khoản công nợ theo đối tượng | `DEBT_MATCH_LEDGER` (DG-PLAN-1) | ✘ | **KS**, KTT | sổ công nợ và sổ cái nói hai số | ① Sổ chi tiết công nợ (ACC40) theo đối tượng lệch. ② Tìm thanh toán chưa phân bổ / phân bổ sai (CN01). ③ Phiếu kế toán tay vào tài khoản công nợ thiếu đối tượng: sửa phiếu | `DEBT_MATCH_LEDGER` | ✔ |
 | F22-DEBT-02 | Công nợ phải thu quá hạn quá N ngày (quy chế nội bộ) | *`DEBT_OVERDUE`*; màn tuổi nợ ACC67 | ⚠ | **KTT** | rủi ro mất vốn, cần trích lập dự phòng | ① Báo cáo tuổi nợ quá hạn (ACC67B). ② Gửi biên bản đối chiếu (CN07). ③ Kế toán trưởng xét trích lập dự phòng | `DEBT_OVERDUE` | ☐ |
 | F22-DEBT-03 | Khách hàng dư Có (trả thừa) / nhà cung cấp dư Nợ lâu không xử lý | *`DEBT_WRONG_SIDE`* | ⚠ | KTT, **KS** | tiền khách chưa hoàn / chưa cấn trừ | ① Cấn trừ công nợ (BT03) với khoản nợ khác. ② Hoặc lập phiếu chi hoàn tiền | `DEBT_WRONG_SIDE` | ☐ |
 | F22-DEBT-04 | Thanh toán chưa phân bổ vào khoản nợ cụ thể | *`DEBT_UNALLOCATED`* | ⚠ | **KTT** | tuổi nợ sai, quá hạn ảo | ① Khoản công nợ và đối trừ (CN01): phân bổ thanh toán vào hoá đơn | `DEBT_UNALLOCATED` | ☐ |
@@ -149,8 +150,8 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 
 | Mã ca | Giả định lỗi | Phát hiện | Mức | Vai | Hậu quả | Phương án khắc phục | Kiểm lại | TT |
 |---|---|---|---|---|---|---|---|---|
-| F22-CASH-01 | Quỹ tiền mặt âm cuối ngày | *`CASH_NEGATIVE`* (tài khoản tiền mặt lấy từ cấu hình, không viết cứng) | ⚠ | KTT, **TT** | chi khi không có tiền: dấu hiệu thiếu phiếu thu / chi khống | ① Sổ quỹ tiền mặt (ACC55) tại ngày âm đầu tiên. ② Tìm phiếu thu thiếu / nhập trễ, hoặc phiếu chi ghi nhầm ngày. ③ Sửa ở nguồn / lập phiếu thu đúng ngày | `CASH_NEGATIVE` | ☐ |
-| F22-CASH-02 | Tiền đang chuyển / chuyển tiền nội bộ không về 0 | *`TRANSIT_NONZERO`* (dùng chung với F22-STK-05) | ⚠ | **KS** | tiền "mất" giữa hai quỹ | ① Chuyển tiền nội bộ: nơi nhận bấm "Xác nhận đã nhận tiền". ② Sổ chi tiết tài khoản tiền đang chuyển (ACC12) | `TRANSIT_NONZERO` | ☐ |
+| F22-CASH-01 | Quỹ tiền mặt âm cuối ngày | `CASH_NEGATIVE` (tài khoản tiền mặt lấy từ cấu hình, không viết cứng) | ⚠ | KTT, **TT** | chi khi không có tiền: dấu hiệu thiếu phiếu thu / chi khống | ① Sổ quỹ tiền mặt (ACC55) tại ngày âm đầu tiên. ② Tìm phiếu thu thiếu / nhập trễ, hoặc phiếu chi ghi nhầm ngày. ③ Sửa ở nguồn / lập phiếu thu đúng ngày | `CASH_NEGATIVE` | ✔ |
+| F22-CASH-02 | Tiền đang chuyển / chuyển tiền nội bộ không về 0 | `TRANSIT_NONZERO` (dùng chung với F22-STK-05) | ⚠ | **KS** | tiền "mất" giữa hai quỹ | ① Chuyển tiền nội bộ: nơi nhận bấm "Xác nhận đã nhận tiền". ② Sổ chi tiết tài khoản tiền đang chuyển (ACC12) | `TRANSIT_NONZERO` | ✔ |
 | F22-CASH-03 | Chuyển tiền nội bộ chưa được nơi nhận xác nhận quá N ngày | *`TRANSFER_UNCONFIRMED`* | ⚠ | **KTT** | tiền không ghi nơi nhận | ① Nhắc nơi nhận xác nhận sau khi đối chiếu quỹ / sao kê | `TRANSFER_UNCONFIRMED` | ☐ |
 | F22-CASH-04 | Chi tiền mặt cho một khoản vượt ngưỡng phải thanh toán không dùng tiền mặt (ngưỡng luật, căn cứ chờ rà) | *`CASH_LARGE_PAYMENT`* (ngưỡng là tham số rulepack) | ⚠ | **TT** | chi phí có thể bị loại khi tính thuế | ① Đổi sang chuyển khoản cho lần sau. ② Ghi chú căn cứ khi xác nhận cảnh báo | `CASH_LARGE_PAYMENT` | ☐ |
 | F22-CASH-05 | Phiếu thu / chi thiếu người nộp / nhận hoặc lý do | *`CASH_VOUCHER_FIELDS`* | ℹ | KS | chứng từ tiền không đủ yếu tố | ① Bổ sung ở phiếu (ACC15 / phiếu thu chi) | `CASH_VOUCHER_FIELDS` | ☐ |
