@@ -26,7 +26,7 @@
 | S020-8 | C01 golden: test C01.4 (cùng docKey hai đơn vị); chốt G4 (Q020-3); mọi ca C01 có bằng chứng — ca T020-4 | W1 / VNCONF-004 | P0 | chưa | ☐ |
 | S020-9 | C08: ca runtime cho vai trò module / RBAC; C08.4, C08.6 chờ ADR-0011 (G3) — ca T020-5 | W1 / VNCONF-005 | P0 | chưa | ☐ |
 | S020-10 | C02: fixture vàng TT99 (hệ thống tài khoản, chuyển chế độ); đề xuất năng lực năm tài chính / chế độ kế toán của đơn vị (G1, G2, G5) theo VERSIONING §5 — ca T020-6 | W2 / VNCONF-006 | P0 | chưa | ☐ ⛔ Q020-2 |
-| S020-11 | C03 `vat-vn` + C04 `einvoice-vn` phạm vi hẹp: registry rà đến điều-khoản-điểm; mock nhà cung cấp hoá đơn; `known_exclusions` rõ — ca T020-7 | W3 / VNCONF-007 | P0 | chưa | ☐ ⛔ `tax_reviewer` |
+| S020-11 | C03 `vat-vn` + C04 `einvoice-vn` phạm vi hẹp: registry rà đến điều-khoản-điểm; mock nhà cung cấp hoá đơn; `known_exclusions` rõ — ca T020-7 | W3 / VNCONF-007 | P0 | nháp | 🟡 2026-11-02 — 2 rulepack nháp (4 ca), kiểm DG-VAT-1/2, DG-EINV-1/2, `vat-einvoice.test.ts`; điều khoản để REVIEW_REQUIRED (người duyệt chốt), mock nhà cung cấp chưa làm; bản cài tự duyệt được (ADR-0015) <!-- [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11 --> |
 | S020-12 | CI gate: bước VN trong `conformance.yml`; FAIL / ERROR P0 chặn; `evidence/`; `docs/compliance/RELEASE-CHECKLIST.md` — ca T020-8 | W4 / VNCONF-008 | P0 | chưa | ☐ |
 | S020-13 | Adapter POS mẫu + tài liệu dev cộng đồng (xét `packages/vn-conformance` — D020-1) | W5 / VNCONF-009 | P1 | chưa | ☐ |
 | S020-14 | `report.html` + trang chứng nhận plugin (nhãn D020-6) | W5 / VNCONF-010 | P1 | chưa | ☐ |

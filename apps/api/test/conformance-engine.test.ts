@@ -73,7 +73,7 @@ describe('Conformance Engine trên bản cài', () => {
     expect(validate(schema, row.report)).toEqual([]);
     expect((row.report as { tenant_profile: { simulated: boolean; accounting_regime: string } }).tenant_profile).toMatchObject({ simulated: false, accounting_regime: 'unknown' });
     expect(row.layers).toEqual(['module', 'configuration', 'enterprise']);
-    expect(row.kit_version).toBe('0.2.0');
+    expect(row.kit_version).toBe('0.3.0');
   });
 
   it('khai TT99: kiểm hồ sơ và gói cùng chế độ đạt; ca vẫn REVIEW_REQUIRED vì rulepack chưa duyệt', async () => {

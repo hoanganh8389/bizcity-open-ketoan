@@ -54,6 +54,10 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version = version` (ghi qua `eventStore`; lệch = có đường ghi vòng qua cửa) | warn | có | DG-EVENT-4 |
 | `INVENTORY_NEGATIVE` <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19 --> | L3 | Tồn kho âm cuối ngày theo (chi nhánh, kho, mã hàng), số dư luỹ kế từ dòng kho đầu tiên; mẫu `<chi nhánh>:<kho>:<mã>@<ngày âm đầu>` (lớp Doanh nghiệp, C09) | warn | có | DG-INV-1 |
 | `PERIOD_CLOSE_OPEN` | L3 | Tháng kết thúc quá 30 ngày (ngưỡng nội bộ) thiếu việc cuối kỳ: `gia-von` (hàng xuất chưa có phiếu giá vốn tháng), `ket-chuyen` (còn số theo bộ quy tắc kết chuyển của đơn vị, chưa lưu bộ riêng thì bộ mặc định), `thu-tu` (giá vốn tính lại sau kết chuyển), `khoa-so`; không chặn khoá kỳ (lớp Doanh nghiệp, C09) | warn | có | DG-CLOSE-1 |
+| `VAT_REDUCED_RATE` <!-- [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11 --> | L3 | Dòng bán ra dùng loại thuế có thuế suất giảm (8%) ngoài thời gian giảm; thuế suất + khoảng ngày là tham số của ca `vn.vat-vn.rate.reduced_window.001` (rulepack), không viết cứng | warn | có | DG-VAT-1 |
+| `VAT_INPUT_NONCASH` | L3 | Hoá đơn mua vào ≥ 5 triệu (gồm thuế), được khấu trừ, chưa ghi chứng từ thanh toán không dùng tiền mặt — dùng lại `taxIssues` / `NON_CASH_THRESHOLD` của ACC78 | warn | có | DG-VAT-2 |
+| `INVOICE_FIELDS` | L3 | Hoá đơn trong sổ thiếu ký hiệu, thiếu tên / mã số thuế người bán (mua vào), mã số thuế sai dạng — dùng lại `taxIssues`; mẫu `<số chứng từ>: <điểm thiếu>` | warn | có | DG-EINV-1 |
+| `INVOICE_ISSUE_DATE` | L3 | Hoá đơn bán hàng hoá có ngày lập sau ngày chứng từ bán (thời điểm chuyển giao) | warn | có | DG-EINV-2 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |

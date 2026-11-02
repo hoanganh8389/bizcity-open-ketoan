@@ -1,0 +1,58 @@
+{
+  "contract": "bizcity_vn_rulepack@1",
+  "id": "einvoice-vn",
+  "version": "0.1.0",
+  "catalog_id": "C04",
+  "title": "Hoá đơn: nội dung bắt buộc trong sổ hoá đơn, thời điểm lập hoá đơn bán hàng hoá (phạm vi hẹp)",
+  "description": "Lớp Doanh nghiệp: sổ hoá đơn của đơn vị so với quy định về hoá đơn, chứng từ. Không nối cơ quan thuế: không kiểm mã của cơ quan thuế, không gửi dữ liệu; giả lập nhà cung cấp hoá đơn chưa làm.",
+  "jurisdiction": "VN",
+  "domain": "invoice",
+  "regime": "neutral",
+  "priority": "P0",
+  "layer": "enterprise",
+  "status": "draft",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.decree.123-2020-nd-cp",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "Nghị định hoá đơn, chứng từ"
+    },
+    {
+      "source_id": "vn.decree.70-2025-nd-cp",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "sửa đổi Nghị định 123/2020, hiệu lực 01/6/2025"
+    }
+  ],
+  "cases": [
+    "cases/book-required_fields.json",
+    "cases/output-issue_time.json"
+  ],
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — miền thuế / hoá đơn: duyệt tại đơn vị cần người duyệt thuế (ADR-0015)"
+  },
+  "release": {
+    "rules_hash": null,
+    "released_at": null,
+    "changelog": [
+      {
+        "version": "0.1.0",
+        "date": "2026-11-02",
+        "note": "S020-11: khởi tạo nháp phạm vi hẹp; mọi căn cứ còn pending, điều khoản để REVIEW_REQUIRED cho người duyệt chốt"
+      }
+    ]
+  }
+}

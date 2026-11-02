@@ -59,6 +59,8 @@ export { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
 export { PROFILE_DIAGNOSTICS } from './modules/posting-config/profile.diagnostics.js';
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm L3 lớp Doanh nghiệp (tồn kho âm, việc cuối kỳ) cho Conformance Engine (S020-19)
 export { PERIOD_DIAGNOSTICS } from './modules/periods/period.diagnostics.js';
+// [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11: kiểm L3 thuế GTGT và hoá đơn (C03 vat-vn, C04 einvoice-vn)
+export { TAX_DIAGNOSTICS } from './modules/tax-info/tax.diagnostics.js';
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — lịch đêm Kiểm chuẩn (subscriber bizcity.clock.daily, R-DIAG-3)
 export { conformanceNightlySubscriber } from './modules/conformance/conformance.service.js';
 export { collectLedgerMetrics } from './modules/ledger/ledger.metrics.js';

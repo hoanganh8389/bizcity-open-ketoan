@@ -128,3 +128,16 @@ export const conformanceNightlySubscriber = defineSubscriber({
     await runConformance(ctx.tx, ctx.tenantId, { asOf: date, actor: 'system:nightly' });
   },
 });
+
+// [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11: tham số luật của ca cho kiểm DG-* (số liệu luật ở rulepack, không viết cứng trong Kernel).
+/** Tham số luật của một ca (`scenario.params`). Thiếu ca / thiếu tham số thì ném lỗi: kiểm ra mức error, không đoán (R-VNC-3). */
+export function caseParams(caseId: string): Record<string, string | number | boolean> {
+  for (const p of loadKit().kit.rulepacks) {
+    for (const k of p._cases) {
+      if (k.id !== caseId) continue;
+      const params = (k as { scenario?: { params?: Record<string, string | number | boolean> } }).scenario?.params;
+      if (params) return params;
+    }
+  }
+  throw new Error(`Không thấy tham số của ca ${caseId} trong kho rulepack (@bizcity/vn-rulepacks)`);
+}

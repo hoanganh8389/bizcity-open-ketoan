@@ -24,16 +24,16 @@
       "rulepack": "vat-vn",
       "title": "Thuế GTGT: loại thuế, thuế suất theo ngày và đối tượng, khấu trừ, làm tròn (phạm vi hẹp)",
       "priority": "P0",
-      "status": "planned",
-      "ticket": "VNCONF-007"
+      "status": "draft",
+      "ticket": "S020-11"
     },
     {
       "id": "C04",
       "rulepack": "einvoice-vn",
       "title": "Hoá đơn điện tử: mốc lập, loại, điều chỉnh / thay thế, tham chiếu, đối soát (phạm vi hẹp, mock)",
       "priority": "P0",
-      "status": "planned",
-      "ticket": "VNCONF-007"
+      "status": "draft",
+      "ticket": "S020-11"
     },
     {
       "id": "C05",

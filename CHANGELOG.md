@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11 -->
+- **Rulepack nháp thuế GTGT (C03 `vat-vn`) và hoá đơn (C04 `einvoice-vn`)**, phạm vi hẹp (S020-11): bốn kiểm tự chẩn đoán L3 mới, chỉ đọc, mức warn — `VAT_REDUCED_RATE` (8% ngoài thời gian giảm; thời gian là tham số của ca trong rulepack), `VAT_INPUT_NONCASH` và `INVOICE_FIELDS` (dùng lại `taxIssues` của màn Bổ sung thông tin thuế), `INVOICE_ISSUE_DATE`. Schema ca `bizcity_vn_case` 1.1.0 thêm `scenario.params`. Gói `@bizcity/vn-rulepacks` 0.3.0. Mọi căn cứ còn chờ rà; bản cài tự duyệt được (cần người duyệt thuế).
 <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014 -->
 - **Duyệt rulepack tại bản cài** ([ADR-0015](docs/adr/ADR-0015-duyet-rulepack-tai-ban-cai.md), migration `0053_duyet_rulepack`): bản cài tự chủ tự duyệt rulepack còn nháp cho đơn vị mình (quyền mới `conformance:approve`: chủ đơn vị, kế toán trưởng). `GET /api/v1/conformance/rulepacks`, `POST …/rulepacks/approve`, `…/revoke`. Lượt duyệt gắn phiên bản + băm nội dung, cập nhật gói rulepack thì phải duyệt lại. Kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị", không mang nhãn Bizcity; báo cáo có `approval_basis`. Màn Kiểm chuẩn có khối "Rulepack và duyệt tại đơn vị".
 <!-- [2026-11-02 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21 / lịch đêm -->
