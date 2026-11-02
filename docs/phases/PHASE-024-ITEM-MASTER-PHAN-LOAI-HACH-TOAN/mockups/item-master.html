@@ -1,0 +1,136 @@
+<!doctype html>
+<!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — bản mẫu tĩnh Item Master: trang Quy định dữ liệu hàng hoá (HT09), thẻ mặt hàng, trace một dòng sổ về nguồn -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Item Master — bản mẫu</title>
+<style>
+:root{--bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--ok-bg:#e8f5ee;--warn-bg:#fff4e0;--bad-bg:#fdecea;--block:#4a3aa8;--block-bg:#efecfb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+.tabs button.on{background:#e3edfb;border-color:var(--accent);color:var(--accent);font-weight:700}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.pad{padding:12px 14px}
+.head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:10px 14px}
+.head b{font-size:16px}
+.mono{font:600 12.5px ui-monospace,Consolas,monospace}
+.law{background:#16202e;color:#fff;border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.law .q{font-size:17px;font-weight:700}.law .s{color:#c9d3e3;font-size:12.5px;margin-top:4px}
+.tag{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.t-ok{background:var(--ok-bg);color:var(--ok)}.t-warn{background:var(--warn-bg);color:var(--warn)}.t-bad{background:var(--bad-bg);color:var(--bad)}.t-block{background:var(--block-bg);color:var(--block)}.t-mute{background:#eef0f3;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:5px 10px;font:inherit;cursor:pointer;color:var(--ink)}
+.btn.xs{padding:2px 8px;font-size:12px}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.pr{border-top:1px solid var(--line);padding:10px 14px}
+.pr .row b{min-width:28px}
+.pr .st{color:var(--muted);font-size:12.5px}
+.blocks{display:none;margin:8px 0 0 36px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
+.pr.open .blocks{display:block}
+.blk{display:grid;grid-template-columns:120px 1fr;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
+.blk:first-child{border-top:0}.blk>b{color:var(--muted);font-size:12px;text-transform:uppercase}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+.steps li{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px}
+.no .n{background:var(--bad)}
+.sec{border-top:1px solid var(--line);padding:10px 14px}
+.sec>h3{margin:0 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:4px 8px;text-align:left;border-top:1px solid var(--line)}th{color:var(--muted);font-weight:600;border-top:0}
+.cur{background:#e3edfb}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.num{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 12px}.num .v{font-size:18px;font-weight:700}.num .l{color:var(--muted);font-size:12px}
+.trace li{display:grid;grid-template-columns:28px 90px 1fr;gap:8px;padding:8px 0;border-top:1px dashed var(--line);align-items:start}
+.trace li:first-child{border-top:0}.trace .n{background:#16202e}
+.trace b{color:var(--muted);font-size:12px;text-transform:uppercase}
+.note{font-size:12px;color:var(--muted)}
+.cfg{font-size:12.5px;color:var(--muted);padding:8px 14px;border-top:1px solid var(--line)}
+@media (max-width:640px){.blk{grid-template-columns:1fr}.blocks{margin-left:0}.nums{grid-template-columns:1fr}.trace li{grid-template-columns:28px 1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Item Master &amp; phân loại hạch toán <span class="note">bản mẫu tĩnh · PHASE-024</span></h1>
+<div class="sub">Ba màn: <b>Quy định</b> (hiến pháp + tình trạng thật của đơn vị) · <b>Thẻ mặt hàng</b> · <b>Trace</b> một dòng sổ về nguồn.</div>
+<div class="tabs"><button class="on" data-v="vlaw">Quy định dữ liệu hàng hoá (HT09)</button><button data-v="vitem">Thẻ mặt hàng</button><button data-v="vtrace">Trace</button></div>
+
+<section class="view on" id="vlaw">
+<div class="law"><div class="q">Item Identity is Immutable. Item Code is Versioned. Posted Ledger is Immutable.</div><div class="s">Định danh hàng hoá bất biến · Mã hàng có phiên bản và ngày hiệu lực · Sổ đã ghi không đổi theo danh mục — bất biến R-ITEM-0 · ADR-0017 · được bảo vệ bằng trigger CSDL + DG-ITEM-1/3/4 + SC-ITEM-1..3</div></div>
+<div class="card">
+  <div class="head"><b>Tình trạng đơn vị</b><span class="note">lượt kiểm 01:00 hôm nay</span><span style="flex:1"></span><span class="tag t-ok">✔ 4 đạt</span><span class="tag t-warn">⚠ 1 cần làm</span><span class="tag t-bad">✘ 1 lỗi</span><button class="btn xs">Kiểm lại tất cả</button></div>
+  <div class="pr"><div class="row"><span class="tag t-ok">✔</span><b>1</b><span>Mỗi hàng hoá có định danh duy nhất, không phụ thuộc tên hay nhóm hàng</span><span style="flex:1"></span><span class="st">1.284 mặt hàng · 1.284 item_id · 0 mã trùng hiệu lực (DG-ITEM-1)</span><button class="btn xs">Xem</button></div></div>
+  <div class="pr"><div class="row"><span class="tag t-ok">✔</span><b>2</b><span>Cây danh mục để tìm, lọc, báo cáo — không làm khoá kế toán</span><span style="flex:1"></span><span class="st">cây 4 cấp · 0 bảng sổ trỏ mã (SC-ITEM-2)</span></div></div>
+  <div class="pr"><div class="row"><span class="tag t-ok">✔</span><b>3</b><span>Biến thể phân biệt được có tồn kho riêng</span><span style="flex:1"></span><span class="st">96 biến thể / 31 cha · 0 trùng thuộc tính (DG-ITEM-5)</span></div></div>
+  <div class="pr" id="p4"><div class="row"><span class="tag t-warn">⚠</span><b>4</b><span>Tài khoản đi từ chính sách hạch toán, không suy từ tiền tố mã</span><span style="flex:1"></span><span class="st">17 mặt hàng <b>chưa phân loại</b> có phát sinh tháng này (DG-ITEM-2)</span><button class="btn xs" onclick="document.getElementById('p4').classList.toggle('open')">Cách khắc phục ▸</button></div>
+    <div class="blocks">
+      <div class="blk"><b>Hiện tượng</b><div>17 mã đang định khoản bằng nhóm mặc định "HH" → 1561 / 632 / 5111 vì <span class="mono">default_group_fallback</span> đang bật. Mẫu: <span class="mono">DV-LAPDAT</span>, <span class="mono">CCDC-KEKE</span>, <span class="mono">SP000912</span>… [xem 17]</div></div>
+      <div class="blk"><b>Vì sao</b><div>Nếu trong 17 mã có dịch vụ hay công cụ dụng cụ thì chúng đang được ghi vào <b>tồn kho</b> và tính <b>giá vốn</b> như hàng hoá: tồn kho ảo, giá vốn sai, lãi gộp sai, thanh tra hỏi không trả lời được.</div></div>
+      <div class="blk"><b>Cách khắc phục</b><ul class="steps"><li><span class="n">1</span>Mở danh sách 17 mã <button class="btn xs">Mở →</button> <span class="note">kế toán kho</span></li><li><span class="n">2</span>Chọn loại (hàng hoá / dịch vụ / CCDC…) và nhóm hạch toán, ngày hiệu lực <span class="note">kế toán trưởng duyệt nhóm</span></li><li><span class="n">3</span>Khi DG-ITEM-2 = 0: tắt <span class="mono">default_group_fallback</span> <button class="btn xs">Cấu hình →</button></li><li class="no"><span class="n">✗</span>Không "tắt cảnh báo" bằng cách để fallback bật mãi</li></ul></div>
+      <div class="blk"><b>Kiểm lại</b><div><button class="btn xs">Kiểm lại DG-ITEM-2</button> <span class="note">lần trước 01:00 hôm nay</span></div></div>
+    </div>
+  </div>
+  <div class="pr"><div class="row"><span class="tag t-ok">✔</span><b>5</b><span>Thay đổi danh mục không viết lại lịch sử đã ghi sổ</span><span style="flex:1"></span><span class="st">12 lần đổi mã, 2 lần gộp trong năm · 0 dòng sổ thay đổi (DG-ITEM-3)</span><button class="btn xs">Lịch sử</button></div></div>
+  <div class="pr" id="p6"><div class="row"><span class="tag t-bad">✘</span><b>6</b><span>Dữ liệu từ POS / ERP / kho / plugin qua validation trước khi chạm sổ</span><span style="flex:1"></span><span class="st">POS <span class="mono">pos-cn02</span> gửi 41 mã lạ / 7 ngày (IN-ITEM-001) → bể chờ</span><button class="btn xs" onclick="document.getElementById('p6').classList.toggle('open')">Cách khắc phục ▸</button></div>
+    <div class="blocks">
+      <div class="blk"><b>Hiện tượng</b><div>41 chứng từ của <span class="mono">pos-cn02</span> có mã hàng không tra được ra mặt hàng; đang nằm ở Trạm tiền kiểm, <b>chưa vào sổ</b> (auto_create tắt → sổ an toàn, nhưng doanh thu CN02 đang thiếu).</div></div>
+      <div class="blk"><b>Vì sao</b><div>Nguồn tạo mã mới ở POS mà chưa khai ở danh mục kế toán. Nếu bật tự tạo, danh mục sẽ nhận mã không phân loại và sổ ghi theo nhóm mặc định (lặp lại lỗi ở nguyên tắc 4).</div></div>
+      <div class="blk"><b>Cách khắc phục</b><ul class="steps"><li><span class="n">1</span>Mở Trạm tiền kiểm, lọc IN-ITEM-001 · nguồn pos-cn02 <button class="btn xs">Mở →</button></li><li><span class="n">2</span>Với từng mã: <b>Tạo mặt hàng từ dòng</b> (tên, ĐVT điền sẵn, gợi ý phân loại từ quy tắc mã) hoặc <b>Thêm mã vào mặt hàng có sẵn</b> (mã ngoài <span class="mono">external:pos-cn02</span>)</li><li><span class="n">3</span>Gửi lại từ bể chờ → posted; báo đội POS đồng bộ danh mục theo <span class="mono">bizcity_item_master@1</span> <button class="btn xs">Hướng dẫn →</button></li></ul></div>
+      <div class="blk"><b>Kiểm lại</b><div><button class="btn xs">IN-ITEM-001 / 7 ngày</button></div></div>
+    </div>
+  </div>
+  <div class="cfg">Cấu hình liên quan: <span class="mono">bizcity.item.auto_create</span> = tắt · <span class="mono">bizcity.item.default_group_fallback</span> = <b>BẬT</b> (từ 15/10) · <span class="mono">SKU_RULE</span> = ngành(2)+nhãn(3)+nhóm(1)+số(3)</div>
+</div>
+</section>
+
+<section class="view" id="vitem">
+<div class="card">
+  <div class="head"><span class="mono" style="font-size:15px">SUA01</span><b>Sữa tươi tiệt trùng 1L</b><span class="tag t-mute">hàng hoá</span><span class="tag t-mute">lô · hạn</span><span style="flex:1"></span><span class="note">item <span class="mono">01JBX…K7</span></span></div>
+  <div class="sec"><h3>Một câu</h3><div style="font-size:15px">Hàng hoá mua về bán lại, theo dõi tồn theo lô và hạn dùng; ĐVT gốc hộp (thùng ×12).</div></div>
+  <div class="sec"><h3>Định danh &amp; mã</h3>
+    <table><tr><th>Loại</th><th>Mã</th><th>Hiệu lực</th><th>Ghi chú</th></tr>
+      <tr class="cur"><td>sku</td><td class="mono">SUA01</td><td>01/01/2025 → nay</td><td>◀ hiện hành</td></tr>
+      <tr><td>sku</td><td class="mono">SUA-1L</td><td>01/01/2023 → 31/12/2024</td><td>đổi mã 02/01/2025 · Nguyễn A · "chuẩn hoá mã"</td></tr>
+      <tr><td>barcode</td><td class="mono">8934673001234</td><td>01/01/2023 → nay</td><td></td></tr>
+      <tr><td>external:pos-cn02</td><td class="mono">SP000912</td><td>01/03/2025 → nay</td><td>mã ở POS</td></tr></table>
+    <div class="row" style="margin-top:8px"><button class="btn xs">Đổi mã…</button><button class="btn xs">Thêm mã ngoài…</button><button class="btn xs">Gộp vào mã khác…</button><span class="note">đổi / gộp luôn hỏi ngày hiệu lực; sổ đã ghi không đổi (R-ITEM-0)</span></div>
+  </div>
+  <div class="sec"><h3>Hạch toán · tại 02/11/2026 · chế độ v3 (hiệu lực 01/10/2026)</h3>
+    <div>Loại <b>hàng hoá</b> · nhóm <b>HH-THUC-PHAM</b> → kho <b>1561</b> · giá vốn <b>632</b> · doanh thu <b>51111</b> · chiết khấu <b>5211</b> · thuế ra V08 · thuế vào V08 · không TTĐB</div>
+    <div class="note" style="margin-top:4px">Lịch sử phân loại: v2 (01/01/2025) nhóm HH · v3 (01/10/2026) HH-THUC-PHAM — chứng từ trước 01/10 giữ v2 khi định khoản lại.</div>
+    <div class="row" style="margin-top:6px"><button class="btn xs">Thẻ TK 1561 ▸</button><button class="btn xs">Thẻ TK 632 ▸</button><button class="btn xs">Phân loại lại từ ngày…</button></div>
+  </div>
+  <div class="sec"><h3>Số của đơn vị</h3>
+    <div class="nums"><div class="num"><div class="l">Tồn 02/11 (3 kho)</div><div class="v">1.284 hộp</div></div><div class="num"><div class="l">Giá vốn T10</div><div class="v">có</div><div class="l">tính 01/11 01:05</div></div><div class="num"><div class="l">Sổ kho 1561 ↔ sổ cái</div><div class="v" style="color:var(--ok)">khớp</div><div class="l">STOCK_LEDGER_MATCH</div></div></div>
+  </div>
+  <div class="sec"><h3>Kiểm</h3>
+    <div class="row"><span class="tag t-warn">⚠ IN-ITEM-006</span><span>3 phiếu bán T10 đánh dấu hàng tặng, nhưng loại là "hàng hoá" và lý do XB không có cờ khuyến mại</span></div>
+    <div class="note" style="margin:4px 0 6px"><b>Vì sao:</b> giá vốn hàng tặng không vào chi phí khuyến mại (641) mà vào 632 → lãi gộp sai. <b>Sửa:</b> ① mở 3 phiếu → ② chọn lý do XKM (có cờ khuyến mại) hoặc tách mã quà (loại <i>gift</i>).</div>
+    <div class="row"><span class="tag t-ok">✔ ĐVT đủ</span><span class="tag t-ok">✔ mã không trùng</span><span class="tag t-ok">✔ đã phân loại</span><span style="flex:1"></span><button class="btn xs">Trace một dòng sổ…</button></div>
+  </div>
+</div>
+</section>
+
+<section class="view" id="vtrace">
+<div class="card">
+  <div class="head"><b>Dòng sổ BT26-0012345 / 3</b><span class="mono">Nợ 632 · 1.250.000 · SUA01</span><span class="note">item <span class="mono">01JBX…K7</span></span></div>
+  <div class="pad"><ul class="trace" style="list-style:none;margin:0;padding:0">
+    <li><span class="n">1</span><b>Nguồn</b><div><span class="mono">pos-cn02</span> · chứng từ <span class="mono">pos:CN02:HD-00912</span> v1 · nhận 12/10/2026 09:14:03 · traceId <span class="mono">4f2a…9c</span> <button class="btn xs">Bàn điều tra →</button></div></li>
+    <li><span class="n">2</span><b>Tiền kiểm</b><div>L1 ✔ · L2 ✔ · L3 ✔ <span class="note">(Item Resolution: external SP000912 → SUA01, 2 ms)</span> · L4 ✔ · L5 ✔ · 0 phát hiện</div></li>
+    <li><span class="n">3</span><b>Sự việc</b><div>accounting_events #88213 · posted_version 1 <button class="btn xs">Chứng từ →</button></div></li>
+    <li><span class="n">4</span><b>Luật</b><div><span class="mono">sale.rule</span> · lý do XB (mặc định sale) · phân loại v2 (HH) → nhóm HH → 632 / 1561 · chế độ kế toán v2 <button class="btn xs">Chính sách →</button></div></li>
+    <li><span class="n">5</span><b>Sổ</b><div>bút toán BT26-0012345 · dòng giá vốn <b>chờ</b> (0) → ghi đè bởi tính giá vốn T10 (01/11 01:05): 1.250.000 <button class="btn xs">Bút toán →</button></div></li>
+    <li><span class="n">6</span><b>Sự kiện</b><div><span class="mono">bizcity.ledger.entry.posted</span> → 2 subscriber ✔</div></li>
+    <li><span class="n">7</span><b>Kiểm</b><div>DG-ITEM-3 ✔ (item_id khớp mã tại 12/10) · STOCK_LEDGER_MATCH ✔ · COGS_STALE ✔</div></li>
+  </ul></div>
+  <div class="cfg">Bảy bước này là chuỗi chuẩn Plugin → Tiền kiểm (gồm Item Resolution) → Sự việc → Luật → Sổ → Sự kiện → Giá vốn / Kiểm. Người dùng thấy chuỗi trên dữ liệu của mình thay vì đọc tài liệu.</div>
+</div>
+</section>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));});
+</script>
+</body></html>

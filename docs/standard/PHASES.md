@@ -97,6 +97,8 @@
 | 2.19 | **Màn Trạm kiểm tra đầu vào** ([PHASE-021](../phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md) W3): thẻ Cần sửa tại ACC14, lỗi theo lớp có Vì sao / Sửa ở nguồn / Bài học, sửa tại bể có dấu lệch nguồn, Kiểm thử, so lần, nộp lại, chấp nhận cảnh báo có lý do | năng lực `intake.station` available | mới |
 | 2.20 | **Bảng điểm đầu vào** ([PHASE-021](../phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md) W4): mọi kế toán xem (công cụ đào tạo), tỷ lệ đạt lần đầu, theo nguồn / người lập / loại / mã; `DG-INTAKE-1`; sự kiện `bizcity.intake.rejected` / `.resolved` | năng lực `intake.score` available | mới |
 | 2.21 | **Tiền kiểm L5** ([PHASE-021](../phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md) W5): định khoản thử trong giao dịch huỷ cho chứng từ chưa nhận, gợi ý cấu hình từ lỗi lặp (kế toán trưởng duyệt), action đọc `core.intake.*` cho AI | năng lực `intake.preflight.posting` available | mới |
+| 2.22 | **Item Master & phân loại hạch toán** ([PHASE-024](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md) W1–W2, [ADR-0017](../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md)): `items` (định danh bất biến) / `item_codes` (mã có phiên bản) / `item_classification` (theo ngày), Item Resolver trong trạm tiền kiểm, Accounting Mapping Resolver, hợp đồng `bizcity_item_master@1`, migration K3 khoá sổ theo `item_id` <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — 2.22 --> | năng lực `item.master` available; sổ không đổi khi đổi / gộp mã | 2.18 |
+| 2.23 | **Validator danh mục hàng** ([PHASE-024](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md) W3): `IN-ITEM-*` ở trạm, `DG-ITEM-*` tự chẩn đoán, `SC-ITEM-*` bộ kiểm, số đo `bizcity_item_*` / `bizcity_posting_mapping_*` / `bizcity_costing_*`, dashboard 09 | năng lực `item.validation` available; SC-ITEM-1 block | 2.22 |
 
 **Rủi ro:** RLS và chuỗi băm bằng chứng tốn hiệu năng. Đo trên dữ liệu thật (30.000 chứng từ / ngày) trước khi bật cho bảng Kernel; bảng module bật ngay vì mới và nhỏ.
 
@@ -138,6 +140,7 @@
 | 4.5 | Chạy ca chuẩn 3 lần; mỗi lần vấp → sửa tài liệu / SDK / template | 3/3 đạt | mới |
 | 4.6 | Standard lên **1.0.0** (bỏ `-draft`); khoá hợp đồng | tag phát hành | — |
 | 4.7 | Preset cài nhanh theo ngành ([`bizcity_preset@1`](../contracts/BIZCITY-PRESET-v1.md)): `presets/<id>/`, `scripts/cai-preset.mjs` (Phase 4: `bizcity init --preset`) | ≥ 3 preset (thương mại, dịch vụ, sản xuất) — **có** `thuong-mai-ban-le` | mới |
+| 4.8 | **Thẻ tài khoản** ([PHASE-023](../phases/PHASE-023-THE-TAI-KHOAN/README.md)): danh mục giải nghĩa máy đọc theo chế độ kế toán (kế toán trưởng duyệt), `core.account.card` (dư Nợ / dư Có tách theo đối tượng), chú giải ở ô chọn / ACC1 / sổ / lỗi ("Vì sao?"), chế độ học, bài theo vai <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — 4.8 --> | năng lực `ui.account-card` available; SC-ACC-1 | mới |
 
 ## Phase 5–6 — Kiểm chứng CRM / kho, Cell adapter, WordPress adapter tối thiểu
 
