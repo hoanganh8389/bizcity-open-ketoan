@@ -45,6 +45,8 @@ import { taiSanRoutes } from './phan-he/tai-san/routes';
 import { thueRoutes } from './phan-he/thue/routes';
 import { muaHangRoutes } from './phan-he/mua-hang/routes';
 import { apiRoutes } from './phan-he/api/routes';
+// [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: màn Bàn điều tra (/dev/…)
+import { devRoutes } from './phan-he/dev/routes';
 import { ADDIN_ROUTES } from './addins/registry';
 
 export const pageRoutes = (
@@ -116,6 +118,7 @@ export const pageRoutes = (
     {thueRoutes}
     {muaHangRoutes}
     {apiRoutes}
+    {devRoutes}
     <Route path="*" element={<Navigate to="/" replace />} />
   </>
 );

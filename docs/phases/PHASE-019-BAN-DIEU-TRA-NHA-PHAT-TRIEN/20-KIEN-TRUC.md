@@ -122,6 +122,39 @@ Máy chủ dựng từ cây span, theo luật cố định (không AI, không đ
 
 `links.grafana` chỉ có giá trị ở chế độ Vận hành.
 
+### 2.5 Đã làm (W2, 2026-11-01)
+<!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: ghi cách làm thật của API trung gian và điều đọc được từ Tempo / Loki thật. -->
+
+| Tệp | Việc |
+|---|---|
+| `apps/api/src/modules/system/devtools.routes.ts` | 4 action `status`, `trace`, `request`, `evidence`; chế độ Vận hành (Q019-2: đếm bảng `tenants` — không có RLS — phải = 1); nhật ký truy cập `evt=bizcity.devtools.query` ở móc `onResponse` của riêng plugin này |
+| `apps/api/src/modules/system/devtools.sources.ts` | gọi Tempo / Loki (`fetch`, chờ ≤ 5 giây; `ping` ≤ 2 giây), NOT_READY `{ backend, reason: off \| down \| bad-response }`, mẫu LogQL, `quote()` thoát ký tự, lọc trường log, giới hạn 30 / phút / người (bộ nhớ trong tiến trình) |
+| `apps/api/src/modules/system/devtools.trace.ts` | hàm thuần: đọc OTLP JSON của Tempo, `ownsTrace` (D019-5), lọc thuộc tính bằng chính `TRACE_ATTRIBUTES`, tóm tắt §2.3 |
+| `db/migrations/0050_vai_tro_nha_phat_trien.sql` | `users_role_check` thêm `developer` |
+
+Đọc từ bản thật (Tempo 2.6.1, Loki 3.3.2 đang chạy, 2026-11-01):
+- `GET /api/traces/{id}` trả `{ batches: [{ resource, scopeSpans: [{ spans }] }] }`; `traceId` / `spanId` **base64**; `intValue` là chuỗi. Bộ đọc đổi về hex, nhận cả khuôn `resourceSpans`.
+- `bizcity.tenant` chỉ có trên span HTTP (sau xác thực) và span action — span CSDL không có. Trace của yêu cầu chưa đăng nhập (401) không có đơn vị → 404 với mọi người (đúng D019-5).
+- **Tìm kiếm (`/api/search`) trả `traceID` bỏ số 0 đầu** (vd `904127dd…` 31 ký tự cho `0904127d…`) → W3 (`core.devtools.traces`) phải đệm trái đủ 32 ký tự.
+- Loki: dòng là JSON của pino (`level` số, `time` ms); `reqId`, `traceId` lọc được trước `| json`; nhãn `tenant` còn thì `| json` tách thành `tenant_extracted` — bộ lọc `tenant="…"` sau `| json` vẫn khớp nhãn. API lọc lại theo trường `tenant` của từng dòng (không tin riêng bộ lọc của Loki).
+
+Còn lại: `links.grafana` (chỉ chế độ Vận hành) dựng link Explore với trace id — kiểm trên Grafana 11.4 ở W5 trước khi bật.
+
+### 2.6 Đã làm (W3, 2026-11-01)
+<!-- [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: logs / traces / summary + phân hệ web dev; điều đo được khi chạy thật. -->
+
+- API: `core.devtools.logs` (khung `1h | 6h | 24h`, đọc `backward` lấy dòng mới nhất), `core.devtools.traces` (`1h | 6h | 24h | 7d`, TraceQL `{ span.bizcity.tenant = … && … } | select(…)`, đệm traceID), `core.devtools.summary` (`1h | 24h`; Loki số đo theo `errCode` + yêu cầu > 1 s, Tempo trace khác ok, CSDL sự kiện + `diagnostic_runs` L3).
+- Web: phân hệ `apps/web/src/phan-he/dev/` (DEV01 Tổng quan, DEV02 Tra mã, DEV03 Nhật ký); phía web luôn coi `dev` là bật (route API thuộc lõi), menu gắn `devtools:read`; khay Mã tra cứu có nút **Bàn điều tra**. Hướng dẫn trong app: `docs/huong-dan/ban-dieu-tra.md`.
+- Đo khi chạy thật: `/ready` của Tempo / Loki trả 503 từng lúc ("waiting for 15s after being ready") dù truy vấn vẫn chạy → `ping` hỏi `/api/echo`, `/loki/api/v1/status/buildinfo`. Câu kết luận Tổng quan lấy thêm trace khác ok của Tempo khi log không ghi nhận (không nói "ổn" khi bảng dưới có lỗi).
+
+### 2.7 Đã làm (W4, 2026-11-02)
+<!-- [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: module-errors, màn DEV04–DEV08, Kịch bản → màn; điều đo được trên Tempo thật. -->
+
+- API `core.devtools.module-errors` (`1h | 6h | 24h | 7d`, `outcome = error | rejected`): mẫu đóng `({ span.bizcity.tenant = T } >> { span.bizcity.outcome = O }) || { span.bizcity.tenant = T && span.bizcity.outcome = O } | select(name, …)`. Vế `>>` lấy cả span step / db **không mang đơn vị** nhưng là con cháu của span mang đơn vị (đúng D019-5: chỉ trace có span của đơn vị mới khớp); vế `||` giữ route không qua action. Kết quả tìm kiếm không có quan hệ cha–con nên chỗ hỏng chọn theo bậc step → Kernel → action → yêu cầu (`devtools.trace.ts placeOf`); span `db …` là chi tiết bên dưới.
+- Màn DEV04 Lỗi theo module, DEV05 Ghi sổ (`/api/v1/posting-log?action=error`, `/api/v1/documents?status=pending|error`), DEV06 Sự kiện (`/api/v1/system/events`), DEV07 Toàn vẹn (`/api/v1/system/diagnostics/runs*`; nút Chạy lại gọi `GET /system/diagnostics` — giao dịch READ ONLY, chỉ lưu thêm một lượt), DEV08 Kịch bản (Sổ tay đọc lúc dựng). Ba màn đọc API sẵn có không tính vào hạn 30 / phút.
+- Màn đọc bộ lọc từ địa chỉ bằng `devParams` chung (`@ketoan/contracts ban-dieu-tra.ts`): giá trị sai khuôn về mặc định, không gửi lên API. Bảng `KICH_BAN` (TH → màn + bộ lọc) cùng chỗ; ca T019-5 đối chiếu với Sổ tay, `routes.tsx`, `menu.ts`.
+- **Đo trên Tempo thật:** `/api/search` từ chối khoảng dài hơn `max_search_duration` (168 giờ) dù 1 giây. Làm tròn `start` xuống + `end` lên biến khung 7 ngày thành 168 giờ 1 giây → 400 — lỗi có từ W3 (`traces?window=7d`). Sửa: cả hai mốc làm tròn lên; Tempo giả trong test chặn như bản thật.
+
 ## 3. Bảo mật và cô lập đơn vị
 
 ### 3.1 Mẫu truy vấn đóng
