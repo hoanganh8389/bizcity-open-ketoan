@@ -1,7 +1,8 @@
 # ADR-0014 · Trạm tiền kiểm và bể chờ đầu vào: hướng dẫn trước, Kernel chặn sau
 <!-- [2026-11-02 02:38 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — đề xuất: không vứt đầu vào bị từ chối; bể chờ intake_inbox + tiền kiểm 5 lớp + chấm điểm đầu vào; Kernel giữ nguyên luật chặn -->
 
-- Trạng thái: **Đề xuất**, chờ chủ dự án duyệt. Chủ dự án yêu cầu 2026-11-02: "cần cơ chế theo dõi được danh sách các chứng từ để chặn, kiểu một bể buffer… để người dùng chủ động xem và sửa lại cho phù hợp với tiêu chuẩn đầu vào thay vì chặn cứng… đứng góc độ kế toán trưởng, kiểm soát, audit… chấm điểm đầu vào… nhân viên thực tập cũng hiểu và chỉnh sửa".
+<!-- [2026-11-02 03:34 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — chủ duyệt: Q1 cho sửa tại bể + dấu lệch nguồn, Q2 hạn giữ 90 / 7 ngày, Q3 bảng điểm theo người lập hiện cho mọi kế toán (để đào tạo), Q4 thành PHASE-021 -->
+- Trạng thái: **Chấp nhận** — chủ dự án (Johnny Chu) duyệt 2026-11-02. Quyết định Q1–Q4 ở cuối phần Hệ quả; kế hoạch thi hành: [PHASE-021](../phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md). Chủ dự án yêu cầu 2026-11-02: "cần cơ chế theo dõi được danh sách các chứng từ để chặn, kiểu một bể buffer… để người dùng chủ động xem và sửa lại cho phù hợp với tiêu chuẩn đầu vào thay vì chặn cứng… đứng góc độ kế toán trưởng, kiểm soát, audit… chấm điểm đầu vào… nhân viên thực tập cũng hiểu và chỉnh sửa".
 - Ngày: 2026-11-02 · Người quyết: Johnny Chu – Chu Hoàng Anh · Mức Kernel: **K0** cho ADR này (chưa đổi mã). Thi hành bọc cửa nạp: **K1** (không đổi luật định khoản, không đổi sổ).
 - Luật / hợp đồng liên quan: bốn câu không thương lượng, R-EVENT-1, R-EVENT-7, R-EVENT-9, R-EVENT-11, ADR-0011 D5 (chủ chứng từ), R-MD (SKU_RULE, ĐVT), R-TEN, [`bizcity_ledger_intake@1`](../contracts/BIZCITY-LEDGER-INTAKE-v1.md), [`bizcity_errors@1`](../contracts/BIZCITY-ERRORS-v1.md), luật định hướng [RULE-INTAKE](../rules/RULE-INTAKE.md).
 
@@ -126,9 +127,11 @@ Mỗi phát hiện là một bản ghi có cấu trúc. Nó không phải một 
 | Vai trò | Làm được |
 |---|---|
 | Người lập, kể cả thực tập sinh (`documents:write`) | xem, sửa tại bể, kiểm thử, nộp lại mục **của mình** |
-| Kế toán viên | như trên với mọi mục của đơn vị |
-| Kế toán trưởng (`documents:edit-all`) | chấp nhận cảnh báo, bỏ mục (có lý do), xem bảng điểm theo người, cấu hình ngưỡng và mã được chấp nhận |
-| Người xem | chỉ đọc |
+| Kế toán viên | như trên với mọi mục của đơn vị; **xem bảng điểm theo người lập** (Q3) |
+| Kế toán trưởng (`documents:edit-all`) | chấp nhận cảnh báo, bỏ mục (có lý do), cấu hình ngưỡng và mã được chấp nhận |
+| Người xem | chỉ đọc danh sách mục; không xem bảng điểm theo người |
+
+Bảng điểm theo người lập hiện cho **mọi kế toán của đơn vị** (người có `documents:write`), theo quyết định Q3: bảng điểm là công cụ **đào tạo**, để mọi người thấy cùng một luồng và học từ lỗi của nhau. Bảng chỉ hiện mã lỗi, điểm, số mục; không hiện nguyên văn chứng từ của người khác ngoài quyền đọc chứng từ sẵn có.
 
 Quyền riêng `intake:review` chờ registry quyền theo module (PHASES 3.3). Trước đó dùng `documents:edit-all`.
 
@@ -163,7 +166,7 @@ Bảng `intake_inbox` thuộc cửa nạp Kernel (`modules/documents`). Đây kh
 - **Sửa tại bể làm lệch nguồn.** Giảm bằng dấu lệch nguồn, chỉ số trên bảng điểm, và sự kiện gửi về nguồn. Chủ dự án có thể tắt đường (b) (câu hỏi Q1).
 - **Thêm một bộ chẩn đoán cạnh Kernel.** Giảm bằng cách dùng **chính** zod của `packages/contracts`, chính `assertTotals`, chính đường định khoản thử. Không viết bộ luật thứ hai, chỉ gom kết quả thay vì ném lỗi đầu tiên.
 
-**Việc phải làm** (đặt vào lộ trình sau khi chủ duyệt; mỗi PR có bộ kiểm riêng):
+**Việc phải làm** (lộ trình 2.17–2.21, chi tiết ở [PHASE-021](../phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/00-MASTER-PLAN.md); mỗi PR có bộ kiểm riêng):
 
 | PR | Nội dung | Mức |
 |---|---|---|
@@ -173,12 +176,12 @@ Bảng `intake_inbox` thuộc cửa nạp Kernel (`modules/documents`). Đây kh
 | PR-I4 | Bảng điểm kế toán trưởng, `DG-INTAKE-1`, sự kiện `bizcity.intake.*`, trang bài học cho từng mã | K0 |
 | PR-I5 | L5 định khoản thử trong tiền kiểm; gợi ý cấu hình từ lỗi lặp; AI đọc chẩn đoán | K1 |
 
-**Câu hỏi cho chủ dự án:**
+**Quyết định của chủ dự án (2026-11-02):**
 
-- **Q1:** Có cho sửa tại bể (D5b) không, hay chỉ cho sửa ở nguồn? Đề xuất là cho, kèm dấu lệch nguồn.
-- **Q2:** Hạn giữ 90 ngày cho mục đã đóng, 7 ngày cho mục thử, có được không?
-- **Q3:** Bảng điểm theo **người lập** có hiện cho mọi kế toán, hay chỉ kế toán trưởng? Đây là thông tin nhân sự nhạy cảm. Đề xuất là chỉ kế toán trưởng.
-- **Q4:** Đặt thành Phase riêng (PHASE-021), hay đưa vào Phase 2 (trích xuất Document)?
+- **Q1 — Sửa tại bể: có**, kèm dấu lệch nguồn (D5b, R-INTAKE-8).
+- **Q2 — Hạn giữ: 90 ngày** cho mục đã đóng, **7 ngày** cho mục thử.
+- **Q3 — Bảng điểm theo người lập hiện cho mọi kế toán** của đơn vị, không chỉ kế toán trưởng: "để bảo đảm theo đúng luồng… một cách để training cho người dùng hiểu logic của hệ thống". Đề xuất ban đầu (chỉ kế toán trưởng) không theo. D9, R-INTAKE-10, R-INTAKE-12 sửa theo.
+- **Q4 — Phase riêng:** [PHASE-021 · Trạm tiền kiểm đầu vào](../phases/PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md); việc lộ trình 2.17–2.21 (Phase 2 của Standard: Document).
 
 ## Phương án đã cân nhắc
 

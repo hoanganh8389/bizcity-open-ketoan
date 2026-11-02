@@ -38,7 +38,7 @@
 |---|---|---|---|---|
 | R-LEDGER | [rules/RULE-LEDGER.md](rules/RULE-LEDGER.md) | 0 | Sổ cái chỉ thêm, cân Nợ = Có, đảo một lần, một cửa ghi | Trigger CSDL, `db-rules.test.ts`, `ledger-flow.test.ts` |
 | R-EVENT | [rules/RULE-EVENT.md](rules/RULE-EVENT.md) | 0 | Mọi đầu vào thành event có `docKey` + `version`; idempotent | `ledger-flow.test.ts`, `auto-push.test.ts`, grep CI |
-| R-INTAKE | [rules/RULE-INTAKE.md](rules/RULE-INTAKE.md) | 1 | **Định hướng** (ADR-0014 đề xuất): Kernel chặn, trạm tiền kiểm dạy — không vứt đầu vào bị từ chối, gom mọi lỗi, giải thích cho người mới, chấm điểm đầu vào; không nới luật Kernel <!-- [2026-11-02 02:38 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — thêm R-INTAKE vào chỉ mục --> | chưa có mã (PR-I1…I5) |
+| R-INTAKE | [rules/RULE-INTAKE.md](rules/RULE-INTAKE.md) | 1 | **Chấp nhận, chưa có mã** (ADR-0014, PHASE-021): Kernel chặn, trạm tiền kiểm dạy — không vứt đầu vào bị từ chối, gom mọi lỗi, giải thích cho người mới, chấm điểm đầu vào; không nới luật Kernel <!-- [2026-11-02 02:38 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — thêm R-INTAKE vào chỉ mục --> | PHASE-021 PR-I1…I5 |
 | R-POST | [rules/RULE-POSTING.md](rules/RULE-POSTING.md) | 0 | Luật định khoản thuần, không viết cứng tài khoản, xem trước = ghi thật | `posting-modes.test.ts`, test từng luật |
 | R-MD | [rules/RULE-MASTER-DATA.md](rules/RULE-MASTER-DATA.md) | 1 | Danh mục chuẩn do kế toán giữ, tra bằng mã, không xoá cái đã dùng | `catalog-delete.test.ts`, `default-data.test.ts` |
 | R-MATRIX | [rules/RULE-SETTINGS-MATRIX.md](rules/RULE-SETTINGS-MATRIX.md) | 1 | Mọi cấu hình khai trong registry, có phạm vi, thứ tự ưu tiên, nhật ký | Registry + test (đợt 2) |
