@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_fault_evidence@1",
-  "catalog": "packages/kernel/src/modules/review/fault-catalog.json",
+  "catalog": "packages/kernel/src/modules/review/fault-catalog.ts",
   "cases": {
     "F22-ENV-01": {
       "kind": "test",
