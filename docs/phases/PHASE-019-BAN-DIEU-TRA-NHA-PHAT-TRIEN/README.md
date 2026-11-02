@@ -1,9 +1,10 @@
 # PHASE-019 — Bàn điều tra cho nhà phát triển (Dev Console)
 <!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — Bàn điều tra cho nhà phát triển: sổ tay điều tra lỗi theo tình huống + thiết kế UI/UX dev trên Prometheus, Loki, Tempo, Grafana, Alertmanager -->
 
-> **Trạng thái:** 🟡 W0 thiết kế + sổ tay + bản mẫu 2026-11-01 · chủ duyệt D019-1..3, Q019-1 (vai trò `developer`), Q019-2 (Vận hành chỉ bản cài một đơn vị) 2026-11-01 · W1 sẵn sàng làm
+<!-- [2026-11-02 04:01 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — trạng thái đóng phase: W1–W5 xong; còn S019-3, S019-4, Q019-4 chờ chủ; S019-19 để sau -->
+> **Trạng thái:** ✅ W1–W5 có mã + bằng chứng (2026-11-01 → 11-02) · ⛔ còn ba việc chờ chủ: duyệt kiến trúc + bố cục bản mẫu (S019-3, S019-4), Q019-4 đưa vào lộ trình (cùng Q018-1; mã 2.17–2.21 nay thuộc PHASE-021 → cần mã khác) · ⏸ S019-19 MCP cho máy dev (chủ để sau)
 <!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — ghi quyết định của chủ: D019-1..3, Q019-1 (b), Q019-2. -->
-> **Giai đoạn:** mở rộng của PHASE-018 (giám sát vận hành) · **Code:** chưa · **Mức Kernel:** K0 (không đụng Kernel, không đụng đường ghi sổ)
+> **Giai đoạn:** mở rộng của PHASE-018 (giám sát vận hành) · **Code:** có (W1–W5) · **Mức Kernel:** K0 (không đụng Kernel, không đụng đường ghi sổ)
 > **Mục tiêu:** dev của phân hệ / add-in (người đóng góp, dev của đơn vị) **tự tìm ra lỗi của mình ngay trong app**, từ một mã lỗi đến đúng module, đúng bước, đúng câu CSDL — mà **không** vào Grafana, **không** thấy dữ liệu của đơn vị khác, **không** có đường nào sửa sổ.
 > **Việc lộ trình:** —
 > **Checklist công bố:** —
