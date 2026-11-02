@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 -->
+- **Thư viện mã phát hiện của hai cổng kiểm chuẩn** ([ADR-0019](docs/adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md), [`bizcity_findings@1`](docs/contracts/BIZCITY-FINDINGS-v1.md)): mọi mã của Gate A (khai báo danh mục) và Gate B (trạm tiền kiểm) một khuôn — mức, bước, vì sao, cách sửa, luật gốc. Tra: trang [Tra mã phát hiện](docs/huong-dan/ma-loi/README.md), `GET /api/v1/findings[/:code]`, công cụ MCP `core.findings.explain` cho trợ lý AI. Check SC-FIND-1: mã không trùng, cảnh báo / chặn phải có cách sửa.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15 -->
 - **Khung "Vì sao" trong form danh mục** (PHASE-023, `bizcity_catalog_hint@1`): form **Tài khoản** và **Đối tượng** nhắc (ℹ), hướng dẫn (▶), cảnh báo mềm (⚠) và chặn (✘) ngay khi khai báo — tài khoản trái bản chất tài khoản cha / hệ thống chuẩn, tài khoản nhóm công nợ không vào sổ phụ công nợ, ngừng dùng tài khoản còn số dư, NCC thiếu MST, MST sai định dạng, trùng tên. Cảnh báo mềm **lưu được nhưng bắt buộc ghi lý do** (≥ 5 ký tự, nhật ký `catalog.warn.ack`; người lưu tự chịu trách nhiệm vì đã được cảnh báo); lưu qua API không lý do ghi `catalog.warn.unacked`. API mới `POST /api/v1/accounts/validate`, `POST /api/v1/partners/validate`; thêm / sửa trả `meta.findings`.
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 manual_journal (K2); PHASE-010 2.8 gói mua-hang-domain -->

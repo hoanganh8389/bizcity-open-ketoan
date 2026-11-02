@@ -49,6 +49,7 @@ export function WhyPanel({ findings, onFix }: { findings: readonly CatalogFindin
                 ? <button type="button" className="why-q" onClick={() => setOpen((o) => ({ ...o, [f.code]: !o[f.code] }))}>{f.title}</button>
                 : <b>{f.title}</b>}
               {shown && <div className="why-why">{f.why}</div>}
+              {shown && f.howTo && <div className="why-why"><b>Cách sửa:</b> {f.howTo}</div>}
               <div className="why-meta">
                 {f.fix && onFix && <button type="button" className="btn btn-xs" onClick={() => onFix(f.fix!.set)}>{f.fix.label}</button>}
                 <span className="why-code">{f.code}{f.rule ? ` · ${f.rule}` : ''}{f.draft ? ' · nội dung nháp, chờ kế toán trưởng duyệt' : ''}</span>

@@ -1,6 +1,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp.
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — xuất bizcity_catalog_hint@1 (khung Vì sao form danh mục)
+// [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — xuất bizcity_findings@1 (thư viện phát hiện hai cổng)
 /**
  * @ketoan/contracts — điểm vào duy nhất.
  *
@@ -31,3 +32,4 @@ export * from './ma-tra-cuu.js';
 // [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: màn Bàn điều tra, bộ lọc trên địa chỉ, Kịch bản → màn.
 export * from './ban-dieu-tra.js';
 export * from './catalog-hint.js';
+export * from './findings.js';

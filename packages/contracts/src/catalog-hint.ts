@@ -1,3 +1,4 @@
+// [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27: thêm `fix` (cách sửa) cho mức warn / block — khuôn chung bizcity_findings@1
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-13 / 14: bizcity_catalog_hint@1 — danh mục luật nhắc · hướng dẫn · cảnh báo mềm · chặn cho form danh mục (D023-6..8)
 /**
  * Khung "Vì sao" của form danh mục (PHASE-023 · 20-VALIDATOR-MEM): mỗi luật có mã, mức, câu "vì sao" nói bằng hậu quả nghiệp vụ,
@@ -27,6 +28,8 @@ export interface CatalogHintDef {
   title: string;
   /** Vì sao — hậu quả nghiệp vụ trước, cách sửa sau; ≤ 3 câu. Có thể chứa {biến}. */
   why: string;
+  /** Cách sửa (≤ 2 câu). Bắt buộc với mức warn / block (SC-FIND-1, R-GATE-2). */
+  fix?: string;
   /** Mã luật gốc (R-*, ADR-*) — SC-CON-5 kiểm mã R-* có thật. */
   rule?: string;
   /** Thẻ học thêm: số tài khoản (thẻ tài khoản, PHASE-023) hoặc mã màn. */
@@ -42,6 +45,8 @@ export interface CatalogFinding {
   why: string;
   rule?: string;
   learn?: string;
+  /** Cách sửa bằng lời (bizcity_findings@1 `fix`) — có với mức warn / block. */
+  howTo?: string;
   /** Sửa một chạm: các trường và giá trị đề xuất (giao diện điền vào form). */
   fix?: { label: string; set: Record<string, unknown> };
   /** Ô liên quan — giao diện đặt khung Vì sao cạnh nhóm ô này. */
@@ -73,31 +78,37 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     id: 'ACC-HINT-003', entity: 'account', level: 'warn', status: 'draft', rule: 'R-MD-8', learn: '{root}',
     title: 'Tài khoản {code} sẽ không vào sổ phụ công nợ.',
     why: 'Nhóm {root} là phải thu / phải trả, nhưng tài khoản này không lưỡng tính, không theo dõi đối tượng, không "Là công nợ" — sổ phụ công nợ chỉ lấy tài khoản có một trong ba cờ đó. Không có tuổi nợ, không đối trừ hoá đơn, không đối chiếu công nợ; với nhóm này gần như luôn sai.',
+    fix: 'Tích "Theo dõi đối tượng" (hoặc đặt lưỡng tính nếu là phải thu / phải trả hai chiều); nếu cố ý, ghi lý do khi lưu.',
   },
   'ACC-HINT-004': {
     id: 'ACC-HINT-004', entity: 'account', level: 'warn', status: 'draft', rule: 'R-MD-8', learn: '{root}',
     title: 'Bên số dư "{side}" khác bản chất thường gặp của tài khoản nhóm {root} ({expected}).',
     why: 'Số dư sẽ lên sai bên trên Bảng cân đối và kiểm ACCOUNT_WRONG_SIDE báo mỗi đêm. Chỉ khác khi đây là tài khoản điều chỉnh giảm (vd hao mòn, dự phòng) — khi đó ghi rõ lý do.',
+    fix: 'Đặt lại bên số dư theo tài khoản cha; nếu là tài khoản điều chỉnh giảm, ghi lý do khi lưu.',
   },
   'ACC-HINT-005': {
     id: 'ACC-HINT-005', entity: 'account', level: 'warn', status: 'draft', rule: 'R-MD-8', learn: '{root}',
     title: 'Tài khoản {code} chưa tích "Theo dõi đối tượng".',
     why: 'Tài khoản nhóm {root} ghi nghĩa vụ với một người cụ thể (khách, nhà cung cấp, nhân viên, đơn vị nội bộ). Không theo dõi đối tượng thì không biết ai nợ ai, sổ chi tiết công nợ và đối chiếu không làm được.',
+    fix: 'Tích "Theo dõi đối tượng"; nếu cố ý, ghi lý do khi lưu.',
   },
   'ACC-HINT-006': {
     id: 'ACC-HINT-006', entity: 'account', level: 'warn', status: 'draft', rule: 'R-MD-4', learn: '{code}',
     title: 'Tài khoản {code} còn số dư {balance} — ngừng sử dụng sẽ để số dư treo.',
     why: 'Ngừng dùng không xoá số dư: số dư vẫn lên báo cáo nhưng không ghi tiếp để tất toán được. Thường nên chuyển số dư sang tài khoản thay thế bằng một phiếu kế toán trước, rồi mới ngừng.',
+    fix: 'Lập phiếu kế toán chuyển số dư sang tài khoản thay thế, rồi ngừng dùng; nếu cố ý giữ số dư treo, ghi lý do khi lưu.',
   },
   'ACC-HINT-007': {
     id: 'ACC-HINT-007', entity: 'account', level: 'warn', status: 'draft', rule: 'R-MD-7',
     title: 'Tài khoản cấp 1 {code} không có trong hệ thống tài khoản chuẩn.',
     why: 'Tài khoản cấp 1 do chế độ kế toán quy định; tự thêm tài khoản cấp 1 làm báo cáo tài chính không có chỉ tiêu cho nó. Thường nên thêm làm tài khoản con của một tài khoản chuẩn.',
+    fix: 'Thêm làm tài khoản con của một tài khoản chuẩn; nếu chế độ kế toán của đơn vị có tài khoản này, ghi lý do khi lưu.',
   },
   'ACC-BLOCK-001': {
     id: 'ACC-BLOCK-001', entity: 'account', level: 'block', status: 'approved', rule: 'R-MD-8',
     title: 'Số tài khoản con phải bắt đầu bằng số tài khoản cha ({parent}).',
     why: 'Cây hệ thống tài khoản dựa vào tiền tố số hiệu để cộng dồn lên tài khoản cha và lên báo cáo; sai tiền tố làm số liệu cộng sai chỗ.',
+    fix: 'Đổi số tài khoản cho bắt đầu bằng số tài khoản cha, hoặc chọn đúng tài khoản cha.',
   },
   // ── Đối tượng (DM03) ───────────────────────────────────────────────────────────────────────────────
   'PART-HINT-001': {
@@ -109,16 +120,19 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     id: 'PART-HINT-002', entity: 'partner', level: 'warn', status: 'draft',
     title: 'Nhà cung cấp {code} chưa có mã số thuế.',
     why: 'Lưu được với nhà cung cấp cá nhân / hộ kinh doanh không có MST, nhưng mọi hoá đơn đầu vào của đối tượng này sẽ bị cảnh báo khi kê khai và không đối chiếu được với hoá đơn điện tử của cơ quan thuế.',
+    fix: 'Nhập mã số thuế (nút tra MST điền sẵn tên, địa chỉ); hộ kinh doanh / cá nhân không có MST thì ghi lý do khi lưu.',
   },
   'PART-HINT-003': {
     id: 'PART-HINT-003', entity: 'partner', level: 'warn', status: 'draft', rule: 'R-MD-3',
     title: 'Đã có đối tượng {other} cùng tên "{name}".',
     why: 'Hai mã cho cùng một khách / nhà cung cấp làm công nợ tách đôi: hoá đơn ghi một mã, phiếu thu ghi mã kia, đối chiếu không khớp. Nếu là một, dùng mã {other}; nếu khác người, phân biệt bằng tên viết tắt hoặc địa chỉ.',
+    fix: 'Mở đối tượng đã có và dùng mã đó; nếu là người khác, phân biệt bằng tên viết tắt hoặc địa chỉ rồi ghi lý do khi lưu.',
   },
   'PART-HINT-004': {
     id: 'PART-HINT-004', entity: 'partner', level: 'warn', status: 'draft',
     title: 'Mã số thuế "{taxCode}" không đúng định dạng (10 số, hoặc 10 số - 3 số chi nhánh).',
     why: 'MST sai định dạng không tra được với cơ quan thuế; hoá đơn điện tử mang MST đúng sẽ không khớp với đối tượng này.',
+    fix: 'Sửa MST: 10 số, hoặc 10 số - 3 số cho đơn vị phụ thuộc, hoặc 12 số (cá nhân).',
   },
 };
 
@@ -129,7 +143,7 @@ export function catalogFinding(code: string, vars: Record<string, string | numbe
   const fill = (s: string) => s.replace(/\{(\w+)\}/g, (_, k: string) => (vars[k] === undefined ? `{${k}}` : String(vars[k])));
   return {
     code, level: def.level, title: fill(def.title), why: fill(def.why),
-    ...(def.rule ? { rule: def.rule } : {}), ...(def.learn ? { learn: fill(def.learn) } : {}),
+    ...(def.fix ? { howTo: fill(def.fix) } : {}), ...(def.rule ? { rule: def.rule } : {}), ...(def.learn ? { learn: fill(def.learn) } : {}),
     ...(def.status === 'draft' ? { draft: true } : {}), ...extra,
   };
 }

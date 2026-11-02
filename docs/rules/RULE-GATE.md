@@ -2,7 +2,7 @@
 <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE theo ADR-0019: năm nguyên tắc của chủ dự án cho cả hai cổng; nháp / bể chờ; một thư viện phát hiện; không chặn im lặng -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-> **Cấp:** Tier 1 (R-GATE-2 là Tier 0 về trải nghiệm: không chặn im lặng) · **Trạng thái:** đề xuất ([ADR-0019](../adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)); Gate B thi hành theo [R-INTAKE](RULE-INTAKE.md) (đã chấp nhận).
+> **Cấp:** Tier 1 (R-GATE-2 là Tier 0 về trải nghiệm: không chặn im lặng) · **Trạng thái:** chấp nhận 2026-11-02 ([ADR-0019](../adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)); Gate B thi hành theo [R-INTAKE](RULE-INTAKE.md) (đã chấp nhận).
 > Sơ đồ, trạng thái, bản mẫu: [PHASE-024 · 60](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/60-HAI-CONG-KIEM-CHUAN.md).
 
 ## Nguyên tắc một câu
