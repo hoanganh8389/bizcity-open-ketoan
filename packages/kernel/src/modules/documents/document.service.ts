@@ -37,6 +37,7 @@ import { db, toNumber, type Db } from '@bizcity/platform/db/client';
 import { AppError, Errors } from '@bizcity/platform/core/errors';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
+import { ownDocument } from '@bizcity/platform/core/actions';
 import { emitKernelEvent } from './kernel-events.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { ledgerRepository } from '../ledger/ledger.repository.js';
@@ -268,6 +269,22 @@ export async function draftDocumentIn(trx: Db, auth: AuthContext, doc: IngestDoc
   return postDocumentIn(trx, auth, doc, opts.preview ? { post: true, force: true } : { hold: true });
 }
 
+// [2026-11-02 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — submitDocumentIn: cửa nạp trong giao dịch của người gọi (ctx.ledger.submit, action core.document.submit — ADR-0011 D5)
+/**
+ * Nộp một chứng từ vào sổ TRONG giao dịch của người gọi (action của module / core.document.submit): cùng khuôn với cửa nạp HTTP
+ * (chuẩn hoá chứng từ khoá API đẩy vào, kiểm khuôn bizcity_ledger_intake@1, kiểm tổng, postDocumentIn) nhưng KHÁC ở lỗi: lỗi định khoản
+ * ném ra để cả giao dịch huỷ — dữ liệu module và sổ cùng commit hoặc cùng huỷ, dry-run huỷ được, bằng chứng ghi thất bại. Cửa nạp
+ * HTTP cũ (documentService.ingest) vẫn lưu chứng từ ở trạng thái lỗi trong giao dịch riêng để kế toán sửa ở ACC14.
+ */
+export async function submitDocumentIn(trx: Db, auth: AuthContext, raw: unknown): Promise<IngestResult> {
+  const prep: { doc: unknown; skip?: string } = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, raw) : { doc: raw };
+  if (prep.skip) return { docKey: String((prep.doc as { docKey?: unknown })?.docKey ?? '?'), version: Number((prep.doc as { version?: unknown })?.version ?? 1), status: 'unchanged' };
+  const parsed = ingestDocumentSchema.safeParse(prep.doc);
+  if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', parsed.error.flatten());
+  assertTotals(parsed.data);
+  return postDocumentIn(trx, auth, parsed.data);
+}
+
 /** Phát bizcity.ledger.entry.reversed khi huỷ / bỏ định khoản đảo bút toán mà không ghi phiên bản mới. */
 function emitReversed(trx: Db, auth: AuthContext, row: { doc_key: string; doc_type: string; doc_no: string; version: number }, reversed: number, reason: 'cancel' | 'unpost') {
   return emitKernelEvent(trx, auth, 'bizcity.ledger.entry.reversed', row.doc_key, { docKey: row.doc_key, docType: row.doc_type, docNo: row.doc_no, version: row.version, reversed, reason });
@@ -299,6 +316,10 @@ export async function logPosting(trx: Db, v: {
  * Mỗi bước ghi nhật ký định khoản (posting_log).
  */
 export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; hold?: boolean } = {}): Promise<IngestResult> {
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 D5 mức 2): khoá app chỉ nộp chứng từ của app — docKey `<app>:…`, sourceSystem = app; một chỗ chặn cho mọi cửa nạp
+  // Khoá app ngoài tiến trình (ADR-0011 mức 2): như module mức 1, chỉ nộp / sửa chứng từ mang tiền tố của app. Đặt ở đây để
+  // mọi cửa (POST /documents, /documents/submit, nhận theo lô) cùng một luật.
+  if (auth.app) doc = ownDocument(auth.app, doc, 'app');
   const branch = await findBranch(trx, auth.tenantId, doc.branchCode);
   const branchId = branch.id;
   const partnerId = await documentPartnerId(trx, auth.tenantId, doc);
@@ -416,6 +437,8 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
 }
 
 async function processDocument(auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean } = {}): Promise<IngestResult> {
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá app — áp luật chủ chứng từ trước, để bản lưu lỗi (recordFailure) cũng mang nguồn = app
+  if (auth.app) doc = ownDocument(auth.app, doc, 'app');
   assertTotals(doc);
   try {
     return await db.transaction().execute((trx) => postDocumentIn(trx, auth, doc, opts));
@@ -755,6 +778,8 @@ export const documentService = {
    * ghi nhật ký; kế toán xem trước rồi định khoản mới huỷ. Chứng từ đã huỷ / đã chờ huỷ thì thôi.
    */
   async requestCancel(auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
+    // [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá app chỉ báo huỷ chứng từ của app (docKey `<app>:…`, ADR-0011 D5)
+    if (auth.app) ownDocument(auth.app, { docKey }, 'app');
     return db.transaction().execute((trx) => requestCancelIn(trx, auth, docKey, reason));
   },
 

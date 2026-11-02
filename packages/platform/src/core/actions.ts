@@ -27,8 +27,9 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
+import { moduleRoles } from '../db/module-db.js';
 import { z } from 'zod';
-import { ERROR_CODES, docRefModule, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
+import { ERROR_CODES, docRefModule, type IngestResult, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
@@ -40,6 +41,7 @@ import { metrics } from './metrics.js';
 import { currentRequest } from './request-context.js';
 import { withSpan } from './tracing.js';
 import { documents } from './documents.js';
+import { readSetting } from './settings.js';
 import type { AuthContext, Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
@@ -59,15 +61,35 @@ export interface ActionContext {
   readonly dryRun: boolean;
   /** Người gọi có quyền này không (quyền phụ trong handler, vd duyệt cấp 2). */
   can(permission: Permission): boolean;
-  data: { tx: Transaction<Database> };
+  // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10 (ADR-0011 D4): ctx.data.module — đọc ghi bảng của module bằng vai trò mod_<key>_rw (không chạm bảng Kernel ở tầng CSDL)
+  data: {
+    tx: Transaction<Database>;
+    /**
+     * Chạy `fn` với vai trò mod_<key>_rw của module (schema mod_<key>, khung nhìn bizcity_read khai trong manifest): PostgreSQL
+     * chặn mọi đọc / ghi bảng Kernel trong `fn`. Cùng giao dịch, cùng đơn vị (RLS). Xong (kể cả lỗi) trả về vai trò API.
+     * Gọi ctx.ledger / ctx.documents NGOÀI `fn`. Module chưa có CSDL riêng (`module migrate`) → NOT_READY.
+     */
+    module<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<T>;
+  };
   evidence: { note(key: string, value: unknown): void };
   /**
    * Phát sự kiện miền trong giao dịch của action (bizcity_event@1 STD-EVT-1): huỷ / dry-run thì không có sự kiện.
    * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
    */
   events: { emit(type: string, data: Record<string, unknown>, opts: { subject: string; version?: number; dedupeKey?: string }): Promise<string | null> };
-  /** Đọc sổ theo mã trong giao dịch của action (ledger.query, BIZCITY-DATA §7) — module không đọc bảng ledger_*. */
-  ledger: { query(q: LedgerQuery): Promise<LedgerQueryRow[]> };
+  // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ctx.ledger.submit (ADR-0011 D5): nộp chứng từ trong giao dịch của action; ctx.settings.get theo registry
+  /**
+   * Sổ trong giao dịch của action. query: đọc theo mã (ledger.query, BIZCITY-DATA §7) — module không đọc bảng ledger_*.
+   * submit: nộp chứng từ bizcity_ledger_intake@1 (ledger.submit, ADR-0011 D5) — chỉ action ghi; docKey phải mang tiền tố
+   * `<module>:`, sourceSystem = mã module (module không ghi đè / huỷ chứng từ của nguồn khác). Không số tài khoản: luật định khoản
+   * của Kernel + cấu hình đơn vị quyết. Lỗi định khoản ném ra → cả action huỷ (dữ liệu module và sổ cùng commit hoặc cùng huỷ).
+   */
+  ledger: {
+    query(q: LedgerQuery): Promise<LedgerQueryRow[]>;
+    submit(doc: Record<string, unknown> & { docKey: string; docType: string }): Promise<IngestResult>;
+  };
+  /** Cấu hình đơn vị theo registry (settings.registry, core/settings.ts): chỉ khoá module sở hữu, khoá lạ là lỗi. */
+  settings: { get<T = unknown>(key: string): Promise<T> };
   // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call (module-sdk API.md §2, câu hỏi mở 3): gọi action đọc của module khác
   /** Gọi action đọc công khai của module khác theo mã, với quyền của người gọi (STD-MOD-3; xem callAction). */
   actions: { call<O = unknown>(id: string, input: unknown): Promise<O> };
@@ -139,6 +161,28 @@ export type LedgerReader = (tx: Transaction<Database>, tenantId: string, q: Ledg
 let ledgerReader: LedgerReader | null = null;
 export function registerLedgerReader(fn: LedgerReader): void {
   ledgerReader = fn;
+}
+
+// [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — cửa nộp chứng từ cho ctx.ledger.submit; Kernel đăng ký ở app.ts (Platform không import Kernel)
+/** Cửa nộp chứng từ cho ctx.ledger.submit (Kernel: submitDocumentIn). Đăng ký lúc lắp ráp như bộ đọc sổ. */
+export type LedgerSubmitter = (tx: Transaction<Database>, auth: AuthContext, doc: unknown) => Promise<IngestResult>;
+let ledgerSubmitter: LedgerSubmitter | null = null;
+export function registerLedgerSubmitter(fn: LedgerSubmitter): void {
+  ledgerSubmitter = fn;
+}
+/** Mã chứng từ của module: `<module>:<phần còn lại>`. */
+const SUBMIT_KEY_RE = /^([a-z][a-z0-9-]*):\S+$/;
+
+// [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: luật chủ chứng từ dùng chung cho module (ctx.ledger.submit) và app ngoài tiến trình (Kernel, khoá app)
+/**
+ * Chứng từ do một chủ nộp (module mức 1 qua ctx.ledger.submit, app mức 2 qua khoá app — ADR-0011 D5): docKey phải
+ * `<chủ>:…`; sourceSystem = chủ (bỏ trống hoặc mặc định 'external' → đặt bằng chủ, khác → từ chối).
+ */
+export function ownDocument<T extends { docKey?: unknown; sourceSystem?: unknown }>(owner: string, doc: T, who: 'module' | 'app'): T & { sourceSystem: string } {
+  const k = SUBMIT_KEY_RE.exec(String(doc?.docKey ?? ''));
+  if (k?.[1] !== owner) throw Errors.validation(`docKey "${String(doc?.docKey)}" phải bắt đầu "${owner}:" — ${who} chỉ nộp chứng từ của mình (ADR-0011 D5)`);
+  if (doc.sourceSystem !== undefined && doc.sourceSystem !== 'external' && doc.sourceSystem !== owner) throw Errors.validation(`sourceSystem của chứng từ ${who} ${owner} phải là "${owner}"`);
+  return { ...doc, sourceSystem: owner };
 }
 
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
@@ -241,7 +285,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const evidence = (objectId: unknown, result: EvidenceEntry['result'], after: unknown): EvidenceEntry => {
     const oid = objectId == null ? undefined : String(objectId);
     return {
-      tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via, onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
+      tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via ?? (auth!.app ? `app:${auth!.app}` : undefined), onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
       subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after,
     };
   };
@@ -275,7 +319,21 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         requestId: call.requestId,
         dryRun,
         can: (p) => !!auth?.permissions.has(p),
-        data: { tx: trx },
+        data: {
+          tx: trx,
+          module: async (fn) => {
+            const { rw } = moduleRoles(def.id.split('.')[0]!);
+            const has = await sql<{ ok: boolean }>`SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ${rw}) AS ok`.execute(trx);
+            if (!has.rows[0]?.ok) throw Errors.notReady(`Module ${def.id.split('.')[0]} chưa có CSDL riêng (vai trò ${rw}): chạy "module migrate" khi cài module`);
+            const prev = (await sql<{ u: string }>`SELECT current_user AS u`.execute(trx)).rows[0]!.u;
+            await sql`SET LOCAL ROLE ${sql.id(rw)}`.execute(trx);
+            try {
+              return await fn(trx);
+            } finally {
+              await sql`SET LOCAL ROLE ${sql.id(prev)}`.execute(trx).catch(() => {});
+            }
+          },
+        },
         evidence: { note: (k, v) => { notes[k] = v; } },
         events: {
           emit: (type, data, o) => {
@@ -292,7 +350,15 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
             if (!ledgerReader) throw new Error('Chưa đăng ký bộ đọc sổ (registerLedgerReader ở app.ts)');
             return ledgerReader(trx, tenantId, q);
           },
+          submit: async (doc) => {
+            const mod = def.id.split('.')[0]!;
+            if (def.effect !== 'write') throw new Error(`Action đọc ${def.id} không được nộp chứng từ (ctx.ledger.submit chỉ trong action ghi)`);
+            if (!ledgerSubmitter) throw new Error('Chưa đăng ký cửa nộp chứng từ (registerLedgerSubmitter ở app.ts)');
+            if (!auth) throw Errors.unauthorized();
+            return ledgerSubmitter(trx, auth, ownDocument(mod, doc, 'module'));
+          },
         },
+        settings: { get: (key) => readSetting(trx, tenantId, def.id.split('.')[0]!, key) },
         actions: {
           call: (id, input) => {
             if (!auth) throw Errors.unauthorized();

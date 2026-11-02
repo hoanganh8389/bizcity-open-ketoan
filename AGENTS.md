@@ -107,8 +107,11 @@ Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa 
 node tests/conformance/selfcheck.mjs   # bộ kiểm chuẩn + bảng điểm, phải ĐẠT (không cần npm install)
 bash scripts/kiem-chuan.sh     # grep ranh giới, phải ĐẠT
 npm run typecheck
-npm test                       # cần PostgreSQL: docker compose up -d db
+npm test                       # cần PostgreSQL: docker compose up -d db — chạy trên CSDL riêng ketoan_test (tự tạo)
 ```
+
+<!-- [2026-11-02 04:00 PM Johnny Chu - Chu Hoàng Anh] FIX — test không bao giờ chạy vào CSDL của bản cài (RULE-REVIEW W-12). -->
+**Test không bao giờ chạy vào CSDL của bản cài** (`ketoan`): bộ test tạo đơn vị rác và cố ý để lại sổ lỗi. `vitest.config.ts` tự dùng `ketoan_test` khi `DATABASE_URL` trống và dừng khi tên CSDL không có "test" — đừng đổi chốt này để "cho chạy được" ([RULE-REVIEW §6 W-12](docs/rules/RULE-REVIEW.md)).
 
 Dán khối bằng chứng theo [docs/ops/DIAGNOSTICS.md](docs/ops/DIAGNOSTICS.md) §4 khi đụng nhân (`tests/conformance/output/latest/evidence.txt` có sẵn phần bộ kiểm). Bộ kiểm báo nợ mới → sửa, **không** thêm vào `baseline.json`; nợ cũ đã hết → `--update-baseline`. Viết check mới: [tests/conformance/README.md](tests/conformance/README.md) §7.
 

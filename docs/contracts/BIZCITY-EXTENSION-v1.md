@@ -1,7 +1,8 @@
 # `bizcity_extension@1` — Extension Contract
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §3a khung nhúng app ngoài tiến trình (ADR-0011 mức 2) — iframe sandbox, vé ≤ 5 phút, giao thức postMessage đóng, kiểm origin hai chiều -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
+> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
 > **Luật nền:** [R-BOUND](../rules/RULE-MODULE-BOUNDARY.md) · **Năng lực:** `ui.menu`, `ui.kit`, `ui.slots`, `permissions.module`, `settings.registry`, `ai.cell`
 
 ## 1. Mục đích
@@ -32,6 +33,22 @@ Liệt kê **đóng** các chỗ module được cắm vào Core: giao diện, A
 
 Luật slot: thành phần chỉ dùng `@bizcity/ui-kit` và client action; lỗi trong slot bị bắt (error boundary) và **không** làm hỏng màn của Core; slot không đọc state của màn chủ ngoài props được truyền.
 
+## 3a. Khung nhúng app ngoài tiến trình (ADR-0011 mức 2)
+
+App `kind: "app"` có `ui.origin` ([Module §3a](BIZCITY-MODULE-v1.md)) hiện ở nhóm **Tiện ích** (một mục mỗi app đang kết nối, màn `/ung-dung/<key>`), nhúng `ui.origin + ui.entry` trong iframe. Slot iframe (`extensions.slots` của app) chờ năng lực `ui.slots` (PHASES 3.8); cùng giao thức dưới đây.
+
+- iframe `sandbox="allow-scripts allow-forms allow-same-origin"`: **không** `allow-top-navigation`, không `allow-popups`; `referrerpolicy="no-referrer"`, `allow=""`. Không gửi phiên đăng nhập của Core vào iframe.
+- **Vé** (≤ 5 phút): giao diện xin `POST /api/v1/apps/<key>/ticket` (chỉ người dùng đăng nhập, kết nối đang bật), trao cho iframe qua `postMessage`. Vé ký bằng khoá dẫn xuất riêng nên **không** dùng được làm `Authorization: Bearer`. App gửi vé + khoá API của chính nó tới `POST /api/v1/apps/ticket/exchange` → `{ app, tenant, user, permissions }`; khoá của app khác / khoá thường → `FORBIDDEN`.
+- Giao thức `postMessage` **đóng**: Core chỉ nhận tin có `event.origin === ui.origin` **và** `event.source` là chính iframe đó; gửi với `targetOrigin = ui.origin` (không bao giờ `"*"`). Loại tin khác bị bỏ qua.
+
+| Chiều | `type` | Dữ liệu |
+|---|---|---|
+| app → Core | `bizcity.ready` | app sẵn sàng; Core gửi `bizcity.context` (và gửi lại mỗi 4 phút, khi đổi chi nhánh làm việc) |
+| app → Core | `bizcity.navigate` | `{ path }`: đường dẫn trong Core, bắt đầu `/` (không `//`) |
+| app → Core | `bizcity.toast` | `{ kind: 'info' \| 'ok' \| 'bad', text }` (≤ 300 ký tự) |
+| app → Core | `bizcity.resize` | `{ height }` px, kẹp 200…10000 |
+| Core → app | `bizcity.context` | `{ version: 1, ticket, expiresAt, tenant: { code, name }, branch, locale: 'vi-VN', theme }` |
+
 ## 4. Hook
 
 Hook là lời gọi **đồng bộ** trong giao dịch của Core, nên bị giới hạn chặt. Muốn phản ứng sau khi việc đã xong thì dùng [sự kiện](BIZCITY-EVENT-v1.md), không dùng hook.
@@ -59,7 +76,7 @@ Không có hook nào cho phép module: đổi bút toán, đổi tài khoản, c
 
 | Mã | Cấp | Luật | Kiểm bằng |
 |---|---|---|---|
-| STD-EXT-1 | 0 | Module chỉ cắm vào điểm có trong §3–§6. Không vá, không ghi đè thành phần Core, không monkey-patch | CONF-STATIC-1, CONF-MAN-7 |
+| STD-EXT-1 | 0 | Module chỉ cắm vào điểm có trong §3–§6 (app ngoài tiến trình: §3a). Không vá, không ghi đè thành phần Core, không monkey-patch | CONF-STATIC-1, CONF-MAN-7 |
 | STD-EXT-2 | 0 | Hook không ghi dữ liệu, không gọi mạng, chạy trong thời gian tối đa; quá giờ = coi như không có ý kiến (`referenceCheck` quá giờ = **chặn xoá**, an toàn) | CONF-RUN-15 |
 | STD-EXT-3 | 1 | Màn và slot chỉ import `@bizcity/ui-kit`, `@bizcity/module-sdk/web` và thư viện ngoài | CONF-STATIC-1 |
 | STD-EXT-4 | 1 | Module có tham chiếu mã danh mục chuẩn (STD-DATA-6) phải khai `masterdata.referenceCheck` | CONF-MAN-8 |

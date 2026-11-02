@@ -1,0 +1,26 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "acme.app-xau",
+  "key": "app-xau",
+  "kind": "app",
+  "version": "0.1.0",
+  "label": "App mẫu CỐ Ý SAI",
+  "description": "SC-CON-2: app ngoài tiến trình không có mã chạy trong Core nên không được khai actions; app.scopes xin quyền quản trị users:write (chỉ cấp được quyền đọc / nộp chứng từ / danh mục).",
+  "owners": [
+    "@acme"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "apps.external"
+    ]
+  },
+  "actions": [
+    "app-xau.thing.list"
+  ],
+  "app": {
+    "scopes": [
+      "users:write"
+    ]
+  }
+}

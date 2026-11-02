@@ -28,14 +28,19 @@ import { randomUUID } from 'node:crypto';
 import { selectEnabled } from './core/addins.js';
 import { BUILTIN_ADDINS, ADDIN_MANIFESTS } from './addins/index.js';
 
-import { enabledModules, routesFor, MODULE_MANIFESTS } from './phan-he/index.js';
+import { enabledModules, CORE_ROUTES, MODULE_MANIFESTS } from './phan-he/index.js';
+import type { Routes } from './phan-he/types.js';
+import { decideLoad, hashModuleDir, moduleGate, readRegistry, recordLoad, type LoadDecision } from '@bizcity/platform/core/module-registry';
+import { bundledModules } from './core/module-lifecycle.js';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
-import { registerLedgerReader } from './core/actions.js';
+import { registerLedgerReader, registerLedgerSubmitter } from './core/actions.js';
+import { registerAppManifests } from '@bizcity/platform/core/apps';
+import { APP_MANIFESTS } from './ung-dung/index.js';
 import { registerDocumentNumberer } from './core/documents.js';
 import { registerCollector } from './core/metrics.js';
 
@@ -114,19 +119,45 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerDocumentNumberer((tx, tenantId, key, year) => documentNumbers.next(tx, tenantId, key, year));
   // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — adapter kết nối chuẩn hoá chứng từ đẩy vào bằng khoá API (trước: Kernel import thẳng adapter)
   registerIncomingPreparer((tenantId, raw) => connectionService.prepareIncoming(tenantId, raw));
+  // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ctx.ledger.submit đi đúng một cửa vào sổ của Kernel (submitDocumentIn → postDocumentIn), ADR-0011 D5
+  registerLedgerSubmitter((tx, auth, doc) => submitDocumentIn(tx, auth, doc));
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: app ngoài tiến trình cài trong bản này (manifest kind "app") → registry + subscriber webhook; khoá trùng phân hệ / add-in → dừng
+  registerAppManifests([...APP_MANIFESTS], [...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys()]);
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.
   // Hệ thống (người dùng, kết nối…) thuộc lõi — luôn báo là bật.
-  app.decorate('enabledModules', [...new Set([...enabledModules(env.ENABLED_MODULES).map((m) => m.key), 'he-thong'])]);
-  for (const routes of routesFor(env.ENABLED_MODULES)) {
-    await app.register(routes);
+  // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13 (ADR-0011 D1, D2): nạp phân hệ / add-in theo registry (active + hash khớp; lệch → bỏ riêng module, ghi last_load_result); route của module bọc cổng MODULE_DISABLED theo đơn vị
+  // Registry bản cài (module_registry): chỉ nạp module active, hash thư mục khớp (bản thật). Trống → nạp như cũ + cảnh báo.
+  const registry = await readRegistry();
+  const enforceHash = env.NODE_ENV === 'production' && !env.BIZCITY_DEV_MODULES;
+  const bundled = new Map(bundledModules().map((b) => [b.key, b]));
+  const decisions = new Map<string, LoadDecision>();
+  const decide = (key: string) => {
+    const b = bundled.get(key);
+    const d = b ? decideLoad(key, hashModuleDir(b.dir), registry, enforceHash) : { key, load: true, result: 'loaded' as const, hash: '' };
+    if (d.warning) app.log[d.load ? 'warn' : 'error']({ module: key, result: d.result }, d.warning);
+    decisions.set(key, d);
+    return d.load;
+  };
+  const loaded = enabledModules(env.ENABLED_MODULES).filter((m) => decide(m.key));
+  app.decorate('enabledModules', [...new Set([...loaded.map((m) => m.key), 'he-thong'])]);
+  // Lõi: không cổng. Route của phân hệ: cổng theo đơn vị — route dùng chung chỉ bị chặn khi mọi phân hệ sở hữu đều tắt.
+  const owners = new Map<Routes, string[]>();
+  for (const m of loaded) for (const r of m.routes) if (!CORE_ROUTES.includes(r)) owners.set(r, [...(owners.get(r) ?? []), m.key]);
+  for (const routes of CORE_ROUTES) await app.register(routes);
+  for (const [routes, keys] of owners) {
+    await app.register(async (scope) => {
+      scope.addHook('preHandler', moduleGate(keys));
+      await scope.register(routes);
+    });
   }
 
-  // Add-in: mỗi add-in có không gian đường dẫn riêng.
-  const addins = selectEnabled(BUILTIN_ADDINS, env.ADDINS);
+  // Add-in: mỗi add-in có không gian đường dẫn riêng, cùng registry + cổng theo đơn vị.
+  const addins = selectEnabled(BUILTIN_ADDINS, env.ADDINS).filter((a) => decide(a.manifest.id));
   for (const addin of addins) {
     await app.register(
       async (scope) => {
+        scope.addHook('preHandler', moduleGate([addin.manifest.id]));
         await addin.register(scope, { db, log: app.log });
       },
       { prefix: `/api/v1/addins/${addin.manifest.id}` },
@@ -139,6 +170,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     ...app.enabledModules.map((k) => MODULE_MANIFESTS.get(k)).filter((m) => m !== undefined),
     ...addins.map((a) => ADDIN_MANIFESTS.get(a.manifest.id)).filter((m) => m !== undefined),
   ]);
+  // Kết quả nạp vào registry (DG-MOD-1 đọc); module có trong registry mà mã không có → skipped_missing.
+  await recordLoad([...decisions.values()].filter((d) => d.hash), registry ? [...registry.keys()].filter((k) => !bundled.has(k)) : []);
 
   return app;
 }

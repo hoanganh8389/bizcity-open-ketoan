@@ -20,6 +20,12 @@ const envSchema = z.object({
   AUTO_MIGRATE: z.enum(['0', '1']).default('1'),
   /** Phân hệ chạy trong tiến trình này (src/phan-he.ts): '*' = tất cả; vd 'mua-hang,kho'. Lõi luôn bật. */
   ENABLED_MODULES: z.string().default('*'),
+  // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: BIZCITY_DEV_MODULES — máy dev bỏ kiểm hash module (cấm ở bản thật)
+  /**
+   * Máy dev: nạp module dù hash thư mục lệch registry (sửa mã khi dev). Bản thật (NODE_ENV=production) cấm — dừng khởi động.
+   * Ngoài bản thật, hash lệch vốn chỉ cảnh báo; biến này chủ yếu để chạy bản dựng production trên máy dev.
+   */
+  BIZCITY_DEV_MODULES: z.enum(['true', 'false', '']).default('').transform((v) => v === 'true'),
   HOST: z.string().default('0.0.0.0'),
   DATABASE_URL: z.string().url().default('postgres://ketoan:ketoan@localhost:5434/ketoan'),
   /** Chuyển sang vai trò này sau khi kết nối (SET ROLE) — chạy test / CI dưới vai trò không superuser để RLS có hiệu lực (PHASE-007). Bản thật: kết nối thẳng bằng DB_APP_USER. */
@@ -109,6 +115,10 @@ function loadEnv(): Env {
   }
   if (parsed.data.NODE_ENV === 'production' && parsed.data.JWT_SECRET.startsWith('dev-secret')) {
     console.error('JWT_SECRET đang dùng giá trị mặc định. Hãy đặt khoá riêng ở môi trường thật.');
+    process.exit(1);
+  }
+  if (parsed.data.NODE_ENV === 'production' && parsed.data.BIZCITY_DEV_MODULES) {
+    console.error('BIZCITY_DEV_MODULES=true bị cấm ở bản thật: API phải chỉ nạp module đúng hash trong registry (ADR-0011 D2).');
     process.exit(1);
   }
   return parsed.data;

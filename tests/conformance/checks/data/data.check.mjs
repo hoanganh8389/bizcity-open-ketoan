@@ -5,7 +5,8 @@
 const DIR = 'db/migrations';
 const LOCK = 'tests/conformance/locks/migrations.lock.json';
 /** Bảng toàn cục, không thuộc đơn vị nào. */
-const GLOBAL_TABLES = new Set(['tenants', 'schema_migrations']);
+// [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — module_registry là bảng CẤP BẢN CÀI (ADR-0011 D1): không theo đơn vị; ketoan_app chỉ SELECT + UPDATE cột last_load_* (0052)
+const GLOBAL_TABLES = new Set(['tenants', 'schema_migrations', 'module_registry']);
 
 export const checks = [
   {

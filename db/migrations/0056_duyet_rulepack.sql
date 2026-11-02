@@ -1,6 +1,7 @@
 -- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: lượt duyệt rulepack tại bản cài (self-host): đơn vị tự duyệt, chỉ thêm, gắn phiên bản + băm nội dung rulepack; thu hồi bằng dòng mới.
+-- [2026-11-02 06:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số 0053 → 0056 khi gộp main (PR #23, #25 có 0051_ung_dung_ngoai, 0052_registry_module, 0053_migration_module); chưa phát hành.
 -- =============================================================================
--- 0053 Duyệt rulepack tại bản cài — rulepack_approvals (ADR-0015; PHASE-020).
+-- 0056 Duyệt rulepack tại bản cài — rulepack_approvals (ADR-0015; PHASE-020).
 --      Bản cài tự chủ (self-host): chủ đơn vị / kế toán trưởng duyệt một rulepack cho đơn vị mình, ghi tên người duyệt kế toán
 --      (và người duyệt thuế với miền thuế / hoá đơn / quản lý thuế / lương). Lượt duyệt gắn ĐÚNG phiên bản + băm nội dung
 --      rulepack: cập nhật gói rulepack làm đổi băm ⇒ lượt duyệt cũ hết hiệu lực, phải duyệt lại.

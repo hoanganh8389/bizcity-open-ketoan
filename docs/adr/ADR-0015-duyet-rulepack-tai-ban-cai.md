@@ -2,7 +2,7 @@
 <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015 chấp nhận: bản cài self-host (dev, CEO) tự duyệt rulepack cho đơn vị mình; lượt duyệt gắn phiên bản + băm nội dung; nhãn "Đạt theo duyệt của đơn vị" tách khỏi nhãn Bizcity; chốt Q020-4. -->
 
 - Trạng thái: **Chấp nhận** — chủ dự án (Johnny Chu) 2026-11-02: "chúng ta làm code, cho dev, và CEO tự chủ selfhost, cho nên việc này hãy để họ có quyền quản lý là tự duyệt"
-- Ngày: 2026-11-02 · Người quyết: chủ dự án · Mức Kernel: **K1** — thêm bảng chỉ thêm `rulepack_approvals` (migration 0053), ba action, một quyền; **không** đổi sổ, luật định khoản, cửa nạp, kỳ kế toán
+- Ngày: 2026-11-02 · Người quyết: chủ dự án · Mức Kernel: **K1** — thêm bảng chỉ thêm `rulepack_approvals` (migration 0056), ba action, một quyền; **không** đổi sổ, luật định khoản, cửa nạp, kỳ kế toán
 - Luật / hợp đồng liên quan: [ADR-0012](ADR-0012-conformance-engine-tru-cot-kernel.md) (Conformance Engine), [R-VNC-3, R-VNC-8, R-VNC-11](../rules/RULE-VN-CONFORMANCE.md), [Q020-4](../phases/PHASE-020-KIEM-CHUAN-PHAP-LY-VN/00-MASTER-PLAN.md)
 
 ## Bối cảnh

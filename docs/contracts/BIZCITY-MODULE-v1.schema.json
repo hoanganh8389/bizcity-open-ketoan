@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bizcity.vn/contracts/bizcity_module/1.1.0",
+  "$id": "https://bizcity.vn/contracts/bizcity_module/1.2.0",
   "title": "bizcity_module@1",
   "description": "Manifest module / add-in theo Bizcity Framework Standard v1 (docs/contracts/BIZCITY-MODULE-v1.md).",
   "type": "object",
@@ -9,7 +9,7 @@
     "contract": { "const": "bizcity_module@1" },
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]{1,31}$" },
     "key": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}$" },
-    "kind": { "enum": ["module", "addin"] },
+    "kind": { "enum": ["module", "addin", "app"] },
     "version": { "$ref": "#/$defs/semver" },
     "label": { "type": "string", "minLength": 1, "maxLength": 80 },
     "description": { "type": "string", "minLength": 1, "maxLength": 300 },
@@ -153,7 +153,26 @@
     },
     "ui": {
       "type": "object",
-      "properties": { "icon": { "type": "string" }, "color": { "type": "string" }, "order": { "type": "integer" } },
+      "properties": {
+        "icon": { "type": "string" }, "color": { "type": "string" }, "order": { "type": "integer" },
+        "origin": { "type": "string", "pattern": "^https?://[^/\\s?#@]+$" },
+        "entry": { "type": "string", "pattern": "^/\\S*$" }
+      },
+      "additionalProperties": false
+    },
+    "app": {
+      "type": "object",
+      "properties": {
+        "scopes": {
+          "type": "array", "uniqueItems": true,
+          "items": { "enum": ["catalog:read", "documents:read", "documents:write", "ledger:read", "reports:read"] }
+        },
+        "webhook": {
+          "type": "object", "required": ["url"],
+          "properties": { "url": { "type": "string", "pattern": "^https?://\\S+$" } },
+          "additionalProperties": false
+        }
+      },
       "additionalProperties": false
     },
     "waivers": {
@@ -175,6 +194,17 @@
     {
       "if": { "properties": { "kind": { "const": "addin" } } },
       "then": { "not": { "anyOf": [{ "required": ["data"] }, { "required": ["documents"] }] } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "app" } } },
+      "then": {
+        "required": ["app"],
+        "not": { "anyOf": [{ "required": ["data"] }, { "required": ["documents"] }, { "required": ["actions"] }, { "required": ["settings"] }, { "required": ["extensions"] }] }
+      },
+      "else": {
+        "not": { "required": ["app"] },
+        "properties": { "ui": { "not": { "anyOf": [{ "required": ["origin"] }, { "required": ["entry"] }] } } }
+      }
     }
   ],
   "$defs": {

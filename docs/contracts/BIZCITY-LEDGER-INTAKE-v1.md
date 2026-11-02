@@ -2,8 +2,9 @@
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0: §7.1 đọc sổ — ledger.query (ctx.ledger.query, ledgerQuery, khung nhìn bizcity_read.*) -->
 <!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1: ledgerQuery mở ở gốc gói @bizcity/kernel -->
+<!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0: §2 thêm cửa core.document.submit (runtime action) và ctx.ledger.submit (module, ADR-0011 D5) -->
 
-> **Phiên bản:** 1.1.0 · 2026-10-31 · **Trạng thái:** Ổn định (§7.1 mới, bổ sung)
+> **Phiên bản:** 1.2.0 · 2026-11-02 · **Trạng thái:** Ổn định (§2 thêm hai cửa, khuôn chứng từ không đổi)
 > **Nguồn sự thật:** `packages/contracts/src/documents.ts` (`ingestDocumentSchema`) · **JSON Schema:** [BIZCITY-LEDGER-INTAKE-v1.schema.json](BIZCITY-LEDGER-INTAKE-v1.schema.json)
 > **Luật:** [R-EVENT](../rules/RULE-EVENT.md) · **Hướng dẫn chi tiết từng loại kèm JSON mẫu:** [../api/](../api/README.md)
 > **Đổi tên (2026-10-29, trước khi phát hành):** trước đây gọi là `bizcity_event@1`. Tên `bizcity_event` nay dành cho **sự kiện miền** của Standard v1 ([BIZCITY-EVENT-v1.md](BIZCITY-EVENT-v1.md)). Hợp đồng này là **cửa nạp của nhân sổ cái**: phân hệ trong tiến trình gọi qua `ctx.ledger.submit()` của SDK, không gọi thẳng.
@@ -19,7 +20,9 @@ Một `bizcity_ledger_intake` mô tả **một sự việc kinh tế đã xảy 
 | `POST /api/v1/documents` | một sự việc | `data: IngestResult` |
 | `POST /api/v1/documents/batch` | `{ "documents": [ … ] }` ≤ 200 | `data: IngestResult[]`, `meta` đếm theo `status` |
 | `POST /api/v1/documents/cancel` | `{ "docKey", "reason" }` | huỷ (tự động) hoặc Chờ huỷ (chế độ chờ) |
-| Phân hệ trong tiến trình | `postDocumentIn(trx, auth, doc, { post?, hold? })` | `IngestResult` |
+| `POST /api/v1/documents/submit` (action `core.document.submit`, từ 1.2.0) | `{ "document": … }`; `Idempotency-Key` tuỳ chọn; `?dryRun=1` | `data: { docKey, version, status, entries }`, `meta.receipt` (biên nhận bằng chứng). Lỗi định khoản trả mã lỗi, **không** lưu chứng từ trạng thái `error` (khác `POST /documents`) — dùng cho app ngoài tiến trình (ADR-0011 mức 2) |
+| Module (`@bizcity/module-sdk`, từ 1.2.0) | `ctx.ledger.submit(doc)` trong action ghi | `IngestResult`; `docKey` phải `<module>:…`, `sourceSystem` = mã module; cùng giao dịch với dữ liệu module (ADR-0011 D5) |
+| Phân hệ trong tiến trình (cũ) | `postDocumentIn(trx, auth, doc, { post?, hold? })` | `IngestResult` |
 | Kéo qua [bizcity_connector@1](BIZCITY-CONNECTOR-v1.md) | `documents[]` cùng khuôn | luôn `pending` |
 
 Xác thực: `X-Api-Key` có phạm vi `documents:write`. Header tuỳ chọn `X-Bizcity-Contract: bizcity_ledger_intake@1` (Giai đoạn 2: lõi kiểm major).
@@ -106,6 +109,8 @@ Bảo đảm:
 - Kernel đổi cấu trúc bảng sổ thì sửa khung nhìn trong migration mới; cột của khung nhìn chỉ **thêm**, không bớt / đổi nghĩa trong `@1`.
 
 ## 8. Changelog
+
+- **1.2.0 (2026-11-02):** §2 thêm hai cửa cùng đường vào Kernel (`submitDocumentIn` → `postDocumentIn`): action `core.document.submit` (Idempotency-Key, biên nhận, dry-run; lỗi không lưu chứng từ) và `ctx.ledger.submit` cho module (tiền tố `docKey`, `sourceSystem` = module). Khuôn chứng từ không đổi (PHASE-011, ADR-0011 D5).
 
 - **1.1.0 (2026-10-31):** §7.1 đọc sổ — năng lực `ledger.query` (PHASES 3.7, PHASE-012 S012-2): `ctx.ledger.query`, `ledgerQuery`, khung nhìn chỉ đọc `bizcity_read.*`. Khuôn nộp không đổi.
 - **1.0.0 (2026-10-28):** Đặt tên hợp đồng cho khuôn `IngestDocument` đang chạy; nội dung không đổi.

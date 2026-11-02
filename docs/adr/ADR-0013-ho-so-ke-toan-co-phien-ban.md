@@ -15,7 +15,7 @@ Audit [VN-CONFORMANCE-BASELINE-2026-11-01](../audits/VN-CONFORMANCE-BASELINE-202
 
 ## Quyết định
 
-1. **Bảng chỉ thêm `accounting_profiles`** (migration 0051): mỗi dòng là một phiên bản hồ sơ gồm `fiscal_year_start_month`, `regime` (`vn-tt200-2014` · `vn-tt99-2025` · `vn-tt133-2016` · `vn-tt152-2025`), `entity_type` (`enterprise` · `sme` · `micro` · `household`), `note` bắt buộc, người phát hành. Trigger chặn sửa / xoá; RLS cùng khuôn 0041.
+1. **Bảng chỉ thêm `accounting_profiles`** (migration 0054): mỗi dòng là một phiên bản hồ sơ gồm `fiscal_year_start_month`, `regime` (`vn-tt200-2014` · `vn-tt99-2025` · `vn-tt133-2016` · `vn-tt152-2025`), `entity_type` (`enterprise` · `sme` · `micro` · `household`), `note` bắt buộc, người phát hành. Trigger chặn sửa / xoá; RLS cùng khuôn 0041.
 2. **Hiệu lực từ đầu năm tài chính**: `effective_from` là ngày 01 của tháng bắt đầu năm tài chính của chính hồ sơ đó (CHECK ở CSDL). Hồ sơ áp cho ngày D = bản có `effective_from ≤ D` lớn nhất. Hồ sơ mới không bao giờ đổi chế độ giữa một năm tài chính.
 3. **Không phát hành vào năm đã có kỳ khoá** (kỳ khoá ở hoặc sau ngày hiệu lực).
 4. **Chưa khai = chưa khai.** Không có dòng thì `current = null`; Core không suy chế độ từ gói định khoản hay từ ngày. Không tự tạo hồ sơ khi khởi tạo đơn vị.
@@ -30,7 +30,7 @@ Audit [VN-CONFORMANCE-BASELINE-2026-11-01](../audits/VN-CONFORMANCE-BASELINE-202
 **Chưa làm (cố ý, giữ Core lean):** báo cáo năm, kết chuyển cuối năm, số dư đầu năm **chưa** đọc năm tài chính từ hồ sơ — vẫn theo năm dương lịch như hôm nay. Chuyển chúng sang năm tài chính là việc riêng có ADR khi có đơn vị cần (đơn vị năm dương lịch không bị ảnh hưởng). Màn khai hồ sơ ở *Hệ thống → Thông tin đơn vị* làm cùng màn Kiểm chuẩn (S020-20). Hệ thống tài khoản theo chế độ (G2) và TT133 / TT152 (G5) vẫn mở.
 
 <!-- [2026-11-02 02:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số lần hai 0050 → 0051 (PR #20 có 0050_vai_tro_nha_phat_trien). -->
-**Việc phải làm:** migration chưa phát hành; đã đổi 0049 → 0050 khi gộp `main` (PR #18 giữ 0049), rồi 0050 → **0051** khi gộp PR #20 (`0050_vai_tro_nha_phat_trien`). Bảng Kiểm chuẩn theo đó là 0052.
+**Việc phải làm:** migration chưa phát hành; đã đổi 0049 → 0050 khi gộp `main` (PR #18 giữ 0049), rồi 0050 → **0051** khi gộp PR #20 (`0050_vai_tro_nha_phat_trien`). Bảng Kiểm chuẩn theo đó là 0052. Lần ba (2026-11-02, gộp PR #23 + #25 có `0051_ung_dung_ngoai`, `0052_registry_module`, `0053_migration_module`): hồ sơ kế toán **0054**, Kiểm chuẩn **0055**, duyệt rulepack **0056**. <!-- [2026-11-02 06:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số migration lần ba khi gộp PR #23, #25: 0051/0052/0053 → 0054/0055/0056. -->
 
 ## Phương án đã cân nhắc
 

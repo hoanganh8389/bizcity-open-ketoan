@@ -13,7 +13,9 @@
     "db:migrate": "tsx --conditions=development src/db/migrate.ts",
     "db:seed": "tsx --conditions=development src/db/seed.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "module": "node dist/cli/module.js",
+    "module:dev": "tsx --conditions=development src/cli/module.ts"
   },
   "dependencies": {
     "@bizcity/kernel": "0.1.0",

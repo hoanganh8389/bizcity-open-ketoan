@@ -1,5 +1,6 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — chép package.json của @bizcity/platform để npm ci khớp lockfile workspace
+# [2026-11-02 01:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — workspace @bizcity/module-sdk: chép package.json để npm ci khớp lockfile; image api chép registry cấu hình (ctx.settings.get)
 # [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — thêm package.json của @bizcity/kernel
 # Giao diện: dựng bằng Vite → phục vụ bằng nginx, chuyển /api sang container api.
 FROM node:22-alpine AS build
@@ -8,6 +9,7 @@ COPY package.json package-lock.json ./
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/platform/package.json packages/platform/
 COPY packages/kernel/package.json packages/kernel/
+COPY packages/module-sdk/package.json packages/module-sdk/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN npm ci --no-audit --no-fund

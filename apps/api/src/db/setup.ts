@@ -9,6 +9,7 @@ import { runMigrations } from './migrate.js';
 import { seed } from '../kernel/public.js';
 import { db } from './client.js';
 import { freezeApproved } from '../phan-he/mua-hang/analysis.js';
+import { syncBundled } from '../core/module-lifecycle.js';
 
 /**
  * Vai trò CSDL của API (R-SEC-6, migration 0032): có DB_APP_PASSWORD thì bật LOGIN + đặt mật khẩu cho ketoan_app để API kết
@@ -68,6 +69,9 @@ async function main(): Promise<void> {
   // Phiếu mua hàng đã duyệt từ trước: chốt chiết khấu tự áp từ chính sách vào phiếu (một lần, chạy lại bỏ qua).
   const fz = await freezeApproved(db);
   if (fz.frozen || fz.skipped.length) console.log(`Mua hàng: chốt chiết khấu ${fz.frozen} phiếu đã duyệt${fz.skipped.length ? `; lệch tổng, bỏ qua: ${fz.skipped.join(', ')}` : ''}`);
+  // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13 (ADR-0011 D2): đồng bộ registry module đi kèm bản dựng này (cài / nâng cấp / băm lại) — API chỉ nạp module đúng hash
+  const changes = await syncBundled('setup');
+  console.log(changes.length ? `Registry module: ${changes.map((c) => `${c.action} ${c.key}`).join(', ')}` : 'Registry module: đã khớp bản dựng');
   await pool.end();
 }
 
