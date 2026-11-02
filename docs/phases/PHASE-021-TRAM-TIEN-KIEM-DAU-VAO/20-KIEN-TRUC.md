@@ -145,7 +145,7 @@ preflight(trx, auth, raw: unknown, opts: { layers?: ('L1'|'L2'|'L3'|'L4'|'L5')[]
 
 | Lời gọi | Quyền | Việc |
 |---|---|---|
-| (lỗi của) `POST /documents`, `/documents/batch`, `/documents/submit` | như cũ | mã HTTP cũ; `error.details.findings`; `meta.intake = { id, score, url }` (lô: từng dòng có `intakeId`) |
+| (lỗi của) `POST /documents`, `/documents/batch`, `/documents/submit` | như cũ | mã HTTP cũ; `error.intake = { id, attempt, score, findings, url }` (lô: từng dòng có `intakeId`); `details` không đổi <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 thi hành --> |
 | `POST /api/v1/intake/preflight` | `documents:write` | Kiểm thử: `{ document, save?: boolean }` → `{ findings, score, entries? }`; `save` → mục `trial` |
 | `GET /api/v1/intake` | `documents:read` | lọc `status`, `channel`, `source`, `docType`, `actor`, `code`, `from`, `to`; phân trang |
 | `GET /api/v1/intake/:id` | `documents:read` | nguyên văn, bản vá, phát hiện từng lần, lịch sử |

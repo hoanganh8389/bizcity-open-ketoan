@@ -84,6 +84,9 @@ Thất bại (chứng từ **không được nhận**, phải sửa rồi gửi 
 { "ok": false, "error": { "code": "VALIDATION_ERROR", "message": "Tổng tiền chứng từ không khớp", "details": ["Tổng thuế 31850 ≠ tổng các dòng 31852"] } }
 ```
 
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: error.intake -->
+Chứng từ bị từ chối được giữ ở **bể chờ**: `error.intake = { id, attempt, score, findings, url }` chỉ đủ mọi lỗi của chứng từ trong một lần (mã `IN-*`, vì sao, sửa ở nguồn). Xem lại ở `GET /api/v1/intake/:id`; thử trước khi gửi ở `POST /api/v1/intake/preflight`. Gửi lại đúng cùng `docKey` thì mục bể tự đóng ([BIZCITY-INTAKE-FINDINGS-v1 §5](../contracts/BIZCITY-INTAKE-FINDINGS-v1.md)).
+
 | HTTP | `error.code` | Nguyên nhân thường gặp |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Sai khuôn (thiếu trường, sai kiểu), tổng tiền không khớp các dòng, chi nhánh chưa khai báo |

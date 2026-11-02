@@ -129,6 +129,22 @@
       "readBy": "phan-he/mua-hang/analysis.ts", "writeBy": "PUT /api/v1/purchase/settings",
       "permission": "settings:write", "audit": "chưa rõ", "affectsPosting": false,
       "gap": "Ghi bằng jsonb_set trần; tách thành khoá con bizcity.mua_hang.<khoá> và đọc qua hàm kiểm khuôn"
+    },
+    {
+      "key": "bizcity.intake.retention_days",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.intake.retentionDays", "schema": "int ≥ 1 (ngày)", "default": "90",
+      "readBy": "intakeRetentionSubscriber (packages/kernel/src/modules/intake/inbox.ts)", "writeBy": "chưa có (W3: màn Trạm kiểm tra)",
+      "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
+      "gap": "Chưa có API ghi; đọc thẳng jsonb không kiểm khuôn (PHASE-021 W3)"
+    },
+    {
+      "key": "bizcity.intake.trial_retention_days",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.intake.trialRetentionDays", "schema": "int ≥ 1 (ngày)", "default": "7",
+      "readBy": "intakeRetentionSubscriber (packages/kernel/src/modules/intake/inbox.ts)", "writeBy": "chưa có (W3: màn Trạm kiểm tra)",
+      "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
+      "gap": "Chưa có API ghi; đọc thẳng jsonb không kiểm khuôn (PHASE-021 W3)"
     }
   ]
 }

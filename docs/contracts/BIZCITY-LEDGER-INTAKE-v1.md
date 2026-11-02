@@ -3,8 +3,9 @@
 <!-- [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0: §7.1 đọc sổ — ledger.query (ctx.ledger.query, ledgerQuery, khung nhìn bizcity_read.*) -->
 <!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1: ledgerQuery mở ở gốc gói @bizcity/kernel -->
 <!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0: §2 thêm cửa core.document.submit (runtime action) và ctx.ledger.submit (module, ADR-0011 D5) -->
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — 1.3.0: §2 lỗi cửa nạp có error.intake (bể chờ), lô có intakeId -->
 
-> **Phiên bản:** 1.2.0 · 2026-11-02 · **Trạng thái:** Ổn định (§2 thêm hai cửa, khuôn chứng từ không đổi)
+> **Phiên bản:** 1.3.0 · 2026-11-02 · **Trạng thái:** Ổn định (§2 lỗi cửa nạp thêm `error.intake`, khuôn chứng từ không đổi)
 > **Nguồn sự thật:** `packages/contracts/src/documents.ts` (`ingestDocumentSchema`) · **JSON Schema:** [BIZCITY-LEDGER-INTAKE-v1.schema.json](BIZCITY-LEDGER-INTAKE-v1.schema.json)
 > **Luật:** [R-EVENT](../rules/RULE-EVENT.md) · **Hướng dẫn chi tiết từng loại kèm JSON mẫu:** [../api/](../api/README.md)
 > **Đổi tên (2026-10-29, trước khi phát hành):** trước đây gọi là `bizcity_event@1`. Tên `bizcity_event` nay dành cho **sự kiện miền** của Standard v1 ([BIZCITY-EVENT-v1.md](BIZCITY-EVENT-v1.md)). Hợp đồng này là **cửa nạp của nhân sổ cái**: phân hệ trong tiến trình gọi qua `ctx.ledger.submit()` của SDK, không gọi thẳng.
@@ -24,6 +25,8 @@ Một `bizcity_ledger_intake` mô tả **một sự việc kinh tế đã xảy 
 | Module (`@bizcity/module-sdk`, từ 1.2.0) | `ctx.ledger.submit(doc)` trong action ghi | `IngestResult`; `docKey` phải `<module>:…`, `sourceSystem` = mã module; cùng giao dịch với dữ liệu module (ADR-0011 D5) |
 | Phân hệ trong tiến trình (cũ) | `postDocumentIn(trx, auth, doc, { post?, hold? })` | `IngestResult` |
 | Kéo qua [bizcity_connector@1](BIZCITY-CONNECTOR-v1.md) | `documents[]` cùng khuôn | luôn `pending` |
+
+Từ 1.3.0: cửa nạp từ chối vì nội dung (`VALIDATION_ERROR`, `CONFLICT`; không gồm chạy thử) thì giữ chứng từ ở bể chờ và thêm `error.intake = { id, attempt, score, findings, url }` vào phản hồi; dòng lỗi của lô có `intakeId`. Mã HTTP, `error.details` không đổi ([BIZCITY-INTAKE-FINDINGS-v1 §5](BIZCITY-INTAKE-FINDINGS-v1.md)).
 
 Xác thực: `X-Api-Key` có phạm vi `documents:write`. Header tuỳ chọn `X-Bizcity-Contract: bizcity_ledger_intake@1` (Giai đoạn 2: lõi kiểm major).
 
@@ -110,6 +113,7 @@ Bảo đảm:
 
 ## 8. Changelog
 
+- **1.3.0 (2026-11-02):** §2 lỗi cửa nạp thêm `error.intake` (bể chờ `intake_inbox`), dòng lỗi lô thêm `intakeId`; `POST /documents` kiểm khuôn trong cửa nạp (sai khuôn vẫn `VALIDATION_ERROR`, `details` là mảng câu như cũ). Tương thích: bên gọi cũ bỏ qua trường mới (PHASE-021 W2, ADR-0014 D2).
 - **1.2.0 (2026-11-02):** §2 thêm hai cửa cùng đường vào Kernel (`submitDocumentIn` → `postDocumentIn`): action `core.document.submit` (Idempotency-Key, biên nhận, dry-run; lỗi không lưu chứng từ) và `ctx.ledger.submit` cho module (tiền tố `docKey`, `sourceSystem` = module). Khuôn chứng từ không đổi (PHASE-011, ADR-0011 D5).
 
 - **1.1.0 (2026-10-31):** §7.1 đọc sổ — năng lực `ledger.query` (PHASES 3.7, PHASE-012 S012-2): `ctx.ledger.query`, `ledgerQuery`, khung nhìn chỉ đọc `bizcity_read.*`. Khuôn nộp không đổi.

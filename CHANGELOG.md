@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 bể chờ -->
+- **Bể chờ đầu vào — W2** (PHASE-021, PHASES 2.18, năng lực `intake.inbox` → available): chứng từ cửa nạp từ chối (đơn, lô, `submit`, khoá app) được giữ nguyên văn + mọi phát hiện + điểm ở bảng `intake_inbox` (migration 0057), phản hồi lỗi thêm `error.intake` (lô: `intakeId`); gửi trùng gộp một mục; nguồn gửi lại đúng thì mục tự đóng; `GET /api/v1/intake`, `/intake/:id`, `POST /intake/preflight` (Kiểm thử, lưu mục thử); hạn giữ 90 / 7 ngày. Chưa có màn (W3).
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1 tiền kiểm -->
 - **Tiền kiểm chứng từ — W1** (PHASE-021, PHASES 2.17, ADR-0014, năng lực `intake.findings` → available): danh mục 20 mã lỗi đầu vào `IN-*` (khuôn, số học, danh mục, nghiệp vụ) viết cho người mới — vì sao kế toán cần, sửa ở nguồn thế nào, trang bài học `docs/huong-dan/loi-dau-vao/`; bộ tiền kiểm gom **mọi** lỗi của một chứng từ trong một lần bằng chính luật cửa nạp, chấm điểm 0–100. Chưa lưu bể chờ / chưa có màn (W2, W3).
 <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — giai đoạn 2: allocateDebt, core.*.upsert + seed, module-sdk/web -->

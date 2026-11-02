@@ -25,6 +25,7 @@ import { listSignatures } from '@bizcity/platform/documents/signature.routes';
 import { assertDateRules, dateRuleViolation, readDataLock } from '@bizcity/platform/core/date-rules';
 import { isAutoMode, needsApproval } from '../../core/posting-modes.js';
 import {
+  ERROR_CATALOG,
   ingestDocumentSchema,
   isTradeDocument,
   moneyEquals,
@@ -35,9 +36,11 @@ import {
 } from '@ketoan/contracts';
 import { db, toNumber, type Db } from '@bizcity/platform/db/client';
 import { AppError, Errors } from '@bizcity/platform/core/errors';
+import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
 import { ownDocument } from '@bizcity/platform/core/actions';
+import { channelOf, closeBySource, isDoorRejection, recordRejection, type IntakeChannel } from '../intake/inbox.js';
 import { emitKernelEvent } from './kernel-events.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { ledgerRepository } from '../ledger/ledger.repository.js';
@@ -510,16 +513,30 @@ async function actorNames(tenantId: string, actors: string[]): Promise<Map<strin
   return out;
 }
 
+/** Nhận một chứng từ (một lần thử, không bể chờ) — documentService.ingest bọc thêm bể chờ. */
+async function ingestOne(auth: AuthContext, input: unknown): Promise<IngestResult> {
+  // Đẩy vào bằng khoá API: chuẩn hoá như chứng từ kéo qua kết nối cùng mã nguồn (đổi hình thức thanh toán…).
+  const prep = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, input) : { doc: input };
+  const raw = prep.doc;
+  if (prep.skip) return { docKey: String((raw as { docKey?: unknown })?.docKey ?? '?'), version: Number((raw as { version?: unknown })?.version ?? 1), status: 'unchanged' };
+  const parsed = ingestDocumentSchema.safeParse(raw);
+  // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route nhận thân thô, khuôn kiểm ở đây (sai khuôn cũng vào bể chờ); details là mảng câu như lỗi kiểm route cũ
+  if (!parsed.success) throw Errors.validation(ERROR_CATALOG.VALIDATION_ERROR.message, zodIssueTexts(parsed.error));
+  return processDocument(auth, parsed.data);
+}
+
 export const documentService = {
   /** Nhận một chứng từ (dữ liệu thô từ API). */
-  async ingest(auth: AuthContext, input: unknown): Promise<IngestResult> {
-    // Đẩy vào bằng khoá API: chuẩn hoá như chứng từ kéo qua kết nối cùng mã nguồn (đổi hình thức thanh toán…).
-    const prep = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, input) : { doc: input };
-    const raw = prep.doc;
-    if (prep.skip) return { docKey: String((raw as { docKey?: unknown })?.docKey ?? '?'), version: Number((raw as { version?: unknown })?.version ?? 1), status: 'unchanged' };
-    const parsed = ingestDocumentSchema.safeParse(raw);
-    if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', parsed.error.flatten());
-    return processDocument(auth, parsed.data);
+  async ingest(auth: AuthContext, input: unknown, channel: IntakeChannel = 'api'): Promise<IngestResult> {
+    // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (ADR-0014 D2): cửa nạp từ chối → giữ ở bể chờ (giao dịch riêng), lỗi mang error.intake; nhận được → đóng mục bể cùng docKey
+    try {
+      const r = await ingestOne(auth, input);
+      if (r.docKey && r.docKey !== '?') await closeBySource(db, auth.tenantId, r.docKey, auth.actor).catch(() => 0);
+      return r;
+    } catch (err) {
+      if (isDoorRejection(err)) await recordRejection(auth, input, channelOf(auth, channel), err);
+      throw err;
+    }
   },
 
   /** Nhận nhiều chứng từ; mỗi chứng từ xử lý độc lập, lỗi chứng từ này không chặn chứng từ khác. */
@@ -529,10 +546,11 @@ export const documentService = {
       const key = (raw as { docKey?: string })?.docKey ?? '?';
       const version = Number((raw as { version?: number })?.version ?? 1);
       try {
-        results.push(await documentService.ingest(auth, raw));
+        results.push(await documentService.ingest(auth, raw, 'batch'));
       } catch (err) {
         const e = err instanceof AppError ? err : Errors.posting((err as Error).message);
-        results.push({ docKey: key, version, status: 'error', error: { code: e.code, message: describe(e) } });
+        const intakeId = (e.intake as { id?: string } | undefined)?.id;
+        results.push({ docKey: key, version, status: 'error', error: { code: e.code, message: describe(e) }, ...(intakeId ? { intakeId } : {}) });
       }
     }
     return results;

@@ -37,6 +37,9 @@ export const requestCancelIn = traceKernelFn('requestCancelIn', requestCancelInR
 export const documentStatusIn = traceKernelFn('documentStatusIn', documentStatusInRaw);
 // [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: preflight (tiền kiểm L1–L4, chỉ đọc) qua cổng
 export const preflight = traceKernelFn('preflight', preflightRaw);
+// [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route + subscriber bể chờ qua cổng
+export { intakeRoutes } from './modules/intake/intake.routes.js';
+export { intakeRetentionSubscriber, deleteExpired as deleteExpiredIntake } from './modules/intake/inbox.js';
 // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16: allocateByDocKeysIn qua cổng (ctx.ledger.allocateDebt, app.ts đăng ký)
 export const allocateByDocKeysIn = traceKernelFn('allocateByDocKeysIn', allocateByDocKeysInRaw);
 export const documentService = traceKernelApi('documentService', documentServiceRaw);

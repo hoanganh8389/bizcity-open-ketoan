@@ -171,7 +171,7 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown): Promi
 }
 
 /** JSON có khoá sắp xếp — so nội dung không phụ thuộc thứ tự khoá. */
-function stable(v: unknown): string {
+export function stable(v: unknown): string {
   if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
   if (v && typeof v === 'object') return `{${Object.keys(v as object).sort().map((k) => `${JSON.stringify(k)}:${stable((v as Record<string, unknown>)[k])}`).join(',')}}`;
   return JSON.stringify(v);

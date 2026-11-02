@@ -1,7 +1,8 @@
 # `bizcity_intake_findings@1` — Danh mục phát hiện tiền kiểm
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 
-> **Phiên bản:** 0.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -54,4 +55,28 @@ L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh 
 
 ## 4. Nhật ký
 
+- **0.2.0-draft (2026-11-02):** §5 bể chờ `intake_inbox`: `error.intake` trong phản hồi lỗi cửa nạp, `intakeId` từng dòng lô, API `/api/v1/intake`, hạn giữ (PHASE-021 W2, PHASES 2.18).
 - **0.1.0-draft (2026-11-02):** 20 mã L1–L4 (PHASE-021 W1, PHASES 2.17).
+
+## 5. Bể chờ (W2, `intake.inbox`)
+
+Cửa nạp từ chối một chứng từ **đã xác thực** vì nội dung (`VALIDATION_ERROR`, `CONFLICT`) ở `POST /api/v1/documents`, `/documents/batch`, `/documents/submit` (không phải chạy thử), khoá app → giữ nguyên văn + phát hiện + điểm ở `intake_inbox` (giao dịch riêng). **Không** thành sự việc, không bút toán, không sự kiện (RULE-INTAKE-2). Mã HTTP và `error.details` giữ như cũ.
+
+```json
+{ "ok": false, "error": { "code": "VALIDATION_ERROR", "message": "Dữ liệu gửi lên không hợp lệ", "details": ["Ngày chứng từ: …"],
+  "intake": { "id": "42", "attempt": 1, "score": 0, "findings": [{ "code": "IN-SHAPE-003", "…": "…" }], "url": "/api/v1/intake/42" } } }
+```
+
+- **Vì sao `error.intake` mà không `meta.intake`** (ADR-0014 D2 ghi `meta.intake`): phản hồi lỗi không có `meta` ([BIZCITY-API-v1 §3](BIZCITY-API-v1.md)); `details` của từng mã đã có khuôn riêng, nhét `findings` vào sẽ gãy bên gọi cũ. `error.intake` là trường tuỳ chọn, bên gọi cũ bỏ qua được.
+- **Lô:** từng dòng `status: "error"` có `intakeId`.
+- **Gửi trùng:** cùng nguyên văn (băm `sha256` của JSON khoá sắp xếp) khi mục còn `open` / `trial` → `attempt_no + 1`, không thêm dòng.
+- **Nguồn gửi lại đúng** cùng `docKey` → mục `open` thành `fixed_at_source`, `event_id` = sự việc vừa nhận.
+- Nguyên văn > 256 KB: lưu `{ truncated, head }`, băm vẫn trên toàn văn.
+
+| Lời gọi | Quyền | Kết quả |
+|---|---|---|
+| `GET /api/v1/intake?status=&docKey=&channel=&limit=&offset=` | `documents:read` | danh sách mục (không nguyên văn) + `codes` (mã phát hiện), `meta.total` |
+| `GET /api/v1/intake/:id` | `documents:read` | một mục: `payload_raw`, `findings`, `door_error`, `attempt_no`, trạng thái |
+| `POST /api/v1/intake/preflight` `{ document, save? }` | `documents:write` | `{ findings, score, trialId?, attempt? }` — Kiểm thử, không sự việc; `save` lưu mục `trial` |
+
+Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · `accepted` · `dismissed` (W3 thêm sửa tại bể, nộp lại, chấp nhận, bỏ). Hạn giữ: mục đã đóng `bizcity.intake.retention_days` (90), mục thử `bizcity.intake.trial_retention_days` (7) — subscriber `intake.retention` theo `bizcity.clock.daily`. Nguyên văn chỉ ở bảng này (RLS theo đơn vị), không vào log, span, `event_outbox` (RULE-INTAKE-12).

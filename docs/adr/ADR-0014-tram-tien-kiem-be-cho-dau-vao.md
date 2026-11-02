@@ -53,7 +53,7 @@ Nhận ──► Tiền kiểm ──┬─► Chặn (bể chờ, tầng A) ─
 ### D2 · Không vứt đầu vào
 
 - Mọi lần nộp **đã xác thực** mà không đạt cửa nạp đều được lưu **nguyên văn** cùng chẩn đoán vào bể chờ. Cửa nạp ở đây gồm API, app ngoài tiến trình, connector, MCP và nhập lô.
-- Phản hồi giữ **mã HTTP cũ** (400 / 409 / 422), nên bên tích hợp cũ không gãy. Phản hồi thêm `meta.intake = { id, score, findings[], url }`.
+- Phản hồi giữ **mã HTTP cũ** (400 / 409 / 422), nên bên tích hợp cũ không gãy. Phản hồi thêm `meta.intake = { id, score, findings[], url }`. *Thi hành (PHASE-021 W2): trường đặt ở `error.intake` (thêm `attempt`) vì phản hồi lỗi không có `meta`; `details` không đổi.* <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — D2 thi hành: error.intake -->
 - Không lưu: yêu cầu chưa xác thực (401), quá hạn mức (429), thân quá giới hạn kích thước. Trường hợp cuối chỉ lưu băm và kích thước. Lý do là chống rác và chống dùng bể làm kho chứa.
 - Form nhập tay trên giao diện đã kiểm trực tiếp từng ô, nên không cần bể. Form vẫn dùng chung bộ chẩn đoán để thông báo giống nhau.
 

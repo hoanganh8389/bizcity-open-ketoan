@@ -1,6 +1,7 @@
 # `bizcity_errors@1` — Mã lỗi, thông báo, gợi ý
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
+<!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — 1.2.0-draft: trường tuỳ chọn error.intake (bể chờ) -->
 
 > **Phiên bản:** 1.0.0 · 2026-10-30 · **Trạng thái:** Chấp nhận · **Thuộc:** Platform (`packages/actions`)
 > **Nguồn máy đọc (duy nhất):** [`packages/contracts/src/errors.ts`](../../packages/contracts/src/errors.ts) (`ERROR_CATALOG`).
@@ -23,6 +24,7 @@
 | `message` | Câu tiếng Việt cho **người dùng cuối**: sai gì, làm gì tiếp | Màn hình, Cell đọc cho người dùng |
 | `requestId` | Mã yêu cầu, trùng `reqId` trong log và `request_id` trong bằng chứng | Báo lỗi, tra log (OBSERVABILITY §3) |
 | `traceId` *(tuỳ chọn, 1.1.0-draft)* | Mã trace OpenTelemetry (32 hex), trùng `traceId` trong log và `trace_id` trong bằng chứng. Chỉ có khi truy vết bật ([ADR-0010](../adr/ADR-0010-opentelemetry-tu-loi.md)). Bên gọi **không** được bắt buộc có trường này | Ops mở trace trong Tempo (OBSERVABILITY §1.1) |
+| `intake` *(tuỳ chọn, 1.2.0-draft)* | Cửa nạp chứng từ từ chối và đã giữ ở bể chờ: `{ id, attempt, score, findings, url }` ([BIZCITY-INTAKE-FINDINGS-v1 §5](BIZCITY-INTAKE-FINDINGS-v1.md)). Chỉ có ở `VALIDATION_ERROR` / `CONFLICT` của cửa nạp | Màn Trạm kiểm tra, bên tích hợp mở mục bể |
 | `details` | Máy đọc: `reason` (mã chi tiết §4), danh sách trường sai, `checks`, `diagnostics`… | Code bên gọi, giao diện hiện chi tiết |
 
 MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error: { code, retryable, details } }`. `hint` và `retryable` lấy từ bảng §3.
@@ -105,4 +107,5 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 ## 7. Changelog
 
 - 1.0.0 (2026-10-30): khởi tạo. Có 14 mã HTTP và 2 mã MCP. Thêm `error.requestId`, `details.reason`, ánh xạ `P0001`.
+- **1.2.0-draft (2026-11-02, ADR-0014):** thêm trường tuỳ chọn `error.intake` cho lỗi cửa nạp chứng từ (bể chờ). Không đổi mã, HTTP, `details`.
 - **1.1.0-draft (2026-11-01, ADR-0010):** thêm trường tuỳ chọn `error.traceId` (tương thích: bên gọi cũ bỏ qua được). Không đổi mã, HTTP, nghĩa.
