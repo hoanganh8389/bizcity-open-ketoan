@@ -436,7 +436,10 @@ describe('Bàn điều tra — Lỗi theo module, màn đọc API sẵn có (PHA
       'Lỗi trong mã của module vat — sửa trong thư mục của module (Sổ tay TH-11).',
     ]);
     const text = JSON.stringify(d);
-    for (const secret of [tenantA, 'so_tien', '1234567']) expect(text).not.toContain(secret);
+    // Mã đơn vị dò ở dạng giá trị ("4", =4), không dò chữ số trần — CSDL test mới cho id ngắn, khớp nhầm thời gian / số đếm.
+    // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] FIX — phép dò mã đơn vị không khớp nhầm khi id ngắn
+    for (const secret of [`"${tenantA}"`, `=${tenantA}`, 'so_tien', '1234567']) expect(text).not.toContain(secret);
+    expect(text).not.toMatch(/bizcity\.tenant|tenant"?\s*[=:]/i);
 
     // Từ chối đúng luật: mẫu đổi outcome; không có trace → câu "không có".
     tempoSearch = [];
@@ -552,6 +555,8 @@ describe('Bàn điều tra — Vận hành, Chép cho AI (PHASE-019 W5)', () => 
     expect(text).toContain('Viết test tái hiện');
     expect(text).toContain('mã `CONFLICT`');
     expect(text).toContain('từ chối đúng luật');
-    for (const secret of [tenantA, 'so_tien', '1234567', 'mst', 'Nguyễn Văn Bí Mật', 'PC-0099', 'bizcity.tenant']) expect(text).not.toContain(secret);
+    // Mã đơn vị dò ở dạng giá trị, không dò chữ số trần (CSDL test mới cho id ngắn).
+    for (const secret of [`"${tenantA}"`, `=${tenantA}`, 'so_tien', '1234567', 'mst', 'Nguyễn Văn Bí Mật', 'PC-0099']) expect(text).not.toContain(secret);
+    expect(text).not.toMatch(/bizcity\.tenant|tenant"?\s*[=:]/i);
   });
 });

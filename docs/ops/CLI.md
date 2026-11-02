@@ -15,7 +15,7 @@
 | `npm run dev -- <phân hệ> --api=<url>` | Chỉ giao diện, gọi API dev dùng chung |
 | `npm run dev -- <phân hệ> --api-only` | Chỉ API |
 | `npm run db:migrate` · `npm run db:seed` | Áp migration · migration + dữ liệu khởi tạo |
-| `npm test` | Test API trên PostgreSQL thật |
+| `npm test` | Test API trên PostgreSQL thật — CSDL riêng `ketoan_test` (tự tạo); `DATABASE_URL` phải trỏ CSDL tên có "test", không thì dừng |
 | `npm run typecheck` | Kiểm kiểu cả ba gói |
 | `npm run build` | Build contracts → api → web |
 | `docker compose up -d --build` | Dựng và chạy bản cài |
