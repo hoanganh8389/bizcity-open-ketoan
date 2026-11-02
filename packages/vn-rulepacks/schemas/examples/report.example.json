@@ -1,0 +1,29 @@
+{
+  "contract": "bizcity_vn_conformance_report@1",
+  "run_id": "20261101-230000-example",
+  "executed_at": "2026-11-01T23:00:00+07:00",
+  "git_sha": "91b8c929dc36e620bd338a20357df4c1e71dcbae",
+  "runtime": { "os": "linux", "node": "v22.12.0", "postgres": "16.4" },
+  "target": { "kind": "kernel", "package": "@bizcity/kernel", "version": "0.1.0" },
+  "tenant_profile": { "jurisdiction": "VN", "accounting_regime": "vn-tt99-2025", "fiscal_year_start": "01-01", "entity_type": "enterprise", "simulated": true },
+  "scope": ["C01", "C02", "C08"],
+  "rulepacks": [
+    { "id": "accounting-integrity", "version": "0.1.0", "status": "draft", "rules_hash": null },
+    { "id": "accounting-regimes-vn", "version": "0.1.0", "status": "draft", "rules_hash": null },
+    { "id": "plugin-boundary-security", "version": "0.1.0", "status": "draft", "rules_hash": null }
+  ],
+  "cases": [
+    { "id": "vn.accounting-integrity.double_entry.balanced.001", "version": "0.1.0", "priority": "P0", "status": "REVIEW_REQUIRED", "reason": "Rulepack còn draft: căn cứ Luật Kế toán 88/2015/QH13 chưa được người có trách nhiệm rà; kiểm kỹ thuật DG-LEDGER-1 đạt (46564 bút toán) nhưng chưa được tính PASS", "evidence": ["DG-LEDGER-1@20261101-154500"], "legal_basis_ids": ["vn.law.88-2015-qh13"] },
+    { "id": "vn.accounting-integrity.tenant.same_dockey_two_tenants.004", "version": "0.1.0", "priority": "P0", "status": "NOT_TESTED", "reason": "Chưa có test gửi cùng docKey vào hai đơn vị (VNCONF-004)", "evidence": [] },
+    { "id": "vn.accounting-regimes-vn.tt99.fiscal_year_offset_no_auto_switch.002", "version": "0.1.0", "priority": "P0", "status": "NOT_TESTED", "reason": "Năm tài chính lệch năm dương lịch chưa mô hình (fiscal_periods theo tháng dương lịch, migration 0004); chờ đề xuất năng lực Core", "evidence": [] },
+    { "id": "vn.plugin-boundary-security.tenant.payload_tenant_id_rejected.002", "version": "0.1.0", "priority": "P0", "status": "REVIEW_REQUIRED", "reason": "Kiểm kỹ thuật đạt (tenant-isolation.test.ts, DG-PLAN-5) nhưng rulepack chưa approved", "evidence": ["tenant-isolation.test.ts@91b8c92"] }
+  ],
+  "known_exclusions": [
+    { "scope": "C03", "reason": "Rulepack vat-vn chưa có (VNCONF-007); không kiểm nghĩa vụ thuế" },
+    { "scope": "C04", "reason": "Rulepack einvoice-vn chưa có; mọi giao tiếp nhà cung cấp hoá đơn sẽ chạy bằng mock, không là bằng chứng cơ quan thuế chấp nhận" }
+  ],
+  "reviewer_status": "Chưa có người duyệt kế toán / thuế cho rulepack nào",
+  "result": "REVIEW_REQUIRED",
+  "label": "Review required",
+  "disclaimer": "Kết quả chỉ có giá trị trong phạm vi, ngày, phiên bản phần mềm, phiên bản rulepack và bộ test đã thực thi. Không phải chứng nhận của Bộ Tài chính hay cơ quan Thuế; không phải ý kiến pháp lý."
+}

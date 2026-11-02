@@ -1,0 +1,15 @@
+{
+  "name": "@bizcity/vn-rulepacks",
+  "version": "0.3.0",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "description": "Dữ liệu luật của bộ kiểm chuẩn pháp lý Việt Nam (kho nguồn pháp lý, catalog, rulepack, ca, schema, hồ sơ mẫu) và bộ đánh giá thuần engine.mjs dùng chung cho --certify và Conformance Engine (ADR-0012 T7). Không phụ thuộc gói ngoài; phiên bản theo nhịp luật, độc lập với Kernel.",
+  "type": "module",
+  "exports": {
+    "./engine": {
+      "types": "./engine.d.ts",
+      "default": "./engine.mjs"
+    },
+    "./package.json": "./package.json"
+  }
+}

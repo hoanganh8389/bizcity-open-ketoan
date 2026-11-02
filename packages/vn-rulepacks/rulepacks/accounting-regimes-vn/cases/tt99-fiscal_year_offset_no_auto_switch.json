@@ -1,0 +1,49 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-regimes-vn.tt99.fiscal_year_offset_no_auto_switch.002",
+  "version": "0.2.0",
+  "rulepack": "accounting-regimes-vn",
+  "spec_ref": "C02.2",
+  "title": "Năm tài chính 01/07/2025–30/06/2026 KHÔNG tự chuyển TT99 ngày 01/01/2026",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "Phụ lục II",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "accounting-profile.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "no_regime_switch_mid_fiscal_year"
+    ],
+    "gap": "Từ ADR-0013: hồ sơ hiệu lực từ đầu năm tài chính (CHECK ở CSDL), năm 01/7/2025–30/6/2026 giữ chế độ cũ — có test chạy thật. Còn thiếu: báo cáo năm, kết chuyển cuối năm vẫn theo năm dương lịch (ngoài phạm vi ADR-0013); căn cứ TT99 chưa được rà."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

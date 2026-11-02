@@ -3,6 +3,7 @@
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gắn action gói định khoản core.template.list / install / uninstall.
+// [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gắn action hồ sơ kế toán accounting.profile.get / publish (ADR-0013).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting-config/posting-config.routes.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 /**
  * Cấu hình hạch toán.
@@ -26,6 +27,7 @@ import { DEFAULT_KEYS, FORM_KEYS, defaultsSchema, groupSchema, paymentMethodSche
 import { mountActions } from '@bizcity/platform/core/actions';
 import { policyActions } from './policy.actions.js';
 import { packActions } from './pack.actions.js';
+import { profileActions } from './profile.actions.js';
 
 const tags = ['Cấu hình hạch toán'];
 const codeParam = z.object({ code: z.string() });
@@ -35,6 +37,8 @@ export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, policyActions);
   // Gói định khoản (bizcity_posting_template@1): cài / xem trước / gỡ — PHASE-012.
   mountActions(app, packActions);
+  // Hồ sơ kế toán của đơn vị (ADR-0013): năm tài chính, chế độ kế toán, loại pháp nhân có phiên bản.
+  mountActions(app, profileActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('catalog:read');
   const write = requirePermission('settings:write');

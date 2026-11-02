@@ -1,0 +1,9 @@
+{
+  "contract": "bizcity_vn_catalog@1",
+  "updated_at": "2026-11-01",
+  "note": "Fixture xấu: C09 draft nhưng không có thư mục; C01 approved nhưng rulepack xau khai catalog_id khác.",
+  "items": [
+    { "id": "C01", "rulepack": "xau", "title": "Trỏ gói xau", "priority": "P0", "status": "approved", "ticket": null },
+    { "id": "C09", "rulepack": "khong-co", "title": "Gói không tồn tại", "priority": "P1", "status": "draft", "ticket": null }
+  ]
+}

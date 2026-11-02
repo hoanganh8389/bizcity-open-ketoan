@@ -1,0 +1,27 @@
+{
+  "contract": "bizcity_vn_legal_registry@1",
+  "updated_at": "2026-11-01",
+  "notice": "Fixture xấu cho ca tự kiểm SC-VNC-1 / SC-VNC-2: nguồn reviewed không có link chính thức, trùng id, ngày ngược, người rà là agent, thiếu provisions.",
+  "sources": [
+    {
+      "id": "vn.law.xau-1", "kind": "law", "domain": "tax", "number": "1/2026/QH99", "title": "Luật giả để tự kiểm", "issuer": "Quốc hội",
+      "issued_on": "2026-01-01", "effective_from": "2026-06-01", "effective_to": "2026-01-01", "status": "in_force",
+      "official_url": null, "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "provisions": [],
+      "review": { "status": "reviewed", "reviewed_at": null, "reviewed_by": "Claude Code", "notes": "" }
+    },
+    {
+      "id": "vn.law.xau-1", "kind": "law", "domain": "tax", "number": "1/2026/QH99", "title": "Luật giả trùng id", "issuer": "Quốc hội",
+      "issued_on": null, "effective_from": null, "effective_to": null, "status": "unverified",
+      "official_url": null, "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "provisions": [],
+      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+    },
+    {
+      "id": "vn.decree.thieu-provisions", "kind": "decree", "domain": "accounting", "number": "2/2026/NĐ-CP", "title": "Nghị định giả thiếu provisions", "issuer": "Chính phủ",
+      "issued_on": null, "effective_from": null, "effective_to": null, "status": "unverified",
+      "official_url": null, "snapshot": { "retrieved_at": null, "sha256": null, "consolidated_version": null },
+      "review": { "status": "pending", "reviewed_at": null, "reviewed_by": null, "notes": "" }
+    }
+  ]
+}

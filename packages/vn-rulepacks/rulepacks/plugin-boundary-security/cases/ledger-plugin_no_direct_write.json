@@ -1,0 +1,55 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.plugin-boundary-security.ledger.plugin_no_direct_write.001",
+  "version": "0.1.0",
+  "rulepack": "plugin-boundary-security",
+  "spec_ref": "C08.1",
+  "title": "Plugin có sales:create + accounting:submit_event không ghi thẳng ledger_*; chỉ Kernel gọi ledgerService",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "any"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.88-2015-qh13",
+      "provision_ref": "Điều 27",
+      "review_status": "pending",
+      "note": "Giữ dấu vết, không tẩy xoá: cơ sở của sổ chỉ thêm và một cửa ghi"
+    }
+  ],
+  "scenario": {
+    "kind": "static",
+    "verified_by": [
+      "SC-KERNEL-1",
+      "SC-KERNEL-3",
+      "SC-MOD-2",
+      "DG-SEC-1",
+      "DG-DB-2"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "no_direct_ledger_insert",
+      "single_write_door",
+      "db_role_cannot_disable_triggers"
+    ],
+    "gap": "Kiểm tĩnh + vai trò CSDL; runtime \"plugin cố INSERT ledger_lines bị từ chối ở CSDL\" chỉ có cho vai trò ketoan_app (DG-SEC-1), chưa cho vai trò mod_<key>_owner (ADR-0011, chưa code)."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

@@ -1,9 +1,12 @@
+// [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: cảnh báo kiểm chuẩn trước khoá kỳ (chỉ thông tin); còn cảnh báo thì người khoá ghi lý do, lưu bằng chứng trước khi khoá (ADR-0012 T3).
 /**
  * Kỳ kế toán và khoá sổ (ACC2).
  *  - Tab "Đóng / mở kỳ": lưới chi nhánh × loại chứng từ của một kỳ; tick ô để khoá, bỏ tick để mở.
  *    Bấm tên chi nhánh để đảo cả hàng, bấm tên loại chứng từ để đảo cả cột (trên các chi nhánh đang hiện).
  *    "Đóng kỳ" khoá mọi ô của các chi nhánh đang hiện. Mở khoá bắt buộc ghi lý do.
  *    Có bảng kiểm trước khi khoá: chứng từ lỗi, lệch, chưa tính giá vốn, chưa kết chuyển…
+ *    Có cảnh báo kiểm chuẩn của tháng (tồn kho âm, hoá đơn đầu vào chờ, sự việc treo, việc cuối kỳ, hồ sơ kế toán): không chặn;
+ *    còn cảnh báo mà vẫn khoá thì ghi lý do ≥ 10 ký tự — lưu làm bằng chứng (core.conformance.acknowledge) rồi mới khoá.
  *  - Tab "Danh sách kỳ": khai kỳ cả năm; xem và mở các dòng khoá (kể cả khoá chung mọi chi nhánh / mọi loại).
  *  - Tab "Nhật ký": ai khoá, ai mở, lúc nào, lý do.
  *  - Tab "Khoá theo ngày": khoá dữ liệu đến ngày, chỉ sửa trong N ngày, chỉ lập phiếu hôm nay, cấm kế toán viên huỷ.
@@ -20,6 +23,7 @@ import { date, dateTime } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { BranchSelect } from '@/components/filters';
 import { Empty, ErrorBox, Field, Loading, Modal, Money } from '@/components/ui';
+import { PeriodGateBox, usePeriodGate } from '@/components/PostingGate';
 
 interface LockRow { id: string; branch: string | null; docType: string; lockedBy: string; lockedAt: string }
 interface Period { id: string; year: number; month: number; startDate: string; endDate: string; locks: LockRow[] }
@@ -111,9 +115,13 @@ function GridTab({ year, month }: { year: number; month: number }) {
 
   const changes = [...draft.entries()].map(([k, locked]) => { const [branchCode, docType] = k.split('|'); return { branchCode: branchCode!, docType: docType!, locked }; });
   const unlocks = changes.filter((c) => !c.locked).length;
+  const locking = changes.some((c) => c.locked);
+  const gate = usePeriodGate(year, month);
   const save = useMutation({
-    mutationFn: (a: { reason: string; accept?: string }) =>
-      api.put<{ locked: number; unlocked: number }>('/api/v1/periods/locks', { year, month, changes, reason: a.reason, acceptDiagnostics: a.accept }),
+    mutationFn: async (a: { reason: string; accept?: string }) => {
+      if (locking) await gate.acknowledge();
+      return api.put<{ locked: number; unlocked: number }>('/api/v1/periods/locks', { year, month, changes, reason: a.reason, acceptDiagnostics: a.accept });
+    },
     // Bị chặn vì lỗi toàn vẹn sổ (R-DIAG-4): đóng hộp lý do mở khoá, hiện khối chấp nhận ở lưới.
     onError: (e) => { if (isDiagBlock(e)) setAsking(false); },
     onSuccess: (r) => {
@@ -137,7 +145,7 @@ function GridTab({ year, month }: { year: number; month: number }) {
                 <Lock size={16} /> Đóng kỳ
               </button>
               <button className="btn" disabled={!changes.length} onClick={() => setDraft(new Map())}>Bỏ thay đổi</button>
-              <button className="btn btn-primary" disabled={!changes.length || save.isPending}
+              <button className="btn btn-primary" disabled={!changes.length || save.isPending || (locking && !gate.ready)} title={locking && !gate.ready ? 'Còn cảnh báo kiểm chuẩn: ghi lý do ở khối cảnh báo' : undefined}
                 onClick={() => (unlocks ? setAsking(true) : save.mutate({ reason: '' }))}>Ghi{changes.length ? ` (${changes.length} ô)` : ''}</button>
             </div>
           </>
@@ -161,6 +169,8 @@ function GridTab({ year, month }: { year: number; month: number }) {
           </ul>
         )}
       </div>
+
+      <PeriodGateBox gate={gate} locking={editable && locking} year={year} month={month} />
 
       {general.length > 0 && (
         <div className="alert" style={{ marginBottom: 10 }}>
@@ -318,18 +328,23 @@ function AcceptDiagnostics({ error, pending, onAccept }: { error: unknown; pendi
 
 function LockForm({ initial, onClose, onDone }: { initial: { year: number; month: number }; onClose: () => void; onDone: () => void }) {
   const [v, setV] = useState({ ...initial, branchCode: '', docType: '*' });
+  const gate = usePeriodGate(v.year, v.month, v.branchCode || undefined);
   const save = useMutation({
-    mutationFn: (accept?: string) => api.post('/api/v1/periods/locks', { ...v, branchCode: v.branchCode || undefined, acceptDiagnostics: accept }),
+    mutationFn: async (accept?: string) => {
+      await gate.acknowledge();
+      return api.post('/api/v1/periods/locks', { ...v, branchCode: v.branchCode || undefined, acceptDiagnostics: accept });
+    },
     onSuccess: () => { onDone(); onClose(); },
   });
   return (
     <Modal title="Khoá chung" onClose={onClose}
-      footer={<><button className="btn" onClick={onClose}>Đóng</button><button className="btn btn-primary" disabled={save.isPending} onClick={() => save.mutate(undefined)}>Khoá</button></>}>
+      footer={<><button className="btn" onClick={onClose}>Đóng</button><button className="btn btn-primary" disabled={save.isPending || !gate.ready} onClick={() => save.mutate(undefined)}>Khoá</button></>}>
       <div className="full muted">Khoá chung áp cho mọi chi nhánh và/hoặc mọi loại chứng từ, kể cả chi nhánh mở sau này.</div>
       <Field label="Tháng"><input className="input" type="number" min={1} max={12} value={v.month} onChange={(e) => setV({ ...v, month: Number(e.target.value) })} /></Field>
       <Field label="Năm"><input className="input" type="number" value={v.year} onChange={(e) => setV({ ...v, year: Number(e.target.value) })} /></Field>
       <Field label="Loại chứng từ"><select className="select input" value={v.docType} onChange={(e) => setV({ ...v, docType: e.target.value })}><option value="*">Mọi loại</option>{ALL_TYPES.map((t) => <option key={t} value={t}>{DOC_TYPE_LABELS[t]}</option>)}</select></Field>
       <div className="full"><BranchSelect multiple={false} value={v.branchCode} onChange={(branchCode) => setV({ ...v, branchCode })} label="Chi nhánh (trống = mọi chi nhánh)" /></div>
+      <div className="full"><PeriodGateBox gate={gate} locking year={v.year} month={v.month} /></div>
       {save.error && !isDiagBlock(save.error) && <div className="alert alert-bad full">{errorText(save.error)}</div>}
       <AcceptDiagnostics error={save.error} pending={save.isPending} onAccept={(accept) => save.mutate(accept)} />
     </Modal>

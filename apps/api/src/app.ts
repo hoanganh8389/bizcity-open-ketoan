@@ -36,7 +36,7 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
 import { registerLedgerCancelGate, registerLedgerReader, registerLedgerSubmitter, unknownActionPermissions } from './core/actions.js';
 import { registerModulePermissions } from '@bizcity/platform/core/auth';
@@ -94,8 +94,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authPlugin);
 
   // Sự kiện miền (core/events.ts): subscriber của Platform. Vòng dispatcher + đồng hồ chạy ở main.ts, không chạy trong test.
+  // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)
   // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: dọn bể chờ theo hạn giữ (bizcity.clock.daily)
-  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, intakeRetentionSubscriber]);
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber]);
   // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {
@@ -105,6 +106,12 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).
   registerDiagnostics(LEDGER_DIAGNOSTICS);
+  // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 (hồ sơ kế toán, gói cùng chế độ) cho Conformance Engine (ADR-0012)
+  registerDiagnostics(PROFILE_DIAGNOSTICS);
+  // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm L3 lớp Doanh nghiệp (tồn kho âm, việc cuối kỳ) cho Conformance Engine (S020-19)
+  registerDiagnostics(PERIOD_DIAGNOSTICS);
+  // [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11: kiểm L3 thuế GTGT và hoá đơn (C03, C04)
+  registerDiagnostics(TAX_DIAGNOSTICS);
   registerCollector('ledger', collectLedgerMetrics);
   registerCollector('postings', () => collectPostingMetrics());
   registerCollector('outbox', collectOutboxMetrics);

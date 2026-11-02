@@ -4,6 +4,9 @@
  */
 import { ExportAdjustPage } from './features/documents/ExportAdjustPage';
 import { ChiNhanhLamViecPage } from './features/system/ChiNhanhLamViecPage';
+// [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: màn Kiểm chuẩn (HT06) và Hồ sơ kế toán (HT07)
+import { ConformancePage } from './features/system/ConformancePage';
+import { AccountingProfilePage } from './features/system/AccountingProfilePage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
 import { DefaultDataPage } from './features/flow/DefaultDataPages';
 import { Navigate, Route } from 'react-router-dom';
@@ -95,6 +98,8 @@ export const pageRoutes = (
     <Route path="cau-hinh/don-vi" element={<TenantPage />} />
     <Route path="cau-hinh/mau-in" element={<PrintTemplatesPage />} />
     <Route path="he-thong/chi-nhanh-lam-viec" element={<ChiNhanhLamViecPage />} />
+    <Route path="he-thong/kiem-chuan" element={<ConformancePage />} />
+    <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />
     <Route path="danh-muc/phan-loai-hang" element={<ItemClassesPage />} />
     <Route path="danh-muc/bang-gia" element={<PriceListsPage />} />
     <Route path="bao-cao/lich-thanh-toan-hop-dong" element={<ContractSchedulesPage />} />

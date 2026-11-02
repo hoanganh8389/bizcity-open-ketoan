@@ -1,0 +1,51 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-regimes-vn.chart.account_outside_chart_rejected.003",
+  "version": "0.1.0",
+  "rulepack": "accounting-regimes-vn",
+  "spec_ref": "C02.3",
+  "title": "Tài khoản ngoài danh mục / không phải tài khoản chi tiết bị từ chối với mã lỗi rõ",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "Phụ lục II",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "SC-TPL-1",
+      "posting-pack.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "unknown_account_rejected",
+      "non_posting_account_rejected"
+    ],
+    "gap": "validateLines (R-LEDGER-8) có trong ledger.service nhưng ca gửi tài khoản lạ qua cửa nạp chưa có test riêng; cần ca tường minh trong VNCONF-006."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

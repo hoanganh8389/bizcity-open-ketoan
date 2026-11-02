@@ -57,6 +57,7 @@
 | R-SIG | [rules/RULE-SIGNATURE.md](rules/RULE-SIGNATURE.md) | 0 | Tệp framework mang chữ ký kiến trúc Johnny Chu – Chu Hoàng Anh; mỗi lần sửa có chức năng thêm dấu theo phase; không xoá dấu cũ, không ghi tên agent | SC-SIG-1, SC-SIG-2 |
 | R-BAK | [rules/RULE-INFRASTRUCTURE.md](rules/RULE-INFRASTRUCTURE.md) §3 | 0 | Sao lưu hằng ngày, PITR, kiểm khôi phục hằng tuần trước khi tin bản sao lưu | `scripts/kiem-khoi-phuc.sh` |
 | R-REV | [rules/RULE-REVIEW.md](rules/RULE-REVIEW.md) | 0 | Người đóng góp làm phân hệ / giao diện qua PR; Nhóm Lõi rà soát mỗi lần nhận việc: kiến trúc, lỗi, rủi ro, dữ liệu kế toán, mã hàng; biên bản ở `docs/audits/REVIEW-*` | `scripts/ra-soat-dong-gop.mjs` |
+| R-VNC | [rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md) | 1 (R-VNC-3, -7: 0) | Bộ kiểm chuẩn pháp lý VN: kho nguồn pháp lý có trạng thái rà, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo 6 trạng thái, không tự nhận chứng nhận nhà nước | SC-VNC-1, SC-VNC-2; runner lane runtime (PHASE-020) |
 
 ## 4. Hợp đồng (contracts)
 
@@ -129,5 +130,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 
 ## 6. Nhật ký thay đổi CANON
 
+<!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm luật R-VNC (bộ kiểm chuẩn pháp lý Việt Nam) vào danh mục luật. -->
+- **v1.2 (2026-11-01):** Thêm luật R-VNC ([rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md)) — bộ kiểm chuẩn pháp lý Việt Nam (PHASE-020): kho nguồn pháp lý, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo bằng chứng.
 - **v1.1 (2026-10-29):** Thêm Bizcity Framework Standard v1 (`docs/standard/`, 7 hợp đồng `STD-*`, bộ kiểm cài đặt, ca chuẩn Hợp đồng, Phase 1–6). Đổi tên khuôn nạp sổ `bizcity_event@1` → `bizcity_ledger_intake@1`; tên `bizcity_event@1` nay là sự kiện miền. `bizcity_workflow@1` gộp vào `bizcity_document@1`.
 - **v1.0 (2026-10-28):** Khởi tạo bộ chuẩn: 11 luật, 8 hợp đồng, 4 tài liệu vận hành, audit nền. Tài liệu cũ ở gốc `docs/` chuyển thành tham chiếu (xem [README.md](README.md)).

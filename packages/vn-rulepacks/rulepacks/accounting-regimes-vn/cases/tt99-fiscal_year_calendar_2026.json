@@ -1,0 +1,54 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-regimes-vn.tt99.fiscal_year_calendar_2026.001",
+  "version": "0.3.0",
+  "rulepack": "accounting-regimes-vn",
+  "spec_ref": "C02.1",
+  "title": "Đơn vị năm tài chính 01/01/2026–31/12/2026 áp TT99 theo cấu hình được duyệt",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "Phụ lục II",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "posting-pack.test.ts",
+      "policy.test.ts",
+      "accounting-profile.test.ts",
+      "DG-PROFILE-1",
+      "DG-PROFILE-2"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "regime_tt99_selected",
+      "selection_from_approved_config"
+    ],
+    "gap": "Trên bản cài: DG-PROFILE-1 (đã khai hồ sơ) và DG-PROFILE-2 (gói định khoản cùng chế độ) là bằng chứng chạy được (ADR-0013, S020-18). Còn thiếu: căn cứ TT99 chưa được rà; chưa có ca kiểm hệ thống tài khoản theo chế độ (G2)."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

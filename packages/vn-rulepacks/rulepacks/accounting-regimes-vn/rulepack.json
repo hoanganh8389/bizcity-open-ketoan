@@ -1,0 +1,80 @@
+{
+  "contract": "bizcity_vn_rulepack@1",
+  "id": "accounting-regimes-vn",
+  "version": "0.3.0",
+  "catalog_id": "C02",
+  "title": "Chế độ kế toán Việt Nam: chọn TT99 / TT133 theo năm tài chính, hệ thống tài khoản, chuyển chế độ có kiểm soát",
+  "description": "Áp dụng chế độ theo NĂM TÀI CHÍNH của đơn vị, không theo ngày dương lịch; tài khoản ngoài danh mục bị từ chối; không tự sinh tài khoản; chuyển chế độ có audit và không sửa lịch sử.",
+  "jurisdiction": "VN",
+  "domain": "accounting",
+  "regime": "vn-tt99-2025",
+  "priority": "P0",
+  "layer": "configuration",
+  "status": "draft",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "Phụ lục II",
+      "review_status": "pending"
+    },
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "Điều khoản hiệu lực theo năm tài chính"
+    },
+    {
+      "source_id": "vn.circular.200-2014-tt-btc",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending"
+    },
+    {
+      "source_id": "vn.circular.133-2016-tt-btc",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending"
+    }
+  ],
+  "cases": [
+    "cases/tt99-fiscal_year_calendar_2026.json",
+    "cases/tt99-fiscal_year_offset_no_auto_switch.json",
+    "cases/chart-account_outside_chart_rejected.json",
+    "cases/chart-no_auto_account_no_unapproved_pack.json",
+    "cases/regime-change_versioned_audited.json"
+  ],
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "release": {
+    "rules_hash": null,
+    "released_at": null,
+    "changelog": [
+      {
+        "version": "0.1.0",
+        "date": "2026-11-01",
+        "note": "Khởi tạo nháp từ đặc tả OKT-SPEC-VNCONF-001 §5; ánh xạ sang kiểm tự động đang có; chưa duyệt"
+      },
+      {
+        "version": "0.2.0",
+        "date": "2026-11-02",
+        "note": "C02.1, C02.2 có bằng chứng chạy thật accounting-profile.test.ts (ADR-0013); vẫn draft"
+      },
+      {
+        "version": "0.3.0",
+        "date": "2026-11-02",
+        "note": "C02.1 thêm bằng chứng chạy trên bản cài DG-PROFILE-1, DG-PROFILE-2 (Conformance Engine S020-18); vẫn draft"
+      }
+    ]
+  }
+}

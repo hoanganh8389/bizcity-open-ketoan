@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-11-02 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — --certify: một lệnh chứng nhận module / Kernel: ba cổng (tĩnh + CSDL + runtime) và tuân thủ VN theo rulepack chọn theo phiên bản + ngày hiệu lực; báo cáo bizcity_vn_conformance_report@1, JUnit, CERTIFICATE.md (VNCONF-003 W1a).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — lộ trình máy đọc bám Phase, ma trận mảng × Phase.
 // [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
@@ -27,6 +28,9 @@ import { createRepo, moduleOf } from './lib/repo.mjs';
 import { evaluateRoadmap, ROADMAP_FILE } from './lib/roadmap.mjs';
 import { evaluateCompliance, COMPLIANCE_FILE } from './lib/compliance.mjs';
 import { buildScoreboard } from './lib/scoreboard.mjs';
+import { spawnSync } from 'node:child_process';
+import { buildReport, evaluate, loadKit, PROFILE_DEFAULT, PROFILE_SCHEMA, renderCertificate, renderJUnit, REPORT_SCHEMA, today } from './lib/certify.mjs';
+import { runVitest } from './lib/runtime.mjs';
 
 const ROOT = path.resolve(SUITE_DIR, '../..');
 const BASELINE = path.join(SUITE_DIR, 'baseline.json');
@@ -47,6 +51,12 @@ Dùng: node tests/conformance/selfcheck.mjs [tuỳ chọn]
   --list                               liệt kê check
   --verbose                            in mọi phát hiện
   --json                               in bảng điểm JSON ra stdout
+  --certify                            CHỨNG NHẬN: chạy đủ hai lane + đánh giá tuân thủ VN theo rulepack (chọn theo hồ sơ, phiên bản, ngày hiệu lực);
+                                       ghi vn-conformance-report.json, vn-junit.xml, CERTIFICATE.md. Với --module: kiểm module VÀ Core nó cài vào
+  --profile <tệp.json>                 hồ sơ đơn vị giả lập (bizcity_vn_profile@1; mặc định packages/vn-rulepacks/profiles/default.json)
+  --as-of <YYYY-MM-DD>                 ngày đánh giá / ngày giao dịch giả định (đè as_of của hồ sơ)
+  --runtime                            thêm lane runtime: chạy đúng các tệp vitest mà ca rulepack dẫn (cần DATABASE_URL = CSDL test)
+  --require-certified                  mã thoát 1 nếu chưa CERTIFIED (mặc định: COMPATIBLE cũng là 0)
 `;
 
 function parseArgs(argv) {
@@ -67,6 +77,11 @@ function parseArgs(argv) {
     else if (k === '--list') a.list = true;
     else if (k === '--verbose') a.verbose = true;
     else if (k === '--json') a.json = true;
+    else if (k === '--certify') a.certify = true;
+    else if (k === '--profile') a.profile = v();
+    else if (k === '--as-of') a.asOf = v();
+    else if (k === '--runtime') a.runtime = true;
+    else if (k === '--require-certified') a.requireCertified = true;
     else if (k === '-h' || k === '--help') a.help = true;
     else { console.error(`Không hiểu tuỳ chọn: ${k}`); process.exit(2); }
   }
@@ -238,14 +253,14 @@ async function main() {
   if (args.lane !== 'all') checks = checks.filter((c) => c.lane === args.lane);
   if (args.only) checks = checks.filter((c) => args.only.some((o) => c.id === o || c.id.startsWith(o)));
   if (!checks.length) { console.error('Không có check nào khớp.'); return 2; }
+  if (args.certify && (args.only || args.lane !== 'all')) { console.error('--certify cần chạy đủ mọi check (bỏ --only / --lane).'); return 2; }
 
-  const db = checks.some((c) => c.lane === 'diagnostics')
+  const db = checks.some((c) => c.lane === 'diagnostics') || args.certify
     ? await openDb({ psql: args.psql ?? process.env.BIZCITY_PSQL, url: process.env.DATABASE_URL, root: ROOT })
     : { available: false, reason: 'không chạy lane diagnostics' };
 
   const baseline = readJson(BASELINE);
   const raw = await runChecks(checks, { root, core: ROOT, mode, args, db });
-  await db.close?.();
   const results = judge(raw, baseline, { useBaseline: mode === 'repo' });
 
   if (args.updateBaseline) {
@@ -298,7 +313,96 @@ async function main() {
     console.log(renderConsole(sb, results, { verbose: args.verbose }));
     console.log(`Bảng điểm${partial ? ' (chạy một phần, không ghi latest/)' : ''}: ${path.relative(process.cwd(), path.join(where, 'SCOREBOARD.md'))} · ${path.relative(process.cwd(), path.join(where, 'scoreboard.html'))}`);
   }
+  if (args.certify) {
+    const code = await certify({ args, mode, root, all, results, sb, where, db, baseline });
+    await db.close?.();
+    return code;
+  }
+  await db.close?.();
   return sb.verdict === 'pass' ? 0 : 1;
+}
+
+/**
+ * --certify: một lệnh, ba cổng + tuân thủ VN (PHASE-020, R-VNC-3/4/7/8).
+ *   Cổng 1 (tương thích + bảo mật): lane selfcheck trên đích (module hoặc repo) — fail/error là KHÔNG ĐẠT.
+ *   Cổng 2 (bất biến kế toán): lane diagnostics trên CSDL test (bỏ qua nếu chưa chỉ CSDL — chứng chỉ ghi rõ).
+ *   Cổng 3 (chạy thật): --runtime chạy đúng các tệp vitest mà ca rulepack dẫn (R-VNC-7, qua cửa thật).
+ *   Tuân thủ VN: chọn rulepack theo hồ sơ + phiên bản + ngày hiệu lực, đánh giá ca từ bằng chứng ba cổng, fail closed.
+ * Với --module: module đi cổng 1; Core nó cài vào chạy thêm lane selfcheck + diagnostics để làm bằng chứng cho ca.
+ * Tier: certified (ba cổng đạt, VN PASS) · compatible (cổng đạt, VN REVIEW_REQUIRED) · fail.
+ */
+async function certify({ args, mode, root, all, results, sb, where, db, baseline }) {
+  const core = createRepo(ROOT);
+  const say = (m) => console.log(`  ${m}`);
+  console.log('\n── CHỨNG NHẬN (--certify)');
+
+  // Hồ sơ đơn vị giả lập.
+  const profileFile = args.profile ? path.resolve(args.profile) : path.join(ROOT, PROFILE_DEFAULT);
+  const profile = readJson(profileFile);
+  if (!profile) { console.error(`Không đọc được hồ sơ ${profileFile}`); return 2; }
+  const pErr = validate(core.json(PROFILE_SCHEMA), profile);
+  if (pErr.length) { console.error(`Hồ sơ ${path.relative(ROOT, profileFile)} sai khuôn bizcity_vn_profile@1: ${pErr.map((e) => `${e.path} ${e.message}`).join('; ')}`); return 2; }
+  profile.as_of = args.asOf ?? profile.as_of ?? today();
+  say(`hồ sơ: ${profile.name ?? path.relative(ROOT, profileFile)} · ${profile.accounting_regime} · năm tài chính từ ${profile.fiscal_year_start} · ${profile.entity_type} · as_of ${profile.as_of}`);
+
+  // Bằng chứng từ Core: khi kiểm module, chạy thêm Core (repo) để ca có bằng chứng SC-* / DG-*.
+  let coreResults = results;
+  if (mode === 'module') {
+    const coreChecks = all.filter((c) => (c.targets ?? ['repo']).includes('repo') || c.lane === 'diagnostics');
+    const raw = await runChecks(coreChecks, { root: ROOT, core: ROOT, mode: 'repo', args, db });
+    coreResults = judge(raw, baseline, { useBaseline: true });
+    const bad = coreResults.filter((r) => ['fail', 'error'].includes(r.status));
+    say(`Core (repo) làm nền: ${coreResults.length} check, ${bad.length ? bad.length + ' KHÔNG ĐẠT: ' + bad.map((r) => r.id).join(', ') : 'không check nào đỏ'}`);
+  }
+  const checks = new Map(coreResults.map((r) => [r.id, r.status]));
+  for (const r of results) if (!checks.has(r.id)) checks.set(r.id, r.status);
+
+  // Lane runtime: chỉ các tệp vitest mà ca dẫn.
+  const kit = loadKit(core);
+  const testFiles = kit.rulepacks.flatMap((p) => p._cases.flatMap((k) => (k.scenario?.verified_by ?? []).filter((v) => v.endsWith('.test.ts'))));
+  let runtime = { ran: false, reason: 'không bật --runtime', tests: new Map() };
+  if (args.runtime) {
+    runtime = await runVitest(testFiles, { root: ROOT, log: say });
+    say(runtime.ran ? `lane runtime: ${runtime.summary} (${runtime.ms} ms)` : `lane runtime bỏ qua: ${runtime.reason}`);
+  }
+
+  // Đánh giá tuân thủ VN. Lớp Cấu hình: chỉ bằng chứng build — kiểm DG-* của lớp này đọc cấu hình các đơn vị trong CSDL test,
+  // không nói gì về mã (hồ sơ ở đây là giả lập). Trên bản cài, Kernel dùng chúng với hồ sơ thật (core.conformance.run).
+  // [2026-11-02 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — --certify: lớp Cấu hình chỉ tính bằng chứng build (buildOnlyLayers)
+  const evaluation = evaluate({ kit, profile, evidence: { checks, tests: runtime.tests, runtime: runtime.ran }, buildOnlyLayers: ['configuration'] });
+  const diag = coreResults.filter((r) => r.lane === 'diagnostics');
+  const diagRan = diag.some((r) => !['skip', 'planned'].includes(r.status));
+  const gates = [
+    { name: '1. Tương thích + bảo mật', what: `lane selfcheck trên ${mode === 'module' ? 'module' : 'repo'} (CONF-MAN, CONF-STATIC, CONF-MIG, SC-SEC-*)`, ok: sb.verdict === 'pass', detail: `${sb.counts.pass} đạt · ${sb.counts.debt} nợ cũ · ${sb.counts.fail + sb.counts.error} đỏ` },
+    { name: '2. Bất biến kế toán', what: 'lane diagnostics (DG-LEDGER-*, DG-EVENT-*, DG-DB-2, DG-SEC-1, DG-PLAN-5) trên CSDL test', ok: diagRan && !diag.some((r) => ['fail', 'error'].includes(r.status)), skipped: diagRan ? null : (db.reason ?? 'chưa chỉ CSDL'), detail: diagRan ? `${diag.filter((r) => r.status === 'pass').length} đạt · ${diag.filter((r) => r.status === 'warn').length} cảnh báo` : '' },
+    { name: '3. Chạy thật (runtime)', what: 'vitest các tệp mà ca rulepack dẫn, qua cửa thật (R-VNC-7)', ok: runtime.ran && ![...runtime.tests.values()].some((s) => s !== 'pass'), skipped: runtime.ran ? null : runtime.reason, detail: runtime.ran ? runtime.summary : '' },
+  ];
+  const gatesOk = gates.every((g) => g.ok || g.skipped);
+  const gitSha = (() => { const r = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }); return /^[0-9a-f]{40}/.test(r.stdout ?? '') ? r.stdout.trim() : '0'.repeat(40); })();
+  const manifest = mode === 'module' && createRepo(root).exists('bizcity.module.json') ? createRepo(root).json('bizcity.module.json') : null;
+  const target = mode === 'module' ? { kind: 'plugin', package: manifest?.id ?? path.basename(root), version: manifest?.version ?? '0.0.0' } : { kind: 'kernel', package: '@bizcity/kernel', version: core.json('packages/kernel/package.json')?.version ?? '0.0.0' };
+  const exclusions = [];
+  if (!diagRan) exclusions.push({ scope: 'lane diagnostics', reason: `bỏ qua — ${db.reason ?? 'chưa chỉ CSDL'}; ca kind diagnostics ra NOT_TESTED` });
+  if (!runtime.ran) exclusions.push({ scope: 'lane runtime', reason: `bỏ qua — ${runtime.reason}; ca dẫn test vitest ra NOT_TESTED` });
+  const report = buildReport({ kit, profile, evaluation, run: { runId: `${sb.runId}-cert`, at: sb.at, gitSha, db: db.available ? db.label : null }, target, exclusions });
+  const rErr = validate(core.json(REPORT_SCHEMA), report);
+  if (rErr.length) { console.error(`Báo cáo sinh ra sai khuôn bizcity_vn_conformance_report@1 (lỗi bộ kiểm): ${rErr.slice(0, 5).map((e) => `${e.path} ${e.message}`).join('; ')}`); return 2; }
+
+  const tier = !gatesOk || report.result === 'FAIL' ? 'fail' : report.result === 'PASS' ? 'certified' : 'compatible';
+  const cert = renderCertificate({ report, evaluation, tier, gates, profile });
+  for (const [name, data] of [['vn-conformance-report.json', report], ['vn-junit.xml', renderJUnit(report, evaluation)], ['CERTIFICATE.md', cert]]) {
+    write(path.join(where, name), data);
+  }
+
+  for (const g of gates) say(`${g.ok ? '✔' : g.skipped ? '·' : '✘'} ${g.name}: ${g.ok ? 'ĐẠT' : g.skipped ? 'bỏ qua — ' + g.skipped : 'KHÔNG ĐẠT'}${g.detail ? ' (' + g.detail + ')' : ''}`);
+  const cnt = (s) => evaluation.cases.filter((c) => c.status === s).length;
+  say(`tuân thủ VN: ${report.result} — ${cnt('PASS')} PASS · ${cnt('FAIL')} FAIL · ${cnt('ERROR')} ERROR · ${cnt('REVIEW_REQUIRED')} REVIEW_REQUIRED · ${cnt('NOT_TESTED')} NOT_TESTED · ${cnt('NOT_APPLICABLE')} N/A · ${report.reviewer_status}`);
+  for (const r of evaluation.resolution.rows) if (r.blocked) say(`  ◔ ${r.pack.id}@${r.pack.version}: ${r.blocked}`);
+  console.log(`\nKẾT LUẬN: ${tier === 'certified' ? '🟢 CERTIFIED — ' + report.label : tier === 'compatible' ? '🟡 COMPATIBLE — tương thích kỹ thuật; tuân thủ VN: ' + report.label : '🔴 FAIL — chưa được công nhận tương thích'}`);
+  console.log(`Chứng chỉ: ${path.relative(process.cwd(), path.join(where, 'CERTIFICATE.md'))} · báo cáo: vn-conformance-report.json · JUnit: vn-junit.xml`);
+  if (tier === 'fail') return 1;
+  if (tier === 'compatible' && args.requireCertified) return 1;
+  return 0;
 }
 
 main().then((code) => { process.exitCode = code; }, (e) => { console.error(e); process.exitCode = 2; });

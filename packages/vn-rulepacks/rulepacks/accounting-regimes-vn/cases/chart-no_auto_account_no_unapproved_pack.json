@@ -1,0 +1,51 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.accounting-regimes-vn.chart.no_auto_account_no_unapproved_pack.004",
+  "version": "0.1.0",
+  "rulepack": "accounting-regimes-vn",
+  "spec_ref": "C02.4",
+  "title": "Không tự sinh tài khoản thiếu; không cài gói định khoản hỏng / chưa duyệt",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.circular.99-2025-tt-btc",
+      "provision_ref": "Phụ lục II",
+      "review_status": "pending"
+    }
+  ],
+  "scenario": {
+    "kind": "runtime",
+    "verified_by": [
+      "posting-pack.test.ts",
+      "SC-TPL-1"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "missing_account_not_created",
+      "broken_pack_blocked"
+    ],
+    "gap": "Khái niệm gói định khoản được DUYỆT (trust official / verified) mới có trường publisher.trust, chưa chặn cài theo trust (TEMPLATE-MARKETPLACE là Phase 5)."
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — chờ kế toán trưởng / chuyên gia thuế (VNCONF-004…007)"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

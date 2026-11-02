@@ -1,0 +1,52 @@
+{
+  "contract": "bizcity_vn_rulepack@1",
+  "id": "vat-vn",
+  "version": "0.1.0",
+  "catalog_id": "C03",
+  "title": "Thuế GTGT: thuế suất giảm theo thời gian, điều kiện khấu trừ đầu vào (phạm vi hẹp)",
+  "description": "Lớp Doanh nghiệp: dữ liệu bán ra / mua vào của đơn vị so với luật thuế GTGT có hiệu lực. Số liệu luật (thời gian giảm thuế) là tham số của ca, không viết cứng trong Kernel. Không suy tính hợp lệ về thuế từ bút toán hợp lệ (R-VNC-5).",
+  "jurisdiction": "VN",
+  "domain": "tax",
+  "regime": "neutral",
+  "priority": "P0",
+  "layer": "enterprise",
+  "status": "draft",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.law.48-2024-qh15",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "Luật Thuế GTGT 2024, hiệu lực 01/7/2025"
+    }
+  ],
+  "cases": [
+    "cases/rate-reduced_window.json",
+    "cases/input-non_cash_payment.json"
+  ],
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — miền thuế / hoá đơn: duyệt tại đơn vị cần người duyệt thuế (ADR-0016)"
+  },
+  "release": {
+    "rules_hash": null,
+    "released_at": null,
+    "changelog": [
+      {
+        "version": "0.1.0",
+        "date": "2026-11-02",
+        "note": "S020-11: khởi tạo nháp phạm vi hẹp; mọi căn cứ còn pending, điều khoản để REVIEW_REQUIRED cho người duyệt chốt"
+      }
+    ]
+  }
+}

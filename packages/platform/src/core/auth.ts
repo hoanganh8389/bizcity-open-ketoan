@@ -1,4 +1,5 @@
 // @bizcity-layer P permissions
+// [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — quyền conformance:read (xem Kiểm chuẩn) và conformance:run (chạy một lượt, lưu ảnh chụp) cho Conformance Engine (ADR-0012, D020-7).
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-29 11:31 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — bộ kiểm chuẩn xanh, gia cố R-API-6, R-BOUND-2, R-SEC-11, R-REL-1.
 // [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
@@ -48,6 +49,12 @@ export const PERMISSIONS = [
   'periods:lock',
   'settings:write',
   'users:write',
+  /** Xem kết quả Kiểm chuẩn (Conformance Engine, ADR-0012). */
+  'conformance:read',
+  /** Chạy một lượt Kiểm chuẩn và lưu ảnh chụp (chỉ đọc sổ; không đổi sổ, không đổi cấu hình). */
+  'conformance:run',
+  /** Duyệt / thu hồi rulepack cho đơn vị (bản cài tự chủ, ADR-0016): kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị". */
+  'conformance:approve',
   // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: quyền devtools:read (D019-3) — chủ đơn vị + vai trò developer; không cấp cho khoá API, không cho AI.
   /** Bàn điều tra cho nhà phát triển (PHASE-019): đọc trace / log / bằng chứng của đơn vị qua API trung gian. Không phạm vi khoá API nào ánh xạ tới. */
   'devtools:read',
@@ -86,12 +93,12 @@ export function rolePermissions(role: Role): Set<Permission> {
   return out;
 }
 
-const VIEWER_PERMISSIONS: readonly Permission[] = ['catalog:read', 'documents:read', 'ledger:read', 'reports:read'];
+const VIEWER_PERMISSIONS: readonly Permission[] = ['catalog:read', 'documents:read', 'ledger:read', 'reports:read', 'conformance:read'];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: PERMISSIONS,
-  chief_accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'documents:edit-all', 'documents:bypass-date-lock', 'payments:approve', 'ledger:read', 'reports:read', 'periods:lock', 'settings:write'],
-  accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'ledger:read', 'reports:read'],
+  chief_accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'documents:edit-all', 'documents:bypass-date-lock', 'payments:approve', 'ledger:read', 'reports:read', 'periods:lock', 'settings:write', 'conformance:read', 'conformance:run', 'conformance:approve'],
+  accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'ledger:read', 'reports:read', 'conformance:read', 'conformance:run'],
   viewer: VIEWER_PERMISSIONS,
   // Nhà phát triển (Q019-1 = b): xem như viewer + Bàn điều tra; không ghi chứng từ, không cấu hình.
   developer: [...VIEWER_PERMISSIONS, 'devtools:read'],
@@ -100,7 +107,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
 /** Phạm vi của khoá API → quyền tương ứng. */
 const SCOPE_PERMISSIONS: Record<string, readonly Permission[]> = {
   'documents:write': ['documents:write', 'documents:edit-all', 'documents:read', 'catalog:read'],
-  'reports:read': ['reports:read', 'ledger:read', 'catalog:read'],
+  'reports:read': ['reports:read', 'ledger:read', 'catalog:read', 'conformance:read'],
   'catalog:write': ['catalog:write', 'catalog:read'],
 };
 

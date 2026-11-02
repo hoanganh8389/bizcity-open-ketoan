@@ -1,0 +1,62 @@
+{
+  "contract": "bizcity_vn_case@1",
+  "id": "vn.vat-vn.rate.reduced_window.001",
+  "version": "0.1.0",
+  "rulepack": "vat-vn",
+  "spec_ref": "VAT-1",
+  "title": "Thuế suất giảm 8% chỉ dùng cho hàng hoá, dịch vụ bán ra trong thời gian giảm thuế theo nghị quyết",
+  "status": "draft",
+  "priority": "P0",
+  "applies_to": {
+    "entity_types": [
+      "enterprise",
+      "sme"
+    ],
+    "fiscal_year_start_from": null,
+    "transaction_date_from": null,
+    "transaction_date_to": null
+  },
+  "legal_basis": [
+    {
+      "source_id": "vn.resolution.204-2025-qh15",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "giảm 2% thuế suất 10% (còn 8%) trong một khoảng thời gian; người duyệt chốt điều khoản và ngày"
+    },
+    {
+      "source_id": "vn.decree.174-2025-nd-cp",
+      "provision_ref": "REVIEW_REQUIRED",
+      "review_status": "pending",
+      "note": "danh mục hàng hoá, dịch vụ không được giảm"
+    }
+  ],
+  "scenario": {
+    "kind": "diagnostics",
+    "verified_by": [
+      "DG-VAT-1",
+      "vat-einvoice.test.ts"
+    ],
+    "input_fixture": null,
+    "expected_fixture": null,
+    "assertions": [
+      "reduced_rate_only_within_window"
+    ],
+    "gap": "Không kiểm danh mục loại trừ (NĐ 174/2025): hàng không được giảm mà dùng 8% trong thời gian giảm chưa bị phát hiện. Tham số from / to cần người duyệt đối chiếu văn bản",
+    "params": {
+      "reduced_rate": 8,
+      "from": "2025-07-01",
+      "to": "2026-12-31"
+    }
+  },
+  "on_missing_basis": "REVIEW_REQUIRED",
+  "review": {
+    "accounting_reviewer": null,
+    "tax_reviewer": null,
+    "approved_at": null,
+    "notes": "Chưa duyệt — bản cài tự duyệt được (ADR-0016) hoặc chờ duyệt thượng nguồn"
+  },
+  "golden": {
+    "hash": null,
+    "approved_at": null
+  }
+}

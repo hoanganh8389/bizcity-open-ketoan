@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_compliance_matrix@1",
-  "updated": "2026-10-30",
+  "updated": "2026-11-02",
   "note": "Ma trận tuân thủ bắt buộc (bizcity_compliance@1 §2). Trạng thái tính tự động từ tín hiệu như roadmap.json (check / fileContains / capability / manual…): ĐẠT khi mọi tín hiệu đúng. Nguyên tắc AP-7: tuân thủ được kiểm trong runtime và CI, không chỉ viết trong tài liệu.",
   "rows": [
     {
@@ -90,7 +90,9 @@
       "rule": "Chính sách kế toán (gói định khoản, lý do, nhóm hạch toán, tài khoản ngầm định) có phiên bản và ngày hiệu lực; mỗi lần định khoản ghi phiên bản đã dùng",
       "done": [
         { "label": "năng lực posting.policy-version available", "capability": "posting.policy-version" },
-        { "label": "posting_log ghi policy_version", "fileContains": { "file": "packages/platform/src/db/types.ts", "text": "policy_version" } }
+        { "label": "posting_log ghi policy_version", "fileContains": { "file": "packages/platform/src/db/types.ts", "text": "policy_version" } },
+        { "label": "hồ sơ kế toán (chế độ, năm tài chính) có phiên bản, hiệu lực từ đầu năm tài chính, không hồi tố (ADR-0013)", "capability": "accounting.profile" },
+        { "label": "test chuyển chế độ theo năm tài chính lệch năm dương lịch", "file": "apps/api/test/accounting-profile.test.ts" }
       ]
     }
   ]
