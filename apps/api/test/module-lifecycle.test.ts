@@ -90,7 +90,7 @@ describe('Registry bản cài', () => {
   it('module lõi không tắt được trên bản cài; năng lực planned bị chặn khi bật', async () => {
     await expect(asOwner((trx) => setStatus('ke-toan', 'disabled', 'test', trx))).rejects.toThrow(/lõi/);
     expect(missingCapabilities(['ledger.submit'])).toEqual([]);
-    expect(missingCapabilities(['permissions.module', 'khong.co'])).toEqual(['permissions.module', 'khong.co']);
+    expect(missingCapabilities(['ui.slots', 'khong.co'])).toEqual(['ui.slots', 'khong.co']);
   });
 });
 

@@ -52,7 +52,39 @@ export const PERMISSIONS = [
   /** Bàn điều tra cho nhà phát triển (PHASE-019): đọc trace / log / bằng chứng của đơn vị qua API trung gian. Không phạm vi khoá API nào ánh xạ tới. */
   'devtools:read',
 ] as const;
-export type Permission = (typeof PERMISSIONS)[number];
+// [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.3 (permissions.module): quyền do module khai trong manifest permissions[] — registry, vai trò mặc định theo roles, quyền risk high không cho AI / khoá API
+export type CorePermission = (typeof PERMISSIONS)[number];
+/** Quyền module khai trong manifest `permissions[]` (`<key>:<việc>`, BIZCITY-MODULE §3) — đăng ký lúc khởi động. */
+export type ModulePermission = `${string}:${string}`;
+export type Permission = CorePermission | ModulePermission;
+
+export interface ModulePermissionDef { key: string; label: string; roles?: string[]; risk?: 'low' | 'high' }
+const modulePermissions = new Map<string, ModulePermissionDef & { module: string }>();
+const MODULE_PERM_RE = /^([a-z][a-z0-9-]*):[a-z][a-z0-9-]*$/;
+
+/** Đăng ký quyền của một module (app.ts từ manifest; test). Tiền tố phải là khoá module, không trùng quyền Core / module khác. */
+export function registerModulePermissions(module: string, defs: readonly ModulePermissionDef[]): void {
+  for (const d of defs) {
+    const m = MODULE_PERM_RE.exec(d.key);
+    if (m?.[1] !== module) throw new Error(`Quyền "${d.key}" của module ${module} phải dạng "${module}:<việc>"`);
+    if ((PERMISSIONS as readonly string[]).includes(d.key)) throw new Error(`Quyền "${d.key}" trùng quyền Core`);
+    const cur = modulePermissions.get(d.key);
+    if (cur && cur.module !== module) throw new Error(`Quyền "${d.key}" đã thuộc module ${cur.module}`);
+    modulePermissions.set(d.key, { ...d, module });
+  }
+}
+
+export const listModulePermissions = (): (ModulePermissionDef & { module: string })[] => [...modulePermissions.values()];
+export const isKnownPermission = (p: string): p is Permission => (PERMISSIONS as readonly string[]).includes(p) || modulePermissions.has(p);
+/** Quyền module rủi ro cao: không cấp cho trợ lý AI, khoá API (BIZCITY-MODULE §3). */
+export const isHighRiskPermission = (p: string): boolean => modulePermissions.get(p)?.risk === 'high';
+
+/** Quyền của vai trò: quyền Core theo bảng + quyền module có vai trò trong `roles` (chủ đơn vị: mọi quyền module). */
+export function rolePermissions(role: Role): Set<Permission> {
+  const out = new Set<Permission>(ROLE_PERMISSIONS[role] ?? []);
+  for (const p of modulePermissions.values()) if (role === 'owner' || p.roles?.includes(role)) out.add(p.key as Permission);
+  return out;
+}
 
 const VIEWER_PERMISSIONS: readonly Permission[] = ['catalog:read', 'documents:read', 'ledger:read', 'reports:read'];
 
@@ -143,8 +175,8 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
       role,
       // Đăng nhập qua hệ thống quản trị: quyền theo phân quyền bên đó (trong phiên); còn lại theo vai trò.
       permissions: claims.perms
-        ? new Set(claims.perms.filter((p): p is Permission => (PERMISSIONS as readonly string[]).includes(p)))
-        : new Set(ROLE_PERMISSIONS[role] ?? []),
+        ? new Set(claims.perms.filter(isKnownPermission))
+        : rolePermissions(role),
     };
   }
   return null;

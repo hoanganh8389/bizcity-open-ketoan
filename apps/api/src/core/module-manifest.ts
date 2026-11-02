@@ -24,6 +24,8 @@ export interface ModuleManifest {
   standard: string;
   requires: { capabilities: string[]; modules?: Record<string, string> };
   actions?: string[];
+  /** Quyền mới module khai (`<key>:<việc>`); app.ts đăng ký vào registry quyền (PHASES 3.3). */
+  permissions?: { key: string; label: string; roles?: string[]; risk?: 'low' | 'high' }[];
   ledger?: { submits?: { docType: string; contract: string }[] };
   ui?: { icon?: string; color?: string; order?: number };
   waivers?: { rule: string; reason: string; adr: string; expires?: string }[];

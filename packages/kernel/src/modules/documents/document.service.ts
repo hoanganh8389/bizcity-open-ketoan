@@ -241,6 +241,14 @@ async function reverseEntries(trx: Db, tenantId: string, actor: string, ids: str
  * khi phiếu tới; chế độ "Chờ định khoản": vào cổng chờ (Chờ huỷ), kế toán định khoản huỷ ở ACC14.
  * hold: luôn vào Chờ huỷ, không theo chế độ (trợ lý AI chỉ được đề xuất — STD-MCP-6).
  */
+// [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: documentStatusIn — trạng thái chứng từ theo docKey trong giao dịch người gọi (ctx.ledger.get); không trả payload
+/** Trạng thái chứng từ theo docKey (đọc trong giao dịch người gọi): phiên bản, trạng thái, phiên bản đã ghi sổ, đang chờ huỷ. */
+export async function documentStatusIn(trx: Db, tenantId: string, docKey: string): Promise<{ docKey: string; version: number; status: string; postedVersion: number | null; cancelRequested: boolean; errorMessage: string | null } | null> {
+  const row = await documentRepository.findByKey(trx, tenantId, docKey);
+  if (!row) return null;
+  return { docKey: row.doc_key, version: row.version, status: row.status, postedVersion: row.posted_version ?? null, cancelRequested: Boolean(row.cancel_requested_at), errorMessage: row.error_message ?? null };
+}
+
 export async function requestCancelIn(trx: Db, auth: AuthContext, docKey: string, reason: string, opts: { hold?: boolean } = {}): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
   const row = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
   if (!row) throw Errors.notFound(`chứng từ ${docKey}`);

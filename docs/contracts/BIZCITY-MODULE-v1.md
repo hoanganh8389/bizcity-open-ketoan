@@ -95,7 +95,7 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 1. **Có (2026-11-01):** `bizcity.module.json` cho 9 phân hệ (`ke-toan`, `quy`, `mua-hang`, `ban-hang`, `kho`, `tai-san`, `thue`, `api`, `he-thong`) và 3 add-in; `id` dạng `bizcity.<key>`. API nạp lúc khởi động (`apps/api/src/core/module-manifest.ts`), lệch `key` / `label` / `kind` / `version` với mã thì dừng.
 2. **Có, trừ so bảng:** SC-MOD-3 (block) — mỗi thư mục có manifest, `key` trùng thư mục, `kind` đúng chỗ, `owners` khớp `CODEOWNERS`; test `module-manifests.test.ts` — action khai = action đăng ký. A-17 ghi `waivers` STD-MOD-2 hạn 2027-03-31. **Chưa:** so bảng bị ghi (grep) với `data.tables` — làm cùng 3.13.
 3. **Một phần:** `GET /api/v1/system/modules?detail=true` trả manifest tóm tắt (mặc định giữ mảng mã). **Chưa:** sinh `ApiModule` / `WebModule` / `AddInManifest` từ manifest — làm ở registry module (3.13, ADR-0011 D1–D2).
-4. Registry quyền đọc `permissions[]` (năng lực `permissions.module`).
+4. **Có (2026-11-02, PHASES 3.3):** registry quyền đọc `permissions[]` (năng lực `permissions.module`): đăng ký lúc khởi động, vai trò theo `roles`, `risk: high` không cho AI, action khai quyền lạ → dừng khởi động, `GET /api/v1/system/permissions`. Màn Phân quyền: PR-6. <!-- [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — §6 bước 4 có -->
 
 ## 7. Nhật ký
 

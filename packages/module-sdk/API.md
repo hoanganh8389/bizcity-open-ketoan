@@ -7,7 +7,7 @@
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 <!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — v0.1 có code (packages/module-sdk/src): defineModule, xuất lại chọn lọc, ctx.ledger.submit, ctx.settings.get; core.document.submit -->
 
-> **Trạng thái: v0.1 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.query`, `settings.get`, `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`. Chưa: `ledger.cancel` / `get`, `data.masterdata`, `module.*`, `defineHook`, `data.masterdata`, `module.*`. Có từ 2026-11-02: `ctx.data.module(fn)` giới hạn `mod_<key>` (3.10), nạp module theo registry (3.13). Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu.
+> **Trạng thái: v0.2 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.cancel`, `ledger.get`, `ledger.query`, `settings.get`, `data.module` (vai trò `mod_<key>_rw`, 3.10), `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`; quyền module (`permissions[]`, 3.3); nạp theo registry (3.13). **Chưa:** `data.masterdata`, `data.describe`, `module.*`, `defineHook`, gói con `/web`; bốn câu hỏi mở §6 (1, 2, 4, 5) chờ chủ dự án — API.md còn là bản nháp tới khi chốt. Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu. <!-- [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — v0.2: ledger.cancel / get, data.module, quyền module -->
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
 > Gói workspace `@bizcity/module-sdk` (chỉ phụ thuộc `@bizcity/platform`, `@ketoan/contracts`, `zod`; không phụ thuộc Kernel). Ví dụ module viết chỉ bằng SDK: `apps/api/test/module-sdk.test.ts`.
 
@@ -103,7 +103,8 @@ interface ActionContext {
   };
   ledger: {
     submit(doc: LedgerIntakeDoc): Promise<IngestResult>;           // ✅ v0.1: bizcity_ledger_intake@1; docKey `<module>:…`, sourceSystem = module; chỉ action ghi; cùng giao dịch (lỗi → huỷ cả action)
-    cancel(docKey: string, reason: string): Promise<IngestResult>;
+    cancel(docKey: string, reason: string): Promise<{ requested; reversed; cancelled? }>;  // ✅ v0.2: chỉ docKey `<module>:…`, chỉ action ghi; chế độ ghi ngay → đảo + huỷ, chế độ chờ → Chờ huỷ (ACC14)
+    get(docKey: string): Promise<{ docKey; version; status; postedVersion; cancelRequested; errorMessage } | null>;  // ✅ v0.2: chỉ chứng từ của module, không trả nội dung
     get(docKey: string): Promise<LedgerDocStatus | null>;          // trạng thái + số chứng từ sổ, không trả dòng ledger_*
     query(q: LedgerQuery): Promise<LedgerQueryRow[]>;              // ✅ 3.7: đầu kỳ / phát sinh / cuối kỳ theo mã, chiều, mã hàng (@ketoan/contracts ledgerQuerySchema)
   };
