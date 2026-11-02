@@ -4,8 +4,9 @@
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §7a webhook cho app ngoài tiến trình (ADR-0011 mức 2) — subscriber <app>.webhook, chữ ký HMAC-SHA256, Idempotency-Key = id sự kiện; SubscriberDef.accepts lọc theo đơn vị lúc phát -->
+<!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: việc giao 'skipped' khi module của subscriber tắt ở đơn vị (ADR-0011 D1); sự kiện bizcity.module.toggled -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
+> **Phiên bản:** 1.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
 > **Năng lực:** `events.outbox`, `events.subscribe`, `events.clock`
 > **Lớp kiểm soát 2/3** của [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md) (Domain · **Event** · Compliance). Sự kiện được phát, phiên bản (`version`), cấu trúc payload (schema theo `type` + `version`), nguồn phát (`source`), ý nghĩa nghiệp vụ.
 > - **AP-2:** sự kiện **báo** việc đã xảy ra sau commit, không dùng để ra lệnh ghi sổ.
@@ -96,6 +97,7 @@ export default defineSubscriber({
 | **Thứ tự** | Cùng `subject` thì giao theo thứ tự `id`; khác `subject` có thể song song |
 | **Retry** | Lỗi tạm thời: thử lại theo `retry` (mặc định 8 lần, luỹ thừa, tối đa 1 giờ). Hết lượt → `dead`, hiện ở `/system/diagnostics`, báo nhóm vận hành |
 | **Xử lý lại** | `bizcity events replay --consumer <id> --from <thời điểm> [--type] [--subject]`: xoá dấu `event_consumptions` trong khoảng rồi giao lại. Có bằng chứng ai chạy |
+| **Module tắt** | Module của subscriber đang tắt ở đơn vị (`tenant_modules`, ADR-0011 D1) → việc giao ghi `skipped`: không xử lý, không `dead`, không ghi `event_consumptions`. Bật lại không tự xử lý bù; cần thì `core.events.replay`. Sự kiện `bizcity.module.toggled` (`data: { module, enabled }`) phát khi bật / tắt |
 | **Giữ** | Outbox giữ 90 ngày sau khi mọi subscriber xong (khoá `bizcity.platform.event_retention_days`) |
 
 Gửi ra ngoài (webhook tới WooCommerce, Cell) là một subscriber đặc biệt của `adapters/*`, có ký HMAC, cùng bảo đảm trên.

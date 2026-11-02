@@ -3,8 +3,9 @@
 <!-- [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0-draft: ledger.submits[].reasons (kind, default, suggestedPacks). -->
 <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.1-draft: waivers bắt buộc expires, chỉ miễn luật đặt tên; §6 bước 1–3 có (12 manifest, SC-MOD-3 block, GET /system/modules?detail=true) -->
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: kind "app" (app ngoài tiến trình, ADR-0011 mức 2): app.scopes, app.webhook.url, ui.origin / ui.entry; §3a -->
+<!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.3.0-draft: §5 vòng đời chạy thật (module_registry × tenant_modules, nạp theo hash, MODULE_DISABLED, skipped) -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
+> **Phiên bản:** 1.3.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
 > **JSON Schema:** [BIZCITY-MODULE-v1.schema.json](BIZCITY-MODULE-v1.schema.json) · **Ví dụ đầy đủ:** [../standard/examples/hop-dong.bizcity.module.json](../standard/examples/hop-dong.bizcity.module.json)
 > **Thay thế:** `ApiModule` (`apps/api/src/phan-he/types.ts`), `WebModule`/`ModuleMeta` (`apps/web/src/phan-he/types.ts`, `packages/contracts/src/module.ts`), `AddInManifest` (`apps/api/src/core/addins.ts`)
 
@@ -77,7 +78,16 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 ```
 
 - **Cài** chỉ chạy được khi báo cáo kiểm khớp băm mã nguồn module ([CONFORMANCE.md §4](../standard/CONFORMANCE.md#4-cổng-cài-đặt)).
-- **Tắt** theo đơn vị: route trả `FORBIDDEN` với lời nhắn "Module chưa bật", subscriber ngừng nhận, sự kiện dồn lại trong outbox tới khi bật lại hoặc hết hạn giữ.
+
+**Đang chạy (2026-11-02, PHASES 3.13, ADR-0011 D1, D2):**
+
+| Mức | Bảng | Ai ghi | Hệ quả |
+|---|---|---|---|
+| Bản cài | `module_registry` (0052): phiên bản, `build_hash` (sha256 thư mục module), `status` installed / active / disabled, lịch sử | job cài đặt (`db/setup.ts` → `syncBundled`) và lệnh `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`, bằng vai trò sở hữu | API chỉ nạp module `active` có hash khớp; bản thật lệch hash → bỏ riêng module đó, ghi `last_load_result`, DG-MOD-1 đỏ. Registry trống → nạp như cũ (bản cài cũ) |
+| Đơn vị | `tenant_modules` (0052); không có dòng = bật | action `core.module.enable` / `disable` (`users:write`, có bằng chứng, dry-run báo ảnh hưởng, phát `bizcity.module.toggled`) | route của module trả `MODULE_DISABLED` (route dùng chung chỉ chặn khi mọi module sở hữu đều tắt); `GET /system/modules` bỏ module tắt; sự kiện tới subscriber của module giao `skipped` |
+
+- **Tắt** theo đơn vị: route trả `MODULE_DISABLED` (403), subscriber của module nhận việc giao `skipped` (không `dead`, không xử lý bù khi bật lại — phát lại bằng `core.events.replay` nếu cần). Dữ liệu, chứng từ, bút toán giữ nguyên. Module lõi (`ke-toan`, `he-thong`) không tắt được. Bật lại kiểm năng lực manifest cần (`planned` → `CAPABILITY_MISSING`).
+- App ngoài tiến trình (`kind: "app"`) bật / tắt ở `app_installations` (§3a), không ở `tenant_modules`.
 - **Gỡ** không bao giờ đụng dữ liệu Kernel: bút toán module đã nộp vẫn còn (sổ chỉ thêm). Gỡ module có chứng từ đã ghi sổ phải huỷ bằng bút toán đảo trước, hoặc giữ nguyên.
 
 ## 6. Chuyển dần từ code hiện tại
@@ -89,6 +99,7 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 ## 7. Nhật ký
 
+- **1.3.0-draft (2026-11-02):** §5 vòng đời chạy thật: `module_registry` × `tenant_modules`, nạp theo hash, `MODULE_DISABLED`, sự kiện `skipped`, lệnh `module` (PHASES 3.13). Không đổi trường manifest.
 - **1.2.0-draft (2026-11-02):** thêm `kind: "app"` (tương thích): `app.scopes`, `app.webhook.url`, `ui.origin`, `ui.entry`; schema chặn app khai `data` / `documents` / `actions` / `settings` / `extensions`, chặn module / add-in khai `app` / `ui.origin` (PHASES 3.14, ADR-0011 mức 2). SC-MOD-3 phủ `apps/api/src/ung-dung/<key>`.
 - **1.1.1-draft (2026-11-01):** `waivers[].expires` bắt buộc ngoài ví dụ (schema giữ tuỳ chọn để ví dụ cũ hợp lệ; bộ kiểm ép); bộ kiểm miễn đúng luật đã khai, báo waiver thiếu hạn / quá hạn. §6 bước 1–2 có, bước 3 một phần (PHASES 3.2).
 

@@ -475,7 +475,7 @@
             "read-view:bizcity_read.khong_co",
             "key-dir",
             "standard",
-            "cap-planned:data.migrations.module",
+            "cap-planned:ui.slots",
             "cap-unknown:ledger.anything",
             "perm-prefix:contracts:read",
             "action-prefix:khac.contract.list",

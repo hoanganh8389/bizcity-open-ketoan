@@ -62,4 +62,22 @@ Mỗi dòng là một việc kiểm được (test hoặc check). Cột "Việc"
 | CK-18 | ✅ | Đổi vé ở `POST /api/v1/apps/ticket/exchange` (app gọi bằng khoá của nó; vé không tự chứng minh app). Vé không dùng một lần: bị lộ cũng không đổi được nếu không có khoá app |
 | CK-20 | ✅ | Phạm vi = `app.scopes` (quyền Core app xin) + `events.subscribes`; `permissions[]` giữ nghĩa "quyền mới module khai". Xoay khoá = `POST /api/v1/apps/:key/rotate`; thu hồi = tắt kết nối hoặc thu hồi ở màn Khoá API |
 
+<!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-3: trạng thái CK-1, 3, 4, 5, 6, 7, 12, 13, 16 -->
+**PR-3 (2026-11-02), trạng thái và chỗ mã khác bản mẫu:**
+
+| CK | Trạng thái | Khác bản mẫu |
+|---|---|---|
+| CK-1 | 🟡 | `GET /system/modules?view=tenant` trả `key, kind, label, description, version, icon, color, order, source, enabled, required`; người không quản trị chỉ thấy module bật. Chưa có `functionCount`; app ngoài tiến trình ở `GET /api/v1/apps` (chưa gộp một danh sách — PR-6) |
+| CK-3 | ✅ | `tenant_modules (tenant_id, module_key, enabled, changed_at, changed_by, reason)` — khoá theo `module_key` thay `module_id` |
+| CK-4 | ✅ | Quyền `users:write` (= chủ đơn vị) vì chưa có registry quyền (3.3); dry-run báo chứng từ chờ / lỗi + bút toán theo nguồn = module |
+| CK-5 | ✅ | |
+| CK-6 | ✅ | Lệnh là `npm run module -w @ketoan/api -- …` (`bizcity module` ở PR-5); `install / upgrade` của module đi kèm gộp vào `sync`; không có `source_path` (thư mục suy từ khoá) |
+| CK-7 | ✅ | Hash chỉ chặn ở bản thật (`NODE_ENV=production`); máy dev cảnh báo. `BIZCITY_DEV_MODULES` cấm ở bản thật. Job cài đặt (`setup.ts`) đồng bộ hash mỗi lần triển khai |
+| CK-12 | 🟡 | API: `MODULE_DISABLED`, danh sách bỏ module tắt (web cũ tự ẩn). Ô "＋" và màn bật / tắt: PR-6 |
+| CK-13 | ✅ | Không có route tải mã; module là import tĩnh trong bản dựng |
+| CK-16 | ✅ | |
+
+<!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-4: CK-10, CK-11 -->
+**PR-4 (2026-11-02):** CK-10 ✅ (migration module chạy `SET LOCAL ROLE mod_<key>_owner`; `DELETE FROM public.ledger_entries` và `DO $ EXECUTE 'TRUNCATE public.audit_logs'` bị PostgreSQL từ chối, cả tệp huỷ). CK-11 ✅ (kiểm sau migration; chặn ở lúc **migrate**, chưa cho tới lúc activate — module local cài theo PR-5 nên hai bước là một).
+
 Khi PR-6 xong: chụp màn thật với dữ liệu demo, đặt cạnh bản mẫu trong `../evidence/PR6-<ngày>.md`.

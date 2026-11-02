@@ -28,6 +28,7 @@ import { randomBytes } from 'node:crypto';
 import { sql } from 'kysely';
 import { db, readWithTimeout, type Db } from '../db/client.js';
 import { currentRequest, withRequestContext } from './request-context.js';
+import { disabledModules } from './module-registry.js';
 import { COLLECTOR_TIMEOUT_MS, metrics } from './metrics.js';
 import { currentTraceparent, linksFrom, markError, SpanKind, withSpan, type Span } from './tracing.js';
 
@@ -172,11 +173,12 @@ export function retryDelayMs(def: SubscriberDef, attempts: number): number {
   return Math.min(r.maxDelayMs, r.baseDelayMs * 2 ** Math.max(0, attempts - 1));
 }
 
-export interface DispatchResult { done: number; duplicate: number; failed: number; dead: number }
+// [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13 (ADR-0011 D1): module của subscriber tắt ở đơn vị → việc giao 'skipped' (không xử lý, không dead)
+export interface DispatchResult { done: number; duplicate: number; failed: number; dead: number; skipped: number }
 
 /** Một lượt giao: tối đa `limit` việc đến hạn của các subscriber đăng ký trong tiến trình này (lọc thêm theo consumer / đơn vị). */
 export async function dispatchOnce(opts: { limit?: number; consumers?: string[]; tenantId?: string } = {}): Promise<DispatchResult> {
-  const out: DispatchResult = { done: 0, duplicate: 0, failed: 0, dead: 0 };
+  const out: DispatchResult = { done: 0, duplicate: 0, failed: 0, dead: 0, skipped: 0 };
   const consumers = (opts.consumers ?? [...registry.keys()]).filter((c) => registry.has(c));
   if (!consumers.length) return out;
   // Việc đến hạn, bỏ việc còn việc cũ hơn (cùng consumer, đơn vị, subject) chưa xong — giữ thứ tự trong một subject.
@@ -223,6 +225,13 @@ async function deliverInTenant(d: { consumer: string; event_id: string; tenant_i
              FOR UPDATE SKIP LOCKED`.execute(trx);
         if (!locked.rows[0]) return 'skip' as const; // tiến trình khác đang giao / đã giao
         attempts = locked.rows[0].attempts;
+        // Module của subscriber đang tắt ở đơn vị (tenant_modules): không xử lý, ghi skipped. Không ghi event_consumptions nên
+        // bật lại rồi phát lại (core.events.replay) vẫn xử lý được.
+        if ((await disabledModules(d.tenant_id, trx)).has(def.module)) {
+          await trx.updateTable('event_deliveries').set({ status: 'skipped', attempts: attempts + 1, done_at: new Date(), last_error: null })
+            .where('consumer', '=', d.consumer).where('event_id', '=', d.event_id).execute();
+          return 'skipped' as const;
+        }
         const fresh = await trx.insertInto('event_consumptions').values({ tenant_id: d.tenant_id, consumer: d.consumer, event_id: d.event_id })
           .onConflict((oc) => oc.columns(['consumer', 'event_id']).doNothing()).returning('event_id').executeTakeFirst();
         if (fresh) {
@@ -244,6 +253,7 @@ async function deliverInTenant(d: { consumer: string; event_id: string; tenant_i
       });
       if (r === 'done') out.done += 1;
       else if (r === 'duplicate') out.duplicate += 1;
+      else if (r === 'skipped') out.skipped += 1;
       if (r !== 'skip') metrics.outboxAttempts.inc({ consumer: d.consumer, result: r });
       span.setAttributes({ 'bizcity.delivery.result': r, 'bizcity.delivery.attempt': attempts + 1 });
     } catch (err) {

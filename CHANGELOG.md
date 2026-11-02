@@ -13,6 +13,12 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-4: CSDL theo module (3.10) -->
+- **CSDL riêng cho module** (PHASES 3.10, ADR-0011 D4, năng lực `data.migrations.module` → available): `npm run module -w @ketoan/api -- migrate <key>` chạy migration của module bằng vai trò `mod_<key>_owner` — chỉ sở hữu schema `mod_<key>`, PostgreSQL từ chối mọi lệnh chạm bảng sổ / Kernel; bảng module thiếu `tenant_id` / RLS / FORCE / chính sách thì huỷ. Lúc chạy, `ctx.data.module(fn)` đọc ghi bảng của module bằng `mod_<key>_rw`.
+<!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-3: registry module + vòng đời (3.13) -->
+- **Registry module và bật / tắt theo đơn vị** (PHASES 3.13, ADR-0011 D1, D2, năng lực `modules.lifecycle` → available):
+  - Bản cài: bảng `module_registry` ghi phiên bản, hash thư mục, trạng thái mỗi phân hệ / add-in. Job cài đặt tự đồng bộ; lệnh `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`. Bản thật chỉ nạp module `active` đúng hash; lệch → bỏ riêng module đó, chẩn đoán DG-MOD-1 đỏ.
+  - Đơn vị: chủ đơn vị bật / tắt phân hệ (`POST /api/v1/system/modules/disable` / `enable`, có chạy thử báo ảnh hưởng, bằng chứng). Phân hệ tắt: route trả `MODULE_DISABLED`, giao diện ẩn phân hệ, sự kiện tới phân hệ đó ghi `skipped`. Dữ liệu, chứng từ, bút toán giữ nguyên; Kế toán và Hệ thống không tắt được.
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-2b: app ngoài tiến trình (3.14, ADR-0011 mức 2) -->
 - **App ngoài tiến trình** (PHASES 3.14, ADR-0011 mức 2, năng lực `apps.external` → available; [docs/api/ung-dung.md](docs/api/ung-dung.md)): dịch vụ riêng, ngôn ngữ bất kỳ, chỉ nói chuyện qua API công khai.
   - Manifest `kind: "app"` (`bizcity_module` 1.2.0-draft): `app.scopes` (quyền Core app xin, chỉ đọc / nộp chứng từ / danh mục), `events.subscribes` + `app.webhook.url`, `ui.origin` + `ui.entry`. Cài vào bản cài bằng manifest trong `apps/api/src/ung-dung/<key>/` + `APP_KEYS`, không quét thư mục.
@@ -201,6 +207,7 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+- Migration `0052_registry_module.sql` (`module_registry`, `tenant_modules`, trạng thái giao `skipped`): job `db-migrate` tự áp và tự ghi registry. Bản thật sửa tay tệp trong thư mục phân hệ mà không dựng lại → API bỏ phân hệ đó; chạy `npm run module -w @ketoan/api -- sync` sau khi dựng.
 - Migration `0051_ung_dung_ngoai.sql` (bảng `app_installations`, cột `api_keys.app_key`): chạy tự động khi cập nhật. Đổi `JWT_SECRET` từ nay đổi luôn bí mật webhook và vé iframe của app: sau khi đổi, xoay khoá từng app đã kết nối.
 - **Bắt buộc `DB_APP_PASSWORD` trong `.env`** (P0-3): `docker compose` dừng nếu thiếu. `bash scripts/cap-nhat.sh` / `bash scripts/cai-nhanh.sh` tự sinh cho bản cài cũ; tự cập nhật bằng tay thì thêm `DB_APP_PASSWORD=<openssl rand -hex 24>`. API chuyển từ vai trò sở hữu sang `ketoan_app` — tích hợp tự viết đang dựa vào quyền superuser của API (tắt trigger, TRUNCATE) sẽ bị từ chối.
 - Migration `0049` chặn mọi `UPDATE` / `DELETE` trực tiếp vào `ledger_entries`, `accounting_events` ngoài các lối của Kernel. Script vận hành tự viết sửa thẳng hai bảng này sẽ lỗi `insufficient_privilege` — dùng bút toán đảo / cửa nạp (xoá sạch một đơn vị vẫn qua `scripts/xoa-chung-tu.sh`).

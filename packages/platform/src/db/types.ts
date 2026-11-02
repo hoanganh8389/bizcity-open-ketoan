@@ -16,6 +16,8 @@
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/db/types.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): app_installations + api_keys.app_key (migration 0050)
 // [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — migration app ngoài tiến trình đổi số 0050 → 0051
+// [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: module_registry, tenant_modules, event_deliveries.status 'skipped' (0052)
+// [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10: schema_migrations.module (0053)
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -77,6 +79,32 @@ export interface ApiKeysTable {
   created_at: TimestampDefault;
   /** Khoá của app ngoài tiến trình (0051): quyền theo app_installations. NULL = khoá tích hợp thường. */
   app_key: ColumnType<string | null, string | null | undefined, string | null>;
+}
+
+/** Module / add-in đã cài vào bản cài (0052, ADR-0011 D1, D2). Cấp bản cài, không tenant_id. */
+export interface ModuleRegistryTable {
+  key: string;
+  kind: 'module' | 'addin';
+  version: string;
+  source: Generated<'bundled' | 'local'>;
+  build_hash: string;
+  status: Generated<'installed' | 'active' | 'disabled'>;
+  installed_at: TimestampDefault;
+  updated_at: TimestampDefault;
+  history: Generated<unknown>;
+  last_load_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  last_load_result: ColumnType<'loaded' | 'skipped_status' | 'skipped_hash' | 'skipped_missing' | null, string | null | undefined, string | null>;
+  last_load_hash: ColumnType<string | null, string | null | undefined, string | null>;
+}
+
+/** Bật / tắt module theo đơn vị (0052). Không có dòng = bật. */
+export interface TenantModulesTable {
+  tenant_id: string;
+  module_key: string;
+  enabled: boolean;
+  changed_at: TimestampDefault;
+  changed_by: string;
+  reason: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 /** App ngoài tiến trình đã kết nối với đơn vị (0051, ADR-0011 mức 2). */
@@ -210,7 +238,7 @@ export interface EventDeliveriesTable {
   tenant_id: string;
   consumer: string;
   event_id: string;
-  status: ColumnType<'pending' | 'done' | 'dead', 'pending' | 'done' | 'dead' | undefined, 'pending' | 'done' | 'dead'>;
+  status: ColumnType<'pending' | 'done' | 'dead' | 'skipped', 'pending' | 'done' | 'dead' | 'skipped' | undefined, 'pending' | 'done' | 'dead' | 'skipped'>;
   attempts: Generated<number>;
   next_at: TimestampDefault;
   last_error: string | null;
@@ -1561,6 +1589,8 @@ export interface DocumentAttachmentsTable {
 export interface SchemaMigrationsTable {
   name: string;
   applied_at: TimestampDefault;
+  /** NULL: Core; khoá module: migration của module (0053, ADR-0011 D4). */
+  module: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 /** Toàn bộ cơ sở dữ liệu. */
@@ -1569,6 +1599,8 @@ export interface Database {
   users: UsersTable;
   api_keys: ApiKeysTable;
   app_installations: AppInstallationsTable;
+  module_registry: ModuleRegistryTable;
+  tenant_modules: TenantModulesTable;
   accounting_units: AccountingUnitsTable;
   branches: BranchesTable;
   warehouses: WarehousesTable;
