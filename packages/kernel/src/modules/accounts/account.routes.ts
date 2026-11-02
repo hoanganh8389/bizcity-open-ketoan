@@ -9,14 +9,17 @@
  *   POST  /api/v1/accounts          thêm
  *   PATCH /api/v1/accounts/:code    sửa (không đổi số tài khoản)
  *   DELETE /api/v1/accounts/:code   xoá (chưa có tài khoản con, chưa có phát sinh, chưa dùng ở danh mục khác)
+ * Ghi: action core.account.{create,update,delete} (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
-import { accountCreateSchema, accountListQuerySchema, accountUpdateSchema } from './account.schemas.js';
+import { accountCreateSchema, accountListQuerySchema, accountUpdateSchema, type AccountDto } from './account.schemas.js';
 import { accountService } from './account.service.js';
+import { toAccountDto } from './account.repository.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Tài khoản'];
 const codeParam = z.object({ code: z.string() });
@@ -36,21 +39,36 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await accountService.get(authOf(req), req.params.code)),
   });
 
-  r.post('/api/v1/accounts', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Thêm tài khoản', body: accountCreateSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await accountService.create(authOf(req), req.body))),
-  });
-
-  r.patch('/api/v1/accounts/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Sửa tài khoản', params: codeParam, body: accountUpdateSchema },
-    handler: async (req) => ok(await accountService.update(authOf(req), req.params.code, req.body)),
-  });
-
-  r.delete('/api/v1/accounts/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá tài khoản', params: codeParam },
-    handler: async (req) => ok(await accountService.remove(authOf(req), req.params.code)),
-  });
+  mountActions(app, accountActions);
 }
+
+// [2026-11-03 01:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 (SC-ACT-1): ghi tài khoản qua defineAction (service *In trong giao dịch của runtime, bằng chứng do runtime); đường dẫn / mã 201 như cũ
+const accountDto = z.custom<AccountDto>((v) => typeof v === 'object' && v !== null && typeof (v as { code?: unknown }).code === 'string');
+
+export const accountActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.account.create', title: 'Thêm tài khoản', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: accountCreateSchema, output: accountDto,
+    expose: { http: { method: 'POST', path: '/api/v1/accounts', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'account', objectId: (i) => i.code },
+    handler: async (ctx, input) => accountService.createIn(ctx.data.tx, ctx.tenant.id, input),
+  }),
+  defineAction({
+    id: 'core.account.update', title: 'Sửa tài khoản', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: accountUpdateSchema.extend({ code: z.string() }), output: accountDto,
+    expose: { http: { method: 'PATCH', path: '/api/v1/accounts/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'account', objectId: (i) => i.code },
+    handler: async (ctx, { code, ...input }) => toAccountDto((await accountService.updateIn(ctx.data.tx, ctx.tenant.id, code, input)).after),
+  }),
+  defineAction({
+    id: 'core.account.delete', title: 'Xoá tài khoản', tags,
+    description: 'Chỉ xoá được tài khoản chưa có tài khoản con, chưa có phát sinh; không thì ngừng sử dụng.',
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: codeParam, output: z.object({ code: z.string() }),
+    expose: { http: { method: 'DELETE', path: '/api/v1/accounts/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'account', objectId: (i) => i.code },
+    handler: async (ctx, { code }) => { await accountService.removeIn(ctx.data.tx, ctx.tenant.id, code); return { code }; },
+  }),
+];
