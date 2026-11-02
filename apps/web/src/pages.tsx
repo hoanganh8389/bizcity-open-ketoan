@@ -48,6 +48,8 @@ import { apiRoutes } from './phan-he/api/routes';
 // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: màn Bàn điều tra (/dev/…)
 import { devRoutes } from './phan-he/dev/routes';
 import { ADDIN_ROUTES } from './addins/registry';
+import { UngDungPage } from './features/ung-dung/UngDungPage';
+import { AppFramePage } from './features/ung-dung/AppFramePage';
 
 export const pageRoutes = (
   <>
@@ -104,6 +106,8 @@ export const pageRoutes = (
     <Route path="cau-hinh/nguoi-dung" element={<UsersPage />} />
     <Route path="cau-hinh/khoa-api" element={<ApiKeysPage />} />
     <Route path="tien-ich/add-in" element={<AddInsPage />} />
+    <Route path="tien-ich/ung-dung" element={<UngDungPage />} />
+    <Route path="ung-dung/:key" element={<AppFramePage />} />
     <Route path="tien-ich/huong-dan" element={<GuidesPage />} />
     <Route path="tien-ich/can-cu" element={<LegalDocsPage />} />
     <Route path="tien-ich/kien-truc" element={<ArchitecturePage />} />

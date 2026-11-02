@@ -100,7 +100,7 @@
       "done": [{ "capability": "intake.preflight.posting" }] },
 
     { "id": "3.1", "phase": "3", "title": "@bizcity/module-sdk: defineModule, ctx", "areas": ["module"], "after": ["2.5", "2.6"],
-      "done": [{ "file": "packages/module-sdk/package.json" }] },
+      "done": [{ "file": "packages/module-sdk/package.json" }, { "manual": "API.md ổn định (bỏ bản nháp): defineModule nạp qua registry 3.13, ctx.data.tx giới hạn mod_<key> (3.10), ctx.ledger.cancel / get" }] },
     { "id": "3.2", "phase": "3", "title": "Manifest bizcity.module.json cho 9 phân hệ + 3 add-in", "areas": ["module"],
       "done": [{ "readiness": { "check": "SC-MOD-3", "min": 100 } }] },
     { "id": "3.3", "phase": "3", "title": "Registry quyền mở theo module", "areas": ["module", "security"],

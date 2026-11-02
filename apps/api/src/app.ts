@@ -33,9 +33,11 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer } from './kernel/public.js';
+import { LEDGER_DIAGNOSTICS, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
-import { registerLedgerReader } from './core/actions.js';
+import { registerLedgerReader, registerLedgerSubmitter } from './core/actions.js';
+import { registerAppManifests } from '@bizcity/platform/core/apps';
+import { APP_MANIFESTS } from './ung-dung/index.js';
 import { registerDocumentNumberer } from './core/documents.js';
 import { registerCollector } from './core/metrics.js';
 
@@ -107,6 +109,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerDocumentNumberer((tx, tenantId, key, year) => documentNumbers.next(tx, tenantId, key, year));
   // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — adapter kết nối chuẩn hoá chứng từ đẩy vào bằng khoá API (trước: Kernel import thẳng adapter)
   registerIncomingPreparer((tenantId, raw) => connectionService.prepareIncoming(tenantId, raw));
+  // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ctx.ledger.submit đi đúng một cửa vào sổ của Kernel (submitDocumentIn → postDocumentIn), ADR-0011 D5
+  registerLedgerSubmitter((tx, auth, doc) => submitDocumentIn(tx, auth, doc));
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: app ngoài tiến trình cài trong bản này (manifest kind "app") → registry + subscriber webhook; khoá trùng phân hệ / add-in → dừng
+  registerAppManifests([...APP_MANIFESTS], [...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys()]);
 
   // Lõi + các phân hệ bật (ENABLED_MODULES) — xem src/phan-he/.
   // Hệ thống (người dùng, kết nối…) thuộc lõi — luôn báo là bật.

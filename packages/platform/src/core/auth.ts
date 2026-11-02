@@ -6,12 +6,15 @@
 // [2026-10-30 11:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — MCP cho trợ lý AI: POST /mcp, công cụ sinh từ action, xác nhận trước khi ghi (PHASES 2.11, 2.12).
 // [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS.
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/core/auth.ts sang packages/platform (@bizcity/platform, D010-7 chặng 2); import tương đối viết lại theo chỗ mới
+// [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): khoá app (api_keys.app_key) — quyền theo app_installations.permissions, kết nối tắt → từ chối; AuthContext.app
 /**
  * Xác thực và phân quyền.
  *
  * Hai cách gọi API:
  *   1. Người dùng giao diện: header  Authorization: Bearer <jwt>
  *   2. Hệ thống tích hợp:    header  X-Api-Key: <khoá>
+ *      Khoá của app ngoài tiến trình (ADR-0011 mức 2, api_keys.app_key): quyền = phạm vi đã đồng ý lúc kết nối
+ *      (app_installations.permissions), không theo scopes; kết nối tắt → khoá bị từ chối như khoá thu hồi.
  *
  * Sau khi qua bước này, mỗi request có `req.auth` (đơn vị, người gọi, vai trò, phạm vi).
  * Route khai báo quyền cần bằng `preHandler: requirePermission('documents:write')`.
@@ -22,6 +25,7 @@ import type { Role } from '@ketoan/contracts';
 import { db } from '../db/client.js';
 import { Errors } from './errors.js';
 import { hashApiKey } from './security/password.js';
+import { getAppManifest } from './apps.js';
 import { verifySession } from './security/tokens.js';
 import { currentRequest } from './request-context.js';
 import { sessionStillValid } from './security/session-state.js';
@@ -85,6 +89,8 @@ export interface AuthContext {
   kind: 'user' | 'apikey';
   role: Role | null;
   permissions: ReadonlySet<Permission>;
+  /** Khoá của app ngoài tiến trình (kind 'apikey'): khoá app. Cửa nạp buộc docKey `<app>:…`, bằng chứng ghi via `app:<app>`. */
+  app?: string;
 }
 
 declare module 'fastify' {
@@ -101,16 +107,24 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
   const apiKey = req.headers['x-api-key'];
   if (typeof apiKey === 'string' && apiKey.length > 10) {
     const row = await db
-      .selectFrom('api_keys')
-      .select(['id', 'tenant_id', 'name', 'scopes'])
-      .where('key_hash', '=', hashApiKey(apiKey))
-      .where('revoked_at', 'is', null)
+      .selectFrom('api_keys as k')
+      .leftJoin('app_installations as i', (j) => j.onRef('i.tenant_id', '=', 'k.tenant_id').onRef('i.app_key', '=', 'k.app_key'))
+      .select(['k.id', 'k.tenant_id', 'k.name', 'k.scopes', 'k.app_key', 'i.status as app_status', 'i.permissions as app_permissions'])
+      .where('k.key_hash', '=', hashApiKey(apiKey))
+      .where('k.revoked_at', 'is', null)
       .executeTakeFirst();
     if (!row) return null;
+    // Khoá app: kết nối phải đang bật và app còn cài trong bản này; quyền chỉ trong danh sách Permission của Core.
+    if (row.app_key && (row.app_status !== 'active' || !getAppManifest(row.app_key))) return null;
     // Ghi lần dùng cuối, không chặn request.
     void db.updateTable('api_keys').set({ last_used_at: new Date() }).where('id', '=', row.id).execute();
-    const perms = new Set<Permission>(row.scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? []));
-    return { tenantId: row.tenant_id, actor: `apikey:${row.id}`, actorName: row.name, kind: 'apikey', role: null, permissions: perms };
+    const perms = row.app_key
+      ? new Set<Permission>((row.app_permissions ?? []).filter((p): p is Permission => (PERMISSIONS as readonly string[]).includes(p)))
+      : new Set<Permission>(row.scopes.flatMap((s) => SCOPE_PERMISSIONS[s] ?? []));
+    return {
+      tenantId: row.tenant_id, actor: `apikey:${row.id}`, actorName: row.name, kind: 'apikey', role: null, permissions: perms,
+      ...(row.app_key ? { app: row.app_key } : {}),
+    };
   }
 
   const header = req.headers.authorization;
@@ -136,6 +150,26 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
   return null;
 }
 
+// [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): cổng route cho khoá app — đọc theo quyền, ghi chỉ danh sách đóng (cửa nạp, báo huỷ, đổi vé); mọi route ghi khác (phiếu tay, số dư đầu, tài khoản, thuế, route mới) bị từ chối
+/**
+ * Route GHI khoá app được gọi (ADR-0011 mức 2: app chỉ ghi sổ qua cửa nạp). Đóng: route ghi mới mặc định bị từ chối, thêm
+ * vào đây phải qua Nhóm Lõi (R-KER-2) và có luật chủ chứng từ ở Kernel. GET: theo quyền của từng route như khoá thường.
+ */
+export const APP_WRITE_ROUTES: ReadonlySet<string> = new Set([
+  'POST /api/v1/documents',          // cửa nạp cũ — postDocumentIn kiểm docKey `<app>:`
+  'POST /api/v1/documents/batch',    // nạp lô — cùng đường processDocument
+  'POST /api/v1/documents/submit',   // core.document.submit
+  'POST /api/v1/documents/cancel',   // báo huỷ — requestCancel kiểm docKey `<app>:`
+  'POST /api/v1/apps/ticket/exchange',
+]);
+
+/** Khoá app gọi route ghi ngoài APP_WRITE_ROUTES → FORBIDDEN (không lộ route có hay không: route lạ cũng FORBIDDEN). */
+export function assertAppRoute(method: string, routeUrl: string | undefined): void {
+  if (method === 'GET' || method === 'HEAD') return;
+  if (routeUrl && APP_WRITE_ROUTES.has(`${method} ${routeUrl}`)) return;
+  throw Errors.forbidden('Khoá app chỉ ghi qua cửa nạp chứng từ (ADR-0011 mức 2): route này không mở cho app');
+}
+
 /** Plugin: mọi route (trừ route khai config.public) bắt buộc xác thực. */
 export const authPlugin = fp(async (app: FastifyInstance) => {
   app.decorateRequest('auth', undefined);
@@ -145,6 +179,7 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
     if (!req.url.startsWith('/api/v1/') && req.url.split('?')[0] !== '/mcp') return;
     const auth = await resolveAuth(req);
     if (!auth) throw Errors.unauthorized();
+    if (auth.app) assertAppRoute(req.method, req.routeOptions.url);
     req.auth = auth;
     // Cô lập đơn vị ở tầng CSDL (RLS, PHASE-007): từ đây mọi kết nối của yêu cầu mang bizcity.tenant_id = đơn vị này.
     const rc = currentRequest();

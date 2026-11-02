@@ -39,3 +39,11 @@
 | `catalog:write` | `catalog:write`, `catalog:read` | Plugin tạo chi nhánh, đối tượng, mặt hàng |
 
 Phân hệ mới cần quyền riêng (ví dụ `payroll:approve`) → thêm vào bảng trên trong cùng PR với `core/auth.ts`.
+
+<!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá của app ngoài tiến trình — quyền theo kết nối app, không theo scopes; kết nối tắt / app gỡ → từ chối -->
+**Khoá của app ngoài tiến trình** (`api_keys.app_key`, ADR-0011 mức 2, migration 0051): không theo bảng trên. Quyền = đúng danh sách chủ đơn vị đồng ý lúc kết nối (`app_installations.permissions`, lấy từ `app.scopes` của manifest), chỉ trong `catalog:read`, `documents:read`, `documents:write`, `ledger:read`, `reports:read` — không bao giờ `users:write`, `settings:write`, `periods:lock`, `payments:approve*`, `documents:edit-all`, `documents:bypass-date-lock`. Kết nối đang tắt hoặc bản cài đã gỡ manifest app → khoá bị từ chối (`401`) như khoá thu hồi. Khoá app chỉ nộp / báo huỷ chứng từ `docKey` `<app>:…` ở mọi cửa nạp.
+
+<!-- [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: cổng route cho khoá app (APP_WRITE_ROUTES); bỏ catalog:write khỏi phạm vi app -->
+**Cổng route cho khoá app** (`APP_WRITE_ROUTES`, `core/auth.ts`): khoá app gọi được mọi route `GET` theo quyền của route, nhưng chỉ **ghi** được qua danh sách đóng — `POST /api/v1/documents`, `/documents/batch`, `/documents/submit`, `/documents/cancel`, `/apps/ticket/exchange`. Route ghi khác (phiếu tay, số dư đầu kỳ, tài khoản, thuế, cấu hình, `/mcp`, route thêm sau này) trả `403` dù khoá có quyền. Mở thêm route cho app = sửa Platform (R-KER-2) và phải có luật chủ chứng từ ở Kernel. Tạo / xoay khoá app qua `/api/v1/apps/:key/install` / `rotate` (quyền `users:write`), không qua `/api/v1/api-keys`; thu hồi ở màn Khoá API vẫn có hiệu lực.
+
+Vé iframe của app (`/api/v1/apps/:key/ticket`) ký bằng khoá dẫn xuất riêng từ `JWT_SECRET` (nhãn `bizcity.app.ticket`), `aud = bizcity.app-ticket`, ≤ 5 phút: **không** dùng được làm phiên `Bearer`. Bí mật webhook không lưu ở CSDL (dẫn xuất từ `JWT_SECRET` + muối). Đổi `JWT_SECRET` = mọi phiên, vé và bí mật webhook đều đổi: phải xoay khoá từng app.

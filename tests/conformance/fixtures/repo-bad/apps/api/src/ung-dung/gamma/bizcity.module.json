@@ -1,0 +1,18 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "acme.gamma",
+  "key": "gamma",
+  "kind": "addin",
+  "version": "0.1.0",
+  "label": "App mẫu CỐ Ý SAI",
+  "description": "SC-MOD-3: thư mục ung-dung/ là app ngoài tiến trình nhưng manifest khai kind \"addin\" (xem ../../../../../../expect.json).",
+  "owners": [
+    "@acme"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": [
+      "masterdata.read"
+    ]
+  }
+}

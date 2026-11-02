@@ -410,10 +410,11 @@
           ]
         },
         "SC-MOD-3": {
-          "findings": 2,
+          "findings": 3,
           "keys": [
             "missing:apps/api/src/phan-he/beta",
-            "key-dir:apps/api/src/phan-he/alpha"
+            "key-dir:apps/api/src/phan-he/alpha",
+            "kind:apps/api/src/ung-dung/gamma"
           ]
         },
         "SC-CON-2": {
@@ -508,6 +509,19 @@
           "keys": [
             "id:3",
             "idem:3"
+          ]
+        }
+      }
+    },
+    {
+      "root": "module-bad/app-xau",
+      "mode": "module",
+      "checks": {
+        "SC-CON-2": {
+          "min": 2,
+          "keys": [
+            "schema:/app/scopes/0:enum",
+            "schema:/:not"
           ]
         }
       }

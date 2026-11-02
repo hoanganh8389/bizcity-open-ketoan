@@ -148,7 +148,9 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   tenants: { group: 'platform', label: 'Đơn vị sử dụng', module: 'access', purpose: 'Mỗi công ty dùng phần mềm là một đơn vị; mọi dữ liệu đều có tenant_id.' },
   users: { group: 'platform', label: 'Người dùng', module: 'access', purpose: 'Tài khoản đăng nhập và vai trò.' },
   print_template_settings: { group: 'platform', label: 'Cấu hình mẫu in', term: 'Mẫu in', module: 'print-templates', purpose: 'Bật / tắt mẫu in, mẫu mặc định, chỉnh tiêu đề, số liên, chức danh ký… theo đơn vị, chi nhánh hoặc người dùng (màn HT05). Chỉ lưu phần khác mặc định; bố cục mẫu nằm trong code giao diện.' },
-  api_keys: { group: 'platform', label: 'Khoá API', module: 'access', purpose: 'Khoá cho hệ thống khác gửi sự kiện vào (chỉ lưu bản băm).' },
+  api_keys: { group: 'platform', label: 'Khoá API', module: 'access', purpose: 'Khoá cho hệ thống khác gửi sự kiện vào (chỉ lưu bản băm). Khoá có app_key là khoá của app ngoài tiến trình: quyền theo kết nối app.' },
+  // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — danh mục bảng: app_installations (0050, app ngoài tiến trình ADR-0011 mức 2)
+  app_installations: { group: 'platform', label: 'App đã kết nối', term: 'Ứng dụng kết nối', module: 'apps', purpose: 'App chạy riêng (ADR-0011 mức 2) đã kết nối với đơn vị: phạm vi quyền và sự kiện chủ đơn vị đồng ý, trạng thái bật / tắt, muối của bí mật webhook (bí mật không lưu).' },
   accounting_units: { group: 'platform', label: 'Đơn vị hạch toán', module: 'branches', purpose: 'Pháp nhân / đơn vị lập báo cáo; chi nhánh thuộc một đơn vị hạch toán.' },
   branches: { group: 'platform', label: 'Chi nhánh / cửa hàng', module: 'branches', purpose: 'Mỗi cửa hàng là một chi nhánh; code là mã cửa hàng dùng để đối chiếu với hệ thống bán hàng.' },
   warehouses: { group: 'platform', label: 'Kho của chi nhánh', module: 'warehouses', purpose: 'Danh mục kho (DM12): mỗi kho thuộc một chi nhánh; mã kho đối chiếu dòng nhập xuất; kho mặc định nhận dòng không ghi mã kho.' },

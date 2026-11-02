@@ -1,14 +1,15 @@
-# `@bizcity/module-sdk` — bản nháp API (v0)
+# `@bizcity/module-sdk` — API (v0.1)
 <!-- [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk. -->
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call có (action đọc); báo cáo về phan-he/ke-toan/reports; câu hỏi mở 3 chốt cách hai -->
 <!-- [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — ctx.documents có (2.7): nextNumber, saveVersion, versions, link, links, attach, attachments -->
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
+<!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — v0.1 có code (packages/module-sdk/src): defineModule, xuất lại chọn lọc, ctx.ledger.submit, ctx.settings.get; core.document.submit -->
 
-> **Trạng thái: bản nháp, chưa có code.** Kết quả PHASES 1.5. Gói thật dựng ở Phase 3 (3.1), sau khi có `packages/actions` (2.5) và `packages/audit` (2.6).
+> **Trạng thái: v0.1 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.query`, `settings.get`, `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`. Chưa: `ledger.cancel` / `get`, `data.masterdata`, `module.*`, `defineHook`, `ctx.data.tx` giới hạn `mod_<key>` (3.10), nạp module theo registry (3.13). Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu.
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
-> Thư mục này chỉ có tệp này: chưa có `package.json`, nên chưa là workspace.
+> Gói workspace `@bizcity/module-sdk` (chỉ phụ thuộc `@bizcity/platform`, `@ketoan/contracts`, `zod`; không phụ thuộc Kernel). Ví dụ module viết chỉ bằng SDK: `apps/api/test/module-sdk.test.ts`.
 
 ## 1. Nguyên tắc
 
@@ -100,7 +101,7 @@ interface ActionContext {
     describe(): SchemaDescription;  // thay schema-catalog
   };
   ledger: {
-    submit(doc: LedgerIntakeDoc): Promise<IngestResult>;           // bizcity_ledger_intake@1; reasonCode, không tài khoản
+    submit(doc: LedgerIntakeDoc): Promise<IngestResult>;           // ✅ v0.1: bizcity_ledger_intake@1; docKey `<module>:…`, sourceSystem = module; chỉ action ghi; cùng giao dịch (lỗi → huỷ cả action)
     cancel(docKey: string, reason: string): Promise<IngestResult>;
     get(docKey: string): Promise<LedgerDocStatus | null>;          // trạng thái + số chứng từ sổ, không trả dòng ledger_*
     query(q: LedgerQuery): Promise<LedgerQueryRow[]>;              // ✅ 3.7: đầu kỳ / phát sinh / cuối kỳ theo mã, chiều, mã hàng (@ketoan/contracts ledgerQuerySchema)
@@ -115,7 +116,7 @@ interface ActionContext {
     versions(docRef: DocRef): Promise<DocumentVersion[]>;  links(docRef: DocRef): Promise<DocumentLink[]>;  attachments(docRef: DocRef): Promise<AttachmentRef[]>;
   };
   events: { emit(type: string, data: unknown, opts?: { subject?: DocRef }): Promise<void> };  // ⏳ outbox, cùng giao dịch
-  settings: { get<T>(key: `bizcity.${string}`, scope?: SettingScope): T };                     // ⏳ registry
+  settings: { get<T>(key: `bizcity.${string}`): Promise<T> };                                    // ✅ v0.1: theo registry, chỉ khoá module sở hữu, phạm vi đơn vị
   evidence: { note(key: string, value: unknown): void };                                         // ⏳ ghi vào changes.notes
   actions: { call<I, O>(id: string, input: I, opts?: { idempotencyKey?: string }): Promise<O> }; // ✅ action đọc (2026-10-31, core/actions.ts); ghi ⏳ cần khoá idempotency
   trace: { step<T>(name: string, fn: () => Promise<T>): Promise<T> };  // ✅ 2026-11-01 (ADR-0010): span `step <module>.<tên>`; module KHÔNG import @opentelemetry/* (R-OBS-7)
