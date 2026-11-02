@@ -25,6 +25,8 @@
 | `./scripts/tao-ban-test.sh …` | Tạo bản cài test riêng từ bản đang chạy |
 | `./scripts/xoa-chung-tu.sh [mã đơn vị]` | Xoá sạch chứng từ + sổ của một đơn vị (chỉ khi `BOOK_MODE=tax`, sau sao lưu) |
 | `node scripts/mau-chuyen-kho.mjs [--xoa]` | Nạp / xoá dữ liệu mẫu chuyển kho |
+| `node scripts/so-tiep-theo.mjs migration \| adr \| kiem [--doi-so]` | Số migration / ADR kế tiếp chưa nhánh nào giữ; kiểm trước khi merge, tự đổi số khi lệch (RULE-REVIEW W-13) <!-- [2026-11-02 06:49 PM Johnny Chu - Chu Hoàng Anh] SO-DANG-KY — lệnh giữ chỗ số, cột tiến độ phase. --> |
+| `node scripts/tien-do-phase.mjs [--write]` | Cột Tiến độ của `docs/phases/README.md` từ lộ trình máy đọc |
 | `./scripts/kiem-nang-cap.sh [git-ref]` | Kiểm nâng cấp (R-DB-15): CSDL tạm chạy migration + dữ liệu mẫu của bản trước (mặc định tag v* mới nhất), rồi migration bản này, rồi kiểm toàn vẹn; CI job `migrate-upgrade` |
 | `./scripts/kiem-khoi-phuc.sh [tệp hoặc --fresh]` | Kiểm khôi phục (R-BAK-3): khôi phục bản sao lưu vào CSDL tạm, chạy kiểm toàn vẹn (Nợ = Có, chuỗi bằng chứng, trigger, migration), so số dòng, xoá CSDL tạm; ghi `backups/kiem-khoi-phuc.log` |
 | `node scripts/cai-preset.mjs <id> --api <url> (--token … | --tenant … --email …)` | Cài nhanh preset theo ngành qua HTTP API: chế độ ghi sổ + dữ liệu mẫu hư cấu; `--list`, `--dry-run`, `--no-sample` ([bizcity_preset@1](../contracts/BIZCITY-PRESET-v1.md)) |

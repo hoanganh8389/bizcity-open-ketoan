@@ -270,6 +270,14 @@
         "SC-DOC-1": {
           "findings": 1
         },
+        "SC-DOC-3": {
+          "findings": 3,
+          "keys": [
+            "dup:0001",
+            "row:ADR-0001-mau-a.md",
+            "index:ADR-0001-mau-b.md"
+          ]
+        },
         "SC-SEC-1": {
           "min": 1,
           "keys": [
