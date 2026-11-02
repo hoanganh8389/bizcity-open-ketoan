@@ -18,7 +18,9 @@
 import { sql } from 'kysely';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
-import { valuedMovements } from '../../modules/inventory/inventory-report.service.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): dòng nhập xuất có giá trị của phân hệ Kho qua cổng
+import { muaHangPorts } from './ports.js';
+const valuedMovementsPort = () => { const f = muaHangPorts().valuedMovements; if (!f) throw new Error('Báo cáo kho của Mua hàng cần phân hệ Kho (cổng valuedMovements chưa gắn)'); return f; };
 import { warehouseScope } from '../../modules/warehouses/warehouse.routes.js';
 import { unitsOf } from './gia-mua.js';
 import { inTransitRows } from './ton-max.js';
@@ -111,7 +113,7 @@ export async function stockLedgerBySku(trx: Db, tenantId: string, f: Filter & { 
 export async function stockOnHandBySku(trx: Db, tenantId: string, f: Filter) {
   const s = await scopeOf(trx, tenantId, f);
   const res = await sql<{ branch_id: string; branch_code: string; wh: string; sku: string; name: string; unit: string; qty: string; val: string | null; uncosted: string }>`
-    WITH mv AS (${valuedMovements({ tenantId, to: f.to, branchIds: s.branchIds, wh: s.wh, search: f.search?.trim() || undefined })}),
+    WITH mv AS (${valuedMovementsPort()({ tenantId, to: f.to, branchIds: s.branchIds, wh: s.wh, search: f.search?.trim() || undefined })}),
     g AS (
       SELECT mv.branch_id, mv.warehouse_code, mv.sku, MAX(mv.name) AS name, MAX(mv.unit) AS unit, SUM(mv.qty) AS qty, SUM(mv.val) AS val,
              COUNT(*) FILTER (WHERE mv.uncosted) AS uncosted

@@ -413,3 +413,10 @@ export const APPROVABLE_DOC_TYPES = ['sale', 'sale_return', 'purchase', 'purchas
 export type ApprovableDocType = (typeof APPROVABLE_DOC_TYPES)[number];
 export const postingModesSchema = z.object(Object.fromEntries(APPROVABLE_DOC_TYPES.map((t) => [t, z.enum(['auto', 'approve']).default('approve')])) as Record<ApprovableDocType, z.ZodDefault<z.ZodEnum<['auto', 'approve']>>>);
 export type PostingModes = z.infer<typeof postingModesSchema>;
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): hàm thuần đọc chế độ ghi sổ từ tenants.settings — ở contracts để Platform (route cấu hình) và Kernel cùng dùng
+/** Chế độ ghi sổ của đơn vị từ tenants.settings (thiếu / sai khuôn → mặc định). */
+export function readPostingModes(settings: unknown): PostingModes {
+  const raw = (settings as { postingModes?: unknown } | null)?.postingModes;
+  const parsed = postingModesSchema.safeParse(raw ?? {});
+  return parsed.success ? parsed.data : postingModesSchema.parse({});
+}

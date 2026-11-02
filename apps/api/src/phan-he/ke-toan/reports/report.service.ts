@@ -18,7 +18,8 @@ import { accountRepository, documentChecks } from '../../../kernel/public.js';
 import { reportRepository, type BalanceRow } from './report.repository.js';
 import { incomeStatement } from './income-statement.js';
 import { balanceSheet } from './balance-sheet.js';
-import { assetService } from '../../../modules/assets/asset.service.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): chi phí trả trước của phân hệ Tài sản qua cổng
+import { keToanPorts } from '../ports.js';
 import { cashBalances, postingSummary, taxSummary, type PostingSummaryGroup } from './extra-reports.js';
 import { cashFlow, cashJournal, purchaseJournal, salesJournal, voucherListing } from './journals.js';
 import { aging, expenseByDimension, profitByContract, type ExpenseGroup, agingByDue, debtByTerm } from './control-reports.js';
@@ -392,7 +393,7 @@ export const reportService = {
   /** Báo cáo tình hình tài chính (B01-DN): số cuối kỳ (hết "đến ngày") và số đầu kỳ (trước "từ ngày"). */
   async balanceSheet(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[] }) {
     const { branchIds } = await resolveScope(auth, q.branchCodes);
-    return balanceSheet({ tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, prepaidSplit: (date) => assetService.prepaidSplit(db, auth.tenantId, date) });
+    return balanceSheet({ tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, prepaidSplit: keToanPorts().prepaidSplit ? (date) => keToanPorts().prepaidSplit!(db, auth.tenantId, date) : undefined });
   },
 
   /** Bảng tổng hợp thuế GTGT theo chi nhánh. */

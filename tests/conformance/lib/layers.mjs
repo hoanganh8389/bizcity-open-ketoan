@@ -63,6 +63,8 @@ export const LAYER_MAP = [
   // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: điểm móc, thông báo trong ứng dụng (Platform)
   ['core/hooks.ts', 'P', 'module-sdk'],
   ['core/notify.ts', 'P', 'module-sdk'],
+  // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): cổng của Platform
+  ['core/ports.ts', 'P', 'module-sdk'],
   ['db/module-db.ts', 'P', 'data'],
   ['cli/', 'P', 'cli'],
   // Khoá có tiền tố gốc (packages/…) so với đường dẫn đầy đủ — gói có tên tệp trùng gói khác (index.ts của Kernel là K).
@@ -75,7 +77,8 @@ export const LAYER_MAP = [
   ['db/client.ts', 'P+A', 'data'],
   ['db/migrate.ts', 'P+A', 'data'],
   ['db/paths.ts', 'P', 'data'],
-  ['db/setup.ts', 'A', 'adapters/postgres'],
+  // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): setup.ts là điểm vào job (như main.ts)
+  ['db/setup.ts', 'P', 'apps/api'],
   ['db/seed.ts', 'K', 'kernel/seeds'],
   ['db/types.ts', 'P', 'data'],
 

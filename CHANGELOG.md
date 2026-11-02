@@ -213,6 +213,9 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 -->
+- **Phân hệ không còn ghi thẳng bảng của lõi** (SC-MOD-2 → 0, C-7): danh mục qua `@bizcity/platform/masterdata/catalog-ensure` (chỉ thêm mục thiếu), lý do định khoản qua Kernel `ensurePostingReason` (có bằng chứng), kỳ hợp đồng "đã chi" qua sự kiện `quy.payment-request.paid` (bên lịch hợp đồng tự cập nhật — chậm vài giây sau khi chi), chứng từ tham chiếu / cấu hình mua hàng qua hàm của bên sở hữu bảng.
+- **Import giữa các lớp đúng chiều** (SC-LAYER-2 → 0): Platform / danh mục gọi Kernel và adapter qua cổng `corePort` (gắn ở `app.ts`); Kế toán, Thuế, Mua hàng dùng Tài sản / Kho qua cổng do chính phân hệ khai (`phan-he/<x>/ports.ts`); add-in Xuất Excel đọc báo cáo qua route HTTP của lõi (đầu ra CSV không đổi, có test cả 17 tệp); `readPostingModes` sang `@ketoan/contracts`.
 - **Bộ máy tính Mua hàng thành gói riêng `@bizcity/mua-hang-domain`** (`modules/mua-hang/domain`, PHASES 2.8, A-06): `@ketoan/contracts/mua-hang` không còn. Code ngoài repo nhập `@ketoan/contracts/mua-hang` đổi sang `@bizcity/mua-hang-domain`; build thêm `npm run build -w @bizcity/mua-hang-domain` sau contracts.
 <!-- [2026-11-01 09:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — gộp main (ADR-0010 OTel) vào gói: tracing / version sang @bizcity/platform, cổng @bizcity/kernel bọc trace; migration ký theo vai đổi số 0047 → 0048; 7 tín hiệu lộ trình / tuân thủ trỏ đường dẫn gói; AUDIT-2026-11-01-PLUGIN-MVP -->
 - **Truy vết OpenTelemetry theo gói** (PHASE-010 + ADR-0010): `core/tracing.ts`, `core/version.ts` thuộc `@bizcity/platform` (`packages/platform/src/core/`), phụ thuộc `@opentelemetry/*` chuyển sang gói Platform; cổng `@bizcity/kernel` (`packages/kernel/src/index.ts`) bọc `traceKernelApi / traceKernelFn` như `kernel/public.ts` của main. Check SC-OBS-2 quét cả `packages/platform`, `packages/kernel`.

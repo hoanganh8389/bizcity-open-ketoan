@@ -14,7 +14,8 @@ import { ok } from '../../core/http.js';
 import { loginBodySchema } from './auth.schemas.js';
 import { authService } from './auth.service.js';
 import { z } from 'zod';
-import { loginWithWpTicket } from './wp-sso.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter WordPress qua cổng
+import { corePort } from '@bizcity/platform/core/ports';
 import { env } from '../../config/env.js';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
@@ -39,7 +40,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   r.post('/api/v1/auth/wp-sso', {
     config: { public: true },
     schema: { tags: ['Đăng nhập'], summary: 'Đăng nhập bằng vé của hệ thống quản trị', body: z.object({ ticket: z.string().min(10).max(8000) }), security: [] },
-    handler: async (req) => ok(await loginWithWpTicket(req.body.ticket)),
+    handler: async (req) => ok(await corePort('wpLogin')(req.body.ticket)),
   });
 
   r.get('/api/v1/auth/me', {
