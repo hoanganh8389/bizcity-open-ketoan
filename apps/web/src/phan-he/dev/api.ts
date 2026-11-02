@@ -241,3 +241,23 @@ export function useDiagRuns() {
 export function useDiagRun(id: string | null) {
   return useQuery({ queryKey: ['devtools', 'diag-run', id], queryFn: () => api.get<DiagRun>(`/api/v1/system/diagnostics/runs/${id}`), enabled: Boolean(id), staleTime: 300_000, ...OPTS });
 }
+
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: chế độ Vận hành — ops.health, ops.alerts
+
+export interface OpsHealth {
+  generatedAt: string;
+  level: 'ok' | 'warn' | 'bad';
+  lines: string[];
+  probes: { key: string; label: string; unit: 'bool' | 'ratio' | 'seconds' | 'count'; value: number | null; level: 'ok' | 'warn' | 'bad' | 'none'; alert: string; dashboard: string | null }[];
+  dashboards: { uid: string; title: string; url: string | null }[];
+}
+
+export interface OpsAlert { name: string; severity: string; state: string; startsAt: string; summary: string; description: string; dashboard: string | null; runbook: string }
+
+export function useOpsHealth(enabled: boolean) {
+  return useQuery({ queryKey: ['devtools', 'ops-health'], queryFn: () => api.get<OpsHealth>(`${BASE}/ops/health`), enabled, staleTime: 30_000, ...OPTS });
+}
+
+export function useOpsAlerts(enabled: boolean) {
+  return useQuery({ queryKey: ['devtools', 'ops-alerts'], queryFn: () => api.get<OpsAlert[]>(`${BASE}/ops/alerts`), enabled, staleTime: 30_000, ...OPTS });
+}

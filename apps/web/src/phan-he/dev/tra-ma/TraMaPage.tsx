@@ -9,6 +9,7 @@
  */
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { noiDungChoAI } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { errorText } from '@/lib/api';
@@ -108,7 +109,10 @@ function TraceBody({ t, tab: tab0, onTab, logsOverride }: { t: TraceView; tab: T
           {s.lines.map((l, i) => <li key={i}>{l}</li>)}
         </ul>
         {/* [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: tình huống khớp → màn Kịch bản (U7) */}
-        {s.playbook && <Link to={`/dev/kich-ban?th=${s.playbook}`}>Làm gì tiếp — kịch bản {s.playbook} →</Link>}
+        <div className="dev-answer-actions">
+          {s.playbook && <Link to={`/dev/kich-ban?th=${s.playbook}`}>Làm gì tiếp — kịch bản {s.playbook} →</Link>}
+          <ChepChoAI t={t} />
+        </div>
       </Answer>
       <div className="dev-cols">
         <div className="card">
@@ -160,6 +164,20 @@ function TraceBody({ t, tab: tab0, onTab, logsOverride }: { t: TraceView; tab: T
         </div>
       </div>
     </>
+  );
+}
+
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: "Chép cho AI" — khối markdown (tóm tắt, cây span rút gọn, chỗ tìm mã, việc phải làm) để dán vào công cụ AI code
+/** Chép nội dung noiDungChoAI (@ketoan/contracts) — chỉ mã và tên bước, không dữ liệu, không đơn vị. */
+function ChepChoAI({ t }: { t: TraceView }) {
+  const [done, setDone] = useState(false);
+  const copy = () => {
+    void navigator.clipboard?.writeText(noiDungChoAI(t)).then(() => { setDone(true); window.setTimeout(() => setDone(false), 2000); }, () => undefined);
+  };
+  return (
+    <button type="button" className="btn btn-sm" onClick={copy} title="Tóm tắt + cây span rút gọn + chỗ tìm mã + việc phải làm (test trước) — dán vào Claude Code, Cursor…">
+      {done ? 'Đã chép — dán vào công cụ AI' : 'Chép cho AI'}
+    </button>
   );
 }
 

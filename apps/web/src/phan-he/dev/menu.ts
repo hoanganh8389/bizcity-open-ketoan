@@ -1,8 +1,9 @@
 // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: menu Bàn điều tra (DEV01–DEV03), chỉ hiện khi có devtools:read
 // [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: DEV04–DEV08
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: DEV09 Vận hành
 /**
  * Menu phân hệ Nhà phát triển. Mọi mục gắn quyền devtools:read (chủ đơn vị, vai trò developer) — filterMenu ẩn với người khác.
- * Màn Vận hành (W5) thêm vào đây khi làm.
+ * Vận hành hiện với mọi người có quyền; màn tự nói vì sao chưa mở (Q019-2: bản cài một đơn vị + DEVTOOLS_OPS=true + chủ đơn vị).
  */
 import type { MenuItem } from '@ketoan/contracts';
 import { sec } from '../../layout/menu-helpers';
@@ -21,6 +22,7 @@ export const devMenu: MenuItem[] = [
       { key: 'dev-ghi-so', label: 'Ghi sổ', path: '/dev/ghi-so', code: 'DEV05', permission: 'devtools:read' },
       { key: 'dev-su-kien', label: 'Sự kiện', path: '/dev/su-kien', code: 'DEV06', permission: 'devtools:read' },
       { key: 'dev-toan-ven', label: 'Toàn vẹn', path: '/dev/toan-ven', code: 'DEV07', permission: 'devtools:read' },
+      { key: 'dev-van-hanh', label: 'Vận hành', path: '/dev/van-hanh', code: 'DEV09', permission: 'devtools:read' },
       sec('dev-huong-dan', 'Hướng dẫn'),
       { key: 'dev-kich-ban', label: 'Kịch bản', path: '/dev/kich-ban', code: 'DEV08', permission: 'devtools:read' },
     ],

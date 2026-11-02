@@ -307,6 +307,106 @@ export function logWindow(at?: string, now = new Date()): { from: Date; to: Date
   return { from: new Date(now.getTime() - 2 * half), to: now };
 }
 
+// ------------------------------------------------- Vận hành (W5) ----
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: chế độ Vận hành — PromQL cố định (đúng biểu thức alerts.yml), cảnh báo đang bật
+
+/** Bảng Grafana của bộ giám sát (infrastructure/monitoring/grafana/dashboards) — chỉ để dựng link, API không gọi Grafana. */
+export const DASHBOARDS = [
+  { uid: 'bizcity-tong-quan', title: '01 — Tổng quan' },
+  { uid: 'bizcity-api', title: '02 — API theo route' },
+  { uid: 'bizcity-postgresql', title: '03 — CSDL PostgreSQL' },
+  { uid: 'bizcity-so-cai', title: '04 — Sổ cái & sự việc' },
+  { uid: 'bizcity-kpi', title: '05 — KPI nghiệp vụ' },
+  { uid: 'bizcity-nhat-ky', title: '06 — Nhật ký & cảnh báo' },
+  { uid: 'bizcity-su-kien', title: '07 — Đường sự kiện' },
+  { uid: 'bizcity-don-vi', title: '08 — Đa đơn vị' },
+  { uid: 'bizcity-toan-ven', title: '09 — Toàn vẹn sổ' },
+] as const;
+
+export interface HealthProbe {
+  key: string;
+  label: string;
+  /** PromQL CỐ ĐỊNH — không nhận tham số (20-KIEN-TRUC §3.1); vế điều kiện của cảnh báo cùng tên trong alerts.yml. */
+  expr: string;
+  unit: 'bool' | 'ratio' | 'seconds' | 'count';
+  /** Ngưỡng của cảnh báo: vượt `bad` → bad, vượt `warn` → warn. `bool`: 0 = bad. */
+  warn?: number;
+  bad?: number;
+  alert: string;
+  dashboard: string;
+}
+
+export const PROMQL: readonly HealthProbe[] = [
+  { key: 'api-up', label: 'API trả lời /metrics', expr: 'min(up{job="api"})', unit: 'bool', alert: 'ApiDown', dashboard: 'bizcity-tong-quan' },
+  { key: 'error-rate', label: 'Tỉ lệ lỗi 5xx (5 phút)', expr: 'sum(rate(bizcity_http_requests_total{job="api", status=~"5.."}[5m])) / sum(rate(bizcity_http_requests_total{job="api"}[5m]))', unit: 'ratio', bad: 0.05, alert: 'HighErrorRate', dashboard: 'bizcity-api' },
+  { key: 'p95', label: 'Thời gian phản hồi p95 (5 phút)', expr: 'histogram_quantile(0.95, sum by (le) (rate(bizcity_http_request_duration_seconds_bucket{job="api"}[5m])))', unit: 'seconds', warn: 1, alert: 'HighLatency', dashboard: 'bizcity-api' },
+  { key: 'pg-up', label: 'PostgreSQL', expr: 'min(pg_up)', unit: 'bool', alert: 'PostgreSQLDown', dashboard: 'bizcity-postgresql' },
+  { key: 'pool', label: 'Bão hoà pool kết nối', expr: 'max((max by (instance) (bizcity_db_pool_connections{job="api", state="total"}) - max by (instance) (bizcity_db_pool_connections{job="api", state="idle"})) / max by (instance) (bizcity_db_pool_max{job="api"}))', unit: 'ratio', warn: 0.8, alert: 'DbPoolSaturation', dashboard: 'bizcity-postgresql' },
+  { key: 'diag-errors', label: 'Lỗi tự chẩn đoán sổ', expr: 'max(bizcity_diagnostics_errors{job="api"})', unit: 'count', bad: 0, alert: 'LedgerIntegrityError', dashboard: 'bizcity-toan-ven' },
+  { key: 'recon-age', label: 'Đối soát L3 gần nhất cách đây', expr: 'time() - max(bizcity_diagnostics_last_run_timestamp_seconds{job="api", layer="L3"})', unit: 'seconds', warn: 26 * 3600, alert: 'ReconciliationStale', dashboard: 'bizcity-toan-ven' },
+  { key: 'posting-error', label: 'Sự việc lỗi định khoản', expr: 'max(bizcity_ledger_events{job="api", status="error"})', unit: 'count', warn: 0, alert: 'PostingBacklog', dashboard: 'bizcity-so-cai' },
+  { key: 'outbox-dead', label: 'Việc giao sự kiện chết', expr: 'max(bizcity_outbox_deliveries{job="api", status="dead"})', unit: 'count', warn: 0, alert: 'OutboxDeadLetter', dashboard: 'bizcity-su-kien' },
+  { key: 'outbox-age', label: 'Việc giao chờ lâu nhất', expr: 'max(bizcity_outbox_oldest_pending_seconds{job="api"})', unit: 'seconds', warn: 300, alert: 'OutboxBacklog', dashboard: 'bizcity-su-kien' },
+];
+
+/** Mức của một số đo theo ngưỡng cảnh báo. Không có dữ liệu → 'none' (khác 0 — U5, Sổ tay TH-13). */
+export function probeLevel(p: HealthProbe, value: number | null): 'ok' | 'warn' | 'bad' | 'none' {
+  if (value === null || Number.isNaN(value)) return 'none';
+  if (p.unit === 'bool') return value >= 1 ? 'ok' : 'bad';
+  if (p.bad !== undefined && value > p.bad) return 'bad';
+  if (p.warn !== undefined && value > p.warn) return 'warn';
+  return 'ok';
+}
+
+/** Prometheus /api/v1/query của một biểu thức cố định → một số (vector rỗng → null). */
+export async function queryProm(expr: string): Promise<number | null> {
+  const { body } = await getJson('prometheus', '/api/v1/query', { query: expr });
+  const data = (body as { status?: string; data?: { result?: { value?: [number, string] }[] } } | null);
+  if (data?.status !== 'success' || !Array.isArray(data.data?.result)) throw unavailable('prometheus', 'bad-response');
+  const v = data.data!.result![0]?.value?.[1];
+  // 0/0 (không có lưu lượng) → "NaN", histogram rỗng → "+Inf": coi là không có dữ liệu, không phải số.
+  const n = v === undefined ? NaN : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+export interface AlertView {
+  name: string;
+  severity: string;
+  state: string;
+  startsAt: string;
+  summary: string;
+  description: string;
+  /** Đường bảng Grafana trong chú thích của luật (`/d/<uid>`), null nếu không có. */
+  dashboard: string | null;
+}
+
+/** Alertmanager /api/v2/alerts → cảnh báo đang bật (không lấy nhãn nào ngoài alertname / severity). */
+export async function listAlerts(): Promise<AlertView[]> {
+  const { body } = await getJson('alertmanager', '/api/v2/alerts', { active: 'true', silenced: 'false', inhibited: 'false' });
+  if (!Array.isArray(body)) throw unavailable('alertmanager', 'bad-response');
+  return (body as { labels?: Record<string, string>; annotations?: Record<string, string>; status?: { state?: string }; startsAt?: string }[])
+    .filter((a) => typeof a.labels?.alertname === 'string')
+    .map((a) => ({
+      name: a.labels!.alertname!,
+      severity: a.labels?.severity ?? '',
+      state: a.status?.state ?? '',
+      startsAt: a.startsAt ?? '',
+      summary: a.annotations?.summary ?? '',
+      description: a.annotations?.description ?? '',
+      dashboard: /^\/d\/[a-z0-9-]+$/.test(a.annotations?.dashboard ?? '') ? a.annotations!.dashboard! : null,
+    }))
+    .sort((x, y) => (x.severity === 'critical' ? 0 : 1) - (y.severity === 'critical' ? 0 : 1) || x.startsAt.localeCompare(y.startsAt));
+}
+
+/**
+ * Link Explore của Grafana 11 (khuôn `panes`, schemaVersion 1) mở một trace trong nguồn Tempo (uid `tempo`, provisioning). Đã mở
+ * thử trên Grafana 11.4 (2026-11-02). Grafana tự đăng nhập riêng; link mở tab mới, không nhúng (D019-1).
+ */
+export function grafanaTraceLink(base: string, traceId: string): string {
+  const panes = { a: { datasource: 'tempo', queries: [{ refId: 'A', datasource: { type: 'tempo', uid: 'tempo' }, queryType: 'traceql', query: traceId }], range: { from: 'now-7d', to: 'now' } } };
+  return `${base.replace(/\/+$/, '')}/explore?schemaVersion=1&orgId=1&panes=${encodeURIComponent(JSON.stringify(panes))}`;
+}
+
 // --------------------------------------------------------- giới hạn ----
 
 const calls = new Map<string, number[]>();

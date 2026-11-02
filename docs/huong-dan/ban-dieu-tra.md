@@ -16,6 +16,8 @@ Dành cho người viết phân hệ, tích hợp, add-in. Ai thấy: **chủ đ
 | Module nhận sự kiện không cập nhật | **Sự kiện** (DEV06) |
 | Nghi sổ sai | **Toàn vẹn** (DEV07) |
 | Có triệu chứng, chưa biết bắt đầu ở đâu | **Kịch bản** (DEV08) |
+| Muốn nhờ AI sửa lỗi | **Tra mã** → **Chép cho AI** |
+| Bản cài một đơn vị, xem sức khoẻ toàn hệ | **Vận hành** (DEV09) |
 
 ## Tra mã (DEV02)
 
@@ -56,6 +58,16 @@ Lượt tự chẩn đoán sổ gần nhất: từng mã kiểm, đạt / lỗi,
 ## Kịch bản (DEV08)
 
 Các tình huống của Sổ tay điều tra lỗi thành thẻ: triệu chứng, nút mở thẳng màn cần xem với bộ lọc điền sẵn, phần Bàn điều tra chưa trả lời được (số đo toàn hệ — người vận hành xem trên Grafana), và toàn văn các bước khi bấm **Xem đủ**. Tra mã nhận ra tình huống thì có link **Làm gì tiếp** tới đúng thẻ.
+
+<!-- [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: hướng dẫn Chép cho AI, Vận hành (DEV09). -->
+
+## Chép cho AI (ở Tra mã)
+
+Nút **Chép cho AI** dưới khối "Chuyện gì đã xảy ra" chép một khối văn bản để dán vào công cụ AI viết mã (Claude Code, Cursor…): tóm tắt, cây span rút gọn, chỗ tìm mã trong repo theo tên bước, việc phải làm (viết test tái hiện trước, không sửa Kernel). Khối này **chỉ có mã và tên bước** — không số tiền, tên khách, mã đơn vị. Đừng dán thêm ảnh màn có dữ liệu hay nội dung phiếu cho AI. Luật đầy đủ: mục "Sửa lỗi bằng AI từ Bàn điều tra" trong `AGENTS.md`.
+
+## Vận hành (DEV09)
+
+Chỉ mở với **chủ đơn vị** ở bản cài có **đúng một đơn vị** đã bật `DEVTOOLS_OPS=true`; người khác thấy lý do chưa mở. Có: mười số đo sức khoẻ toàn hệ (API, lỗi 5xx, độ chậm, CSDL, pool kết nối, tự chẩn đoán sổ, đối soát, ghi sổ, sự kiện) theo đúng ngưỡng cảnh báo, các cảnh báo đang bật kèm mục RUNBOOK-CANH-BAO, link 9 bảng Grafana. "Không có dữ liệu" khác 0 — thường là chưa có lưu lượng hoặc bộ thu chưa chạy. Ở chế độ này Tra mã có thêm nút **Mở trong Grafana** và thấy thông điệp / ngăn xếp lỗi trong log.
 
 ## Giới hạn
 
