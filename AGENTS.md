@@ -21,6 +21,15 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 3. Mọi đầu vào tài chính đi `postDocumentIn()` → luật định khoản → `ledgerService.post()`; sự việc Kernel tự lập (phiếu tay, kết chuyển, khấu hao, giá vốn) đi `eventStore` (`modules/documents/event-store.ts`). Phân hệ / add-in không gọi thẳng `ledgerService`, không ghi bảng nhân.
 4. Không viết số tài khoản trong code định khoản — tra qua `AccountResolver`.
 
+### Danh mục có phiên bản (ADR-0017 / ADR-0018 — chấp nhận 2026-11-02) <!-- [2026-11-02 09:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật danh mục cho agent -->
+
+- **Định danh ≠ mã ≠ phân loại.** Mọi liên kết trong sổ trỏ **định danh** (`item_id`, `partner_id`, `branch_id`), không trỏ mã. Mã có phiên bản + ngày hiệu lực; đổi mã không đổi sổ. Không thêm cột `sku` / `code` làm khoá ngoại ở bảng sổ; không khoá dữ liệu module bằng mã hàng.
+- **Tài khoản kế toán là ngoại lệ:** số hiệu là định danh (theo chế độ kế toán); không có `account_id` thay thế. Đổi số hiệu = phiên bản hệ thống tài khoản + ánh xạ + chứng từ chuyển số dư.
+- **Tài khoản đi từ chính sách hạch toán**, không suy từ tiền tố / đuôi mã hàng: luật định khoản không import `@bizcity/mua-hang-domain`.
+- **Đổi bản chất (156 → 152, khách → NCC, đổi nhóm hạch toán) là sự việc kế toán** (hạng 3): phân loại mới từ ngày, kế toán trưởng duyệt, chứng từ phân loại lại qua cửa nạp. Danh mục **không bao giờ** tự sinh bút toán.
+- **Dữ liệu ngoài (POS / ERP / plugin) qua validation trước khi chạm sổ:** không tự tạo mặt hàng từ chứng từ; mã lạ → trạm tiền kiểm với `IN-ITEM-*`. Tạo / sửa danh mục chỉ qua `core.item.*`, `core.partner.*`.
+- Chi tiết: [RULE-ITEM](docs/rules/RULE-ITEM.md), [PHASE-024 · 10](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/10-DANH-MUC-CO-PHIEN-BAN.md) (bốn hạng thay đổi), [· 50](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/50-TUAN-THU.md).
+
 ## Trước khi code: đồng bộ với `main`
 
 <!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — đồng bộ main trước mỗi lượt code (nhánh feat đứng sau main 18 commit, xung đột mua-hang/service.ts, dist contracts cũ). -->

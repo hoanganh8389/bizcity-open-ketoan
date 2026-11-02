@@ -13,6 +13,7 @@
 | Tài liệu | Một câu |
 |---|---|
 | [10-DANH-MUC-CO-PHIEN-BAN](10-DANH-MUC-CO-PHIEN-BAN.md) <!-- [2026-11-02 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — mở rộng theo ADR-0018 --> | **nguyên tắc chung cho mọi đối tượng** (ADR-0018): định danh ≠ mã ≠ số hiệu tài khoản; bốn hạng thay đổi và quy trình; tài khoản 156 → 152; hai cổng kiểm chuẩn đối chiếu Kernel; checklist plugin → ca chạy máy |
+| [50-TUAN-THU](50-TUAN-THU.md) <!-- [2026-11-02 09:50 PM Johnny Chu - Chu Hoàng Anh] --> | **dev và CEO tuân thủ thế nào**: năm lớp — SDK không cho sai, lỗi dạy tại chỗ (`why`), manifest `conformsTo` + `module check`, AGENTS.md cho AI của dev, trang Quy định cho CEO |
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | sáu nguyên tắc, vai trò từng trụ cột, **chuỗi** Plugin → Ledger (trả lời câu hỏi "có nhất thiết là…?"), thành phần Core cần thêm, quyết định D024-*, câu hỏi Q024-*, đợt W0–W4 |
 | [20-KIEN-TRUC](20-KIEN-TRUC.md) | mô hình dữ liệu (`items`, `item_codes`, `item_classification`, biến thể), Item Resolver, Accounting Mapping Resolver, validator (IN-ITEM-*, DG-ITEM-*, SC-ITEM-*), **số đo Prometheus + span Tempo**, migration K3 điền ngược |
 | [30-UI-UX](30-UI-UX.md) | trang **Quy định dữ liệu hàng hoá** (HT09), **thẻ mặt hàng** (định danh · lịch sử mã · hạch toán · nơi dùng · kiểm), **validator** trong form, **trace** một dòng sổ ngược về nguồn |

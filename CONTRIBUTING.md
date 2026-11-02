@@ -22,7 +22,7 @@ Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một
 3. Mọi đầu vào tài chính đi `postDocumentIn()` → luật định khoản → `ledgerService.post()`; sự việc Kernel tự lập đi `eventStore`. Module, add-in không gọi thẳng `ledgerService`, không ghi bảng nhân.
 4. Không viết số tài khoản trong code định khoản: tra qua `AccountResolver`.
 
-PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh.
+PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh. Từ 02/11/2026 thêm luật danh mục ([ADR-0018](docs/adr/ADR-0018-danh-muc-co-phien-ban-toan-framework.md)): sổ trỏ định danh, không trỏ mã; danh mục không sinh bút toán — xem [AGENTS.md](AGENTS.md) "Danh mục có phiên bản". <!-- [2026-11-02 09:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 -->
 
 ## 2. Bạn muốn đóng góp gì?
 

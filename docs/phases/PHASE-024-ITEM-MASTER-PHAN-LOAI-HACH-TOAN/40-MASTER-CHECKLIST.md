@@ -11,7 +11,7 @@
 |---|---|---|---|---|---|
 | S024-1 | Tài liệu W0: [README](README.md), [00](00-MASTER-PLAN.md), [20](20-KIEN-TRUC.md), [30](30-UI-UX.md); [ADR-0017](../../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md); [RULE-ITEM](../../rules/RULE-ITEM.md); CANON §3; roadmap 2.22 / 2.23 | W0 | P0 | — | ✅ 2026-11-02 |
 | S024-2 | Bản mẫu tĩnh [mockups/item-master.html](mockups/item-master.html): Quy định (HT09) · Thẻ mặt hàng · Trace | W0 | P0 | — | ✅ 2026-11-02 — chờ chủ duyệt bố cục |
-| S024-3 | Chủ duyệt D024-1..8, trả lời Q024-1..5; kế toán trưởng ký đặc tả K3 (W2) | W0 | P0 | — | ⛔ |
+| S024-3 | Chủ duyệt D024-1..8, Q024-1..5, ADR-0018; kế toán trưởng ký đặc tả K3 (W2) | W0 | P0 | — | ✅ 2026-11-02 chủ duyệt ("đồng ý những gì bro đưa ra"); ⛔ còn kế toán trưởng ký đặc tả K3 trước W2 |
 | S024-4 | Hợp đồng `bizcity_item_master@1` (`docs/contracts/BIZCITY-ITEM-MASTER-v1.md` + schema), `packages/contracts/src/item-master.ts`; `bizcity_ledger_intake@1` 1.4.0 (`itemId`, `barcode` trên dòng hàng); `bizcity-standard.json` năng lực `item.master`, `item.validation` planned | W1 | P0 | ☐ | ☐ |
 | S024-5 | Migration: `items`, `item_codes` (chỉ thêm), `item_classification` (theo ngày), RLS; điền từ `products` (song song, `products` chưa đổi) | W1 | P0 | ☐ | ☐ |
 | S024-6 | Item Resolver (`kernel/masterdata/item-resolver.ts`) + đệm theo phiên bản danh mục + span `intake.item.resolve` — ca T024-1 | W1 | P0 | ☐ | ☐ |
@@ -31,6 +31,10 @@
 | S024-20 | Hạng thay đổi 0–3 + Impact + Gate A (hạng 3): `core.<entity>.impact`, `reclassify` (mô phỏng → duyệt → kích hoạt), chứng từ phân loại lại qua cửa nạp; sự kiện `bizcity.masterdata.*.changed` | W2–W3 | P0 | ☐ | ☐ |
 | S024-21 | Tài khoản: phiên bản hệ thống tài khoản + ánh xạ + chứng từ chuyển số dư (nối ADR-0013); báo cáo nhiều kỳ đọc qua ánh xạ — K2 | W3 | P1 | ☐ | ☐ (có thể tách phase) |
 | S024-22 | HT09 → "Quy định dữ liệu danh mục"; thẻ khách hàng / chi nhánh cùng khuôn; hộp thoại "Thay đổi" tự xếp hạng | W4 | P1 | ☐ | ☐ |
+| S024-23 | Tuân thủ W0 ([50-TUAN-THU](50-TUAN-THU.md)): AGENTS.md mục "Danh mục có phiên bản", HUONG-DAN-LAM-VIEC điều cấm 11–12, CONTRIBUTING §1 | W0 | P0 | — | ✅ 2026-11-02 |
+| S024-24 | `why` + `rule` trong lỗi / remedy cho IN-ITEM-*, DG-ITEM-*, trigger bất biến; SC-FIX-2 | W1–W3 | P0 | ☐ | ☐ |
+| S024-25 | Manifest `conformsTo` (bizcity_module@1 1.5) bật ca chạy máy; `module check` in bảng tuân thủ; template starter có sẵn | W3 | P0 | ☐ | ☐ |
+| S024-26 | HT09 cho CEO (hậu quả tiền, ai làm), hộp thoại "Thay đổi" tự xếp hạng, hướng dẫn 1 trang | W4 | P1 | ☐ | ☐ |
 
 ## Ca bằng chứng
 
@@ -52,3 +56,4 @@
 |---|---|---|
 | 2026-11-02 21:20 | Claude Code | Chủ chỉ đạo: ghi sáu nguyên tắc + bất biến "Item Identity is Immutable. Item Code is Versioned. Posted Ledger is Immutable." vào kiến trúc nền tảng; mở phase cho Item Master & Accounting Classification, validator, số đo, trang quy định / trace / hướng dẫn ⇒ W0: ADR-0017, RULE-ITEM, README / 00 / 20 / 30, bản mẫu, roadmap 2.22 / 2.23. |
 | 2026-11-02 22:05 | Claude Code | Chủ hỏi "Versioned Master Data Contract áp cho tất cả đối tượng có hợp lý không? Phản biện" ⇒ ADR-0018 (đề xuất) + [10-DANH-MUC-CO-PHIEN-BAN](10-DANH-MUC-CO-PHIEN-BAN.md): đúng ở nguyên tắc, phân hạng A–E khi làm; tài khoản không có định danh thay thế; bốn hạng thay đổi; checklist plugin thành ca máy. S024-19..22. |
+| 2026-11-02 21:50 | Claude Code | Chủ duyệt ADR-0018 và các đề xuất; hỏi cách để dev / CEO hiểu và tuân thủ ⇒ [50-TUAN-THU](50-TUAN-THU.md) năm lớp; làm ngay lớp 4 (AGENTS.md, HUONG-DAN-LAM-VIEC, CONTRIBUTING). S024-23..26. |
