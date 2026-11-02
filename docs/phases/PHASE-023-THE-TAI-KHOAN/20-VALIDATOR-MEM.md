@@ -5,6 +5,16 @@
 > Chỉ đạo chủ dự án 2026-11-02: *"trong hệ thống và các phần khai báo danh mục tài khoản, tài khoản đối tượng, tài khoản hàng hoá… cần có UI UX **why** cụ thể đóng vai trò như một validator nhắc nhở, hướng dẫn, cảnh báo mềm."*
 > Bản mẫu: [mockups/form-danh-muc.html](mockups/form-danh-muc.html). Áp cho PHASE-024 (hàng hoá) qua cùng khung.
 
+## 0. Quyết định của chủ dự án (2026-11-02) <!-- [2026-11-02 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — chủ duyệt -->
+
+> *"đồng ý theo hướng đề xuất, cảnh báo mềm bắt buộc ghi lý do và tự chịu trách nhiệm do đã cảnh báo."*
+
+| # | Quyết định | Thể hiện |
+|---|---|---|
+| D023-6 | **Cảnh báo mềm bắt buộc ghi lý do** (≥ 5 ký tự) khi lưu; không có "ghi nhận một chạm" | hộp "Lý do bạn vẫn lưu" trước khi Ghi; `audit_logs` action `catalog.warn.ack` ghi mã cảnh báo, lý do, người, thời điểm, giá trị đã lưu |
+| D023-7 | **Người lưu tự chịu trách nhiệm vì đã được cảnh báo**: hệ thống không chặn, không hỏi lại, nhưng giữ bằng chứng | dòng ghi nhận hiện ở thẻ đối tượng / tài khoản ("đã lưu với cảnh báo ACC-HINT-003, lý do…, Nguyễn A, 02/11"); Bàn đánh giá (HT08) vai kiểm soát liệt kê các ghi nhận trong kỳ; số đo `bizcity_catalog_warn_ack_total{code}` |
+| D023-8 | Kế toán trưởng được **hạ một luật kế toán từ ⚠ xuống ℹ cho đơn vị mình**, qua **duyệt tại đơn vị có bằng chứng** (như rulepack, ADR-0016: quyền `conformance:approve`, lý do, gắn phiên bản luật) — không qua cài đặt tự do; không hạ được luật kỹ thuật và không hạ được ✘ | màn Kiểm chuẩn (HT06) thẻ "Luật nhắc tại đơn vị"; hết hiệu lực khi nội dung luật đổi |
+
 ## 1. Ý tưởng
 
 Thẻ tài khoản (30-UI-UX) giải thích **sau** khi người dùng gặp tài khoản. Khung "Vì sao" trong form giải thích **trước** khi họ lưu một khai báo sai: ngay lúc tích ô "lưỡng tính", chọn tài khoản kho cho nhóm hạch toán, bỏ trống MST của nhà cung cấp. Cùng một nguồn luật với trigger và bộ kiểm, nhưng nói trước, nói mềm, và nói bằng hậu quả nghiệp vụ.
@@ -41,7 +51,7 @@ Luật: **cảnh báo mềm không bao giờ thành chặn** bằng cách đổi
 
 - Khung nằm **dưới nhóm ô liên quan**, không che form, không popup. Tối đa 3 dòng hiện; dòng ▶ mở rộng tại chỗ.
 - Dòng ⚠ có nút sửa ngay (một chạm) và lựa chọn "ghi lý do khi lưu".
-- Nút Ghi đếm cảnh báo mềm: "Ghi (có 1 cảnh báo)". Bấm → hộp nhỏ: *"1 cảnh báo mềm. Lý do bạn vẫn lưu: [________]"* (≥ 5 ký tự) → lưu + `audit_logs` action `catalog.warn.ack` với mã cảnh báo, lý do, người.
+- Nút Ghi đếm cảnh báo mềm: "Ghi (có 1 cảnh báo)". Bấm → hộp nhỏ: *"1 cảnh báo mềm. Lý do bạn vẫn lưu: [________]"* (**bắt buộc**, ≥ 5 ký tự — D023-6) → lưu + `audit_logs` action `catalog.warn.ack` với mã cảnh báo, lý do, người, giá trị đã lưu. Câu dưới ô: *"Bạn đã được cảnh báo; lưu là tự chịu trách nhiệm về khai báo này."* (D023-7)
 - Mọi dòng có `rule` (mã luật) ẩn sau ⓘ; không chép điều luật vào form.
 
 ## 3. Nguồn luật: một danh mục máy đọc, ba nơi dùng
@@ -84,7 +94,7 @@ Nội dung `why` của luật kế toán do **kế toán trưởng duyệt** (nh
 ## 5. Luật của khung
 
 - Một ô đổi → tối đa **3** dòng mới; không hiện lại dòng đã ghi nhận trong phiên.
-- Cảnh báo mềm **không có nút "tắt loại cảnh báo này"**; chỉ ghi nhận từng lần. Số lần ghi nhận theo mã là tín hiệu để kế toán trưởng xem lại luật (hoặc người dùng).
+- Cảnh báo mềm **không có nút "tắt loại cảnh báo này"** cho người dùng; chỉ ghi nhận từng lần. Kế toán trưởng có thể hạ ⚠ → ℹ cho đơn vị qua duyệt có bằng chứng (D023-8). Số lần ghi nhận theo mã là tín hiệu để xem lại luật (hoặc người dùng).
 - Mỗi dòng ≤ 3 câu: hậu quả trước, cách sửa sau, link "học thêm" cuối (thẻ tài khoản / mặt hàng).
 - Không số tiền ngoài phạm vi quyền (R-DIAG-6); không chép điều luật.
 - Chặn giữ màu đỏ và không trộn vào khung mềm; chặn vẫn có "Vì sao?" (30-UI-UX §4).
@@ -96,4 +106,6 @@ Nội dung `why` của luật kế toán do **kế toán trưởng duyệt** (nh
 | S023-13 | Hợp đồng `bizcity_catalog_hint@1` (mở rộng account_card): luật `{ id, level, when, why, fix[], rule, learn }`; tệp theo entity; SC-ACC-2 kiểm `rule` có thật, `learn` trỏ thẻ có giải nghĩa, `when` chỉ dùng trường của entity | W1 |
 | S023-14 | Action đọc `core.<entity>.validate` cho account, partner, reason, posting-group, payment-method, tax-code, warehouse, branch (item: PHASE-024 S024-7); trả `findings[]` cùng khuôn `bizcity_remedy@1` + `why` | W1–W2 |
 | S023-15 | Component web `<WhyPanel>` + `<SaveWithWarnings>` (ghi nhận lý do → `catalog.warn.ack`); gắn vào ACC1, DM03, ACC18, nhóm hạch toán, hình thức TT, thuế, kho, chi nhánh; nhập Excel cột "Vì sao" | W2 |
+| S023-17 | Hạ luật tại đơn vị (D023-8): bảng `catalog_hint_overrides` chỉ thêm (mã luật, mức mới, phiên bản luật, người duyệt, lý do), action `core.catalog-hint.override` (`conformance:approve`), thẻ "Luật nhắc tại đơn vị" ở HT06; hết hiệu lực khi băm luật đổi | W2 |
+| S023-18 | Ghi nhận hiện ở thẻ đối tượng / tài khoản và Bàn đánh giá vai kiểm soát; `bizcity_catalog_warn_ack_total{code}` | W2 |
 | S023-16 | Danh mục khởi đầu §4 (~40 luật), kế toán trưởng duyệt phần kế toán; số đo `bizcity_catalog_warn_ack_total{code}` | W2 |
