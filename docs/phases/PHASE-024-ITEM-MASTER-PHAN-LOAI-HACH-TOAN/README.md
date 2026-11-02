@@ -6,12 +6,13 @@
 > **Mục tiêu:** Mỗi hàng hoá có **một định danh bất biến**; mã hàng có **phiên bản và ngày hiệu lực**; tài khoản đi từ **chính sách hạch toán có phiên bản**, không từ tiền tố mã; mọi mã hàng từ POS / ERP / kho / plugin **qua validation** trước khi chạm sổ; người dùng nhìn là thấy **thiếu cấu hình ở đâu và sửa từ gốc**.
 > **Việc lộ trình:** 2.22, 2.23
 > **Checklist công bố:** —
-> **Tuân thủ / nguyên tắc:** [ADR-0017](../../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md) · [R-ITEM](../../rules/RULE-ITEM.md) · R-MD · R-LEDGER · R-INTAKE (ADR-0014) · R-POST · R-DIAG · R-FIX (PHASE-022) · bốn câu không thương lượng
+> **Tuân thủ / nguyên tắc:** [ADR-0018](../../adr/ADR-0018-danh-muc-co-phien-ban-toan-framework.md) (đề xuất) · [ADR-0017](../../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md) · [R-ITEM](../../rules/RULE-ITEM.md) · R-MD · R-LEDGER · R-INTAKE (ADR-0014) · R-POST · R-DIAG · R-FIX (PHASE-022) · bốn câu không thương lượng
 > **Phụ thuộc phase:** 021 (trạm tiền kiểm, mã `IN-*`), 005 (chính sách có phiên bản), 012 (gói định khoản), 022 (`remedy`) · **Liên quan:** 018 / 019 (số đo, trace, Bàn điều tra), 023 (thẻ tài khoản — cùng ngôn ngữ "chú giải tại chỗ")
 > **Nguồn yêu cầu:** chủ dự án 2026-11-02 — *"chuẩn hóa thành một hệ thống Item Master & Accounting Classification nằm trong bộ hợp đồng dữ liệu (Core Contracts)… core master data validation, cùng bộ trụ cột accounts rule engine, conformance engine cùng triết lý luồng event-driven. Yếu nhất của các hệ thống hiện nay nằm ở phần validation này và cảnh báo."*
 
 | Tài liệu | Một câu |
 |---|---|
+| [10-DANH-MUC-CO-PHIEN-BAN](10-DANH-MUC-CO-PHIEN-BAN.md) <!-- [2026-11-02 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — mở rộng theo ADR-0018 --> | **nguyên tắc chung cho mọi đối tượng** (ADR-0018): định danh ≠ mã ≠ số hiệu tài khoản; bốn hạng thay đổi và quy trình; tài khoản 156 → 152; hai cổng kiểm chuẩn đối chiếu Kernel; checklist plugin → ca chạy máy |
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | sáu nguyên tắc, vai trò từng trụ cột, **chuỗi** Plugin → Ledger (trả lời câu hỏi "có nhất thiết là…?"), thành phần Core cần thêm, quyết định D024-*, câu hỏi Q024-*, đợt W0–W4 |
 | [20-KIEN-TRUC](20-KIEN-TRUC.md) | mô hình dữ liệu (`items`, `item_codes`, `item_classification`, biến thể), Item Resolver, Accounting Mapping Resolver, validator (IN-ITEM-*, DG-ITEM-*, SC-ITEM-*), **số đo Prometheus + span Tempo**, migration K3 điền ngược |
 | [30-UI-UX](30-UI-UX.md) | trang **Quy định dữ liệu hàng hoá** (HT09), **thẻ mặt hàng** (định danh · lịch sử mã · hạch toán · nơi dùng · kiểm), **validator** trong form, **trace** một dòng sổ ngược về nguồn |

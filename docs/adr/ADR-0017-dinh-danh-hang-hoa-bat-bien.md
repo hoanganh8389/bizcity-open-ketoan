@@ -3,6 +3,7 @@
 
 - Trạng thái: **Chấp nhận về nguyên tắc** — chỉ đạo của chủ dự án (Johnny Chu) 2026-11-02: *"Item Identity is Immutable. Item Code is Versioned. Posted Ledger is Immutable. … Đây nên là một Invariant cấp Kernel, bắt buộc mọi plugin POS, kho, ERP và các module cộng đồng phải tuân thủ."* Chi tiết thi hành D-1…D-9 dưới đây chờ chủ duyệt cùng [PHASE-024](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md).
 - Ngày: 2026-11-02 · Người quyết: Johnny Chu – Chu Hoàng Anh · Mức Kernel: **K3** khi thi hành (thêm bất biến Tier 0, đổi khoá của sổ phụ kho / dòng sổ từ mã hàng sang định danh) — hai người Nhóm Lõi + kế toán trưởng ký đặc tả; ADR này là bước đầu.
+- Phạm vi: ADR này là **thể hiện đầu tiên** (hàng hoá) của nguyên tắc chung [ADR-0018](ADR-0018-danh-muc-co-phien-ban-toan-framework.md) — Versioned Master Data Contract cho mọi đối tượng danh mục, có phân hạng; tài khoản kế toán là ngoại lệ (số hiệu, không định danh thay thế). <!-- [2026-11-02 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — nối ADR-0018 -->
 - Luật / hợp đồng liên quan: [R-ITEM](../rules/RULE-ITEM.md) (mới), [R-MD](../rules/RULE-MASTER-DATA.md), [R-LEDGER](../rules/RULE-LEDGER.md), [R-KER](../rules/RULE-KERNEL.md), [ADR-0009](ADR-0009-chinh-sach-ke-toan-co-phien-ban.md) (chính sách có phiên bản), [ADR-0014](ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) (trạm tiền kiểm), [bizcity_master_data@1](../contracts/BIZCITY-MASTER-DATA-v1.md), `bizcity_item_master@1` (đề xuất, PHASE-024).
 
 ## Bối cảnh

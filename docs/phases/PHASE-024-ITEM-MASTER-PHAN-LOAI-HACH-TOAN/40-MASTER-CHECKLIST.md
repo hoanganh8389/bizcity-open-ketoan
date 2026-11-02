@@ -27,6 +27,10 @@
 | S024-16 | `SC-ITEM-1..3` + ca tự kiểm `fixtures/repo-bad` | W3 | P0 | ☐ | ☐ |
 | S024-17 | Web: HT09 Quy định, thẻ mặt hàng (3 lớp), validator trong form + nhập Excel, đổi mã / gộp mã có xem trước, trace — ca T024-9 | W4 | P0 | ☐ | ☐ |
 | S024-18 | Hướng dẫn: `docs/huong-dan/mat-hang.md` (mã có phiên bản, phân loại, gộp), `quy-dinh-du-lieu-hang-hoa.md`; `docs/api/` cập nhật `itemId`; AGENTS.md "tạo mặt hàng qua `core.item.*`" | W4 | P1 | ☐ | ☐ |
+| S024-19 | `bizcity_master_data@2` (Versioned Master Data Contract): khuôn chung; `partner_codes`, `branch_codes`; mã ngoài theo nguồn; `core.partner.add-code / merge-preview`; ca CA-MD-02 / -03 ([10 §5](10-DANH-MUC-CO-PHIEN-BAN.md)) | W2 | P0 | ☐ | ⛔ chủ duyệt ADR-0018 <!-- [2026-11-02 10:05 PM Johnny Chu - Chu Hoàng Anh] --> |
+| S024-20 | Hạng thay đổi 0–3 + Impact + Gate A (hạng 3): `core.<entity>.impact`, `reclassify` (mô phỏng → duyệt → kích hoạt), chứng từ phân loại lại qua cửa nạp; sự kiện `bizcity.masterdata.*.changed` | W2–W3 | P0 | ☐ | ☐ |
+| S024-21 | Tài khoản: phiên bản hệ thống tài khoản + ánh xạ + chứng từ chuyển số dư (nối ADR-0013); báo cáo nhiều kỳ đọc qua ánh xạ — K2 | W3 | P1 | ☐ | ☐ (có thể tách phase) |
+| S024-22 | HT09 → "Quy định dữ liệu danh mục"; thẻ khách hàng / chi nhánh cùng khuôn; hộp thoại "Thay đổi" tự xếp hạng | W4 | P1 | ☐ | ☐ |
 
 ## Ca bằng chứng
 
@@ -47,3 +51,4 @@
 | Thời điểm thật | Phiên | Việc |
 |---|---|---|
 | 2026-11-02 21:20 | Claude Code | Chủ chỉ đạo: ghi sáu nguyên tắc + bất biến "Item Identity is Immutable. Item Code is Versioned. Posted Ledger is Immutable." vào kiến trúc nền tảng; mở phase cho Item Master & Accounting Classification, validator, số đo, trang quy định / trace / hướng dẫn ⇒ W0: ADR-0017, RULE-ITEM, README / 00 / 20 / 30, bản mẫu, roadmap 2.22 / 2.23. |
+| 2026-11-02 22:05 | Claude Code | Chủ hỏi "Versioned Master Data Contract áp cho tất cả đối tượng có hợp lý không? Phản biện" ⇒ ADR-0018 (đề xuất) + [10-DANH-MUC-CO-PHIEN-BAN](10-DANH-MUC-CO-PHIEN-BAN.md): đúng ở nguyên tắc, phân hạng A–E khi làm; tài khoản không có định danh thay thế; bốn hạng thay đổi; checklist plugin thành ca máy. S024-19..22. |
