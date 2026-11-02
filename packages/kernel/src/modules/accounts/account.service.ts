@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/accounts/account.service.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15: lưu trả phát hiện khung Vì sao; cảnh báo mềm có lý do → catalog.warn.ack, không lý do (API / plugin) → catalog.warn.unacked
 /**
  * Luật danh mục tài khoản:
  *  - Tài khoản con phải có tài khoản cha tồn tại; số tài khoản con bắt đầu bằng số cha.
@@ -9,6 +10,8 @@
  *    Nếu cha đã có phát sinh thì không cho thêm con (số liệu cũ sẽ treo ở cha).
  *  - Không đổi số tài khoản sau khi tạo.
  *  - Xoá: chỉ tài khoản chưa có con, chưa có phát sinh, chưa dùng ở danh mục khác. Tài khoản mẹ hết con thì ghi sổ trực tiếp lại.
+ *  - Khung Vì sao (PHASE-023): lưu luôn trả `findings`; còn cảnh báo mềm thì ghi nhận vào nhật ký — có lý do (giao diện bắt buộc,
+ *    D023-6) là `catalog.warn.ack`, không có lý do (API / plugin) là `catalog.warn.unacked`. Cảnh báo mềm không chặn lưu.
  */
 import { db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
@@ -16,6 +19,9 @@ import { writeAudit } from '@bizcity/platform/core/audit';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import { accountRepository, toAccountDto } from './account.repository.js';
 import type { AccountCreate, AccountDto, AccountListQuery, AccountUpdate } from './account.schemas.js';
+import type { CatalogFinding } from '@ketoan/contracts';
+import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
+import { accountHints, type AccountDraft } from './account.hints.js';
 
 export const accountService = {
   async list(auth: AuthContext, q: AccountListQuery): Promise<AccountDto[]> {
@@ -28,8 +34,15 @@ export const accountService = {
     return toAccountDto(a);
   },
 
-  async create(auth: AuthContext, input: AccountCreate): Promise<AccountDto> {
+  /** Khung Vì sao: phát hiện cho một bản khai báo (chỉ đọc). */
+  validate(auth: AuthContext, draft: AccountDraft, mode: 'create' | 'update'): Promise<CatalogFinding[]> {
+    return accountHints(db, auth.tenantId, draft, mode);
+  },
+
+  async create(auth: AuthContext, input: AccountCreate): Promise<AccountDto & { findings: CatalogFinding[] }> {
     return db.transaction().execute(async (trx) => {
+      // Chặn (ACC-BLOCK-*) đã có lỗi riêng ở dưới; chỉ giữ nhắc / hướng dẫn / cảnh báo mềm để trả về và ghi nhận.
+      const findings = (await accountHints(trx, auth.tenantId, input, 'create')).filter((f) => f.level !== 'block');
       let level = 1;
       if (input.parentCode) {
         const parent = await accountRepository.findByCode(trx, auth.tenantId, input.parentCode);
@@ -70,7 +83,8 @@ export const accountService = {
         is_cost: input.isCost,
       });
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'account.create', objectType: 'account', objectId: input.code, after: row });
-      return toAccountDto(row);
+      await recordWarnAck(trx, auth, 'account', input.code, findings, input.warnAck);
+      return { ...toAccountDto(row), findings };
     });
   },
 
@@ -91,10 +105,11 @@ export const accountService = {
     });
   },
 
-  async update(auth: AuthContext, code: string, input: AccountUpdate): Promise<AccountDto> {
+  async update(auth: AuthContext, code: string, input: AccountUpdate): Promise<AccountDto & { findings: CatalogFinding[] }> {
     return db.transaction().execute(async (trx) => {
       const before = await accountRepository.findByCode(trx, auth.tenantId, code);
       if (!before) throw Errors.notFound(`tài khoản ${code}`);
+      const findings = await accountHints(trx, auth.tenantId, { code, normalSide: input.normalSide, trackPartner: input.trackPartner, isDebt: input.isDebt, isActive: input.isActive }, 'update');
       const patch: Record<string, unknown> = {};
       if (input.name !== undefined) patch.name = input.name;
       if (input.nameEn !== undefined) patch.name_en = input.nameEn;
@@ -118,10 +133,11 @@ export const accountService = {
       if (input.isLedger !== undefined) patch.is_ledger = input.isLedger;
       if (input.isCost !== undefined) patch.is_cost = input.isCost;
       if (input.isActive !== undefined) patch.is_active = input.isActive;
-      if (Object.keys(patch).length === 0) return toAccountDto(before);
+      if (Object.keys(patch).length === 0) return { ...toAccountDto(before), findings };
       const after = await accountRepository.update(trx, auth.tenantId, code, patch);
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'account.update', objectType: 'account', objectId: code, before, after });
-      return toAccountDto(after!);
+      await recordWarnAck(trx, auth, 'account', code, findings, input.warnAck);
+      return { ...toAccountDto(after!), findings };
     });
   },
 };

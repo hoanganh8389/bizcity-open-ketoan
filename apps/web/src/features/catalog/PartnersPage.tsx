@@ -19,6 +19,8 @@ import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ListPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
+import { useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+import type { CatalogWarnAck } from '@ketoan/contracts';
 
 interface Partner {
   code: string; name: string; kind: string; taxCode: string | null; address: string | null; email: string | null; phone: string | null;
@@ -262,10 +264,14 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
   };
 
   const viewAgain = useViewAgain();
+  // Khung Vì sao (PHASE-023): nhà cung cấp cần MST, MST sai định dạng, trùng tên — cảnh báo mềm, lưu phải ghi lý do.
+  const why = useCatalogWhy('/api/v1/partners/validate', { code: (v.code ?? '').trim(), name: v.name ?? '', kind, alsoKinds: (v.alsoKinds ?? []).filter((k) => k === 'customer' || k === 'supplier'), taxCode: v.taxCode?.trim() || null }, Boolean(v.code?.trim()));
+  const ack = useWarnAck(why.findings);
   const save = useMutation({
-    mutationFn: () => {
+    mutationFn: (warnAck?: CatalogWarnAck) => {
       const code = (v.code ?? '').trim();
       const body = {
+        warnAck,
         name: v.name ?? '', kind, taxCode: v.taxCode?.trim() || undefined, address: v.address || undefined, email: v.email?.trim() || undefined, phone: v.phone?.trim() || undefined,
         groupCode: v.groupCode || null, isActive: v.isActive ?? true, paymentTermDays: v.paymentTermDays ?? null, creditLimit: v.creditLimit ?? null, note: v.note ?? '',
         contactName: v.contactName ?? '', bankAccountNo: v.bankAccountNo ?? '', bankAccountHolder: v.bankAccountHolder ?? '', bankName: v.bankName ?? '', maxOpenDocs: v.maxOpenDocs ?? null,
@@ -285,7 +291,7 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
       if (isNew) onClose(); else viewAgain[1]();
     },
   });
-  const submit = () => { if (validate()) save.mutate(); };
+  const submit = () => { if (validate()) ack.request((a) => save.mutate(a)); };
   const half = { gridColumn: 'span 2', alignSelf: 'start' } as const;
 
   return (
@@ -293,7 +299,7 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
       footer={<>
         <label className="checkbox chk-explain"><input type="checkbox" checked={v.isActive ?? true} onChange={(e) => set({ isActive: e.target.checked })} /> <span><b>{kind === 'supplier' ? 'Đang giao dịch' : 'Theo dõi'}</b><small>{(v.isActive ?? true) ? 'Đang dùng — hiện trong ô chọn khi lập phiếu' : 'Ngừng — không hiện khi lập phiếu mới, số liệu cũ giữ nguyên'}</small></span></label>
         <span className="muted" data-view-ok style={{ marginRight: 'auto', fontSize: 12 }}>{isNew ? 'Tạo mới' : `Tạo bởi ${v.createdBy || '—'}${v.createdTime ? ` lúc ${new Date(v.createdTime).toLocaleString('vi-VN', { hour12: false })}` : v.createdAt ? ` ngày ${new Date(v.createdAt).toLocaleDateString('vi-VN')}` : ''}`}</span>
-        <button className="btn btn-primary" disabled={save.isPending} onClick={submit}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button>
+        <button className="btn btn-primary" disabled={save.isPending || why.blocked} onClick={submit}>{ack.label}</button><button className="btn" onClick={onClose}>Thoát</button>
       </>}>
       <div className="full row" style={{ gap: 10, alignItems: 'center', flexWrap: 'wrap', background: 'var(--surface-2, #eef1f5)', padding: '6px 10px', borderRadius: 6 }}>
         {(() => {
@@ -420,6 +426,8 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
           </fieldset>
         </>
       )}
+      <WhyPanel findings={why.findings} />
+      <WarnAckBox ack={ack} />
       {invalid.length > 0 && <div className="alert alert-bad full">Chưa nhập đủ: {invalid.join(', ')}</div>}
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>

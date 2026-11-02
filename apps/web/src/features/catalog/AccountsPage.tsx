@@ -15,6 +15,8 @@ import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { AccountPicker } from '@/components/pickers';
+import { useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+import type { CatalogWarnAck } from '@ketoan/contracts';
 
 interface Account {
   code: string; name: string; nameEn: string | null; parentCode: string | null; level: number; normalSide: string; isPosting: boolean;
@@ -261,9 +263,14 @@ function AccountForm({ value, onClose }: { value: Partial<Account> & { isNew?: b
     <label key={k} className="checkbox"><input type="checkbox" checked={Boolean(v[k])} onChange={(e) => set({ [k]: e.target.checked } as Partial<Account>)} /> <span>{label}{NOTE[k] && <span className="muted"> ({NOTE[k]})</span>}</span></label>
   );
   const viewAgain = useViewAgain();
+  // Khung Vì sao (PHASE-023): kiểm thử bản khai báo khi các ô có hệ quả đổi; cảnh báo mềm lưu được nhưng phải ghi lý do.
+  const why = useCatalogWhy('/api/v1/accounts/validate', value.isNew
+    ? { mode: 'create', code: v.code ?? '', parentCode: v.parentCode || undefined, normalSide: v.normalSide ?? 'debit', trackPartner: Boolean(v.trackPartner), isDebt: Boolean(v.isDebt) }
+    : { mode: 'update', code: value.code ?? '', normalSide: v.normalSide, trackPartner: Boolean(v.trackPartner), isDebt: Boolean(v.isDebt), isActive: v.isActive !== false }, Boolean(v.code && v.code.length >= 3));
+  const ack = useWarnAck(why.findings);
   const save = useMutation({
-    mutationFn: () => {
-      const body: Record<string, unknown> = { name: v.name, nameEn: v.nameEn || undefined, normalSide: v.normalSide };
+    mutationFn: (warnAck?: CatalogWarnAck) => {
+      const body: Record<string, unknown> = { name: v.name, nameEn: v.nameEn || undefined, normalSide: v.normalSide, warnAck };
       for (const k of ALL_FLAGS) body[k] = Boolean(v[k]);
       return value.isNew
         ? api.post('/api/v1/accounts', { ...body, code: v.code, parentCode: v.parentCode || undefined })
@@ -276,7 +283,7 @@ function AccountForm({ value, onClose }: { value: Partial<Account> & { isNew?: b
     <Modal viewAgain={viewAgain} viewFirst={!value.isNew}
       title="Thông tin tài khoản"
       onClose={onClose}
-      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name} onClick={() => save.mutate()}>Ghi</button><button className="btn" onClick={onClose}>Đóng</button></>}
+      footer={<><button className="btn btn-primary" disabled={save.isPending || !v.code || !v.name || why.blocked} onClick={() => ack.request((a) => save.mutate(a))}>{ack.label}</button><button className="btn" onClick={onClose}>Đóng</button></>}
     >
       <fieldset className="fgroup">
         <legend>Thông tin chung</legend>
@@ -315,6 +322,8 @@ function AccountForm({ value, onClose }: { value: Partial<Account> & { isNew?: b
           {!value.isNew && <label className="checkbox"><input type="checkbox" checked={v.isActive === false} onChange={(e) => set({ isActive: !e.target.checked })} /> Ngừng sử dụng</label>}
         </div>
       </fieldset>
+      <WhyPanel findings={why.findings} onFix={(p) => set(p as Partial<Account>)} />
+      <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
   );

@@ -52,6 +52,7 @@ export const LAYER_MAP = [
   ['core/auth.ts', 'P', 'permissions'],
   ['core/security/', 'P', 'permissions'],
   ['core/audit.ts', 'P', 'audit'],
+  ['core/catalog-warn.ts', 'P', 'audit'], // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — ghi nhận cảnh báo mềm form danh mục
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/module-manifest.ts', 'P', 'module-sdk'],
   ['core/settings.ts', 'P', 'bizcity.config'],

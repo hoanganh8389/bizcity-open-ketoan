@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/accounts/account.routes.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15: POST /api/v1/accounts/validate; lưu trả meta.findings
 /**
  * Danh mục tài khoản.
  *   GET   /api/v1/accounts          danh sách (lọc search, postingOnly)
@@ -9,13 +10,15 @@
  *   POST  /api/v1/accounts          thêm
  *   PATCH /api/v1/accounts/:code    sửa (không đổi số tài khoản)
  *   DELETE /api/v1/accounts/:code   xoá (chưa có tài khoản con, chưa có phát sinh, chưa dùng ở danh mục khác)
+ *   POST  /api/v1/accounts/validate khung Vì sao: nhắc / hướng dẫn / cảnh báo mềm / chặn cho một bản khai báo (chỉ đọc)
+ * Thêm / sửa trả `meta.findings` (bizcity_catalog_hint@1); body nhận `warnAck: { reason, codes }` để ghi nhận cảnh báo mềm (D023-6).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
-import { accountCreateSchema, accountListQuerySchema, accountUpdateSchema } from './account.schemas.js';
+import { accountCreateSchema, accountListQuerySchema, accountUpdateSchema, accountValidateSchema } from './account.schemas.js';
 import { accountService } from './account.service.js';
 
 const tags = ['Danh mục: Tài khoản'];
@@ -36,16 +39,31 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await accountService.get(authOf(req), req.params.code)),
   });
 
+  r.post('/api/v1/accounts/validate', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Khung Vì sao: kiểm thử một bản khai báo tài khoản (chỉ đọc)', body: accountValidateSchema },
+    handler: async (req) => {
+      const { mode, ...draft } = req.body;
+      return ok({ findings: await accountService.validate(authOf(req), draft, mode) });
+    },
+  });
+
   r.post('/api/v1/accounts', {
     preHandler: requirePermission('catalog:write'),
     schema: { tags, summary: 'Thêm tài khoản', body: accountCreateSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await accountService.create(authOf(req), req.body))),
+    handler: async (req, reply) => {
+      const { findings, ...dto } = await accountService.create(authOf(req), req.body);
+      return reply.status(201).send(ok(dto, { findings }));
+    },
   });
 
   r.patch('/api/v1/accounts/:code', {
     preHandler: requirePermission('catalog:write'),
     schema: { tags, summary: 'Sửa tài khoản', params: codeParam, body: accountUpdateSchema },
-    handler: async (req) => ok(await accountService.update(authOf(req), req.params.code, req.body)),
+    handler: async (req) => {
+      const { findings, ...dto } = await accountService.update(authOf(req), req.params.code, req.body);
+      return ok(dto, { findings });
+    },
   });
 
   r.delete('/api/v1/accounts/:code', {
