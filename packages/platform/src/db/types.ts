@@ -17,6 +17,7 @@
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 mức 2): app_installations + api_keys.app_key (migration 0050)
 // [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — migration app ngoài tiến trình đổi số 0050 → 0051
 // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: module_registry, tenant_modules, event_deliveries.status 'skipped' (0052)
+// [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10: schema_migrations.module (0053)
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1588,6 +1589,8 @@ export interface DocumentAttachmentsTable {
 export interface SchemaMigrationsTable {
   name: string;
   applied_at: TimestampDefault;
+  /** NULL: Core; khoá module: migration của module (0053, ADR-0011 D4). */
+  module: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 /** Toàn bộ cơ sở dữ liệu. */

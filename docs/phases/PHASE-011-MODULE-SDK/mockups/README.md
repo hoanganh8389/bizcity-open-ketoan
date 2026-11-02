@@ -77,4 +77,7 @@ Mỗi dòng là một việc kiểm được (test hoặc check). Cột "Việc"
 | CK-13 | ✅ | Không có route tải mã; module là import tĩnh trong bản dựng |
 | CK-16 | ✅ | |
 
+<!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-4: CK-10, CK-11 -->
+**PR-4 (2026-11-02):** CK-10 ✅ (migration module chạy `SET LOCAL ROLE mod_<key>_owner`; `DELETE FROM public.ledger_entries` và `DO $ EXECUTE 'TRUNCATE public.audit_logs'` bị PostgreSQL từ chối, cả tệp huỷ). CK-11 ✅ (kiểm sau migration; chặn ở lúc **migrate**, chưa cho tới lúc activate — module local cài theo PR-5 nên hai bước là một).
+
 Khi PR-6 xong: chụp màn thật với dữ liệu demo, đặt cạnh bản mẫu trong `../evidence/PR6-<ngày>.md`.

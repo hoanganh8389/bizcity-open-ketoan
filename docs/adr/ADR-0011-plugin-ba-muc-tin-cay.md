@@ -131,7 +131,7 @@ App mức 2 tuân **cùng luật** với module trong tiến trình; chỉ khác
 - Hash tính trên **thư mục module** (mã đã dựng ở bản thật, mã nguồn ở máy dev), không riêng `dist`. Job cài đặt (`db/setup.ts`) đồng bộ hash của module đi kèm mỗi lần triển khai; sửa tệp module sau đó mà không triển khai → API bỏ module (D2). Hash chỉ chặn ở bản thật; máy dev cảnh báo.
 - Lệnh tạm là `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`; `bizcity module` (gói CLI) ở PR-5. `install / upgrade` của module đi kèm gộp vào `sync`; module local cài theo PR-5.
 - App ngoài tiến trình bật / tắt ở `app_installations` (PR-2b), không ở `tenant_modules`. Module lõi `ke-toan`, `he-thong` không tắt được.
-| PR-4 | migration theo module bằng `mod_<key>_owner` / `_rw` (D4) | K0 | 3.10 |
+| PR-4 ✅ 2026-11-02 <!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — PR-4 thi hành D4 (vai trò mod_<key>_owner / _rw, kiểm RLS sau migration, ctx.data.module) --> | migration theo module bằng `mod_<key>_owner` / `_rw` (D4) | K0 | 3.10 |
 | PR-5 | starter + `modules/pos-mini` (mức 1) + app mẫu mức 2 tối thiểu; lane `runtime` trong CI | K0 | 4.1–4.3 |
 | PR-6 | launcher "＋ Thêm phân hệ", trang Phân hệ (mức 1 + app mức 2 cùng một danh sách) | — | 3.8 |
 

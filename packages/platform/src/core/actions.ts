@@ -27,6 +27,7 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
+import { moduleRoles } from '../db/module-db.js';
 import { z } from 'zod';
 import { ERROR_CODES, docRefModule, type IngestResult, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
@@ -56,7 +57,16 @@ export interface ActionContext {
   readonly dryRun: boolean;
   /** Người gọi có quyền này không (quyền phụ trong handler, vd duyệt cấp 2). */
   can(permission: Permission): boolean;
-  data: { tx: Transaction<Database> };
+  // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10 (ADR-0011 D4): ctx.data.module — đọc ghi bảng của module bằng vai trò mod_<key>_rw (không chạm bảng Kernel ở tầng CSDL)
+  data: {
+    tx: Transaction<Database>;
+    /**
+     * Chạy `fn` với vai trò mod_<key>_rw của module (schema mod_<key>, khung nhìn bizcity_read khai trong manifest): PostgreSQL
+     * chặn mọi đọc / ghi bảng Kernel trong `fn`. Cùng giao dịch, cùng đơn vị (RLS). Xong (kể cả lỗi) trả về vai trò API.
+     * Gọi ctx.ledger / ctx.documents NGOÀI `fn`. Module chưa có CSDL riêng (`module migrate`) → NOT_READY.
+     */
+    module<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<T>;
+  };
   evidence: { note(key: string, value: unknown): void };
   /**
    * Phát sự kiện miền trong giao dịch của action (bizcity_event@1 STD-EVT-1): huỷ / dry-run thì không có sự kiện.
@@ -305,7 +315,21 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         requestId: call.requestId,
         dryRun,
         can: (p) => !!auth?.permissions.has(p),
-        data: { tx: trx },
+        data: {
+          tx: trx,
+          module: async (fn) => {
+            const { rw } = moduleRoles(def.id.split('.')[0]!);
+            const has = await sql<{ ok: boolean }>`SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ${rw}) AS ok`.execute(trx);
+            if (!has.rows[0]?.ok) throw Errors.notReady(`Module ${def.id.split('.')[0]} chưa có CSDL riêng (vai trò ${rw}): chạy "module migrate" khi cài module`);
+            const prev = (await sql<{ u: string }>`SELECT current_user AS u`.execute(trx)).rows[0]!.u;
+            await sql`SET LOCAL ROLE ${sql.id(rw)}`.execute(trx);
+            try {
+              return await fn(trx);
+            } finally {
+              await sql`SET LOCAL ROLE ${sql.id(prev)}`.execute(trx).catch(() => {});
+            }
+          },
+        },
         evidence: { note: (k, v) => { notes[k] = v; } },
         events: {
           emit: (type, data, o) => {

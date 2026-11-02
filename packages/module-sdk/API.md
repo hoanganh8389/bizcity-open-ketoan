@@ -7,7 +7,7 @@
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 <!-- [2026-11-02 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — v0.1 có code (packages/module-sdk/src): defineModule, xuất lại chọn lọc, ctx.ledger.submit, ctx.settings.get; core.document.submit -->
 
-> **Trạng thái: v0.1 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.query`, `settings.get`, `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`. Chưa: `ledger.cancel` / `get`, `data.masterdata`, `module.*`, `defineHook`, `ctx.data.tx` giới hạn `mod_<key>` (3.10), nạp module theo registry (3.13). Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu.
+> **Trạng thái: v0.1 có code (2026-11-02, PHASES 3.1, ADR-0011 D6)** — `packages/module-sdk/src/index.ts`. Có: `defineModule`, `defineAction`, `defineSubscriber`, kiểu `ActionContext` / `SubscriberDef` / `EventEnvelope`, `Errors`, `z`, tiền (`toCents`, `fromCents`, `sumMoney`…), `docRef`; trong `ctx`: `ledger.submit`, `ledger.query`, `settings.get`, `documents.*`, `events.emit`, `actions.call`, `evidence.note`, `trace.step`. Chưa: `ledger.cancel` / `get`, `data.masterdata`, `module.*`, `defineHook`, `data.masterdata`, `module.*`. Có từ 2026-11-02: `ctx.data.module(fn)` giới hạn `mod_<key>` (3.10), nạp module theo registry (3.13). Kết quả PHASES 1.5 (bản nháp) giữ ở §2–§6 để đối chiếu.
 > Nguồn: đếm import thực tế ngày 2026-10-30 trên `apps/api/src/phan-he/**` và `apps/api/src/addins/**`, kèm REUSE-MAP §3.4. Tên API theo 7 hợp đồng `docs/contracts/BIZCITY-*-v1.md`. Trạng thái năng lực theo [bizcity-standard.json](../../docs/standard/bizcity-standard.json).
 > Gói workspace `@bizcity/module-sdk` (chỉ phụ thuộc `@bizcity/platform`, `@ketoan/contracts`, `zod`; không phụ thuộc Kernel). Ví dụ module viết chỉ bằng SDK: `apps/api/test/module-sdk.test.ts`.
 
@@ -97,6 +97,7 @@ interface ActionContext {
 
   data: {
     tx: ModuleTransaction;          // Kysely chỉ thấy bảng mod_<key>.* + view bizcity_read.* (kiểu sinh theo module)
+    module<T>(fn: (tx) => Promise<T>): Promise<T>;  // ✅ 2026-11-02 (3.10): chạy fn bằng vai trò mod_<key>_rw — PostgreSQL chặn bảng Kernel; gọi ctx.ledger / documents NGOÀI fn
     masterdata: MasterdataReader;   // partners / products / branches / warehouses / units / taxCodes: get(code), list(filter)
     describe(): SchemaDescription;  // thay schema-catalog
   };

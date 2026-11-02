@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-4: CSDL theo module (3.10) -->
+- **CSDL riêng cho module** (PHASES 3.10, ADR-0011 D4, năng lực `data.migrations.module` → available): `npm run module -w @ketoan/api -- migrate <key>` chạy migration của module bằng vai trò `mod_<key>_owner` — chỉ sở hữu schema `mod_<key>`, PostgreSQL từ chối mọi lệnh chạm bảng sổ / Kernel; bảng module thiếu `tenant_id` / RLS / FORCE / chính sách thì huỷ. Lúc chạy, `ctx.data.module(fn)` đọc ghi bảng của module bằng `mod_<key>_rw`.
 <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — PR-3: registry module + vòng đời (3.13) -->
 - **Registry module và bật / tắt theo đơn vị** (PHASES 3.13, ADR-0011 D1, D2, năng lực `modules.lifecycle` → available):
   - Bản cài: bảng `module_registry` ghi phiên bản, hash thư mục, trạng thái mỗi phân hệ / add-in. Job cài đặt tự đồng bộ; lệnh `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`. Bản thật chỉ nạp module `active` đúng hash; lệch → bỏ riêng module đó, chẩn đoán DG-MOD-1 đỏ.
