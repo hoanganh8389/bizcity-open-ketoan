@@ -21,6 +21,10 @@
 | S023-10 | `remedy.why` (mở rộng `bizcity_remedy@1` 1.1): khai ở `validateLines` (đối tượng, tổng hợp, ngừng dùng), `ACCOUNT_WRONG_SIDE`, `UNBALANCED_ENTRY`, thiếu cấu hình hạch toán, `DEBT_MATCH_LEDGER`, IN-POST-002; web nút "Vì sao?" — ca T023-4 | W2 | P0 | ☐ | ☐ |
 | S023-11 | Chế độ học: khoá `bizcity.ui.learning_mode` (registry, theo người dùng), chữ T xem trước bằng định khoản thử trong giao dịch huỷ, nút "Thử" | W3 | P1 | ☐ | ☐ |
 | S023-12 | Trang Học theo vai: 3 bài (thu ngân · kế toán viên · kế toán trưởng) trên tenant mẫu, chấm ngay; gợi ý theo bảng điểm đầu vào (021) — ca T023-5; `docs/huong-dan/dao-tao-theo-vai-tro.md`, `the-tai-khoan.md` | W3 | P1 | ☐ | ☐ |
+| S023-13 | Hợp đồng `bizcity_catalog_hint@1` (luật `{ id, level, when, why, fix[], rule, learn }` theo entity) + SC-ACC-2 ([20 §3](20-VALIDATOR-MEM.md)) <!-- [2026-11-02 10:00 PM Johnny Chu - Chu Hoàng Anh] --> | W1 | P0 | ☐ | ☐ |
+| S023-14 | Action đọc `core.<entity>.validate` cho account, partner, reason, posting-group, payment-method, tax-code, warehouse, branch; `meta.findings[]` ở API upsert | W1–W2 | P0 | ☐ | ☐ |
+| S023-15 | Web `<WhyPanel>` + `<SaveWithWarnings>` (ghi nhận lý do → `catalog.warn.ack`); gắn 8 màn; nhập Excel cột "Vì sao" — ca T023-6 | W2 | P0 | ☐ | ☐ |
+| S023-16 | Danh mục luật khởi đầu [20 §4](20-VALIDATOR-MEM.md) (~40), kế toán trưởng duyệt phần kế toán; số đo `bizcity_catalog_warn_ack_total{code}` | W2 | P0 | — | ⛔ kế toán trưởng |
 
 ## Ca bằng chứng
 
@@ -31,9 +35,11 @@
 | T023-3 | ACC1 + ô chọn | tài khoản con không có mục riêng hiện mục cha kèm "theo 131"; nhãn khớp `normal_side` / `track_partner` |
 | T023-4 | Lập phiếu kế toán Nợ 335 thiếu đối tượng | lỗi có nút "Vì sao?" mở mục 335 *Vì sao bắt buộc đối tượng*; "Cách khắc phục" mở ô đối tượng |
 | T023-5 | Bài "131 / 331 lưỡng tính" trên tenant mẫu | 7 tình huống lập được, chấm đúng; tiến độ lưu theo người dùng |
+| T023-6 | Form ACC1: tạo 1311 bỏ "là công nợ"; đặt 1xx dư Có; mã không theo cha | hai cảnh báo mềm hiện đúng, Ghi đòi lý do và ghi `catalog.warn.ack`; mã sai cha bị chặn; cùng findings trả về qua `core.account.validate` và `meta.findings` của API |
 
 ## Log
 
 | Thời điểm thật | Phiên | Việc |
 |---|---|---|
 | 2026-11-02 21:20 | Claude Code | Chủ: "tạo phase để phát triển riêng cho thẻ tài khoản vì đây thuộc về bản chất của kế toán và cũng liên quan đến các rule ghi sổ, audit, bug lỗi" ⇒ W0: README / 00 / 30, bản mẫu, roadmap 4.8. |
+| 2026-11-02 22:00 | Claude Code | Chủ: "các phần khai báo danh mục… cần có UI UX why cụ thể đóng vai trò như một validator nhắc nhở, hướng dẫn, cảnh báo mềm" ⇒ [20-VALIDATOR-MEM](20-VALIDATOR-MEM.md) + bản mẫu form-danh-muc.html; S023-13..16, T023-6. |
