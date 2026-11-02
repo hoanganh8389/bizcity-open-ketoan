@@ -70,6 +70,15 @@ describe('Posting Gate — cảnh báo, không chặn', () => {
     expect((await post(sale('BAN-1231', '2025-12-31', 1))).body.data.status).toBe('posted');
   });
 
+  it('PHASE-022 R-FIX-1: cảnh báo và kết quả tự chẩn đoán trả kèm phương án có cấu trúc (bước, màn, kiểm lại)', async () => {
+    const adv = (await advisories('date=2025-12-30')).advisories.find((x) => x.code === 'PROFILE_DECLARED') as Adv & { remedy?: { steps: { screen?: { code: string } }[]; verify: { code?: string } } };
+    expect(adv.remedy?.steps.length).toBeGreaterThan(0);
+    expect(adv.remedy?.steps.some((s) => s.screen?.code === 'HT07')).toBe(true);
+    expect(adv.remedy?.verify.code).toBe('PROFILE_DECLARED');
+    const diag = (await call(ctx, 'GET', '/api/v1/system/diagnostics', undefined)).body.data as { checks: { code: string; remedy?: { stopTheLine?: boolean } }[] };
+    expect(diag.checks.find((c) => c.code === 'LEDGER_BALANCED')?.remedy?.stopTheLine).toBe(true);
+  });
+
   it('kỳ: tồn kho âm + việc cuối kỳ còn thiếu của đúng tháng (không có khoa-so); tháng khác không bị kéo theo', async () => {
     expect((await post(sale('BAN-0303', '2026-03-03', 2))).body.data.status).toBe('posted');
     const mar = await advisories('year=2026&month=3');

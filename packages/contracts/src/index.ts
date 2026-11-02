@@ -18,6 +18,8 @@ export * from './ledger-query.js';
 export * from './doc-refs.js';
 export * from './invoices.js';
 export * from './connections.js';
+// [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — phương án khắc phục có cấu trúc (bizcity_remedy@1)
+export * from './remedy.js';
 export * from './module.js';
 export * from './dvt.js';
 export * from './print-templates.js';

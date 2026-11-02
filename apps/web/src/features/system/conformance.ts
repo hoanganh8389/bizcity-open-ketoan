@@ -4,7 +4,9 @@
  * Dữ liệu Kiểm chuẩn phía giao diện (ADR-0012). Nhãn trạng thái luôn có CHỮ, không chỉ màu; không có điểm % (T5).
  * "Việc cần làm" chỉ là link sang màn thao tác sẵn có — không có nút nào sửa sổ, tắt kiểm hay "bỏ qua" (20-KIEN-TRUC §5).
  */
+// [2026-11-02 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: Advisory kèm remedy.
 import { useQuery } from '@tanstack/react-query';
+import type { Remedy } from '@ketoan/contracts';
 import { api } from '@/lib/api';
 
 export type CaseStatus = 'PASS' | 'FAIL' | 'ERROR' | 'NOT_APPLICABLE' | 'NOT_TESTED' | 'REVIEW_REQUIRED';
@@ -22,7 +24,7 @@ export interface ConformanceRun {
   cases: ConformanceCase[]; knownExclusions: { scope: string; reason: string }[]; disclaimer: string; actor: string; createdAt: string;
 }
 export interface RunSummary { id: string; asOf: string; result: RunResult; layerResults: Partial<Record<Layer, RunResult>>; counts: Record<string, number>; actor: string; createdAt: string }
-export interface Advisory { code: string; title: string; why: string; count: number; sample: string[] }
+export interface Advisory { code: string; title: string; why: string; remedy?: Remedy; count: number; sample: string[] }
 export interface AdvisoryReply { context: { kind: 'document' | 'period' }; advisories: Advisory[]; latestRun: { id: string; result: RunResult; createdAt: string } | null }
 
 export interface AccountingProfile { version: number; effectiveFrom: string; fiscalYearStartMonth: number; regime: string; entityType: string; note: string; createdBy: string; createdAt: string }

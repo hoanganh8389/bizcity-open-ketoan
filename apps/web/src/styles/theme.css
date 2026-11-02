@@ -1583,3 +1583,14 @@ table.grid > tbody > tr.dev-row-on > td, table.grid > tbody > tr.dev-row-on:nth-
 .cf-link { color: var(--brand-700); text-decoration: underline; }
 .cf-adv { margin: 6px 0; padding-left: 18px; display: grid; gap: 6px; }
 @media (max-width: 640px) { .cf-layers { grid-template-columns: 1fr; } }
+
+/* [2026-11-02 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: RemedyView — bước khắc phục ①②③, dải dừng ghi sổ, việc cấm. */
+.rm { display: grid; gap: 6px; }
+.rm-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.rm-steps li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rm-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--brand-700, #1e5bb8); color: #fff; font-size: 12px; flex: none; }
+.rm-no .rm-n { background: var(--bad); }
+.rm-text { flex: 1 1 240px; }
+.rm-role, .rm-meta { color: var(--ink-500); font-size: 12px; }
+.rm-stop { background: var(--bad-bg); color: var(--bad); border-radius: 6px; padding: 6px 10px; font-weight: 600; }
+.rm-compact .rm-steps { gap: 4px; }

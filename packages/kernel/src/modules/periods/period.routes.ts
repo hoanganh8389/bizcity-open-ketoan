@@ -32,6 +32,8 @@ import { periodRepository } from './period.repository.js';
 import { closingService } from '../closing/closing.service.js';
 import { documentChecks } from './document-checks.js';
 import { toNumber } from '@bizcity/platform/db/client';
+// [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: mục bảng kiểm khoá kỳ kèm phương án khắc phục (R-FIX-1)
+import { PERIOD_CHECK_REMEDIES } from './period-check.remedies.js';
 
 const tags = ['Kỳ kế toán'];
 const ym = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
@@ -271,16 +273,16 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
       // R-DIAG-4: lỗi toàn vẹn sổ (L3) chặn khoá kỳ — xem trước ở đây, không lưu lượt (lưu khi khoá thật).
       const diag = (await runDiagnostics({ tenantId, from, to: toDate }, { layer: 'L3' })).checks.filter((c) => c.level === 'error');
       return ok([
-        { key: 'integrity', label: 'Lỗi toàn vẹn sổ (tự chẩn đoán) — chặn khoá kỳ nếu không ghi lý do chấp nhận', count: diag.reduce((s, c) => s + c.count, 0), detail: diag.map((c) => `${c.code} ×${c.count}: ${c.sample.slice(0, 5).join(', ')}`).join('; ') },
-        { key: 'errors', label: 'Chứng từ nhận lỗi, chưa ghi sổ', count: checks.errors.count, link: '/bao-cao/kiem-tra-chung-tu' },
-        { key: 'entryMismatch', label: 'Chứng từ lệch với bút toán (đã ghi mà không có bút toán, đã huỷ mà còn bút toán)', count: checks.entryMismatch.count, link: '/bao-cao/kiem-tra-chung-tu' },
-        { key: 'balanceMismatch', label: 'Số dư lưu sẵn lệch với sổ cái', count: checks.balanceMismatch.count, link: '/bao-cao/kiem-tra-chung-tu' },
-        { key: 'orphanReturns', label: 'Phiếu trả lại không nối được phiếu gốc', count: checks.orphanReturns.count, link: '/bao-cao/kiem-tra-chung-tu' },
-        { key: 'paymentRequests', label: 'Yêu cầu thanh toán chờ duyệt hoặc chưa chi', count: Number(pending.rows[0]?.n ?? 0), amount: toNumber(pending.rows[0]?.s ?? 0), link: '/cong-no/yeu-cau-thanh-toan' },
-        { key: 'cogs', label: 'Chi nhánh có bán hàng nhưng chưa tính giá vốn', count: noCogs.rows.length, detail: list(noCogs.rows), link: '/nghiep-vu/tinh-gia-von' },
-        { key: 'closing', label: 'Chi nhánh có phát sinh nhưng chưa kết chuyển lãi lỗ', count: notClosed.rows.length, detail: list(notClosed.rows), link: '/nghiep-vu/ket-chuyen' },
-        { key: 'closingStale', label: 'Chi nhánh có kết chuyển đã lỗi thời (số liệu hoặc quy tắc đổi sau khi kết chuyển)', count: closing.staleBranches.length, detail: closing.staleBranches.join(', '), link: '/nghiep-vu/ket-chuyen' },
-        { key: 'closingResidual', label: 'Chi nhánh đã kết chuyển mà doanh thu, chi phí, 911 còn số dư', count: closing.residuals.length, detail: closing.residuals.map((r) => `${r.branchCode}: ${r.accounts.join(', ')}`).join('; '), link: '/bao-cao/can-doi-phat-sinh' },
+        { key: 'integrity', remedy: PERIOD_CHECK_REMEDIES.integrity, label: 'Lỗi toàn vẹn sổ (tự chẩn đoán) — chặn khoá kỳ nếu không ghi lý do chấp nhận', count: diag.reduce((s, c) => s + c.count, 0), detail: diag.map((c) => `${c.code} ×${c.count}: ${c.sample.slice(0, 5).join(', ')}`).join('; ') },
+        { key: 'errors', remedy: PERIOD_CHECK_REMEDIES.errors, label: 'Chứng từ nhận lỗi, chưa ghi sổ', count: checks.errors.count, link: '/bao-cao/kiem-tra-chung-tu' },
+        { key: 'entryMismatch', remedy: PERIOD_CHECK_REMEDIES.entryMismatch, label: 'Chứng từ lệch với bút toán (đã ghi mà không có bút toán, đã huỷ mà còn bút toán)', count: checks.entryMismatch.count, link: '/bao-cao/kiem-tra-chung-tu' },
+        { key: 'balanceMismatch', remedy: PERIOD_CHECK_REMEDIES.balanceMismatch, label: 'Số dư lưu sẵn lệch với sổ cái', count: checks.balanceMismatch.count, link: '/bao-cao/kiem-tra-chung-tu' },
+        { key: 'orphanReturns', remedy: PERIOD_CHECK_REMEDIES.orphanReturns, label: 'Phiếu trả lại không nối được phiếu gốc', count: checks.orphanReturns.count, link: '/bao-cao/kiem-tra-chung-tu' },
+        { key: 'paymentRequests', remedy: PERIOD_CHECK_REMEDIES.paymentRequests, label: 'Yêu cầu thanh toán chờ duyệt hoặc chưa chi', count: Number(pending.rows[0]?.n ?? 0), amount: toNumber(pending.rows[0]?.s ?? 0), link: '/cong-no/yeu-cau-thanh-toan' },
+        { key: 'cogs', remedy: PERIOD_CHECK_REMEDIES.cogs, label: 'Chi nhánh có bán hàng nhưng chưa tính giá vốn', count: noCogs.rows.length, detail: list(noCogs.rows), link: '/nghiep-vu/tinh-gia-von' },
+        { key: 'closing', remedy: PERIOD_CHECK_REMEDIES.closing, label: 'Chi nhánh có phát sinh nhưng chưa kết chuyển lãi lỗ', count: notClosed.rows.length, detail: list(notClosed.rows), link: '/nghiep-vu/ket-chuyen' },
+        { key: 'closingStale', remedy: PERIOD_CHECK_REMEDIES.closingStale, label: 'Chi nhánh có kết chuyển đã lỗi thời (số liệu hoặc quy tắc đổi sau khi kết chuyển)', count: closing.staleBranches.length, detail: closing.staleBranches.join(', '), link: '/nghiep-vu/ket-chuyen' },
+        { key: 'closingResidual', remedy: PERIOD_CHECK_REMEDIES.closingResidual, label: 'Chi nhánh đã kết chuyển mà doanh thu, chi phí, 911 còn số dư', count: closing.residuals.length, detail: closing.residuals.map((r) => `${r.branchCode}: ${r.accounts.join(', ')}`).join('; '), link: '/bao-cao/can-doi-phat-sinh' },
       ]);
     },
   });

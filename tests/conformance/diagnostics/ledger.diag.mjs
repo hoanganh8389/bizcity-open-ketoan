@@ -173,12 +173,42 @@ export const checks = [
       return { examined: rows.length, findings };
     },
   },
+  // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: DG-PLAN-1 DEBT_MATCH_LEDGER, DG-PLAN-4 TRANSIT_NONZERO có SQL thật (cùng chữ với balance.diagnostics.ts); giữ mã DG-PLAN-* để bảng điểm không đổi mã.
+  sqlCheck({
+    id: 'DG-PLAN-1', code: 'DEBT_MATCH_LEDGER', title: 'Khoản công nợ còn lại theo đối tượng = số dư tài khoản công nợ trên sổ cái',
+    rules: ['R-LEDGER-11'], conf: [], tier: 2, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM (SELECT tenant_id, partner_id, account_code, sum(ledger) AS ledger, sum(debt) AS debt FROM (
+            SELECT l.tenant_id, l.partner_id, l.account_code, sum(l.debit - l.credit) AS ledger, 0::numeric AS debt
+              FROM ledger_lines l
+             WHERE l.partner_id IS NOT NULL AND l.posting_date <= current_date
+               AND l.account_code IN (SELECT DISTINCT d2.account_code FROM debt_items d2 WHERE d2.tenant_id = l.tenant_id) GROUP BY 1, 2, 3
+            UNION ALL
+            SELECT d.tenant_id, d.partner_id, d.account_code, 0::numeric, sum(CASE WHEN d.side = 'debit' THEN d.amount - d.settled_amount ELSE d.settled_amount - d.amount END)
+              FROM debt_items d WHERE d.doc_date <= current_date GROUP BY 1, 2, 3) u GROUP BY 1, 2, 3) p`,
+    sql: `SELECT t.code AS tenant, coalesce(pt.code, p.partner_id::text) || ':' || p.account_code AS key, NULL AS detail
+            FROM (SELECT tenant_id, partner_id, account_code, sum(ledger) AS ledger, sum(debt) AS debt FROM (
+            SELECT l.tenant_id, l.partner_id, l.account_code, sum(l.debit - l.credit) AS ledger, 0::numeric AS debt
+              FROM ledger_lines l JOIN accounts a ON a.tenant_id = l.tenant_id AND a.code = l.account_code AND a.is_debt
+             WHERE l.partner_id IS NOT NULL AND l.posting_date <= current_date GROUP BY 1, 2, 3
+            UNION ALL
+            SELECT d.tenant_id, d.partner_id, d.account_code, 0::numeric, sum(CASE WHEN d.side = 'debit' THEN d.amount - d.settled_amount ELSE d.settled_amount - d.amount END)
+              FROM debt_items d WHERE d.doc_date <= current_date GROUP BY 1, 2, 3) u GROUP BY 1, 2, 3) p JOIN tenants t ON t.id = p.tenant_id LEFT JOIN partners pt ON pt.id = p.partner_id
+           WHERE abs(p.ledger - p.debt) >= 1 ORDER BY 1, 2 LIMIT 200`,
+  }),
+  sqlCheck({
+    id: 'DG-PLAN-4', code: 'TRANSIT_NONZERO', title: 'Tài khoản hàng / tiền đang chuyển giữa chi nhánh về 0 sau 30 ngày',
+    rules: [], conf: [], tier: 2, enforce: 'info', weight: 2,
+    count: "SELECT count(*)::int AS n FROM posting_defaults WHERE key IN ('goods_in_transit', 'cash_in_transit')",
+    sql: `SELECT t.code AS tenant, x.account_code AS key, NULL AS detail
+            FROM (SELECT l.tenant_id, l.account_code, sum(l.debit - l.credit) AS bal FROM ledger_lines l
+                   WHERE l.account_code IN (SELECT a.code FROM accounts a WHERE a.tenant_id = l.tenant_id AND EXISTS (SELECT 1 FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key IN ('goods_in_transit', 'cash_in_transit') AND a.code LIKE d.account_code || '%')) AND l.posting_date <= current_date - 30 GROUP BY 1, 2) x
+            JOIN tenants t ON t.id = x.tenant_id
+           WHERE abs(x.bal) >= 1 ORDER BY 1, 2 LIMIT 200`,
+  }),
   // Chưa làm được bằng SQL thuần (cần AccountResolver / quy tắc tài khoản) — giữ chỗ để bảng điểm thấy khoảng trống.
   ...[
-    ['DG-PLAN-1', 'DEBT_MATCH_LEDGER', 'Σ debt_items mở = số dư tài khoản công nợ theo đối tượng', ['R-LEDGER-11']],
     ['DG-PLAN-2', 'TAX_BOOK_MATCH', 'Sổ hoá đơn = phát sinh thuế GTGT theo kỳ', []],
     ['DG-PLAN-3', 'COST_FILL_OPEN', 'Không còn dòng cost_fill = 0 ở tháng đã qua', []],
-    ['DG-PLAN-4', 'TRANSIT_NONZERO', 'Tài khoản trung gian (hàng đi đường, tiền đang chuyển) về 0', []],
   ].map(([id, code, title, rules]) => ({
     id, code, title, gate: 'CONF-RUN', contract: 'kernel',
     rules, conf: [], tier: 1, enforce: 'planned', phase: 'Phase 2', weight: 2,
