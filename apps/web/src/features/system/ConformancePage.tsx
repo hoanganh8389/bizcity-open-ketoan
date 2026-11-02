@@ -52,7 +52,7 @@ export function ConformancePage() {
       ) : (
         <>
           <div className="cf-head card card-body">
-            <div><span className={`badge ${RESULT[r.result].cls}`}>{RESULT[r.result].text}</span> <span className="muted">· nhãn: {r.label}</span>{(r.approvalBasis === 'local' || r.approvalBasis === 'mixed') && <span className="badge badge-info" style={{ marginLeft: 6 }} title="Có ca đạt dựa trên duyệt tại đơn vị (ADR-0014)">có duyệt tại đơn vị</span>}</div>
+            <div><span className={`badge ${RESULT[r.result].cls}`}>{RESULT[r.result].text}</span> <span className="muted">· nhãn: {r.label}</span>{(r.approvalBasis === 'local' || r.approvalBasis === 'mixed') && <span className="badge badge-info" style={{ marginLeft: 6 }} title="Có ca đạt dựa trên duyệt tại đơn vị (ADR-0015)">có duyệt tại đơn vị</span>}</div>
             <div className="muted">
               Lượt {dateTime(r.createdAt)} ({who(r.actor)}) · ngày đánh giá {r.asOf} · kho rulepack {r.kitVersion ?? '—'}
               {' · '}{r.rulepacks.filter((p) => p.status === 'approved').length}/{r.rulepacks.length} rulepack đã duyệt
@@ -140,7 +140,7 @@ function Matrix({ cases, rulepacks }: { cases: ConformanceCase[]; rulepacks: Con
                 <td>{(c.legal_basis ?? []).map((b) => (
                   <div key={`${b.source_id}${b.provision_ref}`}>{b.label}{b.provision_ref && b.provision_ref !== 'REVIEW_REQUIRED' ? ` · ${b.provision_ref}` : ''} <span className={`badge ${b.review_status === 'reviewed' ? 'badge-ok' : 'badge-gray'}`}>{b.review_status === 'reviewed' ? 'đã rà' : 'chưa rà'}</span></div>
                 ))}</td>
-                <td><span className={`badge ${STATUS[c.status].cls}`} title={STATUS[c.status].hint}>{STATUS[c.status].text}</span>{c.approval === 'local' && <div><span className="badge badge-info" title="Rulepack được duyệt tại đơn vị (ADR-0014)">duyệt tại đơn vị</span></div>}</td>
+                <td><span className={`badge ${STATUS[c.status].cls}`} title={STATUS[c.status].hint}>{STATUS[c.status].text}</span>{c.approval === 'local' && <div><span className="badge badge-info" title="Rulepack được duyệt tại đơn vị (ADR-0015)">duyệt tại đơn vị</span></div>}</td>
                 <td><button type="button" className="btn btn-xs btn-ghost" onClick={() => setOpen(open === c.id ? null : c.id)} aria-expanded={open === c.id}>{open === c.id ? 'Ẩn' : 'Vì sao'}</button></td>
                 <td>{todo.length ? todo.map((t) => <Link key={t.path} className="cf-todo" to={t.path}>{t.label}</Link>) : <span className="muted">—</span>}</td>
               </tr>
@@ -160,7 +160,7 @@ function Matrix({ cases, rulepacks }: { cases: ConformanceCase[]; rulepacks: Con
   );
 }
 
-/** Rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị (ADR-0014). Duyệt / thu hồi: quyền conformance:approve. */
+/** Rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị (ADR-0015). Duyệt / thu hồi: quyền conformance:approve. */
 function Rulepacks() {
   const { can } = useAuth();
   const q = useRulepacks();

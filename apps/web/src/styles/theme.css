@@ -1548,6 +1548,10 @@ table.grid > tbody > tr.dev-row-on > td, table.grid > tbody > tr.dev-row-on:nth-
 .dev-kb-links { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .dev-kb-note { font-size: 12px; color: var(--ink-500); margin-bottom: 6px; }
 .dev-kb-body { border-top: 1px solid var(--line-soft); font-size: 13px; }
+/* [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: hàng nút dưới kết luận Tra mã; màn Vận hành */
+.dev-answer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; }
+.dev-links { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px; }
+.dev-kpi .label { padding-right: 64px; }
 @media (max-width: 760px) {
   .dev-cols { grid-template-columns: minmax(0, 1fr); }
   .dev-wf-row { grid-template-columns: minmax(0, 1fr) 56px; }

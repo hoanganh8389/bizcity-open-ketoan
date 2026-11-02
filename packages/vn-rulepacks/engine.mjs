@@ -107,7 +107,7 @@ export function packHash(pack) {
 }
 
 /**
- * Lượt duyệt tại bản cài (ADR-0014) còn hiệu lực cho rulepack này không: đúng phiên bản + đúng băm nội dung, có người duyệt kế toán,
+ * Lượt duyệt tại bản cài (ADR-0015) còn hiệu lực cho rulepack này không: đúng phiên bản + đúng băm nội dung, có người duyệt kế toán,
  * miền thuế / hoá đơn / quản lý thuế / lương có thêm người duyệt thuế. approvals = Map(id rulepack → lượt duyệt mới nhất chưa thu hồi).
  */
 export function localApproval(approvals, pack) {
@@ -118,7 +118,7 @@ export function localApproval(approvals, pack) {
 }
 
 /**
- * Trả cho mỗi rulepack: { pack, applies: true|false|null, reason, selected, blocked, local } — local = lượt duyệt tại bản cài còn hiệu lực (ADR-0014); blocked là lý do REVIEW_REQUIRED:
+ * Trả cho mỗi rulepack: { pack, applies: true|false|null, reason, selected, blocked, local } — local = lượt duyệt tại bản cài còn hiệu lực (ADR-0015); blocked là lý do REVIEW_REQUIRED:
  * chưa approved · nhiều bản approved cùng catalog · nguồn pháp lý chưa rà / rà quá hạn · thiếu nguồn · hồ sơ chưa khai.
  */
 export function resolve(kit, profile, approvals = null) {
@@ -129,7 +129,7 @@ export function resolve(kit, profile, approvals = null) {
     if (a.applies === null) row.blocked = a.reason;
     if (a.applies === false) return row;
     if (pack.status === 'deprecated') { row.applies = false; row.reason = 'rulepack đã deprecated'; return row; }
-    // Duyệt tại bản cài: người duyệt của đơn vị nhận trách nhiệm thay cho duyệt thượng nguồn và nguồn chưa rà (ADR-0014).
+    // Duyệt tại bản cài: người duyệt của đơn vị nhận trách nhiệm thay cho duyệt thượng nguồn và nguồn chưa rà (ADR-0015).
     // Phạm vi chưa xác định (hồ sơ chưa khai) vẫn chặn như cũ: không ai duyệt được cho một quy định chưa biết có áp hay không.
     row.local = pack.status === 'approved' ? null : localApproval(approvals, pack);
     if (row.local) return row;
@@ -295,7 +295,7 @@ export function buildReport({ kit, profile, evaluation, run, target, exclusions 
     result,
     // Ba câu hỏi khác nhau (ADR-0012): mỗi lớp được đánh giá một kết quả, cùng luật overall; lớp không thuộc lượt thì không có khoá.
     layer_results: Object.fromEntries((evaluation.layers ?? []).map((l) => [l, overall(evaluation.cases.filter((c) => c.layer === l))])),
-    // ADR-0014: PASS dựa trên duyệt tại đơn vị (dù một ca) KHÔNG mang nhãn Bizcity — nhãn đó chỉ cho rulepack duyệt ở thượng nguồn.
+    // ADR-0015: PASS dựa trên duyệt tại đơn vị (dù một ca) KHÔNG mang nhãn Bizcity — nhãn đó chỉ cho rulepack duyệt ở thượng nguồn.
     approval_basis: basis,
     label: result === 'PASS'
       ? `${basis === 'upstream' ? 'Passed Bizcity VN Conformance' : 'Đạt theo duyệt của đơn vị'} [${scope.join(',')}/${kit.rulepacks.map((p) => `${p.id}@${p.version}`).join(',')}/${profile.as_of}]`

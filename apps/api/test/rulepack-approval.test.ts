@@ -1,5 +1,5 @@
 /**
- * Duyệt rulepack tại bản cài (ADR-0014; PHASE-020):
+ * Duyệt rulepack tại bản cài (ADR-0015; PHASE-020):
  *   - chủ đơn vị / kế toán trưởng (conformance:approve) tự duyệt một rulepack nháp; kế toán viên, khoá API không duyệt được;
  *   - lượt duyệt còn hiệu lực ⇒ ca của rulepack được kết luận theo bằng chứng (PASS / FAIL / NOT_TESTED), approval = local,
  *     approvalBasis = local; nhãn PASS (nếu có) là "Đạt theo duyệt của đơn vị", không phải nhãn Bizcity;

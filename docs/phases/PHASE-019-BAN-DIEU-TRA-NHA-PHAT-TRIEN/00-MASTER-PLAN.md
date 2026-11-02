@@ -43,6 +43,7 @@ Khi cộng đồng bắt đầu vibe-code VAT, AR/AP, CRM, kho, agent AI trên c
 | D019-5 | **Trace thuộc đơn vị khi:** có ít nhất một span `bizcity.tenant` = đơn vị của phiên **và** không span nào mang đơn vị khác. Không đạt → trả **404 `NOT_FOUND`** (không 403 — không xác nhận trace tồn tại) | ☐ |
 | D019-6 | **Mã tra cứu ở mọi thông báo lỗi** (`requestId`, `traceId`), có nút chép; nút "Báo lỗi" dựng nội dung theo mẫu `bao-loi.yml` **chỉ gồm mã**, không dữ liệu | ☐ |
 | D019-7 | **Ngăn xếp lỗi (`err.stack`)** chỉ hiện ở chế độ Vận hành; chế độ Đơn vị chỉ thấy `err.type` + mã lỗi (thông điệp lỗi CSDL có thể chứa giá trị dữ liệu) | ☐ — xem Q019-3 |
+| D019-8 | **Dùng Bàn điều tra với công cụ AI code:** (1) nút **Chép cho AI** ở Tra mã — khối markdown từ trace đã lọc (tóm tắt, cây span rút gọn, chỗ tìm mã, việc phải làm), không dữ liệu, không đơn vị; (3) mục "Sửa lỗi bằng AI từ Bàn điều tra" trong `AGENTS.md`. (2) công cụ **MCP chỉ đọc cho máy dev** (agent tự tra trace) — **để sau**: cần sửa N1 / `ai: 'deny'` cho riêng môi trường dev, quyết riêng | ✅ (1), (3) chủ duyệt 2026-11-02, làm ở W5; ⏸ (2) để sau <!-- [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — D019-8: chủ chọn làm Chép cho AI + AGENTS.md cùng W5, MCP để sau. --> |
 
 ## 5. Câu hỏi cần chủ quyết (Q019-*)
 

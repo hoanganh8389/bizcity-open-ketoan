@@ -76,7 +76,7 @@ export async function runConformance(trx: Db, tenantId: string, a: { asOf: strin
     ...(await runDiagnostics(scope, { layer: 'L3' })).checks,
     ...(await runDiagnostics({ tenantId, to: a.asOf }, { layer: 'L5' })).checks,
   ];
-  // ADR-0014: lượt duyệt tại bản cài của đơn vị (bộ đánh giá tự bỏ lượt lệch phiên bản / băm).
+  // ADR-0015: lượt duyệt tại bản cài của đơn vị (bộ đánh giá tự bỏ lượt lệch phiên bản / băm).
   const approvals = await approvalsOf(trx, tenantId);
   const evaluation = evaluate({ kit, profile, evidence: { checks: evidenceFromDiagnostics(diag, kit.diagCodes) }, layers: [...LAYERS], runtimeOnly: true, approvals });
 

@@ -1,7 +1,7 @@
 // @bizcity-layer K kernel/conformance
 // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014: duyệt rulepack tại bản cài (self-host) — đọc lượt duyệt còn hiệu lực, duyệt, thu hồi; chỉ thêm vào rulepack_approvals.
 /**
- * DUYỆT RULEPACK TẠI BẢN CÀI (ADR-0014). Bản cài tự chủ: chủ đơn vị / kế toán trưởng (quyền conformance:approve) duyệt một rulepack
+ * DUYỆT RULEPACK TẠI BẢN CÀI (ADR-0015). Bản cài tự chủ: chủ đơn vị / kế toán trưởng (quyền conformance:approve) duyệt một rulepack
  * cho đơn vị mình, ghi tên người duyệt kế toán (+ người duyệt thuế với miền thuế / hoá đơn / quản lý thuế / lương).
  *
  *   approvalsOf(db, tenant)       Map(id rulepack → lượt duyệt mới nhất chưa thu hồi) — bộ đánh giá tự bỏ lượt lệch phiên bản / băm

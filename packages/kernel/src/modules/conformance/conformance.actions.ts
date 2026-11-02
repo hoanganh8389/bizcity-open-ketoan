@@ -11,7 +11,7 @@
  *   GET  /api/v1/conformance/advisories        core.conformance.advisories   — cảnh báo cho ngày chứng từ (?date) hoặc kỳ sắp khoá (?year&month)
  *   POST /api/v1/conformance/advisories/ack    core.conformance.acknowledge  — người dùng đã xem cảnh báo và tiếp tục: một dòng bằng chứng
  *   GET  /api/v1/conformance/rulepacks         core.conformance.rulepacks    — rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị
- *   POST /api/v1/conformance/rulepacks/approve core.conformance.approve      — đơn vị tự duyệt một rulepack (ADR-0014)
+ *   POST /api/v1/conformance/rulepacks/approve core.conformance.approve      — đơn vị tự duyệt một rulepack (ADR-0015)
  *   POST /api/v1/conformance/rulepacks/revoke  core.conformance.revoke       — thu hồi lượt duyệt tại đơn vị
  * Lượt chạy chỉ đọc sổ và cấu hình. Không có action nào sửa / bỏ qua / tắt kết luận; cảnh báo không bao giờ thành từ chối (R-VNC-10).
  */
@@ -33,7 +33,7 @@ const caseSchema = z.object({
   layer: z.enum(['module', 'configuration', 'enterprise']).nullable().optional(),
   title: z.string().nullable().optional(),
   rulepack: z.string().optional(),
-  approval: z.enum(['upstream', 'local']).nullable().optional().describe('Cơ sở duyệt của ca: upstream = kho rulepack; local = duyệt tại bản cài (ADR-0014)'),
+  approval: z.enum(['upstream', 'local']).nullable().optional().describe('Cơ sở duyệt của ca: upstream = kho rulepack; local = duyệt tại bản cài (ADR-0015)'),
   legal_basis: z.array(z.object({ source_id: z.string(), label: z.string(), provision_ref: z.string().nullable(), review_status: z.string() })).optional(),
 });
 const runSchema = z.object({
@@ -197,7 +197,7 @@ export const conformanceActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'core.conformance.approve', title: 'Duyệt rulepack tại đơn vị', tags,
-    description: 'Bản cài tự chủ (ADR-0014): đơn vị tự duyệt một rulepack còn nháp, nhận trách nhiệm về căn cứ thay cho duyệt ở thượng nguồn. '
+    description: 'Bản cài tự chủ (ADR-0015): đơn vị tự duyệt một rulepack còn nháp, nhận trách nhiệm về căn cứ thay cho duyệt ở thượng nguồn. '
       + 'Ghi người duyệt kế toán (+ người duyệt thuế với miền thuế / hoá đơn / quản lý thuế / lương), phạm vi đã rà. Lượt duyệt gắn phiên bản + băm nội dung: '
       + 'cập nhật gói rulepack thì phải duyệt lại. Kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị", không mang nhãn Bizcity. '
       + 'Không đổi sổ, không đổi cấu hình kế toán. Chỉ người đăng nhập; khoá API / AI không duyệt được.',
@@ -207,7 +207,7 @@ export const conformanceActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/conformance/rulepacks/approve' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'rulepack_approval', objectId: (_i, o) => `${o.rulepackId}@${o.version}` },
     handler: async (ctx, input) => {
-      if (ctx.actor.kind !== 'user') throw Errors.forbidden('Chỉ người đăng nhập duyệt được rulepack; khoá API / AI không duyệt thay (ADR-0014)');
+      if (ctx.actor.kind !== 'user') throw Errors.forbidden('Chỉ người đăng nhập duyệt được rulepack; khoá API / AI không duyệt thay (ADR-0015)');
       return approveRulepack(ctx.data.tx, ctx.tenant.id, { ...input, actor: ctx.actor.id });
     },
   }),
@@ -220,7 +220,7 @@ export const conformanceActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/conformance/rulepacks/revoke' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'rulepack_approval', objectId: (_i, o) => `${o.rulepackId}@${o.version}` },
     handler: async (ctx, input) => {
-      if (ctx.actor.kind !== 'user') throw Errors.forbidden('Chỉ người đăng nhập thu hồi được (ADR-0014)');
+      if (ctx.actor.kind !== 'user') throw Errors.forbidden('Chỉ người đăng nhập thu hồi được (ADR-0015)');
       return revokeRulepack(ctx.data.tx, ctx.tenant.id, { ...input, actor: ctx.actor.id });
     },
   }),

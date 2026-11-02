@@ -843,7 +843,7 @@ export interface ConformanceRunsTable {
   created_at: TimestampDefault;
 }
 
-/** Lượt duyệt / thu hồi rulepack tại bản cài (migration 0053, ADR-0014). Chỉ thêm. */
+/** Lượt duyệt / thu hồi rulepack tại bản cài (migration 0053, ADR-0015). Chỉ thêm. */
 export interface RulepackApprovalsTable {
   id: Generated<string>;
   tenant_id: string;

@@ -49,7 +49,7 @@ export const PERMISSIONS = [
   'conformance:read',
   /** Chạy một lượt Kiểm chuẩn và lưu ảnh chụp (chỉ đọc sổ; không đổi sổ, không đổi cấu hình). */
   'conformance:run',
-  /** Duyệt / thu hồi rulepack cho đơn vị (bản cài tự chủ, ADR-0014): kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị". */
+  /** Duyệt / thu hồi rulepack cho đơn vị (bản cài tự chủ, ADR-0015): kết quả dựa trên duyệt này mang nhãn "Đạt theo duyệt của đơn vị". */
   'conformance:approve',
   // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: quyền devtools:read (D019-3) — chủ đơn vị + vai trò developer; không cấp cho khoá API, không cho AI.
   /** Bàn điều tra cho nhà phát triển (PHASE-019): đọc trace / log / bằng chứng của đơn vị qua API trung gian. Không phạm vi khoá API nào ánh xạ tới. */
