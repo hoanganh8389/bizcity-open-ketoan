@@ -1,5 +1,5 @@
 // [2026-11-02 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: màn Hệ thống → Kiểm chuẩn (HT06) — ba lớp, ma trận ca theo 6 trạng thái, Vì sao, Việc cần làm, xu hướng; theo ma trận BizCity, không điểm %.
-// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: khối "Rulepack và duyệt tại đơn vị" — bản cài tự chủ tự duyệt / thu hồi (quyền conformance:approve); ca duyệt tại đơn vị có thẻ riêng; nhãn không phải Bizcity.
+// [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: khối "Rulepack và duyệt tại đơn vị" — bản cài tự chủ tự duyệt / thu hồi (quyền conformance:approve); ca duyệt tại đơn vị có thẻ riêng; nhãn không phải Bizcity.
 /**
  * KIỂM CHUẨN (HT06, ADR-0012 §5). Ba câu hỏi, ba thẻ: Module · Cấu hình · Doanh nghiệp — mỗi lớp một kết quả riêng (layer_results).
  * Ma trận: hàng = ca, cột = căn cứ (điều khoản + trạng thái rà) / trạng thái (6 mức, có chữ) / Vì sao / Việc cần làm.
@@ -52,7 +52,7 @@ export function ConformancePage() {
       ) : (
         <>
           <div className="cf-head card card-body">
-            <div><span className={`badge ${RESULT[r.result].cls}`}>{RESULT[r.result].text}</span> <span className="muted">· nhãn: {r.label}</span>{(r.approvalBasis === 'local' || r.approvalBasis === 'mixed') && <span className="badge badge-info" style={{ marginLeft: 6 }} title="Có ca đạt dựa trên duyệt tại đơn vị (ADR-0015)">có duyệt tại đơn vị</span>}</div>
+            <div><span className={`badge ${RESULT[r.result].cls}`}>{RESULT[r.result].text}</span> <span className="muted">· nhãn: {r.label}</span>{(r.approvalBasis === 'local' || r.approvalBasis === 'mixed') && <span className="badge badge-info" style={{ marginLeft: 6 }} title="Có ca đạt dựa trên duyệt tại đơn vị (ADR-0016)">có duyệt tại đơn vị</span>}</div>
             <div className="muted">
               Lượt {dateTime(r.createdAt)} ({who(r.actor)}) · ngày đánh giá {r.asOf} · kho rulepack {r.kitVersion ?? '—'}
               {' · '}{r.rulepacks.filter((p) => p.status === 'approved').length}/{r.rulepacks.length} rulepack đã duyệt
@@ -140,7 +140,7 @@ function Matrix({ cases, rulepacks }: { cases: ConformanceCase[]; rulepacks: Con
                 <td>{(c.legal_basis ?? []).map((b) => (
                   <div key={`${b.source_id}${b.provision_ref}`}>{b.label}{b.provision_ref && b.provision_ref !== 'REVIEW_REQUIRED' ? ` · ${b.provision_ref}` : ''} <span className={`badge ${b.review_status === 'reviewed' ? 'badge-ok' : 'badge-gray'}`}>{b.review_status === 'reviewed' ? 'đã rà' : 'chưa rà'}</span></div>
                 ))}</td>
-                <td><span className={`badge ${STATUS[c.status].cls}`} title={STATUS[c.status].hint}>{STATUS[c.status].text}</span>{c.approval === 'local' && <div><span className="badge badge-info" title="Rulepack được duyệt tại đơn vị (ADR-0015)">duyệt tại đơn vị</span></div>}</td>
+                <td><span className={`badge ${STATUS[c.status].cls}`} title={STATUS[c.status].hint}>{STATUS[c.status].text}</span>{c.approval === 'local' && <div><span className="badge badge-info" title="Rulepack được duyệt tại đơn vị (ADR-0016)">duyệt tại đơn vị</span></div>}</td>
                 <td><button type="button" className="btn btn-xs btn-ghost" onClick={() => setOpen(open === c.id ? null : c.id)} aria-expanded={open === c.id}>{open === c.id ? 'Ẩn' : 'Vì sao'}</button></td>
                 <td>{todo.length ? todo.map((t) => <Link key={t.path} className="cf-todo" to={t.path}>{t.label}</Link>) : <span className="muted">—</span>}</td>
               </tr>
@@ -160,7 +160,7 @@ function Matrix({ cases, rulepacks }: { cases: ConformanceCase[]; rulepacks: Con
   );
 }
 
-/** Rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị (ADR-0015). Duyệt / thu hồi: quyền conformance:approve. */
+/** Rulepack trong kho + duyệt thượng nguồn + duyệt tại đơn vị (ADR-0016). Duyệt / thu hồi: quyền conformance:approve. */
 function Rulepacks() {
   const { can } = useAuth();
   const q = useRulepacks();

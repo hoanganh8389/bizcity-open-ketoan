@@ -4,7 +4,7 @@
  *   - VAT_INPUT_NONCASH: hoá đơn mua vào ≥ 5 triệu (gồm thuế) chưa ghi chứng từ thanh toán không dùng tiền mặt ⇒ cảnh báo (dùng lại taxIssues);
  *   - INVOICE_FIELDS: hoá đơn thiếu ký hiệu ⇒ cảnh báo (dùng lại taxIssues);
  *   - INVOICE_ISSUE_DATE: hoá đơn bán hàng hoá lập sau ngày chứng từ ⇒ cảnh báo;
- *   - Engine: ca C03 / C04 lấy bằng chứng từ bốn kiểm; duyệt tại đơn vị miền thuế cần người duyệt thuế (ADR-0015).
+ *   - Engine: ca C03 / C04 lấy bằng chứng từ bốn kiểm; duyệt tại đơn vị miền thuế cần người duyệt thuế (ADR-0016).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';

@@ -26,6 +26,8 @@ import { z } from 'zod';
 import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
+import { mountActions } from '../../core/actions.js';
+import { masterdataActions } from './masterdata.actions.js';
 import { Errors } from '../../core/errors.js';
 import {
   deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, saveProduct, savePriceList, savePriceRows, scanParents, setPriceListBranches,
@@ -68,6 +70,8 @@ const productSchema = z.object({
 });
 
 export async function catalogRoutes(app: FastifyInstance): Promise<void> {
+  // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: core.partner.upsert, core.product.upsert (seed[] của manifest, ctx.actions)
+  mountActions(app, masterdataActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
 
   r.get('/api/v1/catalog/products/:sku', {

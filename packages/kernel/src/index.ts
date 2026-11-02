@@ -19,7 +19,8 @@
 // các phần của Kernel không qua cổng nên không sinh span thừa. Kernel không import @opentelemetry/* (R-KER-8, R-OBS-7): hàm bọc
 // ở Platform (@bizcity/platform/core/tracing, chiều K → P được phép). Module mới không phải sửa Kernel để có trace.
 import { traceKernelApi, traceKernelFn } from '@bizcity/platform/core/tracing';
-import { postDocumentIn as postDocumentInRaw, documentService as documentServiceRaw, submitDocumentIn as submitDocumentInRaw } from './modules/documents/document.service.js';
+import { allocateByDocKeysIn as allocateByDocKeysInRaw } from './modules/debts/debt.service.js';
+import { postDocumentIn as postDocumentInRaw, documentService as documentServiceRaw, submitDocumentIn as submitDocumentInRaw, requestCancelIn as requestCancelInRaw, documentStatusIn as documentStatusInRaw } from './modules/documents/document.service.js';
 import { eventStore as eventStoreRaw } from './modules/documents/event-store.js';
 import { voucherService as voucherServiceRaw } from './modules/vouchers/voucher.service.js';
 import { documentNumbers as documentNumbersRaw } from './modules/documents/numbering.js';
@@ -30,6 +31,11 @@ import { allocate as allocateRaw } from './modules/debts/debt.service.js';
 export const postDocumentIn = traceKernelFn('postDocumentIn', postDocumentInRaw);
 // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — submitDocumentIn: nộp chứng từ trong giao dịch của người gọi; app.ts đăng ký cho ctx.ledger.submit (ADR-0011 D5)
 export const submitDocumentIn = traceKernelFn('submitDocumentIn', submitDocumentInRaw);
+// [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: requestCancelIn, documentStatusIn qua cổng (ctx.ledger.cancel / get của module, app.ts đăng ký)
+export const requestCancelIn = traceKernelFn('requestCancelIn', requestCancelInRaw);
+export const documentStatusIn = traceKernelFn('documentStatusIn', documentStatusInRaw);
+// [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16: allocateByDocKeysIn qua cổng (ctx.ledger.allocateDebt, app.ts đăng ký)
+export const allocateByDocKeysIn = traceKernelFn('allocateByDocKeysIn', allocateByDocKeysInRaw);
 export const documentService = traceKernelApi('documentService', documentServiceRaw);
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — adapter kết nối đăng ký bộ chuẩn hoá chứng từ đẩy vào (Kernel không import adapter)
 export { registerIncomingPreparer, type IncomingPreparer } from './modules/documents/document.service.js';

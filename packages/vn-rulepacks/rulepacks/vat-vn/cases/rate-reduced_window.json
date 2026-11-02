@@ -53,7 +53,7 @@
     "accounting_reviewer": null,
     "tax_reviewer": null,
     "approved_at": null,
-    "notes": "Chưa duyệt — bản cài tự duyệt được (ADR-0015) hoặc chờ duyệt thượng nguồn"
+    "notes": "Chưa duyệt — bản cài tự duyệt được (ADR-0016) hoặc chờ duyệt thượng nguồn"
   },
   "golden": {
     "hash": null,

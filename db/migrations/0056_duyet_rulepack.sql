@@ -1,12 +1,12 @@
--- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0015: lượt duyệt rulepack tại bản cài (self-host): đơn vị tự duyệt, chỉ thêm, gắn phiên bản + băm nội dung rulepack; thu hồi bằng dòng mới.
+-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: lượt duyệt rulepack tại bản cài (self-host): đơn vị tự duyệt, chỉ thêm, gắn phiên bản + băm nội dung rulepack; thu hồi bằng dòng mới.
 -- [2026-11-02 06:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số 0053 → 0056 khi gộp main (PR #23, #25 có 0051_ung_dung_ngoai, 0052_registry_module, 0053_migration_module); chưa phát hành.
 -- =============================================================================
--- 0056 Duyệt rulepack tại bản cài — rulepack_approvals (ADR-0015; PHASE-020).
+-- 0056 Duyệt rulepack tại bản cài — rulepack_approvals (ADR-0016; PHASE-020).
 --      Bản cài tự chủ (self-host): chủ đơn vị / kế toán trưởng duyệt một rulepack cho đơn vị mình, ghi tên người duyệt kế toán
 --      (và người duyệt thuế với miền thuế / hoá đơn / quản lý thuế / lương). Lượt duyệt gắn ĐÚNG phiên bản + băm nội dung
 --      rulepack: cập nhật gói rulepack làm đổi băm ⇒ lượt duyệt cũ hết hiệu lực, phải duyệt lại.
 --      Chỉ thêm: thu hồi là một dòng action = 'revoke'. Lượt duyệt mới nhất (theo id) của (đơn vị, rulepack) quyết định.
---      Kết quả dựa trên duyệt tại đơn vị mang nhãn "Đạt theo duyệt của đơn vị", không mang nhãn Bizcity (ADR-0015 §3).
+--      Kết quả dựa trên duyệt tại đơn vị mang nhãn "Đạt theo duyệt của đơn vị", không mang nhãn Bizcity (ADR-0016 §3).
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS rulepack_approvals (
@@ -38,7 +38,7 @@ ALTER TABLE rulepack_approvals FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS tenant_isolation ON rulepack_approvals;
 CREATE POLICY tenant_isolation ON rulepack_approvals USING (bizcity_tenant_visible(tenant_id)) WITH CHECK (bizcity_tenant_visible(tenant_id));
 
-COMMENT ON TABLE rulepack_approvals IS 'Lượt duyệt / thu hồi rulepack tại bản cài (ADR-0015): đơn vị tự duyệt, chỉ thêm; dòng mới nhất của (đơn vị, rulepack) quyết định.';
+COMMENT ON TABLE rulepack_approvals IS 'Lượt duyệt / thu hồi rulepack tại bản cài (ADR-0016): đơn vị tự duyệt, chỉ thêm; dòng mới nhất của (đơn vị, rulepack) quyết định.';
 COMMENT ON COLUMN rulepack_approvals.id IS 'Số lượt.';
 COMMENT ON COLUMN rulepack_approvals.tenant_id IS 'Đơn vị.';
 COMMENT ON COLUMN rulepack_approvals.rulepack_id IS 'Mã rulepack trong @bizcity/vn-rulepacks.';
