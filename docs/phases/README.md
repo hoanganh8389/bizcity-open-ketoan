@@ -46,6 +46,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [019 Bàn điều tra cho nhà phát triển](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/README.md) <!-- [2026-11-01 07:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — thêm dòng phase Bàn điều tra (Dev Console) + sổ tay điều tra lỗi. --> | mở rộng PHASE-018 | — (chờ Q019-4) | — | chưa | — | 🟡 W0 sổ tay + thiết kế + bản mẫu 2026-11-01; chủ duyệt D019-1, Q019-1, Q019-2 |
 | [020 Kiểm chuẩn pháp lý Việt Nam](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/README.md) <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm dòng phase bộ kiểm chuẩn pháp lý VN (VNCONF). --> | mở rộng 4.3 (PHASE-014) | — (chờ Q020-1) | — | nền có | — | 🟡 W0 audit nền + registry + schema + check 2026-11-01; chờ chủ duyệt D020-1..6 |
 | [021 Trạm tiền kiểm đầu vào](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/README.md) <!-- [2026-11-02 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — thêm dòng phase Trạm tiền kiểm đầu vào (ADR-0014). --> | 2 | 2.17–2.21 | — | chưa | 0% | 🟡 W0 kế hoạch + kiến trúc 2026-11-02; ADR-0014 chủ duyệt |
+| [022 Bộ giả định lỗi và Bàn đánh giá theo vai](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/README.md) <!-- [2026-11-02 07:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — thêm dòng phase giả định lỗi + Bàn đánh giá theo vai (kế toán trưởng, kiểm soát, thanh tra thuế). --> | 2 | — | — | chưa | 0% | 🟡 W0 tài liệu + bản mẫu 2026-11-02; chờ chủ duyệt D022-1..6 |
 
 Thứ tự và đường găng: [AUDIT §4](../audits/AUDIT-2026-10-30-KIEN-TRUC.md). Ba luật thứ tự của PHASES vẫn giữ:
 - 2.1 (PHASE-004) trước 2.3 (PHASE-010);
