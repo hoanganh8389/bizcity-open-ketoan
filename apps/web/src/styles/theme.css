@@ -1623,3 +1623,5 @@ table.grid > tbody > tr.dev-row-on > td, table.grid > tbody > tr.dev-row-on:nth-
   .rb-print-table th, .rb-print-table td { border: 1px solid #999; padding: 3px 5px; text-align: left; vertical-align: top; }
   .rb-print-sign { display: block; margin-top: 24px; font-size: 12px; }
 }
+/* [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): ô dashboard.widget của module SDK trên Tổng quan */
+.launcher-widgets { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 12px 0; }

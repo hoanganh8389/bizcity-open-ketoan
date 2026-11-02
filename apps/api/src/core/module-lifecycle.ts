@@ -19,6 +19,7 @@ import { STANDARD } from '@bizcity/platform/core/version';
 import { hashModuleDir } from '@bizcity/platform/core/module-registry';
 import { MODULE_MANIFESTS } from '../phan-he/index.js';
 import { ADDIN_MANIFESTS } from '../addins/index.js';
+import { discoverSdkModules } from './sdk-modules.js';
 import { listActions, runAction } from '@bizcity/platform/core/actions';
 import { Errors } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
@@ -35,13 +36,18 @@ export interface BundledModule {
   requires: string[];
 }
 
-/** Module đi kèm mã nguồn Core: 9 phân hệ + add-in, theo manifest đã nạp. */
-export function bundledModules(): BundledModule[] {
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: + module SDK ở modules/<key>/ (registry, hash, bật / tắt như phân hệ)
+/** Module đi kèm mã nguồn Core: 9 phân hệ + add-in, theo manifest đã nạp; + module SDK trong `modulesDir` (mặc định <gốc repo>/modules). */
+export function bundledModules(modulesDir?: string): BundledModule[] {
   const mods = [...MODULE_MANIFESTS.values()].map((m) => ({ m, kind: 'module' as const, dir: new URL(`../phan-he/${m.key}/`, import.meta.url) }));
   const adds = [...ADDIN_MANIFESTS.values()].map((m) => ({ m, kind: 'addin' as const, dir: new URL(`../addins/${m.key}/`, import.meta.url) }));
-  return [...mods, ...adds].map(({ m, kind, dir }) => ({
+  const sdk = discoverSdkModules(modulesDir).map((s) => ({ key: s.key, kind: 'module' as const, version: s.manifest.version, label: s.manifest.label, dir: s.dir, requires: s.manifest.requires?.capabilities ?? [] }));
+  const inCore = new Set([...MODULE_MANIFESTS.keys(), ...ADDIN_MANIFESTS.keys()]);
+  const clash = sdk.filter((s) => inCore.has(s.key)).map((s) => s.key);
+  if (clash.length) throw new Error(`Module SDK trùng mã phân hệ / add-in của Core: ${clash.join(', ')}`);
+  return [...[...mods, ...adds].map(({ m, kind, dir }) => ({
     key: m.key, kind, version: m.version, label: m.label, dir: fileURLToPath(dir), requires: m.requires?.capabilities ?? [],
-  }));
+  })), ...sdk];
 }
 
 /** Năng lực manifest cần mà Core chưa có (`planned` hoặc không có trong bizcity-standard.json). */
@@ -55,10 +61,10 @@ const historyAppend = (entry: Record<string, unknown>) => sql<unknown>`history |
 export interface SyncChange { key: string; action: 'install' | 'upgrade' | 'rehash'; from?: string; to: string }
 
 /** Đồng bộ module đi kèm vào registry. Chạy bằng vai trò sở hữu (job cài đặt / lệnh `module sync`). */
-export async function syncBundled(by: string, trx: Db = db): Promise<SyncChange[]> {
+export async function syncBundled(by: string, trx: Db = db, modulesDir?: string): Promise<SyncChange[]> {
   const changes: SyncChange[] = [];
   const at = new Date().toISOString();
-  for (const m of bundledModules()) {
+  for (const m of bundledModules(modulesDir)) {
     const hash = hashModuleDir(m.dir);
     const row = await trx.selectFrom('module_registry').select(['version', 'build_hash']).where('key', '=', m.key).executeTakeFirst();
     if (!row) {

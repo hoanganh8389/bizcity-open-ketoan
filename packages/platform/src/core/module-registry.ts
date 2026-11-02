@@ -21,12 +21,13 @@ import { db, type Db } from '../db/client.js';
 import { Errors } from './errors.js';
 
 /** sha256 của thư mục: mỗi tệp `đường-dẫn-tương-đối \0 kích-thước \0 nội-dung`, sắp theo đường dẫn (dấu `/`). */
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: bỏ node_modules (module SDK là gói npm riêng)
 export function hashModuleDir(dir: string): string {
   const files: string[] = [];
   const walk = (d: string) => {
     for (const e of readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, e.name);
-      if (e.isDirectory()) walk(p);
+      if (e.isDirectory()) { if (e.name !== 'node_modules') walk(p); }
       else if (e.isFile()) files.push(p);
     }
   };

@@ -3,7 +3,9 @@
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §3a khung nhúng app ngoài tiến trình (ADR-0011 mức 2) — iframe sandbox, vé ≤ 5 phút, giao thức postMessage đóng, kiểm origin hai chiều -->
 <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: core.partner.upsert / core.product.upsert có; @bizcity/module-sdk/web (defineWebModule, WEB_SLOTS) -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: 1.3.0-draft — hook masterdata.referenceCheck có (trả câu báo); document.beforeTransition bỏ (kiểm trong action của module); ctx.notify; slot partner.detail.tab, dashboard.widget vẽ được -->
+
+> **Phiên bản:** 1.3.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 7/7)
 > **Luật nền:** [R-BOUND](../rules/RULE-MODULE-BOUNDARY.md) · **Năng lực:** `ui.menu`, `ui.kit`, `ui.slots`, `permissions.module`, `settings.registry`, `ai.cell`
 
 ## 1. Mục đích
@@ -58,13 +60,16 @@ Hook là lời gọi **đồng bộ** trong giao dịch của Core, nên bị gi
 
 | Hook | Khi nào | Module được làm | Thời gian tối đa |
 |---|---|---|---|
-| `masterdata.referenceCheck` | trước khi Core xoá / ngừng một mã danh mục (đối tượng, mặt hàng, chi nhánh) | trả `{ inUse: true, count, sample }` để Core từ chối xoá | 200 ms |
-| `document.beforeTransition` | trước khi chứng từ **của chính module** chuyển trạng thái | trả lỗi `Errors.validation` để chặn | 500 ms |
-| `ledger.previewSource` | Kernel dựng mô tả chứng từ gốc cho màn sổ | trả nhãn, đường dẫn | 100 ms |
+| `masterdata.referenceCheck` | trước khi Core xoá một đối tượng (**có** 1.3.0: `defineHook`, `packages/platform/src/core/hooks.ts`; mặt hàng, chi nhánh: chưa gọi) | trả câu "đang dùng ở …" (vd `"2 hợp đồng"`) hoặc `null`; có câu thì Core từ chối xoá (`CONFLICT`). Chạy bằng vai trò `mod_<key>_rw`, chỉ đọc; module tắt ở đơn vị thì không hỏi | 200 ms |
+| `ledger.previewSource` | Kernel dựng mô tả chứng từ gốc cho màn sổ (**chưa có**) | trả nhãn, đường dẫn | 100 ms |
+
+Kiểm trước khi chứng từ **của chính module** chuyển trạng thái (vd tổng kỳ = giá trị hợp đồng) **không phải hook**: chứng từ của module do action của module chuyển (`loadWorkflow` + `plan`), nên kiểm ngay trong action đó và ném `Errors.validation` (1.3.0 bỏ `document.beforeTransition`).
 
 Không có hook nào cho phép module: đổi bút toán, đổi tài khoản, chặn ghi sổ của module khác, sửa dữ liệu trong giao dịch của Core.
 
 ## 5. API
+
+- **Thông báo trong ứng dụng** (năng lực `notify.inapp`, 1.3.0): `ctx.notify.send({ to: { permission } | { userId }, title, body?, link?, dedupeKey? })` trong action và subscriber; nguồn = module. Người dùng xem ở chuông trên thanh trên cùng (`GET /api/v1/notifications`, `POST /api/v1/notifications/read`). Không có cửa HTTP cho module gửi thông báo.
 
 - Mọi route của module sinh từ action, nằm dưới `/api/v1/m/<key>/…` (phân hệ hiện có giữ đường dẫn cũ trong major 1).
 - Module gọi action của module khác hoặc của Core bằng `ctx.actions.call(id, input)`: vẫn qua quyền, idempotency, bằng chứng như gọi từ ngoài, với `actor` là người dùng gốc và `via: 'module:<id>'`.

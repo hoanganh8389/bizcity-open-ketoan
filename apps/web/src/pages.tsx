@@ -55,6 +55,8 @@ import { devRoutes } from './phan-he/dev/routes';
 import { ADDIN_ROUTES } from './addins/registry';
 import { UngDungPage } from './features/ung-dung/UngDungPage';
 import { AppFramePage } from './features/ung-dung/AppFramePage';
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2: route của module SDK (/app/<key>/…)
+import { sdkRoutes } from './phan-he/sdk-routes';
 
 export const pageRoutes = (
   <>
@@ -131,6 +133,7 @@ export const pageRoutes = (
     {muaHangRoutes}
     {apiRoutes}
     {devRoutes}
+    {sdkRoutes}
     <Route path="*" element={<Navigate to="/" replace />} />
   </>
 );

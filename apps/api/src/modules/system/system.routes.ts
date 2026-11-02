@@ -44,6 +44,8 @@ import { disabledModules } from '@bizcity/platform/core/module-registry';
 import { listModulePermissions, PERMISSIONS } from '@bizcity/platform/core/auth';
 import { REQUIRED_MODULES, runModuleSeed } from '../../core/module-lifecycle.js';
 import { moduleActions } from './module.actions.js';
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4)
+import { notifyActions } from './notify.actions.js';
 import { zodToJson } from '../../core/json-schema.js';
 
 export async function systemRoutes(app: FastifyInstance): Promise<void> {
@@ -278,6 +280,7 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
   mountActions(app, moduleActions);
+  mountActions(app, notifyActions);
 
   // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: chạy seed[] của manifest cho đơn vị (dữ liệu mẫu qua core.*.upsert)
   app.post('/api/v1/system/modules/:key/seed', {

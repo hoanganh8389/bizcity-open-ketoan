@@ -1,4 +1,5 @@
 # Ca chuẩn: module Hợp đồng do Claude Code sinh ra
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: diễn tập lần 0 — Core vá khe hở G1–G6 (workflow cho module, cấu hình module, hook, thông báo, slot, subscriber đọc bảng module); bỏ hook document.beforeTransition, nhắc hạn bằng ctx.notify -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
 > Ca này là **phép thử nghiệm thu** của Standard v1. Standard chỉ lên 1.0.0 khi ca này đạt (Phase 4, [PHASES.md](PHASES.md)).
@@ -32,7 +33,7 @@ Claude **không** cần đọc `packages/kernel`, `ledger.service.ts`, luật đ
 | **Kỳ thanh toán** | Bảng `mod_hop_dong.installments` (thuộc hợp đồng: khoá ngoại trong schema mình). Mỗi kỳ là loại chứng từ `hop-dong.installment` có luồng riêng | Document, Data | — |
 | **File đính kèm** | `ctx.documents.attach(docRef, file, { kind })` | Document STD-DOC-7 | Không tạo bảng `contract_attachments` (A-19) |
 | **Trạng thái duyệt** | Workflow YAML: `draft → submitted → approved → active → closed`, `cancelled`; tách nhiệm người lập / người duyệt; duyệt cấp 2 khi giá trị ≥ `bizcity.hop_dong.second_approval_amount` | Document §5 | Không tự viết cột `status` + `if` rải rác |
-| **Nhắc thanh toán** | Subscriber `bizcity.clock.daily` → tìm kỳ đến hạn trong `remind_days` → phát `hop-dong.installment.due` → subscriber gọi `core.notify.send` (trong ứng dụng; có Cell thì gửi Zalo cho người phụ trách) | Event §4, Extension §5 | Không `setInterval`, không gửi tin nhắn trong action |
+| **Nhắc thanh toán** | Subscriber `bizcity.clock.daily` → tìm kỳ đến hạn trong `remind_days` → phát `hop-dong.installment.due` → subscriber gọi `ctx.notify.send` (dedupeKey theo kỳ + ngày) (trong ứng dụng; có Cell thì gửi Zalo cho người phụ trách) | Event §4, Extension §5 | Không `setInterval`, không gửi tin nhắn trong action |
 | **Thu tiền một kỳ** (suy ra từ "kỳ thanh toán") | Action `record-payment` (quyền `hop-dong:collect`, idempotency bắt buộc) → `ctx.ledger.submit({ docType: 'customer_payment', docKey: 'hop-dong.installment:<id>:payment', partner, methodCode, totals })` → kỳ sang `collecting`. Nghe `bizcity.ledger.entry.posted` cùng `docKey` → kỳ sang `paid`, phát `hop-dong.installment.paid` | Action, Ledger intake, Event §7 | Không viết tài khoản 111/112/131. Core tra theo `methodCode` và cấu hình |
 | **Bằng chứng** | Tự động: mọi action ghi có bản ghi + biên nhận | Evidence | Không gọi `writeAudit`, không ghi tệp log |
 
@@ -80,7 +81,7 @@ modules/hop-dong/
 │   ├── actions/contract-{create,update,get,list,submit,approve,reject,activate,close,cancel,attach}.ts
 │   ├── actions/installment-{list-due,record-payment,cancel-payment}.ts
 │   ├── subscribers/{remind-due,notify-due,on-ledger-posted,on-ledger-reversed}.ts
-│   └── hooks/{partner-in-use,schedule-matches-total}.ts
+│   └── hooks/partner-in-use.ts                 masterdata.referenceCheck (defineHook)
 ├── migrations/
 │   └── 0001_hop_dong.sql                        schema mod_hop_dong, 2 bảng, RLS, COMMENT
 ├── web/
@@ -100,7 +101,7 @@ Chạy bằng `bizcity module check modules/hop-dong` (toàn bộ [CONFORMANCE.m
 
 | Mã | Kịch bản | Kỳ vọng |
 |---|---|---|
-| GC-1 | Lập hợp đồng 3 kỳ, tổng kỳ ≠ giá trị hợp đồng, gửi duyệt | Hook `schedule-matches-total` chặn: `VALIDATION_ERROR` |
+| GC-1 | Lập hợp đồng 3 kỳ, tổng kỳ ≠ giá trị hợp đồng, gửi duyệt | Action `contract-submit` kiểm trước khi chuyển trạng thái, chặn: `VALIDATION_ERROR` |
 | GC-2 | Người lập tự duyệt | `FORBIDDEN` (tách nhiệm) |
 | GC-3 | Hợp đồng ≥ ngưỡng: duyệt một cấp | vẫn `submitted` (chờ cấp 2) |
 | GC-4 | Đính kèm bản scan PDF, sửa hợp đồng nháp | có 2 phiên bản, tệp vẫn gắn |
@@ -111,7 +112,7 @@ Chạy bằng `bizcity module check modules/hop-dong` (toàn bộ [CONFORMANCE.m
 | GC-9 | Huỷ thu kỳ 1 | bút toán đảo đúng một lần; kỳ `scheduled` |
 | GC-10 | Ghi nhận thu trong kỳ đã khoá | `PERIOD_LOCKED`; kỳ không đổi |
 | GC-11 | Xoá khách hàng đang có hợp đồng ở màn Danh mục | Core từ chối (`referenceCheck`) |
-| GC-12 | Gọi `record-payment` qua actor AI (`expose.ai: propose`) | chỉ tạo bản nháp chờ người duyệt; bằng chứng `kind: ai` |
+| GC-12 | Gọi `record-payment` qua MCP bằng actor AI | không tự ghi: quyền `risk: high` (như `hop-dong:collect`) thì Core chặn AI (`FORBIDDEN`); quyền thường thì chỉ đề xuất chờ người xác nhận (`needs_confirmation`). Kỳ không đổi |
 
 ## 7. Quan hệ với code hiện có
 
@@ -131,6 +132,8 @@ Khuyên: ca chuẩn sinh module mới độc lập (đo được "Claude tạo �
 
 ## 8. Đo thế nào là đạt
 
+Bộ kịch bản GC-1..GC-12 có sẵn: `apps/api/test/golden-hop-dong.test.ts` (chỉ gọi HTTP / MCP như người dùng, đối chiếu bảng của Core; chưa có `modules/hop-dong` thì bỏ qua). Chạy: `npx bizcity module check hop-dong` rồi `npx vitest run test/golden-hop-dong.test.ts` trong `apps/api`.
+
 | Tiêu chí | Ngưỡng |
 |---|---|
 | Lặp lại | 3 lần chạy Claude Code độc lập trên repo sạch, cùng lời yêu cầu |
@@ -141,3 +144,9 @@ Khuyên: ca chuẩn sinh module mới độc lập (đo được "Claude tạo �
 | Sửa tay | 0 dòng sửa tay sau khi Claude báo xong (được phép trả lời câu hỏi làm rõ của Claude) |
 
 Lần nào không đạt: ghi lại Claude vấp ở đâu (đọc thiếu tài liệu nào, SDK thiếu gì), sửa **tài liệu / SDK / starter template**, không sửa kết quả của lần chạy.
+
+## 9. Nhật ký các lần chạy <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
+
+| Lần | Ngày | Ai | Kết quả | Vấp ở đâu → sửa gì (tài liệu / SDK / Core) |
+|---|---|---|---|---|
+| 0 (diễn tập, không tính) | 2026-11-02 | Claude Code (phiên PHASE-014) | `module check` ĐẠT; GC-1..12 đạt sau khi vá Core | G1 workflow YAML không nhận quyền của module → dời workflow sang Platform, xuất qua SDK · G2 cấu hình module phải sửa tệp registry của Core → `settings.registry.json` trong module · G3 chưa có hook → `defineHook` + `masterdata.referenceCheck` · G4 `notify.inapp` chưa có → `ctx.notify` + chuông · G5 slot chưa vẽ → `partner.detail.tab`, `dashboard.widget` · G6 subscriber không đọc được bảng module → `ctx.module` · G7 `data.reads` báo "permission denied" (khung nhìn security_invoker) → cấp SELECT đúng các cột trên bảng gốc · G8 bản dựng module không chép `*.workflow.yaml` → script build của template chép tệp không phải `.ts`. Ca chuẩn: bỏ hook `document.beforeTransition`, nhắc hạn bằng `ctx.notify`, GC-12 theo luật AI của Core |

@@ -29,6 +29,9 @@ import { sql } from 'kysely';
 import { db, readWithTimeout, type Db } from '../db/client.js';
 import { currentRequest, withRequestContext } from './request-context.js';
 import { disabledModules } from './module-registry.js';
+import { asModuleRole } from '../db/module-db.js';
+import { readSetting } from './settings.js';
+import { sendNotification, type NotifyInput } from './notify.js';
 import { COLLECTOR_TIMEOUT_MS, metrics } from './metrics.js';
 import { currentTraceparent, linksFrom, markError, SpanKind, withSpan, type Span } from './tracing.js';
 
@@ -73,6 +76,14 @@ export interface SubscriberContext {
   tenantId: string;
   /** Phát tiếp (cùng giao dịch); causationId = sự kiện đang xử lý, giữ correlationId của chuỗi. */
   emit(type: string, data: Record<string, unknown>, opts: { subject: string; version?: number; dedupeKey?: string }): Promise<string | null>;
+  // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G6): subscriber của module đọc ghi bảng của chính module + đọc cấu hình của module
+  /** Bảng của module sở hữu subscriber (mod_<key>.*) bằng vai trò mod_<key>_rw — như ctx.data.module của action. */
+  module<T>(fn: (tx: Db) => Promise<T>): Promise<T>;
+  /** Cấu hình của đơn vị theo registry, chỉ khoá module sở hữu (như ctx.settings.get của action). */
+  settings: { get<T = unknown>(key: string): Promise<T> };
+  // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4)
+  /** Thông báo trong ứng dụng; nguồn = module của subscriber. Dùng dedupeKey theo sự kiện để giao lại không gửi lần hai. */
+  notify: { send(n: NotifyInput): Promise<string | null> };
 }
 
 export interface SubscriberDef {
@@ -244,6 +255,9 @@ async function deliverInTenant(d: { consumer: string; event_id: string; tenant_i
               tenantId: evt.tenantId, type, data, subject: o.subject, version: o.version, dedupeKey: o.dedupeKey, source: def.module,
               actor: { kind: 'system', id: `subscriber:${def.id}` }, correlationId: evt.correlationId ?? evt.id, causationId: evt.id,
             }),
+            module: (fn) => asModuleRole(trx, def.module, fn),
+            settings: { get: (key) => readSetting(trx, evt.tenantId, def.module, key) },
+            notify: { send: (n) => sendNotification(trx, evt.tenantId, def.module, n) },
           };
           await withRequestContext({ requestId: `evt-${evt.id}`, tenantId: evt.tenantId, correlationId: evt.correlationId ?? evt.id }, () => def.handle(ctx, evt));
         }

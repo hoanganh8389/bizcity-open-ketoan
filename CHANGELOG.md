@@ -13,6 +13,19 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
+- **Bộ kịch bản nghiệm thu ca chuẩn Hợp đồng** `apps/api/test/golden-hop-dong.test.ts` (GC-1..GC-12, PHASES 4.5): chấm module `modules/hop-dong` do Claude sinh ra chỉ qua HTTP / MCP; chưa có module thì bỏ qua.
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
+- **Năng lực cho module SDK theo ca chuẩn Hợp đồng** (PHASE-014 W4): workflow YAML dùng được cho chứng từ của module (`@bizcity/module-sdk` xuất `loadWorkflow`; quyền `<module>:<việc>`; mã dời sang `@bizcity/platform/core/workflow`, `apps/api/src/core/workflow.ts` chuyển tiếp); khoá cấu hình module tự khai (`modules/<key>/settings.registry.json`); hook `masterdata.referenceCheck` (xoá đối tượng còn được module dùng → `CONFLICT`); subscriber có `ctx.module`, `ctx.settings`, `ctx.notify`.
+- **Thông báo trong ứng dụng** (`notify.inapp`, migration `0060_thong_bao`): `ctx.notify.send` cho module, chuông trên thanh trên cùng, `GET /api/v1/notifications`, `POST /api/v1/notifications/read`.
+- **Slot giao diện** (`ui.slots`): `partner.detail.tab` (thẻ trong hồ sơ khách), `dashboard.widget` (ô trên Tổng quan).
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 -->
+- **Lệnh `bizcity`** (gói `@bizcity/cli`, PHASES 4.1): `npx bizcity module new <key>` sinh module từ `templates/starter-module`; `module check <key>` chạy luật module, typecheck, test hợp đồng module trên CSDL test; `migrate`, `ledger verify`, `doctor`. [docs/ops/CLI.md](docs/ops/CLI.md) §1b.
+- **Template module** `templates/starter-module/` (PHASES 4.2) kèm AGENTS.md riêng; **`@bizcity/ui-kit`** (PHASES 3.8, năng lực `ui.kit` → available): màn của module dùng thành phần và client API của Core qua gói này, không import `apps/web`.
+- **Web nạp phần giao diện của module SDK** (`modules/<key>/web/index.tsx`): mục Tổng quan, menu, route dưới `/app/<key>/` chặn theo quyền. Chưa có slot.
+- Test hợp đồng cho mọi module trong `modules/` (`apps/api/test/sdk-modules.contract.test.ts`): bảng có RLS + COMMENT, action manifest = code, quyền mang tiền tố module, GET trả 200, viewer không ghi được.
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1 -->
+- **Nạp module viết bằng `@bizcity/module-sdk`** (PHASE-014 W1, [BIZCITY-EXTENSION](docs/contracts/BIZCITY-EXTENSION-v1.md) §3): thư mục `modules/<key>/` có `bizcity.module.json` + `api/index.ts` (`export default defineModule(...)`) được API tìm và nạp như phân hệ — registry, băm thư mục, bật / tắt theo đơn vị; route sinh từ action nằm dưới `/api/v1/m/<key>/`; quyền khai trong manifest vào registry quyền; subscriber vào bộ sự kiện. Mã module lỗi hoặc khoá trùng phân hệ của Core thì dừng khởi động. Biến mới `BIZCITY_MODULES_DIR` (mặc định `<gốc repo>/modules`). SDK xuất thêm `sql` cho bảng của chính module.
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 manual_journal (K2); PHASE-010 2.8 gói mua-hang-domain -->
 - **Phiếu kế toán module lập — `docType: manual_journal`** (PHASES 3.15, [ADR-0015](docs/adr/ADR-0015-chot-sdk-v1-moi-thu-qua-be-su-kien.md) Q1, `bizcity_ledger_intake@1` 1.3.0, năng lực `ledger.manual-journal` → available): module nộp qua `ctx.ledger.submit` dòng `{ reasonCode, amount, partnerCode? }`, **không** số tài khoản, không thuế, không hoá đơn (khuôn đóng). Lý do có loại mới **`journal`** với tài khoản Nợ / Có (migration `0058_ly_do_phieu_ke_toan`; màn Lý do – tài khoản ACC18; gói định khoản `debitAccount` / `creditAccount`, SC-TPL-1 kiểm). Chưa có lý do journal nào trong gói nền — kế toán trưởng chốt danh sách (đặc tả K2).
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->
@@ -226,6 +239,9 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
+- **Module đọc danh mục qua `data.reads`** (khung nhìn `bizcity_read.*`, `security_invoker`): trước đây báo "permission denied for table …" vì vai trò `mod_<key>_rw` chỉ có quyền trên khung nhìn. Nay trình cài cấp SELECT đúng các cột khung nhìn dùng trên bảng gốc (RLS vẫn lọc theo đơn vị). Chạy lại `module migrate <key>` cho module đã cài.
+- **Template module**: `npm run build` chép tệp không phải `.ts` của `api/` (workflow YAML) sang `dist/api`.
 - `GET /api/v1/documents?voucherInfo=false` trước vẫn kèm thông tin phiếu (`z.coerce.boolean()` coi chuỗi "false" là true); nay dùng `queryBool`.
 - Đính tệp vào hoá đơn NCC (`ownerType: invoice`) báo lỗi CSDL: bảng `purchase_attachments` chỉ nhận partner / document / policy. Hết lỗi khi chuyển sang đính kèm chung (0046).
 - Kiểm nâng cấp (`scripts/kiem-nang-cap.sh`) xác nhận:
@@ -249,6 +265,10 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+<!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
+- Chạy migration `0060_thong_bao` (chỉ thêm hai bảng `notifications`, `notification_reads`). Hợp đồng `bizcity_extension` 1.3.0-draft: hook `document.beforeTransition` bỏ (chưa module nào dùng).
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3 -->
+- Workspace npm thêm `modules/*` (mỗi module SDK là một gói) và hai gói `packages/ui-kit`, `packages/cli`: chạy `npm install`. Image API / web nay chép thư mục `modules/`; job cài đặt (`db-migrate`) tự chạy migration của từng module SDK trước khi ghi registry. Bản cài không có module SDK: không đổi gì.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1–W4 -->
 - Chạy migration `0057_vai_tro_kiem_soat` (chỉ nới ràng buộc `users_role_check` thêm `auditor`). Kế toán trưởng, kế toán có thêm quyền `review:read` (Bàn đánh giá); `viewer` không có.
 <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016 -->

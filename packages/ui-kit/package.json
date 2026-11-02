@@ -1,0 +1,27 @@
+{
+  "name": "@bizcity/ui-kit",
+  "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "description": "Bộ giao diện cho module Bizcity (PHASES 3.8; BIZCITY-EXTENSION §3): mặt tiền DUY NHẤT phần web của module được import — khung trang, ô lỗi, trường, hộp thoại, tiền, client API có phiên đăng nhập. Bản thật do khung giao diện (apps/web) cung cấp lúc khởi động (provideUiKit); module không import nội bộ apps/web.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.tsx",
+      "default": "./src/index.tsx"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "5.59.20",
+    "react": "18.3.1"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "5.59.20",
+    "@types/react": "18.3.12",
+    "react": "18.3.1",
+    "typescript": "5.6.3"
+  }
+}

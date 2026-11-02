@@ -58,6 +58,9 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
   // ② Quy tắc
   posting_reasons: { group: 'rules', label: 'Lý do nhập / xuất', term: 'Nghiệp vụ', module: 'posting-config', purpose: 'Mỗi lý do (bán, trả lại, tặng, chuyển kho…) chỉ định tài khoản dùng khi định khoản.' },
+  // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4)
+  notifications: { group: 'rules', label: 'Thông báo trong ứng dụng', term: 'Thông báo', module: 'system', purpose: 'Core / module gửi tới một người hoặc mọi người có một quyền (nhắc hạn, việc cần duyệt); chỉ thêm, chống gửi trùng theo khoá.' },
+  notification_reads: { group: 'rules', label: 'Đã đọc thông báo', term: 'Thông báo', module: 'system', purpose: 'Người nào đã đọc thông báo nào, lúc nào.' },
   rulepack_approvals: { group: 'rules', label: 'Duyệt rulepack tại đơn vị', term: 'Kiểm chuẩn', module: 'conformance', purpose: 'Lượt duyệt / thu hồi rulepack của đơn vị (bản cài tự chủ, ADR-0016): người duyệt kế toán / thuế, phiên bản + băm nội dung rulepack. Đổi gói rulepack thì phải duyệt lại. Chỉ thêm.' },
   conformance_runs: { group: 'rules', label: 'Lượt Kiểm chuẩn', term: 'Kiểm chuẩn', module: 'conformance', purpose: 'Ảnh chụp mỗi lượt Conformance Engine của đơn vị: báo cáo, kết quả, số ca theo trạng thái, phiên bản kho rulepack và hồ sơ kế toán đã dùng. Lượt chạy chỉ đọc sổ; kết luận để người dùng quyết định. Chỉ thêm.' },
   accounting_profiles: { group: 'rules', label: 'Hồ sơ kế toán của đơn vị', term: 'Hồ sơ kế toán', module: 'posting-config', purpose: 'Năm tài chính, chế độ kế toán, loại pháp nhân có phiên bản, hiệu lực từ đầu năm tài chính; hồ sơ cũ giữ cho các năm trước. Chưa có dòng = chưa khai, Core không đoán chế độ. Chỉ thêm.' },

@@ -29,7 +29,23 @@ export interface WebMenuItem {
 }
 
 export interface WebRoute<C> { path: string; component: C; permission?: string }
-export interface WebSlotDef<C> { slot: WebSlot; component: C; permission?: string }
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): nhãn thẻ (tab) + props mỗi điểm cắm nhận
+/**
+ * Props khung giao diện truyền vào thành phần của slot:
+ *   partner.detail.tab      { code, name }   thẻ trong hồ sơ khách hàng (đối tượng đã lưu)
+ *   product.detail.tab      { sku, name }    thẻ trong form mặt hàng (chưa vẽ)
+ *   dashboard.widget        {}               ô trên trang Tổng quan
+ *   document.detail.panel   { docRef }       (chưa vẽ)
+ *   ledger.drilldown.source { docKey }       (chưa vẽ)
+ */
+export interface SlotProps {
+  'partner.detail.tab': { code: string; name: string };
+  'product.detail.tab': { sku: string; name: string };
+  'dashboard.widget': Record<string, never>;
+  'document.detail.panel': { docRef: string };
+  'ledger.drilldown.source': { docKey: string };
+}
+export interface WebSlotDef<C> { slot: WebSlot; component: C; permission?: string; /** Nhãn thẻ / tiêu đề ô (mặc định nhãn module). */ label?: string }
 
 export interface WebModuleDef<C = unknown> {
   key: string;
@@ -47,7 +63,8 @@ export function defineWebModule<C>(def: WebModuleDef<C>): Readonly<WebModuleDef<
   if (!KEY_RE.test(def.key)) bad.push(`key "${def.key}" sai khuôn`);
   if (!def.label?.trim()) bad.push('thiếu label');
   const base = `/app/${def.key}/`;
-  const checkPath = (where: string, p?: string) => { if (p !== undefined && !p.startsWith(base)) bad.push(`${where} "${p}" phải nằm dưới ${base}`); };
+  // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2: nhận cả trang chủ /app/<key> (manifest mẫu hop-dong đặt menu ở đó)
+  const checkPath = (where: string, p?: string) => { if (p !== undefined && p !== base.slice(0, -1) && !p.startsWith(base)) bad.push(`${where} "${p}" phải nằm dưới ${base} (hoặc là trang chủ ${base.slice(0, -1)})`); };
   const checkPerm = (where: string, p?: string) => { if (p !== undefined && !PERM_RE.test(p)) bad.push(`${where}: quyền "${p}" sai khuôn <module>:<việc>`); };
   const walk = (items: WebMenuItem[] = []) => {
     for (const m of items) { checkPath(`menu ${m.key}`, m.path); checkPerm(`menu ${m.key}`, m.permission); walk(m.children); }
@@ -60,4 +77,25 @@ export function defineWebModule<C>(def: WebModuleDef<C>): Readonly<WebModuleDef<
   }
   if (bad.length) throw new Error(`defineWebModule(${def.key}): ${bad.join('; ')}`);
   return Object.freeze({ ...def });
+}
+
+// [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2: webModuleParts — khung giao diện dựng mục Tổng quan, nhóm menu, route từ một web module (thuần, không React)
+/** Phần trình bày manifest khai (`ui`: biểu tượng lucide, màu, thứ tự) + mô tả. */
+export interface WebModuleUi { description?: string; icon?: string; color?: string; order?: number }
+
+export interface WebModuleParts<C> {
+  /** Mục ở trang Tổng quan / thanh phân hệ (khớp ModuleMeta + groups của khung giao diện). */
+  meta: { key: string; label: string; description: string; icon: string; color: string; order: number; groups: string[] };
+  /** Một nhóm menu của module: khoá `mod-<key>`, mục con là menu module khai. */
+  group: { key: string; label: string; children: WebMenuItem[] };
+  routes: WebRoute<C>[];
+}
+
+export function webModuleParts<C>(def: WebModuleDef<C>, ui: WebModuleUi = {}): WebModuleParts<C> {
+  const group = `mod-${def.key}`;
+  return {
+    meta: { key: def.key, label: def.label, description: ui.description ?? '', icon: ui.icon ?? 'Puzzle', color: ui.color ?? '#475569', order: ui.order ?? 60, groups: [group] },
+    group: { key: group, label: def.label, children: def.menu ?? [] },
+    routes: def.routes ?? [],
+  };
 }
