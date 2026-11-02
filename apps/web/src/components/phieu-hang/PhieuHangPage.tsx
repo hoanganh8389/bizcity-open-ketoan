@@ -20,6 +20,7 @@ import { ErrorBox, Loading, openNextInEdit } from '@/components/ui';
 import { PhieuHangForm } from './PhieuHangForm';
 import { TRADE_TEMPLATES } from './printTemplates';
 import { PrintButton } from '@/components/print';
+import { advisoryText, useDocumentGate } from '@/components/PostingGate';
 
 const STATUS: Record<string, string> = { draft: 'Nháp', approved: 'Đã duyệt' };
 
@@ -40,7 +41,15 @@ export function PhieuHangPage({ kind, code, seed, helpKey = 'phieu-hang', subtit
   const [formKey, setFormKey] = useState(0);
   const save = useMutation({ mutationFn: (d: TradeDoc) => svc.save(d), onSuccess: (saved, d) => { if (d.id) { setEditing(saved); setFormKey((k) => k + 1); } else setEditing(null); void refresh(); } });
   const del = useMutation({ mutationFn: (id: string) => svc.remove(id), onSuccess: () => { setSel(null); void refresh(); } });
-  const status = useMutation({ mutationFn: (p: { id: string; s: 'draft' | 'approved' }) => svc.setStatus(p.id, p.s), onSuccess: (d) => { setSel(d); void refresh(); } });
+  // [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: duyệt phiếu (nguồn API: vào sổ) khi còn cảnh báo kiểm chuẩn của ngày phiếu ⇒ một dòng bằng chứng; dữ liệu giả lập thì không ghi.
+  const gate = useDocumentGate(sel?.docDate);
+  const status = useMutation({
+    mutationFn: (p: { id: string; s: 'draft' | 'approved' }) => svc.setStatus(p.id, p.s),
+    onSuccess: (d, p) => {
+      if (p.s === 'approved' && svc.source === 'api') gate.acknowledge({ docType: kind, docDate: d.docDate, docNo: d.docNo });
+      setSel(d); void refresh();
+    },
+  });
   const open = async (row: TradeDoc) => setEditing(await svc.get(row.id));
 
   const columns: Column<TradeDoc>[] = [
@@ -87,7 +96,7 @@ export function PhieuHangPage({ kind, code, seed, helpKey = 'phieu-hang', subtit
           <button className="btn btn-sm btn-primary" onClick={() => setEditing(emptyDoc(kind, workBranch.get() || (f.branchCodes.split(',')[0] ?? '')))}>+ Thêm</button>
           <button className="btn btn-sm" disabled={!sel} onClick={() => { if (!sel) return; if (sel.status !== 'approved') openNextInEdit(); void open(sel); }}>{sel?.status === 'approved' ? 'Xem' : 'Sửa'}</button>
           <button className="btn btn-sm" disabled={!sel || sel.status === 'approved' || del.isPending} onClick={() => { if (sel && window.confirm(`Xoá ${info.label.toLowerCase()} ${sel.docNo}?`)) del.mutate(sel.id); }}>Xoá</button>
-          <button className="btn btn-sm" disabled={!sel || status.isPending} onClick={() => sel && status.mutate({ id: sel.id, s: sel.status === 'approved' ? 'draft' : 'approved' })}>{sel?.status === 'approved' ? 'Bỏ duyệt' : 'Duyệt'}</button>
+          <button className="btn btn-sm" disabled={!sel || status.isPending} onClick={() => { if (!sel) return; const s = sel.status === 'approved' ? 'draft' : 'approved'; if (s === 'approved' && gate.advisories.length && !window.confirm(`Duyệt phiếu ${sel.docNo || '(mới)'}?` + advisoryText(gate.advisories))) return; status.mutate({ id: sel.id, s }); }}>{sel?.status === 'approved' ? 'Bỏ duyệt' : 'Duyệt'}</button>
           {TRADE_TEMPLATES[kind] && <PrintButton small screen={code} templates={TRADE_TEMPLATES[kind]!} disabled={!sel} title="In phiếu đang chọn" getDocs={async () => (sel ? [await svc.get(sel.id)] : [])} />}
           <button className="btn btn-sm" onClick={() => void q.refetch()}>Nạp</button>
           <button className="btn btn-sm" onClick={() => exportRef.current?.()}>Xuất Excel</button>

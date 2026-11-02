@@ -20,7 +20,8 @@
 | Màn (S020-20) <!-- [2026-11-02 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21 / lịch đêm --> | Hệ thống → Kiểm chuẩn (HT06): ba thẻ lớp, ma trận ca (căn cứ, 6 trạng thái, Vì sao, Việc cần làm), xu hướng; Hồ sơ kế toán (HT07) |
 | Posting Gate (S020-21) | `core.conformance.advisories` tính ngoài giao dịch ghi sổ (T4); lưu phiếu / khoá kỳ khi còn cảnh báo ⇒ `core.conformance.acknowledge` ghi bằng chứng, khoá kỳ kèm lý do (T3); khoá API / AI không xác nhận. API khoá kỳ không đổi |
 | Lịch đêm | subscriber `core.conformance-nightly` trên `bizcity.clock.daily` (01:00 giờ VN) |
-| Chưa làm | gắn cảnh báo ở màn duyệt chứng từ (ACC14) và phiếu hàng; sự kiện `bizcity.conformance.evaluated` (§6, chưa cần) |
+| Gắn cảnh báo <!-- [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b --> | khung phiếu dùng chung, `VoucherForm`, khoá kỳ, ACC14 (định khoản hàng loạt: cảnh báo theo ngày sớm nhất + muộn nhất của lô, một dòng bằng chứng cho cả lô), phiếu hàng |
+| Chưa làm | sự kiện `bizcity.conformance.evaluated` (§6, chưa cần) |
 
 Luật đánh giá chốt khi làm: ở lớp Cấu hình và Doanh nghiệp, kiểm mức warn có phát hiện là không đạt; ở lớp Module, kiểm mức info chỉ là ngữ cảnh. Phạm vi chưa xác định (hồ sơ chưa khai) thì không kết luận FAIL. Khi chứng nhận bằng `--certify` (hồ sơ giả lập), lớp Cấu hình chỉ tính bằng chứng build; kiểm DG-* của lớp này chỉ dùng trên bản cài với hồ sơ thật.
 

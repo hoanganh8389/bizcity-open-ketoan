@@ -1,3 +1,4 @@
+// [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: dải cảnh báo kiểm chuẩn theo ngày phiếu (chỉ thông tin, không chặn Ghi).
 /**
  * Form một phiếu hàng hoá (bán hàng, hàng bán trả lại, mua hàng, trả hàng nhà cung cấp, chuyển kho) — xem lib/tradeDocs.ts.
  *   Đầu phiếu: số phiếu (để trống = tự cấp), ngày, chi nhánh + KHO (chuyển kho: chi nhánh / kho xuất → nhận, cùng chi nhánh thì
@@ -19,6 +20,7 @@ import { HelpDrawer } from '@/components/HelpDrawer';
 import { PrintButton } from '@/components/print';
 import { TRADE_TEMPLATES } from './printTemplates';
 import { ChonKho, khoLabel, useKho } from './ChonKho';
+import { DocumentGateBanner, useDocumentGate } from '@/components/PostingGate';
 
 interface CatalogProduct { sku: string; name: string; unit: string; taxOutCode: string | null; taxInCode: string | null; units: { unit: string; isDefault: boolean }[]; prices: { unit: string; price: number | null }[] }
 interface PaymentMethod { code: string; name: string; isActive?: boolean }
@@ -36,6 +38,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
 }) {
   const info = KIND_INFO[value.docType];
   const [v, setV] = useState<TradeDoc>(value);
+  const gate = useDocumentGate(readOnly ? undefined : v.docDate);
   const [help, setHelp] = useState(false);
   const set = (p: Partial<TradeDoc>) => setV((x) => recompute({ ...x, ...p }));
   const setLine = (i: number, p: Partial<TradeLine>) => set({ lines: v.lines.map((l, j) => (j === i ? { ...l, ...p } : l)) });
@@ -84,6 +87,7 @@ export function PhieuHangForm({ value, readOnly, saving, error, onSave, onClose,
         <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)}>? Hướng dẫn</button>
       </div>
       {help && <HelpDrawer guideKey="phieu-hang" onClose={() => setHelp(false)} />}
+      <DocumentGateBanner advisories={gate.advisories} />
       <fieldset className="fgroup" disabled={readOnly}>
         <legend>Thông tin phiếu</legend>
         <Field label="Số phiếu" hint="Để trống: tự cấp khi ghi"><input className="input mono" value={v.docNo} onChange={(e) => set({ docNo: e.target.value.trim() })} /></Field>

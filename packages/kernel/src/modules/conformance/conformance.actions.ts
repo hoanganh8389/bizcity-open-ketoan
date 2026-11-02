@@ -1,6 +1,7 @@
 // @bizcity-layer K kernel/conformance
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — action Kiểm chuẩn: core.conformance.run (chạy + lưu ảnh chụp, quyền conformance:run, AI không dùng) và core.conformance.latest (đọc, AI đọc được) (ADR-0012, S020-18).
 // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21: core.conformance.list (xu hướng), core.conformance.advisories (Posting Gate chỉ thông tin), core.conformance.acknowledge (người xác nhận tiếp tục = bằng chứng; AI / khoá API không xác nhận thay, T3); ca mang layer, title, rulepack, căn cứ; lượt có layerResults.
+// [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: ngữ cảnh 'documents' cho xác nhận khi định khoản hàng loạt ở ACC14 (một dòng bằng chứng cho cả lô, kèm danh sách khoá chứng từ).
 /**
  * Conformance Engine (ADR-0012) — action:
  *   POST /api/v1/conformance/runs              core.conformance.run          — chạy một lượt ba lớp cho đơn vị, lưu ảnh chụp
@@ -146,6 +147,7 @@ export const conformanceActions: AnyActionDef[] = [
       context: z.discriminatedUnion('kind', [
         z.object({ kind: z.literal('document'), docType: z.string().min(1).max(40), docDate: date, docKey: z.string().max(200).optional(), docNo: z.string().max(60).optional() }),
         z.object({ kind: z.literal('period'), year: z.number().int().min(2000).max(2100), month: z.number().int().min(1).max(12), branchCode: z.string().max(32).optional() }),
+        z.object({ kind: z.literal('documents'), docKeys: z.array(z.string().min(1).max(200)).min(1).max(1000), from: date, to: date }).describe('Định khoản hàng loạt (ACC14): một dòng bằng chứng cho cả lô'),
       ]),
       codes: z.array(z.string().min(1).max(60)).min(1).max(30),
       note: z.string().trim().max(500).optional(),
@@ -162,7 +164,9 @@ export const conformanceActions: AnyActionDef[] = [
       }
       const key = c.kind === 'period'
         ? `period:${c.year}-${String(c.month).padStart(2, '0')}${c.branchCode ? `:${c.branchCode}` : ''}`
-        : `document:${c.docType}:${c.docKey ?? c.docNo ?? c.docDate}`;
+        : c.kind === 'documents'
+          ? `documents:${c.docKeys.length}:${c.from}..${c.to}`
+          : `document:${c.docType}:${c.docKey ?? c.docNo ?? c.docDate}`;
       const codes = [...new Set(input.codes)].sort();
       ctx.evidence.note('codes', codes);
       ctx.evidence.note('context', c);

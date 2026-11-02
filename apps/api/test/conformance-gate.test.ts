@@ -93,6 +93,16 @@ describe('Xác nhận cảnh báo = bằng chứng', () => {
     expect(JSON.stringify(row.after_data)).toContain('PROFILE_DECLARED');
   });
 
+  it('định khoản hàng loạt (ACC14): một dòng bằng chứng cho cả lô, kèm danh sách khoá chứng từ', async () => {
+    const r = await ack({ context: { kind: 'documents', docKeys: ['pos:CN01:A1', 'pos:CN01:A2'], from: '2025-12-30', to: '2025-12-31' }, codes: ['PROFILE_DECLARED'] });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data.context).toBe('documents:2:2025-12-30..2025-12-31');
+    const row = await db.selectFrom('audit_logs').select(['object_id', 'after_data']).where('tenant_id', '=', tenantId)
+      .where('action', '=', 'core.conformance.acknowledge').orderBy('id', 'desc').executeTakeFirstOrThrow();
+    expect(row.object_id).toBe('documents:2:2025-12-30..2025-12-31');
+    expect(JSON.stringify(row.after_data)).toContain('pos:CN01:A2');
+  });
+
   it('khoá API không xác nhận thay người', async () => {
     const res = await ctx.app.inject({
       method: 'POST', url: '/api/v1/conformance/advisories/ack', headers: { 'x-api-key': ctx.apiKey, 'idempotency-key': `t-${Date.now()}` },
