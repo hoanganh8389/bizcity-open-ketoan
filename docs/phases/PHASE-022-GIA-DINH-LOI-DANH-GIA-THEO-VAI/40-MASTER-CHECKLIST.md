@@ -10,7 +10,7 @@ có | 🟡 2026-11-02 — cảnh báo kiểm chuẩn (API + dải cảnh báo) d
 | S022-6 | Check SC-FIX-1 (block) + tự kiểm `fixtures/repo-bad` (thiếu remedy, đường dẫn không có trong menu) — ca T022-1 | W1 | P0 | ☐ | ☐ |
 | S022-7 | Giao diện dùng `remedy`: dải cảnh báo (PHASE-020), màn Toàn vẹn (PHASE-019), Trạm tiền kiểm (PHASE-021) hiện bước + nút mở màn | W1 | P1 | ☐ | ☐ |
 | S022-8 | Tách hàm kiểm theo một chứng từ (`reducedRateFinding`, `invoiceDateFinding`, dùng lại `taxIssues`) cho Trạm tiền kiểm gọi chung — hỗ trợ S021-25 | W1 | P1 | ☐ | ☐ |
-| S022-9 | Kiểm mới W2 (lane + app + remedy + test): `CASH_NEGATIVE`, `TRANSIT_NONZERO`, `DEBT_MATCH_LEDGER`, `ACCOUNT_WRONG_SIDE`, `DEPRECIATION_OPEN`, `COGS_STALE`, `STOCK_ADJUST_NO_REASON`, `CONFORMANCE_STALE` — ca T022-2..4 | W2 | P0 | ☐ | ☐ |
+| S022-9 | Kiểm mới W2 (lane + app + remedy + test): `CASH_NEGATIVE`, `TRANSIT_NONZERO`, `DEBT_MATCH_LEDGER`, `ACCOUNT_WRONG_SIDE`, `DEPRECIATION_OPEN`, `COGS_STALE`, `STOCK_ADJUST_NO_REASON`, `CONFORMANCE_STALE` — ca T022-2..4 | W2 | P0 | có | ✅ 2026-11-02 — 8 kiểm (app + lane + remedy), `phase022-checks.test.ts` 7 test (gây lỗi → phát hiện → khắc phục → kiểm lại) <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2 --> |
 | S022-10 | Kiểm mới W2 đợt sau: `TAX_BOOK_MATCH`, `MANUAL_SENSITIVE`, `COST_UNIT_SPIKE`, `YEAR_END_OPEN`, `DEBT_*`, `DEPOSIT_AGED`, `TRANSFER_UNCONFIRMED`, `CASH_LARGE_PAYMENT`, `CASH_VOUCHER_FIELDS`, `FA_*`, `PREPAID_RESIDUAL` | W2 | P1 | ☐ | ☐ |
 | S022-11 | Danh mục máy đọc `tests/conformance/scenarios/**/F22-*.json` (`bizcity_fault_case@1`) cho 92 ca; ca ☐ / ○ ghi `status: planned` + lý do | W3 | P0 | ☐ | ☐ |
 | S022-12 | Bộ chạy `apps/api/test/fault-scenarios.test.ts` (inject → expect → fix → afterFix) + `scenario-board.json` + `selfcheck --scenarios` — ca T022-5..7 | W3 | P0 | ☐ | ☐ |
@@ -40,3 +40,4 @@ có | 🟡 2026-11-02 — cảnh báo kiểm chuẩn (API + dải cảnh báo) d
 |---|---|---|
 | 2026-11-02 19:00 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "duy trì 2 phương án, cảnh báo và phương án xử lý… chạy 1 loạt các giả định lỗi… đóng vai kế toán trưởng, audit – ban kiểm soát, thanh tra thuế… scoreboard checklist… warning lỗi phải kèm phương án khắc phục cụ thể" → mở PHASE-022, W0 tài liệu + bản mẫu |
 | 2026-11-02 20:20 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "mockup ok rồi, code nhé" → W1: bizcity_remedy@1, remedy cho mọi kiểm + bảng kiểm khoá kỳ, SC-FIX-1, RemedyView ở dải cảnh báo |
+| 2026-11-02 21:20 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W2: 8 kiểm mới cho khoảng trống (quỹ âm, dư sai bên, trung gian ≠ 0, công nợ ≠ sổ, giá vốn lỗi thời, điều chỉnh kho thiếu lý do, khấu hao chưa trích, lịch kiểm chuẩn) |

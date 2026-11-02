@@ -58,6 +58,12 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `VAT_INPUT_NONCASH` | L3 | Hoá đơn mua vào ≥ 5 triệu (gồm thuế), được khấu trừ, chưa ghi chứng từ thanh toán không dùng tiền mặt — dùng lại `taxIssues` / `NON_CASH_THRESHOLD` của ACC78 | warn | có | DG-VAT-2 |
 | `INVOICE_FIELDS` | L3 | Hoá đơn trong sổ thiếu ký hiệu, thiếu tên / mã số thuế người bán (mua vào), mã số thuế sai dạng — dùng lại `taxIssues`; mẫu `<số chứng từ>: <điểm thiếu>` | warn | có | DG-EINV-1 |
 | `INVOICE_ISSUE_DATE` | L3 | Hoá đơn bán hàng hoá có ngày lập sau ngày chứng từ bán (thời điểm chuyển giao) | warn | có | DG-EINV-2 |
+| `CASH_NEGATIVE` <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2 --> | L3 | Quỹ tiền mặt âm cuối ngày theo (chi nhánh, tài khoản tiền mặt ngầm định `cash` và tài khoản con); mẫu `<chi nhánh>:<tài khoản>@<ngày âm đầu>` | warn | có | DG-CASH-1 |
+| `ACCOUNT_WRONG_SIDE` | L3 | Tài khoản có `normal_side` một bên mà số dư cuối kỳ ở bên ngược lại; mẫu `<tài khoản>:<bên đang dư>` | warn | có | DG-ACC-1 |
+| `COGS_STALE` | L3 | Chứng từ kho của tháng được nhận / sửa (`received_at`) sau lần ghi phiếu giá vốn tháng; mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-STK-1 |
+| `STOCK_ADJUST_NO_REASON` | L3 | Phiếu điều chỉnh kho (tăng / giảm) không có lý do | warn | có | DG-STK-2 |
+| `DEPRECIATION_OPEN` | L3 | Tháng đã qua 30 ngày (24 tháng gần nhất) có tài sản cần khấu hao / phân bổ mà chưa trích (tính cả khoảng dồn khi trích bù); mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-FA-1 |
+| `CONFORMANCE_STALE` | L3 | Lượt Kiểm chuẩn gần nhất quá 2 ngày (lịch đêm không chạy); đơn vị tạo chưa tới 2 ngày thì không báo | warn | có | DG-CONF-1 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
@@ -69,10 +75,10 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `MODULE_REGISTRY` <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — DG-MOD-1 --> | L1 | Module `active` trong `module_registry` được API nạp ở lần khởi động gần nhất: hash thư mục khớp, mã có (ADR-0011 D2). Lệch → API bỏ riêng module đó; sửa: dựng lại + `npm run module -w @ketoan/api -- sync`, hoặc khôi phục mã | error | chưa (lane) | DG-MOD-1 |
 | `EVIDENCE_CHAIN` | L3 | Chuỗi băm `audit_logs` của đơn vị liền mạch: băm tính lại khớp, nối đúng dòng trước, không hở số (bizcity_evidence@1) | error | có | DG-EVD-1 |
 | `SETTINGS_UNKNOWN` | — | Khoá trong `tenants.settings` không có trong registry | warn | Phase 3 (`settings.registry`) | DG-SET-1 |
-| `DEBT_MATCH_LEDGER` | L3 | Σ `debt_items` mở = số dư tài khoản công nợ theo đối tượng | error | chưa | DG-PLAN-1 (giữ chỗ) |
+| `DEBT_MATCH_LEDGER` <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2 --> | L3 | Khoản công nợ còn lại theo (đối tượng, tài khoản) = số dư sổ cái của đối tượng trên tài khoản có khoản công nợ; mẫu `<mã đối tượng>:<tài khoản>` | warn | có | DG-PLAN-1 |
 | `TAX_BOOK_MATCH` | L3 | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn | chưa | DG-PLAN-2 |
 | `COST_FILL_OPEN` | L3 | Dòng `cost_fill` còn 0 ở tháng đã qua | warn | không viết: từ khi có phiếu giá vốn tháng, dòng chờ về 0 là bình thường; việc giá vốn tháng đã qua xem `PERIOD_CLOSE_OPEN` | DG-PLAN-3 (giữ chỗ) |
-| `TRANSIT_NONZERO` | L3 | Số dư 1579 / 11319 khác 0 quá N ngày | warn | chưa | DG-PLAN-4 |
+| `TRANSIT_NONZERO` | L3 | Tài khoản hàng / tiền đang chuyển (tài khoản ngầm định `goods_in_transit`, `cash_in_transit` và tài khoản con) còn số tại ngày cách hôm nay 30 ngày (quy chế nội bộ), toàn đơn vị; mẫu `<tài khoản>@<ngày>` | warn | có | DG-PLAN-4 |
 
 **Một mã, hai nơi.**
 - Mỗi mã có trong app phải có check DG-* cùng mã ở lane diagnostics (R-DIAG-9). Check **SC-DIAG-1** chặn nếu thiếu.
