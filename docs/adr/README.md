@@ -27,6 +27,7 @@ Một tệp cho mỗi quyết định khó đảo ngược hoặc mỗi ngoại 
 | [0011](ADR-0011-plugin-ba-muc-tin-cay.md) | Plugin theo ba mức tin cậy: module trong mã nguồn bản cài (tự host, trong tiến trình) · app ngoài tiến trình (khoá có phạm vi, webhook từ outbox, iframe) · gói ký (Phase 5); **không drop-in**; hai mức bật, nạp theo hash, migration module bằng vai trò `mod_<key>_owner`, ghi sổ chỉ qua `submit` | Chấp nhận 2026-11-01 |
 | [0012](ADR-0012-conformance-engine-tru-cot-kernel.md) | Conformance Engine là trụ cột cấp Kernel: ba lớp (Module · Cấu hình · Doanh nghiệp), bốn thành phần (Registry cấp điều khoản · Test Packs · Oracle · Evidence), ba cổng (Build chặn · Posting chỉ thông tin — người dùng quyết · Compliance Report); bảng điểm theo ma trận BizCity; chỉ đọc | Chấp nhận 2026-11-02 (kèm T1–T8) |
 | [0013](ADR-0013-ho-so-ke-toan-co-phien-ban.md) | Hồ sơ kế toán của đơn vị có phiên bản: năm tài chính, chế độ kế toán, loại pháp nhân; bảng chỉ thêm `accounting_profiles`, hiệu lực từ đầu năm tài chính; Core giữ cấu trúc, Conformance phân tích; chưa khai thì không đoán | Chấp nhận 2026-11-02 |
+| [0014](ADR-0014-duyet-rulepack-tai-ban-cai.md) | Duyệt rulepack tại bản cài: bản cài tự chủ tự duyệt (quyền `conformance:approve`), lượt duyệt gắn phiên bản + băm nội dung, nhãn "Đạt theo duyệt của đơn vị" tách khỏi nhãn Bizcity <!-- [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0014 --> | Chấp nhận 2026-11-02 |
 
 ## Khuôn
 
