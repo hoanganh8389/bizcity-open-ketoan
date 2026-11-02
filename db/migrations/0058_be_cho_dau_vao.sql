@@ -1,6 +1,7 @@
 -- [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (2.18, ADR-0014 D2, D10): bể chờ intake_inbox — chứng từ bị cửa nạp từ chối được giữ nguyên văn + phát hiện + điểm; không phải sổ, không ghi accounting_events
+-- [2026-11-02 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-022: migration bể chờ đổi số 0057 → 0058 (0057 = vai trò kiểm soát)
 -- =============================================================================
--- 0057 Bể chờ đầu vào (ADR-0014 D2, D10; RULE-INTAKE-1, -2, -7, -12; PHASES 2.18).
+-- 0058 Bể chờ đầu vào (ADR-0014 D2, D10; RULE-INTAKE-1, -2, -7, -12; PHASES 2.18).
 --      Cửa nạp (POST /documents, /documents/batch, core.document.submit, khoá app) từ chối một chứng từ đã xác thực (sai khuôn,
 --      lệch tổng, chi nhánh lạ, sai chủ chứng từ, phiên bản lùi) → một dòng ở đây: nguyên văn (không sửa), phát hiện tiền kiểm,
 --      điểm, lỗi gốc cửa nạp trả. Gửi lại cùng nguyên văn khi mục còn mở → tăng attempt_no, không thêm dòng.

@@ -51,6 +51,7 @@ export const SCREENS = {
   CN05: s('CN05', '/cong-no/yeu-cau-thanh-toan', 'Yêu cầu thanh toán'),
   HT06: s('HT06', '/he-thong/kiem-chuan', 'Kiểm chuẩn'),
   HT07: s('HT07', '/he-thong/ho-so-ke-toan', 'Hồ sơ kế toán'),
+  HT08: s('HT08', '/he-thong/ban-danh-gia', 'Bàn đánh giá'),
 } as const satisfies Record<string, ScreenRef>;
 
 /** Bước mở đầu bắt buộc của lỗi Tier 0 (R-FIX-2). */

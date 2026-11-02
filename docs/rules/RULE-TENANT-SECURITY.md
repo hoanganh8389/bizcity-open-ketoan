@@ -26,9 +26,10 @@
 |---|---|
 | `owner` | tất cả |
 | `chief_accountant` | danh mục, chứng từ (kể cả sửa của người khác, bỏ qua khoá ngày), duyệt chi cấp 1, sổ, báo cáo, khoá kỳ, cấu hình, xem + chạy Kiểm chuẩn, duyệt rulepack tại đơn vị (ADR-0016) |
-| `accountant` | danh mục, chứng từ của mình, sổ, báo cáo, xem + chạy Kiểm chuẩn |
+| `accountant` | danh mục, chứng từ của mình, sổ, báo cáo, xem + chạy Kiểm chuẩn, xem Bàn đánh giá |
 | `viewer` | chỉ đọc (gồm xem Kiểm chuẩn) |
 | `developer` | như `viewer` + `devtools:read` (Bàn điều tra, PHASE-019: trace / log / bằng chứng của đơn vị qua API trung gian chỉ đọc). Không phạm vi khoá API nào cấp `devtools:read` <!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: vai trò developer, quyền devtools:read. --> |
+| `auditor` | như `viewer` + `review:read` (Bàn đánh giá HT08: checklist giả định lỗi, phương án khắc phục, các lần xác nhận cảnh báo của đơn vị mình). Không ghi, không cấu hình, không khoá kỳ <!-- [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: vai trò kiểm soát (Q022-1, migration 0057). --> |
 
 <!-- [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — quyền conformance:read / conformance:run (ADR-0012, D020-7): chạy Kiểm chuẩn chỉ đọc sổ và lưu ảnh chụp, không đổi sổ / cấu hình. -->
 

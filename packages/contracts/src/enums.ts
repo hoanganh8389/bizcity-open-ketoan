@@ -118,6 +118,9 @@ export const ROLES = {
   // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: vai trò developer (Q019-1 = b) = chỉ xem + Bàn điều tra (devtools:read).
   /** Nhà phát triển: chỉ xem như viewer + Bàn điều tra (devtools:read). Không ghi chứng từ (PHASE-019 Q019-1). */
   DEVELOPER: 'developer',
+  // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: vai trò auditor (Q022-1) = chỉ xem + Bàn đánh giá (review:read).
+  /** Kiểm soát / ban kiểm soát: chỉ xem như viewer + Bàn đánh giá (review:read). Không ghi, không cấu hình. */
+  AUDITOR: 'auditor',
 } as const;
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
@@ -127,4 +130,5 @@ export const ROLE_LABELS: Record<Role, string> = {
   accountant: 'Kế toán',
   viewer: 'Chỉ xem',
   developer: 'Nhà phát triển',
+  auditor: 'Kiểm soát (ban kiểm soát)',
 };
