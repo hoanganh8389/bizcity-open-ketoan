@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/periods
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21: periodCloseGaps — việc cuối kỳ còn thiếu của MỘT tháng cho cảnh báo trước khoá kỳ (không ngưỡng 30 ngày, không tính khoa-so).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm L3 cho lớp Doanh nghiệp của Conformance Engine (S020-19, Q020-6): INVENTORY_NEGATIVE, PERIOD_CLOSE_OPEN; cùng mã với lane DG-INV-1, DG-CLOSE-1.
 /**
  * Trạng thái vận hành theo kỳ của MỘT đơn vị (lớp Doanh nghiệp, ADR-0012) — CHỈ ĐỌC, mức warn: phân tích để người dùng
@@ -10,6 +11,7 @@
  * Ngưỡng 30 ngày sau cuối tháng là quy chế nội bộ (miền internal, kế toán trưởng chốt — Q020-6), không phải luật.
  */
 import { sql, type RawBuilder } from 'kysely';
+import type { Db } from '@bizcity/platform/db/client';
 import { sqlCounts, type DiagCheck, type DiagScope } from '@bizcity/platform/system/diagnostics';
 import { DEFAULT_CLOSING_RULES } from '../closing/closing.service.js';
 
@@ -39,8 +41,8 @@ const balances = (s: DiagScope) => sql`
               GROUP BY 1, 2, 3, 4, 5)
   SELECT d.*, sum(d.q) OVER (PARTITION BY d.tenant_id, d.branch_id, d.warehouse_code, d.sku ORDER BY d.doc_date) AS bal FROM d`;
 
-/** (chi nhánh, tháng) có bút toán, tháng đã kết thúc quá 30 ngày; kèm bốn tín hiệu cuối kỳ. */
-const closeState = (s: DiagScope) => sql`
+/** (chi nhánh, tháng) có bút toán, tháng đã kết thúc quá 30 ngày (hoặc đúng tháng `month` = YYYY-MM-01); kèm bốn tín hiệu cuối kỳ. */
+const closeState = (s: DiagScope, month?: string) => sql`
   WITH rules AS (SELECT r.tenant_id, r.from_account AS prefix FROM closing_rules r
                   WHERE r.tenant_id = ${s.tenantId} AND r.is_active
                     AND NOT EXISTS (SELECT 1 FROM closing_rules o WHERE o.tenant_id = r.tenant_id AND o.is_active AND o.include_opening
@@ -50,7 +52,8 @@ const closeState = (s: DiagScope) => sql`
                   WHERE t.id = ${s.tenantId} AND NOT EXISTS (SELECT 1 FROM closing_rules r WHERE r.tenant_id = t.id)),
   u AS (SELECT l.tenant_id, l.branch_id, date_trunc('month', l.posting_date)::date AS m
                FROM ledger_lines l
-              WHERE ${scoped(s, 'l', 'posting_date')} AND l.posting_date < date_trunc('month', current_date - 30)::date
+              WHERE ${scoped(s, 'l', 'posting_date')}
+                AND ${month ? sql`date_trunc('month', l.posting_date)::date = ${month}::date` : sql`l.posting_date < date_trunc('month', current_date - 30)::date`}
               GROUP BY 1, 2, 3)
   SELECT u.*, to_char(u.m, 'YYYY-MM') AS ym,
     EXISTS (SELECT 1 FROM inventory_movements mv
@@ -105,3 +108,20 @@ export const PERIOD_DIAGNOSTICS: DiagCheck[] = [
            ORDER BY c.m, b.code LIMIT ${SAMPLE}`),
   },
 ];
+
+/**
+ * Việc cuối kỳ còn thiếu của MỘT tháng (Posting Gate trước khoá kỳ, ADR-0012 T3 / T4): cùng tín hiệu với PERIOD_CLOSE_OPEN nhưng
+ * không chờ 30 ngày và không tính `khoa-so` (chính là việc người dùng đang làm). Trả mẫu <chi nhánh>:<YYYY-MM>:<việc>. Chỉ đọc.
+ */
+export async function periodCloseGaps(trx: Db, s: DiagScope, month: string): Promise<string[]> {
+  const first = `${month.slice(0, 7)}-01`;
+  const rows = await sql<{ key: string }>`WITH c AS (${closeState(s, first)})
+    SELECT b.code || ':' || c.ym || ':' || concat_ws('+',
+             CASE WHEN c.need_cogs AND c.cogs_at IS NULL THEN 'gia-von' END,
+             CASE WHEN c.need_close AND c.close_at IS NULL THEN 'ket-chuyen' END,
+             CASE WHEN c.cogs_at > c.close_at THEN 'thu-tu' END) AS key
+      FROM c JOIN branches b ON b.id = c.branch_id
+     WHERE (c.need_cogs AND c.cogs_at IS NULL) OR (c.need_close AND c.close_at IS NULL) OR c.cogs_at > c.close_at
+     ORDER BY b.code`.execute(trx);
+  return rows.rows.map((r) => r.key);
+}

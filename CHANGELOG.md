@@ -13,6 +13,10 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-02 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21 / lịch đêm -->
+- **Màn Hệ thống → Kiểm chuẩn (HT06) và Hồ sơ kế toán (HT07)** (S020-20): ba thẻ Module / Cấu hình / Doanh nghiệp, mỗi thẻ một kết quả và số ca theo 6 trạng thái (không điểm %); ma trận ca có căn cứ điều khoản + trạng thái rà, "Vì sao", "Việc cần làm" (link sang màn sẵn có); xu hướng các lượt gần đây (`GET /api/v1/conformance/runs`, `core.conformance.list`). Màn hồ sơ: xem hồ sơ áp cho hôm nay, lịch sử, phát hành bản mới.
+- **Cảnh báo kiểm chuẩn ở màn lập chứng từ và trước khoá kỳ** (S020-21, ADR-0012 T3 / T4): `GET /api/v1/conformance/advisories` (`?date` cho chứng từ, `?year&month` cho kỳ), tính ngoài giao dịch ghi sổ, chỉ thông tin. Lưu phiếu khi còn cảnh báo, hoặc khoá kỳ khi còn cảnh báo (kèm lý do ≥ 10 ký tự), thì ghi một dòng bằng chứng qua `POST /api/v1/conformance/advisories/ack` (`core.conformance.acknowledge`); khoá API / AI không xác nhận thay. Khoá kỳ vẫn chỉ bị chặn bởi lỗi mức error như cũ.
+- **Kiểm chuẩn mỗi đêm**: subscriber `core.conformance-nightly` nghe `bizcity.clock.daily` (01:00 giờ VN), mỗi đơn vị một lượt, actor `system:nightly`.
 <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: lớp Doanh nghiệp của Conformance Engine -->
 - **Lớp Doanh nghiệp của Conformance Engine** (S020-19, Q020-6): hai kiểm tự chẩn đoán L3 mới, chỉ đọc, mức warn, không chặn khoá kỳ: `INVENTORY_NEGATIVE` (tồn kho âm cuối ngày theo mặt hàng × kho) và `PERIOD_CLOSE_OPEN` (tháng qua quá 30 ngày còn thiếu giá vốn, kết chuyển, khoá sổ, hoặc giá vốn tính lại sau kết chuyển). Bản lane DG-INV-1, DG-CLOSE-1. Lượt Kiểm chuẩn trên bản cài nay đánh giá ba lớp; báo cáo `bizcity_vn_conformance_report` 1.1.0 thêm `cases[].layer` và `layer_results` (kết quả riêng cho Module, Cấu hình, Doanh nghiệp). Gói `@bizcity/vn-rulepacks` 0.2.0.
 <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine trên bản cài (S020-18) -->

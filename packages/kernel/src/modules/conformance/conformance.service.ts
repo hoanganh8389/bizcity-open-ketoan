@@ -1,6 +1,7 @@
 // @bizcity-layer K kernel/conformance
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine trên bản cài (S020-18): hồ sơ kế toán thật + kết quả tự chẩn đoán L1/L3/L5 → bộ đánh giá dùng chung @bizcity/vn-rulepacks/engine → ảnh chụp conformance_runs (ADR-0012 T1, T2, T7).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: thêm lớp Doanh nghiệp (C09: hoá đơn đầu vào chờ, sự việc treo, tồn kho âm, việc cuối kỳ) — bằng chứng từ kiểm L3 của chính đơn vị.
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: listRuns (xu hướng ở màn Kiểm chuẩn); lịch đêm: subscriber core.conformance-nightly nghe bizcity.clock.daily (01:00 giờ VN), mỗi đơn vị một lượt, actor system:nightly (R-DIAG-3, STD-EVT-6).
 /**
  * CONFORMANCE ENGINE (ADR-0012) — ba lớp Module · Cấu hình · Doanh nghiệp trên bản cài.
  *
@@ -13,12 +14,18 @@
  *
  * Không sửa sổ, không đổi cấu hình, không chặn gì, không tự chạy giá vốn / kết chuyển / khoá kỳ: kết luận để người dùng quyết định
  * (R-VNC-10). Báo cáo có layer_results: mỗi lớp trả lời một câu hỏi riêng.
+ *
+ *   listRuns(...)         các lượt gần đây (kết quả theo lớp) cho xu hướng
+ *   conformanceNightlySubscriber  lịch đêm qua sự kiện đồng hồ — không setInterval riêng (STD-EVT-6); chạy lại đúng ngày thì khoá
+ *                         chống trùng của đồng hồ giữ một lượt / đơn vị / ngày
  */
 import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
+import { sql } from 'kysely';
 import { buildReport, evaluate, evidenceFromDiagnostics, loadKitFromDir, PACKAGE_DIR, type Kit, type Profile } from '@bizcity/vn-rulepacks/engine';
 import type { Db } from '@bizcity/platform/db/client';
 import { runDiagnostics } from '@bizcity/platform/system/diagnostics';
+import { defineSubscriber } from '@bizcity/platform/core/events';
 import { BUILD_VERSION } from '@bizcity/platform/core/version';
 import { profileAt } from '../posting-config/profile.js';
 
@@ -95,3 +102,25 @@ export async function latestRun(db: Db, tenantId: string): Promise<ConformanceRu
     .where('tenant_id', '=', tenantId).orderBy('id', 'desc').limit(1).executeTakeFirst();
   return (row as unknown as ConformanceRunRow | undefined) ?? null;
 }
+
+export interface ConformanceRunSummary { id: string; as_of: string; result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED'; counts: Record<string, number>; layer_results: Record<string, string>; actor: string; created_at: Date }
+
+/** Các lượt gần đây của đơn vị, mới trước (xu hướng ở màn Kiểm chuẩn). Không trả báo cáo đầy đủ. */
+export async function listRuns(db: Db, tenantId: string, limit = 12): Promise<ConformanceRunSummary[]> {
+  const rows = await db.selectFrom('conformance_runs')
+    .select(['id', 'as_of', 'result', 'counts', 'actor', 'created_at', sql<Record<string, string> | null>`report -> 'layer_results'`.as('layer_results')])
+    .where('tenant_id', '=', tenantId).orderBy('id', 'desc').limit(limit).execute();
+  return rows as unknown as ConformanceRunSummary[];
+}
+
+/** Lịch đêm (R-DIAG-3): mỗi đơn vị đang dùng một lượt Kiểm chuẩn / ngày, ngày đánh giá = ngày của đồng hồ (giờ VN). Chỉ thêm ảnh chụp. */
+export const conformanceNightlySubscriber = defineSubscriber({
+  id: 'core.conformance-nightly',
+  module: 'bizcity.platform',
+  on: ['bizcity.clock.daily'],
+  retry: { maxAttempts: 3 },
+  async handle(ctx, event) {
+    const date = typeof event.data.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(event.data.date) ? event.data.date : new Date().toISOString().slice(0, 10);
+    await runConformance(ctx.tx, ctx.tenantId, { asOf: date, actor: 'system:nightly' });
+  },
+});

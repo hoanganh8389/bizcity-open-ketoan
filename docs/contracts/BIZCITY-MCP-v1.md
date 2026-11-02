@@ -115,6 +115,7 @@ defineAction({ id: 'accounting.report.trial_balance', input, output, permission:
 | `accounting.posting.reason_suggest` | `kt_reason_suggest` | Xếp hạng lý do cho câu mô tả nghiệp vụ ([POSTING-TEMPLATE §6](BIZCITY-POSTING-TEMPLATE-v1.md)) | **có** (PHASE-012, action `accounting.posting.reason-suggest`) <!-- [2026-10-30 11:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — reason_suggest có. --> |
 | `accounting.profile.get` | `kt_profile` | Hồ sơ kế toán của đơn vị tại một ngày: năm tài chính, chế độ kế toán, loại pháp nhân, lịch sử; `current = null` = chưa khai | **có** (ADR-0013, action `accounting.profile.get`) <!-- [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm công cụ accounting.profile.get --> |
 | `core.conformance.latest` | `kt_conformance` | Kết quả Kiểm chuẩn gần nhất của đơn vị: kết quả, số ca theo trạng thái, từng ca kèm lý do / bằng chứng; chỉ để người dùng quyết định | **có** (ADR-0012, action `core.conformance.latest`) <!-- [2026-11-02 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm công cụ core.conformance.latest --> |
+| `core.conformance.advisories` | `kt_conformance_advisories` | Cảnh báo kiểm chuẩn (chỉ thông tin) cho ngày chứng từ hoặc kỳ sắp khoá: mã, Vì sao, mẫu khoá chứng từ; AI đọc để báo người duyệt, **không** xác nhận thay (core.conformance.acknowledge không phơi cho AI) | **có** (ADR-0012 T3 / T4) <!-- [2026-11-02 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21 / lịch đêm --> |
 | `accounting.posting.explain` | `kt_explain_entry` | Giải thích một bút toán: lý do, tài khoản lấy từ đâu theo thứ tự AccountResolver | mới, đọc `posting_log` |
 
 ### 5.2 Đề xuất ghi — `confirm: always`, gói Pro
@@ -179,3 +180,4 @@ MCP server là một phần của Core (`platform/mcp`), **không** nằm trong 
 |---|---|---|
 | 1.0.0-draft | 2026-10-29 | Khởi tạo, làm hồ sơ của `bizcity-mcp-tool@1.0.0` + `bizcity-mcp-bridge@1.0.0`; danh mục công cụ kế toán; mode `accounting*` |
 | 1.1.0-draft | 2026-11-02 | Thêm công cụ đọc `accounting.profile.get` (hồ sơ kế toán của đơn vị, ADR-0013) và `core.conformance.latest` (kết quả Kiểm chuẩn gần nhất, ADR-0012); `accounting.profile.publish`, `core.conformance.run` không phơi cho AI |
+| 1.1.0-draft | 2026-11-02 | Thêm công cụ đọc `core.conformance.advisories` (Posting Gate chỉ thông tin, ADR-0012); `core.conformance.acknowledge`, `core.conformance.list` không phơi qua MCP |

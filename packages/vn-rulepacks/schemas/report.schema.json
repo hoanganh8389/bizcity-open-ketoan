@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bizcity.vn/contracts/bizcity_vn_conformance_report/1.1.0",
   "title": "bizcity_vn_conformance_report@1",
-  "description": "Báo cáo một lần chạy bộ kiểm chuẩn Việt Nam (PHASE-020, R-VNC-8). Máy đọc; junit.xml và report.html sinh từ đây. result = PASS chỉ khi mọi ca P0 áp dụng là PASS hoặc NOT_APPLICABLE có lý do; REVIEW_REQUIRED và NOT_TESTED không bao giờ tính là PASS. Nhãn công bố: Passed Bizcity VN Conformance [scope/version/date]. Không phải chứng nhận của cơ quan nhà nước. 1.1.0 (2026-11-02, thêm tuỳ chọn): cases[].layer, layer_results.",
+  "description": "Báo cáo một lần chạy bộ kiểm chuẩn Việt Nam (PHASE-020, R-VNC-8). Máy đọc; junit.xml và report.html sinh từ đây. result = PASS chỉ khi mọi ca P0 áp dụng là PASS hoặc NOT_APPLICABLE có lý do; REVIEW_REQUIRED và NOT_TESTED không bao giờ tính là PASS. Nhãn công bố: Passed Bizcity VN Conformance [scope/version/date]. Không phải chứng nhận của cơ quan nhà nước. 1.1.0 (2026-11-02, thêm tuỳ chọn): cases[].layer, title, rulepack, legal_basis; layer_results.",
   "type": "object",
   "required": ["contract", "run_id", "executed_at", "git_sha", "runtime", "target", "tenant_profile", "scope", "rulepacks", "cases", "known_exclusions", "result", "label", "disclaimer"],
   "additionalProperties": false,
@@ -44,7 +44,10 @@
           "evidence": { "type": "array", "items": { "type": "string" }, "description": "Mã biên nhận, id bằng chứng, băm input/output đã loại dữ liệu nhạy cảm" },
           "legal_basis_ids": { "type": "array", "items": { "type": "string" } },
           "evaluated_at": { "type": "string" },
-          "layer": { "anyOf": [ { "enum": ["module", "configuration", "enterprise"] }, { "type": "null" } ], "description": "Lớp của rulepack chứa ca (ADR-0012)" }
+          "layer": { "anyOf": [ { "enum": ["module", "configuration", "enterprise"] }, { "type": "null" } ], "description": "Lớp của rulepack chứa ca (ADR-0012)" },
+          "title": { "anyOf": [ { "type": "string" }, { "type": "null" } ] },
+          "rulepack": { "type": "string", "description": "id rulepack chứa ca; phiên bản ở rulepacks[]" },
+          "legal_basis": { "type": "array", "items": { "type": "object", "required": ["source_id", "label", "provision_ref", "review_status"], "additionalProperties": false, "properties": { "source_id": { "type": "string" }, "label": { "type": "string" }, "provision_ref": { "anyOf": [ { "type": "string" }, { "type": "null" } ] }, "review_status": { "type": "string" } } } }
         }
       }
     },

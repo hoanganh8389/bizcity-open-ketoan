@@ -45,6 +45,9 @@ export interface EvaluatedCase {
   technical: 'PASS' | 'FAIL' | 'ERROR' | 'NOT_TESTED';
   evidence: string[];
   legal_basis_ids: string[];
+  // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20
+  title: string | null;
+  legal_basis: Array<{ source_id: string; label: string; provision_ref: string | null; review_status: string }>;
   evaluated_at?: string;
 }
 

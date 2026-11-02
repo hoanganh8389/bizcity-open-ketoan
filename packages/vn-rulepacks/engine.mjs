@@ -1,5 +1,6 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ đánh giá thuần dùng chung cho --certify (CI) và Conformance Engine trên bản cài (Kernel): chọn rulepack 4 bước, 6 trạng thái ca, fail closed; tách từ tests/conformance/lib/certify.mjs để không có hai bộ đánh giá (ADR-0012 T1, T7).
 // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: báo cáo giữ lớp của từng ca và thêm layer_results (kết quả riêng cho Module · Cấu hình · Doanh nghiệp, cùng luật overall).
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20: ca trong báo cáo mang title, rulepack, legal_basis (nguồn + điều khoản + trạng thái rà) cho màn Kiểm chuẩn.
 /**
  * @bizcity/vn-rulepacks/engine — BỘ ĐÁNH GIÁ THUẦN (ADR-0012 T7: gói chứa dữ liệu luật + một bộ đánh giá không phụ thuộc gói ngoài).
  *
@@ -182,7 +183,13 @@ export function evaluate({ kit, profile, evidence, layers = ['module', 'configur
   for (const row of resolution.rows) {
     const { pack } = row;
     for (const k of pack._cases ?? []) {
-      const base = { id: k.id, version: k.version ?? '0.0.0', priority: k.priority ?? pack.priority, rulepack: pack.id, layer: pack.layer ?? null, legal_basis_ids: (k.legal_basis?.length ? k.legal_basis : pack.legal_basis ?? []).map((b) => b.source_id), evidence: [] };
+      const basis = k.legal_basis?.length ? k.legal_basis : pack.legal_basis ?? [];
+      const base = {
+        id: k.id, version: k.version ?? '0.0.0', priority: k.priority ?? pack.priority, rulepack: pack.id, layer: pack.layer ?? null, title: k.title ?? null,
+        legal_basis_ids: basis.map((b) => b.source_id),
+        legal_basis: basis.map((b) => { const s = kit.sources?.get(b.source_id); return { source_id: b.source_id, label: s ? `${s.title} ${s.number ?? ''}`.trim() : b.source_id, provision_ref: b.provision_ref ?? null, review_status: b.review_status ?? 'pending' }; }),
+        evidence: [],
+      };
       if (pack.layer && !layers.includes(pack.layer)) { cases.push({ ...base, status: 'NOT_APPLICABLE', reason: `lớp ${pack.layer} không thuộc lượt đánh giá này`, technical: 'NOT_TESTED' }); continue; }
       if (k._missing) { cases.push({ ...base, status: 'ERROR', reason: `tệp ca ${k._file} không có`, technical: 'ERROR' }); continue; }
       if (k.status === 'deprecated') { cases.push({ ...base, status: 'NOT_APPLICABLE', reason: 'ca đã deprecated', technical: 'NOT_TESTED' }); continue; }
@@ -256,7 +263,7 @@ export function buildReport({ kit, profile, evaluation, run, target, exclusions 
     tenant_profile: { jurisdiction: 'VN', accounting_regime: profile.accounting_regime, fiscal_year_start: profile.fiscal_year_start, entity_type: profile.entity_type, simulated: profile.simulated !== false },
     scope,
     rulepacks: kit.rulepacks.map((p) => ({ id: p.id, version: p.version, status: p.status, rules_hash: p.release?.rules_hash ?? null })),
-    cases: evaluation.cases.map(({ technical, rulepack, ...c }) => c),
+    cases: evaluation.cases.map(({ technical, ...c }) => c),
     known_exclusions: known,
     reviewer_status: approved ? `${approved}/${kit.rulepacks.length} rulepack approved` : 'Chưa rulepack nào được chuyên gia kế toán / thuế duyệt',
     result,

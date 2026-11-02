@@ -17,7 +17,10 @@
 | Lưu | `conformance_runs` (migration 0052, chỉ thêm, RLS): báo cáo nguyên văn, phiên bản + băm kho rulepack, phiên bản hồ sơ |
 | Action | `core.conformance.run` (quyền `conformance:run`, AI không dùng) · `core.conformance.latest` (quyền `conformance:read`, AI đọc được) |
 | Lớp Doanh nghiệp (S020-19) <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19 --> | 4 ca C09 lấy bằng chứng từ kiểm L3 của đơn vị: `TAX_INPUT_NO_INVOICE`, `EVENT_PENDING_AGE`, `INVENTORY_NEGATIVE` (mới), `PERIOD_CLOSE_OPEN` (mới: giá vốn, kết chuyển, thứ tự, khoá sổ; bộ quy tắc kết chuyển của đơn vị hoặc mặc định, không viết số tài khoản). Báo cáo có `layer_results`: một kết quả cho mỗi lớp |
-| Chưa làm | màn Hệ thống → Kiểm chuẩn (S020-20), cảnh báo ở màn lập chứng từ (S020-21), lịch chạy đêm |
+| Màn (S020-20) <!-- [2026-11-02 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-20 / S020-21 / lịch đêm --> | Hệ thống → Kiểm chuẩn (HT06): ba thẻ lớp, ma trận ca (căn cứ, 6 trạng thái, Vì sao, Việc cần làm), xu hướng; Hồ sơ kế toán (HT07) |
+| Posting Gate (S020-21) | `core.conformance.advisories` tính ngoài giao dịch ghi sổ (T4); lưu phiếu / khoá kỳ khi còn cảnh báo ⇒ `core.conformance.acknowledge` ghi bằng chứng, khoá kỳ kèm lý do (T3); khoá API / AI không xác nhận. API khoá kỳ không đổi |
+| Lịch đêm | subscriber `core.conformance-nightly` trên `bizcity.clock.daily` (01:00 giờ VN) |
+| Chưa làm | gắn cảnh báo ở màn duyệt chứng từ (ACC14) và phiếu hàng; sự kiện `bizcity.conformance.evaluated` (§6, chưa cần) |
 
 Luật đánh giá chốt khi làm: ở lớp Cấu hình và Doanh nghiệp, kiểm mức warn có phát hiện là không đạt; ở lớp Module, kiểm mức info chỉ là ngữ cảnh. Phạm vi chưa xác định (hồ sơ chưa khai) thì không kết luận FAIL. Khi chứng nhận bằng `--certify` (hồ sơ giả lập), lớp Cấu hình chỉ tính bằng chứng build; kiểm DG-* của lớp này chỉ dùng trên bản cài với hồ sơ thật.
 
