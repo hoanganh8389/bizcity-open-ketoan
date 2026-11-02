@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting-config/posting-config.schemas.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: lý do kind "journal" + debitAccount / creditAccount
 import { z } from 'zod';
 
 const acc = z.string().trim().max(20);
@@ -9,11 +10,14 @@ const acc = z.string().trim().max(20);
 export const reasonSchema = z.object({
   code: z.string().trim().min(1).max(32),
   name: z.string().trim().min(1).max(255),
-  kind: z.enum(['out', 'in', 'receipt', 'payment']),
+  kind: z.enum(['out', 'in', 'receipt', 'payment', 'journal']),
   counterAccount: acc.optional(),
   revenueAccount: acc.optional(),
   expenseAccount: acc.optional(),
   cashflowCode: z.string().trim().max(16).optional(),
+  /** Lý do journal (manual_journal): tài khoản Nợ / Có của mỗi dòng — bắt buộc cả hai, khác nhau; loại khác bỏ trống. */
+  debitAccount: acc.optional(),
+  creditAccount: acc.optional(),
   flags: z.record(z.unknown()).default({}),
   isActive: z.boolean().default(true),
 });

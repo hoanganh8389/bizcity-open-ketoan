@@ -17,7 +17,7 @@ import {
   COST_TYPES, TAX_RATE, amountTax, autoLineType, baseUnitOf, brandMix, ckttFor, computeDoc, defaultUnitFor, orderProgress, orderReconcile, priceFor, promoBoard, ratioOf, receiptFromOrder, skuInfo, syncGifts, termText,
   type LineType, type PDoc, type PLine, type ProductUnit, type PromoRow, type SupplierProduct,
   type Check, type TraceItem,
-} from '@ketoan/contracts/mua-hang';
+} from '@bizcity/mua-hang-domain';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { Modal, NumInput, openNextInEdit } from '@/components/ui';
@@ -41,7 +41,7 @@ import { factsText, stockSnapshot, useHierarchy, useNeedOf } from '../ton-max/ap
 import { XemMauNcc, xuatMauNcc, type MauNccInfo } from './MauDonNcc';
 import { PrintButton } from '@/components/print';
 import { STATE_LABEL, invoiceApi, receiptPartsFromInvoice } from '../hoa-don/api';
-import { invoiceLabel, sameInvoice } from '@ketoan/contracts/mua-hang';
+import { invoiceLabel, sameInvoice } from '@bizcity/mua-hang-domain';
 import { ChonChungTu, OChonChungTu } from '../thanh-phan/ChonChungTu';
 import { HoaDonModal } from '../hoa-don/HoaDonModal';
 import type { InvoiceRow } from '../hoa-don/api';

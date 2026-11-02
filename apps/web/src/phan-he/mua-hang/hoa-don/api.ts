@@ -1,5 +1,5 @@
 /** Gọi API Hoá đơn NCC (MH22) — hợp đồng: docs/api/14-mua-hang.md § Hoá đơn NCC. */
-import type { InvoiceLine, ItemAlias, ParsedInvoice, ReconcileResult, SupplierInvoice } from '@ketoan/contracts/mua-hang';
+import type { InvoiceLine, ItemAlias, ParsedInvoice, ReconcileResult, SupplierInvoice } from '@bizcity/mua-hang-domain';
 import { api } from '@/lib/api';
 import { P } from '../du-lieu';
 
@@ -42,7 +42,7 @@ export const invoiceApi = {
  * giá CHƯA thuế, thuế suất theo hoá đơn, hàng tặng → dòng quà; chỉ lấy dòng đã nhận diện mã (unmatched = số dòng bỏ qua).
  */
 export async function receiptPartsFromInvoice(id: string) {
-  const { linesFromInvoice } = await import('@ketoan/contracts/mua-hang');
+  const { linesFromInvoice } = await import('@bizcity/mua-hang-domain');
   const { purchaseApi } = await import('../du-lieu');
   const { invoice: inv } = await invoiceApi.get(id);
   const ls = linesFromInvoice(inv);

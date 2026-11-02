@@ -2,7 +2,7 @@
  * Lỗi đợt test 28/10 (file test mua hàng): mỗi lỗi một phép thử tái hiện đúng thao tác, trên dữ liệu mẫu nạp vào một đơn vị mới.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeDoc, rebateFor, type Policy } from '@ketoan/contracts/mua-hang';
+import { computeDoc, rebateFor, type Policy } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

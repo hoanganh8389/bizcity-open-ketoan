@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type Policy, type PolicyKind } from '@ketoan/contracts/mua-hang';
+import { POLICY_LABEL, STACK_KINDS, canRepeat, giftFlags, isRepeat, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';

@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ratioOf, type ProductUnit } from '@ketoan/contracts/mua-hang';
+import { ratioOf, type ProductUnit } from '@bizcity/mua-hang-domain';
 import { Field, Modal } from '@/components/ui';
 import { errorText } from '@/lib/api';
 import { purchaseApi } from '../du-lieu';

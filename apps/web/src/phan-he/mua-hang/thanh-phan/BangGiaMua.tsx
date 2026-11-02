@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileUp, Pencil, Plus } from 'lucide-react';
-import { TAX_RATE, defaultUnitFor, ratioOf, readTable, supplierItemsOf, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
+import { TAX_RATE, defaultUnitFor, ratioOf, readTable, supplierItemsOf, type ProductUnit, type SupplierProduct } from '@bizcity/mua-hang-domain';
 import { Modal, NumInput } from '@/components/ui';
 import { price as donGia, roundPrice } from '@/lib/format';
 import { PartnerPicker } from '@/components/pickers';

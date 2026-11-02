@@ -4,7 +4,7 @@
 /**
  * BỘ MÁY MUA HÀNG — hàm thuần (không gọi mạng, không cơ sở dữ liệu), dùng chung cho máy chủ (apps/api/src/phan-he/mua-hang)
  * và giao diện (tính tức thời khi sửa phiếu): hai phía ra đúng một con số. Thiết kế: docs/nghiep-vu/08-mua-hang.md.
- * Nhập: '@ketoan/contracts/mua-hang'.
+ * Nhập: '@bizcity/mua-hang-domain'.
  *
  *   computeDoc      tính phiếu: CK dòng (bậc SL / %), CK đơn (% / tiền, phân bổ theo giá trị), tách thuế (giá gồm hay chưa VAT),
  *                   quà chia giá vào giá vốn, giá vốn thực tế từng mã, tổng phải trả, CKTT dự kiến, hạn thanh toán

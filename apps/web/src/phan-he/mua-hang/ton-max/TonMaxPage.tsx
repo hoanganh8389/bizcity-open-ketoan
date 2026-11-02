@@ -9,7 +9,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileUp, Plus, Settings2, Sparkles } from 'lucide-react';
-import { TRANSFER_MODES, type TransferMode } from '@ketoan/contracts/mua-hang';
+import { TRANSFER_MODES, type TransferMode } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Field, Loading, Modal } from '@/components/ui';

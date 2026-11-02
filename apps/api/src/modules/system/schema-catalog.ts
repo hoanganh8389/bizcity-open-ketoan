@@ -162,6 +162,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   tenant_modules: { group: 'platform', label: 'Phân hệ bật / tắt theo đơn vị', term: 'Phân hệ', module: 'system', purpose: 'Chủ đơn vị bật / tắt phân hệ cho đơn vị mình (ADR-0011 D1). Không có dòng = bật. Tắt: route trả MODULE_DISABLED; dữ liệu, bút toán giữ nguyên.' },
   // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — danh mục bảng: intake_inbox (0057, bể chờ đầu vào)
   // [2026-11-02 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-022: migration bể chờ đổi số 0057 → 0058 (0057 = vai trò kiểm soát)
+  // [2026-11-02 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-011 (0058 = lý do phiếu kế toán): migration bể chờ đổi số 0058 → 0059
   intake_inbox: { group: 'platform', label: 'Bể chờ đầu vào', term: 'Trạm kiểm tra đầu vào', module: 'documents', purpose: 'Chứng từ cửa nạp từ chối: nguyên văn, phát hiện IN-*, điểm, số lần gửi, trạng thái xử lý (ADR-0014). Không phải sổ: không thành sự việc, không bút toán. Dọn theo hạn giữ 90 / 7 ngày.' },
   app_installations: { group: 'platform', label: 'App đã kết nối', term: 'Ứng dụng kết nối', module: 'apps', purpose: 'App chạy riêng (ADR-0011 mức 2) đã kết nối với đơn vị: phạm vi quyền và sự kiện chủ đơn vị đồng ý, trạng thái bật / tắt, muối của bí mật webhook (bí mật không lưu).' },
   accounting_units: { group: 'platform', label: 'Đơn vị hạch toán', module: 'branches', purpose: 'Pháp nhân / đơn vị lập báo cáo; chi nhánh thuộc một đơn vị hạch toán.' },

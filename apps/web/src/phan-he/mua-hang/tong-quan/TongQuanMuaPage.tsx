@@ -5,7 +5,7 @@
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { runScenarios } from '@ketoan/contracts/mua-hang';
+import { runScenarios } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { KIND_LABEL, STATUS_LABEL, useMuaHang, vnd } from '../du-lieu';
 import { NapDuLieu } from './NapDuLieu';

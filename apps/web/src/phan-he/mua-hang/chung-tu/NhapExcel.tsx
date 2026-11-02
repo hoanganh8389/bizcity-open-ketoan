@@ -9,7 +9,7 @@
  */
 import { useRef, useState } from 'react';
 import { FileUp } from 'lucide-react';
-import { docsFromImport, importRows, type ImportResult, type PDoc } from '@ketoan/contracts/mua-hang';
+import { docsFromImport, importRows, type ImportResult, type PDoc } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
 import { BranchPicker } from '@/components/filters';
 import { PartnerPicker } from '@/components/pickers';

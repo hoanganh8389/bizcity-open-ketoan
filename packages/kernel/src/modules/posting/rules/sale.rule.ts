@@ -31,6 +31,9 @@ export interface RuleContext {
   partnerId: string | null;
   /** Ngữ cảnh phiếu kho (chuyển kho, điều chỉnh kho). */
   stock?: StockContext;
+  // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: đối tượng theo dòng của manual_journal
+  /** Phiếu kế toán module lập (manual_journal): mã đối tượng của dòng → id (postingService tra trước). */
+  partners?: Map<string, string>;
 }
 
 export interface BranchRef {

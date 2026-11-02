@@ -294,6 +294,35 @@ export const customerPaymentDocumentSchema = z.object({ ...paymentDocument, docT
 /** Trả tiền nhà cung cấp. `partner` là nhà cung cấp; `branchCode` là nơi chi tiền. */
 export const supplierPaymentDocumentSchema = z.object({ ...paymentDocument, docType: z.literal('supplier_payment') });
 
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15 (ADR-0015 Q1, K2): docType manual_journal — dòng theo lý do journal, không số tài khoản, không thuế
+/**
+ * Một dòng phiếu kế toán của module: lý do loại `journal` quyết cặp tài khoản (Nợ / Có do kế toán khai ở lý do), dòng chỉ mang
+ * số tiền. Khuôn đóng (`strict`): dòng có trường lạ — số tài khoản (`account`, `debitAccount`…), thuế (`taxCode`…) — bị từ chối.
+ * `partnerCode`: đối tượng có sẵn trong danh mục, bắt buộc khi tài khoản của lý do theo dõi đối tượng (131, 331, 141…).
+ */
+export const manualJournalLineSchema = z.object({
+  lineKey: z.string().trim().min(1).max(64),
+  reasonCode: z.string().trim().min(1).max(32),
+  amount: money.positive(),
+  partnerCode: z.string().trim().min(1).max(64).optional(),
+  description: z.string().trim().max(500).default(''),
+}).strict();
+export type ManualJournalLine = z.infer<typeof manualJournalLineSchema>;
+
+/**
+ * Phiếu kế toán module lập (`ctx.ledger.submit`, ADR-0015 Q1): phân bổ chi phí trả trước, trích trước, kết chuyển doanh thu
+ * chưa thực hiện… Đi bể sự kiện như mọi chứng từ: `accounting_events` → luật định khoản `manual_journal` → sổ. Không hoá đơn,
+ * không thuế GTGT (thuế đi chứng từ mua / bán) — khuôn đóng, gửi `invoice` hay trường lạ là lỗi khuôn. Lõi `ke-toan` tự chọn
+ * tài khoản bằng phiếu kế toán của mình (`/api/v1/vouchers`), không qua loại này.
+ */
+export const manualJournalDocumentSchema = z.object({
+  ...baseDocument,
+  docType: z.literal('manual_journal'),
+  invoice: z.undefined(),
+  lines: z.array(manualJournalLineSchema).min(1).max(500),
+  totals: z.object({ total: money.positive() }),
+}).strict();
+
 export const ingestDocumentSchema = z.discriminatedUnion('docType', [
   saleDocumentSchema,
   saleReturnDocumentSchema,
@@ -304,6 +333,7 @@ export const ingestDocumentSchema = z.discriminatedUnion('docType', [
   cashTransferDocumentSchema,
   customerPaymentDocumentSchema,
   supplierPaymentDocumentSchema,
+  manualJournalDocumentSchema,
 ]);
 export type IngestDocument = z.infer<typeof ingestDocumentSchema>;
 export type SaleDocument = z.infer<typeof saleDocumentSchema>;
@@ -315,6 +345,7 @@ export type StockAdjustmentDocument = z.infer<typeof stockAdjustmentDocumentSche
 export type CashTransferDocument = z.infer<typeof cashTransferDocumentSchema>;
 export type CustomerPaymentDocument = z.infer<typeof customerPaymentDocumentSchema>;
 export type SupplierPaymentDocument = z.infer<typeof supplierPaymentDocumentSchema>;
+export type ManualJournalDocument = z.infer<typeof manualJournalDocumentSchema>;
 
 /** Chứng từ mua bán: có tiền hàng, thuế, hoá đơn, thanh toán. */
 export type TradeDocument = SaleDocument | SaleReturnDocument | PurchaseDocument | PurchaseReturnDocument;
@@ -331,9 +362,9 @@ export function isCashDocument(doc: IngestDocument): doc is CashDocument {
   return doc.docType === 'cash_transfer' || doc.docType === 'customer_payment' || doc.docType === 'supplier_payment';
 }
 
-/** Mã hàng xuất hiện trên chứng từ (phiếu tiền không có). */
+/** Mã hàng xuất hiện trên chứng từ (phiếu tiền, phiếu kế toán không có). */
 export function skusOf(doc: IngestDocument): string[] {
-  if (isCashDocument(doc)) return [];
+  if (isCashDocument(doc) || doc.docType === 'manual_journal') return [];
   return [...new Set((doc.lines as { sku: string }[]).map((l) => l.sku).filter(Boolean))];
 }
 
@@ -375,9 +406,10 @@ export interface IngestResult {
  *             sổ hoá đơn cho tới khi kế toán định khoản (chọn nhiều, định khoản theo lô);
  *   auto    : định khoản ngay khi chứng từ tới.
  * Áp dụng cho chứng từ đẩy vào cổng chờ (POST /api/v1/documents). Chứng từ kéo về từ hệ thống kết nối luôn chờ định
- * khoản. Phiếu thu chi, phiếu kế toán do kế toán tự lập thì ghi ngay ở chính phiếu.
+ * khoản. Phiếu thu chi, phiếu kế toán do kế toán tự lập thì ghi ngay ở chính phiếu. Phiếu kế toán module lập (`manual_journal`)
+ * mặc định chờ duyệt như mọi loại (đặc tả 3.15 K3): kế toán xem trước khi vào sổ.
  */
-export const APPROVABLE_DOC_TYPES = ['sale', 'sale_return', 'purchase', 'purchase_return', 'transfer', 'stock_adjustment', 'cash_transfer', 'customer_payment', 'supplier_payment'] as const;
+export const APPROVABLE_DOC_TYPES = ['sale', 'sale_return', 'purchase', 'purchase_return', 'transfer', 'stock_adjustment', 'cash_transfer', 'customer_payment', 'supplier_payment', 'manual_journal'] as const;
 export type ApprovableDocType = (typeof APPROVABLE_DOC_TYPES)[number];
 export const postingModesSchema = z.object(Object.fromEntries(APPROVABLE_DOC_TYPES.map((t) => [t, z.enum(['auto', 'approve']).default('approve')])) as Record<ApprovableDocType, z.ZodDefault<z.ZodEnum<['auto', 'approve']>>>);
 export type PostingModes = z.infer<typeof postingModesSchema>;

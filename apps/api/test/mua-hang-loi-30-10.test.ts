@@ -3,7 +3,7 @@
  * Mã hàng / NCC riêng cho từng phép thử để số liệu không lẫn phiếu mẫu.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeDoc, type PDoc, type Policy } from '@ketoan/contracts/mua-hang';
+import { computeDoc, type PDoc, type Policy } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

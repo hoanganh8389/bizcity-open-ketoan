@@ -5,6 +5,7 @@
 // [2026-10-30 10:11 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — gắn action gói định khoản core.template.list / install / uninstall.
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gắn action hồ sơ kế toán accounting.profile.get / publish (ADR-0013).
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/modules/posting-config/posting-config.routes.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
+// [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: lý do journal — đọc / ghi cặp tài khoản Nợ / Có, kiểm có thật, chi tiết, khác nhau
 /**
  * Cấu hình hạch toán.
  *   GET/PUT/DELETE  /api/v1/posting/reasons[/:code]    lý do (xoá: chưa dùng trên chứng từ)
@@ -58,6 +59,8 @@ export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
           revenueAccount: x.revenue_account,
           expenseAccount: x.expense_account,
           cashflowCode: x.cashflow_code,
+          debitAccount: x.debit_account,
+          creditAccount: x.credit_account,
           flags: x.flags,
           isActive: x.is_active,
         })),
@@ -71,6 +74,16 @@ export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => {
       const auth = authOf(req);
       const b = req.body;
+      // Lý do journal (manual_journal): cặp Nợ / Có bắt buộc, khác nhau, là tài khoản chi tiết đang dùng. Loại khác: không dùng cặp này.
+      const journal = b.kind === 'journal';
+      if (journal ? !b.debitAccount || !b.creditAccount || b.debitAccount === b.creditAccount : Boolean(b.debitAccount || b.creditAccount)) {
+        throw Errors.validation(journal ? 'Lý do loại journal cần tài khoản Nợ và tài khoản Có khác nhau' : 'Chỉ lý do loại journal mới khai tài khoản Nợ / Có');
+      }
+      if (journal) {
+        const accs = await db.selectFrom('accounts').select(['code', 'is_active', 'is_posting']).where('tenant_id', '=', auth.tenantId).where('code', 'in', [b.debitAccount!, b.creditAccount!]).execute();
+        const bad = [b.debitAccount!, b.creditAccount!].filter((c) => { const a = accs.find((x) => x.code === c); return !a || !a.is_active || !a.is_posting; });
+        if (bad.length) throw Errors.validation(`Tài khoản ${bad.join(', ')} không có, đã ngừng dùng hoặc là tài khoản tổng hợp — chọn tài khoản chi tiết`);
+      }
       const values = {
         name: b.name,
         kind: b.kind,
@@ -78,6 +91,8 @@ export async function postingConfigRoutes(app: FastifyInstance): Promise<void> {
         revenue_account: b.revenueAccount || null,
         expense_account: b.expenseAccount || null,
         cashflow_code: b.cashflowCode || null,
+        debit_account: journal ? b.debitAccount! : null,
+        credit_account: journal ? b.creditAccount! : null,
         flags: JSON.stringify(b.flags),
         is_active: b.isActive,
       };

@@ -4,7 +4,7 @@
  * phiếu đăng ký max (duyệt tay / tự động / hàng mới gắn mã sau), đơn đặt có dòng hàng mới.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { allocateTransfers, buyOptions, DEFAULT_FORMULA, defaultUnitFor, familiesOf, familyParent, formulaText, orderNeed, priceFor, roundTransfer, suggestMax, type ProductUnit, type SupplierProduct } from '@ketoan/contracts/mua-hang';
+import { allocateTransfers, buyOptions, DEFAULT_FORMULA, defaultUnitFor, familiesOf, familyParent, formulaText, orderNeed, priceFor, roundTransfer, suggestMax, type ProductUnit, type SupplierProduct } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;

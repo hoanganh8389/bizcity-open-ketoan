@@ -1,5 +1,6 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — job monitoring: promtool check / test rules, check config, amtool check-config (S018-14b).
+# [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: build gói @bizcity/mua-hang-domain sau contracts
 # Bộ kiểm chuẩn Bizcity Core — tests/conformance/README.md · docs/adr/ADR-0006
 # Hai lane: selfcheck (tĩnh, không cần npm ci) và diagnostics (PostgreSQL thật, chỉ đọc, sau khi chạy test).
 # Thêm job monitoring: cấu hình bộ giám sát (infrastructure/monitoring) — luật cảnh báo bắn / hết bắn đúng, cấu hình nạp được.
@@ -86,7 +87,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build -w @ketoan/contracts
+      - run: npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain
       - run: npm run db:seed
       # Chạy bộ test để CSDL có bút toán thật, rồi kiểm toàn vẹn trên chính dữ liệu đó (thay tạm R-QG-5 tới khi có test-kit).
       # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3: test chạy dưới vai trò ketoan_app (DB_SET_ROLE) — như API thật, RLS có hiệu lực

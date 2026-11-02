@@ -10,7 +10,7 @@ import { workBranch } from '@/lib/workBranch';
 import { restoreDock } from '@/layout/WindowDock';
 import { cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { invoiceLabel, orderProgress, receiptFromOrder, type PDoc } from '@ketoan/contracts/mua-hang';
+import { invoiceLabel, orderProgress, receiptFromOrder, type PDoc } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading } from '@/components/ui';

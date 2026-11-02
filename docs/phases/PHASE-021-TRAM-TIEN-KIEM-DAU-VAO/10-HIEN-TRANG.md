@@ -28,7 +28,7 @@ Câu hỏi: một chứng từ gửi vào mà không đạt thì hôm nay đi đ
 | F8 | Xem trước định khoản = ghi thật rồi huỷ đã có cho sự việc đã nhận | `document.service.ts:674` (`preview`), R-EVENT-11 | L5 dùng lại đường này cho chứng từ chưa nhận |
 | F9 | `core.document.submit` có `?dryRun=1` (dựng bút toán thử) — ở PR-2, **chưa gộp** | nhánh `feat/pr2-module-sdk` | W2 phụ thuộc PR-2 |
 | F10 | Bàn điều tra có màn Lỗi theo module (DEV04) — cho **nhà phát triển**, đọc trace, không theo chứng từ | `apps/web/src/phan-he/dev/loi-theo-module/LoiTheoModulePage.tsx` | không trùng: Trạm là của **kế toán**; Trạm hiện mã tra cứu để dev mở sang Bàn điều tra khi lỗi là sự cố hệ thống |
-| F11 | Mã hàng có quy tắc `skuInfo`; ĐVT có bảng quy đổi | `packages/contracts/src/mua-hang/ma-hang.ts:38`, `packages/contracts/src/dvt.ts` | L3 dùng lại; mã hàng / ĐVT sai là `warn` cho tới khi Kernel chặn |
+| F11 | Mã hàng có quy tắc `skuInfo`; ĐVT có bảng quy đổi | `modules/mua-hang/domain/src/ma-hang.ts:38`, `packages/contracts/src/dvt.ts` | L3 dùng lại; mã hàng / ĐVT sai là `warn` cho tới khi Kernel chặn |
 | F12 | Lỗi xác thực (401) và quá hạn mức (429) xảy ra trước khi biết đơn vị chắc chắn | `core/auth.ts` | không lưu vào bể (ADR-0014 D2) |
 
 ## 3. Câu hỏi còn mở cho W1 (đọc mã khi làm, không chặn kế hoạch)

@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { TAX_RATE, defaultUnitFor, priceFor, ratioOf, supplierItemsOf, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
+import { TAX_RATE, defaultUnitFor, priceFor, ratioOf, supplierItemsOf, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
 import { Modal, NumInput } from '@/components/ui';
 import { price as donGia, roundPrice } from '@/lib/format';
 import { purchaseApi, type MhData } from '../du-lieu';

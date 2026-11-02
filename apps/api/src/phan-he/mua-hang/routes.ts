@@ -13,7 +13,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { runScenarios } from '@ketoan/contracts/mua-hang';
+import { runScenarios } from '@bizcity/mua-hang-domain';
 import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';

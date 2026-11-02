@@ -5,7 +5,7 @@
  *   - chính sách cũ một dòng vẫn tính như trước; qua API: máy chủ kiểm mã + ĐVT, ghi tỉ lệ quy đổi, phiếu duyệt đúng số quà.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeDoc, giftPlan, promoBoard, syncGifts, type GiftItem, type PDoc, type PLine, type Policy } from '@ketoan/contracts/mua-hang';
+import { computeDoc, giftPlan, promoBoard, syncGifts, type GiftItem, type PDoc, type PLine, type Policy } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 // Mã A: Hộp 1, Lốc 4, Thùng 48. Mã Q (quà): Cái 1, Hộp 10.

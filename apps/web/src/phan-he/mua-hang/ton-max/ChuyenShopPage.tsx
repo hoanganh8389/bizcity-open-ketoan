@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileSpreadsheet, Send } from 'lucide-react';
-import { TRANSFER_MODES } from '@ketoan/contracts/mua-hang';
+import { TRANSFER_MODES } from '@bizcity/mua-hang-domain';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';

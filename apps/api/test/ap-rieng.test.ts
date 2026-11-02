@@ -4,7 +4,7 @@
  * riêng cùng khớp (ưu tiên, rồi lợi hơn), bỏ tích chương trình áp riêng thì các cái khác áp lại, quà, bảng khuyến mại, qua API.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeDoc, giftPlan, promoBoard, syncGifts, type PDoc, type PLine, type Policy } from '@ketoan/contracts/mua-hang';
+import { computeDoc, giftPlan, promoBoard, syncGifts, type PDoc, type PLine, type Policy } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 const pol = (code: string, kind: Policy['kind'], rule: Record<string, unknown>, scope: Policy['scope'] = {}, priority = 0): Policy => ({ id: code, code, kind, name: `CT ${code}`, scope: { partnerCode: 'N1', ...scope }, isActive: true, rule, priority });

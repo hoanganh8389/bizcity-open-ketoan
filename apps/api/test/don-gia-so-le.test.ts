@@ -4,7 +4,7 @@
  * và qua API: lưu → duyệt → đơn giá giữ nguyên số lẻ, công nợ / bút toán là số đồng tròn; giá mua của NCC lưu được số lẻ.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { checkDoc, computeDoc, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
+import { checkDoc, computeDoc, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 const line = (k: string, sku: string, qty: number, price: number, o: Partial<PLine> = {}): PLine => ({ lineKey: k, sku, name: sku, unit: 'Lon', qty, price, taxCode: 'V08', lineType: 'buy', ...o });

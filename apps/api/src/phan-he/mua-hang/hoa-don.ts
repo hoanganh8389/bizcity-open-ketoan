@@ -15,7 +15,7 @@ import { z } from 'zod';
 import {
   TAX_RATE, computeDoc, invoiceLabel, matchLine, nameKey, normalizeParsed, reconcileInvoice, sameInvoice, unitFor,
   type Check, type InvoiceLine, type ItemAlias, type MatchSources, type ParsedInvoice, type PDoc, type Policy, type ProductUnit, type ReconcileResult, type ReceiptLineLite, type SupplierInvoice,
-} from '@ketoan/contracts/mua-hang';
+} from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { logEvents } from './log.js';

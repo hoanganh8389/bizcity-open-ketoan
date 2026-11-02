@@ -3,7 +3,7 @@
  * kế toán nhập bằng ô, bảng bậc; phần mềm tự lưu thành quy tắc. Thêm loại chính sách: thêm một nhánh ở cả hai hàm.
  */
 import type { ReactNode } from 'react';
-import { canRepeat, giftFlags, giftItemsOf, isRepeat, termFromRule, termText, type GiftItem, type ItemDiscount, type Policy, type PolicyKind } from '@ketoan/contracts/mua-hang';
+import { canRepeat, giftFlags, giftItemsOf, isRepeat, termFromRule, termText, type GiftItem, type ItemDiscount, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { BangChietKhauMa } from './BangChietKhauMa';
 import { BangQuaTang } from './BangQuaTang';
 import { BranchPicker } from '@/components/filters';

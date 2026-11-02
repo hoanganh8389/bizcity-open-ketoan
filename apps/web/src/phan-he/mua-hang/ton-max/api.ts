@@ -3,7 +3,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { FormulaConfig, MaxRequestItem, MaxRequestKind, MaxRequestStatus, PLine, TransferMode } from '@ketoan/contracts/mua-hang';
+import type { FormulaConfig, MaxRequestItem, MaxRequestKind, MaxRequestStatus, PLine, TransferMode } from '@bizcity/mua-hang-domain';
 
 const S = '/api/v1/stock';
 

@@ -3,7 +3,7 @@
  * thẳng API vượt mức; API chặn % > 100.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeDoc, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
+import { computeDoc, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 const line = (o: Partial<PLine> = {}): PLine => ({ lineKey: 'a', sku: 'A', name: 'A', unit: 'Lon', qty: 10, price: 100_000, taxCode: 'V08', lineType: 'buy', ...o });

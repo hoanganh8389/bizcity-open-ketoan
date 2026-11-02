@@ -6,6 +6,7 @@
 <!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — modules/reports → phan-he/ke-toan/reports (Q012-2); documentChecks về Kernel; callAction / ctx.actions.call thay import chéo -->
 <!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §3.1: 22 tệp Platform dời sang packages/platform (D010-7 chặng 2) -->
+<!-- [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: bộ máy mua hàng thành gói @bizcity/mua-hang-domain (modules/mua-hang/domain) -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
 > Cây đích: [TARGET-LAYOUT.md](TARGET-LAYOUT.md). Phát hiện nền trước đó: [../audits/AUDIT-2026-10-28-BASELINE.md](../audits/AUDIT-2026-10-28-BASELINE.md) (A-01..A-16); phát hiện mới ở §5 (A-17..A-26).
@@ -138,7 +139,7 @@ Quyền module đang dùng: chỉ các quyền chung `catalog:*`, `documents:*`,
 | `packages/contracts/src/{enums,dvt}.ts` | 187 | M + K | tách theo từng hằng |
 | `packages/contracts/src/connections.ts` | 93 | A | `adapters/wordpress` |
 | `packages/contracts/src/print-templates.ts` | 45 | U | `ui-kit/print` |
-| `packages/contracts/src/mua-hang/*` | 2.031 | D | `modules/mua-hang/domain` (A-06) |
+| `packages/contracts/src/mua-hang/*` | 2.031 | D | `modules/mua-hang/domain` (A-06) — ✅ 2026-11-02, gói `@bizcity/mua-hang-domain` |
 
 ## 5. Phát hiện mới (bổ sung audit)
 

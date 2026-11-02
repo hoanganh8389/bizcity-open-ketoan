@@ -2,7 +2,7 @@
  * Hoá đơn đầu vào của NCC (MH22): lưu hoá đơn theo cách NCC ghi, nhận diện mã bên mình, học cách ghi, đối soát với phiếu nhập.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { matchLine, nameScore, normalizeParsed, reconcileInvoice, type InvoiceLine } from '@ketoan/contracts/mua-hang';
+import { matchLine, nameScore, normalizeParsed, reconcileInvoice, type InvoiceLine } from '@bizcity/mua-hang-domain';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let t: TestCtx;

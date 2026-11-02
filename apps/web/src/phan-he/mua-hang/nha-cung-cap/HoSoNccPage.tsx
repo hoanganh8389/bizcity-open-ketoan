@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ClipboardList, FileSpreadsheet, HandCoins, PackageCheck, Pencil, Plus, RotateCcw } from 'lucide-react';
-import { orderProgress, POLICY_LABEL, type Policy, type PolicyKind } from '@ketoan/contracts/mua-hang';
+import { orderProgress, POLICY_LABEL, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
@@ -125,7 +125,7 @@ export function HoSoNccPage() {
   );
 }
 
-function TongQuan({ code, credit, months, docs, allDocs, units, onOpen, onReceipt }: { code: string; units?: MhData["units"]; credit?: import('@ketoan/contracts/mua-hang').CreditStatus; months: { month: string; amount: number }[]; docs: StoredDoc[]; allDocs: StoredDoc[]; onOpen: (d: StoredDoc) => void; onReceipt: (d: StoredDoc) => void }) {
+function TongQuan({ code, credit, months, docs, allDocs, units, onOpen, onReceipt }: { code: string; units?: MhData["units"]; credit?: import('@bizcity/mua-hang-domain').CreditStatus; months: { month: string; amount: number }[]; docs: StoredDoc[]; allDocs: StoredDoc[]; onOpen: (d: StoredDoc) => void; onReceipt: (d: StoredDoc) => void }) {
   const due = useQuery({ queryKey: ['mua-hang', 'due', code], queryFn: () => api.get<{ rows: { docNo: string; dueDate: string; remaining: number; daysOverdue: number; seq?: number; docDate: string }[] }>(`${P}/due`, { partnerCode: code }) });
   const openOrders = docs.filter((d) => d.kind === 'order' && d.status !== 'cancelled' && d.status !== 'draft').map((d) => ({ d, pr: orderProgress(d, allDocs, undefined, units) })).filter((x) => !x.pr.done);
   const max = Math.max(1, ...months.map((m) => m.amount));

@@ -14,7 +14,7 @@
 
 | Tài liệu | Một câu |
 |---|---|
-| [50-DAC-TA-MANUAL-JOURNAL](50-DAC-TA-MANUAL-JOURNAL.md) <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — trỏ đặc tả 3.15 --> | đặc tả định khoản `manual_journal` (3.15) — chờ kế toán trưởng ký |
+| [50-DAC-TA-MANUAL-JOURNAL](50-DAC-TA-MANUAL-JOURNAL.md) <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — trỏ đặc tả 3.15 --> | đặc tả định khoản `manual_journal` (3.15) — K1, K3, K4 duyệt, có mã + 9 ca test; K2 (danh sách lý do gói nền) chờ <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 --> |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | nguồn trạng thái việc con duy nhất của phase + ca bằng chứng + log |
 
 ## Hiện trạng đọc mã
@@ -30,7 +30,7 @@
 
 Phase xong khi mọi việc lộ trình ở trên **done** trên bảng điểm (`node tests/conformance/selfcheck.mjs`, tín hiệu ở [roadmap.json](../../standard/roadmap.json)) và mọi mã checklist công bố chuyển **có** trong [Bản công bố §6](../../CONG-BO-KIEN-TRUC.md). Trạng thái hôm nay: 3.1 ☐ · 3.2 ☐ · 3.3 ☐ · 3.6 🟡 · 3.10 ☐ · 3.13 ☐ · 3.14 ☐.
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — trạng thái 2026-11-02 sau PR-1, PR-2, PR-2b -->
-Trạng thái 2026-11-02: 3.1 🟡 (SDK v0.1) · 3.2 ✅ · 3.3 ☐ · 3.6 ✅ · 3.10 ☐ · 3.13 ☐ · 3.14 ✅ (còn CSP `frame-src`, slot iframe — [mockups/README](mockups/README.md)).
+Trạng thái 2026-11-02 (tối): đủ 11 việc lộ trình ☑ trên bảng điểm — 3.15 `manual_journal` có mã (lý do journal, 0058), còn K2 danh sách lý do cho gói nền chờ kế toán trưởng. (Sáng 2026-11-02: 3.1 🟡 · 3.2 ✅ · 3.3 ☐ · 3.6 ✅ · 3.10 ☐ · 3.13 ☐ · 3.14 ✅.)
 
 <!-- [2026-11-01 10:16 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — phạm vi phase thêm 3.13, 3.14; quyết định thiết kế plugin ở ADR-0011 -->
 <!-- [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] ADR-0011 — trỏ bản mẫu tĩnh mockups/phan-he.html (chủ yêu cầu vẽ trước để định hướng checklist code) -->

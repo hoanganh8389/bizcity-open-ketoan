@@ -138,7 +138,8 @@ async function documentPartnerId(trx: Db, tenantId: string, doc: IngestDocument)
   if (doc.docType === 'purchase' || doc.docType === 'purchase_return' || doc.docType === 'supplier_payment') {
     return partnerRepository.upsert(trx, tenantId, doc.partner?.code ? doc.partner : RETAIL_SUPPLIER, 'supplier');
   }
-  if (isStockDocument(doc) || doc.docType === 'cash_transfer') return doc.partner?.code ? partnerRepository.upsert(trx, tenantId, doc.partner) : null;
+  // [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.15: phiếu kế toán module lập không mặc định Khách lẻ — đối tượng theo dòng hoặc partner của chứng từ
+  if (isStockDocument(doc) || doc.docType === 'cash_transfer' || doc.docType === 'manual_journal') return doc.partner?.code ? partnerRepository.upsert(trx, tenantId, doc.partner) : null;
   return partnerRepository.upsert(trx, tenantId, doc.partner?.code ? doc.partner : RETAIL_PARTNER);
 }
 

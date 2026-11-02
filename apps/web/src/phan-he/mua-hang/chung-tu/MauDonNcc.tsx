@@ -6,7 +6,7 @@
  *   Thành tiền sau CK, Ghi chú; dòng "A – TỔNG TRỊ GIÁ HÀNG ĐẶT"; cuối: ghi chú đơn + tổng tiền.
  * XemMauNcc: xem ngay trên web (màu như Excel); xuatMauNcc: tải tệp .xlsx có màu, khổ ngang, Times New Roman.
  */
-import { TAX_RATE, type PDoc, type PLine } from '@ketoan/contracts/mua-hang';
+import { TAX_RATE, type PDoc, type PLine } from '@bizcity/mua-hang-domain';
 import { Modal } from '@/components/ui';
 import { roundPrice } from '@/lib/format';
 
