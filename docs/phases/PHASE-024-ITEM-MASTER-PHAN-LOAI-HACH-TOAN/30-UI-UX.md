@@ -84,6 +84,8 @@ Ba lớp hiển thị tuỳ chỗ:
 
 ## 4. Validator trong form mặt hàng
 
+Dùng chung khung "Vì sao" bốn mức (nhắc · hướng dẫn · cảnh báo mềm · chặn) của [PHASE-023 · 20](../PHASE-023-THE-TAI-KHOAN/20-VALIDATOR-MEM.md); mặt hàng là entity đầu tiên có `core.item.validate`. <!-- [2026-11-02 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — nối validator mềm -->
+
 - Khi gõ mã: quy tắc mã của đơn vị gợi ý phân loại (từ `skuInfo`) — hiện dưới dạng **gợi ý có thể bỏ**, không tự áp (R-ITEM-4).
 - Trước nút Ghi: khối "Kiểm" liệt kê phát hiện `IN-ITEM-*` cho item này (ĐVT thiếu, mã trùng, chưa phân loại, biến thể trùng thuộc tính), mỗi dòng có nút sửa ngay trong form. Block → nút Ghi mờ với lý do; warn → ghi được, phát hiện còn hiện ở thẻ.
 - Nhập Excel: cột kết quả theo dòng với mã IN-ITEM-*; dòng block không nhập, dòng warn nhập và đánh dấu.
