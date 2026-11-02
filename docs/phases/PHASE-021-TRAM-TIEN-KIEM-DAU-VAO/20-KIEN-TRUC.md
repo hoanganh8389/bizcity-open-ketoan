@@ -83,6 +83,9 @@ interface IntakeCodeSpec {
 }
 ```
 
+<!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: danh mục thật ở hợp đồng; thêm trường stage -->
+> **W1 xong (2026-11-02):** danh mục thật ở [BIZCITY-INTAKE-FINDINGS-v1](../../contracts/BIZCITY-INTAKE-FINDINGS-v1.md) (20 mã). Thêm trường **`stage`** (`door` cửa nạp từ chối · `posting` thành sự việc nhưng chưa ghi sổ được · `advice` chỉ hướng dẫn) vì đọc mã cho thấy kỳ khoá chặn ở bước ghi sổ, không ở cửa nạp — R-INTAKE-4 kiểm theo `stage`. Thêm IN-SUM-006 (tổng thuế); bảng dưới giữ làm nháp lịch sử.
+
 Danh mục **nháp** cho W1. Mức có dấu ⚑ phải xác minh với Kernel ở W1 (10-HIEN-TRANG §3); không xác minh được thì để `warn`.
 
 | Mã | Lớp | Mức | Phát hiện | Nguồn kiểm |
@@ -142,7 +145,7 @@ preflight(trx, auth, raw: unknown, opts: { layers?: ('L1'|'L2'|'L3'|'L4'|'L5')[]
 
 | Lời gọi | Quyền | Việc |
 |---|---|---|
-| (lỗi của) `POST /documents`, `/documents/batch`, `/documents/submit` | như cũ | mã HTTP cũ; `error.details.findings`; `meta.intake = { id, score, url }` (lô: từng dòng có `intakeId`) |
+| (lỗi của) `POST /documents`, `/documents/batch`, `/documents/submit` | như cũ | mã HTTP cũ; `error.intake = { id, attempt, score, findings, url }` (lô: từng dòng có `intakeId`); `details` không đổi <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 thi hành --> |
 | `POST /api/v1/intake/preflight` | `documents:write` | Kiểm thử: `{ document, save?: boolean }` → `{ findings, score, entries? }`; `save` → mục `trial` |
 | `GET /api/v1/intake` | `documents:read` | lọc `status`, `channel`, `source`, `docType`, `actor`, `code`, `from`, `to`; phân trang |
 | `GET /api/v1/intake/:id` | `documents:read` | nguyên văn, bản vá, phát hiện từng lần, lịch sử |
@@ -197,7 +200,7 @@ Khung chi tiết một mục bể:
 - Xu hướng theo tuần.
 - Câu dẫn cố định: "Bảng này để cùng học cách nhập đúng, không để đánh giá cá nhân."
 
-Bản mẫu tĩnh: `mockups/tram-kiem-tra.html` (S021-3).
+Bản mẫu tĩnh: [mockups/tram-kiem-tra.html](mockups/tram-kiem-tra.html) (S021-3). <!-- [2026-11-02 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-3: bản mẫu đã có -->
 
 ## 8. Chấm điểm và chỉ số
 

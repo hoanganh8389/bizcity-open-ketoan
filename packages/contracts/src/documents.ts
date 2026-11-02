@@ -396,6 +396,8 @@ export interface IngestResult {
   updated?: number;
   reversed?: number;
   error?: { code: string; message: string };
+  /** Lô: chứng từ bị cửa nạp từ chối đã giữ ở bể chờ (GET /api/v1/intake/:id, PHASE-021). */
+  intakeId?: string;
 }
 
 /**

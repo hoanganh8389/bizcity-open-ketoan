@@ -25,6 +25,7 @@ import { listSignatures } from '@bizcity/platform/documents/signature.routes';
 import { assertDateRules, dateRuleViolation, readDataLock } from '@bizcity/platform/core/date-rules';
 import { isAutoMode, needsApproval } from '../../core/posting-modes.js';
 import {
+  ERROR_CATALOG,
   ingestDocumentSchema,
   isTradeDocument,
   moneyEquals,
@@ -35,9 +36,11 @@ import {
 } from '@ketoan/contracts';
 import { db, toNumber, type Db } from '@bizcity/platform/db/client';
 import { AppError, Errors } from '@bizcity/platform/core/errors';
+import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
 import { ownDocument } from '@bizcity/platform/core/actions';
+import { channelOf, closeBySource, isDoorRejection, recordRejection, type IntakeChannel } from '../intake/inbox.js';
 import { emitKernelEvent } from './kernel-events.js';
 import { accountRepository } from '../accounts/account.repository.js';
 import { ledgerRepository } from '../ledger/ledger.repository.js';
@@ -69,25 +72,33 @@ export const RETAIL_PARTNER = { code: 'KHACH-LE', name: 'Khách lẻ' };
 export const RETAIL_SUPPLIER = { code: 'NCC-LE', name: 'Nhà cung cấp lẻ' };
 
 /** Kiểm tổng tiền của chứng từ khớp tổng các dòng (tới xu). */
-function assertTotals(doc: IngestDocument): void {
-  if (doc.docType === 'cash_transfer') return; // một số tiền, đã kiểm dương ở khuôn
+// [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1 (R-INTAKE-4): luật tổng tiền tách thành totalsProblems (danh sách, có mã IN-SUM-*) — cửa nạp ném như cũ, bộ tiền kiểm gom; một chỗ luật
+/** Một vi phạm tổng tiền: mã IN-*, trường, câu (giữ nguyên câu cửa nạp trả từ trước). */
+export interface TotalsProblem { code: 'IN-SUM-001' | 'IN-SUM-002' | 'IN-SUM-005' | 'IN-SUM-006'; path: string; message: string }
+
+/** Mọi vi phạm tổng tiền của chứng từ (không dừng ở lỗi đầu). */
+export function totalsProblems(doc: IngestDocument): TotalsProblem[] {
+  if (doc.docType === 'cash_transfer') return []; // một số tiền, đã kiểm dương ở khuôn
   if (doc.docType === 'customer_payment' || doc.docType === 'supplier_payment') {
     const allocated = sumMoney(doc.lines.map((l) => l.amount));
-    if (allocated > doc.totals.total + 0.004) throw Errors.validation('Tổng tiền chứng từ không khớp', [`Tổng phân bổ ${allocated} lớn hơn tổng phiếu ${doc.totals.total}`]);
-    return;
+    return allocated > doc.totals.total + 0.004 ? [{ code: 'IN-SUM-002', path: 'lines', message: `Tổng phân bổ ${allocated} lớn hơn tổng phiếu ${doc.totals.total}` }] : [];
   }
   if (!isTradeDocument(doc)) {
     const sum = sumMoney(doc.lines.map((l) => Math.abs(l.amount)));
-    if (!moneyEquals(sum, Math.abs(doc.totals.total))) throw Errors.validation('Tổng tiền chứng từ không khớp', [`Tổng giá trị ${doc.totals.total} ≠ tổng các dòng ${sum}`]);
-    return;
+    return moneyEquals(sum, Math.abs(doc.totals.total)) ? [] : [{ code: 'IN-SUM-001', path: 'totals.total', message: `Tổng giá trị ${doc.totals.total} ≠ tổng các dòng ${sum}` }];
   }
   const before = sumMoney(doc.lines.map((l) => l.amountBeforeTax));
   const tax = sumMoney(doc.lines.map((l) => l.taxAmount));
-  const problems: string[] = [];
-  if (!moneyEquals(before, doc.totals.beforeTax)) problems.push(`Tổng tiền trước thuế ${doc.totals.beforeTax} ≠ tổng các dòng ${before}`);
-  if (!moneyEquals(tax, doc.totals.tax)) problems.push(`Tổng thuế ${doc.totals.tax} ≠ tổng các dòng ${tax}`);
-  if (!moneyEquals(sumMoney([doc.totals.beforeTax, doc.totals.tax]), doc.totals.total)) problems.push('Tổng thanh toán ≠ tiền trước thuế + thuế');
-  if (problems.length) throw Errors.validation('Tổng tiền chứng từ không khớp', problems);
+  const problems: TotalsProblem[] = [];
+  if (!moneyEquals(before, doc.totals.beforeTax)) problems.push({ code: 'IN-SUM-001', path: 'totals.beforeTax', message: `Tổng tiền trước thuế ${doc.totals.beforeTax} ≠ tổng các dòng ${before}` });
+  if (!moneyEquals(tax, doc.totals.tax)) problems.push({ code: 'IN-SUM-006', path: 'totals.tax', message: `Tổng thuế ${doc.totals.tax} ≠ tổng các dòng ${tax}` });
+  if (!moneyEquals(sumMoney([doc.totals.beforeTax, doc.totals.tax]), doc.totals.total)) problems.push({ code: 'IN-SUM-005', path: 'totals.total', message: 'Tổng thanh toán ≠ tiền trước thuế + thuế' });
+  return problems;
+}
+
+function assertTotals(doc: IngestDocument): void {
+  const problems = totalsProblems(doc);
+  if (problems.length) throw Errors.validation('Tổng tiền chứng từ không khớp', problems.map((p) => p.message));
 }
 
 /**
@@ -97,7 +108,7 @@ function assertTotals(doc: IngestDocument): void {
  *   3. đúng MỘT chi nhánh có mã = mã gửi sang + đuôi chữ (08016 → 08016Plus, 00003 → 00003_OFF — mã của danh mục cũ).
  * Không tìm được, hoặc nhiều chi nhánh cùng khớp đuôi, thì báo rõ để kế toán khai mã tham chiếu.
  */
-async function findBranch(trx: Db, tenantId: string, code: string) {
+export async function findBranch(trx: Db, tenantId: string, code: string) {
   const cols = ['id', 'code', 'name', 'accounting_unit_id'] as const;
   const exact = await trx.selectFrom('branches').select(cols).where('tenant_id', '=', tenantId).where('code', '=', code).executeTakeFirst();
   if (exact) return exact;
@@ -503,16 +514,30 @@ async function actorNames(tenantId: string, actors: string[]): Promise<Map<strin
   return out;
 }
 
+/** Nhận một chứng từ (một lần thử, không bể chờ) — documentService.ingest bọc thêm bể chờ. */
+async function ingestOne(auth: AuthContext, input: unknown): Promise<IngestResult> {
+  // Đẩy vào bằng khoá API: chuẩn hoá như chứng từ kéo qua kết nối cùng mã nguồn (đổi hình thức thanh toán…).
+  const prep = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, input) : { doc: input };
+  const raw = prep.doc;
+  if (prep.skip) return { docKey: String((raw as { docKey?: unknown })?.docKey ?? '?'), version: Number((raw as { version?: unknown })?.version ?? 1), status: 'unchanged' };
+  const parsed = ingestDocumentSchema.safeParse(raw);
+  // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route nhận thân thô, khuôn kiểm ở đây (sai khuôn cũng vào bể chờ); details là mảng câu như lỗi kiểm route cũ
+  if (!parsed.success) throw Errors.validation(ERROR_CATALOG.VALIDATION_ERROR.message, zodIssueTexts(parsed.error));
+  return processDocument(auth, parsed.data);
+}
+
 export const documentService = {
   /** Nhận một chứng từ (dữ liệu thô từ API). */
-  async ingest(auth: AuthContext, input: unknown): Promise<IngestResult> {
-    // Đẩy vào bằng khoá API: chuẩn hoá như chứng từ kéo qua kết nối cùng mã nguồn (đổi hình thức thanh toán…).
-    const prep = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, input) : { doc: input };
-    const raw = prep.doc;
-    if (prep.skip) return { docKey: String((raw as { docKey?: unknown })?.docKey ?? '?'), version: Number((raw as { version?: unknown })?.version ?? 1), status: 'unchanged' };
-    const parsed = ingestDocumentSchema.safeParse(raw);
-    if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', parsed.error.flatten());
-    return processDocument(auth, parsed.data);
+  async ingest(auth: AuthContext, input: unknown, channel: IntakeChannel = 'api'): Promise<IngestResult> {
+    // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (ADR-0014 D2): cửa nạp từ chối → giữ ở bể chờ (giao dịch riêng), lỗi mang error.intake; nhận được → đóng mục bể cùng docKey
+    try {
+      const r = await ingestOne(auth, input);
+      if (r.docKey && r.docKey !== '?') await closeBySource(db, auth.tenantId, r.docKey, auth.actor).catch(() => 0);
+      return r;
+    } catch (err) {
+      if (isDoorRejection(err)) await recordRejection(auth, input, channelOf(auth, channel), err);
+      throw err;
+    }
   },
 
   /** Nhận nhiều chứng từ; mỗi chứng từ xử lý độc lập, lỗi chứng từ này không chặn chứng từ khác. */
@@ -522,10 +547,11 @@ export const documentService = {
       const key = (raw as { docKey?: string })?.docKey ?? '?';
       const version = Number((raw as { version?: number })?.version ?? 1);
       try {
-        results.push(await documentService.ingest(auth, raw));
+        results.push(await documentService.ingest(auth, raw, 'batch'));
       } catch (err) {
         const e = err instanceof AppError ? err : Errors.posting((err as Error).message);
-        results.push({ docKey: key, version, status: 'error', error: { code: e.code, message: describe(e) } });
+        const intakeId = (e.intake as { id?: string } | undefined)?.id;
+        results.push({ docKey: key, version, status: 'error', error: { code: e.code, message: describe(e) }, ...(intakeId ? { intakeId } : {}) });
       }
     }
     return results;

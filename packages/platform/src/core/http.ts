@@ -55,17 +55,18 @@ export function okSchema<T extends z.ZodTypeAny>(data: T) {
  */
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((err: FastifyError | AppError | ZodError, req, reply) => {
-    const send = (code: ErrorCode, message: string, details?: unknown, status = ERROR_CATALOG[code].http) => {
+    // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: send nhận trường phụ (error.intake của lỗi cửa nạp có bể chờ); khuôn details giữ nguyên
+    const send = (code: ErrorCode, message: string, details?: unknown, status = ERROR_CATALOG[code].http, extra?: Record<string, unknown>) => {
       reply.errCode = code;
       if (status >= 500) req.log.error({ err, errCode: code }, 'lỗi hệ thống');
       else req.log.info({ errCode: code, status }, message);
       // traceId (ADR-0010): tra trace trong Tempo, log trong Loki; chỉ có khi truy vết bật.
       const traceId = currentTraceId();
-      return reply.status(status).send({ ok: false, error: { code, message, requestId: String(req.id), ...(traceId ? { traceId } : {}), ...(details === undefined ? {} : { details }) } });
+      return reply.status(status).send({ ok: false, error: { code, message, requestId: String(req.id), ...(traceId ? { traceId } : {}), ...(details === undefined ? {} : { details }), ...extra } });
     };
     const withReason = (reason: ErrorReason, extra?: Record<string, unknown>) => ({ reason, ...extra });
 
-    if (err instanceof AppError) return send(err.code, err.message, err.details, err.httpStatus);
+    if (err instanceof AppError) return send(err.code, err.message, err.details, err.httpStatus, err.intake === undefined ? undefined : { intake: err.intake });
     if (err instanceof ZodError) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, err.issues.map(issueText));
     // Lỗi kiểm tra dữ liệu của fastify-type-provider-zod
     const anyErr = err as FastifyError & { validation?: unknown };
@@ -126,6 +127,10 @@ function issueText(i: { code: string; path: (string | number)[]; message: string
   }
   return `${where}: ${why}`;
 }
+
+// [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: xuất zodIssueTexts — cửa nạp tự kiểm khuôn (để giữ chứng từ sai khuôn ở bể chờ) mà error.details vẫn cùng khuôn mảng câu như lỗi kiểm của route
+/** Lỗi zod → danh sách câu tiếng Việt, cùng khuôn error.details với lỗi kiểm của route. */
+export const zodIssueTexts = (err: ZodError): string[] => err.issues.map(issueText);
 
 /** Lỗi kiểm tra của fastify-type-provider-zod → danh sách câu tiếng Việt. */
 function validationTexts(v: unknown): string[] {

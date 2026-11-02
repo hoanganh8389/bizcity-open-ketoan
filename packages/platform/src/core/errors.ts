@@ -22,6 +22,9 @@ export class AppError extends Error {
     super(message);
     this.name = 'AppError';
   }
+  // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (ADR-0014 D2): thông tin bể chờ gắn vào lỗi cửa nạp — trả ở error.intake, không đổi khuôn details
+  /** Cửa nạp từ chối và đã giữ chứng từ ở bể chờ: { id, score, findings, url }. */
+  intake?: unknown;
 }
 
 /** Lỗi theo danh mục (bizcity_errors@1): HTTP status và thông báo mặc định lấy từ ERROR_CATALOG — một nguồn cho API, MCP, tài liệu. */

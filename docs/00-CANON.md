@@ -72,6 +72,7 @@
 | `bizcity_evidence@1` | [contracts/BIZCITY-EVIDENCE-v1.md](contracts/BIZCITY-EVIDENCE-v1.md) | **Đề xuất** (Standard 6/7) | `core/audit.ts`, `audit_logs` |
 | `bizcity_extension@1` | [contracts/BIZCITY-EXTENSION-v1.md](contracts/BIZCITY-EXTENSION-v1.md) | **Đề xuất** (Standard 7/7) | `apps/web/src/phan-he/*`, `core/addins.ts` |
 | `bizcity_ledger_intake@1` | [contracts/BIZCITY-LEDGER-INTAKE-v1.md](contracts/BIZCITY-LEDGER-INTAKE-v1.md) | Ổn định (Kernel; trước 2026-10-29 tên `bizcity_event@1`) | `packages/contracts/src/documents.ts` |
+| `bizcity_intake_findings@1` <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1 --> | [contracts/BIZCITY-INTAKE-FINDINGS-v1.md](contracts/BIZCITY-INTAKE-FINDINGS-v1.md) | Đề xuất 0.1 (Kernel, cửa nạp — ADR-0014) | `packages/contracts/src/intake-findings.ts` |
 | `bizcity_api@1` | [contracts/BIZCITY-API-v1.md](contracts/BIZCITY-API-v1.md) | Ổn định | `packages/contracts/src/api.ts`, `apps/api/src/core/http.ts`, `core/errors.ts` |
 | `bizcity_posting_rule@1` | [contracts/BIZCITY-POSTING-RULE-v1.md](contracts/BIZCITY-POSTING-RULE-v1.md) | Ổn định (nội bộ lõi) | `modules/posting/*`, `modules/ledger/ledger.types.ts` |
 | `bizcity_master_data@1` | [contracts/BIZCITY-MASTER-DATA-v1.md](contracts/BIZCITY-MASTER-DATA-v1.md) | Ổn định | `modules/{accounts,branches,partners,products,tax-codes,posting-config}` |

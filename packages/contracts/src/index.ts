@@ -9,6 +9,8 @@
 export * from './enums.js';
 export * from './api.js';
 export * from './errors.js';
+// [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: danh mục phát hiện tiền kiểm IN-*
+export * from './intake-findings.js';
 export * from './documents.js';
 export * from './vouchers.js';
 export * from './money.js';

@@ -24,7 +24,7 @@ Phase này thêm **một tầng hướng dẫn trước cửa Kernel**, không �
 | D021-5 | Hạn giữ: mục đã đóng 90 ngày, mục thử 7 ngày; khoá cấu hình `bizcity.intake.retention_days` / `bizcity.intake.trial_retention_days`; dọn bằng subscriber `bizcity.clock.daily` | ADR-0014 Q2 |
 | D021-6 | Bảng điểm theo người lập hiện cho mọi kế toán của đơn vị (người có `documents:write`), chỉ mã lỗi / điểm / số mục — công cụ đào tạo | ADR-0014 Q3 |
 | D021-7 | Màn **Trạm kiểm tra đầu vào** thay màn ACC14 (giữ mã ACC14, giữ đường dẫn `/chung-tu`); thẻ mới "Cần sửa" (bể chờ) đứng đầu | ADR-0014 D1 |
-| D021-8 | Phản hồi lỗi của cửa nạp giữ mã HTTP; thêm `meta.intake` và `error.details.findings`. Bên tích hợp cũ không phải đổi gì | ADR-0014 D2, D11 |
+| D021-8 | Phản hồi lỗi của cửa nạp giữ mã HTTP; thêm `meta.intake` và `error.details.findings`. Bên tích hợp cũ không phải đổi gì. **Thi hành (W2):** `error.intake = { id, attempt, score, findings, url }` — phản hồi lỗi không có `meta`, `details` giữ khuôn từng mã <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — D021-8 thi hành --> | ADR-0014 D2, D11 |
 
 ## 3. Đợt làm
 

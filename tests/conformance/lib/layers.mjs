@@ -19,6 +19,7 @@
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: core/apps.ts, modules/apps/ → P apps.external; ung-dung/index.ts → P apps/api (app ngoài tiến trình, ADR-0011 mức 2)
 // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: core/module-registry.ts, core/module-lifecycle.ts → P module-sdk; cli/ → P cli (lệnh module)
 // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10: db/module-db.ts → P data (CSDL theo module, ADR-0011 D4)
+// [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: modules/intake/ → K kernel/intake (bộ tiền kiểm)
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -74,6 +75,7 @@ export const LAYER_MAP = [
   ['db/types.ts', 'P', 'data'],
 
   ['modules/documents/', 'K', 'kernel/intake'],
+  ['modules/intake/', 'K', 'kernel/intake'],
   ['modules/posting/', 'K', 'kernel/posting'],
   ['modules/posting-config/', 'K', 'kernel/config'],
   ['modules/ledger/', 'K', 'kernel/ledger'],

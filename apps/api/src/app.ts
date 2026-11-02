@@ -37,7 +37,7 @@ import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
 import { ASSET_DIAGNOSTICS } from './modules/assets/asset.diagnostics.js';
-import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn } from './kernel/public.js';
+import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
 import { registerLedgerCancelGate, registerLedgerReader, registerLedgerSubmitter, unknownActionPermissions } from './core/actions.js';
 import { registerModulePermissions } from '@bizcity/platform/core/auth';
@@ -96,7 +96,8 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Sự kiện miền (core/events.ts): subscriber của Platform. Vòng dispatcher + đồng hồ chạy ở main.ts, không chạy trong test.
   // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)
-  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber]);
+  // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: dọn bể chờ theo hạn giữ (bizcity.clock.daily)
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber]);
   // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {

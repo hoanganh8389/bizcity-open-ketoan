@@ -13,7 +13,8 @@
     "bizcity_extension": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
   },
   "kernelContracts": {
-    "bizcity_ledger_intake": { "version": "1.3.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
+    "bizcity_ledger_intake": { "version": "1.4.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
+    "bizcity_intake_findings": { "version": "0.2.0-draft", "doc": "docs/contracts/BIZCITY-INTAKE-FINDINGS-v1.md" },
     "bizcity_posting_rule": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-POSTING-RULE-v1.md", "internal": true },
     "bizcity_master_data": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-MASTER-DATA-v1.md" },
     "bizcity_connector": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-CONNECTOR-v1.md" },
@@ -40,8 +41,8 @@
   "capabilities": [
     { "id": "masterdata.read", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Đọc danh mục chuẩn (đối tượng, mặt hàng, chi nhánh, kho, thuế) qua HTTP. Phase 2: qua ctx.data và view chỉ đọc." },
     { "id": "masterdata.write", "since": "1.0", "status": "available", "contract": "bizcity_master_data", "description": "Thêm / sửa danh mục chuẩn qua API của Core (không ghi thẳng bảng)." },
-    { "id": "intake.findings", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Danh mục mã IN-* (bizcity_intake_findings@1) + preflight() L1–L4 gom mọi lỗi của chứng từ, dùng chính luật cửa nạp (PHASE-021 W1, ADR-0014)." },
-    { "id": "intake.inbox", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Bể chờ intake_inbox: cửa nạp từ chối thì lưu nguyên văn + phát hiện + điểm, trả meta.intake; tự đóng khi nguồn gửi lại đạt; hạn giữ 90 / 7 ngày (PHASE-021 W2)." },
+    { "id": "intake.findings", "since": "1.0", "status": "available", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Danh mục mã IN-* (bizcity_intake_findings@1, packages/contracts/src/intake-findings.ts: lớp, mức, giai đoạn door / posting / advice, trọng số, vì sao, sửa ở nguồn) + preflight() L1–L4 trong Kernel (modules/intake) gom mọi phát hiện bằng chính luật cửa nạp (zod, totalsProblems, findBranch, ownDocument, phiên bản), chỉ đọc; trang bài học từng mã; SC-INTAKE-1; test cặp block + door ⇔ cửa nạp từ chối (PHASE-021 W1, ADR-0014)." },
+    { "id": "intake.inbox", "since": "1.0", "status": "available", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Bể chờ intake_inbox (0059, RLS): cửa nạp (/documents, /batch, /submit, khoá app) từ chối vì nội dung thì lưu nguyên văn + phát hiện + điểm ở giao dịch riêng, trả error.intake (lô: intakeId); gộp gửi trùng theo băm; tự đóng fixed_at_source khi nguồn gửi lại cùng docKey; GET /api/v1/intake, /intake/:id, POST /intake/preflight (save = mục thử); hạn giữ 90 / 7 ngày qua bizcity.clock.daily (PHASE-021 W2, PHASES 2.18)." },
     { "id": "intake.station", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Màn Trạm kiểm tra đầu vào (ACC14): Cần sửa, sửa tại bể có dấu lệch nguồn, Kiểm thử, so lần, nộp lại, chấp nhận cảnh báo có lý do (PHASE-021 W3)." },
     { "id": "intake.score", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Bảng điểm đầu vào cho mọi kế toán (tỷ lệ đạt lần đầu, theo nguồn / người lập / loại / mã), DG-INTAKE-1, sự kiện bizcity.intake.rejected / resolved (PHASE-021 W4)." },
     { "id": "intake.preflight.posting", "since": "1.0", "status": "planned", "phase": 2, "contract": "bizcity_ledger_intake", "description": "Tiền kiểm L5: định khoản thử trong giao dịch huỷ cho chứng từ chưa nhận; gợi ý cấu hình từ lỗi lặp; action đọc core.intake.* cho AI (PHASE-021 W5)." },

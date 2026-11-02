@@ -19,6 +19,7 @@ import { defineAction, type AnyActionDef } from '@bizcity/platform/core/actions'
 import { Errors } from '@bizcity/platform/core/errors';
 import type { Db } from '@bizcity/platform/db/client';
 import { draftDocumentIn, requestCancelIn, submitDocumentIn } from './document.service.js';
+import { channelOf, closeBySource, isDoorRejection, recordRejection } from '../intake/inbox.js';
 
 const tags = ['Chứng từ (AI)'];
 /** Sự việc do Kernel tự lập: huỷ ở màn của chúng, không qua đề xuất huỷ. */
@@ -120,7 +121,8 @@ export const submitActions: AnyActionDef[] = [
       + 'Trả trạng thái như cửa nạp (posted / pending / unchanged) kèm biên nhận bằng chứng ở meta.receipt; ?dryRun=1 trả bút toán dựng thử rồi huỷ. '
       + 'Lỗi định khoản (kỳ khoá, không cân, thiếu cấu hình) trả mã lỗi, không lưu chứng từ.',
     permission: 'documents:write', effect: 'write', idempotency: 'natural', sideEffects: ['documents', 'ledger'], dryRun: true,
-    input: z.object({ document: ingestDocumentSchema.describe('Chứng từ theo bizcity_ledger_intake@1; docType quyết định khuôn') }),
+    // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: khuôn kiểm ở cửa nạp (submitDocumentIn, cùng zod) thay vì ở đầu vào action — để chứng từ sai khuôn cũng vào bể chờ
+    input: z.object({ document: z.record(z.unknown()).describe('Chứng từ theo bizcity_ledger_intake@1 (docType quyết định khuôn; cửa nạp kiểm khuôn — sai thì giữ ở bể chờ, error.intake)') }),
     output: z.object({
       docKey: z.string(), version: z.number(),
       status: z.enum(['posted', 'pending', 'unchanged', 'error']),
@@ -128,10 +130,18 @@ export const submitActions: AnyActionDef[] = [
       entries: z.array(entryLine).describe('Bút toán còn hiệu lực của chứng từ sau khi nộp (dry-run: bút toán dựng thử)'),
     }),
     expose: { http: { method: 'POST', path: '/api/v1/documents/submit' }, ai: 'deny' },
-    evidence: { objectType: 'source_document', objectId: (input) => input.document.docKey },
+    evidence: { objectType: 'source_document', objectId: (input) => String(input.document.docKey ?? '?') },
     handler: async (ctx, { document }) => {
       const auth = ctx.legacyAuth;
-      const r = await submitDocumentIn(ctx.data.tx, auth, document);
+      let r: Awaited<ReturnType<typeof submitDocumentIn>>;
+      try {
+        r = await submitDocumentIn(ctx.data.tx, auth, document);
+      } catch (err) {
+        // Cửa nạp từ chối → bể chờ (giao dịch riêng; giao dịch action sẽ huỷ). Chạy thử (dry-run) không ghi bể.
+        if (!ctx.dryRun && isDoorRejection(err)) await recordRejection(auth, document, channelOf(auth, 'submit'), err);
+        throw err;
+      }
+      if (!ctx.dryRun) await closeBySource(ctx.data.tx, auth.tenantId, r.docKey, auth.actor);
       return {
         docKey: r.docKey, version: r.version, status: r.status,
         ...(r.entryIds ? { entryIds: r.entryIds.map(String) } : {}),

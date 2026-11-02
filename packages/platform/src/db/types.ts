@@ -22,6 +22,7 @@
 // [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — migration app ngoài tiến trình đổi số 0050 → 0051
 // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: module_registry, tenant_modules, event_deliveries.status 'skipped' (0052)
 // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10: schema_migrations.module (0053)
+// [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: intake_inbox (0054)
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -83,6 +84,35 @@ export interface ApiKeysTable {
   created_at: TimestampDefault;
   /** Khoá của app ngoài tiến trình (0051): quyền theo app_installations. NULL = khoá tích hợp thường. */
   app_key: ColumnType<string | null, string | null | undefined, string | null>;
+}
+
+/** Bể chờ đầu vào (0054, ADR-0014): chứng từ bị cửa nạp từ chối. */
+export interface IntakeInboxTable {
+  id: Generated<string>;
+  tenant_id: string;
+  received_at: TimestampDefault;
+  last_seen_at: TimestampDefault;
+  channel: 'api' | 'batch' | 'submit' | 'app' | 'connector' | 'mcp' | 'trial';
+  source_system: ColumnType<string | null, string | null | undefined, string | null>;
+  actor: string;
+  app_key: ColumnType<string | null, string | null | undefined, string | null>;
+  doc_key: ColumnType<string | null, string | null | undefined, string | null>;
+  doc_type: ColumnType<string | null, string | null | undefined, string | null>;
+  version: ColumnType<number | null, number | null | undefined, number | null>;
+  payload_raw: unknown;
+  payload_hash: string;
+  payload_bytes: number;
+  patches: Generated<unknown>;
+  findings: Generated<unknown>;
+  score: number;
+  door_error: ColumnType<unknown | null, unknown | null | undefined, unknown | null>;
+  attempt_no: Generated<number>;
+  status: Generated<'open' | 'trial' | 'resubmitted' | 'fixed_at_source' | 'accepted' | 'dismissed'>;
+  event_id: ColumnType<string | null, string | null | undefined, string | null>;
+  accepted_codes: Generated<string[]>;
+  resolved_by: ColumnType<string | null, string | null | undefined, string | null>;
+  resolved_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  resolution_note: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 /** Module / add-in đã cài vào bản cài (0052, ADR-0011 D1, D2). Cấp bản cài, không tenant_id. */
@@ -1652,6 +1682,7 @@ export interface Database {
   api_keys: ApiKeysTable;
   app_installations: AppInstallationsTable;
   module_registry: ModuleRegistryTable;
+  intake_inbox: IntakeInboxTable;
   tenant_modules: TenantModulesTable;
   accounting_units: AccountingUnitsTable;
   branches: BranchesTable;

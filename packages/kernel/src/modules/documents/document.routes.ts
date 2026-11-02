@@ -22,7 +22,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { VOUCHER_MONEY, ingestBatchSchema, ingestDocumentSchema, type VoucherType } from '@ketoan/contracts';
+import { VOUCHER_MONEY, ingestBatchSchema, type VoucherType } from '@ketoan/contracts';
 import { db, toNumber } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcity/platform/core/http';
@@ -75,7 +75,8 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
       tags,
       summary: 'Gửi một chứng từ',
       description: 'Idempotent theo docKey + version. Trả status: pending (đã lưu, chờ định khoản ở ACC14) | posted (loại chứng từ đặt định khoản ngay) | unchanged | error.',
-      body: ingestDocumentSchema,
+      // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: thân thô — cửa nạp tự kiểm khuôn ingestDocumentSchema để chứng từ sai khuôn được giữ ở bể chờ (error.intake)
+      body: z.record(z.unknown()).describe('Chứng từ theo khuôn ingestDocumentSchema (bizcity_ledger_intake@1) — cửa nạp kiểm, sai khuôn trả VALIDATION_ERROR + error.intake'),
     },
     handler: async (req) => ok(await documentService.ingest(authOf(req), req.body)),
   });

@@ -10,6 +10,7 @@
 // [2026-11-01 12:16 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — CORE_ROUTES thêm docRefRoutes (documents.* — phiên bản, liên kết, đính kèm chung)
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — GOODS thêm inventoryReportRoutes (báo cáo kho tách khỏi route Kernel)
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — CORE_ROUTES thêm appsRoutes (app ngoài tiến trình, PHASES 3.14)
+// [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — CORE_ROUTES thêm intakeRoutes (bể chờ đầu vào)
 /**
  * LÕI máy chủ — luôn bật ở mọi tiến trình: đăng nhập, hệ thống, người dùng, danh mục dùng chung, cổng nhận chứng từ, kết nối.
  * Mã nguồn lõi ở src/core + src/modules (chứng từ, định khoản, sổ cái, kho, công nợ, báo cáo…).
@@ -30,7 +31,7 @@ import { presenceRoutes } from '../modules/system/presence.js';
 import { accessRoutes } from '../modules/access/access.routes.js';
 import { appsRoutes } from '../modules/apps/apps.routes.js';
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gắn route Kiểm chuẩn (conformanceRoutes) vào nhóm Core
-import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes, conformanceRoutes, reviewRoutes } from '../kernel/public.js';
+import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes, conformanceRoutes, intakeRoutes, reviewRoutes } from '../kernel/public.js';
 import { branchRoutes } from '../modules/branches/branch.routes.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
 import { unitNameRoutes } from '../modules/unit-names/unit-name.routes.js';
@@ -58,6 +59,7 @@ export const CORE_ROUTES: Routes[] = [
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,
+  intakeRoutes,
   // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (HT08)
   reviewRoutes,
 ];
