@@ -14,7 +14,7 @@
 | Bộ đánh giá | `@bizcity/vn-rulepacks/engine` — một bộ cho `--certify` và Kernel (T7) |
 | Bằng chứng trên bản cài | tự chẩn đoán L1 + L3 + **L5** của chính đơn vị; L5 mới: `PROFILE_DECLARED`, `PROFILE_PACK_REGIME` (T1); ánh xạ DG-* ↔ mã ở `packages/vn-rulepacks/diag-codes.json` (SC-VNC-2 kiểm) |
 | Hồ sơ | hồ sơ kế toán thật của đơn vị (ADR-0013); chưa khai → ca lớp Cấu hình REVIEW_REQUIRED "chưa khai", không đoán |
-| Lưu | `conformance_runs` (migration 0051, chỉ thêm, RLS): báo cáo nguyên văn, phiên bản + băm kho rulepack, phiên bản hồ sơ |
+| Lưu | `conformance_runs` (migration 0052, chỉ thêm, RLS): báo cáo nguyên văn, phiên bản + băm kho rulepack, phiên bản hồ sơ |
 | Action | `core.conformance.run` (quyền `conformance:run`, AI không dùng) · `core.conformance.latest` (quyền `conformance:read`, AI đọc được) |
 | Lớp Doanh nghiệp (S020-19) <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19 --> | 4 ca C09 lấy bằng chứng từ kiểm L3 của đơn vị: `TAX_INPUT_NO_INVOICE`, `EVENT_PENDING_AGE`, `INVENTORY_NEGATIVE` (mới), `PERIOD_CLOSE_OPEN` (mới: giá vốn, kết chuyển, thứ tự, khoá sổ; bộ quy tắc kết chuyển của đơn vị hoặc mặc định, không viết số tài khoản). Báo cáo có `layer_results`: một kết quả cho mỗi lớp |
 | Chưa làm | màn Hệ thống → Kiểm chuẩn (S020-20), cảnh báo ở màn lập chứng từ (S020-21), lịch chạy đêm |

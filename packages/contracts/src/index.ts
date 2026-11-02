@@ -23,3 +23,5 @@ export * from './dvt.js';
 export * from './print-templates.js';
 // [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: mã tra cứu: đọc requestId / traceId, nội dung Chép / Báo lỗi chỉ gồm mã.
 export * from './ma-tra-cuu.js';
+// [2026-11-02 10:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W4: màn Bàn điều tra, bộ lọc trên địa chỉ, Kịch bản → màn.
+export * from './ban-dieu-tra.js';

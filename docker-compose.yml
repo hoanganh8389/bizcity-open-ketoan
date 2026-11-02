@@ -93,6 +93,8 @@ services:
       # infrastructure/monitoring/docker-compose.monitoring.yml đặt endpoint = otel-collector. OTEL_SDK_DISABLED=true tắt hẳn.
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-}
+      # [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: trang báo lỗi của bản cài (khay Mã tra cứu thêm nút mở); trống = chỉ chép nội dung
+      BUG_REPORT_URL: ${BUG_REPORT_URL:-}
       # Đăng nhập bằng tài khoản hệ thống quản trị: khoá chung (giống bên hệ thống quản trị) + mã đơn vị
       WP_SSO_SECRET: ${WP_SSO_SECRET:-}
       WP_SSO_TENANT: ${WP_SSO_TENANT:-}

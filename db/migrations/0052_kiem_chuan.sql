@@ -1,7 +1,8 @@
+-- [2026-11-02 02:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — đổi số 0051 → 0052 khi gộp main (PR #20 có 0050_vai_tro_nha_phat_trien); chưa phát hành nên không cần RENAMED.
 -- [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ảnh chụp các lượt Kiểm chuẩn (Conformance Engine trên bản cài, ADR-0012 T1): chỉ thêm, theo đơn vị, kèm phiên bản kho rulepack và hồ sơ đã dùng.
 -- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: lớp Doanh nghiệp vào lượt chạy (chú thích cột layers; chưa phát hành nên sửa tại chỗ).
 -- =============================================================================
--- 0051 Kiểm chuẩn — conformance_runs (ADR-0012; PHASE-020 S020-18).
+-- 0052 Kiểm chuẩn — conformance_runs (ADR-0012; PHASE-020 S020-18).
 --      Mỗi dòng là MỘT lượt Conformance Engine chạy cho một đơn vị: báo cáo bizcity_vn_conformance_report@1 nguyên văn, kết quả
 --      tổng, số ca theo trạng thái, phiên bản + băm kho rulepack (@bizcity/vn-rulepacks), phiên bản hồ sơ kế toán đã dùng.
 --      Chỉ thêm: kết luận đã lưu không sửa được (truy vết). Lượt chạy CHỈ ĐỌC sổ và cấu hình — bảng này là thứ duy nhất nó ghi.

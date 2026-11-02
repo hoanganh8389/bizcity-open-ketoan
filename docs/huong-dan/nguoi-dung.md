@@ -10,6 +10,7 @@ Tài khoản đăng nhập của từng người trong đơn vị. Chỉ **Chủ
 | Kế toán trưởng | Như kế toán, thêm: sửa cấu hình hạch toán, khoá/mở sổ, kết chuyển, **sửa / huỷ phiếu của người khác**, duyệt yêu cầu thanh toán (cấp 1), không bị chặn bởi khoá dữ liệu theo ngày (ACC2) |
 | Kế toán | Xem sổ sách, lập chứng từ, sửa danh mục. Phiếu nhập tay (thu, chi, báo có, báo nợ, phiếu kế toán): **chỉ sửa / huỷ được phiếu do chính mình lập**; phiếu của người khác mở ra chỉ xem |
 | Chỉ xem | Chỉ xem chứng từ, sổ sách, báo cáo |
+| Nhà phát triển | Như **Chỉ xem**, thêm **Bàn điều tra**: tra mã lỗi (requestId / traceId), xem trace, nhật ký kỹ thuật và bằng chứng **của đơn vị mình** để tìm lỗi. Không lập / sửa chứng từ. Dành cho người viết phân hệ, tích hợp, add-in |
 
 ## Thao tác
 

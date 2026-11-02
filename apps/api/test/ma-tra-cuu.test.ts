@@ -57,7 +57,8 @@ describe('Mã tra cứu trên web — PHASE-019 W1 (T019-1)', () => {
       expect(text).toContain(TRACE_ID);
       // Câu của máy chủ chỉ được thay bằng câu mặc định của danh mục (không dữ liệu) — trùng thì bỏ qua phép dò.
       const serverMsg = again.body.error.message === cauMacDinh(ma.code) ? [] : [again.body.error.message];
-      for (const secret of ['7654321', '7.654.321', 'NCC-MTC', 'Mã Tra Cứu Bí Mật', paidId, ...serverMsg, 'Bearer', ctx.token]) expect(text).not.toContain(secret);
+      // id phiếu dò theo đoạn đường dẫn: CSDL mới cho id ngắn (vd 19) — dò chuỗi trần sẽ khớp nhầm mốc thời gian.
+      for (const secret of ['7654321', '7.654.321', 'NCC-MTC', 'Mã Tra Cứu Bí Mật', `payment-requests/${paidId}`, `/${paidId}/`, ...serverMsg, 'Bearer', ctx.token]) expect(text).not.toContain(secret);
     }
     expect(baoLoi).toContain('0.1.0 / 0.1.0 / 1.0.0-draft');
   });

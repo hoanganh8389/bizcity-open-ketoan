@@ -13,10 +13,12 @@ import { thue } from './thue/manifest';
 import { heThong } from './he-thong/manifest';
 import { apiModule } from './api/manifest';
 import { danhMuc } from './danh-muc/manifest';
+// [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: phân hệ Nhà phát triển (Bàn điều tra)
+import { devModule } from './dev/manifest';
 
 export type { WebModule } from './types';
 
-const ALL: WebModule[] = [keToan, quy, muaHang, banHang, kho, danhMuc, taiSan, thue, apiModule, heThong];
+const ALL: WebModule[] = [keToan, quy, muaHang, banHang, kho, danhMuc, taiSan, thue, apiModule, devModule, heThong];
 // vite.config.ts (chạy trong Node, xuất erp-menu.json) cũng nạp tệp này: ở đó không có import.meta.env.
 const only = String((import.meta as { env?: Record<string, string> }).env?.VITE_MODULES ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 

@@ -813,7 +813,7 @@ export interface PostingPolicyVersionsTable {
   created_at: TimestampDefault;
 }
 
-/** Hồ sơ kế toán của đơn vị có phiên bản (migration 0050, ADR-0013). Chỉ thêm. */
+/** Hồ sơ kế toán của đơn vị có phiên bản (migration 0051, ADR-0013). Chỉ thêm. */
 export interface AccountingProfilesTable {
   tenant_id: string;
   version: number;
@@ -826,7 +826,7 @@ export interface AccountingProfilesTable {
   created_at: TimestampDefault;
 }
 
-/** Lượt Kiểm chuẩn của đơn vị (migration 0051, ADR-0012). Chỉ thêm. */
+/** Lượt Kiểm chuẩn của đơn vị (migration 0052, ADR-0012). Chỉ thêm. */
 export interface ConformanceRunsTable {
   id: Generated<string>;
   tenant_id: string;

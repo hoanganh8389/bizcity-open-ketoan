@@ -49,14 +49,21 @@ export const PERMISSIONS = [
   'conformance:read',
   /** Chạy một lượt Kiểm chuẩn và lưu ảnh chụp (chỉ đọc sổ; không đổi sổ, không đổi cấu hình). */
   'conformance:run',
+  // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: quyền devtools:read (D019-3) — chủ đơn vị + vai trò developer; không cấp cho khoá API, không cho AI.
+  /** Bàn điều tra cho nhà phát triển (PHASE-019): đọc trace / log / bằng chứng của đơn vị qua API trung gian. Không phạm vi khoá API nào ánh xạ tới. */
+  'devtools:read',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
+
+const VIEWER_PERMISSIONS: readonly Permission[] = ['catalog:read', 'documents:read', 'ledger:read', 'reports:read', 'conformance:read'];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: PERMISSIONS,
   chief_accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'documents:edit-all', 'documents:bypass-date-lock', 'payments:approve', 'ledger:read', 'reports:read', 'periods:lock', 'settings:write', 'conformance:read', 'conformance:run'],
   accountant: ['catalog:read', 'catalog:write', 'documents:read', 'documents:write', 'ledger:read', 'reports:read', 'conformance:read', 'conformance:run'],
-  viewer: ['catalog:read', 'documents:read', 'ledger:read', 'reports:read', 'conformance:read'],
+  viewer: VIEWER_PERMISSIONS,
+  // Nhà phát triển (Q019-1 = b): xem như viewer + Bàn điều tra; không ghi chứng từ, không cấu hình.
+  developer: [...VIEWER_PERMISSIONS, 'devtools:read'],
 };
 
 /** Phạm vi của khoá API → quyền tương ứng. */
