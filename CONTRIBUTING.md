@@ -94,3 +94,5 @@ Cần ADR khi quyết định khó đảo ngược hoặc là ngoại lệ Tier 
 - bỏ một luật.
 
 Khuôn và danh sách: [docs/adr/README.md](docs/adr/README.md). ADR chỉ thêm. Quyết định bị thay thì ghi "Thay bởi ADR-xxxx".
+
+Số ADR (và số migration) lấy bằng `node scripts/so-tiep-theo.mjs adr` (`migration`) — script xem cả các nhánh đang mở; trước khi merge chạy `node scripts/so-tiep-theo.mjs kiem`, lệch thì `--doi-so` ([RULE-REVIEW §6 W-13](docs/rules/RULE-REVIEW.md)). <!-- [2026-11-02 06:49 PM Johnny Chu - Chu Hoàng Anh] SO-DANG-KY — số ADR / migration lấy bằng script. -->
