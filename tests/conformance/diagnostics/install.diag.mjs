@@ -104,4 +104,23 @@ export const checks = [
       return { examined: 1, findings: r.recovery ? [ctx.finding(null, null, 'pg_is_in_recovery() = true: API không ghi chứng từ được', 'recovery')] : [] };
     },
   },
+  // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — DG-MOD-1 (ADR-0011 D2, CK-7): module active bị bỏ khi nạp (hash lệch / mã không có) → đỏ; registry trống / chưa có → ghi chú
+  {
+    id: 'DG-MOD-1', code: 'MODULE_REGISTRY',
+    title: 'Module active trong registry được API nạp ở lần khởi động gần nhất (hash khớp, mã có)',
+    gate: 'CONF-RUN', contract: 'bizcity_module', rules: ['R-DIAG-9', 'STD-MOD-1'], conf: [], tier: 1, enforce: 'block', weight: 3,
+    async run(ctx) {
+      const [t] = await ctx.db.query(`SELECT to_regclass('public.module_registry') IS NOT NULL AS ok`);
+      if (!t.ok) return { examined: 0, findings: [], notes: ['chưa có bảng module_registry (migration 0052 chưa áp)'] };
+      const rows = await ctx.db.query(`SELECT key, status, last_load_result, last_load_at FROM module_registry ORDER BY key`);
+      if (!rows.length) return { examined: 0, findings: [], notes: ['registry module trống — API nạp như cũ; chạy job cài đặt (setup) để ghi registry'] };
+      const findings = [];
+      for (const r of rows) {
+        if (r.last_load_result === 'skipped_hash') findings.push(ctx.finding(null, null, `module ${r.key}: hash thư mục lệch registry → API bỏ module — dựng lại + chạy "module sync", hoặc khôi phục mã`, `hash:${r.key}`));
+        else if (r.last_load_result === 'skipped_missing') findings.push(ctx.finding(null, null, `module ${r.key}: có trong registry nhưng bản dựng không có mã — gỡ khỏi registry hoặc dựng lại`, `missing:${r.key}`));
+        else if (r.status === 'active' && r.last_load_at && r.last_load_result !== 'loaded') findings.push(ctx.finding(null, null, `module ${r.key}: active nhưng lần nạp gần nhất ${r.last_load_result}`, `notloaded:${r.key}`));
+      }
+      return { examined: rows.length, unitBy: 'key', findings };
+    },
+  },
 ];

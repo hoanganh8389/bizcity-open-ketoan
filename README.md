@@ -19,27 +19,26 @@
 
 ## Vì sao có open-ketoan?
 
-Nhiều doanh nghiệp và hộ kinh doanh Việt Nam đang dùng các phần mềm kế toán đóng hoặc SaaS. Những hệ thống đó có giá trị thực tế. Nhưng khi doanh nghiệp muốn mở rộng một quy trình riêng, kết nối với POS / CRM / kho, tự viết ứng dụng trên dữ liệu kế toán, hay vibe-code thêm module mới để thích ứng với nhu cầu phát triển, họ thường bị giới hạn bởi API, quyền truy cập, chi phí và chính sách của nhà cung cấp.
+Nhiều doanh nghiệp và hộ kinh doanh Việt Nam đang dùng các phần mềm kế toán đóng hoặc SaaS, nhưng khi doanh nghiệp muốn mở rộng một quy trình riêng, kết nối với POS / CRM / kho, tự viết ứng dụng trên dữ liệu kế toán, hay vibe-code thêm module mới để thích ứng với nhu cầu phát triển, bị giới hạn bởi API, quyền truy cập, chi phí và chính sách của nhà cung cấp không cho phép.
 
-Trong kỷ nguyên AI, người dùng có thể tạo phần mềm nhanh hơn rất nhiều. Nhưng **viết một màn hình mới dễ hơn rất nhiều so với viết một lõi kế toán đúng, kiểm toán được và không làm hỏng dữ liệu**.
-
-**open-ketoan chọn việc xây một lõi kế toán chung đủ rõ ràng để mọi người có thể xây dựng phần còn lại.**
+Điều này làm mất khả năng tự chủ động kỹ thuật trong kỷ nguyên AI với các CEO, Dev.
 
 Doanh nghiệp cần được sở hữu và chủ động với dữ liệu của mình, còn cộng đồng developer, kế toán và AI builders có thể tạo ra những ứng dụng phù hợp với nhu cầu thực tế, thay vì bắt đầu lại từ sổ cái.
 
-## Tầm nhìn: chuyển đổi số tận gốc bắt đầu từ phần mềm kế toán
+## Open - Kế toán bảo đảm tất cả các sự kiện kinh tế phát sinh ghi vào dữ liệu đều chuẩn theo nguyên tắc của kế toán và quy định của nhà nước.
 
 **Đưa kế toán mở trở thành hạ tầng dữ liệu tin cậy, để chủ doanh nghiệp hoàn toàn làm chủ phần mềm và dữ liệu kế toán của mình. Đó là chuyển đổi số tận gốc cho doanh nghiệp Việt Nam.**
 
 Kế toán là nơi phản ánh tiền, hàng, công nợ, chi phí và kết quả kinh doanh. Nếu có một Accounting Core đáng tin cậy cùng API / contract mở, doanh nghiệp có thể tự phát triển hệ sinh thái ứng dụng xung quanh nó: bán hàng, mua hàng, quản lý kho, CRM, tài sản, nhân sự, hợp đồng, dự án, báo cáo quản trị và trợ lý AI.
 
-Dự án hướng đến ba nhóm cùng tạo giá trị:
+Dự án hướng đến 4 vai trò:
 
 - **Doanh nghiệp và hộ kinh doanh:** có lựa chọn tự triển khai, kiểm soát dữ liệu, xuất dữ liệu và kết nối công cụ phù hợp với mình.
 - **Kế toán và chuyên gia nghiệp vụ:** tham gia định nghĩa, phản biện, kiểm thử và duy trì các quy tắc kế toán, gói cấu hình theo ngành.
 - **Developer và AI builders:** sử dụng SDK, API, MCP và các hợp đồng công khai để xây module, không cần và không được sửa trực tiếp sổ cái.
+- **Ready for AI Agentic:** sử dụng trợ lý AI để giao việc qua Zalo, tự động hóa các báo cáo, sổ sách.
 
-## Bốn nguyên tắc quan trọng lưu ý nhé:
+## Bốn nguyên tắc quan trọng lưu ý cho AE dev:
 
 1. **Không chứng từ / sự việc hợp lệ thì không có bút toán.** Mọi bút toán truy nguyên được nguồn và phiên bản.
 2. **Sổ cái chỉ thêm.** Không âm thầm sửa hoặc xoá bút toán đã ghi; sai sót được xử lý bằng nghiệp vụ điều chỉnh / đảo phù hợp, giữ lại lịch sử.
@@ -48,7 +47,7 @@ Dự án hướng đến ba nhóm cùng tạo giá trị:
 
 Luật chi tiết và cấp độ kiểm soát: [00-CANON.md](docs/00-CANON.md) · [Domain Contract](docs/contracts/BIZCITY-DOMAIN-v1.md) · [RULE-LEDGER](docs/rules/RULE-LEDGER.md).
 
-## Kiến trúc: lõi ổn định, phần mở rộng tự do
+## Kiến trúc: Ngoài lõi kế toán cần đảm bảo nguyên tắc ghi sổ, còn lại anh em muốn Dev gì cũng được.
 
 ![Kiến trúc Core open-ketoan — Bizcity Core Framework](https://media.bizcity.vn/uploads/sites/1258/2026/11/b2ec2082-fe48-4ec3-a216-e53ccd3e83b1.png)
 
@@ -96,7 +95,7 @@ Bộ hợp đồng đang được chuẩn hoá gồm:
 
 Các hợp đồng có **trạng thái khác nhau**: một số đã được chấp nhận / ổn định, một số còn là bản dự thảo. Vui lòng kiểm tra [CANON](docs/00-CANON.md) và [danh mục hợp đồng](docs/contracts/README.md) trước khi sử dụng như API bảo đảm tương thích.
 
-## Event-driven, nhưng sự thật kế toán nằm ở sổ cái
+## Event-driven nhằm đảm bảo mọi luồng chứng từ đều đi theo đúng quy định, nguyên tắc sổ sách, báo cáo của kế toán.
 
 open-ketoan phân biệt **sự việc kinh tế đưa vào kế toán** (`accounting_events`, `docKey`, `version`) với **domain / integration event** thông báo một việc đã xảy ra cho các module khác.
 

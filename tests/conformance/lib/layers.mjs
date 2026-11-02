@@ -17,6 +17,7 @@
 // [2026-11-01 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — core/module-manifest.ts → P module-sdk (nạp bizcity.module.json, PHASES 3.2)
 // [2026-11-02 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — LAYER_ROOTS thêm packages/module-sdk/src (khoá có tiền tố gốc packages/… so đường dẫn đầy đủ); core/settings.ts → P bizcity.config
 // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: core/apps.ts, modules/apps/ → P apps.external; ung-dung/index.ts → P apps/api (app ngoài tiến trình, ADR-0011 mức 2)
+// [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: core/module-registry.ts, core/module-lifecycle.ts → P module-sdk; cli/ → P cli (lệnh module)
 /**
  * Bảng lớp của code hiện tại (REUSE-MAP §3, docs/standard/REUSE-MAP.md): tệp nào sẽ về Kernel / Platform / Module…
  * Nguồn duy nhất cho nhãn đầu tệp `// @bizcity-layer <lớp> <đích>` (PHASES 1.2): scripts/gan-nhan-lop.mjs ghi nhãn từ bảng này,
@@ -53,6 +54,9 @@ export const LAYER_MAP = [
   ['core/module-manifest.ts', 'P', 'module-sdk'],
   ['core/settings.ts', 'P', 'bizcity.config'],
   ['core/apps.ts', 'P', 'apps.external'],
+  ['core/module-registry.ts', 'P', 'module-sdk'],
+  ['core/module-lifecycle.ts', 'P', 'module-sdk'],
+  ['cli/', 'P', 'cli'],
   // Khoá có tiền tố gốc (packages/…) so với đường dẫn đầy đủ — gói có tên tệp trùng gói khác (index.ts của Kernel là K).
   ['packages/module-sdk/src/', 'P', 'module-sdk'],
   ['core/date-rules.ts', 'P', 'documents'],
