@@ -35,6 +35,8 @@ export const DEV_SCREENS = {
   '/dev/su-kien': { xem: { values: ['tat-ca', 'chet', 'cho'], def: 'tat-ca' } },
   '/dev/toan-ven': { kiem: { pattern: /^[A-Z][A-Z0-9_]{1,63}$/ } },
   '/dev/kich-ban': { th: { pattern: /^TH-\d{2}$/ } },
+  // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: màn Vận hành (chỉ mở ở chế độ Vận hành — Q019-2)
+  '/dev/van-hanh': {},
 } as const satisfies Record<string, Record<string, DevParam>>;
 
 export type DevPath = keyof typeof DEV_SCREENS;
@@ -159,6 +161,96 @@ export const KICH_BAN: Record<string, KichBan> = {
   'TH-10': { links: [{ label: 'Toàn vẹn — tự chẩn đoán gần nhất', path: '/dev/toan-ven' }], note: 'sev1 — đọc RUNBOOK-CANH-BAO § LedgerIntegrityError, báo Nhóm Lõi.' },
   'TH-11': { links: [{ label: 'Lỗi kỹ thuật theo module, 7 ngày', path: '/dev/loi-theo-module', filter: { window: '7d' } }] },
   'TH-12': { links: [{ label: 'Lỗi kỹ thuật theo module, 24 giờ', path: '/dev/loi-theo-module', filter: { window: '24h' } }], note: 'Trace của công cụ MCP có span mcp tools/call; lỗi ở confirm mà không có span Kernel → chưa ghi gì.' },
-  'TH-13': { links: [{ label: 'Tổng quan — dải nguồn', path: '/dev/tong-quan' }], note: 'Số đo đứng yên là việc của người vận hành (Prometheus, Grafana) — chế độ Vận hành (W5).' },
+  'TH-13': {
+    links: [{ label: 'Vận hành — số đo toàn hệ', path: '/dev/van-hanh' }, { label: 'Tổng quan — dải nguồn', path: '/dev/tong-quan' }],
+    note: 'Màn Vận hành chỉ mở ở bản cài một đơn vị bật DEVTOOLS_OPS=true, cho chủ đơn vị; còn lại người vận hành xem Prometheus / Grafana.',
+  },
   'TH-14': { links: [{ label: 'Tổng quan — dải nguồn Tempo / Loki', path: '/dev/tong-quan' }] },
 };
+
+// [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W5: "Chép cho AI" — một khối markdown từ trace đã lọc để dán vào công cụ AI code
+
+/** Phần của một trace (khớp output core.devtools.trace) mà nội dung cho AI dùng. */
+export interface TraceChoAI {
+  traceId: string;
+  durationMs: number;
+  summary: {
+    outcome: string;
+    errorCode: string | null;
+    stoppedAt: { name: string; module: string | null } | null;
+    kernel: { state: string; ops: string[] };
+    playbook: string | null;
+    lines: string[];
+  };
+  spans: { spanId: string; parentId: string | null; name: string; durationMs: number; outcome: string; attributes: Record<string, string | number | boolean>; events?: { exceptionType?: string }[] }[];
+}
+
+/**
+ * Thuộc tính span đưa sang AI: chỉ thứ chỉ tới MÃ NGUỒN (module, action, bước, bảng, route, mã lỗi). Không bizcity.tenant, không
+ * request_id — AI không cần đơn vị nào, chỉ cần chỗ hỏng.
+ */
+const AI_ATTRS: Record<string, string> = {
+  'http.route': 'route', 'http.response.status_code': 'status', 'bizcity.module': 'module', 'bizcity.action.id': 'action', 'bizcity.step': 'step',
+  'bizcity.layer': 'layer', 'bizcity.kernel.op': 'kernel', 'bizcity.doc_type': 'docType', 'bizcity.error.code': 'error', 'db.operation.name': 'db',
+  'db.collection.name': 'table', 'error.type': 'errorType', 'server.address': 'host', 'bizcity.event.type': 'event', 'bizcity.consumer': 'consumer',
+  'bizcity.mcp.tool': 'mcpTool',
+};
+const MAX_SPANS = 60;
+
+/**
+ * Khối markdown "Chép cho AI" ở màn Tra mã: tóm tắt, cây span rút gọn, chỉ dẫn tìm mã theo tên span, việc phải làm (test tái hiện
+ * trước — Sổ tay §4; không sửa Kernel / sổ — AGENTS.md). Đầu vào đã qua lọc của API (D019-7); hàm lọc thêm lần nữa theo AI_ATTRS.
+ */
+export function noiDungChoAI(t: TraceChoAI): string {
+  const s = t.summary;
+  const out: string[] = [];
+  out.push(`## Lỗi cần sửa — trace ${t.traceId}`, '', '_Từ Bàn điều tra của open-ketoan. Chỉ có mã và tên bước — không có dữ liệu kế toán, không có đơn vị._', '');
+  out.push('### Chuyện gì đã xảy ra', ...s.lines.map((l) => `- ${l}`), '');
+
+  // Cây span: cha trước con, anh em theo thứ tự đầu vào; thụt lề theo cấp.
+  const byId = new Map(t.spans.map((x) => [x.spanId, x]));
+  const kids = new Map<string | null, TraceChoAI['spans']>();
+  for (const x of t.spans) {
+    const k = x.parentId && byId.has(x.parentId) ? x.parentId : null;
+    kids.set(k, [...(kids.get(k) ?? []), x]);
+  }
+  const rows: string[] = [];
+  const walk = (k: string | null, depth: number) => {
+    for (const x of kids.get(k) ?? []) {
+      if (rows.length < MAX_SPANS) {
+        const attrs = Object.entries(x.attributes).filter(([a]) => AI_ATTRS[a]).map(([a, v]) => `${AI_ATTRS[a]}=${v}`);
+        const ex = (x.events ?? []).map((e) => e.exceptionType).filter(Boolean);
+        rows.push(`${'  '.repeat(depth)}- \`${x.name}\` — ${x.outcome}, ${Math.round(x.durationMs * 10) / 10} ms${attrs.length ? ` [${attrs.join(', ')}]` : ''}${ex.length ? ` (ngoại lệ ${ex.join(', ')})` : ''}`);
+      }
+      walk(x.spanId, depth + 1);
+    }
+  };
+  walk(null, 0);
+  out.push(`### Cây span (${t.spans.length} span, ${Math.round(t.durationMs * 10) / 10} ms)`, ...rows);
+  if (t.spans.length > MAX_SPANS) out.push(`- … còn ${t.spans.length - MAX_SPANS} span (xem trên Bàn điều tra)`);
+  out.push('');
+
+  const where: string[] = [];
+  for (const x of t.spans) {
+    const a = x.attributes;
+    if (typeof a['bizcity.action.id'] === 'string') where.push(`- \`action ${a['bizcity.action.id']}\` → \`defineAction({ id: '${a['bizcity.action.id']}' … })\` trong \`apps/api/src/phan-he/${a['bizcity.module'] ?? '<module>'}/\` (hoặc \`apps/api/src/modules/\` nếu module là core)`);
+    if (typeof a['bizcity.step'] === 'string') where.push(`- \`step ${a['bizcity.step']}\` → \`ctx.trace.step('${String(a['bizcity.step']).split('.').slice(1).join('.')}', …)\` trong module \`${a['bizcity.module'] ?? String(a['bizcity.step']).split('.')[0]}\``);
+    if (a['bizcity.layer'] === 'K') where.push(`- \`${x.name}\` là **Kernel** — không sửa Kernel trong PR phân hệ; Kernel từ chối nghĩa là dữ liệu sai đã tới được đây, sửa ở chỗ gửi`);
+  }
+  out.push('### Tìm mã ở đâu', ...[...new Set(where)]);
+  if (s.playbook) out.push(`- Tình huống giống **${s.playbook}** — đọc \`docs/ops/SO-TAY-DIEU-TRA-LOI.md\` mục ${s.playbook}`);
+  out.push('');
+
+  const at = s.stoppedAt ? `${s.stoppedAt.name}${s.stoppedAt.module ? ` (module ${s.stoppedAt.module})` : ''}` : 'span đầu tiên khác ok';
+  out.push(
+    '### Việc cần làm',
+    `1. Viết test tái hiện trong \`apps/api/test/\` (dùng \`setupTenant\` / \`call\` ở \`apps/api/test/helpers.ts\`): phải đỏ đúng ${s.errorCode ? `mã \`${s.errorCode}\`` : 'kết quả lỗi'}, đúng chỗ ${at}. Dữ liệu trong test là dữ liệu giả.`,
+    s.outcome === 'rejected'
+      ? '2. Đây là **từ chối đúng luật** — hệ thống làm đúng. Sửa chỗ để dữ liệu sai đi tới đây (kiểm sớm ở giao diện / module, báo người dùng), không nới luật.'
+      : '2. Sửa ở đúng tầng chỗ hỏng; không vá Kernel, không UPDATE / DELETE bảng `ledger_*`, không viết số tài khoản trong code.',
+    '3. Chạy lại test, `npm run typecheck`, `node tests/conformance/selfcheck.mjs`.',
+    '',
+    'Luật khi dùng AI sửa lỗi: `AGENTS.md` mục "Sửa lỗi bằng AI từ Bàn điều tra".',
+  );
+  return out.join('\n');
+}
