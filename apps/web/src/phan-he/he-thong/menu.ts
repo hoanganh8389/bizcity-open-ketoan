@@ -18,6 +18,8 @@ export const heThongMenu: MenuItem[] = [
       { key: 'khoa-api', label: 'Khoá API', path: '/cau-hinh/khoa-api', code: 'HT02', permission: 'users:write' },
       { key: 'kiem-chuan', label: 'Kiểm chuẩn', path: '/he-thong/kiem-chuan', code: 'HT06', permission: 'conformance:read' },
       { key: 'ho-so-ke-toan', label: 'Hồ sơ kế toán', path: '/he-thong/ho-so-ke-toan', code: 'HT07', permission: 'ledger:read' },
+      // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá theo vai (HT08, quyền review:read)
+      { key: 'ban-danh-gia', label: 'Bàn đánh giá', path: '/he-thong/ban-danh-gia', code: 'HT08', permission: 'review:read' },
     ],
   },
 ];

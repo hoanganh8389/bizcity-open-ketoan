@@ -1583,3 +1583,43 @@ table.grid > tbody > tr.dev-row-on > td, table.grid > tbody > tr.dev-row-on:nth-
 .cf-link { color: var(--brand-700); text-decoration: underline; }
 .cf-adv { margin: 6px 0; padding-left: 18px; display: grid; gap: 6px; }
 @media (max-width: 640px) { .cf-layers { grid-template-columns: 1fr; } }
+
+/* [2026-11-02 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: RemedyView — bước khắc phục ①②③, dải dừng ghi sổ, việc cấm. */
+.rm { display: grid; gap: 6px; }
+.rm-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.rm-steps li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rm-n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--brand-700, #1e5bb8); color: #fff; font-size: 12px; flex: none; }
+.rm-no .rm-n { background: var(--bad); }
+.rm-text { flex: 1 1 240px; }
+.rm-role, .rm-meta { color: var(--ink-500); font-size: 12px; }
+.rm-stop { background: var(--bad-bg); color: var(--bad); border-radius: 6px; padding: 6px 10px; font-weight: 600; }
+.rm-compact .rm-steps { gap: 4px; }
+
+/* [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (HT08) — ba vai, checklist theo nhóm, bốn khối; biên bản in (@media print). Khổ hẹp: bốn khối xếp dọc. */
+.rb-head { display: grid; gap: 6px; margin-bottom: 12px; }
+.rb-personas { display: flex; flex-wrap: wrap; gap: 6px; }
+.rb-personas label { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; background: var(--surface); }
+.rb-personas label.on { border-color: var(--brand-700, #1e5bb8); color: var(--brand-700, #1e5bb8); font-weight: 600; background: var(--info-bg); }
+.rb-personas input { display: none; }
+.rb-counts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.rb-grow { flex: 1; }
+.rb-group { border-top: 1px solid var(--line); }
+.rb-group > summary { cursor: pointer; padding: 10px 14px; font-weight: 700; display: flex; gap: 8px; align-items: center; }
+.rb-case { border-top: 1px dashed var(--line); padding: 8px 14px 8px 28px; }
+.rb-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rb-title { flex: 1 1 260px; }
+.rb-note { font-size: 12.5px; margin-top: 2px; }
+.rb-blocks { margin: 8px 0 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.rb-blk { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.rb-blk:first-child { border-top: 0; }
+.rb-blk > b { color: var(--ink-500); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+.rb-foot { font-size: 12px; }
+.rb-print-head, .rb-print-table, .rb-print-sign { display: none; }
+@media (max-width: 640px) { .rb-blk { grid-template-columns: 1fr; } .rb-case { padding-left: 14px; } }
+@media print {
+  .rb .page-header .btn, .rb-head, .rb-counts, .rb .card { display: none !important; }
+  .rb-print-head { display: block; margin-bottom: 8px; font-size: 12px; }
+  .rb-print-table { display: table; width: 100%; border-collapse: collapse; font-size: 11px; }
+  .rb-print-table th, .rb-print-table td { border: 1px solid #999; padding: 3px 5px; text-align: left; vertical-align: top; }
+  .rb-print-sign { display: block; margin-top: 24px; font-size: 12px; }
+}

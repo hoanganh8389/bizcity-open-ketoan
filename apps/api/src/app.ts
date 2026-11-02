@@ -36,7 +36,8 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
-import { LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber } from './kernel/public.js';
+import { ASSET_DIAGNOSTICS } from './modules/assets/asset.diagnostics.js';
+import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber } from './kernel/public.js';
 import { connectionService } from './modules/connections/connection.service.js';
 import { registerLedgerCancelGate, registerLedgerReader, registerLedgerSubmitter, unknownActionPermissions } from './core/actions.js';
 import { registerModulePermissions } from '@bizcity/platform/core/auth';
@@ -112,6 +113,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerDiagnostics(PERIOD_DIAGNOSTICS);
   // [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11: kiểm L3 thuế GTGT và hoá đơn (C03, C04)
   registerDiagnostics(TAX_DIAGNOSTICS);
+  // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm số dư, kho, khấu hao, lịch kiểm chuẩn (remedy có cấu trúc)
+  registerDiagnostics([...BALANCE_DIAGNOSTICS, ...INVENTORY_DIAGNOSTICS, ...ASSET_DIAGNOSTICS, ...CONFORMANCE_DIAGNOSTICS]);
   registerCollector('ledger', collectLedgerMetrics);
   registerCollector('postings', () => collectPostingMetrics());
   registerCollector('outbox', collectOutboxMetrics);

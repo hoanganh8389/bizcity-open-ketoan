@@ -270,6 +270,14 @@
         "SC-DOC-1": {
           "findings": 1
         },
+        "SC-DOC-3": {
+          "findings": 3,
+          "keys": [
+            "dup:0001",
+            "row:ADR-0001-mau-a.md",
+            "index:ADR-0001-mau-b.md"
+          ]
+        },
         "SC-SEC-1": {
           "min": 1,
           "keys": [
@@ -465,6 +473,14 @@
         },
         "SC-CON-2": {
           "findings": 0
+        },
+        "SC-FIX-1": {
+          "findings": 3,
+          "keys": [
+            "missing:NO_REMEDY_CHECK",
+            "screen-unknown:BAD_SCREEN_CHECK:NOPE",
+            "screen-path:GHOST_SCREEN"
+          ]
         }
       }
     },

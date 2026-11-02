@@ -62,6 +62,9 @@ export interface ScreenRef { code: string; path: string; label: string }   // vd
 
 ### 3.1 Danh mục máy đọc
 
+<!-- [2026-11-02 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W3 -->
+> **Làm 2026-11-02 (W3):** gọn hơn thiết kế dưới đây — **một** tệp danh mục `packages/kernel/src/modules/review/fault-catalog.json` (`bizcity_fault_catalog@1`, sinh từ bảng ở 10-DANH-MUC-GIA-DINH; màn HT08 dùng lúc chạy) và **một** tệp bằng chứng `tests/conformance/scenarios/f22-evidence.json` (`bizcity_fault_evidence@1`): mỗi ca là `test` (tệp vitest đã chứng minh, kèm từ khoá), `lane`, `design`, `recipe` (công thức gây lỗi → phát hiện → khắc phục → kiểm lại, chạy trong `fault-scenarios.test.ts`) hoặc `planned` (có lý do). Không viết lại test đã có.
+
 `tests/conformance/scenarios/<nhóm>/<mã ca>.json`, khuôn `bizcity_fault_case@1`:
 
 ```json

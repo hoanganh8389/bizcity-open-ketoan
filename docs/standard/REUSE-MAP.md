@@ -70,6 +70,7 @@
 | `sales` | 550 | K + D | `kernel/projections` + `modules/ban-hang` | Dòng bán là bảng tra cứu dựng lại được (projection); báo cáo bán hàng là module |
 | `closing` | 939 | K | `kernel/closing` | Kết chuyển, cuối năm. Ghi sổ qua `eventStore` (A-01 xong 2026-10-30) |
 | `conformance` <!-- [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm dòng Conformance Engine. --> | mới | K | `kernel/conformance` | Conformance Engine (ADR-0012): đánh giá đơn vị theo rulepack có hiệu lực; chỉ đọc sổ, chỉ thêm `conformance_runs`; bộ đánh giá ở `@bizcity/vn-rulepacks/engine` |
+| `review` <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá. --> | mới | K | `kernel/review` | Bàn đánh giá theo vai (PHASE-022): danh mục giả định lỗi F22 + kết quả tự chẩn đoán L1/L3/L5 thành checklist; kiểm lại một mã; chỉ đọc, không bảng riêng |
 | `vouchers` | 526 | K + D | `kernel/intake` (loại `manual`) + `modules/ke-toan` (màn) | Ghi sổ qua `eventStore` (A-01 xong 2026-10-30) |
 | `default-data` | 675 | K | `kernel/seeds` | Dữ liệu mặc định đơn vị mới |
 | `partners`, `products`, `branches`, `warehouses`, `unit-names`, `bank-accounts` | 1.660 | M | `data/masterdata` + `kernel` (thuộc tính hạch toán) | Thực thể dùng chung; cột tài khoản / nhóm hạch toán thuộc Kernel |

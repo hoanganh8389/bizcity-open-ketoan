@@ -1,0 +1,726 @@
+{
+  "contract": "bizcity_fault_evidence@1",
+  "catalog": "packages/kernel/src/modules/review/fault-catalog.ts",
+  "cases": {
+    "F22-ENV-01": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-ENV-02": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-ENV-03": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-ENV-04": {
+      "kind": "test",
+      "test": "app-role.test.ts",
+      "mentions": "ketoan_app"
+    },
+    "F22-ENV-05": {
+      "kind": "test",
+      "test": "tenant-isolation.test.ts",
+      "mentions": "RLS"
+    },
+    "F22-ENV-06": {
+      "kind": "test",
+      "test": "evidence.test.ts"
+    },
+    "F22-ENV-07": {
+      "kind": "test",
+      "test": "events.test.ts"
+    },
+    "F22-ENV-08": {
+      "kind": "lane",
+      "lane": "ledger.diag.mjs",
+      "code": "SETTINGS_UNKNOWN"
+    },
+    "F22-ENV-09": {
+      "kind": "test",
+      "test": "conformance-gate.test.ts"
+    },
+    "F22-ENV-10": {
+      "kind": "test",
+      "test": "conformance-engine.test.ts"
+    },
+    "F22-ENV-11": {
+      "kind": "test",
+      "test": "rulepack-approval.test.ts",
+      "mentions": "stale"
+    },
+    "F22-ENV-12": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-DOC-01": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-DOC-02": {
+      "kind": "test",
+      "test": "ledger-flow.test.ts",
+      "mentions": "assertTotals|tổng"
+    },
+    "F22-DOC-03": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-DOC-04": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-DOC-05": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-DOC-06": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-DOC-07": {
+      "kind": "test",
+      "test": "apps.test.ts",
+      "mentions": "tiền tố"
+    },
+    "F22-DOC-08": {
+      "kind": "test",
+      "test": "event-store.test.ts",
+      "mentions": "version"
+    },
+    "F22-DOC-09": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-DOC-10": {
+      "kind": "recipe",
+      "inject": [
+        {
+          "http": "POST /api/v1/periods/locks",
+          "body": {
+            "year": 2026,
+            "month": 2
+          },
+          "expectStatus": 200
+        },
+        {
+          "http": "POST /api/v1/documents",
+          "body": {
+            "docType": "sale",
+            "docKey": "F22-KHOA",
+            "branchCode": "CN01",
+            "docNo": "F22-KHOA",
+            "docDate": "2026-02-10",
+            "lines": [
+              {
+                "lineKey": "l1",
+                "sku": "SUA01",
+                "name": "Sữa bột 900g",
+                "unit": "Hộp",
+                "qty": 1,
+                "amountBeforeTax": 100000,
+                "taxCode": "R08",
+                "taxAmount": 8000
+              }
+            ],
+            "payments": [
+              {
+                "methodCode": "TM",
+                "amount": 108000
+              }
+            ],
+            "totals": {
+              "beforeTax": 100000,
+              "tax": 8000,
+              "total": 108000
+            }
+          },
+          "expectCode": "PERIOD_LOCKED"
+        }
+      ]
+    },
+    "F22-DOC-11": {
+      "kind": "test",
+      "test": "kich-ban.test.ts"
+    },
+    "F22-DOC-12": {
+      "kind": "test",
+      "test": "giam-sat.test.ts"
+    },
+    "F22-DOC-13": {
+      "kind": "lane",
+      "lane": "ledger.diag.mjs",
+      "code": "EVENT_HAS_ENTRY"
+    },
+    "F22-DOC-14": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-DOC-15": {
+      "kind": "test",
+      "test": "integrity-checks.test.ts",
+      "mentions": "orphanReturns|phiếu gốc"
+    },
+    "F22-DOC-16": {
+      "kind": "test",
+      "test": "kich-ban.test.ts"
+    },
+    "F22-TAX-01": {
+      "kind": "recipe",
+      "inject": [
+        {
+          "http": "POST /api/v1/documents",
+          "body": {
+            "docType": "purchase",
+            "docKey": "F22-TAX01",
+            "branchCode": "CN01",
+            "docNo": "F22-TAX01",
+            "docDate": "2026-03-01",
+            "partner": {
+              "code": "NCC-01",
+              "name": "Nhà cung cấp 01",
+              "taxCode": "0101234567"
+            },
+            "lines": [
+              {
+                "lineKey": "l1",
+                "sku": "SUA01",
+                "name": "Sữa bột 900g",
+                "unit": "Hộp",
+                "qty": 10,
+                "amountBeforeTax": 1000000,
+                "taxCode": "V08",
+                "taxAmount": 80000
+              }
+            ],
+            "totals": {
+              "beforeTax": 1000000,
+              "tax": 80000,
+              "total": 1080000
+            }
+          },
+          "expectStatus": 200
+        }
+      ],
+      "expect": [
+        {
+          "diag": "TAX_INPUT_NO_INVOICE",
+          "level": "warn",
+          "count": 1,
+          "sampleMatch": "F22-TAX01"
+        }
+      ],
+      "fix": [
+        {
+          "http": "POST /api/v1/documents",
+          "body": {
+            "docType": "purchase",
+            "docKey": "F22-TAX01",
+            "branchCode": "CN01",
+            "docNo": "F22-TAX01",
+            "docDate": "2026-03-01",
+            "partner": {
+              "code": "NCC-01",
+              "name": "Nhà cung cấp 01",
+              "taxCode": "0101234567"
+            },
+            "lines": [
+              {
+                "lineKey": "l1",
+                "sku": "SUA01",
+                "name": "Sữa bột 900g",
+                "unit": "Hộp",
+                "qty": 10,
+                "amountBeforeTax": 1000000,
+                "taxCode": "V08",
+                "taxAmount": 80000
+              }
+            ],
+            "totals": {
+              "beforeTax": 1000000,
+              "tax": 80000,
+              "total": 1080000
+            },
+            "version": 2,
+            "invoice": {
+              "no": "0000901",
+              "serial": "C26TAA",
+              "form": "1",
+              "date": "2026-03-01"
+            }
+          },
+          "expectStatus": 200
+        }
+      ],
+      "afterFix": [
+        {
+          "diag": "TAX_INPUT_NO_INVOICE",
+          "count": 0
+        }
+      ]
+    },
+    "F22-TAX-02": {
+      "kind": "test",
+      "test": "vat-einvoice.test.ts"
+    },
+    "F22-TAX-03": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-TAX-04": {
+      "kind": "test",
+      "test": "vat-einvoice.test.ts"
+    },
+    "F22-TAX-05": {
+      "kind": "test",
+      "test": "vat-einvoice.test.ts"
+    },
+    "F22-TAX-06": {
+      "kind": "test",
+      "test": "vat-einvoice.test.ts"
+    },
+    "F22-TAX-07": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-TAX-08": {
+      "kind": "test",
+      "test": "tax-info.test.ts",
+      "mentions": "kê khai trước"
+    },
+    "F22-TAX-09": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-TAX-10": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-TAX-11": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-TAX-12": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-STK-01": {
+      "kind": "recipe",
+      "inject": [
+        {
+          "http": "POST /api/v1/documents",
+          "body": {
+            "docType": "sale",
+            "docKey": "F22-BAN",
+            "branchCode": "CN01",
+            "docNo": "F22-BAN",
+            "docDate": "2026-03-03",
+            "lines": [
+              {
+                "lineKey": "l1",
+                "sku": "SUA01",
+                "name": "Sữa bột 900g",
+                "unit": "Hộp",
+                "qty": 2,
+                "amountBeforeTax": 200000,
+                "taxCode": "R08",
+                "taxAmount": 16000
+              }
+            ],
+            "payments": [
+              {
+                "methodCode": "TM",
+                "amount": 216000
+              }
+            ],
+            "totals": {
+              "beforeTax": 200000,
+              "tax": 16000,
+              "total": 216000
+            }
+          },
+          "expectStatus": 200
+        }
+      ],
+      "expect": [
+        {
+          "diag": "INVENTORY_NEGATIVE",
+          "level": "warn",
+          "count": 1,
+          "sampleMatch": "^CN01:.+:SUA01@2026-03-03$"
+        }
+      ],
+      "fix": [
+        {
+          "http": "POST /api/v1/documents",
+          "body": {
+            "docType": "purchase",
+            "docKey": "F22-NHAP",
+            "branchCode": "CN01",
+            "docNo": "F22-NHAP",
+            "docDate": "2026-03-01",
+            "partner": {
+              "code": "NCC-01",
+              "name": "Nhà cung cấp 01"
+            },
+            "lines": [
+              {
+                "lineKey": "l1",
+                "sku": "SUA01",
+                "name": "Sữa bột 900g",
+                "unit": "Hộp",
+                "qty": 5,
+                "amountBeforeTax": 300000,
+                "taxCode": "V08",
+                "taxAmount": 0
+              }
+            ],
+            "totals": {
+              "beforeTax": 300000,
+              "tax": 0,
+              "total": 300000
+            }
+          },
+          "expectStatus": 200
+        }
+      ],
+      "afterFix": [
+        {
+          "diag": "INVENTORY_NEGATIVE",
+          "count": 0
+        }
+      ]
+    },
+    "F22-STK-02": {
+      "kind": "test",
+      "test": "enterprise-layer.test.ts"
+    },
+    "F22-STK-03": {
+      "kind": "test",
+      "test": "enterprise-layer.test.ts",
+      "mentions": "thu-tu"
+    },
+    "F22-STK-04": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-STK-05": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-STK-06": {
+      "kind": "planned",
+      "reason": "mã tiền kiểm IN-* của PHASE-021 chưa có mã chạy"
+    },
+    "F22-STK-07": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-STK-08": {
+      "kind": "test",
+      "test": "costing.test.ts",
+      "mentions": "missing"
+    },
+    "F22-STK-09": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-STK-10": {
+      "kind": "design",
+      "note": "tính giá vốn tháng đưa dòng chờ kiểu cũ về 0 (overwriteCostPairs)",
+      "test": "costing.test.ts"
+    },
+    "F22-CLOSE-01": {
+      "kind": "test",
+      "test": "enterprise-layer.test.ts"
+    },
+    "F22-CLOSE-02": {
+      "kind": "test",
+      "test": "closing-controls.test.ts",
+      "mentions": "lỗi thời"
+    },
+    "F22-CLOSE-03": {
+      "kind": "test",
+      "test": "closing-controls.test.ts",
+      "mentions": "số dư"
+    },
+    "F22-CLOSE-04": {
+      "kind": "test",
+      "test": "enterprise-layer.test.ts",
+      "mentions": "khoa-so"
+    },
+    "F22-CLOSE-05": {
+      "kind": "test",
+      "test": "diagnostics.test.ts",
+      "mentions": "R-DIAG-4"
+    },
+    "F22-CLOSE-06": {
+      "kind": "test",
+      "test": "conformance-gate.test.ts",
+      "mentions": "kind: 'period'"
+    },
+    "F22-CLOSE-07": {
+      "kind": "test",
+      "test": "period-locks.test.ts",
+      "mentions": "lý do"
+    },
+    "F22-CLOSE-08": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-CLOSE-09": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-CLOSE-10": {
+      "kind": "test",
+      "test": "period-locks.test.ts",
+      "mentions": "paymentRequests"
+    },
+    "F22-LEDGER-01": {
+      "kind": "test",
+      "test": "db-rules.test.ts",
+      "mentions": "trigger"
+    },
+    "F22-LEDGER-02": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-LEDGER-03": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-LEDGER-04": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-LEDGER-05": {
+      "kind": "recipe",
+      "inject": [
+        {
+          "http": "POST /api/v1/documents",
+          "body": {
+            "docType": "sale",
+            "docKey": "F22-SO",
+            "branchCode": "CN01",
+            "docNo": "F22-SO",
+            "docDate": "2026-03-05",
+            "lines": [
+              {
+                "lineKey": "l1",
+                "sku": "SUA01",
+                "name": "Sữa bột 900g",
+                "unit": "Hộp",
+                "qty": 1,
+                "amountBeforeTax": 100000,
+                "taxCode": "R08",
+                "taxAmount": 8000
+              }
+            ],
+            "payments": [
+              {
+                "methodCode": "TM",
+                "amount": 108000
+              }
+            ],
+            "totals": {
+              "beforeTax": 100000,
+              "tax": 8000,
+              "total": 108000
+            }
+          },
+          "expectStatus": 200
+        },
+        {
+          "sql": "UPDATE ledger_lines SET description = 'sửa lén' WHERE tenant_id = $TENANT",
+          "expectError": "chỉ được thêm"
+        }
+      ]
+    },
+    "F22-LEDGER-06": {
+      "kind": "lane",
+      "lane": "ledger.diag.mjs",
+      "code": "INTERNAL_EVENT_VERSION"
+    },
+    "F22-LEDGER-07": {
+      "kind": "test",
+      "test": "policy.test.ts"
+    },
+    "F22-LEDGER-08": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-LEDGER-09": {
+      "kind": "test",
+      "test": "diagnostics.test.ts"
+    },
+    "F22-LEDGER-10": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-DEBT-01": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-DEBT-02": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-DEBT-03": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-DEBT-04": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-DEBT-05": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-DEBT-06": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-CASH-01": {
+      "kind": "recipe",
+      "inject": [
+        {
+          "http": "POST /api/v1/vouchers",
+          "body": {
+            "docType": "payment",
+            "branchCode": "CN01",
+            "docDate": "2026-03-10",
+            "description": "F22",
+            "lines": [
+              {
+                "debitAccount": "64211",
+                "creditAccount": "1111",
+                "amount": 500000
+              }
+            ]
+          },
+          "expectStatus": 201
+        }
+      ],
+      "expect": [
+        {
+          "diag": "CASH_NEGATIVE",
+          "level": "warn",
+          "count": 1,
+          "sampleMatch": "^CN01:1111@2026-03-10$"
+        }
+      ],
+      "fix": [
+        {
+          "http": "POST /api/v1/vouchers",
+          "body": {
+            "docType": "receipt",
+            "branchCode": "CN01",
+            "docDate": "2026-03-09",
+            "description": "F22",
+            "lines": [
+              {
+                "debitAccount": "1111",
+                "creditAccount": "5158",
+                "amount": 1000000
+              }
+            ]
+          },
+          "expectStatus": 201
+        }
+      ],
+      "afterFix": [
+        {
+          "diag": "CASH_NEGATIVE",
+          "count": 0
+        }
+      ]
+    },
+    "F22-CASH-02": {
+      "kind": "test",
+      "test": "phase022-checks.test.ts"
+    },
+    "F22-CASH-03": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-CASH-04": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-CASH-05": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-CASH-06": {
+      "kind": "planned",
+      "reason": "hoãn: chưa có dữ liệu sao kê (như Q020-6)"
+    },
+    "F22-FA-01": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-FA-02": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-FA-03": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-FA-04": {
+      "kind": "planned",
+      "reason": "chưa có kiểm — PHASE-022 S022-10"
+    },
+    "F22-SEC-01": {
+      "kind": "test",
+      "test": "conformance-gate.test.ts",
+      "mentions": "x-api-key"
+    },
+    "F22-SEC-02": {
+      "kind": "test",
+      "test": "conformance-engine.test.ts",
+      "mentions": "tools/list"
+    },
+    "F22-SEC-03": {
+      "kind": "test",
+      "test": "access.test.ts",
+      "mentions": "403"
+    },
+    "F22-SEC-04": {
+      "kind": "test",
+      "test": "tenant-isolation.test.ts",
+      "mentions": "Cô lập đơn vị"
+    },
+    "F22-SEC-05": {
+      "kind": "test",
+      "test": "rulepack-approval.test.ts",
+      "mentions": "Ktv@12345"
+    },
+    "F22-SEC-06": {
+      "kind": "recipe",
+      "inject": [
+        {
+          "http": "POST /api/v1/conformance/runs",
+          "body": {},
+          "headers": {
+            "idempotency-key": "f22-sec06"
+          },
+          "expectStatus": 201
+        },
+        {
+          "http": "POST /api/v1/conformance/runs",
+          "body": {
+            "asOf": "2026-01-01"
+          },
+          "headers": {
+            "idempotency-key": "f22-sec06"
+          },
+          "expectCode": "IDEMPOTENCY_CONFLICT"
+        }
+      ]
+    }
+  }
+}

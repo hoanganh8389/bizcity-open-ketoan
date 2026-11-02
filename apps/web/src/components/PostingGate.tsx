@@ -17,6 +17,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { TODO_BY_CODE, type Advisory, type AdvisoryReply } from '@/features/system/conformance';
+// [2026-11-02 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: cách khắc phục từng bước (RemedyView) thay cho danh sách link khi kiểm có remedy.
+import { RemedyView } from '@/components/RemedyView';
 
 export interface DocumentRef { docType: string; docDate: string; docNo?: string; docKey?: string }
 
@@ -104,7 +106,7 @@ function AdvisoryItems({ advisories }: { advisories: Advisory[] }) {
           <div><b>{a.title}</b> <span className="muted">· {a.count} · <code>{a.code}</code></span></div>
           <div className="muted">Vì sao: {a.why}</div>
           {a.sample.length > 0 && <div>{a.sample.slice(0, 6).map((s) => <code key={s} className="dev-code-chip">{s}</code>)}{a.sample.length > 6 ? ` +${a.sample.length - 6}` : ''}</div>}
-          {(TODO_BY_CODE[a.code] ?? []).length > 0 && <div>Việc cần làm: {TODO_BY_CODE[a.code]!.map((t) => <Link key={t.path} className="cf-todo" to={t.path}>{t.label}</Link>)}</div>}
+          {a.remedy ? <RemedyView remedy={a.remedy} compact /> : (TODO_BY_CODE[a.code] ?? []).length > 0 && <div>Việc cần làm: {TODO_BY_CODE[a.code]!.map((t) => <Link key={t.path} className="cf-todo" to={t.path}>{t.label}</Link>)}</div>}
         </li>
       ))}
     </ul>

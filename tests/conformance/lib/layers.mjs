@@ -94,6 +94,8 @@ export const LAYER_MAP = [
   ['modules/closing/', 'K', 'kernel/closing'],
   // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine (ADR-0012): trụ cột Kernel, chỉ đọc sổ
   ['modules/conformance/', 'K', 'kernel/conformance'],
+  // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá theo vai (danh mục F22 + checklist), chỉ đọc.
+  ['modules/review/', 'K', 'kernel/review'],
   ['kernel/', 'K', 'kernel/public'],
   ['modules/vouchers/voucher.service.ts', 'K', 'kernel/intake'],
   ['modules/vouchers/', 'K+D', 'kernel/intake'],

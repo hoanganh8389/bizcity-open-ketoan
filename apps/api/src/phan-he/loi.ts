@@ -31,7 +31,7 @@ import { presenceRoutes } from '../modules/system/presence.js';
 import { accessRoutes } from '../modules/access/access.routes.js';
 import { appsRoutes } from '../modules/apps/apps.routes.js';
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — gắn route Kiểm chuẩn (conformanceRoutes) vào nhóm Core
-import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes, conformanceRoutes, intakeRoutes } from '../kernel/public.js';
+import { accountRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes, documentRoutes, defaultDataRoutes, taxInfoRoutes, ledgerRoutes, debtRoutes, inventoryRoutes, conformanceRoutes, intakeRoutes, reviewRoutes } from '../kernel/public.js';
 import { branchRoutes } from '../modules/branches/branch.routes.js';
 import { warehouseRoutes } from '../modules/warehouses/warehouse.routes.js';
 import { unitNameRoutes } from '../modules/unit-names/unit-name.routes.js';
@@ -60,6 +60,8 @@ export const CORE_ROUTES: Routes[] = [
   productRoutes, catalogRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
   conformanceRoutes,
   intakeRoutes,
+  // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (HT08)
+  reviewRoutes,
 ];
 
 export const LEDGER: Routes[] = [ledgerRoutes, reportRoutes, debtRoutes];
