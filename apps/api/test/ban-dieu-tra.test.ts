@@ -21,6 +21,12 @@ import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let owner: TestCtx, dev: TestCtx, viewer: TestCtx, ownerB: TestCtx;
 let tenantA = '', tenantB = '';
+/**
+ * Lộ đơn vị: mã đơn vị (chuỗi riêng biệt), hoặc id đơn vị đứng cạnh chữ "tenant" (`"tenantId":"6"`, `tenant=6`…).
+ * Không tìm chuỗi con id trần: trên CSDL sạch id chỉ một chữ số, trùng chữ số trong mốc thời gian / số đếm → báo sai.
+ */
+const leaksTenant = (text: string, id: string, code: string) =>
+  text.includes(code) || new RegExp(String.raw`tenant[\w."' :=]{0,12}\b${id}\b`, 'i').test(text);
 let server: Server;
 let base = '';
 const traces = new Map<string, unknown>();
@@ -436,7 +442,8 @@ describe('Bàn điều tra — Lỗi theo module, màn đọc API sẵn có (PHA
       'Lỗi trong mã của module vat — sửa trong thư mục của module (Sổ tay TH-11).',
     ]);
     const text = JSON.stringify(d);
-    for (const secret of [tenantA, 'so_tien', '1234567']) expect(text).not.toContain(secret);
+    expect(leaksTenant(text, tenantA, owner.tenantCode)).toBe(false);
+    for (const secret of ['so_tien', '1234567']) expect(text).not.toContain(secret);
 
     // Từ chối đúng luật: mẫu đổi outcome; không có trace → câu "không có".
     tempoSearch = [];
@@ -552,6 +559,7 @@ describe('Bàn điều tra — Vận hành, Chép cho AI (PHASE-019 W5)', () => 
     expect(text).toContain('Viết test tái hiện');
     expect(text).toContain('mã `CONFLICT`');
     expect(text).toContain('từ chối đúng luật');
-    for (const secret of [tenantA, 'so_tien', '1234567', 'mst', 'Nguyễn Văn Bí Mật', 'PC-0099', 'bizcity.tenant']) expect(text).not.toContain(secret);
+    expect(leaksTenant(text, tenantA, owner.tenantCode)).toBe(false);
+    for (const secret of ['so_tien', '1234567', 'mst', 'Nguyễn Văn Bí Mật', 'PC-0099', 'bizcity.tenant']) expect(text).not.toContain(secret);
   });
 });
