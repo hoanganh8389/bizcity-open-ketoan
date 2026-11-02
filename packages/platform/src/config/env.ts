@@ -26,6 +26,9 @@ const envSchema = z.object({
    * Ngoài bản thật, hash lệch vốn chỉ cảnh báo; biến này chủ yếu để chạy bản dựng production trên máy dev.
    */
   BIZCITY_DEV_MODULES: z.enum(['true', 'false', '']).default('').transform((v) => v === 'true'),
+  // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1: thư mục module SDK (mặc định <gốc repo>/modules)
+  /** Thư mục chứa module viết bằng @bizcity/module-sdk (mỗi module một thư mục <key>/ có bizcity.module.json). Mặc định <gốc repo>/modules. */
+  BIZCITY_MODULES_DIR: z.string().optional(),
   HOST: z.string().default('0.0.0.0'),
   DATABASE_URL: z.string().url().default('postgres://ketoan:ketoan@localhost:5434/ketoan'),
   /** Chuyển sang vai trò này sau khi kết nối (SET ROLE) — chạy test / CI dưới vai trò không superuser để RLS có hiệu lực (PHASE-007). Bản thật: kết nối thẳng bằng DB_APP_USER. */

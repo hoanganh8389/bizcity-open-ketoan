@@ -24,6 +24,8 @@ import { useAddIns, useAppMenu } from './useAppMenu';
 import { ModuleIcon } from '../phan-he/icons';
 import { NutChiNhanh } from '@/components/ChiNhanhLamViec';
 import { DangOnline } from './DangOnline';
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4): chuông thông báo
+import { ThongBao } from './ThongBao';
 import { workBranch } from '@/lib/workBranch';
 import { MaTraCuu } from '@/components/MaTraCuu';
 
@@ -134,6 +136,7 @@ export function AppLayout() {
         <div className="topbar-right">
           {/* Robot trợ lý khi đã bấm "Ẩn": thu gọn thành biểu tượng ở đây. */}
           {addins.some((a) => a.id === 'tro-ly') && <TroLyDock />}
+          <ThongBao />
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />

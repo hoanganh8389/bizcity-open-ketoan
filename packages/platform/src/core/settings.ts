@@ -47,6 +47,29 @@ export function settingsRegistry(): Map<string, SettingEntry> {
 
 const TENANT_STORAGE = /^tenants\.settings\.([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)$/;
 
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G2): khoá cấu hình do module SDK khai (modules/<key>/settings.registry.json) gộp vào registry lúc nạp module
+/**
+ * Gộp khoá của một module vào registry. Mỗi khoá: `owner` = mã module, `key` dưới `bizcity.<module_gạch_dưới>.`, lưu ở
+ * `tenants.settings.*`, phạm vi `tenant`, có trong `declared` (manifest `settings`). Trùng khoá của Core / module khác → lỗi.
+ */
+export function registerModuleSettings(module: string, entries: SettingEntry[], declared: readonly string[]): void {
+  const reg = settingsRegistry();
+  const prefix = `bizcity.${module.replace(/-/g, '_')}.`;
+  const bad: string[] = [];
+  for (const e of entries) {
+    if (e.owner !== module) bad.push(`${e.key}: owner phải là "${module}"`);
+    if (!e.key.startsWith(prefix)) bad.push(`${e.key}: phải dưới "${prefix}"`);
+    if (!declared.includes(e.key)) bad.push(`${e.key}: chưa khai ở settings của manifest`);
+    if (!TENANT_STORAGE.test(e.storage)) bad.push(`${e.key}: storage phải là tenants.settings.<đường>`);
+    if (!(e.scopes ?? []).includes('tenant')) bad.push(`${e.key}: scopes phải có "tenant"`);
+    const cur = reg.get(e.key);
+    if (cur && cur.owner !== module) bad.push(`${e.key}: trùng khoá của ${cur.owner}`);
+  }
+  for (const k of declared) if (!entries.some((e) => e.key === k) && !reg.has(k)) bad.push(`${k}: khai ở manifest nhưng thiếu trong settings.registry.json của module`);
+  if (bad.length) throw new Error(`Cấu hình module ${module}: ${bad.join('; ')}`);
+  for (const e of entries) reg.set(e.key, e);
+}
+
 /** Giá trị mặc định khai trong registry (chuỗi JSON nếu đọc được, không thì giữ nguyên chuỗi). */
 function parseDefault(v: string | null | undefined): unknown {
   if (v == null) return null;

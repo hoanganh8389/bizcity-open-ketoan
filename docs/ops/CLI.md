@@ -35,6 +35,19 @@
 | `node scripts/gan-nhan-lop.mjs [--write]` | Đếm / ghi nhãn lớp `// @bizcity-layer` đầu mọi tệp `apps/api/src` theo bảng lớp (R-BOUND-10) |
 | `node scripts/do-thi-phu-thuoc.mjs [--date YYYY-MM-DD]` | Dựng đồ thị phụ thuộc theo lớp → `docs/audits/deps-<ngày>.{svg,md,json}` (PHASES 1.4) |
 
+## 1b. Lệnh `bizcity` đã có (gói `@bizcity/cli`, PHASES 4.1) <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3 -->
+
+Chạy ở gốc repo: `npx bizcity <lệnh>`. Mã thoát 0 = đạt, 1 = không đạt (dùng được trong CI). CLI chỉ điều phối công cụ sẵn có, không giữ luật riêng.
+
+| Lệnh | Làm gì |
+|---|---|
+| `npx bizcity module new <key> [--label "Tên"] [--code HD] [--owner @tk]` | Sinh `modules/<key>/` từ `templates/starter-module` (manifest, migration có RLS + COMMENT, 2 action, màn danh sách, AGENTS.md riêng). Từ chối mã sai khuôn, trùng phân hệ Core, thư mục đã có |
+| `npx bizcity module check <key>` | `selfcheck --module modules/<key> --strict` + typecheck phần máy chủ và giao diện + test hợp đồng module trên CSDL test (`apps/api/test/sdk-modules.contract.test.ts`) |
+| `npx bizcity module list` | Module SDK trong `modules/` |
+| `npx bizcity migrate` | Migration Core rồi migration từng module SDK |
+| `npx bizcity ledger verify` | Lane diagnostics (SQL đọc sổ) mức strict |
+| `npx bizcity doctor` | Node, gói đã dựng, CSDL kết nối được, migration Core / module còn chờ |
+
 ## 2. Đích: lệnh `bizcity` (gói `@bizcity/cli`, Giai đoạn 2)
 
 Gom các script trên về một lệnh, thêm các lệnh kiểm framework. Mọi lệnh in kết quả theo khuôn ở [DIAGNOSTICS.md](DIAGNOSTICS.md) §3 và trả mã thoát 0 / 1 để dùng được trong CI.

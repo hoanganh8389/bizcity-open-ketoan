@@ -19,6 +19,7 @@
  *
  * Module nhỏ nên service gộp thẳng vào route (chỉ gọi repository + ghi nhật ký).
  */
+import { referenceChecks } from '@bizcity/platform/core/hooks';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -280,6 +281,9 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
         if (!before) throw Errors.notFound(`đối tượng ${req.params.code}`);
         const used = await trx.selectFrom('bizcity_read.ledger_lines').select('id').where('tenant_id', '=', auth.tenantId).where('partner_id', '=', before.id).limit(1).executeTakeFirst();
         if (used) throw Errors.conflict(`Đối tượng ${before.code} đã có trên sổ: bỏ tích "Theo dõi" để khoá`);
+        // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G3): module còn dùng đối tượng (masterdata.referenceCheck) → không xoá
+        const refs = await referenceChecks(trx, auth.tenantId, { kind: 'partner', code: before.code });
+        if (refs.length) throw Errors.conflict(`Đối tượng ${before.code} đang dùng ở ${refs.join('; ')}: bỏ tích "Theo dõi" để khoá`);
         // Còn chứng từ, công nợ, hợp đồng… trỏ tới thì khoá ngoại chặn (báo trùng / đang dùng).
         await trx.deleteFrom('partners').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.delete', objectType: 'partner', objectId: before.code, before });

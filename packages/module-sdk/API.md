@@ -98,7 +98,7 @@ interface ActionContext {
   data: {
     tx: ModuleTransaction;          // Kysely chỉ thấy bảng mod_<key>.* + view bizcity_read.* (kiểu sinh theo module)
     module<T>(fn: (tx) => Promise<T>): Promise<T>;  // ✅ 2026-11-02 (3.10): chạy fn bằng vai trò mod_<key>_rw — PostgreSQL chặn bảng Kernel; gọi ctx.ledger / documents NGOÀI fn
-    masterdata: MasterdataReader;   // partners / products / branches / warehouses / units / taxCodes: get(code), list(filter)
+    masterdata: MasterdataReader;   // ⏳ CHƯA CÓ (W4 lần 0): đọc danh mục qua khung nhìn khai ở data.reads, vd bizcity_read.partners trong ctx.data.module —   // partners / products / branches / warehouses / units / taxCodes: get(code), list(filter)
     describe(): SchemaDescription;  // thay schema-catalog
   };
   ledger: {
@@ -133,6 +133,7 @@ interface ActionContext {
 |---|---|---|
 | `Errors` | `core/errors` | `validation`, `notFound`, `conflict`, `forbidden`, `posting`, … mã chuẩn ACTION §7. Module không tự đặt HTTP status |
 | `z` | `zod` | Re-export để module và runtime cùng một bản zod (kiểm `input`, sinh OpenAPI / MCP) |
+| `sql` <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1 --> | `kysely` | Câu SQL có tham số cho bảng của chính module (`mod_<key>.*`) trong `ctx.data.module(tx => sql`…`.execute(tx))` — kiểu `Database` của Core không biết bảng module. `${giá trị}` luôn thành tham số, không ghép chuỗi (R-SEC) |
 | `money.toCents`, `money.fromCents`, `money.toNumber` | `db/client.toNumber`, `@ketoan/contracts` money | Tiền `numeric(18,2)`, cộng trừ bằng xu |
 | `docRef(type, id)` | — | Khoá chứng từ `<key>.<loại>:<id>` dùng cho `docKey`, sự kiện, liên kết |
 
@@ -174,3 +175,20 @@ Phân hệ hiện có không viết lại một lần. Theo thứ tự:
 3. ✅ **Chốt 2026-10-31 — cách hai** (`accounting.report.income-statement`, `accounting.report.term-rules` qua `callAction` / `ctx.actions.call`). **Báo cáo tài chính trong phân hệ Thuế** (`incomeStatement`, `termRuleFor`, `TERM_MAP` ở `thue/statements`). Hoặc `ledger.query` có báo cáo dựng sẵn (`kind: 'income-statement'`), hoặc Thuế gọi action đọc `ke-toan.report.*` qua `ctx.actions.call`. Khuyên cách hai: báo cáo là module ([REUSE-MAP §3.2](../../docs/standard/REUSE-MAP.md)).
 4. ✅ **Chốt 2026-11-02 — `seed[]` trong manifest gọi `core.*.upsert` (3.17).** **Tạo danh mục khi dựng dữ liệu mẫu** (`mua-hang/demo.ts`). Khuyên `seed` trong manifest gọi `core.*.upsert`, không ghi bảng.
 5. ✅ **Chốt 2026-11-02 — `@bizcity/module-sdk/web` (3.18).** **Tên gói con giao diện:** `@bizcity/module-sdk/web` hay để `defineWebModule` ở `@bizcity/ui-kit`. Khuyên `module-sdk/web`: một gói danh tính, ui-kit chỉ là thành phần.
+
+## Phần giao diện và nạp module <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W1–W3 -->
+
+- **Nạp:** `modules/<key>/` có `bizcity.module.json` + `api/index.ts` (`export default defineModule(...)`) → API nạp như phân hệ (registry, hash, bật / tắt theo đơn vị), route sinh từ action dưới `/api/v1/m/<key>/`. `web/index.tsx` (`export default defineWebModule(...)`) → web gom lúc dựng: mục Tổng quan (biểu tượng / màu / thứ tự ở manifest `ui`), nhóm menu `mod-<key>`, route dưới `/app/<key>` (trang chủ) hoặc `/app/<key>/…`.
+- **`@bizcity/module-sdk/web`:** `defineWebModule`, `webModuleParts` (khung giao diện dùng), `WEB_SLOTS`. Xuất thẳng mã nguồn (không phụ thuộc gì) — bộ đóng gói của web dùng, không cần dựng SDK.
+- **`@bizcity/ui-kit`:** thành phần + `useApi` / `useCan` / `useQuery` cho màn của module; bản thật do `apps/web` cung cấp (`provideUiKit`). Màn của module không import `apps/web/src/*`.
+- **Slot** (W4): `partner.detail.tab` (props `{ code, name }`, thẻ trong hồ sơ khách đã lưu) và `dashboard.widget` (ô trên Tổng quan) vẽ được; `label` của slot là nhãn thẻ. Ba slot còn lại khai được nhưng chưa vẽ.
+
+## Đợt W4 — năng lực cho ca chuẩn <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
+
+| Cần | Dùng |
+|---|---|
+| Trạng thái duyệt chứng từ của module | `loadWorkflow(new URL('./x.workflow.yaml', import.meta.url))` + `wf.plan(verb, { status, createdBy, levelsRequired }, { id: ctx.actor.id, can: ctx.can })`; quyền trong YAML được là `<key>:<việc>` |
+| Cấu hình của module | khai khoá ở `settings` (manifest) **và** chi tiết ở `modules/<key>/settings.registry.json` (cùng khuôn registry Core, `owner` = key, `storage: tenants.settings.*`, `scopes: [tenant]`); đọc `ctx.settings.get(key)` |
+| Core hỏi "khách này còn dùng không" | `defineHook({ id: '<key>.…', module: '<key>', hook: 'masterdata.referenceCheck', handle: async (ctx, { kind, code }) => câu | null })`, khai ở `defineModule({ hooks })` và `extensions.hooks` |
+| Thông báo | `ctx.notify.send({ to: { permission: '<key>:…' }, title, link, dedupeKey })` (action, subscriber) |
+| Subscriber đọc / ghi bảng module | `ctx.module(tx => …)` (vai trò `mod_<key>_rw`), `ctx.settings.get`, `ctx.notify` |

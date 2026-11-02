@@ -8,16 +8,27 @@
 
 | ID | Việc | Lộ trình / G | Code | Trạng thái |
 |---|---|---|---|---|
-| S014-1 | `@bizcity/cli`: doctor, migrate, module new / check, events replay, evidence / ledger verify | 4.1 · G3-02 | chưa | ☐ |
-| S014-2 | `templates/starter-module/` (+ AGENTS.md riêng) | 4.2 | chưa | ☐ |
+| S014-1 | `@bizcity/cli`: doctor, migrate, module new / check, events replay, evidence / ledger verify | 4.1 · G3-02 | có | 🟡 2026-11-02 — `packages/cli` (`npx bizcity`): module new / check / list, migrate, ledger verify, doctor; còn events replay, evidence verify <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 --> |
+| S014-2 | `templates/starter-module/` (+ AGENTS.md riêng) | 4.2 | có | ✅ 2026-11-02 — `templates/starter-module/`: manifest, migration (RLS + COMMENT), 2 action, màn danh sách + form chỉ dùng ui-kit, AGENTS.md, README; module sinh từ template qua `module check` ĐẠT <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 --> |
 | S014-3 | Lane runtime CONF-RUN / CONF-UPG | 4.3 | chưa | ☐ |
-| S014-4 | AGENTS.md tạo module + AGENTS.md trong template | 4.4 | một phần | 🟡 |
-| S014-5 | Ca chuẩn Hợp đồng 3/3 | 4.5 | chưa | ☐ |
+| S014-4 | AGENTS.md tạo module + AGENTS.md trong template | 4.4 | có | ✅ 2026-11-02 — AGENTS.md gốc mục "Tạo module mới" bước 7–8 trỏ `bizcity module new / check`; `templates/starter-module/AGENTS.md` <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 --> |
+| S014-5 | Ca chuẩn Hợp đồng 3/3 | 4.5 | chưa | ⛔ chờ chạy thật: 3 phiên Claude Code độc lập trên repo sạch, cùng lời yêu cầu §1, chấm bằng `module check` + `golden-hop-dong.test.ts`; ghi vào GOLDEN-CASE §9 <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 --> |
 | S014-6 | Standard 1.0.0 | 4.6 | chưa | ☐ |
 | S014-7 | Thêm preset dịch vụ, sản xuất | 4.7 | một phần | 🟡 1/3 |
+<!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — chủ chỉ đạo "dồn lực cho phase 4 và trả nợ lõi": thêm đợt W1–W6 -->
+| S014-8 | **W1** Chỗ nạp module SDK phía API: `modules/<key>/` (manifest + `defineModule`), registry / hash / bật tắt theo đơn vị như phân hệ, route sinh từ action dưới `/api/v1/m/<key>/`, quyền manifest, subscriber; SDK xuất `sql` | 4.2 · 4.5 (điều kiện) | có | ✅ 2026-11-02 — `apps/api/src/core/sdk-modules.ts`, `buildApp({ modulesDir })`; module thử `test/fixtures/sdk-modules/ghi-chu`; `sdk-module-host.test.ts` 6 test |
+| S014-9 | **W2** Chỗ nạp module SDK phía web: `modules/<key>/web/index.tsx` (`defineWebModule`) → route, menu, quyền | 4.5 (điều kiện) | có | 🟡 2026-11-02 — `apps/web/src/phan-he/sdk-modules.ts` + `sdk-routes.tsx`: Tổng quan, menu `mod-<key>`, route có chặn quyền; `@bizcity/ui-kit` (provideUiKit ở main.tsx); `sdk-web.test.ts` 2 test. Chưa: slot <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 --> |
+| S014-10 | **W3** Khuôn gói npm của module (workspace `modules/*`), template `templates/starter-module/` + AGENTS.md riêng, image Docker chép + dựng `modules/*` và `module-sdk` | 4.2 · 4.4 | có | ✅ 2026-11-02 — workspace `modules/*`; image API dựng + chép `modules/*`, `module-sdk`; image web chép `modules`, `ui-kit`; job cài đặt chạy migration module trước `sync` registry <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 --> |
+| S014-11 | **W3** `@bizcity/cli` (`packages/cli`): `module new`, `module check`, `doctor`, `ledger verify`, `migrate` — dựng trên selfcheck / diagnostics / lệnh `module` sẵn có | 4.1 | có | ✅ 2026-11-02 — xem S014-1 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2/W3 --> |
+| S014-12 | **W4** Diễn tập ca chuẩn Hợp đồng một lần theo GOLDEN-CASE-HOP-DONG, ghi khe hở SDK / tài liệu; sửa khe hở trước khi chạy 3/3 thật (S014-5) | 4.5 | có | ✅ 2026-11-02 — lần 0 (diễn tập): dựng module hop-dong theo ca chuẩn (12 action, 4 subscriber, 1 hook, 2 màn, 2 slot) → `module check` ĐẠT, GC-1..12 đạt (`apps/api/test/golden-hop-dong.test.ts`, bỏ qua khi chưa có module), dist + web dựng được. Vá Core G1–G8 (GOLDEN-CASE §9). Module diễn tập không commit <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 --> |
+| S014-13 | **W5–W6** Trả nợ lõi: route ghi → `defineAction` (SC-ACT-1, 60/202), phân hệ ghi bảng lõi (SC-MOD-2), import sai chiều (SC-LAYER-2) — theo đợt, mỗi đợt giữ test xanh | C-7 · 3.9 | chưa | ☐ |
 
 ## Log
 
 | Thời điểm thật | Phiên | Việc |
 |---|---|---|
 | 2026-10-30 | Claude Code | Mở thư mục phase; trạng thái chụp từ bảng điểm (CSDL `ketoan_test`). |
+| 2026-11-02 21:33 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "dồn lực cho phase 4 và trả nợ lõi" → đợt W1–W6. Rà mã: `defineModule` có nhưng API không nạp module ở `modules/<key>/` (registry chỉ biết `phan-he/*`, `addins/*`) — ca chuẩn bị chặn từ gốc. W1: chỗ nạp module SDK phía API |
+| 2026-11-02 22:30 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W2: web nạp module SDK + `@bizcity/ui-kit`. W3: template `starter-module`, `@bizcity/cli`, test hợp đồng module, Docker + job cài đặt. Diễn tập: `bizcity module new so-tay` → `module check so-tay` ĐẠT (4/4 bước), dist nạp bằng Node, web dựng có route module |
+| 2026-11-02 23:30 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "đã mở PR, code tiếp" → W4 lần 0: đối chiếu ca chuẩn với runtime, vá G1–G6 trong Core (S014-12) |
+| 2026-11-02 23:50 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W4 lần 0 xong: module hop-dong diễn tập đạt `module check` + GC-1..12; thêm khe hở G7 (data.reads), G8 (YAML trong dist) đã vá; bộ kịch bản nghiệm thu commit, module không commit |

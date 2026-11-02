@@ -1,0 +1,10 @@
+{
+  "name": "@bizcity/cli",
+  "version": "0.1.0",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "description": "Lệnh `bizcity` cho developer (PHASES 4.1): module new / check / list, migrate, ledger verify, doctor. Điều phối công cụ sẵn có của repo.",
+  "type": "module",
+  "bin": { "bizcity": "./bin/bizcity.mjs" },
+  "dependencies": { "pg": "8.13.1" }
+}

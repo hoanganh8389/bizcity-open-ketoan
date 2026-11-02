@@ -27,7 +27,8 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { sql, type Transaction } from 'kysely';
-import { moduleRoles } from '../db/module-db.js';
+import { asModuleRole } from '../db/module-db.js';
+import { sendNotification, type NotifyInput } from './notify.js';
 import { z } from 'zod';
 import { ERROR_CODES, docRefModule, type IngestResult, type AttachmentRef, type DocLinkRole, type DocRef, type DocumentLink, type DocumentSignature, type DocumentVersion, type ErrorCode, type FileInput, type LedgerQuery, type LedgerQueryRow } from '@ketoan/contracts';
 import { db } from '../db/client.js';
@@ -98,6 +99,9 @@ export interface ActionContext {
   };
   /** Cấu hình đơn vị theo registry (settings.registry, core/settings.ts): chỉ khoá module sở hữu, khoá lạ là lỗi. */
   settings: { get<T = unknown>(key: string): Promise<T> };
+  // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4)
+  /** Thông báo trong ứng dụng (notify.inapp): nguồn = module của action; trả id hoặc null khi trùng dedupeKey. */
+  notify: { send(n: NotifyInput): Promise<string | null> };
   // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ctx.actions.call (module-sdk API.md §2, câu hỏi mở 3): gọi action đọc của module khác
   /** Gọi action đọc công khai của module khác theo mã, với quyền của người gọi (STD-MOD-3; xem callAction). */
   actions: { call<O = unknown>(id: string, input: unknown): Promise<O> };
@@ -349,18 +353,8 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         can: (p) => !!auth?.permissions.has(p),
         data: {
           tx: trx,
-          module: async (fn) => {
-            const { rw } = moduleRoles(def.id.split('.')[0]!);
-            const has = await sql<{ ok: boolean }>`SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = ${rw}) AS ok`.execute(trx);
-            if (!has.rows[0]?.ok) throw Errors.notReady(`Module ${def.id.split('.')[0]} chưa có CSDL riêng (vai trò ${rw}): chạy "module migrate" khi cài module`);
-            const prev = (await sql<{ u: string }>`SELECT current_user AS u`.execute(trx)).rows[0]!.u;
-            await sql`SET LOCAL ROLE ${sql.id(rw)}`.execute(trx);
-            try {
-              return await fn(trx);
-            } finally {
-              await sql`SET LOCAL ROLE ${sql.id(prev)}`.execute(trx).catch(() => {});
-            }
-          },
+          // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: tách ra asModuleRole (dùng chung với subscriber, hook)
+          module: (fn) => asModuleRole(trx, def.id.split('.')[0]!, () => fn(trx)),
         },
         evidence: { note: (k, v) => { notes[k] = v; } },
         events: {
@@ -411,6 +405,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           },
         },
         settings: { get: (key) => readSetting(trx, tenantId, def.id.split('.')[0]!, key) },
+        notify: { send: (n) => sendNotification(trx, tenantId, def.id.split('.')[0]!, n) },
         actions: {
           call: (id, input) => {
             if (!auth) throw Errors.unauthorized();

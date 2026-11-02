@@ -17,14 +17,19 @@ COPY modules/mua-hang/domain/package.json modules/mua-hang/domain/
 COPY packages/vn-rulepacks packages/vn-rulepacks
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+# [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3: module SDK (modules/<key>/, mỗi module một gói npm) và ui-kit — cả thư mục, vì danh sách module là của từng bản cài
+COPY packages/ui-kit packages/ui-kit
+COPY packages/cli/package.json packages/cli/
+COPY modules modules
 RUN npm ci --no-audit --no-fund
 COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
 COPY packages/platform packages/platform
 COPY packages/kernel packages/kernel
-COPY modules/mua-hang/domain modules/mua-hang/domain
+COPY packages/module-sdk packages/module-sdk
 COPY apps/api apps/api
-RUN npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @ketoan/api
+RUN npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain && npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && npm run build -w @bizcity/module-sdk && npm run build -w @ketoan/api \
+ && for d in modules/*/; do if [ -f "$d/bizcity.module.json" ]; then npm run build -w "./$d" || exit 1; fi; done
 
 FROM node:22-alpine
 WORKDIR /app
@@ -38,12 +43,15 @@ COPY modules/mua-hang/domain/package.json modules/mua-hang/domain/
 COPY packages/vn-rulepacks packages/vn-rulepacks
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-RUN npm ci --omit=dev --no-audit --no-fund -w @ketoan/api -w @ketoan/contracts -w @bizcity/mua-hang-domain -w @bizcity/platform -w @bizcity/kernel -w @bizcity/vn-rulepacks && npm cache clean --force
+RUN npm ci --omit=dev --no-audit --no-fund -w @ketoan/api -w @ketoan/contracts -w @bizcity/mua-hang-domain -w @bizcity/platform -w @bizcity/kernel -w @bizcity/module-sdk -w @bizcity/vn-rulepacks && npm cache clean --force
 COPY --from=build /app/packages/contracts/dist packages/contracts/dist
 COPY --from=build /app/modules/mua-hang/domain/dist modules/mua-hang/domain/dist
 COPY --from=build /app/packages/platform/dist packages/platform/dist
 COPY --from=build /app/packages/kernel/dist packages/kernel/dist
 COPY --from=build /app/apps/api/dist apps/api/dist
+# [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3: SDK + module SDK đã dựng (manifest, dist, migrations) — API nạp modules/<key>/dist/api/index.js
+COPY --from=build /app/packages/module-sdk/dist packages/module-sdk/dist
+COPY --from=build /app/modules modules
 # Thư mục cơ sở dữ liệu (migrations, seeds) — đường dẫn /app/db (packages/platform/src/db/paths.ts: dist/db cách gốc 4 cấp như cũ).
 COPY db/migrations db/migrations
 COPY db/seeds db/seeds

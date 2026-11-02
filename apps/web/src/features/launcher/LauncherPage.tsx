@@ -15,13 +15,15 @@ import { MODULES, isSection, moduleMenu } from '../../layout/menu';
 import { useAppMenu, useEnabledModules } from '../../layout/useAppMenu';
 import { ModuleIcon } from '../../phan-he/icons';
 import { MODULE_FLOWS } from '../../phan-he/flows';
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): ô của module SDK trên Tổng quan (dashboard.widget)
+import { sdkSlots } from '../../phan-he/sdk-modules';
 import '@/components/quy-trinh/quy-trinh.css';
 
 /** Số chức năng đã có (có đường dẫn) trong các nhóm của phân hệ. */
 const countOf = (groups: MenuItem[]) => new Set(groups.flatMap((g) => (g.children ?? []).filter((c) => c.path && !isSection(c)).map((c) => c.path))).size;
 
 export function LauncherPage() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const navigate = useNavigate();
   const menu = useAppMenu();
   const enabled = useEnabledModules();
@@ -39,6 +41,10 @@ export function LauncherPage() {
           </button>
         ))}
       </div>
+      {(() => {
+        const widgets = sdkSlots('dashboard.widget').filter((s) => (!enabled || enabled.has(s.module)) && (!s.permission || can(s.permission)));
+        return widgets.length > 0 && <div className="launcher-widgets">{widgets.map((s) => <div key={s.module} className="card card-body"><b>{s.label}</b><s.component /></div>)}</div>;
+      })()}
       <div className="launcher-links">
         <Link to="/bang-dieu-khien" className="launcher-link"><BarChart3 size={16} /> Bảng điều khiển số liệu (doanh thu, thuế, tiền thu, chứng từ lỗi)</Link>
       </div>

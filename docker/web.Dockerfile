@@ -14,9 +14,14 @@ COPY packages/module-sdk/package.json packages/module-sdk/
 COPY modules/mua-hang/domain/package.json modules/mua-hang/domain/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+# [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3: phần web của module SDK (modules/<key>/web) + @bizcity/ui-kit + @bizcity/module-sdk/web (mã nguồn, không cần dựng SDK)
+COPY packages/ui-kit packages/ui-kit
+COPY packages/cli/package.json packages/cli/
+COPY modules modules
 RUN npm ci --no-audit --no-fund
 COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
+COPY packages/module-sdk packages/module-sdk
 COPY modules/mua-hang/domain modules/mua-hang/domain
 COPY apps/web apps/web
 COPY docs docs

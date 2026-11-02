@@ -1,0 +1,55 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.ghi-chu",
+  "key": "ghi-chu",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Ghi chú (module thử của chỗ nạp module SDK)",
+  "description": "Module nhỏ nhất viết bằng @bizcity/module-sdk: bảng mod_ghi_chu.notes, action ghi / đọc, khoá cấu hình riêng, hook kiểm tham chiếu đối tượng, subscriber gửi thông báo. Chỉ dùng trong test.",
+  "owners": [
+    "@hoanganh8389"
+  ],
+  "standard": "^1.0",
+  "requires": {
+    "capabilities": []
+  },
+  "permissions": [
+    {
+      "key": "ghi-chu:read",
+      "label": "Xem ghi chú",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant",
+        "viewer"
+      ],
+      "risk": "low"
+    },
+    {
+      "key": "ghi-chu:write",
+      "label": "Viết ghi chú",
+      "roles": [
+        "owner",
+        "chief_accountant",
+        "accountant"
+      ],
+      "risk": "low"
+    }
+  ],
+  "data": {
+    "schema": "mod_ghi_chu",
+    "tables": [
+      "notes"
+    ],
+    "reads": [
+      "bizcity_read.partners"
+    ]
+  },
+  "actions": [
+    "ghi-chu.note.create",
+    "ghi-chu.note.list"
+  ],
+  "settings": [
+    "bizcity.ghi_chu.max_len"
+  ]
+}

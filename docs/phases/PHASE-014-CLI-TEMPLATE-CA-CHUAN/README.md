@@ -23,6 +23,7 @@
 | F2 | AGENTS.md có mục "Tạo module mới"; chưa có `templates/` | `AGENTS.md` |
 | F3 | 1/3 preset (`thuong-mai-ban-le`) | `presets/` |
 | F4 | Standard đang `1.0.0-draft` | `docs/standard/bizcity-standard.json` |
+| F5 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — rà mã trước W1 --> | (02/11) `defineModule` có, nhưng API chưa nạp module ở `modules/<key>/`: registry chỉ biết `phan-he/*`, `addins/*`. W1 thêm chỗ nạp (S014-8) | `apps/api/src/core/sdk-modules.ts` |
 
 ## Xong khi
 

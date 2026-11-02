@@ -10,7 +10,7 @@
     "bizcity_action": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-ACTION-v1.md" },
     "bizcity_event": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EVENT-v1.md" },
     "bizcity_evidence": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-EVIDENCE-v1.md" },
-    "bizcity_extension": { "version": "1.2.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
+    "bizcity_extension": { "version": "1.3.0-draft", "doc": "docs/contracts/BIZCITY-EXTENSION-v1.md" }
   },
   "kernelContracts": {
     "bizcity_ledger_intake": { "version": "1.4.0", "doc": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md", "schema": "docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json" },
@@ -77,10 +77,10 @@
     { "id": "events.outbox", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Phát sự kiện miền trong cùng giao dịch (event_outbox, migration 0039); gửi ít nhất một lần. Hiện ở apps/api/src/core/events.ts (emitEvent) và ctx.events.emit của runtime action; Kernel phát bizcity.ledger.entry.posted / reversed, bizcity.period.locked / unlocked." },
     { "id": "events.subscribe", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Đăng ký xử lý sự kiện (defineSubscriber); chống xử lý trùng theo (consumer, event_id); retry giãn nhịp, dead-letter (EVENT_DEAD), replay (core.events.replay)." },
     { "id": "events.clock", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_event", "description": "Sự kiện đồng hồ bizcity.clock.daily (01:00 giờ VN) / hourly cho nhắc hạn, việc định kỳ; chỉ phát khi có subscriber, chống trùng theo giờ / ngày." },
-    { "id": "notify.inapp", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Action core.notify.send: thông báo trong ứng dụng; có Cell thì chuyển thêm qua kênh (Zalo)." },
+    { "id": "notify.inapp", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_extension", "description": "Thông báo trong ứng dụng (PHASE-014 W4, migration 0060): ctx.notify.send trong action / subscriber (tới một người hoặc theo quyền, chống trùng dedupeKey), chuông trên thanh trên cùng. Chưa chuyển qua Cell." },
     { "id": "settings.registry", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_settings", "description": "ctx.settings.get(key) theo registry (core/settings.ts): khoá phải có trong bizcity-settings.registry.json, phạm vi đơn vị (tenants.settings.<đường>), module chỉ đọc khoá mình sở hữu; chưa đặt thì trả mặc định của registry. Ghi qua ctx chưa có (route / action riêng của module)." },
-    { "id": "ui.kit", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit: DataGrid, form, bộ lọc, in, khung trang (tách từ apps/web/src/components)." },
-    { "id": "ui.slots", "since": "1.0", "status": "planned", "phase": 3, "contract": "bizcity_extension", "description": "Chèn tab / panel / widget vào màn của Core." },
+    { "id": "ui.kit", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_extension", "description": "@bizcity/ui-kit (PHASE-014 W2): mặt tiền giao diện cho module — PageHeader, Loading, ErrorBox, Empty, Field, Modal, Money, StatusBadge, useApi, useCan, useQuery / useMutation; bản thật do apps/web cung cấp (provideUiKit). Chưa có: DataGrid, bộ lọc, in." },
+    { "id": "ui.slots", "since": "1.0", "status": "available", "phase": 3, "contract": "bizcity_extension", "description": "Chèn thành phần module vào màn Core (PHASE-014 W4): partner.detail.tab (thẻ trong hồ sơ khách), dashboard.widget (ô trên Tổng quan). Chưa vẽ: product.detail.tab, document.detail.panel, ledger.drilldown.source." },
     { "id": "ui.menu", "since": "1.0", "status": "available", "contract": "bizcity_extension", "description": "Nhóm menu, màn, biểu tượng phân hệ (WebModule.groups, menu.ts)." },
     { "id": "mcp.read", "since": "1.0", "status": "available", "contract": "bizcity_mcp", "description": "POST /mcp (JSON-RPC: initialize, tools/list, tools/call), công cụ đọc ketoan.* (cân đối phát sinh, số dư tiền, công nợ theo đối tượng) bọc reportService; xác thực bằng phiên / khoá API hiện có (khoá mcp_… riêng: sau)." },
     { "id": "mcp.tools", "since": "1.0", "status": "available", "contract": "bizcity_mcp", "description": "Sinh công cụ MCP từ registry action (expose.mcp, expose.ai read | propose); xác nhận trước khi ghi (needs_confirmation + confirm_token, bảng mcp_confirm_tokens); bằng chứng actor ai." },

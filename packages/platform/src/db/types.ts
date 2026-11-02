@@ -939,6 +939,27 @@ export interface RulepackApprovalsTable {
   created_at: TimestampDefault;
 }
 
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4): thông báo trong ứng dụng (0060)
+/** Thông báo trong ứng dụng (migration 0060, notify.inapp). */
+export interface NotificationsTable {
+  id: Generated<string>;
+  tenant_id: string;
+  source: string;
+  recipient_user_id: string | null;
+  audience_permission: string | null;
+  title: string;
+  body: string | null;
+  link: string | null;
+  dedupe_key: string | null;
+  created_at: TimestampDefault;
+}
+export interface NotificationReadsTable {
+  notification_id: string;
+  user_id: string;
+  tenant_id: string;
+  read_at: TimestampDefault;
+}
+
 /** Gói định khoản đã cài (migration 0042, bizcity_posting_template@1 §5). */
 export interface ConfigPacksTable {
   tenant_id: string;
@@ -1719,6 +1740,8 @@ export interface Database {
   accounting_profiles: AccountingProfilesTable;
   conformance_runs: ConformanceRunsTable;
   rulepack_approvals: RulepackApprovalsTable;
+  notifications: NotificationsTable;
+  notification_reads: NotificationReadsTable;
   config_packs: ConfigPacksTable;
   ledger_lines: LedgerLinesTable;
   ledger_balances_daily: LedgerBalancesDailyTable;
