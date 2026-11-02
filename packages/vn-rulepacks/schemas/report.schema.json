@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bizcity.vn/contracts/bizcity_vn_conformance_report/1.0.0",
+  "$id": "https://bizcity.vn/contracts/bizcity_vn_conformance_report/1.1.0",
   "title": "bizcity_vn_conformance_report@1",
-  "description": "Báo cáo một lần chạy bộ kiểm chuẩn Việt Nam (PHASE-020, R-VNC-8). Máy đọc; junit.xml và report.html sinh từ đây. result = PASS chỉ khi mọi ca P0 áp dụng là PASS hoặc NOT_APPLICABLE có lý do; REVIEW_REQUIRED và NOT_TESTED không bao giờ tính là PASS. Nhãn công bố: Passed Bizcity VN Conformance [scope/version/date]. Không phải chứng nhận của cơ quan nhà nước.",
+  "description": "Báo cáo một lần chạy bộ kiểm chuẩn Việt Nam (PHASE-020, R-VNC-8). Máy đọc; junit.xml và report.html sinh từ đây. result = PASS chỉ khi mọi ca P0 áp dụng là PASS hoặc NOT_APPLICABLE có lý do; REVIEW_REQUIRED và NOT_TESTED không bao giờ tính là PASS. Nhãn công bố: Passed Bizcity VN Conformance [scope/version/date]. Không phải chứng nhận của cơ quan nhà nước. 1.1.0 (2026-11-02, thêm tuỳ chọn): cases[].layer, layer_results.",
   "type": "object",
   "required": ["contract", "run_id", "executed_at", "git_sha", "runtime", "target", "tenant_profile", "scope", "rulepacks", "cases", "known_exclusions", "result", "label", "disclaimer"],
   "additionalProperties": false,
@@ -43,13 +43,19 @@
           "reason": { "type": "string", "description": "Bắt buộc có nội dung khi status khác PASS (NOT_APPLICABLE kèm luật áp dụng; REVIEW_REQUIRED kèm căn cứ thiếu)" },
           "evidence": { "type": "array", "items": { "type": "string" }, "description": "Mã biên nhận, id bằng chứng, băm input/output đã loại dữ liệu nhạy cảm" },
           "legal_basis_ids": { "type": "array", "items": { "type": "string" } },
-          "evaluated_at": { "type": "string" }
+          "evaluated_at": { "type": "string" },
+          "layer": { "anyOf": [ { "enum": ["module", "configuration", "enterprise"] }, { "type": "null" } ], "description": "Lớp của rulepack chứa ca (ADR-0012)" }
         }
       }
     },
     "known_exclusions": { "type": "array", "items": { "type": "object", "required": ["scope", "reason"], "additionalProperties": false, "properties": { "scope": { "type": "string" }, "reason": { "type": "string", "minLength": 5 } } } },
     "reviewer_status": { "type": "string" },
     "result": { "enum": ["PASS", "FAIL", "REVIEW_REQUIRED"] },
+    "layer_results": {
+      "type": "object", "additionalProperties": false,
+      "description": "Kết quả riêng của từng lớp được đánh giá trong lượt, cùng luật với result: Module (module / plugin đạt chuẩn chưa), Cấu hình (cấu hình đúng quy định có hiệu lực chưa), Doanh nghiệp (tình trạng thực tế theo kỳ)",
+      "properties": { "module": { "enum": ["PASS", "FAIL", "REVIEW_REQUIRED"] }, "configuration": { "enum": ["PASS", "FAIL", "REVIEW_REQUIRED"] }, "enterprise": { "enum": ["PASS", "FAIL", "REVIEW_REQUIRED"] } }
+    },
     "label": { "type": "string", "pattern": "^(Passed Bizcity VN Conformance \\[[^\\]]+\\]|Not passed|Review required)$" },
     "disclaimer": { "type": "string", "minLength": 40 }
   },

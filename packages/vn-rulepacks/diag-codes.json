@@ -1,15 +1,16 @@
 {
   "contract": "bizcity_vn_diag_codes@1",
-  "note": "Ánh xạ mã kiểm DG-* (lane diagnostics của bộ kiểm) sang mã tự chẩn đoán trong app (DiagCheck.code) để Conformance Engine trên bản cài dùng kết quả tự chẩn đoán làm bằng chứng cho ca (ADR-0012 T1). SC-VNC-2 kiểm mỗi dòng khớp `code` của check DG-* và mọi DG-* mà ca dẫn đều có ở đây. Mã chưa có trong app (vd COST_FILL_OPEN, DB_APP_ROLE) thì trên bản cài ca ra NOT_TESTED.",
+  "note": "Ánh xạ mã kiểm DG-* (lane diagnostics của bộ kiểm) sang mã tự chẩn đoán trong app (DiagCheck.code) để Conformance Engine trên bản cài dùng kết quả tự chẩn đoán làm bằng chứng cho ca (ADR-0012 T1). SC-VNC-2 kiểm mỗi dòng khớp `code` của check DG-* và mọi DG-* mà ca dẫn đều có ở đây. Mã chưa có trong app (vd DB_APP_ROLE) thì trên bản cài ca ra NOT_TESTED.",
   "codes": {
+    "DG-CLOSE-1": "PERIOD_CLOSE_OPEN",
     "DG-DB-2": "LEDGER_TRIGGERS",
     "DG-EVENT-1": "EVENT_POSTED_VERSION",
     "DG-EVENT-3": "EVENT_PENDING_AGE",
     "DG-EVT-1": "EVENT_DEAD",
+    "DG-INV-1": "INVENTORY_NEGATIVE",
     "DG-LEDGER-1": "LEDGER_BALANCED",
     "DG-LEDGER-3": "LEDGER_REVERSED_ONCE",
     "DG-LEDGER-4": "LEDGER_ORPHAN",
-    "DG-PLAN-3": "COST_FILL_OPEN",
     "DG-PLAN-5": "TENANT_ISOLATION",
     "DG-POL-1": "POLICY_VERSION",
     "DG-PROFILE-1": "PROFILE_DECLARED",

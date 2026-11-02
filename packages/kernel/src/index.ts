@@ -57,6 +57,8 @@ export { seed } from './db/seed.js';
 export { LEDGER_DIAGNOSTICS } from './modules/ledger/ledger.diagnostics.js';
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 (hồ sơ kế toán, gói định khoản cùng chế độ) cho Conformance Engine (ADR-0012)
 export { PROFILE_DIAGNOSTICS } from './modules/posting-config/profile.diagnostics.js';
+// [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm L3 lớp Doanh nghiệp (tồn kho âm, việc cuối kỳ) cho Conformance Engine (S020-19)
+export { PERIOD_DIAGNOSTICS } from './modules/periods/period.diagnostics.js';
 export { collectLedgerMetrics } from './modules/ledger/ledger.metrics.js';
 // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bộ thu số đo ghi sổ (posting_log) và đơn vị theo dải cho app.ts đăng ký
 export { collectPostingMetrics, collectTenantMetrics } from './modules/documents/posting.metrics.js';

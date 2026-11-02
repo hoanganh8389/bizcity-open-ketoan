@@ -16,7 +16,8 @@
 | Hồ sơ | hồ sơ kế toán thật của đơn vị (ADR-0013); chưa khai → ca lớp Cấu hình REVIEW_REQUIRED "chưa khai", không đoán |
 | Lưu | `conformance_runs` (migration 0051, chỉ thêm, RLS): báo cáo nguyên văn, phiên bản + băm kho rulepack, phiên bản hồ sơ |
 | Action | `core.conformance.run` (quyền `conformance:run`, AI không dùng) · `core.conformance.latest` (quyền `conformance:read`, AI đọc được) |
-| Chưa làm | lớp Doanh nghiệp (S020-19), màn Hệ thống → Kiểm chuẩn (S020-20), cảnh báo ở màn lập chứng từ (S020-21), lịch chạy đêm |
+| Lớp Doanh nghiệp (S020-19) <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19 --> | 4 ca C09 lấy bằng chứng từ kiểm L3 của đơn vị: `TAX_INPUT_NO_INVOICE`, `EVENT_PENDING_AGE`, `INVENTORY_NEGATIVE` (mới), `PERIOD_CLOSE_OPEN` (mới: giá vốn, kết chuyển, thứ tự, khoá sổ; bộ quy tắc kết chuyển của đơn vị hoặc mặc định, không viết số tài khoản). Báo cáo có `layer_results`: một kết quả cho mỗi lớp |
+| Chưa làm | màn Hệ thống → Kiểm chuẩn (S020-20), cảnh báo ở màn lập chứng từ (S020-21), lịch chạy đêm |
 
 Luật đánh giá chốt khi làm: ở lớp Cấu hình và Doanh nghiệp, kiểm mức warn có phát hiện là không đạt; ở lớp Module, kiểm mức info chỉ là ngữ cảnh. Phạm vi chưa xác định (hồ sơ chưa khai) thì không kết luận FAIL. Khi chứng nhận bằng `--certify` (hồ sơ giả lập), lớp Cấu hình chỉ tính bằng chứng build; kiểm DG-* của lớp này chỉ dùng trên bản cài với hồ sơ thật.
 

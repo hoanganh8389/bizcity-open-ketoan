@@ -1,4 +1,5 @@
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — bộ đánh giá thuần dùng chung cho --certify (CI) và Conformance Engine trên bản cài (Kernel): chọn rulepack 4 bước, 6 trạng thái ca, fail closed; tách từ tests/conformance/lib/certify.mjs để không có hai bộ đánh giá (ADR-0012 T1, T7).
+// [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: báo cáo giữ lớp của từng ca và thêm layer_results (kết quả riêng cho Module · Cấu hình · Doanh nghiệp, cùng luật overall).
 /**
  * @bizcity/vn-rulepacks/engine — BỘ ĐÁNH GIÁ THUẦN (ADR-0012 T7: gói chứa dữ liệu luật + một bộ đánh giá không phụ thuộc gói ngoài).
  *
@@ -222,7 +223,7 @@ export function evaluate({ kit, profile, evidence, layers = ['module', 'configur
       cases.push({ ...base, status, reason, technical, evidence: lines, evaluated_at: profile.as_of });
     }
   }
-  return { fyStart: resolution.fyStart, resolution, cases };
+  return { fyStart: resolution.fyStart, resolution, cases, layers: [...layers] };
 }
 
 /** Kết quả chung của báo cáo từ danh sách ca (R-VNC-8). */
@@ -255,10 +256,12 @@ export function buildReport({ kit, profile, evaluation, run, target, exclusions 
     tenant_profile: { jurisdiction: 'VN', accounting_regime: profile.accounting_regime, fiscal_year_start: profile.fiscal_year_start, entity_type: profile.entity_type, simulated: profile.simulated !== false },
     scope,
     rulepacks: kit.rulepacks.map((p) => ({ id: p.id, version: p.version, status: p.status, rules_hash: p.release?.rules_hash ?? null })),
-    cases: evaluation.cases.map(({ technical, rulepack, layer, ...c }) => c),
+    cases: evaluation.cases.map(({ technical, rulepack, ...c }) => c),
     known_exclusions: known,
     reviewer_status: approved ? `${approved}/${kit.rulepacks.length} rulepack approved` : 'Chưa rulepack nào được chuyên gia kế toán / thuế duyệt',
     result,
+    // Ba câu hỏi khác nhau (ADR-0012): mỗi lớp được đánh giá một kết quả, cùng luật overall; lớp không thuộc lượt thì không có khoá.
+    layer_results: Object.fromEntries((evaluation.layers ?? []).map((l) => [l, overall(evaluation.cases.filter((c) => c.layer === l))])),
     label: result === 'PASS' ? `Passed Bizcity VN Conformance [${scope.join(',')}/${kit.rulepacks.map((p) => `${p.id}@${p.version}`).join(',')}/${profile.as_of}]` : result === 'FAIL' ? 'Not passed' : 'Review required',
     disclaimer: DISCLAIMER,
   };

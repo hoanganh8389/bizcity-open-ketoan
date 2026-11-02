@@ -1,4 +1,5 @@
 -- [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ảnh chụp các lượt Kiểm chuẩn (Conformance Engine trên bản cài, ADR-0012 T1): chỉ thêm, theo đơn vị, kèm phiên bản kho rulepack và hồ sơ đã dùng.
+-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: lớp Doanh nghiệp vào lượt chạy (chú thích cột layers; chưa phát hành nên sửa tại chỗ).
 -- =============================================================================
 -- 0051 Kiểm chuẩn — conformance_runs (ADR-0012; PHASE-020 S020-18).
 --      Mỗi dòng là MỘT lượt Conformance Engine chạy cho một đơn vị: báo cáo bizcity_vn_conformance_report@1 nguyên văn, kết quả
@@ -40,7 +41,7 @@ COMMENT ON TABLE conformance_runs IS 'Lượt Kiểm chuẩn của đơn vị (C
 COMMENT ON COLUMN conformance_runs.id IS 'Số lượt.';
 COMMENT ON COLUMN conformance_runs.tenant_id IS 'Đơn vị.';
 COMMENT ON COLUMN conformance_runs.as_of IS 'Ngày đánh giá: chọn hồ sơ kế toán và rulepack có hiệu lực tại ngày này.';
-COMMENT ON COLUMN conformance_runs.layers IS 'Lớp đã đánh giá: module, configuration (lớp enterprise: đợt sau).';
+COMMENT ON COLUMN conformance_runs.layers IS 'Lớp đã đánh giá trong lượt: module, configuration, enterprise (ADR-0012).';
 COMMENT ON COLUMN conformance_runs.profile_version IS 'Phiên bản hồ sơ kế toán đã dùng (accounting_profiles.version); NULL = đơn vị chưa khai.';
 COMMENT ON COLUMN conformance_runs.kit_version IS 'Phiên bản gói @bizcity/vn-rulepacks lúc chạy.';
 COMMENT ON COLUMN conformance_runs.kit_hash IS 'SHA-256 nội dung kho rulepack + nguồn pháp lý lúc chạy (biết chính xác bộ quy định nào đã dùng).';

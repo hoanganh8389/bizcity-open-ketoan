@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_vn_case@1",
   "id": "vn.enterprise-period-vn.closing.period_complete.004",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "rulepack": "enterprise-period-vn",
   "spec_ref": "E-4",
   "title": "Kỳ đã qua có đủ việc cuối kỳ theo thứ tự: tính giá vốn, kết chuyển, khoá sổ",
@@ -26,16 +26,18 @@
   "scenario": {
     "kind": "diagnostics",
     "verified_by": [
-      "DG-PLAN-3"
+      "DG-CLOSE-1",
+      "enterprise-layer.test.ts"
     ],
     "input_fixture": null,
     "expected_fixture": null,
     "assertions": [
       "cost_filled",
       "closing_posted",
+      "closing_after_costing",
       "period_locked"
     ],
-    "gap": "DG-PLAN-3 (dòng chờ giá vốn) còn planned; trạng thái kết chuyển / khoá kỳ đọc được nhưng chưa có check; viết ở W3"
+    "gap": "Ngưỡng 30 ngày sau cuối tháng là quy chế nội bộ; tháng cần kết chuyển đọc từ bộ quy tắc kết chuyển của đơn vị; chưa xét kết chuyển cuối năm"
   },
   "on_missing_basis": "REVIEW_REQUIRED",
   "review": {

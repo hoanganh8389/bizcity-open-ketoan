@@ -1,7 +1,8 @@
 /**
  * Conformance Engine trên bản cài (ADR-0012; PHASE-020 S020-18):
  *   - chưa chạy → latest = null; chạy → lưu ảnh chụp, có bằng chứng, báo cáo đúng khuôn bizcity_vn_conformance_report@1;
- *   - chưa khai hồ sơ kế toán → ca lớp Cấu hình REVIEW_REQUIRED "chưa khai" (không đoán chế độ); lớp Doanh nghiệp không thuộc lượt này;
+ *   - chưa khai hồ sơ kế toán → ca lớp Cấu hình REVIEW_REQUIRED "chưa khai" (không đoán chế độ); ca lớp Doanh nghiệp REVIEW_REQUIRED
+ *     (loại pháp nhân chưa biết — S020-19, chi tiết ở enterprise-layer.test.ts);
  *   - bằng chứng lấy từ tự chẩn đoán của chính đơn vị (DG-LEDGER-1 = LEDGER_BALANCED …); SC-* / test là bằng chứng build, không tính;
  *   - khai TT99 → kiểm PROFILE_* đạt; khai TT133 trên gói nền TT99 → PROFILE_PACK_REGIME báo lệch, rulepack TT99 không áp;
  *   - rulepack còn draft → không ca nào PASS (fail closed); ảnh chụp chỉ thêm; AI đọc được kết quả, không chạy được.
@@ -62,7 +63,7 @@ describe('Conformance Engine trên bản cài', () => {
     expect(balanced.evidence.join(' ')).toMatch(/bằng chứng build .*db-rules\.test\.ts/);
     expect(balanced.reason).toMatch(/kỹ thuật: PASS/);
 
-    for (const c of d.cases.filter((x) => x.id.startsWith('vn.enterprise-period-vn.'))) expect(c.status).toBe('NOT_APPLICABLE');
+    for (const c of d.cases.filter((x) => x.id.startsWith('vn.enterprise-period-vn.'))) expect(c.status).toBe('REVIEW_REQUIRED');
 
     // Báo cáo lưu nguyên văn đúng khuôn bizcity_vn_conformance_report@1.
     const row = await db.selectFrom('conformance_runs').select(['report', 'layers', 'kit_version']).where('id', '=', d.id).executeTakeFirstOrThrow();
@@ -71,8 +72,8 @@ describe('Conformance Engine trên bản cài', () => {
     const schema = JSON.parse(readFileSync(path.join(ROOT, 'packages/vn-rulepacks/schemas/report.schema.json'), 'utf8'));
     expect(validate(schema, row.report)).toEqual([]);
     expect((row.report as { tenant_profile: { simulated: boolean; accounting_regime: string } }).tenant_profile).toMatchObject({ simulated: false, accounting_regime: 'unknown' });
-    expect(row.layers).toEqual(['module', 'configuration']);
-    expect(row.kit_version).toBe('0.1.0');
+    expect(row.layers).toEqual(['module', 'configuration', 'enterprise']);
+    expect(row.kit_version).toBe('0.2.0');
   });
 
   it('khai TT99: kiểm hồ sơ và gói cùng chế độ đạt; ca vẫn REVIEW_REQUIRED vì rulepack chưa duyệt', async () => {

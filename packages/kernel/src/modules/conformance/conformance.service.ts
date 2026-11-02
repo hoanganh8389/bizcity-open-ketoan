@@ -1,15 +1,18 @@
 // @bizcity-layer K kernel/conformance
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Conformance Engine trên bản cài (S020-18): hồ sơ kế toán thật + kết quả tự chẩn đoán L1/L3/L5 → bộ đánh giá dùng chung @bizcity/vn-rulepacks/engine → ảnh chụp conformance_runs (ADR-0012 T1, T2, T7).
+// [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: thêm lớp Doanh nghiệp (C09: hoá đơn đầu vào chờ, sự việc treo, tồn kho âm, việc cuối kỳ) — bằng chứng từ kiểm L3 của chính đơn vị.
 /**
- * CONFORMANCE ENGINE (ADR-0012) — lớp Module + Cấu hình trên bản cài.
+ * CONFORMANCE ENGINE (ADR-0012) — ba lớp Module · Cấu hình · Doanh nghiệp trên bản cài.
  *
  *   loadKit()             kho rulepack của gói @bizcity/vn-rulepacks (đọc một lần mỗi tiến trình) + băm nội dung
  *   runConformance(...)   1. hồ sơ kế toán áp cho asOf (ADR-0013; chưa khai → 'unknown', không đoán)
- *                         2. tự chẩn đoán L1 + L3 + L5 của đơn vị (READ ONLY, cùng mã với lane DG-*)
+ *                         2. tự chẩn đoán L1 + L3 + L5 của đơn vị (READ ONLY, cùng mã với lane DG-*); lớp Doanh nghiệp
+ *                            dùng kiểm L3 trạng thái theo kỳ (TAX_INPUT_NO_INVOICE, EVENT_PENDING_AGE, INVENTORY_NEGATIVE, PERIOD_CLOSE_OPEN)
  *                         3. engine.evaluate(runtimeOnly): chỉ bằng chứng có được trên bản cài; SC-* / test là bằng chứng build
  *                         4. lưu ảnh chụp vào conformance_runs (bảng duy nhất được ghi)
  *
- * Không sửa sổ, không đổi cấu hình, không chặn gì: kết luận để người dùng quyết định (R-VNC-10). Lớp Doanh nghiệp: S020-19.
+ * Không sửa sổ, không đổi cấu hình, không chặn gì, không tự chạy giá vốn / kết chuyển / khoá kỳ: kết luận để người dùng quyết định
+ * (R-VNC-10). Báo cáo có layer_results: mỗi lớp trả lời một câu hỏi riêng.
  */
 import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -19,7 +22,7 @@ import { runDiagnostics } from '@bizcity/platform/system/diagnostics';
 import { BUILD_VERSION } from '@bizcity/platform/core/version';
 import { profileAt } from '../posting-config/profile.js';
 
-export const LAYERS = ['module', 'configuration'] as const;
+export const LAYERS = ['module', 'configuration', 'enterprise'] as const;
 const STATUSES = ['PASS', 'FAIL', 'ERROR', 'NOT_APPLICABLE', 'NOT_TESTED', 'REVIEW_REQUIRED'] as const;
 
 let cached: { kit: Kit; hash: string } | null = null;
@@ -56,7 +59,8 @@ export async function runConformance(trx: Db, tenantId: string, a: { asOf: strin
     ? { accounting_regime: prof.regime, fiscal_year_start: `${pad(Number(prof.fiscal_year_start_month))}-01`, entity_type: prof.entity_type, as_of: a.asOf, simulated: false }
     : { accounting_regime: 'unknown', fiscal_year_start: '01-01', entity_type: 'unknown', as_of: a.asOf, simulated: false };
 
-  // Bằng chứng trên bản cài: tự chẩn đoán của chính đơn vị, chỉ đọc (R-DIAG-2). L3 xét cả sổ; L5 xét theo ngày đánh giá.
+  // Bằng chứng trên bản cài: tự chẩn đoán của chính đơn vị, chỉ đọc (R-DIAG-2). L3 xét cả sổ (việc tồn đọng ở kỳ nào cũng là tình trạng
+  // hiện tại của doanh nghiệp); L5 xét theo ngày đánh giá.
   const scope = { tenantId };
   const diag = [
     ...(await runDiagnostics(scope, { layer: 'L1' })).checks,
@@ -74,7 +78,6 @@ export async function runConformance(trx: Db, tenantId: string, a: { asOf: strin
     target: { kind: 'kernel', package: '@bizcity/kernel', version: BUILD_VERSION.kernel },
     exclusions: [
       { scope: 'bằng chứng build', reason: 'Kiểm SC-* và test vitest chạy ở CI / --certify, không chạy trên bản cài; ca chỉ có bằng chứng build ra NOT_TESTED ở đây' },
-      { scope: 'lớp enterprise', reason: 'Lớp Doanh nghiệp (dữ liệu vận hành theo kỳ) làm ở S020-19' },
     ],
   });
   const counts = Object.fromEntries(STATUSES.map((s) => [s, evaluation.cases.filter((c) => c.status === s).length]));

@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_vn_rulepack@1",
   "id": "enterprise-period-vn",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "catalog_id": "C09",
   "title": "Trạng thái vận hành doanh nghiệp theo kỳ: hoá đơn chờ, sự việc treo, tồn kho âm, việc cuối kỳ",
   "description": "Lớp Doanh nghiệp của Conformance Engine (ADR-0012, Q020-6): đánh giá dữ liệu thật của một đơn vị theo kỳ, chỉ đọc, để người dùng ra quyết định. Ngưỡng số ngày là quy chế nội bộ (miền internal trong ca), không trình bày như luật.",
@@ -47,6 +47,11 @@
         "version": "0.1.0",
         "date": "2026-11-02",
         "note": "Khởi tạo nháp 4 ca theo Q020-6; hoãn đối chiếu ngân hàng và chứng từ gốc thiếu"
+      },
+      {
+        "version": "0.2.0",
+        "date": "2026-11-02",
+        "note": "S020-19: cả 4 ca có kiểm chạy trên bản cài — thêm DG-INV-1 (tồn kho âm), DG-CLOSE-1 (giá vốn, kết chuyển, thứ tự, khoá sổ) thay DG-PLAN-3"
       }
     ]
   }

@@ -49,7 +49,8 @@ export interface EvaluatedCase {
 }
 
 export interface ResolutionRow { pack: Rulepack; applies: boolean | null; reason: string | null; selected: boolean; blocked: string | null }
-export interface Evaluation { fyStart: string; resolution: { fyStart: string; rows: ResolutionRow[] }; cases: EvaluatedCase[] }
+// [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: Evaluation.layers, báo cáo có layer_results.
+export interface Evaluation { fyStart: string; resolution: { fyStart: string; rows: ResolutionRow[] }; cases: EvaluatedCase[]; layers: Layer[] }
 
 export interface Evidence { checks: Map<string, string>; tests?: Map<string, string>; runtime?: boolean }
 
@@ -71,4 +72,4 @@ export function buildReport(a: {
   run: { runId: string; at: string; gitSha: string; db?: string | null; runtime?: { os: string; node: string; postgres: string | null } };
   target: { kind: 'kernel' | 'plugin'; package: string; version: string };
   exclusions?: Array<{ scope: string; reason: string }>;
-}): Record<string, unknown> & { result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED'; label: string; cases: unknown[] };
+}): Record<string, unknown> & { result: 'PASS' | 'FAIL' | 'REVIEW_REQUIRED'; layer_results: Partial<Record<Layer, 'PASS' | 'FAIL' | 'REVIEW_REQUIRED'>>; label: string; cases: unknown[] };
