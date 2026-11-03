@@ -11,10 +11,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { todayVN } from '../src/core/date-rules.js';
 
 let ctx: TestCtx;
 let tenantId = '';
-const today = () => new Date().toISOString().slice(0, 10);
+// [2026-11-04 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ngày "hôm nay" của test theo giờ Việt Nam như CSDL (CURRENT_DATE): new Date().toISOString() là UTC nên lệch ngày từ 00:00 tới 07:00 giờ VN
+const today = () => todayVN();
 const post = (doc: unknown) => call(ctx, 'POST', '/api/v1/documents', doc);
 const put = (sku: string, body: Record<string, unknown>) => call(ctx, 'PUT', `/api/v1/products/${sku}`, body);
 const ack = { warnAck: { reason: 'thử B2b', codes: ['ITEM-HINT-001'] } };

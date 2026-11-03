@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { todayVN } from '../src/core/date-rules.js';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -94,7 +95,7 @@ describe('Gate A — biến thể kinh tế khác là mặt hàng mới (ITEM-HI
   it('đổi ĐVT gốc của mặt hàng đã có nhập xuất → cảnh báo (vẫn lưu); chưa có nhập xuất → không nhắc', async () => {
     expect((await put('BT-U')).status).toBe(200);
     const r = await call(ctx, 'POST', '/api/v1/documents', {
-      docType: 'purchase', docKey: 'BT-NM1', branchCode: 'CN01', docNo: 'BT-NM1', docDate: new Date().toISOString().slice(0, 10), partner: { code: 'NCC-01', name: 'Nhà cung cấp 01' },
+      docType: 'purchase', docKey: 'BT-NM1', branchCode: 'CN01', docNo: 'BT-NM1', docDate: todayVN(), partner: { code: 'NCC-01', name: 'Nhà cung cấp 01' },
       lines: [{ lineKey: 'l1', sku: 'BT-U', name: 'BT-U', unit: 'Hộp', qty: 10, amountBeforeTax: 100000, taxCode: 'V08', taxAmount: 0 }], totals: { beforeTax: 100000, tax: 0, total: 100000 },
     });
     expect(r.body.data.status, JSON.stringify(r.body)).toBe('posted');

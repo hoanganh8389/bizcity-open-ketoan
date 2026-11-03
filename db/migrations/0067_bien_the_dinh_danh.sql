@@ -64,33 +64,55 @@ BEGIN
 END $$;
 COMMENT ON FUNCTION bizcity_items_link_parents(bigint) IS 'Điền items.parent_item_id theo products.parent_sku (mã cha → định danh của mã cha). Chạy lại an toàn; trả số mặt hàng đã gắn / sửa họ.';
 
--- ── Giữ khớp: chạy SAU products_items_sync (tên trigger xếp sau) để mặt hàng mới đã có định danh ────────────────────────────
-CREATE OR REPLACE FUNCTION bizcity_items_sync_parent() RETURNS trigger LANGUAGE plpgsql AS $$
+-- ── Giữ khớp theo định danh ──────────────────────────────────────────────────────────────────────────────────────────────
+-- Hai trigger (tên xếp SAU products_items_sync để mặt hàng mới đã có định danh). Đường THÊM đi nhẹ: phần lớn mặt hàng không có
+-- mã cha và chưa có con chờ → chỉ một lần dò chỉ mục products_parent_idx, không tra định danh, không UPDATE (đo: 20.000 mặt hàng thêm
+-- trong một giao dịch, trigger kiểu cũ làm chậm ≈ 70 %).
+CREATE OR REPLACE FUNCTION bizcity_items_link_parent_of(p_tenant bigint, p_sku text, p_parent_sku text) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE
   v_id text;
   v_parent text;
 BEGIN
-  v_id := bizcity_item_at(NEW.tenant_id, NEW.sku, CURRENT_DATE);
+  v_id := bizcity_item_at(p_tenant, p_sku, CURRENT_DATE);
   IF v_id IS NULL THEN
-    RETURN NEW;
+    RETURN;
   END IF;
-  IF TG_OP = 'INSERT' OR NEW.parent_sku IS DISTINCT FROM OLD.parent_sku THEN
-    v_parent := CASE WHEN NEW.parent_sku IS NULL OR NEW.parent_sku = '' OR NEW.parent_sku = NEW.sku THEN NULL
-                     ELSE bizcity_item_at(NEW.tenant_id, NEW.parent_sku, CURRENT_DATE) END;
-    -- Mã cha chưa có trong danh mục: để trống, gắn khi mặt hàng cha được thêm (nhánh dưới).
-    UPDATE items SET parent_item_id = v_parent WHERE item_id = v_id AND parent_item_id IS DISTINCT FROM v_parent;
+  v_parent := CASE WHEN p_parent_sku IS NULL OR p_parent_sku = '' OR p_parent_sku = p_sku THEN NULL
+                   ELSE bizcity_item_at(p_tenant, p_parent_sku, CURRENT_DATE) END;
+  -- Mã cha chưa có trong danh mục: để trống, gắn khi mặt hàng cha được thêm (bizcity_items_adopt_children).
+  UPDATE items SET parent_item_id = v_parent WHERE item_id = v_id AND parent_item_id IS DISTINCT FROM v_parent;
+END $$;
+COMMENT ON FUNCTION bizcity_items_link_parent_of(bigint, text, text) IS 'Đặt items.parent_item_id của mặt hàng theo mã cha (định danh của mã cha); mã cha chưa có thì để trống.';
+
+CREATE OR REPLACE FUNCTION bizcity_items_sync_parent_ins() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  v_id text;
+BEGIN
+  IF NEW.parent_sku IS NOT NULL AND NEW.parent_sku <> '' AND NEW.parent_sku <> NEW.sku THEN
+    PERFORM bizcity_items_link_parent_of(NEW.tenant_id, NEW.sku, NEW.parent_sku);
   END IF;
-  IF TG_OP = 'INSERT' THEN
-    -- Mặt hàng cha thêm SAU các mặt hàng con đã khai parent_sku = mã này: nhận các con đang chờ.
-    UPDATE items i SET parent_item_id = v_id
-      FROM products c
-     WHERE c.tenant_id = NEW.tenant_id AND c.parent_sku = NEW.sku AND c.sku <> NEW.sku
-       AND i.item_id = bizcity_item_at(c.tenant_id, c.sku, CURRENT_DATE) AND i.parent_item_id IS NULL;
+  -- Mặt hàng cha thêm SAU các mặt hàng con đã khai parent_sku = mã này: nhận các con đang chờ (dò chỉ mục trước, thường không có).
+  IF EXISTS (SELECT 1 FROM products c WHERE c.tenant_id = NEW.tenant_id AND c.parent_sku = NEW.sku AND c.sku <> NEW.sku) THEN
+    v_id := bizcity_item_at(NEW.tenant_id, NEW.sku, CURRENT_DATE);
+    IF v_id IS NOT NULL THEN
+      UPDATE items i SET parent_item_id = v_id
+        FROM products c
+       WHERE c.tenant_id = NEW.tenant_id AND c.parent_sku = NEW.sku AND c.sku <> NEW.sku
+         AND i.item_id = bizcity_item_at(c.tenant_id, c.sku, CURRENT_DATE) AND i.parent_item_id IS NULL;
+    END IF;
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_items_sync_parent() IS 'Giữ items.parent_item_id khớp products.parent_sku (0067); đổi mã cha / con không đổi họ vì họ trỏ định danh.';
-CREATE TRIGGER products_items_sync_parent AFTER INSERT OR UPDATE OF parent_sku ON products FOR EACH ROW EXECUTE FUNCTION bizcity_items_sync_parent();
+COMMENT ON FUNCTION bizcity_items_sync_parent_ins() IS 'Thêm mặt hàng: gắn cha theo parent_sku; mặt hàng cha thêm sau con thì nhận các con đang chờ (0067). Đường nhẹ: một lần dò chỉ mục khi không có họ.';
+CREATE TRIGGER products_items_sync_parent_ins AFTER INSERT ON products FOR EACH ROW EXECUTE FUNCTION bizcity_items_sync_parent_ins();
+
+CREATE OR REPLACE FUNCTION bizcity_items_sync_parent() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM bizcity_items_link_parent_of(NEW.tenant_id, NEW.sku, NEW.parent_sku);
+  RETURN NEW;
+END $$;
+COMMENT ON FUNCTION bizcity_items_sync_parent() IS 'Đổi parent_sku → đổi items.parent_item_id theo định danh; đổi mã cha / con không đứt họ (0067).';
+CREATE TRIGGER products_items_sync_parent AFTER UPDATE OF parent_sku ON products FOR EACH ROW WHEN (NEW.parent_sku IS DISTINCT FROM OLD.parent_sku) EXECUTE FUNCTION bizcity_items_sync_parent();
 
 CREATE INDEX IF NOT EXISTS items_parent ON items (tenant_id, parent_item_id) WHERE parent_item_id IS NOT NULL;
 
