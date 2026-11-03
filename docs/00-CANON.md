@@ -43,6 +43,21 @@ Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); m�
 | II · Định danh bất biến, mã có phiên bản | `item_id` không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực — đổi thông tư không làm lại dữ liệu | R-ITEM, ADR-0017 / 0018 / 0009 |
 | III · Liên tục kế toán (Accounting Continuity) | mọi con số đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ; lineage giá vốn là sổ thứ hai; kiểm chuẩn vòng đời (Gate C); khoá kỳ đòi chuỗi lành | R-CONT |
 
+<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ADR-0022: nền móng + bảng tám trụ cột; mức đạt hiện ở HT10 -->
+### 0.2 Nền móng và bảng trụ cột (đề xuất — [ADR-0022](adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md))
+
+**Nền móng (tầng 0): Quản trị dữ liệu gốc** — thiết lập một lần hệ thống định danh và nguyên tắc đúng (Identity Continuity · Organizational & Accounting Consistency · Versioning theo phiên bản + ngày hiệu lực) để hàng triệu mã, hàng trăm cửa hàng, nhiều pháp nhân và mọi module dùng chung một dòng dữ liệu kế toán. Ba trụ cột I–III đứng trên nền đó; Accounting Continuity & Lineage là **cam kết** mọi trụ cột phải bảo vệ.
+
+| Trụ cột | Bảo đảm | Luật |
+|---|---|---|
+| IV · Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã | mọi đầu vào đi một cửa; Gate A / B / C; thông báo từ thư viện mã có căn cứ; mặc định cho phép, nhắc khi sai | R-EVENT, R-GATE, ADR-0019 / 0020 |
+| V · Chính sách và chế độ kế toán có phiên bản | đổi thông tư, luật định khoản, phương pháp tính giá = phiên bản từ ngày hiệu lực | ADR-0009, R-POST |
+| VI · Bằng chứng và quan sát được | nhật ký chuỗi băm; tự chẩn đoán; Lịch sử · Tác động · tiến độ hiện trên màn | STD-EVD, R-DIAG |
+| VII · Cô lập đơn vị và phân quyền | RLS theo đơn vị; phân quyền theo quyền, không theo chức danh; nhóm đơn vị không lẫn số | R-SEC, ADR-0020 |
+| VIII · Mở rộng bằng module, kiểm chuẩn tự động | SDK / manifest / năng lực; bộ kiểm chuẩn; Golden Tests là cổng phát hành | R-MOD, R-QG |
+
+Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Trụ cột & mức đạt** và thẻ **Trụ cột** ở trang chủ mỗi phân hệ; đi theo bằng chứng, không tích tay (R-CONT-7).
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).

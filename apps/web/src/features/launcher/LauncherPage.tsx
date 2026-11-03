@@ -7,7 +7,7 @@
  * làm; thẻ "Tất cả chức năng" là các nhóm chức năng dạng thẻ, bấm chức năng để mở màn.
  */
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { BarChart3, LayoutGrid, Workflow } from 'lucide-react';
+import { BarChart3, Columns3, LayoutGrid, Workflow } from 'lucide-react';
 import type { MenuItem } from '@ketoan/contracts';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
@@ -17,6 +17,8 @@ import { ModuleIcon } from '../../phan-he/icons';
 import { MODULE_FLOWS } from '../../phan-he/flows';
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): ô của module SDK trên Tổng quan (dashboard.widget)
 import { sdkSlots } from '../../phan-he/sdk-modules';
+// [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — thẻ "Trụ cột" cạnh "Quy trình": phân hệ này dựa vào trụ cột nào của Core, đạt tới đâu (training cho kế toán, kim chỉ nam cho dev)
+import { PillarMatrix } from '../system/PillarsPage';
 import '@/components/quy-trinh/quy-trinh.css';
 
 /** Số chức năng đã có (có đường dẫn) trong các nhóm của phân hệ. */
@@ -58,7 +60,8 @@ export function ModuleHomePage() {
   const [sp, setSp] = useSearchParams();
   const mod = MODULES.find((m) => m.key === key);
   const Flow = MODULE_FLOWS[key];
-  const view = Flow && sp.get('xem') !== 'chuc-nang' ? 'flow' : 'all';
+  const xem = sp.get('xem');
+  const view = xem === 'tru-cot' ? 'pillars' : Flow && xem !== 'chuc-nang' ? 'flow' : 'all';
   if (!mod) return <div className="card card-body">Không có phân hệ "{key}". <Link to="/">Về trang Tổng quan</Link></div>;
   const own = moduleMenu(menu, mod.key).filter((g) => g.children?.some((c) => c.path) || g.path);
   // Phân hệ chỉ một nhóm có các mục con (vd Danh mục: Tài khoản · Đối tượng · Mặt hàng…): mỗi mục con một thẻ cho dễ nhìn.
@@ -73,13 +76,12 @@ export function ModuleHomePage() {
           <PageHeader title={mod.label} subtitle={mod.description} helpKey={Flow ? `${mod.key}-quy-trinh` : 'trang-chu'} />
         </div>
       </div>
-      {Flow && (
-        <div className="tabs module-home-tabs" role="tablist">
-          <button role="tab" className={`tab ${view === 'flow' ? 'active' : ''}`} onClick={() => setSp({}, { replace: true })}><Workflow size={14} style={{ verticalAlign: -2 }} /> Quy trình</button>
-          <button role="tab" className={`tab ${view === 'all' ? 'active' : ''}`} onClick={() => setSp({ xem: 'chuc-nang' }, { replace: true })}><LayoutGrid size={14} style={{ verticalAlign: -2 }} /> Tất cả chức năng</button>
-        </div>
-      )}
-      {view === 'flow' && Flow ? <Flow /> : <>
+      <div className="tabs module-home-tabs" role="tablist">
+        {Flow && <button role="tab" className={`tab ${view === 'flow' ? 'active' : ''}`} onClick={() => setSp({}, { replace: true })}><Workflow size={14} style={{ verticalAlign: -2 }} /> Quy trình</button>}
+        <button role="tab" className={`tab ${view === 'all' ? 'active' : ''}`} onClick={() => setSp(Flow ? { xem: 'chuc-nang' } : {}, { replace: true })}><LayoutGrid size={14} style={{ verticalAlign: -2 }} /> Tất cả chức năng</button>
+        <button role="tab" className={`tab ${view === 'pillars' ? 'active' : ''}`} onClick={() => setSp({ xem: 'tru-cot' }, { replace: true })} title="Phân hệ này dựa vào trụ cột nào của Core và hôm nay đạt tới đâu"><Columns3 size={14} style={{ verticalAlign: -2 }} /> Trụ cột</button>
+      </div>
+      {view === 'pillars' ? <PillarMatrix module={mod.key} compact /> : view === 'flow' && Flow ? <Flow /> : <>
       {!groups.length && <div className="card card-body muted">Bạn chưa được cấp chức năng nào trong phân hệ này.</div>}
       <div className="module-home-grid">
         {groups.map((g) => (

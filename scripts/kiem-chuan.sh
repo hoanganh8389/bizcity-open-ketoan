@@ -66,6 +66,10 @@ for d in $(ls db/migrations | grep -E '^[0-9]{4}_' | cut -c1-4 | sort | uniq -d)
 done
 check "${BAD%$'\n'}"
 
+# [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bảng trụ cột: tài liệu 10-DANH-GIA-ADAPT phải khớp tru-cot.json (một nguồn)
+rule "PHASE-026: 10-DANH-GIA-ADAPT.md khớp docs/standard/tru-cot.json"
+check "$(node scripts/tru-cot-md.mjs --kiem 2>&1 | grep -v "^ok:")"
+
 rule "R-QG-8: không còn test .only / .skip"
 check "$(grep -rnE "\b(it|describe|test)\.(only|skip)\(" apps/api/test --include=*.ts)"
 

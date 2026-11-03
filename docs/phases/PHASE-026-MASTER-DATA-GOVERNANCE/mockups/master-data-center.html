@@ -1,0 +1,175 @@
+<!doctype html>
+<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bản mẫu tĩnh Enterprise Master Data Center: trung tâm dữ liệu gốc, thẻ mặt hàng bốn thẻ (Lịch sử · Tác động · Kiểm chuẩn · Truy vết), nhóm đơn vị HO / kho / cửa hàng, bảng trụ cột × mức đạt, Golden Tests (ADR-0022) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trung tâm dữ liệu gốc — bản mẫu</title>
+<style>
+:root{--bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--ok-bg:#e8f5ee;--warn-bg:#fff4e0;--bad-bg:#fdecec;--info-bg:#e3edfb;--op:#8a94a6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:14px 0 6px}.sub{color:var(--muted);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font:inherit;cursor:pointer;font-size:13px}
+.tabs button.on{background:var(--info-bg);border-color:var(--accent);color:var(--accent);font-weight:700}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.card .hd{padding:8px 12px;border-bottom:1px solid var(--line);font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card .bd{padding:10px 12px}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:600}
+.ok{background:var(--ok-bg);color:var(--ok)}.bad{background:var(--bad-bg);color:var(--bad)}.warn{background:var(--warn-bg);color:var(--warn)}.op{background:#eef0f3;color:var(--op)}.info{background:var(--info-bg);color:var(--accent)}
+.note{font-size:12px;color:var(--muted)}.mono{font-family:ui-monospace,Consolas,monospace}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{font-size:12px;color:var(--muted)}
+.bar{height:8px;border-radius:6px;background:#e6ebf2;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok)}.bar i.w{background:var(--warn)}.bar i.b{background:var(--bad)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.grid{display:grid;gap:12px}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:1fr 1fr}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}.tile:hover{border-color:var(--accent)}
+.tile b{display:block}.tile .n{font-size:22px;font-weight:700}.tile .m{font-size:12px;color:var(--muted)}
+.search{display:flex;gap:8px;align-items:center;margin-bottom:12px}.search input{flex:1;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
+.todo{display:flex;gap:8px;flex-wrap:wrap}.todo span{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer}
+.side{display:grid;grid-template-columns:1fr 360px;gap:12px}
+.subtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:8px}.subtabs button{border:0;background:none;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;border-bottom:2px solid transparent}.subtabs button.on{border-bottom-color:var(--accent);color:var(--accent);font-weight:700}
+.sv{display:none}.sv.on{display:block}
+.tl{list-style:none;margin:0;padding:0}.tl li{padding:6px 0 6px 14px;border-left:2px solid var(--line);position:relative;font-size:13px}.tl li::before{content:"";position:absolute;left:-5px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.org{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}.node{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);min-width:170px}.node.ho{border-left:4px solid var(--accent)}.node.wh{border-left:4px solid var(--warn)}.node.st{border-left:4px solid var(--ok)}.node b{display:block}.node .m{font-size:12px;color:var(--muted)}
+.field{display:grid;grid-template-columns:120px 1fr;gap:4px 8px;font-size:13px}.field div:nth-child(odd){color:var(--muted)}
+@media (max-width:900px){.g3,.g4,.g2,.side{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Trung tâm dữ liệu gốc <span class="note">bản mẫu tĩnh · PHASE-026 · ADR-0022</span></h1>
+<div class="sub"><b>Thiết lập một lần hệ thống định danh và nguyên tắc đúng</b> — hàng triệu mã, hàng trăm cửa hàng, nhiều pháp nhân, mọi module dùng chung một dòng dữ liệu kế toán. Mọi mức đạt do engine tính; không có ô tích. Dữ liệu minh hoạ.</div>
+
+<div class="tabs">
+  <button class="on" data-v="v1">1 · Trung tâm dữ liệu gốc</button>
+  <button data-v="v2">2 · Thẻ mặt hàng (bốn thẻ)</button>
+  <button data-v="v3">3 · Nhóm đơn vị HO / kho / cửa hàng</button>
+  <button data-v="v4">4 · Trụ cột & mức đạt (HT10)</button>
+  <button data-v="v5">5 · Golden Tests</button>
+</div>
+
+<!-- 1 -->
+<section class="view on" id="v1">
+  <div class="search"><input placeholder="Gõ một mã bất kỳ: SUA-400 (mã cũ), 8934567…, KH-0012, 1561, CN01… → mở thẻ thực thể" value="SUA-400"><button class="btn primary" onclick="go('v2')">Mở</button></div>
+  <div class="card"><div class="hd">Việc cần làm <span class="note">máy chủ gom — bấm một việc để tới đúng chỗ sửa</span></div><div class="bd todo">
+    <span>⚠ 12 mặt hàng nháp từ chứng từ (7 ngày)</span><span>⚠ 3 mã mồ côi (có trong sổ, không có trong danh mục)</span><span>✘ 2 thay đổi lớp 3 chưa xem tác động</span><span>⚠ 1 trùng mã vạch</span><span>⚠ 4 chứng từ liên đơn vị chưa khớp</span>
+  </div></div>
+  <div class="grid g4">
+    <div class="tile" onclick="go('v3')"><b>Tổ chức & pháp nhân</b><span class="n">3 · 120 · 480</span><span class="m">pháp nhân · chi nhánh · cửa hàng · 9 kho · HO + 2 kho tổng (nhóm)</span></div>
+    <div class="tile" onclick="go('v2')"><b>Hàng hoá & SKU</b><span class="n">20.985</span><span class="m">12 nháp · 3 mồ côi · 41 mã đổi trong 30 ngày · 1.204 sản phẩm cha</span></div>
+    <div class="tile"><b>Kho & đơn vị tính</b><span class="n">9 kho</span><span class="m">bình quân tháng (đổi FIFO từ 01/2027: chính sách v4) · tháng chưa tính giá: 0</span></div>
+    <div class="tile"><b>Đối tượng</b><span class="n">10.412</span><span class="m">KH 9.800 · NCC 612 · 37 thiếu MST · 5 trùng tên</span></div>
+    <div class="tile"><b>Tài khoản & chính sách</b><span class="n">212 TK</span><span class="m">chính sách v3 hiệu lực 01/01/2026 · hệ thống TK TT200 · 14 TK chưa dùng</span></div>
+    <div class="tile"><b>Lịch sử & thay đổi</b><span class="n">58</span><span class="m">thay đổi 7 ngày · 2 lớp 3 chờ xem tác động · luật nhắc: 3 đã sửa câu chữ</span></div>
+    <div class="tile" onclick="go('v4')"><b>Kiểm chuẩn & kiểm toán</b><span class="n">47 %</span><span class="m">nền móng MDG · Gate A mở 15 · Gate C mở — · HT06 đạt có điều kiện</span></div>
+    <div class="tile"><b>Nhập / xuất danh mục</b><span class="n">Excel · POS</span><span class="m">nạp 20.985 mặt hàng: 87 s · xem thử trước khi ghi</span></div>
+  </div>
+  <div class="note">Mỗi ô là một nhóm màn hiện có (DM01…DM16, ACC…, MH…) — không thêm menu, chỉ bọc. Số trên ô là số do máy chủ đếm.</div>
+</section>
+
+<!-- 2 -->
+<section class="view" id="v2">
+  <div class="side">
+    <div class="card"><div class="hd">Mặt hàng <span class="mono">01M6GR9M…YS</span> · SUA400N · Sữa bột X 400g <span class="pill ok">đang dùng</span><span class="note">cha: Sữa bột X (01M6GR9M…P0) · biến thể khác: 900g</span></div>
+      <div class="bd field">
+        <div>Mã hiện hành</div><div><b>SUA400N</b> <span class="pill op">SUA-400 → 30/09/2026</span></div>
+        <div>Đơn vị gốc</div><div>Hộp · Thùng = 12 Hộp</div>
+        <div>Nhóm hạch toán</div><div>NHT02 Hàng hoá (từ 15/09/2026) <span class="pill op">NHT01 → 14/09</span></div>
+        <div>Thuế</div><div>Bán R08 · Mua V08</div>
+        <div>Mã vạch</div><div>8934567000123</div>
+        <div>Thao tác</div><div><button class="btn">Đổi mã…</button> <button class="btn">Gộp mã…</button> <button class="btn">Ngừng dùng…</button> <span class="note">không có nút duyệt — người có quyền tự quyết, có lý do</span></div>
+      </div></div>
+    <div class="card"><div class="hd">Bốn khả năng</div><div class="bd">
+      <div class="subtabs"><button class="on" data-s="s1">Lịch sử</button><button data-s="s2">Tác động</button><button data-s="s3">Kiểm chuẩn</button><button data-s="s4">Truy vết</button></div>
+      <div class="sv on" id="s1"><ul class="tl">
+        <li><b>01/10/2026</b> đổi mã SUA-400 → SUA400N (hiệu lực 01/10) — Lan Kế toán · lý do: "chuẩn mã POS"</li>
+        <li><b>15/09/2026</b> nhóm hạch toán NHT01 → NHT02 (từ 15/09) — Hùng KTT · lớp 3, đã xem tác động</li>
+        <li><b>03/2025</b> thêm mã vạch 8934567000123 — POS đồng bộ</li>
+        <li><b>12/2024</b> tạo từ chứng từ NM-0412 (tự thêm) — hệ thống · kích hoạt 02/01/2025</li>
+      </ul><div class="note">Nguồn: item_codes · item_classification · audit_logs. Không sửa được.</div></div>
+      <div class="sv" id="s2">
+        <table><tr><th>Dùng ở</th><th>Số</th><th>Kỳ</th></tr>
+        <tr><td>Chứng từ (mua 310 · bán 912 · chuyển 26)</td><td>1.248</td><td>12/2024 → nay</td></tr>
+        <tr><td>Kho còn tồn</td><td>12 / 9 kho · 480 cửa hàng</td><td>tồn 3.420 Hộp</td></tr>
+        <tr><td>Tài khoản</td><td>1561 · 632 · 5111</td><td>chính sách v3</td></tr>
+        <tr><td>Bảng giá · đơn vị</td><td>BL, BS · Thùng</td><td></td></tr>
+        <tr><td>Báo cáo đã phát hành</td><td>NXT 09/2026 · GV 09/2026</td><td>đã khoá kỳ</td></tr></table>
+        <div class="note" style="margin-top:6px"><b>Xem trước khi đổi nhóm từ hôm nay:</b> 37 chứng từ tháng này sẽ định khoản theo nhóm mới; sổ 09/2026 không đổi; 2 báo cáo đã phát hành giữ nguyên.</div></div>
+      <div class="sv" id="s3"><table><tr><th>Mã</th><th>Mức</th><th>Vì sao · sửa ở đâu</th></tr>
+        <tr><td class="mono">ITEM-HINT-001</td><td><span class="pill info">nhắc</span></td><td>nhóm mặc định — xác nhận đúng nhóm hàng hoá thường · căn cứ: quy ước phần mềm</td></tr>
+        <tr><td class="mono">CT-MD-002</td><td><span class="pill warn">cảnh báo</span></td><td>mã vạch này cũng gắn với 1 mặt hàng khác (ngừng dùng 2024) — kiểm lại ở DM10 · căn cứ: DG-ITEM-1</td></tr>
+        <tr><td class="mono">CT-COST-003</td><td><span class="pill ok">đạt</span></td><td>tổng phân bổ giá vốn 10/2026 = giá vốn ghi sổ</td></tr></table>
+        <div class="note">Gate A (trước kích hoạt) + Gate C (sau ghi sổ) của chính mặt hàng này. Engine chạy lại khi dữ liệu đổi.</div></div>
+      <div class="sv" id="s4"><div class="note">Hành trình (ACC95) nhúng — định danh, mọi mã, sự kiện, bút toán, giá vốn.</div>
+        <table><tr><th>Ngày</th><th>Sự kiện</th><th>Mã tại ngày</th><th>SL</th><th>Tiền</th></tr>
+        <tr><td>02/10</td><td>Mua · nhập NM-10</td><td class="mono">SUA-400 <span class="pill op">mã cũ</span></td><td>+10</td><td>760.000</td></tr>
+        <tr><td>03/10</td><td>Chuyển kho CK-10 → CN02</td><td class="mono">SUA400N</td><td>−5 / +5</td><td>vận hành</td></tr>
+        <tr><td>04/10</td><td>Bán BAN-CN02</td><td class="mono">SUA400N</td><td>−3</td><td>GV 219.000</td></tr></table>
+        <button class="btn" style="margin-top:6px">Mở Hành trình đầy đủ</button></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="view" id="v3">
+  <div class="card"><div class="hd">Nhóm đơn vị <b>CHUOI-SUA</b> <span class="note">mỗi nút là một đơn vị (tenant) — RLS giữ nguyên; danh mục nhóm nhận về từng đơn vị giữ chung item_id</span></div><div class="bd org">
+    <div class="node ho"><b>HO · Công ty CP Sữa X</b><span class="m">vai: HO · MST 0101234567 · chính sách v3 · 212 TK</span><span class="m">danh mục nhóm: 20.985 mặt hàng</span></div>
+    <div class="node wh"><b>Kho tổng Bắc</b><span class="m">vai: kho tổng · MST chi nhánh 0101234567-001 (Hà Nội)</span><span class="m">liên đơn vị chưa khớp: <span class="pill warn">3</span></span></div>
+    <div class="node wh"><b>Kho tổng Nam</b><span class="m">vai: kho tổng · MST 0101234567-002 (TP.HCM)</span><span class="m">liên đơn vị chưa khớp: <span class="pill ok">0</span></span></div>
+    <div class="node st"><b>480 cửa hàng</b><span class="m">vai: cửa hàng · 3 pháp nhân · MST theo tỉnh</span><span class="m">đã nhận danh mục nhóm: 480 / 480</span></div>
+  </div></div>
+  <div class="card"><div class="hd">Chứng từ liên đơn vị chưa khớp <span class="pill warn">CT-IC-001</span></div><div class="bd">
+    <table><tr><th>Ref</th><th>Bên gửi</th><th>Bên nhận</th><th>Chênh</th><th>Sửa ở đâu</th></tr>
+    <tr><td class="mono">IC-2026-10-0441</td><td>Kho tổng Bắc · CK-0441 · 1.200 Hộp · 86.400.000</td><td>CH-0192 · chưa có phiếu nhập</td><td>86.400.000</td><td>CH-0192 → Kho → Nhập chuyển kho (tự điền từ ref)</td></tr>
+    <tr><td class="mono">IC-2026-10-0452</td><td>Kho tổng Bắc · CK-0452 · 300 Hộp</td><td>CH-0007 · PN-0812 · 298 Hộp</td><td>2 Hộp</td><td>CH-0007 → biên bản thiếu hàng (lý do XTT1)</td></tr></table>
+    <div class="note" style="margin-top:6px">Giá chuyển = giá vốn bên gửi (như luật nhóm gửi hôm nay). Báo cáo nhóm: hợp nhất + loại trừ theo ref; chênh = mã CT-IC-* (Gate C).</div></div></div>
+</section>
+
+<!-- 4 -->
+<section class="view" id="v4">
+  <div class="grid g3" id="tiles"></div>
+  <div class="card"><div class="hd">Tiêu chí <span class="note">bấm ô trên để lọc · mức đi theo bằng chứng</span> <label class="note" style="margin-left:auto"><input type="checkbox" id="open"> chỉ chưa đạt</label></div><div class="bd"><table id="mat"></table></div></div>
+  <div class="note">Đã code (HT10 + thẻ Trụ cột ở trang chủ phân hệ): nguồn docs/standard/tru-cot.json. Bản mẫu này nhúng một phần dữ liệu thật tại 2026-11-04.</div>
+</section>
+
+<!-- 5 -->
+<section class="view" id="v5">
+  <div class="card"><div class="hd">Golden Tests — cổng phát hành P0 <span class="note">thất bại = chặn phát hành · chạy trong kiem-chuan</span></div><div class="bd">
+    <table><tr><th>Mã</th><th>Ca</th><th>Phải giữ</th><th>Hôm nay</th></tr>
+    <tr><td>T026-G1</td><td>đổi mã giữa tháng</td><td>một dòng giá vốn, bình quân đúng, phiếu GV ghi mã tại ngày, NXT một dòng</td><td><span class="pill ok">xanh</span></td></tr>
+    <tr><td>T026-G2</td><td>đổi nhóm hạch toán từ ngày D</td><td>trước / sau định khoản đúng, sổ cũ nguyên</td><td><span class="pill op">chưa</span></td></tr>
+    <tr><td>T026-G3</td><td>dời nhánh cây nhóm hàng</td><td>báo cáo kỳ cũ không đổi</td><td><span class="pill op">chưa</span></td></tr>
+    <tr><td>T026-G4</td><td>trả hàng sau đổi mã</td><td>hoàn đúng giá vốn lần bán gốc</td><td><span class="pill op">chưa</span></td></tr>
+    <tr><td>T026-G5</td><td>chuyển kho hai nhóm tính giá qua đổi mã</td><td>hàng đang chuyển về 0</td><td><span class="pill op">chưa</span></td></tr>
+    <tr><td>T026-G6</td><td>đổi chế độ kế toán từ đầu năm</td><td>số dư chuyển theo ánh xạ, sổ cũ nguyên</td><td><span class="pill op">chưa</span></td></tr>
+    <tr><td>T026-G7</td><td>xoá rồi tạo lại cùng mã</td><td>định danh mới, không chồng hiệu lực</td><td><span class="pill ok">xanh</span></td></tr>
+    <tr><td>T026-G8</td><td>hai tenant: HO → cửa hàng</td><td>cặp chứng từ nối ref, loại trừ = 0</td><td><span class="pill op">P1</span></td></tr></table>
+  </div></div>
+</section>
+
+</div>
+<script>
+const P=[
+ {k:'mdg',t:'Nền móng · Quản trị dữ liệu gốc',c:[['MD-001','ID chuẩn bất biến mọi đối tượng','mot-phan','S026-4'],['MD-002','Mã, phân loại có phiên bản','mot-phan','S026-4/5'],['MD-003','Cây nhiều cấp','mot-phan','S026-5'],['MD-004','Không dùng mã làm khoá sổ','mot-phan','S024-11'],['ORG-001','Pháp nhân / chi nhánh / kho rõ','mot-phan','S026-6'],['ORG-002','Chủ thể kế toán & MST','mot-phan','S026-7'],['ACC-001','Mapping TK có phiên bản, phạm vi','mot-phan','S026-8'],['ACC-002','Tồn kho / giá vốn truy về SKU','dat',''],['CF-001','Kiểm chuẩn trước kích hoạt','mot-phan','S026-9'],['CF-002','Exception Buffer','mot-phan','S025-10'],['AUD-001','Truy sai lệch về chứng từ','mot-phan','S026-10/11'],['IC-1','Identity Continuity','mot-phan','S026-4'],['VER-1','item_id + item_code, biến thể','mot-phan','S026-3'],['UI-4','Bốn khả năng trên màn','chua','S026-10..13'],['SCALE-1','Triệu SKU','chua','S026-14']]},
+ {k:'I',t:'I · Sổ cái bất biến',c:[['L-1','Không sửa / xoá dòng sổ','dat',''],['L-2','Nợ = Có','dat',''],['L-3','Dòng sổ trỏ sự việc có phiên bản','dat',''],['L-4','Ảnh chụp mã + item_id trên dòng sổ','dat','']]},
+ {k:'II',t:'II · Định danh, mã phiên bản',c:[['ID-1','items / codes / classification','dat',''],['ID-2','item_id trên sổ / kho','dat',''],['ID-3','Giá vốn, NXT theo item_id','dat',''],['ID-4','products là khung nhìn','chua','S024-11'],['ID-5','parent_item_id / biến thể','chua','S026-3'],['ID-6','entity_codes thực thể khác','chua','S026-4'],['ID-7','TK theo phiên bản hệ thống TK','tai-lieu','S026-8']]},
+ {k:'III',t:'III · Liên tục kế toán',c:[['C-1','Hành trình mặt hàng','dat',''],['C-2','Hành trình qua đổi mã','dat',''],['C-3','Lớp giá vốn + phân bổ','tai-lieu','S025-5'],['C-4','Phương pháp tính giá là chính sách','tai-lieu','S025-7'],['C-5','Gate C CT-*','tai-lieu','S025-9'],['C-6','Khoá kỳ đòi chuỗi lành','chua','S025-11'],['C-7','Truy vết đối tượng / TK','chua','S026-13']]},
+ {k:'IV',t:'IV · Cửa nạp, cổng, một ngôn ngữ mã',c:[['G-1','Gate A + nháp','mot-phan','S026-9'],['G-2','Gate B bể chờ','dat',''],['G-3','Commit Guard','dat',''],['G-4','Thư viện mã có căn cứ','dat',''],['G-5','Mặc định cho phép, nhắc khi sai','dat','']]},
+ {k:'V',t:'V · Chính sách có phiên bản',c:[['P-1','Luật định khoản có phiên bản','dat',''],['P-2','Hồ sơ kế toán theo năm','dat',''],['P-3','Đổi chế độ: ánh xạ TK','tai-lieu','S026-8'],['P-4','Chính sách theo phạm vi nhóm','chua','S026-6']]},
+ {k:'VI',t:'VI · Bằng chứng, quan sát được',c:[['E-1','Nhật ký chuỗi băm','dat',''],['E-2','Lịch sử trên màn danh mục','mot-phan','S026-10'],['E-3','Tác động','chua','S026-11'],['E-4','Tự chẩn đoán L1 / L3','dat',''],['E-5','Bảng trụ cột trên giao diện','mot-phan','S026-15']]},
+ {k:'VII',t:'VII · Cô lập đơn vị, phân quyền',c:[['S-1','RLS theo tenant','dat',''],['S-2','Phân quyền theo quyền','dat',''],['S-3','Nhóm đơn vị HO / kho / cửa hàng','chua','S026-6'],['S-4','Giao dịch liên đơn vị','chua','S026-7']]},
+ {k:'VIII',t:'VIII · Module, kiểm chuẩn',c:[['M-1','Manifest / năng lực / action','dat',''],['M-2','Selfcheck + tự kiểm','dat',''],['M-3','ctx.data đọc items','chua','S024-11'],['M-4','Golden Tests','mot-phan','S026-2'],['M-5','Benchmark','chua','S026-14']]}];
+const W={dat:1,'mot-phan':.5,'tai-lieu':.25,chua:0},L={dat:['Đạt','ok'],'mot-phan':['Một phần','warn'],'tai-lieu':['Tài liệu','info'],chua:['Chưa','op']};
+let pick='';
+function render(){const t=document.getElementById('tiles');t.innerHTML=P.map(p=>{const pct=Math.round(p.c.reduce((s,c)=>s+W[c[2]],0)/p.c.length*100);return `<div class="tile" onclick="pick=pick==='${p.k}'?'':'${p.k}';render()" style="${pick===p.k?'outline:2px solid var(--accent)':''}"><b>${p.t}</b><div class="bar"><i class="${pct>=80?'':pct>=40?'w':'b'}" style="width:${pct}%"></i></div><span class="m">${pct}% · ${p.c.filter(c=>c[2]==='dat').length} đạt / ${p.c.length}</span></div>`}).join('');
+ const open=document.getElementById('open').checked;const m=document.getElementById('mat');m.innerHTML='<tr><th>Mã</th><th>Tiêu chí</th><th>Mức</th><th>Việc tiếp</th></tr>'+P.filter(p=>!pick||p.k===pick).map(p=>`<tr><td colspan="4" style="background:var(--soft);font-weight:700">${p.t}</td></tr>`+p.c.filter(c=>!open||c[2]!=='dat').map(c=>`<tr><td class="mono">${c[0]}</td><td>${c[1]}</td><td><span class="pill ${L[c[2]][1]}">${L[c[2]][0]}</span></td><td class="mono">${c[3]||'—'}</td></tr>`).join('')).join('');}
+document.getElementById('open').addEventListener('change',render);render();
+function go(v){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id===v));}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
+document.querySelectorAll('.subtabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.subtabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.sv').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s));}));
+</script>
+</body></html>
