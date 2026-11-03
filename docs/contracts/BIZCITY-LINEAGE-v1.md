@@ -2,7 +2,8 @@
 <!-- [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: hợp đồng đọc truy vết vòng đời mặt hàng (ADR-0021, R-CONT-0 / R-CONT-8) -->
 
 <!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: 0.2.0-draft — khoá theo item_id -->
-> **Phiên bản:** 0.2.0-draft · 2026-11-04 · **Trạng thái:** Đề xuất (ADR-0021 chờ chủ duyệt; W1 chạy được trước, chỉ đọc)
+<!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: 0.3.0-draft — họ mặt hàng -->
+> **Phiên bản:** 0.3.0-draft · 2026-11-04 · **Trạng thái:** Đề xuất (ADR-0021 chờ chủ duyệt; W1 chạy được trước, chỉ đọc)
 > **Nguồn sự thật:** `packages/contracts/src/lineage.ts` (kiểu, nhãn, làn) · `packages/kernel/src/modules/lineage/` (dịch vụ + route)
 > **Tôn chỉ:** [ADR-0020](../adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md) · **Luật:** [R-CONT](../rules/RULE-CONTINUITY.md) · **Kế hoạch:** [PHASE-025](../phases/PHASE-025-ACCOUNTING-CONTINUITY/README.md)
 
@@ -54,5 +55,6 @@ Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.
 
 ## 6. Changelog
 
+- **0.3.0-draft (2026-11-04):** thêm `GET /lineage/items/:sku/impact` (`ItemImpact`: chứng từ, tồn theo chi nhánh, tài khoản, bảng giá, quy đổi, tháng giá vốn, kỳ đã khoá, câu hệ quả); thêm `GET /lineage/items/:sku/history` (`ItemHistory`: mã cũ / mới, hiệu lực, người, phân loại, sửa + lý do cảnh báo; quyền catalog:read); thêm `item.family` (`parent`, `children`, `siblings` — định danh, mã hiện hành, tên, trạng thái); mở Hành trình bằng mã cũ.
 - **0.2.0-draft (2026-11-04):** khoá theo `item_id`; thêm `item.itemId`, `item.codes`, `event.code`; tìm bằng mã cũ. Giá vốn tháng vẫn tính theo mã (đổi mã giữa tháng → hai dòng giá vốn, PHASE-024 · 70 §3.2.1 G2).
 - **0.1.0-draft (2026-11-03):** khuôn đầu (PHASE-025 W1): tìm, hành trình một mặt hàng, giải thích giá vốn bình quân tháng.
