@@ -5,7 +5,7 @@
 |---|---|---|---|---|---|
 | S026-1 | ADR-0022, CANON §0.2 (nền móng + tám trụ cột), tài liệu phase 00 / 10 / 20 / 30, bản mẫu | W0 | P0 | — | 🟡 2026-11-04: xong, chờ chủ duyệt D026-* |
 | S026-16 | `docs/standard/tru-cot.json` (`bizcity_pillars@1`), `GET /api/v1/system/pillars`, màn HT10, thẻ Trụ cột ở trang chủ phân hệ, hướng dẫn | W0 | P0 | có | ✅ 2026-11-04 (mức đạt ghi tay có bằng chứng) |
-| S026-2 | Golden Tests `T026-G1..G7` có tên, chạy như một cổng (`kiem-chuan.sh`), thất bại chặn phát hành | P0 | P0 | có | 🟡 G1, G7 có (`item-id-so-kho`); G2..G6 ☐ |
+| S026-2 | Golden Tests `T026-G1..G7` có tên, chạy như một cổng (`kiem-chuan.sh`), thất bại chặn phát hành | P0 | P0 | có | 🟡 2026-11-04 <!-- [2026-11-04 05:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — P0 đợt 4 -->: G1, G2, G4, G5, G7 xanh (`item-id-so-kho`, `dinh-khoan-phan-loai-theo-ngay`, `golden-tra-hang-doi-ma`, `golden-chuyen-kho-doi-ma`). Còn: G3 (cùng báo cáo theo nhóm tại ngày — S026-5), G6 (S026-8), G8 (S026-7); chạy như MỘT cổng phát hành riêng (kiem-chuan) chưa làm |
 | S026-3 | `parent_item_id` điền từ `parent_sku`; luật R-ITEM-9 (biến thể kinh tế khác = định danh mới); MH26 ghi / đọc `parent_item_id` | P0 | P0 | có | ☐ |
 | S026-4 | `entity_codes` cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột `code`; `resolveEntity`; điền ban đầu | P0 | P0 | có | ☐ |
 | S026-5 | `item_classes.path` + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | P0 | có | ☐ |
@@ -27,10 +27,10 @@
 | Mã | Ca | Trạng thái |
 |---|---|---|
 | T026-G1 | đổi mã giữa tháng → một dòng giá vốn, bình quân đúng, phiếu GV ghi mã tại ngày, NXT một dòng, sổ chi tiết tra bằng mã cũ | ✅ `apps/api/test/item-id-so-kho.test.ts` |
-| T026-G2 | đổi nhóm hạch toán từ ngày D: trước / sau định khoản đúng, sổ cũ nguyên | ☐ |
+| T026-G2 | đổi nhóm hạch toán từ ngày D: trước / sau định khoản đúng, sổ cũ nguyên | ✅ `apps/api/test/dinh-khoan-phan-loai-theo-ngay.test.ts` (bỏ bản sửa S024-8 thì ca đỏ) |
 | T026-G3 | dời nhánh trong cây nhóm hàng: báo cáo kỳ cũ không đổi | ☐ |
-| T026-G4 | trả hàng sau đổi mã: hoàn đúng giá vốn lần bán gốc | ☐ |
-| T026-G5 | chuyển kho giữa hai nhóm tính giá qua đổi mã: hàng đang chuyển về 0 | ☐ |
+| T026-G4 | trả hàng sau đổi mã: hoàn đúng giá vốn lần bán gốc | ✅ `apps/api/test/golden-tra-hang-doi-ma.test.ts` |
+| T026-G5 | chuyển kho giữa hai nhóm tính giá qua đổi mã: hàng đang chuyển về 0 | ✅ `apps/api/test/golden-chuyen-kho-doi-ma.test.ts` |
 | T026-G6 | đổi chế độ kế toán từ đầu năm: số dư chuyển theo ánh xạ, sổ cũ nguyên | ☐ |
 | T026-G7 | xoá mặt hàng rồi tạo lại cùng mã: định danh mới, không chồng hiệu lực | ✅ `item-id-so-kho` |
 | T026-G8 | hai tenant trong nhóm: chuyển kho + bán + loại trừ = 0 | ☐ (P1) |
