@@ -30,6 +30,21 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 - **Dữ liệu ngoài (POS / ERP / plugin) qua validation trước khi chạm sổ:** không tự tạo mặt hàng từ chứng từ; mã lạ → trạm tiền kiểm với `IN-ITEM-*`. Tạo / sửa danh mục chỉ qua `core.item.*`, `core.partner.*`.
 - Chi tiết: [RULE-ITEM](docs/rules/RULE-ITEM.md), [PHASE-024 · 10](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/10-DANH-MUC-CO-PHIEN-BAN.md) (bốn hạng thay đổi), [· 50](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/50-TUAN-THU.md).
 
+## Bước 0: giữ chỗ trước khi nhận việc (R-FLOW)
+
+<!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — Bước 0: giữ chỗ vào main trước khi code; hai phiên đã làm trùng W6 đợt 3 và đợt 4 (chủ dự án chọn: giữ chỗ phải vào main trước) -->
+
+Nhiều phiên (người và AI) làm cùng một kho. Luật đầy đủ: [RULE-FLOW](docs/rules/RULE-FLOW.md). Trước khi gõ dòng code đầu tiên của một **đợt việc**:
+
+1. `git fetch --all --prune`, rồi đọc [docs/phases/CLAIMS.md](docs/phases/CLAIMS.md) **trên `origin/main`**: `git show origin/main:docs/phases/CLAIMS.md`.
+2. Phạm vi của bạn chồng lên một dòng "đang làm" của người khác → **dừng**, báo người dùng, chọn việc khác hoặc thoả thuận. Không làm song song.
+3. Chưa có dòng của bạn → mở PR **chỉ tài liệu** thêm dòng vào CLAIMS.md, chờ người dùng merge vào `main`. **Chỉ sau đó** mới tạo nhánh code.
+4. Đụng thứ dùng chung (API runtime action / SDK, `packages/contracts`, chính sách bằng chứng, luật lớp, migration, phép kiểm chặn mới — bảng ở [RULE-FLOW §3](docs/rules/RULE-FLOW.md)) → PR tài liệu **chốt thiết kế** vào `main` trước PR code.
+5. Trước khi đẩy: gộp `origin/main`, `git merge-tree --write-tree origin/main HEAD` không báo xung đột, `selfcheck --strict` ĐẠT. Nhánh sống không quá một ngày làm việc.
+6. Làm trùng với bản đã có → giữ bản có tài liệu và test, ghi rõ trong PR; khác nhau về **chính sách** thì hỏi người dùng, không tự chọn.
+
+Không cần bước 1–4: sửa lỗi nhỏ (một tệp, không đổi hành vi dùng chung), tài liệu thuần, sửa nóng trên sản xuất.
+
 ## Trước khi code: đồng bộ với `main`
 
 <!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — đồng bộ main trước mỗi lượt code (nhánh feat đứng sau main 18 commit, xung đột mua-hang/service.ts, dist contracts cũ). -->
