@@ -15,7 +15,8 @@ import {
   SECRET_MASK, connectionSchema, ingestDocumentSchema,
   type Connection, type ConnectionView, type IngestDocument, type PullResult,
 } from '@ketoan/contracts';
-import { db } from '../../db/client.js';
+import { db, type Db } from '../../db/client.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 import { Errors, AppError } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
@@ -28,8 +29,8 @@ const MAX_PAGES = 500;
 /** Độ dài tối đa (ký tự) của danh sách mã cửa hàng trong một lần gọi đầu chuẩn (tham số shops trên đường dẫn). */
 const SHOPS_PER_REQUEST_CHARS = 600;
 
-async function loadSettings(tenantId: string): Promise<Settings> {
-  const t = await db.selectFrom('tenants').select('settings').where('id', '=', tenantId).executeTakeFirstOrThrow();
+async function loadSettings(tenantId: string, trx: Db = db): Promise<Settings> {
+  const t = await trx.selectFrom('tenants').select('settings').where('id', '=', tenantId).executeTakeFirstOrThrow();
   return ((t.settings as Settings) ?? {}) as Settings;
 }
 
@@ -62,13 +63,22 @@ export const connectionService = {
   },
 
   async list(auth: AuthContext): Promise<ConnectionView[]> {
-    const s = await loadSettings(auth.tenantId);
+    return connectionService.listIn(db, auth);
+  },
+
+  // [2026-11-03 08:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): đọc trong giao dịch có sẵn — sau khi lưu trong action phải thấy bản vừa ghi
+  async listIn(trx: Db, auth: AuthContext): Promise<ConnectionView[]> {
+    const s = await loadSettings(auth.tenantId, trx);
     return readConnections(s).map((c) => ({ ...c, apiKey: mask(c.apiKey), apiSecret: mask(c.apiSecret), lastPull: s.connectionPulls?.[c.code] ?? null }));
   },
 
   /** Ghi cả danh sách kết nối. Khoá gửi lên đúng chuỗi che thì giữ khoá đang lưu. */
   async save(auth: AuthContext, input: Connection[]): Promise<ConnectionView[]> {
-    await db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => connectionService.saveIn(trx, auth, input));
+  },
+
+  async saveIn(trx: ActionTx, auth: AuthContext, input: Connection[]): Promise<ConnectionView[]> {
+    await sameTx(trx, async (trx) => {
       const t = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).forUpdate().executeTakeFirstOrThrow();
       const s = ((t.settings as Settings) ?? {}) as Settings;
       const old = new Map(readConnections(s).map((c) => [c.code, c]));
@@ -85,7 +95,7 @@ export const connectionService = {
         after: next.map((c) => ({ code: c.code, kind: c.kind, url: c.url, enabled: c.enabled })),
       });
     });
-    return connectionService.list(auth);
+    return connectionService.listIn(trx, auth);
   },
 
   async get(auth: AuthContext, code: string): Promise<Connection> {

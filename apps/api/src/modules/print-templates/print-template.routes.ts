@@ -87,6 +87,7 @@ export async function printTemplateRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // @bizcity-route: tự phục vụ — người dùng tự đặt mẫu in của mình; phạm vi đơn vị cần settings:write, kiểm trong handler
   r.put('/api/v1/print-templates/settings', {
     schema: { tags, summary: 'Thêm / sửa cấu hình một mẫu in theo phạm vi', body: printSettingInputSchema },
     handler: async (req) => {
@@ -123,6 +124,7 @@ export async function printTemplateRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // @bizcity-route: tự phục vụ — người dùng tự đặt mẫu in của mình; phạm vi đơn vị cần settings:write, kiểm trong handler
   r.delete('/api/v1/print-templates/settings', {
     schema: { tags, summary: 'Bỏ cấu hình một mẫu in ở một phạm vi (về như mặc định)', querystring: scopeKey },
     handler: async (req) => {

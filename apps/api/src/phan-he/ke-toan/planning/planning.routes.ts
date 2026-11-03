@@ -27,6 +27,7 @@ import { authOf, requirePermission } from '../../../core/auth.js';
 import { ok, idParamSchema } from '../../../core/http.js';
 import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Kế hoạch tài chính'];
 const month = z.string().regex(/^\d{4}-\d{2}$/, 'Tháng dạng YYYY-MM');
@@ -79,97 +80,6 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/cash-plans', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Thêm dòng kế hoạch thu / chi', body: planInput },
-    handler: async (req, reply) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const row = await db.transaction().execute(async (trx) => trx.insertInto('cash_plans').values({
-        tenant_id: auth.tenantId, period: b.period, branch_id: await branchIdOf(trx, auth.tenantId, b.branchCode), direction: b.direction,
-        cost_item_code: b.costItemCode || null, partner_id: await partnerIdOf(trx, auth.tenantId, b.partnerCode), due_date: b.dueDate, description: b.description,
-        amount: b.amount, source: 'manual', updated_by: auth.actorName,
-      }).returning('id').executeTakeFirstOrThrow());
-      reply.code(201);
-      return ok({ id: row.id });
-    },
-  });
-
-  r.patch('/api/v1/cash-plans/:id', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Sửa dòng kế hoạch thu / chi', params: idParamSchema, body: planInput },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      await db.transaction().execute(async (trx) => {
-        const res = await trx.updateTable('cash_plans').set({
-          period: b.period, branch_id: await branchIdOf(trx, auth.tenantId, b.branchCode), direction: b.direction, cost_item_code: b.costItemCode || null,
-          partner_id: await partnerIdOf(trx, auth.tenantId, b.partnerCode), due_date: b.dueDate, description: b.description, amount: b.amount, updated_by: auth.actorName, updated_at: new Date(),
-        }).where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id).executeTakeFirst();
-        if (!Number(res.numUpdatedRows)) throw Errors.notFound('dòng kế hoạch');
-      });
-      return ok({ id: req.params.id });
-    },
-  });
-
-  r.delete('/api/v1/cash-plans/:id', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Xoá dòng kế hoạch thu / chi', params: idParamSchema },
-    handler: async (req) => {
-      const res = await db.deleteFrom('cash_plans').where('tenant_id', '=', authOf(req).tenantId).where('id', '=', req.params.id).executeTakeFirst();
-      if (!Number(res.numDeletedRows)) throw Errors.notFound('dòng kế hoạch');
-      return ok({ deleted: true });
-    },
-  });
-
-  r.post('/api/v1/cash-plans/fill', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Điền kế hoạch từ khoản công nợ đến hạn và lịch thanh toán hợp đồng', body: z.object({ period: month }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const p = req.body.period;
-      const from = `${p}-01`;
-      const to = lastDay(p);
-      const res = await db.transaction().execute(async (trx) => {
-        const debts = await sql<{ id: string; branch_id: string; partner_id: string; account_code: string; side: string; due_date: string; doc_no: string; remaining: string; name: string }>`
-          SELECT d.id, d.branch_id, d.partner_id, d.account_code, d.side, d.due_date::text, d.doc_no, d.amount - d.settled_amount AS remaining, p.name
-            FROM debt_items d JOIN partners p ON p.id = d.partner_id
-           WHERE d.tenant_id = ${auth.tenantId} AND d.amount > d.settled_amount AND d.due_date BETWEEN ${from}::date AND ${to}::date
-             AND ((d.side = 'debit' AND d.account_code LIKE '13%') OR (d.side = 'credit' AND d.account_code LIKE '33%'))`.execute(trx);
-        const sched = await sql<{ id: string; contract_code: string; seq: number; due_date: string; amount: string; tax_amount: string; description: string; partner_code: string | null; contract_name: string | null }>`
-          SELECT s.id, s.contract_code, s.seq, s.due_date::text, s.amount, s.tax_amount, s.description, d.extra->>'partnerCode' AS partner_code, d.name AS contract_name
-            FROM contract_schedules s LEFT JOIN dimensions d ON d.tenant_id = s.tenant_id AND d.kind = 'contract' AND d.code = s.contract_code
-           WHERE s.tenant_id = ${auth.tenantId} AND s.status = 'pending' AND s.due_date BETWEEN ${from}::date AND ${to}::date`.execute(trx);
-        const partnerIds = new Map((await trx.selectFrom('partners').select(['id', 'code']).where('tenant_id', '=', auth.tenantId)
-          .where('code', 'in', [...new Set(sched.rows.map((s) => s.partner_code).filter((x): x is string => Boolean(x))), '__none__']).execute()).map((x) => [x.code, x.id]));
-        const rows = [
-          ...debts.rows.map((d) => ({
-            period: p, branch_id: d.branch_id, direction: d.side === 'debit' ? 'in' : 'out', cost_item_code: null, partner_id: d.partner_id, due_date: d.due_date,
-            description: `${d.side === 'debit' ? 'Thu' : 'Trả'} ${d.name} — ${d.doc_no}`, amount: toNumber(d.remaining), source: 'debt', source_ref: `debt:${d.id}`,
-          })),
-          ...sched.rows.map((s) => ({
-            period: p, branch_id: null, direction: 'out', cost_item_code: null, partner_id: (s.partner_code && partnerIds.get(s.partner_code)) || null, due_date: s.due_date,
-            description: `Hợp đồng ${s.contract_code}${s.contract_name ? ` ${s.contract_name}` : ''} kỳ ${s.seq}${s.description ? ` — ${s.description}` : ''}`,
-            amount: toNumber(s.amount) + toNumber(s.tax_amount), source: 'contract', source_ref: `contract:${s.id}`,
-          })),
-        ];
-        // Dòng đã điền trước mà nay không còn (đã thanh toán hết, đổi hạn): bỏ.
-        const keep = rows.map((x) => x.source_ref);
-        const removed = await trx.deleteFrom('cash_plans').where('tenant_id', '=', auth.tenantId).where('period', '=', p).where('source', 'in', ['debt', 'contract'])
-          .where('source_ref', 'not in', keep.length ? keep : ['__none__']).executeTakeFirst();
-        for (const x of rows) {
-          await trx.insertInto('cash_plans').values({ tenant_id: auth.tenantId, ...x, updated_by: auth.actorName })
-            .onConflict((oc) => oc.columns(['tenant_id', 'source_ref']).where('source_ref', 'is not', null).doUpdateSet({
-              period: x.period, branch_id: x.branch_id, direction: x.direction, partner_id: x.partner_id, due_date: x.due_date, description: x.description, amount: x.amount, updated_by: auth.actorName, updated_at: new Date(),
-            })).execute();
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cash-plans.fill', objectType: 'cash_plan', objectId: p, after: { debts: debts.rows.length, contracts: sched.rows.length } });
-        return { debts: debts.rows.length, contracts: sched.rows.length, removed: Number(removed.numDeletedRows) };
-      });
-      return ok(res);
-    },
-  });
-
   r.get('/api/v1/reports/cash-plan-vs-actual', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Kế hoạch thu chi so với thực hiện', querystring: z.object({ from: month, to: month }) },
@@ -214,62 +124,6 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
         .select(['n.id', 'n.period', 'b.code as branch_code', 'n.department_code', 'n.cost_item_code', 'n.amount', 'n.note', 'n.updated_by', 'n.updated_at'])
         .where('n.tenant_id', '=', authOf(req).tenantId).where('n.period', '=', req.query.period).orderBy('b.code').orderBy('n.department_code').orderBy('n.cost_item_code').execute();
       return ok(rows.map((x) => ({ id: x.id, period: x.period, branchCode: x.branch_code, departmentCode: x.department_code, costItemCode: x.cost_item_code, amount: toNumber(x.amount), note: x.note, updatedBy: x.updated_by, updatedAt: x.updated_at })));
-    },
-  });
-
-  r.put('/api/v1/cost-norms', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags, summary: 'Ghi định mức chi phí của một tháng (số tiền 0 = bỏ định mức)',
-      body: z.object({ period: month, items: z.array(z.object({ branchCode: z.string().trim().nullable().default(null), departmentCode: z.string().trim().nullable().default(null), costItemCode: z.string().trim().min(1), amount: z.number().min(0), note: z.string().trim().max(500).default('') })).min(1).max(5000) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const res = await db.transaction().execute(async (trx) => {
-        const items = await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'cost_item').execute();
-        const known = new Set(items.map((x) => x.code));
-        const bad = [...new Set(b.items.map((x) => x.costItemCode).filter((c) => !known.has(c)))];
-        if (bad.length) throw Errors.validation(`Khoản mục không có trong danh mục: ${bad.join(', ')}`);
-        const deps = new Set((await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'department').execute()).map((x) => x.code));
-        const badDep = [...new Set(b.items.map((x) => x.departmentCode).filter((c): c is string => Boolean(c) && !deps.has(c!)))];
-        if (badDep.length) throw Errors.validation(`Bộ phận không có trong danh mục: ${badDep.join(', ')}`);
-        let saved = 0;
-        let removed = 0;
-        for (const x of b.items) {
-          const bid = await branchIdOf(trx, auth.tenantId, x.branchCode);
-          await trx.deleteFrom('cost_norms').where('tenant_id', '=', auth.tenantId).where('period', '=', b.period).where('cost_item_code', '=', x.costItemCode)
-            .where(bid ? sql<boolean>`branch_id = ${bid}` : sql<boolean>`branch_id IS NULL`)
-            .where(x.departmentCode ? sql<boolean>`department_code = ${x.departmentCode}` : sql<boolean>`department_code IS NULL`).execute();
-          if (x.amount > 0) {
-            await trx.insertInto('cost_norms').values({ tenant_id: auth.tenantId, period: b.period, branch_id: bid, department_code: x.departmentCode || null, cost_item_code: x.costItemCode, amount: x.amount, note: x.note, updated_by: auth.actorName }).execute();
-            saved++;
-          } else removed++;
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cost-norms.save', objectType: 'cost_norm', objectId: b.period, after: { saved, removed } });
-        return { saved, removed };
-      });
-      return ok(res);
-    },
-  });
-
-  r.post('/api/v1/cost-norms/copy', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Chép định mức một tháng sang các tháng khác (ghi đè)', body: z.object({ from: month, to: z.array(month).min(1).max(36) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const res = await db.transaction().execute(async (trx) => {
-        const src = await trx.selectFrom('cost_norms').selectAll().where('tenant_id', '=', auth.tenantId).where('period', '=', b.from).execute();
-        if (!src.length) throw Errors.validation(`Tháng ${b.from} chưa có định mức`);
-        for (const t of b.to.filter((x) => x !== b.from)) {
-          await trx.deleteFrom('cost_norms').where('tenant_id', '=', auth.tenantId).where('period', '=', t).execute();
-          await trx.insertInto('cost_norms').values(src.map((x) => ({ tenant_id: auth.tenantId, period: t, branch_id: x.branch_id, department_code: x.department_code, cost_item_code: x.cost_item_code, amount: x.amount, note: x.note, updated_by: auth.actorName }))).execute();
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cost-norms.copy', objectType: 'cost_norm', objectId: b.from, after: { to: b.to } });
-        return { copied: src.length, months: b.to.length };
-      });
-      return ok(res);
     },
   });
 
@@ -357,4 +211,182 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
       });
     },
   });
+  mountActions(app, planningWriteActions);
+  mountActions(app, planningMoreWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const planningWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'ke-toan.cash-plan.update', title: 'Sửa dòng kế hoạch thu / chi', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: (planInput).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/cash-plans/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_plan', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const { id: _id, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = reqBody;
+      await sameTx(trx, async (trx) => {
+        const res = await trx.updateTable('cash_plans').set({
+          period: b.period, branch_id: await branchIdOf(trx, auth.tenantId, b.branchCode), direction: b.direction, cost_item_code: b.costItemCode || null,
+          partner_id: await partnerIdOf(trx, auth.tenantId, b.partnerCode), due_date: b.dueDate, description: b.description, amount: b.amount, updated_by: auth.actorName, updated_at: new Date(),
+        }).where('tenant_id', '=', auth.tenantId).where('id', '=', input.id).executeTakeFirst();
+        if (!Number(res.numUpdatedRows)) throw Errors.notFound('dòng kế hoạch');
+      });
+      return { id: input.id };
+    },
+  }),
+  defineAction({
+    id: 'ke-toan.cash-plan.delete', title: 'Xoá dòng kế hoạch thu / chi', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/cash-plans/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_plan', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const res = await trx.deleteFrom('cash_plans').where('tenant_id', '=', ctx.legacyAuth.tenantId).where('id', '=', input.id).executeTakeFirst();
+      if (!Number(res.numDeletedRows)) throw Errors.notFound('dòng kế hoạch');
+      return { deleted: true };
+    },
+  }),
+  defineAction({
+    id: 'ke-toan.cash-plan.fill', title: 'Điền kế hoạch từ khoản công nợ đến hạn và lịch thanh toán hợp đồng', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ period: month }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/cash-plans/fill' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_plan' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const p = input.period;
+      const from = `${p}-01`;
+      const to = lastDay(p);
+      const res = await sameTx(trx, async (trx) => {
+        const debts = await sql<{ id: string; branch_id: string; partner_id: string; account_code: string; side: string; due_date: string; doc_no: string; remaining: string; name: string }>`
+          SELECT d.id, d.branch_id, d.partner_id, d.account_code, d.side, d.due_date::text, d.doc_no, d.amount - d.settled_amount AS remaining, p.name
+            FROM debt_items d JOIN partners p ON p.id = d.partner_id
+           WHERE d.tenant_id = ${auth.tenantId} AND d.amount > d.settled_amount AND d.due_date BETWEEN ${from}::date AND ${to}::date
+             AND ((d.side = 'debit' AND d.account_code LIKE '13%') OR (d.side = 'credit' AND d.account_code LIKE '33%'))`.execute(trx);
+        const sched = await sql<{ id: string; contract_code: string; seq: number; due_date: string; amount: string; tax_amount: string; description: string; partner_code: string | null; contract_name: string | null }>`
+          SELECT s.id, s.contract_code, s.seq, s.due_date::text, s.amount, s.tax_amount, s.description, d.extra->>'partnerCode' AS partner_code, d.name AS contract_name
+            FROM contract_schedules s LEFT JOIN dimensions d ON d.tenant_id = s.tenant_id AND d.kind = 'contract' AND d.code = s.contract_code
+           WHERE s.tenant_id = ${auth.tenantId} AND s.status = 'pending' AND s.due_date BETWEEN ${from}::date AND ${to}::date`.execute(trx);
+        const partnerIds = new Map((await trx.selectFrom('partners').select(['id', 'code']).where('tenant_id', '=', auth.tenantId)
+          .where('code', 'in', [...new Set(sched.rows.map((s) => s.partner_code).filter((x): x is string => Boolean(x))), '__none__']).execute()).map((x) => [x.code, x.id]));
+        const rows = [
+          ...debts.rows.map((d) => ({
+            period: p, branch_id: d.branch_id, direction: d.side === 'debit' ? 'in' : 'out', cost_item_code: null, partner_id: d.partner_id, due_date: d.due_date,
+            description: `${d.side === 'debit' ? 'Thu' : 'Trả'} ${d.name} — ${d.doc_no}`, amount: toNumber(d.remaining), source: 'debt', source_ref: `debt:${d.id}`,
+          })),
+          ...sched.rows.map((s) => ({
+            period: p, branch_id: null, direction: 'out', cost_item_code: null, partner_id: (s.partner_code && partnerIds.get(s.partner_code)) || null, due_date: s.due_date,
+            description: `Hợp đồng ${s.contract_code}${s.contract_name ? ` ${s.contract_name}` : ''} kỳ ${s.seq}${s.description ? ` — ${s.description}` : ''}`,
+            amount: toNumber(s.amount) + toNumber(s.tax_amount), source: 'contract', source_ref: `contract:${s.id}`,
+          })),
+        ];
+        // Dòng đã điền trước mà nay không còn (đã thanh toán hết, đổi hạn): bỏ.
+        const keep = rows.map((x) => x.source_ref);
+        const removed = await trx.deleteFrom('cash_plans').where('tenant_id', '=', auth.tenantId).where('period', '=', p).where('source', 'in', ['debt', 'contract'])
+          .where('source_ref', 'not in', keep.length ? keep : ['__none__']).executeTakeFirst();
+        for (const x of rows) {
+          await trx.insertInto('cash_plans').values({ tenant_id: auth.tenantId, ...x, updated_by: auth.actorName })
+            .onConflict((oc) => oc.columns(['tenant_id', 'source_ref']).where('source_ref', 'is not', null).doUpdateSet({
+              period: x.period, branch_id: x.branch_id, direction: x.direction, partner_id: x.partner_id, due_date: x.due_date, description: x.description, amount: x.amount, updated_by: auth.actorName, updated_at: new Date(),
+            })).execute();
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cash-plans.fill', objectType: 'cash_plan', objectId: p, after: { debts: debts.rows.length, contracts: sched.rows.length } });
+        return { debts: debts.rows.length, contracts: sched.rows.length, removed: Number(removed.numDeletedRows) };
+      });
+      return res;
+    },
+  }),
+  defineAction({
+    id: 'ke-toan.cost-norm.update', title: 'Ghi định mức chi phí của một tháng (số tiền 0 = bỏ định mức)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ period: month, items: z.array(z.object({ branchCode: z.string().trim().nullable().default(null), departmentCode: z.string().trim().nullable().default(null), costItemCode: z.string().trim().min(1), amount: z.number().min(0), note: z.string().trim().max(500).default('') })).min(1).max(5000) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/cost-norms' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cost_norm' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      const res = await sameTx(trx, async (trx) => {
+        const items = await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'cost_item').execute();
+        const known = new Set(items.map((x) => x.code));
+        const bad = [...new Set(b.items.map((x) => x.costItemCode).filter((c) => !known.has(c)))];
+        if (bad.length) throw Errors.validation(`Khoản mục không có trong danh mục: ${bad.join(', ')}`);
+        const deps = new Set((await trx.selectFrom('dimensions').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', 'department').execute()).map((x) => x.code));
+        const badDep = [...new Set(b.items.map((x) => x.departmentCode).filter((c): c is string => Boolean(c) && !deps.has(c!)))];
+        if (badDep.length) throw Errors.validation(`Bộ phận không có trong danh mục: ${badDep.join(', ')}`);
+        let saved = 0;
+        let removed = 0;
+        for (const x of b.items) {
+          const bid = await branchIdOf(trx, auth.tenantId, x.branchCode);
+          await trx.deleteFrom('cost_norms').where('tenant_id', '=', auth.tenantId).where('period', '=', b.period).where('cost_item_code', '=', x.costItemCode)
+            .where(bid ? sql<boolean>`branch_id = ${bid}` : sql<boolean>`branch_id IS NULL`)
+            .where(x.departmentCode ? sql<boolean>`department_code = ${x.departmentCode}` : sql<boolean>`department_code IS NULL`).execute();
+          if (x.amount > 0) {
+            await trx.insertInto('cost_norms').values({ tenant_id: auth.tenantId, period: b.period, branch_id: bid, department_code: x.departmentCode || null, cost_item_code: x.costItemCode, amount: x.amount, note: x.note, updated_by: auth.actorName }).execute();
+            saved++;
+          } else removed++;
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cost-norms.save', objectType: 'cost_norm', objectId: b.period, after: { saved, removed } });
+        return { saved, removed };
+      });
+      return res;
+    },
+  }),
+  defineAction({
+    id: 'ke-toan.cost-norm.copy', title: 'Chép định mức một tháng sang các tháng khác (ghi đè)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ from: month, to: z.array(month).min(1).max(36) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/cost-norms/copy' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cost_norm' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      const res = await sameTx(trx, async (trx) => {
+        const src = await trx.selectFrom('cost_norms').selectAll().where('tenant_id', '=', auth.tenantId).where('period', '=', b.from).execute();
+        if (!src.length) throw Errors.validation(`Tháng ${b.from} chưa có định mức`);
+        for (const t of b.to.filter((x) => x !== b.from)) {
+          await trx.deleteFrom('cost_norms').where('tenant_id', '=', auth.tenantId).where('period', '=', t).execute();
+          await trx.insertInto('cost_norms').values(src.map((x) => ({ tenant_id: auth.tenantId, period: t, branch_id: x.branch_id, department_code: x.department_code, cost_item_code: x.cost_item_code, amount: x.amount, note: x.note, updated_by: auth.actorName }))).execute();
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cost-norms.copy', objectType: 'cost_norm', objectId: b.from, after: { to: b.to } });
+        return { copied: src.length, months: b.to.length };
+      });
+      return res;
+    },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const planningMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'ke-toan.cash-plan.create', title: 'Thêm dòng kế hoạch thu / chi', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'required',
+    input: planInput, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/cash-plans', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_plan' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      const row = await sameTx(trx, async (trx) => trx.insertInto('cash_plans').values({
+        tenant_id: auth.tenantId, period: b.period, branch_id: await branchIdOf(trx, auth.tenantId, b.branchCode), direction: b.direction,
+        cost_item_code: b.costItemCode || null, partner_id: await partnerIdOf(trx, auth.tenantId, b.partnerCode), due_date: b.dueDate, description: b.description,
+        amount: b.amount, source: 'manual', updated_by: auth.actorName,
+      }).returning('id').executeTakeFirstOrThrow());
+      return { id: row.id };
+    },
+  }),
+];

@@ -29,6 +29,7 @@ import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
 import { ensureReferenceDocument } from '../../../modules/reference-documents/reference-document.routes.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Hoá đơn cơ quan thuế'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -95,44 +96,6 @@ export async function reconcile(trx: Db, tenantId: string, direction: 'input' | 
 export async function authorityInvoiceRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
-  r.put('/api/v1/authority-invoices', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Nhập hoá đơn tải từ cổng hoá đơn điện tử', body: authorityImportSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const rows = b.invoices.map((x) => {
-        const [serial, no] = invoiceKey(x.invoiceSerial, x.invoiceNo).split('|') as [string, string];
-        return {
-          tenant_id: auth.tenantId, direction: b.direction, seller_tax_code: x.sellerTaxCode, seller_name: x.sellerName, buyer_tax_code: x.buyerTaxCode, buyer_name: x.buyerName,
-          invoice_form: x.invoiceForm, invoice_serial: serial, invoice_no: no, invoice_date: x.invoiceDate,
-          total_before_tax: x.totalBeforeTax, total_tax: x.totalTax, total_amount: x.totalAmount || x.totalBeforeTax + x.totalTax,
-          status_text: x.statusText, status: authorityStatusOf(x.statusText), check_result: x.checkResult, source: b.source, file_name: b.fileName, imported_by: auth.actorName,
-        };
-      });
-      // Trong một tệp có thể trùng hoá đơn: giữ dòng sau cùng.
-      const uniq = [...new Map(rows.map((x) => [`${x.seller_tax_code}|${x.invoice_serial}|${x.invoice_no}`, x])).values()];
-      const res = await db.transaction().execute(async (trx) => {
-        let inserted = 0;
-        for (let i = 0; i < uniq.length; i += 500) {
-          const part = await trx.insertInto('authority_invoices').values(uniq.slice(i, i + 500))
-            .onConflict((oc) => oc.columns(['tenant_id', 'direction', 'seller_tax_code', 'invoice_serial', 'invoice_no']).doUpdateSet((eb) => ({
-              seller_name: eb.ref('excluded.seller_name'), buyer_tax_code: eb.ref('excluded.buyer_tax_code'), buyer_name: eb.ref('excluded.buyer_name'),
-              invoice_form: eb.ref('excluded.invoice_form'), invoice_date: eb.ref('excluded.invoice_date'),
-              total_before_tax: eb.ref('excluded.total_before_tax'), total_tax: eb.ref('excluded.total_tax'), total_amount: eb.ref('excluded.total_amount'),
-              status_text: eb.ref('excluded.status_text'), status: eb.ref('excluded.status'), check_result: eb.ref('excluded.check_result'),
-              source: eb.ref('excluded.source'), file_name: eb.ref('excluded.file_name'), imported_by: eb.ref('excluded.imported_by'), imported_at: sql`now()`,
-            })))
-            .returning(sql<boolean>`(xmax = 0)`.as('inserted')).execute();
-          inserted += part.filter((p) => p.inserted).length;
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'authority-invoices.import', objectType: 'authority_invoice', objectId: b.fileName || b.source, after: { direction: b.direction, source: b.source, count: uniq.length } });
-        return { received: b.invoices.length, inserted, updated: uniq.length - inserted };
-      });
-      return ok(res);
-    },
-  });
-
   r.get('/api/v1/authority-invoices/reconcile', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Đối chiếu hoá đơn trên cổng với sổ hoá đơn', querystring: rangeQuery.extend({ direction: directionEnum }) },
@@ -145,58 +108,6 @@ export async function authorityInvoiceRoutes(app: FastifyInstance): Promise<void
         rows,
         summary: { portal: portalCount, books: rows.filter((x) => x.book).length, matched: count('matched'), amountMismatch: count('amount_mismatch'), statusMismatch: count('status_mismatch'), missingInBooks: count('missing_in_books'), missingOnPortal: count('missing_on_portal') },
       });
-    },
-  });
-
-  r.post('/api/v1/authority-invoices/to-reference', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags, summary: 'Chuyển hoá đơn trên cổng thành chứng từ nguồn để lập phiếu công nợ',
-      body: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(1000), branchCode: z.string().trim().min(1) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const res = await db.transaction().execute(async (trx) => {
-        const branch = await trx.selectFrom('branches').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', b.branchCode).executeTakeFirst();
-        if (!branch) throw Errors.validation(`Chi nhánh ${b.branchCode} không có`);
-        const items = await trx.selectFrom('authority_invoices').selectAll().where('tenant_id', '=', auth.tenantId).where('id', 'in', b.ids).execute();
-        let created = 0;
-        for (const x of items) {
-          if (x.reference_doc_key) continue;
-          const input = x.direction === 'input';
-          const taxCode = input ? x.seller_tax_code : x.buyer_tax_code;
-          const name = input ? x.seller_name : x.buyer_name;
-          let partnerId: string | null = null;
-          // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): đối tượng + chứng từ tham chiếu qua hàm của lõi
-          if (taxCode) partnerId = await catalogEnsure.partnerByTaxCode(trx, auth.tenantId, { taxCode, name, kind: input ? 'supplier' : 'customer' });
-          const docKey = `hddt:${x.direction}:${x.seller_tax_code}:${x.invoice_serial}:${x.invoice_no}`;
-          await ensureReferenceDocument(trx, auth.tenantId, {
-            kind: input ? 'purchase_invoice' : 'sales_invoice', doc_key: docKey, doc_no: `${x.invoice_serial}-${x.invoice_no}`,
-            doc_date: x.invoice_date, partner_id: partnerId, branch_code: b.branchCode, total: x.total_amount,
-            description: `Hoá đơn ${x.invoice_serial} số ${x.invoice_no} ngày ${vn(x.invoice_date)} — ${name}`, source_system: 'authority',
-            payload: JSON.stringify({ invoiceForm: x.invoice_form, invoiceSerial: x.invoice_serial, invoiceNo: x.invoice_no, invoiceDate: x.invoice_date, taxCode, name, totalBeforeTax: toNumber(x.total_before_tax), totalTax: toNumber(x.total_tax) }),
-          });
-          await trx.updateTable('authority_invoices').set({ reference_doc_key: docKey }).where('id', '=', x.id).execute();
-          created++;
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'authority-invoices.to-reference', objectType: 'authority_invoice', objectId: b.branchCode, after: { ids: b.ids.length, created } });
-        return { created };
-      });
-      return ok(res);
-    },
-  });
-
-  r.delete('/api/v1/authority-invoices', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Xoá dữ liệu cổng đã nhập trong khoảng ngày', querystring: rangeQuery.extend({ direction: directionEnum }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const q = req.query;
-      const res = await db.deleteFrom('authority_invoices').where('tenant_id', '=', auth.tenantId).where('direction', '=', q.direction)
-        .where('invoice_date', '>=', q.from).where('invoice_date', '<=', q.to).executeTakeFirst();
-      await writeAudit(db, { tenantId: auth.tenantId, actor: auth.actor, action: 'authority-invoices.delete', objectType: 'authority_invoice', objectId: `${q.direction}:${q.from}:${q.to}`, after: { deleted: Number(res.numDeletedRows) } });
-      return ok({ deleted: Number(res.numDeletedRows) });
     },
   });
 
@@ -246,14 +157,121 @@ export async function authorityInvoiceRoutes(app: FastifyInstance): Promise<void
       return ok(rows.map((x) => ({ id: x.id, taxCode: x.tax_code, name: x.name, risk: x.risk, effectiveDate: x.effective_date, source: x.source, note: x.note, updatedBy: x.updated_by, updatedAt: x.updated_at })));
     },
   });
+  mountActions(app, authorityInvoiceWriteActions);
+}
 
-  r.put('/api/v1/risky-taxpayers', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Thêm / sửa người nộp thuế rủi ro theo mã số thuế', body: z.object({ items: z.array(riskyTaxpayerInputSchema).min(1).max(5000) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const items = [...new Map(req.body.items.map((x) => [x.taxCode, x])).values()];
-      await db.transaction().execute(async (trx) => {
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const authorityInvoiceWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'thue.authority-invoice.update', title: 'Nhập hoá đơn tải từ cổng hoá đơn điện tử', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: authorityImportSchema, output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/authority-invoices' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'authority_invoice' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      const rows = b.invoices.map((x) => {
+        const [serial, no] = invoiceKey(x.invoiceSerial, x.invoiceNo).split('|') as [string, string];
+        return {
+          tenant_id: auth.tenantId, direction: b.direction, seller_tax_code: x.sellerTaxCode, seller_name: x.sellerName, buyer_tax_code: x.buyerTaxCode, buyer_name: x.buyerName,
+          invoice_form: x.invoiceForm, invoice_serial: serial, invoice_no: no, invoice_date: x.invoiceDate,
+          total_before_tax: x.totalBeforeTax, total_tax: x.totalTax, total_amount: x.totalAmount || x.totalBeforeTax + x.totalTax,
+          status_text: x.statusText, status: authorityStatusOf(x.statusText), check_result: x.checkResult, source: b.source, file_name: b.fileName, imported_by: auth.actorName,
+        };
+      });
+      // Trong một tệp có thể trùng hoá đơn: giữ dòng sau cùng.
+      const uniq = [...new Map(rows.map((x) => [`${x.seller_tax_code}|${x.invoice_serial}|${x.invoice_no}`, x])).values()];
+      const res = await sameTx(trx, async (trx) => {
+        let inserted = 0;
+        for (let i = 0; i < uniq.length; i += 500) {
+          const part = await trx.insertInto('authority_invoices').values(uniq.slice(i, i + 500))
+            .onConflict((oc) => oc.columns(['tenant_id', 'direction', 'seller_tax_code', 'invoice_serial', 'invoice_no']).doUpdateSet((eb) => ({
+              seller_name: eb.ref('excluded.seller_name'), buyer_tax_code: eb.ref('excluded.buyer_tax_code'), buyer_name: eb.ref('excluded.buyer_name'),
+              invoice_form: eb.ref('excluded.invoice_form'), invoice_date: eb.ref('excluded.invoice_date'),
+              total_before_tax: eb.ref('excluded.total_before_tax'), total_tax: eb.ref('excluded.total_tax'), total_amount: eb.ref('excluded.total_amount'),
+              status_text: eb.ref('excluded.status_text'), status: eb.ref('excluded.status'), check_result: eb.ref('excluded.check_result'),
+              source: eb.ref('excluded.source'), file_name: eb.ref('excluded.file_name'), imported_by: eb.ref('excluded.imported_by'), imported_at: sql`now()`,
+            })))
+            .returning(sql<boolean>`(xmax = 0)`.as('inserted')).execute();
+          inserted += part.filter((p) => p.inserted).length;
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'authority-invoices.import', objectType: 'authority_invoice', objectId: b.fileName || b.source, after: { direction: b.direction, source: b.source, count: uniq.length } });
+        return { received: b.invoices.length, inserted, updated: uniq.length - inserted };
+      });
+      return res;
+    },
+  }),
+  defineAction({
+    id: 'thue.authority-invoice.to-reference', title: 'Chuyển hoá đơn trên cổng thành chứng từ nguồn để lập phiếu công nợ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(1000), branchCode: z.string().trim().min(1) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/authority-invoices/to-reference' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'authority_invoice' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      const res = await sameTx(trx, async (trx) => {
+        const branch = await trx.selectFrom('branches').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', b.branchCode).executeTakeFirst();
+        if (!branch) throw Errors.validation(`Chi nhánh ${b.branchCode} không có`);
+        const items = await trx.selectFrom('authority_invoices').selectAll().where('tenant_id', '=', auth.tenantId).where('id', 'in', b.ids).execute();
+        let created = 0;
+        for (const x of items) {
+          if (x.reference_doc_key) continue;
+          const input = x.direction === 'input';
+          const taxCode = input ? x.seller_tax_code : x.buyer_tax_code;
+          const name = input ? x.seller_name : x.buyer_name;
+          let partnerId: string | null = null;
+          // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): đối tượng + chứng từ tham chiếu qua hàm của lõi
+          if (taxCode) partnerId = await catalogEnsure.partnerByTaxCode(trx, auth.tenantId, { taxCode, name, kind: input ? 'supplier' : 'customer' });
+          const docKey = `hddt:${x.direction}:${x.seller_tax_code}:${x.invoice_serial}:${x.invoice_no}`;
+          await ensureReferenceDocument(trx, auth.tenantId, {
+            kind: input ? 'purchase_invoice' : 'sales_invoice', doc_key: docKey, doc_no: `${x.invoice_serial}-${x.invoice_no}`,
+            doc_date: x.invoice_date, partner_id: partnerId, branch_code: b.branchCode, total: x.total_amount,
+            description: `Hoá đơn ${x.invoice_serial} số ${x.invoice_no} ngày ${vn(x.invoice_date)} — ${name}`, source_system: 'authority',
+            payload: JSON.stringify({ invoiceForm: x.invoice_form, invoiceSerial: x.invoice_serial, invoiceNo: x.invoice_no, invoiceDate: x.invoice_date, taxCode, name, totalBeforeTax: toNumber(x.total_before_tax), totalTax: toNumber(x.total_tax) }),
+          });
+          await trx.updateTable('authority_invoices').set({ reference_doc_key: docKey }).where('id', '=', x.id).execute();
+          created++;
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'authority-invoices.to-reference', objectType: 'authority_invoice', objectId: b.branchCode, after: { ids: b.ids.length, created } });
+        return { created };
+      });
+      return res;
+    },
+  }),
+  defineAction({
+    id: 'thue.authority-invoice.delete', title: 'Xoá dữ liệu cổng đã nhập trong khoảng ngày', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: rangeQuery.extend({ direction: directionEnum }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/authority-invoices' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'authority_invoice' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const q = input;
+      const res = await trx.deleteFrom('authority_invoices').where('tenant_id', '=', auth.tenantId).where('direction', '=', q.direction)
+        .where('invoice_date', '>=', q.from).where('invoice_date', '<=', q.to).executeTakeFirst();
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'authority-invoices.delete', objectType: 'authority_invoice', objectId: `${q.direction}:${q.from}:${q.to}`, after: { deleted: Number(res.numDeletedRows) } });
+      return { deleted: Number(res.numDeletedRows) };
+    },
+  }),
+  defineAction({
+    id: 'thue.risky-taxpayer.update', title: 'Thêm / sửa người nộp thuế rủi ro theo mã số thuế', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ items: z.array(riskyTaxpayerInputSchema).min(1).max(5000) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/risky-taxpayers' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'risky_taxpayer' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const items = [...new Map(input.items.map((x) => [x.taxCode, x])).values()];
+      await sameTx(trx, async (trx) => {
         for (let i = 0; i < items.length; i += 500) {
           await trx.insertInto('risky_taxpayers').values(items.slice(i, i + 500).map((x) => ({
             tenant_id: auth.tenantId, tax_code: x.taxCode, name: x.name, risk: x.risk, effective_date: x.effectiveDate, source: x.source, note: x.note, updated_by: auth.actorName,
@@ -264,19 +282,22 @@ export async function authorityInvoiceRoutes(app: FastifyInstance): Promise<void
         }
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'risky-taxpayers.upsert', objectType: 'risky_taxpayer', objectId: String(items.length), after: { count: items.length } });
       });
-      return ok({ saved: items.length });
+      return { saved: items.length };
     },
-  });
-
-  r.delete('/api/v1/risky-taxpayers/:id', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Bỏ một người nộp thuế khỏi danh sách rủi ro', params: idParamSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const row = await db.deleteFrom('risky_taxpayers').where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id).returningAll().executeTakeFirst();
+  }),
+  defineAction({
+    id: 'thue.risky-taxpayer.delete', title: 'Bỏ một người nộp thuế khỏi danh sách rủi ro', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/risky-taxpayers/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'risky_taxpayer', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const row = await trx.deleteFrom('risky_taxpayers').where('tenant_id', '=', auth.tenantId).where('id', '=', input.id).returningAll().executeTakeFirst();
       if (!row) throw Errors.notFound('người nộp thuế');
-      await writeAudit(db, { tenantId: auth.tenantId, actor: auth.actor, action: 'risky-taxpayers.delete', objectType: 'risky_taxpayer', objectId: row.tax_code, before: row });
-      return ok({ deleted: true });
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'risky-taxpayers.delete', objectType: 'risky_taxpayer', objectId: row.tax_code, before: row });
+      return { deleted: true };
     },
-  });
-}
+  }),
+];

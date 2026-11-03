@@ -21,6 +21,7 @@ import { accessService } from './access.service.js';
 import { signSession, verifySession } from '../../core/security/tokens.js';
 import { Errors } from '../../core/errors.js';
 import type { FastifyRequest } from 'fastify';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 /** Cấp lại vé cho máy đang thao tác với số phiên bản phiên mới (giữ nguyên vai trò, tên, quyền do trang quản trị cấp). */
 const reissueFor = (req: FastifyRequest) => async (sv: number) => {
@@ -38,23 +39,13 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
 
   r.get('/api/v1/users', { preHandler: admin, schema: { tags, summary: 'Danh sách người dùng' }, handler: async (req) => ok(await accessService.listUsers(authOf(req))) });
 
-  r.post('/api/v1/users', {
-    preHandler: admin,
-    schema: { tags, summary: 'Thêm người dùng', body: userCreateSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await accessService.createUser(authOf(req), req.body))),
-  });
-
-  r.patch('/api/v1/users/:id', {
-    preHandler: admin,
-    schema: { tags, summary: 'Sửa người dùng', params: idParam, body: userUpdateSchema },
-    handler: async (req) => ok(await accessService.updateUser(authOf(req), req.params.id, req.body)),
-  });
-
+  // @bizcity-route: tự phục vụ — mọi người dùng tự đổi mật khẩu, trả vé mới; không có quyền riêng để khai
   r.post('/api/v1/auth/change-password', {
     schema: { tags, summary: 'Tự đổi mật khẩu', body: changePasswordSchema },
     handler: async (req) => ok(await accessService.changeOwnPassword(authOf(req), req.body.currentPassword, req.body.newPassword, reissueFor(req))),
   });
 
+  // @bizcity-route: tự phục vụ — đăng xuất các máy khác của chính mình, trả vé mới
   r.post('/api/v1/auth/logout-others', {
     preHandler: requireUser(),
     schema: { tags, summary: 'Đăng xuất mọi thiết bị khác đang đăng nhập tài khoản này (máy đang bấm nhận vé mới, vẫn đăng nhập)' },
@@ -62,16 +53,47 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
   });
 
   r.get('/api/v1/api-keys', { preHandler: admin, schema: { tags, summary: 'Danh sách khoá API' }, handler: async (req) => ok(await accessService.listKeys(authOf(req))) });
-
-  r.post('/api/v1/api-keys', {
-    preHandler: admin,
-    schema: { tags, summary: 'Tạo khoá API (khoá chỉ trả về một lần)', body: apiKeyCreateSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await accessService.createKey(authOf(req), req.body))),
-  });
-
-  r.delete('/api/v1/api-keys/:id', {
-    preHandler: admin,
-    schema: { tags, summary: 'Thu hồi khoá API', params: idParam },
-    handler: async (req) => ok(await accessService.revokeKey(authOf(req), req.params.id)),
-  });
+  mountActions(app, accessWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const accessWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.user.create', title: 'Thêm người dùng', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: userCreateSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/users', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'user' },
+    handler: (ctx, input) => accessService.createUserIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.user.update', title: 'Sửa người dùng', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: (userUpdateSchema).merge(idParam), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/users/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'user', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...reqBody } = input;
+      return accessService.updateUserIn(ctx.data.tx, ctx.legacyAuth, id, reqBody);
+    },
+  }),
+  defineAction({
+    id: 'core.api-key.create', title: 'Tạo khoá API (khoá chỉ trả về một lần)', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: apiKeyCreateSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/api-keys', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'api_key' },
+    handler: (ctx, input) => accessService.createKeyIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.api-key.delete', title: 'Thu hồi khoá API', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: idParam, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/api-keys/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'api_key', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => accessService.revokeKeyIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+];

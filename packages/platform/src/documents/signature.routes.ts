@@ -23,6 +23,7 @@ import { authOf, requirePermission, type AuthContext } from '../core/auth.js';
 import { ok, idParamSchema } from '../core/http.js';
 import { Errors } from '../core/errors.js';
 import { writeAudit } from '../core/audit.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Ký phiếu'];
 export const SIGN_ROLES = ['preparer', 'cashier', 'chief_accountant', 'director'] as const;
@@ -59,17 +60,25 @@ export async function signatureRoutes(app: FastifyInstance): Promise<void> {
       return ok(await listSignatures(db, tenantId, doc.id, doc.version));
     },
   });
+  mountActions(app, signatureWriteActions);
+}
 
-  r.post('/api/v1/signatures', {
-    preHandler: requirePermission('documents:read'),
-    schema: {
-      tags, summary: 'Ký một hoặc nhiều phiếu với một vai',
-      body: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), role: z.enum(SIGN_ROLES) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { ids, role } = req.body;
-      const res = await db.transaction().execute(async (trx) => {
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const signatureWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.signature.create', title: 'Ký một hoặc nhiều phiếu với một vai', tags,
+    permission: 'documents:read', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), role: z.enum(SIGN_ROLES) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/signatures' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'signature' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { ids, role } = input;
+      const res = await sameTx(trx, async (trx) => {
         const docs = await trx.selectFrom('accounting_events').select(['id', 'doc_no', 'version', 'status', 'created_by']).where('tenant_id', '=', auth.tenantId).where('id', 'in', ids).execute();
         if (docs.length !== new Set(ids).size) throw Errors.notFound('phiếu');
         let signed = 0;
@@ -87,25 +96,28 @@ export async function signatureRoutes(app: FastifyInstance): Promise<void> {
         if (!signed && skipped.length && docs.length === 1) throw Errors.forbidden(skipped[0]!.replace(/^[^:]*: /, ''));
         return { signed, skipped };
       });
-      return ok(res);
+      return res;
     },
-  });
-
-  r.delete('/api/v1/documents/:id/signatures/:role', {
-    preHandler: requirePermission('documents:read'),
-    schema: { tags, summary: 'Huỷ chữ ký của một vai', params: idParamSchema.extend({ role: z.enum(SIGN_ROLES) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        const doc = await trx.selectFrom('accounting_events').select(['id', 'version']).where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id).executeTakeFirst();
+  }),
+  defineAction({
+    id: 'core.document.signature-delete', title: 'Huỷ chữ ký của một vai', tags,
+    permission: 'documents:read', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema.extend({ role: z.enum(SIGN_ROLES) }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/documents/:id/signatures/:role' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'document', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, async (trx) => {
+        const doc = await trx.selectFrom('accounting_events').select(['id', 'version']).where('tenant_id', '=', auth.tenantId).where('id', '=', input.id).executeTakeFirst();
         if (!doc) throw Errors.notFound('phiếu');
-        const sig = await trx.selectFrom('document_signatures').selectAll().where('event_id', '=', doc.id).where('role', '=', req.params.role).where('version', '=', doc.version).where('revoked_at', 'is', null).executeTakeFirst();
+        const sig = await trx.selectFrom('document_signatures').selectAll().where('event_id', '=', doc.id).where('role', '=', input.role).where('version', '=', doc.version).where('revoked_at', 'is', null).executeTakeFirst();
         if (!sig) throw Errors.notFound('chữ ký');
         if (sig.signer !== auth.actor && auth.role !== 'owner') throw Errors.forbidden('Chỉ người đã ký hoặc chủ đơn vị huỷ được chữ ký');
         await trx.updateTable('document_signatures').set({ revoked_at: new Date(), revoked_by: auth.actor }).where('id', '=', sig.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.unsign', objectType: 'source_document', objectId: doc.id, before: { role: sig.role, signer: sig.signer_name, version: sig.version } });
       });
-      return ok({ revoked: true });
+      return { revoked: true };
     },
-  });
-}
+  }),
+];

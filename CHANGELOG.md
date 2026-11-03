@@ -235,6 +235,25 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main -->
+- **Action trả thêm khoá vào `meta` của phản hồi** (`ctx.meta`): cổng danh mục (`gate`, `findings`, `held`) vẫn trả như trước sau khi lưu mặt hàng / đối tượng / mặt hàng catalog qua action. Khoá lõi (`requestId`, `receipt`, `idempotency`, `dryRun`) không bị đè. Gửi lặp cùng `Idempotency-Key` chỉ nhận lại dữ liệu và biên nhận, không nhận lại `gate / findings / held`.
+- Sơ đồ tổ chức (thêm / sửa / xoá nút, gắn chi nhánh, khôi phục dữ liệu gốc, nhập Excel) và các "Khung Vì sao" kiểm thử khai báo mặt hàng / đối tượng / tài khoản đi qua `defineAction`; kiểm thử là action đọc.
+<!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 -->
+- **Mọi thao tác ghi qua `defineAction`** (SC-ACT-1 nay **chặn**): route ghi mới phải là action, hoặc khai `// @bizcity-route: <lý do>` ngay dòng trên (17 route cố ý giữ: đăng nhập, SSO, đổi mật khẩu, vé ứng dụng, nhịp online, MCP, mẫu in cá nhân, cửa nạp chứng từ, kéo kết nối, nạp mẫu module, dữ liệu mẫu Mua hàng). Thêm mục huấn luyện / chính sách / tệp đính kèm Mua hàng **bắt buộc `Idempotency-Key`** (giao diện đã gửi sẵn).
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 -->
+- **Thao tác theo lô chạy trong một giao dịch, mỗi mục một SAVEPOINT** (`ctx.data.item`, `inSavepoint` ở `@bizcity/platform/core/actions`): trạm định khoản, xác nhận nhận tiền, kết chuyển (cả dây chuyền tháng sau), kết chuyển năm, tính giá vốn, bỏ định khoản hàng loạt, sinh phiếu định kỳ, nhập Excel mặt hàng. Mục lỗi vẫn được báo trong kết quả và không chặn mục khác; khác trước: các mục đúng được lưu **cùng lúc khi cả lô xong** (trước: lưu dần), và lỗi ngoài từng mục huỷ cả lô thay vì để lại phần đã chạy. Kết chuyển năm và tính giá vốn nay không còn để lại nửa chừng khi một chi nhánh lỗi.
+- Cửa nạp chứng từ (`POST /api/v1/documents`, `/batch`) và kéo chứng từ từ kết nối giữ nguyên cách cũ (có lý do ghi ở route: bể chờ dùng giao dịch riêng; nguồn được báo "đã nhận" sau mỗi trang).
+<!-- [2026-11-03 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 -->
+- **Thêm 16 route qua `defineAction`**: mặt hàng / loại hàng, bảng giá, nạp danh mục, quét hoá đơn NCC, khoá dữ liệu, thông tin đơn vị, bút toán tài sản, kế hoạch tiền, lịch bút toán lặp, tờ khai GTGT / bổ sung / TNDN, cấu hình kết nối. Lập bút toán tài sản, dòng kế hoạch tiền, lịch bút toán lặp **bắt buộc `Idempotency-Key`**.
+- Runtime action: `expose.http.query` (trường lấy từ query của POST/PUT/PATCH), `expose.http.bodyLimit`; bằng chứng không chép `input` lớn hơn 64 KB (giữ cỡ; `inputHash` vẫn đối chiếu được thân gốc).
+- `PUT /api/v1/catalog/products/:sku?new=false` nay hiểu đúng là `false` (trước: `z.coerce.boolean` coi chuỗi "false" là đúng).
+<!-- [2026-11-03 07:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4 -->
+- **Mua hàng qua `defineAction`** (tồn max, hoá đơn NCC, chứng từ, chính sách, ĐVT): lập phiếu mua, hoá đơn NCC, yêu cầu điều chuyển / tồn max **bắt buộc `Idempotency-Key`** (giao diện đã gửi sẵn); route xem trước / tra cứu là action đọc. **Bỏ duyệt phiếu mua chạy trong một giao dịch**: lỗi giữa chừng không còn để lại phiếu "đã duyệt" mà chứng từ kế toán đã huỷ.
+- Action có thân mà mọi trường đều tuỳ chọn: gửi thiếu thân (hoặc `null`) được nhận như `{}`.
+<!-- [2026-11-03 06:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
+- **Thêm 86 route ghi qua `defineAction`** (danh mục, tài sản, người dùng / khoá API, ứng dụng, thiết lập, kế hoạch tiền, thuế, mua hàng, chữ ký): đường dẫn, quyền, thân yêu cầu, mã 201 không đổi; mỗi lần ghi có bằng chứng. Action mới của phân hệ khai trong `bizcity.module.json`. Route dạng lô (mỗi mục một giao dịch, bắt lỗi từng mục) và cửa nạp chứng từ chưa chuyển.
+- **Bằng chứng và bản phản hồi gửi lặp không còn chứa bí mật**: runtime che trường `password`, `secret`, `token`, `apiKey`, `key`… (`***`). Khoá API chỉ trả về một lần; gửi lặp cùng `Idempotency-Key` nhận bản đã che.
+- Chỉ số SC-ACT-1 tính lại: action ghi / (action ghi + route ghi thô còn lại); cách cũ đếm cả action đọc nên vượt 100%.
 <!-- [2026-11-03 03:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 -->
 - **Route ghi của Kernel qua `defineAction`** (SC-ACT-1 35% → 54%): công nợ, phiếu nhập tay, số dư đầu kỳ, bổ sung thông tin thuế, dữ liệu gốc, kiểm thử bể chờ, kỳ kế toán / khoá kỳ, bút toán kết chuyển mẫu, cấu hình hạch toán, huỷ chứng từ. Đường dẫn, quyền, thân yêu cầu, mã 201 không đổi; mỗi lần ghi có bằng chứng của runtime. Lập phiếu, nhập số dư đầu kỳ, đối trừ tay **bắt buộc `Idempotency-Key`** (gửi lặp không lập / đối trừ hai lần — giao diện đã gửi sẵn); các thao tác còn lại chạy lại vô hại. Bổ sung thông tin thuế nay chạy trong một giao dịch (trước: hai giao dịch nối nhau).
 <!-- [2026-11-03 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 -->

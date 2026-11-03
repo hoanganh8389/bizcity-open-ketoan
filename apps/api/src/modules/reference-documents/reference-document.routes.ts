@@ -19,6 +19,7 @@ import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok, pageMeta, pageQuerySchema } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { partnerRepository } from '../partners/partner.repository.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Chứng từ nguồn'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -86,19 +87,26 @@ export async function referenceDocumentRoutes(app: FastifyInstance): Promise<voi
       })), pageMeta(f, Number(total?.n ?? 0)));
     },
   });
+  mountActions(app, referenceDocumentWriteActions);
+}
 
-  r.put('/api/v1/reference-documents', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags,
-      summary: 'Nhận chứng từ nguồn từ hệ thống mua hàng / bán hàng',
-      description: 'Tạo mới hoặc cập nhật theo docKey. Chỉ lưu để kế toán chọn khi lập phiếu công nợ; không ghi sổ. Chứng từ đã dùng (đã lập phiếu) giữ nguyên trạng thái.',
-      body: z.object({ source: z.string().trim().max(32).default('external'), documents: z.array(item).min(1).max(500) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { source, documents } = req.body;
-      await db.transaction().execute(async (trx) => {
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const referenceDocumentWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.reference-document.sync', title: 'Nhận chứng từ nguồn từ hệ thống mua hàng / bán hàng', tags,
+    description: 'Tạo mới hoặc cập nhật theo docKey. Chỉ lưu để kế toán chọn khi lập phiếu công nợ; không ghi sổ. Chứng từ đã dùng (đã lập phiếu) giữ nguyên trạng thái.',
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ source: z.string().trim().max(32).default('external'), documents: z.array(item).min(1).max(500) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/reference-documents' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'reference_document' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { source, documents } = input;
+      await sameTx(trx, async (trx) => {
         for (const d of documents) {
           const partnerId = d.partner ? await partnerRepository.upsert(trx, auth.tenantId, d.partner, SUPPLIER_KINDS.has(d.kind) ? 'supplier' : 'customer') : null;
           const values = {
@@ -114,18 +122,22 @@ export async function referenceDocumentRoutes(app: FastifyInstance): Promise<voi
         }
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'reference_document.sync', objectType: 'reference_document', objectId: `${documents.length} chứng từ`, after: { source, keys: documents.map((d) => d.docKey).slice(0, 50) } });
       });
-      return ok({ count: documents.length });
+      return { count: documents.length };
     },
-  });
-
-  r.patch('/api/v1/reference-documents/:id', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Đóng / mở lại chứng từ nguồn', params: idParamSchema, body: z.object({ status: z.enum(['open', 'closed']) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const res = await db.updateTable('reference_documents').set({ status: req.body.status, used_event_id: null, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id).executeTakeFirst();
+  }),
+  defineAction({
+    id: 'core.reference-document.update', title: 'Đóng / mở lại chứng từ nguồn', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: (z.object({ status: z.enum(['open', 'closed']) })).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/reference-documents/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'reference_document', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const { id: _id, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const res = await trx.updateTable('reference_documents').set({ status: reqBody.status, used_event_id: null, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', input.id).executeTakeFirst();
       if (!Number(res.numUpdatedRows)) throw Errors.notFound('chứng từ nguồn');
-      return ok({ id: req.params.id, status: req.body.status });
+      return { id: input.id, status: reqBody.status };
     },
-  });
-}
+  }),
+];

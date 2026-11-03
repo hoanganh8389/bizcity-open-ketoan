@@ -15,6 +15,7 @@ import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { defineSubscriber } from '../../core/events.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Hợp đồng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -54,66 +55,6 @@ export async function contractScheduleRoutes(app: FastifyInstance): Promise<void
       await contractOf(auth.tenantId, req.params.code);
       const rows = await db.selectFrom('contract_schedules').selectAll().where('tenant_id', '=', auth.tenantId).where('contract_code', '=', req.params.code).orderBy('seq').execute();
       return ok(rows.map(toDto));
-    },
-  });
-
-  r.put('/api/v1/contracts/:code/schedules', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags,
-      summary: 'Lưu lịch thanh toán của hợp đồng (thay toàn bộ)',
-      params: z.object({ code: z.string().min(1) }),
-      body: z.object({
-        schedules: z.array(z.object({
-          seq: z.number().int().positive(),
-          dueDate: day,
-          amount: z.number().min(0),
-          taxAmount: z.number().min(0).default(0),
-          description: z.string().trim().max(500).default(''),
-          status: z.enum(STATUS).default('pending'),
-          paidDate: day.nullish(),
-          paidRef: z.string().trim().max(255).default(''),
-        })).max(600),
-      }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const code = req.params.code;
-      await contractOf(auth.tenantId, code);
-      const seqs = req.body.schedules.map((s) => s.seq);
-      if (new Set(seqs).size !== seqs.length) throw Errors.validation('Số kỳ bị trùng');
-      await db.transaction().execute(async (trx) => {
-        await trx.deleteFrom('contract_schedules').where('tenant_id', '=', auth.tenantId).where('contract_code', '=', code).execute();
-        if (req.body.schedules.length) {
-          await trx.insertInto('contract_schedules').values(req.body.schedules.map((s) => ({
-            tenant_id: auth.tenantId, contract_code: code, seq: s.seq, due_date: s.dueDate, amount: s.amount, tax_amount: s.taxAmount,
-            description: s.description, status: s.status, paid_date: s.status === 'paid' ? s.paidDate ?? null : null, paid_ref: s.paidRef, updated_by: auth.actor,
-          }))).execute();
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'contract_schedule.save', objectType: 'contract', objectId: code, after: { periods: req.body.schedules.length } });
-      });
-      return ok({ code, periods: req.body.schedules.length });
-    },
-  });
-
-  r.patch('/api/v1/contract-schedules/:id', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags,
-      summary: 'Đánh dấu một kỳ đã trả / chưa trả / huỷ',
-      params: z.object({ id: z.string().regex(/^\d+$/) }),
-      body: z.object({ status: z.enum(STATUS), paidDate: day.nullish(), paidRef: z.string().trim().max(255).default('') }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const res = await db.updateTable('contract_schedules')
-        .set({ status: b.status, paid_date: b.status === 'paid' ? b.paidDate ?? new Date().toISOString().slice(0, 10) : null, paid_ref: b.status === 'paid' ? b.paidRef : '', updated_by: auth.actor, updated_at: new Date() })
-        .where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id)
-        .returningAll().executeTakeFirst();
-      if (!res) throw Errors.notFound('kỳ thanh toán');
-      await writeAudit(db, { tenantId: auth.tenantId, actor: auth.actor, action: 'contract_schedule.status', objectType: 'contract', objectId: `${res.contract_code}#${res.seq}`, after: b });
-      return ok(toDto(res));
     },
   });
 
@@ -159,4 +100,70 @@ export async function contractScheduleRoutes(app: FastifyInstance): Promise<void
       }));
     },
   });
+  mountActions(app, contractScheduleWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const contractScheduleWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.contract-schedule.replace', title: 'Lưu lịch thanh toán của hợp đồng (thay toàn bộ)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({
+        schedules: z.array(z.object({
+          seq: z.number().int().positive(),
+          dueDate: day,
+          amount: z.number().min(0),
+          taxAmount: z.number().min(0).default(0),
+          description: z.string().trim().max(500).default(''),
+          status: z.enum(STATUS).default('pending'),
+          paidDate: day.nullish(),
+          paidRef: z.string().trim().max(255).default(''),
+        })).max(600),
+      })).merge(z.object({ code: z.string().min(1) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/contracts/:code/schedules' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'contract_schedule', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const code = input.code;
+      await contractOf(auth.tenantId, code);
+      const seqs = reqBody.schedules.map((s) => s.seq);
+      if (new Set(seqs).size !== seqs.length) throw Errors.validation('Số kỳ bị trùng');
+      await sameTx(trx, async (trx) => {
+        await trx.deleteFrom('contract_schedules').where('tenant_id', '=', auth.tenantId).where('contract_code', '=', code).execute();
+        if (reqBody.schedules.length) {
+          await trx.insertInto('contract_schedules').values(reqBody.schedules.map((s) => ({
+            tenant_id: auth.tenantId, contract_code: code, seq: s.seq, due_date: s.dueDate, amount: s.amount, tax_amount: s.taxAmount,
+            description: s.description, status: s.status, paid_date: s.status === 'paid' ? s.paidDate ?? null : null, paid_ref: s.paidRef, updated_by: auth.actor,
+          }))).execute();
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'contract_schedule.save', objectType: 'contract', objectId: code, after: { periods: reqBody.schedules.length } });
+      });
+      return { code, periods: reqBody.schedules.length };
+    },
+  }),
+  defineAction({
+    id: 'core.contract-schedule.update', title: 'Đánh dấu một kỳ đã trả / chưa trả / huỷ', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({ status: z.enum(STATUS), paidDate: day.nullish(), paidRef: z.string().trim().max(255).default('') })).merge(z.object({ id: z.string().regex(/^\d+$/) })), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/contract-schedules/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'contract_schedule', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const { id: _id, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = reqBody;
+      const res = await trx.updateTable('contract_schedules')
+        .set({ status: b.status, paid_date: b.status === 'paid' ? b.paidDate ?? new Date().toISOString().slice(0, 10) : null, paid_ref: b.status === 'paid' ? b.paidRef : '', updated_by: auth.actor, updated_at: new Date() })
+        .where('tenant_id', '=', auth.tenantId).where('id', '=', input.id)
+        .returningAll().executeTakeFirst();
+      if (!res) throw Errors.notFound('kỳ thanh toán');
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'contract_schedule.status', objectType: 'contract', objectId: `${res.contract_code}#${res.seq}`, after: b });
+      return toDto(res);
+    },
+  }),
+];

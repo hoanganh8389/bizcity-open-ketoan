@@ -5,7 +5,6 @@
  *   POST   /api/v1/warehouses                   thêm kho
  *   PATCH  /api/v1/warehouses/:code             sửa kho (đổi chi nhánh, tên, theo dõi, mặc định…)
  *   DELETE /api/v1/warehouses/:code             xoá kho chưa có dòng nhập xuất
- * Ghi: action core.warehouse.{create,update,delete} (W6, SC-ACT-1).
  * Kho mặc định của chi nhánh nhận các dòng nhập xuất không ghi mã kho (lọc báo cáo kho theo kho).
  * Luật (như danh mục kho của phần mềm bán hàng cũ):
  *   - mã kho duy nhất toàn hệ thống, tối đa 12 ký tự; chi nhánh và tên kho bắt buộc;
@@ -18,9 +17,9 @@ import { z } from 'zod';
 import { authOf, requirePermission, type AuthContext } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
-import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
 import { writeAudit } from '../../core/audit.js';
 import { db, type Db } from '../../db/client.js';
+import { sameTx, type ActionTx, defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Kho'];
 
@@ -65,7 +64,6 @@ async function assertOnePromo(trx: Db, tenantId: string, branch: string, code: s
 const usedBy = (trx: Db, tenantId: string, code: string) =>
   trx.selectFrom('inventory_movements').select('id').where('tenant_id', '=', tenantId).where('warehouse_code', '=', code).limit(1).executeTakeFirst();
 
-// [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): service tách bản *In chạy trong giao dịch của runtime action (audit=false: bằng chứng do runtime ghi), bản cũ giữ chữ ký cho nơi khác gọi
 export const warehouseService = {
   async list(auth: AuthContext, branchCodes?: string[]): Promise<WarehouseDto[]> {
     let q = select(db, auth.tenantId);
@@ -73,89 +71,71 @@ export const warehouseService = {
     return (await q.orderBy('b.code').orderBy('w.code').execute()).map(dto);
   },
 
-  async createIn(trx: Db, auth: AuthContext, input: Body, audit = true): Promise<WarehouseDto> {
-    const exists = await trx.selectFrom('warehouses').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).executeTakeFirst();
-    if (exists) throw Errors.conflict(`Mã kho ${input.code} đã có`);
-    const branch = await branchId(trx, auth.tenantId, input.branchCode);
-    if (input.isPromo) await assertOnePromo(trx, auth.tenantId, branch, input.code);
-    await trx.insertInto('warehouses').values({
-      tenant_id: auth.tenantId, code: input.code, branch_id: branch, name: input.name, address: input.address,
-      is_active: input.isActive, is_default: input.isDefault, is_promo: input.isPromo, account: input.account, note: input.note,
-    }).execute();
-    if (audit) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.create', objectType: 'warehouse', objectId: input.code, after: input });
-    return dto(await select(trx, auth.tenantId).where('w.code', '=', input.code).executeTakeFirstOrThrow());
-  },
   async create(auth: AuthContext, input: Body): Promise<WarehouseDto> {
     return db.transaction().execute((trx) => warehouseService.createIn(trx, auth, input));
   },
 
-  async updateIn(trx: Db, auth: AuthContext, code: string, input: z.infer<typeof patchSchema>, audit = true): Promise<WarehouseDto> {
-    const before = await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirst();
-    if (!before) throw Errors.notFound(`kho ${code}`);
-    const patch: Record<string, unknown> = { updated_at: new Date() };
-    const cur = await trx.selectFrom('warehouses').select(['branch_id', 'is_promo']).where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirstOrThrow();
-    let branch = cur.branch_id;
-    if (input.branchCode !== undefined && input.branchCode !== before.branch_code) {
-      if (await usedBy(trx, auth.tenantId, code)) throw Errors.conflict(`Kho ${code} đã có dòng nhập xuất: không chuyển sang chi nhánh khác được`);
-      branch = await branchId(trx, auth.tenantId, input.branchCode);
-      patch.branch_id = branch;
-    }
-    if (input.isPromo ?? cur.is_promo) await assertOnePromo(trx, auth.tenantId, branch, code);
-    for (const [k, col] of [['name', 'name'], ['address', 'address'], ['isActive', 'is_active'], ['isDefault', 'is_default'], ['isPromo', 'is_promo'], ['account', 'account'], ['note', 'note']] as const) {
-      if (input[k] !== undefined) patch[col] = input[k];
-    }
-    await trx.updateTable('warehouses').set(patch).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
-    if (audit) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.update', objectType: 'warehouse', objectId: code, before, after: input });
-    return dto(await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirstOrThrow());
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: Body): Promise<WarehouseDto> {
+    return sameTx(trx, async (trx) => {
+      const exists = await trx.selectFrom('warehouses').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).executeTakeFirst();
+      if (exists) throw Errors.conflict(`Mã kho ${input.code} đã có`);
+      const branch = await branchId(trx, auth.tenantId, input.branchCode);
+      if (input.isPromo) await assertOnePromo(trx, auth.tenantId, branch, input.code);
+      await trx.insertInto('warehouses').values({
+        tenant_id: auth.tenantId, code: input.code, branch_id: branch, name: input.name, address: input.address,
+        is_active: input.isActive, is_default: input.isDefault, is_promo: input.isPromo, account: input.account, note: input.note,
+      }).execute();
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.create', objectType: 'warehouse', objectId: input.code, after: input });
+      return dto(await select(trx, auth.tenantId).where('w.code', '=', input.code).executeTakeFirstOrThrow());
+    });
   },
+
   async update(auth: AuthContext, code: string, input: z.infer<typeof patchSchema>): Promise<WarehouseDto> {
     return db.transaction().execute((trx) => warehouseService.updateIn(trx, auth, code, input));
   },
 
-  async removeIn(trx: Db, auth: AuthContext, code: string, audit = true): Promise<{ code: string }> {
-    const before = await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirst();
-    if (!before) throw Errors.notFound(`kho ${code}`);
-    if (await usedBy(trx, auth.tenantId, code)) throw Errors.conflict(`Kho ${code} đã có dòng nhập xuất: bỏ tích "Theo dõi" để ngừng dùng`);
-    await trx.deleteFrom('warehouses').where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
-    if (audit) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.delete', objectType: 'warehouse', objectId: code, before });
-    return { code };
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, code: string, input: z.infer<typeof patchSchema>): Promise<WarehouseDto> {
+    return sameTx(trx, async (trx) => {
+      const before = await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirst();
+      if (!before) throw Errors.notFound(`kho ${code}`);
+      const patch: Record<string, unknown> = { updated_at: new Date() };
+      const cur = await trx.selectFrom('warehouses').select(['branch_id', 'is_promo']).where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirstOrThrow();
+      let branch = cur.branch_id;
+      if (input.branchCode !== undefined && input.branchCode !== before.branch_code) {
+        if (await usedBy(trx, auth.tenantId, code)) throw Errors.conflict(`Kho ${code} đã có dòng nhập xuất: không chuyển sang chi nhánh khác được`);
+        branch = await branchId(trx, auth.tenantId, input.branchCode);
+        patch.branch_id = branch;
+      }
+      if (input.isPromo ?? cur.is_promo) await assertOnePromo(trx, auth.tenantId, branch, code);
+      for (const [k, col] of [['name', 'name'], ['address', 'address'], ['isActive', 'is_active'], ['isDefault', 'is_default'], ['isPromo', 'is_promo'], ['account', 'account'], ['note', 'note']] as const) {
+        if (input[k] !== undefined) patch[col] = input[k];
+      }
+      await trx.updateTable('warehouses').set(patch).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.update', objectType: 'warehouse', objectId: code, before, after: input });
+      return dto(await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirstOrThrow());
+    });
   },
+
   async remove(auth: AuthContext, code: string): Promise<{ code: string }> {
     return db.transaction().execute((trx) => warehouseService.removeIn(trx, auth, code));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, code: string): Promise<{ code: string }> {
+    return sameTx(trx, async (trx) => {
+      const before = await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirst();
+      if (!before) throw Errors.notFound(`kho ${code}`);
+      if (await usedBy(trx, auth.tenantId, code)) throw Errors.conflict(`Kho ${code} đã có dòng nhập xuất: bỏ tích "Theo dõi" để ngừng dùng`);
+      await trx.deleteFrom('warehouses').where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'warehouse.delete', objectType: 'warehouse', objectId: code, before });
+      return { code };
+    });
   },
 };
 
 /** Lọc dòng nhập xuất theo kho: mã kho đã chọn, cộng dòng không ghi mã kho của chi nhánh có kho mặc định nằm trong số đã chọn. */
-// [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): ghi qua defineAction — quyền, kiểm input, giao dịch, bằng chứng do runtime; đường dẫn / mã 201 như cũ
-const warehouseDto = z.object({ code: z.string(), branchCode: z.string(), branchName: z.string(), name: z.string(), address: z.string(), isActive: z.boolean(), isDefault: z.boolean(), isPromo: z.boolean(), account: z.string(), note: z.string() });
-
-export const warehouseActions: AnyActionDef[] = [
-  defineAction({
-    id: 'core.warehouse.create', title: 'Thêm kho', tags,
-    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: bodySchema, output: warehouseDto,
-    expose: { http: { method: 'POST', path: '/api/v1/warehouses', status: 201 }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'warehouse', objectId: (i) => i.code },
-    handler: (ctx, b) => warehouseService.createIn(ctx.data.tx, ctx.legacyAuth, b, false),
-  }),
-  defineAction({
-    id: 'core.warehouse.update', title: 'Sửa kho', tags,
-    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: patchSchema.extend({ code: z.string() }), output: warehouseDto,
-    expose: { http: { method: 'PATCH', path: '/api/v1/warehouses/:code' }, mcp: false, ai: 'deny' },
-    evidence: { objectType: 'warehouse', objectId: (i) => i.code },
-    handler: ({ data, legacyAuth }, { code, ...patch }) => warehouseService.updateIn(data.tx, legacyAuth, code, patch, false),
-  }),
-  defineAction({
-    id: 'core.warehouse.delete', title: 'Xoá kho chưa có dòng nhập xuất', tags,
-    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: z.object({ code: z.string() }), output: z.object({ code: z.string() }),
-    expose: { http: { method: 'DELETE', path: '/api/v1/warehouses/:code' }, mcp: false, ai: 'deny', destructive: true },
-    evidence: { objectType: 'warehouse', objectId: (i) => i.code },
-    handler: (ctx, b) => warehouseService.removeIn(ctx.data.tx, ctx.legacyAuth, b.code, false),
-  }),
-];
-
 export async function warehouseScope(tenantId: string, codes?: string[]): Promise<{ codes: string[]; defaultBranchIds: string[] } | null> {
   if (!codes?.length) return null;
   const rows = await db.selectFrom('warehouses').select(['branch_id']).where('tenant_id', '=', tenantId).where('code', 'in', codes).where('is_default', '=', true).execute();
@@ -172,6 +152,39 @@ export async function warehouseRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Danh sách kho (lọc theo chi nhánh)', querystring: z.object({ branchCodes: codesParam }) },
     handler: async (req) => ok(await warehouseService.list(authOf(req), req.query.branchCodes)),
   });
-
-  mountActions(app, warehouseActions);
+  mountActions(app, warehouseWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const warehouseWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.warehouse.create', title: 'Thêm kho', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: bodySchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/warehouses', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse' },
+    handler: (ctx, input) => warehouseService.createIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.warehouse.update', title: 'Sửa kho', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (patchSchema).merge(z.object({ code: z.string() })), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/warehouses/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse', objectId: (i) => String(i.code) },
+    handler: (ctx, input) => {
+      const { code, ...reqBody } = input;
+      return warehouseService.updateIn(ctx.data.tx, ctx.legacyAuth, code, reqBody);
+    },
+  }),
+  defineAction({
+    id: 'core.warehouse.delete', title: 'Xoá kho chưa có dòng nhập xuất', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string() }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/warehouses/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse', objectId: (i) => String(i.code) },
+    handler: (ctx, input) => warehouseService.removeIn(ctx.data.tx, ctx.legacyAuth, input.code),
+  }),
+];

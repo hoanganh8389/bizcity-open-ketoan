@@ -7,6 +7,7 @@ import type { AuthContext } from '../../core/auth.js';
 import { branchRepository, toBranchDto } from './branch.repository.js';
 import type { BranchCreate, BranchDto, BranchUpdate } from './branch.schemas.js';
 import type { Db } from '../../db/client.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức ở DM02 thì tính lại phân cấp chi nhánh (đóng góp)
 import { syncBranchLevels } from '../org-units/org-unit.service.js';
 import type { OrgTables } from '../org-units/org-unit.schemas.js';
@@ -19,92 +20,103 @@ async function departmentOf(trx: Db, tenantId: string, code: string | null | und
   return d.code;
 }
 
-// [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): service tách bản *In chạy trong giao dịch của runtime action (audit=false: bằng chứng do runtime ghi), bản cũ giữ chữ ký cho nơi khác gọi
 export const branchService = {
   async list(auth: AuthContext): Promise<BranchDto[]> {
     return (await branchRepository.list(db, auth.tenantId)).map(toBranchDto);
   },
 
-  async createIn(trx: Db, auth: AuthContext, input: BranchCreate, audit = true): Promise<BranchDto> {
-    const unitId = input.accountingUnitCode ? await branchRepository.ensureUnit(trx, auth.tenantId, input.accountingUnitCode) : null;
-    await branchRepository.insert(trx, {
-      tenant_id: auth.tenantId,
-      code: input.code,
-      name: input.name,
-      accounting_unit_id: unitId,
-      address: input.address ?? null,
-      external_ref: input.externalRef ?? null,
-      department_code: await departmentOf(trx, auth.tenantId, input.departmentCode),
-      note: input.note ?? '',
-      company_name: input.companyName ?? '',
-      tax_code: input.taxCode ?? '',
-      phone: input.phone ?? '',
-      fax: input.fax ?? '',
-    });
-    if (audit) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'branch.create', objectType: 'branch', objectId: input.code, after: input });
-    return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, input.code))!);
-  },
   async create(auth: AuthContext, input: BranchCreate): Promise<BranchDto> {
     return db.transaction().execute((trx) => branchService.createIn(trx, auth, input));
   },
 
-  /** Xoá chi nhánh chưa có chứng từ, bút toán; đã dùng thì bỏ tích "Theo dõi". */
-  async removeIn(trx: Db, auth: AuthContext, code: string, audit = true): Promise<{ code: string }> {
-    const before = await branchRepository.findByCode(trx, auth.tenantId, code);
-    if (!before) throw Errors.notFound(`chi nhánh ${code}`);
-    const used = await trx.selectFrom('bizcity_read.ledger_entries').select('id').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(1).executeTakeFirst();
-    if (used) throw Errors.conflict(`Chi nhánh ${code} đã có chứng từ: bỏ tích "Theo dõi" để ngừng dùng`);
-    const wh = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(3).execute();
-    if (wh.length) throw Errors.conflict(`Chi nhánh ${code} còn kho (${wh.map((w) => w.code).join(', ')}…): xoá hoặc chuyển kho ở Danh mục kho (DM12) trước`);
-    // Còn dữ liệu khác trỏ tới (chứng từ chờ, thẻ tài sản…) thì khoá ngoại chặn và báo đang dùng.
-    await trx.deleteFrom('branches').where('id', '=', before.id).execute();
-    if (audit) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'branch.delete', objectType: 'branch', objectId: code, before });
-    return { code };
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: BranchCreate): Promise<BranchDto> {
+    return sameTx(trx, async (trx) => {
+      const unitId = input.accountingUnitCode ? await branchRepository.ensureUnit(trx, auth.tenantId, input.accountingUnitCode) : null;
+      await branchRepository.insert(trx, {
+        tenant_id: auth.tenantId,
+        code: input.code,
+        name: input.name,
+        accounting_unit_id: unitId,
+        address: input.address ?? null,
+        external_ref: input.externalRef ?? null,
+        department_code: await departmentOf(trx, auth.tenantId, input.departmentCode),
+        note: input.note ?? '',
+        company_name: input.companyName ?? '',
+        tax_code: input.taxCode ?? '',
+        phone: input.phone ?? '',
+        fax: input.fax ?? '',
+      });
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'branch.create', objectType: 'branch', objectId: input.code, after: input });
+      return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, input.code))!);
+    });
   },
+
+  /** Xoá chi nhánh chưa có chứng từ, bút toán; đã dùng thì bỏ tích "Theo dõi". */
   async remove(auth: AuthContext, code: string): Promise<{ code: string }> {
     return db.transaction().execute((trx) => branchService.removeIn(trx, auth, code));
   },
 
-  async updateIn(trx: Db, auth: AuthContext, code: string, input: BranchUpdate, audit = true): Promise<BranchDto> {
-    const before = await branchRepository.findByCode(trx, auth.tenantId, code);
-    if (!before) throw Errors.notFound(`chi nhánh ${code}`);
-    const patch: Record<string, unknown> = {};
-    if (input.name !== undefined) patch.name = input.name;
-    if (input.address !== undefined) patch.address = input.address;
-    if (input.externalRef !== undefined) patch.external_ref = input.externalRef;
-    if (input.isActive !== undefined) patch.is_active = input.isActive;
-    if (input.note !== undefined) patch.note = input.note;
-    if (input.companyName !== undefined) patch.company_name = input.companyName;
-    if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
-    if (input.phone !== undefined) patch.phone = input.phone;
-    if (input.fax !== undefined) patch.fax = input.fax;
-
-    if (input.departmentCode !== undefined) patch.department_code = await departmentOf(trx, auth.tenantId, input.departmentCode);
-    if (input.accountingUnitCode !== undefined) {
-      patch.accounting_unit_id = input.accountingUnitCode ? await branchRepository.ensureUnit(trx, auth.tenantId, input.accountingUnitCode) : null;
-    }
-    let finalCode = code;
-    if (input.newCode && input.newCode !== code) {
-      if (await branchRepository.findByCode(trx, auth.tenantId, input.newCode)) throw Errors.conflict(`Mã chi nhánh ${input.newCode} đã có`);
-      patch.code = input.newCode;
-      finalCode = input.newCode;
-    }
-    if (input.orgUnitCode !== undefined) {
-      let orgId: string | null = null;
-      if (input.orgUnitCode) {
-        const o = await trx.withTables<OrgTables>().selectFrom('org_units').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('code', '=', input.orgUnitCode).executeTakeFirst();
-        if (!o) throw Errors.validation(`Không có nút sơ đồ tổ chức ${input.orgUnitCode}`);
-        if (!o.is_active) throw Errors.validation(`Nút ${input.orgUnitCode} đã ngừng dùng`);
-        orgId = String(o.id);
-      }
-      patch.org_unit_id = orgId;
-    }
-    if (Object.keys(patch).length) await branchRepository.update(trx, auth.tenantId, code, patch);
-    if (input.orgUnitCode !== undefined) await syncBranchLevels(trx, auth.tenantId);
-    if (audit) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: finalCode !== code ? 'branch.rename' : 'branch.update', objectType: 'branch', objectId: code, before, after: input });
-    return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, finalCode))!);
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, code: string): Promise<{ code: string }> {
+    return sameTx(trx, async (trx) => {
+      const before = await branchRepository.findByCode(trx, auth.tenantId, code);
+      if (!before) throw Errors.notFound(`chi nhánh ${code}`);
+      const used = await trx.selectFrom('bizcity_read.ledger_entries').select('id').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(1).executeTakeFirst();
+      if (used) throw Errors.conflict(`Chi nhánh ${code} đã có chứng từ: bỏ tích "Theo dõi" để ngừng dùng`);
+      const wh = await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(3).execute();
+      if (wh.length) throw Errors.conflict(`Chi nhánh ${code} còn kho (${wh.map((w) => w.code).join(', ')}…): xoá hoặc chuyển kho ở Danh mục kho (DM12) trước`);
+      // Còn dữ liệu khác trỏ tới (chứng từ chờ, thẻ tài sản…) thì khoá ngoại chặn và báo đang dùng.
+      await trx.deleteFrom('branches').where('id', '=', before.id).execute();
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'branch.delete', objectType: 'branch', objectId: code, before });
+      return { code };
+    });
   },
+
   async update(auth: AuthContext, code: string, input: BranchUpdate): Promise<BranchDto> {
     return db.transaction().execute((trx) => branchService.updateIn(trx, auth, code, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, code: string, input: BranchUpdate): Promise<BranchDto> {
+    return sameTx(trx, async (trx) => {
+      const before = await branchRepository.findByCode(trx, auth.tenantId, code);
+      if (!before) throw Errors.notFound(`chi nhánh ${code}`);
+      const patch: Record<string, unknown> = {};
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.address !== undefined) patch.address = input.address;
+      if (input.externalRef !== undefined) patch.external_ref = input.externalRef;
+      if (input.isActive !== undefined) patch.is_active = input.isActive;
+      if (input.note !== undefined) patch.note = input.note;
+      if (input.companyName !== undefined) patch.company_name = input.companyName;
+      if (input.taxCode !== undefined) patch.tax_code = input.taxCode;
+      if (input.phone !== undefined) patch.phone = input.phone;
+      if (input.fax !== undefined) patch.fax = input.fax;
+
+      if (input.departmentCode !== undefined) patch.department_code = await departmentOf(trx, auth.tenantId, input.departmentCode);
+      if (input.accountingUnitCode !== undefined) {
+        patch.accounting_unit_id = input.accountingUnitCode ? await branchRepository.ensureUnit(trx, auth.tenantId, input.accountingUnitCode) : null;
+      }
+      let finalCode = code;
+      if (input.newCode && input.newCode !== code) {
+        if (await branchRepository.findByCode(trx, auth.tenantId, input.newCode)) throw Errors.conflict(`Mã chi nhánh ${input.newCode} đã có`);
+        patch.code = input.newCode;
+        finalCode = input.newCode;
+      }
+      if (input.orgUnitCode !== undefined) {
+        let orgId: string | null = null;
+        if (input.orgUnitCode) {
+          const o = await trx.withTables<OrgTables>().selectFrom('org_units').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('code', '=', input.orgUnitCode).executeTakeFirst();
+          if (!o) throw Errors.validation(`Không có nút sơ đồ tổ chức ${input.orgUnitCode}`);
+          if (!o.is_active) throw Errors.validation(`Nút ${input.orgUnitCode} đã ngừng dùng`);
+          orgId = String(o.id);
+        }
+        patch.org_unit_id = orgId;
+      }
+      if (Object.keys(patch).length) await branchRepository.update(trx, auth.tenantId, code, patch);
+      if (input.orgUnitCode !== undefined) await syncBranchLevels(trx, auth.tenantId);
+      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: finalCode !== code ? 'branch.rename' : 'branch.update', objectType: 'branch', objectId: code, before, after: input });
+      return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, finalCode))!);
+    });
   },
 };

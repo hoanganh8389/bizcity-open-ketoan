@@ -1,4 +1,5 @@
 -- [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — sơ đồ tổ chức làm gốc: cây Công ty → Miền → Chi nhánh → Tỉnh, chi nhánh / điểm kinh doanh gắn vào nút, nút đánh dấu đơn vị mua hàng chọn chi nhánh kho tổng (đóng góp)
+-- [2026-11-03 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main: dấu chữ ký cho migration 0062 (nội dung do Nguyễn Văn Thủy đóng góp, không đổi)
 -- =============================================================================
 -- 0062 Sơ đồ tổ chức (SĐTC).
 --      Cây quản lý của công ty: gốc "Công ty" (cấp 0) → cấp 1 Miền → cấp 2 Chi nhánh → cấp 3 Tỉnh (đi sâu hơn vẫn được).

@@ -24,6 +24,7 @@ import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { voucherService } from '../../kernel/public.js';
+import { defineAction, itemMessage, mountActions, type AnyActionDef, sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Bút toán mẫu, bút toán lặp'];
 const STEP: Record<RecurrenceFrequency, number> = { monthly: 1, quarterly: 3, yearly: 12 };
@@ -63,8 +64,9 @@ const templateDto = (t: { code: string; name: string; doc_type: string; voucher:
 };
 
 /** Sinh phiếu của một kỳ: dựng phiếu từ mẫu, ghi sổ, ghi kỳ đã sinh cùng giao dịch. */
-async function generateOne(auth: AuthContext, recurrenceId: string, period: string) {
-  const r = await db.selectFrom('voucher_recurrences').selectAll().where('tenant_id', '=', auth.tenantId).where('id', '=', recurrenceId).executeTakeFirst();
+// [2026-11-03 10:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): chạy trong giao dịch của action (mỗi kỳ một SAVEPOINT ở action sinh phiếu)
+async function generateOne(trx: ActionTx, auth: AuthContext, recurrenceId: string, period: string) {
+  const r = await trx.selectFrom('voucher_recurrences').selectAll().where('tenant_id', '=', auth.tenantId).where('id', '=', recurrenceId).executeTakeFirst();
   if (!r) throw Errors.notFound(`bút toán lặp ${recurrenceId}`);
   if (!r.is_active) throw Errors.conflict('Bút toán lặp đang ngừng');
   const slot = periodsOf(r, '9999-12-31').find((p) => p.period === period);
@@ -87,7 +89,7 @@ async function generateOne(auth: AuthContext, recurrenceId: string, period: stri
     const i = parsed.error.issues[0]!;
     throw Errors.validation(`Mẫu ${t.code} chưa đủ để sinh phiếu tự động: ${i.path.join('.') === 'branchCode' ? 'chưa chọn chi nhánh' : i.message}`);
   }
-  return db.transaction().execute(async (trx) => {
+  return sameTx(trx, async (trx) => {
     const done = await trx.selectFrom('voucher_recurrence_runs').select('id').where('recurrence_id', '=', r.id).where('period', '=', period).executeTakeFirst();
     if (done) throw Errors.conflict(`Kỳ ${periodLabel(slot.docDate, freq)} đã sinh phiếu`);
     const created = await voucherService.createIn(trx, auth, parsed.data);
@@ -95,6 +97,34 @@ async function generateOne(auth: AuthContext, recurrenceId: string, period: stri
     return created;
   });
 }
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
+// [2026-11-03 08:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: chạy trong giao dịch của action (trx)
+const saveRecurrence = async (trx: ActionTx, auth: AuthContext, id: string | null, b: z.infer<typeof voucherRecurrenceInputSchema>) => {
+  await loadTemplate(auth.tenantId, b.templateCode);
+  if (b.endMonth && b.endMonth < b.startMonth) throw Errors.validation('Tháng kết thúc trước tháng bắt đầu');
+  const values = {
+    template_code: b.templateCode, name: b.name, frequency: b.frequency, day_of_month: b.dayOfMonth, start_month: b.startMonth,
+    end_month: b.endMonth ?? null, branch_code: b.branchCode || null, is_active: b.isActive, updated_by: auth.actorName, updated_at: new Date(),
+  };
+  return sameTx(trx, async (trx) => {
+    let rid = id;
+    if (rid) {
+      const runs = await trx.selectFrom('voucher_recurrence_runs').select('period').where('recurrence_id', '=', rid).execute();
+      if (runs.length) {
+        const slots = new Set(periodsOf({ frequency: b.frequency, day_of_month: b.dayOfMonth, start_month: b.startMonth, end_month: b.endMonth ?? null }, '9999-12-31').map((s) => s.period));
+        const lost = runs.filter((x) => !slots.has(x.period)).map((x) => x.period);
+        if (lost.length) throw Errors.validation(`Lịch mới không còn chứa kỳ đã sinh phiếu (${lost.join(', ')}); hãy ngừng lịch này và tạo lịch mới`);
+      }
+      const res = await trx.updateTable('voucher_recurrences').set(values).where('tenant_id', '=', auth.tenantId).where('id', '=', rid).executeTakeFirst();
+      if (!Number(res.numUpdatedRows)) throw Errors.notFound(`bút toán lặp ${rid}`);
+    } else {
+      rid = (await trx.insertInto('voucher_recurrences').values({ tenant_id: auth.tenantId, ...values }).returning('id').executeTakeFirstOrThrow()).id;
+    }
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_recurrence.save', objectType: 'voucher_recurrence', objectId: rid, after: b });
+    return { id: rid };
+  });
+};
 
 export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -119,32 +149,6 @@ export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void>
     handler: async (req) => ok(templateDto(await loadTemplate(authOf(req).tenantId, req.params.code))),
   });
 
-  r.put('/api/v1/voucher-templates/:code', {
-    preHandler: write,
-    schema: { tags, summary: 'Thêm hoặc sửa bút toán mẫu', params: z.object({ code: z.string().trim().min(1).max(64) }), body: voucherTemplateInputSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { name, docType, isActive, ...voucher } = req.body;
-      const codes = [...new Set(voucher.lines.flatMap((l) => [l.debitAccount, l.creditAccount]))];
-      const accounts = await db.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', auth.tenantId).where('code', 'in', codes).execute();
-      const missing = codes.filter((c) => !accounts.some((a) => a.code === c && a.is_posting));
-      if (missing.length) throw Errors.validation(`Tài khoản chưa có hoặc không phải tài khoản chi tiết: ${missing.join(', ')}`);
-      if (voucher.branchCode) {
-        const b = await db.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', voucher.branchCode).executeTakeFirst();
-        if (!b) throw Errors.validation(`Chi nhánh ${voucher.branchCode} chưa có`);
-      }
-      const old = await db.selectFrom('voucher_templates').select('doc_type').where('tenant_id', '=', auth.tenantId).where('code', '=', req.params.code).executeTakeFirst();
-      if (old && old.doc_type !== docType) throw Errors.validation('Không đổi được loại phiếu của mẫu; hãy tạo mẫu mới');
-      const values = { name, doc_type: docType, is_active: isActive, voucher: JSON.stringify(voucher), updated_by: auth.actorName, updated_at: new Date() };
-      await db.transaction().execute(async (trx) => {
-        await trx.insertInto('voucher_templates').values({ tenant_id: auth.tenantId, code: req.params.code, ...values })
-          .onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_template.save', objectType: 'voucher_template', objectId: req.params.code, after: req.body });
-      });
-      return ok({ code: req.params.code });
-    },
-  });
-
   r.get('/api/v1/voucher-recurrences', {
     preHandler: read,
     schema: { tags, summary: 'Danh sách bút toán lặp' },
@@ -166,59 +170,6 @@ export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void>
         frequency: x.frequency, frequencyLabel: RECURRENCE_FREQUENCIES[x.frequency as RecurrenceFrequency], dayOfMonth: x.day_of_month,
         startMonth: x.start_month, endMonth: x.end_month, branchCode: x.branch_code, isActive: x.is_active, runs: Number(x.runs ?? 0), lastPeriod: x.last_period,
       })));
-    },
-  });
-
-  const saveRecurrence = async (auth: AuthContext, id: string | null, b: z.infer<typeof voucherRecurrenceInputSchema>) => {
-    await loadTemplate(auth.tenantId, b.templateCode);
-    if (b.endMonth && b.endMonth < b.startMonth) throw Errors.validation('Tháng kết thúc trước tháng bắt đầu');
-    const values = {
-      template_code: b.templateCode, name: b.name, frequency: b.frequency, day_of_month: b.dayOfMonth, start_month: b.startMonth,
-      end_month: b.endMonth ?? null, branch_code: b.branchCode || null, is_active: b.isActive, updated_by: auth.actorName, updated_at: new Date(),
-    };
-    return db.transaction().execute(async (trx) => {
-      let rid = id;
-      if (rid) {
-        const runs = await trx.selectFrom('voucher_recurrence_runs').select('period').where('recurrence_id', '=', rid).execute();
-        if (runs.length) {
-          const slots = new Set(periodsOf({ frequency: b.frequency, day_of_month: b.dayOfMonth, start_month: b.startMonth, end_month: b.endMonth ?? null }, '9999-12-31').map((s) => s.period));
-          const lost = runs.filter((x) => !slots.has(x.period)).map((x) => x.period);
-          if (lost.length) throw Errors.validation(`Lịch mới không còn chứa kỳ đã sinh phiếu (${lost.join(', ')}); hãy ngừng lịch này và tạo lịch mới`);
-        }
-        const res = await trx.updateTable('voucher_recurrences').set(values).where('tenant_id', '=', auth.tenantId).where('id', '=', rid).executeTakeFirst();
-        if (!Number(res.numUpdatedRows)) throw Errors.notFound(`bút toán lặp ${rid}`);
-      } else {
-        rid = (await trx.insertInto('voucher_recurrences').values({ tenant_id: auth.tenantId, ...values }).returning('id').executeTakeFirstOrThrow()).id;
-      }
-      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_recurrence.save', objectType: 'voucher_recurrence', objectId: rid, after: b });
-      return { id: rid };
-    });
-  };
-
-  r.post('/api/v1/voucher-recurrences', {
-    preHandler: write,
-    schema: { tags, summary: 'Thêm bút toán lặp', body: voucherRecurrenceInputSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await saveRecurrence(authOf(req), null, req.body))),
-  });
-
-  r.put('/api/v1/voucher-recurrences/:id', {
-    preHandler: write,
-    schema: { tags, summary: 'Sửa bút toán lặp', params: idParamSchema, body: voucherRecurrenceInputSchema },
-    handler: async (req) => ok(await saveRecurrence(authOf(req), req.params.id, req.body)),
-  });
-
-  r.delete('/api/v1/voucher-recurrences/:id', {
-    preHandler: write,
-    schema: { tags, summary: 'Xoá bút toán lặp chưa sinh phiếu nào', params: idParamSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const runs = await db.selectFrom('voucher_recurrence_runs').select('id').where('tenant_id', '=', auth.tenantId).where('recurrence_id', '=', req.params.id).executeTakeFirst();
-      if (runs) throw Errors.conflict('Bút toán lặp đã sinh phiếu, không xoá được; hãy ngừng dùng');
-      await db.transaction().execute(async (trx) => {
-        await trx.deleteFrom('voucher_recurrences').where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_recurrence.delete', objectType: 'voucher_recurrence', objectId: req.params.id });
-      });
-      return ok({ id: req.params.id });
     },
   });
 
@@ -258,26 +209,108 @@ export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void>
     },
   });
 
-  r.post('/api/v1/voucher-recurrences/generate', {
-    preHandler: write,
-    schema: {
-      tags,
-      summary: 'Sinh phiếu cho các kỳ đến hạn',
-      description: 'Mỗi kỳ sinh trong một giao dịch riêng: kỳ lỗi không chặn kỳ khác. Kỳ đã sinh thì báo lỗi, không sinh trùng.',
-      body: z.object({ items: z.array(z.object({ recurrenceId: z.string().regex(/^[1-9][0-9]*$/), period: z.string().regex(/^\d{4}-\d{2}$/) })).min(1).max(200) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const results = [];
-      for (const it of req.body.items) {
-        try {
-          const c = await generateOne(auth, it.recurrenceId, it.period);
-          results.push({ ...it, ok: true as const, documentId: c.id, docNo: c.docNo });
-        } catch (e) {
-          results.push({ ...it, ok: false as const, error: e instanceof Error ? e.message : String(e) });
-        }
-      }
-      return ok(results);
-    },
-  });
+  mountActions(app, voucherTemplateWriteActions);
+  mountActions(app, voucherTemplateMoreWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const voucherTemplateWriteActions: AnyActionDef[] = [
+  // [2026-11-03 10:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả lô một giao dịch, mỗi kỳ một SAVEPOINT — kỳ lỗi không chặn kỳ khác (như trước), các kỳ đúng lưu khi lô xong
+  defineAction({
+    id: 'core.voucher-recurrence.generate', title: 'Sinh phiếu cho các kỳ đến hạn', tags,
+    description: 'Mỗi kỳ sinh trong một SAVEPOINT: kỳ lỗi không chặn kỳ khác. Kỳ đã sinh thì báo lỗi, không sinh trùng.',
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'required',
+    input: z.object({ items: z.array(z.object({ recurrenceId: z.string().regex(/^[1-9][0-9]*$/), period: z.string().regex(/^\d{4}-\d{2}$/) })).min(1).max(200) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/voucher-recurrences/generate' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_recurrence' },
+    handler: async (ctx, input) => {
+      const results = [];
+      for (const it of input.items) {
+        const x = await ctx.data.item((t) => generateOne(t, ctx.legacyAuth, it.recurrenceId, it.period));
+        results.push(x.ok ? { ...it, ok: true as const, documentId: x.value.id, docNo: x.value.docNo } : { ...it, ok: false as const, error: itemMessage(x.error) });
+      }
+      return results;
+    },
+  }),
+  defineAction({
+    id: 'core.voucher-template.upsert', title: 'Thêm hoặc sửa bút toán mẫu', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: (voucherTemplateInputSchema).merge(z.object({ code: z.string().trim().min(1).max(64) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/voucher-templates/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_template', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { name, docType, isActive, ...voucher } = reqBody;
+      const codes = [...new Set(voucher.lines.flatMap((l) => [l.debitAccount, l.creditAccount]))];
+      const accounts = await trx.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', auth.tenantId).where('code', 'in', codes).execute();
+      const missing = codes.filter((c) => !accounts.some((a) => a.code === c && a.is_posting));
+      if (missing.length) throw Errors.validation(`Tài khoản chưa có hoặc không phải tài khoản chi tiết: ${missing.join(', ')}`);
+      if (voucher.branchCode) {
+        const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', voucher.branchCode).executeTakeFirst();
+        if (!b) throw Errors.validation(`Chi nhánh ${voucher.branchCode} chưa có`);
+      }
+      const old = await trx.selectFrom('voucher_templates').select('doc_type').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).executeTakeFirst();
+      if (old && old.doc_type !== docType) throw Errors.validation('Không đổi được loại phiếu của mẫu; hãy tạo mẫu mới');
+      const values = { name, doc_type: docType, is_active: isActive, voucher: JSON.stringify(voucher), updated_by: auth.actorName, updated_at: new Date() };
+      await sameTx(trx, async (trx) => {
+        await trx.insertInto('voucher_templates').values({ tenant_id: auth.tenantId, code: input.code, ...values })
+          .onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_template.save', objectType: 'voucher_template', objectId: input.code, after: reqBody });
+      });
+      return { code: input.code };
+    },
+  }),
+  defineAction({
+    id: 'core.voucher-recurrence.delete', title: 'Xoá bút toán lặp chưa sinh phiếu nào', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/voucher-recurrences/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_recurrence', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const runs = await trx.selectFrom('voucher_recurrence_runs').select('id').where('tenant_id', '=', auth.tenantId).where('recurrence_id', '=', input.id).executeTakeFirst();
+      if (runs) throw Errors.conflict('Bút toán lặp đã sinh phiếu, không xoá được; hãy ngừng dùng');
+      await sameTx(trx, async (trx) => {
+        await trx.deleteFrom('voucher_recurrences').where('tenant_id', '=', auth.tenantId).where('id', '=', input.id).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_recurrence.delete', objectType: 'voucher_recurrence', objectId: input.id });
+      });
+      return { id: input.id };
+    },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const voucherTemplateMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.voucher-recurrence.create', title: 'Thêm bút toán lặp', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'required',
+    input: voucherRecurrenceInputSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/voucher-recurrences', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_recurrence' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      return await saveRecurrence(trx, ctx.legacyAuth, null, input);
+    },
+  }),
+  defineAction({
+    id: 'core.voucher-recurrence.update', title: 'Sửa bút toán lặp', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: (voucherRecurrenceInputSchema).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/voucher-recurrences/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_recurrence', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const { id: _id, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      return await saveRecurrence(trx, ctx.legacyAuth, input.id, reqBody);
+    },
+  }),
+];

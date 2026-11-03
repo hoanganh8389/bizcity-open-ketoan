@@ -44,6 +44,7 @@ import { accountRepository } from '../accounts/account.repository.js';
 import { documentRepository } from '../documents/document.repository.js';
 import { eventStore } from '../documents/event-store.js';
 import type { DraftLine } from '../ledger/ledger.types.js';
+import { inSavepoint, itemMessage, sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 /**
  * Bộ bút toán kết chuyển mặc định (đơn vị chưa khai riêng thì dùng bộ này), chạy theo thứ tự seq:
@@ -507,8 +508,9 @@ function assertRulesUsable(ruleSet: RuleSet, accounts: Map<string, Account>) {
 }
 
 /** Kết chuyển (hoặc kết chuyển lại) một chi nhánh, một kỳ, trong một giao dịch. */
-async function runOne(auth: AuthContext, branchCode: string, period: string): Promise<ClosingRunResult> {
-  return db.transaction().execute(async (trx) => {
+// [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): chạy trong giao dịch có sẵn (trx của action / của bản cũ)
+async function runOne(outer: ActionTx, auth: AuthContext, branchCode: string, period: string): Promise<ClosingRunResult> {
+  return sameTx(outer, async (trx) => {
     const s = await scope(trx, auth, { period, branchCodes: [branchCode] });
     assertRulesUsable(s.ruleSet, s.accounts);
     const rules = s.ruleSet.rules;
@@ -663,37 +665,47 @@ export const closingService = {
   },
 
   /**
-   * Kết chuyển (hoặc kết chuyển lại) từng chi nhánh; mỗi chi nhánh, mỗi kỳ một giao dịch riêng.
+   * Kết chuyển (hoặc kết chuyển lại) từng chi nhánh, cả lần trong một giao dịch (W6 đợt 6).
    * cascade: kết chuyển xong thì kết chuyển lại luôn các tháng sau (cùng năm) đã kết chuyển của chi nhánh, vì số dư đầu
    * 911 của các tháng đó vừa đổi; tháng nào lỗi (kỳ đã khoá…) thì dừng dây chuyền của chi nhánh đó và báo.
    */
   async run(auth: AuthContext, input: ClosingRunInput): Promise<ClosingRunResult[]> {
+    return db.transaction().execute((trx) => closingService.runIn(trx, auth, input));
+  },
+
+  // [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả lần kết chuyển một giao dịch; tháng kết chuyển lại theo dây chuyền mỗi tháng một SAVEPOINT (tháng lỗi dừng
+  // dây chuyền của chi nhánh và được báo, như trước). Lỗi ở tháng đầu của một chi nhánh: huỷ cả lần (trước: chi nhánh trước đã lưu).
+  async runIn(trx: ActionTx, auth: AuthContext, input: ClosingRunInput): Promise<ClosingRunResult[]> {
     const results: ClosingRunResult[] = [];
     for (const branchCode of [...new Set(input.branchCodes)]) {
-      const first = await runOne(auth, branchCode, input.period);
+      const first = await runOne(trx, auth, branchCode, input.period);
       results.push(first);
       if (!input.cascade || first.status === 'blocked') continue;
-      for (const p of await laterClosedPeriods(db, auth.tenantId, branchCode, input.period)) {
-        try {
-          const r = await runOne(auth, branchCode, p);
-          results.push({ ...r, cascaded: true });
-          if (r.status === 'blocked') break;
-        } catch (e) {
-          results.push({ branchCode, period: p, status: 'error', lines: 0, total: 0, profit: null, residuals: [], cascaded: true, message: e instanceof Error ? e.message : String(e) });
+      for (const p of await laterClosedPeriods(trx, auth.tenantId, branchCode, input.period)) {
+        const x = await inSavepoint(trx, (t) => runOne(t, auth, branchCode, p));
+        if (!x.ok) {
+          results.push({ branchCode, period: p, status: 'error', lines: 0, total: 0, profit: null, residuals: [], cascaded: true, message: itemMessage(x.error) });
           break;
         }
+        results.push({ ...x.value, cascaded: true });
+        if (x.value.status === 'blocked') break;
       }
     }
     return results;
   },
 
   /**
-   * Kết chuyển lợi nhuận năm trước (4212 → 4211) cho năm mới `year`, từng chi nhánh một giao dịch.
+   * Kết chuyển lợi nhuận năm trước (4212 → 4211) cho năm mới `year`, mọi chi nhánh trong một giao dịch.
    * Số chuyển = số dư tài khoản nguồn (gồm tài khoản con) đến hết 31/12 năm trước; dư Có (lãi): Nợ nguồn / Có đích;
    * dư Nợ (lỗ): Nợ đích / Có nguồn. Ghi ngày 01/01. Chạy lại: bút toán cũ được đảo rồi ghi lại.
    */
   async yearEnd(auth: AuthContext, input: YearEndRunInput) {
-    const accounts = await accountRepository.mapByCode(db, auth.tenantId);
+    return db.transaction().execute((trx) => closingService.yearEndIn(trx, auth, input));
+  },
+
+  // [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): mọi chi nhánh trong một giao dịch (trước: mỗi chi nhánh một giao dịch, lỗi giữa chừng để lại chi nhánh trước đã ghi)
+  async yearEndIn(outer: ActionTx, auth: AuthContext, input: YearEndRunInput) {
+    const accounts = await accountRepository.mapByCode(outer, auth.tenantId);
     const target = accounts.get(input.toAccount);
     if (!target) throw Errors.validation(`Tài khoản ${input.toAccount} không có trong danh mục`);
     if (!target.is_posting) throw Errors.validation(`Tài khoản ${input.toAccount} là tài khoản tổng hợp, hãy chọn tài khoản chi tiết`);
@@ -702,7 +714,7 @@ export const closingService = {
     const label = `năm ${input.year - 1}`;
     const results: { branchCode: string; status: 'posted' | 'empty' | 'preview'; docNo?: string; lines: { account: string; balance: number }[]; total: number }[] = [];
     for (const branchCode of [...new Set(input.branchCodes)]) {
-      const r = await db.transaction().execute(async (trx) => {
+      const r = await sameTx(outer, async (trx) => {
         const s = await scope(trx, auth, { period: `${input.year}-01`, branchCodes: [branchCode] });
         const b = s.branches[0]!;
         const res = await sql<{ account_code: string; bal: string }>`

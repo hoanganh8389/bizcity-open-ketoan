@@ -40,7 +40,7 @@ import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
-import { listActions, mountActions } from '../../core/actions.js';
+import { listActions, mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
 import { listModulePermissions, PERMISSIONS } from '@bizcity/platform/core/auth';
 import { REQUIRED_MODULES, runModuleSeed } from '../../core/module-lifecycle.js';
@@ -49,12 +49,15 @@ import { moduleActions } from './module.actions.js';
 import { notifyActions } from './notify.actions.js';
 import { zodToJson } from '../../core/json-schema.js';
 
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
+const tenantDto = (t: { code: string; name: string; tax_code: string | null; address: string | null; phone: string | null; settings: unknown }) => ({
+  code: t.code, name: t.name, taxCode: t.tax_code ?? '', address: t.address ?? '', phone: t.phone ?? '',
+  logo: String((t.settings as { logo?: unknown } | null)?.logo ?? '') || null,
+});
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
+
 export async function systemRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
-  const tenantDto = (t: { code: string; name: string; tax_code: string | null; address: string | null; phone: string | null; settings: unknown }) => ({
-    code: t.code, name: t.name, taxCode: t.tax_code ?? '', address: t.address ?? '', phone: t.phone ?? '',
-    logo: String((t.settings as { logo?: unknown } | null)?.logo ?? '') || null,
-  });
 
   r.get('/api/v1/settings/data-lock', {
     schema: { tags: ['Hệ thống'], summary: 'Khoá dữ liệu theo ngày: khoá đến ngày, chỉ sửa trong N ngày, chỉ lập phiếu hôm nay, cấm kế toán viên huỷ' },
@@ -62,23 +65,6 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
       const auth = authOf(req);
       const t = await db.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
       return ok({ ...readDataLock(t.settings), today: todayVN(), bypass: auth.permissions.has('documents:bypass-date-lock') });
-    },
-  });
-
-  r.put('/api/v1/settings/data-lock', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags: ['Hệ thống'], summary: 'Sửa khoá dữ liệu theo ngày', body: dataLockSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      await db.transaction().execute(async (trx) => {
-        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
-        const before = readDataLock(cur.settings);
-        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}), dataLock: b };
-        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.data-lock', objectType: 'tenant', objectId: auth.tenantId, before, after: b });
-      });
-      return ok({ ...b, today: todayVN(), bypass: auth.permissions.has('documents:bypass-date-lock') });
     },
   });
 
@@ -90,58 +76,10 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.put('/api/v1/settings/posting-modes', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags: ['Hệ thống'], summary: 'Sửa chế độ ghi sổ theo loại chứng từ', body: postingModesSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
-        const before = readPostingModes(cur.settings);
-        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}), postingModes: req.body };
-        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.posting-modes', objectType: 'tenant', objectId: auth.tenantId, before, after: req.body });
-      });
-      return ok(req.body);
-    },
-  });
-
   r.get('/api/v1/tenant', {
     schema: { tags: ['Hệ thống'], summary: 'Thông tin đơn vị đang đăng nhập' },
     handler: async (req) => {
       const t = await db.selectFrom('tenants').select(['code', 'name', 'tax_code', 'address', 'phone', 'settings']).where('id', '=', authOf(req).tenantId).executeTakeFirstOrThrow();
-      return ok(tenantDto(t));
-    },
-  });
-
-  r.put('/api/v1/tenant', {
-    preHandler: requirePermission('settings:write'),
-    schema: {
-      tags: ['Hệ thống'],
-      summary: 'Sửa thông tin đơn vị (tên hiện ở đầu trang, trên phiếu in, báo cáo)',
-      body: z.object({
-        name: z.string().trim().min(1, 'Cần nhập tên đơn vị').max(255),
-        taxCode: z.string().trim().max(32).default(''),
-        address: z.string().trim().max(500).default(''),
-        phone: z.string().trim().max(64).default(''),
-        /** Logo: data URL ảnh; null = xoá logo; không gửi = giữ nguyên. */
-        logo: z.string().max(420_000).nullable().optional(),
-      }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      if (b.taxCode && !/^\d{10}(-\d{3})?$/.test(b.taxCode)) throw Errors.validation('Mã số thuế gồm 10 chữ số (chi nhánh thêm -xxx)');
-      if (b.logo && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(b.logo)) throw Errors.validation('Logo phải là ảnh PNG, JPEG hoặc WebP');
-      const t = await db.transaction().execute(async (trx) => {
-        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
-        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}) };
-        if (b.logo !== undefined) { if (b.logo) settings.logo = b.logo; else delete settings.logo; }
-        const row = await trx.updateTable('tenants').set({ name: b.name, tax_code: b.taxCode || null, address: b.address || null, phone: b.phone || null, settings: JSON.stringify(settings) })
-          .where('id', '=', auth.tenantId).returning(['code', 'name', 'tax_code', 'address', 'phone', 'settings']).executeTakeFirstOrThrow();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'tenant.update', objectType: 'tenant', objectId: auth.tenantId, after: { ...b, logo: b.logo === undefined ? undefined : b.logo ? `(ảnh ${b.logo.length} ký tự)` : null } });
-        return row;
-      });
       return ok(tenantDto(t));
     },
   });
@@ -168,8 +106,6 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
       return ok({ status: 'ready', time: r.at, checks, ...BUILD_VERSION });
     },
   });
-
-  const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 
   r.get('/api/v1/system/diagnostics', {
     preHandler: requirePermission('reports:read'),
@@ -284,6 +220,7 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, notifyActions);
 
   // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: chạy seed[] của manifest cho đơn vị (dữ liệu mẫu qua core.*.upsert)
+  // @bizcity-route: nạp dữ liệu mẫu bằng cách gọi các action danh mục chuẩn (mỗi mục đã có bằng chứng riêng)
   app.post('/api/v1/system/modules/:key/seed', {
     preHandler: requirePermission('catalog:write'),
     schema: { tags: ['Hệ thống'], summary: 'Nạp dữ liệu mẫu của module (seed[] trong manifest) qua action danh mục chuẩn', params: z.object({ key: z.string().regex(/^[a-z][a-z0-9-]*$/) }), querystring: z.object({ dryRun: queryBool.optional() }) },
@@ -308,4 +245,90 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags: ['Hệ thống'], summary: 'Cấu trúc cơ sở dữ liệu kèm giải thích' },
     handler: async () => ok(await readSchema()),
   });
+  mountActions(app, systemWriteActions);
+  mountActions(app, systemMoreWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const systemWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.posting-modes.update', title: 'Sửa chế độ ghi sổ theo loại chứng từ', tags: ['Hệ thống'],
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: postingModesSchema, output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/settings/posting-modes' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'posting_modes' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, async (trx) => {
+        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
+        const before = readPostingModes(cur.settings);
+        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}), postingModes: input };
+        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.posting-modes', objectType: 'tenant', objectId: auth.tenantId, before, after: input });
+      });
+      return input;
+    },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const systemMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.data-lock.update', title: 'Sửa khoá dữ liệu theo ngày', tags: ['Hệ thống'],
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: dataLockSchema, output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/settings/data-lock' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'data_lock' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      await sameTx(trx, async (trx) => {
+        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
+        const before = readDataLock(cur.settings);
+        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}), dataLock: b };
+        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.data-lock', objectType: 'tenant', objectId: auth.tenantId, before, after: b });
+      });
+      return { ...b, today: todayVN(), bypass: auth.permissions.has('documents:bypass-date-lock') };
+    },
+  }),
+  defineAction({
+    id: 'core.tenant.update', title: 'Sửa thông tin đơn vị (tên hiện ở đầu trang, trên phiếu in, báo cáo)', tags: ['Hệ thống'],
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({
+        name: z.string().trim().min(1, 'Cần nhập tên đơn vị').max(255),
+        taxCode: z.string().trim().max(32).default(''),
+        address: z.string().trim().max(500).default(''),
+        phone: z.string().trim().max(64).default(''),
+        /** Logo: data URL ảnh; null = xoá logo; không gửi = giữ nguyên. */
+        logo: z.string().max(420_000).nullable().optional(),
+      }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/tenant' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'tenant' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      if (b.taxCode && !/^\d{10}(-\d{3})?$/.test(b.taxCode)) throw Errors.validation('Mã số thuế gồm 10 chữ số (chi nhánh thêm -xxx)');
+      if (b.logo && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(b.logo)) throw Errors.validation('Logo phải là ảnh PNG, JPEG hoặc WebP');
+      const t = await sameTx(trx, async (trx) => {
+        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
+        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}) };
+        if (b.logo !== undefined) { if (b.logo) settings.logo = b.logo; else delete settings.logo; }
+        const row = await trx.updateTable('tenants').set({ name: b.name, tax_code: b.taxCode || null, address: b.address || null, phone: b.phone || null, settings: JSON.stringify(settings) })
+          .where('id', '=', auth.tenantId).returning(['code', 'name', 'tax_code', 'address', 'phone', 'settings']).executeTakeFirstOrThrow();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'tenant.update', objectType: 'tenant', objectId: auth.tenantId, after: { ...b, logo: b.logo === undefined ? undefined : b.logo ? `(ảnh ${b.logo.length} ký tự)` : null } });
+        return row;
+      });
+      return tenantDto(t);
+    },
+  }),
+];
