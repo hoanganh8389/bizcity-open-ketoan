@@ -215,6 +215,8 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 -->
+- **Mọi thao tác ghi qua `defineAction`** (SC-ACT-1 nay **chặn**): route ghi mới phải là action, hoặc khai `// @bizcity-route: <lý do>` ngay dòng trên (17 route cố ý giữ: đăng nhập, SSO, đổi mật khẩu, vé ứng dụng, nhịp online, MCP, mẫu in cá nhân, cửa nạp chứng từ, kéo kết nối, nạp mẫu module, dữ liệu mẫu Mua hàng). Thêm mục huấn luyện / chính sách / tệp đính kèm Mua hàng **bắt buộc `Idempotency-Key`** (giao diện đã gửi sẵn).
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 -->
 - **Thao tác theo lô chạy trong một giao dịch, mỗi mục một SAVEPOINT** (`ctx.data.item`, `inSavepoint` ở `@bizcity/platform/core/actions`): trạm định khoản, xác nhận nhận tiền, kết chuyển (cả dây chuyền tháng sau), kết chuyển năm, tính giá vốn, bỏ định khoản hàng loạt, sinh phiếu định kỳ, nhập Excel mặt hàng. Mục lỗi vẫn được báo trong kết quả và không chặn mục khác; khác trước: các mục đúng được lưu **cùng lúc khi cả lô xong** (trước: lưu dần), và lỗi ngoài từng mục huỷ cả lô thay vì để lại phần đã chạy. Kết chuyển năm và tính giá vốn nay không còn để lại nửa chừng khi một chi nhánh lỗi.
 - Cửa nạp chứng từ (`POST /api/v1/documents`, `/batch`) và kéo chứng từ từ kết nối giữ nguyên cách cũ (có lý do ghi ở route: bể chờ dùng giao dịch riêng; nguồn được báo "đã nhận" sau mỗi trang).

@@ -112,7 +112,10 @@
     "mua-hang.unit.thung-empty-rows-delete",
     "mua-hang.transfer-request.done",
     "mua-hang.transfer-request.cancel",
-    "mua-hang.transfer-request.reopen"
+    "mua-hang.transfer-request.reopen",
+    "mua-hang.attachment.add",
+    "mua-hang.policy.create",
+    "mua-hang.policy.update"
   ],
   "ui": {
     "icon": "Truck",

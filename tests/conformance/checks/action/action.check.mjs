@@ -65,13 +65,14 @@ export const checks = [
   {
     id: 'SC-ACT-1',
     title: 'Thao tác ghi đi qua defineAction (quyền, zod, Idempotency-Key, dry-run, bằng chứng)',
-    gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['STD-ACT-1', 'STD-ACT-4'], conf: ['CONF-STATIC-8', 'CONF-RUN-4'], tier: 1, enforce: 'planned', phase: 'Phase 2 (2.3)', weight: 4, targets: ['repo'], scope: 'module',
+    gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['STD-ACT-1', 'STD-ACT-4'], conf: ['CONF-STATIC-8', 'CONF-RUN-4'], tier: 1, enforce: 'block', weight: 4, targets: ['repo'], scope: 'module',
     run(ctx) {
+      // [2026-11-03 01:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7: 0 route ghi thô → planned thành block: route ghi mới phải là defineAction hoặc khai `// @bizcity-route: <lý do>`
       // [2026-11-03 05:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: đo trung thực — action GHI / (action ghi + route ghi thô còn lại);
       // trước đây tử số đếm mọi defineAction (cả action đọc) trên mẫu số chỉ route thô, vượt 100% khi route thô ít đi.
       // [2026-11-03 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: route ghi CỐ Ý không là action (công khai / tự phục vụ /
       // giao thức / cửa nạp / xác nhận ra hệ thống ngoài) khai `// @bizcity-route: <lý do>` ngay dòng trên — tách khỏi nợ, phải có lý do.
-      let writes = 0; let viaAction = 0; let actions = 0; const exempt = [];
+      let writes = 0; let viaAction = 0; let actions = 0; const exempt = []; const findings = [];
       for (const file of ctx.repo.files({ under: SRC, ext: ['.ts'] })) {
         const ls = ctx.repo.lines(file);
         ls.forEach((t, i) => {
@@ -79,7 +80,7 @@ export const checks = [
           if (!m || m[1] === 'get') return;
           const why = /\/\/\s*@bizcity-route:\s*(\S.*)$/.exec(ls[i - 1] ?? '');
           if (why) exempt.push(`${m[1].toUpperCase()} ${m[2]} — ${why[1].trim()}`);
-          else writes++;
+          else { writes++; findings.push(ctx.finding(file, i + 1, `${m[1].toUpperCase()} ${m[2]} là route ghi thô — dùng defineAction (quyền, zod, Idempotency-Key, bằng chứng) hoặc khai // @bizcity-route: <lý do> ngay dòng trên`, `${m[1]} ${m[2]}`)); }
         });
         const text = ctx.repo.read(file);
         const n = (text.match(/\bdefineAction\(/g) ?? []).length;
@@ -88,7 +89,7 @@ export const checks = [
       }
       const total = viaAction + writes;
       return {
-        examined: total, readiness: total ? viaAction / total : 0, findings: [],
+        examined: total, findings,
         metrics: { writeRoutes: writes, writeActions: viaAction, exemptRoutes: exempt.length, defineAction: actions },
         notes: [`${viaAction}/${total} thao tác ghi đi qua defineAction; còn ${writes} route ghi thô; ${exempt.length} route cố ý giữ (có lý do)`, ...exempt.map((e) => `giữ route: ${e}`)],
       };

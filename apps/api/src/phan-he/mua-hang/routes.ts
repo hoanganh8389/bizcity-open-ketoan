@@ -41,6 +41,9 @@ const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(d
 const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
 const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
 
+// [2026-11-03 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): chủ của tệp đính kèm — dùng ở GET và action
+const attachmentOwner = z.object({ ownerType: z.enum(['partner', 'document', 'policy', 'invoice']), ownerId: z.string().min(1) });
+
 export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('documents:read');
@@ -63,16 +66,8 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const a = authOf(req); return ok(await supplierProfile(db, a.tenantId, await ctxOf(a.tenantId), req.params.code)); } });
 
   // ---------------- Tệp đính kèm (hợp đồng, CO, CQ, báo giá, chứng từ) — lưu trên ổ dữ liệu ERP
-  const owner = z.object({ ownerType: z.enum(['partner', 'document', 'policy', 'invoice']), ownerId: z.string().min(1) });
-  r.get('/api/v1/purchase/attachments', { preHandler: read, schema: { tags, summary: 'Tệp đính kèm của NCC / chứng từ / chính sách', querystring: owner },
+  r.get('/api/v1/purchase/attachments', { preHandler: read, schema: { tags, summary: 'Tệp đính kèm của NCC / chứng từ / chính sách', querystring: attachmentOwner },
     handler: async (req) => ok({ files: await listAttachments(db, authOf(req).tenantId, req.query.ownerType, req.query.ownerId), kinds: ATTACHMENT_KINDS }) });
-  r.post('/api/v1/purchase/attachments', { preHandler: write, schema: { tags, summary: 'Gửi tệp (nội dung base64, tối đa 15 MB)', body: owner.extend({ kind: z.string().default('khac'), fileName: z.string().min(1).max(200), mime: z.string().max(120).default(''), dataBase64: z.string().min(1), note: z.string().max(500).optional() }) },
-    handler: async (req, reply) => {
-      const a = authOf(req);
-      const out = await addAttachment(db, a.tenantId, a.actorName, req.body);
-      await logEvents(a.tenantId, [{ event: 'attachment_added', docNo: req.body.ownerType === 'partner' ? '' : req.body.ownerId, user: a.actorName, data: { ownerType: req.body.ownerType, ownerId: req.body.ownerId, partnerCode: req.body.ownerType === 'partner' ? req.body.ownerId : undefined, fileName: req.body.fileName, kind: req.body.kind } }]);
-      return reply.code(201).send(ok(out));
-    } });
   r.get('/api/v1/purchase/attachments/:id/file', { preHandler: read, schema: { tags, summary: 'Tải nội dung tệp', params: idParamSchema },
     handler: async (req, reply) => {
       const f = await readAttachment(db, authOf(req).tenantId, req.params.id);
@@ -81,15 +76,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
 
   // ---------------- Chính sách
   r.get('/api/v1/purchase/policies', { preHandler: read, schema: { tags, summary: 'Danh sách chính sách mua hàng' }, handler: async (req) => ok(await listPolicies(db, authOf(req).tenantId)) });
-  const savePol = async (req: { body: unknown }, auth: ReturnType<typeof authOf>, id?: string) => {
-    const p = policyInputSchema.parse(req.body);
-    const before = id ? (await listPolicies(db, auth.tenantId)).find((x) => x.id === id) : undefined;
-    const saved = await db.transaction().execute((trx) => savePolicy(trx, auth.tenantId, auth.actorName, p, id));
-    await logEvents(auth.tenantId, [{ event: id ? 'policy_changed' : 'policy_created', docNo: p.code, user: auth.actorName, data: { code: p.code, kind: p.kind, name: p.name, partnerCode: p.scope.partnerCode, rule: p.rule, scope: p.scope, isActive: p.isActive, validFrom: p.validFrom, validTo: p.validTo, ...(before ? { before: { name: before.name, rule: before.rule, scope: before.scope, isActive: before.isActive, validFrom: before.validFrom, validTo: before.validTo } } : {}) } }]);
-    return { id: saved };
-  };
-  r.post('/api/v1/purchase/policies', { preHandler: catalog, schema: { tags, summary: 'Thêm chính sách (nội dung kiểm theo loại)' }, handler: async (req, reply) => reply.code(201).send(ok(await savePol(req, authOf(req)))) });
-  r.put('/api/v1/purchase/policies/:id', { preHandler: catalog, schema: { tags, summary: 'Sửa chính sách', params: idParamSchema }, handler: async (req) => ok(await savePol(req, authOf(req), req.params.id)) });
 
   // ---------------- Báo cáo
   r.get('/api/v1/purchase/credit', { preHandler: read, schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
@@ -149,10 +135,13 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
   r.get('/api/v1/purchase/units/thung/empty-rows', { preHandler: read, schema: { tags, summary: 'MH27: dòng Thùng trống giá thừa (bản đầu từng thêm) — cùng NCC × mã còn dòng có giá' },
     handler: async (req) => ok(await emptyThungRows(db, authOf(req).tenantId)) });
+  // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });
+  // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/warehouses', { preHandler: settings, schema: { tags, summary: 'Thêm kho mặc định cho chi nhánh mẫu chưa có kho (CN-NA, CN-ND, CN-PT, CN-HCM) — không sửa phiếu; cần mật khẩu', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await ensureDemoWarehouses(authOf(req))); } });
+  // @bizcity-route: công cụ dữ liệu tình huống (cần mật khẩu) — dựng / xoá từng tình huống bằng service ghi sổ, mỗi tình huống một giao dịch, cố ý bỏ qua lỗi từng phần
   r.post('/api/v1/purchase/demo/clear', { preHandler: settings, schema: { tags, summary: 'Xoá dữ liệu tình huống (đảo bút toán đã ghi) — cần mật khẩu', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await clearDemo(authOf(req))); } });
   mountActions(app, routesTsWriteActions);
@@ -329,6 +318,39 @@ export const routesTsWriteActions: AnyActionDef[] = [
 
 
 export const routesWriteActions: AnyActionDef[] = [
+  // [2026-11-03 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): đính kèm, chính sách. Nhật ký mua hàng (tệp JSONL, log.ts) ghi trong handler — trước commit của giao dịch action
+  defineAction({
+    id: 'mua-hang.attachment.add', title: 'Gửi tệp (nội dung base64, tối đa 15 MB)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'required',
+    input: attachmentOwner.extend({ kind: z.string().default('khac'), fileName: z.string().min(1).max(200), mime: z.string().max(120).default(''), dataBase64: z.string().min(1), note: z.string().max(500).optional() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/attachments', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'attachment', objectId: (i) => `${i.ownerType}:${i.ownerId}` },
+    handler: async (ctx, input) => {
+      const a = ctx.legacyAuth;
+      const out = await addAttachment(ctx.data.tx, a.tenantId, a.actorName, input);
+      await logEvents(a.tenantId, [{ event: 'attachment_added', docNo: input.ownerType === 'partner' ? '' : input.ownerId, user: a.actorName, data: { ownerType: input.ownerType, ownerId: input.ownerId, partnerCode: input.ownerType === 'partner' ? input.ownerId : undefined, fileName: input.fileName, kind: input.kind } }]);
+      return out;
+    },
+  }),
+  ...([['create', 'POST', '/api/v1/purchase/policies', 'Thêm chính sách (nội dung kiểm theo loại)'], ['update', 'PUT', '/api/v1/purchase/policies/:id', 'Sửa chính sách']] as const).map(([verb, method, path, title]) => defineAction({
+    id: `mua-hang.policy.${verb}`, title, tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: verb === 'create' ? 'required' : 'natural',
+    // Nội dung kiểm theo loại (policyInputSchema có superRefine): kiểm trong handler, lỗi vẫn là VALIDATION_ERROR
+    input: (verb === 'create' ? z.object({}) : idParamSchema.partial()).passthrough(), output: z.object({ id: z.string() }),
+    expose: { http: { method, path, ...(verb === 'create' ? { status: 201 as const } : {}) }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'policy', objectId: (_i, o) => o.id },
+    handler: async (ctx, { id: rawId, ...body }) => {
+      // Thêm mới: giao diện gửi kèm id tạm trong thân ("new-…") — như route cũ, chỉ lệnh sửa lấy id (từ đường dẫn)
+      const id = verb === 'update' ? (rawId as string) : undefined;
+      const auth = ctx.legacyAuth;
+      const trx = ctx.data.tx;
+      const p = policyInputSchema.parse(body);
+      const before = id ? (await listPolicies(trx, auth.tenantId)).find((x) => x.id === id) : undefined;
+      const saved = await savePolicy(trx, auth.tenantId, auth.actorName, p, id);
+      await logEvents(auth.tenantId, [{ event: id ? 'policy_changed' : 'policy_created', docNo: p.code, user: auth.actorName, data: { code: p.code, kind: p.kind, name: p.name, partnerCode: p.scope.partnerCode, rule: p.rule, scope: p.scope, isActive: p.isActive, validFrom: p.validFrom, validTo: p.validTo, ...(before ? { before: { name: before.name, rule: before.rule, scope: before.scope, isActive: before.isActive, validFrom: before.validFrom, validTo: before.validTo } } : {}) } }]);
+      return { id: String(saved) };
+    },
+  })),
   // [2026-11-03 11:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: hai route dạng r.post(url, opts, handler) công cụ chuyển đổi bỏ sót
   defineAction({
     id: 'mua-hang.sku-info.lookup', title: 'Tên theo danh mục, đường dẫn nhóm hàng, ngành · nhãn · nhóm của nhiều mã (báo cáo MH23)', tags,

@@ -28,11 +28,6 @@ export async function connectionRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await connectionService.list(authOf(req))),
   });
 
-  r.post('/api/v1/connections/:code/test', {
-    preHandler: requirePermission('documents:read'),
-    schema: { tags, summary: 'Thử kết nối', params: codeParam },
-    handler: async (req) => ok(await connectionService.test(authOf(req), req.params.code)),
-  });
 
   // @bizcity-route: báo "đã nhận" cho hệ thống nguồn sau mỗi trang — gom một giao dịch thì lô huỷ mà nguồn tưởng đã giao (mất chứng từ)
   r.post('/api/v1/connections/:code/pull', {
@@ -48,6 +43,14 @@ export async function connectionRoutes(app: FastifyInstance): Promise<void> {
 const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 
 export const connectionWriteActions: AnyActionDef[] = [
+  // [2026-11-03 12:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7: thử kết nối = action đọc (gọi ra hệ thống nguồn, không lưu gì)
+  defineAction({
+    id: 'core.connection.test', title: 'Thử kết nối', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: codeParam, output: z.object({ ok: z.boolean(), message: z.string(), sample: z.number() }),
+    expose: { http: { method: 'POST', path: '/api/v1/connections/:code/test' }, mcp: false, ai: 'read' },
+    handler: (ctx, input) => connectionService.test(ctx.legacyAuth, input.code),
+  }),
   defineAction({
     id: 'core.connection.save', title: 'Ghi cấu hình kết nối', tags,
     permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
