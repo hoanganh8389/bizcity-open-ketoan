@@ -39,6 +39,7 @@ Sơ đồ: HO (tenant) — kho tổng (tenant) — cửa hàng (tenant) ×n; m�
 - **HT10** (Hệ thống): ô mỗi trụ cột (thanh %, đạt / một phần / chưa) → bấm lọc; bảng tiêu chí: mã · tiêu chí · mức · bằng chứng · khoảng cách · việc tiếp · ưu tiên; lọc "chỉ chưa đạt". Đọc được bởi mọi người đăng nhập.
 - **Thẻ Trụ cột** ở trang chủ phân hệ (cạnh *Quy trình*, *Tất cả chức năng*): cùng bảng, lọc `modules` chứa phân hệ; đóng hai vai: *training* — kế toán hiểu luật nào đang bảo vệ số liệu của mình; *kim chỉ nam* — dev thấy tiêu chí chưa đạt gắn với phân hệ đang làm.
 - Đã code (W0, 2026-11-04): `PillarsPage.tsx`, `GET /api/v1/system/pillars`, `docs/standard/tru-cot.json`. Chưa: engine ghi mức đạt (S026-15).
+- Đợt 2 (S026-19, chữ chốt [50-BAN-DO-VIEC-TRU-COT](50-BAN-DO-VIEC-TRU-COT.md), bản mẫu [tru-cot-ban-do-viec.html](mockups/tru-cot-ban-do-viec.html)): khối trụ cột mở rộng (nhiệm vụ · ranh giới · vai · tài liệu), tiêu chí mở việc con có bằng chứng, lọc vai, vị trí trong URL. <!-- [2026-11-04 01:11 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-19 -->
 
 ## 5. Luồng "small win" cho kế toán
 

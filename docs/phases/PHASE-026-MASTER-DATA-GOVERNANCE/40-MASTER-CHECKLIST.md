@@ -5,6 +5,7 @@
 |---|---|---|---|---|---|
 | S026-1 | ADR-0022, CANON §0.2 (nền móng + tám trụ cột), tài liệu phase 00 / 10 / 20 / 30, bản mẫu | W0 | P0 | — | 🟡 2026-11-04: xong, chờ chủ duyệt D026-* |
 | S026-16 | `docs/standard/tru-cot.json` (`bizcity_pillars@1`), `GET /api/v1/system/pillars`, màn HT10, thẻ Trụ cột ở trang chủ phân hệ, hướng dẫn | W0 | P0 | có | ✅ 2026-11-04 (mức đạt ghi tay có bằng chứng) |
+| S026-19 | Bản đồ việc theo trụ cột ([50](50-BAN-DO-VIEC-TRU-COT.md), D026-9…12): `bizcity_pillars@1` 0.2 — nhiệm vụ · ranh giới kernel / phân hệ / giao tiếp · vai · tài liệu · việc con có bằng chứng và cách kiểm lại cho mọi trụ cột (II, III bóc tách đủ); HT10 + thẻ Trụ cột mở việc con, lọc vai, URL; `tru-cot-md.mjs` sinh đủ; hướng dẫn <!-- [2026-11-04 01:11 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — mở S026-19 theo chỉ đạo chủ 2026-11-04 --> | W0 | P0 | có | ☐ chờ merge chữ chốt + bản mẫu |
 | S026-2 | Golden Tests `T026-G1..G7` có tên, chạy như một cổng (`kiem-chuan.sh`), thất bại chặn phát hành | P0 | P0 | có | 🟡 G1, G7 có (`item-id-so-kho`); G2..G6 ☐ |
 | S026-3 | `parent_item_id` điền từ `parent_sku`; luật R-ITEM-9 (biến thể kinh tế khác = định danh mới); MH26 ghi / đọc `parent_item_id` | P0 | P0 | có | ☐ |
 | S026-4 | `entity_codes` cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột `code`; `resolveEntity`; điền ban đầu | P0 | P0 | có | ☐ |
@@ -14,7 +15,7 @@
 | S026-10 | API `GET /api/v1/master-data/:type/:id/history`; thẻ Lịch sử | P0 | P0 | có | ☐ |
 | S026-11 | Chỉ mục tham chiếu `md_references` + `GET …/impact`; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng | P0 | P0 | có | ☐ |
 | S026-12 | `MasterDataFrame` bốn thẻ, gắn vào form mặt hàng, đối tượng, tài khoản, chi nhánh, kho; trang Trung tâm dữ liệu gốc `/danh-muc` với ô tìm mọi mã + Việc cần làm | P0 | P0 | có | ☐ |
-| S026-15 | SC-PILLAR-1: tiêu chí `dat` phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi `source = check` cho tiêu chí có check | P0 | P1 | có | ☐ |
+| S026-15 | SC-PILLAR-1: tiêu chí `dat` phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi `source = check` cho tiêu chí có check | P0 | P1 | có | ☐ gộp vào đợt S026-19 (D026-11) <!-- [2026-11-04 01:11 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 làm cùng S026-19 --> |
 | S026-6 | `tenant_groups`, thành viên + vai (ho / warehouse / store / legal_entity), MST tỉnh; danh mục nhóm nhận về đơn vị giữ chung `item_id`; màn Nhóm đơn vị | P1 | P1 | có | ☐ (sau S024-11) |
 | S026-7 | Cặp chứng từ liên đơn vị + `intercompany_refs`; giá chuyển theo bên gửi; báo cáo nhóm loại trừ; mã `CT-IC-*` — ca T026-G8 | P1 | P1 | có | ☐ |
 | S026-13 | Truy vết đối tượng (`/lineage/partners/:id`) và tài khoản (`/lineage/accounts/:code`); thẻ Truy vết cho hai loại này | P1 | P1 | có | ☐ |
@@ -38,3 +39,4 @@
 ## Log
 
 - 2026-11-04: mở phase; ADR-0022; `tru-cot.json` + HT10 + thẻ Trụ cột; bản mẫu; G2 (giá vốn, NXT, sổ chi tiết theo `item_id`) làm T026-G1 xanh.
+- 2026-11-04: chủ dự án xem HT10 bản W0, chỉ đạo: nhiệm vụ chi tiết + tài liệu cụ thể từng mục, việc con có bằng chứng và kiểm lại, ranh giới cho dev phân hệ ngoài kernel (REST API, bể sự kiện), bóc tách kỹ trụ cột II và III. Mở S026-19, chữ chốt [50](50-BAN-DO-VIEC-TRU-COT.md) + bản mẫu [tru-cot-ban-do-viec.html](mockups/tru-cot-ban-do-viec.html); S026-15 (SC-PILLAR-1) làm cùng đợt.

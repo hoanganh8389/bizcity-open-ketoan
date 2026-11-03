@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 11
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 96
+      "count": 95
     },
     {
       "key": "partial",
@@ -3570,7 +3570,7 @@
       "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 8
+      "line": 9
     },
     {
       "id": "S026-3",
@@ -3587,7 +3587,7 @@
         "dot": "PHASE-026 · P0 đợt 1 — S026-3 họ mặt hàng theo định danh (migration 0067, ITEM-HINT-003), S026-10 L…"
       },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 9
+      "line": 10
     },
     {
       "id": "S026-4",
@@ -3598,7 +3598,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 10
+      "line": 11
     },
     {
       "id": "S026-5",
@@ -3609,7 +3609,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 11
+      "line": 12
     },
     {
       "id": "S026-6",
@@ -3620,7 +3620,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 18
+      "line": 19
     },
     {
       "id": "S026-7",
@@ -3631,7 +3631,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 19
+      "line": 20
     },
     {
       "id": "S026-8",
@@ -3642,7 +3642,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 12
+      "line": 13
     },
     {
       "id": "S026-9",
@@ -3653,7 +3653,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 13
+      "line": 14
     },
     {
       "id": "S026-10",
@@ -3670,7 +3670,7 @@
         "dot": "PHASE-026 · P0 đợt 1 — S026-3 họ mặt hàng theo định danh (migration 0067, ITEM-HINT-003), S026-10 L…"
       },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 14
+      "line": 15
     },
     {
       "id": "S026-11",
@@ -3687,7 +3687,7 @@
         "dot": "PHASE-026 · P0 đợt 1 — S026-3 họ mặt hàng theo định danh (migration 0067, ITEM-HINT-003), S026-10 L…"
       },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 15
+      "line": 16
     },
     {
       "id": "S026-12",
@@ -3698,7 +3698,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 16
+      "line": 17
     },
     {
       "id": "S026-13",
@@ -3709,7 +3709,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 20
+      "line": 21
     },
     {
       "id": "S026-14",
@@ -3720,7 +3720,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 22
+      "line": 23
     },
     {
       "id": "S026-15",
@@ -3728,10 +3728,16 @@
       "title": "SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = check cho tiêu chí có check",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
+        "branch": "feat/tru-cot-ban-do-viec",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · HT10 bản đồ việc — bizcitypillars@1 0.2 (nhiệm vụ, ranh giới, vai, tài liệu, việc con c…"
+      },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 17
+      "line": 18
     },
     {
       "id": "S026-16",
@@ -3753,7 +3759,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 21
+      "line": 22
     },
     {
       "id": "S026-18",
@@ -3764,7 +3770,24 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
-      "line": 23
+      "line": 24
+    },
+    {
+      "id": "S026-19",
+      "phase": "PHASE-026",
+      "title": "Bản đồ việc theo trụ cột (50, D026-9…12): bizcitypillars@1 0.2 — nhiệm vụ · ranh giới kernel / phân hệ / giao tiếp · vai · tài liệu · việc con có bằng chứng và…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
+        "branch": "feat/tru-cot-ban-do-viec",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · HT10 bản đồ việc — bizcitypillars@1 0.2 (nhiệm vụ, ranh giới, vai, tài liệu, việc con c…"
+      },
+      "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
+      "line": 8
     },
     {
       "id": "S027-1",

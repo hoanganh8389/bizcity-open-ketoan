@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HT10 · Trụ cột & bản đồ việc — bản mẫu</title>
+<!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bản mẫu tĩnh HT10 bản đồ việc (S026-19): trụ cột mở rộng (nhiệm vụ · ranh giới · vai · tài liệu), tiêu chí mở ra việc con có bằng chứng. Dữ liệu trong trang là VÍ DỤ. -->
+<style>
+  :root { --brand: #1e5bb8; --ok: #1a7f4b; --ok-bg: #e4f5ec; --warn: #b26a00; --warn-bg: #fff4dd; --info: #1e5bb8; --info-bg: #e6eefb; --bad: #c62828; --line: #e6ebf2; --muted: #6b7686; --surface: #f2f6fb; }
+  body { font: 13px/1.45 system-ui, Segoe UI, Roboto, sans-serif; margin: 0; color: #1b2430; }
+  .wrap { padding: 12px 16px; max-width: 1500px; }
+  h1 { font-size: 18px; margin: 0; } .sub { color: var(--muted); margin: 2px 0 10px; }
+  .note { background: #fffbe6; border: 1px solid #f0d978; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .tile { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; cursor: pointer; }
+  .tile.on { outline: 2px solid var(--brand); } .tile.nm { border-left: 4px solid var(--brand); }
+  .k { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 4px; } .bar i { display: block; height: 100%; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; border: 1px solid var(--line); }
+  .b-ok { background: var(--ok-bg); color: var(--ok); } .b-warn { background: var(--warn-bg); color: var(--warn); } .b-info { background: var(--info-bg); color: var(--info); }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 11.5px; margin: 2px 4px 2px 0; color: var(--brand); text-decoration: none; }
+  .chip b { color: var(--muted); font-weight: 500; margin-right: 3px; }
+  table { border-collapse: collapse; width: 100%; background: #fff; } th, td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; font-size: 12.5px; } th { background: var(--surface); font-weight: 600; font-size: 12px; }
+  .ph { background: var(--surface); font-weight: 700; }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  .muted { color: var(--muted); }
+  .pillar-box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 10px 0; background: #fff; }
+  .pillar-box h2 { font-size: 15px; margin: 0 0 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: #fff; } .box h3 { font-size: 12px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .tasks { background: #fafcff; } .tasks table { width: calc(100% - 24px); margin: 4px 0 8px 24px; }
+  .tog { cursor: pointer; color: var(--brand); user-select: none; }
+  .states { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; } @media (max-width: 900px) { .states { grid-template-columns: 1fr 1fr; } }
+  .state { border: 1px dashed var(--line); border-radius: 6px; padding: 8px; font-size: 12px; min-height: 70px; }
+  .roles td:first-child { font-weight: 600; width: 160px; }
+  .mobile { border: 1px solid var(--line); border-radius: 12px; width: 360px; padding: 10px; margin-top: 14px; background: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Trụ cột & mức đạt <span class="badge">HT10</span></h1>
+  <div class="sub">Core bảo đảm điều gì, hôm nay đạt tới đâu, <b>việc nào còn phải làm và bằng chứng ở đâu</b> — cho kế toán hiểu luật, cho dev (kể cả dev cộng đồng làm phân hệ ngoài kernel) biết việc kế tiếp. Mức đạt theo bằng chứng, không tích tay (R-CONT-7).</div>
+  <div class="note"><b>Bản mẫu tĩnh.</b> Số liệu, tên việc, đường dẫn trong trang là <b>ví dụ</b> lấy từ `docs/standard/tru-cot.json` 0.2 (bản nháp). Màn thật đọc `GET /api/v1/system/pillars`.</div>
+
+  <!-- Ô trụ cột: như bản W0, thêm số việc còn mở -->
+  <div class="tiles">
+    <div class="tile nm"><div class="k">Nền móng</div><b>Quản trị dữ liệu gốc</b><div class="bar"><i style="width:47%;background:var(--warn)"></i></div><div class="muted" style="font-size:11px">47% · 1 đạt · 12 một phần · 2 chưa · <b>23 việc mở</b></div></div>
+    <div class="tile"><div class="k">Trụ cột I</div><b>Sổ cái bất biến</b><div class="bar"><i style="width:100%;background:var(--ok)"></i></div><div class="muted" style="font-size:11px">100% · 4 đạt · 1 việc mở</div></div>
+    <div class="tile on"><div class="k">Trụ cột II</div><b>Định danh bất biến, mã có phiên bản</b><div class="bar"><i style="width:46%;background:var(--warn)"></i></div><div class="muted" style="font-size:11px">46% · 3 đạt · 4 chưa · <b>19 việc mở</b></div></div>
+    <div class="tile"><div class="k">Trụ cột III</div><b>Liên tục kế toán</b><div class="bar"><i style="width:39%;background:var(--bad)"></i></div><div class="muted" style="font-size:11px">39% · 2 đạt · 5 chưa · <b>17 việc mở</b></div></div>
+    <div class="tile"><div class="k">Trụ cột IV</div><b>Một cửa nạp, các cổng kiểm chuẩn</b><div class="bar"><i style="width:90%;background:var(--ok)"></i></div><div class="muted" style="font-size:11px">90% · 4 đạt · 1 một phần</div></div>
+    <div class="tile"><div class="k">Trụ cột V</div><b>Chính sách, chế độ có phiên bản</b><div class="bar"><i style="width:56%;background:var(--warn)"></i></div><div class="muted" style="font-size:11px">56%</div></div>
+    <div class="tile"><div class="k">Trụ cột VI</div><b>Bằng chứng, quan sát được</b><div class="bar"><i style="width:60%;background:var(--warn)"></i></div><div class="muted" style="font-size:11px">60%</div></div>
+    <div class="tile"><div class="k">Trụ cột VII</div><b>Cô lập đơn vị, phân quyền</b><div class="bar"><i style="width:50%;background:var(--warn)"></i></div><div class="muted" style="font-size:11px">50%</div></div>
+    <div class="tile"><div class="k">Trụ cột VIII</div><b>Mở rộng bằng module, kiểm chuẩn tự động</b><div class="bar"><i style="width:50%;background:var(--warn)"></i></div><div class="muted" style="font-size:11px">50%</div></div>
+  </div>
+
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+    <label class="muted"><input type="checkbox"> chỉ tiêu chí chưa đạt</label>
+    <label class="muted"><input type="checkbox" checked> mở việc con</label>
+    <span class="muted">Vai: </span><span class="badge b-info">Dev phân hệ ngoài</span> <span class="badge">Cộng đồng Core</span> <span class="badge">Kế toán</span> <span class="badge">CEO</span>
+    <span style="flex:1"></span><span class="muted" style="font-size:12px">bizcity_pillars@1 · 0.2.0-draft · cập nhật 2026-11-04 · URL: <span class="mono">?tru=II&tieu-chi=ID-4&vai=dev</span></span>
+  </div>
+
+  <!-- Khối trụ cột mở rộng (chỉ hiện khi chọn một ô) -->
+  <div class="pillar-box">
+    <h2>Trụ cột II · Định danh bất biến, mã có phiên bản</h2>
+    <div class="muted" style="margin-bottom:8px"><b>Nhiệm vụ.</b> Mỗi mặt hàng có một `item_id` cấp một lần, không sửa, không dùng lại; mã hàng, mã đối tượng, mã chi nhánh, số hiệu tài khoản là thuộc tính <b>có phiên bản và ngày hiệu lực</b>. Nhờ đó đổi mã, đổi thông tư, đổi hệ thống tài khoản không làm lại dữ liệu, không đứt giá vốn, lãi lỗ, công nợ. Trụ cột này là gốc để trụ cột III (liên tục) tồn tại.</div>
+    <div class="grid2">
+      <div class="box"><h3>Ranh giới: kernel giữ gì · phân hệ / app làm gì · giao tiếp qua đâu</h3>
+        <table>
+          <tr><td style="width:120px"><b>Kernel</b></td><td>bảng `items` / `item_codes` / `item_classification` + trigger bất biến; Item Resolution ở cửa nạp (L3); `item_id` trên mọi dòng sổ / kho / giá vốn; action `core.item.*`.</td></tr>
+          <tr><td><b>Phân hệ / app ngoài</b></td><td>gửi hàng theo hợp đồng `bizcity_item_master@1`; <b>không</b> ghi bảng `items*` / `products*`; giữ bảng ánh xạ mã nội bộ ↔ mã của sổ; đổi mã chỉ qua `core.item.add-code`.</td></tr>
+          <tr><td><b>Giao tiếp</b></td><td>REST `bizcity_api@1` (`GET /api/v1/catalog/*`, `POST …/validate`) · sự việc vào bể qua `bizcity_ledger_intake@1` (`itemId` từ 1.4.0) · sự kiện `bizcity.masterdata.*.changed` (`bizcity_event@1`).</td></tr>
+        </table>
+      </div>
+      <div class="box"><h3>Vai: giúp ai việc gì (PHASE-027 §4)</h3>
+        <table class="roles">
+          <tr><td>Dev phân hệ ngoài</td><td>một mặt hàng một mã gửi sang sổ; khi API có thì gửi `itemId`; chạy `bizcity event check` trước khi nộp</td></tr>
+          <tr><td>Cộng đồng Core</td><td>Item Resolver, `core.item.*`, `entity_codes`, phiên bản hệ thống TK (PHASE-024 / 026)</td></tr>
+          <tr><td>Kế toán</td><td>đổi mã có ngày hiệu lực, không đứt lịch sử; duyệt nháp (HT09)</td></tr>
+          <tr><td>CEO</td><td>lãi lỗ theo mặt hàng liền qua các lần đổi mã, đổi quy định</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:8px"><span class="muted">Tài liệu gốc: </span>
+      <a class="chip" href="#"><b>luật</b>RULE-ITEM (R-ITEM-0…9)</a><a class="chip" href="#"><b>ADR</b>ADR-0017</a><a class="chip" href="#"><b>ADR</b>ADR-0018</a><a class="chip" href="#"><b>hợp đồng</b>bizcity_item_master@1</a><a class="chip" href="#"><b>hợp đồng</b>bizcity_master_data@1</a><a class="chip" href="#"><b>phase</b>PHASE-024 · 10 Danh mục có phiên bản</a><a class="chip" href="#"><b>phase</b>PHASE-024 · 70 Lộ trình ổn định Core</a><a class="chip" href="#"><b>mockup</b>item-master.html#vitem</a><a class="chip" href="#"><b>hướng dẫn</b>Mặt hàng</a><a class="chip" href="#"><b>hướng dẫn</b>Quy định dữ liệu danh mục</a><a class="chip" href="#"><b>API</b>09 Danh mục</a>
+    </div>
+  </div>
+
+  <!-- Bảng tiêu chí + việc con -->
+  <table>
+    <thead><tr><th style="width:26px"></th><th style="width:70px">Mã</th><th>Tiêu chí</th><th style="width:90px">Mức</th><th>Bằng chứng</th><th>Khoảng cách</th><th style="width:110px">Việc tiếp</th><th style="width:48px">Ưu tiên</th></tr></thead>
+    <tbody>
+      <tr><td class="ph" colspan="8">Trụ cột II · Định danh bất biến, mã có phiên bản <span class="muted" style="font-weight:400">— item_id không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực.</span></td></tr>
+      <tr><td class="tog">▸</td><td class="mono">ID-1</td><td>items / item_codes / item_classification với bất biến ở CSDL</td><td><span class="badge b-ok">Đạt</span></td><td class="muted">0065; test item-master (18 ca)</td><td class="muted">—</td><td>—</td><td><span class="badge b-warn">P0</span></td></tr>
+      <tr><td class="tog">▸</td><td class="mono">ID-2</td><td>item_id trên mọi bảng sổ / kho / giá / đơn vị</td><td><span class="badge b-ok">Đạt</span></td><td class="muted">0066; test item-id-so-kho (7 ca)</td><td class="muted">—</td><td>—</td><td><span class="badge b-warn">P0</span></td></tr>
+      <tr><td class="tog">▸</td><td class="mono">ID-3</td><td>Giá vốn, NXT, sổ chi tiết hàng hoá gom theo item_id</td><td><span class="badge b-ok">Đạt</span></td><td class="muted">costing.service + inventory-report (G2)</td><td class="muted">—</td><td>—</td><td><span class="badge b-warn">P0</span></td></tr>
+      <tr style="background:#fafcff"><td class="tog">▾</td><td class="mono">ID-4</td><td>products là khung nhìn; mọi đường ghi đi qua core.item.*</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td>chặn bởi INSERT … ON CONFLICT ở 6 / 7 chỗ ghi (70 §3.2.1 G1)</td><td><span class="mono">S024-11</span><div class="muted">PHASE-024</div></td><td><span class="badge b-warn">P0</span></td></tr>
+      <tr class="tasks"><td colspan="8">
+        <div style="margin-left:24px"><span class="muted">Tài liệu của tiêu chí: </span><a class="chip" href="#"><b>phase</b>PHASE-024 · 70 §3.2.1 G1</a><a class="chip" href="#"><b>hợp đồng</b>bizcity_item_master@1 §API</a><a class="chip" href="#"><b>mockup</b>item-master.html#vitem</a><a class="chip" href="#"><b>luật</b>R-ITEM-9</a></div>
+        <table>
+          <thead><tr><th style="width:90px">Việc</th><th>Phải làm</th><th style="width:88px">Mức</th><th>Bằng chứng (tệp)</th><th>Kiểm lại bằng</th><th style="width:90px">Vai</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">S024-11a</td><td>Action `core.item.upsert / add-code / retire-code / classify / validate / trace` (`bizcity_action@1`)</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td class="mono">apps/api/test/item-master.test.ts (ca mới)</td><td>Cộng đồng Core</td></tr>
+            <tr><td class="mono">S024-11b</td><td>`core.item.merge-preview` → `merge`: mã cũ thành bí danh, không đổi `item_id` lịch sử</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td class="mono">T026-G4, T026-G5</td><td>Cộng đồng Core</td></tr>
+            <tr><td class="mono">S024-11c</td><td>Chuyển 7 đường ghi `products` (INSERT … ON CONFLICT) sang `items`; `products` thành khung nhìn</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td class="mono">SC-ITEM-2; kiem-nang-cap.sh (DG-ITEM-3 = 0)</td><td>Cộng đồng Core</td></tr>
+            <tr><td class="mono">S024-11d</td><td>Khung nhìn `bizcity_read.items*`; SDK `ctx.data` đọc được định danh (trụ cột VIII M-3)</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td class="mono">packages/module-sdk test</td><td>Cộng đồng Core</td></tr>
+            <tr><td class="mono">S024-4</td><td>Khuôn nạp `bizcity_ledger_intake@1` 1.4.0 nhận `itemId`, `barcode`</td><td><span class="badge b-ok">Đạt</span></td><td class="mono">docs/contracts/BIZCITY-LEDGER-INTAKE-v1.schema.json</td><td class="mono">npx bizcity event check</td><td>Dev phân hệ ngoài</td></tr>
+            <tr><td class="mono">S024-17</td><td>Web: đổi mã / gộp mã có xem trước; thẻ mặt hàng ba lớp (mockup item-master.html#vitem)</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td class="mono">T024-9</td><td>Cộng đồng Core</td></tr>
+          </tbody>
+        </table>
+      </td></tr>
+      <tr><td class="tog">▸</td><td class="mono">ID-5</td><td>Sản phẩm cha / biến thể: parent_item_id được điền và có luật</td><td><span class="badge">Chưa</span></td><td class="muted">cột parent_item_id có; MH26</td><td>chưa điền; chưa có luật biến thể = định danh mới</td><td><span class="mono">S026-3</span><div class="muted">PHASE-026 · đang làm (CLAIMS)</div></td><td><span class="badge b-warn">P0</span></td></tr>
+      <tr><td class="tog">▸</td><td class="mono">ID-6</td><td>Đối tượng, chi nhánh, kho có mã phiên bản (entity_codes)</td><td><span class="badge">Chưa</span></td><td class="muted">—</td><td>ADR-0018 hạng A/B chưa thi hành</td><td><span class="mono">S026-4</span><div class="muted">PHASE-026</div></td><td><span class="badge b-warn">P0</span></td></tr>
+      <tr><td class="tog">▸</td><td class="mono">ID-7</td><td>Tài khoản theo phiên bản hệ thống TK + bảng ánh xạ cũ → mới</td><td><span class="badge b-info">Mới tài liệu</span></td><td class="muted">ADR-0018</td><td>chưa có chart_versions / account_mappings</td><td><span class="mono">S026-8</span><div class="muted">PHASE-026</div></td><td><span class="badge b-warn">P0</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Bốn trạng thái -->
+  <div class="states">
+    <div class="state"><b>Đang tải</b><br><span class="muted">khung xương 9 ô + 3 dòng bảng mờ; không hiện % khi chưa có dữ liệu</span></div>
+    <div class="state"><b>Trống</b><br><span class="muted">lọc "chỉ chưa đạt" mà trụ cột đã 100 % → dòng "Trụ cột này không còn tiêu chí mở — xem mọi trụ cột"</span></div>
+    <div class="state"><b>Lỗi</b><br><span class="muted">`ErrorBox` từ `errorText(err)`: mã · thông báo · gợi ý (vd. 404 "bảng trụ cột không có trong bản cài") · nút Thử lại</span></div>
+    <div class="state"><b>Không có quyền</b><br><span class="muted">chỉ cần đăng nhập (`requireAuthenticated`); chưa đăng nhập → về màn đăng nhập, không hiện bảng rỗng</span></div>
+  </div>
+
+  <!-- Di động -->
+  <div class="mobile">
+    <div class="k">Di động (≤ 640 px)</div>
+    <div style="margin:6px 0"><b>Trụ cột II · Định danh bất biến</b> <span class="badge b-warn">46%</span></div>
+    <div class="muted" style="font-size:12px">Ô trụ cột xếp 2 cột; bảng tiêu chí thành thẻ: mã + tiêu chí + mức ở dòng đầu, bấm thẻ mở "Việc con" (danh sách dọc: việc · mức · bằng chứng · kiểm lại). Chip tài liệu cuộn ngang. Cột "Bằng chứng" của tiêu chí ẩn, có trong thẻ mở.</div>
+    <div style="border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:6px"><span class="mono">ID-4</span> products là khung nhìn… <span class="badge">Chưa</span><div class="muted" style="font-size:11px">6 việc con · S024-11 · P0 ▸</div></div>
+  </div>
+</div>
+</body>
+</html>

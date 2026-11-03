@@ -75,6 +75,8 @@ docs/standard/tru-cot.json  ──▶  GET /api/v1/system/pillars  ──▶  HT
         └── đợt sau: selfcheck ghi status theo bằng chứng (evidenceIds → test / check / migration tồn tại); SC-PILLAR-1 kiểm "đạt" phải có bằng chứng
 ```
 
+0.2 (S026-19, [50-BAN-DO-VIEC-TRU-COT](50-BAN-DO-VIEC-TRU-COT.md)): mỗi trụ cột thêm `mission` · `boundary` (kernel / phân hệ / giao tiếp qua REST `bizcity_api@1`, cửa nạp `bizcity_ledger_intake@1`, action, sự kiện) · `roles` · `docs[]`; mỗi tiêu chí thêm `docs[]`, `mockup`, `tasks[]` (việc con: `proof[]` tệp bằng chứng, `check` cách kiểm lại). SC-PILLAR-1: `dat` phải có `proof` tồn tại; mã việc phải có trong checklist và không được "đạt" hơn checklist. <!-- [2026-11-04 01:11 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-19 khuôn 0.2 -->
+
 ## 8. Quy mô (SCALE-1)
 
 - Benchmark `scripts/benchmark-danh-muc.mjs`: 1.000.000 mặt hàng × 300 chi nhánh — thời gian nạp lô, đổi mã, resolve 2.000 dòng / chứng từ, NXT theo cấp nhóm.
