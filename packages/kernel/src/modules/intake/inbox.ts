@@ -61,10 +61,10 @@ async function insertRow(trx: Db, auth: AuthContext, raw: unknown, channel: Inta
  * Cửa nạp vừa từ chối `raw` với lỗi `err`: tiền kiểm + giữ ở bể (giao dịch riêng), gắn error.intake. Lỗi khi ghi bể KHÔNG che lỗi
  * cửa nạp (bể là phần hướng dẫn, không được làm hỏng phản hồi).
  */
-export async function recordRejection(auth: AuthContext, raw: unknown, channel: IntakeChannel, err: AppError): Promise<void> {
+export async function recordRejection(auth: AuthContext, raw: unknown, channel: IntakeChannel, err: AppError, opts: { guard?: string } = {}): Promise<void> {
   try {
     const out = await db.transaction().execute(async (trx) => {
-      const pf = await preflight(trx, auth, raw);
+      const pf = await preflight(trx, auth, raw, opts); // dấu Commit Guard của lần nộp (nếu có) → bể ghi IN-GUARD-001 như cửa nạp
       const row = await insertRow(trx, auth, raw, channel, 'open', pf.findings, pf.score, { code: err.code, message: err.message, details: err.details ?? null });
       return { id: String(row.id), attempt: row.attempt_no, score: pf.score, findings: pf.findings };
     });

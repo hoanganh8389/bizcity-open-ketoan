@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29 -->
+- **Commit Guard — `IN-GUARD-001`** (PHASE-024, R-GATE-8): Kiểm thử chứng từ (`POST /api/v1/intake/preflight`) trả thêm `guard` — dấu của phần cấu hình chứng từ dựa vào (mặt hàng trên dòng, chi nhánh, đối tượng, phiên bản chính sách kế toán, khoá kỳ). Nộp kèm dấu đó (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`): nếu cấu hình đã đổi, cửa nạp chạy lại tiền kiểm; còn lỗi chặn thì từ chối với `IN-GUARD-001` kèm lỗi cụ thể và giữ ở Trạm kiểm tra; vẫn đạt thì nhận. Không gửi dấu: như cũ. [Bài học](docs/huong-dan/loi-dau-vao/IN-GUARD-001.md).
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->
 - **Mặt hàng nháp** (PHASE-024, [ADR-0019](docs/adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md), migration `0061_mat_hang_nhap`): khai báo mặt hàng còn lỗi chặn — thiếu đơn vị tính gốc, hoặc thiếu nhóm hạch toán khi đơn vị không có nhóm mặc định — được **lưu nháp** thay vì báo lỗi (không mất bản khai). Mặt hàng nháp không có ở ô chọn của phiếu; chứng từ dùng nó bị cửa nạp giữ ở Trạm kiểm tra với mã **IN-ITEM-009**. Sửa xong → mặt hàng tự kích hoạt và các chứng từ đang chờ vì nó được **kiểm lại tự động**. Áp cho mọi đường lưu (form, nhập Excel, đồng bộ từ POS, `core.product.upsert`). Danh sách mặt hàng có nhãn và bộ lọc "Nháp"; `POST /api/v1/products/validate`.
 <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 -->

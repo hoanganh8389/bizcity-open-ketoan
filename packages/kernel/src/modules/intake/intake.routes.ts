@@ -4,7 +4,7 @@
  * BỂ CHỜ ĐẦU VÀO — API (docs/contracts/BIZCITY-INTAKE-FINDINGS-v1.md §5).
  *   GET  /api/v1/intake                 danh sách mục (lọc status, docKey, channel), kèm mã phát hiện   (documents:read)
  *   GET  /api/v1/intake/:id             chi tiết: nguyên văn, phát hiện, lỗi cửa nạp, lịch sử           (documents:read)
- *   POST /api/v1/intake/preflight       Kiểm thử: { document, save? } → { findings, score, trialId? } — không ghi sự việc (documents:write)
+ *   POST /api/v1/intake/preflight       Kiểm thử: { document, save?, guard? } → { findings, score, guard, guardChanged?, trialId? } — không ghi sự việc (documents:write)
  * Sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục: W3.
  */
 import type { FastifyInstance } from 'fastify';
@@ -54,14 +54,14 @@ export async function intakeRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('documents:write'),
     schema: {
       tags, summary: 'Kiểm thử chứng từ: mọi phát hiện L1–L4 + điểm, không ghi sự việc; save = lưu mục thử (giữ 7 ngày)',
-      body: z.object({ document: z.unknown(), save: z.boolean().default(false) }),
+      body: z.object({ document: z.unknown(), save: z.boolean().default(false), guard: z.string().trim().max(64).optional().describe('Dấu cũ (lần Kiểm thử trước) — có thì trả guardChanged') }),
     },
     handler: async (req) => {
       const auth = authOf(req);
       const out = await db.transaction().execute(async (trx) => {
-        const pf = await preflight(trx, auth, req.body.document);
+        const pf = await preflight(trx, auth, req.body.document, req.body.guard ? { guard: req.body.guard } : {});
         const trial = req.body.save ? await saveTrial(trx, auth, req.body.document, pf.findings, pf.score) : null;
-        return { findings: pf.findings, score: pf.score, ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
+        return { findings: pf.findings, score: pf.score, guard: pf.guard, ...(pf.guardChanged !== undefined ? { guardChanged: pf.guardChanged } : {}), ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
       });
       return ok(out);
     },

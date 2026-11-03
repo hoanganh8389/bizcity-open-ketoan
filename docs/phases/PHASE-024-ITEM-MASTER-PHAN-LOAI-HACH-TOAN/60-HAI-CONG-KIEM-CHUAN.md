@@ -9,11 +9,12 @@
 
 | Phần | Ở đâu |
 |---|---|
-| Thư viện mã `bizcity_findings@1` (36 mã), tra qua API / MCP / trang | S024-27 — `packages/contracts/src/findings.ts`, `/api/v1/findings`, [ma-loi](../../huong-dan/ma-loi/README.md) |
+| Thư viện mã `bizcity_findings@1` (37 mã), tra qua API / MCP / trang | S024-27 — `packages/contracts/src/findings.ts`, `/api/v1/findings`, [ma-loi](../../huong-dan/ma-loi/README.md) |
 | Mặt hàng nháp: `products.is_draft` + `draft_codes` (0061); `applyItemGate` / `applyItemGateBulk` cho mọi đường lưu | `apps/api/src/modules/products/item.hints.ts` |
 | Gate B: `IN-ITEM-009` ở cửa nạp và tiền kiểm | `packages/kernel/src/modules/intake/draft-items.ts` |
 | Kích hoạt → bể chờ kiểm lại | `recheckInboxForSkus` (`intake/inbox.ts`), đăng ký ở `app.ts` qua `registerItemsActivatedHook` |
-| Chưa: Commit Guard, nháp cho đối tượng, bỏ tự thêm mặt hàng từ chứng từ (D024-3) | — |
+| Commit Guard `IN-GUARD-001` <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29 -->: Kiểm thử trả `guard`; nộp kèm dấu → cấu hình đổi thì chạy lại tiền kiểm, còn lỗi chặn → bể | `packages/kernel/src/modules/intake/guard.ts`, `postDocumentIn` (opts.guard) |
+| Chưa: nháp cho đối tượng, bỏ tự thêm mặt hàng từ chứng từ (D024-3) | — |
 
 ## 1. Toàn cảnh
 

@@ -3,7 +3,7 @@
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
 
-> **Phiên bản:** 0.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.3.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -52,11 +52,14 @@
 | `IN-BIZ-005` | L4 | warn | advice | 20 | Cùng phiên bản nhưng nội dung khác bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-005.md) |
 | `IN-BIZ-006` | L4 | warn | advice | 20 | Số hoá đơn đã có ở chứng từ khác | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-006.md) |
 | `IN-BIZ-007` | L4 | hint | advice | 0 | Ngày hoá đơn cách ngày chứng từ hơn 5 ngày | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-007.md) |
+| `IN-GUARD-001` | L5 | block | door | 0 | Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn (Commit Guard, R-GATE-8) | [bài học](../huong-dan/loi-dau-vao/IN-GUARD-001.md) |
 
 L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh Kernel (ĐVT, kho thuộc chi nhánh, bán nợ thiếu đối tượng, kỳ khoá) thêm ở W5 / S021-4.
 
 ## 4. Nhật ký
 
+<!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: IN-GUARD-001, guard trong Kiểm thử / cửa nạp -->
+- **0.3.0-draft (2026-11-03):** Commit Guard (PHASE-024 S024-29): Kiểm thử trả `guard` (dấu cấu hình chứng từ dựa vào) và nhận `guard` cũ → `guardChanged`; nộp kèm dấu (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`) — cấu hình đã đổi thì chạy lại tiền kiểm một lần, còn lỗi chặn → `IN-GUARD-001` + các lỗi đó, bể chờ giữ. Không gửi dấu: như cũ.
 - **0.2.0-draft (2026-11-02):** §5 bể chờ `intake_inbox`: `error.intake` trong phản hồi lỗi cửa nạp, `intakeId` từng dòng lô, API `/api/v1/intake`, hạn giữ (PHASE-021 W2, PHASES 2.18).
 - **0.1.0-draft (2026-11-02):** 20 mã L1–L4 (PHASE-021 W1, PHASES 2.17).
 
@@ -79,6 +82,6 @@ Cửa nạp từ chối một chứng từ **đã xác thực** vì nội dung (
 |---|---|---|
 | `GET /api/v1/intake?status=&docKey=&channel=&limit=&offset=` | `documents:read` | danh sách mục (không nguyên văn) + `codes` (mã phát hiện), `meta.total` |
 | `GET /api/v1/intake/:id` | `documents:read` | một mục: `payload_raw`, `findings`, `door_error`, `attempt_no`, trạng thái |
-| `POST /api/v1/intake/preflight` `{ document, save? }` | `documents:write` | `{ findings, score, trialId?, attempt? }` — Kiểm thử, không sự việc; `save` lưu mục `trial` |
+| `POST /api/v1/intake/preflight` `{ document, save?, guard? }` | `documents:write` | `{ findings, score, guard, guardChanged?, trialId?, attempt? }` — Kiểm thử, không sự việc; `save` lưu mục `trial`; `guard` = dấu cấu hình gửi kèm lúc nộp (Commit Guard) |
 
 Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · `accepted` · `dismissed` (W3 thêm sửa tại bể, nộp lại, chấp nhận, bỏ). Hạn giữ: mục đã đóng `bizcity.intake.retention_days` (90), mục thử `bizcity.intake.trial_retention_days` (7) — subscriber `intake.retention` theo `bizcity.clock.daily`. Nguyên văn chỉ ở bảng này (RLS theo đơn vị), không vào log, span, `event_outbox` (RULE-INTAKE-12).
