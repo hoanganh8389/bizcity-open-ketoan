@@ -213,15 +213,21 @@ export const purchaseService = {
 
   /** Bỏ duyệt: huỷ các chứng từ kế toán đã sinh (đảo bút toán, gỡ kho, gỡ đối trừ) rồi về nháp. */
   async unapprove(auth: AuthContext, id: string, reason = 'Bỏ duyệt phiếu mua hàng'): Promise<StoredDoc> {
-    const d = await getDoc(db, auth.tenantId, id);
+    return db.transaction().execute((trx) => purchaseService.unapproveIn(trx, auth, id, reason));
+  },
+
+  // [2026-11-03 06:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4 (SC-ACT-1): bỏ duyệt trong MỘT giao dịch (trước: huỷ từng
+  // chứng từ con ở giao dịch riêng rồi mới về nháp — lỗi giữa chừng để lại phiếu đã duyệt mà chứng từ con đã huỷ)
+  async unapproveIn(trx: ActionTx, auth: AuthContext, id: string, reason = 'Bỏ duyệt phiếu mua hàng'): Promise<StoredDoc> {
+    const d = await getDoc(trx, auth.tenantId, id);
     const step = wf.plan('unapprove', d, workflowActor(auth));
-    const dependents = (await dependentsOf(db, auth.tenantId, id)).filter((x) => x.kind !== 'payment');
+    const dependents = (await dependentsOf(trx, auth.tenantId, id)).filter((x) => x.kind !== 'payment');
     if (dependents.length) throw Errors.conflict(`Phiếu ${dependents.map((x) => x.docNo).join(', ')} đang dựa trên phiếu này — bỏ duyệt các phiếu đó trước`);
-    for (const l of [...d.links].reverse()) await documentService.cancel(auth, l.docKey, `${reason} ${d.docNo}`);
+    for (const l of [...d.links].reverse()) await documentService.cancelIn(trx, auth, l.docKey, `${reason} ${d.docNo}`);
     // Về nháp: xoá dấu duyệt ngoại lệ (lịch sử vẫn ở nhật ký mua hàng MH10 và nhật ký thao tác).
-    await db.updateTable('purchase_documents').set({ status: step.to, links: '[]', approved_by: null, approved_at: null, data: sql`data - 'override'`, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    await trx.updateTable('purchase_documents').set({ status: step.to, links: '[]', approved_by: null, approved_at: null, data: sql`data - 'override'`, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'doc_unapproved', docNo: d.docNo, user: auth.actorName, data: { reason, cancelled: d.links.map((l) => l.docNo) } }]);
-    return getDoc(db, auth.tenantId, id);
+    return getDoc(trx, auth.tenantId, id);
   },
 
   async cancel(auth: AuthContext, id: string): Promise<StoredDoc> {

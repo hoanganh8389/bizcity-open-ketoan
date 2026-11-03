@@ -36,13 +36,17 @@ import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/
 const tags = ['Mua hàng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
+const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(db, tenantId), { full: true });
+const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
+const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
+
 export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
   const read = requirePermission('documents:read');
   const write = requirePermission('documents:write');
   const catalog = requirePermission('catalog:write');
   const settings = requirePermission('settings:write');
-  const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(db, tenantId), { full: true });
 
   // ---------------- Chứng từ
   r.get('/api/v1/purchase/documents', { preHandler: read, schema: { tags, summary: 'Danh sách chứng từ mua hàng', querystring: z.object({ kind: z.string().optional(), status: z.string().optional(), partnerCode: z.string().optional(), from: day.optional(), to: day.optional() }) },
@@ -51,9 +55,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows, { total: rows.length, page: 1, pageSize: rows.length });
     } });
   r.get('/api/v1/purchase/documents/:id', { preHandler: read, schema: { tags, summary: 'Một chứng từ + kết quả bộ máy', params: idParamSchema }, handler: async (req) => ok(await purchaseService.get(authOf(req), req.params.id)) });
-  r.post('/api/v1/purchase/documents', { preHandler: write, schema: { tags, summary: 'Thêm chứng từ (nháp); số phiếu trống thì tự cấp' }, handler: async (req, reply) => reply.code(201).send(ok(await purchaseService.save(authOf(req), req.body))) });
-  r.post('/api/v1/purchase/documents/:id/unapprove', { preHandler: write, schema: { tags, summary: 'Bỏ duyệt: huỷ chứng từ kế toán đã sinh, về nháp (body tuỳ chọn { reason })', params: idParamSchema },
-    handler: async (req) => ok(await purchaseService.unapprove(authOf(req), req.params.id, String((req.body as { reason?: unknown } | undefined)?.reason ?? '') || undefined)) });
 
   // ---------------- Nhà cung cấp (mọi việc mua hàng đi từ NCC)
   r.get('/api/v1/purchase/suppliers', { preHandler: read, schema: { tags, summary: 'Nhà cung cấp mua hàng: nợ, quá hạn, hạn mức, điều khoản, chính sách, hợp đồng, lần nhập gần nhất', querystring: z.object({ scope: z.enum(['active', 'all']).default('active'), asOf: day.optional() }) },
@@ -89,28 +90,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   };
   r.post('/api/v1/purchase/policies', { preHandler: catalog, schema: { tags, summary: 'Thêm chính sách (nội dung kiểm theo loại)' }, handler: async (req, reply) => reply.code(201).send(ok(await savePol(req, authOf(req)))) });
   r.put('/api/v1/purchase/policies/:id', { preHandler: catalog, schema: { tags, summary: 'Sửa chính sách', params: idParamSchema }, handler: async (req) => ok(await savePol(req, authOf(req), req.params.id)) });
-  r.post('/api/v1/purchase/policies/:id/transfer-limit', { preHandler: catalog, schema: { tags, summary: 'Điều chuyển hạn mức nhãn giữa chi nhánh', params: idParamSchema, body: z.object({ from: z.string().default(''), to: z.string().min(1), amount: z.number().positive() }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const p = (await listPolicies(db, auth.tenantId)).find((x) => x.id === req.params.id && x.kind === 'credit_limit');
-      if (!p) throw Errors.notFound('chính sách hạn mức');
-      const rule = p.rule as { limit: number; warnPct?: number; branches?: Record<string, number> };
-      const branches = { ...(rule.branches ?? {}) };
-      const { from, to, amount } = req.body;
-      if (from === to) throw Errors.validation('Nơi chuyển và nơi nhận trùng nhau');
-      const pool = from ? branches[from] ?? 0 : rule.limit - Object.values(branches).reduce((a, b) => a + b, 0);
-      // Chuyển từ chi nhánh: chỉ được chuyển phần CÒN TRỐNG (hạn mức − nợ nhãn đã ghi − phiếu đang chờ); phần đã bị nợ chiếm vẫn nằm ở chi nhánh đó
-      const used = from ? await brandBranchUsage(db, auth.tenantId, await ctxOf(auth.tenantId), p.scope.brandCode!, from) : { current: 0, pending: 0 };
-      const free = Math.max(0, pool - used.current - used.pending);
-      if (amount > free) throw Errors.validation(from
-        ? `Số chuyển vượt phần còn trống của ${from}: chỉ còn ${free.toLocaleString('vi-VN')} (hạn mức ${pool.toLocaleString('vi-VN')} − nợ đã ghi ${used.current.toLocaleString('vi-VN')} − đang chờ ${used.pending.toLocaleString('vi-VN')})`
-        : `Số chuyển vượt hạn mức chưa phân bổ (${pool.toLocaleString('vi-VN')})`);
-      if (from) branches[from] = pool - amount;
-      branches[to] = (branches[to] ?? 0) + amount;
-      await db.transaction().execute((trx) => savePolicy(trx, auth.tenantId, auth.actor, policyInputSchema.parse({ ...p, rule: { ...rule, branches }, validFrom: p.validFrom ?? null, validTo: p.validTo ?? null }), p.id));
-      await logEvents(auth.tenantId, [{ event: 'limit_transfer', docNo: '', user: auth.actorName, data: { policy: p.code, brand: p.scope.brandCode, from: from || 'Chưa phân bổ', to, amount, before: rule.branches ?? {}, after: branches } }]);
-      return ok({ branches });
-    } });
 
   // ---------------- Báo cáo
   r.get('/api/v1/purchase/credit', { preHandler: read, schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
@@ -134,14 +113,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const a = authOf(req); return ok(await purchaseSummary(db, a.tenantId, await ctxOf(a.tenantId), req.query)); } });
   r.get('/api/v1/purchase/rebates/overview', { preHandler: read, schema: { tags, summary: 'Tổng hợp thưởng mọi chính sách trong kỳ', querystring: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }) },
     handler: async (req) => { const a = authOf(req); return ok(await rebateOverview(db, a.tenantId, await ctxOf(a.tenantId), req.query.month)); } });
-  r.post('/api/v1/purchase/rebates/preview', { preHandler: read, schema: { tags, summary: 'Tính thưởng cuối kỳ (xem trước)', body: z.object({ policyCode: z.string().min(1), period: z.string().min(4), manualTotal: z.number().nonnegative().optional() }) },
-    handler: async (req) => {
-      const a = authOf(req); const ctx = await ctxOf(a.tenantId);
-      const p = ctx.policies.find((x) => x.code === req.body.policyCode && ['period_rebate', 'target_rebate', 'stage_rebate'].includes(x.kind));
-      if (!p) throw Errors.notFound('chính sách thưởng');
-      if (p.kind === 'stage_rebate' && req.body.manualTotal !== undefined) throw Errors.validation('Thưởng theo giai đoạn tính theo doanh số từng ngày từ phiếu đã duyệt — không nhập doanh số tay');
-      return ok(await rebatePreview(db, a.tenantId, ctx, p, req.body.period, req.body.manualTotal));
-    } });
   r.get('/api/v1/purchase/allocations/:id', { preHandler: read, schema: { tags, summary: 'Phân bổ phiếu chi phí vào phiếu nhập', params: idParamSchema, querystring: z.object({ basis: z.enum(['value', 'qty']).optional() }) },
     handler: async (req) => ok(costAllocation(await ctxOf(authOf(req).tenantId), req.params.id, req.query.basis)) });
   r.get('/api/v1/purchase/real-cost/:id', { preHandler: read, schema: { tags, summary: 'Giá vốn thực tế từng mã của phiếu nhập', params: idParamSchema }, handler: async (req) => ok(await realCost(db, authOf(req).tenantId, await ctxOf(authOf(req).tenantId), req.params.id)) });
@@ -163,8 +134,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await supplierBrandList(db, authOf(req).tenantId, req.params.code)) });
   r.get('/api/v1/purchase/product-cost/:sku', { preHandler: read, schema: { tags, summary: 'Giá vốn của một mã theo ĐVT nhỏ nhất: bình quân tháng gần nhất + tạm tính theo tồn hiện tại', params: z.object({ sku: z.string().min(1).max(64) }) },
     handler: async (req) => ok(await productCost(db, authOf(req).tenantId, req.params.sku)) });
-  r.post('/api/v1/purchase/units', { preHandler: read, schema: { tags, summary: 'ĐVT của nhiều mã (danh sách dài: gửi trong thân)', body: z.object({ skus: z.array(z.string().max(64)).max(20000) }) },
-    handler: async (req) => ok(await unitsOf(db, authOf(req).tenantId, req.body.skus)) });
   r.post('/api/v1/purchase/sku-info', { preHandler: read, schema: { tags, summary: 'Tên theo danh mục, đường dẫn nhóm hàng, ngành · nhãn · nhóm của nhiều mã (báo cáo MH23)', body: z.object({ skus: z.array(z.string().max(64)).max(20000) }) } },
     async (req) => ok(await skuInfoRows(db, authOf(req).tenantId, req.body.skus)));
   r.get('/api/v1/purchase/units', { preHandler: read, schema: { tags, summary: 'ĐVT của các mã (tỉ lệ, bán chính, mua mặc định)', querystring: z.object({ skus: z.string() }) },
@@ -180,17 +149,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const a = authOf(req); const s = await loadSettings(db, a.tenantId); return ok({ ...s, resolvedAccounts: await resolveAccounts(db, a.tenantId, s) }); } });
   r.get('/api/v1/purchase/variants', { preHandler: read, schema: { tags, summary: 'Biến thể mặt hàng (MH26): đuôi mã, số mã con, đuôi nào tách riêng khi phân tích đặt hàng' },
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
-  const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
-  r.post('/api/v1/purchase/units/thung/preview', { preHandler: read, schema: { tags, summary: 'ĐVT Thùng đặt hàng (MH27): xem trước — mã có tương tác mua / NCC khai trong N ngày, quy cách nhập vào (specs: 12 Lốc, 12CAN/THÙNG) quy về ĐVT nhỏ nhất; không có thì đoán theo ngữ cảnh (mặc định 48)', body: thungBody },
-    handler: async (req) => ok(await thungPlan(db, authOf(req).tenantId, req.body)) });
-  r.post('/api/v1/purchase/units/thung/apply', { preHandler: settings, schema: { tags, summary: 'ĐVT Thùng đặt hàng (MH27): chạy thật cho các mã chọn — thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định; dòng giá NCC giữ nguyên (lập đơn tự quy đổi)', body: thungBody.extend({ skus: z.array(z.string().trim().min(1).max(64)).min(1).max(20000) }) },
-    handler: async (req) => {
-      const a = authOf(req);
-      const res = await db.transaction().execute((trx) => thungApply(trx, a.tenantId, a.actor, req.body));
-      const manual = Object.keys(req.body.specs).filter((k) => req.body.skus.includes(k));
-      await logEvents(a.tenantId, [{ event: 'units_thung', docNo: '', user: a.actorName, data: { ...res, days: req.body.days, manual: manual.slice(0, 200), skus: req.body.skus.slice(0, 500) } }]);
-      return ok(res);
-    } });
   r.get('/api/v1/purchase/units/thung/empty-rows', { preHandler: read, schema: { tags, summary: 'MH27: dòng Thùng trống giá thừa (bản đầu từng thêm) — cùng NCC × mã còn dòng có giá' },
     handler: async (req) => ok(await emptyThungRows(db, authOf(req).tenantId)) });
   r.post('/api/v1/purchase/units/thung/empty-rows/delete', { preHandler: settings, schema: { tags, summary: 'MH27: xoá vĩnh viễn các dòng Thùng trống giá thừa, ghi nhật ký đủ nội dung' } },
@@ -200,7 +158,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
       if (res.count) await logEvents(a.tenantId, [{ event: 'units_thung_cleanup', docNo: '', user: a.actorName, data: { count: res.count, deleted: res.deleted } }]);
       return ok({ count: res.count });
     });
-  const seedBody = z.object({ password: z.string().default(''), reset: z.boolean().default(false) }).optional();
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });
   r.post('/api/v1/purchase/demo/warehouses', { preHandler: settings, schema: { tags, summary: 'Thêm kho mặc định cho chi nhánh mẫu chưa có kho (CN-NA, CN-ND, CN-PT, CN-HCM) — không sửa phiếu; cần mật khẩu', body: seedBody },
@@ -208,6 +165,7 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   r.post('/api/v1/purchase/demo/clear', { preHandler: settings, schema: { tags, summary: 'Xoá dữ liệu tình huống (đảo bút toán đã ghi) — cần mật khẩu', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await clearDemo(authOf(req))); } });
   mountActions(app, routesTsWriteActions);
+  mountActions(app, routesWriteActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
@@ -371,6 +329,109 @@ export const routesTsWriteActions: AnyActionDef[] = [
       const separate = await saveVariantSeparate(trx, a.tenantId, input.separate);
       await logEvents(a.tenantId, [{ event: 'variants_saved', docNo: '', user: a.actorName, data: { before, after: separate } }]);
       return { separate };
+    },
+  }),
+];
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const routesWriteActions: AnyActionDef[] = [
+  // [2026-11-03 06:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: bỏ duyệt trong giao dịch của action (huỷ chứng từ con + về nháp cùng lúc)
+  defineAction({
+    id: 'mua-hang.purchase.documents-unapprove', title: 'Bỏ duyệt: huỷ chứng từ kế toán đã sinh, về nháp (body tuỳ chọn { reason })', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    input: idParamSchema.extend({ reason: z.string().trim().max(500).optional() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/unapprove' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.unapproveIn(ctx.data.tx, ctx.legacyAuth, input.id, input.reason || undefined),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.document-create', title: 'Thêm chứng từ (nháp); số phiếu trống thì tự cấp', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'required',
+    input: z.object({}).passthrough(), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase' },
+    handler: (ctx, input) => purchaseService.saveIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'mua-hang.policy.transfer-limit', title: 'Điều chuyển hạn mức nhãn giữa chi nhánh', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: (z.object({ from: z.string().default(''), to: z.string().min(1), amount: z.number().positive() })).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/policies/:id/transfer-limit' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'policy', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const { id: _id, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const p = (await listPolicies(trx, auth.tenantId)).find((x) => x.id === input.id && x.kind === 'credit_limit');
+      if (!p) throw Errors.notFound('chính sách hạn mức');
+      const rule = p.rule as { limit: number; warnPct?: number; branches?: Record<string, number> };
+      const branches = { ...(rule.branches ?? {}) };
+      const { from, to, amount } = reqBody;
+      if (from === to) throw Errors.validation('Nơi chuyển và nơi nhận trùng nhau');
+      const pool = from ? branches[from] ?? 0 : rule.limit - Object.values(branches).reduce((a, b) => a + b, 0);
+      // Chuyển từ chi nhánh: chỉ được chuyển phần CÒN TRỐNG (hạn mức − nợ nhãn đã ghi − phiếu đang chờ); phần đã bị nợ chiếm vẫn nằm ở chi nhánh đó
+      const used = from ? await brandBranchUsage(trx, auth.tenantId, await ctxOf(auth.tenantId), p.scope.brandCode!, from) : { current: 0, pending: 0 };
+      const free = Math.max(0, pool - used.current - used.pending);
+      if (amount > free) throw Errors.validation(from
+        ? `Số chuyển vượt phần còn trống của ${from}: chỉ còn ${free.toLocaleString('vi-VN')} (hạn mức ${pool.toLocaleString('vi-VN')} − nợ đã ghi ${used.current.toLocaleString('vi-VN')} − đang chờ ${used.pending.toLocaleString('vi-VN')})`
+        : `Số chuyển vượt hạn mức chưa phân bổ (${pool.toLocaleString('vi-VN')})`);
+      if (from) branches[from] = pool - amount;
+      branches[to] = (branches[to] ?? 0) + amount;
+      await sameTx(trx, (trx) => savePolicy(trx, auth.tenantId, auth.actor, policyInputSchema.parse({ ...p, rule: { ...rule, branches }, validFrom: p.validFrom ?? null, validTo: p.validTo ?? null }), p.id));
+      await logEvents(auth.tenantId, [{ event: 'limit_transfer', docNo: '', user: auth.actorName, data: { policy: p.code, brand: p.scope.brandCode, from: from || 'Chưa phân bổ', to, amount, before: rule.branches ?? {}, after: branches } }]);
+      return { branches };
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.rebate.preview', title: 'Tính thưởng cuối kỳ (xem trước)', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: z.object({ policyCode: z.string().min(1), period: z.string().min(4), manualTotal: z.number().nonnegative().optional() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/rebates/preview' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth; const cx = await ctxOf(a.tenantId);
+      const p = cx.policies.find((x) => x.code === input.policyCode && ['period_rebate', 'target_rebate', 'stage_rebate'].includes(x.kind));
+      if (!p) throw Errors.notFound('chính sách thưởng');
+      if (p.kind === 'stage_rebate' && input.manualTotal !== undefined) throw Errors.validation('Thưởng theo giai đoạn tính theo doanh số từng ngày từ phiếu đã duyệt — không nhập doanh số tay');
+      return await rebatePreview(trx, a.tenantId, cx, p, input.period, input.manualTotal);
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.unit.lookup', title: 'ĐVT của nhiều mã (danh sách dài: gửi trong thân)', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: z.object({ skus: z.array(z.string().max(64)).max(20000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/units' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      return await unitsOf(trx, ctx.legacyAuth.tenantId, input.skus);
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.unit.thung-preview', title: 'ĐVT Thùng đặt hàng (MH27): xem trước — mã có tương tác mua / NCC khai trong N ngày, quy cách nhập vào (specs: 12 Lốc, 12CAN/THÙNG) quy về ĐVT nhỏ nhất; không có thì đoán theo ngữ cảnh (mặc định 48)', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: thungBody, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/preview' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      return await thungPlan(trx, ctx.legacyAuth.tenantId, input);
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.unit.thung-apply', title: 'ĐVT Thùng đặt hàng (MH27): chạy thật cho các mã chọn — thêm / sửa ĐVT Thùng, đặt làm ĐVT mua mặc định; dòng giá NCC giữ nguyên (lập đơn tự quy đổi)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: thungBody.extend({ skus: z.array(z.string().trim().min(1).max(64)).min(1).max(20000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/apply' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'unit' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth;
+      const res = await sameTx(trx, (trx) => thungApply(trx, a.tenantId, a.actor, input));
+      const manual = Object.keys(input.specs).filter((k) => input.skus.includes(k));
+      await logEvents(a.tenantId, [{ event: 'units_thung', docNo: '', user: a.actorName, data: { ...res, days: input.days, manual: manual.slice(0, 200), skus: input.skus.slice(0, 500) } }]);
+      return res;
     },
   }),
 ];

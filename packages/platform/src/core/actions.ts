@@ -553,7 +553,8 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
         summary: def.title,
         description: notes,
         ...(names.length ? { params: def.input.pick(mask) } : {}),
-        ...(inQuery ? { querystring: dry ? rest.merge(dry) : rest } : { ...(Object.keys(rest.shape).length ? { body: rest } : {}), ...(dry ? { querystring: dry } : {}) }),
+        // [2026-11-03 07:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: thân mà {} đã hợp lệ (mọi trường tuỳ chọn / có mặc định) thì được gửi thiếu
+        ...(inQuery ? { querystring: dry ? rest.merge(dry) : rest } : { ...(Object.keys(rest.shape).length ? { body: rest.safeParse({}).success ? rest.nullish() : rest } : {}), ...(dry ? { querystring: dry } : {}) }),
       },
       config: def.permission === 'public' ? { public: true } : {},
       handler: async (req: FastifyRequest, reply) => {

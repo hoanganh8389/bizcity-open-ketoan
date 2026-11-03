@@ -215,6 +215,9 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 07:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4 -->
+- **Mua hàng qua `defineAction`** (tồn max, hoá đơn NCC, chứng từ, chính sách, ĐVT): lập phiếu mua, hoá đơn NCC, yêu cầu điều chuyển / tồn max **bắt buộc `Idempotency-Key`** (giao diện đã gửi sẵn); route xem trước / tra cứu là action đọc. **Bỏ duyệt phiếu mua chạy trong một giao dịch**: lỗi giữa chừng không còn để lại phiếu "đã duyệt" mà chứng từ kế toán đã huỷ.
+- Action có thân mà mọi trường đều tuỳ chọn: gửi thiếu thân (hoặc `null`) được nhận như `{}`.
 <!-- [2026-11-03 06:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
 - **Thêm 86 route ghi qua `defineAction`** (danh mục, tài sản, người dùng / khoá API, ứng dụng, thiết lập, kế hoạch tiền, thuế, mua hàng, chữ ký): đường dẫn, quyền, thân yêu cầu, mã 201 không đổi; mỗi lần ghi có bằng chứng. Action mới của phân hệ khai trong `bizcity.module.json`. Route dạng lô (mỗi mục một giao dịch, bắt lỗi từng mục) và cửa nạp chứng từ chưa chuyển.
 - **Bằng chứng và bản phản hồi gửi lặp không còn chứa bí mật**: runtime che trường `password`, `secret`, `token`, `apiKey`, `key`… (`***`). Khoá API chỉ trả về một lần; gửi lặp cùng `Idempotency-Key` nhận bản đã che.
