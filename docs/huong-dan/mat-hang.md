@@ -195,3 +195,12 @@ Khi bạn Ghi mặt hàng mà khai báo còn **lỗi chặn** (khung **Vì sao**
 - sửa hết lỗi chặn rồi Ghi → mặt hàng **tự kích hoạt**; các chứng từ đang chờ vì nó được kiểm lại tự động.
 
 Lỗi chặn hiện có: thiếu đơn vị tính gốc (`ITEM-BLOCK-001`); thiếu nhóm hạch toán khi đơn vị chưa có nhóm mặc định (`ITEM-BLOCK-002`). Thiếu nhóm hạch toán nhưng có nhóm mặc định chỉ là **cảnh báo mềm** (`ITEM-HINT-001`): lưu được ngay sau khi ghi lý do. Tra mọi mã ở [Tra mã phát hiện](ma-loi/README.md).
+
+## Mặt hàng mới từ chứng từ và kích hoạt hàng loạt <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3 -->
+
+Chứng từ của hệ thống bán hàng mang mã hàng chưa có trong danh mục thì xử lý theo chế độ kế toán trưởng chọn ở [Quy định dữ liệu danh mục](quy-dinh-du-lieu-danh-muc.md):
+
+- **bật** (như trước): mặt hàng được thêm thẳng vào danh mục. Danh sách mặt hàng hiện dải nhắc "N ngày qua chứng từ đã tự thêm … mặt hàng — X thiếu đơn vị tính, Y chưa có nhóm hạch toán" để kế toán kiểm;
+- **tắt**: mặt hàng mới thành **nháp**, chứng từ chờ ở Trạm kiểm tra với mã [IN-ITEM-001](loi-dau-vao/IN-ITEM-001.md).
+
+Nút **Kích hoạt hàng loạt** ở danh sách mặt hàng: chọn các mặt hàng nháp, điền một lần đơn vị tính / nhóm hạch toán cho ô **còn trống** (không ghi đè ô đã có). Mặt hàng nào hết lỗi chặn thì kích hoạt, còn thiếu thì giữ nháp và được liệt kê. Chứng từ đang chờ vì các mặt hàng vừa kích hoạt được kiểm lại tự động. Dùng nhóm mặc định cho mặt hàng chưa có nhóm thì phải ghi lý do.

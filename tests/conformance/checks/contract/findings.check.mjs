@@ -1,14 +1,19 @@
+// [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: SC-FIND-1 thêm căn cứ (R-GATE-11); SC-FIND-2 mọi thông báo của Core dựng từ thư viện mã (R-GATE-10)
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 (ADR-0019, R-GATE-2 / R-GATE-5): SC-FIND-1 — một thư viện phát hiện cho hai cổng: mã không trùng, đủ vì sao / cách sửa, trang tra mã đủ mã
 /**
  * bizcity_findings@1: hai danh mục nguồn (Gate A `catalog-hint.ts`, Gate B `intake-findings.ts`) gom về một thư viện. Kiểm:
  *   - mã không trùng giữa hai danh mục (và trong từng danh mục);
  *   - mỗi mã có tiêu đề và "vì sao"; mức block / warn có "cách sửa" (không chặn im lặng, R-GATE-2);
- *   - trang người đọc docs/huong-dan/ma-loi/README.md có đúng các mã (sinh bằng `node scripts/sinh-ma-loi.mjs --write`).
+ *   - trang người đọc docs/huong-dan/ma-loi/README.md có đúng các mã (sinh bằng `node scripts/sinh-ma-loi.mjs --write`);
+ *   - mỗi mã có căn cứ ở legal-basis.ts (FINDING_BASIS), khoá có trong LEGAL_BASES, tên văn bản (trừ NOI-BO) có trong
+ *     docs/can-cu/01-danh-muc-van-ban.md (R-GATE-11).
  * Đọc nguồn bằng regex (không cần build), như SC-INTAKE-1.
  */
 const HINTS = 'packages/contracts/src/catalog-hint.ts';
 const INTAKE = 'packages/contracts/src/intake-findings.ts';
 const PAGE = 'docs/huong-dan/ma-loi/README.md';
+const BASIS = 'packages/contracts/src/legal-basis.ts';
+const LAW_PAGE = 'docs/can-cu/01-danh-muc-van-ban.md';
 const INTAKE_ROW = /^ {2}'(IN-[A-Z]+-\d{3})': \{[^\n]*severity: '(block|warn|hint)'[^\n]*title: '([^']*)', why: '([^']*)', fix: '([^']*)'/;
 
 /** Các mục của CATALOG_HINTS: khối `  'MÃ': {` … `  },`. */
@@ -28,7 +33,7 @@ function hintEntries(src) {
 export default {
   id: 'SC-FIND-1',
   title: 'Thư viện phát hiện hai cổng: mã không trùng, đủ vì sao / cách sửa, trang tra mã đủ mã',
-  gate: 'DOCS', contract: 'contracts', rules: ['R-GATE-2', 'R-GATE-5'], tier: 1, enforce: 'block', weight: 2, targets: ['repo'],
+  gate: 'DOCS', contract: 'contracts', rules: ['R-GATE-2', 'R-GATE-5', 'R-GATE-11'], tier: 1, enforce: 'block', weight: 2, targets: ['repo'],
   run(ctx) {
     const findings = [];
     const add = (file, msg, key) => findings.push(ctx.finding(file, null, msg, key));
@@ -50,6 +55,21 @@ export default {
       const listed = new Set([...page.matchAll(/^\| `([A-Z]+-[A-Z]+-\d{3})` \|/gm)].map((m) => m[1]));
       for (const code of seen.keys()) if (!listed.has(code)) add(PAGE, `trang tra mã thiếu ${code} — chạy node scripts/sinh-ma-loi.mjs --write`, `page-missing:${code}`);
       for (const code of listed) if (!seen.has(code)) add(PAGE, `trang tra mã có ${code} nhưng thư viện không có`, `page-extra:${code}`);
+    }
+    // ── căn cứ (R-GATE-11) ──
+    const basisSrc = ctx.repo.read(BASIS);
+    if (basisSrc == null) add(BASIS, 'chưa có sổ căn cứ legal-basis.ts — mỗi mã phải có căn cứ (R-GATE-11)', 'basis:file-missing');
+    else {
+      const laws = new Map([...basisSrc.matchAll(/^ {2}'([A-Z0-9-]+)': \{ title: '([^']+)'/gm)].map((m) => [m[1], m[2]]));
+      const rows = new Map([...basisSrc.matchAll(/^ {2}'([A-Z]+-[A-Z]+-\d{3})': \[([^\]]*)\],/gm)].map((m) => [m[1], [...m[2].matchAll(/'([A-Z0-9-]+)'/g)].map((x) => x[1])]));
+      const lawPage = ctx.repo.read(LAW_PAGE) ?? '';
+      for (const [key, title] of laws) if (key !== 'NOI-BO' && !lawPage.includes(`**${title}**`)) add(BASIS, `căn cứ ${key} "${title}" không có trong ${LAW_PAGE} — thêm văn bản vào danh mục (có ngày rà soát) hoặc sửa tên`, `basis-law:${key}`);
+      for (const code of seen.keys()) {
+        const keys = rows.get(code);
+        if (!keys?.length) { add(BASIS, `${code}: chưa có căn cứ — khai ở FINDING_BASIS (văn bản trong docs/can-cu, hoặc NOI-BO = quy ước phần mềm)`, `basis-missing:${code}`); continue; }
+        for (const k of keys) if (!laws.has(k)) add(BASIS, `${code}: căn cứ ${k} không có trong LEGAL_BASES`, `basis-unknown:${code}:${k}`);
+      }
+      for (const code of rows.keys()) if (!seen.has(code)) add(BASIS, `FINDING_BASIS có ${code} nhưng thư viện không có mã này`, `basis-extra:${code}`);
     }
     return { examined: seen.size, unitBy: 'key', findings, metrics: { gateA: hints.length, gateB: intake.length } };
   },

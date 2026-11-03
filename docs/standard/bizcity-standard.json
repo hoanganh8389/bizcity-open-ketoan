@@ -21,7 +21,7 @@
     "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
     "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
     "bizcity_posting_template": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
-    "bizcity_findings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-FINDINGS-v1.md", "role": "thư viện phát hiện của hai cổng kiểm chuẩn (ADR-0019, SC-FIND-1)" },
+    "bizcity_findings": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-FINDINGS-v1.md", "role": "thư viện phát hiện của hai cổng kiểm chuẩn (ADR-0019, SC-FIND-1)" },
     "bizcity_remedy": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-REMEDY-v1.md", "role": "phương án khắc phục có cấu trúc cho mọi kiểm (PHASE-022, SC-FIX-1)" },
     "bizcity_mcp": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] },
     "bizcity_domain": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-DOMAIN-v1.md", "role": "accounting invariants — Domain Contract (layer 1/4)" },
@@ -125,6 +125,7 @@
     "planned": []
   },
   "changelog": [
+    { "version": "1.0.0-draft", "date": "2026-11-03", "changes": ["kernelContracts: bizcity_findings 1.1.0-draft (ADR-0020 tôn chỉ Core) — trường basis (căn cứ pháp lý, R-GATE-11), notifyFinding + SC-FIND-2 (R-GATE-10: mọi thông báo của Core dựng từ thư viện mã), status không còn là cổng chờ duyệt"] },
     { "version": "1.0.0-draft", "date": "2026-11-02", "changes": ["kernelContracts: thêm bizcity_findings 1.0.0-draft (PHASE-024 S024-27, ADR-0019) — thư viện phát hiện hai cổng, core.findings.list / explain, check SC-FIND-1"] },
     { "version": "1.0.0-draft", "date": "2026-11-02", "changes": ["kernelContracts: thêm bizcity_remedy 1.0.0-draft (PHASE-022 W1) — phương án khắc phục có cấu trúc, check SC-FIX-1"] },
     { "version": "1.0.0-draft", "date": "2026-11-02", "changes": ["conformance.engine: duyệt rulepack tại bản cài (ADR-0016, migration 0056, quyền conformance:approve); báo cáo có approval_basis"] },

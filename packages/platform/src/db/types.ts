@@ -575,6 +575,8 @@ export interface ProductsTable {
   is_draft: Generated<boolean>;
   /** Mã lỗi chặn khiến còn nháp (ITEM-BLOCK-*). */
   draft_codes: Generated<string[]>;
+  /** Lúc thêm mặt hàng (0063). */
+  created_at: TimestampDefault;
 }
 
 export interface ProductUnitsTable {
@@ -1702,7 +1704,23 @@ export interface SchemaMigrationsTable {
 }
 
 /** Toàn bộ cơ sở dữ liệu. */
+/** Duyệt luật nhắc khung Vì sao theo đơn vị (0063, D023-4 / D023-8). [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 */
+export interface CatalogRuleReviewsTable {
+  tenant_id: string;
+  code: string;
+  title: string | null;
+  why: string | null;
+  fix: string | null;
+  lowered: Generated<boolean>;
+  note: Generated<string>;
+  rule_hash: string;
+  reviewed_by: string;
+  reviewed_by_name: Generated<string>;
+  reviewed_at: TimestampDefault;
+}
+
 export interface Database {
+  catalog_rule_reviews: CatalogRuleReviewsTable;
   tenants: TenantsTable;
   users: UsersTable;
   api_keys: ApiKeysTable;

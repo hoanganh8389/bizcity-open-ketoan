@@ -6,7 +6,7 @@
  *   catalog.warn.unacked  — lưu qua API / plugin không kèm lý do (cảnh báo vẫn được trả trong meta.findings).
  * Không có cảnh báo mềm → không ghi gì. Cảnh báo mềm không bao giờ chặn lưu.
  */
-import { warnCodes, type CatalogFinding, type CatalogWarnAck } from '@ketoan/contracts';
+import { applyRuleReview, hintHash, warnCodes, type CatalogFinding, type CatalogWarnAck } from '@ketoan/contracts';
 import type { Db } from '../db/client.js';
 import type { AuthContext } from './auth.js';
 import { writeAudit } from './audit.js';
@@ -18,4 +18,20 @@ export async function recordWarnAck(trx: Db, auth: AuthContext, objectType: stri
     tenantId: auth.tenantId, actor: auth.actor, action: ack ? 'catalog.warn.ack' : 'catalog.warn.unacked', objectType, objectId,
     after: { codes, reason: ack?.reason ?? null, seen: ack?.codes ?? [], via: auth.kind },
   });
+}
+
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị (catalog_rule_reviews, 0063) lên phát hiện — mọi danh mục dùng chung
+/**
+ * Áp bản duyệt của đơn vị (HT09 "Quy định dữ liệu danh mục") lên phát hiện khung Vì sao: câu chữ kế toán trưởng sửa lại, cảnh
+ * báo mềm đã hạ xuống nhắc (D023-8 — không còn bắt ghi lý do), bỏ nhãn "nháp" của luật đã duyệt. Gọi ở cuối mỗi hàm hint
+ * (tài khoản, đối tượng, mặt hàng) để `/validate` và lúc lưu thấy cùng một kết quả.
+ */
+export async function reviewFindings(trx: Db, tenantId: string, findings: CatalogFinding[]): Promise<CatalogFinding[]> {
+  if (!findings.length) return findings;
+  const rows = await trx.selectFrom('catalog_rule_reviews').select(['code', 'title', 'why', 'fix', 'lowered', 'rule_hash'])
+    .where('tenant_id', '=', tenantId).where('code', 'in', [...new Set(findings.map((f) => f.code))]).execute();
+  if (!rows.length) return findings;
+  // Bản duyệt của luật đã đổi (dấu khác) không còn áp — luật về chưa duyệt (S023-17).
+  const by = new Map(rows.filter((r) => r.rule_hash === hintHash(r.code)).map((r) => [r.code, r]));
+  return findings.map((f) => applyRuleReview(f, by.get(f.code)));
 }

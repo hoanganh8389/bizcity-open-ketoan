@@ -15,7 +15,7 @@ import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { AccountPicker } from '@/components/pickers';
-import { useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
 import type { CatalogWarnAck } from '@ketoan/contracts';
 
 interface Account {
@@ -276,7 +276,7 @@ function AccountForm({ value, onClose }: { value: Partial<Account> & { isNew?: b
         ? api.post('/api/v1/accounts', { ...body, code: v.code, parentCode: v.parentCode || undefined })
         : api.patch(`/api/v1/accounts/${value.code}`, { ...body, isActive: v.isActive });
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['accounts'] }); if (value.isNew) onClose(); else viewAgain[1](); },
+    onSuccess: () => { flashSaved(savedNote(why.findings)); void qc.invalidateQueries({ queryKey: ['accounts'] }); if (value.isNew) onClose(); else viewAgain[1](); },
   });
   const both = v.normalSide === 'both';
   return (

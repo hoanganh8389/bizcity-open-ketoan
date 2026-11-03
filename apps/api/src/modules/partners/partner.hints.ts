@@ -7,6 +7,7 @@
 import { catalogFinding, type CatalogFinding } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
+import { reviewFindings } from '@bizcity/platform/core/catalog-warn';
 
 export interface PartnerDraft {
   code: string;
@@ -34,5 +35,5 @@ export async function partnerHints(db: Db, tenantId: string, d: PartnerDraft): P
       .where(sql<boolean>`lower(trim(name)) = lower(${name})`).limit(1).executeTakeFirst();
     if (same) out.push(catalogFinding('PART-HINT-003', { other: same.code, name }, { field: 'name' }));
   }
-  return out;
+  return reviewFindings(db, tenantId, out); // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị
 }

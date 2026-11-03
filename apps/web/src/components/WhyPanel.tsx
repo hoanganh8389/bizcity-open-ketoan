@@ -7,7 +7,7 @@
  *   <WarnAckBox ack={ack} />                                                   — hộp lý do bắt buộc ≥ 5 ký tự
  * Cảnh báo mềm không chặn lưu; chặn (block) thì nút Ghi tắt.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { WARN_ACK_MIN_REASON, type CatalogFinding, type CatalogWarnAck } from '@ketoan/contracts';
 import { api } from '@/lib/api';
@@ -52,8 +52,10 @@ export function WhyPanel({ findings, onFix }: { findings: readonly CatalogFindin
               {shown && f.howTo && <div className="why-why"><b>Cách sửa:</b> {f.howTo}</div>}
               <div className="why-meta">
                 {f.fix && onFix && <button type="button" className="btn btn-xs" onClick={() => onFix(f.fix!.set)}>{f.fix.label}</button>}
-                <span className="why-code">{f.code}{f.rule ? ` · ${f.rule}` : ''}{f.draft ? ' · nội dung nháp, chờ kế toán trưởng duyệt' : ''}</span>
+                {/* [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: không còn nhãn "chờ kế toán trưởng duyệt"; có căn cứ (R-GATE-11) */}
+                <span className="why-code">{f.code}{f.rule ? ` · ${f.rule}` : ''}{f.lowered ? ' · đơn vị đã hạ xuống nhắc' : ''}</span>
               </div>
+              {shown && f.basis?.length ? <div className="why-basis">Căn cứ: {f.basis.join('; ')}</div> : null}
             </div>
           </div>
         );
@@ -100,6 +102,42 @@ export function WarnAckBox({ ack }: { ack: ReturnType<typeof useWarnAck> }) {
         <button type="button" className="btn btn-primary btn-xs" disabled={!ack.valid} onClick={() => ack.confirm()}>Ghi và ghi nhận</button>
         <button type="button" className="btn btn-xs" onClick={() => ack.cancel()}>Quay lại sửa</button>
       </div>
+    </div>
+  );
+}
+
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: dòng nhắc sau khi lưu — người dùng thấy cảnh báo TRƯỚC khi bấm Ghi (khung Vì sao); sau khi lưu chỉ nhắc ngắn còn gì
+let flashText: string | null = null;
+let flashTimer: ReturnType<typeof setTimeout> | undefined;
+const flashSubs = new Set<() => void>();
+const notify = () => flashSubs.forEach((f) => f());
+
+/** Hiện một dòng nhắc ngắn ở góc màn (tự tắt sau 6 giây). */
+export function flashSaved(text: string | null) {
+  if (!text) return;
+  flashText = text;
+  notify();
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { flashText = null; notify(); }, 6000);
+}
+
+/** Câu nhắc sau khi lưu bản khai báo: còn cảnh báo mềm (đã ghi lý do) / lưu nháp vì còn lỗi chặn. Không còn gì → null. */
+export function savedNote(findings: readonly CatalogFinding[], opts: { draft?: boolean } = {}): string | null {
+  const blocks = findings.filter((f) => f.level === 'block').length;
+  const warns = findings.filter((f) => f.level === 'warn').length;
+  if (opts.draft && blocks) return `Đã lưu nháp — còn ${blocks} lỗi chặn; chưa dùng được trên chứng từ cho tới khi sửa xong.`;
+  if (warns) return `Đã lưu — còn ${warns} cảnh báo mềm (lý do đã ghi vào nhật ký).`;
+  return null;
+}
+
+/** Chỗ hiện dòng nhắc — gắn một lần ở khung ứng dụng. */
+export function SavedFlash() {
+  const text = useSyncExternalStore((cb) => { flashSubs.add(cb); return () => { flashSubs.delete(cb); }; }, () => flashText);
+  if (!text) return null;
+  return (
+    <div className="why-flash" role="status" aria-live="polite">
+      <span>{text}</span>
+      <button type="button" className="btn btn-xs" onClick={() => { flashText = null; notify(); }} aria-label="Đóng">×</button>
     </div>
   );
 }

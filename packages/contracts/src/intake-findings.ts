@@ -50,6 +50,8 @@ export const INTAKE_CATALOG = {
   'IN-SUM-004': { layer: 'L2', severity: 'warn', stage: 'advice', weight: 10, title: 'Đơn giá × số lượng − chiết khấu khác thành tiền dòng', why: 'Thành tiền lệch đơn giá thì giá vốn, lãi gộp, đối chiếu với đơn hàng sẽ khó giải thích.', fix: 'Kiểm đơn giá, số lượng, chiết khấu của dòng ở hệ thống nguồn.', ref: 'R-EVENT-5', acceptable: true },
   'IN-MD-001': { layer: 'L3', severity: 'block', stage: 'door', weight: 0, title: 'Chi nhánh (mã cửa hàng) chưa có', why: 'Sổ, kho, báo cáo theo chi nhánh; mã lạ thì không biết ghi cho cửa hàng nào.', fix: 'Dùng mã chi nhánh đã khai ở Danh mục chi nhánh, hoặc nhờ kế toán thêm chi nhánh trước.', ref: 'R-MD, findBranch', acceptable: false },
   'IN-MD-004': { layer: 'L3', severity: 'hint', stage: 'advice', weight: 0, title: 'Mã hàng chưa có trong danh mục', why: 'Mặt hàng mới chưa có nhóm hạch toán thì doanh thu, giá vốn theo mặc định — kế toán nên gắn nhóm sớm.', fix: 'Đồng bộ danh mục mặt hàng trước (PUT /api/v1/products) hoặc nhờ kế toán thêm và gắn nhóm hạch toán.', ref: 'R-MD', acceptable: true },
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: IN-ITEM-001 — mã hàng lạ khi đơn vị đã tắt tự thêm mặt hàng (bizcity.item.auto_create = off): mặt hàng nháp + bể chờ
+  'IN-ITEM-001': { layer: 'L3', severity: 'block', stage: 'door', weight: 0, title: 'Mã hàng chưa có trong danh mục (đơn vị đã tắt tự thêm mặt hàng)', why: 'Đơn vị đã tắt tự thêm mặt hàng từ chứng từ: mặt hàng mới phải được kế toán xem (đơn vị tính, nhóm hạch toán) trước khi vào sổ, để kho và giá vốn không ghi theo mặc định sai. Phần mềm đã tạo sẵn một mặt hàng NHÁP từ dòng chứng từ.', fix: 'Mở mặt hàng nháp vừa tạo ở danh mục (lọc "Nháp"), kiểm đơn vị tính và nhóm hạch toán rồi lưu để kích hoạt; hoặc đồng bộ danh mục từ hệ thống nguồn trước khi gửi chứng từ.', ref: 'D024-3, R-ITEM-6, ADR-0019', acceptable: false },
   // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: IN-ITEM-009 — chứng từ dùng mặt hàng còn nháp (Gate A chưa kích hoạt, R-GATE-6)
   'IN-ITEM-009': { layer: 'L3', severity: 'block', stage: 'door', weight: 0, title: 'Mặt hàng còn nháp, chưa kích hoạt', why: 'Mặt hàng lưu nháp vì khai báo còn thiếu (đơn vị tính, nhóm hạch toán); ghi sổ với nó thì kho, giá vốn hoặc tài khoản sẽ sai.', fix: 'Mở mặt hàng ở danh mục, sửa phần còn thiếu để mặt hàng tự kích hoạt; chứng từ ở Trạm kiểm tra được kiểm lại tự động, rồi nộp lại.', ref: 'R-GATE-6, ADR-0019', acceptable: false },
   'IN-MD-005': { layer: 'L3', severity: 'warn', stage: 'advice', weight: 10, title: 'Mã số thuế đối tượng sai định dạng', why: 'Mã số thuế sai thì hoá đơn, bảng kê và tra cứu doanh nghiệp đều sai; cơ quan thuế loại hoá đơn.', fix: 'Mã số thuế gồm 10 chữ số, hoặc 10 chữ số + "-" + 3 chữ số (chi nhánh); không khoảng trắng.', ref: 'R-MD', acceptable: true },
@@ -177,6 +179,15 @@ export const INTAKE_REMEDIES: Record<IntakeCodeNeedingRemedy, Remedy> & Partial<
     forbid: ['Không dùng mã chứng từ của nguồn khác để sửa chứng từ của nơi đó'],
   },
   // [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29: phương án cho IN-ITEM-009 (mặt hàng nháp) và IN-GUARD-001 (Commit Guard) — R-FIX-1
+  'IN-ITEM-001': {
+    steps: [
+      { text: 'Mở mặt hàng nháp vừa được tạo từ dòng chứng từ (Danh mục mặt hàng, lọc "Nháp"); kiểm đơn vị tính, nhóm hạch toán rồi lưu để kích hoạt', screen: SCREENS.DM10, role: 'accountant' },
+      { text: 'Chứng từ ở Trạm kiểm tra được kiểm lại tự động khi mặt hàng kích hoạt; nộp lại hoặc để hệ thống nguồn gửi lại', role: 'creator' },
+      { text: 'Về lâu dài: đồng bộ danh mục mặt hàng từ hệ thống nguồn (PUT /api/v1/products) trước khi gửi chứng từ có mã mới' },
+    ],
+    owner: 'accountant', verify: { code: 'IN-ITEM-001' },
+    forbid: ['Không bật lại tự thêm mặt hàng chỉ để chứng từ lọt cửa nạp — mặt hàng thiếu đơn vị tính / nhóm hạch toán sẽ ghi sai kho và giá vốn'],
+  },
   'IN-ITEM-009': {
     steps: [
       { text: 'Mở mặt hàng đang nháp ở danh mục (lọc "Nháp"), bổ sung phần còn thiếu theo khung Vì sao; lưu xong mặt hàng tự kích hoạt', screen: SCREENS.DM10, role: 'accountant' },

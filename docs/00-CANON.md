@@ -17,6 +17,32 @@
 > **Phiên bản:** 1.1 · 2026-10-29 · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
 > **Hai lớp chuẩn:** luật `R-*` dưới đây giữ **Kernel** (sổ cái). Luật `STD-*` của [Bizcity Framework Standard v1](standard/README.md) giữ **module** (7 hợp đồng, bộ kiểm cài đặt). Module tuân `STD-*`; nhờ SDK nó tự tuân `R-*`.
 
+<!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
+## 0. Tôn chỉ ([ADR-0020](adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md))
+
+**Người dùng là người quyết định và thao tác.** Core không tự sửa dữ liệu thay họ, cũng không âm thầm chặn. Việc của Core là làm cho vấn đề **nhìn thấy được và chỉ đúng chỗ sửa**, bằng các công cụ:
+
+| Công cụ | Trả lời câu hỏi |
+|---|---|
+| Gate A (khung Vì sao, nháp) | Khai báo danh mục này thiếu / sai gì |
+| Gate B (trạm tiền kiểm, bể chờ) | Chứng từ này vì sao chưa vào sổ |
+| Check / tự chẩn đoán / kiểm chuẩn | Sổ đang lệch ở đâu |
+| Sổ tay module nghiệp vụ, trang bài học | Vì sao phải làm vậy, làm thế nào |
+| Debug / trace | Lỗi xảy ra ở bước nào |
+
+Mọi công cụ trên phải nói **cùng một ngôn ngữ**, và ngôn ngữ đó là **thư viện mã** (`bizcity_findings@1`). Một vấn đề có một mã. Mã đó mang vì sao, cách sửa, chỗ sửa (màn / bước) và **căn cứ** ([danh mục văn bản](can-cu/01-danh-muc-van-ban.md)). Thông báo, dải nhắc, lỗi API, trang bài học đều sinh ra từ mã, không ai viết câu chữ riêng.
+
+Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); mọi lời Core nói ra bắt đầu từ thư viện mã (R-GATE-10); mỗi mã có căn cứ (R-GATE-11); Core không mã hoá quy trình theo chức danh — ai làm gì là việc của phân quyền.
+
+<!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity -->
+### 0.1 Ba trụ cột (đề xuất — [ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md))
+
+| Trụ cột | Bảo đảm | Luật |
+|---|---|---|
+| I · Sổ cái bất biến | sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có | R-LEDGER, §1 |
+| II · Định danh bất biến, mã có phiên bản | `item_id` không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực — đổi thông tư không làm lại dữ liệu | R-ITEM, ADR-0017 / 0018 / 0009 |
+| III · Liên tục kế toán (Accounting Continuity) | mọi con số đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ; lineage giá vốn là sổ thứ hai; kiểm chuẩn vòng đời (Gate C); khoá kỳ đòi chuỗi lành | R-CONT |
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -59,6 +85,7 @@
 | R-REV | [rules/RULE-REVIEW.md](rules/RULE-REVIEW.md) | 0 | Người đóng góp làm phân hệ / giao diện qua PR; Nhóm Lõi rà soát mỗi lần nhận việc: kiến trúc, lỗi, rủi ro, dữ liệu kế toán, mã hàng; biên bản ở `docs/audits/REVIEW-*` | `scripts/ra-soat-dong-gop.mjs` |
 | R-VNC | [rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md) | 1 (R-VNC-3, -7: 0) | Bộ kiểm chuẩn pháp lý VN: kho nguồn pháp lý có trạng thái rà, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo 6 trạng thái, không tự nhận chứng nhận nhà nước | SC-VNC-1, SC-VNC-2; runner lane runtime (PHASE-020) |
 | R-ITEM | [rules/RULE-ITEM.md](rules/RULE-ITEM.md) | 0 (R-ITEM-0), 1 (R-ITEM-1..9) | **Chấp nhận về nguyên tắc, chưa có mã** ([ADR-0017](adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), PHASE-024): định danh hàng hoá bất biến, mã có phiên bản, sổ đã ghi không đổi theo danh mục; tài khoản từ chính sách, không từ tiền tố mã; dữ liệu ngoài qua validation <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-ITEM --> | trigger, DG-ITEM-1..5, SC-ITEM-1..3 (sẽ có) |
+| R-CONT <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity --> | [rules/RULE-CONTINUITY.md](rules/RULE-CONTINUITY.md) | 0 (R-CONT-0), 1 (R-CONT-1..9) | **Đề xuất 2026-11-03** ([ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), PHASE-025): không đứt chuỗi; lineage giá vốn chỉ thêm; phương pháp tính giá là chính sách có phiên bản; trả / huỷ hoàn đúng giá vốn gốc; sổ chi tiết = sổ cái; khoá kỳ đòi Gate C sạch; kết quả do engine tính |
 | R-GATE | [rules/RULE-GATE.md](rules/RULE-GATE.md) | 1 | **Chấp nhận 2026-11-02** ([ADR-0019](adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)): hai cổng — Gate A danh mục (nháp), Gate B nghiệp vụ (bể chờ, R-INTAKE); không chặn im lặng; một thư viện mã; mức nào hậu quả đó, không lan <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE --> | SC-FIND-1 (sẽ có), test bể / nháp |
 
 ## 4. Hợp đồng (contracts)
@@ -134,6 +161,8 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 
 ## 6. Nhật ký thay đổi CANON
 
+<!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
+- **v1.3 (2026-11-03):** Thêm §0 Tôn chỉ ([ADR-0020](adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md)): người dùng quyết định, Core chỉ đúng chỗ; một ngôn ngữ là thư viện mã có căn cứ; R-GATE-9 / 10 / 11.
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm luật R-VNC (bộ kiểm chuẩn pháp lý Việt Nam) vào danh mục luật. -->
 - **v1.2 (2026-11-01):** Thêm luật R-VNC ([rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md)) — bộ kiểm chuẩn pháp lý Việt Nam (PHASE-020): kho nguồn pháp lý, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo bằng chứng.
 - **v1.1 (2026-10-29):** Thêm Bizcity Framework Standard v1 (`docs/standard/`, 7 hợp đồng `STD-*`, bộ kiểm cài đặt, ca chuẩn Hợp đồng, Phase 1–6). Đổi tên khuôn nạp sổ `bizcity_event@1` → `bizcity_ledger_intake@1`; tên `bizcity_event@1` nay là sự kiện miền. `bizcity_workflow@1` gộp vào `bizcity_document@1`.

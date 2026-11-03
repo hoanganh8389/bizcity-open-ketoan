@@ -484,11 +484,18 @@
           ]
         },
         "SC-FIND-1": {
-          "min": 3,
+          "min": 4,
           "keys": [
             "dup:IN-XAU-001",
             "fix:ACC-XAU-001",
-            "page:missing"
+            "page:missing",
+            "basis:file-missing"
+          ]
+        },
+        "SC-FIND-2": {
+          "min": 1,
+          "keys": [
+            "free-text:packages/kernel/src/modules/intake/thong-bao-tu-do.ts"
           ]
         }
       }
