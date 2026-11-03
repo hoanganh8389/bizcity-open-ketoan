@@ -22,7 +22,6 @@ import { NhaCungCapPage } from './nha-cung-cap/NhaCungCapPage';
 import { HoSoNccPage } from './nha-cung-cap/HoSoNccPage';
 import { DatHangPage } from './dat-hang/DatHangPage';
 import { CsdlPage } from './csdl/CsdlPage';
-import { PhanCapPage } from './ton-max/PhanCapPage';
 import { KhoiDauPage } from './khoi-dau/KhoiDauPage';
 import { TonMaxPage } from './ton-max/TonMaxPage';
 import { DangKyMaxPage } from './ton-max/DangKyMaxPage';
@@ -39,7 +38,8 @@ export const muaHangRoutes = (
     <Route path="mua-hang/dang-ky-max" element={<DangKyMaxPage />} />
     <Route path="mua-hang/chuyen-shop" element={<ChuyenShopPage />} />
     <Route path="mua-hang/cong-thuc" element={<CongThucPage />} />
-    <Route path="mua-hang/phan-cap" element={<PhanCapPage />} />
+    {/* [2026-11-03 02:10 PM Nguyễn Văn Thủy] SDTC — bỏ MH15: phân cấp đi theo Sơ đồ tổ chức (DM16) */}
+    <Route path="mua-hang/phan-cap" element={<Navigate to="/danh-muc/so-do-to-chuc" replace />} />
     <Route path="mua-hang/khoi-dau" element={<KhoiDauPage />} />
     <Route path="mua-hang/tong-quan" element={<TongQuanMuaPage />} />
     {/* MH03 Chứng từ mua hàng đã gộp vào MH11 Tổng hợp mua hàng — liên kết cũ (?mo, ?moi, ?loai…) chuyển sang, giữ tham số */}

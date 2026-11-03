@@ -115,6 +115,8 @@ export const LAYER_MAP = [
   ['modules/partners/tra-mst.ts', 'A', 'adapters/tax-lookup'],
   ['modules/products/', 'M', 'data/masterdata'],
   ['modules/branches/', 'M', 'data/masterdata'],
+  // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — modules/org-units/ (sơ đồ tổ chức) cùng lớp M danh mục với chi nhánh (đóng góp)
+  ['modules/org-units/', 'M', 'data/masterdata'],
   ['modules/warehouses/', 'M', 'data/masterdata'],
   ['modules/unit-names/', 'M', 'data/masterdata'],
   ['modules/bank-accounts/', 'M', 'data/masterdata'],

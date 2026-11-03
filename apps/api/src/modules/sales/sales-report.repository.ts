@@ -1,5 +1,6 @@
 // @bizcity-layer D modules/ban-hang
 // [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
+// [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — báo cáo bán hàng: lọc ?groups= theo nhóm hàng (gồm nhóm con), tổng hợp theo nhóm hàng cấp 1 / 2 / 3 (đóng góp)
 /**
  * Truy vấn báo cáo bán hàng trên sales_lines / sales_payments.
  * Mọi số lượng, số tiền đã nhân sign → hàng trả lại ra số âm, cộng lại là số thuần.
@@ -19,16 +20,31 @@ export interface SalesFilter {
   scope: 'all' | 'invoiced' | 'internal';
   /** Tìm theo mã hàng, tên hàng, số chứng từ, tên/mã khách. */
   search?: string;
+  /** Chỉ mã hàng thuộc các nhóm hàng này (gồm mọi nhóm con). */
+  groups?: string[];
+  /** Lọc theo mã kho: dòng ghi đúng mã kho đã chọn + dòng không ghi kho của chi nhánh có kho mặc định trong số đã chọn. */
+  wh?: { codes: string[]; defaultBranchIds: string[] } | null;
 }
 
-export const SALES_GROUPS = ['document', 'day', 'month', 'branch', 'product', 'customer', 'taxCode', 'brand', 'industry', 'itemGroup', 'itemType', 'customerGroup', 'department'] as const;
+export const SALES_GROUPS = ['document', 'day', 'month', 'branch', 'product', 'customer', 'taxCode', 'brand', 'industry', 'itemGroup', 'itemGroup1', 'itemGroup2', 'itemGroup3', 'itemType', 'customerGroup', 'department'] as const;
 export type SalesGroupBy = (typeof SALES_GROUPS)[number];
 
 /** Cột khoá và nhãn của từng cách nhóm. */
 const classJoin = (kind: string, col: string) => sql`LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.sku
         LEFT JOIN item_classes ic ON ic.tenant_id = l.tenant_id AND ic.kind = ${kind} AND ic.code = ${sql.ref(`pr.${col}`)}`;
+/** CTE "nhom": mỗi nhóm hàng → nhóm tổ tiên ở từng cấp (lvl 1 = nhóm không có cha). */
+export const nhomCte = (tenantId: string) => sql`WITH nhom AS (
+        WITH RECURSIVE up AS (
+          SELECT code, code AS anc, parent_code, 0 AS d FROM item_classes WHERE tenant_id = ${tenantId} AND kind = 'group'
+          UNION ALL
+          SELECT up.code, c.code, c.parent_code, up.d + 1 FROM up JOIN item_classes c ON c.tenant_id = ${tenantId} AND c.kind = 'group' AND c.code = up.parent_code WHERE up.d < 20
+        )
+        SELECT code, anc, COUNT(*) OVER (PARTITION BY code) - d AS lvl FROM up)`;
+const levelJoin = (n: number) => sql`LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.sku
+        LEFT JOIN nhom gl ON gl.code = pr.group_code AND gl.lvl = ${n}
+        LEFT JOIN item_classes ic ON ic.tenant_id = l.tenant_id AND ic.kind = 'group' AND ic.code = gl.anc`;
 /** Cột khoá, nhãn của từng cách nhóm; `join`: bảng nối thêm (phân loại hàng, nhóm khách) — mặt hàng chưa phân loại gom vào khoá rỗng. */
-export const GROUP_SQL: Record<SalesGroupBy, { key: RawBuilder<unknown>; label: RawBuilder<unknown>; extra: RawBuilder<unknown>; join?: RawBuilder<unknown> }> = {
+export const GROUP_SQL: Record<SalesGroupBy, { key: RawBuilder<unknown>; label: RawBuilder<unknown>; extra: RawBuilder<unknown>; join?: RawBuilder<unknown>; level?: boolean }> = {
   // Theo phiếu: khoá = ngày + số phiếu (sắp theo thời gian), nhãn = số phiếu, thông tin thêm do byDocument() bổ sung.
   document: { key: sql`l.doc_date::text || ' ' || d.doc_no || ' ' || l.event_id::text`, label: sql`MAX(d.doc_no)`, extra: sql`MAX(l.event_id::text)` },
   day: { key: sql`l.doc_date::text`, label: sql`l.doc_date::text`, extra: sql`''` },
@@ -40,6 +56,9 @@ export const GROUP_SQL: Record<SalesGroupBy, { key: RawBuilder<unknown>; label: 
   brand: { key: sql`COALESCE(pr.brand_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: classJoin('brand', 'brand_code') },
   industry: { key: sql`COALESCE(pr.industry_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: classJoin('industry', 'industry_code') },
   itemGroup: { key: sql`COALESCE(pr.group_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: classJoin('group', 'group_code') },
+  itemGroup1: { key: sql`COALESCE(gl.anc, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: levelJoin(1), level: true },
+  itemGroup2: { key: sql`COALESCE(gl.anc, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: levelJoin(2), level: true },
+  itemGroup3: { key: sql`COALESCE(gl.anc, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: levelJoin(3), level: true },
   itemType: { key: sql`COALESCE(pr.type_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: classJoin('type', 'type_code') },
   customerGroup: { key: sql`COALESCE(p.group_code, '')`, label: sql`COALESCE(MAX(pg.name), '')`, extra: sql`''`, join: sql`LEFT JOIN partner_groups pg ON pg.tenant_id = l.tenant_id AND pg.code = p.group_code` },
   // Bộ phận của chi nhánh (cửa hàng): xem theo điểm bán, HO, chi nhánh.
@@ -60,6 +79,15 @@ export function where(f: SalesFilter): RawBuilder<unknown> {
     const like = `%${f.search}%`;
     parts.push(sql`(l.sku ILIKE ${like} OR l.name ILIKE ${like} OR d.doc_no ILIKE ${like} OR d.invoice_no ILIKE ${like} OR p.name ILIKE ${like} OR p.code ILIKE ${like})`);
   }
+  if (f.wh) {
+    const whc = sql`COALESCE(d.payload -> 'lines' -> (l.line_no - 1) ->> 'warehouseCode', '')`;
+    parts.push(sql`(${whc} = ANY(${f.wh.codes}::text[]) OR (${whc} = '' AND l.branch_id = ANY(${f.wh.defaultBranchIds}::bigint[])))`);
+  }
+  if (f.groups?.length) parts.push(sql`l.sku IN (
+        WITH RECURSIVE g(code) AS (
+          SELECT code FROM item_classes WHERE tenant_id = ${f.tenantId} AND kind = 'group' AND code IN (${sql.join(f.groups)})
+          UNION SELECT c.code FROM item_classes c JOIN g ON c.parent_code = g.code WHERE c.tenant_id = ${f.tenantId} AND c.kind = 'group')
+        SELECT sku FROM products WHERE tenant_id = ${f.tenantId} AND group_code IN (SELECT code FROM g))`);
   return sql.join(parts, sql` AND `);
 }
 
@@ -145,6 +173,7 @@ export const salesReportRepository = {
   async summary(db: Db, f: SalesFilter, groupBy: SalesGroupBy): Promise<SalesSummaryRow[]> {
     const g = GROUP_SQL[groupBy];
     const res = await sql<SalesSummaryRow>`
+      ${g.level ? nhomCte(f.tenantId) : sql``}
       SELECT ${g.key} AS key, ${g.label} AS label, ${g.extra} AS extra,
              COUNT(DISTINCT l.event_id) FILTER (WHERE l.sign = 1)  AS sale_docs,
              COUNT(DISTINCT l.event_id) FILTER (WHERE l.sign = -1) AS return_docs,

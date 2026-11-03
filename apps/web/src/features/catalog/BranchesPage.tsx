@@ -7,7 +7,7 @@
  * Cầu nối hệ thống bán hàng: qua KẾT NỐI CHÍNH (Định khoản tự động → Kết nối), cột Website / Tên website / Mã kho website
  * hiện website (blog_id) đang nối với từng chi nhánh — theo cấu hình phân cấp bên hệ thống bán hàng.
  */
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -16,10 +16,13 @@ import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ListPicker } from '@/components/pickers';
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — chi nhánh thuộc nút sơ đồ tổ chức: cột C1 / C2 / C3, ô chọn nút ở form
+import { indexOrg, invalidateOrg, useOrgTree } from '@/lib/orgUnits';
+import { CayDonVi, ChonSoDoToChuc } from '@/components/CayDonVi';
 
 interface SourceSite { blogId: number; name: string; url: string; siteCode: string; branchCode: string | null; isMain: boolean; active: boolean }
 interface BranchSites { connection: { code: string; name: string } | null; sites: SourceSite[]; error?: string }
-type BranchRow = Branch & { siteIds: string; siteNames: string; siteCodes: string };
+type BranchRow = Branch & { siteIds: string; siteNames: string; siteCodes: string; c1: string; c2: string; c3: string };
 
 /** Website của hệ thống bán hàng (qua kết nối chính) — dùng chung cho lưới và form. */
 function useBranchSites() {
@@ -29,6 +32,7 @@ function useBranchSites() {
 interface Branch {
   code: string; name: string; accountingUnitCode: string | null; departmentCode: string | null; address: string | null; externalRef: string | null; isActive: boolean;
   note: string; companyName: string; taxCode: string; phone: string; fax: string;
+  orgUnitCode: string | null; orgPath: string;
 }
 
 export function BranchesPage() {
@@ -44,8 +48,16 @@ export function BranchesPage() {
   for (const st of sites.data?.sites ?? []) if (st.branchCode) byBranch.set(st.branchCode, [...(byBranch.get(st.branchCode) ?? []), st]);
   const rows: BranchRow[] = (q.data ?? []).map((b) => {
     const list = byBranch.get(b.code) ?? [];
-    return { ...b, siteIds: list.map((x) => x.blogId).join(', '), siteNames: list.map((x) => x.name).join(', '), siteCodes: list.map((x) => x.siteCode).filter(Boolean).join(', ') };
+    // Đường dẫn Công ty\BAC\PT\PTO → cấp 1 / 2 / 3 (gốc Công ty không tính cấp).
+    const seg = (b.orgPath ?? '').split('\\');
+    return { ...b, siteIds: list.map((x) => x.blogId).join(', '), siteNames: list.map((x) => x.name).join(', '), siteCodes: list.map((x) => x.siteCode).filter(Boolean).join(', '), c1: seg[1] ?? '', c2: seg[2] ?? '', c3: seg[3] ?? '' };
   });
+  // [2026-11-03 03:30 PM Nguyễn Văn Thủy] SDTC — cây sơ đồ tổ chức bên trái: bấm nút lọc chi nhánh trong nhánh đó
+  const org = useOrgTree();
+  const ix = useMemo(() => indexOrg(org.data), [org.data]);
+  const [orgSel, setOrgSel] = useState<string | null>(null); // null = tất cả, '' = chưa gắn
+  const inNode = orgSel ? ix.subtree(orgSel) : null;
+  const shown = orgSel === null ? rows : orgSel === '' ? rows.filter((b) => !b.orgUnitCode) : rows.filter((b) => b.orgUnitCode && inNode!.has(b.orgUnitCode));
   const linked = (sites.data?.sites ?? []).filter((x) => x.branchCode);
   const unknown = linked.filter((x) => !(q.data ?? []).some((b) => b.code === x.branchCode));
   const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/branches/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['branches'] }); } });
@@ -75,12 +87,22 @@ export function BranchesPage() {
         </div>
         <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
         {q.isLoading ? <Loading /> : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) 1fr', gap: 10, padding: '0 8px 8px' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', gap: 4, margin: '2px 0 6px', alignItems: 'center' }}>
+              <b style={{ flex: 1 }}>Sơ đồ tổ chức</b>
+              <button type="button" className={`btn btn-xs${orgSel === null ? ' btn-primary' : ''}`} onClick={() => setOrgSel(null)}>Tất cả</button>
+              <button type="button" className={`btn btn-xs${orgSel === '' ? ' btn-primary' : ''}`} title="Chi nhánh chưa gắn sơ đồ tổ chức" onClick={() => setOrgSel('')}>Chưa gắn ({rows.filter((b) => !b.orgUnitCode).length})</button>
+            </div>
+            <CayDonVi tree={org.data} selected={orgSel || null} onSelect={(n) => setOrgSel(n.level === 0 ? null : n.code)} height="calc(100vh - 330px)" openLevel={2} />
+          </div>
+          <div style={{ minWidth: 0 }}>
           <DataGrid
             storageKey="dm02-v2"
             exportName="chi-nhanh"
             groupable
             exportRef={exportRef}
-            rows={rows}
+            rows={shown}
             rowKey={(b) => b.code}
             onSelect={setSel}
             onRowDoubleClick={(b) => canWrite && setEditing(b)}
@@ -96,6 +118,10 @@ export function BranchesPage() {
               { key: 'phone', header: 'Điện thoại', type: 'code', width: 110 },
               { key: 'fax', header: 'Fax', type: 'code', width: 90, hidden: true },
               { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
+              { key: 'c1', header: 'Sơ đồ tổ chức C1', type: 'code', width: 90, title: 'Cấp 1 – Miền (theo sơ đồ tổ chức DM16)' },
+              { key: 'c2', header: 'Sơ đồ tổ chức C2', type: 'code', width: 90, title: 'Cấp 2 – Chi nhánh' },
+              { key: 'c3', header: 'Sơ đồ tổ chức C3', type: 'code', width: 90, title: 'Cấp 3 – Tỉnh', render: (b) => b.c3 || (b.orgUnitCode ? '' : <span className="text-bad">chưa gắn</span>) },
+              { key: 'orgPath', header: 'Thuộc SĐTC', width: 180, hidden: true },
               { key: 'accountingUnitCode', header: 'Đơn vị hạch toán', type: 'code', width: 120 },
               { key: 'departmentCode', header: 'Bộ phận', type: 'code', width: 100, render: (b) => b.departmentCode ?? <span className="text-bad">chưa gắn</span> },
               { key: 'externalRef', header: 'Mã tham chiếu nguồn', type: 'code', width: 120, hidden: true },
@@ -104,6 +130,8 @@ export function BranchesPage() {
               { key: 'siteCodes', header: 'Mã kho website', type: 'code', width: 110 },
             ] satisfies Column<BranchRow>[]}
           />
+          </div>
+          </div>
         )}
       </div>
       {editing && <BranchForm value={editing} onClose={() => setEditing(null)} />}
@@ -133,9 +161,9 @@ function BranchForm({ value, onClose }: { value: Partial<Branch> & { isNew?: boo
       };
       const newCode = v.code?.trim();
       return value.isNew ? api.post('/api/v1/branches', { ...body, code: newCode })
-        : api.patch(`/api/v1/branches/${encodeURIComponent(value.code!)}`, { ...body, isActive: v.isActive, ...(newCode && newCode !== value.code ? { newCode } : {}) });
+        : api.patch(`/api/v1/branches/${encodeURIComponent(value.code!)}`, { ...body, isActive: v.isActive, ...(newCode && newCode !== value.code ? { newCode } : {}), ...((v.orgUnitCode ?? null) !== (value.orgUnitCode ?? null) ? { orgUnitCode: v.orgUnitCode || null } : {}) });
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['branches'] }); void qc.invalidateQueries({ queryKey: ['warehouses'] }); invalidateOrg(qc); if (value.isNew || v.code?.trim() !== value.code) onClose(); else viewAgain[1](); },
   });
   const txt = (k: keyof Branch, label: string, full = false) => <Field label={label} full={full}><input className="input" value={String(v[k] ?? '')} onChange={(e) => set({ [k]: e.target.value } as Partial<Branch>)} /></Field>;
   return (
@@ -147,6 +175,11 @@ function BranchForm({ value, onClose }: { value: Partial<Branch> & { isNew?: boo
         {txt('name', 'Mô tả (*)')}
         {txt('note', 'Ghi chú')}
         {txt('taxCode', 'Số đăng ký kinh doanh/MST')}
+        {!value.isNew && (
+          <Field label="Thuộc SĐTC" hint="Nút sơ đồ tổ chức (thường cấp Tỉnh) — báo cáo, bộ lọc cây và nơi nhận hàng đi theo đây">
+            <ChonSoDoToChuc value={v.orgUnitCode ?? null} onChange={(orgUnitCode) => set({ orgUnitCode })} />
+          </Field>
+        )}
         <Field label=" "><label className="checkbox"><input type="checkbox" checked={v.isActive !== false} onChange={(e) => set({ isActive: e.target.checked })} /> Theo dõi</label></Field>
       </fieldset>
       <fieldset className="fgroup">

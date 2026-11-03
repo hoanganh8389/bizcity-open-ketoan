@@ -575,7 +575,7 @@ export interface ProductsTable {
   is_draft: Generated<boolean>;
   /** Mã lỗi chặn khiến còn nháp (ITEM-BLOCK-*). */
   draft_codes: Generated<string[]>;
-  /** Lúc thêm mặt hàng (0062). */
+  /** Lúc thêm mặt hàng (0063). */
   created_at: TimestampDefault;
 }
 
@@ -1704,7 +1704,7 @@ export interface SchemaMigrationsTable {
 }
 
 /** Toàn bộ cơ sở dữ liệu. */
-/** Duyệt luật nhắc khung Vì sao theo đơn vị (0062, D023-4 / D023-8). [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 */
+/** Duyệt luật nhắc khung Vì sao theo đơn vị (0063, D023-4 / D023-8). [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 */
 export interface CatalogRuleReviewsTable {
   tenant_id: string;
   code: string;

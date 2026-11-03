@@ -1,8 +1,8 @@
 /**
  * TỒN MAX (MH16) — khai max (và min nếu cần) theo chi nhánh – kho – mã, một nơi duy nhất.
- *   Theo chi nhánh / shop: chọn kho của chi nhánh cha hoặc một shop → mỗi mã một dòng: tồn, bán / ngày (đo trong N ngày),
+ *   Theo chi nhánh / shop: chọn kho của chi nhánh hoặc một shop → mỗi mã một dòng: tồn, bán / ngày (đo trong N ngày),
  *     gợi ý max (shop = bán / ngày × số ngày đủ hàng; kho = tổng max shop + % dự phòng), max / min sửa ngay trên ô.
- *   Theo mã hàng: một mã ở kho + mọi shop của chi nhánh cha.
+ *   Theo mã hàng: một mã ở kho + mọi shop của chi nhánh.
  * Áp gợi ý hàng loạt cho các dòng đang lọc, nhập / xuất Excel, cài riêng từng mã (số ngày đo bán, số ngày đủ hàng, cách chuyển).
  */
 import { useMemo, useRef, useState } from 'react';
@@ -19,6 +19,7 @@ import { NhapExcelChung } from '../thanh-phan/NhapExcelChung';
 import { ChonMatHang } from '../thanh-phan/ChonMatHang';
 import { num, qtyFmt, stockApi, useHierarchy, type MaxBoardRow } from './api';
 import { ChonChiNhanhCha, ChonShop, ChuaPhanCap, KhoiSo, isOff } from './chung';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 
 type Draft = { max?: number; min?: number; mode?: TransferMode };
 type Filter = '' | 'below' | 'nomax' | 'diff' | 'set';
@@ -30,7 +31,7 @@ export function TonMaxPage() {
   const [parent, setParent] = useState('');
   const [params] = useSearchParams();
   const [mode, setMode] = useState<'branch' | 'sku'>(params.get('sku') ? 'sku' : 'branch');
-  const [target, setTarget] = useState(''); // '' = kho chi nhánh cha
+  const [target, setTarget] = useState(''); // '' = kho chi nhánh
   const [wh, setWh] = useState('');
   const [sku, setSku] = useState(params.get('sku') ?? '');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
@@ -44,16 +45,19 @@ export function TonMaxPage() {
   const view = useRef<MaxBoardRow[]>([]);
   const shops = (h.data?.branches ?? []).filter((b) => b.level === 'shop' && b.parentCode === parent);
   const parentNode = (h.data?.branches ?? []).find((b) => b.code === parent);
-  // Chi nhánh / shop đang xem: kho của nó luôn hiện để chọn (shop thường một kho cố định, kho chi nhánh cha có nhiều kho).
+  // Chi nhánh / shop đang xem: kho của nó luôn hiện để chọn (shop thường một kho cố định, kho chi nhánh có nhiều kho).
   const targetNode = target ? shops.find((s) => s.code === target) : parentNode;
   const q = useQuery({
     queryKey: ['ton-max', 'board', parent, mode, target, wh, sku], enabled: Boolean(parent) && (mode === 'branch' || Boolean(sku)),
     queryFn: () => stockApi.board({ parentCode: parent, ...(mode === 'sku' ? { sku } : { branchCode: target || parent, warehouseCode: wh || undefined }) }),
   });
   const isKho = mode === 'branch' && !target;
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — lọc theo nhóm hàng
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
   const rows = useMemo(() => {
     const base = [...(q.data?.rows ?? []), ...extra.filter((x) => !(q.data?.rows ?? []).some((r) => k(r) === k(x)))];
-    return base.filter((r) => {
+    return ln.loc(base).filter((r) => {
       const d = drafts[k(r)], max = d?.max ?? r.max;
       if (filter === 'below') return max > 0 && r.ton < max;
       if (filter === 'nomax') return !max && (r.avgPerDay > 0 || (r.shopMaxSum ?? 0) > 0);
@@ -61,7 +65,7 @@ export function TonMaxPage() {
       if (filter === 'set') return max > 0;
       return true;
     });
-  }, [q.data, extra, drafts, filter]);
+  }, [q.data, extra, drafts, filter, ln]);
   const all = q.data?.rows ?? [];
   const dirty = Object.keys(drafts).length;
   const setD = (r: MaxBoardRow, d: Draft) => setDrafts((x) => ({ ...x, [k(r)]: { ...x[k(r)], ...d } }));
@@ -143,6 +147,7 @@ export function TonMaxPage() {
                 {targetNode.warehouses.map((w) => <option key={w.code} value={w.code}>{w.code}{w.isDefault ? ' (mặc định)' : ''}</option>)}
               </select> : <span className="mh-bad" style={{ fontSize: 13 }}>chưa có kho — khai ở <Link to="/danh-muc/kho">Danh mục kho</Link></span>}
             </label>
+            <ChonNhomHang value={nhom} onChange={setNhom} />
           </> : <div style={{ width: 300 }}><ItemPicker value={sku} onChange={setSku} placeholder="Gõ mã / tên hàng" /></div>}
           <span className="grow" />
           {mode === 'branch' && <button className="btn btn-sm" onClick={() => setAdd(true)}><Plus size={14} /> Thêm mã</button>}
@@ -182,7 +187,7 @@ export function TonMaxPage() {
       }} s={{
         title: 'Nhập tồn max từ Excel (kho + shop cùng một tệp)', file: 'mau-ton-max.xlsx', keyField: 'sku',
         columns: [
-          { name: 'Mã chi nhánh', required: true, aliases: 'Mã shop, Chi nhánh', example: target || shops[0]?.code || '08001', note: 'Mã chi nhánh cha (kho) hoặc mã shop' },
+          { name: 'Mã chi nhánh', required: true, aliases: 'Mã shop, Chi nhánh', example: target || shops[0]?.code || '08001', note: 'Mã chi nhánh (kho) hoặc mã shop' },
           { name: 'Mã kho', aliases: 'Kho', example: '', note: 'Trống = kho mặc định của chi nhánh (shop thường chỉ có một kho)' },
           { name: 'Mã hàng', required: true, aliases: 'Mã SP, SKU', example: '110154035', note: 'Mã trong danh mục mặt hàng' },
           { name: 'Tồn max', required: true, aliases: 'Max', example: 24, note: 'Theo ĐVT nhỏ nhất (Lon, Hộp…)' },
@@ -218,7 +223,7 @@ function CaiRiengMa({ row, onClose, onSaved }: { row: MaxBoardRow; onClose: () =
   };
   return (
     <Modal title={`Cài riêng mã ${row.sku} — ${row.name}`} onClose={onClose} footer={<>{s && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => void save(true)}>Bỏ cài riêng</button>}<button className="btn btn-primary" onClick={() => void save()}>Ghi</button><button className="btn" onClick={onClose}>Thoát</button></>}>
-      <div className="full alert alert-info" style={{ fontSize: 13 }}>Để trống = theo công thức của chi nhánh cha ({row.windowDays} ngày đo, {row.coverDays} ngày đủ hàng). Áp cho mọi chi nhánh.</div>
+      <div className="full alert alert-info" style={{ fontSize: 13 }}>Để trống = theo công thức của chi nhánh ({row.windowDays} ngày đo, {row.coverDays} ngày đủ hàng). Áp cho mọi chi nhánh.</div>
       <Field label="Số ngày đo tốc độ bán" hint="Bán / ngày = tổng bán trong N ngày gần nhất ÷ N (mặc định 7)"><input className="input num" style={{ width: 100 }} value={w} placeholder={String(row.windowDays)} onChange={(e) => setWin(e.target.value.replace(/\D/g, ''))} /></Field>
       <Field label="Số ngày cần đủ hàng ở shop" hint="Max gợi ý = bán / ngày × số này"><input className="input num" style={{ width: 100 }} value={c} placeholder={String(row.coverDays)} onChange={(e) => setCover(e.target.value)} /></Field>
       <Field label="Chuyển xuống shop" full>

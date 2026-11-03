@@ -7,6 +7,9 @@ import type { AuthContext } from '../../core/auth.js';
 import { branchRepository, toBranchDto } from './branch.repository.js';
 import type { BranchCreate, BranchDto, BranchUpdate } from './branch.schemas.js';
 import type { Db } from '../../db/client.js';
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức ở DM02 thì tính lại phân cấp chi nhánh (đóng góp)
+import { syncBranchLevels } from '../org-units/org-unit.service.js';
+import type { OrgTables } from '../org-units/org-unit.schemas.js';
 
 /** Mã bộ phận gắn cho chi nhánh phải có trong danh mục Bộ phận. */
 async function departmentOf(trx: Db, tenantId: string, code: string | null | undefined): Promise<string | null> {
@@ -84,7 +87,18 @@ export const branchService = {
         patch.code = input.newCode;
         finalCode = input.newCode;
       }
+      if (input.orgUnitCode !== undefined) {
+        let orgId: string | null = null;
+        if (input.orgUnitCode) {
+          const o = await trx.withTables<OrgTables>().selectFrom('org_units').select(['id', 'is_active']).where('tenant_id', '=', auth.tenantId).where('code', '=', input.orgUnitCode).executeTakeFirst();
+          if (!o) throw Errors.validation(`Không có nút sơ đồ tổ chức ${input.orgUnitCode}`);
+          if (!o.is_active) throw Errors.validation(`Nút ${input.orgUnitCode} đã ngừng dùng`);
+          orgId = String(o.id);
+        }
+        patch.org_unit_id = orgId;
+      }
       if (Object.keys(patch).length) await branchRepository.update(trx, auth.tenantId, code, patch);
+      if (input.orgUnitCode !== undefined) await syncBranchLevels(trx, auth.tenantId);
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: finalCode !== code ? 'branch.rename' : 'branch.update', objectType: 'branch', objectId: code, before, after: input });
       return toBranchDto((await branchRepository.findByCode(trx, auth.tenantId, finalCode))!);
     });

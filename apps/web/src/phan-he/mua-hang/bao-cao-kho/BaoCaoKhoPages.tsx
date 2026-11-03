@@ -4,7 +4,7 @@
  *                               SL điều chỉnh ± · khác → tồn cuối, mỗi luồng một màu (cả cột + dòng tổng).
  *   MH25 Tồn kho theo mặt hàng  kho · mã · tên · alias · số lượng · đơn giá · thành tiền · SL đi đường · tồn max · tồn min ·
  *                               SL cần nhập (= tồn max − số lượng, âm = đang dư) · ĐVT.
- * Bộ lọc trái: chi nhánh → mã kho (BranchSelect). Cả hai màn CHỈ chạy khi bấm Tìm kiếm (443 chi nhánh × cả lịch sử kho là truy vấn
+ * Bộ lọc trái: chi nhánh → mã kho (BranchSelect), nhóm hàng (ChonNhomHang — lọc dòng theo mã hàng thuộc nhóm). Cả hai màn CHỈ chạy khi bấm Tìm kiếm (443 chi nhánh × cả lịch sử kho là truy vấn
  * nặng — không tự chạy lúc mở màn); ngày / mã hàng cũng là bản nháp, áp khi bấm. Lúc chạy hiện thanh tiến độ + Huỷ (TienDoTai).
  */
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect } from '@/components/filters';
 import { DataGrid, type Column } from '@/components/DataGrid';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { ErrorBox } from '@/components/ui';
 import { TienDoTai } from '@/components/TienDoTai';
 import { P, today } from '../du-lieu';
@@ -30,6 +31,9 @@ export function SoKhoTheoMatHangPage() {
   const [d, setD] = useState({ from: f.from, to: f.to, search: '' });
   const [ran, setRan] = useState(false);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — lọc theo nhóm hàng (tích nhóm cha = cả nhánh con)
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['mua-hang', 'stock-ledger', f], enabled: ran, placeholderData: keepPreviousData,
     queryFn: ({ signal }) => api.get<{ rows: LedgerRow[] }>(`${P}/stock-ledger`, f, signal) });
@@ -56,13 +60,14 @@ export function SoKhoTheoMatHangPage() {
         <div className="field"><label>Từ ngày</label><input className="input" type="date" value={d.from} onChange={(e) => setD({ ...d, from: e.target.value })} /></div>
         <div className="field"><label>Đến ngày</label><input className="input" type="date" value={d.to} onChange={(e) => setD({ ...d, to: e.target.value })} /></div>
         <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
+        <ChonNhomHang value={nhom} onChange={setNhom} />
         <div className="field"><label>Mã / tên hàng</label><input className="input" value={d.search} onChange={(e) => setD({ ...d, search: e.target.value })} /></div>
       </form>}>
         <div className="card">
           <TienDoTai chuaTim={!ran} dangTai={q.isFetching} soDong={q.data?.rows.length} onHuy={() => void qc.cancelQueries({ queryKey: ['mua-hang', 'stock-ledger'] })} />
           <ErrorBox error={q.error ? errorText(q.error) : null} />
           {ran && q.data && (
-            <DataGrid storageKey="mh24-so-kho" exportName={`so-kho-theo-mat-hang-${f.from}-${f.to}`} exportTitle="Sổ kho theo mặt hàng" rows={q.data?.rows ?? []} rowKey={(r) => r.sku} columns={columns}
+            <DataGrid storageKey="mh24-so-kho" exportName={`so-kho-theo-mat-hang-${f.from}-${f.to}`} exportTitle="Sổ kho theo mặt hàng" rows={ln.loc(q.data?.rows ?? [])} rowKey={(r) => r.sku} columns={columns}
               footerLabel="Tổng cộng" emptyText="Không có mặt hàng phát sinh trong kỳ / chi nhánh / kho đã chọn" />
           )}
         </div>
@@ -76,6 +81,9 @@ export function TonKhoTheoMatHangPage() {
   const [d, setD] = useState({ to: f.to, search: '' });
   const [ran, setRan] = useState(false);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — lọc theo nhóm hàng (tích nhóm cha = cả nhánh con)
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['mua-hang', 'stock-on-hand', f], enabled: ran, placeholderData: keepPreviousData,
     queryFn: ({ signal }) => api.get<{ rows: OnHandRow[] }>(`${P}/stock-on-hand`, f, signal) });
@@ -102,6 +110,7 @@ export function TonKhoTheoMatHangPage() {
       <FilterLayout filters={<form className="rp-form" onSubmit={(e) => { e.preventDefault(); set({ to: d.to, search: d.search.trim() }); setRan(true); }}>
         <div className="field"><label>Đến ngày</label><input className="input" type="date" value={d.to} onChange={(e) => setD({ ...d, to: e.target.value })} /></div>
         <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
+        <ChonNhomHang value={nhom} onChange={setNhom} />
         <div className="field"><label>Mã / tên hàng</label><input className="input" value={d.search} onChange={(e) => setD({ ...d, search: e.target.value })} /></div>
       </form>}>
         <div className="card">
@@ -109,7 +118,7 @@ export function TonKhoTheoMatHangPage() {
           <ErrorBox error={q.error ? errorText(q.error) : null} />
           {uncosted > 0 && <div className="card-body muted">Có {uncosted} lần nhập / xuất chưa có giá trị (tháng chưa tính giá vốn): đơn giá, thành tiền chưa đầy đủ.</div>}
           {ran && q.data && (
-            <DataGrid storageKey="mh25-ton-kho" exportName={`ton-kho-theo-mat-hang-${f.to}`} exportTitle="Tồn kho theo mặt hàng" rows={q.data?.rows ?? []} rowKey={(r) => `${r.branchCode}|${r.warehouseCode}|${r.sku}`} columns={columns}
+            <DataGrid storageKey="mh25-ton-kho" exportName={`ton-kho-theo-mat-hang-${f.to}`} exportTitle="Tồn kho theo mặt hàng" rows={ln.loc(q.data?.rows ?? [])} rowKey={(r) => `${r.branchCode}|${r.warehouseCode}|${r.sku}`} columns={columns}
               footerLabel="Tổng cộng" emptyText="Không có tồn ở chi nhánh / kho đã chọn" />
           )}
         </div>

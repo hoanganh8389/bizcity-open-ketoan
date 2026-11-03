@@ -1,19 +1,22 @@
 // @bizcity-layer M data/masterdata
 import type { Db } from '../../db/client.js';
 import type { BranchDto } from './branch.schemas.js';
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — chi nhánh kèm nút sơ đồ tổ chức (mã, đường dẫn) (đóng góp)
+import type { OrgTables } from '../org-units/org-unit.schemas.js';
 
 const baseSelect = (db: Db, tenantId: string) =>
-  db
+  db.withTables<OrgTables>()
     .selectFrom('branches as b')
     .leftJoin('accounting_units as u', 'u.id', 'b.accounting_unit_id')
-    .select(['b.id', 'b.code', 'b.name', 'b.address', 'b.external_ref', 'b.is_active', 'b.department_code', 'b.note', 'b.company_name', 'b.tax_code', 'b.phone', 'b.fax', 'u.code as unit_code'])
+    .leftJoin('org_units as o', 'o.id', 'b.org_unit_id')
+    .select(['b.id', 'b.code', 'b.name', 'b.address', 'b.external_ref', 'b.is_active', 'b.department_code', 'b.note', 'b.company_name', 'b.tax_code', 'b.phone', 'b.fax', 'u.code as unit_code', 'o.code as org_code', 'o.path as org_path'])
     .where('b.tenant_id', '=', tenantId);
 
 type Row = Awaited<ReturnType<ReturnType<typeof baseSelect>['executeTakeFirstOrThrow']>>;
 
 export function toBranchDto(r: Row): BranchDto {
   return { id: r.id, code: r.code, name: r.name, accountingUnitCode: r.unit_code, address: r.address, externalRef: r.external_ref, departmentCode: r.department_code,
-    note: r.note, companyName: r.company_name, taxCode: r.tax_code, phone: r.phone, fax: r.fax, isActive: r.is_active };
+    note: r.note, companyName: r.company_name, taxCode: r.tax_code, phone: r.phone, fax: r.fax, isActive: r.is_active, orgUnitCode: r.org_code ?? null, orgPath: r.org_path ?? '' };
 }
 
 export const branchRepository = {

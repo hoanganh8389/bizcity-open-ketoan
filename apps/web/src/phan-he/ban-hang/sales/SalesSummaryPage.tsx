@@ -14,10 +14,11 @@ import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
 import { KindSelect, Qty, ScopeSelect } from '../../../components/salesFilters';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
 import { DataGrid, type Column } from '@/components/DataGrid';
+import { ChonNhomHang } from '@/components/CayNhomHang';
 import { PrintButton } from '@/components/print';
 import { summaryTemplates } from './mauIn/baoCaoBanHang';
 
-type GroupBy = 'document' | 'day' | 'month' | 'branch' | 'product' | 'customer' | 'taxCode' | 'brand' | 'industry' | 'itemGroup' | 'itemType' | 'customerGroup' | 'department';
+type GroupBy = 'document' | 'day' | 'month' | 'branch' | 'product' | 'customer' | 'taxCode' | 'itemGroup1' | 'itemGroup2' | 'itemGroup3' | 'itemType' | 'customerGroup' | 'department';
 /** Mỗi cách nhóm: nhãn thẻ, tiêu đề cột mã / tên / thông tin thêm (để trống = không hiện cột). */
 const GROUPS: { key: GroupBy; tab: string; keyHead: string; labelHead?: string; extraHead?: string }[] = [
   { key: 'document', tab: 'Theo phiếu', keyHead: 'Số phiếu' },
@@ -27,9 +28,10 @@ const GROUPS: { key: GroupBy; tab: string; keyHead: string; labelHead?: string; 
   { key: 'product', tab: 'Theo mặt hàng', keyHead: 'Mã hàng', labelHead: 'Tên hàng', extraHead: 'ĐVT' },
   { key: 'customer', tab: 'Theo khách hàng', keyHead: 'Mã khách', labelHead: 'Tên khách hàng', extraHead: 'Mã số thuế' },
   { key: 'taxCode', tab: 'Theo loại thuế', keyHead: 'Loại thuế' },
-  { key: 'brand', tab: 'Theo nhãn hàng', keyHead: 'Mã nhãn hàng', labelHead: 'Nhãn hàng' },
-  { key: 'industry', tab: 'Theo ngành hàng', keyHead: 'Mã ngành hàng', labelHead: 'Ngành hàng' },
-  { key: 'itemGroup', tab: 'Theo nhóm hàng', keyHead: 'Mã nhóm hàng', labelHead: 'Nhóm hàng' },
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — tổng hợp theo cây nhóm hàng cấp 1 / 2 / 3 (cộng dồn nhánh con), thay 3 thẻ ngành / nhãn / nhóm rời
+  { key: 'itemGroup1', tab: 'Theo nhóm cấp 1', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng cấp 1' },
+  { key: 'itemGroup2', tab: 'Theo nhóm cấp 2', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng cấp 2' },
+  { key: 'itemGroup3', tab: 'Theo nhóm cấp 3', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng cấp 3' },
   { key: 'itemType', tab: 'Theo loại hàng', keyHead: 'Mã loại hàng', labelHead: 'Loại hàng' },
   { key: 'customerGroup', tab: 'Theo nhóm khách', keyHead: 'Mã nhóm khách', labelHead: 'Nhóm khách hàng' },
   { key: 'department', tab: 'Theo bộ phận (cửa hàng)', keyHead: 'Mã bộ phận', labelHead: 'Bộ phận' },
@@ -45,7 +47,7 @@ interface Row extends Measures {
 interface Data { rows: Row[]; totals: Measures & { paid: number; onCredit: number } }
 
 export function SalesSummaryPage() {
-  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', kind: 'all', scope: 'all', groupBy: 'document' as GroupBy });
+  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', groups: '', kind: 'all', scope: 'all', groupBy: 'document' as GroupBy });
   const [docId, setDocId] = useState<string | null>(null);
   const set = (patch: Partial<typeof f>) => setF((x) => ({ ...x, ...patch }));
   const q = useQuery({ queryKey: ['sales-summary', f], queryFn: () => api.get<Data>('/api/v1/reports/sales-summary', f) });
@@ -68,7 +70,8 @@ export function SalesSummaryPage() {
         filters={
           <>
             <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
-            <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />
+            <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
+            <ChonNhomHang value={f.groups} onChange={(groups) => set({ groups })} />
             <KindSelect value={f.kind} onChange={(kind) => set({ kind })} />
             <ScopeSelect value={f.scope} onChange={(scope) => set({ scope })} />
           </>

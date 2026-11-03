@@ -1,5 +1,5 @@
 /**
- * ĐỀ XUẤT CHUYỂN HÀNG XUỐNG SHOP (MH19) — 2 lần / tuần mỗi shop được chia hàng từ kho chi nhánh cha:
+ * ĐỀ XUẤT CHUYỂN HÀNG XUỐNG SHOP (MH19) — 2 lần / tuần mỗi shop được chia hàng từ kho chi nhánh:
  *   cần chuyển = max shop − tồn shop − hàng đang đi đường đến shop − đề nghị đã chốt chưa làm; làm tròn theo thùng
  *   (tự động / nguyên thùng / lẻ — cài từng mã ở Tồn max); kho không đủ thì ưu tiên shop thiếu nhiều nhất so với max.
  * Sửa số chuyển, bỏ dòng, bấm "Chốt đề nghị" → mỗi shop một đề nghị chuyển. Thẻ "Đề nghị đã chốt": kế toán kho quét danh sách

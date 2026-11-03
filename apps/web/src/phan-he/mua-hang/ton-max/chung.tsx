@@ -3,36 +3,85 @@
  * Ô chọn chi nhánh / shop là ô gõ tìm (mã hoặc tên, không dấu); chi nhánh / shop đã ngừng ghi rõ "ngừng".
  */
 import { workBranch } from '@/lib/workBranch';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ListPicker } from '@/components/pickers';
-import { lastParent, useHierarchy, type BranchNode } from './api';
+import { fold, lastParent, useHierarchy, type BranchNode } from './api';
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — ô "Chi nhánh" theo sơ đồ tổ chức (PT · Chi nhánh Phú Thọ); giá trị vẫn là mã chi nhánh kho (08000)
+import { useOrgTree, usePurchaseUnits } from '@/lib/orgUnits';
 import './ton-max.css';
 
-/** Chọn chi nhánh cha. Chưa chọn thì tự lấy lần trước / chi nhánh cha đầu tiên. */
-export function ChonChiNhanhCha({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+// [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — ô Chi nhánh là cây thả xuống theo sơ đồ tổ chức (Miền → Chi nhánh); MH02 tích được nhiều chi nhánh
+const SEP = String.fromCharCode(92);
+/**
+ * Chọn chi nhánh theo sơ đồ tổ chức: cây thả xuống Công ty → Miền → Chi nhánh (vd Phú Thọ). Giá trị là mã chi nhánh nhận hàng
+ * (mã xx000, vd 08000) — nhiều chi nhánh thì cách dấu phẩy (multiple). Chưa chọn thì tự lấy chi nhánh đang làm việc / lần trước / đầu tiên.
+ */
+export function ChonChiNhanhCha({ value, onChange, multiple = false }: { value: string; onChange: (v: string) => void; multiple?: boolean }) {
   const h = useHierarchy();
   const parents = (h.data?.branches ?? []).filter((b) => b.level === 'branch');
+  const units = usePurchaseUnits().data ?? [];
+  const tree = useOrgTree();
+  const opts = units.length
+    ? units.map((u) => ({ code: u.branchCode, name: u.orgName.replace(/^Chi nhánh\s+/i, ''), group: u.path.split(SEP)[1] ?? '', hint: `${u.activeBranches} cửa hàng` }))
+    : parents.map((p) => ({ code: p.code, name: p.name, group: '', hint: '' }));
+  const groupName = (g: string) => tree.data?.nodes.find((n) => n.code === g)?.name ?? (g || 'Chi nhánh');
+  const groups = [...new Set(opts.map((o) => o.group))];
   useEffect(() => {
-    if (value || !parents.length) return;
-    // Ưu tiên chi nhánh đang làm việc (shop → chi nhánh cha của shop), rồi lựa chọn lần trước.
+    if (value || !opts.length) return;
+    // Ưu tiên chi nhánh đang làm việc (cửa hàng → chi nhánh của nó), rồi lựa chọn lần trước.
     const wb = (h.data?.branches ?? []).find((b) => b.code === workBranch.get());
     const fromWork = wb?.level === 'branch' ? wb.code : wb?.level === 'shop' ? wb.parentCode ?? '' : '';
-    const last = lastParent.get();
-    onChange(parents.some((p) => p.code === fromWork) ? fromWork : parents.some((p) => p.code === last) ? last : parents[0]!.code);
-  }, [value, parents.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  const all = h.data?.branches ?? [];
-  const items = parents.map((p) => {
-    const kids = all.filter((s) => s.parentCode === p.code);
-    const off = kids.filter(isOff).length;
-    return { code: p.code, name: p.name, hint: `${isOff(p) ? 'ngừng · ' : ''}${kids.length} shop${off ? ` (${off} ngừng)` : ''}` };
-  });
+    const last = lastParent.get().split(',').filter((c) => opts.some((o) => o.code === c));
+    onChange(opts.some((o) => o.code === fromWork) ? fromWork : last.length ? (multiple ? last.join(',') : last[0]!) : opts[0]!.code);
+  }, [value, opts.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const picked = value ? value.split(',') : [];
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<string[]>([]);
+  const [q, setQ] = useState('');
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+  const nameOf = (c: string) => opts.find((o) => o.code === c)?.name ?? c;
+  const summary = !picked.length ? 'Chọn chi nhánh' : picked.length === 1 ? nameOf(picked[0]!) : picked.length === opts.length ? `Tất cả ${opts.length} chi nhánh` : `${picked.length} chi nhánh: ${picked.map(nameOf).join(', ')}`;
+  const commit = (list: string[]) => { const v = opts.filter((o) => list.includes(o.code)).map((o) => o.code).join(','); lastParent.set(v); onChange(v); setOpen(false); };
+  const shown = opts.filter((o) => !q.trim() || fold(`${o.name} ${groupName(o.group)}`).includes(fold(q.trim())));
+  const toggle = (codes: string[], on: boolean) => setDraft((d) => (on ? [...new Set([...d, ...codes])] : d.filter((c) => !codes.includes(c))));
+  const state = (codes: string[]) => { const n = codes.filter((c) => draft.includes(c)).length; return n === 0 ? 'off' : n === codes.length ? 'on' : 'some'; };
+  const box3 = (codes: string[]) => <input type="checkbox" checked={state(codes) === 'on'} ref={(el) => { if (el) el.indeterminate = state(codes) === 'some'; }} onChange={() => toggle(codes, state(codes) !== 'on')} />;
+
   return (
-    <label className="tm-parent">
-      <span>Chi nhánh cha</span>
-      <ListPicker items={items} value={value} style={{ width: 320 }} placeholder={parents.length ? 'Gõ mã / tên chi nhánh cha' : '— chưa có chi nhánh cha —'} emptyText="Không có chi nhánh cha khớp"
-        onChange={(v) => { if (!v) return; lastParent.set(v); onChange(v); }} />
-    </label>
+    <div className="tm-parent tm-cn" ref={box} title={summary}>
+      <span>Chi nhánh</span>
+      <button type="button" className="input tm-cn-btn" onClick={() => { setDraft(picked); setQ(''); setOpen((x) => !x); }}>{summary}</button>
+      {open && (
+        <div className="tm-cn-drop">
+          <input className="input" placeholder="Tìm chi nhánh, miền" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+          <div className="tm-cn-list">
+            {multiple && !q.trim() && <label className="tm-cn-row tm-cn-all">{box3(opts.map((o) => o.code))} <b>Tất cả</b></label>}
+            {groups.map((g) => {
+              const list = shown.filter((o) => o.group === g);
+              if (!list.length) return null;
+              return (
+                <div key={g || '-'}>
+                  {groups.length > 1 && <label className="tm-cn-row tm-cn-group">{multiple && box3(list.map((o) => o.code))} <b>{groupName(g)}</b></label>}
+                  {list.map((o) => (multiple
+                    ? <label key={o.code} className="tm-cn-row tm-cn-item">{box3([o.code])} {o.name} <span className="muted">{o.hint}</span></label>
+                    : <button key={o.code} type="button" className={`tm-cn-row tm-cn-item${picked[0] === o.code ? ' on' : ''}`} onClick={() => commit([o.code])}>{o.name} <span className="muted">{o.hint}</span></button>))}
+                </div>
+              );
+            })}
+            {!shown.length && <div className="muted" style={{ padding: 6 }}>{opts.length ? 'Không có chi nhánh khớp' : 'Chưa có sơ đồ tổ chức (DM16)'}</div>}
+          </div>
+          {multiple && <div className="tm-cn-foot"><span className="muted">{draft.length} chi nhánh</span><button type="button" className="btn btn-sm btn-primary" disabled={!draft.length} onClick={() => commit(draft)}>Xong</button></div>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -54,10 +103,10 @@ export function ChonShop({ parent, value, onChange, width = 300 }: { parent: str
     onChange={(v) => { if (v) onChange(v === KHO_CHA ? '' : v); }} />;
 }
 
-/** Chưa xếp phân cấp thì chỉ đường sang MH15. */
+/** Chưa có sơ đồ tổ chức thì chỉ đường sang DM16. */
 export function ChuaPhanCap({ branches }: { branches: BranchNode[] | undefined }) {
   if (!branches || branches.some((b) => b.level === 'branch')) return null;
-  return <div className="alert alert-warn" style={{ margin: 12 }}>Chưa có chi nhánh cha nào. Mở <Link to="/mua-hang/phan-cap">Phân cấp chi nhánh – shop (MH15)</Link> → bấm <b>Tự xếp theo mã</b> hoặc chọn tay.</div>;
+  return <div className="alert alert-warn" style={{ margin: 12 }}>Chưa có sơ đồ tổ chức. Mở <Link to="/danh-muc/so-do-to-chuc">Sơ đồ tổ chức (DM16)</Link> → bấm <b>Quay về dữ liệu gốc</b> hoặc <b>Nhập Excel</b>.</div>;
 }
 
 /** Ô số liệu tóm tắt (khối màu) — bấm được để lọc. */

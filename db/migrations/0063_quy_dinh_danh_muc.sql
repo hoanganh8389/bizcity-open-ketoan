@@ -1,6 +1,7 @@
 -- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 Quy định dữ liệu danh mục: duyệt luật nhắc theo đơn vị (D023-4, D023-8) + mốc tạo mặt hàng (báo cáo mặt hàng tự thêm từ chứng từ)
+-- [2026-11-03 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — gộp main: migration 0062 → 0063 (0062 = sơ đồ tổ chức)
 -- =============================================================================
--- 0062 Quy định dữ liệu danh mục.
+-- 0063 Quy định dữ liệu danh mục.
 --   catalog_rule_reviews  Kế toán trưởng của đơn vị duyệt luật nhắc của khung "Vì sao" (bizcity_catalog_hint@1): đồng ý, sửa câu
 --                         chữ, hoặc hạ cảnh báo mềm xuống nhắc (D023-8 — có lý do, ghi nhật ký). Một dòng / mã / đơn vị = trạng
 --                         thái hiện hành; lịch sử từng lần duyệt ở audit_logs (catalog.rule.review). Chưa có dòng = nội dung
@@ -25,7 +26,7 @@ CREATE TABLE catalog_rule_reviews (
   PRIMARY KEY (tenant_id, code)
 );
 
-COMMENT ON TABLE catalog_rule_reviews IS 'Duyệt luật nhắc khung Vì sao theo đơn vị (0062, D023-4 / D023-8): có dòng = đã duyệt; lịch sử ở audit_logs.';
+COMMENT ON TABLE catalog_rule_reviews IS 'Duyệt luật nhắc khung Vì sao theo đơn vị (0063, D023-4 / D023-8): có dòng = đã duyệt; lịch sử ở audit_logs.';
 COMMENT ON COLUMN catalog_rule_reviews.code IS 'Mã luật trong CATALOG_HINTS (ACC-*, PART-*, ITEM-*).';
 COMMENT ON COLUMN catalog_rule_reviews.title IS 'Câu ngắn đơn vị sửa lại (null = dùng mặc định); chỉ dùng biến {..} của luật gốc.';
 COMMENT ON COLUMN catalog_rule_reviews.why IS 'Câu "vì sao" đơn vị sửa lại (null = mặc định).';
@@ -52,4 +53,4 @@ ALTER TABLE products ADD COLUMN created_at timestamptz;
 UPDATE products SET created_at = updated_at WHERE created_at IS NULL;
 ALTER TABLE products ALTER COLUMN created_at SET DEFAULT now();
 ALTER TABLE products ALTER COLUMN created_at SET NOT NULL;
-COMMENT ON COLUMN products.created_at IS 'Lúc thêm mặt hàng (0062); dòng có trước 0062 lấy updated_at.';
+COMMENT ON COLUMN products.created_at IS 'Lúc thêm mặt hàng (0063); dòng có trước 0063 lấy updated_at.';

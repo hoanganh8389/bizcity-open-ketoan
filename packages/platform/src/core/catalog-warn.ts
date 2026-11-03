@@ -20,7 +20,7 @@ export async function recordWarnAck(trx: Db, auth: AuthContext, objectType: stri
   });
 }
 
-// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị (catalog_rule_reviews, 0062) lên phát hiện — mọi danh mục dùng chung
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị (catalog_rule_reviews, 0063) lên phát hiện — mọi danh mục dùng chung
 /**
  * Áp bản duyệt của đơn vị (HT09 "Quy định dữ liệu danh mục") lên phát hiện khung Vì sao: câu chữ kế toán trưởng sửa lại, cảnh
  * báo mềm đã hạ xuống nhắc (D023-8 — không còn bắt ghi lý do), bỏ nhãn "nháp" của luật đã duyệt. Gọi ở cuối mỗi hàm hint
