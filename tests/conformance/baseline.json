@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-11-03",
+  "updatedAt": "2026-11-04",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -850,6 +850,982 @@
           "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
           "file": "apps/api/src/phan-he/mua-hang/posting.ts",
           "message": "số tài khoản '112' viết cứng: docType: money.startsWith('112') ? 'bank_payment' : 'payment', branchCode: d.branchCode, docDate: d.docDate, docNo: undefined,"
+        }
+      ]
+    },
+    "SC-DOC-6": {
+      "title": "Mỗi mục menu web có docs/huong-dan/<key>.md (nút Hướng dẫn của màn)",
+      "ref": "SC-DOC-6 · nợ hướng dẫn màn có từ trước khi có check (2026-11-03); viết docs/huong-dan/<key>.md rồi chạy --update-baseline để bớt",
+      "debts": [
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/api/menu.ts|guide:api-thu-api",
+          "file": "apps/web/src/phan-he/api/menu.ts",
+          "message": "\"Thử API\" chưa có docs/huong-dan/api-thu-api.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/api/menu.ts|guide:api-huong-dan",
+          "file": "apps/web/src/phan-he/api/menu.ts",
+          "message": "\"Hướng dẫn API\" chưa có docs/huong-dan/api-huong-dan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/api/menu.ts|guide:api-nguon-du-lieu",
+          "file": "apps/web/src/phan-he/api/menu.ts",
+          "message": "\"Nguồn dữ liệu màn hình\" chưa có docs/huong-dan/api-nguon-du-lieu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/api/menu.ts|guide:api-khoa-api",
+          "file": "apps/web/src/phan-he/api/menu.ts",
+          "message": "\"Khoá API\" chưa có docs/huong-dan/api-khoa-api.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-phieu-ban",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Phiếu bán hàng\" chưa có docs/huong-dan/bh-phieu-ban.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-tra-lai",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Hàng bán trả lại\" chưa có docs/huong-dan/bh-tra-lai.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bc-ban-hang",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Báo cáo bán hàng\" chưa có docs/huong-dan/bc-ban-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:th-ban-hang",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Tổng hợp bán hàng\" chưa có docs/huong-dan/th-ban-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:thu-tien",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Thu tiền theo hình thức thanh toán\" chưa có docs/huong-dan/thu-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-xuat-dieu-chinh",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Phiếu xuất điều chỉnh\" chưa có docs/huong-dan/bh-xuat-dieu-chinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-nk-ban-hang",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Sổ nhật ký bán hàng\" chưa có docs/huong-dan/bh-nk-ban-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-thue-ra",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Báo cáo thuế ra\" chưa có docs/huong-dan/bh-thue-ra.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-doi-tuong",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Đối tượng\" chưa có docs/huong-dan/bh-doi-tuong.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-khach-hang",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Khách hàng\" chưa có docs/huong-dan/bh-khach-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-nhom-doi-tuong",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Nhóm đối tượng\" chưa có docs/huong-dan/bh-nhom-doi-tuong.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-hinh-thuc-tt",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Hình thức thanh toán\" chưa có docs/huong-dan/bh-hinh-thuc-tt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-mat-hang",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Danh mục mặt hàng\" chưa có docs/huong-dan/bh-mat-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-don-vi-tinh",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Danh mục đơn vị tính\" chưa có docs/huong-dan/bh-don-vi-tinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ban-hang/menu.ts|guide:bh-bang-gia",
+          "file": "apps/web/src/phan-he/ban-hang/menu.ts",
+          "message": "\"Bảng giá bán\" chưa có docs/huong-dan/bh-bang-gia.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-tong-quan",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Tổng quan\" chưa có docs/huong-dan/dev-tong-quan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-tra-ma",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Tra mã\" chưa có docs/huong-dan/dev-tra-ma.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-nhat-ky",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Nhật ký\" chưa có docs/huong-dan/dev-nhat-ky.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-loi-theo-module",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Lỗi theo module\" chưa có docs/huong-dan/dev-loi-theo-module.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-ghi-so",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Ghi sổ\" chưa có docs/huong-dan/dev-ghi-so.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-su-kien",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Sự kiện\" chưa có docs/huong-dan/dev-su-kien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-toan-ven",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Toàn vẹn\" chưa có docs/huong-dan/dev-toan-ven.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-van-hanh",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Vận hành\" chưa có docs/huong-dan/dev-van-hanh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/dev/menu.ts|guide:dev-kich-ban",
+          "file": "apps/web/src/phan-he/dev/menu.ts",
+          "message": "\"Kịch bản\" chưa có docs/huong-dan/dev-kich-ban.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/he-thong/menu.ts|guide:don-vi",
+          "file": "apps/web/src/phan-he/he-thong/menu.ts",
+          "message": "\"Thông tin đơn vị\" chưa có docs/huong-dan/don-vi.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/he-thong/menu.ts|guide:mau-in",
+          "file": "apps/web/src/phan-he/he-thong/menu.ts",
+          "message": "\"Mẫu in\" chưa có docs/huong-dan/mau-in.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/he-thong/menu.ts|guide:quy-dinh-danh-muc",
+          "file": "apps/web/src/phan-he/he-thong/menu.ts",
+          "message": "\"Quy định dữ liệu danh mục\" chưa có docs/huong-dan/quy-dinh-danh-muc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/he-thong/menu.ts|guide:tru-cot",
+          "file": "apps/web/src/phan-he/he-thong/menu.ts",
+          "message": "\"Trụ cột & mức đạt\" chưa có docs/huong-dan/tru-cot.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ds-chung-tu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Định khoản tự động\" chưa có docs/huong-dan/ds-chung-tu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:but-toan-lap",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Bút toán lặp\" chưa có docs/huong-dan/but-toan-lap.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:phieu-thu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Phiếu thu\" chưa có docs/huong-dan/phieu-thu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:phieu-chi",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Phiếu chi\" chưa có docs/huong-dan/phieu-chi.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:phieu-bao-co",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Phiếu báo có\" chưa có docs/huong-dan/phieu-bao-co.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:phieu-bao-no",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Phiếu báo nợ\" chưa có docs/huong-dan/phieu-bao-no.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:gia-von",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Tính giá vốn\" chưa có docs/huong-dan/gia-von.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:so-du",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Số dư tài khoản\" chưa có docs/huong-dan/so-du.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ky-khoa-so",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Đóng / mở kỳ kế toán\" chưa có docs/huong-dan/ky-khoa-so.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cdkt",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Báo cáo tình hình tài chính\" chưa có docs/huong-dan/cdkt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kqkd",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Báo cáo kết quả hoạt động KD\" chưa có docs/huong-dan/kqkd.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:lctt",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Báo cáo lưu chuyển tiền tệ\" chưa có docs/huong-dan/lctt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:thuyet-minh",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Thuyết minh báo cáo tài chính\" chưa có docs/huong-dan/thuyet-minh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:can-doi",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Bảng cân đối số phát sinh\" chưa có docs/huong-dan/can-doi.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:dai-han",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Phân loại dài hạn (B01)\" chưa có docs/huong-dan/dai-han.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kq-cua-hang",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Kết quả kinh doanh theo cửa hàng\" chưa có docs/huong-dan/kq-cua-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:bang-ke-ct",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Bảng kê chi tiết chứng từ\" chưa có docs/huong-dan/bang-ke-ct.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:th-chung-tu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Bảng tổng hợp chứng từ\" chưa có docs/huong-dan/th-chung-tu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kiem-tra",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BC kiểm tra chứng từ, hoá đơn\" chưa có docs/huong-dan/kiem-tra.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cp-khoan-muc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BCTH chi phí theo KM/BP\" chưa có docs/huong-dan/cp-khoan-muc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ct-khoan-muc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BC chi tiết theo KM và PB\" chưa có docs/huong-dan/ct-khoan-muc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:tk-cp-km",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"TK chi phí và khoản mục\" chưa có docs/huong-dan/tk-cp-km.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:th-nv-hd-pb",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BCTH theo NV, HĐ, PB\" chưa có docs/huong-dan/th-nv-hd-pb.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:lai-lo-hd",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BC tổng hợp lãi lỗ theo HĐ\" chưa có docs/huong-dan/lai-lo-hd.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:lai-lo-hd-ct",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BC chi tiết lãi lỗ theo HĐ\" chưa có docs/huong-dan/lai-lo-hd-ct.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nxt",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BC nhập xuất tồn hàng hoá\" chưa có docs/huong-dan/nxt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ct-hang-hoa",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ chi tiết hàng hoá\" chưa có docs/huong-dan/ct-hang-hoa.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:chuyen-kho",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Bảng kê chuyển kho\" chưa có docs/huong-dan/chuyen-kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nk-mua-hang",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ nhật ký mua hàng\" chưa có docs/huong-dan/nk-mua-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-phai-thu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Ghi tăng, giảm công nợ phải thu\" chưa có docs/huong-dan/cn-phai-thu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-phai-tra",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Ghi tăng, giảm công nợ phải trả\" chưa có docs/huong-dan/cn-phai-tra.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-dat-coc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Đặt cọc, trả trước\" chưa có docs/huong-dan/cn-dat-coc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-yeu-cau-tt",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Yêu cầu thanh toán\" chưa có docs/huong-dan/cn-yeu-cau-tt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-chung-tu-nguon",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Chứng từ nguồn\" chưa có docs/huong-dan/cn-chung-tu-nguon.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-doi-chieu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Biên bản đối chiếu công nợ\" chưa có docs/huong-dan/cn-doi-chieu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:th-cong-no",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ tổng hợp công nợ phát sinh\" chưa có docs/huong-dan/th-cong-no.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ct-cong-no",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ chi tiết công nợ\" chưa có docs/huong-dan/ct-cong-no.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ct-thanh-toan",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ chi tiết thanh toán\" chưa có docs/huong-dan/ct-thanh-toan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nk-ban-hang",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ nhật ký bán hàng\" chưa có docs/huong-dan/nk-ban-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-han-tt",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ công nợ theo hạn thanh toán\" chưa có docs/huong-dan/cn-han-tt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:lich-tt-hd",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Lịch thanh toán hợp đồng\" chưa có docs/huong-dan/lich-tt-hd.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:tien-vay",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ chi tiết tiền vay\" chưa có docs/huong-dan/tien-vay.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:tuoi-no-th",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BCCN theo tuổi nợ trước hạn\" chưa có docs/huong-dan/tuoi-no-th.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:tuoi-no-qh",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BCCN theo tuổi nợ quá hạn\" chưa có docs/huong-dan/tuoi-no-qh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-nv",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Báo cáo công nợ theo NV\" chưa có docs/huong-dan/cn-nv.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-mh",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BCCN theo mặt hàng\" chưa có docs/huong-dan/cn-mh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-nb",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Báo cáo công nợ nội bộ\" chưa có docs/huong-dan/cn-nb.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:cn-nb-ct",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BCCN nội bộ chi tiết\" chưa có docs/huong-dan/cn-nb-ct.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:so-tien-gui",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"BC Tiền gửi ngân hàng\" chưa có docs/huong-dan/so-tien-gui.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ct-quy",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ kế toán chi tiết quỹ TM\" chưa có docs/huong-dan/ct-quy.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nk-thu-tien",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ nhật ký thu tiền\" chưa có docs/huong-dan/nk-thu-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nk-chi-tien",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ nhật ký chi tiền\" chưa có docs/huong-dan/nk-chi-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nk-chi-km",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Sổ nhật ký chi tiền theo KM\" chưa có docs/huong-dan/nk-chi-km.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kh-thu-chi",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Kế hoạch thu chi\" chưa có docs/huong-dan/kh-thu-chi.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kh-dinh-muc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Định mức chi phí\" chưa có docs/huong-dan/kh-dinh-muc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:tk-ngam-dinh",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Tài khoản ngầm định\" chưa có docs/huong-dan/tk-ngam-dinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:hinh-thuc-tt",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Hình thức thanh toán\" chưa có docs/huong-dan/hinh-thuc-tt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ngan-hang",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Tài khoản ngân hàng\" chưa có docs/huong-dan/ngan-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:khach-hang",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Khách hàng\" chưa có docs/huong-dan/khach-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nha-cung-cap",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Nhà cung cấp\" chưa có docs/huong-dan/nha-cung-cap.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nhom-doi-tuong",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Nhóm đối tượng\" chưa có docs/huong-dan/nhom-doi-tuong.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kho",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục kho\" chưa có docs/huong-dan/kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:bo-phan",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục bộ phận\" chưa có docs/huong-dan/bo-phan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nhan-vien",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục nhân viên\" chưa có docs/huong-dan/nhan-vien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:don-vi-tinh",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục đơn vị tính\" chưa có docs/huong-dan/don-vi-tinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:phan-loai-hang",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Nhóm hàng\" chưa có docs/huong-dan/phan-loai-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:khoan-muc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục khoản mục\" chưa có docs/huong-dan/khoan-muc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:vu-viec",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục vụ việc\" chưa có docs/huong-dan/vu-viec.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:du-an",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục dự án\" chưa có docs/huong-dan/du-an.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:loai-ts",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Loại tài sản\" chưa có docs/huong-dan/loai-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:nhom-ccdc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"DM Nhóm công cụ dụng cụ\" chưa có docs/huong-dan/nhom-ccdc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:dm-nguon-von",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Danh mục Nguồn vốn\" chưa có docs/huong-dan/dm-nguon-von.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:muc-dich",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"DM Mục đích sử dụng\" chưa có docs/huong-dan/muc-dich.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:yc-tai-chinh",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Yêu cầu nghiệp vụ Tài chính – Kế toán\" chưa có docs/huong-dan/yc-tai-chinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:tai-lieu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Hướng dẫn sử dụng\" chưa có docs/huong-dan/tai-lieu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:kien-truc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Kiến trúc & Nghiệp vụ\" chưa có docs/huong-dan/kien-truc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:can-cu",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Căn cứ pháp lý\" chưa có docs/huong-dan/can-cu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:ti-chung-tu-ke-toan",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"Chứng từ kế toán\" chưa có docs/huong-dan/ti-chung-tu-ke-toan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:mat-lien-ket",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"CT kế toán bị mất liên kết phiếu gốc\" chưa có docs/huong-dan/mat-lien-ket.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:lech-than",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"CT kế toán lệch giữa thân và chi tiết\" chưa có docs/huong-dan/lech-than.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/ke-toan/menu.ts|guide:lech-goc",
+          "file": "apps/web/src/phan-he/ke-toan/menu.ts",
+          "message": "\"CT kế toán lệch so với phiếu gốc\" chưa có docs/huong-dan/lech-goc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-chuyen-kho",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Phiếu chuyển kho\" chưa có docs/huong-dan/kho-chuyen-kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-gia-von",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Tính giá vốn\" chưa có docs/huong-dan/kho-gia-von.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-nxt",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"BC nhập xuất tồn hàng hoá\" chưa có docs/huong-dan/kho-nxt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-ct-hang-hoa",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Sổ chi tiết hàng hoá\" chưa có docs/huong-dan/kho-ct-hang-hoa.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-hanh-trinh",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Hành trình mặt hàng\" chưa có docs/huong-dan/kho-hanh-trinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-mat-hang",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Danh mục mặt hàng\" chưa có docs/huong-dan/kho-mat-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-don-vi-tinh",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Danh mục đơn vị tính\" chưa có docs/huong-dan/kho-don-vi-tinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-phan-loai",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Nhóm hàng\" chưa có docs/huong-dan/kho-phan-loai.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-nhom-hach-toan",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Mặt hàng - Tài khoản\" chưa có docs/huong-dan/kho-nhom-hach-toan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-so-do-to-chuc",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Sơ đồ tổ chức\" chưa có docs/huong-dan/kho-so-do-to-chuc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-chi-nhanh",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Chi nhánh (kho, cửa hàng)\" chưa có docs/huong-dan/kho-chi-nhanh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/kho/menu.ts|guide:kho-kho",
+          "file": "apps/web/src/phan-he/kho/menu.ts",
+          "message": "\"Danh mục kho\" chưa có docs/huong-dan/kho-kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-ncc",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Nhà cung cấp mua hàng\" chưa có docs/huong-dan/mh-ncc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-tong-hop",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Tổng hợp mua hàng\" chưa có docs/huong-dan/mh-tong-hop.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-hoa-don-ncc",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Hoá đơn đầu vào của NCC\" chưa có docs/huong-dan/mh-hoa-don-ncc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-han-muc",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Hạn mức & công nợ đến hạn\" chưa có docs/huong-dan/mh-han-muc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-thuong",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Tính thưởng cuối kỳ\" chưa có docs/huong-dan/mh-thuong.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-phan-bo",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Phân bổ & giá vốn thực tế\" chưa có docs/huong-dan/mh-phan-bo.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-lo-han",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Lô & hạn dùng\" chưa có docs/huong-dan/mh-lo-han.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-qua-tang",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Quà tặng\" chưa có docs/huong-dan/mh-qua-tang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-nhat-ky",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Nhật ký mua hàng\" chưa có docs/huong-dan/mh-nhat-ky.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-dat-hang",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Phân tích đặt hàng\" chưa có docs/huong-dan/mh-dat-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-ton-max",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Tồn max\" chưa có docs/huong-dan/mh-ton-max.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-dang-ky-max",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Phiếu đăng ký tồn max\" chưa có docs/huong-dan/mh-dang-ky-max.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-chuyen-shop",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Chuyển hàng xuống shop\" chưa có docs/huong-dan/mh-chuyen-shop.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-cong-thuc",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Công thức đặt hàng\" chưa có docs/huong-dan/mh-cong-thuc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-chinh-sach",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Chính sách mua hàng\" chưa có docs/huong-dan/mh-chinh-sach.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-cai-dat",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Cài đặt mua hàng\" chưa có docs/huong-dan/mh-cai-dat.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-bien-the",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Biến thể mặt hàng\" chưa có docs/huong-dan/mh-bien-the.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-dvt-thung",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"ĐVT Thùng đặt hàng\" chưa có docs/huong-dan/mh-dvt-thung.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-nhom-doi-tuong",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Nhóm nhà cung cấp\" chưa có docs/huong-dan/mh-nhom-doi-tuong.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-mat-hang",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Danh mục mặt hàng\" chưa có docs/huong-dan/mh-mat-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-phan-loai",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Nhóm hàng\" chưa có docs/huong-dan/mh-phan-loai.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-don-vi-tinh",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Danh mục đơn vị tính\" chưa có docs/huong-dan/mh-don-vi-tinh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-so-do-to-chuc",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Sơ đồ tổ chức\" chưa có docs/huong-dan/mh-so-do-to-chuc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-chi-nhanh",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Chi nhánh\" chưa có docs/huong-dan/mh-chi-nhanh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-kho",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Danh mục kho\" chưa có docs/huong-dan/mh-kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-bao-cao",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Báo cáo mua hàng\" chưa có docs/huong-dan/mh-bao-cao.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-so-kho",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Sổ kho theo mặt hàng\" chưa có docs/huong-dan/mh-so-kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-ton-kho",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Tồn kho theo mặt hàng\" chưa có docs/huong-dan/mh-ton-kho.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-doi-chieu",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Đối chiếu đơn đặt ↔ phiếu nhập\" chưa có docs/huong-dan/mh-doi-chieu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-bc-chinh-sach",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Chi tiết chính sách mua hàng\" chưa có docs/huong-dan/mh-bc-chinh-sach.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-nk-mua-hang",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Sổ nhật ký mua hàng\" chưa có docs/huong-dan/mh-nk-mua-hang.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-sct-dinh-khoan",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Sổ chi tiết định khoản theo mã hàng\" chưa có docs/huong-dan/mh-sct-dinh-khoan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-thue-vao",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Báo cáo thuế vào\" chưa có docs/huong-dan/mh-thue-vao.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-cong-no",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Sổ tổng hợp công nợ phát sinh\" chưa có docs/huong-dan/mh-cong-no.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-nxt",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"BC nhập xuất tồn hàng hoá\" chưa có docs/huong-dan/mh-nxt.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-tong-quan",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Tổng quan & dữ liệu mẫu\" chưa có docs/huong-dan/mh-tong-quan.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-khoi-dau",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Nhập dữ liệu khởi đầu\" chưa có docs/huong-dan/mh-khoi-dau.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/mua-hang/menu.ts|guide:mh-csdl",
+          "file": "apps/web/src/phan-he/mua-hang/menu.ts",
+          "message": "\"Cơ sở dữ liệu mua hàng\" chưa có docs/huong-dan/mh-csdl.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-chuyen-tien",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Phiếu chuyển tiền\" chưa có docs/huong-dan/q-chuyen-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-phieu-thu",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Phiếu thu\" chưa có docs/huong-dan/q-phieu-thu.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-phieu-chi",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Phiếu chi\" chưa có docs/huong-dan/q-phieu-chi.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-phieu-bao-no",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Phiếu báo nợ\" chưa có docs/huong-dan/q-phieu-bao-no.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-phieu-bao-co",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Phiếu báo có\" chưa có docs/huong-dan/q-phieu-bao-co.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-so-du-tien",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Bảng kê số dư tiền\" chưa có docs/huong-dan/q-so-du-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-so-quy",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"BC Sổ quỹ tiền mặt\" chưa có docs/huong-dan/q-so-quy.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-so-tien-gui",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"BC Tiền gửi ngân hàng\" chưa có docs/huong-dan/q-so-tien-gui.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-nk-thu-tien",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Sổ nhật ký thu tiền\" chưa có docs/huong-dan/q-nk-thu-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-nk-chi-tien",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Sổ nhật ký chi tiền\" chưa có docs/huong-dan/q-nk-chi-tien.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/quy/menu.ts|guide:q-ct-quy",
+          "file": "apps/web/src/phan-he/quy/menu.ts",
+          "message": "\"Sổ kế toán chi tiết quỹ TM\" chưa có docs/huong-dan/q-ct-quy.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:ccdc",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Công cụ dụng cụ\" chưa có docs/huong-dan/ccdc.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:phan-bo",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Phân bổ chi phí trả trước\" chưa có docs/huong-dan/phan-bo.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:bc-phan-bo",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Báo cáo phân bổ chi phí\" chưa có docs/huong-dan/bc-phan-bo.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:tang-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Tăng tài sản cố định\" chưa có docs/huong-dan/tang-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:giam-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Giảm tài sản cố định\" chưa có docs/huong-dan/giam-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:khau-hao",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Tính khấu hao, phân bổ\" chưa có docs/huong-dan/khau-hao.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:ke-hoach-kh",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Kế hoạch khấu hao, phân bổ\" chưa có docs/huong-dan/ke-hoach-kh.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:danh-gia-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Đánh giá lại tài sản\" chưa có docs/huong-dan/danh-gia-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:dieu-chuyen-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Điều chuyển tài sản\" chưa có docs/huong-dan/dieu-chuyen-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:kiem-ke-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Kiểm kê tài sản\" chưa có docs/huong-dan/kiem-ke-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:so-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Sổ tài sản\" chưa có docs/huong-dan/so-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:bc-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Báo cáo tài sản\" chưa có docs/huong-dan/bc-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:theo-doi-ts",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"BC theo dõi TSCĐ và CCDC\" chưa có docs/huong-dan/theo-doi-ts.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/tai-san/menu.ts|guide:nguon-von",
+          "file": "apps/web/src/phan-he/tai-san/menu.ts",
+          "message": "\"Sổ theo dõi chi tiết nguồn vốn CSH\" chưa có docs/huong-dan/nguon-von.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/thue/menu.ts|guide:bo-sung-thue",
+          "file": "apps/web/src/phan-he/thue/menu.ts",
+          "message": "\"Bổ sung thông tin thuế\" chưa có docs/huong-dan/bo-sung-thue.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/thue/menu.ts|guide:to-khai",
+          "file": "apps/web/src/phan-he/thue/menu.ts",
+          "message": "\"Tờ khai thuế GTGT\" chưa có docs/huong-dan/to-khai.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/thue/menu.ts|guide:hd-co-quan-thue",
+          "file": "apps/web/src/phan-he/thue/menu.ts",
+          "message": "\"Hoá đơn từ cơ quan thuế\" chưa có docs/huong-dan/hd-co-quan-thue.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/thue/menu.ts|guide:hd-rui-ro",
+          "file": "apps/web/src/phan-he/thue/menu.ts",
+          "message": "\"Cảnh báo hoá đơn rủi ro\" chưa có docs/huong-dan/hd-rui-ro.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/thue/menu.ts|guide:nguoi-nop-thue",
+          "file": "apps/web/src/phan-he/thue/menu.ts",
+          "message": "\"Thông tin người nộp thuế\" chưa có docs/huong-dan/nguoi-nop-thue.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
+        },
+        {
+          "fp": "SC-DOC-6|apps/web/src/phan-he/thue/menu.ts|guide:th-thue",
+          "file": "apps/web/src/phan-he/thue/menu.ts",
+          "message": "\"Bảng tổng hợp thuế GTGT\" chưa có docs/huong-dan/th-thue.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
         }
       ]
     }
