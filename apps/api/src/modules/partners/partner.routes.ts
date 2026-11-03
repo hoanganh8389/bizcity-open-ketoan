@@ -38,6 +38,7 @@ import { corePort } from '@bizcity/platform/core/ports';
 import { partnerHints } from './partner.hints.js';
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
 
@@ -193,125 +194,6 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/partners/validate', {
-    preHandler: requirePermission('catalog:read'),
-    schema: { tags, summary: 'Khung Vì sao: kiểm thử một bản khai báo đối tượng (chỉ đọc)', body: z.object({ code: z.string().trim().min(1).max(64), name: z.string().trim().max(255).optional(), kind: z.enum(KINDS).optional(), alsoKinds: z.array(z.enum(['customer', 'supplier'])).max(2).optional(), taxCode: z.string().trim().max(32).nullish() }) },
-    handler: async (req) => ok({ findings: await partnerHints(db, authOf(req).tenantId, req.body) }),
-  });
-
-  r.post('/api/v1/partners', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Tạo mới đối tượng (mã đã có thì báo trùng, không ghi đè)', body: partnerFormBody.extend({ code: z.string().trim().min(1).max(64) }) },
-    handler: async (req, reply) => {
-      const auth = authOf(req);
-      const { code, warnAck: ack, ...body } = req.body;
-      const { info, rest } = split(body);
-      let findings: Awaited<ReturnType<typeof partnerHints>> = [];
-      await db.transaction().execute(async (trx) => {
-        // Hai người tạo cùng mã một lúc: người sau phải thấy mã đã có (upsert bên dưới không được ghi đè).
-        await sql`SELECT pg_advisory_xact_lock(hashtext(${`partner:${auth.tenantId}:${code}`}))`.execute(trx);
-        const existing = await partnerRepository.findByCode(trx, auth.tenantId, code);
-        if (existing) throw Errors.conflict(`Mã ${code} đã có: ${existing.name || '(chưa có tên)'} (${KIND_TEXT[existing.kind] ?? existing.kind}). Bấm "Lấy mã mới" hoặc nhập mã khác.`);
-        await assertGroups(trx, auth.tenantId, [info.groupCode]);
-        await assertTaxCodeFree(trx, auth.tenantId, code, rest.taxCode);
-        await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code } as PartnerInput, info.kind);
-        await partnerRepository.updateAccountingInfo(trx, auth.tenantId, code, info);
-        await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
-        findings = await partnerHints(trx, auth.tenantId, { code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.create', objectType: 'partner', objectId: code, after: req.body });
-        await recordWarnAck(trx, auth, 'partner', code, findings, ack);
-      });
-      return reply.status(201).send(ok(toPartnerDto((await partnerRepository.findByCode(db, auth.tenantId, code))!), { findings }));
-    },
-  });
-
-  r.put('/api/v1/partners/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Tạo hoặc cập nhật đối tượng', params: z.object({ code: z.string().trim().min(1).max(64) }), body: partnerFormBody },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { warnAck: ack, ...body } = req.body;
-      const { info, rest } = split(body);
-      let findings: Awaited<ReturnType<typeof partnerHints>> = [];
-      await db.transaction().execute(async (trx) => {
-        await assertGroups(trx, auth.tenantId, [info.groupCode]);
-        const before = await partnerRepository.findByCode(trx, auth.tenantId, req.params.code);
-        const isNew = !before;
-        await assertTaxCodeFree(trx, auth.tenantId, req.params.code, rest.taxCode, before?.tax_code);
-        await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code: req.params.code } as PartnerInput, info.kind);
-        await partnerRepository.updateAccountingInfo(trx, auth.tenantId, req.params.code, info);
-        if (isNew) await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', req.params.code).execute();
-        findings = await partnerHints(trx, auth.tenantId, { code: req.params.code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.upsert', objectType: 'partner', objectId: req.params.code, after: req.body });
-        await recordWarnAck(trx, auth, 'partner', req.params.code, findings, ack);
-      });
-      return ok(toPartnerDto((await partnerRepository.findByCode(db, auth.tenantId, req.params.code))!), { findings });
-    },
-  });
-
-  r.put('/api/v1/partners', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags,
-      summary: 'Đồng bộ danh mục đối tượng từ hệ thống bán hàng / mua hàng',
-      description: 'Tạo mới hoặc cập nhật theo mã. Trường để trống không xoá thông tin cũ. Khoá, hạn thanh toán, hạn mức nợ chỉ cập nhật khi được gửi.',
-      body: z.object({ partners: z.array(partnerBody.extend({ code: z.string().trim().min(1).max(64) })).min(1).max(1000) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        await assertGroups(trx, auth.tenantId, req.body.partners.map((p) => p.groupCode));
-        for (const p of req.body.partners) {
-          const { info, rest } = split(p);
-          await partnerRepository.upsert(trx, auth.tenantId, rest as PartnerInput, info.kind);
-          await partnerRepository.updateAccountingInfo(trx, auth.tenantId, p.code, info);
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.sync', objectType: 'partner', objectId: `${req.body.partners.length} đối tượng`, after: { codes: req.body.partners.map((p) => p.code).slice(0, 50) } });
-      });
-      return ok({ count: req.body.partners.length });
-    },
-  });
-
-  r.delete('/api/v1/partners/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá đối tượng chưa có trên sổ, chứng từ', params: z.object({ code: z.string() }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        const before = await partnerRepository.findByCode(trx, auth.tenantId, req.params.code);
-        if (!before) throw Errors.notFound(`đối tượng ${req.params.code}`);
-        const used = await trx.selectFrom('bizcity_read.ledger_lines').select('id').where('tenant_id', '=', auth.tenantId).where('partner_id', '=', before.id).limit(1).executeTakeFirst();
-        if (used) throw Errors.conflict(`Đối tượng ${before.code} đã có trên sổ: bỏ tích "Theo dõi" để khoá`);
-        // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G3): module còn dùng đối tượng (masterdata.referenceCheck) → không xoá
-        const refs = await referenceChecks(trx, auth.tenantId, { kind: 'partner', code: before.code });
-        if (refs.length) throw Errors.conflict(`Đối tượng ${before.code} đang dùng ở ${refs.join('; ')}: bỏ tích "Theo dõi" để khoá`);
-        // Còn chứng từ, công nợ, hợp đồng… trỏ tới thì khoá ngoại chặn (báo trùng / đang dùng).
-        await trx.deleteFrom('partners').where('id', '=', before.id).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.delete', objectType: 'partner', objectId: before.code, before });
-      });
-      return ok({ code: req.params.code });
-    },
-  });
-
-  r.delete('/api/v1/partner-groups/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá nhóm đối tượng chưa dùng', params: z.object({ code: z.string() }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const code = req.params.code;
-      await db.transaction().execute(async (trx) => {
-        const before = await trx.selectFrom('partner_groups').selectAll().where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
-        if (!before) throw Errors.notFound(`nhóm ${code}`);
-        const used = await trx.selectFrom('partners').select('code').where('tenant_id', '=', auth.tenantId).where('group_code', '=', code).limit(1).executeTakeFirst()
-          ?? await trx.selectFrom('partner_groups').select('code').where('tenant_id', '=', auth.tenantId).where('parent_code', '=', code).limit(1).executeTakeFirst();
-        if (used) throw Errors.conflict(`Nhóm ${code} đang dùng (${used.code}): bỏ tích "Đang dùng" để ngừng`);
-        await trx.deleteFrom('partner_groups').where('id', '=', before.id).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner_group.delete', objectType: 'partner_group', objectId: code, before });
-      });
-      return ok({ code });
-    },
-  });
-
   r.get('/api/v1/partner-groups', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Nhóm đối tượng' },
@@ -330,33 +212,175 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.map((g) => ({ code: g.code, name: g.name, parentCode: g.parent_code, kind: g.kind, note: g.note, isActive: g.is_active, partners: Number(g.n ?? 0) })));
     },
   });
+  mountActions(app, partnerWriteActions);
+}
 
-  r.put('/api/v1/partner-groups/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags,
-      summary: 'Thêm hoặc sửa nhóm đối tượng',
-      params: z.object({ code: z.string().trim().min(1).max(64) }),
-      body: z.object({
+// [2026-11-03 05:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (cổng danh mục): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const partnerWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.partner.validate', title: 'Khung Vì sao: kiểm thử một bản khai báo đối tượng (chỉ đọc)', tags,
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({ code: z.string().trim().min(1).max(64), name: z.string().trim().max(255).optional(), kind: z.enum(KINDS).optional(), alsoKinds: z.array(z.enum(['customer', 'supplier'])).max(2).optional(), taxCode: z.string().trim().max(32).nullish() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/partners/validate' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      return { findings: await partnerHints(trx, ctx.legacyAuth.tenantId, input) };
+    },
+  }),
+  defineAction({
+    id: 'core.partner.create', title: 'Tạo mới đối tượng (mã đã có thì báo trùng, không ghi đè)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: partnerFormBody.extend({ code: z.string().trim().min(1).max(64) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/partners', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { code, warnAck: ack, ...body } = input;
+      const { info, rest } = split(body);
+      let findings: Awaited<ReturnType<typeof partnerHints>> = [];
+      await sameTx(trx, async (trx) => {
+        // Hai người tạo cùng mã một lúc: người sau phải thấy mã đã có (upsert bên dưới không được ghi đè).
+        await sql`SELECT pg_advisory_xact_lock(hashtext(${`partner:${auth.tenantId}:${code}`}))`.execute(trx);
+        const existing = await partnerRepository.findByCode(trx, auth.tenantId, code);
+        if (existing) throw Errors.conflict(`Mã ${code} đã có: ${existing.name || '(chưa có tên)'} (${KIND_TEXT[existing.kind] ?? existing.kind}). Bấm "Lấy mã mới" hoặc nhập mã khác.`);
+        await assertGroups(trx, auth.tenantId, [info.groupCode]);
+        await assertTaxCodeFree(trx, auth.tenantId, code, rest.taxCode);
+        await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code } as PartnerInput, info.kind);
+        await partnerRepository.updateAccountingInfo(trx, auth.tenantId, code, info);
+        await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
+        findings = await partnerHints(trx, auth.tenantId, { code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.create', objectType: 'partner', objectId: code, after: input });
+        await recordWarnAck(trx, auth, 'partner', code, findings, ack);
+      });
+      return (Object.assign(ctx.meta, { findings }), toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, code))!));
+    },
+  }),
+  defineAction({
+    id: 'core.partner.save', title: 'Tạo hoặc cập nhật đối tượng', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (partnerFormBody).merge(z.object({ code: z.string().trim().min(1).max(64) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/partners/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { warnAck: ack, ...body } = reqBody;
+      const { info, rest } = split(body);
+      let findings: Awaited<ReturnType<typeof partnerHints>> = [];
+      await sameTx(trx, async (trx) => {
+        await assertGroups(trx, auth.tenantId, [info.groupCode]);
+        const before = await partnerRepository.findByCode(trx, auth.tenantId, input.code);
+        const isNew = !before;
+        await assertTaxCodeFree(trx, auth.tenantId, input.code, rest.taxCode, before?.tax_code);
+        await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code: input.code } as PartnerInput, info.kind);
+        await partnerRepository.updateAccountingInfo(trx, auth.tenantId, input.code, info);
+        if (isNew) await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).execute();
+        findings = await partnerHints(trx, auth.tenantId, { code: input.code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.upsert', objectType: 'partner', objectId: input.code, after: reqBody });
+        await recordWarnAck(trx, auth, 'partner', input.code, findings, ack);
+      });
+      return (Object.assign(ctx.meta, { findings }), toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, input.code))!));
+    },
+  }),
+  defineAction({
+    id: 'core.partner.sync', title: 'Đồng bộ danh mục đối tượng từ hệ thống bán hàng / mua hàng', tags,
+    description: 'Tạo mới hoặc cập nhật theo mã. Trường để trống không xoá thông tin cũ. Khoá, hạn thanh toán, hạn mức nợ chỉ cập nhật khi được gửi.',
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ partners: z.array(partnerBody.extend({ code: z.string().trim().min(1).max(64) })).min(1).max(1000) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/partners' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, async (trx) => {
+        await assertGroups(trx, auth.tenantId, input.partners.map((p) => p.groupCode));
+        for (const p of input.partners) {
+          const { info, rest } = split(p);
+          await partnerRepository.upsert(trx, auth.tenantId, rest as PartnerInput, info.kind);
+          await partnerRepository.updateAccountingInfo(trx, auth.tenantId, p.code, info);
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.sync', objectType: 'partner', objectId: `${input.partners.length} đối tượng`, after: { codes: input.partners.map((p) => p.code).slice(0, 50) } });
+      });
+      return { count: input.partners.length };
+    },
+  }),
+  defineAction({
+    id: 'core.partner.delete', title: 'Xoá đối tượng chưa có trên sổ, chứng từ', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string() }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/partners/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, async (trx) => {
+        const before = await partnerRepository.findByCode(trx, auth.tenantId, input.code);
+        if (!before) throw Errors.notFound(`đối tượng ${input.code}`);
+        const used = await trx.selectFrom('bizcity_read.ledger_lines').select('id').where('tenant_id', '=', auth.tenantId).where('partner_id', '=', before.id).limit(1).executeTakeFirst();
+        if (used) throw Errors.conflict(`Đối tượng ${before.code} đã có trên sổ: bỏ tích "Theo dõi" để khoá`);
+        // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G3): module còn dùng đối tượng (masterdata.referenceCheck) → không xoá
+        const refs = await referenceChecks(trx, auth.tenantId, { kind: 'partner', code: before.code });
+        if (refs.length) throw Errors.conflict(`Đối tượng ${before.code} đang dùng ở ${refs.join('; ')}: bỏ tích "Theo dõi" để khoá`);
+        // Còn chứng từ, công nợ, hợp đồng… trỏ tới thì khoá ngoại chặn (báo trùng / đang dùng).
+        await trx.deleteFrom('partners').where('id', '=', before.id).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.delete', objectType: 'partner', objectId: before.code, before });
+      });
+      return { code: input.code };
+    },
+  }),
+  defineAction({
+    id: 'core.partner-group.delete', title: 'Xoá nhóm đối tượng chưa dùng', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string() }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/partner-groups/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner_group', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const code = input.code;
+      await sameTx(trx, async (trx) => {
+        const before = await trx.selectFrom('partner_groups').selectAll().where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
+        if (!before) throw Errors.notFound(`nhóm ${code}`);
+        const used = await trx.selectFrom('partners').select('code').where('tenant_id', '=', auth.tenantId).where('group_code', '=', code).limit(1).executeTakeFirst()
+          ?? await trx.selectFrom('partner_groups').select('code').where('tenant_id', '=', auth.tenantId).where('parent_code', '=', code).limit(1).executeTakeFirst();
+        if (used) throw Errors.conflict(`Nhóm ${code} đang dùng (${used.code}): bỏ tích "Đang dùng" để ngừng`);
+        await trx.deleteFrom('partner_groups').where('id', '=', before.id).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner_group.delete', objectType: 'partner_group', objectId: code, before });
+      });
+      return { code };
+    },
+  }),
+  defineAction({
+    id: 'core.partner-group.upsert', title: 'Thêm hoặc sửa nhóm đối tượng', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({
         name: z.string().trim().min(1).max(255),
         parentCode: z.string().trim().max(64).optional(),
         kind: z.enum([...KINDS, 'any']).default('any'),
         note: z.string().trim().max(500).default(''),
         isActive: z.boolean().default(true),
-      }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { code } = req.params;
-      const b = req.body;
+      })).merge(z.object({ code: z.string().trim().min(1).max(64) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/partner-groups/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'partner_group', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { code } = input;
+      const b = reqBody;
       if (b.parentCode === code) throw Errors.validation('Nhóm cha không được là chính nó');
-      if (b.parentCode) await assertGroups(db, auth.tenantId, [b.parentCode]);
+      if (b.parentCode) await assertGroups(trx, auth.tenantId, [b.parentCode]);
       const values = { name: b.name, parent_code: b.parentCode || null, kind: b.kind, note: b.note, is_active: b.isActive };
-      await db.transaction().execute(async (trx) => {
+      await sameTx(trx, async (trx) => {
         await trx.insertInto('partner_groups').values({ tenant_id: auth.tenantId, code, ...values }).onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner_group.save', objectType: 'partner_group', objectId: code, after: b });
       });
-      return ok({ code });
+      return { code };
     },
-  });
-}
+  }),
+];

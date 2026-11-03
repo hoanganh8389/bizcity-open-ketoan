@@ -24,6 +24,7 @@ import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import type { AuthContext } from '../../../core/auth.js';
 import { callAction } from '../../../core/actions.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 /** Phần B02 thuế cần (action công khai accounting.report.income-statement của ke-toan). */
 interface IncomeStatement { rows: { code: string; current: number }[] }
@@ -128,9 +129,14 @@ export const citReturnService = {
   },
 
   async save(auth: AuthContext, q: { year: number; manual: Partial<Record<CitManualKey, number>>; status: 'draft' | 'final' }) {
-    const built = await this.build(auth, q);
+    return db.transaction().execute((trx) => citReturnService.saveIn(trx, auth, q));
+  },
+
+  // [2026-11-03 08:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): bản *In chạy trong giao dịch của action
+  async saveIn(trx: ActionTx, auth: AuthContext, q: { year: number; manual: Partial<Record<CitManualKey, number>>; status: 'draft' | 'final' }) {
+    const built = await citReturnService.build(auth, q);
     const values = computeCit(built.auto, q.manual);
-    await db.transaction().execute(async (trx) => {
+    await sameTx(trx, async (trx) => {
       const row = { values: JSON.stringify(values), manual: JSON.stringify(q.manual), status: q.status, updated_by: auth.actor, updated_at: new Date() };
       await trx.insertInto('cit_returns').values({ tenant_id: auth.tenantId, year: q.year, ...row }).onConflict((oc) => oc.columns(['tenant_id', 'year']).doUpdateSet(row)).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cit_return.save', objectType: 'cit_return', objectId: String(q.year), after: { values, manual: q.manual, status: q.status } });
@@ -153,10 +159,15 @@ export const taxpayerService = {
   },
 
   async save(auth: AuthContext, data: TaxpayerProfile) {
+    return db.transaction().execute((trx) => taxpayerService.saveIn(trx, auth, data));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async saveIn(trx: ActionTx, auth: AuthContext, data: TaxpayerProfile) {
     const clean: TaxpayerProfile = {};
     for (const k of TAXPAYER_FIELDS) if (data[k]?.trim()) clean[k] = data[k]!.trim();
     if (clean.taxCode && !/^(\d{10}(-\d{3})?|\d{12})$/.test(clean.taxCode)) throw Errors.validation('Mã số thuế phải gồm 10 số, 10 số – 3 số, hoặc 12 số');
-    await db.transaction().execute(async (trx) => {
+    await sameTx(trx, async (trx) => {
       const row = { data: JSON.stringify(clean), updated_by: auth.actor, updated_at: new Date() };
       await trx.insertInto('taxpayer_profiles').values({ tenant_id: auth.tenantId, ...row }).onConflict((oc) => oc.column('tenant_id').doUpdateSet(row)).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'taxpayer.save', objectType: 'taxpayer_profile', objectId: auth.tenantId, after: clean });

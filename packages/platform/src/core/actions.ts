@@ -71,8 +71,15 @@ export interface ActionContext {
      * Gọi ctx.ledger / ctx.documents NGOÀI `fn`. Module chưa có CSDL riêng (`module migrate`) → NOT_READY.
      */
     module<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<T>;
+    /**
+     * Một mục của lô (action theo lô): chạy `fn` trong SAVEPOINT của giao dịch action. Mục lỗi chỉ huỷ phần của nó,
+     * trả `{ ok: false, error }` để handler báo trong kết quả; các mục khác giữ nguyên, lưu cùng lúc khi cả lô xong.
+     */
+    item<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>>;
   };
   evidence: { note(key: string, value: unknown): void };
+  // [2026-11-03 05:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main: ctx.meta: phản hồi thêm khoá vào meta (cổng danh mục: gate, findings, held — PHASE-024). Khoá lõi (requestId, receipt, idempotency, dryRun) không bị đè.
+  readonly meta: Record<string, unknown>;
   /**
    * Phát sự kiện miền trong giao dịch của action (bizcity_event@1 STD-EVT-1): huỷ / dry-run thì không có sự kiện.
    * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
@@ -150,7 +157,8 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
   /** Cho phép ?dryRun=1 (STD-ACT-7: không hiệu ứng ngoài giao dịch). */
   dryRun?: boolean;
   expose: {
-    http?: { method: HttpMethod; path: string; status?: 200 | 201 };
+    // [2026-11-03 07:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: query = trường lấy từ query string của POST/PUT/PATCH (gộp vào input); bodyLimit = cỡ thân tối đa (byte)
+    http?: { method: HttpMethod; path: string; status?: 200 | 201; query?: z.AnyZodObject; bodyLimit?: number };
     mcp?: boolean;
     ai?: 'deny' | 'read' | 'propose' | 'execute';
     /** Công cụ MCP huỷ / đảo cái đã có (annotations.destructiveHint): client cảnh báo rõ hơn trước khi xác nhận. */
@@ -216,6 +224,60 @@ export function ownDocument<T extends { docKey?: unknown; sourceSystem?: unknown
 }
 
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): giao dịch của action cho mã cũ viết dạng db.transaction().execute(fn)
+// [2026-11-03 05:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: không lưu bí mật vào bằng chứng / bản phản hồi gửi lặp
+const SECRET_KEY = /(^key$|password$|secret$|token$|apikey$|api_key$|privatekey$)/i;
+/**
+ * Che trường bí mật (mật khẩu, khoá API, token, secret…) trước khi ghi bằng chứng (audit_logs) và trước khi lưu phản hồi để trả
+ * lại khi gửi lặp (action_requests). Người gọi lần đầu vẫn nhận đủ; gửi lặp nhận bản đã che (khoá chỉ trả về một lần).
+ */
+export function redactSecrets<T>(v: T): T {
+  const walk = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(walk);
+    if (x && typeof x === 'object' && !(x instanceof Date)) return Object.fromEntries(Object.entries(x).map(([k, val]) => [k, SECRET_KEY.test(k) && val != null && val !== '' ? '***' : walk(val)]));
+    return x;
+  };
+  return walk(v) as T;
+}
+
+// [2026-11-03 07:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: thân lớn (nạp danh mục, bảng giá, ảnh hoá đơn…) không chép vào bằng chứng
+export const EVIDENCE_INPUT_MAX = 64 * 1024;
+/** input của bằng chứng quá EVIDENCE_INPUT_MAX byte: chỉ giữ cỡ (inputHash của bằng chứng vẫn đối chiếu được thân gốc). */
+export function compactEvidence<T>(after: T): T {
+  if (!after || typeof after !== 'object' || !('input' in after)) return after;
+  const bytes = Buffer.byteLength(JSON.stringify((after as { input: unknown }).input) ?? '', 'utf8');
+  return bytes > EVIDENCE_INPUT_MAX ? { ...after, input: { omitted: true, bytes } } as T : after;
+}
+
+// [2026-11-03 09:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: action theo lô — mỗi mục một SAVEPOINT trong giao dịch của action
+export type ItemResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
+let savepointSeq = 0;
+/**
+ * Chạy `fn` trong SAVEPOINT của `trx` (thay "mỗi mục một giao dịch" của route lô cũ). Lỗi → ROLLBACK TO SAVEPOINT, trả lỗi;
+ * giao dịch ngoài vẫn dùng tiếp được. Dùng ở service bản *In; handler action gọi ctx.data.item.
+ */
+export async function inSavepoint<T>(trx: Transaction<Database>, fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>> {
+  const name = sql.id(`bz_item_${++savepointSeq}`);
+  await sql`SAVEPOINT ${name}`.execute(trx);
+  try {
+    const value = await fn(trx);
+    await sql`RELEASE SAVEPOINT ${name}`.execute(trx);
+    return { ok: true, value };
+  } catch (error) {
+    await sql`ROLLBACK TO SAVEPOINT ${name}`.execute(trx);
+    return { ok: false, error };
+  }
+}
+/** Lời nhắn của lỗi một mục (như route lô cũ báo). */
+export const itemMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** Giao dịch runtime mở cho action (ctx.data.tx). */
+export type ActionTx = Transaction<Database>;
+/** Chạy fn trong giao dịch có sẵn — thay `db.transaction().execute(fn)` khi mã cũ đã nằm trong giao dịch của action (không mở giao dịch lồng). */
+export function sameTx<T>(trx: ActionTx, fn: (trx: ActionTx) => Promise<T>): Promise<T> {
+  return fn(trx);
+}
+
 const registry = new Map<string, AnyActionDef>();
 
 /** Khai báo action; kiểm các luật đọc được từ khai báo (STD-ACT-2, -4, -6) ngay lúc nạp. */
@@ -266,7 +328,7 @@ export interface ActionResult<T = unknown> {
   data: T;
   status: number;
   /** receipt: biên nhận bằng chứng (bizcity_evidence@1 §3) — có với action ghi chạy thật, kể cả khi gửi lặp. */
-  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt };
+  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt; [extra: string]: unknown };
 }
 
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
@@ -311,6 +373,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const tenantId = auth?.tenantId ?? '';
   const inputHash = def.effect === 'write' ? requestHash(input) : '';
   const notes: Record<string, unknown> = {};
+  const responseMeta: Record<string, unknown> = {};
   // Bằng chứng (STD-EVD-1): action ghi chạy thật → đúng một bản ghi, thành công hay thất bại vì lỗi nghiệp vụ trong handler.
   const evidenceOn = def.effect === 'write' && !dryRun && !!auth;
   const objectType = def.evidence?.objectType ?? def.id.split('.')[1]!;
@@ -318,7 +381,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
     const oid = objectId == null ? undefined : String(objectId);
     return {
       tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via ?? (auth!.app ? `app:${auth!.app}` : undefined), onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
-      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after,
+      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after: compactEvidence(redactSecrets(after)),
     };
   };
   let inHandler = false;
@@ -355,8 +418,10 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           tx: trx,
           // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: tách ra asModuleRole (dùng chung với subscriber, hook)
           module: (fn) => asModuleRole(trx, def.id.split('.')[0]!, () => fn(trx)),
+          item: (fn) => inSavepoint(trx, fn),
         },
         evidence: { note: (k, v) => { notes[k] = v; } },
+        meta: responseMeta,
         events: {
           emit: (type, data, o) => {
             const mod = def.id.split('.')[0]!;
@@ -451,13 +516,13 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         if (!checked.success) throw new Error(`Action ${def.id} trả sai khuôn output: ${checked.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
       }
       if (dryRun) throw new DryRunRollback(output);
-      const result = { data: output, status, meta };
+      const result = { data: output, status, meta: { ...responseMeta, ...meta } as ActionResult['meta'] };
       if (evidenceOn) {
         const objectId = def.evidence?.objectId?.(input, output) ?? (output as { id?: unknown } | null)?.id;
-        result.meta = { ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
+        result.meta = { ...responseMeta, ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
       }
       if (key) {
-        await trx.updateTable('action_requests').set({ response: JSON.stringify(output ?? null), status_code: status })
+        await trx.updateTable('action_requests').set({ response: JSON.stringify(redactSecrets(output ?? null)), status_code: status })
           .where('tenant_id', '=', tenantId).where('action_id', '=', def.id).where('idem_key', '=', key).execute();
       }
       return result;
@@ -514,8 +579,10 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
     if (!http) continue;
     const names = pathParams(http.path);
     const mask = Object.fromEntries(names.map((n) => [n, true])) as Record<string, true>;
-    const rest = def.input.omit(mask);
     const inQuery = http.method === 'GET' || http.method === 'DELETE';
+    // Trường query của POST/PUT/PATCH không nằm trong thân
+    const qMask = Object.fromEntries(Object.keys(!inQuery && http.query ? http.query.shape : {}).map((n) => [n, true])) as Record<string, true>;
+    const rest = def.input.omit({ ...mask, ...qMask });
     const dry = def.dryRun ? z.object({ dryRun: queryBool.describe('1 = chạy thử trong giao dịch rồi huỷ, không ghi gì') }) : null;
     const notes = [
       def.description,
@@ -530,8 +597,10 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
         summary: def.title,
         description: notes,
         ...(names.length ? { params: def.input.pick(mask) } : {}),
-        ...(inQuery ? { querystring: dry ? rest.merge(dry) : rest } : { ...(Object.keys(rest.shape).length ? { body: rest } : {}), ...(dry ? { querystring: dry } : {}) }),
+        // [2026-11-03 07:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: thân mà {} đã hợp lệ (mọi trường tuỳ chọn / có mặc định) thì được gửi thiếu
+        ...(inQuery ? { querystring: dry ? rest.merge(dry) : rest } : { ...(Object.keys(rest.shape).length ? { body: rest.safeParse({}).success ? rest.nullish() : rest } : {}), ...(dry || http.query ? { querystring: http.query && dry ? http.query.merge(dry) : (http.query ?? dry)! } : {}) }),
       },
+      ...(http.bodyLimit ? { bodyLimit: http.bodyLimit } : {}),
       config: def.permission === 'public' ? { public: true } : {},
       handler: async (req: FastifyRequest, reply) => {
         const params = (req.params ?? {}) as Record<string, unknown>;
@@ -540,7 +609,8 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
         const flag = query.dryRun;
         const dryRun = flag === true || (typeof flag === 'string' && ['1', 'true', 'on', 'yes'].includes(flag.toLowerCase()));
         delete query.dryRun;
-        const raw = inQuery ? { ...query, ...params } : { ...((req.body ?? {}) as Record<string, unknown>), ...params };
+        const fromQuery = Object.fromEntries(Object.keys(qMask).filter((k) => k in query).map((k) => [k, query[k]]));
+        const raw = inQuery ? { ...query, ...params } : { ...((req.body ?? {}) as Record<string, unknown>), ...fromQuery, ...params };
         const header = req.headers['idempotency-key'];
         const res = await runAction(def, raw, { auth: req.auth, requestId: String(req.id), idempotencyKey: Array.isArray(header) ? header[0] : header, dryRun });
         return reply.status(res.status).send(ok(res.data, res.meta));

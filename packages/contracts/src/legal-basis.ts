@@ -24,6 +24,7 @@ export const LEGAL_BASES = {
   'TT32': { title: 'Thông tư 32/2025/TT-BTC', page: 'docs/can-cu/05-hoa-don-thue-gtgt.md' },
   'LGTGT': { title: 'Luật Thuế GTGT số 48/2024/QH15', page: 'docs/can-cu/05-hoa-don-thue-gtgt.md' },
   'LQLT': { title: 'Luật Quản lý thuế số 108/2025/QH15', page: 'docs/can-cu/01-danh-muc-van-ban.md' },
+  'NQ204': { title: 'Nghị quyết 204/2025/QH15', page: 'docs/can-cu/05-hoa-don-thue-gtgt.md' },
   'NOI-BO': { title: 'Quy ước phần mềm', page: 'docs/can-cu/02-chuc-nang-va-can-cu.md' },
 } as const satisfies Record<string, LegalBasis>;
 
@@ -72,6 +73,18 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'IN-BIZ-005': ['NOI-BO'],
   'IN-BIZ-006': ['ND123', 'LGTGT'],
   'IN-BIZ-007': ['ND123'],
+  // [2026-11-03 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — căn cứ cho 10 mã PHASE-021 W5 (gộp từ main), MỨC VĂN BẢN theo R-GATE-11, lấy từ docs/can-cu; chưa đối chiếu điều khoản ở văn bản gốc.
+  // IN-VAT-001 khớp nguồn của rulepack vat-vn (NQ204). IN-CFG-001: hồ sơ còn cho chọn TT200 / TT133 / TT152 nhưng danh mục căn cứ chưa có các văn bản này — bổ sung vào docs/can-cu/01 rồi thêm khoá.
+  'IN-BIZ-001': ['LKT'],
+  'IN-POST-001': ['NOI-BO'],
+  'IN-POST-002': ['NOI-BO'],
+  'IN-POST-003': ['NOI-BO'],
+  'IN-POST-004': ['TT99'],
+  'IN-POST-005': ['NOI-BO'],
+  'IN-VAT-001': ['NQ204'],
+  'IN-INV-001': ['ND123', 'LGTGT'],
+  'IN-INV-002': ['ND123'],
+  'IN-CFG-001': ['TT99'],
 };
 
 /** Căn cứ của một mã (tên văn bản + trang tra). Mã chưa khai → rỗng (SC-FIND-1 báo). */

@@ -14,6 +14,7 @@ import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import type { AuthContext } from '../../../core/auth.js';
 import { callAction } from '../../../core/actions.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 export interface TermRule { prefix: string; label: string; asset: [string, string] | null; liability: [string, string] | null }
 const termRules = (auth: AuthContext) => callAction<TermRule[]>('accounting.report.term-rules', {}, auth);
@@ -56,8 +57,13 @@ export const longTermService = {
   },
 
   async save(auth: AuthContext, q: { asOf: string; lines: LongTermLine[] }) {
+    return db.transaction().execute((trx) => longTermService.saveIn(trx, auth, q));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async saveIn(trx: ActionTx, auth: AuthContext, q: { asOf: string; lines: LongTermLine[] }) {
     const rules = await termRules(auth);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const problems: string[] = [];
       const partnerCodes = [...new Set(q.lines.map((l) => l.partnerCode).filter((c): c is string => Boolean(c)))];
       const partners = partnerCodes.length ? await trx.selectFrom('partners').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).where('code', 'in', partnerCodes).execute() : [];

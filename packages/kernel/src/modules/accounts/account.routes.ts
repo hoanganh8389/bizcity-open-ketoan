@@ -47,15 +47,6 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await accountService.get(authOf(req), req.params.code)),
   });
 
-  r.post('/api/v1/accounts/validate', {
-    preHandler: requirePermission('catalog:read'),
-    schema: { tags, summary: 'Khung Vì sao: kiểm thử một bản khai báo tài khoản (chỉ đọc)', body: accountValidateSchema },
-    handler: async (req) => {
-      const { mode, ...draft } = req.body;
-      return ok({ findings: await accountService.validate(authOf(req), draft, mode) });
-    },
-  });
-
   mountActions(app, accountActions);
 }
 
@@ -63,6 +54,14 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
 const accountDto = z.custom<AccountDto>((v) => typeof v === 'object' && v !== null && typeof (v as { code?: unknown }).code === 'string');
 
 export const accountActions: AnyActionDef[] = [
+  // [2026-11-03 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main: "Khung Vì sao" kiểm thử khai báo tài khoản = action đọc (không ghi gì)
+  defineAction({
+    id: 'core.account.validate', title: 'Khung Vì sao: kiểm thử một bản khai báo tài khoản (chỉ đọc)', tags,
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: accountValidateSchema, output: z.object({ findings: z.array(z.unknown()) }),
+    expose: { http: { method: 'POST', path: '/api/v1/accounts/validate' }, mcp: false, ai: 'read' },
+    handler: async (ctx, { mode, ...draft }) => ({ findings: await accountService.validate(ctx.legacyAuth, draft, mode) }),
+  }),
   defineAction({
     id: 'core.account.create', title: 'Thêm tài khoản', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',

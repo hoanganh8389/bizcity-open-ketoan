@@ -28,6 +28,7 @@ import { defineAddIn } from '../../core/addins.js';
 import { AppError } from '../../core/errors.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { db } from '../../db/client.js';
 import { postDocumentIn } from '../../kernel/public.js';
 import { createReadStream } from 'node:fs';
@@ -108,6 +109,120 @@ function sampleDocument(q: SimulateInput, taxRate: number): Record<string, unkno
 
 class Rollback extends Error { constructor(readonly data: unknown) { super('rollback'); } }
 
+
+// [2026-11-03 12:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 7 (SC-ACT-1): ghi dữ liệu huấn luyện / ảnh qua defineAction (quyền, kiểm input, idempotency, bằng chứng); dữ liệu vẫn ở tệp JSONL (store.ts)
+// — tệp không theo giao dịch CSDL: bằng chứng ghi cùng giao dịch action, tệp ghi trong handler. Mô phỏng = action đọc, ghi thử trong SAVEPOINT rồi huỷ.
+const ktags = ['Add-in: Trợ lý — dữ liệu huấn luyện'];
+const entryId = z.object({ id: z.string().uuid() });
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+const troLyActions: AnyActionDef[] = [
+  defineAction({
+    id: 'tro-ly.knowledge.create', title: 'Thêm mục huấn luyện', tags: ktags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'required',
+    input: entrySchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/knowledge', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'training_entry', objectId: (_i, o) => (o as TrainingEntry).id },
+    handler: (ctx, input) => saveEntry(ctx.tenant.id, ctx.actor.id, input),
+  }),
+  defineAction({
+    id: 'tro-ly.knowledge.update', title: 'Sửa mục huấn luyện', tags: ktags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: entrySchema.merge(entryId), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/knowledge/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'training_entry', objectId: (i) => i.id },
+    handler: async (ctx, { id, ...input }) => {
+      try { return await saveEntry(ctx.tenant.id, ctx.actor.id, input, id); }
+      catch (e) { if ((e as { notFound?: boolean }).notFound) throw Errors.notFound('mục huấn luyện'); throw e; }
+    },
+  }),
+  defineAction({
+    id: 'tro-ly.knowledge.delete', title: 'Xoá mục huấn luyện', tags: ktags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: entryId, output: z.object({ deleted: z.boolean() }),
+    expose: { http: { method: 'DELETE', path: '/knowledge/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'training_entry', objectId: (i) => i.id },
+    handler: async (ctx, { id }) => {
+      if (!(await deleteEntry(ctx.tenant.id, id))) throw Errors.notFound('mục huấn luyện');
+      return { deleted: true };
+    },
+  }),
+  defineAction({
+    id: 'tro-ly.knowledge.import', title: 'Nhập mục huấn luyện từ JSONL (trùng id thì ghi đè)', tags: ktags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ jsonl: z.string().max(5_000_000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/knowledge/import', bodyLimit: 8 * 1024 * 1024 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'training_entry' },
+    handler: async (ctx, input) => {
+      const items: Partial<TrainingEntry>[] = [];
+      const bad: number[] = [];
+      input.jsonl.split('\n').forEach((line, i) => {
+        const t = line.trim();
+        if (!t) return;
+        try { items.push(JSON.parse(t)); } catch { bad.push(i + 1); }
+      });
+      if (!items.length) throw Errors.validation('Tệp không có dòng JSON hợp lệ nào');
+      return { ...(await importEntries(ctx.tenant.id, ctx.actor.id, items)), badLines: bad.slice(0, 20) };
+    },
+  }),
+  defineAction({
+    id: 'tro-ly.image.upload', title: 'Tải ảnh chèn vào câu trả lời (data URL, tối đa 3 MB)', tags: ktags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ dataUrl: z.string().max(5_000_000) }), output: z.object({ url: z.string() }),
+    expose: { http: { method: 'POST', path: '/images', bodyLimit: 8 * 1024 * 1024 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'training_image', objectId: (_i, o) => o.url.split('/').pop() },
+    handler: async (_ctx, input) => {
+      try { return { url: `/api/v1/addins/tro-ly/images/${await saveImage(input.dataUrl)}` }; }
+      catch (e) { throw Errors.validation((e as Error).message); }
+    },
+  }),
+  defineAction({
+    id: 'tro-ly.posting.simulate', title: 'Mô phỏng định khoản một phiếu mẫu (không ghi sổ)', tags: ['Add-in: Trợ lý'],
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: simulateSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/simulate' }, mcp: false, ai: 'read' },
+    handler: async (ctx, q) => {
+      const auth = ctx.legacyAuth;
+      const rate = q.taxCode
+        ? Number((await ctx.data.tx.selectFrom('tax_codes').select('rate').where('tenant_id', '=', auth.tenantId).where('code', '=', q.taxCode).executeTakeFirst())?.rate ?? 0)
+        : 0;
+      const parsed = ingestDocumentSchema.safeParse(sampleDocument(q, Math.max(0, rate)));
+      if (!parsed.success) return ({ ok: false, error: `Phiếu mẫu chưa hợp lệ: ${parsed.error.issues.slice(0, 2).map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}` });
+      const doc = parsed.data as IngestDocument;
+      // Ghi thử trong SAVEPOINT rồi huỷ (Rollback): không chứng từ, bút toán nào còn lại
+      const x = await ctx.data.item(async (trx) => {
+        {
+          const res = await postDocumentIn(trx, auth, doc, { post: true, force: true });
+          const ids = res.entryIds ?? [];
+          const lines = ids.length ? await trx.selectFrom('bizcity_read.ledger_lines as l')
+            .innerJoin('bizcity_read.ledger_entries as e', 'e.id', 'l.entry_id')
+            .innerJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 'l.tenant_id').onRef('a.code', '=', 'l.account_code'))
+            .select(['l.entry_id', 'e.doc_type', 'e.reason_code', 'l.pair_no', 'l.part', 'l.account_code', 'a.name as account_name', 'l.debit', 'l.credit', 'l.description', 'l.tax_code'])
+            .where('l.entry_id', 'in', ids).orderBy('l.entry_id').orderBy('l.line_no').execute() : [];
+          const event = await trx.selectFrom('accounting_events').select('id').where('tenant_id', '=', auth.tenantId).where('doc_key', '=', doc.docKey).executeTakeFirst();
+          const moves = event ? (await sql<{ branch_code: string; kind: string; qty: string }>`
+            SELECT b.code AS branch_code, m.kind, m.qty FROM inventory_movements m JOIN branches b ON b.id = m.branch_id
+             WHERE m.event_id = ${event.id} ORDER BY m.line_no`.execute(trx)).rows : [];
+          throw new Rollback({
+            ok: true,
+            entries: ids.map((id) => {
+              const own = lines.filter((l) => String(l.entry_id) === String(id));
+              return {
+                docType: own[0]?.doc_type ?? doc.docType, reasonCode: own[0]?.reason_code ?? null,
+                lines: own.map((l) => ({ pairNo: l.pair_no, part: l.part, accountCode: l.account_code, accountName: l.account_name, debit: Number(l.debit), credit: Number(l.credit), description: l.description ?? '', taxCode: l.tax_code })),
+              };
+            }),
+            movements: moves.map((m) => ({ branchCode: m.branch_code, kind: m.kind, qty: Number(m.qty) })),
+          });
+        }
+      });
+      if (!x.ok && x.error instanceof Rollback) return x.error.data as object;
+      if (!x.ok && x.error instanceof AppError) return { ok: false, error: x.error.message };
+      if (!x.ok) throw x.error;
+      return { ok: false, error: 'Không mô phỏng được' };
+    },
+  }),
+];
+
 export default defineAddIn({
   manifest: {
     id: 'tro-ly',
@@ -119,33 +234,11 @@ export default defineAddIn({
   },
   register(app) {
     const r = app.withTypeProvider<ZodTypeProvider>();
-    const ktags = ['Add-in: Trợ lý — dữ liệu huấn luyện'];
 
     r.get('/knowledge', {
       preHandler: requirePermission('catalog:read'),
       schema: { tags: ktags, summary: 'Danh sách mục huấn luyện (câu hỏi, hướng dẫn)' },
       handler: async (req) => ok(await readEntries(authOf(req).tenantId)),
-    });
-    r.post('/knowledge', {
-      preHandler: requirePermission('catalog:write'),
-      schema: { tags: ktags, summary: 'Thêm mục huấn luyện', body: entrySchema },
-      handler: async (req, reply) => reply.status(201).send(ok(await saveEntry(authOf(req).tenantId, authOf(req).actor, req.body))),
-    });
-    r.put('/knowledge/:id', {
-      preHandler: requirePermission('catalog:write'),
-      schema: { tags: ktags, summary: 'Sửa mục huấn luyện', params: z.object({ id: z.string().uuid() }), body: entrySchema },
-      handler: async (req) => {
-        try { return ok(await saveEntry(authOf(req).tenantId, authOf(req).actor, req.body, req.params.id)); }
-        catch (e) { if ((e as { notFound?: boolean }).notFound) throw Errors.notFound('mục huấn luyện'); throw e; }
-      },
-    });
-    r.delete('/knowledge/:id', {
-      preHandler: requirePermission('catalog:write'),
-      schema: { tags: ktags, summary: 'Xoá mục huấn luyện', params: z.object({ id: z.string().uuid() }) },
-      handler: async (req) => {
-        if (!(await deleteEntry(authOf(req).tenantId, req.params.id))) throw Errors.notFound('mục huấn luyện');
-        return ok({ deleted: true });
-      },
     });
     r.get('/knowledge/export', {
       preHandler: requirePermission('catalog:read'),
@@ -154,29 +247,6 @@ export default defineAddIn({
         const list = await readEntries(authOf(req).tenantId);
         reply.header('content-type', 'application/x-ndjson; charset=utf-8').header('content-disposition', 'attachment; filename="tro-ly-huan-luyen.jsonl"');
         return list.map((x) => JSON.stringify(x)).join('\n') + (list.length ? '\n' : '');
-      },
-    });
-    r.post('/knowledge/import', {
-      preHandler: requirePermission('catalog:write'),
-      schema: { tags: ktags, summary: 'Nhập mục huấn luyện từ JSONL (trùng id thì ghi đè)', body: z.object({ jsonl: z.string().max(5_000_000) }) },
-      handler: async (req) => {
-        const items: Partial<TrainingEntry>[] = [];
-        const bad: number[] = [];
-        req.body.jsonl.split('\n').forEach((line, i) => {
-          const t = line.trim();
-          if (!t) return;
-          try { items.push(JSON.parse(t)); } catch { bad.push(i + 1); }
-        });
-        if (!items.length) throw Errors.validation('Tệp không có dòng JSON hợp lệ nào');
-        return ok({ ...(await importEntries(authOf(req).tenantId, authOf(req).actor, items)), badLines: bad.slice(0, 20) });
-      },
-    });
-    r.post('/images', {
-      preHandler: requirePermission('catalog:write'),
-      schema: { tags: ktags, summary: 'Tải ảnh chèn vào câu trả lời (data URL, tối đa 3 MB)', body: z.object({ dataUrl: z.string().max(5_000_000) }) },
-      handler: async (req) => {
-        try { return ok({ url: `/api/v1/addins/tro-ly/images/${await saveImage(req.body.dataUrl)}` }); }
-        catch (e) { throw Errors.validation((e as Error).message); }
       },
     });
     r.get('/images/:name', {
@@ -189,50 +259,6 @@ export default defineAddIn({
         return reply.send(createReadStream(file));
       },
     });
-    r.post('/simulate', {
-      preHandler: requirePermission('catalog:read'),
-      schema: { tags: ['Add-in: Trợ lý'], summary: 'Mô phỏng định khoản một phiếu mẫu (không ghi sổ)', body: simulateSchema },
-      handler: async (req) => {
-        const auth = authOf(req);
-        const q = req.body;
-        const rate = q.taxCode
-          ? Number((await db.selectFrom('tax_codes').select('rate').where('tenant_id', '=', auth.tenantId).where('code', '=', q.taxCode).executeTakeFirst())?.rate ?? 0)
-          : 0;
-        const parsed = ingestDocumentSchema.safeParse(sampleDocument(q, Math.max(0, rate)));
-        if (!parsed.success) return ok({ ok: false, error: `Phiếu mẫu chưa hợp lệ: ${parsed.error.issues.slice(0, 2).map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}` });
-        const doc = parsed.data as IngestDocument;
-        try {
-          await db.transaction().execute(async (trx) => {
-            const res = await postDocumentIn(trx, auth, doc, { post: true, force: true });
-            const ids = res.entryIds ?? [];
-            const lines = ids.length ? await trx.selectFrom('bizcity_read.ledger_lines as l')
-              .innerJoin('bizcity_read.ledger_entries as e', 'e.id', 'l.entry_id')
-              .innerJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 'l.tenant_id').onRef('a.code', '=', 'l.account_code'))
-              .select(['l.entry_id', 'e.doc_type', 'e.reason_code', 'l.pair_no', 'l.part', 'l.account_code', 'a.name as account_name', 'l.debit', 'l.credit', 'l.description', 'l.tax_code'])
-              .where('l.entry_id', 'in', ids).orderBy('l.entry_id').orderBy('l.line_no').execute() : [];
-            const event = await trx.selectFrom('accounting_events').select('id').where('tenant_id', '=', auth.tenantId).where('doc_key', '=', doc.docKey).executeTakeFirst();
-            const moves = event ? (await sql<{ branch_code: string; kind: string; qty: string }>`
-              SELECT b.code AS branch_code, m.kind, m.qty FROM inventory_movements m JOIN branches b ON b.id = m.branch_id
-               WHERE m.event_id = ${event.id} ORDER BY m.line_no`.execute(trx)).rows : [];
-            throw new Rollback({
-              ok: true,
-              entries: ids.map((id) => {
-                const own = lines.filter((l) => String(l.entry_id) === String(id));
-                return {
-                  docType: own[0]?.doc_type ?? doc.docType, reasonCode: own[0]?.reason_code ?? null,
-                  lines: own.map((l) => ({ pairNo: l.pair_no, part: l.part, accountCode: l.account_code, accountName: l.account_name, debit: Number(l.debit), credit: Number(l.credit), description: l.description ?? '', taxCode: l.tax_code })),
-                };
-              }),
-              movements: moves.map((m) => ({ branchCode: m.branch_code, kind: m.kind, qty: Number(m.qty) })),
-            });
-          });
-        } catch (e) {
-          if (e instanceof Rollback) return ok(e.data);
-          if (e instanceof AppError) return ok({ ok: false, error: e.message });
-          throw e;
-        }
-        return ok({ ok: false, error: 'Không mô phỏng được' });
-      },
-    });
+    mountActions(app, troLyActions);
   },
 });

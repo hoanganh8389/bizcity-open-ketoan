@@ -38,6 +38,7 @@ import { voucherService } from '../../kernel/public.js';
 import { partnerRepository } from '../partners/partner.repository.js';
 import { assetService, buildRevaluations, calcOf, type CalcRow } from './asset.service.js';
 import { chargeFor, effectiveAt, firstChargePeriod, fromIndex, monthIndex, periodLabel, periodOf } from './depreciation.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Tài sản'];
 const month = z.string().regex(/^\d{4}-\d{2}$/, 'Tháng dạng YYYY-MM');
@@ -186,76 +187,12 @@ export async function assetPlanRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/assets/:code/postings', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Lập phiếu kế toán hạch toán ghi tăng / ghi giảm, thanh lý tài sản', params: z.object({ code: z.string() }), body: postingBody },
-    handler: async (req, reply) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const res = await db.transaction().execute(async (trx) => {
-        const a = await trx.selectFrom('assets as a').innerJoin('branches as br', 'br.id', 'a.branch_id').select(['a.id', 'a.code', 'a.name', 'a.status', 'br.code as branch_code'])
-          .where('a.tenant_id', '=', auth.tenantId).where('a.code', '=', req.params.code).executeTakeFirst();
-        if (!a) throw Errors.notFound(`tài sản ${req.params.code}`);
-        const created = await voucherService.createIn(trx, auth, {
-          docType: 'manual', branchCode: a.branch_code, docDate: b.docDate, description: b.description, counterparty: '', reference: `Tài sản ${a.code}`,
-          partnerCode: b.partnerCode, lines: b.lines,
-        } as Parameters<typeof voucherService.createIn>[2]);
-        const total = b.lines.reduce((s, l) => s + l.amount + (l.taxAmount ?? 0), 0);
-        await trx.insertInto('asset_events').values({
-          tenant_id: auth.tenantId, asset_id: a.id, kind: b.kind, event_date: b.docDate, doc_no: created.docNo,
-          payload: JSON.stringify({ docKey: created.docKey, eventId: created.id, total, salePrice: b.salePrice ?? null, disposalCost: b.disposalCost ?? null }),
-          note: b.description, created_by: auth.actorName,
-        }).execute();
-        if (b.kind === 'decrease' && b.markDisposed && a.status !== 'disposed') {
-          await trx.updateTable('assets').set({ status: 'disposed', disposed_date: b.docDate, updated_at: new Date() }).where('id', '=', a.id).execute();
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `asset.${b.kind}`, objectType: 'asset', objectId: a.code, after: { docKey: created.docKey, total } });
-        return { docNo: created.docNo, docKey: created.docKey, id: created.id };
-      });
-      reply.code(201);
-      return ok(res);
-    },
-  });
-
   r.get('/api/v1/asset-events/:id/transfer-posting', {
     preHandler: requirePermission('documents:read'),
     schema: { tags, summary: 'Gợi ý hạch toán điều chuyển tài sản giữa hai đơn vị hạch toán', params: z.object({ id: z.string().regex(/^[1-9][0-9]*$/) }) },
     handler: async (req) => ok(await transferSuggestion(db, authOf(req).tenantId, req.params.id)),
   });
-
-  r.post('/api/v1/asset-events/:id/transfer-posting', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags, summary: 'Lập hai phiếu kế toán hạch toán điều chuyển tài sản (bên giao, bên nhận)', params: z.object({ id: z.string().regex(/^[1-9][0-9]*$/) }),
-      body: z.object({ docDate: day.optional() }),
-    },
-    handler: async (req, reply) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const res = await db.transaction().execute(async (trx) => {
-        await sql`SELECT 1 FROM asset_events WHERE tenant_id = ${auth.tenantId} AND id = ${req.params.id} FOR UPDATE`.execute(trx);
-        const s = await transferSuggestion(trx, auth.tenantId, req.params.id);
-        if (s.sameUnit) throw Errors.validation('Hai chi nhánh cùng đơn vị hạch toán: điều chuyển không cần ghi sổ');
-        if (s.posted.length) throw Errors.conflict(`Lần điều chuyển này đã hạch toán ở phiếu ${s.posted.map((p) => p.docNo).join(', ')}`);
-        if (!s.parts.some((p) => p.lines.length)) throw Errors.validation('Tài sản không còn giá trị để hạch toán điều chuyển');
-        const docDate = b.docDate ?? s.date;
-        const postings: { branchCode: string; docNo: string; docKey: string; id: string }[] = [];
-        for (const p of s.parts) {
-          if (!p.lines.length) continue;
-          const created = await voucherService.createIn(trx, auth, {
-            docType: 'manual', branchCode: p.branchCode, docDate, description: p.description, counterparty: '', reference: `Tài sản ${s.asset.code}`,
-            lines: p.lines,
-          } as Parameters<typeof voucherService.createIn>[2]);
-          postings.push({ branchCode: p.branchCode, docNo: created.docNo, docKey: created.docKey, id: created.id });
-        }
-        await sql`UPDATE asset_events SET payload = payload || ${JSON.stringify({ postings })}::jsonb WHERE id = ${req.params.id}`.execute(trx);
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'asset.transfer.post', objectType: 'asset', objectId: s.asset.code, after: { eventId: req.params.id, postings } });
-        return { postings };
-      });
-      reply.code(201);
-      return ok(res);
-    },
-  });
+  mountActions(app, assetPlanWriteActions);
 }
 
 /** Định khoản điều chuyển (xem đầu tệp). Số luỹ kế lấy theo kế hoạch đến hết tháng trước tháng điều chuyển. */
@@ -328,3 +265,78 @@ async function defaultAccount(trx: Db, tenantId: string, key: string, fallback: 
   const r = await trx.selectFrom('posting_defaults').select('account_code').where('tenant_id', '=', tenantId).where('key', '=', key).executeTakeFirst();
   return r?.account_code ?? fallback;
 }
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const assetPlanWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.asset.posting-create', title: 'Lập phiếu kế toán hạch toán ghi tăng / ghi giảm, thanh lý tài sản', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'required',
+    input: (postingBody).merge(z.object({ code: z.string() })), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/assets/:code/postings', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'asset', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = reqBody;
+      const res = await sameTx(trx, async (trx) => {
+        const a = await trx.selectFrom('assets as a').innerJoin('branches as br', 'br.id', 'a.branch_id').select(['a.id', 'a.code', 'a.name', 'a.status', 'br.code as branch_code'])
+          .where('a.tenant_id', '=', auth.tenantId).where('a.code', '=', input.code).executeTakeFirst();
+        if (!a) throw Errors.notFound(`tài sản ${input.code}`);
+        const created = await voucherService.createIn(trx, auth, {
+          docType: 'manual', branchCode: a.branch_code, docDate: b.docDate, description: b.description, counterparty: '', reference: `Tài sản ${a.code}`,
+          partnerCode: b.partnerCode, lines: b.lines,
+        } as Parameters<typeof voucherService.createIn>[2]);
+        const total = b.lines.reduce((s, l) => s + l.amount + (l.taxAmount ?? 0), 0);
+        await trx.insertInto('asset_events').values({
+          tenant_id: auth.tenantId, asset_id: a.id, kind: b.kind, event_date: b.docDate, doc_no: created.docNo,
+          payload: JSON.stringify({ docKey: created.docKey, eventId: created.id, total, salePrice: b.salePrice ?? null, disposalCost: b.disposalCost ?? null }),
+          note: b.description, created_by: auth.actorName,
+        }).execute();
+        if (b.kind === 'decrease' && b.markDisposed && a.status !== 'disposed') {
+          await trx.updateTable('assets').set({ status: 'disposed', disposed_date: b.docDate, updated_at: new Date() }).where('id', '=', a.id).execute();
+        }
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `asset.${b.kind}`, objectType: 'asset', objectId: a.code, after: { docKey: created.docKey, total } });
+        return { docNo: created.docNo, docKey: created.docKey, id: created.id };
+      });
+      return res;
+    },
+  }),
+  defineAction({
+    id: 'core.asset-event.transfer-posting', title: 'Lập hai phiếu kế toán hạch toán điều chuyển tài sản (bên giao, bên nhận)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({ docDate: day.optional() })).merge(z.object({ id: z.string().regex(/^[1-9][0-9]*$/) })), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/asset-events/:id/transfer-posting', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'asset_event', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const { id: _id, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = reqBody;
+      const res = await sameTx(trx, async (trx) => {
+        await sql`SELECT 1 FROM asset_events WHERE tenant_id = ${auth.tenantId} AND id = ${input.id} FOR UPDATE`.execute(trx);
+        const s = await transferSuggestion(trx, auth.tenantId, input.id);
+        if (s.sameUnit) throw Errors.validation('Hai chi nhánh cùng đơn vị hạch toán: điều chuyển không cần ghi sổ');
+        if (s.posted.length) throw Errors.conflict(`Lần điều chuyển này đã hạch toán ở phiếu ${s.posted.map((p) => p.docNo).join(', ')}`);
+        if (!s.parts.some((p) => p.lines.length)) throw Errors.validation('Tài sản không còn giá trị để hạch toán điều chuyển');
+        const docDate = b.docDate ?? s.date;
+        const postings: { branchCode: string; docNo: string; docKey: string; id: string }[] = [];
+        for (const p of s.parts) {
+          if (!p.lines.length) continue;
+          const created = await voucherService.createIn(trx, auth, {
+            docType: 'manual', branchCode: p.branchCode, docDate, description: p.description, counterparty: '', reference: `Tài sản ${s.asset.code}`,
+            lines: p.lines,
+          } as Parameters<typeof voucherService.createIn>[2]);
+          postings.push({ branchCode: p.branchCode, docNo: created.docNo, docKey: created.docKey, id: created.id });
+        }
+        await sql`UPDATE asset_events SET payload = payload || ${JSON.stringify({ postings })}::jsonb WHERE id = ${input.id}`.execute(trx);
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'asset.transfer.post', objectType: 'asset', objectId: s.asset.code, after: { eventId: input.id, postings } });
+        return { postings };
+      });
+      return res;
+    },
+  }),
+];

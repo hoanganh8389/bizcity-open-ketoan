@@ -21,6 +21,7 @@ import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): hỏi Kernel qua cổng
 import { corePort } from '@bizcity/platform/core/ports';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Khoản mục, bộ phận, hợp đồng'];
 const kindParam = z.object({ kind: z.enum(DIMENSION_KINDS) });
@@ -42,24 +43,36 @@ export async function dimensionRoutes(app: FastifyInstance): Promise<void> {
       }));
     },
   });
+  mountActions(app, dimensionWriteActions);
+}
 
-  r.put('/api/v1/dimensions/:kind/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Thêm hoặc sửa một mã', params: kindParam.extend({ code: z.string().trim().min(1).max(64) }), body: dimensionInputSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { kind, code } = req.params;
-      const b = req.body;
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const dimensionWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.dimension.upsert', title: 'Thêm hoặc sửa một mã', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (dimensionInputSchema).merge(kindParam.extend({ code: z.string().trim().min(1).max(64) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/dimensions/:kind/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'dimension', objectId: (i) => String(i.kind) },
+    handler: async (ctx, input) => {
+      const { kind: _kind, code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { kind, code } = input;
+      const b = reqBody;
       if (b.parentCode === code) throw Errors.validation(`${DIMENSION_LABELS[kind]} cha không được là chính nó`);
       if (b.parentCode) {
-        const parent = await db.selectFrom('dimensions').select('id').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
+        const parent = await trx.selectFrom('dimensions').select('id').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
         if (!parent) throw Errors.validation(`${DIMENSION_LABELS[kind]} cha "${b.parentCode}" không có trong danh mục`);
       }
-      const cur = await db.selectFrom('dimensions').select('extra').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
+      const cur = await trx.selectFrom('dimensions').select('extra').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
       const { partnerName: _p, createdBy: _c, ...rest } = b.extra as Record<string, unknown>;
       const createdBy = (cur?.extra as { createdBy?: string } | undefined)?.createdBy ?? (cur ? undefined : auth.actorName);
       const values = { name: b.name, parent_code: b.parentCode || null, note: b.note, is_active: b.isActive, extra: JSON.stringify(createdBy ? { ...rest, createdBy } : rest) };
-      await db.transaction().execute(async (trx) => {
+      await sameTx(trx, async (trx) => {
         await trx
           .insertInto('dimensions')
           .values({ tenant_id: auth.tenantId, kind, code, ...values })
@@ -67,17 +80,20 @@ export async function dimensionRoutes(app: FastifyInstance): Promise<void> {
           .execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'dimension.save', objectType: `dimension:${kind}`, objectId: code, after: { name: b.name, isActive: b.isActive } });
       });
-      return ok({ code });
+      return { code };
     },
-  });
-
-  r.delete('/api/v1/dimensions/:kind/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá một mã chưa dùng', params: kindParam.extend({ code: z.string().trim().min(1).max(64) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { kind, code } = req.params;
-      await db.transaction().execute(async (trx) => {
+  }),
+  defineAction({
+    id: 'core.dimension.delete', title: 'Xoá một mã chưa dùng', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: kindParam.extend({ code: z.string().trim().min(1).max(64) }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/dimensions/:kind/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'dimension', objectId: (i) => String(i.kind) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { kind, code } = input;
+      await sameTx(trx, async (trx) => {
         const before = await trx.selectFrom('dimensions').selectAll().where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
         if (!before) throw Errors.notFound(`${DIMENSION_LABELS[kind]} ${code}`);
         if ((await corePort('usedDimensionCodes')(trx, auth.tenantId, kind, [code])).has(code)) {
@@ -86,7 +102,7 @@ export async function dimensionRoutes(app: FastifyInstance): Promise<void> {
         await trx.deleteFrom('dimensions').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'dimension.delete', objectType: `dimension:${kind}`, objectId: code, before });
       });
-      return ok({ code });
+      return { code };
     },
-  });
-}
+  }),
+];

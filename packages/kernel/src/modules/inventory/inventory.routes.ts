@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
 import { costingService } from './costing.service.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Kho và giá vốn'];
 const period = z.string().regex(/^\d{4}-\d{2}$/, 'Kỳ dạng YYYY-MM');
@@ -23,12 +24,23 @@ const period = z.string().regex(/^\d{4}-\d{2}$/, 'Kỳ dạng YYYY-MM');
 export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
-  r.post('/api/v1/inventory/costing', {
-    preHandler: requirePermission('periods:lock'),
-    schema: {
-      tags,
-      summary: 'Tính giá vốn tháng (bình quân; mã có trong bảng giá nhập từ Excel thì dùng giá đó), ghi đè dòng giá vốn chờ của các phiếu',
-      body: z.object({
+  r.get('/api/v1/inventory/costs', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Bảng đơn giá vốn của một tháng', querystring: z.object({ period, search: z.string().optional() }) },
+    handler: async (req) => ok(await costingService.list(authOf(req), req.query)),
+  });
+  mountActions(app, inventoryWriteActions);
+}
+
+// [2026-11-03 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const inventoryWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.inventory.costing-run', title: 'Tính giá vốn tháng (bình quân; mã có trong bảng giá nhập từ Excel thì dùng giá đó), ghi đè dòng giá vốn chờ của các phiếu', tags,
+    permission: 'periods:lock', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: z.object({
         period,
         /** Bảng giá vốn tháng nhập từ Excel (Mã hàng, Tên hàng, Giá vốn): thay toàn bộ giá đã nhập của tháng. */
         imported: z.array(z.object({ sku: z.string().trim().min(1).max(64), unitCost: z.number().finite().min(0), name: z.string().max(500).optional() })).max(100000).optional(),
@@ -37,14 +49,9 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
         /** Chỉ cập nhật giá vốn cho chứng từ có ngày chứng từ trong khoảng này (trong tháng; mặc định cả tháng). */
         from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
         to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-      }),
-    },
-    handler: async (req) => ok(await costingService.run(authOf(req), req.body)),
-  });
-
-  r.get('/api/v1/inventory/costs', {
-    preHandler: requirePermission('reports:read'),
-    schema: { tags, summary: 'Bảng đơn giá vốn của một tháng', querystring: z.object({ period, search: z.string().optional() }) },
-    handler: async (req) => ok(await costingService.list(authOf(req), req.query)),
-  });
-}
+      }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/inventory/costing' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'inventory' },
+    handler: (ctx, input) => costingService.runIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+];

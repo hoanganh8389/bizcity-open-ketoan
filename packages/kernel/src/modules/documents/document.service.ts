@@ -40,7 +40,7 @@ import { AppError, Errors } from '@bizcity/platform/core/errors';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
-import { ownDocument } from '@bizcity/platform/core/actions';
+import { inSavepoint, itemMessage, ownDocument, type ActionTx } from '@bizcity/platform/core/actions';
 import { channelOf, closeBySource, isDoorRejection, recordRejection, type IntakeChannel } from '../intake/inbox.js';
 import { emitKernelEvent } from './kernel-events.js';
 import { accountRepository } from '../accounts/account.repository.js';
@@ -495,7 +495,12 @@ function describe(err: AppError): string {
 
 /** Lưu chứng từ ở trạng thái lỗi định khoản (giữ nguyên bút toán cũ nếu có) và ghi nhật ký. */
 async function recordFailure(auth: AuthContext, doc: IngestDocument, err: AppError): Promise<void> {
-  await db.transaction().execute(async (trx) => {
+  await db.transaction().execute((trx) => recordFailureIn(trx, auth, doc, err));
+}
+
+// [2026-11-03 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: ghi lỗi định khoản trong giao dịch có sẵn (lô ở trạm: sau ROLLBACK TO SAVEPOINT của mục lỗi)
+async function recordFailureIn(trx: Db, auth: AuthContext, doc: IngestDocument, err: AppError): Promise<void> {
+  {
     const branchId = await findBranchId(trx, auth.tenantId, doc.branchCode);
     const existing = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, doc.docKey);
     const fields = {
@@ -519,7 +524,7 @@ async function recordFailure(auth: AuthContext, doc: IngestDocument, err: AppErr
       await documentRepository.update(trx, created.id, { status: 'error', error_code: err.code, error_message: describe(err) });
     }
     await logPosting(trx, { tenantId: auth.tenantId, eventId: id, docType: doc.docType, docNo: doc.docNo, version: doc.version, action: 'error', total: doc.totals.total, message: describe(err), actor: auth.actor });
-  });
+  }
 }
 
 /** Tên người làm (user:<id> → họ tên, apikey:<id> → tên khoá API). */
@@ -584,23 +589,26 @@ export const documentService = {
    * chuyển sang trạng thái Lỗi định khoản, không chặn chứng từ khác. Phiếu thu chi, phiếu kế toán sửa ở chính phiếu.
    */
   async postMany(auth: AuthContext, ids: string[], repost: boolean): Promise<{ posted: number; unchanged: number; skipped: { docNo: string; message: string }[]; errors: { docNo: string; message: string }[] }> {
+    return db.transaction().execute((trx) => documentService.postManyIn(trx, auth, ids, repost));
+  },
+
+  // [2026-11-03 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả lô một giao dịch, mỗi chứng từ một SAVEPOINT — chứng từ lỗi chỉ huỷ phần của nó và được báo
+  // trong errors (như trước); các chứng từ định khoản được lưu cùng lúc khi cả lô xong (trước: lưu dần từng chứng từ).
+  async postManyIn(trx: ActionTx, auth: AuthContext, ids: string[], repost: boolean): Promise<{ posted: number; unchanged: number; skipped: { docNo: string; message: string }[]; errors: { docNo: string; message: string }[] }> {
     let posted = 0;
     // Định khoản lại mà bút toán dựng lại trùng hệt bút toán đang có hiệu lực: giữ nguyên, không đảo / ghi lại.
     let unchanged = 0;
     const skipped: { docNo: string; message: string }[] = [];
     const errors: { docNo: string; message: string }[] = [];
     for (const id of ids) {
-      const row = await documentRepository.findById(db, auth.tenantId, id);
+      const row = await documentRepository.findById(trx, auth.tenantId, id);
       if (!row) { errors.push({ docNo: id, message: 'Không tìm thấy chứng từ' }); continue; }
       if (row.status === 'cancelled') { skipped.push({ docNo: row.doc_no, message: 'Chứng từ đã huỷ' }); continue; }
       if (row.cancel_requested_at) {
         // Chờ huỷ (phiếu đã xoá ở nguồn): định khoản = huỷ chứng từ.
-        try {
-          await documentService.cancel(auth, row.doc_key, row.cancel_reason || 'Phiếu đã xoá ở hệ thống nguồn');
-          posted++;
-        } catch (e) {
-          errors.push({ docNo: row.doc_no, message: e instanceof AppError ? describe(e) : (e as Error).message });
-        }
+        const r = await inSavepoint(trx, (t) => documentService.cancelIn(t, auth, row.doc_key, row.cancel_reason || 'Phiếu đã xoá ở hệ thống nguồn'));
+        if (r.ok) posted++;
+        else errors.push({ docNo: row.doc_no, message: r.error instanceof AppError ? describe(r.error) : itemMessage(r.error) });
         continue;
       }
       if (!repost && row.status === 'posted' && row.posted_version === row.version) { skipped.push({ docNo: row.doc_no, message: 'Đã định khoản (dùng Định khoản lại nếu cần)' }); continue; }
@@ -611,16 +619,18 @@ export const documentService = {
         skipped.push({ docNo: row.doc_no, message: draft ? 'Phiếu nháp chờ duyệt: mở phiếu để duyệt (POST /api/v1/vouchers/:id/approve) hoặc sửa rồi lưu' : 'Phiếu lập trong phần mềm kế toán (thu chi, phiếu kế toán…): sửa và ghi ở chính phiếu' });
         continue;
       }
-      try {
-        const res = await db.transaction().execute(async (trx) => {
-          await assertDateRules(trx, auth, 'lập', [row.doc_date]);
-          return postDocumentIn(trx, auth, { ...parsed.data, version: row.version }, { post: true, force: true });
-        });
+      const r = await inSavepoint(trx, async (t) => {
+        await assertDateRules(t, auth, 'lập', [row.doc_date]);
+        return postDocumentIn(t, auth, { ...parsed.data, version: row.version }, { post: true, force: true });
+      });
+      if (r.ok) {
+        const res = r.value;
         if ('kept' in res && res.kept && !res.entryIds?.length && !res.reversed && !res.updated) unchanged++;
         else posted++;
-      } catch (e) {
-        const msg = e instanceof AppError ? describe(e) : (e as Error).message;
-        if (e instanceof AppError && e.code !== 'VALIDATION_ERROR' && e.code !== 'CONFLICT') await recordFailure(auth, { ...parsed.data, version: row.version }, e);
+      } else {
+        const e = r.error;
+        const msg = e instanceof AppError ? describe(e) : itemMessage(e);
+        if (e instanceof AppError && e.code !== 'VALIDATION_ERROR' && e.code !== 'CONFLICT') await recordFailureIn(trx, auth, { ...parsed.data, version: row.version }, e);
         errors.push({ docNo: row.doc_no, message: msg });
       }
     }
@@ -633,8 +643,13 @@ export const documentService = {
    * khoản (lại) ngay: thêm bút toán nơi nhận.
    */
   async confirmReceipt(auth: AuthContext, id: string, note = '') {
+    return db.transaction().execute((trx) => documentService.confirmReceiptIn(trx, auth, id, note));
+  },
+
+  // [2026-11-03 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: bản *In trong giao dịch của action
+  async confirmReceiptIn(trx: ActionTx, auth: AuthContext, id: string, note = '') {
     if (auth.kind !== 'user') throw Errors.forbidden('Chỉ kế toán (người dùng đăng nhập) mới xác nhận đã nhận tiền');
-    const row = await documentRepository.findById(db, auth.tenantId, id);
+    const row = await documentRepository.findById(trx, auth.tenantId, id);
     if (!row) throw Errors.notFound('chứng từ');
     if (row.doc_type !== 'cash_transfer') throw Errors.validation('Chỉ phiếu chuyển tiền mới xác nhận đã nhận tiền');
     if (row.status === 'cancelled' || row.cancel_requested_at) throw Errors.validation('Phiếu đã huỷ / chờ huỷ: không xác nhận được');
@@ -643,29 +658,30 @@ export const documentService = {
     const doc = parsed.data;
     if (doc.toBranchCode === doc.branchCode) throw Errors.validation('Chuyển tiền trong một chi nhánh không cần xác nhận nhận tiền');
     if (doc.status === 'received') throw Errors.validation('Hệ thống nguồn đã báo nơi nhận nhận tiền: không cần xác nhận');
-    const before = await loadReceiptConfirmation(db, row.id);
+    const before = await loadReceiptConfirmation(trx, row.id);
     if (before && confirmationMatches(doc, before)) throw Errors.conflict(`Phiếu ${row.doc_no} đã được xác nhận lúc ${before.confirmedAt} bởi ${before.confirmedBy}`);
-    await db.transaction().execute(async (trx) => {
-      const values = { amount: doc.totals.total, to_branch_code: doc.toBranchCode, to_bank_code: doc.toBankCode ?? '', note: note.trim(), confirmed_by: auth.actorName, confirmed_at: new Date() };
-      await trx.insertInto('cash_transfer_confirmations').values({ tenant_id: auth.tenantId, event_id: row.id, ...values })
-        .onConflict((oc) => oc.column('event_id').doUpdateSet(values)).execute();
-      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cash_transfer.confirm_receipt', objectType: 'accounting_event', objectId: row.doc_no, before: before ?? null, after: values });
-    });
-    return { confirmed: true, posting: await documentService.postMany(auth, [row.id], true) };
+    const values = { amount: doc.totals.total, to_branch_code: doc.toBranchCode, to_bank_code: doc.toBankCode ?? '', note: note.trim(), confirmed_by: auth.actorName, confirmed_at: new Date() };
+    await trx.insertInto('cash_transfer_confirmations').values({ tenant_id: auth.tenantId, event_id: row.id, ...values })
+      .onConflict((oc) => oc.column('event_id').doUpdateSet(values)).execute();
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cash_transfer.confirm_receipt', objectType: 'accounting_event', objectId: row.doc_no, before: before ?? null, after: values });
+    return { confirmed: true, posting: await documentService.postManyIn(trx, auth, [row.id], true) };
   },
 
   /** Bỏ xác nhận đã nhận tiền (xác nhận nhầm): định khoản lại, bút toán nơi nhận bị đảo. */
   async unconfirmReceipt(auth: AuthContext, id: string) {
+    return db.transaction().execute((trx) => documentService.unconfirmReceiptIn(trx, auth, id));
+  },
+
+  // [2026-11-03 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: bản *In trong giao dịch của action
+  async unconfirmReceiptIn(trx: ActionTx, auth: AuthContext, id: string) {
     if (auth.kind !== 'user') throw Errors.forbidden('Chỉ kế toán (người dùng đăng nhập) mới bỏ xác nhận');
-    const row = await documentRepository.findById(db, auth.tenantId, id);
+    const row = await documentRepository.findById(trx, auth.tenantId, id);
     if (!row) throw Errors.notFound('chứng từ');
-    const before = await loadReceiptConfirmation(db, row.id);
+    const before = await loadReceiptConfirmation(trx, row.id);
     if (!before) throw Errors.validation(`Phiếu ${row.doc_no} chưa được xác nhận`);
-    await db.transaction().execute(async (trx) => {
-      await trx.deleteFrom('cash_transfer_confirmations').where('event_id', '=', row.id).execute();
-      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cash_transfer.unconfirm_receipt', objectType: 'accounting_event', objectId: row.doc_no, before, after: null });
-    });
-    const posting = row.status === 'cancelled' ? null : await documentService.postMany(auth, [row.id], true);
+        await trx.deleteFrom('cash_transfer_confirmations').where('event_id', '=', row.id).execute();
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cash_transfer.unconfirm_receipt', objectType: 'accounting_event', objectId: row.doc_no, before, after: null });
+    const posting = row.status === 'cancelled' ? null : await documentService.postManyIn(trx, auth, [row.id], true);
     return { confirmed: false, posting };
   },
 
@@ -712,16 +728,20 @@ export const documentService = {
 
   /** Xác nhận đã nhận tiền nhiều phiếu một lần (màn Q2): từng phiếu một, lỗi phiếu nào ghi phiếu đó. */
   async confirmReceipts(auth: AuthContext, ids: string[], note = '') {
+    return db.transaction().execute((trx) => documentService.confirmReceiptsIn(trx, auth, ids, note));
+  },
+
+  // [2026-11-03 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: bản *In trong giao dịch của action
+  async confirmReceiptsIn(trx: ActionTx, auth: AuthContext, ids: string[], note = '') {
     let confirmed = 0;
     const errors: { id: string; message: string }[] = [];
+    // Mỗi phiếu một SAVEPOINT (action theo lô): phiếu lỗi không chặn phiếu khác
     for (const id of ids) {
-      try {
-        const r = await documentService.confirmReceipt(auth, id, note);
-        if (r.posting.errors.length) errors.push({ id, message: r.posting.errors.map((e) => `${e.docNo}: ${e.message}`).join('; ') });
-        else confirmed++;
-      } catch (e) {
-        errors.push({ id, message: e instanceof AppError ? describe(e) : (e as Error).message });
-      }
+      const x = await inSavepoint(trx, (t) => documentService.confirmReceiptIn(t, auth, id, note));
+      if (!x.ok) { errors.push({ id, message: x.error instanceof AppError ? describe(x.error) : itemMessage(x.error) }); continue; }
+      const r = x.value;
+      if (r.posting.errors.length) errors.push({ id, message: r.posting.errors.map((e) => `${e.docNo}: ${e.message}`).join('; ') });
+      else confirmed++;
     }
     return { confirmed, errors };
   },
@@ -870,23 +890,26 @@ export const documentService = {
    * sửa / huỷ ở màn của chúng.
    */
   async unpost(auth: AuthContext, id: string, reason: string): Promise<{ reversed: number }> {
-    return db.transaction().execute(async (trx) => {
-      const found = await documentRepository.findById(trx, auth.tenantId, id);
-      if (!found) throw Errors.notFound('chứng từ');
-      const row = (await documentRepository.findByKeyForUpdate(trx, auth.tenantId, found.doc_key))!;
-      if (row.source_system === 'manual') throw Errors.validation(`${row.doc_no}: ${UNPOST_ELSEWHERE[row.doc_type] ?? 'phiếu lập tay — sửa hoặc huỷ ở màn phiếu của nó'}`);
-      if (row.status === 'cancelled') throw Errors.validation(`${row.doc_no}: chứng từ đã huỷ`);
-      assertCanModify(auth, row, 'huỷ');
-      await assertDateRules(trx, auth, 'huỷ', [row.doc_date]);
-      const reversed = await reverseActiveEntries(trx, auth.tenantId, auth.actor, row.id, `Bỏ định khoản: ${reason}`);
-      await taxInvoiceRepository.removeForDocument(trx, row.id);
-      await inventoryMovementRepository.removeForDocument(trx, row.id);
-      await documentRepository.update(trx, row.id, { status: 'pending', posted_at: null, posted_version: null, error_message: `Bỏ định khoản: ${reason}` });
-      await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'unpost', reversed, message: reason, actor: auth.actor });
-      if (reversed) await emitReversed(trx, auth, row, reversed, 'unpost');
-      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.unpost', objectType: 'source_document', objectId: row.doc_key, after: { reason, reversed } });
-      return { reversed };
-    });
+    return db.transaction().execute((trx) => documentService.unpostIn(trx, auth, id, reason));
+  },
+
+  // [2026-11-03 10:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): bản *In trong giao dịch có sẵn
+  async unpostIn(trx: Db, auth: AuthContext, id: string, reason: string): Promise<{ reversed: number }> {
+    const found = await documentRepository.findById(trx, auth.tenantId, id);
+    if (!found) throw Errors.notFound('chứng từ');
+    const row = (await documentRepository.findByKeyForUpdate(trx, auth.tenantId, found.doc_key))!;
+    if (row.source_system === 'manual') throw Errors.validation(`${row.doc_no}: ${UNPOST_ELSEWHERE[row.doc_type] ?? 'phiếu lập tay — sửa hoặc huỷ ở màn phiếu của nó'}`);
+    if (row.status === 'cancelled') throw Errors.validation(`${row.doc_no}: chứng từ đã huỷ`);
+    assertCanModify(auth, row, 'huỷ');
+    await assertDateRules(trx, auth, 'huỷ', [row.doc_date]);
+    const reversed = await reverseActiveEntries(trx, auth.tenantId, auth.actor, row.id, `Bỏ định khoản: ${reason}`);
+    await taxInvoiceRepository.removeForDocument(trx, row.id);
+    await inventoryMovementRepository.removeForDocument(trx, row.id);
+    await documentRepository.update(trx, row.id, { status: 'pending', posted_at: null, posted_version: null, error_message: `Bỏ định khoản: ${reason}` });
+    await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'unpost', reversed, message: reason, actor: auth.actor });
+    if (reversed) await emitReversed(trx, auth, row, reversed, 'unpost');
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.unpost', objectType: 'source_document', objectId: row.doc_key, after: { reason, reversed } });
+    return { reversed };
   },
 
   list(auth: AuthContext, f: DocumentListFilter) {
