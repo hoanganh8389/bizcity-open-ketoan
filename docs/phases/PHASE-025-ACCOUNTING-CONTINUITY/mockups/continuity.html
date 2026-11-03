@@ -1,0 +1,174 @@
+<!doctype html>
+<!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — bản mẫu tĩnh Accounting Continuity: Hành trình mặt hàng, dòng sự kiện, checklist sự kiện, Sẵn sàng khoá kỳ (ADR-0021 / R-CONT) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liên tục kế toán — bản mẫu</title>
+<style>
+:root{--bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--ok-bg:#e8f5ee;--warn-bg:#fff4e0;--bad-bg:#fdecec;--op:#8a94a6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font:inherit;cursor:pointer;font-size:13px}
+.tabs button.on{background:#e3edfb;border-color:var(--accent);color:var(--accent);font-weight:700}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.card .hd{padding:8px 12px;border-bottom:1px solid var(--line);font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card .bd{padding:10px 12px}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:600}
+.ok{background:var(--ok-bg);color:var(--ok)}.bad{background:var(--bad-bg);color:var(--bad)}.warn{background:var(--warn-bg);color:var(--warn)}.op{background:#eef0f3;color:var(--op)}
+.note{font-size:12px;color:var(--muted)}.mono{font-family:ui-monospace,Consolas,monospace}
+.lane{display:grid;grid-template-columns:150px 1fr;gap:8px;padding:8px 0;border-top:1px dashed var(--line)}
+.lane:first-child{border-top:0}.lane .k{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.nodes{display:flex;gap:8px;flex-wrap:wrap}
+.node{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);cursor:pointer;min-width:180px}
+.node.acc{border-left:4px solid var(--accent)}.node.opn{border-left:4px solid var(--op);color:var(--muted)}
+.node.brk{border-color:var(--bad);background:var(--bad-bg)}.node.hl{outline:2px solid var(--accent)}
+.node b{display:block}.node .m{font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{font-size:12px;color:var(--muted)}
+.bar{height:10px;border-radius:6px;background:#e6ebf2;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok);transition:width .4s}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed}
+.big{font-size:28px;font-weight:700}.win{color:var(--ok);font-weight:600}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:860px){.grid3{grid-template-columns:1fr}.lane{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Liên tục kế toán <span class="note">bản mẫu tĩnh · PHASE-025 · ADR-0021 / R-CONT</span></h1>
+<div class="sub"><b>Mọi con số trên sổ đi ngược được về nghiệp vụ đã sinh ra nó.</b> Kết quả kiểm do engine tính — không có ô tích "đạt". Dữ liệu minh hoạ, phương pháp nhập trước – xuất trước.</div>
+
+<div class="tabs">
+  <button class="on" data-v="v1">1 · Hành trình mặt hàng</button>
+  <button data-v="v2">2 · Dòng sự kiện kỳ 10/2026</button>
+  <button data-v="v3">3 · Checklist xuất bán HD-0450</button>
+  <button data-v="v4">4 · Sẵn sàng khoá kỳ</button>
+</div>
+
+<!-- 1 -->
+<section class="view on" id="v1">
+  <div class="grid3">
+    <div class="card"><div class="bd"><div class="note">Giá vốn kỳ giải thích được</div><div class="big">98,6%</div><div class="note">16.000.000 / 16.226.000 có lineage tới phiếu nhập</div></div></div>
+    <div class="card"><div class="bd"><div class="note">Sự kiện của mặt hàng đạt</div><div class="big">7 / 8</div><div class="note">1 chỗ đứt: trả hàng</div></div></div>
+    <div class="card"><div class="bd"><div class="note">Lãi gộp kỳ 10</div><div class="big">3.800.000</div><div class="note">doanh thu 19.800.000 · giá vốn 16.000.000</div></div></div>
+  </div>
+  <div class="card">
+    <div class="hd">ITEM <span class="mono">01JC…K7</span> · Sữa bột 900g <span class="pill op">mã SUA01 01–09/2026</span> → <span class="pill op">mã SUA-900 từ 10/2026</span><span class="note">bấm một nút để xem chuỗi nối với nó</span></div>
+    <div class="bd" id="lineage">
+      <div class="lane"><div class="k">Phiên bản mã</div><div class="nodes">
+        <div class="node opn" data-l="code"><b>Đổi mã SUA01 → SUA-900</b><span class="m">01/10/2026 · vận hành · item_id giữ nguyên</span></div></div></div>
+      <div class="lane"><div class="k">Mua · nhập (lớp)</div><div class="nodes">
+        <div class="node acc" data-l="L001"><b>L001 · PN-0101</b><span class="m">100 × 100.000 · còn 0 · <span class="pill ok">✔</span></span></div>
+        <div class="node acc" data-l="L002"><b>L002 · PN-0215</b><span class="m">80 × 120.000 · còn 30 · <span class="pill ok">✔</span></span></div></div></div>
+      <div class="lane"><div class="k">Xuất · bán (phân bổ)</div><div class="nodes">
+        <div class="node acc" data-l="L001 L002 J1"><b>HD-0450 · 120 hộp</b><span class="m">L001 100×100k + L002 20×120k = 12.400.000</span></div>
+        <div class="node acc" data-l="L002 J2"><b>HD-0461 · 30 hộp</b><span class="m">L002 30×120k = 3.600.000</span></div></div></div>
+      <div class="lane"><div class="k">Bút toán</div><div class="nodes">
+        <div class="node acc" data-l="J1"><b>Nợ 632 / Có 156</b><span class="m">12.400.000 · HD-0450</span></div>
+        <div class="node acc" data-l="J2"><b>Nợ 632 / Có 156</b><span class="m">3.600.000 · HD-0461</span></div></div></div>
+      <div class="lane"><div class="k">Trả · huỷ</div><div class="nodes">
+        <div class="node acc brk" data-l="L001 L002 J1"><b>TL-0012 · trả 5 hộp HD-0450</b><span class="m">hoàn theo 125.000/hộp <span class="pill bad">✘ CT-REV-001</span><br>giá vốn gốc 103.333/hộp → hoàn 516.667 · <button class="btn" onclick="fixReturn(this)">Sửa phiếu hoàn</button></span></div></div></div>
+      <div class="lane"><div class="k">Lãi lỗ · kỳ</div><div class="nodes">
+        <div class="node acc"><b>Kỳ 10/2026</b><span class="m">doanh thu 19.800.000 · giá vốn 16.000.000 · lãi gộp 3.800.000</span></div></div></div>
+    </div>
+  </div>
+  <div class="note">Viền xanh = sự kiện <b>kế toán</b> (đổi sổ / đổi giá trị tồn). Viền xám = sự kiện <b>vận hành</b>. Viền đỏ = chỗ đứt, kèm mã thư viện và nút sửa.</div>
+</section>
+
+<!-- 2 -->
+<section class="view" id="v2">
+  <div class="card"><div class="hd">Kỳ 10/2026 · 1.245 sự kiện · <span class="pill ok">1.240 đạt</span> <span class="pill bad">5 chỗ đứt</span>
+    <label class="note"><input type="checkbox" id="onlyAcc"> chỉ sự kiện đổi sổ</label> <label class="note"><input type="checkbox" id="onlyBad"> chỉ chỗ đứt</label></div>
+    <div class="bd"><table id="ev"><thead><tr><th>Ngày</th><th>Sự kiện</th><th>Chứng từ</th><th>Ảnh hưởng</th><th>Kiểm</th></tr></thead><tbody>
+      <tr data-acc="1"><td>02/10</td><td>Mua hàng + nhập kho</td><td>PN-0215</td><td><span class="pill ok">kế toán</span></td><td><span class="pill ok">6/6</span></td></tr>
+      <tr data-acc="0"><td>01/10</td><td>Đổi mã hiển thị SUA01 → SUA-900</td><td>—</td><td><span class="pill op">vận hành</span></td><td><span class="pill ok">3/3</span></td></tr>
+      <tr data-acc="0"><td>05/10</td><td>Đặt hàng nhà cung cấp</td><td>DH-0033</td><td><span class="pill op">vận hành</span></td><td><span class="pill ok">2/2</span></td></tr>
+      <tr data-acc="1"><td>10/10</td><td>Bán hàng + xuất kho</td><td>HD-0450</td><td><span class="pill ok">kế toán</span></td><td><span class="pill ok">10/10</span></td></tr>
+      <tr data-acc="1" data-bad="1"><td>14/10</td><td>Trả hàng bán</td><td>TL-0012</td><td><span class="pill ok">kế toán</span></td><td><span class="pill bad">4/5 · CT-REV-001</span></td></tr>
+      <tr data-acc="0"><td>18/10</td><td>Chuyển kho cùng nhóm tính giá</td><td>CK-0091</td><td><span class="pill op">vận hành</span></td><td><span class="pill ok">3/3</span></td></tr>
+      <tr data-acc="1" data-bad="1"><td>31/10</td><td>Xuất bán chưa tính giá vốn</td><td>HD-0502</td><td><span class="pill ok">kế toán</span></td><td><span class="pill bad">8/10 · CT-LIN-001</span></td></tr>
+    </tbody></table></div></div>
+</section>
+
+<!-- 3 -->
+<section class="view" id="v3">
+  <div class="card"><div class="hd">SALE / STOCK ISSUE · HD-0450 <span class="pill ok">10 / 10 đạt</span></div>
+    <div class="bd"><table><thead><tr><th></th><th>Mã</th><th>Kiểm</th><th>Căn cứ</th></tr></thead><tbody>
+      <tr><td>✔</td><td class="mono">CT-MD-001</td><td>Xác định được item_id, variant_id</td><td class="note">Quy ước phần mềm</td></tr>
+      <tr><td>✔</td><td class="mono">CT-MD-002</td><td>Phiên bản mã đúng ngày hiệu lực</td><td class="note">Quy ước phần mềm</td></tr>
+      <tr><td>✔</td><td class="mono">CT-INV-001</td><td>Đúng kho và nhóm tính giá</td><td class="note">Chuẩn mực kế toán số 02 — Hàng tồn kho</td></tr>
+      <tr><td>✔</td><td class="mono">CT-COST-002</td><td>Đủ lượng tồn có thể xuất</td><td class="note">Chuẩn mực kế toán số 02 — Hàng tồn kho</td></tr>
+      <tr><td>✔</td><td class="mono">CT-COST-004</td><td>Phân bổ đúng thứ tự lớp (nhập trước – xuất trước)</td><td class="note">Chuẩn mực kế toán số 02 — Hàng tồn kho</td></tr>
+      <tr><td>✔</td><td class="mono">CT-COST-003</td><td>Giá trị xuất = tổng phân bổ (12.400.000)</td><td class="note">Thông tư 99/2025/TT-BTC</td></tr>
+      <tr><td>✔</td><td class="mono">CT-ACC-001</td><td>Đúng tài khoản theo chính sách tại ngày</td><td class="note">Thông tư 99/2025/TT-BTC</td></tr>
+      <tr><td>✔</td><td class="mono">CT-ACC-002</td><td>Bút toán Nợ = Có</td><td class="note">Luật Kế toán số 88/2015/QH13</td></tr>
+      <tr><td>✔</td><td class="mono">CT-ACC-003</td><td>Không ghi trùng doanh thu / giá vốn</td><td class="note">Thông tư 99/2025/TT-BTC</td></tr>
+      <tr><td>✔</td><td class="mono">CT-PER-006</td><td>Kỳ kế toán cho phép ghi sổ</td><td class="note">Luật Kế toán số 88/2015/QH13</td></tr>
+    </tbody></table>
+    <div class="note" style="margin-top:8px">Kết quả do engine tính từ dữ liệu và rule pack — không đánh dấu tay (R-CONT-7). Câu chữ và căn cứ lấy từ thư viện mã.</div></div></div>
+</section>
+
+<!-- 4 -->
+<section class="view" id="v4">
+  <div class="card"><div class="hd">Sẵn sàng khoá kỳ 10/2026 <span class="pill warn" id="score">4 / 6 điều kiện</span> <span class="win" id="won"></span></div>
+    <div class="bd"><table><thead><tr><th style="width:38%">Điều kiện</th><th>Tiến độ</th><th>Còn lại</th><th></th></tr></thead><tbody id="conds"></tbody></table>
+    <div style="margin-top:10px"><button class="btn primary" id="lock" disabled>Khoá kỳ 10/2026</button> <span class="note" id="lockwhy"></span></div></div></div>
+</section>
+
+<script>
+document.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === b.dataset.v));
+});
+// lineage: bấm một nút → làm nổi các nút cùng chuỗi
+document.querySelectorAll('#lineage .node').forEach((n) => n.onclick = (e) => {
+  if (e.target.tagName === 'BUTTON') return;
+  const keys = (n.dataset.l || '').split(' ').filter(Boolean);
+  document.querySelectorAll('#lineage .node').forEach((m) => {
+    const mk = (m.dataset.l || '').split(' ');
+    m.classList.toggle('hl', m === n || keys.some((k) => mk.includes(k)));
+  });
+});
+function fixReturn(btn) {
+  const node = btn.closest('.node');
+  node.classList.remove('brk');
+  node.querySelector('.m').innerHTML = 'hoàn 5 × 103.333 = 516.667 theo giá vốn gốc · <span class="pill ok">✔ CT-REV-001</span> <span class="win">vừa sửa</span>';
+  conds[4].done = conds[4].total; render('Trả / huỷ tham chiếu đúng gốc');
+}
+document.getElementById('onlyAcc').onchange = filt; document.getElementById('onlyBad').onchange = filt;
+function filt() {
+  const a = document.getElementById('onlyAcc').checked, b = document.getElementById('onlyBad').checked;
+  document.querySelectorAll('#ev tbody tr').forEach((r) => { r.style.display = (a && r.dataset.acc !== '1') || (b && r.dataset.bad !== '1') ? 'none' : ''; });
+}
+// sẵn sàng khoá kỳ
+const conds = [
+  { t: 'Không còn chứng từ ở bể chờ / mặt hàng nháp của kỳ', done: 42, total: 42, fix: 'Mở Trạm kiểm tra' },
+  { t: 'Mọi dòng xuất đã phân bổ giá vốn', done: 1238, total: 1239, fix: 'Chạy tính giá vốn' },
+  { t: 'Tồn chi tiết = số dư hàng tồn kho (156)', done: 6, total: 6, fix: 'Mở đối chiếu' },
+  { t: 'Giá vốn phân bổ = phát sinh Nợ 632', done: 6, total: 6, fix: 'Mở danh sách dòng' },
+  { t: 'Trả / huỷ tham chiếu đúng gốc', done: 17, total: 18, fix: 'Mở hành trình mặt hàng' },
+  { t: 'Kết chuyển cân, không trùng', done: 6, total: 6, fix: 'Mở kết chuyển' },
+];
+function render(justFixed) {
+  const tb = document.getElementById('conds'); tb.innerHTML = '';
+  conds.forEach((c, i) => {
+    const ok = c.done >= c.total, pct = Math.round((c.done / c.total) * 100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + (ok ? '✔ ' : '') + c.t + '</td><td><div class="bar"><i style="width:' + pct + '%"></i></div><span class="note">' + c.done + ' / ' + c.total + '</span></td><td>' + (ok ? '<span class="pill ok">xong</span>' : '<span class="pill bad">' + (c.total - c.done) + '</span>') + '</td><td>' + (ok ? '' : '<button class="btn">' + c.fix + '</button>') + '</td>';
+    if (!ok) tr.querySelector('button').onclick = () => { c.done = c.total; render(c.t); };
+    tb.appendChild(tr);
+  });
+  const n = conds.filter((c) => c.done >= c.total).length;
+  const s = document.getElementById('score'); s.textContent = n + ' / 6 điều kiện'; s.className = 'pill ' + (n === 6 ? 'ok' : 'warn');
+  document.getElementById('won').textContent = justFixed ? '✔ vừa xong: ' + justFixed : '';
+  const lock = document.getElementById('lock'); lock.disabled = n < 6;
+  document.getElementById('lockwhy').textContent = n < 6 ? 'Còn thiếu: ' + conds.filter((c) => c.done < c.total).map((c) => c.t).join('; ') : 'Đủ điều kiện — khoá kỳ sẽ chốt phân bổ giá vốn và kiểm tra lần cuối.';
+}
+render();
+</script>
+</div></body>
+</html>

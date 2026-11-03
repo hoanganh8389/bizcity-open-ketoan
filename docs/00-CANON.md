@@ -34,6 +34,15 @@ Mọi công cụ trên phải nói **cùng một ngôn ngữ**, và ngôn ngữ 
 
 Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); mọi lời Core nói ra bắt đầu từ thư viện mã (R-GATE-10); mỗi mã có căn cứ (R-GATE-11); Core không mã hoá quy trình theo chức danh — ai làm gì là việc của phân quyền.
 
+<!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity -->
+### 0.1 Ba trụ cột (đề xuất — [ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md))
+
+| Trụ cột | Bảo đảm | Luật |
+|---|---|---|
+| I · Sổ cái bất biến | sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có | R-LEDGER, §1 |
+| II · Định danh bất biến, mã có phiên bản | `item_id` không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực — đổi thông tư không làm lại dữ liệu | R-ITEM, ADR-0017 / 0018 / 0009 |
+| III · Liên tục kế toán (Accounting Continuity) | mọi con số đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ; lineage giá vốn là sổ thứ hai; kiểm chuẩn vòng đời (Gate C); khoá kỳ đòi chuỗi lành | R-CONT |
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -76,6 +85,7 @@ Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); m�
 | R-REV | [rules/RULE-REVIEW.md](rules/RULE-REVIEW.md) | 0 | Người đóng góp làm phân hệ / giao diện qua PR; Nhóm Lõi rà soát mỗi lần nhận việc: kiến trúc, lỗi, rủi ro, dữ liệu kế toán, mã hàng; biên bản ở `docs/audits/REVIEW-*` | `scripts/ra-soat-dong-gop.mjs` |
 | R-VNC | [rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md) | 1 (R-VNC-3, -7: 0) | Bộ kiểm chuẩn pháp lý VN: kho nguồn pháp lý có trạng thái rà, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo 6 trạng thái, không tự nhận chứng nhận nhà nước | SC-VNC-1, SC-VNC-2; runner lane runtime (PHASE-020) |
 | R-ITEM | [rules/RULE-ITEM.md](rules/RULE-ITEM.md) | 0 (R-ITEM-0), 1 (R-ITEM-1..9) | **Chấp nhận về nguyên tắc, chưa có mã** ([ADR-0017](adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), PHASE-024): định danh hàng hoá bất biến, mã có phiên bản, sổ đã ghi không đổi theo danh mục; tài khoản từ chính sách, không từ tiền tố mã; dữ liệu ngoài qua validation <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-ITEM --> | trigger, DG-ITEM-1..5, SC-ITEM-1..3 (sẽ có) |
+| R-CONT <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity --> | [rules/RULE-CONTINUITY.md](rules/RULE-CONTINUITY.md) | 0 (R-CONT-0), 1 (R-CONT-1..9) | **Đề xuất 2026-11-03** ([ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), PHASE-025): không đứt chuỗi; lineage giá vốn chỉ thêm; phương pháp tính giá là chính sách có phiên bản; trả / huỷ hoàn đúng giá vốn gốc; sổ chi tiết = sổ cái; khoá kỳ đòi Gate C sạch; kết quả do engine tính |
 | R-GATE | [rules/RULE-GATE.md](rules/RULE-GATE.md) | 1 | **Chấp nhận 2026-11-02** ([ADR-0019](adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)): hai cổng — Gate A danh mục (nháp), Gate B nghiệp vụ (bể chờ, R-INTAKE); không chặn im lặng; một thư viện mã; mức nào hậu quả đó, không lan <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE --> | SC-FIND-1 (sẽ có), test bể / nháp |
 
 ## 4. Hợp đồng (contracts)

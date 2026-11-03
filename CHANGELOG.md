@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity -->
+- **Đề xuất trụ cột Accounting Continuity** ([ADR-0021](docs/adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), luật [R-CONT](docs/rules/RULE-CONTINUITY.md), [PHASE-025](docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/README.md)): mọi con số trên sổ đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ, qua mọi lần đổi mã / chế độ; lineage giá vốn (lớp + phân bổ, mọi phương pháp tính giá); kiểm chuẩn vòng đời (Gate C, mã `CT-*`); màn Hành trình mặt hàng và Sẵn sàng khoá kỳ ([bản mẫu](docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/mockups/continuity.html)). Chỉ tài liệu, chưa code.
 <!-- [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 -->
 - **Tôn chỉ Core** ([ADR-0020](docs/adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md), [CANON §0](docs/00-CANON.md)): người dùng quyết định và thao tác; Core làm vấn đề nhìn thấy được và chỉ đúng chỗ sửa (gate, check, sổ tay, debug, bể chờ, nháp), bằng **một ngôn ngữ là thư viện mã**. Hệ quả: mỗi mã có **căn cứ** (văn bản trong danh mục căn cứ pháp lý, hoặc "quy ước phần mềm") — hiện ở khung Vì sao, trang tra mã, thông báo; thông báo của Core dựng từ mã (`notifyFinding`, check SC-FIND-2); bỏ nhãn "nội dung nháp, chờ kế toán trưởng duyệt" — luật chạy ngay, ai chỉnh được là việc của phân quyền.
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3 -->
