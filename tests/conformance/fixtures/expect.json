@@ -475,11 +475,12 @@
           "findings": 0
         },
         "SC-FIX-1": {
-          "findings": 3,
+          "findings": 4,
           "keys": [
             "missing:NO_REMEDY_CHECK",
             "screen-unknown:BAD_SCREEN_CHECK:NOPE",
-            "screen-path:GHOST_SCREEN"
+            "screen-path:GHOST_SCREEN",
+            "intake-missing:IN-XAU-001"
           ]
         }
       }

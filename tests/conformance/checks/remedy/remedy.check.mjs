@@ -9,10 +9,13 @@
  *   4. `verify: { code: 'Y' }` trỏ mã kiểm có thật.
  *   5. Mỗi mục bảng kiểm khoá kỳ (`{ key: 'k', … count: …` ở periods/period.routes.ts) có `remedy: PERIOD_CHECK_REMEDIES.k`
  *      và khoá đó có trong period-check.remedies.ts.
+ *   6. Mỗi mã tiền kiểm IN-* mức block / warn (INTAKE_CATALOG) có đoạn trong INTAKE_REMEDIES với steps / owner / verify; không có
+ *      phương án cho mã lạ (packages/contracts/src/intake-findings.ts).
  */
 const REMEDY_FILE = 'packages/contracts/src/remedy.ts';
 const PERIOD_ROUTES = 'packages/kernel/src/modules/periods/period.routes.ts';
 const PERIOD_REMEDIES = 'packages/kernel/src/modules/periods/period-check.remedies.ts';
+const INTAKE_FILE = 'packages/contracts/src/intake-findings.ts';
 const CODE_RE = /code: '([A-Z][A-Z0-9_]+)', layer: 'L\d', level: '(warn|error|info)'/g;
 
 /** Tách các đối tượng kiểm theo vị trí `code: '…'` — đoạn từ mã này tới mã kế tiếp thuộc về kiểm này. */
@@ -63,6 +66,34 @@ export default {
       for (const m of body.matchAll(/SCREENS\.([A-Za-z0-9_]+)/g)) if (screens.size && !screens.has(m[1])) add(f, `${code}: SCREENS.${m[1]} không có trong sổ màn`, `screen-unknown:${code}:${m[1]}`);
       const v = /verify:\s*\{\s*code:\s*'([A-Z0-9_]+)'/.exec(body)?.[1];
       if (v && !allCodes.has(v) && !segs.some((x) => x.code === v)) add(f, `${code}: verify trỏ mã ${v} không có`, `verify:${code}:${v}`);
+    }
+
+    // [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26: SC-FIX-1 quét thêm mã tiền kiểm IN-* — mã block / warn có phương án trong INTAKE_REMEDIES
+    // Mã tiền kiểm IN-*: danh mục (khuôn một dòng, SC-INTAKE-1) → mã block / warn phải có đoạn trong INTAKE_REMEDIES.
+    const intakeSrc = ctx.repo.read(INTAKE_FILE);
+    if (intakeSrc) {
+      const block = (name) => {
+        const i = intakeSrc.indexOf(`export const ${name}`);
+        if (i < 0) return '';
+        const j = intakeSrc.indexOf('\n}', i);
+        return intakeSrc.slice(i, j < 0 ? undefined : j);
+      };
+      const catalog = [...block('INTAKE_CATALOG').matchAll(/^ {2}'(IN-[A-Z]+-\d{3})': \{[^\n]*severity: '(block|warn|hint)'/gm)].map((m) => ({ code: m[1], severity: m[2] }));
+      const remText = block('INTAKE_REMEDIES');
+      const hits = [...remText.matchAll(/^ {2}'(IN-[A-Z]+-\d{3})': \{/gm)];
+      const rem = new Map(hits.map((m, i) => [m[1], remText.slice(m.index, i + 1 < hits.length ? hits[i + 1].index : remText.length)]));
+      const known = new Set(catalog.map((c) => c.code));
+      for (const { code, severity } of catalog) {
+        const body = rem.get(code);
+        if (severity === 'hint' && !body) continue;
+        examined++;
+        if (!body) { add(INTAKE_FILE, `${code} (${severity}) chưa có phương án trong INTAKE_REMEDIES`, `intake-missing:${code}`); continue; }
+        if (!/\bsteps:\s*\[/.test(body) || !/\bowner:\s*'/.test(body) || !/\bverify:\s*\{/.test(body)) add(INTAKE_FILE, `${code}: remedy thiếu steps / owner / verify`, `intake-shape:${code}`);
+        for (const m of body.matchAll(/SCREENS\.([A-Za-z0-9_]+)/g)) if (screens.size && !screens.has(m[1])) add(INTAKE_FILE, `${code}: SCREENS.${m[1]} không có trong sổ màn`, `screen-unknown:${code}:${m[1]}`);
+        const v = /verify:\s*\{\s*code:\s*'([A-Z0-9_-]+)'/.exec(body)?.[1];
+        if (v && !known.has(v) && !allCodes.has(v)) add(INTAKE_FILE, `${code}: verify trỏ mã ${v} không có`, `verify:${code}:${v}`);
+      }
+      for (const code of rem.keys()) if (!known.has(code)) add(INTAKE_FILE, `INTAKE_REMEDIES có ${code} nhưng danh mục không có`, `intake-extra:${code}`);
     }
 
     // Bảng kiểm khoá kỳ

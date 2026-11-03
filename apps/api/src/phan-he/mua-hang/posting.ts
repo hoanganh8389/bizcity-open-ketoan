@@ -16,6 +16,7 @@ import { ingestDocumentSchema, voucherInputSchema, type IngestDocument } from '@
 import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
+import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { postDocumentIn, voucherService, allocateDebt, ensurePostingReason } from '../../kernel/public.js';
 import type { Accounts } from '@bizcity/mua-hang-domain';
 import type { StoredDoc } from './store.js';
@@ -81,7 +82,7 @@ async function ingest(trx: Db, auth: AuthContext, raw: Record<string, unknown>, 
   // Phân kho của phiếu mua → từng dòng hàng (dòng chưa ghi kho riêng).
   if (warehouseCode && Array.isArray(raw.lines)) raw = { ...raw, lines: (raw.lines as Record<string, unknown>[]).map((l) => (l.warehouseCode ? l : { ...l, warehouseCode })) };
   const parsed = ingestDocumentSchema.safeParse(raw);
-  if (!parsed.success) throw Errors.validation('Chứng từ kế toán dựng từ phiếu mua không đúng khuôn', parsed.error.flatten());
+  if (!parsed.success) throw Errors.validation('Chứng từ kế toán dựng từ phiếu mua không đúng khuôn', zodIssueTexts(parsed.error));
   const doc = parsed.data as IngestDocument;
   await postDocumentIn(trx, auth, doc, { post: true, force: true });
   const e = await eventOf(trx, auth.tenantId, doc.docKey);
