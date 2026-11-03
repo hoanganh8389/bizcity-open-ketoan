@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1 -->
+- **Hành trình mặt hàng (ACC95)** — truy vết vòng đời một mặt hàng, chỉ đọc ([hướng dẫn](docs/huong-dan/hanh-trinh-mat-hang.md), [bizcity_lineage@1](docs/contracts/BIZCITY-LINEAGE-v1.md), migration `0064_truy_vet_mat_hang`): mua → nhập → bán → trả → chuyển kho, bút toán mang mã hàng, giá vốn từng tháng; phân biệt sự kiện **kế toán** (đổi sổ) với **vận hành**; bấm một sự kiện để thấy chuỗi nối với nó; **"Vì sao giá vốn này?"** giải thích đơn giá bình quân tháng bằng số thật và các phiếu góp vào; nói rõ phần chưa truy được. Nút **Truy vết** ở Báo cáo nhập xuất tồn, Sổ chi tiết hàng hoá, Danh mục mặt hàng. API: `GET /api/v1/lineage/search`, `/lineage/items/:sku`, `/lineage/items/:sku/cost`.
 <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity -->
 - **Đề xuất trụ cột Accounting Continuity** ([ADR-0021](docs/adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), luật [R-CONT](docs/rules/RULE-CONTINUITY.md), [PHASE-025](docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/README.md)): mọi con số trên sổ đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ, qua mọi lần đổi mã / chế độ; lineage giá vốn (lớp + phân bổ, mọi phương pháp tính giá); kiểm chuẩn vòng đời (Gate C, mã `CT-*`); màn Hành trình mặt hàng và Sẵn sàng khoá kỳ ([bản mẫu](docs/phases/PHASE-025-ACCOUNTING-CONTINUITY/mockups/continuity.html)). Chỉ tài liệu, chưa code.
 <!-- [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 -->

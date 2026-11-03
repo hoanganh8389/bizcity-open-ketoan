@@ -60,6 +60,8 @@ export const keToanMenu: MenuItem[] = [
       { key: 'lai-lo-hd-ct', label: 'BC chi tiết lãi lỗ theo HĐ', path: '/bao-cao/lai-lo-hop-dong-chi-tiet', code: 'ACC71' },
       sec('hang-hoa', 'Hàng hoá'),
       { key: 'nxt', label: 'BC nhập xuất tồn hàng hoá', path: '/bao-cao/nhap-xuat-ton', code: 'ACC83' },
+      // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: truy vết vòng đời một mặt hàng (ADR-0021)
+      { key: 'hanh-trinh-mat-hang', label: 'Hành trình mặt hàng', path: '/bao-cao/hanh-trinh-mat-hang', code: 'ACC95', permission: 'ledger:read' },
       { key: 'ct-hang-hoa', label: 'Sổ chi tiết hàng hoá', path: '/bao-cao/so-chi-tiet-hang-hoa', code: 'ACC82' },
       { key: 'chuyen-kho', label: 'Bảng kê chuyển kho', path: '/bao-cao/chuyen-kho', code: 'HH01' },
       { key: 'nk-mua-hang', label: 'Sổ nhật ký mua hàng', path: '/bao-cao/nhat-ky-mua-hang', code: 'ACC77' },

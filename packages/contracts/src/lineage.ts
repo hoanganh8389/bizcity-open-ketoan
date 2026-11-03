@@ -1,0 +1,165 @@
+// [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: bizcity_lineage@1 — hợp đồng đọc truy vết vòng đời mặt hàng (ADR-0021, R-CONT-0 / R-CONT-8)
+/**
+ * TRUY VẾT VÒNG ĐỜI MẶT HÀNG (bizcity_lineage@1, chỉ đọc). Một mặt hàng → mọi sự kiện kho (mua, nhập, bán, trả, điều chuyển, điều
+ * chỉnh), mọi dòng bút toán mang mã hàng, và giá vốn từng tháng — nối bằng khoá thật của dữ liệu hiện có:
+ *   sự kiện kho  = inventory_movements (event_id, line_no)  →  chứng từ accounting_events (doc_key, version)
+ *   bút toán     = ledger_lines (product_sku, source_line_key) →  ledger_entries (event_id)
+ *   giá vốn      = inventory_costs (nhóm tính giá × tháng × mã hàng)
+ * W1 khoá theo MÃ HÀNG (\`coverage.keyedBy = 'sku'\`); khi PHASE-024 B2 có bảng items thì khoá sang \`item_id\` và hiện cả phiên bản mã
+ * (\`coverage.keyedBy = 'item_id'\`). Hợp đồng không đổi hình dạng — chỉ thêm trường (R-CONT-1).
+ *
+ * \`effect\` (R-CONT-8): sự kiện KẾ TOÁN đổi giá trị tồn / sinh bút toán; sự kiện VẬN HÀNH không đổi sổ (chuyển kho cùng nhóm tính giá).
+ */
+
+export type LineageKind = 'purchase' | 'purchase_return' | 'sale' | 'sale_return' | 'transfer_out' | 'transfer_in' | 'adjust_in' | 'adjust_out';
+export type LineageEffect = 'accounting' | 'operational';
+
+export const LINEAGE_KIND_LABEL: Record<LineageKind, string> = {
+  purchase: 'Mua hàng · nhập kho',
+  purchase_return: 'Trả nhà cung cấp',
+  sale: 'Bán hàng · xuất kho',
+  sale_return: 'Khách trả hàng',
+  transfer_out: 'Chuyển kho (xuất)',
+  transfer_in: 'Chuyển kho (nhập)',
+  adjust_in: 'Điều chỉnh tăng',
+  adjust_out: 'Điều chỉnh giảm',
+};
+
+/** Làn của màn Hành trình mặt hàng: sự kiện nào nằm ở làn nào. */
+export const LINEAGE_LANE: Record<LineageKind, 'in' | 'out' | 'return' | 'move'> = {
+  purchase: 'in', adjust_in: 'in', transfer_in: 'move', transfer_out: 'move', sale: 'out', adjust_out: 'out', sale_return: 'return', purchase_return: 'return',
+};
+
+export interface LineageEvent {
+  /** Ngày chứng từ (YYYY-MM-DD). */
+  at: string;
+  kind: LineageKind;
+  label: string;
+  effect: LineageEffect;
+  /** Vì sao xếp vào loại này — câu cho người đọc. */
+  effectWhy: string;
+  docKey: string;
+  docNo: string;
+  docType: string;
+  version: number;
+  /** Trạng thái chứng từ: posted / pending / error / cancelled. */
+  status: string;
+  branch: string;
+  warehouse: string;
+  lineNo: number;
+  /** Có dấu: nhập +, xuất −. */
+  qty: number;
+  /** Thành tiền (có dấu); null = nguồn chưa có giá vốn (chờ tính giá vốn). */
+  amount: number | null;
+  unit: string;
+  /** Chi nhánh bên kia (chuyển kho). */
+  counterBranch: string | null;
+  /** Hàng trả: chứng từ bán gốc (nếu chứng từ khai). */
+  originalDocKey: string | null;
+  isGift: boolean;
+}
+
+export interface LineageEntryLine {
+  entryNo: string;
+  docNo: string;
+  docType: string;
+  docKey: string | null;
+  postingDate: string;
+  account: string;
+  accountName: string;
+  /** Nợ / Có của dòng; dòng giá vốn chờ tính: cả hai 0 và `costFill` ≠ null. */
+  debit: number;
+  credit: number;
+  costFill: string | null;
+  part: string;
+  description: string;
+  /** posted | reversed (đã bị đảo bởi bút toán khác). */
+  status: string;
+  branch: string;
+}
+
+export interface LineageCostPeriod {
+  /** YYYY-MM */
+  period: string;
+  costGroup: string;
+  costGroupName: string;
+  openingQty: number;
+  openingValue: number;
+  inQty: number;
+  inValue: number;
+  unitCost: number;
+  outQty: number;
+  closingQty: number;
+  closingValue: number;
+  /** computed | import (nhập từ Excel giá vốn tháng). */
+  source: string;
+}
+
+export interface LineageItemInfo {
+  sku: string;
+  name: string;
+  unit: string;
+  barcode: string;
+  isActive: boolean;
+  isDraft: boolean;
+}
+
+export interface LineageCoverage {
+  keyedBy: 'sku' | 'item_id';
+  /** Câu cho người đọc: dữ liệu nào truy được, dữ liệu nào chưa (R-CONT, nói rõ phần chưa truy được). */
+  notes: string[];
+}
+
+export interface LineageItem {
+  item: LineageItemInfo;
+  coverage: LineageCoverage;
+  range: { from: string | null; to: string | null };
+  events: LineageEvent[];
+  entries: LineageEntryLine[];
+  costPeriods: LineageCostPeriod[];
+  summary: {
+    events: number;
+    accountingEvents: number;
+    operationalEvents: number;
+    unvaluedEvents: number;
+    inQty: number;
+    outQty: number;
+    entries: number;
+    /** Danh sách bị cắt ở mức giới hạn. */
+    truncated: boolean;
+  };
+}
+
+/** Vai của một sự kiện trong công thức đơn giá bình quân tháng (giải thích giá vốn). */
+export type CostRole = 'in' | 'out' | 'gift' | 'internal' | 'return';
+
+export interface CostContribution {
+  at: string;
+  docKey: string;
+  docNo: string;
+  kind: LineageKind;
+  label: string;
+  role: CostRole;
+  roleWhy: string;
+  branch: string;
+  qty: number;
+  amount: number | null;
+}
+
+export interface CostExplain {
+  sku: string;
+  period: string;
+  costGroup: string;
+  costGroupName: string;
+  /** Hàng tháng đã tính giá vốn chưa. */
+  computed: boolean;
+  row: LineageCostPeriod | null;
+  previous: { period: string; unitCost: number } | null;
+  /** Thay đổi đơn giá so với tháng trước (%). */
+  changePct: number | null;
+  /** Công thức với số thật, từng dòng một câu. */
+  sentences: string[];
+  contributions: CostContribution[];
+  /** Cộng lại từ các sự kiện liệt kê có khớp số đã lưu không; không khớp = có luật lý do (trả NCC theo tồn đầu, điều chỉnh loại trừ…). */
+  reconcile: { inQty: number; inValue: number; matchesStored: boolean | null; note: string };
+}

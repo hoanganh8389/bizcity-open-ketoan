@@ -6,6 +6,7 @@
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api, errorText } from '@/lib/api';
 import { defaultFrom, defaultTo, money, periodFrom } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
@@ -232,6 +233,8 @@ export function StockMovementPage() {
                 { key: 'unit', header: 'Đơn vị' },
                 ...(figureCols(true, false) as Column<StockRow>[]),
                 { key: 'branchCode', header: 'Chi nhánh', type: 'code' },
+                // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: nút Truy vết → Hành trình mặt hàng đúng mã, đúng khoảng ngày của báo cáo
+                { key: 'trace', header: '', noFilter: true, noSort: true, width: 70, render: (r) => <Link to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(r.sku)}&from=${f.from}&to=${f.to}`}>Truy vết</Link> },
               ]}
             />
           ) : (
@@ -260,8 +263,10 @@ interface LedgerRow { eventId: string; docDate: string; docNo: string; docType: 
 interface ItemLedger { sku: string; name: string; unit: string; opening: { qty: number; value: number }; rows: LedgerRow[]; closing: { qty: number; value: number } }
 
 export function ItemLedgerPage() {
-  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', sku: '' });
-  const [sku, setSku] = useState('');
+  // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: nhận mã hàng / khoảng ngày từ URL (từ Hành trình mặt hàng, danh mục mặt hàng)
+  const [sp] = useSearchParams();
+  const [f, setF] = useState({ from: sp.get('from') || defaultFrom(), to: sp.get('to') || defaultTo(), branchCodes: '', warehouseCodes: '', sku: sp.get('sku') ?? '' });
+  const [sku, setSku] = useState(sp.get('sku') ?? '');
   const [docId, setDocId] = useState<string | null>(null);
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const q = useQuery({ queryKey: ['item-ledger', f], enabled: Boolean(f.sku), queryFn: () => api.get<ItemLedger>('/api/v1/inventory/item-ledger', f) });
@@ -286,7 +291,7 @@ export function ItemLedgerPage() {
           {!f.sku ? <Empty text="Chưa chọn mặt hàng — bấm vào ô Mã hàng ở trên để tìm theo mã hoặc tên." /> : q.isLoading ? <Loading /> : !d ? null : (
             <>
               <div className="card-body">
-                <b className="mono">{d.sku}</b> {d.name} {d.unit && `(${d.unit})`} · Tồn đầu: <b>{d.opening.qty.toLocaleString('vi-VN')}</b> = {money(d.opening.value)} · Tồn cuối: <b>{d.closing.qty.toLocaleString('vi-VN')}</b> = {money(d.closing.value)}
+                <b className="mono">{d.sku}</b> {d.name} {d.unit && `(${d.unit})`} <Link className="btn btn-xs" to={`/bao-cao/hanh-trinh-mat-hang?sku=${encodeURIComponent(d.sku)}&from=${f.from}&to=${f.to}`}>Truy vết</Link> · Tồn đầu: <b>{d.opening.qty.toLocaleString('vi-VN')}</b> = {money(d.opening.value)} · Tồn cuối: <b>{d.closing.qty.toLocaleString('vi-VN')}</b> = {money(d.closing.value)}
               </div>
               {!d.rows.length ? <Empty text="Không có phát sinh trong khoảng này" /> : (
                 <DataGrid

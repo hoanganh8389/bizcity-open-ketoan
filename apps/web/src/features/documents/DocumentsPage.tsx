@@ -59,7 +59,8 @@ export function DocumentsPage() {
   const [params] = useSearchParams();
   const { can } = useAuth();
   const [tab, setTab] = useState<Tab>((params.get('status') as Tab | null) ?? 'pending');
-  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', docType: '', sourceSystem: '', search: '', page: 1 });
+  // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: mở từ Hành trình mặt hàng: /chung-tu?status=&search=<số chứng từ>&from=&to= (lọc đúng chứng từ đó)
+  const [f, setF] = useState({ from: params.get('from') || defaultFrom(), to: params.get('to') || defaultTo(), branchCodes: '', docType: '', sourceSystem: '', search: params.get('search') ?? '', page: 1 });
   const [openId, setOpenId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [modes, setModes] = useState(false);
