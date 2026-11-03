@@ -67,3 +67,4 @@
 | 2026-11-02 23:55 | Claude Code | Chủ duyệt ADR-0019 "code nhé" ⇒ S024-27 xong: thư viện phát hiện một khuôn, API + MCP tra mã, trang sinh tự động, SC-FIND-1. |
 | 2026-11-03 00:20 | Claude Code | S024-28 / 29 đợt 1 trên `products`: nháp ↔ bể chờ nối nhau (IN-ITEM-009, kiểm lại khi kích hoạt). Gộp main (bể chờ 0059 đã vào). |
 | 2026-11-03 09:10 | Claude Code | S024-29 xong: Commit Guard (IN-GUARD-001) — dấu cấu hình Kiểm thử ↔ cửa nạp, bể chờ ghi cùng mã. |
+| 2026-11-03 11:00 | Claude Code | Lộ trình ổn định Core [70](70-LO-TRINH-ON-DINH-CORE.md): B1 PR #38 test đầy đủ 1090 đạt / 0 lỗi (chờ merge); B2–B6 xếp theo S024-4..16, 24, 28, 30; đề xuất SC-ITEM-4 / 5 (bất biến ở CSDL). |
