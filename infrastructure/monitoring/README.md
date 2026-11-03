@@ -61,6 +61,11 @@ Các bảng điều khiển:
 
 ## 2. Bật / tắt
 
+<!-- [2026-11-04 04:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — S018-21 -->
+**Mặc định bật** khi cài bằng `bash scripts/cai-nhanh.sh` (tắt: `--khong-giam-sat`). Script ghi `COMPOSE_FILE` vào `.env`, nên các lệnh dưới đây rút gọn thành
+`docker compose up -d` / `docker compose down` / `docker compose logs -f loki` — không còn lo `down` trần để lại container giám sát mồ côi.
+Các lệnh có `-f` đầy đủ bên dưới vẫn đúng (dùng cho máy chủ không cài bằng script).
+
 Chạy **từ thư mục gốc kho** (để đường dẫn `./infrastructure/monitoring/...` đúng — với nhiều `-f`,
 Compose tính đường dẫn tương đối theo thư mục của tệp đầu tiên):
 

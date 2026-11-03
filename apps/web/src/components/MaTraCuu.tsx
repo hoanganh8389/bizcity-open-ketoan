@@ -33,8 +33,17 @@ async function chep(text: string): Promise<boolean> {
   return ok;
 }
 
+// [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — S018-21: NOT_READY của nguồn Bàn điều tra (Loki / Tempo / Prometheus chưa bật) là TRẠNG THÁI, không phải lỗi kỹ thuật
+/**
+ * Nguồn của Bàn điều tra chưa cấu hình (DEVTOOLS_*_URL trống) → API trả NOT_READY và màn tự hiện dòng "chưa bật" kèm cách bật.
+ * Đó là trạng thái bình thường của bản cài chưa bật giám sát, không cần mã tra cứu gửi dev: không hiện khay "Lỗi kỹ thuật".
+ * Chỉ bỏ NOT_READY của các đường devtools; lỗi thật (nguồn bật mà không trả lời, mọi mã khác, mọi đường khác) vẫn hiện như cũ.
+ */
+const laTrangThaiNguon = (x: { code: string; api: string }) => x.code === 'NOT_READY' && /\/api\/v1\/system\/devtools(\/|$)/.test(x.api);
+
 export function MaTraCuu() {
-  const ds = useSyncExternalStore(khoMaTraCuu.nghe, khoMaTraCuu.ds);
+  const tatCa = useSyncExternalStore(khoMaTraCuu.nghe, khoMaTraCuu.ds);
+  const ds = tatCa.filter((x) => !laTrangThaiNguon(x));
   const [an, setAn] = useState<string | null>(null);
   const [i, setI] = useState(0);
   const [daChep, setDaChep] = useState<'' | 'chep' | 'bao-loi' | 'loi'>('');

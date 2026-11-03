@@ -24,21 +24,21 @@ Bốn câu hỏi, bốn nguồn, hai khoá nối (`requestId`, `traceId`). Đây
 
 Chỉ số đo, trace, log là **quan sát**. Sự thật về sổ nằm ở Kernel và PostgreSQL (lớp 1–2). Span "ghi sổ xong" không chứng minh giao dịch đã commit, `posting_log` mới chứng minh.
 
-## Mặc định bật (PHASE-018 W6, S018-21) <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — chủ dự án: "on by default" -->
+## Mặc định bật (PHASE-018 W6, S018-21) <!-- [2026-11-04 04:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — S018-21 — chủ dự án: "on by default" -->
 
 **Vì sao:** Bàn điều tra (DEV01–DEV04: Tổng quan, Tra mã, Nhật ký, Lỗi theo module) đọc Loki, Tempo, Prometheus. Không có bộ giám sát thì các màn đó chỉ báo "chưa bật" và nhà phát triển phải biết tự bật — bản cài mới nên có sẵn.
 
-**Thiết kế:**
-- `docker-compose.yml` ở gốc `include:` tệp `infrastructure/monitoring/docker-compose.monitoring.yml` (Compose ≥ 2.20, `project_directory: .` để đường dẫn gắn ổ vẫn tính từ gốc kho). `docker compose up -d` khởi chạy cả bộ giám sát.
-- Khối `api:` (biến `OTEL_EXPORTER_OTLP_ENDPOINT`, `DEVTOOLS_*_URL` với giá trị mặc định tới dịch vụ trong mạng Docker) **chuyển** từ tệp giám sát sang `docker-compose.yml`; tệp giám sát chỉ còn các dịch vụ giám sát (Compose báo trùng nếu một dịch vụ khai ở cả hai nơi).
-- `GRAFANA_ADMIN_PASSWORD` vẫn bắt buộc (không có mật khẩu dự phòng — P0 khảo sát W0); `scripts/cai-nhanh.sh` **tự sinh** như `JWT_SECRET` / `DB_APP_PASSWORD`, nên cài nhanh không phải làm thêm gì.
-- Cổng giám sát chỉ mở trên `127.0.0.1` (như cũ). Dữ liệu: Loki 30 ngày, Tempo 7 ngày, Prometheus 15 ngày / 10 GB — ổ đĩa tăng theo tải, xem README giám sát §dung lượng.
-- **Tắt khi không cần** (máy nhỏ, thử nhanh): `docker compose up -d db api web` — Compose chỉ chạy dịch vụ được nêu; Bàn điều tra khi đó hiện "chưa bật" kèm lệnh bật.
-- **Lệnh cũ** `docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d` **không còn dùng** (dịch vụ khai hai lần): ghi ở CHANGELOG "Nâng cấp cần làm". Docker Desktop (Windows / macOS) vẫn ghép thêm `-f infrastructure/monitoring/docker-compose.desktop.yml`.
-- **Chi phí:** thêm khoảng 9 container (Prometheus, Alertmanager, Grafana, Loki, Promtail, Tempo, OTel Collector, các exporter, cAdvisor), mỗi cái có giới hạn bộ nhớ trong tệp compose.
-- **Bàn điều tra khi nguồn chưa bật:** `NOT_READY` của một nguồn là TRẠNG THÁI, không phải lỗi kỹ thuật — không hiện khay "Lỗi kỹ thuật" / không sinh mã tra cứu; màn hiện dòng "chưa bật" kèm cách bật. Lỗi thật (nguồn bật mà không trả lời) vẫn hiện như cũ.
-- **Kiểm:** `docker compose config` sạch; `docker compose up -d` rồi `GET /api/v1/system/devtools/status` báo Loki / Tempo / Prometheus sẵn sàng; `selfcheck --strict`.
-
+**Cách làm (đổi so với bản chữ chốt đầu — đọc `scripts/cai-nhanh.sh` mới thấy sẵn công tắc `GIAM_SAT`, nên không cần `include:`):**
+- `bash scripts/cai-nhanh.sh` **mặc định bật** giám sát (Prometheus, Alertmanager, Grafana, Loki, Promtail, Tempo, OTel Collector, các exporter). Tắt: `--khong-giam-sat` hoặc `GIAM_SAT=0`. Cờ cũ `--giam-sat` vẫn được nhận (không đổi gì).
+- Script tự sinh `GRAFANA_ADMIN_PASSWORD` và vai trò exporter chỉ đọc (như `JWT_SECRET` / `DB_APP_PASSWORD`); mật khẩu Grafana vẫn **bắt buộc**, không có mật khẩu dự phòng (P0 khảo sát W0).
+- Script ghi `COMPOSE_FILE` + `COMPOSE_PATH_SEPARATOR=:` vào `.env` → mọi lệnh `docker compose up / down / logs` gõ trần sau này dùng đúng bộ tệp. Trước đây chỉ lệnh `up` của script có `-f`, còn `docker compose down` trần để lại các container giám sát mồ côi. Tắt giám sát thì script **xoá** hai dòng đó (không bật lại ngầm).
+- **Không đổi tệp compose** (`docker-compose.yml`, `docker-compose.monitoring.yml`): lệnh hai `-f` cũ vẫn chạy; máy chủ thật (không dùng cài nhanh) tự đặt `COMPOSE_FILE` hoặc dùng hai `-f` theo [docs/trien-khai.md](../trien-khai.md).
+- Cổng giám sát chỉ mở trên `127.0.0.1`. Dữ liệu: Loki 30 ngày, Tempo 7 ngày, Prometheus 15 ngày / 10 GB.
+- **Chi phí:** 11 dịch vụ thêm (10 chạy liên tục, 1 tác vụ chạy một lần), mỗi cái có giới hạn bộ nhớ trong tệp compose; máy nhỏ chọn `--khong-giam-sat`.
+- **Bản Docker đang chạy từ trước** (dựng khi chưa có Bàn điều tra) không có đường dẫn `/api/v1/system/devtools/*` — cần `docker compose up -d --build` để API có Bàn điều tra rồi mới nối được Loki / Tempo.
+- **Bản chạy `npm run dev`** (máy dev) không nằm trong mạng Docker nên không gọi được `http://loki:3100`: Bàn điều tra báo "chưa bật" là đúng; muốn thử thì đặt `DEVTOOLS_LOKI_URL` / `DEVTOOLS_TEMPO_URL` trỏ tới Loki / Tempo mở cổng ra máy.
+- **Bàn điều tra khi nguồn chưa bật:** `NOT_READY` của nguồn là TRẠNG THÁI, không phải lỗi kỹ thuật — khay "Lỗi kỹ thuật" / mã tra cứu **không hiện** cho `NOT_READY` của các đường `/api/v1/system/devtools/*`; màn hiện dòng "Chưa bật …" kèm lệnh bật. Lỗi thật (nguồn bật mà không trả lời, mọi mã khác) vẫn hiện như cũ.
+- **Đã kiểm:** `DRY_RUN=1` mọi tổ hợp (mặc định, tắt, `GIAM_SAT=0`, cờ cũ) cấu hình hợp lệ; `docker compose config --services` trần thấy đủ 15 dịch vụ khi bật, 4 dịch vụ lõi khi tắt; chạy lại không nhân đôi dòng `.env`. **Chưa kiểm:** dựng thật cả ngăn xếp ở một máy sạch rồi mở Bàn điều tra (cần dựng lại ảnh `api`) — việc của lần cài thật đầu tiên.
 
 ## 1. Truy vết yêu cầu
 

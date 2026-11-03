@@ -35,7 +35,7 @@
 | S018-18 | SLI / SLO, đo tải theo Q018-5, kịch bản sập, lint cấu hình giám sát trong CI | W6 | P2 | chưa | ⛔ Q018-5 |
 | S018-19 | API tóm tắt sức khoẻ có phân quyền + widget CEO 4 chỉ số — ca T018-7 | W7 | P3 | chưa | ⛔ PHASE-015, Q018-6 |
 | S018-20 | Luật dò `H-METRIC-LABEL` trong `scripts/ra-soat-dong-gop.mjs` + RULE-REVIEW §4 | W1 | P1 | có | ✅ 2026-11-01 |
-| S018-21 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: `include:` trong `docker-compose.yml`, khối `api` chuyển lên gốc, `cai-nhanh.sh` sinh mật khẩu Grafana, tắt bằng `up -d db api web`; Bàn điều tra không báo "Lỗi kỹ thuật" khi nguồn chưa bật <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 --> | W6 | P1 | có | ☐ |
+| S018-21 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: `include:` trong `docker-compose.yml`, khối `api` chuyển lên gốc, `cai-nhanh.sh` sinh mật khẩu Grafana, tắt bằng `up -d db api web`; Bàn điều tra không báo "Lỗi kỹ thuật" khi nguồn chưa bật <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 --> | W6 | P1 | có | ✅ 2026-11-04 (`cai-nhanh.sh` mặc định bật + `COMPOSE_FILE`; `NOT_READY` của nguồn không còn là "Lỗi kỹ thuật"; DRY_RUN mọi tổ hợp). Chưa kiểm: dựng thật ở máy sạch |
 
 ## Ca bằng chứng
 

@@ -83,7 +83,12 @@ export function SourceOff({ name, state }: { name: string; state: SourceState })
   return (
     <div className="dev-off">
       {state === 'off'
-        ? <>Chưa bật {name} cho Bàn điều tra — đặt <code>DEVTOOLS_{name.toUpperCase()}_URL</code> (bộ giám sát đặt sẵn). Xem Sổ tay điều tra lỗi §0.</>
+        ? <>
+          {/* [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — S018-21: nói cách bật, không chỉ nói "chưa bật" */}
+          Chưa bật {name} cho Bàn điều tra. Cài bằng <code>bash scripts/cai-nhanh.sh</code> thì bộ giám sát bật sẵn; bản đang chạy chưa có thì chạy
+          {' '}<code>docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d</code>
+          {' '}(hoặc đặt <code>DEVTOOLS_{name.toUpperCase()}_URL</code> trỏ tới {name} của bạn). Xem Sổ tay điều tra lỗi §0.
+        </>
         : <>{name} không trả lời — xem Sổ tay điều tra lỗi TH-14.</>}
     </div>
   );

@@ -166,7 +166,7 @@ Bàn giao kèm:
 ## 9. Khi có lỗi — tra thế nào
 
 - Mọi lỗi API có **mã tra cứu** (`requestId`, `traceId`) ở khay lỗi trên màn hình → người dùng chỉ cần gửi mã đó.
-- Có bật giám sát (`bash scripts/cai-nhanh.sh --giam-sat`) thì xem Grafana:
+- Cài bằng `bash scripts/cai-nhanh.sh` thì giám sát **bật sẵn** (tắt: `--khong-giam-sat`); xem Grafana:
   - **Đã ghi sổ / Đang chờ / Lỗi / Chờ lâu nhất / Bút toán chưa cân**: sức khoẻ ghi sổ;
   - Tempo theo `traceId`: chứng từ đi qua **phân hệ nào, bước nào**, lỗi ở đâu;
   - Loki: log của đúng yêu cầu đó.
