@@ -13,7 +13,8 @@ const LEGACY_HEADER = ['Đợt', 'Phạm vi', 'Người nhận', 'Nhánh', 'Tr�
 const VIEC_RE = /^S\d{3}-\d+[a-z]?$/;
 
 /** Tệp mọi nhánh được sửa dù không nằm trong phạm vi đã giữ chỗ: nhật ký thay đổi, bảng giữ chỗ, nhật ký checklist của phase, bảng việc sinh. */
-export const ALWAYS_OK = [/^CHANGELOG\.md$/, /^docs\/phases\/CLAIMS\.md$/, /^docs\/phases\/[^/]+\/40-MASTER-CHECKLIST\.md$/, /^docs\/phases\/BANG-VIEC\.md$/, /^docs\/phases\/bang-viec\.json$/];
+// [2026-11-04 12:04 AM Johnny Chu - Chu Hoàng Anh] FLOW — "Sổ dùng chung" của RULE-FLOW: thêm expect.json, baseline.json (mọi PR thêm phép kiểm đều sửa)
+export const ALWAYS_OK = [/^CHANGELOG\.md$/, /^docs\/phases\/CLAIMS\.md$/, /^docs\/phases\/[^/]+\/40-MASTER-CHECKLIST\.md$/, /^docs\/phases\/BANG-VIEC\.md$/, /^docs\/phases\/bang-viec\.json$/, /^tests\/conformance\/fixtures\/expect\.json$/, /^tests\/conformance\/baseline\.json$/];
 
 /**
  * Thứ dùng chung (R-FLOW-2): đổi `code` thì phải có chữ chốt ở `docs`. Giữ ngắn và có chủ đích — chỉ những chỗ mà hai phiên

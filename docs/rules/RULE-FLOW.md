@@ -54,7 +54,7 @@ Không cần chữ chốt riêng: làm thêm theo **khuôn đã chốt** (vd chu
 
 **Hình dạng.**
 
-1. `CLAIMS.md` thêm cột **Việc** (sau cột Đợt): danh sách mã `S###-n` (có thể thêm một chữ cái khi tách việc, vd `S010-1a`) <!-- [2026-11-04 12:01 AM Johnny Chu - Chu Hoàng Anh] FLOW — khuôn mã việc có hậu tố chữ cái (8 việc đang dùng) --> dòng đó giữ, cách nhau dấu phẩy; `—` khi đợt chưa có dòng checklist (vd đợt tài liệu). Một mã chỉ nằm ở **một** dòng "đang làm" / "chờ merge". Mã phải có thật trong một `40-MASTER-CHECKLIST.md`.
+1. `CLAIMS.md` thêm cột **Việc** (sau cột Đợt): danh sách mã `S###-n` dòng đó giữ, cách nhau dấu phẩy; `—` khi đợt chưa có dòng checklist (vd đợt tài liệu). Một mã chỉ nằm ở **một** dòng "đang làm" / "chờ merge". Mã phải có thật trong một `40-MASTER-CHECKLIST.md`.
 2. Dòng việc trong checklist: `| S###-n | Việc | … | Trạng thái |`, ô cuối **bắt đầu bằng một ký hiệu**: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài · **⏸ hoãn (chủ để sau)** (ký hiệu mới, đã có trong PHASE-019). Dấu `|` trong nội dung ô viết `\|`.
 3. Cột của bảng (mỗi việc đúng một cột):
 
