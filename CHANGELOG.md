@@ -241,6 +241,8 @@ Mỗi bản ghi đủ sáu mục:
 - Khuôn nạp sổ đổi tên từ `bizcity_event@1` thành `bizcity_ledger_intake@1`. Tên `bizcity_event@1` từ nay dành cho sự kiện miền.
 
 ### Sửa
+<!-- [2026-11-03 09:07 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — DG-PLAN-1 -->
+- **DG-PLAN-1 báo công nợ lệch sổ giả trên mọi đơn vị cài mới**: câu lấy phát hiện lọc tài khoản theo `accounts.is_debt` (hệ thống tài khoản seed để `false` cho 131 / 331), khác câu đếm và kiểm `DEBT_MATCH_LEDGER` trong ứng dụng (lọc theo tài khoản có `debt_items`); nay cùng một định nghĩa. Phát hiện khi chạy bộ 25 trường hợp mua hàng trên đơn vị sạch: đối chiếu 331 lệch 0, lane báo 5 NCC lệch.
 <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] R-ERR -->
 - **Lỗi sai khuôn không nói trường nào sai**: năm chỗ (nộp chứng từ trong giao dịch, gói định khoản, phiếu nháp, phân hệ mua hàng ×2) trả `details` dạng object `flatten()` nên giao diện chỉ hiện "không đúng khuôn"; nay là mảng câu `<trường>: <vì sao>` qua `zodIssueTexts` (BIZCITY-ERRORS 1.2.1-draft).
 <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 lần 0 -->
