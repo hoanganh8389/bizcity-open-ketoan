@@ -15,6 +15,8 @@ Mỗi phase là **một gói việc** có thư mục riêng: kế hoạch, sự 
 
 Mỗi mã việc thuộc **đúng một** phase; check **SC-PHASE-1** báo khi trùng hoặc sót.
 
+**Việc đang có người nhận:** [CLAIMS.md](CLAIMS.md) — giữ chỗ phải vào `main` trước khi code (luật [R-FLOW](../rules/RULE-FLOW.md)). <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW -->
+
 **Đánh giá đầy đủ:** [AUDIT-2026-10-30-KIEN-TRUC](../audits/AUDIT-2026-10-30-KIEN-TRUC.md).
 - Codebase đáp ứng **khoảng 50%** kiến trúc công bố: G1 77%, G2 60%, G3 0%.
 - Lộ trình 33%, ma trận tuân thủ 59%.
