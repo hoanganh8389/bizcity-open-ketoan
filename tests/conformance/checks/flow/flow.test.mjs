@@ -53,6 +53,15 @@ test('cột Việc: đọc mã, — là rỗng, mã sai khuôn bị báo', () =>
   assert.match(parseClaims(doc(row('A', '`a/**`', 'x', '`feat/a`', 'đang làm', '2026-11-03', 'việc 1'))).problems[0].message, /không phải mã việc/);
 });
 
+test('bảng khuôn cũ (chưa có cột Việc): vẫn đọc được dòng để nhan-viec.mjs dùng, nhưng báo tiêu đề', () => {
+  const old = '## Đang có\n\n| Đợt | Phạm vi | Người nhận | Nhánh | Trạng thái | Từ ngày |\n|---|---|---|---|---|---|\n| A | `a/**` | x | `feat/a` | đang làm | 2026-11-03 |\n';
+  const r = parseClaims(old);
+  assert.equal(r.rows.length, 1);
+  assert.equal(r.rows[0].nhanh, 'feat/a');
+  assert.deepEqual(r.rows[0].viec, []);
+  assert.deepEqual(r.problems.map((p) => p.key), ['header']);
+});
+
 const CK = (rows) => `# x\n\n| ID | Việc | Ưu tiên | Trạng thái |\n|---|---|---|---|\n${rows.join('\n')}\n`;
 
 test('đọc checklist: dấu \\| trong ô, dòng chú thích giữa bảng, hậu tố chữ cái, báo lỗi khuôn', () => {

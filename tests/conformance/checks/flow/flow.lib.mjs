@@ -9,6 +9,7 @@ export const CLAIMS_FILE = 'docs/phases/CLAIMS.md';
 export const STATUSES = ['đang làm', 'chờ merge'];
 // [2026-11-03 11:52 PM Johnny Chu - Chu Hoàng Anh] FLOW — FLOW-2 (R-FLOW-8): thêm cột "Việc" (mã S###-n dòng đó giữ); bảng việc sinh tự động được mọi nhánh sửa
 const HEADER = ['Đợt', 'Việc', 'Phạm vi', 'Người nhận', 'Nhánh', 'Trạng thái', 'Từ ngày'];
+const LEGACY_HEADER = ['Đợt', 'Phạm vi', 'Người nhận', 'Nhánh', 'Trạng thái', 'Từ ngày'];
 const VIEC_RE = /^S\d{3}-\d+[a-z]?$/;
 
 /** Tệp mọi nhánh được sửa dù không nằm trong phạm vi đã giữ chỗ: nhật ký thay đổi, bảng giữ chỗ, nhật ký checklist của phase, bảng việc sinh. */
@@ -43,12 +44,16 @@ export function parseClaims(md) {
   while (i < L.length && !L[i].trim().startsWith('|')) { if (/^##\s/.test(L[i])) break; i++; }
   if (i >= L.length || !L[i].trim().startsWith('|')) return { rows, problems: [{ line: start + 1, message: 'mục "Đang có" không có bảng', key: 'no-table' }] };
   const head = cellsOf(L[i]);
-  if (head.join('|') !== HEADER.join('|')) problems.push({ line: i + 1, message: `cột bảng phải là: ${HEADER.join(' | ')}`, key: 'header' });
+  // [2026-11-04 12:01 AM Johnny Chu - Chu Hoàng Anh] FLOW — FLOW-2: vẫn đọc được bảng khuôn cũ (chưa có cột Việc) để nhan-viec.mjs đọc origin/main trong lúc chuyển khuôn; SC-FLOW-1 vẫn báo tiêu đề cũ
+  const legacy = head.join('|') === LEGACY_HEADER.join('|');
+  const width = legacy ? LEGACY_HEADER.length : HEADER.length;
+  if (head.join('|') !== HEADER.join('|')) problems.push({ line: i + 1, message: `cột bảng phải là: ${HEADER.join(' | ')}${legacy ? ' (bảng đang theo khuôn cũ, thiếu cột Việc)' : ''}`, key: 'header' });
   i += 2; // bỏ dòng ngăn |---|
   for (; i < L.length && L[i].trim().startsWith('|'); i++) {
-    const c = cellsOf(L[i]);
+    const c0 = cellsOf(L[i]);
     const line = i + 1;
-    if (c.length !== HEADER.length) { problems.push({ line, message: `dòng phải có ${HEADER.length} ô, đang có ${c.length}`, key: `cols:${line}` }); continue; }
+    if (c0.length !== width) { problems.push({ line, message: `dòng phải có ${width} ô, đang có ${c0.length}`, key: `cols:${line}` }); continue; }
+    const c = legacy ? [c0[0], '—', ...c0.slice(1)] : c0;
     const [dot, viecRaw, phamviRaw, nguoi, nhanhRaw, trang, tu] = c;
     const viec = viecRaw === '—' || viecRaw === '-' ? [] : viecRaw.split(',').map((s) => s.replace(/`/g, '').trim()).filter(Boolean);
     const phamvi = ticks(phamviRaw);
