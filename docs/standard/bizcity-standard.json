@@ -21,8 +21,8 @@
     "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
     "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
     "bizcity_posting_template": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
-    "bizcity_item_master": { "version": "0.2.0-draft", "doc": "docs/contracts/BIZCITY-ITEM-MASTER-v1.md", "role": "định danh bất biến, mã có phiên bản, phân loại theo ngày, Item Resolver (PHASE-024 B2a, ADR-0017)" },
-    "bizcity_lineage": { "version": "0.2.0-draft", "doc": "docs/contracts/BIZCITY-LINEAGE-v1.md", "role": "truy vết vòng đời mặt hàng: sự kiện kho, bút toán mang mã hàng, giá vốn từng tháng (PHASE-025, ADR-0021)" },
+    "bizcity_item_master": { "version": "0.3.0-draft", "doc": "docs/contracts/BIZCITY-ITEM-MASTER-v1.md", "role": "định danh bất biến, mã có phiên bản, phân loại theo ngày, Item Resolver (PHASE-024 B2a, ADR-0017)" },
+    "bizcity_lineage": { "version": "0.3.0-draft", "doc": "docs/contracts/BIZCITY-LINEAGE-v1.md", "role": "truy vết vòng đời mặt hàng: sự kiện kho, bút toán mang mã hàng, giá vốn từng tháng (PHASE-025, ADR-0021)" },
     "bizcity_findings": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-FINDINGS-v1.md", "role": "thư viện phát hiện của hai cổng kiểm chuẩn (ADR-0019, SC-FIND-1)" },
     "bizcity_remedy": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-REMEDY-v1.md", "role": "phương án khắc phục có cấu trúc cho mọi kiểm (PHASE-022, SC-FIX-1)" },
     "bizcity_mcp": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-MCP-v1.md", "profileOf": ["bizcity-mcp-tool@1.0.0", "bizcity-mcp-bridge@1.0.0"] },
@@ -130,6 +130,7 @@
   },
   "changelog": [
     { "version": "1.0.0-draft", "date": "2026-11-03", "changes": ["kernelContracts: thêm bizcity_item_master 0.1.0-draft (PHASE-024 B2a, ADR-0017) — items / item_codes / item_classification, Item Resolver; capability masterdata.items"] },
+    { "version": "1.0.0-draft", "date": "2026-11-04", "changes": ["kernelContracts: bizcity_item_master 0.3.0-draft (họ mặt hàng theo định danh, 0067), bizcity_lineage 0.3.0-draft (history, impact, item.family) — PHASE-026 P0 đợt 1, chữ chốt trước code (R-FLOW-2)"] },
     { "version": "1.0.0-draft", "date": "2026-11-04", "changes": ["kernelContracts: bizcity_item_master 0.2.0-draft (item_id trên bảng sổ / kho, 0066), bizcity_lineage 0.2.0-draft (khoá theo item_id) — PHASE-024 B2b"] },
     { "version": "1.0.0-draft", "date": "2026-11-03", "changes": ["kernelContracts: thêm bizcity_lineage 0.1.0-draft (PHASE-025 W1, ADR-0021) — truy vết vòng đời mặt hàng; capability lineage.item"] },
     { "version": "1.0.0-draft", "date": "2026-11-03", "changes": ["kernelContracts: bizcity_findings 1.1.0-draft (ADR-0020 tôn chỉ Core) — trường basis (căn cứ pháp lý, R-GATE-11), notifyFinding + SC-FIND-2 (R-GATE-10: mọi thông báo của Core dựng từ thư viện mã), status không còn là cổng chờ duyệt"] },
