@@ -72,9 +72,14 @@ Không cần chữ chốt riêng: làm thêm theo **khuôn đã chốt** (vd chu
    - `docs/phases/BANG-VIEC.md`: tổng số theo cột, rồi từng cột nhóm theo phase (mã, việc rút gọn, ưu tiên, người giữ + nhánh, link tới dòng checklist);
    - `docs/phases/bang-viec.json` (`bizcity_task_board@1`): `{ contract, columns[], items: [{ id, phase, title, priority, status, column, claim: { who, branch, state, since } | null, file, line }] }`. **Không** ghi giờ sinh hay mã commit, để cùng nguồn luôn ra cùng tệp.
    - không có `--write`: in bảng ra màn hình, không ghi.
-5. Màn xem kiểu kanban (bước sau, chủ dự án chọn nơi đặt): chỉ đọc `bang-viec.json` trên `main`; nút **Nhận việc** mở trang sửa `CLAIMS.md` trên GitHub (thành PR chỉ tài liệu), nút **Mở checklist** tới đúng dòng.
+5. **Màn kanban chỉ đọc ở GitHub Pages** (chủ dự án quyết 2026-11-03) <!-- [2026-11-03 11:44 PM Johnny Chu - Chu Hoàng Anh] FLOW — chủ dự án quyết: màn kanban chỉ đọc đặt ở GitHub Pages; PR giữ chỗ không tự merge -->:
+   - nguồn trang: `tools/bang-viec-web/` (HTML + JS tĩnh, không gói phụ thuộc, không gọi API nào ghi dữ liệu); đọc `bang-viec.json` của **chính commit** được dựng;
+   - workflow `.github/workflows/bang-viec-pages.yml`: chạy khi đẩy vào `main` có đổi `docs/phases/**` hoặc `tools/bang-viec-web/**` (và chạy tay); quyền tối thiểu `contents: read`, `pages: write`, `id-token: write`; không dùng secret; action ghim theo SHA (R-SEC-8); dựng lại `bang-viec.json` bằng `scripts/bang-viec.mjs` và dừng nếu lệch tệp đã commit (cùng ý SC-FLOW-3);
+   - trên trang: lọc theo phase, cột, người giữ, ưu tiên; mỗi thẻ có **Nhận việc** (mở `https://github.com/<repo>/edit/main/docs/phases/CLAIMS.md` để thành PR chỉ tài liệu), **Mở checklist** (tới đúng dòng trên GitHub); ghi rõ "chỉ đọc — đổi trạng thái bằng PR";
+   - repo công khai nên trang công khai: chỉ hiện những gì đã có trong `docs/phases` (mã việc, tên việc, ưu tiên, tài khoản GitHub, nhánh), không thêm gì ngoài repo;
+   - bật Pages (Settings → Pages → Source: GitHub Actions) là việc của chủ repo, một lần.
 
-**Ảnh hưởng.** PR đổi trạng thái một việc (checklist hoặc CLAIMS) phải chạy lại `bang-viec.mjs --write` trong cùng PR (SC-FLOW-3 bắt khi quên, như `tru-cot-md.mjs`). Dòng CLAIMS cũ thêm cột Việc trong PR code đầu tiên. PR giữ chỗ **không** tự merge (giữ mức chặt của R-FLOW).
+**Ảnh hưởng.** PR đổi trạng thái một việc (checklist hoặc CLAIMS) phải chạy lại `bang-viec.mjs --write` trong cùng PR (SC-FLOW-3 bắt khi quên, như `tru-cot-md.mjs`). Dòng CLAIMS cũ thêm cột Việc trong PR code đầu tiên. PR giữ chỗ **không** tự merge (chủ dự án quyết 2026-11-03, giữ mức chặt của R-FLOW): người duyệt merge tay sau khi SC-FLOW-1 xanh.
 
 **Kiểm bằng.** SC-FLOW-1 mở rộng (cột Việc: mã có thật, không hai dòng cùng giữ); SC-FLOW-3 (bảng sinh khớp nguồn); SC-FLOW-4 (dòng checklist đúng khuôn, ô trạng thái bắt đầu bằng ký hiệu). Chi tiết ở [RULE-QUALITY-GATE](RULE-QUALITY-GATE.md).
 
