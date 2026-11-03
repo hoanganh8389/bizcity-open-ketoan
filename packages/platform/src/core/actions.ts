@@ -34,7 +34,7 @@ import { ERROR_CODES, docRefModule, type IngestResult, type AttachmentRef, type 
 import { db } from '../db/client.js';
 import type { Database } from '../db/types.js';
 import { env } from '../config/env.js';
-import { writeEvidence, type EvidenceEntry, type EvidenceReceipt } from './audit.js';
+import { currentActionScope, runInActionScope, writeEvidence, type ActionScope, type EvidenceEntry, type EvidenceReceipt } from './audit.js';
 import { emitEvent } from './events.js';
 import { AppError, Errors } from './errors.js';
 import { ok, queryBool } from './http.js';
@@ -275,6 +275,8 @@ let savepointSeq = 0;
  * giao dịch ngoài vẫn dùng tiếp được. Dùng ở service bản *In; handler action gọi ctx.data.item.
  */
 export async function inSavepoint<T>(trx: Transaction<Database>, fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>> {
+  const scope = currentActionScope();
+  const noted = scope?.audit.length ?? 0;
   const name = sql.id(`bz_item_${++savepointSeq}`);
   await sql`SAVEPOINT ${name}`.execute(trx);
   try {
@@ -283,6 +285,7 @@ export async function inSavepoint<T>(trx: Transaction<Database>, fn: (tx: Transa
     return { ok: true, value };
   } catch (error) {
     await sql`ROLLBACK TO SAVEPOINT ${name}`.execute(trx);
+    if (scope) scope.audit.length = noted; // ghi chú nhật ký của mục bị huỷ bỏ theo mục (ACTION §4.4)
     return { ok: false, error };
   }
 }
@@ -294,6 +297,16 @@ export type ActionTx = Transaction<Database>;
 /** Chạy fn trong giao dịch có sẵn — thay `db.transaction().execute(fn)` khi mã cũ đã nằm trong giao dịch của action (không mở giao dịch lồng). */
 export function sameTx<T>(trx: ActionTx, fn: (trx: ActionTx) => Promise<T>): Promise<T> {
   return fn(trx);
+}
+
+/** notes của bằng chứng kèm nhật ký nghiệp vụ gom được (ACTION §4.4); lớn hơn EVIDENCE_INPUT_MAX thì chỉ giữ cỡ. */
+function withAuditNotes(notes: Record<string, unknown>, scope: ActionScope): Record<string, unknown> | undefined {
+  const out = { ...notes };
+  if (scope.audit.length) {
+    const bytes = Buffer.byteLength(JSON.stringify(scope.audit), 'utf8');
+    out.audit = bytes > EVIDENCE_INPUT_MAX ? { omitted: true, bytes } : scope.audit;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 const registry = new Map<string, AnyActionDef>();
@@ -391,6 +404,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const tenantId = auth?.tenantId ?? '';
   const inputHash = def.effect === 'write' ? requestHash(input) : '';
   const notes: Record<string, unknown> = {};
+  const scope: ActionScope = { audit: [] };
   const responseMeta: Record<string, unknown> = {};
   // Bằng chứng (STD-EVD-1): action ghi chạy thật → đúng một bản ghi, thành công hay thất bại vì lỗi nghiệp vụ trong handler.
   const evidenceOn = def.effect === 'write' && !dryRun && !!auth;
@@ -527,7 +541,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         },
       };
       inHandler = true;
-      const output = await def.handler(ctx, input);
+      const output = await (evidenceOn ? runInActionScope(scope, () => def.handler(ctx, input)) : def.handler(ctx, input));
       // STD-ACT-3: phản hồi đúng khuôn output — kiểm khi chạy test (CONF-RUN-3), không tốn ở bản chạy thật.
       if (env.NODE_ENV === 'test') {
         const checked = def.output.safeParse(output);
@@ -537,7 +551,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
       const result = { data: output, status, meta: { ...responseMeta, ...meta } as ActionResult['meta'] };
       if (evidenceOn) {
         const objectId = def.evidence?.objectId?.(input, output) ?? (output as { id?: unknown } | null)?.id;
-        result.meta = { ...responseMeta, ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
+        result.meta = { ...responseMeta, ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, (() => { const n = withAuditNotes(notes, scope); return n ? { input, notes: n } : { input }; })())) };
       }
       if (key) {
         await trx.updateTable('action_requests').set({ response: JSON.stringify(redactSecrets(output ?? null)), status_code: status })

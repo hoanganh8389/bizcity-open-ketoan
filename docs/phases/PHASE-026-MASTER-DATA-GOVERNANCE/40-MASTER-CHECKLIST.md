@@ -15,7 +15,7 @@
 | S026-10 | API `GET /api/v1/master-data/:type/:id/history`; thẻ Lịch sử | P0 | P0 | có | ☐ |
 | S026-11 | Chỉ mục tham chiếu `md_references` + `GET …/impact`; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng | P0 | P0 | có | ☐ |
 | S026-12 | `MasterDataFrame` bốn thẻ, gắn vào form mặt hàng, đối tượng, tài khoản, chi nhánh, kho; trang Trung tâm dữ liệu gốc `/danh-muc` với ô tìm mọi mã + Việc cần làm | P0 | P0 | có | ☐ |
-| S026-15 | SC-PILLAR-1: tiêu chí `dat` phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi `source = check` cho tiêu chí có check | P0 | P1 | có | ☐ gộp vào đợt S026-19 (D026-11) <!-- [2026-11-04 01:11 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 làm cùng S026-19 --> |
+| S026-15 | SC-PILLAR-1: tiêu chí `dat` phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi `source = check` cho tiêu chí có check | P0 | P1 | có | ☐ |
 | S026-6 | `tenant_groups`, thành viên + vai (ho / warehouse / store / legal_entity), MST tỉnh; danh mục nhóm nhận về đơn vị giữ chung `item_id`; màn Nhóm đơn vị | P1 | P1 | có | ☐ (sau S024-11) |
 | S026-7 | Cặp chứng từ liên đơn vị + `intercompany_refs`; giá chuyển theo bên gửi; báo cáo nhóm loại trừ; mã `CT-IC-*` — ca T026-G8 | P1 | P1 | có | ☐ |
 | S026-13 | Truy vết đối tượng (`/lineage/partners/:id`) và tài khoản (`/lineage/accounts/:code`); thẻ Truy vết cho hai loại này | P1 | P1 | có | ☐ |
@@ -38,5 +38,6 @@
 
 ## Log
 
+- 2026-11-04: <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 --> phát hiện khi đánh giá để làm Golden Test G2: **định khoản đọc `products.posting_group_code` hiện tại, không đọc `item_classification` tại ngày chứng từ** — R-ITEM-7 chưa thi hành (việc S024-8, giữ chỗ ở đợt 4). Đổi nhóm hạch toán hôm nay làm định khoản lại chứng từ cũ ra theo nhóm mới.
 - 2026-11-04: mở phase; ADR-0022; `tru-cot.json` + HT10 + thẻ Trụ cột; bản mẫu; G2 (giá vốn, NXT, sổ chi tiết theo `item_id`) làm T026-G1 xanh.
-- 2026-11-04: chủ dự án xem HT10 bản W0, chỉ đạo: nhiệm vụ chi tiết + tài liệu cụ thể từng mục, việc con có bằng chứng và kiểm lại, ranh giới cho dev phân hệ ngoài kernel (REST API, bể sự kiện), bóc tách kỹ trụ cột II và III. Mở S026-19, chữ chốt [50](50-BAN-DO-VIEC-TRU-COT.md) + bản mẫu [tru-cot-ban-do-viec.html](mockups/tru-cot-ban-do-viec.html); S026-15 (SC-PILLAR-1) làm cùng đợt.
+- 2026-11-04: chủ dự án xem HT10 bản W0, chỉ đạo: nhiệm vụ chi tiết + tài liệu cụ thể từng mục, việc con có bằng chứng và kiểm lại, ranh giới cho dev phân hệ ngoài kernel (REST API, bể sự kiện), bóc tách kỹ trụ cột II và III. Mở S026-19, chữ chốt [50](50-BAN-DO-VIEC-TRU-COT.md) + bản mẫu [tru-cot-ban-do-viec.html](mockups/tru-cot-ban-do-viec.html); SC-PILLAR-1 (S026-15) code ở P0 đợt 2 theo luật kiểm D026-11.

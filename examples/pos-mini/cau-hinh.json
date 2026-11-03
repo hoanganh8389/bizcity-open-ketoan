@@ -1,0 +1,5 @@
+{
+  "source": "pos",
+  "branches": { "CN01": "CN01" },
+  "payments": { "cash": "TM", "qr": "QR", "card": "POS", "bank": "CK" }
+}

@@ -1,8 +1,9 @@
+// [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trụ cột 7: DG-STK-3 INVENTORY_LEDGER_MISMATCH: sổ chi tiết kho ↔ số dư TK hàng tồn kho (chép từ inventory.diagnostics.ts, R-DIAG-9)
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: lane cho kiểm số dư, kho, khấu hao, lịch kiểm chuẩn — DG-CASH-1, DG-ACC-1, DG-STK-1, DG-STK-2, DG-FA-1, DG-CONF-1 (DG-PLAN-1, DG-PLAN-4 ở ledger.diag.mjs).
 /**
  * Kiểm trên CSDL thật, CHỈ ĐỌC, cùng mã với app (R-DIAG-9):
  *   packages/kernel/src/modules/ledger/balance.diagnostics.ts      CASH_NEGATIVE, ACCOUNT_WRONG_SIDE (+ TRANSIT_NONZERO, DEBT_MATCH_LEDGER)
- *   packages/kernel/src/modules/inventory/inventory.diagnostics.ts COGS_STALE, STOCK_ADJUST_NO_REASON
+ *   packages/kernel/src/modules/inventory/inventory.diagnostics.ts COGS_STALE, STOCK_ADJUST_NO_REASON, INVENTORY_LEDGER_MISMATCH
  *   apps/api/src/modules/assets/asset.diagnostics.ts               DEPRECIATION_OPEN
  *   packages/kernel/src/modules/conformance/conformance.diagnostics.ts CONFORMANCE_STALE
  * Mức warn (enforce info). Không số tiền trong mẫu. Tài khoản tiền mặt đọc từ tài khoản ngầm định của đơn vị.
@@ -26,6 +27,22 @@ const DUE = `WITH m AS (SELECT gs::date AS ms, (gs + interval '1 month - 1 day')
                     bool_and(EXISTS (SELECT 1 FROM asset_depreciations x WHERE x.asset_id = u.asset_id
                                      AND ((x.year * 12 + x.month - 1) = u.idx OR (x.covers_from IS NOT NULL AND x.covers_from <= u.idx AND u.idx < x.year * 12 + x.month - 1)))) AS done
                FROM u GROUP BY u.tenant_id, u.branch_id, u.ms, u.ym)`;
+
+/** Sổ kho ↔ sổ cái theo (đơn vị, chi nhánh, mặt hàng) tới hôm nay; cùng công thức với INVENTORY_LEDGER_MISMATCH của app. */
+const STOCK_GL = `WITH gl AS (SELECT l.tenant_id, l.branch_id, coalesce(l.product_sku, '') AS sku, sum(l.debit - l.credit) AS v FROM ledger_lines l
+                   WHERE l.posting_date <= current_date
+                     AND l.account_code IN (SELECT g.inventory_account FROM product_posting_groups g WHERE g.tenant_id = l.tenant_id)
+                   GROUP BY 1, 2, 3),
+           mv AS (SELECT m.tenant_id, m.branch_id, m.sku, sum(coalesce(m.amount, round(m.qty * c.unit_cost))) AS v, bool_or(m.amount IS NULL AND c.unit_cost IS NULL) AS uncosted
+                    FROM inventory_movements m JOIN branches b ON b.id = m.branch_id LEFT JOIN branches cb ON cb.id = m.counter_branch_id
+                    LEFT JOIN inventory_costs c ON c.tenant_id = m.tenant_id AND c.sku = m.sku
+                     AND c.year = EXTRACT(YEAR FROM m.doc_date)::int AND c.month = EXTRACT(MONTH FROM m.doc_date)::int
+                     AND c.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN coalesce(cb.accounting_unit_id, 0) ELSE coalesce(b.accounting_unit_id, 0) END
+                   WHERE m.doc_date <= current_date
+                   GROUP BY 1, 2, 3)
+      SELECT coalesce(gl.tenant_id, mv.tenant_id) AS tenant_id, coalesce(gl.branch_id, mv.branch_id) AS branch_id, coalesce(gl.sku, mv.sku) AS sku,
+             coalesce(gl.v, 0) AS gv, coalesce(mv.v, 0) AS sv, coalesce(mv.uncosted, false) AS uncosted
+        FROM gl FULL JOIN mv ON mv.tenant_id = gl.tenant_id AND mv.branch_id = gl.branch_id AND mv.sku = gl.sku`;
 
 export const checks = [
   sqlCheck({
@@ -68,6 +85,14 @@ export const checks = [
     sql: `SELECT DISTINCT t.code AS tenant, a.doc_key AS key, NULL AS detail
             FROM inventory_movements m JOIN accounting_events a ON a.id = m.event_id JOIN tenants t ON t.id = m.tenant_id
            WHERE m.kind IN ('adjust_in', 'adjust_out') AND coalesce(m.reason_code, '') = '' LIMIT 200`,
+  }),
+  sqlCheck({
+    id: 'DG-STK-3', code: 'INVENTORY_LEDGER_MISMATCH', title: 'Sổ chi tiết kho khớp số dư tài khoản hàng tồn kho',
+    rules: ['R-FIX-1'], conf: [], tier: 2, enforce: 'info', weight: 1,
+    count: `SELECT count(*)::int AS n FROM (${STOCK_GL}) x WHERE NOT x.uncosted`,
+    sql: `SELECT t.code AS tenant, b.code || ':' || x.sku AS key, NULL AS detail
+            FROM (${STOCK_GL}) x JOIN tenants t ON t.id = x.tenant_id JOIN branches b ON b.id = x.branch_id
+           WHERE NOT x.uncosted AND abs(x.gv - x.sv) >= 1 ORDER BY 1, 2 LIMIT 200`,
   }),
   sqlCheck({
     id: 'DG-FA-1', code: 'DEPRECIATION_OPEN', title: 'Tháng đã qua có tài sản cần trích thì đã có phiếu khấu hao tháng',

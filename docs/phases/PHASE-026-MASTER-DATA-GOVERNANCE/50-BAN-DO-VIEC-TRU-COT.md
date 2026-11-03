@@ -1,5 +1,5 @@
 # PHASE-026 · 50 — Bản đồ việc theo trụ cột: HT10 nói rõ nhiệm vụ, ranh giới, tài liệu, việc con và bằng chứng
-<!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — chữ chốt thiết kế S026-19 (bizcity_pillars@1 0.2) + S026-15 (SC-PILLAR-1), theo chỉ đạo chủ dự án 2026-11-04: "explain nhiệm vụ chi tiết hơn, gắn tài liệu cụ thể, từng task nhỏ có bằng chứng, check lại; đặc biệt cho dev cộng đồng làm phân hệ ngoài kernel" -->
+<!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — chữ chốt thiết kế S026-19 (bizcity_pillars@1 0.2); luật kiểm SC-PILLAR-1 cho S026-15 (code ở đợt 2 phiên MDG), theo chỉ đạo chủ dự án 2026-11-04: "explain nhiệm vụ chi tiết hơn, gắn tài liệu cụ thể, từng task nhỏ có bằng chứng, check lại; đặc biệt cho dev cộng đồng làm phân hệ ngoài kernel" -->
 
 **Bản mẫu (duyệt trước khi code):** [mockups/tru-cot-ban-do-viec.html](mockups/tru-cot-ban-do-viec.html) — ô trụ cột, khối trụ cột mở rộng (nhiệm vụ · ranh giới · vai · tài liệu), tiêu chí mở ra bảng việc con, bốn trạng thái, bản di động. Dữ liệu trong bản mẫu là ví dụ.
 

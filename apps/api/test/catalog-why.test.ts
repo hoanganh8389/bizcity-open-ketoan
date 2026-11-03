@@ -6,14 +6,13 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
-import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { auditRows, call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
 const codes = (r: { body: { data?: { findings?: { code: string }[] }; meta?: { findings?: { code: string }[] } } }, where: 'data' | 'meta' = 'data') =>
   ((where === 'data' ? r.body.data?.findings : r.body.meta?.findings) ?? []).map((f) => f.code).sort();
-const audits = (objectId: string) => db.selectFrom('audit_logs').select(['action', 'after_data']).where('tenant_id', '=', tenantId)
-  .where('object_id', '=', objectId).where('action', 'like', 'catalog.warn%').orderBy('id').execute();
+const audits = async (objectId: string) => (await auditRows(tenantId, 'catalog.warn%', objectId)).map((r) => ({ action: r.action, after_data: r.after }));
 
 beforeAll(async () => {
   ctx = await setupTenant();

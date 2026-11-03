@@ -19,7 +19,52 @@ const cogsRuns = (s: DiagScope) => sql`
    WHERE a.tenant_id = ${s.tenantId} AND a.doc_type = 'cogs' AND a.status = 'posted' ${branchCond(s, 'a')}
    GROUP BY 1, 2`;
 
+// [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trụ cột 7: INVENTORY_LEDGER_MISMATCH (DG-STK-3, F22-STK-11): sổ chi tiết kho ↔ số dư TK hàng tồn kho theo (chi nhánh, mặt hàng)
+/**
+ * Giá trị sổ kho và số dư sổ cái tới ngày cuối phạm vi, theo (chi nhánh, mặt hàng). Sổ kho định giá như sổ chi tiết hàng
+ * (giá trị chứng từ, hoặc số lượng × đơn giá vốn tháng; chuyển đến lấy nhóm giá của bên gửi — cùng công thức valuedMovements
+ * của module kho). TK hàng tồn kho = inventory_account của các nhóm hạch toán đơn vị đã khai. Cặp còn dòng chưa định giá bị
+ * bỏ qua (đã có bảng kiểm "chưa tính giá vốn"); dòng sổ cái không gắn mặt hàng gom vào mã rỗng. Lệch ≥ 1 đồng thì báo.
+ */
+const ledgerVsStock = (s: DiagScope) => {
+  const to = s.to ? sql`${s.to}::date` : sql`current_date`;
+  return sql`
+    WITH acc AS (SELECT DISTINCT inventory_account AS code FROM product_posting_groups WHERE tenant_id = ${s.tenantId}),
+         gl AS (SELECT l.branch_id, coalesce(l.product_sku, '') AS sku, sum(l.debit - l.credit) AS v FROM ledger_lines l
+                 WHERE l.tenant_id = ${s.tenantId} AND l.account_code IN (SELECT code FROM acc) AND l.posting_date <= ${to} ${branchCond(s, 'l')}
+                 GROUP BY 1, 2),
+         mv AS (SELECT m.branch_id, m.sku, sum(coalesce(m.amount, round(m.qty * c.unit_cost))) AS v, bool_or(m.amount IS NULL AND c.unit_cost IS NULL) AS uncosted
+                  FROM inventory_movements m JOIN branches b ON b.id = m.branch_id LEFT JOIN branches cb ON cb.id = m.counter_branch_id
+                  LEFT JOIN inventory_costs c ON c.tenant_id = m.tenant_id AND c.sku = m.sku
+                   AND c.year = EXTRACT(YEAR FROM m.doc_date)::int AND c.month = EXTRACT(MONTH FROM m.doc_date)::int
+                   AND c.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN coalesce(cb.accounting_unit_id, 0) ELSE coalesce(b.accounting_unit_id, 0) END
+                 WHERE m.tenant_id = ${s.tenantId} AND m.doc_date <= ${to} ${branchCond(s, 'm')}
+                 GROUP BY 1, 2)
+    SELECT coalesce(gl.branch_id, mv.branch_id) AS branch_id, coalesce(gl.sku, mv.sku) AS sku, coalesce(gl.v, 0) AS gv, coalesce(mv.v, 0) AS sv,
+           coalesce(mv.uncosted, false) AS uncosted
+      FROM gl FULL JOIN mv ON mv.branch_id = gl.branch_id AND mv.sku = gl.sku`;
+};
+
 export const INVENTORY_DIAGNOSTICS: DiagCheck[] = [
+  {
+    code: 'INVENTORY_LEDGER_MISMATCH', layer: 'L3', level: 'warn', scoped: true,
+    remedy: {
+      steps: [
+        { text: 'Mở đối chiếu kho ↔ sổ cái của kỳ (GET /api/v1/inventory/reconcile?period=YYYY-MM), xem trạng thái từng dòng trong mẫu', role: 'chief_accountant' },
+        { text: 'Mã rỗng: bút toán tay vào tài khoản kho không gắn mặt hàng — huỷ phiếu đó, ghi lại bằng chứng từ kho có mặt hàng', role: 'accountant' },
+        { text: 'Có mã: tìm chứng từ có ngày hạch toán khác ngày chứng từ, hoặc mặt hàng ghi vào tài khoản kho khác nhóm hạch toán; sửa ở nguồn rồi tính lại giá vốn (ACC49)', screen: SCREENS.ACC49, role: 'chief_accountant' },
+      ],
+      owner: 'chief_accountant', verify: { code: 'INVENTORY_LEDGER_MISMATCH' }, forbid: ['Không lập phiếu điều chỉnh kho để làm khớp số'],
+    },
+    title: 'Sổ chi tiết kho khớp số dư tài khoản hàng tồn kho (theo chi nhánh, mặt hàng)',
+    fix: 'Tổng Nợ bằng tổng Có nhưng giá trị tồn theo sổ chi tiết khác số dư tài khoản kho: báo cáo kho và bảng cân đối không cùng một số. Mẫu: <chi nhánh>:<mã hàng> (mã rỗng = bút toán kho không gắn mặt hàng).',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM (${ledgerVsStock(s)}) x WHERE NOT x.uncosted`,
+      sql`SELECT b.code || ':' || x.sku AS key, count(*) OVER ()::int AS total
+            FROM (${ledgerVsStock(s)}) x JOIN branches b ON b.id = x.branch_id
+           WHERE NOT x.uncosted AND abs(x.gv - x.sv) >= 1
+           ORDER BY b.code, x.sku LIMIT ${SAMPLE}`),
+  },
   {
     code: 'COGS_STALE', layer: 'L3', level: 'warn', scoped: true,
     remedy: {

@@ -8,7 +8,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '../src/db/client.js';
-import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { auditRows, call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
@@ -73,7 +73,7 @@ describe('Nháp → bể chờ → kích hoạt → kiểm lại', () => {
     expect(r.body.meta.inboxRechecked).toEqual({ checked: 1, cleared: 1 });
     const inbox = await inboxOf('nhap:CN01:HD-1');
     expect(codesOf(inbox!.findings)).not.toContain('IN-ITEM-009');
-    const audit = await db.selectFrom('audit_logs').select('action').where('tenant_id', '=', tenantId).where('object_id', '=', 'MH-NHAP').where('action', 'like', 'product.%').orderBy('id').execute();
+    const audit = await auditRows(tenantId, 'product.%', 'MH-NHAP');
     expect(audit.map((a) => a.action)).toEqual(['product.draft', 'product.activate']);
   });
 
