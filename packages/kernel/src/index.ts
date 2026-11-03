@@ -41,6 +41,8 @@ export const preflight = traceKernelFn('preflight', preflightRaw);
 export { intakeRoutes } from './modules/intake/intake.routes.js';
 // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: truy vết vòng đời mặt hàng (bizcity_lineage@1, chỉ đọc)
 export { lineageRoutes } from './modules/lineage/lineage.routes.js';
+// [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: Item Resolver (mã / itemId tại một ngày → item_id + phân loại hiệu lực)
+export { resolveItem, resolveItems } from './modules/masterdata/item-resolver.js';
 export { intakeRetentionSubscriber, deleteExpired as deleteExpiredIntake } from './modules/intake/inbox.js';
 // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: bể chờ kiểm lại khi mặt hàng nháp được kích hoạt (R-GATE-6)
 import { recheckInboxForSkus as recheckInboxForSkusRaw } from './modules/intake/inbox.js';

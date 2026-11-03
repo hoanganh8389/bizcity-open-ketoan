@@ -34,4 +34,5 @@ export * from './ban-dieu-tra.js';
 export * from './catalog-hint.js';
 export * from './findings.js';
 export * from './legal-basis.js';
-export * from './lineage.js'; // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: bizcity_lineage@1 // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: căn cứ của mã (R-GATE-11)
+export * from './lineage.js';
+export * from './item-master.js'; // [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: bizcity_item_master@1 (định danh, mã có phiên bản, kết quả tra mã) // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: bizcity_lineage@1 // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: căn cứ của mã (R-GATE-11)

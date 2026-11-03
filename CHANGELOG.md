@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a -->
+- **Item Master — định danh mặt hàng bất biến** ([bizcity_item_master@1](docs/contracts/BIZCITY-ITEM-MASTER-v1.md), migration `0065_mat_hang_dinh_danh`, bước B2a, ADR-0017): mỗi mặt hàng có một `item_id` (ULID) không đổi, không xoá, không dùng lại; mã hàng có **phiên bản và ngày hiệu lực** (đổi mã = đóng mã cũ + thêm mã mới); phân loại hạch toán theo ngày. **Bất biến ở CSDL**: không sửa / xoá định danh, mã chỉ thêm, một mã tại một ngày chỉ trỏ một mặt hàng, lịch sử phân loại không bị sửa. Chạy **song song** với danh mục mặt hàng hiện có (đồng bộ tự động ở mọi đường ghi, chưa ảnh hưởng ai); kèm **Item Resolver** (mã hoặc itemId tại một ngày → item_id + phân loại hiệu lực). Chi phí đồng bộ 2.000 mặt hàng qua API: gửi lại y nguyên không đổi, thêm mới +40%.
 <!-- [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1 -->
 - **Hành trình mặt hàng (ACC95)** — truy vết vòng đời một mặt hàng, chỉ đọc ([hướng dẫn](docs/huong-dan/hanh-trinh-mat-hang.md), [bizcity_lineage@1](docs/contracts/BIZCITY-LINEAGE-v1.md), migration `0064_truy_vet_mat_hang`): mua → nhập → bán → trả → chuyển kho, bút toán mang mã hàng, giá vốn từng tháng; phân biệt sự kiện **kế toán** (đổi sổ) với **vận hành**; bấm một sự kiện để thấy chuỗi nối với nó; **"Vì sao giá vốn này?"** giải thích đơn giá bình quân tháng bằng số thật và các phiếu góp vào; nói rõ phần chưa truy được. Nút **Truy vết** ở Báo cáo nhập xuất tồn, Sổ chi tiết hàng hoá, Danh mục mặt hàng. API: `GET /api/v1/lineage/search`, `/lineage/items/:sku`, `/lineage/items/:sku/cost`.
 <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity -->

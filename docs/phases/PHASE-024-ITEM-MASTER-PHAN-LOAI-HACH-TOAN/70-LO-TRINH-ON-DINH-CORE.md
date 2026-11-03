@@ -43,7 +43,7 @@ Hành vi đã đổi khi gộp, cần biết: thêm / sửa **tài khoản** ghi
 
 Mô hình dữ liệu đã chốt ở [20-KIEN-TRUC §1](20-KIEN-TRUC.md); phần này chỉ định thứ tự triển khai và điều kiện an toàn.
 
-### 3.1 B2a — chạy song song, chưa ai đọc (migration 0064 trở đi)
+### 3.1 B2a — chạy song song, chưa ai đọc (migration 0064 trở đi) <!-- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: ✅ xong 2026-11-03 — migration 0065, trigger đồng bộ, bất biến ở CSDL, Item Resolver; chi tiết [BIZCITY-ITEM-MASTER-v1](../../contracts/BIZCITY-ITEM-MASTER-v1.md) -->
 
 1. Hợp đồng `bizcity_item_master@1` + `packages/contracts/src/item-master.ts`; `bizcity_ledger_intake@1` thêm `itemId`, `barcode` trên dòng hàng (tuỳ chọn, tương thích ngược).
 2. Bảng:
