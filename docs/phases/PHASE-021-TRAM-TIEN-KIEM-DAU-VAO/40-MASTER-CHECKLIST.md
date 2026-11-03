@@ -21,14 +21,14 @@
 | S021-10 | Tự đóng khi nguồn gửi lại đạt (hook đăng ký, Platform không import Kernel) — ca T021-5 | W2 | P0 | có | ✅ 2026-11-02: `closeBySource()` gọi trong `ingest` (đường Kernel, không cần hook Platform) và trong giao dịch action `submit` — T021-5 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-10 --> |
 | S021-11 | `GET /intake`, `GET /intake/:id`, `POST /intake/preflight`; khoá cấu hình `bizcity.intake.*` trong registry; dọn theo hạn giữ bằng `bizcity.clock.daily` — ca T021-10, T021-11, T021-12 | W2 | P0 | có | ✅ 2026-11-02: `intake.routes.ts`; khoá `bizcity.intake.retention_days` / `trial_retention_days`; subscriber `intake.retention` — T021-10, T021-11, T021-12 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-11 --> |
 | S021-12 | `bizcity_ledger_intake@1` minor (`meta.intake`); `BIZCITY-ERRORS` ghi `details.findings`; `docs/api/01-quy-uoc.md` | W2 | P1 | có | ✅ 2026-11-02: `bizcity_ledger_intake@1` 1.4.0 (1.3.0 là `manual_journal` của PHASE-011), `bizcity_errors@1` 1.2.0-draft (`error.intake`), `bizcity_intake_findings@1` 0.2.0-draft §5, `docs/api/01-quy-uoc.md` <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-12 --> |
-| S021-13 | Màn Trạm kiểm tra: thẻ Cần sửa / Đã xử lý / Thử của tôi cạnh Chờ / Lỗi định khoản tại `/chung-tu` (ACC14) | W3 | P0 | ☐ | ☐ |
-| S021-14 | Khung chi tiết: câu kết luận, lỗi theo lớp, bấm trường nhảy tới ô, Vì sao / Sửa ở nguồn / Bài học | W3 | P0 | ☐ | ☐ |
-| S021-15 | Sửa tại bể (bản vá + lý do), Kiểm thử, Nộp lại, lịch sử lần thử + so hai lần — ca T021-6, T021-9 | W3 | P0 | ☐ | ☐ |
-| S021-16 | Chấp nhận cảnh báo (vai trò cấu hình, có lý do, bằng chứng), Bỏ mục (kế toán trưởng) — ca T021-7, T021-8 | W3 | P1 | ☐ | ☐ |
+| S021-13 | Màn Trạm kiểm tra: thẻ Cần sửa / Đã xử lý / Thử của tôi cạnh Chờ / Lỗi định khoản tại `/chung-tu` (ACC14) | W3 | P0 | — | ✅ 2026-11-03: `apps/web/src/features/documents/IntakeStation.tsx` + ba thẻ ở `DocumentsPage.tsx` (Cần sửa có số mục mở); `GET /intake` thêm `closed`, `closedDays`, `mine` <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-13 --> |
+| S021-14 | Khung chi tiết: câu kết luận, lỗi theo lớp, bấm trường nhảy tới ô, Vì sao / Sửa ở nguồn / Bài học | W3 | P0 | — | ✅ 2026-11-03: câu kết luận + điểm; lỗi theo L1–L5; nút trường → ô; Vì sao / Sửa ở nguồn / phương án (RemedyView); Bài học mở trang `docs/huong-dan/loi-dau-vao/<mã>.md` trong ngăn bên; ô dạng form hoặc JSON (viền đỏ / vàng / nét đứt đã sửa) <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-14 --> |
+| S021-15 | Sửa tại bể (bản vá + lý do), Kiểm thử, Nộp lại, lịch sử lần thử + so hai lần — ca T021-6, T021-9 | W3 | P0 | có | ✅ 2026-11-03: `packages/kernel/src/modules/intake/repair.ts` + action `core.intake.patch` / `core.intake.resubmit` (RFC 6902, nguyên văn không đổi, nộp lại qua `submitDocumentIn`, còn lỗi chặn → `blocked`, sự việc mang `extra.intake`); GET chi tiết kèm `current`; lịch sử từ `patches`; `apps/api/test/intake-repair.test.ts` <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-15 --> |
+| S021-16 | Chấp nhận cảnh báo (vai trò cấu hình, có lý do, bằng chứng), Bỏ mục (kế toán trưởng) — ca T021-7, T021-8 | W3 | P1 | có | ✅ 2026-11-03: `core.intake.accept` (mã warn `acceptable`, vai trò `bizcity.intake.accept_roles` mặc định chủ đơn vị + kế toán trưởng, lý do vào bằng chứng), `core.intake.dismiss` (`documents:edit-all`) <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-16 --> |
 | S021-17 | Thực tập sinh thử thật trên dữ liệu demo (ba chứng từ hỏng mẫu), biên bản `evidence/W3-<ngày>.md` | W3 | P1 | — | ☐ |
-| S021-18 | `GET /intake/score` + màn Bảng điểm đầu vào (mọi kế toán, Q3) — ca T021-13 | W4 | P0 | ☐ | ☐ |
-| S021-19 | `DG-INTAKE-1` mục mở quá hạn (`ops/DIAGNOSTICS.md` §2 trước) — ca T021-14 | W4 | P1 | ☐ | ☐ |
-| S021-20 | Sự kiện `bizcity.intake.rejected` / `.resolved` (`bizcity_event` §7), webhook app nhận được — ca T021-17 | W4 | P1 | ☐ | ☐ |
+| S021-18 | `GET /intake/score` + màn Bảng điểm đầu vào (mọi kế toán, Q3) — ca T021-13 | W4 | P0 | có | ✅ 2026-11-03: `packages/kernel/src/modules/intake/score.ts` + `GET /api/v1/intake/score`; màn ACC94 `/chung-tu/bang-diem` (`IntakeScorePage.tsx`): ô số, theo nguồn / người lập / loại, mười mã (bài học), xu hướng tuần; `intake-score.test.ts` <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-18 --> |
+| S021-19 | `DG-INTAKE-1` mục mở quá hạn (`ops/DIAGNOSTICS.md` §2 trước) — ca T021-14 | W4 | P1 | có | ✅ 2026-11-03: `INTAKE_OPEN_AGE` (`intake.diagnostics.ts`, đăng ký ở `app.ts`) + lane `tests/conformance/diagnostics/intake.diag.mjs`; ngưỡng `bizcity.intake.open_alert_days` (3) <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-19 --> |
+| S021-20 | Sự kiện `bizcity.intake.rejected` / `.resolved` (`bizcity_event` §7), webhook app nhận được — ca T021-17 | W4 | P1 | có | ✅ 2026-11-03: `kernel-events.ts` + phát ở `recordRejection` (mục mới), `closeBySource`, nộp lại, bỏ mục; `coreEvents`; webhook app trong `apps.test.ts` <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-20 --> |
 | S021-21 | Trang bài học đủ ví dụ sai / đúng / vì sao cho mọi mã; kế toán trưởng đọc lại câu chữ | W4 | P1 | — | ☐ |
 | S021-22 | L5 định khoản thử (`IN-POST-*`), giao dịch huỷ, giới hạn thời gian + lượt — ca T021-16 | W5 | P0 | ☐ | ☐ |
 | S021-23 | Gợi ý cấu hình từ lỗi lặp (ĐVT, ánh xạ mã hàng, lý do) để kế toán trưởng duyệt, không tự sửa | W5 | P1 | ☐ | ☐ |
@@ -45,18 +45,18 @@
 | T021-3 | Một chứng từ có lỗi ở L1, L2, L3 → ba phát hiện trong một lần, sắp block → warn → hint | W1 | ✅ 2026-11-02 `intake-preflight.test.ts` |
 | T021-4 | Mỗi mã `block`: `preflight` báo mã **và** cửa nạp từ chối cùng dữ liệu (test cặp sinh từ danh mục) | W1 | ✅ 2026-11-02 `intake-preflight.test.ts`: 11 mã door + IN-BIZ-004; danh sách ca phải phủ đủ mã door của danh mục |
 | T021-5 | Nguồn gửi lại cùng `docKey` đã sửa → mục `fixed_at_source`, có `event_id`, cùng giao dịch | W2 | ✅ 2026-11-02 `intake-inbox.test.ts` |
-| T021-6 | Sửa tại bể → `resubmitted`; `payload_raw` không đổi; sự việc có `extra.intake.patched = true` | W3 | ☐ |
-| T021-7 | Chấp nhận cảnh báo: vai trò không được phép → 403; được phép → `accepted`, bằng chứng có lý do | W3 | ☐ |
-| T021-8 | Mức `block` không chấp nhận được, kể cả chủ đơn vị | W3 | ☐ |
-| T021-9 | Kiểm thử: không sự việc, không bút toán, không sự kiện; mục `trial` của đúng người | W3 | ☐ |
+| T021-6 | Sửa tại bể → `resubmitted`; `payload_raw` không đổi; sự việc có `extra.intake.patched = true` | W3 | ✅ 2026-11-03 `intake-repair.test.ts` |
+| T021-7 | Chấp nhận cảnh báo: vai trò không được phép → 403; được phép → `accepted`, bằng chứng có lý do | W3 | ✅ 2026-11-03 `intake-repair.test.ts` |
+| T021-8 | Mức `block` không chấp nhận được, kể cả chủ đơn vị | W3 | ✅ 2026-11-03 `intake-repair.test.ts` |
+| T021-9 | Kiểm thử: không sự việc, không bút toán, không sự kiện; mục `trial` của đúng người | W3 | ✅ 2026-11-03 `intake-repair.test.ts` |
 | T021-10 | RLS: đơn vị A không đọc được bể của đơn vị B (dưới `ketoan_app`) | W2 | ✅ 2026-11-02 `intake-inbox.test.ts` (API: đơn vị khác 404 / rỗng) |
 | T021-11 | Dọn theo hạn giữ: xoá mục đóng > 90 ngày, `trial` > 7 ngày; không đụng `accounting_events` | W2 | ✅ 2026-11-02 `intake-inbox.test.ts` |
 | T021-12 | Nguyên văn không xuất hiện trong log, span, `event_outbox.data` | W2 | ✅ 2026-11-02 `intake-inbox.test.ts`: `event_outbox`; log / span: nguyên văn không truyền vào logger, trace chỉ có tên bước |
-| T021-13 | Bảng điểm: số khớp truy vấn đối chiếu; kế toán xem được, người xem không | W4 | ☐ |
-| T021-14 | `DG-INTAKE-1` đỏ khi có mục mở quá ngưỡng, xanh khi không | W4 | ☐ |
+| T021-13 | Bảng điểm: số khớp truy vấn đối chiếu; kế toán xem được, người xem không | W4 | ✅ 2026-11-03 `intake-score.test.ts` |
+| T021-14 | `DG-INTAKE-1` đỏ khi có mục mở quá ngưỡng, xanh khi không | W4 | ✅ 2026-11-03 `intake-score.test.ts` (kiểm trong app) + lane chạy trên CSDL test |
 | T021-15 | `SC-INTAKE-1`: thiếu trang bài học cho một mã → không đạt (ca tự kiểm) | W1 | ✅ 2026-11-02 SC-INTAKE-1 + ca tự kiểm `repo-bad` |
 | T021-16 | L5: `accounting_events`, `ledger_entries`, `event_outbox` trước / sau như nhau | W5 | ☐ |
-| T021-17 | Khoá app gửi hỏng → mục bể có `app_key`; webhook `bizcity.intake.rejected` chỉ có mã, không nguyên văn | W4 | ☐ |
+| T021-17 | Khoá app gửi hỏng → mục bể có `app_key`; webhook `bizcity.intake.rejected` chỉ có mã, không nguyên văn | W4 | ✅ 2026-11-03 `apps.test.ts`, `intake-score.test.ts` |
 | T021-18 | Action AI `core.intake.get` không trả nguyên văn; không có action ghi nào cho AI | W5 | ☐ |
 
 ## Log
@@ -70,3 +70,5 @@
 | 2026-11-02 23:30 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | Gộp main (PHASE-022, PR #33) vào nhánh: migration bể chờ đổi số 0057 → `0059_be_cho_dau_vao.sql` (0057 đã là vai trò kiểm soát); gỡ xung đột CHANGELOG, app.ts, loi.ts (giữ cả hai) |
 | 2026-11-02 23:55 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | Gộp main (PHASE-010/011, PR #34) vào nhánh: migration bể chờ đổi số 0058 → `0059_be_cho_dau_vao.sql` (0058 = lý do phiếu kế toán); `bizcity_ledger_intake@1` của `error.intake` lên 1.4.0 (1.3.0 = `manual_journal`); gỡ xung đột hợp đồng cửa nạp, bizcity-standard |
 | 2026-11-02 23:50 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | "mockup ok rồi" → S021-3 ✅. Sổ mã lỗi: phần "một thư viện" để ADR-0019 QĐ4 (`bizcity_findings@1`, SC-FIND-1, nhánh phase-023) — không lập ADR trùng; làm trước S021-26 (remedy cho `IN-*`) và thống nhất `details` lỗi sai khuôn thành mảng câu (5 chỗ `flatten()`) |
+| 2026-11-03 10:45 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W3 (2.19): sửa tại bể (`core.intake.patch`, bản vá RFC 6902 chồng lên nguyên văn), nộp lại qua `submitDocumentIn` (`blocked` khi còn lỗi chặn; sự việc mang `extra.intake`), chấp nhận cảnh báo (`bizcity.intake.accept_roles`), bỏ mục; màn Trạm kiểm tra ở ACC14 (Cần sửa / Đã xử lý / Thử của tôi, khung chi tiết, lịch sử + so hai lần); T021-6..9. Còn S021-17 (thực tập sinh thử thật). Quyết định nhỏ: mục của khoá app không nộp lại thay app (R-INTAKE-8); "Chấp nhận" chỉ ghi mã — vào sổ khi bấm Nộp lại. |
+| 2026-11-03 11:40 | Johnny Chu – Chu Hoàng Anh (chỉ đạo) | W4 (2.20): bảng điểm `GET /intake/score` + màn ACC94; `INTAKE_OPEN_AGE` / DG-INTAKE-1; sự kiện `bizcity.intake.rejected` / `.resolved` (chỉ mã + số), webhook app; T021-13, 14, 17. Còn S021-21 (kế toán trưởng đọc lại trang bài học). Ghi nhận: webhook giao theo đơn vị như sự kiện lõi khác — app nhận cả mục của nguồn khác cùng đơn vị (chỉ docKey + mã); lọc theo chủ chứng từ là đề xuất sau. |

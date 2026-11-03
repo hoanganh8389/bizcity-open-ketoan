@@ -145,6 +145,22 @@
       "readBy": "intakeRetentionSubscriber (packages/kernel/src/modules/intake/inbox.ts)", "writeBy": "chưa có (W3: màn Trạm kiểm tra)",
       "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb không kiểm khuôn (PHASE-021 W3)"
+    },
+    {
+      "key": "bizcity.intake.accept_roles",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.intake.acceptRoles", "schema": "mảng vai trò (owner, chief_accountant, accountant…)", "default": "[\"owner\", \"chief_accountant\"]",
+      "readBy": "acceptItem (packages/kernel/src/modules/intake/repair.ts)", "writeBy": "chưa có",
+      "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
+      "gap": "Chưa có API ghi; đọc thẳng jsonb (PHASE-021 W3 — mặc định đủ dùng)"
+    },
+    {
+      "key": "bizcity.intake.open_alert_days",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.intake.openAlertDays", "schema": "int ≥ 1 (ngày)", "default": "3",
+      "readBy": "INTAKE_OPEN_AGE (packages/kernel/src/modules/intake/intake.diagnostics.ts), DG-INTAKE-1 (tests/conformance/diagnostics/intake.diag.mjs)", "writeBy": "chưa có",
+      "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
+      "gap": "Chưa có API ghi; đọc thẳng jsonb (PHASE-021 W4)"
     }
   ]
 }

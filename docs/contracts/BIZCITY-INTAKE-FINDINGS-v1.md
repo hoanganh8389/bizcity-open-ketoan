@@ -2,8 +2,10 @@
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4: 0.6.0-draft — §7 bảng điểm, INTAKE_OPEN_AGE, sự kiện bizcity.intake.* -->
+<!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: 0.5.0-draft — §6 sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục; lọc closed / mine; chi tiết kèm current -->
 
-> **Phiên bản:** 0.4.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.6.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -84,8 +86,36 @@ Cửa nạp từ chối một chứng từ **đã xác thực** vì nội dung (
 
 | Lời gọi | Quyền | Kết quả |
 |---|---|---|
-| `GET /api/v1/intake?status=&docKey=&channel=&limit=&offset=` | `documents:read` | danh sách mục (không nguyên văn) + `codes` (mã phát hiện), `meta.total` |
-| `GET /api/v1/intake/:id` | `documents:read` | một mục: `payload_raw`, `findings`, `door_error`, `attempt_no`, trạng thái |
+| `GET /api/v1/intake?status=&docKey=&channel=&closed=&closedDays=&mine=&limit=&offset=` | `documents:read` | danh sách mục (không nguyên văn) + `codes` (mã phát hiện), `patch_count`, `accepted_codes`, `meta.total`; `closed=1` mục đã đóng, `closedDays` đóng trong N ngày, `mine=1` mục của người gọi |
+| `GET /api/v1/intake/:id` | `documents:read` | một mục: `payload_raw`, `patches`, `current` (nguyên văn + mọi bản vá), `findings`, `door_error`, `attempt_no`, `accepted_codes`, trạng thái |
 | `POST /api/v1/intake/preflight` `{ document, save?, guard? }` | `documents:write` | `{ findings, score, guard, guardChanged?, trialId?, attempt? }` — Kiểm thử, không sự việc; `save` lưu mục `trial`; `guard` = dấu cấu hình gửi kèm lúc nộp (Commit Guard) |
 
-Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · `accepted` · `dismissed` (W3 thêm sửa tại bể, nộp lại, chấp nhận, bỏ). Hạn giữ: mục đã đóng `bizcity.intake.retention_days` (90), mục thử `bizcity.intake.trial_retention_days` (7) — subscriber `intake.retention` theo `bizcity.clock.daily`. Nguyên văn chỉ ở bảng này (RLS theo đơn vị), không vào log, span, `event_outbox` (RULE-INTAKE-12).
+Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · `accepted` · `dismissed` (vòng đời §6). Hạn giữ: mục đã đóng `bizcity.intake.retention_days` (90), mục thử `bizcity.intake.trial_retention_days` (7) — subscriber `intake.retention` theo `bizcity.clock.daily`. Nguyên văn chỉ ở bảng này (RLS theo đơn vị), không vào log, span, `event_outbox` (RULE-INTAKE-12).
+
+## 6. Sửa tại bể (W3, `intake.station`)
+
+<!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3 (S021-15, S021-16) -->
+Ưu tiên **sửa ở nguồn** rồi gửi lại (mục tự đóng `fixed_at_source`). Sửa tại bể khi nguồn không sửa được; chứng từ vào sổ mang dấu lệch nguồn.
+
+| Lời gọi (action) | Quyền | Kết quả |
+|---|---|---|
+| `POST /api/v1/intake/:id/patch` `{ ops, reason }` (`core.intake.patch`, cần `Idempotency-Key`) | `documents:write`; mục người khác cần `documents:edit-all` | thêm bản vá RFC 6902 (`add` / `replace` / `remove`; đường `""` = thay cả chứng từ) vào `patches` (chỉ thêm); chạy lại tiền kiểm trên nguyên văn + mọi bản vá → `{ findings, score, fixed, added, patchNo }`. Đường không có → 400, không ghi. Nguyên văn quá 256 KB (đã cắt) → 400 |
+| `POST /api/v1/intake/:id/resubmit` `{ reason? }` (`core.intake.resubmit`) | như trên; mục của khoá app → 403 (sửa ở app, R-INTAKE-8) | còn lỗi chặn → `status: "blocked"`, **không nộp**, cập nhật phát hiện; đạt → nộp qua `submitDocumentIn` (đúng luật cửa nạp) → `resubmitted` (hoặc `accepted` khi có mã đã chấp nhận), `eventId`; mục mở khác cùng `docKey` → `fixed_at_source`. Sổ đã có cùng `docKey` + phiên bản → 409 |
+| `POST /api/v1/intake/:id/accept` `{ codes, reason }` (`core.intake.accept`) | `documents:write` + vai trò trong `bizcity.intake.accept_roles` (mặc định `owner`, `chief_accountant`), khác → 403 | chỉ mã `warn` có `acceptable` đang có ở mục; mã `block` không bao giờ (400, kể cả chủ đơn vị); điểm tính lại bỏ mã đã chấp nhận; lý do vào bằng chứng |
+| `POST /api/v1/intake/:id/dismiss` `{ reason }` (`core.intake.dismiss`) | `documents:edit-all` | `dismissed`, không nộp |
+
+- Mọi thao tác chỉ trên mục `open`; mục đã đóng → 409.
+- Mỗi bản vá giữ `{ at, by, reason, ops, score, codes, fixed, added }` — lịch sử lần thử và so hai lần đọc từ đây.
+- Sự việc sinh từ nộp lại mang `extra.intake = { inboxId, patched, acceptedCodes }` (dấu lệch nguồn, khuôn `extra` có sẵn của `bizcity_ledger_intake@1`).
+- Không action ghi nào phơi cho AI / MCP (`ai: 'deny'`, `mcp: false`).
+
+## 7. Bảng điểm, chẩn đoán, sự kiện (W4, `intake.score`)
+
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-18..20) -->
+| Lời gọi | Quyền | Kết quả |
+|---|---|---|
+| `GET /api/v1/intake/score?days=30` (hoặc `from`, `to` YYYY-MM-DD) | `documents:write` (mọi kế toán, ADR-0014 Q3; người xem → 403) | `totals` { `sent`, `firstPass`, `firstPassRate`, `avgScore`, `open`, `oldestOpenAt`, `oldestOpenKey`, `closed`, `patchedAtInbox`, `patchedRate`, `medianResolveHours` }; `bySource`, `byActor` (kèm `label`), `byDocType`, `byWeek` — mỗi dòng { `key`, `sent`, `firstPass`, `firstPassRate`, `avgScore`, `topCode` }; `topCodes` (10 mã) |
+
+- **Chứng từ gửi** = một `docKey` khác nhau nhận trong khung (sự việc hoặc mục bể, không tính mục thử; mục không đọc được `docKey` tính riêng). **Đạt lần đầu** = chứng từ gửi chưa từng có mục bể. Không có nội dung chứng từ trong phản hồi.
+- **INTAKE_OPEN_AGE** (app) / **DG-INTAKE-1** (lane): mục `open` quá `bizcity.intake.open_alert_days` ngày (mặc định 3) → `warn`, mẫu = `docKey`.
+- **Sự kiện** (`bizcity_event@1` §7): `bizcity.intake.rejected` khi tạo mục mới, `bizcity.intake.resolved` khi mục đóng; `data` chỉ mã và số. App kết nối đăng ký được qua webhook như mọi sự kiện lõi (giao theo đơn vị, như `bizcity.ledger.entry.posted`).

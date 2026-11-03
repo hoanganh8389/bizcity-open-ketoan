@@ -14,6 +14,7 @@ export const keToanMenu: MenuItem[] = [
     children: [
       sec('dinh-khoan', 'Định khoản'),
       { key: 'ds-chung-tu', label: 'Định khoản tự động', path: '/chung-tu', code: 'ACC14' },
+      { key: 'bang-diem-dau-vao', label: 'Bảng điểm đầu vào', path: '/chung-tu/bang-diem', code: 'ACC94' },
       { key: 'chung-tu-ke-toan', label: 'Chứng từ kế toán', path: '/tien-ich/chung-tu-ke-toan', code: 'ACC3' },
       { key: 'but-toan', label: 'Bút toán sổ cái', path: '/so-cai/but-toan', code: 'SC01' },
       { key: 'phieu-ke-toan', label: 'Phiếu kế toán', path: '/nghiep-vu/phieu-ke-toan', code: 'ACC16' },
