@@ -1,0 +1,39 @@
+<!doctype html>
+<!-- [2026-11-03 11:52 PM Johnny Chu - Chu Hoàng Anh] FLOW — FLOW-2 (R-FLOW-8): màn kanban chỉ đọc ở GitHub Pages, đọc bang-viec.json của chính commit được dựng -->
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng việc · Open Kế Toán</title>
+  <meta name="description" content="Bảng việc chỉ đọc của Open Kế Toán, sinh từ docs/phases trên nhánh main.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title">
+      <h1>Bảng việc</h1>
+      <p class="sub">Open Kế Toán · sinh từ <code>docs/phases</code> trên <code>main</code></p>
+    </div>
+    <p class="readonly" role="note"><strong>Chỉ đọc.</strong> Đổi trạng thái bằng PR sửa checklist của phase hoặc <code>CLAIMS.md</code> (luật R-FLOW-8). Nhận việc = PR giữ chỗ, chờ merge rồi mới code.</p>
+  </header>
+
+  <section class="filters" aria-label="Lọc">
+    <label>Tìm <input id="q" type="search" placeholder="mã, tên việc, người giữ…" autocomplete="off"></label>
+    <label>Phase <select id="phase"><option value="">Tất cả</option></select></label>
+    <label>Người giữ <select id="who"><option value="">Tất cả</option></select></label>
+    <label>Ưu tiên <select id="prio"><option value="">Tất cả</option></select></label>
+    <button id="reset" type="button">Bỏ lọc</button>
+  </section>
+
+  <p id="summary" class="summary" aria-live="polite"></p>
+  <main id="board" class="board" aria-busy="true">
+    <p class="state">Đang tải bảng việc…</p>
+  </main>
+
+  <footer class="foot">
+    <span id="source"></span>
+    <a id="rule" href="#">Luật R-FLOW</a>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

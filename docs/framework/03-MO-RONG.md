@@ -18,14 +18,19 @@ Mặc định chọn **plugin ngoài** cho hệ thống đã có sẵn (POS, CRM
 
 ## 2. Phân hệ (module)
 
+<!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 — chỗ đặt phân hệ theo ADR-0024: modules/<key>/; phan-he/ chỉ còn là chỗ của phân hệ cũ chưa chuyển -->
+> **Yêu cầu kiến trúc (ADR-0024, chủ dự án Johnny Chu):** phân hệ **mới** nằm ở `modules/<key>/`. `apps/*/src/phan-he/` **đóng băng** — không thêm phân hệ mới ở đó. Xem [../standard/CHUYEN-PHAN-HE-SANG-MODULES.md](../standard/CHUYEN-PHAN-HE-SANG-MODULES.md).
+
 ```
-apps/api/src/phan-he/<key>/index.ts      export const <key>: ApiModule = { key, label, routes, includes? }
-apps/api/src/phan-he/<key>/**            schemas · repository · service · routes riêng
-apps/web/src/phan-he/<key>/manifest.ts   key, label, description, icon, color, order, groups
-apps/web/src/phan-he/<key>/{menu,routes}.ts(x)
-db/migrations/NNNN_<key>_<mo_ta>.sql     bảng riêng, tiền tố <key> (R-DB-6)
+modules/<key>/bizcity.module.json        khai báo: key, quyền, action, sự kiện, bảng, phụ thuộc
+modules/<key>/api/**                     defineAction (@bizcity/module-sdk); đường dẫn /api/v1/m/<key>/…
+modules/<key>/web/**                     màn hình (@bizcity/ui-kit); đường dẫn /app/<key>/…
+modules/<key>/migrations/NNNN_mod_<key>_<mo_ta>.sql   bảng riêng trong schema mod_<key>
+modules/<key>/domain/**                  (tuỳ chọn) logic thuần dùng chung API + web
 docs/huong-dan/<helpKey>.md              hướng dẫn mỗi màn
 ```
+
+Phân hệ cũ chưa chuyển (`apps/api/src/phan-he/<key>/`, `apps/web/src/phan-he/<key>/`, đăng ký ở `API_MODULES` / `WEB_MODULES`) vẫn chạy và được sửa lỗi tại chỗ cho tới đợt chuyển của nó; **không dùng cách đó cho phân hệ mới**.
 
 Phân hệ **được**:
 - đọc danh mục, cấu hình, sổ qua service lõi (`modules/*`) hoặc view;
@@ -39,7 +44,7 @@ Phân hệ **không được**:
 - gọi thẳng `ledgerService.post/reverse`;
 - tự tính tài khoản Nợ / Có — chỉ gửi `reasonCode`, mã hàng, mã thuế, mã hình thức thanh toán.
 
-Đăng ký: thêm vào `API_MODULES` (`apps/api/src/phan-he/index.ts`), `WEB_MODULES`, `package.json` (`dev:<key>`), `.github/CODEOWNERS`. Chuẩn đích là một tệp khai `bizcity.module.json` theo [../contracts/BIZCITY-MODULE-v1.md](../contracts/BIZCITY-MODULE-v1.md).
+Đăng ký: module ở `modules/<key>/` **tự nạp** (không sửa `API_MODULES`); thêm `.github/CODEOWNERS` cho thư mục của module. (Phân hệ cũ: `API_MODULES`, `WEB_MODULES`, `package.json` `dev:<key>` — không thêm mới.) Chuẩn đích là một tệp khai `bizcity.module.json` theo [../contracts/BIZCITY-MODULE-v1.md](../contracts/BIZCITY-MODULE-v1.md).
 
 ## 3. Add-in
 

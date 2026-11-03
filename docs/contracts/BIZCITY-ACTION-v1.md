@@ -5,7 +5,7 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> **Phiên bản:** 1.3.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -112,32 +112,34 @@ Một thao tác nhiều mục (trạm định khoản, kết chuyển nhiều ch
 - Trường tên `key` (đúng nguyên tên), hoặc kết thúc bằng `password`, `secret`, `token`, `apikey`, `api_key`, `privatekey` (không phân biệt hoa thường) bị che thành `***` trong **bằng chứng** và trong **phản hồi lưu để phát lại**. Người gọi lần đầu nhận đủ; gửi lặp nhận bản đã che — nên khoá API chỉ trả về một lần.
 - `input` trong bằng chứng lớn hơn 64 KB được thay bằng `{ omitted: true, bytes }`; `inputHash` vẫn đối chiếu được với thân gốc. (Nạp danh mục hay quét ảnh hoá đơn có thể tới hàng chục MB.)
 
-### 4.4 Nhật ký nghiệp vụ trong action — **đề xuất, chờ chủ dự án chốt**
+### 4.4 Nhật ký nghiệp vụ trong action — **đã chốt, phương án C** (1.3.0)
+<!-- [2026-11-03 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6: chốt phương án C — writeAudit trong action ghi vào ghi chú của bằng chứng, trừ sổ "nhật ký có người đọc"; chủ dự án đồng ý 2026-11-03 -->
 
-**Vấn đề.** Dòng cuối §4 nói handler không gọi `writeAudit` (bằng chứng do runtime ghi). Nhưng các service mà handler gọi vẫn gọi `writeAudit`: mỗi lần ghi có **hai** dòng `audit_logs` — bằng chứng của runtime (tên = id action, mang `input`) và dòng cũ (tên cũ như `branch.update`, mang `before` / `after`). Hợp đồng chưa nói gì về service.
+**Vấn đề.** Dòng cuối §4 nói handler không gọi `writeAudit` (bằng chứng do runtime ghi, STD-EVD-3). Nhưng các service mà handler gọi vẫn gọi `writeAudit`, nên mỗi lần ghi có **hai** dòng `audit_logs`: bằng chứng của runtime (tên = id action, mang `input`) và dòng cũ (tên cũ như `branch.update`, mang `before` / `after`).
 
-**Chỗ đọc dòng cũ theo tên** (khảo sát mã):
+**Chỗ đọc dòng cũ theo tên** (khảo sát mã) — bỏ dòng cũ mà không tính tới sẽ làm hỏng:
 
 | Tên hành động | Nơi đọc | Dùng để |
 |---|---|---|
 | `costing.fill` | `packages/kernel/.../closing.service.ts` | phát hiện kết chuyển lỗi thời (giá vốn điền lại sau lần kết chuyển) |
-| `<loại>.update` (vd `receipt.update`) | `packages/kernel/.../document.repository.ts` | hiện "người sửa cuối" của chứng từ |
+| `<loại>.update`, `objectType = source_document` (vd `receipt.update`) | `packages/kernel/.../document.repository.ts` | hiện "người sửa cuối" của chứng từ |
 | `settings.item-auto-create` | `apps/api/.../catalog-rules.routes.ts` | hiện người và lý do đổi "tự thêm mặt hàng" lần cuối |
 
-Cộng khoảng 19 tệp test đọc `audit_logs` theo tên. (`core.conformance.acknowledge` và các id action khác là bằng chứng của runtime — không bị ảnh hưởng.)
+**Đã xem xét và không chọn:** (A) giữ nguyên — ghi trùng, trái §4; (B) bỏ `writeAudit` ở từng service bằng tham số `audit = false` — hỏng ba tính năng trên, mất ảnh `before`, phải sửa hơn 100 chỗ gọi; (D) sửa hợp đồng cho khớp thực tế — ghi trùng vĩnh viễn.
 
-**Lựa chọn.**
+**Quyết định (C).** Trong lúc chạy một action, `writeAudit(trx, entry)` **không chèn dòng mới** mà ghi vào ghi chú của chính bằng chứng — **trừ** các mục khai ở sổ "nhật ký có người đọc".
 
-| | Cách | Được | Mất |
-|---|---|---|---|
-| A | Giữ nguyên | đủ thông tin | ghi trùng; trái chữ §4 |
-| B | Bỏ `writeAudit` trong mọi đường action (tham số `audit = false` ở từng service) | đúng chữ §4 | **hỏng ba tính năng ở bảng trên**; mất ảnh `before` (bằng chứng chưa có); phải sửa từng service (hơn 100 chỗ gọi) |
-| **C** | **`writeAudit` chạy trong action không chèn dòng mới mà ghi vào ghi chú của chính bằng chứng** (`notes.audit[]`: hành động, đối tượng, `before`, `after`), **trừ** các tên khai ở sổ "nhật ký có người đọc" (ba tên ở bảng) — những tên đó vẫn ghi dòng như cũ | không đổi chỗ gọi nào; một nguồn duy nhất; không mất `before` / `after`; ba tính năng chạy tiếp | 19 test đọc theo tên cần chuyển sang đọc ghi chú bằng chứng hoặc đăng ký tên; dòng cũ của thao tác đi qua action không còn (route chưa là action vẫn ghi) |
-| D | Sửa hợp đồng cho khớp thực tế: service được phép ghi nhật ký nghiệp vụ | rẻ nhất | ghi trùng vĩnh viễn |
+1. **Cơ chế.** Runtime đặt bối cảnh action (AsyncLocalStorage) quanh `handler`. `writeAudit` gọi trong bối cảnh đó: nếu `entry` khớp một mục của sổ thì ghi dòng như cũ; nếu không thì thêm `{ action, objectType, objectId, before, after }` vào `changes.notes.audit[]` của bằng chứng (STD-EVD-3: module bổ sung bằng chứng qua `notes`). Ngoài bối cảnh action (route chưa là action, tác vụ nền) `writeAudit` chạy y như cũ. Không đổi chỗ gọi nào.
+2. **Sổ "nhật ký có người đọc".** Hằng số `AUDIT_KEEP` trong `packages/platform/src/core/audit.ts`; mỗi mục là `{ action, objectType? }` (`action` có thể là mẫu `*.hậu-tố`). Ban đầu đúng ba mục ở bảng trên. Thêm mục = có chỗ đọc mới, kèm dòng trong bảng này.
+3. **Lô.** Ghi chú nhật ký tạo trong một mục lô bị huỷ (§4.2) bị bỏ theo mục đó.
+4. **Kích thước.** `notes` lớn hơn 64 KB trong bằng chứng bị thay bằng `{ omitted: true, bytes }` (giống `input`, §4.3).
+5. **Chuỗi băm.** Không ảnh hưởng: trigger `audit_logs_chain` tính cho mọi dòng còn lại; ghi chú nằm trong nội dung bằng chứng đã băm.
+6. **Phép kiểm tĩnh SC-AUDIT-1.** Mọi chỗ trong mã đọc `audit_logs` theo `action` (`= '…'`, `IN (…)`, `LIKE '…'`) phải khớp một mục của `AUDIT_KEEP`; chỗ đọc theo **id action** (ba phần `module.thực-thể.động-từ`, vd `core.conformance.acknowledge`) là đọc bằng chứng của runtime, được miễn.
+7. **Test.** Test đang đọc `audit_logs` theo tên cũ chuyển sang helper `auditRows(action, objectId)` đọc cả dòng cũ lẫn `notes.audit[]`, để giữ ý của test và không viết lại hàng loạt.
 
-**Đề xuất: C**, kèm hai ràng buộc: (1) ghi chú nhật ký tạo trong một mục lô bị huỷ (§4.2) bị bỏ theo mục đó; (2) phép kiểm tĩnh **SC-AUDIT-1**: mọi chỗ trong mã đọc `audit_logs` theo `action = '…'` phải có tên đó trong sổ — để người sau không thêm chỗ đọc mà âm thầm mất dữ liệu.
+**Hệ quả.** Thao tác đi qua action không còn dòng `audit_logs` cũ cho những tên **không** trong sổ; thông tin `before` / `after` vẫn còn trong bằng chứng. Route chưa là action vẫn ghi dòng cũ cho tới khi chuyển.
 
-**Trạng thái:** đề xuất. Mã (đợt 8b) chỉ làm sau khi mục này đổi sang "**đã chốt**" bằng một PR tài liệu; trong lúc chờ, không sửa gì ở `writeAudit`.
+**Thứ tự làm.** Mã (đợt 8b) làm sau đợt 8a (cùng sửa `core/actions.ts`); dòng giữ chỗ 8b thêm sau khi 8a merge.
 
 ## 5. Luật
 
@@ -205,3 +207,4 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 | 1.0.0-draft | 2026-10-29 | Khởi tạo (Standard v1, hợp đồng 4/7) |
 | 1.1.0-draft | 2026-11-02 | Thêm `sideEffects: 'analysis'` — action chỉ lưu kết quả phân tích của Core (vd `core.conformance.run`, ADR-0012), không đổi chứng từ, sổ, danh mục, cấu hình |
 | 1.2.0-draft | 2026-11-03 | Chốt `ctx.meta(key, value)` (§4.1), action theo lô `ctx.data.item` (§4.2), che bí mật và lược `input` lớn trong bằng chứng (§4.3), `expose.http.query` / `bodyLimit` và thân tuỳ chọn (§3.1). Đề xuất chờ chốt: nhật ký nghiệp vụ trong action (§4.4) |
+| 1.3.0-draft | 2026-11-03 | Chốt §4.4 phương án C: `writeAudit` trong action ghi vào `changes.notes.audit[]` của bằng chứng, trừ sổ `AUDIT_KEEP` (ba mục có chỗ đọc); phép kiểm SC-AUDIT-1 |
