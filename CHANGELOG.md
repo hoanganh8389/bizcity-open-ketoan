@@ -17,6 +17,8 @@ Mỗi bản ghi đủ sáu mục:
 - **Ghi danh mục chi nhánh, kho, tên đơn vị tính, tài khoản ngân hàng đi qua action** (PHASE-014 W6 đợt 3, SC-ACT-1): cùng đường dẫn, quyền, mã trả về như cũ (201 khi thêm); `Idempotency-Key` không bắt buộc (thao tác đặt trạng thái tuyệt đối, gửi lại không tạo thêm). Khác biệt người dùng thấy: nhật ký bằng chứng ghi tên hành động mới `core.branch.*`, `core.warehouse.*`, `core.unit-name.*`, `core.bank-account.*` thay cho `branch.create`… và có biên nhận `meta.receipt`; kiểm và ghi nằm trong một giao dịch với bằng chứng. Hàm `branchService.create`… cũ giữ nguyên cho nơi khác gọi. SC-ACT-1: 56,7% → 66,9%.
 
 ### Thêm
+<!-- [2026-11-03 10:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — công cụ nhận việc -->
+- **Công cụ nhận việc R-FLOW**: `node scripts/nhan-viec.mjs` (`list`: bảng giữ chỗ trên origin/main và các nhánh còn mở; `kiem`: nhánh hiện tại đã giữ chỗ chưa, tệp đổi có nằm trong phạm vi không, đổi thứ dùng chung đã có chữ chốt vào main chưa, nhánh ngắn không, đã gộp main và không xung đột) và phép kiểm **SC-FLOW-1** (bảng CLAIMS.md đúng khuôn, các dòng không chồng phạm vi, mỗi nhánh một dòng; mức chặn). 11 ca thử ở `tests/conformance/checks/flow/flow.test.mjs`.
 <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW -->
 - **Luật nhận việc [R-FLOW](docs/rules/RULE-FLOW.md)** (chủ dự án đồng ý): giữ chỗ vào `main` trước khi code ([CLAIMS.md](docs/phases/CLAIMS.md)), chốt thiết kế thứ dùng chung bằng tài liệu trước, nhánh ngắn, gộp `main` và bộ kiểm xanh trước khi đẩy; Bước 0 trong AGENTS.md. Sinh ra từ việc hai phiên làm trùng W6 đợt 3 và đợt 4 ngày 2026-11-03. Phép kiểm tự động (SC-FLOW-1/2, `nhan-viec.mjs`) là đợt kế tiếp.
 <!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ADR-0022, HT10 -->

@@ -27,4 +27,3 @@ Luật: [R-FLOW](../rules/RULE-FLOW.md). **Đọc bản trên `origin/main`** (`
 | Đợt | Phạm vi | Người nhận | Nhánh | Trạng thái | Từ ngày |
 |---|---|---|---|---|---|
 | PHASE-014 · W6 đợt 4 — `ctx.meta` + route đối tượng (PR #50) | `packages/platform/src/core/actions.ts`; `apps/api/src/modules/partners/**`; `docs/contracts/BIZCITY-ACTION-v1.md`; `apps/api/test/action-meta.test.ts` | hoanganh8389 (phiên W6-meta) | `feat/phase-014-w6-meta` | chờ merge — đang xung đột `main`, phiên chủ dự án đang gộp | 2026-11-03 |
-| PHASE-014 · FLOW-1 — script `nhan-viec.mjs` và phép kiểm SC-FLOW-1 / SC-FLOW-2 | `scripts/nhan-viec.mjs`; `tests/conformance/checks/flow/**`; `tests/conformance/lib/layers.mjs` | hoanganh8389 (phiên Claude, R-FLOW) | `feat/flow-nhan-viec` (tạo sau khi PR tài liệu này merge) | đang làm | 2026-11-03 |
