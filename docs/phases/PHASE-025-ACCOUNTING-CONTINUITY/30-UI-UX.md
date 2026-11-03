@@ -25,7 +25,7 @@ Bản mẫu bấm thử: [mockups/continuity.html](mockups/continuity.html).
 │                              HD-0461   30 hộp → L002 30 × 120k = 3.600.000                     ✔
 ├─ Bút toán                    Nợ 632 / Có 156  12.400.000 (HD-0450)  · 3.600.000 (HD-0461)
 ├─ Trả / huỷ                   TL-0012 trả 5 hộp của HD-0450, phiếu hoàn theo giá nhập mới nhất 125.000/hộp
-│                              ✘ CT-REV-001 — giá vốn gốc của HD-0450 là 103.333/hộp (12.400.000 ÷ 120) → hoàn 516.667
+│                              ⚠ CT-REV-002 — giá vốn gốc của HD-0450 là 103.333/hộp (12.400.000 ÷ 120) → hoàn 516.667
 └─ Lãi lỗ kỳ 10                doanh thu 19.800.000 · giá vốn 16.000.000 · lãi gộp 3.800.000
 ```
 

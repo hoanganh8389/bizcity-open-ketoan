@@ -21,7 +21,7 @@ Gate C không chặn ghi sổ (R-GATE-9: không dừng bán hàng). Nó chặn *
 | Điều chuyển | đúng kho nguồn / đích; cùng nhóm tính giá thì không đổi giá trị; khác nhóm thì mang giá trị nhóm gửi; không sinh doanh thu / giá vốn | `CT-INV-002..003` |
 | Bán hàng | đúng khách, chứng từ, giá bán, thuế, thời điểm ghi nhận doanh thu | Gate B |
 | Xuất kho | đủ tồn theo chính sách; phân bổ đúng lớp; không ghi trùng | `CT-COST-002..004` |
-| Trả hàng bán | tham chiếu giao dịch gốc; hoàn lượng và **giá vốn của lần bán gốc** | `CT-REV-001..002` |
+| Trả hàng bán | tham chiếu giao dịch gốc; hoàn lượng và **giá vốn của lần bán gốc** | `CT-REV-001`, `CT-REV-002` |
 | Huỷ chứng từ | đã ghi sổ chưa; kỳ đã khoá chưa; nghiệp vụ điều chỉnh hợp lệ | `CT-REV-003` |
 | Đổi ánh xạ tài khoản | phiên bản, ngày hiệu lực, tác động tới giao dịch và số dư | `CT-ACC-004` |
 | Khoá sổ | giao dịch chưa xử lý; chênh lệch kho – sổ cái; đối chiếu và nghiệp vụ cuối kỳ | `CT-PER-*` |
@@ -34,7 +34,8 @@ Gate C không chặn ghi sổ (R-GATE-9: không dừng bán hàng). Nó chặn *
 | `CT-LIN-001` | mọi dòng xuất đã ghi giá vốn có phân bổ về lớp | phiếu bán đúng nhưng không nối được về phiếu nhập |
 | `CT-LIN-002` | mọi lớp có nguồn (phiếu nhập / tồn đầu / bể có nguồn) | lớp "mồ côi" |
 | `CT-MD-002` | đổi mã giữa kỳ không đổi `item_id` của dòng đã ghi; báo cáo theo mã đọc phiên bản tại ngày | đứt lịch sử FIFO / lãi lỗ theo mã |
-| `CT-REV-001` | dòng trả hàng có `original_line_id`; giá vốn hoàn = giá vốn đã phân bổ cho dòng gốc (tỷ lệ lượng) | trả hàng hợp lệ nhưng hoàn sai giá vốn |
+| `CT-REV-001` | dòng trả hàng **không có** `original_line_id` (không nối được tới dòng bán gốc) | trả hàng không truy được giá vốn gốc; thường là dữ liệu cũ chưa có liên kết — mức **cảnh báo**, ghi lý do khi khoá kỳ <!-- [2026-11-03 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt: tách CT-REV-001 làm hai, cảnh báo rõ + ghi lý do --> |
+| `CT-REV-002` | dòng trả hàng **có** tham chiếu gốc nhưng giá vốn hoàn ≠ giá vốn đã phân bổ cho dòng gốc (tỷ lệ lượng) mà không ghi lý do | trả hàng hợp lệ nhưng hoàn sai giá vốn; mức **cảnh báo** (có trường hợp hợp lệ: hàng trả hỏng / cận hạn), phải ghi lý do; nâng lên chặn sau giai đoạn bóng nếu tỉ lệ nhầm cao |
 | `CT-REC-001` | Σ giá trị tồn theo lớp = số dư tài khoản hàng tồn kho (từng nhóm, cuối kỳ) | Nợ = Có nhưng chi tiết ≠ sổ cái |
 | `CT-REC-002` | Σ phân bổ kỳ = phát sinh Nợ giá vốn từ xuất kho | giá vốn sổ cái không giải thích được |
 | `CT-PER-001` | không còn mục bể chờ / nháp chặn của kỳ | khoá khi còn chứng từ treo |
@@ -76,7 +77,8 @@ Mã nào cũng vào `bizcity_findings@1` (cổng C), có vì sao, cách sửa, c
 | 2. Phân mức theo bản chất | **toàn vẹn chuỗi** (`CT-LIN-*` đứt chuỗi, `CT-REC-*` chi tiết ≠ sổ cái) = mức `error`: chặn trừ khi chấp nhận có lý do, như R-DIAG-4. **Việc cuối kỳ chưa làm** (chưa phân bổ giá vốn, chưa kết chuyển, chứng từ ở bể) và **mã nghiệp vụ** (`CT-REV-*` hoàn sai giá vốn) = mặc định `warn`: hiện, tính vào thanh tiến độ, không chặn (R-GATE-9: mặc định cho phép). Đơn vị tự nâng một mã lên chặn ở HT09 khi sẵn sàng (có lý do, nhật ký) |
 | 3. Đúng thứ tự | điều kiện đánh giá theo thứ tự việc cuối kỳ: xử lý bể → phân bổ giá vốn → đối chiếu chi tiết – sổ cái → kết chuyển. Chưa tới bước thì hiện "chưa tới lượt", không báo lỗi dồn một lần (tránh nhầm "chưa làm" với "đứt chuỗi") |
 | 4. Sửa không viết lại sổ | chỗ đứt sửa bằng **chứng từ điều chỉnh trong kỳ còn mở** (đảo + ghi mới, R-LEDGER-1), hoặc mở khoá kỳ có lý do. Phiếu ghi lùi vào kỳ đã khoá bị khoá kỳ hiện có từ chối → vào kỳ mở; phân bổ FIFO của kỳ đã khoá **không tự tính lại** |
-| 5. Chấp nhận là quyết định, có dấu vết | `acceptDiagnostics`: mã được chấp nhận + lý do (≥ 5 ký tự) + người; ghi vào bằng chứng và nhật ký khoá kỳ; mã vẫn hiện ở Hành trình mặt hàng với nhãn "đã chấp nhận khi khoá kỳ X". Mã đánh dấu `acceptable: false` (vd Σ phân bổ ≠ giá vốn đã ghi) không chấp nhận được: phải sửa. Ai được chấp nhận là việc của phân quyền (ADR-0020), không theo chức danh |
+| 5. Cảnh báo cũng phải ghi lý do <!-- [2026-11-03 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt: tách CT-REV-001 làm hai, cảnh báo rõ + ghi lý do --> | mã mức `warn` hiện **rõ, cụ thể** (nêu đúng phiếu, số tiền lệch, nguyên nhân có thể) và khi khoá kỳ vẫn cần **ghi lý do** (một lý do cho cả nhóm cùng nguyên nhân, như D023-6). Khác mức chặn: cảnh báo ghi lý do là đủ; mức chặn thêm điều kiện quyền chấp nhận và có mã `acceptable: false` |
+| 5b. Chấp nhận là quyết định, có dấu vết | `acceptDiagnostics`: mã được chấp nhận + lý do (≥ 5 ký tự) + người; ghi vào bằng chứng và nhật ký khoá kỳ; mã vẫn hiện ở Hành trình mặt hàng với nhãn "đã chấp nhận khi khoá kỳ X". Mã đánh dấu `acceptable: false` (vd Σ phân bổ ≠ giá vốn đã ghi) không chấp nhận được: phải sửa. Ai được chấp nhận là việc của phân quyền (ADR-0020), không theo chức danh |
 | 6. Khoá = chốt | khi khoá thành công: lưu ảnh chụp kết quả Gate C của phạm vi khoá (lượt chẩn đoán); chốt phân bổ giá vốn của kỳ (`cost_allocations` không còn bản mới cho kỳ đó). Mở khoá = sự kiện có lý do; chạy lại Gate C trước khi khoá lại |
 | 7. Phạm vi | khoá theo (kỳ × chi nhánh × loại chứng từ) như hiện nay; Gate C chỉ đánh giá phần chạm phạm vi khoá (nhóm tính giá của chi nhánh đó) |
 | 8. Hiệu năng bán lẻ | Gate C chạy **gia tăng** sau ghi sổ và đêm; lúc khoá chỉ đọc kết quả mới nhất + kiểm lại phần thay đổi; `close-checks` xem trước không lưu lượt |

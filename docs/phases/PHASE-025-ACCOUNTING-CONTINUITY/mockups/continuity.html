@@ -71,7 +71,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
         <div class="node acc" data-l="J1"><b>Nợ 632 / Có 156</b><span class="m">12.400.000 · HD-0450</span></div>
         <div class="node acc" data-l="J2"><b>Nợ 632 / Có 156</b><span class="m">3.600.000 · HD-0461</span></div></div></div>
       <div class="lane"><div class="k">Trả · huỷ</div><div class="nodes">
-        <div class="node acc brk" data-l="L001 L002 J1"><b>TL-0012 · trả 5 hộp HD-0450</b><span class="m">hoàn theo 125.000/hộp <span class="pill bad">✘ CT-REV-001</span><br>giá vốn gốc 103.333/hộp → hoàn 516.667 · <button class="btn" onclick="fixReturn(this)">Sửa phiếu hoàn</button></span></div></div></div>
+        <div class="node acc brk" data-l="L001 L002 J1"><b>TL-0012 · trả 5 hộp HD-0450</b><span class="m">hoàn theo 125.000/hộp <span class="pill warn">⚠ CT-REV-002</span><br>giá vốn gốc 103.333/hộp → hoàn 516.667 · <button class="btn" onclick="fixReturn(this)">Sửa phiếu hoàn</button></span></div></div></div>
       <div class="lane"><div class="k">Lãi lỗ · kỳ</div><div class="nodes">
         <div class="node acc"><b>Kỳ 10/2026</b><span class="m">doanh thu 19.800.000 · giá vốn 16.000.000 · lãi gộp 3.800.000</span></div></div></div>
     </div>
@@ -88,7 +88,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
       <tr data-acc="0"><td>01/10</td><td>Đổi mã hiển thị SUA01 → SUA-900</td><td>—</td><td><span class="pill op">vận hành</span></td><td><span class="pill ok">3/3</span></td></tr>
       <tr data-acc="0"><td>05/10</td><td>Đặt hàng nhà cung cấp</td><td>DH-0033</td><td><span class="pill op">vận hành</span></td><td><span class="pill ok">2/2</span></td></tr>
       <tr data-acc="1"><td>10/10</td><td>Bán hàng + xuất kho</td><td>HD-0450</td><td><span class="pill ok">kế toán</span></td><td><span class="pill ok">10/10</span></td></tr>
-      <tr data-acc="1" data-bad="1"><td>14/10</td><td>Trả hàng bán</td><td>TL-0012</td><td><span class="pill ok">kế toán</span></td><td><span class="pill bad">4/5 · CT-REV-001</span></td></tr>
+      <tr data-acc="1" data-bad="1"><td>14/10</td><td>Trả hàng bán</td><td>TL-0012</td><td><span class="pill ok">kế toán</span></td><td><span class="pill warn">4/5 · CT-REV-002</span></td></tr>
       <tr data-acc="0"><td>18/10</td><td>Chuyển kho cùng nhóm tính giá</td><td>CK-0091</td><td><span class="pill op">vận hành</span></td><td><span class="pill ok">3/3</span></td></tr>
       <tr data-acc="1" data-bad="1"><td>31/10</td><td>Xuất bán chưa tính giá vốn</td><td>HD-0502</td><td><span class="pill ok">kế toán</span></td><td><span class="pill bad">8/10 · CT-LIN-001</span></td></tr>
     </tbody></table></div></div>
@@ -136,7 +136,7 @@ document.querySelectorAll('#lineage .node').forEach((n) => n.onclick = (e) => {
 function fixReturn(btn) {
   const node = btn.closest('.node');
   node.classList.remove('brk');
-  node.querySelector('.m').innerHTML = 'hoàn 5 × 103.333 = 516.667 theo giá vốn gốc · <span class="pill ok">✔ CT-REV-001</span> <span class="win">vừa sửa</span>';
+  node.querySelector('.m').innerHTML = 'hoàn 5 × 103.333 = 516.667 theo giá vốn gốc · <span class="pill ok">✔ CT-REV-002</span> <span class="win">vừa sửa</span>';
   conds[4].done = conds[4].total; render('Trả / huỷ tham chiếu đúng gốc');
 }
 document.getElementById('onlyAcc').onchange = filt; document.getElementById('onlyBad').onchange = filt;

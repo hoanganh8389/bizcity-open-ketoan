@@ -30,7 +30,7 @@
 | T025-2 | Bình quân: Σ phân bổ kỳ = phát sinh Nợ giá vốn; giá vốn trước / sau W2 không đổi trên dữ liệu thật |
 | T025-3 | FIFO: nhập 100 × 100k, nhập 80 × 120k, xuất 120 → L001 100 + L002 20 = 12.400.000; phiếu nhập ghi lùi ngày → phân bổ mới thay bản cũ, bản cũ còn |
 | T025-4 | Đổi mã giữa kỳ: chuỗi không đứt, báo cáo theo mã đọc đúng phiên bản |
-| T025-5 | Trả hàng hoàn sai giá vốn → `CT-REV-001` → khoá kỳ bị chặn; sửa → mở được |
+| T025-5 | Trả hàng có gốc nhưng hoàn sai giá vốn → `CT-REV-002` (cảnh báo, nêu phiếu + số lệch); khoá kỳ cần ghi lý do; trả hàng không có gốc → `CT-REV-001`; sửa bằng phiếu điều chỉnh → mã hết |
 | T025-7 | Chuyển đơn vị từ bình quân sang FIFO từ đầu năm: lớp `opening` từ tồn đầu, kỳ cũ giữ nguyên bình quân, kỳ mới phân bổ theo lớp |
 | T025-6 | Tồn chi tiết ≠ số dư 156 → `CT-REC-001`, thanh "Sẵn sàng khoá kỳ" 5/6, nút khoá kỳ ghi rõ còn thiếu |
 
@@ -40,3 +40,4 @@
 |---|---|---|
 | 2026-11-03 18:10 | Claude Code | Mở phase theo chỉ đạo chủ dự án (Accounting Continuity); ADR-0021 đề xuất, R-CONT, tài liệu, bản mẫu. Phản biện: không cứng hoá FIFO (Kernel đang bình quân tháng), `account_id` = phiên bản + số hiệu (ADR-0018), mã kiểm vào thư viện mã (cổng C). |
 | 2026-11-03 19:30 | Claude Code | Chủ duyệt D025-2 (mặc định FIFO cho đơn vị mới, đơn vị cũ giữ bình quân); D025-6 hướng: mở rộng cơ chế khoá kỳ hiện có (R-DIAG-4), toàn vẹn chuỗi chặn trừ khi chấp nhận có lý do, mã khác mặc định cảnh báo (R-GATE-9). Sửa R-CONT-6 cho khớp. |
+| 2026-11-03 20:10 | Claude Code | Chủ duyệt: trả hàng hoàn sai giá vốn để cảnh báo, tách `CT-REV-001` (không có gốc) / `CT-REV-002` (có gốc, hoàn khác giá vốn gốc); cảnh báo rõ, cụ thể và khi khoá kỳ ghi lý do. |
