@@ -21,3 +21,10 @@ tests/conformance/output/
 **/.bizcity/latest/
 **/.bizcity/runs/
 **/.bizcity/history.jsonl
+
+# [2026-11-03 03:25 PM Johnny Chu - Chu Hoàng Anh] G3-01 — skill kế toán: bản dựng GIẢ của test CLI được giữ; bản cài skill và liên kết máy cục bộ không đưa lên git
+!packages/cli/test/fixtures/root/packages/*/dist/
+/.claude/skills/
+/.agents/skills/
+**/.bizcity/ketoan.json
+/build/

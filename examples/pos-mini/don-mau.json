@@ -1,0 +1,16 @@
+{
+  "id": 1001,
+  "version": 1,
+  "store": "CN01",
+  "receiptNo": "CN01-HD1001",
+  "date": "2026-11-03",
+  "customer": { "phone": "0912345678", "name": "Nguyễn Văn A" },
+  "items": [
+    { "lineId": 1, "sku": "SUA400", "name": "Sữa bột 400g", "unit": "Lon", "qty": 2, "unitPrice": 398148, "amountBeforeTax": 796296, "taxCode": "R08", "taxAmount": 63704 },
+    { "lineId": 2, "sku": "QT01", "name": "Quà tặng kèm", "unit": "Cái", "qty": 1, "amountBeforeTax": 0, "taxCode": "R08", "taxAmount": 0, "gift": true }
+  ],
+  "payments": [
+    { "method": "cash", "amount": 500000 },
+    { "method": "qr", "amount": 360000, "ref": "FT26307123456" }
+  ]
+}

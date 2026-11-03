@@ -191,7 +191,8 @@ export const checks = [
     title: 'JSON mẫu docs/api/vi-du hợp lệ theo bizcity_ledger_intake@1',
     gate: 'DOCS', contract: 'bizcity_ledger_intake', rules: ['R-QG-7', 'R-EVENT-7'], conf: [], tier: 1, enforce: 'ratchet', weight: 3, targets: ['repo'],
     run(ctx) {
-      const files = ctx.repo.files({ under: ['docs/api/vi-du'], ext: ['.json'] });
+      // [2026-11-03 08:12 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — kiểm cả mẫu cho module (docs/api/vi-du-module): chỉ theo khuôn, không gửi thật ở api-examples
+      const files = ctx.repo.files({ under: ['docs/api/vi-du', 'docs/api/vi-du-module'], ext: ['.json'] });
       const findings = [];
       for (const f of files) {
         const data = ctx.repo.json(f);
