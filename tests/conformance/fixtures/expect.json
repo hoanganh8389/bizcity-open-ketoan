@@ -497,6 +497,19 @@
           "keys": [
             "free-text:packages/kernel/src/modules/intake/thong-bao-tu-do.ts"
           ]
+        },
+        "SC-ITEM-2": {
+          "findings": 2,
+          "keys": [
+            "fk:products:product_sku",
+            "col:inventory_movements.lot_sku"
+          ]
+        },
+        "SC-ITEM-3": {
+          "findings": 1,
+          "keys": [
+            "packages/kernel/src/modules/posting/rules/xau.rule.ts"
+          ]
         }
       }
     },
