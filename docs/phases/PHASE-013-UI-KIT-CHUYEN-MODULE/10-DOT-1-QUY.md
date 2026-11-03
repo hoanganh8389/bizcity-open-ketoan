@@ -60,7 +60,7 @@ Host module chỉ gắn ở `/api/v1/m/<key>/…` (`apps/api/src/app.ts:222`); k
 | | 1a — chuyển mã | 1b — chuyển bảng |
 |---|---|---|
 | Làm gì | 11 action, workflow, web, mẫu in sang `modules/quy/`; bảng còn ở `public`; gỡ `import` của lõi web (`printCatalog.ts`); `ke-toan` đọc qua action `quy` | `payment_requests`, `payment_request_settings` → `mod_quy` bằng migration mới; mục kiểm kỳ do `quy` cung cấp |
-| Chờ gì | ADR-0025 (PR riêng, `docs/adr/ADR-0025-cong-kiem-ky-va-chuyen-tiep-duong-dan-cu.md`) mục B (lớp 308) vào `main` nếu muốn bỏ đường cũ; không chờ mục A | ADR-0025 mục A làm xong (`period.check.contributor`) |
+| Chờ gì | [ADR-0025](../../adr/ADR-0025-cong-kiem-ky-va-chuyen-tiep-duong-dan-cu.md) mục B (lớp 308) vào `main` nếu muốn bỏ đường cũ; không chờ mục A | ADR-0025 mục A làm xong (`period.check.contributor`) |
 | Bằng chứng | §5, trừ dòng "bảng ở `mod_quy`" | §4: đối chiếu `doi-chieu-ke-toan.sql` trước / sau, số đếm bảng bằng nhau |
 
 **Bàn giao:** `quy` do nhân sự khác thực hiện. Người nhận (1) đọc [CHUYEN-PHAN-HE-SANG-MODULES](../../standard/CHUYEN-PHAN-HE-SANG-MODULES.md), (2) `node scripts/nhan-viec.mjs` rồi mở PR chỉ-tài-liệu thêm dòng giữ chỗ cho `S013-3` (phạm vi: `apps/api/src/phan-he/quy/**`, `apps/web/src/phan-he/quy/**`, `modules/quy/**`, `apps/api/test/payment-requests.test.ts`), (3) làm theo §2–§5; không tự vá Kernel (mục A / B là việc Nhóm Lõi). Dòng giữ chỗ của phiên Claude đã gỡ khỏi CLAIMS.md.
