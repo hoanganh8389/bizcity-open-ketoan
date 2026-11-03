@@ -590,6 +590,8 @@ export interface ProductUnitsTable {
   weight_kg: string | null;
   note: Generated<string>;
   updated_at: TimestampDefault;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface UnitNamesTable {
@@ -810,6 +812,8 @@ export interface ProductPricesTable {
   is_default_unit: Generated<boolean>;
   note: Generated<string>;
   updated_at: TimestampDefault;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface CatalogTombstonesTable {
@@ -1084,6 +1088,8 @@ export interface LedgerLinesTable {
   dims: JsonDefault;
   /** Dòng giá vốn chờ tính giá: 'debit' | 'credit' (bên ghi số tiền). Xem migration 0059. */
   cost_fill: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface LedgerLinksTable {
@@ -1220,6 +1226,8 @@ export interface InventoryMovementsTable {
   reason_code: string | null;
   is_gift: Generated<boolean>;
   priced_at_sale: Generated<boolean>;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface AssetCategoriesTable {
@@ -1386,6 +1394,8 @@ export interface InventoryCostsTable {
   computed_at: Generated<Date>;
   /** computed = tính bình quân; import = nhập từ Excel giá vốn tháng (migration 0061). */
   cost_source: Generated<string>;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 /** View (migration 0053): thanh toán của chứng từ bán / trả lại đã ghi sổ, đọc từ payload. Chỉ đọc. */

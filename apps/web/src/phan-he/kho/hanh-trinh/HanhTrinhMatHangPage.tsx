@@ -99,6 +99,18 @@ export function HanhTrinhMatHangPage() {
             <Link className="btn btn-sm" to={`/bao-cao/so-chi-tiet-hang-hoa?sku=${encodeURIComponent(d.item.sku)}`}>Sổ chi tiết hàng hoá</Link>
           </div>
 
+          {/* [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: định danh + lịch sử mã — mã cũ / mới là MỘT mặt hàng */}
+          {d.item.itemId && (
+            <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, marginBottom: 4 }}>
+              <span className="muted" title="Định danh bất biến của mặt hàng — không đổi khi đổi mã">Định danh <code>{d.item.itemId}</code></span>
+              {d.item.codes.length > 1 && <span className="muted">· Các mã:</span>}
+              {d.item.codes.length > 1 && d.item.codes.map((c, i) => (
+                <span key={i} className={`badge ${c.validTo === null ? 'badge-ok' : ''}`} title={`${c.kind} · ${c.validFrom === '1970-01-01' ? 'từ đầu' : `từ ${c.validFrom}`}${c.validTo ? ` đến trước ${c.validTo}` : ' · đang dùng'}`}>
+                  {c.kind === 'sku' ? '' : `${c.kind}: `}{c.code}{c.validTo ? ` (đến ${c.validTo})` : ''}
+                </span>
+              ))}
+            </div>
+          )}
           {d.coverage.notes.map((n, i) => <div key={i} className={`alert ${i === 0 ? 'alert-info' : 'alert-warn'}`} style={{ margin: '4px 0' }}>{n}</div>)}
           {d.summary.truncated && <div className="alert alert-warn" style={{ margin: '4px 0' }}>Danh sách quá dài nên bị cắt — thu hẹp khoảng ngày để xem đủ.</div>}
 
@@ -153,7 +165,7 @@ export function HanhTrinhMatHangPage() {
               <table className="grid"><thead><tr><th>Ngày</th><th>Sự kiện</th><th>Chứng từ</th><th>Chi nhánh / kho</th><th className="num">Số lượng</th><th className="num">Thành tiền</th><th>Ảnh hưởng</th><th>Trạng thái</th></tr></thead>
                 <tbody>{events.map((e, i) => (
                   <tr key={i} onClick={() => setPicked(picked === e ? null : e)} style={{ cursor: 'pointer', background: related.has(e.docKey) ? 'var(--info-bg, #e8f0fc)' : undefined }}>
-                    <td>{e.at}</td><td>{e.label}</td><td><Link to={docLink(e)} onClick={(ev) => ev.stopPropagation()}>{e.docNo}</Link>{e.version > 1 ? <span className="muted"> (v{e.version})</span> : null}</td>
+                    <td>{e.at}</td><td>{e.label}</td><td><Link to={docLink(e)} onClick={(ev) => ev.stopPropagation()}>{e.docNo}</Link>{e.version > 1 ? <span className="muted"> (v{e.version})</span> : null}{e.code && e.code !== d.item.sku ? <span className="badge" title="Mã hàng tại ngày chứng từ — cùng định danh"> mã cũ {e.code}</span> : null}</td>
                     <td>{e.branch}{e.warehouse ? ` / ${e.warehouse}` : ''}{e.counterBranch ? ` ⇄ ${e.counterBranch}` : ''}</td>
                     <td className="num">{qty(e.qty)}</td><td className="num">{e.amount === null ? <span className="muted">chờ giá vốn</span> : <Money value={e.amount} />}</td>
                     <td><span className={`badge ${e.effect === 'accounting' ? 'badge-ok' : ''}`} title={e.effectWhy}>{e.effect === 'accounting' ? 'kế toán' : 'vận hành'}</span></td><td>{e.status}</td>

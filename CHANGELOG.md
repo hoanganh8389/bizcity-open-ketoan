@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b -->
+- **Định danh mặt hàng trên sổ và kho** (migration `0066_item_id_so_kho`, [bizcity_item_master@1](docs/contracts/BIZCITY-ITEM-MASTER-v1.md) 0.2.0): mọi dòng sổ cái, dòng nhập xuất kho, giá vốn tháng, đơn vị quy đổi, bảng giá mang `item_id` của mặt hàng; mã hàng trên dòng giữ nguyên làm ảnh chụp tại ngày. **Hành trình mặt hàng** truy theo định danh: sau khi đổi mã, mã cũ và mã mới là **một** hành trình, có lịch sử mã, nhãn "mã cũ" trên sự kiện cũ; gõ mã cũ vẫn tìm ra mặt hàng. Sổ cái vẫn chỉ thêm.
 <!-- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a -->
 - **Item Master — định danh mặt hàng bất biến** ([bizcity_item_master@1](docs/contracts/BIZCITY-ITEM-MASTER-v1.md), migration `0065_mat_hang_dinh_danh`, bước B2a, ADR-0017): mỗi mặt hàng có một `item_id` (ULID) không đổi, không xoá, không dùng lại; mã hàng có **phiên bản và ngày hiệu lực** (đổi mã = đóng mã cũ + thêm mã mới); phân loại hạch toán theo ngày. **Bất biến ở CSDL**: không sửa / xoá định danh, mã chỉ thêm, một mã tại một ngày chỉ trỏ một mặt hàng, lịch sử phân loại không bị sửa. Chạy **song song** với danh mục mặt hàng hiện có (đồng bộ tự động ở mọi đường ghi, chưa ảnh hưởng ai); kèm **Item Resolver** (mã hoặc itemId tại một ngày → item_id + phân loại hiệu lực). Chi phí đồng bộ 2.000 mặt hàng qua API: gửi lại y nguyên không đổi, thêm mới +40%.
 <!-- [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1 -->
@@ -298,6 +300,8 @@ Mỗi bản ghi đủ sáu mục:
   - Bản cài có sổ lệch sẽ thấy lỗi khi khoá tháng tới: xem `GET /api/v1/system/diagnostics?from&to`. Chấp nhận thì ghi lý do.
 
 ### Nâng cấp cần làm
+<!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b -->
+- Migration `0066` điền `item_id` cho toàn bộ dòng sổ / kho / giá vốn (theo mã có hiệu lực tại ngày của dòng). Mã có trong sổ / kho mà không có trong danh mục mặt hàng được tạo thành **mặt hàng mồ côi** (ngừng dùng, `attributes.orphan`) — khai lại mã đó thì nhận lại đúng định danh. Sổ lớn: chạy thử trên bản sao trước (PHASE-024 · 70 §3.2.1 G6).
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
 - Chạy migration `0060_thong_bao` (chỉ thêm hai bảng `notifications`, `notification_reads`). Hợp đồng `bizcity_extension` 1.3.0-draft: hook `document.beforeTransition` bỏ (chưa module nào dùng).
 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3 -->

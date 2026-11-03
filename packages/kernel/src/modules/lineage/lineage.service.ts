@@ -7,6 +7,7 @@
  *   getItemLineage()   mọi sự kiện kho + mọi dòng bút toán mang mã + giá vốn từng tháng của MỘT mặt hàng, theo ngày
  *   explainCost()      "Vì sao giá vốn này?": công thức đơn giá bình quân tháng bằng số thật + các phiếu góp vào
  *
+ * [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: khoá theo item_id (0066) — mã cũ / mới của một mặt hàng về MỘT hành trình; dòng chưa gắn item_id lấy theo mã.
  * Nối bằng khoá có sẵn: inventory_movements.event_id → accounting_events; ledger_lines.product_sku / source_line_key →
  * ledger_entries.event_id; inventory_costs (nhóm tính giá = đơn vị hạch toán của chi nhánh). Phần chưa truy được nói rõ ở
  * `coverage.notes` (không giả vờ đầy đủ). Luật tính giá ở costing.service.ts; explainCost() CỘNG LẠI từ các phiếu và báo khớp /
@@ -31,6 +32,22 @@ const mmyyyy = (p: string) => `${p.slice(5)}/${p.slice(0, 4)}`;
 
 export interface LineageQuery { from?: string; to?: string; branch?: string; limit?: number }
 
+/** Mặt hàng của một mã: item_id (mã đang mở, hoặc mã gần nhất) + lịch sử mã. Chưa có định danh → null. */
+async function itemKey(trx: Db, tenantId: string, sku: string): Promise<{ itemId: string | null; codes: { kind: string; code: string; validFrom: string; validTo: string | null }[] }> {
+  const hit = await sql<{ item_id: string }>`
+    SELECT item_id FROM item_codes WHERE tenant_id = ${tenantId} AND kind IN ('sku', 'alias') AND code = ${sku}
+     ORDER BY (valid_to IS NULL) DESC, valid_from DESC LIMIT 1`.execute(trx);
+  const itemId = hit.rows[0]?.item_id ?? null;
+  if (!itemId) return { itemId: null, codes: [] };
+  const codes = await sql<{ kind: string; code: string; valid_from: string; valid_to: string | null }>`
+    SELECT kind, code, valid_from::text, valid_to::text FROM item_codes WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
+  return { itemId, codes: codes.rows.map((c) => ({ kind: c.kind, code: c.code, validFrom: c.valid_from, validTo: c.valid_to })) };
+}
+/** Điều kiện "dòng của mặt hàng": theo item_id; dòng chưa gắn item_id thì theo mã. */
+const ofItem = (alias: string, skuCol: string, itemId: string | null, sku: string) =>
+  itemId ? sql`(${sql.ref(`${alias}.item_id`)} = ${itemId} OR (${sql.ref(`${alias}.item_id`)} IS NULL AND ${sql.ref(`${alias}.${skuCol}`)} = ${sku}))`
+    : sql`${sql.ref(`${alias}.${skuCol}`)} = ${sku}`;
+
 /** Tìm mặt hàng cho ô tìm của màn Hành trình: mã (đúng hoặc đầu), mã vạch (đúng), tên (chứa). */
 export async function searchItems(trx: Db, tenantId: string, q: string, limit = 20) {
   const text = q.trim();
@@ -40,7 +57,17 @@ export async function searchItems(trx: Db, tenantId: string, q: string, limit = 
     .where('tenant_id', '=', tenantId)
     .where((eb) => eb.or([eb('sku', '=', text), eb('barcode', '=', text), eb('sku', 'ilike', `${esc}%`), eb('name', 'ilike', `%${esc}%`)]))
     .orderBy(sql`(sku = ${text}) DESC`).orderBy('sku').limit(Math.min(limit, 50)).execute();
-  return rows.map((r) => ({ sku: r.sku, name: r.name, unit: r.unit, barcode: r.barcode, isActive: r.is_active, isDraft: r.is_draft }));
+  const found = rows.map((r) => ({ sku: r.sku, name: r.name, unit: r.unit, barcode: r.barcode, isActive: r.is_active, isDraft: r.is_draft }));
+  // [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: gõ MÃ CŨ (đã đổi), bí danh, mã ngoài → ra mặt hàng hiện hành (cùng item_id), kèm ghi chú mã đã gõ
+  const old = await sql<{ sku: string; name: string; unit: string; barcode: string; is_active: boolean; is_draft: boolean; matched: string }>`
+    SELECT DISTINCT ON (p.sku) p.sku, p.name, p.unit, p.barcode, p.is_active, p.is_draft, c.code AS matched
+      FROM item_codes c
+      JOIN item_codes cur ON cur.item_id = c.item_id AND cur.kind = 'sku' AND cur.valid_to IS NULL
+      JOIN products p ON p.tenant_id = cur.tenant_id AND p.sku = cur.code
+     WHERE c.tenant_id = ${tenantId} AND c.code = ${text} AND p.sku <> ${text}
+     LIMIT 10`.execute(trx);
+  for (const o of old.rows) if (!found.some((f) => f.sku === o.sku)) found.unshift({ sku: o.sku, name: `${o.name} (mã cũ / khác: ${o.matched})`, unit: o.unit, barcode: o.barcode, isActive: o.is_active, isDraft: o.is_draft });
+  return found;
 }
 
 function effectOf(kind: LineageKind, sameGroup: boolean): { effect: LineageEffect; why: string } {
@@ -57,16 +84,17 @@ function effectOf(kind: LineageKind, sameGroup: boolean): { effect: LineageEffec
 export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: LineageQuery = {}): Promise<LineageItem> {
   const item = await trx.selectFrom('products').select(['sku', 'name', 'unit', 'barcode', 'is_active', 'is_draft']).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (!item) throw Errors.notFound(`mặt hàng ${sku}`);
+  const key = await itemKey(trx, tenantId, sku);
   const limit = Math.min(Math.max(q.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
   const from = q.from || null;
   const to = q.to || null;
 
   const evRows = await sql<{
-    at: string; kind: string; line_no: number; qty: string; amount: string | null; unit: string; warehouse_code: string; is_gift: boolean;
+    at: string; kind: string; code: string; line_no: number; qty: string; amount: string | null; unit: string; warehouse_code: string; is_gift: boolean;
     branch: string; counter: string | null; g1: string; g2: string | null; doc_key: string; doc_no: string; doc_type: string; version: number;
     status: string; original: string | null;
   }>`
-    SELECT m.doc_date::text AS at, m.kind, m.line_no, m.qty, m.amount, m.unit, m.warehouse_code, m.is_gift,
+    SELECT m.doc_date::text AS at, m.kind, m.sku AS code, m.line_no, m.qty, m.amount, m.unit, m.warehouse_code, m.is_gift,
            b.code AS branch, cb.code AS counter, COALESCE(b.accounting_unit_id, 0)::text AS g1,
            CASE WHEN cb.id IS NULL THEN NULL ELSE COALESCE(cb.accounting_unit_id, 0)::text END AS g2,
            e.doc_key, e.doc_no, e.doc_type, e.version, e.status, e.payload ->> 'originalDocKey' AS original
@@ -74,7 +102,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
       JOIN accounting_events e ON e.id = m.event_id
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
-     WHERE m.tenant_id = ${tenantId} AND m.sku = ${sku}
+     WHERE m.tenant_id = ${tenantId} AND ${ofItem('m', 'sku', key.itemId, sku)}
        ${from ? sql`AND m.doc_date >= ${from}::date` : sql``}
        ${to ? sql`AND m.doc_date <= ${to}::date` : sql``}
        ${q.branch ? sql`AND b.code = ${q.branch}` : sql``}
@@ -87,7 +115,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
     return {
       at: r.at, kind, label: LINEAGE_KIND_LABEL[kind], effect, effectWhy: why, docKey: r.doc_key, docNo: r.doc_no, docType: r.doc_type,
       version: r.version, status: r.status, branch: r.branch, warehouse: r.warehouse_code, lineNo: r.line_no, qty: num(r.qty),
-      amount: r.amount === null ? null : num(r.amount), unit: r.unit, counterBranch: r.counter, originalDocKey: r.original, isGift: r.is_gift,
+      amount: r.amount === null ? null : num(r.amount), unit: r.unit, counterBranch: r.counter, originalDocKey: r.original, isGift: r.is_gift, code: r.code,
     };
   });
 
@@ -102,7 +130,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
       JOIN branches b ON b.id = l.branch_id
       LEFT JOIN accounting_events ev ON ev.id = e.event_id
       LEFT JOIN accounts a ON a.tenant_id = l.tenant_id AND a.code = l.account_code
-     WHERE l.tenant_id = ${tenantId} AND l.product_sku = ${sku}
+     WHERE l.tenant_id = ${tenantId} AND ${ofItem('l', 'product_sku', key.itemId, sku)}
        ${from ? sql`AND l.posting_date >= ${from}::date` : sql``}
        ${to ? sql`AND l.posting_date <= ${to}::date` : sql``}
        ${q.branch ? sql`AND b.code = ${q.branch}` : sql``}
@@ -124,7 +152,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
     SELECT c.year, c.month, c.cost_group::text, u.code AS unit_code, u.name AS unit_name, c.opening_qty, c.opening_value, c.in_qty, c.in_value,
            c.unit_cost, c.out_qty, c.closing_qty, c.closing_value, c.cost_source
       FROM inventory_costs c LEFT JOIN accounting_units u ON u.id = c.cost_group
-     WHERE c.tenant_id = ${tenantId} AND c.sku = ${sku} ${periodFilter}
+     WHERE c.tenant_id = ${tenantId} AND ${ofItem('c', 'sku', key.itemId, sku)} ${periodFilter}
      ORDER BY c.year DESC, c.month DESC, c.cost_group LIMIT 120`.execute(trx);
   const costPeriods: LineageCostPeriod[] = costRows.rows.reverse().map(costRow);
 
@@ -135,7 +163,10 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
   const unvaluedMonths = [...new Set(unvaluedEvents.map((e) => mmyyyy(e.at.slice(0, 7))))];
   const returnsNoOrigin = events.filter((e) => e.kind === 'sale_return' && !e.originalDocKey).length;
   const waiting = entries.filter((l) => l.costFill && l.debit === 0 && l.credit === 0).length;
-  const notes = ['Truy vết theo mã hàng hiện hành. Đổi mã chưa có phiên bản: mã cũ / mới sẽ nối về một định danh khi có bảng mặt hàng (PHASE-024).'];
+  const skuCodes = key.codes.filter((c) => c.kind === 'sku');
+  const notes = [key.itemId
+    ? `Truy vết theo định danh mặt hàng ${key.itemId}${skuCodes.length > 1 ? ` — gồm mọi mã từng dùng: ${skuCodes.map((c) => `${c.code} (${c.validFrom === '1970-01-01' ? 'từ đầu' : c.validFrom} → ${c.validTo ?? 'nay'})`).join(', ')}` : ''}.`
+    : 'Truy vết theo mã hàng hiện hành: mặt hàng chưa có định danh (dữ liệu trước Item Master).'];
   if (unvalued) notes.push(`${unvalued} sự kiện kho thuộc tháng chưa tính giá vốn (${unvaluedMonths.join(', ')}): chạy "Tính giá vốn" để có giá vốn và bút toán.`);
   if (waiting) notes.push(`${waiting} dòng bút toán giá vốn đang chờ tính giá (số 0 cho tới khi chạy tính giá vốn).`);
   if (returnsNoOrigin) notes.push(`${returnsNoOrigin} phiếu khách trả hàng chưa nối được chứng từ bán gốc — chưa biết hoàn đúng giá vốn lần bán nào.`);
@@ -144,8 +175,8 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
   const inQty = events.filter((e) => e.qty > 0).reduce((s, e) => s + e.qty, 0);
   const outQty = events.filter((e) => e.qty < 0).reduce((s, e) => s - e.qty, 0);
   return {
-    item: { sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft },
-    coverage: { keyedBy: 'sku', notes },
+    item: { itemId: key.itemId, codes: key.codes, sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft },
+    coverage: { keyedBy: key.itemId ? 'item_id' : 'sku', notes },
     range: { from, to },
     events, entries, costPeriods,
     summary: {
@@ -185,6 +216,7 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
   const month = Number(m[2]);
   const exists = await trx.selectFrom('products').select('sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (!exists) throw Errors.notFound(`mặt hàng ${sku}`);
+  const key = await itemKey(trx, tenantId, sku);
 
   const rows = await sql<{
     year: number; month: number; cost_group: string; unit_code: string | null; unit_name: string | null; opening_qty: string; opening_value: string;
@@ -193,7 +225,7 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
     SELECT c.year, c.month, c.cost_group::text, u.code AS unit_code, u.name AS unit_name, c.opening_qty, c.opening_value, c.in_qty, c.in_value,
            c.unit_cost, c.out_qty, c.closing_qty, c.closing_value, c.cost_source
       FROM inventory_costs c LEFT JOIN accounting_units u ON u.id = c.cost_group
-     WHERE c.tenant_id = ${tenantId} AND c.sku = ${sku} AND c.year = ${year} AND c.month = ${month}
+     WHERE c.tenant_id = ${tenantId} AND ${ofItem('c', 'sku', key.itemId, sku)} AND c.year = ${year} AND c.month = ${month}
      ORDER BY c.cost_group`.execute(trx);
   const all = rows.rows.map((r) => ({ raw: r, row: costRow(r) }));
   const chosen = costGroup ? all.find((x) => x.row.costGroup === costGroup || x.raw.cost_group === costGroup) : all.sort((a, b) => b.row.inQty + b.row.outQty - (a.row.inQty + a.row.outQty))[0];
@@ -209,7 +241,8 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
 
   const prevY = month === 1 ? year - 1 : year;
   const prevM = month === 1 ? 12 : month - 1;
-  const prev = await trx.selectFrom('inventory_costs').select('unit_cost').where('tenant_id', '=', tenantId).where('sku', '=', sku)
+  const prev = await trx.selectFrom('inventory_costs').select('unit_cost').where('tenant_id', '=', tenantId)
+    .where(key.itemId ? sql<boolean>`(item_id = ${key.itemId} OR (item_id IS NULL AND sku = ${sku}))` : sql<boolean>`sku = ${sku}`)
     .where('year', '=', prevY).where('month', '=', prevM).where(sql<boolean>`cost_group::text = ${groupId}`).executeTakeFirst();
   const previous = prev ? { period: ymLabel(prevY, prevM), unitCost: num(prev.unit_cost) } : null;
   const changePct = previous && previous.unitCost > 0 ? ((row.unitCost - previous.unitCost) / previous.unitCost) * 100 : null;
@@ -223,7 +256,7 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
       JOIN accounting_events e ON e.id = m.event_id
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
-     WHERE m.tenant_id = ${tenantId} AND m.sku = ${sku} AND m.doc_date BETWEEN ${first}::date AND ${last}::date
+     WHERE m.tenant_id = ${tenantId} AND ${ofItem('m', 'sku', key.itemId, sku)} AND m.doc_date BETWEEN ${first}::date AND ${last}::date
        AND COALESCE(b.accounting_unit_id, 0)::text = ${groupId}
      ORDER BY m.doc_date, m.id LIMIT 500`.execute(trx);
 

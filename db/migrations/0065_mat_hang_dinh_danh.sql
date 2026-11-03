@@ -1,3 +1,4 @@
+-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: sửa trước khi phát hành — tạo lại mã đã xoá không vấp chặn chồng hiệu lực; nhận lại mặt hàng mồ côi; hàm phân loại dùng chung; móc điền item_id (0066)
 -- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a (S024-4 / 5, D024-1 / 2, R-ITEM-0 / 1 / 5 / 7): Item Master chạy SONG SONG với products — items (định danh bất biến), item_codes (mã có phiên bản), item_classification (phân loại theo ngày)
 -- =============================================================================
 -- 0065 Item Master — bước B2a (chạy song song, chưa ai đọc; `products` CHƯA đổi).
@@ -113,8 +114,11 @@ CREATE TRIGGER item_classification_no_truncate BEFORE TRUNCATE ON item_classific
 CREATE OR REPLACE FUNCTION bizcity_item_codes_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    -- Một (đơn vị, loại mã, mã) tại một ngày trỏ ≤ 1 mặt hàng (DG-ITEM-1): khoá theo mã để hai lần ghi song song không cùng lọt.
-    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id::text || '|' || NEW.kind || '|' || NEW.code, 0));
+    -- Một (đơn vị, loại mã, mã) tại một ngày trỏ ≤ 1 mặt hàng (DG-ITEM-1): khoá để hai lần ghi song song không cùng lọt.
+    -- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: khoá theo (đơn vị, loại mã), KHÔNG theo từng mã — nạp 20.000 mặt hàng
+    -- trong một giao dịch với khoá từng mã làm cạn bảng khoá (out of shared memory / max_locks_per_transaction). Đổi lại: ghi mã cùng
+    -- đơn vị đi nối đuôi tới hết giao dịch (đơn vị khác không ảnh hưởng).
+    PERFORM pg_advisory_xact_lock(hashtextextended('item_codes|' || NEW.tenant_id::text || '|' || NEW.kind, 0));
     IF EXISTS (SELECT 1 FROM item_codes c
                 WHERE c.tenant_id = NEW.tenant_id AND c.kind = NEW.kind AND c.code = NEW.code
                   AND daterange(c.valid_from, c.valid_to, '[)') && daterange(NEW.valid_from, NEW.valid_to, '[)')) THEN
@@ -139,7 +143,7 @@ CREATE TRIGGER item_codes_guard BEFORE INSERT OR UPDATE OR DELETE ON item_codes 
 CREATE OR REPLACE FUNCTION bizcity_item_classification_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id::text || '|' || NEW.item_id, 1));
+    PERFORM pg_advisory_xact_lock(hashtextextended('item_classification|' || NEW.tenant_id::text, 1));   -- theo đơn vị (như item_codes, B2b)
     IF EXISTS (SELECT 1 FROM item_classification c
                 WHERE c.tenant_id = NEW.tenant_id AND c.item_id = NEW.item_id
                   AND daterange(c.valid_from, c.valid_to, '[)') && daterange(NEW.valid_from, NEW.valid_to, '[)')) THEN
@@ -165,30 +169,85 @@ END $$;
 COMMENT ON FUNCTION bizcity_item_classification_guard() IS 'Bất biến item_classification: lịch sử không bị sửa / xoá; chỉ chỉnh bản đang mở bắt đầu / tạo hôm nay; chặn chồng hiệu lực.';
 CREATE TRIGGER item_classification_guard BEFORE INSERT OR UPDATE OR DELETE ON item_classification FOR EACH ROW EXECUTE FUNCTION bizcity_item_classification_guard();
 
--- ── Tạo từ một dòng products (dùng cho trigger và điền ban đầu) ───────────────────────────────────────────────────────────
+-- ── Phân loại hiện hành của một mặt hàng theo một dòng products (dùng chung) ──────────────────────────────────────────────
+-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: tách hàm phân loại; tạo lại mã đã xoá / nhận mặt hàng mồ côi không vấp chặn chồng hiệu lực
+CREATE OR REPLACE FUNCTION bizcity_item_classify(p_tenant bigint, p_item text, p products) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE
+  v_day date := CURRENT_DATE;
+  v_cur item_classification%ROWTYPE;
+  v_track text[] := CASE WHEN p.track_identifier THEN ARRAY['identifier'] ELSE '{}'::text[] END;
+BEGIN
+  SELECT * INTO v_cur FROM item_classification WHERE tenant_id = p_tenant AND item_id = p_item AND valid_to IS NULL;
+  IF NOT FOUND THEN
+    -- chưa có bản nào: bản đầu tiên có hiệu lực từ 1970 (hoặc từ ngày đóng của bản cũ nếu có)
+    INSERT INTO item_classification (tenant_id, item_id, valid_from, posting_group_code, tax_out_code, tax_in_code, excise_rate, track, created_by)
+    VALUES (p_tenant, p_item, COALESCE((SELECT max(valid_to) FROM item_classification WHERE tenant_id = p_tenant AND item_id = p_item), DATE '1970-01-01'),
+            p.posting_group_code, p.tax_out_code, p.tax_in_code, p.excise_rate, v_track, 'system:products-sync');
+    RETURN;
+  END IF;
+  IF (v_cur.posting_group_code, v_cur.tax_out_code, v_cur.tax_in_code, v_cur.excise_rate, v_cur.track)
+     IS NOT DISTINCT FROM (p.posting_group_code, p.tax_out_code, p.tax_in_code, p.excise_rate::numeric, v_track) THEN
+    RETURN;                                          -- không đổi
+  END IF;
+  IF v_cur.valid_from >= v_day OR v_cur.created_at >= v_day::timestamptz THEN
+    -- chỉnh trong ngày: sửa bản đang mở
+    UPDATE item_classification SET posting_group_code = p.posting_group_code, tax_out_code = p.tax_out_code, tax_in_code = p.tax_in_code,
+           excise_rate = p.excise_rate, track = v_track WHERE id = v_cur.id;
+  ELSE
+    -- đổi từ hôm nay: đóng bản cũ + thêm bản mới (lịch sử giữ nguyên)
+    UPDATE item_classification SET valid_to = v_day WHERE id = v_cur.id;
+    INSERT INTO item_classification (tenant_id, item_id, valid_from, posting_group_code, tax_out_code, tax_in_code, excise_rate, track, created_by)
+    VALUES (p_tenant, p_item, v_day, p.posting_group_code, p.tax_out_code, p.tax_in_code, p.excise_rate, v_track, 'system:products-sync');
+  END IF;
+END $$;
+COMMENT ON FUNCTION bizcity_item_classify(bigint, text, products) IS 'Phân loại hiện hành theo một dòng products: không đổi → bỏ qua; bản tạo / bắt đầu hôm nay → sửa tại chỗ; khác → đóng bản cũ, thêm bản mới từ hôm nay.';
+
+-- Điền item_id vào các dòng đã có mã nhưng chưa có item_id (mặt hàng vừa được tạo sau chứng từ). 0066 thay thân hàm khi các bảng sổ / kho có cột item_id.
+CREATE OR REPLACE FUNCTION bizcity_item_fill_refs(p_tenant bigint, p_sku text, p_item text) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN;
+END $$;
+COMMENT ON FUNCTION bizcity_item_fill_refs(bigint, text, text) IS 'Điền item_id cho dòng sổ / kho / đơn vị / giá mang mã này mà chưa có item_id (thân hàm đầy đủ ở 0066).';
+
+-- ── Tạo (hoặc nhận lại) mặt hàng từ một dòng products (dùng cho trigger và điền ban đầu) ──────────────────────────────────
 CREATE OR REPLACE FUNCTION bizcity_items_from_product(p products) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE
-  v_id text := bizcity_ulid(COALESCE(p.created_at, now()));
+  v_id text;
+  v_status text := CASE WHEN p.is_draft THEN 'draft' WHEN NOT p.is_active THEN 'retired' ELSE 'active' END;
+  v_attrs jsonb := jsonb_strip_nulls(jsonb_build_object('brand', p.brand_code, 'industry', p.industry_code, 'group', p.group_code, 'type', p.type_code, 'parentSku', p.parent_sku));
 BEGIN
-  INSERT INTO items (item_id, tenant_id, name, unit_base, status, draft_codes, attributes, source_system, created_at, created_by, retired_at)
-  VALUES (v_id, p.tenant_id, p.name, p.unit,
-          CASE WHEN p.is_draft THEN 'draft' WHEN NOT p.is_active THEN 'retired' ELSE 'active' END, p.draft_codes,
-          jsonb_strip_nulls(jsonb_build_object('brand', p.brand_code, 'industry', p.industry_code, 'group', p.group_code, 'type', p.type_code, 'parentSku', p.parent_sku)),
-          p.source_system, COALESCE(p.created_at, now()), 'system:products-sync', CASE WHEN NOT p.is_active THEN now() END);
-  INSERT INTO item_codes (tenant_id, item_id, kind, code, created_by) VALUES (p.tenant_id, v_id, 'sku', p.sku, 'system:products-sync');
-  IF p.barcode <> '' THEN
+  -- Mã đang mở mà không có dòng products (mặt hàng mồ côi: mã có trong sổ / kho, 0066) → NHẬN LẠI mặt hàng đó, không tạo mới.
+  SELECT c.item_id INTO v_id FROM item_codes c WHERE c.tenant_id = p.tenant_id AND c.kind = 'sku' AND c.code = p.sku AND c.valid_to IS NULL;
+  IF v_id IS NOT NULL THEN
+    UPDATE items SET name = p.name, unit_base = p.unit, status = v_status, draft_codes = p.draft_codes,
+           attributes = (attributes - 'orphan' - 'brand' - 'industry' - 'group' - 'type' - 'parentSku') || v_attrs,
+           source_system = p.source_system, retired_at = CASE WHEN p.is_active THEN NULL ELSE COALESCE(retired_at, now()) END
+     WHERE item_id = v_id;
+  ELSE
+    v_id := bizcity_ulid(COALESCE(p.created_at, now()));
+    INSERT INTO items (item_id, tenant_id, name, unit_base, status, draft_codes, attributes, source_system, created_at, created_by, retired_at)
+    VALUES (v_id, p.tenant_id, p.name, p.unit, v_status, p.draft_codes, v_attrs, p.source_system, COALESCE(p.created_at, now()), 'system:products-sync',
+            CASE WHEN NOT p.is_active THEN now() END);
+    -- Mã từng dùng cho mặt hàng đã xoá: mã mới bắt đầu từ ngày mã cũ đóng (không chồng hiệu lực, R-ITEM-0).
+    INSERT INTO item_codes (tenant_id, item_id, kind, code, valid_from, created_by)
+    VALUES (p.tenant_id, v_id, 'sku', p.sku,
+            COALESCE((SELECT max(valid_to) FROM item_codes WHERE tenant_id = p.tenant_id AND kind = 'sku' AND code = p.sku), DATE '1970-01-01'), 'system:products-sync');
+  END IF;
+  IF p.barcode <> '' AND NOT EXISTS (SELECT 1 FROM item_codes WHERE item_id = v_id AND kind = 'barcode' AND code = p.barcode AND valid_to IS NULL) THEN
     BEGIN
-      INSERT INTO item_codes (tenant_id, item_id, kind, code, created_by) VALUES (p.tenant_id, v_id, 'barcode', p.barcode, 'system:products-sync');
+      INSERT INTO item_codes (tenant_id, item_id, kind, code, valid_from, created_by)
+      VALUES (p.tenant_id, v_id, 'barcode', p.barcode,
+              COALESCE((SELECT max(valid_to) FROM item_codes WHERE tenant_id = p.tenant_id AND kind = 'barcode' AND code = p.barcode), DATE '1970-01-01'), 'system:products-sync');
     EXCEPTION WHEN exclusion_violation THEN
       -- Dữ liệu cũ hay có hai mặt hàng cùng mã vạch: không làm hỏng việc ghi mặt hàng, ghi nhận để kế toán xử lý (DG-ITEM-1).
       UPDATE items SET attributes = attributes || jsonb_build_object('barcodeConflict', p.barcode) WHERE item_id = v_id;
     END;
   END IF;
-  INSERT INTO item_classification (tenant_id, item_id, posting_group_code, tax_out_code, tax_in_code, excise_rate, track, created_by)
-  VALUES (p.tenant_id, v_id, p.posting_group_code, p.tax_out_code, p.tax_in_code, p.excise_rate, CASE WHEN p.track_identifier THEN ARRAY['identifier'] ELSE '{}'::text[] END, 'system:products-sync');
+  PERFORM bizcity_item_classify(p.tenant_id, v_id, p);
+  PERFORM bizcity_item_fill_refs(p.tenant_id, p.sku, v_id);
   RETURN v_id;
 END $$;
-COMMENT ON FUNCTION bizcity_items_from_product(products) IS 'Tạo items + item_codes (sku, mã vạch) + item_classification từ một dòng products (B2a, song song).';
+COMMENT ON FUNCTION bizcity_items_from_product(products) IS 'Tạo items + item_codes (sku, mã vạch) + item_classification từ một dòng products; mã đang mở của mặt hàng mồ côi thì nhận lại mặt hàng đó (B2a / B2b).';
 
 -- ── Đồng bộ mọi đường ghi products (bỏ khi products thành khung nhìn, B2b) ────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION bizcity_items_sync() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -197,7 +256,6 @@ DECLARE
   v_day date := CURRENT_DATE;
   v_old_from date;
   v_from date;
-  v_cur item_classification%ROWTYPE;
 BEGIN
   IF TG_OP = 'INSERT' THEN
     PERFORM bizcity_items_from_product(NEW);
@@ -222,9 +280,12 @@ BEGIN
 
   IF NEW.sku IS DISTINCT FROM OLD.sku THEN        -- đổi mã = đóng mã cũ + thêm mã mới, item_id giữ nguyên (R-ITEM-0)
     v_from := GREATEST(v_day, v_old_from + 1);
+    -- mã mới từng dùng cho mặt hàng đã xoá: bắt đầu sau ngày mã đó đóng
+    v_from := GREATEST(v_from, COALESCE((SELECT max(valid_to) FROM item_codes WHERE tenant_id = NEW.tenant_id AND kind = 'sku' AND code = NEW.sku), v_from));
     UPDATE item_codes SET valid_to = v_from WHERE item_id = v_id AND kind = 'sku' AND valid_to IS NULL;
     INSERT INTO item_codes (tenant_id, item_id, kind, code, valid_from, created_by, note)
     VALUES (NEW.tenant_id, v_id, 'sku', NEW.sku, v_from, 'system:products-sync', 'đổi mã từ ' || OLD.sku);
+    PERFORM bizcity_item_fill_refs(NEW.tenant_id, NEW.sku, v_id);
   END IF;
 
   IF NEW.barcode IS DISTINCT FROM OLD.barcode THEN
@@ -232,7 +293,7 @@ BEGIN
     IF NEW.barcode <> '' THEN
       BEGIN
         INSERT INTO item_codes (tenant_id, item_id, kind, code, valid_from, created_by)
-        VALUES (NEW.tenant_id, v_id, 'barcode', NEW.barcode, GREATEST(v_day, COALESCE((SELECT max(valid_to) FROM item_codes WHERE item_id = v_id AND kind = 'barcode'), v_day)), 'system:products-sync');
+        VALUES (NEW.tenant_id, v_id, 'barcode', NEW.barcode, GREATEST(v_day, COALESCE((SELECT max(valid_to) FROM item_codes WHERE tenant_id = NEW.tenant_id AND kind = 'barcode' AND code = NEW.barcode), v_day)), 'system:products-sync');
       EXCEPTION WHEN exclusion_violation THEN
         UPDATE items SET attributes = attributes || jsonb_build_object('barcodeConflict', NEW.barcode) WHERE item_id = v_id;
       END;
@@ -253,16 +314,7 @@ BEGIN
 
   IF (NEW.posting_group_code, NEW.tax_out_code, NEW.tax_in_code, NEW.excise_rate, NEW.track_identifier)
      IS DISTINCT FROM (OLD.posting_group_code, OLD.tax_out_code, OLD.tax_in_code, OLD.excise_rate, OLD.track_identifier) THEN
-    SELECT * INTO v_cur FROM item_classification WHERE tenant_id = NEW.tenant_id AND item_id = v_id AND valid_to IS NULL;
-    IF FOUND AND (v_cur.valid_from >= v_day OR v_cur.created_at >= v_day::timestamptz) THEN     -- chỉnh trong ngày: sửa bản đang mở
-      UPDATE item_classification SET posting_group_code = NEW.posting_group_code, tax_out_code = NEW.tax_out_code, tax_in_code = NEW.tax_in_code,
-             excise_rate = NEW.excise_rate, track = CASE WHEN NEW.track_identifier THEN ARRAY['identifier'] ELSE '{}'::text[] END WHERE id = v_cur.id;
-    ELSE                                            -- đổi từ hôm nay: đóng bản cũ + thêm bản mới (lịch sử giữ nguyên)
-      IF FOUND THEN UPDATE item_classification SET valid_to = v_day WHERE id = v_cur.id; END IF;
-      INSERT INTO item_classification (tenant_id, item_id, valid_from, posting_group_code, tax_out_code, tax_in_code, excise_rate, track, created_by)
-      VALUES (NEW.tenant_id, v_id, v_day, NEW.posting_group_code, NEW.tax_out_code, NEW.tax_in_code, NEW.excise_rate,
-              CASE WHEN NEW.track_identifier THEN ARRAY['identifier'] ELSE '{}'::text[] END, 'system:products-sync');
-    END IF;
+    PERFORM bizcity_item_classify(NEW.tenant_id, v_id, NEW);   -- trong ngày: sửa bản đang mở; khác ngày: bản mới từ hôm nay
   END IF;
   RETURN NEW;
 END $$;
@@ -302,6 +354,8 @@ DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ketoan_app') THEN
     GRANT SELECT, INSERT, UPDATE ON items, item_codes, item_classification TO ketoan_app;
+    -- quyền mặc định của schema (0032) tự cấp cả DELETE cho bảng mới: thu hồi cho rõ (trigger vẫn chặn xoá)
+    REVOKE DELETE, TRUNCATE ON items, item_codes, item_classification FROM ketoan_app;
     GRANT USAGE ON SEQUENCE item_codes_id_seq, item_classification_id_seq TO ketoan_app;
   END IF;
 END $$;
