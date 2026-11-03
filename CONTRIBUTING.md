@@ -1,4 +1,5 @@
 # Đóng góp cho Bizcity Core (open-ketoan)
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 <!-- [2026-10-30 01:22 PM Johnny Chu - Chu Hoàng Anh] R-LICENSE — giấy phép GPL-2.0-or-later, chính sách nhãn hiệu BizCity. -->
@@ -75,7 +76,7 @@ docker compose up -d db && npm test         # PostgreSQL thật, CSDL riêng ket
 - **Ngôn ngữ:** tên bảng, cột, biến bằng tiếng Anh; chú thích, thông báo, tài liệu bằng tiếng Việt có dấu.
 - **Tiền:** `numeric(18,2)` ở CSDL, cộng trừ qua `toCents` / `fromCents`.
 - **Lỗi:** `Errors.*`, mã trong danh mục `bizcity_errors@1`, thông báo nói sai gì và làm gì tiếp (R-ERR-3).
-- **Migration:** tệp mới số kế tiếp; không sửa tệp đã chạy; có `COMMENT ON`; cập nhật `db/types.ts` (SC-DATA-7) và `schema-catalog.ts`.
+- **Migration:** tệp mới số kế tiếp; không sửa tệp đã chạy; có `COMMENT ON`; cập nhật `packages/platform/src/db/types.ts` (SC-DATA-7) và `schema-catalog.ts`.
 - **Ranh giới:** phân hệ không import phân hệ khác (R-BOUND-1); import đúng chiều lớp (SC-LAYER-2); ngoài Kernel chỉ dùng cổng `@bizcity/kernel` (gốc gói; đường cũ `apps/api/src/kernel/public.ts` chuyển tiếp) (SC-KERNEL-6 — thêm mục vào cổng cần nhóm Lõi duyệt).
 - **Thao tác ghi mới:** viết bằng `defineAction` (quyền, idempotency, bằng chứng do runtime lo), không route Fastify tay.
 - **Log và số đo:** không dữ liệu cá nhân, không bí mật (R-SEC-10); số đo không nhãn `tenant` (R-OBS-4).

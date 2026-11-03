@@ -1,4 +1,5 @@
 # RULE · Thay đổi Kernel (R-KER)
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
 
 > **Cấp:** Tier 0 / 1 (ghi từng luật) · **Phiên bản:** 1.0 · 2026-10-29 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
@@ -9,11 +10,11 @@
 
 Danh sách đóng. Thêm hoặc bớt thư mục khỏi danh sách cần ADR.
 
-| Hiện tại (`apps/api/src/…`) | Đích (Phase 2.3) |
+| Thành phần | Ở đâu hôm nay |
 |---|---|
-| `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}`, `db/seed.ts` | `packages/kernel` |
-| Migration nền `db/migrations/000{1..9}_goc_*.sql` và mọi trigger / hàm bảo vệ sổ | `packages/kernel/migrations` |
-| `packages/contracts/src/documents.ts` (khuôn `bizcity_ledger_intake@1`) | `packages/kernel/contracts` |
+| `modules/{documents,posting,posting-config,ledger,periods,accounts,debts,inventory,tax-*,closing,default-data}` và seed | `packages/kernel/src/modules/…`, `packages/kernel/src/db/seed.ts` (đã tách ở PHASES 2.3) |
+| Migration nền `db/migrations/000{1..9}_goc_*.sql` và mọi trigger / hàm bảo vệ sổ | vẫn ở `db/migrations/`; gói đích `packages/kernel/migrations` chưa tách |
+| `packages/contracts/src/documents.ts` (khuôn `bizcity_ledger_intake@1`) | vẫn ở `packages/contracts`; gói đích `packages/kernel/contracts` chưa tách |
 
 Bề mặt công khai của Kernel: `submit`, `cancel`, `get`, `query` (sổ, báo cáo), hợp đồng `bizcity_ledger_intake@1`, `bizcity_posting_template@1`, `bizcity_mcp@1` phần `ketoan.*`. Mọi thứ khác là nội bộ.
 

@@ -1,4 +1,5 @@
 # `bizcity_module@1` — Module Contract
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 10:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — 1.1.0-draft: ledger.submits[].reasons (kind, default, suggestedPacks). -->
 <!-- [2026-11-01 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.1-draft: waivers bắt buộc expires, chỉ miễn luật đặt tên; §6 bước 1–3 có (12 manifest, SC-MOD-3 block, GET /system/modules?detail=true) -->
@@ -85,7 +86,7 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 | Mức | Bảng | Ai ghi | Hệ quả |
 |---|---|---|---|
-| Bản cài | `module_registry` (0052): phiên bản, `build_hash` (sha256 thư mục module), `status` installed / active / disabled, lịch sử | job cài đặt (`db/setup.ts` → `syncBundled`) và lệnh `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`, bằng vai trò sở hữu | API chỉ nạp module `active` có hash khớp; bản thật lệch hash → bỏ riêng module đó, ghi `last_load_result`, DG-MOD-1 đỏ. Registry trống → nạp như cũ (bản cài cũ) |
+| Bản cài | `module_registry` (0052): phiên bản, `build_hash` (sha256 thư mục module), `status` installed / active / disabled, lịch sử | job cài đặt (`apps/api/src/db/setup.ts` → `syncBundled`) và lệnh `npm run module -w @ketoan/api -- list / sync / activate / deactivate / verify`, bằng vai trò sở hữu | API chỉ nạp module `active` có hash khớp; bản thật lệch hash → bỏ riêng module đó, ghi `last_load_result`, DG-MOD-1 đỏ. Registry trống → nạp như cũ (bản cài cũ) |
 | Đơn vị | `tenant_modules` (0052); không có dòng = bật | action `core.module.enable` / `disable` (`users:write`, có bằng chứng, dry-run báo ảnh hưởng, phát `bizcity.module.toggled`) | route của module trả `MODULE_DISABLED` (route dùng chung chỉ chặn khi mọi module sở hữu đều tắt); `GET /system/modules` bỏ module tắt; sự kiện tới subscriber của module giao `skipped` |
 
 - **Tắt** theo đơn vị: route trả `MODULE_DISABLED` (403), subscriber của module nhận việc giao `skipped` (không `dead`, không xử lý bù khi bật lại — phát lại bằng `core.events.replay` nếu cần). Dữ liệu, chứng từ, bút toán giữ nguyên. Module lõi (`ke-toan`, `he-thong`) không tắt được. Bật lại kiểm năng lực manifest cần (`planned` → `CAPABILITY_MISSING`).

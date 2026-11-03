@@ -1,4 +1,5 @@
 # 13. Phiếu nhập tay trong phần mềm — hợp đồng đề xuất (`/api/v1/trade-documents`)
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 > **Mua hàng, trả hàng NCC không dùng hợp đồng này**: làm ở phân hệ Mua hàng, API thật `/api/v1/purchase/*` — xem [14-mua-hang](14-mua-hang.md).
 
@@ -75,7 +76,7 @@ Luật kiểm tra (trả 400 kèm câu tiếng Việt): thiếu trường bắt 
 
 ## Duyệt → vào kế toán
 
-Duyệt = dựng chứng từ theo **đúng khuôn cổng nhận chứng từ** ([02-ban-hang](02-ban-hang.md), [03-tra-hang-ban](03-tra-hang-ban.md), [04-nhap-mua](04-nhap-mua.md), [05-tra-hang-ncc](05-tra-hang-ncc.md), [06-chuyen-kho](06-chuyen-kho.md)) rồi gọi lõi `postDocumentIn` (thư mục `apps/api/src/modules/documents`), với:
+Duyệt = dựng chứng từ theo **đúng khuôn cổng nhận chứng từ** ([02-ban-hang](02-ban-hang.md), [03-tra-hang-ban](03-tra-hang-ban.md), [04-nhap-mua](04-nhap-mua.md), [05-tra-hang-ncc](05-tra-hang-ncc.md), [06-chuyen-kho](06-chuyen-kho.md)) rồi gọi lõi `postDocumentIn` (thư mục `packages/kernel/src/modules/documents`), với:
 
 - `docKey` = `erp:<branchCode>:<docType>:<id>` (cố định theo phiếu) — sửa lại rồi duyệt lần nữa thì tăng `version` (lõi tự đảo bút toán cũ);
 - `sourceSystem` = `erp` (nguồn "nhập tay trong phần mềm" ở trạm ACC14).

@@ -7,7 +7,7 @@
 
 ## Nguyên tắc một câu
 
-> **Giữ chỗ và tài liệu vào `main` trước; code đi sau.** Hai phiên không cùng làm một việc, và không ai đổi thứ dùng chung khi chưa có chữ chốt.
+> **Giữ chỗ và tài liệu vào `main` trước; code đi sau.** Hai phiên không cùng làm một việc, và không ai đổi thứ dùng chung khi chưa có chữ chốt. **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7).
 
 ## Vì sao (đã xảy ra ngày 2026-11-03, không phải lo xa)
 
@@ -26,6 +26,7 @@
 | **R-FLOW-4** | **Nhánh ngắn, không xếp chồng sâu.** Một nhánh sống không quá một ngày làm việc, không quá khoảng 10 commit; không xếp chồng quá 2 tầng PR; đã xếp chồng thì merge từ dưới lên ngay khi xong | `nhan-viec.mjs kiem` (cảnh báo quá 10 commit hoặc quá 24 giờ); duyệt PR |
 | **R-FLOW-5** | **Chỉ đẩy khi đã gộp `main` và bộ kiểm xanh.** Trước khi đẩy: `git fetch`, `git merge origin/main`, `git merge-tree --write-tree origin/main HEAD` không báo xung đột, `selfcheck --strict` ĐẠT. `main` đổi sau đó (PR khác merge) thì gộp lại trước khi merge. Không `push --force`, không rebase nhánh đã đẩy | `nhan-viec.mjs kiem` (đã gộp main, gộp thử không xung đột); `selfcheck --strict` |
 | **R-FLOW-6** | **Trả chỗ trong cùng PR.** PR cuối của đợt xoá dòng khỏi CLAIMS.md và ghi nhật ký checklist. Dòng "đang làm" quá 3 ngày không có commit trên nhánh coi là đã nhả; người khác chỉ nhận sau khi hỏi người giữ hoặc chủ dự án | SC-FLOW-1 (khuôn bảng); `nhan-viec.mjs list` (cảnh báo dòng quá 3 ngày) |
+| **R-FLOW-7** | **Nguồn sự thật của tài liệu là `main`.** <!-- [2026-11-03 10:35 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW-7: nguồn sự thật của tài liệu là main (chủ dự án: "source of truth tài liệu phải ở nhánh main để nhiều session window, nhiều dev ko bị phân mảnh tài liệu kiến trúc chuẩn do Johnny Chu ban hành") --> Kiến trúc chuẩn, luật, hợp đồng, ADR và quyết định của chủ dự án (Johnny Chu – Chu Hoàng Anh) chỉ có hiệu lực khi đã nằm trong **tài liệu sở hữu trên `main`** (phase, rule, contract, ADR — bảng "đổi code X → sửa tài liệu Y" ở [CANON §5](../00-CANON.md)). Tài liệu ngoài repo (Claude artifact, Google Docs, ghi chú phiên, chat), nhánh chưa merge và bản vá là **bản làm việc**: khác `main` thì `main` thắng. Mỗi phiên, mỗi dev đọc tài liệu từ `origin/main` (`git fetch` rồi `git show origin/main:<tệp>`) trước khi làm, không đọc bản trong nhánh của mình hay bản làm việc. Quyết định mới vào tài liệu sở hữu bằng PR tài liệu trước (R-FLOW-2), không chỉ nằm trong chat hay artifact. Không sao chép tài liệu kiến trúc sang nơi khác để sửa riêng; muốn đổi thì mở PR | duyệt PR; `nhan-viec.mjs` đọc bảng giữ chỗ và chữ chốt từ `origin/main` |
 
 ## §3. Thứ dùng chung (R-FLOW-2)
 
@@ -63,4 +64,4 @@ Không cần giữ chỗ (R-FLOW-1) và không cần chữ chốt (R-FLOW-2), nh
 ## Liên quan
 
 [AGENTS.md — Bước 0](../../AGENTS.md) · `scripts/so-tiep-theo.mjs` (cùng ý, cho số migration / ADR) · [R-REV](RULE-REVIEW.md) (rà soát mỗi lần nhận việc) · [R-SIG](RULE-SIGNATURE.md) (dấu thay đổi).
-<!-- [2026-11-03 11:10 PM Johnny Chu - Chu Hoàng Anh] FLOW — khớp luật với công cụ nhan-viec.mjs / SC-FLOW-1 -->
+<!-- [2026-11-03 10:35 PM Johnny Chu - Chu Hoàng Anh] FLOW — khớp luật với công cụ nhan-viec.mjs / SC-FLOW-1 -->

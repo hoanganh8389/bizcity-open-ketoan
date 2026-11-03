@@ -1,4 +1,5 @@
 # Kiến trúc Bizcity Core (open-ketoan): sổ cái là lõi
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
@@ -99,7 +100,7 @@ Bốn câu không thương lượng ([AGENTS.md](../../AGENTS.md)):
 Mọi module nghiệp vụ, từ bán hàng tới sản xuất, đi **một khuôn**:
 
 1. Dữ liệu riêng ở bảng `mod_<key>.*`.
-2. Danh mục dùng chung (khách, mặt hàng, chi nhánh, nhân viên) ở `packages/data`.
+2. Danh mục dùng chung (khách, mặt hàng, chi nhánh, nhân viên) ở `packages/data` (gói đích, lộ trình 2.4; hôm nay ở `apps/api/src/modules/catalog`).
 3. Khi có **tiền** thì nộp sự việc `docType` + `reasonCode` vào Kernel. Kernel định khoản theo gói định khoản của ngành.
 4. Đọc số liệu kế toán qua `ctx.ledger.query`, không JOIN bảng sổ.
 

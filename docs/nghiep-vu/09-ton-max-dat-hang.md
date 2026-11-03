@@ -1,4 +1,5 @@
 # 09. Tồn max, chuyển hàng shop và đặt mua hàng theo chi nhánh
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 Đây là tài liệu ghi nhớ luồng mua hàng thực tế ở chi nhánh, viết để không phải giải thích lại.
 - Phần A: luồng nghiệp vụ.
@@ -148,7 +149,7 @@ GET  /api/v1/stock/hierarchy                         cây chi nhánh cha → sho
 PUT  /api/v1/stock/hierarchy                         lưu phân cấp
 GET  /api/v1/stock/levels?branchCode=&skus=          tồn max / min
 PUT  /api/v1/stock/levels                            ghi hàng loạt (nhập Excel, áp gợi ý)
-GET  /api/v1/stock/velocity?branchCode=&days=        bán / ngày theo mã
+GET  /api/v1/stock/velocity?branchCode=&days=        bán / ngày theo mã (đề xuất, chưa có trong mã)
 GET  /api/v1/stock/max-requests?from=&to=&status=    phiếu đăng ký max
 POST /api/v1/stock/max-requests                      tạo (POS gửi lên)
 POST /api/v1/stock/max-requests/:id/approve          duyệt (ghi max)

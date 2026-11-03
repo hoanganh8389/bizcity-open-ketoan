@@ -1,4 +1,5 @@
 # `bizcity_data@1` — Data Contract
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-31 11:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — §8 bước 1: bizcity_read có view danh mục (0044), data.read-views available -->
 <!-- [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §8 bước 3 có — migration module bằng mod_<key>_owner, ctx.data.module bằng mod_<key>_rw, kiểm RLS sau migration (ADR-0011 D4, PHASES 3.10) -->
@@ -17,7 +18,7 @@ Chuẩn thực thể, schema, quan hệ, migration và cô lập đơn vị cho 
 | Mọi bảng có `tenant_id`; truy vấn lọc theo `auth.tenantId` (R-TEN) | RLS: lọc chỉ ở tầng ứng dụng, quên một `where` là lộ dữ liệu (A-23) |
 | Tiền `numeric(18,2)`, `toCents/fromCents` | Ranh giới chủ bảng: module ghi bảng lõi (A-17) |
 | `COMMENT ON` tiếng Việt, `schema-catalog.ts` có test | Migration theo module: mọi bảng chung một dãy số, bảng nghiệp vụ nằm trong migration nền (A-26) |
-| Trigger chặn sửa sổ cái | Kiểu Kysely của mọi bảng ở một tệp `db/types.ts` |
+| Trigger chặn sửa sổ cái | Kiểu Kysely của mọi bảng ở một tệp `packages/platform/src/db/types.ts` |
 
 ## 3. Vị trí và chủ sở hữu
 

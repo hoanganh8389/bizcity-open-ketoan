@@ -45,6 +45,9 @@ Nhiều phiên (người và AI) làm cùng một kho. Luật đầy đủ: [RUL
 
 Không cần bước 1–4: sửa lỗi nhỏ (một tệp, không đổi hành vi dùng chung), tài liệu thuần, sửa nóng trên sản xuất.
 
+<!-- [2026-11-03 10:35 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW-7: nguồn sự thật của tài liệu là main (chủ dự án: "source of truth tài liệu phải ở nhánh main để nhiều session window, nhiều dev ko bị phân mảnh tài liệu kiến trúc chuẩn do Johnny Chu ban hành") -->
+**Nguồn sự thật của tài liệu là `main` (R-FLOW-7).** Kiến trúc chuẩn do Johnny Chu – Chu Hoàng Anh ban hành chỉ có hiệu lực khi đã nằm trong tài liệu sở hữu trên `main`. Artifact, ghi chú phiên, chat, nhánh chưa merge là bản làm việc: khác `main` thì `main` thắng. Đọc tài liệu bằng `git show origin/main:<tệp>`; quyết định mới vào tài liệu sở hữu bằng PR tài liệu trước khi code.
+
 ## Trước khi code: đồng bộ với `main`
 
 <!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — đồng bộ main trước mỗi lượt code (nhánh feat đứng sau main 18 commit, xung đột mua-hang/service.ts, dist contracts cũ). -->

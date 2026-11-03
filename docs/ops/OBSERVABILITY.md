@@ -1,4 +1,5 @@
 # Quan sát hệ thống: log, truy vết, số đo, báo lỗi
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — §3 thêm 15 số đo (ghi sổ, outbox, gửi lặp, đối soát, đơn vị theo dải, bộ thu); §4 9 dashboard, 14 cảnh báo, runbook (R-OBS-6). -->
 <!-- [2026-11-01 03:01 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi: sáu lớp bảo đảm, span chỉ ở khớp nối Platform + cổng Kernel, thuộc tính theo danh sách cho phép, Tempo -->
@@ -120,7 +121,7 @@ Fastify pino, JSON một dòng, ra stdout. Docker / promtail đưa vào Loki. M�
 
 **Không** gắn nhãn `tenant` vào số đo: số đơn vị không giới hạn sẽ làm nổ chuỗi số đo. Thống kê theo đơn vị lấy từ Loki hoặc từ CSDL; Prometheus chỉ có số đơn vị theo dải (`bizcity_tenants`). Luật dò `H-METRIC-LABEL` (RULE-REVIEW §4) chặn nhãn theo đơn vị / chứng từ / người ở review; test `giam-sat.test.ts` kiểm cả văn bản `/metrics`.
 
-**Bộ thu đọc CSDL** (`registerCollector`): chạy khi Prometheus đọc `/metrics`, tối đa một lần mỗi chu kỳ, trong **giao dịch chỉ đọc có `statement_timeout` 5 s** (`readWithTimeout`, `db/client.ts`) — câu đếm chậm bị CSDL huỷ, không treo `/metrics`, không ảnh hưởng đường ghi sổ. Số đo ghi sổ đọc từ `posting_log` (ghi cùng giao dịch với bút toán) nên chỉ đếm phần đã commit, mọi đường vào như nhau, và đường ghi sổ không phải làm thêm gì.
+**Bộ thu đọc CSDL** (`registerCollector`): chạy khi Prometheus đọc `/metrics`, tối đa một lần mỗi chu kỳ, trong **giao dịch chỉ đọc có `statement_timeout` 5 s** (`readWithTimeout`, `packages/platform/src/db/client.ts`) — câu đếm chậm bị CSDL huỷ, không treo `/metrics`, không ảnh hưởng đường ghi sổ. Số đo ghi sổ đọc từ `posting_log` (ghi cùng giao dịch với bút toán) nên chỉ đếm phần đã commit, mọi đường vào như nhau, và đường ghi sổ không phải làm thêm gì.
 
 ## 4. Giám sát và cảnh báo
 
