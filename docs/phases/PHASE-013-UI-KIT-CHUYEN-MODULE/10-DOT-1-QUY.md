@@ -1,7 +1,7 @@
 # PHASE-013 · Đợt 1 — chuyển `quy` sang `modules/quy/` (chữ chốt)
 <!-- [2026-11-04 12:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 — chữ chốt đợt 1 quy: phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu, cách đo (R-FLOW-2) -->
 
-> **Việc:** S013-3 · **Căn cứ:** [ADR-0024](../../adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md), [CHUYEN-PHAN-HE-SANG-MODULES](../../standard/CHUYEN-PHAN-HE-SANG-MODULES.md) · **Trạng thái:** đề xuất chốt, chờ chủ dự án xác nhận từng mục ở §6.
+> **Việc:** S013-3 · **Căn cứ:** [ADR-0024](../../adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md), [CHUYEN-PHAN-HE-SANG-MODULES](../../standard/CHUYEN-PHAN-HE-SANG-MODULES.md) · **Trạng thái:** chia 1a / 1b (chủ dự án chọn 2026-11-04); người thực hiện: nhân sự khác, chưa giữ chỗ.
 > Đợt 1 là **đường thử đầu tiên**: chọn `quy` vì nhỏ (11 action, 4 tệp API, 5 tệp web). Bài học của đợt này ghi lại để đợt 2–6 dùng.
 
 ## 1. Hiện trạng (đã đọc mã, 2026-11-04)
@@ -54,8 +54,13 @@ Host module chỉ gắn ở `/api/v1/m/<key>/…` (`apps/api/src/app.ts:222`); k
 | `selfcheck --strict`, `kiem-chuan.sh`, `typecheck`, `npm test` | đạt | đạt, nợ baseline không tăng |
 | Bảng điểm sẵn sàng / conformance | 77.2 / 98.7 | không giảm |
 
-## 6. Cần chủ dự án xác nhận
+## 6. Chia đợt 1a / 1b và bàn giao
+<!-- [2026-11-04 12:28 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 — chia đợt 1a/1b, quy giao nhân sự khác -->
 
-1. **§2 điểm 1** — Core có điểm mở rộng cho "kiểm kỳ" chưa? Nếu chưa: đồng ý chia PR code thành (a) mã trước, (b) bảng sau và mở đề xuất bậc 4?
-2. **§3** — chấp nhận lớp chuyển tiếp 308 ở lõi + hạn 60 ngày (Q3)?
-3. Phiếu thu / chi Kernel ở `quy/index.ts` ở lại lõi như §2?
+| | 1a — chuyển mã | 1b — chuyển bảng |
+|---|---|---|
+| Làm gì | 11 action, workflow, web, mẫu in sang `modules/quy/`; bảng còn ở `public`; gỡ `import` của lõi web (`printCatalog.ts`); `ke-toan` đọc qua action `quy` | `payment_requests`, `payment_request_settings` → `mod_quy` bằng migration mới; mục kiểm kỳ do `quy` cung cấp |
+| Chờ gì | ADR-0025 (PR riêng, `docs/adr/ADR-0025-cong-kiem-ky-va-chuyen-tiep-duong-dan-cu.md`) mục B (lớp 308) vào `main` nếu muốn bỏ đường cũ; không chờ mục A | ADR-0025 mục A làm xong (`period.check.contributor`) |
+| Bằng chứng | §5, trừ dòng "bảng ở `mod_quy`" | §4: đối chiếu `doi-chieu-ke-toan.sql` trước / sau, số đếm bảng bằng nhau |
+
+**Bàn giao:** `quy` do nhân sự khác thực hiện. Người nhận (1) đọc [CHUYEN-PHAN-HE-SANG-MODULES](../../standard/CHUYEN-PHAN-HE-SANG-MODULES.md), (2) `node scripts/nhan-viec.mjs` rồi mở PR chỉ-tài-liệu thêm dòng giữ chỗ cho `S013-3` (phạm vi: `apps/api/src/phan-he/quy/**`, `apps/web/src/phan-he/quy/**`, `modules/quy/**`, `apps/api/test/payment-requests.test.ts`), (3) làm theo §2–§5; không tự vá Kernel (mục A / B là việc Nhóm Lõi). Dòng giữ chỗ của phiên Claude đã gỡ khỏi CLAIMS.md.

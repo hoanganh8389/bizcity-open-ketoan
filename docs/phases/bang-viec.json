@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 96
+      "count": 97
     },
     {
       "key": "partial",
@@ -1156,14 +1156,8 @@
       "title": "Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu)",
       "priority": null,
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, dot-1-quy)",
-        "branch": "feat/phase-013-dot-1-quy",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-013 · Đợt 1 — chuyển quy sang modules/quy/ (ADR-0024; chữ chốt 10-DOT-1-QUY)"
-      },
+      "column": "todo",
+      "claim": null,
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
