@@ -27,7 +27,7 @@ import { db, toNumber } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcity/platform/core/http';
 import { documentService } from './document.service.js';
-import { mountActions, registerActions } from '@bizcity/platform/core/actions';
+import { defineAction, mountActions, registerActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { documentActions, submitActions } from './document.actions.js';
 
 const tags = ['Chứng từ'];
@@ -99,15 +99,6 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
       body: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), repost: z.boolean().default(false) }),
     },
     handler: async (req) => ok(await documentService.postMany(authOf(req), req.body.ids, req.body.repost)),
-  });
-
-  r.post('/api/v1/documents/cancel', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Huỷ chứng từ', body: z.object({ docKey: z.string().min(3), reason: z.string().trim().min(1).max(500) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      return ok(auth.kind === 'apikey' ? await documentService.requestCancel(auth, req.body.docKey, req.body.reason) : await documentService.cancel(auth, req.body.docKey, req.body.reason));
-    },
   });
 
   r.get('/api/v1/documents', {
@@ -239,4 +230,22 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
     },
     handler: async (req) => ok(await documentService.postingLog(authOf(req), req.query)),
   });
+  mountActions(app, cancelActions);
 }
+
+// [2026-11-03 03:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): huỷ chứng từ qua defineAction. Người dùng: đảo bút toán, huỷ; khoá API của hệ thống nguồn: chỉ đưa về cổng chờ (Chờ huỷ).
+// Gửi chứng từ (một / lô), trạm định khoản, xác nhận nhận tiền còn là route: cửa nạp giữ chứng từ bị từ chối ở bể chờ kể cả khi lỗi,
+// lô ghi kết quả từng chứng từ ở giao dịch riêng — chờ action dạng lô.
+export const cancelActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.document.cancel', title: 'Huỷ chứng từ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    input: z.object({ docKey: z.string().min(3), reason: z.string().trim().min(1).max(500) }),
+    output: z.object({ reversed: z.number().int(), requested: z.boolean().optional(), cancelled: z.boolean().optional() }),
+    expose: { http: { method: 'POST', path: '/api/v1/documents/cancel' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'source_document', objectId: (i) => i.docKey },
+    handler: (ctx, b) => (ctx.legacyAuth.kind === 'apikey'
+      ? documentService.requestCancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)
+      : documentService.cancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)),
+  }),
+];

@@ -80,7 +80,7 @@ describe('Sự kiện miền', () => {
   it('Kernel phát bizcity.ledger.entry.posted khi ghi sổ, mang correlation_id từ X-Correlation-Id; huỷ → entry.reversed', async () => {
     const res = await ctx.app.inject({
       method: 'POST', url: '/api/v1/vouchers',
-      headers: { authorization: `Bearer ${ctx.token}`, 'x-correlation-id': 'cell-hoi-thoai-0001' },
+      headers: { authorization: `Bearer ${ctx.token}`, 'x-correlation-id': 'cell-hoi-thoai-0001', 'idempotency-key': 'test-events-voucher-0001' },
       payload: { docType: 'receipt', branchCode: 'CN01', docDate: '2026-10-08', description: 'Thu thử sự kiện', counterparty: 'Khách lẻ', lines: [{ debitAccount: '1111', creditAccount: '5158', amount: 250000, description: 'Thu' }] },
     });
     expect(res.statusCode, res.body).toBe(201);
@@ -181,8 +181,14 @@ describe('Sự kiện miền', () => {
 
   it('danh mục đổi → bizcity.masterdata.catalog.changed (gom theo khung 5 giây), có việc giao cho catalog.notify-sales', async () => {
     expect((await call(ctx, 'PUT', '/api/v1/products/SK-EVT-1', { name: 'Hàng thử sự kiện', unit: 'Cái' })).status).toBeLessThan(300);
-    const ev = (await outbox('bizcity.masterdata.catalog.changed')).at(-1)!;
-    expect(ev).toMatchObject({ subject: 'catalog', source_module: 'bizcity.platform' });
+    // Hook onResponse phát sự kiện SAU khi phản hồi đã trả (catalog-notify.ts): chờ có điều kiện, không đọc ngay.
+    let found: Awaited<ReturnType<typeof outbox>>[number] | undefined;
+    for (let i = 0; i < 40 && !found; i++) {
+      found = (await outbox('bizcity.masterdata.catalog.changed')).at(-1);
+      if (!found) await new Promise((r) => setTimeout(r, 50));
+    }
+    expect(found).toMatchObject({ subject: 'catalog', source_module: 'bizcity.platform' });
+    const ev = found!;
     const d = await db.selectFrom('event_deliveries').select(['consumer', 'status']).where('event_id', '=', ev.id).execute();
     expect(d).toEqual([{ consumer: 'catalog.notify-sales', status: 'pending' }]);
   });

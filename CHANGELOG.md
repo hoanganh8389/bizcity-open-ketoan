@@ -213,6 +213,8 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 03:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 -->
+- **Route ghi của Kernel qua `defineAction`** (SC-ACT-1 35% → 54%): công nợ, phiếu nhập tay, số dư đầu kỳ, bổ sung thông tin thuế, dữ liệu gốc, kiểm thử bể chờ, kỳ kế toán / khoá kỳ, bút toán kết chuyển mẫu, cấu hình hạch toán, huỷ chứng từ. Đường dẫn, quyền, thân yêu cầu, mã 201 không đổi; mỗi lần ghi có bằng chứng của runtime. Lập phiếu, nhập số dư đầu kỳ, đối trừ tay **bắt buộc `Idempotency-Key`** (gửi lặp không lập / đối trừ hai lần — giao diện đã gửi sẵn); các thao tác còn lại chạy lại vô hại. Bổ sung thông tin thuế nay chạy trong một giao dịch (trước: hai giao dịch nối nhau).
 <!-- [2026-11-03 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 -->
 - **Phân hệ không còn ghi thẳng bảng của lõi** (SC-MOD-2 → 0, C-7): danh mục qua `@bizcity/platform/masterdata/catalog-ensure` (chỉ thêm mục thiếu), lý do định khoản qua Kernel `ensurePostingReason` (có bằng chứng), kỳ hợp đồng "đã chi" qua sự kiện `quy.payment-request.paid` (bên lịch hợp đồng tự cập nhật — chậm vài giây sau khi chi), chứng từ tham chiếu / cấu hình mua hàng qua hàm của bên sở hữu bảng.
 - **Import giữa các lớp đúng chiều** (SC-LAYER-2 → 0): Platform / danh mục gọi Kernel và adapter qua cổng `corePort` (gắn ở `app.ts`); Kế toán, Thuế, Mua hàng dùng Tài sản / Kho qua cổng do chính phân hệ khai (`phan-he/<x>/ports.ts`); add-in Xuất Excel đọc báo cáo qua route HTTP của lõi (đầu ra CSV không đổi, có test cả 17 tệp); `readPostingModes` sang `@ketoan/contracts`.

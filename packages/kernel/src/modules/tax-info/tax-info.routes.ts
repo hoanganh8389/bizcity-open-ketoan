@@ -7,12 +7,14 @@
  *   GET    /api/v1/tax-info               chứng từ mua bán, hoá đơn trong kỳ, kèm các điểm còn thiếu
  *   PUT    /api/v1/tax-info/:eventId      bổ sung / sửa (hoá đơn, kỳ kê khai, được khấu trừ, chứng từ thanh toán)
  *   DELETE /api/v1/tax-info/:eventId      bỏ phần đã bổ sung, trở về thông tin gốc của chứng từ
+ * Ghi: action core.tax-info.{save,remove} (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { taxInfoService } from './tax-info.service.js';
 
 const tags = ['Thuế: Bổ sung thông tin thuế'];
@@ -44,26 +46,34 @@ export async function taxInfoRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await taxInfoService.list(authOf(req), req.query)),
   });
 
-  r.put('/api/v1/tax-info/:eventId', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags,
-      summary: 'Bổ sung thông tin thuế cho một chứng từ',
-      params: eventParam,
-      body: z.object({
-        invoice: z.object({ no: text(32), serial: text(32), form: text(32), date: text(10), buyerName: text(255), buyerTaxCode: text(32), buyerAddress: text(500) }).default({}),
-        declareMonth: z.string().regex(/^(\d{4}-\d{2})?$/, 'Kỳ kê khai dạng YYYY-MM').default(''),
-        deductible: z.boolean().default(true),
-        paymentRef: z.string().trim().max(255).default(''),
-        note: z.string().trim().max(500).default(''),
-      }),
-    },
-    handler: async (req) => ok(await taxInfoService.save(authOf(req), req.params.eventId, req.body)),
-  });
-
-  r.delete('/api/v1/tax-info/:eventId', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Bỏ phần đã bổ sung', params: eventParam },
-    handler: async (req) => ok(await taxInfoService.remove(authOf(req), req.params.eventId)),
-  });
+  mountActions(app, taxInfoActions);
 }
+
+// [2026-11-03 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): bổ sung / bỏ thông tin thuế qua defineAction — một giao dịch của runtime, bằng chứng do runtime
+const taxInfoOut = z.object({ eventId: z.string(), pendingRepost: z.boolean() });
+
+export const taxInfoActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.tax-info.save', title: 'Bổ sung thông tin thuế cho một chứng từ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: eventParam.extend({
+      invoice: z.object({ no: text(32), serial: text(32), form: text(32), date: text(10), buyerName: text(255), buyerTaxCode: text(32), buyerAddress: text(500) }).default({}),
+      declareMonth: z.string().regex(/^(\d{4}-\d{2})?$/, 'Kỳ kê khai dạng YYYY-MM').default(''),
+      deductible: z.boolean().default(true),
+      paymentRef: z.string().trim().max(255).default(''),
+      note: z.string().trim().max(500).default(''),
+    }),
+    output: taxInfoOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/tax-info/:eventId' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'accounting_event', objectId: (i) => i.eventId },
+    handler: (ctx, { eventId, ...input }) => taxInfoService.saveIn(ctx.data.tx, ctx.legacyAuth, eventId, input),
+  }),
+  defineAction({
+    id: 'core.tax-info.remove', title: 'Bỏ phần đã bổ sung', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: eventParam, output: taxInfoOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/tax-info/:eventId' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'accounting_event', objectId: (i) => i.eventId },
+    handler: (ctx, { eventId }) => taxInfoService.removeIn(ctx.data.tx, ctx.legacyAuth, eventId),
+  }),
+];
