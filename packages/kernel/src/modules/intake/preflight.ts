@@ -21,7 +21,7 @@ import { AppError } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import type { Db } from '@bizcity/platform/db/client';
 import { findBranch, totalsProblems } from '../documents/document.service.js';
-import { draftItemFindings } from './draft-items.js';
+import { draftItemFindings, itemAutoCreate } from './draft-items.js';
 import { commitGuard } from './guard.js';
 
 export interface PreflightResult {
@@ -90,6 +90,8 @@ function lenient(raw: unknown): IngestDocument | null {
 }
 
 const MST_RE = /^\d{10}(-\d{3})?$/;
+/** Loại chứng từ không mang mặt hàng (như skusOf của cửa nạp). */
+const CASH_TYPES = new Set(['cash_transfer', 'customer_payment', 'supplier_payment', 'manual_journal']);
 const DAY_MS = 86_400_000;
 
 /** Tiền kiểm một chứng từ thô (chưa parse). Đọc trong `trx` (RLS theo đơn vị của người gọi). */
@@ -143,7 +145,11 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
   const skus = Array.isArray(r.lines) ? [...new Set((r.lines as { sku?: unknown }[]).map((l) => (typeof l?.sku === 'string' ? l.sku.trim() : '')).filter(Boolean))] : [];
   if (skus.length) {
     const have = new Set((await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('sku', 'in', skus).execute()).map((p) => p.sku));
-    for (const s of skus) if (!have.has(s)) findings.push(intakeFinding('IN-MD-004', 'lines[].sku', { got: s }));
+    // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: đơn vị tắt tự thêm mặt hàng → mã lạ là IN-ITEM-001 (chặn, cùng luật cửa nạp); bật → IN-MD-004 (gợi ý) như cũ
+    const strict = !CASH_TYPES.has(String(r.docType)) && (await itemAutoCreate(trx, auth.tenantId)) === 'off';
+    for (const s of skus) {
+      if (!have.has(s)) findings.push(strict ? intakeFinding('IN-ITEM-001', 'lines[].sku', { got: s, expected: 'mặt hàng đã khai trong danh mục' }) : intakeFinding('IN-MD-004', 'lines[].sku', { got: s }));
+    }
     // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: mặt hàng nháp → IN-ITEM-009 (cùng luật cửa nạp, R-INTAKE-4)
     findings.push(...(await draftItemFindings(trx, auth.tenantId, skus)));
   }

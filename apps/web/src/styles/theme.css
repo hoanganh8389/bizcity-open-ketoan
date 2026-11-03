@@ -178,6 +178,8 @@ table.grid tfoot td { position: sticky; bottom: 0; background: #f1f5f9; font-wei
 
 /* ---------------- Khung "Vì sao" của form danh mục (PHASE-023: nhắc · hướng dẫn · cảnh báo mềm · chặn) ---------------- */
 /* [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-15 */
+/* [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: dòng nhắc sau khi lưu */
+.why-flash { position: fixed; right: 16px; bottom: 16px; z-index: 1000; display: flex; gap: 10px; align-items: center; max-width: min(460px, calc(100vw - 32px)); padding: 10px 12px; border-radius: 8px; background: var(--surface, #fff); border: 1px solid var(--line, #dfe6ef); border-left: 4px solid #e8a33d; box-shadow: 0 6px 24px rgba(0,0,0,.12); font-size: 13px; }
 .why { border: 1px solid var(--line, #dfe6ef); border-radius: 8px; overflow: hidden; font-size: 13px; }
 .why-t { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-500); padding: 5px 12px; background: var(--surface-2, #f2f6fb); }
 .why-ln { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line, #dfe6ef); }

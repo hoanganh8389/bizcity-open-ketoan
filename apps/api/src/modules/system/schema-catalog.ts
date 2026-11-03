@@ -167,6 +167,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-02 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-022: migration bể chờ đổi số 0057 → 0058 (0057 = vai trò kiểm soát)
   // [2026-11-02 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-011 (0058 = lý do phiếu kế toán): migration bể chờ đổi số 0058 → 0059
   intake_inbox: { group: 'platform', label: 'Bể chờ đầu vào', term: 'Trạm kiểm tra đầu vào', module: 'documents', purpose: 'Chứng từ cửa nạp từ chối: nguyên văn, phát hiện IN-*, điểm, số lần gửi, trạng thái xử lý (ADR-0014). Không phải sổ: không thành sự việc, không bút toán. Dọn theo hạn giữ 90 / 7 ngày.' },
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — danh mục bảng: catalog_rule_reviews (0062, HT09 duyệt luật nhắc)
+  catalog_rule_reviews: { group: 'platform', label: 'Duyệt luật nhắc danh mục', term: 'Quy định dữ liệu danh mục', module: 'system', purpose: 'Kế toán trưởng của đơn vị duyệt luật nhắc khung Vì sao: đồng ý, sửa câu chữ, hạ cảnh báo mềm xuống nhắc (D023-8). Lịch sử ở nhật ký thao tác.' },
   app_installations: { group: 'platform', label: 'App đã kết nối', term: 'Ứng dụng kết nối', module: 'apps', purpose: 'App chạy riêng (ADR-0011 mức 2) đã kết nối với đơn vị: phạm vi quyền và sự kiện chủ đơn vị đồng ý, trạng thái bật / tắt, muối của bí mật webhook (bí mật không lưu).' },
   accounting_units: { group: 'platform', label: 'Đơn vị hạch toán', module: 'branches', purpose: 'Pháp nhân / đơn vị lập báo cáo; chi nhánh thuộc một đơn vị hạch toán.' },
   branches: { group: 'platform', label: 'Chi nhánh / cửa hàng', module: 'branches', purpose: 'Mỗi cửa hàng là một chi nhánh; code là mã cửa hàng dùng để đối chiếu với hệ thống bán hàng.' },

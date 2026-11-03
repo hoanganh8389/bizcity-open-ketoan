@@ -76,7 +76,7 @@ describe('Danh mục IN-*', () => {
   it('ca cặp phủ đủ mã block + door (thêm mã mới phải thêm ca)', () => {
     const door = Object.entries(INTAKE_CATALOG).filter(([, s]) => s.severity === 'block' && s.stage === 'door').map(([c]) => c)
       // hai mã này có ca riêng bên dưới (cần khoá app / hai lần gửi); IN-GUARD-001 cần dấu cũ + đổi cấu hình — ca ở commit-guard.test.ts
-      .filter((c) => c !== 'IN-BIZ-003' && c !== 'IN-BIZ-004' && c !== 'IN-GUARD-001');
+      .filter((c) => c !== 'IN-BIZ-003' && c !== 'IN-BIZ-004' && c !== 'IN-GUARD-001' && c !== 'IN-ITEM-001'); // IN-ITEM-001 cần đơn vị tắt tự thêm mặt hàng — ca ở quy-dinh-danh-muc.test.ts
     expect(Object.keys(PAIRS).sort()).toEqual(door.sort());
   });
 });

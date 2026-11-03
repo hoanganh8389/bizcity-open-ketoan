@@ -125,6 +125,21 @@ Mỗi cảnh báo có ca trong `alerts.test.yml`. Cổng: dashboard hiện tuổ
 
 ## 8. Câu hỏi chờ chủ quyết
 
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3: chủ đồng ý hướng đề xuất theo góc nhìn người dùng (2026-11-03) -->
+**Đã quyết 2026-11-03** (chủ đồng ý hướng đề xuất, nhìn từ người dùng):
+
+| # | Quyết định | Đã thi hành |
+|---|---|---|
+| Q-70-1 | Không trả lại `findings` khi lưu tài khoản; người dùng thấy cảnh báo **trước** khi Ghi (khung Vì sao), sau khi lưu chỉ hiện dòng nhắc ngắn "Đã lưu — còn n cảnh báo mềm (lý do đã ghi vào nhật ký)" | ✅ dòng nhắc sau khi lưu cho tài khoản, đối tượng, mặt hàng (`flashSaved` / `savedNote`) |
+| Q-70-2 | Mặt hàng trước; thẻ / thao tác (lịch sử mã, Đổi mã, Gộp mã, nhãn Nháp) thiết kế thành khuôn chung để đối tượng dùng lại | ☐ cùng B2 |
+| Q-70-3 | Giữ API `products` cũ tới khi không còn ai gọi: tối thiểu 2 bản phát hành, gỡ khi 30 ngày không còn lượt gọi; phản hồi cũ kèm `itemId` ngay từ đầu; màn hệ thống cho kế toán thấy "POS còn dùng API cũ" | ☐ cùng B2b |
+| Q-70-4 | Không có một ngày T chung: **đơn vị tự tắt** khi sẵn sàng; đơn vị mới mặc định tắt. Trước khi tắt: báo cáo "tự thêm N mặt hàng" (giai đoạn cảnh báo) + **Kích hoạt hàng loạt**; kế toán trưởng tự bấm tắt, có lý do, thấy hậu quả | ✅ `bizcity.item.auto_create`, `IN-ITEM-001`, HT09, `GET /products/auto-created`, `core.product.activate-drafts` |
+| Q-70-5 | Duyệt luật nhắc là **thao tác trong ứng dụng** (HT09): xem luật đúng như trong form, Đồng ý / Sửa câu chữ / Hạ xuống nhắc; duyệt từng nhóm; luật chưa duyệt vẫn chạy, nhãn "nháp" | ✅ `catalog_rule_reviews` (0062), `core.catalog-rule.review`, HT09 |
+
+Ghi chú Q-70-5: luật chưa duyệt **giữ nguyên mức** (cảnh báo mềm vẫn bắt ghi lý do — D023-6 chủ đã duyệt trước đó); chỉ hạ mức khi kế toán trưởng chọn "Hạ xuống nhắc" (D023-8). Q-70-4 thi hành **trước** B2 / B3 trên bảng `products` vì nháp + bể chờ đã có: đơn vị cũ không đổi hành vi (mặc định bật), chỉ đơn vị mới tắt — khi có `items`, tạo nháp chuyển sang `items.status`.
+
+Bảng câu hỏi gốc:
+
 | # | Câu hỏi | Đề xuất |
 |---|---|---|
 | Q-70-1 | Tài khoản có trả lại `findings` khi lưu không? | **Không** mở rộng `ctx` công khai của SDK chỉ cho việc này; web đã dùng `/validate`. Nếu cần, thêm đường riêng trong Kernel. |

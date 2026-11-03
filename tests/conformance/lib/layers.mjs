@@ -146,6 +146,7 @@ export const LAYER_MAP = [
   ['fastify-swagger.d.ts', 'K', 'kernel/public'],
   ['modules/system/evidence.routes.ts', 'P', 'audit'],
   ['modules/system/events.routes.ts', 'P', 'events'],
+  ['modules/system/catalog-rules.routes.ts', 'P', 'bizcity.config'], // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 duyệt luật nhắc, công tắc tự thêm mặt hàng
   ['modules/system/findings.routes.ts', 'P', 'diagnostics'], // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — thư viện mã hai cổng
   ['modules/system/mcp.routes.ts', 'P', 'mcp'],
   ['modules/system/metrics.routes.ts', 'P', 'observability'],

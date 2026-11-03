@@ -13,6 +13,12 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3 -->
+- **Quy định dữ liệu danh mục (HT09)** — màn của kế toán trưởng ([hướng dẫn](docs/huong-dan/quy-dinh-du-lieu-danh-muc.md), migration `0062_quy_dinh_danh_muc`):
+  - **Duyệt luật nhắc** của khung Vì sao ngay trong ứng dụng: xem luật đúng như trong form, Đồng ý (bỏ nhãn nháp), Sửa câu chữ, Hạ cảnh báo mềm xuống nhắc (bắt buộc lý do, D023-8), Về mặc định. Luật đổi ở bản phát hành sau thì bản duyệt hết hiệu lực.
+  - **Tắt / bật tự thêm mặt hàng từ chứng từ** (`bizcity.item.auto_create`): tắt thì mã hàng lạ thành mặt hàng nháp và chứng từ chờ ở Trạm kiểm tra với mã mới [`IN-ITEM-001`](docs/huong-dan/loi-dau-vao/IN-ITEM-001.md). Đơn vị mới mặc định tắt; đơn vị có từ trước giữ như cũ.
+- Danh sách mặt hàng: dải nhắc "N ngày qua chứng từ đã tự thêm … mặt hàng" và nút **Kích hoạt hàng loạt** mặt hàng nháp (`POST /api/v1/products/activate`).
+- Lưu tài khoản / đối tượng / mặt hàng còn cảnh báo mềm (hoặc lưu nháp): dòng nhắc ngắn ở góc màn sau khi lưu.
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29 -->
 - **Commit Guard — `IN-GUARD-001`** (PHASE-024, R-GATE-8): Kiểm thử chứng từ (`POST /api/v1/intake/preflight`) trả thêm `guard` — dấu của phần cấu hình chứng từ dựa vào (mặt hàng trên dòng, chi nhánh, đối tượng, phiên bản chính sách kế toán, khoá kỳ). Nộp kèm dấu đó (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`): nếu cấu hình đã đổi, cửa nạp chạy lại tiền kiểm; còn lỗi chặn thì từ chối với `IN-GUARD-001` kèm lỗi cụ thể và giữ ở Trạm kiểm tra; vẫn đạt thì nhận. Không gửi dấu: như cũ. [Bài học](docs/huong-dan/loi-dau-vao/IN-GUARD-001.md).
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->

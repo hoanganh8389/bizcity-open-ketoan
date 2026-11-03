@@ -48,6 +48,7 @@
 | `IN-MD-001` | L3 | block | door | 0 | Chi nhánh (mã cửa hàng) chưa có | [bài học](../huong-dan/loi-dau-vao/IN-MD-001.md) |
 | `IN-MD-004` | L3 | hint | advice | 0 | Mã hàng chưa có trong danh mục | [bài học](../huong-dan/loi-dau-vao/IN-MD-004.md) |
 | `IN-MD-005` | L3 | warn | advice | 10 | Mã số thuế đối tượng sai định dạng | [bài học](../huong-dan/loi-dau-vao/IN-MD-005.md) |
+| `IN-ITEM-001` | L3 | block | door | 0 | Mã hàng chưa có trong danh mục khi đơn vị đã tắt tự thêm mặt hàng (D024-3) — bể tạo mặt hàng nháp từ dòng | [bài học](../huong-dan/loi-dau-vao/IN-ITEM-001.md) |
 | `IN-ITEM-009` | L3 | block | door | 0 | Mặt hàng còn nháp, chưa kích hoạt (Gate A, R-GATE-6) | [bài học](../huong-dan/loi-dau-vao/IN-ITEM-009.md) |
 | `IN-BIZ-003` | L4 | block | door | 0 | Mã chứng từ không thuộc nguồn gửi | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-003.md) |
 | `IN-BIZ-004` | L4 | block | door | 0 | Phiên bản cũ hơn bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-004.md) |
@@ -61,7 +62,8 @@ L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh 
 ## 4. Nhật ký
 
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: IN-GUARD-001, guard trong Kiểm thử / cửa nạp -->
-- **0.4.0-draft (2026-11-03):** Commit Guard (PHASE-024 S024-29): Kiểm thử trả `guard` (dấu cấu hình chứng từ dựa vào) và nhận `guard` cũ → `guardChanged`; nộp kèm dấu (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`) — cấu hình đã đổi thì chạy lại tiền kiểm một lần, còn lỗi chặn → `IN-GUARD-001` + các lỗi đó, bể chờ giữ. Không gửi dấu: như cũ.
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3: IN-ITEM-001 -->
+- **0.4.0-draft (2026-11-03):** `IN-ITEM-001` (đơn vị tắt tự thêm mặt hàng, `bizcity.item.auto_create = off`): mã lạ → chặn ở cửa nạp + tiền kiểm (khi bật vẫn là `IN-MD-004` gợi ý); bể chờ tạo mặt hàng nháp từ dòng. Commit Guard (PHASE-024 S024-29): Kiểm thử trả `guard` (dấu cấu hình chứng từ dựa vào) và nhận `guard` cũ → `guardChanged`; nộp kèm dấu (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`) — cấu hình đã đổi thì chạy lại tiền kiểm một lần, còn lỗi chặn → `IN-GUARD-001` + các lỗi đó, bể chờ giữ. Không gửi dấu: như cũ.
 <!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26 -->
 - **0.3.0-draft (2026-11-02):** trường `remedy` trên phát hiện — mọi mã `block` / `warn` có phương án (bước sửa ở nguồn, màn danh mục khi thiếu mã, việc cấm); SC-FIX-1 kiểm. Thêm trường, không đổi mã / mức / điểm.
 - **0.2.0-draft (2026-11-02):** §5 bể chờ `intake_inbox`: `error.intake` trong phản hồi lỗi cửa nạp, `intakeId` từng dòng lô, API `/api/v1/intake`, hạn giữ (PHASE-021 W2, PHASES 2.18).

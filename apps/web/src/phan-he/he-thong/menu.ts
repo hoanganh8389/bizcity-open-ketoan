@@ -20,6 +20,8 @@ export const heThongMenu: MenuItem[] = [
       { key: 'ho-so-ke-toan', label: 'Hồ sơ kế toán', path: '/he-thong/ho-so-ke-toan', code: 'HT07', permission: 'ledger:read' },
       // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá theo vai (HT08, quyền review:read)
       { key: 'ban-danh-gia', label: 'Bàn đánh giá', path: '/he-thong/ban-danh-gia', code: 'HT08', permission: 'review:read' },
+      // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: kế toán trưởng duyệt luật nhắc, tắt / bật tự thêm mặt hàng từ chứng từ (người có catalog:read xem được)
+      { key: 'quy-dinh-danh-muc', label: 'Quy định dữ liệu danh mục', path: '/he-thong/quy-dinh-danh-muc', code: 'HT09', permission: 'catalog:read' },
     ],
   },
 ];

@@ -18,6 +18,8 @@ import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
 import { PrintButton } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems } from './productPrint';
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: dải báo cáo mặt hàng tự thêm, kích hoạt hàng loạt mặt hàng nháp
+import { AutoCreatedBanner, BulkActivateModal } from './autoCreate';
 
 export type ClassKind = 'brand' | 'industry' | 'group' | 'type';
 const KINDS: [ClassKind, string][] = [['group', 'Nhóm hàng'], ['industry', 'Ngành hàng'], ['brand', 'Nhãn hàng'], ['type', 'Loại hàng']];
@@ -144,6 +146,7 @@ export function ProductsPage() {
   }, [q.data]);
   const isChild = (p: Product) => fam.parent.get(p.sku) !== p.sku;
   const [scan, setScan] = useState<{ pw: string; busy?: boolean; msg?: string; ok?: boolean } | null>(null);
+  const [bulk, setBulk] = useState(false);
   const runScan = async () => {
     if (!scan) return;
     setScan({ ...scan, busy: true, msg: undefined });
@@ -204,6 +207,7 @@ export function ProductsPage() {
                     return { updated: o.created + o.updated, errors: importErrors(o).map((e) => `Dòng ${e.row} (${e.key || 'thiếu mã'}): ${e.text}`) };
                   }}
                 />
+                {canWrite && <button className="btn btn-sm" title="Mặt hàng nháp (thiếu đơn vị tính / nhóm hạch toán, hoặc mới từ chứng từ): điền một lần cho cả lô rồi kích hoạt" onClick={() => setBulk(true)}>Kích hoạt hàng loạt</button>}
                 {canWrite && <button className="btn btn-sm" title="Quét họ mã theo mã: mã 9 số + đuôi (Z, Q, K, M, B…; trừ T có tem) là mã con của mã gốc có trong danh mục. Giữ mã cha đã chọn tay." onClick={() => setScan({ pw: '' })}>Quét cha – con theo mã</button>}
                 <span className="row" style={{ gap: 4 }} title="In tem mã vạch / tem kệ: chọn phạm vi và số tem mỗi mã, mũi tên cạnh nút In tem để chọn mẫu (3–8 cột, tem kệ)">
                   <select className="select input" style={{ height: 30 }} value={labelScope} onChange={(e) => setLabelScope(e.target.value as 'sel' | 'view')}>
@@ -228,6 +232,7 @@ export function ProductsPage() {
             }
           />
           <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : null} />
+          <AutoCreatedBanner onActivate={canWrite ? () => setBulk(true) : undefined} />
           {q.isLoading ? <Loading /> : (
             <DataGrid
               storageKey="dm10-v2"
@@ -248,6 +253,7 @@ export function ProductsPage() {
           )}
         </div>
       </div>
+      {bulk && <BulkActivateModal onClose={() => setBulk(false)} groups={groups.data ?? []} />}
       {scan && (
         <Modal title="Quét cha – con theo mã (công cụ)" onClose={() => setScan(null)}
           footer={<><button className="btn btn-primary" disabled={scan.busy || !scan.pw} onClick={() => void runScan()}>{scan.busy ? 'Đang quét…' : 'Chạy'}</button><button className="btn" onClick={() => setScan(null)}>Đóng</button></>}>

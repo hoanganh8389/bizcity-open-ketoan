@@ -12,6 +12,8 @@
  *   GET /api/v1/item-classes/:kind       nhãn hàng / ngành hàng / nhóm hàng / loại hàng
  *   PUT /api/v1/item-classes/:kind/:code thêm hoặc sửa
  *   POST /api/v1/products/validate       khung Vì sao: nhắc / cảnh báo mềm / chặn cho một bản khai báo mặt hàng (chỉ đọc)
+ *   GET  /api/v1/products/auto-created?days=7   mặt hàng hệ thống bán hàng tự thêm từ chứng từ trong N ngày (thiếu ĐVT / nhóm, còn nháp)
+ *   POST /api/v1/products/activate       core.product.activate-drafts — kích hoạt hàng loạt mặt hàng nháp (điền ĐVT / nhóm còn trống)
  *
  * Mặt hàng NHÁP (0061): lưu khi còn lỗi chặn (ITEM-BLOCK-*) — chưa dùng được trên chứng từ (cửa nạp: IN-ITEM-009), không có ở
  * ô chọn của phiếu (status=active loại nháp). Hết lỗi chặn → tự kích hoạt, mục bể chờ có mã đó được tiền kiểm lại.
@@ -29,9 +31,10 @@ import { writeAudit } from '../../core/audit.js';
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
 import { applyItemGate, applyItemGateBulk, itemHints } from './item.hints.js';
+import { deleteProduct } from '../catalog/catalog.service.js';
+import { defineAction, mountActions } from '../../core/actions.js';
 
 const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
-import { deleteProduct } from '../catalog/catalog.service.js';
 
 const tags = ['Danh mục: Mặt hàng'];
 export const ITEM_CLASS_KINDS = ['brand', 'industry', 'group', 'type'] as const;
@@ -252,6 +255,34 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: trước khi tắt tự thêm mặt hàng, kế toán thấy hệ thống bán hàng đã tự thêm những gì (giai đoạn cảnh báo)
+  r.get('/api/v1/products/auto-created', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Mặt hàng tự thêm từ chứng từ trong N ngày: số lượng, thiếu đơn vị tính / nhóm hạch toán, còn nháp', querystring: z.object({ days: z.coerce.number().int().min(1).max(90).default(7) }) },
+    handler: async (req) => {
+      const auth = authOf(req);
+      const since = new Date(Date.now() - req.query.days * 86_400_000);
+      return db.transaction().execute(async (trx) => {
+        const base = trx.selectFrom('products').where('tenant_id', '=', auth.tenantId).where('source_system', '=', 'document').where('created_at', '>=', since);
+        const [sum, items] = await Promise.all([
+          base.select([
+            sql<number>`count(*)::int`.as('count'),
+            sql<number>`count(*) FILTER (WHERE unit = '')::int`.as('noUnit'),
+            sql<number>`count(*) FILTER (WHERE posting_group_code IS NULL)::int`.as('noGroup'),
+            sql<number>`count(*) FILTER (WHERE is_draft)::int`.as('drafts'),
+          ]).executeTakeFirstOrThrow(),
+          base.select(['sku', 'name', 'unit', 'posting_group_code', 'is_draft', 'draft_codes', 'created_at']).orderBy('created_at', 'desc').limit(100).execute(),
+        ]);
+        return ok({
+          days: req.query.days, ...sum,
+          items: items.map((i) => ({ sku: i.sku, name: i.name, unit: i.unit, postingGroupCode: i.posting_group_code, isDraft: i.is_draft, draftCodes: i.draft_codes, createdAt: i.created_at })),
+        });
+      });
+    },
+  });
+
+  mountActions(app, [activateDrafts]);
+
   r.post('/api/v1/products/validate', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Khung Vì sao: kiểm thử một bản khai báo mặt hàng (chỉ đọc)', body: z.object({ sku: z.string().trim().min(1).max(64), unit: z.string().trim().max(32).nullish(), postingGroupCode: code.nullish() }) },
@@ -450,3 +481,48 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 }
+
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: kích hoạt hàng loạt mặt hàng nháp — kế toán điền một lần đơn vị tính / nhóm hạch toán còn trống cho cả lô, rồi cổng danh mục
+// quyết định từng mặt hàng (còn lỗi chặn thì vẫn nháp). Kích hoạt xong → bể chờ kiểm lại chứng từ đang chờ vì các mặt hàng đó.
+const activateDrafts = defineAction({
+  id: 'core.product.activate-drafts', title: 'Kích hoạt hàng loạt mặt hàng nháp', tags,
+  description: 'Điền đơn vị tính / nhóm hạch toán cho mặt hàng nháp còn trống (không ghi đè ô đã có), rồi áp cổng danh mục: hết lỗi chặn → đang dùng. '
+    + 'Còn cảnh báo mềm (vd dùng nhóm mặc định) thì ghi lý do (warnAck) — không có lý do thì nhật ký catalog.warn.unacked.',
+  permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+  input: z.object({
+    skus: z.array(code.min(1)).min(1).max(500),
+    unit: z.string().trim().max(32).optional(),
+    postingGroupCode: z.string().trim().max(64).optional(),
+    warnAck: warnAck.optional(),
+  }),
+  output: z.object({
+    activated: z.array(z.string()),
+    stillDraft: z.array(z.object({ sku: z.string(), codes: z.array(z.string()) })),
+    inboxRechecked: z.object({ checked: z.number(), cleared: z.number() }),
+  }),
+  expose: { http: { method: 'POST', path: '/api/v1/products/activate' }, mcp: false, ai: 'deny' },
+  evidence: { objectType: 'product', objectId: (i) => (i.skus.length === 1 ? i.skus[0]! : `${i.skus.length} mặt hàng`) },
+  handler: async (ctx, input) => {
+    const tx = ctx.data.tx;
+    const auth = ctx.legacyAuth;
+    const drafts = (await tx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('sku', 'in', [...new Set(input.skus)]).where('is_draft', '=', true).execute()).map((r) => r.sku);
+    if (!drafts.length) return { activated: [], stillDraft: [], inboxRechecked: { checked: 0, cleared: 0 } };
+    if (input.postingGroupCode) {
+      const g = await tx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', auth.tenantId).where('code', '=', input.postingGroupCode).executeTakeFirst();
+      if (!g) throw Errors.validation(`Nhóm hạch toán ${input.postingGroupCode} chưa có`);
+      await tx.updateTable('products').set({ posting_group_code: input.postingGroupCode }).where('tenant_id', '=', auth.tenantId).where('sku', 'in', drafts).where('posting_group_code', 'is', null).execute();
+    }
+    if (input.unit) await tx.updateTable('products').set({ unit: input.unit }).where('tenant_id', '=', auth.tenantId).where('sku', 'in', drafts).where('unit', '=', '').execute();
+    const res = await applyItemGateBulk(tx, auth, drafts);
+    for (const sku of res.activated) {
+      const row = await tx.selectFrom('products').select(['unit', 'posting_group_code']).where('tenant_id', '=', auth.tenantId).where('sku', '=', sku).executeTakeFirstOrThrow();
+      const findings = await itemHints(tx, auth.tenantId, { sku, unit: row.unit, postingGroupCode: row.posting_group_code });
+      await recordWarnAck(tx, auth, 'product', sku, findings, input.warnAck);
+      await writeAudit(tx, { tenantId: auth.tenantId, actor: auth.actor, action: 'product.activate', objectType: 'product', objectId: sku, after: { via: 'activate-drafts', unit: row.unit, postingGroupCode: row.posting_group_code } });
+    }
+    const left = res.drafts.length
+      ? await tx.selectFrom('products').select(['sku', 'draft_codes']).where('tenant_id', '=', auth.tenantId).where('sku', 'in', res.drafts).execute()
+      : [];
+    return { activated: res.activated, stillDraft: left.map((r) => ({ sku: r.sku, codes: r.draft_codes ?? [] })), inboxRechecked: res.recheck };
+  },
+});

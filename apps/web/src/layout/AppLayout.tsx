@@ -28,6 +28,8 @@ import { DangOnline } from './DangOnline';
 import { ThongBao } from './ThongBao';
 import { workBranch } from '@/lib/workBranch';
 import { MaTraCuu } from '@/components/MaTraCuu';
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: dòng nhắc sau khi lưu danh mục
+import { SavedFlash } from '@/components/WhyPanel';
 
 export function AppLayout() {
   const { user, logout } = useAuth();
@@ -137,6 +139,7 @@ export function AppLayout() {
           {/* Robot trợ lý khi đã bấm "Ẩn": thu gọn thành biểu tượng ở đây. */}
           {addins.some((a) => a.id === 'tro-ly') && <TroLyDock />}
           <ThongBao />
+          <SavedFlash />
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />

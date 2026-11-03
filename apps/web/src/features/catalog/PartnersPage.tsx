@@ -22,7 +22,7 @@ import { useEnabledModules } from '../../layout/useAppMenu';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ListPicker } from '@/components/pickers';
 import { useBranches } from '@/components/filters';
-import { useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
 import type { CatalogWarnAck } from '@ketoan/contracts';
 
 interface Partner {
@@ -290,6 +290,7 @@ function PartnerForm({ value, groups, employees, onClose }: { value: Partial<Par
       return isNew ? api.post('/api/v1/partners', { code, ...body }) : api.put(`/api/v1/partners/${encodeURIComponent(code)}`, body);
     },
     onSuccess: () => {
+      flashSaved(savedNote(why.findings));
       void qc.invalidateQueries({ queryKey: ['partners'] }); void qc.invalidateQueries({ queryKey: ['partner-groups'] });
       // Đang nằm trong khung của trang quản trị → báo mã đối tượng vừa lưu để bên đó chọn luôn.
       // Mở từ nút "+" NCC của phiếu nhập (cửa sổ riêng) → báo cửa sổ phiếu để tải lại NCC và chọn luôn.

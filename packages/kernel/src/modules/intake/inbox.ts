@@ -20,6 +20,7 @@ import type { AuthContext } from '@bizcity/platform/core/auth';
 import { defineSubscriber } from '@bizcity/platform/core/events';
 import type { IntakeFinding } from '@ketoan/contracts';
 import { preflight, stable } from './preflight.js';
+import { createDraftItemsFromLines } from './draft-items.js';
 
 export type IntakeChannel = 'api' | 'batch' | 'submit' | 'app' | 'connector' | 'mcp' | 'trial';
 const MAX_BYTES = 256 * 1024;
@@ -65,6 +66,9 @@ export async function recordRejection(auth: AuthContext, raw: unknown, channel: 
   try {
     const out = await db.transaction().execute(async (trx) => {
       const pf = await preflight(trx, auth, raw, opts); // dấu Commit Guard của lần nộp (nếu có) → bể ghi IN-GUARD-001 như cửa nạp
+      // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: mã lạ khi đơn vị tắt tự thêm → tạo mặt hàng nháp từ dòng (kích hoạt xong, bể tự kiểm lại — recheckInboxForSkus)
+      const unknown = [...new Set(pf.findings.filter((f) => f.code === 'IN-ITEM-001').map((f) => String(f.got)))];
+      if (unknown.length) await createDraftItemsFromLines(trx, auth.tenantId, raw, unknown);
       const row = await insertRow(trx, auth, raw, channel, 'open', pf.findings, pf.score, { code: err.code, message: err.message, details: err.details ?? null });
       return { id: String(row.id), attempt: row.attempt_no, score: pf.score, findings: pf.findings };
     });

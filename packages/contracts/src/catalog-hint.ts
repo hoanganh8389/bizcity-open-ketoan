@@ -1,3 +1,4 @@
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: duyệt luật nhắc theo đơn vị (D023-4 / D023-8) — ví dụ minh hoạ từng luật, áp bản duyệt (sửa câu chữ, hạ warn → info)
 // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: luật nhắc mặt hàng ITEM-* (thiếu ĐVT, thiếu nhóm hạch toán) — còn ✘ thì mặt hàng lưu NHÁP (ADR-0019)
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27: thêm `fix` (cách sửa) cho mức warn / block — khuôn chung bizcity_findings@1
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-13 / 14: bizcity_catalog_hint@1 — danh mục luật nhắc · hướng dẫn · cảnh báo mềm · chặn cho form danh mục (D023-6..8)
@@ -13,9 +14,10 @@
  *           người lưu tự chịu trách nhiệm vì đã được cảnh báo (D023-7)
  *   block — chặn: chỉ toàn vẹn dữ liệu / bất biến; không lưu được
  * Cảnh báo mềm không bao giờ thành chặn bằng cấu hình; chặn không hạ thành mềm. Hạ warn → info cho một đơn vị chỉ qua duyệt
- * tại đơn vị có bằng chứng (D023-8, S023-17 — chưa có).
+ * tại đơn vị có bằng chứng (D023-8): màn HT09 "Quy định dữ liệu danh mục", bảng catalog_rule_reviews, áp bằng applyRuleReview.
  *
- * Nội dung `why` của luật kế toán: trạng thái `draft` tới khi kế toán trưởng duyệt (D023-4); giao diện ghi nhãn "nháp".
+ * Nội dung `why` của luật kế toán: trạng thái `draft` tới khi kế toán trưởng duyệt (D023-4); giao diện ghi nhãn "nháp". Kế toán
+ * trưởng của từng đơn vị duyệt ở HT09: đồng ý (bỏ nhãn nháp), sửa câu chữ (chỉ dùng biến của luật gốc), hạ mức (chỉ warn → info).
  */
 
 export type CatalogHintLevel = 'info' | 'guide' | 'warn' | 'block';
@@ -53,6 +55,10 @@ export interface CatalogFinding {
   /** Ô liên quan — giao diện đặt khung Vì sao cạnh nhóm ô này. */
   field?: string;
   draft?: boolean;
+  /** Biến đã thay vào câu chữ — để áp câu chữ đơn vị sửa lại (applyRuleReview). */
+  vars?: Record<string, string | number>;
+  /** Cảnh báo mềm đã được kế toán trưởng của đơn vị hạ xuống nhắc (D023-8). */
+  lowered?: boolean;
 }
 
 /** Ghi nhận khi lưu bản khai báo còn cảnh báo mềm (D023-6): bắt buộc lý do. */
@@ -164,11 +170,77 @@ export function catalogFinding(code: string, vars: Record<string, string | numbe
   return {
     code, level: def.level, title: fill(def.title), why: fill(def.why),
     ...(def.fix ? { howTo: fill(def.fix) } : {}), ...(def.rule ? { rule: def.rule } : {}), ...(def.learn ? { learn: fill(def.learn) } : {}),
-    ...(def.status === 'draft' ? { draft: true } : {}), ...extra,
+    ...(def.status === 'draft' ? { draft: true } : {}), ...(Object.keys(vars).length ? { vars } : {}), ...extra,
   };
 }
 
 /** Mã các cảnh báo mềm trong danh sách phát hiện (cần ghi lý do khi lưu). */
 export function warnCodes(findings: readonly CatalogFinding[]): string[] {
   return findings.filter((f) => f.level === 'warn').map((f) => f.code);
+}
+
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09
+/** Giá trị minh hoạ cho từng luật — màn duyệt hiện luật đúng như người dùng sẽ thấy trong form. */
+export const CATALOG_HINT_EXAMPLES: Record<string, Record<string, string>> = {
+  'ACC-HINT-001': { parent: '131', inherited: 'lưỡng tính, theo dõi đối tượng' },
+  'ACC-HINT-003': { code: '13198', root: '131' },
+  'ACC-HINT-004': { side: 'Có', root: '156', expected: 'Nợ' },
+  'ACC-HINT-005': { code: '33110', root: '331' },
+  'ACC-HINT-006': { code: '1388', balance: '12.500.000' },
+  'ACC-HINT-007': { code: '990' },
+  'ACC-BLOCK-001': { parent: '131' },
+  'ITEM-BLOCK-001': { sku: 'SUA01' },
+  'ITEM-BLOCK-002': { sku: 'SUA01' },
+  'ITEM-HINT-001': { sku: 'SUA01', group: 'HH' },
+  'PART-HINT-002': { code: 'NCC-AN' },
+  'PART-HINT-003': { other: 'KH001', name: 'Công ty TNHH An Bình' },
+  'PART-HINT-004': { taxCode: '01234' },
+};
+
+/** Biến {x} một luật dùng (title / why / fix / learn) — câu chữ đơn vị sửa lại chỉ được dùng các biến này. */
+export function hintVars(code: string): string[] {
+  const d = CATALOG_HINTS[code];
+  if (!d) return [];
+  return [...new Set([d.title, d.why, d.fix ?? '', d.learn ?? ''].flatMap((t) => [...t.matchAll(/\{(\w+)\}/g)].map((m) => m[1]!)))];
+}
+
+/**
+ * Dấu của một luật (mức + câu chữ mặc định) — bản duyệt của đơn vị gắn dấu này; luật đổi ở bản phát hành sau → dấu khác → bản duyệt
+ * hết hiệu lực, luật về "chưa duyệt" (S023-17). Băm chuỗi đơn giản (chạy cả trên trình duyệt), không dùng cho bảo mật.
+ */
+export function hintHash(code: string): string {
+  const d = CATALOG_HINTS[code];
+  if (!d) return '';
+  const text = JSON.stringify([d.level, d.title, d.why, d.fix ?? '']);
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return `h1:${(h >>> 0).toString(16)}`;
+}
+
+/** Bản duyệt của đơn vị cho một luật (catalog_rule_reviews). Có bản duyệt = đã duyệt (bỏ nhãn nháp). */
+export interface CatalogRuleReview {
+  code: string;
+  title?: string | null;
+  why?: string | null;
+  fix?: string | null;
+  lowered?: boolean;
+}
+
+/**
+ * Áp bản duyệt của đơn vị lên một phát hiện: câu chữ sửa lại (thay lại biến), hạ warn → info (D023-8), bỏ nhãn nháp.
+ * Mức chặn không bao giờ hạ; mức khác warn không đổi.
+ */
+export function applyRuleReview(f: CatalogFinding, r: CatalogRuleReview | undefined): CatalogFinding {
+  if (!r) return f;
+  const vars = f.vars ?? {};
+  const fill = (t: string) => t.replace(/\{(\w+)\}/g, (_, k: string) => (vars[k] === undefined ? `{${k}}` : String(vars[k])));
+  const { draft: _d, ...rest } = f;
+  const lower = Boolean(r.lowered) && f.level === 'warn';
+  return {
+    ...rest,
+    ...(r.title ? { title: fill(r.title) } : {}),
+    ...(r.why ? { why: fill(r.why) } : {}),
+    ...(r.fix ? { howTo: fill(r.fix) } : {}),
+    ...(lower ? { level: 'info' as const, lowered: true } : {}),
+  };
 }

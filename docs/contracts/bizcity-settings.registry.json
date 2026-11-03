@@ -145,6 +145,14 @@
       "readBy": "intakeRetentionSubscriber (packages/kernel/src/modules/intake/inbox.ts)", "writeBy": "chưa có (W3: màn Trạm kiểm tra)",
       "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb không kiểm khuôn (PHASE-021 W3)"
+    },
+    {
+      "key": "bizcity.item.auto_create",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.item.autoCreate", "schema": "enum on|off", "default": "on",
+      "readBy": "itemAutoCreate() (packages/kernel/src/modules/intake/draft-items.ts) — cửa nạp assertKnownItems, tiền kiểm L3", "writeBy": "core.settings.item-auto-create (PUT /api/v1/settings/item-auto-create, HT09)",
+      "permission": "settings:write", "audit": "settings.item-auto-create (có lý do)", "affectsPosting": true,
+      "note": "D024-3: on = mã lạ trên chứng từ tự thêm vào danh mục (như cũ); off = mã lạ → mặt hàng nháp + bể chờ IN-ITEM-001. Không khai = on (đơn vị có trước 0062); đơn vị mới tạo bằng seed = off."
     }
   ]
 }

@@ -20,7 +20,7 @@ import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
 import { SKU_SUFFIXES, skuInfo, variantName } from '@bizcity/mua-hang-domain';
-import { useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
+import { flashSaved, savedNote, useCatalogWhy, useWarnAck, WarnAckBox, WhyPanel } from '@/components/WhyPanel';
 import type { CatalogWarnAck } from '@ketoan/contracts';
 
 type ClassKind = 'brand' | 'industry' | 'group' | 'type';
@@ -217,6 +217,7 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
       return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
     },
     onSuccess: () => {
+      flashSaved(savedNote(why.findings, { draft: blockCount > 0 }));
       void qc.invalidateQueries({ queryKey: ['products'] });
       void qc.invalidateQueries({ queryKey: ['catalog-product'] });
       void qc.invalidateQueries({ queryKey: ['price-lists'] });

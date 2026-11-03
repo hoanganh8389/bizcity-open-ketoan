@@ -49,7 +49,7 @@ import { ledgerService } from '../ledger/ledger.service.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { hasTaxInvoice, isStockDocument, needsBranchContext, postingService, type PostContext } from '../posting/posting.service.js';
-import { assertNoDraftItems } from '../intake/draft-items.js';
+import { assertKnownItems, assertNoDraftItems } from '../intake/draft-items.js';
 import { preflight } from '../intake/preflight.js';
 import type { StockContext } from '../posting/rules/sale.rule.js';
 import { inventoryMovementRepository } from '../inventory/inventory-movement.repository.js';
@@ -354,6 +354,8 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   }
   // Mặt hàng còn nháp (Gate A chưa kích hoạt) thì không nhận vào sổ — bể chờ giữ nguyên văn với IN-ITEM-009 (ADR-0019).
   await assertNoDraftItems(trx, auth.tenantId, doc);
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: đơn vị tắt tự thêm mặt hàng → mã lạ vào bể chờ (IN-ITEM-001), bể tạo mặt hàng nháp từ dòng.
+  await assertKnownItems(trx, auth.tenantId, doc);
   const branch = await findBranch(trx, auth.tenantId, doc.branchCode);
   const branchId = branch.id;
   const partnerId = await documentPartnerId(trx, auth.tenantId, doc);

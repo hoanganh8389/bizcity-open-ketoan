@@ -14,6 +14,7 @@ import { SEEDS_DIR } from '@bizcity/platform/db/paths';
 import type { Db } from '@bizcity/platform/db/client';
 import { parseCsv } from '../../db/seed.js';
 import { accountRepository } from './account.repository.js';
+import { reviewFindings } from '@bizcity/platform/core/catalog-warn';
 
 export interface AccountDraft {
   code: string;
@@ -86,5 +87,5 @@ export async function accountHints(db: Db, tenantId: string, draft: AccountDraft
     const net = Number(r?.net ?? 0);
     if (Math.abs(net) >= 0.005) out.push(catalogFinding('ACC-HINT-006', { code: draft.code, balance: `${net > 0 ? 'Nợ' : 'Có'} ${fmt(Math.abs(net))}` }, { field: 'isActive' }));
   }
-  return out;
+  return reviewFindings(db, tenantId, out); // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị
 }

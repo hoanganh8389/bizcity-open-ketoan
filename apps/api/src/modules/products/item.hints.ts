@@ -7,6 +7,7 @@
 import { catalogFinding, type CatalogFinding } from '@ketoan/contracts';
 import type { Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
+import { reviewFindings } from '@bizcity/platform/core/catalog-warn';
 
 /**
  * Mặt hàng vừa kích hoạt → bể chờ kiểm lại (Gate B, Kernel). Danh mục (lớp M) không import Kernel: hàm do phần lắp ráp đăng ký
@@ -34,7 +35,7 @@ export async function itemHints(db: Db, tenantId: string, d: ItemDraft): Promise
       ? catalogFinding('ITEM-HINT-001', { sku: d.sku, group: def.code }, { field: 'postingGroupCode' })
       : catalogFinding('ITEM-BLOCK-002', { sku: d.sku }, { field: 'postingGroupCode' }));
   }
-  return out;
+  return reviewFindings(db, tenantId, out); // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: áp bản duyệt luật nhắc của đơn vị
 }
 
 /** Mã lỗi chặn (để ghi products.draft_codes). */
