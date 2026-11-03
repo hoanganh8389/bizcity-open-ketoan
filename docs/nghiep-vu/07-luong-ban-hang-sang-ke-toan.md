@@ -1,4 +1,5 @@
 # Luồng bán hàng sang kế toán
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 Bài này để cả team (kế toán và lập trình) cùng một cách hiểu: chứng từ ở cửa hàng sang phần mềm kế toán đi qua những bước nào, phiếu nào định khoản ra sao, dữ liệu lưu ở đâu, kế toán cấu hình và xem ở màn nào.
 
@@ -48,7 +49,7 @@ Mỗi công ty cấu hình tài khoản theo lý do khác nhau, nên khi làm m�
 
 Mỗi mặt hàng thuộc một bộ tài khoản: **kho, giá vốn, doanh thu, chiết khấu, hàng bán trả lại**, kèm loại thuế ra / vào. Thực tế chỉ có khoảng 20 bộ; phần lớn mặt hàng dùng bộ hàng hoá thường (1561 – 6321 – 51111 – 52111 – 52131), hàng khuyến mại dùng bộ riêng (1561 – 6323 – 51113 – 52113 – 52133), công cụ dụng cụ dùng 1531 – 64138.
 
-Mặt hàng chưa có trong danh mục mặt hàng của phần mềm: bộ định khoản đọc bộ tài khoản, loại thuế từ **tệp dữ liệu gốc** (`apps/api/seeds/mat-hang-tai-khoan.jsonl`); không có ở đó thì dùng nhóm mặc định.
+Mặt hàng chưa có trong danh mục mặt hàng của phần mềm: bộ định khoản đọc bộ tài khoản, loại thuế từ **tệp dữ liệu gốc** (`db/seeds/mat-hang-tai-khoan.jsonl`); không có ở đó thì dùng nhóm mặc định.
 
 ### 2.3. Hình thức thanh toán (DM05)
 

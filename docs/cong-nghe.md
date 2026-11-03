@@ -1,4 +1,5 @@
 # Công nghệ sử dụng
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 Tài liệu trả lời bốn câu hỏi: phần mềm viết bằng gì, vì sao chọn như vậy, bảo trì và mở rộng ra sao, và người dùng quen phần mềm cài trên Windows chuyển sang bản chạy trên trình duyệt thì thế nào.
 
@@ -104,7 +105,7 @@ Biết một module là đọc được mọi module khác.
 |---|---|
 | Một báo cáo | Thêm hàm truy vấn (đọc `bizcity_read.*`) + một đường dẫn ở `phan-he/ke-toan/reports`, một trang ở `features/reports`, một dòng trong `layout/menu.ts` và `App.tsx`, một bài hướng dẫn |
 | Một loại chứng từ tự động | Thêm khuôn ở `packages/contracts`, một luật định khoản ở `modules/posting/rules/` |
-| Một cột, một bảng | Thêm file migration mới (không sửa file cũ), cập nhật `db/types.ts` |
+| Một cột, một bảng | Thêm file migration mới (không sửa file cũ), cập nhật `packages/platform/src/db/types.ts` |
 | Một tiện ích ngoài lõi (bảng tính AI, xuất file…) | Viết thành **add-in**: thư mục riêng, đường dẫn riêng, tự gắn mục vào menu, bật tắt bằng cấu hình. Xem `docs/add-in.md` |
 
 ### Những thứ giữ cho code không hỏng dần

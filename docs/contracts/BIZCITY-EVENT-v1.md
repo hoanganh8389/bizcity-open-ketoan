@@ -1,4 +1,5 @@
 # `bizcity_event@1` — Event Contract (sự kiện miền)
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
@@ -28,7 +29,7 @@
 
 ## 2. Hiện trạng
 
-**Có từ 2026-10-30 (PHASE-006, migration 0039):** runtime `apps/api/src/core/events.ts`. Gói `packages/events` tách cùng Kernel ở PHASES 2.3.
+**Có từ 2026-10-30 (PHASE-006, migration 0039):** runtime `apps/api/src/core/events.ts`. Gói đích `packages/events` (lộ trình 3.4) chưa tách.
 
 | Phần | Hiện có |
 |---|---|

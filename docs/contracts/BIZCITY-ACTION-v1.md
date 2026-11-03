@@ -1,4 +1,5 @@
 # `bizcity_action@1` — Action Contract
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 10:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — tự chẩn đoán L1 / L3, diagnostic_runs, khoá kỳ chặn khi sổ lỗi (PHASES 2.10). -->
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
@@ -121,7 +122,7 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 
 1. Phase 2: viết `@bizcity/actions` bọc Fastify; chuyển trước các route **ghi** của `phan-he/quy` (yêu cầu thanh toán) làm mẫu vì có luồng duyệt và chạm sổ.
    - **Đã làm (PHASES 2.5):**
-     - runtime ở `apps/api/src/core/actions.ts` (tách thành gói `packages/actions` cùng 2.3);
+     - runtime ở `apps/api/src/core/actions.ts` (gói đích `packages/actions`, lộ trình 2.5, chưa tách);
      - bảng `action_requests` (migration 0035);
      - 11 action `quy.payment-request.*`, giữ nguyên đường dẫn;
      - test `apps/api/test/actions.test.ts` (CONF-RUN-1, -4, -9).
