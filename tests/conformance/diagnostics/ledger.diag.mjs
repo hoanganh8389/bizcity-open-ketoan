@@ -174,6 +174,7 @@ export const checks = [
     },
   },
   // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: DG-PLAN-1 DEBT_MATCH_LEDGER, DG-PLAN-4 TRANSIT_NONZERO có SQL thật (cùng chữ với balance.diagnostics.ts); giữ mã DG-PLAN-* để bảng điểm không đổi mã.
+  // [2026-11-03 09:07 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — DG-PLAN-1: câu lấy phát hiện lọc tài khoản công nợ theo debt_items như câu count và kiểm DEBT_MATCH_LEDGER trong app — trước lọc accounts.is_debt (seed để false cho 131/331) nên đơn vị mới luôn báo lệch giả
   sqlCheck({
     id: 'DG-PLAN-1', code: 'DEBT_MATCH_LEDGER', title: 'Khoản công nợ còn lại theo đối tượng = số dư tài khoản công nợ trên sổ cái',
     rules: ['R-LEDGER-11'], conf: [], tier: 2, enforce: 'info', weight: 2,
@@ -188,8 +189,9 @@ export const checks = [
     sql: `SELECT t.code AS tenant, coalesce(pt.code, p.partner_id::text) || ':' || p.account_code AS key, NULL AS detail
             FROM (SELECT tenant_id, partner_id, account_code, sum(ledger) AS ledger, sum(debt) AS debt FROM (
             SELECT l.tenant_id, l.partner_id, l.account_code, sum(l.debit - l.credit) AS ledger, 0::numeric AS debt
-              FROM ledger_lines l JOIN accounts a ON a.tenant_id = l.tenant_id AND a.code = l.account_code AND a.is_debt
-             WHERE l.partner_id IS NOT NULL AND l.posting_date <= current_date GROUP BY 1, 2, 3
+              FROM ledger_lines l
+             WHERE l.partner_id IS NOT NULL AND l.posting_date <= current_date
+               AND l.account_code IN (SELECT DISTINCT d2.account_code FROM debt_items d2 WHERE d2.tenant_id = l.tenant_id) GROUP BY 1, 2, 3
             UNION ALL
             SELECT d.tenant_id, d.partner_id, d.account_code, 0::numeric, sum(CASE WHEN d.side = 'debit' THEN d.amount - d.settled_amount ELSE d.settled_amount - d.amount END)
               FROM debt_items d WHERE d.doc_date <= current_date GROUP BY 1, 2, 3) u GROUP BY 1, 2, 3) p JOIN tenants t ON t.id = p.tenant_id LEFT JOIN partners pt ON pt.id = p.partner_id

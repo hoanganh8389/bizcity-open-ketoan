@@ -303,7 +303,8 @@ export async function submitDocumentIn(trx: Db, auth: AuthContext, raw: unknown,
   const prep: { doc: unknown; skip?: string } = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, raw) : { doc: raw };
   if (prep.skip) return { docKey: String((prep.doc as { docKey?: unknown })?.docKey ?? '?'), version: Number((prep.doc as { version?: unknown })?.version ?? 1), status: 'unchanged' };
   const parsed = ingestDocumentSchema.safeParse(prep.doc);
-  if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', parsed.error.flatten());
+  // [2026-11-02 11:47 PM Johnny Chu - Chu Hoàng Anh] R-ERR — details của lỗi sai khuôn là mảng câu (zodIssueTexts) thay flatten() — web chỉ hiện details dạng mảng (apps/web/src/lib/api.ts errorText), trước đây người dùng không thấy trường nào sai
+  if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', zodIssueTexts(parsed.error));
   assertTotals(parsed.data);
   return postDocumentIn(trx, auth, parsed.data, opts);
 }

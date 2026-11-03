@@ -10,8 +10,9 @@
  *   R-INTAKE-4: mã `block` + `door` ⇔ cửa nạp từ chối cùng dữ liệu (test cặp `intake-preflight.test.ts`). Mã chỉ có ở trạm
  *   (không có luật Kernel tương ứng) thì bắt buộc warn / hint + advice. Đổi nghĩa một mã = cấp mã mới (R-INTAKE-11).
  */
+import { SCREENS, type Remedy, type RemedyStep } from './remedy.js';
 
-export type IntakeLayer = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+export type IntakeLayer ='L1' | 'L2' | 'L3' | 'L4' | 'L5';
 export type IntakeSeverity = 'block' | 'warn' | 'hint';
 export type IntakeStage = 'door' | 'posting' | 'advice';
 
@@ -63,6 +64,143 @@ export const INTAKE_CATALOG = {
 
 export type IntakeCode = keyof typeof INTAKE_CATALOG;
 
+// [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26 (R-FIX-1, bizcity_remedy@1 §3): phương án khắc phục có cấu trúc cho mọi mã IN-* mức block / warn; phát hiện mang remedy; SC-FIX-1 kiểm
+/** Mã bắt buộc có phương án khắc phục: mọi mã `block` / `warn` (R-FIX-1). Mã `hint` khai thì tốt, không bắt buộc. */
+type IntakeCodeNeedingRemedy = { [K in IntakeCode]: (typeof INTAKE_CATALOG)[K]['severity'] extends 'hint' ? never : K }[IntakeCode];
+
+const RESEND: RemedyStep = { text: 'Gửi lại chứng từ từ hệ thống nguồn, rồi xem kết quả tiền kiểm', role: 'creator' };
+
+/**
+ * PHƯƠNG ÁN KHẮC PHỤC theo mã (bizcity_remedy@1). Tách khỏi INTAKE_CATALOG vì danh mục giữ khuôn một dòng / mã (SC-INTAKE-1).
+ * Đầu vào sai sửa ở NGUỒN (R-INTAKE-8): bước đầu là việc của người lập / hệ thống gửi; kế toán chỉ vào cuộc khi thiếu danh mục
+ * hoặc khi cảnh báo được chấp nhận có lý do. Kiểm lại = gửi lại và tiền kiểm không còn mã đó. Mỗi khoá một đoạn — SC-FIX-1 đọc.
+ */
+export const INTAKE_REMEDIES: Record<IntakeCodeNeedingRemedy, Remedy> & Partial<Record<IntakeCode, Remedy>> = {
+  'IN-SHAPE-001': {
+    steps: [{ text: 'Điền trường còn thiếu (xem "trường" trong phát hiện) ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SHAPE-001' },
+  },
+  'IN-SHAPE-002': {
+    steps: [{ text: 'Sửa trường sai kiểu ở hệ thống nguồn: số không kèm dấu phân cách hàng nghìn hay đơn vị tiền, mã là chuỗi' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SHAPE-002' },
+  },
+  'IN-SHAPE-003': {
+    steps: [{ text: 'Đổi ngày sang dạng năm-tháng-ngày (vd 2026-10-05) ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SHAPE-003' },
+    forbid: ['Không đổi ngày chứng từ sang ngày khác cho lọt cửa nạp — ngày quyết định kỳ kế toán'],
+  },
+  'IN-SHAPE-004': {
+    steps: [{ text: 'Chọn một loại chứng từ có sẵn trong khuôn nạp (sale, purchase, customer_payment…) ở hệ thống nguồn' }, { text: 'Cần loại mới thì gửi đề xuất cho Nhóm Lõi, chưa gửi chứng từ' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SHAPE-004' },
+    forbid: ['Không mượn loại chứng từ khác nghĩa — luật định khoản đi theo loại'],
+  },
+  'IN-SHAPE-005': {
+    steps: [{ text: 'Rút gọn trường quá dài, hoặc tách chứng từ có quá nhiều dòng ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SHAPE-005' },
+  },
+  'IN-SHAPE-006': {
+    steps: [{ text: 'Chọn một giá trị trong danh sách "mong đợi" của phát hiện ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SHAPE-006' },
+  },
+  'IN-SUM-001': {
+    steps: [{ text: 'Tính lại tổng chứng từ bằng cộng các dòng tới đồng ở hệ thống nguồn; kiểm cách làm tròn từng dòng' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SUM-001' },
+    forbid: ['Không sửa riêng tổng cho khớp mà không kiểm lại dòng — hoá đơn và sổ phải cùng số'],
+  },
+  'IN-SUM-002': {
+    steps: [{ text: 'Giảm số phân bổ cho các hoá đơn, hoặc kiểm lại số tiền phiếu thu / chi ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SUM-002' },
+  },
+  'IN-SUM-005': {
+    steps: [{ text: 'Tính lại tổng thanh toán = tiền trước thuế + thuế ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SUM-005' },
+  },
+  'IN-SUM-006': {
+    steps: [{ text: 'Tính lại tổng thuế bằng cộng thuế từng dòng tới đồng ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-SUM-006' },
+  },
+  'IN-SUM-003': {
+    steps: [
+      { text: 'Kiểm mã thuế suất của dòng và cách làm tròn thuế (theo dòng hay theo hoá đơn) ở hệ thống nguồn' },
+      { text: 'Lệch do làm tròn theo hoá đơn đúng quy định thì kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' },
+      RESEND,
+    ],
+    owner: 'creator', verify: { code: 'IN-SUM-003' },
+  },
+  'IN-SUM-004': {
+    steps: [
+      { text: 'Kiểm đơn giá, số lượng, chiết khấu của dòng ở hệ thống nguồn' },
+      { text: 'Lệch có lý do (giá đặc biệt, khuyến mại tính riêng) thì kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' },
+      RESEND,
+    ],
+    owner: 'creator', verify: { code: 'IN-SUM-004' },
+  },
+  'IN-MD-001': {
+    steps: [
+      { text: 'Đổi mã chi nhánh ở hệ thống nguồn sang mã đã khai trong danh mục' },
+      { text: 'Chi nhánh mới thật thì thêm vào danh mục chi nhánh trước', screen: SCREENS.DM02, role: 'accountant' },
+      RESEND,
+    ],
+    owner: 'creator', verify: { code: 'IN-MD-001' },
+    forbid: ['Không gán tạm sang chi nhánh khác cho lọt cửa nạp — sổ, kho, báo cáo sẽ sai chi nhánh'],
+  },
+  'IN-MD-004': {
+    steps: [
+      { text: 'Đồng bộ danh mục mặt hàng từ hệ thống nguồn trước khi gửi chứng từ (PUT /api/v1/products)' },
+      { text: 'Gắn nhóm hạch toán cho mặt hàng mới', screen: SCREENS.DM10, role: 'accountant' },
+    ],
+    owner: 'creator', verify: { code: 'IN-MD-004' },
+  },
+  'IN-MD-005': {
+    steps: [
+      { text: 'Sửa mã số thuế ở hệ thống nguồn: 10 chữ số, hoặc 10 chữ số + "-" + 3 chữ số, không khoảng trắng' },
+      { text: 'Sửa mã số thuế của đối tượng trong danh mục nếu đã lưu sai', screen: SCREENS.DM03, role: 'accountant' },
+      RESEND,
+    ],
+    owner: 'creator', verify: { code: 'IN-MD-005' },
+  },
+  'IN-BIZ-003': {
+    steps: [{ text: 'Đặt mã chứng từ (docKey) bắt đầu bằng mã của nguồn gửi, vd "pos-mini:CN01:HD0001"' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-BIZ-003' },
+    forbid: ['Không dùng mã chứng từ của nguồn khác để sửa chứng từ của nơi đó'],
+  },
+  // [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29: phương án cho IN-ITEM-009 (mặt hàng nháp) và IN-GUARD-001 (Commit Guard) — R-FIX-1
+  'IN-ITEM-009': {
+    steps: [
+      { text: 'Mở mặt hàng đang nháp ở danh mục (lọc "Nháp"), bổ sung phần còn thiếu theo khung Vì sao; lưu xong mặt hàng tự kích hoạt', screen: SCREENS.DM10, role: 'accountant' },
+      { text: 'Chứng từ đang chờ ở Trạm kiểm tra được kiểm lại tự động; nộp lại hoặc để hệ thống nguồn gửi lại', role: 'creator' },
+    ],
+    owner: 'accountant', verify: { code: 'IN-ITEM-009' },
+    forbid: ['Không đổi mã hàng trên chứng từ sang mặt hàng khác cho lọt cửa nạp — kho và giá vốn sẽ ghi sai mặt hàng'],
+  },
+  'IN-GUARD-001': {
+    steps: [
+      { text: 'Xem các lỗi chặn đi kèm (kết quả chạy lại theo cấu hình mới) và sửa theo phương án của từng mã' },
+      { text: 'Kiểm thử lại để lấy dấu cấu hình mới (guard), rồi nộp lại kèm dấu mới', role: 'creator' },
+    ],
+    owner: 'creator', verify: { code: 'IN-GUARD-001' },
+    forbid: ['Không bỏ dấu cấu hình để lọt cửa nạp mà chưa kiểm thử lại — kết quả kiểm thử cũ không còn đúng với cấu hình hiện hành'],
+  },
+  'IN-BIZ-004': {
+    steps: [{ text: 'Gửi phiên bản lớn hơn phiên bản đã nhận; mỗi lần sửa chứng từ tăng version ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-BIZ-004' },
+  },
+  'IN-BIZ-005': {
+    steps: [{ text: 'Tăng version của chứng từ đã sửa ở hệ thống nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-BIZ-005' },
+    forbid: ['Không gửi lại nội dung đã sửa với cùng version — cửa nạp coi là không đổi, phần sửa không vào sổ'],
+  },
+  'IN-BIZ-006': {
+    steps: [
+      { text: 'Kiểm số và ký hiệu hoá đơn ở hệ thống nguồn' },
+      { text: 'Đối chiếu với chứng từ đã có cùng số hoá đơn', screen: SCREENS.ACC93, role: 'accountant' },
+      { text: 'Hoá đơn thay thế / điều chỉnh thì khai relation; trùng thật có lý do thì kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' },
+    ],
+    owner: 'creator', verify: { code: 'IN-BIZ-006' },
+    forbid: ['Không đổi số hoá đơn cho khác đi khi không có hoá đơn thật mang số đó'],
+  },
+};
+
 export interface IntakeFinding {
   code: IntakeCode;
   severity: IntakeSeverity;
@@ -76,11 +214,15 @@ export interface IntakeFinding {
   why: string;
   fix: string;
   ref: string;
+  // [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26: phát hiện mang remedy lấy từ INTAKE_REMEDIES
+  /** Phương án khắc phục (bizcity_remedy@1) — có ở mọi mã block / warn. */
+  remedy?: Remedy;
 }
 
 export function intakeFinding(code: IntakeCode, path: string | null, extra: { got?: unknown; expected?: string } = {}): IntakeFinding {
   const s = INTAKE_CATALOG[code];
-  return { code, severity: s.severity, stage: s.stage, layer: s.layer, title: s.title, path, ...extra, why: s.why, fix: s.fix, ref: s.ref };
+  const remedy = (INTAKE_REMEDIES as Partial<Record<IntakeCode, Remedy>>)[code];
+  return { code, severity: s.severity, stage: s.stage, layer: s.layer, title: s.title, path, ...extra, why: s.why, fix: s.fix, ref: s.ref, ...(remedy ? { remedy } : {}) };
 }
 
 const SEVERITY_ORDER: Record<IntakeSeverity, number> = { block: 0, warn: 1, hint: 2 };

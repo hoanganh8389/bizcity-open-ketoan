@@ -86,6 +86,15 @@ describe('Cửa nạp từ chối → bể chờ', () => {
     expect(await inbox(id)).toMatchObject({ channel: 'submit', status: 'open' });
     expect((res.json().error.intake.findings as { code: string }[]).map((f) => f.code)).toContain('IN-SUM-001');
   });
+
+  it('core.document.submit sai khuôn: details là mảng câu nêu trường sai (trước: object flatten() — giao diện không hiện được)', async () => {
+    const { docDate: _bo, ...doc } = saleDoc({ docKey: 'bc:CN01:S2', docNo: 'S2' });
+    const res = await ctx.app.inject({ method: 'POST', url: '/api/v1/documents/submit', payload: { document: doc } as never, headers: { ...H(), 'idempotency-key': 'bc-submit-0002' } });
+    expect(res.statusCode).toBe(400);
+    const details = res.json().error.details;
+    expect(Array.isArray(details), JSON.stringify(details)).toBe(true);
+    expect(details).toContain('Ngày chứng từ: thiếu');
+  });
 });
 
 describe('API bể chờ', () => {

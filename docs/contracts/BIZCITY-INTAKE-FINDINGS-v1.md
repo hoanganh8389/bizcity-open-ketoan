@@ -3,7 +3,7 @@
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
 
-> **Phiên bản:** 0.3.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.4.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -17,6 +17,8 @@
 | `path` | trường, vd `lines[2].qty`; `null` = cả chứng từ |
 | `got`, `expected` | đã gửi / đúng phải là |
 | `title`, `why`, `fix`, `ref` | tên, vì sao kế toán cần, sửa ở nguồn thế nào, căn cứ |
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26: phát hiện mang remedy (bizcity_remedy@1) -->
+| `remedy` | phương án khắc phục có cấu trúc ([bizcity_remedy@1](BIZCITY-REMEDY-v1.md)): bước, màn, vai, kiểm lại, việc cấm. Có ở mọi mã `block` / `warn` (khai ở `INTAKE_REMEDIES`, SC-FIX-1); mã `hint` tuỳ |
 
 **Điểm** 0–100: có `block` → 0; không thì 100 − Σ trọng số `warn` chưa chấp nhận; `hint` không trừ (R-INTAKE-10).
 
@@ -59,7 +61,9 @@ L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh 
 ## 4. Nhật ký
 
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: IN-GUARD-001, guard trong Kiểm thử / cửa nạp -->
-- **0.3.0-draft (2026-11-03):** Commit Guard (PHASE-024 S024-29): Kiểm thử trả `guard` (dấu cấu hình chứng từ dựa vào) và nhận `guard` cũ → `guardChanged`; nộp kèm dấu (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`) — cấu hình đã đổi thì chạy lại tiền kiểm một lần, còn lỗi chặn → `IN-GUARD-001` + các lỗi đó, bể chờ giữ. Không gửi dấu: như cũ.
+- **0.4.0-draft (2026-11-03):** Commit Guard (PHASE-024 S024-29): Kiểm thử trả `guard` (dấu cấu hình chứng từ dựa vào) và nhận `guard` cũ → `guardChanged`; nộp kèm dấu (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`) — cấu hình đã đổi thì chạy lại tiền kiểm một lần, còn lỗi chặn → `IN-GUARD-001` + các lỗi đó, bể chờ giữ. Không gửi dấu: như cũ.
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26 -->
+- **0.3.0-draft (2026-11-02):** trường `remedy` trên phát hiện — mọi mã `block` / `warn` có phương án (bước sửa ở nguồn, màn danh mục khi thiếu mã, việc cấm); SC-FIX-1 kiểm. Thêm trường, không đổi mã / mức / điểm.
 - **0.2.0-draft (2026-11-02):** §5 bể chờ `intake_inbox`: `error.intake` trong phản hồi lỗi cửa nạp, `intakeId` từng dòng lô, API `/api/v1/intake`, hạn giữ (PHASE-021 W2, PHASES 2.18).
 - **0.1.0-draft (2026-11-02):** 20 mã L1–L4 (PHASE-021 W1, PHASES 2.17).
 

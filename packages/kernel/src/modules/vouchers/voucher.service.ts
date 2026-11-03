@@ -40,6 +40,7 @@ import {
 } from '@ketoan/contracts';
 import { db, type Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
+import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
 import { settleFromEvent } from '../debts/debt.service.js';
@@ -315,7 +316,8 @@ async function approveDraftIn(trx: Db, auth: AuthContext, id: string) {
     if (row.status === 'posted' && row.posted_version === row.version) return { ...base, approved: false, entryIds: [] as string[] };
     if (row.posted_version !== null || row.cancel_requested_at) throw Errors.conflict(`${row.doc_no}: không phải phiếu nháp (đã ghi sổ hoặc đang chờ huỷ)`);
     const parsed = voucherInputSchema.safeParse(row.payload);
-    if (!parsed.success) throw Errors.validation(`${row.doc_no}: nội dung phiếu nháp không đúng khuôn — mở phiếu sửa rồi lưu`, parsed.error.flatten());
+    // [2026-11-02 11:47 PM Johnny Chu - Chu Hoàng Anh] R-ERR — details của lỗi sai khuôn là mảng câu (zodIssueTexts) thay flatten() — web chỉ hiện details dạng mảng (apps/web/src/lib/api.ts errorText), trước đây người dùng không thấy trường nào sai
+    if (!parsed.success) throw Errors.validation(`${row.doc_no}: nội dung phiếu nháp không đúng khuôn — mở phiếu sửa rồi lưu`, zodIssueTexts(parsed.error));
     const doc = fromVoucher(parsed.data);
     await assertNotFutureDate(trx, auth.tenantId, doc.docDate);
     await assertDateRules(trx, auth, 'lập', [doc.docDate]);
