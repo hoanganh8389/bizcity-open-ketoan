@@ -25,6 +25,7 @@ Luật: [R-FLOW](../rules/RULE-FLOW.md). **Đọc bản trên `origin/main`** (`
 
 ## Đang có
 <!-- [2026-11-03 10:06 PM Johnny Chu - Chu Hoàng Anh] FLOW — giữ chỗ PHASE-027 CK-1 / CK-2 / CK-3 và S024-16 (phiên core-ke-toan); `tests/conformance/fixtures/expect.json` và `baseline.json` dùng chung với FLOW-1 — mỗi PR chỉ thêm dòng của check mình -->
+<!-- [2026-11-04 12:34 AM Johnny Chu - Chu Hoàng Anh] FLOW — sửa lần gộp #72: dòng CK-1 về đúng phạm vi đã mở rộng ở #77; bỏ dòng CK-3 trùng (SC-FLOW-1) -->
 
 | Đợt | Việc | Phạm vi | Người nhận | Nhánh | Trạng thái | Từ ngày |
 |---|---|---|---|---|---|---|
