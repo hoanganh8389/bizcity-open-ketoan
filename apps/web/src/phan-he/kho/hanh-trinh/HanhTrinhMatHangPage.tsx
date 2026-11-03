@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { LINEAGE_LANE, type CostExplain, type ItemHistory, type LineageEvent, type LineageItem } from '@ketoan/contracts';
+import { LINEAGE_LANE, type CostExplain, type ItemHistory, type ItemImpact, type LineageEvent, type LineageItem } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading, Money } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
@@ -48,6 +48,9 @@ export function HanhTrinhMatHangPage() {
   // [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10: thẻ Lịch sử (mã cũ / mới, hiệu lực, người đổi, phân loại, lý do)
   const [showHistory, setShowHistory] = useState(false);
   const hist = useQuery({ queryKey: ['lineage-history', sku], queryFn: () => api.get<ItemHistory>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/history`), enabled: Boolean(sku) && showHistory });
+  // [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11: thẻ Tác động (đọc trước khi đổi mã / nhóm / ngừng dùng)
+  const [showImpact, setShowImpact] = useState(false);
+  const imp = useQuery({ queryKey: ['lineage-impact', sku], queryFn: () => api.get<ItemImpact>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/impact`), enabled: Boolean(sku) && showImpact });
   const why = useQuery({
     queryKey: ['lineage-cost', sku, period?.period, period?.costGroup],
     queryFn: () => api.get<CostExplain>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/cost?period=${period!.period}&costGroup=${encodeURIComponent(period!.costGroup)}`),
@@ -127,6 +130,20 @@ export function HanhTrinhMatHangPage() {
           )}
           <div style={{ margin: '4px 0' }}>
             <button type="button" className="btn btn-sm" onClick={() => setShowHistory(!showHistory)}>{showHistory ? 'Ẩn lịch sử' : 'Lịch sử mặt hàng'}</button>
+            {' '}<button type="button" className="btn btn-sm" onClick={() => setShowImpact(!showImpact)} title="Đọc trước khi đổi mã, đổi nhóm hạch toán, đổi đơn vị tính hay ngừng dùng">{showImpact ? 'Ẩn tác động' : 'Tác động'}</button>
+            {showImpact && (imp.isLoading ? <Loading /> : imp.error ? <ErrorBox error={errorText(imp.error)} /> : imp.data && (
+              <div className="card card-body" style={{ marginTop: 6 }}>
+                {imp.data.sentences.map((s, i) => <div key={i} className={`alert ${i === 0 ? 'alert-info' : ''}`} style={{ margin: '2px 0' }}>{s}</div>)}
+                <div className="row" style={{ gap: 16, flexWrap: 'wrap', fontSize: 12, marginTop: 6 }}>
+                  <div><b>Chứng từ</b>{imp.data.documents.map((x) => <div key={x.docType}>{x.docType}: {x.count} ({x.first} → {x.last})</div>)}</div>
+                  <div><b>Tồn theo chi nhánh</b>{imp.data.stock.map((x) => <div key={x.branchCode}>{x.branchCode} · {qty(x.qty)}</div>)}</div>
+                  <div><b>Tài khoản</b>{imp.data.accounts.map((x) => <div key={x.account}>{x.account} {x.name} · {x.lines} dòng</div>)}</div>
+                  {imp.data.prices.length > 0 && <div><b>Bảng giá</b>{imp.data.prices.map((x, i) => <div key={i}>{x.priceList} · {x.unit} · {x.price ?? '—'}</div>)}</div>}
+                  {imp.data.lockedPeriods.length > 0 && <div><b>Kỳ đã khoá</b>{imp.data.lockedPeriods.map((x) => <div key={x.period}>{x.period}: {x.lines} dòng sổ</div>)}</div>}
+                  <div><b>Giá vốn</b><div>{imp.data.costMonths} tháng đã tính</div></div>
+                </div>
+              </div>
+            ))}
             {showHistory && (hist.isLoading ? <Loading /> : hist.error ? <ErrorBox error={errorText(hist.error)} /> : hist.data && (
               <div className="card card-body" style={{ marginTop: 6 }}>
                 <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Mới nhất trước · nguồn: mã có phiên bản, phân loại theo ngày, nhật ký thao tác — không sửa được</div>

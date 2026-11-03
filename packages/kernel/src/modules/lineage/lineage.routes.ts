@@ -6,6 +6,7 @@
  *   GET /api/v1/lineage/items/:sku?from=&to=&branch=      sự kiện kho + bút toán + giá vốn từng tháng của một mặt hàng
  *   GET /api/v1/lineage/items/:sku/cost?period=&costGroup=   "Vì sao giá vốn này?": công thức đơn giá bằng số thật + các phiếu góp vào
  *   GET /api/v1/lineage/items/:sku/history                Lịch sử mặt hàng: mã cũ / mới, hiệu lực, người đổi, phân loại, sửa có lý do (PHASE-026 S026-10)
+ *   GET /api/v1/lineage/items/:sku/impact                 Tác động: chứng từ, tồn theo chi nhánh, tài khoản, bảng giá, kỳ đã khoá dùng mặt hàng (PHASE-026 S026-11)
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -13,7 +14,7 @@ import { z } from 'zod';
 import { db } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
-import { explainCost, getItemHistory, getItemLineage, searchItems } from './lineage.service.js';
+import { explainCost, getItemHistory, getItemImpact, getItemLineage, searchItems } from './lineage.service.js';
 
 const tags = ['Truy vết vòng đời'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
@@ -63,6 +64,16 @@ export async function lineageRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => {
       const auth = authOf(req);
       return ok(await db.transaction().execute((trx) => getItemHistory(trx, auth.tenantId, req.params.sku)));
+    },
+  });
+
+  // [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11 (D026-5): thẻ Tác động — đọc trước khi đổi mã / đổi nhóm / ngừng dùng
+  r.get('/api/v1/lineage/items/:sku/impact', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Tác động của mặt hàng: chứng từ, tồn theo chi nhánh, tài khoản, bảng giá, quy đổi, kỳ đã khoá — đọc trước khi đổi mã / nhóm / ngừng dùng', params: z.object({ sku: z.string().min(1).max(64) }) },
+    handler: async (req) => {
+      const auth = authOf(req);
+      return ok(await db.transaction().execute((trx) => getItemImpact(trx, auth.tenantId, req.params.sku)));
     },
   });
 }

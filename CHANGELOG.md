@@ -19,6 +19,8 @@ Mỗi bản ghi đủ sáu mục:
 ### Thêm
 <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW -->
 - **Luật nhận việc [R-FLOW](docs/rules/RULE-FLOW.md)** (chủ dự án đồng ý): giữ chỗ vào `main` trước khi code ([CLAIMS.md](docs/phases/CLAIMS.md)), chốt thiết kế thứ dùng chung bằng tài liệu trước, nhánh ngắn, gộp `main` và bộ kiểm xanh trước khi đẩy; Bước 0 trong AGENTS.md. Sinh ra từ việc hai phiên làm trùng W6 đợt 3 và đợt 4 ngày 2026-11-03. Phép kiểm tự động (SC-FLOW-1/2, `nhan-viec.mjs`) là đợt kế tiếp.
+<!-- [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11 -->
+- **Tác động mặt hàng** (PHASE-026 S026-11): nút **Tác động** ở Hành trình mặt hàng — mã này đang ở bao nhiêu chứng từ (theo loại, từ ngày nào), còn tồn ở chi nhánh nào, có dòng sổ ở tài khoản nào, bảng giá / quy đổi nào, kỳ đã khoá nào — kèm câu nói rõ đổi mã, đổi nhóm, đổi đơn vị tính hay ngừng dùng sẽ ảnh hưởng gì. Đọc trước khi sửa danh mục. API `GET /api/v1/lineage/items/:sku/impact`.
 <!-- [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 -->
 - **Lịch sử mặt hàng** (PHASE-026 S026-10): nút **Lịch sử mặt hàng** ở Hành trình mặt hàng — mỗi lần đổi mã (mã cũ → mới, hiệu lực từ ngày nào), đổi phân loại hạch toán (từ ngày nào, chứng từ trước giữ phân loại cũ), sửa khai báo, kích hoạt, lưu dù có cảnh báo (kèm lý do đã ghi) — ai làm, lúc nào; gõ mã cũ vẫn ra đúng lịch sử. API `GET /api/v1/lineage/items/:sku/history` (quyền xem danh mục).
 <!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 -->

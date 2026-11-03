@@ -144,6 +144,27 @@ export interface ItemHistory {
   truncated: boolean;
 }
 
+/**
+ * [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11 (D026-5): TÁC ĐỘNG của một mặt hàng — mã này đang được dùng ở
+ * chứng từ, kho, tài khoản, bảng giá, kỳ đã khoá nào; đọc TRƯỚC khi đổi mã / đổi nhóm / ngừng dùng. Chỉ đọc, theo item_id.
+ */
+export interface ItemImpact {
+  itemId: string;
+  sku: string;
+  documents: { docType: string; count: number; first: string; last: string }[];
+  /** Tồn hiện tại theo chi nhánh (chỉ chi nhánh còn tồn ≠ 0). */
+  stock: { branchCode: string; branchName: string; qty: number }[];
+  accounts: { account: string; name: string; lines: number; debit: number; credit: number }[];
+  prices: { priceList: string; unit: string; price: number | null }[];
+  units: { unit: string; ratio: number }[];
+  /** Số tháng đã có giá vốn tính cho mặt hàng. */
+  costMonths: number;
+  /** Kỳ đã khoá có dòng sổ của mặt hàng (YYYY-MM, số dòng). */
+  lockedPeriods: { period: string; lines: number }[];
+  /** Câu cho người đọc: đổi danh mục sẽ / không ảnh hưởng gì. */
+  sentences: string[];
+}
+
 export interface LineageCoverage {
   keyedBy: 'sku' | 'item_id';
   /** Câu cho người đọc: dữ liệu nào truy được, dữ liệu nào chưa (R-CONT, nói rõ phần chưa truy được). */

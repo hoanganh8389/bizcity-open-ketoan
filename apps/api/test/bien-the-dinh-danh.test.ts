@@ -115,3 +115,20 @@ describe('Gate A — biến thể kinh tế khác là mặt hàng mới (ITEM-HI
     expect(findingCodes(await put('BT-U', { unit: 'Thùng' }).then((x) => x.body))).not.toContain('ITEM-HINT-003'); // không đổi → không nhắc
   });
 });
+
+describe('Tác động mặt hàng (S026-11)', () => {
+  it('chứng từ, tồn theo chi nhánh, tài khoản, giá vốn; câu nói rõ đổi mã / nhóm ảnh hưởng gì; chưa dùng thì nói không ảnh hưởng', async () => {
+    const i = (await call(ctx, 'GET', '/api/v1/lineage/items/BT-U/impact')).body.data;
+    expect(i.itemId).toBe(await idOf('BT-U'));
+    expect(i.documents).toEqual([{ docType: 'purchase', count: 1, first: expect.any(String), last: expect.any(String) }]);
+    expect(i.stock).toEqual([{ branchCode: 'CN01', branchName: expect.any(String), qty: 10 }]);
+    expect(i.accounts.some((a: { account: string }) => a.account.startsWith('15'))).toBe(true);
+    expect(i.lockedPeriods).toEqual([]);
+    expect(i.sentences[0]).toMatch(/^Đang dùng ở 1 chứng từ \(1 phiếu mua\)/);
+    expect(i.sentences.join(' ')).toMatch(/Còn tồn 10 ở 1 chi nhánh/);
+
+    const none = (await call(ctx, 'GET', '/api/v1/lineage/items/BT-V/impact')).body.data;
+    expect(none.documents).toEqual([]);
+    expect(none.sentences[0]).toMatch(/chưa có chứng từ nào/);
+  });
+});

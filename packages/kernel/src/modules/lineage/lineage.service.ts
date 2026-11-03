@@ -18,7 +18,7 @@ import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
 import {
   LINEAGE_KIND_LABEL, type CostContribution, type CostExplain, type CostRole, type LineageCostPeriod, type LineageEffect, type LineageEntryLine,
-  type LineageEvent, type LineageItem, type LineageKind, type ItemHistory, type ItemHistoryEntry,
+  type LineageEvent, type LineageItem, type LineageKind, type ItemHistory, type ItemHistoryEntry, type ItemImpact,
 } from '@ketoan/contracts';
 
 const DEFAULT_LIMIT = 500;
@@ -408,4 +408,67 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
   }
   out.sort((x, y) => (x.at < y.at ? 1 : x.at > y.at ? -1 : 0));
   return { itemId, sku: current, entries: out.slice(0, HISTORY_LIMIT), truncated: out.length > HISTORY_LIMIT || audits.rows.length >= HISTORY_LIMIT };
+}
+
+// [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11 (D026-5): Tác động — mã này đang được dùng ở đâu, đọc trước khi đổi mã / nhóm / ngừng
+const DOC_LABEL: Record<string, string> = {
+  purchase: 'phiếu mua', purchase_return: 'phiếu trả NCC', sale: 'phiếu bán', sale_return: 'phiếu khách trả', transfer: 'phiếu chuyển kho',
+  stock_adjustment: 'phiếu điều chỉnh kho', cogs: 'phiếu giá vốn',
+};
+const fmtQty = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 }).format(n);
+
+/** Tác động của một mặt hàng (mã đang dùng hoặc mã cũ). Truy vấn theo item_id (chỉ mục 0066), không quét bảng. */
+export async function getItemImpact(trx: Db, tenantId: string, sku: string): Promise<ItemImpact> {
+  const key = await itemKey(trx, tenantId, sku);
+  if (!key.itemId) throw Errors.notFound(`mặt hàng ${sku}`);
+  const id = key.itemId;
+  const current = key.codes.find((c) => c.kind === 'sku' && c.validTo === null)?.code ?? sku;
+  const [docs, stock, accounts, prices, units, costs, locked] = await Promise.all([
+    sql<{ doc_type: string; n: string; first: string; last: string }>`
+      SELECT e.doc_type, count(DISTINCT e.id)::text AS n, min(m.doc_date)::text AS first, max(m.doc_date)::text AS last
+        FROM inventory_movements m JOIN accounting_events e ON e.id = m.event_id
+       WHERE m.tenant_id = ${tenantId} AND m.item_id = ${id} GROUP BY e.doc_type ORDER BY 2 DESC`.execute(trx),
+    sql<{ code: string; name: string; qty: string }>`
+      SELECT b.code, b.name, sum(m.qty)::text AS qty FROM inventory_movements m JOIN branches b ON b.id = m.branch_id
+       WHERE m.tenant_id = ${tenantId} AND m.item_id = ${id} GROUP BY b.code, b.name HAVING sum(m.qty) <> 0 ORDER BY b.code`.execute(trx),
+    sql<{ account_code: string; name: string | null; n: string; debit: string; credit: string }>`
+      SELECT l.account_code, max(a.name) AS name, count(*)::text AS n, sum(l.debit)::text AS debit, sum(l.credit)::text AS credit
+        FROM ledger_lines l LEFT JOIN accounts a ON a.tenant_id = l.tenant_id AND a.code = l.account_code
+       WHERE l.tenant_id = ${tenantId} AND l.item_id = ${id} GROUP BY l.account_code ORDER BY l.account_code`.execute(trx),
+    sql<{ price_list_code: string; unit: string; price: string | null }>`
+      SELECT price_list_code, unit, price::text FROM product_prices WHERE tenant_id = ${tenantId} AND item_id = ${id} ORDER BY 1, 2`.execute(trx),
+    sql<{ unit: string; ratio: string }>`
+      SELECT unit, ratio::text FROM product_units WHERE tenant_id = ${tenantId} AND item_id = ${id} ORDER BY ratio`.execute(trx),
+    sql<{ n: string }>`SELECT count(DISTINCT (year, month))::text AS n FROM inventory_costs WHERE tenant_id = ${tenantId} AND item_id = ${id}`.execute(trx),
+    sql<{ period: string; n: string }>`
+      SELECT to_char(f.start_date, 'YYYY-MM') AS period, count(l.id)::text AS n
+        FROM fiscal_periods f
+        JOIN ledger_lines l ON l.tenant_id = f.tenant_id AND l.item_id = ${id} AND l.posting_date BETWEEN f.start_date AND f.end_date
+       WHERE f.tenant_id = ${tenantId} AND EXISTS (SELECT 1 FROM period_locks k WHERE k.period_id = f.id AND k.branch_id IS NULL)
+       GROUP BY 1 ORDER BY 1`.execute(trx),
+  ]);
+  const documents = docs.rows.map((r) => ({ docType: r.doc_type, count: Number(r.n), first: r.first, last: r.last }));
+  const out: ItemImpact = {
+    itemId: id, sku: current, documents,
+    stock: stock.rows.map((r) => ({ branchCode: r.code, branchName: r.name, qty: Number(r.qty) })),
+    accounts: accounts.rows.map((r) => ({ account: r.account_code, name: r.name ?? '', lines: Number(r.n), debit: Number(r.debit), credit: Number(r.credit) })),
+    prices: prices.rows.map((r) => ({ priceList: r.price_list_code, unit: r.unit, price: r.price === null ? null : Number(r.price) })),
+    units: units.rows.map((r) => ({ unit: r.unit, ratio: Number(r.ratio) })),
+    costMonths: Number(costs.rows[0]?.n ?? 0),
+    lockedPeriods: locked.rows.map((r) => ({ period: r.period, lines: Number(r.n) })),
+    sentences: [],
+  };
+  const nDocs = documents.reduce((s, d) => s + d.count, 0);
+  const st = out.stock.reduce((s, b) => s + b.qty, 0);
+  const sn = out.sentences;
+  if (!nDocs && !out.accounts.length) sn.push('Mặt hàng chưa có chứng từ nào: đổi mã, đổi nhóm, đổi đơn vị tính hay ngừng dùng đều không ảnh hưởng sổ.');
+  else {
+    sn.push(`Đang dùng ở ${nDocs} chứng từ (${documents.map((d) => `${d.count} ${DOC_LABEL[d.docType] ?? d.docType}`).join(', ')}) từ ${documents.map((d) => d.first).sort()[0]} tới ${documents.map((d) => d.last).sort().reverse()[0]}.`);
+    sn.push('Đổi mã: các chứng từ đó giữ mã cũ làm ảnh chụp, vẫn thuộc cùng định danh — hành trình, giá vốn, báo cáo kho không tách.');
+    if (out.accounts.length) sn.push(`Sổ cái có dòng ở tài khoản ${out.accounts.map((a) => a.account).join(', ')}. Đổi nhóm hạch toán chỉ áp từ ngày hiệu lực; dòng sổ đã ghi không đổi (sổ chỉ thêm).`);
+  }
+  if (out.stock.length) sn.push(`Còn tồn ${fmtQty(st)} ở ${out.stock.length} chi nhánh: ngừng dùng không xoá tồn; đổi đơn vị tính gốc làm tồn cũ và mới không cộng được (ITEM-HINT-003).`);
+  if (out.lockedPeriods.length) sn.push(`Có dòng sổ trong kỳ đã khoá ${out.lockedPeriods.map((p) => p.period).join(', ')}: báo cáo đã phát hành của các kỳ đó không đổi.`);
+  if (out.prices.length || out.units.length) sn.push(`Bảng giá (${out.prices.length} dòng) và quy đổi đơn vị (${out.units.length} dòng) theo định danh — đổi mã không phải khai lại.`);
+  return out;
 }
