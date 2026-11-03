@@ -56,4 +56,8 @@ Không có điểm mở rộng nào hiện có cho (1) (`grep` trong Kernel khô
 
 1. Chấp nhận cổng A với ngoại lệ "một phân hệ" hay chờ đủ hai?
 2. Chấp nhận B (308 + hạn 60 ngày + đo `bizcity.legacy-route.hit`)?
-3. Thứ tự: làm A/B trước đợt 1 (đợt 1 chờ), hay chia đợt 1a (mã) / 1b (bảng) để đợt 1a chạy song song?
+
+## Đã quyết (2026-11-04)
+
+- **Thứ tự: chia đợt 1a / 1b** (chủ dự án chọn). 1a chuyển mã `quy` sang `modules/quy/`, bảng còn ở `public`; 1b chuyển bảng sang `mod_quy` sau khi cổng A vào `main`. A và B là việc Nhóm Lõi, chạy song song với 1a.
+- **Phân hệ `quy` do nhân sự khác thực hiện**, không phải phiên Claude của Nhóm Lõi. Người nhận tự giữ chỗ ở CLAIMS.md theo R-FLOW-1.
