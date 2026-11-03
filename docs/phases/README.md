@@ -53,6 +53,7 @@ Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ tr�
 | [024 Item Master & phân loại hạch toán](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md) <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — thêm dòng phase Item Master (ADR-0017) --> | 2 | 2.22, 2.23 | — | chưa | 0% | 🟡 W0 tài liệu + bản mẫu 2026-11-02; ADR-0017 chấp nhận về nguyên tắc; chờ chủ duyệt D024-1..8; W2 là K3 (kế toán trưởng ký) |
 | [025 Accounting Continuity](PHASE-025-ACCOUNTING-CONTINUITY/README.md) <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity --> | 2 | — | — | chưa | 0% | 🟡 W0 tài liệu + bản mẫu 2026-11-03; ADR-0021 đề xuất; chờ chủ duyệt D025-1..8; W1 lineage chỉ đọc chạy được trước PHASE-024 B2 |
 | [026 Quản trị dữ liệu gốc (Master Data Governance)](PHASE-026-MASTER-DATA-GOVERNANCE/README.md) <!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ADR-0022: MDG là nền móng; bảng trụ cột × mức đạt (HT10) --> | 2 | — | — | một phần | — | 🟡 W0 tài liệu + bản mẫu + HT10 2026-11-04; ADR-0022 đề xuất; chờ chủ duyệt D026-1..8; P0 sau PHASE-024 B2b, nhóm đơn vị sau S024-11 |
+| [027 Core kế toán cho dev](PHASE-027-CORE-KE-TOAN-CHO-DEV/README.md) <!-- [2026-11-03 10:14 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — thêm dòng phase Core kế toán cho dev (CK-1..3) --> | 4 | — | — | chưa | — | 🟡 W0 tài liệu; CK-1..3 đã giữ chỗ |
 
 Thứ tự và đường găng: [AUDIT §4](../audits/AUDIT-2026-10-30-KIEN-TRUC.md). Ba luật thứ tự của PHASES vẫn giữ:
 - 2.1 (PHASE-004) trước 2.3 (PHASE-010);
