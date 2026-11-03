@@ -8,6 +8,7 @@
  *   GET  /api/v1/default-data/:key/rows?search=      xem nội dung tệp gốc
  *   POST /api/v1/default-data/:key/restore { confirm: true }   quay về dữ liệu gốc (quyền settings:write)
  *   POST /api/v1/default-data/all/restore { confirm: true }    quay về toàn bộ theo thứ tự phụ thuộc
+ * Ghi: action core.default-data.{restore,restore-all} (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -16,7 +17,7 @@ import { db } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { Errors } from '@bizcity/platform/core/errors';
-import { writeAudit } from '@bizcity/platform/core/audit';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { DATASETS, datasetOf, readSeed, seedCount } from './default-data.service.js';
 
 const tags = ['Dữ liệu gốc'];
@@ -53,33 +54,33 @@ export async function defaultDataRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/default-data/all/restore', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags, summary: 'Quay về dữ liệu gốc toàn bộ danh mục, theo thứ tự phụ thuộc', body: z.object({ confirm: z.literal(true) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const res = await db.transaction().execute(async (trx) => {
-        const out: { key: string; title: string; result: Awaited<ReturnType<(typeof DATASETS)[number]['restore']>> }[] = [];
-        for (const d of DATASETS) out.push({ key: d.key, title: d.title, result: await d.restore(trx, auth.tenantId) });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'default-data.restore-all', objectType: 'default_data', objectId: 'all', after: out.map((o) => ({ key: o.key, ...o.result, warnings: o.result.warnings.length })) });
-        return out;
-      });
-      return ok(res);
-    },
-  });
-
-  r.post('/api/v1/default-data/:key/restore', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags, summary: 'Quay về dữ liệu gốc cho một bộ (ghi đè theo tệp gốc)', params: z.object({ key: z.string() }), body: z.object({ confirm: z.literal(true) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const d = datasetOf(req.params.key);
-      const res = await db.transaction().execute(async (trx) => {
-        const out = await d.restore(trx, auth.tenantId);
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'default-data.restore', objectType: 'default_data', objectId: d.key, after: out });
-        return out;
-      });
-      return ok(res);
-    },
-  });
+  mountActions(app, defaultDataActions);
 }
+
+// [2026-11-03 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): quay về dữ liệu gốc qua defineAction (quyền settings:write, xác nhận confirm: true như cũ); bằng chứng do runtime
+type RestoreResult = Awaited<ReturnType<(typeof DATASETS)[number]['restore']>>;
+const restoreOut = z.custom<RestoreResult>((v) => typeof v === 'object' && v !== null);
+
+export const defaultDataActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.default-data.restore-all', title: 'Quay về dữ liệu gốc toàn bộ danh mục, theo thứ tự phụ thuộc', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ confirm: z.literal(true) }),
+    output: z.array(z.object({ key: z.string(), title: z.string(), result: restoreOut })),
+    expose: { http: { method: 'POST', path: '/api/v1/default-data/all/restore' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'default_data', objectId: () => 'all' },
+    handler: async (ctx) => {
+      const out: { key: string; title: string; result: RestoreResult }[] = [];
+      for (const d of DATASETS) out.push({ key: d.key, title: d.title, result: await d.restore(ctx.data.tx, ctx.tenant.id) });
+      return out;
+    },
+  }),
+  defineAction({
+    id: 'core.default-data.restore', title: 'Quay về dữ liệu gốc cho một bộ (ghi đè theo tệp gốc)', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ key: z.string(), confirm: z.literal(true) }), output: restoreOut,
+    expose: { http: { method: 'POST', path: '/api/v1/default-data/:key/restore' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'default_data', objectId: (i) => i.key },
+    handler: (ctx, { key }) => datasetOf(key).restore(ctx.data.tx, ctx.tenant.id),
+  }),
+];

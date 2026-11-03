@@ -1,4 +1,5 @@
-// @bizcity-layer A adapters/postgres
+// @bizcity-layer P apps/api
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): điểm vào job db-migrate (node dist/db/setup.js) — gốc lắp ráp như main.ts (LAYOUT-6), được gọi việc cài đặt của phân hệ
 /**
  * JOB CƠ SỞ DỮ LIỆU (Docker: service db-migrate; dòng lệnh: node dist/db/setup.js): áp migration chưa chạy rồi seed
  * dữ liệu gốc (an toàn khi chạy lại), xong thì thoát. Các container API chỉ khởi động sau khi job này xong

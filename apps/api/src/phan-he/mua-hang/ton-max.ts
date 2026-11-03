@@ -9,6 +9,7 @@
  *   Chuyển shop   đề xuất (max − tồn − đi đường − đã đề nghị, làm tròn thùng, giới hạn tồn kho) → transfer_requests
  *   Đăng ký max   stock_max_requests (mã có sẵn / hàng mới), duyệt = ghi stock_levels
  */
+import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
 import { sql } from 'kysely';
 import { z } from 'zod';
 import {
@@ -70,10 +71,8 @@ export async function saveHierarchy(trx: Db, tenantId: string, items: z.infer<ty
     const stuck = kids.filter((k) => !moving.has(k.code));
     if (stuck.length) throw Errors.validation(`Chi nhánh cha còn ${stuck.length} shop (${stuck.slice(0, 5).map((k) => k.code).join(', ')}…) — chuyển các shop sang chi nhánh khác trước`);
   }
-  for (const it of items) {
-    const parentId = it.level === 'shop' ? byCode.get(it.parentCode!)!.id : null;
-    await trx.updateTable('branches').set({ level: it.level, parent_id: parentId }).where('tenant_id', '=', tenantId).where('code', '=', it.code).execute();
-  }
+  // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): phân cấp chi nhánh qua catalogEnsure của lõi
+  await catalogEnsure.setBranchLevels(trx, tenantId, items.map((it) => ({ code: it.code, level: it.level, parentId: it.level === 'shop' ? byCode.get(it.parentCode!)!.id : null })));
   return { saved: items.length };
 }
 

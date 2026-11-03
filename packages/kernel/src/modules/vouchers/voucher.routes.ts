@@ -13,46 +13,59 @@
  *   GET  /api/v1/documents?docType=receipt|payment|manual
  *   GET  /api/v1/documents/:id
  *   POST /api/v1/documents/cancel
+ * Ghi: action core.voucher.{create,update}, core.opening-balance.{create,update} (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
-import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { openingInputSchema, voucherInputSchema } from '@ketoan/contracts';
-import { authOf, requirePermission } from '@bizcity/platform/core/auth';
-import { ok, idParamSchema } from '@bizcity/platform/core/http';
+import { idParamSchema } from '@bizcity/platform/core/http';
 import { voucherService } from './voucher.service.js';
-import { mountActions } from '@bizcity/platform/core/actions';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { voucherActions } from './voucher.actions.js';
 
 const tags = ['Chứng từ nhập tay'];
 
 export async function voucherRoutes(app: FastifyInstance): Promise<void> {
-  const r = app.withTypeProvider<ZodTypeProvider>();
-  const pre = requirePermission('documents:write');
   mountActions(app, voucherActions);
-
-  r.post('/api/v1/vouchers', {
-    preHandler: pre,
-    schema: { tags, summary: 'Lập phiếu thu / phiếu chi / phiếu kế toán', body: voucherInputSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await voucherService.create(authOf(req), req.body))),
-  });
-
-  r.put('/api/v1/vouchers/:id', {
-    preHandler: pre,
-    schema: { tags, summary: 'Sửa phiếu nhập tay', params: idParamSchema, body: voucherInputSchema },
-    handler: async (req) => ok(await voucherService.update(authOf(req), req.params.id, req.body)),
-  });
-
-  // Số dư tài khoản đầu kỳ: danh sách và huỷ dùng chung /api/v1/documents (docType=opening).
-  r.post('/api/v1/opening-balances', {
-    preHandler: pre,
-    schema: { tags, summary: 'Nhập số dư tài khoản đầu kỳ', body: openingInputSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await voucherService.createOpening(authOf(req), req.body))),
-  });
-
-  r.put('/api/v1/opening-balances/:id', {
-    preHandler: pre,
-    schema: { tags, summary: 'Sửa số dư tài khoản đầu kỳ', params: idParamSchema, body: openingInputSchema },
-    handler: async (req) => ok(await voucherService.updateOpening(authOf(req), req.params.id, req.body)),
-  });
+  mountActions(app, manualWriteActions);
 }
+
+// [2026-11-03 02:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): lập / sửa phiếu nhập tay, số dư đầu kỳ qua defineAction — service *In chạy trong giao dịch của runtime
+// (nhật ký nghiệp vụ <loại>.create / .update vẫn do service ghi; bằng chứng action do runtime). Lập mới bắt buộc khoá idempotency.
+const docOut = z.custom<{ id: string; docKey: string; docNo: string; version: number; entryIds: string[] }>((v) => typeof v === 'object' && v !== null && 'docKey' in v);
+
+export const manualWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.voucher.create', title: 'Lập phiếu thu / phiếu chi / phiếu kế toán', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'required',
+    input: voucherInputSchema, output: docOut,
+    expose: { http: { method: 'POST', path: '/api/v1/vouchers', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'source_document', objectId: (_i, o) => o.docKey },
+    handler: (ctx, input) => voucherService.createIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.voucher.update', title: 'Sửa phiếu nhập tay', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    input: voucherInputSchema.extend({ id: idParamSchema.shape.id }), output: docOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/vouchers/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'source_document', objectId: (_i, o) => o.docKey },
+    handler: (ctx, { id, ...input }) => voucherService.updateIn(ctx.data.tx, ctx.legacyAuth, id, input),
+  }),
+  // Số dư tài khoản đầu kỳ: danh sách và huỷ dùng chung /api/v1/documents (docType=opening).
+  defineAction({
+    id: 'core.opening-balance.create', title: 'Nhập số dư tài khoản đầu kỳ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'required',
+    input: openingInputSchema, output: docOut,
+    expose: { http: { method: 'POST', path: '/api/v1/opening-balances', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'source_document', objectId: (_i, o) => o.docKey },
+    handler: (ctx, input) => voucherService.createOpeningIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.opening-balance.update', title: 'Sửa số dư tài khoản đầu kỳ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
+    input: openingInputSchema.extend({ id: idParamSchema.shape.id }), output: docOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/opening-balances/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'source_document', objectId: (_i, o) => o.docKey },
+    handler: (ctx, { id, ...input }) => voucherService.updateOpeningIn(ctx.data.tx, ctx.legacyAuth, id, input),
+  }),
+];

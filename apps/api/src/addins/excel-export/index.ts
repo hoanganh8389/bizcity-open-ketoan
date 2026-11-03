@@ -8,20 +8,41 @@
  *   GET /api/v1/addins/excel-export/sales-detail.csv | sales-summary.csv | sales-payments.csv
  *   GET /api/v1/addins/excel-export/partner-balances.csv?account=&from=&to=
  *
- * Minh hoạ cách add-in dùng lại dịch vụ lõi (reportService) mà không sửa lõi.
+ * Minh hoạ cách add-in dùng lại báo cáo của lõi mà không sửa lõi: gọi chính route HTTP báo cáo (cùng quyền, cùng tham số) rồi
+ * đổi JSON sang CSV — add-in chỉ phụ thuộc hợp đồng HTTP, không import dịch vụ của phân hệ.
  */
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): đọc báo cáo qua HTTP của lõi (inject cùng phiên đăng nhập) thay vì import reportService / salesReportService
 import { z } from 'zod';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { defineAddIn } from '../../core/addins.js';
-import { authOf, requirePermission } from '../../core/auth.js';
-import type { FastifyReply } from 'fastify';
-import { reportService } from '../../phan-he/ke-toan/reports/report.service.js';
-import type { PostingSummaryGroup } from '../../phan-he/ke-toan/reports/extra-reports.js';
-import { salesPaymentsQuerySchema, salesQuerySchema, salesSummaryQuerySchema } from '../../modules/sales/sales-report.routes.js';
-import { salesReportService } from '../../modules/sales/sales-report.service.js';
+import { requirePermission } from '../../core/auth.js';
+import { AppError } from '../../core/errors.js';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { ErrorCode } from '@ketoan/contracts';
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const branchCodes = z.string().optional().transform((s) => (s ? s.split(',').map((x) => x.trim()).filter(Boolean) : undefined));
+/** Tham số báo cáo bán hàng: route của lõi kiểm đủ, ở đây chỉ cần kỳ để đặt tên tệp. */
+/** Một dòng báo cáo (JSON của route HTTP). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = Record<string, any>;
+const salesQuery = z.object({ from: date, to: date }).passthrough();
+
+/**
+ * Dữ liệu một báo cáo của lõi qua chính route HTTP (cùng phiên đăng nhập / khoá API, cùng chuỗi tham số; `override` đặt thêm vd
+ * page=1). Lỗi của route (quyền, tham số, khoá kỳ…) trả nguyên mã cho người gọi.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fromCore(req: FastifyRequest, path: string, override: Record<string, string | number> = {}): Promise<any> {
+  const sp = new URLSearchParams(req.url.split('?')[1] ?? '');
+  for (const [k, v] of Object.entries(override)) sp.set(k, String(v));
+  const headers: Record<string, string> = {};
+  for (const h of ['authorization', 'x-api-key']) if (typeof req.headers[h] === 'string') headers[h] = req.headers[h] as string;
+  const res = await req.server.inject({ method: 'GET', url: `${path}?${sp}`, headers });
+  const body = res.json() as { data?: unknown; error?: { code: ErrorCode; message: string; details?: unknown } };
+  if (res.statusCode >= 400) throw new AppError(body.error?.code ?? 'INTERNAL_ERROR', body.error?.message ?? `Báo cáo ${path} lỗi`, res.statusCode, body.error?.details);
+  return body.data;
+}
 
 /** Một ô CSV: bọc nháy kép khi có dấu phẩy, xuống dòng, nháy. */
 function cell(v: unknown): string {
@@ -29,7 +50,7 @@ function cell(v: unknown): string {
   return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 function toCsv(header: string[], rows: unknown[][]): string {
-  return '﻿' + [header, ...rows].map((r) => r.map(cell).join(',')).join('\r\n');
+  return '﻿' + [header, ...rows].map((r: Row) => r.map(cell).join(',')).join('\r\n');
 }
 
 export default defineAddIn({
@@ -49,10 +70,10 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: z.object({ from: date, to: date, branchCodes }) },
       handler: async (req, reply) => {
-        const data = await reportService.trialBalance(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/trial-balance');
         const csv = toCsv(
           ['Số TK', 'Tên tài khoản', 'Dư Nợ đầu kỳ', 'Dư Có đầu kỳ', 'Phát sinh Nợ', 'Phát sinh Có', 'Dư Nợ cuối kỳ', 'Dư Có cuối kỳ'],
-          data.rows.map((x) => [x.code, x.name, x.openingDebit, x.openingCredit, x.debit, x.credit, x.closingDebit, x.closingCredit]),
+          data.rows.map((x: Row) => [x.code, x.name, x.openingDebit, x.openingCredit, x.debit, x.credit, x.closingDebit, x.closingCredit]),
         );
         return reply.header('content-type', 'text/csv; charset=utf-8').header('content-disposition', `attachment; filename="can-doi-phat-sinh-${req.query.from}-${req.query.to}.csv"`).send(csv);
       },
@@ -70,7 +91,7 @@ export default defineAddIn({
         }),
       },
       handler: async (req, reply) => {
-        const data = await reportService.accountLedger(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/account-ledger');
         const rows: unknown[][] = [['', '', '', 'Số dư đầu kỳ', '', '', '', '', data.opening.debit, data.opening.credit]];
         for (const x of data.rows) rows.push([x.postingDate, x.docNo, x.invoiceNo, x.description, x.counterAccounts, x.partnerCode ?? '', x.debit, x.credit, x.balanceDebit, x.balanceCredit]);
         rows.push(['', '', '', 'Cộng phát sinh', '', '', data.totals.debit, data.totals.credit, '', '']);
@@ -85,11 +106,11 @@ export default defineAddIn({
 
     r.get('/sales-detail.csv', {
       preHandler: pre,
-      schema: { tags, querystring: salesQuerySchema },
+      schema: { tags, querystring: salesQuery },
       handler: async (req, reply) => {
         // Xuất toàn bộ kết quả lọc (tối đa 50.000 dòng), không theo trang đang xem.
-        const data = await salesReportService.detail(authOf(req), { ...req.query, page: 1, pageSize: 50000 });
-        const rows = data.rows.map((x) => [x.docDate, x.docNo, x.invoiceForm, x.invoiceSerial, x.invoiceNo, x.isReturn ? 'Trả lại' : 'Bán', x.branchCode, x.partnerCode, x.partnerName, x.sku, x.name, x.unit, x.qty, x.unitPrice, x.discount, x.amount, x.taxCode, x.taxRate, x.tax, x.total, x.isGift ? 'Hàng tặng' : '']);
+        const data = await fromCore(req, '/api/v1/reports/sales-detail', { page: 1, pageSize: 50000 });
+        const rows = data.rows.map((x: Row) => [x.docDate, x.docNo, x.invoiceForm, x.invoiceSerial, x.invoiceNo, x.isReturn ? 'Trả lại' : 'Bán', x.branchCode, x.partnerCode, x.partnerName, x.sku, x.name, x.unit, x.qty, x.unitPrice, x.discount, x.amount, x.taxCode, x.taxRate, x.tax, x.total, x.isGift ? 'Hàng tặng' : '']);
         rows.push(['Tổng cộng', '', '', '', '', '', '', '', '', '', '', '', data.totals.qty, '', data.totals.discount, data.totals.amount, '', '', data.totals.tax, data.totals.total, '']);
         return send(reply, `bao-cao-ban-hang-${req.query.from}-${req.query.to}.csv`, toCsv(['Ngày', 'Số chứng từ', 'Mẫu số', 'Ký hiệu', 'Số hoá đơn', 'Loại', 'Chi nhánh', 'Mã khách', 'Tên khách', 'Mã hàng', 'Tên hàng', 'ĐVT', 'Số lượng', 'Đơn giá', 'Chiết khấu', 'Tiền hàng', 'Loại thuế', 'Thuế suất (%)', 'Tiền thuế', 'Tổng tiền', 'Ghi chú'], rows));
       },
@@ -97,16 +118,17 @@ export default defineAddIn({
 
     r.get('/sales-summary.csv', {
       preHandler: pre,
-      schema: { tags, querystring: salesSummaryQuerySchema },
+      // mặc định gom theo chứng từ (tiêu đề CSV chọn theo groupBy)
+      schema: { tags, querystring: salesQuery.extend({ groupBy: z.string().default('document') }) },
       handler: async (req, reply) => {
-        const data = await salesReportService.summary(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/sales-summary', { groupBy: req.query.groupBy });
         const t = data.totals;
         if (req.query.groupBy === 'document') {
-          const rows: unknown[][] = (data.rows as (typeof data.rows[number] & Record<string, unknown>)[]).map((x) => [x.docDate, x.docNo, x.isReturn ? 'Trả lại' : 'Bán', x.invoiceSerial, x.invoiceNo, x.branchCode, x.partnerCode, x.partnerName, x.saleQty - x.returnQty, x.netAmount, x.tax, x.total, x.paid, x.onCredit, x.methods]);
+          const rows: unknown[][] = (data.rows as (typeof data.rows[number] & Record<string, unknown>)[]).map((x: Row) => [x.docDate, x.docNo, x.isReturn ? 'Trả lại' : 'Bán', x.invoiceSerial, x.invoiceNo, x.branchCode, x.partnerCode, x.partnerName, x.saleQty - x.returnQty, x.netAmount, x.tax, x.total, x.paid, x.onCredit, x.methods]);
           rows.push(['Tổng cộng', '', '', '', '', '', '', '', t.saleQty - t.returnQty, t.netAmount, t.tax, t.total, t.paid, t.onCredit, '']);
           return send(reply, `tong-hop-ban-hang-theo-phieu-${req.query.from}-${req.query.to}.csv`, toCsv(['Ngày', 'Số phiếu', 'Loại', 'Ký hiệu', 'Số HĐ', 'Chi nhánh', 'Mã khách', 'Tên khách hàng', 'Số lượng', 'Tiền hàng', 'Thuế GTGT', 'Tổng thanh toán', 'Đã thu', 'Ghi nợ', 'Hình thức TT'], rows));
         }
-        const rows: unknown[][] = data.rows.map((x) => [x.key, x.label, x.extra, x.saleDocs, x.saleQty, x.saleAmount, x.returnDocs, x.returnQty, x.returnAmount, x.netAmount, x.tax, x.total]);
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.key, x.label, x.extra, x.saleDocs, x.saleQty, x.saleAmount, x.returnDocs, x.returnQty, x.returnAmount, x.netAmount, x.tax, x.total]);
         rows.push(['Tổng cộng', '', '', t.saleDocs, t.saleQty, t.saleAmount, t.returnDocs, t.returnQty, t.returnAmount, t.netAmount, t.tax, t.total]);
         return send(reply, `tong-hop-ban-hang-${req.query.groupBy}-${req.query.from}-${req.query.to}.csv`, toCsv(['Mã', 'Tên', 'Thông tin thêm', 'Số CT bán', 'SL bán', 'Doanh số bán', 'Số CT trả', 'SL trả lại', 'Hàng trả lại', 'Doanh thu thuần', 'Thuế GTGT', 'Tổng thanh toán'], rows));
       },
@@ -114,13 +136,13 @@ export default defineAddIn({
 
     r.get('/sales-payments.csv', {
       preHandler: pre,
-      schema: { tags, querystring: salesPaymentsQuerySchema },
+      schema: { tags, querystring: salesQuery },
       handler: async (req, reply) => {
-        const data = await salesReportService.payments(authOf(req), req.query);
-        const cols = data.methods.map((m) => m.code);
-        const rows: unknown[][] = data.rows.map((x) => [x.key, x.label, ...cols.map((c) => x.cells[c] ?? 0), x.received, x.refunded, x.net]);
+        const data = await fromCore(req, '/api/v1/reports/sales-payments');
+        const cols: string[] = data.methods.map((m: Row) => m.code);
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.key, x.label, ...cols.map((c) => x.cells[c] ?? 0), x.received, x.refunded, x.net]);
         rows.push(['Tổng cộng', '', ...cols.map((c) => data.totals.cells[c] ?? 0), data.totals.received, data.totals.refunded, data.totals.net]);
-        return send(reply, `thu-tien-${req.query.from}-${req.query.to}.csv`, toCsv(['Mã', 'Tên', ...data.methods.map((m) => m.name), 'Tổng thu', 'Trả lại khách', 'Thực thu'], rows));
+        return send(reply, `thu-tien-${req.query.from}-${req.query.to}.csv`, toCsv(['Mã', 'Tên', ...data.methods.map((m: Row) => m.name), 'Tổng thu', 'Trả lại khách', 'Thực thu'], rows));
       },
     });
 
@@ -128,8 +150,8 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: z.object({ from: date, to: date, branchCodes }) },
       handler: async (req, reply) => {
-        const data = await reportService.incomeStatement(authOf(req), req.query);
-        const rows = data.rows.map((x) => [x.name, x.code, x.note, x.current, x.previous]);
+        const data = await fromCore(req, '/api/v1/reports/income-statement');
+        const rows = data.rows.map((x: Row) => [x.name, x.code, x.note, x.current, x.previous]);
         return send(reply, `ket-qua-kinh-doanh-${req.query.from}-${req.query.to}.csv`, toCsv(['Chỉ tiêu', 'Mã số', 'Thuyết minh', 'Kỳ này', 'Cùng kỳ năm trước'], rows));
       },
     });
@@ -140,8 +162,8 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged },
       handler: async (req, reply) => {
-        const data = await reportService.balanceSheet(authOf(req), req.query);
-        return send(reply, `can-doi-ke-toan-${req.query.to}.csv`, toCsv(['Chỉ tiêu', 'Mã số', 'Số cuối kỳ', 'Số đầu kỳ'], data.rows.map((x) => [x.name, x.code, x.closing, x.opening])));
+        const data = await fromCore(req, '/api/v1/reports/balance-sheet');
+        return send(reply, `can-doi-ke-toan-${req.query.to}.csv`, toCsv(['Chỉ tiêu', 'Mã số', 'Số cuối kỳ', 'Số đầu kỳ'], data.rows.map((x: Row) => [x.name, x.code, x.closing, x.opening])));
       },
     });
 
@@ -149,9 +171,9 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged },
       handler: async (req, reply) => {
-        const data = await reportService.taxSummary(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/tax-summary');
         const t = data.totals;
-        const rows: unknown[][] = data.rows.map((x) => [x.branchCode, x.branchName, x.month, x.revenue, x.outputTax, x.inputTax, x.carried, x.payable]);
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.branchCode, x.branchName, x.month, x.revenue, x.outputTax, x.inputTax, x.carried, x.payable]);
         rows.push(['Tổng cộng', '', '', t.revenue, t.outputTax, t.inputTax, t.carried, t.payable]);
         return send(reply, `tong-hop-thue-${req.query.from}-${req.query.to}.csv`, toCsv(['Mã chi nhánh', 'Tên chi nhánh', 'Tháng', 'Doanh thu', 'Thuế ra', 'Thuế vào', 'Khấu trừ', 'Thuế nộp cuối kỳ'], rows));
       },
@@ -161,9 +183,9 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged },
       handler: async (req, reply) => {
-        const data = await reportService.cashBalances(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/cash-balances');
         const t = data.totals;
-        const rows: unknown[][] = data.rows.map((x) => [x.branchCode, x.branchName, x.accountCode, x.accountName, x.opening, x.debit, x.credit, x.closing]);
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.branchCode, x.branchName, x.accountCode, x.accountName, x.opening, x.debit, x.credit, x.closing]);
         rows.push(['Tổng cộng', '', '', '', t.opening, t.debit, t.credit, t.closing]);
         return send(reply, `so-du-tien-${req.query.from}-${req.query.to}.csv`, toCsv(['Mã chi nhánh', 'Tên chi nhánh', 'Tài khoản', 'Tên tài khoản', 'Dư đầu kỳ', 'Thu (Nợ)', 'Chi (Có)', 'Dư cuối kỳ'], rows));
       },
@@ -173,9 +195,8 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged.extend({ docType: z.string().optional(), groups: z.string().optional() }) },
       handler: async (req, reply) => {
-        const groups = (req.query.groups ?? '').split(',').filter((g): g is PostingSummaryGroup => ['branch', 'month', 'docType', 'costItem', 'reason'].includes(g));
-        const data = await reportService.postingSummary(authOf(req), { ...req.query, groups });
-        const rows: unknown[][] = data.rows.map((x) => [x.branchCode, x.month, x.docType, x.debitAccount, x.creditAccount, x.costItem, x.reasonCode, x.amount, x.entries]);
+        const data = await fromCore(req, '/api/v1/reports/posting-summary');
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.branchCode, x.month, x.docType, x.debitAccount, x.creditAccount, x.costItem, x.reasonCode, x.amount, x.entries]);
         rows.push(['Tổng cộng', '', '', '', '', '', '', data.total, '']);
         return send(reply, `tong-hop-chung-tu-${req.query.from}-${req.query.to}.csv`, toCsv(['Chi nhánh', 'Tháng', 'Loại chứng từ', 'TK Nợ', 'TK Có', 'Khoản mục', 'Lý do', 'Số tiền', 'Số bút toán'], rows));
       },
@@ -185,11 +206,11 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged.extend({ account: z.string().default('111'), direction: z.enum(['in', 'out']).default('in'), columns: z.string().optional() }) },
       handler: async (req, reply) => {
-        const data = await reportService.cashJournal(authOf(req), { ...req.query, columns: req.query.columns?.split(',').map((x) => x.trim()).filter(Boolean) });
-        const rows: unknown[][] = data.rows.map((x) => [x.postingDate, x.docNo, x.description, x.partnerCode ?? '', x.amount, ...x.cells, x.other, x.otherAccount, x.branchCode]);
+        const data = await fromCore(req, '/api/v1/reports/cash-journal');
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.postingDate, x.docNo, x.description, x.partnerCode ?? '', x.amount, ...x.cells, x.other, x.otherAccount, x.branchCode]);
         rows.push(['Tổng cộng', '', '', '', data.totals.amount, ...data.totals.cells, data.totals.other, '', '']);
         const name = data.direction === 'in' ? 'Ghi Nợ TK' : 'Ghi Có TK';
-        return send(reply, `nhat-ky-${data.direction === 'in' ? 'thu' : 'chi'}-tien-${req.query.from}-${req.query.to}.csv`, toCsv(['Ngày', 'Số chứng từ', 'Diễn giải', 'Đối tượng', name + ' ' + req.query.account, ...data.columns.map((c) => 'TK ' + c), 'Số tiền TK khác', 'Số hiệu TK khác', 'Chi nhánh'], rows));
+        return send(reply, `nhat-ky-${data.direction === 'in' ? 'thu' : 'chi'}-tien-${req.query.from}-${req.query.to}.csv`, toCsv(['Ngày', 'Số chứng từ', 'Diễn giải', 'Đối tượng', name + ' ' + req.query.account, ...data.columns.map((c: Row) => 'TK ' + c), 'Số tiền TK khác', 'Số hiệu TK khác', 'Chi nhánh'], rows));
       },
     });
 
@@ -197,7 +218,7 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged.extend({ partnerCode: z.string().optional(), account: z.string().optional(), productSkus: z.string().optional() }) },
       handler: async (req, reply) => {
-        const data = await reportService.salesJournal(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/sales-journal');
         type Row = { createdDate: string; postingDate: string; docDate: string; invoiceDate: string | null; docNo: string; invoiceNo: string | null; description: string; partnerCode: string | null; partnerName: string | null; account: string; contraAccount: string; otherAccount: string; reasonCode: string; total: number; goods: number; finished: number; service: number; other: number };
         const blank = (n: number) => Array.from({ length: n }, () => '');
         const rows: unknown[][] = [];
@@ -219,8 +240,8 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged.extend({ account: z.string().optional(), docType: z.string().optional() }) },
       handler: async (req, reply) => {
-        const data = await reportService.voucherListing(authOf(req), { ...req.query, page: 1, pageSize: 100000 });
-        const rows: unknown[][] = data.rows.map((x) => [x.postingDate, x.docNo, x.docType, x.description, x.debitAccount, x.creditAccount, x.amount, x.debitPartner, x.creditPartner, x.costItem, x.department, x.contract, x.reasonCode, x.branchCode]);
+        const data = await fromCore(req, '/api/v1/reports/voucher-listing', { page: 1, pageSize: 100000 });
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.postingDate, x.docNo, x.docType, x.description, x.debitAccount, x.creditAccount, x.amount, x.debitPartner, x.creditPartner, x.costItem, x.department, x.contract, x.reasonCode, x.branchCode]);
         rows.push(['Tổng cộng', '', '', '', '', '', data.amount, '', '', '', '', '', '', '']);
         return send(reply, `bang-ke-chung-tu-${req.query.from}-${req.query.to}.csv`, toCsv(['Ngày', 'Số chứng từ', 'Loại', 'Diễn giải', 'TK Nợ', 'TK Có', 'Số tiền', 'Đối tượng Nợ', 'Đối tượng Có', 'Khoản mục', 'Bộ phận', 'Hợp đồng', 'Lý do', 'Chi nhánh'], rows));
       },
@@ -230,8 +251,8 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: ranged },
       handler: async (req, reply) => {
-        const data = await reportService.cashFlow(authOf(req), req.query);
-        return send(reply, `luu-chuyen-tien-te-${req.query.from}-${req.query.to}.csv`, toCsv(['Chỉ tiêu', 'Mã số', 'Số tiền'], data.rows.map((x) => [x.name, x.code, x.value ?? ''])));
+        const data = await fromCore(req, '/api/v1/reports/cash-flow');
+        return send(reply, `luu-chuyen-tien-te-${req.query.from}-${req.query.to}.csv`, toCsv(['Chỉ tiêu', 'Mã số', 'Số tiền'], data.rows.map((x: Row) => [x.name, x.code, x.value ?? ''])));
       },
     });
 
@@ -240,8 +261,8 @@ export default defineAddIn({
       schema: { tags, querystring: z.object({ from: date, to: date, branchCodes, docType: z.string().optional(), search: z.string().optional(), account: z.string().optional(), counterAccount: z.string().optional(), groupMode: z.coerce.number().int().min(1).max(3).default(1).transform((v) => v as 1 | 2 | 3) }) },
       handler: async (req, reply) => {
         // Xuất toàn bộ kết quả lọc (tối đa 100.000 dòng), không gồm bút toán đã sửa.
-        const data = await reportService.journal(authOf(req), { ...req.query, page: 1, pageSize: 100000 });
-        const rows: unknown[][] = data.rows.map((x) => [x.docDate, x.docNo, x.accountCode, x.counterAccounts, x.description, x.debit, x.credit, x.branchCode, x.reasonCode ?? '', x.postingDate, x.entryNo, x.partnerCode, x.partnerName, x.productSku ?? '', x.productName ?? '']);
+        const data = await fromCore(req, '/api/v1/reports/journal', { page: 1, pageSize: 100000 });
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.docDate, x.docNo, x.accountCode, x.counterAccounts, x.description, x.debit, x.credit, x.branchCode, x.reasonCode ?? '', x.postingDate, x.entryNo, x.partnerCode, x.partnerName, x.productSku ?? '', x.productName ?? '']);
         rows.push(['Tổng cộng', '', '', '', '', data.totals.debit, data.totals.credit, '', '', '', '', '', '', '', '']);
         return send(reply, `nhat-ky-chung-${req.query.from}-${req.query.to}.csv`, toCsv(['Ngày chứng từ', 'Số chứng từ', 'Tài khoản', 'Tài khoản đối ứng', 'Ghi chú', 'Số tiền Nợ', 'Số tiền Có', 'Chi nhánh', 'Mã lý do', 'Ngày ghi sổ', 'Số bút toán', 'Mã đối tượng', 'Tên đối tượng', 'Mã hàng', 'Tên hàng'], rows));
       },
@@ -251,9 +272,9 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: z.object({ account: z.string().default('131').transform((s) => (s.trim() === '*' ? '' : s.trim())), from: date, to: date, branchCodes, hideZero: z.string().optional().transform((s) => s === 'true' || s === '1'), byBranch: z.string().optional().transform((s) => s === 'true' || s === '1') }) },
       handler: async (req, reply) => {
-        const data = await reportService.partnerBalances(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/partner-balances');
         const t = data.totals;
-        const rows: unknown[][] = data.rows.map((x) => [x.accountCode, x.branchCode, x.partnerCode, x.partnerName, x.taxCode, x.openingDebit, x.openingCredit, x.debit, x.credit, x.closingDebit, x.closingCredit]);
+        const rows: unknown[][] = data.rows.map((x: Row) => [x.accountCode, x.branchCode, x.partnerCode, x.partnerName, x.taxCode, x.openingDebit, x.openingCredit, x.debit, x.credit, x.closingDebit, x.closingCredit]);
         for (const a of data.accounts) rows.push([`Cộng TK ${a.accountCode}`, '', '', a.accountName, '', a.openingDebit, a.openingCredit, a.debit, a.credit, a.closingDebit, a.closingCredit]);
         rows.push(['Tổng cộng', '', '', '', '', t.openingDebit, t.openingCredit, t.debit, t.credit, t.closingDebit, t.closingCredit]);
         return send(reply, `cong-no-${req.query.account || 'tat-ca'}-${req.query.from}-${req.query.to}.csv`, toCsv(['Tài khoản', 'Chi nhánh', 'Mã đối tượng', 'Tên đối tượng', 'Mã số thuế', 'Dư Nợ đầu kỳ', 'Dư Có đầu kỳ', 'Phát sinh Nợ', 'Phát sinh Có', 'Dư Nợ cuối kỳ', 'Dư Có cuối kỳ'], rows));
@@ -264,7 +285,7 @@ export default defineAddIn({
       preHandler: pre,
       schema: { tags, querystring: z.object({ from: date, to: date, branchCodes, direction: z.enum(['output', 'input']).default('output') }) },
       handler: async (req, reply) => {
-        const data = await reportService.salesInvoices(authOf(req), req.query);
+        const data = await fromCore(req, '/api/v1/reports/sales-invoices');
         const rows: unknown[][] = [];
         for (const g of data.groups) {
           if (g.label) rows.push([g.label]);

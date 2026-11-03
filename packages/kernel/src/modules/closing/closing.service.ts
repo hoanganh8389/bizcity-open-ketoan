@@ -592,34 +592,41 @@ async function laterClosedPeriods(trx: Db, tenantId: string, branchCode: string,
 
 export const closingService = {
   async listRules(auth: AuthContext): Promise<{ rules: ClosingRule[]; isDefault: boolean; version: number | null; hash: string } & RuleCheck> {
-    const set = await loadRuleSet(db, auth.tenantId);
-    const check = validateRules(set.rules, await accountRepository.mapByCode(db, auth.tenantId));
+    return closingService.listRulesIn(db, auth.tenantId);
+  },
+
+  async listRulesIn(trx: Db, tenantId: string): Promise<{ rules: ClosingRule[]; isDefault: boolean; version: number | null; hash: string } & RuleCheck> {
+    const set = await loadRuleSet(trx, tenantId);
+    const check = validateRules(set.rules, await accountRepository.mapByCode(trx, tenantId));
     return { rules: set.rules, isDefault: set.isDefault, version: set.version, hash: set.hash, ...check };
   },
 
   /** Thay toàn bộ danh sách bút toán kết chuyển mẫu của đơn vị; khác bộ đang dùng thì ghi thêm một phiên bản. */
   async saveRules(auth: AuthContext, rules: ClosingRule[], note = '') {
+    await db.transaction().execute(async (trx) => {
+      const changed = await closingService.saveRulesIn(trx, auth, rules, note);
+      if (changed) await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'closing.rules', objectType: 'closing_rules', objectId: auth.tenantId, before: changed.before, after: changed.after });
+    });
+    return closingService.listRules(auth);
+  },
+
+  // [2026-11-03 02:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): bản *In chạy trong giao dịch của action core.closing-rules.save (bằng chứng do runtime); trả bản trước / sau, null = không đổi
+  async saveRulesIn(trx: Db, auth: AuthContext, rules: ClosingRule[], note = ''): Promise<{ before: unknown; after: unknown } | null> {
     if (!rules.length) throw Errors.validation('Bạn chưa khai báo tài khoản kết chuyển');
-    const accounts = await accountRepository.mapByCode(db, auth.tenantId);
+    const accounts = await accountRepository.mapByCode(trx, auth.tenantId);
     const check = validateRules(rules, accounts, 'save');
     if (check.errors.length) throw Errors.validation('Bút toán kết chuyển mẫu chưa hợp lệ', check.errors);
     const ordered = orderRules(rules);
-    await db.transaction().execute(async (trx) => {
-      // Khoá theo đơn vị để hai người lưu cùng lúc không trùng số phiên bản.
-      await sql`SELECT pg_advisory_xact_lock(hashtext('closing_rules'), ${Number(auth.tenantId)}::int)`.execute(trx);
-      const before = await loadRuleSet(trx, auth.tenantId);
-      const hash = hashRules(ordered);
-      if (!before.isDefault && before.hash === hash) return;
-      await trx.deleteFrom('closing_rules').where('tenant_id', '=', auth.tenantId).execute();
-      await trx.insertInto('closing_rules').values(ordered.map((r) => ({ tenant_id: auth.tenantId, seq: r.seq, from_account: r.fromAccount, to_account: r.toAccount, mode: r.mode, description: r.description, is_active: r.isActive, include_opening: r.includeOpening }))).execute();
-      const version = (before.version ?? 0) + 1;
-      await trx.insertInto('closing_rule_versions').values({ tenant_id: auth.tenantId, version, rules: JSON.stringify(ordered), note, created_by: auth.actor, created_by_name: auth.actorName }).execute();
-      await writeAudit(trx, {
-        tenantId: auth.tenantId, actor: auth.actor, action: 'closing.rules', objectType: 'closing_rules', objectId: auth.tenantId,
-        before: { version: before.version, isDefault: before.isDefault, rules: before.rules }, after: { version, rules: ordered, note },
-      });
-    });
-    return closingService.listRules(auth);
+    // Khoá theo đơn vị để hai người lưu cùng lúc không trùng số phiên bản.
+    await sql`SELECT pg_advisory_xact_lock(hashtext('closing_rules'), ${Number(auth.tenantId)}::int)`.execute(trx);
+    const before = await loadRuleSet(trx, auth.tenantId);
+    const hash = hashRules(ordered);
+    if (!before.isDefault && before.hash === hash) return null;
+    await trx.deleteFrom('closing_rules').where('tenant_id', '=', auth.tenantId).execute();
+    await trx.insertInto('closing_rules').values(ordered.map((r) => ({ tenant_id: auth.tenantId, seq: r.seq, from_account: r.fromAccount, to_account: r.toAccount, mode: r.mode, description: r.description, is_active: r.isActive, include_opening: r.includeOpening }))).execute();
+    const version = (before.version ?? 0) + 1;
+    await trx.insertInto('closing_rule_versions').values({ tenant_id: auth.tenantId, version, rules: JSON.stringify(ordered), note, created_by: auth.actor, created_by_name: auth.actorName }).execute();
+    return { before: { version: before.version, isDefault: before.isDefault, rules: before.rules }, after: { version, rules: ordered, note } };
   },
 
   /** Lịch sử phiên bản bộ bút toán kết chuyển mẫu, mới nhất trước. */

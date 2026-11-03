@@ -9,6 +9,7 @@
  *   POST   /api/v1/debt-allocations               ghi các cặp đối trừ (người dùng chọn)
  *   POST   /api/v1/debt-allocations/auto          tự đối trừ theo hạn cũ trước
  *   DELETE /api/v1/debt-allocations/:id           gỡ một đối trừ
+ * Ghi: action core.debt.{allocate,auto-allocate,unallocate} (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -18,7 +19,7 @@ import { db, toNumber } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { Errors } from '@bizcity/platform/core/errors';
 import { idParamSchema, ok, pageMeta, pageQuerySchema } from '@bizcity/platform/core/http';
-import { writeAudit } from '@bizcity/platform/core/audit';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { allocate, autoAllocate, unallocate } from './debt.service.js';
 
 const tags = ['Công nợ theo chứng từ'];
@@ -123,63 +124,51 @@ export async function debtRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/debt-allocations', {
-    preHandler: write,
-    schema: {
-      tags,
-      summary: 'Đối trừ công nợ (người dùng chọn cặp)',
-      body: z.object({
-        pairs: z.array(z.object({ debitItemId: id, creditItemId: id, amount: z.number().finite().positive() })).min(1).max(500),
-        date: day.optional(),
-        note: z.string().trim().max(500).default(''),
-      }),
-    },
-    handler: async (req, reply) => {
-      const auth = authOf(req);
-      const n = await db.transaction().execute(async (trx) => {
-        const count = await allocate(trx, auth.tenantId, req.body.pairs, { actor: auth.actorName, date: req.body.date, note: req.body.note });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'debt.allocate', objectType: 'debt_allocation', objectId: `${count} cặp`, after: req.body });
-        return count;
-      });
-      return reply.status(201).send(ok({ count: n }));
-    },
-  });
+  mountActions(app, debtActions);
+}
 
-  r.post('/api/v1/debt-allocations/auto', {
-    preHandler: write,
-    schema: {
-      tags,
-      summary: 'Tự đối trừ theo hạn cũ trước',
-      description: 'Trong từng (đối tượng, tài khoản): khoản ghi Nợ cũ nhất ghép với khoản ghi Có cũ nhất. Không truyền đối tượng = mọi đối tượng.',
-      body: z.object({ partnerCode: z.string().trim().optional(), account: z.string().trim().optional() }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
+// [2026-11-03 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): đối trừ công nợ qua defineAction — quyền, giao dịch, bằng chứng do runtime; đường dẫn / mã 201 như cũ.
+// Đối trừ tay bắt buộc khoá idempotency (gửi lặp không đối trừ hai lần); tự đối trừ / gỡ chạy lại vô hại (natural).
+const countOut = z.object({ count: z.number().int() });
+
+export const debtActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.debt.allocate', title: 'Đối trừ công nợ (người dùng chọn cặp)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'required',
+    input: z.object({
+      pairs: z.array(z.object({ debitItemId: id, creditItemId: id, amount: z.number().finite().positive() })).min(1).max(500),
+      date: day.optional(),
+      note: z.string().trim().max(500).default(''),
+    }),
+    output: countOut,
+    expose: { http: { method: 'POST', path: '/api/v1/debt-allocations', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'debt_allocation', objectId: (_i, o) => `${o.count} cặp` },
+    handler: async (ctx, b) => ({ count: await allocate(ctx.data.tx, ctx.tenant.id, b.pairs, { actor: ctx.actor.name, date: b.date, note: b.note }) }),
+  }),
+  defineAction({
+    id: 'core.debt.auto-allocate', title: 'Tự đối trừ theo hạn cũ trước', tags,
+    description: 'Trong từng (đối tượng, tài khoản): khoản ghi Nợ cũ nhất ghép với khoản ghi Có cũ nhất. Không truyền đối tượng = mọi đối tượng.',
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: z.object({ partnerCode: z.string().trim().optional(), account: z.string().trim().optional() }),
+    output: countOut,
+    expose: { http: { method: 'POST', path: '/api/v1/debt-allocations/auto' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'debt_allocation', objectId: (_i, o) => `${o.count} cặp` },
+    handler: async (ctx, b) => {
       let partnerId: string | undefined;
-      if (req.body.partnerCode) {
-        const p = await db.selectFrom('partners').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', req.body.partnerCode).executeTakeFirst();
-        if (!p) throw Errors.notFound(`đối tượng ${req.body.partnerCode}`);
+      if (b.partnerCode) {
+        const p = await ctx.data.tx.selectFrom('partners').select('id').where('tenant_id', '=', ctx.tenant.id).where('code', '=', b.partnerCode).executeTakeFirst();
+        if (!p) throw Errors.notFound(`đối tượng ${b.partnerCode}`);
         partnerId = p.id;
       }
-      const n = await db.transaction().execute(async (trx) => {
-        const count = await autoAllocate(trx, auth.tenantId, { partnerId, accountCode: req.body.account || undefined, actor: auth.actorName });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'debt.auto_allocate', objectType: 'debt_allocation', objectId: `${count} cặp`, after: req.body });
-        return count;
-      });
-      return ok({ count: n });
+      return { count: await autoAllocate(ctx.data.tx, ctx.tenant.id, { partnerId, accountCode: b.account || undefined, actor: ctx.actor.name }) };
     },
-  });
-
-  r.delete('/api/v1/debt-allocations/:id', {
-    preHandler: write,
-    schema: { tags, summary: 'Gỡ một đối trừ', params: idParamSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        await unallocate(trx, auth.tenantId, req.params.id);
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'debt.unallocate', objectType: 'debt_allocation', objectId: req.params.id });
-      });
-      return ok({ id: req.params.id });
-    },
-  });
-}
+  }),
+  defineAction({
+    id: 'core.debt.unallocate', title: 'Gỡ một đối trừ', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: z.object({ id }), output: z.object({ id: z.string() }),
+    expose: { http: { method: 'DELETE', path: '/api/v1/debt-allocations/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'debt_allocation', objectId: (i) => i.id },
+    handler: async (ctx, { id: allocId }) => { await unallocate(ctx.data.tx, ctx.tenant.id, allocId); return { id: allocId }; },
+  }),
+];

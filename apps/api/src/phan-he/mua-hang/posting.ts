@@ -17,7 +17,7 @@ import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
-import { postDocumentIn, voucherService, allocateDebt } from '../../kernel/public.js';
+import { postDocumentIn, voucherService, allocateDebt, ensurePostingReason } from '../../kernel/public.js';
 import type { Accounts } from '@bizcity/mua-hang-domain';
 import type { StoredDoc } from './store.js';
 
@@ -36,9 +36,9 @@ async function eventOf(trx: Db, tenantId: string, docKey: string): Promise<{ id:
 }
 
 /** Lý do kho của phân hệ (nhận quà / xuất quà) — chưa có thì tự thêm vào Cấu hình hạch toán. */
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): thêm lý do qua Kernel (ensurePostingReason) — không ghi thẳng posting_reasons
 async function ensureReason(trx: Db, tenantId: string, code: string, name: string, kind: 'in' | 'out', counter: string) {
-  await trx.insertInto('posting_reasons').values({ tenant_id: tenantId, code, name, kind, counter_account: counter, flags: JSON.stringify({ module: 'mua-hang' }) } as never)
-    .onConflict((oc) => oc.columns(['tenant_id', 'code'] as never).doNothing()).execute();
+  await ensurePostingReason(trx, tenantId, 'mua-hang', 'module:mua-hang', { code, name, kind, counterAccount: counter });
 }
 
 /**
@@ -52,11 +52,10 @@ async function ensureRebateReason(trx: Db, tenantId: string): Promise<string> {
   if (rows.some((r) => r.code === REBATE_REASON)) return REBATE_REASON;
   const def = rows.find((r) => (r.flags as Record<string, unknown> | null)?.default === 'purchase_return');
   const { returnAtOpeningCost: _o, default: _d, ...flags } = (def?.flags ?? { postToLedger: true }) as Record<string, unknown>;
-  await trx.insertInto('posting_reasons').values({
-    tenant_id: tenantId, code: REBATE_REASON, name: 'Giảm giá hàng mua (thưởng / chiết khấu sau mua)', kind: 'out',
-    counter_account: def?.counter_account ?? null, revenue_account: def?.revenue_account ?? null, expense_account: def?.expense_account ?? null,
-    flags: JSON.stringify({ ...flags, module: 'mua-hang' }),
-  } as never).onConflict((oc) => oc.columns(['tenant_id', 'code'] as never).doNothing()).execute();
+  await ensurePostingReason(trx, tenantId, 'mua-hang', 'module:mua-hang', {
+    code: REBATE_REASON, name: 'Giảm giá hàng mua (thưởng / chiết khấu sau mua)', kind: 'out',
+    counterAccount: def?.counter_account ?? null, revenueAccount: def?.revenue_account ?? null, expenseAccount: def?.expense_account ?? null, flags,
+  });
   return REBATE_REASON;
 }
 

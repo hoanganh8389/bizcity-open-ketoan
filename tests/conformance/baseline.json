@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-11-01",
+  "updatedAt": "2026-11-02",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -139,7 +139,7 @@
         {
           "fp": "SC-DATA-3|db/migrations/0001_goc_nen_tang.sql|columns:users",
           "file": "db/migrations/0001_goc_nen_tang.sql",
-          "message": "bảng nền users: 6 cột thiếu COMMENT ON COLUMN"
+          "message": "bảng nền users: 5 cột thiếu COMMENT ON COLUMN"
         },
         {
           "fp": "SC-DATA-3|db/migrations/0001_goc_nen_tang.sql|columns:warehouses",
@@ -254,7 +254,7 @@
         {
           "fp": "SC-DATA-3|db/migrations/0003_goc_cau_hinh_dinh_khoan.sql|columns:posting_reasons",
           "file": "db/migrations/0003_goc_cau_hinh_dinh_khoan.sql",
-          "message": "bảng nền posting_reasons: 8 cột thiếu COMMENT ON COLUMN"
+          "message": "bảng nền posting_reasons: 7 cột thiếu COMMENT ON COLUMN"
         },
         {
           "fp": "SC-DATA-3|db/migrations/0003_goc_cau_hinh_dinh_khoan.sql|columns:product_posting_groups",
@@ -855,142 +855,6 @@
           "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
           "file": "apps/api/src/phan-he/mua-hang/posting.ts",
           "message": "số tài khoản '112' viết cứng: docType: money.startsWith('112') ? 'bank_payment' : 'payment', branchCode: d.branchCode, docDate: d.docDate, docNo: undefined,"
-        }
-      ]
-    },
-    "SC-LAYER-2": {
-      "title": "Import giữa các lớp đúng chiều: Platform không biết Kernel, danh mục không import Kernel, module không import module khác",
-      "ref": "PHASES 1.4 · mốc docs/audits/deps-2026-10-30.md §3 (22 cạnh ngược chiều lớp lúc mở check); gỡ dần ở Phase 2–3 (A-01, A-17, ADR-0003..0005)",
-      "debts": [
-        {
-          "fp": "SC-LAYER-2|apps/api/src/addins/excel-export/index.ts|addins/excel-export[D]->modules/sales[D]",
-          "file": "apps/api/src/addins/excel-export/index.ts",
-          "message": "D addins/excel-export → modules/xuat-excel import D modules/sales → modules/ban-hang (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/addins/excel-export/index.ts|addins/excel-export[D]->phan-he/ke-toan[D]",
-          "file": "apps/api/src/addins/excel-export/index.ts",
-          "message": "D addins/excel-export → modules/xuat-excel import D phan-he/ke-toan (2 chỗ) — ngược chiều lớp TARGET-LAYOUT §2",
-          "why": "Nợ cũ đổi đường dẫn (trước: addins/excel-export[D]->modules/reports[D]) khi chuyển modules/reports → phan-he/ke-toan/reports 2026-10-31; chủ duyệt ghi đổi tên. Gỡ ở 3.9: excel-export gọi action accounting.report.* (callAction).",
-          "ref": "PHASE-012 Q012-2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/db/setup.ts|db/setup[A]->phan-he/mua-hang[D]",
-          "file": "apps/api/src/db/setup.ts",
-          "message": "A db/setup → adapters/postgres import D phan-he/mua-hang (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/auth/auth.routes.ts|modules/auth[P]->modules/auth[A]",
-          "file": "apps/api/src/modules/auth/auth.routes.ts",
-          "message": "P modules/auth → permissions import A modules/auth → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/catalog/catalog-notify.ts|modules/catalog[P]->modules/connections[A]",
-          "file": "apps/api/src/modules/catalog/catalog-notify.ts",
-          "message": "P modules/catalog → events import A modules/connections → adapters/wordpress (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/dimensions/dimension.routes.ts|modules/dimensions[P]->kernel/public[K]",
-          "file": "apps/api/src/modules/dimensions/dimension.routes.ts",
-          "message": "P modules/dimensions → data import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/partners/partner.routes.ts|modules/partners[M]->modules/partners[A]",
-          "file": "apps/api/src/modules/partners/partner.routes.ts",
-          "message": "M modules/partners → data/masterdata import A modules/partners → adapters/tax-lookup (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/products/product.routes.ts|modules/products[M]->kernel/public[K]",
-          "file": "apps/api/src/modules/products/product.routes.ts",
-          "message": "M modules/products → data/masterdata import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/modules/system/system.routes.ts|modules/system[P]->kernel/public[K]",
-          "file": "apps/api/src/modules/system/system.routes.ts",
-          "message": "P modules/system → cli import K kernel/public → kernel/public (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/phan-he/ke-toan/reports/report.service.ts|phan-he/ke-toan[D]->modules/assets[D]",
-          "file": "apps/api/src/phan-he/ke-toan/reports/report.service.ts",
-          "message": "D phan-he/ke-toan import D modules/assets → modules/tai-san (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2",
-          "why": "Nợ cũ đổi đường dẫn (trước: modules/reports[D]->modules/assets[D]) khi chuyển thư mục báo cáo 2026-10-31; chủ duyệt ghi đổi tên. Gỡ ở 3.9: B01 lấy phần tách 242 qua action của tai-san — cần chốt cách lui khi bản cài không bật tai-san.",
-          "ref": "PHASE-012 Q012-2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/phan-he/mua-hang/bao-cao-kho.ts|phan-he/mua-hang[D]->modules/inventory[D]",
-          "file": "apps/api/src/phan-he/mua-hang/bao-cao-kho.ts",
-          "message": "D phan-he/mua-hang import D modules/inventory → modules/kho (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        },
-        {
-          "fp": "SC-LAYER-2|apps/api/src/phan-he/thue/statements/notes.service.ts|phan-he/thue[D]->modules/assets[D]",
-          "file": "apps/api/src/phan-he/thue/statements/notes.service.ts",
-          "message": "D phan-he/thue import D modules/assets → modules/tai-san (1 chỗ) — ngược chiều lớp TARGET-LAYOUT §2"
-        }
-      ]
-    },
-    "SC-MOD-2": {
-      "title": "Phân hệ không ghi bảng nhân, bảng danh mục / cấu hình của lõi",
-      "ref": "Audit A-17 · ADR-0005 (danh mục chuẩn ở packages/data, ghi qua API)",
-      "debts": [
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/analysis.ts|core:tenants",
-          "file": "apps/api/src/phan-he/mua-hang/analysis.ts",
-          "message": "ghi bảng lõi tenants — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:branches",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:partners",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi partners — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:item_classes",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi item_classes — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:product_units",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi product_units — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:products",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi products — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/demo.ts|core:tax_codes",
-          "file": "apps/api/src/phan-he/mua-hang/demo.ts",
-          "message": "ghi bảng lõi tax_codes — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/posting.ts|core:posting_reasons",
-          "file": "apps/api/src/phan-he/mua-hang/posting.ts",
-          "message": "ghi bảng lõi posting_reasons — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/mua-hang/ton-max.ts|core:branches",
-          "file": "apps/api/src/phan-he/mua-hang/ton-max.ts",
-          "message": "ghi bảng lõi branches — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts|core:contract_schedules",
-          "file": "apps/api/src/phan-he/quy/payment-requests/payment-request.routes.ts",
-          "message": "ghi bảng lõi contract_schedules — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts|core:partners",
-          "file": "apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts",
-          "message": "ghi bảng lõi partners — đi qua API / service danh mục (A-17)"
-        },
-        {
-          "fp": "SC-MOD-2|apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts|core:reference_documents",
-          "file": "apps/api/src/phan-he/thue/authority-invoices/authority-invoice.routes.ts",
-          "message": "ghi bảng lõi reference_documents — đi qua API / service danh mục (A-17)"
         }
       ]
     }

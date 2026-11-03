@@ -276,8 +276,9 @@ export const paymentRequestActions: AnyActionDef[] = [
         settle: items.length ? items.map((i) => ({ debtItemId: i.debtItemId, amount: i.amount })) : undefined,
       });
       const created = await voucherService.createIn(trx, ctx.legacyAuth, input);
+      // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): kỳ hợp đồng do bên sở hữu lịch hợp đồng đánh dấu "đã chi" khi nghe sự kiện — quy không ghi bảng contract_schedules
       if (cur.contract_schedule_id) {
-        await trx.updateTable('contract_schedules').set({ status: 'paid', paid_date: body.docDate, paid_ref: created.docNo, updated_by: ctx.actor.id, updated_at: new Date() }).where('id', '=', cur.contract_schedule_id).execute();
+        await ctx.events.emit('quy.payment-request.paid', { contractScheduleId: String(cur.contract_schedule_id), paidDate: body.docDate, paidRef: created.docNo }, { subject: `quy.payment-request:${cur.id}` });
       }
       ctx.evidence.note('voucher', created.docNo);
       return { paid_event_id: created.id, extra: { paidDocumentId: created.id, paidDocNo: created.docNo } };

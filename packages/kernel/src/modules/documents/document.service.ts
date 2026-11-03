@@ -814,28 +814,35 @@ export const documentService = {
    * ghi nhật ký; kế toán xem trước rồi định khoản mới huỷ. Chứng từ đã huỷ / đã chờ huỷ thì thôi.
    */
   async requestCancel(auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
+    return db.transaction().execute((trx) => documentService.requestCancelIn(trx, auth, docKey, reason));
+  },
+
+  // [2026-11-03 03:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): bản *In cho action core.document.cancel (giao dịch của runtime)
+  async requestCancelIn(trx: Db, auth: AuthContext, docKey: string, reason: string): Promise<{ requested: boolean; reversed: number; cancelled?: boolean }> {
     // [2026-11-02 03:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá app chỉ báo huỷ chứng từ của app (docKey `<app>:…`, ADR-0011 D5)
     if (auth.app) ownDocument(auth.app, { docKey }, 'app');
-    return db.transaction().execute((trx) => requestCancelIn(trx, auth, docKey, reason));
+    return requestCancelIn(trx, auth, docKey, reason);
   },
 
   /** Huỷ chứng từ: đảo bút toán, bỏ khỏi sổ hoá đơn. */
   async cancel(auth: AuthContext, docKey: string, reason: string): Promise<{ reversed: number }> {
-    return db.transaction().execute(async (trx) => {
-      const row = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
-      if (!row) throw Errors.notFound(`chứng từ ${docKey}`);
-      if (row.status === 'cancelled') return { reversed: 0 };
-      assertCanModify(auth, row, 'huỷ');
-      await assertDateRules(trx, auth, 'huỷ', [row.doc_date]);
-      const reversed = await reverseActiveEntries(trx, auth.tenantId, auth.actor, row.id, `Huỷ chứng từ: ${reason}`);
-      await taxInvoiceRepository.removeForDocument(trx, row.id);
-      await inventoryMovementRepository.removeForDocument(trx, row.id);
-      await documentRepository.update(trx, row.id, { status: 'cancelled', error_message: reason });
-      await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel', reversed, message: reason, actor: auth.actor });
-      if (reversed) await emitReversed(trx, auth, row, reversed, 'cancel');
-      await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.cancel', objectType: 'source_document', objectId: docKey, after: { reason } });
-      return { reversed };
-    });
+    return db.transaction().execute((trx) => documentService.cancelIn(trx, auth, docKey, reason));
+  },
+
+  async cancelIn(trx: Db, auth: AuthContext, docKey: string, reason: string): Promise<{ reversed: number }> {
+    const row = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, docKey);
+    if (!row) throw Errors.notFound(`chứng từ ${docKey}`);
+    if (row.status === 'cancelled') return { reversed: 0 };
+    assertCanModify(auth, row, 'huỷ');
+    await assertDateRules(trx, auth, 'huỷ', [row.doc_date]);
+    const reversed = await reverseActiveEntries(trx, auth.tenantId, auth.actor, row.id, `Huỷ chứng từ: ${reason}`);
+    await taxInvoiceRepository.removeForDocument(trx, row.id);
+    await inventoryMovementRepository.removeForDocument(trx, row.id);
+    await documentRepository.update(trx, row.id, { status: 'cancelled', error_message: reason });
+    await logPosting(trx, { tenantId: auth.tenantId, eventId: row.id, docType: row.doc_type, docNo: row.doc_no, version: row.version, action: 'cancel', reversed, message: reason, actor: auth.actor });
+    if (reversed) await emitReversed(trx, auth, row, reversed, 'cancel');
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'document.cancel', objectType: 'source_document', objectId: docKey, after: { reason } });
+    return { reversed };
   },
 
   /**

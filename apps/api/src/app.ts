@@ -32,6 +32,18 @@ import { enabledModules, CORE_ROUTES, MODULE_MANIFESTS } from './phan-he/index.j
 import type { Routes } from './phan-he/types.js';
 import { decideLoad, hashModuleDir, moduleGate, readRegistry, recordLoad, type LoadDecision } from '@bizcity/platform/core/module-registry';
 import { bundledModules } from './core/module-lifecycle.js';
+import { contractSchedulePaidSubscriber } from './modules/dimensions/contract-schedule.routes.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): bản thật cho cổng của Platform
+import { provideCorePorts } from '@bizcity/platform/core/ports';
+import { usedDimensionCodes } from './kernel/public.js';
+import { loginWithWpTicket } from './modules/auth/wp-sso.js';
+import { primaryConnection } from './modules/connections/connection.service.js';
+import { lookupTaxCode } from './modules/partners/tra-mst.js';
+import { provideKeToanPorts } from './phan-he/ke-toan/ports.js';
+import { provideThuePorts } from './phan-he/thue/ports.js';
+import { provideMuaHangPorts } from './phan-he/mua-hang/ports.js';
+import { assetService } from './modules/assets/asset.service.js';
+import { valuedMovements } from './modules/inventory/inventory-report.service.js';
 import { discoverSdkModules, importSdkModule, sdkModuleSettings } from './core/sdk-modules.js';
 import { registerModuleSettings } from '@bizcity/platform/core/settings';
 import { registerHooks } from '@bizcity/platform/core/hooks';
@@ -102,7 +114,8 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   // Sự kiện miền (core/events.ts): subscriber của Platform. Vòng dispatcher + đồng hồ chạy ở main.ts, không chạy trong test.
   // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)
   // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: dọn bể chờ theo hạn giữ (bizcity.clock.daily)
-  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber]);
+  // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): kỳ hợp đồng "đã chi" theo sự kiện yêu cầu thanh toán
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber, contractSchedulePaidSubscriber]);
   // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {
@@ -111,6 +124,12 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   });
 
   // Tự chẩn đoán: Kernel đăng ký kiểm sổ vào bộ chẩn đoán của Platform (Platform không import Kernel — LAYOUT-1).
+  // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): Platform / danh mục gọi Kernel, adapter qua cổng
+  provideCorePorts({ usedDimensionCodes: (trx, t, kind, codes) => usedDimensionCodes(trx, t, kind as never, codes), wpLogin: loginWithWpTicket, primaryConnection, lookupTaxCode });
+  // phân hệ dùng phân hệ khác qua cổng do phía dùng khai (Kế toán, Thuế ← Tài sản; Mua hàng ← Kho)
+  provideKeToanPorts({ prepaidSplit: (trx, t, asOf) => assetService.prepaidSplit(trx, t, asOf) });
+  provideThuePorts({ assetRegister: (auth, q) => assetService.register(auth, q) });
+  provideMuaHangPorts({ valuedMovements });
   registerDiagnostics(LEDGER_DIAGNOSTICS);
   // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 (hồ sơ kế toán, gói cùng chế độ) cho Conformance Engine (ADR-0012)
   registerDiagnostics(PROFILE_DIAGNOSTICS);
