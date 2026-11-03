@@ -7,7 +7,7 @@ export const checks = [
   {
     id: 'DG-INTAKE-1', code: 'INTAKE_OPEN_AGE',
     title: 'Không có chứng từ nằm ở bể chờ đầu vào quá ngưỡng ngày',
-    contract: 'bizcity_intake_findings', rules: ['R-INTAKE-2'], conf: [], tier: 2, enforce: 'info', weight: 1,
+    gate: 'CONF-RUN', contract: 'bizcity_ledger_intake', rules: ['R-INTAKE-2'], conf: [], tier: 2, enforce: 'info', weight: 1,
     async run(ctx) {
       const [t] = await ctx.db.query("SELECT to_regclass('public.intake_inbox') IS NOT NULL AS ok");
       if (!t?.ok) return { examined: 0, findings: [], notes: ['CSDL chưa áp migration 0059 (chưa có bể chờ) — xem DG-DB-1'] };
