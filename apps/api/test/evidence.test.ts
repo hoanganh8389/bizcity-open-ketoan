@@ -94,4 +94,21 @@ describe('Bằng chứng', () => {
     const diag = await call(ctx, 'GET', '/api/v1/system/diagnostics');
     expect(diag.body.data.checks.find((c: { code: string }) => c.code === 'EVIDENCE_CHAIN')).toMatchObject({ level: 'pass' });
   });
+
+  // [2026-11-03 05:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: bí mật không vào bằng chứng, không trả lại khi gửi lặp
+  it('mật khẩu không vào bằng chứng; khoá API chỉ trả về một lần (gửi lặp nhận bản đã che)', async () => {
+    expect((await call(ctx, 'POST', '/api/v1/users', { email: 'bimat@ketoan.local', fullName: 'Bí mật', role: 'accountant', password: 'MatKhau@98765' })).status).toBe(201);
+    const ev = await db.selectFrom('audit_logs').select('after_data').where('tenant_id', '=', tenantId).where('action', '=', 'core.user.create').orderBy('id', 'desc').executeTakeFirstOrThrow();
+    expect(JSON.stringify(ev.after_data)).not.toContain('MatKhau@98765');
+    expect(ev.after_data).toMatchObject({ input: { email: 'bimat@ketoan.local', password: '***' } });
+
+    const first = await post(ctx, '/api/v1/api-keys', { name: 'Khoá bí mật' }, 'khoa-api-bi-mat-01');
+    expect(first.statusCode, first.body).toBe(201);
+    const key = first.json().data.key as string;
+    expect(key.length).toBeGreaterThan(10);
+    const again = await post(ctx, '/api/v1/api-keys', { name: 'Khoá bí mật' }, 'khoa-api-bi-mat-01');
+    expect(again.json()).toMatchObject({ data: { key: '***' }, meta: { idempotency: 'replayed' } });
+    const stored = await db.selectFrom('action_requests').select('response').where('tenant_id', '=', tenantId).where('idem_key', '=', 'khoa-api-bi-mat-01').executeTakeFirstOrThrow();
+    expect(JSON.stringify(stored.response)).not.toContain(key);
+  });
 });

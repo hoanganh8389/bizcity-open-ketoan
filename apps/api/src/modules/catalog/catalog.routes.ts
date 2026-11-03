@@ -26,7 +26,7 @@ import { z } from 'zod';
 import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
-import { mountActions } from '../../core/actions.js';
+import { mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { masterdataActions } from './masterdata.actions.js';
 import { Errors } from '../../core/errors.js';
 import {
@@ -108,80 +108,16 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { const auth = authOf(req); return ok(await importProducts(auth.tenantId, auth.actor, req.body.rows, req.body.dryRun)); },
   });
 
-  r.post('/api/v1/catalog/products/scan-parents', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Quét họ mã theo mã: mã 9 số + đuôi (trừ T có tem) là mã con của mã gốc có trong danh mục (cần mật khẩu công cụ)', body: z.object({ overwrite: z.boolean().default(false), password: z.string().max(200).default('') }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      // Công cụ chạy cho cả danh mục → hỏi mật khẩu công cụ (cùng mật khẩu nạp dữ liệu mẫu, đổi bằng PURCHASE_SEED_PASSWORD).
-      if (req.body.password !== (process.env.PURCHASE_SEED_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu công cụ');
-      return ok(await db.transaction().execute((trx) => scanParents(trx, auth.tenantId, { overwrite: req.body.overwrite })));
-    },
-  });
-
-  r.delete('/api/v1/catalog/products/:sku', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá mặt hàng chưa có nhập xuất (kèm đơn vị tính, giá)', params: z.object({ sku }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute((trx) => deleteProduct(trx, auth.tenantId, auth.actor, req.params.sku));
-      return ok({ sku: req.params.sku });
-    },
-  });
-
   r.get('/api/v1/catalog/next-sku', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Mã hàng kế tiếp theo nhóm hàng', querystring: z.object({ groupCode: code.min(1) }) },
     handler: async (req) => ok({ ...(await db.transaction().execute((trx) => nextSku(trx, authOf(req).tenantId, req.query.groupCode))), rule: SKU_RULE }),
   });
 
-  r.post('/api/v1/catalog/sku-codes/infer', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Suy mã SKU cho nhóm hàng chưa khai, từ mã hàng đang có', body: z.object({ apply: z.boolean().default(false) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const rows = await db.transaction().execute((trx) => inferSkuCodes(trx, auth.tenantId, req.body.apply));
-      return ok({ applied: req.body.apply, rows });
-    },
-  });
-
   r.get('/api/v1/catalog/price-lists', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Bảng giá và chi nhánh áp dụng' },
     handler: async (req) => ok(await listPriceLists(db, authOf(req).tenantId)),
-  });
-
-  r.put('/api/v1/catalog/price-lists/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags, summary: 'Thêm / sửa bảng giá', params: z.object({ code: code.min(1) }),
-      body: z.object({ name: z.string().trim().min(1).max(255), isCompany: z.boolean().optional(), isActive: z.boolean().optional(), note: z.string().max(500).optional() }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute((trx) => savePriceList(trx, auth.tenantId, auth.actor, req.params.code, req.body));
-      return ok({ code: req.params.code });
-    },
-  });
-
-  r.delete('/api/v1/catalog/price-lists/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá bảng giá (không phải bảng giá công ty, chưa áp chi nhánh nào)', params: z.object({ code: code.min(1) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute((trx) => deletePriceList(trx, auth.tenantId, auth.actor, req.params.code));
-      return ok({ code: req.params.code });
-    },
-  });
-
-  r.put('/api/v1/catalog/price-lists/:code/branches', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Gán chi nhánh cho bảng giá', params: z.object({ code: code.min(1) }), body: z.object({ branchCodes: z.array(code.min(1)).max(2000) }) },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute((trx) => setPriceListBranches(trx, auth.tenantId, auth.actor, req.params.code, req.body.branchCodes));
-      return ok({ code: req.params.code });
-    },
   });
 
   r.get('/api/v1/catalog/price-lists/:code/rows', {
@@ -239,4 +175,93 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
       return ok(await db.transaction().execute((trx) => importCatalog(trx, auth.tenantId, auth.actor, req.body)));
     },
   });
+  mountActions(app, catalogWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const catalogWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.catalog.products-scan-parents', title: 'Quét họ mã theo mã: mã 9 số + đuôi (trừ T có tem) là mã con của mã gốc có trong danh mục (cần mật khẩu công cụ)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ overwrite: z.boolean().default(false), password: z.string().max(200).default('') }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/catalog/products/scan-parents' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      // Công cụ chạy cho cả danh mục → hỏi mật khẩu công cụ (cùng mật khẩu nạp dữ liệu mẫu, đổi bằng PURCHASE_SEED_PASSWORD).
+      if (input.password !== (process.env.PURCHASE_SEED_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu công cụ');
+      return await sameTx(trx, (trx) => scanParents(trx, auth.tenantId, { overwrite: input.overwrite }));
+    },
+  }),
+  defineAction({
+    id: 'core.catalog.product-delete', title: 'Xoá mặt hàng chưa có nhập xuất (kèm đơn vị tính, giá)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ sku }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/catalog/products/:sku' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog', objectId: (i) => String(i.sku) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, (trx) => deleteProduct(trx, auth.tenantId, auth.actor, input.sku));
+      return { sku: input.sku };
+    },
+  }),
+  defineAction({
+    id: 'core.catalog.sku-codes-infer', title: 'Suy mã SKU cho nhóm hàng chưa khai, từ mã hàng đang có', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ apply: z.boolean().default(false) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/catalog/sku-codes/infer' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const rows = await sameTx(trx, (trx) => inferSkuCodes(trx, auth.tenantId, input.apply));
+      return { applied: input.apply, rows };
+    },
+  }),
+  defineAction({
+    id: 'core.catalog.price-list-upsert', title: 'Thêm / sửa bảng giá', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({ name: z.string().trim().min(1).max(255), isCompany: z.boolean().optional(), isActive: z.boolean().optional(), note: z.string().max(500).optional() })).merge(z.object({ code: code.min(1) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/catalog/price-lists/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, (trx) => savePriceList(trx, auth.tenantId, auth.actor, input.code, reqBody));
+      return { code: input.code };
+    },
+  }),
+  defineAction({
+    id: 'core.catalog.price-list-delete', title: 'Xoá bảng giá (không phải bảng giá công ty, chưa áp chi nhánh nào)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: code.min(1) }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/catalog/price-lists/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, (trx) => deletePriceList(trx, auth.tenantId, auth.actor, input.code));
+      return { code: input.code };
+    },
+  }),
+  defineAction({
+    id: 'core.catalog.price-lists-branches', title: 'Gán chi nhánh cho bảng giá', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({ branchCodes: z.array(code.min(1)).max(2000) })).merge(z.object({ code: code.min(1) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/catalog/price-lists/:code/branches' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, (trx) => setPriceListBranches(trx, auth.tenantId, auth.actor, input.code, reqBody.branchCodes));
+      return { code: input.code };
+    },
+  }),
+];

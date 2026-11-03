@@ -32,6 +32,7 @@ import {
   addDays, chargeFor, effectiveAt, firstChargePeriod, firstDayOf, fromIndex, lastDayOf, monthIndex, periodLabel, periodOf, scheduleAfter, splitByDays, splitByPercent,
   type DepreciableAsset, type Period, type Revaluation,
 } from './depreciation.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 export type AssetKind = 'fixed_asset' | 'tool' | 'prepaid';
 export const KIND_LABEL: Record<AssetKind, string> = { fixed_asset: 'Tài sản cố định', tool: 'Công cụ dụng cụ', prepaid: 'Chi phí trả trước' };
@@ -220,7 +221,12 @@ export const assetService = {
   },
 
   async saveCategory(auth: AuthContext, input: CategoryInput, existingCode?: string) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.saveCategoryIn(trx, auth, input, existingCode));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async saveCategoryIn(trx: ActionTx, auth: AuthContext, input: CategoryInput, existingCode?: string) {
+    return sameTx(trx, async (trx) => {
       const code = (existingCode ?? input.code).trim();
       // Loại cha (đã có loại con) khai tài khoản tổng hợp; loại thường khai tài khoản chi tiết.
       const isGroup = Boolean(existingCode && (await trx.selectFrom('asset_categories').select('id').where('tenant_id', '=', auth.tenantId).where('parent_code', '=', code).executeTakeFirst()));
@@ -249,7 +255,12 @@ export const assetService = {
   },
 
   async removeCategory(auth: AuthContext, code: string) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.removeCategoryIn(trx, auth, code));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeCategoryIn(trx: ActionTx, auth: AuthContext, code: string) {
+    return sameTx(trx, async (trx) => {
       const before = await trx.selectFrom('asset_categories').selectAll().where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
       if (!before) throw Errors.notFound(`loại tài sản ${code}`);
       const child = await trx.selectFrom('asset_categories').select('code').where('tenant_id', '=', auth.tenantId).where('parent_code', '=', code).executeTakeFirst();
@@ -305,7 +316,12 @@ export const assetService = {
   },
 
   async create(auth: AuthContext, input: AssetInput) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.createIn(trx, auth, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: AssetInput) {
+    return sameTx(trx, async (trx) => {
       const dup = await trx.selectFrom('assets').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code.trim()).executeTakeFirst();
       if (dup) throw Errors.conflict(`Mã tài sản ${input.code} đã có`);
       const b = await buildAssetRow(trx, auth.tenantId, input, await loadLookups(trx, auth.tenantId));
@@ -318,7 +334,12 @@ export const assetService = {
   },
 
   async update(auth: AuthContext, code: string, input: AssetInput) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.updateIn(trx, auth, code, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, code: string, input: AssetInput) {
+    return sameTx(trx, async (trx) => {
       const cur = await trx.selectFrom('assets').selectAll().where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
       if (!cur) throw Errors.notFound(`tài sản ${code}`);
       const b = await buildAssetRow(trx, auth.tenantId, { ...input, code }, await loadLookups(trx, auth.tenantId));
@@ -331,7 +352,12 @@ export const assetService = {
   },
 
   async remove(auth: AuthContext, code: string) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.removeIn(trx, auth, code));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, code: string) {
+    return sameTx(trx, async (trx) => {
       const cur = await trx.selectFrom('assets').select(['id']).where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
       if (!cur) throw Errors.notFound(`tài sản ${code}`);
       const used = await trx.selectFrom('asset_depreciations').select('id').where('asset_id', '=', cur.id).where('amount', '<>', '0').executeTakeFirst();
@@ -348,7 +374,12 @@ export const assetService = {
    * createBranches: chi nhánh chưa có thì tạo (tên = mã) thay vì báo lỗi.
    */
   async importMany(auth: AuthContext, q: { assets: AssetInput[]; createBranches?: boolean; dryRun?: boolean }) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.importManyIn(trx, auth, q));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async importManyIn(trx: ActionTx, auth: AuthContext, q: { assets: AssetInput[]; createBranches?: boolean; dryRun?: boolean }) {
+    return sameTx(trx, async (trx) => {
       if (q.createBranches && !q.dryRun) {
         const codes = [...new Set(q.assets.flatMap((a) => [a.branchCode, ...(a.allocations ?? []).map((l) => l.branchCode ?? '')]).filter(Boolean))];
         const have = new Set((await trx.selectFrom('branches').select('code').where('tenant_id', '=', auth.tenantId).execute()).map((b) => b.code));
@@ -412,7 +443,12 @@ export const assetService = {
   },
 
   async addEvent(auth: AuthContext, code: string, input: EventInput) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.addEventIn(trx, auth, code, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async addEventIn(trx: ActionTx, auth: AuthContext, code: string, input: EventInput) {
+    return sameTx(trx, async (trx) => {
       const a = await trx.selectFrom('assets').selectAll().where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
       if (!a) throw Errors.notFound(`tài sản ${code}`);
       if (input.date < String(a.start_date) && input.kind !== 'audit') throw Errors.validation('Ngày sự kiện trước ngày bắt đầu sử dụng tài sản');
@@ -441,7 +477,12 @@ export const assetService = {
   },
 
   async removeEvent(auth: AuthContext, id: string) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => assetService.removeEventIn(trx, auth, id));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeEventIn(trx: ActionTx, auth: AuthContext, id: string) {
+    return sameTx(trx, async (trx) => {
       const e = await trx.selectFrom('asset_events').selectAll().where('tenant_id', '=', auth.tenantId).where('id', '=', id).executeTakeFirst();
       if (!e) throw Errors.notFound('sự kiện tài sản');
       if (e.kind === 'transfer') {
@@ -461,8 +502,13 @@ export const assetService = {
 
   /** Sửa tay số trích một tháng (amount null = bỏ số sửa tay, dùng lại số máy tính). Tính lại tháng để áp dụng. */
   async setOverride(auth: AuthContext, code: string, q: { period: string; amount: number | null; reason?: string }) {
+    return db.transaction().execute((trx) => assetService.setOverrideIn(trx, auth, code, q));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async setOverrideIn(trx: ActionTx, auth: AuthContext, code: string, q: { period: string; amount: number | null; reason?: string }) {
     const p = parsePeriod(q.period);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const a = await trx.selectFrom('assets').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', code).executeTakeFirst();
       if (!a) throw Errors.notFound(`tài sản ${code}`);
       await trx.deleteFrom('asset_depreciation_overrides').where('asset_id', '=', a.id).where('year', '=', p.year).where('month', '=', p.month).execute();
@@ -477,8 +523,13 @@ export const assetService = {
 
   /* ---------------- Tính khấu hao, phân bổ ---------------- */
   async run(auth: AuthContext, q: { period: string; catchUp?: boolean }) {
+    return db.transaction().execute((trx) => assetService.runIn(trx, auth, q));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async runIn(trx: ActionTx, auth: AuthContext, q: { period: string; catchUp?: boolean }) {
     const p = parsePeriod(q.period);
-    const result = await db.transaction().execute((trx) => runPeriod(trx, auth, p, Boolean(q.catchUp)));
+    const result = await sameTx(trx, (trx) => runPeriod(trx, auth, p, Boolean(q.catchUp)));
     return { period: periodLabel(p), ...result };
   },
 

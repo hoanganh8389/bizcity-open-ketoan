@@ -31,6 +31,7 @@ import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-th
 import { skuInfoRows } from './thong-tin-ma.js';
 import { deleteEmptyThungRows, emptyThungRows, thungApply, thungPlan } from './dvt-thung.js';
 import { deletePolicy, listDocs, listPolicies, policyInputSchema, savePolicy } from './store.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Mua hàng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -51,30 +52,14 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     } });
   r.get('/api/v1/purchase/documents/:id', { preHandler: read, schema: { tags, summary: 'Một chứng từ + kết quả bộ máy', params: idParamSchema }, handler: async (req) => ok(await purchaseService.get(authOf(req), req.params.id)) });
   r.post('/api/v1/purchase/documents', { preHandler: write, schema: { tags, summary: 'Thêm chứng từ (nháp); số phiếu trống thì tự cấp' }, handler: async (req, reply) => reply.code(201).send(ok(await purchaseService.save(authOf(req), req.body))) });
-  r.put('/api/v1/purchase/documents/:id', { preHandler: write, schema: { tags, summary: 'Sửa chứng từ nháp / chờ duyệt', params: idParamSchema }, handler: async (req) => ok(await purchaseService.save(authOf(req), req.body, req.params.id)) });
-  r.post('/api/v1/purchase/analyze', { preHandler: read, schema: { tags, summary: 'Chạy bộ máy cho phiếu đang nhập: tiền, hạn, cảnh báo, hạn mức, giá mua, bút toán xem trước' }, handler: async (req) => ok(await purchaseService.analyze(authOf(req), req.body)) });
-  r.post('/api/v1/purchase/documents/:id/submit', { preHandler: write, schema: { tags, summary: 'Gửi duyệt', params: idParamSchema }, handler: async (req) => ok(await purchaseService.submit(authOf(req), req.params.id)) });
-  r.post('/api/v1/purchase/documents/:id/approve', { preHandler: write, schema: { tags, summary: 'Duyệt = ghi sổ (409 nếu còn cảnh báo chặn)', params: idParamSchema }, handler: async (req) => ok(await purchaseService.approve(authOf(req), req.params.id)) });
-  r.post('/api/v1/purchase/documents/:id/override', { preHandler: requirePermission('payments:approve'), schema: { tags, summary: 'Duyệt ngoại lệ vượt hạn mức (bắt buộc lý do)', params: idParamSchema, body: z.object({ reason: z.string().trim().min(3, 'Ghi lý do duyệt ngoại lệ') }) },
-    handler: async (req) => ok(await purchaseService.approve(authOf(req), req.params.id, { reason: req.body.reason })) });
-  r.post('/api/v1/purchase/documents/:id/review-outside', { preHandler: requirePermission('payments:approve'), schema: { tags, summary: 'Rà soát phiếu nhập ngoài đơn đã duyệt (ghi người, lúc, ghi chú)', params: idParamSchema, body: z.object({ note: z.string().trim().max(500).default('') }) },
-    handler: async (req) => ok(await purchaseService.reviewOutside(authOf(req), req.params.id, req.body.note)) });
   r.post('/api/v1/purchase/documents/:id/unapprove', { preHandler: write, schema: { tags, summary: 'Bỏ duyệt: huỷ chứng từ kế toán đã sinh, về nháp (body tuỳ chọn { reason })', params: idParamSchema },
     handler: async (req) => ok(await purchaseService.unapprove(authOf(req), req.params.id, String((req.body as { reason?: unknown } | undefined)?.reason ?? '') || undefined)) });
-  r.post('/api/v1/purchase/documents/:id/cancel', { preHandler: write, schema: { tags, summary: 'Huỷ chứng từ chưa duyệt (không xoá)', params: idParamSchema }, handler: async (req) => ok(await purchaseService.cancel(authOf(req), req.params.id)) });
 
   // ---------------- Nhà cung cấp (mọi việc mua hàng đi từ NCC)
   r.get('/api/v1/purchase/suppliers', { preHandler: read, schema: { tags, summary: 'Nhà cung cấp mua hàng: nợ, quá hạn, hạn mức, điều khoản, chính sách, hợp đồng, lần nhập gần nhất', querystring: z.object({ scope: z.enum(['active', 'all']).default('active'), asOf: day.optional() }) },
     handler: async (req) => { const a = authOf(req); return ok(await supplierList(db, a.tenantId, await ctxOf(a.tenantId), req.query.scope, req.query.asOf)); } });
   r.get('/api/v1/purchase/suppliers/:code', { preHandler: read, schema: { tags, summary: 'Hồ sơ một nhà cung cấp', params: z.object({ code: z.string().min(1) }) },
     handler: async (req) => { const a = authOf(req); return ok(await supplierProfile(db, a.tenantId, await ctxOf(a.tenantId), req.params.code)); } });
-
-  r.post('/api/v1/purchase/products-lookup', { preHandler: read, schema: { tags, summary: 'Tra nhiều mã hàng một lần (nhập Excel): tên, ĐVT, thuế đầu vào, nhãn', body: z.object({ skus: z.array(z.string()).max(5000) }) },
-    handler: async (req) => {
-      const skus = [...new Set(req.body.skus.map((s) => s.trim()).filter(Boolean))];
-      const rows = skus.length ? await db.selectFrom('products').select(['sku', 'name', 'unit', 'tax_in_code', 'brand_code']).where('tenant_id', '=', authOf(req).tenantId).where('sku', 'in', skus).execute() : [];
-      return ok(rows.map((p) => ({ sku: p.sku, name: p.name, unit: p.unit, taxInCode: p.tax_in_code, brandCode: p.brand_code })));
-    } });
 
   // ---------------- Tệp đính kèm (hợp đồng, CO, CQ, báo giá, chứng từ) — lưu trên ổ dữ liệu ERP
   const owner = z.object({ ownerType: z.enum(['partner', 'document', 'policy', 'invoice']), ownerId: z.string().min(1) });
@@ -92,8 +77,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
       const f = await readAttachment(db, authOf(req).tenantId, req.params.id);
       return reply.header('content-type', f.mime).header('content-disposition', `inline; filename*=UTF-8''${encodeURIComponent(f.fileName)}`).send(f.data);
     } });
-  r.delete('/api/v1/purchase/attachments/:id', { preHandler: write, schema: { tags, summary: 'Gỡ tệp khỏi hồ sơ (lưu trữ, không xoá cứng — tệp vẫn trên ổ)', params: idParamSchema },
-    handler: async (req) => { const a = authOf(req); await deleteAttachment(db, a.tenantId, req.params.id, a.actorName); return ok({ deleted: true }); } });
 
   // ---------------- Chính sách
   r.get('/api/v1/purchase/policies', { preHandler: read, schema: { tags, summary: 'Danh sách chính sách mua hàng' }, handler: async (req) => ok(await listPolicies(db, authOf(req).tenantId)) });
@@ -106,13 +89,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   };
   r.post('/api/v1/purchase/policies', { preHandler: catalog, schema: { tags, summary: 'Thêm chính sách (nội dung kiểm theo loại)' }, handler: async (req, reply) => reply.code(201).send(ok(await savePol(req, authOf(req)))) });
   r.put('/api/v1/purchase/policies/:id', { preHandler: catalog, schema: { tags, summary: 'Sửa chính sách', params: idParamSchema }, handler: async (req) => ok(await savePol(req, authOf(req), req.params.id)) });
-  r.delete('/api/v1/purchase/policies/:id', { preHandler: catalog, schema: { tags, summary: 'Xoá chính sách chưa áp vào phiếu nào (đã áp: 409, tắt "Áp dụng")', params: idParamSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const p = await db.transaction().execute((trx) => deletePolicy(trx, auth.tenantId, req.params.id));
-      await logEvents(auth.tenantId, [{ event: 'policy_deleted', docNo: p.code, user: auth.actorName, data: { code: p.code, kind: p.kind, name: p.name, partnerCode: p.scope.partnerCode, rule: p.rule, scope: p.scope } }]);
-      return ok({ id: req.params.id });
-    } });
   r.post('/api/v1/purchase/policies/:id/transfer-limit', { preHandler: catalog, schema: { tags, summary: 'Điều chuyển hạn mức nhãn giữa chi nhánh', params: idParamSchema, body: z.object({ from: z.string().default(''), to: z.string().min(1), amount: z.number().positive() }) },
     handler: async (req) => {
       const auth = authOf(req);
@@ -183,21 +159,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
       const rows = await listSupplierProducts(db, a.tenantId, req.query);
       return ok({ rows, units: await unitsOf(db, a.tenantId, rows.map((r) => r.sku).concat(req.query.sku ? [req.query.sku] : [])) });
     } });
-  r.post('/api/v1/purchase/supplier-products', { preHandler: catalog, schema: { tags, summary: 'Thêm / sửa nhiều dòng mặt hàng & giá mua (chọn mã, dán nhiều mã, nhập Excel); ĐVT phải có ở mặt hàng', body: z.object({ rows: z.array(supplierProductSchema).min(1).max(5000) }) },
-    handler: async (req) => {
-      const a = authOf(req);
-      const out = await db.transaction().execute((trx) => saveSupplierProducts(trx, a.tenantId, a.actorName, req.body.rows));
-      const partners = [...new Set(req.body.rows.map((r) => r.partnerCode ?? ''))];
-      await logEvents(a.tenantId, partners.map((pc) => ({ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: pc || undefined, ...out, rows: req.body.rows.filter((r) => (r.partnerCode ?? '') === pc).slice(0, 30).map((r) => `${r.sku} ${r.unit}${r.price !== null && r.price !== undefined ? ` ${r.price.toLocaleString('vi-VN')}đ` : ''}${r.isActive ? '' : ' (bỏ)'}`) } })));
-      return ok(out);
-    } });
-  r.delete('/api/v1/purchase/supplier-products/:id', { preHandler: catalog, schema: { tags, summary: 'Xoá hẳn một dòng mặt hàng & giá mua', params: idParamSchema },
-    handler: async (req) => {
-      const a = authOf(req);
-      const row = await db.transaction().execute((trx) => deleteSupplierProduct(trx, a.tenantId, req.params.id));
-      await logEvents(a.tenantId, [{ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: row.partnerCode || undefined, added: 0, updated: 0, rows: [`${row.sku} ${row.unit}${row.price !== null && row.price !== undefined ? ` ${row.price.toLocaleString('vi-VN')}đ (${row.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : ' chưa có giá'}${row.validFrom ? `, hiệu lực từ ${row.validFrom.split('-').reverse().join('/')}` : ''}${row.validTo ? ` đến ${row.validTo.split('-').reverse().join('/')}` : ''}${row.note ? `, ghi chú: ${row.note}` : ''} (xoá vĩnh viễn)`], deleted: row } }]);
-      return ok({ id: req.params.id });
-    } });
   r.get('/api/v1/purchase/suppliers/:code/brands', { preHandler: read, schema: { tags, summary: 'Các nhãn hàng NCC bán (suy từ mặt hàng NCC bán / đã nhập, nhãn theo danh mục mặt hàng) — gợi ý khi lập chính sách', params: z.object({ code: z.string().min(1).max(64) }) },
     handler: async (req) => ok(await supplierBrandList(db, authOf(req).tenantId, req.params.code)) });
   r.get('/api/v1/purchase/product-cost/:sku', { preHandler: read, schema: { tags, summary: 'Giá vốn của một mã theo ĐVT nhỏ nhất: bình quân tháng gần nhất + tạm tính theo tồn hiện tại', params: z.object({ sku: z.string().min(1).max(64) }) },
@@ -217,24 +178,8 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
   // ---------------- Cài đặt, dữ liệu mẫu
   r.get('/api/v1/purchase/settings', { preHandler: read, schema: { tags, summary: 'Cài đặt mua hàng: ngày nghỉ, số dư nhãn đầu kỳ, tài khoản' },
     handler: async (req) => { const a = authOf(req); const s = await loadSettings(db, a.tenantId); return ok({ ...s, resolvedAccounts: await resolveAccounts(db, a.tenantId, s) }); } });
-  r.put('/api/v1/purchase/settings', { preHandler: settings, schema: { tags, summary: 'Lưu cài đặt mua hàng', body: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false) }) },
-    handler: async (req) => {
-      const a = authOf(req);
-      // Giữ cấu hình biến thể (MH26) — màn MH12 không gửi trường này.
-      const keep = (await loadSettings(db, a.tenantId)).variantSeparate;
-      await saveSettings(db, a.tenantId, { ...req.body, ...(keep ? { variantSeparate: keep } : {}) });
-      return ok(req.body);
-    } });
   r.get('/api/v1/purchase/variants', { preHandler: read, schema: { tags, summary: 'Biến thể mặt hàng (MH26): đuôi mã, số mã con, đuôi nào tách riêng khi phân tích đặt hàng' },
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
-  r.put('/api/v1/purchase/variants', { preHandler: settings, schema: { tags, summary: 'Lưu đuôi mã tách riêng khi phân tích đặt hàng', body: z.object({ separate: z.array(z.string().trim().min(1).max(3)).max(30) }) },
-    handler: async (req) => {
-      const a = authOf(req);
-      const before = await variantSeparate(db, a.tenantId);
-      const separate = await saveVariantSeparate(db, a.tenantId, req.body.separate);
-      await logEvents(a.tenantId, [{ event: 'variants_saved', docNo: '', user: a.actorName, data: { before, after: separate } }]);
-      return ok({ separate });
-    } });
   const thungBody = z.object({ days: z.number().int().min(0).max(3650).default(30), specs: z.record(z.string(), z.string().trim().max(60)).default({}) });
   r.post('/api/v1/purchase/units/thung/preview', { preHandler: read, schema: { tags, summary: 'ĐVT Thùng đặt hàng (MH27): xem trước — mã có tương tác mua / NCC khai trong N ngày, quy cách nhập vào (specs: 12 Lốc, 12CAN/THÙNG) quy về ĐVT nhỏ nhất; không có thì đoán theo ngữ cảnh (mặc định 48)', body: thungBody },
     handler: async (req) => ok(await thungPlan(db, authOf(req).tenantId, req.body)) });
@@ -262,4 +207,170 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await ensureDemoWarehouses(authOf(req))); } });
   r.post('/api/v1/purchase/demo/clear', { preHandler: settings, schema: { tags, summary: 'Xoá dữ liệu tình huống (đảo bút toán đã ghi) — cần mật khẩu', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await clearDemo(authOf(req))); } });
+  mountActions(app, routesTsWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const routesTsWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'mua-hang.purchase.document-upsert', title: 'Sửa chứng từ nháp / chờ duyệt', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema.passthrough(), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/purchase/documents/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...reqBody } = input;
+      return purchaseService.saveIn(ctx.data.tx, ctx.legacyAuth, reqBody, id);
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.analyze', title: 'Chạy bộ máy cho phiếu đang nhập: tiền, hạn, cảnh báo, hạn mức, giá mua, bút toán xem trước', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: z.object({}).passthrough(), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/analyze' }, mcp: false, ai: 'read' },
+    handler: (ctx, input) => purchaseService.analyzeIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-submit', title: 'Gửi duyệt', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/submit' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.submitIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-approve', title: 'Duyệt = ghi sổ (409 nếu còn cảnh báo chặn)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/approve' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.approveIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-override', title: 'Duyệt ngoại lệ vượt hạn mức (bắt buộc lý do)', tags,
+    permission: 'payments:approve', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: (z.object({ reason: z.string().trim().min(3, 'Ghi lý do duyệt ngoại lệ') })).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/override' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...reqBody } = input;
+      return purchaseService.approveIn(ctx.data.tx, ctx.legacyAuth, id, { reason: reqBody.reason });
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-review-outside', title: 'Rà soát phiếu nhập ngoài đơn đã duyệt (ghi người, lúc, ghi chú)', tags,
+    permission: 'payments:approve', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: (z.object({ note: z.string().trim().max(500).default('') })).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/review-outside' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...reqBody } = input;
+      return purchaseService.reviewOutsideIn(ctx.data.tx, ctx.legacyAuth, id, reqBody.note);
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.documents-cancel', title: 'Huỷ chứng từ chưa duyệt (không xoá)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/documents/:id/cancel' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => purchaseService.cancelIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.products-lookup', title: 'Tra nhiều mã hàng một lần (nhập Excel): tên, ĐVT, thuế đầu vào, nhãn', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: z.object({ skus: z.array(z.string()).max(5000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/products-lookup' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const skus = [...new Set(input.skus.map((s) => s.trim()).filter(Boolean))];
+      const rows = skus.length ? await trx.selectFrom('products').select(['sku', 'name', 'unit', 'tax_in_code', 'brand_code']).where('tenant_id', '=', ctx.legacyAuth.tenantId).where('sku', 'in', skus).execute() : [];
+      return rows.map((p) => ({ sku: p.sku, name: p.name, unit: p.unit, taxInCode: p.tax_in_code, brandCode: p.brand_code }));
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.attachment-delete', title: 'Gỡ tệp khỏi hồ sơ (lưu trữ, không xoá cứng — tệp vẫn trên ổ)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/purchase/attachments/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx; const a = ctx.legacyAuth; await deleteAttachment(trx, a.tenantId, input.id, a.actorName); return { deleted: true }; },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.policy-delete', title: 'Xoá chính sách chưa áp vào phiếu nào (đã áp: 409, tắt "Áp dụng")', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/purchase/policies/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const p = await sameTx(trx, (trx) => deletePolicy(trx, auth.tenantId, input.id));
+      await logEvents(auth.tenantId, [{ event: 'policy_deleted', docNo: p.code, user: auth.actorName, data: { code: p.code, kind: p.kind, name: p.name, partnerCode: p.scope.partnerCode, rule: p.rule, scope: p.scope } }]);
+      return { id: input.id };
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.supplier-products', title: 'Thêm / sửa nhiều dòng mặt hàng & giá mua (chọn mã, dán nhiều mã, nhập Excel); ĐVT phải có ở mặt hàng', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ rows: z.array(supplierProductSchema).min(1).max(5000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/supplier-products' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth;
+      const out = await sameTx(trx, (trx) => saveSupplierProducts(trx, a.tenantId, a.actorName, input.rows));
+      const partners = [...new Set(input.rows.map((r) => r.partnerCode ?? ''))];
+      await logEvents(a.tenantId, partners.map((pc) => ({ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: pc || undefined, ...out, rows: input.rows.filter((r) => (r.partnerCode ?? '') === pc).slice(0, 30).map((r) => `${r.sku} ${r.unit}${r.price !== null && r.price !== undefined ? ` ${r.price.toLocaleString('vi-VN')}đ` : ''}${r.isActive ? '' : ' (bỏ)'}`) } })));
+      return out;
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.supplier-product-delete', title: 'Xoá hẳn một dòng mặt hàng & giá mua', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/purchase/supplier-products/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth;
+      const row = await sameTx(trx, (trx) => deleteSupplierProduct(trx, a.tenantId, input.id));
+      await logEvents(a.tenantId, [{ event: 'supplier_products', docNo: '', user: a.actorName, data: { partnerCode: row.partnerCode || undefined, added: 0, updated: 0, rows: [`${row.sku} ${row.unit}${row.price !== null && row.price !== undefined ? ` ${row.price.toLocaleString('vi-VN')}đ (${row.priceIncludesVat ? 'gồm' : 'chưa'} thuế)` : ' chưa có giá'}${row.validFrom ? `, hiệu lực từ ${row.validFrom.split('-').reverse().join('/')}` : ''}${row.validTo ? ` đến ${row.validTo.split('-').reverse().join('/')}` : ''}${row.note ? `, ghi chú: ${row.note}` : ''} (xoá vĩnh viễn)`], deleted: row } }]);
+      return { id: input.id };
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.settings', title: 'Lưu cài đặt mua hàng', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ holidays: z.array(day).default([]), brandOpening: z.record(z.record(z.number())).default({}), accounts: z.record(z.string()).default({}), warnDays: z.number().int().min(0).max(60).default(3), priceWarnPct: z.number().min(0).max(100).default(2), requireOrder: z.boolean().default(false) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/purchase/settings' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth;
+      // Giữ cấu hình biến thể (MH26) — màn MH12 không gửi trường này.
+      const keep = (await loadSettings(trx, a.tenantId)).variantSeparate;
+      await saveSettings(trx, a.tenantId, { ...input, ...(keep ? { variantSeparate: keep } : {}) });
+      return input;
+    },
+  }),
+  defineAction({
+    id: 'mua-hang.purchase.variants', title: 'Lưu đuôi mã tách riêng khi phân tích đặt hàng', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ separate: z.array(z.string().trim().min(1).max(3)).max(30) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/purchase/variants' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'purchase' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const a = ctx.legacyAuth;
+      const before = await variantSeparate(trx, a.tenantId);
+      const separate = await saveVariantSeparate(trx, a.tenantId, input.separate);
+      await logEvents(a.tenantId, [{ event: 'variants_saved', docNo: '', user: a.actorName, data: { before, after: separate } }]);
+      return { separate };
+    },
+  }),
+];

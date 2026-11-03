@@ -23,6 +23,7 @@ import { longTermService } from './long-term.service.js';
 import { notesService } from './notes.service.js';
 import { MANUAL_KEYS, vatReturnService } from './vat-return.service.js';
 import { CIT_MANUAL_KEYS, TAXPAYER_FIELDS, citReturnService, taxpayerService } from './cit-return.service.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 const branchCodes = z
@@ -47,15 +48,6 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('reports:read'),
     schema: { tags: ['Báo cáo tài chính'], summary: 'Phần dài hạn đã khai tại một ngày', querystring: z.object({ asOf: date }) },
     handler: async (req) => ok(await longTermService.list(authOf(req), req.query)),
-  });
-  r.put('/api/v1/long-term-balances', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags: ['Báo cáo tài chính'],
-      summary: 'Lưu phần dài hạn của một ngày (thay toàn bộ)',
-      body: z.object({ asOf: date, lines: z.array(z.object({ accountCode: z.string().trim().min(1), partnerCode: z.string().trim().nullish(), amount: z.coerce.number(), note: z.string().optional() })) }),
-    },
-    handler: async (req) => ok(await longTermService.save(authOf(req), req.body)),
   });
 
   r.get('/api/v1/vat-returns', {
@@ -132,15 +124,34 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags: ['Thuế'], summary: 'Thông tin người nộp thuế' },
     handler: async (req) => ok(await taxpayerService.get(authOf(req))),
   });
-  r.put('/api/v1/taxpayer', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags: ['Thuế'], summary: 'Lưu thông tin người nộp thuế', body: z.object(Object.fromEntries(TAXPAYER_FIELDS.map((k) => [k, z.string().max(500).optional()]))) },
-    handler: async (req) => ok(await taxpayerService.save(authOf(req), req.body as Record<string, string>)),
-  });
 
   r.get('/api/v1/reports/notes', {
     preHandler: requirePermission('reports:read'),
     schema: { tags: ['Báo cáo tài chính'], summary: 'Thuyết minh báo cáo tài chính (B09-DN) — phần số liệu', querystring: z.object({ from: date, to: date }) },
     handler: async (req) => ok(await notesService.build(authOf(req), req.query)),
   });
+  mountActions(app, statementsWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const statementsWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'thue.long-term-balance.update', title: 'Lưu phần dài hạn của một ngày (thay toàn bộ)', tags: ['Báo cáo tài chính'],
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({ asOf: date, lines: z.array(z.object({ accountCode: z.string().trim().min(1), partnerCode: z.string().trim().nullish(), amount: z.coerce.number(), note: z.string().optional() })) }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/long-term-balances' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'long_term_balance' },
+    handler: (ctx, input) => longTermService.saveIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'thue.taxpayer.update', title: 'Lưu thông tin người nộp thuế', tags: ['Thuế'],
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object(Object.fromEntries(TAXPAYER_FIELDS.map((k) => [k, z.string().max(500).optional()]))), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/taxpayer' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'taxpayer' },
+    handler: (ctx, input) => taxpayerService.saveIn(ctx.data.tx, ctx.legacyAuth, input as Record<string, string>),
+  }),
+];

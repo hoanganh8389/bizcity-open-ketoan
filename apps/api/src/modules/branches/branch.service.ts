@@ -7,6 +7,7 @@ import type { AuthContext } from '../../core/auth.js';
 import { branchRepository, toBranchDto } from './branch.repository.js';
 import type { BranchCreate, BranchDto, BranchUpdate } from './branch.schemas.js';
 import type { Db } from '../../db/client.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 /** Mã bộ phận gắn cho chi nhánh phải có trong danh mục Bộ phận. */
 async function departmentOf(trx: Db, tenantId: string, code: string | null | undefined): Promise<string | null> {
@@ -22,7 +23,12 @@ export const branchService = {
   },
 
   async create(auth: AuthContext, input: BranchCreate): Promise<BranchDto> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => branchService.createIn(trx, auth, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: BranchCreate): Promise<BranchDto> {
+    return sameTx(trx, async (trx) => {
       const unitId = input.accountingUnitCode ? await branchRepository.ensureUnit(trx, auth.tenantId, input.accountingUnitCode) : null;
       await branchRepository.insert(trx, {
         tenant_id: auth.tenantId,
@@ -45,7 +51,12 @@ export const branchService = {
 
   /** Xoá chi nhánh chưa có chứng từ, bút toán; đã dùng thì bỏ tích "Theo dõi". */
   async remove(auth: AuthContext, code: string): Promise<{ code: string }> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => branchService.removeIn(trx, auth, code));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, code: string): Promise<{ code: string }> {
+    return sameTx(trx, async (trx) => {
       const before = await branchRepository.findByCode(trx, auth.tenantId, code);
       if (!before) throw Errors.notFound(`chi nhánh ${code}`);
       const used = await trx.selectFrom('bizcity_read.ledger_entries').select('id').where('tenant_id', '=', auth.tenantId).where('branch_id', '=', before.id).limit(1).executeTakeFirst();
@@ -60,7 +71,12 @@ export const branchService = {
   },
 
   async update(auth: AuthContext, code: string, input: BranchUpdate): Promise<BranchDto> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => branchService.updateIn(trx, auth, code, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, code: string, input: BranchUpdate): Promise<BranchDto> {
+    return sameTx(trx, async (trx) => {
       const before = await branchRepository.findByCode(trx, auth.tenantId, code);
       if (!before) throw Errors.notFound(`chi nhánh ${code}`);
       const patch: Record<string, unknown> = {};

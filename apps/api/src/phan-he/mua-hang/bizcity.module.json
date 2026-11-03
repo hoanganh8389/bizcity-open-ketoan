@@ -63,6 +63,22 @@
   "settings": [
     "bizcity.mua_hang.settings"
   ],
+  "actions": [
+    "mua-hang.purchase.document-upsert",
+    "mua-hang.purchase.analyze",
+    "mua-hang.purchase.documents-submit",
+    "mua-hang.purchase.documents-approve",
+    "mua-hang.purchase.documents-override",
+    "mua-hang.purchase.documents-review-outside",
+    "mua-hang.purchase.documents-cancel",
+    "mua-hang.purchase.products-lookup",
+    "mua-hang.purchase.attachment-delete",
+    "mua-hang.purchase.policy-delete",
+    "mua-hang.purchase.supplier-products",
+    "mua-hang.purchase.supplier-product-delete",
+    "mua-hang.purchase.settings",
+    "mua-hang.purchase.variants"
+  ],
   "ui": {
     "icon": "Truck",
     "color": "#e8710a",

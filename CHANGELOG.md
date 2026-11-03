@@ -213,6 +213,10 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 06:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
+- **Thêm 86 route ghi qua `defineAction`** (danh mục, tài sản, người dùng / khoá API, ứng dụng, thiết lập, kế hoạch tiền, thuế, mua hàng, chữ ký): đường dẫn, quyền, thân yêu cầu, mã 201 không đổi; mỗi lần ghi có bằng chứng. Action mới của phân hệ khai trong `bizcity.module.json`. Route dạng lô (mỗi mục một giao dịch, bắt lỗi từng mục) và cửa nạp chứng từ chưa chuyển.
+- **Bằng chứng và bản phản hồi gửi lặp không còn chứa bí mật**: runtime che trường `password`, `secret`, `token`, `apiKey`, `key`… (`***`). Khoá API chỉ trả về một lần; gửi lặp cùng `Idempotency-Key` nhận bản đã che.
+- Chỉ số SC-ACT-1 tính lại: action ghi / (action ghi + route ghi thô còn lại); cách cũ đếm cả action đọc nên vượt 100%.
 <!-- [2026-11-03 03:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 -->
 - **Route ghi của Kernel qua `defineAction`** (SC-ACT-1 35% → 54%): công nợ, phiếu nhập tay, số dư đầu kỳ, bổ sung thông tin thuế, dữ liệu gốc, kiểm thử bể chờ, kỳ kế toán / khoá kỳ, bút toán kết chuyển mẫu, cấu hình hạch toán, huỷ chứng từ. Đường dẫn, quyền, thân yêu cầu, mã 201 không đổi; mỗi lần ghi có bằng chứng của runtime. Lập phiếu, nhập số dư đầu kỳ, đối trừ tay **bắt buộc `Idempotency-Key`** (gửi lặp không lập / đối trừ hai lần — giao diện đã gửi sẵn); các thao tác còn lại chạy lại vô hại. Bổ sung thông tin thuế nay chạy trong một giao dịch (trước: hai giao dịch nối nhau).
 <!-- [2026-11-03 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 -->

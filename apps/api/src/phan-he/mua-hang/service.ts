@@ -18,6 +18,7 @@ import { postPurchase, refReceipts, spreadOverMany } from './posting.js';
 import { logEvents, type LogRow } from './log.js';
 import { dependentsOf, docInputSchema, FREEZE_KINDS, freezeOf, getDoc, listDocs, listDocsFor, nextDocNo, withUserLabels, withDebtStatus, rowValues, type DocInput, type StoredDoc } from './store.js';
 import { resolveWarehouse } from '../../modules/warehouses/default-warehouse.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 /** Phiếu mua có hàng ra / vào kho (đơn đặt chưa vào kho; chi phí, thưởng chỉ điều chỉnh giá trị). */
 const STOCK_KINDS: string[] = ['receipt', 'return', 'exchange', 'gift_in', 'gift_out'];
@@ -75,14 +76,24 @@ export const purchaseService = {
 
   /** Chạy bộ máy cho phiếu đang nhập (chưa lưu). */
   async analyze(auth: AuthContext, raw: unknown): Promise<Analysis> {
-    const input = await withBrands(db, auth.tenantId, docInputSchema.parse(raw));
-    const docs = await listDocsFor(db, auth.tenantId, input);
-    return analyze(db, auth.tenantId, toPDoc(input, input.id ?? 'new'), await loadCtx(db, auth.tenantId, docs));
+    return db.transaction().execute((trx) => purchaseService.analyzeIn(trx, auth, raw));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async analyzeIn(trx: ActionTx, auth: AuthContext, raw: unknown): Promise<Analysis> {
+    const input = await withBrands(trx, auth.tenantId, docInputSchema.parse(raw));
+    const docs = await listDocsFor(trx, auth.tenantId, input);
+    return analyze(trx, auth.tenantId, toPDoc(input, input.id ?? 'new'), await loadCtx(trx, auth.tenantId, docs));
   },
 
   async save(auth: AuthContext, raw: unknown, id?: string): Promise<StoredDoc> {
+    return db.transaction().execute((trx) => purchaseService.saveIn(trx, auth, raw, id));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async saveIn(trx: ActionTx, auth: AuthContext, raw: unknown, id?: string): Promise<StoredDoc> {
     const parsed = docInputSchema.parse(raw);
-    const saved = await db.transaction().execute(async (trx) => {
+    const saved = await sameTx(trx, async (trx) => {
       const input = await withBrands(trx, auth.tenantId, parsed);
       // Chỉ đọc chứng từ liên quan (cùng NCC / nhãn / phiếu gắn) — trùng số phiếu khác NCC do ràng buộc CSDL chặn.
       const docs = await listDocsFor(trx, auth.tenantId, { ...input, id });
@@ -123,7 +134,12 @@ export const purchaseService = {
   },
 
   async submit(auth: AuthContext, id: string): Promise<StoredDoc> {
-    const out = await db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => purchaseService.submitIn(trx, auth, id));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async submitIn(trx: ActionTx, auth: AuthContext, id: string): Promise<StoredDoc> {
+    const out = await sameTx(trx, async (trx) => {
       const docs = await listDocsFor(trx, auth.tenantId, await getDoc(trx, auth.tenantId, id));
       const d = docs.find((x) => x.id === id);
       if (!d) throw Errors.notFound('chứng từ mua hàng');
@@ -138,7 +154,12 @@ export const purchaseService = {
 
   /** Duyệt = ghi sổ. override: duyệt ngoại lệ vượt hạn mức (chỉ khi mọi cảnh báo chặn là vượt hạn mức), bắt buộc lý do. */
   async approve(auth: AuthContext, id: string, override?: { reason: string }): Promise<StoredDoc> {
-    const out = await db.transaction().execute(async (trx: Db) => {
+    return db.transaction().execute((trx) => purchaseService.approveIn(trx, auth, id, override));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async approveIn(trx: ActionTx, auth: AuthContext, id: string, override?: { reason: string }): Promise<StoredDoc> {
+    const out = await sameTx(trx, async (trx: Db) => {
       const docs = await listDocsFor(trx, auth.tenantId, await getDoc(trx, auth.tenantId, id, true));
       const d = docs.find((x) => x.id === id);
       if (!d) throw Errors.notFound('chứng từ mua hàng');
@@ -175,14 +196,19 @@ export const purchaseService = {
 
   /** Kế toán rà soát phiếu nhập ngoài đơn đã duyệt (xử lý riêng): ghi người, lúc, ghi chú; bỏ khỏi việc cần làm. */
   async reviewOutside(auth: AuthContext, id: string, note = ''): Promise<StoredDoc> {
-    const d = await getDoc(db, auth.tenantId, id);
+    return db.transaction().execute((trx) => purchaseService.reviewOutsideIn(trx, auth, id, note));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async reviewOutsideIn(trx: ActionTx, auth: AuthContext, id: string, note = ''): Promise<StoredDoc> {
+    const d = await getDoc(trx, auth.tenantId, id);
     if (d.status !== 'approved' || !d.outsideOrder?.by) throw Errors.conflict('Chỉ rà soát phiếu nhập ngoài đơn đã duyệt');
-    const row = await db.selectFrom('purchase_documents').select('data').where('tenant_id', '=', auth.tenantId).where('id', '=', id).executeTakeFirstOrThrow();
+    const row = await trx.selectFrom('purchase_documents').select('data').where('tenant_id', '=', auth.tenantId).where('id', '=', id).executeTakeFirstOrThrow();
     const data = row.data as Record<string, unknown>;
     const outsideOrder = { ...d.outsideOrder, reviewedBy: auth.actorName, reviewedAt: new Date().toISOString(), reviewNote: note.trim() };
-    await db.updateTable('purchase_documents').set({ data: JSON.stringify({ ...data, outsideOrder }), updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    await trx.updateTable('purchase_documents').set({ data: JSON.stringify({ ...data, outsideOrder }), updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'outside_order_reviewed', docNo: d.docNo, user: auth.actorName, data: { reason: d.outsideOrder.reason, note: note.trim() } }]);
-    return getDoc(db, auth.tenantId, id);
+    return getDoc(trx, auth.tenantId, id);
   },
 
   /** Bỏ duyệt: huỷ các chứng từ kế toán đã sinh (đảo bút toán, gỡ kho, gỡ đối trừ) rồi về nháp. */
@@ -199,12 +225,17 @@ export const purchaseService = {
   },
 
   async cancel(auth: AuthContext, id: string): Promise<StoredDoc> {
-    const d = await getDoc(db, auth.tenantId, id);
+    return db.transaction().execute((trx) => purchaseService.cancelIn(trx, auth, id));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async cancelIn(trx: ActionTx, auth: AuthContext, id: string): Promise<StoredDoc> {
+    const d = await getDoc(trx, auth.tenantId, id);
     if (d.status === 'cancelled') return d;
     const step = wf.plan('cancel', d, workflowActor(auth));
-    await db.updateTable('purchase_documents').set({ status: step.to, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
+    await trx.updateTable('purchase_documents').set({ status: step.to, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('id', '=', id).execute();
     await logEvents(auth.tenantId, [{ event: 'doc_cancelled', docNo: d.docNo, user: auth.actorName, data: {} }]);
-    return getDoc(db, auth.tenantId, id);
+    return getDoc(trx, auth.tenantId, id);
   },
 
   /** Tính tiền nhanh không cần cơ sở dữ liệu (dùng cho dữ liệu mẫu). */

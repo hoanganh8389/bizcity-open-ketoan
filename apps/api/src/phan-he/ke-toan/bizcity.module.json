@@ -37,7 +37,12 @@
     "accounting.cash.balances",
     "accounting.debts.partner-balances",
     "accounting.report.income-statement",
-    "accounting.report.term-rules"
+    "accounting.report.term-rules",
+    "ke-toan.cash-plan.update",
+    "ke-toan.cash-plan.delete",
+    "ke-toan.cash-plan.fill",
+    "ke-toan.cost-norm.update",
+    "ke-toan.cost-norm.copy"
   ],
   "ui": {
     "icon": "Calculator",

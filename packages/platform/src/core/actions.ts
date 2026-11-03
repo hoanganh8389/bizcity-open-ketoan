@@ -216,6 +216,29 @@ export function ownDocument<T extends { docKey?: unknown; sourceSystem?: unknown
 }
 
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): giao dịch của action cho mã cũ viết dạng db.transaction().execute(fn)
+// [2026-11-03 05:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: không lưu bí mật vào bằng chứng / bản phản hồi gửi lặp
+const SECRET_KEY = /(^key$|password$|secret$|token$|apikey$|api_key$|privatekey$)/i;
+/**
+ * Che trường bí mật (mật khẩu, khoá API, token, secret…) trước khi ghi bằng chứng (audit_logs) và trước khi lưu phản hồi để trả
+ * lại khi gửi lặp (action_requests). Người gọi lần đầu vẫn nhận đủ; gửi lặp nhận bản đã che (khoá chỉ trả về một lần).
+ */
+export function redactSecrets<T>(v: T): T {
+  const walk = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(walk);
+    if (x && typeof x === 'object' && !(x instanceof Date)) return Object.fromEntries(Object.entries(x).map(([k, val]) => [k, SECRET_KEY.test(k) && val != null && val !== '' ? '***' : walk(val)]));
+    return x;
+  };
+  return walk(v) as T;
+}
+
+/** Giao dịch runtime mở cho action (ctx.data.tx). */
+export type ActionTx = Transaction<Database>;
+/** Chạy fn trong giao dịch có sẵn — thay `db.transaction().execute(fn)` khi mã cũ đã nằm trong giao dịch của action (không mở giao dịch lồng). */
+export function sameTx<T>(trx: ActionTx, fn: (trx: ActionTx) => Promise<T>): Promise<T> {
+  return fn(trx);
+}
+
 const registry = new Map<string, AnyActionDef>();
 
 /** Khai báo action; kiểm các luật đọc được từ khai báo (STD-ACT-2, -4, -6) ngay lúc nạp. */
@@ -318,7 +341,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
     const oid = objectId == null ? undefined : String(objectId);
     return {
       tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via ?? (auth!.app ? `app:${auth!.app}` : undefined), onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
-      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after,
+      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after: redactSecrets(after),
     };
   };
   let inHandler = false;
@@ -457,7 +480,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         result.meta = { ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
       }
       if (key) {
-        await trx.updateTable('action_requests').set({ response: JSON.stringify(output ?? null), status_code: status })
+        await trx.updateTable('action_requests').set({ response: JSON.stringify(redactSecrets(output ?? null)), status_code: status })
           .where('tenant_id', '=', tenantId).where('action_id', '=', def.id).where('idem_key', '=', key).execute();
       }
       return result;

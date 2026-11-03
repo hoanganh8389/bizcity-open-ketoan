@@ -67,12 +67,18 @@ export const checks = [
     title: 'Thao tác ghi đi qua defineAction (quyền, zod, Idempotency-Key, dry-run, bằng chứng)',
     gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['STD-ACT-1', 'STD-ACT-4'], conf: ['CONF-STATIC-8', 'CONF-RUN-4'], tier: 1, enforce: 'planned', phase: 'Phase 2 (2.3)', weight: 4, targets: ['repo'], scope: 'module',
     run(ctx) {
-      let writes = 0; let viaAction = 0;
+      // [2026-11-03 05:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: đo trung thực — action GHI / (action ghi + route ghi thô còn lại);
+      // trước đây tử số đếm mọi defineAction (cả action đọc) trên mẫu số chỉ route thô, vượt 100% khi route thô ít đi.
+      let writes = 0; let viaAction = 0; let actions = 0;
       for (const file of ctx.repo.files({ under: SRC, ext: ['.ts'] })) {
         for (const t of ctx.repo.lines(file)) { const m = ROUTE_RE.exec(t); if (m && m[1] !== 'get') writes++; }
-        viaAction += (ctx.repo.read(file).match(/\bdefineAction\(/g) ?? []).length;
+        const text = ctx.repo.read(file);
+        const n = (text.match(/\bdefineAction\(/g) ?? []).length;
+        actions += n;
+        if (n) viaAction += (text.match(/\beffect:\s*'write'/g) ?? []).length;
       }
-      return { examined: writes, readiness: writes ? Math.min(1, viaAction / writes) : 0, findings: [], metrics: { writeRoutes: writes, defineAction: viaAction }, notes: [`${viaAction}/${writes} route ghi đi qua defineAction (audit A-21: chưa có idempotency ngoài cửa sổ sổ cái)`] };
+      const total = viaAction + writes;
+      return { examined: total, readiness: total ? viaAction / total : 0, findings: [], metrics: { writeRoutes: writes, writeActions: viaAction, defineAction: actions }, notes: [`${viaAction}/${total} thao tác ghi đi qua defineAction; còn ${writes} route ghi thô (audit A-21: chưa có idempotency ngoài cửa sổ sổ cái)`] };
     },
   },
   {

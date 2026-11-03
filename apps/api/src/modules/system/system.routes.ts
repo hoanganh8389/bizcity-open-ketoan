@@ -40,7 +40,7 @@ import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
-import { listActions, mountActions } from '../../core/actions.js';
+import { listActions, mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
 import { listModulePermissions, PERMISSIONS } from '@bizcity/platform/core/auth';
 import { REQUIRED_MODULES, runModuleSeed } from '../../core/module-lifecycle.js';
@@ -87,22 +87,6 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => {
       const t = await db.selectFrom('tenants').select('settings').where('id', '=', authOf(req).tenantId).executeTakeFirstOrThrow();
       return ok(readPostingModes(t.settings));
-    },
-  });
-
-  r.put('/api/v1/settings/posting-modes', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags: ['Hệ thống'], summary: 'Sửa chế độ ghi sổ theo loại chứng từ', body: postingModesSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
-        const before = readPostingModes(cur.settings);
-        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}), postingModes: req.body };
-        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.posting-modes', objectType: 'tenant', objectId: auth.tenantId, before, after: req.body });
-      });
-      return ok(req.body);
     },
   });
 
@@ -308,4 +292,31 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags: ['Hệ thống'], summary: 'Cấu trúc cơ sở dữ liệu kèm giải thích' },
     handler: async () => ok(await readSchema()),
   });
+  mountActions(app, systemWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const systemWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.posting-modes.update', title: 'Sửa chế độ ghi sổ theo loại chứng từ', tags: ['Hệ thống'],
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: postingModesSchema, output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/settings/posting-modes' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'posting_modes' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      await sameTx(trx, async (trx) => {
+        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
+        const before = readPostingModes(cur.settings);
+        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}), postingModes: input };
+        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.posting-modes', objectType: 'tenant', objectId: auth.tenantId, before, after: input });
+      });
+      return input;
+    },
+  }),
+];

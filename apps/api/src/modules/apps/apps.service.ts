@@ -14,6 +14,7 @@ import { generateApiKey } from '@bizcity/platform/core/security/password';
 import {
   appEventTypes, getAppManifest, listAppManifests, newWebhookSalt, signAppTicket, verifyAppTicket, webhookSecret, type AppManifest,
 } from '@bizcity/platform/core/apps';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 const need = (key: string): AppManifest => {
   const m = getAppManifest(key);
@@ -62,8 +63,13 @@ export const appsService = {
 
   /** Kết nối app: đồng ý phạm vi trong manifest, nhận khoá API + bí mật webhook (một lần). */
   async install(auth: AuthContext, key: string) {
+    return db.transaction().execute((trx) => appsService.installIn(trx, auth, key));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async installIn(trx: ActionTx, auth: AuthContext, key: string) {
     const m = need(key);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const cur = await lockInstallation(trx, auth.tenantId, key);
       if (cur) throw Errors.conflict(cur.status === 'active' ? `App ${m.label} đã kết nối với đơn vị này` : `App ${m.label} đã kết nối nhưng đang tắt — bật lại thay vì kết nối mới`);
       const salt = newWebhookSalt();
@@ -80,8 +86,13 @@ export const appsService = {
 
   /** Bật / tắt kết nối. Tắt: khoá app bị từ chối, webhook ngừng; dữ liệu và bút toán app đã nộp giữ nguyên. */
   async setStatus(auth: AuthContext, key: string, status: 'active' | 'disabled') {
+    return db.transaction().execute((trx) => appsService.setStatusIn(trx, auth, key, status));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async setStatusIn(trx: ActionTx, auth: AuthContext, key: string, status: 'active' | 'disabled') {
     need(key);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const cur = await lockInstallation(trx, auth.tenantId, key);
       if (!cur) throw Errors.notFound(`kết nối app "${key}" của đơn vị`);
       if (cur.status === status) return { key, status, changed: false };
@@ -94,8 +105,13 @@ export const appsService = {
 
   /** Đồng ý phạm vi mới của manifest (app nâng cấp xin thêm / bớt quyền, sự kiện). Không đổi khoá. */
   async updateScope(auth: AuthContext, key: string) {
+    return db.transaction().execute((trx) => appsService.updateScopeIn(trx, auth, key));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateScopeIn(trx: ActionTx, auth: AuthContext, key: string) {
     const m = need(key);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const cur = await lockInstallation(trx, auth.tenantId, key);
       if (!cur) throw Errors.notFound(`kết nối app "${key}" của đơn vị`);
       const after = { version: m.version, permissions: m.app.scopes ?? [], events: appEventTypes(m) };
@@ -108,8 +124,13 @@ export const appsService = {
 
   /** Xoay khoá: thu hồi khoá API cũ, cấp khoá mới + bí mật webhook mới (một lần). */
   async rotate(auth: AuthContext, key: string) {
+    return db.transaction().execute((trx) => appsService.rotateIn(trx, auth, key));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async rotateIn(trx: ActionTx, auth: AuthContext, key: string) {
     const m = need(key);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const cur = await lockInstallation(trx, auth.tenantId, key);
       if (!cur) throw Errors.notFound(`kết nối app "${key}" của đơn vị`);
       const salt = newWebhookSalt();

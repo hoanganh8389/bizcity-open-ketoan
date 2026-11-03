@@ -24,6 +24,7 @@ import { Errors } from '../../core/errors.js';
 import { idParamSchema, ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { voucherService } from '../../kernel/public.js';
+import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Bút toán mẫu, bút toán lặp'];
 const STEP: Record<RecurrenceFrequency, number> = { monthly: 1, quarterly: 3, yearly: 12 };
@@ -119,32 +120,6 @@ export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void>
     handler: async (req) => ok(templateDto(await loadTemplate(authOf(req).tenantId, req.params.code))),
   });
 
-  r.put('/api/v1/voucher-templates/:code', {
-    preHandler: write,
-    schema: { tags, summary: 'Thêm hoặc sửa bút toán mẫu', params: z.object({ code: z.string().trim().min(1).max(64) }), body: voucherTemplateInputSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { name, docType, isActive, ...voucher } = req.body;
-      const codes = [...new Set(voucher.lines.flatMap((l) => [l.debitAccount, l.creditAccount]))];
-      const accounts = await db.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', auth.tenantId).where('code', 'in', codes).execute();
-      const missing = codes.filter((c) => !accounts.some((a) => a.code === c && a.is_posting));
-      if (missing.length) throw Errors.validation(`Tài khoản chưa có hoặc không phải tài khoản chi tiết: ${missing.join(', ')}`);
-      if (voucher.branchCode) {
-        const b = await db.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', voucher.branchCode).executeTakeFirst();
-        if (!b) throw Errors.validation(`Chi nhánh ${voucher.branchCode} chưa có`);
-      }
-      const old = await db.selectFrom('voucher_templates').select('doc_type').where('tenant_id', '=', auth.tenantId).where('code', '=', req.params.code).executeTakeFirst();
-      if (old && old.doc_type !== docType) throw Errors.validation('Không đổi được loại phiếu của mẫu; hãy tạo mẫu mới');
-      const values = { name, doc_type: docType, is_active: isActive, voucher: JSON.stringify(voucher), updated_by: auth.actorName, updated_at: new Date() };
-      await db.transaction().execute(async (trx) => {
-        await trx.insertInto('voucher_templates').values({ tenant_id: auth.tenantId, code: req.params.code, ...values })
-          .onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_template.save', objectType: 'voucher_template', objectId: req.params.code, after: req.body });
-      });
-      return ok({ code: req.params.code });
-    },
-  });
-
   r.get('/api/v1/voucher-recurrences', {
     preHandler: read,
     schema: { tags, summary: 'Danh sách bút toán lặp' },
@@ -207,21 +182,6 @@ export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void>
     handler: async (req) => ok(await saveRecurrence(authOf(req), req.params.id, req.body)),
   });
 
-  r.delete('/api/v1/voucher-recurrences/:id', {
-    preHandler: write,
-    schema: { tags, summary: 'Xoá bút toán lặp chưa sinh phiếu nào', params: idParamSchema },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const runs = await db.selectFrom('voucher_recurrence_runs').select('id').where('tenant_id', '=', auth.tenantId).where('recurrence_id', '=', req.params.id).executeTakeFirst();
-      if (runs) throw Errors.conflict('Bút toán lặp đã sinh phiếu, không xoá được; hãy ngừng dùng');
-      await db.transaction().execute(async (trx) => {
-        await trx.deleteFrom('voucher_recurrences').where('tenant_id', '=', auth.tenantId).where('id', '=', req.params.id).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_recurrence.delete', objectType: 'voucher_recurrence', objectId: req.params.id });
-      });
-      return ok({ id: req.params.id });
-    },
-  });
-
   r.get('/api/v1/voucher-recurrences/due', {
     preHandler: read,
     schema: { tags, summary: 'Các kỳ đến hạn chưa sinh phiếu', querystring: z.object({ to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }) },
@@ -280,4 +240,60 @@ export async function voucherTemplateRoutes(app: FastifyInstance): Promise<void>
       return ok(results);
     },
   });
+  mountActions(app, voucherTemplateWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const voucherTemplateWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.voucher-template.upsert', title: 'Thêm hoặc sửa bút toán mẫu', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: (voucherTemplateInputSchema).merge(z.object({ code: z.string().trim().min(1).max(64) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/voucher-templates/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_template', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { name, docType, isActive, ...voucher } = reqBody;
+      const codes = [...new Set(voucher.lines.flatMap((l) => [l.debitAccount, l.creditAccount]))];
+      const accounts = await trx.selectFrom('accounts').select(['code', 'is_posting']).where('tenant_id', '=', auth.tenantId).where('code', 'in', codes).execute();
+      const missing = codes.filter((c) => !accounts.some((a) => a.code === c && a.is_posting));
+      if (missing.length) throw Errors.validation(`Tài khoản chưa có hoặc không phải tài khoản chi tiết: ${missing.join(', ')}`);
+      if (voucher.branchCode) {
+        const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', voucher.branchCode).executeTakeFirst();
+        if (!b) throw Errors.validation(`Chi nhánh ${voucher.branchCode} chưa có`);
+      }
+      const old = await trx.selectFrom('voucher_templates').select('doc_type').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).executeTakeFirst();
+      if (old && old.doc_type !== docType) throw Errors.validation('Không đổi được loại phiếu của mẫu; hãy tạo mẫu mới');
+      const values = { name, doc_type: docType, is_active: isActive, voucher: JSON.stringify(voucher), updated_by: auth.actorName, updated_at: new Date() };
+      await sameTx(trx, async (trx) => {
+        await trx.insertInto('voucher_templates').values({ tenant_id: auth.tenantId, code: input.code, ...values })
+          .onConflict((oc) => oc.columns(['tenant_id', 'code']).doUpdateSet(values)).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_template.save', objectType: 'voucher_template', objectId: input.code, after: reqBody });
+      });
+      return { code: input.code };
+    },
+  }),
+  defineAction({
+    id: 'core.voucher-recurrence.delete', title: 'Xoá bút toán lặp chưa sinh phiếu nào', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/voucher-recurrences/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'voucher_recurrence', objectId: (i) => String(i.id) },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const runs = await trx.selectFrom('voucher_recurrence_runs').select('id').where('tenant_id', '=', auth.tenantId).where('recurrence_id', '=', input.id).executeTakeFirst();
+      if (runs) throw Errors.conflict('Bút toán lặp đã sinh phiếu, không xoá được; hãy ngừng dùng');
+      await sameTx(trx, async (trx) => {
+        await trx.deleteFrom('voucher_recurrences').where('tenant_id', '=', auth.tenantId).where('id', '=', input.id).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'voucher_recurrence.delete', objectType: 'voucher_recurrence', objectId: input.id });
+      });
+      return { id: input.id };
+    },
+  }),
+];
