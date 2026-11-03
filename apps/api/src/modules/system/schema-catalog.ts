@@ -208,6 +208,9 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_item_codes_guard: 'Mã hàng chỉ thêm (R-ITEM-0): UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một mặt hàng (DG-ITEM-1); không xoá.',
   bizcity_item_classification_guard: 'Phân loại hạch toán theo ngày (R-ITEM-5 / 7): không chồng hiệu lực; bản đã đóng không sửa; không xoá.',
   bizcity_item_truncate_guard: 'Chặn xoá sạch bảng định danh mặt hàng bằng TRUNCATE (R-ITEM-0).',
+  // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng
+  bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
+  bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',
   bizcity_set_item_id: 'Dòng mới (sổ cái, kho, giá vốn, đơn vị quy đổi, bảng giá) tự gắn item_id theo mã có hiệu lực tại ngày của dòng; mã chưa có trong danh mục → để rỗng, điền khi mặt hàng được tạo (bizcity_item_fill_refs).',
 };
 

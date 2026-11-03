@@ -329,7 +329,9 @@ export const productWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'POST', path: '/api/v1/products/validate' }, mcp: false, ai: 'read' },
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
-      return { findings: await itemHints(trx, ctx.legacyAuth.tenantId, input) };
+      // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: so với ĐVT đang lưu để khung Vì sao nhắc ITEM-HINT-003 ngay khi gõ
+      const cur = await trx.selectFrom('products').select('unit').where('tenant_id', '=', ctx.legacyAuth.tenantId).where('sku', '=', input.sku).executeTakeFirst();
+      return { findings: await itemHints(trx, ctx.legacyAuth.tenantId, { ...input, previousUnit: cur?.unit }) };
     },
   }),
   defineAction({
@@ -381,6 +383,8 @@ export const productWriteActions: AnyActionDef[] = [
           }
           patch[col] = v || null;
         }
+        // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: nhớ ĐVT gốc trước khi sửa để Gate A nhắc ITEM-HINT-003 (biến thể khác = mặt hàng mới)
+        const before = await trx.selectFrom('products').select('unit').where('tenant_id', '=', auth.tenantId).where('sku', '=', input.sku).executeTakeFirst();
         await trx
           .insertInto('products')
           .values({ tenant_id: auth.tenantId, sku: input.sku, name: b.name ?? '', unit: b.unit ?? '', source_system: 'manual' })
@@ -388,7 +392,7 @@ export const productWriteActions: AnyActionDef[] = [
           .execute();
         await trx.updateTable('products').set(patch).where('tenant_id', '=', auth.tenantId).where('sku', '=', input.sku).execute();
         // Gate A: còn lỗi chặn → NHÁP (không mất bản khai, chưa dùng được trên chứng từ); vừa kích hoạt → bể chờ kiểm lại (R-GATE-6).
-        const gate = await applyItemGate(trx, auth, input.sku);
+        const gate = await applyItemGate(trx, auth, input.sku, { previousUnit: before?.unit });
         findings = gate.findings;
         isDraft = gate.isDraft;
         recheck = gate.recheck;

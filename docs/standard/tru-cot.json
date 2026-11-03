@@ -12,113 +12,823 @@
   },
   "pillars": [
     {
-      "id": "0", "key": "mdg", "role": "nền móng", "title": "Quản trị dữ liệu gốc (Master Data Governance)",
+      "id": "0",
+      "key": "mdg",
+      "role": "nền móng",
+      "title": "Quản trị dữ liệu gốc (Master Data Governance)",
       "one": "Thiết lập một lần hệ thống định danh và nguyên tắc đúng để hàng triệu mã, hàng trăm cửa hàng, nhiều pháp nhân và mọi module dùng chung một dòng dữ liệu kế toán liên tục.",
       "criteria": [
-        { "id": "MD-001", "text": "Mọi đối tượng kinh tế có ID chuẩn, bất biến trong phạm vi quản lý", "status": "mot-phan", "evidence": "items.item_id ULID bất biến (0065, trigger guard); đối tượng / chi nhánh / kho / tài khoản chỉ có id số + mã sửa được", "gap": "định danh có phiên bản cho đối tượng, chi nhánh, kho (ADR-0018 hạng A/B); tài khoản theo phiên bản hệ thống TK", "next": "S026-4", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "MD-002", "text": "Mã hiển thị và phân loại có phiên bản theo ngày hiệu lực", "status": "mot-phan", "evidence": "item_codes (valid_from / valid_to, chỉ thêm), item_classification theo ngày (0065)", "gap": "mã đối tượng / chi nhánh / kho; phân loại hàng (item_classes) chưa có ngày hiệu lực", "next": "S026-4, S026-5", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "MD-003", "text": "Cây phân cấp nhiều cấp, không giới hạn cố định hai tầng", "status": "mot-phan", "evidence": "org_units cây tuỳ ý (0062, path, level 0–9); item_classes / accounts / partner_groups / dimensions có parent_code", "gap": "item_classes chưa có path / kiểm vòng; báo cáo kho mới gom tới 3 cấp nhóm hàng; cây không có ngày hiệu lực", "next": "S026-5", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc", "kho"] },
-        { "id": "MD-004", "text": "Không dùng mã hiển thị làm khoá liên kết sổ sách", "status": "mot-phan", "evidence": "item_id trên ledger_lines / inventory_movements / inventory_costs / product_units / product_prices (0066); giá vốn và báo cáo kho gom theo item_id (G2)", "gap": "ledger_lines.account_code, partner_id (id số, không phiên bản); products vẫn là bảng ghi (S024-11)", "next": "S024-11, S026-4", "phase": "PHASE-024", "level": "P0", "modules": ["kho", "ke-toan"] },
-        { "id": "ORG-001", "text": "Pháp nhân, đơn vị hạch toán, chi nhánh, cửa hàng, kho được phân biệt rõ", "status": "mot-phan", "evidence": "tenants (MST), branches (MST riêng, accounting_unit_id), accounting_units, warehouses thuộc chi nhánh, org_units", "gap": "chưa có NHÓM đơn vị (HO · kho tổng · cửa hàng là các tenant); chưa có vai của tenant trong nhóm", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["he-thong", "danh-muc"] },
-        { "id": "ORG-002", "text": "Nghiệp vụ phải xác định được chủ thể kế toán và mã số thuế liên quan", "status": "mot-phan", "evidence": "chứng từ mang branch_id → chi nhánh có tax_code / company_name; sổ theo đơn vị hạch toán", "gap": "chuyển kho / bán hàng LIÊN tenant (HO → cửa hàng) chưa có cặp chứng từ + loại trừ nội bộ", "next": "S026-7", "phase": "PHASE-026", "level": "P1", "modules": ["kho", "ban-hang", "ke-toan"] },
-        { "id": "ACC-001", "text": "Mapping tài khoản có phiên bản, phạm vi và thời gian hiệu lực", "status": "mot-phan", "evidence": "posting_policy_versions (ADR-0009, effective_from, ảnh chụp nhóm / lý do / TK); accounting_profiles theo năm; item_classification theo ngày", "gap": "product_posting_groups không có ngày hiệu lực; chưa có bảng ánh xạ TK cũ → mới khi đổi chế độ; mapping theo phạm vi (nhóm đơn vị / pháp nhân) chưa có", "next": "S026-8", "phase": "PHASE-026", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "ACC-002", "text": "Mọi dòng tồn kho và giá vốn truy xuất được về SKU và nghiệp vụ gốc", "status": "dat", "evidence": "inventory_movements (event_id, line_no, item_id); inventory_costs.item_id; Hành trình mặt hàng theo item_id (bizcity_lineage 0.2.0); test item-id-so-kho, lineage", "gap": "lớp giá vốn / phân bổ từng dòng xuất (PHASE-025 W2) để chỉ đích danh phiếu nhập nào", "next": "S025-5", "phase": "PHASE-025", "level": "P0", "modules": ["kho"] },
-        { "id": "CF-001", "text": "Thay đổi danh mục ảnh hưởng kế toán phải được kiểm chuẩn trước khi kích hoạt", "status": "mot-phan", "evidence": "Gate A: /products|partners|accounts/validate, mặt hàng nháp (0061), khung Vì sao, luật nhắc HT09", "gap": "chưa phân lớp thay đổi 0–3 (ADR-0018) để lớp 3 (đổi bản chất / TK) qua cổng + chứng từ điều chỉnh; đối tượng chưa có nháp", "next": "S026-9", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "CF-002", "text": "Sự kiện không đạt kiểm chuẩn phải được giữ trong Exception Buffer", "status": "mot-phan", "evidence": "intake_inbox (0059) — bể chờ Gate B; Commit Guard IN-GUARD-001", "gap": "chưa có bể cho sai lệch SAU ghi sổ (Gate C) và tìm chứng từ theo sai lệch sổ", "next": "S025-10", "phase": "PHASE-025", "level": "P1", "modules": ["ke-toan"] },
-        { "id": "AUD-001", "text": "Sai lệch truy tìm được về chứng từ, nguyên nhân và phạm vi ảnh hưởng", "status": "mot-phan", "evidence": "audit_logs chuỗi băm (0036 / 0047), Bàn điều tra (PHASE-019), Hành trình mặt hàng", "gap": "chưa có 'Tác động' (một mã dùng ở chứng từ / kho / TK / báo cáo nào); lịch sử chưa có trên form đối tượng / tài khoản / chi nhánh", "next": "S026-10, S026-11", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc", "he-thong"] },
-        { "id": "IC-1", "text": "Identity Continuity: đổi tên, đổi mã, đổi vị trí phân loại không đứt định danh", "status": "mot-phan", "evidence": "mặt hàng: đổi mã giữ item_id, hành trình nối mã cũ + mới, giá vốn một dòng (test B2b); đổi nhóm = bản phân loại mới theo ngày", "gap": "chỉ mặt hàng; đối tượng / kho / chi nhánh / tài khoản chưa", "next": "S026-4", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "VER-1", "text": "Hai cột: định danh tồn kho (item_id) và mã (item_code) — cùng biến thể đổi mã giữ định danh; biến thể kinh tế khác → định danh mới, cùng sản phẩm cha", "status": "mot-phan", "evidence": "items.item_id + item_codes; items.parent_item_id có cột", "gap": "parent_item_id chưa được điền (họ mã products.parent_sku chỉ là tiền tố 9 ký tự); chưa có luật 'biến thể kinh tế khác = định danh mới'", "next": "S026-3", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc", "kho"] },
-        { "id": "UI-4", "text": "Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết", "status": "chua", "evidence": "Truy vết: nút Truy vết ở danh mục mặt hàng → ACC95; Kiểm chuẩn: khung Vì sao (Gate A)", "gap": "Lịch sử, Tác động chưa có trên form; khung chung MasterDataFrame chưa có", "next": "S026-10..13", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "SCALE-1", "text": "Danh mục hàng triệu mã, hàng trăm cửa hàng: đo và giữ hiệu năng", "status": "chua", "evidence": "đo 20.985 mặt hàng: đồng bộ Item Master +0,7 ms / mặt hàng; khoá chống chồng hiệu lực theo đơn vị", "gap": "chưa có benchmark triệu SKU, chưa có nạp theo lô (FOR EACH STATEMENT), chưa có EXCLUDE gist", "next": "S026-14", "phase": "PHASE-026", "level": "P2", "modules": ["danh-muc"] }
+        {
+          "id": "MD-001",
+          "text": "Mọi đối tượng kinh tế có ID chuẩn, bất biến trong phạm vi quản lý",
+          "status": "mot-phan",
+          "evidence": "items.item_id ULID bất biến (0065, trigger guard); đối tượng / chi nhánh / kho / tài khoản chỉ có id số + mã sửa được",
+          "gap": "định danh có phiên bản cho đối tượng, chi nhánh, kho (ADR-0018 hạng A/B); tài khoản theo phiên bản hệ thống TK",
+          "next": "S026-4",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "MD-002",
+          "text": "Mã hiển thị và phân loại có phiên bản theo ngày hiệu lực",
+          "status": "mot-phan",
+          "evidence": "item_codes (valid_from / valid_to, chỉ thêm), item_classification theo ngày (0065)",
+          "gap": "mã đối tượng / chi nhánh / kho; phân loại hàng (item_classes) chưa có ngày hiệu lực",
+          "next": "S026-4, S026-5",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "MD-003",
+          "text": "Cây phân cấp nhiều cấp, không giới hạn cố định hai tầng",
+          "status": "mot-phan",
+          "evidence": "org_units cây tuỳ ý (0062, path, level 0–9); item_classes / accounts / partner_groups / dimensions có parent_code",
+          "gap": "item_classes chưa có path / kiểm vòng; báo cáo kho mới gom tới 3 cấp nhóm hàng; cây không có ngày hiệu lực",
+          "next": "S026-5",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc",
+            "kho"
+          ]
+        },
+        {
+          "id": "MD-004",
+          "text": "Không dùng mã hiển thị làm khoá liên kết sổ sách",
+          "status": "mot-phan",
+          "evidence": "item_id trên ledger_lines / inventory_movements / inventory_costs / product_units / product_prices (0066); giá vốn và báo cáo kho gom theo item_id (G2)",
+          "gap": "ledger_lines.account_code, partner_id (id số, không phiên bản); products vẫn là bảng ghi (S024-11)",
+          "next": "S024-11, S026-4",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "kho",
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "ORG-001",
+          "text": "Pháp nhân, đơn vị hạch toán, chi nhánh, cửa hàng, kho được phân biệt rõ",
+          "status": "mot-phan",
+          "evidence": "tenants (MST), branches (MST riêng, accounting_unit_id), accounting_units, warehouses thuộc chi nhánh, org_units",
+          "gap": "chưa có NHÓM đơn vị (HO · kho tổng · cửa hàng là các tenant); chưa có vai của tenant trong nhóm",
+          "next": "S026-6",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "he-thong",
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "ORG-002",
+          "text": "Nghiệp vụ phải xác định được chủ thể kế toán và mã số thuế liên quan",
+          "status": "mot-phan",
+          "evidence": "chứng từ mang branch_id → chi nhánh có tax_code / company_name; sổ theo đơn vị hạch toán",
+          "gap": "chuyển kho / bán hàng LIÊN tenant (HO → cửa hàng) chưa có cặp chứng từ + loại trừ nội bộ",
+          "next": "S026-7",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "kho",
+            "ban-hang",
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "ACC-001",
+          "text": "Mapping tài khoản có phiên bản, phạm vi và thời gian hiệu lực",
+          "status": "mot-phan",
+          "evidence": "posting_policy_versions (ADR-0009, effective_from, ảnh chụp nhóm / lý do / TK); accounting_profiles theo năm; item_classification theo ngày",
+          "gap": "product_posting_groups không có ngày hiệu lực; chưa có bảng ánh xạ TK cũ → mới khi đổi chế độ; mapping theo phạm vi (nhóm đơn vị / pháp nhân) chưa có",
+          "next": "S026-8",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "ACC-002",
+          "text": "Mọi dòng tồn kho và giá vốn truy xuất được về SKU và nghiệp vụ gốc",
+          "status": "dat",
+          "evidence": "inventory_movements (event_id, line_no, item_id); inventory_costs.item_id; Hành trình mặt hàng theo item_id (bizcity_lineage 0.2.0); test item-id-so-kho, lineage",
+          "gap": "lớp giá vốn / phân bổ từng dòng xuất (PHASE-025 W2) để chỉ đích danh phiếu nhập nào",
+          "next": "S025-5",
+          "phase": "PHASE-025",
+          "level": "P0",
+          "modules": [
+            "kho"
+          ]
+        },
+        {
+          "id": "CF-001",
+          "text": "Thay đổi danh mục ảnh hưởng kế toán phải được kiểm chuẩn trước khi kích hoạt",
+          "status": "mot-phan",
+          "evidence": "Gate A: /products|partners|accounts/validate, mặt hàng nháp (0061), khung Vì sao, luật nhắc HT09",
+          "gap": "chưa phân lớp thay đổi 0–3 (ADR-0018) để lớp 3 (đổi bản chất / TK) qua cổng + chứng từ điều chỉnh; đối tượng chưa có nháp",
+          "next": "S026-9",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "CF-002",
+          "text": "Sự kiện không đạt kiểm chuẩn phải được giữ trong Exception Buffer",
+          "status": "mot-phan",
+          "evidence": "intake_inbox (0059) — bể chờ Gate B; Commit Guard IN-GUARD-001",
+          "gap": "chưa có bể cho sai lệch SAU ghi sổ (Gate C) và tìm chứng từ theo sai lệch sổ",
+          "next": "S025-10",
+          "phase": "PHASE-025",
+          "level": "P1",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "AUD-001",
+          "text": "Sai lệch truy tìm được về chứng từ, nguyên nhân và phạm vi ảnh hưởng",
+          "status": "mot-phan",
+          "evidence": "audit_logs chuỗi băm (0036 / 0047), Bàn điều tra (PHASE-019), Hành trình mặt hàng",
+          "gap": "chưa có 'Tác động' (một mã dùng ở chứng từ / kho / TK / báo cáo nào); lịch sử chưa có trên form đối tượng / tài khoản / chi nhánh",
+          "next": "S026-10, S026-11",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc",
+            "he-thong"
+          ]
+        },
+        {
+          "id": "IC-1",
+          "text": "Identity Continuity: đổi tên, đổi mã, đổi vị trí phân loại không đứt định danh",
+          "status": "mot-phan",
+          "evidence": "mặt hàng: đổi mã giữ item_id, hành trình nối mã cũ + mới, giá vốn một dòng (test B2b); đổi nhóm = bản phân loại mới theo ngày",
+          "gap": "chỉ mặt hàng; đối tượng / kho / chi nhánh / tài khoản chưa",
+          "next": "S026-4",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "VER-1",
+          "text": "Hai cột: định danh tồn kho (item_id) và mã (item_code) — cùng biến thể đổi mã giữ định danh; biến thể kinh tế khác → định danh mới, cùng sản phẩm cha",
+          "status": "dat",
+          "evidence": "items.item_id + item_codes (0065); items.parent_item_id điền và giữ khớp theo định danh từ products.parent_sku, chặn vòng (0067); ITEM-HINT-003 nhắc khi đổi ĐVT gốc của mặt hàng đã có nhập xuất; test bien-the-dinh-danh (4 ca)",
+          "gap": "MH26 / phân tích đặt hàng còn đọc products.parent_sku (ảnh chụp) — chuyển sang parent_item_id khi products thành khung nhìn (S024-11)",
+          "next": "S024-11",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "danh-muc",
+            "kho"
+          ]
+        },
+        {
+          "id": "UI-4",
+          "text": "Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết",
+          "status": "chua",
+          "evidence": "Truy vết: nút Truy vết ở danh mục mặt hàng → ACC95; Kiểm chuẩn: khung Vì sao (Gate A)",
+          "gap": "Lịch sử, Tác động chưa có trên form; khung chung MasterDataFrame chưa có",
+          "next": "S026-10..13",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "SCALE-1",
+          "text": "Danh mục hàng triệu mã, hàng trăm cửa hàng: đo và giữ hiệu năng",
+          "status": "chua",
+          "evidence": "đo 20.985 mặt hàng: đồng bộ Item Master +0,7 ms / mặt hàng; khoá chống chồng hiệu lực theo đơn vị",
+          "gap": "chưa có benchmark triệu SKU, chưa có nạp theo lô (FOR EACH STATEMENT), chưa có EXCLUDE gist",
+          "next": "S026-14",
+          "phase": "PHASE-026",
+          "level": "P2",
+          "modules": [
+            "danh-muc"
+          ]
+        }
       ]
     },
     {
-      "id": "I", "key": "ledger", "role": "trụ cột", "title": "Sổ cái bất biến",
+      "id": "I",
+      "key": "ledger",
+      "role": "trụ cột",
+      "title": "Sổ cái bất biến",
       "one": "Sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có; không chứng từ thì không có bút toán.",
       "criteria": [
-        { "id": "L-1", "text": "Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL)", "status": "dat", "evidence": "guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); test db-rules, item-id-so-kho", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "L-2", "text": "Tổng Nợ = tổng Có cuối giao dịch", "status": "dat", "evidence": "assert_entry_balanced (constraint trigger hoãn)", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "L-3", "text": "Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản", "status": "dat", "evidence": "accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1", "gap": "", "next": "", "phase": "PHASE-004", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "L-4", "text": "Dòng sổ mang ảnh chụp mã + định danh mặt hàng", "status": "dat", "evidence": "ledger_lines.product_sku (ảnh chụp) + item_id (0066); đổi item_id bị chặn", "gap": "đối tượng (partner_id) và tài khoản (account_code) chưa có định danh có phiên bản", "next": "S026-4", "phase": "PHASE-024", "level": "P0", "modules": ["ke-toan"] }
+        {
+          "id": "L-1",
+          "text": "Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL)",
+          "status": "dat",
+          "evidence": "guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); test db-rules, item-id-so-kho",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-001",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "L-2",
+          "text": "Tổng Nợ = tổng Có cuối giao dịch",
+          "status": "dat",
+          "evidence": "assert_entry_balanced (constraint trigger hoãn)",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-001",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "L-3",
+          "text": "Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản",
+          "status": "dat",
+          "evidence": "accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-004",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "L-4",
+          "text": "Dòng sổ mang ảnh chụp mã + định danh mặt hàng",
+          "status": "dat",
+          "evidence": "ledger_lines.product_sku (ảnh chụp) + item_id (0066); đổi item_id bị chặn",
+          "gap": "đối tượng (partner_id) và tài khoản (account_code) chưa có định danh có phiên bản",
+          "next": "S026-4",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        }
       ]
     },
     {
-      "id": "II", "key": "identity", "role": "trụ cột", "title": "Định danh bất biến, mã có phiên bản",
+      "id": "II",
+      "key": "identity",
+      "role": "trụ cột",
+      "title": "Định danh bất biến, mã có phiên bản",
       "one": "item_id không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực.",
       "criteria": [
-        { "id": "ID-1", "text": "items / item_codes / item_classification với bất biến ở CSDL", "status": "dat", "evidence": "0065; test item-master (18 ca)", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "ID-2", "text": "item_id trên mọi bảng sổ / kho / giá / đơn vị", "status": "dat", "evidence": "0066; test item-id-so-kho (7 ca); điền ngược kiểm 0 dòng thiếu", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["kho"] },
-        { "id": "ID-3", "text": "Giá vốn, NXT, sổ chi tiết hàng hoá gom theo item_id", "status": "dat", "evidence": "costing.service + inventory-report.service (G2, 2026-11-04); ca 'đổi mã giữa tháng → một dòng giá vốn'", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["kho"] },
-        { "id": "ID-4", "text": "products là khung nhìn; mọi đường ghi đi qua core.item.*", "status": "chua", "evidence": "", "gap": "chặn bởi INSERT … ON CONFLICT ở 6 / 7 chỗ ghi (70 §3.2.1 G1)", "next": "S024-11", "phase": "PHASE-024", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "ID-5", "text": "Sản phẩm cha / biến thể: parent_item_id được điền và có luật", "status": "chua", "evidence": "cột parent_item_id có; MH26 Biến thể mặt hàng", "gap": "chưa điền; chưa có luật tạo biến thể = định danh mới", "next": "S026-3", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "ID-6", "text": "Đối tượng, chi nhánh, kho có mã phiên bản (entity_codes)", "status": "chua", "evidence": "", "gap": "ADR-0018 hạng A/B chưa thi hành", "next": "S026-4", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "ID-7", "text": "Tài khoản theo phiên bản hệ thống TK + bảng ánh xạ cũ → mới", "status": "tai-lieu", "evidence": "ADR-0018 (chấp nhận 2026-11-02)", "gap": "chưa có chart_versions / account_mappings", "next": "S026-8", "phase": "PHASE-026", "level": "P0", "modules": ["ke-toan"] }
+        {
+          "id": "ID-1",
+          "text": "items / item_codes / item_classification với bất biến ở CSDL",
+          "status": "dat",
+          "evidence": "0065; test item-master (18 ca)",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "ID-2",
+          "text": "item_id trên mọi bảng sổ / kho / giá / đơn vị",
+          "status": "dat",
+          "evidence": "0066; test item-id-so-kho (7 ca); điền ngược kiểm 0 dòng thiếu",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "kho"
+          ]
+        },
+        {
+          "id": "ID-3",
+          "text": "Giá vốn, NXT, sổ chi tiết hàng hoá gom theo item_id",
+          "status": "dat",
+          "evidence": "costing.service + inventory-report.service (G2, 2026-11-04); ca 'đổi mã giữa tháng → một dòng giá vốn'",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "kho"
+          ]
+        },
+        {
+          "id": "ID-4",
+          "text": "products là khung nhìn; mọi đường ghi đi qua core.item.*",
+          "status": "chua",
+          "evidence": "",
+          "gap": "chặn bởi INSERT … ON CONFLICT ở 6 / 7 chỗ ghi (70 §3.2.1 G1)",
+          "next": "S024-11",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "ID-5",
+          "text": "Sản phẩm cha / biến thể: parent_item_id được điền và có luật",
+          "status": "dat",
+          "evidence": "0067: bizcity_items_link_parents, trigger products_items_sync_parent, items_parent_guard; Hành trình hiện họ (cha / biến thể / cùng cha); test bien-the-dinh-danh",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "ID-6",
+          "text": "Đối tượng, chi nhánh, kho có mã phiên bản (entity_codes)",
+          "status": "chua",
+          "evidence": "",
+          "gap": "ADR-0018 hạng A/B chưa thi hành",
+          "next": "S026-4",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "ID-7",
+          "text": "Tài khoản theo phiên bản hệ thống TK + bảng ánh xạ cũ → mới",
+          "status": "tai-lieu",
+          "evidence": "ADR-0018 (chấp nhận 2026-11-02)",
+          "gap": "chưa có chart_versions / account_mappings",
+          "next": "S026-8",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        }
       ]
     },
     {
-      "id": "III", "key": "continuity", "role": "trụ cột", "title": "Liên tục kế toán (Accounting Continuity)",
+      "id": "III",
+      "key": "continuity",
+      "role": "trụ cột",
+      "title": "Liên tục kế toán (Accounting Continuity)",
       "one": "Mọi con số đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ, qua mọi lần đổi mã / chế độ.",
       "criteria": [
-        { "id": "C-1", "text": "Hành trình mặt hàng: sự kiện kho, bút toán, giá vốn tháng, 'Vì sao giá vốn này?'", "status": "dat", "evidence": "bizcity_lineage 0.2.0, ACC95; test lineage (8 ca)", "gap": "", "next": "", "phase": "PHASE-025", "level": "P0", "modules": ["kho"] },
-        { "id": "C-2", "text": "Hành trình qua đổi mã: mã cũ + mới là một; tìm bằng mã cũ", "status": "dat", "evidence": "B2b: item.codes, event.code, nhãn 'mã cũ'; test item-id-so-kho", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["kho"] },
-        { "id": "C-3", "text": "Lớp giá vốn + phân bổ từng dòng xuất (mọi phương pháp)", "status": "tai-lieu", "evidence": "ADR-0021, PHASE-025 10-MO-HINH-DU-LIEU", "gap": "valuation_layers / cost_allocations chưa có", "next": "S025-5, S025-6", "phase": "PHASE-025", "level": "P0", "modules": ["kho"] },
-        { "id": "C-4", "text": "Phương pháp tính giá là chính sách có phiên bản; đơn vị mới mặc định FIFO", "status": "tai-lieu", "evidence": "D025-2 chủ duyệt", "gap": "costing_method chưa có trong posting_policy_versions", "next": "S025-7, S025-17", "phase": "PHASE-025", "level": "P1", "modules": ["kho", "ke-toan"] },
-        { "id": "C-5", "text": "Gate C — kiểm chuẩn vòng đời, mã CT-* trong thư viện", "status": "tai-lieu", "evidence": "RULE-CONTINUITY (CT-LIN/MD/COST/REC/PER/REV)", "gap": "chưa có trong bizcity_findings@1, chưa có engine", "next": "S025-9, S025-10", "phase": "PHASE-025", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "C-6", "text": "Khoá kỳ đòi chuỗi lành (chặn trừ khi chấp nhận có lý do; còn lại cảnh báo)", "status": "chua", "evidence": "", "gap": "", "next": "S025-11, S025-18", "phase": "PHASE-025", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "C-7", "text": "Truy vết đối tượng và tài khoản (một khách hàng / một TK → sự kiện, chứng từ)", "status": "chua", "evidence": "mới có báo cáo sổ chi tiết công nợ / sổ cái TK", "gap": "chưa có lineage đối tượng / tài khoản", "next": "S026-13", "phase": "PHASE-026", "level": "P1", "modules": ["ke-toan", "ban-hang"] }
+        {
+          "id": "C-1",
+          "text": "Hành trình mặt hàng: sự kiện kho, bút toán, giá vốn tháng, 'Vì sao giá vốn này?'",
+          "status": "dat",
+          "evidence": "bizcity_lineage 0.2.0, ACC95; test lineage (8 ca)",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-025",
+          "level": "P0",
+          "modules": [
+            "kho"
+          ]
+        },
+        {
+          "id": "C-2",
+          "text": "Hành trình qua đổi mã: mã cũ + mới là một; tìm bằng mã cũ",
+          "status": "dat",
+          "evidence": "B2b: item.codes, event.code, nhãn 'mã cũ'; test item-id-so-kho",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "kho"
+          ]
+        },
+        {
+          "id": "C-3",
+          "text": "Lớp giá vốn + phân bổ từng dòng xuất (mọi phương pháp)",
+          "status": "tai-lieu",
+          "evidence": "ADR-0021, PHASE-025 10-MO-HINH-DU-LIEU",
+          "gap": "valuation_layers / cost_allocations chưa có",
+          "next": "S025-5, S025-6",
+          "phase": "PHASE-025",
+          "level": "P0",
+          "modules": [
+            "kho"
+          ]
+        },
+        {
+          "id": "C-4",
+          "text": "Phương pháp tính giá là chính sách có phiên bản; đơn vị mới mặc định FIFO",
+          "status": "tai-lieu",
+          "evidence": "D025-2 chủ duyệt",
+          "gap": "costing_method chưa có trong posting_policy_versions",
+          "next": "S025-7, S025-17",
+          "phase": "PHASE-025",
+          "level": "P1",
+          "modules": [
+            "kho",
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "C-5",
+          "text": "Gate C — kiểm chuẩn vòng đời, mã CT-* trong thư viện",
+          "status": "tai-lieu",
+          "evidence": "RULE-CONTINUITY (CT-LIN/MD/COST/REC/PER/REV)",
+          "gap": "chưa có trong bizcity_findings@1, chưa có engine",
+          "next": "S025-9, S025-10",
+          "phase": "PHASE-025",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "C-6",
+          "text": "Khoá kỳ đòi chuỗi lành (chặn trừ khi chấp nhận có lý do; còn lại cảnh báo)",
+          "status": "chua",
+          "evidence": "",
+          "gap": "",
+          "next": "S025-11, S025-18",
+          "phase": "PHASE-025",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "C-7",
+          "text": "Truy vết đối tượng và tài khoản (một khách hàng / một TK → sự kiện, chứng từ)",
+          "status": "chua",
+          "evidence": "mới có báo cáo sổ chi tiết công nợ / sổ cái TK",
+          "gap": "chưa có lineage đối tượng / tài khoản",
+          "next": "S026-13",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "ke-toan",
+            "ban-hang"
+          ]
+        }
       ]
     },
     {
-      "id": "IV", "key": "gates", "role": "trụ cột", "title": "Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã",
+      "id": "IV",
+      "key": "gates",
+      "role": "trụ cột",
+      "title": "Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã",
       "one": "Mọi đầu vào đi một cửa; Gate A (danh mục) · B (trước ghi sổ) · C (vòng đời); mọi thông báo từ thư viện mã có căn cứ; mặc định cho phép, nhắc khi sai.",
       "criteria": [
-        { "id": "G-1", "text": "Gate A: validate + lưu nháp khi còn lỗi chặn", "status": "mot-phan", "evidence": "/products|partners|accounts/validate; mặt hàng nháp (0061); khung Vì sao", "gap": "đối tượng chưa có nháp; chưa phân lớp thay đổi", "next": "S026-9", "phase": "PHASE-023", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "G-2", "text": "Gate B: trạm tiền kiểm + bể chờ + kiểm lại tự động", "status": "dat", "evidence": "intake_inbox (0059), preflight, recheckInboxForSkus; mã IN-*", "gap": "", "next": "", "phase": "PHASE-021", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "G-3", "text": "Commit Guard: cấu hình đổi sau tiền kiểm thì kiểm lại trước khi nhận", "status": "dat", "evidence": "IN-GUARD-001, header X-Preflight-Guard (S024-29)", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "G-4", "text": "Thư viện mã một khuôn, có căn cứ pháp lý; thông báo dựng từ mã", "status": "dat", "evidence": "bizcity_findings@1, legal-basis.ts, notifyFinding, check SC-FIND-1 / SC-FIND-2 (R-GATE-10 / 11)", "gap": "IN-ITEM-002 / 008, CT-* chưa vào thư viện", "next": "S024-7, S025-9", "phase": "PHASE-024", "level": "P0", "modules": ["he-thong"] },
-        { "id": "G-5", "text": "Mặc định cho phép, nhắc khi sai (R-GATE-9); không có luồng 'chờ kế toán trưởng'", "status": "dat", "evidence": "bizcity.item.auto_create mặc định bật; ADR-0020; HT09", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["he-thong"] }
+        {
+          "id": "G-1",
+          "text": "Gate A: validate + lưu nháp khi còn lỗi chặn",
+          "status": "mot-phan",
+          "evidence": "/products|partners|accounts/validate; mặt hàng nháp (0061); khung Vì sao",
+          "gap": "đối tượng chưa có nháp; chưa phân lớp thay đổi",
+          "next": "S026-9",
+          "phase": "PHASE-023",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "G-2",
+          "text": "Gate B: trạm tiền kiểm + bể chờ + kiểm lại tự động",
+          "status": "dat",
+          "evidence": "intake_inbox (0059), preflight, recheckInboxForSkus; mã IN-*",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-021",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "G-3",
+          "text": "Commit Guard: cấu hình đổi sau tiền kiểm thì kiểm lại trước khi nhận",
+          "status": "dat",
+          "evidence": "IN-GUARD-001, header X-Preflight-Guard (S024-29)",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "G-4",
+          "text": "Thư viện mã một khuôn, có căn cứ pháp lý; thông báo dựng từ mã",
+          "status": "dat",
+          "evidence": "bizcity_findings@1, legal-basis.ts, notifyFinding, check SC-FIND-1 / SC-FIND-2 (R-GATE-10 / 11)",
+          "gap": "IN-ITEM-002 / 008, CT-* chưa vào thư viện",
+          "next": "S024-7, S025-9",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "G-5",
+          "text": "Mặc định cho phép, nhắc khi sai (R-GATE-9); không có luồng 'chờ kế toán trưởng'",
+          "status": "dat",
+          "evidence": "bizcity.item.auto_create mặc định bật; ADR-0020; HT09",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        }
       ]
     },
     {
-      "id": "V", "key": "policy", "role": "trụ cột", "title": "Chính sách và chế độ kế toán có phiên bản",
+      "id": "V",
+      "key": "policy",
+      "role": "trụ cột",
+      "title": "Chính sách và chế độ kế toán có phiên bản",
       "one": "Đổi thông tư, đổi luật định khoản, đổi phương pháp tính giá là tạo phiên bản từ ngày hiệu lực — không làm lại dữ liệu lịch sử.",
       "criteria": [
-        { "id": "P-1", "text": "Luật định khoản có phiên bản; dòng sổ ghi policy_version", "status": "dat", "evidence": "posting_policy_versions (0040, ADR-0009)", "gap": "", "next": "", "phase": "PHASE-005", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "P-2", "text": "Hồ sơ kế toán (chế độ, năm tài chính) theo năm", "status": "dat", "evidence": "accounting_profiles (0054), HT07", "gap": "", "next": "", "phase": "PHASE-020", "level": "P0", "modules": ["he-thong"] },
-        { "id": "P-3", "text": "Đổi chế độ: phiên bản hệ thống TK + ánh xạ + phiếu chuyển số dư", "status": "tai-lieu", "evidence": "ADR-0018 §tài khoản", "gap": "", "next": "S026-8", "phase": "PHASE-026", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "P-4", "text": "Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi", "status": "chua", "evidence": "", "gap": "chính sách hôm nay theo tenant", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["ke-toan"] }
+        {
+          "id": "P-1",
+          "text": "Luật định khoản có phiên bản; dòng sổ ghi policy_version",
+          "status": "dat",
+          "evidence": "posting_policy_versions (0040, ADR-0009)",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-005",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "P-2",
+          "text": "Hồ sơ kế toán (chế độ, năm tài chính) theo năm",
+          "status": "dat",
+          "evidence": "accounting_profiles (0054), HT07",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-020",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "P-3",
+          "text": "Đổi chế độ: phiên bản hệ thống TK + ánh xạ + phiếu chuyển số dư",
+          "status": "tai-lieu",
+          "evidence": "ADR-0018 §tài khoản",
+          "gap": "",
+          "next": "S026-8",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "P-4",
+          "text": "Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi",
+          "status": "chua",
+          "evidence": "",
+          "gap": "chính sách hôm nay theo tenant",
+          "next": "S026-6",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "ke-toan"
+          ]
+        }
       ]
     },
     {
-      "id": "VI", "key": "evidence", "role": "trụ cột", "title": "Bằng chứng và quan sát được",
+      "id": "VI",
+      "key": "evidence",
+      "role": "trụ cột",
+      "title": "Bằng chứng và quan sát được",
       "one": "Mọi thao tác để lại nhật ký chuỗi băm; sai lệch tự chẩn đoán; người dùng thấy lịch sử, tác động, tiến độ ngay trên màn.",
       "criteria": [
-        { "id": "E-1", "text": "Nhật ký thao tác chỉ thêm, chuỗi băm, kiểm bằng chứng", "status": "dat", "evidence": "audit_logs (0036 / 0047), forbid_audit_log_mutation, evidence.routes", "gap": "", "next": "", "phase": "PHASE-018", "level": "P0", "modules": ["he-thong"] },
-        { "id": "E-2", "text": "Lịch sử (mã cũ / mới, ngày hiệu lực, người đổi) trên màn danh mục", "status": "mot-phan", "evidence": "lịch sử mã ở Hành trình mặt hàng; lịch sử ở phiếu, chính sách, hồ sơ, tài sản", "gap": "form mặt hàng / đối tượng / tài khoản / chi nhánh chưa có thẻ Lịch sử", "next": "S026-10", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "E-3", "text": "Tác động: một mã dùng ở chứng từ, kho, TK, cửa hàng, báo cáo nào", "status": "chua", "evidence": "", "gap": "chưa có chỉ mục tham chiếu / API impact", "next": "S026-11", "phase": "PHASE-026", "level": "P0", "modules": ["danh-muc"] },
-        { "id": "E-4", "text": "Tự chẩn đoán L1 / L3, khoá kỳ chặn khi sổ lỗi", "status": "dat", "evidence": "diagnostic_runs, runDiagnostics, STOCK_LEDGER_MATCH", "gap": "", "next": "", "phase": "PHASE-003", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "E-5", "text": "Bảng trụ cột × mức đạt trên giao diện (Hệ thống + trang chủ phân hệ)", "status": "mot-phan", "evidence": "HT10 bản đầu (2026-11-04), nguồn docs/standard/tru-cot.json ghi tay có bằng chứng", "gap": "mức đạt chưa do engine ghi (selfcheck / test)", "next": "S026-15", "phase": "PHASE-026", "level": "P1", "modules": ["he-thong"] }
+        {
+          "id": "E-1",
+          "text": "Nhật ký thao tác chỉ thêm, chuỗi băm, kiểm bằng chứng",
+          "status": "dat",
+          "evidence": "audit_logs (0036 / 0047), forbid_audit_log_mutation, evidence.routes",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-018",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "E-2",
+          "text": "Lịch sử (mã cũ / mới, ngày hiệu lực, người đổi) trên màn danh mục",
+          "status": "mot-phan",
+          "evidence": "lịch sử mã ở Hành trình mặt hàng; lịch sử ở phiếu, chính sách, hồ sơ, tài sản",
+          "gap": "form mặt hàng / đối tượng / tài khoản / chi nhánh chưa có thẻ Lịch sử",
+          "next": "S026-10",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "E-3",
+          "text": "Tác động: một mã dùng ở chứng từ, kho, TK, cửa hàng, báo cáo nào",
+          "status": "chua",
+          "evidence": "",
+          "gap": "chưa có chỉ mục tham chiếu / API impact",
+          "next": "S026-11",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "E-4",
+          "text": "Tự chẩn đoán L1 / L3, khoá kỳ chặn khi sổ lỗi",
+          "status": "dat",
+          "evidence": "diagnostic_runs, runDiagnostics, STOCK_LEDGER_MATCH",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-003",
+          "level": "P0",
+          "modules": [
+            "ke-toan"
+          ]
+        },
+        {
+          "id": "E-5",
+          "text": "Bảng trụ cột × mức đạt trên giao diện (Hệ thống + trang chủ phân hệ)",
+          "status": "mot-phan",
+          "evidence": "HT10 bản đầu (2026-11-04), nguồn docs/standard/tru-cot.json ghi tay có bằng chứng",
+          "gap": "mức đạt chưa do engine ghi (selfcheck / test)",
+          "next": "S026-15",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "he-thong"
+          ]
+        }
       ]
     },
     {
-      "id": "VII", "key": "isolation", "role": "trụ cột", "title": "Cô lập đơn vị và phân quyền",
+      "id": "VII",
+      "key": "isolation",
+      "role": "trụ cột",
+      "title": "Cô lập đơn vị và phân quyền",
       "one": "Số liệu của đơn vị nào ở đơn vị đó (RLS); ai làm được gì là việc của phân quyền, không mã hoá theo chức danh; chuỗi nhiều đơn vị vẫn không lẫn số.",
       "criteria": [
-        { "id": "S-1", "text": "RLS theo tenant trên mọi bảng nghiệp vụ", "status": "dat", "evidence": "bizcity_tenant_visible (0041), test access / app-role", "gap": "", "next": "", "phase": "PHASE-008", "level": "P0", "modules": ["he-thong"] },
-        { "id": "S-2", "text": "Phân quyền theo quyền (permission), không theo chức danh", "status": "dat", "evidence": "PERMISSIONS, ADR-0020", "gap": "", "next": "", "phase": "PHASE-024", "level": "P0", "modules": ["he-thong"] },
-        { "id": "S-3", "text": "Nhóm đơn vị: một tenant là HO, tenant khác là kho tổng / cửa hàng; danh mục dùng chung trong nhóm", "status": "chua", "evidence": "", "gap": "tenant_groups, vai của tenant, danh mục nhóm + nhận về đơn vị", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["he-thong", "danh-muc"] },
-        { "id": "S-4", "text": "Giao dịch liên đơn vị (chuyển kho, bán nội bộ HO → cửa hàng) thành cặp chứng từ đối ứng, loại trừ được khi hợp nhất", "status": "chua", "evidence": "trong một tenant: counter_branch_id, 1368x, hàng đang chuyển", "gap": "cặp chứng từ liên tenant + intercompany_ref + báo cáo loại trừ", "next": "S026-7", "phase": "PHASE-026", "level": "P1", "modules": ["kho", "ke-toan"] }
+        {
+          "id": "S-1",
+          "text": "RLS theo tenant trên mọi bảng nghiệp vụ",
+          "status": "dat",
+          "evidence": "bizcity_tenant_visible (0041), test access / app-role",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-008",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "S-2",
+          "text": "Phân quyền theo quyền (permission), không theo chức danh",
+          "status": "dat",
+          "evidence": "PERMISSIONS, ADR-0020",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "S-3",
+          "text": "Nhóm đơn vị: một tenant là HO, tenant khác là kho tổng / cửa hàng; danh mục dùng chung trong nhóm",
+          "status": "chua",
+          "evidence": "",
+          "gap": "tenant_groups, vai của tenant, danh mục nhóm + nhận về đơn vị",
+          "next": "S026-6",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "he-thong",
+            "danh-muc"
+          ]
+        },
+        {
+          "id": "S-4",
+          "text": "Giao dịch liên đơn vị (chuyển kho, bán nội bộ HO → cửa hàng) thành cặp chứng từ đối ứng, loại trừ được khi hợp nhất",
+          "status": "chua",
+          "evidence": "trong một tenant: counter_branch_id, 1368x, hàng đang chuyển",
+          "gap": "cặp chứng từ liên tenant + intercompany_ref + báo cáo loại trừ",
+          "next": "S026-7",
+          "phase": "PHASE-026",
+          "level": "P1",
+          "modules": [
+            "kho",
+            "ke-toan"
+          ]
+        }
       ]
     },
     {
-      "id": "VIII", "key": "modules", "role": "trụ cột", "title": "Mở rộng bằng module, kiểm chuẩn tự động",
+      "id": "VIII",
+      "key": "modules",
+      "role": "trụ cột",
+      "title": "Mở rộng bằng module, kiểm chuẩn tự động",
       "one": "Module của cộng đồng dùng chung một dòng dữ liệu kế toán qua SDK; bộ kiểm chuẩn bảo vệ luật, hợp đồng và mức đạt.",
       "criteria": [
-        { "id": "M-1", "text": "Manifest, năng lực, action công bố schema / quyền / tác dụng phụ", "status": "dat", "evidence": "bizcity-standard.json, defineAction, GET /system/capabilities", "gap": "", "next": "", "phase": "PHASE-002", "level": "P0", "modules": ["he-thong"] },
-        { "id": "M-2", "text": "Bộ kiểm chuẩn tĩnh (selfcheck) + tự kiểm (repo-bad)", "status": "dat", "evidence": "tests/conformance (52 đạt · 0 không đạt 2026-11-04)", "gap": "SC-ITEM-4 / 5 chưa viết", "next": "S024-16", "phase": "PHASE-001", "level": "P0", "modules": ["he-thong"] },
-        { "id": "M-3", "text": "Module đọc định danh qua ctx.data (items*, khung nhìn bizcity_read)", "status": "chua", "evidence": "", "gap": "", "next": "S024-11", "phase": "PHASE-024", "level": "P0", "modules": ["he-thong"] },
-        { "id": "M-4", "text": "Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái", "status": "mot-phan", "evidence": "ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master)", "gap": "chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành", "next": "S026-2", "phase": "PHASE-026", "level": "P0", "modules": ["he-thong"] },
-        { "id": "M-5", "text": "Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng", "status": "chua", "evidence": "", "gap": "", "next": "S026-14", "phase": "PHASE-026", "level": "P2", "modules": ["he-thong"] }
+        {
+          "id": "M-1",
+          "text": "Manifest, năng lực, action công bố schema / quyền / tác dụng phụ",
+          "status": "dat",
+          "evidence": "bizcity-standard.json, defineAction, GET /system/capabilities",
+          "gap": "",
+          "next": "",
+          "phase": "PHASE-002",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "M-2",
+          "text": "Bộ kiểm chuẩn tĩnh (selfcheck) + tự kiểm (repo-bad)",
+          "status": "dat",
+          "evidence": "tests/conformance (52 đạt · 0 không đạt 2026-11-04)",
+          "gap": "SC-ITEM-4 / 5 chưa viết",
+          "next": "S024-16",
+          "phase": "PHASE-001",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "M-3",
+          "text": "Module đọc định danh qua ctx.data (items*, khung nhìn bizcity_read)",
+          "status": "chua",
+          "evidence": "",
+          "gap": "",
+          "next": "S024-11",
+          "phase": "PHASE-024",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "M-4",
+          "text": "Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái",
+          "status": "mot-phan",
+          "evidence": "ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master)",
+          "gap": "chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành",
+          "next": "S026-2",
+          "phase": "PHASE-026",
+          "level": "P0",
+          "modules": [
+            "he-thong"
+          ]
+        },
+        {
+          "id": "M-5",
+          "text": "Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng",
+          "status": "chua",
+          "evidence": "",
+          "gap": "",
+          "next": "S026-14",
+          "phase": "PHASE-026",
+          "level": "P2",
+          "modules": [
+            "he-thong"
+          ]
+        }
       ]
     }
   ]

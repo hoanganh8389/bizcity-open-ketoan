@@ -6,7 +6,7 @@
 | S026-1 | ADR-0022, CANON §0.2 (nền móng + tám trụ cột), tài liệu phase 00 / 10 / 20 / 30, bản mẫu | W0 | P0 | — | 🟡 2026-11-04: xong, chờ chủ duyệt D026-* |
 | S026-16 | `docs/standard/tru-cot.json` (`bizcity_pillars@1`), `GET /api/v1/system/pillars`, màn HT10, thẻ Trụ cột ở trang chủ phân hệ, hướng dẫn | W0 | P0 | có | ✅ 2026-11-04 (mức đạt ghi tay có bằng chứng) |
 | S026-2 | Golden Tests `T026-G1..G7` có tên, chạy như một cổng (`kiem-chuan.sh`), thất bại chặn phát hành | P0 | P0 | có | 🟡 G1, G7 có (`item-id-so-kho`); G2..G6 ☐ |
-| S026-3 | `parent_item_id` điền từ `parent_sku`; luật R-ITEM-9 (biến thể kinh tế khác = định danh mới); MH26 ghi / đọc `parent_item_id` | P0 | P0 | có | ☐ |
+| S026-3 | `parent_item_id` điền từ `parent_sku`; luật biến thể kinh tế khác = định danh mới (R-ITEM-3); MH26 ghi / đọc `parent_item_id` | P0 | P0 | có | ✅ 2026-11-04 <!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 -->: migration 0067 (điền + giữ khớp theo định danh, mặt hàng cha thêm sau con nhận con, chặn tự trỏ / vòng / khác đơn vị); ITEM-HINT-003 (Gate A, cảnh báo); Hành trình hiện họ mặt hàng; test `bien-the-dinh-danh` 4 ca. Còn: MH26 đọc `parent_item_id` (sau S024-11) |
 | S026-4 | `entity_codes` cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột `code`; `resolveEntity`; điền ban đầu | P0 | P0 | có | ☐ |
 | S026-5 | `item_classes.path` + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | P0 | có | ☐ |
 | S026-8 | Nhóm hạch toán theo ngày; `chart_versions`, `account_mappings`, phiếu chuyển số dư (ADR-0018) — ca T026-G6 | P0 | P0 | có | ☐ |
@@ -37,4 +37,5 @@
 
 ## Log
 
+- 2026-11-04: S026-3 xong (0067, ITEM-HINT-003, họ mặt hàng trên Hành trình). Gộp main vào PR #48.
 - 2026-11-04: mở phase; ADR-0022; `tru-cot.json` + HT10 + thẻ Trụ cột; bản mẫu; G2 (giá vốn, NXT, sổ chi tiết theo `item_id`) làm T026-G1 xanh.

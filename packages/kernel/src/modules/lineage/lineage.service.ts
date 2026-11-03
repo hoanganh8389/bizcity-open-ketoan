@@ -43,6 +43,29 @@ async function itemKey(trx: Db, tenantId: string, sku: string): Promise<{ itemId
     SELECT kind, code, valid_from::text, valid_to::text FROM item_codes WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
   return { itemId, codes: codes.rows.map((c) => ({ kind: c.kind, code: c.code, validFrom: c.valid_from, validTo: c.valid_to })) };
 }
+/** [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng theo định danh (cha, con, anh em) với mã hiện hành. */
+async function familyOf(trx: Db, tenantId: string, itemId: string | null): Promise<LineageItem['item']['family']> {
+  const empty = { parent: null, children: [], siblings: [] };
+  if (!itemId) return empty;
+  const r = await sql<{ rel: 'parent' | 'child' | 'sibling'; item_id: string; name: string; status: string; sku: string | null }>`
+    WITH me AS (SELECT parent_item_id FROM items WHERE tenant_id = ${tenantId} AND item_id = ${itemId}),
+    fam AS (
+      SELECT 'parent'::text AS rel, i.* FROM items i, me WHERE i.tenant_id = ${tenantId} AND i.item_id = me.parent_item_id
+      UNION ALL SELECT 'child', i.* FROM items i WHERE i.tenant_id = ${tenantId} AND i.parent_item_id = ${itemId}
+      UNION ALL SELECT 'sibling', i.* FROM items i, me WHERE i.tenant_id = ${tenantId} AND me.parent_item_id IS NOT NULL
+                  AND i.parent_item_id = me.parent_item_id AND i.item_id <> ${itemId}
+    )
+    SELECT f.rel, f.item_id, f.name, f.status,
+           (SELECT c.code FROM item_codes c WHERE c.item_id = f.item_id AND c.kind = 'sku' ORDER BY (c.valid_to IS NULL) DESC, c.valid_from DESC LIMIT 1) AS sku
+      FROM fam f ORDER BY 1, 5 LIMIT 200`.execute(trx);
+  const m = (x: (typeof r.rows)[number]) => ({ itemId: x.item_id, sku: x.sku ?? '', name: x.name, status: x.status });
+  return {
+    parent: r.rows.filter((x) => x.rel === 'parent').map(m)[0] ?? null,
+    children: r.rows.filter((x) => x.rel === 'child').map(m),
+    siblings: r.rows.filter((x) => x.rel === 'sibling').map(m),
+  };
+}
+
 /** Điều kiện "dòng của mặt hàng": theo item_id; dòng chưa gắn item_id thì theo mã. */
 const ofItem = (alias: string, skuCol: string, itemId: string | null, sku: string) =>
   itemId ? sql`(${sql.ref(`${alias}.item_id`)} = ${itemId} OR (${sql.ref(`${alias}.item_id`)} IS NULL AND ${sql.ref(`${alias}.${skuCol}`)} = ${sku}))`
@@ -177,7 +200,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
   const inQty = events.filter((e) => e.qty > 0).reduce((s, e) => s + e.qty, 0);
   const outQty = events.filter((e) => e.qty < 0).reduce((s, e) => s - e.qty, 0);
   return {
-    item: { itemId: key.itemId, codes: key.codes, sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft },
+    item: { itemId: key.itemId, codes: key.codes, sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft, family: await familyOf(trx, tenantId, key.itemId) },
     coverage: { keyedBy: key.itemId ? 'item_id' : 'sku', notes },
     range: { from, to },
     events, entries, costPeriods,

@@ -108,6 +108,16 @@ export interface LineageItemInfo {
   barcode: string;
   isActive: boolean;
   isDraft: boolean;
+  /** [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng theo định danh (R-ITEM-3) — cha, con, anh em; mỗi biến thể có tồn / giá vốn riêng. */
+  family: { parent: LineageFamilyMember | null; children: LineageFamilyMember[]; siblings: LineageFamilyMember[] };
+}
+
+export interface LineageFamilyMember {
+  itemId: string;
+  /** Mã hiện hành (mã đang mở; mặt hàng đã ngừng → mã gần nhất). */
+  sku: string;
+  name: string;
+  status: string;
 }
 
 export interface LineageCoverage {

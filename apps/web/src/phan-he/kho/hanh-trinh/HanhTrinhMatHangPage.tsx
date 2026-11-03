@@ -111,6 +111,17 @@ export function HanhTrinhMatHangPage() {
               ))}
             </div>
           )}
+          {/* [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng theo định danh — mỗi biến thể một hành trình riêng (tồn, giá vốn riêng) */}
+          {(d.item.family.parent || d.item.family.children.length > 0 || d.item.family.siblings.length > 0) && (
+            <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, marginBottom: 4 }}>
+              <span className="muted" title="Biến thể là mặt hàng riêng: tồn kho và giá vốn tính riêng; họ đi theo định danh nên đổi mã không đứt">Họ mặt hàng:</span>
+              {d.item.family.parent && <><span className="muted">cha</span> <button type="button" className="btn btn-xs" onClick={() => go(d.item.family.parent!.sku)}>{d.item.family.parent.sku} · {d.item.family.parent.name}</button></>}
+              {d.item.family.children.length > 0 && <span className="muted">· biến thể</span>}
+              {d.item.family.children.map((c) => <button key={c.itemId} type="button" className="btn btn-xs" onClick={() => go(c.sku)}>{c.sku}</button>)}
+              {d.item.family.siblings.length > 0 && <span className="muted">· cùng cha</span>}
+              {d.item.family.siblings.map((c) => <button key={c.itemId} type="button" className="btn btn-xs" onClick={() => go(c.sku)}>{c.sku}</button>)}
+            </div>
+          )}
           {d.coverage.notes.map((n, i) => <div key={i} className={`alert ${i === 0 ? 'alert-info' : 'alert-warn'}`} style={{ margin: '4px 0' }}>{n}</div>)}
           {d.summary.truncated && <div className="alert alert-warn" style={{ margin: '4px 0' }}>Danh sách quá dài nên bị cắt — thu hẹp khoảng ngày để xem đủ.</div>}
 

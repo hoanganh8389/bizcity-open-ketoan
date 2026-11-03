@@ -7,9 +7,9 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 
 | Tầng | Trụ cột | Mức | Đạt | Một phần | Tài liệu | Chưa |
 |---|---|---|---|---|---|---|
-| Nền móng | Quản trị dữ liệu gốc (Master Data Governance) | **47 %** | 1 | 12 | 0 | 2 |
+| Nền móng | Quản trị dữ liệu gốc (Master Data Governance) | **50 %** | 2 | 11 | 0 | 2 |
 | I | Sổ cái bất biến | **100 %** | 4 | 0 | 0 | 0 |
-| II | Định danh bất biến, mã có phiên bản | **46 %** | 3 | 0 | 1 | 3 |
+| II | Định danh bất biến, mã có phiên bản | **61 %** | 4 | 0 | 1 | 2 |
 | III | Liên tục kế toán (Accounting Continuity) | **39 %** | 2 | 0 | 3 | 2 |
 | IV | Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã | **90 %** | 4 | 1 | 0 | 0 |
 | V | Chính sách và chế độ kế toán có phiên bản | **56 %** | 2 | 0 | 1 | 1 |
@@ -17,7 +17,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
 
-## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 47 %
+## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 50 %
 
 > Thiết lập một lần hệ thống định danh và nguyên tắc đúng để hàng triệu mã, hàng trăm cửa hàng, nhiều pháp nhân và mọi module dùng chung một dòng dữ liệu kế toán liên tục.
 
@@ -35,7 +35,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | CF-002 | Sự kiện không đạt kiểm chuẩn phải được giữ trong Exception Buffer | 🟡 Một phần | intake_inbox (0059) — bể chờ Gate B; Commit Guard IN-GUARD-001 | chưa có bể cho sai lệch SAU ghi sổ (Gate C) và tìm chứng từ theo sai lệch sổ | S025-10 (PHASE-025) | P1 |
 | AUD-001 | Sai lệch truy tìm được về chứng từ, nguyên nhân và phạm vi ảnh hưởng | 🟡 Một phần | audit_logs chuỗi băm (0036 / 0047), Bàn điều tra (PHASE-019), Hành trình mặt hàng | chưa có 'Tác động' (một mã dùng ở chứng từ / kho / TK / báo cáo nào); lịch sử chưa có trên form đối tượng / tài khoản / chi nhánh | S026-10, S026-11 (PHASE-026) | P0 |
 | IC-1 | Identity Continuity: đổi tên, đổi mã, đổi vị trí phân loại không đứt định danh | 🟡 Một phần | mặt hàng: đổi mã giữ item_id, hành trình nối mã cũ + mới, giá vốn một dòng (test B2b); đổi nhóm = bản phân loại mới theo ngày | chỉ mặt hàng; đối tượng / kho / chi nhánh / tài khoản chưa | S026-4 (PHASE-026) | P0 |
-| VER-1 | Hai cột: định danh tồn kho (item_id) và mã (item_code) — cùng biến thể đổi mã giữ định danh; biến thể kinh tế khác → định danh mới, cùng sản phẩm cha | 🟡 Một phần | items.item_id + item_codes; items.parent_item_id có cột | parent_item_id chưa được điền (họ mã products.parent_sku chỉ là tiền tố 9 ký tự); chưa có luật 'biến thể kinh tế khác = định danh mới' | S026-3 (PHASE-026) | P0 |
+| VER-1 | Hai cột: định danh tồn kho (item_id) và mã (item_code) — cùng biến thể đổi mã giữ định danh; biến thể kinh tế khác → định danh mới, cùng sản phẩm cha | ✅ Đạt | items.item_id + item_codes (0065); items.parent_item_id điền và giữ khớp theo định danh từ products.parent_sku, chặn vòng (0067); ITEM-HINT-003 nhắc khi đổi ĐVT gốc của mặt hàng đã có nhập xuất; test bien-the-dinh-danh (4 ca) | MH26 / phân tích đặt hàng còn đọc products.parent_sku (ảnh chụp) — chuyển sang parent_item_id khi products thành khung nhìn (S024-11) | S024-11 (PHASE-024) | P0 |
 | UI-4 | Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết | ☐ Chưa | Truy vết: nút Truy vết ở danh mục mặt hàng → ACC95; Kiểm chuẩn: khung Vì sao (Gate A) | Lịch sử, Tác động chưa có trên form; khung chung MasterDataFrame chưa có | S026-10..13 (PHASE-026) | P0 |
 | SCALE-1 | Danh mục hàng triệu mã, hàng trăm cửa hàng: đo và giữ hiệu năng | ☐ Chưa | đo 20.985 mặt hàng: đồng bộ Item Master +0,7 ms / mặt hàng; khoá chống chồng hiệu lực theo đơn vị | chưa có benchmark triệu SKU, chưa có nạp theo lô (FOR EACH STATEMENT), chưa có EXCLUDE gist | S026-14 (PHASE-026) | P2 |
 
@@ -50,7 +50,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | L-3 | Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản | ✅ Đạt | accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1 | — | — | P0 |
 | L-4 | Dòng sổ mang ảnh chụp mã + định danh mặt hàng | ✅ Đạt | ledger_lines.product_sku (ảnh chụp) + item_id (0066); đổi item_id bị chặn | đối tượng (partner_id) và tài khoản (account_code) chưa có định danh có phiên bản | S026-4 (PHASE-024) | P0 |
 
-## Trụ cột II · Định danh bất biến, mã có phiên bản — 46 %
+## Trụ cột II · Định danh bất biến, mã có phiên bản — 61 %
 
 > item_id không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực.
 
@@ -60,7 +60,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | ID-2 | item_id trên mọi bảng sổ / kho / giá / đơn vị | ✅ Đạt | 0066; test item-id-so-kho (7 ca); điền ngược kiểm 0 dòng thiếu | — | — | P0 |
 | ID-3 | Giá vốn, NXT, sổ chi tiết hàng hoá gom theo item_id | ✅ Đạt | costing.service + inventory-report.service (G2, 2026-11-04); ca 'đổi mã giữa tháng → một dòng giá vốn' | — | — | P0 |
 | ID-4 | products là khung nhìn; mọi đường ghi đi qua core.item.* | ☐ Chưa | — | chặn bởi INSERT … ON CONFLICT ở 6 / 7 chỗ ghi (70 §3.2.1 G1) | S024-11 (PHASE-024) | P0 |
-| ID-5 | Sản phẩm cha / biến thể: parent_item_id được điền và có luật | ☐ Chưa | cột parent_item_id có; MH26 Biến thể mặt hàng | chưa điền; chưa có luật tạo biến thể = định danh mới | S026-3 (PHASE-026) | P0 |
+| ID-5 | Sản phẩm cha / biến thể: parent_item_id được điền và có luật | ✅ Đạt | 0067: bizcity_items_link_parents, trigger products_items_sync_parent, items_parent_guard; Hành trình hiện họ (cha / biến thể / cùng cha); test bien-the-dinh-danh | — | — | P0 |
 | ID-6 | Đối tượng, chi nhánh, kho có mã phiên bản (entity_codes) | ☐ Chưa | — | ADR-0018 hạng A/B chưa thi hành | S026-4 (PHASE-026) | P0 |
 | ID-7 | Tài khoản theo phiên bản hệ thống TK + bảng ánh xạ cũ → mới | 📄 Tài liệu | ADR-0018 (chấp nhận 2026-11-02) | chưa có chart_versions / account_mappings | S026-8 (PHASE-026) | P0 |
 
