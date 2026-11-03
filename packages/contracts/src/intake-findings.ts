@@ -62,6 +62,11 @@ export const INTAKE_CATALOG = {
   'IN-POST-003': { layer: 'L5', severity: 'block', stage: 'posting', weight: 0, title: 'Thiếu nhóm hạch toán mặt hàng', why: 'Nhóm hạch toán của mặt hàng quyết định tài khoản hàng hoá, doanh thu, giá vốn. Thiếu thì dòng hàng không có chỗ ghi.', fix: 'Gán nhóm hạch toán cho mặt hàng hoặc đặt nhóm mặc định ở Mặt hàng và Tài khoản.', ref: 'ADR-0017, AccountResolver', acceptable: false },
   'IN-POST-004': { layer: 'L5', severity: 'block', stage: 'posting', weight: 0, title: 'Bút toán dựng ra không cân hoặc không hợp lệ', why: 'Sổ cái chỉ nhận bút toán cân Nợ bằng Có. Bút toán dựng ra mà không cân là lỗi của luật định khoản, không phải của chứng từ.', fix: 'Không sửa chứng từ cho lọt. Dừng ghi sổ, báo nhóm Lõi kèm mã tra cứu của lần Kiểm thử.', ref: 'R-LEDGER, ledgerService.post', acceptable: false },
   'IN-POST-005': { layer: 'L5', severity: 'block', stage: 'posting', weight: 0, title: 'Định khoản thử không thành công vì lý do khác', why: 'Định khoản thử chạy đúng đường ghi sổ rồi hoàn tác. Lý do chưa có tên mã riêng, ví dụ chưa có luật cho loại chứng từ, hình thức thanh toán không dùng được, hết thời gian cho phép.', fix: 'Đọc thông báo kèm theo; sửa theo đó, hoặc báo kế toán trưởng nếu liên quan cấu hình. Lỗi lặp lại thì báo nhóm Lõi để thêm mã riêng.', ref: 'R-INTAKE-3, R-EVENT-11', acceptable: false },
+  // [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25: cảnh báo thuế / hoá đơn / hồ sơ kế toán lúc nhập, cùng luật với tự chẩn đoán (tax.findings.ts, S022-8)
+  'IN-VAT-001': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 15, title: 'Thuế suất giảm dùng ngoài khoảng ngày được giảm', why: 'Thuế suất giảm chỉ áp cho hàng bán ra trong khoảng thời gian theo nghị quyết. Ngoài khoảng đó mà vẫn dùng thì thuế đầu ra kê khai thiếu.', fix: 'Đổi loại thuế của dòng về thuế suất đúng thời điểm; đã lập hoá đơn thì lập hoá đơn điều chỉnh theo quy định.', ref: 'NQ 204/2025/QH15, rulepack vat-vn', acceptable: true },
+  'IN-INV-001': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Hoá đơn mua vào thiếu ký hiệu, tên hoặc mã số thuế người bán', why: 'Bảng kê mua vào và tờ khai phải khớp dữ liệu cơ quan thuế. Hoá đơn thiếu ký hiệu hoặc mã số thuế người bán thì không đối chiếu được, thuế đầu vào có thể bị loại.', fix: 'Bổ sung ký hiệu hoá đơn, tên và mã số thuế người bán từ hoá đơn gốc.', ref: 'taxIssues (ACC78), INVOICE_FIELDS', acceptable: true },
+  'IN-INV-002': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Hoá đơn bán hàng lập sau ngày chứng từ bán', why: 'Hoá đơn hàng hoá phải lập vào thời điểm chuyển giao quyền sở hữu. Lập chậm hơn ngày giao có thể bị xử phạt.', fix: 'Lập hoá đơn ngay khi giao hàng; trường hợp đặc thù (dịch vụ, bán theo đợt) ghi căn cứ thời điểm riêng khi chấp nhận.', ref: 'Quy định về thời điểm lập hoá đơn', acceptable: true },
+  'IN-CFG-001': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 0, title: 'Đơn vị chưa khai hồ sơ kế toán áp cho ngày chứng từ', why: 'Hồ sơ kế toán (năm tài chính, chế độ kế toán, loại pháp nhân) quyết định bộ quy định để kiểm chuẩn. Chưa khai thì Kiểm chuẩn ra kết quả cần rà soát. Lỗi của cấu hình đơn vị nên không trừ điểm người lập.', fix: 'Kế toán trưởng khai hồ sơ kế toán có hiệu lực từ ngày thích hợp.', ref: 'ADR-0012, PROFILE_DECLARED', acceptable: false },
   'IN-BIZ-003': { layer: 'L4', severity: 'block', stage: 'door', weight: 0, title: 'Mã chứng từ không thuộc nguồn gửi', why: 'Mỗi nguồn (module, app) chỉ được nộp / sửa chứng từ của mình, để không ghi đè chứng từ của nơi khác.', fix: 'Mã chứng từ (docKey) phải bắt đầu bằng mã của nguồn, vd "pos-mini:CN01:HD0001".', ref: 'ADR-0011 D5, R-EVENT-13', acceptable: false },
   'IN-BIZ-004': { layer: 'L4', severity: 'block', stage: 'door', weight: 0, title: 'Phiên bản cũ hơn bản đã nhận', why: 'Sổ đang theo phiên bản mới hơn; nhận bản cũ sẽ ghi đè thông tin mới bằng thông tin cũ.', fix: 'Gửi phiên bản lớn hơn phiên bản đã nhận; sửa chứng từ thì tăng version.', ref: 'R-EVENT-4', acceptable: false },
   'IN-BIZ-005': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 20, title: 'Cùng phiên bản nhưng nội dung khác bản đã nhận', why: 'Cửa nạp coi cùng phiên bản là "không đổi" và bỏ qua — nội dung sửa sẽ KHÔNG vào sổ.', fix: 'Sửa chứng từ thì tăng version; gửi lại đúng nội dung cũ thì không sao.', ref: 'R-EVENT-4', acceptable: false },
@@ -238,6 +243,41 @@ export const INTAKE_REMEDIES: Record<IntakeCodeNeedingRemedy, Remedy> & Partial<
       { text: 'Lỗi lặp lại mà không rõ nguyên nhân thì báo nhóm Lõi kèm mã tra cứu', role: 'accountant' },
     ],
     owner: 'accountant', verify: { code: 'IN-POST-005' },
+  },
+  // [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25: phương án cho cảnh báo thuế / hoá đơn / hồ sơ — R-FIX-1
+  'IN-VAT-001': {
+    steps: [
+      { text: 'Đổi loại thuế của dòng về thuế suất đúng với ngày chứng từ ở hệ thống nguồn', role: 'creator' },
+      { text: 'Kiểm loại thuế mặc định của mặt hàng nếu nhiều chứng từ cùng lỗi', screen: SCREENS.DM10, role: 'accountant' },
+      { text: 'Đã lập hoá đơn với thuế suất sai: lập hoá đơn điều chỉnh theo quy định, kế toán trưởng quyết định', role: 'chief_accountant' },
+      RESEND,
+    ],
+    owner: 'creator', verify: { code: 'IN-VAT-001' },
+    forbid: ['Không đổi ngày chứng từ cho lọt khoảng giảm thuế — thuế và kỳ kê khai sẽ sai'],
+  },
+  'IN-INV-001': {
+    steps: [
+      { text: 'Bổ sung ký hiệu hoá đơn, tên và mã số thuế người bán từ hoá đơn gốc ở hệ thống nguồn', role: 'creator' },
+      { text: 'Hoặc bổ sung ở Bổ sung thông tin thuế theo số chứng từ', screen: SCREENS.ACC78, role: 'accountant' },
+      RESEND,
+    ],
+    owner: 'creator', verify: { code: 'IN-INV-001' },
+    forbid: ['Không điền mã số thuế bất kỳ cho đủ trường — kê khai sẽ sai và có thể bị xử phạt'],
+  },
+  'IN-INV-002': {
+    steps: [
+      { text: 'Kiểm quy trình xuất hoá đơn ở hệ thống bán hàng: xuất ngay khi giao hàng' },
+      { text: 'Đúng là chậm: ghi nhận để xử lý theo quy định; có căn cứ thời điểm khác (dịch vụ, bán theo đợt): kế toán trưởng chấp nhận cảnh báo kèm lý do', role: 'chief_accountant' },
+    ],
+    owner: 'chief_accountant', verify: { code: 'IN-INV-002' },
+    forbid: ['Không sửa ngày hoá đơn về ngày giao khi hoá đơn đã lập và gửi khách'],
+  },
+  'IN-CFG-001': {
+    steps: [
+      { text: 'Mở Hồ sơ kế toán, chọn năm tài chính, chế độ kế toán, loại pháp nhân; ghi căn cứ', screen: SCREENS.HT07, role: 'chief_accountant' },
+    ],
+    owner: 'chief_accountant', verify: { code: 'IN-CFG-001' },
+    forbid: ['Không khai hồ sơ cho có: chế độ sai thì Kiểm chuẩn chọn nhầm bộ quy định'],
   },
   'IN-BIZ-004': {
     steps: [{ text: 'Gửi phiên bản lớn hơn phiên bản đã nhận; mỗi lần sửa chứng từ tăng version ở hệ thống nguồn' }, RESEND],

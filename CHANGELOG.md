@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25 / PHASE-022 S022-8 -->
+- **Cảnh báo thuế và hoá đơn ngay lúc nhập** (PHASE-021 S021-25): Kiểm thử và sửa tại bể nay nhắc thêm bốn điểm mà tự chẩn đoán thuế vốn chỉ quét theo kỳ — `IN-VAT-001` thuế suất giảm dùng ngoài khoảng ngày được giảm (khoảng ngày lấy từ rulepack), `IN-INV-001` hoá đơn mua thiếu ký hiệu / tên / mã số thuế người bán, `IN-INV-002` hoá đơn bán lập sau ngày chứng từ, `IN-CFG-001` chưa khai hồ sơ kế toán (không trừ điểm người lập). Đều là cảnh báo: cửa nạp vẫn nhận, kế toán trưởng chấp nhận được kèm lý do. Cùng một bộ hàm kiểm theo một chứng từ với tự chẩn đoán (`tax.findings.ts`, PHASE-022 S022-8) nên hai nơi không thể lệch luật.
 <!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 -->
 - **Định khoản thử trong Kiểm thử** (PHASE-021 W5, L5): khi chứng từ hết lỗi chặn, Kiểm thử và sửa tại bể chạy thử đường ghi sổ thật rồi hoàn tác hết — báo trước lỗi cấu hình mà trước đây chỉ lộ lúc định khoản: `IN-POST-001` (lý do), `IN-POST-002` (tài khoản), `IN-POST-003` (nhóm hạch toán), `IN-POST-004` (bút toán không cân: lỗi luật, dừng ghi sổ báo nhóm Lõi), `IN-POST-005` (khác), `IN-BIZ-001` (kỳ đã khoá). Giới hạn 3 giây và 20 lần mỗi người mỗi phút. **Gợi ý cấu hình**: lỗi cấu hình lặp từ 3 chứng từ trở lên hiện thành dải gợi ý cho kế toán trưởng (`GET /api/v1/intake/suggestions`), không tự sửa. Trợ lý AI đọc được bể chờ qua `core.intake.list / get / explain` (không có nguyên văn hay giá trị đã gửi).
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 -->

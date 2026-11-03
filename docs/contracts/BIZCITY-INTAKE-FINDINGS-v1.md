@@ -2,11 +2,12 @@
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
+<!-- [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25: 0.8.0-draft — §3 thêm IN-VAT-001, IN-INV-001, IN-INV-002, IN-CFG-001 (L4, warn, cùng luật với tự chẩn đoán thuế); §9 -->
 <!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5: 0.7.0-draft — §3 thêm IN-BIZ-001, IN-POST-001..005 (stage posting); §8 L5 định khoản thử, gợi ý cấu hình, action đọc -->
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4: 0.6.0-draft — §7 bảng điểm, INTAKE_OPEN_AGE, sự kiện bizcity.intake.* -->
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: 0.5.0-draft — §6 sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục; lọc closed / mine; chi tiết kèm current -->
 
-> **Phiên bản:** 0.7.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.8.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -58,6 +59,10 @@
 | `IN-POST-003` | L5 | block | posting | 0 | Thiếu nhóm hạch toán mặt hàng | [bài học](../huong-dan/loi-dau-vao/IN-POST-003.md) |
 | `IN-POST-004` | L5 | block | posting | 0 | Bút toán dựng ra không cân hoặc không hợp lệ | [bài học](../huong-dan/loi-dau-vao/IN-POST-004.md) |
 | `IN-POST-005` | L5 | block | posting | 0 | Định khoản thử không thành công vì lý do khác | [bài học](../huong-dan/loi-dau-vao/IN-POST-005.md) |
+| `IN-VAT-001` | L4 | warn | advice | 15 | Thuế suất giảm dùng ngoài khoảng ngày được giảm | [bài học](../huong-dan/loi-dau-vao/IN-VAT-001.md) |
+| `IN-INV-001` | L4 | warn | advice | 10 | Hoá đơn mua vào thiếu ký hiệu, tên hoặc mã số thuế người bán | [bài học](../huong-dan/loi-dau-vao/IN-INV-001.md) |
+| `IN-INV-002` | L4 | warn | advice | 10 | Hoá đơn bán hàng lập sau ngày chứng từ bán | [bài học](../huong-dan/loi-dau-vao/IN-INV-002.md) |
+| `IN-CFG-001` | L4 | warn | advice | 0 | Đơn vị chưa khai hồ sơ kế toán áp cho ngày chứng từ | [bài học](../huong-dan/loi-dau-vao/IN-CFG-001.md) |
 | `IN-BIZ-003` | L4 | block | door | 0 | Mã chứng từ không thuộc nguồn gửi | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-003.md) |
 | `IN-BIZ-004` | L4 | block | door | 0 | Phiên bản cũ hơn bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-004.md) |
 | `IN-BIZ-005` | L4 | warn | advice | 20 | Cùng phiên bản nhưng nội dung khác bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-005.md) |

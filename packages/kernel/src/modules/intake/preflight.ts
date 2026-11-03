@@ -24,6 +24,7 @@ import { findBranch, totalsProblems } from '../documents/document.service.js';
 import { draftItemFindings } from './draft-items.js';
 import { commitGuard } from './guard.js';
 import { takeTrial, trialPosting } from './trial-posting.js';
+import { taxFindings } from './tax-findings.js';
 
 export interface PreflightResult {
   findings: IntakeFinding[];
@@ -178,6 +179,9 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
       if (Number.isFinite(gap) && gap > 5) findings.push(intakeFinding('IN-BIZ-007', 'invoice.date', { got: inv.date, expected: `trong 5 ngày quanh ${r.docDate}` }));
     }
   }
+
+  // ── L4 thuế / hoá đơn / hồ sơ kế toán (S021-25): cảnh báo, cùng luật với tự chẩn đoán thuế ──
+  if (parsed.success) findings.push(...await taxFindings(trx, auth.tenantId, parsed.data));
 
   // ── L5 định khoản thử (R-INTAKE-3, R-EVENT-11): chỉ khi L1–L4 không còn lỗi chặn; hoàn tác hết, giới hạn 3 giây + lượt mỗi phút ──
   let l5: PreflightResult['l5'] = 'off';

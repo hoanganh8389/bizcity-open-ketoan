@@ -26,6 +26,8 @@ Phiếu mua, bán, trả lại, chuyển kho, điều chỉnh kho lập ở **h�
 Số trên thẻ là số chứng từ chờ / lỗi theo bộ lọc đang chọn.
 
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: Trạm kiểm tra -->
+**Cảnh báo thuế, hoá đơn.** Kiểm thử còn nhắc: dùng thuế suất giảm ngoài khoảng ngày được giảm, hoá đơn mua thiếu ký hiệu hoặc mã số thuế người bán, hoá đơn bán lập sau ngày giao, đơn vị chưa khai hồ sơ kế toán. Đây là cảnh báo (vàng): chứng từ vẫn vào được; nếu có căn cứ riêng thì kế toán trưởng chấp nhận kèm lý do. <!-- [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25 -->
+
 **Định khoản thử.** Bấm **Kiểm thử** khi chứng từ hết lỗi đỏ: hệ thống chạy thử việc ghi sổ rồi hoàn tác, để bạn thấy trước lỗi cấu hình (thiếu lý do, tài khoản, nhóm hạch toán, kỳ đã khoá). Không ghi gì vào sổ. Kế toán trưởng thấy thêm dải **Gợi ý cấu hình** khi cùng một lỗi lặp ở nhiều chứng từ. <!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 -->
 
 **Bảng điểm đầu vào (ACC94)** — menu Kế toán, ngay dưới Định khoản tự động: tỷ lệ chứng từ vào sổ ngay lần đầu, lỗi hay gặp theo nguồn / người lập. Để cùng học cách nhập đúng, không để đánh giá cá nhân. <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 -->

@@ -16,13 +16,12 @@
 import { sql, type RawBuilder } from 'kysely';
 import { sqlCounts, type DiagCheck, type DiagScope } from '@bizcity/platform/system/diagnostics';
 import { taxIssues } from './tax-info.service.js';
-import { caseParams } from '../conformance/conformance.service.js';
+// [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-8: tham số thuế suất giảm và nhóm trường hoá đơn lấy từ tax.findings.ts (dùng chung với Trạm tiền kiểm, một nguồn luật)
+import { FIELD_ISSUES, REDUCED_RATE_CASE, reducedRateWindow } from './tax.findings.js';
 import { SCREENS } from '@ketoan/contracts';
 
 const SAMPLE = 20;
-/** Ca chứa tham số thời gian áp thuế suất giảm (NQ 204/2025/QH15). */
-export const REDUCED_RATE_CASE = 'vn.vat-vn.rate.reduced_window.001';
-const FIELD_ISSUES = new Set(['Thiếu ký hiệu hoá đơn', 'Thiếu tên người bán', 'Thiếu mã số thuế người bán', 'Mã số thuế không đúng dạng']);
+export { REDUCED_RATE_CASE };
 const NONCASH_PREFIX = 'Từ 5 triệu';
 
 function scoped(s: DiagScope, t: string, date: string): RawBuilder<boolean> {
@@ -59,11 +58,7 @@ export const TAX_DIAGNOSTICS: DiagCheck[] = [
     title: 'Thuế suất GTGT giảm (8%) chỉ dùng cho hàng bán ra trong thời gian giảm theo nghị quyết',
     fix: 'Chứng từ bán ra ngoài thời gian giảm thuế mà vẫn dùng loại thuế 8%: thuế đầu ra kê khai thiếu. Mẫu: khoá chứng từ. Kiểm lại loại thuế của mặt hàng / phiếu (10% sau khi hết giảm), lập hoá đơn điều chỉnh theo quy định. Thời gian giảm lấy từ rulepack vat-vn (đã duyệt hay chưa xem ở Kiểm chuẩn).',
     async run(trx, s) {
-      const p = caseParams(REDUCED_RATE_CASE);
-      const rate = Number(p.reduced_rate);
-      const from = String(p.from);
-      const to = String(p.to);
-      if (!Number.isFinite(rate) || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) throw new Error(`Tham số ca ${REDUCED_RATE_CASE} không hợp lệ`);
+      const { rate, from, to } = reducedRateWindow();
       return sqlCounts(trx,
         sql`SELECT count(*)::int AS n FROM sales_lines l JOIN tax_codes tc ON tc.tenant_id = l.tenant_id AND tc.code = l.tax_code AND tc.direction = 'output'
              WHERE ${scoped(s, 'l', 'doc_date')} AND l.amount_before_tax <> 0 AND tc.rate = ${rate}`,
