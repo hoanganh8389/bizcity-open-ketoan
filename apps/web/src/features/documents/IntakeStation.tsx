@@ -37,6 +37,13 @@ const LAYERS: [IntakeFinding['layer'], string][] = [['L1', 'Khuôn'], ['L2', 'S�
 const STATUS_TEXT: Record<string, string> = { open: 'Cần sửa', trial: 'Thử', resubmitted: 'Đã nộp lại', fixed_at_source: 'Nguồn đã sửa', accepted: 'Chấp nhận cảnh báo', dismissed: 'Đã bỏ' };
 const CHANNEL_TEXT: Record<string, string> = { api: 'API', batch: 'nạp lô', submit: 'nộp có biên nhận', app: 'app', connector: 'kết nối', mcp: 'MCP', trial: 'Kiểm thử' };
 const sourceText = (r: Pick<InboxRow, 'app_key' | 'source_system' | 'channel'>) => (r.app_key ? `app: ${r.app_key}` : r.source_system === 'manual' ? 'Nhập tay' : r.source_system ?? CHANNEL_TEXT[r.channel] ?? r.channel);
+// [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5: kết quả định khoản thử (L5) hiện cạnh điểm
+const L5_TEXT: Record<string, string> = {
+  ran: 'Định khoản thử (L5): đã chạy đường ghi sổ thật rồi hoàn tác, không để lại gì trong sổ.',
+  blocked: 'Định khoản thử (L5) chưa chạy: còn lỗi chặn ở các lớp trước — sửa xong sẽ thử.',
+  rate: 'Định khoản thử (L5) tạm bỏ qua: quá 20 lần mỗi phút, thử lại sau ít phút.',
+  off: '',
+};
 const typeText = (t: string | null) => (t ? DOC_TYPE_LABELS[t as DocType] ?? t : '—');
 
 /** Ô chứng từ thường gặp; ô của phát hiện (đường khác) được thêm tự động. */
@@ -60,6 +67,7 @@ const severityClass = (s: IntakeFinding['severity']) => (s === 'block' ? 'text-b
 
 /** Danh sách mục bể cho một thẻ. */
 export function IntakeList({ tab }: { tab: IntakeTab }) {
+  const { can } = useAuth();
   const [openId, setOpenId] = useState<string | null>(null);
   const params = tab === 'inbox' ? { status: 'open' } : tab === 'trial' ? { status: 'trial', mine: '1' } : { closed: '1', closedDays: '7' };
   const q = useQuery({ queryKey: ['intake', tab], queryFn: () => api.get<InboxRow[]>('/api/v1/intake', { ...params, limit: 200 }) });
@@ -80,6 +88,7 @@ export function IntakeList({ tab }: { tab: IntakeTab }) {
   return (
     <>
       {tab === 'inbox' && <div className="muted" style={{ margin: '4px 0', fontSize: 12 }}>Chứng từ cửa nạp đã từ chối, chưa vào sổ. Ưu tiên sửa ở nguồn rồi gửi lại (mục tự đóng); sửa tại bể khi nguồn không sửa được — chứng từ sẽ mang dấu "sửa tại bể". <Link to="/chung-tu/bang-diem">Bảng điểm đầu vào (ACC94) →</Link></div>}
+      {tab === 'inbox' && can('documents:edit-all') && <Suggestions />}
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {q.isLoading ? <Loading /> : rows.length === 0 ? (
         <Empty text={tab === 'inbox' ? 'Không có chứng từ nào cần sửa' : tab === 'trial' ? 'Bạn chưa lưu lần Kiểm thử nào' : 'Không có mục nào đóng trong 7 ngày qua'} />
@@ -88,6 +97,25 @@ export function IntakeList({ tab }: { tab: IntakeTab }) {
       )}
       {openId && <IntakeDetail id={openId} onClose={() => setOpenId(null)} />}
     </>
+  );
+}
+
+/** Gợi ý cấu hình từ lỗi lặp (S021-23): chỉ gợi ý — kế toán trưởng tự mở màn và khai; không nút nào tự sửa. */
+function Suggestions() {
+  const q = useQuery({ queryKey: ['intake-suggestions'], queryFn: () => api.get<{ code: string; value: string | null; items: number; suggestion: string; screen: { path: string; label: string; code: string } | null; role: string | null }[]>('/api/v1/intake/suggestions') });
+  const list = q.data ?? [];
+  if (!list.length) return null;
+  return (
+    <div className="alert" style={{ margin: '6px 0' }}>
+      <b>Gợi ý cấu hình</b> <span className="muted" style={{ fontSize: 12 }}>(lỗi lặp lại ở nhiều chứng từ — sửa một chỗ ở cấu hình thay vì sửa từng chứng từ; hệ thống không tự sửa)</span>
+      <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
+        {list.slice(0, 5).map((s) => (
+          <li key={`${s.code}-${s.value ?? ''}`} style={{ fontSize: 13 }}>
+            <code>{s.code}</code> {s.suggestion} {s.screen && <Link className="btn btn-xs" to={s.screen.path}>Mở {s.screen.label} ({s.screen.code}) →</Link>}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -104,6 +132,7 @@ function IntakeDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [lesson, setLesson] = useState<string | null>(null);
   const [dialog, setDialog] = useState<'accept' | 'dismiss' | null>(null);
+  const [l5, setL5] = useState<string>('');
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const refresh = () => { void qc.invalidateQueries({ queryKey: ['intake'] }); void qc.invalidateQueries({ queryKey: ['intake-item', id] }); };
 
@@ -134,10 +163,11 @@ function IntakeDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
   const check = useMutation({
     mutationFn: async () => {
-      if (!changed) return { kind: 'dry' as const, out: await api.post<{ findings: IntakeFinding[]; score: number }>('/api/v1/intake/preflight', { document: item!.current }) };
-      return { kind: 'patch' as const, out: await api.post<{ findings: IntakeFinding[]; score: number; fixed: string[]; added: string[] }>(`/api/v1/intake/${id}/patch`, { ops: ops(), reason }) };
+      if (!changed) return { kind: 'dry' as const, out: await api.post<{ findings: IntakeFinding[]; score: number; l5: string }>('/api/v1/intake/preflight', { document: item!.current }) };
+      return { kind: 'patch' as const, out: await api.post<{ findings: IntakeFinding[]; score: number; fixed: string[]; added: string[]; l5: string }>(`/api/v1/intake/${id}/patch`, { ops: ops(), reason }) };
     },
     onSuccess: ({ kind, out }) => {
+      setL5((out as { l5?: string }).l5 ?? '');
       if (kind === 'dry') { setTrial(out); setNotice(`Kiểm thử (không lưu): điểm ${out.score}/100.`); return; }
       const o = out as { score: number; fixed: string[]; added: string[] };
       setTrial(null); setEdits({}); setJsonText(null);
@@ -185,6 +215,7 @@ function IntakeDetail({ id, onClose }: { id: string; onClose: () => void }) {
         {item.app_key && <> · <b>mục của app {item.app_key}: sửa ở app rồi gửi lại</b></>}
       </div>
       {notice && <div className="alert alert-ok" style={{ margin: '6px 0' }}>{notice}</div>}
+      {L5_TEXT[l5] && <div className="muted" style={{ fontSize: 12, margin: '4px 0' }}>{L5_TEXT[l5]}</div>}
       <ErrorBox error={err ? errorText(err) : null} />
 
       {trial && <div className="muted" style={{ fontSize: 12 }}>Đang xem kết quả Kiểm thử (chưa lưu).</div>}

@@ -2,10 +2,11 @@
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
+<!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5: 0.7.0-draft — §3 thêm IN-BIZ-001, IN-POST-001..005 (stage posting); §8 L5 định khoản thử, gợi ý cấu hình, action đọc -->
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4: 0.6.0-draft — §7 bảng điểm, INTAKE_OPEN_AGE, sự kiện bizcity.intake.* -->
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: 0.5.0-draft — §6 sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục; lọc closed / mine; chi tiết kèm current -->
 
-> **Phiên bản:** 0.6.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.7.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -51,6 +52,12 @@
 | `IN-MD-004` | L3 | hint | advice | 0 | Mã hàng chưa có trong danh mục | [bài học](../huong-dan/loi-dau-vao/IN-MD-004.md) |
 | `IN-MD-005` | L3 | warn | advice | 10 | Mã số thuế đối tượng sai định dạng | [bài học](../huong-dan/loi-dau-vao/IN-MD-005.md) |
 | `IN-ITEM-009` | L3 | block | door | 0 | Mặt hàng còn nháp, chưa kích hoạt (Gate A, R-GATE-6) | [bài học](../huong-dan/loi-dau-vao/IN-ITEM-009.md) |
+| `IN-BIZ-001` | L4 | block | posting | 0 | Kỳ kế toán của ngày chứng từ đã khoá | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-001.md) |
+| `IN-POST-001` | L5 | block | posting | 0 | Không chọn được lý do định khoản | [bài học](../huong-dan/loi-dau-vao/IN-POST-001.md) |
+| `IN-POST-002` | L5 | block | posting | 0 | Không tra được tài khoản để định khoản | [bài học](../huong-dan/loi-dau-vao/IN-POST-002.md) |
+| `IN-POST-003` | L5 | block | posting | 0 | Thiếu nhóm hạch toán mặt hàng | [bài học](../huong-dan/loi-dau-vao/IN-POST-003.md) |
+| `IN-POST-004` | L5 | block | posting | 0 | Bút toán dựng ra không cân hoặc không hợp lệ | [bài học](../huong-dan/loi-dau-vao/IN-POST-004.md) |
+| `IN-POST-005` | L5 | block | posting | 0 | Định khoản thử không thành công vì lý do khác | [bài học](../huong-dan/loi-dau-vao/IN-POST-005.md) |
 | `IN-BIZ-003` | L4 | block | door | 0 | Mã chứng từ không thuộc nguồn gửi | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-003.md) |
 | `IN-BIZ-004` | L4 | block | door | 0 | Phiên bản cũ hơn bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-004.md) |
 | `IN-BIZ-005` | L4 | warn | advice | 20 | Cùng phiên bản nhưng nội dung khác bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-005.md) |
@@ -119,3 +126,23 @@ Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · 
 - **Chứng từ gửi** = một `docKey` khác nhau nhận trong khung (sự việc hoặc mục bể, không tính mục thử; mục không đọc được `docKey` tính riêng). **Đạt lần đầu** = chứng từ gửi chưa từng có mục bể. Không có nội dung chứng từ trong phản hồi.
 - **INTAKE_OPEN_AGE** (app) / **DG-INTAKE-1** (lane): mục `open` quá `bizcity.intake.open_alert_days` ngày (mặc định 3) → `warn`, mẫu = `docKey`.
 - **Sự kiện** (`bizcity_event@1` §7): `bizcity.intake.rejected` khi tạo mục mới, `bizcity.intake.resolved` khi mục đóng; `data` chỉ mã và số. App kết nối đăng ký được qua webhook như mọi sự kiện lõi (giao theo đơn vị, như `bizcity.ledger.entry.posted`).
+
+## 8. Định khoản thử, gợi ý cấu hình, action đọc cho AI (W5, `intake.preflight.posting`)
+
+<!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22..24) -->
+**L5 định khoản thử.** `POST /api/v1/intake/preflight` nhận thêm `post` (mặc định `true`) và trả `l5`:
+
+| `l5` | Nghĩa |
+|---|---|
+| `ran` | L1–L4 hết lỗi chặn nên đã định khoản thử: chạy đường ghi sổ thật (`postDocumentIn` với `post`, `force`) trong một savepoint rồi **hoàn tác** — không còn sự việc, bút toán, nhật ký định khoản hay sự kiện outbox (RULE-INTAKE-3, R-EVENT-11) |
+| `blocked` | còn lỗi chặn ở L1–L4 nên không thử |
+| `rate` | quá **20 lần mỗi người mỗi phút** nên bỏ qua L5 (L1–L4 vẫn chạy); giới hạn theo bộ nhớ tiến trình |
+| `off` | gọi với `post: false` |
+
+- Giới hạn thời gian 3 giây (`SET LOCAL statement_timeout` đặt sau savepoint nên hoàn tác cùng savepoint). Hết giờ → `IN-POST-005`; lỗi kỹ thuật khác ném lên, không nuốt.
+- **Phân loại lỗi** (`postingFindings`, một chỗ): `PERIOD_LOCKED` → `IN-BIZ-001`; `UNBALANCED_ENTRY` hoặc "Bút toán không hợp lệ" → `IN-POST-004` (**lỗi luật, dừng ghi sổ báo nhóm Lõi**); lý do chưa khai / không có mặc định → `IN-POST-001`; "Thiếu cấu hình hạch toán" → `IN-POST-002`; thiếu nhóm hạch toán → `IN-POST-003`; còn lại → `IN-POST-005`. Các mã này `stage: posting`, mức `block`, không chấp nhận được.
+- `core.intake.patch` (sửa tại bể) cũng chạy L5 và trả `l5`; `recordRejection` và `recheckInboxForSkus` không chạy L5.
+
+**Gợi ý cấu hình.** `GET /api/v1/intake/suggestions?days=30&min=3` (`documents:edit-all`): gom phát hiện của mục bể theo (mã, giá trị đã gửi) với các mã mà gốc sửa là cấu hình — `IN-MD-001`, `IN-ITEM-009`, `IN-POST-001`, `IN-POST-002`, `IN-POST-003` — từ `min` chứng từ trở lên. Trả `{ code, title, value, items, lastSeenAt, suggestion, screen, role }`; câu gợi ý lấy từ phương án khắc phục của mã. **Chỉ gợi ý**: không đổi dữ liệu nào (R-INTAKE-8).
+
+**Action đọc cho AI** (`expose.ai: 'read'`, chỉ MCP, `documents:read`): `core.intake.list`, `core.intake.get`, `core.intake.explain`. Không trả nguyên văn, nội dung và lý do bản vá, **giá trị đã gửi (`got`) và giá trị mong đợi (`expected`)** — nhiều mã dựng `expected` từ số liệu / ngày của chính chứng từ. Không có action ghi nào của bể chờ mở cho AI (`ai: 'deny'`, `mcp: false`).

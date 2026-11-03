@@ -80,6 +80,8 @@ export { PERIOD_DIAGNOSTICS } from './modules/periods/period.diagnostics.js';
 export { TAX_DIAGNOSTICS } from './modules/tax-info/tax.diagnostics.js';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19): INTAKE_OPEN_AGE — mục bể chờ mở quá ngưỡng
 export { INTAKE_DIAGNOSTICS } from './modules/intake/intake.diagnostics.js';
+// [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22): phân loại lỗi định khoản thử và giới hạn lượt — để test của Core kiểm; phân hệ không dùng
+export { postingFindings, takeTrial, resetTrials, TRIAL_LIMIT } from './modules/intake/trial-posting.js';
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm số dư, kho, lịch kiểm chuẩn
 export { BALANCE_DIAGNOSTICS } from './modules/ledger/balance.diagnostics.js';
 export { INVENTORY_DIAGNOSTICS } from './modules/inventory/inventory.diagnostics.js';

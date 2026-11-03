@@ -93,14 +93,15 @@ export async function patchItem(trx: Db, auth: AuthContext, id: string, ops: Pat
   if ((row.payload_raw as { truncated?: unknown } | null)?.truncated === true) throw Errors.validation('Nguyên văn quá 256 KB đã bị cắt — sửa ở nguồn rồi gửi lại', ['IN-SHAPE-007']);
   const before = codesOf(row.findings as IntakeFinding[]);
   const doc = applyOps(currentDocument(row), ops);
-  const pf = await preflight(trx, auth, doc);
+  // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5: sửa tại bể cũng định khoản thử (L5) khi L1–L4 đã sạch, để người sửa thấy ngay chỗ cấu hình còn thiếu
+  const pf = await preflight(trx, auth, doc, { post: true });
   const codes = codesOf(pf.findings);
   const score = intakeScore(pf.findings, row.accepted_codes);
   const entry: PatchEntry = { at: new Date().toISOString(), by: auth.actor, reason, ops, score, codes, fixed: before.filter((c) => !codes.includes(c)), added: codes.filter((c) => !before.includes(c)) };
   await trx.updateTable('intake_inbox')
     .set({ patches: sql`patches || ${JSON.stringify([entry])}::jsonb`, findings: JSON.stringify(pf.findings), score, last_seen_at: new Date() })
     .where('id', '=', row.id).execute();
-  return { id: row.id, findings: pf.findings, score, fixed: entry.fixed, added: entry.added, patchNo: patchesOf(row).length + 1 };
+  return { id: row.id, findings: pf.findings, score, fixed: entry.fixed, added: entry.added, patchNo: patchesOf(row).length + 1, l5: pf.l5 };
 }
 
 export async function resubmitItem(trx: Db, auth: AuthContext, id: string, reason: string | undefined) {

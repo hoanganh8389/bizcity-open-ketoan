@@ -23,6 +23,7 @@ import type { Db } from '@bizcity/platform/db/client';
 import { findBranch, totalsProblems } from '../documents/document.service.js';
 import { draftItemFindings } from './draft-items.js';
 import { commitGuard } from './guard.js';
+import { takeTrial, trialPosting } from './trial-posting.js';
 
 export interface PreflightResult {
   findings: IntakeFinding[];
@@ -33,6 +34,8 @@ export interface PreflightResult {
   guard: string;
   /** Có khi người gọi đưa dấu cũ: true = cấu hình đã đổi kể từ dấu đó. */
   guardChanged?: boolean;
+  // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22): L5 có chạy không — 'ran' đã định khoản thử; 'blocked' còn lỗi chặn ở L1–L4 nên không thử; 'rate' hết lượt thử trong phút; 'off' không yêu cầu
+  l5: 'ran' | 'blocked' | 'rate' | 'off';
 }
 
 type ZodIssueLike = { code: string; path: (string | number)[]; received?: unknown; expected?: unknown; options?: unknown[]; validation?: unknown; type?: string };
@@ -93,7 +96,8 @@ const MST_RE = /^\d{10}(-\d{3})?$/;
 const DAY_MS = 86_400_000;
 
 /** Tiền kiểm một chứng từ thô (chưa parse). Đọc trong `trx` (RLS theo đơn vị của người gọi). */
-export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: { guard?: string } = {}): Promise<PreflightResult> {
+// [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5: opts.post bật L5 (định khoản thử trong savepoint rồi hoàn tác, chỉ khi L1–L4 hết lỗi chặn)
+export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: { guard?: string; post?: boolean } = {}): Promise<PreflightResult> {
   const findings: IntakeFinding[] = [];
 
   // ── L1 khuôn ──
@@ -175,13 +179,21 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
     }
   }
 
+  // ── L5 định khoản thử (R-INTAKE-3, R-EVENT-11): chỉ khi L1–L4 không còn lỗi chặn; hoàn tác hết, giới hạn 3 giây + lượt mỗi phút ──
+  let l5: PreflightResult['l5'] = 'off';
+  if (opts.post) {
+    if (!parsed.success || findings.some((f) => f.severity === 'block')) l5 = 'blocked';
+    else if (!takeTrial(auth)) l5 = 'rate';
+    else { findings.push(...await trialPosting(trx, auth, parsed.data)); l5 = 'ran'; }
+  }
+
   // ── Commit Guard (R-GATE-8): dấu cũ khác dấu hiện hành VÀ còn lỗi chặn → IN-GUARD-001 (cùng điều kiện cửa nạp từ chối, R-INTAKE-4) ──
   const guard = await commitGuard(trx, auth.tenantId, raw);
   const guardChanged = opts.guard !== undefined ? opts.guard !== guard : undefined;
   if (guardChanged && findings.some((f) => f.severity === 'block')) findings.push(intakeFinding('IN-GUARD-001', null, { got: opts.guard, expected: guard }));
 
   const sorted = sortFindings(findings);
-  return { findings: sorted, score: intakeScore(sorted), ...(parsed.success ? { parsed: parsed.data } : {}), guard, ...(guardChanged !== undefined ? { guardChanged } : {}) };
+  return { findings: sorted, score: intakeScore(sorted), ...(parsed.success ? { parsed: parsed.data } : {}), guard, l5, ...(guardChanged !== undefined ? { guardChanged } : {}) };
 }
 
 /** JSON có khoá sắp xếp — so nội dung không phụ thuộc thứ tự khoá. */
