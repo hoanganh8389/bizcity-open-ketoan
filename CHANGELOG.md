@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Đổi
+<!-- [2026-11-03 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — chốt thiết kế hợp đồng ACTION 1.2.0 -->
+- **Hợp đồng `bizcity_action` 1.2.0-draft** (chốt trước khi chuẩn hoá mã, R-FLOW-2): `ctx.meta(key, value)` — dạng hàm, khoá của runtime bị cấm, chạy thử giữ meta, gửi lặp không phát lại meta; action theo lô `ctx.data.item`; che bí mật và lược `input` lớn trong bằng chứng; `expose.http.query` / `bodyLimit` và thân tuỳ chọn. Mục §4.4 (nhật ký nghiệp vụ trong action, phương án C) là **đề xuất chờ chốt** — không đổi mã `writeAudit` cho tới khi được chốt.
 <!-- [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
 - **Ghi danh mục chi nhánh, kho, tên đơn vị tính, tài khoản ngân hàng đi qua action** (PHASE-014 W6 đợt 3, SC-ACT-1): cùng đường dẫn, quyền, mã trả về như cũ (201 khi thêm); `Idempotency-Key` không bắt buộc (thao tác đặt trạng thái tuyệt đối, gửi lại không tạo thêm). Khác biệt người dùng thấy: nhật ký bằng chứng ghi tên hành động mới `core.branch.*`, `core.warehouse.*`, `core.unit-name.*`, `core.bank-account.*` thay cho `branch.create`… và có biên nhận `meta.receipt`; kiểm và ghi nằm trong một giao dịch với bằng chứng. Hàm `branchService.create`… cũ giữ nguyên cho nơi khác gọi. SC-ACT-1: 56,7% → 66,9%.
 

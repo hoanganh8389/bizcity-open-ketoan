@@ -26,4 +26,4 @@ Luật: [R-FLOW](../rules/RULE-FLOW.md). **Đọc bản trên `origin/main`** (`
 
 | Đợt | Phạm vi | Người nhận | Nhánh | Trạng thái | Từ ngày |
 |---|---|---|---|---|---|
-| PHASE-014 · W6 đợt 4 — `ctx.meta` + route đối tượng (PR #50) | `packages/platform/src/core/actions.ts`; `apps/api/src/modules/partners/**`; `docs/contracts/BIZCITY-ACTION-v1.md`; `apps/api/test/action-meta.test.ts` | hoanganh8389 (phiên W6-meta) | `feat/phase-014-w6-meta` | chờ merge — đang xung đột `main`, phiên chủ dự án đang gộp | 2026-11-03 |
+| PHASE-014 · W6 đợt 8a — chuẩn hoá `ctx.meta` theo hợp đồng ACTION 1.2.0 (§4.1: hàm, khoá cấm, dry-run giữ meta) + test | `packages/platform/src/core/actions.ts`; `apps/api/test/action-meta.test.ts` | hoanganh8389 (phiên Claude, ctx-meta) | `feat/phase-014-ctx-meta` (tạo sau khi PR chốt thiết kế này merge) | đang làm | 2026-11-03 |
