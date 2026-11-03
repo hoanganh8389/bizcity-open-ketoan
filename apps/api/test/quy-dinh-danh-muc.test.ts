@@ -10,16 +10,12 @@ import { withRequestContext } from '@bizcity/platform/core/request-context';
 import type { AuthContext } from '../src/core/auth.js';
 import { preflight } from '../src/kernel/public.js';
 import { db } from '../src/db/client.js';
-import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
+import { auditRows, call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
 let tenantId = '';
 let auth: AuthContext;
-const audits = (action: string, objectId?: string) => {
-  let q = db.selectFrom('audit_logs').select(['action', 'before_data', 'after_data']).where('tenant_id', '=', tenantId).where('action', '=', action);
-  if (objectId) q = q.where('object_id', '=', objectId);
-  return q.orderBy('id').execute();
-};
+const audits = async (action: string, objectId?: string) => (await auditRows(tenantId, action, objectId)).map((r) => ({ action: r.action, before_data: r.before, after_data: r.after }));
 const pre = (raw: unknown) => withRequestContext({ requestId: `ht09-${Math.random().toString(36).slice(2, 9)}`, correlationId: 'ht09', tenantId },
   () => db.transaction().execute((trx) => preflight(trx, auth, raw)));
 const door = (raw: unknown) => ctx.app.inject({ method: 'POST', url: '/api/v1/documents', payload: raw as never, headers: { authorization: `Bearer ${ctx.token}` } });
