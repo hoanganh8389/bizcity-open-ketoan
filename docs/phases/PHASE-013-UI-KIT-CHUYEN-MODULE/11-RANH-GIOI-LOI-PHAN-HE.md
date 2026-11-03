@@ -111,6 +111,7 @@ Phân hệ sở hữu: quy trình (đề nghị, duyệt, chính sách), bảng 
 |---|---|---|---|
 | G1 | Mục kiểm khoá kỳ do module đóng góp | `quy` | không — ngoại lệ, [ADR-0025](../../adr/ADR-0025-cong-kiem-ky-va-chuyen-tiep-duong-dan-cu.md) A |
 | G2 | **Cổng đọc chỉ-đọc dữ liệu lõi ngoài sổ cái**: nhập xuất / giá vốn, dòng bán, hoá đơn, sự việc theo docType (`ledger.query` chỉ đọc sổ) | `mua-hang`, `ban-hang`, `kho` | **có (3)** |
+| | *Đính chính 2026-11-04:* Core **đã có** `data.read-views` (schema `bizcity_read`, migration 0043 / 0044: danh mục + sổ) — G2 là **mở rộng** năng lực này, không phải cơ chế mới; `mua-hang` đọc `warehouses`, `payment_methods` dùng được khung nhìn sẵn có ngay <!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 — đính chính G2 --> | | |
 | G3 | **Slot mẫu in** cho web module — lõi web đang import mẫu in của cả 5 phân hệ ở `printCatalog.ts` (hiện có slot: `partner.detail.tab`, `product.detail.tab`, `document.detail.panel`, `dashboard.widget`, `ledger.drilldown.source`) | cả 5 | **có (5)** |
 | G4 | Chỗ đăng ký `LEDGER` / `GOODS` ở lõi, không gắn qua phân hệ (§2) | cả 5 | **có** — việc Nhóm Lõi, không đổi hợp đồng |
 | G5 | Thành phần dùng chung thay cho trang lõi web bị import: `DocumentDetail` (`quy`, `ban-hang`, `kho`), `PartnersPage` / `ProductsPage` (`mua-hang`), `TenantPage` (`tai-san`), `salesFilters` | 5 | **có** — qua `@bizcity/ui-kit` hoặc slot |
@@ -129,6 +130,16 @@ Phân hệ sở hữu: quy trình (đề nghị, duyệt, chính sách), bảng 
 2. **Tài sản:** (A) giữ là miền lõi — chuyển `apps/api/src/modules/assets` vào Kernel ở một đợt riêng, `tai-san` chỉ còn giao diện module; hay (B) thành module đầy đủ, cần G6 (docType khấu hao). Đề xuất **A**: khấu hao đã được AGENTS.md xếp là sự việc Kernel tự lập.
 3. **Tồn max / đề nghị chuyển kho** (`stock_levels`, `stock_sku_settings`, `stock_max_requests`, `transfer_requests`): ở lại `mua-hang` hay thuộc `kho`? Đây là việc của người đóng góp mua hàng (Nguyễn Văn Thủy) — hỏi trước khi quyết.
 4. Đồng ý thứ tự đề xuất ở trên (G4 / G3 / G5 trước đợt 2)?
+
+### Đã quyết (2026-11-04)
+<!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 — chủ dự án "đồng ý đề xuất" cho bốn câu ở trên -->
+
+Chủ dự án trả lời **"đồng ý đề xuất"**:
+
+1. **G2:** mở ADR → [ADR-0026](../../adr/ADR-0026-mo-rong-khung-nhin-doc-du-lieu-loi.md) (mở rộng `data.read-views`; thiết kế chờ duyệt).
+2. **Tài sản: phương án A** — miền lõi; `apps/api/src/modules/assets` vào Kernel ở đợt riêng (S013-14); `tai-san` chỉ còn giao diện module. G6 không làm.
+3. **Tồn max / đề nghị chuyển kho:** hỏi người đóng góp mua hàng (Nguyễn Văn Thủy) trước; chưa quyết chủ sở hữu.
+4. **Thứ tự G4 → G3 → G5** trước đợt 2 → chữ chốt [12-CHOT-G4-G3-G5](12-CHOT-G4-G3-G5.md) (S013-10..12).
 
 ## 9. Cách tái lập số đo
 

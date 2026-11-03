@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 96
+      "count": 101
     },
     {
       "key": "partial",
@@ -1156,14 +1156,8 @@
       "title": "Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu)",
       "priority": null,
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, dot-1-quy)",
-        "branch": "feat/phase-013-dot-1-quy",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-013 · Đợt 1 — chuyển quy sang modules/quy/ (ADR-0024; chữ chốt 10-DOT-1-QUY)"
-      },
+      "column": "todo",
+      "claim": null,
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -1232,6 +1226,67 @@
       "claim": null,
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 27
+    },
+    {
+      "id": "S013-10",
+      "phase": "PHASE-013",
+      "title": "G4: route dùng chung (LEDGER, GOODS) đăng ký ở lõi, route phân hệ trả về chủ (12-CHOT)",
+      "priority": null,
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ranh-gioi-phan-he)",
+        "branch": "feat/phase-013-g4-route-dung-chung",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-013 · G4 — route dùng chung LEDGER / GOODS đăng ký ở lõi, route phân hệ trả về chủ (chữ chốt …"
+      },
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S013-11",
+      "phase": "PHASE-013",
+      "title": "G3: mẫu in khai qua printTemplates của module web, lõi web không import mẫu in phân hệ",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S013-12",
+      "phase": "PHASE-013",
+      "title": "G5: web phân hệ không import trang lõi — openCoreScreen (danh sách đóng), bộ lọc dùng chung vào ui-kit",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S013-13",
+      "phase": "PHASE-013",
+      "title": "G2: khung nhìn bizcityread cho kho, giá vốn, dòng bán, hoá đơn, đầu chứng từ (ADR-0026)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S013-14",
+      "phase": "PHASE-013",
+      "title": "Tài sản vào Kernel (phương án A): apps/api/src/modules/assets → Kernel, tai-san chỉ còn giao diện module — chữ chốt riêng",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 32
     },
     {
       "id": "S014-1",
