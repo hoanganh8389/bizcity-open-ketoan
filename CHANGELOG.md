@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3 -->
+- **Trạm kiểm tra đầu vào** (PHASE-021 W3, [bizcity_intake_findings@1 §6](docs/contracts/BIZCITY-INTAKE-FINDINGS-v1.md)): màn Định khoản tự động (ACC14) có thêm thẻ **Cần sửa** (chứng từ cửa nạp đã từ chối), **Đã xử lý**, **Thử của tôi**. Bấm một mục: câu kết luận, lỗi theo lớp kèm Vì sao / Sửa ở nguồn / Bài học, sửa ô ngay tại bể (bắt buộc lý do, bản gốc giữ nguyên), Kiểm thử, **Nộp lại** qua đúng cửa nạp, lịch sử lần thử và so hai lần. Chủ đơn vị / kế toán trưởng chấp nhận được cảnh báo (không bao giờ lỗi chặn) kèm lý do; kế toán trưởng bỏ được mục. API mới: `POST /api/v1/intake/:id/patch | resubmit | accept | dismiss` (action `core.intake.*`, không mở cho AI); `GET /api/v1/intake` lọc `closed`, `closedDays`, `mine`; chi tiết kèm `current`. Chứng từ nộp lại từ bể mang `extra.intake`. Khoá cấu hình mới `bizcity.intake.accept_roles`.
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29 -->
 - **Commit Guard — `IN-GUARD-001`** (PHASE-024, R-GATE-8): Kiểm thử chứng từ (`POST /api/v1/intake/preflight`) trả thêm `guard` — dấu của phần cấu hình chứng từ dựa vào (mặt hàng trên dòng, chi nhánh, đối tượng, phiên bản chính sách kế toán, khoá kỳ). Nộp kèm dấu đó (header `X-Preflight-Guard` ở `POST /api/v1/documents`, trường `guard` ở `core.document.submit`): nếu cấu hình đã đổi, cửa nạp chạy lại tiền kiểm; còn lỗi chặn thì từ chối với `IN-GUARD-001` kèm lỗi cụ thể và giữ ở Trạm kiểm tra; vẫn đạt thì nhận. Không gửi dấu: như cũ. [Bài học](docs/huong-dan/loi-dau-vao/IN-GUARD-001.md).
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->

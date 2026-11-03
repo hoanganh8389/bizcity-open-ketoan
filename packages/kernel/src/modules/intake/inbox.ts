@@ -91,7 +91,8 @@ export async function closeBySource(trx: Db, tenantId: string, docKey: string, a
   return Number(r.numUpdatedRows ?? 0);
 }
 
-export interface InboxFilter { status?: string; docKey?: string; channel?: string; limit?: number; offset?: number }
+// [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: lọc mục đã đóng (closed, closedDays) và theo người lập (actor) cho thẻ Đã xử lý / Thử của tôi; danh sách kèm số bản vá, mã đã chấp nhận
+export interface InboxFilter { status?: string; docKey?: string; channel?: string; actor?: string; closed?: boolean; closedDays?: number; limit?: number; offset?: number }
 
 const LIST_COLS = ['id', 'received_at', 'last_seen_at', 'channel', 'source_system', 'actor', 'app_key', 'doc_key', 'doc_type', 'version', 'score', 'attempt_no', 'status', 'event_id', 'resolved_at'] as const;
 
@@ -100,8 +101,11 @@ export async function listInbox(trx: Db, tenantId: string, f: InboxFilter) {
   if (f.status) q = q.where('status', '=', f.status as never);
   if (f.docKey) q = q.where('doc_key', '=', f.docKey);
   if (f.channel) q = q.where('channel', '=', f.channel as never);
+  if (f.actor) q = q.where('actor', '=', f.actor);
+  if (f.closed) q = q.where('status', 'not in', ['open', 'trial']);
+  if (f.closedDays) q = q.where('resolved_at', '>=', new Date(Date.now() - f.closedDays * 86_400_000));
   const [rows, total] = await Promise.all([
-    q.select([...LIST_COLS, sql<string[]>`(SELECT coalesce(array_agg(DISTINCT x->>'code'), '{}') FROM jsonb_array_elements(findings) x)`.as('codes')])
+    q.select([...LIST_COLS, 'accepted_codes', sql<string[]>`(SELECT coalesce(array_agg(DISTINCT x->>'code'), '{}') FROM jsonb_array_elements(findings) x)`.as('codes'), sql<number>`jsonb_array_length(patches)`.as('patch_count')])
       .orderBy('last_seen_at', 'desc').limit(Math.min(f.limit ?? 50, 200)).offset(f.offset ?? 0).execute(),
     q.select(sql<number>`count(*)::int`.as('n')).executeTakeFirst(),
   ]);

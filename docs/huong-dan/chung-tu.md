@@ -14,13 +14,19 @@ Phiếu mua, bán, trả lại, chuyển kho, điều chỉnh kho lập ở **h�
 
 | Thẻ | Nội dung | Việc cần làm |
 |---|---|---|
+| **Cần sửa** | Chứng từ nơi phát sinh gửi sang nhưng **chưa vào được** (sai khuôn, lệch tổng, chi nhánh chưa có…) — giữ ở bể chờ kèm điểm và từng lỗi | Bấm dòng: đọc lỗi (Vì sao, Sửa ở nguồn, Bài học). Ưu tiên sửa ở nguồn rồi gửi lại — mục tự đóng. Nguồn không sửa được: sửa ô ngay tại đây (ghi lý do), **Kiểm thử**, rồi **Nộp lại** |
 | **Chờ định khoản** | Chứng từ chưa vào sổ, hoặc đã vào sổ nhưng nơi phát sinh vừa gửi phiên bản mới (ghi "chờ định khoản lại") | Tích **Chọn** rồi **Định khoản**, hoặc **Định khoản tất cả đang hiện** |
 | **Lỗi định khoản** | Chứng từ không định khoản được (thiếu tài khoản, lý do, loại thuế, kỳ đã khoá…), cột Lỗi ghi rõ | Sửa cấu hình rồi định khoản lại |
 | **Đã định khoản** | Chứng từ đã vào sổ | Tích chọn rồi **Định khoản lại** khi vừa sửa cấu hình hạch toán |
 | **Tất cả** | Mọi chứng từ và trạng thái | Bấm dòng để xem chứng từ, bút toán, nhật ký |
+| **Đã xử lý** | Mục bể chờ đã đóng trong 7 ngày: nguồn gửi lại đúng, nộp lại từ bể, chấp nhận cảnh báo, bỏ mục | Xem lại ai sửa gì, lý do |
+| **Thử của tôi** | Các lần **Kiểm thử** bạn đã lưu (giữ 7 ngày) | So lần trước / lần này |
 | **Nhật ký định khoản** | Mỗi lần nhận, định khoản, định khoản lại, lỗi, huỷ của từng chứng từ: thời gian, phiên bản, bút toán ghi, số bút toán đảo, tổng tiền, người làm | Lọc theo loại chứng từ, ngày, hành động để tra |
 
 Số trên thẻ là số chứng từ chờ / lỗi theo bộ lọc đang chọn.
+
+<!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: Trạm kiểm tra -->
+**Sửa tại bể.** Chứng từ sửa ở đây mang dấu "sửa tại bể" (lệch so với nơi phát sinh); bản gốc nơi phát sinh gửi vẫn được giữ nguyên để đối chiếu. Mỗi lần sửa phải ghi lý do và hiện ở **Lịch sử lần thử** (tích hai dòng để so: lỗi nào hết, lỗi nào mới). Lỗi đỏ (chặn) phải sửa; cảnh báo vàng thì chủ đơn vị / kế toán trưởng có thể **Chấp nhận cảnh báo** kèm lý do. Chứng từ do app ngoài gửi phải sửa ở app. **Bỏ mục** (kế toán trưởng) khi nơi phát sinh đã huỷ phiếu.
 
 ## Định khoản theo lô
 
