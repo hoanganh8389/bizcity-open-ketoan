@@ -15,6 +15,19 @@ product (sản phẩm cha)      items { item_id = P, kind = 'parent' }         "
 - `parent_item_id` điền từ `products.parent_sku` và **giữ khớp theo định danh** (trigger `products_items_sync_parent`): đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ; chặn tự trỏ, vòng, khác đơn vị (`items_parent_guard`). `parent_sku` còn là ảnh chụp cho MH26 tới S024-11.
 - Bảng thuật ngữ: *item_id (cha)* của chủ dự án = `parent_item_id`; *sku_id / variant_id* = `item_id`; *mã code* = `item_codes.code`. Không đổi tên cột.
 
+## 1b. Định khoản theo phân loại TẠI NGÀY chứng từ (S024-8, R-ITEM-7) <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 -->
+
+**Hiện trạng (đối chiếu code 2026-11-04):** `postingConfigRepository.loadPostingConfig(db, tenant, skus, { asOf })` chọn phiên bản **chính sách** theo `asOf` nhưng đọc nhóm hạch toán và thuế của mặt hàng từ `products` (giá trị HIỆN TẠI). `item_classification` (0065) có lịch sử theo ngày nhưng không nơi nào trong đường định khoản đọc nó.
+
+**Hệ quả hôm nay:** đổi nhóm hạch toán của mặt hàng rồi **định khoản lại** (repost) chứng từ cũ → ra theo nhóm MỚI; sổ đã ghi không đổi (chỉ thêm) nhưng bản định khoản lại không còn đúng với nhóm đang hiệu lực ngày chứng từ.
+
+**Thiết kế:**
+- `loadPostingConfig` có `asOf`: với mỗi mã hàng, tra định danh tại `asOf` (`bizcity_item_at(tenant, sku, asOf)`), lấy bản `item_classification` có `valid_from ≤ asOf < valid_to` → `postingGroupCode`, `taxOutCode`. Không có định danh / không có bản phân loại → rơi về `products` như cũ (mặt hàng nháp, mã mồ côi).
+- Không có `asOf` (đường xem trước / trạm kiểm) → như cũ.
+- Bản đầu của phân loại có `valid_from = 1970-01-01` = "từ đầu tới lần đổi đầu tiên"; chứng từ lùi ngày trước ngày tạo mặt hàng vẫn khớp bản đó.
+- Chỉ ĐỌC khác đi; không đổi lược đồ, không sửa dòng sổ. Ca chứng minh: [T026-G2](40-MASTER-CHECKLIST.md) và `apps/api/test/dinh-khoan-phan-loai-theo-ngay.test.ts` (đổi nhóm từ ngày D: chứng từ trước D định khoản theo nhóm cũ, sau D theo nhóm mới, định khoản lại chứng từ trước D vẫn nhóm cũ).
+- Rủi ro: K3 (đổi cách định khoản). Giảm bằng: hành vi chỉ khác khi mặt hàng ĐÃ có từ hai bản phân loại; mặt hàng chưa từng đổi nhóm có một bản từ 1970 = đúng như `products` hiện tại.
+
 ## 2. Mã có phiên bản cho mọi thực thể hạng A/B (D026-3)
 
 ```sql
