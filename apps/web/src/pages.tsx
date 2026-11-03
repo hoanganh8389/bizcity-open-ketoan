@@ -20,11 +20,14 @@ import { AccountingVouchersPage } from './features/ledger/AccountingVouchersPage
 import { AccountsPage } from './features/catalog/AccountsPage';
 import { BranchesPage } from './features/catalog/BranchesPage';
 import { WarehousesPage } from './features/catalog/WarehousesPage';
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — màn Sơ đồ tổ chức (DM16)
+import { OrgUnitsPage } from './features/catalog/OrgUnitsPage';
 import { UnitNamesPage } from './features/catalog/UnitNamesPage';
 import { PartnerGroupsPage, PartnersPage } from './features/catalog/PartnersPage';
 import { BankAccountsPage } from './features/catalog/BankAccountsPage';
 import { ContractSchedulesPage } from './features/catalog/ContractSchedulesPage';
-import { ItemClassesPage, ProductsPage } from './features/catalog/ProductsPage';
+import { ProductsPage } from './features/catalog/ProductsPage';
+import { NhomHangPage } from './features/catalog/NhomHangPage';
 import { PriceListsPage } from './features/catalog/PriceListsPage';
 import { VoucherRecurrencesPage, VoucherTemplatesPage } from './features/vouchers/TemplatesPage';
 import { OffsetPage } from './features/vouchers/OffsetPage';
@@ -85,6 +88,7 @@ export const pageRoutes = (
     <Route path="danh-muc/tai-khoan" element={<AccountsPage />} />
     <Route path="danh-muc/chi-nhanh" element={<BranchesPage />} />
     <Route path="danh-muc/kho" element={<WarehousesPage />} />
+    <Route path="danh-muc/so-do-to-chuc" element={<OrgUnitsPage />} />
     <Route path="danh-muc/don-vi-tinh" element={<UnitNamesPage />} />
     <Route path="danh-muc/doi-tuong" element={<PartnersPage />} />
     <Route path="danh-muc/khach-hang" element={<PartnersPage key="customer" fixedKind="customer" />} />
@@ -105,7 +109,7 @@ export const pageRoutes = (
     <Route path="he-thong/kiem-chuan" element={<ConformancePage />} />
     <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />
     <Route path="he-thong/ban-danh-gia" element={<ReviewBoardPage />} />
-    <Route path="danh-muc/phan-loai-hang" element={<ItemClassesPage />} />
+    <Route path="danh-muc/phan-loai-hang" element={<NhomHangPage />} />
     <Route path="danh-muc/bang-gia" element={<PriceListsPage />} />
     <Route path="bao-cao/lich-thanh-toan-hop-dong" element={<ContractSchedulesPage />} />
     <Route path="danh-muc/loai-thue" element={<TaxCodesPage />} />

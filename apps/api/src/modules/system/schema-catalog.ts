@@ -170,6 +170,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   app_installations: { group: 'platform', label: 'App đã kết nối', term: 'Ứng dụng kết nối', module: 'apps', purpose: 'App chạy riêng (ADR-0011 mức 2) đã kết nối với đơn vị: phạm vi quyền và sự kiện chủ đơn vị đồng ý, trạng thái bật / tắt, muối của bí mật webhook (bí mật không lưu).' },
   accounting_units: { group: 'platform', label: 'Đơn vị hạch toán', module: 'branches', purpose: 'Pháp nhân / đơn vị lập báo cáo; chi nhánh thuộc một đơn vị hạch toán.' },
   branches: { group: 'platform', label: 'Chi nhánh / cửa hàng', module: 'branches', purpose: 'Mỗi cửa hàng là một chi nhánh; code là mã cửa hàng dùng để đối chiếu với hệ thống bán hàng.' },
+  // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — khai bảng sơ đồ tổ chức (0062) (đóng góp)
+  org_units: { group: 'platform', label: 'Sơ đồ tổ chức', module: 'org-units', purpose: 'Cây Công ty → Miền → Chi nhánh → Tỉnh; chi nhánh gắn nút qua branches.org_unit_id; nút có purchase_branch_id là đơn vị mua hàng (kho tổng), từ đó tính branches.level / parent_id.' },
   warehouses: { group: 'platform', label: 'Kho của chi nhánh', module: 'warehouses', purpose: 'Danh mục kho (DM12): mỗi kho thuộc một chi nhánh; mã kho đối chiếu dòng nhập xuất; kho mặc định nhận dòng không ghi mã kho.' },
   audit_logs: { group: 'platform', label: 'Nhật ký thao tác', module: 'access', purpose: 'Ai làm gì, lúc nào, dữ liệu trước / sau.' },
   mcp_confirm_tokens: { group: 'platform', label: 'Xác nhận thao tác của trợ lý AI', term: 'MCP xác nhận', module: 'system', purpose: 'Trợ lý AI (MCP) muốn ghi gì cũng phải xem trước rồi người dùng đồng ý: mỗi lần xem trước một token dùng một lần, 15 phút, gắn công cụ, người gọi, tham số.' },

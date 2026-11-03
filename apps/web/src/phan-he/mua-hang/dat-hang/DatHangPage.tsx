@@ -1,5 +1,5 @@
 /**
- * PHÂN TÍCH ĐẶT HÀNG (MH02) — theo công thức của chi nhánh cha (MH18): mỗi mã một dòng, nhóm theo NHÃN + NCC
+ * PHÂN TÍCH ĐẶT HÀNG (MH02) — theo công thức của chi nhánh (MH18): mỗi mã một dòng, nhóm theo NHÃN + NCC
  * (dòng tiêu đề kiểu "Nutricare │ NC100625 – Công ty …"), các cột tồn tô màu như bảng phân tích quen dùng:
  *   SL cần nhập (cam) · BH tháng liền kề (tham khảo) · Doanh số N ngày · Tồn max kho · Tồn kho (vàng) · Hàng đi đường ·
  *   SL mua chưa nhập kho (xanh: đơn đặt đang mở của MỌI NCC, trừ để không đặt trùng) · Tồn max shop · Tồn shop.
@@ -19,6 +19,7 @@ import { purchaseApi, today, useMuaHang, useNames, type SupplierRow } from '../d
 import { PhieuMuaForm } from '../chung-tu/PhieuMuaForm';
 import { factsText, fold, num, qtyFmt, stockApi, stockSnapshot, useHierarchy, type AnalysisRow } from '../ton-max/api';
 import { ChonChiNhanhCha, ChuaPhanCap, KhoiSo } from '../ton-max/chung';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { roundPrice } from '@/lib/format';
 import '../mua-hang.css';
 
@@ -33,6 +34,9 @@ export function DatHangPage() {
   const [params] = useSearchParams();
   const [search, setSearch] = useState(params.get('ncc') ?? '');
   const [quick, setQuick] = useState<Quick>('need');
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — lọc theo nhóm hàng (tích nhóm cha = cả nhánh con)
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [buy, setBuy] = useState<Record<string, number>>({});
   const [why, setWhy] = useState<AnalysisRow | null>(null);
@@ -55,8 +59,9 @@ export function DatHangPage() {
   const coverOf = (r: AnalysisRow) => { const d = perDay(r); return d > 0 ? (r.tonKho + r.tonShop + r.diDuongShop) / d : null; };
   const rows = useMemo(() => {
     const f = fold(search.trim());
-    const list = data.filter((r) => (!f || fold(`${r.sku} ${r.name} ${r.barcode} ${r.partnerCode} ${r.partnerName} ${r.brandName} ${r.nccSku} ${(r.members ?? []).map((m) => `${m.sku} ${m.name}`).join(' ')}`).includes(f))
-      && (quick === '' || (quick === 'need' ? r.need > 0 : quick === 'over' ? r.need < 0 : quick === 'pending' ? r.dangDat > 0 : !r.partnerCode)));
+    const list = ln.loc(data).filter((r) => (!f || fold(`${r.sku} ${r.name} ${r.barcode} ${r.partnerCode} ${r.partnerName} ${r.brandName} ${r.nccSku} ${(r.members ?? []).map((m) => `${m.sku} ${m.name}`).join(' ')}`).includes(f))
+      // [2026-11-03 02:10 PM Nguyễn Văn Thủy] SDTC — đang gõ tìm thì tìm trên MỌI mã (kể cả mã đủ hàng, cần nhập = 0), không bị bộ lọc nhanh che
+      && (Boolean(f) || quick === '' || (quick === 'need' ? r.need > 0 : quick === 'over' ? r.need < 0 : quick === 'pending' ? r.dangDat > 0 : !r.partnerCode)));
     // Dòng tiêu đề nhóm: nhãn + NCC (giữ thứ tự máy chủ đã sắp).
     const out: Row[] = [];
     let last = '';
@@ -66,7 +71,7 @@ export function DatHangPage() {
       out.push({ ...r, _key: r.sku });
     }
     return out;
-  }, [data, search, quick]);
+  }, [data, search, quick, ln]);
   const qtyOf = (r: AnalysisRow) => buy[r.sku] ?? r.suggest;
   /** Đủ bán bao nhiêu ngày NẾU đặt đúng SL ở cột SL đặt: hàng hiện có + đi đường về kho + đơn chưa về + SL đặt. */
   const afterOf = (r: AnalysisRow) => { const d = perDay(r); return d > 0 ? (r.tonKho + r.tonShop + r.diDuongShop + r.diDuongKho + r.dangDat + Math.max(0, qtyOf(r))) / d : null; };
@@ -91,8 +96,8 @@ export function DatHangPage() {
     { key: 'banThangTruoc', header: 'BH tháng liền kề', type: 'qty', width: 82, className: 'tm-ref', title: 'Bán tháng trước của mọi shop — tham khảo' },
     { key: 'banShop', header: `Doanh số ${banDays} ngày`, type: 'qty', width: 82, className: 'tm-ref', title: `Bán ${banDays} ngày gần nhất của mọi shop (phần dự phòng)` },
     { key: 'maxKho', header: 'Tồn max kho', title: 'Tổng tồn max của các kho chọn ở cột "Lấy max" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-ref' },
-    { key: 'tonKho', header: 'Tồn kho', title: 'Tồn hiện tại của các kho chi nhánh cha chọn ở cột "Tính tồn" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-stock', showZero: true },
-    { key: 'diDuong', header: 'Hàng đang đi đường', title: 'Đã xuất nhưng nơi nhận chưa xác nhận: về kho chi nhánh cha + xuống shop (rê chuột lên ô xem tách)', type: 'qty', width: 82, value: (r) => r.diDuongKho + r.diDuongShop, render: (r) => <span title={`Về kho: ${qtyFmt(r.diDuongKho)} · xuống shop: ${qtyFmt(r.diDuongShop)}`}>{qtyFmt(r.diDuongKho + r.diDuongShop) || ''}</span> },
+    { key: 'tonKho', header: 'Tồn kho', title: 'Tồn hiện tại của các kho chi nhánh chọn ở cột "Tính tồn" của công thức (MH18)', type: 'qty', width: 80, className: 'tm-stock', showZero: true },
+    { key: 'diDuong', header: 'Hàng đang đi đường', title: 'Đã xuất nhưng nơi nhận chưa xác nhận: về kho chi nhánh + xuống shop (rê chuột lên ô xem tách)', type: 'qty', width: 82, value: (r) => r.diDuongKho + r.diDuongShop, render: (r) => <span title={`Về kho: ${qtyFmt(r.diDuongKho)} · xuống shop: ${qtyFmt(r.diDuongShop)}`}>{qtyFmt(r.diDuongKho + r.diDuongShop) || ''}</span> },
     { key: 'dangDat', header: 'SL mua chưa nhập kho', title: 'Phần chưa về của mọi đơn đặt đang mở, của mọi NCC — trừ đi để không đặt trùng (rê chuột lên ô xem từng đơn)', type: 'qty', width: 86, className: 'tm-pend', render: (r) => (r.dangDat ? <span title={r.orders.map((o) => `${o.docNo} (${o.partnerCode}, ${o.date}) còn ${qtyFmt(o.remaining)}`).join('\n')}>{qtyFmt(r.dangDat)}</span> : '') },
     { key: 'maxShop', header: 'Tồn max shop', title: 'Tổng tồn max của mọi shop con tính vào công thức (rê chuột lên ô xem số shop có max / đang dưới max)', type: 'qty', width: 80, className: 'tm-stock', render: (r) => <span title={`${r.shopsWithMax} shop có max, ${r.shopsBelowMax} shop đang dưới max`}>{qtyFmt(r.maxShop)}</span> },
     { key: 'tonShop', header: 'Tồn shop', title: 'Tổng tồn hiện tại của mọi shop con tính vào công thức', type: 'qty', width: 80 },
@@ -159,18 +164,19 @@ export function DatHangPage() {
 
   return (
     <>
-      <PageHeader title="Phân tích đặt hàng" code="MH02" helpKey="mua-hang-dat-hang" subtitle="SL cần nhập từng mã theo công thức của chi nhánh cha: tồn max kho + shop, tồn, đi đường, đơn đang đặt, doanh số dự phòng. Chọn mã → lập đơn đặt cho từng NCC" />
+      <PageHeader title="Phân tích đặt hàng" code="MH02" helpKey="mua-hang-dat-hang" subtitle="SL cần nhập từng mã theo công thức của chi nhánh: tồn max kho + shop, tồn, đi đường, đơn đang đặt, doanh số dự phòng. Chọn mã → lập đơn đặt cho từng NCC" />
       <div className="card">
         <ChuaPhanCap branches={h.data?.branches} />
         <div className="tm-bar">
-          <ChonChiNhanhCha value={parent} onChange={(v) => { setParent(v); setSel({}); setBuy({}); }} />
-          <input className="input" type="search" placeholder="Tìm mã, tên, mã vạch, NCC… ví dụ: bim 400g" value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, minWidth: 260 }} />
+          <ChonChiNhanhCha multiple value={parent} onChange={(v) => { setParent(v); setSel({}); setBuy({}); }} />
+          <ChonNhomHang value={nhom} onChange={setNhom} />
+          <input className="input" type="search" placeholder="Tìm mã, tên, mã vạch, NCC…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, minWidth: 260 }} />
           <Link className="btn btn-sm" to="/mua-hang/cong-thuc">Công thức (MH18)</Link>
           <button className="btn btn-sm" onClick={() => exportRef.current?.()}><FileSpreadsheet size={14} /> Xuất Excel</button>
-          <button className="btn btn-primary" disabled={!chosen.length || busy} onClick={() => void makeOrders()}><ShoppingCart size={15} /> Lập đơn đặt ({chosen.length} mã{money ? ` · ${Math.round(money).toLocaleString('vi-VN')}đ` : ''})</button>
+          <button className="btn btn-primary" disabled={!chosen.length || busy || parent.includes(',')} title={parent.includes(',') ? 'Đang xem gộp nhiều chi nhánh — chọn một chi nhánh để lập đơn đặt (hàng về kho của chi nhánh đó)' : undefined} onClick={() => void makeOrders()}><ShoppingCart size={15} /> Lập đơn đặt ({chosen.length} mã{money ? ` · ${Math.round(money).toLocaleString('vi-VN')}đ` : ''})</button>
         </div>
         <div className="tm-stats">
-          <KhoiSo label="Tổng mã đang phân tích" value={stats.all.toLocaleString('vi-VN')} active={quick === ''} onClick={() => setQuick('')} hint="Mọi mã có max, tồn, bán, hàng đi đường hoặc đơn đang về trong chi nhánh cha — bấm để hiện tất cả" />
+          <KhoiSo label="Tổng mã đang phân tích" value={stats.all.toLocaleString('vi-VN')} active={quick === ''} onClick={() => setQuick('')} hint="Mọi mã có max, tồn, bán, hàng đi đường hoặc đơn đang về trong chi nhánh — bấm để hiện tất cả" />
           <KhoiSo label="Mã cần nhập" value={stats.need.toLocaleString('vi-VN')} tone="orange" active={quick === 'need'} onClick={() => setQuick('need')} hint="Mã có SL cần nhập dương (theo công thức MH18) — bấm để lọc" />
           <KhoiSo label="Mã đang dư" value={stats.over.toLocaleString('vi-VN')} tone="yellow" active={quick === 'over'} onClick={() => setQuick('over')} hint="Mã có SL cần nhập âm: hàng hiện có nhiều hơn mức cần — không đặt thêm; bấm để lọc" />
           <KhoiSo label="Đang có đơn chưa về" value={stats.pending.toLocaleString('vi-VN')} tone="blue" active={quick === 'pending'} onClick={() => setQuick('pending')} hint="Mã đang có đơn đặt chưa về hết (SL mua chưa nhập kho > 0) — bấm để lọc" />
@@ -183,7 +189,7 @@ export function DatHangPage() {
             exportTitle={`Phân tích đặt hàng ${q.data?.parent.name ?? parent} ngày ${today()}`}
             rowKind={(r) => (r._group ? 'group' : 'data')}
             groupLabel={(r) => <span className="tm-group-label"><span className="brand">{r.brandName || 'Chưa có nhãn'}</span><span className="ncc">{r.partnerCode ? `${r.partnerCode} - ${r.partnerName || names.partnerName(r.partnerCode)}` : 'Chưa rõ nhà cung cấp'}</span>{!r.partnerCode && <span className="muted" style={{ fontSize: 11.5, fontWeight: 400, marginLeft: 10 }}>— mã chưa nhập lần nào và chưa NCC nào khai bán: vào hồ sơ NCC → thẻ Mặt hàng & giá mua → Thêm mã (hoặc Nhập dữ liệu khởi đầu MH20, thẻ giá mua)</span>}{r.partnerCode && <NccNo s={supOf.get(r.partnerCode)} />}</span>}
-            emptyText={parent ? (quick === 'need' ? 'Không có mã nào cần nhập theo công thức hiện tại.' : 'Không có mã nào.') : 'Chọn chi nhánh cha.'} /></div>
+            emptyText={!parent ? 'Chọn chi nhánh.' : search.trim() ? 'Không thấy mã khớp: mã chưa có tồn max, tồn, bán hay đơn đặt ở chi nhánh này.' : quick === 'need' ? 'Không có mã nào cần nhập theo công thức hiện tại.' : 'Không có mã nào.'} /></div>
         )}
       </div>
       {why && <Modal title={`Vì sao ${why.sku} cần nhập ${qtyFmt(why.need)} ${why.baseUnit}`} onClose={() => setWhy(null)} footer={<button className="btn" onClick={() => setWhy(null)}>Đóng</button>}>

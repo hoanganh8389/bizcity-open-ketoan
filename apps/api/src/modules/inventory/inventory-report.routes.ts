@@ -1,5 +1,6 @@
 // @bizcity-layer D modules/kho
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — tách khỏi inventory.routes.ts (Kernel): route báo cáo kho là module kho; Kernel không import báo cáo (chuẩn bị packages/kernel, PHASES 2.3)
+// [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — nhập xuất tồn: lọc ?groups= (nhóm hàng, gồm nhóm con), gom theo nhóm cấp 1 / 2 / 3 (đóng góp)
 /**
  * Báo cáo kho (module kho, đọc inventory_movements qua inventory-report.service.ts):
  *   GET  /api/v1/inventory/stock-movement báo cáo nhập xuất tồn theo chi nhánh, mặt hàng
@@ -27,7 +28,7 @@ export async function inventoryReportRoutes(app: FastifyInstance): Promise<void>
 
   r.get('/api/v1/inventory/stock-movement', {
     preHandler: requirePermission('reports:read'),
-    schema: { tags, summary: 'Báo cáo nhập xuất tồn', querystring: z.object({ from: date, to: date, branchCodes, warehouseCodes: branchCodes, search: z.string().optional() }) },
+    schema: { tags, summary: 'Báo cáo nhập xuất tồn', querystring: z.object({ from: date, to: date, branchCodes, warehouseCodes: branchCodes, search: z.string().optional(), groups: branchCodes }) },
     handler: async (req) => ok(await inventoryReportService.stockMovement(authOf(req), req.query)),
   });
 
@@ -35,7 +36,7 @@ export async function inventoryReportRoutes(app: FastifyInstance): Promise<void>
     preHandler: requirePermission('reports:read'),
     schema: {
       tags, summary: 'Nhập xuất tồn, mua hàng, giá vốn gom theo phân loại hàng, chi nhánh, nhà cung cấp',
-      querystring: z.object({ from: date, to: date, branchCodes, warehouseCodes: branchCodes, search: z.string().optional(), groupBy: z.enum(STOCK_GROUPS).default('itemGroup') }),
+      querystring: z.object({ from: date, to: date, branchCodes, warehouseCodes: branchCodes, search: z.string().optional(), groupBy: z.enum(STOCK_GROUPS).default('itemGroup'), groups: branchCodes }),
     },
     handler: async (req) => ok(await inventoryReportService.stockSummary(authOf(req), req.query)),
   });

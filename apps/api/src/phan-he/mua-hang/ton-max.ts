@@ -45,8 +45,15 @@ export const hierarchySaveSchema = z.object({
   items: z.array(z.object({ code: z.string().trim().min(1), level: z.enum(['', 'branch', 'shop']), parentCode: z.string().trim().nullable().optional() })).min(1).max(5000),
 });
 
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đã có đơn vị mua hàng theo sơ đồ tổ chức (0062) thì phân cấp tính từ cây: chặn lưu tay / tự xếp theo mã
+async function assertNoOrgChart(trx: Db, tenantId: string) {
+  const r = await sql<{ n: string }>`SELECT count(*)::text AS n FROM org_units WHERE tenant_id = ${tenantId} AND purchase_branch_id IS NOT NULL AND is_active`.execute(trx);
+  if (Number(r.rows[0]?.n ?? 0) > 0) throw Errors.validation('Phân cấp chi nhánh đang tính từ sơ đồ tổ chức — đổi ở Sơ đồ tổ chức (DM16) hoặc Đơn vị mua hàng (MH15)');
+}
+
 /** Lưu phân cấp: chỉ 2 cấp — cha phải là chi nhánh cha, chi nhánh cha không có cha, shop phải có cha. */
 export async function saveHierarchy(trx: Db, tenantId: string, items: z.infer<typeof hierarchySaveSchema>['items']) {
+  await assertNoOrgChart(trx, tenantId);
   const all = await trx.selectFrom('branches').select(['id', 'code', 'level']).where('tenant_id', '=', tenantId).execute();
   const byCode = new Map(all.map((b) => [b.code, b]));
   const level = new Map(all.map((b) => [b.code, b.level]));
@@ -78,6 +85,7 @@ export async function saveHierarchy(trx: Db, tenantId: string, items: z.infer<ty
 
 /** Tự xếp theo mã: "xx000" = chi nhánh cha, mã 5 số cùng 2 số đầu = shop của nó. overwrite = xếp lại cả chi nhánh đã xếp. */
 export async function autoArrange(trx: Db, tenantId: string, overwrite = false) {
+  await assertNoOrgChart(trx, tenantId);
   const all = await trx.selectFrom('branches').select(['id', 'code', 'level', 'parent_id']).where('tenant_id', '=', tenantId).execute();
   const parents = new Map<string, string>();
   const items: { code: string; level: 'branch' | 'shop'; parentCode?: string }[] = [];
@@ -97,7 +105,7 @@ export async function treeOf(trx: Db, tenantId: string, parentCode: string) {
   const { branches } = await hierarchy(trx, tenantId);
   const parent = branches.find((b) => b.code === parentCode);
   if (!parent) throw Errors.notFound(`chi nhánh ${parentCode}`);
-  if (parent.level !== 'branch') throw Errors.validation(`${parentCode} chưa là chi nhánh cha — xếp ở màn Phân cấp chi nhánh – shop (MH15)`);
+  if (parent.level !== 'branch') throw Errors.validation(`${parentCode} chưa là kho tổng của đơn vị mua hàng nào — chọn ở Đơn vị mua hàng (MH15)`);
   const shops = branches.filter((b) => b.parentCode === parentCode && b.level === 'shop');
   return { parent, shops, all: [parent, ...shops] };
 }
@@ -454,6 +462,37 @@ export async function orderAnalysis(trx: Db, tenantId: string, parentCode: strin
   }
   rows.sort((a, b) => (a.brandName || '~').localeCompare(b.brandName || '~', 'vi') || (a.partnerCode || '~').localeCompare(b.partnerCode || '~') || a.sku.localeCompare(b.sku));
   return { rows, formula: cfg, parent: { code: tree.parent.code, name: tree.parent.name }, shops: fShops.length, asOf };
+}
+
+// [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — phân tích đặt hàng gộp nhiều chi nhánh (tích nhiều nút trên cây sơ đồ tổ chức)
+/**
+ * Phân tích nhiều chi nhánh cùng lúc: mỗi chi nhánh tính theo công thức riêng của nó, rồi cộng theo mã (SL cần nhập, tồn, max,
+ * bán, đi đường, đơn đang đặt, SL gợi ý đã làm tròn thùng của từng chi nhánh). Một chi nhánh thì như orderAnalysis.
+ */
+export async function orderAnalysisMany(trx: Db, tenantId: string, parentCodes: string[], f: { asOf?: string; sku?: string } = {}) {
+  const codes = [...new Set(parentCodes.map((c) => c.trim()).filter(Boolean))];
+  if (codes.length <= 1) return orderAnalysis(trx, tenantId, codes[0] ?? '', f);
+  const parts = [];
+  for (const c of codes) parts.push(await orderAnalysis(trx, tenantId, c, f));
+  const NUM = ['need', 'suggest', 'maxKho', 'minKho', 'tonKho', 'diDuongKho', 'diDuongShop', 'maxShop', 'tonShop', 'banShop', 'banThangTruoc', 'dangDat', 'shopsBelowMax', 'shopsWithMax'] as const;
+  const MNUM = ['tonKho', 'tonShop', 'diDuong', 'dangDat', 'banShop', 'banThangTruoc', 'maxKho', 'maxShop'] as const;
+  const bySku = new Map<string, AnalysisRow>();
+  for (const part of parts) for (const r of part.rows) {
+    const cur = bySku.get(r.sku);
+    if (!cur) { bySku.set(r.sku, { ...r, parts: r.parts.map((x) => ({ ...x })), members: r.members.map((m) => ({ ...m })), orders: [...r.orders] }); continue; }
+    for (const k of NUM) (cur as unknown as Record<string, number>)[k] = r3((cur[k] as number) + (r[k] as number));
+    for (const x of r.parts) { const y = cur.parts.find((z) => z.key === x.key); if (y) y.signed = r3(y.signed + x.signed); else cur.parts.push({ ...x }); }
+    for (const m of r.members) { const y = cur.members.find((z) => z.sku === m.sku); if (y) for (const k of MNUM) y[k] = r3(y[k] + m[k]); else cur.members.push({ ...m }); }
+    for (const o of r.orders) if (!cur.orders.some((z) => z.docNo === o.docNo && z.sku === o.sku)) cur.orders.push(o);
+    if (!cur.partnerCode && r.partnerCode) Object.assign(cur, { partnerCode: r.partnerCode, partnerName: r.partnerName, partnerSource: r.partnerSource, nccSku: r.nccSku, nccName: r.nccName, nccNote: r.nccNote, price: r.price, packPrice: r.packPrice });
+    cur.nccCount = Math.max(cur.nccCount, r.nccCount);
+  }
+  const rows = [...bySku.values()].map((r) => ({ ...r, options: buyOptions(r.need, r.pack) }));
+  rows.sort((a, b) => (a.brandName || '~').localeCompare(b.brandName || '~', 'vi') || (a.partnerCode || '~').localeCompare(b.partnerCode || '~') || a.sku.localeCompare(b.sku));
+  return {
+    rows, formula: parts[0]!.formula, asOf: parts[0]!.asOf, shops: parts.reduce((t, x) => t + x.shops, 0),
+    parent: { code: codes.join(','), name: parts.map((x) => x.parent.name).join(', ') },
+  };
 }
 
 /* ------------------------------------------------------------------ bảng tồn max (theo shop / theo mã) */

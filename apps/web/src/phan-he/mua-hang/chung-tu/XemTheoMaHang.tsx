@@ -31,7 +31,8 @@ const LINE_TYPE: Record<string, string> = { buy: 'Hàng mua', gift_seller: 'KM n
 interface Row { key: string; doc: StoredDoc; l: LineCalc; dir: Dir; base: number; baseUnit: string; total: number; grossEx: number; disc: number }
 interface SkuRow { key: string; sku: string; name: string; baseUnit: string; ordered: number; inQty: number; outQty: number; giftQty: number; inGross: number; inDisc: number; inValue: number; outValue: number; tax: number; docs: Set<string> }
 
-export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }: { docs: StoredDoc[]; data: MhData; mode: 'dong' | 'ma'; partnerName: (c: string) => string; khoText: (d: StoredDoc) => string; onOpen: (d: StoredDoc) => void }) {
+// [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — locDong: chỉ giữ dòng hàng thuộc nhóm hàng đã chọn (tính phiếu đủ dòng rồi mới lọc, chiết khấu phiếu không đổi)
+export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen, locDong }: { docs: StoredDoc[]; data: MhData; mode: 'dong' | 'ma'; partnerName: (c: string) => string; khoText: (d: StoredDoc) => string; onOpen: (d: StoredDoc) => void; locDong?: <T extends { sku: string }>(rows: T[]) => T[] }) {
   const branchName = useNames().branchName;
   const skus = useMemo(() => [...new Set(docs.flatMap((d) => d.lines.map((l) => l.sku)).filter(Boolean))].sort(), [docs]);
   const uq = useQuery({ queryKey: ['mua-hang', 'units', 'xem-ma', skus.join(',')], enabled: skus.length > 0, staleTime: 60_000, queryFn: () => api.post<Record<string, ProductUnit[]>>(`${P}/units`, { skus }) });
@@ -58,8 +59,8 @@ export function XemTheoMaHang({ docs, data, mode, partnerName, khoText, onOpen }
         out.push({ key: `${d.id}-${i}`, doc: d, l, dir, base: Math.round(l.qty * r * 10000) / 10000, baseUnit: us.find((u) => u.ratio === 1)?.unit ?? l.unit, total: l.beforeTax + l.tax, grossEx: Math.max(grossEx, l.beforeTax), disc: Math.max(0, grossEx - l.beforeTax) });
       });
     }
-    return out;
-  }, [docs, data.policies, units]);
+    return locDong ? locDong(out.map((r) => ({ ...r, sku: r.l.sku }))) : out;
+  }, [docs, data.policies, units, locDong]);
   if (skus.length && !units) return <Loading />;
 
   if (mode === 'dong') {

@@ -14,6 +14,9 @@ import { useLocation } from 'react-router-dom';
 import { FileSpreadsheet, Plus, Printer, Search, Sparkles, X } from 'lucide-react';
 import { useBranches } from './filters';
 import { FilterPanelCtx, useFilterPanel, type FilterPanelContext } from './filterPanel';
+// [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — bảng lọc chi nhánh / kho thêm thẻ Cây theo sơ đồ tổ chức (tích cha tích hết con, tới kho)
+import { CayDonVi } from './CayDonVi';
+import { useOrgTree } from '@/lib/orgUnits';
 
 /**
  * Bề rộng bảng lọc (nhớ theo máy): mặc định 240px để nhường chỗ cho bảng số liệu; kéo rộng tới 600px,
@@ -131,6 +134,8 @@ const savePresets = (list: BranchPreset[]) => { try { localStorage.setItem(PRESE
 
 /** Chi nhánh đã tích của từng màn (nhớ theo máy, mỗi màn một chỗ). */
 const pickedKey = (pathname: string) => `ketoan.cn.chon:${pathname}`;
+/** Mã kho đã tích của từng màn. */
+const whKey = (pathname: string) => `ketoan.kho.chon:${pathname}`;
 
 /**
  * Chi nhánh: value là các mã cách nhau dấu phẩy; rỗng = tất cả (mọi ô đều tích); BRANCH_NONE = không chi nhánh nào.
@@ -323,18 +328,65 @@ export function PanelBranchList({ value, onChange, warehouses }: { value: string
   whValueRef.current = whValue;
   const whChange = warehouses?.onChange;
   useEffect(() => { setWhDraft(whValue); }, [whValue]);
+  // [2026-11-03 02:40 PM Nguyễn Văn Thủy] SDTC — nhớ mã kho đã tích theo màn (như chi nhánh): mở lại màn thì tích lại đúng kho lần trước
+  const { pathname } = useLocation();
+  const whRestored = useRef(false);
+  useLayoutEffect(() => {
+    if (whRestored.current || !whChange) return;
+    whRestored.current = true;
+    if (whValue) return;
+    try { const v = localStorage.getItem(whKey(pathname)); if (v) { setWhDraft(v); whChange(v); } } catch { /* bỏ qua */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!whRestored.current || !whChange) return;
+    try { if (whDraft) localStorage.setItem(whKey(pathname), whDraft); else localStorage.removeItem(whKey(pathname)); } catch { /* bỏ qua */ }
+  }, [whDraft, pathname, whChange]);
   useEffect(() => (whChange ? panel?.register(() => { if (whRef.current !== whValueRef.current) whChange(whRef.current); }) : undefined), [panel, whChange]);
+  // [2026-11-03 02:30 PM Nguyễn Văn Thủy] SDTC — mở màn luôn ở thẻ Danh sách; tích ở thẻ Cây cũng được nhớ theo màn như thẻ Danh sách
+  // Thẻ Danh sách | Cây (như bộ chọn chi nhánh / kho quen dùng). Mở màn luôn ở Danh sách, cần mới chuyển sang Cây.
+  const [tab, setTab] = useState<'list' | 'tree'>('list');
+  const pickTab = (t: 'list' | 'tree') => setTab(t);
+  // Thẻ Danh sách tự nhớ chi nhánh đã tích (BranchCheckList); đang ở thẻ Cây thì nhớ ở đây, cùng một chỗ lưu.
+  useEffect(() => {
+    if (tab !== 'tree' || draft === BRANCH_NONE) return;
+    try { if (draft) localStorage.setItem(pickedKey(pathname), draft); else localStorage.removeItem(pickedKey(pathname)); } catch { /* bỏ qua */ }
+  }, [tab, draft, pathname]);
   return (
     <>
-      <span className="muted" style={{ fontSize: 12, marginTop: 2 }}>Chi nhánh</span>
-      <BranchCheckList value={draft} onChange={setDraft} onRestore={(v) => { setDraft(v); onChange(v); }} />
-      {warehouses && (
+      <div className="rp-tabs" role="tablist">
+        <button type="button" role="tab" className={tab === 'list' ? 'on' : ''} onClick={() => pickTab('list')} title="Danh sách chi nhánh, mã kho">Danh sách</button>
+        <button type="button" role="tab" className={tab === 'tree' ? 'on' : ''} onClick={() => pickTab('tree')} title="Cây theo sơ đồ tổ chức: Công ty → Miền → Chi nhánh → Tỉnh → điểm kinh doanh → kho">Cây</button>
+      </div>
+      {tab === 'tree' ? <PanelBranchTree value={draft} onChange={setDraft} warehouses={warehouses ? { value: whDraft, onChange: setWhDraft } : undefined} /> : (
         <>
-          <span className="muted" style={{ fontSize: 12, marginTop: 4 }}>Mã kho</span>
-          <WarehouseCheckList branches={draft} value={whDraft} onChange={setWhDraft} />
+          <span className="muted" style={{ fontSize: 12, marginTop: 2 }}>Chi nhánh</span>
+          <BranchCheckList value={draft} onChange={setDraft} onRestore={(v) => { setDraft(v); onChange(v); }} />
+          {warehouses && (
+            <>
+              <span className="muted" style={{ fontSize: 12, marginTop: 4 }}>Mã kho</span>
+              <WarehouseCheckList branches={draft} value={whDraft} onChange={setWhDraft} />
+            </>
+          )}
         </>
       )}
     </>
+  );
+}
+
+/**
+ * Thẻ Cây của bảng lọc: cùng giá trị với thẻ Danh sách (rỗng = mọi chi nhánh, BRANCH_NONE = không chi nhánh nào; mã kho rỗng = mọi kho).
+ * Chi nhánh chưa gắn sơ đồ tổ chức không có trong cây: chọn "Chọn tất" ở cây = mọi chi nhánh đã gắn.
+ */
+function PanelBranchTree({ value, onChange, warehouses }: { value: string; onChange: (v: string) => void; warehouses?: { value: string; onChange: (v: string) => void } }) {
+  const tree = useOrgTree();
+  const { data: all = [] } = useBranches();
+  const picked = value === BRANCH_NONE ? [] : value ? value.split(',') : all.map((b) => b.code);
+  const pickedWh = warehouses?.value ? warehouses.value.split(',') : [];
+  return (
+    <CayDonVi tree={tree.data} showBranches showWarehouses={Boolean(warehouses)} checkable height={360} openLevel={2}
+      picked={picked} pickedWarehouses={pickedWh}
+      onPick={(b, w) => { onChange(b.length === 0 ? BRANCH_NONE : b.length === all.length ? '' : all.map((x) => x.code).filter((c) => b.includes(c)).join(',')); warehouses?.onChange(w.join(',')); }} />
   );
 }
 

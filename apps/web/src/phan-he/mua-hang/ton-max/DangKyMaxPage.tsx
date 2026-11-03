@@ -1,5 +1,5 @@
 /**
- * PHIẾU ĐĂNG KÝ TỒN MAX (MH17) — 2 lần / tháng shop đăng ký lại max; chi nhánh cha đăng ký max cho hàng mới.
+ * PHIẾU ĐĂNG KÝ TỒN MAX (MH17) — 2 lần / tháng shop đăng ký lại max; chi nhánh đăng ký max cho hàng mới.
  *   Mã có sẵn: chọn shop → phần mềm điền sẵn mọi mã của shop (tồn, bán / ngày, max hiện tại, max gợi ý) → sửa max đề nghị → gửi duyệt.
  *     Duyệt = ghi max (Tồn max MH16). Lệch nhỏ (≤ % cài ở Công thức) thì duyệt tự động. POS gửi phiếu qua API cùng khuôn.
  *   Hàng mới (NCC gửi mẫu, mã chưa có): bảng mặt hàng × shop, mỗi shop điền max; duyệt khi chưa có mã thì chờ — có mã (tạo ở
@@ -146,9 +146,9 @@ function PhieuDangKy({ parent, init, branches, onClose }: { parent: string; init
         <div className="full row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           {kind === 'existing' ? (
             <label className="tm-parent"><span>Shop</span><select className="select input" disabled={Boolean(req)} value={br} onChange={(e) => { setBranch(e.target.value); setItems(null); }}>
-              <option value="">— chọn shop —</option><option value={parent}>★ Kho chi nhánh cha {parent}</option>
+              <option value="">— chọn shop —</option><option value={parent}>★ Kho chi nhánh {parent}</option>
               {shops.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}</select></label>
-          ) : <span className="tm-chip warn">Chi nhánh cha {parent} · {shops.length} shop</span>}
+          ) : <span className="tm-chip warn">Chi nhánh {parent} · {shops.length} shop</span>}
           <input className="input" style={{ flex: 1, minWidth: 200 }} placeholder="Tiêu đề (vd Đăng ký max kỳ 2 tháng 10)" value={title ?? req?.title ?? ''} disabled={locked} onChange={(e) => setTitle(e.target.value)} />
           <input className="input" type="search" placeholder="Tìm mã / tên…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 180 }} />
           {kind === 'existing' && <label className="checkbox"><input type="checkbox" checked={onlyChanged} onChange={(e) => setOnlyChanged(e.target.checked)} /> Chỉ mã đổi max</label>}

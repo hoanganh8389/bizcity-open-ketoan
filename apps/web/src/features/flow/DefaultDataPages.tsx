@@ -19,7 +19,7 @@ export const DEFAULT_DATA_SCREENS: Record<string, { key: string; title: string }
   ACC1: { key: 'account_tracking', title: 'Theo dõi chiều của tài khoản' },
   ACC41: { key: 'posting_defaults', title: 'Tài khoản ngầm định' },
   DM10: { key: 'products', title: 'Danh mục mặt hàng' },
-  DM11: { key: 'item_classes', title: 'Phân loại hàng hoá' },
+  DM11: { key: 'item_classes', title: 'Nhóm hàng' },
   ACC17: { key: 'posting_groups', title: 'Mặt hàng – tài khoản' },
   ACC18: { key: 'reasons', title: 'Lý do – tài khoản' },
   ACC19: { key: 'tool_group', title: 'Nhóm công cụ dụng cụ' },

@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ban-hang
+// [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — thêm ?groups= (nhóm hàng, gồm nhóm con) cho mọi báo cáo bán hàng (đóng góp)
 /**
  * Báo cáo bán hàng.
  *   GET /api/v1/reports/sales-detail      Báo cáo bán hàng (chi tiết từng dòng hàng, phân trang)
@@ -32,6 +33,10 @@ export const salesQuerySchema = z.object({
   kind: z.enum(['all', 'sale', 'return']).default('all'),
   scope: z.enum(['all', 'invoiced', 'internal']).default('all'),
   search: z.string().trim().max(100).optional(),
+  /** Mã nhóm hàng cách dấu phẩy: chỉ mã hàng thuộc các nhóm này (gồm nhóm con). */
+  groups: branchCodes,
+  /** Mã kho cách dấu phẩy. */
+  warehouseCodes: branchCodes,
 });
 export const salesSummaryQuerySchema = salesQuerySchema.extend({ groupBy: z.enum(SALES_GROUPS).default('document') });
 export const salesPaymentsQuerySchema = z.object({ from: date, to: date, branchCodes, groupBy: z.enum(['day', 'branch']).default('day') });

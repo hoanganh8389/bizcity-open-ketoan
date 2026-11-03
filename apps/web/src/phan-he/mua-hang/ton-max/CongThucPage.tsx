@@ -1,5 +1,5 @@
 /**
- * CÔNG THỨC ĐẶT HÀNG (MH18) — cấu hình riêng từng chi nhánh cha, nhân viên mua hàng tự chỉnh:
+ * CÔNG THỨC ĐẶT HÀNG (MH18) — cấu hình riêng từng chi nhánh, nhân viên mua hàng tự chỉnh:
  *   1. Kho: kho nào cộng vào "Tồn kho", kho nào lấy "Tồn max kho"; kho chuẩn của từng shop (thường mỗi shop một kho).
  *   2. Thành phần: bật / tắt, dấu + / −, hệ số, số ngày bán dự phòng; phần shop cộng gộp hay chỉ cộng phần thiếu.
  *   3. Làm tròn, đuôi mã bỏ qua, tốc độ bán (số ngày đo, số ngày đủ hàng), dự phòng kho, ngưỡng nửa thùng, duyệt tự động.
@@ -15,6 +15,7 @@ import { ItemPicker } from '@/components/pickers';
 import { errorText } from '@/lib/api';
 import { num, qtyFmt, stockApi, useHierarchy } from './api';
 import { ChonChiNhanhCha, ChuaPhanCap } from './chung';
+import { useOrgTree } from '@/lib/orgUnits';
 
 export function CongThucPage() {
   const qc = useQueryClient();
@@ -29,6 +30,11 @@ export function CongThucPage() {
   const node = (h.data?.branches ?? []).find((b) => b.code === parent);
   const shops = (h.data?.branches ?? []).filter((b) => b.level === 'shop' && b.parentCode === parent);
   const excl = new Set(cfg?.excludeShops ?? []);
+  // Cửa hàng nhóm theo tỉnh (nút sơ đồ tổ chức gắn với cửa hàng); chưa gắn thì vào nhóm "Chưa gắn sơ đồ tổ chức".
+  const org = useOrgTree();
+  const orgOf = new Map((org.data?.branches ?? []).map((b) => [b.code, b.orgCode ?? '']));
+  const orgName = (c: string) => (c ? org.data?.nodes.find((n) => n.code === c)?.name ?? c : 'Chưa gắn sơ đồ tổ chức');
+  const shopGroups = [...shops.reduce((m, sh) => { const g = orgOf.get(sh.code) ?? ''; m.set(g, [...(m.get(g) ?? []), sh]); return m; }, new Map<string, typeof shops>())].sort((x, y) => (x[0] ? 0 : 1) - (y[0] ? 0 : 1) || orgName(x[0]).localeCompare(orgName(y[0]), 'vi'));
   const stopped = shops.filter((s) => !s.isActive && !excl.has(s.code));
   const dirty = Boolean(cfg && f.data && JSON.stringify(cfg) !== JSON.stringify(f.data.config));
   const up = (p: Partial<FormulaConfig>) => setCfg((c) => (c ? { ...c, ...p } : c));
@@ -64,7 +70,7 @@ export function CongThucPage() {
 
   return (
     <>
-      <PageHeader title="Công thức đặt hàng" code="MH18" helpKey="mua-hang-cong-thuc" subtitle="Mỗi chi nhánh cha một công thức tính SL cần nhập: chọn kho, bật / tắt thành phần, dấu, hệ số, số ngày; xem công thức bằng chữ và ví dụ trên mã thật" />
+      <PageHeader title="Công thức đặt hàng" code="MH18" helpKey="mua-hang-cong-thuc" subtitle="Mỗi chi nhánh một công thức tính SL cần nhập: chọn kho, bật / tắt thành phần, dấu, hệ số, số ngày; xem công thức bằng chữ và ví dụ trên mã thật" />
       <div className="card">
         <ChuaPhanCap branches={h.data?.branches} />
         <div className="tm-bar">
@@ -81,9 +87,9 @@ export function CongThucPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 1fr)', gap: 12, padding: '0 12px 12px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <section className="mh-panel">
-                <h4>① Kho của chi nhánh cha</h4>
+                <h4>① Kho của chi nhánh</h4>
                 <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Tích kho cộng vào <b>Tồn kho</b> (vd kho hàng + kho khuyến mại), kho lấy <b>Tồn max kho</b> và kho lấy <b>Tồn min kho</b> (dùng khi công thức bật Tồn min kho thay cho max). Không tích gì = mọi kho đang dùng / kho mặc định / như kho lấy max.</div>
-                <table className="tm-terms"><thead><tr><th title="Kho của chi nhánh cha (Danh mục kho DM12)">Kho</th><th title="Tích = tồn của kho này cộng vào thành phần Tồn kho">Tính tồn</th><th title="Tích = tồn max khai cho kho này cộng vào thành phần Tồn max kho">Lấy max</th><th title="Tích = tồn min khai cho kho này cộng vào thành phần Tồn min kho (dùng khi đặt theo min). Không tích ô nào = như kho lấy max">Lấy min</th></tr></thead><tbody>
+                <table className="tm-terms"><thead><tr><th title="Kho của chi nhánh (Danh mục kho DM12)">Kho</th><th title="Tích = tồn của kho này cộng vào thành phần Tồn kho">Tính tồn</th><th title="Tích = tồn max khai cho kho này cộng vào thành phần Tồn max kho">Lấy max</th><th title="Tích = tồn min khai cho kho này cộng vào thành phần Tồn min kho (dùng khi đặt theo min). Không tích ô nào = như kho lấy max">Lấy min</th></tr></thead><tbody>
                   {(node?.warehouses ?? []).map((w) => <tr key={w.code} className={w.isActive ? '' : 'off'}>
                     <td><span className="mono">{w.code}</span> · {w.name}{w.isDefault && <span className="tm-chip info" style={{ marginLeft: 6 }}>mặc định</span>}{w.isPromo && <span className="tm-chip warn" style={{ marginLeft: 4 }}>KM</span>}</td>
                     <td><input type="checkbox" checked={effective('stockWarehouses').includes(w.code)} onChange={() => toggleWh('stockWarehouses', w.code)} /></td>
@@ -93,20 +99,30 @@ export function CongThucPage() {
                 </tbody></table>
               </section>
               <section className="mh-panel">
-                <h4>② Shop tính vào công thức & kho chuẩn <span className="badge">{shops.length - excl.size} / {shops.length} shop đang tính</span>
-                  <Link to="/mua-hang/phan-cap" className="btn btn-xs" style={{ marginLeft: 'auto' }} title="Thêm / bỏ shop khỏi cây chi nhánh cha (MH15)">Cấu hình phân cấp (MH15) →</Link></h4>
+                <h4>② Cửa hàng tính vào công thức <span className="badge">{shops.length - excl.size} / {shops.length} cửa hàng</span>
+                  <Link to="/danh-muc/so-do-to-chuc" className="btn btn-xs" style={{ marginLeft: 'auto' }} title="Cửa hàng thuộc chi nhánh nào: theo sơ đồ tổ chức">Sơ đồ tổ chức (DM16) →</Link></h4>
                 <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
-                  Ô tích = shop được cộng vào công thức (tồn max shop, tồn shop, bán, đi đường xuống shop). Shop đã nghỉ / tạm dừng mà vẫn nằm trong cây phân cấp (vd còn max cũ) thì <b>bỏ tích</b> để không tính — tích lại là tính lại; muốn bỏ hẳn khỏi cây thì vào MH15. Shop nhiều kho thì chọn kho chuẩn. Bấm <b>Lưu</b> để áp dụng.
-                  {stopped.length > 0 && <> <button type="button" className="btn btn-xs" onClick={() => up({ excludeShops: [...new Set([...(cfg.excludeShops ?? []), ...stopped.map((s) => s.code)])] })}>Bỏ {stopped.length} shop đang ngừng ra khỏi công thức</button></>}
+                  Cửa hàng xếp theo tỉnh của sơ đồ tổ chức. Ô tích = cửa hàng được cộng vào công thức; bỏ tích cửa hàng đã nghỉ / tạm dừng. Bấm <b>Lưu</b> để áp dụng.
+                  {stopped.length > 0 && <> <button type="button" className="btn btn-xs" onClick={() => up({ excludeShops: [...new Set([...(cfg.excludeShops ?? []), ...stopped.map((s) => s.code)])] })}>Bỏ {stopped.length} cửa hàng đang ngừng</button></>}
                 </div>
-                <div className="tm-wh-grid">{shops.map((s) => <label key={s.code} title={s.name} style={excl.has(s.code) ? { opacity: 0.55, background: '#f3f4f6' } : undefined}>
-                  <input type="checkbox" checked={!excl.has(s.code)} title={excl.has(s.code) ? 'Đang KHÔNG tính vào công thức — tích để tính lại' : 'Đang tính vào công thức — bỏ tích để không tính'} onChange={(e) => up({ excludeShops: e.target.checked ? (cfg.excludeShops ?? []).filter((x) => x !== s.code) : [...(cfg.excludeShops ?? []), s.code] })} />
-                  <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: excl.has(s.code) ? 'line-through' : undefined }}><b className="mono">{s.code}</b> {s.name}</span>
-                  {!s.isActive && <span className="badge badge-bad" style={{ fontSize: 10 }} title="Chi nhánh đã ngừng hoạt động (danh mục chi nhánh)">ngừng</span>}
-                  {s.warehouses.length > 1 ? <select className="select input" style={{ height: 24, fontSize: 11.5, width: 96 }} value={cfg.shopWarehouses[s.code] ?? ''} onChange={(e) => up({ shopWarehouses: { ...cfg.shopWarehouses, [s.code]: e.target.value } })}>
-                    <option value="">mặc định</option>{s.warehouses.map((w) => <option key={w.code} value={w.code}>{w.code}</option>)}</select>
-                    : <span className="mono muted" style={{ fontSize: 11 }}>{s.warehouses[0]?.code ?? 'chưa có kho'}</span>}
-                </label>)}</div>
+                {/* [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — cửa hàng nhóm theo tỉnh (sơ đồ tổ chức), tích / bỏ cả tỉnh */}
+                {shopGroups.map(([g, list]) => {
+                  const on = list.filter((s) => !excl.has(s.code)).length;
+                  const setAll = (include: boolean) => up({ excludeShops: include ? (cfg.excludeShops ?? []).filter((x) => !list.some((s) => s.code === x)) : [...new Set([...(cfg.excludeShops ?? []), ...list.map((s) => s.code)])] });
+                  return (
+                    <div key={g} className="tm-prov">
+                      <label className="tm-prov-head"><input type="checkbox" checked={on === list.length} ref={(el) => { if (el) el.indeterminate = on > 0 && on < list.length; }} onChange={() => setAll(on !== list.length)} />
+                        <b>{orgName(g)}</b> <span className="muted">{on} / {list.length} cửa hàng</span></label>
+                      <div className="tm-wh-grid">{list.map((s) => <label key={s.code} title={s.name} style={excl.has(s.code) ? { opacity: 0.55 } : undefined}>
+                        <input type="checkbox" checked={!excl.has(s.code)} onChange={(e) => up({ excludeShops: e.target.checked ? (cfg.excludeShops ?? []).filter((x) => x !== s.code) : [...(cfg.excludeShops ?? []), s.code] })} />
+                        <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: excl.has(s.code) ? 'line-through' : undefined }}><b className="mono">{s.code}</b> {s.name}</span>
+                        {!s.isActive && <span className="badge badge-bad" style={{ fontSize: 10 }}>ngừng</span>}
+                        {s.warehouses.length > 1 && <select className="select input" style={{ height: 24, fontSize: 11.5, width: 96 }} title="Kho chuẩn của cửa hàng" value={cfg.shopWarehouses[s.code] ?? ''} onChange={(e) => up({ shopWarehouses: { ...cfg.shopWarehouses, [s.code]: e.target.value } })}>
+                          <option value="">mặc định</option>{s.warehouses.map((w) => <option key={w.code} value={w.code}>{w.code}</option>)}</select>}
+                      </label>)}</div>
+                    </div>
+                  );
+                })}
               </section>
               <section className="mh-panel">
                 <h4>③ Thành phần công thức</h4>

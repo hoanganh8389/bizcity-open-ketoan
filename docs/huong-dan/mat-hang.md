@@ -1,4 +1,4 @@
-# Danh mục mặt hàng (DM10) và phân loại hàng hoá (DM11)
+# Danh mục mặt hàng (DM10)
 
 Đây là **danh mục hàng chuẩn của công ty**. Mặt hàng, đơn vị tính, tỉ lệ quy đổi, giá bán, trạng thái bán khai **ở đây**. Hệ thống bán hàng (các website cửa hàng) tự kéo về vài phút một lần để hiển thị và bán, không sửa được bên đó.
 
@@ -106,7 +106,7 @@ Số tự sinh = số lớn nhất đang có của **mã 9 ký tự** cùng ti�
 **Đoạn mã của nhóm** (cột *Đoạn mã trong mã hàng* ở **Nhóm hàng (DM11)**, có trong menu Mua hàng → Danh mục mua hàng) chưa khai thì phần mềm tự lo:
 - nhóm đã có mặt hàng: lấy đoạn mã từ các mã hàng đang có trong nhóm;
 - nhóm mới tinh: cấp số kế tiếp sau các nhóm cùng cha (Sữa người lớn là 4 thì Sữa bầu mới là 5).
-- Mã tìm được ghi lại vào nhóm, sửa được ở DM11 → thẻ Nhóm hàng → ô **Mã SKU**.
+- Mã tìm được ghi lại vào nhóm, sửa được ở **Nhóm hàng (DM11)** → ô **Mã ngắn**.
 
 ### Câu hỏi hay gặp (để trả lời khi họp)
 
@@ -143,13 +143,9 @@ Các trường hợp 1–3, 6–9, 11 đã có phép thử tự động (`apps/a
 - Chỉ **xoá** được mặt hàng chưa có nhập xuất. Mặt hàng đã dùng thì bỏ tích "Đang theo dõi".
 - Chứng từ mang mã hàng chưa có thì mặt hàng tự thêm (cột **Nguồn** = "Tự thêm từ chứng từ"). Mã tự thêm chưa khai ĐVT thì **chưa xuống cửa hàng**; khai ĐVT là cửa hàng thấy.
 
-## Phân loại hàng hoá (DM11)
+## Nhóm hàng (DM11)
 
-Bốn thẻ **Nhóm hàng**, **Ngành hàng**, **Nhãn hàng**, **Loại hàng**. Lưới: mã, tên, Path (đường dẫn cây), thuộc, số mặt hàng đang gắn. Form: mã (*), tên, phân cấp (thuộc mục nào).
-
-- Thẻ **Nhóm hàng** có thêm cột / ô **Mã SKU**: đoạn mã ghép khi sinh mã hàng. Cấp 1 thường 2 chữ số (11), cấp 2 thường 3 chữ số (006), cấp 3 thường 1 chữ số (3).
-- Nút **Suy mã SKU**: điền mã SKU cho các nhóm chưa khai, đoán từ mã hàng đang có trong nhóm. Hiện danh sách xem trước rồi mới hỏi áp dụng. Nhóm đã khai không bị đổi.
-- Chỉ xoá được mục chưa gắn mặt hàng và chưa có mục con.
+Cây nhóm hàng (cấp 1 → 2 → 3 → …), mã ngắn từng cấp và cách thêm / sửa: xem [Nhóm hàng](nhom-hang.md).
 
 ## Thẻ Mua hàng (khi dùng phân hệ Mua hàng)
 

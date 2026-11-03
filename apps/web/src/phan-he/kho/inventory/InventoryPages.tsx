@@ -13,6 +13,7 @@ import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
 import { Empty, ErrorBox, Loading } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
 import { ItemPicker } from '@/components/pickers';
 import { ExcelImport, type ImportResult } from '@/components/ExcelImport';
@@ -42,6 +43,8 @@ function parseCost(v: string | number | undefined): number | null {
 }
 
 export function CostingPage() {
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
   const qc = useQueryClient();
   const [period, setPeriodState] = useState(thisMonth());
   const [search, setSearch] = useState('');
@@ -101,6 +104,7 @@ export function CostingPage() {
         <div className="filters">
           <div className="field"><label>Tháng</label><input type="month" className="input w-md" value={period} onChange={(e) => e.target.value && setPeriod(e.target.value)} /></div>
           <div className="field"><label>Mã hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Lọc theo mã hàng" /></div>
+          <ChonNhomHang value={nhom} onChange={setNhom} />
         </div>
         <div className="card-body" style={{ paddingTop: 8, paddingBottom: 8 }}>
           <p className="muted" style={{ margin: 0 }}>
@@ -125,7 +129,7 @@ export function CostingPage() {
         {costs.isLoading ? <Loading /> : !costs.data?.length ? <Empty text="Tháng này chưa tính giá vốn" /> : (
           <DataGrid
             storageKey="acc49"
-            rows={costs.data}
+            rows={ln.loc(costs.data)}
             rowKey={(r) => `${r.costGroup}-${r.sku}`}
             columns={[
               { key: 'costGroup', header: 'Đơn vị hạch toán', type: 'code' },
@@ -156,7 +160,8 @@ interface StockData { rows: StockRow[]; uncosted: number }
 interface GroupRow extends StockFigures { key: string; label: string; skuCount: number }
 interface GroupData { rows: GroupRow[]; uncosted: number; purchaseOnly: boolean }
 const STOCK_VIEWS: [string, string][] = [
-  ['item', 'Mặt hàng (chi tiết)'], ['itemGroup', 'Nhóm hàng'], ['itemType', 'Loại hàng'], ['brand', 'Nhãn hiệu'], ['industry', 'Ngành hàng'], ['postingGroup', 'Nhóm hạch toán (hàng thường, khuyến mại…)'],
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — xem theo nhóm hàng cấp 1 / 2 / 3: cộng dồn cả nhánh con trên cây nhóm hàng
+  ['item', 'Mặt hàng (chi tiết)'], ['itemGroup1', 'Nhóm hàng cấp 1'], ['itemGroup2', 'Nhóm hàng cấp 2'], ['itemGroup3', 'Nhóm hàng cấp 3'], ['itemGroup', 'Nhóm hàng gắn trên mặt hàng'], ['itemType', 'Loại hàng'], ['brand', 'Nhãn hiệu'], ['industry', 'Ngành hàng'], ['postingGroup', 'Nhóm hạch toán (hàng thường, khuyến mại…)'],
   ['branch', 'Chi nhánh'], ['supplier', 'Nhà cung cấp (mua hàng)'], ['supplierGroup', 'Nhóm nhà cung cấp (mua hàng)'],
 ];
 const figureCols = (stock: boolean, extra: boolean): Column<StockFigures>[] => [
@@ -179,7 +184,7 @@ const figureCols = (stock: boolean, extra: boolean): Column<StockFigures>[] => [
 ];
 
 export function StockMovementPage() {
-  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', search: '' });
+  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', search: '', groups: '' });
   const [view, setView] = useState('item');
   const [search, setSearch] = useState('');
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
@@ -204,6 +209,7 @@ export function StockMovementPage() {
             <form className="rp-form" onSubmit={(e) => { e.preventDefault(); set({ search: search.trim() }); }}>
               <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
               <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
+              <ChonNhomHang value={f.groups} onChange={(groups) => set({ groups })} />
               <div className="field"><label>Xem theo</label><select className="select input" value={view} onChange={(e) => setView(e.target.value)}>{STOCK_VIEWS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
               <div className="field"><label>Mã / tên hàng</label><input className="input w-md" value={search} onChange={(e) => setSearch(e.target.value)} onBlur={() => set({ search: search.trim() })} /></div>
             </form>
