@@ -75,7 +75,7 @@ Mức: **Đạt** = có phép kiểm tự động xanh hoặc đối chiếu tr�
 | 11 | **Sao lưu PITR** (PHASE-008, R-BAK) | **Một phần** | 1/4 ✅; R-BAK-1 và R-BAK-3 là luật Tier 0 chỉ kiểm tay. |
 | 12 | **Standard v1 / CLI / ca chuẩn** (PHASE-014) | **Một phần** | CLI, template, AGENTS cho module có; **chưa** chạy ca chuẩn Hợp đồng 3 lần (4.5), **chưa** Standard 1.0.0 (4.6), lane runtime 0% (4.3). |
 | 13 | **Hệ sinh thái** (PHASE-015/016/017: Cell, WordPress, tải lớn, beta) | **Chưa** | 0/16 việc; Phase 5 lộ trình 0%. |
-| 14 | **Quy trình nhận việc** ([RULE-FLOW](../rules/RULE-FLOW.md), mới) | **Đạt** | SC-FLOW-1 chặn, đạt; `scripts/nhan-viec.mjs`. Có 1 dòng giữ chỗ lỗi thời (§7). |
+| 14 | **Quy trình nhận việc** ([RULE-FLOW](../rules/RULE-FLOW.md), mới) | **Đạt** | SC-FLOW-1 chặn, đạt; `scripts/nhan-viec.mjs`. Có 1 dòng giữ chỗ lỗi thời (§7); phiên khác đã giữ chỗ PHASE-027 CK-1..3 và PHASE-026 P0. |
 
 ## 3. Lộ trình theo phase (bảng điểm, `docs/standard/roadmap.json`)
 
@@ -155,7 +155,7 @@ Ghi chú: "Tiến độ README" tính từ **việc lộ trình** (tín hiệu b
 | **Checklist ↔ mã** (PHASE-014, 021, 024, 025) | Khớp (chủ dự án cập nhật sát: S014-13 ✅ "0 route ghi thô"; PHASE-024 ghi B2a/B2b đúng migration 0065/0066). |
 | **Checklist PHASE-013** | **Lệch** (từ 2026-10-30): S013-1 còn `☐` nhưng `@bizcity/ui-kit` và slot đã có (PHASE-014 W2/W4); S013-2 `🟡` đúng nhưng văn bản trạng thái ở README đã cũ. **Sửa cùng PR này.** |
 | **Năng lực ↔ mã** | Lệch 2: `item.master`, `item.validation` còn `planned`. Quyết định `partial`/`available` thuộc chủ (B2c, B3 chưa xong). |
-| **Đường dẫn HTTP ↔ tài liệu viết tay** | 188/385 (49%) đường dẫn được nhắc; **OpenAPI tự sinh từ schema phủ đủ**. Nhóm thiếu nhiều nhất: `/reports` 37, `/purchase` 20, `/assets` 12, `/stock` 11, `/org-units` 8. Không có luật bắt buộc viết tay cho mọi route (ngoài chứng từ ở `docs/api/`). |
+| **Đường dẫn HTTP ↔ tài liệu viết tay** | 188/385 (49%) đường dẫn được nhắc; **OpenAPI tự sinh từ schema phủ đủ**. Nhóm thiếu nhiều nhất: `/reports` 37, `/purchase` 20, `/assets` 12, `/stock` 11, `/org-units` 8. Không có luật bắt buộc viết tay cho mọi route (ngoài chứng từ ở `docs/api/`). **PHASE-027 CK-2** (SC-DOC-4/5/6: đường dẫn, route, mục menu ↔ tài liệu) đã được giữ chỗ trong [CLAIMS.md](../phases/CLAIMS.md) cho đúng loại lệch này; số liệu ở đây là phép đo tay một lần, dùng làm mốc cho CK-2. |
 | **Action ↔ tài liệu theo mã** | 264 action trong code; 58 được nhắc theo `id` ở `docs/`/CHANGELOG. Cùng ghi chú như trên. |
 | **Bảng giữ chỗ** | [CLAIMS.md](../phases/CLAIMS.md) có 1 dòng lỗi thời: "W6 đợt 4 — `ctx.meta` + route đối tượng (PR #50)", nhánh `feat/phase-014-w6-meta` đã xoá (§7). |
 
@@ -172,7 +172,7 @@ Ghi chú: "Tiến độ README" tính từ **việc lộ trình** (tín hiệu b
 | P1 | Đổi trạng thái năng lực `item.master`/`item.validation`; chạy ca chuẩn Hợp đồng 3 lần (4.5) rồi cân nhắc Standard 1.0.0 (4.6) | Chủ dự án | §2 dòng 6, 12 |
 | P1 | **Dòng giữ chỗ lỗi thời** ở CLAIMS.md ("W6 đợt 4 … PR #50"): xoá (R-FLOW-6) hay giữ cho phiên đang gộp? | Chủ dự án | §6 |
 | P2 | Phân hệ mua hàng (Thủy): **bộ nạp 25 TH** (`scripts/mua-hang/nap-25-truong-hop.mjs`) chưa gửi `Idempotency-Key` cho các lệnh ghi và cần khai trước nhãn `63`/`34`, nhóm `221` trong `item_classes` (đo này phải dùng bản sao tạm); CHANGELOG cho commit sơ đồ tổ chức; chuyển `phan-he/mua-hang` sang `modules/` | Người đóng góp, Nhóm Lõi rà (R-REV) | §2 dòng 10, §6 |
-| P2 | Tài liệu viết tay cho `reports`, `purchase`, `assets`, `stock`, `org-units` (hoặc xác nhận OpenAPI là nguồn duy nhất) | Nhóm Lõi / chủ dự án | §6 |
+| P2 | Tài liệu viết tay cho `reports`, `purchase`, `assets`, `stock`, `org-units` (hoặc xác nhận OpenAPI là nguồn duy nhất) — **để PHASE-027 CK-2 xử lý, không làm song song** | Phiên đang giữ CK-2 / chủ dự án | §6 |
 | P2 | Hướng dẫn chạy test: hai tệp cần quyền chủ CSDL — ghi vào [AGENTS.md](../../AGENTS.md)/`tests/conformance/README.md` | Nhóm Lõi | §1.2 |
 
 ## 8. Thay đổi đã chuẩn bị nhưng **chưa vào `main`** (chờ giữ chỗ theo R-FLOW)
