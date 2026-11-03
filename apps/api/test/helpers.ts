@@ -7,7 +7,7 @@ import { APPROVABLE_DOC_TYPES } from '@ketoan/contracts';
 import { buildApp } from '../src/app.js';
 import { runMigrations } from '../src/db/migrate.js';
 import { seed } from '../src/db/seed.js';
-import { Kysely, PostgresDialect } from 'kysely';
+import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { env } from '../src/config/env.js';
 import type { Database } from '../src/db/types.js';
@@ -100,4 +100,26 @@ export function saleDoc(over: Record<string, unknown> = {}) {
     totals: { beforeTax: 185185, tax: 14815, total: 200000 },
     ...over,
   };
+}
+
+// [2026-11-04 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 8b: đọc nhật ký nghiệp vụ theo tên cũ ở cả dòng audit_logs lẫn notes.audit[] của bằng chứng (ACTION §4.4)
+export interface AuditRow { action: string; objectType: string; objectId: string | null; before: any; after: any }
+/**
+ * Dòng nhật ký nghiệp vụ tên `action` (hoặc mẫu `x%`) của đơn vị: dòng audit_logs cũ (tên trong AUDIT_KEEP, hoặc ghi ngoài action)
+ * cộng ghi chú `notes.audit[]` trong bằng chứng của action. Test giữ ý "thao tác đã để lại dấu vết gì" mà không cần biết dấu vết nằm ở đâu.
+ */
+export async function auditRows(tenantId: string | number, action: string, objectId?: string): Promise<AuditRow[]> {
+  const { db } = await import('../src/db/client.js');
+  const like = action.endsWith('%');
+  const match = (a: string) => (like ? a.startsWith(action.slice(0, -1)) : a === action);
+  const legacy = await db.selectFrom('audit_logs').select(['action', 'object_type', 'object_id', 'before_data', 'after_data']).where('tenant_id', '=', String(tenantId))
+    .where('action', like ? 'like' : '=', action).orderBy('id').execute();
+  const evid = await db.selectFrom('audit_logs').select(['id', 'after_data']).where('tenant_id', '=', String(tenantId))
+    .where(sql<boolean>`after_data -> 'notes' -> 'audit' IS NOT NULL`).orderBy('id').execute();
+  const rows: AuditRow[] = legacy.map((r) => ({ action: r.action, objectType: r.object_type, objectId: r.object_id, before: r.before_data, after: r.after_data }));
+  for (const e of evid) {
+    const notes = (e.after_data as { notes?: { audit?: Array<{ action: string; objectType: string; objectId?: string; before?: unknown; after?: unknown }> } } | null)?.notes?.audit;
+    if (Array.isArray(notes)) for (const n of notes) if (match(n.action)) rows.push({ action: n.action, objectType: n.objectType, objectId: n.objectId ?? null, before: n.before ?? null, after: n.after ?? null });
+  }
+  return objectId === undefined ? rows : rows.filter((r) => r.objectId === objectId);
 }

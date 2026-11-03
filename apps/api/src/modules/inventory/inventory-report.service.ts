@@ -236,4 +236,87 @@ export const inventoryReportService = {
        GROUP BY sku ORDER BY sku LIMIT ${q.limit ?? 50}`.execute(db);
     return res.rows;
   },
+
+  // [2026-11-03 06:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — đối chiếu sổ chi tiết kho với số dư tài khoản hàng tồn kho (chủ dự án yêu cầu 2026-11-03)
+  /**
+   * Đối chiếu tới hết kỳ YYYY-MM, theo (chi nhánh, mặt hàng):
+   *   - Sổ chi tiết kho: tổng giá trị các lần vào / ra (inventory_movements, cùng cách định giá với sổ chi tiết hàng).
+   *   - Sổ cái: số dư Nợ − Có trên các tài khoản hàng tồn kho của nhóm hạch toán (product_posting_groups.inventory_account),
+   *     theo ledger_lines.product_sku. Tài khoản lấy từ cấu hình của đơn vị, không viết cứng.
+   * Trạng thái mỗi dòng: ok · diff (lệch) · uncosted (còn dòng kho chưa định giá, chưa kết luận được) · wrong_account (có số dư
+   * trên tài khoản kho khác tài khoản của nhóm hạch toán mặt hàng) · no_product (bút toán vào tài khoản kho không gắn mặt hàng).
+   * Chỉ đọc. Ngày so: sổ cái theo ngày hạch toán, sổ kho theo ngày chứng từ (hai ngày lệch nhau thì dòng lệch ở ranh giới kỳ).
+   */
+  async reconcile(auth: AuthContext, q: { period: string; branchCodes?: string[]; search?: string }) {
+    const [y, m] = q.period.split('-').map(Number) as [number, number];
+    const to = `${q.period}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`;
+    const s = await scope(auth, q.branchCodes);
+    const search = q.search?.trim() || undefined;
+    const groups = await db.selectFrom('product_posting_groups').select(['code', 'inventory_account', 'is_default']).where('tenant_id', '=', auth.tenantId).execute();
+    const accounts = [...new Set(groups.map((g) => g.inventory_account))].sort();
+    const defaultAccount = groups.find((g) => g.is_default)?.inventory_account ?? null;
+    if (!accounts.length) return { period: q.period, to, accounts, defaultAccount, totals: [], rows: [], summary: { ok: 0, diff: 0, uncosted: 0, wrong_account: 0, no_product: 0 } };
+
+    const gl = await sql<{ branch_code: string; sku: string; account_code: string; v: string }>`
+      SELECT b.code AS branch_code, COALESCE(l.product_sku, '') AS sku, l.account_code, SUM(l.debit - l.credit) AS v
+        FROM bizcity_read.ledger_lines l JOIN branches b ON b.id = l.branch_id
+       WHERE l.tenant_id = ${auth.tenantId} AND l.posting_date <= ${to}::date AND l.account_code = ANY(${accounts}::text[])
+         ${s.branchIds ? sql`AND l.branch_id = ANY(${s.branchIds}::bigint[])` : sql``}
+         ${search ? sql`AND l.product_sku ILIKE ${'%' + search + '%'}` : sql``}
+       GROUP BY 1, 2, 3`.execute(db);
+    const sub = await sql<{ branch_code: string; sku: string; name: string; qty: string; val: string | null; uncosted: string }>`
+      WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to, branchIds: s.branchIds, search })})
+      SELECT b.code AS branch_code, mv.sku, MAX(mv.name) AS name, SUM(mv.qty) AS qty, SUM(mv.val) AS val, COUNT(*) FILTER (WHERE mv.uncosted) AS uncosted
+        FROM mv JOIN branches b ON b.id = mv.branch_id
+       GROUP BY 1, 2`.execute(db);
+
+    const skus = [...new Set([...gl.rows.map((r) => r.sku), ...sub.rows.map((r) => r.sku)].filter(Boolean))];
+    const own = skus.length
+      ? await sql<{ sku: string; account: string | null }>`
+          SELECT p.sku, g.inventory_account AS account FROM products p
+            LEFT JOIN product_posting_groups g ON g.tenant_id = p.tenant_id AND g.code = p.posting_group_code
+           WHERE p.tenant_id = ${auth.tenantId} AND p.sku = ANY(${skus}::text[])`.execute(db)
+      : { rows: [] };
+    const expectedOf = new Map(own.rows.map((r) => [r.sku, r.account ?? defaultAccount]));
+
+    type Row = { branchCode: string; sku: string; name: string; qty: number; subledgerValue: number; ledgerValue: number; diff: number;
+      uncosted: number; expectedAccount: string | null; accounts: { code: string; value: number }[]; status: string };
+    const rows = new Map<string, Row>();
+    const rowOf = (branchCode: string, sku: string) => {
+      const k = `${branchCode}\u0000${sku}`;
+      let r = rows.get(k);
+      if (!r) {
+        r = { branchCode, sku, name: '', qty: 0, subledgerValue: 0, ledgerValue: 0, diff: 0, uncosted: 0, expectedAccount: sku ? expectedOf.get(sku) ?? defaultAccount : null, accounts: [], status: 'ok' };
+        rows.set(k, r);
+      }
+      return r;
+    };
+    for (const x of sub.rows) Object.assign(rowOf(x.branch_code, x.sku), { name: x.name, qty: Number(x.qty), subledgerValue: num(x.val), uncosted: Number(x.uncosted) });
+    for (const x of gl.rows) {
+      const r = rowOf(x.branch_code, x.sku);
+      r.ledgerValue += Number(x.v);
+      r.accounts.push({ code: x.account_code, value: Number(x.v) });
+    }
+    const out = [...rows.values()].map((r) => {
+      r.diff = r.ledgerValue - r.subledgerValue;
+      r.accounts.sort((a, b) => a.code.localeCompare(b.code));
+      if (!r.sku) r.status = r.ledgerValue !== 0 ? 'no_product' : 'ok';
+      else if (r.uncosted > 0) r.status = 'uncosted';
+      else if (r.accounts.some((a) => a.code !== r.expectedAccount && Math.abs(a.value) >= 1)) r.status = 'wrong_account';
+      else if (Math.abs(r.diff) >= 1) r.status = 'diff';
+      return r;
+    }).filter((r) => r.status !== 'ok' || r.qty !== 0 || r.subledgerValue !== 0 || r.ledgerValue !== 0);
+    const ORDER = ['no_product', 'wrong_account', 'diff', 'uncosted', 'ok'];
+    out.sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status) || a.branchCode.localeCompare(b.branchCode) || a.sku.localeCompare(b.sku));
+
+    // Tổng theo tài khoản: số dư sổ cái so với giá trị sổ kho của các mặt hàng có tài khoản đó trong nhóm hạch toán.
+    const totals = accounts.map((code) => {
+      const ledgerValue = gl.rows.filter((x) => x.account_code === code).reduce((t, x) => t + Number(x.v), 0);
+      const subledgerValue = out.filter((r) => r.sku && r.expectedAccount === code).reduce((t, r) => t + r.subledgerValue, 0);
+      return { account: code, ledgerValue, subledgerValue, diff: ledgerValue - subledgerValue };
+    });
+    const summary = { ok: 0, diff: 0, uncosted: 0, wrong_account: 0, no_product: 0 } as Record<string, number>;
+    for (const r of out) summary[r.status] = (summary[r.status] ?? 0) + 1;
+    return { period: q.period, to, accounts, defaultAccount, totals, rows: out, summary };
+  },
 };

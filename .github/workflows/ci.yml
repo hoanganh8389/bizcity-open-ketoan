@@ -2,6 +2,7 @@
 # [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration.
 # [2026-11-01 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — P0-3 (AUDIT-2026-11-01): bước vitest chạy dưới vai trò ketoan_app (DB_SET_ROLE) — RLS có hiệu lực, test pool RLS không còn bị bỏ qua
 # [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: build gói @bizcity/mua-hang-domain sau contracts
+# [2026-11-03 03:30 PM Johnny Chu - Chu Hoàng Anh] G3-01 — Kiểm kiểu: dựng platform + kernel rồi chạy test lệnh kế toán trên bản dựng thật (ingestDocumentSchema, totalsProblems)
 # CI BizCity Ledger Framework — xem docs/ops/CI-CD.md
 name: ci
 
@@ -35,6 +36,8 @@ jobs:
       # @ketoan/contracts, @bizcity/mua-hang-domain trỏ vào dist/ — build trước để api, web thấy kiểu
       - run: npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain
       - run: npm run typecheck
+      - name: Lệnh kế toán trên bản dựng thật (event check, explain)
+        run: npm run build -w @bizcity/platform && npm run build -w @bizcity/kernel && node --test packages/cli/test/accounting-cli.test.mjs packages/cli/test/module-accounting.test.mjs packages/cli/test/saving-model.test.mjs
 
   test:
     name: Test trên PostgreSQL 16

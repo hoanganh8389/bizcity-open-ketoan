@@ -37,4 +37,5 @@
 
 ## Log
 
+- 2026-11-04: <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 --> phát hiện khi đánh giá để làm Golden Test G2: **định khoản đọc `products.posting_group_code` hiện tại, không đọc `item_classification` tại ngày chứng từ** — R-ITEM-7 chưa thi hành (việc S024-8, giữ chỗ ở đợt 4). Đổi nhóm hạch toán hôm nay làm định khoản lại chứng từ cũ ra theo nhóm mới.
 - 2026-11-04: mở phase; ADR-0022; `tru-cot.json` + HT10 + thẻ Trụ cột; bản mẫu; G2 (giá vốn, NXT, sổ chi tiết theo `item_id`) làm T026-G1 xanh.

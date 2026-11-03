@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/review
+// [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trụ cột 7: thêm F22-STK-11 (INVENTORY_LEDGER_MISMATCH), khớp 10-DANH-MUC-GIA-DINH.md
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — danh mục giả định lỗi F22 (bizcity_fault_catalog@1) — SINH TỪ 10-DANH-MUC-GIA-DINH.md bằng script, không sửa tay; module TS để có trong dist khi triển khai.
 export type FaultLevel = 'block' | 'error' | 'warn' | 'hint' | 'none';
 export type FaultStatus = 'done' | 'blocked' | 'planned-021' | 'todo' | 'deferred';
@@ -985,6 +986,28 @@ export const FAULT_CATALOG: FaultCatalog = {
       "consequence": "(đã xử lý theo thiết kế)",
       "remedyText": "Không cần làm gì: tính giá vốn tháng tự đưa dòng chờ cũ về 0",
       "verifyText": "—",
+      "status": "done"
+    },
+    {
+      "id": "F22-STK-11",
+      "group": "STK",
+      "title": "Sổ chi tiết kho lệch số dư tài khoản hàng tồn kho (tổng Nợ = tổng Có nhưng kho ≠ sổ cái)",
+      "detectors": [
+        "INVENTORY_LEDGER_MISMATCH"
+      ],
+      "detectText": "`INVENTORY_LEDGER_MISMATCH` (DG-STK-3); `GET /api/v1/inventory/reconcile`",
+      "level": "warn",
+      "personas": [
+        "chief_accountant",
+        "auditor",
+        "tax_inspector"
+      ],
+      "primary": [
+        "chief_accountant"
+      ],
+      "consequence": "báo cáo kho và bảng cân đối không cùng một số; giá vốn, lãi gộp theo mặt hàng không giải thích được",
+      "remedyText": "① Mẫu `<chi nhánh>:<mã hàng>`: mở đối chiếu kho ↔ sổ cái (`GET /api/v1/inventory/reconcile?period=YYYY-MM`). ② Mã rỗng = bút toán tay vào tài khoản kho không gắn mặt hàng: huỷ, ghi lại bằng chứng từ kho có mặt hàng. ③ Có mã: tìm chứng từ có ngày hạch toán khác ngày chứng từ, hoặc mặt hàng ghi vào tài khoản kho khác nhóm hạch toán; sửa ở nguồn, tính lại giá vốn (ACC49). Không điều chỉnh kho cho \"khớp\"",
+      "verifyText": "`INVENTORY_LEDGER_MISMATCH`",
       "status": "done"
     },
     {

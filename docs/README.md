@@ -52,6 +52,7 @@ Từ 2026-10-29 repo còn là **Bizcity Core Framework**: hạ tầng ứng dụ
 | [api/](api/) | Hướng dẫn chi tiết cho bên gửi từng loại chứng từ, JSON mẫu đã kiểm | Tham chiếu (thực thi `bizcity_ledger_intake@1`) |
 | [nghiep-vu/](nghiep-vu/) | Kế toán cho lập trình viên, tình huống ghi sổ | Tham chiếu nghiệp vụ |
 | [can-cu/](can-cu/) | Căn cứ pháp lý (TT99/2025, luật thuế…) | Tham chiếu |
+| [core/](core/README.md) | **Hướng dẫn Core kế toán**: trụ cột 0–VIII <!-- [2026-11-04 12:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-027 — khung 0–VIII -->, công cụ kiểm, bộ kiểm chuẩn, mã hàng và vòng đời, hướng dẫn cho AI <!-- [2026-11-03 07:23 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trỏ tới bộ hướng dẫn docs/core/ --> | Người dùng, dev, cộng đồng, AI |
 | [huong-dan/](huong-dan/) | Hướng dẫn sử dụng từng màn (nút "Hướng dẫn") | Người dùng cuối |
 
 ## Tài liệu cũ ở gốc `docs/`
