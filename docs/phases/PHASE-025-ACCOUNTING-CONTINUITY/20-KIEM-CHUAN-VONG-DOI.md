@@ -65,3 +65,21 @@ Mã nào cũng vào `bizcity_findings@1` (cổng C), có vì sao, cách sửa, c
 - **Theo sự kiện**: sau khi một chứng từ ghi sổ, chạy các mã của loại sự kiện đó trên chuỗi chạm tới (dòng, lớp, phân bổ, bút toán) — kết quả ghi vào `continuity_checks` (chỉ thêm: mã, đối tượng, kỳ, đạt / không, chi tiết, lần chạy).
 - **Theo kỳ**: đêm và trước khoá kỳ chạy các mã `CT-LIN-*`, `CT-REC-*`, `CT-PER-*`.
 - Dùng chung khung kiểm chuẩn hiện có (rule pack, `diagnostic_runs`, Bàn đánh giá), không dựng engine thứ hai.
+
+## 6. Gate C và khoá kỳ — hướng giải pháp (D025-6) <!-- [2026-11-03 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt D025-2 (mặc định FIFO) + hướng D025-6 (khoá kỳ) -->
+
+**Nguyên tắc:** mở rộng cái đã chạy, không dựng cơ chế thứ hai. Hôm nay: `core.period.lock` chạy chẩn đoán L3, lỗi `error` chặn trừ khi người có quyền ghi lý do chấp nhận (R-DIAG-4, `acceptDiagnostics`, lượt chẩn đoán lưu cả khi bị chặn); `GET /api/v1/periods/close-checks` liệt kê điều kiện kèm link và cách sửa; chưa tính giá vốn / chưa kết chuyển chỉ là cảnh báo.
+
+| Bước | Làm gì |
+|---|---|
+| 1. Cùng khung | mã `CT-*` chạy trong khung tự chẩn đoán (`runDiagnostics`, lượt lưu `diagnostic_runs`) và hiện thành điều kiện của `close-checks`; không engine mới |
+| 2. Phân mức theo bản chất | **toàn vẹn chuỗi** (`CT-LIN-*` đứt chuỗi, `CT-REC-*` chi tiết ≠ sổ cái) = mức `error`: chặn trừ khi chấp nhận có lý do, như R-DIAG-4. **Việc cuối kỳ chưa làm** (chưa phân bổ giá vốn, chưa kết chuyển, chứng từ ở bể) và **mã nghiệp vụ** (`CT-REV-*` hoàn sai giá vốn) = mặc định `warn`: hiện, tính vào thanh tiến độ, không chặn (R-GATE-9: mặc định cho phép). Đơn vị tự nâng một mã lên chặn ở HT09 khi sẵn sàng (có lý do, nhật ký) |
+| 3. Đúng thứ tự | điều kiện đánh giá theo thứ tự việc cuối kỳ: xử lý bể → phân bổ giá vốn → đối chiếu chi tiết – sổ cái → kết chuyển. Chưa tới bước thì hiện "chưa tới lượt", không báo lỗi dồn một lần (tránh nhầm "chưa làm" với "đứt chuỗi") |
+| 4. Sửa không viết lại sổ | chỗ đứt sửa bằng **chứng từ điều chỉnh trong kỳ còn mở** (đảo + ghi mới, R-LEDGER-1), hoặc mở khoá kỳ có lý do. Phiếu ghi lùi vào kỳ đã khoá bị khoá kỳ hiện có từ chối → vào kỳ mở; phân bổ FIFO của kỳ đã khoá **không tự tính lại** |
+| 5. Chấp nhận là quyết định, có dấu vết | `acceptDiagnostics`: mã được chấp nhận + lý do (≥ 5 ký tự) + người; ghi vào bằng chứng và nhật ký khoá kỳ; mã vẫn hiện ở Hành trình mặt hàng với nhãn "đã chấp nhận khi khoá kỳ X". Mã đánh dấu `acceptable: false` (vd Σ phân bổ ≠ giá vốn đã ghi) không chấp nhận được: phải sửa. Ai được chấp nhận là việc của phân quyền (ADR-0020), không theo chức danh |
+| 6. Khoá = chốt | khi khoá thành công: lưu ảnh chụp kết quả Gate C của phạm vi khoá (lượt chẩn đoán); chốt phân bổ giá vốn của kỳ (`cost_allocations` không còn bản mới cho kỳ đó). Mở khoá = sự kiện có lý do; chạy lại Gate C trước khi khoá lại |
+| 7. Phạm vi | khoá theo (kỳ × chi nhánh × loại chứng từ) như hiện nay; Gate C chỉ đánh giá phần chạm phạm vi khoá (nhóm tính giá của chi nhánh đó) |
+| 8. Hiệu năng bán lẻ | Gate C chạy **gia tăng** sau ghi sổ và đêm; lúc khoá chỉ đọc kết quả mới nhất + kiểm lại phần thay đổi; `close-checks` xem trước không lưu lượt |
+| 9. Triển khai | giai đoạn **bóng** (`warn`) vài kỳ trên dữ liệu thật để đo tỉ lệ mã đỏ, sửa luật / dữ liệu; rồi mới bật chặn cho nhóm toàn vẹn. Số đo: tỉ lệ khoá kỳ phải chấp nhận, thời gian từ mã đỏ tới sửa |
+
+**Vì sao không chặn tuyệt đối:** đơn vị thật có dữ liệu cũ chưa sạch (nhập bình quân từ trước, chưa có lineage); chặn cứng làm kỳ kẹt và người dùng tìm cách vòng. Chặn trừ khi chấp nhận có lý do giữ được hai điều: không khoá lặng lẽ khi sổ đứt, và không ai mất quyền quyết định.

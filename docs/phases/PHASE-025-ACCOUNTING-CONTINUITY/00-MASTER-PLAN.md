@@ -36,11 +36,11 @@ Cả ba phục vụ tôn chỉ (ADR-0020): người dùng quyết định; Core 
 | Mã | Quyết định | Lý do |
 |---|---|---|
 | D025-1 | Accounting Continuity là **trụ cột III** của Core, ghi vào CANON §0.1 | yêu cầu chủ dự án; ngang tầm sổ cái |
-| D025-2 | **Không cứng hoá FIFO**: phương pháp tính giá là chính sách có phiên bản (FIFO / bình quân kỳ / bình quân liên hoàn / đích danh); mô hình lớp + phân bổ chung | nguyên tắc nhất quán phương pháp của đơn vị; dữ liệu bình quân đang chạy giữ nguyên |
+| D025-2 | **Mặc định FIFO, không cứng hoá**: phương pháp tính giá là chính sách có phiên bản (FIFO / bình quân kỳ / bình quân liên hoàn / đích danh); **đơn vị mới mặc định nhập trước – xuất trước**; đơn vị đang chạy bình quân giữ nguyên (không đổi ngầm), muốn đổi thì tạo phiên bản chính sách từ đầu năm tài chính; mô hình lớp + phân bổ chung <!-- [2026-11-03 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt D025-2 (mặc định FIFO) + hướng D025-6 (khoá kỳ): chủ duyệt — "hàng hóa bán lẻ vẫn chủ yếu có date" --> | bán lẻ hàng có hạn dùng bán theo thứ tự nhập; nhất quán phương pháp của đơn vị; dữ liệu bình quân đang chạy giữ nguyên |
 | D025-3 | Lớp và phân bổ **chỉ thêm**, có phiên bản (`superseded_by`); tính lại trước khoá kỳ, chốt khi khoá | phiếu nhập ghi lùi ngày làm đổi FIFO; không ghi đè |
 | D025-4 | Bình quân: lớp = **bể kỳ** của nhóm tính giá; lineage của bể liệt kê các phiếu nhập góp vào bể (đóng góp SL, GT) | người dùng vẫn thấy "giá vốn hình thành từ phiếu nào" khi chưa dùng FIFO |
 | D025-5 | **Gate C** = kiểm chuẩn vòng đời; mã `CT-*` vào `bizcity_findings@1` (cổng C), có căn cứ | R-GATE-10 / 11: một ngôn ngữ |
-| D025-6 | Khoá kỳ đòi Gate C không còn mã chặn của kỳ (R-CONT-6) | "mỗi chứng từ hợp lệ nhưng cuối kỳ không đủ điều kiện khoá" |
+| D025-6 | Khoá kỳ đọc Gate C: **mở rộng cơ chế khoá kỳ đang chạy** (R-DIAG-4 + danh sách điều kiện), không dựng cơ chế thứ hai. Mã toàn vẹn chuỗi (`CT-LIN-*`, `CT-REC-*`) chặn trừ khi người có quyền ghi lý do chấp nhận có bằng chứng; các mã còn lại mặc định **cảnh báo** (R-GATE-9), đơn vị tự nâng lên chặn khi sẵn sàng. Chi tiết: [20 §6](20-KIEM-CHUAN-VONG-DOI.md) <!-- [2026-11-03 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt D025-2 (mặc định FIFO) + hướng D025-6 (khoá kỳ) --> | "mỗi chứng từ hợp lệ nhưng cuối kỳ không đủ điều kiện khoá" — nhưng không làm kỳ kẹt cứng |
 | D025-7 | Dòng thời gian ghi **effect** của từng sự kiện: `accounting` / `operational` (R-CONT-8); hợp đồng đọc `bizcity_lineage@1` | người dùng thấy cái gì đổi sổ |
 | D025-8 | W1 dựng lineage **chỉ đọc** trên dữ liệu đang có (khoá theo mã hàng), chuyển sang `item_id` khi PHASE-024 B2 xong | giá trị sớm, không chờ |
 

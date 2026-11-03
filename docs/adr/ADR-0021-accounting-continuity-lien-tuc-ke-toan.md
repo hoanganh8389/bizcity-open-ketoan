@@ -20,7 +20,7 @@ Bút toán Nợ 632 / Có 156 chỉ cho biết **giá trị** đã hạch toán;
 
 ## Phản biện (trước khi chốt)
 
-1. **Không cứng hoá FIFO.** Kernel hôm nay tính giá vốn **bình quân gia quyền theo tháng** cho từng nhóm tính giá (`costing.service.ts`); chế độ kế toán cho phép nhập trước – xuất trước, bình quân gia quyền, thực tế đích danh, và đơn vị phải **áp dụng nhất quán**. Vậy phương pháp tính giá là **chính sách có phiên bản** (ADR-0009), đổi từ đầu năm tài chính; mô hình dữ liệu phải chung cho mọi phương pháp: **lớp giá vốn** (`valuation_layer`) + **phân bổ** (`cost_allocation`). Với FIFO mỗi phiếu nhập là một lớp; với bình quân, lớp là "bể bình quân của kỳ" và lineage vẫn chỉ ra các phiếu nhập góp vào bể đó.
+1. **Mặc định FIFO nhưng không cứng hoá** <!-- [2026-11-03 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt D025-2 (mặc định FIFO) + hướng D025-6 (khoá kỳ) -->: chủ duyệt đơn vị mới mặc định nhập trước – xuất trước (bán lẻ hàng có hạn dùng); đơn vị đang chạy giữ bình quân, không đổi ngầm. Kernel hôm nay tính giá vốn **bình quân gia quyền theo tháng** cho từng nhóm tính giá (`costing.service.ts`); chế độ kế toán cho phép nhập trước – xuất trước, bình quân gia quyền, thực tế đích danh, và đơn vị phải **áp dụng nhất quán**. Vậy phương pháp tính giá là **chính sách có phiên bản** (ADR-0009), đổi từ đầu năm tài chính; mô hình dữ liệu phải chung cho mọi phương pháp: **lớp giá vốn** (`valuation_layer`) + **phân bổ** (`cost_allocation`). Với FIFO mỗi phiếu nhập là một lớp; với bình quân, lớp là "bể bình quân của kỳ" và lineage vẫn chỉ ra các phiếu nhập góp vào bể đó.
 2. **Giá vốn vẫn tính sau ghi sổ** (R-POST-7). FIFO bị ảnh hưởng bởi phiếu nhập ghi lùi ngày: phân bổ phải **có phiên bản, chỉ thêm** (bản phân bổ mới thay thế bản cũ, không ghi đè), chốt khi khoá kỳ. Không tính giá vốn đồng bộ trên đường ghi sổ.
 3. **`account_id` không phải khoá thay thế.** ADR-0018 đã chốt: tài khoản định danh bằng **số hiệu trong một phiên bản hệ thống tài khoản**. "Liên kết sổ cái với số hiệu có hiệu lực" = (`chart_version`, `account_code`) + bảng ánh xạ khi đổi chế độ; không thêm id nhân tạo.
 4. **Mã kiểm của checklist phải vào thư viện mã** (R-GATE-10): `MD-001`, `FIFO-002`… trong bản mẫu trở thành mã của **Gate C — kiểm chuẩn vòng đời** (`CT-*`) trong `bizcity_findings@1`, có vì sao / cách sửa / căn cứ; không phải nhãn riêng của màn.
@@ -41,7 +41,7 @@ Bút toán Nợ 632 / Có 156 chỉ cho biết **giá trị** đã hạch toán;
 - PHASE-025 mở: mô hình dữ liệu, Gate C, màn **Hành trình mặt hàng** (lineage), checklist theo sự kiện, độ sẵn sàng khoá kỳ, bản mẫu.
 - `bizcity_findings@1` thêm cổng **C** và họ mã `CT-*`.
 - Kernel thêm `valuation_layers`, `cost_allocations` (chỉ thêm), engine tính giá dùng chung cho bình quân / FIFO / đích danh.
-- Khoá kỳ thêm điều kiện: Gate C không còn mã chặn của kỳ (R-CONT-6).
+- Khoá kỳ đọc Gate C qua cơ chế khoá kỳ hiện có: mã toàn vẹn chuỗi chặn trừ khi chấp nhận có lý do, mã khác mặc định cảnh báo (R-CONT-6, [PHASE-025 · 20 §6](../phases/PHASE-025-ACCOUNTING-CONTINUITY/20-KIEM-CHUAN-VONG-DOI.md)).
 
 ## Phương án đã cân nhắc
 
