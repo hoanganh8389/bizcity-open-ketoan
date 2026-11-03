@@ -100,8 +100,10 @@ function kiem() {
     if (inBranch.length) { add('warn', 'R-FLOW-2', `${s.ten}: chữ chốt (${inBranch.join(', ')}) nằm CÙNG nhánh với code — R-FLOW-2 muốn PR tài liệu vào main trước`); continue; }
     // Đúng thứ tự R-FLOW: giữ chỗ → chốt thiết kế → code. Chỉ tính tài liệu vào main TỪ ngày giữ chỗ (hợp đồng được sửa thường xuyên,
     // cho lùi về trước thì bất kỳ lần sửa gần đây nào cũng làm phép kiểm qua). Không có dòng giữ chỗ (ngoại lệ một tệp) thì từ hôm nay.
+    // `git log --since=YYYY-MM-DD` chỉ có ngày thì git điền GIỜ HIỆN TẠI cho phần thiếu (lọc từ 'bây giờ' chứ không từ 00:00) — luôn nêu rõ giờ và múi giờ.
     const since = claim ? claim.tu : dayStr(Date.now());
-    const onMain = lines(tryGit('log', 'origin/main', `--since=${since}`, '--name-only', '--pretty=format:')).filter((f) => s.docs.some((re) => re.test(f)));
+    const sinceArg = `${since}T00:00:00+07:00`;
+    const onMain = lines(tryGit('log', 'origin/main', `--since=${sinceArg}`, '--name-only', '--pretty=format:')).filter((f) => s.docs.some((re) => re.test(f)));
     if (onMain.length) add('ok', 'R-FLOW-2', `${s.ten}: chữ chốt đã vào main (${[...new Set(onMain)].slice(0, 3).join(', ')})`);
     else add('fail', 'R-FLOW-2', `${s.ten} (${s.code.slice(0, 3).join(', ')}): đổi thứ dùng chung nhưng chưa thấy tài liệu chốt nào vào main kể từ ngày giữ chỗ (${since}). Mở PR tài liệu chốt thiết kế (hợp đồng / ADR) vào main trước — bảng ở RULE-FLOW §3`);
   }
