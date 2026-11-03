@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { authOf, requireAuthenticated, requirePermission, requireUser } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { appsService } from './apps.service.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['App ngoài tiến trình'];
 const keyParam = z.object({ key: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Khoá app sai khuôn') });
@@ -27,34 +28,63 @@ export async function appsRoutes(app: FastifyInstance): Promise<void> {
 
   // Mọi người dùng của đơn vị (menu Tiện ích dựng từ danh sách này); nút quản trị kiểm users:write riêng.
   r.get('/api/v1/apps', { preHandler: requireAuthenticated(), schema: { tags, summary: 'App ngoài tiến trình cài trong bản này và trạng thái kết nối của đơn vị' }, handler: async (req) => ok(await appsService.list(authOf(req))) });
-
-  r.post('/api/v1/apps/:key/install', {
-    preHandler: admin, schema: { tags, summary: 'Kết nối app với đơn vị (khoá API và bí mật webhook chỉ trả về một lần)', params: keyParam },
-    handler: async (req, reply) => reply.status(201).send(ok(await appsService.install(authOf(req), req.params.key))),
-  });
-  r.post('/api/v1/apps/:key/enable', {
-    preHandler: admin, schema: { tags, summary: 'Bật lại kết nối app', params: keyParam },
-    handler: async (req) => ok(await appsService.setStatus(authOf(req), req.params.key, 'active')),
-  });
-  r.post('/api/v1/apps/:key/disable', {
-    preHandler: admin, schema: { tags, summary: 'Tắt kết nối app: khoá bị từ chối, webhook ngừng; dữ liệu và bút toán giữ nguyên', params: keyParam },
-    handler: async (req) => ok(await appsService.setStatus(authOf(req), req.params.key, 'disabled')),
-  });
-  r.post('/api/v1/apps/:key/scope', {
-    preHandler: admin, schema: { tags, summary: 'Đồng ý phạm vi quyền / sự kiện mới trong manifest app', params: keyParam },
-    handler: async (req) => ok(await appsService.updateScope(authOf(req), req.params.key)),
-  });
-  r.post('/api/v1/apps/:key/rotate', {
-    preHandler: admin, schema: { tags, summary: 'Xoay khoá API và bí mật webhook của app (trả về một lần)', params: keyParam },
-    handler: async (req) => ok(await appsService.rotate(authOf(req), req.params.key)),
-  });
+  // @bizcity-route: vé một lần cho ứng dụng nhúng (đổi phiên), không ghi dữ liệu nghiệp vụ
   r.post('/api/v1/apps/:key/ticket', {
     preHandler: requireUser(), schema: { tags, summary: 'Vé iframe ngắn hạn cho người dùng đang đăng nhập', params: keyParam },
     handler: async (req) => ok(await appsService.ticket(authOf(req), req.params.key)),
   });
   // Chỉ khoá app (appsService.exchange kiểm auth.app); không cần quyền Core nào vì chỉ trả ngữ cảnh của vé app đó giữ.
+  // @bizcity-route: công khai — đổi vé một lần lấy phiên của ứng dụng
   r.post('/api/v1/apps/ticket/exchange', {
     preHandler: requireAuthenticated(), schema: { tags, summary: 'App đổi vé iframe lấy ngữ cảnh (gọi bằng khoá API của app)', body: z.object({ ticket: z.string().min(20).max(4096) }) },
     handler: async (req) => ok(await appsService.exchange(authOf(req), req.body.ticket)),
   });
+  mountActions(app, appsWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const appsWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.app.install', title: 'Kết nối app với đơn vị (khoá API và bí mật webhook chỉ trả về một lần)', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: keyParam, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/apps/:key/install', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'app', objectId: (i) => String(i.key) },
+    handler: (ctx, input) => appsService.installIn(ctx.data.tx, ctx.legacyAuth, input.key),
+  }),
+  defineAction({
+    id: 'core.app.enable', title: 'Bật lại kết nối app', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: keyParam, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/apps/:key/enable' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'app', objectId: (i) => String(i.key) },
+    handler: (ctx, input) => appsService.setStatusIn(ctx.data.tx, ctx.legacyAuth, input.key, 'active'),
+  }),
+  defineAction({
+    id: 'core.app.disable', title: 'Tắt kết nối app: khoá bị từ chối, webhook ngừng; dữ liệu và bút toán giữ nguyên', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: keyParam, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/apps/:key/disable' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'app', objectId: (i) => String(i.key) },
+    handler: (ctx, input) => appsService.setStatusIn(ctx.data.tx, ctx.legacyAuth, input.key, 'disabled'),
+  }),
+  defineAction({
+    id: 'core.app.scope', title: 'Đồng ý phạm vi quyền / sự kiện mới trong manifest app', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: keyParam, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/apps/:key/scope' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'app', objectId: (i) => String(i.key) },
+    handler: (ctx, input) => appsService.updateScopeIn(ctx.data.tx, ctx.legacyAuth, input.key),
+  }),
+  defineAction({
+    id: 'core.app.rotate', title: 'Xoay khoá API và bí mật webhook của app (trả về một lần)', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: keyParam, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/apps/:key/rotate' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'app', objectId: (i) => String(i.key) },
+    handler: (ctx, input) => appsService.rotateIn(ctx.data.tx, ctx.legacyAuth, input.key),
+  }),
+];

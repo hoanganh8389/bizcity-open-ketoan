@@ -32,6 +32,18 @@
       "bizcity_read.ledger_balances_daily"
     ]
   },
+  "actions": [
+    "thue.authority-invoice.update",
+    "thue.authority-invoice.to-reference",
+    "thue.authority-invoice.delete",
+    "thue.risky-taxpayer.update",
+    "thue.risky-taxpayer.delete",
+    "thue.long-term-balance.update",
+    "thue.taxpayer.update",
+    "thue.vat-return.save",
+    "thue.vat-return.supplement",
+    "thue.cit-return.save"
+  ],
   "ui": {
     "icon": "Landmark",
     "color": "#5d4037",

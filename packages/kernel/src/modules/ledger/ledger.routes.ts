@@ -19,6 +19,7 @@ import { Errors } from '@bizcity/platform/core/errors';
 import { ledgerRepository } from './ledger.repository.js';
 import { listVouchers, VOUCHER_MODES } from './ledger-vouchers.js';
 import { documentService } from '../documents/document.service.js';
+import { defineAction, itemMessage, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Sổ cái'];
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -107,35 +108,7 @@ export async function ledgerRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await listVouchers(authOf(req), req.query)),
   });
 
-  r.post('/api/v1/ledger/vouchers/unpost', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags,
-      summary: 'Bỏ định khoản phiếu gốc của các bút toán được chọn: đảo bút toán, chứng từ về Chờ định khoản (ACC14)',
-      body: z.object({ entryIds: z.array(z.string().regex(/^\d+$/)).min(1).max(500), reason: z.string().trim().min(1, 'Nhập lý do').max(500) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      // Chỉ người dùng (kế toán) bỏ định khoản; khoá API của hệ thống bán hàng có documents:write nhưng không được làm việc này.
-      if (auth.kind !== 'user') throw Errors.forbidden('Bỏ định khoản chỉ làm ở màn Chứng từ kế toán, không qua khoá API');
-      const entries = await db.selectFrom('ledger_entries').select(['id', 'event_id', 'doc_no', 'entry_no'])
-        .where('tenant_id', '=', auth.tenantId).where('id', 'in', req.body.entryIds).execute();
-      const results: { docNo: string; ok: boolean; reversed?: number; message?: string }[] = [];
-      const seen = new Set<string>();
-      for (const e of entries) {
-        if (!e.event_id) { results.push({ docNo: e.doc_no || e.entry_no, ok: false, message: 'Bút toán không có phiếu gốc: đảo ở màn bút toán' }); continue; }
-        if (seen.has(e.event_id)) continue;
-        seen.add(e.event_id);
-        try {
-          const r = await documentService.unpost(auth, e.event_id, req.body.reason);
-          results.push({ docNo: e.doc_no, ok: true, reversed: r.reversed });
-        } catch (err) {
-          results.push({ docNo: e.doc_no, ok: false, message: err instanceof Error ? err.message : String(err) });
-        }
-      }
-      return ok({ results, done: results.filter((x) => x.ok).length, failed: results.filter((x) => !x.ok).length });
-    },
-  });
+  mountActions(app, ledgerWriteActions);
 
   r.get('/api/v1/ledger/entries/:id', {
     preHandler: requirePermission('ledger:read'),
@@ -233,3 +206,34 @@ export async function ledgerRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 }
+
+// [2026-11-03 10:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): bỏ định khoản hàng loạt — cả lô một giao dịch, mỗi phiếu gốc một SAVEPOINT (phiếu lỗi được báo, phiếu khác vẫn bỏ)
+export const ledgerWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.ledger.unpost', title: 'Bỏ định khoản phiếu gốc của các bút toán được chọn: đảo bút toán, chứng từ về Chờ định khoản (ACC14)', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: z.object({ entryIds: z.array(z.string().regex(/^\d+$/)).min(1).max(500), reason: z.string().trim().min(1, 'Nhập lý do').max(500) }),
+    output: z.object({ results: z.array(z.object({ docNo: z.string(), ok: z.boolean(), reversed: z.number().optional(), message: z.string().optional() })), done: z.number(), failed: z.number() }),
+    expose: { http: { method: 'POST', path: '/api/v1/ledger/vouchers/unpost' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'ledger_entry' },
+    handler: async (ctx, input) => {
+      const auth = ctx.legacyAuth;
+      // Chỉ người dùng (kế toán) bỏ định khoản; khoá API của hệ thống bán hàng có documents:write nhưng không được làm việc này.
+      if (auth.kind !== 'user') throw Errors.forbidden('Bỏ định khoản chỉ làm ở màn Chứng từ kế toán, không qua khoá API');
+      const trx = ctx.data.tx;
+      const entries = await trx.selectFrom('ledger_entries').select(['id', 'event_id', 'doc_no', 'entry_no'])
+        .where('tenant_id', '=', auth.tenantId).where('id', 'in', input.entryIds).execute();
+      const results: { docNo: string; ok: boolean; reversed?: number; message?: string }[] = [];
+      const seen = new Set<string>();
+      for (const e of entries) {
+        if (!e.event_id) { results.push({ docNo: e.doc_no || e.entry_no, ok: false, message: 'Bút toán không có phiếu gốc: đảo ở màn bút toán' }); continue; }
+        if (seen.has(e.event_id)) continue;
+        seen.add(e.event_id);
+        const eventId = e.event_id;
+        const x = await ctx.data.item((t) => documentService.unpostIn(t, auth, eventId, input.reason));
+        results.push(x.ok ? { docNo: e.doc_no, ok: true, reversed: x.value.reversed } : { docNo: e.doc_no, ok: false, message: itemMessage(x.error) });
+      }
+      return { results, done: results.filter((x) => x.ok).length, failed: results.filter((x) => !x.ok).length };
+    },
+  }),
+];

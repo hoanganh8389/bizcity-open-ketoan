@@ -20,6 +20,7 @@ import { ok } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { db, type Db } from '../../db/client.js';
+import { sameTx, type ActionTx, defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Đơn vị tính'];
 const NAME_RE = /^[\p{L}\p{N} _.\-/()+×]+$/u;
@@ -57,7 +58,12 @@ export const unitNameService = {
     return rows.map((r) => dto(r as unknown as Row, used));
   },
   async create(auth: AuthContext, input: z.infer<typeof bodySchema>): Promise<UnitNameDto> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => unitNameService.createIn(trx, auth, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: z.infer<typeof bodySchema>): Promise<UnitNameDto> {
+    return sameTx(trx, async (trx) => {
       await assertFree(trx, auth.tenantId, input.name);
       const r = await trx.insertInto('unit_names').values({ tenant_id: auth.tenantId, name: input.name, note: input.note, is_active: input.isActive, source: 'manual', created_by: auth.actorName, updated_by: auth.actorName })
         .returningAll().executeTakeFirstOrThrow();
@@ -66,7 +72,12 @@ export const unitNameService = {
     });
   },
   async update(auth: AuthContext, id: string, input: z.infer<typeof patchSchema>): Promise<UnitNameDto> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => unitNameService.updateIn(trx, auth, id, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, id: string, input: z.infer<typeof patchSchema>): Promise<UnitNameDto> {
+    return sameTx(trx, async (trx) => {
       const before = await one(trx, auth.tenantId, id);
       if (!before) throw Errors.notFound(`đơn vị tính #${id}`);
       if (input.name !== undefined && input.name !== before.name) {
@@ -84,7 +95,12 @@ export const unitNameService = {
     });
   },
   async remove(auth: AuthContext, id: string): Promise<{ id: string }> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => unitNameService.removeIn(trx, auth, id));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, id: string): Promise<{ id: string }> {
+    return sameTx(trx, async (trx) => {
       const before = await one(trx, auth.tenantId, id);
       if (!before) throw Errors.notFound(`đơn vị tính #${id}`);
       const n = (await usage(trx, auth.tenantId, before.name)).get(before.name.toLowerCase()) ?? 0;
@@ -101,7 +117,39 @@ const idParam = z.object({ id: z.string().regex(/^[1-9][0-9]*$/, 'Mã không h�
 export async function unitNameRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
   r.get('/api/v1/unit-names', { preHandler: requirePermission('catalog:read'), schema: { tags, summary: 'Danh mục tên đơn vị tính + số mặt hàng đang dùng' }, handler: async (req) => ok(await unitNameService.list(authOf(req))) });
-  r.post('/api/v1/unit-names', { preHandler: requirePermission('catalog:write'), schema: { tags, summary: 'Thêm tên đơn vị tính', body: bodySchema }, handler: async (req, reply) => reply.status(201).send(ok(await unitNameService.create(authOf(req), req.body))) });
-  r.patch('/api/v1/unit-names/:id', { preHandler: requirePermission('catalog:write'), schema: { tags, summary: 'Sửa tên đơn vị tính (tên đang dùng không đổi được)', params: idParam, body: patchSchema }, handler: async (req) => ok(await unitNameService.update(authOf(req), req.params.id, req.body)) });
-  r.delete('/api/v1/unit-names/:id', { preHandler: requirePermission('catalog:write'), schema: { tags, summary: 'Xoá tên đơn vị tính chưa mặt hàng nào dùng', params: idParam }, handler: async (req) => ok(await unitNameService.remove(authOf(req), req.params.id)) });
+  mountActions(app, unitNameWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const unitNameWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.unit-name.create', title: 'Thêm tên đơn vị tính', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: bodySchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/unit-names', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'unit_name' },
+    handler: (ctx, input) => unitNameService.createIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.unit-name.update', title: 'Sửa tên đơn vị tính (tên đang dùng không đổi được)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (patchSchema).merge(idParam), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/unit-names/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'unit_name', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...reqBody } = input;
+      return unitNameService.updateIn(ctx.data.tx, ctx.legacyAuth, id, reqBody);
+    },
+  }),
+  defineAction({
+    id: 'core.unit-name.delete', title: 'Xoá tên đơn vị tính chưa mặt hàng nào dùng', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: idParam, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/unit-names/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'unit_name', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => unitNameService.removeIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+];

@@ -16,6 +16,7 @@ import { generateApiKey, hashPassword, verifyPassword } from '../../core/securit
 import { accessRepository } from './access.repository.js';
 import { bumpSession, forgetSession } from '../../core/security/session-state.js';
 import type { ApiKeyCreate, UserCreate, UserUpdate } from './access.schemas.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 export const accessService = {
   async listUsers(auth: AuthContext) {
@@ -31,8 +32,13 @@ export const accessService = {
   },
 
   async createUser(auth: AuthContext, input: UserCreate) {
+    return db.transaction().execute((trx) => accessService.createUserIn(trx, auth, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createUserIn(trx: ActionTx, auth: AuthContext, input: UserCreate) {
     const password_hash = await hashPassword(input.password);
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const row = await accessRepository.insertUser(trx, { tenant_id: auth.tenantId, email: input.email, full_name: input.fullName, password_hash, role: input.role });
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'user.create', objectType: 'user', objectId: row.id, after: { email: input.email, role: input.role } });
       return { id: row.id };
@@ -40,8 +46,13 @@ export const accessService = {
   },
 
   async updateUser(auth: AuthContext, id: string, input: UserUpdate) {
+    return db.transaction().execute((trx) => accessService.updateUserIn(trx, auth, id, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateUserIn(trx: ActionTx, auth: AuthContext, id: string, input: UserUpdate) {
     const password_hash = input.password ? await hashPassword(input.password) : undefined;
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const user = await accessRepository.findUser(trx, auth.tenantId, id);
       if (!user) throw Errors.notFound('người dùng');
 
@@ -109,8 +120,13 @@ export const accessService = {
   },
 
   async createKey(auth: AuthContext, input: ApiKeyCreate) {
+    return db.transaction().execute((trx) => accessService.createKeyIn(trx, auth, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createKeyIn(trx: ActionTx, auth: AuthContext, input: ApiKeyCreate) {
     const k = generateApiKey();
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const row = await accessRepository.insertKey(trx, { tenant_id: auth.tenantId, name: input.name, key_prefix: k.prefix, key_hash: k.hash, scopes: input.scopes });
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'api_key.create', objectType: 'api_key', objectId: row.id, after: { name: input.name, scopes: input.scopes } });
       // Khoá đầy đủ chỉ trả về ở đây, một lần duy nhất.
@@ -119,7 +135,12 @@ export const accessService = {
   },
 
   async revokeKey(auth: AuthContext, id: string) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => accessService.revokeKeyIn(trx, auth, id));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async revokeKeyIn(trx: ActionTx, auth: AuthContext, id: string) {
+    return sameTx(trx, async (trx) => {
       const row = await accessRepository.revokeKey(trx, auth.tenantId, id);
       if (!row) throw Errors.notFound('khoá API đang hiệu lực');
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'api_key.revoke', objectType: 'api_key', objectId: id, before: row });

@@ -69,6 +69,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, submitActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
 
+  // @bizcity-route: cửa nạp (ADR-0014) — chứng từ bị từ chối giữ ở bể chờ bằng giao dịch riêng; idempotent theo docKey + version
   r.post('/api/v1/documents', {
     preHandler: requirePermission('documents:write'),
     schema: {
@@ -86,6 +87,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // @bizcity-route: cửa nạp theo lô — như POST /documents; gom một giao dịch có thể khoá chéo với bể chờ (kết nối riêng)
   r.post('/api/v1/documents/batch', {
     preHandler: requirePermission('documents:write'),
     schema: { tags, summary: 'Gửi nhiều chứng từ', body: ingestBatchSchema },
@@ -94,16 +96,6 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
       const summary = results.reduce<Record<string, number>>((acc, x) => ((acc[x.status] = (acc[x.status] ?? 0) + 1), acc), {});
       return ok(results, summary);
     },
-  });
-
-  r.post('/api/v1/documents/post', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags,
-      summary: 'Trạm định khoản: định khoản (chờ / lỗi) hoặc định khoản lại (repost = true) các chứng từ đã chọn theo nội dung mới nhất',
-      body: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), repost: z.boolean().default(false) }),
-    },
-    handler: async (req) => ok(await documentService.postMany(authOf(req), req.body.ids, req.body.repost)),
   });
 
   r.get('/api/v1/documents', {
@@ -170,19 +162,6 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await documentService.get(authOf(req), req.params.id)),
   });
 
-  // Phiếu chuyển tiền: kế toán xác nhận nơi nhận đã nhận tiền (thay bước duyệt của HTsoft; không qua khoá API).
-  r.post('/api/v1/documents/:id/confirm-receipt', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Xác nhận đã nhận tiền (phiếu chuyển tiền): định khoản thêm bút toán nơi nhận', params: idParamSchema, body: z.object({ note: z.string().trim().max(500).default('') }).default({}) },
-    handler: async (req) => ok(await documentService.confirmReceipt(authOf(req), req.params.id, req.body.note)),
-  });
-
-  r.delete('/api/v1/documents/:id/confirm-receipt', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Bỏ xác nhận đã nhận tiền: định khoản lại, đảo bút toán nơi nhận', params: idParamSchema },
-    handler: async (req) => ok(await documentService.unconfirmReceipt(authOf(req), req.params.id)),
-  });
-
   r.get('/api/v1/documents/cash-transfers', {
     preHandler: requirePermission('documents:read'),
     schema: {
@@ -196,12 +175,6 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
       }),
     },
     handler: async (req) => ok(await documentService.listCashTransfers(authOf(req), req.query)),
-  });
-
-  r.post('/api/v1/documents/confirm-receipts', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Xác nhận đã nhận tiền nhiều phiếu chuyển tiền một lần', body: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), note: z.string().trim().max(500).default('') }) },
-    handler: async (req) => ok(await documentService.confirmReceipts(authOf(req), req.body.ids, req.body.note)),
   });
 
   r.get('/api/v1/documents/receipt-confirmations', {
@@ -236,6 +209,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await documentService.postingLog(authOf(req), req.query)),
   });
   mountActions(app, cancelActions);
+  mountActions(app, documentWriteActions);
 }
 
 // [2026-11-03 03:15 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): huỷ chứng từ qua defineAction. Người dùng: đảo bút toán, huỷ; khoá API của hệ thống nguồn: chỉ đưa về cổng chờ (Chờ huỷ).
@@ -252,5 +226,47 @@ export const cancelActions: AnyActionDef[] = [
     handler: (ctx, b) => (ctx.legacyAuth.kind === 'apikey'
       ? documentService.requestCancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)
       : documentService.cancelIn(ctx.data.tx, ctx.legacyAuth, b.docKey, b.reason)),
+  }),
+];
+
+// [2026-11-03 09:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const documentWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.document.post-many', title: 'Trạm định khoản: định khoản (chờ / lỗi) hoặc định khoản lại (repost = true) các chứng từ đã chọn theo nội dung mới nhất', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), repost: z.boolean().default(false) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/documents/post' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'document' },
+    handler: (ctx, input) => documentService.postManyIn(ctx.data.tx, ctx.legacyAuth, input.ids, input.repost),
+  }),
+  defineAction({
+    id: 'core.cash-transfer.confirm-receipt', title: 'Xác nhận đã nhận tiền (phiếu chuyển tiền): định khoản thêm bút toán nơi nhận', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: (z.object({ note: z.string().trim().max(500).default('') })).merge(idParamSchema), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/documents/:id/confirm-receipt' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_transfer', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...reqBody } = input;
+      return documentService.confirmReceiptIn(ctx.data.tx, ctx.legacyAuth, id, reqBody.note);
+    },
+  }),
+  defineAction({
+    id: 'core.cash-transfer.unconfirm-receipt', title: 'Bỏ xác nhận đã nhận tiền: định khoản lại, đảo bút toán nơi nhận', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/documents/:id/confirm-receipt' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_transfer', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => documentService.unconfirmReceiptIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+  defineAction({
+    id: 'core.cash-transfer.confirm-receipts', title: 'Xác nhận đã nhận tiền nhiều phiếu chuyển tiền một lần', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: z.object({ ids: z.array(z.string().regex(/^\d+$/)).min(1).max(500), note: z.string().trim().max(500).default('') }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/documents/confirm-receipts' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_transfer' },
+    handler: (ctx, input) => documentService.confirmReceiptsIn(ctx.data.tx, ctx.legacyAuth, input.ids, input.note),
   }),
 ];

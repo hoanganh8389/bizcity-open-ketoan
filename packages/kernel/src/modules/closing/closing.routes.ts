@@ -41,18 +41,6 @@ export async function closingRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await closingService.listRuleVersions(authOf(req))),
   });
 
-  r.post('/api/v1/closing/run', {
-    preHandler: requirePermission('periods:lock'),
-    schema: { tags, summary: 'Kết chuyển lãi lỗ (chạy lại thì bút toán cũ được đảo)', body: closingRunSchema },
-    handler: async (req) => ok(await closingService.run(authOf(req), req.body)),
-  });
-
-  r.post('/api/v1/closing/year-end', {
-    preHandler: requirePermission('periods:lock'),
-    schema: { tags, summary: 'Kết chuyển lợi nhuận năm trước (4212 → 4211) khi sang năm mới', body: yearEndRunSchema },
-    handler: async (req) => ok(await closingService.yearEnd(authOf(req), req.body)),
-  });
-
   r.get('/api/v1/closing/runs', {
     preHandler: requirePermission('reports:read'),
     schema: {
@@ -72,6 +60,7 @@ export async function closingRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await closingService.runSources(authOf(req), req.params.id, req.query)),
   });
   mountActions(app, closingActions);
+  mountActions(app, closingWriteActions);
 }
 
 // [2026-11-03 02:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): lưu bút toán kết chuyển mẫu, xem trước qua defineAction. Kết chuyển / kết chuyển năm (run, year-end) còn là route:
@@ -99,5 +88,28 @@ export const closingActions: AnyActionDef[] = [
     input: closingRunSchema, output: z.array(anyObject),
     expose: { http: { method: 'POST', path: '/api/v1/closing/preview' }, mcp: false, ai: 'read' },
     handler: (ctx, b) => closingService.preview(ctx.legacyAuth, b),
+  }),
+];
+
+// [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const closingWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.closing.run', title: 'Kết chuyển lãi lỗ (chạy lại thì bút toán cũ được đảo)', tags,
+    permission: 'periods:lock', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: closingRunSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/closing/run' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'closing' },
+    handler: (ctx, input) => closingService.runIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.closing.year-end', title: 'Kết chuyển lợi nhuận năm trước (4212 → 4211) khi sang năm mới', tags,
+    permission: 'periods:lock', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',
+    input: yearEndRunSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/closing/year-end' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'closing' },
+    handler: (ctx, input) => closingService.yearEndIn(ctx.data.tx, ctx.legacyAuth, input),
   }),
 ];

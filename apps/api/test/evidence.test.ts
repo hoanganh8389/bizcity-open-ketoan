@@ -7,6 +7,7 @@ import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { PLATFORM_DIAGNOSTICS } from '../src/modules/system/diagnostics.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { compactEvidence, EVIDENCE_INPUT_MAX } from '@bizcity/platform/core/actions';
 
 let ctx: TestCtx, kt: TestCtx;
 let tenantId = '';
@@ -93,5 +94,32 @@ describe('Bằng chứng', () => {
     expect(tampered).toMatchObject({ count: 1, sample: [victim] });
     const diag = await call(ctx, 'GET', '/api/v1/system/diagnostics');
     expect(diag.body.data.checks.find((c: { code: string }) => c.code === 'EVIDENCE_CHAIN')).toMatchObject({ level: 'pass' });
+  });
+
+  // [2026-11-03 05:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: bí mật không vào bằng chứng, không trả lại khi gửi lặp
+  it('mật khẩu không vào bằng chứng; khoá API chỉ trả về một lần (gửi lặp nhận bản đã che)', async () => {
+    expect((await call(ctx, 'POST', '/api/v1/users', { email: 'bimat@ketoan.local', fullName: 'Bí mật', role: 'accountant', password: 'MatKhau@98765' })).status).toBe(201);
+    const ev = await db.selectFrom('audit_logs').select('after_data').where('tenant_id', '=', tenantId).where('action', '=', 'core.user.create').orderBy('id', 'desc').executeTakeFirstOrThrow();
+    expect(JSON.stringify(ev.after_data)).not.toContain('MatKhau@98765');
+    expect(ev.after_data).toMatchObject({ input: { email: 'bimat@ketoan.local', password: '***' } });
+
+    const first = await post(ctx, '/api/v1/api-keys', { name: 'Khoá bí mật' }, 'khoa-api-bi-mat-01');
+    expect(first.statusCode, first.body).toBe(201);
+    const key = first.json().data.key as string;
+    expect(key.length).toBeGreaterThan(10);
+    const again = await post(ctx, '/api/v1/api-keys', { name: 'Khoá bí mật' }, 'khoa-api-bi-mat-01');
+    expect(again.json()).toMatchObject({ data: { key: '***' }, meta: { idempotency: 'replayed' } });
+    const stored = await db.selectFrom('action_requests').select('response').where('tenant_id', '=', tenantId).where('idem_key', '=', 'khoa-api-bi-mat-01').executeTakeFirstOrThrow();
+    expect(JSON.stringify(stored.response)).not.toContain(key);
+  });
+});
+
+// [2026-11-03 08:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: thân lớn không chép vào bằng chứng
+describe('Bằng chứng gọn', () => {
+  it('input quá 64 KB chỉ giữ cỡ; input nhỏ giữ nguyên', () => {
+    const big = { input: { rows: 'x'.repeat(EVIDENCE_INPUT_MAX + 1) }, notes: { a: 1 } };
+    expect(compactEvidence(big)).toEqual({ input: { omitted: true, bytes: EVIDENCE_INPUT_MAX + 1 + 11 }, notes: { a: 1 } });
+    const small = { input: { code: 'A' } };
+    expect(compactEvidence(small)).toBe(small);
   });
 });

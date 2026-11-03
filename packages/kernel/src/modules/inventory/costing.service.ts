@@ -64,6 +64,7 @@ import { partnerRepository } from '@bizcity/platform/masterdata/partner.reposito
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { AccountResolver } from '../posting/account-resolver.js';
 import { EntryBuilder } from '../posting/entry-builder.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 
 interface Period { year: number; month: number }
 const label = (p: Period) => `${p.year}-${String(p.month).padStart(2, '0')}`;
@@ -387,6 +388,12 @@ export const costingService = {
    * `clearImport`: bỏ giá đã nhập, quay về tính bình quân cho mọi mã.
    */
   async run(auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string }): Promise<CostingResult> {
+    return db.transaction().execute((trx) => costingService.runIn(trx, auth, input));
+  },
+
+  // [2026-11-03 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): đơn giá + ghi sổ giá vốn mọi chi nhánh trong một giao dịch (trước: 2+ giao dịch nối nhau — lỗi ở một chi nhánh
+  // để lại đơn giá và các chi nhánh trước đã ghi)
+  async runIn(trx: ActionTx, auth: AuthContext, input: { period: string; imported?: CostImportRow[]; clearImport?: boolean; from?: string; to?: string }): Promise<CostingResult> {
     const p = parsePeriod(input.period);
     // Khoảng ngày chứng từ được cập nhật giá vốn: trong tháng đang tính (giá vốn là giá của tháng), mặc định cả tháng.
     const from = input.from ?? firstDay(p);
@@ -418,7 +425,7 @@ export const costingService = {
       if (!imports.size) throw Errors.validation('Tệp không có dòng nào có Mã hàng và Giá vốn hợp lệ');
     }
     // Bước 1: đơn giá (một giao dịch, gồm các tháng trước còn thiếu).
-    const { units, giftCovered, months, items, imported } = await db.transaction().execute(async (trx) => {
+    const { units, giftCovered, months, items, imported } = await sameTx(trx, async (trx) => {
       const months = [...(await missingMonthsBefore(trx, auth.tenantId, p)), p];
       let rows = new Map<string, CostRow>();
       let giftCovered = new Map<string, number>();
@@ -434,12 +441,12 @@ export const costingService = {
     });
 
     // Bước 2: ghi sổ giá vốn từng chi nhánh, mỗi chi nhánh một giao dịch.
-    const movements = await unvaluedMovements(db, auth.tenantId, p);
+    const movements = await unvaluedMovements(trx, auth.tenantId, p);
     const byBranch = new Map<string, CogsMovement[]>();
     for (const m of movements) byBranch.set(m.branchId, [...(byBranch.get(m.branchId) ?? []), m]);
     // Chi nhánh đã có chứng từ giá vốn tháng này mà nay không còn gì để ghi: vẫn chạy để đảo bút toán cũ.
     // Mẫu khớp cả khoá mới (cogs:<chi nhánh>:<kỳ>) lẫn khoá cũ (cogs:<internal|tax>:<chi nhánh>:<kỳ>).
-    const prior = await db.selectFrom('accounting_events as d').innerJoin('branches as b', 'b.id', 'd.branch_id')
+    const prior = await trx.selectFrom('accounting_events as d').innerJoin('branches as b', 'b.id', 'd.branch_id')
       .select(['d.branch_id', 'b.code', 'b.name']).where('d.tenant_id', '=', auth.tenantId).where('d.doc_type', '=', 'cogs')
       .where('d.doc_key', 'like', `cogs:%:${label(p)}`).where('d.status', '=', 'posted').execute();
     for (const r of prior) if (!byBranch.has(r.branch_id)) byBranch.set(r.branch_id, []);
@@ -447,7 +454,7 @@ export const costingService = {
     const slotBranches = await sql<{ branch_id: string; code: string; name: string }>`
       SELECT DISTINCT l.branch_id::text, b.code, b.name FROM ledger_lines l JOIN branches b ON b.id = l.branch_id
        WHERE l.tenant_id = ${auth.tenantId} AND l.cost_fill IS NOT NULL AND (l.debit <> 0 OR l.credit <> 0)
-         AND l.posting_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date`.execute(db);
+         AND l.posting_date BETWEEN ${firstDay(p)}::date AND ${lastDay(p)}::date`.execute(trx);
     for (const r of slotBranches.rows) if (!byBranch.has(r.branch_id)) byBranch.set(r.branch_id, []);
     const branchInfo = new Map([...prior, ...slotBranches.rows].map((r) => [r.branch_id, { code: r.code, name: r.name }]));
     for (const m of movements) branchInfo.set(m.branchId, { code: m.branchCode, name: m.branchName });
@@ -455,7 +462,7 @@ export const costingService = {
     const branches: CostingResult['branches'] = [];
     for (const [branchId, list] of byBranch) {
       const info = branchInfo.get(branchId)!;
-      branches.push(await db.transaction().execute((trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, movements: list })));
+      branches.push(await sameTx(trx, (trx) => postBranch(trx, auth, { period: p, from, to, branchId, branchCode: info.code, units, giftCovered, movements: list })));
     }
     branches.sort((a, b) => a.branchCode.localeCompare(b.branchCode));
     return { period: label(p), monthsComputed: months, items, branches, total: fromCents(branches.reduce((s, b) => s + toCents(b.total) + toCents(b.filledTotal), 0)), imported };

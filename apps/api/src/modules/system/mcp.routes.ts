@@ -159,6 +159,7 @@ async function callTool(req: FastifyRequest, auth: AuthContext, params: CallPara
 const rpcError = (id: unknown, code: number, message: string) => ({ jsonrpc: '2.0', id: id ?? null, error: { code, message } });
 
 export async function mcpRoutes(app: FastifyInstance): Promise<void> {
+  // @bizcity-route: giao thức MCP (JSON-RPC) — mỗi công cụ gọi bên trong đã chạy qua runAction
   app.post('/mcp', {
     preHandler: requireAuthenticated(),
     schema: {

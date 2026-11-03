@@ -60,6 +60,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `INVOICE_ISSUE_DATE` | L3 | Hoá đơn bán hàng hoá có ngày lập sau ngày chứng từ bán (thời điểm chuyển giao) | warn | có | DG-EINV-2 |
 | `CASH_NEGATIVE` <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2 --> | L3 | Quỹ tiền mặt âm cuối ngày theo (chi nhánh, tài khoản tiền mặt ngầm định `cash` và tài khoản con); mẫu `<chi nhánh>:<tài khoản>@<ngày âm đầu>` | warn | có | DG-CASH-1 |
 | `ACCOUNT_WRONG_SIDE` | L3 | Tài khoản có `normal_side` một bên mà số dư cuối kỳ ở bên ngược lại; mẫu `<tài khoản>:<bên đang dư>` | warn | có | DG-ACC-1 |
+| `INTAKE_OPEN_AGE` <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19) --> | L3 | Mục bể chờ đầu vào `open` (cửa nạp từ chối, chưa vào sổ) quá `bizcity.intake.open_alert_days` ngày (mặc định 3); mẫu `docKey` (`#<id>` khi khuôn hỏng) | warn | có | DG-INTAKE-1 |
 | `COGS_STALE` | L3 | Chứng từ kho của tháng được nhận / sửa (`received_at`) sau lần ghi phiếu giá vốn tháng; mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-STK-1 |
 | `STOCK_ADJUST_NO_REASON` | L3 | Phiếu điều chỉnh kho (tăng / giảm) không có lý do | warn | có | DG-STK-2 |
 | `DEPRECIATION_OPEN` | L3 | Tháng đã qua 30 ngày (24 tháng gần nhất) có tài sản cần khấu hao / phân bổ mà chưa trích (tính cả khoảng dồn khi trích bù); mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-FA-1 |

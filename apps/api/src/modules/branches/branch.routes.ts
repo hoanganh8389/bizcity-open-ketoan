@@ -15,6 +15,7 @@ import { ok } from '../../core/http.js';
 import { branchCreateSchema, branchUpdateSchema } from './branch.schemas.js';
 import { branchService } from './branch.service.js';
 import { branchSites } from './branch-sites.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Chi nhánh'];
 
@@ -32,22 +33,39 @@ export async function branchRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Website của hệ thống bán hàng và chi nhánh đang nối (qua kết nối chính)', querystring: z.object({ refresh: z.string().optional() }) },
     handler: async (req) => ok(await branchSites(authOf(req).tenantId, req.query.refresh === '1')),
   });
-
-  r.post('/api/v1/branches', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Thêm chi nhánh', body: branchCreateSchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await branchService.create(authOf(req), req.body))),
-  });
-
-  r.patch('/api/v1/branches/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Sửa chi nhánh', params: z.object({ code: z.string() }), body: branchUpdateSchema },
-    handler: async (req) => ok(await branchService.update(authOf(req), req.params.code, req.body)),
-  });
-
-  r.delete('/api/v1/branches/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá chi nhánh chưa có chứng từ', params: z.object({ code: z.string() }) },
-    handler: async (req) => ok(await branchService.remove(authOf(req), req.params.code)),
-  });
+  mountActions(app, branchWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const branchWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.branch.create', title: 'Thêm chi nhánh', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: branchCreateSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/branches', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'branch' },
+    handler: (ctx, input) => branchService.createIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.branch.update', title: 'Sửa chi nhánh', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (branchUpdateSchema).merge(z.object({ code: z.string() })), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/branches/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'branch', objectId: (i) => String(i.code) },
+    handler: (ctx, input) => {
+      const { code, ...reqBody } = input;
+      return branchService.updateIn(ctx.data.tx, ctx.legacyAuth, code, reqBody);
+    },
+  }),
+  defineAction({
+    id: 'core.branch.delete', title: 'Xoá chi nhánh chưa có chứng từ', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string() }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/branches/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'branch', objectId: (i) => String(i.code) },
+    handler: (ctx, input) => branchService.removeIn(ctx.data.tx, ctx.legacyAuth, input.code),
+  }),
+];

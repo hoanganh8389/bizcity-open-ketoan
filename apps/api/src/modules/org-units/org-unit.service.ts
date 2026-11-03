@@ -20,6 +20,7 @@ import { db, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import type { AuthContext } from '../../core/auth.js';
+import { inSavepoint, sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 import type {
   OrgBranchDto, OrgCreate, OrgImport, OrgNodeDto, OrgTables, OrgTreeDto, OrgUpdate, OrgWarehouseDto, PurchaseUnitDto,
 } from './org-unit.schemas.js';
@@ -227,7 +228,12 @@ export const orgUnitService = {
   purchaseUnits: (auth: AuthContext) => purchaseUnits(db, auth.tenantId),
 
   async create(auth: AuthContext, input: OrgCreate) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => orgUnitService.createIn(trx, auth, input));
+  },
+
+  // [2026-11-03 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (sơ đồ tổ chức): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: OrgCreate) {
+    return sameTx(trx, async (trx) => {
       if ((await loadNodes(trx, auth.tenantId)).some((n) => n.code === input.code)) throw Errors.conflict(`Mã ${input.code} đã có trong sơ đồ tổ chức`);
       const parentId = await parentIdOf(trx, auth.tenantId, input.parentCode);
       await withOrg(trx).insertInto('org_units').values({
@@ -241,7 +247,12 @@ export const orgUnitService = {
   },
 
   async update(auth: AuthContext, code: string, input: OrgUpdate) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => orgUnitService.updateIn(trx, auth, code, input));
+  },
+
+  // [2026-11-03 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (sơ đồ tổ chức): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, code: string, input: OrgUpdate) {
+    return sameTx(trx, async (trx) => {
       const before = await nodeOrThrow(trx, auth.tenantId, code);
       const patch: Record<string, unknown> = { updated_by: auth.actor, updated_at: new Date() };
       if (input.name !== undefined) patch.name = input.name;
@@ -272,7 +283,12 @@ export const orgUnitService = {
   // [2026-11-03 03:10 PM Nguyễn Văn Thủy] SDTC — Xoá nút như màn quen dùng (thay Ngừng dùng): chỉ xoá được nút không có nút con, không gắn chi nhánh nào
   /** Xoá nút: không xoá gốc, nút còn nút con hoặc còn chi nhánh gắn vào (kể cả chi nhánh đã ngừng). */
   async remove(auth: AuthContext, code: string) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => orgUnitService.removeIn(trx, auth, code));
+  },
+
+  // [2026-11-03 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (sơ đồ tổ chức): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, code: string) {
+    return sameTx(trx, async (trx) => {
       const before = await nodeOrThrow(trx, auth.tenantId, code);
       if (!before.parent_id) throw Errors.validation('Không xoá được nút gốc');
       const kid = await withOrg(trx).selectFrom('org_units').select('code').where('tenant_id', '=', auth.tenantId).where('parent_id', '=', before.id).limit(1).executeTakeFirst();
@@ -289,7 +305,12 @@ export const orgUnitService = {
 
   /** Gắn / chuyển chi nhánh vào nút. */
   async assign(auth: AuthContext, code: string, branchCodes: string[]) {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => orgUnitService.assignIn(trx, auth, code, branchCodes));
+  },
+
+  // [2026-11-03 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (sơ đồ tổ chức): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async assignIn(trx: ActionTx, auth: AuthContext, code: string, branchCodes: string[]) {
+    return sameTx(trx, async (trx) => {
       const node = await nodeOrThrow(trx, auth.tenantId, code);
       if (!node.is_active) throw Errors.validation(`Nút ${code} đã ngừng dùng`);
       const found = await trx.selectFrom('branches').select('code').where('tenant_id', '=', auth.tenantId).where('code', 'in', branchCodes).execute();
@@ -304,21 +325,24 @@ export const orgUnitService = {
 
   /** Nhập từ Excel: nút (cha trước con), gắn chi nhánh. Có lỗi thì không lưu gì; dryRun chỉ kiểm + xem trước. */
   async importAll(auth: AuthContext, input: OrgImport) {
+    return db.transaction().execute((trx) => orgUnitService.importAllIn(trx, auth, input));
+  },
+
+  // [2026-11-03 05:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (sơ đồ tổ chức): nhập trong giao dịch của action. Thử (dryRun) hoặc còn lỗi → nhập chạy trong SAVEPOINT rồi huỷ riêng phần đó, kết quả vẫn trả về
+  async importAllIn(trx: ActionTx, auth: AuthContext, input: OrgImport) {
     const ROLLBACK = Symbol('dry-run');
     let result: Awaited<ReturnType<typeof runImport>> | null = null;
-    try {
-      await db.transaction().execute(async (trx) => {
-        result = await runImport(trx, auth, input);
-        if (input.dryRun || result.errors.length) throw ROLLBACK;
-      });
-    } catch (e) {
-      if (e !== ROLLBACK) throw e;
-    }
+    const x = await inSavepoint(trx, async (t) => {
+      result = await runImport(t, auth, input);
+      if (input.dryRun || result.errors.length) throw ROLLBACK;
+    });
+    if (!x.ok && x.error !== ROLLBACK) throw x.error;
     return { ...result!, saved: !input.dryRun && result!.errors.length === 0 };
   },
 
   defaultsInfo: () => defaultsInfo(),
   restoreDefaults: (auth: AuthContext) => db.transaction().execute((trx) => restoreDefaults(trx, auth)),
+  restoreDefaultsIn: (trx: ActionTx, auth: AuthContext) => restoreDefaults(trx, auth),
 };
 
 /* ------------------------------------------------------------------ dữ liệu gốc */

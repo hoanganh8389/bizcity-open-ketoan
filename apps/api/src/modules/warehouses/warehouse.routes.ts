@@ -19,6 +19,7 @@ import { ok } from '../../core/http.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { db, type Db } from '../../db/client.js';
+import { sameTx, type ActionTx, defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Danh mục: Kho'];
 
@@ -71,7 +72,12 @@ export const warehouseService = {
   },
 
   async create(auth: AuthContext, input: Body): Promise<WarehouseDto> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => warehouseService.createIn(trx, auth, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async createIn(trx: ActionTx, auth: AuthContext, input: Body): Promise<WarehouseDto> {
+    return sameTx(trx, async (trx) => {
       const exists = await trx.selectFrom('warehouses').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).executeTakeFirst();
       if (exists) throw Errors.conflict(`Mã kho ${input.code} đã có`);
       const branch = await branchId(trx, auth.tenantId, input.branchCode);
@@ -86,7 +92,12 @@ export const warehouseService = {
   },
 
   async update(auth: AuthContext, code: string, input: z.infer<typeof patchSchema>): Promise<WarehouseDto> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => warehouseService.updateIn(trx, auth, code, input));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async updateIn(trx: ActionTx, auth: AuthContext, code: string, input: z.infer<typeof patchSchema>): Promise<WarehouseDto> {
+    return sameTx(trx, async (trx) => {
       const before = await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirst();
       if (!before) throw Errors.notFound(`kho ${code}`);
       const patch: Record<string, unknown> = { updated_at: new Date() };
@@ -108,7 +119,12 @@ export const warehouseService = {
   },
 
   async remove(auth: AuthContext, code: string): Promise<{ code: string }> {
-    return db.transaction().execute(async (trx) => {
+    return db.transaction().execute((trx) => warehouseService.removeIn(trx, auth, code));
+  },
+
+  // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): bản *In chạy trong giao dịch của action (defineAction); bản cũ giữ chữ ký, tự mở giao dịch
+  async removeIn(trx: ActionTx, auth: AuthContext, code: string): Promise<{ code: string }> {
+    return sameTx(trx, async (trx) => {
       const before = await select(trx, auth.tenantId).where('w.code', '=', code).executeTakeFirst();
       if (!before) throw Errors.notFound(`kho ${code}`);
       if (await usedBy(trx, auth.tenantId, code)) throw Errors.conflict(`Kho ${code} đã có dòng nhập xuất: bỏ tích "Theo dõi" để ngừng dùng`);
@@ -136,19 +152,39 @@ export async function warehouseRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Danh sách kho (lọc theo chi nhánh)', querystring: z.object({ branchCodes: codesParam }) },
     handler: async (req) => ok(await warehouseService.list(authOf(req), req.query.branchCodes)),
   });
-  r.post('/api/v1/warehouses', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Thêm kho', body: bodySchema },
-    handler: async (req, reply) => reply.status(201).send(ok(await warehouseService.create(authOf(req), req.body))),
-  });
-  r.patch('/api/v1/warehouses/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Sửa kho', params: z.object({ code: z.string() }), body: patchSchema },
-    handler: async (req) => ok(await warehouseService.update(authOf(req), req.params.code, req.body)),
-  });
-  r.delete('/api/v1/warehouses/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: { tags, summary: 'Xoá kho chưa có dòng nhập xuất', params: z.object({ code: z.string() }) },
-    handler: async (req) => ok(await warehouseService.remove(authOf(req), req.params.code)),
-  });
+  mountActions(app, warehouseWriteActions);
 }
+
+// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const warehouseWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.warehouse.create', title: 'Thêm kho', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: bodySchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/warehouses', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse' },
+    handler: (ctx, input) => warehouseService.createIn(ctx.data.tx, ctx.legacyAuth, input),
+  }),
+  defineAction({
+    id: 'core.warehouse.update', title: 'Sửa kho', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (patchSchema).merge(z.object({ code: z.string() })), output: anyOut,
+    expose: { http: { method: 'PATCH', path: '/api/v1/warehouses/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse', objectId: (i) => String(i.code) },
+    handler: (ctx, input) => {
+      const { code, ...reqBody } = input;
+      return warehouseService.updateIn(ctx.data.tx, ctx.legacyAuth, code, reqBody);
+    },
+  }),
+  defineAction({
+    id: 'core.warehouse.delete', title: 'Xoá kho chưa có dòng nhập xuất', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({ code: z.string() }), output: anyOut,
+    expose: { http: { method: 'DELETE', path: '/api/v1/warehouses/:code' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'warehouse', objectId: (i) => String(i.code) },
+    handler: (ctx, input) => warehouseService.removeIn(ctx.data.tx, ctx.legacyAuth, input.code),
+  }),
+];
