@@ -2,7 +2,8 @@
 <!-- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a (S024-4 / 5 / 6): hợp đồng Item Master phần dữ liệu + Item Resolver; chạy song song với products (ADR-0017, R-ITEM) -->
 
 <!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: 0.2.0-draft — item_id trên bảng sổ / kho (0066) -->
-> **Phiên bản:** 0.2.0-draft · 2026-11-04 · **Trạng thái:** Đề xuất (B2a + B2b phần 1: dữ liệu, Item Resolver, `item_id` trên dòng sổ / kho; `products` vẫn là bảng)
+<!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: 0.3.0-draft — họ mặt hàng theo định danh (0067) -->
+> **Phiên bản:** 0.3.0-draft · 2026-11-04 · **Trạng thái:** Đề xuất (B2a + B2b phần 1: dữ liệu, Item Resolver, `item_id` trên dòng sổ / kho; `products` vẫn là bảng)
 > **Nguồn sự thật:** `packages/contracts/src/item-master.ts` (kiểu) · `db/migrations/0065_mat_hang_dinh_danh.sql` (bảng, bất biến) · `packages/kernel/src/modules/masterdata/item-resolver.ts`
 > **Luật:** [R-ITEM](../rules/RULE-ITEM.md) · **Quyết định:** [ADR-0017](../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), [ADR-0018](../adr/ADR-0018-danh-muc-co-phien-ban-toan-framework.md) · **Kế hoạch:** [PHASE-024 · 70 §3](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/70-LO-TRINH-ON-DINH-CORE.md)
 
@@ -78,5 +79,6 @@ Hợp đồng nhập / xuất cho plugin (`itemId`, `barcode` trên dòng hàng 
 
 ## 7. Changelog
 
+- **0.3.0-draft (2026-11-04):** họ mặt hàng theo định danh — `items.parent_item_id` điền + giữ khớp từ `products.parent_sku` (0067), đổi mã không đứt họ, chặn tự trỏ / vòng / khác đơn vị; Gate A `ITEM-HINT-003` (đổi ĐVT gốc của mặt hàng đã có nhập xuất).
 - **0.2.0-draft (2026-11-04):** B2b phần 1 — `item_id` trên `ledger_lines`, `inventory_movements`, `inventory_costs`, `product_units`, `product_prices` (0066); mặt hàng mồ côi; tạo lại mã đã xoá không chồng hiệu lực; khoá chống chồng hiệu lực theo đơn vị.
 - **0.1.0-draft (2026-11-03):** B2a — `items`, `item_codes`, `item_classification`, trigger đồng bộ, điền ban đầu, Item Resolver.

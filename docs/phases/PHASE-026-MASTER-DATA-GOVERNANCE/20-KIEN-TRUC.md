@@ -11,8 +11,8 @@ product (sản phẩm cha)      items { item_id = P, kind = 'parent' }         "
 ```
 
 - **Đổi mã của cùng biến thể** (SUA-400 → SUA400N): đóng mã cũ, thêm mã mới, `V1` giữ nguyên — đã có (0065, trigger `bizcity_items_sync`).
-- **Biến thể kinh tế khác** (quy cách khác, giá vốn tách riêng): `item_id` mới, cùng `parent_item_id`. Luật mới R-ITEM-9 (S026-3): một mã `sku` không được "đổi" sang một mặt hàng có `unit_base` khác — đó là biến thể mới.
-- `parent_item_id` điền từ `products.parent_sku` (họ mã 9 ký tự) khi điền ban đầu; sau đó do người dùng / MH26 quyết, không suy từ tiền tố.
+- **Biến thể kinh tế khác** (quy cách khác, giá vốn tách riêng): `item_id` mới, cùng `parent_item_id` (R-ITEM-3). Thi hành (S026-3, 0067 <!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 -->): đổi đơn vị tính gốc của mặt hàng **đã có nhập xuất** → Gate A `ITEM-HINT-003` (cảnh báo, bắt lý do — R-GATE-9: không chặn, vì có khi chỉ là sửa chính tả tên ĐVT).
+- `parent_item_id` điền từ `products.parent_sku` và **giữ khớp theo định danh** (trigger `products_items_sync_parent`): đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ; chặn tự trỏ, vòng, khác đơn vị (`items_parent_guard`). `parent_sku` còn là ảnh chụp cho MH26 tới S024-11.
 - Bảng thuật ngữ: *item_id (cha)* của chủ dự án = `parent_item_id`; *sku_id / variant_id* = `item_id`; *mã code* = `item_codes.code`. Không đổi tên cột.
 
 ## 2. Mã có phiên bản cho mọi thực thể hạng A/B (D026-3)
