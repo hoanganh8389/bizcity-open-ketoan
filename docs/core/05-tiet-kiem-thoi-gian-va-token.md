@@ -8,7 +8,7 @@
 
 ## 1. Ai hưởng lợi
 
-Developer làm ERP nội bộ cho công ty mình, hoặc một module bán hàng, POS, CRM, quản lý sản xuất (MRP), nhân sự (HRM), mà **thiếu nghiệp vụ kế toán và sổ sách**. Không có Core, họ phải tự học định khoản, thuế, giá vốn, khoá kỳ, rồi tự viết, tự kiểm. Với Core, họ **kể sự việc** theo hợp đồng, Core ghi sổ đúng nguyên tắc ([01](01-bay-tru-cot.md)).
+Developer làm ERP nội bộ cho công ty mình, hoặc một module bán hàng, POS, CRM, quản lý sản xuất (MRP), nhân sự (HRM), mà **thiếu nghiệp vụ kế toán và sổ sách**. Không có Core, họ phải tự học định khoản, thuế, giá vốn, khoá kỳ, rồi tự viết, tự kiểm. Với Core, họ **kể sự việc** theo hợp đồng, Core ghi sổ đúng nguyên tắc ([01](01-tru-cot.md)).
 
 ## 2. Nghiệp vụ mà dev không phải tự làm: Core đã có gì (ĐÃ ĐO)
 

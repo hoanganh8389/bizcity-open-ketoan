@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 97
+      "count": 96
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 36
+      "count": 37
     },
     {
       "key": "paused",
@@ -1156,8 +1156,14 @@
       "title": "Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu)",
       "priority": null,
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, dot-1-quy)",
+        "branch": "feat/phase-013-dot-1-quy",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-013 · Đợt 1 — chuyển quy sang modules/quy/ (ADR-0024; chữ chốt 10-DOT-1-QUY)"
+      },
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -3159,8 +3165,14 @@
       "title": "SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad",
       "priority": "P0",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
+        "branch": "feat/phase-024-s024-16-sc-item",
+        "state": "đang làm",
+        "since": "2026-11-03",
+        "dot": "PHASE-024 · S024-16 — SC-ITEM-1..3 (sổ khoá theo itemid, không theo mã; luật định khoản không đọc s…"
+      },
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -3770,15 +3782,9 @@
       "phase": "PHASE-027",
       "title": "CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), skills install; bộ skill cho AI; ví dụ POS mini; API…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
-        "branch": "feat/core-ke-toan-ck1",
-        "state": "đang làm",
-        "since": "2026-11-03",
-        "dot": "PHASE-027 · CK-1 — công cụ kiểm cho dev: bizcity event check / flow check / explain / module accoun…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 7
     },

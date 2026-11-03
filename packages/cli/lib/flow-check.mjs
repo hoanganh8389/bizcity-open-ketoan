@@ -21,7 +21,7 @@ const skip = (id, title, detail) => ({ id, title, status: 'SKIP', detail });
 // [2026-11-03 05:45 PM Johnny Chu - Chu Hoàng Anh] G3-01 — quyết định chủ dự án 2026-11-03: mặc định bình quân gia quyền tháng, FIFO vào lộ trình
 export const COSTING_NOTE = 'Giá vốn: bình quân gia quyền theo tháng — phương pháp mặc định (quyết định chủ dự án 2026-11-03). FIFO có trong lộ trình, làm sau item_id (PHASE-024 B7), Kernel chưa thi hành; đích danh chưa có — xem skills/open-ketoan-standard chuẩn C1.';
 // [2026-11-04 12:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-1: lý do SKIP của C2 theo main (0066 đã đưa item_id vào sổ)
-export const ITEM_ID_NOTE = 'Sổ, sổ kho và giá vốn đã theo item_id (migration 0066, PHASE-024 G2), nhưng chưa có thao tác đổi mã / gộp mã và API chưa trả itemId (PHASE-024 S024-11).' Không đổi, không dùng lại mã của mặt hàng đã có dòng sổ.';
+export const ITEM_ID_NOTE = 'Sổ, sổ kho và giá vốn đã theo item_id (migration 0066, PHASE-024 G2), nhưng chưa có thao tác đổi mã / gộp mã và API chưa trả itemId (PHASE-024 S024-11). Không đổi, không dùng lại mã của mặt hàng đã có dòng sổ.';
 
 /** Ngày đầu, ngày cuối của kỳ YYYY-MM. */
 export function periodRange(period) {
