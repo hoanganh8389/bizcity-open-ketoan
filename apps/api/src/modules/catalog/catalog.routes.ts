@@ -25,7 +25,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
-import { ok } from '../../core/http.js';
+import { ok, queryBool } from '../../core/http.js';
 import { mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { masterdataActions } from './masterdata.actions.js';
 import { Errors } from '../../core/errors.js';
@@ -69,6 +69,9 @@ const productSchema = z.object({
   prices: z.array(priceSchema).max(2000).optional(),
 });
 
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
+const cell = z.string().max(20000).optional();
+
 export async function catalogRoutes(app: FastifyInstance): Promise<void> {
   // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.17: core.partner.upsert, core.product.upsert (seed[] của manifest, ctx.actions)
   mountActions(app, masterdataActions);
@@ -79,20 +82,6 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Trọn một mặt hàng: thông tin, cờ, đơn vị tính, giá ở mọi bảng giá', params: z.object({ sku }) },
     handler: async (req) => ok(await getProduct(db, authOf(req).tenantId, req.params.sku)),
   });
-
-  r.put('/api/v1/catalog/products/:sku', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags, summary: 'Lưu trọn một mặt hàng (units = thay cả bộ đơn vị tính; prices = ghi các ô giá gửi lên, price null = xoá ô)',
-      params: z.object({ sku }), querystring: z.object({ new: z.coerce.boolean().optional() }), body: productSchema,
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      return ok(await db.transaction().execute((trx) => saveProduct(trx, auth.tenantId, auth.actor, req.params.sku, req.body, { isNew: req.query.new })));
-    },
-  });
-
-  const cell = z.string().max(20000).optional();
   r.post('/api/v1/catalog/products/import', {
     preHandler: requirePermission('catalog:write'),
     schema: {
@@ -126,19 +115,6 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await listPriceRows(db, authOf(req).tenantId, req.params.code)),
   });
 
-  r.put('/api/v1/catalog/price-lists/:code/prices', {
-    preHandler: requirePermission('catalog:write'),
-    bodyLimit: 20 * 1024 * 1024,
-    schema: {
-      tags, summary: 'Ghi nhiều ô giá của bảng giá (price null = bỏ giá ô đó)', params: z.object({ code: code.min(1) }),
-      body: z.object({ rows: z.array(z.object({ sku, unit: z.string().trim().min(1).max(64), price: money.nullable() })).max(50000) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      return ok(await db.transaction().execute((trx) => savePriceRows(trx, auth.tenantId, auth.actor, req.params.code, req.body.rows)));
-    },
-  });
-
   r.get('/api/v1/catalog/feed/meta', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Luồng thay đổi: nhóm hàng, bảng giá, gán chi nhánh, mục đã xoá sau since', querystring: z.object({ since: z.string().max(80).optional() }) },
@@ -156,31 +132,13 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Luồng thay đổi dòng giá sau con trỏ', querystring: z.object({ after: z.string().max(80).optional(), limit: z.coerce.number().int().min(1).max(20000).default(5000) }) },
     handler: async (req) => ok(await feedPrices(db, authOf(req).tenantId, req.query.after, req.query.limit)),
   });
-
-  r.post('/api/v1/catalog/import', {
-    preHandler: requirePermission('catalog:write'),
-    bodyLimit: 50 * 1024 * 1024,
-    schema: {
-      tags, summary: 'Nạp dữ liệu ban đầu từ hệ thống bán hàng (mặt hàng, đơn vị tính, bảng giá, giá, gán chi nhánh, mã SKU nhóm)',
-      body: z.object({
-        products: z.array(productSchema.extend({ sku })).max(5000).optional(),
-        priceLists: z.array(z.object({ code: code.min(1), name: z.string().trim().min(1).max(255), isCompany: z.boolean().optional(), isActive: z.boolean().optional(), note: z.string().max(500).optional() })).max(500).optional(),
-        branches: z.array(z.object({ branchCode: code.min(1), priceListCode: code.min(1) })).max(5000).optional(),
-        prices: z.array(priceSchema.extend({ sku })).max(50000).optional(),
-        groupSkuCodes: z.array(z.object({ code: code.min(1), skuCode: z.string().trim().max(20) })).max(10000).optional(),
-      }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      return ok(await db.transaction().execute((trx) => importCatalog(trx, auth.tenantId, auth.actor, req.body)));
-    },
-  });
   mountActions(app, catalogWriteActions);
+  mountActions(app, catalogMoreWriteActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
 // Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
-const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+const anyOut = z.custom<object | null>((v) => typeof v === 'object');
 
 export const catalogWriteActions: AnyActionDef[] = [
   defineAction({
@@ -262,6 +220,57 @@ export const catalogWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       await sameTx(trx, (trx) => setPriceListBranches(trx, auth.tenantId, auth.actor, input.code, reqBody.branchCodes));
       return { code: input.code };
+    },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const catalogMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.catalog-product.save', title: 'Lưu trọn một mặt hàng (units = thay cả bộ đơn vị tính; prices = ghi các ô giá gửi lên, price null = xoá ô)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (productSchema).merge(z.object({ new: queryBool })).merge(z.object({ sku })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/catalog/products/:sku', query: z.object({ new: queryBool }) }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog_product', objectId: (i) => String(i.sku) },
+    handler: async (ctx, input) => {
+      const { sku: _sku, new: _new, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      return await sameTx(trx, (trx) => saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new }));
+    },
+  }),
+  defineAction({
+    id: 'core.price-list.prices-save', title: 'Ghi nhiều ô giá của bảng giá (price null = bỏ giá ô đó)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({ rows: z.array(z.object({ sku, unit: z.string().trim().min(1).max(64), price: money.nullable() })).max(50000) })).merge(z.object({ code: code.min(1) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/catalog/price-lists/:code/prices', bodyLimit: 20 * 1024 * 1024 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'price_list', objectId: (i) => String(i.code) },
+    handler: async (ctx, input) => {
+      const { code: _code, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      return await sameTx(trx, (trx) => savePriceRows(trx, auth.tenantId, auth.actor, input.code, reqBody.rows));
+    },
+  }),
+  defineAction({
+    id: 'core.catalog.import', title: 'Nạp dữ liệu ban đầu từ hệ thống bán hàng (mặt hàng, đơn vị tính, bảng giá, giá, gán chi nhánh, mã SKU nhóm)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({
+        products: z.array(productSchema.extend({ sku })).max(5000).optional(),
+        priceLists: z.array(z.object({ code: code.min(1), name: z.string().trim().min(1).max(255), isCompany: z.boolean().optional(), isActive: z.boolean().optional(), note: z.string().max(500).optional() })).max(500).optional(),
+        branches: z.array(z.object({ branchCode: code.min(1), priceListCode: code.min(1) })).max(5000).optional(),
+        prices: z.array(priceSchema.extend({ sku })).max(50000).optional(),
+        groupSkuCodes: z.array(z.object({ code: code.min(1), skuCode: z.string().trim().max(20) })).max(10000).optional(),
+      }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/catalog/import', bodyLimit: 50 * 1024 * 1024 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      return await sameTx(trx, (trx) => importCatalog(trx, auth.tenantId, auth.actor, input));
     },
   }),
 ];

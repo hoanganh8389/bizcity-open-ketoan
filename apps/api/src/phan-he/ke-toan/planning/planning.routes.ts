@@ -80,22 +80,6 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/cash-plans', {
-    preHandler: requirePermission('documents:write'),
-    schema: { tags, summary: 'Thêm dòng kế hoạch thu / chi', body: planInput },
-    handler: async (req, reply) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const row = await db.transaction().execute(async (trx) => trx.insertInto('cash_plans').values({
-        tenant_id: auth.tenantId, period: b.period, branch_id: await branchIdOf(trx, auth.tenantId, b.branchCode), direction: b.direction,
-        cost_item_code: b.costItemCode || null, partner_id: await partnerIdOf(trx, auth.tenantId, b.partnerCode), due_date: b.dueDate, description: b.description,
-        amount: b.amount, source: 'manual', updated_by: auth.actorName,
-      }).returning('id').executeTakeFirstOrThrow());
-      reply.code(201);
-      return ok({ id: row.id });
-    },
-  });
-
   r.get('/api/v1/reports/cash-plan-vs-actual', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Kế hoạch thu chi so với thực hiện', querystring: z.object({ from: month, to: month }) },
@@ -228,6 +212,7 @@ export async function planningRoutes(app: FastifyInstance): Promise<void> {
     },
   });
   mountActions(app, planningWriteActions);
+  mountActions(app, planningMoreWriteActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
@@ -377,6 +362,31 @@ export const planningWriteActions: AnyActionDef[] = [
         return { copied: src.length, months: b.to.length };
       });
       return res;
+    },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const planningMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'ke-toan.cash-plan.create', title: 'Thêm dòng kế hoạch thu / chi', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['settings'], idempotency: 'required',
+    input: planInput, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/cash-plans', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cash_plan' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const b = input;
+      const row = await sameTx(trx, async (trx) => trx.insertInto('cash_plans').values({
+        tenant_id: auth.tenantId, period: b.period, branch_id: await branchIdOf(trx, auth.tenantId, b.branchCode), direction: b.direction,
+        cost_item_code: b.costItemCode || null, partner_id: await partnerIdOf(trx, auth.tenantId, b.partnerCode), due_date: b.dueDate, description: b.description,
+        amount: b.amount, source: 'manual', updated_by: auth.actorName,
+      }).returning('id').executeTakeFirstOrThrow());
+      return { id: row.id };
     },
   }),
 ];

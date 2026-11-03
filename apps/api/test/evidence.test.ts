@@ -7,6 +7,7 @@ import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { PLATFORM_DIAGNOSTICS } from '../src/modules/system/diagnostics.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { compactEvidence, EVIDENCE_INPUT_MAX } from '@bizcity/platform/core/actions';
 
 let ctx: TestCtx, kt: TestCtx;
 let tenantId = '';
@@ -110,5 +111,15 @@ describe('Bằng chứng', () => {
     expect(again.json()).toMatchObject({ data: { key: '***' }, meta: { idempotency: 'replayed' } });
     const stored = await db.selectFrom('action_requests').select('response').where('tenant_id', '=', tenantId).where('idem_key', '=', 'khoa-api-bi-mat-01').executeTakeFirstOrThrow();
     expect(JSON.stringify(stored.response)).not.toContain(key);
+  });
+});
+
+// [2026-11-03 08:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: thân lớn không chép vào bằng chứng
+describe('Bằng chứng gọn', () => {
+  it('input quá 64 KB chỉ giữ cỡ; input nhỏ giữ nguyên', () => {
+    const big = { input: { rows: 'x'.repeat(EVIDENCE_INPUT_MAX + 1) }, notes: { a: 1 } };
+    expect(compactEvidence(big)).toEqual({ input: { omitted: true, bytes: EVIDENCE_INPUT_MAX + 1 + 11 }, notes: { a: 1 } });
+    const small = { input: { code: 'A' } };
+    expect(compactEvidence(small)).toBe(small);
   });
 });

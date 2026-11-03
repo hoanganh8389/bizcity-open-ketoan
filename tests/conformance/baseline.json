@@ -1,17 +1,12 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-11-02",
+  "updatedAt": "2026-11-03",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
       "ref": "R-API-5 · đổi sang queryBool",
       "debts": [
-        {
-          "fp": "SC-API-2|apps/api/src/modules/catalog/catalog.routes.ts|params:z.object({sku}),querystring:z.object({new:z.coerce.boolean().optional()}),body:productSchema,",
-          "file": "apps/api/src/modules/catalog/catalog.routes.ts",
-          "message": "params: z.object({ sku }), querystring: z.object({ new: z.coerce.boolean().optional() }), body: productSchema,"
-        },
         {
           "fp": "SC-API-2|apps/api/src/phan-he/mua-hang/routes.ts|r.get('/api/v1/purchase/supplier-products',{preHandler:read,schema:{tags,summary:'Mặthàng&giámua:theoNCC(kèmgiáchungnếuwithGeneral=1)hoặctheomã;units=1trảkèmĐVTcácmã',quer",
           "file": "apps/api/src/phan-he/mua-hang/routes.ts",

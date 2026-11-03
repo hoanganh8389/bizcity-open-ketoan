@@ -150,7 +150,8 @@ export interface ActionDef<I extends z.AnyZodObject = z.AnyZodObject, O extends 
   /** Cho phép ?dryRun=1 (STD-ACT-7: không hiệu ứng ngoài giao dịch). */
   dryRun?: boolean;
   expose: {
-    http?: { method: HttpMethod; path: string; status?: 200 | 201 };
+    // [2026-11-03 07:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: query = trường lấy từ query string của POST/PUT/PATCH (gộp vào input); bodyLimit = cỡ thân tối đa (byte)
+    http?: { method: HttpMethod; path: string; status?: 200 | 201; query?: z.AnyZodObject; bodyLimit?: number };
     mcp?: boolean;
     ai?: 'deny' | 'read' | 'propose' | 'execute';
     /** Công cụ MCP huỷ / đảo cái đã có (annotations.destructiveHint): client cảnh báo rõ hơn trước khi xác nhận. */
@@ -230,6 +231,15 @@ export function redactSecrets<T>(v: T): T {
     return x;
   };
   return walk(v) as T;
+}
+
+// [2026-11-03 07:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5: thân lớn (nạp danh mục, bảng giá, ảnh hoá đơn…) không chép vào bằng chứng
+export const EVIDENCE_INPUT_MAX = 64 * 1024;
+/** input của bằng chứng quá EVIDENCE_INPUT_MAX byte: chỉ giữ cỡ (inputHash của bằng chứng vẫn đối chiếu được thân gốc). */
+export function compactEvidence<T>(after: T): T {
+  if (!after || typeof after !== 'object' || !('input' in after)) return after;
+  const bytes = Buffer.byteLength(JSON.stringify((after as { input: unknown }).input) ?? '', 'utf8');
+  return bytes > EVIDENCE_INPUT_MAX ? { ...after, input: { omitted: true, bytes } } as T : after;
 }
 
 /** Giao dịch runtime mở cho action (ctx.data.tx). */
@@ -341,7 +351,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
     const oid = objectId == null ? undefined : String(objectId);
     return {
       tenantId, actor: auth!.actor, actorKind: call.via ? 'ai' : auth!.kind, actorVia: call.via ?? (auth!.app ? `app:${auth!.app}` : undefined), onBehalfOf: call.via ? auth!.actor : undefined, action: def.id, moduleId: def.id.split('.')[0], objectType, objectId: oid,
-      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after: redactSecrets(after),
+      subject: oid ? `${objectType}:${oid}` : undefined, requestId: call.requestId, idempotencyKey: key, inputHash: `sha256:${inputHash}`, result, after: compactEvidence(redactSecrets(after)),
     };
   };
   let inHandler = false;
@@ -537,8 +547,10 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
     if (!http) continue;
     const names = pathParams(http.path);
     const mask = Object.fromEntries(names.map((n) => [n, true])) as Record<string, true>;
-    const rest = def.input.omit(mask);
     const inQuery = http.method === 'GET' || http.method === 'DELETE';
+    // Trường query của POST/PUT/PATCH không nằm trong thân
+    const qMask = Object.fromEntries(Object.keys(!inQuery && http.query ? http.query.shape : {}).map((n) => [n, true])) as Record<string, true>;
+    const rest = def.input.omit({ ...mask, ...qMask });
     const dry = def.dryRun ? z.object({ dryRun: queryBool.describe('1 = chạy thử trong giao dịch rồi huỷ, không ghi gì') }) : null;
     const notes = [
       def.description,
@@ -554,8 +566,9 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
         description: notes,
         ...(names.length ? { params: def.input.pick(mask) } : {}),
         // [2026-11-03 07:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: thân mà {} đã hợp lệ (mọi trường tuỳ chọn / có mặc định) thì được gửi thiếu
-        ...(inQuery ? { querystring: dry ? rest.merge(dry) : rest } : { ...(Object.keys(rest.shape).length ? { body: rest.safeParse({}).success ? rest.nullish() : rest } : {}), ...(dry ? { querystring: dry } : {}) }),
+        ...(inQuery ? { querystring: dry ? rest.merge(dry) : rest } : { ...(Object.keys(rest.shape).length ? { body: rest.safeParse({}).success ? rest.nullish() : rest } : {}), ...(dry || http.query ? { querystring: http.query && dry ? http.query.merge(dry) : (http.query ?? dry)! } : {}) }),
       },
+      ...(http.bodyLimit ? { bodyLimit: http.bodyLimit } : {}),
       config: def.permission === 'public' ? { public: true } : {},
       handler: async (req: FastifyRequest, reply) => {
         const params = (req.params ?? {}) as Record<string, unknown>;
@@ -564,7 +577,8 @@ export function mountActions(app: FastifyInstance, defs: AnyActionDef[]): void {
         const flag = query.dryRun;
         const dryRun = flag === true || (typeof flag === 'string' && ['1', 'true', 'on', 'yes'].includes(flag.toLowerCase()));
         delete query.dryRun;
-        const raw = inQuery ? { ...query, ...params } : { ...((req.body ?? {}) as Record<string, unknown>), ...params };
+        const fromQuery = Object.fromEntries(Object.keys(qMask).filter((k) => k in query).map((k) => [k, query[k]]));
+        const raw = inQuery ? { ...query, ...params } : { ...((req.body ?? {}) as Record<string, unknown>), ...fromQuery, ...params };
         const header = req.headers['idempotency-key'];
         const res = await runAction(def, raw, { auth: req.auth, requestId: String(req.id), idempotencyKey: Array.isArray(header) ? header[0] : header, dryRun });
         return reply.status(res.status).send(ok(res.data, res.meta));

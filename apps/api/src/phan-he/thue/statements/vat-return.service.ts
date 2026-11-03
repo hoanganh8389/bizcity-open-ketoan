@@ -22,6 +22,7 @@
  */
 import { sql } from 'kysely';
 import { db, toNumber } from '../../../db/client.js';
+import { sameTx, type ActionTx } from '@bizcity/platform/core/actions';
 import { Errors } from '../../../core/errors.js';
 import { writeAudit } from '../../../core/audit.js';
 import type { AuthContext } from '../../../core/auth.js';
@@ -245,10 +246,15 @@ export const vatReturnService = {
   },
 
   async save(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; status: 'draft' | 'final' }) {
-    const built = await this.build(auth, { ...q });
+    return db.transaction().execute((trx) => vatReturnService.saveIn(trx, auth, q));
+  },
+
+  // [2026-11-03 08:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): bản *In chạy trong giao dịch của action; số tự tính đọc trước khi ghi
+  async saveIn(trx: ActionTx, auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; status: 'draft' | 'final' }) {
+    const built = await vatReturnService.build(auth, { ...q });
     const values = computeForm(built.auto, q.manual);
     const scope = built.scope;
-    return db.transaction().execute(async (trx) => {
+    return sameTx(trx, async (trx) => {
       const cur = await trx.selectFrom('vat_returns').select(['id', 'status', 'revision']).where('tenant_id', '=', auth.tenantId).where('period_kind', '=', q.periodKind).where('year', '=', q.year).where('period', '=', q.period).where('scope', '=', scope).orderBy('revision', 'desc').executeTakeFirst();
       const row = { values: JSON.stringify(values), manual: JSON.stringify(q.manual), status: q.status, updated_by: auth.actor, updated_at: new Date() };
       if (cur) await trx.updateTable('vat_returns').set(row).where('id', '=', cur.id).execute();
@@ -263,7 +269,11 @@ export const vatReturnService = {
    * nhập tay, kèm bản giải trình 01/KHBS và tiền chậm nộp đến ngày nộp dự kiến. dryRun: chỉ tính, không lưu.
    */
   async supplement(auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; payDate: string; dryRun: boolean }) {
-    const built = await this.build(auth, { ...q });
+    return db.transaction().execute((trx) => vatReturnService.supplementIn(trx, auth, q));
+  },
+
+  async supplementIn(trx: ActionTx, auth: AuthContext, q: { periodKind: PeriodKind; year: number; period: number; branchCodes?: string[]; manual: Partial<Record<ManualKey, number>>; payDate: string; dryRun: boolean }) {
+    const built = await vatReturnService.build(auth, { ...q });
     const latest = built.saved;
     if (!latest || latest.status !== 'final') throw Errors.conflict('Kỳ này chưa có tờ khai lưu chính thức: lập và lưu tờ khai lần đầu trước');
     const values = computeForm(built.auto, q.manual);
@@ -271,7 +281,7 @@ export const vatReturnService = {
     const revision = latest.revision + 1;
     if (q.dryRun) return { revision, values, supplement: khbs, saved: false };
     if (!khbs.rows.length) throw Errors.conflict('Số khai lại không khác tờ khai đã nộp: không cần khai bổ sung');
-    await db.transaction().execute(async (trx) => {
+    await sameTx(trx, async (trx) => {
       await trx.insertInto('vat_returns').values({
         tenant_id: auth.tenantId, period_kind: q.periodKind, year: q.year, period: q.period, scope: built.scope, revision, status: 'final',
         values: JSON.stringify(values), manual: JSON.stringify(q.manual), supplement: JSON.stringify(khbs), updated_by: auth.actor, updated_at: new Date(),

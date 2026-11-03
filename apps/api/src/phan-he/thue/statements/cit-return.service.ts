@@ -129,9 +129,14 @@ export const citReturnService = {
   },
 
   async save(auth: AuthContext, q: { year: number; manual: Partial<Record<CitManualKey, number>>; status: 'draft' | 'final' }) {
-    const built = await this.build(auth, q);
+    return db.transaction().execute((trx) => citReturnService.saveIn(trx, auth, q));
+  },
+
+  // [2026-11-03 08:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): bản *In chạy trong giao dịch của action
+  async saveIn(trx: ActionTx, auth: AuthContext, q: { year: number; manual: Partial<Record<CitManualKey, number>>; status: 'draft' | 'final' }) {
+    const built = await citReturnService.build(auth, q);
     const values = computeCit(built.auto, q.manual);
-    await db.transaction().execute(async (trx) => {
+    await sameTx(trx, async (trx) => {
       const row = { values: JSON.stringify(values), manual: JSON.stringify(q.manual), status: q.status, updated_by: auth.actor, updated_at: new Date() };
       await trx.insertInto('cit_returns').values({ tenant_id: auth.tenantId, year: q.year, ...row }).onConflict((oc) => oc.columns(['tenant_id', 'year']).doUpdateSet(row)).execute();
       await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'cit_return.save', objectType: 'cit_return', objectId: String(q.year), after: { values, manual: q.manual, status: q.status } });

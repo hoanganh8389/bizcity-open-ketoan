@@ -106,7 +106,8 @@
     "mua-hang.stock.init-reconcile-import",
     "mua-hang.stock.init-max-preview",
     "mua-hang.stock.init-max-import",
-    "mua-hang.purchase.documents-unapprove"
+    "mua-hang.purchase.documents-unapprove",
+    "mua-hang.invoice.scan"
   ],
   "ui": {
     "icon": "Truck",

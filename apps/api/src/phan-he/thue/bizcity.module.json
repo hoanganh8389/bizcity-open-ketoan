@@ -39,7 +39,10 @@
     "thue.risky-taxpayer.update",
     "thue.risky-taxpayer.delete",
     "thue.long-term-balance.update",
-    "thue.taxpayer.update"
+    "thue.taxpayer.update",
+    "thue.vat-return.save",
+    "thue.vat-return.supplement",
+    "thue.cit-return.save"
   ],
   "ui": {
     "icon": "Landmark",

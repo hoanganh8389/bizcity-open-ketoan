@@ -14,6 +14,7 @@ import { connectionsInputSchema, pullInputSchema } from '@ketoan/contracts';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
 import { connectionService } from './connection.service.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Kết nối hệ thống khác'];
 const codeParam = z.object({ code: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,31}$/) });
@@ -27,12 +28,6 @@ export async function connectionRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await connectionService.list(authOf(req))),
   });
 
-  r.put('/api/v1/connections', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags, summary: 'Ghi cấu hình kết nối', body: connectionsInputSchema },
-    handler: async (req) => ok(await connectionService.save(authOf(req), req.body.connections)),
-  });
-
   r.post('/api/v1/connections/:code/test', {
     preHandler: requirePermission('documents:read'),
     schema: { tags, summary: 'Thử kết nối', params: codeParam },
@@ -44,4 +39,21 @@ export async function connectionRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Kéo chứng từ của kết nối trong khoảng ngày về trạm ACC14 (chờ định khoản)', params: codeParam, body: pullInputSchema },
     handler: async (req) => ok(await connectionService.pull(authOf(req), req.params.code, req.body)),
   });
+  mountActions(app, connectionWriteActions);
 }
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const connectionWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.connection.save', title: 'Ghi cấu hình kết nối', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    // Schema có superRefine (ZodEffects): khuôn ngoài làm input, kiểm chéo chạy lại trong handler (ZodError → VALIDATION_ERROR như cũ)
+    input: connectionsInputSchema.innerType(), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/connections' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'connection' },
+    handler: (ctx, input) => connectionService.saveIn(ctx.data.tx, ctx.legacyAuth, connectionsInputSchema.parse(input).connections),
+  }),
+];

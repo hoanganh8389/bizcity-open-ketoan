@@ -175,39 +175,8 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.map((c) => ({ code: c.code, name: c.name, parentCode: c.parent_code, isActive: c.is_active, skuCode: c.sku_code, products: n.get(c.code) ?? 0 })));
     },
   });
-
-  r.put('/api/v1/item-classes/:kind/:code', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags,
-      summary: 'Thêm hoặc sửa nhãn / ngành / nhóm / loại hàng (?new=1: thêm mới, báo trùng mã)',
-      params: z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string().trim().min(1).max(64) }),
-      querystring: z.object({ new: queryBool }),
-      body: z.object({ name: z.string().trim().min(1).max(255), parentCode: code.optional(), isActive: z.boolean().default(true), skuCode: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/, 'Mã SKU chỉ gồm chữ và số').optional() }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const { kind, code: c } = req.params;
-      const b = req.body;
-      if (b.parentCode === c) throw Errors.validation(`${LABEL[kind]} cha không được là chính nó`);
-      // Thêm mới mà trùng mã: báo lỗi — không ghi đè (đổi tên, đổi cha) mã đang dùng.
-      if (req.query.new) {
-        const dup = await db.selectFrom('item_classes').select(['name', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
-        if (dup) throw Errors.conflict(`Mã ${LABEL[kind].toLowerCase()} ${c} đã có: "${dup.name}"${dup.parent_code ? ` (thuộc ${dup.parent_code})` : ''} — chọn mã khác`);
-      }
-      if (b.parentCode) {
-        const p = await db.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
-        if (!p) throw Errors.validation(`${LABEL[kind]} cha ${b.parentCode} chưa có`);
-      }
-      const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}) };
-      await db.transaction().execute(async (trx) => {
-        await trx.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind, code: c, ...values }).onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values)).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.save', objectType: `item_class:${kind}`, objectId: c, after: b });
-      });
-      return ok({ code: c });
-    },
-  });
   mountActions(app, productWriteActions);
+  mountActions(app, productMoreWriteActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
@@ -421,6 +390,43 @@ export const productWriteActions: AnyActionDef[] = [
         if (used) throw Errors.conflict(`${LABEL[kind]} ${c} đang gắn cho mặt hàng ${used.sku}: bỏ tích "Đang dùng" để ngừng`);
         await trx.deleteFrom('item_classes').where('id', '=', before.id).execute();
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.delete', objectType: `item_class:${kind}`, objectId: c, before });
+      });
+      return { code: c };
+    },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const productMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.item-class.upsert', title: 'Thêm hoặc sửa nhãn / ngành / nhóm / loại hàng (?new=1: thêm mới, báo trùng mã)', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: (z.object({ name: z.string().trim().min(1).max(255), parentCode: code.optional(), isActive: z.boolean().default(true), skuCode: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/, 'Mã SKU chỉ gồm chữ và số').optional() })).merge(z.object({ new: queryBool })).merge(z.object({ kind: z.enum(ITEM_CLASS_KINDS), code: z.string().trim().min(1).max(64) })), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/item-classes/:kind/:code', query: z.object({ new: queryBool }) }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'item_class', objectId: (i) => String(i.kind) },
+    handler: async (ctx, input) => {
+      const { kind: _kind, code: _code, new: _new, ...reqBody } = input;
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      const { kind, code: c } = input;
+      const b = reqBody;
+      if (b.parentCode === c) throw Errors.validation(`${LABEL[kind]} cha không được là chính nó`);
+      // Thêm mới mà trùng mã: báo lỗi — không ghi đè (đổi tên, đổi cha) mã đang dùng.
+      if (input.new) {
+        const dup = await trx.selectFrom('item_classes').select(['name', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
+        if (dup) throw Errors.conflict(`Mã ${LABEL[kind].toLowerCase()} ${c} đã có: "${dup.name}"${dup.parent_code ? ` (thuộc ${dup.parent_code})` : ''} — chọn mã khác`);
+      }
+      if (b.parentCode) {
+        const p = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
+        if (!p) throw Errors.validation(`${LABEL[kind]} cha ${b.parentCode} chưa có`);
+      }
+      const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}) };
+      await sameTx(trx, async (trx) => {
+        await trx.insertInto('item_classes').values({ tenant_id: auth.tenantId, kind, code: c, ...values }).onConflict((oc) => oc.columns(['tenant_id', 'kind', 'code']).doUpdateSet(values)).execute();
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'item_class.save', objectType: `item_class:${kind}`, objectId: c, after: b });
       });
       return { code: c };
     },

@@ -42,7 +42,8 @@
     "ke-toan.cash-plan.delete",
     "ke-toan.cash-plan.fill",
     "ke-toan.cost-norm.update",
-    "ke-toan.cost-norm.copy"
+    "ke-toan.cost-norm.copy",
+    "ke-toan.cash-plan.create"
   ],
   "ui": {
     "icon": "Calculator",

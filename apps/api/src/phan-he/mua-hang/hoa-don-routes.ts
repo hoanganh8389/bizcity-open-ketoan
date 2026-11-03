@@ -43,12 +43,11 @@ export async function invoiceRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/purchase/invoices/scan/config', { preHandler: read, schema: { tags, summary: 'Dịch vụ đọc hoá đơn (AI) đã cấu hình chưa' }, handler: async () => ok({ configured: scanConfigured() }) });
   r.get('/api/v1/purchase/invoices/:id', { preHandler: read, schema: { tags, summary: 'Một hoá đơn NCC + gợi ý mã + đối soát phiếu nhập', params: idParamSchema },
     handler: async (req) => { const a = authOf(req); const inv = await db.selectFrom('supplier_invoices').select('partner_code').where('tenant_id', '=', a.tenantId).where('id', '=', req.params.id).executeTakeFirst(); const c = await invoiceCtx(a.tenantId, inv?.partner_code ?? '-'); return ok(await getInvoice(db, a.tenantId, req.params.id, c.docs, c.policies)); } });
-  r.post('/api/v1/purchase/invoices/scan', { preHandler: write, bodyLimit: 30 * 1024 * 1024, schema: { tags, summary: 'Đọc ảnh / PDF hoá đơn bằng dịch vụ ngoài (AI) → xem trước', body: z.object({ partnerCode: z.string().min(1), fileName: z.string().min(1).max(200), mime: z.string().max(120).default(''), dataBase64: z.string().min(1) }) },
-    handler: async (req) => { const a = authOf(req); return ok(await scanInvoice(db, a.tenantId, a.actorName, req.body)); } });
 
   r.get('/api/v1/purchase/invoice-aliases', { preHandler: read, schema: { tags, summary: 'Bảng nhận diện mã hàng NCC (dữ liệu học)', querystring: z.object({ partnerCode: z.string().optional() }) },
     handler: async (req) => ok(await listAliases(db, authOf(req).tenantId, req.query.partnerCode)) });
   mountActions(app, hoaDonRoutesWriteActions);
+  mountActions(app, hoaDonRoutesMoreWriteActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
@@ -112,5 +111,21 @@ export const hoaDonRoutesWriteActions: AnyActionDef[] = [
     evidence: { objectType: 'invoice_alias', objectId: (i) => String(i.id) },
     handler: async (ctx, input) => {
       const trx = ctx.data.tx; const a = ctx.legacyAuth; await deleteAlias(trx, a.tenantId, a.actorName, input.id); return { deleted: true }; },
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const hoaDonRoutesMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'mua-hang.invoice.scan', title: 'Đọc ảnh / PDF hoá đơn bằng dịch vụ ngoài (AI) → xem trước', tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['external'], idempotency: 'natural',
+    input: z.object({ partnerCode: z.string().min(1), fileName: z.string().min(1).max(200), mime: z.string().max(120).default(''), dataBase64: z.string().min(1) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/invoices/scan', bodyLimit: 30 * 1024 * 1024 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'invoice' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx; const a = ctx.legacyAuth; return await scanInvoice(trx, a.tenantId, a.actorName, input); },
   }),
 ];

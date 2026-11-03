@@ -215,6 +215,10 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 -->
+- **Thêm 16 route qua `defineAction`**: mặt hàng / loại hàng, bảng giá, nạp danh mục, quét hoá đơn NCC, khoá dữ liệu, thông tin đơn vị, bút toán tài sản, kế hoạch tiền, lịch bút toán lặp, tờ khai GTGT / bổ sung / TNDN, cấu hình kết nối. Lập bút toán tài sản, dòng kế hoạch tiền, lịch bút toán lặp **bắt buộc `Idempotency-Key`**.
+- Runtime action: `expose.http.query` (trường lấy từ query của POST/PUT/PATCH), `expose.http.bodyLimit`; bằng chứng không chép `input` lớn hơn 64 KB (giữ cỡ; `inputHash` vẫn đối chiếu được thân gốc).
+- `PUT /api/v1/catalog/products/:sku?new=false` nay hiểu đúng là `false` (trước: `z.coerce.boolean` coi chuỗi "false" là đúng).
 <!-- [2026-11-03 07:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4 -->
 - **Mua hàng qua `defineAction`** (tồn max, hoá đơn NCC, chứng từ, chính sách, ĐVT): lập phiếu mua, hoá đơn NCC, yêu cầu điều chuyển / tồn max **bắt buộc `Idempotency-Key`** (giao diện đã gửi sẵn); route xem trước / tra cứu là action đọc. **Bỏ duyệt phiếu mua chạy trong một giao dịch**: lỗi giữa chừng không còn để lại phiếu "đã duyệt" mà chứng từ kế toán đã huỷ.
 - Action có thân mà mọi trường đều tuỳ chọn: gửi thiếu thân (hoặc `null`) được nhận như `{}`.

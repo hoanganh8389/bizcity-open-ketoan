@@ -60,63 +60,11 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags: ['Thuế'], summary: 'Lập tờ khai thuế GTGT (mẫu 01/GTGT) cho một kỳ', querystring: z.object({ ...periodQuery, branchCodes }) },
     handler: async (req) => ok({ form: vatReturnService.form(), ...(await vatReturnService.build(authOf(req), req.query)) }),
   });
-  r.put('/api/v1/vat-returns', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags: ['Thuế'],
-      summary: 'Lưu tờ khai thuế GTGT (nháp hoặc chính thức)',
-      body: z.object({
-        ...periodQuery,
-        branchCodes: z.array(z.string()).optional(),
-        status: z.enum(['draft', 'final']).default('draft'),
-        manual: z.object(Object.fromEntries(MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
-      }),
-    },
-    handler: async (req) => {
-      const manual = Object.fromEntries(Object.entries(req.body.manual).filter(([, v]) => v !== null && v !== undefined)) as Record<string, number>;
-      return ok(await vatReturnService.save(authOf(req), { ...req.body, manual }));
-    },
-  });
-
-  r.put('/api/v1/vat-returns/supplement', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags: ['Thuế'],
-      summary: 'Lập tờ khai bổ sung (kèm giải trình 01/KHBS, tiền chậm nộp); dryRun = chỉ tính',
-      body: z.object({
-        ...periodQuery,
-        branchCodes: z.array(z.string()).optional(),
-        manual: z.object(Object.fromEntries(MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
-        payDate: date.describe('Ngày dự kiến nộp tiền thuế tăng thêm (tính tiền chậm nộp)'),
-        dryRun: z.boolean().default(false),
-      }),
-    },
-    handler: async (req) => {
-      const manual = Object.fromEntries(Object.entries(req.body.manual).filter(([, v]) => v !== null && v !== undefined)) as Record<string, number>;
-      return ok(await vatReturnService.supplement(authOf(req), { ...req.body, manual }));
-    },
-  });
 
   r.get('/api/v1/cit-returns/build', {
     preHandler: requirePermission('reports:read'),
     schema: { tags: ['Thuế'], summary: 'Lập tờ khai quyết toán thuế TNDN (mẫu 03/TNDN) cho một năm', querystring: z.object({ year: z.coerce.number().int().min(2000).max(2100) }) },
     handler: async (req) => ok({ form: citReturnService.form(), ...(await citReturnService.build(authOf(req), req.query)) }),
-  });
-  r.put('/api/v1/cit-returns', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags: ['Thuế'],
-      summary: 'Lưu tờ khai quyết toán thuế TNDN (nháp hoặc chính thức)',
-      body: z.object({
-        year: z.number().int().min(2000).max(2100),
-        status: z.enum(['draft', 'final']).default('draft'),
-        manual: z.object(Object.fromEntries(CIT_MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
-      }),
-    },
-    handler: async (req) => {
-      const manual = Object.fromEntries(Object.entries(req.body.manual).filter(([, v]) => v !== null && v !== undefined)) as Record<string, number>;
-      return ok(await citReturnService.save(authOf(req), { ...req.body, manual }));
-    },
   });
 
   r.get('/api/v1/taxpayer', {
@@ -131,6 +79,7 @@ export async function statementRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await notesService.build(authOf(req), req.query)),
   });
   mountActions(app, statementsWriteActions);
+  mountActions(app, statementsMoreWriteActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
@@ -153,5 +102,63 @@ export const statementsWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'PUT', path: '/api/v1/taxpayer' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'taxpayer' },
     handler: (ctx, input) => taxpayerService.saveIn(ctx.data.tx, ctx.legacyAuth, input as Record<string, string>),
+  }),
+];
+
+// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const statementsMoreWriteActions: AnyActionDef[] = [
+  defineAction({
+    id: 'thue.vat-return.save', title: 'Lưu tờ khai thuế GTGT (nháp hoặc chính thức)', tags: ['Thuế'],
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({
+        ...periodQuery,
+        branchCodes: z.array(z.string()).optional(),
+        status: z.enum(['draft', 'final']).default('draft'),
+        manual: z.object(Object.fromEntries(MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
+      }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/vat-returns' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'vat_return' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const manual = Object.fromEntries(Object.entries(input.manual).filter(([, v]) => v !== null && v !== undefined)) as Record<string, number>;
+      return await vatReturnService.saveIn(trx, ctx.legacyAuth, { ...input, manual });
+    },
+  }),
+  defineAction({
+    id: 'thue.vat-return.supplement', title: 'Lập tờ khai bổ sung (kèm giải trình 01/KHBS, tiền chậm nộp); dryRun = chỉ tính', tags: ['Thuế'],
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({
+        ...periodQuery,
+        branchCodes: z.array(z.string()).optional(),
+        manual: z.object(Object.fromEntries(MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
+        payDate: date.describe('Ngày dự kiến nộp tiền thuế tăng thêm (tính tiền chậm nộp)'),
+        dryRun: z.boolean().default(false),
+      }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/vat-returns/supplement' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'vat_return' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const manual = Object.fromEntries(Object.entries(input.manual).filter(([, v]) => v !== null && v !== undefined)) as Record<string, number>;
+      return await vatReturnService.supplementIn(trx, ctx.legacyAuth, { ...input, manual });
+    },
+  }),
+  defineAction({
+    id: 'thue.cit-return.save', title: 'Lưu tờ khai quyết toán thuế TNDN (nháp hoặc chính thức)', tags: ['Thuế'],
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: z.object({
+        year: z.number().int().min(2000).max(2100),
+        status: z.enum(['draft', 'final']).default('draft'),
+        manual: z.object(Object.fromEntries(CIT_MANUAL_KEYS.map((k) => [k, z.coerce.number().nullish()]))).partial(),
+      }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/cit-returns' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'cit_return' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const manual = Object.fromEntries(Object.entries(input.manual).filter(([, v]) => v !== null && v !== undefined)) as Record<string, number>;
+      return await citReturnService.saveIn(trx, ctx.legacyAuth, { ...input, manual });
+    },
   }),
 ];
