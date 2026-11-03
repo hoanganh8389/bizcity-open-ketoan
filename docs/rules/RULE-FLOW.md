@@ -107,6 +107,8 @@ Không cần giữ chỗ (R-FLOW-1) và không cần chữ chốt (R-FLOW-2), nh
 - R-FLOW-2 chỉ thấy một tài liệu thuộc bảng §3 **đã được sửa trên `main` kể từ ngày giữ chỗ**; nó không đọc được tài liệu đó có chốt đúng điều cần chốt không. Phần đó vẫn là việc duyệt PR.
 - Phép kiểm chạy ở máy người làm; khi chưa có CI thì không gì chặn ở `main`. Hai phiên giữ chỗ cùng một phút vẫn có thể va nhau — phép kiểm bắt ở lần đẩy đầu.
 
+- **Bộ kiểm có thể đỏ sẵn trên `main`** (ai đó merge mà chưa sinh lại tệp sinh tự động, chưa cập nhật baseline…). Cách xác định: chạy `selfcheck --strict` trên cây `origin/main` sạch (`git worktree`) — đỏ như nhau thì không phải lỗi của nhánh. Sửa ở PR riêng (tài liệu sinh tự động hoặc một tệp là ngoại lệ). Đến lúc đó nhánh của mình được đẩy khi `kiem` xanh **và** đã chứng minh đó là lỗi duy nhất (áp tạm bản sửa vào cây thử, không commit, `--strict` đạt); ghi rõ trong mô tả PR.
+
 ## Khi hai bên đã làm trùng
 
 1. Giữ bản có **tài liệu và test**; nếu ngang nhau, giữ bản đã vào `main`.

@@ -5,7 +5,7 @@
 |---|---|---|---|---|---|
 | S027-1 | Tài liệu W0: README, 00, checklist; ADR-0023; dòng phase ở `docs/phases/README.md` | W0 | P0 | — | 🟡 2026-11-03: PR tài liệu, chờ merge |
 | S027-2 | **CK-1** công cụ kiểm (§6 của 00): `event check`, `flow check [--to]`, `explain`, `module accounting-check` (AC-1..6), `skills install`; bộ skill cho AI; ví dụ POS mini; API `GET /api/v1/inventory/reconcile` + mã tự chẩn đoán `INVENTORY_LEDGER_MISMATCH` + ca F22 (D027-4); hướng dẫn `docs/core/` viết theo khung 0–VIII (D027-1); README các gói | CK-1 | P0 | có | ☐ chờ S027-1 merge; mã đã viết ngoài `main`, cắt lại theo phạm vi dòng CK-1 |
-| S027-3 | **CK-2** SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế ở [RULE-QUALITY-GATE](../../rules/RULE-QUALITY-GATE.md) | CK-2 | P1 | có | ☐ chờ PR chốt thiết kế merge |
+| S027-3 | **CK-2** SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế ở [RULE-QUALITY-GATE](../../rules/RULE-QUALITY-GATE.md) | CK-2 | P1 | có | 🟡 2026-11-04: `tests/conformance/checks/docs/doc-drift.check.mjs` — SC-DOC-4 và SC-DOC-5 chặn (repo thật 0 phát hiện), SC-DOC-6 bánh cóc (194 nợ cũ vào baseline, màn mới thiếu hướng dẫn thì đỏ); ca tự kiểm `fixtures/repo-bad` <!-- [2026-11-04 12:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-027 — S027-3 có mã --> |
 | S027-4 | **CK-3** SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (`PURCHASE_SEED_PASSWORD`) | CK-3 | P0 | có | ☐ chờ PR chốt thiết kế merge |
 | S027-5 | Q027-5 `SEED_ADMIN_PASSWORD` | — | P1 | — | ⛔ chủ dự án quyết |
 | S027-6 | Q027-1 giải thích theo vai + SC-ERR-2 | — | P1 | — | ☐ đề xuất |

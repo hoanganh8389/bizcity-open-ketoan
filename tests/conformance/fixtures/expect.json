@@ -497,6 +497,24 @@
           "keys": [
             "free-text:packages/kernel/src/modules/intake/thong-bao-tu-do.ts"
           ]
+        },
+        "SC-DOC-4": {
+          "findings": 1,
+          "keys": [
+            "apps/api/src/khong-co.ts"
+          ]
+        },
+        "SC-DOC-5": {
+          "findings": 1,
+          "keys": [
+            "POST /api/v1/khong-co-route"
+          ]
+        },
+        "SC-DOC-6": {
+          "findings": 1,
+          "keys": [
+            "guide:khong-huong-dan"
+          ]
         }
       }
     },

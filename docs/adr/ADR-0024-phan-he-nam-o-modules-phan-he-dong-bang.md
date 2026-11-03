@@ -78,3 +78,8 @@ Hệ quả của việc không chốt:
 - **Giữ `phan-he/` vĩnh viễn, chỉ sửa tài liệu.** Bị loại: cộng đồng không thể viết module độc lập; ranh giới chỉ nhờ quy ước, mâu thuẫn mục tiêu Phase 5 (module do người ngoài nhóm viết chỉ bằng SDK).
 - **Cho phép thêm mã mới vào `phan-he/` "tạm thời" tới khi chuyển.** Bị loại: đó chính là cách nợ hôm nay đã tích lại; quyết định 1 và 2 chặn ở nguồn.
 - **Chuyển theo thứ tự lớn trước (để người chuyển gánh phần khó).** Bị loại: chưa có đường chuyển đã được kiểm; thử trên phân hệ nhỏ rồi mới đến phân hệ nặng.
+
+## Quyết định của chủ dự án (2026-11-04)
+<!-- [2026-11-04 12:15 AM Johnny Chu - Chu Hoàng Anh] ADR-0024 — ghi quyết định chủ dự án 2026-11-04 -->
+
+Chủ dự án trả lời **"đồng ý"** cho bản đề xuất ở trên. Ghi nhận: Q1 (giao diện lõi ở lại `apps/web`, đổi tên thư mục ở đợt 6) và Q2 (giữ thứ tự đợt) theo đề xuất. Q3 (tương thích đường dẫn cũ) và Q4 (SC-MOD-4 ratchet) được hiểu là nhận mặc định đề xuất; **chờ chủ dự án xác nhận lại** ở chữ chốt [đợt 1](../phases/PHASE-013-UI-KIT-CHUYEN-MODULE/10-DOT-1-QUY.md) §3 và PR chốt SC-MOD-4 riêng (RULE-FLOW §3). Đợt 1 giữ chỗ ở CLAIMS.md.
