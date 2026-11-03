@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 15
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 96
+      "count": 92
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 36
+      "count": 35
     },
     {
       "key": "paused",
@@ -1862,6 +1862,23 @@
       "line": 37
     },
     {
+      "id": "S018-21",
+      "phase": "PHASE-018",
+      "title": "Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml, khối api chuyển lên gốc, cai-nhanh.sh sinh mật kh…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
+        "branch": "feat/phase-018-giam-sat-mac-dinh",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-018 · W6 — giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH khi cài Docker; Bàn điều …"
+      },
+      "file": "docs/phases/PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md",
+      "line": 38
+    },
+    {
       "id": "S019-1",
       "phase": "PHASE-019",
       "title": "Sổ tay điều tra lỗi: 14 tình huống, khuôn chung, ba ngôn ngữ truy vấn, luật an toàn",
@@ -3077,8 +3094,14 @@
       "title": "Accounting Mapping Resolver: AccountResolver nhận phân loại tại ngày; xung đột IN-POST-005; SC-ITEM-3 — ca T024-4",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
+        "branch": "feat/phase-026-p0-dot4",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · P0 đợt 4 — định khoản theo phân loại tại ngày chứng từ (R-ITEM-7) + Golden Tests"
+      },
       "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -3567,8 +3590,14 @@
       "title": "Golden Tests T026-G1..G7 có tên, chạy như một cổng (kiem-chuan.sh), thất bại chặn phát hành",
       "priority": "P0",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
+        "branch": "feat/phase-026-p0-dot4",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · P0 đợt 4 — định khoản theo phân loại tại ngày chứng từ (R-ITEM-7) + Golden Tests"
+      },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 8
     },
@@ -3595,8 +3624,14 @@
       "title": "entitycodes cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột code; resolveEntity; điền ban đầu",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
+        "branch": "feat/phase-026-p0-dot3",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · P0 đợt 3 — mã có phiên bản cho đối tượng / chi nhánh / kho (entitycodes)"
+      },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -3606,8 +3641,14 @@
       "title": "itemclasses.path + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
+        "branch": "feat/phase-026-p0-dot2",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · P0 đợt 2 — SC-PILLAR-1 (kiểm bảng trụ cột) + cây nhóm hàng nhiều cấp (DB)"
+      },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -3728,8 +3769,14 @@
       "title": "SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = check cho tiêu chí có check",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
+        "branch": "feat/phase-026-p0-dot2",
+        "state": "đang làm",
+        "since": "2026-11-04",
+        "dot": "PHASE-026 · P0 đợt 2 — SC-PILLAR-1 (kiểm bảng trụ cột) + cây nhóm hàng nhiều cấp (DB)"
+      },
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 17
     },

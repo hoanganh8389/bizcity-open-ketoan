@@ -24,6 +24,22 @@ Bốn câu hỏi, bốn nguồn, hai khoá nối (`requestId`, `traceId`). Đây
 
 Chỉ số đo, trace, log là **quan sát**. Sự thật về sổ nằm ở Kernel và PostgreSQL (lớp 1–2). Span "ghi sổ xong" không chứng minh giao dịch đã commit, `posting_log` mới chứng minh.
 
+## Mặc định bật (PHASE-018 W6, S018-21) <!-- [2026-11-04 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — chủ dự án: "on by default" -->
+
+**Vì sao:** Bàn điều tra (DEV01–DEV04: Tổng quan, Tra mã, Nhật ký, Lỗi theo module) đọc Loki, Tempo, Prometheus. Không có bộ giám sát thì các màn đó chỉ báo "chưa bật" và nhà phát triển phải biết tự bật — bản cài mới nên có sẵn.
+
+**Thiết kế:**
+- `docker-compose.yml` ở gốc `include:` tệp `infrastructure/monitoring/docker-compose.monitoring.yml` (Compose ≥ 2.20, `project_directory: .` để đường dẫn gắn ổ vẫn tính từ gốc kho). `docker compose up -d` khởi chạy cả bộ giám sát.
+- Khối `api:` (biến `OTEL_EXPORTER_OTLP_ENDPOINT`, `DEVTOOLS_*_URL` với giá trị mặc định tới dịch vụ trong mạng Docker) **chuyển** từ tệp giám sát sang `docker-compose.yml`; tệp giám sát chỉ còn các dịch vụ giám sát (Compose báo trùng nếu một dịch vụ khai ở cả hai nơi).
+- `GRAFANA_ADMIN_PASSWORD` vẫn bắt buộc (không có mật khẩu dự phòng — P0 khảo sát W0); `scripts/cai-nhanh.sh` **tự sinh** như `JWT_SECRET` / `DB_APP_PASSWORD`, nên cài nhanh không phải làm thêm gì.
+- Cổng giám sát chỉ mở trên `127.0.0.1` (như cũ). Dữ liệu: Loki 30 ngày, Tempo 7 ngày, Prometheus 15 ngày / 10 GB — ổ đĩa tăng theo tải, xem README giám sát §dung lượng.
+- **Tắt khi không cần** (máy nhỏ, thử nhanh): `docker compose up -d db api web` — Compose chỉ chạy dịch vụ được nêu; Bàn điều tra khi đó hiện "chưa bật" kèm lệnh bật.
+- **Lệnh cũ** `docker compose -f docker-compose.yml -f infrastructure/monitoring/docker-compose.monitoring.yml up -d` **không còn dùng** (dịch vụ khai hai lần): ghi ở CHANGELOG "Nâng cấp cần làm". Docker Desktop (Windows / macOS) vẫn ghép thêm `-f infrastructure/monitoring/docker-compose.desktop.yml`.
+- **Chi phí:** thêm khoảng 9 container (Prometheus, Alertmanager, Grafana, Loki, Promtail, Tempo, OTel Collector, các exporter, cAdvisor), mỗi cái có giới hạn bộ nhớ trong tệp compose.
+- **Bàn điều tra khi nguồn chưa bật:** `NOT_READY` của một nguồn là TRẠNG THÁI, không phải lỗi kỹ thuật — không hiện khay "Lỗi kỹ thuật" / không sinh mã tra cứu; màn hiện dòng "chưa bật" kèm cách bật. Lỗi thật (nguồn bật mà không trả lời) vẫn hiện như cũ.
+- **Kiểm:** `docker compose config` sạch; `docker compose up -d` rồi `GET /api/v1/system/devtools/status` báo Loki / Tempo / Prometheus sẵn sàng; `selfcheck --strict`.
+
+
 ## 1. Truy vết yêu cầu
 
 | Việc | Quy định |
