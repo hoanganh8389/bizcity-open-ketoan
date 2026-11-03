@@ -21,6 +21,8 @@ export const khoMenu: MenuItem[] = [
     children: [
       { key: 'kho-nxt', label: 'BC nhập xuất tồn hàng hoá', path: '/bao-cao/nhap-xuat-ton', code: 'ACC83' },
       { key: 'kho-ct-hang-hoa', label: 'Sổ chi tiết hàng hoá', path: '/bao-cao/so-chi-tiet-hang-hoa', code: 'ACC82' },
+      // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: truy vết vòng đời một mặt hàng (ADR-0021)
+      { key: 'kho-hanh-trinh', label: 'Hành trình mặt hàng', path: '/bao-cao/hanh-trinh-mat-hang', code: 'ACC95', permission: 'ledger:read' },
       { key: 'kho-chuyen-kho', label: 'Bảng kê chuyển kho', path: '/bao-cao/chuyen-kho', code: 'HH01' },
     ],
   },
