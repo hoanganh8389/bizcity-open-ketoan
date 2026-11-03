@@ -62,7 +62,7 @@ const IDEAS: { n: string; title: string; text: string; tables: string[]; cls: st
 ];
 const TERMS: [string, string, string][] = [
   ['Nhà cung cấp, nhóm NCC', 'partners, partner_groups', 'MH01 Nhà cung cấp · DM08 Nhóm NCC'],
-  ['Mặt hàng + cây Ngành → Nhãn → Nhóm (nhãn khai MỘT chỗ ở đây)', 'products (industry_code, brand_code, group_code), item_classes', 'DM10 Danh mục mặt hàng · DM11 Nhãn / ngành / nhóm'],
+  ['Mặt hàng + cây Ngành → Nhãn → Nhóm (nhãn khai MỘT chỗ ở đây)', 'products (industry_code, brand_code, group_code), item_classes', 'DM10 Danh mục mặt hàng · DM11 Nhóm hàng (cây)'],
   ['Mã hàng: ngành 2 + nhãn 3 + nhóm 1 + số 3 (quà: Q + 3 + 1 + 4), đuôi K / M / Q / T / Z', 'products.sku · item_classes.sku_code (đoạn mã của nhóm)', 'DM10 → chọn nhóm hàng là tự sinh mã, tự điền ngành / nhãn'],
   ['Nhãn của từng dòng phiếu · nhãn chính của phiếu (tự suy, không nhập)', 'purchase_documents.data.lines[].brandCode · brand_code', 'Máy chủ ghi theo danh mục mặt hàng khi lưu phiếu'],
   ['Tên ĐVT (Hộp, Lốc_4, Thùng…)', 'unit_names', 'DM15 Danh mục đơn vị tính'],
@@ -70,7 +70,7 @@ const TERMS: [string, string, string][] = [
   ['Giá mua riêng của sản phẩm', 'supplier_products (NCC trống)', 'DM10 → thẻ Mua hàng'],
   ['Giá mua theo từng NCC, mã bên NCC', 'supplier_products', 'Hồ sơ NCC → Mặt hàng & giá mua'],
   ['Chính sách: CK, KM, thưởng, hạn mức, hạn trả', 'purchase_policies', 'MH04 Chính sách · Hồ sơ NCC'],
-  ['Phân cấp chi nhánh cha (kho tổng) → shop, 2 cấp', 'branches.level, branches.parent_id · warehouses', 'MH15 Phân cấp chi nhánh – shop'],
+  ['Sơ đồ tổ chức → chi nhánh cấp 2 (kho mã xx000 nhận hàng) → cửa hàng: tính từ cây', 'org_units, branches.org_unit_id → branches.level, branches.parent_id · warehouses', 'DM16 Sơ đồ tổ chức'],
   ['Tồn max / min theo chi nhánh – kho – mã', 'stock_levels', 'MH16 Tồn max · DM10 → thẻ Mua hàng'],
   ['Số ngày đo bán, số ngày đủ hàng, cách chuyển (riêng mã)', 'stock_sku_settings', 'MH16 → nút ⚙ / cột Chuyển xuống shop'],
   ['Phiếu đăng ký tồn max (mã có sẵn / hàng mới × shop)', 'stock_max_requests', 'MH17 Phiếu đăng ký tồn max · API cho POS'],
@@ -283,7 +283,7 @@ const STEPS: { title: string; screen: string; reads: string[]; writes: string[];
   { title: '3. Chính sách của NCC', screen: 'Hồ sơ NCC → Hợp đồng & điều khoản · Chiết khấu & KM · Thưởng', reads: ['partners'], writes: ['purchase_policies'],
     auto: ['Báo cáo chi tiết chính sách (MH14) trải mỗi chính sách ra từng dòng ưu đãi (từng mã, bậc, giai đoạn, chi nhánh) để xuất Excel', 'Mẫu nhanh điền sẵn quy tắc, mã tự đặt <mã NCC>-<loại>', 'Câu "Phần mềm sẽ hiểu là…" đọc lại quy tắc bằng chữ', 'Chiết khấu theo mã: một chính sách chứa cả bảng nghìn mã — thêm từ danh mục (bấm dòng là thêm), dán, nhập / xuất Excel có file mẫu'],
     rules: ['rule kiểm khuôn theo loại (zod) — sai khuôn 400', 'Mã chính sách duy nhất', 'Đã áp vào phiếu thì không xoá được, chỉ tắt (tra lại cách tính phiếu cũ)'] },
-  { title: '4a. Phân cấp + tồn max (gốc của chia hàng và đặt mua)', screen: 'MH15 Phân cấp · MH16 Tồn max · MH17 Phiếu đăng ký tồn max (2 lần / tháng, POS gửi qua API) · MH18 Công thức', reads: ['branches', 'warehouses', 'inventory_movements', 'stock_sku_settings', 'order_formulas'], writes: ['branches', 'stock_levels', 'stock_sku_settings', 'stock_max_requests', 'order_formulas'],
+  { title: '4a. Phân cấp + tồn max (gốc của chia hàng và đặt mua)', screen: 'DM16 Sơ đồ tổ chức · MH16 Tồn max · MH17 Phiếu đăng ký tồn max (2 lần / tháng, POS gửi qua API) · MH18 Công thức', reads: ['branches', 'warehouses', 'inventory_movements', 'stock_sku_settings', 'order_formulas'], writes: ['branches', 'stock_levels', 'stock_sku_settings', 'stock_max_requests', 'order_formulas'],
     auto: ['Tự xếp phân cấp theo mã (xx000 = chi nhánh cha, cùng 2 số đầu = shop)', 'Gợi ý max shop = bán / ngày (đo N ngày, mặc định 7) × số ngày đủ hàng; max kho = tổng max shop + % dự phòng', 'Phiếu đăng ký: điền sẵn mọi mã của shop + gợi ý; lệch nhỏ thì duyệt tự động; duyệt = ghi stock_levels', 'Hàng mới chưa có mã: bảng mặt hàng × shop, gắn mã sau thì ghi max'],
     rules: ['Chỉ 2 cấp: chi nhánh cha không có cha, shop phải có cha là chi nhánh cha', 'Max theo (chi nhánh, kho, mã); kho trống = kho mặc định', 'Mã phải có trong danh mục mới ghi max; min ≤ max'] },
   { title: '4b. Chuyển hàng xuống shop', screen: 'MH19 Chuyển hàng xuống shop', reads: ['stock_levels', 'inventory_movements', 'accounting_events', 'stock_sku_settings', 'transfer_requests'], writes: ['transfer_requests'],

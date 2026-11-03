@@ -72,3 +72,11 @@ Phần mềm **tự nhận loại hàng từ mã** — không phải chọn "lo�
 
 - **Dòng đơn giá 0 = hàng tặng.** Mặc định **chia vào giá vốn** (hàng chia giá); NCC có chính sách khuyến mại cho người tiêu dùng thì theo chính sách; bỏ tích **chia vào giá vốn** nếu là quà cho khách.
 - **Không nhập đổi mã:** phiếu nhập theo đơn mà dùng mã khác mã đã đặt (ví dụ đặt mã thường, nhập mã Q) → **chặn duyệt**, người có quyền **Duyệt ngoại lệ** và ghi lý do.
+
+## Chọn chi nhánh theo sơ đồ tổ chức
+<!-- [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — chọn nhiều chi nhánh trên cây -->
+
+Bấm ô **Chi nhánh**: danh sách chia theo Miền → Chi nhánh như sơ đồ tổ chức. Tích **một hoặc nhiều** chi nhánh (hoặc tích cả Miền, **Tất cả**) rồi bấm **Xong**.
+- Mỗi chi nhánh tính theo công thức riêng của nó (MH18), rồi cộng theo từng mã.
+- Gõ ô tìm là tìm trên **mọi mã** (kể cả mã đang đủ hàng), không bị bộ lọc nhanh che.
+- **Lập đơn đặt** chỉ bấm được khi chọn **một** chi nhánh (hàng về kho của chi nhánh đó).

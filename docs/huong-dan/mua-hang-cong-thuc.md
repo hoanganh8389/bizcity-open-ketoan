@@ -66,3 +66,9 @@ Khối **② Shop tính vào công thức & kho chuẩn**: mỗi shop con của 
 - **Tích** = shop được cộng vào công thức (tồn max shop, tồn shop, bán 7 ngày, bán tháng trước, đi đường xuống shop).
 - Shop **đã nghỉ / tạm dừng** (nhãn đỏ *ngừng* theo danh mục chi nhánh) mà vẫn nằm trong cây phân cấp — vd còn max khai từ trước — thì **bỏ tích** để không tính; nút *Bỏ N shop đang ngừng ra khỏi công thức* bỏ tích nhanh. Tích lại là tính lại. Bấm **Lưu**.
 - Bỏ tích **không** đổi cây phân cấp; muốn bỏ hẳn shop khỏi chi nhánh cha thì bấm **Cấu hình phân cấp (MH15) →**.
+
+## Chi nhánh và cửa hàng theo sơ đồ tổ chức
+<!-- [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — công thức theo chi nhánh của sơ đồ tổ chức -->
+
+Ô **Chi nhánh** chọn trên cây Miền → Chi nhánh. Mỗi chi nhánh một công thức. Kho của chi nhánh (mục ①) là kho của chi nhánh mã `xx000` (vd Phú Thọ → 08000), phần mềm tự lấy theo sơ đồ tổ chức.
+Mục ② xếp cửa hàng theo **tỉnh**; tích / bỏ cả tỉnh bằng ô ở đầu nhóm.

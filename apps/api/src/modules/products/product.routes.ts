@@ -11,6 +11,7 @@
  *   PUT /api/v1/product-accounts                  sửa hàng loạt (tối đa 5000); đổi tài khoản → gán sang nhóm hạch toán có đúng bộ tài khoản (chưa có thì tự tạo)
  *   GET /api/v1/item-classes/:kind       nhãn hàng / ngành hàng / nhóm hàng / loại hàng
  *   PUT /api/v1/item-classes/:kind/:code thêm hoặc sửa
+ *   GET /api/v1/products/skus-by-group?groups=a,b   mã hàng thuộc các nhóm hàng (gồm mọi nhóm con) — ô "Chọn nhóm" của báo cáo
  *   POST /api/v1/products/validate       khung Vì sao: nhắc / cảnh báo mềm / chặn cho một bản khai báo mặt hàng (chỉ đọc)
  *
  * Mặt hàng NHÁP (0061): lưu khi còn lỗi chặn (ITEM-BLOCK-*) — chưa dùng được trên chứng từ (cửa nạp: IN-ITEM-009), không có ở
@@ -386,6 +387,25 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — báo cáo theo mã hàng lọc "Chọn nhóm": tích nhóm cha = cả nhánh con bên dưới (đóng góp)
+  r.get('/api/v1/products/skus-by-group', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Mã hàng thuộc các nhóm hàng đã chọn (gồm mọi nhóm con)', querystring: z.object({ groups: z.string().max(20000).default('') }) },
+    handler: async (req) => {
+      const auth = authOf(req);
+      const groups = [...new Set(req.query.groups.split(',').map((g) => g.trim()).filter(Boolean))];
+      if (!groups.length) return ok({ skus: [] as string[] });
+      const res = await sql<{ sku: string }>`
+        WITH RECURSIVE g(code) AS (
+          SELECT code FROM item_classes WHERE tenant_id = ${auth.tenantId} AND kind = 'group' AND code IN (${sql.join(groups)})
+          UNION
+          SELECT c.code FROM item_classes c JOIN g ON c.parent_code = g.code WHERE c.tenant_id = ${auth.tenantId} AND c.kind = 'group'
+        )
+        SELECT p.sku FROM products p WHERE p.tenant_id = ${auth.tenantId} AND p.group_code IN (SELECT code FROM g)`.execute(db);
+      return ok({ skus: res.rows.map((r) => r.sku) });
+    },
+  });
+
   r.delete('/api/v1/products/:sku', {
     preHandler: requirePermission('catalog:write'),
     schema: { tags, summary: 'Xoá mặt hàng chưa có nhập xuất', params: z.object({ sku: z.string() }) },
@@ -440,6 +460,19 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       if (b.parentCode) {
         const p = await db.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
         if (!p) throw Errors.validation(`${LABEL[kind]} cha ${b.parentCode} chưa có`);
+        // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — chặn chuyển nhóm vào nhánh con của chính nó; chặn trùng mã ngắn giữa các nhóm cùng cha (đóng góp)
+        const all = await db.selectFrom('item_classes').select(['code', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).execute();
+        const up = new Map(all.map((x) => [x.code, x.parent_code]));
+        for (let x: string | null | undefined = b.parentCode, n = 0; x && n < 50; x = up.get(x), n++) if (x === c) throw Errors.validation(`${LABEL[kind]} ${c} không chuyển vào nhóm con của chính nó (${b.parentCode})`);
+      }
+      if (kind === 'group' && b.skuCode) {
+        const before = await db.selectFrom('item_classes').select('sku_code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
+        if (before?.sku_code !== b.skuCode) {
+          let dupQ = db.selectFrom('item_classes').select(['code', 'name']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('sku_code', '=', b.skuCode).where('code', '<>', c);
+          dupQ = b.parentCode ? dupQ.where('parent_code', '=', b.parentCode) : dupQ.where('parent_code', 'is', null);
+          const dup = await dupQ.executeTakeFirst();
+          if (dup) throw Errors.conflict(`Mã ngắn ${b.skuCode} đã dùng cho nhóm "${dup.name}" (${dup.code}) cùng cấp — chọn mã ngắn khác`);
+        }
       }
       const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}) };
       await db.transaction().execute(async (trx) => {

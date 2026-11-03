@@ -1,5 +1,6 @@
 // @bizcity-layer D modules/ban-hang
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — toFilter tự tra chi nhánh, bỏ import báo cáo ke-toan (chuyển modules/reports → phan-he/ke-toan/reports)
+// [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — báo cáo bán hàng: lọc ?groups= theo nhóm hàng (gồm nhóm con), tổng hợp theo nhóm hàng cấp 1 / 2 / 3 (đóng góp)
 /**
  * Báo cáo bán hàng.
  *
@@ -14,6 +15,7 @@ import { db, toNumber } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import type { AuthContext } from '../../core/auth.js';
 import type { PageQuery } from '../../core/http.js';
+import { warehouseScope } from '../warehouses/warehouse.routes.js';
 import { salesReportRepository, type SalesFilter, type SalesGroupBy } from './sales-report.repository.js';
 
 export interface SalesQuery {
@@ -23,6 +25,8 @@ export interface SalesQuery {
   kind?: 'all' | 'sale' | 'return';
   scope?: 'all' | 'invoiced' | 'internal';
   search?: string;
+  groups?: string[];
+  warehouseCodes?: string[];
 }
 
 export async function toFilter(auth: AuthContext, q: SalesQuery): Promise<SalesFilter> {
@@ -32,7 +36,7 @@ export async function toFilter(auth: AuthContext, q: SalesQuery): Promise<SalesF
     branchIds = (await db.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', 'in', q.branchCodes).execute()).map((r) => r.id);
     if (!branchIds.length) throw Errors.validation('Chi nhánh không tồn tại');
   }
-  return { tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, kind: q.kind ?? 'all', scope: q.scope ?? 'all', search: q.search?.trim() || undefined };
+  return { tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, kind: q.kind ?? 'all', scope: q.scope ?? 'all', search: q.search?.trim() || undefined, groups: q.groups?.length ? q.groups : undefined, wh: await warehouseScope(auth.tenantId, q.warehouseCodes) };
 }
 
 export const salesReportService = {

@@ -64,17 +64,38 @@ export function valuedMovements(a: { tenantId: string; to: string; branchIds: st
 
 const num = (v: string | null) => (v === null ? 0 : Number(v));
 
-export const STOCK_GROUPS = ['branch', 'brand', 'industry', 'itemGroup', 'itemType', 'postingGroup', 'supplier', 'supplierGroup'] as const;
+export const STOCK_GROUPS = ['branch', 'brand', 'industry', 'itemGroup', 'itemGroup1', 'itemGroup2', 'itemGroup3', 'itemType', 'postingGroup', 'supplier', 'supplierGroup'] as const;
 export type StockGroupBy = (typeof STOCK_GROUPS)[number];
 const classJoin = (kind: string, col: string) => sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.sku
         LEFT JOIN item_classes ic ON ic.tenant_id = b.tenant_id AND ic.kind = ${kind} AND ic.code = ${sql.ref(`pr.${col}`)}`;
 const partnerJoin = sql`JOIN accounting_events d ON d.id = mv.event_id LEFT JOIN partners p ON p.id = d.partner_id`;
+// [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — gom theo nhóm hàng cấp 1 / 2 / 3 (cộng dồn cả nhánh con) và lọc theo nhóm đã chọn (đóng góp)
+/** CTE "nhom": mỗi nhóm hàng → nhóm tổ tiên ở từng cấp (lvl 1 = nhóm không có cha). Dùng khi gom theo nhóm cấp N. */
+const groupLevelCte = (tenantId: string) => sql`, nhom AS (
+        WITH RECURSIVE up AS (
+          SELECT code, code AS anc, parent_code, 0 AS d FROM item_classes WHERE tenant_id = ${tenantId} AND kind = 'group'
+          UNION ALL
+          SELECT up.code, c.code, c.parent_code, up.d + 1 FROM up JOIN item_classes c ON c.tenant_id = ${tenantId} AND c.kind = 'group' AND c.code = up.parent_code WHERE up.d < 20
+        )
+        SELECT code, anc, COUNT(*) OVER (PARTITION BY code) - d AS lvl FROM up)`;
+const levelJoin = (n: number) => sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.sku
+        LEFT JOIN nhom gl ON gl.code = pr.group_code AND gl.lvl = ${n}
+        LEFT JOIN item_classes ic ON ic.tenant_id = b.tenant_id AND ic.kind = 'group' AND ic.code = gl.anc`;
+/** Chỉ lấy mã hàng thuộc các nhóm đã chọn (gồm mọi nhóm con). */
+export const groupFilter = (tenantId: string, groups?: string[]) => (groups?.length ? sql`AND mv.sku IN (
+        WITH RECURSIVE g(code) AS (
+          SELECT code FROM item_classes WHERE tenant_id = ${tenantId} AND kind = 'group' AND code IN (${sql.join(groups)})
+          UNION SELECT c.code FROM item_classes c JOIN g ON c.parent_code = g.code WHERE c.tenant_id = ${tenantId} AND c.kind = 'group')
+        SELECT sku FROM products WHERE tenant_id = ${tenantId} AND group_code IN (SELECT code FROM g))` : sql``);
 /** Khoá, nhãn, bảng nối của từng cách gom; hàng chưa phân loại / phiếu không có đối tượng gom vào khoá rỗng. */
-const STOCK_GROUP_SQL: Record<StockGroupBy, { key: ReturnType<typeof sql>; label: ReturnType<typeof sql>; join: ReturnType<typeof sql>; purchaseOnly?: boolean }> = {
+const STOCK_GROUP_SQL: Record<StockGroupBy, { key: ReturnType<typeof sql>; label: ReturnType<typeof sql>; join: ReturnType<typeof sql>; purchaseOnly?: boolean; level?: boolean }> = {
   branch: { key: sql`b.code`, label: sql`MAX(b.name)`, join: sql`` },
   brand: { key: sql`COALESCE(pr.brand_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: classJoin('brand', 'brand_code') },
   industry: { key: sql`COALESCE(pr.industry_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: classJoin('industry', 'industry_code') },
   itemGroup: { key: sql`COALESCE(pr.group_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: classJoin('group', 'group_code') },
+  itemGroup1: { key: sql`COALESCE(gl.anc, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: levelJoin(1), level: true },
+  itemGroup2: { key: sql`COALESCE(gl.anc, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: levelJoin(2), level: true },
+  itemGroup3: { key: sql`COALESCE(gl.anc, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: levelJoin(3), level: true },
   itemType: { key: sql`COALESCE(pr.type_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, join: classJoin('type', 'type_code') },
   // Nhóm hạch toán (bộ tài khoản) của mặt hàng: tách hàng hoá thường, hàng khuyến mại, công cụ dụng cụ…
   postingGroup: {
@@ -111,12 +132,13 @@ const figures = (r: SumRow) => {
 };
 
 export const inventoryReportService = {
-  async stockMovement(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; warehouseCodes?: string[]; search?: string }) {
+  async stockMovement(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; warehouseCodes?: string[]; search?: string; groups?: string[] }) {
     const s = await scope(auth, q.branchCodes, q.warehouseCodes);
     const res = await sql<SumRow & { branch_code: string; branch_name: string; sku: string; name: string; unit: string }>`
       WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to: q.to, branchIds: s.branchIds, wh: s.wh, search: q.search?.trim() || undefined })})
       SELECT b.code AS branch_code, b.name AS branch_name, mv.sku, MAX(mv.name) AS name, MAX(mv.unit) AS unit, ${sums(q.from)}
         FROM mv JOIN branches b ON b.id = mv.branch_id
+       WHERE TRUE ${groupFilter(auth.tenantId, q.groups)}
        GROUP BY b.code, b.name, mv.sku
        ORDER BY b.code, mv.sku`.execute(db);
     const rows = res.rows
@@ -131,19 +153,20 @@ export const inventoryReportService = {
   },
 
   /** Nhập xuất tồn, mua hàng, giá vốn gom theo phân loại hàng / chi nhánh / nhà cung cấp (số lượng cộng thẳng, khác đơn vị tính chỉ để tham khảo). */
-  async stockSummary(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; warehouseCodes?: string[]; search?: string; groupBy: StockGroupBy }) {
+  async stockSummary(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; warehouseCodes?: string[]; search?: string; groupBy: StockGroupBy; groups?: string[] }) {
     const s = await scope(auth, q.branchCodes, q.warehouseCodes);
     const g = STOCK_GROUP_SQL[q.groupBy];
     const res = await sql<SumRow & { key: string; label: string; skus: string }>`
-      WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to: q.to, branchIds: s.branchIds, wh: s.wh, search: q.search?.trim() || undefined })})
+      WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to: q.to, branchIds: s.branchIds, wh: s.wh, search: q.search?.trim() || undefined })})${g.level ? groupLevelCte(auth.tenantId) : sql``}
       SELECT ${g.key} AS key, ${g.label} AS label, COUNT(DISTINCT mv.sku) AS skus, ${sums(q.from)}
         FROM mv JOIN branches b ON b.id = mv.branch_id
         ${g.join}
-       ${g.purchaseOnly ? sql`WHERE mv.kind IN ('purchase', 'purchase_return') AND mv.doc_date >= ${q.from}::date` : sql``}
+       WHERE TRUE ${groupFilter(auth.tenantId, q.groups)}
+       ${g.purchaseOnly ? sql`AND mv.kind IN ('purchase', 'purchase_return') AND mv.doc_date >= ${q.from}::date` : sql``}
        GROUP BY 1
        ORDER BY 1`.execute(db);
     const rows = res.rows
-      .map((r) => ({ key: r.key, label: r.key ? r.label : g.purchaseOnly ? '(không có nhà cung cấp)' : q.groupBy === 'branch' ? r.label : '(chưa phân loại)', skuCount: Number(r.skus), ...figures(r) }))
+      .map((r) => ({ key: r.key, label: r.key ? r.label : g.purchaseOnly ? '(không có nhà cung cấp)' : q.groupBy === 'branch' ? r.label : g.level ? '(nhóm chưa tới cấp này)' : '(chưa phân loại)', skuCount: Number(r.skus), ...figures(r) }))
       .filter((r) => r.openingQty || r.inQty || r.outQty || r.openingValue || r.inValue);
     const sum = (k: keyof (typeof rows)[number]) => rows.reduce((s2, r) => s2 + (r[k] as number), 0);
     return {

@@ -16,7 +16,7 @@ import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { idParamSchema, ok } from '../../core/http.js';
 import {
-  approveMaxRequest, autoArrange, cancelMaxRequest, createTransferRequests, formulaSchema, getFormula, getMaxRequest, hierarchy, hierarchySaveSchema, levelInputSchema,
+  approveMaxRequest, autoArrange, cancelMaxRequest, createTransferRequests, formulaSchema, getFormula, orderAnalysisMany, getMaxRequest, hierarchy, hierarchySaveSchema, levelInputSchema,
   listLevels, listMaxRequests, listSkuSettings, listTransferRequests, maxBoard, maxRequestSchema, maxRequestSuggest, orderAnalysis, saveFormula, saveHierarchy, saveLevels,
   saveMaxRequest, saveSkuSettings, setTransferStatus, skuSettingSchema, transferCreateSchema, transferSuggest,
 } from './ton-max.js';
@@ -57,8 +57,9 @@ export async function stockRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await getFormula(db, authOf(req).tenantId, req.params.branchCode)) });
   r.put('/api/v1/stock/formulas/:branchCode', { preHandler: requirePermission('settings:write'), schema: { tags, summary: 'Lưu công thức đặt hàng', params: z.object({ branchCode: z.string().min(1) }), body: formulaSchema },
     handler: async (req) => { const a = authOf(req); return ok(await tx((t) => saveFormula(t, a.tenantId, a.actorName, req.params.branchCode, req.body))); } });
-  r.get('/api/v1/stock/order-analysis', { preHandler: read, schema: { tags, summary: 'Phân tích đặt hàng theo công thức của chi nhánh cha (SL cần nhập từng mã)', querystring: z.object({ branchCode: z.string().min(1), sku: z.string().optional(), asOf: day.optional() }) },
-    handler: async (req) => ok(await orderAnalysis(db, authOf(req).tenantId, req.query.branchCode, req.query)) });
+  // [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — branchCode nhận nhiều mã cách dấu phẩy: gộp nhiều chi nhánh
+  r.get('/api/v1/stock/order-analysis', { preHandler: read, schema: { tags, summary: 'Phân tích đặt hàng theo công thức của chi nhánh (nhiều chi nhánh: mã cách dấu phẩy, cộng theo mã)', querystring: z.object({ branchCode: z.string().min(1), sku: z.string().optional(), asOf: day.optional() }) },
+    handler: async (req) => ok(await orderAnalysisMany(db, authOf(req).tenantId, req.query.branchCode.split(','), req.query)) });
 
   // ---------------- Chuyển hàng xuống shop
   r.get('/api/v1/stock/transfer-suggest', { preHandler: read, schema: { tags, summary: 'Đề xuất chuyển hàng từ kho chi nhánh cha xuống shop (max − tồn − đi đường, làm tròn thùng)', querystring: z.object({ branchCode: z.string().min(1), fromWarehouse: z.string().optional(), shopCodes: list, asOf: day.optional() }) },
