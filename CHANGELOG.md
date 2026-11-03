@@ -25,6 +25,8 @@ Mỗi bản ghi đủ sáu mục:
 - **Đồng bộ PHASE-013 với mã**: checklist S013-1 (`@bizcity/ui-kit` và slot) ✅, S013-2 giữ 🟡; dòng PHASE-013 ở bảng lộ trình cập nhật trạng thái.
 
 ### Đổi
+<!-- [2026-11-03 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — chốt thiết kế hợp đồng ACTION 1.2.0 -->
+- **Hợp đồng `bizcity_action` 1.2.0-draft** (chốt trước khi chuẩn hoá mã, R-FLOW-2): `ctx.meta(key, value)` — dạng hàm, khoá của runtime bị cấm, chạy thử giữ meta, gửi lặp không phát lại meta; action theo lô `ctx.data.item`; che bí mật và lược `input` lớn trong bằng chứng; `expose.http.query` / `bodyLimit` và thân tuỳ chọn. Mục §4.4 (nhật ký nghiệp vụ trong action, phương án C) là **đề xuất chờ chốt** — không đổi mã `writeAudit` cho tới khi được chốt.
 <!-- [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
 - **Ghi danh mục chi nhánh, kho, tên đơn vị tính, tài khoản ngân hàng đi qua action** (PHASE-014 W6 đợt 3, SC-ACT-1): cùng đường dẫn, quyền, mã trả về như cũ (201 khi thêm); `Idempotency-Key` không bắt buộc (thao tác đặt trạng thái tuyệt đối, gửi lại không tạo thêm). Khác biệt người dùng thấy: nhật ký bằng chứng ghi tên hành động mới `core.branch.*`, `core.warehouse.*`, `core.unit-name.*`, `core.bank-account.*` thay cho `branch.create`… và có biên nhận `meta.receipt`; kiểm và ghi nằm trong một giao dịch với bằng chứng. Hàm `branchService.create`… cũ giữ nguyên cho nơi khác gọi. SC-ACT-1: 56,7% → 66,9%.
 
@@ -352,7 +354,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Nâng cấp cần làm
 <!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b -->
-- Migration `0066` điền `item_id` cho toàn bộ dòng sổ / kho / giá vốn (theo mã có hiệu lực tại ngày của dòng). Mã có trong sổ / kho mà không có trong danh mục mặt hàng được tạo thành **mặt hàng mồ côi** (ngừng dùng, `attributes.orphan`) — khai lại mã đó thì nhận lại đúng định danh. Sổ lớn: chạy thử trên bản sao trước (PHASE-024 · 70 §3.2.1 G6).
+- Migration `0066` điền `item_id` cho toàn bộ dòng sổ / kho / giá vốn (theo mã có hiệu lực tại ngày của dòng). Mã có trong sổ / kho mà không có trong danh mục mặt hàng được tạo thành **mặt hàng mồ côi** (ngừng dùng, `attributes.orphan`) — khai lại mã đó thì nhận lại đúng định danh. Sổ lớn: chạy thử trên bản sao trước (PHASE-024 · 70 §3.2.1 G6). <!-- [2026-11-04 05:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — G6 (chủ chọn B: không viết lại 0065) --> **Thời gian điền định danh** (migration 0065 điền từ danh mục mặt hàng, ~0,8 ms một mặt hàng): 20.985 mặt hàng ≈ 17 giây · 100.000 ≈ 80 giây · 1.000.000 ≈ 13 phút. Bản cài có hơn vài trăm nghìn mặt hàng: lên lịch cửa sổ bảo trì và chạy thử trên bản sao; migration chạy trong một giao dịch, dừng giữa chừng thì quay lại như chưa chạy. Ước lượng: `SELECT count(*) FROM products` × 0,8 ms.
 <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 -->
 - Chạy migration `0060_thong_bao` (chỉ thêm hai bảng `notifications`, `notification_reads`). Hợp đồng `bizcity_extension` 1.3.0-draft: hook `document.beforeTransition` bỏ (chưa module nào dùng).
 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3 -->
