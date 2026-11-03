@@ -78,8 +78,8 @@ export interface ActionContext {
     item<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>>;
   };
   evidence: { note(key: string, value: unknown): void };
-  // [2026-11-03 05:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main: ctx.meta: phản hồi thêm khoá vào meta (cổng danh mục: gate, findings, held — PHASE-024). Khoá lõi (requestId, receipt, idempotency, dryRun) không bị đè.
-  readonly meta: Record<string, unknown>;
+  // [2026-11-03 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 8a: ctx.meta theo hợp đồng ACTION 1.2.0 §4.1: hàm `ctx.meta(khoá, giá trị)` thêm trường vào meta của phản hồi (gate, findings, held…); khoá runtime (requestId, receipt, idempotency, dryRun) bị cấm; chạy thử giữ meta; gửi lặp không phát lại. Gán thuộc tính / Object.assign (mã cũ) vẫn nhận.
+  readonly meta: ActionMeta;
   /**
    * Phát sự kiện miền trong giao dịch của action (bizcity_event@1 STD-EVT-1): huỷ / dry-run thì không có sự kiện.
    * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
@@ -226,6 +226,24 @@ export function ownDocument<T extends { docKey?: unknown; sourceSystem?: unknown
 const ID_RE = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,}$/;
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): giao dịch của action cho mã cũ viết dạng db.transaction().execute(fn)
 // [2026-11-03 05:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: không lưu bí mật vào bằng chứng / bản phản hồi gửi lặp
+// [2026-11-03 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 8a: ctx.meta theo hợp đồng ACTION 1.2.0 §4.1
+/** Khoá trong meta của phản hồi thuộc về runtime — handler không được ghi (§4.1). */
+const RESERVED_META = new Set(['requestId', 'receipt', 'idempotency', 'dryRun']);
+/** `ctx.meta`: hàm `(khoá, giá trị)`; còn nhận gán thuộc tính và Object.assign cho mã viết theo dạng object (§4.1 Tương thích). */
+export type ActionMeta = ((key: string, value: unknown) => void) & { [key: string]: unknown };
+function makeMeta(actionId: string, store: Record<string, unknown>): ActionMeta {
+  const put = (k: string, v: unknown) => {
+    if (RESERVED_META.has(k)) throw new Error(`Action ${actionId}: khoá meta "${k}" là của runtime`);
+    store[k] = v;
+  };
+  return new Proxy(((k: string, v: unknown) => put(k, v)) as ActionMeta, {
+    set: (_t, p, v) => { if (typeof p !== 'string') return false; put(p, v); return true; },
+    get: (t, p, r) => (typeof p === 'string' && Object.hasOwn(store, p) ? store[p] : Reflect.get(t, p, r)),
+    has: (t, p) => (typeof p === 'string' && Object.hasOwn(store, p)) || Reflect.has(t, p),
+    deleteProperty: (_t, p) => { if (typeof p === 'string') delete store[p]; return true; },
+  });
+}
+
 const SECRET_KEY = /(^key$|password$|secret$|token$|apikey$|api_key$|privatekey$)/i;
 /**
  * Che trường bí mật (mật khẩu, khoá API, token, secret…) trước khi ghi bằng chứng (audit_logs) và trước khi lưu phản hồi để trả
@@ -421,7 +439,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           item: (fn) => inSavepoint(trx, fn),
         },
         evidence: { note: (k, v) => { notes[k] = v; } },
-        meta: responseMeta,
+        meta: makeMeta(def.id, responseMeta),
         events: {
           emit: (type, data, o) => {
             const mod = def.id.split('.')[0]!;
@@ -532,7 +550,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
     if (key) metrics.idempotency.inc({ result: res.meta.idempotency === 'replayed' ? 'replayed' : 'new' });
     return res;
   } catch (err) {
-    if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...meta, dryRun: true } };
+    if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...responseMeta, ...meta, dryRun: true } };
     if (key && err instanceof AppError && err.code === ERROR_CODES.IDEMPOTENCY_CONFLICT) metrics.idempotency.inc({ result: 'conflict' });
     metrics.actions.inc({ action: def.id, result: 'error', code: err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL });
     // Thất bại trong handler: giao dịch đã huỷ → ghi bằng chứng "result_ok = false" ở giao dịch riêng. Ghi lỗi thì vẫn ném lỗi gốc.

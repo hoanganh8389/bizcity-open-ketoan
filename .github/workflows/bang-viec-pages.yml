@@ -1,0 +1,55 @@
+# [2026-11-03 11:52 PM Johnny Chu - Chu Hoàng Anh] FLOW — FLOW-2 (R-FLOW-8): xuất bản màn kanban chỉ đọc lên GitHub Pages từ main
+# Nguồn trang: tools/bang-viec-web/ + docs/phases/bang-viec.json của chính commit này. Không secret; quyền tối thiểu; action ghim SHA (R-SEC-8).
+# Dừng trước khi xuất bản nếu bang-viec.json lệch nguồn (cùng ý SC-FLOW-3): bảng trên Pages luôn đúng với main.
+name: Bảng việc (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/phases/**'
+      - 'tools/bang-viec-web/**'
+      - 'scripts/bang-viec.mjs'
+      - 'tests/conformance/checks/flow/**'
+      - '.github/workflows/bang-viec-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: bang-viec-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Bảng việc khớp nguồn
+        run: node scripts/bang-viec.mjs --check
+      - name: Dựng trang
+        run: |
+          mkdir -p _site
+          cp tools/bang-viec-web/index.html tools/bang-viec-web/style.css tools/bang-viec-web/app.js _site/
+          cp docs/phases/bang-viec.json _site/
+          printf '{"repo":"%s","sha":"%s"}\n' "$GITHUB_REPOSITORY" "$GITHUB_SHA" > _site/config.json
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

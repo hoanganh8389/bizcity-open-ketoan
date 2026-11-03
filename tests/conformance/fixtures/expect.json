@@ -497,6 +497,19 @@
           "keys": [
             "free-text:packages/kernel/src/modules/intake/thong-bao-tu-do.ts"
           ]
+        },
+        "SC-ITEM-2": {
+          "findings": 2,
+          "keys": [
+            "fk:products:product_sku",
+            "col:inventory_movements.lot_sku"
+          ]
+        },
+        "SC-ITEM-3": {
+          "findings": 1,
+          "keys": [
+            "packages/kernel/src/modules/posting/rules/xau.rule.ts"
+          ]
         }
       }
     },
@@ -623,6 +636,33 @@
             "scn-same:S-1:1311",
             "req-doctype:production",
             "req-cap:ledger.khong-co"
+          ]
+        }
+      }
+    },
+    {
+      "root": "flow-bang-viec",
+      "mode": "repo",
+      "checks": {
+        "SC-FLOW-1": {
+          "findings": 2,
+          "keys": [
+            "viec-hai:S901-1",
+            "viec-la:S901-9"
+          ]
+        },
+        "SC-FLOW-3": {
+          "findings": 2,
+          "keys": [
+            "lech:docs/phases/BANG-VIEC.md",
+            "thieu:docs/phases/bang-viec.json"
+          ]
+        },
+        "SC-FLOW-4": {
+          "findings": 2,
+          "keys": [
+            "ky-hieu:S901-3",
+            "cot:S901-4"
           ]
         }
       }

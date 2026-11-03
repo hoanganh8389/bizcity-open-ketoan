@@ -12,6 +12,9 @@ Cảm ơn bạn muốn đóng góp. Đây là **phần mềm kế toán**: một
 
 > **Cộng đồng được tự do phát triển module, nhưng không được tự do thay đổi sự thật kế toán.** (Johnny Chu – Chu Hoàng Anh, [Bản công bố kiến trúc §0](docs/CONG-BO-KIEN-TRUC.md))
 
+<!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 — yêu cầu kiến trúc cho người đóng góp -->
+> **Yêu cầu kiến trúc (chủ dự án Johnny Chu – Chu Hoàng Anh, [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)):** phân hệ nghiệp vụ nằm ở **`modules/<key>/`**; thư mục `apps/*/src/phan-he/` **đóng băng** (không thêm phân hệ mới, sửa lỗi tại chỗ) và được chuyển theo từng đợt. Tạo module mới bằng `npx bizcity module new`. Hướng dẫn, lộ trình và lời nhắn riêng cho người đang giữ phân hệ: [docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md](docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md).
+
 > **Giấy phép:** đóng góp của bạn (code, tài liệu, gói định khoản, preset) được phát hành theo **GPL-2.0-or-later** như phần còn lại của repository ([LICENSE](LICENSE)). Mở PR nghĩa là bạn đồng ý điều đó và có quyền đóng góp nội dung ấy. Không đưa code chép từ nguồn có giấy phép không tương thích, không đưa dữ liệu thật của khách hàng. Đặt tên module: không dùng tiền tố `bizcity` cho tên sản phẩm của bạn ([TRADEMARK.md](TRADEMARK.md) §3).
 
 > Người mới: đọc [docs/00-CANON.md](docs/00-CANON.md) (luật), [docs/architecture/README.md](docs/architecture/README.md) (kiến trúc), [docs/phat-trien.md](docs/phat-trien.md) (chạy máy dev). Agent AI: [AGENTS.md](AGENTS.md).
@@ -54,7 +57,7 @@ PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh. Từ 02/11/
 |---|---|---|
 | T0 Nhân | `packages/kernel/`, `packages/platform/` (từ 01/11/2026), `apps/api/src/core/`, `modules/{documents,posting,ledger,periods}`, `packages/contracts`, trigger sổ cái, `db/migrations` | 2 người, 1 nhóm Lõi ([CODEOWNERS](.github/CODEOWNERS)) |
 | T1 Dịch vụ lõi | `apps/api/src/modules/*` khác, `apps/web/src/{features,components}` | 1 nhóm Lõi |
-| T2 Phân hệ / module | `apps/*/src/phan-he/<key>/`, sau này `modules/<key>/` | người phụ trách module |
+| T2 Phân hệ / module | **`modules/<key>/`** (mới, bắt buộc — [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)); phân hệ cũ ở `apps/*/src/phan-he/<key>/` đóng băng, chuyển theo đợt | người phụ trách module |
 | T3 Add-in, preset, gói định khoản | `apps/*/src/addins/<id>/`, `presets/`, gói | người phụ trách |
 
 ## 5. Trước khi mở PR

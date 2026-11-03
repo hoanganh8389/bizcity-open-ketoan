@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Đổi
+<!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 -->
+- **Yêu cầu kiến trúc: phân hệ nghiệp vụ nằm ở `modules/<key>/`, `phan-he/` đóng băng** (chủ dự án, [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)): không thêm phân hệ mới vào `apps/*/src/phan-he/`; phân hệ cũ sửa lỗi tại chỗ và chuyển sang chuẩn module theo 6 đợt (đề xuất: `quy`, `tai-san`/`kho`/`ban-hang`, `thue`, `ke-toan`, `mua-hang`, giao diện lõi). Mỗi đợt giữ chỗ và chốt thiết kế trước khi code (R-FLOW). `AGENTS.md`, `CONTRIBUTING.md`, `docs/framework/03-MO-RONG.md` sửa cho khớp; hướng dẫn và lời nhắn riêng cho người đóng góp ở [docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md](docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md). Chưa đổi mã: việc chuyển và phép kiểm SC-MOD-4 làm theo từng đợt.
+
 ### Thêm
 <!-- [2026-11-03 11:20 PM Johnny Chu - Chu Hoàng Anh] DANH-GIA -->
 - **Bản đánh giá mức đáp ứng của code so với tài liệu `main`** ([docs/audits/DANH-GIA-DAP-UNG-2026-11-03.md](docs/audits/DANH-GIA-DAP-UNG-2026-11-03.md)): bảng điểm tĩnh, test sản phẩm (1205 đạt, 0 hỏng), nạp 25 trường hợp mua hàng và đối chiếu sổ (116/119 và 113/119, Nợ = Có = 4.774.840.842), mức đáp ứng theo 14 nhóm tài liệu, lộ trình, checklist 27 phase, độ phủ luật (42/100), nợ cũ, độ lệch tài liệu ↔ code và việc mở theo ưu tiên.
@@ -21,6 +25,8 @@ Mỗi bản ghi đủ sáu mục:
 - **Đồng bộ PHASE-013 với mã**: checklist S013-1 (`@bizcity/ui-kit` và slot) ✅, S013-2 giữ 🟡; dòng PHASE-013 ở bảng lộ trình cập nhật trạng thái.
 
 ### Đổi
+<!-- [2026-11-03 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — chốt phương án C nhật ký trong action -->
+- **Chốt thiết kế nhật ký nghiệp vụ trong action** (chủ dự án đồng ý, `bizcity_action` 1.3.0-draft, `bizcity_evidence` 1.1.0-draft): `writeAudit` chạy trong action không chèn dòng `audit_logs` thứ hai mà ghi vào `changes.notes.audit[]` của bằng chứng, trừ sổ `AUDIT_KEEP` (ba tên có chỗ đọc: `costing.fill`, `<loại>.update` của chứng từ, `settings.item-auto-create`); phép kiểm SC-AUDIT-1. Chưa đổi mã — làm ở đợt 8b sau đợt 8a.
 <!-- [2026-11-03 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — chốt thiết kế hợp đồng ACTION 1.2.0 -->
 - **Hợp đồng `bizcity_action` 1.2.0-draft** (chốt trước khi chuẩn hoá mã, R-FLOW-2): `ctx.meta(key, value)` — dạng hàm, khoá của runtime bị cấm, chạy thử giữ meta, gửi lặp không phát lại meta; action theo lô `ctx.data.item`; che bí mật và lược `input` lớn trong bằng chứng; `expose.http.query` / `bodyLimit` và thân tuỳ chọn. Mục §4.4 (nhật ký nghiệp vụ trong action, phương án C) là **đề xuất chờ chốt** — không đổi mã `writeAudit` cho tới khi được chốt.
 <!-- [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->

@@ -27,6 +27,7 @@
 | **R-FLOW-5** | **Chỉ đẩy khi đã gộp `main` và bộ kiểm xanh.** Trước khi đẩy: `git fetch`, `git merge origin/main`, `git merge-tree --write-tree origin/main HEAD` không báo xung đột, `selfcheck --strict` ĐẠT. `main` đổi sau đó (PR khác merge) thì gộp lại trước khi merge. Không `push --force`, không rebase nhánh đã đẩy | `nhan-viec.mjs kiem` (đã gộp main, gộp thử không xung đột); `selfcheck --strict` |
 | **R-FLOW-6** | **Trả chỗ trong cùng PR.** PR cuối của đợt xoá dòng khỏi CLAIMS.md và ghi nhật ký checklist. Dòng "đang làm" quá 3 ngày không có commit trên nhánh coi là đã nhả; người khác chỉ nhận sau khi hỏi người giữ hoặc chủ dự án | SC-FLOW-1 (khuôn bảng); `nhan-viec.mjs list` (cảnh báo dòng quá 3 ngày) |
 | **R-FLOW-7** | **Nguồn sự thật của tài liệu là `main`.** <!-- [2026-11-03 10:35 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW-7: nguồn sự thật của tài liệu là main (chủ dự án: "source of truth tài liệu phải ở nhánh main để nhiều session window, nhiều dev ko bị phân mảnh tài liệu kiến trúc chuẩn do Johnny Chu ban hành") --> Kiến trúc chuẩn, luật, hợp đồng, ADR và quyết định của chủ dự án (Johnny Chu – Chu Hoàng Anh) chỉ có hiệu lực khi đã nằm trong **tài liệu sở hữu trên `main`** (phase, rule, contract, ADR — bảng "đổi code X → sửa tài liệu Y" ở [CANON §5](../00-CANON.md)). Tài liệu ngoài repo (Claude artifact, Google Docs, ghi chú phiên, chat), nhánh chưa merge và bản vá là **bản làm việc**: khác `main` thì `main` thắng. Mỗi phiên, mỗi dev đọc tài liệu từ `origin/main` (`git fetch` rồi `git show origin/main:<tệp>`) trước khi làm, không đọc bản trong nhánh của mình hay bản làm việc. Quyết định mới vào tài liệu sở hữu bằng PR tài liệu trước (R-FLOW-2), không chỉ nằm trong chat hay artifact. Không sao chép tài liệu kiến trúc sang nơi khác để sửa riêng; muốn đổi thì mở PR | duyệt PR; `nhan-viec.mjs` đọc bảng giữ chỗ và chữ chốt từ `origin/main` |
+| **R-FLOW-8** | **Một bảng việc, sinh từ `main`.** <!-- [2026-11-03 11:40 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW-8 bảng việc sinh từ main (chủ dự án chọn phương án D: trạng thái việc chỉ ở main; không bảng ngoài) --> Trạng thái việc chỉ nằm ở ba chỗ trên `main`: [CLAIMS.md](../phases/CLAIMS.md) (ai giữ việc nào, phạm vi nào), `docs/phases/PHASE-xxx/40-MASTER-CHECKLIST.md` (từng việc con và bằng chứng), bảng sinh tự động `docs/phases/BANG-VIEC.md` + `bang-viec.json`. Không dùng bảng ngoài repo (Trello, GitHub Projects, artifact) làm nơi giữ trạng thái; một màn xem kiểu kanban được phép khi nó **chỉ đọc** `bang-viec.json` từ `main`. Đổi trạng thái = PR sửa checklist / CLAIMS, rồi chạy `node scripts/bang-viec.mjs --write`. Khuôn ở §4 | SC-FLOW-1 (mở rộng), SC-FLOW-3, SC-FLOW-4 |
 
 ## §3. Thứ dùng chung (R-FLOW-2)
 
@@ -43,6 +44,58 @@ Danh sách ngắn; bảng đầy đủ "đổi code X → sửa tài liệu Y" �
 | `docs/standard/*` | chính nó (đổi phiên bản theo hợp đồng) |
 
 Không cần chữ chốt riêng: làm thêm theo **khuôn đã chốt** (vd chuyển thêm route sang action theo mẫu có sẵn) — chỉ cần giữ chỗ.
+
+## §4. Bảng việc (R-FLOW-8)
+<!-- [2026-11-03 11:40 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW-8 bảng việc sinh từ main (chủ dự án chọn phương án D: trạng thái việc chỉ ở main; không bảng ngoài) -->
+
+**Vấn đề.** 27 phase, 335 việc con nằm rải ở 27 checklist; `CLAIMS.md` ghi theo "đợt" và đường dẫn, không ghi mã việc, nên không biết việc `S###-n` nào đang có người giữ. Không có chỗ nhìn toàn dự án; dùng bảng ngoài (Trello, artifact) thì thành nguồn thứ hai (R-FLOW-7).
+
+**Lựa chọn (chủ dự án duyệt 2026-11-03, phương án D).** Giữ nguồn ở `main`; sinh bảng từ nguồn. Đã loại: Trello (ngoài GitHub, CI và AI không đọc được, đồng bộ tay); GitHub Projects + Issues làm nguồn (mỗi việc ở hai nơi, cần bot ghi `main` để giữ R-FLOW-1).
+
+**Hình dạng.**
+
+1. `CLAIMS.md` thêm cột **Việc** (sau cột Đợt): danh sách mã `S###-n` — có thể thêm một chữ cái khi tách việc, vd `S010-1a` (8 việc đang dùng) <!-- [2026-11-04 12:04 AM Johnny Chu - Chu Hoàng Anh] FLOW — sổ đăng ký dùng chung của bộ kiểm; khuôn mã việc có hậu tố chữ cái (gặp khi làm FLOW-2) --> — dòng đó giữ, cách nhau dấu phẩy; `—` khi đợt chưa có dòng checklist (vd đợt tài liệu). Một mã chỉ nằm ở **một** dòng "đang làm" / "chờ merge". Mã phải có thật trong một `40-MASTER-CHECKLIST.md`.
+2. Dòng việc trong checklist: `| S###-n | Việc | … | Trạng thái |`, ô cuối **bắt đầu bằng một ký hiệu**: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài · **⏸ hoãn (chủ để sau)** (ký hiệu mới, đã có trong PHASE-019). Dấu `|` trong nội dung ô viết `\|`.
+3. Cột của bảng (mỗi việc đúng một cột):
+
+| Cột | Điều kiện |
+|---|---|
+| Đang làm | mã nằm ở dòng CLAIMS "đang làm" |
+| Chờ merge | mã nằm ở dòng CLAIMS "chờ merge" |
+| Bị chặn | ⛔ (không có giữ chỗ) |
+| Chưa ai nhận | ☐ (không có giữ chỗ) |
+| Chờ đủ tín hiệu | 🟡 (không có giữ chỗ) |
+| Hoãn | ⏸ |
+| Xong | ✅ |
+
+4. `node scripts/bang-viec.mjs --write` đọc 27 checklist + `CLAIMS.md`, ghi:
+   - `docs/phases/BANG-VIEC.md`: tổng số theo cột, rồi từng cột nhóm theo phase (mã, việc rút gọn, ưu tiên, người giữ + nhánh, link tới dòng checklist);
+   - `docs/phases/bang-viec.json` (`bizcity_task_board@1`): `{ contract, columns[], items: [{ id, phase, title, priority, status, column, claim: { who, branch, state, since } | null, file, line }] }`. **Không** ghi giờ sinh hay mã commit, để cùng nguồn luôn ra cùng tệp.
+   - không có `--write`: in bảng ra màn hình, không ghi.
+5. **Màn kanban chỉ đọc ở GitHub Pages** (chủ dự án quyết 2026-11-03) <!-- [2026-11-03 11:44 PM Johnny Chu - Chu Hoàng Anh] FLOW — chủ dự án quyết: màn kanban chỉ đọc đặt ở GitHub Pages; PR giữ chỗ không tự merge -->:
+   - nguồn trang: `tools/bang-viec-web/` (HTML + JS tĩnh, không gói phụ thuộc, không gọi API nào ghi dữ liệu); đọc `bang-viec.json` của **chính commit** được dựng;
+   - workflow `.github/workflows/bang-viec-pages.yml`: chạy khi đẩy vào `main` có đổi `docs/phases/**` hoặc `tools/bang-viec-web/**` (và chạy tay); quyền tối thiểu `contents: read`, `pages: write`, `id-token: write`; không dùng secret; action ghim theo SHA (R-SEC-8); dựng lại `bang-viec.json` bằng `scripts/bang-viec.mjs` và dừng nếu lệch tệp đã commit (cùng ý SC-FLOW-3);
+   - trên trang: lọc theo phase, cột, người giữ, ưu tiên; mỗi thẻ có **Nhận việc** (mở `https://github.com/<repo>/edit/main/docs/phases/CLAIMS.md` để thành PR chỉ tài liệu), **Mở checklist** (tới đúng dòng trên GitHub); ghi rõ "chỉ đọc — đổi trạng thái bằng PR";
+   - repo công khai nên trang công khai: chỉ hiện những gì đã có trong `docs/phases` (mã việc, tên việc, ưu tiên, tài khoản GitHub, nhánh), không thêm gì ngoài repo;
+   - bật Pages (Settings → Pages → Source: GitHub Actions) là việc của chủ repo, một lần.
+
+**Ảnh hưởng.** PR đổi trạng thái một việc (checklist hoặc CLAIMS) phải chạy lại `bang-viec.mjs --write` trong cùng PR (SC-FLOW-3 bắt khi quên, như `tru-cot-md.mjs`). Dòng CLAIMS cũ thêm cột Việc trong PR code đầu tiên. PR giữ chỗ **không** tự merge (chủ dự án quyết 2026-11-03, giữ mức chặt của R-FLOW): người duyệt merge tay sau khi SC-FLOW-1 xanh.
+
+**Kiểm bằng.** SC-FLOW-1 mở rộng (cột Việc: mã có thật, không hai dòng cùng giữ); SC-FLOW-3 (bảng sinh khớp nguồn); SC-FLOW-4 (dòng checklist đúng khuôn, ô trạng thái bắt đầu bằng ký hiệu). Chi tiết ở [RULE-QUALITY-GATE](RULE-QUALITY-GATE.md).
+
+## Sổ dùng chung (không tính là ngoài phạm vi)
+<!-- [2026-11-04 12:04 AM Johnny Chu - Chu Hoàng Anh] FLOW — sổ đăng ký dùng chung của bộ kiểm; khuôn mã việc có hậu tố chữ cái (gặp khi làm FLOW-2) -->
+
+Vài tệp là **sổ đăng ký** mà mọi PR cùng loại phải thêm một dòng của mình; giữ chỗ riêng cho chúng sẽ làm mọi đợt chồng phạm vi nhau. Mọi nhánh được sửa các tệp này dù không có trong phạm vi đã giữ chỗ (`nhan-viec.mjs kiem` không báo R-FLOW-3), với điều kiện **chỉ thêm / sửa dòng của chính đợt mình**, không đổi dòng của đợt khác:
+
+| Tệp | Mỗi PR thêm gì |
+|---|---|
+| `CHANGELOG.md` | dòng thay đổi của đợt |
+| `docs/phases/CLAIMS.md` | dòng giữ chỗ của đợt (và xoá khi xong, R-FLOW-6) |
+| `docs/phases/*/40-MASTER-CHECKLIST.md` | trạng thái việc con của đợt, nhật ký |
+| `docs/phases/BANG-VIEC.md`, `docs/phases/bang-viec.json` | sinh lại bằng `node scripts/bang-viec.mjs --write` (R-FLOW-8) |
+| `tests/conformance/fixtures/expect.json` | kết quả mong đợi của ca tự kiểm cho phép kiểm của đợt |
+| `tests/conformance/baseline.json` | nợ đã biết của phép kiểm của đợt, kèm `ref` (thêm nợ cần người duyệt, RULE-QUALITY-GATE) |
 
 ## Ngoại lệ
 

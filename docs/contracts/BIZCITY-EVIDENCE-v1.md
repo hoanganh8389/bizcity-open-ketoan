@@ -2,7 +2,7 @@
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6). -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-10-29 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 6/7)
+> **Phiên bản:** 1.1.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 6/7)
 > **Luật nền:** R-TEN ("mọi thao tác ghi có nhật ký"), R-LEDGER (sổ chỉ thêm) · **Năng lực:** `evidence.receipt`
 
 ## 1. Mục đích
@@ -51,6 +51,9 @@ Trả lời được, cho **mọi** thao tác ghi: **ai** (người, khoá API, 
 ```
 
 Ai giữ biên nhận (người dùng, Cell, plugin WP) có thể hỏi lại `GET /api/v1/evidence/48213` và kiểm `hash` khớp. Chuỗi băm (`prevHash` → `hash`) theo từng đơn vị cho phép phát hiện sửa / xoá bản ghi ở giữa (`bizcity evidence verify`).
+
+**Ghi chú nhật ký nghiệp vụ `changes.notes.audit[]`** (1.1.0, theo [ACTION §4.4](BIZCITY-ACTION-v1.md)): khi một service mà action gọi dùng `writeAudit`, runtime không chèn dòng `audit_logs` thứ hai mà thêm vào bằng chứng của chính action: `{ "action": "branch.update", "objectType": "branch", "objectId": "CN01", "before": {…}, "after": {…} }`. Ngoại lệ là các tên có chỗ đọc khai ở `AUDIT_KEEP` (ba tên ban đầu ở ACTION §4.4) — những tên đó vẫn ghi dòng riêng. Ghi chú nằm trong nội dung bằng chứng nên được băm cùng; lớn hơn 64 KB thì bị lược thành `{ "omitted": true, "bytes": … }`.
+
 
 > **Đã có (PHASES 2.6, 2026-10-30):**
 > - **Bảng:** migration `0036_bang_chung.sql` thêm các cột §5, trigger `audit_logs_chain` (tính `chain_seq`, `prev_hash`, `hash` cho **mọi** dòng, kể cả `writeAudit()` cũ) và trigger chỉ thêm. Hàm `audit_log_hash(dòng)` dùng chung cho trigger và kiểm.
@@ -103,3 +106,11 @@ evidence (ai bấm "ghi nhận thanh toán", lúc nào, qua Zalo hay giao diện
 ```
 
 Từ một dòng sổ cái lần ngược được tới người / AI đã gây ra nó, và ngược lại.
+
+## 7. Nhật ký thay đổi
+<!-- [2026-11-03 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — mở nhật ký thay đổi; 1.1.0-draft thêm changes.notes.audit[] -->
+
+| Phiên bản | Ngày | Thay đổi |
+|---|---|---|
+| 1.0.0-draft | 2026-10-29 | Khởi tạo (Standard v1, hợp đồng 6/7) |
+| 1.1.0-draft | 2026-11-03 | Thêm `changes.notes.audit[]` — nhật ký nghiệp vụ do service ghi trong lúc chạy action, thay cho dòng `audit_logs` thứ hai (ACTION §4.4, phương án C) |

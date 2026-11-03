@@ -5,6 +5,7 @@
 > **Giai đoạn:** Phase 3 của [PHASES](../../standard/PHASES.md) · **Code:** một phần · **Tiến độ tín hiệu (2026-10-30):** 25%
 > **Mục tiêu:** Giao diện module chỉ import ui-kit; phân hệ thành module thật, hết chỗ ghi bảng lõi (A-17).
 > **Việc lộ trình:** 3.8, 3.9
+<!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 — 3.9 theo ADR-0024: chuyển phân hệ nghiệp vụ sang modules/<key>/ theo 6 đợt (xem checklist) -->
 > **Checklist công bố:** —
 > **Tuân thủ / nguyên tắc:** C-7
 > **Phụ thuộc phase:** 011

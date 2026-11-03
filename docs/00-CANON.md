@@ -149,7 +149,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | `modules/documents/document.service.ts` (cửa nhận) | `rules/RULE-EVENT.md` |
 | `core/auth.ts` (quyền, vai trò, phạm vi khoá) | `rules/RULE-TENANT-SECURITY.md` §3 |
 | Thêm khoá vào `tenants.settings` hoặc bảng cấu hình | `contracts/bizcity-settings.registry.json` + `rules/RULE-SETTINGS-MATRIX.md` |
-| `apps/api/src/phan-he/**` (thêm / bớt phân hệ) | `framework/01-CORE-MODULES.md` §3, `.github/CODEOWNERS` |
+| `modules/**` (thêm phân hệ — chỗ đặt chuẩn, [ADR-0024](adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)); `apps/api/src/phan-he/**` (phân hệ cũ, đóng băng; bớt khi chuyển) | `framework/01-CORE-MODULES.md` §3, `standard/CHUYEN-PHAN-HE-SANG-MODULES.md`, `.github/CODEOWNERS` |
 | `db/migrations/*` | `db/README.md` nếu đổi quy trình; `schema-catalog.ts` (test bắt buộc) |
 | `docker/`, `docker-compose.yml`, `scripts/` | `ops/DEPLOY.md`, `ops/CLI.md` |
 | `.github/workflows/*` | `ops/CI-CD.md` |
