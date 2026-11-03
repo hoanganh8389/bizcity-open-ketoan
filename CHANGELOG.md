@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Đổi
+<!-- [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
+- **Ghi danh mục chi nhánh, kho, tên đơn vị tính, tài khoản ngân hàng đi qua action** (PHASE-014 W6 đợt 3, SC-ACT-1): cùng đường dẫn, quyền, mã trả về như cũ (201 khi thêm); `Idempotency-Key` không bắt buộc (thao tác đặt trạng thái tuyệt đối, gửi lại không tạo thêm). Khác biệt người dùng thấy: nhật ký bằng chứng ghi tên hành động mới `core.branch.*`, `core.warehouse.*`, `core.unit-name.*`, `core.bank-account.*` thay cho `branch.create`… và có biên nhận `meta.receipt`; kiểm và ghi nằm trong một giao dịch với bằng chứng. Hàm `branchService.create`… cũ giữ nguyên cho nơi khác gọi. SC-ACT-1: 56,7% → 66,9%.
+
 ### Thêm
 <!-- [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-25 / PHASE-022 S022-8 -->
 - **Cảnh báo thuế và hoá đơn ngay lúc nhập** (PHASE-021 S021-25): Kiểm thử và sửa tại bể nay nhắc thêm bốn điểm mà tự chẩn đoán thuế vốn chỉ quét theo kỳ — `IN-VAT-001` thuế suất giảm dùng ngoài khoảng ngày được giảm (khoảng ngày lấy từ rulepack), `IN-INV-001` hoá đơn mua thiếu ký hiệu / tên / mã số thuế người bán, `IN-INV-002` hoá đơn bán lập sau ngày chứng từ, `IN-CFG-001` chưa khai hồ sơ kế toán (không trừ điểm người lập). Đều là cảnh báo: cửa nạp vẫn nhận, kế toán trưởng chấp nhận được kèm lý do. Cùng một bộ hàm kiểm theo một chứng từ với tự chẩn đoán (`tax.findings.ts`, PHASE-022 S022-8) nên hai nơi không thể lệch luật.
