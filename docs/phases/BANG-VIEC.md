@@ -9,7 +9,7 @@
 | Chờ merge | 0 |
 | Bị chặn | 15 |
 | Chưa ai nhận | 97 |
-| Chờ đủ tín hiệu | 36 |
+| Chờ đủ tín hiệu | 35 |
 | Hoãn | 1 |
 | Xong | 187 |
 | **Tổng** | **343** |
