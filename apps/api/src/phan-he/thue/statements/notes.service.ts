@@ -14,7 +14,8 @@
 import { sql } from 'kysely';
 import { db, toNumber } from '../../../db/client.js';
 import type { AuthContext } from '../../../core/auth.js';
-import { assetService } from '../../../modules/assets/asset.service.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): sổ tài sản của phân hệ Tài sản qua cổng
+import { thuePorts } from '../ports.js';
 
 interface Scope { tenantId: string; from: string; to: string }
 
@@ -113,7 +114,7 @@ async function partnerTable(s: Scope, key: string, title: string, prefix: string
 
 /** Tăng, giảm tài sản cố định theo loại tài sản (từ thẻ tài sản). */
 async function fixedAssetTable(auth: AuthContext, from: string, to: string): Promise<NoteTable> {
-  const reg = await assetService.register(auth, { from, to, kind: 'fixed_asset' });
+  const reg = (await thuePorts().assetRegister?.(auth, { from, to, kind: 'fixed_asset' })) ?? { rows: [] };
   const by = new Map<string, { costOpen: number; costInc: number; costDec: number; costClose: number; depOpen: number; depCharge: number; depDec: number; depClose: number; nbvOpen: number; nbvClose: number }>();
   for (const r of reg.rows) {
     const k = r.categoryName || 'Chưa phân loại';

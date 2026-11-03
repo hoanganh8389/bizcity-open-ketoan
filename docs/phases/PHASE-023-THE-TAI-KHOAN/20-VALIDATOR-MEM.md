@@ -22,7 +22,7 @@
 | Danh mục luật `bizcity_catalog_hint@1` (12 luật: `ACC-HINT-001..007`, `ACC-BLOCK-001`, `PART-HINT-001..004`; `status: draft` tới khi kế toán trưởng duyệt) | `packages/contracts/src/catalog-hint.ts` |
 | Tài khoản: so với **tài khoản cha** của đơn vị, không có cha thì **hệ thống tài khoản chuẩn** (`db/seeds/tai-khoan.csv`) | `packages/kernel/src/modules/accounts/account.hints.ts`; `POST /api/v1/accounts/validate` |
 | Đối tượng: NCC thiếu MST, MST sai định dạng (10 số, 10-3, 12 số), trùng tên | `apps/api/src/modules/partners/partner.hints.ts`; `POST /api/v1/partners/validate` |
-| Lưu: `meta.findings` ở thêm / sửa; cảnh báo mềm có lý do → `catalog.warn.ack`, API / plugin không lý do → `catalog.warn.unacked` (cảnh báo vẫn được trả và có bằng chứng); lý do < 5 ký tự → 400 | `packages/platform/src/core/catalog-warn.ts` |
+| Lưu: `meta.findings` ở thêm / sửa (đối tượng, mặt hàng; **tài khoản** ghi qua `defineAction` nên chưa trả — xem trước bằng `/validate`) <!-- [2026-11-03 10:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-023 — gộp main W6: tài khoản ghi qua defineAction, phản hồi không mang findings -->; cảnh báo mềm có lý do → `catalog.warn.ack`, API / plugin không lý do → `catalog.warn.unacked` (cảnh báo vẫn được trả và có bằng chứng); lý do < 5 ký tự → 400 | `packages/platform/src/core/catalog-warn.ts` |
 | Giao diện: `WhyPanel`, `useCatalogWhy` (trễ 300 ms), `useWarnAck` + `WarnAckBox`; form Tài khoản (ACC1), Đối tượng (DM03) | `apps/web/src/components/WhyPanel.tsx` |
 | Ca thử | `apps/api/test/catalog-why.test.ts` (9 ca) |
 

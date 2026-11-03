@@ -25,7 +25,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
-import { accountRepository } from '../../kernel/public.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): chỉ đọc danh sách tài khoản để đối chiếu — đọc bảng, không import Kernel
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
 import { applyItemGate, applyItemGateBulk, itemHints } from './item.hints.js';
@@ -145,7 +145,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         for (const g of groups) if (!byKey.has(keyOf(accOf(g)))) byKey.set(keyOf(accOf(g)), g.code);
         const byCode = new Map(groups.map((g) => [g.code, g]));
         const def = groups.find((g) => g.is_default);
-        const accounts = await accountRepository.mapByCode(trx, auth.tenantId);
+        const accounts = new Map((await trx.selectFrom('accounts').selectAll().where('tenant_id', '=', auth.tenantId).execute()).map((a) => [a.code, a]));
         const taxes = new Map((await trx.selectFrom('tax_codes').select(['code', 'direction']).where('tenant_id', '=', auth.tenantId).execute()).map((t) => [t.code, t.direction]));
         const products = new Map((await trx.selectFrom('products').select(['sku', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'note', 'excise_rate']).where('tenant_id', '=', auth.tenantId).where('sku', 'in', items.map((i) => i.sku)).execute()).map((p) => [p.sku, p]));
         let seq = groups.filter((g) => /^NHT-T\d+$/.test(g.code)).reduce((m, g) => Math.max(m, Number(g.code.slice(5))), 0);

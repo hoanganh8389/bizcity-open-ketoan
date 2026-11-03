@@ -35,7 +35,8 @@ import { ok, queryBool } from '../../core/http.js';
 import { summarize } from '../../core/module-manifest.js';
 import { readSchema } from './schema.service.js';
 import { postingModesSchema } from '@ketoan/contracts';
-import { readPostingModes } from '../../kernel/public.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2)
+import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
 import { BUILD_VERSION, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';

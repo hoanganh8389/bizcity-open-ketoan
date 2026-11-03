@@ -8,6 +8,7 @@
  *   - Ứng trước         = phần chưa đối trừ của phiếu ứng trước gắn cùng đơn đặt.
  *   - Tài khoản         = tài khoản thật của đơn vị (cài đặt mua hàng, không khai thì chọn theo hệ thống tài khoản).
  */
+import { writeTenantSection } from '@bizcity/platform/core/settings';
 import { sql } from 'kysely';
 import {
   ACC, brandMix, brandShare, checkDoc, codeSwaps, computeDoc, creditStatus, docBrand, fefoCheck, findPolicy, orderProgress, postingFor, ratioIn, receiptsOfOrder, scheduleStatus, type OrderLineProgress,
@@ -30,8 +31,9 @@ export async function loadSettings(trx: Db, tenantId: string): Promise<PurchaseS
   return { holidays: p.holidays ?? [], brandOpening: p.brandOpening ?? {}, accounts: p.accounts ?? {}, warnDays: Number(p.warnDays ?? 3), priceWarnPct: Number(p.priceWarnPct ?? 2), requireOrder: Boolean(p.requireOrder), ...(Array.isArray(p.variantSeparate) ? { variantSeparate: p.variantSeparate } : {}) };
 }
 
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): ghi qua writeTenantSection của Platform
 export async function saveSettings(trx: Db, tenantId: string, s: PurchaseSettings): Promise<void> {
-  await sql`UPDATE tenants SET settings = jsonb_set(COALESCE(settings, '{}'::jsonb), '{purchase}', ${JSON.stringify(s)}::jsonb) WHERE id = ${tenantId}`.execute(trx);
+  await writeTenantSection(trx, tenantId, 'purchase', s);
 }
 
 /** Tài khoản dùng khi ghi sổ / xem trước: cài đặt → lý do mặc định → tài khoản chi tiết đầu tiên có trong hệ thống tài khoản. */

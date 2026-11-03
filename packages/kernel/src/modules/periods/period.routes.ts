@@ -15,6 +15,7 @@
  *   PUT    /api/v1/periods/locks        khoá / mở hàng loạt ô (chi nhánh × loại chứng từ); có ô mở khoá thì bắt buộc lý do
  *   GET    /api/v1/periods/check?year=&month=   bảng kiểm trước khi khoá (chứng từ lỗi, lệch, chưa kết chuyển…)
  *   GET    /api/v1/periods/lock-events?year=&month=    nhật ký khoá / mở khoá
+ * Ghi: action core.period.{create,lock,unlock,lock-batch} (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -24,7 +25,7 @@ import { authOf, requirePermission, type AuthContext } from '@bizcity/platform/c
 import { runDiagnostics, saveDiagnosticRun } from '@bizcity/platform/system/diagnostics';
 import { ok, idParamSchema } from '@bizcity/platform/core/http';
 import { Errors } from '@bizcity/platform/core/errors';
-import { writeAudit } from '@bizcity/platform/core/audit';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { sql } from 'kysely';
 import { DOC_TYPE_LIST } from '@ketoan/contracts';
 import { emitKernelEvent } from '../documents/kernel-events.js';
@@ -87,81 +88,6 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/periods', {
-    preHandler: requirePermission('periods:lock'),
-    schema: {
-      tags,
-      summary: 'Khai kỳ kế toán',
-      description: 'Kỳ là tháng dương lịch. Bỏ trống tháng thì khai đủ 12 tháng của năm. Kỳ đã có thì giữ nguyên.',
-      body: z.object({ year: z.number().int().min(2000).max(2100), month: z.number().int().min(1).max(12).optional() }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const months = req.body.month ? [req.body.month] : Array.from({ length: 12 }, (_, i) => i + 1);
-      await db.transaction().execute(async (trx) => {
-        for (const m of months) await periodRepository.ensurePeriodFor(trx, auth.tenantId, `${req.body.year}-${String(m).padStart(2, '0')}-01`);
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.create', objectType: 'period', objectId: String(req.body.year), after: req.body });
-      });
-      return ok({ created: months.length });
-    },
-  });
-
-  r.post('/api/v1/periods/locks', {
-    preHandler: requirePermission('periods:lock'),
-    schema: {
-      tags,
-      summary: 'Khoá kỳ',
-      body: z.object({
-        year: z.number().int(),
-        month: z.number().int().min(1).max(12),
-        branchCode: z.string().optional().describe('Bỏ trống = mọi chi nhánh'),
-        docType: z.string().default('*').describe('* = mọi loại chứng từ'),
-        acceptDiagnostics: acceptSchema,
-      }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      const date = `${b.year}-${String(b.month).padStart(2, '0')}-01`;
-      let branchId: string | null = null;
-      if (b.branchCode) {
-        const br = await db.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('code', '=', b.branchCode).executeTakeFirst();
-        if (!br) throw Errors.notFound(`chi nhánh ${b.branchCode}`);
-        branchId = br.id;
-      }
-      const accepted = await guardLock(auth, b.year, b.month, branchId, b.acceptDiagnostics);
-      await db.transaction().execute(async (trx) => {
-        const period = await periodRepository.ensurePeriodFor(trx, auth.tenantId, date);
-        if (await periodRepository.insertLock(trx, { tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, locked_by: auth.actorName })) {
-          await trx.insertInto('period_lock_events').values({ tenant_id: auth.tenantId, period_id: period.id, branch_id: branchId, doc_type: b.docType, action: 'lock', reason: accepted, actor: auth.actor, actor_name: auth.actorName }).execute();
-          await emitKernelEvent(trx, auth, 'bizcity.period.locked', periodSubject(b.year, b.month), { year: b.year, month: b.month, locks: [{ branchCode: b.branchCode ?? null, docType: b.docType }] });
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock', objectType: 'period', objectId: period.id, after: { ...b, acceptedDiagnostics: accepted ?? undefined } });
-      });
-      return ok({ locked: true });
-    },
-  });
-
-  r.delete('/api/v1/periods/locks/:id', {
-    preHandler: requirePermission('periods:lock'),
-    schema: {
-      tags, summary: 'Mở khoá kỳ', params: idParamSchema,
-      querystring: z.object({ reason: z.string().trim().min(3, 'Cần ghi lý do mở khoá (ít nhất 3 ký tự)').max(500) }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      await db.transaction().execute(async (trx) => {
-        const removed = await periodRepository.deleteLock(trx, auth.tenantId, req.params.id);
-        if (!removed) throw Errors.notFound('khoá sổ');
-        await trx.insertInto('period_lock_events').values({ tenant_id: auth.tenantId, period_id: removed.period_id, branch_id: removed.branch_id, doc_type: removed.doc_type, action: 'unlock', reason: req.query.reason, actor: auth.actor, actor_name: auth.actorName }).execute();
-        const p = await trx.selectFrom('fiscal_periods').select(['year', 'month']).where('id', '=', removed.period_id).executeTakeFirstOrThrow();
-        const br = removed.branch_id ? await trx.selectFrom('branches').select('code').where('id', '=', removed.branch_id).executeTakeFirst() : undefined;
-        await emitKernelEvent(trx, auth, 'bizcity.period.unlocked', periodSubject(p.year, p.month), { year: p.year, month: p.month, locks: [{ branchCode: br?.code ?? null, docType: removed.doc_type }] });
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.unlock', objectType: 'period', objectId: removed.period_id, before: removed });
-      });
-      return ok({ unlocked: true });
-    },
-  });
   r.get('/api/v1/periods/lock-grid', {
     preHandler: requirePermission('ledger:read'),
     schema: { tags, summary: 'Lưới khoá của một kỳ: chi nhánh × loại chứng từ', querystring: periodQuery },
@@ -179,62 +105,6 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
         branches: branches.map((b) => ({ code: b.code, name: b.name, isActive: b.is_active })),
         locks: res.rows.map((l) => ({ id: l.id, branch: l.branch, docType: l.doc_type, lockedBy: l.locked_by, lockedAt: l.locked_at })),
       });
-    },
-  });
-
-  r.put('/api/v1/periods/locks', {
-    preHandler: requirePermission('periods:lock'),
-    schema: {
-      tags,
-      summary: 'Khoá / mở khoá hàng loạt ô của một kỳ',
-      description: 'Mỗi thay đổi là một ô (chi nhánh, loại chứng từ). Khoá chung (mọi chi nhánh / mọi loại) không đổi ở đây. Có ô mở khoá thì bắt buộc lý do.',
-      body: periodQuery.extend({
-        changes: z.array(z.object({ branchCode: z.string().min(1), docType: docTypeEnum, locked: z.boolean() })).min(1).max(20000),
-        reason: z.string().trim().max(500).default(''),
-        acceptDiagnostics: acceptSchema,
-      }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const b = req.body;
-      if (b.changes.some((c) => !c.locked) && b.reason.length < 3) throw Errors.validation('Cần ghi lý do mở khoá (ít nhất 3 ký tự)');
-      // R-DIAG-4: có ô được khoá thì chẩn đoán cả kỳ (mọi chi nhánh) một lần.
-      const accepted = b.changes.some((c) => c.locked) ? await guardLock(auth, b.year, b.month, null, b.acceptDiagnostics) : null;
-      const counts = await db.transaction().execute(async (trx) => {
-        const period = await periodRepository.ensurePeriodFor(trx, auth.tenantId, `${ym(b.year, b.month)}-01`);
-        const branchRows = await trx.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).execute();
-        const branchId = new Map(branchRows.map((x) => [x.code, x.id]));
-        const unknown = [...new Set(b.changes.map((c) => c.branchCode).filter((c) => !branchId.has(c)))];
-        if (unknown.length) throw Errors.validation(`Chi nhánh không có: ${unknown.join(', ')}`);
-        let locked = 0;
-        let unlocked = 0;
-        const events: { tenant_id: string; period_id: string; branch_id: string; doc_type: string; action: 'lock' | 'unlock'; reason: string | null; actor: string; actor_name: string }[] = [];
-        for (const c of b.changes) {
-          const bid = branchId.get(c.branchCode)!;
-          if (c.locked) {
-            if (await periodRepository.insertLock(trx, { tenant_id: auth.tenantId, period_id: period.id, branch_id: bid, doc_type: c.docType, locked_by: auth.actorName })) {
-              locked++;
-              events.push({ tenant_id: auth.tenantId, period_id: period.id, branch_id: bid, doc_type: c.docType, action: 'lock', reason: [accepted, b.reason].filter(Boolean).join(' · ') || null, actor: auth.actor, actor_name: auth.actorName });
-            }
-          } else {
-            const del = await trx.deleteFrom('period_locks').where('tenant_id', '=', auth.tenantId).where('period_id', '=', period.id)
-              .where('branch_id', '=', bid).where('doc_type', '=', c.docType).returning('id').execute();
-            if (del.length) {
-              unlocked++;
-              events.push({ tenant_id: auth.tenantId, period_id: period.id, branch_id: bid, doc_type: c.docType, action: 'unlock', reason: b.reason, actor: auth.actor, actor_name: auth.actorName });
-            }
-          }
-        }
-        for (let i = 0; i < events.length; i += 1000) await trx.insertInto('period_lock_events').values(events.slice(i, i + 1000)).execute();
-        const codeOf = new Map(branchRows.map((x) => [x.id, x.code]));
-        for (const action of ['lock', 'unlock'] as const) {
-          const locks = events.filter((e) => e.action === action).map((e) => ({ branchCode: codeOf.get(e.branch_id) ?? null, docType: e.doc_type }));
-          if (locks.length) await emitKernelEvent(trx, auth, action === 'lock' ? 'bizcity.period.locked' : 'bizcity.period.unlocked', periodSubject(b.year, b.month), { year: b.year, month: b.month, locks });
-        }
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'period.lock-batch', objectType: 'period', objectId: period.id, after: { locked, unlocked, reason: b.reason || undefined, acceptedDiagnostics: accepted ?? undefined } });
-        return { locked, unlocked };
-      });
-      return ok(counts);
     },
   });
 
@@ -302,4 +172,129 @@ export async function periodRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.map((r) => ({ id: r.id, period: ym(r.year, r.month), branch: r.branch, docType: r.doc_type, action: r.action, reason: r.reason, actorName: r.actor_name, createdAt: r.created_at })));
     },
   });
+  mountActions(app, periodActions);
 }
+
+// [2026-11-03 02:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): khai kỳ, khoá / mở khoá qua defineAction — quyền periods:lock, giao dịch, bằng chứng do runtime (lý do chấp nhận
+// chẩn đoán ghi vào bằng chứng qua evidence.note). Chẩn đoán R-DIAG-4 vẫn chạy trước, lượt chẩn đoán lưu riêng kể cả khi bị chặn.
+export const periodActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.period.create', title: 'Khai kỳ kế toán', tags,
+    description: 'Kỳ là tháng dương lịch. Bỏ trống tháng thì khai đủ 12 tháng của năm. Kỳ đã có thì giữ nguyên.',
+    permission: 'periods:lock', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ year: z.number().int().min(2000).max(2100), month: z.number().int().min(1).max(12).optional() }),
+    output: z.object({ created: z.number().int() }),
+    expose: { http: { method: 'POST', path: '/api/v1/periods' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'period', objectId: (i) => String(i.year) },
+    handler: async (ctx, b) => {
+      const months = b.month ? [b.month] : Array.from({ length: 12 }, (_, i) => i + 1);
+      for (const m of months) await periodRepository.ensurePeriodFor(ctx.data.tx, ctx.tenant.id, `${b.year}-${String(m).padStart(2, '0')}-01`);
+      return { created: months.length };
+    },
+  }),
+  defineAction({
+    id: 'core.period.lock', title: 'Khoá kỳ', tags,
+    permission: 'periods:lock', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({
+      year: z.number().int(),
+      month: z.number().int().min(1).max(12),
+      branchCode: z.string().optional().describe('Bỏ trống = mọi chi nhánh'),
+      docType: z.string().default('*').describe('* = mọi loại chứng từ'),
+      acceptDiagnostics: acceptSchema,
+    }),
+    output: z.object({ locked: z.literal(true) }),
+    expose: { http: { method: 'POST', path: '/api/v1/periods/locks' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'period', objectId: (i) => ym(i.year, i.month) },
+    handler: async (ctx, b) => {
+      const auth = ctx.legacyAuth;
+      const trx = ctx.data.tx;
+      let branchId: string | null = null;
+      if (b.branchCode) {
+        const br = await trx.selectFrom('branches').select('id').where('tenant_id', '=', ctx.tenant.id).where('code', '=', b.branchCode).executeTakeFirst();
+        if (!br) throw Errors.notFound(`chi nhánh ${b.branchCode}`);
+        branchId = br.id;
+      }
+      const accepted = await guardLock(auth, b.year, b.month, branchId, b.acceptDiagnostics);
+      if (accepted) ctx.evidence.note('acceptedDiagnostics', accepted);
+      const period = await periodRepository.ensurePeriodFor(trx, ctx.tenant.id, `${ym(b.year, b.month)}-01`);
+      if (await periodRepository.insertLock(trx, { tenant_id: ctx.tenant.id, period_id: period.id, branch_id: branchId, doc_type: b.docType, locked_by: auth.actorName })) {
+        await trx.insertInto('period_lock_events').values({ tenant_id: ctx.tenant.id, period_id: period.id, branch_id: branchId, doc_type: b.docType, action: 'lock', reason: accepted, actor: auth.actor, actor_name: auth.actorName }).execute();
+        await emitKernelEvent(trx, auth, 'bizcity.period.locked', periodSubject(b.year, b.month), { year: b.year, month: b.month, locks: [{ branchCode: b.branchCode ?? null, docType: b.docType }] });
+      }
+      return { locked: true as const };
+    },
+  }),
+  defineAction({
+    id: 'core.period.unlock', title: 'Mở khoá kỳ', tags,
+    permission: 'periods:lock', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({ id: idParamSchema.shape.id, reason: z.string().trim().min(3, 'Cần ghi lý do mở khoá (ít nhất 3 ký tự)').max(500) }),
+    output: z.object({ unlocked: z.literal(true) }),
+    expose: { http: { method: 'DELETE', path: '/api/v1/periods/locks/:id' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'period_lock', objectId: (i) => i.id },
+    handler: async (ctx, b) => {
+      const auth = ctx.legacyAuth;
+      const trx = ctx.data.tx;
+      const removed = await periodRepository.deleteLock(trx, ctx.tenant.id, b.id);
+      if (!removed) throw Errors.notFound('khoá sổ');
+      ctx.evidence.note('before', removed);
+      await trx.insertInto('period_lock_events').values({ tenant_id: ctx.tenant.id, period_id: removed.period_id, branch_id: removed.branch_id, doc_type: removed.doc_type, action: 'unlock', reason: b.reason, actor: auth.actor, actor_name: auth.actorName }).execute();
+      const p = await trx.selectFrom('fiscal_periods').select(['year', 'month']).where('id', '=', removed.period_id).executeTakeFirstOrThrow();
+      const br = removed.branch_id ? await trx.selectFrom('branches').select('code').where('id', '=', removed.branch_id).executeTakeFirst() : undefined;
+      await emitKernelEvent(trx, auth, 'bizcity.period.unlocked', periodSubject(p.year, p.month), { year: p.year, month: p.month, locks: [{ branchCode: br?.code ?? null, docType: removed.doc_type }] });
+      return { unlocked: true as const };
+    },
+  }),
+  defineAction({
+    id: 'core.period.lock-batch', title: 'Khoá / mở khoá hàng loạt ô của một kỳ', tags,
+    description: 'Mỗi thay đổi là một ô (chi nhánh, loại chứng từ). Khoá chung (mọi chi nhánh / mọi loại) không đổi ở đây. Có ô mở khoá thì bắt buộc lý do.',
+    permission: 'periods:lock', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({
+      year: z.number().int().min(2000).max(2100), month: z.number().int().min(1).max(12),
+      changes: z.array(z.object({ branchCode: z.string().min(1), docType: docTypeEnum, locked: z.boolean() })).min(1).max(20000),
+      reason: z.string().trim().max(500).default(''),
+      acceptDiagnostics: acceptSchema,
+    }),
+    output: z.object({ locked: z.number().int(), unlocked: z.number().int() }),
+    expose: { http: { method: 'PUT', path: '/api/v1/periods/locks' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'period', objectId: (i) => ym(i.year, i.month) },
+    handler: async (ctx, b) => {
+      const auth = ctx.legacyAuth;
+      const trx = ctx.data.tx;
+      if (b.changes.some((c) => !c.locked) && b.reason.length < 3) throw Errors.validation('Cần ghi lý do mở khoá (ít nhất 3 ký tự)');
+      // R-DIAG-4: có ô được khoá thì chẩn đoán cả kỳ (mọi chi nhánh) một lần.
+      const accepted = b.changes.some((c) => c.locked) ? await guardLock(auth, b.year, b.month, null, b.acceptDiagnostics) : null;
+      if (accepted) ctx.evidence.note('acceptedDiagnostics', accepted);
+      const period = await periodRepository.ensurePeriodFor(trx, ctx.tenant.id, `${ym(b.year, b.month)}-01`);
+      const branchRows = await trx.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', ctx.tenant.id).execute();
+      const branchId = new Map(branchRows.map((x) => [x.code, x.id]));
+      const unknown = [...new Set(b.changes.map((c) => c.branchCode).filter((c) => !branchId.has(c)))];
+      if (unknown.length) throw Errors.validation(`Chi nhánh không có: ${unknown.join(', ')}`);
+      let locked = 0;
+      let unlocked = 0;
+      const events: { tenant_id: string; period_id: string; branch_id: string; doc_type: string; action: 'lock' | 'unlock'; reason: string | null; actor: string; actor_name: string }[] = [];
+      for (const c of b.changes) {
+        const bid = branchId.get(c.branchCode)!;
+        if (c.locked) {
+          if (await periodRepository.insertLock(trx, { tenant_id: ctx.tenant.id, period_id: period.id, branch_id: bid, doc_type: c.docType, locked_by: auth.actorName })) {
+            locked++;
+            events.push({ tenant_id: ctx.tenant.id, period_id: period.id, branch_id: bid, doc_type: c.docType, action: 'lock', reason: [accepted, b.reason].filter(Boolean).join(' · ') || null, actor: auth.actor, actor_name: auth.actorName });
+          }
+        } else {
+          const del = await trx.deleteFrom('period_locks').where('tenant_id', '=', ctx.tenant.id).where('period_id', '=', period.id)
+            .where('branch_id', '=', bid).where('doc_type', '=', c.docType).returning('id').execute();
+          if (del.length) {
+            unlocked++;
+            events.push({ tenant_id: ctx.tenant.id, period_id: period.id, branch_id: bid, doc_type: c.docType, action: 'unlock', reason: b.reason, actor: auth.actor, actor_name: auth.actorName });
+          }
+        }
+      }
+      for (let i = 0; i < events.length; i += 1000) await trx.insertInto('period_lock_events').values(events.slice(i, i + 1000)).execute();
+      const codeOf = new Map(branchRows.map((x) => [x.id, x.code]));
+      for (const action of ['lock', 'unlock'] as const) {
+        const locks = events.filter((e) => e.action === action).map((e) => ({ branchCode: codeOf.get(e.branch_id) ?? null, docType: e.doc_type }));
+        if (locks.length) await emitKernelEvent(trx, auth, action === 'lock' ? 'bizcity.period.locked' : 'bizcity.period.unlocked', periodSubject(b.year, b.month), { year: b.year, month: b.month, locks });
+      }
+      return { locked, unlocked };
+    },
+  }),
+];

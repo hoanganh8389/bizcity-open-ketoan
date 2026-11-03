@@ -48,10 +48,10 @@ describe('Tài khoản: POST /api/v1/accounts/validate', () => {
 });
 
 describe('Tài khoản: lưu còn cảnh báo mềm', () => {
-  it('API không lý do → lưu được, meta.findings, nhật ký catalog.warn.unacked', async () => {
+  // Tài khoản ghi qua defineAction (PHASE-014 W6): phản hồi không mang findings — xem trước bằng /validate; lưu vẫn ghi nhận cảnh báo mềm
+  it('API không lý do → lưu được, nhật ký catalog.warn.unacked', async () => {
     const r = await call(ctx, 'POST', '/api/v1/accounts', { code: '13198', parentCode: '131', name: 'Phải thu thử không đối tượng', normalSide: 'debit' });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
-    expect(codes(r, 'meta')).toContain('ACC-HINT-003');
     const a = await audits('13198');
     expect(a.map((x) => x.action)).toEqual(['catalog.warn.unacked']);
   });

@@ -19,7 +19,8 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
-import { usedDimensionCodes } from '../../kernel/public.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): hỏi Kernel qua cổng
+import { corePort } from '@bizcity/platform/core/ports';
 
 const tags = ['Danh mục: Khoản mục, bộ phận, hợp đồng'];
 const kindParam = z.object({ kind: z.enum(DIMENSION_KINDS) });
@@ -79,7 +80,7 @@ export async function dimensionRoutes(app: FastifyInstance): Promise<void> {
       await db.transaction().execute(async (trx) => {
         const before = await trx.selectFrom('dimensions').selectAll().where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', code).executeTakeFirst();
         if (!before) throw Errors.notFound(`${DIMENSION_LABELS[kind]} ${code}`);
-        if ((await usedDimensionCodes(trx, auth.tenantId, kind, [code])).has(code)) {
+        if ((await corePort('usedDimensionCodes')(trx, auth.tenantId, kind, [code])).has(code)) {
           throw Errors.conflict(`${DIMENSION_LABELS[kind]} ${code} đang được dùng (sổ sách, thẻ tài sản, định mức, chi nhánh, lý do, lịch hợp đồng hoặc có mã con): bỏ tích "Theo dõi" để ngừng dùng`);
         }
         await trx.deleteFrom('dimensions').where('id', '=', before.id).execute();

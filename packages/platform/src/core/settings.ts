@@ -96,3 +96,13 @@ export async function readSetting<T = unknown>(trx: Db, tenantId: string, module
   const v = row.rows[0]?.v;
   return (v === null || v === undefined ? parseDefault(entry.default) : v) as T;
 }
+
+// [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): ghi một mục cấu hình của module trong tenants.settings — phân hệ không UPDATE bảng tenants
+/**
+ * Ghi mục `section` (vd "purchase" của phân hệ Mua hàng) trong tenants.settings của đơn vị: thay cả mục, giữ các mục khác.
+ * Chỉ cho mục cấu hình riêng của một module (không phải khoá registry của Core); quyền ghi do route / action gọi kiểm.
+ */
+export async function writeTenantSection(trx: Db, tenantId: string, section: string, value: unknown): Promise<void> {
+  if (!/^[a-z][a-z0-9_]*$/.test(section)) throw Errors.validation(`Mục cấu hình "${section}" sai khuôn`);
+  await sql`UPDATE tenants SET settings = jsonb_set(COALESCE(settings, '{}'::jsonb), ARRAY[${section}]::text[], ${JSON.stringify(value)}::jsonb) WHERE id = ${tenantId}`.execute(trx);
+}

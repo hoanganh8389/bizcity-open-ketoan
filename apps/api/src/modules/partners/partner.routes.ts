@@ -33,7 +33,8 @@ import { Errors } from '../../core/errors.js';
 import type { PartnerInput } from '@ketoan/contracts';
 import { partnerRepository, toPartnerDto, type PartnerAccountingInfo } from './partner.repository.js';
 import { suggestPartnerCode } from './partner-code.js';
-import { lookupTaxCode } from './tra-mst.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter tra MST qua cổng
+import { corePort } from '@bizcity/platform/core/ports';
 import { partnerHints } from './partner.hints.js';
 import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
 import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
@@ -169,7 +170,7 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
       tags, summary: 'Tra cứu doanh nghiệp theo mã số thuế (tên, địa chỉ, tên viết tắt, người đại diện, trạng thái) để điền sẵn form; kèm đối tượng đã dùng MST này',
       params: z.object({ taxCode: z.string().trim().min(1).max(32) }),
     },
-    handler: async (req) => ok(await lookupTaxCode(authOf(req).tenantId, req.params.taxCode)),
+    handler: async (req) => ok(await corePort('lookupTaxCode')(authOf(req).tenantId, req.params.taxCode)),
   });
   r.get('/api/v1/partners/lookup', {
     preHandler: requirePermission('catalog:read'),

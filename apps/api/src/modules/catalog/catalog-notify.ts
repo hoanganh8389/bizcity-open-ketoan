@@ -20,7 +20,8 @@ import { env } from '../../config/env.js';
 import type { AuthContext } from '../../core/auth.js';
 import { db } from '../../db/client.js';
 import { defineSubscriber, emitEvent } from '../../core/events.js';
-import { primaryConnection } from '../connections/connection.service.js';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter kết nối qua cổng
+import { corePort } from '@bizcity/platform/core/ports';
 
 export const CATALOG_CHANGED = 'bizcity.masterdata.catalog.changed';
 const BUCKET_MS = 5_000;
@@ -48,7 +49,7 @@ export const catalogNotifySubscriber = defineSubscriber({
   on: [CATALOG_CHANGED],
   retry: { maxAttempts: 5, baseDelayMs: 10_000, maxDelayMs: 600_000 },
   async handle(ctx, evt) {
-    const c = await primaryConnection(ctx.tenantId);
+    const c = await corePort('primaryConnection')(ctx.tenantId);
     if (!c) return;
     const u = new URL(c.url);
     if (!/\/pending\/?$/.test(u.pathname)) return;

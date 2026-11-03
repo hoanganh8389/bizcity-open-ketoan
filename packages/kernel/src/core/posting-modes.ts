@@ -6,14 +6,11 @@
  * Chế độ ghi sổ theo loại chứng từ (tenants.settings.postingModes): ghi ngay hay chờ duyệt.
  * Xem APPROVABLE_DOC_TYPES, postingModesSchema ở @ketoan/contracts.
  */
-import { APPROVABLE_DOC_TYPES, postingModesSchema, type PostingModes } from '@ketoan/contracts';
+import { APPROVABLE_DOC_TYPES, readPostingModes, type PostingModes } from '@ketoan/contracts';
+// [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): readPostingModes dời sang @ketoan/contracts (xuất lại cho mã cũ)
+export { readPostingModes };
 import type { Db } from '@bizcity/platform/db/client';
 
-export function readPostingModes(settings: unknown): PostingModes {
-  const raw = (settings as { postingModes?: unknown } | null)?.postingModes;
-  const parsed = postingModesSchema.safeParse(raw ?? {});
-  return parsed.success ? parsed.data : postingModesSchema.parse({});
-}
 
 /**
  * Loại chứng từ này có đặt chế độ "Tự động định khoản" không (chỉ các loại có chế độ — APPROVABLE_DOC_TYPES). Dùng khi nguồn

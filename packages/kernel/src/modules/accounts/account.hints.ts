@@ -2,7 +2,7 @@
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14: khung "Vì sao" cho form tài khoản — nhắc / hướng dẫn / cảnh báo mềm / chặn theo bizcity_catalog_hint@1, so với hệ thống tài khoản chuẩn (db/seeds/tai-khoan.csv)
 /**
  * Đánh giá một bản khai báo tài khoản (thêm hoặc sửa) trước khi lưu — chỉ đọc, không ghi gì.
- * Cùng hàm dùng cho POST /api/v1/accounts/validate (form gọi khi ô đổi) và cho chính lúc lưu (meta.findings + ghi nhận cảnh báo).
+ * Cùng hàm dùng cho POST /api/v1/accounts/validate (form gọi khi ô đổi) và cho chính lúc lưu (ghi nhận cảnh báo mềm; tài khoản không trả findings khi lưu — action runtime chưa có meta tuỳ biến).
  *
  * "Bản chất thường gặp" của một tài khoản = dòng của nó (hoặc tài khoản cấp 1 cùng gốc 3 số) trong hệ thống tài khoản chuẩn
  * đã nạp khi khởi tạo đơn vị; tài khoản con thì so với tài khoản cha của đơn vị.

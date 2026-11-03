@@ -6,6 +6,7 @@
  *   GET  /api/v1/intake/:id             chi tiết: nguyên văn, phát hiện, lỗi cửa nạp, lịch sử           (documents:read)
  *   POST /api/v1/intake/preflight       Kiểm thử: { document, save?, guard? } → { findings, score, guard, guardChanged?, trialId? } — không ghi sự việc (documents:write)
  * Sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục: W3.
+ * Ghi: action core.intake.preflight (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -16,6 +17,7 @@ import { Errors } from '@bizcity/platform/core/errors';
 import { ok } from '@bizcity/platform/core/http';
 import { getInbox, listInbox, saveTrial } from './inbox.js';
 import { preflight } from './preflight.js';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Bể chờ đầu vào'];
 
@@ -50,20 +52,24 @@ export async function intakeRoutes(app: FastifyInstance): Promise<void> {
     },
   });
 
-  r.post('/api/v1/intake/preflight', {
-    preHandler: requirePermission('documents:write'),
-    schema: {
-      tags, summary: 'Kiểm thử chứng từ: mọi phát hiện L1–L4 + điểm, không ghi sự việc; save = lưu mục thử (giữ 7 ngày)',
-      body: z.object({ document: z.unknown(), save: z.boolean().default(false), guard: z.string().trim().max(64).optional().describe('Dấu cũ (lần Kiểm thử trước) — có thì trả guardChanged') }),
-    },
-    handler: async (req) => {
-      const auth = authOf(req);
-      const out = await db.transaction().execute(async (trx) => {
-        const pf = await preflight(trx, auth, req.body.document, req.body.guard ? { guard: req.body.guard } : {});
-        const trial = req.body.save ? await saveTrial(trx, auth, req.body.document, pf.findings, pf.score) : null;
-        return { findings: pf.findings, score: pf.score, guard: pf.guard, ...(pf.guardChanged !== undefined ? { guardChanged: pf.guardChanged } : {}), ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
-      });
-      return ok(out);
-    },
-  });
+  mountActions(app, intakeActions);
 }
+
+// [2026-11-03 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): Kiểm thử qua defineAction — không ghi sự việc; save = lưu mục thử (gửi trùng gộp vào mục cũ, natural)
+export const intakeActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.intake.preflight', title: 'Kiểm thử chứng từ', tags,
+    description: 'Mọi phát hiện L1–L4 + điểm, không ghi sự việc; save = lưu mục thử (giữ 7 ngày)',
+    permission: 'documents:write', effect: 'write', sideEffects: ['analysis'], idempotency: 'natural',
+    // [2026-11-03 10:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: Commit Guard — trả guard (dấu cấu hình), nhận guard cũ → guardChanged
+    input: z.object({ document: z.unknown(), save: z.boolean().default(false), guard: z.string().trim().max(64).optional().describe('Dấu cũ (lần Kiểm thử trước) — có thì trả guardChanged') }),
+    output: z.object({ findings: z.array(z.unknown()), score: z.number(), guard: z.string(), guardChanged: z.boolean().optional(), trialId: z.string().optional(), attempt: z.number().optional() }),
+    expose: { http: { method: 'POST', path: '/api/v1/intake/preflight' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'intake_inbox', objectId: (_i, o) => o.trialId },
+    handler: async (ctx, b) => {
+      const pf = await preflight(ctx.data.tx, ctx.legacyAuth, b.document, b.guard ? { guard: b.guard } : {});
+      const trial = b.save ? await saveTrial(ctx.data.tx, ctx.legacyAuth, b.document, pf.findings, pf.score) : null;
+      return { findings: pf.findings, score: pf.score, guard: pf.guard, ...(pf.guardChanged !== undefined ? { guardChanged: pf.guardChanged } : {}), ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
+    },
+  }),
+];

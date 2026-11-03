@@ -330,7 +330,12 @@ async function approveDraftIn(trx: Db, auth: AuthContext, id: string) {
 
 /** Sửa chứng từ: đảo bút toán cũ (ghi số âm), ghi bút toán mới, tăng phiên bản. */
 async function updateManual(auth: AuthContext, id: string, doc: ManualDoc) {
-  return db.transaction().execute(async (trx) => {
+  return db.transaction().execute((trx) => updateManualIn(trx, auth, id, doc));
+}
+
+// [2026-11-03 02:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): bản *In chạy trong giao dịch của action core.voucher.update / core.opening-balance.update
+async function updateManualIn(trx: Db, auth: AuthContext, id: string, doc: ManualDoc) {
+  {
     const found = await documentRepository.findById(trx, auth.tenantId, id);
     if (!found) throw Errors.notFound('phiếu');
     const row = (await documentRepository.findByKeyForUpdate(trx, auth.tenantId, found.doc_key))!;
@@ -362,7 +367,7 @@ async function updateManual(auth: AuthContext, id: string, doc: ManualDoc) {
     await eventStore.markPosted(trx, auth, { id: row.id, version, docKey: row.doc_key, docType: doc.docType, docNo: row.doc_no, entryIds, reversed, total: doc.total, action: 'repost' });
     await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: `${doc.docType}.update`, objectType: 'source_document', objectId: row.doc_key, after: { version, total: doc.total } });
     return { id: row.id, docKey: row.doc_key, docNo: row.doc_no, version, entryIds };
-  });
+  }
 }
 
 /** Tên gọi từng chiều phân tích trong thông báo lỗi và cờ tương ứng trên tài khoản. */
@@ -525,10 +530,13 @@ export const voucherService = {
   create: (auth: AuthContext, input: VoucherInput) => createManual(auth, fromVoucher(input)),
   createIn: (trx: Db, auth: AuthContext, input: VoucherInput) => createManualIn(trx, auth, fromVoucher(input)),
   update: (auth: AuthContext, id: string, input: VoucherInput) => updateManual(auth, id, fromVoucher(input)),
+  updateIn: (trx: Db, auth: AuthContext, id: string, input: VoucherInput) => updateManualIn(trx, auth, id, fromVoucher(input)),
   /** Phiếu nháp chờ duyệt (PHASE-009 S009-2). */
   draftIn: (trx: Db, auth: AuthContext, input: VoucherInput, opts: { preview?: boolean } = {}) => draftManualIn(trx, auth, fromVoucher(input), opts),
   approveIn: approveDraftIn,
   approve: (auth: AuthContext, id: string) => db.transaction().execute((trx) => approveDraftIn(trx, auth, id)),
   createOpening: (auth: AuthContext, input: OpeningInput) => createManual(auth, fromOpening(input)),
   updateOpening: (auth: AuthContext, id: string, input: OpeningInput) => updateManual(auth, id, fromOpening(input)),
+  createOpeningIn: (trx: Db, auth: AuthContext, input: OpeningInput) => createManualIn(trx, auth, fromOpening(input)),
+  updateOpeningIn: (trx: Db, auth: AuthContext, id: string, input: OpeningInput) => updateManualIn(trx, auth, id, fromOpening(input)),
 };

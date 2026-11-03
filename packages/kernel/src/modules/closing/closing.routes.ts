@@ -13,6 +13,7 @@
  *   GET  /api/v1/closing/runs/:id/sources  bút toán nguồn của một lần kết chuyển theo đầu số tài khoản
  *   POST /api/v1/closing/year-end   kết chuyển lợi nhuận năm trước 4212 → 4211 (đầu năm mới; dryRun = xem trước)
  * Huỷ một lần kết chuyển: POST /api/v1/documents/cancel với docKey của nó.
+ * Action: core.closing-rules.save, core.closing.preview (W6, SC-ACT-1).
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -20,6 +21,7 @@ import { z } from 'zod';
 import { closingRulesSaveSchema, closingRunSchema, yearEndRunSchema } from '@ketoan/contracts';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
+import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { closingService } from './closing.service.js';
 
 const tags = ['Kết chuyển'];
@@ -33,22 +35,10 @@ export async function closingRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await closingService.listRules(authOf(req))),
   });
 
-  r.put('/api/v1/closing/rules', {
-    preHandler: requirePermission('settings:write'),
-    schema: { tags, summary: 'Thay danh sách bút toán kết chuyển mẫu', body: closingRulesSaveSchema },
-    handler: async (req) => ok(await closingService.saveRules(authOf(req), req.body.rules, req.body.note)),
-  });
-
   r.get('/api/v1/closing/rules/versions', {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Lịch sử phiên bản bút toán kết chuyển mẫu' },
     handler: async (req) => ok(await closingService.listRuleVersions(authOf(req))),
-  });
-
-  r.post('/api/v1/closing/preview', {
-    preHandler: requirePermission('reports:read'),
-    schema: { tags, summary: 'Xem trước kết chuyển', body: closingRunSchema },
-    handler: async (req) => ok(await closingService.preview(authOf(req), req.body)),
   });
 
   r.post('/api/v1/closing/run', {
@@ -81,4 +71,33 @@ export async function closingRoutes(app: FastifyInstance): Promise<void> {
     },
     handler: async (req) => ok(await closingService.runSources(authOf(req), req.params.id, req.query)),
   });
+  mountActions(app, closingActions);
 }
+
+// [2026-11-03 02:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 2 (SC-ACT-1): lưu bút toán kết chuyển mẫu, xem trước qua defineAction. Kết chuyển / kết chuyển năm (run, year-end) còn là route:
+// mỗi chi nhánh, mỗi kỳ một giao dịch riêng (lỗi một chi nhánh không chặn chi nhánh khác) — chờ action dạng lô.
+const anyObject = z.custom<object>((v) => typeof v === 'object' && v !== null);
+
+export const closingActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.closing-rules.save', title: 'Thay danh sách bút toán kết chuyển mẫu', tags,
+    description: 'Khác bộ đang dùng thì ghi thêm một phiên bản; giống hệt thì không đổi gì.',
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: closingRulesSaveSchema, output: anyObject,
+    expose: { http: { method: 'PUT', path: '/api/v1/closing/rules' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'closing_rules', objectId: () => 'rules' },
+    handler: async (ctx, b) => {
+      const changed = await closingService.saveRulesIn(ctx.data.tx, ctx.legacyAuth, b.rules, b.note);
+      if (changed) ctx.evidence.note('before', changed.before);
+      return closingService.listRulesIn(ctx.data.tx, ctx.tenant.id);
+    },
+  }),
+  defineAction({
+    id: 'core.closing.preview', title: 'Xem trước kết chuyển', tags,
+    description: 'Bút toán sẽ sinh, lãi lỗ từng chi nhánh, tháng trước chưa kết chuyển, kết chuyển cũ đã lỗi thời. Không ghi gì.',
+    permission: 'reports:read', effect: 'read', idempotency: 'none',
+    input: closingRunSchema, output: z.array(anyObject),
+    expose: { http: { method: 'POST', path: '/api/v1/closing/preview' }, mcp: false, ai: 'read' },
+    handler: (ctx, b) => closingService.preview(ctx.legacyAuth, b),
+  }),
+];
