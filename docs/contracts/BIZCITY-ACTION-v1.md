@@ -5,7 +5,7 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> **Phiên bản:** 1.2.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -56,6 +56,19 @@ export default defineAction({
 });
 ```
 
+### 3.1 Trường mở rộng của `expose.http` và thân tuỳ chọn
+<!-- [2026-11-03 10:32 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6: ghi lại các khả năng đã có ở runtime (query, bodyLimit, thân tuỳ chọn) — chốt thiết kế trước (R-FLOW-2) -->
+
+`expose.http` ngoài `method`, `path`:
+
+| Trường | Ý nghĩa |
+|---|---|
+| `status: 201` | Mã trả khi thành công (mặc định 200). |
+| `query: <zod object>` | Những khoá của `input` lấy từ **query string** khi method là `POST` / `PUT` / `PATCH` (ví dụ `PUT /products/:sku?new=1`); các khoá còn lại lấy từ thân. `GET` / `DELETE` luôn lấy toàn bộ `input` từ query và path. Khoá kiểu true / false dùng `queryBool` (không dùng `z.coerce.boolean()` — chuỗi `"false"` sẽ thành `true`). |
+| `bodyLimit: <byte>` | Nới giới hạn thân cho thao tác nạp dữ liệu lớn (nhập danh mục, quét ảnh hoá đơn). |
+
+**Thân tuỳ chọn:** nếu `{}` đã hợp lệ với `input` (mọi trường tuỳ chọn hoặc có giá trị mặc định) thì thân thiếu hoặc `null` được nhận như `{}`.
+
 ## 4. Runtime chạy gì, theo thứ tự
 
 | Bước | Việc | Lỗi chuẩn |
@@ -69,9 +82,62 @@ export default defineAction({
 | 7 | `handler(ctx, input)` | `Errors.*` của handler |
 | 8 | Ghi bằng chứng (Evidence) trong cùng giao dịch, kể cả khi handler ném lỗi nghiệp vụ (ghi ở giao dịch riêng) | |
 | 9 | Ghi sự kiện vào outbox (cùng giao dịch); lưu phản hồi cho idempotency | |
-| 10 | Commit (hoặc rollback nếu `dryRun`) → trả `{ ok, data, meta: { receipt, requestId, dryRun? } }` | |
+| 10 | Commit (hoặc rollback nếu `dryRun`) → trả `{ ok, data, meta: { receipt, requestId, dryRun?, …ctx.meta } }` (§4.1) | |
 
 Handler **không** gọi `requirePermission`, `writeAudit`, `reply.status`, không tự mở giao dịch.
+
+### 4.1 `ctx.meta(key, value)` — trường bổ sung của phản hồi (1.2.0, **đã chốt**)
+<!-- [2026-11-03 10:32 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6: chốt hình dạng ctx.meta trước khi chuẩn hoá mã (hai phiên đã viết hai bản khác nhau ngày 2026-11-03) -->
+
+Handler thêm trường vào `meta` của phản hồi, ở mức trên cùng cạnh `requestId` / `receipt` — dành cho thông tin đi kèm kết quả mà không thuộc `data`, ví dụ `gate`, `findings`, `held` của cổng kiểm chuẩn Gate A khi lưu danh mục.
+
+- **Dạng chuẩn là hàm:** `ctx.meta('findings', findings)`. Gọi nhiều lần, mỗi khoá một giá trị (gọi lại cùng khoá thì ghi đè).
+- **Khoá của runtime là cấm:** `requestId`, `receipt`, `idempotency`, `dryRun`. Ghi vào đó là lỗi lập trình (ném lỗi), không phải lỗi người dùng — để không ai âm thầm đè biên nhận.
+- **Chạy thử (`dryRun`) giữ meta.** Người xem trước thấy cùng `findings` như khi ghi thật.
+- **Gửi lặp cùng `Idempotency-Key`** trả đúng dữ liệu và biên nhận lần đầu, **không** kèm meta bổ sung (meta không được lưu để phát lại).
+- **Tương thích:** mã đã có trên `main` ghi meta bằng `Object.assign(ctx.meta, { … })` (hoặc gán `ctx.meta.<khoá> = giá trị`); runtime vẫn nhận, cùng một chỗ chứa, cùng luật khoá cấm. Mã mới dùng dạng hàm; chuyển mã cũ dần, không bắt buộc cùng lúc.
+
+### 4.2 Action theo lô — `ctx.data.item(fn)` (**đã chốt**)
+
+Một thao tác nhiều mục (trạm định khoản, kết chuyển nhiều chi nhánh, nhập Excel…) chạy **trong một giao dịch của action**, mỗi mục một `SAVEPOINT`:
+
+- Mục lỗi chỉ huỷ phần của nó và trả `{ ok: false, error }` để handler báo trong kết quả; các mục khác giữ nguyên.
+- Các mục đúng được lưu **cùng lúc khi cả lô xong**. Lỗi ngoài từng mục huỷ cả lô — không để lại phần đã chạy.
+- Một bằng chứng cho cả lô.
+- Không dùng cho cửa nạp chứng từ (chứng từ bị từ chối phải còn ở bể chờ dù yêu cầu lỗi) và kéo chứng từ từ kết nối (nguồn đã được báo "đã nhận" từng trang): hai route đó giữ là route, có lý do ghi ở `// @bizcity-route:`.
+- Service dùng chung có bản `*In(trx, …)` nhận giao dịch của action và gọi `inSavepoint(trx, fn)` cho từng mục.
+
+### 4.3 Bí mật và kích thước trong bằng chứng (**đã chốt**)
+
+- Trường tên `key` (đúng nguyên tên), hoặc kết thúc bằng `password`, `secret`, `token`, `apikey`, `api_key`, `privatekey` (không phân biệt hoa thường) bị che thành `***` trong **bằng chứng** và trong **phản hồi lưu để phát lại**. Người gọi lần đầu nhận đủ; gửi lặp nhận bản đã che — nên khoá API chỉ trả về một lần.
+- `input` trong bằng chứng lớn hơn 64 KB được thay bằng `{ omitted: true, bytes }`; `inputHash` vẫn đối chiếu được với thân gốc. (Nạp danh mục hay quét ảnh hoá đơn có thể tới hàng chục MB.)
+
+### 4.4 Nhật ký nghiệp vụ trong action — **đề xuất, chờ chủ dự án chốt**
+
+**Vấn đề.** Dòng cuối §4 nói handler không gọi `writeAudit` (bằng chứng do runtime ghi). Nhưng các service mà handler gọi vẫn gọi `writeAudit`: mỗi lần ghi có **hai** dòng `audit_logs` — bằng chứng của runtime (tên = id action, mang `input`) và dòng cũ (tên cũ như `branch.update`, mang `before` / `after`). Hợp đồng chưa nói gì về service.
+
+**Chỗ đọc dòng cũ theo tên** (khảo sát mã):
+
+| Tên hành động | Nơi đọc | Dùng để |
+|---|---|---|
+| `costing.fill` | `packages/kernel/.../closing.service.ts` | phát hiện kết chuyển lỗi thời (giá vốn điền lại sau lần kết chuyển) |
+| `<loại>.update` (vd `receipt.update`) | `packages/kernel/.../document.repository.ts` | hiện "người sửa cuối" của chứng từ |
+| `settings.item-auto-create` | `apps/api/.../catalog-rules.routes.ts` | hiện người và lý do đổi "tự thêm mặt hàng" lần cuối |
+
+Cộng khoảng 19 tệp test đọc `audit_logs` theo tên. (`core.conformance.acknowledge` và các id action khác là bằng chứng của runtime — không bị ảnh hưởng.)
+
+**Lựa chọn.**
+
+| | Cách | Được | Mất |
+|---|---|---|---|
+| A | Giữ nguyên | đủ thông tin | ghi trùng; trái chữ §4 |
+| B | Bỏ `writeAudit` trong mọi đường action (tham số `audit = false` ở từng service) | đúng chữ §4 | **hỏng ba tính năng ở bảng trên**; mất ảnh `before` (bằng chứng chưa có); phải sửa từng service (hơn 100 chỗ gọi) |
+| **C** | **`writeAudit` chạy trong action không chèn dòng mới mà ghi vào ghi chú của chính bằng chứng** (`notes.audit[]`: hành động, đối tượng, `before`, `after`), **trừ** các tên khai ở sổ "nhật ký có người đọc" (ba tên ở bảng) — những tên đó vẫn ghi dòng như cũ | không đổi chỗ gọi nào; một nguồn duy nhất; không mất `before` / `after`; ba tính năng chạy tiếp | 19 test đọc theo tên cần chuyển sang đọc ghi chú bằng chứng hoặc đăng ký tên; dòng cũ của thao tác đi qua action không còn (route chưa là action vẫn ghi) |
+| D | Sửa hợp đồng cho khớp thực tế: service được phép ghi nhật ký nghiệp vụ | rẻ nhất | ghi trùng vĩnh viễn |
+
+**Đề xuất: C**, kèm hai ràng buộc: (1) ghi chú nhật ký tạo trong một mục lô bị huỷ (§4.2) bị bỏ theo mục đó; (2) phép kiểm tĩnh **SC-AUDIT-1**: mọi chỗ trong mã đọc `audit_logs` theo `action = '…'` phải có tên đó trong sổ — để người sau không thêm chỗ đọc mà âm thầm mất dữ liệu.
+
+**Trạng thái:** đề xuất. Mã (đợt 8b) chỉ làm sau khi mục này đổi sang "**đã chốt**" bằng một PR tài liệu; trong lúc chờ, không sửa gì ở `writeAudit`.
 
 ## 5. Luật
 
@@ -138,3 +204,4 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 |---|---|---|
 | 1.0.0-draft | 2026-10-29 | Khởi tạo (Standard v1, hợp đồng 4/7) |
 | 1.1.0-draft | 2026-11-02 | Thêm `sideEffects: 'analysis'` — action chỉ lưu kết quả phân tích của Core (vd `core.conformance.run`, ADR-0012), không đổi chứng từ, sổ, danh mục, cấu hình |
+| 1.2.0-draft | 2026-11-03 | Chốt `ctx.meta(key, value)` (§4.1), action theo lô `ctx.data.item` (§4.2), che bí mật và lược `input` lớn trong bằng chứng (§4.3), `expose.http.query` / `bodyLimit` và thân tuỳ chọn (§3.1). Đề xuất chờ chốt: nhật ký nghiệp vụ trong action (§4.4) |
