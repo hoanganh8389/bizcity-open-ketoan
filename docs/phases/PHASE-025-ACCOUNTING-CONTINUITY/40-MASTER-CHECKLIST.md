@@ -5,7 +5,7 @@
 |---|---|---|---|---|---|
 | S025-1 | ADR-0021, RULE-CONTINUITY (R-CONT-0..9), CANON §0.1 ba trụ cột | W0 | P0 | — | 🟡 2026-11-03: tài liệu xong, chờ chủ duyệt D025-* |
 | S025-2 | Tài liệu phase 00 / 10 / 20 / 30, bản mẫu `mockups/continuity.html` | W0 | P0 | — | 🟡 2026-11-03 |
-| S025-3 | Hợp đồng đọc `bizcity_lineage@1` (nút, cạnh, effect, mã `CT-*` trên nút) | W1 | P0 | có | ✅ 2026-11-03: `packages/contracts/src/lineage.ts`, [BIZCITY-LINEAGE-v1](../../contracts/BIZCITY-LINEAGE-v1.md) 0.1.0-draft; kiểu sự kiện / bút toán / giá vốn / giải thích, `effect` kế toán | vận hành |
+| S025-3 | Hợp đồng đọc `bizcity_lineage@1` (nút, cạnh, effect, mã `CT-*` trên nút) | W1 | P0 | có | ✅ 2026-11-03: `packages/contracts/src/lineage.ts`, [BIZCITY-LINEAGE-v1](../../contracts/BIZCITY-LINEAGE-v1.md) 0.1.0-draft; kiểu sự kiện / bút toán / giá vốn / giải thích, `effect` kế toán \| vận hành |
 | S025-4 | API lineage chỉ đọc trên dữ liệu có sẵn (`inventory_movements`, `inventory_costs`, chứng từ `cogs`, link trả hàng); màn Hành trình mặt hàng bản đầu — ca T025-1 | W1 | P0 | có | ✅ 2026-11-03 (đợt 1 — chỉ đọc, khoá theo mã hàng): `GET /api/v1/lineage/{search,items/:sku,items/:sku/cost}`; chỉ mục `ledger_lines_sku` (0064); màn Hành trình mặt hàng ACC95 (vòng đời theo làn, dòng thời gian, giá vốn tháng, "Vì sao giá vốn này?", bút toán); nút Truy vết ở nhập xuất tồn, sổ chi tiết hàng hoá, danh mục mặt hàng; `lineage.test.ts` 8 ca. Còn: khoá `item_id` + phiên bản mã (PHASE-024 B2); `original_line_id` (S025-8) |
 | S025-5 | Bảng `valuation_layers`, `valuation_layer_sources`, `cost_allocations` (chỉ thêm, RLS, trigger) | W2 | P0 | có | ☐ (sau PHASE-024 B2b) |
 | S025-6 | Engine bình quân ghi lớp bể + phân bổ; tổng phân bổ = giá vốn ghi sổ — ca T025-2 | W2 | P0 | có | ☐ |

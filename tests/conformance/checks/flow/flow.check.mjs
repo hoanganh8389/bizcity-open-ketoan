@@ -5,6 +5,8 @@
  * ở `node scripts/nhan-viec.mjs kiem` (cùng cách với `so-tiep-theo.mjs kiem` cho số migration).
  */
 import { CLAIMS_FILE, checkRegistry } from './flow.lib.mjs';
+import { parseAllChecklists, viecProblems } from './board.lib.mjs';
+import { readChecklists } from './board.check.mjs';
 
 const RULE_FILE = 'docs/rules/RULE-FLOW.md';
 
@@ -20,6 +22,9 @@ export default {
       return { examined: 0, findings: [ctx.finding(CLAIMS_FILE, null, `thiếu ${CLAIMS_FILE} dù đã có ${RULE_FILE}`, 'missing')] };
     }
     const { rows, problems } = checkRegistry(md);
+    // [2026-11-03 11:52 PM Johnny Chu - Chu Hoàng Anh] FLOW — FLOW-2: cột Việc — mã có thật trong checklist, không hai dòng cùng giữ (R-FLOW-8)
+    const checklists = readChecklists(ctx);
+    if (checklists.length) problems.push(...viecProblems(rows, parseAllChecklists(checklists).items));
     return {
       examined: rows.length,
       findings: problems.map((p) => ctx.finding(CLAIMS_FILE, p.line, p.message, p.key)),
