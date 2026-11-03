@@ -52,6 +52,10 @@ export const SCREENS = {
   HT06: s('HT06', '/he-thong/kiem-chuan', 'Kiểm chuẩn'),
   HT07: s('HT07', '/he-thong/ho-so-ke-toan', 'Hồ sơ kế toán'),
   HT08: s('HT08', '/he-thong/ban-danh-gia', 'Bàn đánh giá'),
+  // [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26: thêm màn danh mục chi nhánh / đối tượng / mặt hàng cho phương án khắc phục mã tiền kiểm IN-*
+  DM02: s('DM02', '/danh-muc/chi-nhanh', 'Chi nhánh'),
+  DM03: s('DM03', '/danh-muc/doi-tuong', 'Đối tượng'),
+  DM10: s('DM10', '/danh-muc/mat-hang', 'Danh mục mặt hàng'),
 } as const satisfies Record<string, ScreenRef>;
 
 /** Bước mở đầu bắt buộc của lỗi Tier 0 (R-FIX-2). */

@@ -15,6 +15,7 @@ import { ingestDocumentSchema, type IngestDocument } from '@ketoan/contracts';
 import { toNumber, type Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
+import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { postDocumentIn } from '../../kernel/public.js';
 import { partnerRepository } from '../../modules/partners/partner.repository.js';
 import { saveSupplierProducts, unitsOf } from './gia-mua.js';
@@ -256,7 +257,7 @@ export async function reconcileApply(trx: Db, auth: AuthContext, body: StockInpu
         lines: chunk.map((l, i) => ({ lineKey: `L${i + 1}`, sku: l.sku, name: l.name, unit: l.unit, qty: l.diff, amount: 0, warehouseCode: w.warehouseCode })), totals: { total: 0 },
       };
       const parsed = ingestDocumentSchema.safeParse(raw);
-      if (!parsed.success) throw Errors.validation(`Phiếu điều chỉnh kho ${w.warehouseCode} không đúng khuôn`, parsed.error.flatten());
+      if (!parsed.success) throw Errors.validation(`Phiếu điều chỉnh kho ${w.warehouseCode} không đúng khuôn`, zodIssueTexts(parsed.error));
       await postDocumentIn(trx, auth, parsed.data as IngestDocument, { post: true, force: true });
       created.push({ branchCode: w.branchCode, warehouseCode: w.warehouseCode, docNo, lines: chunk.length, up: chunk.filter((l) => l.diff > 0).length, down: chunk.filter((l) => l.diff < 0).length });
     }

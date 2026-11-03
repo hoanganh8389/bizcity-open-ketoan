@@ -7,7 +7,7 @@
  *   - danh mục: mọi mã đủ title / why / fix / ref (R-INTAKE-5); preflight chỉ đọc (không ghi sự việc).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { INTAKE_CATALOG, type IntakeCode } from '@ketoan/contracts';
+import { INTAKE_CATALOG, intakeFinding, type IntakeCode } from '@ketoan/contracts';
 import { withRequestContext } from '@bizcity/platform/core/request-context';
 import type { AuthContext } from '../src/core/auth.js';
 import { preflight } from '../src/kernel/public.js';
@@ -60,6 +60,16 @@ describe('Danh mục IN-*', () => {
     }
   });
 
+  it('S021-26: mọi mã block / warn có phương án khắc phục (bước, vai, kiểm lại bằng chính mã) và phát hiện mang remedy', () => {
+    for (const [code, s] of Object.entries(INTAKE_CATALOG)) {
+      const f = intakeFinding(code as IntakeCode, null);
+      if (s.severity === 'hint') continue;
+      expect(f.remedy?.steps.length, code).toBeGreaterThan(0);
+      expect(f.remedy?.owner, code).toBeTruthy();
+      expect(f.remedy?.verify.code, code).toBe(code);
+    }
+  });
+
   it('ca cặp phủ đủ mã block + door (thêm mã mới phải thêm ca)', () => {
     const door = Object.entries(INTAKE_CATALOG).filter(([, s]) => s.severity === 'block' && s.stage === 'door').map(([c]) => c)
       .filter((c) => c !== 'IN-BIZ-003' && c !== 'IN-BIZ-004'); // hai mã này có ca riêng bên dưới (cần khoá app / hai lần gửi)
@@ -105,6 +115,8 @@ describe('Gom mọi lỗi, mã hướng dẫn, chỉ đọc', () => {
     expect(sev.indexOf('hint') === -1 || sev.lastIndexOf('block') < sev.indexOf('hint')).toBe(true);
     expect(r.score).toBe(0);
     expect(r.findings.find((f) => f.code === 'IN-MD-001')).toMatchObject({ path: 'branchCode', got: 'KHONG-CO-CN', why: expect.any(String), fix: expect.any(String) });
+    // Phương án của mã thiếu chi nhánh dẫn tới màn Danh mục chi nhánh (S021-26)
+    expect(r.findings.find((f) => f.code === 'IN-MD-001')?.remedy?.steps.some((s) => s.screen?.code === 'DM02')).toBe(true);
   });
 
   it('chứng từ hợp lệ: không block, cửa nạp nhận; preflight không ghi sự việc', async () => {
