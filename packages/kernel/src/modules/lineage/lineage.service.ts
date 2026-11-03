@@ -18,7 +18,7 @@ import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
 import {
   LINEAGE_KIND_LABEL, type CostContribution, type CostExplain, type CostRole, type LineageCostPeriod, type LineageEffect, type LineageEntryLine,
-  type LineageEvent, type LineageItem, type LineageKind,
+  type LineageEvent, type LineageItem, type LineageKind, type ItemHistory, type ItemHistoryEntry,
 } from '@ketoan/contracts';
 
 const DEFAULT_LIMIT = 500;
@@ -335,4 +335,77 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
   }
 
   return { sku, period, costGroup: row.costGroup, costGroupName: row.costGroupName, computed: true, row, previous, changePct, sentences, contributions, reconcile };
+}
+
+// [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 (D026-5): Lịch sử mặt hàng — mã cũ / mới, hiệu lực, người đổi, phân loại, sửa có lý do
+const HISTORY_LIMIT = 300;
+const ACTION_TEXT: Record<string, string> = {
+  'product.update': 'Sửa khai báo', 'product.draft': 'Lưu nháp (còn thiếu khai báo)', 'product.activate': 'Kích hoạt (hết lỗi chặn)',
+  'product.create': 'Thêm mặt hàng', 'product.delete': 'Xoá khỏi danh mục (định danh ngừng dùng, không mất)', 'catalog.warn.unacked': 'Lưu qua API còn cảnh báo, không ghi lý do',
+};
+const FIELD_TEXT: Record<string, string> = {
+  name: 'tên', unit: 'đơn vị tính', postingGroupCode: 'nhóm hạch toán', brandCode: 'nhãn hàng', industryCode: 'ngành hàng', groupCode: 'nhóm hàng', typeCode: 'loại hàng',
+  isActive: 'theo dõi', note: 'ghi chú', taxOutCode: 'thuế bán ra', taxInCode: 'thuế mua vào', exciseRate: 'thuế TTĐB',
+};
+const show = (v: unknown) => (v === null || v === undefined || v === '' ? '(trống)' : typeof v === 'boolean' ? (v ? 'có' : 'không') : String(v));
+const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
+
+/** Lịch sử một mặt hàng (mã đang dùng hoặc mã cũ): mới nhất trước. */
+export async function getItemHistory(trx: Db, tenantId: string, sku: string): Promise<ItemHistory> {
+  const key = await itemKey(trx, tenantId, sku);
+  if (!key.itemId) throw Errors.notFound(`mặt hàng ${sku}`);
+  const itemId = key.itemId;
+  const current = key.codes.find((c) => c.kind === 'sku' && c.validTo === null)?.code ?? sku;
+  const item = await sql<{ created_at: Date; created_by: string; source_system: string; attributes: Record<string, unknown> }>`
+    SELECT created_at, created_by, source_system, attributes FROM items WHERE tenant_id = ${tenantId} AND item_id = ${itemId}`.execute(trx);
+  const codes = await sql<{ kind: string; code: string; valid_from: string; valid_to: string | null; created_at: Date; created_by: string; note: string }>`
+    SELECT kind, code, valid_from::text, valid_to::text, created_at, created_by, note FROM item_codes
+     WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
+  const cls = await sql<{ valid_from: string; posting_group_code: string | null; tax_out_code: string | null; tax_in_code: string | null; created_at: Date; created_by: string }>`
+    SELECT valid_from::text, posting_group_code, tax_out_code, tax_in_code, created_at, created_by FROM item_classification
+     WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
+  const skus = [...new Set(codes.rows.filter((c) => c.kind === 'sku').map((c) => c.code))];
+  const audits = skus.length
+    ? await sql<{ action: string; actor: string; after_data: Record<string, unknown> | null; created_at: Date; object_id: string }>`
+        SELECT action, actor, after_data, created_at, object_id FROM audit_logs
+         WHERE tenant_id = ${tenantId} AND object_type = 'product' AND object_id = ANY(${skus}::text[])
+         ORDER BY created_at DESC, id DESC LIMIT ${HISTORY_LIMIT}`.execute(trx)
+    : { rows: [] };
+
+  const out: ItemHistoryEntry[] = [];
+  const it = item.rows[0];
+  if (it) {
+    const orphan = it.attributes?.orphan === true;
+    out.push({ at: iso(it.created_at), effectiveFrom: null, kind: 'created', by: it.created_by,
+      text: orphan ? 'Tạo định danh cho mã có trong sổ / kho mà chưa có trong danh mục (mặt hàng mồ côi)' : `Tạo định danh mặt hàng (nguồn: ${it.source_system || 'danh mục'})` });
+  }
+  for (const c of codes.rows) {
+    const from = c.valid_from === '1970-01-01' ? null : c.valid_from;
+    const label = c.kind === 'sku' ? 'mã hàng' : c.kind === 'barcode' ? 'mã vạch' : c.kind === 'alias' ? 'bí danh' : `mã ${c.kind}`;
+    const renamed = c.kind === 'sku' && c.note.startsWith('đổi mã từ ') ? c.note.slice('đổi mã từ '.length) : null;
+    out.push({ at: iso(c.created_at), effectiveFrom: from, kind: 'code', by: c.created_by,
+      text: renamed ? `Đổi mã ${renamed} → ${c.code}${from ? ` (hiệu lực từ ${from})` : ''}`
+        : `${label[0]!.toUpperCase()}${label.slice(1)} ${c.code}${from ? ` có hiệu lực từ ${from}` : ''}${c.valid_to ? ` — đã đóng, dùng tới trước ${c.valid_to}` : ''}` });
+  }
+  cls.rows.forEach((c, i) => {
+    const prev = cls.rows[i - 1];
+    const from = c.valid_from === '1970-01-01' ? null : c.valid_from;
+    out.push({ at: iso(c.created_at), effectiveFrom: from, kind: 'classification', by: c.created_by,
+      text: prev
+        ? `Đổi phân loại hạch toán: nhóm ${show(prev.posting_group_code)} → ${show(c.posting_group_code)}${from ? ` từ ${from}` : ''} (chứng từ trước ngày đó giữ phân loại cũ)`
+        : `Phân loại hạch toán ban đầu: nhóm ${show(c.posting_group_code)}` });
+  });
+  for (const a of audits.rows) {
+    const after = a.after_data ?? {};
+    if (a.action === 'catalog.warn.ack') {
+      out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'warn-ack', by: a.actor,
+        text: `Lưu dù có cảnh báo ${(after.codes as string[] | undefined)?.join(', ') ?? ''} — lý do: "${show(after.reason)}"` });
+      continue;
+    }
+    const fields = Object.entries(after).filter(([k]) => FIELD_TEXT[k]).map(([k, v]) => `${FIELD_TEXT[k]} = ${show(v)}`);
+    out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'change', by: a.actor,
+      text: `${ACTION_TEXT[a.action] ?? a.action}${fields.length ? `: ${fields.join('; ')}` : ''}${a.object_id !== current ? ` (khi còn mã ${a.object_id})` : ''}` });
+  }
+  out.sort((x, y) => (x.at < y.at ? 1 : x.at > y.at ? -1 : 0));
+  return { itemId, sku: current, entries: out.slice(0, HISTORY_LIMIT), truncated: out.length > HISTORY_LIMIT || audits.rows.length >= HISTORY_LIMIT };
 }

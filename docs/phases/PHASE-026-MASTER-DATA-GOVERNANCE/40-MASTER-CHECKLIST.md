@@ -11,7 +11,7 @@
 | S026-5 | `item_classes.path` + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | P0 | có | ☐ |
 | S026-8 | Nhóm hạch toán theo ngày; `chart_versions`, `account_mappings`, phiếu chuyển số dư (ADR-0018) — ca T026-G6 | P0 | P0 | có | ☐ |
 | S026-9 | Bốn lớp thay đổi ở Gate A (`changeClass` trong phản hồi validate / save); nháp cho đối tượng; lớp 3 bắt buộc xem Tác động + lý do | P0 | P0 | có | ☐ |
-| S026-10 | API `GET /api/v1/master-data/:type/:id/history`; thẻ Lịch sử | P0 | P0 | có | ☐ |
+| S026-10 | API `GET /api/v1/master-data/:type/:id/history`; thẻ Lịch sử | P0 | P0 | có | 🟡 2026-11-04 <!-- [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 -->: mặt hàng xong — `GET /api/v1/lineage/items/:sku/history` (tra bằng mã cũ ra cùng lịch sử), nút Lịch sử ở Hành trình; test 1 ca. Còn: đường chung `/master-data/:type/:id/history` khi có `entity_codes` (S026-4), gắn vào form DM10 |
 | S026-11 | Chỉ mục tham chiếu `md_references` + `GET …/impact`; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng | P0 | P0 | có | ☐ |
 | S026-12 | `MasterDataFrame` bốn thẻ, gắn vào form mặt hàng, đối tượng, tài khoản, chi nhánh, kho; trang Trung tâm dữ liệu gốc `/danh-muc` với ô tìm mọi mã + Việc cần làm | P0 | P0 | có | ☐ |
 | S026-15 | SC-PILLAR-1: tiêu chí `dat` phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi `source = check` cho tiêu chí có check | P0 | P1 | có | ☐ |

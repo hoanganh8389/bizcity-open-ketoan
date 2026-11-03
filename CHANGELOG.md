@@ -19,6 +19,8 @@ Mỗi bản ghi đủ sáu mục:
 ### Thêm
 <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW -->
 - **Luật nhận việc [R-FLOW](docs/rules/RULE-FLOW.md)** (chủ dự án đồng ý): giữ chỗ vào `main` trước khi code ([CLAIMS.md](docs/phases/CLAIMS.md)), chốt thiết kế thứ dùng chung bằng tài liệu trước, nhánh ngắn, gộp `main` và bộ kiểm xanh trước khi đẩy; Bước 0 trong AGENTS.md. Sinh ra từ việc hai phiên làm trùng W6 đợt 3 và đợt 4 ngày 2026-11-03. Phép kiểm tự động (SC-FLOW-1/2, `nhan-viec.mjs`) là đợt kế tiếp.
+<!-- [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 -->
+- **Lịch sử mặt hàng** (PHASE-026 S026-10): nút **Lịch sử mặt hàng** ở Hành trình mặt hàng — mỗi lần đổi mã (mã cũ → mới, hiệu lực từ ngày nào), đổi phân loại hạch toán (từ ngày nào, chứng từ trước giữ phân loại cũ), sửa khai báo, kích hoạt, lưu dù có cảnh báo (kèm lý do đã ghi) — ai làm, lúc nào; gõ mã cũ vẫn ra đúng lịch sử. API `GET /api/v1/lineage/items/:sku/history` (quyền xem danh mục).
 <!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 -->
 - **Họ mặt hàng theo định danh** (migration `0067_bien_the_dinh_danh`, R-ITEM-3): biến thể (mã con) trỏ về mặt hàng cha bằng **định danh**, không bằng chuỗi mã — đổi mã cha hay mã con không làm đứt họ; khai mặt hàng cha sau mã con thì các con tự nhận cha. Hành trình mặt hàng hiện **cha / biến thể / cùng cha** (bấm để mở hành trình biến thể — mỗi biến thể có tồn và giá vốn riêng). Khung Vì sao nhắc **ITEM-HINT-003** khi đổi đơn vị tính gốc của mặt hàng đã có nhập xuất: quy cách khác (hộp ↔ thùng, 400g ↔ 900g) nên là mặt hàng mới cùng mã cha; vẫn lưu được, ghi lý do.
 <!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ADR-0022, HT10 -->

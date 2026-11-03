@@ -7,7 +7,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 
 | Tầng | Trụ cột | Mức | Đạt | Một phần | Tài liệu | Chưa |
 |---|---|---|---|---|---|---|
-| Nền móng | Quản trị dữ liệu gốc (Master Data Governance) | **50 %** | 2 | 11 | 0 | 2 |
+| Nền móng | Quản trị dữ liệu gốc (Master Data Governance) | **53 %** | 2 | 12 | 0 | 1 |
 | I | Sổ cái bất biến | **100 %** | 4 | 0 | 0 | 0 |
 | II | Định danh bất biến, mã có phiên bản | **61 %** | 4 | 0 | 1 | 2 |
 | III | Liên tục kế toán (Accounting Continuity) | **39 %** | 2 | 0 | 3 | 2 |
@@ -17,7 +17,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
 
-## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 50 %
+## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 53 %
 
 > Thiết lập một lần hệ thống định danh và nguyên tắc đúng để hàng triệu mã, hàng trăm cửa hàng, nhiều pháp nhân và mọi module dùng chung một dòng dữ liệu kế toán liên tục.
 
@@ -33,10 +33,10 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | ACC-002 | Mọi dòng tồn kho và giá vốn truy xuất được về SKU và nghiệp vụ gốc | ✅ Đạt | inventory_movements (event_id, line_no, item_id); inventory_costs.item_id; Hành trình mặt hàng theo item_id (bizcity_lineage 0.2.0); test item-id-so-kho, lineage | lớp giá vốn / phân bổ từng dòng xuất (PHASE-025 W2) để chỉ đích danh phiếu nhập nào | S025-5 (PHASE-025) | P0 |
 | CF-001 | Thay đổi danh mục ảnh hưởng kế toán phải được kiểm chuẩn trước khi kích hoạt | 🟡 Một phần | Gate A: /products\|partners\|accounts/validate, mặt hàng nháp (0061), khung Vì sao, luật nhắc HT09 | chưa phân lớp thay đổi 0–3 (ADR-0018) để lớp 3 (đổi bản chất / TK) qua cổng + chứng từ điều chỉnh; đối tượng chưa có nháp | S026-9 (PHASE-026) | P0 |
 | CF-002 | Sự kiện không đạt kiểm chuẩn phải được giữ trong Exception Buffer | 🟡 Một phần | intake_inbox (0059) — bể chờ Gate B; Commit Guard IN-GUARD-001 | chưa có bể cho sai lệch SAU ghi sổ (Gate C) và tìm chứng từ theo sai lệch sổ | S025-10 (PHASE-025) | P1 |
-| AUD-001 | Sai lệch truy tìm được về chứng từ, nguyên nhân và phạm vi ảnh hưởng | 🟡 Một phần | audit_logs chuỗi băm (0036 / 0047), Bàn điều tra (PHASE-019), Hành trình mặt hàng | chưa có 'Tác động' (một mã dùng ở chứng từ / kho / TK / báo cáo nào); lịch sử chưa có trên form đối tượng / tài khoản / chi nhánh | S026-10, S026-11 (PHASE-026) | P0 |
+| AUD-001 | Sai lệch truy tìm được về chứng từ, nguyên nhân và phạm vi ảnh hưởng | 🟡 Một phần | audit_logs chuỗi băm (0036 / 0047), Bàn điều tra (PHASE-019), Hành trình mặt hàng, Lịch sử mặt hàng (S026-10) | chưa có Tác động (một mã dùng ở chứng từ / kho / TK / báo cáo nào); lịch sử đối tượng / tài khoản / chi nhánh chưa | S026-10, S026-11 (PHASE-026) | P0 |
 | IC-1 | Identity Continuity: đổi tên, đổi mã, đổi vị trí phân loại không đứt định danh | 🟡 Một phần | mặt hàng: đổi mã giữ item_id, hành trình nối mã cũ + mới, giá vốn một dòng (test B2b); đổi nhóm = bản phân loại mới theo ngày | chỉ mặt hàng; đối tượng / kho / chi nhánh / tài khoản chưa | S026-4 (PHASE-026) | P0 |
 | VER-1 | Hai cột: định danh tồn kho (item_id) và mã (item_code) — cùng biến thể đổi mã giữ định danh; biến thể kinh tế khác → định danh mới, cùng sản phẩm cha | ✅ Đạt | items.item_id + item_codes (0065); items.parent_item_id điền và giữ khớp theo định danh từ products.parent_sku, chặn vòng (0067); ITEM-HINT-003 nhắc khi đổi ĐVT gốc của mặt hàng đã có nhập xuất; test bien-the-dinh-danh (4 ca) | MH26 / phân tích đặt hàng còn đọc products.parent_sku (ảnh chụp) — chuyển sang parent_item_id khi products thành khung nhìn (S024-11) | S024-11 (PHASE-024) | P0 |
-| UI-4 | Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết | ☐ Chưa | Truy vết: nút Truy vết ở danh mục mặt hàng → ACC95; Kiểm chuẩn: khung Vì sao (Gate A) | Lịch sử, Tác động chưa có trên form; khung chung MasterDataFrame chưa có | S026-10..13 (PHASE-026) | P0 |
+| UI-4 | Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết | 🟡 Một phần | mặt hàng có 3/4: Lịch sử (S026-10), Kiểm chuẩn (khung Vì sao Gate A), Truy vết (ACC95, họ mặt hàng) | Tác động chưa có; chưa gom thành khung chung trên form danh mục; thực thể khác chưa | S026-11, S026-12 (PHASE-026) | P0 |
 | SCALE-1 | Danh mục hàng triệu mã, hàng trăm cửa hàng: đo và giữ hiệu năng | ☐ Chưa | đo 20.985 mặt hàng: đồng bộ Item Master +0,7 ms / mặt hàng; khoá chống chồng hiệu lực theo đơn vị | chưa có benchmark triệu SKU, chưa có nạp theo lô (FOR EACH STATEMENT), chưa có EXCLUDE gist | S026-14 (PHASE-026) | P2 |
 
 ## Trụ cột I · Sổ cái bất biến — 100 %
@@ -108,7 +108,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp | Ưu tiên |
 |---|---|---|---|---|---|---|
 | E-1 | Nhật ký thao tác chỉ thêm, chuỗi băm, kiểm bằng chứng | ✅ Đạt | audit_logs (0036 / 0047), forbid_audit_log_mutation, evidence.routes | — | — | P0 |
-| E-2 | Lịch sử (mã cũ / mới, ngày hiệu lực, người đổi) trên màn danh mục | 🟡 Một phần | lịch sử mã ở Hành trình mặt hàng; lịch sử ở phiếu, chính sách, hồ sơ, tài sản | form mặt hàng / đối tượng / tài khoản / chi nhánh chưa có thẻ Lịch sử | S026-10 (PHASE-026) | P0 |
+| E-2 | Lịch sử (mã cũ / mới, ngày hiệu lực, người đổi) trên màn danh mục | 🟡 Một phần | GET /api/v1/lineage/items/:sku/history (mã cũ / mới, hiệu lực, người đổi, phân loại, sửa + lý do cảnh báo; tra bằng mã cũ); nút Lịch sử ở Hành trình mặt hàng; test bien-the-dinh-danh | chỉ mặt hàng — đối tượng / tài khoản / chi nhánh chờ entity_codes (S026-4); chưa gắn vào form DM10 (khung MasterDataFrame S026-12) | S026-4, S026-12 (PHASE-026) | P0 |
 | E-3 | Tác động: một mã dùng ở chứng từ, kho, TK, cửa hàng, báo cáo nào | ☐ Chưa | — | chưa có chỉ mục tham chiếu / API impact | S026-11 (PHASE-026) | P0 |
 | E-4 | Tự chẩn đoán L1 / L3, khoá kỳ chặn khi sổ lỗi | ✅ Đạt | diagnostic_runs, runDiagnostics, STOCK_LEDGER_MATCH | — | — | P0 |
 | E-5 | Bảng trụ cột × mức đạt trên giao diện (Hệ thống + trang chủ phân hệ) | 🟡 Một phần | HT10 bản đầu (2026-11-04), nguồn docs/standard/tru-cot.json ghi tay có bằng chứng | mức đạt chưa do engine ghi (selfcheck / test) | S026-15 (PHASE-026) | P1 |

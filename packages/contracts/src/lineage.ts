@@ -120,6 +120,30 @@ export interface LineageFamilyMember {
   status: string;
 }
 
+/**
+ * [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 (D026-5): LỊCH SỬ của một mặt hàng — mã cũ / mới, ngày hiệu lực,
+ * người đổi, đổi phân loại, sửa / kích hoạt / cảnh báo có lý do. Dựng từ item_codes, item_classification, audit_logs; chỉ đọc.
+ */
+export type ItemHistoryKind = 'created' | 'code' | 'classification' | 'change' | 'warn-ack';
+export interface ItemHistoryEntry {
+  /** Lúc ghi nhận (ISO). */
+  at: string;
+  /** Ngày bắt đầu hiệu lực (mã, phân loại) — khác `at` khi đổi có hiệu lực từ ngày khác; null = không có khái niệm hiệu lực. */
+  effectiveFrom: string | null;
+  kind: ItemHistoryKind;
+  /** Một câu cho người đọc. */
+  text: string;
+  /** Người / hệ thống làm (actor của nhật ký, created_by của bảng định danh). */
+  by: string;
+}
+export interface ItemHistory {
+  itemId: string;
+  sku: string;
+  entries: ItemHistoryEntry[];
+  /** Danh sách bị cắt ở giới hạn. */
+  truncated: boolean;
+}
+
 export interface LineageCoverage {
   keyedBy: 'sku' | 'item_id';
   /** Câu cho người đọc: dữ liệu nào truy được, dữ liệu nào chưa (R-CONT, nói rõ phần chưa truy được). */

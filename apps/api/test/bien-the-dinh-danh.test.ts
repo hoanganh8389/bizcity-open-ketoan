@@ -73,6 +73,23 @@ describe('Họ mặt hàng theo định danh', () => {
   });
 });
 
+describe('Lịch sử mặt hàng (S026-10)', () => {
+  it('tra bằng mã cũ hay mã mới đều ra một lịch sử: tạo, đổi mã có hiệu lực, phân loại ban đầu, sửa có lý do', async () => {
+    const h = (await call(ctx, 'GET', '/api/v1/lineage/items/BT-P/history')).body.data;   // mã cũ (đã đổi sang BT-P2)
+    expect(h.sku).toBe('BT-P2');
+    expect(h.itemId).toBe(await idOf('BT-P2'));
+    const texts = h.entries.map((e: { text: string }) => e.text);
+    expect(texts.some((t: string) => /^Tạo định danh mặt hàng/.test(t))).toBe(true);
+    expect(texts.some((t: string) => /^Đổi mã BT-P → BT-P2 \(hiệu lực từ \d{4}-\d{2}-\d{2}\)$/.test(t))).toBe(true);
+    expect(texts.some((t: string) => /^Phân loại hạch toán ban đầu: nhóm /.test(t))).toBe(true);
+    expect(texts.some((t: string) => /lý do: "thử họ mặt hàng"/.test(t))).toBe(true);     // cảnh báo mềm (ITEM-HINT-001) lưu có lý do
+    expect(texts.some((t: string) => /\(khi còn mã BT-P\)/.test(t))).toBe(true);           // thao tác trước khi đổi mã ghi rõ mã lúc đó
+    const at = h.entries.map((e: { at: string }) => e.at);
+    expect([...at].sort().reverse()).toEqual(at);                                          // mới nhất trước
+    expect((await call(ctx, 'GET', '/api/v1/lineage/items/KHONG-CO/history')).status).toBe(404);
+  });
+});
+
 describe('Gate A — biến thể kinh tế khác là mặt hàng mới (ITEM-HINT-003)', () => {
   it('đổi ĐVT gốc của mặt hàng đã có nhập xuất → cảnh báo (vẫn lưu); chưa có nhập xuất → không nhắc', async () => {
     expect((await put('BT-U')).status).toBe(200);
