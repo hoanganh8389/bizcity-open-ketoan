@@ -19,7 +19,7 @@ import { Errors } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import type { Db } from '@bizcity/platform/db/client';
 import { submitDocumentIn } from '../documents/document.service.js';
-import { closeBySource } from './inbox.js';
+import { closeBySource, emitResolved } from './inbox.js';
 import { preflight } from './preflight.js';
 
 export interface PatchOp { op: 'add' | 'replace' | 'remove'; path: string; value?: unknown }
@@ -124,6 +124,8 @@ export async function resubmitItem(trx: Db, auth: AuthContext, id: string, reaso
   await trx.updateTable('intake_inbox')
     .set({ status, event_id: ev.id, findings: JSON.stringify(pf.findings), score, resolved_at: new Date(), resolved_by: auth.actor, resolution_note: reason?.trim() || (patched ? 'Sửa tại bể, nộp lại' : 'Nộp lại') })
     .where('id', '=', row.id).execute();
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): mục đóng → bizcity.intake.resolved
+  await emitResolved(trx, auth.tenantId, auth.actor, { inboxId: row.id, docKey: r.docKey, status, eventId: String(ev.id), patched });
   await closeBySource(trx, auth.tenantId, r.docKey, auth.actor); // mục mở khác cùng docKey (lần gửi khác nội dung của nguồn)
   return { status, findings: pf.findings, score, eventId: String(ev.id), docKey: r.docKey, version: r.version, postStatus: r.status };
 }
@@ -153,5 +155,7 @@ export async function acceptItem(trx: Db, auth: AuthContext, id: string, codes: 
 export async function dismissItem(trx: Db, auth: AuthContext, id: string, reason: string) {
   const row = await lockOpen(trx, auth, id);
   await trx.updateTable('intake_inbox').set({ status: 'dismissed', resolved_at: new Date(), resolved_by: auth.actor, resolution_note: reason }).where('id', '=', row.id).execute();
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): bỏ mục → bizcity.intake.resolved
+  await emitResolved(trx, auth.tenantId, auth.actor, { inboxId: row.id, docKey: row.doc_key, status: 'dismissed', eventId: null, patched: patchesOf(row).length > 0 });
   return { id: row.id, status: 'dismissed' as const };
 }

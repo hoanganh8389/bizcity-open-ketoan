@@ -9,6 +9,7 @@
  */
 import { useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DOC_TYPE_LABELS, INTAKE_CATALOG, type DocType, type IntakeCode, type IntakeFinding } from '@ketoan/contracts';
 import { api, errorText } from '@/lib/api';
@@ -78,7 +79,7 @@ export function IntakeList({ tab }: { tab: IntakeTab }) {
   ];
   return (
     <>
-      {tab === 'inbox' && <div className="muted" style={{ margin: '4px 0', fontSize: 12 }}>Chứng từ cửa nạp đã từ chối, chưa vào sổ. Ưu tiên sửa ở nguồn rồi gửi lại (mục tự đóng); sửa tại bể khi nguồn không sửa được — chứng từ sẽ mang dấu "sửa tại bể".</div>}
+      {tab === 'inbox' && <div className="muted" style={{ margin: '4px 0', fontSize: 12 }}>Chứng từ cửa nạp đã từ chối, chưa vào sổ. Ưu tiên sửa ở nguồn rồi gửi lại (mục tự đóng); sửa tại bể khi nguồn không sửa được — chứng từ sẽ mang dấu "sửa tại bể". <Link to="/chung-tu/bang-diem">Bảng điểm đầu vào (ACC94) →</Link></div>}
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {q.isLoading ? <Loading /> : rows.length === 0 ? (
         <Empty text={tab === 'inbox' ? 'Không có chứng từ nào cần sửa' : tab === 'trial' ? 'Bạn chưa lưu lần Kiểm thử nào' : 'Không có mục nào đóng trong 7 ngày qua'} />
@@ -290,7 +291,7 @@ function History({ item }: { item: InboxItem }) {
   );
 }
 
-function LessonDrawer({ code, onClose }: { code: string; onClose: () => void }) {
+export function LessonDrawer({ code, onClose }: { code: string; onClose: () => void }) {
   const html = useMemo(() => marked.parse(getLesson(code) ?? `# ${code}\n\nChưa có trang bài học \`docs/huong-dan/loi-dau-vao/${code}.md\`.`, { async: false }) as string, [code]);
   return (
     <Drawer title={`Bài học ${code}`} onClose={onClose} narrow>

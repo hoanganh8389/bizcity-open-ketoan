@@ -3,6 +3,7 @@
 /**
  * BỂ CHỜ ĐẦU VÀO — API (docs/contracts/BIZCITY-INTAKE-FINDINGS-v1.md §5).
  *   GET  /api/v1/intake                 danh sách mục (lọc status, docKey, channel), kèm mã phát hiện   (documents:read)
+ *   GET  /api/v1/intake/score           bảng điểm đầu vào (đạt lần đầu, theo nguồn / người lập / loại / tuần, mười mã)            (documents:write)
  *   GET  /api/v1/intake/:id             chi tiết: nguyên văn, phát hiện, lỗi cửa nạp, lịch sử           (documents:read)
  *   POST /api/v1/intake/preflight       Kiểm thử: { document, save?, guard? } → { findings, score, guard, guardChanged?, trialId? } — không ghi sự việc (documents:write)
  *   POST /api/v1/intake/:id/patch       Sửa tại bể: { ops (RFC 6902), reason } → phát hiện mới, mã hết / mã mới (documents:write, mục của mình)
@@ -21,9 +22,11 @@ import { ok, queryBool } from '@bizcity/platform/core/http';
 import { getInbox, listInbox, saveTrial } from './inbox.js';
 import { acceptItem, currentDocument, dismissItem, patchItem, resubmitItem } from './repair.js';
 import { preflight } from './preflight.js';
+import { intakeScore } from './score.js';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Bể chờ đầu vào'];
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 
 export async function intakeRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -46,6 +49,21 @@ export async function intakeRoutes(app: FastifyInstance): Promise<void> {
       const auth = authOf(req);
       const out = await db.transaction().execute((trx) => listInbox(trx, auth.tenantId, { ...req.query, ...(req.query.mine ? { actor: auth.actor } : {}) }));
       return ok(out.rows, { total: out.total });
+    },
+  });
+
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-18): bảng điểm đầu vào — mọi kế toán (documents:write, ADR-0014 Q3), người xem không
+  r.get('/api/v1/intake/score', {
+    preHandler: requirePermission('documents:write'),
+    schema: {
+      tags, summary: 'Bảng điểm đầu vào: đạt lần đầu, điểm TB, mục mở, thời gian xử lý; theo nguồn / người lập / loại / tuần; mười mã nhiều nhất',
+      querystring: z.object({ days: z.coerce.number().int().min(1).max(366).default(30).describe('Khung N ngày gần nhất (bỏ qua khi có from)'), from: isoDate.optional(), to: isoDate.optional() }),
+    },
+    handler: async (req) => {
+      const auth = authOf(req);
+      const to = req.query.to ? new Date(`${req.query.to}T00:00:00Z`).getTime() + 86_400_000 : Date.now();
+      const from = req.query.from ? new Date(`${req.query.from}T00:00:00Z`).getTime() : to - req.query.days * 86_400_000;
+      return ok(await db.transaction().execute((trx) => intakeScore(trx, auth.tenantId, new Date(from), new Date(to))));
     },
   });
 

@@ -2,9 +2,10 @@
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4: 0.6.0-draft — §7 bảng điểm, INTAKE_OPEN_AGE, sự kiện bizcity.intake.* -->
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: 0.5.0-draft — §6 sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục; lọc closed / mine; chi tiết kèm current -->
 
-> **Phiên bản:** 0.5.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
+> **Phiên bản:** 0.6.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** Kernel (cửa nạp) · **Quyết định:** [ADR-0014](../adr/ADR-0014-tram-tien-kiem-be-cho-dau-vao.md) · **Luật:** [RULE-INTAKE](../rules/RULE-INTAKE.md)
 > **Mã nguồn:** `packages/contracts/src/intake-findings.ts` (danh mục), `packages/kernel/src/modules/intake/preflight.ts` (bộ tiền kiểm) · **Năng lực:** `intake.findings`
 
 ## 1. Khuôn một phát hiện
@@ -108,3 +109,13 @@ Trạng thái mục: `open` · `trial` · `resubmitted` · `fixed_at_source` · 
 - Sự việc sinh từ nộp lại mang `extra.intake = { inboxId, patched, acceptedCodes }` (dấu lệch nguồn, khuôn `extra` có sẵn của `bizcity_ledger_intake@1`).
 - Không action ghi nào phơi cho AI / MCP (`ai: 'deny'`, `mcp: false`).
 
+## 7. Bảng điểm, chẩn đoán, sự kiện (W4, `intake.score`)
+
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-18..20) -->
+| Lời gọi | Quyền | Kết quả |
+|---|---|---|
+| `GET /api/v1/intake/score?days=30` (hoặc `from`, `to` YYYY-MM-DD) | `documents:write` (mọi kế toán, ADR-0014 Q3; người xem → 403) | `totals` { `sent`, `firstPass`, `firstPassRate`, `avgScore`, `open`, `oldestOpenAt`, `oldestOpenKey`, `closed`, `patchedAtInbox`, `patchedRate`, `medianResolveHours` }; `bySource`, `byActor` (kèm `label`), `byDocType`, `byWeek` — mỗi dòng { `key`, `sent`, `firstPass`, `firstPassRate`, `avgScore`, `topCode` }; `topCodes` (10 mã) |
+
+- **Chứng từ gửi** = một `docKey` khác nhau nhận trong khung (sự việc hoặc mục bể, không tính mục thử; mục không đọc được `docKey` tính riêng). **Đạt lần đầu** = chứng từ gửi chưa từng có mục bể. Không có nội dung chứng từ trong phản hồi.
+- **INTAKE_OPEN_AGE** (app) / **DG-INTAKE-1** (lane): mục `open` quá `bizcity.intake.open_alert_days` ngày (mặc định 3) → `warn`, mẫu = `docKey`.
+- **Sự kiện** (`bizcity_event@1` §7): `bizcity.intake.rejected` khi tạo mục mới, `bizcity.intake.resolved` khi mục đóng; `data` chỉ mã và số. App kết nối đăng ký được qua webhook như mọi sự kiện lõi (giao theo đơn vị, như `bizcity.ledger.entry.posted`).

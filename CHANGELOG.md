@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 -->
+- **Bảng điểm đầu vào** (ACC94, PHASE-021 W4): mọi kế toán xem tỷ lệ chứng từ đạt ngay lần đầu, điểm trung bình, mục đang mở (lâu nhất bao lâu), thời gian xử lý, số mục sửa tại bể; theo nguồn / người lập / loại chứng từ; mười mã lỗi hay gặp (mở bài học); xu hướng theo tuần. Không có nội dung chứng từ. API `GET /api/v1/intake/score`. Tự chẩn đoán thêm kiểm **INTAKE_OPEN_AGE** (chứng từ ở bể chờ quá 3 ngày, đổi bằng `bizcity.intake.open_alert_days`), bộ kiểm thêm **DG-INTAKE-1**. Sự kiện lõi mới `bizcity.intake.rejected` / `bizcity.intake.resolved` (chỉ mã và số) — app kết nối nhận qua webhook.
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3 -->
 - **Trạm kiểm tra đầu vào** (PHASE-021 W3, [bizcity_intake_findings@1 §6](docs/contracts/BIZCITY-INTAKE-FINDINGS-v1.md)): màn Định khoản tự động (ACC14) có thêm thẻ **Cần sửa** (chứng từ cửa nạp đã từ chối), **Đã xử lý**, **Thử của tôi**. Bấm một mục: câu kết luận, lỗi theo lớp kèm Vì sao / Sửa ở nguồn / Bài học, sửa ô ngay tại bể (bắt buộc lý do, bản gốc giữ nguyên), Kiểm thử, **Nộp lại** qua đúng cửa nạp, lịch sử lần thử và so hai lần. Chủ đơn vị / kế toán trưởng chấp nhận được cảnh báo (không bao giờ lỗi chặn) kèm lý do; kế toán trưởng bỏ được mục. API mới: `POST /api/v1/intake/:id/patch | resubmit | accept | dismiss` (action `core.intake.*`, không mở cho AI); `GET /api/v1/intake` lọc `closed`, `closedDays`, `mine`; chi tiết kèm `current`. Chứng từ nộp lại từ bể mang `extra.intake`. Khoá cấu hình mới `bizcity.intake.accept_roles`.
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29 -->

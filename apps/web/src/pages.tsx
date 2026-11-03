@@ -14,6 +14,7 @@ import { DefaultDataPage } from './features/flow/DefaultDataPages';
 import { Navigate, Route } from 'react-router-dom';
 import { LauncherPage, ModuleHomePage } from './features/launcher/LauncherPage';
 import { DocumentsPage } from './features/documents/DocumentsPage';
+import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
 import { EntriesPage } from './features/ledger/EntriesPage';
 import { AccountingVouchersPage } from './features/ledger/AccountingVouchersPage';
@@ -63,6 +64,7 @@ export const pageRoutes = (
     <Route path="/" element={<LauncherPage />} />
     <Route path="/app/:key" element={<ModuleHomePage />} />
     <Route path="chung-tu" element={<DocumentsPage />} />
+    <Route path="chung-tu/bang-diem" element={<IntakeScorePage />} />
     <Route path="quy/phieu-chuyen-tien" element={<CashTransfersPage />} />
     <Route path="so-cai/but-toan" element={<EntriesPage />} />
     <Route path="tien-ich/chung-tu-ke-toan" element={<AccountingVouchersPage key="all" mode="all" />} />

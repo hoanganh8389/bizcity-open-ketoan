@@ -153,6 +153,14 @@
       "readBy": "acceptItem (packages/kernel/src/modules/intake/repair.ts)", "writeBy": "chưa có",
       "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb (PHASE-021 W3 — mặc định đủ dùng)"
+    },
+    {
+      "key": "bizcity.intake.open_alert_days",
+      "class": "C", "owner": "core", "scopes": ["tenant"],
+      "storage": "tenants.settings.intake.openAlertDays", "schema": "int ≥ 1 (ngày)", "default": "3",
+      "readBy": "INTAKE_OPEN_AGE (packages/kernel/src/modules/intake/intake.diagnostics.ts), DG-INTAKE-1 (tests/conformance/diagnostics/intake.diag.mjs)", "writeBy": "chưa có",
+      "permission": "settings:write", "audit": "chưa có", "affectsPosting": false,
+      "gap": "Chưa có API ghi; đọc thẳng jsonb (PHASE-021 W4)"
     }
   ]
 }

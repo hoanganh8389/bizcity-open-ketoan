@@ -2,7 +2,7 @@
  * App ngoài tiến trình (ADR-0011 mức 2, PHASES 3.14):
  *   - kết nối: khoá API + bí mật webhook trả một lần, phạm vi = app.scopes của manifest; kết nối hai lần → CONFLICT;
  *   - khoá app: chỉ quyền đã đồng ý; nộp chứng từ chỉ docKey `<app>:…` ở MỌI cửa nạp, nguồn = app, bằng chứng via app:<key>;
- *   - webhook: chỉ đơn vị đã kết nối có việc giao; POST ký HMAC đúng, Idempotency-Key = id sự kiện; non-2xx → thử lại;
+ *   - webhook: chỉ đơn vị đã kết nối có việc giao; bizcity.intake.rejected (T021-17) chỉ mang mã, không nguyên văn; POST ký HMAC đúng, Idempotency-Key = id sự kiện; non-2xx → thử lại;
  *   - tắt kết nối: khoá bị từ chối, sự kiện mới không giao; bật lại dùng tiếp; xoay khoá: khoá cũ hết hiệu lực;
  *   - vé iframe: chỉ người dùng xin được, không dùng làm phiên, chỉ khoá của đúng app đổi được;
  *   - manifest sai (quyền quản trị, origin có đường dẫn, sự kiện không webhook) → dừng lúc đăng ký.
@@ -28,7 +28,7 @@ let install: { apiKey: string; webhookSecret: string; permissions: string[]; eve
 const manifest = (url: string): AppManifest => ({
   contract: 'bizcity_module@1', id: 'acme.pos-ngoai', key: 'pos-ngoai', kind: 'app', version: '0.1.0', label: 'POS ngoài', description: 'App bán lẻ chạy riêng (thử)',
   app: { scopes: ['documents:write', 'documents:read', 'catalog:read'], webhook: { url } },
-  events: { subscribes: [{ type: 'bizcity.ledger.entry.posted', version: 1 }] },
+  events: { subscribes: [{ type: 'bizcity.ledger.entry.posted', version: 1 }, { type: 'bizcity.intake.rejected', version: 1 }] },
   ui: { origin: 'https://pos.example.test', entry: '/nhung' },
 });
 
@@ -65,7 +65,7 @@ describe('Kết nối app', () => {
     install = res.json().data;
     expect(install.webhookSecret).toMatch(/^whsec_/);
     expect(install.permissions).toEqual(['documents:write', 'documents:read', 'catalog:read']);
-    expect(install.events).toEqual(['bizcity.ledger.entry.posted']);
+    expect(install.events).toEqual(['bizcity.ledger.entry.posted', 'bizcity.intake.rejected']);
     const key = await db.selectFrom('api_keys').select(['app_key', 'scopes']).where('tenant_id', '=', tenantId).where('app_key', '=', 'pos-ngoai').executeTakeFirstOrThrow();
     expect(key).toEqual({ app_key: 'pos-ngoai', scopes: [] });
     const again = await ctx.app.inject({ method: 'POST', url: '/api/v1/apps/pos-ngoai/install', headers: auth() });
@@ -168,6 +168,19 @@ describe('Webhook từ outbox', () => {
     expect(left.length).toBeGreaterThan(0);
     expect(left[0]).toMatchObject({ attempts: 1, last_error: expect.stringContaining('HTTP 500') });
     reply = 200;
+  });
+
+  it('T021-17: app gửi chứng từ hỏng → mục bể có app_key; webhook bizcity.intake.rejected chỉ có mã, không nguyên văn', async () => {
+    const res = await submit({ ...appDoc('R1'), docDate: '05/10/2026', description: 'BI-MAT-APP-001' });
+    expect(res.statusCode).toBe(400);
+    const id = res.json().error.intake.id as string;
+    expect(await db.selectFrom('intake_inbox').select(['app_key', 'channel']).where('id', '=', id).executeTakeFirstOrThrow()).toEqual({ app_key: 'pos-ngoai', channel: 'app' });
+    hits.length = 0;
+    reply = 200;
+    await dispatch();
+    const hit = hits.map((h) => JSON.parse(h.body)).find((e) => e.type === 'bizcity.intake.rejected' && e.subject === `intake:${id}`);
+    expect(hit?.data).toMatchObject({ inboxId: id, docKey: 'pos-ngoai:CN01:R1', appKey: 'pos-ngoai', channel: 'app', codes: expect.arrayContaining(['IN-SHAPE-003']), score: 0 });
+    expect(JSON.stringify(hits.map((h) => h.body))).not.toContain('BI-MAT-APP-001');
   });
 
   it('đơn vị không kết nối app: không có việc giao', async () => {

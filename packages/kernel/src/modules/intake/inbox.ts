@@ -19,6 +19,7 @@ import { AppError } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import { defineSubscriber } from '@bizcity/platform/core/events';
 import type { IntakeFinding } from '@ketoan/contracts';
+import { emitKernelEvent, emitKernelEventAs } from '../documents/kernel-events.js';
 import { preflight, stable } from './preflight.js';
 
 export type IntakeChannel = 'api' | 'batch' | 'submit' | 'app' | 'connector' | 'mcp' | 'trial';
@@ -66,6 +67,13 @@ export async function recordRejection(auth: AuthContext, raw: unknown, channel: 
     const out = await db.transaction().execute(async (trx) => {
       const pf = await preflight(trx, auth, raw, opts); // dấu Commit Guard của lần nộp (nếu có) → bể ghi IN-GUARD-001 như cửa nạp
       const row = await insertRow(trx, auth, raw, channel, 'open', pf.findings, pf.score, { code: err.code, message: err.message, details: err.details ?? null });
+      // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): mục mới → bizcity.intake.rejected (gửi trùng không phát lại); chỉ mã + số, không nguyên văn
+      if (row.attempt_no === 1) {
+        const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+        await emitKernelEvent(trx, auth, 'bizcity.intake.rejected', `intake:${row.id}`, {
+          inboxId: String(row.id), docKey: str(r.docKey), docType: str(r.docType, 40), channel, appKey: auth.app ?? null, codes: [...new Set(pf.findings.map((f) => f.code))], score: pf.score,
+        });
+      }
       return { id: String(row.id), attempt: row.attempt_no, score: pf.score, findings: pf.findings };
     });
     err.intake = { id: out.id, attempt: out.attempt, score: out.score, findings: out.findings, url: `/api/v1/intake/${out.id}` };
@@ -80,15 +88,23 @@ export async function saveTrial(trx: Db, auth: AuthContext, raw: unknown, findin
   return { id: String(row.id), attempt: row.attempt_no };
 }
 
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): đóng mục theo nguồn → bizcity.intake.resolved từng mục
 /** Cửa nạp đã nhận docKey → đóng mục 'open' cùng docKey (nguồn đã sửa). Gọi trong giao dịch có sự việc, hoặc sau commit. */
 export async function closeBySource(trx: Db, tenantId: string, docKey: string, actor: string): Promise<number> {
   const ev = await trx.selectFrom('accounting_events').select('id').where('tenant_id', '=', tenantId).where('doc_key', '=', docKey).executeTakeFirst();
   if (!ev) return 0;
-  const r = await trx.updateTable('intake_inbox')
+  const rows = await trx.updateTable('intake_inbox')
     .set({ status: 'fixed_at_source', event_id: ev.id, resolved_at: new Date(), resolved_by: actor, resolution_note: 'Nguồn gửi lại, cửa nạp đã nhận' })
     .where('tenant_id', '=', tenantId).where('doc_key', '=', docKey).where('status', '=', 'open')
-    .executeTakeFirst();
-  return Number(r.numUpdatedRows ?? 0);
+    .returning(['id', 'patches'])
+    .execute();
+  for (const r of rows) await emitResolved(trx, tenantId, actor, { inboxId: String(r.id), docKey, status: 'fixed_at_source', eventId: String(ev.id), patched: Array.isArray(r.patches) && r.patches.length > 0 });
+  return rows.length;
+}
+
+/** bizcity.intake.resolved — mục đóng (nguồn sửa, nộp lại, chấp nhận, bỏ). */
+export function emitResolved(trx: Db, tenantId: string, actor: string, data: { inboxId: string; docKey: string | null; status: string; eventId: string | null; patched: boolean }) {
+  return emitKernelEventAs(trx, tenantId, actor, 'bizcity.intake.resolved', `intake:${data.inboxId}`, data);
 }
 
 // [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: lọc mục đã đóng (closed, closedDays) và theo người lập (actor) cho thẻ Đã xử lý / Thử của tôi; danh sách kèm số bản vá, mã đã chấp nhận

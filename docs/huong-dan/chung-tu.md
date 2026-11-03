@@ -26,6 +26,8 @@ Phiếu mua, bán, trả lại, chuyển kho, điều chỉnh kho lập ở **h�
 Số trên thẻ là số chứng từ chờ / lỗi theo bộ lọc đang chọn.
 
 <!-- [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: Trạm kiểm tra -->
+**Bảng điểm đầu vào (ACC94)** — menu Kế toán, ngay dưới Định khoản tự động: tỷ lệ chứng từ vào sổ ngay lần đầu, lỗi hay gặp theo nguồn / người lập. Để cùng học cách nhập đúng, không để đánh giá cá nhân. <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 -->
+
 **Sửa tại bể.** Chứng từ sửa ở đây mang dấu "sửa tại bể" (lệch so với nơi phát sinh); bản gốc nơi phát sinh gửi vẫn được giữ nguyên để đối chiếu. Mỗi lần sửa phải ghi lý do và hiện ở **Lịch sử lần thử** (tích hai dòng để so: lỗi nào hết, lỗi nào mới). Lỗi đỏ (chặn) phải sửa; cảnh báo vàng thì chủ đơn vị / kế toán trưởng có thể **Chấp nhận cảnh báo** kèm lý do. Chứng từ do app ngoài gửi phải sửa ở app. **Bỏ mục** (kế toán trưởng) khi nơi phát sinh đã huỷ phiếu.
 
 ## Định khoản theo lô

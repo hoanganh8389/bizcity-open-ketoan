@@ -128,6 +128,8 @@ Gửi ra ngoài (webhook tới WooCommerce, Cell) là một subscriber đặc bi
 | `bizcity.masterdata.catalog.changed` | danh mục hàng đổi (gom khung 5 giây; đang phát từ hook sau commit) | `catalog` |
 | `bizcity.clock.daily` / `bizcity.clock.hourly` | 01:00 giờ đơn vị / mỗi giờ | `clock` |
 | `bizcity.module.enabled` / `.disabled` | bật / tắt module cho đơn vị | `module:<id>` |
+| `bizcity.intake.rejected` <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20) --> | cửa nạp từ chối, tạo mục bể chờ mới (gửi trùng không phát lại); `data` = `{ inboxId, docKey, docType, channel, appKey, codes, score }` — chỉ mã và số, không nguyên văn (R-INTAKE-12) | `intake:<id>` |
+| `bizcity.intake.resolved` | mục bể đóng (`fixed_at_source`, `resubmitted`, `accepted`, `dismissed`); `data` = `{ inboxId, docKey, status, eventId, patched }` | `intake:<id>` |
 
 Module dùng `bizcity.ledger.entry.posted` để biết **chắc chắn** sổ đã ghi (ví dụ đổi kỳ hợp đồng sang "đã thu" chỉ khi bút toán thu tiền đã vào sổ, kể cả ở chế độ chờ duyệt của kế toán).
 
