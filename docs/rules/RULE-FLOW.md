@@ -54,7 +54,7 @@ Không cần chữ chốt riêng: làm thêm theo **khuôn đã chốt** (vd chu
 
 **Hình dạng.**
 
-1. `CLAIMS.md` thêm cột **Việc** (sau cột Đợt): danh sách mã `S###-n` dòng đó giữ, cách nhau dấu phẩy; `—` khi đợt chưa có dòng checklist (vd đợt tài liệu). Một mã chỉ nằm ở **một** dòng "đang làm" / "chờ merge". Mã phải có thật trong một `40-MASTER-CHECKLIST.md`.
+1. `CLAIMS.md` thêm cột **Việc** (sau cột Đợt): danh sách mã `S###-n` — có thể thêm một chữ cái khi tách việc, vd `S010-1a` (8 việc đang dùng) <!-- [2026-11-04 12:04 AM Johnny Chu - Chu Hoàng Anh] FLOW — sổ đăng ký dùng chung của bộ kiểm; khuôn mã việc có hậu tố chữ cái (gặp khi làm FLOW-2) --> — dòng đó giữ, cách nhau dấu phẩy; `—` khi đợt chưa có dòng checklist (vd đợt tài liệu). Một mã chỉ nằm ở **một** dòng "đang làm" / "chờ merge". Mã phải có thật trong một `40-MASTER-CHECKLIST.md`.
 2. Dòng việc trong checklist: `| S###-n | Việc | … | Trạng thái |`, ô cuối **bắt đầu bằng một ký hiệu**: ☐ chưa làm · 🟡 có mã + test, chưa đủ tín hiệu · ✅ đủ tín hiệu / có bằng chứng · ⛔ chờ chủ hoặc người ngoài · **⏸ hoãn (chủ để sau)** (ký hiệu mới, đã có trong PHASE-019). Dấu `|` trong nội dung ô viết `\|`.
 3. Cột của bảng (mỗi việc đúng một cột):
 
@@ -82,6 +82,20 @@ Không cần chữ chốt riêng: làm thêm theo **khuôn đã chốt** (vd chu
 **Ảnh hưởng.** PR đổi trạng thái một việc (checklist hoặc CLAIMS) phải chạy lại `bang-viec.mjs --write` trong cùng PR (SC-FLOW-3 bắt khi quên, như `tru-cot-md.mjs`). Dòng CLAIMS cũ thêm cột Việc trong PR code đầu tiên. PR giữ chỗ **không** tự merge (chủ dự án quyết 2026-11-03, giữ mức chặt của R-FLOW): người duyệt merge tay sau khi SC-FLOW-1 xanh.
 
 **Kiểm bằng.** SC-FLOW-1 mở rộng (cột Việc: mã có thật, không hai dòng cùng giữ); SC-FLOW-3 (bảng sinh khớp nguồn); SC-FLOW-4 (dòng checklist đúng khuôn, ô trạng thái bắt đầu bằng ký hiệu). Chi tiết ở [RULE-QUALITY-GATE](RULE-QUALITY-GATE.md).
+
+## Sổ dùng chung (không tính là ngoài phạm vi)
+<!-- [2026-11-04 12:04 AM Johnny Chu - Chu Hoàng Anh] FLOW — sổ đăng ký dùng chung của bộ kiểm; khuôn mã việc có hậu tố chữ cái (gặp khi làm FLOW-2) -->
+
+Vài tệp là **sổ đăng ký** mà mọi PR cùng loại phải thêm một dòng của mình; giữ chỗ riêng cho chúng sẽ làm mọi đợt chồng phạm vi nhau. Mọi nhánh được sửa các tệp này dù không có trong phạm vi đã giữ chỗ (`nhan-viec.mjs kiem` không báo R-FLOW-3), với điều kiện **chỉ thêm / sửa dòng của chính đợt mình**, không đổi dòng của đợt khác:
+
+| Tệp | Mỗi PR thêm gì |
+|---|---|
+| `CHANGELOG.md` | dòng thay đổi của đợt |
+| `docs/phases/CLAIMS.md` | dòng giữ chỗ của đợt (và xoá khi xong, R-FLOW-6) |
+| `docs/phases/*/40-MASTER-CHECKLIST.md` | trạng thái việc con của đợt, nhật ký |
+| `docs/phases/BANG-VIEC.md`, `docs/phases/bang-viec.json` | sinh lại bằng `node scripts/bang-viec.mjs --write` (R-FLOW-8) |
+| `tests/conformance/fixtures/expect.json` | kết quả mong đợi của ca tự kiểm cho phép kiểm của đợt |
+| `tests/conformance/baseline.json` | nợ đã biết của phép kiểm của đợt, kèm `ref` (thêm nợ cần người duyệt, RULE-QUALITY-GATE) |
 
 ## Ngoại lệ
 
