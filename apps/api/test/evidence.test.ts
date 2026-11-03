@@ -8,6 +8,7 @@ import { db } from '../src/db/client.js';
 import { PLATFORM_DIAGNOSTICS } from '../src/modules/system/diagnostics.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 import { compactEvidence, EVIDENCE_INPUT_MAX } from '@bizcity/platform/core/actions';
+import { writeAudit } from '@bizcity/platform/core/audit';
 
 let ctx: TestCtx, kt: TestCtx;
 let tenantId = '';
@@ -63,7 +64,8 @@ describe('Bằng chứng', () => {
   });
 
   it('writeAudit() cũ (service gọi tay) cũng vào chuỗi băm, loại người gọi suy từ actor', async () => {
-    expect((await call(ctx, 'PUT', '/api/v1/settings/data-lock', { lockUntil: null })).status).toBe(200);
+    // Ngoài action (trong action, tên ngoài AUDIT_KEEP nằm ở notes.audit[] của bằng chứng — ACTION §4.4)
+    await db.transaction().execute((trx) => writeAudit(trx as never, { tenantId, actor: 'user:test', action: 'settings.data-lock', objectType: 'settings', objectId: 'data-lock', after: { lockUntil: null } }));
     const row = await db.selectFrom('audit_logs').select(['id', 'actor_kind', 'chain_seq', 'hash']).where('tenant_id', '=', tenantId).where('action', '=', 'settings.data-lock').executeTakeFirstOrThrow();
     expect(row).toMatchObject({ actor_kind: 'user', chain_seq: expect.any(String), hash: expect.stringMatching(/^sha256:/) });
     expect((await call(ctx, 'GET', `/api/v1/evidence/${row.id}`)).body.data.verify).toEqual({ hashValid: true, linked: true });
