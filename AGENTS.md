@@ -64,6 +64,9 @@ Không cần bước 1–4: sửa lỗi nhỏ (một tệp, không đổi hành 
 <!-- [2026-10-31 03:55 PM Johnny Chu - Chu Hoàng Anh] R-SIG — đồng bộ main trước mỗi lượt code (nhánh feat đứng sau main 18 commit, xung đột mua-hang/service.ts, dist contracts cũ). -->
 <!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — Errors / Platform nay ở packages/platform (@bizcity/platform), đường cũ là tệp chuyển tiếp -->
 <!-- [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cổng Kernel nay là gói @bizcity/kernel (packages/kernel), đường con chỉ cho test -->
+<!-- [2026-11-03 03:40 PM Johnny Chu - Chu Hoàng Anh] G3-01 — mục "Xây app ghi sổ": ba skill kế toán, lệnh event check / explain, không tự đoán tài khoản hay thuế -->
+<!-- [2026-11-03 04:45 PM Johnny Chu - Chu Hoàng Anh] G3-01 — "Xây app ghi sổ": sáu chuẩn C1…C6, skill cho mọi loại app, flow check -->
+<!-- [2026-11-04 12:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-027 — "Xây app ghi sổ" trỏ khung trụ cột 0–VIII (D027-1) -->
 
 Nhiều người cùng đẩy lên `main` (phân hệ, giao diện). Nhánh đứng lại sau `main` thì sửa chồng lên mã cũ, xung đột khi gộp, bộ kiểm báo lỗi không phải của mình. Mỗi lượt code:
 
@@ -127,6 +130,23 @@ Luật: [RULE-REVIEW §7–§8](docs/rules/RULE-REVIEW.md) (R-REV-14..16). Mục
 
 Trả lời ngắn trước (kết luận + điểm + phát hiện chặn), chi tiết sau. Không khen chung chung; chỉ nói điều kiểm được.
 
+## Xây app ghi sổ (POS, CRM, MRP, kho vật tư, tài sản, ERP): dùng skill kế toán
+
+App ngoài Core chỉ **kể sự việc** qua cửa nạp; Kernel định khoản. Bản đồ kiến trúc: trụ cột 0–VIII của Core ([docs/standard/tru-cot.json](docs/standard/tru-cot.json)) và việc của từng người ở [PHASE-027 §4](docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/00-MASTER-PLAN.md). Hướng dẫn đầy đủ (công cụ kiểm, mã hàng, vòng đời, quy tắc đặt tên, AI): [docs/core/](docs/core/README.md), riêng AI: [docs/core/04-huong-dan-cho-ai.md](docs/core/04-huong-dan-cho-ai.md). Đọc trước [open-ketoan-standard](skills/open-ketoan-standard/SKILL.md): sáu chuẩn mọi app phải đạt và chỗ Kernel chưa có (FIFO, mã hàng có phiên bản, sản xuất). Các skill ở [skills/](skills/README.md):
+
+| Việc | Skill | Lệnh |
+|---|---|---|
+| Thiết kế tích hợp cho CRM, MRP, kho, tài sản, bán online | [build-business-app-with-open-ketoan](skills/build-business-app-with-open-ketoan/SKILL.md) | theo bảng loại app |
+| Nối POS vào sổ, tới lúc thấy bút toán thật | [build-pos-with-open-ketoan](skills/build-pos-with-open-ketoan/SKILL.md) | `node examples/pos-mini/pos-mini.mjs`, `npx bizcity event check` |
+| Kiểm luồng mua → kho → bán → giá vốn → lãi lỗ → đóng kỳ | [check-accounting-flow](skills/check-accounting-flow/SKILL.md) | `npx bizcity flow check --sku <mã> --period YYYY-MM` |
+| Kiểm chứng từ trước khi nộp | [validate-accounting-event](skills/validate-accounting-event/SKILL.md) | `npx bizcity event check <tệp> [--submit]` |
+| Giải thích một mã lỗi / mã phát hiện | [explain-accounting-error](skills/explain-accounting-error/SKILL.md) | `npx bizcity explain <MÃ> [--role …]` |
+
+- Không gửi, sinh hay đoán số tài khoản; không tự đặt thuế suất; không tự tính giá vốn; một mặt hàng một mã suốt đời. Mã lấy từ danh mục của đơn vị (`docs/api/09-danh-muc.md`).
+- Chỉ báo "xong" khi `event check` ra `KẾT LUẬN: PASS` (đã có lớp L5 định khoản thử). SKIP không phải PASS.
+- Nghĩa của một mã chỉ lấy từ `npx bizcity explain`; mã không có trong danh mục thì nói thẳng, không đoán.
+- Cài skill vào dự án khác: `npx bizcity skills install --to <thư mục>`.
+
 ## Tạo module mới (Bizcity Framework Standard v1)
 
 Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa `packages/*`, không sửa module khác.** Chỉ tạo / sửa tệp trong `modules/<key>/` (ADR-0024: không còn tạo mới ở `apps/*/src/phan-he/`).
@@ -137,8 +157,9 @@ Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa 
 4. Viết `bizcity.module.json` trước, kiểm theo [docs/contracts/BIZCITY-MODULE-v1.schema.json](docs/contracts/BIZCITY-MODULE-v1.schema.json).
 5. Khách hàng, mặt hàng, chi nhánh: dùng danh mục chuẩn, **không** tạo bảng riêng. Tiền vào sổ: nộp `docType` có sẵn qua `ctx.ledger.submit` kèm `reasonCode` (lý do lấy từ gói định khoản, [BIZCITY-POSTING-TEMPLATE-v1.md](docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md) §7), **không** viết tài khoản. Action cho AI dùng: `expose.mcp` theo [BIZCITY-MCP-v1.md](docs/contracts/BIZCITY-MCP-v1.md).
 6. Thiếu năng lực thì **dừng phần đó**, nói rõ với người dùng và soạn đề xuất theo [docs/standard/VERSIONING.md §5](docs/standard/VERSIONING.md). Không tự vá Core.
-7. Chạy bộ kiểm [docs/standard/CONFORMANCE.md](docs/standard/CONFORMANCE.md): `npx bizcity module check <key>` phải **ĐẠT** (gồm `selfcheck --module`, typecheck, test hợp đồng module trên CSDL test).
+7. Chạy bộ kiểm [docs/standard/CONFORMANCE.md](docs/standard/CONFORMANCE.md): `npx bizcity module check <key>` phải **ĐẠT** (gồm `selfcheck --module`, kiểm kế toán `accounting-check --static`, typecheck, test hợp đồng module trên CSDL test). Module có gửi chứng từ vào sổ: đặt chứng từ mẫu ở `modules/<key>/examples/*.json`, chạy `npx bizcity module accounting-check <key>` (kèm `BIZCITY_SERVER` + `BIZCITY_API_KEY`) để thấy bút toán Kernel dựng. `selfcheck --module` một mình **không** thấy module tự ghi bảng sổ, tự điền số tài khoản hay tự tính giá vốn.
 <!-- [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W3: module SDK có chỗ nạp (API + web), template, CLI -->
+<!-- [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — module check gồm accounting-check; chứng từ mẫu examples/ -->
 8. Bắt đầu module mới bằng `npx bizcity module new <key> --label "Tên"` (khung từ [templates/starter-module/](templates/starter-module/)), rồi đọc `modules/<key>/AGENTS.md`. Module nằm ở `modules/<key>/`: API tự nạp (route `/api/v1/m/<key>/…`), web tự gom (`/app/<key>/…`); màn chỉ dùng `@bizcity/ui-kit`.
 
 ## Trước khi xong việc
@@ -192,6 +213,9 @@ Dev (chủ đơn vị / vai trò Nhà phát triển) tra lỗi ở **Nhà phát 
 ## Đổi code X → sửa tài liệu Y
 
 Tra bảng §5 trong [docs/00-CANON.md](docs/00-CANON.md). Thêm khoá cấu hình → [docs/contracts/bizcity-settings.registry.json](docs/contracts/bizcity-settings.registry.json). Đổi khuôn chứng từ → [docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md](docs/contracts/BIZCITY-LEDGER-INTAKE-v1.md) + `docs/api/`.
+
+<!-- [2026-11-03 08:23 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — bộ kiểm chặn tài liệu trôi khỏi mã -->
+Dời / đổi tên tệp hoặc route → sửa mọi tài liệu nhắc tới nó: `SC-DOC-4` chặn đường dẫn `trong dấu huyền` không còn, `SC-DOC-5` chặn "GET /api/v1/…" không có trong mã (đích chưa làm thì ghi rõ "chưa tách" / "đề xuất" trên dòng đó). Thêm mục menu → thêm `docs/huong-dan/<key>.md` (`SC-DOC-6`, nợ cũ chỉ được bớt).
 
 ## Chữ ký và dấu thay đổi (R-SIG — bắt buộc)
 

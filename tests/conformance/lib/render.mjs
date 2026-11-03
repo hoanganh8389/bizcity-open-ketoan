@@ -50,7 +50,9 @@ export function renderConsole(sb, results, { verbose = false } = {}) {
   }
   out.push('── BẢNG ĐIỂM');
   out.push(`  Tuân chuẩn (conformance) ${fmt(s.conformance.score).padStart(5)}  ${s.conformance.grade}${delta(s.conformance.delta)}`);
-  out.push(`  Sẵn sàng Standard v1     ${fmt(s.readiness.score).padStart(5)}  ${s.readiness.grade}${delta(s.readiness.delta)}`);
+  // [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — ở chế độ module, điểm "Sẵn sàng Standard v1" là của Core (năng lực Core đã có), không phải của module: không in cạnh "Tuân chuẩn" để dev mới khỏi hiểu nhầm module của mình bị điểm F
+  if (sb.mode === 'module') out.push('  (Sẵn sàng Standard v1 là điểm của Core, không phải của module này — xem selfcheck toàn repo)');
+  else out.push(`  Sẵn sàng Standard v1     ${fmt(s.readiness.score).padStart(5)}  ${s.readiness.grade}${delta(s.readiness.delta)}`);
   out.push(`  Độ phủ luật              ${fmt(s.coverage.score).padStart(5)}  ${s.coverage.grade}${delta(s.coverage.delta)}`);
   out.push(`  Diagnostics              ${fmt(s.diagnostics.score).padStart(5)}  ${s.diagnostics.grade}${s.diagnostics.score == null ? '  (bỏ qua: chưa chỉ CSDL)' : ''}`);
   const c = sb.counts;

@@ -1,0 +1,119 @@
+{
+  "contract": "bizcity_check_report@1",
+  "module": "bizcity.mau-module",
+  "version": "0.1.0",
+  "sourceHash": "sha256:d3bb0906e12fc7268989d432da72b67afa5fb0915fb9167c71bfe3ba9c2445cf",
+  "core": {
+    "standard": "1.0.0-draft"
+  },
+  "result": "fail",
+  "checks": [
+    {
+      "id": "SC-API-1",
+      "conf": [
+        "CONF-STATIC-9"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-API-2",
+      "conf": [],
+      "result": "pass"
+    },
+    {
+      "id": "SC-CON-2",
+      "conf": [
+        "CONF-MAN-1",
+        "CONF-MAN-2",
+        "CONF-MAN-3",
+        "CONF-MAN-4",
+        "CONF-MAN-6",
+        "CONF-MAN-7"
+      ],
+      "result": "fail",
+      "findings": 1
+    },
+    {
+      "id": "SC-DATA-1",
+      "conf": [
+        "CONF-MIG-1"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-DATA-3",
+      "conf": [
+        "CONF-MIG-6"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-DATA-4",
+      "conf": [
+        "CONF-MIG-4"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-DATA-5",
+      "conf": [
+        "CONF-MIG-2"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-DATA-6",
+      "conf": [
+        "CONF-MIG-2"
+      ],
+      "result": "not-run"
+    },
+    {
+      "id": "SC-EVD-1",
+      "conf": [
+        "CONF-STATIC-13"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-EVT-1",
+      "conf": [
+        "CONF-STATIC-11"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-EVT-2",
+      "conf": [
+        "CONF-RUN-10"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-MOD-1",
+      "conf": [
+        "CONF-STATIC-1"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-SEC-1",
+      "conf": [],
+      "result": "pass"
+    },
+    {
+      "id": "SC-SEC-2",
+      "conf": [
+        "CONF-STATIC-3"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "SC-TPL-1",
+      "conf": [],
+      "result": "pass"
+    }
+  ],
+  "note": "CONF-RUN, CONF-UPG (chạy trên Core thật) chưa có ở bộ kiểm tĩnh — Phase 4.",
+  "ranAt": "2026-11-03T12:10:07.452Z"
+}

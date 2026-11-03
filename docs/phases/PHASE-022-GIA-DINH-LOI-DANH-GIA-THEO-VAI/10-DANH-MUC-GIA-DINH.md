@@ -1,4 +1,5 @@
 # PHASE-022 · 10 — Danh mục giả định lỗi (mỗi ca kèm phương án khắc phục)
+<!-- [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trụ cột 7: thêm F22-STK-11 sổ chi tiết kho lệch số dư tài khoản hàng tồn kho (INVENTORY_LEDGER_MISMATCH, DG-STK-3); 93 ca -->
 <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: 9 ca có kiểm + test (CASH_NEGATIVE, ACCOUNT_WRONG_SIDE, TRANSIT_NONZERO, DEBT_MATCH_LEDGER, COGS_STALE, STOCK_ADJUST_NO_REASON, DEPRECIATION_OPEN, CONFORMANCE_STALE). -->
 <!-- [2026-11-02 07:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — danh mục 92 giả định lỗi trong 10 nhóm: môi trường, chứng từ, thuế / hoá đơn, kho / giá vốn, cuối kỳ, sổ / lệch sổ, công nợ, tiền, tài sản, phân quyền / bằng chứng; mỗi ca có phát hiện, mức, vai, hậu quả, phương án khắc phục từng bước, kiểm lại, trạng thái. -->
 
@@ -26,14 +27,14 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 | [ENV · Môi trường, bản cài](#2-env--môi-trường-bản-cài) | 12 | 12 | 0 | 0 | 0 | 0 |
 | [DOC · Chứng từ, cửa nạp](#3-doc--chứng-từ-cửa-nạp) | 16 | 6 | 4 | 6 | 0 | 0 |
 | [TAX · Thuế, hoá đơn](#4-tax--thuế-hoá-đơn) | 12 | 5 | 1 | 2 | 4 | 0 |
-| [STK · Kho, giá vốn](#5-stk--kho-giá-vốn) | 10 | 8 | 0 | 1 | 1 | 0 |
+| [STK · Kho, giá vốn](#5-stk--kho-giá-vốn) | 11 | 9 | 0 | 1 | 1 | 0 |
 | [CLOSE · Cuối kỳ, kết chuyển, khoá kỳ](#6-close--cuối-kỳ-kết-chuyển-khoá-kỳ) | 10 | 7 | 2 | 0 | 1 | 0 |
 | [LEDGER · Sổ, lệch sổ](#7-ledger--sổ-lệch-sổ) | 10 | 7 | 2 | 0 | 1 | 0 |
 | [DEBT · Công nợ](#8-debt--công-nợ) | 6 | 1 | 0 | 0 | 5 | 0 |
 | [CASH · Tiền](#9-cash--tiền) | 6 | 2 | 0 | 0 | 3 | 1 |
 | [FA · Tài sản, chi phí trả trước](#10-fa--tài-sản-chi-phí-trả-trước) | 4 | 0 | 0 | 0 | 4 | 0 |
 | [SEC · Phân quyền, bằng chứng](#11-sec--phân-quyền-bằng-chứng) | 6 | 0 | 6 | 0 | 0 | 0 |
-| **Cộng** | **92** | **48** | **15** | **9** | **19** | **1** |
+| **Cộng** | **93** | **49** | **15** | **9** | **19** | **1** |
 
 ## 2. ENV · Môi trường, bản cài
 
@@ -104,6 +105,7 @@ Ngưỡng ngày (3, 30) là **quy chế nội bộ** (miền `internal`), đơn 
 | F22-STK-08 | Nhập bảng giá vốn từ Excel thiếu mã đang xuất | kết quả tính giá vốn `imported.missing` | ⚠ | KTT | mã thiếu tính theo bình quân, lẫn hai cách | ① Bổ sung mã vào tệp, nhập lại. ② Hoặc bỏ giá nhập, quay về bình quân | màn ACC49 | ✔ |
 | F22-STK-09 | Phiếu điều chỉnh kho (kiểm kê) không ghi lý do | `STOCK_ADJUST_NO_REASON` | ⚠ | **KS**, TT | chênh lệch kiểm kê không có cơ sở | ① Ghi lý do + biên bản kiểm kê ở nguồn. ② Chọn lý do có tài khoản đối ứng (ACC18) | `STOCK_ADJUST_NO_REASON` | ✔ |
 | F22-STK-10 | Dòng chờ giá vốn kiểu cũ còn số tiền | phiếu giá vốn tháng đưa về 0 (`overwriteCostPairs`) | — | KS | (đã xử lý theo thiết kế) | Không cần làm gì: tính giá vốn tháng tự đưa dòng chờ cũ về 0 | — | ✔ |
+| F22-STK-11 | Sổ chi tiết kho lệch số dư tài khoản hàng tồn kho (tổng Nợ = tổng Có nhưng kho ≠ sổ cái) | `INVENTORY_LEDGER_MISMATCH` (DG-STK-3); `GET /api/v1/inventory/reconcile` | ⚠ | **KTT**, KS, TT | báo cáo kho và bảng cân đối không cùng một số; giá vốn, lãi gộp theo mặt hàng không giải thích được | ① Mẫu `<chi nhánh>:<mã hàng>`: mở đối chiếu kho ↔ sổ cái (`GET /api/v1/inventory/reconcile?period=YYYY-MM`). ② Mã rỗng = bút toán tay vào tài khoản kho không gắn mặt hàng: huỷ, ghi lại bằng chứng từ kho có mặt hàng. ③ Có mã: tìm chứng từ có ngày hạch toán khác ngày chứng từ, hoặc mặt hàng ghi vào tài khoản kho khác nhóm hạch toán; sửa ở nguồn, tính lại giá vốn (ACC49). Không điều chỉnh kho cho "khớp" | `INVENTORY_LEDGER_MISMATCH` | ✔ |
 
 ## 6. CLOSE · Cuối kỳ, kết chuyển, khoá kỳ
 
