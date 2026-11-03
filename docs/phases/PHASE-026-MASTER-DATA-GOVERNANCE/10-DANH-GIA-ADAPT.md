@@ -73,7 +73,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | C-1 | Hành trình mặt hàng: sự kiện kho, bút toán, giá vốn tháng, 'Vì sao giá vốn này?' | ✅ Đạt | bizcity_lineage 0.2.0, ACC95; test lineage (8 ca) | — | — | P0 |
 | C-2 | Hành trình qua đổi mã: mã cũ + mới là một; tìm bằng mã cũ | ✅ Đạt | B2b: item.codes, event.code, nhãn 'mã cũ'; test item-id-so-kho | — | — | P0 |
 | C-3 | Lớp giá vốn + phân bổ từng dòng xuất (mọi phương pháp) | 📄 Tài liệu | ADR-0021, PHASE-025 10-MO-HINH-DU-LIEU | valuation_layers / cost_allocations chưa có | S025-5, S025-6 (PHASE-025) | P0 |
-| C-4 | Phương pháp tính giá là chính sách có phiên bản; đơn vị mới mặc định FIFO | 📄 Tài liệu | D025-2 chủ duyệt | costing_method chưa có trong posting_policy_versions | S025-7, S025-17 (PHASE-025) | P1 |
+| C-4 | Phương pháp tính giá là chính sách có phiên bản; mặc định bình quân gia quyền tháng (xuất lô FEFO / FIFO là việc của kho) | 📄 Tài liệu | D025-2 chủ duyệt | costing_method chưa có trong posting_policy_versions | S025-7, S025-17 (PHASE-025) | P1 |
 | C-5 | Gate C — kiểm chuẩn vòng đời, mã CT-* trong thư viện | 📄 Tài liệu | RULE-CONTINUITY (CT-LIN/MD/COST/REC/PER/REV) | chưa có trong bizcity_findings@1, chưa có engine | S025-9, S025-10 (PHASE-025) | P0 |
 | C-6 | Khoá kỳ đòi chuỗi lành (chặn trừ khi chấp nhận có lý do; còn lại cảnh báo) | ☐ Chưa | — | — | S025-11, S025-18 (PHASE-025) | P0 |
 | C-7 | Truy vết đối tượng và tài khoản (một khách hàng / một TK → sự kiện, chứng từ) | ☐ Chưa | mới có báo cáo sổ chi tiết công nợ / sổ cái TK | chưa có lineage đối tượng / tài khoản | S026-13 (PHASE-026) | P1 |
