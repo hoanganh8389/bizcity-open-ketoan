@@ -82,9 +82,11 @@ function effectOf(kind: LineageKind, sameGroup: boolean): { effect: LineageEffec
 
 /** Hành trình một mặt hàng. `limit` áp riêng cho sự kiện và bút toán; vượt thì `summary.truncated`. */
 export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: LineageQuery = {}): Promise<LineageItem> {
-  const item = await trx.selectFrom('products').select(['sku', 'name', 'unit', 'barcode', 'is_active', 'is_draft']).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
-  if (!item) throw Errors.notFound(`mặt hàng ${sku}`);
+  // Mã gõ vào có thể là MÃ CŨ (đã đổi mã, B2b): tra định danh trước, rồi lấy mặt hàng hiện hành theo mã đang mở.
   const key = await itemKey(trx, tenantId, sku);
+  const current = key.codes.find((c) => c.kind === 'sku' && c.validTo === null)?.code ?? sku;
+  const item = await trx.selectFrom('products').select(['sku', 'name', 'unit', 'barcode', 'is_active', 'is_draft']).where('tenant_id', '=', tenantId).where('sku', '=', current).executeTakeFirst();
+  if (!item) throw Errors.notFound(`mặt hàng ${sku}`);
   const limit = Math.min(Math.max(q.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
   const from = q.from || null;
   const to = q.to || null;

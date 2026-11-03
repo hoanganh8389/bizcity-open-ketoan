@@ -4,6 +4,7 @@
  *   - đổi mã giữa kỳ: dòng cũ giữ mã cũ (ảnh chụp) và CÙNG item_id; Hành trình mặt hàng nối mã cũ + mã mới thành một;
  *   - sổ cái vẫn chỉ thêm: điền item_id từ rỗng một lần; đổi item_id / mã hàng của dòng sổ bị chặn;
  *   - mặt hàng mồ côi (mã có trong sổ / kho, không có trong danh mục) → khai lại mặt hàng thì NHẬN LẠI định danh đó;
+ *   - giá vốn tính theo định danh (G2): đổi mã giữa tháng → MỘT dòng giá vốn, đơn giá bình quân trên cả hai mã;
  *   - xoá (mặt hàng chưa có nhập xuất) rồi tạo lại cùng mã → định danh mới, không chồng hiệu lực; định danh cũ ngừng dùng.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -117,6 +118,50 @@ describe('item_id trên dòng sổ / kho', () => {
     expect(codes).toHaveLength(2);
     expect(codes[1]!.valid_from >= codes[0]!.valid_to!).toBe(true);
     expect(await db.selectFrom('items').select('status').where('item_id', '=', oldId).executeTakeFirst()).toMatchObject({ status: 'retired' });
+  });
+
+  it('giá vốn theo định danh: đổi mã giữa tháng → một dòng giá vốn mang mã hiện hành, đơn giá bình quân cả hai mã; phiếu giá vốn ghi mã tại ngày', async () => {
+    const ym = today().slice(0, 7);
+    const d1 = `${ym}-01`;
+    expect((await post(purchase('B2-GV1', d1, 'B2-GVA', 10, 100000))).body.data.status).toBe('posted');     // 10 × 10.000
+    const id = (await openItem('B2-GVA'))!;
+    await sql`UPDATE products SET sku = 'B2-GVB' WHERE tenant_id = ${tenantId} AND sku = 'B2-GVA'`.execute(db);
+    expect((await post(purchase('B2-GV2', today(), 'B2-GVB', 10, 200000))).body.data.status).toBe('posted'); // 10 × 20.000
+    const sale = await post({
+      docType: 'sale', docKey: 'B2-GV3', branchCode: 'CN01', docNo: 'B2-GV3', docDate: today(),
+      lines: [{ lineKey: 'l1', sku: 'B2-GVB', name: 'B2-GVB', unit: 'Hộp', qty: 4, amountBeforeTax: 400000, taxCode: 'R08', taxAmount: 32000 }],
+      payments: [{ methodCode: 'TM', amount: 432000 }], totals: { beforeTax: 400000, tax: 32000, total: 432000 },
+    });
+    expect(sale.body.data.status, JSON.stringify(sale.body)).toBe('posted');
+    const run = await call(ctx, 'POST', '/api/v1/inventory/costing', { period: ym });
+    expect(run.status, JSON.stringify(run.body)).toBe(200);
+
+    const costs = (await sql<{ sku: string; item_id: string; in_qty: string; unit_cost: string; out_qty: string }>`
+      SELECT sku, item_id, in_qty, unit_cost, out_qty FROM inventory_costs WHERE tenant_id = ${tenantId} AND item_id = ${id}`.execute(db)).rows;
+    expect(costs).toHaveLength(1);                                   // không tách thành B2-GVA + B2-GVB
+    expect(costs[0]).toMatchObject({ sku: 'B2-GVB', item_id: id });
+    expect(Number(costs[0]!.in_qty)).toBe(20);
+    expect(Number(costs[0]!.unit_cost)).toBe(15000);                 // (100.000 + 200.000) ÷ 20
+    expect(Number(costs[0]!.out_qty)).toBe(4);
+    const list = (await call(ctx, 'GET', `/api/v1/inventory/costs?period=${ym}&search=B2-GV`)).body.data;
+    expect(list.filter((r: { itemId: string }) => r.itemId === id)).toHaveLength(1);
+
+    // Phiếu giá vốn: 4 × 15.000, mã hàng trên dòng sổ = mã tại ngày bán, dòng sổ vẫn về đúng định danh.
+    const cogs = (await sql<{ product_sku: string; debit: string }>`
+      SELECT product_sku, debit FROM ledger_lines WHERE tenant_id = ${tenantId} AND item_id = ${id} AND description = 'Giá vốn hàng bán' AND debit > 0`.execute(db)).rows;
+    expect(cogs).toEqual([{ product_sku: 'B2-GVB', debit: expect.any(String) }]);
+    expect(Number(cogs[0]!.debit)).toBe(60000);
+    // Hành trình: một kỳ giá vốn, nối cả hai mã.
+    const l = (await call(ctx, 'GET', '/api/v1/lineage/items/B2-GVA')).body.data;
+    expect(l.item.itemId).toBe(id);
+    expect(l.costPeriods).toHaveLength(1);
+    expect(l.costPeriods[0]).toMatchObject({ period: ym, unitCost: 15000 });
+    // Báo cáo kho theo định danh: NXT một dòng mang mã hiện hành; sổ chi tiết tra bằng mã cũ vẫn ra đủ.
+    const nxt = (await call(ctx, 'GET', `/api/v1/inventory/stock-movement?from=${d1}&to=${today()}&search=B2-GV`)).body.data.rows;
+    expect(nxt.filter((r: { sku: string }) => r.sku.startsWith('B2-GV')).map((r: { sku: string; inQty: number; outQty: number }) => [r.sku, r.inQty, r.outQty])).toEqual([['B2-GVB', 20, 4]]);
+    const ledger = (await call(ctx, 'GET', `/api/v1/inventory/item-ledger?sku=B2-GVA&from=${d1}&to=${today()}`)).body.data;
+    expect(ledger.rows.map((r: { docNo: string }) => r.docNo)).toEqual(['B2-GV1', 'B2-GV2', 'B2-GV3']);
+    expect(ledger.closing).toMatchObject({ qty: 16, value: 240000 });
   });
 
   it('dòng mới tự gắn item_id theo mã tại ngày (trigger), bảng giá cũng vậy', async () => {
