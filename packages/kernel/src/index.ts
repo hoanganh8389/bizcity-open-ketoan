@@ -40,6 +40,9 @@ export const preflight = traceKernelFn('preflight', preflightRaw);
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route + subscriber bể chờ qua cổng
 export { intakeRoutes } from './modules/intake/intake.routes.js';
 export { intakeRetentionSubscriber, deleteExpired as deleteExpiredIntake } from './modules/intake/inbox.js';
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: bể chờ kiểm lại khi mặt hàng nháp được kích hoạt (R-GATE-6)
+import { recheckInboxForSkus as recheckInboxForSkusRaw } from './modules/intake/inbox.js';
+export const recheckInboxForSkus = traceKernelFn('recheckInboxForSkus', recheckInboxForSkusRaw);
 // [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.16: allocateByDocKeysIn qua cổng (ctx.ledger.allocateDebt, app.ts đăng ký)
 export const allocateByDocKeysIn = traceKernelFn('allocateByDocKeysIn', allocateByDocKeysInRaw);
 export const documentService = traceKernelApi('documentService', documentServiceRaw);
@@ -75,6 +78,12 @@ export { PROFILE_DIAGNOSTICS } from './modules/posting-config/profile.diagnostic
 export { PERIOD_DIAGNOSTICS } from './modules/periods/period.diagnostics.js';
 // [2026-11-02 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-11: kiểm L3 thuế GTGT và hoá đơn (C03 vat-vn, C04 einvoice-vn)
 export { TAX_DIAGNOSTICS } from './modules/tax-info/tax.diagnostics.js';
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19): INTAKE_OPEN_AGE — mục bể chờ mở quá ngưỡng
+export { INTAKE_DIAGNOSTICS } from './modules/intake/intake.diagnostics.js';
+// [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22): phân loại lỗi định khoản thử và giới hạn lượt — để test của Core kiểm; phân hệ không dùng
+export { postingFindings, takeTrial, resetTrials, TRIAL_LIMIT } from './modules/intake/trial-posting.js';
+// [2026-11-03 03:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-8: hàm kiểm thuế / hoá đơn theo một chứng từ (dùng chung tự chẩn đoán và Trạm tiền kiểm) — để test của Core kiểm; phân hệ không dùng
+export { reducedRateWindow, outsideReducedWindow, invoiceFieldIssues, invoiceIssuedAfterDelivery } from './modules/tax-info/tax.findings.js';
 // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm số dư, kho, lịch kiểm chuẩn
 export { BALANCE_DIAGNOSTICS } from './modules/ledger/balance.diagnostics.js';
 export { INVENTORY_DIAGNOSTICS } from './modules/inventory/inventory.diagnostics.js';

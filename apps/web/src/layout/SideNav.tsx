@@ -102,7 +102,7 @@ export function SideNav({ title, items, collapsed, onCollapse, onResizeStart }: 
 
 const WIDTH_KEY = 'ketoan.sidenav.width';
 export const sideNavWidth = {
-  get: () => { const w = read<number>(WIDTH_KEY, 268); return w >= 200 && w <= 520 ? w : 268; },
+  get: () => { const w = read<number>(WIDTH_KEY, 224); return w >= 200 && w <= 520 ? w : 224; },
   set: (v: number) => write(WIDTH_KEY, v),
 };
 

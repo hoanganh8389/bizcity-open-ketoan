@@ -122,7 +122,7 @@ export const submitActions: AnyActionDef[] = [
       + 'Lỗi định khoản (kỳ khoá, không cân, thiếu cấu hình) trả mã lỗi, không lưu chứng từ.',
     permission: 'documents:write', effect: 'write', idempotency: 'natural', sideEffects: ['documents', 'ledger'], dryRun: true,
     // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: khuôn kiểm ở cửa nạp (submitDocumentIn, cùng zod) thay vì ở đầu vào action — để chứng từ sai khuôn cũng vào bể chờ
-    input: z.object({ document: z.record(z.unknown()).describe('Chứng từ theo bizcity_ledger_intake@1 (docType quyết định khuôn; cửa nạp kiểm khuôn — sai thì giữ ở bể chờ, error.intake)') }),
+    input: z.object({ guard: z.string().trim().max(64).optional().describe('Dấu cấu hình từ lần Kiểm thử (POST /api/v1/intake/preflight → guard). Cấu hình đổi sau đó thì cửa nạp chạy lại tiền kiểm; còn lỗi chặn → IN-GUARD-001'), document: z.record(z.unknown()).describe('Chứng từ theo bizcity_ledger_intake@1 (docType quyết định khuôn; cửa nạp kiểm khuôn — sai thì giữ ở bể chờ, error.intake)') }),
     output: z.object({
       docKey: z.string(), version: z.number(),
       status: z.enum(['posted', 'pending', 'unchanged', 'error']),
@@ -131,14 +131,14 @@ export const submitActions: AnyActionDef[] = [
     }),
     expose: { http: { method: 'POST', path: '/api/v1/documents/submit' }, ai: 'deny' },
     evidence: { objectType: 'source_document', objectId: (input) => String(input.document.docKey ?? '?') },
-    handler: async (ctx, { document }) => {
+    handler: async (ctx, { document, guard }) => {
       const auth = ctx.legacyAuth;
       let r: Awaited<ReturnType<typeof submitDocumentIn>>;
       try {
-        r = await submitDocumentIn(ctx.data.tx, auth, document);
+        r = await submitDocumentIn(ctx.data.tx, auth, document, guard ? { guard } : {});
       } catch (err) {
         // Cửa nạp từ chối → bể chờ (giao dịch riêng; giao dịch action sẽ huỷ). Chạy thử (dry-run) không ghi bể.
-        if (!ctx.dryRun && isDoorRejection(err)) await recordRejection(auth, document, channelOf(auth, 'submit'), err);
+        if (!ctx.dryRun && isDoorRejection(err)) await recordRejection(auth, document, channelOf(auth, 'submit'), err, guard ? { guard } : {});
         throw err;
       }
       if (!ctx.dryRun) await closeBySource(ctx.data.tx, auth.tenantId, r.docKey, auth.actor);

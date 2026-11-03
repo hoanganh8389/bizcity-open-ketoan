@@ -78,6 +78,8 @@ export interface ActionContext {
     item<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>>;
   };
   evidence: { note(key: string, value: unknown): void };
+  // [2026-11-03 05:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main: ctx.meta: phản hồi thêm khoá vào meta (cổng danh mục: gate, findings, held — PHASE-024). Khoá lõi (requestId, receipt, idempotency, dryRun) không bị đè.
+  readonly meta: Record<string, unknown>;
   /**
    * Phát sự kiện miền trong giao dịch của action (bizcity_event@1 STD-EVT-1): huỷ / dry-run thì không có sự kiện.
    * Loại phải mang tiền tố module của action (`<module>.`, STD-EVT-3); `bizcity.*` chỉ Core phát.
@@ -326,7 +328,7 @@ export interface ActionResult<T = unknown> {
   data: T;
   status: number;
   /** receipt: biên nhận bằng chứng (bizcity_evidence@1 §3) — có với action ghi chạy thật, kể cả khi gửi lặp. */
-  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt };
+  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt; [extra: string]: unknown };
 }
 
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
@@ -371,6 +373,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const tenantId = auth?.tenantId ?? '';
   const inputHash = def.effect === 'write' ? requestHash(input) : '';
   const notes: Record<string, unknown> = {};
+  const responseMeta: Record<string, unknown> = {};
   // Bằng chứng (STD-EVD-1): action ghi chạy thật → đúng một bản ghi, thành công hay thất bại vì lỗi nghiệp vụ trong handler.
   const evidenceOn = def.effect === 'write' && !dryRun && !!auth;
   const objectType = def.evidence?.objectType ?? def.id.split('.')[1]!;
@@ -418,6 +421,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           item: (fn) => inSavepoint(trx, fn),
         },
         evidence: { note: (k, v) => { notes[k] = v; } },
+        meta: responseMeta,
         events: {
           emit: (type, data, o) => {
             const mod = def.id.split('.')[0]!;
@@ -512,10 +516,10 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         if (!checked.success) throw new Error(`Action ${def.id} trả sai khuôn output: ${checked.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
       }
       if (dryRun) throw new DryRunRollback(output);
-      const result = { data: output, status, meta };
+      const result = { data: output, status, meta: { ...responseMeta, ...meta } as ActionResult['meta'] };
       if (evidenceOn) {
         const objectId = def.evidence?.objectId?.(input, output) ?? (output as { id?: unknown } | null)?.id;
-        result.meta = { ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
+        result.meta = { ...responseMeta, ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
       }
       if (key) {
         await trx.updateTable('action_requests').set({ response: JSON.stringify(redactSecrets(output ?? null)), status_code: status })

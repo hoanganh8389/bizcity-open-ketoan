@@ -27,6 +27,7 @@ import { TongHopTheoNhom } from '../tong-hop/TongHopMuaPage';
 import { LocKho, matchKho, useKhoOf, type KhoFilter } from '../thanh-phan/LocKho';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect } from '@/components/filters';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { NccInfo } from '../thanh-phan/NccInfo';
 import { PrintButton } from '@/components/print';
 import { layPhieuIn, mauInCua } from './mauIn';
@@ -140,6 +141,9 @@ export function ChungTuPage({ embedPartner, embedGroup, command, report, formsOn
   const [view, setView] = useState<View>(VIEWS[report ?? ''][0]![0]);
   const [branchCodes, setBranchCodes] = useState('');
   const [whCodes, setWhCodes] = useState('');
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — Báo cáo mua hàng (xem theo dòng / mã): lọc theo nhóm hàng
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
   const khoFilter: KhoFilter = { branches: branchCodes ? branchCodes.split(',').filter(Boolean) : [], warehouses: whCodes ? whCodes.split(',').filter(Boolean) : [] };
   const { khoOf } = useKhoOf();
   const [sel, setSel] = useState<StoredDoc | null>(null);
@@ -313,7 +317,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
         <ErrorBox error={error ? errorText(error) : null} />
         {view === 'nhom' ? <TongHopTheoNhom from={from} to={to} />
         : !isLoading && data && view !== 'phieu' ? (
-          <XemTheoMaHang docs={rows} data={data} mode={view} partnerName={names.partnerName} onOpen={(d) => setEditing(d)}
+          <XemTheoMaHang docs={rows} data={data} mode={view} partnerName={names.partnerName} onOpen={(d) => setEditing(d)} locDong={ln.coLoc ? ln.loc : undefined}
             khoText={(d) => { const k = d.kind === 'order' ? khoOf(d.branchCode, d.deliveryWarehouse) : khoOf(d.branchCode, d.warehouseCode); return k; }} />
         ) : isLoading || !data ? <Loading /> : (
           <DataGrid storageKey={embedded ? "mh-chung-tu-ncc" : report === 'bao-cao' ? 'mh-bao-cao-phieu' : "mh-chung-tu-v2"} exportName="chung-tu-mua-hang" rows={rows} rowKey={(r) => r.id} onSelect={setSel} onRowDoubleClick={(r) => setEditing(r)}
@@ -328,6 +332,7 @@ Rà soát: ${r.outsideOrder.reviewedBy}` : ''}` : 'Chưa ghi lý do nhập ngoà
             <div className="field"><label>Từ ngày</label><input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
             <div className="field"><label>Đến ngày</label><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
             <BranchSelect value={branchCodes} onChange={setBranchCodes} warehouses={{ value: whCodes, onChange: setWhCodes }} />
+            {view !== 'phieu' && view !== 'nhom' && <ChonNhomHang value={nhom} onChange={setNhom} />}
             <div className="field"><label>Trạng thái</label>{statusSel}</div>
           </>}>{body}</FilterLayout>
         );

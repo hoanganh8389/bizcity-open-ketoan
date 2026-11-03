@@ -15,6 +15,19 @@
 | D023-7 | **Người lưu tự chịu trách nhiệm vì đã được cảnh báo**: hệ thống không chặn, không hỏi lại, nhưng giữ bằng chứng | dòng ghi nhận hiện ở thẻ đối tượng / tài khoản ("đã lưu với cảnh báo ACC-HINT-003, lý do…, Nguyễn A, 02/11"); Bàn đánh giá (HT08) vai kiểm soát liệt kê các ghi nhận trong kỳ; số đo `bizcity_catalog_warn_ack_total{code}` |
 | D023-8 | Kế toán trưởng được **hạ một luật kế toán từ ⚠ xuống ℹ cho đơn vị mình**, qua **duyệt tại đơn vị có bằng chứng** (như rulepack, ADR-0016: quyền `conformance:approve`, lý do, gắn phiên bản luật) — không qua cài đặt tự do; không hạ được luật kỹ thuật và không hạ được ✘ | màn Kiểm chuẩn (HT06) thẻ "Luật nhắc tại đơn vị"; hết hiệu lực khi nội dung luật đổi |
 
+## 0b. Thi hành đợt 1 (2026-11-02, S023-14 / 15) <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — có mã -->
+
+| Phần | Ở đâu |
+|---|---|
+| Danh mục luật `bizcity_catalog_hint@1` (12 luật: `ACC-HINT-001..007`, `ACC-BLOCK-001`, `PART-HINT-001..004`; `status: draft` tới khi kế toán trưởng duyệt) | `packages/contracts/src/catalog-hint.ts` |
+| Tài khoản: so với **tài khoản cha** của đơn vị, không có cha thì **hệ thống tài khoản chuẩn** (`db/seeds/tai-khoan.csv`) | `packages/kernel/src/modules/accounts/account.hints.ts`; `POST /api/v1/accounts/validate` |
+| Đối tượng: NCC thiếu MST, MST sai định dạng (10 số, 10-3, 12 số), trùng tên | `apps/api/src/modules/partners/partner.hints.ts`; `POST /api/v1/partners/validate` |
+| Lưu: `meta.findings` ở thêm / sửa (đối tượng, mặt hàng; **tài khoản** ghi qua `defineAction` nên chưa trả — xem trước bằng `/validate`) <!-- [2026-11-03 10:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-023 — gộp main W6: tài khoản ghi qua defineAction, phản hồi không mang findings -->; cảnh báo mềm có lý do → `catalog.warn.ack`, API / plugin không lý do → `catalog.warn.unacked` (cảnh báo vẫn được trả và có bằng chứng); lý do < 5 ký tự → 400 | `packages/platform/src/core/catalog-warn.ts` |
+| Giao diện: `WhyPanel`, `useCatalogWhy` (trễ 300 ms), `useWarnAck` + `WarnAckBox`; form Tài khoản (ACC1), Đối tượng (DM03) | `apps/web/src/components/WhyPanel.tsx` |
+| Ca thử | `apps/api/test/catalog-why.test.ts` (9 ca) |
+
+**Sửa so với bản mẫu (đọc dữ liệu thật):** hệ thống tài khoản chuẩn để `is_debt = 0` cho cả 131 / 331; sổ phụ công nợ lấy tài khoản theo **`track_partner OR is_debt OR lưỡng tính`** (`debt.service.ts`). Vì vậy cảnh báo "chưa tích *Là công nợ*" trong bản mẫu là sai; luật thi hành `ACC-HINT-003` báo khi tài khoản thuộc nhóm công nợ mà **không có cả ba cờ** (không vào sổ phụ công nợ), và `ACC-HINT-005` khi nhóm theo dõi đối tượng mà tài khoản bỏ cờ đó.
+
 ## 1. Ý tưởng
 
 Thẻ tài khoản (30-UI-UX) giải thích **sau** khi người dùng gặp tài khoản. Khung "Vì sao" trong form giải thích **trước** khi họ lưu một khai báo sai: ngay lúc tích ô "lưỡng tính", chọn tài khoản kho cho nhóm hạch toán, bỏ trống MST của nhà cung cấp. Cùng một nguồn luật với trigger và bộ kiểm, nhưng nói trước, nói mềm, và nói bằng hậu quả nghiệp vụ.

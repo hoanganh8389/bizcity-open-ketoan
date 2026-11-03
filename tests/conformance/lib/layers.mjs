@@ -52,6 +52,7 @@ export const LAYER_MAP = [
   ['core/auth.ts', 'P', 'permissions'],
   ['core/security/', 'P', 'permissions'],
   ['core/audit.ts', 'P', 'audit'],
+  ['core/catalog-warn.ts', 'P', 'audit'], // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — ghi nhận cảnh báo mềm form danh mục
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/module-manifest.ts', 'P', 'module-sdk'],
   ['core/settings.ts', 'P', 'bizcity.config'],
@@ -114,6 +115,8 @@ export const LAYER_MAP = [
   ['modules/partners/tra-mst.ts', 'A', 'adapters/tax-lookup'],
   ['modules/products/', 'M', 'data/masterdata'],
   ['modules/branches/', 'M', 'data/masterdata'],
+  // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — modules/org-units/ (sơ đồ tổ chức) cùng lớp M danh mục với chi nhánh (đóng góp)
+  ['modules/org-units/', 'M', 'data/masterdata'],
   ['modules/warehouses/', 'M', 'data/masterdata'],
   ['modules/unit-names/', 'M', 'data/masterdata'],
   ['modules/bank-accounts/', 'M', 'data/masterdata'],
@@ -145,6 +148,7 @@ export const LAYER_MAP = [
   ['fastify-swagger.d.ts', 'K', 'kernel/public'],
   ['modules/system/evidence.routes.ts', 'P', 'audit'],
   ['modules/system/events.routes.ts', 'P', 'events'],
+  ['modules/system/findings.routes.ts', 'P', 'diagnostics'], // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — thư viện mã hai cổng
   ['modules/system/mcp.routes.ts', 'P', 'mcp'],
   ['modules/system/metrics.routes.ts', 'P', 'observability'],
   // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: Bàn điều tra (API trung gian đọc trace / log) → P observability

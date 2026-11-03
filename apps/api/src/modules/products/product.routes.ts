@@ -1,4 +1,5 @@
 // @bizcity-layer M data/masterdata
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: mặt hàng NHÁP (Gate A, ADR-0019) — validate, lưu nháp khi còn lỗi chặn, tự kích hoạt + bể chờ kiểm lại; ô chọn (status=active) không hiện nháp
 /**
  * Danh mục mặt hàng và phân loại hàng hoá.
  *   GET /api/v1/products?search=&brand=&industry=&group=&type=&postingGroup=&status=&page=&pageSize=
@@ -10,6 +11,11 @@
  *   PUT /api/v1/product-accounts                  sửa hàng loạt (tối đa 5000); đổi tài khoản → gán sang nhóm hạch toán có đúng bộ tài khoản (chưa có thì tự tạo)
  *   GET /api/v1/item-classes/:kind       nhãn hàng / ngành hàng / nhóm hàng / loại hàng
  *   PUT /api/v1/item-classes/:kind/:code thêm hoặc sửa
+ *   GET /api/v1/products/skus-by-group?groups=a,b   mã hàng thuộc các nhóm hàng (gồm mọi nhóm con) — ô "Chọn nhóm" của báo cáo
+ *   POST /api/v1/products/validate       khung Vì sao: nhắc / cảnh báo mềm / chặn cho một bản khai báo mặt hàng (chỉ đọc)
+ *
+ * Mặt hàng NHÁP (0061): lưu khi còn lỗi chặn (ITEM-BLOCK-*) — chưa dùng được trên chứng từ (cửa nạp: IN-ITEM-009), không có ở
+ * ô chọn của phiếu (status=active loại nháp). Hết lỗi chặn → tự kích hoạt, mục bể chờ có mã đó được tiền kiểm lại.
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -21,6 +27,11 @@ import { Errors } from '../../core/errors.js';
 import { ok, pageMeta, pageQuerySchema, queryBool } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): chỉ đọc danh sách tài khoản để đối chiếu — đọc bảng, không import Kernel
+import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
+import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
+import { applyItemGate, applyItemGateBulk, itemHints } from './item.hints.js';
+
+const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
 import { deleteProduct } from '../catalog/catalog.service.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
@@ -124,7 +135,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         search: z.string().trim().optional(),
         brand: z.string().optional(), industry: z.string().optional(), group: z.string().optional(), type: z.string().optional(),
         postingGroup: z.string().optional().describe('Mã nhóm hạch toán; "-" = chưa gán'),
-        status: z.enum(['all', 'active', 'inactive']).default('all'),
+        status: z.enum(['all', 'active', 'inactive', 'draft']).default('all').describe('active = đang dùng, KHÔNG gồm nháp (ô chọn của phiếu); draft = chỉ nháp'),
         parent: z.string().trim().max(64).optional().describe('Mã hàng cha: liệt kê các mã con của mã này'),
       }),
     },
@@ -149,7 +160,9 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         else q = q.where(COLUMN[k], '=', v);
       }
       if (f.postingGroup) q = f.postingGroup === '-' ? q.where('posting_group_code', 'is', null) : q.where('posting_group_code', '=', f.postingGroup);
-      if (f.status !== 'all') q = q.where('is_active', '=', f.status === 'active');
+      if (f.status === 'draft') q = q.where('is_draft', '=', true);
+      else if (f.status === 'active') q = q.where('is_active', '=', true).where('is_draft', '=', false);
+      else if (f.status === 'inactive') q = q.where('is_active', '=', false);
       if (f.parent) q = q.where('parent_sku', '=', f.parent);
       const [rows, total] = await Promise.all([
         q.selectAll().orderBy('sku').limit(f.pageSize).offset((f.page - 1) * f.pageSize).execute(),
@@ -157,7 +170,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       ]);
       return ok(rows.map((p) => ({
         sku: p.sku, name: p.name, unit: p.unit, postingGroupCode: p.posting_group_code, brandCode: p.brand_code, industryCode: p.industry_code,
-        groupCode: p.group_code, typeCode: p.type_code, isActive: p.is_active, sourceSystem: p.source_system,
+        groupCode: p.group_code, typeCode: p.type_code, isActive: p.is_active, isDraft: p.is_draft, draftCodes: p.draft_codes, sourceSystem: p.source_system,
         note: p.note, exciseRate: p.excise_rate === null ? null : Number(p.excise_rate), taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, updatedAt: p.updated_at, parentSku: p.parent_sku,
       })), pageMeta(f, Number(total?.n ?? 0)));
     },
@@ -175,11 +188,29 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       return ok(rows.map((c) => ({ code: c.code, name: c.name, parentCode: c.parent_code, isActive: c.is_active, skuCode: c.sku_code, products: n.get(c.code) ?? 0 })));
     },
   });
+
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — báo cáo theo mã hàng lọc "Chọn nhóm": tích nhóm cha = cả nhánh con bên dưới (đóng góp)
+  r.get('/api/v1/products/skus-by-group', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Mã hàng thuộc các nhóm hàng đã chọn (gồm mọi nhóm con)', querystring: z.object({ groups: z.string().max(20000).default('') }) },
+    handler: async (req) => {
+      const auth = authOf(req);
+      const groups = [...new Set(req.query.groups.split(',').map((g) => g.trim()).filter(Boolean))];
+      if (!groups.length) return ok({ skus: [] as string[] });
+      const res = await sql<{ sku: string }>`
+        WITH RECURSIVE g(code) AS (
+          SELECT code FROM item_classes WHERE tenant_id = ${auth.tenantId} AND kind = 'group' AND code IN (${sql.join(groups)})
+          UNION
+          SELECT c.code FROM item_classes c JOIN g ON c.parent_code = g.code WHERE c.tenant_id = ${auth.tenantId} AND c.kind = 'group'
+        )
+        SELECT p.sku FROM products p WHERE p.tenant_id = ${auth.tenantId} AND p.group_code IN (SELECT code FROM g)`.execute(db);
+      return ok({ skus: res.rows.map((r) => r.sku) });
+    },
+  });
   mountActions(app, productWriteActions);
-  mountActions(app, productMoreWriteActions);
 }
 
-// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// [2026-11-03 05:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (cổng danh mục): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
 // Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
 const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 
@@ -210,6 +241,7 @@ export const productWriteActions: AnyActionDef[] = [
         const products = new Map((await trx.selectFrom('products').select(['sku', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'note', 'excise_rate']).where('tenant_id', '=', auth.tenantId).where('sku', 'in', items.map((i) => i.sku)).execute()).map((p) => [p.sku, p]));
         let seq = groups.filter((g) => /^NHT-T\d+$/.test(g.code)).reduce((m, g) => Math.max(m, Number(g.code.slice(5))), 0);
         let updated = 0;
+        const touched: string[] = [];
         for (const it of items) {
           const p = products.get(it.sku);
           if (!p) { errors.push(`${it.sku}: mặt hàng chưa có trong danh mục`); continue; }
@@ -250,11 +282,24 @@ export const productWriteActions: AnyActionDef[] = [
           if (!Object.keys(patch).length) continue;
           await trx.updateTable('products').set({ ...patch, updated_at: new Date() }).where('tenant_id', '=', auth.tenantId).where('sku', '=', it.sku).execute();
           updated++;
+          if (patch.posting_group_code) touched.push(it.sku);
         }
+        // Gate A ([2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28): gán nhóm hạch toán có thể kích hoạt mặt hàng nháp.
+        await applyItemGateBulk(trx, auth, touched);
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'product.accounts', objectType: 'product', objectId: `${items.length} mặt hàng`, after: { updated, created, skus: items.map((i) => i.sku).slice(0, 50) } });
         return { updated, skipped: items.length - updated - errors.length, createdGroups: created, errors };
       });
       return out;
+    },
+  }),
+  defineAction({
+    id: 'core.product.validate', title: 'Khung Vì sao: kiểm thử một bản khai báo mặt hàng (chỉ đọc)', tags,
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({ sku: z.string().trim().min(1).max(64), unit: z.string().trim().max(32).nullish(), postingGroupCode: code.nullish() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/products/validate' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      return { findings: await itemHints(trx, ctx.legacyAuth.tenantId, input) };
     },
   }),
   defineAction({
@@ -265,6 +310,7 @@ export const productWriteActions: AnyActionDef[] = [
         postingGroupCode: code.nullish(), brandCode: code.nullish(), industryCode: code.nullish(), groupCode: code.nullish(), typeCode: code.nullish(),
         isActive: z.boolean().optional(),
         note: z.string().max(500).optional(), taxOutCode: code.nullish(), taxInCode: code.nullish(), exciseRate: z.coerce.number().min(0).max(100).nullish(),
+        warnAck: warnAck.optional().describe('Ghi nhận cảnh báo mềm khi lưu (D023-6)'),
       })).merge(z.object({ sku: z.string().trim().min(1).max(64) })), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/products/:sku' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'product', objectId: (i) => String(i.sku) },
@@ -273,6 +319,9 @@ export const productWriteActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
       const b = reqBody;
+      let findings: Awaited<ReturnType<typeof itemHints>> = [];
+      let isDraft = false;
+      let recheck = { checked: 0, cleared: 0 };
       await sameTx(trx, async (trx) => {
         for (const k of ITEM_CLASS_KINDS) {
           const v = b[`${k}Code` as const];
@@ -308,9 +357,16 @@ export const productWriteActions: AnyActionDef[] = [
           .onConflict((oc) => oc.columns(['tenant_id', 'sku']).doNothing())
           .execute();
         await trx.updateTable('products').set(patch).where('tenant_id', '=', auth.tenantId).where('sku', '=', input.sku).execute();
-        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'product.update', objectType: 'product', objectId: input.sku, after: b });
+        // Gate A: còn lỗi chặn → NHÁP (không mất bản khai, chưa dùng được trên chứng từ); vừa kích hoạt → bể chờ kiểm lại (R-GATE-6).
+        const gate = await applyItemGate(trx, auth, input.sku);
+        findings = gate.findings;
+        isDraft = gate.isDraft;
+        recheck = gate.recheck;
+        const { warnAck: ack, ...after } = b;
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: isDraft ? 'product.draft' : gate.wasDraft ? 'product.activate' : 'product.update', objectType: 'product', objectId: input.sku, after });
+        await recordWarnAck(trx, auth, 'product', input.sku, findings, ack);
       });
-      return { sku: input.sku };
+      return (Object.assign(ctx.meta, { gate: 'A', findings, ...(isDraft ? { held: { kind: 'draft', id: input.sku } } : {}), ...(recheck.checked ? { inboxRechecked: recheck } : {}) }), { sku: input.sku, isDraft });
     },
   }),
   defineAction({
@@ -324,6 +380,7 @@ export const productWriteActions: AnyActionDef[] = [
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
       const { source, products } = input;
+      let drafts: string[] = [];
       await sameTx(trx, async (trx) => {
         await ensureClasses(trx, auth.tenantId, products.flatMap((p) => ITEM_CLASS_KINDS.map((k) => ({ kind: k, code: p[`${k}Code` as const] ?? '', name: p[`${k}Name` as const] }))));
         const groups = new Set((await trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', auth.tenantId).execute()).map((g) => g.code));
@@ -351,9 +408,11 @@ export const productWriteActions: AnyActionDef[] = [
             }))
             .execute();
         }
+        // Gate A cho đồng bộ: mặt hàng còn lỗi chặn (thiếu ĐVT gốc, thiếu nhóm khi không có nhóm mặc định) → nháp; vừa đủ → kích hoạt.
+        drafts = (await applyItemGateBulk(trx, auth, products.map((p) => p.sku))).drafts;
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'product.sync', objectType: 'product', objectId: `${products.length} mặt hàng`, after: { source, skus: products.map((p) => p.sku).slice(0, 50) } });
       });
-      return { count: products.length };
+      return (Object.assign(ctx.meta, drafts.length ? { gate: 'A', held: { kind: 'draft', ids: drafts } } : undefined), { count: products.length, drafts });
     },
   }),
   defineAction({
@@ -394,13 +453,6 @@ export const productWriteActions: AnyActionDef[] = [
       return { code: c };
     },
   }),
-];
-
-// [2026-11-03 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
-// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
-
-
-export const productMoreWriteActions: AnyActionDef[] = [
   defineAction({
     id: 'core.item-class.upsert', title: 'Thêm hoặc sửa nhãn / ngành / nhóm / loại hàng (?new=1: thêm mới, báo trùng mã)', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
@@ -422,6 +474,19 @@ export const productMoreWriteActions: AnyActionDef[] = [
       if (b.parentCode) {
         const p = await trx.selectFrom('item_classes').select('code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', b.parentCode).executeTakeFirst();
         if (!p) throw Errors.validation(`${LABEL[kind]} cha ${b.parentCode} chưa có`);
+        // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — chặn chuyển nhóm vào nhánh con của chính nó; chặn trùng mã ngắn giữa các nhóm cùng cha (đóng góp)
+        const all = await trx.selectFrom('item_classes').select(['code', 'parent_code']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).execute();
+        const up = new Map(all.map((x) => [x.code, x.parent_code]));
+        for (let x: string | null | undefined = b.parentCode, n = 0; x && n < 50; x = up.get(x), n++) if (x === c) throw Errors.validation(`${LABEL[kind]} ${c} không chuyển vào nhóm con của chính nó (${b.parentCode})`);
+      }
+      if (kind === 'group' && b.skuCode) {
+        const before = await trx.selectFrom('item_classes').select('sku_code').where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('code', '=', c).executeTakeFirst();
+        if (before?.sku_code !== b.skuCode) {
+          let dupQ = trx.selectFrom('item_classes').select(['code', 'name']).where('tenant_id', '=', auth.tenantId).where('kind', '=', kind).where('sku_code', '=', b.skuCode).where('code', '<>', c);
+          dupQ = b.parentCode ? dupQ.where('parent_code', '=', b.parentCode) : dupQ.where('parent_code', 'is', null);
+          const dup = await dupQ.executeTakeFirst();
+          if (dup) throw Errors.conflict(`Mã ngắn ${b.skuCode} đã dùng cho nhóm "${dup.name}" (${dup.code}) cùng cấp — chọn mã ngắn khác`);
+        }
       }
       const values = { name: b.name, parent_code: b.parentCode || null, is_active: b.isActive, updated_at: new Date(), ...(b.skuCode !== undefined ? { sku_code: b.skuCode } : {}) };
       await sameTx(trx, async (trx) => {

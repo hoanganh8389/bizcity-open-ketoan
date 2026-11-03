@@ -19,7 +19,11 @@ export const branchCreateSchema = z.object({
 export type BranchCreate = z.infer<typeof branchCreateSchema>;
 
 /** newCode: đổi mã chi nhánh (shop lên Plus / Premium, đóng thành _OFF) — chứng từ, bút toán, kho giữ nguyên vì gắn theo id. */
-export const branchUpdateSchema = branchCreateSchema.omit({ code: true }).partial().extend({ isActive: z.boolean().optional(), newCode: z.string().trim().min(1).max(32).optional() });
+export const branchUpdateSchema = branchCreateSchema.omit({ code: true }).partial().extend({
+  isActive: z.boolean().optional(), newCode: z.string().trim().min(1).max(32).optional(),
+  // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — đổi nút sơ đồ tổ chức của chi nhánh ngay ở DM02 (null = bỏ gắn) (đóng góp)
+  orgUnitCode: z.string().trim().min(1).max(32).nullable().optional(),
+});
 export type BranchUpdate = z.infer<typeof branchUpdateSchema>;
 
 export interface BranchDto {
@@ -36,4 +40,7 @@ export interface BranchDto {
   phone: string;
   fax: string;
   isActive: boolean;
+  /** Nút sơ đồ tổ chức (0062) và đường dẫn (Công ty\BAC\PT\PTO); null / '' = chưa gắn. */
+  orgUnitCode: string | null;
+  orgPath: string;
 }

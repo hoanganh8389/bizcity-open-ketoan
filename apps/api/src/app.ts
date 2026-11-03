@@ -53,7 +53,9 @@ import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
 import { ASSET_DIAGNOSTICS } from './modules/assets/asset.diagnostics.js';
-import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber } from './kernel/public.js';
+import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INTAKE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber, recheckInboxForSkus } from './kernel/public.js';
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: mặt hàng kích hoạt → bể chờ kiểm lại (danh mục không import Kernel)
+import { registerItemsActivatedHook } from './modules/products/item.hints.js';
 import { connectionService } from './modules/connections/connection.service.js';
 import { registerLedgerCancelGate, registerLedgerReader, registerLedgerSubmitter, unknownActionPermissions } from './core/actions.js';
 import { registerModulePermissions } from '@bizcity/platform/core/auth';
@@ -139,6 +141,8 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   registerDiagnostics(TAX_DIAGNOSTICS);
   // [2026-11-02 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2: kiểm số dư, kho, khấu hao, lịch kiểm chuẩn (remedy có cấu trúc)
   registerDiagnostics([...BALANCE_DIAGNOSTICS, ...INVENTORY_DIAGNOSTICS, ...ASSET_DIAGNOSTICS, ...CONFORMANCE_DIAGNOSTICS]);
+  // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19): bể chờ đầu vào — mục mở quá ngưỡng
+  registerDiagnostics(INTAKE_DIAGNOSTICS);
   registerCollector('ledger', collectLedgerMetrics);
   registerCollector('postings', () => collectPostingMetrics());
   registerCollector('outbox', collectOutboxMetrics);
@@ -148,6 +152,7 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   registerDocumentNumberer((tx, tenantId, key, year) => documentNumbers.next(tx, tenantId, key, year));
   // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — adapter kết nối chuẩn hoá chứng từ đẩy vào bằng khoá API (trước: Kernel import thẳng adapter)
   registerIncomingPreparer((tenantId, raw) => connectionService.prepareIncoming(tenantId, raw));
+  registerItemsActivatedHook((trx, auth, skus) => recheckInboxForSkus(trx, auth, skus));
   // [2026-11-02 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — ctx.ledger.submit đi đúng một cửa vào sổ của Kernel (submitDocumentIn → postDocumentIn), ADR-0011 D5
   registerLedgerSubmitter((tx, auth, doc) => submitDocumentIn(tx, auth, doc));
   // [2026-11-02 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.1: ctx.ledger.cancel / get đi cổng Kernel (requestCancelIn, documentStatusIn)

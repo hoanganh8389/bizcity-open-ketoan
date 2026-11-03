@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/intake
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: recheckInboxForSkus — mặt hàng kích hoạt thì mục bể có mã đó được tiền kiểm lại (R-GATE-6)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (2.18, ADR-0014 D2, D10; R-INTAKE-1/2/7/12): bể chờ — cửa nạp từ chối thì giữ nguyên văn + phát hiện + điểm (gộp gửi trùng), tự đóng khi nguồn gửi lại đúng, đọc danh sách / chi tiết, dọn theo hạn giữ
 /**
  * BỂ CHỜ ĐẦU VÀO (ADR-0014 D2, D10). Không phải sổ: không bút toán, không sự kiện sổ, không ghi accounting_events (R-INTAKE-2).
@@ -18,6 +19,7 @@ import { AppError } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import { defineSubscriber } from '@bizcity/platform/core/events';
 import type { IntakeFinding } from '@ketoan/contracts';
+import { emitKernelEvent, emitKernelEventAs } from '../documents/kernel-events.js';
 import { preflight, stable } from './preflight.js';
 
 export type IntakeChannel = 'api' | 'batch' | 'submit' | 'app' | 'connector' | 'mcp' | 'trial';
@@ -60,11 +62,18 @@ async function insertRow(trx: Db, auth: AuthContext, raw: unknown, channel: Inta
  * Cửa nạp vừa từ chối `raw` với lỗi `err`: tiền kiểm + giữ ở bể (giao dịch riêng), gắn error.intake. Lỗi khi ghi bể KHÔNG che lỗi
  * cửa nạp (bể là phần hướng dẫn, không được làm hỏng phản hồi).
  */
-export async function recordRejection(auth: AuthContext, raw: unknown, channel: IntakeChannel, err: AppError): Promise<void> {
+export async function recordRejection(auth: AuthContext, raw: unknown, channel: IntakeChannel, err: AppError, opts: { guard?: string } = {}): Promise<void> {
   try {
     const out = await db.transaction().execute(async (trx) => {
-      const pf = await preflight(trx, auth, raw);
+      const pf = await preflight(trx, auth, raw, opts); // dấu Commit Guard của lần nộp (nếu có) → bể ghi IN-GUARD-001 như cửa nạp
       const row = await insertRow(trx, auth, raw, channel, 'open', pf.findings, pf.score, { code: err.code, message: err.message, details: err.details ?? null });
+      // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): mục mới → bizcity.intake.rejected (gửi trùng không phát lại); chỉ mã + số, không nguyên văn
+      if (row.attempt_no === 1) {
+        const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+        await emitKernelEvent(trx, auth, 'bizcity.intake.rejected', `intake:${row.id}`, {
+          inboxId: String(row.id), docKey: str(r.docKey), docType: str(r.docType, 40), channel, appKey: auth.app ?? null, codes: [...new Set(pf.findings.map((f) => f.code))], score: pf.score,
+        });
+      }
       return { id: String(row.id), attempt: row.attempt_no, score: pf.score, findings: pf.findings };
     });
     err.intake = { id: out.id, attempt: out.attempt, score: out.score, findings: out.findings, url: `/api/v1/intake/${out.id}` };
@@ -79,18 +88,27 @@ export async function saveTrial(trx: Db, auth: AuthContext, raw: unknown, findin
   return { id: String(row.id), attempt: row.attempt_no };
 }
 
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): đóng mục theo nguồn → bizcity.intake.resolved từng mục
 /** Cửa nạp đã nhận docKey → đóng mục 'open' cùng docKey (nguồn đã sửa). Gọi trong giao dịch có sự việc, hoặc sau commit. */
 export async function closeBySource(trx: Db, tenantId: string, docKey: string, actor: string): Promise<number> {
   const ev = await trx.selectFrom('accounting_events').select('id').where('tenant_id', '=', tenantId).where('doc_key', '=', docKey).executeTakeFirst();
   if (!ev) return 0;
-  const r = await trx.updateTable('intake_inbox')
+  const rows = await trx.updateTable('intake_inbox')
     .set({ status: 'fixed_at_source', event_id: ev.id, resolved_at: new Date(), resolved_by: actor, resolution_note: 'Nguồn gửi lại, cửa nạp đã nhận' })
     .where('tenant_id', '=', tenantId).where('doc_key', '=', docKey).where('status', '=', 'open')
-    .executeTakeFirst();
-  return Number(r.numUpdatedRows ?? 0);
+    .returning(['id', 'patches'])
+    .execute();
+  for (const r of rows) await emitResolved(trx, tenantId, actor, { inboxId: String(r.id), docKey, status: 'fixed_at_source', eventId: String(ev.id), patched: Array.isArray(r.patches) && r.patches.length > 0 });
+  return rows.length;
 }
 
-export interface InboxFilter { status?: string; docKey?: string; channel?: string; limit?: number; offset?: number }
+/** bizcity.intake.resolved — mục đóng (nguồn sửa, nộp lại, chấp nhận, bỏ). */
+export function emitResolved(trx: Db, tenantId: string, actor: string, data: { inboxId: string; docKey: string | null; status: string; eventId: string | null; patched: boolean }) {
+  return emitKernelEventAs(trx, tenantId, actor, 'bizcity.intake.resolved', `intake:${data.inboxId}`, data);
+}
+
+// [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3: lọc mục đã đóng (closed, closedDays) và theo người lập (actor) cho thẻ Đã xử lý / Thử của tôi; danh sách kèm số bản vá, mã đã chấp nhận
+export interface InboxFilter { status?: string; docKey?: string; channel?: string; actor?: string; closed?: boolean; closedDays?: number; limit?: number; offset?: number }
 
 const LIST_COLS = ['id', 'received_at', 'last_seen_at', 'channel', 'source_system', 'actor', 'app_key', 'doc_key', 'doc_type', 'version', 'score', 'attempt_no', 'status', 'event_id', 'resolved_at'] as const;
 
@@ -99,8 +117,11 @@ export async function listInbox(trx: Db, tenantId: string, f: InboxFilter) {
   if (f.status) q = q.where('status', '=', f.status as never);
   if (f.docKey) q = q.where('doc_key', '=', f.docKey);
   if (f.channel) q = q.where('channel', '=', f.channel as never);
+  if (f.actor) q = q.where('actor', '=', f.actor);
+  if (f.closed) q = q.where('status', 'not in', ['open', 'trial']);
+  if (f.closedDays) q = q.where('resolved_at', '>=', new Date(Date.now() - f.closedDays * 86_400_000));
   const [rows, total] = await Promise.all([
-    q.select([...LIST_COLS, sql<string[]>`(SELECT coalesce(array_agg(DISTINCT x->>'code'), '{}') FROM jsonb_array_elements(findings) x)`.as('codes')])
+    q.select([...LIST_COLS, 'accepted_codes', sql<string[]>`(SELECT coalesce(array_agg(DISTINCT x->>'code'), '{}') FROM jsonb_array_elements(findings) x)`.as('codes'), sql<number>`jsonb_array_length(patches)`.as('patch_count')])
       .orderBy('last_seen_at', 'desc').limit(Math.min(f.limit ?? 50, 200)).offset(f.offset ?? 0).execute(),
     q.select(sql<number>`count(*)::int`.as('n')).executeTakeFirst(),
   ]);
@@ -129,3 +150,21 @@ export async function deleteExpired(trx: Db, tenantId: string, keepDays: number,
     .where('status', '=', 'trial').where('last_seen_at', '<', new Date(now.getTime() - trialDays * 86_400_000)).executeTakeFirst();
   return Number(closed.numDeletedRows ?? 0) + Number(trial.numDeletedRows ?? 0);
 }
+
+/**
+ * Mặt hàng vừa kích hoạt: mục bể đang mở có dòng mang mã đó → tiền kiểm lại (giữ nguyên văn, chỉ cập nhật phát hiện + điểm).
+ * Mục hết lỗi chặn vẫn ở trạng thái `open` — người lập bấm Nộp lại hoặc nguồn gửi lại (R-INTAKE-8: ưu tiên sửa ở nguồn).
+ */
+export async function recheckInboxForSkus(trx: Db, auth: AuthContext, skus: readonly string[]): Promise<{ checked: number; cleared: number }> {
+  if (!skus.length) return { checked: 0, cleared: 0 };
+  const rows = await trx.selectFrom('intake_inbox').select(['id', 'payload_raw']).where('tenant_id', '=', auth.tenantId).where('status', '=', 'open')
+    .where((eb) => eb.or(skus.map((s) => eb(sql`payload_raw`, '@>', sql`${JSON.stringify({ lines: [{ sku: s }] })}::jsonb`)))).execute();
+  let cleared = 0;
+  for (const r of rows) {
+    const res = await preflight(trx, auth, r.payload_raw);
+    if (!res.findings.some((f) => f.severity === 'block')) cleared += 1;
+    await trx.updateTable('intake_inbox').set({ findings: JSON.stringify(res.findings), score: res.score, last_seen_at: new Date() }).where('id', '=', r.id).execute();
+  }
+  return { checked: rows.length, cleared };
+}
+

@@ -1,5 +1,5 @@
 /**
- * Danh mục mặt hàng (DM10) và phân loại hàng hoá (DM11: nhóm hàng, ngành hàng, nhãn hàng, loại hàng).
+ * Danh mục mặt hàng (DM10). Cây nhóm hàng (DM11) ở NhomHangPage.tsx.
  * DM10: cây nhóm hàng bên trái; lưới Mã hàng · Tên hàng · Ghi chú · Nhóm hàng · ĐVT · Ngành hàng · Nhãn hàng · Mã VAT ra ·
  * Mã VAT vào · Nhóm hạch toán · Theo dõi. Đây là danh mục hàng CHUẨN: thêm / sửa ở form trọn (ProductFullForm — thông tin,
  * đơn vị tính + tỉ lệ, giá bảng giá công ty / chi nhánh, cờ trạng thái); hệ thống bán hàng kéo về qua /api/v1/catalog/feed.
@@ -9,23 +9,22 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api, errorText, ALL_ROWS } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
+import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ExcelImport, type ImportColumn } from '@/components/ExcelImport';
-import { ListPicker } from '@/components/pickers';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
 import { PrintButton } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems } from './productPrint';
 
 export type ClassKind = 'brand' | 'industry' | 'group' | 'type';
-const KINDS: [ClassKind, string][] = [['group', 'Nhóm hàng'], ['industry', 'Ngành hàng'], ['brand', 'Nhãn hàng'], ['type', 'Loại hàng']];
-const LEVEL_NAME: Record<number, string> = { 1: '1 · Ngành', 2: '2 · Nhãn', 3: '3 · Nhóm sản phẩm' };
 interface ItemClass { code: string; name: string; parentCode: string | null; isActive: boolean; products: number; skuCode?: string }
 interface Product {
   sku: string; name: string; unit: string; postingGroupCode: string | null;
   brandCode: string | null; industryCode: string | null; groupCode: string | null; typeCode: string | null; isActive: boolean; sourceSystem: string;
+  /** Nháp (PHASE-024 S024-28): còn lỗi chặn, chưa dùng được trên chứng từ. */
+  isDraft?: boolean; draftCodes?: string[];
   note: string; exciseRate: number | null; taxOutCode: string | null; taxInCode: string | null;
   /** Mã hàng cha (họ mã 1 cấp). */
   parentSku?: string | null;
@@ -155,7 +154,7 @@ export function ProductsPage() {
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
-    { key: 'name', header: 'Tên hàng', width: 280, render: (p) => (isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name) },
+    { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
     { key: 'unit', header: 'ĐVT', width: 70 },
@@ -220,7 +219,7 @@ export function ProductsPage() {
                   {(groups.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
                 </select>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
-                  <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="inactive">Ngừng</option>
+                  <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="draft">Nháp (chưa kích hoạt)</option><option value="inactive">Ngừng</option>
                 </select>
               </>
             }
@@ -255,122 +254,6 @@ export function ProductsPage() {
         </Modal>
       )}
       {editing && <ProductFullForm sku={editing.isNew ? null : editing.sku ?? null} initial={editing.isNew ? { groupCode: editing.groupCode ?? null } : undefined} classes={{ brand: classes.brand.data ?? [], industry: classes.industry.data ?? [], group: classes.group.data ?? [], type: classes.type.data ?? [] }} groupPath={groupPath} onClose={() => setEditing(null)} />}
-    </>
-  );
-}
-
-/** Phân loại hàng hoá (DM11): nhóm hàng (cây), ngành hàng, nhãn hàng, loại hàng. */
-export function ItemClassesPage() {
-  const { can } = useAuth();
-  const qc = useQueryClient();
-  const canWrite = can('catalog:write');
-  const [kind, setKind] = useState<ClassKind>('group');
-  const [editing, setEditing] = useState<(Partial<ItemClass> & { isNew?: boolean }) | null>(null);
-  const [sel, setSel] = useState<ItemClass | null>(null);
-  const exportRef = useRef<(() => void) | null>(null);
-  const q = useClasses(kind);
-  const label = KINDS.find(([k]) => k === kind)![1];
-  const path = useMemo(() => pathOf(q.data ?? []), [q.data]);
-  const codePath = useMemo(() => pathOf(q.data ?? [], 'code'), [q.data]);
-  // Cấp trong cây nhóm hàng (1 ngành · 2 nhãn · 3 nhóm sản phẩm) — nút gốc chung tên "Nhóm hàng" không tính.
-  const levelOf = useMemo(() => {
-    const by = new Map((q.data ?? []).map((c) => [c.code, c]));
-    const memo = new Map<string, number>();
-    const f = (code: string, seen = new Set<string>()): number => {
-      if (memo.has(code)) return memo.get(code)!;
-      const c = by.get(code);
-      if (!c || seen.has(code)) return 0;
-      seen.add(code);
-      const n = c.parentCode ? f(c.parentCode, seen) + 1 : /^nhóm hàng$/i.test(c.name.trim()) ? 0 : 1;
-      memo.set(code, n);
-      return n;
-    };
-    return f;
-  }, [q.data]);
-  // Nhóm hàng là cây: xếp cha – con (con ngay dưới cha, anh em theo tên), thụt lề theo cấp — dễ nhìn ngành → nhãn → nhóm.
-  const treeRows = useMemo(() => {
-    const list = q.data ?? [];
-    if (kind !== 'group') return list;
-    const codes = new Set(list.map((c) => c.code));
-    const kids = new Map<string, ItemClass[]>();
-    const roots: ItemClass[] = [];
-    for (const c of list) (c.parentCode && codes.has(c.parentCode) ? (kids.get(c.parentCode) ?? kids.set(c.parentCode, []).get(c.parentCode)!) : roots).push(c);
-    const byName = (a: ItemClass, b: ItemClass) => a.name.localeCompare(b.name, 'vi');
-    const out: ItemClass[] = [];
-    const seen = new Set<string>();
-    const walk = (c: ItemClass) => { if (seen.has(c.code)) return; seen.add(c.code); out.push(c); for (const k of (kids.get(c.code) ?? []).sort(byName)) walk(k); };
-    roots.sort(byName).forEach(walk);
-    for (const c of list) if (!seen.has(c.code)) out.push(c);
-    return out;
-  }, [q.data, kind]);
-  const indent = (c: ItemClass) => (kind === 'group' ? Math.max(0, levelOf(c.code) - 1) : 0);
-  const viewAgain = useViewAgain();
-  const save = useMutation({
-    mutationFn: (c: Partial<ItemClass> & { isNew?: boolean }) => api.put(`/api/v1/item-classes/${kind}/${encodeURIComponent((c.code ?? '').trim())}${c.isNew ? '?new=1' : ''}`, { name: c.name ?? '', parentCode: c.parentCode || undefined, isActive: c.isActive ?? true, ...(kind === 'group' ? { skuCode: c.skuCode ?? '' } : {}) }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['item-classes', kind] }); if (editing?.isNew) setEditing(null); else viewAgain[1](); },
-  });
-  const del = useMutation({ mutationFn: (code: string) => api.delete(`/api/v1/item-classes/${kind}/${encodeURIComponent(code)}`), onSuccess: () => { setSel(null); void qc.invalidateQueries({ queryKey: ['item-classes', kind] }); } });
-  /** Suy mã SKU nhóm hàng chưa khai từ mã hàng đang có: xem trước rồi hỏi áp dụng. */
-  const infer = useMutation({
-    mutationFn: async () => {
-      const pre = await api.post<{ rows: { code: string; name: string; level: number; skuCode: string; votes: number; total: number }[] }>('/api/v1/catalog/sku-codes/infer', { apply: false });
-      if (!pre.rows.length) { window.alert('Mọi nhóm hàng có mặt hàng đều đã khai mã SKU'); return; }
-      const lack = pre.rows.filter((r) => r.votes < r.total).length;
-      const sample = pre.rows.slice(0, 8).map((r) => `  cấp ${r.level} · ${r.name}: ${r.skuCode}`).join('\n');
-      if (!window.confirm(`Suy được mã SKU cho ${pre.rows.length} nhóm hàng${lack ? ` (${lack} nhóm có mã hàng lệch, lấy mã chiếm đa số)` : ''}:\n${sample}${pre.rows.length > 8 ? '\n  …' : ''}\n\nÁp dụng?`)) return;
-      await api.post('/api/v1/catalog/sku-codes/infer', { apply: true });
-    },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['item-classes'] }),
-  });
-  const e = editing;
-  return (
-    <>
-      <PageHeader title="Phân loại hàng hoá" code="DM11" subtitle="Nhóm hàng (cây cha – con), ngành hàng, nhãn hàng, loại hàng gắn trên mặt hàng để báo cáo phân tích theo nhóm hàng" helpKey="mat-hang" />
-      <div className="tabs" role="tablist" style={{ marginBottom: 8 }}>{KINDS.map(([k, l]) => <button key={k} role="tab" className={`tab ${kind === k ? 'active' : ''}`} onClick={() => { setKind(k); setSel(null); }}>{l}</button>)}</div>
-      <div className="card">
-        <CatalogToolbar
-          canWrite={canWrite}
-          hasSelection={Boolean(sel)}
-          busy={del.isPending}
-          onAdd={() => setEditing({ isNew: true, isActive: true, parentCode: sel?.code ?? null })}
-          onEdit={() => sel && setEditing(sel)}
-          onDelete={() => { if (sel && window.confirm(`Bạn có chắc chắn muốn xoá ${label.toLowerCase()} ${sel.code} - ${sel.name}?`)) del.mutate(sel.code); }}
-          onRefresh={() => q.refetch()}
-          onExport={() => exportRef.current?.()}
-          extra={kind === 'group' && canWrite ? <><span className="spacer" /><button className="btn btn-sm" disabled={infer.isPending} onClick={() => infer.mutate()} title="Điền đoạn mã cho các nhóm chưa có, lấy từ mã hàng đang có trong nhóm (vd nhóm Vinamilk có mã 110053024 → cấp 1 = 11, cấp 2 = 005, cấp 3 = 3). Không cần bấm: sinh mã hàng cũng tự làm việc này">Tự điền đoạn mã từ mã hàng đang có</button></> : undefined}
-        />
-        <ErrorBox error={q.error ? errorText(q.error) : del.error ? errorText(del.error) : infer.error ? errorText(infer.error) : null} />
-        {q.isLoading ? <Loading /> : (
-          <DataGrid key={kind} storageKey={`dm11-${kind}-v2`} exportName={`phan-loai-${kind}`} groupable exportRef={exportRef} rows={treeRows} rowKey={(c) => c.code}
-            onSelect={setSel} onRowDoubleClick={(c) => canWrite && setEditing(c)} rowClassName={(c) => (c.isActive ? '' : 'muted')} footerLabel={false}
-            emptyText={`Chưa có ${label.toLowerCase()} nào. Đồng bộ mặt hàng qua API kèm mã phân loại thì danh mục tự thêm.`}
-            columns={[
-              { key: 'code', header: `Mã ${label.toLowerCase()}`, type: 'code', width: 120 },
-              { key: 'name', header: `Tên ${label.toLowerCase()}`, width: 300, render: (c) => (indent(c) ? <span style={{ paddingLeft: indent(c) * 18 }}><span className="muted">└ </span>{c.name}</span> : <b>{c.name}</b>) },
-              { key: 'path', header: 'Path', width: 420, value: (c) => path(c.code) },
-              { key: 'parentCode', header: 'Thuộc', type: 'code', width: 160, value: (c) => codePath(c.parentCode) },
-              ...(kind === 'group' ? [{ key: 'level', header: 'Cấp', width: 110, value: (c: ItemClass) => LEVEL_NAME[levelOf(c.code)] ?? `cấp ${levelOf(c.code)}` } as Column<ItemClass>,
-                { key: 'skuCode', header: 'Đoạn mã trong mã hàng', type: 'code', width: 150 } as Column<ItemClass>] : []),
-              { key: 'products', header: 'Số mặt hàng', type: 'number', width: 100 },
-              { key: 'inactive', header: 'Ngừng dùng', type: 'check', width: 85, hidden: true, value: (c) => !c.isActive },
-            ] satisfies Column<ItemClass>[]} />
-        )}
-      </div>
-      {e && (
-        <Modal viewAgain={viewAgain} viewFirst={!e.isNew} title={label} onClose={() => setEditing(null)}
-          footer={<><button className="btn btn-primary" disabled={save.isPending || !e.code?.trim() || !e.name} onClick={() => save.mutate(e)}>Ghi</button><button className="btn" onClick={() => setEditing(null)}>Thoát</button></>}>
-          <Field label={`Mã ${label.toLowerCase()} (*)`}><input className="input mono" value={e.code ?? ''} disabled={!e.isNew} onChange={(ev) => setEditing({ ...e, code: ev.target.value })} autoFocus /></Field>
-          <Field label={`Tên ${label.toLowerCase()}`}><input className="input" value={e.name ?? ''} onChange={(ev) => setEditing({ ...e, name: ev.target.value })} /></Field>
-          <Field label="Phân cấp (thuộc)" full><ListPicker items={(q.data ?? []).filter((c) => c.code !== e.code).map((c) => ({ code: c.code, name: path(c.code) }))} value={e.parentCode ?? ''} onChange={(p) => setEditing({ ...e, parentCode: p || null })} placeholder="Không có (cấp 1)" nameFirst /></Field>
-          {kind === 'group' && (() => {
-            const lv = e.parentCode ? levelOf(e.parentCode) + 1 : 1;
-            const ex = ['', 'Cấp 1 — ngành: 2 số (11 Sữa bột, 19 Bỉm/tã) · quà khuyến mại: Q', 'Cấp 2 — nhãn: 3 số (005 Vinamilk, 006 Abbott)', 'Cấp 3 — nhóm sản phẩm: 1 số (3 Sữa công thức trẻ em, 8 Combo)'][lv] ?? 'Nhóm sâu hơn cấp 3: không ghép vào mã (mã lấy theo nhóm cấp 3 chứa nó)';
-            return <Field label="Đoạn mã trong mã hàng" hint={`${ex}. Mã hàng = cấp 1 + cấp 2 + cấp 3 + số thứ tự (vd 11 · 005 · 3 · 024 = 110053024). Để trống: sinh mã tự điền theo mã hàng đang có / số kế tiếp.`}><input className="input mono" value={e.skuCode ?? ''} placeholder="tự điền khi sinh mã" onChange={(ev) => setEditing({ ...e, skuCode: ev.target.value.trim().toUpperCase() })} /></Field>;
-          })()}
-          <Field label=" "><label className="checkbox"><input type="checkbox" checked={e.isActive ?? true} onChange={(ev) => setEditing({ ...e, isActive: ev.target.checked })} /> Đang dùng</label></Field>
-          {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
-        </Modal>
-      )}
     </>
   );
 }

@@ -30,8 +30,9 @@ export const khoMenu: MenuItem[] = [
     children: [
       { key: 'kho-mat-hang', label: 'Danh mục mặt hàng', path: '/danh-muc/mat-hang', code: 'DM10' },
       { key: 'kho-don-vi-tinh', label: 'Danh mục đơn vị tính', path: '/danh-muc/don-vi-tinh', code: 'DM15' },
-      { key: 'kho-phan-loai', label: 'Phân loại hàng hoá', path: '/danh-muc/phan-loai-hang', code: 'DM11' },
+      { key: 'kho-phan-loai', label: 'Nhóm hàng', path: '/danh-muc/phan-loai-hang', code: 'DM11' },
       { key: 'kho-nhom-hach-toan', label: 'Mặt hàng - Tài khoản', path: '/cau-hinh/nhom-hach-toan', code: 'ACC17' },
+      { key: 'kho-so-do-to-chuc', label: 'Sơ đồ tổ chức', path: '/danh-muc/so-do-to-chuc', code: 'DM16' },
       { key: 'kho-chi-nhanh', label: 'Chi nhánh (kho, cửa hàng)', path: '/danh-muc/chi-nhanh', code: 'DM02' },
       { key: 'kho-kho', label: 'Danh mục kho', path: '/danh-muc/kho', code: 'DM12' },
     ],

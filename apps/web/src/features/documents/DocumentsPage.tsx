@@ -1,10 +1,12 @@
 // [2026-11-02 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-21b: cảnh báo kiểm chuẩn cho các chứng từ đang chọn (chỉ thông tin) — hiện trên lưới và trong hộp xác nhận; định khoản xong thì một dòng bằng chứng cho cả lô.
+// [2026-11-03 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W3 (S021-13): Trạm kiểm tra — thêm thẻ Cần sửa (bể chờ open), Đã xử lý (đóng 7 ngày), Thử của tôi cạnh Chờ / Lỗi định khoản
 /**
  * Định khoản tự động (ACC14) — trạm điều khiển chứng từ trước khi vào sổ nhật ký chung.
  * Phiếu mua, bán, chuyển kho, điều chỉnh lập ở hệ thống bán hàng (multisite, WooCommerce…). Đường chính: hệ thống nguồn
  * TỰ ĐẨY từng phiếu ngay khi lưu / sửa / xoá (sự kiện thời gian thực); loại chứng từ đặt "Tự động" thì định khoản luôn,
  * "Chờ định khoản" thì vào cổng chờ. Nút "Kéo chứng từ" (chỉ khi bấm, mở màn KHÔNG tự kéo) để lấy phiếu cũ / bù phiếu sót.
  * Chứng từ luôn với nội dung MỚI NHẤT. Bấm một dòng: xem trước bút toán sẽ ghi, thấy đúng mới định khoản.
+ *   thẻ Cần sửa / Đã xử lý / Thử của tôi: bể chờ đầu vào — chứng từ cửa nạp đã từ chối (Trạm kiểm tra, PHASE-021 W3, IntakeStation.tsx);
  *   thẻ Chờ định khoản : chứng từ mới, hoặc đã định khoản nhưng có phiên bản mới (sổ còn theo phiên bản cũ);
  *   thẻ Lỗi định khoản : không ghi được (thiếu cấu hình…), sửa cấu hình rồi định khoản lại;
  *   thẻ Tự động định khoản: phiếu nguồn đẩy vào và tự ghi sổ (chế độ Tự động) — xem nhanh đã hạch toán thế nào;
@@ -32,6 +34,7 @@ import { DocumentDetail } from './DocumentDetail';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ConnectionsModal, PullModal, useConnections } from './Connections';
 import { DocumentGateBanner, advisoryText, useBatchGate } from '@/components/PostingGate';
+import { IntakeList, type IntakeTab } from './IntakeStation';
 
 /** Phiếu xuất điều chỉnh: chứng từ bán nội bộ có lý do (sourceRef.type = export_adjust), hiện thành loại riêng. */
 const EXPORT_ADJUST = 'export_adjust';
@@ -48,7 +51,8 @@ export interface LogRow {
   id: string; eventId: string; docType: DocType; docNo: string; version: number; action: 'receive' | 'post' | 'repost' | 'error' | 'cancel' | 'cancel_request' | 'unpost'; branchCode: string;
   entryNos: string[]; reversed: number; total: number | null; message: string | null; actorName: string; createdAt: string; docStatus: string; docVersion: number;
 }
-type Tab = 'pending' | 'error' | 'auto' | 'posted' | '' | 'log';
+type Tab = 'pending' | 'error' | 'auto' | 'posted' | '' | 'log' | IntakeTab;
+const INTAKE_TABS: readonly string[] = ['inbox', 'resolved', 'trial'];
 export const ACTION_TEXT: Record<LogRow['action'], string> = { receive: 'Nhận phiên bản', post: 'Định khoản', repost: 'Định khoản lại', error: 'Lỗi định khoản', cancel: 'Huỷ', cancel_request: 'Nguồn báo xoá (chờ huỷ)', unpost: 'Bỏ định khoản' };
 
 /** Trạng thái hiển thị: chờ định khoản lại khi sổ còn theo phiên bản cũ. */
@@ -71,10 +75,13 @@ export function DocumentsPage() {
   const set = (patch: Partial<typeof f>) => setF((x) => ({ ...x, ...patch, page: patch.page ?? 1 }));
   const changeTab = (t: Tab) => { setTab(t); setSelected(new Set()); setNotice(null); };
   const qc = useQueryClient();
+  const intakeTab = INTAKE_TABS.includes(tab);
+  /** Thẻ đọc accounting_events (không phải Nhật ký, không phải bể chờ). */
+  const docTab = tab !== 'log' && !intakeTab;
 
   const q = useQuery({
     queryKey: ['documents', f, tab],
-    enabled: tab !== 'log',
+    enabled: docTab,
     queryFn: () => api.getPage<DocRow[]>('/api/v1/documents', { ...f, ...typeParams(f.docType), status: tab || undefined, pageSize: ALL_ROWS }),
     placeholderData: keepPreviousData,
   });
@@ -85,6 +92,7 @@ export function DocumentsPage() {
     placeholderData: keepPreviousData,
   });
   const pendingCount = useQuery({ queryKey: ['documents', 'count', 'pending', f], queryFn: async () => Number((await api.getPage<DocRow[]>('/api/v1/documents', { ...f, ...typeParams(f.docType), status: 'pending', pageSize: 1 })).meta?.total ?? 0) }).data ?? 0;
+  const inboxCount = useQuery({ queryKey: ['intake', 'count'], queryFn: async () => Number((await api.getPage<unknown[]>('/api/v1/intake', { status: 'open', limit: 1 })).meta?.total ?? 0) }).data ?? 0;
   const errorCount = useQuery({ queryKey: ['documents', 'count', 'error', f], queryFn: async () => Number((await api.getPage<DocRow[]>('/api/v1/documents', { ...f, ...typeParams(f.docType), status: 'error', pageSize: 1 })).meta?.total ?? 0) }).data ?? 0;
   const rows = q.data?.data ?? [];
   const picked = rows.filter((r) => selected.has(r.id));
@@ -197,7 +205,7 @@ export function DocumentsPage() {
                 <option value={EXPORT_ADJUST}>Phiếu xuất điều chỉnh</option>
               </select>
             </div>
-            {tab !== 'log' && (
+            {docTab && (
               <div className="field">
                 <label>Nguồn</label>
                 <select className="select input w-md" value={f.sourceSystem} onChange={(e) => set({ sourceSystem: e.target.value })}>
@@ -207,7 +215,7 @@ export function DocumentsPage() {
                 </select>
               </div>
             )}
-            {tab !== 'log' && (
+            {docTab && (
               <div className="field">
                 <label>Tìm số chứng từ, số hoá đơn, khách</label>
                 <input className="input w-lg" value={f.search} onChange={(e) => set({ search: e.target.value })} placeholder="Gõ để tìm…" />
@@ -219,13 +227,15 @@ export function DocumentsPage() {
         <div className="card">
           <FormTabs<Tab>
             tabs={[
+              ['inbox', `Cần sửa${inboxCount ? ` (${inboxCount.toLocaleString('vi-VN')})` : ''}`],
               ['pending', `Chờ định khoản${pendingCount ? ` (${pendingCount.toLocaleString('vi-VN')})` : ''}`],
               ['error', `Lỗi định khoản${errorCount ? ` (${errorCount.toLocaleString('vi-VN')})` : ''}`],
               ['auto', 'Tự động định khoản'], ['posted', 'Đã định khoản'], ['', 'Tất cả chứng từ'], ['log', 'Nhật ký định khoản'],
+              ['resolved', 'Đã xử lý'], ['trial', 'Thử của tôi'],
             ]}
             value={tab} onChange={changeTab}
           />
-          {tab !== 'log' && (
+          {docTab && (
             <div className="vf-toolbar" style={{ marginTop: 6 }}>
               {tab !== 'posted' && tab !== 'auto' && (
                 <>
@@ -244,7 +254,7 @@ export function DocumentsPage() {
           {canPost && picked.length > 0 && <DocumentGateBanner advisories={gate.advisories} subject={`${picked.length} chứng từ đang chọn`} />}
           {tab === 'auto' && <div className="muted" style={{ margin: '4px 0', fontSize: 12 }}>Phiếu hệ thống nguồn đẩy vào ngay khi lưu / sửa và tự ghi sổ theo Chế độ định khoản "Tự động". Bấm một dòng để xem chứng từ và thẻ Bút toán.</div>}
           <ErrorBox error={(tab === 'log' ? logQ.error : q.error) ? errorText(tab === 'log' ? logQ.error : q.error) : post.error ? errorText(post.error) : remove.error ? errorText(remove.error) : null} />
-          {tab === 'log' ? (
+          {intakeTab ? <IntakeList tab={tab as IntakeTab} /> : tab === 'log' ? (
             logQ.isLoading ? <Loading /> : !(logQ.data ?? []).length ? <Empty text="Chưa có lần định khoản nào trong khoảng này" /> : (
               <DataGrid storageKey="acc14-log" rows={logQ.data!} rowKey={(r) => r.id} onRowClick={(r) => setOpenId(r.eventId)} columns={logColumns} exportName={`ACC14-nhat-ky-${f.from}-${f.to}`} />
             )

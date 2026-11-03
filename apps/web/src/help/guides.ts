@@ -14,7 +14,14 @@ export function getGuide(key: string): string | undefined {
   return guides[key];
 }
 
-export function listGuides(): { key: string; title: string }[] {
+/** Trang bài học lỗi đầu vào (docs/huong-dan/loi-dau-vao/<mã>.md — PHASE-021, SC-INTAKE-1 giữ đủ trang cho mọi mã IN-*). */
+const lessons = import.meta.glob('../../../../docs/huong-dan/loi-dau-vao/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+
+export function getLesson(code: string): string | undefined {
+  return Object.entries(lessons).find(([p]) => p.endsWith(`/${code}.md`))?.[1];
+}
+
+export function listGuides():{ key: string; title: string }[] {
   return Object.entries(guides)
     .map(([key, md]) => ({ key, title: (md.match(/^#\s+(.+)$/m)?.[1] ?? key).trim() }))
     .sort((a, b) => a.key.localeCompare(b.key));

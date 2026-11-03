@@ -34,6 +34,8 @@ import {
 } from './catalog.service.js';
 import { inferSkuCodes, nextSku, SKU_RULE } from './sku-rule.js';
 import { importProducts } from './catalog-import.js';
+import { itemHints } from '../products/item.hints.js';
+import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
 
 const tags = ['Danh mục: Hàng hoá chuẩn'];
 const code = z.string().trim().max(64);
@@ -62,6 +64,7 @@ const productSchema = z.object({
   isActive: z.boolean().optional(),
   barcode: z.string().trim().max(500).optional(), imageUrl: z.string().trim().max(1000).optional(), description: z.string().max(20000).optional(),
   weightKg: z.coerce.number().min(0).nullish(), origin: z.string().trim().max(255).optional(),
+  warnAck: z.object({ reason: z.string().trim().min(5, 'Lý do ít nhất 5 ký tự').max(500), codes: z.array(z.string().max(32)).max(50).default([]) }).optional(), // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: ghi nhận cảnh báo mềm (D023-6)
   isMain: z.boolean().optional(), isUnder24m: z.boolean().optional(), noSale: z.boolean().optional(), exportAdjust: z.boolean().optional(),
   isKct: z.boolean().optional(), trackIdentifier: z.boolean().optional(),
   parentSku: z.string().trim().max(64).nullable().optional(),
@@ -223,10 +226,16 @@ export const catalogMoreWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'PUT', path: '/api/v1/catalog/products/:sku', query: z.object({ new: queryBool }) }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'catalog_product', objectId: (i) => String(i.sku) },
     handler: async (ctx, input) => {
-      const { sku: _sku, new: _new, ...reqBody } = input;
+      const { sku: _sku, new: _new, warnAck, ...reqBody } = input;
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
-      return await sameTx(trx, (trx) => saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new }));
+      // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: saveProduct áp cổng danh mục (nháp / kích hoạt); trả khung Vì sao + ghi nhận cảnh báo mềm.
+      // [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main: gate / findings / held trả qua ctx.meta (action không còn tự dựng phản hồi)
+      const product = (await saveProduct(trx, auth.tenantId, auth.actor, input.sku, reqBody, { isNew: input.new }))!;
+      const findings = await itemHints(trx, auth.tenantId, { sku: input.sku, unit: product.unit, postingGroupCode: product.postingGroupCode });
+      await recordWarnAck(trx, auth, 'product', input.sku, findings, warnAck);
+      Object.assign(ctx.meta, { gate: 'A', findings, ...(product.isDraft ? { held: { kind: 'draft', id: input.sku } } : {}) });
+      return product;
     },
   }),
   defineAction({

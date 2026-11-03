@@ -12,19 +12,21 @@ import { PageHeader } from '@/components/PageHeader';
 import { FilterLayout } from '@/components/ReportPanel';
 import { BranchSelect, DateRange } from '@/components/filters';
 import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
+import { ChonNhomHang, useLocNhomHang } from '@/components/CayNhomHang';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { KindSelect, ScopeSelect } from '../../../components/salesFilters';
 import { PrintButton } from '@/components/print';
 import { PNL_TEMPLATES, PROFIT_TEMPLATES, TRANSFER_TEMPLATES } from './mauIn/baoCaoHang';
 
 /* ------------------------------------------------------------------ BH04 lãi gộp */
-type GroupBy = 'product' | 'itemGroup' | 'itemType' | 'brand' | 'industry' | 'branch' | 'department' | 'customer' | 'customerGroup' | 'month';
+type GroupBy = 'product' | 'itemGroup1' | 'itemGroup2' | 'itemGroup3' | 'itemType' | 'branch' | 'department' | 'customer' | 'customerGroup' | 'month';
 const GROUPS: { key: GroupBy; tab: string; keyHead: string; labelHead?: string; extraHead?: string }[] = [
   { key: 'product', tab: 'Theo mặt hàng', keyHead: 'Mã hàng', labelHead: 'Tên hàng', extraHead: 'ĐVT' },
-  { key: 'itemGroup', tab: 'Theo nhóm hàng', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng' },
+  // [2026-11-03 02:40 PM Nguyễn Văn Thủy] NHOM — lãi gộp theo cây nhóm hàng cấp 1 / 2 / 3, thay 3 thẻ ngành / nhãn / nhóm rời
+  { key: 'itemGroup1', tab: 'Theo nhóm cấp 1', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng cấp 1' },
+  { key: 'itemGroup2', tab: 'Theo nhóm cấp 2', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng cấp 2' },
+  { key: 'itemGroup3', tab: 'Theo nhóm cấp 3', keyHead: 'Mã nhóm', labelHead: 'Nhóm hàng cấp 3' },
   { key: 'itemType', tab: 'Theo loại hàng', keyHead: 'Mã loại', labelHead: 'Loại hàng' },
-  { key: 'brand', tab: 'Theo nhãn hàng', keyHead: 'Mã nhãn', labelHead: 'Nhãn hàng' },
-  { key: 'industry', tab: 'Theo ngành hàng', keyHead: 'Mã ngành', labelHead: 'Ngành hàng' },
   { key: 'branch', tab: 'Theo chi nhánh', keyHead: 'Mã chi nhánh', labelHead: 'Tên chi nhánh' },
   { key: 'department', tab: 'Theo bộ phận (cửa hàng)', keyHead: 'Mã bộ phận', labelHead: 'Bộ phận' },
   { key: 'customer', tab: 'Theo khách hàng', keyHead: 'Mã khách', labelHead: 'Tên khách', extraHead: 'Mã số thuế' },
@@ -35,7 +37,7 @@ interface ProfitRow { key: string; label: string; extra: string; qty: number; re
 interface ProfitData { rows: ProfitRow[]; totals: Omit<ProfitRow, 'key' | 'label' | 'extra' | 'uncosted'>; uncosted: number }
 
 export function GrossProfitPage() {
-  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', kind: 'all', scope: 'all', groupBy: 'product' as GroupBy });
+  const [f, setF] = useState({ from: periodFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', groups: '', kind: 'all', scope: 'all', groupBy: 'product' as GroupBy });
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const q = useQuery({ queryKey: ['gross-profit', f], queryFn: () => api.get<ProfitData>('/api/v1/reports/gross-profit', f) });
   const d = q.data;
@@ -60,7 +62,8 @@ export function GrossProfitPage() {
         filters={
           <>
             <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
-            <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />
+            <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
+            <ChonNhomHang value={f.groups} onChange={(groups) => set({ groups })} />
             <KindSelect value={f.kind} onChange={(kind) => set({ kind })} />
             <ScopeSelect value={f.scope} onChange={(scope) => set({ scope })} />
           </>
@@ -96,7 +99,10 @@ export function StockTransfersPage() {
   const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', status: 'all' });
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const q = useQuery({ queryKey: ['stock-transfers', f], queryFn: () => api.get<{ rows: TransferRow[]; totals: { outValue: number; pendingLines: number }; uncosted: number }>('/api/v1/reports/stock-transfers', f) });
-  const d = q.data;
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — lọc theo nhóm hàng
+  const [nhom, setNhom] = useState('');
+  const ln = useLocNhomHang(nhom);
+  const d = q.data && ln.coLoc ? { ...q.data, rows: ln.loc(q.data.rows) } : q.data;
   return (
     <>
       <PageHeader title="Bảng kê chuyển kho" code="HH01" subtitle="Hàng chuyển giữa các chi nhánh theo phiếu và mặt hàng: đã nhận, còn trên đường (số dư hàng đang chuyển)" helpKey="bang-ke-chuyen-kho" />
@@ -106,6 +112,7 @@ export function StockTransfersPage() {
           <>
             <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
             <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} label="Chi nhánh xuất hoặc nhận" />
+            <ChonNhomHang value={nhom} onChange={setNhom} />
             <div className="field"><label>Trạng thái</label><select className="select input" value={f.status} onChange={(e) => set({ status: e.target.value })}><option value="all">Tất cả</option><option value="pending">Chưa nhận đủ</option><option value="received">Đã nhận đủ</option></select></div>
           </>
         }

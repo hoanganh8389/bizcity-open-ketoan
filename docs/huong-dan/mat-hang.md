@@ -1,4 +1,4 @@
-# Danh mục mặt hàng (DM10) và phân loại hàng hoá (DM11)
+# Danh mục mặt hàng (DM10)
 
 Đây là **danh mục hàng chuẩn của công ty**. Mặt hàng, đơn vị tính, tỉ lệ quy đổi, giá bán, trạng thái bán khai **ở đây**. Hệ thống bán hàng (các website cửa hàng) tự kéo về vài phút một lần để hiển thị và bán, không sửa được bên đó.
 
@@ -106,7 +106,7 @@ Số tự sinh = số lớn nhất đang có của **mã 9 ký tự** cùng ti�
 **Đoạn mã của nhóm** (cột *Đoạn mã trong mã hàng* ở **Nhóm hàng (DM11)**, có trong menu Mua hàng → Danh mục mua hàng) chưa khai thì phần mềm tự lo:
 - nhóm đã có mặt hàng: lấy đoạn mã từ các mã hàng đang có trong nhóm;
 - nhóm mới tinh: cấp số kế tiếp sau các nhóm cùng cha (Sữa người lớn là 4 thì Sữa bầu mới là 5).
-- Mã tìm được ghi lại vào nhóm, sửa được ở DM11 → thẻ Nhóm hàng → ô **Mã SKU**.
+- Mã tìm được ghi lại vào nhóm, sửa được ở **Nhóm hàng (DM11)** → ô **Mã ngắn**.
 
 ### Câu hỏi hay gặp (để trả lời khi họp)
 
@@ -143,13 +143,9 @@ Các trường hợp 1–3, 6–9, 11 đã có phép thử tự động (`apps/a
 - Chỉ **xoá** được mặt hàng chưa có nhập xuất. Mặt hàng đã dùng thì bỏ tích "Đang theo dõi".
 - Chứng từ mang mã hàng chưa có thì mặt hàng tự thêm (cột **Nguồn** = "Tự thêm từ chứng từ"). Mã tự thêm chưa khai ĐVT thì **chưa xuống cửa hàng**; khai ĐVT là cửa hàng thấy.
 
-## Phân loại hàng hoá (DM11)
+## Nhóm hàng (DM11)
 
-Bốn thẻ **Nhóm hàng**, **Ngành hàng**, **Nhãn hàng**, **Loại hàng**. Lưới: mã, tên, Path (đường dẫn cây), thuộc, số mặt hàng đang gắn. Form: mã (*), tên, phân cấp (thuộc mục nào).
-
-- Thẻ **Nhóm hàng** có thêm cột / ô **Mã SKU**: đoạn mã ghép khi sinh mã hàng. Cấp 1 thường 2 chữ số (11), cấp 2 thường 3 chữ số (006), cấp 3 thường 1 chữ số (3).
-- Nút **Suy mã SKU**: điền mã SKU cho các nhóm chưa khai, đoán từ mã hàng đang có trong nhóm. Hiện danh sách xem trước rồi mới hỏi áp dụng. Nhóm đã khai không bị đổi.
-- Chỉ xoá được mục chưa gắn mặt hàng và chưa có mục con.
+Cây nhóm hàng (cấp 1 → 2 → 3 → …), mã ngắn từng cấp và cách thêm / sửa: xem [Nhóm hàng](nhom-hang.md).
 
 ## Thẻ Mua hàng (khi dùng phân hệ Mua hàng)
 
@@ -189,3 +185,13 @@ Khai hàng loạt, xem gợi ý theo tốc độ bán: màn **Tồn max (MH16)**
 ## Hàng không chịu thuế GTGT (KCT)
 
 Khai **thuế bán ra KCT** (hoặc R00K) thì **thuế mua vào tự là V13K** — "Thuế GTGT đầu vào 0% (không chịu VAT)" — nếu để trống: phiếu mua không tự lấy 8%. Phiếu mua / đơn đặt: ô thuế suất chọn **KCT (không chịu thuế)**, tiền thuế 0; bán ra dùng mã KCT. Khác với **Không kê khai (KKKN)** — dùng cho quà / hàng không có hoá đơn.
+
+## Mặt hàng nháp <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29 -->
+
+Khi bạn Ghi mặt hàng mà khai báo còn **lỗi chặn** (khung **Vì sao** dưới form có dấu ✘), mặt hàng vẫn được lưu nhưng ở trạng thái **Nháp**:
+
+- nút Ghi đổi thành **"Lưu nháp (còn n lỗi chặn)"**; danh sách mặt hàng hiện nhãn **Nháp**, lọc được bằng "Nháp (chưa kích hoạt)";
+- mặt hàng nháp **không** có ở ô chọn mặt hàng của phiếu; chứng từ từ POS / hệ thống khác có mặt hàng này được giữ ở **Trạm kiểm tra đầu vào** với mã [IN-ITEM-009](loi-dau-vao/IN-ITEM-009.md);
+- sửa hết lỗi chặn rồi Ghi → mặt hàng **tự kích hoạt**; các chứng từ đang chờ vì nó được kiểm lại tự động.
+
+Lỗi chặn hiện có: thiếu đơn vị tính gốc (`ITEM-BLOCK-001`); thiếu nhóm hạch toán khi đơn vị chưa có nhóm mặc định (`ITEM-BLOCK-002`). Thiếu nhóm hạch toán nhưng có nhóm mặc định chỉ là **cảnh báo mềm** (`ITEM-HINT-001`): lưu được ngay sau khi ghi lý do. Tra mọi mã ở [Tra mã phát hiện](ma-loi/README.md).

@@ -13,6 +13,7 @@ import { Empty, ErrorBox, Loading, Money } from '@/components/ui';
 import { DocumentDetail } from '../../../features/documents/DocumentDetail';
 import { KindSelect, Qty, ScopeSelect } from '../../../components/salesFilters';
 import { DataGrid, type Column } from '@/components/DataGrid';
+import { ChonNhomHang } from '@/components/CayNhomHang';
 import { PrintButton } from '@/components/print';
 import { SALES_DETAIL_TEMPLATES } from './mauIn/baoCaoBanHang';
 
@@ -24,7 +25,8 @@ interface Row {
 interface Data { rows: Row[]; totals: { lines: number; documents: number; qty: number; amount: number; discount: number; tax: number; total: number } }
 
 export function SalesDetailPage() {
-  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', kind: 'all', scope: 'all', search: '', page: 1 });
+  // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — lọc theo nhóm hàng (groups, tích nhóm cha = cả nhánh con)
+  const [f, setF] = useState({ from: defaultFrom(), to: defaultTo(), branchCodes: '', warehouseCodes: '', groups: '', kind: 'all', scope: 'all', search: '', page: 1 });
   const [searchText, setSearchText] = useState('');
   const [docId, setDocId] = useState<string | null>(null);
   const set = (patch: Partial<typeof f>) => setF((x) => ({ ...x, ...patch, page: patch.page ?? 1 }));
@@ -51,7 +53,8 @@ export function SalesDetailPage() {
           <>
             <form className="rp-form" onSubmit={(e) => { e.preventDefault(); set({ search: searchText.trim() }); }}>
               <DateRange from={f.from} to={f.to} onChange={(from, to) => set({ from, to })} />
-              <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} />
+              <BranchSelect value={f.branchCodes} onChange={(branchCodes) => set({ branchCodes })} warehouses={{ value: f.warehouseCodes, onChange: (warehouseCodes) => set({ warehouseCodes }) }} />
+              <ChonNhomHang value={f.groups} onChange={(groups) => set({ groups })} />
               <KindSelect value={f.kind} onChange={(kind) => set({ kind })} />
               <ScopeSelect value={f.scope} onChange={(scope) => set({ scope })} />
               <div className="field">

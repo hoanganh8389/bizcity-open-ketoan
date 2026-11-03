@@ -79,7 +79,12 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
       // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: thân thô — cửa nạp tự kiểm khuôn ingestDocumentSchema để chứng từ sai khuôn được giữ ở bể chờ (error.intake)
       body: z.record(z.unknown()).describe('Chứng từ theo khuôn ingestDocumentSchema (bizcity_ledger_intake@1) — cửa nạp kiểm, sai khuôn trả VALIDATION_ERROR + error.intake'),
     },
-    handler: async (req) => ok(await documentService.ingest(authOf(req), req.body)),
+    // [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: header X-Preflight-Guard = dấu cấu hình từ lần Kiểm thử (Commit Guard, IN-GUARD-001)
+    handler: async (req) => {
+      const g = req.headers['x-preflight-guard'];
+      const guard = typeof g === 'string' && g.trim() ? g.trim().slice(0, 64) : undefined;
+      return ok(await documentService.ingest(authOf(req), req.body, 'api', guard ? { guard } : {}));
+    },
   });
 
   // @bizcity-route: cửa nạp theo lô — như POST /documents; gom một giao dịch có thể khoá chéo với bể chờ (kết nối riêng)

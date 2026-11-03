@@ -14,6 +14,7 @@ Danh mục và cấu hình định khoản chuẩn của công ty. Phần mềm 
 | `khoan-muc.jsonl` | Khoản mục (ACC24) | cây cha – con |
 | `bo-phan.jsonl` | Bộ phận (ACC26) | cửa hàng: BH + mã cửa hàng |
 | `chi-nhanh.jsonl` | Chi nhánh (DM02) | chỉ thêm / cập nhật |
+| `so-do-to-chuc.jsonl`, `so-do-to-chuc-gan.jsonl` | Sơ đồ tổ chức (DM16) + chi nhánh gắn nút | cây Công ty → Miền → Chi nhánh → Tỉnh; kho nhận hàng tự lấy chi nhánh xx000 của mỗi chi nhánh cấp 2; quay về gốc bằng nút ở màn DM16 |
 | `kho.jsonl` | Kho theo chi nhánh (DM12) | mã kho, chi nhánh sở hữu, kho mặc định (nhận dòng nhập xuất không ghi mã kho); chỉ thêm / cập nhật |
 | `ly-do.jsonl` | Lý do – tài khoản (ACC18) | |
 | `nhom-hach-toan.jsonl` | Nhóm hạch toán mặt hàng (ACC17) | bộ tài khoản; mặt hàng gán nhóm ở `mat-hang-tai-khoan.jsonl` |

@@ -8,15 +8,23 @@
  *   bizcity.ledger.entry.reversed  — bút toán của chứng từ bị đảo mà không ghi phiên bản mới (huỷ, bỏ định khoản)
  *   bizcity.period.locked / .unlocked — khoá / mở kỳ; subject = period:<yyyy-mm>
  *   bizcity.posting.policy.published — phát hành chính sách kế toán mới (ADR-0009); subject = policy:<version>
+ *   bizcity.intake.rejected / .resolved — mục bể chờ mới (không phát cho lần gửi trùng) / mục đóng; subject = intake:<id>
  * Module dùng entry.posted để biết CHẮC sổ đã ghi (vd đổi kỳ hợp đồng sang "đã thu"). Không module nào được phát bizcity.*.
  */
 import type { Db } from '@bizcity/platform/db/client';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import { emitEvent } from '@bizcity/platform/core/events';
 
+// [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20): bizcity.intake.rejected / .resolved — chỉ mã và số, không nguyên văn (R-INTAKE-12); emitKernelEventAs cho chỗ chỉ có tenantId + actor (đóng mục theo nguồn)
 export type KernelEventType = 'bizcity.ledger.entry.posted' | 'bizcity.ledger.entry.reversed' | 'bizcity.period.locked' | 'bizcity.period.unlocked'
-  | 'bizcity.posting.policy.published';
+  | 'bizcity.posting.policy.published' | 'bizcity.intake.rejected' | 'bizcity.intake.resolved';
 
 export function emitKernelEvent(trx: Db, auth: AuthContext, type: KernelEventType, subject: string, data: Record<string, unknown>): Promise<string | null> {
   return emitEvent(trx, { tenantId: auth.tenantId, type, subject, data, source: 'bizcity.kernel', actor: { kind: auth.kind, id: auth.actor } });
+}
+
+/** Như emitKernelEvent khi chỉ có `actor` dạng `user:<id>` / `apikey:<id>`. */
+export function emitKernelEventAs(trx: Db, tenantId: string, actor: string, type: KernelEventType, subject: string, data: Record<string, unknown>): Promise<string | null> {
+  const kind = actor.startsWith('apikey:') ? 'apikey' : actor.startsWith('user:') ? 'user' : 'system';
+  return emitEvent(trx, { tenantId, type, subject, data, source: 'bizcity.kernel', actor: { kind, id: actor } });
 }

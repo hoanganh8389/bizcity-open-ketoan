@@ -50,7 +50,7 @@ const STAGES: Stage[] = [
     node: { label: 'Tồn max', code: 'MH16', icon: 'Gauge', color: '#5b6cff', path: '/mua-hang/ton-max',
       auto: ['Mỗi shop có mức tồn tối đa cho từng mã hàng', 'Shop gửi phiếu đăng ký, duyệt xong là mức mới có hiệu lực'] },
     config: [
-      { label: 'Phân cấp chi nhánh – shop', code: 'MH15', icon: 'Network', color: '#64748b', path: '/mua-hang/phan-cap', hint: 'Chi nhánh cha đặt NCC, shop con nhận hàng' },
+      { label: 'Sơ đồ tổ chức', code: 'DM16', icon: 'Network', color: '#64748b', path: '/danh-muc/so-do-to-chuc', hint: 'Chi nhánh (vd Phú Thọ) mua hàng cho mọi tỉnh bên dưới, hàng về kho chi nhánh rồi chia xuống cửa hàng' },
       { label: 'Phiếu đăng ký tồn max', code: 'MH17', icon: 'FilePen', color: '#64748b', path: '/mua-hang/dang-ky-max', hint: 'Shop đề nghị mức tồn' },
     ],
     side: [],

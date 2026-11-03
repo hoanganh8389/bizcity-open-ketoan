@@ -1,5 +1,6 @@
 // @bizcity-layer M data/masterdata
 // [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
+// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-14 / 15: POST /api/v1/partners/validate; tạo / sửa trả meta.findings, ghi nhận cảnh báo mềm (warnAck)
 /**
  * Đối tượng và nhóm đối tượng.
  *   GET /api/v1/partners?search=&groupCode=&kind=&status=&page=&pageSize=
@@ -13,6 +14,8 @@
  *   GET /api/v1/partners/:code/balances?asOf=&branchCode=  số dư công nợ của một đối tượng theo từng tài khoản
  *   GET /api/v1/partner-groups        nhóm đối tượng
  *   PUT /api/v1/partner-groups/:code  thêm hoặc sửa nhóm
+ *   POST /api/v1/partners/validate   khung Vì sao: nhắc / cảnh báo mềm cho một bản khai báo (chỉ đọc); POST / PUT :code trả meta.findings,
+ *                                     nhận warnAck { reason, codes } để ghi nhận cảnh báo mềm (D023-6)
  *
  * Module nhỏ nên service gộp thẳng vào route (chỉ gọi repository + ghi nhật ký).
  */
@@ -32,7 +35,12 @@ import { partnerRepository, toPartnerDto, type PartnerAccountingInfo } from './p
 import { suggestPartnerCode } from './partner-code.js';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2): adapter tra MST qua cổng
 import { corePort } from '@bizcity/platform/core/ports';
+import { partnerHints } from './partner.hints.js';
+import { recordWarnAck } from '@bizcity/platform/core/catalog-warn';
+import { WARN_ACK_MIN_REASON } from '@ketoan/contracts';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
+
+const warnAck = z.object({ reason: z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500), codes: z.array(z.string().max(32)).max(50).default([]) });
 
 const tags = ['Danh mục: Đối tượng'];
 const KINDS = ['customer', 'supplier', 'employee', 'internal', 'other'] as const;
@@ -75,6 +83,8 @@ function split<T extends Record<string, unknown>>(b: T) {
   return { info: info as PartnerAccountingInfo, rest: rest as Omit<PartnerInput, 'code'> & { code?: string } };
 }
 const partnerBody = partnerInputSchema.omit({ code: true }).extend({ kind: z.enum(KINDS).default('customer'), ...accountingInfo });
+/** Tạo / sửa một đối tượng từ màn hình: thêm ghi nhận cảnh báo mềm. Đồng bộ hàng loạt không có trường này. */
+const partnerFormBody = partnerBody.extend({ warnAck: warnAck.optional() });
 
 /** Kiểm nhóm có trong danh mục. */
 async function assertGroups(trx: Db, tenantId: string, codes: (string | null | undefined)[]) {
@@ -205,22 +215,33 @@ export async function partnerRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, partnerWriteActions);
 }
 
-// [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// [2026-11-03 05:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 gộp main (cổng danh mục): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
 // Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
 const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 
 export const partnerWriteActions: AnyActionDef[] = [
   defineAction({
+    id: 'core.partner.validate', title: 'Khung Vì sao: kiểm thử một bản khai báo đối tượng (chỉ đọc)', tags,
+    permission: 'catalog:read', effect: 'read', idempotency: 'none',
+    input: z.object({ code: z.string().trim().min(1).max(64), name: z.string().trim().max(255).optional(), kind: z.enum(KINDS).optional(), alsoKinds: z.array(z.enum(['customer', 'supplier'])).max(2).optional(), taxCode: z.string().trim().max(32).nullish() }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/partners/validate' }, mcp: false, ai: 'read' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      return { findings: await partnerHints(trx, ctx.legacyAuth.tenantId, input) };
+    },
+  }),
+  defineAction({
     id: 'core.partner.create', title: 'Tạo mới đối tượng (mã đã có thì báo trùng, không ghi đè)', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: partnerBody.extend({ code: z.string().trim().min(1).max(64) }), output: anyOut,
+    input: partnerFormBody.extend({ code: z.string().trim().min(1).max(64) }), output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/partners', status: 201 }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'partner' },
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
-      const { code, ...body } = input;
+      const { code, warnAck: ack, ...body } = input;
       const { info, rest } = split(body);
+      let findings: Awaited<ReturnType<typeof partnerHints>> = [];
       await sameTx(trx, async (trx) => {
         // Hai người tạo cùng mã một lúc: người sau phải thấy mã đã có (upsert bên dưới không được ghi đè).
         await sql`SELECT pg_advisory_xact_lock(hashtext(${`partner:${auth.tenantId}:${code}`}))`.execute(trx);
@@ -231,22 +252,26 @@ export const partnerWriteActions: AnyActionDef[] = [
         await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code } as PartnerInput, info.kind);
         await partnerRepository.updateAccountingInfo(trx, auth.tenantId, code, info);
         await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', code).execute();
+        findings = await partnerHints(trx, auth.tenantId, { code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.create', objectType: 'partner', objectId: code, after: input });
+        await recordWarnAck(trx, auth, 'partner', code, findings, ack);
       });
-      return toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, code))!);
+      return (Object.assign(ctx.meta, { findings }), toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, code))!));
     },
   }),
   defineAction({
     id: 'core.partner.save', title: 'Tạo hoặc cập nhật đối tượng', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
-    input: (partnerBody).merge(z.object({ code: z.string().trim().min(1).max(64) })), output: anyOut,
+    input: (partnerFormBody).merge(z.object({ code: z.string().trim().min(1).max(64) })), output: anyOut,
     expose: { http: { method: 'PUT', path: '/api/v1/partners/:code' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'partner', objectId: (i) => String(i.code) },
     handler: async (ctx, input) => {
       const { code: _code, ...reqBody } = input;
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
-      const { info, rest } = split(reqBody);
+      const { warnAck: ack, ...body } = reqBody;
+      const { info, rest } = split(body);
+      let findings: Awaited<ReturnType<typeof partnerHints>> = [];
       await sameTx(trx, async (trx) => {
         await assertGroups(trx, auth.tenantId, [info.groupCode]);
         const before = await partnerRepository.findByCode(trx, auth.tenantId, input.code);
@@ -255,9 +280,11 @@ export const partnerWriteActions: AnyActionDef[] = [
         await partnerRepository.upsert(trx, auth.tenantId, { ...rest, code: input.code } as PartnerInput, info.kind);
         await partnerRepository.updateAccountingInfo(trx, auth.tenantId, input.code, info);
         if (isNew) await trx.updateTable('partners').set({ created_by: auth.actorName }).where('tenant_id', '=', auth.tenantId).where('code', '=', input.code).execute();
+        findings = await partnerHints(trx, auth.tenantId, { code: input.code, name: rest.name, kind: info.kind, alsoKinds: info.alsoKinds, taxCode: rest.taxCode });
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'partner.upsert', objectType: 'partner', objectId: input.code, after: reqBody });
+        await recordWarnAck(trx, auth, 'partner', input.code, findings, ack);
       });
-      return toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, input.code))!);
+      return (Object.assign(ctx.meta, { findings }), toPartnerDto((await partnerRepository.findByCode(trx, auth.tenantId, input.code))!));
     },
   }),
   defineAction({

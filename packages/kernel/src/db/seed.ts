@@ -33,7 +33,7 @@ export const BASE_PACK_FILE = 'vn-tt99-nen.posting-pack.json';
 
 
 /** Đọc CSV đơn giản (có ô bọc nháy kép). */
-function parseCsv(text: string): Record<string, string>[] {
+export function parseCsv(text: string): Record<string, string>[] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';

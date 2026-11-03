@@ -1,5 +1,6 @@
 // @bizcity-layer D modules/ban-hang
 // [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — tách từ báo cáo hàng hoá (modules/reports/goods-reports.ts) về ban-hang: lãi gộp dựa trên dòng bán (SC-LAYER-2)
+// [2026-11-03 02:40 PM Nguyễn Văn Thủy] NHOM — gom theo nhóm hàng cấp 1 / 2 / 3, lọc ?groups= nhóm hàng và ?warehouseCodes= mã kho (đóng góp)
 /**
  * GET /api/v1/reports/gross-profit?from=&to=&groupBy=&branchCodes=&kind=&scope=   lãi gộp (BH04)
  *     doanh thu thuần (tiền hàng sau chiết khấu, trừ hàng trả lại) − giá vốn, theo mặt hàng, nhóm / loại / nhãn / ngành hàng,
@@ -15,7 +16,7 @@ import { fromCents, toCents } from '@ketoan/contracts';
 import { db, toNumber } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok } from '../../core/http.js';
-import { FROM, GROUP_SQL, SALES_GROUPS, where } from '../../modules/sales/sales-report.repository.js';
+import { FROM, GROUP_SQL, SALES_GROUPS, where, nhomCte } from '../../modules/sales/sales-report.repository.js';
 import { toFilter } from '../../modules/sales/sales-report.service.js';
 
 const tags = ['Báo cáo hàng hoá'];
@@ -31,7 +32,7 @@ export async function grossProfitRoutes(app: FastifyInstance): Promise<void> {
     preHandler: pre,
     schema: {
       tags, summary: 'Lãi gộp theo mặt hàng, nhóm hàng, cửa hàng, khách',
-      querystring: z.object({ from: date, to: date, branchCodes, groupBy: z.enum(SALES_GROUPS).default('product'), kind: z.enum(['all', 'sale', 'return']).default('all'), scope: z.enum(['all', 'invoiced', 'internal']).default('all'), search: z.string().trim().max(100).optional() }),
+      querystring: z.object({ from: date, to: date, branchCodes, groupBy: z.enum(SALES_GROUPS).default('product'), kind: z.enum(['all', 'sale', 'return']).default('all'), scope: z.enum(['all', 'invoiced', 'internal']).default('all'), search: z.string().trim().max(100).optional(), groups: branchCodes, warehouseCodes: branchCodes }),
     },
     handler: async (req) => {
       const auth = authOf(req);
@@ -39,6 +40,7 @@ export async function grossProfitRoutes(app: FastifyInstance): Promise<void> {
       const f = await toFilter(auth, q);
       const g = GROUP_SQL[q.groupBy];
       const res = await sql<{ key: string; label: string; extra: string; qty: string; revenue: string; cost: string; gift_cost: string; uncosted: string; lines: string }>`
+        ${g.level ? nhomCte(auth.tenantId) : sql``}
         SELECT ${g.key} AS key, ${g.label} AS label, ${g.extra} AS extra,
                COALESCE(SUM(l.qty * l.sign), 0) AS qty,
                COALESCE(SUM(l.amount_before_tax * l.sign), 0) AS revenue,
