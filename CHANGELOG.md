@@ -12,6 +12,10 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Đổi
+<!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 -->
+- **Yêu cầu kiến trúc: phân hệ nghiệp vụ nằm ở `modules/<key>/`, `phan-he/` đóng băng** (chủ dự án, [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)): không thêm phân hệ mới vào `apps/*/src/phan-he/`; phân hệ cũ sửa lỗi tại chỗ và chuyển sang chuẩn module theo 6 đợt (đề xuất: `quy`, `tai-san`/`kho`/`ban-hang`, `thue`, `ke-toan`, `mua-hang`, giao diện lõi). Mỗi đợt giữ chỗ và chốt thiết kế trước khi code (R-FLOW). `AGENTS.md`, `CONTRIBUTING.md`, `docs/framework/03-MO-RONG.md` sửa cho khớp; hướng dẫn và lời nhắn riêng cho người đóng góp ở [docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md](docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md). Chưa đổi mã: việc chuyển và phép kiểm SC-MOD-4 làm theo từng đợt.
+
 ### Thêm
 <!-- [2026-11-03 11:20 PM Johnny Chu - Chu Hoàng Anh] DANH-GIA -->
 - **Bản đánh giá mức đáp ứng của code so với tài liệu `main`** ([docs/audits/DANH-GIA-DAP-UNG-2026-11-03.md](docs/audits/DANH-GIA-DAP-UNG-2026-11-03.md)): bảng điểm tĩnh, test sản phẩm (1205 đạt, 0 hỏng), nạp 25 trường hợp mua hàng và đối chiếu sổ (116/119 và 113/119, Nợ = Có = 4.774.840.842), mức đáp ứng theo 14 nhóm tài liệu, lộ trình, checklist 27 phase, độ phủ luật (42/100), nợ cũ, độ lệch tài liệu ↔ code và việc mở theo ưu tiên.

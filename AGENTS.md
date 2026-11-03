@@ -30,6 +30,17 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 - **Dữ liệu ngoài (POS / ERP / plugin) qua validation trước khi chạm sổ:** không tự tạo mặt hàng từ chứng từ; mã lạ → trạm tiền kiểm với `IN-ITEM-*`. Tạo / sửa danh mục chỉ qua `core.item.*`, `core.partner.*`.
 - Chi tiết: [RULE-ITEM](docs/rules/RULE-ITEM.md), [PHASE-024 · 10](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/10-DANH-MUC-CO-PHIEN-BAN.md) (bốn hạng thay đổi), [· 50](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/50-TUAN-THU.md).
 
+## Yêu cầu kiến trúc: phân hệ nghiệp vụ nằm ở `modules/<key>/` (ADR-0024)
+
+<!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 — yêu cầu kiến trúc của chủ dự án: phan-he/ đóng băng, mã phân hệ mới ở modules/<key>/ -->
+**Đây là yêu cầu kiến trúc của chủ dự án Johnny Chu – Chu Hoàng Anh, không phải gợi ý.** Áp cho mọi người đóng góp (Nguyễn Văn Thủy, anh em dev, cộng đồng) và mọi trợ lý AI. Đọc trước khi tạo hoặc sửa mã phân hệ.
+
+1. **Phân hệ / add-in mới ở `modules/<key>/`** (API, web, migration, `bizcity.module.json`), tạo bằng `npx bizcity module new <key> --label "Tên"`. **Không tạo thư mục mới dưới `apps/api/src/phan-he/` hay `apps/web/src/phan-he/`.**
+2. **`phan-he/` đóng băng.** Phân hệ cũ (ke-toan, quy, mua-hang, ban-hang, kho, tai-san, thue) vẫn được sửa lỗi, mở rộng vừa phải tại chỗ cho tới đợt chuyển của nó. Chức năng **mới và độc lập** → module mới ở `modules/`. Phần mới trong phân hệ cũ viết kiểu **"sạch SDK"** (gom truy cập CSDL vào một tệp, phụ thuộc Core qua `ports.ts`, logic thuần ở `modules/<key>/domain`).
+3. **Chuyển phân hệ cũ = chuyển chuẩn module, theo đợt**, mỗi đợt có giữ chỗ ở CLAIMS.md và chữ chốt (R-FLOW). **Không tự chuyển cả một phân hệ trong PR bất kỳ**; không đổi tên thư mục cho có.
+4. Người dùng nhờ "thêm phân hệ / chức năng mới" → đặt ở `modules/<key>/`. Nếu yêu cầu thêm mã mới vào `phan-he/`: **nhắc yêu cầu này và hỏi lại trước khi làm.**
+5. Hướng dẫn đầy đủ, lộ trình các đợt, mục gửi riêng người đóng góp: [docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md](docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md). Quyết định và câu hỏi mở: [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md).
+
 ## Bước 0: giữ chỗ trước khi nhận việc (R-FLOW)
 
 <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — Bước 0: giữ chỗ vào main trước khi code; hai phiên đã làm trùng W6 đợt 3 và đợt 4 (chủ dự án chọn: giữ chỗ phải vào main trước) -->
@@ -94,8 +105,8 @@ Framework mở để hàng chục người cùng phát triển, nhưng **mỗi l
 
 | Bậc | Đặt ở đâu | Ai làm / ai duyệt | Rủi ro |
 |---|---|---|---|
-| 1. Giao diện, hướng dẫn, dữ liệu mẫu | `apps/web/src/phan-he/<key>/`, `docs/huong-dan/`, `scripts/<phân hệ>/` | người đóng góp / 1 người duyệt | R0 |
-| 2. Nghiệp vụ phân hệ | `apps/api/src/phan-he/<key>/` (đích: `modules/<key>/`), dùng `ctx.ledger.submit` + `reasonCode`, danh mục chuẩn, `defineAction` | người đóng góp / Nhóm Lõi rà §7 | R1–R2 |
+| 1. Giao diện, hướng dẫn, dữ liệu mẫu | `modules/<key>/web/` (phân hệ cũ chưa chuyển: `apps/web/src/phan-he/<key>/`), `docs/huong-dan/`, `scripts/<phân hệ>/` | người đóng góp / 1 người duyệt | R0 |
+| 2. Nghiệp vụ phân hệ | `modules/<key>/` (ADR-0024; phân hệ cũ chưa chuyển: `apps/api/src/phan-he/<key>/`, đóng băng), dùng `ctx.ledger.submit` + `reasonCode`, danh mục chuẩn, `defineAction` | người đóng góp / Nhóm Lõi rà §7 | R1–R2 |
 | 3. Add-in, connector, gói định khoản, preset | `apps/api/src/addins/<id>/`, hợp đồng EXTENSION / CONNECTOR / POSTING-TEMPLATE / PRESET | người đóng góp / Nhóm Lõi rà §7 + R-REV-6 | R2 |
 | 4. Đề xuất năng lực Core | issue / ADR theo [VERSIONING §5](docs/standard/VERSIONING.md) — **chưa viết mã** | ai cũng đề xuất được / chủ dự án quyết | — |
 | 5. Kernel, Platform, `packages/*`, hợp đồng, migration, bộ kiểm | tệp framework (RULE-SIGNATURE §3) | Nhóm Lõi / mức K0–K3 theo R-KER-2, dấu R-SIG | R3 |
@@ -118,7 +129,7 @@ Trả lời ngắn trước (kết luận + điểm + phát hiện chặn), chi 
 
 ## Tạo module mới (Bizcity Framework Standard v1)
 
-Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa `packages/*`, không sửa module khác.** Chỉ tạo / sửa tệp trong `modules/<key>/` (trước Phase 3: `apps/api/src/phan-he/<key>/` + `apps/web/src/phan-he/<key>/`).
+Khi được yêu cầu "tạo module …": **không sửa Kernel, không sửa `packages/*`, không sửa module khác.** Chỉ tạo / sửa tệp trong `modules/<key>/` (ADR-0024: không còn tạo mới ở `apps/*/src/phan-he/`).
 
 1. Đọc [docs/standard/README.md](docs/standard/README.md) rồi ví dụ mẫu [docs/standard/GOLDEN-CASE-HOP-DONG.md](docs/standard/GOLDEN-CASE-HOP-DONG.md).
 2. Đọc 7 hợp đồng `docs/contracts/BIZCITY-{MODULE,DATA,DOCUMENT,ACTION,EVENT,EVIDENCE,EXTENSION}-v1.md`.
@@ -165,7 +176,7 @@ Dev (chủ đơn vị / vai trò Nhà phát triển) tra lỗi ở **Nhà phát 
 
    | Trong trace | Ở đâu trong repo |
    |---|---|
-   | `action <module>.<việc>` | `defineAction({ id: '<module>.<việc>' … })` trong `apps/api/src/phan-he/<module>/` (lõi: `apps/api/src/modules/`) |
+   | `action <module>.<việc>` | `defineAction({ id: '<module>.<việc>' … })` trong `modules/<module>/api/` (phân hệ cũ chưa chuyển: `apps/api/src/phan-he/<module>/`; lõi: `apps/api/src/modules/`) |
    | `step <module>.<bước>` | `ctx.trace.step('<bước>', …)` trong module đó |
    | `kernel <op>` (`bizcity.layer = K`) | Kernel — **không sửa** trong PR phân hệ; Kernel từ chối = dữ liệu sai đã tới được đây, sửa ở chỗ gửi |
    | `db <lệnh> <bảng>` | câu SQL chạm bảng đó trong module / repository của span cha |
@@ -205,6 +216,6 @@ Kiến trúc open-ketoan do **Johnny Chu – Chu Hoàng Anh** thiết kế. Mỗ
 - Tiền: `numeric(18,2)` ở CSDL, cộng trừ qua `toCents/fromCents`.
 - Lỗi: `Errors.*` (`@bizcity/platform/core/errors` — `packages/platform/src/core/errors.ts`; đường cũ `apps/api/src/core/errors.ts` là tệp chuyển tiếp), không `reply.status()`. Mã mới import Platform qua `@bizcity/platform/<đường>` (`core/*`, `db/*`, `config/env`).
 - Migration: tệp mới số kế tiếp (lấy bằng `node scripts/so-tiep-theo.mjs migration`), không sửa tệp đã chạy, có `COMMENT ON`.
-- Phân hệ không import phân hệ khác (`apps/*/src/phan-he/<key>/`).
+- Phân hệ không import phân hệ khác (`modules/<key>/`, và phân hệ cũ ở `apps/*/src/phan-he/<key>/`).
 - Ngoài Kernel chỉ import Kernel qua gốc gói `@bizcity/kernel` (`packages/kernel/src/index.ts`; đường cũ `apps/api/src/kernel/public.ts` là tệp chuyển tiếp) — SC-KERNEL-6. Không import đường con `@bizcity/kernel/<đường>` (chỉ test của Core). Cần thêm gì vào cổng thì đề xuất.
 - Đặt tên mới theo [docs/framework/04-DAT-TEN-BIZCITY.md](docs/framework/04-DAT-TEN-BIZCITY.md).
