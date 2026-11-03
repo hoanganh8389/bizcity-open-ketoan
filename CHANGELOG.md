@@ -13,9 +13,11 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Thêm
+<!-- [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 -->
+- **Tôn chỉ Core** ([ADR-0020](docs/adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md), [CANON §0](docs/00-CANON.md)): người dùng quyết định và thao tác; Core làm vấn đề nhìn thấy được và chỉ đúng chỗ sửa (gate, check, sổ tay, debug, bể chờ, nháp), bằng **một ngôn ngữ là thư viện mã**. Hệ quả: mỗi mã có **căn cứ** (văn bản trong danh mục căn cứ pháp lý, hoặc "quy ước phần mềm") — hiện ở khung Vì sao, trang tra mã, thông báo; thông báo của Core dựng từ mã (`notifyFinding`, check SC-FIND-2); bỏ nhãn "nội dung nháp, chờ kế toán trưởng duyệt" — luật chạy ngay, ai chỉnh được là việc của phân quyền.
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3 -->
 - **Quy định dữ liệu danh mục (HT09)** — màn của kế toán trưởng ([hướng dẫn](docs/huong-dan/quy-dinh-du-lieu-danh-muc.md), migration `0062_quy_dinh_danh_muc`):
-  - **Duyệt luật nhắc** của khung Vì sao ngay trong ứng dụng: xem luật đúng như trong form, Đồng ý (bỏ nhãn nháp), Sửa câu chữ, Hạ cảnh báo mềm xuống nhắc (bắt buộc lý do, D023-8), Về mặc định. Luật đổi ở bản phát hành sau thì bản duyệt hết hiệu lực.
+  - **Luật nhắc** của khung Vì sao tại đơn vị: xem luật đúng như trong form kèm căn cứ, Sửa câu chữ, Hạ cảnh báo mềm xuống nhắc (bắt buộc lý do, D023-8), Về mặc định. Luật đổi ở bản phát hành sau thì phần chỉnh cũ hết hiệu lực.
   - **Tắt / bật tự thêm mặt hàng từ chứng từ** (`bizcity.item.auto_create`): tắt thì mã hàng lạ thành mặt hàng nháp và chứng từ chờ ở Trạm kiểm tra với mã mới [`IN-ITEM-001`](docs/huong-dan/loi-dau-vao/IN-ITEM-001.md). Mặc định **bật** cho mọi đơn vị (luật chung R-GATE-9: mặc định cho phép, nhắc khi sai): mặt hàng tự thêm được nhắc bằng thông báo "Chứng từ … đã tự thêm n mặt hàng — cần kiểm" cho người có quyền sửa danh mục.
 - Danh sách mặt hàng: dải nhắc "N ngày qua chứng từ đã tự thêm … mặt hàng" và nút **Kích hoạt hàng loạt** mặt hàng nháp (`POST /api/v1/products/activate`).
 - Lưu tài khoản / đối tượng / mặt hàng còn cảnh báo mềm (hoặc lưu nháp): dòng nhắc ngắn ở góc màn sau khi lưu.

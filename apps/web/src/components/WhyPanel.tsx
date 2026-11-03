@@ -52,8 +52,10 @@ export function WhyPanel({ findings, onFix }: { findings: readonly CatalogFindin
               {shown && f.howTo && <div className="why-why"><b>Cách sửa:</b> {f.howTo}</div>}
               <div className="why-meta">
                 {f.fix && onFix && <button type="button" className="btn btn-xs" onClick={() => onFix(f.fix!.set)}>{f.fix.label}</button>}
-                <span className="why-code">{f.code}{f.rule ? ` · ${f.rule}` : ''}{f.draft ? ' · nội dung nháp, chờ kế toán trưởng duyệt' : ''}{f.lowered ? ' · kế toán trưởng đã hạ xuống nhắc' : ''}</span>
+                {/* [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: không còn nhãn "chờ kế toán trưởng duyệt"; có căn cứ (R-GATE-11) */}
+                <span className="why-code">{f.code}{f.rule ? ` · ${f.rule}` : ''}{f.lowered ? ' · đơn vị đã hạ xuống nhắc' : ''}</span>
               </div>
+              {shown && f.basis?.length ? <div className="why-basis">Căn cứ: {f.basis.join('; ')}</div> : null}
             </div>
           </div>
         );

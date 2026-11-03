@@ -1,7 +1,10 @@
+// [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: căn cứ trong phát hiện (R-GATE-11); bỏ cờ "nháp chờ kế toán trưởng" (Core không mã hoá quy trình theo chức danh); ITEM-HINT-002 nhắc mặt hàng tự thêm (R-GATE-9 / 10)
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: duyệt luật nhắc theo đơn vị (D023-4 / D023-8) — ví dụ minh hoạ từng luật, áp bản duyệt (sửa câu chữ, hạ warn → info)
 // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: luật nhắc mặt hàng ITEM-* (thiếu ĐVT, thiếu nhóm hạch toán) — còn ✘ thì mặt hàng lưu NHÁP (ADR-0019)
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27: thêm `fix` (cách sửa) cho mức warn / block — khuôn chung bizcity_findings@1
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-13 / 14: bizcity_catalog_hint@1 — danh mục luật nhắc · hướng dẫn · cảnh báo mềm · chặn cho form danh mục (D023-6..8)
+import { basisOf } from './legal-basis.js';
+
 /**
  * Khung "Vì sao" của form danh mục (PHASE-023 · 20-VALIDATOR-MEM): mỗi luật có mã, mức, câu "vì sao" nói bằng hậu quả nghiệp vụ,
  * cách sửa, mã luật gốc và thẻ "học thêm". Nguồn duy nhất cho máy chủ (`/api/v1/<danh mục>/validate`, `meta.findings` khi lưu)
@@ -16,8 +19,9 @@
  * Cảnh báo mềm không bao giờ thành chặn bằng cấu hình; chặn không hạ thành mềm. Hạ warn → info cho một đơn vị chỉ qua duyệt
  * tại đơn vị có bằng chứng (D023-8): màn HT09 "Quy định dữ liệu danh mục", bảng catalog_rule_reviews, áp bằng applyRuleReview.
  *
- * Nội dung `why` của luật kế toán: trạng thái `draft` tới khi kế toán trưởng duyệt (D023-4); giao diện ghi nhãn "nháp". Kế toán
- * trưởng của từng đơn vị duyệt ở HT09: đồng ý (bỏ nhãn nháp), sửa câu chữ (chỉ dùng biến của luật gốc), hạ mức (chỉ warn → info).
+ * Luật chạy ngay theo nội dung ở đây (ADR-0020: Core không mã hoá quy trình "chờ kế toán trưởng" — ai làm gì là việc của phân quyền).
+ * Người có quyền của từng đơn vị chỉnh ở HT09: sửa câu chữ (chỉ dùng biến của luật gốc), hạ mức (chỉ warn → info). Mỗi luật có căn
+ * cứ (FINDING_BASIS, R-GATE-11); phát hiện mang tên văn bản căn cứ.
  */
 
 export type CatalogHintLevel = 'info' | 'guide' | 'warn' | 'block';
@@ -57,8 +61,10 @@ export interface CatalogFinding {
   draft?: boolean;
   /** Biến đã thay vào câu chữ — để áp câu chữ đơn vị sửa lại (applyRuleReview). */
   vars?: Record<string, string | number>;
-  /** Cảnh báo mềm đã được kế toán trưởng của đơn vị hạ xuống nhắc (D023-8). */
+  /** Cảnh báo mềm đã được đơn vị hạ xuống nhắc (D023-8, người có quyền ở HT09). */
   lowered?: boolean;
+  /** Căn cứ (tên văn bản) — R-GATE-11. */
+  basis?: string[];
 }
 
 /** Ghi nhận khi lưu bản khai báo còn cảnh báo mềm (D023-6): bắt buộc lý do. */
@@ -136,6 +142,13 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     why: 'Nhóm mặc định thường là hàng hoá (kho 156, giá vốn 632, doanh thu 511). Nếu đây là dịch vụ, nguyên vật liệu hay công cụ dụng cụ thì tồn kho, giá vốn và lãi gộp sẽ sai.',
     fix: 'Chọn nhóm hạch toán đúng loại; nếu đúng là hàng hoá theo nhóm mặc định, ghi lý do khi lưu.',
   },
+  // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 (R-GATE-9 / 10): nhắc mặt hàng tự thêm từ chứng từ — thông báo dựng từ mã này (notifyFinding), không câu chữ tự do
+  'ITEM-HINT-002': {
+    id: 'ITEM-HINT-002', entity: 'item', level: 'info', status: 'approved', rule: 'R-GATE-9',
+    title: 'Chứng từ {docNo} đã tự thêm {count} mặt hàng — cần kiểm.',
+    why: 'Mã hàng mới trên chứng từ được thêm vào danh mục và vào sổ ngay: {items}. Đơn vị tính và nhóm hạch toán đang theo khai báo tự động; sai thì kho, giá vốn và doanh thu ghi sai.',
+    fix: 'Mở từng mặt hàng ở Danh mục mặt hàng, kiểm đơn vị tính và nhóm hạch toán rồi lưu. Muốn kiểm trước khi vào sổ: tắt tự thêm mặt hàng ở Quy định dữ liệu danh mục.',
+  },
   // ── Đối tượng (DM03) ───────────────────────────────────────────────────────────────────────────────
   'PART-HINT-001': {
     id: 'PART-HINT-001', entity: 'partner', level: 'info', status: 'draft',
@@ -170,7 +183,7 @@ export function catalogFinding(code: string, vars: Record<string, string | numbe
   return {
     code, level: def.level, title: fill(def.title), why: fill(def.why),
     ...(def.fix ? { howTo: fill(def.fix) } : {}), ...(def.rule ? { rule: def.rule } : {}), ...(def.learn ? { learn: fill(def.learn) } : {}),
-    ...(def.status === 'draft' ? { draft: true } : {}), ...(Object.keys(vars).length ? { vars } : {}), ...extra,
+    basis: basisOf(code).map((b) => b.title), ...(Object.keys(vars).length ? { vars } : {}), ...extra,
   };
 }
 
@@ -192,6 +205,7 @@ export const CATALOG_HINT_EXAMPLES: Record<string, Record<string, string>> = {
   'ITEM-BLOCK-001': { sku: 'SUA01' },
   'ITEM-BLOCK-002': { sku: 'SUA01' },
   'ITEM-HINT-001': { sku: 'SUA01', group: 'HH' },
+  'ITEM-HINT-002': { docNo: 'HD0001', count: '2', items: 'SUA02 (thiếu đơn vị tính; ghi theo nhóm mặc định HH) · QUA05 (ghi theo nhóm mặc định HH)' },
   'PART-HINT-002': { code: 'NCC-AN' },
   'PART-HINT-003': { other: 'KH001', name: 'Công ty TNHH An Bình' },
   'PART-HINT-004': { taxCode: '01234' },

@@ -4,7 +4,8 @@
  * QUY ĐỊNH DỮ LIỆU DANH MỤC (HT09) — việc của kế toán trưởng / chủ đơn vị:
  *   GET  /api/v1/catalog-rules                  core.catalog-rules.list — mọi luật nhắc khung Vì sao: mức, câu chữ (mặc định / đơn
  *                                               vị sửa), bản xem trước như người dùng thấy trong form, trạng thái duyệt
- *   POST /api/v1/catalog-rules/:code/review     core.catalog-rule.review — approve (bỏ nhãn nháp) · edit (sửa câu chữ, chỉ dùng biến
+ *   POST /api/v1/catalog-rules/:code/review     core.catalog-rule.review — edit (sửa câu chữ, chỉ dùng biến
+ *                                               ([2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: không còn "chờ duyệt" — luật chạy ngay; approve chỉ ghi nhận đã xem)
  *                                               của luật gốc) · lower / unlower (hạ cảnh báo mềm xuống nhắc, D023-8, bắt buộc lý do)
  *                                               · reset (về mặc định, nhãn nháp) — quyền conformance:approve (kế toán trưởng, D023-8);
  *                                               nhật ký catalog.rule.review. Bản duyệt gắn dấu luật (hintHash): luật đổi → hết hiệu lực
@@ -16,7 +17,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
-  CATALOG_HINTS, CATALOG_HINT_EXAMPLES, WARN_ACK_MIN_REASON, applyRuleReview, catalogFinding, hintHash, hintVars, type CatalogFinding,
+  CATALOG_HINTS, CATALOG_HINT_EXAMPLES, WARN_ACK_MIN_REASON, applyRuleReview, basisOf, catalogFinding, hintHash, hintVars, type CatalogFinding,
 } from '@ketoan/contracts';
 import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
@@ -26,6 +27,7 @@ import { writeAudit } from '../../core/audit.js';
 import { defineAction, mountActions } from '../../core/actions.js';
 
 const tags = ['Quy định dữ liệu danh mục'];
+const FINDING_BASIS_TITLES = (code: string) => basisOf(code).map((b) => b.title);
 const reason = z.string().trim().min(WARN_ACK_MIN_REASON, `Lý do ít nhất ${WARN_ACK_MIN_REASON} ký tự`).max(500);
 const text = (max: number) => z.string().trim().max(max).nullish();
 
@@ -39,8 +41,10 @@ function ruleView(code: string, row: ReviewRow | undefined) {
   const preview: CatalogFinding = applyRuleReview(catalogFinding(code, CATALOG_HINT_EXAMPLES[code] ?? {}), r);
   return {
     code, entity: d.entity, level: d.level, effectiveLevel: preview.level, rule: d.rule ?? null,
-    status: r ? (r.lowered && d.level === 'warn' ? 'lowered' as const : 'approved' as const) : 'draft' as const,
+    // ADR-0020: không có trạng thái "chờ duyệt" — luật chạy ngay; đơn vị chỉ có thể đã sửa câu chữ / đã hạ mức
+    status: r && r.lowered && d.level === 'warn' ? 'lowered' as const : r && (r.title || r.why || r.fix) ? 'edited' as const : 'default' as const,
     edited: Boolean(r && (r.title || r.why || r.fix)),
+    basis: FINDING_BASIS_TITLES(code),
     canLower: d.level === 'warn',
     vars: hintVars(code),
     defaults: { title: d.title, why: d.why, fix: d.fix ?? null },
@@ -57,19 +61,19 @@ const listRules = defineAction({
   id: 'core.catalog-rules.list', title: 'Luật nhắc của khung Vì sao và trạng thái duyệt tại đơn vị', tags,
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({ entity: z.enum(['account', 'partner', 'item']).optional() }),
-  output: z.object({ items: z.array(ruleOut), total: z.number(), pending: z.number() }),
+  output: z.object({ items: z.array(ruleOut), total: z.number(), customized: z.number() }),
   expose: { http: { method: 'GET', path: '/api/v1/catalog-rules' }, mcp: false, ai: 'deny' },
   handler: async (ctx, input) => {
     const rows = await ctx.data.tx.selectFrom('catalog_rule_reviews').selectAll().where('tenant_id', '=', ctx.tenant.id).execute();
     const by = new Map(rows.map((r) => [r.code, r as ReviewRow]));
     const items = Object.values(CATALOG_HINTS).filter((d) => !input.entity || d.entity === input.entity).map((d) => ruleView(d.id, by.get(d.id)));
-    return { items, total: items.length, pending: items.filter((i) => i.status === 'draft').length };
+    return { items, total: items.length, customized: items.filter((i) => i.status !== 'default').length };
   },
 });
 
 const reviewRule = defineAction({
-  id: 'core.catalog-rule.review', title: 'Duyệt một luật nhắc (đồng ý, sửa câu chữ, hạ mức, về mặc định)', tags,
-  description: 'approve: bỏ nhãn nháp · edit: sửa câu chữ (chỉ dùng biến của luật gốc) · lower: hạ cảnh báo mềm xuống nhắc tại đơn vị (D023-8, bắt buộc lý do) '
+  id: 'core.catalog-rule.review', title: 'Chỉnh một luật nhắc tại đơn vị (sửa câu chữ, hạ mức, về mặc định)', tags,
+  description: 'approve: ghi nhận đã xem (không đổi gì) · edit: sửa câu chữ (chỉ dùng biến của luật gốc) · lower: hạ cảnh báo mềm xuống nhắc tại đơn vị (D023-8, bắt buộc lý do) '
     + '· unlower: bỏ hạ mức · reset: về nội dung mặc định. Không hạ được mức chặn.',
   permission: 'conformance:approve', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
   input: z.object({

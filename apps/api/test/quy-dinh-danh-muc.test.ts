@@ -1,7 +1,7 @@
 /**
  * HT09 "Quy định dữ liệu danh mục" (PHASE-024, D023-4 / D023-8, D024-3):
- *   - duyệt luật nhắc theo đơn vị: đồng ý bỏ nhãn nháp; sửa câu chữ chỉ dùng biến của luật gốc; hạ cảnh báo mềm xuống nhắc bắt buộc
- *     lý do và không còn đòi lý do khi lưu; không hạ được mức chặn; về mặc định; mọi lần duyệt có nhật ký;
+ *   - chỉnh luật nhắc theo đơn vị (ADR-0020: không có "chờ duyệt" — luật chạy ngay, có căn cứ): sửa câu chữ chỉ dùng biến của luật
+ *     gốc; hạ cảnh báo mềm xuống nhắc bắt buộc lý do và không còn đòi lý do khi lưu; không hạ được mức chặn; về mặc định; có nhật ký;
  *   - tự thêm mặt hàng từ chứng từ: đơn vị mới mặc định tắt; tắt thì mã lạ → IN-ITEM-001 ở tiền kiểm VÀ cửa nạp (ca cặp), bể chờ tạo
  *     mặt hàng nháp từ dòng; kích hoạt hàng loạt → bể kiểm lại → nộp lại được; bật thì như cũ và báo cáo "tự thêm trong N ngày".
  */
@@ -24,7 +24,7 @@ const pre = (raw: unknown) => withRequestContext({ requestId: `ht09-${Math.rando
   () => db.transaction().execute((trx) => preflight(trx, auth, raw)));
 const door = (raw: unknown) => ctx.app.inject({ method: 'POST', url: '/api/v1/documents', payload: raw as never, headers: { authorization: `Bearer ${ctx.token}` } });
 const review = (code: string, body: Record<string, unknown>) => call(ctx, 'POST', `/api/v1/catalog-rules/${code}/review`, body);
-const validateAccount = async (body: Record<string, unknown>) => (await call(ctx, 'POST', '/api/v1/accounts/validate', body)).body.data.findings as { code: string; level: string; title: string; draft?: boolean; lowered?: boolean }[];
+const validateAccount = async (body: Record<string, unknown>) => (await call(ctx, 'POST', '/api/v1/accounts/validate', body)).body.data.findings as { code: string; level: string; title: string; draft?: boolean; lowered?: boolean; basis?: string[] }[];
 
 beforeAll(async () => {
   ctx = await setupTenant();
@@ -35,34 +35,32 @@ afterAll(async () => {
   await ctx.app.close();
 });
 
-describe('Duyệt luật nhắc (HT09)', () => {
+describe('Luật nhắc tại đơn vị (HT09)', () => {
   const ACC003 = { mode: 'create', code: '13199', parentCode: '131', normalSide: 'debit', trackPartner: false, isDebt: false };
 
-  it('danh sách: mọi luật, chưa duyệt = nháp, có bản xem trước với giá trị minh hoạ', async () => {
+  it('danh sách: mọi luật ở trạng thái mặc định, có bản xem trước với giá trị minh hoạ và căn cứ', async () => {
     const r = await call(ctx, 'GET', '/api/v1/catalog-rules');
     expect(r.status, JSON.stringify(r.body)).toBe(200);
-    const items = r.body.data.items as { code: string; status: string; preview: { title: string }; canLower: boolean }[];
-    expect(r.body.data.pending).toBe(items.length);
+    const items = r.body.data.items as { code: string; status: string; preview: { title: string }; canLower: boolean; basis: string[] }[];
+    expect(r.body.data.customized).toBe(0);
     const a3 = items.find((i) => i.code === 'ACC-HINT-003')!;
-    expect(a3).toMatchObject({ status: 'draft', canLower: true });
+    expect(a3).toMatchObject({ status: 'default', canLower: true, basis: ['Thông tư 99/2025/TT-BTC'] });
     expect(a3.preview.title).toContain('13198');
     expect(items.find((i) => i.code === 'ITEM-BLOCK-001')).toMatchObject({ canLower: false });
   });
 
-  it('đồng ý → bỏ nhãn nháp ở khung Vì sao; có nhật ký', async () => {
-    expect((await validateAccount(ACC003)).find((f) => f.code === 'ACC-HINT-003')?.draft).toBe(true);
-    const r = await review('ACC-HINT-003', { decision: 'approve' });
-    expect(r.status, JSON.stringify(r.body)).toBe(200);
-    expect(r.body.data.status).toBe('approved');
-    expect((await validateAccount(ACC003)).find((f) => f.code === 'ACC-HINT-003')?.draft).toBeUndefined();
-    expect((await audits('catalog.rule.review', 'ACC-HINT-003')).length).toBe(1);
+  it('khung Vì sao: luật chạy ngay, không nhãn "chờ duyệt", có căn cứ (R-GATE-11)', async () => {
+    const f = (await validateAccount(ACC003)).find((x) => x.code === 'ACC-HINT-003')!;
+    expect(f.draft).toBeUndefined();
+    expect(f.basis).toEqual(['Thông tư 99/2025/TT-BTC']);
   });
 
   it('sửa câu chữ: biến lạ → 400; biến của luật gốc → form hiện câu mới đã thay biến', async () => {
     expect((await review('ACC-HINT-003', { decision: 'edit', title: 'TK {code} thiếu {abc}' })).status).toBe(400);
     const r = await review('ACC-HINT-003', { decision: 'edit', title: 'Tài khoản {code} (nhóm {root}) chưa vào sổ công nợ.' });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
-    expect(r.body.data.edited).toBe(true);
+    expect(r.body.data).toMatchObject({ edited: true, status: 'edited' });
+    expect((await audits('catalog.rule.review', 'ACC-HINT-003')).length).toBe(1);
     expect((await validateAccount(ACC003)).find((f) => f.code === 'ACC-HINT-003')?.title).toBe('Tài khoản 13199 (nhóm 131) chưa vào sổ công nợ.');
   });
 
@@ -76,23 +74,23 @@ describe('Duyệt luật nhắc (HT09)', () => {
     expect(await audits('catalog.warn.unacked', '13195')).toHaveLength(0);
   });
 
-  it('luật gốc đổi ở bản phát hành sau (dấu khác) → bản duyệt hết hiệu lực, luật về chưa duyệt', async () => {
+  it('luật gốc đổi ở bản phát hành sau (dấu khác) → phần chỉnh của đơn vị hết hiệu lực, luật về mặc định', async () => {
     expect((await review('ACC-HINT-005', { decision: 'lower', note: 'Đơn vị không theo dõi đối tượng ở 331x' })).status).toBe(200);
     const ACC005 = { mode: 'create', code: '33199', parentCode: '331', normalSide: 'credit', trackPartner: false, isDebt: true };
     expect((await validateAccount(ACC005)).find((f) => f.code === 'ACC-HINT-005')?.level).toBe('info');
     await db.updateTable('catalog_rule_reviews').set({ rule_hash: 'h1:cu' }).where('tenant_id', '=', tenantId).where('code', '=', 'ACC-HINT-005').execute();
-    expect((await validateAccount(ACC005)).find((f) => f.code === 'ACC-HINT-005')).toMatchObject({ level: 'warn', draft: true });
+    expect((await validateAccount(ACC005)).find((f) => f.code === 'ACC-HINT-005')).toMatchObject({ level: 'warn' });
     const list = (await call(ctx, 'GET', '/api/v1/catalog-rules')).body.data.items as { code: string; status: string; stale: boolean }[];
-    expect(list.find((i) => i.code === 'ACC-HINT-005')).toMatchObject({ status: 'draft', stale: true });
+    expect(list.find((i) => i.code === 'ACC-HINT-005')).toMatchObject({ status: 'default', stale: true });
   });
 
-  it('không hạ được mức chặn; về mặc định → lại là nháp, cảnh báo mềm như cũ', async () => {
+  it('không hạ được mức chặn; về mặc định → cảnh báo mềm như cũ', async () => {
     const block = await review('ITEM-BLOCK-001', { decision: 'lower', note: 'thử hạ mức chặn' });
     expect(block.status).toBe(400);
     expect(block.body.error.message).toMatch(/không hạ được/);
     const r = await review('ACC-HINT-003', { decision: 'reset' });
-    expect(r.body.data.status).toBe('draft');
-    expect((await validateAccount(ACC003)).find((f) => f.code === 'ACC-HINT-003')).toMatchObject({ level: 'warn', draft: true });
+    expect(r.body.data.status).toBe('default');
+    expect((await validateAccount(ACC003)).find((f) => f.code === 'ACC-HINT-003')).toMatchObject({ level: 'warn', title: 'Tài khoản 13199 sẽ không vào sổ phụ công nợ.' });
   });
 });
 
@@ -117,6 +115,10 @@ describe('Tự thêm mặt hàng từ chứng từ (D024-3)', () => {
     expect(n).toHaveLength(1);
     expect(n[0]).toMatchObject({ link: '/danh-muc/mat-hang', audience_permission: 'catalog:write' });
     expect(n[0]!.body).toMatch(/AUTO-ON-1 \(ghi theo nhóm mặc định/);
+    // R-GATE-10: câu chữ dựng từ mã ITEM-HINT-002 của thư viện (kèm mã + căn cứ), không viết tay; chứng từ mẫu có 2 mã mới (AUTO-ON-1, quà QUA01)
+    expect(n[0]!.title).toMatch(/^Chứng từ HT\d+ đã tự thêm 2 mặt hàng — cần kiểm\.$/);
+    expect(n[0]!.body).toContain('(mã ITEM-HINT-002)');
+    expect(n[0]!.body).toContain('Căn cứ: Chuẩn mực kế toán số 02 — Hàng tồn kho');
   });
 
   it('đổi chế độ bắt buộc lý do; GET trả chế độ + lần đổi gần nhất', async () => {

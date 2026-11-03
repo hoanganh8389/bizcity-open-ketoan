@@ -69,3 +69,19 @@ export async function markNotificationsRead(trx: Db, tenantId: string, userId: s
     ON CONFLICT DO NOTHING`.execute(trx);
   return Number(r.numAffectedRows ?? 0);
 }
+
+// [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 / R-GATE-10: thông báo của Core dựng từ thư viện mã — một ngôn ngữ, đơn vị sửa câu chữ ở HT09, tra được bằng core.findings.explain
+/** Một phát hiện đã dựng (catalogFinding / intakeFinding + bản duyệt của đơn vị) — đủ để làm thông báo. */
+export interface FindingForNotify { code: string; title: string; why: string; howTo?: string; fix?: unknown; basis?: string[] }
+
+/**
+ * Gửi thông báo TỪ MỘT MÃ của thư viện phát hiện (R-GATE-10): tiêu đề = câu ngắn của mã, nội dung = vì sao + cách sửa + mã + căn cứ.
+ * Code Core gửi thông báo qua hàm này, không gọi sendNotification với câu chữ tự do (SC-FIND-2).
+ */
+export function notifyFinding(trx: Db, tenantId: string, source: string, to: NotifyInput['to'], f: FindingForNotify, opts: { link?: string; dedupeKey?: string } = {}): Promise<string | null> {
+  const howTo = f.howTo ? ` Cách sửa: ${f.howTo}` : '';
+  const basis = f.basis?.length ? ` Căn cứ: ${f.basis.join('; ')}.` : '';
+  return sendNotification(trx, tenantId, source, {
+    to, title: f.title.slice(0, 200), body: `${f.why}${howTo} (mã ${f.code})${basis}`, ...(opts.link ? { link: opts.link } : {}), ...(opts.dedupeKey ? { dedupeKey: opts.dedupeKey } : {}),
+  });
+}

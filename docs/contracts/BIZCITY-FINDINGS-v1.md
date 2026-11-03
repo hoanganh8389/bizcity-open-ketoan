@@ -1,9 +1,10 @@
 # `bizcity_findings@1` — Thư viện phát hiện của hai cổng kiểm chuẩn
 <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 (ADR-0019, R-GATE-5): hợp đồng thư viện phát hiện — một khuôn cho mã Gate A (danh mục) và Gate B (trạm tiền kiểm) -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất (ADR-0019 chủ duyệt 2026-11-02; thi hành đợt 1)
+<!-- [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: 1.1.0-draft — basis (R-GATE-11), notifyFinding (R-GATE-10), status không còn là cổng chờ duyệt -->
+> **Phiên bản:** 1.1.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất (ADR-0019 chủ duyệt 2026-11-02; thi hành đợt 1)
 > **Nguồn sự thật:** `packages/contracts/src/findings.ts` (`FINDINGS_LIBRARY`, `explainFinding`) — gom từ `catalog-hint.ts` (Gate A) và `intake-findings.ts` (Gate B)
-> **Luật:** [R-GATE](../rules/RULE-GATE.md) · [R-INTAKE](../rules/RULE-INTAKE.md) · **Kiểm:** SC-FIND-1 · **Trang người đọc:** [docs/huong-dan/ma-loi](../huong-dan/ma-loi/README.md)
+> **Tôn chỉ:** [ADR-0020](../adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md) — một ngôn ngữ là thư viện mã · **Luật:** [R-GATE](../rules/RULE-GATE.md) · [R-INTAKE](../rules/RULE-INTAKE.md) · **Kiểm:** SC-FIND-1, SC-FIND-2 · **Trang người đọc:** [docs/huong-dan/ma-loi](../huong-dan/ma-loi/README.md)
 
 ## 1. Ý nghĩa
 
@@ -21,7 +22,8 @@ Mọi lần một trong hai cổng không cho qua — khai báo danh mục (Gate
 | `fix` | chuỗi | cách sửa; **bắt buộc** với `block` / `warn` (R-GATE-2) |
 | `rule` | chuỗi | luật / hợp đồng gốc |
 | `learn` | chuỗi \| null | trang học thêm |
-| `status` | `draft` \| `approved` | nội dung nghiệp vụ đã được duyệt chưa (luật kế toán: kế toán trưởng) |
+| `status` | `draft` \| `approved` | trạng thái nội dung trong danh mục gốc — giữ để tương thích, **không** phải cổng chờ duyệt (ADR-0020: luật chạy ngay; đơn vị chỉnh câu chữ / hạ mức ở HT09 theo phân quyền) |
+| `basis` | `{ key, title, page }[]` | **căn cứ** (R-GATE-11): văn bản trong [danh mục căn cứ pháp lý](../can-cu/01-danh-muc-van-ban.md) — sổ `LEGAL_BASES` ở `packages/contracts/src/legal-basis.ts` — hoặc `NOI-BO` = quy ước phần mềm. Ghi ở mức văn bản; điều khoản chỉ thêm khi đã đối chiếu văn bản gốc |
 | `source` | chuỗi | danh mục gốc |
 
 Phát hiện **cụ thể** cho một bản khai / một chứng từ thêm các trường ngữ cảnh: Gate B `path`, `got`, `expected`, `layer`, `stage` (`bizcity_intake_findings@1`); Gate A `field`, `fix` sửa một chạm `{ label, set }`, `howTo` (`bizcity_catalog_hint@1`).
@@ -36,10 +38,14 @@ Phát hiện **cụ thể** cho một bản khai / một chứng từ thêm các
 
 ## 4. Bảo đảm
 
+- **Mọi lời Core nói ra bắt đầu từ đây** (R-GATE-10): thông báo trong ứng dụng gửi bằng `notifyFinding(trx, tenant, source, to, finding)` — tiêu đề = câu ngắn của mã, nội dung = vì sao + cách sửa + mã + căn cứ; lỗi cửa nạp mang `IN-*`; khung Vì sao mang `ACC-*` / `PART-*` / `ITEM-*`. Code Core không gọi `sendNotification` với câu chữ tự do — SC-FIND-2 (block).
+- Mỗi mã có căn cứ; khoá căn cứ có trong `LEGAL_BASES`; tên văn bản có trong trang danh mục căn cứ — SC-FIND-1.
+
 - Mã không trùng giữa các danh mục; mỗi mã có tiêu đề, vì sao; `block` / `warn` có cách sửa — SC-FIND-1 (block).
 - Trang tra mã có đúng các mã của thư viện — SC-FIND-1.
 - Gate B: mã `IN-*` còn chịu SC-INTAKE-1 (bảng hợp đồng + trang bài học từng mã).
 
 ## 5. Changelog
 
+- **1.1.0-draft (2026-11-03):** trường `basis` (R-GATE-11); `notifyFinding` + SC-FIND-2 (R-GATE-10); `status` không còn là cổng chờ duyệt (ADR-0020); thêm `ITEM-HINT-002` (nhắc mặt hàng tự thêm), `IN-ITEM-001` — 39 mã.
 - **1.0.0-draft (2026-11-02):** khuôn chung; gom 12 mã Gate A + 20 mã Gate B; API và công cụ MCP tra mã; SC-FIND-1.

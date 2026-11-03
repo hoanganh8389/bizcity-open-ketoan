@@ -33,3 +33,4 @@ export * from './ma-tra-cuu.js';
 export * from './ban-dieu-tra.js';
 export * from './catalog-hint.js';
 export * from './findings.js';
+export * from './legal-basis.js'; // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: căn cứ của mã (R-GATE-11)

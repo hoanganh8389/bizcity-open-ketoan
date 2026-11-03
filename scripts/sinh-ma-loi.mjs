@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: cột Căn cứ (R-GATE-11); bỏ ghi chú nháp chờ kế toán trưởng
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 (ADR-0019, R-GATE-5): sinh trang tra mã docs/huong-dan/ma-loi/README.md từ thư viện phát hiện bizcity_findings@1
 /**
  * Trang tra mã cho người đọc: mọi mã của hai cổng kiểm chuẩn, một bảng mỗi cổng, sinh từ packages/contracts (đọc `dist` — chạy
@@ -18,10 +19,10 @@ const { FINDINGS_LIBRARY } = await import(new URL('../packages/contracts/dist/fi
 const LEVEL = { block: '✘ chặn', warn: '⚠ cảnh báo', info: 'ℹ nhắc' };
 const cell = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 const table = (gate) => [
-  '| Mã | Mức | Bước | Nghĩa | Vì sao | Cách sửa | Luật |',
-  '|---|---|---|---|---|---|---|',
+  '| Mã | Mức | Bước | Nghĩa | Vì sao | Cách sửa | Luật | Căn cứ |',
+  '|---|---|---|---|---|---|---|---|',
   ...FINDINGS_LIBRARY.filter((f) => f.gate === gate).map((f) =>
-    `| \`${f.code}\` | ${LEVEL[f.level]} | ${f.step} | ${cell(f.title)}${f.status === 'draft' ? ' *(nháp)*' : ''} | ${cell(f.why)} | ${cell(f.fix) || '—'} | ${cell(f.rule)}${f.learn && f.learn.startsWith('docs/') ? ` · [học](../../../${f.learn})` : ''} |`),
+    `| \`${f.code}\` | ${LEVEL[f.level]} | ${f.step} | ${cell(f.title)} | ${cell(f.why)} | ${cell(f.fix) || '—'} | ${cell(f.rule)}${f.learn && f.learn.startsWith('docs/') ? ` · [học](../../../${f.learn})` : ''} | ${f.basis.map((b) => b.title).join('; ')} |`),
 ].join('\n');
 
 const text = `# Tra mã phát hiện — hai cổng kiểm chuẩn
@@ -33,7 +34,7 @@ const text = `# Tra mã phát hiện — hai cổng kiểm chuẩn
 > [bizcity_findings@1](../../contracts/BIZCITY-FINDINGS-v1.md).
 >
 > **Mức:** ✘ chặn — giữ lại (danh mục → bản nháp; chứng từ → bể chờ), hết khi dữ liệu đúng · ⚠ cảnh báo — qua cổng khi ghi lý do,
-> có bằng chứng · ℹ nhắc — chỉ để biết. *(nháp)* = nội dung chờ kế toán trưởng duyệt.
+> có bằng chứng · ℹ nhắc — chỉ để biết. **Căn cứ:** văn bản trong [danh mục căn cứ pháp lý](../../can-cu/01-danh-muc-van-ban.md), "Quy ước phần mềm" = quy ước kỹ thuật của Core.
 
 ## Gate A — khai báo danh mục (${FINDINGS_LIBRARY.filter((f) => f.gate === 'A').length} mã)
 

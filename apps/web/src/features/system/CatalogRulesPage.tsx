@@ -1,10 +1,10 @@
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 "Quy định dữ liệu danh mục": mặt hàng mới từ chứng từ (D024-3) + duyệt luật nhắc của khung Vì sao (D023-4 / D023-8)
 /**
- * QUY ĐỊNH DỮ LIỆU DANH MỤC (HT09) — màn của kế toán trưởng:
+ * QUY ĐỊNH DỮ LIỆU DANH MỤC (HT09) — công cụ cho người có quyền ([2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: Core không mã hoá quy trình theo chức danh):
  *   1. Mặt hàng mới từ chứng từ: xem hệ thống bán hàng đã tự thêm gì (7 ngày), rồi tự quyết tắt / bật — có lý do, ghi nhật ký.
- *   2. Duyệt luật nhắc: mỗi luật hiện ĐÚNG như người dùng thấy trong form (bản xem trước); Đồng ý · Sửa câu chữ · Hạ xuống nhắc
- *      (chỉ cảnh báo mềm, bắt buộc lý do) · Về mặc định. Duyệt từng nhóm nhỏ; luật chưa duyệt vẫn chạy như cũ, mang nhãn "nháp".
- * Quyền: đổi tự thêm mặt hàng = settings:write; duyệt luật = conformance:approve (kế toán trưởng, D023-8). Không có quyền: xem được, không có nút.
+ *   2. Luật nhắc: mỗi luật hiện ĐÚNG như người dùng thấy trong form (bản xem trước) kèm căn cứ; luật chạy ngay. Sửa câu chữ ·
+ *      Hạ xuống nhắc (chỉ cảnh báo mềm, bắt buộc lý do) · Về mặc định.
+ * Quyền (phân quyền quyết định, không theo chức danh): đổi tự thêm mặt hàng = settings:write; chỉnh luật = conformance:approve.
  */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,7 @@ import { autoCreatedSummary, useAutoCreate } from '../catalog/autoCreate';
 type Entity = 'account' | 'partner' | 'item';
 interface Rule {
   code: string; entity: Entity; level: CatalogFinding['level']; effectiveLevel: CatalogFinding['level']; rule: string | null;
-  status: 'draft' | 'approved' | 'lowered'; edited: boolean; canLower: boolean; vars: string[];
+  status: 'default' | 'edited' | 'lowered'; edited: boolean; canLower: boolean; vars: string[]; basis: string[];
   defaults: { title: string; why: string; fix: string | null };
   overrides: { title: string | null; why: string | null; fix: string | null };
   preview: CatalogFinding;
@@ -30,8 +30,9 @@ interface Rule {
 }
 const ENTITY_LABEL: Record<Entity, string> = { account: 'Tài khoản', partner: 'Đối tượng', item: 'Mặt hàng' };
 const LEVEL_LABEL: Record<CatalogFinding['level'], string> = { info: 'nhắc', guide: 'hướng dẫn', warn: 'cảnh báo mềm', block: 'chặn' };
+// [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: không có trạng thái "chờ duyệt" — luật chạy ngay; đơn vị chỉ chỉnh nếu muốn (ai được chỉnh là việc của phân quyền)
 const STATUS: Record<Rule['status'], { text: string; cls: string }> = {
-  draft: { text: 'Chưa duyệt', cls: 'badge-warn' }, approved: { text: 'Đã duyệt', cls: 'badge-ok' }, lowered: { text: 'Đã hạ xuống nhắc', cls: 'badge-info' },
+  default: { text: 'Mặc định', cls: '' }, edited: { text: 'Đơn vị đã sửa câu chữ', cls: 'badge-ok' }, lowered: { text: 'Đơn vị đã hạ xuống nhắc', cls: 'badge-info' },
 };
 
 export function CatalogRulesPage() {
@@ -40,7 +41,7 @@ export function CatalogRulesPage() {
   const canReview = can('conformance:approve');
   return (
     <div>
-      <PageHeader title="Quy định dữ liệu danh mục" code="HT09" helpKey="quy-dinh-du-lieu-danh-muc" subtitle="Kế toán trưởng quyết định: mặt hàng mới từ chứng từ vào sổ thế nào, và khung Vì sao nhắc người nhập điều gì" />
+      <PageHeader title="Quy định dữ liệu danh mục" code="HT09" helpKey="quy-dinh-du-lieu-danh-muc" subtitle="Đơn vị quyết định: mặt hàng mới từ chứng từ vào sổ thế nào, và khung Vì sao nhắc người nhập điều gì" />
       <AutoCreateSection canWrite={canWrite} />
       <RulesSection canWrite={canReview} />
     </div>
@@ -95,20 +96,19 @@ function AutoCreateSection({ canWrite }: { canWrite: boolean }) {
 
 function RulesSection({ canWrite }: { canWrite: boolean }) {
   const [entity, setEntity] = useState<Entity>('account');
-  const q = useQuery({ queryKey: ['catalog-rules'], queryFn: () => api.get<{ items: Rule[]; total: number; pending: number }>('/api/v1/catalog-rules') });
+  const q = useQuery({ queryKey: ['catalog-rules'], queryFn: () => api.get<{ items: Rule[]; total: number; customized: number }>('/api/v1/catalog-rules') });
   const items = q.data?.items ?? [];
   const of = (e: Entity) => items.filter((r) => r.entity === e);
   return (
     <section className="card">
-      <h3 style={{ marginTop: 0 }}>Duyệt luật nhắc của khung Vì sao</h3>
+      <h3 style={{ marginTop: 0 }}>Luật nhắc của khung Vì sao</h3>
       <div className="muted" style={{ fontSize: 13, marginBottom: 8 }}>
-        Mỗi luật hiện đúng như người nhập sẽ thấy trong form. Luật chưa duyệt vẫn chạy như hiện nay, kèm nhãn "nội dung nháp". Duyệt từng nhóm; mỗi lần duyệt ghi vào nhật ký.
+        Mỗi luật hiện đúng như người nhập sẽ thấy trong form, kèm căn cứ. Luật chạy ngay; đơn vị có thể sửa câu chữ hoặc hạ cảnh báo mềm xuống nhắc — mỗi lần chỉnh ghi vào nhật ký.
       </div>
       <div role="tablist" className="row" style={{ gap: 4, marginBottom: 10 }}>
         {(Object.keys(ENTITY_LABEL) as Entity[]).map((e) => {
           const list = of(e);
-          const done = list.filter((r) => r.status !== 'draft').length;
-          return <button key={e} role="tab" className={`tab ${entity === e ? 'active' : ''}`} onClick={() => setEntity(e)}>{ENTITY_LABEL[e]} <small className="muted">{done}/{list.length}</small></button>;
+          return <button key={e} role="tab" className={`tab ${entity === e ? 'active' : ''}`} onClick={() => setEntity(e)}>{ENTITY_LABEL[e]} <small className="muted">{list.length}</small></button>;
         })}
       </div>
       {q.isLoading ? <Loading /> : q.error ? <ErrorBox error={errorText(q.error)} /> : of(entity).map((r) => <RuleCard key={r.code} rule={r} canWrite={canWrite} />)}
@@ -136,19 +136,17 @@ function RuleCard({ rule, canWrite }: { rule: Rule; canWrite: boolean }) {
       <div className="row" style={{ gap: 8, alignItems: 'center', marginBottom: 6 }}>
         <b>{rule.code}</b>
         <span className="muted" style={{ fontSize: 12 }}>mức: {LEVEL_LABEL[rule.level]}{rule.effectiveLevel !== rule.level ? ` → ${LEVEL_LABEL[rule.effectiveLevel]} (tại đơn vị)` : ''}{rule.rule ? ` · ${rule.rule}` : ''}</span>
-        <span className={`badge ${st.cls}`}>{st.text}</span>
-        {rule.edited && <span className="badge">đã sửa câu chữ</span>}
-        {rule.stale && <span className="badge badge-warn" title="Luật gốc đã đổi ở bản phát hành sau lần duyệt; bản duyệt cũ không còn áp">luật đã đổi — cần duyệt lại</span>}
+        {rule.status !== 'default' && <span className={`badge ${st.cls}`}>{st.text}</span>}
+        {rule.stale && <span className="badge badge-warn" title="Luật gốc đã đổi ở bản phát hành sau lần chỉnh; phần chỉnh cũ không còn áp">luật đã đổi — phần chỉnh cũ hết hiệu lực</span>}
       </div>
       <WhyPanel findings={[rule.preview]} />
       {rule.review && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{rule.review.by} · {dateTime(rule.review.at)}{rule.review.note ? ` · "${rule.review.note}"` : ''}</div>}
       {canWrite && !mode && (
         <div className="row" style={{ gap: 6, marginTop: 8 }}>
-          {rule.status === 'draft' && <button className="btn btn-primary btn-xs" disabled={review.isPending} onClick={() => review.mutate({ decision: 'approve' })}>Đồng ý</button>}
           <button className="btn btn-xs" onClick={openEdit}>Sửa câu chữ</button>
           {rule.canLower && rule.status !== 'lowered' && <button className="btn btn-xs" onClick={() => { setT({ ...t, note: '' }); setMode('lower'); }}>Hạ xuống nhắc</button>}
           {rule.status === 'lowered' && <button className="btn btn-xs" disabled={review.isPending} onClick={() => review.mutate({ decision: 'unlower' })}>Bỏ hạ mức</button>}
-          {rule.status !== 'draft' && <button className="btn btn-xs" disabled={review.isPending} onClick={() => review.mutate({ decision: 'reset' })}>Về mặc định</button>}
+          {rule.status !== 'default' && <button className="btn btn-xs" disabled={review.isPending} onClick={() => review.mutate({ decision: 'reset' })}>Về mặc định</button>}
         </div>
       )}
       {mode === 'edit' && (

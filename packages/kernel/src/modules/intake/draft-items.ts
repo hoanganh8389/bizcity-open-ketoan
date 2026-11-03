@@ -6,14 +6,15 @@
  *   assertNoDraftItems()   cửa nạp: chứng từ có mặt hàng nháp → VALIDATION_ERROR kèm phát hiện IN-ITEM-009 (bể chờ giữ nguyên văn)
  *   (kiểm lại bể khi mặt hàng kích hoạt: recheckInboxForSkus ở inbox.ts — tránh vòng import với preflight)
  *   itemAutoCreate()       chế độ tự thêm mặt hàng từ chứng từ (tenants.settings.item.autoCreate: on | off, mặc định on — D024-3, R-GATE-9)
- *   remindAutoCreated()    chế độ on: mặt hàng vừa tự thêm thiếu ĐVT / ghi theo nhóm mặc định → thông báo cho người có catalog:write (nhắc, không chặn)
+ *   remindAutoCreated()    chế độ on: mặt hàng vừa tự thêm → thông báo dựng từ mã ITEM-HINT-002 cho người có catalog:write (nhắc, không chặn)
  *   assertKnownItems()     cửa nạp, chế độ off: mã lạ → VALIDATION_ERROR kèm IN-ITEM-001 (bể chờ giữ; createDraftItemsFromLines tạo nháp)
  * Chỉ cờ NHÁP mới chặn (R-GATE-4): mặt hàng đang dùng có cảnh báo mềm (vd chưa phân loại, dùng nhóm mặc định) không bị giữ.
  */
-import { intakeFinding, skusOf, type IngestDocument, type IntakeFinding } from '@ketoan/contracts';
+import { catalogFinding, intakeFinding, skusOf, type IngestDocument, type IntakeFinding } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { Errors } from '@bizcity/platform/core/errors';
-import { sendNotification } from '@bizcity/platform/core/notify';
+import { notifyFinding } from '@bizcity/platform/core/notify';
+import { reviewFindings } from '@bizcity/platform/core/catalog-warn';
 import type { Db } from '@bizcity/platform/db/client';
 
 export async function draftSkus(trx: Db, tenantId: string, skus: readonly string[]): Promise<Map<string, string[]>> {
@@ -94,10 +95,8 @@ export async function remindAutoCreated(trx: Db, tenantId: string, doc: { docKey
   const def = await trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).where('is_default', '=', true).executeTakeFirst();
   const group = def ? `ghi theo nhóm mặc định ${def.code}` : 'chưa có nhóm hạch toán, đơn vị chưa có nhóm mặc định';
   const lines = items.map((i) => `${i.sku} (${[i.unit.trim() ? '' : 'thiếu đơn vị tính', group].filter(Boolean).join('; ')})`);
-  const body = `${lines.slice(0, 10).join(' · ')}${lines.length > 10 ? ` · và ${lines.length - 10} mặt hàng khác` : ''}. Kiểm đơn vị tính và nhóm hạch toán để kho, giá vốn không ghi sai.`;
-  await sendNotification(trx, tenantId, 'core', {
-    to: { permission: 'catalog:write' },
-    title: `Chứng từ ${doc.docNo} đã tự thêm ${items.length} mặt hàng — cần kiểm`.slice(0, 200),
-    body, link: '/danh-muc/mat-hang', dedupeKey: `auto-items:${doc.docKey}:${doc.version}`,
-  });
+  const list = `${lines.slice(0, 10).join(' · ')}${lines.length > 10 ? ` · và ${lines.length - 10} mặt hàng khác` : ''}`;
+  // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 / R-GATE-10: câu chữ từ mã ITEM-HINT-002 (đơn vị sửa được ở HT09), không viết tay
+  const [f] = await reviewFindings(trx, tenantId, [catalogFinding('ITEM-HINT-002', { docNo: doc.docNo, count: items.length, items: list })]);
+  await notifyFinding(trx, tenantId, 'core', { permission: 'catalog:write' }, f!, { link: '/danh-muc/mat-hang', dedupeKey: `auto-items:${doc.docKey}:${doc.version}` });
 }

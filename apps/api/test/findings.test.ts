@@ -27,7 +27,7 @@ describe('GET /api/v1/findings', () => {
     expect(r.body.data).toMatchObject({ code: 'IN-MD-001', gate: 'B', step: 'L3', level: 'block', learn: 'docs/huong-dan/loi-dau-vao/IN-MD-001.md' });
     expect(r.body.data.why.length).toBeGreaterThan(10);
     const a = await call(ctx, 'GET', '/api/v1/findings/ACC-HINT-003');
-    expect(a.body.data).toMatchObject({ gate: 'A', step: 'account', level: 'warn', status: 'draft' });
+    expect(a.body.data).toMatchObject({ gate: 'A', step: 'account', level: 'warn', basis: [{ key: 'TT99', title: 'Thông tư 99/2025/TT-BTC' }] });
     expect(a.body.data.fix).toMatch(/Theo dõi đối tượng/);
     const x = await call(ctx, 'GET', '/api/v1/findings/XX-YY-999');
     expect(x.status).toBe(404);

@@ -6,7 +6,8 @@
  * Danh mục gốc giữ nguyên chỗ cũ (mã ổn định, R-INTAKE-11); tệp này CHỈ gom về một khuôn để người, dev và AI tra một chỗ:
  * `GET /api/v1/findings`, `core.findings.explain(code)` (MCP), trang `docs/huong-dan/ma-loi/README.md` (sinh bằng
  * `node scripts/sinh-ma-loi.mjs`). SC-FIND-1 kiểm: mã không trùng giữa các danh mục; đủ tiêu đề / vì sao; mức warn / block
- * có cách sửa; trang tra mã có đủ mã.
+ * có cách sửa; mỗi mã có căn cứ (R-GATE-11, legal-basis.ts); trang tra mã có đủ mã. Mọi lời Core nói ra bắt đầu từ thư viện này
+ * (R-GATE-10, ADR-0020).
  *
  * Mức chung (R-GATE-4 — mức nào, hậu quả đó):
  *   block — giữ lại: Gate A → bản nháp, Gate B → bể chờ; hết khi dữ liệu đúng, không ai "chấp nhận" thay
@@ -15,6 +16,7 @@
  */
 import { INTAKE_CATALOG, type IntakeCode } from './intake-findings.js';
 import { CATALOG_HINTS } from './catalog-hint.js';
+import { basisOf, type BasisKey } from './legal-basis.js';
 
 export type FindingGate = 'A' | 'B';
 export type FindingLevel = 'block' | 'warn' | 'info';
@@ -33,8 +35,10 @@ export interface FindingEntry {
   rule: string;
   /** Trang học thêm (đường dẫn trong repo), hoặc thẻ tài khoản. */
   learn: string | null;
-  /** Nội dung đã được người duyệt nghiệp vụ duyệt chưa (luật kế toán: kế toán trưởng). */
+  /** Trạng thái nội dung trong danh mục gốc (giữ để tương thích; không còn là cổng chờ duyệt — ADR-0020). */
   status: 'draft' | 'approved';
+  /** Căn cứ (R-GATE-11): văn bản trong docs/can-cu hoặc NOI-BO = quy ước phần mềm. */
+  basis: { key: BasisKey; title: string; page: string }[];
   /** Danh mục gốc. */
   source: 'bizcity_intake_findings' | 'bizcity_catalog_hint';
 }
@@ -43,7 +47,7 @@ function fromIntake(code: IntakeCode): FindingEntry {
   const s = INTAKE_CATALOG[code];
   return {
     code, gate: 'B', level: s.severity === 'hint' ? 'info' : s.severity, step: s.layer, title: s.title, why: s.why, fix: s.fix,
-    rule: s.ref, learn: `docs/huong-dan/loi-dau-vao/${code}.md`, status: 'approved', source: 'bizcity_intake_findings',
+    rule: s.ref, learn: `docs/huong-dan/loi-dau-vao/${code}.md`, status: 'approved', basis: basisOf(code), source: 'bizcity_intake_findings',
   };
 }
 
@@ -51,7 +55,7 @@ function fromIntake(code: IntakeCode): FindingEntry {
 export const FINDINGS_LIBRARY: readonly FindingEntry[] = [
   ...Object.values(CATALOG_HINTS).map((d): FindingEntry => ({
     code: d.id, gate: 'A', level: d.level === 'guide' ? 'info' : d.level, step: d.entity, title: d.title, why: d.why,
-    fix: d.fix ?? '', rule: d.rule ?? 'R-GATE-2', learn: d.learn && !d.learn.includes('{') ? d.learn : null, status: d.status, source: 'bizcity_catalog_hint',
+    fix: d.fix ?? '', rule: d.rule ?? 'R-GATE-2', learn: d.learn && !d.learn.includes('{') ? d.learn : null, status: d.status, basis: basisOf(d.id), source: 'bizcity_catalog_hint',
   })),
   ...(Object.keys(INTAKE_CATALOG) as IntakeCode[]).map(fromIntake),
 ];

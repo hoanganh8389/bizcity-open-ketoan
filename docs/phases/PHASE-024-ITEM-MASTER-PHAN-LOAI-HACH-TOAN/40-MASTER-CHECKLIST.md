@@ -70,3 +70,4 @@
 | 2026-11-03 11:00 | Claude Code | Lộ trình ổn định Core [70](70-LO-TRINH-ON-DINH-CORE.md): B1 PR #38 test đầy đủ 1090 đạt / 0 lỗi (chờ merge); B2–B6 xếp theo S024-4..16, 24, 28, 30; đề xuất SC-ITEM-4 / 5 (bất biến ở CSDL). |
 | 2026-11-03 11:40 | Claude Code | Chủ đồng ý Q-70-1..5 ⇒ HT09 Quy định dữ liệu danh mục (duyệt luật nhắc, tắt tự thêm mặt hàng), IN-ITEM-001, kích hoạt hàng loạt, dòng nhắc sau khi lưu; migration 0062. |
 | 2026-11-03 13:10 | Claude Code | Chủ: "cấu hình tự thêm mặt hàng để mặc định cho thêm, nhưng sẽ nhắc nếu sai, đây là rule chung" ⇒ R-GATE-9; bỏ mặc định tắt cho đơn vị mới; thông báo nhắc mặt hàng tự thêm; D024-5 sửa theo luật chung. |
+| 2026-11-03 14:00 | Claude Code | ADR-0020 tôn chỉ Core ⇒ R-GATE-10 (notifyFinding, SC-FIND-2), R-GATE-11 (căn cứ, legal-basis.ts, SC-FIND-1 mở rộng); ITEM-HINT-002 thay thông báo viết tay; HT09 bỏ trạng thái chờ duyệt. |

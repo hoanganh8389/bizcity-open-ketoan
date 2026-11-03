@@ -17,6 +17,23 @@
 > **Phiên bản:** 1.1 · 2026-10-29 · **Người giữ:** nhóm Lõi (CODEOWNERS `/docs/00-CANON.md`)
 > **Hai lớp chuẩn:** luật `R-*` dưới đây giữ **Kernel** (sổ cái). Luật `STD-*` của [Bizcity Framework Standard v1](standard/README.md) giữ **module** (7 hợp đồng, bộ kiểm cài đặt). Module tuân `STD-*`; nhờ SDK nó tự tuân `R-*`.
 
+<!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
+## 0. Tôn chỉ ([ADR-0020](adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md))
+
+**Người dùng là người quyết định và thao tác.** Core không tự sửa dữ liệu thay họ, cũng không âm thầm chặn. Việc của Core là làm cho vấn đề **nhìn thấy được và chỉ đúng chỗ sửa**, bằng các công cụ:
+
+| Công cụ | Trả lời câu hỏi |
+|---|---|
+| Gate A (khung Vì sao, nháp) | Khai báo danh mục này thiếu / sai gì |
+| Gate B (trạm tiền kiểm, bể chờ) | Chứng từ này vì sao chưa vào sổ |
+| Check / tự chẩn đoán / kiểm chuẩn | Sổ đang lệch ở đâu |
+| Sổ tay module nghiệp vụ, trang bài học | Vì sao phải làm vậy, làm thế nào |
+| Debug / trace | Lỗi xảy ra ở bước nào |
+
+Mọi công cụ trên phải nói **cùng một ngôn ngữ**, và ngôn ngữ đó là **thư viện mã** (`bizcity_findings@1`). Một vấn đề có một mã. Mã đó mang vì sao, cách sửa, chỗ sửa (màn / bước) và **căn cứ** ([danh mục văn bản](can-cu/01-danh-muc-van-ban.md)). Thông báo, dải nhắc, lỗi API, trang bài học đều sinh ra từ mã, không ai viết câu chữ riêng.
+
+Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); mọi lời Core nói ra bắt đầu từ thư viện mã (R-GATE-10); mỗi mã có căn cứ (R-GATE-11); Core không mã hoá quy trình theo chức danh — ai làm gì là việc của phân quyền.
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -134,6 +151,8 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 
 ## 6. Nhật ký thay đổi CANON
 
+<!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
+- **v1.3 (2026-11-03):** Thêm §0 Tôn chỉ ([ADR-0020](adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md)): người dùng quyết định, Core chỉ đúng chỗ; một ngôn ngữ là thư viện mã có căn cứ; R-GATE-9 / 10 / 11.
 <!-- [2026-11-01 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm luật R-VNC (bộ kiểm chuẩn pháp lý Việt Nam) vào danh mục luật. -->
 - **v1.2 (2026-11-01):** Thêm luật R-VNC ([rules/RULE-VN-CONFORMANCE.md](rules/RULE-VN-CONFORMANCE.md)) — bộ kiểm chuẩn pháp lý Việt Nam (PHASE-020): kho nguồn pháp lý, rulepack / ca có phiên bản, cổng phê duyệt fail-closed, báo cáo bằng chứng.
 - **v1.1 (2026-10-29):** Thêm Bizcity Framework Standard v1 (`docs/standard/`, 7 hợp đồng `STD-*`, bộ kiểm cài đặt, ca chuẩn Hợp đồng, Phase 1–6). Đổi tên khuôn nạp sổ `bizcity_event@1` → `bizcity_ledger_intake@1`; tên `bizcity_event@1` nay là sự kiện miền. `bizcity_workflow@1` gộp vào `bizcity_document@1`.
