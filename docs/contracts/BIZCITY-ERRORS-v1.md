@@ -107,5 +107,7 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 ## 7. Changelog
 
 - 1.0.0 (2026-10-30): khởi tạo. Có 14 mã HTTP và 2 mã MCP. Thêm `error.requestId`, `details.reason`, ánh xạ `P0001`.
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] R-ERR — details lỗi sai khuôn thống nhất mảng câu -->
+- **1.2.1-draft (2026-11-02):** `details` của `VALIDATION_ERROR` do sai khuôn luôn là **mảng câu** (`<trường>: <vì sao>`), như lỗi kiểm của route. Năm chỗ trước trả object `flatten()` của zod (nộp chứng từ trong giao dịch, gói định khoản, phiếu nháp, phân hệ mua hàng) — giao diện không hiện được trường sai. Không đổi mã, HTTP.
 - **1.2.0-draft (2026-11-02, ADR-0014):** thêm trường tuỳ chọn `error.intake` cho lỗi cửa nạp chứng từ (bể chờ). Không đổi mã, HTTP, `details`.
 - **1.1.0-draft (2026-11-01, ADR-0010):** thêm trường tuỳ chọn `error.traceId` (tương thích: bên gọi cũ bỏ qua được). Không đổi mã, HTTP, nghĩa.

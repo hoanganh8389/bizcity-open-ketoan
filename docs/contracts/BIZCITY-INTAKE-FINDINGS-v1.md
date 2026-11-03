@@ -16,6 +16,8 @@
 | `path` | trường, vd `lines[2].qty`; `null` = cả chứng từ |
 | `got`, `expected` | đã gửi / đúng phải là |
 | `title`, `why`, `fix`, `ref` | tên, vì sao kế toán cần, sửa ở nguồn thế nào, căn cứ |
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26: phát hiện mang remedy (bizcity_remedy@1) -->
+| `remedy` | phương án khắc phục có cấu trúc ([bizcity_remedy@1](BIZCITY-REMEDY-v1.md)): bước, màn, vai, kiểm lại, việc cấm. Có ở mọi mã `block` / `warn` (khai ở `INTAKE_REMEDIES`, SC-FIX-1); mã `hint` tuỳ |
 
 **Điểm** 0–100: có `block` → 0; không thì 100 − Σ trọng số `warn` chưa chấp nhận; `hint` không trừ (R-INTAKE-10).
 
@@ -55,6 +57,8 @@ L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh 
 
 ## 4. Nhật ký
 
+<!-- [2026-11-02 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — S021-26 -->
+- **0.3.0-draft (2026-11-02):** trường `remedy` trên phát hiện — mọi mã `block` / `warn` có phương án (bước sửa ở nguồn, màn danh mục khi thiếu mã, việc cấm); SC-FIX-1 kiểm. Thêm trường, không đổi mã / mức / điểm.
 - **0.2.0-draft (2026-11-02):** §5 bể chờ `intake_inbox`: `error.intake` trong phản hồi lỗi cửa nạp, `intakeId` từng dòng lô, API `/api/v1/intake`, hạn giữ (PHASE-021 W2, PHASES 2.18).
 - **0.1.0-draft (2026-11-02):** 20 mã L1–L4 (PHASE-021 W1, PHASES 2.17).
 

@@ -23,6 +23,7 @@ import { z } from 'zod';
 import { APPROVABLE_DOC_TYPES } from '@ketoan/contracts';
 import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
+import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { ensureHead, publishPolicy, policyHash, type PolicyVersionRow } from './policy.js';
 import { loadPolicyRaw } from './posting-config.repository.js';
 
@@ -327,7 +328,8 @@ export async function uninstallPack(trx: Db, tenantId: string, packId: string, a
 /** Đọc gói từ tệp (gói nền ở db/packs) và kiểm khuôn. */
 export function parsePack(json: unknown, source: string): PostingPack {
   const r = postingPackSchema.safeParse(json);
-  if (!r.success) throw Errors.validation(`Gói ${source} không đúng khuôn bizcity_posting_template@1`, r.error.flatten());
+  // [2026-11-02 11:47 PM Johnny Chu - Chu Hoàng Anh] R-ERR — details của lỗi sai khuôn là mảng câu (zodIssueTexts) thay flatten() — web chỉ hiện details dạng mảng (apps/web/src/lib/api.ts errorText), trước đây người dùng không thấy trường nào sai
+  if (!r.success) throw Errors.validation(`Gói ${source} không đúng khuôn bizcity_posting_template@1`, zodIssueTexts(r.error));
   return r.data;
 }
 
