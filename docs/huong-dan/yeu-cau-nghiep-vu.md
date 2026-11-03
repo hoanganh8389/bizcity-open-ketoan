@@ -1,4 +1,5 @@
 # Yêu cầu nghiệp vụ (YC01)
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 Bảng theo dõi từng yêu cầu trong **file yêu cầu xây dựng hệ thống của công ty** (sheet Tài chính – Kế toán) và phần mềm đã đáp ứng tới đâu. Dùng cho:
 
@@ -26,7 +27,7 @@ Phía trên bảng: tỷ lệ tính năng đã có và số yêu cầu theo từ
 
 ## Cập nhật (nhóm phát triển)
 
-Dữ liệu nằm ở `apps/web/src/features/requirements/finance-requirements.ts`. Làm xong (hoặc làm thêm một phần) yêu cầu nào thì sửa ngay mục đó trong cùng lần thay đổi mã:
+Dữ liệu nằm ở `apps/web/src/phan-he/ke-toan/requirements/finance-requirements.ts`. Làm xong (hoặc làm thêm một phần) yêu cầu nào thì sửa ngay mục đó trong cùng lần thay đổi mã:
 
 1. Đổi `status` của tính năng: `done`, `partial`, `todo`, `waiting`; ghi `note` nếu còn thiếu.
 2. Viết lại `solution` (viết cho kế toán đọc), thêm mã màn vào `screens`, tên tài liệu vào `guides`, đổi `updated`.

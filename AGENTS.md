@@ -36,14 +36,17 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 
 Nhiều phiên (người và AI) làm cùng một kho. Luật đầy đủ: [RULE-FLOW](docs/rules/RULE-FLOW.md). Trước khi gõ dòng code đầu tiên của một **đợt việc**:
 
-1. `git fetch --all --prune`, rồi đọc [docs/phases/CLAIMS.md](docs/phases/CLAIMS.md) **trên `origin/main`**: `git show origin/main:docs/phases/CLAIMS.md`.
+1. `node scripts/nhan-viec.mjs` — in bảng giữ chỗ [docs/phases/CLAIMS.md](docs/phases/CLAIMS.md) **trên `origin/main`** (không phải bản trong nhánh của mình) và các nhánh còn mở chưa vào `main`.
 2. Phạm vi của bạn chồng lên một dòng "đang làm" của người khác → **dừng**, báo người dùng, chọn việc khác hoặc thoả thuận. Không làm song song.
 3. Chưa có dòng của bạn → mở PR **chỉ tài liệu** thêm dòng vào CLAIMS.md, chờ người dùng merge vào `main`. **Chỉ sau đó** mới tạo nhánh code.
 4. Đụng thứ dùng chung (API runtime action / SDK, `packages/contracts`, chính sách bằng chứng, luật lớp, migration, phép kiểm chặn mới — bảng ở [RULE-FLOW §3](docs/rules/RULE-FLOW.md)) → PR tài liệu **chốt thiết kế** vào `main` trước PR code.
-5. Trước khi đẩy: gộp `origin/main`, `git merge-tree --write-tree origin/main HEAD` không báo xung đột, `selfcheck --strict` ĐẠT. Nhánh sống không quá một ngày làm việc.
+5. Trước khi đẩy: `node scripts/nhan-viec.mjs kiem` ĐẠT (có dòng giữ chỗ, tệp đổi nằm trong phạm vi, đổi thứ dùng chung đã có chữ chốt trên `main`, nhánh ngắn, đã gộp `origin/main` và gộp thử không xung đột), rồi `selfcheck --strict` ĐẠT. Nhánh sống không quá một ngày làm việc.
 6. Làm trùng với bản đã có → giữ bản có tài liệu và test, ghi rõ trong PR; khác nhau về **chính sách** thì hỏi người dùng, không tự chọn.
 
 Không cần bước 1–4: sửa lỗi nhỏ (một tệp, không đổi hành vi dùng chung), tài liệu thuần, sửa nóng trên sản xuất.
+
+<!-- [2026-11-03 10:35 PM Johnny Chu - Chu Hoàng Anh] FLOW — R-FLOW-7: nguồn sự thật của tài liệu là main (chủ dự án: "source of truth tài liệu phải ở nhánh main để nhiều session window, nhiều dev ko bị phân mảnh tài liệu kiến trúc chuẩn do Johnny Chu ban hành") -->
+**Nguồn sự thật của tài liệu là `main` (R-FLOW-7).** Kiến trúc chuẩn do Johnny Chu – Chu Hoàng Anh ban hành chỉ có hiệu lực khi đã nằm trong tài liệu sở hữu trên `main`. Artifact, ghi chú phiên, chat, nhánh chưa merge là bản làm việc: khác `main` thì `main` thắng. Đọc tài liệu bằng `git show origin/main:<tệp>`; quyết định mới vào tài liệu sở hữu bằng PR tài liệu trước khi code.
 
 ## Trước khi code: đồng bộ với `main`
 

@@ -1,7 +1,7 @@
 # RULE · Cổng chất lượng (R-QG)
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 
-> **Cấp:** Tier 1 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
+> **Cấp:** Tier 1 · **Phiên bản:** 1.1 · 2026-11-03 (thêm mục chốt phép kiểm chặn) · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **CI:** [../ops/CI-CD.md](../ops/CI-CD.md) · **Bằng chứng:** [../ops/DIAGNOSTICS.md](../ops/DIAGNOSTICS.md) §4
 
 | Mã | Luật | Kiểm bằng |
@@ -16,3 +16,20 @@
 | **R-QG-8** | Không merge với test bị `skip` / `only` mới thêm | Grep CI |
 | **R-QG-9** | PR đổi hợp đồng ghi vào CHANGELOG hợp đồng và tăng `version` trong tệp `docs/contracts/*` | Mẫu PR |
 | **R-QG-10** | Sau triển khai: `GET /api/v1/system/health` khoẻ và `diagnostics` không có lỗi mức `error` trước khi báo xong | [../ops/DEPLOY.md](../ops/DEPLOY.md) §4 |
+
+## Phép kiểm chặn mới — chốt thiết kế (R-FLOW-2)
+<!-- [2026-11-03 10:07 PM Johnny Chu - Chu Hoàng Anh] FLOW — chốt thiết kế năm phép kiểm chặn và hai mục nợ baseline trước PR code (giữ chỗ CK-2, CK-3, S024-16 trong docs/phases/CLAIMS.md) -->
+
+Thêm một phép kiểm mức **chặn**, hoặc thêm nợ vào `tests/conformance/baseline.json`, là đổi thứ dùng chung ([RULE-FLOW §3](RULE-FLOW.md)). Mỗi dòng dưới đây phải vào `main` trước PR code của nó. Một phép kiểm chặn chỉ được bật khi đã có ca sai mẫu trong `tests/conformance/fixtures/` (dòng ở `expect.json`) **và** chạy trên repo thật cho 0 phát hiện mới; phần nợ đã biết vào baseline kèm `ref`.
+
+| Mã | Vấn đề | Hình dạng (quét gì, dấu vân tay) | Ảnh hưởng khi bật | Kiểm bằng |
+|---|---|---|---|---|
+| **SC-DOC-4** (chặn) | Tài liệu nhắc `đường/dẫn` không còn sau khi tách Kernel / Platform: 33 dòng lỗi thời trong 23 tài liệu | đường dẫn trong dấu huyền ở mọi `.md` còn hiệu lực; tra cả viết tắt `modules/…` theo `packages/kernel/src/`, `apps/api/src/`, `packages/platform/src/`. Bỏ qua: nhật ký (`docs/phases`, `docs/adr`, `docs/audits`, `CHANGELOG.md`), tài liệu kế hoạch đích (`PHASES.md`, `REUSE-MAP.md`, `TARGET-LAYOUT.md`…), `templates/`, chỗ giữ chỗ, và **dòng tự ghi** "chưa tách" / "gói đích" / "đề xuất" / "lộ trình". Vân tay: đường dẫn | sửa xong 33 dòng thì 0 phát hiện; đích chưa làm phải ghi rõ trên dòng | ca `fixtures/repo-bad/docs/troi-ma.md` (1 sai, 2 đúng) |
+| **SC-DOC-5** (chặn) | Tài liệu hứa route không có trong mã | "GET / POST / PUT / PATCH / DELETE `/api/v1/…`" trong `.md` còn hiệu lực, so với route khai bằng `r.get(…)` / `app.*` và `expose.http.path` của action (kể cả template literal); bỏ qua tài liệu có "Trạng thái: Đề xuất" ở đầu và route `/api/v1/m/<module>` | 0 phát hiện sau khi ghi "(đề xuất, chưa có trong mã)" ở dòng cần ghi | cùng tệp ca mẫu |
+| **SC-DOC-6** (bánh cóc) | Nút **Hướng dẫn** của màn hiện "Chưa có hướng dẫn" | mỗi mục menu (`key` + `path`) ở `apps/web/src/phan-he/*/menu.ts` có `docs/huong-dan/<key>.md`. Vân tay `guide:<key>` | **nợ baseline: các mục đang thiếu tại lúc merge** (đếm lại khi merge, hôm nay 192 / 230), `ref` "nợ hướng dẫn màn có từ trước khi có check"; màn **mới** thiếu hướng dẫn là đỏ | ca `repo-bad`: một mục có, một mục thiếu |
+| **SC-SEC-5** (chặn) | Bí mật có giá trị mặc định viết trong mã (`process.env.X \|\| '…'`, `?? '…'`): chạy được khi quên đặt biến, và giá trị nằm trong git | biến có tên chứa `PASSWORD`, `PASSWD`, `SECRET`, `TOKEN`, `API_KEY`, `PRIVATE_KEY`, trong mã của các lớp (không quét test, `.md`, `.example`). **Không in giá trị**, chỉ độ dài. Vân tay: tên biến | sửa `PURCHASE_SEED_PASSWORD` (công cụ tắt khi chưa đặt biến, kiểm ở `packages/platform/src/core/security/tool-password.ts` — tệp mới của CK-3, chưa có trên `main`); **nợ baseline: `SEED_ADMIN_PASSWORD`** (`packages/kernel/src/db/seed.ts`, mật khẩu quản trị ban đầu đã công bố) chờ chủ dự án quyết | ca `repo-bad`: một biến bí mật (bắt), một biến thường (`HOST`, không bắt) |
+| **SC-ITEM-2** (chặn) | Bất biến "sổ khoá theo `item_id`, mã chỉ là ảnh chụp" (R-ITEM-1) chưa có phép kiểm tĩnh | migration: `FOREIGN KEY (…sku…) REFERENCES …` hoặc cột `…sku` khai `REFERENCES`; sau migration đầu tiên gắn `item_id` vào `ledger_lines`, không `ADD COLUMN …sku` vào `ledger_lines`, `inventory_movements`, `inventory_costs`, `product_units`, `product_prices`. Vân tay `fk:<bảng>:<cột>`, `col:<bảng>.<cột>` | hôm nay 0 phát hiện trên 134 khoá ngoại | ca `fixtures/repo-bad/db/migrations/0005_khoa_theo_ma.sql` (2 sai, 1 đúng) |
+| **SC-ITEM-3** (chặn) | Luật định khoản đọc danh mục mua hàng thay vì phân loại mặt hàng tại ngày | `packages/kernel/src/modules/posting/**` (trừ test) không import `@bizcity/mua-hang-domain`, không dùng `skuInfo`; một phát hiện mỗi tệp | hôm nay 0 phát hiện trên 9 tệp | ca `repo-bad/packages/kernel/src/modules/posting/rules/xau.rule.ts` |
+| **SC-ITEM-1** (`planned`) | Preset / module / fixture gửi hàng đúng `bizcity_item_master@1` | chờ JSON Schema nhập / xuất cho plugin (`BIZCITY-ITEM-MASTER-v1` §5, S024-4) | không chặn, chỉ đo sẵn sàng | — |
+
+Thứ tự PR: giữ chỗ (CLAIMS.md) → mục này → PR code CK-2 (SC-DOC-4..6), CK-3 (SC-SEC-5 + bỏ mật khẩu mặc định), S024-16 (SC-ITEM). Mỗi PR code chỉ thêm dòng `expect.json` / `baseline.json` của check mình (hai tệp dùng chung với FLOW-1).

@@ -1,4 +1,5 @@
 # Phát triển
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 ## 0. Người mới: đọc theo thứ tự này
 
@@ -95,7 +96,7 @@ Mỗi lần chạy kiểm thử tạo một đơn vị riêng (`t<thời điểm
 
 ## 4. Thêm một module API
 
-Mã nguồn chỉ một phân hệ dùng: tạo trong `apps/api/src/phan-he/<phân hệ>/<ten>/` (`schemas`, `repository`, `service`, `routes`) và khai `routes` ở `phan-he/<phân hệ>/index.ts`. Dùng chung nhiều phân hệ: tạo ở `apps/api/src/modules/<ten>/`, khai vào `phan-he/loi.ts` (lõi) hoặc các phân hệ cần. Cần bảng mới thì thêm migration, cập nhật `db/types.ts`, và khai mô tả bảng trong `modules/system/schema-catalog.ts` (phép thử `db-rules` báo lỗi nếu quên; mô tả này hiện ở tab *Cấu trúc dữ liệu*).
+Mã nguồn chỉ một phân hệ dùng: tạo trong `apps/api/src/phan-he/<phân hệ>/<ten>/` (`schemas`, `repository`, `service`, `routes`) và khai `routes` ở `phan-he/<phân hệ>/index.ts`. Dùng chung nhiều phân hệ: tạo ở `apps/api/src/modules/<ten>/`, khai vào `phan-he/loi.ts` (lõi) hoặc các phân hệ cần. Cần bảng mới thì thêm migration, cập nhật `packages/platform/src/db/types.ts`, và khai mô tả bảng trong `modules/system/schema-catalog.ts` (phép thử `db-rules` báo lỗi nếu quên; mô tả này hiện ở tab *Cấu trúc dữ liệu*).
 
 ## 5. Thêm một màn hình
 
@@ -129,7 +130,7 @@ Phiếu kế toán tự lập (thu, chi, báo nợ, báo có, phiếu kế toán
 
 ## 5b. Bảng yêu cầu nghiệp vụ (YC01)
 
-Màn **Yêu cầu nghiệp vụ → Tài chính – Kế toán** liệt kê từng yêu cầu trong file yêu cầu của công ty và tình trạng đáp ứng. Dữ liệu ở `apps/web/src/features/requirements/finance-requirements.ts`.
+Màn **Yêu cầu nghiệp vụ → Tài chính – Kế toán** liệt kê từng yêu cầu trong file yêu cầu của công ty và tình trạng đáp ứng. Dữ liệu ở `apps/web/src/phan-he/ke-toan/requirements/finance-requirements.ts`.
 
 Làm xong hoặc làm thêm một phần yêu cầu nào thì **sửa mục đó trong cùng lần thay đổi mã**: trạng thái từng tính năng, ghi chú phần còn thiếu, cách đáp ứng, mã màn, tài liệu hướng dẫn, ngày cập nhật. Chi tiết: [huong-dan/yeu-cau-nghiep-vu.md](huong-dan/yeu-cau-nghiep-vu.md).
 

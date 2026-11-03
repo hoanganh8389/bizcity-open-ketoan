@@ -1,11 +1,12 @@
 # Nối Bizcity Cell: một khoá 1API, bốn bước, bản Pro
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
 > **Cho ai:** nhóm Lõi làm `adapters/cell`; người cài Core muốn bật trợ lý AI.
 > **Tuân:** P1 (Core chạy đủ khi không có Cell), CELL-1..7 ([CELL-MCP.md](CELL-MCP.md)), [bizcity_mcp@1](../contracts/BIZCITY-MCP-v1.md).
 > **Nguồn sự thật phía hệ sinh thái** (plugin `bizcity-twin-ai`, Hub `bizcity-llm-router`):
-> - luật `R-SETUP-4` (`docs/rules/PHASE-0-RULE-FOUR-STEP-SETUP-AXIS.md`);
+> - luật `R-SETUP-4` (tài liệu luật của repo bizcity-twin-ai, không nằm trong repo này);
 > - `core/bizcity-llm/includes/class-llm-client.php`, `class-llm-connect-flow.php`;
 > - phase 0.83 (bốn bước), 0.107 (tính phí), 0.138, 0.139 (gói).
 >

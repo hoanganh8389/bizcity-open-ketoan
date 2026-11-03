@@ -1,4 +1,5 @@
 # Thuế, công nợ và liên kết bút toán
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 Phần này giải thích các mảnh thêm vào sau phần lõi: liên kết bút toán, bổ sung thông tin thuế, khai bổ sung, quyết toán TNDN, công nợ theo nhân viên và theo mặt hàng. Đọc sau *Luồng dữ liệu và cấu trúc bảng*.
 
@@ -74,8 +75,8 @@ processDocument(doc)
 
 | Phần | Thư mục |
 |---|---|
-| Liên kết bút toán | `apps/api/src/modules/ledger` (`ledger.service.ts`, `ledger.repository.ts`) |
-| Bổ sung thông tin thuế | `apps/api/src/modules/tax-info` |
-| Tờ khai GTGT, khai bổ sung, TNDN, người nộp thuế | `apps/api/src/modules/statements` |
+| Liên kết bút toán | `packages/kernel/src/modules/ledger` (`ledger.service.ts`, `ledger.repository.ts`) |
+| Bổ sung thông tin thuế | `packages/kernel/src/modules/tax-info` |
+| Tờ khai GTGT, khai bổ sung, TNDN, người nộp thuế | `apps/api/src/phan-he/thue/statements` |
 | Công nợ theo nhân viên, mặt hàng | `apps/api/src/phan-he/ke-toan/reports/debt-reports.ts` |
 | Test | `apps/api/test/ledger-links.test.ts`, `tax-info.test.ts`, `tax-returns.test.ts`, `debt-reports.test.ts` |

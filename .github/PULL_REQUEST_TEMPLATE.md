@@ -1,4 +1,5 @@
 # Pull Request
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 ## Mô tả
 
@@ -23,7 +24,7 @@
 - [ ] **R-MATRIX** — Khoá cấu hình mới đã thêm vào `docs/contracts/bizcity-settings.registry.json`; đọc qua hàm kiểm khuôn.
 - [ ] **R-BOUND** — Phân hệ không import phân hệ khác, không ghi bảng nhân.
 - [ ] **R-API** — Phản hồi `{ ok, data | error }`; lỗi bằng `Errors.*`; route có `requirePermission`.
-- [ ] **R-DB** — Migration mới, số kế tiếp không trùng, có `COMMENT ON` tiếng Việt, đã cập nhật `db/types.ts` + `schema-catalog.ts`.
+- [ ] **R-DB** — Migration mới, số kế tiếp không trùng, có `COMMENT ON` tiếng Việt, đã cập nhật `packages/platform/src/db/types.ts` + `schema-catalog.ts`.
 - [ ] **R-TEN** — Lọc `tenant_id`; thao tác ghi có `writeAudit`.
 - [ ] **R-WF** — Chỉ trạng thái đã duyệt mới nộp sự việc.
 - [ ] **Hợp đồng** — Đổi `packages/contracts` / API công khai → đã cập nhật `docs/contracts/*` (tăng phiên bản, changelog) và `docs/api/` + JSON mẫu.

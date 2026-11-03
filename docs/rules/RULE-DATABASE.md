@@ -1,4 +1,5 @@
 # RULE · Cơ sở dữ liệu (R-DB)
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh. -->
 <!-- [2026-10-30 01:11 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — tuyên bố tối thượng, 7 nguyên tắc AP, ba lớp kiểm soát, ma trận tuân thủ, kiểm nâng cấp migration. -->
@@ -10,7 +11,7 @@
 |---|---|---|
 | **R-DB-1** *(T0)* | **Migration chỉ thêm.** Không sửa tệp đã chạy ở máy chủ thật (kể cả 9 tệp gốc `000x_goc_*`). Đổi thì thêm tệp số kế tiếp | Duyệt PR; CI so băm tệp cũ (Giai đoạn 1) |
 | **R-DB-2** *(T0)* | Ràng buộc bảo vệ sổ (trigger, CHECK, UNIQUE của R-LEDGER) chỉ được **thêm chặt hơn**, không nới. Nới = ADR + duyệt nhóm Lõi | `db-rules.test.ts` |
-| **R-DB-3** | **Số migration không trùng**, tăng dần, dạng `NNNN_mo_ta_khong_dau.sql`. Đổi tên tệp đã chạy để sửa trùng số: thêm vào `RENAMED` trong `db/migrate.ts` (bản cài đã áp tên cũ chỉ ghi nhận tên mới). Đã sửa `0028_thue_kkkn.sql` → `0031_thue_kkkn.sql` (2026-10-30, A-03) | CI: `ls db/migrations \| cut -c1-4 \| uniq -d` rỗng |
+| **R-DB-3** | **Số migration không trùng**, tăng dần, dạng `NNNN_mo_ta_khong_dau.sql`. Đổi tên tệp đã chạy để sửa trùng số: thêm vào `RENAMED` trong `packages/platform/src/db/migrate.ts` (bản cài đã áp tên cũ chỉ ghi nhận tên mới). Đã sửa `0028_thue_kkkn.sql` → `0031_thue_kkkn.sql` (2026-10-30, A-03) | CI: `ls db/migrations \| cut -c1-4 \| uniq -d` rỗng |
 | **R-DB-4** | Mỗi tệp chạy trong **một giao dịch**; khoá `pg_advisory_lock(727001)` chặn chạy song song; Docker: job `db-migrate` chạy trước API (`AUTO_MIGRATE=0`) | `migrate.ts` |
 | **R-DB-5** | Bảng, cột mới có `COMMENT ON` **tiếng Việt**; bảng mới có mục trong `modules/system/schema-catalog.ts`; kiểu khai ở `apps/api/src/db/types.ts` | `db-rules.test.ts` |
 | **R-DB-6** | Đặt tên theo [../framework/04-DAT-TEN-BIZCITY.md](../framework/04-DAT-TEN-BIZCITY.md) §2: bảng lõi theo miền (`ledger_`, `event_`, `config_`…), bảng phân hệ tiền tố phân hệ, add-in `addin_<id>_` | Duyệt PR |
@@ -21,7 +22,7 @@
 | **R-DB-11** | Trigger mới có một câu giải thích trong `TRIGGER_NOTES` | Duyệt PR |
 | **R-DB-12** | Không lưu cấu hình dạng "túi JSON" mới trên `tenants.settings` mà không đăng ký registry (R-MATRIX-2). Trạng thái chạy (con trỏ kéo, lần chạy cuối) không phải cấu hình → bảng riêng | Duyệt PR |
 | **R-DB-13** | Thay đổi cần dữ liệu lớn (đổi kiểu cột sổ cái, thêm chỉ mục trên `ledger_lines`) phải ghi thời gian chạy ước tính và dùng `CREATE INDEX CONCURRENTLY` ở tệp riêng không giao dịch khi bảng lớn | Duyệt PR |
-| **R-DB-14** *(T0)* | **SQL là nguồn sự thật của schema.** Không sinh hay tự đổi schema từ model ORM (không Prisma — ADR-0007). Kiểu Kysely `db/types.ts` phải khớp migration, không ngược lại | SC-DATA-7 |
+| **R-DB-14** *(T0)* | **SQL là nguồn sự thật của schema.** Không sinh hay tự đổi schema từ model ORM (không Prisma — ADR-0007). Kiểu Kysely `packages/platform/src/db/types.ts` phải khớp migration, không ngược lại | SC-DATA-7 |
 | **R-DB-15** *(T0)* | **Migration đã phát hành là bất biến**:<br>- checksum mọi tệp khoá ở `tests/conformance/locks/migrations.lock.json` khi phát hành (`--update-lock`), CI báo đỏ khi tệp đã khoá đổi nội dung;<br>- lịch sử thực thi ở `schema_migrations`;<br>- đổi schema = tệp **mới**.<br>Mỗi PR có migration phải chạy được **trên CSDL sạch** (job CI `test`) **và trên CSDL có dữ liệu của bản phát hành trước** (`scripts/kiem-nang-cap.sh`, job CI `migrate-upgrade`) | SC-DATA-2; `scripts/kiem-nang-cap.sh` |
 | **R-DB-16** | Truy vấn bằng Kysely (type-safe). SQL thô chỉ qua `sql` có tham số khi nghiệp vụ cần (CTE, hàm cửa sổ, kiểm toàn vẹn); không ghép chuỗi (R-SEC-3) | SC-SEC-2 |
 | **R-DB-17** *(T0)* | Ghi sổ chỉ qua Domain Service của Kernel trong **một** giao dịch PostgreSQL (STD-DOM-5); module bên ngoài không sửa bảng của Core (R-BOUND-2) | SC-KERNEL-1..3; SC-MOD-2 |

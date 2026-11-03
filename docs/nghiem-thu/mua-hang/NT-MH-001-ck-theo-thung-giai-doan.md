@@ -1,4 +1,5 @@
 # NT-MH-001 · Nhập mua có CK theo thùng / %, chương trình theo giai đoạn, quà, CKTT, hỗ trợ ngoài
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-11-02 11:50 AM Nguyễn Văn Thủy] NGHIEM-THU — tạo phiếu từ tình huống test mua hàng 31/10/2026 (tình huống 1), kèm kết quả chạy bộ tính. -->
 
 | | |
@@ -84,7 +85,7 @@ Phần mềm phải tự áp đúng chương trình theo **ngày chứng từ**,
 ## 7. Kết quả chạy
 | | |
 |---|---|
-| Ngày chạy | 31/10/2026 (bộ tính chung `computeDoc`, `packages/contracts/src/mua-hang/engine.ts`) |
+| Ngày chạy | 31/10/2026 (bộ tính chung `computeDoc`, `modules/mua-hang/domain/src/engine.ts`) |
 | Bản code (commit) | 2bd97a1 |
 | Test tự động | chưa có — việc tiếp theo: `apps/api/test/nt-mh-001.test.ts` chạy trên sổ thật (CSDL test) |
 

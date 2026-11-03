@@ -1,4 +1,5 @@
 # CANON — Chỉ mục luật BizCity Ledger Framework
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-29 10:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — chuẩn MCP, gói định khoản theo ngành, kết nối Cell. -->
 <!-- [2026-10-29 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — luật phát hành, thay đổi Kernel, bảo mật, tự chẩn đoán. -->
@@ -102,7 +103,7 @@ Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Tr�
 | R-ITEM | [rules/RULE-ITEM.md](rules/RULE-ITEM.md) | 0 (R-ITEM-0), 1 (R-ITEM-1..9) | **Chấp nhận về nguyên tắc, chưa có mã** ([ADR-0017](adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), PHASE-024): định danh hàng hoá bất biến, mã có phiên bản, sổ đã ghi không đổi theo danh mục; tài khoản từ chính sách, không từ tiền tố mã; dữ liệu ngoài qua validation <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-ITEM --> | trigger, DG-ITEM-1..5, SC-ITEM-1..3 (sẽ có) |
 | R-CONT <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity --> | [rules/RULE-CONTINUITY.md](rules/RULE-CONTINUITY.md) | 0 (R-CONT-0), 1 (R-CONT-1..9) | **Đề xuất 2026-11-03** ([ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), PHASE-025): không đứt chuỗi; lineage giá vốn chỉ thêm; phương pháp tính giá là chính sách có phiên bản; trả / huỷ hoàn đúng giá vốn gốc; sổ chi tiết = sổ cái; khoá kỳ đòi Gate C sạch; kết quả do engine tính |
 | R-GATE | [rules/RULE-GATE.md](rules/RULE-GATE.md) | 1 | **Chấp nhận 2026-11-02** ([ADR-0019](adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)): hai cổng — Gate A danh mục (nháp), Gate B nghiệp vụ (bể chờ, R-INTAKE); không chặn im lặng; một thư viện mã; mức nào hậu quả đó, không lan <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE --> | SC-FIND-1 (sẽ có), test bể / nháp |
-| R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> | SC-FLOW-1, SC-FLOW-2 (đợt 8 PHASE-014); Bước 0 AGENTS.md |
+| R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7, 2026-11-03). | SC-FLOW-1; `scripts/nhan-viec.mjs kiem`; Bước 0 AGENTS.md |
 
 ## 4. Hợp đồng (contracts)
 
@@ -110,7 +111,7 @@ Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Tr�
 |---|---|---|---|
 | `bizcity_standard@1` | [standard/README.md](standard/README.md) · [bizcity-standard.json](standard/bizcity-standard.json) | **Đề xuất** (1.0.0-draft) | gói 7 hợp đồng dưới đây + bảng năng lực |
 | `bizcity_module@1` | [contracts/BIZCITY-MODULE-v1.md](contracts/BIZCITY-MODULE-v1.md) | **Đề xuất** (Standard 1/7) | `apps/api/src/phan-he/types.ts`, `packages/contracts/src/module.ts`, `core/addins.ts` |
-| `bizcity_data@1` | [contracts/BIZCITY-DATA-v1.md](contracts/BIZCITY-DATA-v1.md) | **Đề xuất** (Standard 2/7) | `db/client.ts`, `db/migrate.ts` |
+| `bizcity_data@1` | [contracts/BIZCITY-DATA-v1.md](contracts/BIZCITY-DATA-v1.md) | **Đề xuất** (Standard 2/7) | `packages/platform/src/db/client.ts`, `packages/platform/src/db/migrate.ts` |
 | `bizcity_document@1` | [contracts/BIZCITY-DOCUMENT-v1.md](contracts/BIZCITY-DOCUMENT-v1.md) | **Đề xuất** (Standard 3/7; gồm luồng duyệt, thay `bizcity_workflow@1`) | `modules/{signatures,reference-documents}`, `payment_requests` |
 | `bizcity_action@1` | [contracts/BIZCITY-ACTION-v1.md](contracts/BIZCITY-ACTION-v1.md) | **Đề xuất** (Standard 4/7) | `core/{http,errors,auth}.ts` |
 | `bizcity_event@1` | [contracts/BIZCITY-EVENT-v1.md](contracts/BIZCITY-EVENT-v1.md) | **Đề xuất** (Standard 5/7) — sự kiện miền | chưa có (`catalog-notify.ts`) |

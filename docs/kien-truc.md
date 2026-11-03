@@ -1,4 +1,5 @@
 # Kiến trúc
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 
 > **Tài liệu tham chiếu cũ.** Chuẩn hiện hành: [framework/00-TONG-QUAN.md](framework/00-TONG-QUAN.md), [framework/01-CORE-MODULES.md](framework/01-CORE-MODULES.md), [00-CANON.md](00-CANON.md). Một số chỗ dưới đây đã lỗi thời: `gl_*` nay là `ledger_*`; "bộ sổ" nay là một sổ nhật ký chung mỗi đơn vị (sổ thuế là bản cài riêng `BOOK_MODE=tax`); ghi sổ lại nay là `POST /api/v1/documents/post { ids, repost }`.
 
@@ -90,7 +91,7 @@ main.tsx → App.tsx (provider + bảng định tuyến)
 - Tiền: `numeric(18,2)` ở database, `number` (đồng) trên JSON; cộng trừ qua `toCents/fromCents` (`packages/contracts/src/money.ts`).
 - Tham số true/false trên URL dùng `queryBool` (không dùng `z.coerce.boolean()`).
 - Lỗi nghiệp vụ: ném `Errors.*` (`core/errors.ts`), không tự viết `reply.status(...)`.
-- Thay đổi database: thêm tệp migration mới, cập nhật `db/types.ts`, không sửa migration đã phát hành.
+- Thay đổi database: thêm tệp migration mới, cập nhật `packages/platform/src/db/types.ts`, không sửa migration đã phát hành.
 - Thêm luật nghiệp vụ thì thêm phép thử vào `apps/api/test/`.
 
 ## 7. Giới hạn hiện tại

@@ -1,4 +1,5 @@
 # API nhận chứng từ — tài liệu cho bên gửi
+<!-- [2026-11-03 08:12 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — mục lục thêm trang 15 manual_journal -->
 
 Viết cho team lập trình các hệ thống nghiệp vụ (bán hàng, kho, mua hàng…) cần gửi chứng từ sang phần mềm kế toán. Bên gửi lấy dữ liệu từ đâu là việc của bên gửi; tài liệu này quy định **gửi vào cái gì, theo khuôn nào**.
 
@@ -20,6 +21,7 @@ Mọi file mẫu trong [`vi-du/`](vi-du/) được kiểm tự động mỗi l�
 | [10-chuyen-tien.md](10-chuyen-tien.md) | Chuyển tiền giữa chi nhánh, nộp / rút tiền ngân hàng `cash_transfer` | `chuyen-tien.json`, `nop-tien-ngan-hang.json` |
 | [11-thu-tien-khach.md](11-thu-tien-khach.md) | Thu tiền khách trả nợ, thu hộ chi nhánh khác `customer_payment` | `thu-tien-khach.json` |
 | [12-tra-tien-ncc.md](12-tra-tien-ncc.md) | Trả tiền nhà cung cấp, trả hộ chi nhánh khác `supplier_payment` | `tra-tien-ncc.json` |
+| [15-phieu-ke-toan-module.md](15-phieu-ke-toan-module.md) | Phiếu kế toán do **module** lập `manual_journal` (phân bổ, trích trước, chi phí lương): dòng chỉ có lý do loại journal + số tiền | `vi-du-module/phieu-ke-toan-phan-bo.json` (kiểm theo khuôn, không gửi thật: cần lý do journal, mặc định chờ duyệt) |
 | [13-phieu-nhap-tay.md](13-phieu-nhap-tay.md) | **Đề xuất** — phiếu nhập tay trong phần mềm (bán, trả lại, mua, trả NCC, chuyển kho) `/api/v1/trade-documents` | `apps/web/src/phan-he/*/…/mau-*.json` |
 
 ## Năm điều phải nhớ

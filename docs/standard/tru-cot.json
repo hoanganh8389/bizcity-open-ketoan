@@ -431,7 +431,7 @@
         },
         {
           "id": "C-4",
-          "text": "Phương pháp tính giá là chính sách có phiên bản; đơn vị mới mặc định FIFO",
+          "text": "Phương pháp tính giá là chính sách có phiên bản; mặc định bình quân gia quyền tháng (xuất lô FEFO / FIFO là việc của kho)",
           "status": "tai-lieu",
           "evidence": "D025-2 chủ duyệt",
           "gap": "costing_method chưa có trong posting_policy_versions",

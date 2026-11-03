@@ -1,9 +1,10 @@
 # `bizcity_errors@1` — Mã lỗi, thông báo, gợi ý
+<!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
 <!-- [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — 1.2.0-draft: trường tuỳ chọn error.intake (bể chờ) -->
 
-> **Phiên bản:** 1.0.0 · 2026-10-30 · **Trạng thái:** Chấp nhận · **Thuộc:** Platform (`packages/actions`)
+> **Phiên bản:** 1.0.0 · 2026-10-30 · **Trạng thái:** Chấp nhận · **Thuộc:** Platform (`packages/platform/src/core/errors.ts`; gói đích `packages/actions`, lộ trình 2.5)
 > **Nguồn máy đọc (duy nhất):** [`packages/contracts/src/errors.ts`](../../packages/contracts/src/errors.ts) (`ERROR_CATALOG`).
 > - Bảng §3 phải khớp nguồn này; check **SC-ERR-1** chặn khi lệch.
 > - API dùng nó cho thông báo mặc định, MCP dùng cho `hint`, giao diện dùng cho cách xử lý.
