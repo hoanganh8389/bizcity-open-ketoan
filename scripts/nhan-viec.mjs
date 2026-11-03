@@ -27,7 +27,6 @@ const opt = (n) => { const i = args.indexOf(`--${n}`); return i >= 0 ? args[i + 
 const MAX_COMMITS = 10; // R-FLOW-4
 const MAX_HOURS = 24;
 const STALE_DAYS = 3; // R-FLOW-6
-const LOOKBACK_DAYS = 14; // chữ chốt vào main trong 14 ngày trước ngày giữ chỗ vẫn tính
 
 const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 26 }).trim();
 const tryGit = (...a) => { try { return git(...a); } catch { return null; } };
@@ -99,10 +98,12 @@ function kiem() {
   for (const s of shared) {
     const inBranch = changed.filter((f) => s.docs.some((re) => re.test(f)));
     if (inBranch.length) { add('warn', 'R-FLOW-2', `${s.ten}: chữ chốt (${inBranch.join(', ')}) nằm CÙNG nhánh với code — R-FLOW-2 muốn PR tài liệu vào main trước`); continue; }
-    const since = dayStr((claim ? Date.parse(`${claim.tu}T00:00:00Z`) : Date.now()) - LOOKBACK_DAYS * 86_400_000);
+    // Đúng thứ tự R-FLOW: giữ chỗ → chốt thiết kế → code. Chỉ tính tài liệu vào main TỪ ngày giữ chỗ (hợp đồng được sửa thường xuyên,
+    // cho lùi về trước thì bất kỳ lần sửa gần đây nào cũng làm phép kiểm qua). Không có dòng giữ chỗ (ngoại lệ một tệp) thì từ hôm nay.
+    const since = claim ? claim.tu : dayStr(Date.now());
     const onMain = lines(tryGit('log', 'origin/main', `--since=${since}`, '--name-only', '--pretty=format:')).filter((f) => s.docs.some((re) => re.test(f)));
     if (onMain.length) add('ok', 'R-FLOW-2', `${s.ten}: chữ chốt đã vào main (${[...new Set(onMain)].slice(0, 3).join(', ')})`);
-    else add('fail', 'R-FLOW-2', `${s.ten} (${s.code.slice(0, 3).join(', ')}): đổi thứ dùng chung nhưng chưa thấy tài liệu chốt nào vào main kể từ ${since}. Mở PR tài liệu chốt thiết kế (hợp đồng / ADR) vào main trước — bảng ở RULE-FLOW §3`);
+    else add('fail', 'R-FLOW-2', `${s.ten} (${s.code.slice(0, 3).join(', ')}): đổi thứ dùng chung nhưng chưa thấy tài liệu chốt nào vào main kể từ ngày giữ chỗ (${since}). Mở PR tài liệu chốt thiết kế (hợp đồng / ADR) vào main trước — bảng ở RULE-FLOW §3`);
   }
 
   // R-FLOW-4 — nhánh ngắn
