@@ -19,7 +19,7 @@ Việc 3.9 chỉ thật sự xong khi `apps/*/src/phan-he/` hết phân hệ ngh
 | ID | Việc | Lộ trình / G | Code | Trạng thái |
 |---|---|---|---|---|
 | S013-3 | Đợt 1: `quy` → `modules/quy/` (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu) | 3.9 | chưa | ☐ |
-| S013-4 | Đợt 2: `tai-san`, `kho`, `ban-hang` → `modules/` (mã miền ở `apps/api/src/modules/*` cần phân định) | 3.9 | chưa | ☐ |
+| S013-4 | Đợt 2: `tai-san`, `kho`, `ban-hang` → `modules/` (mã miền ở `apps/api/src/modules/*` cần phân định) | 3.9 | chưa | ☐ phân định ở [11-RANH-GIOI-LOI-PHAN-HE](11-RANH-GIOI-LOI-PHAN-HE.md): `ban-hang`, `kho` chờ G2 / G3 / G5; `tai-san` chờ quyết §8 câu 2 <!-- [2026-11-04 12:39 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 --> |
 | S013-5 | Đợt 3: `thue` → `modules/thue/` | 3.9 | chưa | ☐ |
 | S013-6 | Đợt 4: `ke-toan` → `modules/ke-toan/` | 3.9 | chưa | ☐ |
 | S013-7 | Đợt 5: `mua-hang` → `modules/mua-hang/` (người đóng góp giữ chỗ; bộ nạp 25 TH là bài kiểm trước / sau) | 3.9 | chưa | ☐ |
@@ -33,3 +33,4 @@ Việc 3.9 chỉ thật sự xong khi `apps/*/src/phan-he/` hết phân hệ ngh
 | 2026-10-30 | Claude Code | Mở thư mục phase; trạng thái chụp từ bảng điểm (CSDL `ketoan_test`). |
 | 2026-11-03 | Claude Code (theo chỉ đạo chủ dự án) | Đồng bộ với `main` theo [DANH-GIA-DAP-UNG-2026-11-03](../../audits/DANH-GIA-DAP-UNG-2026-11-03.md): S013-1 ✅ (ui-kit và slot có từ PHASE-014); S013-2 giữ 🟡 vì thư mục chưa chuyển. Bảng điểm lộ trình 3.8 và 3.9 đều 100% (tín hiệu `ui.kit`, `ui.slots`, SC-MOD-1/2) <!-- [2026-11-03 11:20 PM Johnny Chu - Chu Hoàng Anh] DANH-GIA --> |
 | 2026-11-03 | Claude Code (theo chỉ đạo chủ dự án) | [ADR-0024](../../adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md): yêu cầu kiến trúc — `phan-he/` đóng băng, phân hệ nghiệp vụ chuyển sang `modules/<key>/` theo đợt; mở S013-3..S013-9; hướng dẫn người đóng góp ở [CHUYEN-PHAN-HE-SANG-MODULES](../../standard/CHUYEN-PHAN-HE-SANG-MODULES.md) <!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 --> |
+| 2026-11-04 | Claude Code (theo chỉ đạo chủ dự án) | Rà ranh giới lõi / phân hệ cho `quy`, `mua-hang`, `ban-hang`, `tai-san`, `kho` ([11-RANH-GIOI-LOI-PHAN-HE](11-RANH-GIOI-LOI-PHAN-HE.md)): 6 khoảng trống năng lực Core G1–G6, 4 câu chờ chủ dự án quyết; đợt 1 chia 1a / 1b, `quy` giao nhân sự khác <!-- [2026-11-04 12:39 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 --> |

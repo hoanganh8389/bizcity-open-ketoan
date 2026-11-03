@@ -21,6 +21,10 @@
 | Kernel `numbering.ts` | giữ khoá dãy `payment_request` | giữ nguyên khoá (số đã cấp không đổi) |
 
 ## 2. Phân định lõi / phân hệ
+<!-- [2026-11-04 12:39 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 — dẫn tới bản rà ranh giới chung -->
+
+Nguyên tắc và bảng đầy đủ cho Quỹ: [11-RANH-GIOI-LOI-PHAN-HE §3](11-RANH-GIOI-LOI-PHAN-HE.md#3-quỹ-quy). Chi tiền trong module dùng `ctx.ledger.submit` docType `manual_journal` (năng lực `ledger.manual-journal`), không gọi `voucherService.createIn`.
+
 
 **Vào `modules/quy/`:** 11 action `quy.payment-request*`, workflow, hai bảng, sự việc `quy.payment-request.paid`, trang web yêu cầu thanh toán và mẫu in.
 **Ở lại lõi (không chuyển trong đợt này):** route phiếu thu / chi Kernel (`LEDGER`, `voucherRoutes`) — thuộc `apps/api/src/modules/*` / Kernel, đã có chủ; chỉ gỡ khỏi `quy/index.ts`, giữ nguyên nơi đăng ký ở lõi.
