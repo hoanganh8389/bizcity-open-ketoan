@@ -8,11 +8,11 @@
 | Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 15 |
-| Chưa ai nhận | 90 |
+| Chưa ai nhận | 97 |
 | Chờ đủ tín hiệu | 35 |
 | Hoãn | 1 |
 | Xong | 187 |
-| **Tổng** | **336** |
+| **Tổng** | **343** |
 
 ## Đang làm (8)
 
@@ -51,7 +51,7 @@
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
 | [S027-5](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L10) | PHASE-027 | Q027-5 SEEDADMINPASSWORD | P1 | — |
 
-## Chưa ai nhận (90)
+## Chưa ai nhận (97)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -59,6 +59,13 @@
 | [S002-3](PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md#L13) | PHASE-002 | A-17..A-26 thành việc có người nhận (mỗi chỗ SC-MOD-2: action Core thay thế hay chuyển bảng về module) | — | — |
 | [S005-7](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md#L19) | PHASE-005 | Q-2: kế toán chọn "bản mới nhất" khi định khoản lại (quyền settings:write, lý do, bằng chứng) | — | — |
 | [S011-7](PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md#L18) | PHASE-011 | Extension chạy thật: slot, hook, ctx.actions.call | — | — |
+| [S013-3](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L21) | PHASE-013 | Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu) | — | — |
+| [S013-4](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L22) | PHASE-013 | Đợt 2: tai-san, kho, ban-hang → modules/ (mã miền ở apps/api/src/modules/ cần phân định) | — | — |
+| [S013-5](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L23) | PHASE-013 | Đợt 3: thue → modules/thue/ | — | — |
+| [S013-6](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L24) | PHASE-013 | Đợt 4: ke-toan → modules/ke-toan/ | — | — |
+| [S013-7](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L25) | PHASE-013 | Đợt 5: mua-hang → modules/mua-hang/ (người đóng góp giữ chỗ; bộ nạp 25 TH là bài kiểm trước / sau) | — | — |
+| [S013-8](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L26) | PHASE-013 | Đợt 6: giao diện lõi (he-thong, api, danh-muc, dev) — đổi tên / dời khỏi phan-he/ theo Q1 của ADR | — | — |
+| [S013-9](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L27) | PHASE-013 | Phép kiểm SC-MOD-4: không thêm tệp mới vào phan-he/ (ratchet); tiêu chí 3.9 đo bằng số tệp còn lại — cần chữ … | — | — |
 | [S014-3](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L13) | PHASE-014 | Lane runtime CONF-RUN / CONF-UPG | — | — |
 | [S014-6](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L16) | PHASE-014 | Standard 1.0.0 | — | — |
 | [S015-1](PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md#L11) | PHASE-015 | adapters/cell: khoá 1API, bốn bước, PKCE | — | — |

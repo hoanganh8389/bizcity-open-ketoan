@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 90
+      "count": 97
     },
     {
       "key": "partial",
@@ -1149,6 +1149,83 @@
       "claim": null,
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 12
+    },
+    {
+      "id": "S013-3",
+      "phase": "PHASE-013",
+      "title": "Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S013-4",
+      "phase": "PHASE-013",
+      "title": "Đợt 2: tai-san, kho, ban-hang → modules/ (mã miền ở apps/api/src/modules/ cần phân định)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S013-5",
+      "phase": "PHASE-013",
+      "title": "Đợt 3: thue → modules/thue/",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S013-6",
+      "phase": "PHASE-013",
+      "title": "Đợt 4: ke-toan → modules/ke-toan/",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S013-7",
+      "phase": "PHASE-013",
+      "title": "Đợt 5: mua-hang → modules/mua-hang/ (người đóng góp giữ chỗ; bộ nạp 25 TH là bài kiểm trước / sau)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S013-8",
+      "phase": "PHASE-013",
+      "title": "Đợt 6: giao diện lõi (he-thong, api, danh-muc, dev) — đổi tên / dời khỏi phan-he/ theo Q1 của ADR",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S013-9",
+      "phase": "PHASE-013",
+      "title": "Phép kiểm SC-MOD-4: không thêm tệp mới vào phan-he/ (ratchet); tiêu chí 3.9 đo bằng số tệp còn lại — cần chữ chốt riêng (phép kiểm chặn mới)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 27
     },
     {
       "id": "S014-1",
