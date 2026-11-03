@@ -18,7 +18,6 @@
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
-| [S013-3](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L21) | PHASE-013 | Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu) | — | hoanganh8389 (phiên Claude, dot-1-quy) · `feat/phase-013-dot-1-quy` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S014-15](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L26) | PHASE-014 | W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh ac… | — | hoanganh8389 (phiên Claude, audit-in-action) · `feat/phase-014-audit-in-action` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
