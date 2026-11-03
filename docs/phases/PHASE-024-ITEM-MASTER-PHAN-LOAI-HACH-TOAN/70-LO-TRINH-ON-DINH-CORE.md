@@ -43,7 +43,7 @@ Hành vi đã đổi khi gộp, cần biết: thêm / sửa **tài khoản** ghi
 
 Mô hình dữ liệu đã chốt ở [20-KIEN-TRUC §1](20-KIEN-TRUC.md); phần này chỉ định thứ tự triển khai và điều kiện an toàn.
 
-### 3.1 B2a — chạy song song, chưa ai đọc (migration 0064 trở đi)
+### 3.1 B2a — chạy song song, chưa ai đọc (migration 0064 trở đi) <!-- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: ✅ xong 2026-11-03 — migration 0065, trigger đồng bộ, bất biến ở CSDL, Item Resolver; chi tiết [BIZCITY-ITEM-MASTER-v1](../../contracts/BIZCITY-ITEM-MASTER-v1.md) -->
 
 1. Hợp đồng `bizcity_item_master@1` + `packages/contracts/src/item-master.ts`; `bizcity_ledger_intake@1` thêm `itemId`, `barcode` trên dòng hàng (tuỳ chọn, tương thích ngược).
 2. Bảng:
@@ -56,12 +56,33 @@ Mô hình dữ liệu đã chốt ở [20-KIEN-TRUC §1](20-KIEN-TRUC.md); phầ
 
 Cổng: ca T024-1 (mã → item tại ngày, mã hết hiệu lực, mã trỏ hai item); `products` và mọi API chưa đổi.
 
-### 3.2 B2b — `item_id` vào bảng sổ (migration K3)
+### 3.2 B2b — `item_id` vào bảng sổ (migration K3) <!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: 🟡 phần 1 xong 2026-11-04 (migration 0066: mục 1, 2); mục 3 (khung nhìn) CHẶN — xem 3.2.1 -->
 
 1. Thêm `item_id` vào `ledger_lines`, `inventory_movements`, `inventory_costs`, `product_units`, `product_prices` (danh sách đầy đủ ở S024-9). Hiện có 13 migration chứa cột `sku`; các bảng ngoài sổ (đơn đặt, đề xuất nhập, hoá đơn NCC…) giữ `sku` làm thông tin hiển thị, chỉ bảng **kế toán / kho** buộc `item_id`.
 2. Điền ngược theo `item_codes(kind = sku)`. Dòng không tra được → **dừng migration**, in danh sách; không tự tạo item trong migration.
 3. `products` thành **khung nhìn** (D024-2): `items ⋈ item_codes[sku, hiệu lực hôm nay] ⋈ item_classification[hiện hành]`. API `/api/v1/products` giữ khuôn trả về, thêm `itemId`.
 4. **Chạy thử bắt buộc** trên bản sao dữ liệu thật của ít nhất một đơn vị đang dùng, so tồn cuối theo mã từng kho trước / sau (`kiem-nang-cap.sh`), trước khi chạy ở bản cài thật.
+
+#### 3.2.1 Phản tư sau B2b phần 1 — làm được gì, khoảng cách còn lại
+<!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: phản tư theo yêu cầu chủ "làm và reflect lại để xem GAP" -->
+
+**Đã làm (0066 + sửa 0065 trước phát hành):** `item_id` trên `ledger_lines`, `inventory_movements`, `inventory_costs`, `product_units`, `product_prices`; điền ngược theo **mã có hiệu lực tại ngày của dòng**; dòng mới tự gắn (trigger); mặt hàng tạo SAU chứng từ thì điền ngược các dòng của mã đó (`bizcity_item_fill_refs`); khoá ngoại ghép `(tenant_id, item_id)`; sổ cái vẫn chỉ thêm (ngoại lệ duy nhất: điền `item_id` từ rỗng, một lần). **Hành trình mặt hàng khoá theo `item_id`**: mã cũ + mã mới sau đổi mã là MỘT hành trình, kèm lịch sử mã, mã tại ngày trên từng sự kiện, tìm bằng mã cũ ra mặt hàng hiện hành. Đã thử: CSDL trống, CSDL có sẵn dữ liệu (276 dòng sổ / 22 dòng kho / 5 dòng giá vốn → 0 dòng thiếu `item_id`), nạp 20.000 mặt hàng.
+
+**Khoảng cách (GAP), xếp theo mức ảnh hưởng:**
+
+| # | Khoảng cách | Bằng chứng / hệ quả | Hướng xử lý |
+|---|---|---|---|
+| G1 | **`products` chưa thành khung nhìn** (mục 3) | Khung nhìn ghép + `INSTEAD OF` **không nhận `INSERT … ON CONFLICT`** (thử trực tiếp trên PostgreSQL); `products` có 7 chỗ thêm, 6 dùng `onConflict`, thêm 4 tệp ghi khác | Tách B2b-2: chuyển mọi đường ghi sang `items` (S024-11 `core.item.upsert`), **đảo chiều** đồng bộ (items là nguồn, `products` là bảng chiếu), sau đó mới thay bằng khung nhìn |
+| G2 | ~~Giá vốn vẫn tính theo mã~~ **✅ xong 2026-11-04** <!-- [2026-11-04 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — G2 --> | `costing.service`, `inventory-report.service` gom theo `item_id` (khoá = `COALESCE(item_id, sku)`); `inventory_costs.sku` = mã hiện hành, `item_id` = định danh; giá Excel theo mã → định danh; NXT một dòng, sổ chi tiết tra bằng mã cũ; ca "đổi mã giữa tháng" (T026-G1) | Còn: lớp giá vốn / phân bổ (PHASE-025 W2) |
+| G3 | **Mặt hàng mồ côi thay cho "dừng migration"** (khác mục 2) | Mã có trong sổ / kho mà không có trong danh mục là dữ liệu hợp lệ hôm nay (xoá mặt hàng chưa nhập xuất, đơn vị quy đổi khai trước); dừng thì bản cài không nâng cấp được. 0066 tạo mặt hàng `retired` + `attributes.orphan`, khai lại mã thì **nhận lại** đúng định danh; vẫn dừng nếu sau đó còn dòng thiếu `item_id` | Chủ duyệt lệch kế hoạch (Q-70-6); thêm cảnh báo danh mục "mặt hàng mồ côi" ở Gate C (`CT-*`) |
+| G4 | **Bảng kho / giá vốn là bảng dẫn xuất** | `inventory_movements`, `inventory_costs` bị xoá – ghi lại theo chứng từ / lần tính giá → không áp "chỉ thêm" được; `item_id` gắn lại mỗi lần ghi | Chỉ `ledger_lines` là bất biến; ghi rõ ở R-ITEM; check SC-ITEM-4 bảo vệ trigger gắn `item_id` |
+| G5 | **Khoá chống chồng hiệu lực theo đơn vị** | Khoá theo từng mã làm **cạn bảng khoá** khi nạp 20.000 mặt hàng (`out of shared memory`) → đổi sang khoá theo (đơn vị, loại mã): ghi mã cùng đơn vị nối đuôi tới hết giao dịch; một lần nạp lớn chặn sửa mặt hàng khác của đơn vị đó trong lúc nạp | Dùng `EXCLUDE USING gist` (cần `btree_gist`) — không khoá, không tranh chấp |
+| G6 | **Cổng của B2b chưa đạt** | Chưa có `kiem-nang-cap.sh` (S024-10), chưa chạy trên bản sao dữ liệu thật. Đã đo ở CSDL trên 20.985 mặt hàng: thêm mới cả lô 17,5 s có trigger đồng bộ / 2,1 s không (≈ 0,7 ms một mặt hàng); đổi tên cả lô 3,1 s / 0,2 s; đổi mã cả lô 10,5 s. Điền ngược 0066 là UPDATE theo tập (không theo dòng) — chưa đo trên sổ lớn | Làm S024-10; chạy trên bản sao trước khi phát hành; nếu cần, gom đồng bộ theo câu lệnh (FOR EACH STATEMENT) cho đường nạp Excel |
+| G7 | **Bất biến chưa có check tĩnh** | SC-ITEM-4 / 5 chưa viết; ai gỡ trigger / khoá ngoại thì test bắt, check tĩnh chưa bắt | B3 |
+| G8 | **Bề mặt API chưa có `itemId`** | `/api/v1/products`, sổ chi tiết, NXT chưa trả `itemId`; Resolver chưa đệm / span; `IN-ITEM-002` / `008` chưa vào thư viện mã | S024-11, S024-6, S024-7 |
+| G9 | **Kiểm cân Nợ / Có khi sửa dòng sổ** | Điền `item_id` lúc chạy (mặt hàng tạo sau chứng từ) xếp một kiểm cân hoãn cho mỗi dòng của mã đó — nhỏ; migration tắt riêng kiểm này khi điền ngược | Có thể thêm `WHEN` (chỉ khi Nợ / Có đổi) cho trigger kiểm cân — cần duyệt vì là trigger toàn vẹn sổ |
+
+Kết luận: phần **giá trị nhất** của B2b — mọi dòng sổ / kho mang định danh bất biến và truy vết qua đổi mã — đã có và được test. Việc "`products` thành khung nhìn" không làm được như kế hoạch viết; thứ tự đúng là S024-11 trước. Việc đáng làm kế tiếp: **G2** (giá vốn theo `item_id`) vì đó là chỗ số tiền sai khi đổi mã giữa kỳ.
 
 ### 3.3 Thời gian song song của API cũ
 
@@ -147,6 +168,7 @@ Bảng câu hỏi gốc:
 | Q-70-3 | Thời gian giữ API `products` cũ | Tối thiểu 2 bản phát hành sau B2b, gỡ khi số gọi = 0 trong 30 ngày. |
 | Q-70-4 | Ngày T đóng tự thêm mặt hàng (B4) | Chốt sau khi B3 xong; báo trước ≥ 14 ngày. |
 | Q-70-5 | Kế toán trưởng duyệt nội dung luật nhắc (đang nhãn "nháp") | Cần trước khi bật cứng bất kỳ luật nào thành chặn. |
+| Q-70-6 <!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b --> | Điền ngược B2b gặp mã có trong sổ / kho mà không có trong danh mục: dừng migration (kế hoạch 3.2 mục 2) hay tạo mặt hàng mồ côi? | **Mặt hàng mồ côi** (đã làm ở 0066, 3.2.1 G3): dữ liệu đó hợp lệ hôm nay, dừng thì bản cài không nâng cấp được; vẫn dừng nếu còn dòng thiếu `item_id`. Chờ chủ duyệt. |
 
 ## 9. Rủi ro lớn nhất
 

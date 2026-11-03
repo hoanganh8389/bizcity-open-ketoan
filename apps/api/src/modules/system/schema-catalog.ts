@@ -168,6 +168,10 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-02 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-011 (0058 = lý do phiếu kế toán): migration bể chờ đổi số 0058 → 0059
   intake_inbox: { group: 'platform', label: 'Bể chờ đầu vào', term: 'Trạm kiểm tra đầu vào', module: 'documents', purpose: 'Chứng từ cửa nạp từ chối: nguyên văn, phát hiện IN-*, điểm, số lần gửi, trạng thái xử lý (ADR-0014). Không phải sổ: không thành sự việc, không bút toán. Dọn theo hạn giữ 90 / 7 ngày.' },
   // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — danh mục bảng: catalog_rule_reviews (0063, HT09 duyệt luật nhắc)
+  // [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: Item Master song song với products (0065)
+  items: { group: 'platform', label: 'Mặt hàng — định danh bất biến', term: 'Item Master', module: 'catalog', purpose: 'item_id ULID bất biến của mặt hàng (không đổi, không xoá, không dùng lại); tên, đơn vị gốc, trạng thái nháp / đang dùng / ngừng. Chạy song song với products, đồng bộ bằng trigger (B2a).' },
+  item_codes: { group: 'platform', label: 'Mã hàng có phiên bản', term: 'Item Master', module: 'catalog', purpose: 'Mã hàng (sku, mã vạch, bí danh, mã ngoài) → mặt hàng, có ngày hiệu lực; chỉ thêm, đổi mã = đóng mã cũ + thêm mã mới. Một mã tại một ngày chỉ trỏ một mặt hàng.' },
+  item_classification: { group: 'platform', label: 'Phân loại hạch toán theo ngày', term: 'Item Master', module: 'catalog', purpose: 'Loại, nhóm hạch toán, thuế, theo dõi của mặt hàng theo ngày hiệu lực; lịch sử không bị sửa. Chưa phân loại = loại để trống (R-ITEM-8).' },
   catalog_rule_reviews: { group: 'platform', label: 'Duyệt luật nhắc danh mục', term: 'Quy định dữ liệu danh mục', module: 'system', purpose: 'Kế toán trưởng của đơn vị duyệt luật nhắc khung Vì sao: đồng ý, sửa câu chữ, hạ cảnh báo mềm xuống nhắc (D023-8). Lịch sử ở nhật ký thao tác.' },
   app_installations: { group: 'platform', label: 'App đã kết nối', term: 'Ứng dụng kết nối', module: 'apps', purpose: 'App chạy riêng (ADR-0011 mức 2) đã kết nối với đơn vị: phạm vi quyền và sự kiện chủ đơn vị đồng ý, trạng thái bật / tắt, muối của bí mật webhook (bí mật không lưu).' },
   accounting_units: { group: 'platform', label: 'Đơn vị hạch toán', module: 'branches', purpose: 'Pháp nhân / đơn vị lập báo cáo; chi nhánh thuộc một đơn vị hạch toán.' },
@@ -197,7 +201,14 @@ export const TRIGGER_NOTES: Record<string, string> = {
   // [2026-11-01 10:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — P0-1: giải thích trigger 0049 (đầu bút toán, sự việc kế toán)
   guard_ledger_entry_mutation: 'Đầu bút toán không xoá được; chỉ đổi theo ba lối của Kernel: đảo (posted → reversed), cập nhật thông tin đầu khi định khoản lại mà dòng không đổi, điền giá vốn đổi tổng tiền.',
   guard_accounting_event_mutation: 'Sự việc kế toán không xoá được, không đổi doc_key / nguồn / người lập, không lùi phiên bản. Huỷ = trạng thái cancelled qua cửa nạp.',
-  guard_ledger_line_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Ngoại lệ duy nhất: tính giá vốn ghi đè số tiền dòng chờ giá vốn (cost_fill) của bút toán còn hiệu lực, không đảo bút toán.',
+  guard_ledger_line_mutation: 'Sổ cái chỉ được thêm: chặn sửa, xoá dòng đã ghi. Hai ngoại lệ: tính giá vốn ghi đè số tiền dòng chờ giá vốn (cost_fill) của bút toán còn hiệu lực, không đảo bút toán; điền item_id từ rỗng một lần (mặt hàng tạo sau chứng từ), không đổi gì khác.',
+  // [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a / B2b: giải thích trigger Item Master (0065, 0066)
+  bizcity_items_sync: 'Mọi đường ghi mặt hàng (form, Excel, đồng bộ, chứng từ tự thêm) giữ items / item_codes / item_classification khớp: thêm → mặt hàng + mã; đổi mã → đóng mã cũ, thêm mã mới, định danh giữ nguyên; xoá → ngừng dùng. Bỏ khi mọi đường ghi chuyển sang items (S024-11).',
+  bizcity_items_guard: 'Định danh mặt hàng bất biến (R-ITEM-0): không đổi item_id, đơn vị, ngày tạo; không xoá — ngừng dùng bằng status = retired.',
+  bizcity_item_codes_guard: 'Mã hàng chỉ thêm (R-ITEM-0): UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một mặt hàng (DG-ITEM-1); không xoá.',
+  bizcity_item_classification_guard: 'Phân loại hạch toán theo ngày (R-ITEM-5 / 7): không chồng hiệu lực; bản đã đóng không sửa; không xoá.',
+  bizcity_item_truncate_guard: 'Chặn xoá sạch bảng định danh mặt hàng bằng TRUNCATE (R-ITEM-0).',
+  bizcity_set_item_id: 'Dòng mới (sổ cái, kho, giá vốn, đơn vị quy đổi, bảng giá) tự gắn item_id theo mã có hiệu lực tại ngày của dòng; mã chưa có trong danh mục → để rỗng, điền khi mặt hàng được tạo (bizcity_item_fill_refs).',
 };
 
 /**

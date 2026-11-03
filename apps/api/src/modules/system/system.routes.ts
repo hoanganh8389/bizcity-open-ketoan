@@ -38,7 +38,7 @@ import { postingModesSchema } from '@ketoan/contracts';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2)
 import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
-import { BUILD_VERSION, STANDARD } from '../../core/version.js';
+import { BUILD_VERSION, PILLARS, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
 import { listActions, mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
@@ -160,6 +160,16 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
       const x = await db.selectFrom('diagnostic_runs').selectAll().where('tenant_id', '=', authOf(req).tenantId).where('id', '=', req.params.id).executeTakeFirst();
       if (!x) throw Errors.notFound('lượt chẩn đoán');
       return ok({ id: x.id, layer: x.layer, trigger: x.trigger, scope: x.scope, summary: x.summary, checks: x.checks, errorCount: x.error_count, actor: x.actor, at: x.created_at });
+    },
+  });
+
+  // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bảng trụ cột × mức đạt (bizcity_pillars@1): nguồn là tệp của bản dựng, không theo đơn vị; không có API ghi "đạt" (R-CONT-7)
+  app.get('/api/v1/system/pillars', {
+    preHandler: requireAuthenticated(),
+    schema: { tags: ['Hệ thống'], summary: 'Bảng trụ cột × tiêu chí × mức đạt của Core (docs/standard/tru-cot.json) — cho màn Trụ cột & mức đạt và thẻ Trụ cột ở trang chủ phân hệ' },
+    handler: async () => {
+      if (!PILLARS) throw Errors.notFound('bảng trụ cột (docs/standard/tru-cot.json không có trong bản cài)');
+      return ok(PILLARS);
     },
   });
 

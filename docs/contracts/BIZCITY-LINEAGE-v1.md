@@ -1,7 +1,8 @@
 # `bizcity_lineage@1` — Truy vết vòng đời mặt hàng
 <!-- [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: hợp đồng đọc truy vết vòng đời mặt hàng (ADR-0021, R-CONT-0 / R-CONT-8) -->
 
-> **Phiên bản:** 0.1.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất (ADR-0021 chờ chủ duyệt; W1 chạy được trước, chỉ đọc)
+<!-- [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: 0.2.0-draft — khoá theo item_id -->
+> **Phiên bản:** 0.2.0-draft · 2026-11-04 · **Trạng thái:** Đề xuất (ADR-0021 chờ chủ duyệt; W1 chạy được trước, chỉ đọc)
 > **Nguồn sự thật:** `packages/contracts/src/lineage.ts` (kiểu, nhãn, làn) · `packages/kernel/src/modules/lineage/` (dịch vụ + route)
 > **Tôn chỉ:** [ADR-0020](../adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md) · **Luật:** [R-CONT](../rules/RULE-CONTINUITY.md) · **Kế hoạch:** [PHASE-025](../phases/PHASE-025-ACCOUNTING-CONTINUITY/README.md)
 
@@ -15,7 +16,7 @@ Một mặt hàng → mọi sự kiện kho của nó (mua, nhập, bán, trả,
 | bút toán | `product_sku`, `source_line_key` → bút toán (`event_id`) | `ledger_lines` → `ledger_entries` |
 | giá vốn | nhóm tính giá × tháng × mã hàng | `inventory_costs` |
 
-**Khoá của W1 là mã hàng** (`coverage.keyedBy = 'sku'`). Khi PHASE-024 B2 có bảng `items`, khoá chuyển sang `item_id` và hiện thêm phiên bản mã (`coverage.keyedBy = 'item_id'`); hình dạng hợp đồng không đổi, chỉ thêm trường.
+**Khoá là `item_id`** (từ 0.2.0, PHASE-024 B2b, `coverage.keyedBy = 'item_id'`): mã nhập vào (mã đang dùng, mã cũ, bí danh) → định danh mặt hàng → mọi dòng kho / sổ / giá vốn có `item_id` đó, **kể cả dòng mang mã cũ trước khi đổi mã**. Dòng chưa có `item_id` (không còn sau 0066) lấy theo mã. Mặt hàng không có định danh → `keyedBy = 'sku'` như W1. Chỉ thêm trường so với 0.1.0.
 
 ## 2. API (quyền `ledger:read`)
 
@@ -29,7 +30,9 @@ Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.
 
 ## 3. Khuôn
 
-**Sự kiện** (`LineageEvent`): `at`, `kind` (`purchase` · `purchase_return` · `sale` · `sale_return` · `transfer_out` · `transfer_in` · `adjust_in` · `adjust_out`), `label`, **`effect`** (`accounting` | `operational`), `effectWhy`, chứng từ (`docKey`, `docNo`, `docType`, `version`, `status`), `branch`, `warehouse`, `lineNo`, `qty` (nhập +, xuất −), `amount` (null = chưa có giá vốn), `counterBranch`, `originalDocKey` (hàng trả), `isGift`.
+**Sự kiện** (`LineageEvent`): `at`, `kind` (`purchase` · `purchase_return` · `sale` · `sale_return` · `transfer_out` · `transfer_in` · `adjust_in` · `adjust_out`), `label`, **`effect`** (`accounting` | `operational`), `effectWhy`, chứng từ (`docKey`, `docNo`, `docType`, `version`, `status`), `branch`, `warehouse`, `lineNo`, `qty` (nhập +, xuất −), `amount` (null = chưa có giá vốn), `counterBranch`, `originalDocKey` (hàng trả), `isGift`, **`code`** (mã hàng tại ngày của sự kiện — khác mã hiện hành khi đã đổi mã).
+
+**Mặt hàng** (`LineageItemInfo`): thêm **`itemId`** và **`codes[]`** (mọi mã đã / đang dùng: `kind`, `code`, `validFrom`, `validTo`). Tìm (`/lineage/search`) bằng mã cũ / bí danh / mã ngoài ra mặt hàng hiện hành, tên kèm "(mã cũ / khác: …)".
 
 **`effect` (R-CONT-8):** *kế toán* = đổi số lượng / giá trị tồn, có bút toán; *vận hành* = không đổi sổ (hôm nay: chuyển kho trong cùng nhóm tính giá). Làn của màn Hành trình: `LINEAGE_LANE`.
 
@@ -41,7 +44,7 @@ Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.
 
 ## 4. Nói rõ phần chưa truy được
 
-`coverage.notes` luôn có dòng đầu về khoá theo mã hàng; thêm dòng khi: sự kiện kho thuộc **tháng chưa tính giá vốn**; dòng bút toán giá vốn đang chờ tính giá; phiếu **khách trả hàng chưa nối được chứng từ bán gốc**. Không giả vờ đầy đủ (R-CONT-0).
+`coverage.notes` luôn có dòng đầu về khoá (định danh, và các mã từng dùng khi có hơn một); thêm dòng khi: sự kiện kho thuộc **tháng chưa tính giá vốn**; dòng bút toán giá vốn đang chờ tính giá; phiếu **khách trả hàng chưa nối được chứng từ bán gốc**. Không giả vờ đầy đủ (R-CONT-0).
 
 ## 5. Bảo đảm
 
@@ -51,4 +54,5 @@ Danh sách bị cắt ở `limit` (mặc định 500, tối đa 2000): `summary.
 
 ## 6. Changelog
 
+- **0.2.0-draft (2026-11-04):** khoá theo `item_id`; thêm `item.itemId`, `item.codes`, `event.code`; tìm bằng mã cũ. Giá vốn tháng vẫn tính theo mã (đổi mã giữa tháng → hai dòng giá vốn, PHASE-024 · 70 §3.2.1 G2).
 - **0.1.0-draft (2026-11-03):** khuôn đầu (PHASE-025 W1): tìm, hành trình một mặt hàng, giải thích giá vốn bình quân tháng.

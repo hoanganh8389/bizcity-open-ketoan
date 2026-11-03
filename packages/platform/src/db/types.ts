@@ -590,6 +590,8 @@ export interface ProductUnitsTable {
   weight_kg: string | null;
   note: Generated<string>;
   updated_at: TimestampDefault;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface UnitNamesTable {
@@ -810,6 +812,8 @@ export interface ProductPricesTable {
   is_default_unit: Generated<boolean>;
   note: Generated<string>;
   updated_at: TimestampDefault;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface CatalogTombstonesTable {
@@ -1084,6 +1088,8 @@ export interface LedgerLinesTable {
   dims: JsonDefault;
   /** Dòng giá vốn chờ tính giá: 'debit' | 'credit' (bên ghi số tiền). Xem migration 0059. */
   cost_fill: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface LedgerLinksTable {
@@ -1220,6 +1226,8 @@ export interface InventoryMovementsTable {
   reason_code: string | null;
   is_gift: Generated<boolean>;
   priced_at_sale: Generated<boolean>;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 export interface AssetCategoriesTable {
@@ -1386,6 +1394,8 @@ export interface InventoryCostsTable {
   computed_at: Generated<Date>;
   /** computed = tính bình quân; import = nhập từ Excel giá vốn tháng (migration 0061). */
   cost_source: Generated<string>;
+  /** Định danh mặt hàng (0066, B2b); mã là ảnh chụp tại ngày. */
+  item_id: ColumnType<string | null, string | null | undefined, string | null>;
 }
 
 /** View (migration 0053): thanh toán của chứng từ bán / trả lại đã ghi sổ, đọc từ payload. Chỉ đọc. */
@@ -1719,7 +1729,60 @@ export interface CatalogRuleReviewsTable {
   reviewed_at: TimestampDefault;
 }
 
+/** Item Master (0065, B2a): định danh bất biến. [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a */
+export interface ItemsTable {
+  item_id: Generated<string>;
+  tenant_id: string;
+  name: Generated<string>;
+  unit_base: Generated<string>;
+  status: Generated<'draft' | 'active' | 'retired'>;
+  draft_codes: Generated<string[]>;
+  parent_item_id: string | null;
+  attributes: JsonDefault;
+  source_system: Generated<string>;
+  created_at: TimestampDefault;
+  created_by: Generated<string>;
+  updated_at: TimestampDefault;
+  retired_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+}
+
+/** Mã hàng có phiên bản (0065): chỉ thêm, UPDATE duy nhất là đóng valid_to. */
+export interface ItemCodesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  item_id: string;
+  kind: string;
+  code: string;
+  valid_from: ColumnType<string, string | undefined, never>;
+  valid_to: ColumnType<string | null, string | null | undefined, string | null>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  note: Generated<string>;
+}
+
+/** Phân loại hạch toán theo ngày hiệu lực (0065). */
+export interface ItemClassificationTable {
+  id: Generated<string>;
+  tenant_id: string;
+  item_id: string;
+  valid_from: ColumnType<string, string | undefined, string>;
+  valid_to: ColumnType<string | null, string | null | undefined, string | null>;
+  kind: string | null;
+  posting_group_code: string | null;
+  tax_out_code: string | null;
+  tax_in_code: string | null;
+  excise_rate: ColumnType<string | null, number | string | null | undefined, number | string | null>;
+  track: Generated<string[]>;
+  policy_version: number | null;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  note: Generated<string>;
+}
+
 export interface Database {
+  items: ItemsTable;
+  item_codes: ItemCodesTable;
+  item_classification: ItemClassificationTable;
   catalog_rule_reviews: CatalogRuleReviewsTable;
   tenants: TenantsTable;
   users: UsersTable;

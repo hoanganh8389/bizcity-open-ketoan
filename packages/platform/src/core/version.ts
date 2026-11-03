@@ -30,6 +30,9 @@ function readVersion(file: string): string | null {
 
 /** Bảng năng lực Bizcity Standard (bizcity-standard.json) cho GET /api/v1/system/capabilities; không có tệp thì null. */
 export const STANDARD = readJson('docs/standard/bizcity-standard.json');
+// [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bảng trụ cột × mức đạt (bizcity_pillars@1) cho HT10 và thẻ Trụ cột ở trang chủ phân hệ
+/** Bảng trụ cột × tiêu chí × mức đạt của Core (docs/standard/tru-cot.json); không có tệp thì null. */
+export const PILLARS = readJson('docs/standard/tru-cot.json');
 
 const version = readVersion('package.json') ?? '0.0.0';
 

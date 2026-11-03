@@ -64,7 +64,7 @@ describe('Hành trình một mặt hàng', () => {
     const r = await call(ctx, 'GET', '/api/v1/lineage/items/SUA01');
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const d = r.body.data;
-    expect(d.coverage.keyedBy).toBe('sku');
+    expect(d.coverage.keyedBy).toBe('item_id');
     // Theo ngày chứng từ, cùng ngày theo thứ tự ghi.
     expect(d.events.map((e: { docKey: string; kind: string }) => [e.docKey, e.kind])).toEqual([
       ['NM-09', 'purchase'], ['NM-10', 'purchase'], ['CK-10', 'transfer_out'], ['CK-10', 'transfer_in'], ['BAN-CN02', 'sale'], ['BAN-CN01', 'sale'], ['KK-10', 'adjust_out'],

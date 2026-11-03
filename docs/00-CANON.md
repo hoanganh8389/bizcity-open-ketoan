@@ -43,6 +43,21 @@ Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); m�
 | II · Định danh bất biến, mã có phiên bản | `item_id` không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực — đổi thông tư không làm lại dữ liệu | R-ITEM, ADR-0017 / 0018 / 0009 |
 | III · Liên tục kế toán (Accounting Continuity) | mọi con số đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ; lineage giá vốn là sổ thứ hai; kiểm chuẩn vòng đời (Gate C); khoá kỳ đòi chuỗi lành | R-CONT |
 
+<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ADR-0022: nền móng + bảng tám trụ cột; mức đạt hiện ở HT10 -->
+### 0.2 Nền móng và bảng trụ cột (đề xuất — [ADR-0022](adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md))
+
+**Nền móng (tầng 0): Quản trị dữ liệu gốc** — thiết lập một lần hệ thống định danh và nguyên tắc đúng (Identity Continuity · Organizational & Accounting Consistency · Versioning theo phiên bản + ngày hiệu lực) để hàng triệu mã, hàng trăm cửa hàng, nhiều pháp nhân và mọi module dùng chung một dòng dữ liệu kế toán. Ba trụ cột I–III đứng trên nền đó; Accounting Continuity & Lineage là **cam kết** mọi trụ cột phải bảo vệ.
+
+| Trụ cột | Bảo đảm | Luật |
+|---|---|---|
+| IV · Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã | mọi đầu vào đi một cửa; Gate A / B / C; thông báo từ thư viện mã có căn cứ; mặc định cho phép, nhắc khi sai | R-EVENT, R-GATE, ADR-0019 / 0020 |
+| V · Chính sách và chế độ kế toán có phiên bản | đổi thông tư, luật định khoản, phương pháp tính giá = phiên bản từ ngày hiệu lực | ADR-0009, R-POST |
+| VI · Bằng chứng và quan sát được | nhật ký chuỗi băm; tự chẩn đoán; Lịch sử · Tác động · tiến độ hiện trên màn | STD-EVD, R-DIAG |
+| VII · Cô lập đơn vị và phân quyền | RLS theo đơn vị; phân quyền theo quyền, không theo chức danh; nhóm đơn vị không lẫn số | R-SEC, ADR-0020 |
+| VIII · Mở rộng bằng module, kiểm chuẩn tự động | SDK / manifest / năng lực; bộ kiểm chuẩn; Golden Tests là cổng phát hành | R-MOD, R-QG |
+
+Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Trụ cột & mức đạt** và thẻ **Trụ cột** ở trang chủ mỗi phân hệ; đi theo bằng chứng, không tích tay (R-CONT-7).
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -112,6 +127,7 @@ Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); m�
 | `bizcity_domain@1` | [contracts/BIZCITY-DOMAIN-v1.md](contracts/BIZCITY-DOMAIN-v1.md) | Chấp nhận — bất biến kế toán (Domain Contract, lớp 1/4 của [CONG-BO-KIEN-TRUC](CONG-BO-KIEN-TRUC.md)); đổi = K3 + ADR | trigger; DG-LEDGER-*, DG-EVENT-*; `assertLedgerInvariants` |
 | `bizcity_compliance@1` | [contracts/BIZCITY-COMPLIANCE-v1.md](contracts/BIZCITY-COMPLIANCE-v1.md) | Chấp nhận — ma trận tuân thủ bắt buộc STD-CMP-1..9, ma trận pháp lý; trạng thái tính tự động trên bảng điểm | [standard/compliance-matrix.json](standard/compliance-matrix.json); kiểm SC-CMP-1 |
 | `bizcity_remedy@1` <!-- [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — thêm hợp đồng phương án khắc phục. --> | [contracts/BIZCITY-REMEDY-v1.md](contracts/BIZCITY-REMEDY-v1.md) | **Đề xuất** — mọi kiểm warn / error khai phương án khắc phục có cấu trúc (bước, màn, vai, kiểm lại); sổ màn SCREENS | `packages/contracts/src/remedy.ts`; check SC-FIX-1 |
+| `bizcity_item_master@1` <!-- [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a --> | [contracts/BIZCITY-ITEM-MASTER-v1.md](contracts/BIZCITY-ITEM-MASTER-v1.md) | **Đề xuất** — định danh mặt hàng bất biến (ULID), mã có phiên bản + ngày hiệu lực, phân loại theo ngày, Item Resolver; bất biến ở CSDL (ADR-0017, R-ITEM-0) | `packages/contracts/src/item-master.ts`; `packages/kernel/src/modules/masterdata/` |
 | `bizcity_lineage@1` <!-- [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1 --> | [contracts/BIZCITY-LINEAGE-v1.md](contracts/BIZCITY-LINEAGE-v1.md) | **Đề xuất** — truy vết vòng đời mặt hàng, chỉ đọc: sự kiện kho (kế toán / vận hành), bút toán mang mã hàng, giá vốn từng tháng, giải thích giá vốn (ADR-0021, R-CONT) | `packages/contracts/src/lineage.ts`; `packages/kernel/src/modules/lineage/` |
 | `bizcity_findings@1` <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — thư viện phát hiện hai cổng (ADR-0019) --> | [contracts/BIZCITY-FINDINGS-v1.md](contracts/BIZCITY-FINDINGS-v1.md) | **Đề xuất** — một thư viện mã cho hai cổng kiểm chuẩn: mức, bước, vì sao, cách sửa, luật gốc; `core.findings.explain` cho người / dev / AI | `packages/contracts/src/findings.ts`; check SC-FIND-1 |
 | `bizcity_errors@1` | [contracts/BIZCITY-ERRORS-v1.md](contracts/BIZCITY-ERRORS-v1.md) | Chấp nhận — danh mục mã lỗi, thông báo, gợi ý (R-ERR) | `packages/contracts/src/errors.ts`; kiểm SC-ERR-1 |

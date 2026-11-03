@@ -141,5 +141,6 @@ describe('Dữ liệu gốc', () => {
     expect(all.status, JSON.stringify(all.body).slice(0, 300)).toBe(200);
     expect(all.body.data).toHaveLength(23);
     expect(all.body.data.find((o: { key: string }) => o.key === 'products').result.added).toBe(0);
-  }, 120_000);
+    // [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: nạp 20.985 mặt hàng ≈ 87 s một mình (đồng bộ Item Master ≈ 15 s trong đó), vượt 120 s khi cả bộ test chạy song song
+  }, 240_000);
 });

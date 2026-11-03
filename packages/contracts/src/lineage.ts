@@ -5,8 +5,8 @@
  *   sự kiện kho  = inventory_movements (event_id, line_no)  →  chứng từ accounting_events (doc_key, version)
  *   bút toán     = ledger_lines (product_sku, source_line_key) →  ledger_entries (event_id)
  *   giá vốn      = inventory_costs (nhóm tính giá × tháng × mã hàng)
- * W1 khoá theo MÃ HÀNG (\`coverage.keyedBy = 'sku'\`); khi PHASE-024 B2 có bảng items thì khoá sang \`item_id\` và hiện cả phiên bản mã
- * (\`coverage.keyedBy = 'item_id'\`). Hợp đồng không đổi hình dạng — chỉ thêm trường (R-CONT-1).
+ * Khoá theo \`item_id\` (\`coverage.keyedBy = 'item_id'\`, [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b): mọi mã từng dùng của mặt hàng về một hành trình, \`item.codes\` là lịch sử
+ * mã, \`event.code\` là mã tại ngày. Dòng chưa gắn item_id (dữ liệu trước 0066) vẫn được lấy theo mã hiện hành. Chỉ thêm trường (R-CONT-1).
  *
  * \`effect\` (R-CONT-8): sự kiện KẾ TOÁN đổi giá trị tồn / sinh bút toán; sự kiện VẬN HÀNH không đổi sổ (chuyển kho cùng nhóm tính giá).
  */
@@ -57,6 +57,8 @@ export interface LineageEvent {
   /** Hàng trả: chứng từ bán gốc (nếu chứng từ khai). */
   originalDocKey: string | null;
   isGift: boolean;
+  /** Mã hàng TẠI NGÀY của sự kiện (ảnh chụp) — khác mã hiện hành khi mặt hàng đã đổi mã. */
+  code: string;
 }
 
 export interface LineageEntryLine {
@@ -96,6 +98,10 @@ export interface LineageCostPeriod {
 }
 
 export interface LineageItemInfo {
+  /** [2026-11-04 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2b: định danh bất biến (null khi chưa có — trước 0065). */
+  itemId: string | null;
+  /** Mọi mã đã / đang dùng của mặt hàng, theo thời gian (sku, mã vạch, bí danh, mã ngoài). */
+  codes: { kind: string; code: string; validFrom: string; validTo: string | null }[];
   sku: string;
   name: string;
   unit: string;

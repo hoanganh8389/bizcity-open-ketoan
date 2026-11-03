@@ -41,24 +41,31 @@ export async function scope(auth: AuthContext, branchCodes?: string[], warehouse
 
 /** Lần vào / ra kèm giá trị (giá trị chứng từ, hoặc số lượng × đơn giá bình quân của tháng). */
 /**
+ * [2026-11-04 01:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — G2: khoá theo ĐỊNH DANH mặt hàng — `ikey` = item_id (dòng chưa có item_id → mã), `cur` = mã hiện hành của định danh.
+ * Báo cáo gom theo ikey, hiện cur: đổi mã giữa kỳ không tách thành hai dòng; lọc một mã (kể cả mã cũ) ra đủ dòng của định danh.
+ */
+/**
  * wh: lọc theo kho — dòng ghi đúng mã kho đã chọn, cộng dòng không ghi mã kho của chi nhánh có kho mặc định trong số đã chọn.
  */
 export function valuedMovements(a: { tenantId: string; to: string; branchIds: string[] | null; sku?: string; search?: string; wh?: { codes: string[]; defaultBranchIds: string[] } | null }) {
   return sql`
-    SELECT m.id, m.event_id, m.branch_id, m.counter_branch_id, m.warehouse_code, m.sku, m.name, m.unit, m.kind, m.doc_type, m.doc_date, m.qty,
+    SELECT m.id, m.event_id, m.branch_id, m.counter_branch_id, m.warehouse_code, m.sku, COALESCE(m.item_id, m.sku) AS ikey, COALESCE(cc.code, m.sku) AS cur,
+           m.name, m.unit, m.kind, m.doc_type, m.doc_date, m.qty,
            COALESCE(m.amount, ROUND(m.qty * c.unit_cost)) AS val,
            (m.amount IS NULL AND c.unit_cost IS NULL) AS uncosted
       FROM inventory_movements m
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
+      LEFT JOIN (SELECT DISTINCT ON (item_id) item_id, code FROM item_codes WHERE tenant_id = ${a.tenantId} AND kind = 'sku'
+                  ORDER BY item_id, (valid_to IS NULL) DESC, valid_from DESC) cc ON cc.item_id = m.item_id
       LEFT JOIN inventory_costs c
-        ON c.tenant_id = m.tenant_id AND c.sku = m.sku
+        ON c.tenant_id = m.tenant_id AND ((m.item_id IS NOT NULL AND c.item_id = m.item_id) OR (m.item_id IS NULL AND c.sku = m.sku))
        AND c.year = EXTRACT(YEAR FROM m.doc_date)::int AND c.month = EXTRACT(MONTH FROM m.doc_date)::int
        AND c.cost_group = CASE WHEN m.kind = 'transfer_in' AND cb.id IS NOT NULL THEN COALESCE(cb.accounting_unit_id, 0) ELSE COALESCE(b.accounting_unit_id, 0) END
      WHERE m.tenant_id = ${a.tenantId} AND m.doc_date <= ${a.to}::date
        ${a.branchIds ? sql`AND m.branch_id = ANY(${a.branchIds}::bigint[])` : sql``}
        ${a.wh ? sql`AND (m.warehouse_code = ANY(${a.wh.codes}::text[]) OR (m.warehouse_code = '' AND m.branch_id = ANY(${a.wh.defaultBranchIds}::bigint[])))` : sql``}
-       ${a.sku ? sql`AND m.sku = ${a.sku}` : sql``}
+       ${a.sku ? sql`AND (m.sku = ${a.sku} OR m.item_id = bizcity_item_at(${a.tenantId}, ${a.sku}, ${a.to}::date))` : sql``}
        ${a.search ? sql`AND (m.sku ILIKE ${'%' + a.search + '%'} OR m.name ILIKE ${'%' + a.search + '%'})` : sql``}`;
 }
 
@@ -66,7 +73,7 @@ const num = (v: string | null) => (v === null ? 0 : Number(v));
 
 export const STOCK_GROUPS = ['branch', 'brand', 'industry', 'itemGroup', 'itemGroup1', 'itemGroup2', 'itemGroup3', 'itemType', 'postingGroup', 'supplier', 'supplierGroup'] as const;
 export type StockGroupBy = (typeof STOCK_GROUPS)[number];
-const classJoin = (kind: string, col: string) => sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.sku
+const classJoin = (kind: string, col: string) => sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.cur
         LEFT JOIN item_classes ic ON ic.tenant_id = b.tenant_id AND ic.kind = ${kind} AND ic.code = ${sql.ref(`pr.${col}`)}`;
 const partnerJoin = sql`JOIN accounting_events d ON d.id = mv.event_id LEFT JOIN partners p ON p.id = d.partner_id`;
 // [2026-11-03 04:30 PM Nguyễn Văn Thủy] NHOM — gom theo nhóm hàng cấp 1 / 2 / 3 (cộng dồn cả nhánh con) và lọc theo nhóm đã chọn (đóng góp)
@@ -78,11 +85,11 @@ const groupLevelCte = (tenantId: string) => sql`, nhom AS (
           SELECT up.code, c.code, c.parent_code, up.d + 1 FROM up JOIN item_classes c ON c.tenant_id = ${tenantId} AND c.kind = 'group' AND c.code = up.parent_code WHERE up.d < 20
         )
         SELECT code, anc, COUNT(*) OVER (PARTITION BY code) - d AS lvl FROM up)`;
-const levelJoin = (n: number) => sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.sku
+const levelJoin = (n: number) => sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.cur
         LEFT JOIN nhom gl ON gl.code = pr.group_code AND gl.lvl = ${n}
         LEFT JOIN item_classes ic ON ic.tenant_id = b.tenant_id AND ic.kind = 'group' AND ic.code = gl.anc`;
 /** Chỉ lấy mã hàng thuộc các nhóm đã chọn (gồm mọi nhóm con). */
-export const groupFilter = (tenantId: string, groups?: string[]) => (groups?.length ? sql`AND mv.sku IN (
+export const groupFilter = (tenantId: string, groups?: string[]) => (groups?.length ? sql`AND mv.cur IN (
         WITH RECURSIVE g(code) AS (
           SELECT code FROM item_classes WHERE tenant_id = ${tenantId} AND kind = 'group' AND code IN (${sql.join(groups)})
           UNION SELECT c.code FROM item_classes c JOIN g ON c.parent_code = g.code WHERE c.tenant_id = ${tenantId} AND c.kind = 'group')
@@ -100,7 +107,7 @@ const STOCK_GROUP_SQL: Record<StockGroupBy, { key: ReturnType<typeof sql>; label
   // Nhóm hạch toán (bộ tài khoản) của mặt hàng: tách hàng hoá thường, hàng khuyến mại, công cụ dụng cụ…
   postingGroup: {
     key: sql`COALESCE(pr.posting_group_code, '')`, label: sql`COALESCE(MAX(pg.name), '')`,
-    join: sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.sku LEFT JOIN product_posting_groups pg ON pg.tenant_id = b.tenant_id AND pg.code = pr.posting_group_code`,
+    join: sql`LEFT JOIN products pr ON pr.tenant_id = b.tenant_id AND pr.sku = mv.cur LEFT JOIN product_posting_groups pg ON pg.tenant_id = b.tenant_id AND pg.code = pr.posting_group_code`,
   },
   supplier: { key: sql`COALESCE(p.code, '')`, label: sql`COALESCE(MAX(p.name), '')`, join: partnerJoin, purchaseOnly: true },
   supplierGroup: { key: sql`COALESCE(p.group_code, '')`, label: sql`COALESCE(MAX(pg.name), '')`, join: sql`${partnerJoin} LEFT JOIN partner_groups pg ON pg.tenant_id = p.tenant_id AND pg.code = p.group_code`, purchaseOnly: true },
@@ -136,11 +143,11 @@ export const inventoryReportService = {
     const s = await scope(auth, q.branchCodes, q.warehouseCodes);
     const res = await sql<SumRow & { branch_code: string; branch_name: string; sku: string; name: string; unit: string }>`
       WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to: q.to, branchIds: s.branchIds, wh: s.wh, search: q.search?.trim() || undefined })})
-      SELECT b.code AS branch_code, b.name AS branch_name, mv.sku, MAX(mv.name) AS name, MAX(mv.unit) AS unit, ${sums(q.from)}
+      SELECT b.code AS branch_code, b.name AS branch_name, MAX(mv.cur) AS sku, MAX(mv.name) AS name, MAX(mv.unit) AS unit, ${sums(q.from)}
         FROM mv JOIN branches b ON b.id = mv.branch_id
        WHERE TRUE ${groupFilter(auth.tenantId, q.groups)}
-       GROUP BY b.code, b.name, mv.sku
-       ORDER BY b.code, mv.sku`.execute(db);
+       GROUP BY b.code, b.name, mv.ikey
+       ORDER BY b.code, 3`.execute(db);
     const rows = res.rows
       .map((r) => ({ branchCode: r.branch_code, branchName: r.branch_name, sku: r.sku, name: r.name, unit: r.unit, ...figures(r) }))
       .filter((r) => r.openingQty || r.inQty || r.outQty || r.openingValue || r.inValue);
@@ -158,7 +165,7 @@ export const inventoryReportService = {
     const g = STOCK_GROUP_SQL[q.groupBy];
     const res = await sql<SumRow & { key: string; label: string; skus: string }>`
       WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to: q.to, branchIds: s.branchIds, wh: s.wh, search: q.search?.trim() || undefined })})${g.level ? groupLevelCte(auth.tenantId) : sql``}
-      SELECT ${g.key} AS key, ${g.label} AS label, COUNT(DISTINCT mv.sku) AS skus, ${sums(q.from)}
+      SELECT ${g.key} AS key, ${g.label} AS label, COUNT(DISTINCT mv.ikey) AS skus, ${sums(q.from)}
         FROM mv JOIN branches b ON b.id = mv.branch_id
         ${g.join}
        WHERE TRUE ${groupFilter(auth.tenantId, q.groups)}

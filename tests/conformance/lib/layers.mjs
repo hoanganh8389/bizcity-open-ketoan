@@ -85,7 +85,8 @@ export const LAYER_MAP = [
 
   ['modules/documents/', 'K', 'kernel/intake'],
   ['modules/intake/', 'K', 'kernel/intake'],
-  ['modules/lineage/', 'K', 'kernel/lineage'], // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: truy vết vòng đời mặt hàng
+  ['modules/lineage/', 'K', 'kernel/lineage'],
+  ['modules/masterdata/', 'K', 'kernel/masterdata'], // [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: Item Resolver // [2026-11-03 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — W1: truy vết vòng đời mặt hàng
   ['modules/posting/', 'K', 'kernel/posting'],
   ['modules/posting-config/', 'K', 'kernel/config'],
   ['modules/ledger/', 'K', 'kernel/ledger'],
