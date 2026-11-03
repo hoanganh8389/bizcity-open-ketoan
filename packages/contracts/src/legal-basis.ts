@@ -73,7 +73,8 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'IN-BIZ-005': ['NOI-BO'],
   'IN-BIZ-006': ['ND123', 'LGTGT'],
   'IN-BIZ-007': ['ND123'],
-  // [2026-11-03 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — gộp main vào PR #44: căn cứ cho 10 mã PHASE-021 W5 (gộp từ main) — mức văn bản, đối chiếu docs/can-cu; CHỜ NGƯỜI PHỤ TRÁCH NGHIỆP VỤ DUYỆT
+  // [2026-11-03 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — căn cứ cho 10 mã PHASE-021 W5 (gộp từ main), MỨC VĂN BẢN theo R-GATE-11, lấy từ docs/can-cu; chưa đối chiếu điều khoản ở văn bản gốc.
+  // IN-VAT-001 khớp nguồn của rulepack vat-vn (NQ204). IN-CFG-001: hồ sơ còn cho chọn TT200 / TT133 / TT152 nhưng danh mục căn cứ chưa có các văn bản này — bổ sung vào docs/can-cu/01 rồi thêm khoá.
   'IN-BIZ-001': ['LKT'],
   'IN-POST-001': ['NOI-BO'],
   'IN-POST-002': ['NOI-BO'],
