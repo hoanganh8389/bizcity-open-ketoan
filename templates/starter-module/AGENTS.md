@@ -33,12 +33,14 @@ Bạn đang làm trong **một module** của Bizcity Core. Phạm vi sửa: **c
 - Không tạo bảng khách hàng / mặt hàng / chi nhánh: đọc danh mục chuẩn (`data.reads` + `bizcity_read.*`), tạo mới qua `ctx.actions.call('core.partner.upsert')`.
 - Không ghi bảng sổ / số tài khoản: tiền vào sổ là `ctx.ledger.submit({ docType, docKey: 'mau-module:…', … })` với docType có sẵn.
 - Không tự đếm số chứng từ (`ctx.documents.nextNumber`), không bảng đính kèm riêng (`ctx.documents.attach`), không ghi log ra tệp, không `writeAudit`.
+- Không viết số tài khoản, không tự điền giá vốn, không chạm bảng `ledger_*` / `inventory_*`: `npx bizcity module accounting-check mau-module` báo FAIL (trụ cột I, V trong `docs/standard/tru-cot.json` của open-ketoan).
 - Không import `apps/*`, `packages/*/src`, module khác. Chỉ `@bizcity/module-sdk`, `@bizcity/module-sdk/web`, `@bizcity/ui-kit`, `react`.
 
 ## Lệnh
 
 ```bash
-npx bizcity module check mau-module     # manifest + luật (selfcheck --module) + typecheck + test hợp đồng module trên CSDL test — phải ĐẠT
+npx bizcity module check mau-module     # manifest + luật (selfcheck --module) + kiểm kế toán tĩnh + typecheck + test hợp đồng module trên CSDL test — phải ĐẠT
+npx bizcity module accounting-check mau-module   # riêng phần kế toán: không đụng bảng sổ, không số tài khoản, docType / docKey đúng hợp đồng; kèm BIZCITY_SERVER + BIZCITY_API_KEY thì chạy cả chứng từ mẫu examples/*.json
 npm run module -w @ketoan/api -- migrate mau-module   # chạy migration của module (vai trò mod_mau_module_owner)
 npm run build -w @bizcity-module/mau-module           # dựng api/ ra dist/ (API bản thật nạp dist)
 ```

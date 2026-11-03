@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 36
+      "count": 37
     },
     {
       "key": "paused",
@@ -3776,15 +3776,9 @@
       "phase": "PHASE-027",
       "title": "CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), skills install; bộ skill cho AI; ví dụ POS mini; API…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
-        "branch": "feat/core-ke-toan-ck1",
-        "state": "đang làm",
-        "since": "2026-11-03",
-        "dot": "PHASE-027 · CK-1 — công cụ kiểm cho dev: bizcity event check / flow check / explain / module accoun…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 7
     },

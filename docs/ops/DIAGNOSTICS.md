@@ -63,6 +63,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `INTAKE_OPEN_AGE` <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-19) --> | L3 | Mục bể chờ đầu vào `open` (cửa nạp từ chối, chưa vào sổ) quá `bizcity.intake.open_alert_days` ngày (mặc định 3); mẫu `docKey` (`#<id>` khi khuôn hỏng) | warn | có | DG-INTAKE-1 |
 | `COGS_STALE` | L3 | Chứng từ kho của tháng được nhận / sửa (`received_at`) sau lần ghi phiếu giá vốn tháng; mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-STK-1 |
 | `STOCK_ADJUST_NO_REASON` | L3 | Phiếu điều chỉnh kho (tăng / giảm) không có lý do | warn | có | DG-STK-2 |
+| `INVENTORY_LEDGER_MISMATCH` <!-- [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trụ cột 7: F22-STK-11 --> | L3 | Giá trị tồn theo sổ chi tiết kho ≠ số dư tài khoản hàng tồn kho (tài khoản kho của các nhóm hạch toán) tới cuối phạm vi, theo (chi nhánh, mặt hàng); bỏ qua cặp còn dòng chưa định giá; mẫu `<chi nhánh>:<mã hàng>`, mã rỗng = bút toán kho không gắn mặt hàng. Chi tiết số: `GET /api/v1/inventory/reconcile` | warn | có | DG-STK-3 |
 | `DEPRECIATION_OPEN` | L3 | Tháng đã qua 30 ngày (24 tháng gần nhất) có tài sản cần khấu hao / phân bổ mà chưa trích (tính cả khoảng dồn khi trích bù); mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-FA-1 |
 | `CONFORMANCE_STALE` | L3 | Lượt Kiểm chuẩn gần nhất quá 2 ngày (lịch đêm không chạy); đơn vị tạo chưa tới 2 ngày thì không báo | warn | có | DG-CONF-1 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |

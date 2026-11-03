@@ -9,7 +9,7 @@
 | Chờ merge | 0 |
 | Bị chặn | 15 |
 | Chưa ai nhận | 96 |
-| Chờ đủ tín hiệu | 36 |
+| Chờ đủ tín hiệu | 37 |
 | Hoãn | 1 |
 | Xong | 188 |
 | **Tổng** | **344** |
@@ -23,7 +23,6 @@
 | [S026-3](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L9) | PHASE-026 | parentitemid điền từ parentsku; luật R-ITEM-9 (biến thể kinh tế khác = định danh mới); MH26 ghi / đọc parenti… | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot1` |
 | [S026-10](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L14) | PHASE-026 | API GET /api/v1/master-data/:type/:id/history; thẻ Lịch sử | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot1` |
 | [S026-11](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L15) | PHASE-026 | Chỉ mục tham chiếu mdreferences + GET …/impact; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot1` |
-| [S027-2](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L7) | PHASE-027 | CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), sk… | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck1` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
 
 ## Chờ merge (0)
@@ -151,7 +150,7 @@
 | [S027-8](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L13) | PHASE-027 | Q027-3 quy tắc cho skill | P2 | — |
 | [S027-9](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L14) | PHASE-027 | Q027-4 cổng phát hành (CI xanh, bảo vệ main, SBOM) | P1 | — |
 
-## Chờ đủ tín hiệu (36)
+## Chờ đủ tín hiệu (37)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -190,6 +189,7 @@
 | [S026-1](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L6) | PHASE-026 | ADR-0022, CANON §0.2 (nền móng + tám trụ cột), tài liệu phase 00 / 10 / 20 / 30, bản mẫu | P0 | — |
 | [S026-2](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L8) | PHASE-026 | Golden Tests T026-G1..G7 có tên, chạy như một cổng (kiem-chuan.sh), thất bại chặn phát hành | P0 | — |
 | [S027-1](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L6) | PHASE-027 | Tài liệu W0: README, 00, checklist; ADR-0023; dòng phase ở docs/phases/README.md | P0 | — |
+| [S027-2](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L7) | PHASE-027 | CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), sk… | P0 | — |
 | [S027-3](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L8) | PHASE-027 | CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế … | P1 | — |
 
 ## Hoãn (1)
