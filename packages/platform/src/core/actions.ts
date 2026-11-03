@@ -62,6 +62,8 @@ export interface ActionContext {
   readonly dryRun: boolean;
   /** Người gọi có quyền này không (quyền phụ trong handler, vd duyệt cấp 2). */
   can(permission: Permission): boolean;
+  // [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6: meta bổ sung của phản hồi, hợp nhất vào meta ở mức trên cùng cạnh requestId / receipt. Chỉ có ở lần chạy thật hoặc chạy thử; gửi lặp (replayed) trả lại dữ liệu lần đầu, KHÔNG kèm meta bổ sung
+  meta(key: string, value: unknown): void;
   // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10 (ADR-0011 D4): ctx.data.module — đọc ghi bảng của module bằng vai trò mod_<key>_rw (không chạm bảng Kernel ở tầng CSDL)
   data: {
     tx: Transaction<Database>;
@@ -266,8 +268,11 @@ export interface ActionResult<T = unknown> {
   data: T;
   status: number;
   /** receipt: biên nhận bằng chứng (bizcity_evidence@1 §3) — có với action ghi chạy thật, kể cả khi gửi lặp. */
-  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt };
+  meta: { requestId: string; dryRun?: true; idempotency?: 'replayed'; receipt?: EvidenceReceipt } & Record<string, unknown>;
 }
+
+// [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6: ctx.meta(key, value) — handler thêm trường vào meta của phản hồi (vd findings của cổng kiểm chuẩn Gate A); khoá của runtime là của runtime
+const RESERVED_META = new Set(['requestId', 'dryRun', 'idempotency', 'receipt']);
 
 // [2026-11-01 04:13 PM Johnny Chu - Chu Hoàng Anh] ADR-0010 — OpenTelemetry từ lõi (PHASE-018 W5): span ở khớp nối Platform + cổng Kernel, lọc thuộc tính, traceparent qua outbox
 /**
@@ -311,6 +316,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
   const tenantId = auth?.tenantId ?? '';
   const inputHash = def.effect === 'write' ? requestHash(input) : '';
   const notes: Record<string, unknown> = {};
+  const extraMeta: Record<string, unknown> = {};
   // Bằng chứng (STD-EVD-1): action ghi chạy thật → đúng một bản ghi, thành công hay thất bại vì lỗi nghiệp vụ trong handler.
   const evidenceOn = def.effect === 'write' && !dryRun && !!auth;
   const objectType = def.evidence?.objectType ?? def.id.split('.')[1]!;
@@ -351,6 +357,10 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         requestId: call.requestId,
         dryRun,
         can: (p) => !!auth?.permissions.has(p),
+        meta: (k, v) => {
+          if (RESERVED_META.has(k)) throw new Error(`Action ${def.id}: khoá meta "${k}" là của runtime`);
+          extraMeta[k] = v;
+        },
         data: {
           tx: trx,
           // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: tách ra asModuleRole (dùng chung với subscriber, hook)
@@ -451,10 +461,10 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
         if (!checked.success) throw new Error(`Action ${def.id} trả sai khuôn output: ${checked.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
       }
       if (dryRun) throw new DryRunRollback(output);
-      const result = { data: output, status, meta };
+      const result = { data: output, status, meta: { ...extraMeta, ...meta } as ActionResult['meta'] };
       if (evidenceOn) {
         const objectId = def.evidence?.objectId?.(input, output) ?? (output as { id?: unknown } | null)?.id;
-        result.meta = { ...meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
+        result.meta = { ...result.meta, receipt: await writeEvidence(trx, evidence(objectId, { ok: true }, Object.keys(notes).length ? { input, notes } : { input })) };
       }
       if (key) {
         await trx.updateTable('action_requests').set({ response: JSON.stringify(output ?? null), status_code: status })
@@ -467,7 +477,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
     if (key) metrics.idempotency.inc({ result: res.meta.idempotency === 'replayed' ? 'replayed' : 'new' });
     return res;
   } catch (err) {
-    if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...meta, dryRun: true } };
+    if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...extraMeta, ...meta, dryRun: true } };
     if (key && err instanceof AppError && err.code === ERROR_CODES.IDEMPOTENCY_CONFLICT) metrics.idempotency.inc({ result: 'conflict' });
     metrics.actions.inc({ action: def.id, result: 'error', code: err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL });
     // Thất bại trong handler: giao dịch đã huỷ → ghi bằng chứng "result_ok = false" ở giao dịch riêng. Ghi lỗi thì vẫn ném lỗi gốc.

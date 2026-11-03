@@ -13,6 +13,8 @@ Mỗi bản ghi đủ sáu mục:
 ## [Chưa phát hành]
 
 ### Đổi
+<!-- [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4 -->
+- **Ghi đối tượng và nhóm đối tượng đi qua action** (PHASE-014 W6 đợt 4, SC-ACT-1): `POST /api/v1/partners` (201), `PUT /api/v1/partners/:code`, `PUT /api/v1/partners` (đồng bộ), `DELETE /api/v1/partners/:code`, `PUT` / `DELETE /api/v1/partner-groups/:code`; `POST /api/v1/partners/validate` thành action đọc. Đường dẫn, quyền, mã trả về, `meta.findings` và `warnAck` giữ nguyên. Bằng chứng ghi dưới `core.partner.*` và `core.partner-group.*`, có biên nhận. Hợp đồng `bizcity_action@1` 1.2.0-draft: handler thêm được trường vào `meta` bằng `ctx.meta(key, value)` (gửi lặp cùng Idempotency-Key không kèm meta bổ sung).
 <!-- [2026-11-03 04:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 -->
 - **Ghi danh mục chi nhánh, kho, tên đơn vị tính, tài khoản ngân hàng đi qua action** (PHASE-014 W6 đợt 3, SC-ACT-1): cùng đường dẫn, quyền, mã trả về như cũ (201 khi thêm); `Idempotency-Key` không bắt buộc (thao tác đặt trạng thái tuyệt đối, gửi lại không tạo thêm). Khác biệt người dùng thấy: nhật ký bằng chứng ghi tên hành động mới `core.branch.*`, `core.warehouse.*`, `core.unit-name.*`, `core.bank-account.*` thay cho `branch.create`… và có biên nhận `meta.receipt`; kiểm và ghi nằm trong một giao dịch với bằng chứng. Hàm `branchService.create`… cũ giữ nguyên cho nơi khác gọi. SC-ACT-1: 56,7% → 66,9%.
 

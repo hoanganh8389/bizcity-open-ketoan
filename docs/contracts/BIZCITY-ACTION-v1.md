@@ -4,7 +4,7 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> **Phiên bản:** 1.2.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -68,7 +68,10 @@ export default defineAction({
 | 7 | `handler(ctx, input)` | `Errors.*` của handler |
 | 8 | Ghi bằng chứng (Evidence) trong cùng giao dịch, kể cả khi handler ném lỗi nghiệp vụ (ghi ở giao dịch riêng) | |
 | 9 | Ghi sự kiện vào outbox (cùng giao dịch); lưu phản hồi cho idempotency | |
-| 10 | Commit (hoặc rollback nếu `dryRun`) → trả `{ ok, data, meta: { receipt, requestId, dryRun? } }` | |
+| 10 | Commit (hoặc rollback nếu `dryRun`) → trả `{ ok, data, meta: { receipt, requestId, dryRun?, …ctx.meta } }` | |
+
+<!-- [2026-11-03 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6: ctx.meta (1.2.0-draft) -->
+**`ctx.meta(key, value)`** (1.2.0): handler thêm trường vào `meta` của phản hồi, hợp nhất ở mức trên cùng cạnh `requestId` / `receipt` — dành cho thông tin đi kèm kết quả mà không thuộc `data`, vd `findings` của cổng kiểm chuẩn Gate A khi lưu danh mục. Khoá `requestId`, `receipt`, `idempotency`, `dryRun` là của runtime (gọi `ctx.meta` với các khoá đó → lỗi). Có ở lần chạy thật và chạy thử (`dryRun`); **gửi lặp** (`idempotency: 'replayed'`) trả lại `data` của lần đầu và **không** kèm meta bổ sung — bên gọi cần `findings` thì tra lại bằng action đọc (vd `validate`).
 
 Handler **không** gọi `requirePermission`, `writeAudit`, `reply.status`, không tự mở giao dịch.
 
@@ -137,3 +140,4 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 |---|---|---|
 | 1.0.0-draft | 2026-10-29 | Khởi tạo (Standard v1, hợp đồng 4/7) |
 | 1.1.0-draft | 2026-11-02 | Thêm `sideEffects: 'analysis'` — action chỉ lưu kết quả phân tích của Core (vd `core.conformance.run`, ADR-0012), không đổi chứng từ, sổ, danh mục, cấu hình |
+| 1.2.0-draft | 2026-11-03 | Thêm `ctx.meta(key, value)` — trường bổ sung của phản hồi (§4 bước 10) |
