@@ -7,7 +7,7 @@
  *   - Mỗi dòng ghi riêng (lỗi một dòng không làm hỏng dòng khác), dùng chung saveProduct với form DM10.
  *   - Xem trước: mỗi dòng trả `values` (thông tin sẽ ghi, phân loại hiện "mã — tên") và với mã đã có trả `before` (đang có).
  */
-import { db } from '../../db/client.js';
+import { inSavepoint, type ActionTx } from '@bizcity/platform/core/actions';
 import { writeAudit } from '../../core/audit.js';
 import { saveProduct, type ProductInput } from './catalog.service.js';
 
@@ -27,13 +27,14 @@ const YES = new Set(['có', 'co', 'x', '1', 'true', 'yes', 'đang theo dõi', 't
 const NO = new Set(['không', 'khong', '0', 'false', 'no', 'ngừng', 'ngung']);
 const low = (s: string) => s.trim().toLowerCase();
 
-export async function importProducts(tenantId: string, actor: string, rows: ImportRow[], dryRun: boolean) {
+// [2026-11-03 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): cả tệp một giao dịch, mỗi dòng một SAVEPOINT
+export async function importProducts(trx: ActionTx, tenantId: string, actor: string, rows: ImportRow[], dryRun: boolean) {
   const [products, classes, groups, taxes] = await Promise.all([
-    db.selectFrom('products').select(['sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'is_active'])
+    trx.selectFrom('products').select(['sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'is_active'])
       .where('tenant_id', '=', tenantId).execute(),
-    db.selectFrom('item_classes').select(['kind', 'code', 'name']).where('tenant_id', '=', tenantId).execute(),
-    db.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).execute(),
-    db.selectFrom('tax_codes').select('code').where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('item_classes').select(['kind', 'code', 'name']).where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).execute(),
+    trx.selectFrom('tax_codes').select('code').where('tenant_id', '=', tenantId).execute(),
   ]);
   const existing = new Map(products.map((p) => [p.sku, p.unit]));
   const className = new Map(classes.map((c) => [`${c.kind}|${c.code}`, c.name]));
@@ -101,17 +102,13 @@ export async function importProducts(tenantId: string, actor: string, rows: Impo
   for (const c of checked) {
     const show = { values: c.values, ...(c.before ? { before: c.before } : {}) };
     if (c.errors.length || dryRun) { results.push({ row: c.row, sku: c.sku, action: c.errors.length ? 'error' : c.isNew ? 'create' : 'update', errors: c.errors, ...show }); continue; }
-    try {
-      await db.transaction().execute((trx) => saveProduct(trx, tenantId, actor, c.sku, c.input, { isNew: c.isNew, source: 'excel', quiet: true }));
-      results.push({ row: c.row, sku: c.sku, action: c.isNew ? 'create' : 'update', errors: [], ...show });
-    } catch (e) {
-      results.push({ row: c.row, sku: c.sku, action: 'error', errors: [errorText(e)], ...show });
-    }
+    const x = await inSavepoint(trx, (t) => saveProduct(t, tenantId, actor, c.sku, c.input, { isNew: c.isNew, source: 'excel', quiet: true }));
+    results.push(x.ok ? { row: c.row, sku: c.sku, action: c.isNew ? 'create' : 'update', errors: [], ...show } : { row: c.row, sku: c.sku, action: 'error', errors: [errorText(x.error)], ...show });
   }
   const count = (a: RowResult['action']) => results.filter((x) => x.action === a).length;
   const summary = { created: count('create'), updated: count('update'), failed: count('error') };
   if (!dryRun && (summary.created || summary.updated)) {
-    await writeAudit(db, { tenantId, actor, action: 'catalog.product.import', objectType: 'product', objectId: `${summary.created + summary.updated} mặt hàng`, after: { ...summary, skus: results.filter((x) => x.action !== 'error').map((x) => x.sku).slice(0, 50) } });
+    await writeAudit(trx, { tenantId, actor, action: 'catalog.product.import', objectType: 'product', objectId: `${summary.created + summary.updated} mặt hàng`, after: { ...summary, skus: results.filter((x) => x.action !== 'error').map((x) => x.sku).slice(0, 50) } });
   }
   return { dryRun, ...summary, rows: results };
 }

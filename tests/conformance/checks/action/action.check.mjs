@@ -69,16 +69,29 @@ export const checks = [
     run(ctx) {
       // [2026-11-03 05:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3: đo trung thực — action GHI / (action ghi + route ghi thô còn lại);
       // trước đây tử số đếm mọi defineAction (cả action đọc) trên mẫu số chỉ route thô, vượt 100% khi route thô ít đi.
-      let writes = 0; let viaAction = 0; let actions = 0;
+      // [2026-11-03 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: route ghi CỐ Ý không là action (công khai / tự phục vụ /
+      // giao thức / cửa nạp / xác nhận ra hệ thống ngoài) khai `// @bizcity-route: <lý do>` ngay dòng trên — tách khỏi nợ, phải có lý do.
+      let writes = 0; let viaAction = 0; let actions = 0; const exempt = [];
       for (const file of ctx.repo.files({ under: SRC, ext: ['.ts'] })) {
-        for (const t of ctx.repo.lines(file)) { const m = ROUTE_RE.exec(t); if (m && m[1] !== 'get') writes++; }
+        const ls = ctx.repo.lines(file);
+        ls.forEach((t, i) => {
+          const m = ROUTE_RE.exec(t);
+          if (!m || m[1] === 'get') return;
+          const why = /\/\/\s*@bizcity-route:\s*(\S.*)$/.exec(ls[i - 1] ?? '');
+          if (why) exempt.push(`${m[1].toUpperCase()} ${m[2]} — ${why[1].trim()}`);
+          else writes++;
+        });
         const text = ctx.repo.read(file);
         const n = (text.match(/\bdefineAction\(/g) ?? []).length;
         actions += n;
         if (n) viaAction += (text.match(/\beffect:\s*'write'/g) ?? []).length;
       }
       const total = viaAction + writes;
-      return { examined: total, readiness: total ? viaAction / total : 0, findings: [], metrics: { writeRoutes: writes, writeActions: viaAction, defineAction: actions }, notes: [`${viaAction}/${total} thao tác ghi đi qua defineAction; còn ${writes} route ghi thô (audit A-21: chưa có idempotency ngoài cửa sổ sổ cái)`] };
+      return {
+        examined: total, readiness: total ? viaAction / total : 0, findings: [],
+        metrics: { writeRoutes: writes, writeActions: viaAction, exemptRoutes: exempt.length, defineAction: actions },
+        notes: [`${viaAction}/${total} thao tác ghi đi qua defineAction; còn ${writes} route ghi thô; ${exempt.length} route cố ý giữ (có lý do)`, ...exempt.map((e) => `giữ route: ${e}`)],
+      };
     },
   },
   {

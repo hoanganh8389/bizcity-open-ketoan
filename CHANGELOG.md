@@ -215,6 +215,9 @@ Mỗi bản ghi đủ sáu mục:
   - **bộ kiểm**: SC-ERR-1, SC-PRESET-1.
 
 ### Đổi
+<!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 -->
+- **Thao tác theo lô chạy trong một giao dịch, mỗi mục một SAVEPOINT** (`ctx.data.item`, `inSavepoint` ở `@bizcity/platform/core/actions`): trạm định khoản, xác nhận nhận tiền, kết chuyển (cả dây chuyền tháng sau), kết chuyển năm, tính giá vốn, bỏ định khoản hàng loạt, sinh phiếu định kỳ, nhập Excel mặt hàng. Mục lỗi vẫn được báo trong kết quả và không chặn mục khác; khác trước: các mục đúng được lưu **cùng lúc khi cả lô xong** (trước: lưu dần), và lỗi ngoài từng mục huỷ cả lô thay vì để lại phần đã chạy. Kết chuyển năm và tính giá vốn nay không còn để lại nửa chừng khi một chi nhánh lỗi.
+- Cửa nạp chứng từ (`POST /api/v1/documents`, `/batch`) và kéo chứng từ từ kết nối giữ nguyên cách cũ (có lý do ghi ở route: bể chờ dùng giao dịch riêng; nguồn được báo "đã nhận" sau mỗi trang).
 <!-- [2026-11-03 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 5 -->
 - **Thêm 16 route qua `defineAction`**: mặt hàng / loại hàng, bảng giá, nạp danh mục, quét hoá đơn NCC, khoá dữ liệu, thông tin đơn vị, bút toán tài sản, kế hoạch tiền, lịch bút toán lặp, tờ khai GTGT / bổ sung / TNDN, cấu hình kết nối. Lập bút toán tài sản, dòng kế hoạch tiền, lịch bút toán lặp **bắt buộc `Idempotency-Key`**.
 - Runtime action: `expose.http.query` (trường lấy từ query của POST/PUT/PATCH), `expose.http.bodyLimit`; bằng chứng không chép `input` lớn hơn 64 KB (giữ cỡ; `inputHash` vẫn đối chiếu được thân gốc).

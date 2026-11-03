@@ -134,8 +134,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await supplierBrandList(db, authOf(req).tenantId, req.params.code)) });
   r.get('/api/v1/purchase/product-cost/:sku', { preHandler: read, schema: { tags, summary: 'Giá vốn của một mã theo ĐVT nhỏ nhất: bình quân tháng gần nhất + tạm tính theo tồn hiện tại', params: z.object({ sku: z.string().min(1).max(64) }) },
     handler: async (req) => ok(await productCost(db, authOf(req).tenantId, req.params.sku)) });
-  r.post('/api/v1/purchase/sku-info', { preHandler: read, schema: { tags, summary: 'Tên theo danh mục, đường dẫn nhóm hàng, ngành · nhãn · nhóm của nhiều mã (báo cáo MH23)', body: z.object({ skus: z.array(z.string().max(64)).max(20000) }) } },
-    async (req) => ok(await skuInfoRows(db, authOf(req).tenantId, req.body.skus)));
   r.get('/api/v1/purchase/units', { preHandler: read, schema: { tags, summary: 'ĐVT của các mã (tỉ lệ, bán chính, mua mặc định)', querystring: z.object({ skus: z.string() }) },
     handler: async (req) => ok(await unitsOf(db, authOf(req).tenantId, req.query.skus.split(',').map((x) => x.trim()))) });
   r.get('/api/v1/purchase/db-schema', { preHandler: read, schema: { tags, summary: 'Cấu trúc CSDL phân hệ Mua hàng đọc thẳng từ PostgreSQL: bảng, cột, chú thích, chỉ mục, trigger, số dòng' },
@@ -151,13 +149,6 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await variantOverview(db, authOf(req).tenantId)) });
   r.get('/api/v1/purchase/units/thung/empty-rows', { preHandler: read, schema: { tags, summary: 'MH27: dòng Thùng trống giá thừa (bản đầu từng thêm) — cùng NCC × mã còn dòng có giá' },
     handler: async (req) => ok(await emptyThungRows(db, authOf(req).tenantId)) });
-  r.post('/api/v1/purchase/units/thung/empty-rows/delete', { preHandler: settings, schema: { tags, summary: 'MH27: xoá vĩnh viễn các dòng Thùng trống giá thừa, ghi nhật ký đủ nội dung' } },
-    async (req) => {
-      const a = authOf(req);
-      const res = await db.transaction().execute((trx) => deleteEmptyThungRows(trx, a.tenantId));
-      if (res.count) await logEvents(a.tenantId, [{ event: 'units_thung_cleanup', docNo: '', user: a.actorName, data: { count: res.count, deleted: res.deleted } }]);
-      return ok({ count: res.count });
-    });
   r.post('/api/v1/purchase/demo/seed', { preHandler: settings, schema: { tags, summary: 'Nạp dữ liệu tình huống (25 tình huống + ví dụ bổ sung) vào sổ thật — cần mật khẩu; reset = xoá bản cũ rồi nạp', body: seedBody },
     handler: async (req) => { checkSeedPassword(req.body?.password); return ok(await seedDemo(authOf(req), { reset: req.body?.reset })); } });
   r.post('/api/v1/purchase/demo/warehouses', { preHandler: settings, schema: { tags, summary: 'Thêm kho mặc định cho chi nhánh mẫu chưa có kho (CN-NA, CN-ND, CN-PT, CN-HCM) — không sửa phiếu; cần mật khẩu', body: seedBody },
@@ -338,6 +329,30 @@ export const routesTsWriteActions: AnyActionDef[] = [
 
 
 export const routesWriteActions: AnyActionDef[] = [
+  // [2026-11-03 11:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: hai route dạng r.post(url, opts, handler) công cụ chuyển đổi bỏ sót
+  defineAction({
+    id: 'mua-hang.sku-info.lookup', title: 'Tên theo danh mục, đường dẫn nhóm hàng, ngành · nhãn · nhóm của nhiều mã (báo cáo MH23)', tags,
+    permission: 'documents:read', effect: 'read', idempotency: 'none',
+    input: z.object({ skus: z.array(z.string().max(64)).max(20000) }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/sku-info' }, mcp: false, ai: 'read' },
+    handler: (ctx, input) => skuInfoRows(ctx.data.tx, ctx.tenant.id, input.skus),
+  }),
+  defineAction({
+    id: 'mua-hang.unit.thung-empty-rows-delete', title: 'MH27: xoá vĩnh viễn các dòng Thùng trống giá thừa, ghi nhật ký đủ nội dung', tags,
+    permission: 'settings:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({}), output: z.object({ count: z.number() }),
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/units/thung/empty-rows/delete' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'supplier_product' },
+    handler: async (ctx) => {
+      const a = ctx.legacyAuth;
+      const res = await deleteEmptyThungRows(ctx.data.tx, a.tenantId);
+      if (res.count) {
+        ctx.evidence.note('deleted', res.deleted);
+        await logEvents(a.tenantId, [{ event: 'units_thung_cleanup', docNo: '', user: a.actorName, data: { count: res.count, deleted: res.deleted } }]);
+      }
+      return { count: res.count };
+    },
+  }),
   // [2026-11-03 06:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 4: bỏ duyệt trong giao dịch của action (huỷ chứng từ con + về nháp cùng lúc)
   defineAction({
     id: 'mua-hang.purchase.documents-unapprove', title: 'Bỏ duyệt: huỷ chứng từ kế toán đã sinh, về nháp (body tuỳ chọn { reason })', tags,

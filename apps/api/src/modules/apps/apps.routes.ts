@@ -28,11 +28,13 @@ export async function appsRoutes(app: FastifyInstance): Promise<void> {
 
   // Mọi người dùng của đơn vị (menu Tiện ích dựng từ danh sách này); nút quản trị kiểm users:write riêng.
   r.get('/api/v1/apps', { preHandler: requireAuthenticated(), schema: { tags, summary: 'App ngoài tiến trình cài trong bản này và trạng thái kết nối của đơn vị' }, handler: async (req) => ok(await appsService.list(authOf(req))) });
+  // @bizcity-route: vé một lần cho ứng dụng nhúng (đổi phiên), không ghi dữ liệu nghiệp vụ
   r.post('/api/v1/apps/:key/ticket', {
     preHandler: requireUser(), schema: { tags, summary: 'Vé iframe ngắn hạn cho người dùng đang đăng nhập', params: keyParam },
     handler: async (req) => ok(await appsService.ticket(authOf(req), req.params.key)),
   });
   // Chỉ khoá app (appsService.exchange kiểm auth.app); không cần quyền Core nào vì chỉ trả ngữ cảnh của vé app đó giữ.
+  // @bizcity-route: công khai — đổi vé một lần lấy phiên của ứng dụng
   r.post('/api/v1/apps/ticket/exchange', {
     preHandler: requireAuthenticated(), schema: { tags, summary: 'App đổi vé iframe lấy ngữ cảnh (gọi bằng khoá API của app)', body: z.object({ ticket: z.string().min(20).max(4096) }) },
     handler: async (req) => ok(await appsService.exchange(authOf(req), req.body.ticket)),

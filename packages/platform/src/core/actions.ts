@@ -71,6 +71,11 @@ export interface ActionContext {
      * Gọi ctx.ledger / ctx.documents NGOÀI `fn`. Module chưa có CSDL riêng (`module migrate`) → NOT_READY.
      */
     module<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<T>;
+    /**
+     * Một mục của lô (action theo lô): chạy `fn` trong SAVEPOINT của giao dịch action. Mục lỗi chỉ huỷ phần của nó,
+     * trả `{ ok: false, error }` để handler báo trong kết quả; các mục khác giữ nguyên, lưu cùng lúc khi cả lô xong.
+     */
+    item<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>>;
   };
   evidence: { note(key: string, value: unknown): void };
   /**
@@ -242,6 +247,28 @@ export function compactEvidence<T>(after: T): T {
   return bytes > EVIDENCE_INPUT_MAX ? { ...after, input: { omitted: true, bytes } } as T : after;
 }
 
+// [2026-11-03 09:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: action theo lô — mỗi mục một SAVEPOINT trong giao dịch của action
+export type ItemResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
+let savepointSeq = 0;
+/**
+ * Chạy `fn` trong SAVEPOINT của `trx` (thay "mỗi mục một giao dịch" của route lô cũ). Lỗi → ROLLBACK TO SAVEPOINT, trả lỗi;
+ * giao dịch ngoài vẫn dùng tiếp được. Dùng ở service bản *In; handler action gọi ctx.data.item.
+ */
+export async function inSavepoint<T>(trx: Transaction<Database>, fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>> {
+  const name = sql.id(`bz_item_${++savepointSeq}`);
+  await sql`SAVEPOINT ${name}`.execute(trx);
+  try {
+    const value = await fn(trx);
+    await sql`RELEASE SAVEPOINT ${name}`.execute(trx);
+    return { ok: true, value };
+  } catch (error) {
+    await sql`ROLLBACK TO SAVEPOINT ${name}`.execute(trx);
+    return { ok: false, error };
+  }
+}
+/** Lời nhắn của lỗi một mục (như route lô cũ báo). */
+export const itemMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
 /** Giao dịch runtime mở cho action (ctx.data.tx). */
 export type ActionTx = Transaction<Database>;
 /** Chạy fn trong giao dịch có sẵn — thay `db.transaction().execute(fn)` khi mã cũ đã nằm trong giao dịch của action (không mở giao dịch lồng). */
@@ -388,6 +415,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           tx: trx,
           // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4: tách ra asModuleRole (dùng chung với subscriber, hook)
           module: (fn) => asModuleRole(trx, def.id.split('.')[0]!, () => fn(trx)),
+          item: (fn) => inSavepoint(trx, fn),
         },
         evidence: { note: (k, v) => { notes[k] = v; } },
         events: {

@@ -56,10 +56,6 @@ export async function stockRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await transferSuggest(db, authOf(req).tenantId, req.query.branchCode, req.query)) });
   r.get('/api/v1/stock/transfer-requests', { preHandler: read, schema: { tags, summary: 'Đề nghị chuyển hàng đã chốt (kho / POS quét để lên phiếu chuyển)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional() }) },
     handler: async (req) => ok(await listTransferRequests(db, authOf(req).tenantId, req.query)) });
-  for (const [path, status] of [['done', 'done'], ['cancel', 'cancelled'], ['reopen', 'open']] as const) {
-    r.post(`/api/v1/stock/transfer-requests/:id/${path}`, { preHandler: write, schema: { tags, summary: path === 'done' ? 'Đánh dấu đã lên phiếu chuyển' : path === 'cancel' ? 'Huỷ đề nghị' : 'Mở lại đề nghị', params: idParamSchema },
-      handler: async (req) => { const a = authOf(req); return ok(await tx((t) => setTransferStatus(t, a.tenantId, a.actorName, req.params.id, status))); } });
-  }
 
   // ---------------- Phiếu đăng ký tồn max
   r.get('/api/v1/stock/max-requests', { preHandler: read, schema: { tags, summary: 'Phiếu đăng ký tồn max (lọc ngày lập, trạng thái, chi nhánh, loại)', querystring: z.object({ from: day.optional(), to: day.optional(), status: z.string().optional(), branchCode: z.string().optional(), kind: z.string().optional() }) },
@@ -78,6 +74,15 @@ export async function stockRoutes(app: FastifyInstance): Promise<void> {
 const anyOut = z.custom<object>((v) => typeof v === 'object' && v !== null);
 
 export const tonMaxRoutesWriteActions: AnyActionDef[] = [
+  // [2026-11-03 11:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6: ba route đổi trạng thái đề nghị chuyển hàng (trước: vòng lặp tạo route, công cụ bỏ sót)
+  ...([['done', 'done', 'Đánh dấu đã lên phiếu chuyển'], ['cancel', 'cancelled', 'Huỷ đề nghị'], ['reopen', 'open', 'Mở lại đề nghị']] as const).map(([path, status, title]) => defineAction({
+    id: `mua-hang.transfer-request.${path}`, title, tags,
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    input: idParamSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: `/api/v1/stock/transfer-requests/:id/${path}` }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'transfer_request', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => setTransferStatus(ctx.data.tx, ctx.tenant.id, ctx.actor.name, input.id, status),
+  })),
   defineAction({
     id: 'mua-hang.stock.hierarchy', title: 'Lưu phân cấp (level: branch / shop / rỗng, parentCode cho shop)', tags,
     permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',

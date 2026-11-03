@@ -103,6 +103,7 @@ export function readPresence(tenantId: string, withList: boolean) {
 
 export async function presenceRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
+  // @bizcity-route: nhịp "đang online" mỗi phút — không phải thao tác nghiệp vụ
   r.post('/api/v1/presence/ping', {
     preHandler: requireAuthenticated(),
     schema: {

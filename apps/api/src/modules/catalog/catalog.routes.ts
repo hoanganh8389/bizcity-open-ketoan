@@ -82,20 +82,6 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
     schema: { tags, summary: 'Trọn một mặt hàng: thông tin, cờ, đơn vị tính, giá ở mọi bảng giá', params: z.object({ sku }) },
     handler: async (req) => ok(await getProduct(db, authOf(req).tenantId, req.params.sku)),
   });
-  r.post('/api/v1/catalog/products/import', {
-    preHandler: requirePermission('catalog:write'),
-    schema: {
-      tags, summary: 'Nhập Excel mặt hàng: dryRun kiểm tra từng dòng (không ghi); không dryRun thì ghi các dòng đúng, bỏ qua dòng lỗi',
-      body: z.object({
-        dryRun: z.boolean().default(true),
-        rows: z.array(z.object({
-          row: z.number().int(), sku: z.string().max(200), name: cell, unit: cell, note: cell, groupCode: cell, industryCode: cell, brandCode: cell, typeCode: cell,
-          postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, isActive: cell,
-        })).min(1).max(5000),
-      }),
-    },
-    handler: async (req) => { const auth = authOf(req); return ok(await importProducts(auth.tenantId, auth.actor, req.body.rows, req.body.dryRun)); },
-  });
 
   r.get('/api/v1/catalog/next-sku', {
     preHandler: requirePermission('catalog:read'),
@@ -134,6 +120,7 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
   });
   mountActions(app, catalogWriteActions);
   mountActions(app, catalogMoreWriteActions);
+  mountActions(app, catalogBatchActions);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
@@ -272,5 +259,27 @@ export const catalogMoreWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       return await sameTx(trx, (trx) => importCatalog(trx, auth.tenantId, auth.actor, input));
     },
+  }),
+];
+
+// [2026-11-03 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
+// Mã cũ trong handler chạy trong giao dịch của action (sameTx); service tự mở giao dịch có bản *In.
+
+
+export const catalogBatchActions: AnyActionDef[] = [
+  defineAction({
+    id: 'core.catalog.products-import', title: 'Nhập Excel mặt hàng: dryRun kiểm tra từng dòng (không ghi); không dryRun thì ghi các dòng đúng, bỏ qua dòng lỗi', tags,
+    permission: 'catalog:write', effect: 'write', sideEffects: ['masterdata'], idempotency: 'natural',
+    input: z.object({
+        dryRun: z.boolean().default(true),
+        rows: z.array(z.object({
+          row: z.number().int(), sku: z.string().max(200), name: cell, unit: cell, note: cell, groupCode: cell, industryCode: cell, brandCode: cell, typeCode: cell,
+          postingGroupCode: cell, taxOutCode: cell, taxInCode: cell, isActive: cell,
+        })).min(1).max(5000),
+      }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/catalog/products/import' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'catalog' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx; const auth = ctx.legacyAuth; return await importProducts(trx, auth.tenantId, auth.actor, input.rows, input.dryRun); },
   }),
 ];

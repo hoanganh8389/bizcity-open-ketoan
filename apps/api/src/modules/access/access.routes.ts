@@ -39,11 +39,13 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
 
   r.get('/api/v1/users', { preHandler: admin, schema: { tags, summary: 'Danh sách người dùng' }, handler: async (req) => ok(await accessService.listUsers(authOf(req))) });
 
+  // @bizcity-route: tự phục vụ — mọi người dùng tự đổi mật khẩu, trả vé mới; không có quyền riêng để khai
   r.post('/api/v1/auth/change-password', {
     schema: { tags, summary: 'Tự đổi mật khẩu', body: changePasswordSchema },
     handler: async (req) => ok(await accessService.changeOwnPassword(authOf(req), req.body.currentPassword, req.body.newPassword, reissueFor(req))),
   });
 
+  // @bizcity-route: tự phục vụ — đăng xuất các máy khác của chính mình, trả vé mới
   r.post('/api/v1/auth/logout-others', {
     preHandler: requireUser(),
     schema: { tags, summary: 'Đăng xuất mọi thiết bị khác đang đăng nhập tài khoản này (máy đang bấm nhận vé mới, vẫn đăng nhập)' },

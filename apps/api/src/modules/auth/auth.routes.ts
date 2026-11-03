@@ -21,6 +21,7 @@ import { env } from '../../config/env.js';
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
+  // @bizcity-route: công khai — đăng nhập cấp vé phiên, chưa có người làm để ghi bằng chứng action
   r.post('/api/v1/auth/login', {
     config: { public: true },
     schema: { tags: ['Đăng nhập'], summary: 'Đăng nhập, nhận token', body: loginBodySchema, security: [] },
@@ -37,6 +38,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }),
   });
 
+  // @bizcity-route: công khai — đăng nhập một lần từ WordPress (chữ ký HMAC), cấp vé phiên
   r.post('/api/v1/auth/wp-sso', {
     config: { public: true },
     schema: { tags: ['Đăng nhập'], summary: 'Đăng nhập bằng vé của hệ thống quản trị', body: z.object({ ticket: z.string().min(10).max(8000) }), security: [] },

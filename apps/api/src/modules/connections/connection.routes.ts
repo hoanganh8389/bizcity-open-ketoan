@@ -34,6 +34,7 @@ export async function connectionRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => ok(await connectionService.test(authOf(req), req.params.code)),
   });
 
+  // @bizcity-route: báo "đã nhận" cho hệ thống nguồn sau mỗi trang — gom một giao dịch thì lô huỷ mà nguồn tưởng đã giao (mất chứng từ)
   r.post('/api/v1/connections/:code/pull', {
     preHandler: requirePermission('documents:write'),
     schema: { tags, summary: 'Kéo chứng từ của kết nối trong khoảng ngày về trạm ACC14 (chờ định khoản)', params: codeParam, body: pullInputSchema },
