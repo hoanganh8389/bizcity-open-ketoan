@@ -50,7 +50,11 @@ export const INTAKE_CATALOG = {
   'IN-SUM-004': { layer: 'L2', severity: 'warn', stage: 'advice', weight: 10, title: 'Đơn giá × số lượng − chiết khấu khác thành tiền dòng', why: 'Thành tiền lệch đơn giá thì giá vốn, lãi gộp, đối chiếu với đơn hàng sẽ khó giải thích.', fix: 'Kiểm đơn giá, số lượng, chiết khấu của dòng ở hệ thống nguồn.', ref: 'R-EVENT-5', acceptable: true },
   'IN-MD-001': { layer: 'L3', severity: 'block', stage: 'door', weight: 0, title: 'Chi nhánh (mã cửa hàng) chưa có', why: 'Sổ, kho, báo cáo theo chi nhánh; mã lạ thì không biết ghi cho cửa hàng nào.', fix: 'Dùng mã chi nhánh đã khai ở Danh mục chi nhánh, hoặc nhờ kế toán thêm chi nhánh trước.', ref: 'R-MD, findBranch', acceptable: false },
   'IN-MD-004': { layer: 'L3', severity: 'hint', stage: 'advice', weight: 0, title: 'Mã hàng chưa có trong danh mục', why: 'Mặt hàng mới chưa có nhóm hạch toán thì doanh thu, giá vốn theo mặc định — kế toán nên gắn nhóm sớm.', fix: 'Đồng bộ danh mục mặt hàng trước (PUT /api/v1/products) hoặc nhờ kế toán thêm và gắn nhóm hạch toán.', ref: 'R-MD', acceptable: true },
+  // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: IN-ITEM-009 — chứng từ dùng mặt hàng còn nháp (Gate A chưa kích hoạt, R-GATE-6)
+  'IN-ITEM-009': { layer: 'L3', severity: 'block', stage: 'door', weight: 0, title: 'Mặt hàng còn nháp, chưa kích hoạt', why: 'Mặt hàng lưu nháp vì khai báo còn thiếu (đơn vị tính, nhóm hạch toán); ghi sổ với nó thì kho, giá vốn hoặc tài khoản sẽ sai.', fix: 'Mở mặt hàng ở danh mục, sửa phần còn thiếu để mặt hàng tự kích hoạt; chứng từ ở Trạm kiểm tra được kiểm lại tự động, rồi nộp lại.', ref: 'R-GATE-6, ADR-0019', acceptable: false },
   'IN-MD-005': { layer: 'L3', severity: 'warn', stage: 'advice', weight: 10, title: 'Mã số thuế đối tượng sai định dạng', why: 'Mã số thuế sai thì hoá đơn, bảng kê và tra cứu doanh nghiệp đều sai; cơ quan thuế loại hoá đơn.', fix: 'Mã số thuế gồm 10 chữ số, hoặc 10 chữ số + "-" + 3 chữ số (chi nhánh); không khoảng trắng.', ref: 'R-MD', acceptable: true },
+  // [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: IN-GUARD-001 — Commit Guard: cấu hình đổi giữa tiền kiểm và ghi sổ, chạy lại vẫn còn lỗi chặn (R-GATE-8)
+  'IN-GUARD-001': { layer: 'L5', severity: 'block', stage: 'door', weight: 0, title: 'Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn', why: 'Nguồn đã Kiểm thử chứng từ với danh mục / chính sách / khoá kỳ cũ; trước khi ghi sổ cấu hình đổi và chứng từ không còn đạt. Ghi theo kết quả Kiểm thử cũ thì sổ sẽ sai với cấu hình hiện hành.', fix: 'Xem các lỗi chặn đi kèm (là kết quả chạy lại theo cấu hình mới), sửa rồi Kiểm thử lại để lấy dấu mới trước khi nộp.', ref: 'R-GATE-8, ADR-0019', acceptable: false },
   'IN-BIZ-003': { layer: 'L4', severity: 'block', stage: 'door', weight: 0, title: 'Mã chứng từ không thuộc nguồn gửi', why: 'Mỗi nguồn (module, app) chỉ được nộp / sửa chứng từ của mình, để không ghi đè chứng từ của nơi khác.', fix: 'Mã chứng từ (docKey) phải bắt đầu bằng mã của nguồn, vd "pos-mini:CN01:HD0001".', ref: 'ADR-0011 D5, R-EVENT-13', acceptable: false },
   'IN-BIZ-004': { layer: 'L4', severity: 'block', stage: 'door', weight: 0, title: 'Phiên bản cũ hơn bản đã nhận', why: 'Sổ đang theo phiên bản mới hơn; nhận bản cũ sẽ ghi đè thông tin mới bằng thông tin cũ.', fix: 'Gửi phiên bản lớn hơn phiên bản đã nhận; sửa chứng từ thì tăng version.', ref: 'R-EVENT-4', acceptable: false },
   'IN-BIZ-005': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 20, title: 'Cùng phiên bản nhưng nội dung khác bản đã nhận', why: 'Cửa nạp coi cùng phiên bản là "không đổi" và bỏ qua — nội dung sửa sẽ KHÔNG vào sổ.', fix: 'Sửa chứng từ thì tăng version; gửi lại đúng nội dung cũ thì không sao.', ref: 'R-EVENT-4', acceptable: false },
@@ -159,6 +163,23 @@ export const INTAKE_REMEDIES: Record<IntakeCodeNeedingRemedy, Remedy> & Partial<
     steps: [{ text: 'Đặt mã chứng từ (docKey) bắt đầu bằng mã của nguồn gửi, vd "pos-mini:CN01:HD0001"' }, RESEND],
     owner: 'creator', verify: { code: 'IN-BIZ-003' },
     forbid: ['Không dùng mã chứng từ của nguồn khác để sửa chứng từ của nơi đó'],
+  },
+  // [2026-11-03 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28 / 29: phương án cho IN-ITEM-009 (mặt hàng nháp) và IN-GUARD-001 (Commit Guard) — R-FIX-1
+  'IN-ITEM-009': {
+    steps: [
+      { text: 'Mở mặt hàng đang nháp ở danh mục (lọc "Nháp"), bổ sung phần còn thiếu theo khung Vì sao; lưu xong mặt hàng tự kích hoạt', screen: SCREENS.DM10, role: 'accountant' },
+      { text: 'Chứng từ đang chờ ở Trạm kiểm tra được kiểm lại tự động; nộp lại hoặc để hệ thống nguồn gửi lại', role: 'creator' },
+    ],
+    owner: 'accountant', verify: { code: 'IN-ITEM-009' },
+    forbid: ['Không đổi mã hàng trên chứng từ sang mặt hàng khác cho lọt cửa nạp — kho và giá vốn sẽ ghi sai mặt hàng'],
+  },
+  'IN-GUARD-001': {
+    steps: [
+      { text: 'Xem các lỗi chặn đi kèm (kết quả chạy lại theo cấu hình mới) và sửa theo phương án của từng mã' },
+      { text: 'Kiểm thử lại để lấy dấu cấu hình mới (guard), rồi nộp lại kèm dấu mới', role: 'creator' },
+    ],
+    owner: 'creator', verify: { code: 'IN-GUARD-001' },
+    forbid: ['Không bỏ dấu cấu hình để lọt cửa nạp mà chưa kiểm thử lại — kết quả kiểm thử cũ không còn đúng với cấu hình hiện hành'],
   },
   'IN-BIZ-004': {
     steps: [{ text: 'Gửi phiên bản lớn hơn phiên bản đã nhận; mỗi lần sửa chứng từ tăng version ở hệ thống nguồn' }, RESEND],

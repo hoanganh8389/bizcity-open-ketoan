@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/intake
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: recheckInboxForSkus — mặt hàng kích hoạt thì mục bể có mã đó được tiền kiểm lại (R-GATE-6)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (2.18, ADR-0014 D2, D10; R-INTAKE-1/2/7/12): bể chờ — cửa nạp từ chối thì giữ nguyên văn + phát hiện + điểm (gộp gửi trùng), tự đóng khi nguồn gửi lại đúng, đọc danh sách / chi tiết, dọn theo hạn giữ
 /**
  * BỂ CHỜ ĐẦU VÀO (ADR-0014 D2, D10). Không phải sổ: không bút toán, không sự kiện sổ, không ghi accounting_events (R-INTAKE-2).
@@ -60,10 +61,10 @@ async function insertRow(trx: Db, auth: AuthContext, raw: unknown, channel: Inta
  * Cửa nạp vừa từ chối `raw` với lỗi `err`: tiền kiểm + giữ ở bể (giao dịch riêng), gắn error.intake. Lỗi khi ghi bể KHÔNG che lỗi
  * cửa nạp (bể là phần hướng dẫn, không được làm hỏng phản hồi).
  */
-export async function recordRejection(auth: AuthContext, raw: unknown, channel: IntakeChannel, err: AppError): Promise<void> {
+export async function recordRejection(auth: AuthContext, raw: unknown, channel: IntakeChannel, err: AppError, opts: { guard?: string } = {}): Promise<void> {
   try {
     const out = await db.transaction().execute(async (trx) => {
-      const pf = await preflight(trx, auth, raw);
+      const pf = await preflight(trx, auth, raw, opts); // dấu Commit Guard của lần nộp (nếu có) → bể ghi IN-GUARD-001 như cửa nạp
       const row = await insertRow(trx, auth, raw, channel, 'open', pf.findings, pf.score, { code: err.code, message: err.message, details: err.details ?? null });
       return { id: String(row.id), attempt: row.attempt_no, score: pf.score, findings: pf.findings };
     });
@@ -129,3 +130,21 @@ export async function deleteExpired(trx: Db, tenantId: string, keepDays: number,
     .where('status', '=', 'trial').where('last_seen_at', '<', new Date(now.getTime() - trialDays * 86_400_000)).executeTakeFirst();
   return Number(closed.numDeletedRows ?? 0) + Number(trial.numDeletedRows ?? 0);
 }
+
+/**
+ * Mặt hàng vừa kích hoạt: mục bể đang mở có dòng mang mã đó → tiền kiểm lại (giữ nguyên văn, chỉ cập nhật phát hiện + điểm).
+ * Mục hết lỗi chặn vẫn ở trạng thái `open` — người lập bấm Nộp lại hoặc nguồn gửi lại (R-INTAKE-8: ưu tiên sửa ở nguồn).
+ */
+export async function recheckInboxForSkus(trx: Db, auth: AuthContext, skus: readonly string[]): Promise<{ checked: number; cleared: number }> {
+  if (!skus.length) return { checked: 0, cleared: 0 };
+  const rows = await trx.selectFrom('intake_inbox').select(['id', 'payload_raw']).where('tenant_id', '=', auth.tenantId).where('status', '=', 'open')
+    .where((eb) => eb.or(skus.map((s) => eb(sql`payload_raw`, '@>', sql`${JSON.stringify({ lines: [{ sku: s }] })}::jsonb`)))).execute();
+  let cleared = 0;
+  for (const r of rows) {
+    const res = await preflight(trx, auth, r.payload_raw);
+    if (!res.findings.some((f) => f.severity === 'block')) cleared += 1;
+    await trx.updateTable('intake_inbox').set({ findings: JSON.stringify(res.findings), score: res.score, last_seen_at: new Date() }).where('id', '=', r.id).execute();
+  }
+  return { checked: rows.length, cleared };
+}
+

@@ -1,0 +1,176 @@
+<!doctype html>
+<!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — bản mẫu tĩnh hai cổng kiểm chuẩn (ADR-0019 / R-GATE): quy trình, sáu tình huống, góc nhìn người dùng và dev / AI cạnh nhau -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hai cổng kiểm chuẩn — bản mẫu</title>
+<style>
+:root{--bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--ok-bg:#e8f5ee;--warn-bg:#fff4e0;--bad-bg:#fdecea;--draft:#6b4fbb;--draft-bg:#f1edfb;--code:#0f1720}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin-bottom:12px}
+.flow{display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:stretch;gap:0;margin-bottom:14px}
+.gate{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.gate h3{margin:0 0 6px;font-size:14px}.gate .s{font-size:12.5px;color:var(--muted)}
+.gate .hold{margin-top:6px;font-size:12.5px}
+.arrow{display:grid;place-items:center;color:var(--muted);font-size:20px}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:600}
+.p-draft{background:var(--draft-bg);color:var(--draft)}.p-inbox{background:var(--warn-bg);color:var(--warn)}.p-ok{background:var(--ok-bg);color:var(--ok)}.p-bad{background:var(--bad-bg);color:var(--bad)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font:inherit;cursor:pointer;font-size:13px}
+.tabs button.on{background:#e3edfb;border-color:var(--accent);color:var(--accent);font-weight:700}
+.view{display:none}.view.on{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.card .hd{padding:8px 12px;border-bottom:1px solid var(--line);font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card .bd{padding:10px 12px}
+.who{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.f{border:1px solid var(--line);border-radius:8px;margin-top:8px}
+.f .t{padding:6px 10px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.f .w{padding:6px 10px;border-top:1px solid var(--line);color:#2c3a4b}
+.f ol{margin:0;padding:6px 10px 8px 28px;border-top:1px solid var(--line)}
+.f.block{background:var(--bad-bg)}.f.warn{background:var(--warn-bg)}.f.draft{background:var(--draft-bg)}
+.mono,.json{font-family:ui-monospace,Consolas,monospace}
+.json{background:var(--code);color:#d6e2f0;font-size:12px;line-height:1.45;padding:10px 12px;margin:0;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto}
+.json .k{color:#8fc1ff}.json .s{color:#b5e3a3}.json .n{color:#f3c178}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.draft{background:var(--draft);border-color:var(--draft);color:#fff}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.st{font-size:11.5px;border-radius:4px;padding:1px 6px;background:var(--ok-bg);color:var(--ok)}.st.x{background:var(--bad-bg);color:var(--bad)}.st.n{background:#eef0f3;color:var(--muted)}
+.note{font-size:12px;color:var(--muted)}
+@media (max-width:860px){.view.on{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);height:28px}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Hai cổng kiểm chuẩn <span class="note">bản mẫu tĩnh · PHASE-024 · 60 · ADR-0019 / R-GATE</span></h1>
+<div class="sub"><b>Không gì chạm sổ mà chưa qua cổng; không gì bị chặn mà không có tên, lý do và chỗ để sửa.</b> Mỗi tình huống: trái là người dùng, phải là dev / AI của dev — cùng một mã, cùng một lý do.</div>
+
+<div class="flow">
+  <div class="gate"><h3>Gate A · Danh mục</h3><div class="s">khung Vì sao: ℹ ▶ ⚠ ✘</div><div class="hold">còn ✘ → <span class="pill p-draft">Nháp</span> · chỉ ⚠ + lý do → <span class="pill p-ok">Đang dùng</span> · hạng 3 → phiên bản nháp chờ duyệt</div></div>
+  <div class="arrow">→</div>
+  <div class="gate"><h3>Gate B · Nghiệp vụ</h3><div class="s">L1 khuôn · L2 số học · L3 danh mục + Item Resolution · L4 kỳ · L5 định khoản thử · Commit Guard</div><div class="hold">có ✘ → <span class="pill p-inbox">Bể chờ</span> · đạt / ⚠ + lý do → sự việc</div></div>
+  <div class="arrow">→</div>
+  <div class="gate"><h3>Kernel</h3><div class="s">Luật định khoản → Ghi sổ (trigger) + Outbox → Giá vốn (sau) → Kiểm chuẩn (đêm)</div><div class="hold">nháp kích hoạt → <b>bể tự kiểm lại</b></div></div>
+</div>
+
+<div class="tabs">
+  <button class="on" data-v="t1">1 · POS gửi mã lạ</button>
+  <button data-v="t2">2 · Mặt hàng thiếu ĐVT → nháp</button>
+  <button data-v="t3">3 · Chứng từ dùng mặt hàng nháp</button>
+  <button data-v="t4">4 · NCC không MST (⚠)</button>
+  <button data-v="t5">5 · Đổi nhóm hạch toán (hạng 3)</button>
+  <button data-v="t6">6 · Cấu hình đổi giữa chừng</button>
+</div>
+
+<section class="view on" id="t1">
+  <div class="card"><div class="hd"><span class="who">Người dùng</span> Trạm kiểm tra đầu vào · Cần sửa <span class="pill p-inbox">Bể chờ · 41 mục</span></div><div class="bd">
+    <div><b>pos:CN02:HD-00912</b> · CN02 · 12/10 09:14 · nguồn <span class="mono">pos-cn02</span></div>
+    <div class="steps"><span class="st">L1 khuôn</span><span class="st">L2 số học</span><span class="st x">L3 danh mục</span><span class="st n">L4</span><span class="st n">L5</span></div>
+    <div class="f block"><div class="t">✘ IN-ITEM-001 · dòng 3 · mã <span class="mono">SP000912</span> không tra được ra mặt hàng</div>
+      <div class="w">Sổ kho và giá vốn không biết đây là hàng gì; tự tạo sẽ ra mặt hàng chưa phân loại và ghi sai tài khoản.</div>
+      <ol><li>Thêm mã ngoài <span class="mono">external:pos-cn02 SP000912</span> vào mặt hàng có sẵn <button class="btn">Chọn mặt hàng…</button></li><li>hoặc <button class="btn">Tạo mặt hàng từ dòng này</button> (điền sẵn tên, ĐVT; lưu nháp nếu còn thiếu)</li><li>Sửa xong: <b>Nộp lại</b>, hoặc để POS gửi lại — mục tự đóng</li></ol></div>
+    <div class="note" style="margin-top:6px">Chưa có gì vào sổ. Doanh thu CN02 của 41 chứng từ đang chờ.</div>
+  </div></div>
+  <div class="card"><div class="hd"><span class="who">Dev / AI</span> phản hồi <span class="mono">POST /api/v1/documents</span></div>
+<pre class="json">{ <span class="k">"ok"</span>: false, <span class="k">"gate"</span>: <span class="s">"B"</span>,
+  <span class="k">"held"</span>: { <span class="k">"kind"</span>: <span class="s">"inbox"</span>, <span class="k">"id"</span>: <span class="s">"inb_01JC9…"</span> },
+  <span class="k">"findings"</span>: [{
+    <span class="k">"code"</span>: <span class="s">"IN-ITEM-001"</span>, <span class="k">"step"</span>: <span class="s">"L3"</span>, <span class="k">"level"</span>: <span class="s">"block"</span>,
+    <span class="k">"path"</span>: <span class="s">"lines[2].sku"</span>, <span class="k">"got"</span>: <span class="s">"SP000912"</span>,
+    <span class="k">"title"</span>: <span class="s">"Mã SP000912 không tra được ra mặt hàng tại 12/10/2026"</span>,
+    <span class="k">"why"</span>: <span class="s">"Dữ liệu ngoài phải qua validation trước khi chạm sổ…"</span>,
+    <span class="k">"fix"</span>: [{ <span class="k">"action"</span>: <span class="s">"core.item.add-code"</span>,
+             <span class="k">"input"</span>: { <span class="k">"kind"</span>: <span class="s">"external:pos-cn02"</span>, <span class="k">"code"</span>: <span class="s">"SP000912"</span> } }],
+    <span class="k">"rule"</span>: <span class="s">"R-ITEM-6"</span>, <span class="k">"learn"</span>: <span class="s">"docs/huong-dan/ma-loi/IN-ITEM-001.md"</span> }],
+  <span class="k">"requestId"</span>: <span class="s">"req_7Q…"</span>, <span class="k">"traceId"</span>: <span class="s">"4f2a…9c"</span> }</pre>
+    <div class="bd note">AI của dev gọi <span class="mono">core.findings.explain("IN-ITEM-001")</span> để đọc đúng nguyên nhân, không đoán; <span class="mono">core.intake.get("inb_01JC9…")</span> để xem nguyên văn đã giữ.</div>
+  </div>
+</section>
+
+<section class="view" id="t2">
+  <div class="card"><div class="hd"><span class="who">Người dùng</span> Mặt hàng · thêm mới</div><div class="bd">
+    <div><b>SUA01</b> · Sữa tươi tiệt trùng 1L · ĐVT gốc: hộp</div>
+    <div class="f block"><div class="t">✘ ITEM-HINT-003 · chưa khai quy đổi ĐVT "thùng"</div><div class="w">POS bán theo thùng; không có quy đổi thì sổ kho không trừ được tồn đúng số hộp.</div></div>
+    <div class="f warn"><div class="t">⚠ ITEM-HINT-004 · chưa phân loại hạch toán</div><div class="w">Sẽ ghi theo nhóm mặc định HH (156 / 632 / 5111) nếu đơn vị cho phép.</div></div>
+    <div class="row"><button class="btn draft">Lưu nháp (còn 1 lỗi chặn)</button><button class="btn" disabled>Kích hoạt</button><span class="note">Nháp: lưu để sửa tiếp, chưa dùng được trên chứng từ.</span></div>
+    <div class="f draft"><div class="t"><span class="pill p-draft">Nháp</span> SUA01 · thiếu: quy đổi thùng · tạo 22:41 bởi Lan</div></div>
+  </div></div>
+  <div class="card"><div class="hd"><span class="who">Dev / AI</span> phản hồi <span class="mono">core.item.upsert</span></div>
+<pre class="json">{ <span class="k">"ok"</span>: true, <span class="k">"data"</span>: { <span class="k">"itemId"</span>: <span class="s">"01JBX…K7"</span>, <span class="k">"status"</span>: <span class="s">"draft"</span> },
+  <span class="k">"meta"</span>: { <span class="k">"gate"</span>: <span class="s">"A"</span>,
+    <span class="k">"held"</span>: { <span class="k">"kind"</span>: <span class="s">"draft"</span>, <span class="k">"id"</span>: <span class="s">"01JBX…K7"</span> },
+    <span class="k">"findings"</span>: [
+      { <span class="k">"code"</span>: <span class="s">"ITEM-HINT-003"</span>, <span class="k">"level"</span>: <span class="s">"block"</span>, <span class="k">"field"</span>: <span class="s">"units"</span> },
+      { <span class="k">"code"</span>: <span class="s">"ITEM-HINT-004"</span>, <span class="k">"level"</span>: <span class="s">"warn"</span>, <span class="k">"field"</span>: <span class="s">"classification"</span> } ] } }</pre>
+    <div class="bd note">Lưu nháp là <b>200</b>, không phải lỗi: bản khai không mất (R-GATE-3). Kích hoạt khi còn ✘ trả <b>409</b> với cùng danh sách.</div>
+  </div>
+</section>
+
+<section class="view" id="t3">
+  <div class="card"><div class="hd"><span class="who">Người dùng</span> Trạm kiểm tra đầu vào · Cần sửa</div><div class="bd">
+    <div class="f block"><div class="t">✘ IN-ITEM-009 · mặt hàng <b>SUA01</b> còn nháp</div><div class="w">Chứng từ không ghi sổ được với mặt hàng chưa kích hoạt. Thiếu: quy đổi ĐVT "thùng".</div>
+      <ol><li><button class="btn">Mở bản nháp SUA01 →</button> khai quy đổi, Kích hoạt</li><li>Chứng từ này <b>tự kiểm lại</b> khi SUA01 được kích hoạt — không phải nộp lại</li></ol></div>
+    <div class="row"><span class="pill p-ok">22:55 · SUA01 kích hoạt → 7 mục chờ đã kiểm lại, 7 đạt, đã thành sự việc</span></div>
+  </div></div>
+  <div class="card"><div class="hd"><span class="who">Dev / AI</span> sự kiện</div>
+<pre class="json">bizcity.masterdata.item.activated  { <span class="k">"itemId"</span>: <span class="s">"01JBX…K7"</span>, <span class="k">"waiting"</span>: <span class="n">7</span> }
+  → core.intake.recheck  7 mục  → <span class="s">resubmitted</span> × 7
+bizcity.ledger.entry.posted        × 7</pre>
+    <div class="bd note">Một ⚠ ở danh mục (vd chưa phân loại nhưng đã cho phép nhóm mặc định) <b>không</b> sinh IN-ITEM-009 — chỉ ✘ mới giữ lại (R-GATE-4).</div>
+  </div>
+</section>
+
+<section class="view" id="t4">
+  <div class="card"><div class="hd"><span class="who">Người dùng</span> Đối tượng · NCC-W2</div><div class="bd">
+    <div class="f warn"><div class="t">⚠ PART-HINT-002 · nhà cung cấp chưa có mã số thuế</div><div class="w">Hoá đơn đầu vào sẽ bị cảnh báo khi kê khai, không đối chiếu được với hoá đơn điện tử.</div></div>
+    <div class="row"><button class="btn primary">Ghi (có 1 cảnh báo)</button></div>
+    <div class="f" style="background:var(--warn-bg)"><div class="t">Lý do bạn vẫn lưu (bắt buộc ≥ 5 ký tự)</div><div class="w"><span class="mono">Hộ kinh doanh, không có MST</span> — bạn đã được cảnh báo; lưu là tự chịu trách nhiệm.</div></div>
+    <div class="row"><span class="pill p-ok">Đang dùng</span><span class="note">không thành nháp: cảnh báo mềm giữ đúng nghĩa mềm</span></div>
+  </div></div>
+  <div class="card"><div class="hd"><span class="who">Dev / AI</span> <span class="mono">PUT /api/v1/partners/NCC-W2</span> (có từ 02/11)</div>
+<pre class="json">{ <span class="k">"ok"</span>: true, <span class="k">"data"</span>: { <span class="k">"code"</span>: <span class="s">"NCC-W2"</span>, … },
+  <span class="k">"meta"</span>: { <span class="k">"findings"</span>: [
+    { <span class="k">"code"</span>: <span class="s">"PART-HINT-001"</span>, <span class="k">"level"</span>: <span class="s">"info"</span> },
+    { <span class="k">"code"</span>: <span class="s">"PART-HINT-002"</span>, <span class="k">"level"</span>: <span class="s">"warn"</span>, <span class="k">"draft"</span>: true } ] } }
+<span class="k">audit_logs</span>: catalog.warn.ack  { codes: [PART-HINT-002], reason: "Hộ kinh doanh…" }
+<span class="k">qua API không lý do</span>: catalog.warn.unacked  (vẫn lưu, vẫn có bằng chứng)</pre>
+  </div>
+</section>
+
+<section class="view" id="t5">
+  <div class="card"><div class="hd"><span class="who">Người dùng</span> Nhóm hạch toán HH-THUC-PHAM · 1561 → 152</div><div class="bd">
+    <div class="f warn"><div class="t">Hạng 3 · đổi bản chất — cần kế toán trưởng duyệt</div><div class="w">412 mặt hàng đang tồn 1,28 tỷ. Từ ngày hiệu lực, hàng nhập ghi 152; tồn hiện tại cần chứng từ phân loại lại Nợ 152 / Có 1561.</div>
+      <ol><li>Chọn ngày hiệu lực · <button class="btn">Xem tác động</button> (mô phỏng định khoản 30 chứng từ gần nhất)</li><li>Gửi duyệt → <span class="pill p-draft">Phiên bản nháp v4</span>; v3 (1561) <b>vẫn chạy</b></li><li>Kế toán trưởng duyệt → v4 hiệu lực từ ngày đã chọn + lập chứng từ phân loại lại</li></ol></div>
+  </div></div>
+  <div class="card"><div class="hd"><span class="who">Dev / AI</span> <span class="mono">core.item.reclassify</span></div>
+<pre class="json">{ <span class="k">"ok"</span>: true, <span class="k">"data"</span>: { <span class="k">"draftId"</span>: <span class="s">"cls_01JC…"</span>, <span class="k">"status"</span>: <span class="s">"pending_approval"</span>,
+  <span class="k">"impact"</span>: { <span class="k">"items"</span>: <span class="n">412</span>, <span class="k">"openDocs"</span>: <span class="n">3</span>, <span class="k">"stockValue"</span>: <span class="s">"(theo quyền)"</span> } },
+  <span class="k">"meta"</span>: { <span class="k">"gate"</span>: <span class="s">"A"</span>, <span class="k">"changeClass"</span>: <span class="n">3</span>,
+    <span class="k">"held"</span>: { <span class="k">"kind"</span>: <span class="s">"draft"</span>, <span class="k">"id"</span>: <span class="s">"cls_01JC…"</span> } } }</pre>
+    <div class="bd note">Danh mục không bao giờ tự sinh bút toán: chứng từ phân loại lại đi Gate B như mọi chứng từ (ADR-0018).</div>
+  </div>
+</section>
+
+<section class="view" id="t6">
+  <div class="card"><div class="hd"><span class="who">Người dùng</span> (thường không thấy gì)</div><div class="bd">
+    <div>Kế toán trưởng phát hành chế độ v5 đúng lúc POS đang gửi lô 200 chứng từ.</div>
+    <div class="steps"><span class="st">L1–L5 theo v4</span><span class="st x">Commit Guard: v4 ≠ v5</span><span class="st">chạy lại L3–L5 theo v5</span><span class="st">commit</span></div>
+    <div class="f block" style="margin-top:8px"><div class="t">Chỉ khi chạy lại vẫn không đạt: ✘ IN-GUARD-001 · cấu hình vừa đổi</div><div class="w">Chứng từ được kiểm theo cấu hình cũ, cấu hình mới làm nó không còn đạt (vd lý do vừa ngừng dùng). Giữ ở bể, không ghi theo kết quả cũ.</div></div>
+  </div></div>
+  <div class="card"><div class="hd"><span class="who">Dev / AI</span> span</div>
+<pre class="json">intake.preflight   policy=v4 catalog=1288  ✔
+posting.commit     guard: policy v4→v5  ⟳ re-run L3–L5
+intake.preflight   policy=v5 catalog=1288  ✔
+ledger.post        BT26-0013001</pre>
+  </div>
+</section>
+
+<div class="note" style="margin-top:12px">Năm nguyên tắc của chủ dự án → luật: thư viện mã chung (R-GATE-5) · không chặn im lặng (R-GATE-2) · nháp / bể chờ (R-GATE-3, R-INTAKE-1) · trải nghiệm dev cùng AI (khuôn JSON chung, dryRun, MCP đọc) · quy trình tường minh (R-GATE-8: bước nào, mã nào, giữ ở đâu).</div>
+</div>
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));});
+</script>
+</body></html>

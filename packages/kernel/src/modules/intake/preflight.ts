@@ -11,6 +11,7 @@
  *   L4 nghiệp vụ   chủ chứng từ (ownDocument, khoá app) → IN-BIZ-003; phiên bản lùi → IN-BIZ-004; cùng phiên bản khác nội dung
  *                  → IN-BIZ-005; số hoá đơn trùng chứng từ khác → IN-BIZ-006; ngày hoá đơn xa ngày chứng từ → IN-BIZ-007
  *   L5             định khoản thử — W5 (PHASE-021), không ở đây
+ *   Guard          dấu cấu hình (guard.ts); có dấu cũ khác dấu hiện hành + còn lỗi chặn → IN-GUARD-001 (PHASE-024 S024-29)
  *
  * R-INTAKE-4: mã `block` + `door` ⇔ cửa nạp từ chối cùng dữ liệu — kiểm bằng test cặp (apps/api/test/intake-preflight.test.ts).
  */
@@ -20,12 +21,18 @@ import { AppError } from '@bizcity/platform/core/errors';
 import type { AuthContext } from '@bizcity/platform/core/auth';
 import type { Db } from '@bizcity/platform/db/client';
 import { findBranch, totalsProblems } from '../documents/document.service.js';
+import { draftItemFindings } from './draft-items.js';
+import { commitGuard } from './guard.js';
 
 export interface PreflightResult {
   findings: IntakeFinding[];
   score: number;
   /** Có khi khuôn L1 đạt. */
   parsed?: IngestDocument;
+  /** [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: dấu cấu hình (Commit Guard) — gửi kèm lúc nộp để cửa nạp biết cấu hình có đổi sau lần kiểm này không. */
+  guard: string;
+  /** Có khi người gọi đưa dấu cũ: true = cấu hình đã đổi kể từ dấu đó. */
+  guardChanged?: boolean;
 }
 
 type ZodIssueLike = { code: string; path: (string | number)[]; received?: unknown; expected?: unknown; options?: unknown[]; validation?: unknown; type?: string };
@@ -86,7 +93,7 @@ const MST_RE = /^\d{10}(-\d{3})?$/;
 const DAY_MS = 86_400_000;
 
 /** Tiền kiểm một chứng từ thô (chưa parse). Đọc trong `trx` (RLS theo đơn vị của người gọi). */
-export async function preflight(trx: Db, auth: AuthContext, raw: unknown): Promise<PreflightResult> {
+export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: { guard?: string } = {}): Promise<PreflightResult> {
   const findings: IntakeFinding[] = [];
 
   // ── L1 khuôn ──
@@ -137,6 +144,8 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown): Promi
   if (skus.length) {
     const have = new Set((await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('sku', 'in', skus).execute()).map((p) => p.sku));
     for (const s of skus) if (!have.has(s)) findings.push(intakeFinding('IN-MD-004', 'lines[].sku', { got: s }));
+    // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: mặt hàng nháp → IN-ITEM-009 (cùng luật cửa nạp, R-INTAKE-4)
+    findings.push(...(await draftItemFindings(trx, auth.tenantId, skus)));
   }
   const taxCode = (r.partner as { taxCode?: unknown } | undefined)?.taxCode;
   if (typeof taxCode === 'string' && taxCode.trim() && !MST_RE.test(taxCode.trim())) findings.push(intakeFinding('IN-MD-005', 'partner.taxCode', { got: taxCode, expected: '10 chữ số hoặc 10 chữ số-3 chữ số' }));
@@ -166,8 +175,13 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown): Promi
     }
   }
 
+  // ── Commit Guard (R-GATE-8): dấu cũ khác dấu hiện hành VÀ còn lỗi chặn → IN-GUARD-001 (cùng điều kiện cửa nạp từ chối, R-INTAKE-4) ──
+  const guard = await commitGuard(trx, auth.tenantId, raw);
+  const guardChanged = opts.guard !== undefined ? opts.guard !== guard : undefined;
+  if (guardChanged && findings.some((f) => f.severity === 'block')) findings.push(intakeFinding('IN-GUARD-001', null, { got: opts.guard, expected: guard }));
+
   const sorted = sortFindings(findings);
-  return { findings: sorted, score: intakeScore(sorted), ...(parsed.success ? { parsed: parsed.data } : {}) };
+  return { findings: sorted, score: intakeScore(sorted), ...(parsed.success ? { parsed: parsed.data } : {}), guard, ...(guardChanged !== undefined ? { guardChanged } : {}) };
 }
 
 /** JSON có khoá sắp xếp — so nội dung không phụ thuộc thứ tự khoá. */

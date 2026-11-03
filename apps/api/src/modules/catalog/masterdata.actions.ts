@@ -7,6 +7,8 @@
  *
  * Mã hàng không ép SKU_RULE ở đây: SKU_RULE là quy tắc sinh mã của từng đơn vị (catalog/sku-rule.ts), cửa đồng bộ cũng không ép.
  */
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: core.product.upsert áp cổng danh mục (mặt hàng nháp)
+import { applyItemGate } from '../products/item.hints.js';
 import { sql } from 'kysely';
 import { z } from 'zod';
 import { defineAction, type AnyActionDef } from '../../core/actions.js';
@@ -57,6 +59,8 @@ const productUpsert = defineAction({
         updated_at: new Date(),
       }))
       .execute();
+    // Gate A ([2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28): còn lỗi chặn → mặt hàng nháp, chưa dùng được trên chứng từ (IN-ITEM-009).
+    await applyItemGate(tx, ctx.legacyAuth, i.sku);
     return { sku: i.sku };
   },
 });

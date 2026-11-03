@@ -17,6 +17,8 @@ import { sql } from 'kysely';
 import type { Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
+import type { AuthContext } from '../../core/auth.js';
+import { applyItemGate } from '../products/item.hints.js';
 
 // ----------------------------------------------------------------------------------------------- kiểu dữ liệu
 
@@ -40,6 +42,7 @@ type ProductRow = {
   posting_group_code: string | null; tax_out_code: string | null; tax_in_code: string | null; excise_rate: string | null; is_active: boolean;
   barcode: string; image_url: string; description: string; weight_kg: string | null; origin: string;
   is_main: boolean; is_under_24m: boolean; no_sale: boolean; export_adjust: boolean; is_kct: boolean; track_identifier: boolean; updated_at: Date; parent_sku: string | null;
+  is_draft: boolean; draft_codes: string[];
 };
 
 const num = (v: string | null | undefined) => (v === null || v === undefined ? null : Number(v));
@@ -51,13 +54,14 @@ export function productDto(p: ProductRow) {
     postingGroupCode: p.posting_group_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, exciseRate: num(p.excise_rate), isActive: p.is_active,
     barcode: p.barcode, imageUrl: p.image_url, description: p.description, weightKg: num(p.weight_kg), origin: p.origin,
     isMain: p.is_main, isUnder24m: p.is_under_24m, noSale: p.no_sale, exportAdjust: p.export_adjust, isKct: p.is_kct, trackIdentifier: p.track_identifier,
-    parentSku: p.parent_sku, updatedAt: p.updated_at,
+    parentSku: p.parent_sku, updatedAt: p.updated_at, isDraft: p.is_draft, draftCodes: p.draft_codes,
   };
 }
 
 const PRODUCT_COLS = [
   'sku', 'name', 'unit', 'note', 'group_code', 'industry_code', 'brand_code', 'type_code', 'posting_group_code', 'tax_out_code', 'tax_in_code', 'excise_rate',
   'is_active', 'barcode', 'image_url', 'description', 'weight_kg', 'origin', 'is_main', 'is_under_24m', 'no_sale', 'export_adjust', 'is_kct', 'track_identifier', 'updated_at', 'parent_sku',
+  'is_draft', 'draft_codes', // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: mặt hàng nháp (0061)
 ] as const;
 
 /** Mã VAT ra mang nghĩa "không chịu thuế GTGT" — cờ is_kct suy từ mã VAT ra, không khai riêng. */
@@ -263,6 +267,8 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
         .onConflict((oc) => oc.columns(['tenant_id', 'price_list_code', 'sku', 'unit']).doUpdateSet(values)).execute();
     }
   }
+  // Gate A ([2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28): còn lỗi chặn → nháp; vừa đủ → kích hoạt + bể chờ kiểm lại (mọi đường lưu đi qua đây).
+  await applyItemGate(trx, { tenantId, actor, actorName: actor, kind: 'user', role: 'owner', permissions: new Set<string>() } as unknown as AuthContext, sku);
   if (opts.quiet) return null; // nạp hàng loạt: không ghi nhật ký từng mặt hàng, không đọc lại
   await writeAudit(trx, { tenantId, actor, action: exists ? 'catalog.product.save' : 'catalog.product.create', objectType: 'product', objectId: sku, after: b });
   return getProduct(trx, tenantId, sku);

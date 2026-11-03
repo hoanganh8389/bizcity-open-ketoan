@@ -482,6 +482,14 @@
             "screen-path:GHOST_SCREEN",
             "intake-missing:IN-XAU-001"
           ]
+        },
+        "SC-FIND-1": {
+          "min": 3,
+          "keys": [
+            "dup:IN-XAU-001",
+            "fix:ACC-XAU-001",
+            "page:missing"
+          ]
         }
       }
     },

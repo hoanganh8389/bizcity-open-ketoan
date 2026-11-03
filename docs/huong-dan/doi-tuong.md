@@ -90,3 +90,16 @@ Lọc danh sách theo nhóm, loại (khách hàng / nhà cung cấp…), trạng
 Các ô này do kế toán nhập; chứng từ và đồng bộ danh mục gửi sang không ghi đè (trừ khi bên gửi gửi kèm đúng trường đó).
 
 Nhóm **Cơ quan nhà nước** có sẵn hai nhóm con: **Cơ quan thuế**, **Cơ quan bảo hiểm**.
+
+## Khung "Vì sao" khi khai báo <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 -->
+
+Dưới form đối tượng có khung **Vì sao** đổi theo ô bạn vừa chọn:
+
+| Dấu | Nghĩa | Bạn làm gì |
+|---|---|---|
+| ℹ | nhắc hệ quả (vd tài khoản con kế thừa bản chất tài khoản cha) | đọc |
+| ▶ | giải thích bản chất (bấm để mở) | đọc khi cần |
+| ⚠ | cảnh báo mềm: hợp lệ nhưng thường sai về kế toán | sửa bằng nút gợi ý, **hoặc** vẫn Ghi — khi đó phải ghi lý do (ít nhất 5 ký tự); lý do vào nhật ký, người lưu tự chịu trách nhiệm vì đã được cảnh báo |
+| ✘ | chặn: sai toàn vẹn dữ liệu | phải sửa mới Ghi được |
+
+Nút Ghi hiện số cảnh báo đang có ("Ghi (có 1 cảnh báo)"). Nội dung cảnh báo đang ở dạng **nháp** tới khi kế toán trưởng duyệt.

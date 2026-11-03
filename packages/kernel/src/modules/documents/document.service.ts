@@ -21,6 +21,7 @@
  *   4. Định khoản lỗi (thiếu cấu hình, kỳ khoá…) → giao dịch huỷ hết, rồi lưu chứng từ ở
  *      trạng thái "error" kèm lý do để kế toán sửa cấu hình và bấm "Ghi sổ lại".
  */
+// [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: cửa nạp từ chối chứng từ có mặt hàng nháp (IN-ITEM-009, R-GATE-6)
 import { listSignatures } from '@bizcity/platform/documents/signature.routes';
 import { assertDateRules, dateRuleViolation, readDataLock } from '@bizcity/platform/core/date-rules';
 import { isAutoMode, needsApproval } from '../../core/posting-modes.js';
@@ -48,6 +49,8 @@ import { ledgerService } from '../ledger/ledger.service.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { hasTaxInvoice, isStockDocument, needsBranchContext, postingService, type PostContext } from '../posting/posting.service.js';
+import { assertNoDraftItems } from '../intake/draft-items.js';
+import { preflight } from '../intake/preflight.js';
 import type { StockContext } from '../posting/rules/sale.rule.js';
 import { inventoryMovementRepository } from '../inventory/inventory-movement.repository.js';
 import { taxInvoiceRepository } from '../tax-invoices/tax-invoice.repository.js';
@@ -296,14 +299,14 @@ export async function draftDocumentIn(trx: Db, auth: AuthContext, doc: IngestDoc
  * ném ra để cả giao dịch huỷ — dữ liệu module và sổ cùng commit hoặc cùng huỷ, dry-run huỷ được, bằng chứng ghi thất bại. Cửa nạp
  * HTTP cũ (documentService.ingest) vẫn lưu chứng từ ở trạng thái lỗi trong giao dịch riêng để kế toán sửa ở ACC14.
  */
-export async function submitDocumentIn(trx: Db, auth: AuthContext, raw: unknown): Promise<IngestResult> {
+export async function submitDocumentIn(trx: Db, auth: AuthContext, raw: unknown, opts: { guard?: string } = {}): Promise<IngestResult> {
   const prep: { doc: unknown; skip?: string } = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, raw) : { doc: raw };
   if (prep.skip) return { docKey: String((prep.doc as { docKey?: unknown })?.docKey ?? '?'), version: Number((prep.doc as { version?: unknown })?.version ?? 1), status: 'unchanged' };
   const parsed = ingestDocumentSchema.safeParse(prep.doc);
   // [2026-11-02 11:47 PM Johnny Chu - Chu Hoàng Anh] R-ERR — details của lỗi sai khuôn là mảng câu (zodIssueTexts) thay flatten() — web chỉ hiện details dạng mảng (apps/web/src/lib/api.ts errorText), trước đây người dùng không thấy trường nào sai
   if (!parsed.success) throw Errors.validation('Chứng từ không đúng khuôn', zodIssueTexts(parsed.error));
   assertTotals(parsed.data);
-  return postDocumentIn(trx, auth, parsed.data);
+  return postDocumentIn(trx, auth, parsed.data, opts);
 }
 
 /** Phát bizcity.ledger.entry.reversed khi huỷ / bỏ định khoản đảo bút toán mà không ghi phiên bản mới. */
@@ -336,11 +339,21 @@ export async function logPosting(trx: Db, v: {
  *    (sổ hoá đơn, số liệu bán hàng, hàng vào / ra kho); posted_version = phiên bản vừa định khoản. Không xoá gì.
  * Mỗi bước ghi nhật ký định khoản (posting_log).
  */
-export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; hold?: boolean } = {}): Promise<IngestResult> {
+export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; hold?: boolean; guard?: string } = {}): Promise<IngestResult> {
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 D5 mức 2): khoá app chỉ nộp chứng từ của app — docKey `<app>:…`, sourceSystem = app; một chỗ chặn cho mọi cửa nạp
   // Khoá app ngoài tiến trình (ADR-0011 mức 2): như module mức 1, chỉ nộp / sửa chứng từ mang tiền tố của app. Đặt ở đây để
   // mọi cửa (POST /documents, /documents/submit, nhận theo lô) cùng một luật.
   if (auth.app) doc = ownDocument(auth.app, doc, 'app');
+  // [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: Commit Guard — nguồn gửi dấu cấu hình lúc Kiểm thử; cấu hình đã đổi thì chạy lại tiền kiểm MỘT lần, còn lỗi chặn → IN-GUARD-001.
+  if (opts.guard) {
+    const pf = await preflight(trx, auth, doc, { guard: opts.guard });
+    if (pf.findings.some((f) => f.code === 'IN-GUARD-001')) {
+      const blocks = pf.findings.filter((f) => f.severity === 'block' && f.code !== 'IN-GUARD-001').map((f) => f.code);
+      throw Errors.validation(`Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn: ${[...new Set(blocks)].join(', ')} (IN-GUARD-001) — sửa rồi Kiểm thử lại để lấy dấu mới`, { findings: pf.findings });
+    }
+  }
+  // Mặt hàng còn nháp (Gate A chưa kích hoạt) thì không nhận vào sổ — bể chờ giữ nguyên văn với IN-ITEM-009 (ADR-0019).
+  await assertNoDraftItems(trx, auth.tenantId, doc);
   const branch = await findBranch(trx, auth.tenantId, doc.branchCode);
   const branchId = branch.id;
   const partnerId = await documentPartnerId(trx, auth.tenantId, doc);
@@ -457,7 +470,7 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   return { docKey: doc.docKey, version: doc.version, status: 'posted' as const, entryIds, kept: kept.length, updated: updated.length, reversed };
 }
 
-async function processDocument(auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean } = {}): Promise<IngestResult> {
+async function processDocument(auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; guard?: string } = {}): Promise<IngestResult> {
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14: khoá app — áp luật chủ chứng từ trước, để bản lưu lỗi (recordFailure) cũng mang nguồn = app
   if (auth.app) doc = ownDocument(auth.app, doc, 'app');
   assertTotals(doc);
@@ -516,7 +529,7 @@ async function actorNames(tenantId: string, actors: string[]): Promise<Map<strin
 }
 
 /** Nhận một chứng từ (một lần thử, không bể chờ) — documentService.ingest bọc thêm bể chờ. */
-async function ingestOne(auth: AuthContext, input: unknown): Promise<IngestResult> {
+async function ingestOne(auth: AuthContext, input: unknown, guard?: string): Promise<IngestResult> {
   // Đẩy vào bằng khoá API: chuẩn hoá như chứng từ kéo qua kết nối cùng mã nguồn (đổi hình thức thanh toán…).
   const prep = auth.kind === 'apikey' ? await prepareIncoming(auth.tenantId, input) : { doc: input };
   const raw = prep.doc;
@@ -524,19 +537,19 @@ async function ingestOne(auth: AuthContext, input: unknown): Promise<IngestResul
   const parsed = ingestDocumentSchema.safeParse(raw);
   // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route nhận thân thô, khuôn kiểm ở đây (sai khuôn cũng vào bể chờ); details là mảng câu như lỗi kiểm route cũ
   if (!parsed.success) throw Errors.validation(ERROR_CATALOG.VALIDATION_ERROR.message, zodIssueTexts(parsed.error));
-  return processDocument(auth, parsed.data);
+  return processDocument(auth, parsed.data, guard ? { guard } : {});
 }
 
 export const documentService = {
   /** Nhận một chứng từ (dữ liệu thô từ API). */
-  async ingest(auth: AuthContext, input: unknown, channel: IntakeChannel = 'api'): Promise<IngestResult> {
+  async ingest(auth: AuthContext, input: unknown, channel: IntakeChannel = 'api', opts: { guard?: string } = {}): Promise<IngestResult> {
     // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2 (ADR-0014 D2): cửa nạp từ chối → giữ ở bể chờ (giao dịch riêng), lỗi mang error.intake; nhận được → đóng mục bể cùng docKey
     try {
-      const r = await ingestOne(auth, input);
+      const r = await ingestOne(auth, input, opts.guard);
       if (r.docKey && r.docKey !== '?') await closeBySource(db, auth.tenantId, r.docKey, auth.actor).catch(() => 0);
       return r;
     } catch (err) {
-      if (isDoorRejection(err)) await recordRejection(auth, input, channelOf(auth, channel), err);
+      if (isDoorRejection(err)) await recordRejection(auth, input, channelOf(auth, channel), err, opts);
       throw err;
     }
   },

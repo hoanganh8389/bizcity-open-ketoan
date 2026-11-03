@@ -52,6 +52,7 @@ export const LAYER_MAP = [
   ['core/auth.ts', 'P', 'permissions'],
   ['core/security/', 'P', 'permissions'],
   ['core/audit.ts', 'P', 'audit'],
+  ['core/catalog-warn.ts', 'P', 'audit'], // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — ghi nhận cảnh báo mềm form danh mục
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/module-manifest.ts', 'P', 'module-sdk'],
   ['core/settings.ts', 'P', 'bizcity.config'],
@@ -145,6 +146,7 @@ export const LAYER_MAP = [
   ['fastify-swagger.d.ts', 'K', 'kernel/public'],
   ['modules/system/evidence.routes.ts', 'P', 'audit'],
   ['modules/system/events.routes.ts', 'P', 'events'],
+  ['modules/system/findings.routes.ts', 'P', 'diagnostics'], // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — thư viện mã hai cổng
   ['modules/system/mcp.routes.ts', 'P', 'mcp'],
   ['modules/system/metrics.routes.ts', 'P', 'observability'],
   // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: Bàn điều tra (API trung gian đọc trace / log) → P observability

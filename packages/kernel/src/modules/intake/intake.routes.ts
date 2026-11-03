@@ -4,7 +4,7 @@
  * BỂ CHỜ ĐẦU VÀO — API (docs/contracts/BIZCITY-INTAKE-FINDINGS-v1.md §5).
  *   GET  /api/v1/intake                 danh sách mục (lọc status, docKey, channel), kèm mã phát hiện   (documents:read)
  *   GET  /api/v1/intake/:id             chi tiết: nguyên văn, phát hiện, lỗi cửa nạp, lịch sử           (documents:read)
- *   POST /api/v1/intake/preflight       Kiểm thử: { document, save? } → { findings, score, trialId? } — không ghi sự việc (documents:write)
+ *   POST /api/v1/intake/preflight       Kiểm thử: { document, save?, guard? } → { findings, score, guard, guardChanged?, trialId? } — không ghi sự việc (documents:write)
  * Sửa tại bể, nộp lại, chấp nhận cảnh báo, bỏ mục: W3.
  * Ghi: action core.intake.preflight (W6, SC-ACT-1).
  */
@@ -61,14 +61,15 @@ export const intakeActions: AnyActionDef[] = [
     id: 'core.intake.preflight', title: 'Kiểm thử chứng từ', tags,
     description: 'Mọi phát hiện L1–L4 + điểm, không ghi sự việc; save = lưu mục thử (giữ 7 ngày)',
     permission: 'documents:write', effect: 'write', sideEffects: ['analysis'], idempotency: 'natural',
-    input: z.object({ document: z.unknown(), save: z.boolean().default(false) }),
-    output: z.object({ findings: z.array(z.unknown()), score: z.number(), trialId: z.string().optional(), attempt: z.number().optional() }),
+    // [2026-11-03 10:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: Commit Guard — trả guard (dấu cấu hình), nhận guard cũ → guardChanged
+    input: z.object({ document: z.unknown(), save: z.boolean().default(false), guard: z.string().trim().max(64).optional().describe('Dấu cũ (lần Kiểm thử trước) — có thì trả guardChanged') }),
+    output: z.object({ findings: z.array(z.unknown()), score: z.number(), guard: z.string(), guardChanged: z.boolean().optional(), trialId: z.string().optional(), attempt: z.number().optional() }),
     expose: { http: { method: 'POST', path: '/api/v1/intake/preflight' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'intake_inbox', objectId: (_i, o) => o.trialId },
     handler: async (ctx, b) => {
-      const pf = await preflight(ctx.data.tx, ctx.legacyAuth, b.document);
+      const pf = await preflight(ctx.data.tx, ctx.legacyAuth, b.document, b.guard ? { guard: b.guard } : {});
       const trial = b.save ? await saveTrial(ctx.data.tx, ctx.legacyAuth, b.document, pf.findings, pf.score) : null;
-      return { findings: pf.findings, score: pf.score, ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
+      return { findings: pf.findings, score: pf.score, guard: pf.guard, ...(pf.guardChanged !== undefined ? { guardChanged: pf.guardChanged } : {}), ...(trial ? { trialId: trial.id, attempt: trial.attempt } : {}) };
     },
   }),
 ];

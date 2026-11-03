@@ -176,6 +176,22 @@ table.grid tfoot td { position: sticky; bottom: 0; background: #f1f5f9; font-wei
 .alert-warn { background: var(--warn-bg); color: var(--warn); }
 .empty { padding: 40px; text-align: center; color: var(--ink-500); }
 
+/* ---------------- Khung "Vì sao" của form danh mục (PHASE-023: nhắc · hướng dẫn · cảnh báo mềm · chặn) ---------------- */
+/* [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — S023-15 */
+.why { border: 1px solid var(--line, #dfe6ef); border-radius: 8px; overflow: hidden; font-size: 13px; }
+.why-t { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-500); padding: 5px 12px; background: var(--surface-2, #f2f6fb); }
+.why-ln { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line, #dfe6ef); }
+.why-info { background: var(--info-bg); } .why-info .why-i { color: var(--brand-800); }
+.why-guide { background: #f3f0fb; } .why-guide .why-i { color: #4a3aa8; }
+.why-warn { background: var(--warn-bg); } .why-warn .why-i { color: var(--warn); }
+.why-block { background: var(--bad-bg); } .why-block .why-i { color: var(--bad); }
+.why-i { font-weight: 700; }
+.why-q { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; text-align: left; text-decoration: underline dotted; }
+.why-why { color: var(--ink-700, #2c3a4b); margin-top: 2px; }
+.why-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.why-code { font: 11px ui-monospace, Consolas, monospace; color: var(--ink-500); }
+.warn-ack input { width: 100%; margin-top: 6px; }
+
 /* ---------------- Ngăn trượt (chi tiết, hướng dẫn) ---------------- */
 .drawer-mask { position: fixed; inset: 0; background: rgba(14, 42, 69, 0.35); z-index: 80; }
 /* Ngăn chi tiết hiện thành hộp thoại giữa màn hình, rộng (như form chi tiết của phần mềm kế toán để bàn).
