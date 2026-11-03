@@ -1,4 +1,5 @@
 # RULE · Hai cổng kiểm chuẩn — Gate A (danh mục) và Gate B (nghiệp vụ) (R-GATE)
+<!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — R-GATE-9 mặc định cho phép, nhắc khi sai (chủ dự án: "rule chung") -->
 <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE theo ADR-0019: năm nguyên tắc của chủ dự án cho cả hai cổng; nháp / bể chờ; một thư viện phát hiện; không chặn im lặng -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
@@ -30,6 +31,7 @@
 | R-GATE-6 | **Nháp và bể nối nhau.** Chứng từ tham chiếu danh mục `draft` → giữ ở bể với `IN-ITEM-009` / `IN-MD-*` kèm link nháp. Kích hoạt danh mục → mục bể đang chờ nó được kiểm lại tự động | test chuỗi kích hoạt → bể đóng / `resubmitted` |
 | R-GATE-7 | **Có chủ, có tuổi, có giới hạn.** Bể và nháp có hạn giữ (R-INTAKE-12), số đo tuổi mục cũ nhất và số mục theo mã, cảnh báo khi quá ngưỡng, hiện trên Bàn đánh giá. Không báo cáo nào đọc từ bể / nháp | số đo `bizcity_intake_inbox_*`, `bizcity_catalog_drafts_*`; alert |
 | R-GATE-8 | **Quy trình tường minh, thử được.** Mỗi cổng công bố bước của mình (Gate B: L1 khuôn → L2 số học → L3 danh mục → L4 nghiệp vụ → L5 định khoản thử → Commit Guard); mỗi phát hiện nói thuộc bước nào; cả hai cổng có `?dryRun=1`; kết quả mang `traceId` | `--dry-run` test; span theo bước |
+| R-GATE-9 | **Mặc định cho phép, nhắc khi sai.** Khoá cấu hình làm cổng chặt hơn (tắt tự thêm, tắt nhóm mặc định, đổi cảnh báo thành chặn…) có mặc định là **cho phép** — với mọi đơn vị, kể cả đơn vị mới — để việc bán hàng, nhập liệu không dừng. Khi đầu vào không chuẩn, Core **nhắc** (thông báo cho người có quyền sửa, dải nhắc ở màn liên quan, phát hiện mức warn / hint) kèm cách sửa; không chặn, không im lặng. Chặt hơn là **quyết định của kế toán trưởng** tại HT09, có lý do, ghi nhật ký, xem trước hậu quả. Ngoại lệ duy nhất: toàn vẹn dữ liệu / bất biến (mức ✘, R-GATE-4) chặn ngay | registry `bizcity-settings` (`default` của khoá chặt = cho phép); test "mặc định bật + có nhắc" (vd `quy-dinh-danh-muc.test.ts`) |
 
 ## Thể hiện khi làm việc
 

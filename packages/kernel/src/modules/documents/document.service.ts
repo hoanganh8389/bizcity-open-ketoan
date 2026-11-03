@@ -49,7 +49,7 @@ import { ledgerService } from '../ledger/ledger.service.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
 import { hasTaxInvoice, isStockDocument, needsBranchContext, postingService, type PostContext } from '../posting/posting.service.js';
-import { assertKnownItems, assertNoDraftItems } from '../intake/draft-items.js';
+import { assertKnownItems, assertNoDraftItems, remindAutoCreated } from '../intake/draft-items.js';
 import { preflight } from '../intake/preflight.js';
 import type { StockContext } from '../posting/rules/sale.rule.js';
 import { inventoryMovementRepository } from '../inventory/inventory-movement.repository.js';
@@ -199,7 +199,7 @@ async function ensureEmployee(trx: Db, tenantId: string, code: string, name: str
     .execute();
 }
 
-/** Mã hàng mới trên chứng từ thì thêm vào danh mục mặt hàng (chỉ thêm, không ghi đè mặt hàng đã có). */
+/** Mã hàng mới trên chứng từ thì thêm vào danh mục mặt hàng (chỉ thêm, không ghi đè mặt hàng đã có) và nhắc kế toán kiểm (R-GATE-9). */
 async function ensureProducts(trx: Db, tenantId: string, doc: IngestDocument): Promise<void> {
   if (isCashDocument(doc)) return;
   const seen = new Map<string, { name: string; unit: string }>();
@@ -207,11 +207,14 @@ async function ensureProducts(trx: Db, tenantId: string, doc: IngestDocument): P
     if (l.sku && !seen.has(l.sku)) seen.set(l.sku, { name: l.name ?? '', unit: l.unit ?? '' });
   }
   if (!seen.size) return;
-  await trx
+  const created = await trx
     .insertInto('products')
     .values([...seen].map(([sku, v]) => ({ tenant_id: tenantId, sku, name: v.name, unit: v.unit, source_system: 'document' })))
     .onConflict((oc) => oc.columns(['tenant_id', 'sku']).doNothing())
+    .returning(['sku', 'unit'])
     .execute();
+  // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — R-GATE-9 mặc định cho phép, nhắc khi sai: cho thêm như cũ, nhưng nhắc kế toán kiểm mặt hàng vừa tự thêm
+  await remindAutoCreated(trx, tenantId, doc, created);
 }
 
 /**

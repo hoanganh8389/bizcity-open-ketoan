@@ -12,10 +12,10 @@ Người khác mở được màn để xem, nhưng không thấy nút.
 
 | Chế độ | Khi chứng từ mang mã hàng lạ |
 |---|---|
-| **Bật** (như trước) | Mặt hàng được thêm vào danh mục và chứng từ vào sổ ngay, theo nhóm hạch toán mặc định. |
+| **Bật** (mặc định) | Mặt hàng được thêm vào danh mục và chứng từ vào sổ ngay, theo nhóm hạch toán mặc định. Kế toán **được nhắc**: thông báo "Chứng từ … đã tự thêm n mặt hàng — cần kiểm" (nêu mặt hàng thiếu đơn vị tính, ghi theo nhóm mặc định) và dải nhắc ở danh sách mặt hàng. |
 | **Tắt** | Phần mềm tạo **mặt hàng nháp** (điền sẵn tên, đơn vị tính từ dòng). Chứng từ chờ ở **Trạm kiểm tra** với mã [IN-ITEM-001](loi-dau-vao/IN-ITEM-001.md) tới khi kế toán kích hoạt mặt hàng. |
 
-Đơn vị mới mặc định **tắt**. Đơn vị đang dùng từ trước vẫn **bật** cho tới khi kế toán trưởng tự tắt.
+Mọi đơn vị, kể cả đơn vị mới, mặc định **bật**: việc bán hàng không dừng, sai thì nhắc (luật chung R-GATE-9 — mặc định cho phép, nhắc khi sai). **Tắt** là quyết định của kế toán trưởng khi đơn vị muốn kiểm mặt hàng mới trước khi vào sổ.
 
 **Trước khi tắt**, xem dòng tóm tắt ngay trên màn: "7 ngày qua, chứng từ đã tự thêm N mặt hàng — X thiếu đơn vị tính, Y chưa có nhóm hạch toán". Danh sách mặt hàng (DM10) cũng hiện dải nhắc này.
 

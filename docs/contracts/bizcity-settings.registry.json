@@ -152,7 +152,7 @@
       "storage": "tenants.settings.item.autoCreate", "schema": "enum on|off", "default": "on",
       "readBy": "itemAutoCreate() (packages/kernel/src/modules/intake/draft-items.ts) — cửa nạp assertKnownItems, tiền kiểm L3", "writeBy": "core.settings.item-auto-create (PUT /api/v1/settings/item-auto-create, HT09)",
       "permission": "settings:write", "audit": "settings.item-auto-create (có lý do)", "affectsPosting": true,
-      "note": "D024-3: on = mã lạ trên chứng từ tự thêm vào danh mục (như cũ); off = mã lạ → mặt hàng nháp + bể chờ IN-ITEM-001. Không khai = on (đơn vị có trước 0062); đơn vị mới tạo bằng seed = off."
+      "note": "D024-3: on = mã lạ trên chứng từ tự thêm vào danh mục (như cũ); off = mã lạ → mặt hàng nháp + bể chờ IN-ITEM-001. Mặc định on cho mọi đơn vị (R-GATE-9: mặc định cho phép, nhắc khi sai) — mặt hàng tự thêm được nhắc qua thông báo (catalog:write) và dải nhắc DM10; kế toán trưởng tắt ở HT09."
     }
   ]
 }

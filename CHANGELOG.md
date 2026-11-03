@@ -16,7 +16,7 @@ Mỗi bản ghi đủ sáu mục:
 <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09 / D024-3 -->
 - **Quy định dữ liệu danh mục (HT09)** — màn của kế toán trưởng ([hướng dẫn](docs/huong-dan/quy-dinh-du-lieu-danh-muc.md), migration `0062_quy_dinh_danh_muc`):
   - **Duyệt luật nhắc** của khung Vì sao ngay trong ứng dụng: xem luật đúng như trong form, Đồng ý (bỏ nhãn nháp), Sửa câu chữ, Hạ cảnh báo mềm xuống nhắc (bắt buộc lý do, D023-8), Về mặc định. Luật đổi ở bản phát hành sau thì bản duyệt hết hiệu lực.
-  - **Tắt / bật tự thêm mặt hàng từ chứng từ** (`bizcity.item.auto_create`): tắt thì mã hàng lạ thành mặt hàng nháp và chứng từ chờ ở Trạm kiểm tra với mã mới [`IN-ITEM-001`](docs/huong-dan/loi-dau-vao/IN-ITEM-001.md). Đơn vị mới mặc định tắt; đơn vị có từ trước giữ như cũ.
+  - **Tắt / bật tự thêm mặt hàng từ chứng từ** (`bizcity.item.auto_create`): tắt thì mã hàng lạ thành mặt hàng nháp và chứng từ chờ ở Trạm kiểm tra với mã mới [`IN-ITEM-001`](docs/huong-dan/loi-dau-vao/IN-ITEM-001.md). Mặc định **bật** cho mọi đơn vị (luật chung R-GATE-9: mặc định cho phép, nhắc khi sai): mặt hàng tự thêm được nhắc bằng thông báo "Chứng từ … đã tự thêm n mặt hàng — cần kiểm" cho người có quyền sửa danh mục.
 - Danh sách mặt hàng: dải nhắc "N ngày qua chứng từ đã tự thêm … mặt hàng" và nút **Kích hoạt hàng loạt** mặt hàng nháp (`POST /api/v1/products/activate`).
 - Lưu tài khoản / đối tượng / mặt hàng còn cảnh báo mềm (hoặc lưu nháp): dòng nhắc ngắn ở góc màn sau khi lưu.
 <!-- [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29 -->

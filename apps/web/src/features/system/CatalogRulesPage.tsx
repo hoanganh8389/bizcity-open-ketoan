@@ -64,7 +64,7 @@ function AutoCreateSection({ canWrite }: { canWrite: boolean }) {
         <>
           <div className={`dev-answer ${mode === 'on' ? 'warn' : ''}`}>
             {mode === 'on'
-              ? <>Đang <b>BẬT</b>: mã hàng lạ trên chứng từ được tự thêm vào danh mục và vào sổ ngay, theo nhóm hạch toán mặc định.</>
+              ? <>Đang <b>BẬT</b> (mặc định): mã hàng lạ trên chứng từ được tự thêm vào danh mục và vào sổ ngay, theo nhóm hạch toán mặc định; kế toán được nhắc kiểm qua thông báo và dải nhắc ở danh sách mặt hàng.</>
               : <>Đang <b>TẮT</b>: mã hàng lạ thành <b>mặt hàng nháp</b> (điền sẵn tên, đơn vị tính từ dòng chứng từ); chứng từ chờ ở Trạm kiểm tra tới khi kế toán kích hoạt mặt hàng.</>}
             {setting.data?.last && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Lần đổi gần nhất: {dateTime(setting.data.last.at)} · {setting.data.last.by}{setting.data.last.reason ? ` · "${setting.data.last.reason}"` : ''}</div>}
           </div>

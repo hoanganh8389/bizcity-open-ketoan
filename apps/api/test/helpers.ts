@@ -70,8 +70,6 @@ export async function setupTenant(): Promise<TestCtx> {
   // cho mọi loại (phép thử chế độ chờ đặt lại riêng).
   const auto = Object.fromEntries(APPROVABLE_DOC_TYPES.map((t) => [t, 'auto']));
   await app.inject({ method: 'PUT', url: '/api/v1/settings/posting-modes', payload: auto, headers: { authorization: `Bearer ${token}` } });
-  // Đơn vị mới tắt tự thêm mặt hàng (D024-3); phép thử cũ gửi chứng từ có mã hàng chưa khai → bật lại như trước (phép thử chế độ tắt đặt riêng).
-  await app.inject({ method: 'PUT', url: '/api/v1/settings/item-auto-create', payload: { mode: 'on', reason: 'phép thử dùng hành vi cũ' }, headers: { authorization: `Bearer ${token}` } });
   return { app, token, apiKey, tenantCode };
 }
 

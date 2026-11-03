@@ -5,13 +5,15 @@
  *   draftSkus()            mã hàng nào trong danh sách đang NHÁP (products.is_draft, migration 0061) và vì sao
  *   assertNoDraftItems()   cửa nạp: chứng từ có mặt hàng nháp → VALIDATION_ERROR kèm phát hiện IN-ITEM-009 (bể chờ giữ nguyên văn)
  *   (kiểm lại bể khi mặt hàng kích hoạt: recheckInboxForSkus ở inbox.ts — tránh vòng import với preflight)
- *   itemAutoCreate()       chế độ tự thêm mặt hàng từ chứng từ (tenants.settings.item.autoCreate: on | off, mặc định on — D024-3)
+ *   itemAutoCreate()       chế độ tự thêm mặt hàng từ chứng từ (tenants.settings.item.autoCreate: on | off, mặc định on — D024-3, R-GATE-9)
+ *   remindAutoCreated()    chế độ on: mặt hàng vừa tự thêm thiếu ĐVT / ghi theo nhóm mặc định → thông báo cho người có catalog:write (nhắc, không chặn)
  *   assertKnownItems()     cửa nạp, chế độ off: mã lạ → VALIDATION_ERROR kèm IN-ITEM-001 (bể chờ giữ; createDraftItemsFromLines tạo nháp)
  * Chỉ cờ NHÁP mới chặn (R-GATE-4): mặt hàng đang dùng có cảnh báo mềm (vd chưa phân loại, dùng nhóm mặc định) không bị giữ.
  */
 import { intakeFinding, skusOf, type IngestDocument, type IntakeFinding } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { Errors } from '@bizcity/platform/core/errors';
+import { sendNotification } from '@bizcity/platform/core/notify';
 import type { Db } from '@bizcity/platform/db/client';
 
 export async function draftSkus(trx: Db, tenantId: string, skus: readonly string[]): Promise<Map<string, string[]>> {
@@ -80,4 +82,22 @@ export async function createDraftItemsFromLines(trx: Db, tenantId: string, raw: 
     .onConflict((oc) => oc.columns(['tenant_id', 'sku']).doNothing())
     .returning('sku').execute();
   return rows.map((r) => r.sku);
+}
+
+// [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — R-GATE-9 mặc định cho phép, nhắc khi sai
+/**
+ * Mặt hàng vừa tự thêm từ chứng từ (chế độ on): cho vào sổ như cũ, nhưng NHẮC kế toán — mỗi chứng từ một thông báo, liệt kê mặt hàng
+ * và điều cần kiểm (thiếu đơn vị tính; chưa có nhóm hạch toán nên ghi theo nhóm mặc định — R-ITEM-8). Gửi lại cùng phiên bản không nhắc lại.
+ */
+export async function remindAutoCreated(trx: Db, tenantId: string, doc: { docKey: string; docNo: string; version: number }, items: readonly { sku: string; unit: string }[]): Promise<void> {
+  if (!items.length) return;
+  const def = await trx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).where('is_default', '=', true).executeTakeFirst();
+  const group = def ? `ghi theo nhóm mặc định ${def.code}` : 'chưa có nhóm hạch toán, đơn vị chưa có nhóm mặc định';
+  const lines = items.map((i) => `${i.sku} (${[i.unit.trim() ? '' : 'thiếu đơn vị tính', group].filter(Boolean).join('; ')})`);
+  const body = `${lines.slice(0, 10).join(' · ')}${lines.length > 10 ? ` · và ${lines.length - 10} mặt hàng khác` : ''}. Kiểm đơn vị tính và nhóm hạch toán để kho, giá vốn không ghi sai.`;
+  await sendNotification(trx, tenantId, 'core', {
+    to: { permission: 'catalog:write' },
+    title: `Chứng từ ${doc.docNo} đã tự thêm ${items.length} mặt hàng — cần kiểm`.slice(0, 200),
+    body, link: '/danh-muc/mat-hang', dedupeKey: `auto-items:${doc.docKey}:${doc.version}`,
+  });
 }

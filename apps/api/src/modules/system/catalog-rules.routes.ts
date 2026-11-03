@@ -8,7 +8,7 @@
  *                                               của luật gốc) · lower / unlower (hạ cảnh báo mềm xuống nhắc, D023-8, bắt buộc lý do)
  *                                               · reset (về mặc định, nhãn nháp) — quyền conformance:approve (kế toán trưởng, D023-8);
  *                                               nhật ký catalog.rule.review. Bản duyệt gắn dấu luật (hintHash): luật đổi → hết hiệu lực
- *   GET  /api/v1/settings/item-auto-create      chế độ tự thêm mặt hàng từ chứng từ: on (như cũ) · off (mã lạ → mặt hàng NHÁP +
+ *   GET  /api/v1/settings/item-auto-create      chế độ tự thêm mặt hàng từ chứng từ: on (mặc định mọi đơn vị, R-GATE-9 — thêm + nhắc) · off (mã lạ → mặt hàng NHÁP +
  *                                               chứng từ vào bể chờ với IN-ITEM-001)
  *   PUT  /api/v1/settings/item-auto-create      core.settings.item-auto-create — đổi chế độ, bắt buộc lý do; nhật ký settings.item-auto-create
  * Không hạ được mức chặn: chặn chỉ dành cho toàn vẹn dữ liệu (bizcity_catalog_hint@1).

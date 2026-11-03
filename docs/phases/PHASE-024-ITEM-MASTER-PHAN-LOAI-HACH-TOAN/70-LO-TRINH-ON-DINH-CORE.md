@@ -100,7 +100,7 @@ Lỗi từ trigger mang mã theo `bizcity_errors@1` có `why` + `rule` (S024-24)
 |---|---|---|
 | T−14 ngày | Thông báo các bên tích hợp POS: đổi hành vi, ngày áp dụng, cách đồng bộ danh mục trước (`PUT /api/v1/products` / `core.item.upsert`), mã lỗi sẽ gặp | bên tích hợp, kế toán đơn vị |
 | T−14 → T | Chế độ **cảnh báo**: vẫn tự tạo như cũ, nhưng tiền kiểm trả `IN-ITEM-001` mức `warn` và đếm `bizcity_item_auto_created_total` | bên tích hợp thấy cảnh báo trong phản hồi |
-| T | Khoá `bizcity.item.auto_create = false` cho đơn vị mới; đơn vị cũ tắt theo lịch đã báo | — |
+| T | ~~Khoá `bizcity.item.auto_create = false` cho đơn vị mới~~ — thay bởi R-GATE-9: mọi đơn vị mặc định bật, kế toán trưởng của từng đơn vị tự tắt ở HT09 khi sẵn sàng | — |
 | Đường lui | Bật lại khoá theo từng đơn vị; không cần triển khai lại | vận hành |
 
 Cổng: ca T024-2 (mã lạ → nháp + bể), T024-3 (khoá bật → hành vi cũ); số đo tự tạo = 0 ở đơn vị đã tắt.
@@ -133,10 +133,10 @@ Mỗi cảnh báo có ca trong `alerts.test.yml`. Cổng: dashboard hiện tuổ
 | Q-70-1 | Không trả lại `findings` khi lưu tài khoản; người dùng thấy cảnh báo **trước** khi Ghi (khung Vì sao), sau khi lưu chỉ hiện dòng nhắc ngắn "Đã lưu — còn n cảnh báo mềm (lý do đã ghi vào nhật ký)" | ✅ dòng nhắc sau khi lưu cho tài khoản, đối tượng, mặt hàng (`flashSaved` / `savedNote`) |
 | Q-70-2 | Mặt hàng trước; thẻ / thao tác (lịch sử mã, Đổi mã, Gộp mã, nhãn Nháp) thiết kế thành khuôn chung để đối tượng dùng lại | ☐ cùng B2 |
 | Q-70-3 | Giữ API `products` cũ tới khi không còn ai gọi: tối thiểu 2 bản phát hành, gỡ khi 30 ngày không còn lượt gọi; phản hồi cũ kèm `itemId` ngay từ đầu; màn hệ thống cho kế toán thấy "POS còn dùng API cũ" | ☐ cùng B2b |
-| Q-70-4 | Không có một ngày T chung: **đơn vị tự tắt** khi sẵn sàng; đơn vị mới mặc định tắt. Trước khi tắt: báo cáo "tự thêm N mặt hàng" (giai đoạn cảnh báo) + **Kích hoạt hàng loạt**; kế toán trưởng tự bấm tắt, có lý do, thấy hậu quả | ✅ `bizcity.item.auto_create`, `IN-ITEM-001`, HT09, `GET /products/auto-created`, `core.product.activate-drafts` |
+| Q-70-4 | Không có một ngày T chung: **đơn vị tự tắt** khi sẵn sàng; **mặc định bật cho mọi đơn vị, kể cả đơn vị mới**, sai thì nhắc (thông báo + dải nhắc) — luật chung R-GATE-9 <!-- [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — R-GATE-9 mặc định cho phép, nhắc khi sai (chủ dự án: "rule chung") -->. Trước khi tắt: báo cáo "tự thêm N mặt hàng" (giai đoạn cảnh báo) + **Kích hoạt hàng loạt**; kế toán trưởng tự bấm tắt, có lý do, thấy hậu quả | ✅ `bizcity.item.auto_create`, `IN-ITEM-001`, HT09, `GET /products/auto-created`, `core.product.activate-drafts` |
 | Q-70-5 | Duyệt luật nhắc là **thao tác trong ứng dụng** (HT09): xem luật đúng như trong form, Đồng ý / Sửa câu chữ / Hạ xuống nhắc; duyệt từng nhóm; luật chưa duyệt vẫn chạy, nhãn "nháp" | ✅ `catalog_rule_reviews` (0062), `core.catalog-rule.review`, HT09 |
 
-Ghi chú Q-70-5: luật chưa duyệt **giữ nguyên mức** (cảnh báo mềm vẫn bắt ghi lý do — D023-6 chủ đã duyệt trước đó); chỉ hạ mức khi kế toán trưởng chọn "Hạ xuống nhắc" (D023-8). Q-70-4 thi hành **trước** B2 / B3 trên bảng `products` vì nháp + bể chờ đã có: đơn vị cũ không đổi hành vi (mặc định bật), chỉ đơn vị mới tắt — khi có `items`, tạo nháp chuyển sang `items.status`.
+Ghi chú Q-70-5: luật chưa duyệt **giữ nguyên mức** (cảnh báo mềm vẫn bắt ghi lý do — D023-6 chủ đã duyệt trước đó); chỉ hạ mức khi kế toán trưởng chọn "Hạ xuống nhắc" (D023-8). Q-70-4 thi hành **trước** B2 / B3 trên bảng `products` vì nháp + bể chờ đã có: đơn vị cũ không đổi hành vi (mặc định bật), mọi đơn vị mặc định bật (R-GATE-9) — khi có `items`, tạo nháp chuyển sang `items.status`.
 
 Bảng câu hỏi gốc:
 

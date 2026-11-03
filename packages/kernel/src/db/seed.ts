@@ -98,8 +98,7 @@ export async function seed(): Promise<void> {
     // Đơn vị
     let tenant = await trx.selectFrom('tenants').select('id').where('code', '=', tenantCode).executeTakeFirst();
     if (!tenant) {
-      // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: đơn vị mới tắt tự thêm mặt hàng từ chứng từ (mã lạ → nháp + bể chờ IN-ITEM-001); đơn vị có trước giữ như cũ
-      tenant = await trx.insertInto('tenants').values({ code: tenantCode, name: tenantName, tax_code: null, address: null, phone: null, settings: JSON.stringify({ item: { autoCreate: 'off' } }) }).returning('id').executeTakeFirstOrThrow();
+      tenant = await trx.insertInto('tenants').values({ code: tenantCode, name: tenantName, tax_code: null, address: null, phone: null }).returning('id').executeTakeFirstOrThrow();
       console.log(`+ Đơn vị ${tenantCode}`);
     }
     const tid = tenant.id;

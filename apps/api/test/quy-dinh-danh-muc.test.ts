@@ -100,10 +100,9 @@ describe('Tự thêm mặt hàng từ chứng từ (D024-3)', () => {
   let k = 0;
   const sale = (sku: string) => { k += 1; const d = saleDoc({ docKey: `ht09:CN01:${k}`, docNo: `HT${k}` }); d.lines = [{ ...d.lines[0]!, sku, name: `Hàng mới ${sku}` }, ...d.lines.slice(1)] as typeof d.lines; return d; };
 
-  it('đơn vị mới tạo bằng seed mặc định tắt (phép thử bật lại — nhật ký giữ chế độ trước)', async () => {
-    const [first] = await audits('settings.item-auto-create');
-    expect(first!.before_data).toMatchObject({ mode: 'off' });
-    expect(first!.after_data).toMatchObject({ mode: 'on' });
+  it('mặc định BẬT cho mọi đơn vị, kể cả đơn vị mới (R-GATE-9: mặc định cho phép, nhắc khi sai)', async () => {
+    const g = await call(ctx, 'GET', '/api/v1/settings/item-auto-create');
+    expect(g.body.data).toEqual({ mode: 'on', last: null });
   });
 
   it('bật: mã lạ tự thêm như cũ; báo cáo "tự thêm trong 7 ngày" đếm được, thiếu nhóm hạch toán', async () => {
@@ -113,6 +112,11 @@ describe('Tự thêm mặt hàng từ chứng từ (D024-3)', () => {
     expect(r.body.data.count).toBeGreaterThanOrEqual(1);
     expect(r.body.data.items.map((i: { sku: string }) => i.sku)).toContain('AUTO-ON-1');
     expect(r.body.data.noGroup).toBeGreaterThanOrEqual(1);
+    // nhắc kế toán: một thông báo cho chứng từ, nêu mặt hàng và điều cần kiểm
+    const n = await db.selectFrom('notifications').select(['title', 'body', 'link', 'audience_permission']).where('tenant_id', '=', tenantId).where('title', 'like', '%tự thêm%').execute();
+    expect(n).toHaveLength(1);
+    expect(n[0]).toMatchObject({ link: '/danh-muc/mat-hang', audience_permission: 'catalog:write' });
+    expect(n[0]!.body).toMatch(/AUTO-ON-1 \(ghi theo nhóm mặc định/);
   });
 
   it('đổi chế độ bắt buộc lý do; GET trả chế độ + lần đổi gần nhất', async () => {
