@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 15
+      "count": 14
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 95
+      "count": 96
     },
     {
       "key": "partial",
@@ -1233,14 +1233,8 @@
       "title": "G4: route dùng chung (LEDGER, GOODS) đăng ký ở lõi, route phân hệ trả về chủ (12-CHOT)",
       "priority": null,
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ranh-gioi-phan-he)",
-        "branch": "feat/phase-013-g4-route-dung-chung",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-013 · G4 — route dùng chung LEDGER / GOODS đăng ký ở lõi, route phân hệ trả về chủ (chữ chốt …"
-      },
+      "column": "todo",
+      "claim": null,
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 28
     },
