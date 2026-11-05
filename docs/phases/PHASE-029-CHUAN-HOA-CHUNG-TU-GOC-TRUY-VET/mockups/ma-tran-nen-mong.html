@@ -1,0 +1,170 @@
+<!doctype html>
+<!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — bản mẫu tĩnh Ma trận kiểm chuẩn nền móng: sáu năng lực lõi, 17 trụ cột × bốn nhóm, ECP × trụ cột, tín hiệu kiểm, nguyên tắc tinh gọn (ADR-0028). Dữ liệu chép nguyên từ docs/standard/nen-mong.json lúc dựng; màn thật (HT10) đọc qua API -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma trận nền móng — bản mẫu</title>
+<style>
+:root{--bg:#eef3fa;--panel:#fff;--ink:#16202e;--muted:#5d6878;--line:#dfe6ef;--soft:#f2f6fb;--accent:#1e5bb8;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--ok-bg:#e8f5ee;--warn-bg:#fff4e0;--bad-bg:#fdecec;--info-bg:#e3edfb;--op:#8a94a6;--branch:#6a3fb5;--branch-bg:#f0e9fb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:16px 0 8px}h3{font-size:14px;margin:0}
+.sub{color:var(--muted);margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button,.chipbtn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font:inherit;cursor:pointer;font-size:13px;color:var(--ink)}
+.tabs button.on,.chipbtn.on{background:var(--info-bg);border-color:var(--accent);color:var(--accent);font-weight:700}
+.view{display:none}.view.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.card .hd{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card .bd{padding:10px 12px}
+.grid6{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.dat,.co{background:var(--ok-bg);color:var(--ok)}.mot-phan{background:var(--warn-bg);color:var(--warn)}.chua{background:var(--bad-bg);color:var(--bad)}.tai-lieu{background:#eef0f3;color:var(--op)}.nhanh{background:var(--branch-bg);color:var(--branch)}
+.note{font-size:12px;color:var(--muted)}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{font-size:12px;color:var(--muted);background:var(--soft);position:sticky;top:0}
+.scroll{overflow-x:auto}
+.bar{display:flex;height:8px;border-radius:6px;overflow:hidden;background:var(--soft);min-width:90px}
+.bar span{display:block}.b-co{background:var(--ok)}.b-nhanh{background:var(--branch)}.b-chua{background:var(--bad)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.cell-c{text-align:center}
+tr.grp td{background:var(--soft);font-weight:700;color:var(--accent)}
+tr.row{cursor:pointer}tr.row:hover td{background:#f7faff}tr.row.sel td{background:var(--info-bg)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:4px 10px;font-size:13px}.kv b{color:var(--muted);font-weight:600}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:6px 0}
+.ecp{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:6px;padding:0 5px;margin:1px;background:var(--soft)}
+.mark{color:var(--accent);font-weight:700;text-align:center}
+.split{display:grid;grid-template-columns:1fr 360px;gap:12px}
+@media (max-width:900px){body{overflow-x:hidden}.wrap{padding:16px}.split{grid-template-columns:1fr}.grid6{grid-template-columns:1fr}}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.kpi .card{flex:1;min-width:150px;margin:0;padding:10px 12px}.kpi .n{font-size:22px;font-weight:700}
+ul.tight{margin:4px 0;padding-left:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Ma trận kiểm chuẩn nền móng</h1>
+<div class="sub">Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × 13 nguyên tắc ECP — mức đạt đi theo <b>tín hiệu chạy được</b> (check, chẩn đoán, test), không theo tài liệu. Bản mẫu tĩnh; dữ liệu từ <span class="mono">docs/standard/nen-mong.json</span> <span id="ver"></span>.</div>
+<div class="kpi" id="kpi"></div>
+<div class="tabs" id="tabs">
+  <button data-v="cores" class="on">Sáu năng lực lõi</button>
+  <button data-v="matrix">Ma trận 17 trụ cột</button>
+  <button data-v="ecp">ECP × trụ cột</button>
+  <button data-v="signals">Tín hiệu kiểm</button>
+  <button data-v="lean">Tinh gọn & SDK</button>
+</div>
+
+<section class="view on" id="v-cores"><div class="grid6" id="cores"></div></section>
+
+<section class="view" id="v-matrix">
+  <div class="legend">Lọc nhóm: <span id="fgroup"></span> · Lọc mức: <span id="fstatus"></span></div>
+  <div class="split">
+    <div class="card"><div class="scroll"><table id="mx"></table></div></div>
+    <div class="card" id="detail"><div class="hd"><h3>Chọn một trụ cột</h3></div><div class="bd note">Bấm một dòng để xem tín hiệu, khoảng cách, việc kế tiếp.</div></div>
+  </div>
+</section>
+
+<section class="view" id="v-ecp"><div class="card"><div class="scroll"><table id="ecpx"></table></div></div>
+  <div class="note">Ô đánh dấu: trụ cột chịu trách nhiệm thi hành nguyên tắc. Màu dòng = mức yếu nhất trong các trụ cột của nguyên tắc đó.</div></section>
+
+<section class="view" id="v-signals">
+  <div class="legend">Lọc: <span id="fsig"></span></div>
+  <div class="card"><div class="scroll"><table id="sig"></table></div></div>
+</section>
+
+<section class="view" id="v-lean">
+  <div class="card"><div class="hd"><h3>Small Core, Strong Contracts — bảy nguyên tắc tinh gọn</h3></div><div class="bd scroll"><table id="lean"></table></div></div>
+  <div class="card"><div class="hd"><h3>Dev không phải tự xây lại</h3></div><div class="bd scroll"><table id="devgets"></table></div></div>
+  <div class="card"><div class="hd"><h3>Continuity không phải một engine lưu trùng dữ liệu</h3></div><div class="bd">
+    <ul class="tight">
+      <li>Continuity là <b>tập quy tắc + kiểm chứng</b> chạy trên bảng sẵn có (sự việc, sổ, kho, nhật ký, danh mục): chẩn đoán đọc, truy vết dựng khi hỏi, cổng kiểm tĩnh.</li>
+      <li>Chỉ lưu <b>kết quả kiểm</b> (lần chạy chẩn đoán, bể chờ, biên bản kiểm chuẩn) — không chép sổ, không chép chứng từ.</li>
+      <li>Sáu năng lực lõi là <b>thư viện, hợp đồng, capability</b> trong Platform / Kernel hiện có — không phải sáu dịch vụ hay sáu CSDL.</li>
+    </ul></div></div>
+</section>
+</div>
+<script>
+const D = {"$comment":"[2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — bizcity_foundations@1 (đề xuất): sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP × tín hiệu kiểm. NGUỒN cho bản mẫu ma trận kiểm chuẩn và phép kiểm SC-CORE-1 (S029-29, chưa có). Mức ghi tay có bằng chứng (source = manual) tới khi engine bảng điểm chạy (S029-18); tín hiệu `state` = co (chạy được trên main) · nhanh (ở nhánh chưa vào main) · chua (chưa có).","contract":"bizcity_foundations@1","version":"0.1.0-draft","updated":"2026-11-05","doc":"docs/standard/NEN-MONG-DOANH-NGHIEP.md","statuses":{"dat":"Đạt — có tín hiệu chạy được bảo vệ","mot-phan":"Một phần — có mã, còn khoảng cách","tai-lieu":"Mới có tài liệu","chua":"Chưa có"},"lean":[{"id":"LEAN-1","title":"Reuse before Build","rule":"Ưu tiên tái sử dụng sự việc kế toán, Document SDK, danh mục chuẩn và thư viện đang có","enforcedBy":"REUSE-MAP + R-KER-8; rà soát T11 (R-REV)"},{"id":"LEAN-2","title":"Contract First","rule":"Bắt buộc chuẩn giao tiếp, không bắt buộc mọi module dùng chung cách triển khai","enforcedBy":"manifest bizcity.module.json (SC-CON-2), defineAction, 7 hợp đồng Standard"},{"id":"LEAN-3","title":"No Duplicate Truth","rule":"Mỗi loại dữ liệu có một chủ sở hữu; module khác tham chiếu định danh hoặc đọc qua giao diện chuẩn","enforcedBy":"STD-DATA-3, khung nhìn bizcity_read, cột Chủ ở DU-LIEU-GOC"},{"id":"LEAN-4","title":"Immutable Where It Matters","rule":"Lịch sử nghiệp vụ đã xác lập không bị sửa / xoá phá huỷ; không bắt mọi bảng chỉ thêm","enforcedBy":"ECP-13 chỉ áp cho dữ liệu đã được tham chiếu; trigger chỉ thêm ở sổ / sự việc / nhật ký / mã"},{"id":"LEAN-5","title":"Progressive Complexity","rule":"Một cửa hàng và chuỗi 500 cửa hàng cùng một chuẩn, khác cấu hình triển khai","enforcedBy":"preset cài nhanh (SC-PRESET-1), cấu hình có phạm vi (S029-10), nhóm đơn vị (S026-6)"},{"id":"LEAN-6","title":"Modular Monolith First","rule":"PostgreSQL + outbox trước; chỉ tách dịch vụ, NATS, gateway khi có nhu cầu đo được","enforcedBy":"R-OUTBOX (NATS là adapter, để sau), bizcity_event@1 §8"},{"id":"LEAN-7","title":"Conformance as Code","rule":"Quy tắc được kiểm thử tự động, không chỉ viết trong tài liệu","enforcedBy":"AP-7, selfcheck --strict trong CI, R-ECP-SCORE"}],"cores":[{"id":"C1","key":"identity","title":"Identity & Master Data","duty":"ID bất biến, mã có phiên bản, cây tổ chức, quan hệ giữa đối tượng","layer":"Kernel + Platform (thư viện, không phải dịch vụ riêng)","code":["packages/kernel/src/modules/masterdata","apps/api/src/modules/partners","apps/api/src/modules/org-units","apps/api/src/modules/branches","apps/api/src/modules/warehouses"],"contracts":["bizcity_master_data@1","bizcity_item_master@1"],"capabilities":["masterdata.read","masterdata.write","masterdata.items","item.master"],"devGets":"Bộ ID và cách đổi mã / gộp mã hàng không mất lịch sử; phân giải mã theo nguồn và ngày","sdk":"ctx.data (khung nhìn bizcity_read), core.item.*, core.partner.*","status":"mot-phan","gap":"chỉ mặt hàng có mã có hiệu lực + gộp; đối tượng / chi nhánh / kho chưa (S026-4, S029-19, S029-20); chưa có người / nhân viên (S029-23)"},{"id":"C2","key":"authz","title":"Authorization & Context","duty":"Tenant, user, role, scope, quyền theo tổ chức và ngữ cảnh","layer":"Platform","code":["packages/platform/src/core/auth.ts","packages/platform/src/core/actions.ts","apps/api/src/modules/access"],"contracts":["bizcity_action@1"],"capabilities":["actions.runtime","permissions.module","data.tenant-tx","apps.external"],"devGets":"Quản trị user, role, tenant, cửa hàng; kiểm quyền phía máy chủ ở mọi action; RLS theo đơn vị","sdk":"defineAction({ permission }), registerModulePermissions, ctx.tenant, ctx.actor","status":"mot-phan","gap":"phạm vi chi nhánh / kho, SoD, quyền module mặc định từ chối (PHASE-028); vai trò bổ sung ở nhánh W1"},{"id":"C3","key":"settings","title":"Settings & Policies","duty":"Cấu hình có phiên bản, phạm vi, ngày hiệu lực","layer":"Platform (registry + một đường đọc / ghi)","code":["packages/platform/src/core/settings.ts","packages/kernel/src/modules/posting-config"],"contracts":["bizcity_settings@1","bizcity_posting_template@1"],"capabilities":["settings.registry","accounting.profile","posting.policy-version"],"devGets":"Đọc cấu hình theo phạm vi và ngày; chính sách định khoản có phiên bản","sdk":"ctx.settings.get (có), settings.set (chưa có)","status":"mot-phan","gap":"yếu nhất: không đường ghi chung, không lịch sử, không hiệu lực, chỉ phạm vi đơn vị (S029-10, P0)"},{"id":"C4","key":"documents","title":"Documents & Workflow","duty":"Chứng từ, trạng thái, phiên bản, phê duyệt, quan hệ nguồn","layer":"Platform (Document SDK) + Kernel (sự việc)","code":["packages/platform/src/core/documents.ts","packages/platform/src/core/workflow.ts","packages/kernel/src/modules/documents"],"contracts":["bizcity_document@1"],"capabilities":["documents.numbering","documents.versions","documents.links","documents.attachments","documents.signatures","documents.workflow"],"devGets":"Workflow chứng từ, nhiều cấp duyệt, nhật ký phê duyệt, cấp số, đính kèm, ký","sdk":"ctx.documents.nextNumber / saveVersion / link / attach / sign; workflow YAML","status":"mot-phan","gap":"module chưa gọi saveVersion / link (S029-5); SoD chưa bật (S029-25); thuộc tính chứng từ chung (S029-11)"},{"id":"C5","key":"ledger","title":"Events & Accounting","duty":"Giao dịch, outbox, idempotency, một cửa ghi sổ kế toán","layer":"Kernel (sổ) + Platform (outbox, action)","code":["packages/kernel/src/modules/ledger","packages/kernel/src/modules/posting","packages/kernel/src/modules/documents","packages/platform/src/core/events.ts"],"contracts":["bizcity_ledger_intake@1","bizcity_posting_rule@1","bizcity_event@1","bizcity_domain@1"],"capabilities":["ledger.submit","ledger.cancel","ledger.query","events.outbox","events.subscribe","actions.idempotency","templates.posting"],"devGets":"Phát sự kiện, thử lại, chống trùng; bộ quy tắc định khoản và ghi sổ — module chỉ kể sự việc","sdk":"ctx.ledger.submit({ docType, reasonCode }), ctx.events.emit, Idempotency-Key","status":"dat","gap":"kỳ khoá chưa có trigger CSDL (S029-17); lớp giá vốn (PHASE-025)"},{"id":"C6","key":"continuity","title":"Continuity & Conformance","duty":"Kiểm chuẩn quan hệ xuyên module, truy vết, đối chiếu và kiểm soát lịch sử","layer":"Tập quy tắc + kiểm chứng trên dữ liệu sẵn có — KHÔNG phải engine lưu trùng dữ liệu","code":["packages/kernel/src/modules/lineage","packages/kernel/src/modules/conformance","packages/kernel/src/modules/intake","tests/conformance"],"contracts":["bizcity_lineage@1","bizcity_findings@1","bizcity_compliance@1","bizcity_evidence@1"],"capabilities":["lineage.item","conformance.engine","intake.findings","intake.inbox","evidence.receipt"],"devGets":"Truy vết và đối chiếu giữa các module; một thư viện mã lỗi có căn cứ; bộ kiểm module","sdk":"npx bizcity module check, event check, explain; registerDiagnostics (chưa mở cho module — S029-21)","status":"mot-phan","gap":"module chưa thêm được luật / chẩn đoán; đối chiếu chạy tay; Gate C; KPI"}],"groups":[{"id":"A","title":"Nền móng thống nhất của doanh nghiệp"},{"id":"B","title":"Nền móng xử lý nghiệp vụ và giao dịch"},{"id":"C","title":"Nền móng bảo đảm dữ liệu luôn đúng"},{"id":"D","title":"Nền móng để cộng đồng mở rộng"}],"pillars":[{"id":"01","group":"A","core":"C1","title":"Canonical Identity","status":"mot-phan","ecp":["ECP-01","ECP-04"],"next":"S026-4, S029-23","signals":[{"kind":"test","ref":"apps/api/test/item-master.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/xuong-ca-dinh-danh.test.ts","state":"co"},{"kind":"check","ref":"SC-ITEM-2","state":"co"},{"kind":"test","ref":"T029-ECP-P001","state":"chua"}]},{"id":"02","group":"A","core":"C1","title":"Master Data Governance","status":"mot-phan","ecp":["ECP-03","ECP-13"],"next":"S026-4/9/11, S029-12/19/20","signals":[{"kind":"test","ref":"apps/api/test/catalog-delete.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/bien-the-dinh-danh.test.ts","state":"co"},{"kind":"check","ref":"SC-ECP-13 (xoá an toàn ở CSDL)","state":"chua"}]},{"id":"03","group":"A","core":"C1","title":"Enterprise Organization","status":"mot-phan","ecp":["ECP-01"],"next":"S026-6, S026-7","signals":[{"kind":"test","ref":"apps/api/test/so-do-to-chuc.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/warehouses.test.ts","state":"co"}]},{"id":"04","group":"A","core":"C2","title":"Identity & Authorization","status":"mot-phan","ecp":["ECP-02","ECP-06"],"next":"PHASE-028, S029-23, S029-25","signals":[{"kind":"test","ref":"apps/api/test/access.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/tenant-isolation.test.ts","state":"co"},{"kind":"diag","ref":"TENANT_ISOLATION","state":"co"},{"kind":"test","ref":"apps/api/test/vai-tro-bo-sung.test.ts","state":"nhanh"}]},{"id":"05","group":"A","core":"C3","title":"Configuration & Policy Registry","status":"mot-phan","ecp":["ECP-03"],"next":"S029-10","signals":[{"kind":"test","ref":"apps/api/test/policy.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/accounting-profile.test.ts","state":"co"},{"kind":"check","ref":"SC-CON-7","state":"co"},{"kind":"check","ref":"chặn đọc thô tenants.settings","state":"chua"},{"kind":"test","ref":"settings.set duy nhất + lịch sử","state":"chua"},{"kind":"test","ref":"giá trị theo phạm vi + ngày hiệu lực","state":"chua"}]},{"id":"06","group":"B","core":"C4","title":"Document SDK & Lifecycle","status":"mot-phan","ecp":["ECP-05","ECP-09"],"next":"S029-5, S029-11","signals":[{"kind":"test","ref":"apps/api/test/documents-common.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/signatures.test.ts","state":"co"},{"kind":"check","ref":"SC-DOC-7","state":"nhanh"},{"kind":"test","ref":"apps/api/test/lich-su-chung-tu.test.ts","state":"nhanh"}]},{"id":"07","group":"B","core":"C4","title":"Workflow & Approval Engine","status":"mot-phan","ecp":["ECP-06"],"next":"S029-25","signals":[{"kind":"test","ref":"apps/api/test/workflow.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/payment-requests.test.ts","state":"co"},{"kind":"test","ref":"SoD người lập ≠ người duyệt","state":"chua"}]},{"id":"08","group":"B","core":"C5","title":"Command & Event Contracts","status":"dat","ecp":["ECP-02","ECP-08"],"next":"S029-28","signals":[{"kind":"check","ref":"SC-EVT-1","state":"co"},{"kind":"check","ref":"SC-EVT-2","state":"co"},{"kind":"test","ref":"apps/api/test/events.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/actions.test.ts","state":"co"},{"kind":"diag","ref":"EVENT_DEAD","state":"co"}]},{"id":"09","group":"B","core":"C5","title":"Accounting Kernel","status":"mot-phan","ecp":["ECP-05","ECP-07","ECP-13"],"next":"S029-17, S026-8","signals":[{"kind":"check","ref":"SC-KERNEL-1","state":"co"},{"kind":"test","ref":"apps/api/test/db-rules.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/ledger-flow.test.ts","state":"co"},{"kind":"diag","ref":"LEDGER_BALANCED","state":"co"},{"kind":"diag","ref":"LEDGER_TRIGGERS","state":"co"},{"kind":"test","ref":"trigger kỳ khoá ở CSDL","state":"chua"}]},{"id":"10","group":"B","core":"C5","title":"Inventory & Cost Continuity","status":"mot-phan","ecp":["ECP-05","ECP-09"],"next":"PHASE-025 S025-5..8","signals":[{"kind":"test","ref":"apps/api/test/costing.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/item-id-so-kho.test.ts","state":"co"},{"kind":"diag","ref":"INVENTORY_LEDGER_MISMATCH","state":"co"}]},{"id":"11","group":"C","core":"C6","title":"Cross-Module Lineage","status":"mot-phan","ecp":["ECP-05"],"next":"S029-2..8, S026-13, S029-27","signals":[{"kind":"test","ref":"apps/api/test/lineage.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/truy-vet.test.ts","state":"co"},{"kind":"diag","ref":"LEDGER_ORPHAN","state":"co"},{"kind":"diag","ref":"ENTRY_NO_VERSION","state":"nhanh"}]},{"id":"12","group":"C","core":"C6","title":"Validation & Conformance","status":"mot-phan","ecp":["ECP-10","ECP-11"],"next":"S029-21, S025-9/10","signals":[{"kind":"check","ref":"SC-FIND-1","state":"co"},{"kind":"check","ref":"SC-INTAKE-1","state":"co"},{"kind":"test","ref":"apps/api/test/conformance-engine.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/intake-preflight.test.ts","state":"co"},{"kind":"check","ref":"luật / chẩn đoán do module khai","state":"chua"}]},{"id":"13","group":"C","core":"C6","title":"Reconciliation & Period Integrity","status":"mot-phan","ecp":["ECP-11"],"next":"S029-13, S025-11/14, S026-7","signals":[{"kind":"diag","ref":"DEBT_MATCH_LEDGER","state":"co"},{"kind":"diag","ref":"LEDGER_BALANCES_DAILY","state":"co"},{"kind":"test","ref":"apps/api/test/period-locks.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/inventory-reconcile.test.ts","state":"co"},{"kind":"diag","ref":"sổ đăng ký đối chiếu","state":"chua"}]},{"id":"14","group":"C","core":"C6","title":"Semantic Metrics & KPI","status":"chua","ecp":["ECP-12"],"next":"S029-16","signals":[{"kind":"test","ref":"sổ chỉ tiêu có phiên bản","state":"chua"}]},{"id":"15","group":"D","core":"C1","title":"Integration & External Identity","status":"mot-phan","ecp":["ECP-04","ECP-10"],"next":"S029-15, S029-24","signals":[{"kind":"test","ref":"apps/api/test/connections.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/intake-inbox.test.ts","state":"co"},{"kind":"diag","ref":"INTAKE_OPEN_AGE","state":"co"},{"kind":"test","ref":"ánh xạ định danh ngoài","state":"chua"}]},{"id":"16","group":"D","core":"SDK","title":"Module SDK & Metadata Registry","status":"mot-phan","ecp":["ECP-07"],"next":"S029-21","signals":[{"kind":"check","ref":"SC-CON-2","state":"co"},{"kind":"check","ref":"SC-MOD-2","state":"co"},{"kind":"test","ref":"apps/api/test/module-sdk.test.ts","state":"co"},{"kind":"test","ref":"apps/api/test/module-manifests.test.ts","state":"co"},{"kind":"check","ref":"SC-CORE-1","state":"chua"}]},{"id":"17","group":"D","core":"C2","title":"Audit, Security & Operations","status":"mot-phan","ecp":["ECP-02","ECP-13"],"next":"S029-22, S029-24","signals":[{"kind":"diag","ref":"EVIDENCE_CHAIN","state":"co"},{"kind":"check","ref":"SC-DATA-2","state":"co"},{"kind":"check","ref":"SC-SEC-1","state":"co"},{"kind":"test","ref":"apps/api/test/evidence.test.ts","state":"co"},{"kind":"check","ref":"khoá checksum migration 0034+","state":"chua"}]}],"ecp":[{"id":"ECP-01","text":"Định danh chuẩn không tái sử dụng / thay đổi tuỳ tiện"},{"id":"ECP-02","text":"Tenant, actor, nguồn, correlation hợp lệ"},{"id":"ECP-03","text":"Ngày hiệu lực + phiên bản; không âm thầm viết lại"},{"id":"ECP-04","text":"Quan hệ xuyên module bằng định danh / ánh xạ kiểm chứng"},{"id":"ECP-05","text":"Bút toán → sự việc → chứng từ, kể cả phiên bản"},{"id":"ECP-06","text":"Quyền kiểm lúc hành động; lịch sử quyết định quyền"},{"id":"ECP-07","text":"Module không sửa dữ liệu của người khác"},{"id":"ECP-08","text":"Sự kiện = sự thật đã commit"},{"id":"ECP-09","text":"Sửa / huỷ / thay thế giữ quan hệ chứng từ gốc"},{"id":"ECP-10","text":"Lỗi dữ liệu có biên nhận, trạng thái chờ, đường sửa"},{"id":"ECP-11","text":"Bất biến xuyên module có đối chiếu + Gate Check"},{"id":"ECP-12","text":"KPI có nguồn, định nghĩa, phạm vi, phiên bản"},{"id":"ECP-13","text":"Không thay đổi phá huỷ lịch sử đã tham chiếu"}]};
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ST = D.statuses; const SL = { co: 'chạy được', nhanh: 'ở nhánh', chua: 'chưa có' };
+const pill = (s, t) => `<span class="pill ${s}">${esc(t ?? ST[s] ?? SL[s] ?? s)}</span>`;
+const coreName = (id) => id === 'SDK' ? 'Bề mặt SDK' : (D.cores.find((c) => c.id === id)?.title ?? id);
+const count = (sigs) => ({ co: sigs.filter((s) => s.state === 'co').length, nhanh: sigs.filter((s) => s.state === 'nhanh').length, chua: sigs.filter((s) => s.state === 'chua').length, n: sigs.length });
+const bar = (c) => `<div class="bar" title="${c.co} chạy được · ${c.nhanh} ở nhánh · ${c.chua} chưa có">${['co', 'nhanh', 'chua'].map((k) => `<span class="b-${k}" style="width:${c.n ? (c[k] / c.n) * 100 : 0}%"></span>`).join('')}</div>`;
+const rank = { chua: 0, 'tai-lieu': 1, 'mot-phan': 2, dat: 3 };
+$('#ver').textContent = `(${D.contract} ${D.version}, cập nhật ${D.updated})`;
+
+const allSig = D.pillars.flatMap((p) => p.signals.map((s) => ({ ...s, pillar: p })));
+const tot = count(allSig);
+$('#kpi').innerHTML = [
+  ['Trụ cột đạt', D.pillars.filter((p) => p.status === 'dat').length + ' / ' + D.pillars.length],
+  ['Năng lực lõi đạt', D.cores.filter((c) => c.status === 'dat').length + ' / ' + D.cores.length],
+  ['Tín hiệu chạy được', tot.co + ' / ' + tot.n],
+  ['Tín hiệu chưa có', tot.chua],
+].map(([k, v]) => `<div class="card"><div class="note">${k}</div><div class="n">${v}</div></div>`).join('');
+
+$('#cores').innerHTML = D.cores.map((c) => {
+  const ps = D.pillars.filter((p) => p.core === c.id); const cs = count(ps.flatMap((p) => p.signals));
+  return `<div class="card"><div class="hd"><span class="pill tai-lieu">${c.id}</span><h3>${esc(c.title)}</h3>${pill(c.status)}</div><div class="bd">
+  <div style="margin-bottom:6px">${esc(c.duty)}</div>${bar(cs)}<div class="note" style="margin:4px 0 8px">${cs.co}/${cs.n} tín hiệu chạy được · trụ cột ${ps.map((p) => p.id).join(', ') || '—'}</div>
+  <div class="kv"><b>Lớp</b><span>${esc(c.layer)}</span><b>Dev nhận sẵn</b><span>${esc(c.devGets)}</span><b>SDK</b><span class="mono">${esc(c.sdk)}</span>
+  <b>Hợp đồng</b><span>${c.contracts.map((x) => `<span class="ecp">${esc(x)}</span>`).join('')}</span><b>Capability</b><span>${c.capabilities.map((x) => `<span class="ecp">${esc(x)}</span>`).join('')}</span>
+  <b>Mã</b><span class="mono">${c.code.map(esc).join('<br>')}</span><b>Khoảng cách</b><span>${esc(c.gap)}</span></div></div></div>`;
+}).join('');
+
+let fG = 'all', fS = 'all', sel = null;
+const chips = (el, opts, cur, set) => { $(el).innerHTML = opts.map(([v, t]) => `<button class="chipbtn ${v === cur ? 'on' : ''}" data-v="${v}">${esc(t)}</button>`).join(' '); $(el).onclick = (e) => { const v = e.target.dataset.v; if (v) { set(v); } }; };
+const cols = [...D.cores.map((c) => c.id), 'SDK'];
+function drawMatrix() {
+  chips('#fgroup', [['all', 'Tất cả'], ...D.groups.map((g) => [g.id, g.id])], fG, (v) => { fG = v; drawMatrix(); });
+  chips('#fstatus', [['all', 'Tất cả'], ...Object.keys(ST).map((k) => [k, ST[k].split(' —')[0]])], fS, (v) => { fS = v; drawMatrix(); });
+  let h = `<tr><th>#</th><th>Trụ cột</th>${cols.map((c) => `<th class="cell-c" title="${esc(coreName(c))}">${c}</th>`).join('')}<th>Mức</th><th>Tín hiệu</th><th>ECP</th></tr>`;
+  for (const g of D.groups) {
+    if (fG !== 'all' && fG !== g.id) continue;
+    const ps = D.pillars.filter((p) => p.group === g.id && (fS === 'all' || p.status === fS));
+    if (!ps.length) continue;
+    h += `<tr class="grp"><td colspan="${cols.length + 5}">${g.id} · ${esc(g.title)}</td></tr>`;
+    h += ps.map((p) => `<tr class="row ${sel === p.id ? 'sel' : ''}" data-id="${p.id}"><td>${p.id}</td><td>${esc(p.title)}</td>${cols.map((c) => `<td class="cell-c">${p.core === c ? '<span class="dot"></span>' : ''}</td>`).join('')}<td>${pill(p.status)}</td><td>${bar(count(p.signals))}</td><td>${p.ecp.map((e) => `<span class="ecp">${e.slice(4)}</span>`).join('')}</td></tr>`).join('');
+  }
+  $('#mx').innerHTML = h;
+  $('#mx').onclick = (e) => { const r = e.target.closest('tr.row'); if (r) { sel = r.dataset.id; drawMatrix(); drawDetail(); } };
+}
+function drawDetail() {
+  const p = D.pillars.find((x) => x.id === sel); if (!p) return;
+  $('#detail').innerHTML = `<div class="hd"><h3>${p.id} · ${esc(p.title)}</h3>${pill(p.status)}</div><div class="bd">
+  <div class="kv"><b>Nhóm</b><span>${p.group} · ${esc(D.groups.find((g) => g.id === p.group).title)}</span><b>Năng lực lõi</b><span>${esc(coreName(p.core))}</span><b>Việc kế tiếp</b><span class="mono">${esc(p.next)}</span></div>
+  <h2>Tín hiệu kiểm</h2><table>${p.signals.map((s) => `<tr><td>${pill(s.state)}</td><td class="note">${s.kind}</td><td class="mono">${esc(s.ref)}</td></tr>`).join('')}</table>
+  <h2>Nguyên tắc</h2>${p.ecp.map((e) => `<div><span class="ecp">${e}</span> ${esc(D.ecp.find((x) => x.id === e)?.text)}</div>`).join('')}
+  <p class="note">Mức chỉ lên "đạt" khi mọi tín hiệu cần thiết ở trạng thái chạy được (R-ECP-SCORE).</p></div>`;
+}
+drawMatrix();
+
+(function drawEcp() {
+  let h = `<tr><th>ECP</th><th>Nguyên tắc</th>${D.pillars.map((p) => `<th class="cell-c" title="${esc(p.title)}">${p.id}</th>`).join('')}<th>Mức yếu nhất</th></tr>`;
+  h += D.ecp.map((e) => {
+    const ps = D.pillars.filter((p) => p.ecp.includes(e.id));
+    const worst = ps.reduce((w, p) => (rank[p.status] < rank[w] ? p.status : w), 'dat');
+    return `<tr><td><b>${e.id}</b></td><td>${esc(e.text)}</td>${D.pillars.map((p) => `<td class="mark">${p.ecp.includes(e.id) ? '●' : ''}</td>`).join('')}<td>${ps.length ? pill(worst) : pill('chua')}</td></tr>`;
+  }).join('');
+  $('#ecpx').innerHTML = h;
+})();
+
+let fSig = 'all';
+function drawSig() {
+  chips('#fsig', [['all', 'Tất cả'], ['co', 'Chạy được'], ['nhanh', 'Ở nhánh'], ['chua', 'Chưa có']], fSig, (v) => { fSig = v; drawSig(); });
+  const rows = allSig.filter((s) => fSig === 'all' || s.state === fSig);
+  $('#sig').innerHTML = `<tr><th>Trạng thái</th><th>Loại</th><th>Tín hiệu</th><th>Trụ cột</th><th>Năng lực lõi</th></tr>` + rows.map((s) => `<tr><td>${pill(s.state)}</td><td>${s.kind}</td><td class="mono">${esc(s.ref)}</td><td>${s.pillar.id} · ${esc(s.pillar.title)}</td><td>${esc(coreName(s.pillar.core))}</td></tr>`).join('');
+}
+drawSig();
+
+$('#lean').innerHTML = `<tr><th>Mã</th><th>Nguyên tắc</th><th>Nghĩa</th><th>Thi hành bằng</th></tr>` + D.lean.map((l) => `<tr><td><b>${l.id}</b></td><td>${esc(l.title)}</td><td>${esc(l.rule)}</td><td class="note">${esc(l.enforcedBy)}</td></tr>`).join('');
+$('#devgets').innerHTML = `<tr><th>Năng lực lõi</th><th>Dev nhận sẵn</th><th>Gọi bằng</th><th>Mức</th></tr>` + D.cores.map((c) => `<tr><td><b>${c.id}</b> ${esc(c.title)}</td><td>${esc(c.devGets)}</td><td class="mono">${esc(c.sdk)}</td><td>${pill(c.status)}</td></tr>`).join('');
+
+const show = (v) => { if (!document.getElementById('v-' + v)) return; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === v)); document.querySelectorAll('.view').forEach((s) => s.classList.toggle('on', s.id === 'v-' + v)); };
+$('#tabs').onclick = (e) => { const v = e.target.dataset.v; if (v) { show(v); history.replaceState(null, '', '#xem/' + v); } };
+const [h0, h1] = location.hash.replace(/^#(xem\/)?/, '').split(':'); if (h0) show(h0); if (h1 && D.pillars.some((p) => p.id === h1)) { sel = h1; drawMatrix(); drawDetail(); }
+</script>
+</body>
+</html>

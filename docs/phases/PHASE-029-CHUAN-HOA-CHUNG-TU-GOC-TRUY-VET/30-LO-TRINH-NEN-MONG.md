@@ -41,3 +41,22 @@ P1  E4 chứng từ thuộc tính · E7 tích hợp & định danh ngoài · E9 
 | Lớp giá vốn, Gate C, khoá kỳ đòi chuỗi lành | PHASE-025 |
 | Vai trò, phạm vi, quyền module, trình sửa vai trò | PHASE-028 |
 | Bể chờ, `IN-*` | PHASE-021 |
+
+<!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §4 chữ chốt SC-CORE-1 (phép kiểm giữ sáu năng lực lõi, D028-13) -->
+## 4. Chữ chốt SC-CORE-1 — giữ sáu năng lực lõi trong repo (S029-29)
+
+Phép kiểm chặn mới là thứ dùng chung (R-FLOW §3) — mục này là chữ chốt; code mở bằng dòng giữ chỗ riêng sau khi PR tài liệu này vào `main`.
+
+| Mục | Chốt |
+|---|---|
+| Nguồn | `docs/standard/nen-mong.json` (`bizcity_foundations@1`); không đọc mã để đoán |
+| Lớp | CONF-STATIC, thư mục check mới `tests/conformance/checks/foundations/` (đề xuất); chạy trong `selfcheck` |
+| Mức | `warn` ở bản đầu; `block` khi nợ = 0 (ratchet `baseline.json`, không thêm nợ mới) |
+| Luật 1 | Đúng sáu lõi `C1`..`C6`; mỗi lõi có ≥ 1 capability, mọi capability có trong `bizcity-standard.json`; lõi mức `dat` thì mọi capability phải `available` |
+| Luật 2 | Mọi đường dẫn ở `code` tồn tại; mọi hợp đồng ở `contracts` có trong CANON §4 |
+| Luật 3 | Đúng 17 trụ cột `01`..`17`, mỗi trụ cột thuộc đúng một lõi (hoặc `SDK`), thuộc đúng một nhóm A–D; mọi ECP-01..13 có ≥ 1 trụ cột |
+| Luật 4 | Tín hiệu `co`: `check` → id có trong `tests/conformance/checks`; `diag` → mã có trong mã nguồn chẩn đoán; `test` → tệp tồn tại. Tín hiệu `nhanh` / `chua` không cần tồn tại |
+| Luật 5 | Trụ cột / lõi mức `dat` thì không còn tín hiệu `chua` (R-ECP-SCORE-1) |
+| Ca tự kiểm | gốc mẫu `fixtures/foundations-bad` (đề xuất): một lõi thiếu, một tín hiệu `co` trỏ tệp không có, một trụ cột `dat` còn `chua` |
+| Quan hệ SC-PILLAR-1 | SC-PILLAR-1 (S026-15) kiểm `tru-cot.json`; SC-CORE-1 kiểm `nen-mong.json`. Khi S029-18 thêm trường `foundation` vào `tru-cot.json`, hai phép kiểm dùng chung bộ đọc tín hiệu — không viết hai lần |
+| Đổi mã → sửa tài liệu | đổi / dời thư mục ở `code` của một lõi → sửa `nen-mong.json` trong cùng PR (SC-CORE-1 báo) |

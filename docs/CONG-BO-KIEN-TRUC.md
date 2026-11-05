@@ -52,6 +52,7 @@ AP-1..AP-7 giữ **sự thật kế toán**; ECP-01..13 giữ **sự thật nghi
 - **ECP-13 — không thay đổi phá huỷ lịch sử nghiệp vụ đã được tham chiếu** — được bảo vệ đồng thời bằng ràng buộc / trigger CSDL, SDK, phân quyền và cổng kiểm chuẩn. Ẩn nút Xoá trên giao diện không tính là thi hành.
 - **Sáu thao tác vòng đời** cho mọi dữ liệu gốc: CREATE · UPDATE · ARCHIVE · MERGE · REVERSE · DELETE (chỉ khi an toàn) — [standard/DU-LIEU-GOC.md](standard/DU-LIEU-GOC.md).
 - **Mô hình nhất quán ba tầng** (bổ sung §3.2): **Strong** trong một giao dịch PostgreSQL (Nợ = Có, kiểm quyền, kỳ khoá); **Eventual** sau commit qua outbox, retry, idempotency (CRM, POS, HRM, báo cáo, hệ ngoài); **Reconciliation** — mỗi projection / đồng bộ có phép đối chiếu có mã và đường khắc phục.
+- **Sáu năng lực lõi, Small Core – Strong Contracts** <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — sáu lõi + LEAN --> — Identity & Master Data · Authorization & Context · Settings & Policies · Documents & Workflow · Events & Accounting · Continuity & Conformance; là thư viện, hợp đồng, capability trong Platform / Kernel, không phải sáu dịch vụ; bảy nguyên tắc tinh gọn LEAN-1..7 ([CANON §0.7–§0.8](00-CANON.md)).
 - **Bốn nhóm nền móng, mười bảy trụ cột** — thống nhất doanh nghiệp · xử lý giao dịch · dữ liệu luôn đúng · cộng đồng mở rộng: [standard/NEN-MONG-DOANH-NGHIEP.md](standard/NEN-MONG-DOANH-NGHIEP.md).
 
 ## 2. Ba lớp kiểm soát: điều gì là đúng
