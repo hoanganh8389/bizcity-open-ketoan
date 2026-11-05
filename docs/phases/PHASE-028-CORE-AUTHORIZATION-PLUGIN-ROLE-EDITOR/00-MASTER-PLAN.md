@@ -19,6 +19,8 @@ Sự thật đọc mã: [10-AS-IS-AUDIT.md](10-AS-IS-AUDIT.md). Kết luận W0:
 
 ## 3. Mười quyết định cần chủ dự án duyệt (D-AUTH-01..10)
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"Đồng ý hướng đề xuất, Mở rộng users. thêm user_role_assignments. Không khai báo thì Default-deny cho mọi quyền module mới, riêng owner và các quyền cao, như super admin, admin thì ok."*): D-AUTH-01, -02, -04..-10 **duyệt như đề xuất**. **D-AUTH-03 sửa lại:** quyền module **không khai `roles`** trong manifest → mặc định cấm với mọi vai trò, **trừ vai trò quản trị cao** (`owner` hôm nay; vai trò `admin` / quản trị hệ thống nếu sau này thêm thì vào cùng tập) vẫn tự có mọi quyền module. Bảng `module_grants` (W2) là đường **cấp thêm** cho vai trò khác, không thu quyền của `owner`. D-AUTH-05: đổi `users.role` **đã** bump `session_version` sẵn (`apps/api/src/modules/access/access.service.ts` `updateUserIn`) — không phải vá; W1 chỉ thêm cơ chế tương tự cho vai trò bổ sung. Q028-3 (role preset mới) chưa trả lời — W1 không thêm vai trò mới. <!-- [2026-11-05 06:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chủ duyệt D-AUTH-01..10, sửa D-AUTH-03 -->
+
 Đề bài §13 đã tự ghi "phương án ưu tiên để đề xuất" — dưới đây giữ nguyên hướng đó, đối chiếu lại với bằng chứng thật ở AS-IS audit, chỉ nói rõ thêm khi cần. **Claude không tự quyết — đây là đề xuất chờ duyệt**, đúng như đề bài tự yêu cầu ở §0 và §13.
 
 | ID | Quyết định | Phương án đề xuất (đã đối chiếu mã thật) | Vì sao |
@@ -41,12 +43,24 @@ Sự thật đọc mã: [10-AS-IS-AUDIT.md](10-AS-IS-AUDIT.md). Kết luận W0:
 | Wave | Mục tiêu | Đụng gì (K-level) | Cổng nghiệm thu |
 |---|---|---|---|
 | **W0** (phase này) | Audit + ADR-0027 + 10 quyết định | K0, chỉ tài liệu | Chủ duyệt D-AUTH-01..10; PR tài liệu vào `main` |
-| **W1 — Identity & multi-role** | `user_role_assignments` (migration mới); sửa 1 chỗ bump `session_version` khi đổi `users.role` (D-AUTH-05, có thể tách PR riêng làm ngay, rủi ro thấp) | K2 (migration + `auth.ts`) | Test: 1 user 2 role 2 scope; đổi role cũ có hiệu lực ngay; không phá login hiện tại |
+| **W1 — Identity & multi-role** | Chữ chốt ở §4a. `user_role_assignments` (migration 0074); quyền hiệu lực = vai trò chính ∪ vai trò bổ sung còn hiệu lực (phạm vi đơn vị); action gán / thu hồi; tập vai trò quản trị cao (`ADMIN_ROLES`) thay cho so sánh cứng `role === 'owner'` | K2 (migration + `auth.ts`) | Test: 1 user 2 role; thu hồi có hiệu lực ngay; không tự gán cho mình; không gán vai trò rộng hơn quyền của mình; login cũ không đổi |
 | **W2 — Module grant (default-deny)** | `module_grants` (migration); sửa `rolePermissions()` bỏ nhánh `role === 'owner'` auto-grant; Role Editor API đọc/ghi grant | K3 (đổi hành vi `auth.ts` — ảnh hưởng mọi module đang chạy, cần kế hoạch tương thích ngược: migration backfill grant cho module **đã cài trước ngày chuyển**, chỉ module **mới** từ nay mới default-deny) | Test AUTH-REG-01/02; không có module nào đang chạy bị khoá đột ngột sau nâng cấp |
 | **W3 — SDK & guard hoàn thiện** | Đóng nốt 17 route ghi thô còn lại (F16) vào `defineAction`; `requireScope()` wrapper cho resource scope (chi nhánh/kho) | K2 | SC-AUTH-03 (mọi route ghi có guard), test `WAREHOUSE_REPORT_VS_OPERATE` |
 | **W4 — Role Editor UI** | Màn mới (mã `HT12`/`HT13` — xác nhận trước khi code), dùng `@bizcity/ui-kit`, đọc registry + `module_grants` + `user_role_assignments` | K1 (UI + API đọc/ghi quyền, không chạm Ledger) | 9 nghiệm thu UI ở đề bài §8.1, không có nút tự tick "Đạt" |
 | **W5 — TGS mapping & 1 luồng MVP** | Map 349 mã (tài liệu + JSON/CSV có `confidence`); chuyển luồng **Warehouse transfer** làm ca mẫu | K1 (mapping) + K2 (nếu luồng mẫu cần action mới) | Coverage report; `TRANSFER_TWO_SIDES` test pass |
 | **W6 — Scoreboard & gate** | Thêm S-5..S-n vào pillar VII; nối `selfcheck.mjs` (SC-AUTH-*) | K1 | Scoreboard đọc evidence thật, không % giả |
+
+## 4a. Chữ chốt W1 — vai trò bổ sung (RULE-FLOW §3: migration + `auth.ts`)
+<!-- [2026-11-05 06:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chữ chốt thiết kế W1 trước PR code -->
+
+1. **Bảng `user_role_assignments`** (migration `0074` — 0072 / 0073 đã được PHASE-026 đợt 2 / 3 giữ): `id`, `tenant_id`, `user_id` (FK `users`, không CASCADE — người dùng không bị xoá, chỉ khoá), `role` (cùng tập CHECK với `users.role`), `scope_type` (`tenant` · `branch` · `warehouse`), `scope_id` (NULL ⇔ `tenant`), `purpose` (`operate` · `approve` · `report` · `export`), `valid_from`, `valid_to`, `reason`, `granted_by`, `granted_at`, `revoked_by`, `revoked_at`, `revoke_reason`. RLS như mọi bảng có `tenant_id`; COMMENT ON đủ cột.
+2. **Chỉ thêm, thu hồi bằng cột:** trigger chặn `DELETE` và chặn `UPDATE` trừ lần đặt `revoked_*` đầu tiên. Không dòng nào bị xoá — lịch sử cấp quyền giữ nguyên (AUTHZ-07). Vai trò API `ketoan_app`: `SELECT, INSERT, UPDATE`.
+3. **`users.role` giữ nguyên là vai trò chính** (đăng nhập, `claims.role`, đếm chủ sở hữu cuối cùng). Bảng mới chỉ chứa vai trò **bổ sung** — không backfill, không ghi hai nơi.
+4. **Quyền hiệu lực** = `rolePermissions(vai trò chính)` ∪ `rolePermissions(r)` với mọi dòng còn hiệu lực có `scope_type = 'tenant'` **và** `purpose = 'operate'`. Dòng phạm vi chi nhánh / kho hoặc mục đích khác **được lưu nhưng chưa cấp gì** cho tới W3 (bộ giải phạm vi) — W1 action chỉ nhận `tenant` + `operate` để không có dòng "đăng ký mà không thi hành" (AUTHZ-16). "Còn hiệu lực": `revoked_at IS NULL`, `valid_from ≤ hôm nay ≤ valid_to` theo giờ Việt Nam.
+5. **Tập vai trò quản trị cao `ADMIN_ROLES`** (`auth.ts`, hôm nay = `{ owner }`) thay cho so sánh cứng `role === 'owner'`: vai trò trong tập nhận mọi quyền module (D-AUTH-03 bản sửa). Thêm vai trò `admin` sau này = thêm vào tập, không sửa chỗ khác.
+6. **Đọc nhanh, thu hồi ngay:** vai trò bổ sung đọc kèm đệm 15 giây theo người dùng (cùng nhịp với `session-state.ts`); gán / thu hồi trong tiến trình xoá đệm ngay. Không đăng xuất người được gán.
+7. **Action** (quyền `users:write`, `ai: 'deny'`, `mcp: false`, idempotency `natural`): `core.user.role-assign` (`POST /api/v1/users/:id/roles`), `core.user.role-revoke` (`POST /api/v1/users/:id/roles/:assignmentId/revoke`); đọc `GET /api/v1/users/:id/roles`. Luật: không tự gán cho mình; không gán vai trò mà quyền Core của nó vượt quyền của người gán (chống leo thang); không gán trùng vai trò chính hoặc trùng một dòng đang hiệu lực; lý do bắt buộc khi thu hồi.
+8. **Không đổi:** đường đăng nhập qua hệ thống quản trị (`claims.perms`), khoá API, khoá app, `defineAction`, Ledger.
 
 ## 5. Mười hai mã kiểm (SC-AUTH-01..12) — đề xuất vị trí, chưa viết
 

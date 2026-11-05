@@ -1,12 +1,12 @@
 # PHASE-028 — Core Authorization Foundation, Plugin Contract & Role Editor
 <!-- [2026-11-05 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — mở phase theo đề bài "CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR" (05/11/2026); W0 audit + ADR-0027 trước khi đụng Kernel (R-FLOW) -->
 
-> **Trạng thái:** 🟡 W0 tài liệu 2026-11-05 · **Code:** chưa — chờ chủ dự án duyệt D-AUTH-01..10 (00 §5) và PR tài liệu này vào `main` trước khi giữ chỗ code (R-FLOW)
+> **Trạng thái:** 🟡 W0 xong 2026-11-05 — chủ duyệt D-AUTH-01..10 (D-AUTH-03 bản sửa) · **Code:** W1 đã giữ chỗ (chữ chốt 00 §4a) <!-- [2026-11-05 06:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chủ duyệt, giữ chỗ W1 -->
 > **Mức Kernel:** K0 cho W0 (chỉ tài liệu). W1 (identity/role) và W2 (registry default-deny) đụng `packages/platform/src/core/auth.ts`, `packages/module-sdk`, migration mới → K2/K3, cần chữ chốt riêng từng wave trước PR code (RULE-FLOW §3).
 > **Mục tiêu:** Cộng đồng tạo module mới, khai `permissions[]`/menu/action theo manifest là có ngay cây quyền trong Role Editor — nhưng **mặc định không ai có thêm đặc quyền**, kể cả `owner`. Quyền hiệu lực và sự thật kế toán vẫn do Core (Accounting Kernel) giữ; Role Editor chỉ cấu hình **ai làm được gì ở phạm vi nào**, không bao giờ tự sinh bút toán hay đổi ranh giới Kernel.
 > **Việc lộ trình:** — (đề xuất thêm mã khi W0 được duyệt — xem 00 §6, giữ cùng đợt với PHASE-018/019/020 đã chờ mã)
 > **Checklist công bố:** — (phase mới, ngoài G1–G3 hiện có; mã RBAC công bố hiện vẫn thuộc PHASE-011, xem mục "Trả lời ngắn")
-> **Quyết định:** chưa có — ADR-0027 ở trạng thái **Đề xuất**, chờ chủ dự án duyệt D-AUTH-01..10
+> **Quyết định:** [ADR-0027](../../adr/ADR-0027-core-authorization-plugin-role-editor.md) chấp nhận 2026-11-05
 > **Phụ thuộc phase:** PHASE-011 (Module SDK, manifest `permissions[]` đã có), PHASE-010 (`packages/platform/src/core/auth.ts`), ADR-0011 mức 2 (app_installations — mẫu "module grant" đã có cho app ngoài tiến trình), ADR-0024 (modules/ vs phan-he/)
 > **Luật đi kèm:** [R-FLOW](../../rules/RULE-FLOW.md) — W0 là PR tài liệu, không giữ chỗ code cho tới khi D-AUTH-* có chữ chốt
 

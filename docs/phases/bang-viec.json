@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 15
+      "count": 16
     },
     {
       "key": "merging",
@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 15
+      "count": 14
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 102
+      "count": 101
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 195
+      "count": 196
     }
   ],
   "items": [
@@ -4083,8 +4083,8 @@
       "phase": "PHASE-028",
       "title": "Chủ dự án duyệt D-AUTH-01..10",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 13
@@ -4103,18 +4103,24 @@
     {
       "id": "S028-6",
       "phase": "PHASE-028",
-      "title": "W1: userroleassignments + bump sessionversion khi đổi users.role",
+      "title": "W1: userroleassignments (0074), quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w1-vai-tro-bo-sung",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-028 · W1 — vai trò bổ sung userroleassignments, quyền hiệu lực nhiều vai trò, ADMINROLES (chữ…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 15
     },
     {
       "id": "S028-7",
       "phase": "PHASE-028",
-      "title": "W2: modulegrants, bỏ owner auto-grant quyền module",
+      "title": "W2: modulegrants — cấp thêm quyền module cho vai trò ngoài ADMINROLES (D-AUTH-03 bản sửa: không thu quyền của owner)",
       "priority": "P0",
       "status": "todo",
       "column": "todo",

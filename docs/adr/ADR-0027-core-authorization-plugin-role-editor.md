@@ -1,7 +1,7 @@
 # ADR-0027 · Core Authorization Foundation: module grant mặc định cấm, nhiều role có phạm vi, Role Editor
 <!-- [2026-11-05 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — ADR-0027: đề xuất từ đề bài chủ dự án 05/11/2026 (WordPress-style plugin ecosystem + User Role Editor + Accounting Kernel enforcement) -->
 
-- Trạng thái: **Đề xuất** — chờ chủ dự án duyệt D-AUTH-01..10 ([PHASE-028](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md)).
+- Trạng thái: **Chấp nhận** <!-- [2026-11-05 06:27 PM Johnny Chu - Chu Hoàng Anh] ADR-0027 — chấp nhận, sửa D-AUTH-03 --> — chủ dự án (Johnny Chu) duyệt 2026-11-05: *"Đồng ý hướng đề xuất, Mở rộng users. thêm user_role_assignments. Không khai báo thì Default-deny cho mọi quyền module mới, riêng owner và các quyền cao, như super admin, admin thì ok."* — D-AUTH-01..10, **D-AUTH-03 theo bản sửa** dưới đây ([PHASE-028](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/README.md)).
 - Nguồn: chủ dự án 2026-11-05 — đề bài `PHASE-DE-XUAT-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR.md`: cộng đồng tạo module nhanh như WordPress, đăng ký chức năng là có cây quyền để quản trị viên cấu hình, nhưng "quyền thực thi và sự thật kế toán luôn nằm dưới Core".
 - Ngày: 2026-11-05 · Người quyết: Johnny Chu – Chu Hoàng Anh · Mức Kernel: K0 cho ADR này; thi hành K2–K3 theo từng wave PHASE-028 (xem [00-MASTER-PLAN §4](../phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/00-MASTER-PLAN.md)).
 - Nền: ADR-0011 mức 2 (`app_installations` — mẫu module-grant đã có cho app ngoài tiến trình), PHASE-010/011 (`packages/platform/src/core/auth.ts`, Module SDK), [ADR-0024](ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md) (modules/ vs phan-he/ đóng băng).
@@ -21,7 +21,7 @@ Ngược lại, ba nền đã đúng hướng và **không cần làm lại**: d
 |---|---|---|
 | D-AUTH-01 | Mở rộng `users` (không tạo `core_users` song song); thêm `user_role_assignments(user, role, tenant, scope, purpose, hiệu lực)` cạnh `users.role` | Tránh double-write identity đã gắn FK/RLS/login |
 | D-AUTH-02 | Giữ định dạng quyền `<module>:<việc>`; thêm bảng chiếu `permission_catalog` mang `resource/operation/risk/scopeKinds`, không đổi ID đang chạy | Đổi ID phải sửa mọi nơi gọi `requirePermission`/`defineAction`, chi phí không tương xứng |
-| D-AUTH-03 | **Mặc định cấm (default-deny) mọi quyền module mới, kể cả `owner`.** Thêm `module_grants(tenant_id, module_key, permission_key, granted_by, granted_at)`, nhân mẫu `app_installations.permissions` sang module trong tiến trình | Đây là lỗ hổng xác nhận rõ nhất qua đọc mã; đúng tinh thần AUTHZ-03 |
+| D-AUTH-03 | ~~Mặc định cấm mọi quyền module mới, kể cả `owner`.~~ **Bản chủ duyệt 2026-11-05:** quyền module không khai `roles` → mặc định cấm với mọi vai trò, **trừ tập vai trò quản trị cao `ADMIN_ROLES`** (`owner` hôm nay; `admin` nếu sau này thêm) vẫn tự có. `module_grants(tenant_id, module_key, permission_key, granted_by, granted_at)` (W2, nhân mẫu `app_installations.permissions`) là đường cấp thêm cho vai trò khác | Chủ đơn vị là người chịu trách nhiệm cao nhất của đơn vị; khoá cả họ khỏi module mình cài làm vận hành khó mà không thêm an toàn thật. Rủi ro còn lại (quyền `risk: high`) vẫn chặn AI / khoá API như cũ |
 | D-AUTH-04 | ALLOW = UNION trong cùng scope của các role đang gán; DENY/SoD luôn thắng ALLOW | Khớp mô hình RLS/scope đã có, mở rộng tự nhiên xuống chi nhánh/kho |
 | D-AUTH-05 | Đổi `users.role` phải bump `session_version` ngay (vá điểm hở revoke); EXPAND → BACKFILL → SHADOW CHECK → SWITCH cho các bước còn lại | Giữ login/JWT hiện tại hoạt động trong lúc chuyển |
 | D-AUTH-06 | Mở rộng pillar VII có sẵn trong `tru-cot.json` (`bizcity_pillars@1`), không mở `authz_compliance@1` song song | Pillar VII đã đúng chủ đề "Cô lập đơn vị và phân quyền"; mở contract mới là trùng (R-KER-8) |
@@ -34,6 +34,6 @@ Chi tiết từng wave, 12 mã kiểm SC-AUTH-01..12, checklist nghiệm thu: [0
 
 ## Hệ quả
 
-- **Tương thích ngược bắt buộc** ở W2: module **đã cài trước ngày chuyển** được backfill `module_grants` tương đương quyền đang có (không khoá đột ngột); chỉ module **mới** từ sau ngày chuyển mới default-deny thật.
+- **Tương thích ngược:** với D-AUTH-03 bản sửa, hành vi hôm nay giữ nguyên (`owner` có mọi quyền module; vai trò khác chỉ có quyền module khai `roles`) — W2 không phải backfill để tránh khoá đột ngột.
 - Không đổi Ledger, không đổi `ledgerService`, không thêm cổng ghi sổ mới — quyền module chỉ quyết định actor được gọi action nào, Kernel vẫn là nơi duy nhất ghi sổ.
 - Standard `bizcity_module@1` có thể cần trường tuỳ chọn mới ở W2 (tương thích VER-1, minor) — chốt cụ thể khi W2 mở PR tài liệu riêng.
