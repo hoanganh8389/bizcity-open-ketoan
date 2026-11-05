@@ -1983,10 +1983,7 @@ body.has-dock .rail-panel { bottom: var(--dock-h); }
 
 /* Thanh cửa sổ nằm trong vùng làm việc, chừa menu trái (nút Thu gọn) và thanh mép phải. */
 @media screen and (min-width: 901px) { .win-dock { left: var(--nav-w, 224px); right: var(--rail-w); } }
-/* Menu cố định và màn đã ghim nằm đúng giữa thanh trên cùng: hai bên chia đều phần còn lại. */
-.pinbar { justify-content: safe center; }
+/* Menu cố định và màn đã ghim bắt đầu thẳng hàng với mép vùng làm việc (phần logo rộng bằng menu trái). */
 @media screen and (min-width: 901px) {
-  .topbar .brand { flex: 1 1 0; margin-right: 0; }
-  .topbar .pinbar { flex: 0 1 auto; }
-  .topbar .topbar-right { flex: 1 1 0; justify-content: flex-end; margin-left: 0; }
+  .topbar .brand { flex: 0 0 auto; min-width: calc(var(--nav-w, 224px) - var(--tb-pad, 16px)); margin-right: 0; box-sizing: border-box; }
 }
