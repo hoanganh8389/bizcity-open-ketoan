@@ -54,6 +54,19 @@ Tạo lại một mã đã xoá: mặt hàng **mới**, mã bắt đầu từ ng
 - Dòng mới: trigger `bizcity_set_item_id` gắn theo mã tại ngày. Mã chưa có trong danh mục lúc ghi (mặt hàng tự thêm SAU khi ghi sổ) → `bizcity_item_fill_refs` điền khi mặt hàng được tạo / đổi mã.
 - Điền ngược: theo mã hiệu lực tại ngày, rồi mã gần nhất; mã có trong sổ / kho / đơn vị / giá mà **không có trong danh mục** → **mặt hàng mồ côi** (`status = retired`, `attributes.orphan`, `bizcity_items_adopt_orphans`); còn dòng có mã mà thiếu `item_id` → migration dừng.
 
+## 3b. Đổi mã, gộp mã, hệ ngoài (migration 0070, 0071) <!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 — S024-11, S026-19..22: 0.4.0-draft (đóng góp) -->
+
+Thiết kế và quyết định: [docs/core/06-xuong-ca-dinh-danh.md](../core/06-xuong-ca-dinh-danh.md).
+
+| Action | Việc |
+|---|---|
+| `core.item.rename-code` | Đóng mã cũ, mở mã mới từ hôm nay; bảng cấu hình theo mã mới; sổ cũ giữ ảnh chụp |
+| `core.item.add-code` | Thêm mã vạch, bí danh, `external:<nguồn>` |
+| `core.item.merge-preview` | Chỉ đọc: lỗi chặn, tồn, số dòng lịch sử, số con, xung đột quy đổi |
+| `core.item.merge` | Gộp vào mặt hàng khác từ hôm nay; còn tồn thì chặn; gộp tiếp được |
+
+Đọc: `GET /api/v1/items/resolve`, `GET /api/v1/items/:itemId` trả `itemId`, `sku`, `status`, `parentItemId`, `mergedIntoItemId`, `rootItemId`, `codes[]`. Nguồn đổi danh mục thêm `itemId`, `parentItemId` trên mặt hàng, `replacedByItemId` trên dòng xoá.
+
 ## 4. Item Resolver (`resolveItem` / `resolveItems`, Kernel, chỉ đọc)
 
 `(ItemRef, asOf)` → `ResolveResult`. `ItemRef` = `{ itemId? | sku? | barcode? | external? }`; thứ tự: itemId → sku (và bí danh) → barcode → mã ngoài.
@@ -69,7 +82,7 @@ Tạo lại một mã đã xoá: mặt hàng **mới**, mã bắt đầu từ ng
 
 ## 5. Chưa có (các bước sau)
 
-Hợp đồng nhập / xuất cho plugin (`itemId`, `barcode` trên dòng hàng của `bizcity_ledger_intake`), action `core.item.*` (S024-11), đệm theo phiên bản danh mục + span `intake.item.resolve` (S024-6 phần còn lại), `products` thành khung nhìn (B2b-2, sau S024-11), giá vốn và báo cáo kho gom theo `item_id` (70 §3.2.1 G2).
+Hợp đồng nhập cho plugin (`itemId`, `barcode` trên dòng hàng của `bizcity_ledger_intake`), action `core.item.upsert / retire-code / classify` (S024-11 phần còn lại), đệm theo phiên bản danh mục + span `intake.item.resolve` (S024-6 phần còn lại), `products` thành khung nhìn (B2b-2, sau S024-11), giá vốn và báo cáo kho gom theo `item_id` (70 §3.2.1 G2).
 
 ## 6. Bảo đảm
 
@@ -79,6 +92,7 @@ Hợp đồng nhập / xuất cho plugin (`itemId`, `barcode` trên dòng hàng 
 
 ## 7. Changelog
 
+- **0.4.0-draft (2026-11-05):** đổi mã, thêm mã, gộp mã nhiều lần, `merged_into_item_id`, `root_item_id`, `item_id` trên bảng cấu hình và dòng hoá đơn, đọc theo định danh cho hệ ngoài (0070, 0071).
 - **0.3.0-draft (2026-11-04):** họ mặt hàng theo định danh — `items.parent_item_id` điền + giữ khớp từ `products.parent_sku` (0067), đổi mã không đứt họ, chặn tự trỏ / vòng / khác đơn vị; Gate A `ITEM-HINT-003` (đổi ĐVT gốc của mặt hàng đã có nhập xuất).
 - **0.2.0-draft (2026-11-04):** B2b phần 1 — `item_id` trên `ledger_lines`, `inventory_movements`, `inventory_costs`, `product_units`, `product_prices` (0066); mặt hàng mồ côi; tạo lại mã đã xoá không chồng hiệu lực; khoá chống chồng hiệu lực theo đơn vị.
 - **0.1.0-draft (2026-11-03):** B2a — `items`, `item_codes`, `item_classification`, trigger đồng bộ, điền ban đầu, Item Resolver.

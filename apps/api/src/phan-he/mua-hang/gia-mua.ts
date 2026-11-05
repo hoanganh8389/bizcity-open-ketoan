@@ -8,6 +8,8 @@ import { z } from 'zod';
 import type { ProductUnit, SupplierProduct } from '@bizcity/mua-hang-domain';
 import { toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
+// [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
+import { theoMa } from './ma-hien-hanh.js';
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const supplierProductSchema = z.object({
@@ -93,8 +95,8 @@ export async function deleteSupplierProduct(trx: Db, tenantId: string, id: strin
  */
 export async function productCost(trx: Db, tenantId: string, sku: string) {
   const last = await trx.selectFrom('inventory_costs').select(['year', 'month', sql<string>`SUM(closing_value)`.as('value'), sql<string>`SUM(closing_qty)`.as('qty'), sql<string>`SUM(in_value + opening_value)`.as('inv'), sql<string>`SUM(in_qty + opening_qty)`.as('inq')])
-    .where('tenant_id', '=', tenantId).where('sku', '=', sku).groupBy(['year', 'month']).orderBy('year', 'desc').orderBy('month', 'desc').limit(1).executeTakeFirst();
-  const now = await trx.selectFrom('inventory_movements').select([sql<string>`COALESCE(SUM(qty), 0)`.as('qty'), sql<string>`COALESCE(SUM(amount), 0)`.as('value')]).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirstOrThrow();
+    .where('tenant_id', '=', tenantId).where(theoMa(tenantId, [sku])).groupBy(['year', 'month']).orderBy('year', 'desc').orderBy('month', 'desc').limit(1).executeTakeFirst();
+  const now = await trx.selectFrom('inventory_movements').select([sql<string>`COALESCE(SUM(qty), 0)`.as('qty'), sql<string>`COALESCE(SUM(amount), 0)`.as('value')]).where('tenant_id', '=', tenantId).where(theoMa(tenantId, [sku])).executeTakeFirstOrThrow();
   const inq = last ? toNumber(last.inq) : 0;
   const nq = toNumber(now.qty), nv = toNumber(now.value);
   return {

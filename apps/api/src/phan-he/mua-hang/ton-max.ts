@@ -20,6 +20,8 @@ import { Errors } from '../../core/errors.js';
 import { listSupplierProducts, unitsForOrders, unitsOf } from './gia-mua.js';
 import { listDocs, listPolicies } from './store.js';
 import { suffixOf, variantSeparate } from './bien-the.js';
+// [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
+import { theoMa } from './ma-hien-hanh.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (d: string, n: number) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -117,9 +119,9 @@ const defaultWh = (b: BranchNode) => b.warehouses.find((w) => w.isDefault)?.code
 /** Tồn theo (chi nhánh, kho, mã). Dòng không ghi kho tính vào kho mặc định của chi nhánh. */
 async function stockRows(trx: Db, tenantId: string, branchIds: string[], skus?: string[]) {
   if (!branchIds.length) return [];
-  let q = trx.selectFrom('inventory_movements').select(['branch_id', 'warehouse_code', 'sku', sql<string>`SUM(qty)`.as('qty')])
+  let q = trx.selectFrom('inventory_movements_cur').select(['branch_id', 'warehouse_code', 'sku', sql<string>`SUM(qty)`.as('qty')])
     .where('tenant_id', '=', tenantId).where('branch_id', 'in', branchIds).groupBy(['branch_id', 'warehouse_code', 'sku']);
-  if (skus) q = q.where('sku', 'in', skus.length ? skus : ['']);
+  if (skus) q = q.where(theoMa(tenantId, skus));
   return (await q.execute()).map((r) => ({ branchId: String(r.branch_id), warehouse: r.warehouse_code, sku: r.sku, qty: toNumber(r.qty) }));
 }
 
@@ -127,7 +129,7 @@ async function stockRows(trx: Db, tenantId: string, branchIds: string[], skus?: 
 async function salesRows(trx: Db, tenantId: string, branchIds: string[], days: number, asOf: string) {
   if (!branchIds.length) return [];
   const from = addDays(asOf, -(Math.max(1, days) - 1));
-  const rows = await trx.selectFrom('inventory_movements').select(['branch_id', 'sku', sql<string>`(${asOf}::date - doc_date)`.as('d'), sql<string>`-SUM(qty)`.as('qty')])
+  const rows = await trx.selectFrom('inventory_movements_cur').select(['branch_id', 'sku', sql<string>`(${asOf}::date - doc_date)`.as('d'), sql<string>`-SUM(qty)`.as('qty')])
     .where('tenant_id', '=', tenantId).where('branch_id', 'in', branchIds).where('kind', 'in', ['sale', 'sale_return'])
     .where('doc_date', '>=', from).where('doc_date', '<=', asOf).groupBy(['branch_id', 'sku', 'doc_date']).execute();
   return rows.map((r) => ({ branchId: String(r.branch_id), sku: r.sku, day: Number(r.d), qty: toNumber(r.qty) }));
@@ -138,7 +140,7 @@ async function lastMonthSales(trx: Db, tenantId: string, branchIds: string[], as
   if (!branchIds.length) return new Map<string, number>();
   const first = `${asOf.slice(0, 7)}-01`;
   const from = addDays(first, -1).slice(0, 7) + '-01';
-  const rows = await trx.selectFrom('inventory_movements').select(['sku', sql<string>`-SUM(qty)`.as('qty')])
+  const rows = await trx.selectFrom('inventory_movements_cur').select(['sku', sql<string>`-SUM(qty)`.as('qty')])
     .where('tenant_id', '=', tenantId).where('branch_id', 'in', branchIds).where('kind', 'in', ['sale', 'sale_return'])
     .where('doc_date', '>=', from).where('doc_date', '<', first).groupBy('sku').execute();
   return new Map(rows.map((r) => [r.sku, toNumber(r.qty)]));
@@ -155,7 +157,7 @@ export async function inTransitRows(trx: Db, tenantId: string, branchIds: string
     WITH t AS (
       SELECT m.kind, m.branch_id, m.counter_branch_id, m.sku, m.qty,
              COALESCE(NULLIF(e.payload->'extra'->>'transferGroup', ''), 'ev:' || e.id::text) AS grp
-        FROM inventory_movements m JOIN accounting_events e ON e.id = m.event_id
+        FROM inventory_movements_cur m JOIN accounting_events e ON e.id = m.event_id
        WHERE m.tenant_id = ${tenantId} AND m.kind IN ('transfer_out', 'transfer_in') AND m.doc_date >= ${from}::date
     ), g AS (
       SELECT grp, sku,

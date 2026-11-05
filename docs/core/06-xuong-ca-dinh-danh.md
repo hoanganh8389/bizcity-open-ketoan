@@ -44,11 +44,12 @@ Người dùng chỉ thấy và gõ **mã**. `item_id` chỉ hiện ở chỗ d�
 
 ## 3. Hình dạng cụ thể
 
-### 3.1. CSDL (migration 0070)
+### 3.1. CSDL (migration 0070, 0071)
 
 ```sql
 ALTER TABLE items ADD COLUMN merged_into_item_id text, ADD COLUMN merged_at date;
 -- guard: đã gộp thì không đổi; không tự trỏ; đích cùng đơn vị, không vòng
+ALTER TABLE items ADD COLUMN root_item_id text;   -- 0071, đích cuối lưu sẵn, trigger giữ khớp
 
 bizcity_item_root(item_id) → text           -- đi theo merged_into tới đích cuối
 bizcity_item_family(item_id) → setof text   -- mọi mặt hàng thuộc cùng chuỗi gộp
@@ -56,6 +57,9 @@ bizcity_item_family(item_id) → setof text   -- mọi mặt hàng thuộc cùng
 -- item_id + trigger + khoá ngoại + chỉ mục trên các bảng còn khoá theo mã
 supplier_products, supplier_item_aliases, supplier_invoice_lines,
 stock_levels, stock_sku_settings, tax_invoice_lines
+
+inventory_movements_cur                     -- 0071: sổ kho với sku = mã hiện hành, snapshot_sku = mã lúc ghi
+bizcity_item_current_sku(tenant, sku, ngày) -- 0071: mã hiện hành cho bảng chưa có item_id (sales_lines)
 ```
 
 **Bảng cấu hình** (`product_units`, `product_prices`, `supplier_products`, `supplier_item_aliases`, `stock_levels`, `stock_sku_settings`, `products.parent_sku`) mô tả hiện tại, nên cột `sku` luôn theo **mã hiện hành**: đổi mã thì tự cập nhật. **Bảng lịch sử** (sổ cái, sổ kho, dòng hoá đơn, chứng từ) giữ nguyên ảnh chụp mã.
@@ -76,7 +80,7 @@ stock_levels, stock_sku_settings, tax_invoice_lines
 
 | Việc | Cách làm |
 |---|---|
-| Chặn | A hoặc B không tồn tại, trùng nhau, A đã gộp, B đã gộp hoặc ngừng, A còn tồn, khác ĐVT gốc, ngày D thuộc kỳ đã khoá |
+| Chặn | A hoặc B không tồn tại, trùng nhau, A đã gộp, B đã gộp hoặc ngừng, A còn tồn, khác ĐVT gốc. Gộp không ghi sổ nên không cần xét khoá kỳ |
 | Mặt hàng A | `status = retired`, `merged_into_item_id = B`, `merged_at = D` |
 | Mã của A | Đóng mọi mã đang mở từ ngày D. SKU và bí danh thành `alias` của B từ D; mã vạch, mã ngoài chuyển sang B giữ nguyên loại |
 | Con của A | `parent_item_id` chuyển sang B |
@@ -84,7 +88,7 @@ stock_levels, stock_sku_settings, tax_invoice_lines
 | Dòng `products` của A | Xoá; lịch sử nằm ở `items`, `item_codes`, `audit_logs` |
 | Sổ cũ của A | Không đụng |
 
-Gộp tiếp B vào C từ ngày D2: mã của B **và bí danh A đang trỏ về B** cùng đóng tại D2, mở lại trỏ C. Tra mã A: trước D1 ra A, từ D1 đến trước D2 ra B, từ D2 ra C. Sổ của A và B giữ nguyên. Báo cáo gộp dùng `bizcity_item_family`.
+Gộp tiếp B vào C từ ngày D2: mã của B thành bí danh của C. Bí danh A đang trỏ về B giữ nguyên, hệ thống đi theo chuỗi gộp tại ngày nên không viết lại gì. Tra mã A: trước D1 ra A, từ D1 đến trước D2 ra B, từ D2 ra C. Sổ của A và B giữ nguyên. Báo cáo gom một dòng dùng `items.root_item_id`, lưu sẵn đích cuối để nối theo tập.
 
 ### 3.4. Mã cũ đi vào hệ thống
 
@@ -119,18 +123,20 @@ Bản ghi đọc ổn định:
 
 ## 5. Tiến độ
 
+Cập nhật 05/11/2026. Nhánh `feat/xuong-ca-dinh-danh`, dựa trên `feat/phase-026-p0-dot1` và `feat/phase-026-p0-dot4`, **chưa vào main**.
+
 | Mã | Việc | Trạng thái |
 |---|---|---|
-| S026-3 | Cha – con theo định danh (0067) | Trên nhánh `feat/phase-026-p0-dot1`, chưa vào main |
-| S024-8 | Định khoản theo phân loại tại ngày | Trên nhánh `feat/phase-026-p0-dot4`, chưa vào main |
-| S026-19 | 0070: gộp nhiều lần, `item_id` trên bảng cấu hình, đồng bộ mã | Đang làm |
-| S024-11 | `core.item.*`: đổi mã, thêm mã, xem trước gộp, gộp, đọc | Đang làm |
-| S026-20 | Cửa nạp và đường tạo mặt hàng không làm đứt chuỗi khi gặp mã cũ | Đang làm |
-| S026-21 | Báo cáo và truy vấn lịch sử chuyển sang `item_id` | Đang làm |
-| S026-22 | Hợp đồng hệ ngoài: `itemId`, `mergedIntoItemId` ở nguồn đổi | Đang làm |
-| S026-23 | Giao diện: Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | Đang làm |
+| S026-3 | Cha – con theo định danh (0067) | Có sẵn trên nhánh dot1 |
+| S024-8 | Định khoản theo phân loại tại ngày | Có sẵn trên nhánh dot4 |
+| S026-19 | 0070, 0071: gộp nhiều lần, `item_id` trên bảng cấu hình, đồng bộ mã | Có code và test |
+| S024-11 | Đổi mã, thêm mã, xem trước gộp, gộp, đọc | Có code và test. Còn `upsert`, `retire-code`, `classify`; `products` chưa thành khung nhìn |
+| S026-20 | Cửa nạp và đường tạo mặt hàng gặp mã cũ | Có code và test |
+| S026-21 | Báo cáo theo mã hiện hành: mua hàng, kho, bán hàng, lãi gộp | Có code, một phần có test. Còn soát công nợ, thuế |
+| S026-22 | Hệ ngoài: đọc theo định danh, mã external, nguồn đổi | Có code và test. Cửa nạp chưa nhận `itemId` |
+| S026-23 | Đổi mã, Gộp mã, Lịch sử trên form | Có code, đã qua typecheck, chưa thử trên trình duyệt |
 | S026-14 | Đo 21 triệu dòng, xử lý nút nghẽn | Chưa làm |
-| Sau | Chứng từ chuyển tồn tự động khi gộp; đổi mã có ngày tương lai; `products` thành khung nhìn | Chưa làm |
+| Sau | Chứng từ chuyển tồn tự động khi gộp; đổi mã có ngày tương lai; nhóm hàng và kho theo định danh | Chưa làm |
 
 ## 6. Kiểm chứng
 

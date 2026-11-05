@@ -2,6 +2,9 @@
 <!-- [2026-11-03 07:23 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — Item Master: ba lớp định danh / mã / phân loại, quy tắc mã hàng, bảng quy tắc đặt tên, vòng đời mặt hàng hôm nay và theo thiết kế -->
 <!-- [2026-11-04 12:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-1: bảng "hôm nay" theo main (0065 items / item_codes, 0066 item_id trên sổ) -->
 
+<!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 — đổi mã, gộp mã đã có thao tác: xem 06 (đóng góp) -->
+> **Cập nhật 05/11/2026:** đổi mã, gộp mã đã có thao tác (`core.item.rename-code`, `core.item.merge`) trên nhánh `feat/xuong-ca-dinh-danh`, chi tiết ở [06 Xương cá](06-xuong-ca-dinh-danh.md). Các mục "chưa có thao tác" dưới đây còn đúng cho tới khi nhánh đó vào `main`.
+
 > Nguồn luật: [R-ITEM](../rules/RULE-ITEM.md) · [ADR-0017](../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md) (định danh bất biến) · [ADR-0018](../adr/ADR-0018-danh-muc-co-phien-ban-toan-framework.md) (danh mục có phiên bản) · [PHASE-024](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md). Tài liệu này giải thích để dùng, và tách rõ **cái đã chạy** với **cái mới ở thiết kế**.
 
 ## 1. Bất biến cần nhớ

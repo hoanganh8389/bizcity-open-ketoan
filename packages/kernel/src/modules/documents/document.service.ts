@@ -207,6 +207,10 @@ async function ensureProducts(trx: Db, tenantId: string, doc: IngestDocument): P
     if (l.sku && !seen.has(l.sku)) seen.set(l.sku, { name: l.name ?? '', unit: l.unit ?? '' });
   }
   if (!seen.size) return;
+  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-20: mã đã đổi / đã gộp không tạo mặt hàng mới; dòng sổ và kho tự gắn đúng item_id theo mã tại ngày (0070) (đóng góp)
+  const taken = await sql<{ code: string }>`SELECT code FROM unnest(${[...seen.keys()]}::text[]) AS code WHERE bizcity_item_code_taken(${tenantId}::bigint, code) IS NOT NULL`.execute(trx);
+  for (const t of taken.rows) seen.delete(t.code);
+  if (!seen.size) return;
   const created = await trx
     .insertInto('products')
     .values([...seen].map(([sku, v]) => ({ tenant_id: tenantId, sku, name: v.name, unit: v.unit, source_system: 'document' })))

@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Xương cá: định danh xuyên suốt (PHASE-026, S024-11, S026-19..23) <!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 (đóng góp) -->
+
+- **Thêm:** đổi mã, thêm mã (mã vạch, bí danh, `external:<nguồn>`), xem trước gộp, gộp mã nhiều lần; đọc mặt hàng theo định danh cho hệ ngoài; thẻ Lịch sử, nút Đổi mã, Gộp mã trên form mặt hàng; `item_id` trên giá NCC, bí danh NCC, dòng hoá đơn NCC, tồn max, cài đặt theo mã, dòng hoá đơn thuế; khung nhìn `inventory_movements_cur`.
+- **Đổi:** bảng cấu hình tự theo mã mới khi đổi mã. Báo cáo mua hàng, kho, bán hàng theo mặt hàng gom một dòng theo mã hiện hành. Mã của hàng còn sống hoặc đã gộp không dùng lại được; mã cũ gửi vào cửa nạp vẫn ghi đúng mặt hàng, không tạo mặt hàng mới.
+- **Sửa:** đổi mã làm đứt giá NCC, ĐVT, tồn max theo mã cũ. Lãi gộp tra giá vốn theo định danh nên mã cũ vẫn ra đơn giá.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0070, 0071; bước điền `item_id` là UPDATE từng bảng theo hàm tra mã, chưa đo trên dữ liệu lớn.
+- **Bảo mật:** không đổi. `inventory_movements_cur` dùng `security_invoker`, giữ cô lập đơn vị.
+
 ### Đổi
 <!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 -->
 - **Yêu cầu kiến trúc: phân hệ nghiệp vụ nằm ở `modules/<key>/`, `phan-he/` đóng băng** (chủ dự án, [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)): không thêm phân hệ mới vào `apps/*/src/phan-he/`; phân hệ cũ sửa lỗi tại chỗ và chuyển sang chuẩn module theo 6 đợt (đề xuất: `quy`, `tai-san`/`kho`/`ban-hang`, `thue`, `ke-toan`, `mua-hang`, giao diện lõi). Mỗi đợt giữ chỗ và chốt thiết kế trước khi code (R-FLOW). `AGENTS.md`, `CONTRIBUTING.md`, `docs/framework/03-MO-RONG.md` sửa cho khớp; hướng dẫn và lời nhắn riêng cho người đóng góp ở [docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md](docs/standard/CHUYEN-PHAN-HE-SANG-MODULES.md). Chưa đổi mã: việc chuyển và phép kiểm SC-MOD-4 làm theo từng đợt.

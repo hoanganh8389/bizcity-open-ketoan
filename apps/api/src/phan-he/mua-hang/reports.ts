@@ -19,6 +19,8 @@ import { apBalance, openOf, openOfBrand, pendingOf, type Ctx } from './analysis.
 import { refReceipts, spreadOverMany } from './posting.js';
 import { unitsForOrders, unitsOf } from './gia-mua.js';
 import { noDueDate, type StoredDoc } from './store.js';
+// [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
+import { theoMa } from './ma-hien-hanh.js';
 
 const evs = (ds: StoredDoc[]) => ds.flatMap((d) => d.links.map((l) => l.eventId)).filter(Boolean);
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -121,9 +123,9 @@ export async function lotStock(trx: Db, tenantId: string, ctx: Ctx, asOf = today
   const pairs = [...new Set([...lots.values()].map((l) => `${l.branchCode}|${l.sku}`))];
   const onHand = new Map<string, number>();
   if (pairs.length) {
-    const rows = await trx.selectFrom('inventory_movements as m').innerJoin('branches as b', 'b.id', 'm.branch_id')
+    const rows = await trx.selectFrom('inventory_movements_cur as m').innerJoin('branches as b', 'b.id', 'm.branch_id')
       .select(['b.code as branch_code', 'm.sku', sql<string>`SUM(m.qty)`.as('qty')])
-      .where('m.tenant_id', '=', tenantId).where('m.sku', 'in', [...new Set([...lots.values()].map((l) => l.sku))]).where('m.doc_date', '<=', asOf)
+      .where('m.tenant_id', '=', tenantId).where(theoMa(tenantId, [...new Set([...lots.values()].map((l) => l.sku))], 'm.item_id')).where('m.doc_date', '<=', asOf)
       .groupBy(['b.code', 'm.sku']).execute();
     for (const r of rows) onHand.set(`${r.branch_code}|${r.sku}`, toNumber(r.qty));
   }
@@ -223,7 +225,7 @@ export async function rebatePreview(trx: Db, tenantId: string, ctx: Ctx, p: Poli
   const rows = [...skus.values()].filter((x) => x.purchased > 0);
   const onHand = new Map<string, number>();
   if (rows.length) {
-    const inv = await trx.selectFrom('inventory_movements').select(['sku', sql<string>`SUM(qty)`.as('qty')]).where('tenant_id', '=', tenantId).where('sku', 'in', rows.map((x) => x.sku)).where('doc_date', '<=', to).groupBy('sku').execute();
+    const inv = await trx.selectFrom('inventory_movements_cur').select(['sku', sql<string>`SUM(qty)`.as('qty')]).where('tenant_id', '=', tenantId).where(theoMa(tenantId, rows.map((x) => x.sku))).where('doc_date', '<=', to).groupBy('sku').execute();
     for (const x of inv) onHand.set(x.sku, toNumber(x.qty));
   }
   const inRange = (sku: string, from: number, to: number) => [...(skuDay.get(sku) ?? new Map<number, number>())].filter(([d]) => d >= from && d <= to).reduce((t, [, v]) => t + v, 0);

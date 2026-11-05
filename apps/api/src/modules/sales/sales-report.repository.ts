@@ -29,8 +29,10 @@ export interface SalesFilter {
 export const SALES_GROUPS = ['document', 'day', 'month', 'branch', 'product', 'customer', 'taxCode', 'brand', 'industry', 'itemGroup', 'itemGroup1', 'itemGroup2', 'itemGroup3', 'itemType', 'customerGroup', 'department'] as const;
 export type SalesGroupBy = (typeof SALES_GROUPS)[number];
 
+// [2026-11-05 02:00 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: nhóm theo mã hiện hành, một dòng qua đổi mã và gộp mã; mã trên chứng từ giữ nguyên ở dòng chi tiết (đóng góp)
+const CUR_SKU = sql`bizcity_item_current_sku(l.tenant_id, l.sku, l.doc_date)`;
 /** Cột khoá và nhãn của từng cách nhóm. */
-const classJoin = (kind: string, col: string) => sql`LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.sku
+const classJoin = (kind: string, col: string) => sql`LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = bizcity_item_current_sku(l.tenant_id, l.sku, l.doc_date)
         LEFT JOIN item_classes ic ON ic.tenant_id = l.tenant_id AND ic.kind = ${kind} AND ic.code = ${sql.ref(`pr.${col}`)}`;
 /** CTE "nhom": mỗi nhóm hàng → nhóm tổ tiên ở từng cấp (lvl 1 = nhóm không có cha). */
 export const nhomCte = (tenantId: string) => sql`WITH nhom AS (
@@ -40,7 +42,7 @@ export const nhomCte = (tenantId: string) => sql`WITH nhom AS (
           SELECT up.code, c.code, c.parent_code, up.d + 1 FROM up JOIN item_classes c ON c.tenant_id = ${tenantId} AND c.kind = 'group' AND c.code = up.parent_code WHERE up.d < 20
         )
         SELECT code, anc, COUNT(*) OVER (PARTITION BY code) - d AS lvl FROM up)`;
-const levelJoin = (n: number) => sql`LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.sku
+const levelJoin = (n: number) => sql`LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = bizcity_item_current_sku(l.tenant_id, l.sku, l.doc_date)
         LEFT JOIN nhom gl ON gl.code = pr.group_code AND gl.lvl = ${n}
         LEFT JOIN item_classes ic ON ic.tenant_id = l.tenant_id AND ic.kind = 'group' AND ic.code = gl.anc`;
 /** Cột khoá, nhãn của từng cách nhóm; `join`: bảng nối thêm (phân loại hàng, nhóm khách) — mặt hàng chưa phân loại gom vào khoá rỗng. */
@@ -50,7 +52,7 @@ export const GROUP_SQL: Record<SalesGroupBy, { key: RawBuilder<unknown>; label: 
   day: { key: sql`l.doc_date::text`, label: sql`l.doc_date::text`, extra: sql`''` },
   month: { key: sql`to_char(l.doc_date, 'YYYY-MM')`, label: sql`MAX(to_char(l.doc_date, 'MM/YYYY'))`, extra: sql`''` },
   branch: { key: sql`br.code`, label: sql`MAX(br.name)`, extra: sql`''` },
-  product: { key: sql`l.sku`, label: sql`MAX(l.name)`, extra: sql`MAX(l.unit)` },
+  product: { key: CUR_SKU, label: sql`MAX(l.name)`, extra: sql`MAX(l.unit)` },
   customer: { key: sql`COALESCE(p.code, '')`, label: sql`COALESCE(MAX(p.name), '')`, extra: sql`COALESCE(MAX(p.tax_code), '')` },
   taxCode: { key: sql`l.tax_code`, label: sql`l.tax_code`, extra: sql`''` },
   brand: { key: sql`COALESCE(pr.brand_code, '')`, label: sql`COALESCE(MAX(ic.name), '')`, extra: sql`''`, join: classJoin('brand', 'brand_code') },
@@ -83,7 +85,7 @@ export function where(f: SalesFilter): RawBuilder<unknown> {
     const whc = sql`COALESCE(d.payload -> 'lines' -> (l.line_no - 1) ->> 'warehouseCode', '')`;
     parts.push(sql`(${whc} = ANY(${f.wh.codes}::text[]) OR (${whc} = '' AND l.branch_id = ANY(${f.wh.defaultBranchIds}::bigint[])))`);
   }
-  if (f.groups?.length) parts.push(sql`l.sku IN (
+  if (f.groups?.length) parts.push(sql`bizcity_item_current_sku(l.tenant_id, l.sku, l.doc_date) IN (
         WITH RECURSIVE g(code) AS (
           SELECT code FROM item_classes WHERE tenant_id = ${f.tenantId} AND kind = 'group' AND code IN (${sql.join(f.groups)})
           UNION SELECT c.code FROM item_classes c JOIN g ON c.parent_code = g.code WHERE c.tenant_id = ${f.tenantId} AND c.kind = 'group')

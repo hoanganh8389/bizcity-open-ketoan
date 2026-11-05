@@ -79,7 +79,7 @@ export async function stockLedgerBySku(trx: Db, tenantId: string, f: Filter & { 
     y AS (
       SELECT m.sku, m.kind, (m.doc_date >= ${f.from}::date) AS p, COALESCE(ev.src, '') AS src,
              SUM(m.qty) AS qty, MAX(m.name) AS name, MAX(m.unit) AS unit
-        FROM inventory_movements m
+        FROM inventory_movements_cur m  -- [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: một dòng qua đổi mã, gộp mã (đóng góp)
         LEFT JOIN ev ON ev.id = m.event_id AND m.doc_date >= ${f.from}::date
        WHERE ${movementWhere(tenantId, f.to, s, f.search?.trim() || undefined)}
        GROUP BY 1, 2, 3, 4

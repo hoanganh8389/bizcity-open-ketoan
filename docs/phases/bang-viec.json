@@ -3788,7 +3788,7 @@
       "phase": "PHASE-026",
       "title": "Migration 0070: mergedintoitemid gộp nhiều lần, bizcityitemroot / bizcityitemfamily, itemid trên bảng cấu hình và dòng hoá đơn, mã hiện hành tự đồng bộ (06)",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "Nguyễn Văn Thủy (phiên Claude, xương cá)",
@@ -3805,7 +3805,7 @@
       "phase": "PHASE-026",
       "title": "Cửa nạp và đường tạo mặt hàng không đứt chuỗi khi gặp mã cũ / mã đã gộp; chặn dùng lại mã của hàng còn sống",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "Nguyễn Văn Thủy (phiên Claude, xương cá)",
@@ -3822,7 +3822,7 @@
       "phase": "PHASE-026",
       "title": "Báo cáo và truy vấn lịch sử (mua hàng, kho, bán hàng) gom theo itemid, lọc riêng theo mã",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "Nguyễn Văn Thủy (phiên Claude, xương cá)",
@@ -3839,7 +3839,7 @@
       "phase": "PHASE-026",
       "title": "Hợp đồng hệ ngoài: itemId, mergedIntoItemId ở nguồn đổi danh mục, mã external:<nguồn>",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "Nguyễn Văn Thủy (phiên Claude, xương cá)",
@@ -3856,7 +3856,7 @@
       "phase": "PHASE-026",
       "title": "Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "Nguyễn Văn Thủy (phiên Claude, xương cá)",

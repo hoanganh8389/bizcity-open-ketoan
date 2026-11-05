@@ -50,7 +50,7 @@ export async function grossProfitRoutes(app: FastifyInstance): Promise<void> {
                COUNT(*) AS lines
           ${FROM}
           LEFT JOIN inventory_costs ic2
-            ON ic2.tenant_id = l.tenant_id AND ic2.sku = l.sku
+            ON ic2.tenant_id = l.tenant_id AND ic2.item_id = bizcity_item_at(l.tenant_id, l.sku, l.doc_date)  -- [2026-11-05 02:00 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: giá vốn theo định danh, mã cũ vẫn ra (đóng góp)
            AND ic2.year = EXTRACT(YEAR FROM l.doc_date)::int AND ic2.month = EXTRACT(MONTH FROM l.doc_date)::int
            AND ic2.cost_group = COALESCE(br.accounting_unit_id, 0)
           ${g.join ?? sql``}

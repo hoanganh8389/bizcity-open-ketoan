@@ -18,6 +18,8 @@ import { toNumber, type Db } from '../../db/client.js';
 import { FREEZE_KINDS, FREEZE_VERSION, freezeOf, listPolicies, noDueDate, receiptsWithSku, toDoc, type StoredDoc } from './store.js';
 import { listSupplierProducts, unitsOf } from './gia-mua.js';
 import { invoiceCheck } from './hoa-don.js';
+// [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
+import { theoMa } from './ma-hien-hanh.js';
 
 export interface PurchaseSettings { holidays: string[]; brandOpening: Record<string, Record<string, number>>; accounts: Partial<Accounts>; warnDays: number; /** Đơn giá lệch quá % này so với giá NCC / lần nhập trước thì cảnh báo (một mức cho cả đơn vị). */ priceWarnPct: number;
   /** Phiếu nhập mua bắt buộc lập từ đơn đặt đã duyệt (bật: chặn duyệt phiếu nhập không theo đơn; tắt: chỉ cảnh báo). */
@@ -138,7 +140,7 @@ export async function priceHistory(trx: Db, tenantId: string, sku: string, befor
   });
   const q = trx.selectFrom('inventory_movements as m').innerJoin('accounting_events as e', 'e.id', 'm.event_id').leftJoin('partners as p', 'p.id', 'e.partner_id')
     .select(['m.doc_date', 'm.qty', 'm.amount', 'e.doc_no', 'p.code as partner_code'])
-    .where('m.tenant_id', '=', tenantId).where('m.sku', '=', sku).where('m.kind', '=', 'purchase').where('m.is_gift', '=', false).where('m.qty', '>', '0').where('m.doc_date', '<=', before)
+    .where('m.tenant_id', '=', tenantId).where(theoMa(tenantId, [sku], 'm.item_id')).where('m.kind', '=', 'purchase').where('m.is_gift', '=', false).where('m.qty', '>', '0').where('m.doc_date', '<=', before)
     .where('e.doc_key', 'not like', 'mh:%').orderBy('m.doc_date', 'desc').limit(limit);
   // Biến động kho ghi theo ĐVT nhỏ nhất — ghi kèm ĐVT đó để nơi dùng quy đổi về ĐVT của dòng (vd đặt theo Thùng).
   const base = (await trx.selectFrom('product_units').select('unit').where('tenant_id', '=', tenantId).where('sku', '=', sku).where('ratio', '=', '1').executeTakeFirst())?.unit

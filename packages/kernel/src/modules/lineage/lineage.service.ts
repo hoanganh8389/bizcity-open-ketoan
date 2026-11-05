@@ -368,7 +368,9 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
   const audits = skus.length
     ? await sql<{ action: string; actor: string; after_data: Record<string, unknown> | null; created_at: Date; object_id: string }>`
         SELECT action, actor, after_data, created_at, object_id FROM audit_logs
-         WHERE tenant_id = ${tenantId} AND object_type = 'product' AND object_id = ANY(${skus}::text[])
+         WHERE tenant_id = ${tenantId} AND ((object_type = 'product' AND object_id = ANY(${skus}::text[]))
+            -- [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: thao tác theo định danh: đổi mã, gộp mã, gồm mặt hàng đã gộp vào (đóng góp)
+            OR (object_type = 'item' AND object_id IN (SELECT bizcity_item_family(${itemId}))))
          ORDER BY created_at DESC, id DESC LIMIT ${HISTORY_LIMIT}`.execute(trx)
     : { rows: [] };
 
@@ -397,6 +399,17 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
   });
   for (const a of audits.rows) {
     const after = a.after_data ?? {};
+    const res = ((after.notes as Record<string, unknown> | undefined)?.result ?? {}) as Record<string, unknown>;
+    if (a.action === 'core.item.merge') {
+      out.push({ at: iso(a.created_at), effectiveFrom: show(res.mergedAt), kind: 'change', by: a.actor,
+        text: `Gộp mã ${show(res.fromSku)} vào ${show(res.toSku)} — lý do: "${show(res.reason)}"` });
+      continue;
+    }
+    if (a.action === 'core.item.rename-code') {
+      out.push({ at: iso(a.created_at), effectiveFrom: show(res.validFrom), kind: 'change', by: a.actor,
+        text: `Lý do đổi mã ${show(res.fromSku)} → ${show(res.toSku)}: "${show(res.reason)}"` });
+      continue;
+    }
     if (a.action === 'catalog.warn.ack') {
       out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'warn-ack', by: a.actor,
         text: `Lưu dù có cảnh báo ${(after.codes as string[] | undefined)?.join(', ') ?? ''} — lý do: "${show(after.reason)}"` });
