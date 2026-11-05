@@ -4274,11 +4274,17 @@
     {
       "id": "S029-10",
       "phase": "PHASE-029",
-      "title": "Cấu hình theo mô hình options: phạm vi, hiệu lực, lịch sử, settings.set duy nhất, configversion, check đọc thô, khoá thiếu, tiền tệ, thuế suất theo ngày",
+      "title": "Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → accountingunit → tenant, ngày hiệu lực, getSetting / setS…",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 cấu hình)",
+        "branch": "feat/phase-029-e2-cau-hinh",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-029 · E2 đợt 1 — cấu hình có phiên bản, phạm vi, ngày hiệu lực (settingvalues, getSetting / s…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4291,7 +4297,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 20
+      "line": 21
     },
     {
       "id": "S029-12",
@@ -4302,7 +4308,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 21
+      "line": 22
     },
     {
       "id": "S029-13",
@@ -4313,7 +4319,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 22
+      "line": 23
     },
     {
       "id": "S029-14",
@@ -4324,7 +4330,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 23
+      "line": 24
     },
     {
       "id": "S029-15",
@@ -4335,7 +4341,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 24
+      "line": 25
     },
     {
       "id": "S029-16",
@@ -4346,7 +4352,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 25
+      "line": 26
     },
     {
       "id": "S029-17",
@@ -4357,7 +4363,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 26
+      "line": 27
     },
     {
       "id": "S029-18",
@@ -4368,7 +4374,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 27
+      "line": 28
     },
     {
       "id": "S029-19",
@@ -4379,7 +4385,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 28
+      "line": 29
     },
     {
       "id": "S029-20",
@@ -4390,7 +4396,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 29
+      "line": 30
     },
     {
       "id": "S029-21",
@@ -4401,7 +4407,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 30
+      "line": 31
     },
     {
       "id": "S029-22",
@@ -4412,7 +4418,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 31
+      "line": 32
     },
     {
       "id": "S029-23",
@@ -4423,7 +4429,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 32
+      "line": 33
     },
     {
       "id": "S029-24",
@@ -4434,7 +4440,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 33
+      "line": 34
     },
     {
       "id": "S029-25",
@@ -4445,7 +4451,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 34
+      "line": 35
     },
     {
       "id": "S029-26",
@@ -4456,7 +4462,7 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 35
+      "line": 36
     },
     {
       "id": "S029-27",
@@ -4467,7 +4473,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 36
+      "line": 37
     },
     {
       "id": "S029-28",
@@ -4478,31 +4484,14 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 40
+      "line": 41
     },
     {
       "id": "S029-29",
       "phase": "PHASE-029",
       "title": "Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu co có thật, …",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
-        "branch": "feat/phase-029-e1-sc-core-1",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-029 · E1 — phép kiểm SC-CORE-1 giữ sáu năng lực lõi (chữ chốt 30 §4) + thẻ Nền móng ở màn HT1…"
-      },
-      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 37
-    },
-    {
-      "id": "S029-30",
-      "phase": "PHASE-029",
-      "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json (GET /api/v1/system/foundations, …",
-      "priority": "P1",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
@@ -4515,6 +4504,23 @@
       "line": 38
     },
     {
+      "id": "S029-30",
+      "phase": "PHASE-029",
+      "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json (GET /api/v1/system/foundations, …",
+      "priority": "P1",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
+        "branch": "feat/phase-029-e1-sc-core-1",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-029 · E1 — phép kiểm SC-CORE-1 giữ sáu năng lực lõi (chữ chốt 30 §4) + thẻ Nền móng ở màn HT1…"
+      },
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 39
+    },
+    {
       "id": "S029-31",
       "phase": "PHASE-029",
       "title": "Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-0028 / CANON §0.7–§0.8",
@@ -4523,7 +4529,18 @@
       "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
-      "line": 39
+      "line": 40
+    },
+    {
+      "id": "S029-32",
+      "phase": "PHASE-029",
+      "title": "Cấu hình đợt 2: route ghi riêng → setSetting; valueType cho module; chặn đọc thô tenants.settings; xuất / nhập; đệm theo configversion; khoá idempotencydays, e…",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 20
     }
   ]
 }

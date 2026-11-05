@@ -18,7 +18,7 @@
     "bizcity_posting_rule": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-POSTING-RULE-v1.md", "internal": true },
     "bizcity_master_data": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-MASTER-DATA-v1.md" },
     "bizcity_connector": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-CONNECTOR-v1.md" },
-    "bizcity_settings": { "version": "1.0.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
+    "bizcity_settings": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md" },
     "bizcity_api": { "version": "1.0.0", "doc": "docs/contracts/BIZCITY-API-v1.md", "role": "transport of bizcity_action" },
     "bizcity_posting_template": { "version": "1.1.0-draft", "doc": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md", "schema": "docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.schema.json" },
     "bizcity_item_master": { "version": "0.3.0-draft", "doc": "docs/contracts/BIZCITY-ITEM-MASTER-v1.md", "role": "định danh bất biến, mã có phiên bản, phân loại theo ngày, Item Resolver (PHASE-024 B2a, ADR-0017)" },
