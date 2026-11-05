@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 20
     },
     {
       "key": "merging",
@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 24
+      "count": 25
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 114
+      "count": 112
     },
     {
       "key": "partial",
@@ -4134,8 +4134,14 @@
       "title": "W3: đóng 17 route ghi thô còn lại, requireScope()",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 engine)",
+        "branch": "feat/phase-028-w3-engine",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-028 · W3 đợt 1 — bộ tính quyền thuần (không CSDL): Cho / Nới / Cấm, phạm vi, điều kiện, expla…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 17
     },
