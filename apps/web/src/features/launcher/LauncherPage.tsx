@@ -1,10 +1,11 @@
+// [2026-11-06 12:20 AM Nguyễn Văn Thủy] MENU — Tổng quan khớp menu trái: lưới theo nhóm việc, thêm trang chủ nhóm (đóng góp)
 /**
- * Trang Tổng quan (/): lưới PHÂN HỆ như màn hình ứng dụng trên máy tính bảng — mỗi phân hệ một biểu tượng màu, tên,
- * mô tả, số chức năng. Bấm vào → trang chủ phân hệ (/app/<key>) với menu chức năng riêng của phân hệ đó.
- * Chỉ hiện phân hệ người dùng có ít nhất một chức năng (theo quyền). Danh sách phân hệ: src/modules.
+ * Trang Tổng quan (/): lưới các NHÓM VIỆC, cùng tên, biểu tượng, thứ tự với menu trái (layout/menu-gon.ts). Bấm một ô → trang chủ nhóm.
+ * Chỉ hiện nhóm người dùng có ít nhất một chức năng (theo quyền, phân hệ đang bật).
  *
- * Trang chủ phân hệ (/app/<key>): phân hệ có lưu đồ (phan-he/flows.tsx) mở thẻ "Quy trình" — sơ đồ nghiệp vụ + việc cần
- * làm; thẻ "Tất cả chức năng" là các nhóm chức năng dạng thẻ, bấm chức năng để mở màn.
+ * Trang chủ nhóm (/nhom/<key>): nhóm có lưu đồ (phan-he/flows.tsx) mở thẻ "Quy trình"; thẻ "Tất cả chức năng" là các mục của
+ * nhóm dạng thẻ, bấm chức năng để mở màn.
+ * Trang chủ phân hệ (/app/<key>) chỉ còn dùng cho module SDK; phân hệ lõi tự chuyển sang trang chủ nhóm.
  */
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BarChart3, Columns3, LayoutGrid, Workflow } from 'lucide-react';
@@ -14,6 +15,9 @@ import { PageHeader } from '@/components/PageHeader';
 import { MODULES, isSection, moduleMenu } from '../../layout/menu';
 import { useAppMenu, useEnabledModules } from '../../layout/useAppMenu';
 import { ModuleIcon } from '../../phan-he/icons';
+import { GonIcon } from '../../layout/SideNav';
+import { useGonGroups } from '../../layout/useGon';
+import { groupCount, REPORT_PAGE } from '../../layout/menu-gon';
 import { MODULE_FLOWS } from '../../phan-he/flows';
 // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): ô của module SDK trên Tổng quan (dashboard.widget)
 import { sdkSlots } from '../../phan-he/sdk-modules';
@@ -21,27 +25,33 @@ import { sdkSlots } from '../../phan-he/sdk-modules';
 import { PillarMatrix } from '../system/PillarsPage';
 import '@/components/quy-trinh/quy-trinh.css';
 
-/** Số chức năng đã có (có đường dẫn) trong các nhóm của phân hệ. */
-const countOf = (groups: MenuItem[]) => new Set(groups.flatMap((g) => (g.children ?? []).filter((c) => c.path && !isSection(c)).map((c) => c.path))).size;
-
 export function LauncherPage() {
   const { user, can } = useAuth();
   const navigate = useNavigate();
   const menu = useAppMenu();
   const enabled = useEnabledModules();
-  const apps = MODULES.filter((m) => !enabled || enabled.has(m.key)).map((m) => ({ m, n: countOf(moduleMenu(menu, m.key)) })).filter((x) => x.n > 0);
+  const groups = useGonGroups(menu);
+  const reportCount = new Set(groups.flatMap((g) => g.reports.flatMap((s) => s.items.map((i) => i.path)))).size;
   return (
     <>
-      <PageHeader title={`Xin chào${user?.fullName ? `, ${user.fullName}` : ''}`} subtitle={user?.tenant.name ? `${user.tenant.name} — chọn phân hệ để làm việc` : 'Chọn phân hệ để làm việc'} helpKey="trang-chu" />
+      <PageHeader title={`Xin chào${user?.fullName ? `, ${user.fullName}` : ''}`} subtitle={user?.tenant.name ? `${user.tenant.name} — chọn việc cần làm` : 'Chọn việc cần làm'} helpKey="trang-chu" />
       <div className="launcher-grid">
-        {apps.map(({ m, n }) => (
-          <button key={m.key} type="button" className="launcher-app" onClick={() => navigate(`/app/${m.key}`)}>
-            <span className="launcher-icon" style={{ background: `linear-gradient(135deg, ${m.color}, ${m.color}cc)` }}><ModuleIcon name={m.icon} size={30} color="#fff" /></span>
-            <span className="launcher-name">{m.label}</span>
-            <span className="launcher-desc">{m.description}</span>
-            <span className="launcher-count">{n} chức năng</span>
+        {groups.map((g) => (
+          <button key={g.key} type="button" className="launcher-app" onClick={() => navigate(g.home)}>
+            <span className="launcher-icon" style={{ background: `linear-gradient(135deg, ${g.color}, ${g.color}cc)` }}><GonIcon name={g.icon} size={30} color="#fff" /></span>
+            <span className="launcher-name">{g.label}</span>
+            <span className="launcher-desc">{g.description}</span>
+            <span className="launcher-count">{groupCount(g)} chức năng</span>
           </button>
         ))}
+        {reportCount > 0 && (
+          <button type="button" className="launcher-app" onClick={() => navigate(REPORT_PAGE)}>
+            <span className="launcher-icon" style={{ background: 'linear-gradient(135deg, #2a6cc4, #2a6cc4cc)' }}><BarChart3 size={30} color="#fff" /></span>
+            <span className="launcher-name">Báo cáo</span>
+            <span className="launcher-desc">Tất cả báo cáo, sổ sách theo từng loại</span>
+            <span className="launcher-count">{reportCount} báo cáo</span>
+          </button>
+        )}
       </div>
       {(() => {
         const widgets = sdkSlots('dashboard.widget').filter((s) => (!enabled || enabled.has(s.module)) && (!s.permission || can(s.permission)));
@@ -97,6 +107,50 @@ export function ModuleHomePage() {
         ))}
       </div>
       </>}
+    </>
+  );
+}
+
+export function GroupHomePage() {
+  const { key = '' } = useParams();
+  const menu = useAppMenu();
+  const [sp, setSp] = useSearchParams();
+  const g = useGonGroups(menu).find((x) => x.key === key);
+  if (!g) return <div className="card card-body">Không có nhóm "{key}" hoặc bạn chưa được cấp chức năng nào trong nhóm này. <Link to="/">Về trang Tổng quan</Link></div>;
+  const Flow = g.module ? MODULE_FLOWS[g.module] : undefined;
+  const xem = sp.get('xem');
+  const view = xem === 'tru-cot' && g.module ? 'pillars' : Flow && xem !== 'chuc-nang' ? 'flow' : 'all';
+  const cards = [
+    ...g.sections.map((s, i) => ({ key: `s${i}`, label: s.label ?? g.label, items: s.items })),
+    ...g.reports.map((s, i) => ({ key: `r${i}`, label: `Báo cáo: ${s.label}`, items: s.items })),
+  ];
+  return (
+    <>
+      <div className="module-home-head">
+        <span className="launcher-icon small" style={{ background: `linear-gradient(135deg, ${g.color}, ${g.color}cc)` }}><GonIcon name={g.icon} size={22} color="#fff" /></span>
+        <div style={{ flex: 1 }}>
+          <PageHeader title={g.label} subtitle={g.description} helpKey={Flow ? `${g.module}-quy-trinh` : 'trang-chu'} />
+        </div>
+      </div>
+      {(Flow || g.module) && (
+        <div className="tabs module-home-tabs" role="tablist">
+          {Flow && <button role="tab" className={`tab ${view === 'flow' ? 'active' : ''}`} onClick={() => setSp({}, { replace: true })}><Workflow size={14} style={{ verticalAlign: -2 }} /> Quy trình</button>}
+          <button role="tab" className={`tab ${view === 'all' ? 'active' : ''}`} onClick={() => setSp(Flow ? { xem: 'chuc-nang' } : {}, { replace: true })}><LayoutGrid size={14} style={{ verticalAlign: -2 }} /> Tất cả chức năng</button>
+          {g.module && <button role="tab" className={`tab ${view === 'pillars' ? 'active' : ''}`} onClick={() => setSp({ xem: 'tru-cot' }, { replace: true })} title="Nhóm này dựa vào trụ cột nào của Core và hôm nay đạt tới đâu"><Columns3 size={14} style={{ verticalAlign: -2 }} /> Trụ cột</button>}
+        </div>
+      )}
+      {view === 'pillars' ? <PillarMatrix module={g.module!} compact /> : view === 'flow' && Flow ? <Flow /> : (
+        <div className="module-home-grid">
+          {cards.map((c) => (
+            <div key={c.key} className="card module-home-card">
+              <div className="module-home-card-head" style={{ borderColor: g.color }}>{c.label}</div>
+              <div className="module-home-card-body">
+                {c.items.map((m) => <Link key={m.key} to={m.path!} className="module-home-item"><span>{m.label}</span>{m.code && <small>{m.code}</small>}</Link>)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }

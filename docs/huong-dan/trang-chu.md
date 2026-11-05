@@ -24,6 +24,7 @@ Phần mềm chia thành các **phân hệ**, mỗi phân hệ là một "ứng 
 
 ## Tìm màn ở đâu
 
+- **Trang Tổng quan** có đúng các nhóm như menu trái. Bấm một ô để vào trang chủ của nhóm: Mua hàng mở sơ đồ quy trình, các nhóm khác mở danh sách chức năng.
 - **Menu trái** chia theo việc: Tiền, Mua hàng, Bán hàng, Kho, Công nợ, Tài sản, Thuế, Tổng hợp, Danh mục, Số dư ban đầu. Bấm một nhóm để bung danh sách màn.
 - **Thẻ dưới dải màn đang mở** là các màn chính của nhóm đang làm, bấm một lần để chuyển.
 - **Báo cáo** nằm ở một trang riêng, mở từ cuối menu trái hoặc thẻ Báo cáo của nhóm.

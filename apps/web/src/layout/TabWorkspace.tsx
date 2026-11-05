@@ -17,6 +17,7 @@ import type { MenuItem } from '@ketoan/contracts';
 import { pageRoutes } from '../pages';
 import { inFrame } from '@/lib/auth';
 import { MODULES } from './menu';
+import { GON_DEFS, groupHome, OLD_HOME_ALIASES } from './menu-gon';
 
 interface Tab { pathname: string; search: string; key: number }
 
@@ -24,7 +25,7 @@ const STORE_KEY = 'ketoan.tabs';
 const MAX_TABS = 20;
 let seq = 0;
 /** Đường dẫn cũ đã gộp vào màn khác: không mở thẻ riêng, chuyển thẳng sang màn mới (giữ tham số ?mo, ?loai…). */
-const ALIASES: Record<string, string> = { '/mua-hang/chung-tu': '/mua-hang/tong-hop', '/mua-hang/phieu-mua': '/mua-hang/tong-hop', '/mua-hang/tra-ncc': '/mua-hang/tong-hop' };
+const ALIASES: Record<string, string> = { ...OLD_HOME_ALIASES, '/mua-hang/chung-tu': '/mua-hang/tong-hop', '/mua-hang/phieu-mua': '/mua-hang/tong-hop', '/mua-hang/tra-ncc': '/mua-hang/tong-hop' };
 
 function loadTabs(): Tab[] {
   // Nhúng trong trang quản trị: mỗi khung một màn, không khôi phục thẻ (các khung dùng chung bộ nhớ phiên).
@@ -63,7 +64,7 @@ export function TabWorkspace({ menu, strip }: { menu: MenuItem[]; strip?: ReactN
 
   // Tên thẻ: tên chức năng trên menu, kèm mã.
   const titles = useMemo(() => {
-    const m = new Map<string, { label: string; code?: string }>([['/', { label: 'Tổng quan' }], ['/bao-cao', { label: 'Báo cáo' }], ...MODULES.map((x) => [`/app/${x.key}`, { label: x.label }] as [string, { label: string }])]);
+    const m = new Map<string, { label: string; code?: string }>([['/', { label: 'Tổng quan' }], ['/bao-cao', { label: 'Báo cáo' }], ...GON_DEFS.map((g) => [groupHome(g.key), { label: g.label }] as [string, { label: string }]), ...MODULES.map((x) => [`/app/${x.key}`, { label: x.label }] as [string, { label: string }])]);
     for (const g of menu) for (const c of g.children ?? []) if (c.path && !m.has(c.path)) m.set(c.path, { label: c.label, code: c.code });
     return m;
   }, [menu]);

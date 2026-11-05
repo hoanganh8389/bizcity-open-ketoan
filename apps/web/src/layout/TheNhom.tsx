@@ -10,7 +10,7 @@ export function TheNhom({ group }: { group?: GonGroup }) {
   const { pathname } = useLocation();
   if (!group?.the.length) return null;
   const links = [
-    ...(group.home ? [{ key: 'home', label: group.homeLabel ?? 'Tổng quan', path: group.home, title: `Trang chủ ${group.label}` }] : []),
+    { key: 'home', label: group.homeLabel ?? 'Tổng quan', path: group.home, title: `Trang chủ ${group.label}` },
     ...group.the.map((m) => ({ key: m.key, label: m.label, path: m.path!, title: m.code ? `${m.label} (${m.code})` : m.label })),
   ];
   const reportPaths = group.reports.flatMap((s) => s.items);

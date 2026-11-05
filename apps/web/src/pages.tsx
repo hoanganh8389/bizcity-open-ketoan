@@ -16,7 +16,7 @@ import { ReviewBoardPage } from './features/system/ReviewBoardPage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
 import { DefaultDataPage } from './features/flow/DefaultDataPages';
 import { Navigate, Route } from 'react-router-dom';
-import { LauncherPage, ModuleHomePage } from './features/launcher/LauncherPage';
+import { LauncherPage, ModuleHomePage, GroupHomePage } from './features/launcher/LauncherPage';
 import { DocumentsPage } from './features/documents/DocumentsPage';
 import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
@@ -72,6 +72,7 @@ export const pageRoutes = (
     <Route path="/" element={<LauncherPage />} />
     <Route path="/app/:key" element={<ModuleHomePage />} />
     <Route path="/bao-cao" element={<BaoCaoChungPage />} />
+    <Route path="/nhom/:key" element={<GroupHomePage />} />
     <Route path="chung-tu" element={<DocumentsPage />} />
     <Route path="chung-tu/bang-diem" element={<IntakeScorePage />} />
     <Route path="quy/phieu-chuyen-tien" element={<CashTransfersPage />} />

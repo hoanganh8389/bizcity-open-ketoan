@@ -16,7 +16,7 @@ export function useGonGroups(menu: MenuItem[]): GonGroup[] {
     const on = MODULES.filter((m) => !enabled || enabled.has(m.key));
     const seen = new Set<string>();
     const visible = on.flatMap((m) => moduleMenu(menu, m.key)).filter((g) => !seen.has(g.key) && seen.add(g.key));
-    return buildGon(visible, new Set(on.map((m) => m.key)));
+    return buildGon(visible);
   }, [menu, enabled]);
 }
 
