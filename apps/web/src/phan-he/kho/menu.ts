@@ -13,6 +13,7 @@ export const khoMenu: MenuItem[] = [
     children: [
       { key: 'kho-chuyen-kho', label: 'Phiếu chuyển kho', path: '/kho/chuyen-kho', code: 'KHO01' },
       { key: 'kho-gia-von', label: 'Tính giá vốn', path: '/nghiep-vu/tinh-gia-von', code: 'ACC49' },
+      { key: 'kho-cong-thuc-gia-von', label: 'Công thức giá vốn', path: '/nghiep-vu/cong-thuc-gia-von', code: 'ACC49A' },
     ],
   },
   {
