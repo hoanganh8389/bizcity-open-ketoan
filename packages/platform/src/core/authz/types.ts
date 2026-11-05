@@ -1,3 +1,4 @@
+// @bizcity-layer P permissions
 // [2026-11-05 06:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1 nền: bizcity_authorization@1 — khuôn quyền, bí danh, vai trò, luật Cho / Nới / Cấm, lần gán theo phạm vi × mục đích, quyết định có mã lý do (ADR-0027)
 /**
  * PHÂN QUYỀN (bizcity_authorization@1, ADR-0027, docs/contracts/BIZCITY-AUTHORIZATION-v1.md). Kiểu dùng chung cho Platform (bộ tính),
