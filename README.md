@@ -9,6 +9,7 @@
 <!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
 <!-- [2026-11-01 01:01 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — ảnh kiến trúc Core, cài nhanh 3 bước (scripts/cai-nhanh.sh), giám sát Prometheus / Grafana / Loki, kết nối API + MCP để trợ lý AI ghi nhận sổ sách và đọc báo cáo. -->
 <!-- [2026-11-03 03:40 PM Johnny Chu - Chu Hoàng Anh] G3-01 — lối vào "POS của bạn ghi sổ trong 4 bước" + skill kế toán cho AI -->
+<!-- [2026-11-05 11:50 PM Johnny Chu - Chu Hoàng Anh] README — ảnh kiến trúc: bốn ảnh, sửa cú pháp liên kết (ngoặc trong tên tệp mã hoá %28 %29) -->
 
 **Kế toán mở. Dữ liệu thuộc về doanh nghiệp. Cộng đồng tự do xây dựng ứng dụng.**
 
@@ -50,7 +51,13 @@ Luật chi tiết và cấp độ kiểm soát: [00-CANON.md](docs/00-CANON.md) 
 
 ## Kiến trúc: Ngoài lõi kế toán cần đảm bảo nguyên tắc ghi sổ, còn lại anh em muốn Dev gì cũng được.
 
-![Kiến trúc Core open-ketoan — Bizcity Core Framework](https://media.bizcity.vn/uploads/sites/1258/2026/11/b2ec2082-fe48-4ec3-a216-e53ccd3e83b1.png)
+![Kiến trúc Core open-ketoan — Bizcity Core Framework (1/4)](https://media.bizcity.vn/uploads/sites/1258/2026/11/Hinh-anh-2.png)
+
+![Kiến trúc Core open-ketoan (2/4)](https://media.bizcity.vn/uploads/sites/1258/2026/11/hinh0-anh%281%29.png)
+
+![Kiến trúc Core open-ketoan (3/4)](https://media.bizcity.vn/uploads/sites/1258/2026/11/ban-le.png)
+
+![Kiến trúc Core open-ketoan (4/4)](https://media.bizcity.vn/uploads/sites/1258/2026/11/b2ec2082-fe48-4ec3-a216-e53ccd3e83b1.png)
 
 *Kiến trúc Core open-ketoan (Bizcity Core Framework) — © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity.*
 
