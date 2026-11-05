@@ -53,20 +53,24 @@ Phase này đưa ba thứ vào repo: **kho nguồn pháp lý có trạng thái r
 
 ## 5. Quyết định (D020-*, chờ chủ duyệt)
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D020-2..6 duyệt (D020-1, D020-7..10 đã duyệt 2026-11-02). <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — chủ duyệt D020-2..6 -->
+
 | ID | Quyết định đề xuất | Trạng thái |
 |---|---|---|
 | D020-1 | Bộ kiểm VN là **một phần của `tests/conformance/`** (dữ liệu `vietnam/`, check `checks/vietnam/`, runner = lane `runtime` của 4.3), không tạo `packages/vn-conformance` trước W5 | ✅ chủ duyệt 2026-11-02 — sửa: "không tạo gói" chỉ áp cho SDK; dữ liệu luật là gói chỉ chứa dữ liệu `packages/vn-rulepacks/` (ADR-0012 T7) |
-| D020-2 | Kho nguồn pháp lý là **tệp JSON trong Git** phát hành bất biến cùng rulepack; không bảng CSDL ở MVP | ☐ |
-| D020-3 | **Fail closed** là luật Tier 0 (R-VNC-3): SC-VNC-2 `block`, không baseline, không cờ bỏ qua; `REVIEW_REQUIRED` / `NOT_TESTED` không tính PASS | ☐ |
-| D020-4 | Hai lớp trạng thái tách riêng: bảng điểm giữ 7 trạng thái **mã nguồn**; báo cáo VN có 6 trạng thái **ca pháp lý** | ☐ |
-| D020-5 | Khoảng trống Core G1–G5 đi đường **đề xuất năng lực** (VERSIONING §5, ADR khi cần); phase này không vá | ☐ |
+| D020-2 | Kho nguồn pháp lý là **tệp JSON trong Git** phát hành bất biến cùng rulepack; không bảng CSDL ở MVP | ✅ chủ duyệt 2026-11-05 |
+| D020-3 | **Fail closed** là luật Tier 0 (R-VNC-3): SC-VNC-2 `block`, không baseline, không cờ bỏ qua; `REVIEW_REQUIRED` / `NOT_TESTED` không tính PASS | ✅ chủ duyệt 2026-11-05 |
+| D020-4 | Hai lớp trạng thái tách riêng: bảng điểm giữ 7 trạng thái **mã nguồn**; báo cáo VN có 6 trạng thái **ca pháp lý** | ✅ chủ duyệt 2026-11-05 |
+| D020-5 | Khoảng trống Core G1–G5 đi đường **đề xuất năng lực** (VERSIONING §5, ADR khi cần); phase này không vá | ✅ chủ duyệt 2026-11-05 |
 | D020-7 | **Conformance Engine là trụ cột Kernel trong Core** (K1): module `packages/kernel/src/modules/conformance/`, bật mặc định, menu Hệ thống → Kiểm chuẩn (`HT06`), quyền `conformance:read / run`; ba lớp Module · Cấu hình · Doanh nghiệp dùng chung Registry · Test Packs · Oracle · Evidence ([ADR-0012](../../adr/ADR-0012-conformance-engine-tru-cot-kernel.md)) | ✅ chủ duyệt 2026-11-02 — kèm T1 (tầng L5, dùng lại DiagCheck), T2 (lớp Module trên bản cài đọc check-report + sourceHash) |
 | D020-8 | **Posting Gate chỉ thông tin, người dùng quyết định ghi sổ**: advisory kèm Vì sao + Việc cần làm; không cấu hình nào biến advisory thành tự từ chối; chỉ bất biến Tier 0 của Kernel mới chặn | ✅ chủ duyệt 2026-11-02 — kèm T3 (xác nhận là bằng chứng, AI không xác nhận thay), T4 (không tính trong giao dịch ghi sổ) |
 | D020-9 | **Bảng điểm và UI theo ma trận BizCity**: giữ `bizcity_scoreboard@1` (ba điểm không cộng lẫn, A–F, kết luận không theo điểm, đạt rỗng ≠ đạt); 6 trạng thái ca pháp lý không quy về điểm; ma trận hàng = ca, cột = trạng thái; không nút sửa sổ / bỏ qua | ✅ chủ duyệt 2026-11-02 — kèm T5 (không "điểm tuân thủ %"; độ phủ bằng chứng + số ca theo trạng thái) |
 | D020-10 | **Registry mô hình hiệu lực ở cấp điều khoản** (effective_from/to của provision, phạm vi pháp nhân, năm tài chính áp dụng, chuyển tiếp) — không có công tắc TT200 tắt / TT99 bật; thêm TT152/2025 (hộ, cá nhân kinh doanh) và provision chuyển tiếp của TT200 | ✅ chủ duyệt 2026-11-02 — kèm T6 (khai điều khoản dần theo ca P0) |
-| D020-6 | Nhãn công bố duy nhất **"Passed Bizcity VN Conformance [scope/version/date]"**; trang chứng nhận plugin (VNCONF-010) chỉ hiện nhãn này + phạm vi + `known_exclusions` | ☐ |
+| D020-6 | Nhãn công bố duy nhất **"Passed Bizcity VN Conformance [scope/version/date]"**; trang chứng nhận plugin (VNCONF-010) chỉ hiện nhãn này + phạm vi + `known_exclusions` | ✅ chủ duyệt 2026-11-05 |
 
 ## 6. Câu hỏi cần chủ quyết (Q020-*)
+
+> **Chủ chốt 2026-11-05:** Q020-1 gắn 4.3 (lane runtime), thêm 4.3b "rulepack pháp lý VN" khi W1 bắt đầu — mã việc thêm vào lộ trình ở PR riêng cùng Q018-1 / Q019-4; Q020-3 `docKey` có tiền tố nguồn là đủ, ghi thành quy ước trong `bizcity_ledger_intake@1`; Q020-5 kho pháp lý cùng repo GPL, trạng thái `reviewed` chỉ do người được chỉ định. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — chủ chốt Q020-1, -3, -5 -->
 
 | ID | Câu hỏi | Đề xuất |
 |---|---|---|

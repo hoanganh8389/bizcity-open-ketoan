@@ -8,7 +8,7 @@
 
 | ID | Việc | Lộ trình / G | Code | Trạng thái |
 |---|---|---|---|---|
-| S001-1 | Nhóm Lõi duyệt `docs/standard/`, hợp đồng, CANON | 0.1 | có | ⛔ chủ merge nhánh `feat/phase-0-tiep` vào `main` |
+| S001-1 | Nhóm Lõi duyệt `docs/standard/`, hợp đồng, CANON | 0.1 | có | ✅ 2026-11-05 chủ dự án duyệt `docs/standard/`, bảy hợp đồng, CANON (nhánh `feat/phase-0-tiep` đã vào `main`); roadmap 0.1 ghi `doneAt` <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-001 — S001-1 chủ duyệt --> |
 | S001-2 | CI `ci.yml` + `conformance.yml` | 0.2 | có | 🟡 chờ CI xanh trên `main` sau merge |
 | S001-3 | Migration đúng chuẩn (0030, 0031, 0033) | 0.3 | có | ✅ |
 | S001-4 | ADR-0003..0005 chốt REUSE-MAP §6 | 0.4 | có | ✅ |

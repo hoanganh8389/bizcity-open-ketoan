@@ -41,6 +41,7 @@
 | S024-30 | Số đo nháp / bể theo tuổi, alert, Bàn đánh giá | W3 | P1 | ☐ | ☐ |
 | S024-31 | MCP đọc `core.findings.explain`, `core.intake.get`, `core.item.get` | W3 | P1 | ☐ | ☐ |
 | S024-32 | UI theo bản mẫu hai-cong.html | W4 | P1 | ☐ | ☐ |
+| S024-33 | Bỏ suy tài khoản kho từ tiền tố ở `packages/kernel/src/modules/posting/rules/stock.rule.ts:55` (`startsWith('15')`, SC-KERNEL-5 nợ cũ). Chữ chốt: `AccountResolver` thêm `isInventoryAccount(code)` = tài khoản có trong `inventory_account` của nhóm hạch toán đang áp; luật chuyển kho dùng hàm này. Đơn vị đang cấu hình đúng: bút toán không đổi (test so trước / sau); tài khoản 15x không phải tài khoản kho của nhóm nào (151, 154…) thôi bị bỏ qua. Mức K2. Xong khi SC-KERNEL-5 hết dòng `stock.rule.ts` (`--update-baseline`) <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-33 chữ chốt SC-KERNEL-5 --> | — | P0 | ☐ | ☐ |
 
 ## Ca bằng chứng
 

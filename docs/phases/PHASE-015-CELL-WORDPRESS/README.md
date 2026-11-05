@@ -20,6 +20,7 @@
 | # | Sự thật | Ở đâu |
 |---|---|---|
 | F1 | Thiết kế có: kết nối bốn bước, cầu MCP, cổng kênh | `docs/standard/CELL-CONNECT.md`, `CELL-MCP.md`, `CHANNEL-GATEWAY-PORT.md` |
+| F4 | Q018-4 (kênh cảnh báo vận hành PHASE-018) chốt **Zalo qua Cell**, đi cùng luồng kết nối bốn bước ở đây, không làm riêng | [PHASE-018 §5 Q018-4](../PHASE-018-GIAM-SAT-VAN-HANH/00-MASTER-PLAN.md) <!-- [2026-11-05 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-015 — F4 trỏ Q018-4 --> |
 | F2 | Cổng kết nối WordPress hiện có (`bizcity_connector@1` ổn định) | `docs/cong-ket-noi.md` |
 | F3 | `mcp.cell-bridge`, `cell.connect`, `ai.ocr-invoice` đang planned | `bizcity-standard.json` |
 

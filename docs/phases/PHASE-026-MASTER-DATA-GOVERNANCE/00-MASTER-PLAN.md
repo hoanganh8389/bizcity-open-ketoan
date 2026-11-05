@@ -31,6 +31,8 @@ Ba điều phải bảo đảm:
 
 ## 3. Quyết định chờ chủ duyệt
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D026-1..8 duyệt. Hai điểm chốt rõ: **D026-2** giữ tên cột `items.item_id` = đơn vị tồn kho (biến thể); "sản phẩm cha" là `items.parent_item_id`, không đổi tên cột. **D026-4** nhóm đơn vị làm sau S024-11. [ADR-0022](../../adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md) chuyển **Chấp nhận**. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — chủ duyệt D026-* -->
+
 Xem [ADR-0022 §Quyết định](../../adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md): D026-1 nền móng + bảng tám trụ cột · D026-2 định danh ba tầng và bảng thuật ngữ · D026-3 `entity_codes` cho hạng A/B · D026-4 nhóm đơn vị · D026-5 bốn khả năng · D026-6 bảng trụ cột × mức đạt · D026-7 Golden Tests là cổng phát hành · D026-8 thứ tự P0 / P1 / P2.
 
 Điểm cần chủ quyết rõ: **D026-2** (giữ tên cột `item_id` = đơn vị tồn kho; thuật ngữ "item_id cha" của chủ ↔ `parent_item_id`), **D026-4** (nhóm đơn vị làm sau S024-11).

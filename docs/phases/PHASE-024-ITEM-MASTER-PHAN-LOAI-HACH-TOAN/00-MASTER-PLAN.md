@@ -82,6 +82,8 @@ Những gì giữ nguyên: Item Resolution là **bước riêng, có tên, có s
 
 ## 5. Quyết định đề xuất D024-* (chờ chủ duyệt)
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D024-1..8 duyệt như bảng dưới. Việc K3 (W2, S024-9 điền `item_id` vào sổ / kho) **vẫn cần kế toán trưởng ký** trước khi chạy trên bản cài. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — chủ duyệt D024-* -->
+
 | # | Quyết định | Vì sao |
 |---|---|---|
 | D024-1 | `item_id` = **ULID** (26 ký tự, có thứ tự thời gian, in ra được); cấp bởi Core khi tạo; plugin có thể gửi `itemId` nếu biết | ổn định giữa bản cài, nhập xuất được; không lộ số đếm |
@@ -94,6 +96,8 @@ Những gì giữ nguyên: Item Resolution là **bước riêng, có tên, có s
 | D024-8 | Gộp mã = `item_codes.kind = alias` trỏ item đích + ngày hiệu lực; sổ cũ giữ `item_id` cũ; báo cáo tồn gộp theo bí danh khi người xem chọn "gộp bí danh" | nguyên tắc 5 |
 
 ## 6. Câu hỏi cần chủ chốt (Q024-*)
+
+> **Chủ chốt 2026-11-05:** Q024-1..5 theo cột "Đề xuất" — Q024-1: điền ngược `item_id` **một lần khi nâng cấp**, trong giao dịch, có sao lưu + kiểm; Q024-2: đủ cho W1, `combo` theo đề xuất; Q024-3: mỗi `(nguồn, code)` một item tại một thời điểm; Q024-4: quy tắc mã của đơn vị, preset điền sẵn, validator chỉ `hint`; Q024-5: giữ 2.22 / 2.23 trong lộ trình. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — chủ chốt Q024-* -->
 
 | # | Câu hỏi | Đề xuất |
 |---|---|---|

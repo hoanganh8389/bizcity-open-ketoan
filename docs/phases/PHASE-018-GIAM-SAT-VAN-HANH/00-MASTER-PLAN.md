@@ -60,6 +60,10 @@ Bản giao việc đề xuất tạo `/docs/observability/`, `/infra/monitoring/
 
 ## 5. Câu hỏi cần chủ quyết (Q018-*)
 
+> **Chủ chốt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): Q018-1 **có** — đưa phase vào lộ trình; mã việc thêm ở PR riêng cùng Q019-4 / Q020-1 (2.17–2.21 đã thuộc PHASE-021, phải chọn số khác). Q018-5 **còn mở**: cần số liệu thật của chủ trước W6. Q018-6 **hoãn**: làm khi có nhu cầu, cần ADR riêng. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — chủ chốt Q018-1, -6 -->
+>
+> **Q018-4 chốt lại 2026-11-05 17:xx** (Johnny Chu – Chu Hoàng Anh): kênh cảnh báo thật là **Zalo qua Cell Bizcity** (không phải Telegram — sửa lại đề xuất trước), người trực chưa chỉ định (còn mở). Đi theo luồng kết nối Zalo bốn bước đã làm ở `channel-gateway` (dự án Twin AI, `core/channel-gateway/docs/PHASE-0.83-FOUR-STEP-SETUP/00-FOUR-STEP-SETUP-AND-AGENT-GURU.md`): khoá/khoá API + kiểm thử → kiểm Hub Zalo → quét QR + xác nhận chủ số → chọn Agent/Guru mặc định. Việc này **phụ thuộc Cell** (G1-12, PHASE-015 "chưa, cần Hub") nên chưa làm được ở open-ketoan; khi PHASE-015 mở, lấy mẫu bốn bước này làm tham chiếu UI/luồng kết nối, không chép mã (khác repo). <!-- [2026-11-05 05:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — Q018-4 sửa lại: Zalo qua Cell, tham chiếu four-step-setup -->
+
 | Mã | Câu hỏi | Gợi ý |
 |---|---|---|
 | Q018-1 | Đưa phase vào lộ trình chính thức (`docs/standard/PHASES.md`, `roadmap.json`) với mã việc mới (vd 2.17–2.20 cho W1–W4, 5.10–5.12 cho W5–W7), hay giữ ngoài lộ trình? | Thêm mã — để bảng điểm tự tính tiến độ (SC-PHASE-1). Tệp lộ trình đang được phiên khác sửa: thêm sau khi phiên đó commit. |

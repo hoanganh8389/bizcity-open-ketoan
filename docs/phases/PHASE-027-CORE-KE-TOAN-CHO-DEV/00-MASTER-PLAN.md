@@ -83,6 +83,8 @@ Small win cho dev module mới: `module new` → `module check` → đặt một
 
 ## 7. Đề xuất chờ duyệt
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): Q027-5 **duyệt** — bỏ giá trị mặc định của `SEED_ADMIN_PASSWORD`, cài nhanh tự sinh mật khẩu (gỡ chặn S027-5); Q027-4 **duyệt** — kiểm lại cổng phát hành ngay khi CI xanh trên `main`. Q027-1..3 chưa có lượt duyệt. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — chủ duyệt Q027-4, Q027-5 -->
+
 | # | Đề xuất | Vì sao | Khi duyệt thì |
 |---|---|---|---|
 | Q027-1 | Mỗi mã (API, IN-*, DG-*, F22) có câu giải thích theo vai (dev, kế toán trưởng, kiểm soát, thanh tra, CEO), mỗi câu ≤ 120 ký tự, người có vai đó duyệt, không do model sinh; phép kiểm SC-ERR-2 bắt mã thiếu | dev nhận mã lỗi nhưng không biết ai sửa; CEO không cần số tài khoản | mở rộng `bizcity_findings@1` (R-FLOW-2: chốt hợp đồng trước) |
