@@ -9,9 +9,8 @@ import { WindowDock } from './WindowDock';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { BarChart3, KeyRound, LogOut, Menu } from 'lucide-react';
+import { BarChart3, Menu } from 'lucide-react';
 import { ChangePasswordModal } from '@/features/access/ChangePasswordModal';
-import { ROLE_LABELS, type Role } from '@ketoan/contracts';
 import { api } from '@/lib/api';
 import { useAuth, inFrame } from '@/lib/auth';
 import { SideNav, sideNavCollapsed, sideNavWidth } from './SideNav';
@@ -20,6 +19,7 @@ import { MenuSearch } from './MenuSearch';
 import { TabWorkspace } from './TabWorkspace';
 import { useActiveModule } from './ModuleBar';
 import { useGon } from './useGon';
+import { UserMenu } from './UserMenu';
 import { useGhiHayDung } from './hay-dung';
 import { TheNhom } from './TheNhom';
 import { useFitTables } from './fitTables';
@@ -34,7 +34,7 @@ import { MaTraCuu } from '@/components/MaTraCuu';
 import { SavedFlash } from '@/components/WhyPanel';
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   // Chi nhánh đang làm việc lưu theo đơn vị × người dùng.
   workBranch.setScope(user ? `${user.tenant.id}:${user.id}` : '');
   const [changingPassword, setChangingPassword] = useState(false);
@@ -142,15 +142,7 @@ export function AppLayout() {
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />
-          <span className="user-chip" title={user?.email}>
-            {user?.fullName} <small>{ROLE_LABELS[user?.role as Role] ?? user?.role}</small>
-          </span>
-          <button className="btn btn-sm btn-ghost" style={{ color: 'var(--topbar-ink)' }} onClick={() => setChangingPassword(true)} title="Đổi mật khẩu">
-            <KeyRound size={16} />
-          </button>
-          <button className="btn btn-sm btn-ghost" style={{ color: 'var(--topbar-ink)' }} onClick={logout} title="Đăng xuất">
-            <LogOut size={16} />
-          </button>
+          <UserMenu onChangePassword={() => setChangingPassword(true)} />
         </div>
       </header>
       {/* Menu trái: nhóm theo việc, bấm mới bung danh sách màn. */}

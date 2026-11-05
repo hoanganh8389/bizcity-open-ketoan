@@ -20,6 +20,7 @@ import { useGonGroups } from '../../layout/useGon';
 import { GonIcon } from '../../layout/SideNav';
 import { groupCount, REPORT_PAGE } from '../../layout/menu-gon';
 import { useHayDung } from '../../layout/hay-dung';
+import { initialsOf } from '../../layout/UserMenu';
 import { useViec, viecOf } from '../../layout/rail/useViec';
 import { ViecRow } from '../../layout/rail/ViecPanel';
 import { sdkSlots } from '../../phan-he/sdk-modules';
@@ -203,12 +204,11 @@ export function TongQuanPage() {
   const enabled = useEnabledModules();
   const [help, setHelp] = useState(false);
   const name = user?.fullName ?? '';
-  const initials = name.trim().split(/\s+/).slice(-2).map((w) => w[0]).join('').toUpperCase() || 'ERP';
   const widgets = sdkSlots('dashboard.widget').filter((s) => (!enabled || enabled.has(s.module)) && (!s.permission || can(s.permission)));
   return (
     <>
       <div className="tq-hello">
-        <span className="tq-avatar">{initials}</span>
+        <span className="tq-avatar">{initialsOf(name)}</span>
         <div><b>Xin chào{name ? `, ${name}` : ''}</b><span>{user?.tenant.name}</span></div>
         <button type="button" className="btn btn-help" onClick={() => setHelp(true)}><HelpCircle size={16} /> Hướng dẫn</button>
       </div>
