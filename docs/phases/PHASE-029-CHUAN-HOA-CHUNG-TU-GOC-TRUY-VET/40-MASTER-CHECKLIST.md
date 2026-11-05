@@ -9,7 +9,7 @@
 |---|---|---|---|---|
 | S029-1 | Đánh giá hiện trạng + chữ chốt thiết kế ([00](00-MASTER-PLAN.md), [audit](../../audits/DANH-GIA-TRACE-CHUNG-TU-GOC-2026-11-05.md)), hợp đồng `bizcity_document@1` §7.2 | W0 | P0 | ✅ 2026-11-05 |
 | S029-2 | Cổng `GET /api/v1/documents/history` (id · docKey · entryId), `integrity` | W1 | P0 | ☐ giữ chỗ ở CLAIMS.md |
-| S029-3 | Bốn mã chẩn đoán `ENTRY_NO_EVENT`, `ENTRY_NO_VERSION`, `ENTRY_VERSION_UNKNOWN`, `EVENT_ENTRIES_STALE` | W1 | P0 | ☐ |
+| S029-3 | Ba mã chẩn đoán mới `ENTRY_NO_VERSION`, `ENTRY_VERSION_UNKNOWN`, `EVENT_ENTRIES_STALE` (dùng lại `LEDGER_ORPHAN` có sẵn) + lane `DG-DOC-1..3` | W1 | P0 | ☐ |
 | S029-4 | Phép kiểm tĩnh `SC-DOC-7` + ca tự kiểm | W1 | P0 | ☐ |
 | S029-5 | `ctx.ledger.submit` tự `saveVersion` + liên kết `ledger`; `payloadVersion` ở `GET /documents/:id` | W2a | P0 | ⛔ chờ nhả `actions.ts`, `kernel/src/index.ts`, `document.service.ts` |
 | S029-6 | Migration người sửa / lý do cho phiên bản sự việc; `IN-DOC-REASON` (warn) | W2b | P1 | ⛔ chủ ký K3 |

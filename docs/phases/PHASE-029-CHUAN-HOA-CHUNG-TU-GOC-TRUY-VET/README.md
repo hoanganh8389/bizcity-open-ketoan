@@ -19,4 +19,4 @@
 
 - **Có thêm bảng "Universal Documents" không?** Không. Dùng `accounting_events`, `accounting_event_versions`, `ledger_entries.event_version`, `posting_log`, `audit_logs`, `document_links`.
 - **Module cộng đồng có phải nhớ gọi gì không?** W1: không — cổng đọc dựng từ sổ và sự việc. W2: runtime tự ghi `saveVersion` + liên kết `ledger` khi `ctx.ledger.submit`.
-- **Ép 100 % thế nào?** Ba lớp: (1) cấu trúc — một cửa ghi, CSDL chặn sửa / xoá; (2) chẩn đoán dữ liệu `ENTRY_NO_EVENT`, `ENTRY_NO_VERSION`, `ENTRY_VERSION_UNKNOWN`, `EVENT_ENTRIES_STALE` trên mọi bản cài; (3) phép kiểm tĩnh `SC-DOC-7` chặn đường ghi mới lệch.
+- **Ép 100 % thế nào?** Ba lớp: (1) cấu trúc — một cửa ghi, CSDL chặn sửa / xoá; (2) chẩn đoán dữ liệu `LEDGER_ORPHAN` (có sẵn), `ENTRY_NO_VERSION`, `ENTRY_VERSION_UNKNOWN`, `EVENT_ENTRIES_STALE` trên mọi bản cài; (3) phép kiểm tĩnh `SC-DOC-7` chặn đường ghi mới lệch.

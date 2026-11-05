@@ -34,7 +34,7 @@
 | [S026-23](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L15) | PHASE-026 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
 | [S029-2](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L11) | PHASE-029 | Cổng GET /api/v1/documents/history (id · docKey · entryId), integrity | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
-| [S029-3](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L12) | PHASE-029 | Bốn mã chẩn đoán ENTRYNOEVENT, ENTRYNOVERSION, ENTRYVERSIONUNKNOWN, EVENTENTRIESSTALE | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
+| [S029-3](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L12) | PHASE-029 | Ba mã chẩn đoán mới ENTRYNOVERSION, ENTRYVERSIONUNKNOWN, EVENTENTRIESSTALE (dùng lại LEDGERORPHAN có sẵn) + l… | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
 | [S029-4](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L13) | PHASE-029 | Phép kiểm tĩnh SC-DOC-7 + ca tự kiểm | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
 
 ## Chờ merge (0)
