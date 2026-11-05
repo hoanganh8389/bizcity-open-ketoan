@@ -1,5 +1,5 @@
 {
-  "$comment": "[2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — bizcity_foundations@1 (đề xuất): sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP × tín hiệu kiểm. NGUỒN cho bản mẫu ma trận kiểm chuẩn và phép kiểm SC-CORE-1 (S029-29, chưa có). Mức ghi tay có bằng chứng (source = manual) tới khi engine bảng điểm chạy (S029-18); tín hiệu `state` = co (chạy được trên main) · nhanh (ở nhánh chưa vào main) · chua (chưa có).",
+  "$comment": "[2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — bizcity_foundations@1 (đề xuất): sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP × tín hiệu kiểm. NGUỒN cho bản mẫu ma trận kiểm chuẩn và phép kiểm SC-CORE-1 (S029-29, chưa có). Mức ghi tay có bằng chứng (source = manual) tới khi engine bảng điểm chạy (S029-18); tín hiệu `state` = co (chạy được trên main) · nhanh (ở nhánh chưa vào main) · chua (chưa có). [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1: SC-CORE-1 có mã; C5 hạ về mot-phan (trụ cột 09 còn tín hiệu chua); SC-DOC-7 / lịch sử chứng từ / ENTRY_NO_VERSION nâng co sau #92.",
   "contract": "bizcity_foundations@1",
   "version": "0.1.0-draft",
   "updated": "2026-11-05",
@@ -77,8 +77,8 @@
       "capabilities": ["ledger.submit", "ledger.cancel", "ledger.query", "events.outbox", "events.subscribe", "actions.idempotency", "templates.posting"],
       "devGets": "Phát sự kiện, thử lại, chống trùng; bộ quy tắc định khoản và ghi sổ — module chỉ kể sự việc",
       "sdk": "ctx.ledger.submit({ docType, reasonCode }), ctx.events.emit, Idempotency-Key",
-      "status": "dat",
-      "gap": "kỳ khoá chưa có trigger CSDL (S029-17); lớp giá vốn (PHASE-025)"
+      "status": "mot-phan",
+      "gap": "mạnh nhất nhưng chưa đạt: kỳ khoá chưa có trigger CSDL (S029-17, SC-CORE-1 bắt); lớp giá vốn (PHASE-025)"
     },
     {
       "id": "C6", "key": "continuity", "title": "Continuity & Conformance",
@@ -111,7 +111,7 @@
     { "id": "05", "group": "A", "core": "C3", "title": "Configuration & Policy Registry", "status": "mot-phan", "ecp": ["ECP-03"], "next": "S029-10",
       "signals": [ { "kind": "test", "ref": "apps/api/test/policy.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/accounting-profile.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-CON-7", "state": "co" }, { "kind": "check", "ref": "chặn đọc thô tenants.settings", "state": "chua" }, { "kind": "test", "ref": "settings.set duy nhất + lịch sử", "state": "chua" }, { "kind": "test", "ref": "giá trị theo phạm vi + ngày hiệu lực", "state": "chua" } ] },
     { "id": "06", "group": "B", "core": "C4", "title": "Document SDK & Lifecycle", "status": "mot-phan", "ecp": ["ECP-05", "ECP-09"], "next": "S029-5, S029-11",
-      "signals": [ { "kind": "test", "ref": "apps/api/test/documents-common.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/signatures.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-DOC-7", "state": "nhanh" }, { "kind": "test", "ref": "apps/api/test/lich-su-chung-tu.test.ts", "state": "nhanh" } ] },
+      "signals": [ { "kind": "test", "ref": "apps/api/test/documents-common.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/signatures.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-DOC-7", "state": "co" }, { "kind": "test", "ref": "apps/api/test/lich-su-chung-tu.test.ts", "state": "co" } ] },
     { "id": "07", "group": "B", "core": "C4", "title": "Workflow & Approval Engine", "status": "mot-phan", "ecp": ["ECP-06"], "next": "S029-25",
       "signals": [ { "kind": "test", "ref": "apps/api/test/workflow.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/payment-requests.test.ts", "state": "co" }, { "kind": "test", "ref": "SoD người lập ≠ người duyệt", "state": "chua" } ] },
     { "id": "08", "group": "B", "core": "C5", "title": "Command & Event Contracts", "status": "dat", "ecp": ["ECP-02", "ECP-08"], "next": "S029-28",
@@ -121,7 +121,7 @@
     { "id": "10", "group": "B", "core": "C5", "title": "Inventory & Cost Continuity", "status": "mot-phan", "ecp": ["ECP-05", "ECP-09"], "next": "PHASE-025 S025-5..8",
       "signals": [ { "kind": "test", "ref": "apps/api/test/costing.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/item-id-so-kho.test.ts", "state": "co" }, { "kind": "diag", "ref": "INVENTORY_LEDGER_MISMATCH", "state": "co" } ] },
     { "id": "11", "group": "C", "core": "C6", "title": "Cross-Module Lineage", "status": "mot-phan", "ecp": ["ECP-05"], "next": "S029-2..8, S026-13, S029-27",
-      "signals": [ { "kind": "test", "ref": "apps/api/test/lineage.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/truy-vet.test.ts", "state": "co" }, { "kind": "diag", "ref": "LEDGER_ORPHAN", "state": "co" }, { "kind": "diag", "ref": "ENTRY_NO_VERSION", "state": "nhanh" } ] },
+      "signals": [ { "kind": "test", "ref": "apps/api/test/lineage.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/truy-vet.test.ts", "state": "co" }, { "kind": "diag", "ref": "LEDGER_ORPHAN", "state": "co" }, { "kind": "diag", "ref": "ENTRY_NO_VERSION", "state": "co" } ] },
     { "id": "12", "group": "C", "core": "C6", "title": "Validation & Conformance", "status": "mot-phan", "ecp": ["ECP-10", "ECP-11"], "next": "S029-21, S025-9/10",
       "signals": [ { "kind": "check", "ref": "SC-FIND-1", "state": "co" }, { "kind": "check", "ref": "SC-INTAKE-1", "state": "co" }, { "kind": "test", "ref": "apps/api/test/conformance-engine.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/intake-preflight.test.ts", "state": "co" }, { "kind": "check", "ref": "luật / chẩn đoán do module khai", "state": "chua" } ] },
     { "id": "13", "group": "C", "core": "C6", "title": "Reconciliation & Period Integrity", "status": "mot-phan", "ecp": ["ECP-11"], "next": "S029-13, S025-11/14, S026-7",
@@ -131,7 +131,7 @@
     { "id": "15", "group": "D", "core": "C1", "title": "Integration & External Identity", "status": "mot-phan", "ecp": ["ECP-04", "ECP-10"], "next": "S029-15, S029-24",
       "signals": [ { "kind": "test", "ref": "apps/api/test/connections.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/intake-inbox.test.ts", "state": "co" }, { "kind": "diag", "ref": "INTAKE_OPEN_AGE", "state": "co" }, { "kind": "test", "ref": "ánh xạ định danh ngoài", "state": "chua" } ] },
     { "id": "16", "group": "D", "core": "SDK", "title": "Module SDK & Metadata Registry", "status": "mot-phan", "ecp": ["ECP-07"], "next": "S029-21",
-      "signals": [ { "kind": "check", "ref": "SC-CON-2", "state": "co" }, { "kind": "check", "ref": "SC-MOD-2", "state": "co" }, { "kind": "test", "ref": "apps/api/test/module-sdk.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/module-manifests.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-CORE-1", "state": "chua" } ] },
+      "signals": [ { "kind": "check", "ref": "SC-CON-2", "state": "co" }, { "kind": "check", "ref": "SC-MOD-2", "state": "co" }, { "kind": "test", "ref": "apps/api/test/module-sdk.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/module-manifests.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-CORE-1", "state": "co" } ] },
     { "id": "17", "group": "D", "core": "C2", "title": "Audit, Security & Operations", "status": "mot-phan", "ecp": ["ECP-02", "ECP-13"], "next": "S029-22, S029-24",
       "signals": [ { "kind": "diag", "ref": "EVIDENCE_CHAIN", "state": "co" }, { "kind": "check", "ref": "SC-DATA-2", "state": "co" }, { "kind": "check", "ref": "SC-SEC-1", "state": "co" }, { "kind": "test", "ref": "apps/api/test/evidence.test.ts", "state": "co" }, { "kind": "check", "ref": "khoá checksum migration 0034+", "state": "chua" } ] }
   ],

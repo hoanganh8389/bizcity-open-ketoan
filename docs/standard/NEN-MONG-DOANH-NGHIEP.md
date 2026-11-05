@@ -15,7 +15,7 @@
 | C2 · Authorization & Context | 04, 17 | `packages/platform/src/core/auth.ts`, `packages/platform/src/core/actions.ts`, `apps/api/src/modules/access` | `bizcity_action@1` | 🟡 |
 | C3 · Settings & Policies | 05 | `packages/platform/src/core/settings.ts`, `packages/kernel/src/modules/posting-config` | `bizcity_settings@1` | 🟡 yếu nhất |
 | C4 · Documents & Workflow | 06, 07 | `packages/platform/src/core/documents.ts`, `packages/platform/src/core/workflow.ts`, `packages/kernel/src/modules/documents` | `bizcity_document@1` | 🟡 |
-| C5 · Events & Accounting | 08, 09, 10 | `packages/kernel/src/modules/ledger`, `packages/kernel/src/modules/posting`, `packages/platform/src/core/events.ts` | `bizcity_ledger_intake@1`, `bizcity_posting_rule@1`, `bizcity_event@1` | ✅ |
+| C5 · Events & Accounting | 08, 09, 10 | `packages/kernel/src/modules/ledger`, `packages/kernel/src/modules/posting`, `packages/platform/src/core/events.ts` | `bizcity_ledger_intake@1`, `bizcity_posting_rule@1`, `bizcity_event@1` | 🟡 mạnh nhất; còn kỳ khoá ở CSDL (S029-17) <!-- [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — SC-CORE-1 hạ C5 về một phần --> |
 | C6 · Continuity & Conformance | 11, 12, 13, 14 | `packages/kernel/src/modules/lineage`, `packages/kernel/src/modules/conformance`, `tests/conformance` | `bizcity_lineage@1`, `bizcity_findings@1`, `bizcity_compliance@1` | 🟡 |
 | Bề mặt SDK của cả sáu | 16 | `packages/module-sdk/src/index.ts`, `bizcity.module.json` | `bizcity_module@1` | 🟡 |
 
