@@ -1778,3 +1778,39 @@ table.dgrid-table thead th { padding-top: 4px; padding-bottom: 4px; }
 .gon-bc-chan { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 2px; }
 @media (max-width: 900px) { .gon-bc { grid-template-columns: 1fr; } .gon-bc-loai { position: static; grid-auto-flow: column; overflow-x: auto; } }
 @media print { .gon-the, .gon-fly { display: none !important; } }
+
+/* ---------------- Trang chủ nhóm: sơ đồ ít chữ, hàng Tiện ích; Tổng quan chỉ biểu tượng và tên ---------------- */
+.launcher-grid.gon-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.gon-grid .launcher-app { padding: 18px 10px 14px; gap: 8px; }
+.gon-grid .launcher-icon { width: 56px; height: 56px; border-radius: 16px; }
+.page-info { display: inline-flex; align-self: center; color: var(--ink-400, #9aa7b4); cursor: help; }
+.sd-card { padding: 36px 20px 40px; margin: 0; }
+.sd-rows { --sd-n: 4; position: relative; max-width: 1180px; margin: 0 auto; }
+.sd-row { position: relative; display: grid; grid-template-columns: repeat(var(--sd-n), minmax(0, 1fr)); row-gap: 24px; }
+.sd-node { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+.sd-node.open { z-index: 10; }
+.sd-art { position: relative; display: block; width: 76px; height: 88px; transition: transform .12s; }
+.sd-node a:hover .sd-art { transform: translateY(-2px); }
+.sd-art svg { display: block; filter: drop-shadow(0 6px 5px rgba(14, 42, 69, .12)); }
+.sd-paper { fill: var(--brand-50); stroke: var(--brand-600); stroke-width: 2; }
+.sd-fold { fill: var(--brand-100); stroke: var(--brand-600); stroke-width: 2; stroke-linejoin: round; }
+.sd-line { fill: none; stroke: var(--brand-600); stroke-width: 2.5; stroke-linecap: round; opacity: .55; }
+.sd-badge { position: absolute; right: -10px; bottom: -6px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface); border: 2px solid var(--brand-600); color: var(--brand-700, var(--brand-800)); }
+.sd-btn-wrap { position: relative; max-width: 100%; }
+.sd-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border: 0; border-radius: 6px; background: var(--brand-600); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; box-shadow: 0 2px 4px rgba(14, 42, 69, .18); }
+.sd-btn:hover { background: var(--brand-800); color: #fff; text-decoration: none; }
+.sd-sub { position: absolute; z-index: 5; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); min-width: 100%; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 20px rgba(15, 35, 60, .18); }
+.sd-sub button { display: block; width: 100%; padding: 7px 12px; border: 0; border-radius: 4px; background: none; font: inherit; font-size: 13.5px; text-align: left; white-space: nowrap; cursor: pointer; }
+.sd-sub button:hover { background: var(--brand-50); }
+/* Một hàng: đường đứt chạy ngang qua giữa hình. Hai hàng: mỗi bước có đoạn đứt xuống / lên trục giữa. */
+.sd-line-h { position: absolute; top: 44px; height: 0; border-top: 2px dashed var(--brand-600); opacity: .6; }
+.sd-bus { display: block; height: 0; margin: 0 calc(50% / var(--sd-n)); border-top: 2px dashed var(--brand-600); opacity: .6; }
+.sd-rows.two .sd-row.top .sd-node::after, .sd-rows.two .sd-row.bot .sd-node::before { content: ''; height: 26px; border-left: 2px dashed var(--brand-600); opacity: .6; }
+.sd-rows.two .sd-row.top .sd-node { gap: 8px; }
+.sd-rows.two .sd-row.bot .sd-node { gap: 8px; }
+.sd-links { display: flex; flex-direction: column; margin: 12px 0 0 !important; padding: 0; }
+.sd-links > b { padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.sd-links > div { display: flex; flex-wrap: wrap; gap: 4px 22px; padding: 12px 18px; }
+.sd-links a, .sd-links button { display: inline-flex; align-items: center; gap: 7px; padding: 3px 0; border: 0; background: none; color: var(--ink, inherit); font: inherit; font-size: 13.5px; cursor: pointer; }
+.sd-links a:hover, .sd-links button:hover { color: var(--brand-800); text-decoration: none; }
+@media (max-width: 760px) { .sd-rows { --sd-n: 2 !important; } .sd-line-h, .sd-bus, .sd-rows.two .sd-node::after, .sd-rows.two .sd-node::before { display: none; } .sd-row + .sd-row { margin-top: 24px; } }
