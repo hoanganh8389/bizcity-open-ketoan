@@ -342,12 +342,49 @@ const HISTORY_LIMIT = 300;
 const ACTION_TEXT: Record<string, string> = {
   'product.update': 'Sửa khai báo', 'product.draft': 'Lưu nháp (còn thiếu khai báo)', 'product.activate': 'Kích hoạt (hết lỗi chặn)',
   'product.create': 'Thêm mặt hàng', 'product.delete': 'Xoá khỏi danh mục (định danh ngừng dùng, không mất)', 'catalog.warn.unacked': 'Lưu qua API còn cảnh báo, không ghi lý do',
+  'catalog.product.save': 'Sửa khai báo', 'catalog.product.create': 'Thêm mặt hàng', 'core.catalog-product.save': 'Sửa khai báo',
   'core.product.upsert': 'Tạo / cập nhật qua API', 'core.item.upsert': 'Tạo / cập nhật qua API', 'core.item.add-code': 'Thêm mã', 'core.item.retire-code': 'Đóng mã', 'core.item.classify': 'Đổi phân loại hạch toán',
 };
 const FIELD_TEXT: Record<string, string> = {
   name: 'tên', unit: 'đơn vị tính', postingGroupCode: 'nhóm hạch toán', brandCode: 'nhãn hàng', industryCode: 'ngành hàng', groupCode: 'nhóm hàng', typeCode: 'loại hàng',
   isActive: 'theo dõi', note: 'ghi chú', taxOutCode: 'thuế bán ra', taxInCode: 'thuế mua vào', exciseRate: 'thuế TTĐB',
+  isMain: 'hàng chính', noSale: 'không bán', origin: 'xuất xứ', parentSku: 'mã cha', barcode: 'mã vạch',
 };
+// [2026-11-05 06:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: lịch sử nói đổi từ gì sang gì, so lần ghi này với lần ghi trước của cùng mặt hàng (đóng góp)
+type Snapshot = Map<string, string>;
+const SNAP_MAX_LIST = 5;
+/** Giá trị đọc được của một lần ghi. Đầu vào của action: trường để trống nghĩa là giữ giá trị cũ, nên bỏ qua. */
+function snapshotOf(data: Record<string, unknown>, partial: boolean): Snapshot {
+  const out: Snapshot = new Map();
+  for (const [k, v] of Object.entries(data)) {
+    if (!FIELD_TEXT[k] || (partial && (v === '' || v === null || v === undefined))) continue;
+    out.set(k, show(v));
+  }
+  if (Array.isArray(data.units)) {
+    out.set('@units', (data.units as { unit?: string; ratio?: number }[]).map((u) => `${show(u.unit)} = ${show(u.ratio)}`).sort().join(', '));
+  }
+  if (Array.isArray(data.prices)) {
+    for (const x of data.prices as { priceListCode?: string; unit?: string; price?: unknown }[]) out.set(`@price:${show(x.priceListCode)} / ${show(x.unit)}`, show(x.price));
+  }
+  return out;
+}
+const labelOf = (k: string) => (k === '@units' ? 'đơn vị tính' : k.startsWith('@price:') ? `giá ${k.slice(7)}` : FIELD_TEXT[k]!);
+/** So với giá trị đã biết: có trước đó thì ghi A → B; chưa từng biết thì ghi giá trị. Cập nhật `known`. */
+function describeChange(known: Snapshot, now: Snapshot): { text: string[]; changed: boolean; first: boolean } {
+  const seen = known.size > 0;
+  const text: string[] = [];
+  for (const [k, v] of now) {
+    const before = known.get(k);
+    if (before === undefined) {
+      if (!seen) text.push(`${labelOf(k)} = ${v}`);
+      else if (v !== show('')) text.push(`${labelOf(k)}: (chưa có) → ${v}`);   // lần đầu thấy mà trống thì không phải thay đổi
+    }
+    else if (before !== v) text.push(`${labelOf(k)}: ${before} → ${v}`);
+    known.set(k, v);
+  }
+  return { text, changed: text.length > 0, first: !seen };
+}
+
 const show = (v: unknown) => (v === null || v === undefined || v === '' ? '(trống)' : typeof v === 'boolean' ? (v ? 'có' : 'không') : String(v));
 const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
 
@@ -369,7 +406,7 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
   const audits = skus.length
     ? await sql<{ action: string; actor: string; after_data: Record<string, unknown> | null; created_at: Date; object_id: string }>`
         SELECT action, actor, after_data, created_at, object_id FROM audit_logs
-         WHERE tenant_id = ${tenantId} AND ((object_type = 'product' AND object_id = ANY(${skus}::text[]))
+         WHERE tenant_id = ${tenantId} AND ((object_type IN ('product', 'catalog_product') AND object_id = ANY(${skus}::text[]))
             -- [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: thao tác theo định danh: đổi mã, gộp mã, gồm mặt hàng đã gộp vào (đóng góp)
             OR (object_type = 'item' AND object_id IN (SELECT bizcity_item_family(${itemId}))))
          ORDER BY created_at DESC, id DESC LIMIT ${HISTORY_LIMIT}`.execute(trx)
@@ -406,7 +443,8 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
     if (!mine.length) return [a];
     return mine.map((n) => ({ action: n.action, actor: a.actor, after_data: n.after ?? null, created_at: a.created_at, object_id: n.objectId ?? a.object_id }));
   });
-  for (const a of flat) {
+  const known: Snapshot = new Map();
+  for (const a of [...flat].reverse()) {
     const after = a.after_data ?? {};
     const res = ((after.notes as Record<string, unknown> | undefined)?.result ?? {}) as Record<string, unknown>;
     if (a.action === 'core.item.merge') {
@@ -425,10 +463,11 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
       continue;
     }
     const input = after.input as Record<string, unknown> | undefined;
-    // Đầu vào của action: trường để trống nghĩa là giữ giá trị cũ, không phải đổi thành trống.
-    const fields = Object.entries(input ?? after).filter(([k, v]) => FIELD_TEXT[k] && !(input && (v === '' || v === null || v === undefined))).map(([k, v]) => `${FIELD_TEXT[k]} = ${show(v)}`);
+    const change = describeChange(known, snapshotOf(input ?? after, Boolean(input)));
+    const shown = change.first ? change.text : change.text.slice(0, SNAP_MAX_LIST).concat(change.text.length > SNAP_MAX_LIST ? [`và ${change.text.length - SNAP_MAX_LIST} thay đổi khác`] : []);
+    const detail = shown.length ? `: ${shown.join('; ')}` : change.first ? '' : ': không đổi thông tin';
     out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'change', by: a.actor,
-      text: `${ACTION_TEXT[a.action] ?? a.action}${fields.length ? `: ${fields.join('; ')}` : ''}${a.object_id !== current && skus.includes(a.object_id) ? ` (khi còn mã ${a.object_id})` : ''}` });
+      text: `${ACTION_TEXT[a.action] ?? a.action}${detail}${a.object_id !== current && skus.includes(a.object_id) ? ` (khi còn mã ${a.object_id})` : ''}` });
   }
   out.sort((x, y) => (x.at < y.at ? 1 : x.at > y.at ? -1 : 0));
   return { itemId, sku: current, entries: out.slice(0, HISTORY_LIMIT), truncated: out.length > HISTORY_LIMIT || audits.rows.length >= HISTORY_LIMIT };

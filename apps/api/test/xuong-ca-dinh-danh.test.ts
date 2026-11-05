@@ -365,6 +365,57 @@ describe('Lịch sử đọc đúng chữ', () => {
   });
 });
 
+describe('Tên lúc ghi trên dòng sổ', () => {
+  const setName = (sku: string, name: string) => call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name, unit: 'Hộp', ...ack });
+  const lines = async (docNo: string) => (await sql<{ sku: string | null; name: string | null; rev: boolean }>`
+    SELECT l.product_sku AS sku, l.product_name AS name, e.is_reversal AS rev FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+     WHERE l.tenant_id = ${tenantId} AND e.doc_no = ${docNo} AND l.part = 'goods'`.execute(db)).rows;
+  it('phiếu bán mới mang mã và tên; đổi tên: dòng cũ giữ tên cũ, phiếu sau tên mới, đảo mang tên gốc', async () => {
+    expect((await put('XC-TEN')).status).toBeLessThan(300);
+    expect((await setName('XC-TEN', 'Tên đầu')).status).toBe(200);
+    expect((await purchase('xc-ten-mua', 'XC-TEN', 10, 1_000_000)).status).toBeLessThan(300);
+    expect((await sale('xc-ten-1', 'XC-TEN', 1, 200_000)).status).toBeLessThan(300);
+    const dau = await lines('xc-ten-1');
+    expect(dau.length).toBeGreaterThan(0);
+    expect(dau.every((l) => l.sku === 'XC-TEN' && l.name === 'Tên đầu')).toBe(true);
+
+    expect((await setName('XC-TEN', 'Tên sau')).status).toBe(200);
+    expect((await lines('xc-ten-1')).every((l) => l.name === 'Tên đầu')).toBe(true);
+    expect((await sale('xc-ten-2', 'XC-TEN', 1, 200_000)).status).toBeLessThan(300);
+    expect((await lines('xc-ten-2')).every((l) => l.name === 'Tên sau')).toBe(true);
+
+    const so = await call(ctx, 'GET', `/api/v1/reports/journal?from=${today()}&to=${today()}&sku=XC-TEN`);
+    const text = JSON.stringify(so.body);
+    expect(text).toContain('Tên đầu');
+    expect(text).toContain('Tên sau');
+
+    // Sửa phiếu đã ghi sau khi đổi tên: dòng đảo giữ tên gốc, dòng mới tên mới
+    const sua = await call(ctx, 'POST', '/api/v1/documents', {
+      docType: 'sale', docKey: 'xc-ten-1', branchCode: 'CN01', docNo: 'xc-ten-1', docDate: today(), version: 2,
+      lines: [line('XC-TEN', 1, 300_000)], totals: { beforeTax: 300_000, tax: 0, total: 300_000 },
+    });
+    expect(sua.status, JSON.stringify(sua.body)).toBeLessThan(300);
+    const sau = await lines('xc-ten-1');
+    expect(sau.some((l) => l.rev)).toBe(true);
+    expect(sau.filter((l) => l.rev).every((l) => l.name === 'Tên đầu')).toBe(true);
+    expect(sau.filter((l) => !l.rev).some((l) => l.name === 'Tên sau')).toBe(true);
+  });
+});
+
+describe('Lịch sử nói đổi từ gì sang gì', () => {
+  const save = (sku: string, name: string) => call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name, unit: 'Hộp', ...ack });
+  const texts = async (sku: string) => (await call(ctx, 'GET', `/api/v1/lineage/items/${sku}/history`)).body.data.entries.map((e: { text: string }) => e.text) as string[];
+  it('sửa tên ở form đầy đủ: hiện tên cũ → tên mới; lưu lại y nguyên: báo không đổi', async () => {
+    expect((await put('LS-B')).status).toBe(200);
+    const a = await save('LS-B', 'Tên A');
+    expect(a.status, JSON.stringify(a.body)).toBe(200);
+    expect((await save('LS-B', 'Tên B')).status).toBe(200);
+    expect(await texts('LS-B')).toContain('Sửa khai báo: tên: Tên A → Tên B');
+    expect((await save('LS-B', 'Tên B')).status).toBe(200);
+    expect(await texts('LS-B')).toContain('Sửa khai báo: không đổi thông tin');
+  });
+});
+
 describe('Hệ ngoài', () => {
   it('mã external giữ nguyên qua đổi mã và gộp; nguồn đổi có itemId và định danh thay thế', async () => {
     await put('XC-W1');

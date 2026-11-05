@@ -1087,6 +1087,7 @@ export interface LedgerLinesTable {
   tax_code: string | null;
   part: string;
   product_sku: string | null;
+  product_name: string | null;
   description: Generated<string>;
   source_line_key: string | null;
   dims: JsonDefault;
