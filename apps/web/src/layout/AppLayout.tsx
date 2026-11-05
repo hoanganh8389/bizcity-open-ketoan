@@ -1,3 +1,4 @@
+// [2026-11-06 01:30 AM Nguyễn Văn Thủy] MENU — thêm thanh mép phải, trợ lý và thông báo chuyển vào đó
 // [2026-11-05 11:50 PM Nguyễn Văn Thủy] MENU — bỏ thanh phân hệ, menu trái gọn luôn hiện, thêm thẻ của nhóm
 /**
  * Khung trang sau khi đăng nhập: thanh trên cùng (logo, màn đã ghim, tìm chức năng, người dùng),
@@ -22,12 +23,10 @@ import { useGon } from './useGon';
 import { TheNhom } from './TheNhom';
 import { useFitTables } from './fitTables';
 import { MobileNav } from './MobileNav';
-import { AssistantBubble, TroLyDock } from '../addins/tro-ly/AssistantBubble';
+import { RightRail } from './rail/RightRail';
 import { useAddIns, useAppMenu } from './useAppMenu';
 import { NutChiNhanh } from '@/components/ChiNhanhLamViec';
 import { DangOnline } from './DangOnline';
-// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4): chuông thông báo
-import { ThongBao } from './ThongBao';
 import { workBranch } from '@/lib/workBranch';
 import { MaTraCuu } from '@/components/MaTraCuu';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: dòng nhắc sau khi lưu danh mục
@@ -135,9 +134,6 @@ export function AppLayout() {
         </Link>
         <PinBar menu={menu} />
         <div className="topbar-right">
-          {/* Robot trợ lý khi đã bấm "Ẩn": thu gọn thành biểu tượng ở đây. */}
-          {addins.some((a) => a.id === 'tro-ly') && <TroLyDock />}
-          <ThongBao />
           <SavedFlash />
           <DangOnline menu={menu} />
           <NutChiNhanh />
@@ -168,8 +164,8 @@ export function AppLayout() {
         </div>
       </main>
       </div>
-      {/* Robot trợ lý góc màn hình: chỉ khi add-in Trợ lý đang bật. */}
-      {addins.some((a) => a.id === 'tro-ly') && <AssistantBubble menu={menu} />}
+      {/* Thanh mép phải: việc cần làm, trợ lý, thông báo. */}
+      <RightRail menu={menu} groups={gon.groups} active={gon.active} assistant={addins.some((a) => a.id === 'tro-ly')} />
       {mobileNav && <MobileNav modules={mod.modules} current={mod.current.key} menu={menu} onChoose={mod.choose} onClose={() => setMobileNav(false)} />}
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
       {/* Mã tra cứu của lỗi API gần nhất (PHASE-019 W1): người dùng chép gửi dev. */}

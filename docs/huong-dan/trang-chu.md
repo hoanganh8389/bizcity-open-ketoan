@@ -28,4 +28,5 @@ Phần mềm chia thành các **phân hệ**, mỗi phân hệ là một "ứng 
 - **Menu trái** chia theo việc: Tiền, Mua hàng, Bán hàng, Kho, Công nợ, Tài sản, Thuế, Tổng hợp, Danh mục, Số dư ban đầu. Bấm một nhóm để bung danh sách màn.
 - **Thẻ dưới dải màn đang mở** là các màn chính của nhóm đang làm, bấm một lần để chuyển.
 - **Báo cáo** nằm ở một trang riêng, mở từ cuối menu trái hoặc thẻ Báo cáo của nhóm.
+- **Thanh mép phải** có Việc cần làm (dấu `!` là có việc gấp ở nhóm đang làm), Trợ lý và Thông báo. Bấm icon để mở; đưa chuột ra ngoài hoặc bấm nút thu nhỏ để thu lại; bấm ghim nếu muốn giữ bảng mở.
 - Biết mã màn thì bấm Ctrl + K rồi gõ mã, mã vẫn dùng như cũ.
