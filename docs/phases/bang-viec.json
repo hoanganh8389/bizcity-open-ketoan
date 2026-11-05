@@ -4364,7 +4364,7 @@
       "phase": "PHASE-029",
       "title": "Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu co có thật, …",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
@@ -4381,7 +4381,7 @@
       "phase": "PHASE-029",
       "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json (GET /api/v1/system/foundations, …",
       "priority": "P1",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",

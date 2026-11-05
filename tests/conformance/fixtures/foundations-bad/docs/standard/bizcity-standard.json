@@ -1,0 +1,1 @@
+{ "$comment": "[2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — ca tự kiểm SC-CORE-1: bảng năng lực mẫu", "version": "0.0.0-fixture", "capabilities": [ { "id": "a.ok", "status": "available" }, { "id": "x.planned", "status": "planned" } ] }

@@ -1,0 +1,18 @@
+{
+  "$comment": "[2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — ca tự kiểm SC-CORE-1: mỗi mục dưới đây cài đúng một vi phạm",
+  "contract": "bizcity_foundations@1",
+  "cores": [
+    { "id": "C1", "status": "dat", "capabilities": ["a.ok", "ghost.cap"], "code": ["packages/co-that", "packages/khong-co"], "contracts": ["bizcity_ok@1"] },
+    { "id": "C2", "status": "dat", "capabilities": ["x.planned"], "code": [], "contracts": [] },
+    { "id": "C3", "status": "mot-phan", "capabilities": ["a.ok"], "code": [], "contracts": ["bizcity_khong_co@1"] },
+    { "id": "C4", "status": "mot-phan", "capabilities": ["a.ok"], "code": [], "contracts": [] },
+    { "id": "C5", "status": "mot-phan", "capabilities": ["a.ok"], "code": [], "contracts": [] }
+  ],
+  "pillars": [
+    { "id": "01", "group": "A", "core": "C1", "status": "dat", "ecp": ["ECP-01"],
+      "signals": [ { "kind": "test", "ref": "apps/api/test/khong-co.test.ts", "state": "co" }, { "kind": "test", "ref": "chưa viết", "state": "chua" } ] },
+    { "id": "02", "group": "E", "core": "C9", "status": "mot-phan", "ecp": ["ECP-01"],
+      "signals": [ { "kind": "check", "ref": "SC-X-9", "state": "chua" } ] }
+  ],
+  "ecp": [ { "id": "ECP-01" }, { "id": "ECP-02" } ]
+}
