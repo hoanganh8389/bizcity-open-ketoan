@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 16
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 36
+      "count": 38
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 187
+      "count": 188
     }
   ],
   "items": [
@@ -3604,17 +3604,11 @@
     {
       "id": "S026-3",
       "phase": "PHASE-026",
-      "title": "parentitemid điền từ parentsku; luật R-ITEM-9 (biến thể kinh tế khác = định danh mới); MH26 ghi / đọc parentitemid",
+      "title": "parentitemid điền từ parentsku; luật biến thể kinh tế khác = định danh mới (R-ITEM-3); MH26 ghi / đọc parentitemid",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-026-p0-dot1",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-026 · P0 đợt 1 — S026-3 họ mặt hàng theo định danh (migration 0067, ITEM-HINT-003), S026-10 L…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -3701,15 +3695,9 @@
       "phase": "PHASE-026",
       "title": "API GET /api/v1/master-data/:type/:id/history; thẻ Lịch sử",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-026-p0-dot1",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-026 · P0 đợt 1 — S026-3 họ mặt hàng theo định danh (migration 0067, ITEM-HINT-003), S026-10 L…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -3718,15 +3706,9 @@
       "phase": "PHASE-026",
       "title": "Chỉ mục tham chiếu mdreferences + GET …/impact; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-026-p0-dot1",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-026 · P0 đợt 1 — S026-3 họ mặt hàng theo định danh (migration 0067, ITEM-HINT-003), S026-10 L…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 20
     },

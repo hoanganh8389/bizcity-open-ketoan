@@ -108,6 +108,61 @@ export interface LineageItemInfo {
   barcode: string;
   isActive: boolean;
   isDraft: boolean;
+  /** [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng theo định danh (R-ITEM-3) — cha, con, anh em; mỗi biến thể có tồn / giá vốn riêng. */
+  family: { parent: LineageFamilyMember | null; children: LineageFamilyMember[]; siblings: LineageFamilyMember[] };
+}
+
+export interface LineageFamilyMember {
+  itemId: string;
+  /** Mã hiện hành (mã đang mở; mặt hàng đã ngừng → mã gần nhất). */
+  sku: string;
+  name: string;
+  status: string;
+}
+
+/**
+ * [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 (D026-5): LỊCH SỬ của một mặt hàng — mã cũ / mới, ngày hiệu lực,
+ * người đổi, đổi phân loại, sửa / kích hoạt / cảnh báo có lý do. Dựng từ item_codes, item_classification, audit_logs; chỉ đọc.
+ */
+export type ItemHistoryKind = 'created' | 'code' | 'classification' | 'change' | 'warn-ack';
+export interface ItemHistoryEntry {
+  /** Lúc ghi nhận (ISO). */
+  at: string;
+  /** Ngày bắt đầu hiệu lực (mã, phân loại) — khác `at` khi đổi có hiệu lực từ ngày khác; null = không có khái niệm hiệu lực. */
+  effectiveFrom: string | null;
+  kind: ItemHistoryKind;
+  /** Một câu cho người đọc. */
+  text: string;
+  /** Người / hệ thống làm (actor của nhật ký, created_by của bảng định danh). */
+  by: string;
+}
+export interface ItemHistory {
+  itemId: string;
+  sku: string;
+  entries: ItemHistoryEntry[];
+  /** Danh sách bị cắt ở giới hạn. */
+  truncated: boolean;
+}
+
+/**
+ * [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11 (D026-5): TÁC ĐỘNG của một mặt hàng — mã này đang được dùng ở
+ * chứng từ, kho, tài khoản, bảng giá, kỳ đã khoá nào; đọc TRƯỚC khi đổi mã / đổi nhóm / ngừng dùng. Chỉ đọc, theo item_id.
+ */
+export interface ItemImpact {
+  itemId: string;
+  sku: string;
+  documents: { docType: string; count: number; first: string; last: string }[];
+  /** Tồn hiện tại theo chi nhánh (chỉ chi nhánh còn tồn ≠ 0). */
+  stock: { branchCode: string; branchName: string; qty: number }[];
+  accounts: { account: string; name: string; lines: number; debit: number; credit: number }[];
+  prices: { priceList: string; unit: string; price: number | null }[];
+  units: { unit: string; ratio: number }[];
+  /** Số tháng đã có giá vốn tính cho mặt hàng. */
+  costMonths: number;
+  /** Kỳ đã khoá có dòng sổ của mặt hàng (YYYY-MM, số dòng). */
+  lockedPeriods: { period: string; lines: number }[];
+  /** Câu cho người đọc: đổi danh mục sẽ / không ảnh hưởng gì. */
+  sentences: string[];
 }
 
 export interface LineageCoverage {

@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { LINEAGE_LANE, type CostExplain, type LineageEvent, type LineageItem } from '@ketoan/contracts';
+import { LINEAGE_LANE, type CostExplain, type ItemHistory, type ItemImpact, type LineageEvent, type LineageItem } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading, Money } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
@@ -45,6 +45,12 @@ export function HanhTrinhMatHangPage() {
   const search = useQuery({ queryKey: ['lineage-search', dq], queryFn: () => api.get<SearchRow[]>(`/api/v1/lineage/search?q=${encodeURIComponent(dq)}`), enabled: dq.length > 0 && !sku });
   const qs = new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) }).toString();
   const lin = useQuery({ queryKey: ['lineage', sku, from, to], queryFn: () => api.get<LineageItem>(`/api/v1/lineage/items/${encodeURIComponent(sku)}${qs ? `?${qs}` : ''}`), enabled: Boolean(sku) });
+  // [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10: thẻ Lịch sử (mã cũ / mới, hiệu lực, người đổi, phân loại, lý do)
+  const [showHistory, setShowHistory] = useState(false);
+  const hist = useQuery({ queryKey: ['lineage-history', sku], queryFn: () => api.get<ItemHistory>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/history`), enabled: Boolean(sku) && showHistory });
+  // [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11: thẻ Tác động (đọc trước khi đổi mã / nhóm / ngừng dùng)
+  const [showImpact, setShowImpact] = useState(false);
+  const imp = useQuery({ queryKey: ['lineage-impact', sku], queryFn: () => api.get<ItemImpact>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/impact`), enabled: Boolean(sku) && showImpact });
   const why = useQuery({
     queryKey: ['lineage-cost', sku, period?.period, period?.costGroup],
     queryFn: () => api.get<CostExplain>(`/api/v1/lineage/items/${encodeURIComponent(sku)}/cost?period=${period!.period}&costGroup=${encodeURIComponent(period!.costGroup)}`),
@@ -111,6 +117,44 @@ export function HanhTrinhMatHangPage() {
               ))}
             </div>
           )}
+          {/* [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng theo định danh — mỗi biến thể một hành trình riêng (tồn, giá vốn riêng) */}
+          {(d.item.family.parent || d.item.family.children.length > 0 || d.item.family.siblings.length > 0) && (
+            <div className="row" style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, marginBottom: 4 }}>
+              <span className="muted" title="Biến thể là mặt hàng riêng: tồn kho và giá vốn tính riêng; họ đi theo định danh nên đổi mã không đứt">Họ mặt hàng:</span>
+              {d.item.family.parent && <><span className="muted">cha</span> <button type="button" className="btn btn-xs" onClick={() => go(d.item.family.parent!.sku)}>{d.item.family.parent.sku} · {d.item.family.parent.name}</button></>}
+              {d.item.family.children.length > 0 && <span className="muted">· biến thể</span>}
+              {d.item.family.children.map((c) => <button key={c.itemId} type="button" className="btn btn-xs" onClick={() => go(c.sku)}>{c.sku}</button>)}
+              {d.item.family.siblings.length > 0 && <span className="muted">· cùng cha</span>}
+              {d.item.family.siblings.map((c) => <button key={c.itemId} type="button" className="btn btn-xs" onClick={() => go(c.sku)}>{c.sku}</button>)}
+            </div>
+          )}
+          <div style={{ margin: '4px 0' }}>
+            <button type="button" className="btn btn-sm" onClick={() => setShowHistory(!showHistory)}>{showHistory ? 'Ẩn lịch sử' : 'Lịch sử mặt hàng'}</button>
+            {' '}<button type="button" className="btn btn-sm" onClick={() => setShowImpact(!showImpact)} title="Đọc trước khi đổi mã, đổi nhóm hạch toán, đổi đơn vị tính hay ngừng dùng">{showImpact ? 'Ẩn tác động' : 'Tác động'}</button>
+            {showImpact && (imp.isLoading ? <Loading /> : imp.error ? <ErrorBox error={errorText(imp.error)} /> : imp.data && (
+              <div className="card card-body" style={{ marginTop: 6 }}>
+                {imp.data.sentences.map((s, i) => <div key={i} className={`alert ${i === 0 ? 'alert-info' : ''}`} style={{ margin: '2px 0' }}>{s}</div>)}
+                <div className="row" style={{ gap: 16, flexWrap: 'wrap', fontSize: 12, marginTop: 6 }}>
+                  <div><b>Chứng từ</b>{imp.data.documents.map((x) => <div key={x.docType}>{x.docType}: {x.count} ({x.first} → {x.last})</div>)}</div>
+                  <div><b>Tồn theo chi nhánh</b>{imp.data.stock.map((x) => <div key={x.branchCode}>{x.branchCode} · {qty(x.qty)}</div>)}</div>
+                  <div><b>Tài khoản</b>{imp.data.accounts.map((x) => <div key={x.account}>{x.account} {x.name} · {x.lines} dòng</div>)}</div>
+                  {imp.data.prices.length > 0 && <div><b>Bảng giá</b>{imp.data.prices.map((x, i) => <div key={i}>{x.priceList} · {x.unit} · {x.price ?? '—'}</div>)}</div>}
+                  {imp.data.lockedPeriods.length > 0 && <div><b>Kỳ đã khoá</b>{imp.data.lockedPeriods.map((x) => <div key={x.period}>{x.period}: {x.lines} dòng sổ</div>)}</div>}
+                  <div><b>Giá vốn</b><div>{imp.data.costMonths} tháng đã tính</div></div>
+                </div>
+              </div>
+            ))}
+            {showHistory && (hist.isLoading ? <Loading /> : hist.error ? <ErrorBox error={errorText(hist.error)} /> : hist.data && (
+              <div className="card card-body" style={{ marginTop: 6 }}>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Mới nhất trước · nguồn: mã có phiên bản, phân loại theo ngày, nhật ký thao tác — không sửa được</div>
+                <table className="grid"><thead><tr><th style={{ width: 150 }}>Lúc</th><th style={{ width: 100 }}>Hiệu lực từ</th><th>Thay đổi</th><th style={{ width: 160 }}>Người</th></tr></thead>
+                  <tbody>{hist.data.entries.map((h, i) => (
+                    <tr key={i}><td>{h.at.slice(0, 16).replace('T', ' ')}</td><td>{h.effectiveFrom ?? '—'}</td><td>{h.text}</td><td className="muted">{h.by}</td></tr>
+                  ))}</tbody></table>
+                {hist.data.truncated && <div className="muted" style={{ fontSize: 12 }}>Danh sách bị cắt — xem nhật ký đầy đủ ở Bàn điều tra.</div>}
+              </div>
+            ))}
+          </div>
           {d.coverage.notes.map((n, i) => <div key={i} className={`alert ${i === 0 ? 'alert-info' : 'alert-warn'}`} style={{ margin: '4px 0' }}>{n}</div>)}
           {d.summary.truncated && <div className="alert alert-warn" style={{ margin: '4px 0' }}>Danh sách quá dài nên bị cắt — thu hẹp khoảng ngày để xem đủ.</div>}
 
