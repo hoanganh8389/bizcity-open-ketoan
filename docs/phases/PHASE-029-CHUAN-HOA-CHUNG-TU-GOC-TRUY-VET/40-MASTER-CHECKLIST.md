@@ -15,9 +15,30 @@
 | S029-6 | Migration người sửa / lý do cho phiên bản sự việc; `IN-DOC-REASON` (warn) | W2b | P1 | ⛔ chủ ký K3 |
 | S029-7 | `module check` bắt module nộp sổ không qua W2a; `DG-DOC-*` lane SQL | W3 | P1 | ☐ |
 | S029-8 | Nâng chẩn đoán lên `error` khi bản đo trên bản cài thật = 0 | W3 | P2 | ⛔ cần số đo |
+| S029-9 <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — mở rộng Enterprise Continuity (ADR-0028): S029-9..28 --> | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá [20](20-DANH-GIA-NEN-MONG.md), lộ trình [30](30-LO-TRINH-NEN-MONG.md); CANON / CONG-BO; sửa `bizcity_master_data@1` §2, `bizcity_data@1` STD-DATA-6, R-MD-2 (mã ≠ định danh) | E0 | P0 | 🟡 2026-11-05 PR tài liệu |
+| S029-10 | Cấu hình theo mô hình `options`: phạm vi, hiệu lực, lịch sử, `settings.set` duy nhất, `config_version`, check đọc thô, khoá thiếu, tiền tệ, thuế suất theo ngày | E2 | P0 | ☐ |
+| S029-11 | Chứng từ `documents` + `document_meta` (mô hình `posts` / `postmeta`), `ctx.documents.transition`, quan hệ có đóng hiệu lực | E4 | P1 | ☐ |
+| S029-12 | Xoá an toàn ở CSDL: thu hồi `DELETE`, hàm xoá đọc `md_references`, bỏ `CASCADE`, ngừng dùng cho bảng thiếu cột | E3b | P0 | ⛔ chủ ký K3; sau S026-11 |
+| S029-13 | Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu | E6 | P1 | ☐ |
+| S029-14 | Kiểm đường ghi ngoài action mang tenant / actor / nguồn / correlation (ECP-02) | E9 | P2 | ☐ |
+| S029-15 | Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ | E7 | P1 | ☐ |
+| S029-16 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | E8 | P2 | ☐ |
+| S029-17 | Trigger kỳ khoá trên `ledger_entries` | E5 | P0 | ⛔ chủ ký K3 |
+| S029-18 | Bảng điểm 17 trụ cột theo bằng chứng (`signal`, `foundation`), HT10 theo bốn nhóm | E1 | P0 | ⛔ sau S026-15 |
+| S029-19 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test `T029-ECP-P001` | E3 | P0 | ⛔ sau S026-4 |
+| S029-20 | Gộp đối tượng theo khuôn 0068 | E3 | P1 | ⛔ sau S026-4 |
+| S029-21 | SDK: module đăng ký chẩn đoán / luật kiểm; manifest `objects` / `fields` / `rules` / `diagnostics` | E9 | P1 | ☐ |
+| S029-22 | Khoá checksum migration 0034 → hiện tại; `migrate.ts` ghi checksum | E9 | P1 | ☐ |
+| S029-23 | Người / nhân viên tách người dùng | E9 | P2 | ⛔ phối hợp PHASE-028 |
+| S029-24 | Mã hoá bí mật kết nối khi lưu; phân loại dữ liệu nhạy cảm | E7 | P1 | ☐ |
+| S029-25 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa `bizcity_document@1` §5.1 | E4 | P1 | ☐ |
+| S029-26 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | E8 | P2 | ⛔ sau S029-23 |
+| S029-27 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | E6 | P2 | ☐ |
+| S029-28 | Khớp danh mục sự kiện với hợp đồng (`module.enabled` / `disabled`, sự kiện chưa phát); hạn idempotency vào registry | E9 | P2 | ☐ |
 
 ## Log
 
 | Thời điểm thật | Phiên | Việc |
 |---|---|---|
 | 2026-11-05 | Claude Code | Mở phase từ đánh giá truy vết; chủ duyệt Q-TR-1..4; chữ chốt W1; giữ chỗ W1. W2a chờ nhả tệp dùng chung. |
+| 2026-11-05 | Claude Code | Chủ dự án yêu cầu mở rộng thành Enterprise Continuity: ADR-0028, R-ECP (ECP-01..13), bốn nhóm nền móng 17 trụ cột, rà codebase, lộ trình E1–E9, S029-9..28. |

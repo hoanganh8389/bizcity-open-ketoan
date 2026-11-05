@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 16
+      "count": 23
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 97
+      "count": 109
     },
     {
       "key": "partial",
@@ -4150,6 +4150,215 @@
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 17
+    },
+    {
+      "id": "S029-10",
+      "phase": "PHASE-029",
+      "title": "Cấu hình theo mô hình options: phạm vi, hiệu lực, lịch sử, settings.set duy nhất, configversion, check đọc thô, khoá thiếu, tiền tệ, thuế suất theo ngày",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S029-11",
+      "phase": "PHASE-029",
+      "title": "Chứng từ documents + documentmeta (mô hình posts / postmeta), ctx.documents.transition, quan hệ có đóng hiệu lực",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S029-12",
+      "phase": "PHASE-029",
+      "title": "Xoá an toàn ở CSDL: thu hồi DELETE, hàm xoá đọc mdreferences, bỏ CASCADE, ngừng dùng cho bảng thiếu cột",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S029-13",
+      "phase": "PHASE-029",
+      "title": "Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S029-14",
+      "phase": "PHASE-029",
+      "title": "Kiểm đường ghi ngoài action mang tenant / actor / nguồn / correlation (ECP-02)",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S029-15",
+      "phase": "PHASE-029",
+      "title": "Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S029-16",
+      "phase": "PHASE-029",
+      "title": "Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S029-17",
+      "phase": "PHASE-029",
+      "title": "Trigger kỳ khoá trên ledgerentries",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S029-18",
+      "phase": "PHASE-029",
+      "title": "Bảng điểm 17 trụ cột theo bằng chứng (signal, foundation), HT10 theo bốn nhóm",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S029-19",
+      "phase": "PHASE-029",
+      "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S029-20",
+      "phase": "PHASE-029",
+      "title": "Gộp đối tượng theo khuôn 0068",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S029-21",
+      "phase": "PHASE-029",
+      "title": "SDK: module đăng ký chẩn đoán / luật kiểm; manifest objects / fields / rules / diagnostics",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S029-22",
+      "phase": "PHASE-029",
+      "title": "Khoá checksum migration 0034 → hiện tại; migrate.ts ghi checksum",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S029-23",
+      "phase": "PHASE-029",
+      "title": "Người / nhân viên tách người dùng",
+      "priority": "P2",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 32
+    },
+    {
+      "id": "S029-24",
+      "phase": "PHASE-029",
+      "title": "Mã hoá bí mật kết nối khi lưu; phân loại dữ liệu nhạy cảm",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 33
+    },
+    {
+      "id": "S029-25",
+      "phase": "PHASE-029",
+      "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 34
+    },
+    {
+      "id": "S029-26",
+      "phase": "PHASE-029",
+      "title": "Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI",
+      "priority": "P2",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 35
+    },
+    {
+      "id": "S029-27",
+      "phase": "PHASE-029",
+      "title": "Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 36
+    },
+    {
+      "id": "S029-28",
+      "phase": "PHASE-029",
+      "title": "Khớp danh mục sự kiện với hợp đồng (module.enabled / disabled, sự kiện chưa phát); hạn idempotency vào registry",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 37
     }
   ]
 }
