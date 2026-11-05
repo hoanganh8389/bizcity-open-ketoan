@@ -142,7 +142,7 @@ Mọi dòng bút toán truy vết ngược được về chứng từ gốc **đ
 
 | Mã | Nguyên tắc | Giữ bằng |
 |---|---|---|
-| DOC-01 | Mọi bút toán có nguồn: sự việc + phiên bản ghi sổ | `ledger_entries.event_id` + `event_version`; chẩn đoán `ENTRY_NO_EVENT`, `ENTRY_NO_VERSION`; `SC-DOC-7` |
+| DOC-01 | Mọi bút toán có nguồn: sự việc + phiên bản ghi sổ | `ledger_entries.event_id` + `event_version`; chẩn đoán `LEDGER_ORPHAN`, `ENTRY_NO_VERSION`; `SC-DOC-7` |
 | DOC-02 | Định danh ổn định; sửa nội dung = phiên bản mới, bảo toàn lịch sử | `doc_key` bất biến (trigger 0049); `accounting_event_versions` chỉ thêm |
 | DOC-03 | Phiên bản đã ghi sổ truy xuất được **nội dung tại lúc hạch toán**, kể cả khi chứng từ gốc đổi | `GET /api/v1/documents/history` trả nội dung từng phiên bản; `ENTRY_VERSION_UNKNOWN` |
 | DOC-04 | Sửa nghiệp vụ đã ghi sổ = điều chỉnh / đảo + bút toán mới | trigger `ledger_entries`; `EVENT_ENTRIES_STALE` |
@@ -168,7 +168,7 @@ Hiện trạng: cổng W1 (PHASE-029); `ctx.ledger.submit` tự `saveVersion` + 
 
 ## 9. Nhật ký
 
-- **1.3.0-draft (2026-11-05):** thêm §7.2 Lịch sử chứng từ — sáu nguyên tắc DOC-01..06, cổng `GET /api/v1/documents/history` (id · docKey · entryId), bốn mã chẩn đoán, phép kiểm `SC-DOC-7`. Không bảng mới, không migration ở W1.
+- **1.3.0-draft (2026-11-05):** thêm §7.2 Lịch sử chứng từ — sáu nguyên tắc DOC-01..06, cổng `GET /api/v1/documents/history` (id · docKey · entryId), ba mã chẩn đoán mới (dùng lại `LEDGER_ORPHAN`), phép kiểm `SC-DOC-7`. Không bảng mới, không migration ở W1.
 - **1.2.0-draft (2026-11-01, bổ sung 2):** §7.1 thêm `sign` / `signatures` / `unsign` (documents.signatures, 0048); §8 `document_signatures.doc_ref` có.
 - **1.2.0-draft (2026-11-01, bổ sung):** §8 — đính kèm Mua hàng đã chạy trên đính kèm chung (0046); `AttachmentRef.sha256` có thể `null` với tệp chuyển sang chưa tải lần nào.
 - **1.2.0-draft (2026-11-01):** thêm §7.1 hiện trạng `ctx.documents` — `nextNumber`, `saveVersion`, `versions`, `link`, `links`, `attach`, `attachments` có; `transition` vẫn qua `documents.workflow`. §8: đánh số một chỗ, `document_versions` có. Chỉ thêm, tương thích.

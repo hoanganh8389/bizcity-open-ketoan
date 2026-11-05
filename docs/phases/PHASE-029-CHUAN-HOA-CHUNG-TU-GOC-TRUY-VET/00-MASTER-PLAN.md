@@ -41,13 +41,14 @@ PostingStep = { action, at, actor, entryIds, reversed, message, policyVersion }
 - Phiên bản hiện hành: nội dung từ `accounting_events.payload`; phiên bản cũ: `accounting_event_versions.payload`. `contentHash` = sha256 của JSON đã chuẩn hoá khoá (cùng cách `document_versions`). `receivedBy` = `actor` của dòng `posting_log` `receive` của phiên bản đó (chỉ ghi khi chứng từ chờ định khoản); không có thì `actor` của dòng định khoản đầu tiên của phiên bản (nộp và định khoản cùng lời gọi); bản 1 không có dòng nào → `source.createdBy`; vẫn không có → `null`, không đoán.
 - `isPosted` = `version = posted_version`. Một bút toán thuộc phiên bản `event_version`; bút toán đảo nối `reverses_entry_id` và hiện ở **phiên bản của bút toán bị đảo** cùng `isReversal`.
 - Khoá `entryId` không có `event_id` → 404 `NOT_FOUND` kèm thông điệp nêu rõ "bút toán không gắn sự việc" (đúng dữ liệu chẩn đoán `ENTRY_NO_EVENT` sẽ báo).
-- `integrity.issues` dùng đúng bốn mã chẩn đoán §3.2.
+- `integrity.issues` dùng đúng ba mã mới của §3.2 cùng hai mã `posted_version` có sẵn (`EVENT_POSTED_VERSION`, `INTERNAL_EVENT_VERSION`). `unversionedEntries` gồm bút toán `event_version` NULL **và** bút toán trỏ phiên bản không còn nội dung.
 
-### 3.2 Chẩn đoán dữ liệu (`ledger.diagnostics.ts`, lớp L3, mức `warn`, theo đơn vị)
+### 3.2 Chẩn đoán dữ liệu (`ledger.diagnostics.ts` + lane SQL `DG-DOC-1..3` ở `ledger.diag.mjs`, lớp L3, mức `warn`, theo đơn vị) <!-- [2026-11-05 08:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §3.2: dùng lại LEDGER_ORPHAN; ba mã mới -->
+
+> **Bút toán không gắn sự việc đã có mã `LEDGER_ORPHAN` (mức `error`, DG-LEDGER-*)** — không thêm mã trùng. Cổng lịch sử trả 404 nêu mã đó khi truy vết ngược từ bút toán mồ côi.
 
 | Mã | Điều kiện |
 |---|---|
-| `ENTRY_NO_EVENT` | `ledger_entries.event_id IS NULL` |
 | `ENTRY_NO_VERSION` | `event_id` có nhưng `event_version IS NULL` |
 | `ENTRY_VERSION_UNKNOWN` | `event_version` ≠ `accounting_events.version` và không có dòng `accounting_event_versions (event_id, version)` |
 | `EVENT_ENTRIES_STALE` | sự việc `status = posted`: có bút toán đang hiệu lực (`posted`, không đảo, không `is_reversal`) mà `event_version ≠ posted_version` |
@@ -56,7 +57,7 @@ PostingStep = { action, at, actor, entryIds, reversed, message, policyVersion }
 
 1. `insertInto('accounting_event_versions')` chỉ trong `document.repository.ts`; `insertInto('document_versions')` / `('document_links')` chỉ trong `packages/platform/src/core/documents.ts`.
 2. Mọi lời gọi `ledgerService.post(…)` có `sourceDocumentId` phải kèm `sourceVersion` (bút toán luôn mang phiên bản — DOC-01 / DOC-03).
-3. Có ca tự kiểm trong `fixtures/repo-bad` + dòng ở `expect.json` (chỉ thêm dòng của check này).
+3. Có ca tự kiểm: gốc mẫu `fixtures/document-bad` (không đụng `repo-bad` dùng chung) + một mục ở `expect.json` (chỉ thêm mục của check này).
 
 ### 3.4 Không làm ở W1
 `ctx.ledger.submit` tự ghi vết; `payloadVersion` ở `GET /documents/:id`; migration cột người sửa / lý do; liên kết `ledger` tự động — xem §4.
