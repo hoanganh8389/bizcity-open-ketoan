@@ -4149,7 +4149,7 @@
       "phase": "PHASE-029",
       "title": "Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → accountingunit → tenant, ngày hiệu lực, getSetting / setS…",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-029 cấu hình)",
