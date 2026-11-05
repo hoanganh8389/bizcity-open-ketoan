@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 17 |
 | Chờ merge | 0 |
-| Bị chặn | 25 |
-| Chưa ai nhận | 111 |
-| Chờ đủ tín hiệu | 43 |
+| Bị chặn | 28 |
+| Chưa ai nhận | 116 |
+| Chờ đủ tín hiệu | 45 |
 | Hoãn | 1 |
-| Xong | 202 |
-| **Tổng** | **399** |
+| Xong | 209 |
+| **Tổng** | **416** |
 
 ## Đang làm (17)
 
@@ -40,7 +40,7 @@
 
 —
 
-## Bị chặn (25)
+## Bị chặn (28)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -69,8 +69,11 @@
 | [S029-23](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L33) | PHASE-029 | Người / nhân viên tách người dùng | P2 | — |
 | [S029-26](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L36) | PHASE-029 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | P2 | — |
 | [S029-32](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L20) | PHASE-029 | Cấu hình đợt 2: route ghi riêng → setSetting; valueType cho module; chặn đọc thô tenants.settings; xuất / nhậ… | P1 | — |
+| [S030-12](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L19) | PHASE-030 | Kế toán trưởng trả Q030-3 (ngân sách), xác nhận công thức TS03 theo ngày, lương – BH – TNCN và giá trị tham s… | P0 | — |
+| [S030-13](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L20) | PHASE-030 | Nhóm Lõi trả Q030-2 (lô ở Kernel), xếp K-030-1..6 vào phase Kernel; golden vào bizcitymodule@1 (PR chốt thiết… | P0 | — |
+| [S030-14](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L21) | PHASE-030 | Chủ dự án trả Q030-1 (nhân sự một hay ba module), Q030-4 (giao hàng tách) | P1 | — |
 
-## Chưa ai nhận (111)
+## Chưa ai nhận (116)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -185,8 +188,13 @@
 | [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | — |
 | [S029-27](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L37) | PHASE-029 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | P2 | — |
 | [S029-28](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L41) | PHASE-029 | Khớp danh mục sự kiện với hợp đồng (module.enabled / disabled, sự kiện chưa phát); hạn idempotency vào regist… | P2 | — |
+| [S030-10](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L17) | PHASE-030 | Ca chạy được apps/api/test/golden/T030-MH.test.ts (mua hàng đã có mã) + T030-CORE-1..6; chứng minh khuôn; dòn… | P0 | — |
+| [S030-11](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L18) | PHASE-030 | Chuyển blueprint P0 về docs/nghiep-vu/ban-hang/, docs/nghiep-vu/kho/; cập nhật docs/nghiep-vu/08-mua-hang.md … | P0 | — |
+| [S030-15](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L22) | PHASE-030 | Seed khoá tham số pháp lý VN vào vn-rulepacks (danh sách khoá + legalRef từ Erp-vn data/legalparams.xml, giá … | P1 | — |
+| [S030-16](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L23) | PHASE-030 | Mở phase code từng module theo ADR-0024: modules/ban-hang, modules/kho (P0); modules/tam-ung, modules/ngan-ha… | — | — |
+| [S030-17](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L24) | PHASE-030 | 70-REFLECT sau module đầu tiên: khuôn thiếu mục nào; ca nào không viết được bằng bất biến sổ | P2 | — |
 
-## Chờ đủ tín hiệu (43)
+## Chờ đủ tín hiệu (45)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -233,6 +241,8 @@
 | [S029-9](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L18) | PHASE-029 | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CAN… | P0 | — |
 | [S029-10](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L19) | PHASE-029 | Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → account… | P0 | — |
 | [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
+| [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | Mockup luồng mockups/thu-vien-nghiep-vu.html — chủ dự án duyệt bố cục, cách nói, ưu tiên D030-9 | P0 | — |
+| [S030-9](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L16) | PHASE-030 | Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn | P0 | — |
 
 ## Hoãn (1)
 
@@ -240,6 +250,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (202)
+## Xong (209)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
