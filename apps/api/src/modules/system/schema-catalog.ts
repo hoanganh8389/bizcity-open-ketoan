@@ -160,6 +160,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   tenants: { group: 'platform', label: 'Đơn vị sử dụng', module: 'access', purpose: 'Mỗi công ty dùng phần mềm là một đơn vị; mọi dữ liệu đều có tenant_id.' },
   users: { group: 'platform', label: 'Người dùng', module: 'access', purpose: 'Tài khoản đăng nhập và vai trò.' },
   // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — danh mục bảng: user_role_assignments (0074)
+  // [2026-11-06 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0074 → 0075 (W-13: 0073 / 0074 PHASE-026 đợt 2 / 3 giữ)
   user_role_assignments: { group: 'platform', label: 'Vai trò bổ sung của người dùng', term: 'Phân quyền', module: 'access', purpose: 'Vai trò thêm cho một người ngoài vai trò chính (users.role); quyền hiệu lực = hợp các vai trò còn hiệu lực. Chỉ thêm, thu hồi có lý do (ADR-0027).' },
   print_template_settings: { group: 'platform', label: 'Cấu hình mẫu in', term: 'Mẫu in', module: 'print-templates', purpose: 'Bật / tắt mẫu in, mẫu mặc định, chỉnh tiêu đề, số liên, chức danh ký… theo đơn vị, chi nhánh hoặc người dùng (màn HT05). Chỉ lưu phần khác mặc định; bố cục mẫu nằm trong code giao diện.' },
   api_keys: { group: 'platform', label: 'Khoá API', module: 'access', purpose: 'Khoá cho hệ thống khác gửi sự kiện vào (chỉ lưu bản băm). Khoá có app_key là khoá của app ngoài tiến trình: quyền theo kết nối app.' },

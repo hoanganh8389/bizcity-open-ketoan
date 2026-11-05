@@ -1,6 +1,7 @@
 -- [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1 (ADR-0027 D-AUTH-01 / -04): vai trò bổ sung của người dùng — user_role_assignments, chỉ thêm, thu hồi bằng cột
+-- [2026-11-06 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0074 → 0075 (W-13: 0073 / 0074 PHASE-026 đợt 2 / 3 giữ)
 -- =============================================================================
--- 0074 Vai trò bổ sung (PHASE-028 W1, chữ chốt 00-MASTER-PLAN §4a).
+-- 0075 Vai trò bổ sung (PHASE-028 W1, chữ chốt 00-MASTER-PLAN §4a).
 --   users.role GIỮ NGUYÊN là vai trò chính (đăng nhập, vé, chủ sở hữu cuối cùng). Bảng này chỉ chứa vai trò THÊM cho một người:
 --   quyền hiệu lực = quyền vai trò chính ∪ quyền các vai trò bổ sung còn hiệu lực (core/auth.ts).
 --   Phạm vi / mục đích: W1 chỉ thi hành dòng scope_type = 'tenant' + purpose = 'operate'. Dòng chi nhánh / kho / mục đích khác được

@@ -1,12 +1,13 @@
 // @bizcity-layer P permissions
 // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1 (ADR-0027, chữ chốt 00 §4a): gán / thu hồi vai trò bổ sung — không tự gán cho mình, không leo thang quyền, chỉ thêm
+// [2026-11-06 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0074 → 0075 (W-13: 0073 / 0074 PHASE-026 đợt 2 / 3 giữ)
 /**
- * Vai trò bổ sung của người dùng (user_role_assignments, 0074). Luật:
+ * Vai trò bổ sung của người dùng (user_role_assignments, 0075). Luật:
  *  - Không tự gán / thu hồi vai trò của chính mình.
  *  - Không gán / thu hồi vai trò có quyền vượt quyền của người thao tác (chống leo thang).
  *  - Không gán trùng vai trò chính, không gán trùng một dòng đang mở.
  *  - W1 chỉ phạm vi cả đơn vị + mục đích "operate" (dòng phạm vi khác chưa thi hành — schema không nhận).
- *  - Chỉ thêm: thu hồi đặt revoked_* một lần; CSDL chặn xoá / sửa (trigger 0074).
+ *  - Chỉ thêm: thu hồi đặt revoked_* một lần; CSDL chặn xoá / sửa (trigger 0075).
  * Bảng không có trong db/types.ts (PHASE-026 đợt 3 đang giữ tệp đó) — truy vấn bằng `sql` có tham số.
  */
 import { sql } from 'kysely';
