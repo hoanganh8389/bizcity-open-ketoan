@@ -1,68 +1,26 @@
 // [2026-11-06 12:20 AM Nguyễn Văn Thủy] MENU — Tổng quan khớp menu trái: lưới theo nhóm việc, thêm trang chủ nhóm (đóng góp)
 /**
- * Trang Tổng quan (/): lưới các NHÓM VIỆC, cùng tên, biểu tượng, thứ tự với menu trái (layout/menu-gon.ts). Bấm một ô → trang chủ nhóm.
- * Chỉ hiện nhóm người dùng có ít nhất một chức năng (theo quyền, phân hệ đang bật).
- *
  * Trang chủ nhóm (/nhom/<key>): sơ đồ ít chữ (layout/so-do-nhom.ts) và hàng Tiện ích; nhóm không có quy trình (Danh mục, Hệ thống…)
  * là các mục dạng thẻ. Sơ đồ đầy đủ (phan-he/flows.tsx) và Trụ cột mở từ hàng Tiện ích (?xem=chi-tiet, ?xem=tru-cot).
  * Trang chủ phân hệ (/app/<key>) chỉ còn dùng cho module SDK; phân hệ lõi tự chuyển sang trang chủ nhóm.
  */
 import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, BarChart3, Columns3, HelpCircle, LayoutGrid, Workflow } from 'lucide-react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Columns3, HelpCircle, LayoutGrid, Workflow } from 'lucide-react';
 import type { MenuItem } from '@ketoan/contracts';
-import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
 import { HelpDrawer } from '@/components/HelpDrawer';
 import { SoDoNhom } from './SoDoNhom';
 import { SO_DO } from '../../layout/so-do-nhom';
 import { MODULES, isSection, moduleMenu } from '../../layout/menu';
-import { useAppMenu, useEnabledModules } from '../../layout/useAppMenu';
+import { useAppMenu } from '../../layout/useAppMenu';
 import { ModuleIcon } from '../../phan-he/icons';
 import { GonIcon } from '../../layout/SideNav';
 import { useGonGroups } from '../../layout/useGon';
-import { groupCount, REPORT_PAGE } from '../../layout/menu-gon';
 import { MODULE_FLOWS } from '../../phan-he/flows';
-// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G5): ô của module SDK trên Tổng quan (dashboard.widget)
-import { sdkSlots } from '../../phan-he/sdk-modules';
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — thẻ "Trụ cột" cạnh "Quy trình": phân hệ này dựa vào trụ cột nào của Core, đạt tới đâu (training cho kế toán, kim chỉ nam cho dev)
 import { PillarMatrix } from '../system/PillarsPage';
 import '@/components/quy-trinh/quy-trinh.css';
-
-export function LauncherPage() {
-  const { user, can } = useAuth();
-  const navigate = useNavigate();
-  const menu = useAppMenu();
-  const enabled = useEnabledModules();
-  const groups = useGonGroups(menu);
-  const reportCount = new Set(groups.flatMap((g) => g.reports.flatMap((s) => s.items.map((i) => i.path)))).size;
-  return (
-    <>
-      <PageHeader title={`Xin chào${user?.fullName ? `, ${user.fullName}` : ''}`} subtitle={user?.tenant.name ? `${user.tenant.name} — chọn việc cần làm` : 'Chọn việc cần làm'} helpKey="trang-chu" />
-      <div className="launcher-grid gon-grid">
-        {groups.map((g) => (
-          <button key={g.key} type="button" className="launcher-app" title={`${g.description} (${groupCount(g)} chức năng)`} onClick={() => navigate(g.home)}>
-            <span className="launcher-icon" style={{ background: `linear-gradient(135deg, ${g.color}, ${g.color}cc)` }}><GonIcon name={g.icon} size={26} color="#fff" /></span>
-            <span className="launcher-name">{g.label}</span>
-          </button>
-        ))}
-        {reportCount > 0 && (
-          <button type="button" className="launcher-app" title={`Tất cả báo cáo, sổ sách theo từng loại (${reportCount} báo cáo)`} onClick={() => navigate(REPORT_PAGE)}>
-            <span className="launcher-icon" style={{ background: 'linear-gradient(135deg, #2a6cc4, #2a6cc4cc)' }}><BarChart3 size={26} color="#fff" /></span>
-            <span className="launcher-name">Báo cáo</span>
-          </button>
-        )}
-      </div>
-      {(() => {
-        const widgets = sdkSlots('dashboard.widget').filter((s) => (!enabled || enabled.has(s.module)) && (!s.permission || can(s.permission)));
-        return widgets.length > 0 && <div className="launcher-widgets">{widgets.map((s) => <div key={s.module} className="card card-body"><b>{s.label}</b><s.component /></div>)}</div>;
-      })()}
-      <div className="launcher-links">
-        <Link to="/bang-dieu-khien" className="launcher-link"><BarChart3 size={16} /> Bảng điều khiển số liệu (doanh thu, thuế, tiền thu, chứng từ lỗi)</Link>
-      </div>
-    </>
-  );
-}
 
 export function ModuleHomePage() {
   const { key = '' } = useParams();

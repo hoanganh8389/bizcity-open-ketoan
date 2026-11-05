@@ -21,7 +21,7 @@ export function ViecRow({ v, onGo }: { v: Viec; onGo: () => void }) {
 }
 
 export function ViecPanel({ items, loading, group, groups, onRefresh, onGo }: { items: Viec[]; loading: boolean; group?: GonGroup; groups: GonGroup[]; onRefresh: () => void; onGo: () => void }) {
-  const mine = group ? viecOf(items, group.key) : items;
+  const mine = viecOf(items, group?.key);
   const others = group ? groups.filter((g) => g.key !== group.key).map((g) => ({ g, list: viecOf(items, g.key).filter((v) => !v.groups.includes(group.key)) })).filter((x) => x.list.length) : [];
   const shown = new Set<string>();
   return (

@@ -20,6 +20,7 @@ import { MenuSearch } from './MenuSearch';
 import { TabWorkspace } from './TabWorkspace';
 import { useActiveModule } from './ModuleBar';
 import { useGon } from './useGon';
+import { useGhiHayDung } from './hay-dung';
 import { TheNhom } from './TheNhom';
 import { useFitTables } from './fitTables';
 import { MobileNav } from './MobileNav';
@@ -62,11 +63,14 @@ export function AppLayout() {
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
   };
+  // Bề rộng menu trái cho thanh cửa sổ dưới đáy, để thanh nằm đúng trong vùng làm việc.
+  useEffect(() => { document.documentElement.style.setProperty('--nav-w', `${collapsed ? 48 : navWidth}px`); }, [collapsed, navWidth]);
   const addins = useAddIns();
   const menu = useAppMenu();
   const { data: tenant } = useTenant();
   const mod = useActiveModule(menu);
   const gon = useGon(menu);
+  useGhiHayDung(menu);
   useFitTables();
   // Bản cài sổ thuế (BOOK_MODE=tax): nhãn đỏ cạnh tên để không nhầm với sổ nội bộ.
   const sysInfo = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<{ bookMode?: string; envLabel?: string }>('/api/v1/system/health'), staleTime: Infinity }).data;
