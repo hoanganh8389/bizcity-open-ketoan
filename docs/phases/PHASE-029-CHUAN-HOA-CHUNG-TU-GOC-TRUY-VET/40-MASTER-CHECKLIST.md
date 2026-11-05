@@ -20,7 +20,7 @@
 | S029-32 | Cấu hình đợt 2: route ghi riêng → `setSetting`; `valueType` cho module; chặn đọc thô `tenants.settings`; xuất / nhập; đệm theo `config_version`; khoá `idempotency_days`, `event_retention_days`; tiền tệ; thuế suất theo ngày | E2 | P1 | ⛔ sau S029-10 |
 | S029-11 | Chứng từ `documents` + `document_meta` (mô hình `posts` / `postmeta`), `ctx.documents.transition`, quan hệ có đóng hiệu lực | E4 | P1 | ☐ |
 | S029-12 | Xoá an toàn ở CSDL: thu hồi `DELETE`, hàm xoá đọc `md_references`, bỏ `CASCADE`, ngừng dùng cho bảng thiếu cột | E3b | P0 | ⛔ chủ ký K3; sau S026-11 |
-| S029-13 | Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu | E6 | P1 | ☐ |
+| S029-13 | <!-- [2026-11-06 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-13 đợt 1: chữ chốt 30 §6, giữ chỗ --> Sổ đăng ký đối chiếu đợt 1 (chữ chốt [30 §6](30-LO-TRINH-NEN-MONG.md)): `VAT_INPUT_INVOICE_MATCH`, `LEDGER_ROUNDING`, `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` + lane + mục sổ đăng ký ở DIAGNOSTICS.md; projection khai đối chiếu ở đợt 2 (S029-21) | E6 | P1 | ☐ giữ chỗ ở CLAIMS.md |
 | S029-14 | Kiểm đường ghi ngoài action mang tenant / actor / nguồn / correlation (ECP-02) | E9 | P2 | ☐ |
 | S029-15 | Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ | E7 | P1 | ☐ |
 | S029-16 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | E8 | P2 | ☐ |
