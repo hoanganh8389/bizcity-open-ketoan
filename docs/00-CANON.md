@@ -103,6 +103,24 @@ Nền móng 0 và tám trụ cột I–VIII ở §0.1–§0.2 **ánh xạ** vào
 
 `CREATE` định danh bất biến · `UPDATE` thuộc tính được phép + lịch sử / phiên bản khi cần · `ARCHIVE` ngừng dùng, giữ tham chiếu cũ · `MERGE` ánh xạ cũ → mới, không viết lại chứng từ lịch sử · `REVERSE` đảo tác động kế toán, giữ bút toán gốc · `DELETE` chỉ khi an toàn, không tham chiếu, không tác động lịch sử. **Mã là phương thức nhận diện, định danh là khoá liên kết bền vững**: hợp đồng ra ngoài vẫn nhận mã, Core phân giải theo nguồn và thời điểm rồi lưu định danh.
 
+<!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §0.7 sáu năng lực lõi, §0.8 bảy nguyên tắc tinh gọn (ADR-0028 D028-11..13) -->
+### 0.7 Sáu năng lực lõi ([ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md) D028-11; bản đồ `docs/standard/nen-mong.json`)
+
+| Lõi | Trách nhiệm không thể thiếu | Dev nhận sẵn, không tự xây lại |
+|---|---|---|
+| C1 · Identity & Master Data | ID bất biến, mã có phiên bản, cây tổ chức, quan hệ giữa đối tượng | bộ ID, đổi / gộp mã không mất lịch sử |
+| C2 · Authorization & Context | tenant, user, role, scope, quyền theo tổ chức và ngữ cảnh | quản trị user, role, tenant, cửa hàng |
+| C3 · Settings & Policies | cấu hình có phiên bản, phạm vi, ngày hiệu lực | đọc cấu hình theo phạm vi và ngày; chính sách định khoản có phiên bản |
+| C4 · Documents & Workflow | chứng từ, trạng thái, phiên bản, phê duyệt, quan hệ nguồn | workflow chứng từ, nhật ký phê duyệt |
+| C5 · Events & Accounting | giao dịch, outbox, idempotency, một cửa ghi sổ | phát sự kiện, thử lại, chống trùng; định khoản và ghi sổ |
+| C6 · Continuity & Conformance | kiểm chuẩn quan hệ xuyên module, truy vết, đối chiếu, kiểm soát lịch sử | truy vết và đối chiếu giữa các module |
+
+Sáu năng lực là thư viện, hợp đồng, capability trong Platform / Kernel — **không** phải sáu dịch vụ hay sáu CSDL. C6 là quy tắc + kiểm chứng trên dữ liệu sẵn có, không phải engine lưu trùng dữ liệu.
+
+### 0.8 Small Core, Strong Contracts — bảy nguyên tắc tinh gọn (D028-12)
+
+LEAN-1 **Reuse before Build** · LEAN-2 **Contract First** (bắt buộc chuẩn giao tiếp, không bắt buộc cách triển khai) · LEAN-3 **No Duplicate Truth** (mỗi loại dữ liệu một chủ) · LEAN-4 **Immutable Where It Matters** (bất biến chỉ cho lịch sử đã xác lập) · LEAN-5 **Progressive Complexity** (một cửa hàng và 500 cửa hàng cùng chuẩn, khác cấu hình) · LEAN-6 **Modular Monolith First** (PostgreSQL + outbox; tách khi đo được) · LEAN-7 **Conformance as Code**.
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -228,7 +246,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 ## 6. Nhật ký thay đổi CANON
 
 <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — CANON v1.4 -->
-- **v1.4 (2026-11-05):** Thêm §0.3–§0.6 Enterprise Continuity ([ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md)): ECP-01..13 (ECP-13 không thay đổi phá huỷ lịch sử đã tham chiếu), bốn nhóm nền móng 17 trụ cột, mô hình nhất quán ba tầng, sáu thao tác vòng đời; luật R-ECP; R-MD: mã ≠ định danh.
+- **v1.4 (2026-11-05):** Thêm §0.7 sáu năng lực lõi, §0.8 bảy nguyên tắc tinh gọn LEAN-1..7 <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — nhật ký §0.7 / §0.8 -->. Thêm §0.3–§0.6 Enterprise Continuity ([ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md)): ECP-01..13 (ECP-13 không thay đổi phá huỷ lịch sử đã tham chiếu), bốn nhóm nền móng 17 trụ cột, mô hình nhất quán ba tầng, sáu thao tác vòng đời; luật R-ECP; R-MD: mã ≠ định danh.
 
 <!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
 - **v1.3 (2026-11-03):** Thêm §0 Tôn chỉ ([ADR-0020](adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md)): người dùng quyết định, Core chỉ đúng chỗ; một ngôn ngữ là thư viện mã có căn cứ; R-GATE-9 / 10 / 11.

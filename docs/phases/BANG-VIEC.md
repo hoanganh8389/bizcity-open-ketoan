@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 18 |
 | Chờ merge | 0 |
-| Bị chặn | 23 |
+| Bị chặn | 24 |
 | Chưa ai nhận | 109 |
-| Chờ đủ tín hiệu | 39 |
+| Chờ đủ tín hiệu | 40 |
 | Hoãn | 1 |
 | Xong | 193 |
-| **Tổng** | **383** |
+| **Tổng** | **385** |
 
 ## Đang làm (18)
 
@@ -41,7 +41,7 @@
 
 —
 
-## Bị chặn (23)
+## Bị chặn (24)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -68,6 +68,7 @@
 | [S029-20](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Gộp đối tượng theo khuôn 0068 | P1 | — |
 | [S029-23](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L32) | PHASE-029 | Người / nhân viên tách người dùng | P2 | — |
 | [S029-26](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | P2 | — |
+| [S029-30](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L38) | PHASE-029 | Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đ… | P1 | — |
 
 ## Chưa ai nhận (109)
 
@@ -181,9 +182,9 @@
 | [S029-24](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L33) | PHASE-029 | Mã hoá bí mật kết nối khi lưu; phân loại dữ liệu nhạy cảm | P1 | — |
 | [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L34) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | — |
 | [S029-27](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L36) | PHASE-029 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | P2 | — |
-| [S029-28](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L37) | PHASE-029 | Khớp danh mục sự kiện với hợp đồng (module.enabled / disabled, sự kiện chưa phát); hạn idempotency vào regist… | P2 | — |
+| [S029-28](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | Khớp danh mục sự kiện với hợp đồng (module.enabled / disabled, sự kiện chưa phát); hạn idempotency vào regist… | P2 | — |
 
-## Chờ đủ tín hiệu (39)
+## Chờ đủ tín hiệu (40)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -226,6 +227,7 @@
 | [S027-1](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L6) | PHASE-027 | Tài liệu W0: README, 00, checklist; ADR-0023; dòng phase ở docs/phases/README.md | P0 | — |
 | [S027-2](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L7) | PHASE-027 | CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), sk… | P0 | — |
 | [S027-3](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L8) | PHASE-027 | CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế … | P1 | — |
+| [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L39) | PHASE-029 | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
 
 ## Hoãn (1)
 

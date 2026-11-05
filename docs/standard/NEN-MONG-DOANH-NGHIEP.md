@@ -4,6 +4,27 @@
 > **Trạng thái:** chấp nhận về nguyên tắc ([ADR-0028](../adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md), D028-6) · **Luật:** [R-ECP](../rules/RULE-ENTERPRISE-CONTINUITY.md) · **Rà soát:** 2026-11-05 trên `main` 601d939 — chi tiết bằng chứng [PHASE-029 · 20](../phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/20-DANH-GIA-NEN-MONG.md) · **Lộ trình:** [PHASE-029 · 30](../phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/30-LO-TRINH-NEN-MONG.md)
 > **Mức:** ✅ đạt (có tín hiệu chạy được) · 🟡 một phần · 📄 mới có tài liệu · ⬜ chưa có. Mức ở trang này **ghi tay có bằng chứng** cho tới khi engine bảng điểm chạy (S029-18, R-ECP-SCORE).
 
+<!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §0 sáu năng lực lõi, nguyên tắc tinh gọn, bản mẫu ma trận (D028-11..13) -->
+## 0. Sáu năng lực lõi — thứ repo phải giữ
+
+17 trụ cột là **cách đo**; sáu năng lực lõi là **thứ Core sở hữu**. Bản đồ máy đọc (năng lực ↔ trụ cột ↔ mã ↔ hợp đồng ↔ capability ↔ tín hiệu): `docs/standard/nen-mong.json`. Bản mẫu ma trận kiểm chuẩn: [PHASE-029 mockups/ma-tran-nen-mong.html](../phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/mockups/ma-tran-nen-mong.html).
+
+| Lõi | Trụ cột | Ở đâu trong mã (thư viện, không phải dịch vụ) | Hợp đồng | Mức |
+|---|---|---|---|---|
+| C1 · Identity & Master Data | 01, 02, 03, 15 | `packages/kernel/src/modules/masterdata`, `apps/api/src/modules/partners`, `apps/api/src/modules/org-units` | `bizcity_master_data@1`, `bizcity_item_master@1` | 🟡 |
+| C2 · Authorization & Context | 04, 17 | `packages/platform/src/core/auth.ts`, `packages/platform/src/core/actions.ts`, `apps/api/src/modules/access` | `bizcity_action@1` | 🟡 |
+| C3 · Settings & Policies | 05 | `packages/platform/src/core/settings.ts`, `packages/kernel/src/modules/posting-config` | `bizcity_settings@1` | 🟡 yếu nhất |
+| C4 · Documents & Workflow | 06, 07 | `packages/platform/src/core/documents.ts`, `packages/platform/src/core/workflow.ts`, `packages/kernel/src/modules/documents` | `bizcity_document@1` | 🟡 |
+| C5 · Events & Accounting | 08, 09, 10 | `packages/kernel/src/modules/ledger`, `packages/kernel/src/modules/posting`, `packages/platform/src/core/events.ts` | `bizcity_ledger_intake@1`, `bizcity_posting_rule@1`, `bizcity_event@1` | ✅ |
+| C6 · Continuity & Conformance | 11, 12, 13, 14 | `packages/kernel/src/modules/lineage`, `packages/kernel/src/modules/conformance`, `tests/conformance` | `bizcity_lineage@1`, `bizcity_findings@1`, `bizcity_compliance@1` | 🟡 |
+| Bề mặt SDK của cả sáu | 16 | `packages/module-sdk/src/index.ts`, `bizcity.module.json` | `bizcity_module@1` | 🟡 |
+
+**Dev không phải tự xây lại:** bộ ID và cách đổi mã hàng không mất lịch sử (C1) · quản trị user, role, tenant, cửa hàng (C2) · workflow chứng từ và nhật ký phê duyệt (C4) · cơ chế phát sự kiện, thử lại, chống trùng (C5) · bộ quy tắc định khoản và ghi sổ (C5) · truy vết và đối chiếu giữa các module (C6). Ví dụ: tạo nghiệp vụ bán hàng, dev dùng SDK tham chiếu mặt hàng, khách hàng, người bán và chứng từ; Framework kiểm quyền, phiên bản và quan hệ liên quan.
+
+**Continuity không phải engine:** C6 chạy quy tắc và kiểm chứng trên bảng sẵn có, chỉ lưu kết quả kiểm; không chép sổ, không chép chứng từ (D028-13).
+
+**Giữ trong repo bằng mã (LEAN-7):** phép kiểm SC-CORE-1 (đề xuất, S029-29) đọc `nen-mong.json`: mỗi lõi có capability `available` trong `bizcity-standard.json`, đường dẫn mã và hợp đồng tồn tại; mỗi trụ cột thuộc đúng một lõi; mỗi tín hiệu `co` trỏ tới check / chẩn đoán / test có thật; mức "đạt" chỉ khi không còn tín hiệu `chua` (R-ECP-SCORE).
+
 ## 1. Bốn nhóm
 
 | Nhóm | Câu hỏi nó trả lời | Trụ cột |

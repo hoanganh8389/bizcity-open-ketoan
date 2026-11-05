@@ -18,6 +18,7 @@
 | [20-DANH-GIA-NEN-MONG](20-DANH-GIA-NEN-MONG.md) | rà codebase so với 17 trụ cột: đã chắc, khoảng cách K-1..K-16, tài liệu lệch mã |
 | [30-LO-TRINH-NEN-MONG](30-LO-TRINH-NEN-MONG.md) | luồng E1–E9, ưu tiên, mức Kernel, phụ thuộc phase khác |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S029-*`, log |
+| [mockups/ma-tran-nen-mong.html](mockups/ma-tran-nen-mong.html) <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — bản mẫu ma trận kiểm chuẩn --> | bản mẫu ma trận kiểm chuẩn: sáu năng lực lõi · 17 trụ cột · ECP × trụ cột · tín hiệu kiểm · tinh gọn & SDK (dữ liệu từ `docs/standard/nen-mong.json`) |
 | [standard/NEN-MONG-DOANH-NGHIEP](../../standard/NEN-MONG-DOANH-NGHIEP.md) · [standard/DU-LIEU-GOC](../../standard/DU-LIEU-GOC.md) | bản đồ bốn nhóm nền móng; danh sách dữ liệu gốc và sáu thao tác vòng đời |
 
 ## Trả lời ngắn

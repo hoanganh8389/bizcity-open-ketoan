@@ -34,6 +34,9 @@
 | S029-25 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa `bizcity_document@1` §5.1 | E4 | P1 | ☐ |
 | S029-26 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | E8 | P2 | ⛔ sau S029-23 |
 | S029-27 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | E6 | P2 | ☐ |
+| S029-29 <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-29..31: sáu năng lực lõi, SC-CORE-1, ma trận kiểm chuẩn --> | Phép kiểm SC-CORE-1 trên `docs/standard/nen-mong.json`: sáu lõi có capability `available`, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu `co` có thật, "đạt" chỉ khi không còn `chua`; ca tự kiểm | E1 | P0 | ☐ chốt thiết kế ở [30](30-LO-TRINH-NEN-MONG.md) §4 |
+| S029-30 | Màn HT10 theo bản mẫu [ma trận nền móng](mockups/ma-tran-nen-mong.html): năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc `nen-mong.json` | E1 | P1 | ⛔ sau S029-29 + S026-15 |
+| S029-31 | Bản mẫu ma trận kiểm chuẩn + `nen-mong.json` (`bizcity_foundations@1` 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-0028 / CANON §0.7–§0.8 | E0 | P0 | 🟡 2026-11-05 PR tài liệu |
 | S029-28 | Khớp danh mục sự kiện với hợp đồng (`module.enabled` / `disabled`, sự kiện chưa phát); hạn idempotency vào registry | E9 | P2 | ☐ |
 
 ## Log
