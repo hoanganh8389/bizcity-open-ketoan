@@ -1,101 +1,104 @@
+// [2026-11-05 11:50 PM Nguyễn Văn Thủy] MENU — menu trái gọn: nhóm theo việc, bấm mới bung danh sách màn (đóng góp)
 /**
- * Thanh menu bên trái (bảng điều khiển kế toán): các nhóm thu gọn / mở ra, mỗi chức năng một dòng kèm mã.
- *  - Nhóm chứa màn đang mở tự mở ra; các nhóm người dùng đã mở được nhớ lại (localStorage).
- *  - Chức năng chưa làm hiện mờ, ghi "chưa có", bấm không mở gì.
- *  - Nút thu gọn ở đáy để dành chỗ cho bảng số liệu rộng.
+ * Thanh menu bên trái: mỗi nhóm một dòng có biểu tượng, bấm thì bung danh sách màn sang bên phải, bấm màn thì mở và đóng lại.
+ *  - Báo cáo không nằm trong danh sách này, mỗi nhóm có một dòng Báo cáo dẫn tới trang Báo cáo chung.
+ *  - Rê vào một màn có nút ghim; mã màn hiện ở chú thích, vẫn gõ mã tìm được bằng Ctrl + K.
+ *  - Thu gọn (Ctrl + B) chỉ còn biểu tượng, bấm biểu tượng vẫn bung danh sách.
  */
-import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { isSection } from './menu';
-import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
-import type { MenuItem } from '@ketoan/contracts';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { BarChart3, Building2, ChevronRight, Home, Landmark, LayoutGrid, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
+import { matchLen, REPORT_PAGE, type GonGroup } from './menu-gon';
 
-const OPEN_KEY = 'ketoan.sidenav.open';
 const COLLAPSED_KEY = 'ketoan.sidenav.collapsed';
 const read = <T,>(key: string, fallback: T): T => {
   try { return JSON.parse(localStorage.getItem(key) ?? 'null') ?? fallback; } catch { return fallback; }
 };
 const write = (key: string, v: unknown) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* chế độ riêng tư */ } };
 
-export function SideNav({ title, items, collapsed, onCollapse, onResizeStart }: { title: React.ReactNode; items: MenuItem[]; collapsed: boolean; onCollapse: (v: boolean) => void; onResizeStart?: (e: React.MouseEvent) => void }) {
-  const location = useLocation();
+const ICONS: Record<string, LucideIcon> = { Building2, Landmark, LayoutGrid, List, ListEnd, Network, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench };
+
+/** Số cột của danh sách bung theo số dòng, để danh mục dài không phải cuộn. */
+const columnsOf = (g: GonGroup) => {
+  const rows = g.sections.reduce((n, s) => n + s.items.length + (s.label ? 1 : 0), 0);
+  return rows > 26 ? 3 : rows > 14 ? 2 : 1;
+};
+
+export function SideNav({ groups, active, onChoose, collapsed, onCollapse, onResizeStart }: { groups: GonGroup[]; active?: GonGroup; onChoose: (key: string) => void; collapsed: boolean; onCollapse: (v: boolean) => void; onResizeStart?: (e: React.MouseEvent) => void }) {
+  const { pathname, search } = useLocation();
   const { isPinned, toggle: togglePin } = usePins();
-  const [open, setOpen] = useState<string[]>(() => read<string[]>(OPEN_KEY, ['nghiep-vu']));
-  const active = (path?: string) => Boolean(path && (path === '/' ? location.pathname === '/' : location.pathname === path || location.pathname.startsWith(`${path}/`)));
+  const [open, setOpen] = useState<{ key: string; top: number; left: number } | null>(null);
+  const root = useRef<HTMLElement>(null);
+  const fly = useRef<HTMLDivElement>(null);
+  const best = active ? Math.max(0, ...active.sections.flatMap((s) => s.items.map((m) => matchLen(m.path, pathname)))) : 0;
 
-  // Mở sẵn nhóm chứa màn đang xem.
+  useEffect(() => { setOpen(null); }, [pathname, search]);
   useEffect(() => {
-    const g = items.find((m) => m.children?.some((c) => active(c.path)));
-    if (g && !open.includes(g.key)) setOpen((x) => [...x, g.key]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
-  useEffect(() => write(OPEN_KEY, open), [open]);
-  // Đổi sang phân hệ chưa mở nhóm nào: mở sẵn mọi nhóm của phân hệ đó.
-  const groupKeys = items.filter((m) => m.children?.length).map((m) => m.key).join(',');
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { const t = e.target as Node; if (!root.current?.contains(t) && !fly.current?.contains(t)) setOpen(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(null); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  // Danh sách dài thì đẩy lên cho vừa đáy màn.
   useEffect(() => {
-    const keys = groupKeys ? groupKeys.split(',') : [];
-    if (keys.length && !keys.some((k) => open.includes(k))) setOpen((x) => [...x, ...keys]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupKeys]);
+    if (!open || !fly.current) return;
+    const over = fly.current.getBoundingClientRect().bottom - window.innerHeight + 8;
+    if (over > 0) setOpen((o) => (o ? { ...o, top: Math.max(8, o.top - over) } : o));
+  }, [open?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggle = (key: string) => setOpen((x) => (x.includes(key) ? x.filter((k) => k !== key) : [...x, key]));
-
-  if (collapsed) {
-    return (
-      <aside className="sidenav collapsed" aria-label="Menu chức năng">
-        <button className="sidenav-toggle" title="Mở menu" onClick={() => onCollapse(false)}><PanelLeftOpen size={18} /></button>
-      </aside>
-    );
-  }
+  const toggle = (g: GonGroup, e: React.MouseEvent<HTMLButtonElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setOpen((o) => (o?.key === g.key ? null : { key: g.key, top: r.top, left: r.right + 4 }));
+  };
+  const openGroup = groups.find((g) => g.key === open?.key);
 
   return (
-    <aside className="sidenav" aria-label="Menu chức năng">
-      {/* Nút thu gọn ở trên cùng (cạnh tên phân hệ) — khỏi phải kéo xuống đáy; nút "Thu gọn" ở đáy vẫn giữ. Phím tắt: Ctrl + B. */}
-      <div className="sidenav-title sidenav-title-row">{title}<button type="button" className="sidenav-top-toggle" title="Thu gọn menu (Ctrl + B) — bấm lại biểu tượng ở mép trái để mở" aria-label="Thu gọn menu" onClick={() => onCollapse(true)}><PanelLeftClose size={16} /></button></div>
+    <aside className={`sidenav gon${collapsed ? ' collapsed' : ''}`} aria-label="Menu chức năng" ref={root}>
       <nav className="sidenav-body">
-        {items.map((m) =>
-          m.children?.length ? (
-            <div key={m.key} className={`sidenav-group ${open.includes(m.key) ? 'open' : ''}`}>
-              <button className="sidenav-group-head" onClick={() => toggle(m.key)} aria-expanded={open.includes(m.key)}>
-                {open.includes(m.key) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <span>{m.label}</span>
-              </button>
-              {open.includes(m.key) && (
-                <div className="sidenav-items">
-                  {m.children.map((c) =>
-                    isSection(c) ? (
-                      <div key={c.key} className="sidenav-section">{c.label}</div>
-                    ) : c.path ? (
-                      <NavLink key={c.key} to={c.path} end className={() => `${active(c.path) ? 'active' : ''} ${isPinned(c.key) ? 'pinned' : ''}`} title={c.code ? `${c.label} (${c.code})` : c.label}>
-                        <span className="label">{c.label}</span>
-                        {c.code && <span className="code">{c.code}</span>}
-                        <button
-                          type="button"
-                          className="pin-btn"
-                          title={isPinned(c.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (màn hay dùng)'}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(c.key); }}
-                        >
-                          {isPinned(c.key) ? <PinOff size={13} /> : <Pin size={13} />}
-                        </button>
-                      </NavLink>
-                    ) : (
-                      <span key={c.key} className="disabled" title="Chức năng này chưa có trong phiên bản hiện tại">
-                        <span className="label">{c.label}</span>
-                        <span className="code">chưa có</span>
-                      </span>
-                    ),
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <NavLink key={m.key} to={m.path ?? '/'} end className={() => `sidenav-top ${active(m.path) ? 'active' : ''}`}>{m.label}</NavLink>
-          ),
-        )}
+        <NavLink to="/" end className={() => `gon-row${pathname === '/' ? ' active' : ''}`} title="Tổng quan"><Home size={17} /><span>Tổng quan</span></NavLink>
+        {groups.map((g) => {
+          const Icon = ICONS[g.icon] ?? List;
+          const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
+          return (
+            <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={g.label} aria-expanded={open?.key === g.key} onClick={(e) => toggle(g, e)}>
+              <Icon size={17} /><span>{g.label}</span><ChevronRight size={14} className="gon-arrow" />
+            </button>
+          );
+        })}
+        <NavLink to={REPORT_PAGE} end className={() => `gon-row${pathname === REPORT_PAGE && !new URLSearchParams(search).get('nhom') ? ' active' : ''}`} title="Tất cả báo cáo, sổ sách"><BarChart3 size={17} /><span>Báo cáo</span></NavLink>
       </nav>
-      <button className="sidenav-toggle" title="Thu gọn menu" onClick={() => onCollapse(true)}><PanelLeftClose size={16} /> Thu gọn</button>
-      {onResizeStart && <div className="sidenav-resize" onMouseDown={onResizeStart} title="Kéo để đổi bề rộng menu" />}
+      <button className="sidenav-toggle" title={collapsed ? 'Mở rộng menu (Ctrl + B)' : 'Thu gọn menu (Ctrl + B)'} onClick={() => onCollapse(!collapsed)}>
+        {collapsed ? <PanelLeftOpen size={16} /> : <><PanelLeftClose size={16} /> Thu gọn</>}
+      </button>
+      {!collapsed && onResizeStart && <div className="sidenav-resize" onMouseDown={onResizeStart} title="Kéo để đổi bề rộng menu" />}
+      {/* Gắn thẳng vào body để không bị bảng, cột lọc của màn bên dưới đè lên. */}
+      {open && openGroup && createPortal(
+        <div ref={fly} className={`gon-fly cot-${columnsOf(openGroup)}`} style={{ top: open.top, left: open.left }}>
+          <div className="gon-fly-body">
+            {openGroup.home && <Link className="gon-fly-item" to={openGroup.home} onClick={() => onChoose(openGroup.key)}><span>{openGroup.homeLabel ?? 'Tổng quan'}</span></Link>}
+            {openGroup.sections.map((s, i) => (
+              <div key={s.label ?? i} className="gon-fly-sec">
+                {s.label && <div className="gon-fly-head">{s.label}</div>}
+                {s.items.map((m) => (
+                  <Link key={m.key} to={m.path!} onClick={() => onChoose(openGroup.key)} title={m.code ? `${m.label} (${m.code})` : m.label} className={`gon-fly-item${active?.key === openGroup.key && best > 0 && matchLen(m.path, pathname) === best ? ' active' : ''}${isPinned(m.key) ? ' pinned' : ''}`}>
+                    <span>{m.label}</span>
+                    <button type="button" className="pin-btn" title={isPinned(m.key) ? 'Bỏ ghim khỏi thanh trên cùng' : 'Ghim lên thanh trên cùng (màn hay dùng)'} onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(m.key); }}>
+                      {isPinned(m.key) ? <PinOff size={13} /> : <Pin size={13} />}
+                    </button>
+                  </Link>
+                ))}
+              </div>
+            ))}
+            {openGroup.soon?.map((label) => <span key={label} className="gon-fly-item disabled" title="Chức năng này chưa có trong phiên bản hiện tại"><span>{label}</span><small>chưa có</small></span>)}
+            {openGroup.reports.length > 0 && <Link className="gon-fly-item gon-fly-report" to={`${REPORT_PAGE}?nhom=${openGroup.key}`} onClick={() => onChoose(openGroup.key)}><span>Báo cáo</span></Link>}
+          </div>
+        </div>,
+        document.body,
+      )}
     </aside>
   );
 }

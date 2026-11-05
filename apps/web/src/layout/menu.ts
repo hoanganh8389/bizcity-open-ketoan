@@ -5,7 +5,7 @@
  * (sec(): "Nghiệp vụ", "Báo cáo"…) để nghiệp vụ và báo cáo của cùng một mảng nằm chung một chỗ. Tên, mã chức năng
  * (ACC65, ACC88…) giữ như bảng điều khiển kế toán quen dùng để gọi nhanh (Ctrl + K, gõ "65"); khoá mục giữ nguyên
  * (màn đã ghim không mất). Chức năng chưa làm vẫn hiện (không có path); bấm vào không mở gì.
- * Các phân hệ khác (Quỹ, Bán hàng, Mua hàng, Kho, Hệ thống) dùng menu xổ ở thanh trên, khai ở cuối tệp.
+ * Vị trí hiển thị trên menu trái, thẻ đầu trang, trang Báo cáo xếp ở menu-gon.ts; tệp này vẫn là nguồn tên, mã, quyền của màn.
  *
  * Add-in gắn thêm mục qua manifest.menu + menuParent (key nhóm bên dưới, mặc định "tien-ich").
  */
