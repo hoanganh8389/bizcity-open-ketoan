@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 15 |
+| Đang làm | 18 |
 | Chờ merge | 0 |
-| Bị chặn | 13 |
-| Chưa ai nhận | 96 |
+| Bị chặn | 16 |
+| Chưa ai nhận | 97 |
 | Chờ đủ tín hiệu | 39 |
 | Hoãn | 1 |
-| Xong | 192 |
-| **Tổng** | **356** |
+| Xong | 193 |
+| **Tổng** | **364** |
 
-## Đang làm (15)
+## Đang làm (18)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -33,12 +33,15 @@
 | [S026-22](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L14) | PHASE-026 | Hợp đồng hệ ngoài: itemId, mergedIntoItemId ở nguồn đổi danh mục, mã external:<nguồn> | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S026-23](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L15) | PHASE-026 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
+| [S029-2](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L11) | PHASE-029 | Cổng GET /api/v1/documents/history (id · docKey · entryId), integrity | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
+| [S029-3](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L12) | PHASE-029 | Bốn mã chẩn đoán ENTRYNOEVENT, ENTRYNOVERSION, ENTRYVERSIONUNKNOWN, EVENTENTRIESSTALE | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
+| [S029-4](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L13) | PHASE-029 | Phép kiểm tĩnh SC-DOC-7 + ca tự kiểm | P0 | hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc) · `feat/phase-029-w1-lich-su-chung-tu` |
 
 ## Chờ merge (0)
 
 —
 
-## Bị chặn (13)
+## Bị chặn (16)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -55,8 +58,11 @@
 | [S023-5](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L16) | PHASE-023 | Tệp giải nghĩa data/giai-nghia-tai-khoan/vn-tt99.json: 30 tài khoản (D023-5), nháp theo Q023-1; căn cứ trỏ do… | P0 | — |
 | [S024-9](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L20) | PHASE-024 | Migration K3: itemid ở ledgerlines, inventorymovements, inventorycosts, productunits, productprices; điền ngư… | P0 | — |
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
+| [S029-5](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L14) | PHASE-029 | ctx.ledger.submit tự saveVersion + liên kết ledger; payloadVersion ở GET /documents/:id | P0 | — |
+| [S029-6](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L15) | PHASE-029 | Migration người sửa / lý do cho phiên bản sự việc; IN-DOC-REASON (warn) | P1 | — |
+| [S029-8](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L17) | PHASE-029 | Nâng chẩn đoán lên error khi bản đo trên bản cài thật = 0 | P2 | — |
 
-## Chưa ai nhận (96)
+## Chưa ai nhận (97)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -156,6 +162,7 @@
 | [S027-7](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L12) | PHASE-027 | Q027-2 sổ tay theo action bizcitysotay@1 + SC-SOTAY-1..5, làm thử mua-hang | P1 | — |
 | [S027-8](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L13) | PHASE-027 | Q027-3 quy tắc cho skill | P2 | — |
 | [S027-9](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L14) | PHASE-027 | Q027-4 cổng phát hành (CI xanh, bảo vệ main, SBOM) | P1 | — |
+| [S029-7](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L16) | PHASE-029 | module check bắt module nộp sổ không qua W2a; DG-DOC- lane SQL | P1 | — |
 
 ## Chờ đủ tín hiệu (39)
 
@@ -207,6 +214,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (192)
+## Xong (193)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

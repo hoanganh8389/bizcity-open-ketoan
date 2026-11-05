@@ -5,7 +5,7 @@
 <!-- [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §8: purchase_attachments đã chuyển sang document_attachments (0046) -->
 <!-- [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1 / §8: documents.signatures (doc_ref, 0048) -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-01 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
+> **Phiên bản:** 1.3.0-draft · 2026-11-05 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
 > **Luật nền:** [R-WF](../rules/RULE-WORKFLOW.md), [R-EVENT](../rules/RULE-EVENT.md) · **Năng lực:** `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments`, `documents.signatures`, `documents.workflow`, `ledger.submit`
 
 ## 1. Mục đích
@@ -136,6 +136,23 @@ Runtime `apps/api/src/core/documents.ts` (Platform, sẽ về `packages/document
 
 Ghi (`saveVersion`, `link` phía `from`, `attach`) chỉ trên docRef của chính module của action (`<module>.…`) — như `ctx.events.emit`; đọc được mọi docRef của đơn vị.
 
+### 7.2 Lịch sử chứng từ — cổng truy vết chung (1.3.0-draft) <!-- [2026-11-05 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §7.2: DOC-01..06 và cổng lịch sử -->
+
+Mọi dòng bút toán truy vết ngược được về chứng từ gốc **đúng phiên bản đã tạo ra nó**; từ một chứng từ truy vấn được toàn bộ quá trình phát sinh, sửa, ghi sổ, điều chỉnh, đảo. Dựng từ nguồn thẩm quyền của Kernel — **không bảng mới** — nên phủ mọi `docKey`, kể cả POS, app ngoài, phân hệ cũ.
+
+| Mã | Nguyên tắc | Giữ bằng |
+|---|---|---|
+| DOC-01 | Mọi bút toán có nguồn: sự việc + phiên bản ghi sổ | `ledger_entries.event_id` + `event_version`; chẩn đoán `ENTRY_NO_EVENT`, `ENTRY_NO_VERSION`; `SC-DOC-7` |
+| DOC-02 | Định danh ổn định; sửa nội dung = phiên bản mới, bảo toàn lịch sử | `doc_key` bất biến (trigger 0049); `accounting_event_versions` chỉ thêm |
+| DOC-03 | Phiên bản đã ghi sổ truy xuất được **nội dung tại lúc hạch toán**, kể cả khi chứng từ gốc đổi | `GET /api/v1/documents/history` trả nội dung từng phiên bản; `ENTRY_VERSION_UNKNOWN` |
+| DOC-04 | Sửa nghiệp vụ đã ghi sổ = điều chỉnh / đảo + bút toán mới | trigger `ledger_entries`; `EVENT_ENTRIES_STALE` |
+| DOC-05 | Chứng từ gốc ↔ chứng từ phát sinh ↔ sự việc ↔ sổ truy vết hai chiều | `history?docKey=` (xuôi) và `history?entryId=` (ngược) |
+| DOC-06 | Không xoá cứng / mất lịch sử chứng từ, phiên bản, bằng chứng đã vào sổ | trigger 0049, `posting_log` chỉ thêm |
+
+`GET /api/v1/documents/history` (`documents:read`, chỉ đọc) — đúng một khoá: `id` (sự việc) · `docKey` · `entryId` (dòng sổ). Tuỳ chọn `version`, `withPayload=1`. Trả: `versions[]` (mỗi phiên bản: `isCurrent`, `isPosted`, `receivedBy`, `contentHash`, nội dung nếu xin, bút toán của phiên bản gồm cả bút toán đảo, các bước `posting_log`), `unversionedEntries[]`, `links[]`, `audit[]`, `integrity{ ok, issues[] }`. Phân biệt **phiên bản hiện hành** (`currentVersion`) với **phiên bản đang được ghi nhận trên sổ** (`postedVersion`): không dùng nội dung mới nhất để diễn giải bút toán của phiên bản cũ. Chi tiết khuôn: [PHASE-029 · 00 §3](../phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/00-MASTER-PLAN.md).
+
+Hiện trạng: cổng W1 (PHASE-029); `ctx.ledger.submit` tự `saveVersion` + liên kết `ledger` ở W2a.
+
 ## 8. Ánh xạ từ code hiện tại
 
 | Hiện có | Thành |
@@ -151,6 +168,7 @@ Ghi (`saveVersion`, `link` phía `from`, `attach`) chỉ trên docRef của chí
 
 ## 9. Nhật ký
 
+- **1.3.0-draft (2026-11-05):** thêm §7.2 Lịch sử chứng từ — sáu nguyên tắc DOC-01..06, cổng `GET /api/v1/documents/history` (id · docKey · entryId), bốn mã chẩn đoán, phép kiểm `SC-DOC-7`. Không bảng mới, không migration ở W1.
 - **1.2.0-draft (2026-11-01, bổ sung 2):** §7.1 thêm `sign` / `signatures` / `unsign` (documents.signatures, 0048); §8 `document_signatures.doc_ref` có.
 - **1.2.0-draft (2026-11-01, bổ sung):** §8 — đính kèm Mua hàng đã chạy trên đính kèm chung (0046); `AttachmentRef.sha256` có thể `null` với tệp chuyển sang chưa tải lần nào.
 - **1.2.0-draft (2026-11-01):** thêm §7.1 hiện trạng `ctx.documents` — `nextNumber`, `saveVersion`, `versions`, `link`, `links`, `attach`, `attachments` có; `transition` vẫn qua `documents.workflow`. §8: đánh số một chỗ, `document_versions` có. Chỉ thêm, tương thích.

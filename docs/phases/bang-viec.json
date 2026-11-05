@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 15
+      "count": 18
     },
     {
       "key": "merging",
@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 13
+      "count": 16
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 96
+      "count": 97
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 192
+      "count": 193
     }
   ],
   "items": [
@@ -4044,6 +4044,112 @@
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 14
+    },
+    {
+      "id": "S029-1",
+      "phase": "PHASE-029",
+      "title": "Đánh giá hiện trạng + chữ chốt thiết kế (00, audit), hợp đồng bizcitydocument@1 §7.2",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S029-2",
+      "phase": "PHASE-029",
+      "title": "Cổng GET /api/v1/documents/history (id · docKey · entryId), integrity",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc)",
+        "branch": "feat/phase-029-w1-lich-su-chung-tu",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-029 · W1 — cổng lịch sử chứng từ GET /api/v1/documents/history, bốn mã chẩn đoán dữ liệu, phé…"
+      },
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S029-3",
+      "phase": "PHASE-029",
+      "title": "Bốn mã chẩn đoán ENTRYNOEVENT, ENTRYNOVERSION, ENTRYVERSIONUNKNOWN, EVENTENTRIESSTALE",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc)",
+        "branch": "feat/phase-029-w1-lich-su-chung-tu",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-029 · W1 — cổng lịch sử chứng từ GET /api/v1/documents/history, bốn mã chẩn đoán dữ liệu, phé…"
+      },
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S029-4",
+      "phase": "PHASE-029",
+      "title": "Phép kiểm tĩnh SC-DOC-7 + ca tự kiểm",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc)",
+        "branch": "feat/phase-029-w1-lich-su-chung-tu",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-029 · W1 — cổng lịch sử chứng từ GET /api/v1/documents/history, bốn mã chẩn đoán dữ liệu, phé…"
+      },
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S029-5",
+      "phase": "PHASE-029",
+      "title": "ctx.ledger.submit tự saveVersion + liên kết ledger; payloadVersion ở GET /documents/:id",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S029-6",
+      "phase": "PHASE-029",
+      "title": "Migration người sửa / lý do cho phiên bản sự việc; IN-DOC-REASON (warn)",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S029-7",
+      "phase": "PHASE-029",
+      "title": "module check bắt module nộp sổ không qua W2a; DG-DOC- lane SQL",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S029-8",
+      "phase": "PHASE-029",
+      "title": "Nâng chẩn đoán lên error khi bản đo trên bản cài thật = 0",
+      "priority": "P2",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 17
     }
   ]
 }
