@@ -9,9 +9,11 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
+import { FoundationsBoard } from './FoundationsBoard';
 
 export type PillarStatus = 'dat' | 'mot-phan' | 'tai-lieu' | 'chua';
 export interface PillarCriterion {
@@ -107,12 +109,19 @@ export function PillarMatrix({ module, compact }: { module?: string; compact?: b
   );
 }
 
+// [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1 (S029-30): HT10 thêm thẻ Nền móng (sáu năng lực lõi × 17 trụ cột, ADR-0028); thẻ Tiêu chí giữ nguyên bảng tru-cot.json
 export function PillarsPage() {
+  const [sp, setSp] = useSearchParams();
+  const tab = sp.get('xem') === 'nen-mong' ? 'nen-mong' : 'tieu-chi';
   return (
     <div>
       <PageHeader title="Trụ cột & mức đạt" code="HT10" helpKey="tru-cot-muc-dat"
         subtitle="Core bảo đảm điều gì và hôm nay đạt tới đâu — một bảng cho kế toán hiểu luật chạy, cho dev biết việc kế tiếp. Mức đạt đi theo bằng chứng (test / check), không ai tích tay." />
-      <PillarMatrix />
+      <div className="tabs" role="tablist" style={{ marginBottom: 10 }}>
+        <button type="button" role="tab" className={`tab ${tab === 'tieu-chi' ? 'active' : ''}`} onClick={() => setSp({}, { replace: true })}>Tiêu chí theo trụ cột</button>
+        <button type="button" role="tab" className={`tab ${tab === 'nen-mong' ? 'active' : ''}`} onClick={() => setSp({ xem: 'nen-mong' }, { replace: true })} title="Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP — mức đạt theo tín hiệu kiểm chạy được">Nền móng</button>
+      </div>
+      {tab === 'nen-mong' ? <FoundationsBoard /> : <PillarMatrix />}
     </div>
   );
 }

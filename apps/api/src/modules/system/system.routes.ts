@@ -38,7 +38,7 @@ import { postingModesSchema } from '@ketoan/contracts';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2)
 import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
-import { BUILD_VERSION, PILLARS, STANDARD } from '../../core/version.js';
+import { BUILD_VERSION, FOUNDATIONS, PILLARS, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
 import { listActions, mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
@@ -170,6 +170,16 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     handler: async () => {
       if (!PILLARS) throw Errors.notFound('bảng trụ cột (docs/standard/tru-cot.json không có trong bản cài)');
       return ok(PILLARS);
+    },
+  });
+
+  // [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1 (S029-30): bản đồ nền móng (bizcity_foundations@1) — chỉ đọc, thuộc bản dựng; mức đạt đổi bằng sửa mã + tệp nguồn, SC-CORE-1 kiểm (R-ECP-SCORE)
+  app.get('/api/v1/system/foundations', {
+    preHandler: requireAuthenticated(),
+    schema: { tags: ['Hệ thống'], summary: 'Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP × tín hiệu kiểm (docs/standard/nen-mong.json) — cho thẻ Nền móng ở màn Trụ cột & mức đạt' },
+    handler: async () => {
+      if (!FOUNDATIONS) throw Errors.notFound('bản đồ nền móng (docs/standard/nen-mong.json không có trong bản cài)');
+      return ok(FOUNDATIONS);
     },
   });
 
