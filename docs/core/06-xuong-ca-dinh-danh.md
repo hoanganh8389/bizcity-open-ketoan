@@ -151,7 +151,7 @@ Cập nhật 05/11/2026.
 | S026-14 | Đo 21 triệu mặt hàng, xử lý nút nghẽn | Xong phần mặt hàng. Chưa đo sổ cái lớn và 300 chi nhánh |
 
 Chưa làm, không nằm trong đợt này:
-- Chứng từ chuyển tồn khi gộp: gộp bị chặn khi còn tồn, kế toán lập chứng từ riêng (Q6).
+- Gộp mã khi còn tồn và POS theo mã gộp: xem mục 8.
 - Đổi mã có ngày tương lai.
 - Mã có phiên bản cho đối tượng, chi nhánh, kho (S026-4) và cây nhóm hàng (S026-5): đang có phiên khác giữ chỗ.
 
@@ -197,3 +197,44 @@ Dựng chỉ mục tìm kiếm trên 21 triệu dòng mất 6 phút 13 giây, ch
 | Q8 | `itemId` trong JSON dòng phiếu do trigger gắn, không do code từng màn | Đường ghi nào cũng có, không sót khi thêm màn mới |
 | Q9 | Lọc sổ bằng mã nào cũng ra cả mặt hàng; lọc riêng phần ghi dưới đúng mã dùng `codeOnly=true` | Đúng câu hỏi thường gặp, vẫn lấy riêng được |
 | Q10 | Danh sách mặt hàng phân trang 5.000 dòng; tổng đếm tới 100.001 thì dừng | Không tải cả danh mục về trình duyệt, không quét cả bảng mỗi lần mở |
+
+## 8. Việc để sau (chốt hướng 05/11/2026)
+<!-- [2026-11-05 05:30 PM Nguyễn Văn Thủy] PHASE-026 — ghi hướng đã bàn: gộp mã khi còn tồn, POS theo mã gộp; chưa làm (đóng góp) -->
+
+Hiện tại gộp bị chặn khi mặt hàng bị gộp còn tồn, nên chưa sinh số sai. Nhược điểm: mã có tồn rải rác ở nhiều shop thì chưa gộp được. Phần dưới là nâng cao, làm sau.
+
+### 8.1. Gộp mã khi còn tồn
+
+Thực tế một mã global có tồn ở nhiều shop, không thể đợi hết tồn mới gộp. Hướng đã chọn: **không sinh phiếu chuyển tồn, không sinh bút toán**. Mã cũ giữ `item_id`, bút toán đã ghi để nguyên, báo cáo lấy thêm các mã đã gộp. Đã cân nhắc phiếu chuyển tồn theo từng shop và bỏ, vì nặng hơn và đụng luật "danh mục không tự sinh bút toán".
+
+Doanh thu, giá vốn đã phát sinh không chuyển: đó là phát sinh đã xảy ra, không phải số dư. Xem gộp thì cộng qua `root_item_id`.
+
+| # | Việc | Vì sao |
+|---|---|---|
+| 1 | Giá vốn tính chung theo `root_item_id` từ tháng gộp. Tháng đã tính xong không đổi | `monthFlows` trong `costing.service.ts` đang tính riêng theo `item_id`. Ví dụ A tồn 5, B tồn 5, gộp xong bán 8 ghi vào B: báo cáo gom vẫn còn 2, nhưng B âm 3, giá vốn sai, giá trị của A kẹt lại |
+| 2 | Khác tài khoản kho thì vẫn chặn gộp | Tồn ở tài khoản này, xuất ghi tài khoản kia: sổ cái lệch từng tài khoản, không có bút toán thì không sửa được |
+| 3 | Bỏ lỗi chặn `FROM_HAS_STOCK`. Màn Kiểm tra chỉ hiện tồn từng shop để biết | |
+| 4 | Báo cáo có nhãn "đã gộp vào B" khi xem riêng mã cũ | Tồn dưới mã cũ đứng yên từ lúc gộp, không phải tồn thực tế |
+
+Đánh đổi: không có chứng từ ghi "ngày X chuyển 5 cái sang B", dấu vết nằm ở Lịch sử mặt hàng và nhật ký gộp. Nên hỏi kế toán trước khi làm. `costing.service.ts` thuộc Kernel, cần chủ dự án rà.
+
+Test cần có: gộp khi cả hai còn tồn, bán tiếp, kiểm tra giá vốn, sổ kho, đối chiếu kho với sổ cái.
+
+### 8.2. POS theo mã gộp
+
+Quản trị gộp một lần ở ERP, cả hệ thống tự theo: nhân viên không thấy mã cũ để bán. Khảo sát ngày 05/11/2026, đọc code, chưa chạy thử trên POS:
+
+| Khâu | Hiện tại |
+|---|---|
+| Danh mục global ở WordPress | Tự xoá mềm mã cũ khi đồng bộ (`apply_tombstones` trong `tgs_accounting_bridge`) |
+| `replacedByItemId` ERP gửi | Cầu nối bỏ qua |
+| POS từng shop | Dùng `local_product_name`, `local_product_lot`, đồng bộ không đụng tới; nhiều khả năng vẫn thấy mã cũ |
+| Tồn ở shop | Nằm dưới mã cũ |
+
+Cần làm: cầu nối đọc `replacedByItemId`; POS ngừng hiện mã cũ ở màn tìm và bán; tồn ở shop đi theo mã giữ lại; đơn và phiếu chuyển kho đang dở vẫn đi tiếp được.
+
+**Còn phải quyết:** hàng trên kệ còn dán tem mã cũ. Đề xuất: gõ tìm thì không thấy mã cũ, quét hoặc gõ đúng nguyên mã cũ thì tự ra mã mới để bán, kèm dòng "mã cũ X, nay là Y".
+
+### 8.3. Tìm bằng mã cũ ở danh sách mặt hàng
+
+Ô tìm ở DM10 và ô chọn hàng ở phiếu mua chỉ tìm theo mã hiện hành, tên, ghi chú. Nếu cần gõ mã cũ ra mặt hàng thì thêm tra `item_codes` vào `GET /api/v1/products`.
