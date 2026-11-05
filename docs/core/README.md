@@ -38,6 +38,7 @@ Chưa `npm install` thì thay `npx bizcity` bằng `node packages/cli/bin/bizcit
 | Xem Core đã làm sẵn gì (số đếm) | `node scripts/do-bang-chung-core.mjs` | Không cần cài gì |
 | Ước tính tiết kiệm giờ và token cho dự án của tôi | `node scripts/uoc-tinh-tiet-kiem.mjs --sensitivity` (số mặc định là **giả định**) | Không cần cài gì |
 | Cài skill cho AI vào dự án | `npx bizcity skills install --to <thư mục>` | — |
+| **Định danh xuyên suốt, đổi mã, gộp mã, nối hệ ngoài** | Xem [06 Xương cá](06-xuong-ca-dinh-danh.md) (tài liệu sống của đợt) | |
 | **Đổi mã một mặt hàng đã có sổ** | **Chưa có thao tác đổi mã** (sổ và giá vốn đã theo `item_id`, API chưa). Giữ một mã suốt đời, xem [03](03-ma-hang-va-vong-doi.md) | — |
 | **Tính giá vốn FIFO** | **Chưa có.** Mặc định cho mọi đơn vị: bình quân gia quyền theo tháng | — |
 | **Ghi sản xuất (MRP)** | **Cổng chờ**, Kernel chưa mở. Xem [skill mở cổng](../../skills/contribute-production-module/SKILL.md) | — |

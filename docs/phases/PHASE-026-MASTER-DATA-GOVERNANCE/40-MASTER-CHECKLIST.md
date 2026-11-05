@@ -8,6 +8,11 @@
 | S026-2 | Golden Tests `T026-G1..G7` có tên, chạy như một cổng (`kiem-chuan.sh`), thất bại chặn phát hành | P0 | P0 | có | 🟡 G1, G7 có (`item-id-so-kho`); G2..G6 ☐ |
 | S026-3 | `parent_item_id` điền từ `parent_sku`; luật R-ITEM-9 (biến thể kinh tế khác = định danh mới); MH26 ghi / đọc `parent_item_id` | P0 | P0 | có | ☐ |
 | S026-4 | `entity_codes` cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột `code`; `resolveEntity`; điền ban đầu | P0 | P0 | có | ☐ |
+| S026-19 | Migration 0070: `merged_into_item_id` gộp nhiều lần, `bizcity_item_root` / `bizcity_item_family`, `item_id` trên bảng cấu hình và dòng hoá đơn, mã hiện hành tự đồng bộ ([06](../../core/06-xuong-ca-dinh-danh.md)) | P0 | P0 | có | ☐ |
+| S026-20 | Cửa nạp và đường tạo mặt hàng không đứt chuỗi khi gặp mã cũ / mã đã gộp; chặn dùng lại mã của hàng còn sống | P0 | P0 | có | ☐ |
+| S026-21 | Báo cáo và truy vấn lịch sử (mua hàng, kho, bán hàng) gom theo `item_id`, lọc riêng theo mã | P0 | P0 | có | ☐ |
+| S026-22 | Hợp đồng hệ ngoài: `itemId`, `mergedIntoItemId` ở nguồn đổi danh mục, mã `external:<nguồn>` | P0 | P0 | có | ☐ |
+| S026-23 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | P0 | có | ☐ |
 | S026-5 | `item_classes.path` + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | P0 | có | ☐ |
 | S026-8 | Nhóm hạch toán theo ngày; `chart_versions`, `account_mappings`, phiếu chuyển số dư (ADR-0018) — ca T026-G6 | P0 | P0 | có | ☐ |
 | S026-9 | Bốn lớp thay đổi ở Gate A (`changeClass` trong phản hồi validate / save); nháp cho đối tượng; lớp 3 bắt buộc xem Tác động + lý do | P0 | P0 | có | ☐ |
