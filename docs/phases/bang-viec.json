@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 91
+      "count": 96
     },
     {
       "key": "partial",
@@ -1226,6 +1226,61 @@
       "claim": null,
       "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
       "line": 27
+    },
+    {
+      "id": "S013-10",
+      "phase": "PHASE-013",
+      "title": "G4: route dùng chung (LEDGER, GOODS) đăng ký ở lõi, route phân hệ trả về chủ (12-CHOT)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S013-11",
+      "phase": "PHASE-013",
+      "title": "G3: mẫu in khai qua printTemplates của module web, lõi web không import mẫu in phân hệ",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S013-12",
+      "phase": "PHASE-013",
+      "title": "G5: web phân hệ không import trang lõi — openCoreScreen (danh sách đóng), bộ lọc dùng chung vào ui-kit",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S013-13",
+      "phase": "PHASE-013",
+      "title": "G2: khung nhìn bizcityread cho kho, giá vốn, dòng bán, hoá đơn, đầu chứng từ (ADR-0026)",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S013-14",
+      "phase": "PHASE-013",
+      "title": "Tài sản vào Kernel (phương án A): apps/api/src/modules/assets → Kernel, tai-san chỉ còn giao diện module — chữ chốt riêng",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md",
+      "line": 32
     },
     {
       "id": "S014-1",

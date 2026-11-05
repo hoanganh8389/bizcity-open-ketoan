@@ -8,11 +8,11 @@
 | Đang làm | 15 |
 | Chờ merge | 0 |
 | Bị chặn | 13 |
-| Chưa ai nhận | 91 |
+| Chưa ai nhận | 96 |
 | Chờ đủ tín hiệu | 39 |
 | Hoãn | 1 |
 | Xong | 192 |
-| **Tổng** | **351** |
+| **Tổng** | **356** |
 
 ## Đang làm (15)
 
@@ -56,7 +56,7 @@
 | [S024-9](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L20) | PHASE-024 | Migration K3: itemid ở ledgerlines, inventorymovements, inventorycosts, productunits, productprices; điền ngư… | P0 | — |
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
 
-## Chưa ai nhận (91)
+## Chưa ai nhận (96)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -70,6 +70,11 @@
 | [S013-7](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L25) | PHASE-013 | Đợt 5: mua-hang → modules/mua-hang/ (người đóng góp giữ chỗ; bộ nạp 25 TH là bài kiểm trước / sau) | — | — |
 | [S013-8](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L26) | PHASE-013 | Đợt 6: giao diện lõi (he-thong, api, danh-muc, dev) — đổi tên / dời khỏi phan-he/ theo Q1 của ADR | — | — |
 | [S013-9](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L27) | PHASE-013 | Phép kiểm SC-MOD-4: không thêm tệp mới vào phan-he/ (ratchet); tiêu chí 3.9 đo bằng số tệp còn lại — cần chữ … | — | — |
+| [S013-10](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L28) | PHASE-013 | G4: route dùng chung (LEDGER, GOODS) đăng ký ở lõi, route phân hệ trả về chủ (12-CHOT) | — | — |
+| [S013-11](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L29) | PHASE-013 | G3: mẫu in khai qua printTemplates của module web, lõi web không import mẫu in phân hệ | — | — |
+| [S013-12](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L30) | PHASE-013 | G5: web phân hệ không import trang lõi — openCoreScreen (danh sách đóng), bộ lọc dùng chung vào ui-kit | — | — |
+| [S013-13](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L31) | PHASE-013 | G2: khung nhìn bizcityread cho kho, giá vốn, dòng bán, hoá đơn, đầu chứng từ (ADR-0026) | — | — |
+| [S013-14](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L32) | PHASE-013 | Tài sản vào Kernel (phương án A): apps/api/src/modules/assets → Kernel, tai-san chỉ còn giao diện module — ch… | — | — |
 | [S014-3](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L13) | PHASE-014 | Lane runtime CONF-RUN / CONF-UPG | — | — |
 | [S014-6](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L16) | PHASE-014 | Standard 1.0.0 | — | — |
 | [S015-1](PHASE-015-CELL-WORDPRESS/40-MASTER-CHECKLIST.md#L11) | PHASE-015 | adapters/cell: khoá 1API, bốn bước, PKCE | — | — |

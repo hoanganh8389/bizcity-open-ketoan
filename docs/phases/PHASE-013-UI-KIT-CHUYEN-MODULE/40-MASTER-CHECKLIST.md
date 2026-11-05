@@ -25,6 +25,11 @@ Việc 3.9 chỉ thật sự xong khi `apps/*/src/phan-he/` hết phân hệ ngh
 | S013-7 | Đợt 5: `mua-hang` → `modules/mua-hang/` (người đóng góp giữ chỗ; bộ nạp 25 TH là bài kiểm trước / sau) | 3.9 | chưa | ☐ |
 | S013-8 | Đợt 6: giao diện lõi (`he-thong`, `api`, `danh-muc`, `dev`) — đổi tên / dời khỏi `phan-he/` theo Q1 của ADR | 3.9 | chưa | ☐ |
 | S013-9 | Phép kiểm SC-MOD-4: không thêm tệp mới vào `phan-he/` (ratchet); tiêu chí 3.9 đo bằng số tệp còn lại — cần chữ chốt riêng (phép kiểm chặn mới) | 3.9 | chưa | ☐ |
+| S013-10 | G4: route dùng chung (`LEDGER`, `GOODS`) đăng ký ở lõi, route phân hệ trả về chủ ([12-CHOT](12-CHOT-G4-G3-G5.md)) <!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 --> | 3.9 | chưa | ☐ |
+| S013-11 | G3: mẫu in khai qua `printTemplates` của module web, lõi web không import mẫu in phân hệ | 3.8 | chưa | ☐ |
+| S013-12 | G5: web phân hệ không import trang lõi — `openCoreScreen` (danh sách đóng), bộ lọc dùng chung vào ui-kit | 3.8 | chưa | ☐ |
+| S013-13 | G2: khung nhìn `bizcity_read` cho kho, giá vốn, dòng bán, hoá đơn, đầu chứng từ ([ADR-0026](../../adr/ADR-0026-mo-rong-khung-nhin-doc-du-lieu-loi.md)) | 3.9 | chưa | ☐ |
+| S013-14 | Tài sản vào Kernel (phương án A): `apps/api/src/modules/assets` → Kernel, `tai-san` chỉ còn giao diện module — chữ chốt riêng | 3.9 | chưa | ☐ |
 
 ## Log
 
@@ -34,3 +39,5 @@ Việc 3.9 chỉ thật sự xong khi `apps/*/src/phan-he/` hết phân hệ ngh
 | 2026-11-03 | Claude Code (theo chỉ đạo chủ dự án) | Đồng bộ với `main` theo [DANH-GIA-DAP-UNG-2026-11-03](../../audits/DANH-GIA-DAP-UNG-2026-11-03.md): S013-1 ✅ (ui-kit và slot có từ PHASE-014); S013-2 giữ 🟡 vì thư mục chưa chuyển. Bảng điểm lộ trình 3.8 và 3.9 đều 100% (tín hiệu `ui.kit`, `ui.slots`, SC-MOD-1/2) <!-- [2026-11-03 11:20 PM Johnny Chu - Chu Hoàng Anh] DANH-GIA --> |
 | 2026-11-03 | Claude Code (theo chỉ đạo chủ dự án) | [ADR-0024](../../adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md): yêu cầu kiến trúc — `phan-he/` đóng băng, phân hệ nghiệp vụ chuyển sang `modules/<key>/` theo đợt; mở S013-3..S013-9; hướng dẫn người đóng góp ở [CHUYEN-PHAN-HE-SANG-MODULES](../../standard/CHUYEN-PHAN-HE-SANG-MODULES.md) <!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 --> |
 | 2026-11-04 | Claude Code (theo chỉ đạo chủ dự án) | Rà ranh giới lõi / phân hệ cho `quy`, `mua-hang`, `ban-hang`, `tai-san`, `kho` ([11-RANH-GIOI-LOI-PHAN-HE](11-RANH-GIOI-LOI-PHAN-HE.md)): 6 khoảng trống năng lực Core G1–G6, 4 câu chờ chủ dự án quyết; đợt 1 chia 1a / 1b, `quy` giao nhân sự khác <!-- [2026-11-04 12:39 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 --> |
+| 2026-11-04 | Claude Code (theo chỉ đạo chủ dự án) | Chủ dự án đồng ý đề xuất ở [11 §8](11-RANH-GIOI-LOI-PHAN-HE.md): mở ADR-0026 (G2), tài sản phương án A, thứ tự G4 → G3 → G5 ([12-CHOT](12-CHOT-G4-G3-G5.md)); mở S013-10..14; tồn max chờ hỏi người đóng góp <!-- [2026-11-04 01:08 AM Johnny Chu - Chu Hoàng Anh] PHASE-013 --> |
+| 2026-11-05 | Claude Code | Rút dòng giữ chỗ G4 (S013-10) khỏi PR này: phạm vi chồng `apps/api/src/phan-he/loi.ts`, `apps/api/src/phan-he/ban-hang/**` của dòng xương cá (Nguyễn Văn Thủy) còn "đang làm" (SC-FLOW-1, R-FLOW-3). Giữ chỗ lại sau khi dòng đó được trả (R-FLOW-6). <!-- [2026-11-05 05:10 PM Johnny Chu - Chu Hoàng Anh] FLOW — rút giữ chỗ G4 vì chồng phạm vi --> |
