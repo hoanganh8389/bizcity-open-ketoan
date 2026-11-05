@@ -71,6 +71,7 @@ export const muaHangMenu: MenuItem[] = [
     key: 'mua-hang-it',
     label: 'Nghiệp vụ IT (riêng)',
     children: [
+      { key: 'mh-hieu-nghiep-vu', label: 'Hiểu hàng hoá và giá vốn', path: '/mua-hang/hieu-nghiep-vu', code: 'MH28' },
       { key: 'mh-tong-quan', label: 'Tổng quan & dữ liệu mẫu', path: '/mua-hang/tong-quan', code: 'MH00' },
       { key: 'mh-khoi-dau', label: 'Nhập dữ liệu khởi đầu', path: '/mua-hang/khoi-dau', code: 'MH20' },
       { key: 'mh-csdl', label: 'Cơ sở dữ liệu mua hàng', path: '/mua-hang/csdl', code: 'MH13' },
