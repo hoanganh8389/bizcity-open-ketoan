@@ -415,14 +415,15 @@ export async function feedMeta(trx: Db, tenantId: string, since?: string) {
     trx.selectFrom('item_classes').select(['code', 'name', 'parent_code', 'sku_code', 'is_active', 'updated_at']).where('tenant_id', '=', tenantId).where('kind', '=', 'group').orderBy('code').execute(),
     listPriceLists(trx, tenantId),
     trx.selectFrom('price_list_branches').select(['branch_code', 'price_list_code']).where('tenant_id', '=', tenantId).execute(),
-    trx.selectFrom('catalog_tombstones').select(['entity', 'key', 'deleted_at']).where('tenant_id', '=', tenantId).where('deleted_at', '>', new Date(at)).orderBy('deleted_at').execute(),
+    trx.selectFrom('catalog_tombstones').select(['entity', 'key', 'deleted_at', 'replaced_by_item_id']).where('tenant_id', '=', tenantId).where('deleted_at', '>', new Date(at)).orderBy('deleted_at').execute(),
   ]);
   return {
     serverTime: new Date().toISOString(),
     groups: groups.map((g) => ({ code: g.code, name: g.name, parentCode: g.parent_code, skuCode: g.sku_code, isActive: g.is_active })),
     priceLists: lists.map(({ branchCodes: _b, pricedRows: _n, ...l }) => l),
     branches: branches.map((b) => ({ branchCode: b.branch_code, priceListCode: b.price_list_code })),
-    tombstones: tomb.map((t) => ({ entity: t.entity, key: t.key, deletedAt: t.deleted_at })),
+    // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: mã bị bỏ vì đổi / gộp trỏ tới định danh thay thế (đóng góp)
+    tombstones: tomb.map((t) => ({ entity: t.entity, key: t.key, deletedAt: t.deleted_at, replacedByItemId: t.replaced_by_item_id })),
   };
 }
 
@@ -439,10 +440,17 @@ export async function feedProducts(trx: Db, tenantId: string, after?: string, li
   const units = skus.length ? await trx.selectFrom('product_units').selectAll().where('tenant_id', '=', tenantId).where('sku', 'in', skus).orderBy('ratio').execute() : [];
   const bySku = new Map<string, typeof units>();
   for (const u of units) bySku.set(u.sku, [...(bySku.get(u.sku) ?? []), u]);
+  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: nguồn đổi mang định danh, hệ ngoài lưu itemId thay vì mã (đóng góp)
+  const ids = skus.length ? await sql<{ code: string; item_id: string; parent_item_id: string | null }>`
+    SELECT c.code, c.item_id, i.parent_item_id FROM item_codes c JOIN items i ON i.item_id = c.item_id
+     WHERE c.tenant_id = ${tenantId} AND c.kind = 'sku' AND c.valid_to IS NULL AND c.code = ANY(${skus}::text[])`.execute(trx) : { rows: [] as { code: string; item_id: string; parent_item_id: string | null }[] };
+  const idBySku = new Map(ids.rows.map((x) => [x.code, x]));
   const last = rows[rows.length - 1];
   return {
     items: rows.map((r) => ({
       ...productDto(r as unknown as ProductRow),
+      itemId: idBySku.get(r.sku)?.item_id ?? null,
+      parentItemId: idBySku.get(r.sku)?.parent_item_id ?? null,
       taxRate: r.tax_rate === null || r.tax_rate === undefined ? null : Number(r.tax_rate),
       units: (bySku.get(r.sku) ?? []).map((u) => ({ unit: u.unit, ratio: Number(u.ratio), isDefault: u.is_default, weightKg: num(u.weight_kg), note: u.note })),
     })),

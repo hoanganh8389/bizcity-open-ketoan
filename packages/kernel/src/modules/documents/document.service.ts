@@ -199,6 +199,26 @@ async function ensureEmployee(trx: Db, tenantId: string, code: string, name: str
     .execute();
 }
 
+// [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: dòng gửi itemId: sku trống thì lấy mã tại ngày chứng từ; có cả hai thì phải cùng một mặt hàng (đóng góp)
+async function resolveLineItems(tenantId: string, doc: IngestDocument): Promise<void> {
+  if (isCashDocument(doc)) return;
+  const lines = (doc.lines as { lineKey: string; sku?: string; itemId?: string }[]).filter((l) => l.itemId);
+  if (!lines.length) return;
+  const docDate = (doc as { docDate: string }).docDate;
+  const rows = await sql<{ item_id: string; root_item_id: string; sku: string | null }>`
+    SELECT item_id, root_item_id, bizcity_item_sku_at(item_id, ${docDate}::date) AS sku
+      FROM items WHERE tenant_id = ${tenantId} AND item_id = ANY(${[...new Set(lines.map((l) => l.itemId!))]}::text[])`.execute(db);
+  const byId = new Map(rows.rows.map((r) => [r.item_id, r]));
+  for (const l of lines) {
+    const r = byId.get(l.itemId!);
+    if (!r || !r.sku) throw Errors.validation(`Dòng ${l.lineKey}: không có mặt hàng ${l.itemId} trong đơn vị`);
+    if (!l.sku) { l.sku = r.sku; continue; }
+    const same = await sql<{ root: string | null }>`
+      SELECT i.root_item_id AS root FROM items i WHERE i.item_id = bizcity_item_at(${tenantId}::bigint, ${l.sku}, ${docDate}::date)`.execute(db);
+    if (same.rows[0]?.root !== r.root_item_id) throw Errors.validation(`Dòng ${l.lineKey}: mã ${l.sku} và itemId ${l.itemId} là hai mặt hàng khác nhau`);
+  }
+}
+
 /** Mã hàng mới trên chứng từ thì thêm vào danh mục mặt hàng (chỉ thêm, không ghi đè mặt hàng đã có) và nhắc kế toán kiểm (R-GATE-9). */
 async function ensureProducts(trx: Db, tenantId: string, doc: IngestDocument): Promise<void> {
   if (isCashDocument(doc)) return;
@@ -206,6 +226,10 @@ async function ensureProducts(trx: Db, tenantId: string, doc: IngestDocument): P
   for (const l of doc.lines as { sku?: string; name?: string; unit?: string }[]) {
     if (l.sku && !seen.has(l.sku)) seen.set(l.sku, { name: l.name ?? '', unit: l.unit ?? '' });
   }
+  if (!seen.size) return;
+  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-20: mã đã đổi / đã gộp không tạo mặt hàng mới; dòng sổ và kho tự gắn đúng item_id theo mã tại ngày (0068) (đóng góp)
+  const taken = await sql<{ code: string }>`SELECT code FROM unnest(${[...seen.keys()]}::text[]) AS code WHERE bizcity_item_code_taken(${tenantId}::bigint, code) IS NOT NULL`.execute(trx);
+  for (const t of taken.rows) seen.delete(t.code);
   if (!seen.size) return;
   const created = await trx
     .insertInto('products')
@@ -547,6 +571,7 @@ async function ingestOne(auth: AuthContext, input: unknown, guard?: string): Pro
   const parsed = ingestDocumentSchema.safeParse(raw);
   // [2026-11-02 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: route nhận thân thô, khuôn kiểm ở đây (sai khuôn cũng vào bể chờ); details là mảng câu như lỗi kiểm route cũ
   if (!parsed.success) throw Errors.validation(ERROR_CATALOG.VALIDATION_ERROR.message, zodIssueTexts(parsed.error));
+  await resolveLineItems(auth.tenantId, parsed.data);
   return processDocument(auth, parsed.data, guard ? { guard } : {});
 }
 

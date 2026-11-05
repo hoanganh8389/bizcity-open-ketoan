@@ -8,6 +8,7 @@
 <!-- [2026-10-30 01:36 PM Johnny Chu - Chu Hoàng Anh] AUDIT — thư mục phase PHASE-001…017, SC-PHASE-1. -->
 <!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
 <!-- [2026-11-01 01:01 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — ảnh kiến trúc Core, cài nhanh 3 bước (scripts/cai-nhanh.sh), giám sát Prometheus / Grafana / Loki, kết nối API + MCP để trợ lý AI ghi nhận sổ sách và đọc báo cáo. -->
+<!-- [2026-11-03 03:40 PM Johnny Chu - Chu Hoàng Anh] G3-01 — lối vào "POS của bạn ghi sổ trong 4 bước" + skill kế toán cho AI -->
 
 **Kế toán mở. Dữ liệu thuộc về doanh nghiệp. Cộng đồng tự do xây dựng ứng dụng.**
 
@@ -110,6 +111,54 @@ Hướng triển khai là **transactional outbox**: dữ liệu nghiệp vụ v�
 open-ketoan hướng đến việc để ChatGPT, Claude, Bizcity Cell hoặc agent khác có thể **đọc số dư, tra cứu chứng từ, lập nháp và đề xuất nghiệp vụ** qua MCP / API. Những thao tác nhạy cảm phải tuân thủ quyền, trạng thái chứng từ, bước xem trước và quy trình xác nhận / duyệt bởi con người.
 
 **AI có thể giúp viết phần mềm và đề xuất nghiệp vụ. AI không được tự duyệt chứng từ, tự vượt khoá kỳ hoặc sửa trực tiếp sổ cái.** Các công cụ MCP có khả năng khác nhau theo phiên bản triển khai; xem trạng thái trong [Bản công bố kiến trúc §2.1](docs/CONG-BO-KIEN-TRUC.md) và [bizcity_mcp@1](docs/contracts/BIZCITY-MCP-v1.md). Bản đang chạy tự liệt kê công cụ ở `POST /mcp` (`tools/list`) và năng lực ở `/api/v1/system/capabilities`.
+
+## Dùng open-ketoan tiết kiệm được gì?
+<!-- [2026-11-03 07:37 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — README: tiết kiệm cho dev thiếu nghiệp vụ kế toán, tách số đã đo / giả định, trỏ demo và bộ hướng dẫn docs/core -->
+
+Dành cho dev xây **ERP nội bộ cho công ty mình**, hoặc module **bán hàng, POS, CRM, quản lý sản xuất (MRP), nhân sự (HRM)** mà thiếu nghiệp vụ kế toán và sổ sách. Thay vì tự học định khoản, thuế, giá vốn, khoá kỳ rồi tự viết và tự kiểm, dev **kể sự việc** theo hợp đồng; Core ghi sổ đúng nguyên tắc. Phân tích đầy đủ, kể cả phần Core **không** giúp được: [docs/core/05](docs/core/05-tiet-kiem-thoi-gian-va-token.md).
+
+**1. Đã đo từ mã nguồn** (chạy lại: `node scripts/do-bang-chung-core.mjs`, đo 2026-11-03; route và ca test là mức tối thiểu)
+
+| Core đã làm sẵn | Số |
+|---|---:|
+| Loại chứng từ nhận vào · tệp luật định khoản | 10 · 6 |
+| Route API · migration CSDL | 453+ · 61 |
+| Ca test API (146 tệp) | 1.087+ |
+| Mã phát hiện ở cửa nạp · kiểm tự chẩn đoán · ca lỗi F22 có cách khắc phục theo vai | 22 · 28 · 93 |
+| Skill cho AI | 7 |
+| Bộ tài liệu tối thiểu AI cần đọc để nối một app vào sổ | ~33 nghìn ký tự, ~8.300–13.400 token (ước lượng) |
+
+**2. Ước tính, là GIẢ ĐỊNH** (mô hình cho một ứng dụng quản lý kinh doanh quy mô vừa; **chưa đo dự án thật nào**). Đổi tham số hoặc nạp số đo thật: `node scripts/uoc-tinh-tiet-kiem.mjs --sensitivity`.
+
+| Nhóm công việc | Tự xây (giờ) | Dùng Core (giờ) | Tránh được |
+|---|---:|---:|---:|
+| Chuẩn hoá dữ liệu ban đầu | 40 | 15 | 25 |
+| Ghi nhận giao dịch và sổ sách | 120 | 15 | 105 |
+| Thiết lập quy tắc ghi nhận | 75 | 30 | 45 |
+| Kiểm soát sai sót và lịch sử điều chỉnh | 80 | 20 | 60 |
+| Kết nối với phần mềm kinh doanh | 45 | 50 | −5 |
+| Kiểm thử và đối chiếu số liệu | 95 | 40 | 55 |
+| **Tổng** | **455** | **170** | **285** (≈ 7,1 tuần công) |
+
+- Với 300.000 đồng/giờ: **85,5 triệu đồng** công phát triển không phải làm lại. Phí API giả định giảm thêm **3,4 triệu** (42,0 → 13,2 triệu token). Tổng **~88,9 triệu đồng** một dự án, trong đó **token chỉ ~3,9%**: lợi ích chính là thời gian developer và độ tin cậy của sổ, không phải tiền API.
+- Phần tiết kiệm thực tế chỉ đạt 30–100% bảng, chi phí 150.000–500.000 đồng/giờ: tổng từ **13,9** đến **145,9 triệu đồng**.
+- Đây là nguồn lực được giải phóng, không phải tiền mặt. Đơn giá token (2,5 / 15 USD mỗi triệu) và tỉ giá 26.000 đồng/USD là giả định, thay bằng giá bạn đang dùng.
+
+**3. Không tiết kiệm được, hoặc ít hơn**
+
+- **Nhóm "Kết nối" mất thêm ~5 giờ**: vẫn phải học hợp đồng, ánh xạ mã, xin khoá API.
+- **MRP**: chứng từ sản xuất, giá thành là cổng chờ, Kernel chưa mở ([skill mở cổng](skills/contribute-production-module/SKILL.md)). **HRM**: không có bảng lương, BHXH, thuế TNCN; chỉ ghi nhận chi phí qua `manual_journal` theo lý do kế toán khai.
+- Giá vốn mặc định là bình quân gia quyền theo tháng; FIFO và đổi mã hàng có phiên bản (`item_id`) chưa có.
+- Core không thay kế toán trưởng (chính sách, lý do, duyệt gói) và không phải tư vấn pháp lý.
+
+**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
+
+| | Địa chỉ | Ghi chú |
+|---|---|---|
+| Kế toán | <https://ketoan.bizcity.vn/> | Mã đơn vị `demo`, email `admin@ketoan.local`, mật khẩu mặc định như mục [Cài đặt](#cài-đặt) |
+| Quản trị kho, POS | <https://quantri.bizcity.vn/> | Tài khoản không công bố trong repo, liên hệ ban quản trị |
+
+Bộ hướng dẫn đọc theo vai (kế toán, CEO, dev, cộng đồng, AI): [docs/core/](docs/core/README.md).
 
 ## Công nghệ và cách triển khai
 
@@ -250,6 +299,18 @@ curl -s https://<máy-chủ>/mcp -H "X-Api-Key: kt_…" -H "Content-Type: applic
 | **Đề xuất ghi — luôn chờ duyệt** | `accounting.document.create_draft` (chứng từ nháp) · `accounting.journal.post` (phiếu kế toán nháp) · `accounting.entry.reverse` (đề xuất huỷ) · `quy.payment_request.create` / `.update` (yêu cầu thanh toán; `.list` / `.get` để đọc) |
 
 **Luật an toàn khi cho AI ghi sổ:** công cụ ghi trả **bút toán xem trước** + `confirm_token`, người dùng xác nhận thì mới lập phiếu, và phiếu luôn ở trạng thái **chờ kế toán duyệt** tại màn ACC14. AI **không** tự duyệt, không vượt khoá kỳ, không đổi cấu hình, không ghi thẳng sổ cái. Mọi lần gọi ghi có bằng chứng (`audit_logs`, chuỗi băm) và quyền theo khoá — AI chỉ làm được những gì khoá cho phép.
+
+### POS của bạn ghi sổ trong 4 bước (không cần biết kế toán)
+
+```bash
+bash scripts/cai-nhanh.sh                                          # ① chạy open-ketoan
+export BIZCITY_SERVER=http://localhost:8088 BIZCITY_API_KEY=...    # ② khoá màn Khoá API (HT02)
+node examples/pos-mini/pos-mini.mjs examples/pos-mini/don-mau.json --out build/don-1.json
+npx bizcity event check build/don-1.json                           # ③ thấy bút toán Kernel dựng từ một đơn bán
+npx bizcity event check build/don-1.json --submit                  # ④ vào sổ
+```
+
+Dùng AI coding agent? `npx bizcity skills install --to <dự án của bạn>` cài ba skill kế toán ([skills/](skills/README.md)): AI đọc hợp đồng, viết code tích hợp, chạy lệnh kiểm, và không tự đoán tài khoản hay luật thuế.
 
 ## Sử dụng
 

@@ -426,6 +426,10 @@
       "kind": "test",
       "test": "phase022-checks.test.ts"
     },
+    "F22-STK-11": {
+      "kind": "test",
+      "test": "inventory-reconcile.test.ts"
+    },
     "F22-STK-10": {
       "kind": "design",
       "note": "tính giá vốn tháng đưa dòng chờ kiểu cũ về 0 (overwriteCostPairs)",

@@ -59,6 +59,8 @@ COPY db/seeds db/seeds
 COPY db/packs db/packs
 # Phiên bản Standard trả ở /api/v1/system/health (apps/api/src/core/version.ts, R-REL-1).
 COPY docs/standard/bizcity-standard.json docs/standard/bizcity-standard.json
+# [2026-11-05 08:43 AM Nguyễn Văn Thủy] PHASE-026 — bảng trụ cột cho HT10 (packages/platform/src/core/version.ts đọc lúc chạy); thiếu tệp thì màn báo NOT_FOUND (đóng góp)
+COPY docs/standard/tru-cot.json docs/standard/tru-cot.json
 # Registry khoá cấu hình cho ctx.settings.get (packages/platform/src/core/settings.ts).
 COPY docs/contracts/bizcity-settings.registry.json docs/contracts/bizcity-settings.registry.json
 COPY docker/api-entrypoint.sh /entrypoint.sh

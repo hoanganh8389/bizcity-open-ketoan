@@ -6,10 +6,10 @@
  */
 import { useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorText, ALL_ROWS } from '@/lib/api';
+import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { PageHeader } from '@/components/PageHeader';
-import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
+import { ErrorBox, Field, Loading, Modal, Pager } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ExcelImport, type ImportColumn } from '@/components/ExcelImport';
@@ -100,6 +100,9 @@ export function pathOf(list: { code: string; name: string; parentCode: string | 
   return path;
 }
 
+/** Danh mục lớn không tải hết về trình duyệt: mỗi trang tối đa ngần này mặt hàng, ít hơn thì không hiện thanh trang. */
+const TRANG_MAT_HANG = 5000;
+
 export function ProductsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
@@ -124,7 +127,7 @@ export function ProductsPage() {
   };
   const classes = { brand: useClasses('brand'), industry: useClasses('industry'), group: useClasses('group'), type: useClasses('type') };
   const groups = useQuery({ queryKey: ['groups'], queryFn: () => api.get<PostingGroup[]>('/api/v1/posting/groups'), staleTime: 60_000 });
-  const params = { search: applied, page, pageSize: ALL_ROWS, group: group ?? undefined, ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)) };
+  const params = { search: applied, page, pageSize: TRANG_MAT_HANG, group: group ?? undefined, ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)) };
   const q = useQuery({ queryKey: ['products', params], queryFn: () => api.getPage<Product[]>('/api/v1/products', params), placeholderData: keepPreviousData });
   const groupPath = useMemo(() => pathOf(classes.group.data ?? []), [classes.group.data]);
   const nameOf = (k: ClassKind, c: string | null) => (c ? classes[k].data?.find((x) => x.code === c)?.name ?? c : '');
@@ -251,6 +254,7 @@ export function ProductsPage() {
               columns={columns}
             />
           )}
+          {Number(q.data?.meta?.total ?? 0) > TRANG_MAT_HANG && <Pager page={page} pageSize={TRANG_MAT_HANG} total={Number(q.data?.meta?.total)} onPage={setPage} />}
         </div>
       </div>
       {bulk && <BulkActivateModal onClose={() => setBulk(false)} groups={groups.data ?? []} />}

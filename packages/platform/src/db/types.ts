@@ -542,6 +542,8 @@ export interface ProductsTable {
   id: Generated<string>;
   tenant_id: string;
   sku: string;
+  // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-19: định danh trên dòng danh mục, do trigger cấp, 0070 (đóng góp)
+  item_id: Generated<string | null>;
   name: Generated<string>;
   unit: Generated<string>;
   posting_group_code: string | null;
@@ -822,6 +824,8 @@ export interface CatalogTombstonesTable {
   entity: 'product' | 'unit' | 'price' | 'price_list' | 'group';
   key: string;
   deleted_at: TimestampDefault;
+  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: định danh thay thế khi mã bị bỏ vì đổi / gộp, 0068 (đóng góp)
+  replaced_by_item_id: string | null;
 }
 
 export interface ItemClassesTable {
@@ -1185,6 +1189,7 @@ export interface TaxInvoiceLinesTable {
 /** View (migration 0053): dòng hàng chứng từ bán / trả lại đã ghi sổ, đọc từ payload. Chỉ đọc. */
 export interface SalesLinesTable {
   id: Generated<string>;
+  item_id: string | null;
   tenant_id: string;
   event_id: string;
   branch_id: string;
@@ -1781,6 +1786,8 @@ export interface ItemClassificationTable {
 
 export interface Database {
   items: ItemsTable;
+  // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: khung nhìn sổ kho theo mã hiện hành, 0069 (đóng góp)
+  inventory_movements_cur: InventoryMovementsTable & { snapshot_sku: string; root_item_id: string | null };
   item_codes: ItemCodesTable;
   item_classification: ItemClassificationTable;
   catalog_rule_reviews: CatalogRuleReviewsTable;

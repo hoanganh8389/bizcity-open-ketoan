@@ -1,6 +1,7 @@
 # [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 # [2026-11-01 01:14 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — job monitoring: promtool check / test rules, check config, amtool check-config (S018-14b).
 # [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: build gói @bizcity/mua-hang-domain sau contracts
+# [2026-11-03 03:30 PM Johnny Chu - Chu Hoàng Anh] G3-01 — test lệnh kế toán của CLI (event check, explain, skills install, pos-mini) — không cần npm ci
 # Bộ kiểm chuẩn Bizcity Core — tests/conformance/README.md · docs/adr/ADR-0006
 # Hai lane: selfcheck (tĩnh, không cần npm ci) và diagnostics (PostgreSQL thật, chỉ đọc, sau khi chạy test).
 # Thêm job monitoring: cấu hình bộ giám sát (infrastructure/monitoring) — luật cảnh báo bắn / hết bắn đúng, cấu hình nạp được.
@@ -28,6 +29,8 @@ jobs:
       - run: node tests/conformance/selfcheck.mjs --self-test
       # --strict: nợ đã hết phải dọn khỏi baseline (bánh cóc chỉ chặt thêm).
       - run: node tests/conformance/selfcheck.mjs --lane selfcheck --strict
+      # Lệnh kế toán cho skill (G3-01): dữ liệu thật của repo + bản dựng giả + máy chủ giả. Ca cần bản dựng thật chạy ở job Kiểm kiểu.
+      - run: node --test packages/cli/test/accounting-cli.test.mjs packages/cli/test/module-accounting.test.mjs packages/cli/test/saving-model.test.mjs tests/conformance/checks/flow/flow.test.mjs
       - name: Bảng điểm vào trang tóm tắt
         if: always()
         run: cat tests/conformance/output/runs/*/SCOREBOARD.md >> "$GITHUB_STEP_SUMMARY"

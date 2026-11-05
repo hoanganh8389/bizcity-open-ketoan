@@ -208,7 +208,8 @@ export async function reconcilePreview(trx: Db, tenantId: string, body: StockInp
     // Tồn trên sổ của đúng kho (dòng không ghi kho tính vào kho mặc định của chi nhánh).
     // Kho mặc định nhận cả dòng không ghi kho hoặc ghi mã kho không thuộc chi nhánh (phiếu chuyển chép mã kho đầu đi).
     const others = (await trx.selectFrom('warehouses').select('code').where('tenant_id', '=', tenantId).where('branch_id', '=', bid).where('code', '<>', ref.warehouseCode).execute()).map((w) => w.code);
-    const book = await trx.selectFrom('inventory_movements').select(['sku', sql<string>`SUM(qty)`.as('qty')]).where('tenant_id', '=', tenantId).where('branch_id', '=', bid)
+    // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: sổ kho theo mã hiện hành (đóng góp)
+    const book = await trx.selectFrom('inventory_movements_cur').select(['sku', sql<string>`SUM(qty)`.as('qty')]).where('tenant_id', '=', tenantId).where('branch_id', '=', bid)
       .where((eb) => (isDefault ? (others.length ? eb('warehouse_code', 'not in', others) : eb.val(true)) : eb('warehouse_code', '=', ref.warehouseCode))).groupBy('sku').execute();
     const bookOf = new Map(book.map((b) => [b.sku, toNumber(b.qty)]));
     const seen = new Set<string>();

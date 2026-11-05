@@ -149,6 +149,13 @@ export const CATALOG_HINTS: Record<string, CatalogHintDef> = {
     why: 'Mã hàng mới trên chứng từ được thêm vào danh mục và vào sổ ngay: {items}. Đơn vị tính và nhóm hạch toán đang theo khai báo tự động; sai thì kho, giá vốn và doanh thu ghi sai.',
     fix: 'Mở từng mặt hàng ở Danh mục mặt hàng, kiểm đơn vị tính và nhóm hạch toán rồi lưu. Muốn kiểm trước khi vào sổ: tắt tự thêm mặt hàng ở Quy định dữ liệu danh mục.',
   },
+  // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 (R-ITEM-3, D026-2): biến thể kinh tế khác = định danh mới — nhắc khi đổi ĐVT gốc của mặt hàng đã có nhập xuất
+  'ITEM-HINT-003': {
+    id: 'ITEM-HINT-003', entity: 'item', level: 'warn', status: 'approved', rule: 'R-ITEM-3',
+    title: 'Mặt hàng {sku} đã có nhập xuất theo đơn vị tính "{from}" — đổi sang "{to}".',
+    why: 'Sổ kho và giá vốn đã đếm theo "{from}". Đổi đơn vị tính gốc của cùng một định danh làm số lượng tồn cũ và mới không cộng được với nhau, đơn giá bình quân lẫn hai quy cách. Nếu đây là quy cách khác (hộp ↔ thùng, 400g ↔ 900g) thì đó là một biến thể kinh tế khác, cần một mặt hàng riêng.',
+    fix: 'Quy cách khác: giữ đơn vị cũ, tạo mặt hàng mới (mã mới, chọn mã cha là {sku}) và dùng quy đổi đơn vị nếu cần. Chỉ sửa tên đơn vị (cùng quy cách, vd "hop" → "Hộp"): lưu và ghi lý do.',
+  },
   // ── Đối tượng (DM03) ───────────────────────────────────────────────────────────────────────────────
   'PART-HINT-001': {
     id: 'PART-HINT-001', entity: 'partner', level: 'info', status: 'draft',

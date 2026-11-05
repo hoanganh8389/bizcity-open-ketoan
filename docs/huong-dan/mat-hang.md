@@ -175,6 +175,17 @@ Khối này liệt kê max của mã ở mọi chi nhánh / shop (cùng bảng v
 
 Khai hàng loạt, xem gợi ý theo tốc độ bán: màn **Tồn max (MH16)** — nút **Xem mọi shop (MH16)** mở sẵn mã này.
 
+## Đổi mã, gộp mã, lịch sử <!-- [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23 (đóng góp) -->
+
+Mở mặt hàng, dùng các nút ở cuối form. Cả hai có hiệu lực từ hôm nay, bắt buộc ghi lý do.
+
+| Việc | Kết quả |
+|---|---|
+| **Đổi mã** | Sổ và chứng từ cũ giữ mã cũ. ĐVT, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Gõ mã cũ vẫn tìm ra hàng, hệ thống bán hàng còn gửi mã cũ vẫn ghi đúng hàng. Mã cũ không dùng lại cho hàng khác |
+| **Gộp mã** | Mã này ngừng dùng và trỏ sang mặt hàng giữ lại. Sổ cũ không đổi. Gộp tiếp được nhiều lần. Phải hết tồn trước khi gộp: còn tồn thì lập phiếu chuyển tồn sang mã giữ lại trước |
+
+Thẻ **Lịch sử** hiện từng lần đổi: lúc nào, ai, hiệu lực từ ngày nào, lý do. Báo cáo theo mặt hàng gom một dòng theo mã hiện hành.
+
 ## Họ mã (mã cha – mã con)
 
 - Mỗi mặt hàng có ô **Mã hàng cha (họ mã)** ở thẻ *Thông tin* (chỉ 1 cấp). Mã con: mã kẹp quà / khuyến mại / chia giá / Z, B… của cùng sản phẩm, hoặc **mã đặt tên khác nhưng bản chất là sản phẩm ấy** (chọn tay). Mã đang là mã cha thì ô này liệt kê các mã con.
@@ -204,3 +215,7 @@ Chứng từ của hệ thống bán hàng mang mã hàng chưa có trong danh m
 - **tắt**: mặt hàng mới thành **nháp**, chứng từ chờ ở Trạm kiểm tra với mã [IN-ITEM-001](loi-dau-vao/IN-ITEM-001.md).
 
 Nút **Kích hoạt hàng loạt** ở danh sách mặt hàng: chọn các mặt hàng nháp, điền một lần đơn vị tính / nhóm hạch toán cho ô **còn trống** (không ghi đè ô đã có). Mặt hàng nào hết lỗi chặn thì kích hoạt, còn thiếu thì giữ nháp và được liệt kê. Chứng từ đang chờ vì các mặt hàng vừa kích hoạt được kiểm lại tự động. Dùng nhóm mặc định cho mặt hàng chưa có nhóm thì phải ghi lý do.
+
+## Danh sách lớn
+
+Mỗi trang hiện tối đa 5.000 mặt hàng. Danh mục nhiều hơn thì có thanh chuyển trang ở dưới lưới; dùng ô tìm hoặc cây nhóm hàng để đến đúng mặt hàng. Tìm được theo một phần mã, tên, ghi chú, không cần gõ dấu.

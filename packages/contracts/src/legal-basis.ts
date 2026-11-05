@@ -45,6 +45,7 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'ITEM-BLOCK-002': ['TT99', 'VAS02'],
   'ITEM-HINT-001': ['TT99', 'VAS02'],
   'ITEM-HINT-002': ['VAS02', 'TT99'],
+  'ITEM-HINT-003': ['VAS02'],
   'PART-HINT-001': ['ND123', 'LGTGT'],
   'PART-HINT-002': ['ND123', 'LGTGT'],
   'PART-HINT-003': ['NOI-BO'],

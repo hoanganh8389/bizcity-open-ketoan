@@ -18,7 +18,7 @@ import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
 import {
   LINEAGE_KIND_LABEL, type CostContribution, type CostExplain, type CostRole, type LineageCostPeriod, type LineageEffect, type LineageEntryLine,
-  type LineageEvent, type LineageItem, type LineageKind,
+  type LineageEvent, type LineageItem, type LineageKind, type ItemHistory, type ItemHistoryEntry, type ItemImpact,
 } from '@ketoan/contracts';
 
 const DEFAULT_LIMIT = 500;
@@ -43,6 +43,29 @@ async function itemKey(trx: Db, tenantId: string, sku: string): Promise<{ itemId
     SELECT kind, code, valid_from::text, valid_to::text FROM item_codes WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
   return { itemId, codes: codes.rows.map((c) => ({ kind: c.kind, code: c.code, validFrom: c.valid_from, validTo: c.valid_to })) };
 }
+/** [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng theo định danh (cha, con, anh em) với mã hiện hành. */
+async function familyOf(trx: Db, tenantId: string, itemId: string | null): Promise<LineageItem['item']['family']> {
+  const empty = { parent: null, children: [], siblings: [] };
+  if (!itemId) return empty;
+  const r = await sql<{ rel: 'parent' | 'child' | 'sibling'; item_id: string; name: string; status: string; sku: string | null }>`
+    WITH me AS (SELECT parent_item_id FROM items WHERE tenant_id = ${tenantId} AND item_id = ${itemId}),
+    fam AS (
+      SELECT 'parent'::text AS rel, i.* FROM items i, me WHERE i.tenant_id = ${tenantId} AND i.item_id = me.parent_item_id
+      UNION ALL SELECT 'child', i.* FROM items i WHERE i.tenant_id = ${tenantId} AND i.parent_item_id = ${itemId}
+      UNION ALL SELECT 'sibling', i.* FROM items i, me WHERE i.tenant_id = ${tenantId} AND me.parent_item_id IS NOT NULL
+                  AND i.parent_item_id = me.parent_item_id AND i.item_id <> ${itemId}
+    )
+    SELECT f.rel, f.item_id, f.name, f.status,
+           (SELECT c.code FROM item_codes c WHERE c.item_id = f.item_id AND c.kind = 'sku' ORDER BY (c.valid_to IS NULL) DESC, c.valid_from DESC LIMIT 1) AS sku
+      FROM fam f ORDER BY 1, 5 LIMIT 200`.execute(trx);
+  const m = (x: (typeof r.rows)[number]) => ({ itemId: x.item_id, sku: x.sku ?? '', name: x.name, status: x.status });
+  return {
+    parent: r.rows.filter((x) => x.rel === 'parent').map(m)[0] ?? null,
+    children: r.rows.filter((x) => x.rel === 'child').map(m),
+    siblings: r.rows.filter((x) => x.rel === 'sibling').map(m),
+  };
+}
+
 /** Điều kiện "dòng của mặt hàng": theo item_id; dòng chưa gắn item_id thì theo mã. */
 const ofItem = (alias: string, skuCol: string, itemId: string | null, sku: string) =>
   itemId ? sql`(${sql.ref(`${alias}.item_id`)} = ${itemId} OR (${sql.ref(`${alias}.item_id`)} IS NULL AND ${sql.ref(`${alias}.${skuCol}`)} = ${sku}))`
@@ -177,7 +200,7 @@ export async function getItemLineage(trx: Db, tenantId: string, sku: string, q: 
   const inQty = events.filter((e) => e.qty > 0).reduce((s, e) => s + e.qty, 0);
   const outQty = events.filter((e) => e.qty < 0).reduce((s, e) => s - e.qty, 0);
   return {
-    item: { itemId: key.itemId, codes: key.codes, sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft },
+    item: { itemId: key.itemId, codes: key.codes, sku: item.sku, name: item.name, unit: item.unit, barcode: item.barcode, isActive: item.is_active, isDraft: item.is_draft, family: await familyOf(trx, tenantId, key.itemId) },
     coverage: { keyedBy: key.itemId ? 'item_id' : 'sku', notes },
     range: { from, to },
     events, entries, costPeriods,
@@ -312,4 +335,164 @@ export async function explainCost(trx: Db, tenantId: string, sku: string, period
   }
 
   return { sku, period, costGroup: row.costGroup, costGroupName: row.costGroupName, computed: true, row, previous, changePct, sentences, contributions, reconcile };
+}
+
+// [2026-11-04 03:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-10 (D026-5): Lịch sử mặt hàng — mã cũ / mới, hiệu lực, người đổi, phân loại, sửa có lý do
+const HISTORY_LIMIT = 300;
+const ACTION_TEXT: Record<string, string> = {
+  'product.update': 'Sửa khai báo', 'product.draft': 'Lưu nháp (còn thiếu khai báo)', 'product.activate': 'Kích hoạt (hết lỗi chặn)',
+  'product.create': 'Thêm mặt hàng', 'product.delete': 'Xoá khỏi danh mục (định danh ngừng dùng, không mất)', 'catalog.warn.unacked': 'Lưu qua API còn cảnh báo, không ghi lý do',
+  'core.product.upsert': 'Tạo / cập nhật qua API', 'core.item.upsert': 'Tạo / cập nhật qua API', 'core.item.add-code': 'Thêm mã', 'core.item.retire-code': 'Đóng mã', 'core.item.classify': 'Đổi phân loại hạch toán',
+};
+const FIELD_TEXT: Record<string, string> = {
+  name: 'tên', unit: 'đơn vị tính', postingGroupCode: 'nhóm hạch toán', brandCode: 'nhãn hàng', industryCode: 'ngành hàng', groupCode: 'nhóm hàng', typeCode: 'loại hàng',
+  isActive: 'theo dõi', note: 'ghi chú', taxOutCode: 'thuế bán ra', taxInCode: 'thuế mua vào', exciseRate: 'thuế TTĐB',
+};
+const show = (v: unknown) => (v === null || v === undefined || v === '' ? '(trống)' : typeof v === 'boolean' ? (v ? 'có' : 'không') : String(v));
+const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
+
+/** Lịch sử một mặt hàng (mã đang dùng hoặc mã cũ): mới nhất trước. */
+export async function getItemHistory(trx: Db, tenantId: string, sku: string): Promise<ItemHistory> {
+  const key = await itemKey(trx, tenantId, sku);
+  if (!key.itemId) throw Errors.notFound(`mặt hàng ${sku}`);
+  const itemId = key.itemId;
+  const current = key.codes.find((c) => c.kind === 'sku' && c.validTo === null)?.code ?? sku;
+  const item = await sql<{ created_at: Date; created_by: string; source_system: string; attributes: Record<string, unknown> }>`
+    SELECT created_at, created_by, source_system, attributes FROM items WHERE tenant_id = ${tenantId} AND item_id = ${itemId}`.execute(trx);
+  const codes = await sql<{ kind: string; code: string; valid_from: string; valid_to: string | null; created_at: Date; created_by: string; note: string }>`
+    SELECT kind, code, valid_from::text, valid_to::text, created_at, created_by, note FROM item_codes
+     WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
+  const cls = await sql<{ valid_from: string; posting_group_code: string | null; tax_out_code: string | null; tax_in_code: string | null; created_at: Date; created_by: string }>`
+    SELECT valid_from::text, posting_group_code, tax_out_code, tax_in_code, created_at, created_by FROM item_classification
+     WHERE tenant_id = ${tenantId} AND item_id = ${itemId} ORDER BY valid_from, id`.execute(trx);
+  const skus = [...new Set(codes.rows.filter((c) => c.kind === 'sku').map((c) => c.code))];
+  const audits = skus.length
+    ? await sql<{ action: string; actor: string; after_data: Record<string, unknown> | null; created_at: Date; object_id: string }>`
+        SELECT action, actor, after_data, created_at, object_id FROM audit_logs
+         WHERE tenant_id = ${tenantId} AND ((object_type = 'product' AND object_id = ANY(${skus}::text[]))
+            -- [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: thao tác theo định danh: đổi mã, gộp mã, gồm mặt hàng đã gộp vào (đóng góp)
+            OR (object_type = 'item' AND object_id IN (SELECT bizcity_item_family(${itemId}))))
+         ORDER BY created_at DESC, id DESC LIMIT ${HISTORY_LIMIT}`.execute(trx)
+    : { rows: [] };
+
+  const out: ItemHistoryEntry[] = [];
+  const it = item.rows[0];
+  if (it) {
+    const orphan = it.attributes?.orphan === true;
+    out.push({ at: iso(it.created_at), effectiveFrom: null, kind: 'created', by: it.created_by,
+      text: orphan ? 'Tạo định danh cho mã có trong sổ / kho mà chưa có trong danh mục (mặt hàng mồ côi)' : `Tạo định danh mặt hàng (nguồn: ${it.source_system || 'danh mục'})` });
+  }
+  for (const c of codes.rows) {
+    const from = c.valid_from === '1970-01-01' ? null : c.valid_from;
+    const label = c.kind === 'sku' ? 'mã hàng' : c.kind === 'barcode' ? 'mã vạch' : c.kind === 'alias' ? 'bí danh' : `mã ${c.kind}`;
+    const renamed = c.kind === 'sku' ? /^đổi mã từ ([^:]+)/.exec(c.note)?.[1] ?? null : null;
+    out.push({ at: iso(c.created_at), effectiveFrom: from, kind: 'code', by: c.created_by,
+      text: renamed ? `Đổi mã ${renamed} → ${c.code}${from ? ` (hiệu lực từ ${from})` : ''}`
+        : `${label[0]!.toUpperCase()}${label.slice(1)} ${c.code}${from ? ` có hiệu lực từ ${from}` : ''}${c.valid_to ? ` — đã đóng, dùng tới trước ${c.valid_to}` : ''}` });
+  }
+  cls.rows.forEach((c, i) => {
+    const prev = cls.rows[i - 1];
+    const from = c.valid_from === '1970-01-01' ? null : c.valid_from;
+    out.push({ at: iso(c.created_at), effectiveFrom: from, kind: 'classification', by: c.created_by,
+      text: prev
+        ? `Đổi phân loại hạch toán: nhóm ${show(prev.posting_group_code)} → ${show(c.posting_group_code)}${from ? ` từ ${from}` : ''} (chứng từ trước ngày đó giữ phân loại cũ)`
+        : `Phân loại hạch toán ban đầu: nhóm ${show(c.posting_group_code)}` });
+  });
+  // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: thao tác trong action ghi nhật ký vào notes.audit của bằng chứng (ACTION §4.4), đọc ra thành từng dòng (đóng góp)
+  type AuditRow = (typeof audits.rows)[number];
+  const flat: AuditRow[] = audits.rows.flatMap((a): AuditRow[] => {
+    const nested = (a.after_data?.notes as { audit?: { action: string; objectType?: string; objectId?: string; after?: Record<string, unknown> | null }[] } | undefined)?.audit;
+    const mine = (nested ?? []).filter((n) => n.objectType === 'item' || (n.objectType === 'product' && skus.includes(n.objectId ?? '')));
+    if (!mine.length) return [a];
+    return mine.map((n) => ({ action: n.action, actor: a.actor, after_data: n.after ?? null, created_at: a.created_at, object_id: n.objectId ?? a.object_id }));
+  });
+  for (const a of flat) {
+    const after = a.after_data ?? {};
+    const res = ((after.notes as Record<string, unknown> | undefined)?.result ?? {}) as Record<string, unknown>;
+    if (a.action === 'core.item.merge') {
+      out.push({ at: iso(a.created_at), effectiveFrom: show(res.mergedAt), kind: 'change', by: a.actor,
+        text: `Gộp mã ${show(res.fromSku)} vào ${show(res.toSku)} — lý do: "${show(res.reason)}"` });
+      continue;
+    }
+    if (a.action === 'core.item.rename-code') {
+      out.push({ at: iso(a.created_at), effectiveFrom: show(res.validFrom), kind: 'change', by: a.actor,
+        text: `Lý do đổi mã ${show(res.fromSku)} → ${show(res.toSku)}: "${show(res.reason)}"` });
+      continue;
+    }
+    if (a.action === 'catalog.warn.ack') {
+      out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'warn-ack', by: a.actor,
+        text: `Lưu dù có cảnh báo ${(after.codes as string[] | undefined)?.join(', ') ?? ''} — lý do: "${show(after.reason)}"` });
+      continue;
+    }
+    const input = after.input as Record<string, unknown> | undefined;
+    // Đầu vào của action: trường để trống nghĩa là giữ giá trị cũ, không phải đổi thành trống.
+    const fields = Object.entries(input ?? after).filter(([k, v]) => FIELD_TEXT[k] && !(input && (v === '' || v === null || v === undefined))).map(([k, v]) => `${FIELD_TEXT[k]} = ${show(v)}`);
+    out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'change', by: a.actor,
+      text: `${ACTION_TEXT[a.action] ?? a.action}${fields.length ? `: ${fields.join('; ')}` : ''}${a.object_id !== current && skus.includes(a.object_id) ? ` (khi còn mã ${a.object_id})` : ''}` });
+  }
+  out.sort((x, y) => (x.at < y.at ? 1 : x.at > y.at ? -1 : 0));
+  return { itemId, sku: current, entries: out.slice(0, HISTORY_LIMIT), truncated: out.length > HISTORY_LIMIT || audits.rows.length >= HISTORY_LIMIT };
+}
+
+// [2026-11-04 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-11 (D026-5): Tác động — mã này đang được dùng ở đâu, đọc trước khi đổi mã / nhóm / ngừng
+const DOC_LABEL: Record<string, string> = {
+  purchase: 'phiếu mua', purchase_return: 'phiếu trả NCC', sale: 'phiếu bán', sale_return: 'phiếu khách trả', transfer: 'phiếu chuyển kho',
+  stock_adjustment: 'phiếu điều chỉnh kho', cogs: 'phiếu giá vốn',
+};
+const fmtQty = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 }).format(n);
+
+/** Tác động của một mặt hàng (mã đang dùng hoặc mã cũ). Truy vấn theo item_id (chỉ mục 0066), không quét bảng. */
+export async function getItemImpact(trx: Db, tenantId: string, sku: string): Promise<ItemImpact> {
+  const key = await itemKey(trx, tenantId, sku);
+  if (!key.itemId) throw Errors.notFound(`mặt hàng ${sku}`);
+  const id = key.itemId;
+  const current = key.codes.find((c) => c.kind === 'sku' && c.validTo === null)?.code ?? sku;
+  const [docs, stock, accounts, prices, units, costs, locked] = await Promise.all([
+    sql<{ doc_type: string; n: string; first: string; last: string }>`
+      SELECT e.doc_type, count(DISTINCT e.id)::text AS n, min(m.doc_date)::text AS first, max(m.doc_date)::text AS last
+        FROM inventory_movements m JOIN accounting_events e ON e.id = m.event_id
+       WHERE m.tenant_id = ${tenantId} AND m.item_id = ${id} GROUP BY e.doc_type ORDER BY 2 DESC`.execute(trx),
+    sql<{ code: string; name: string; qty: string }>`
+      SELECT b.code, b.name, sum(m.qty)::text AS qty FROM inventory_movements m JOIN branches b ON b.id = m.branch_id
+       WHERE m.tenant_id = ${tenantId} AND m.item_id = ${id} GROUP BY b.code, b.name HAVING sum(m.qty) <> 0 ORDER BY b.code`.execute(trx),
+    sql<{ account_code: string; name: string | null; n: string; debit: string; credit: string }>`
+      SELECT l.account_code, max(a.name) AS name, count(*)::text AS n, sum(l.debit)::text AS debit, sum(l.credit)::text AS credit
+        FROM ledger_lines l LEFT JOIN accounts a ON a.tenant_id = l.tenant_id AND a.code = l.account_code
+       WHERE l.tenant_id = ${tenantId} AND l.item_id = ${id} GROUP BY l.account_code ORDER BY l.account_code`.execute(trx),
+    sql<{ price_list_code: string; unit: string; price: string | null }>`
+      SELECT price_list_code, unit, price::text FROM product_prices WHERE tenant_id = ${tenantId} AND item_id = ${id} ORDER BY 1, 2`.execute(trx),
+    sql<{ unit: string; ratio: string }>`
+      SELECT unit, ratio::text FROM product_units WHERE tenant_id = ${tenantId} AND item_id = ${id} ORDER BY ratio`.execute(trx),
+    sql<{ n: string }>`SELECT count(DISTINCT (year, month))::text AS n FROM inventory_costs WHERE tenant_id = ${tenantId} AND item_id = ${id}`.execute(trx),
+    sql<{ period: string; n: string }>`
+      SELECT to_char(f.start_date, 'YYYY-MM') AS period, count(l.id)::text AS n
+        FROM fiscal_periods f
+        JOIN ledger_lines l ON l.tenant_id = f.tenant_id AND l.item_id = ${id} AND l.posting_date BETWEEN f.start_date AND f.end_date
+       WHERE f.tenant_id = ${tenantId} AND EXISTS (SELECT 1 FROM period_locks k WHERE k.period_id = f.id AND k.branch_id IS NULL)
+       GROUP BY 1 ORDER BY 1`.execute(trx),
+  ]);
+  const documents = docs.rows.map((r) => ({ docType: r.doc_type, count: Number(r.n), first: r.first, last: r.last }));
+  const out: ItemImpact = {
+    itemId: id, sku: current, documents,
+    stock: stock.rows.map((r) => ({ branchCode: r.code, branchName: r.name, qty: Number(r.qty) })),
+    accounts: accounts.rows.map((r) => ({ account: r.account_code, name: r.name ?? '', lines: Number(r.n), debit: Number(r.debit), credit: Number(r.credit) })),
+    prices: prices.rows.map((r) => ({ priceList: r.price_list_code, unit: r.unit, price: r.price === null ? null : Number(r.price) })),
+    units: units.rows.map((r) => ({ unit: r.unit, ratio: Number(r.ratio) })),
+    costMonths: Number(costs.rows[0]?.n ?? 0),
+    lockedPeriods: locked.rows.map((r) => ({ period: r.period, lines: Number(r.n) })),
+    sentences: [],
+  };
+  const nDocs = documents.reduce((s, d) => s + d.count, 0);
+  const st = out.stock.reduce((s, b) => s + b.qty, 0);
+  const sn = out.sentences;
+  if (!nDocs && !out.accounts.length) sn.push('Mặt hàng chưa có chứng từ nào: đổi mã, đổi nhóm, đổi đơn vị tính hay ngừng dùng đều không ảnh hưởng sổ.');
+  else {
+    sn.push(`Đang dùng ở ${nDocs} chứng từ (${documents.map((d) => `${d.count} ${DOC_LABEL[d.docType] ?? d.docType}`).join(', ')}) từ ${documents.map((d) => d.first).sort()[0]} tới ${documents.map((d) => d.last).sort().reverse()[0]}.`);
+    sn.push('Đổi mã: các chứng từ đó giữ mã cũ làm ảnh chụp, vẫn thuộc cùng định danh — hành trình, giá vốn, báo cáo kho không tách.');
+    if (out.accounts.length) sn.push(`Sổ cái có dòng ở tài khoản ${out.accounts.map((a) => a.account).join(', ')}. Đổi nhóm hạch toán chỉ áp từ ngày hiệu lực; dòng sổ đã ghi không đổi (sổ chỉ thêm).`);
+  }
+  if (out.stock.length) sn.push(`Còn tồn ${fmtQty(st)} ở ${out.stock.length} chi nhánh: ngừng dùng không xoá tồn; đổi đơn vị tính gốc làm tồn cũ và mới không cộng được (ITEM-HINT-003).`);
+  if (out.lockedPeriods.length) sn.push(`Có dòng sổ trong kỳ đã khoá ${out.lockedPeriods.map((p) => p.period).join(', ')}: báo cáo đã phát hành của các kỳ đó không đổi.`);
+  if (out.prices.length || out.units.length) sn.push(`Bảng giá (${out.prices.length} dòng) và quy đổi đơn vị (${out.units.length} dòng) theo định danh — đổi mã không phải khai lại.`);
+  return out;
 }

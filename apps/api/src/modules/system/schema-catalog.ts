@@ -86,6 +86,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   debt_allocations: { group: 'ledger', label: 'Đối trừ công nợ', term: 'Thanh toán trừ vào khoản nào', module: 'debts', purpose: 'Ghép một khoản ghi Nợ với một khoản ghi Có cùng đối tượng, cùng tài khoản (thu tiền trừ hoá đơn nào, đặt cọc trừ hoá đơn nào). Có người ghép, ngày ghép; gỡ được.' },
   purchase_documents: { group: 'events', label: 'Chứng từ mua hàng', term: 'Phiếu mua hàng', module: 'mua-hang', purpose: 'Mọi chứng từ phía mua trong một bảng (đơn đặt, nhập mua, trả / đổi hàng, nhận / xuất quà, chi phí mua hàng, thưởng cuối kỳ, ứng trước, trả tiền), phân biệt bằng kind. Cột cho thứ cần lọc; data (jsonb) giữ dòng hàng, điều khoản, lịch trả, cảnh báo và vết chính sách lúc duyệt. Duyệt → ghi sổ qua cổng chứng từ (links giữ các chứng từ kế toán đã sinh).' },
   purchase_policies: { group: 'rules', label: 'Chính sách mua hàng', term: 'Điều kiện mua hàng', module: 'mua-hang', purpose: 'Chiết khấu, bậc số lượng, khuyến mại, CKTT, thưởng doanh số / chỉ tiêu / giai đoạn, hạn mức công nợ (phân bổ chi nhánh), điều khoản thanh toán, giá mua cố định, chỉ tiêu cung ứng, theo dõi lô: loại + phạm vi + hiệu lực + quy tắc (jsonb).' },
+  // [2026-11-05 03:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: khung nhìn sổ kho theo mã hiện hành, 0069 (đóng góp)
+  inventory_movements_cur: { group: 'rules', label: 'Sổ kho theo mã hiện hành', term: 'Sổ kho', module: 'kho', purpose: 'Khung nhìn chỉ đọc của sổ kho: sku là mã hiện hành, snapshot_sku là mã lúc ghi; báo cáo gom một dòng qua đổi mã, gộp mã.' },
   stock_levels: { group: 'rules', label: 'Tồn max / min', term: 'Tồn max', module: 'mua-hang', purpose: 'Tồn max / min theo chi nhánh – kho – mã hàng (ĐVT nhỏ nhất): gốc của đề xuất chuyển hàng xuống shop và công thức đặt mua. Ghi từ màn Tồn max, nhập Excel, phiếu đăng ký đã duyệt.' },
   stock_sku_settings: { group: 'rules', label: 'Cài tồn max riêng từng mã', term: 'Tốc độ bán riêng', module: 'mua-hang', purpose: 'Riêng từng mã: số ngày đo tốc độ bán, số ngày cần đủ hàng, cách làm tròn khi chuyển (tự động / nguyên thùng / lẻ).' },
   stock_max_requests: { group: 'events', label: 'Phiếu đăng ký tồn max', term: 'Đăng ký tồn max', module: 'mua-hang', purpose: 'Shop đăng ký max mã có sẵn / chi nhánh đăng ký max hàng mới (bảng mặt hàng × shop); duyệt thì ghi tồn max.' },
@@ -143,7 +145,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // Danh mục
   accounts: { group: 'catalog', label: 'Hệ thống tài khoản', term: 'Tài khoản kế toán', module: 'accounts', purpose: 'Danh mục tài khoản (111, 131, 156, 511…), cấp cha con, bên số dư, có theo dõi đối tượng hay không.' },
   partners: { group: 'catalog', label: 'Đối tượng', term: 'Đối tượng công nợ', module: 'partners', purpose: 'Khách hàng, nhà cung cấp, nhân viên, nội bộ, khác (cột kind = vai trò chính, also_kinds = vai trò thêm: vừa là NCC vừa là khách hàng) — để theo dõi công nợ từng đối tượng trên 131, 331…' },
-  products: { group: 'catalog', label: 'Hàng hoá', module: 'catalog', purpose: 'Danh mục hàng chuẩn: mã hàng (sku), tên, nhóm, barcode, ảnh, mô tả, cờ hàng chính / sữa < 24 tháng / không bán / xuất điều chỉnh, thuế, nhóm hạch toán. Hệ thống bán hàng kéo về qua /api/v1/catalog/feed.' },
+  products: { group: 'catalog', label: 'Hàng hoá', module: 'catalog', purpose: 'Danh mục hàng chuẩn: định danh (item_id), mã hàng hiện hành (sku), tên, nhóm, barcode, ảnh, mô tả, cờ hàng chính / sữa < 24 tháng / không bán / xuất điều chỉnh, thuế, nhóm hạch toán. Hệ thống bán hàng kéo về qua /api/v1/catalog/feed.' },
   unit_names: { group: 'catalog', label: 'Danh mục đơn vị tính', term: 'Tên ĐVT (Hộp, Lốc, Lốc_4, Thùng…)', module: 'catalog', purpose: 'Tên ĐVT dùng chung, không có tỉ lệ: có sẵn danh sách khởi tạo; khai ĐVT mới ở mặt hàng thì CSDL tự thêm (trigger). Tỉ lệ quy đổi ở product_units.' },
   product_units: { group: 'catalog', label: 'Đơn vị tính của mặt hàng', term: 'ĐVT & tỉ lệ quy đổi', module: 'catalog', purpose: 'Mỗi mặt hàng một bộ đơn vị: 1 đơn vị = ratio × đơn vị nhỏ nhất (đúng một đơn vị ratio 1), đơn vị bán chính, khối lượng.' },
   price_lists: { group: 'catalog', label: 'Bảng giá bán', module: 'catalog', purpose: 'Bảng giá: đúng một bảng giá công ty (is_company) + các bảng giá chi nhánh / kênh.' },
@@ -169,6 +171,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   intake_inbox: { group: 'platform', label: 'Bể chờ đầu vào', term: 'Trạm kiểm tra đầu vào', module: 'documents', purpose: 'Chứng từ cửa nạp từ chối: nguyên văn, phát hiện IN-*, điểm, số lần gửi, trạng thái xử lý (ADR-0014). Không phải sổ: không thành sự việc, không bút toán. Dọn theo hạn giữ 90 / 7 ngày.' },
   // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — danh mục bảng: catalog_rule_reviews (0063, HT09 duyệt luật nhắc)
   // [2026-11-03 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — B2a: Item Master song song với products (0065)
+  // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-19: hai khung nhìn đọc mới của lõi, 0070 (đóng góp)
   items: { group: 'platform', label: 'Mặt hàng — định danh bất biến', term: 'Item Master', module: 'catalog', purpose: 'item_id ULID bất biến của mặt hàng (không đổi, không xoá, không dùng lại); tên, đơn vị gốc, trạng thái nháp / đang dùng / ngừng. Chạy song song với products, đồng bộ bằng trigger (B2a).' },
   item_codes: { group: 'platform', label: 'Mã hàng có phiên bản', term: 'Item Master', module: 'catalog', purpose: 'Mã hàng (sku, mã vạch, bí danh, mã ngoài) → mặt hàng, có ngày hiệu lực; chỉ thêm, đổi mã = đóng mã cũ + thêm mã mới. Một mã tại một ngày chỉ trỏ một mặt hàng.' },
   item_classification: { group: 'platform', label: 'Phân loại hạch toán theo ngày', term: 'Item Master', module: 'catalog', purpose: 'Loại, nhóm hạch toán, thuế, theo dõi của mặt hàng theo ngày hiệu lực; lịch sử không bị sửa. Chưa phân loại = loại để trống (R-ITEM-8).' },
@@ -208,6 +211,9 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_item_codes_guard: 'Mã hàng chỉ thêm (R-ITEM-0): UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một mặt hàng (DG-ITEM-1); không xoá.',
   bizcity_item_classification_guard: 'Phân loại hạch toán theo ngày (R-ITEM-5 / 7): không chồng hiệu lực; bản đã đóng không sửa; không xoá.',
   bizcity_item_truncate_guard: 'Chặn xoá sạch bảng định danh mặt hàng bằng TRUNCATE (R-ITEM-0).',
+  // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng
+  bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
+  bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',
   bizcity_set_item_id: 'Dòng mới (sổ cái, kho, giá vốn, đơn vị quy đổi, bảng giá) tự gắn item_id theo mã có hiệu lực tại ngày của dòng; mã chưa có trong danh mục → để rỗng, điền khi mặt hàng được tạo (bizcity_item_fill_refs).',
 };
 

@@ -138,6 +138,22 @@ function FlowTab({ onTable }: { onTable: (n: string) => void }) {
         </FlowStep>
       </div>
 
+      <h3 className="kt-h">Định danh mặt hàng: xương sống xuyên suốt</h3>
+      <p className="kt-muted">
+        Mỗi mặt hàng có một <span className="mono">item_id</span> không bao giờ đổi. Người dùng làm việc bằng mã, hệ thống nối dữ liệu bằng định danh.
+        Dòng sổ lưu cả hai: định danh để nối, mã để biết lúc ghi mang mã gì. Chi tiết ở thẻ Tài liệu nghiệp vụ, mục 10.
+      </p>
+      <table className="grid">
+        <thead><tr><th>Nhóm</th><th>Bảng</th><th>Cột mã hàng nghĩa là</th><th>Đổi mã, gộp mã</th></tr></thead>
+        <tbody>
+          <tr><td><b>Định danh</b></td><td>{t('items')}, {t('item_codes')}, {t('item_classification')}</td><td>Mọi mã từng dùng, theo ngày hiệu lực</td><td>Giữ nguyên định danh, thêm một dòng mã</td></tr>
+          <tr><td><b>Danh mục, cấu hình</b></td><td>{t('products')}, {t('product_units')}, {t('product_prices')}, {t('supplier_products')}, {t('supplier_item_aliases')}, {t('stock_levels')}, {t('stock_sku_settings')}</td><td>Mã hiện hành</td><td>Tự đổi theo mã mới</td></tr>
+          <tr><td><b>Lịch sử</b></td><td>{t('ledger_lines')}, {t('inventory_movements')}, {t('inventory_costs')}, {t('tax_invoice_lines')}, {t('supplier_invoice_lines')}</td><td>Mã lúc ghi</td><td>Không dòng nào bị sửa</td></tr>
+          <tr><td><b>Dòng phiếu trong JSON</b></td><td>{t('purchase_documents')}, {t('transfer_requests')}, {t('stock_max_requests')}</td><td>Mã lúc lập, kèm <span className="mono">itemId</span> trên từng dòng</td><td>Không sửa phiếu cũ</td></tr>
+          <tr><td><b>Báo cáo</b></td><td>{t('inventory_movements_cur')}, {t('sales_lines')}</td><td>Bảng ảo: gom theo đích gộp <span className="mono">root_item_id</span></td><td>Một dòng liền qua đổi mã, gộp mã</td></tr>
+        </tbody>
+      </table>
+
       <h3 className="kt-h">Cờ của một chứng từ: nhìn cột nào để biết mới / đổi / xong</h3>
       <p className="kt-muted">Không có bảng hàng đợi riêng — trạng thái nằm ngay trên dòng {t('accounting_events')}.</p>
       <table className="grid">
@@ -505,6 +521,9 @@ function TableDetail({ t, groups, onTable }: { t: SchemaTable; groups: SchemaGro
 // Thuật ngữ ↔ bảng
 
 const TERMS: { term: string; plain: string; dev: string; tables: string[]; code: string }[] = [
+  { term: 'Định danh mặt hàng', plain: 'Số căn cước của mặt hàng, không bao giờ đổi. Người dùng không cần biết, chỉ gõ mã', dev: 'Khoá chính bất biến (ULID), mọi dòng dữ liệu nối bằng cột này', tables: ['items'], code: 'db/migrations/0068_xuong_ca_dinh_danh.sql' },
+  { term: 'Đổi mã', plain: 'Đổi mã hàng từ hôm nay. Sổ cũ vẫn ghi mã cũ, gõ mã cũ vẫn ra mặt hàng này', dev: 'Đóng một dòng mã, thêm một dòng mã; định danh giữ nguyên', tables: ['item_codes'], code: 'modules/catalog/item.actions.ts' },
+  { term: 'Gộp mã', plain: 'Hai mã thực ra là một hàng: mã này ngừng dùng và trỏ sang mã giữ lại. Gộp được nhiều lần', dev: 'merged_into_item_id là con trỏ một chiều, root_item_id lưu sẵn đích cuối', tables: ['items'], code: 'modules/catalog/item.actions.ts' },
   { term: 'Tài khoản', plain: 'Một "cái hộp" có mã số: 111 tiền mặt, 131 khách nợ, 156 hàng hoá, 511 doanh thu', dev: 'Một biến / ví có mã', tables: ['accounts'], code: 'modules/accounts' },
   { term: 'Nợ / Có', plain: 'Cột trái / cột phải khi ghi. Không có nghĩa là "nợ tiền"', dev: 'Quy ước dấu: hộp loại 1, 2, 6, 8 tăng bên Nợ; loại 3, 4, 5, 7 tăng bên Có', tables: ['ledger_lines'], code: 'cột debit, credit' },
   { term: 'Chứng từ', plain: 'Bằng chứng của nghiệp vụ: hoá đơn, phiếu thu, phiếu nhập…', dev: 'Input / request gửi vào', tables: ['accounting_events', 'accounting_event_versions'], code: 'modules/documents' },

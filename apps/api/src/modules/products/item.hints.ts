@@ -4,6 +4,7 @@
  * Đánh giá một bản khai báo mặt hàng (đã gộp với bản đang có) — chỉ đọc. Còn mức block → mặt hàng lưu NHÁP (products.is_draft),
  * chưa dùng được trên chứng từ (IN-ITEM-009); chỉ còn warn → đang dùng sau khi ghi lý do (D023-6).
  */
+import { sql } from 'kysely';
 import { catalogFinding, type CatalogFinding } from '@ketoan/contracts';
 import type { Db } from '../../db/client.js';
 import type { AuthContext } from '../../core/auth.js';
@@ -24,11 +25,29 @@ export interface ItemDraft {
   sku: string;
   unit?: string | null;
   postingGroupCode?: string | null;
+  /** Đơn vị tính gốc TRƯỚC lần sửa này (để nhắc ITEM-HINT-003); không gửi = không so. */
+  previousUnit?: string | null;
+}
+
+/** Mặt hàng đã có dòng nhập xuất chưa (theo định danh, hoặc theo mã khi dòng chưa có item_id). */
+async function hasMovements(db: Db, tenantId: string, sku: string): Promise<boolean> {
+  const r = await sql<{ x: number }>`
+    SELECT 1 AS x FROM inventory_movements m
+     WHERE m.tenant_id = ${tenantId}
+       AND (m.sku = ${sku} OR m.item_id = bizcity_item_at(${tenantId}, ${sku}, CURRENT_DATE))
+     LIMIT 1`.execute(db);
+  return r.rows.length > 0;
 }
 
 export async function itemHints(db: Db, tenantId: string, d: ItemDraft): Promise<CatalogFinding[]> {
   const out: CatalogFinding[] = [];
   if (!d.unit?.trim()) out.push(catalogFinding('ITEM-BLOCK-001', { sku: d.sku }, { field: 'unit' }));
+  // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 (R-ITEM-3): đổi ĐVT gốc của mặt hàng đã có nhập xuất → nhắc "biến thể khác = mặt hàng mới"
+  const from = d.previousUnit?.trim() ?? '';
+  const to = d.unit?.trim() ?? '';
+  if (from && to && from !== to && (await hasMovements(db, tenantId, d.sku))) {
+    out.push(catalogFinding('ITEM-HINT-003', { sku: d.sku, from, to }, { field: 'unit' }));
+  }
   if (!d.postingGroupCode) {
     const def = await db.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).where('is_default', '=', true).executeTakeFirst();
     out.push(def
@@ -45,9 +64,9 @@ export const blockCodes = (f: readonly CatalogFinding[]) => f.filter((x) => x.le
  * Áp trạng thái Gate A cho một mặt hàng ĐÃ GHI (mọi đường lưu: sửa nhanh, form đầy đủ, nhập Excel, ĐVT thùng của mua hàng):
  * còn lỗi chặn → nháp; hết → đang dùng; vừa từ nháp sang đang dùng → bể chờ tiền kiểm lại các mục có mã này (R-GATE-6).
  */
-export async function applyItemGate(trx: Db, auth: AuthContext, sku: string): Promise<{ findings: CatalogFinding[]; isDraft: boolean; wasDraft: boolean; recheck: { checked: number; cleared: number } }> {
+export async function applyItemGate(trx: Db, auth: AuthContext, sku: string, opts: { previousUnit?: string | null } = {}): Promise<{ findings: CatalogFinding[]; isDraft: boolean; wasDraft: boolean; recheck: { checked: number; cleared: number } }> {
   const row = await trx.selectFrom('products').select(['unit', 'posting_group_code', 'is_draft']).where('tenant_id', '=', auth.tenantId).where('sku', '=', sku).executeTakeFirstOrThrow();
-  const findings = await itemHints(trx, auth.tenantId, { sku, unit: row.unit, postingGroupCode: row.posting_group_code });
+  const findings = await itemHints(trx, auth.tenantId, { sku, unit: row.unit, postingGroupCode: row.posting_group_code, previousUnit: opts.previousUnit });
   const blocks = blockCodes(findings);
   const isDraft = blocks.length > 0;
   await trx.updateTable('products').set({ is_draft: isDraft, draft_codes: blocks }).where('tenant_id', '=', auth.tenantId).where('sku', '=', sku).execute();

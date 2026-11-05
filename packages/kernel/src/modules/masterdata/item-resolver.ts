@@ -50,6 +50,13 @@ export async function resolveItems(trx: Db, tenantId: string, refs: readonly Ite
   };
   const wanted = new Set(ids);
   refs.forEach((ref, i) => { const h = hit(ref, keys[i] ?? null); if (h.row) wanted.add(h.row.item_id); });
+  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-19: mã trỏ mặt hàng đã gộp → đi theo chuỗi gộp tại ngày, gộp mấy lần cũng ra mặt hàng đang có hiệu lực (đóng góp)
+  const walked = new Map<string, string>();
+  if (wanted.size) {
+    const w = await sql<{ item_id: string; cur: string }>`SELECT i.item_id, bizcity_item_walk(i.item_id, ${asOf}::date) AS cur FROM items i WHERE i.tenant_id = ${tenantId} AND i.item_id IN (${sql.join([...wanted])})`.execute(trx);
+    for (const r of w.rows) { walked.set(r.item_id, r.cur); wanted.add(r.cur); }
+  }
+  const currentOf = (id: string) => walked.get(id) ?? id;
 
   const items = wanted.size
     ? await trx.selectFrom('items').select(['item_id', 'name', 'unit_base', 'status']).where('tenant_id', '=', tenantId).where('item_id', 'in', [...wanted]).execute()
@@ -70,12 +77,12 @@ export async function resolveItems(trx: Db, tenantId: string, refs: readonly Ite
     const list = skuByItem.get(itemId) ?? [];
     return list.find((r) => validAt(r, asOf)) ?? [...list].sort((a, b) => day(b.valid_from).localeCompare(day(a.valid_from)))[0];
   };
-  const unitSkus = [...new Set([...wanted].map((id) => skuAt(id)?.code).filter((v): v is string => Boolean(v)))];
-  const unitRows = unitSkus.length
-    ? await sql<{ sku: string; unit: string; ratio: string }>`SELECT sku, unit, ratio FROM product_units WHERE tenant_id = ${tenantId} AND sku IN (${sql.join(unitSkus)})`.execute(trx)
-    : { rows: [] as { sku: string; unit: string; ratio: string }[] };
-  const unitsBySku = new Map<string, Record<string, number>>();
-  for (const u of unitRows.rows) unitsBySku.set(u.sku, { ...(unitsBySku.get(u.sku) ?? {}), [u.unit]: Number(u.ratio) });
+  // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-19: đơn vị quy đổi đọc theo định danh, mã tại ngày cũ vẫn ra đúng đơn vị (đóng góp)
+  const unitRows = wanted.size
+    ? await sql<{ item_id: string; unit: string; ratio: string }>`SELECT item_id, unit, ratio FROM product_units WHERE tenant_id = ${tenantId} AND item_id IN (${sql.join([...wanted])})`.execute(trx)
+    : { rows: [] as { item_id: string; unit: string; ratio: string }[] };
+  const unitsByItem = new Map<string, Record<string, number>>();
+  for (const u of unitRows.rows) unitsByItem.set(u.item_id, { ...(unitsByItem.get(u.item_id) ?? {}), [u.unit]: Number(u.ratio) });
 
   const build = (itemId: string, code: ItemCodeInfo, alias?: string): ResolveResult => {
     const it = itemById.get(itemId)!;
@@ -83,8 +90,7 @@ export async function resolveItems(trx: Db, tenantId: string, refs: readonly Ite
     const classification: ItemClassificationInfo | null = c
       ? { validFrom: day(c.valid_from), validTo: c.valid_to ? day(c.valid_to) : null, kind: (c.kind as ItemKind | null) ?? null, postingGroupCode: c.posting_group_code, taxOutCode: c.tax_out_code, taxInCode: c.tax_in_code, exciseRate: c.excise_rate === null ? null : Number(c.excise_rate), track: c.track ?? [] }
       : null;
-    const sku = skuAt(itemId)?.code;
-    const units = { ...(it.unit_base ? { [it.unit_base]: 1 } : {}), ...((sku && unitsBySku.get(sku)) || {}) };
+    const units = { ...(it.unit_base ? { [it.unit_base]: 1 } : {}), ...(unitsByItem.get(itemId) ?? {}) };
     return { ok: true, itemId, name: it.name, unitBase: it.unit_base, status: it.status as ItemStatus, code, classification, unclassified: !classification || classification.kind === null, units, ...(alias ? { alias: { fromCode: alias } } : {}) };
   };
   const fail = (ref: ItemRef, code: ResolveFailure['code'], detail: string): ResolveFailure => ({ ok: false, code, detail, ref });
@@ -92,13 +98,19 @@ export async function resolveItems(trx: Db, tenantId: string, refs: readonly Ite
   return refs.map((ref, i): ResolveResult => {
     if (ref.itemId) {
       if (!isItemId(ref.itemId) || !itemById.has(ref.itemId)) return fail(ref, 'IN-ITEM-008', `itemId ${ref.itemId} không thuộc đơn vị này`);
-      const sku = skuAt(ref.itemId);
-      return build(ref.itemId, sku ? toCode(sku) : { kind: 'sku', code: '', validFrom: '1970-01-01', validTo: null });
+      const cur = currentOf(ref.itemId);
+      const sku = skuAt(cur);
+      return build(cur, sku ? toCode(sku) : { kind: 'sku', code: '', validFrom: '1970-01-01', validTo: null });
     }
     const k = keys[i];
     if (!k) return fail(ref, 'IN-ITEM-001', 'Không có mã, mã vạch hay itemId để tra');
     const h = hit(ref, k);
-    if (h.row) return build(h.row.item_id, toCode(h.row), h.row.kind === 'alias' ? h.row.code : undefined);
+    if (h.row) {
+      const cur = currentOf(h.row.item_id);
+      // Mã đã gộp: trả mã hiện hành của mặt hàng đích, giữ dấu mã đã gửi ở alias.
+      if (cur !== h.row.item_id) { const s = skuAt(cur); return build(cur, s ? toCode(s) : toCode(h.row), h.row.code); }
+      return build(h.row.item_id, toCode(h.row), h.row.kind === 'alias' ? h.row.code : undefined);
+    }
     if (h.all.length) return fail(ref, 'IN-ITEM-002', `Mã ${k.code} không có hiệu lực ngày ${asOf} (hiệu lực: ${ranges(h.all)})`);
     return fail(ref, 'IN-ITEM-001', `Mã ${k.code} chưa có trong danh mục`);
   });

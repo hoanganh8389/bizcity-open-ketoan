@@ -12,11 +12,13 @@ import { ULID_RE } from '@ketoan/contracts';
 import { db } from '../src/db/client.js';
 import { resolveItem, resolveItems } from '../src/kernel/public.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+import { todayVN } from '../src/core/date-rules.js';
 
 let ctx: TestCtx;
 let tenantId = '';
 let group = '';
-const today = () => new Date().toISOString().slice(0, 10);
+// [2026-11-04 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ngày "hôm nay" của test theo giờ Việt Nam như CSDL (CURRENT_DATE): new Date().toISOString() là UTC nên lệch ngày từ 00:00 tới 07:00 giờ VN
+const today = () => todayVN();
 const addDays = (d: string, n: number) => new Date(Date.parse(d) + n * 86_400_000).toISOString().slice(0, 10);
 const itemOf = (sku: string) => db.selectFrom('item_codes').innerJoin('items', 'items.item_id', 'item_codes.item_id')
   .select(['items.item_id', 'items.name', 'items.unit_base', 'items.status', 'items.draft_codes', 'items.attributes', 'items.retired_at'])

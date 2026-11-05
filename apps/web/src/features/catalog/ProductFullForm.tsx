@@ -16,6 +16,8 @@ import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Loading, Modal, useViewAgain } from '@/components/ui';
 import { ItemPicker, ListPicker } from '@/components/pickers';
 import { HelpDrawer } from '@/components/HelpDrawer';
+// [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
+import { DoiMaModal, GopMaModal, LichSuMatHang } from './DoiMaGopMa';
 import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
@@ -99,6 +101,8 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
   const [help, setHelp] = useState(false);
   const [imgBad, setImgBad] = useState(false);
   const [taxDetail, setTaxDetail] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [merging, setMerging] = useState(false);
   const set = (p: Partial<FullProduct>) => setV((x) => ({ ...x, ...p }));
 
   const loaded = useQuery({ queryKey: ['catalog-product', sku], queryFn: () => api.get<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku!)}`), enabled: !isNew });
@@ -243,16 +247,19 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} onClose={onClose}
       footer={<>
         {!isNew && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Tạo mã mới = mã này + chữ đuôi (K chia giá, M khuyến mại, Q kẹp quà, T có tem, Z / B…): chép nhóm, nhãn, ĐVT, thuế; tên đặt theo quy định" onClick={() => setChooseVariant(true)}>Tạo mã biến thể…</button>}
+        {!isNew && <button className="btn" data-view-ok title="Đổi sang mã mới từ hôm nay, sổ cũ giữ mã cũ" onClick={() => setRenaming(true)}>Đổi mã</button>}
+        {!isNew && <button className="btn" data-view-ok title="Gộp mã này vào mặt hàng khác từ hôm nay, sổ cũ giữ nguyên" onClick={() => setMerging(true)}>Gộp mã</button>}
         <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim()} title={blockCount ? 'Còn lỗi chặn: mặt hàng được lưu NHÁP, chưa dùng được trên chứng từ cho tới khi sửa xong' : undefined}
           onClick={() => ack.request((a) => save.mutate(a))}>{blockCount ? `Lưu nháp (còn ${blockCount} lỗi chặn)` : ack.label}</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={loaded.error ? errorText(loaded.error) : null} />
       <div className="tabs full" role="tablist" style={{ marginBottom: 8 }}>
-        {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{tabBtn('acc', 'Kế toán')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}
+        {tabBtn('info', 'Thông tin')}{tabBtn('units', `Đơn vị tính (${v.units.filter((u) => u.unit.trim()).length})`)}{tabBtn('status', 'Trạng thái')}{tabBtn('acc', 'Kế toán')}{extraTabs.map((t) => tabBtn(t.key, t.label))}{tabBtn('prices', 'Giá bán')}{!isNew && tabBtn('history', 'Lịch sử')}
         <span className="spacer" style={{ flex: 1 }} />
         <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)} title="Cách khai mặt hàng, ĐVT, giá, sinh mã hàng">? Hướng dẫn</button>
       </div>
       {help && <HelpDrawer guideKey="mat-hang" onClose={() => setHelp(false)} />}
 
+      {tab === 'history' && !isNew && <LichSuMatHang sku={v.sku} />}
       {tab === 'info' && (
         <fieldset className="fgroup">
           <legend>Thông tin mặt hàng</legend>
@@ -357,6 +364,8 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
       <WarnAckBox ack={ack} />
       {save.error && <div className="alert alert-bad full">{errorText(save.error)}</div>}
     </Modal>
+    {renaming && <DoiMaModal sku={v.sku} onClose={() => setRenaming(false)} onDone={() => { setRenaming(false); onClose(); }} />}
+    {merging && <GopMaModal sku={v.sku} onClose={() => setMerging(false)} onDone={() => { setMerging(false); onClose(); }} />}
     {chooseVariant && <ChonDuoiMa base={baseOf(v.sku)} name={v.name} onClose={() => setChooseVariant(false)} onPick={(sf) => { setChooseVariant(false); setVariant(sf); }} />}
     {/* Form mã biến thể đặt NGOÀI và SAU form đang xem: nằm trên, nhận phím; form xem khoá mọi ô / nút bên trong nó. */}
     {variant && <ProductFullForm sku={null} classes={classes} groupPath={groupPath} initialSuffix={variant} onClose={() => setVariant(null)}

@@ -7,12 +7,24 @@
  *   module new <key> [--label "Tên"] [--code HD] [--owner @tai-khoan]
  *                         sinh modules/<key>/ từ templates/starter-module (module mẫu hợp lệ `mau-module`: thay mã, schema, nhãn, mã màn, người phụ trách)
  *   module check <key>    selfcheck --module (luật manifest, lớp, bảo mật) + typecheck (api, web) + test hợp đồng module trên CSDL test
+ *   module accounting-check <key> [--static] [--json]
+ *                         kiểm kế toán của module: không đụng bảng sổ, không viết số tài khoản, docType / docKey đúng hợp đồng, chứng từ mẫu examples/*.json qua event check
  *   module list           module SDK trong modules/
  *   migrate               migration Core rồi migration từng module SDK (CSDL theo DATABASE_URL)
  *   ledger verify         lane diagnostics (SQL đọc sổ) ở mức strict — sổ có toàn vẹn không
  *   doctor                Node, gói đã dựng, CSDL kết nối được, migration còn chờ, module SDK đã chạy migration chưa
+ *   event check <tệp.json|-> [--submit] [--json]
+ *                         kiểm một chứng từ trước khi vào sổ: khuôn + tổng tiền (offline) → tiền kiểm L1–L4 → định khoản thử L5 (dryRun) → nộp
+ *                         máy chủ: BIZCITY_SERVER (vd http://localhost:8088) + BIZCITY_API_KEY (khoá HT02), hoặc --server / --key
+ *   flow check --sku <mã hàng> --period YYYY-MM [--to YYYY-MM] [--branch CN01] [--json]
+ *                         một mặt hàng có liền mạch mua → kho → bán → giá vốn → lãi lỗ → đóng kỳ không (đọc báo cáo của đơn vị)
+ *   explain <MÃ> [--role dev|chief_accountant|auditor|tax_inspector] [--json]
+ *                         giải thích một mã (IN-*, ACC-*, PART-*, mã lỗi API, F22-*, DG-*): vì sao, ai sửa, sửa ở đâu, kiểm lại
+ *   skills install [--to <thư mục dự án>]
+ *                         chép skill kế toán (skills/*) vào <dự án>/.claude/skills + .agents/skills, ghi .bizcity/ketoan.json
  *
  * Mỗi lệnh gọi lại công cụ sẵn có (selfcheck.mjs, vitest, lệnh `module` của API, db:migrate) — CLI không giữ luật riêng.
+ * [2026-11-03 02:30 PM Johnny Chu - Chu Hoàng Anh] G3-01 — event check / explain / skills install: nạp đúng hàm và danh mục của repo (packages/cli/lib)
  */
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
@@ -78,6 +90,8 @@ function moduleCheck(args) {
   const dir = path.join('modules', key);
   const steps = [
     ['Luật module (selfcheck --module)', 'node', ['tests/conformance/selfcheck.mjs', '--module', dir, '--strict']],
+    // [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — module check gồm kiểm kế toán tĩnh (selfcheck --module không thấy module tự ghi sổ / điền tài khoản / tính giá vốn)
+    ['Kế toán của module (accounting-check --static)', 'node', ['packages/cli/bin/bizcity.mjs', 'module', 'accounting-check', key, '--static']],
     ['Kiểu — phần máy chủ', 'npx', ['tsc', '-p', path.join(dir, 'tsconfig.json'), '--noEmit']],
     ['Kiểu — phần giao diện', 'npx', ['tsc', '-p', path.join(dir, 'web', 'tsconfig.json'), '--noEmit']],
     ['Test hợp đồng module (CSDL test)', 'npx', ['vitest', 'run', 'test/sdk-modules.contract.test.ts'], { cwd: path.join(ROOT, 'apps', 'api'), env: { BIZCITY_CHECK_MODULE: key } }],
@@ -88,6 +102,23 @@ function moduleCheck(args) {
   const ok = results.every(([, r]) => r);
   out(`\nmodule check ${key}: ${ok ? 'ĐẠT' : 'KHÔNG ĐẠT'}`);
   process.exit(ok ? 0 : 1);
+}
+
+// [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — module accounting-check: quét tĩnh + chứng từ mẫu qua event check
+async function moduleAccounting(args) {
+  const key = args.find((a, i) => !a.startsWith('--') && !['--server', '--key'].includes(args[i - 1]));
+  if (!key || !KEY_RE.test(key)) usage('cần mã module: npx bizcity module accounting-check <key> [--static] [--json]');
+  const { checkModuleAccounting, formatModuleAccounting } = await import('../lib/module-accounting.mjs');
+  let r;
+  try {
+    r = await checkModuleAccounting(key, { ...serverOf(args), staticOnly: args.includes('--static') });
+  } catch (err) {
+    process.stderr.write(`✘ ${err.message}\n`);
+    process.exitCode = 2;
+    return;
+  }
+  out(args.includes('--json') ? JSON.stringify(r, null, 2) : formatModuleAccounting(r));
+  process.exitCode = r.verdict === 'PASS' ? 0 : r.verdict === 'FAIL' ? 1 : args.includes('--static') ? 0 : 2;
 }
 
 function migrate() {
@@ -130,12 +161,79 @@ async function doctor() {
   process.exit(rows.every(([ok]) => ok) ? 0 : 1);
 }
 
+// [2026-11-03 02:30 PM Johnny Chu - Chu Hoàng Anh] G3-01 — ba lệnh cho skill kế toán; mã thoát 0 PASS · 1 FAIL · 2 SKIP / lỗi dùng lệnh
+const usage = (s) => { process.stderr.write(`✘ ${s}\n`); process.exit(2); };
+const serverOf = (args) => ({ server: flag(args, '--server', process.env.BIZCITY_SERVER), key: flag(args, '--key', process.env.BIZCITY_API_KEY) });
+
+async function eventCheck(args) {
+  const file = args.find((a, i) => !a.startsWith('--') && !['--server', '--key'].includes(args[i - 1]));
+  if (!file) usage('cần tệp chứng từ: npx bizcity event check <tệp.json> (hoặc - để đọc stdin)');
+  let doc;
+  try {
+    doc = JSON.parse(file === '-' ? readFileSync(0, 'utf8') : readFileSync(path.resolve(file), 'utf8'));
+  } catch (err) {
+    process.stderr.write(`✘ không đọc được ${file}: ${err.message}\n`);
+    process.exit(2);
+  }
+  if (doc && typeof doc === 'object' && 'document' in doc && !('docType' in doc)) doc = doc.document;
+  const { checkEvent, formatCheck } = await import('../lib/event-check.mjs');
+  const r = await checkEvent(doc, { ...serverOf(args), submit: args.includes('--submit') });
+  out(args.includes('--json') ? JSON.stringify(r, null, 2) : formatCheck(r));
+  // process.exitCode thay process.exit: trên Windows, thoát cứng khi kết nối fetch còn mở làm Node sập (0xC0000409)
+  process.exitCode = r.verdict === 'PASS' ? 0 : r.verdict === 'FAIL' ? 1 : 2;
+}
+
+async function explain(args) {
+  const code = args.find((a, i) => !a.startsWith('--') && !['--role', '--server', '--key'].includes(args[i - 1]));
+  if (!code) usage('cần mã: npx bizcity explain IN-SUM-001');
+  const { explainCode, formatExplain, viewsOf } = await import('../lib/explain.mjs');
+  const r = await explainCode(code, serverOf(args));
+  out(args.includes('--json') ? JSON.stringify({ ...r, views: viewsOf(r) }, null, 2) : formatExplain(r, { role: flag(args, '--role') }));
+  process.exitCode = r.known ? 0 : 1;
+}
+
+// [2026-11-03 04:15 PM Johnny Chu - Chu Hoàng Anh] G3-01 — flow check: luồng một mặt hàng trong một kỳ (chuẩn C1, C2, C5)
+async function flowCheck(args) {
+  const sku = flag(args, '--sku');
+  const period = flag(args, '--period');
+  if (!sku || !/^\d{4}-\d{2}$/.test(period ?? '')) usage('cần --sku <mã hàng> --period YYYY-MM, vd: npx bizcity flow check --sku SUA400 --period 2026-11');
+  const { checkFlow, formatFlow, checkLifecycle, formatLifecycle, periodsBetween } = await import('../lib/flow-check.mjs');
+  // [2026-11-03 05:45 PM Johnny Chu - Chu Hoàng Anh] G3-01 — --to: kiểm vòng đời nhiều kỳ, tồn chuyển kỳ liền mạch
+  const to = flag(args, '--to');
+  if (to) {
+    if (!periodsBetween(period, to)) usage('--to YYYY-MM phải không trước --period, tối đa 24 kỳ');
+    const r = await checkLifecycle({ sku, from: period, to, branch: flag(args, '--branch'), ...serverOf(args) });
+    out(args.includes('--json') ? JSON.stringify(r, null, 2) : formatLifecycle(r));
+    process.exitCode = r.verdict === 'PASS' ? 0 : r.verdict === 'FAIL' ? 1 : 2;
+    return;
+  }
+  const r = await checkFlow({ sku, period, branch: flag(args, '--branch'), ...serverOf(args) });
+  out(args.includes('--json') ? JSON.stringify(r, null, 2) : formatFlow(r));
+  process.exitCode = r.verdict === 'PASS' ? 0 : r.verdict === 'FAIL' ? 1 : 2;
+}
+
+async function skillsInstall(args) {
+  const { installSkills } = await import('../lib/skills-install.mjs');
+  try {
+    const r = installSkills(flag(args, '--to', ROOT));
+    out(`Đã cài ${r.names.length} skill: ${r.names.join(', ')}`);
+    for (const w of r.written) out(`  + ${w}`);
+  } catch (err) {
+    fail(err.message);
+  }
+}
+
 const HELP = readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith(' *   ')).map((l) => l.slice(3)).join('\n');
 const [cmd, sub, ...rest] = process.argv.slice(2);
 if (cmd === 'module' && sub === 'new') moduleNew(rest);
 else if (cmd === 'module' && sub === 'check') moduleCheck(rest);
+else if (cmd === 'module' && sub === 'accounting-check') await moduleAccounting(rest);
 else if (cmd === 'module' && sub === 'list') out(sdkModules().join('\n') || '(chưa có module SDK nào trong modules/)');
 else if (cmd === 'migrate') migrate();
 else if (cmd === 'ledger' && sub === 'verify') ledgerVerify();
 else if (cmd === 'doctor') await doctor();
+else if (cmd === 'event' && sub === 'check') await eventCheck(rest);
+else if (cmd === 'flow' && sub === 'check') await flowCheck(rest);
+else if (cmd === 'explain') await explain([sub, ...rest].filter((x) => x !== undefined));
+else if (cmd === 'skills' && sub === 'install') await skillsInstall(rest);
 else { out(`bizcity — lệnh cho developer Bizcity Core\n\n${HELP}`); process.exit(cmd ? 1 : 0); }
