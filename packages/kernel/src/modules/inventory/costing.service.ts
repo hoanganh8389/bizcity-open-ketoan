@@ -22,7 +22,9 @@
  *   - Tồn đầu = tồn cuối tháng trước của chính bảng này; tồn đầu số lượng ≤ 0 thì coi như không có.
  *   - Hàng xuất THEO GIÁ BÁN (bán nội bộ cho chi nhánh khác — lý do có cờ costAtSalePrice) bị trừ khỏi cả tử
  *     (theo giá bán) và mẫu (số lượng) trước khi chia; giá vốn của nó đã ghi sổ cùng phiếu bán.
- *   - Hàng trả nhà cung cấp mang lý do có cờ returnAtOpeningCost (XTR1, XTR9) được định giá theo tồn đầu
+ *   - [2026-11-05 09:30 PM Nguyễn Văn Thủy] PHASE-026 — công thức theo BOOK_MODE của bản cài (@ketoan/contracts, COST_FORMULAS). Bản NỘI BỘ: mọi lý do trả lấy thành tiền − thuế.
+ *     Các dòng sau áp cho bản THUẾ:
+ *   - Hàng trả nhà cung cấp mang lý do XTR1, XTR9 hoặc có cờ returnAtOpeningCost được định giá theo tồn đầu
  *     (đơn giá trả = tiền trả ÷ số lượng trả); lý do trả khác (XDC, XKK, XTT1, XTT2, XTR3, XTR4, XTRCN…) lấy
  *     thành tiền − thuế trên phiếu. Phiếu không ghi lý do dùng lý do mặc định của loại chứng từ:
  *       tiền trả 0 → 0;  đơn giá trả ≤ đơn giá tồn đầu → SL trả × đơn giá tồn đầu;
@@ -58,9 +60,10 @@
  * Tính lại: bút toán cũ được ghi số âm rồi ghi bút toán mới. Không cần xoá, ghi lại bút toán bán hàng.
  * Lần hàng xuất mà hệ thống nguồn đã gửi kèm giá vốn thì đã ghi sổ cùng chứng từ gốc, ở đây bỏ qua.
  */
-import { fromCents, toCents, ULID_RE } from '@ketoan/contracts';
+import { fromCents, returnsAtOpening, returnValueAtOpening, toCents, ULID_RE } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, type Db } from '@bizcity/platform/db/client';
+import { env } from '@bizcity/platform/config/env';
 import { Errors } from '@bizcity/platform/core/errors';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import type { AuthContext } from '@bizcity/platform/core/auth';
@@ -151,24 +154,15 @@ async function costReasonRules(trx: Db, tenantId: string) {
     const r = code ? rows.find((x) => x.code === code) : rows.find((x) => (x.flags as Record<string, unknown>)?.default === fallbackDefault);
     return Boolean((r?.flags as Record<string, unknown> | undefined)?.[name]);
   };
+  const defaultReturn = rows.find((x) => (x.flags as Record<string, unknown>)?.default === 'purchase_return')?.code ?? null;
   return {
-    returnAtOpening: (code: string | null) => flag(code, 'returnAtOpeningCost', 'purchase_return'),
+    returnAtOpening: (code: string | null) => returnsAtOpening(env.BOOK_MODE, code ?? defaultReturn, flag(code, 'returnAtOpeningCost', 'purchase_return')),
     excluded: (code: string | null) => flag(code, 'excludeFromCost', 'stock_adjustment:increase'),
   };
 }
 
 /** Giá trị hàng trả nhà cung cấp đưa vào công thức đơn giá, định giá theo tồn đầu. */
-export function returnValue(qty: number, amount: number, openingQty: number, openingValue: number): number {
-  if (!amount || !qty) return 0;
-  const oq = openingQty > 0 ? openingQty : 0;
-  const ov = openingQty > 0 ? openingValue : 0;
-  const unitReturn = amount / qty;
-  const unitOpening = oq > 0 ? ov / oq : 0;
-  if (oq > 0 && unitReturn <= unitOpening) return Math.round(qty * unitOpening);
-  if (amount <= ov) return amount;
-  if (qty <= oq) return ov;
-  return Math.round(ov + (qty - oq) * unitReturn);
-}
+export const returnValue = returnValueAtOpening;
 
 /** Đơn giá đã nhập từ Excel của một tháng (theo khoá mặt hàng). */
 async function importedUnits(trx: Db, tenantId: string, p: Period): Promise<Map<string, number>> {

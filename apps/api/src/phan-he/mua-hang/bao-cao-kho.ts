@@ -84,7 +84,7 @@ export async function stockLedgerBySku(trx: Db, tenantId: string, f: Filter & { 
        WHERE ${movementWhere(tenantId, f.to, s, f.search?.trim() || undefined)}
        GROUP BY 1, 2, 3, 4
     )
-    SELECT sku, MAX(name) AS name, MAX(unit) AS unit,
+    SELECT sku, COALESCE(bizcity_item_name_now(${tenantId}::bigint, sku), MAX(name)) AS name, MAX(unit) AS unit,
            SUM(qty) FILTER (WHERE NOT p) AS ton_dau,
            SUM(qty) FILTER (WHERE p AND kind = 'purchase') AS nhap,
            SUM(qty) FILTER (WHERE p AND kind = 'sale_return') AS nhap_lai,
@@ -120,7 +120,7 @@ export async function stockOnHandBySku(trx: Db, tenantId: string, f: Filter) {
         FROM mv GROUP BY 1, 2, 3
     )
     SELECT g.branch_id::text AS branch_id, b.code AS branch_code, COALESCE(NULLIF(g.warehouse_code, ''), dw.code, '') AS wh,
-           g.sku, MAX(g.name) AS name, MAX(g.unit) AS unit, SUM(g.qty) AS qty, SUM(g.val) AS val, SUM(g.uncosted) AS uncosted
+           g.sku, COALESCE(bizcity_item_name_now(${tenantId}::bigint, g.sku), MAX(g.name)) AS name, MAX(g.unit) AS unit, SUM(g.qty) AS qty, SUM(g.val) AS val, SUM(g.uncosted) AS uncosted
       FROM g
       JOIN branches b ON b.id = g.branch_id
       LEFT JOIN LATERAL (SELECT w.code FROM warehouses w WHERE w.tenant_id = b.tenant_id AND w.branch_id = b.id AND w.is_default ORDER BY w.id LIMIT 1) dw ON true

@@ -30,6 +30,13 @@ Dự án: **Bizcity Core Framework** (open-ketoan) — hạ tầng ứng dụng 
 - **Dữ liệu ngoài (POS / ERP / plugin) qua validation trước khi chạm sổ:** không tự tạo mặt hàng từ chứng từ; mã lạ → trạm tiền kiểm với `IN-ITEM-*`. Tạo / sửa danh mục chỉ qua `core.item.*`, `core.partner.*`.
 - Chi tiết: [RULE-ITEM](docs/rules/RULE-ITEM.md), [PHASE-024 · 10](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/10-DANH-MUC-CO-PHIEN-BAN.md) (bốn hạng thay đổi), [· 50](docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/50-TUAN-THU.md).
 
+### Enterprise Continuity (ADR-0028 — chấp nhận về nguyên tắc 2026-11-05) <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — luật ECP cho agent -->
+
+- **ECP-13: không thay đổi phá huỷ lịch sử nghiệp vụ đã được tham chiếu.** Dữ liệu gốc đã dùng: ngừng dùng / gộp / phiên bản mới, **không** xoá, **không** ghi đè thuộc tính lịch sử (mã, tên pháp lý, MST, phân loại, cấu hình đã dùng). Ẩn nút Xoá không phải là thi hành — chặn ở CSDL, SDK, quyền, bộ kiểm.
+- Sáu thao tác vòng đời CREATE · UPDATE · ARCHIVE · MERGE · REVERSE · DELETE (chỉ khi an toàn): bảng từng danh mục ở [standard/DU-LIEU-GOC.md](docs/standard/DU-LIEU-GOC.md). Thêm loại dữ liệu gốc → thêm dòng ở đó.
+- **Strong trong giao dịch, Eventual sau commit, có Reconciliation**: không dời kiểm Nợ = Có / quyền / kỳ khoá ra chạy nền; đồng bộ ngoài đi outbox + idempotency + một phép đối chiếu có mã.
+- Không ghi "đạt" cho trụ cột nếu không có check / chẩn đoán / test chạy được (R-ECP-SCORE). Mười ba nguyên tắc: [CANON §0.3](docs/00-CANON.md); luật: [R-ECP](docs/rules/RULE-ENTERPRISE-CONTINUITY.md); bản đồ 17 trụ cột: [standard/NEN-MONG-DOANH-NGHIEP.md](docs/standard/NEN-MONG-DOANH-NGHIEP.md).
+
 ## Yêu cầu kiến trúc: phân hệ nghiệp vụ nằm ở `modules/<key>/` (ADR-0024)
 
 <!-- [2026-11-03 11:45 PM Johnny Chu - Chu Hoàng Anh] ADR-0024 — yêu cầu kiến trúc của chủ dự án: phan-he/ đóng băng, mã phân hệ mới ở modules/<key>/ -->

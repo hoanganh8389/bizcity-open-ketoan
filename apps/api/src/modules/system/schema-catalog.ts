@@ -217,6 +217,7 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
   bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',
   bizcity_set_item_id: 'Dòng mới (sổ cái, kho, giá vốn, đơn vị quy đổi, bảng giá) tự gắn item_id theo mã có hiệu lực tại ngày của dòng; mã chưa có trong danh mục → để rỗng, điền khi mặt hàng được tạo (bizcity_item_fill_refs).',
+  bizcity_set_line_name: 'Dòng sổ mới tự lưu tên mặt hàng lúc ghi theo item_id. Đổi tên về sau không ảnh hưởng dòng đã ghi (0072).',
 };
 
 /**

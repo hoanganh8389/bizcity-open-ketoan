@@ -16,6 +16,9 @@ Công ty
 
 Mỗi **chi nhánh / cửa hàng** gắn vào một nút, thường là nút cấp 3 (tỉnh). Bạn gắn ở **Danh mục chi nhánh (DM02)**: mở chi nhánh → ô **Thuộc SĐTC** → bấm kính lúp → chọn nút.
 
+
+**Kiểu xem:** nút **Danh sách** để sửa cây, nút **Sơ đồ** để xem toàn bộ dạng sơ đồ khối. Bấm một khối trên sơ đồ để mở nút đó ở kiểu danh sách.
+
 ## Màn hình
 
 - **Trái**: cây. Gõ mã hoặc tên để tìm, không cần dấu.

@@ -66,6 +66,8 @@ bizcity_item_sku_at(item_id, ngày)          -- 0070: định danh → mã tại
 itemId trên dòng JSON                       -- 0070: purchase_documents, transfer_requests, stock_max_requests, trigger gắn
 sales_lines.item_id, bizcity_read.*         -- 0070: khung nhìn đọc có item_id; thêm bizcity_read.items, item_codes
 bizcity_item_search_text, products_search   -- 0071: tìm theo một phần mã, tên, ghi chú bằng chỉ mục trigram (cần pg_trgm)
+ledger_lines.product_name                   -- 0072: tên lúc ghi, trigger điền theo item_id, không đổi; dòng trước 0072 để trống
+bizcity_item_name_now(tenant, mã)           -- 0072: tên hiện tại, cho báo cáo gom theo mặt hàng
 ```
 
 Không gắn định danh vào `accounting_events.payload`, `document_versions.snapshot`: đây là nguyên bản nguồn, là căn cứ so nội dung phiếu. Định danh nằm trên dòng sổ, dòng kho, dòng hoá đơn sinh ra từ phiếu. `purchase_policies` giữ mã hiện hành trong JSON, đổi mã và gộp mã thì đổi theo.

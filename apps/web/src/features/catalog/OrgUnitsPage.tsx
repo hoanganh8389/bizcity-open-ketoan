@@ -1,5 +1,6 @@
 // [2026-11-03 10:39 AM Nguyễn Văn Thủy] SDTC — màn Sơ đồ tổ chức (DM16)
 // [2026-11-03 02:10 PM Nguyễn Văn Thủy] SDTC — làm lại gọn như màn Sơ đồ tổ chức quen dùng: cây trái, form trên, lưới nút con dưới
+// [2026-11-05 11:00 PM Nguyễn Văn Thủy] SDTC — thêm kiểu xem sơ đồ khối bên cạnh kiểu danh sách
 // [2026-11-03 03:00 PM Nguyễn Văn Thủy] SDTC — bỏ ô Mã ngắn, Alias (chưa có nghĩa nghiệp vụ, không chức năng nào dùng): chỉ còn Mã, Tên, Mô tả
 /**
  * SƠ ĐỒ TỔ CHỨC (DM16) — gốc Công ty → Miền → Chi nhánh → Tỉnh.
@@ -17,6 +18,7 @@ import { ErrorBox, Field, Loading, Modal } from '@/components/ui';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { plain } from '@/components/pickers';
 import { CayDonVi } from '@/components/CayDonVi';
+import { SoDoToChucChart } from './SoDoToChucChart';
 import { indexOrg, invalidateOrg, useOrgTree, type OrgNode } from '@/lib/orgUnits';
 
 type Form = { code: string; name: string; note: string; parentCode: string | null };
@@ -37,6 +39,7 @@ export function OrgUnitsPage() {
   const [imp, setImp] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
+  const [view, setView] = useState<'list' | 'chart'>('list');
 
   const shown: Form = mode ? f : node ? { code: node.code, name: node.name, note: node.note, parentCode: node.parentCode } : empty(null);
   const rows = level === 'all' ? tree.data?.nodes ?? [] : level !== null ? (tree.data?.nodes ?? []).filter((n) => n.level === level) : node ? ix.kids.get(node.code) ?? [] : [];
@@ -100,11 +103,15 @@ export function OrgUnitsPage() {
           {canWrite && <button className="btn btn-sm" disabled={!mode} onClick={() => setMode(null)}><Undo2 size={14} /> Hoãn</button>}
           <button className="btn btn-sm" onClick={() => void exportExcel()}><FileDown size={14} /> Xuất</button>
           {canWrite && <button className="btn btn-sm" onClick={() => setImp(true)}><FileUp size={14} /> Nhập Excel</button>}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+            <button className={`btn btn-sm${view === 'list' ? ' btn-primary' : ''}`} disabled={Boolean(mode)} title="Cây, thông tin nút và lưới nút con" onClick={() => setView('list')}>Danh sách</button>
+            <button className={`btn btn-sm${view === 'chart' ? ' btn-primary' : ''}`} disabled={Boolean(mode)} title="Xem toàn bộ cây dạng sơ đồ khối" onClick={() => setView('chart')}>Sơ đồ</button>
+          </div>
           {can('settings:write') && <button className="btn btn-sm" disabled={restore.isPending} title="Đặt lại cây và việc gắn chi nhánh theo tệp gốc — dùng khi đã sửa lộn xộn" onClick={() => restore.mutate()}><RotateCcw size={14} /> Quay về dữ liệu gốc</button>}
         </div>
         {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 12px 8px' }}>{msg.text}</div>}
         <ErrorBox error={tree.error ? errorText(tree.error) : null} />
-        {tree.isLoading ? <Loading /> : (
+        {tree.isLoading ? <Loading /> : view === 'chart' ? (ix.root ? <SoDoToChucChart root={ix.root} kids={ix.kids} selected={node?.code ?? null} onSelect={(n) => { setSel(n.code); setLevel(null); setView('list'); }} /> : null) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: 12, padding: '0 12px 12px' }}>
             <div>
               <div style={{ fontWeight: 700, margin: '2px 0 6px' }}>Sơ đồ tổ chức</div>
