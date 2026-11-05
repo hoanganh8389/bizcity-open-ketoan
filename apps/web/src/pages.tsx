@@ -16,7 +16,7 @@ import { ReviewBoardPage } from './features/system/ReviewBoardPage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
 import { DefaultDataPage } from './features/flow/DefaultDataPages';
 import { Navigate, Route } from 'react-router-dom';
-import { LauncherPage, ModuleHomePage } from './features/launcher/LauncherPage';
+import { LauncherPage, ModuleHomePage, GroupHomePage } from './features/launcher/LauncherPage';
 import { DocumentsPage } from './features/documents/DocumentsPage';
 import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
@@ -61,6 +61,7 @@ import { apiRoutes } from './phan-he/api/routes';
 // [2026-11-01 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W3: màn Bàn điều tra (/dev/…)
 import { devRoutes } from './phan-he/dev/routes';
 import { ADDIN_ROUTES } from './addins/registry';
+import { BaoCaoChungPage } from './features/launcher/BaoCaoChungPage';
 import { UngDungPage } from './features/ung-dung/UngDungPage';
 import { AppFramePage } from './features/ung-dung/AppFramePage';
 // [2026-11-02 09:33 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W2: route của module SDK (/app/<key>/…)
@@ -70,6 +71,8 @@ export const pageRoutes = (
   <>
     <Route path="/" element={<LauncherPage />} />
     <Route path="/app/:key" element={<ModuleHomePage />} />
+    <Route path="/bao-cao" element={<BaoCaoChungPage />} />
+    <Route path="/nhom/:key" element={<GroupHomePage />} />
     <Route path="chung-tu" element={<DocumentsPage />} />
     <Route path="chung-tu/bang-diem" element={<IntakeScorePage />} />
     <Route path="quy/phieu-chuyen-tien" element={<CashTransfersPage />} />

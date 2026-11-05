@@ -7,6 +7,7 @@
  *  - Bấm vào: thiết bị online, tài khoản, tab, thiết bị đã vào hôm nay; người có quyền quản trị người dùng xem thêm danh sách
  *    theo tài khoản → từng máy (trình duyệt · hệ điều hành, màn đang mở, online từ mấy giờ, mấy tab). Tự làm mới 30 giây / lần.
  */
+import { GON_DEFS, groupHome, REPORT_PAGE } from './menu-gon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,7 +42,8 @@ export function DangOnline({ menu }: { menu: MenuItem[] }) {
   const screens = useMemo(() => new Map(flattenMenu(menu).map((m) => [m.path, `${m.label}${m.code ? ` · ${m.code}` : ''}`])), [menu]);
   // Trang tổng quan phân hệ (/app/ban-hang…) không nằm trong menu chức năng: ghi "Tổng quan Bán hàng" thay vì đường dẫn.
   const appModule = MODULES.find((m) => m.key === moduleOfAppPath(loc.pathname));
-  const screen = screens.get(loc.pathname) ?? (loc.pathname === '/' ? 'Tổng quan' : appModule ? `Tổng quan ${appModule.label}` : loc.pathname);
+  const nhom = GON_DEFS.find((g) => groupHome(g.key) === loc.pathname);
+  const screen = screens.get(loc.pathname) ?? (loc.pathname === '/' ? 'Tổng quan' : loc.pathname === REPORT_PAGE ? 'Báo cáo' : appModule ? `Tổng quan ${appModule.label}` : nhom ? `Tổng quan ${nhom.label}` : loc.pathname);
   const here = useRef({ path: loc.pathname, screen });
   here.current = { path: loc.pathname, screen };
 
