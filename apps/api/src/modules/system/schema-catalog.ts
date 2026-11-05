@@ -159,6 +159,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // Nền tảng
   tenants: { group: 'platform', label: 'Đơn vị sử dụng', module: 'access', purpose: 'Mỗi công ty dùng phần mềm là một đơn vị; mọi dữ liệu đều có tenant_id.' },
   users: { group: 'platform', label: 'Người dùng', module: 'access', purpose: 'Tài khoản đăng nhập và vai trò.' },
+  // [2026-11-06 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2: danh mục bảng setting_values (0074)
+  setting_values: { group: 'platform', label: 'Giá trị cấu hình có phiên bản', term: 'Cấu hình', module: 'system', purpose: 'Mỗi lần đổi cấu hình là một dòng mới: khoá, phạm vi (đơn vị / đơn vị hạch toán / chi nhánh / người dùng), giá trị, ngày hiệu lực, người ghi, lý do. Không sửa, không xoá — lịch sử cấu hình chính là bảng này (bizcity_settings@1 §2, ECP-03).' },
   print_template_settings: { group: 'platform', label: 'Cấu hình mẫu in', term: 'Mẫu in', module: 'print-templates', purpose: 'Bật / tắt mẫu in, mẫu mặc định, chỉnh tiêu đề, số liên, chức danh ký… theo đơn vị, chi nhánh hoặc người dùng (màn HT05). Chỉ lưu phần khác mặc định; bố cục mẫu nằm trong code giao diện.' },
   api_keys: { group: 'platform', label: 'Khoá API', module: 'access', purpose: 'Khoá cho hệ thống khác gửi sự kiện vào (chỉ lưu bản băm). Khoá có app_key là khoá của app ngoài tiến trình: quyền theo kết nối app.' },
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — danh mục bảng: app_installations (0050, app ngoài tiến trình ADR-0011 mức 2)

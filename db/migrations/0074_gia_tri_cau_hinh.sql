@@ -1,6 +1,7 @@
 -- [2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1 (S029-10, bizcity_settings@1 1.1.0-draft §2): kho giá trị cấu hình kiểu options — phạm vi, ngày hiệu lực, phiên bản, chỉ thêm; tenants.config_version
+-- [2026-11-06 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2: đổi số migration 0076 → 0074 (chủ dự án chọn: ai merge trước lấy số trước; W1 phân quyền lấy 0073)
 -- =============================================================================
--- 0076 Giá trị cấu hình có phiên bản (PHASE-029 E2, chữ chốt 30 §5, ADR-0028 D028-7 / D028-8, ECP-03).
+-- 0074 Giá trị cấu hình có phiên bản (PHASE-029 E2, chữ chốt 30 §5, ADR-0028 D028-7 / D028-8, ECP-03).
 --   Một kho khoá / giá trị cho mọi khoá registry có valueType (học cách tổ chức options của WordPress), nhưng KHÔNG ghi đè:
 --   mỗi lần ghi là một dòng mới (phiên bản kế), có phạm vi, ngày hiệu lực, người ghi, lý do. Lịch sử chính là bảng này.
 --   Đọc: user → branch → accounting_unit → tenant → mặc định registry; ở mỗi phạm vi lấy dòng valid_from ≤ ngày mới nhất

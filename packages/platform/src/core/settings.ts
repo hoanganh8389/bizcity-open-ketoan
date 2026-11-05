@@ -12,6 +12,7 @@
  * [2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1 (bizcity_settings@1 1.1.0-draft §2): một đường đọc `getSetting`,
  * một đường ghi `setSetting` trên kho `setting_values` (0076) — phạm vi user → branch → accounting_unit → tenant → mặc định, ngày hiệu lực,
  * phiên bản, chỉ thêm; khoá cũ ở tenants.settings ghi song song ở phạm vi đơn vị; `tenants.config_version` tăng mỗi lần ghi.
+ * [2026-11-06 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2: migration đổi số 0076 → 0074 (chủ dự án chọn: ai merge trước lấy số trước).
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';

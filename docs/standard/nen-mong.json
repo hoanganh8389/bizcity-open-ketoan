@@ -52,9 +52,9 @@
       "contracts": ["bizcity_settings@1", "bizcity_posting_template@1"],
       "capabilities": ["settings.registry", "accounting.profile", "posting.policy-version"],
       "devGets": "Đọc cấu hình theo phạm vi và ngày; chính sách định khoản có phiên bản",
-      "sdk": "ctx.settings.get (có), settings.set (chưa có)",
+      "sdk": "ctx.settings.get, getSetting / setSetting, PUT /api/v1/settings/values/:key (core.settings.set)",
       "status": "mot-phan",
-      "gap": "yếu nhất: không đường ghi chung, không lịch sử, không hiệu lực, chỉ phạm vi đơn vị (S029-10, P0)"
+      "gap": "đợt 1 có kho setting_values (phạm vi, hiệu lực, phiên bản, chỉ thêm) và một đường đọc / ghi; còn route ghi riêng cũ, đọc thô tenants.settings, xuất / nhập (S029-32)"
     },
     {
       "id": "C4", "key": "documents", "title": "Documents & Workflow",
@@ -109,7 +109,7 @@
     { "id": "04", "group": "A", "core": "C2", "title": "Identity & Authorization", "status": "mot-phan", "ecp": ["ECP-02", "ECP-06"], "next": "PHASE-028, S029-23, S029-25",
       "signals": [ { "kind": "test", "ref": "apps/api/test/access.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/tenant-isolation.test.ts", "state": "co" }, { "kind": "diag", "ref": "TENANT_ISOLATION", "state": "co" }, { "kind": "test", "ref": "apps/api/test/vai-tro-bo-sung.test.ts", "state": "nhanh" } ] },
     { "id": "05", "group": "A", "core": "C3", "title": "Configuration & Policy Registry", "status": "mot-phan", "ecp": ["ECP-03"], "next": "S029-10",
-      "signals": [ { "kind": "test", "ref": "apps/api/test/policy.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/accounting-profile.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-CON-7", "state": "co" }, { "kind": "check", "ref": "chặn đọc thô tenants.settings", "state": "chua" }, { "kind": "test", "ref": "settings.set duy nhất + lịch sử", "state": "chua" }, { "kind": "test", "ref": "giá trị theo phạm vi + ngày hiệu lực", "state": "chua" } ] },
+      "signals": [ { "kind": "test", "ref": "apps/api/test/policy.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/accounting-profile.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-CON-7", "state": "co" }, { "kind": "check", "ref": "chặn đọc thô tenants.settings", "state": "chua" }, { "kind": "test", "ref": "apps/api/test/cau-hinh-gia-tri.test.ts", "state": "co" }, { "kind": "test", "ref": "route ghi riêng chuyển sang setSetting (S029-32)", "state": "chua" } ] },
     { "id": "06", "group": "B", "core": "C4", "title": "Document SDK & Lifecycle", "status": "mot-phan", "ecp": ["ECP-05", "ECP-09"], "next": "S029-5, S029-11",
       "signals": [ { "kind": "test", "ref": "apps/api/test/documents-common.test.ts", "state": "co" }, { "kind": "test", "ref": "apps/api/test/signatures.test.ts", "state": "co" }, { "kind": "check", "ref": "SC-DOC-7", "state": "nhanh" }, { "kind": "test", "ref": "apps/api/test/lich-su-chung-tu.test.ts", "state": "nhanh" } ] },
     { "id": "07", "group": "B", "core": "C4", "title": "Workflow & Approval Engine", "status": "mot-phan", "ecp": ["ECP-06"], "next": "S029-25",

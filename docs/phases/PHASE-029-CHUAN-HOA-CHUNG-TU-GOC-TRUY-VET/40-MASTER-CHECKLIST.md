@@ -48,3 +48,4 @@
 | 2026-11-05 | Claude Code | Chủ dự án yêu cầu mở rộng thành Enterprise Continuity: ADR-0028, R-ECP (ECP-01..13), bốn nhóm nền móng 17 trụ cột, rà codebase, lộ trình E1–E9, S029-9..28. |
 | 2026-11-05 | Claude Code | W1 merge (#92): S029-2..4 xong, bỏ dòng giữ chỗ W1. Giữ chỗ E1 (S029-29 SC-CORE-1, S029-30 thẻ Nền móng). |
 | 2026-11-06 | Claude Code | Chữ chốt E2 đợt 1 (`bizcity_settings@1` 1.1.0-draft §2, 30 §5); giữ chỗ E2; tách đợt 2 thành S029-32. |
+| 2026-11-06 | Claude Code | E2 đợt 1 code: `setting_values` + `tenants.config_version`, `getSetting` / `setSetting`, `/settings/values`, `valueType` cho 5 khoá + khoá mẫu `bizcity.ui.theme`; sửa lỗi `jsonb_set` không tạo nhánh cha khi ghi song song; thêm `setting_values` vào `schema-catalog.ts` (test db-rules bắt); đổi số migration 0076 → 0074 (chủ chọn ai merge trước lấy số trước); trụ cột 05 nâng tín hiệu `cau-hinh-gia-tri` (SC-CORE-1). |
