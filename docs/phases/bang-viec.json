@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 108
+      "count": 114
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 196
+      "count": 200
     }
   ],
   "items": [
@@ -4044,6 +4044,133 @@
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 14
+    },
+    {
+      "id": "S028-1",
+      "phase": "PHASE-028",
+      "title": "W0: AS-IS audit có file:line (10)",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S028-2",
+      "phase": "PHASE-028",
+      "title": "W0: Master plan, 10 quyết định D-AUTH-01..10 có phương án đề xuất (00)",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S028-3",
+      "phase": "PHASE-028",
+      "title": "W0: ADR-0027 (Đề xuất)",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S028-4",
+      "phase": "PHASE-028",
+      "title": "Chủ dự án duyệt D-AUTH-01..10",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S028-5",
+      "phase": "PHASE-028",
+      "title": "PR tài liệu W0 merge vào main (R-FLOW)",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S028-6",
+      "phase": "PHASE-028",
+      "title": "W1: userroleassignments (0075) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w1-vai-tro-bo-sung",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-028 · W1 — vai trò bổ sung userroleassignments, quyền hiệu lực nhiều vai trò, ADMINROLES (chữ…"
+      },
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S028-7",
+      "phase": "PHASE-028",
+      "title": "W2: modulegrants — cấp thêm quyền module cho vai trò ngoài ADMINROLES (D-AUTH-03 bản sửa: không thu quyền của owner)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S028-8",
+      "phase": "PHASE-028",
+      "title": "W3: đóng 17 route ghi thô còn lại, requireScope()",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S028-9",
+      "phase": "PHASE-028",
+      "title": "W4: Role Editor UI (mã màn — Q028-1)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S028-10",
+      "phase": "PHASE-028",
+      "title": "W5: TGS mapping 349 mã + luồng mẫu Warehouse transfer",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S028-11",
+      "phase": "PHASE-028",
+      "title": "W6: S-5..S-n vào pillar VII tru-cot.json, SC-AUTH-01..12",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
+      "line": 20
     },
     {
       "id": "S029-1",
