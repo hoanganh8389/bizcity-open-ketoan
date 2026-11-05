@@ -1,5 +1,5 @@
 /**
- * Danh sách phân hệ phía giao diện (trang Tổng quan, thanh phân hệ, menu trái). Thêm phân hệ: tạo một tệp manifest
+ * Danh sách phân hệ phía giao diện (trang Tổng quan, menu điện thoại, lọc màn theo phân hệ đang bật). Thêm phân hệ: tạo một tệp manifest
  * cùng thư mục rồi thêm vào WEB_MODULES. Biến VITE_MODULES (vd "mua-hang,kho") thu gọn danh sách khi chạy dev một phân hệ.
  */
 import type { WebModule } from './types';
