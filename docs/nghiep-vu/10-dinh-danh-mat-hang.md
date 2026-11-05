@@ -40,7 +40,8 @@ Mở mặt hàng, bấm **Đổi mã**, nhập mã mới và lý do. Có hiệu 
 
 - Sổ và chứng từ cũ vẫn ghi mã cũ.
 - Đơn vị tính, bảng giá, giá nhà cung cấp, tồn max, chính sách mua chuyển sang mã mới.
-- Gõ mã cũ vẫn tìm ra mặt hàng này. Chứng từ gửi mã cũ vào vẫn ghi đúng mặt hàng, không sinh hàng mới.
+- Chứng từ gửi mã cũ vào vẫn ghi đúng mặt hàng, không sinh hàng mới. Lọc sổ bằng mã cũ vẫn ra mặt hàng này.
+- Ô tìm ở danh sách mặt hàng chỉ tìm theo mã hiện hành, tên, ghi chú: gõ mã cũ không ra.
 
 ## Gộp mã
 

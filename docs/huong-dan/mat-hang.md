@@ -181,7 +181,7 @@ Mở mặt hàng, dùng các nút ở cuối form. Cả hai có hiệu lực t�
 
 | Việc | Kết quả |
 |---|---|
-| **Đổi mã** | Sổ và chứng từ cũ giữ mã cũ. ĐVT, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Gõ mã cũ vẫn tìm ra hàng, hệ thống bán hàng còn gửi mã cũ vẫn ghi đúng hàng. Mã cũ không dùng lại cho hàng khác |
+| **Đổi mã** | Sổ và chứng từ cũ giữ mã cũ. ĐVT, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Chứng từ gửi mã cũ vào vẫn ghi đúng mặt hàng. Ô tìm ở danh sách chỉ tìm theo mã hiện hành, tên, ghi chú. |
 | **Gộp mã** | Mã này ngừng dùng và trỏ sang mặt hàng giữ lại. Sổ cũ không đổi. Gộp tiếp được nhiều lần. Phải hết tồn trước khi gộp: còn tồn thì lập phiếu chuyển tồn sang mã giữ lại trước |
 
 Thẻ **Lịch sử** hiện từng lần đổi: lúc nào, ai, hiệu lực từ ngày nào, lý do. Báo cáo theo mặt hàng gom một dòng theo mã hiện hành.

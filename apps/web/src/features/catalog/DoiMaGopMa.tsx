@@ -32,7 +32,7 @@ export function DoiMaModal({ sku, onClose, onDone }: { sku: string; onClose: () 
     <Modal title={`Đổi mã hàng ${sku}`} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={!ok || save.isPending} title="Có hiệu lực từ hôm nay" onClick={() => save.mutate()}>Đổi mã</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
-      <p className="muted full" style={{ gridColumn: '1 / -1' }}>Có hiệu lực từ hôm nay. Sổ và chứng từ cũ vẫn ghi mã {sku}; đơn vị tính, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Gõ mã {sku} vẫn tìm ra mặt hàng này.</p>
+      <p className="muted full" style={{ gridColumn: '1 / -1' }}>Có hiệu lực từ hôm nay. Sổ và chứng từ cũ vẫn ghi mã {sku}; đơn vị tính, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Chứng từ gửi mã {sku} vào vẫn ghi đúng mặt hàng này.</p>
       <Field full label="Mã mới (*)"><input value={newSku} autoFocus maxLength={64} title="Mã hàng mới, chưa từng dùng cho mặt hàng khác" onChange={(e) => setNewSku(e.target.value)} /></Field>
       <Field full label="Lý do (*)" hint={`Ít nhất ${MIN_REASON} ký tự`}><input value={reason} maxLength={500} title="Hiện ở thẻ Lịch sử của mặt hàng" onChange={(e) => setReason(e.target.value)} /></Field>
     </Modal>
