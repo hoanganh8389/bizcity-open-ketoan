@@ -183,6 +183,43 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
              AND a.posted_version IS DISTINCT FROM a.version
            LIMIT ${SAMPLE}`),
   },
+  // [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: ba mã chẩn đoán truy vết chứng từ gốc (DOC-01 / DOC-03 / DOC-04), mức warn — dữ liệu cũ có thể thiếu event_version; lane SQL DG-DOC-1..3
+  {
+    code: 'ENTRY_NO_VERSION', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở chứng từ trong mẫu ở Định khoản tự động, định khoản lại để bút toán mới mang phiên bản chứng từ', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Lặp lại: báo nhóm Lõi kèm mã tra cứu' }], owner: 'accountant', verify: { code: 'ENTRY_NO_VERSION' } },
+    title: 'Bút toán gắn sự việc có ghi phiên bản chứng từ đã tạo ra nó (event_version)',
+    fix: 'Bút toán không biết nó sinh từ phiên bản nào của chứng từ nên không truy vết đúng phiên bản được (DOC-01 / DOC-03). Thường là bút toán ghi trước khi có cột phiên bản: định khoản lại chứng từ để bút toán mới mang phiên bản. Mọi đường ghi mới phải truyền sourceVersion (SC-DOC-7).',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM ledger_entries e WHERE ${scoped(s, 'e', 'posting_date')} AND e.event_id IS NOT NULL`,
+      sql`SELECT e.entry_no AS key, count(*) OVER ()::int AS total FROM ledger_entries e
+           WHERE ${scoped(s, 'e', 'posting_date')} AND e.event_id IS NOT NULL AND e.event_version IS NULL
+           LIMIT ${SAMPLE}`),
+  },
+  {
+    code: 'ENTRY_VERSION_UNKNOWN', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở chứng từ của bút toán trong mẫu ở Định khoản tự động: phiên bản không còn nội dung lưu', screen: SCREENS.ACC14 }, { text: 'Báo nhóm Lõi kèm mã tra cứu — nội dung phiên bản cũ không được mất (DOC-06)', role: 'owner' }], owner: 'core_team', verify: { code: 'ENTRY_VERSION_UNKNOWN' } },
+    title: 'Phiên bản chứng từ của bút toán còn nội dung lưu (hiện hành hoặc ở accounting_event_versions)',
+    fix: 'Bút toán trỏ phiên bản chứng từ mà không còn nội dung để xem (không phải bản hiện hành, không có ở accounting_event_versions): lịch sử chứng từ bị mất, không giải thích được vì sao có bút toán này (DOC-03 / DOC-06). Báo nhóm Lõi, không tự sửa.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM ledger_entries e WHERE ${scoped(s, 'e', 'posting_date')} AND e.event_id IS NOT NULL AND e.event_version IS NOT NULL`,
+      sql`SELECT e.entry_no AS key, count(*) OVER ()::int AS total FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id
+           WHERE ${scoped(s, 'e', 'posting_date')} AND e.event_version IS NOT NULL AND e.event_version <> a.version
+             AND NOT EXISTS (SELECT 1 FROM accounting_event_versions v WHERE v.event_id = a.id AND v.version = e.event_version)
+           LIMIT ${SAMPLE}`),
+  },
+  {
+    code: 'EVENT_ENTRIES_STALE', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở chứng từ trong mẫu ở Định khoản tự động, xem nhật ký định khoản và định khoản lại', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Lặp lại: báo nhóm Lõi kèm mã tra cứu' }], owner: 'accountant', verify: { code: 'EVENT_ENTRIES_STALE' } },
+    title: 'Bút toán đang hiệu lực của sự việc đã ghi sổ thuộc đúng phiên bản đã ghi nhận (posted_version)',
+    fix: 'Sự việc báo ghi sổ phiên bản N nhưng còn bút toán hiệu lực của phiên bản khác: sổ lẫn hai phiên bản (DOC-04). Định khoản lại chứng từ ở ACC14 để bút toán cũ được đảo.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM accounting_events a WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${valued}`,
+      sql`SELECT a.doc_key AS key, count(*) OVER ()::int AS total FROM accounting_events a
+           WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${valued} AND a.posted_version IS NOT NULL
+             AND EXISTS (SELECT 1 FROM ledger_entries e WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal
+                          AND e.event_version IS NOT NULL AND e.event_version <> a.posted_version)
+           LIMIT ${SAMPLE}`),
+  },
   {
     code: 'LEDGER_TRIGGERS', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Vận hành chạy lại migration để dựng lại trigger', role: 'operator' }, { text: 'Tra nhật ký CSDL ai / lúc nào tắt trigger, lập biên bản (R-KER-3)', role: 'owner' }, { text: 'Chạy lại toàn bộ tự chẩn đoán L3' }], owner: 'operator', verify: { code: 'LEDGER_TRIGGERS' }, stopTheLine: true },

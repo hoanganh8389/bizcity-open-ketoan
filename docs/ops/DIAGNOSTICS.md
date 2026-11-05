@@ -49,6 +49,9 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `LEDGER_ORPHAN` | L3 | Mọi `ledger_entries.event_id` tồn tại | error | có | DG-LEDGER-4 |
 | `EVENT_POSTED_VERSION` | L3 | `status = posted` ⇒ `posted_version = version` (trừ sự việc nội bộ) | error | có | DG-EVENT-1 |
 | `EVENT_HAS_ENTRY` | L3 | Sự việc `posted` có bút toán hiệu lực | warn | có | DG-EVENT-2 |
+| `ENTRY_NO_VERSION` | L3 | Bút toán gắn sự việc có `event_version` (phiên bản chứng từ đã tạo ra nó) <!-- [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: DOC-01 --> | warn | có | DG-DOC-1 |
+| `ENTRY_VERSION_UNKNOWN` | L3 | Phiên bản chứng từ của bút toán còn nội dung lưu <!-- [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: DOC-03 --> | warn | có | DG-DOC-2 |
+| `EVENT_ENTRIES_STALE` | L3 | Bút toán hiệu lực của sự việc đã ghi sổ thuộc đúng `posted_version` <!-- [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: DOC-04 --> | warn | có | DG-DOC-3 |
 | `EVENT_PENDING_AGE` | L3 | Sự việc `pending` / `error` quá 3 ngày | warn | có | DG-EVENT-3 |
 | `TAX_INPUT_NO_INVOICE` | L3 | Thuế GTGT đầu vào đã vào sổ (tài khoản của loại thuế đầu vào / ngầm định `tax_input`) mà sự việc chưa có hoá đơn trong sổ hoá đơn quá 30 ngày — bảng kê mua vào thiếu so với sổ | warn | có | DG-TAX-1 |
 | `INTERNAL_EVENT_VERSION` | L3 | Kết chuyển, giá vốn, khấu hao có `posted_version = version` (ghi qua `eventStore`; lệch = có đường ghi vòng qua cửa) | warn | có | DG-EVENT-4 |
