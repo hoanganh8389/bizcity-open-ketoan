@@ -4103,7 +4103,7 @@
     {
       "id": "S028-6",
       "phase": "PHASE-028",
-      "title": "W1: userroleassignments (0075) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
+      "title": "W1: userroleassignments (0073) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
       "priority": "P0",
       "status": "partial",
       "column": "partial",

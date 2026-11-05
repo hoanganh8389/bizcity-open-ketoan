@@ -1,4 +1,5 @@
 // [2026-11-06 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0074 → 0075 (W-13: 0073 / 0074 PHASE-026 đợt 2 / 3 giữ)
+// [2026-11-06 01:35 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0075 → 0073 (chủ dự án chọn: ai merge trước lấy số trước, so-tiep-theo kiem; PHASE-026 đợt 2 / 3 đổi số khi merge)
 /**
  * PHASE-028 W1 (ADR-0027): vai trò bổ sung — một người nhiều vai trò, quyền hiệu lực là hợp các vai trò còn hiệu lực;
  * thu hồi có hiệu lực ngay; không tự gán; không leo thang quyền; lịch sử chỉ thêm (CSDL chặn xoá / sửa).
@@ -117,7 +118,7 @@ describe('Quyền hiệu lực qua vé đăng nhập', () => {
   });
 });
 
-describe('Bất biến ở CSDL (0075)', () => {
+describe('Bất biến ở CSDL (0073)', () => {
   it('không xoá, không sửa dòng gán; không sửa dòng đã thu hồi', async () => {
     const { rows } = await sql<{ id: string; revoked_at: Date | null }>`SELECT id, revoked_at FROM user_role_assignments WHERE user_id = ${viewerId} ORDER BY id`.execute(db);
     const open = rows.find((r) => !r.revoked_at)!;
