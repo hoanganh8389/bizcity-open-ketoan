@@ -122,6 +122,40 @@ export const checks = [
             SELECT 1 FROM ledger_entries e WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal)
           LIMIT 200`,
   }),
+  // [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: ba kiểm truy vết chứng từ gốc (DOC-01 / 03 / 04); cùng bộ mã với LEDGER_DIAGNOSTICS (R-DIAG-9)
+  sqlCheck({
+    id: 'DG-DOC-1', code: 'ENTRY_NO_VERSION',
+    title: 'Bút toán gắn sự việc có ghi event_version (phiên bản chứng từ đã tạo ra nó)',
+    rules: ['R-EVENT-1'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM ledger_entries WHERE event_id IS NOT NULL`,
+    sql: `SELECT t.code AS tenant, e.entry_no AS key, json_build_object('doc_type', e.doc_type, 'event_id', e.event_id) AS detail
+          FROM ledger_entries e JOIN tenants t ON t.id = e.tenant_id
+          WHERE e.event_id IS NOT NULL AND e.event_version IS NULL
+          LIMIT 200`,
+  }),
+  sqlCheck({
+    id: 'DG-DOC-2', code: 'ENTRY_VERSION_UNKNOWN',
+    title: 'Phiên bản chứng từ của bút toán còn nội dung lưu (hiện hành hoặc accounting_event_versions)',
+    rules: ['R-EVENT-1'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM ledger_entries WHERE event_id IS NOT NULL AND event_version IS NOT NULL`,
+    sql: `SELECT t.code AS tenant, e.entry_no AS key, json_build_object('event_version', e.event_version, 'current_version', a.version) AS detail
+          FROM ledger_entries e JOIN accounting_events a ON a.id = e.event_id JOIN tenants t ON t.id = e.tenant_id
+          WHERE e.event_version IS NOT NULL AND e.event_version <> a.version
+            AND NOT EXISTS (SELECT 1 FROM accounting_event_versions v WHERE v.event_id = a.id AND v.version = e.event_version)
+          LIMIT 200`,
+  }),
+  sqlCheck({
+    id: 'DG-DOC-3', code: 'EVENT_ENTRIES_STALE',
+    title: 'Bút toán đang hiệu lực của sự việc đã ghi sổ thuộc đúng phiên bản posted_version',
+    rules: ['R-EVENT-4'], conf: [], tier: 1, enforce: 'info', weight: 2,
+    count: `SELECT count(*)::int AS n FROM accounting_events a WHERE status = 'posted' AND ${VALUED}`,
+    sql: `SELECT t.code AS tenant, a.doc_key AS key, json_build_object('posted_version', a.posted_version) AS detail
+          FROM accounting_events a JOIN tenants t ON t.id = a.tenant_id
+          WHERE a.status = 'posted' AND ${VALUED} AND a.posted_version IS NOT NULL
+            AND EXISTS (SELECT 1 FROM ledger_entries e WHERE e.event_id = a.id AND e.status = 'posted' AND NOT e.is_reversal
+                         AND e.event_version IS NOT NULL AND e.event_version <> a.posted_version)
+          LIMIT 200`,
+  }),
   sqlCheck({
     id: 'DG-EVENT-3', code: 'EVENT_PENDING_AGE',
     title: 'Sự việc pending / error không quá 3 ngày',

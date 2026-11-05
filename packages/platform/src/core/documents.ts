@@ -41,7 +41,8 @@ function assertRef(ref: string, what = 'docRef'): asserts ref is DocRef {
 }
 
 /** sha256 của JSON đã chuẩn hoá (khoá sắp xếp): cùng nội dung → cùng băm, không phụ thuộc thứ tự khoá. */
-function contentHash(value: unknown): string {
+// [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: xuất contentHash để lịch sử chứng từ (Kernel) băm nội dung phiên bản sự việc cùng cách document_versions
+export function contentHash(value: unknown): string {
   const norm = (v: unknown): unknown =>
     Array.isArray(v) ? v.map(norm) : v && typeof v === 'object' && !(v instanceof Date)
       ? Object.fromEntries(Object.keys(v as object).sort().map((k) => [k, norm((v as Record<string, unknown>)[k])]))

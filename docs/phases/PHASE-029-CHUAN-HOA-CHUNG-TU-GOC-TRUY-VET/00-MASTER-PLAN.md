@@ -38,7 +38,7 @@ Entry = { id, entryNo, postingDate, status, isReversal, reversesEntryId, reverse
 PostingStep = { action, at, actor, entryIds, reversed, message, policyVersion }
 ```
 
-- Phiên bản hiện hành: nội dung từ `accounting_events.payload`; phiên bản cũ: `accounting_event_versions.payload`. `contentHash` = sha256 của JSON đã chuẩn hoá khoá (cùng cách `document_versions`). `receivedBy` = `actor` của dòng `posting_log` `receive` của phiên bản đó (V1 không có dòng `receive` → `source.createdBy`).
+- Phiên bản hiện hành: nội dung từ `accounting_events.payload`; phiên bản cũ: `accounting_event_versions.payload`. `contentHash` = sha256 của JSON đã chuẩn hoá khoá (cùng cách `document_versions`). `receivedBy` = `actor` của dòng `posting_log` `receive` của phiên bản đó (chỉ ghi khi chứng từ chờ định khoản); không có thì `actor` của dòng định khoản đầu tiên của phiên bản (nộp và định khoản cùng lời gọi); bản 1 không có dòng nào → `source.createdBy`; vẫn không có → `null`, không đoán.
 - `isPosted` = `version = posted_version`. Một bút toán thuộc phiên bản `event_version`; bút toán đảo nối `reverses_entry_id` và hiện ở **phiên bản của bút toán bị đảo** cùng `isReversal`.
 - Khoá `entryId` không có `event_id` → 404 `NOT_FOUND` kèm thông điệp nêu rõ "bút toán không gắn sự việc" (đúng dữ liệu chẩn đoán `ENTRY_NO_EVENT` sẽ báo).
 - `integrity.issues` dùng đúng ba mã mới của §3.2 cùng hai mã `posted_version` có sẵn (`EVENT_POSTED_VERSION`, `INTERNAL_EVENT_VERSION`). `unversionedEntries` gồm bút toán `event_version` NULL **và** bút toán trỏ phiên bản không còn nội dung.

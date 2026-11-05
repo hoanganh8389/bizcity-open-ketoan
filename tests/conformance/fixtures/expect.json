@@ -671,6 +671,20 @@
           ]
         }
       }
+    },
+    {
+      "root": "document-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-DOC-7": {
+          "findings": 3,
+          "keys": [
+            "write:accounting_event_versions:packages/kernel/src/modules/documents/ghi-vong.ts",
+            "write:document_links:packages/kernel/src/modules/documents/ghi-vong.ts",
+            "version:packages/kernel/src/modules/ledger/ghi-thieu-phien-ban.ts:7"
+          ]
+        }
+      }
     }
   ]
 }
