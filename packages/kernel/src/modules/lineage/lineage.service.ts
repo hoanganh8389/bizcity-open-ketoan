@@ -445,29 +445,30 @@ const fmtQty = (n: number) => new Intl.NumberFormat('vi-VN', { maximumFractionDi
 export async function getItemImpact(trx: Db, tenantId: string, sku: string): Promise<ItemImpact> {
   const key = await itemKey(trx, tenantId, sku);
   if (!key.itemId) throw Errors.notFound(`mặt hàng ${sku}`);
+  // [2026-11-05 05:45 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: tính cả mặt hàng đã gộp vào (đóng góp)
   const id = key.itemId;
   const current = key.codes.find((c) => c.kind === 'sku' && c.validTo === null)?.code ?? sku;
   const [docs, stock, accounts, prices, units, costs, locked] = await Promise.all([
     sql<{ doc_type: string; n: string; first: string; last: string }>`
       SELECT e.doc_type, count(DISTINCT e.id)::text AS n, min(m.doc_date)::text AS first, max(m.doc_date)::text AS last
         FROM inventory_movements m JOIN accounting_events e ON e.id = m.event_id
-       WHERE m.tenant_id = ${tenantId} AND m.item_id = ${id} GROUP BY e.doc_type ORDER BY 2 DESC`.execute(trx),
+       WHERE m.tenant_id = ${tenantId} AND m.item_id IN (SELECT bizcity_item_family(${id})) GROUP BY e.doc_type ORDER BY 2 DESC`.execute(trx),
     sql<{ code: string; name: string; qty: string }>`
       SELECT b.code, b.name, sum(m.qty)::text AS qty FROM inventory_movements m JOIN branches b ON b.id = m.branch_id
-       WHERE m.tenant_id = ${tenantId} AND m.item_id = ${id} GROUP BY b.code, b.name HAVING sum(m.qty) <> 0 ORDER BY b.code`.execute(trx),
+       WHERE m.tenant_id = ${tenantId} AND m.item_id IN (SELECT bizcity_item_family(${id})) GROUP BY b.code, b.name HAVING sum(m.qty) <> 0 ORDER BY b.code`.execute(trx),
     sql<{ account_code: string; name: string | null; n: string; debit: string; credit: string }>`
       SELECT l.account_code, max(a.name) AS name, count(*)::text AS n, sum(l.debit)::text AS debit, sum(l.credit)::text AS credit
         FROM ledger_lines l LEFT JOIN accounts a ON a.tenant_id = l.tenant_id AND a.code = l.account_code
-       WHERE l.tenant_id = ${tenantId} AND l.item_id = ${id} GROUP BY l.account_code ORDER BY l.account_code`.execute(trx),
+       WHERE l.tenant_id = ${tenantId} AND l.item_id IN (SELECT bizcity_item_family(${id})) GROUP BY l.account_code ORDER BY l.account_code`.execute(trx),
     sql<{ price_list_code: string; unit: string; price: string | null }>`
-      SELECT price_list_code, unit, price::text FROM product_prices WHERE tenant_id = ${tenantId} AND item_id = ${id} ORDER BY 1, 2`.execute(trx),
+      SELECT price_list_code, unit, price::text FROM product_prices WHERE tenant_id = ${tenantId} AND item_id IN (SELECT bizcity_item_family(${id})) ORDER BY 1, 2`.execute(trx),
     sql<{ unit: string; ratio: string }>`
-      SELECT unit, ratio::text FROM product_units WHERE tenant_id = ${tenantId} AND item_id = ${id} ORDER BY ratio`.execute(trx),
-    sql<{ n: string }>`SELECT count(DISTINCT (year, month))::text AS n FROM inventory_costs WHERE tenant_id = ${tenantId} AND item_id = ${id}`.execute(trx),
+      SELECT unit, ratio::text FROM product_units WHERE tenant_id = ${tenantId} AND item_id IN (SELECT bizcity_item_family(${id})) ORDER BY ratio`.execute(trx),
+    sql<{ n: string }>`SELECT count(DISTINCT (year, month))::text AS n FROM inventory_costs WHERE tenant_id = ${tenantId} AND item_id IN (SELECT bizcity_item_family(${id}))`.execute(trx),
     sql<{ period: string; n: string }>`
       SELECT to_char(f.start_date, 'YYYY-MM') AS period, count(l.id)::text AS n
         FROM fiscal_periods f
-        JOIN ledger_lines l ON l.tenant_id = f.tenant_id AND l.item_id = ${id} AND l.posting_date BETWEEN f.start_date AND f.end_date
+        JOIN ledger_lines l ON l.tenant_id = f.tenant_id AND l.item_id IN (SELECT bizcity_item_family(${id})) AND l.posting_date BETWEEN f.start_date AND f.end_date
        WHERE f.tenant_id = ${tenantId} AND EXISTS (SELECT 1 FROM period_locks k WHERE k.period_id = f.id AND k.branch_id IS NULL)
        GROUP BY 1 ORDER BY 1`.execute(trx),
   ]);

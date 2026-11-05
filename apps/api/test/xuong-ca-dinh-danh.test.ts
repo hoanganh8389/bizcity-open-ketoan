@@ -341,6 +341,19 @@ describe('Định danh phủ kín (0070)', () => {
   });
 });
 
+describe('Tác động qua gộp mã', () => {
+  it('mặt hàng giữ lại tính cả chứng từ và sổ của mã đã gộp vào; tra bằng mã cũ cũng vậy', async () => {
+    expect((await put('TD-A')).status).toBe(200);
+    expect((await put('TD-B')).status).toBe(200);
+    expect((await purchase('TD-M1', 'TD-A', 2, 200000)).body.data.status).toBe('posted');
+    expect((await sale('TD-S1', 'TD-A', 2, 300000)).body.data.status).toBe('posted');
+    expect((await merge('TD-A', 'TD-B')).status).toBe(200);
+    const docs = async (code: string) => (await call(ctx, 'GET', `/api/v1/lineage/items/${code}/impact`)).body.data.documents.map((d: { docType: string }) => d.docType) as string[];
+    expect(await docs('TD-B')).toEqual(expect.arrayContaining(['purchase', 'sale']));
+    expect(await docs('TD-A')).toEqual(expect.arrayContaining(['purchase', 'sale']));
+  });
+});
+
 describe('Lịch sử đọc đúng chữ', () => {
   it('đổi mã có lý do không trộn lý do vào mã; upsert để trống không in thành trống', async () => {
     expect((await put('LS-A')).status).toBe(200);

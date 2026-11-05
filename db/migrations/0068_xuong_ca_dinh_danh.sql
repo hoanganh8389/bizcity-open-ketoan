@@ -1,4 +1,5 @@
 -- [2026-11-05 12:30 PM Nguyễn Văn Thủy] PHASE-026 — S026-19 (docs/core/06-xuong-ca-dinh-danh.md): gộp mã nhiều lần, tra mã qua chuỗi gộp, item_id trên bảng cấu hình và dòng hoá đơn, bảng cấu hình theo mã hiện hành (đóng góp)
+-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — nhận đóng góp vào framework: Nguyễn Văn Thủy rà và gộp theo uỷ quyền review / merge của chủ dự án; chủ dự án chưa tự rà riêng tệp này
 -- [2026-11-05 01:35 PM Nguyễn Văn Thủy] PHASE-026 — đổi số 0070 → 0068 theo W-13 trước khi gộp vào main, không đổi nội dung (đóng góp)
 -- =============================================================================
 -- 0068 Xương cá.

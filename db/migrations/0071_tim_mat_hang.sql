@@ -1,4 +1,5 @@
 -- [2026-11-05 04:30 PM Nguyễn Văn Thủy] PHASE-026 — S026-14 (docs/core/06-xuong-ca-dinh-danh.md): tìm mặt hàng và lọc theo nhóm chịu được danh mục lớn (đóng góp)
+-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — nhận đóng góp vào framework: Nguyễn Văn Thủy rà và gộp theo uỷ quyền review / merge của chủ dự án; chủ dự án chưa tự rà riêng tệp này
 -- =============================================================================
 -- 0071 Tìm mặt hàng trên danh mục lớn.
 --   Đo trên 21 triệu mặt hàng: tìm kiếm quét toàn bảng hết 76 giây, lọc theo nhóm 14 giây.

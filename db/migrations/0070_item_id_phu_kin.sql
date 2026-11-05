@@ -1,4 +1,5 @@
 -- [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-19 (docs/core/06-xuong-ca-dinh-danh.md): phủ kín item_id: dòng danh mục, JSON dòng phiếu, khung nhìn đọc (đóng góp)
+-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — nhận đóng góp vào framework: Nguyễn Văn Thủy rà và gộp theo uỷ quyền review / merge của chủ dự án; chủ dự án chưa tự rà riêng tệp này
 -- =============================================================================
 -- 0070 Phủ kín định danh mặt hàng.
 --   products.item_id          dòng danh mục trỏ thẳng định danh, không phải tra qua mã.
