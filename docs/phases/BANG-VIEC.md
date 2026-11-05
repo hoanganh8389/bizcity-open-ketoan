@@ -8,8 +8,8 @@
 | Đang làm | 14 |
 | Chờ merge | 0 |
 | Bị chặn | 15 |
-| Chưa ai nhận | 92 |
-| Chờ đủ tín hiệu | 39 |
+| Chưa ai nhận | 91 |
+| Chờ đủ tín hiệu | 40 |
 | Hoãn | 1 |
 | Xong | 189 |
 | **Tổng** | **350** |
@@ -26,7 +26,7 @@
 | [S026-4](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L10) | PHASE-026 | entitycodes cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng b… | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot3` |
 | [S026-5](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L16) | PHASE-026 | itemclasses.path + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
-| [S026-19](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L11) | PHASE-026 | Migration 0070: mergedintoitemid gộp nhiều lần, bizcityitemroot / bizcityitemfamily, itemid trên bảng cấu hìn… | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
+| [S026-19](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L11) | PHASE-026 | Migration 0068: mergedintoitemid gộp nhiều lần, bizcityitemroot / bizcityitemfamily, itemid trên bảng cấu hìn… | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S026-20](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L12) | PHASE-026 | Cửa nạp và đường tạo mặt hàng không đứt chuỗi khi gặp mã cũ / mã đã gộp; chặn dùng lại mã của hàng còn sống | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S026-21](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L13) | PHASE-026 | Báo cáo và truy vấn lịch sử (mua hàng, kho, bán hàng) gom theo itemid, lọc riêng theo mã | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S026-22](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L14) | PHASE-026 | Hợp đồng hệ ngoài: itemId, mergedIntoItemId ở nguồn đổi danh mục, mã external:<nguồn> | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
@@ -57,7 +57,7 @@
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
 | [S027-5](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L10) | PHASE-027 | Q027-5 SEEDADMINPASSWORD | P1 | — |
 
-## Chưa ai nhận (92)
+## Chưa ai nhận (91)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -146,7 +146,6 @@
 | [S026-9](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L18) | PHASE-026 | Bốn lớp thay đổi ở Gate A (changeClass trong phản hồi validate / save); nháp cho đối tượng; lớp 3 bắt buộc xe… | P0 | — |
 | [S026-12](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L21) | PHASE-026 | MasterDataFrame bốn thẻ, gắn vào form mặt hàng, đối tượng, tài khoản, chi nhánh, kho; trang Trung tâm dữ liệu… | P0 | — |
 | [S026-13](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L25) | PHASE-026 | Truy vết đối tượng (/lineage/partners/:id) và tài khoản (/lineage/accounts/:code); thẻ Truy vết cho hai loại … | P1 | — |
-| [S026-14](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L27) | PHASE-026 | Benchmark 1.000.000 mặt hàng × 300 chi nhánh; đồng bộ theo câu lệnh cho đường nạp lô; EXCLUDE USING gist; số … | P2 | — |
 | [S026-17](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L26) | PHASE-026 | Nhập Excel đối tượng (hiện chỉ có partners/upsert); mapping chính sách theo phạm vi nhóm | P1 | — |
 | [S026-18](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L28) | PHASE-026 | Phân tích tác động hàng loạt (đổi cây nhóm, đổi chế độ); trợ lý AI hướng dẫn kế toán từ thư viện mã; bộ kiểm … | P2 | — |
 | [S027-6](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L11) | PHASE-027 | Q027-1 giải thích theo vai + SC-ERR-2 | P1 | — |
@@ -154,7 +153,7 @@
 | [S027-8](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L13) | PHASE-027 | Q027-3 quy tắc cho skill | P2 | — |
 | [S027-9](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L14) | PHASE-027 | Q027-4 cổng phát hành (CI xanh, bảo vệ main, SBOM) | P1 | — |
 
-## Chờ đủ tín hiệu (39)
+## Chờ đủ tín hiệu (40)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -194,6 +193,7 @@
 | [S026-2](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L8) | PHASE-026 | Golden Tests T026-G1..G7 có tên, chạy như một cổng (kiem-chuan.sh), thất bại chặn phát hành | P0 | — |
 | [S026-10](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L19) | PHASE-026 | API GET /api/v1/master-data/:type/:id/history; thẻ Lịch sử | P0 | — |
 | [S026-11](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L20) | PHASE-026 | Chỉ mục tham chiếu mdreferences + GET …/impact; thẻ Tác động + xem trước khi đổi mã / nhóm / ngừng | P0 | — |
+| [S026-14](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L27) | PHASE-026 | Benchmark 1.000.000 mặt hàng × 300 chi nhánh; đồng bộ theo câu lệnh cho đường nạp lô; EXCLUDE USING gist; số … | P2 | — |
 | [S027-1](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L6) | PHASE-027 | Tài liệu W0: README, 00, checklist; ADR-0023; dòng phase ở docs/phases/README.md | P0 | — |
 | [S027-2](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L7) | PHASE-027 | CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), sk… | P0 | — |
 | [S027-3](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L8) | PHASE-027 | CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế … | P1 | — |

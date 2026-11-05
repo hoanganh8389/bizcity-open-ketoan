@@ -58,7 +58,7 @@ describe('Đối chiếu sổ chi tiết kho với sổ cái', () => {
     inventoryAccount = d.defaultAccount;
     expect(d.accounts).toContain(inventoryAccount);
     expect(d.rows).toEqual([expect.objectContaining({ branchCode: 'CN01', sku: 'SUA01', qty: 8, subledgerValue: 700000, ledgerValue: 700000, uncosted: 1, status: 'uncosted' })]);
-    expect(await mismatch()).toMatchObject({ code: 'INVENTORY_LEDGER_MISMATCH', level: 'warn', examined: 0, count: 0, sample: [] });
+    expect(await mismatch()).toMatchObject({ code: 'INVENTORY_LEDGER_MISMATCH', level: 'empty', examined: 0, count: 0, sample: [] });
   });
 
   it('sau khi tính giá vốn: sổ kho = sổ cái theo mặt hàng và theo tài khoản', async () => {

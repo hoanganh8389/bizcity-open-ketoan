@@ -230,6 +230,128 @@ describe('Báo cáo và lịch sử qua đổi mã, gộp mã', () => {
   });
 });
 
+describe('Định danh phủ kín (0070)', () => {
+  it('canh cửa: bảng nào có cột mã hàng đều phải có item_id', async () => {
+    const r = await sql<{ table_name: string }>`
+      SELECT c.table_name FROM information_schema.columns c
+        JOIN information_schema.tables t USING (table_schema, table_name)
+       WHERE c.table_schema = 'public' AND t.table_type = 'BASE TABLE' AND c.column_name IN ('sku', 'product_sku', 'parent_sku')
+         AND NOT EXISTS (SELECT 1 FROM information_schema.columns x WHERE x.table_schema = 'public' AND x.table_name = c.table_name AND x.column_name = 'item_id')`.execute(db);
+    expect(r.rows.map((x) => x.table_name)).toEqual([]);
+  });
+
+  it('dòng danh mục có item_id trùng định danh của mã, đổi mã không đổi, không sửa tay được', async () => {
+    expect((await put('PK-A')).status).toBe(200);
+    const row = async (sku: string) => (await sql<{ item_id: string | null }>`SELECT item_id FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(db)).rows[0]?.item_id;
+    const id = await row('PK-A');
+    expect(id).toBe(await idOf('PK-A'));
+    expect((await rename('PK-A', 'PK-A2')).status).toBe(200);
+    expect(await row('PK-A2')).toBe(id);
+    await expect(sql`UPDATE products SET item_id = ${'01ARZ3NDEKTSV4RRFFQ69G5FAV'} WHERE tenant_id = ${tenantId} AND sku = 'PK-A2'`.execute(db)).rejects.toThrow(/không đổi được/);
+    const missing = await sql<{ n: string }>`SELECT count(*) AS n FROM products WHERE tenant_id = ${tenantId} AND item_id IS NULL`.execute(db);
+    expect(Number(missing.rows[0]!.n)).toBe(0);
+  });
+
+  it('thêm trùng mã (ON CONFLICT) không làm hỏng tên và định danh', async () => {
+    expect((await put('PK-B')).status).toBe(200);
+    const id = await idOf('PK-B');
+    const r = await call(ctx, 'POST', '/api/v1/items/upsert', { sku: 'PK-B', name: '', unit: '' });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data).toMatchObject({ sku: 'PK-B', itemId: id });
+    const it = await sql<{ name: string }>`SELECT name FROM items WHERE item_id = ${id!}`.execute(db);
+    expect(it.rows[0]!.name).toBe('PK-B');
+  });
+
+  it('JSON dòng phiếu tự kèm itemId, cả khi sửa phiếu', async () => {
+    expect((await put('PK-C')).status).toBe(200);
+    const id = await idOf('PK-C');
+    const ins = await sql<{ id: string }>`
+      INSERT INTO transfer_requests (tenant_id, code, from_branch, from_warehouse, to_branch, to_warehouse, data, created_by)
+      VALUES (${tenantId}, ${'PK-DNC-' + Date.now()}, 'CN01', '', 'CN01', '', ${JSON.stringify({ lines: [{ sku: 'PK-C', qty: 1 }, { sku: '', qty: 2 }] })}::jsonb, 'test') RETURNING id`.execute(db);
+    const dataOf = async () => (await sql<{ data: { lines: { sku: string; itemId?: string }[] } }>`SELECT data FROM transfer_requests WHERE id = ${ins.rows[0]!.id}`.execute(db)).rows[0]!.data;
+    expect((await dataOf()).lines[0]!.itemId).toBe(id);
+    expect((await dataOf()).lines[1]!.itemId).toBeUndefined();
+    expect((await rename('PK-C', 'PK-C2')).status).toBe(200);
+    await sql`UPDATE transfer_requests SET data = ${JSON.stringify({ lines: [{ sku: 'PK-C', qty: 3 }] })}::jsonb WHERE id = ${ins.rows[0]!.id}`.execute(db);
+    expect((await dataOf()).lines[0]).toMatchObject({ sku: 'PK-C', itemId: id });   // mã cũ vẫn ra đúng định danh
+  });
+
+  it('sales_lines và bizcity_read có item_id', async () => {
+    expect((await put('PK-D')).status).toBe(200);
+    const id = await idOf('PK-D');
+    expect((await purchase('PK-M1', 'PK-D', 5, 500000)).body.data.status).toBe('posted');
+    expect((await sale('PK-S1', 'PK-D', 1, 150000)).body.data.status).toBe('posted');
+    const sl = await sql<{ item_id: string }>`SELECT item_id FROM sales_lines WHERE tenant_id = ${tenantId} AND sku = 'PK-D'`.execute(db);
+    expect(sl.rows[0]?.item_id).toBe(id);
+    const rl = await sql<{ item_id: string }>`SELECT DISTINCT item_id FROM bizcity_read.ledger_lines WHERE tenant_id = ${tenantId} AND product_sku = 'PK-D'`.execute(db);
+    expect(rl.rows.map((r) => r.item_id)).toEqual([id]);
+    const ri = await sql<{ root_item_id: string }>`SELECT root_item_id FROM bizcity_read.items WHERE item_id = ${id!}`.execute(db);
+    expect(ri.rows[0]?.root_item_id).toBe(id);
+  });
+
+  it('sổ chi tiết lọc bằng mã mới, mã cũ đều đủ lịch sử; codeOnly chỉ phần dưới đúng mã đó', async () => {
+    expect((await put('PK-E')).status).toBe(200);
+    expect((await purchase('PK-M2', 'PK-E', 10, 1000000)).body.data.status).toBe('posted');
+    expect((await rename('PK-E', 'PK-E2')).status).toBe(200);
+    expect((await purchase('PK-M3', 'PK-E2', 10, 1000000)).body.data.status).toBe('posted');
+    const ask = async (sku: string, extra = '') => {
+      const r = await call(ctx, 'GET', `/api/v1/reports/journal?from=${today()}&to=${today()}&account=156&sku=${sku}${extra}`);
+      expect(r.status, JSON.stringify(r.body)).toBe(200);
+      return r.body.data.rows.length as number;
+    };
+    const both = await ask('PK-E2');
+    expect(both).toBeGreaterThanOrEqual(2);
+    expect(await ask('PK-E')).toBe(both);
+    expect(await ask('PK-E', '&codeOnly=true')).toBe(both / 2);
+    expect(await ask('PK-E2', '&codeOnly=true')).toBe(both / 2);
+  });
+
+  it('cửa nạp nhận itemId: thay cho mã, mã cũ cùng hàng được, khác hàng hoặc không có thì từ chối', async () => {
+    expect((await put('PK-F')).status).toBe(200);
+    expect((await put('PK-G')).status).toBe(200);
+    const id = (await idOf('PK-F'))!;
+    expect((await rename('PK-F', 'PK-F2')).status).toBe(200);
+    const send = (key: string, l: Record<string, unknown>) => call(ctx, 'POST', '/api/v1/documents', {
+      docType: 'purchase', docKey: key, branchCode: 'CN01', docNo: key, docDate: today(), partner: { code: 'NCC-01', name: 'Nhà cung cấp' }, payments: [],
+      lines: [{ lineKey: 'l1', name: 'x', unit: 'Hộp', qty: 1, amountBeforeTax: 100000, taxCode: 'V08', taxAmount: 0, ...l }], totals: { beforeTax: 100000, tax: 0, total: 100000 },
+    });
+    const a = await send('PK-I1', { itemId: id });
+    expect(a.body.data?.status, JSON.stringify(a.body)).toBe('posted');
+    expect(await ledgerIds('PK-F2')).toContain(id);
+    expect((await send('PK-I2', { itemId: id, sku: 'PK-F' })).body.data?.status).toBe('posted');
+    expect((await send('PK-I3', { itemId: id, sku: 'PK-G' })).status).toBe(400);
+    expect((await send('PK-I4', { itemId: '01ARZ3NDEKTSV4RRFFQ69G5FAV' })).status).toBe(400);
+  });
+
+  it('đóng mã ngoài; đổi phân loại từ hôm nay', async () => {
+    expect((await put('PK-H')).status).toBe(200);
+    const id = (await idOf('PK-H'))!;
+    expect((await call(ctx, 'POST', '/api/v1/items/add-code', { sku: 'PK-H', kind: 'external:woocommerce', code: 'PK-WOO-1' })).status).toBe(200);
+    const r = await call(ctx, 'POST', '/api/v1/items/retire-code', { sku: 'PK-H', kind: 'external:woocommerce', code: 'PK-WOO-1', reason: 'gỡ khỏi web' });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data.validTo).toBeTruthy();
+    expect((await call(ctx, 'POST', '/api/v1/items/retire-code', { sku: 'PK-H', kind: 'sku', code: 'PK-H', reason: 'không được đóng' })).status).toBe(400);
+    const g = await sql<{ code: string }>`SELECT code FROM product_posting_groups WHERE tenant_id = ${tenantId} LIMIT 1`.execute(db);
+    if (g.rows[0]) {
+      const c = await call(ctx, 'POST', '/api/v1/items/classify', { sku: 'PK-H', postingGroupCode: g.rows[0].code, reason: 'phân loại lại' });
+      expect(c.status, JSON.stringify(c.body)).toBe(200);
+      expect(c.body.data.itemId).toBe(id);
+    }
+    expect((await call(ctx, 'POST', '/api/v1/items/classify', { sku: 'PK-H', reason: 'thiếu nội dung' })).status).toBe(400);
+  });
+});
+
+describe('Lịch sử đọc đúng chữ', () => {
+  it('đổi mã có lý do không trộn lý do vào mã; upsert để trống không in thành trống', async () => {
+    expect((await put('LS-A')).status).toBe(200);
+    expect((await rename('LS-A', 'LS-A2')).status).toBe(200);
+    expect((await call(ctx, 'POST', '/api/v1/items/upsert', { sku: 'LS-A2', name: '', unit: '' })).status).toBe(200);
+    const texts = (await call(ctx, 'GET', '/api/v1/lineage/items/LS-A/history')).body.data.entries.map((e: { text: string }) => e.text) as string[];
+    expect(texts.some((t) => /^Đổi mã LS-A → LS-A2 \(hiệu lực từ /.test(t))).toBe(true);
+    expect(texts.some((t) => /\(trống\)/.test(t) && t.startsWith('Tạo / cập nhật'))).toBe(false);
+  });
+});
+
 describe('Hệ ngoài', () => {
   it('mã external giữ nguyên qua đổi mã và gộp; nguồn đổi có itemId và định danh thay thế', async () => {
     await put('XC-W1');

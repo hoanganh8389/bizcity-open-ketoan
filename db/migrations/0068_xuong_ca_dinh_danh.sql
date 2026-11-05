@@ -1,6 +1,7 @@
 -- [2026-11-05 12:30 PM Nguyễn Văn Thủy] PHASE-026 — S026-19 (docs/core/06-xuong-ca-dinh-danh.md): gộp mã nhiều lần, tra mã qua chuỗi gộp, item_id trên bảng cấu hình và dòng hoá đơn, bảng cấu hình theo mã hiện hành (đóng góp)
+-- [2026-11-05 01:35 PM Nguyễn Văn Thủy] PHASE-026 — đổi số 0070 → 0068 theo W-13 trước khi gộp vào main, không đổi nội dung (đóng góp)
 -- =============================================================================
--- 0070 Xương cá.
+-- 0068 Xương cá.
 --   - items.merged_into_item_id + merged_at: A gộp vào B, sau đó B gộp vào C. Mỗi mặt hàng gộp tối đa một lần, không viết lại;
 --     đích cuối tính bằng cách đi theo chuỗi (bizcity_item_root / bizcity_item_walk). Sổ cũ không đụng (R-ITEM-0, R-ITEM-5).
 --   - bizcity_item_at: tra cả bí danh và đi theo chuỗi gộp tại ngày.
@@ -14,7 +15,7 @@
 ALTER TABLE items ADD COLUMN merged_into_item_id text REFERENCES items(item_id), ADD COLUMN merged_at date;
 ALTER TABLE items ADD CONSTRAINT items_merged_pair CHECK ((merged_into_item_id IS NULL) = (merged_at IS NULL));
 CREATE INDEX items_merged_into ON items (tenant_id, merged_into_item_id) WHERE merged_into_item_id IS NOT NULL;
-COMMENT ON COLUMN items.merged_into_item_id IS 'Mặt hàng này đã gộp vào mặt hàng nào (0070). Đặt một lần, không đổi; gộp nhiều lần tạo thành chuỗi A → B → C.';
+COMMENT ON COLUMN items.merged_into_item_id IS 'Mặt hàng này đã gộp vào mặt hàng nào (0068). Đặt một lần, không đổi; gộp nhiều lần tạo thành chuỗi A → B → C.';
 COMMENT ON COLUMN items.merged_at IS 'Ngày gộp có hiệu lực. Chứng từ trước ngày này vẫn thuộc mặt hàng cũ.';
 
 CREATE OR REPLACE FUNCTION bizcity_items_merge_guard() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -47,7 +48,7 @@ BEGIN
   END LOOP;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_items_merge_guard() IS 'Bất biến gộp mã: đặt một lần, không tự trỏ, cùng đơn vị, không vòng (0070).';
+COMMENT ON FUNCTION bizcity_items_merge_guard() IS 'Bất biến gộp mã: đặt một lần, không tự trỏ, cùng đơn vị, không vòng (0068).';
 CREATE TRIGGER items_merge_guard BEFORE UPDATE OF merged_into_item_id, merged_at ON items FOR EACH ROW EXECUTE FUNCTION bizcity_items_merge_guard();
 
 -- Đích cuối tại một ngày; p_day NULL = đích cuối hiện tại, không xét ngày.
@@ -70,12 +71,12 @@ BEGIN
     n := n + 1;
   END LOOP;
 END $$;
-COMMENT ON FUNCTION bizcity_item_walk(text, date) IS 'Đi theo chuỗi gộp tới mặt hàng có hiệu lực tại ngày; không có ngày thì tới đích cuối (0070).';
+COMMENT ON FUNCTION bizcity_item_walk(text, date) IS 'Đi theo chuỗi gộp tới mặt hàng có hiệu lực tại ngày; không có ngày thì tới đích cuối (0068).';
 
 CREATE OR REPLACE FUNCTION bizcity_item_root(p_item text) RETURNS text LANGUAGE sql STABLE AS $$
   SELECT bizcity_item_walk(p_item, NULL)
 $$;
-COMMENT ON FUNCTION bizcity_item_root(text) IS 'Mặt hàng đích cuối của chuỗi gộp (0070).';
+COMMENT ON FUNCTION bizcity_item_root(text) IS 'Mặt hàng đích cuối của chuỗi gộp (0068).';
 
 -- Mọi mặt hàng cùng chuỗi gộp với p_item: đích cuối và mọi mặt hàng đã gộp vào nó. Báo cáo "gộp" dùng hàm này.
 CREATE OR REPLACE FUNCTION bizcity_item_family(p_item text) RETURNS SETOF text LANGUAGE sql STABLE AS $$
@@ -86,7 +87,7 @@ CREATE OR REPLACE FUNCTION bizcity_item_family(p_item text) RETURNS SETOF text L
   )
   SELECT item_id FROM f WHERE item_id IS NOT NULL
 $$;
-COMMENT ON FUNCTION bizcity_item_family(text) IS 'Đích cuối và mọi mặt hàng đã gộp vào nó, gồm cả gộp nhiều lần (0070).';
+COMMENT ON FUNCTION bizcity_item_family(text) IS 'Đích cuối và mọi mặt hàng đã gộp vào nó, gồm cả gộp nhiều lần (0068).';
 
 -- ── Tra mã tại ngày: sku có hiệu lực → bí danh có hiệu lực → mã gần nhất; rồi đi theo chuỗi gộp tại ngày đó ──────────────────
 CREATE OR REPLACE FUNCTION bizcity_item_at(p_tenant bigint, p_sku text, p_day date) RETURNS text LANGUAGE sql STABLE AS $$
@@ -102,7 +103,7 @@ CREATE OR REPLACE FUNCTION bizcity_item_at(p_tenant bigint, p_sku text, p_day da
     ) x ORDER BY rank, valid_from DESC LIMIT 1
   ), p_day)
 $$;
-COMMENT ON FUNCTION bizcity_item_at(bigint, text, date) IS 'item_id của mã tại ngày: sku có hiệu lực, rồi bí danh có hiệu lực, rồi mã gần nhất; sau đó đi theo chuỗi gộp tại ngày đó (0070).';
+COMMENT ON FUNCTION bizcity_item_at(bigint, text, date) IS 'item_id của mã tại ngày: sku có hiệu lực, rồi bí danh có hiệu lực, rồi mã gần nhất; sau đó đi theo chuỗi gộp tại ngày đó (0068).';
 
 -- Mã này đang thuộc mặt hàng nào mà KHÔNG được dùng cho hàng mới: bí danh còn mở, hoặc sku đã đóng của mặt hàng còn sống.
 CREATE OR REPLACE FUNCTION bizcity_item_code_taken(p_tenant bigint, p_code text) RETURNS text LANGUAGE sql STABLE AS $$
@@ -115,7 +116,7 @@ CREATE OR REPLACE FUNCTION bizcity_item_code_taken(p_tenant bigint, p_code text)
      AND NOT EXISTS (SELECT 1 FROM item_codes o WHERE o.tenant_id = p_tenant AND o.kind = 'sku' AND o.code = p_code AND o.valid_to IS NULL)
    ORDER BY c.valid_from DESC LIMIT 1
 $$;
-COMMENT ON FUNCTION bizcity_item_code_taken(bigint, text) IS 'Mặt hàng hiện giữ mã cũ / bí danh này; NULL = mã mới, hoặc đang là sku mở, hoặc của hàng đã xoá (0070, Q5).';
+COMMENT ON FUNCTION bizcity_item_code_taken(bigint, text) IS 'Mặt hàng hiện giữ mã cũ / bí danh này; NULL = mã mới, hoặc đang là sku mở, hoặc của hàng đã xoá (0068, Q5).';
 
 -- ── item_id trên bảng còn khoá theo mã ─────────────────────────────────────────────────────────────────────────────────
 ALTER TABLE supplier_products      ADD COLUMN item_id text;
@@ -124,12 +125,12 @@ ALTER TABLE supplier_invoice_lines ADD COLUMN item_id text;
 ALTER TABLE stock_levels           ADD COLUMN item_id text;
 ALTER TABLE stock_sku_settings     ADD COLUMN item_id text;
 ALTER TABLE tax_invoice_lines      ADD COLUMN item_id text;
-COMMENT ON COLUMN supplier_products.item_id IS 'Định danh mặt hàng (0070); sku = mã hiện hành, tự theo khi đổi mã.';
-COMMENT ON COLUMN supplier_item_aliases.item_id IS 'Định danh mặt hàng (0070); sku = mã hiện hành, tự theo khi đổi mã.';
-COMMENT ON COLUMN supplier_invoice_lines.item_id IS 'Định danh mặt hàng (0070); sku = ảnh chụp mã trên dòng hoá đơn.';
-COMMENT ON COLUMN stock_levels.item_id IS 'Định danh mặt hàng (0070); sku = mã hiện hành, tự theo khi đổi mã.';
-COMMENT ON COLUMN stock_sku_settings.item_id IS 'Định danh mặt hàng (0070); sku = mã hiện hành, tự theo khi đổi mã.';
-COMMENT ON COLUMN tax_invoice_lines.item_id IS 'Định danh mặt hàng (0070); sku = ảnh chụp mã trên dòng hoá đơn thuế.';
+COMMENT ON COLUMN supplier_products.item_id IS 'Định danh mặt hàng (0068); sku = mã hiện hành, tự theo khi đổi mã.';
+COMMENT ON COLUMN supplier_item_aliases.item_id IS 'Định danh mặt hàng (0068); sku = mã hiện hành, tự theo khi đổi mã.';
+COMMENT ON COLUMN supplier_invoice_lines.item_id IS 'Định danh mặt hàng (0068); sku = ảnh chụp mã trên dòng hoá đơn.';
+COMMENT ON COLUMN stock_levels.item_id IS 'Định danh mặt hàng (0068); sku = mã hiện hành, tự theo khi đổi mã.';
+COMMENT ON COLUMN stock_sku_settings.item_id IS 'Định danh mặt hàng (0068); sku = mã hiện hành, tự theo khi đổi mã.';
+COMMENT ON COLUMN tax_invoice_lines.item_id IS 'Định danh mặt hàng (0068); sku = ảnh chụp mã trên dòng hoá đơn thuế.';
 
 UPDATE supplier_products      SET item_id = bizcity_item_at(tenant_id, sku, CURRENT_DATE) WHERE sku <> '';
 UPDATE supplier_item_aliases  SET item_id = bizcity_item_at(tenant_id, sku, CURRENT_DATE) WHERE sku <> '';
@@ -163,7 +164,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_config_item_id() IS 'Gắn item_id cho bảng còn dùng sku khi thêm dòng hoặc đổi sku (0070).';
+COMMENT ON FUNCTION bizcity_config_item_id() IS 'Gắn item_id cho bảng còn dùng sku khi thêm dòng hoặc đổi sku (0068).';
 CREATE TRIGGER supplier_products_item_id      BEFORE INSERT OR UPDATE OF sku ON supplier_products      FOR EACH ROW EXECUTE FUNCTION bizcity_config_item_id();
 CREATE TRIGGER supplier_item_aliases_item_id  BEFORE INSERT OR UPDATE OF sku ON supplier_item_aliases  FOR EACH ROW EXECUTE FUNCTION bizcity_config_item_id();
 CREATE TRIGGER supplier_invoice_lines_item_id BEFORE INSERT OR UPDATE OF sku ON supplier_invoice_lines FOR EACH ROW EXECUTE FUNCTION bizcity_config_item_id();
@@ -181,7 +182,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_tax_line_item_id() IS 'Gắn item_id cho dòng hoá đơn thuế theo mã (0070).';
+COMMENT ON FUNCTION bizcity_tax_line_item_id() IS 'Gắn item_id cho dòng hoá đơn thuế theo mã (0068).';
 CREATE TRIGGER tax_invoice_lines_item_id BEFORE INSERT ON tax_invoice_lines FOR EACH ROW EXECUTE FUNCTION bizcity_tax_line_item_id();
 UPDATE tax_invoice_lines l SET item_id = bizcity_item_at(t.tenant_id, l.sku, CURRENT_DATE)
   FROM tax_invoices t WHERE t.id = l.tax_invoice_id AND l.sku <> '';
@@ -217,13 +218,13 @@ BEGIN
          rule  = replace(rule::text,  to_jsonb(p_old)::text, to_jsonb(p_new)::text)::jsonb
    WHERE tenant_id = p_tenant AND (scope::text LIKE '%' || to_jsonb(p_old)::text || '%' OR rule::text LIKE '%' || to_jsonb(p_old)::text || '%');
 END $$;
-COMMENT ON FUNCTION bizcity_item_rename_refs(bigint, text, text) IS 'Bảng cấu hình mô tả hiện tại: đổi mã thì đổi theo. Bảng lịch sử giữ ảnh chụp (0070).';
+COMMENT ON FUNCTION bizcity_item_rename_refs(bigint, text, text) IS 'Bảng cấu hình mô tả hiện tại: đổi mã thì đổi theo. Bảng lịch sử giữ ảnh chụp (0068).';
 
 -- Đường tạo mặt hàng: từ chối mã của hàng còn sống / đã gộp (Q5). Người thao tác và ghi chú lấy từ phiên (bizcity.actor, bizcity.note).
 CREATE OR REPLACE FUNCTION bizcity_items_actor() RETURNS text LANGUAGE sql STABLE AS $$
   SELECT COALESCE(NULLIF(current_setting('bizcity.actor', true), ''), 'system:products-sync')
 $$;
-COMMENT ON FUNCTION bizcity_items_actor() IS 'Người thao tác do action đặt trong giao dịch; không có thì là hệ thống (0070).';
+COMMENT ON FUNCTION bizcity_items_actor() IS 'Người thao tác do action đặt trong giao dịch; không có thì là hệ thống (0068).';
 
 CREATE OR REPLACE FUNCTION bizcity_items_from_product(p products) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE
@@ -377,7 +378,7 @@ BEGIN
     'unitConflicts', (SELECT count(*) FROM product_units a JOIN product_units b ON b.tenant_id = a.tenant_id AND b.item_id = p_to AND lower(b.unit) = lower(a.unit)
                        WHERE a.tenant_id = p_tenant AND a.item_id = p_from AND a.ratio <> b.ratio));
 END $$;
-COMMENT ON FUNCTION bizcity_item_merge_check(bigint, text, text) IS 'Xem trước gộp mã, chỉ đọc: lỗi chặn, tồn, số dòng lịch sử (không dòng nào bị sửa), số con, xung đột quy đổi (0070).';
+COMMENT ON FUNCTION bizcity_item_merge_check(bigint, text, text) IS 'Xem trước gộp mã, chỉ đọc: lỗi chặn, tồn, số dòng lịch sử (không dòng nào bị sửa), số con, xung đột quy đổi (0068).';
 
 -- Gộp p_from vào p_to. Sổ cũ không đụng. Trả { fromSku, toSku, droppedConfig }.
 CREATE OR REPLACE FUNCTION bizcity_item_merge(p_tenant bigint, p_from text, p_to text, p_actor text, p_note text) RETURNS jsonb LANGUAGE plpgsql AS $$
@@ -466,8 +467,8 @@ BEGIN
   UPDATE products SET updated_at = now() WHERE tenant_id = p_tenant AND sku = v_to_sku;
   RETURN jsonb_build_object('fromSku', v_from_sku, 'toSku', v_to_sku, 'droppedConfig', v_dropped, 'mergedAt', v_day);
 END $$;
-COMMENT ON FUNCTION bizcity_item_merge(bigint, text, text, text, text) IS 'Gộp mặt hàng: đóng mã nguồn, mở bí danh ở đích, chuyển con và cấu hình, đánh dấu chuỗi gộp. Không đụng sổ, không sinh bút toán (0070).';
+COMMENT ON FUNCTION bizcity_item_merge(bigint, text, text, text, text) IS 'Gộp mặt hàng: đóng mã nguồn, mở bí danh ở đích, chuyển con và cấu hình, đánh dấu chuỗi gộp. Không đụng sổ, không sinh bút toán (0068).';
 
 -- ── Nguồn đổi danh mục cho hệ ngoài: dòng xoá vì đổi mã / gộp mã trỏ tới mặt hàng thay thế ─────────────────────────────────
 ALTER TABLE catalog_tombstones ADD COLUMN replaced_by_item_id text;
-COMMENT ON COLUMN catalog_tombstones.replaced_by_item_id IS 'Mã bị bỏ vì đổi mã / gộp mã: định danh mặt hàng thay thế, để hệ ngoài chuyển bản ghi (0070).';
+COMMENT ON COLUMN catalog_tombstones.replaced_by_item_id IS 'Mã bị bỏ vì đổi mã / gộp mã: định danh mặt hàng thay thế, để hệ ngoài chuyển bản ghi (0068).';

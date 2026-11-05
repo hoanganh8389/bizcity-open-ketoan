@@ -18,6 +18,14 @@ export interface BalanceRow {
   credit: string; // phát sinh Có trong kỳ
 }
 
+// [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-21 (docs/core/06-xuong-ca-dinh-danh.md): lọc sổ theo mặt hàng gồm mã cũ và mã đã gộp; codeOnly chỉ lấy phần ghi dưới đúng mã này (đóng góp)
+const skuCond = (tenantId: string, sku: string, codeOnly?: boolean, alias = 'l') => {
+  const col = (c: string) => sql.ref(alias ? `${alias}.${c}` : c);
+  return codeOnly
+    ? sql`${col('product_sku')} = ${sku}`
+    : sql`${col('item_id')} IN (SELECT bizcity_items_of_codes(${tenantId}::bigint, ARRAY[${sku}]::text[]))`;
+};
+
 export const reportRepository = {
   branchIds(db: Db, tenantId: string, codes: string[]) {
     return db.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', tenantId).where('code', 'in', codes).execute();
@@ -60,7 +68,7 @@ export const reportRepository = {
    * Số dư đầu kỳ của tài khoản cho MỘT mã hàng (sổ chi tiết lọc theo mã hàng, vd 156 chi tiết theo mã): cộng thẳng các dòng sổ
    * mang mã đó trước kỳ (bảng số dư ngày không tách theo mã). Bút toán gốc đã sửa và bút toán ghi số âm triệt tiêu nhau nên cộng cả.
    */
-  async openingBySku(db: Db, a: { tenantId: string; accountPrefix: string; from: string; branchIds: string[] | null; partnerId?: string; sku: string }) {
+  async openingBySku(db: Db, a: { tenantId: string; accountPrefix: string; from: string; branchIds: string[] | null; partnerId?: string; sku: string; codeOnly?: boolean }) {
     const branchFilter = a.branchIds ? sql`AND branch_id = ANY(${a.branchIds}::bigint[])` : sql``;
     const partnerFilter = a.partnerId ? sql`AND partner_id = ${a.partnerId}` : sql``;
     const res = await sql<{ partner_id: string | null; net: string }>`
@@ -68,7 +76,7 @@ export const reportRepository = {
         FROM bizcity_read.ledger_lines
        WHERE tenant_id = ${a.tenantId}
          AND account_code LIKE ${a.accountPrefix + '%'}
-         AND product_sku = ${a.sku}
+         AND ${skuCond(a.tenantId, a.sku, a.codeOnly, '')}
          AND posting_date < ${a.from}::date
          ${branchFilter} ${partnerFilter}
        GROUP BY partner_id`.execute(db);
@@ -82,9 +90,9 @@ export const reportRepository = {
    *   docType        chỉ lấy một loại chứng từ
    *   cashOrder      trong cùng ngày: dòng thu (Nợ) trước, dòng chi (Có) sau — thứ tự của sổ quỹ
    */
-  async accountLines(db: Db, a: { tenantId: string; accountPrefix: string; from: string; to: string; branchIds: string[] | null; partnerId?: string; showCorrections?: boolean; counterPrefix?: string; docType?: string; cashOrder?: boolean; sku?: string }) {
+  async accountLines(db: Db, a: { tenantId: string; accountPrefix: string; from: string; to: string; branchIds: string[] | null; partnerId?: string; showCorrections?: boolean; counterPrefix?: string; docType?: string; cashOrder?: boolean; sku?: string; codeOnly?: boolean }) {
     const branchFilter = a.branchIds ? sql`AND l.branch_id = ANY(${a.branchIds}::bigint[])` : sql``;
-    const skuFilter = a.sku ? sql`AND l.product_sku = ${a.sku}` : sql``;
+    const skuFilter = a.sku ? sql`AND ${skuCond(a.tenantId, a.sku, a.codeOnly)}` : sql``;
     const partnerFilter = a.partnerId ? sql`AND l.partner_id = ${a.partnerId}` : sql``;
     const typeFilter = a.docType ? sql`AND e.doc_type = ${a.docType}` : sql``;
     const counterFilter = a.counterPrefix
@@ -138,7 +146,7 @@ export const reportRepository = {
         JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
         JOIN branches br ON br.id = l.branch_id
         LEFT JOIN partners p ON p.id = l.partner_id
-        LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.product_sku
+        LEFT JOIN bizcity_read.items pr ON pr.item_id = l.item_id
        WHERE l.tenant_id = ${a.tenantId}
          AND l.account_code LIKE ${a.accountPrefix + '%'}
          AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
@@ -151,11 +159,11 @@ export const reportRepository = {
    * Sổ nhật ký chung: mọi dòng sổ cái trong kỳ theo trình tự thời gian, kèm tài khoản đối ứng.
    * Mặc định ẩn bút toán gốc đã sửa và bút toán ghi số âm của nó (triệt tiêu nhau).
    */
-  async journal(db: Db, a: { tenantId: string; from: string; to: string; branchIds: string[] | null; docType?: string; search?: string; showCorrections?: boolean; corrections?: 'hide' | 'all' | 'only'; accountPrefix?: string; counterPrefix?: string; sku?: string; limit: number; offset: number }) {
+  async journal(db: Db, a: { tenantId: string; from: string; to: string; branchIds: string[] | null; docType?: string; search?: string; showCorrections?: boolean; corrections?: 'hide' | 'all' | 'only'; accountPrefix?: string; counterPrefix?: string; sku?: string; codeOnly?: boolean; limit: number; offset: number }) {
     const filters = [
       a.branchIds ? sql`AND l.branch_id = ANY(${a.branchIds}::bigint[])` : sql``,
       a.accountPrefix ? sql`AND l.account_code LIKE ${a.accountPrefix + '%'}` : sql``,
-      a.sku ? sql`AND l.product_sku = ${a.sku}` : sql``,
+      a.sku ? sql`AND ${skuCond(a.tenantId, a.sku, a.codeOnly)}` : sql``,
       // TK đối ứng: dòng phía bên kia của cùng cặp định khoản.
       a.counterPrefix
         ? sql`AND EXISTS (SELECT 1 FROM bizcity_read.ledger_lines o WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
@@ -173,7 +181,7 @@ export const reportRepository = {
         JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
         JOIN branches br ON br.id = l.branch_id
         LEFT JOIN partners p ON p.id = l.partner_id
-        LEFT JOIN products pr ON pr.tenant_id = l.tenant_id AND pr.sku = l.product_sku
+        LEFT JOIN bizcity_read.items pr ON pr.item_id = l.item_id
        WHERE l.tenant_id = ${a.tenantId}
          AND l.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
          ${sql.join(filters, sql` `)}`;

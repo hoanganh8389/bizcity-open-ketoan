@@ -25,7 +25,8 @@ export function useCatalogWhy(url: string, draft: Record<string, unknown>, enabl
   const q = useQuery({
     queryKey: ['catalog-why', url, debounced],
     queryFn: () => api.post<{ findings: CatalogFinding[] }>(url, JSON.parse(debounced)),
-    enabled,
+    // Chỉ gọi khi nội dung đã ổn định: form vừa nạp xong mà còn khoá cũ thì sẽ gửi mã trống, máy chủ báo lỗi.
+    enabled: enabled && debounced === key,
     staleTime: 30_000,
   });
   const findings = q.data?.findings ?? [];

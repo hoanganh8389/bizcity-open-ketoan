@@ -9,7 +9,7 @@
 
 <!-- [2026-11-02 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — gộp main sau PHASE-011 (manual_journal lấy 1.3.0): error.intake lên 1.4.0 -->
 
-> **Phiên bản:** 1.4.0 · 2026-11-02 · **Trạng thái:** Ổn định (1.4.0: §2 lỗi cửa nạp thêm `error.intake`; 1.3.0: thêm `docType` `manual_journal`; khuôn các loại cũ không đổi)
+> **Phiên bản:** 1.5.0 · 2026-11-05 · **Trạng thái:** Ổn định (1.4.0: §2 lỗi cửa nạp thêm `error.intake`; 1.3.0: thêm `docType` `manual_journal`; khuôn các loại cũ không đổi)
 > **Nguồn sự thật:** `packages/contracts/src/documents.ts` (`ingestDocumentSchema`) · **JSON Schema:** [BIZCITY-LEDGER-INTAKE-v1.schema.json](BIZCITY-LEDGER-INTAKE-v1.schema.json)
 > **Luật:** [R-EVENT](../rules/RULE-EVENT.md) · **Hướng dẫn chi tiết từng loại kèm JSON mẫu:** [../api/](../api/README.md)
 > **Đổi tên (2026-10-29, trước khi phát hành):** trước đây gọi là `bizcity_event@1`. Tên `bizcity_event` nay dành cho **sự kiện miền** của Standard v1 ([BIZCITY-EVENT-v1.md](BIZCITY-EVENT-v1.md)). Hợp đồng này là **cửa nạp của nhân sổ cái**: phân hệ trong tiến trình gọi qua `ctx.ledger.submit()` của SDK, không gọi thẳng.
@@ -69,7 +69,7 @@ Xác thực: `X-Api-Key` có phạm vi `documents:write`. Header tuỳ chọn `X
 | `customer_payment`, `supplier_payment` | **`methodCode`**, `direction` (`in`/`out`), `lines[]` phân bổ `{lineKey, amount, branchCode?, invoiceDocKey?}` | **`totals{total > 0}`**, tổng phân bổ ≤ tổng |
 | `manual_journal` (từ 1.3.0) | **`lines[]`** ≥ 1 dòng `{**lineKey**, **reasonCode**, **amount** > 0, partnerCode?, description?}` — **khuôn đóng**: dòng / phiếu có trường lạ (số tài khoản, `taxCode`…) hay có `invoice` → `VALIDATION_ERROR` | **`totals{total > 0}`** = Σ `amount` |
 
-Dòng hàng (`sale`…`purchase_return`): **`lineKey`**, `sku`, `name`, `unit`, `qty` (ĐVT nhỏ nhất), `unitQty`, `unitRatio`, `unitPrice`, **`amountBeforeTax`** (đã trừ chiết khấu, tròn như hoá đơn), `discount`, **`taxCode`**, `taxAmount`, `warehouseCode`, `isGift`, `excludeFromCost`, `lotNo`, `expDate`, `note`, `cost`.
+Dòng hàng (`sale`…`purchase_return`): **`lineKey`**, `sku`, `itemId` (định danh, gửi kèm hoặc thay `sku`; có cả hai mà khác mặt hàng thì từ chối), `name`, `unit`, `qty` (ĐVT nhỏ nhất), `unitQty`, `unitRatio`, `unitPrice`, **`amountBeforeTax`** (đã trừ chiết khấu, tròn như hoá đơn), `discount`, **`taxCode`**, `taxAmount`, `warehouseCode`, `isGift`, `excludeFromCost`, `lotNo`, `expDate`, `note`, `cost`.
 
 Dòng kho (`transfer`, `stock_adjustment`): **`lineKey`**, **`sku`**, `name`, `unit`, **`qty`**, `amount` (giá vốn; 0 = định giá cuối tháng), `warehouseCode`.
 
@@ -120,6 +120,7 @@ Bảo đảm:
 
 ## 8. Changelog
 
+- **1.5.0 (2026-11-05):** <!-- [2026-11-05 04:45 PM Nguyễn Văn Thủy] PHASE-026 — S024-11, S026-14, S026-19..23: phủ kín định danh, đo tải (đóng góp) --> dòng hàng nhận thêm `itemId` (tuỳ chọn, không phá khuôn cũ); hỏi sổ theo `sku` lấy cả mã cũ, mã đã gộp của mặt hàng.
 - **1.4.0 (2026-11-02):** §2 lỗi cửa nạp thêm `error.intake` (bể chờ `intake_inbox`), dòng lỗi lô thêm `intakeId`; `POST /documents` kiểm khuôn trong cửa nạp (sai khuôn vẫn `VALIDATION_ERROR`, `details` là mảng câu như cũ). Tương thích: bên gọi cũ bỏ qua trường mới (PHASE-021 W2, ADR-0014 D2).
 - **1.3.0 (2026-11-02):** thêm `docType` `manual_journal` (§4): dòng theo lý do `journal`, không số tài khoản, không thuế, khuôn đóng; năng lực `ledger.manual-journal` available (PHASES 3.15, K2). Lý do có thêm `kind: journal` + `debitAccount` / `creditAccount` (migration 0058, `bizcity_posting_template@1`).
 - **1.2.0 (2026-11-02):** §2 thêm hai cửa cùng đường vào Kernel (`submitDocumentIn` → `postDocumentIn`): action `core.document.submit` (Idempotency-Key, biên nhận, dry-run; lỗi không lưu chứng từ) và `ctx.ledger.submit` cho module (tiền tố `docKey`, `sourceSystem` = module). Khuôn chứng từ không đổi (PHASE-011, ADR-0011 D5).

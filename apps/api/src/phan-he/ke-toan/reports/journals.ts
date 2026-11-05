@@ -97,7 +97,7 @@ export async function cashJournal(a: Scope & { accountPrefix: string; direction:
  * Lọc thêm như HTsoft: tài khoản (đầu số, TK doanh thu hoặc TK ghi Nợ), mặt hàng.
  */
 export async function salesJournal(a: Scope & { partnerCode?: string; account?: string; productSkus?: string[] }) {
-  const productFilter = a.productSkus?.length ? sql`AND l.product_sku = ANY(${a.productSkus}::text[])` : sql``;
+  const productFilter = a.productSkus?.length ? sql`AND l.item_id IN (SELECT bizcity_items_of_codes(${a.tenantId}::bigint, ${a.productSkus}::text[]))` : sql``;
   const partnerFilter = a.partnerCode ? sql`AND p.code = ${a.partnerCode}` : sql``;
   const accountFilter = a.account ? sql`AND (starts_with(g.revenue, ${a.account}) OR starts_with(g.counter, ${a.account}))` : sql``;
   // Dòng hàng tiền âm (trả lại, điều chỉnh giảm trong hoá đơn) bị đổi bên khi ghi sổ (Nợ doanh thu / Có phải thu), nên không

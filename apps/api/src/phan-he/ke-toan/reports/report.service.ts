@@ -186,7 +186,7 @@ export const reportService = {
    *            mỗi dòng xếp vào một cột thu / chi theo tài khoản đối ứng.
    * Kiểu báo cáo (groupMode): 1 = từng dòng; 2 = gom theo chứng từ + tài khoản đối ứng; 3 = gom theo chứng từ.
    */
-  async accountLedger(auth: AuthContext, q: { account: string; from: string; to: string; branchCodes?: string[]; partnerCode?: string; showCorrections?: boolean; kind?: 'detail' | 'ledger' | 'partner' | 'cash'; groupMode?: 1 | 2 | 3; counterAccount?: string; docType?: string; sku?: string }) {
+  async accountLedger(auth: AuthContext, q: { account: string; from: string; to: string; branchCodes?: string[]; partnerCode?: string; showCorrections?: boolean; kind?: 'detail' | 'ledger' | 'partner' | 'cash'; groupMode?: 1 | 2 | 3; counterAccount?: string; docType?: string; sku?: string; codeOnly?: boolean }) {
     const kind = q.kind ?? 'detail';
     const sku = q.sku?.trim() || undefined;
     const { branchIds } = await resolveScope(auth, q.branchCodes);
@@ -201,10 +201,10 @@ export const reportService = {
     const scope = { tenantId: auth.tenantId, accountPrefix: q.account, branchIds, partnerId };
     const [openingRows, lines] = await Promise.all([
       // Lọc một mã hàng (vd 156 chi tiết theo mã): số dư đầu kỳ cũng chỉ của mã đó.
-      sku ? reportRepository.openingBySku(db, { ...scope, from: q.from, sku }) : reportRepository.openingByPartner(db, { ...scope, from: q.from }),
+      sku ? reportRepository.openingBySku(db, { ...scope, from: q.from, sku, codeOnly: q.codeOnly }) : reportRepository.openingByPartner(db, { ...scope, from: q.from }),
       reportRepository.accountLines(db, {
         ...scope, from: q.from, to: q.to, showCorrections: q.showCorrections,
-        counterPrefix: q.counterAccount?.trim() || undefined, docType: q.docType || undefined, cashOrder: kind === 'cash', sku,
+        counterPrefix: q.counterAccount?.trim() || undefined, docType: q.docType || undefined, cashOrder: kind === 'cash', sku, codeOnly: q.codeOnly,
       }),
     ]);
 
@@ -500,12 +500,12 @@ export const reportService = {
    *   3 = theo chứng từ: cộng các dòng cùng chứng từ, tài khoản, bên Nợ/Có (TK đối ứng nối lại).
    * Kiểu 2, 3 gom trên toàn kỳ rồi mới chia trang.
    */
-  async journal(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; docType?: string; search?: string; showCorrections?: boolean; corrections?: 'hide' | 'all' | 'only'; account?: string; counterAccount?: string; sku?: string; groupMode?: 1 | 2 | 3; page: number; pageSize: number }) {
+  async journal(auth: AuthContext, q: { from: string; to: string; branchCodes?: string[]; docType?: string; search?: string; showCorrections?: boolean; corrections?: 'hide' | 'all' | 'only'; account?: string; counterAccount?: string; sku?: string; codeOnly?: boolean; groupMode?: 1 | 2 | 3; page: number; pageSize: number }) {
     const { branchIds } = await resolveScope(auth, q.branchCodes);
     const mode = q.groupMode ?? 1;
     const { rows, totals } = await reportRepository.journal(db, {
       tenantId: auth.tenantId, from: q.from, to: q.to, branchIds, docType: q.docType, search: q.search?.trim() || undefined,
-      showCorrections: q.showCorrections, corrections: q.corrections, accountPrefix: q.account?.trim() || undefined, counterPrefix: q.counterAccount?.trim() || undefined, sku: q.sku?.trim() || undefined,
+      showCorrections: q.showCorrections, corrections: q.corrections, accountPrefix: q.account?.trim() || undefined, counterPrefix: q.counterAccount?.trim() || undefined, sku: q.sku?.trim() || undefined, codeOnly: q.codeOnly,
       limit: mode === 1 ? q.pageSize : 1_000_000, offset: mode === 1 ? (q.page - 1) * q.pageSize : 0,
     });
     const mapped = rows.map((r) => ({

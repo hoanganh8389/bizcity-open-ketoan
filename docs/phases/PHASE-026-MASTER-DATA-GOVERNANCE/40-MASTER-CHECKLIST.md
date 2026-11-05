@@ -8,11 +8,11 @@
 | S026-2 | Golden Tests `T026-G1..G7` có tên, chạy như một cổng (`kiem-chuan.sh`), thất bại chặn phát hành | P0 | P0 | có | 🟡 2026-11-04 <!-- [2026-11-04 05:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — P0 đợt 4 -->: G1, G2, G4, G5, G7 xanh (`item-id-so-kho`, `dinh-khoan-phan-loai-theo-ngay`, `golden-tra-hang-doi-ma`, `golden-chuyen-kho-doi-ma`). Còn: G3 (cùng báo cáo theo nhóm tại ngày — S026-5), G6 (S026-8), G8 (S026-7); chạy như MỘT cổng phát hành riêng (kiem-chuan) chưa làm |
 | S026-3 | `parent_item_id` điền từ `parent_sku`; luật biến thể kinh tế khác = định danh mới (R-ITEM-3); MH26 ghi / đọc `parent_item_id` | P0 | P0 | có | ✅ 2026-11-04 <!-- [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3 -->: migration 0067 (điền + giữ khớp theo định danh, mặt hàng cha thêm sau con nhận con, chặn tự trỏ / vòng / khác đơn vị); ITEM-HINT-003 (Gate A, cảnh báo); Hành trình hiện họ mặt hàng; test `bien-the-dinh-danh` 4 ca. Còn: MH26 đọc `parent_item_id` (sau S024-11) |
 | S026-4 | `entity_codes` cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột `code`; `resolveEntity`; điền ban đầu | P0 | P0 | có | ☐ |
-| S026-19 | Migration 0070: `merged_into_item_id` gộp nhiều lần, `bizcity_item_root` / `bizcity_item_family`, `item_id` trên bảng cấu hình và dòng hoá đơn, mã hiện hành tự đồng bộ ([06](../../core/06-xuong-ca-dinh-danh.md)) | P0 | P0 | có | 🟡 2026-11-05: 0070, 0071 có test `xuong-ca-dinh-danh`; chờ vào main |
-| S026-20 | Cửa nạp và đường tạo mặt hàng không đứt chuỗi khi gặp mã cũ / mã đã gộp; chặn dùng lại mã của hàng còn sống | P0 | P0 | có | 🟡 2026-11-05: cửa nạp, tạo mặt hàng có test; chờ vào main |
-| S026-21 | Báo cáo và truy vấn lịch sử (mua hàng, kho, bán hàng) gom theo `item_id`, lọc riêng theo mã | P0 | P0 | có | 🟡 2026-11-05: mua hàng, kho, bán hàng, lãi gộp; còn soát công nợ, thuế, tài sản |
-| S026-22 | Hợp đồng hệ ngoài: `itemId`, `mergedIntoItemId` ở nguồn đổi danh mục, mã `external:<nguồn>` | P0 | P0 | có | 🟡 2026-11-05: đọc theo định danh, mã external, nguồn đổi; chưa nhận `itemId` ở cửa nạp |
-| S026-23 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | P0 | có | 🟡 2026-11-05: Đổi mã, Gộp mã, Lịch sử trên form; chưa có chứng từ chuyển tồn tự động |
+| S026-19 | Migration 0068: `merged_into_item_id` gộp nhiều lần, `bizcity_item_root` / `bizcity_item_family`, `item_id` trên bảng cấu hình và dòng hoá đơn, mã hiện hành tự đồng bộ ([06](../../core/06-xuong-ca-dinh-danh.md)) | P0 | P0 | có | ✅ 2026-11-05: 0068, 0069, 0070; test canh cửa |
+| S026-20 | Cửa nạp và đường tạo mặt hàng không đứt chuỗi khi gặp mã cũ / mã đã gộp; chặn dùng lại mã của hàng còn sống | P0 | P0 | có | ✅ 2026-11-05 |
+| S026-21 | Báo cáo và truy vấn lịch sử (mua hàng, kho, bán hàng) gom theo `item_id`, lọc riêng theo mã | P0 | P0 | có | ✅ 2026-11-05: gồm sổ kế toán, đối chiếu kho, đọc sổ Kernel |
+| S026-22 | Hợp đồng hệ ngoài: `itemId`, `mergedIntoItemId` ở nguồn đổi danh mục, mã `external:<nguồn>` | P0 | P0 | có | ✅ 2026-11-05: gồm cửa nạp nhận `itemId` |
+| S026-23 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | P0 | có | ✅ 2026-11-05: đã thử trên trình duyệt |
 | S026-5 | `item_classes.path` + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | P0 | có | ☐ |
 | S026-8 | Nhóm hạch toán theo ngày; `chart_versions`, `account_mappings`, phiếu chuyển số dư (ADR-0018) — ca T026-G6 | P0 | P0 | có | ☐ |
 | S026-9 | Bốn lớp thay đổi ở Gate A (`changeClass` trong phản hồi validate / save); nháp cho đối tượng; lớp 3 bắt buộc xem Tác động + lý do | P0 | P0 | có | ☐ |
@@ -24,7 +24,7 @@
 | S026-7 | Cặp chứng từ liên đơn vị + `intercompany_refs`; giá chuyển theo bên gửi; báo cáo nhóm loại trừ; mã `CT-IC-*` — ca T026-G8 | P1 | P1 | có | ☐ |
 | S026-13 | Truy vết đối tượng (`/lineage/partners/:id`) và tài khoản (`/lineage/accounts/:code`); thẻ Truy vết cho hai loại này | P1 | P1 | có | ☐ |
 | S026-17 | Nhập Excel đối tượng (hiện chỉ có `partners/upsert`); mapping chính sách theo phạm vi nhóm | P1 | P1 | có | ☐ |
-| S026-14 | Benchmark 1.000.000 mặt hàng × 300 chi nhánh; đồng bộ theo câu lệnh cho đường nạp lô; `EXCLUDE USING gist`; số đo vào CHANGELOG | P2 | P2 | có | ☐ |
+| S026-14 | Benchmark 1.000.000 mặt hàng × 300 chi nhánh; đồng bộ theo câu lệnh cho đường nạp lô; `EXCLUDE USING gist`; số đo vào CHANGELOG | P2 | P2 | có | 🟡 2026-11-05: 21 triệu mặt hàng, tìm kiếm, nhóm, đếm đã sửa (0071); chưa đo sổ cái lớn, 300 chi nhánh |
 | S026-18 | Phân tích tác động hàng loạt (đổi cây nhóm, đổi chế độ); trợ lý AI hướng dẫn kế toán từ thư viện mã; bộ kiểm thử theo chế độ kế toán | P2 | P2 | có | ☐ |
 
 ## Golden Tests (D026-7)

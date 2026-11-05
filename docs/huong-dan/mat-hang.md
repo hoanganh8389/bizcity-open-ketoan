@@ -215,3 +215,7 @@ Chứng từ của hệ thống bán hàng mang mã hàng chưa có trong danh m
 - **tắt**: mặt hàng mới thành **nháp**, chứng từ chờ ở Trạm kiểm tra với mã [IN-ITEM-001](loi-dau-vao/IN-ITEM-001.md).
 
 Nút **Kích hoạt hàng loạt** ở danh sách mặt hàng: chọn các mặt hàng nháp, điền một lần đơn vị tính / nhóm hạch toán cho ô **còn trống** (không ghi đè ô đã có). Mặt hàng nào hết lỗi chặn thì kích hoạt, còn thiếu thì giữ nháp và được liệt kê. Chứng từ đang chờ vì các mặt hàng vừa kích hoạt được kiểm lại tự động. Dùng nhóm mặc định cho mặt hàng chưa có nhóm thì phải ghi lý do.
+
+## Danh sách lớn
+
+Mỗi trang hiện tối đa 5.000 mặt hàng. Danh mục nhiều hơn thì có thanh chuyển trang ở dưới lưới; dùng ô tìm hoặc cây nhóm hàng để đến đúng mặt hàng. Tìm được theo một phần mã, tên, ghi chú, không cần gõ dấu.

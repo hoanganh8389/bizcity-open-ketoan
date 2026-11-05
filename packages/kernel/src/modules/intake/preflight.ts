@@ -151,7 +151,7 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
   const skus = Array.isArray(r.lines) ? [...new Set((r.lines as { sku?: unknown }[]).map((l) => (typeof l?.sku === 'string' ? l.sku.trim() : '')).filter(Boolean))] : [];
   if (skus.length) {
     const have = new Set((await trx.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('sku', 'in', skus).execute()).map((p) => p.sku));
-    // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-20: mã cũ đã đổi / đã gộp vẫn hợp lệ, không phải mã lạ (0070) (đóng góp)
+    // [2026-11-05 01:10 PM Nguyễn Văn Thủy] PHASE-026 — S026-20: mã cũ đã đổi / đã gộp vẫn hợp lệ, không phải mã lạ (0068) (đóng góp)
     const old = await sql<{ code: string }>`SELECT code FROM unnest(${skus.filter((s) => !have.has(s))}::text[]) AS code WHERE bizcity_item_code_taken(${auth.tenantId}::bigint, code) IS NOT NULL`.execute(trx);
     for (const o of old.rows) have.add(o.code);
     // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: đơn vị tắt tự thêm mặt hàng → mã lạ là IN-ITEM-001 (chặn, cùng luật cửa nạp); bật → IN-MD-004 (gợi ý) như cũ

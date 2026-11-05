@@ -54,7 +54,7 @@ Tạo lại một mã đã xoá: mặt hàng **mới**, mã bắt đầu từ ng
 - Dòng mới: trigger `bizcity_set_item_id` gắn theo mã tại ngày. Mã chưa có trong danh mục lúc ghi (mặt hàng tự thêm SAU khi ghi sổ) → `bizcity_item_fill_refs` điền khi mặt hàng được tạo / đổi mã.
 - Điền ngược: theo mã hiệu lực tại ngày, rồi mã gần nhất; mã có trong sổ / kho / đơn vị / giá mà **không có trong danh mục** → **mặt hàng mồ côi** (`status = retired`, `attributes.orphan`, `bizcity_items_adopt_orphans`); còn dòng có mã mà thiếu `item_id` → migration dừng.
 
-## 3b. Đổi mã, gộp mã, hệ ngoài (migration 0070, 0071) <!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 — S024-11, S026-19..22: 0.4.0-draft (đóng góp) -->
+## 3b. Đổi mã, gộp mã, hệ ngoài (migration 0068, 0069, 0070) <!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 — S024-11, S026-19..22: 0.4.0-draft (đóng góp) -->
 
 Thiết kế và quyết định: [docs/core/06-xuong-ca-dinh-danh.md](../core/06-xuong-ca-dinh-danh.md).
 
@@ -62,6 +62,9 @@ Thiết kế và quyết định: [docs/core/06-xuong-ca-dinh-danh.md](../core/0
 |---|---|
 | `core.item.rename-code` | Đóng mã cũ, mở mã mới từ hôm nay; bảng cấu hình theo mã mới; sổ cũ giữ ảnh chụp |
 | `core.item.add-code` | Thêm mã vạch, bí danh, `external:<nguồn>` |
+| `core.item.retire-code` | Đóng mã vạch, bí danh, mã ngoài từ hôm nay |
+| `core.item.classify` | Đổi nhóm hạch toán, thuế từ hôm nay |
+| `core.item.upsert` | Như `core.product.upsert`, trả về `itemId` |
 | `core.item.merge-preview` | Chỉ đọc: lỗi chặn, tồn, số dòng lịch sử, số con, xung đột quy đổi |
 | `core.item.merge` | Gộp vào mặt hàng khác từ hôm nay; còn tồn thì chặn; gộp tiếp được |
 
@@ -92,7 +95,8 @@ Hợp đồng nhập cho plugin (`itemId`, `barcode` trên dòng hàng của `bi
 
 ## 7. Changelog
 
-- **0.4.0-draft (2026-11-05):** đổi mã, thêm mã, gộp mã nhiều lần, `merged_into_item_id`, `root_item_id`, `item_id` trên bảng cấu hình và dòng hoá đơn, đọc theo định danh cho hệ ngoài (0070, 0071).
+- **0.5.0-draft (2026-11-05):** <!-- [2026-11-05 04:45 PM Nguyễn Văn Thủy] PHASE-026 — S024-11, S026-14, S026-19..23: phủ kín định danh, đo tải (đóng góp) --> `retire-code`, `classify`, `upsert`; `products.item_id`; `itemId` trên dòng JSON của chứng từ mua, đề nghị chuyển hàng, đăng ký tồn max; `sales_lines.item_id`; `bizcity_read.items`, `item_codes`
+- **0.4.0-draft (2026-11-05):** đổi mã, thêm mã, gộp mã nhiều lần, `merged_into_item_id`, `root_item_id`, `item_id` trên bảng cấu hình và dòng hoá đơn, đọc theo định danh cho hệ ngoài (0068, 0069).
 - **0.3.0-draft (2026-11-04):** họ mặt hàng theo định danh — `items.parent_item_id` điền + giữ khớp từ `products.parent_sku` (0067), đổi mã không đứt họ, chặn tự trỏ / vòng / khác đơn vị; Gate A `ITEM-HINT-003` (đổi ĐVT gốc của mặt hàng đã có nhập xuất).
 - **0.2.0-draft (2026-11-04):** B2b phần 1 — `item_id` trên `ledger_lines`, `inventory_movements`, `inventory_costs`, `product_units`, `product_prices` (0066); mặt hàng mồ côi; tạo lại mã đã xoá không chồng hiệu lực; khoá chống chồng hiệu lực theo đơn vị.
 - **0.1.0-draft (2026-11-03):** B2a — `items`, `item_codes`, `item_classification`, trigger đồng bộ, điền ban đầu, Item Resolver.

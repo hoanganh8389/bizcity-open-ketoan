@@ -129,7 +129,7 @@ export async function ledgerRoutes(app: FastifyInstance): Promise<void> {
         .selectFrom('ledger_lines as l')
         .innerJoin('accounts as a', (j) => j.onRef('a.tenant_id', '=', 'l.tenant_id').onRef('a.code', '=', 'l.account_code'))
         .leftJoin('partners as p', 'p.id', 'l.partner_id')
-        .leftJoin('products as pr', (j) => j.onRef('pr.tenant_id', '=', 'l.tenant_id').onRef('pr.sku', '=', 'l.product_sku'))
+        .leftJoin('items as pr', 'pr.item_id', 'l.item_id')
         .select(['l.line_no', 'l.pair_no', 'l.account_code', 'a.name as account_name', 'a.track_cashflow', 'l.debit', 'l.credit', 'l.part', 'l.tax_code', 'l.description', 'p.code as partner_code', 'p.name as partner_name', 'l.product_sku', 'pr.name as product_name', 'l.dims'])
         .where('l.entry_id', '=', e.id)
         .orderBy('l.line_no')

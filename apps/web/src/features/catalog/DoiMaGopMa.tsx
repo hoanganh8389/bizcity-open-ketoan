@@ -25,16 +25,16 @@ export function DoiMaModal({ sku, onClose, onDone }: { sku: string; onClose: () 
   const qc = useQueryClient();
   const save = useMutation({
     mutationFn: () => api.post<{ toSku: string }>('/api/v1/items/rename-code', { sku, newSku: newSku.trim(), reason: reason.trim() }),
-    onSuccess: (r) => { void qc.invalidateQueries(); onDone(r.toSku); },
+    onSuccess: (r) => { onDone(r.toSku); void qc.invalidateQueries(); },   // đóng form trước, không tải lại mã vừa đổi
   });
   const ok = newSku.trim() && newSku.trim() !== sku && reason.trim().length >= MIN_REASON;
   return (
     <Modal title={`Đổi mã hàng ${sku}`} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={!ok || save.isPending} title="Có hiệu lực từ hôm nay" onClick={() => save.mutate()}>Đổi mã</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
-      <p className="muted">Có hiệu lực từ hôm nay. Sổ và chứng từ cũ vẫn ghi mã {sku}; đơn vị tính, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Gõ mã {sku} vẫn tìm ra mặt hàng này.</p>
-      <Field label="Mã mới (*)"><input value={newSku} autoFocus maxLength={64} title="Mã hàng mới, chưa từng dùng cho mặt hàng khác" onChange={(e) => setNewSku(e.target.value)} /></Field>
-      <Field label="Lý do (*)" hint={`Ít nhất ${MIN_REASON} ký tự`}><input value={reason} maxLength={500} title="Hiện ở thẻ Lịch sử của mặt hàng" onChange={(e) => setReason(e.target.value)} /></Field>
+      <p className="muted full" style={{ gridColumn: '1 / -1' }}>Có hiệu lực từ hôm nay. Sổ và chứng từ cũ vẫn ghi mã {sku}; đơn vị tính, bảng giá, giá nhà cung cấp, tồn max chuyển sang mã mới. Gõ mã {sku} vẫn tìm ra mặt hàng này.</p>
+      <Field full label="Mã mới (*)"><input value={newSku} autoFocus maxLength={64} title="Mã hàng mới, chưa từng dùng cho mặt hàng khác" onChange={(e) => setNewSku(e.target.value)} /></Field>
+      <Field full label="Lý do (*)" hint={`Ít nhất ${MIN_REASON} ký tự`}><input value={reason} maxLength={500} title="Hiện ở thẻ Lịch sử của mặt hàng" onChange={(e) => setReason(e.target.value)} /></Field>
     </Modal>
   );
 }
@@ -51,7 +51,7 @@ export function GopMaModal({ sku, onClose, onDone }: { sku: string; onClose: () 
   });
   const merge = useMutation({
     mutationFn: () => api.post('/api/v1/items/merge', { from: { sku }, to: { sku: checked }, reason: reason.trim() }),
-    onSuccess: () => { void qc.invalidateQueries(); onDone(); },
+    onSuccess: () => { onDone(); void qc.invalidateQueries(); },
   });
   const p = preview.data;
   const ok = Boolean(p?.canMerge) && checked === toSku.trim() && reason.trim().length >= MIN_REASON;
@@ -59,8 +59,8 @@ export function GopMaModal({ sku, onClose, onDone }: { sku: string; onClose: () 
     <Modal title={`Gộp mã ${sku} vào mặt hàng khác`} onClose={onClose}
       footer={<><button className="btn btn-primary" disabled={!ok || merge.isPending} title="Mã này ngừng dùng từ hôm nay và trỏ sang mặt hàng giữ lại" onClick={() => merge.mutate()}>Gộp mã</button><button className="btn" onClick={onClose}>Thoát</button></>}>
       <ErrorBox error={merge.error ? errorText(merge.error) : preview.error ? errorText(preview.error) : null} />
-      <p className="muted">Mã {sku} ngừng dùng từ hôm nay và trỏ sang mặt hàng giữ lại. Sổ và chứng từ cũ giữ nguyên, không dòng nào bị sửa.</p>
-      <Field label="Mã mặt hàng giữ lại (*)">
+      <p className="muted full" style={{ gridColumn: '1 / -1' }}>Mã {sku} ngừng dùng từ hôm nay và trỏ sang mặt hàng giữ lại. Sổ và chứng từ cũ giữ nguyên, không dòng nào bị sửa.</p>
+      <Field full label="Mã mặt hàng giữ lại (*)">
         <div className="row" style={{ gap: 6 }}>
           <input value={toSku} autoFocus maxLength={160} title="Mã của mặt hàng sẽ nhận mã này" onChange={(e) => setToSku(e.target.value)} />
           <button type="button" className="btn" disabled={!toSku.trim()} title="Kiểm tra trước khi gộp, chưa ghi gì" onClick={() => setChecked(toSku.trim())}>Kiểm tra</button>
@@ -68,14 +68,14 @@ export function GopMaModal({ sku, onClose, onDone }: { sku: string; onClose: () 
       </Field>
       {preview.isFetching && <Loading />}
       {p && checked === toSku.trim() && (
-        <div style={{ margin: '8px 0' }}>
+        <div className="full" style={{ gridColumn: '1 / -1', margin: '8px 0' }}>
           {p.blocks.map((b) => <div key={b.code} className="alert alert-error" title={b.code}>{b.text}</div>)}
           {p.stock.length > 0 && <div className="muted" title="Số lượng còn lại theo kho">Tồn còn lại: {p.stock.map((s) => `${s.warehouseCode || 'kho mặc định'}: ${s.qty}`).join('; ')}</div>}
           <div className="muted" title="Các dòng này giữ nguyên mã và định danh cũ">Giữ nguyên {p.ledgerLines} dòng sổ, {p.movements} dòng kho. Chuyển {p.children} mã con sang {p.toSku}.</div>
           {p.unitConflicts > 0 && <div className="muted" title="Cùng đơn vị tính nhưng khác tỉ lệ quy đổi">{p.unitConflicts} đơn vị tính khác tỉ lệ: giữ theo {p.toSku}.</div>}
         </div>
       )}
-      <Field label="Lý do (*)" hint={`Ít nhất ${MIN_REASON} ký tự`}><input value={reason} maxLength={500} title="Hiện ở thẻ Lịch sử của mặt hàng" onChange={(e) => setReason(e.target.value)} /></Field>
+      <Field full label="Lý do (*)" hint={`Ít nhất ${MIN_REASON} ký tự`}><input value={reason} maxLength={500} title="Hiện ở thẻ Lịch sử của mặt hàng" onChange={(e) => setReason(e.target.value)} /></Field>
     </Modal>
   );
 }

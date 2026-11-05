@@ -49,15 +49,17 @@ export async function scope(auth: AuthContext, branchCodes?: string[], warehouse
  */
 export function valuedMovements(a: { tenantId: string; to: string; branchIds: string[] | null; sku?: string; search?: string; wh?: { codes: string[]; defaultBranchIds: string[] } | null }) {
   return sql`
-    SELECT m.id, m.event_id, m.branch_id, m.counter_branch_id, m.warehouse_code, m.sku, COALESCE(m.item_id, m.sku) AS ikey, COALESCE(cc.code, m.sku) AS cur,
+    SELECT m.id, m.event_id, m.branch_id, m.counter_branch_id, m.warehouse_code, m.sku, COALESCE(it.root_item_id, m.sku) AS ikey, COALESCE(cc.code, m.sku) AS cur,
            m.name, m.unit, m.kind, m.doc_type, m.doc_date, m.qty,
            COALESCE(m.amount, ROUND(m.qty * c.unit_cost)) AS val,
            (m.amount IS NULL AND c.unit_cost IS NULL) AS uncosted
       FROM inventory_movements m
       JOIN branches b ON b.id = m.branch_id
       LEFT JOIN branches cb ON cb.id = m.counter_branch_id
+      -- [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: mặt hàng đã gộp gom vào đích cuối, mã hiển thị là mã hiện hành của đích (đóng góp)
+      LEFT JOIN items it ON it.item_id = m.item_id
       LEFT JOIN (SELECT DISTINCT ON (item_id) item_id, code FROM item_codes WHERE tenant_id = ${a.tenantId} AND kind = 'sku'
-                  ORDER BY item_id, (valid_to IS NULL) DESC, valid_from DESC) cc ON cc.item_id = m.item_id
+                  ORDER BY item_id, (valid_to IS NULL) DESC, valid_from DESC) cc ON cc.item_id = it.root_item_id
       LEFT JOIN inventory_costs c
         ON c.tenant_id = m.tenant_id AND ((m.item_id IS NOT NULL AND c.item_id = m.item_id) OR (m.item_id IS NULL AND c.sku = m.sku))
        AND c.year = EXTRACT(YEAR FROM m.doc_date)::int AND c.month = EXTRACT(MONTH FROM m.doc_date)::int
@@ -65,8 +67,8 @@ export function valuedMovements(a: { tenantId: string; to: string; branchIds: st
      WHERE m.tenant_id = ${a.tenantId} AND m.doc_date <= ${a.to}::date
        ${a.branchIds ? sql`AND m.branch_id = ANY(${a.branchIds}::bigint[])` : sql``}
        ${a.wh ? sql`AND (m.warehouse_code = ANY(${a.wh.codes}::text[]) OR (m.warehouse_code = '' AND m.branch_id = ANY(${a.wh.defaultBranchIds}::bigint[])))` : sql``}
-       ${a.sku ? sql`AND (m.sku = ${a.sku} OR m.item_id = bizcity_item_at(${a.tenantId}, ${a.sku}, ${a.to}::date))` : sql``}
-       ${a.search ? sql`AND (m.sku ILIKE ${'%' + a.search + '%'} OR m.name ILIKE ${'%' + a.search + '%'})` : sql``}`;
+       ${a.sku ? sql`AND (m.sku = ${a.sku} OR m.item_id IN (SELECT bizcity_items_of_codes(${a.tenantId}::bigint, ARRAY[${a.sku}]::text[])))` : sql``}
+       ${a.search ? sql`AND (m.sku ILIKE ${'%' + a.search + '%'} OR cc.code ILIKE ${'%' + a.search + '%'} OR m.name ILIKE ${'%' + a.search + '%'})` : sql``}`;
 }
 
 const num = (v: string | null) => (v === null ? 0 : Number(v));
@@ -258,15 +260,17 @@ export const inventoryReportService = {
     if (!accounts.length) return { period: q.period, to, accounts, defaultAccount, totals: [], rows: [], summary: { ok: 0, diff: 0, uncosted: 0, wrong_account: 0, no_product: 0 } };
 
     const gl = await sql<{ branch_code: string; sku: string; account_code: string; v: string }>`
-      SELECT b.code AS branch_code, COALESCE(l.product_sku, '') AS sku, l.account_code, SUM(l.debit - l.credit) AS v
+      SELECT b.code AS branch_code, COALESCE(cc.code, l.product_sku, '') AS sku, l.account_code, SUM(l.debit - l.credit) AS v
         FROM bizcity_read.ledger_lines l JOIN branches b ON b.id = l.branch_id
+        LEFT JOIN bizcity_read.items it ON it.item_id = l.item_id
+        LEFT JOIN item_codes cc ON cc.item_id = it.root_item_id AND cc.kind = 'sku' AND cc.valid_to IS NULL
        WHERE l.tenant_id = ${auth.tenantId} AND l.posting_date <= ${to}::date AND l.account_code = ANY(${accounts}::text[])
          ${s.branchIds ? sql`AND l.branch_id = ANY(${s.branchIds}::bigint[])` : sql``}
-         ${search ? sql`AND l.product_sku ILIKE ${'%' + search + '%'}` : sql``}
+         ${search ? sql`AND (l.product_sku ILIKE ${'%' + search + '%'} OR cc.code ILIKE ${'%' + search + '%'})` : sql``}
        GROUP BY 1, 2, 3`.execute(db);
     const sub = await sql<{ branch_code: string; sku: string; name: string; qty: string; val: string | null; uncosted: string }>`
       WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to, branchIds: s.branchIds, search })})
-      SELECT b.code AS branch_code, mv.sku, MAX(mv.name) AS name, SUM(mv.qty) AS qty, SUM(mv.val) AS val, COUNT(*) FILTER (WHERE mv.uncosted) AS uncosted
+      SELECT b.code AS branch_code, mv.cur AS sku, MAX(mv.name) AS name, SUM(mv.qty) AS qty, SUM(mv.val) AS val, COUNT(*) FILTER (WHERE mv.uncosted) AS uncosted
         FROM mv JOIN branches b ON b.id = mv.branch_id
        GROUP BY 1, 2`.execute(db);
 

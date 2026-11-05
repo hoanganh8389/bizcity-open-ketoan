@@ -14,11 +14,11 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Xương cá: định danh xuyên suốt (PHASE-026, S024-11, S026-19..23) <!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 (đóng góp) -->
 
-- **Thêm:** đổi mã, thêm mã (mã vạch, bí danh, `external:<nguồn>`), xem trước gộp, gộp mã nhiều lần; đọc mặt hàng theo định danh cho hệ ngoài; thẻ Lịch sử, nút Đổi mã, Gộp mã trên form mặt hàng; `item_id` trên giá NCC, bí danh NCC, dòng hoá đơn NCC, tồn max, cài đặt theo mã, dòng hoá đơn thuế; khung nhìn `inventory_movements_cur`.
+- **Thêm:** `item_id` trên `products` và dòng JSON phiếu mua, đề nghị chuyển hàng, đăng ký tồn max; cửa nạp nhận `itemId`; `core.item.retire-code`, `classify`, `upsert`; `bizcity_read.items`, `item_codes`; tài liệu nghiệp vụ mục 10, mục Định danh ở TI10. Đổi mã, thêm mã (mã vạch, bí danh, `external:<nguồn>`), xem trước gộp, gộp mã nhiều lần; đọc mặt hàng theo định danh cho hệ ngoài; thẻ Lịch sử, nút Đổi mã, Gộp mã trên form mặt hàng; `item_id` trên giá NCC, bí danh NCC, dòng hoá đơn NCC, tồn max, cài đặt theo mã, dòng hoá đơn thuế; khung nhìn `inventory_movements_cur`.
 - **Đổi:** bảng cấu hình tự theo mã mới khi đổi mã. Báo cáo mua hàng, kho, bán hàng theo mặt hàng gom một dòng theo mã hiện hành. Mã của hàng còn sống hoặc đã gộp không dùng lại được; mã cũ gửi vào cửa nạp vẫn ghi đúng mặt hàng, không tạo mặt hàng mới.
-- **Sửa:** đổi mã làm đứt giá NCC, ĐVT, tồn max theo mã cũ. Lãi gộp tra giá vốn theo định danh nên mã cũ vẫn ra đơn giá.
+- **Sửa:** sổ chi tiết, sổ nhật ký, sổ bán hàng, đối chiếu kho, đọc sổ của Kernel lọc bằng mã mới mất phần ghi dưới mã cũ. Thẻ Lịch sử không đọc được thao tác ghi trong action. Tìm mặt hàng và lọc theo nhóm quét toàn bảng; DM10 tải cả danh mục về trình duyệt. Đổi mã làm đứt giá NCC, ĐVT, tồn max theo mã cũ. Lãi gộp tra giá vốn theo định danh nên mã cũ vẫn ra đơn giá.
 - **Thay đổi định khoản:** không.
-- **Nâng cấp cần làm:** chạy migration 0070, 0071; bước điền `item_id` là UPDATE từng bảng theo hàm tra mã, chưa đo trên dữ liệu lớn.
+- **Nâng cấp cần làm:** chạy migration 0067–0071. CSDL cần có sẵn gói `pg_trgm` (ảnh `postgres:16-alpine` đã có). `meta.total` của `GET /api/v1/products` đếm tới 100.001 thì dừng. Thử trên 42.016 mặt hàng hết khoảng 23 giây; số đo 21 triệu dòng ở `docs/core/06-xuong-ca-dinh-danh.md`.
 - **Bảo mật:** không đổi. `inventory_movements_cur` dùng `security_invoker`, giữ cô lập đơn vị.
 
 ### Đổi

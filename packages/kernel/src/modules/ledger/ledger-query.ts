@@ -70,7 +70,8 @@ export const ledgerQuery = {
       q.accounts?.length ? sql`AND x.account_code LIKE ANY(${q.accounts.map((a) => a + '%')}::text[])` : sql``,
       partnerId ? sql`AND x.partner_id = ${partnerId}::bigint` : sql``,
       branchIds ? sql`AND x.branch_id = ANY(${branchIds}::bigint[])` : sql``,
-      q.sku ? sql`AND x.product_sku = ${q.sku}` : sql``,
+      // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: hỏi theo mã gồm cả mã cũ, mã đã gộp của mặt hàng (đóng góp)
+      q.sku ? sql`AND x.item_id IN (SELECT bizcity_items_of_codes(${tenantId}::bigint, ARRAY[${q.sku}]::text[]))` : sql``,
       q.dimension && Object.keys(q.dimension).length ? sql`AND x.dims @> ${JSON.stringify(q.dimension)}::jsonb` : sql``,
     ];
     const res = await sql<{ account_code: string | null; partner_code: string | null; branch_code: string | null; opening: string; debit: string; credit: string }>`

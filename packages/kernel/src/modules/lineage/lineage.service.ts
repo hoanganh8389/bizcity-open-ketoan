@@ -342,6 +342,7 @@ const HISTORY_LIMIT = 300;
 const ACTION_TEXT: Record<string, string> = {
   'product.update': 'Sửa khai báo', 'product.draft': 'Lưu nháp (còn thiếu khai báo)', 'product.activate': 'Kích hoạt (hết lỗi chặn)',
   'product.create': 'Thêm mặt hàng', 'product.delete': 'Xoá khỏi danh mục (định danh ngừng dùng, không mất)', 'catalog.warn.unacked': 'Lưu qua API còn cảnh báo, không ghi lý do',
+  'core.product.upsert': 'Tạo / cập nhật qua API', 'core.item.upsert': 'Tạo / cập nhật qua API', 'core.item.add-code': 'Thêm mã', 'core.item.retire-code': 'Đóng mã', 'core.item.classify': 'Đổi phân loại hạch toán',
 };
 const FIELD_TEXT: Record<string, string> = {
   name: 'tên', unit: 'đơn vị tính', postingGroupCode: 'nhóm hạch toán', brandCode: 'nhãn hàng', industryCode: 'ngành hàng', groupCode: 'nhóm hàng', typeCode: 'loại hàng',
@@ -384,7 +385,7 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
   for (const c of codes.rows) {
     const from = c.valid_from === '1970-01-01' ? null : c.valid_from;
     const label = c.kind === 'sku' ? 'mã hàng' : c.kind === 'barcode' ? 'mã vạch' : c.kind === 'alias' ? 'bí danh' : `mã ${c.kind}`;
-    const renamed = c.kind === 'sku' && c.note.startsWith('đổi mã từ ') ? c.note.slice('đổi mã từ '.length) : null;
+    const renamed = c.kind === 'sku' ? /^đổi mã từ ([^:]+)/.exec(c.note)?.[1] ?? null : null;
     out.push({ at: iso(c.created_at), effectiveFrom: from, kind: 'code', by: c.created_by,
       text: renamed ? `Đổi mã ${renamed} → ${c.code}${from ? ` (hiệu lực từ ${from})` : ''}`
         : `${label[0]!.toUpperCase()}${label.slice(1)} ${c.code}${from ? ` có hiệu lực từ ${from}` : ''}${c.valid_to ? ` — đã đóng, dùng tới trước ${c.valid_to}` : ''}` });
@@ -397,7 +398,15 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
         ? `Đổi phân loại hạch toán: nhóm ${show(prev.posting_group_code)} → ${show(c.posting_group_code)}${from ? ` từ ${from}` : ''} (chứng từ trước ngày đó giữ phân loại cũ)`
         : `Phân loại hạch toán ban đầu: nhóm ${show(c.posting_group_code)}` });
   });
-  for (const a of audits.rows) {
+  // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: thao tác trong action ghi nhật ký vào notes.audit của bằng chứng (ACTION §4.4), đọc ra thành từng dòng (đóng góp)
+  type AuditRow = (typeof audits.rows)[number];
+  const flat: AuditRow[] = audits.rows.flatMap((a): AuditRow[] => {
+    const nested = (a.after_data?.notes as { audit?: { action: string; objectType?: string; objectId?: string; after?: Record<string, unknown> | null }[] } | undefined)?.audit;
+    const mine = (nested ?? []).filter((n) => n.objectType === 'item' || (n.objectType === 'product' && skus.includes(n.objectId ?? '')));
+    if (!mine.length) return [a];
+    return mine.map((n) => ({ action: n.action, actor: a.actor, after_data: n.after ?? null, created_at: a.created_at, object_id: n.objectId ?? a.object_id }));
+  });
+  for (const a of flat) {
     const after = a.after_data ?? {};
     const res = ((after.notes as Record<string, unknown> | undefined)?.result ?? {}) as Record<string, unknown>;
     if (a.action === 'core.item.merge') {
@@ -415,9 +424,11 @@ export async function getItemHistory(trx: Db, tenantId: string, sku: string): Pr
         text: `Lưu dù có cảnh báo ${(after.codes as string[] | undefined)?.join(', ') ?? ''} — lý do: "${show(after.reason)}"` });
       continue;
     }
-    const fields = Object.entries(after).filter(([k]) => FIELD_TEXT[k]).map(([k, v]) => `${FIELD_TEXT[k]} = ${show(v)}`);
+    const input = after.input as Record<string, unknown> | undefined;
+    // Đầu vào của action: trường để trống nghĩa là giữ giá trị cũ, không phải đổi thành trống.
+    const fields = Object.entries(input ?? after).filter(([k, v]) => FIELD_TEXT[k] && !(input && (v === '' || v === null || v === undefined))).map(([k, v]) => `${FIELD_TEXT[k]} = ${show(v)}`);
     out.push({ at: iso(a.created_at), effectiveFrom: null, kind: 'change', by: a.actor,
-      text: `${ACTION_TEXT[a.action] ?? a.action}${fields.length ? `: ${fields.join('; ')}` : ''}${a.object_id !== current ? ` (khi còn mã ${a.object_id})` : ''}` });
+      text: `${ACTION_TEXT[a.action] ?? a.action}${fields.length ? `: ${fields.join('; ')}` : ''}${a.object_id !== current && skus.includes(a.object_id) ? ` (khi còn mã ${a.object_id})` : ''}` });
   }
   out.sort((x, y) => (x.at < y.at ? 1 : x.at > y.at ? -1 : 0));
   return { itemId, sku: current, entries: out.slice(0, HISTORY_LIMIT), truncated: out.length > HISTORY_LIMIT || audits.rows.length >= HISTORY_LIMIT };

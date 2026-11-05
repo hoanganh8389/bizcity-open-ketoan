@@ -1,10 +1,11 @@
 // @bizcity-layer M data/masterdata
 // [2026-11-05 12:45 PM Nguyễn Văn Thủy] PHASE-024 — S024-11, S026-22 (docs/core/06-xuong-ca-dinh-danh.md): core.item.rename-code, add-code, merge-preview, merge (đóng góp)
+// [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S024-11: core.item.retire-code, classify (đóng góp)
 /**
  * MẶT HÀNG THEO ĐỊNH DANH (bizcity_item_master@1). Người dùng gọi bằng mã, hệ ngoài gọi bằng mã hoặc itemId; mọi thao tác giữ `item_id`.
  *   - Đổi mã: đóng mã cũ, mở mã mới từ hôm nay; bảng cấu hình theo mã mới; sổ cũ giữ ảnh chụp.
  *   - Gộp: A vào B, gộp tiếp được; sổ cũ không đụng; A còn tồn thì chặn (chuyển tồn là chứng từ riêng, danh mục không sinh bút toán).
- * Logic trên CSDL nằm ở migration 0070 (bizcity_item_merge, trigger đổi mã) để mọi đường ghi cùng một luật.
+ * Logic trên CSDL nằm ở migration 0068 (bizcity_item_merge, trigger đổi mã) để mọi đường ghi cùng một luật.
  */
 import { sql } from 'kysely';
 import { z } from 'zod';
@@ -12,6 +13,7 @@ import { defineAction, type AnyActionDef } from '../../core/actions.js';
 import { Errors } from '../../core/errors.js';
 import type { Db } from '../../db/client.js';
 import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
+import { applyItemGate } from '../products/item.hints.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -93,6 +95,58 @@ const addCode = defineAction({
   },
 });
 
+const retireCode = defineAction({
+  id: 'core.item.retire-code', title: 'Đóng mã của mặt hàng', tags,
+  description: 'Ngừng dùng một mã vạch, bí danh hoặc mã hệ ngoài từ hôm nay. Sổ cũ không đổi. Mã hàng chính đổi bằng core.item.rename-code.',
+  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'], dryRun: true,
+  input: z.object({ ...refShape, kind: z.string().trim().regex(ITEM_CODE_KIND_RE, 'kind: barcode, alias hoặc external:<nguồn>'), code: z.string().trim().min(1).max(160), reason }),
+  output: z.object({ itemId: z.string(), kind: z.string(), code: z.string(), validTo: z.string().nullable() }),
+  expose: { http: { method: 'POST', path: '/api/v1/items/retire-code' }, ai: 'deny' },
+  evidence: { objectType: 'item', objectId: (_i, o) => o.itemId },
+  handler: async (ctx, i) => {
+    if (i.kind === 'sku') throw Errors.validation('Mã hàng chính đổi bằng core.item.rename-code, không đóng riêng');
+    const tx = ctx.data.tx;
+    const cur = await resolveRef(tx, ctx.tenant.id, i, 'Mặt hàng');
+    const r = await sql<{ valid_to: string }>`
+      UPDATE item_codes SET valid_to = GREATEST(CURRENT_DATE, valid_from + 1), note = ${i.reason}
+       WHERE tenant_id = ${ctx.tenant.id} AND item_id = ${cur.itemId} AND kind = ${i.kind} AND code = ${i.code} AND valid_to IS NULL
+       RETURNING valid_to::text`.execute(tx);
+    // Gửi lại sau khi đã đóng: trạng thái đã đúng.
+    return { itemId: cur.itemId, kind: i.kind, code: i.code, validTo: r.rows[0]?.valid_to ?? null };
+  },
+});
+
+const classify = defineAction({
+  id: 'core.item.classify', title: 'Đổi phân loại hạch toán', tags,
+  description: 'Đổi nhóm hạch toán, thuế bán ra, thuế mua vào từ hôm nay. Chứng từ trước ngày đổi vẫn theo phân loại cũ.',
+  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'], dryRun: true,
+  input: z.object({ ...refShape, postingGroupCode: z.string().trim().max(32).optional(), taxOutCode: z.string().trim().max(16).optional(), taxInCode: z.string().trim().max(16).optional(), reason }),
+  output: z.object({ itemId: z.string(), sku: z.string() }),
+  expose: { http: { method: 'POST', path: '/api/v1/items/classify' }, ai: 'deny' },
+  evidence: { objectType: 'item', objectId: (_i, o) => o.itemId },
+  handler: async (ctx, i) => {
+    const tx = ctx.data.tx;
+    const tenantId = ctx.tenant.id;
+    if (!i.postingGroupCode && !i.taxOutCode && !i.taxInCode) throw Errors.validation('Cần ít nhất một phân loại để đổi');
+    const cur = await resolveRef(tx, tenantId, i, 'Mặt hàng');
+    if (i.postingGroupCode && !await tx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', tenantId).where('code', '=', i.postingGroupCode).executeTakeFirst()) {
+      throw Errors.validation(`Nhóm hạch toán chưa có: ${i.postingGroupCode}`);
+    }
+    for (const t of [i.taxOutCode, i.taxInCode]) {
+      if (t && !await tx.selectFrom('tax_codes').select('code').where('tenant_id', '=', tenantId).where('code', '=', t).executeTakeFirst()) throw Errors.validation(`Loại thuế chưa có: ${t}`);
+    }
+    await setSession(tx, ctx.legacyAuth.actor, i.reason);
+    await tx.updateTable('products').set({
+      ...(i.postingGroupCode ? { posting_group_code: i.postingGroupCode } : {}),
+      ...(i.taxOutCode ? { tax_out_code: i.taxOutCode } : {}),
+      ...(i.taxInCode ? { tax_in_code: i.taxInCode } : {}),
+      updated_at: new Date(),
+    }).where('tenant_id', '=', tenantId).where('sku', '=', cur.sku).execute();
+    await applyItemGate(tx, ctx.legacyAuth, cur.sku);
+    return { itemId: cur.itemId, sku: cur.sku };
+  },
+});
+
 const mergeInput = z.object({
   from: z.object(refShape).describe('Mặt hàng bị gộp'), to: z.object(refShape).describe('Mặt hàng giữ lại'),
 });
@@ -153,4 +207,4 @@ const merge = defineAction({
   },
 });
 
-export const itemActions: AnyActionDef[] = [renameCode, addCode, mergePreview, merge];
+export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge];

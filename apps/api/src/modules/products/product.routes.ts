@@ -87,7 +87,10 @@ const productAccountItem = z.object({
 const VI_FROM = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
 const VI_TO = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd';
 export const plainVi = (s: string) => [...s.toLowerCase()].map((c) => { const k = VI_FROM.indexOf(c); return k >= 0 ? VI_TO[k] : c; }).join('').trim();
-const PLAIN = (col: 'sku' | 'name' | 'note') => sql`translate(lower(${sql.ref(col)}), ${VI_FROM}, ${VI_TO})`;
+// [2026-11-05 04:30 PM Nguyễn Văn Thủy] PHASE-026 — S026-14: cùng biểu thức với chỉ mục products_search (0071) (đóng góp)
+const SEARCH_TEXT = sql`bizcity_item_search_text(sku, name, note)`;
+/** Danh mục lớn: đếm tới mức này là dừng, tránh quét cả bảng mỗi lần mở trang. */
+const COUNT_CAP = 100_000;
 
 export async function productRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -149,7 +152,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         // Không phân biệt dấu, nhiều từ: "sua tuoi 110" khớp "Sữa tươi TH 110ml" (mỗi từ phải có trong mã / tên / ghi chú).
         for (const w of plainVi(f.search).split(/\s+/).filter(Boolean).slice(0, 6)) {
           const s = `%${w}%`;
-          q = q.where((eb) => eb.or([eb(sql`${PLAIN('sku')}`, 'like', s), eb(sql`${PLAIN('name')}`, 'like', s), eb(sql`${PLAIN('note')}`, 'like', s)]));
+          q = q.where(sql<boolean>`${SEARCH_TEXT} LIKE ${s}`);
         }
       }
       for (const k of ITEM_CLASS_KINDS) {
@@ -168,7 +171,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       if (f.parent) q = q.where('parent_sku', '=', f.parent);
       const [rows, total] = await Promise.all([
         q.selectAll().orderBy('sku').limit(f.pageSize).offset((f.page - 1) * f.pageSize).execute(),
-        q.select((eb) => eb.fn.countAll<string>().as('n')).executeTakeFirst(),
+        db.selectFrom(q.select(sql`1`.as('x')).limit(COUNT_CAP + 1).as('c')).select((eb) => eb.fn.countAll<string>().as('n')).executeTakeFirst(),
       ]);
       return ok(rows.map((p) => ({
         sku: p.sku, name: p.name, unit: p.unit, postingGroupCode: p.posting_group_code, brandCode: p.brand_code, industryCode: p.industry_code,

@@ -13,6 +13,8 @@ import { sql } from 'kysely';
 import { z } from 'zod';
 import { defineAction, type AnyActionDef } from '../../core/actions.js';
 import { Errors } from '../../core/errors.js';
+import type { Db } from '../../db/client.js';
+import type { AuthContext } from '../../core/auth.js';
 import { partnerRepository } from '@bizcity/platform/masterdata/partner.repository';
 
 const tags = ['Danh mục'];
@@ -33,18 +35,13 @@ const partnerUpsert = defineAction({
   handler: async (ctx, i) => ({ id: await partnerRepository.upsert(ctx.data.tx, ctx.tenant.id, i, i.kind), code: i.code }),
 });
 
-const productUpsert = defineAction({
-  id: 'core.product.upsert', title: 'Tạo / cập nhật mặt hàng theo mã', tags,
-  description: 'Mặt hàng theo mã hàng. Trường để trống giữ giá trị cũ. Nhóm hạch toán phải có sẵn (nhóm quyết định tài khoản doanh thu, giá vốn, kho).',
-  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'], dryRun: true,
-  input: z.object({
-    sku: z.string().trim().min(1).max(64), name: z.string().trim().max(500).default(''), unit: z.string().trim().max(32).default(''),
-    postingGroupCode: z.string().trim().max(32).optional(),
-  }),
-  output: z.object({ sku: z.string() }),
-  expose: { http: { method: 'POST', path: '/api/v1/products/upsert' }, ai: 'deny' },
-  evidence: { objectType: 'product', objectId: (i) => i.sku },
-  handler: async (ctx, i) => {
+// [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S024-11: core.item.upsert cùng đường ghi với core.product.upsert, trả về itemId (đóng góp)
+const productInput = z.object({
+  sku: z.string().trim().min(1).max(64), name: z.string().trim().max(500).default(''), unit: z.string().trim().max(32).default(''),
+  postingGroupCode: z.string().trim().max(32).optional(),
+});
+const productOutput = z.object({ sku: z.string(), itemId: z.string() });
+async function upsertProduct(ctx: { data: { tx: Db }; tenant: { id: string }; legacyAuth: AuthContext }, i: z.infer<typeof productInput>) {
     const tx = ctx.data.tx;
     if (i.postingGroupCode) {
       const g = await tx.selectFrom('product_posting_groups').select('code').where('tenant_id', '=', ctx.tenant.id).where('code', '=', i.postingGroupCode).executeTakeFirst();
@@ -61,8 +58,30 @@ const productUpsert = defineAction({
       .execute();
     // Gate A ([2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28): còn lỗi chặn → mặt hàng nháp, chưa dùng được trên chứng từ (IN-ITEM-009).
     await applyItemGate(tx, ctx.legacyAuth, i.sku);
-    return { sku: i.sku };
-  },
+    const row = await tx.selectFrom('products').select('item_id').where('tenant_id', '=', ctx.tenant.id).where('sku', '=', i.sku).executeTakeFirstOrThrow();
+    return { sku: i.sku, itemId: row.item_id ?? '' };
+}
+
+const productUpsert = defineAction({
+  id: 'core.product.upsert', title: 'Tạo / cập nhật mặt hàng theo mã', tags,
+  description: 'Mặt hàng theo mã hàng. Trường để trống giữ giá trị cũ. Nhóm hạch toán phải có sẵn (nhóm quyết định tài khoản doanh thu, giá vốn, kho).',
+  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'], dryRun: true,
+  input: productInput,
+  output: productOutput,
+  expose: { http: { method: 'POST', path: '/api/v1/products/upsert' }, ai: 'deny' },
+  evidence: { objectType: 'product', objectId: (i) => i.sku },
+  handler: (ctx, i) => upsertProduct(ctx, i),
 });
 
-export const masterdataActions: AnyActionDef[] = [partnerUpsert, productUpsert];
+const itemUpsert = defineAction({
+  id: 'core.item.upsert', title: 'Tạo / cập nhật mặt hàng', tags,
+  description: 'Như core.product.upsert: theo mã hàng, trường để trống giữ giá trị cũ, trả về itemId. Mã đã đổi / đã gộp không tạo được hàng mới.',
+  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'], dryRun: true,
+  input: productInput,
+  output: productOutput,
+  expose: { http: { method: 'POST', path: '/api/v1/items/upsert' }, ai: 'deny' },
+  evidence: { objectType: 'product', objectId: (i) => i.sku },
+  handler: (ctx, i) => upsertProduct(ctx, i),
+});
+
+export const masterdataActions: AnyActionDef[] = [partnerUpsert, productUpsert, itemUpsert];

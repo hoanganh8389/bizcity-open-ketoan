@@ -52,6 +52,8 @@ export type InvoiceInput = z.infer<typeof invoiceInputSchema>;
 export const documentLineSchema = z.object({
   lineKey: z.string().trim().min(1).max(64).describe('Khoá dòng ở hệ thống nguồn'),
   sku: z.string().trim().max(64).default(''),
+  // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-22: hệ ngoài gửi định danh thay cho mã, đổi mã không làm đứt tích hợp (đóng góp)
+  itemId: z.string().trim().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/, 'itemId không đúng khuôn').optional().describe('Định danh mặt hàng. Gửi kèm hoặc thay cho sku; sku trống thì lấy mã có hiệu lực tại ngày chứng từ'),
   name: z.string().trim().max(500).default(''),
   unit: z.string().trim().max(32).default(''),
   /** Số lượng quy về đơn vị nhỏ nhất (đơn vị tính tồn kho). */
