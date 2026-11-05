@@ -6,6 +6,8 @@
  * Người dùng và khoá API.
  *   GET/POST   /api/v1/users            danh sách, thêm            (quyền users:write)
  *   PATCH      /api/v1/users/:id        sửa, khoá, đặt lại mật khẩu (đặt lại / khoá / đổi vai trò → mọi máy của người đó bị đăng xuất)
+ *   GET/POST   /api/v1/users/:id/roles  vai trò bổ sung: lịch sử, gán (PHASE-028 W1, không đăng xuất người được gán)
+ *   POST       /api/v1/users/:id/roles/:assignmentId/revoke   thu hồi vai trò bổ sung (lý do bắt buộc)
  *   POST       /api/v1/auth/change-password   tự đổi mật khẩu      (mọi người dùng; máy khác bị đăng xuất, máy này nhận vé mới)
  *   POST       /api/v1/auth/logout-others     đăng xuất mọi thiết bị khác (máy này nhận vé mới)
  *   GET/POST   /api/v1/api-keys         danh sách, tạo (khoá chỉ hiện một lần)
@@ -15,9 +17,10 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { authOf, requirePermission, requireUser } from '../../core/auth.js';
-import { ok, idParamSchema } from '../../core/http.js';
-import { apiKeyCreateSchema, changePasswordSchema, userCreateSchema, userUpdateSchema } from './access.schemas.js';
+import { ok, idParamSchema, idSchema } from '../../core/http.js';
+import { apiKeyCreateSchema, changePasswordSchema, roleAssignSchema, roleRevokeSchema, userCreateSchema, userUpdateSchema } from './access.schemas.js';
 import { accessService } from './access.service.js';
+import { roleAssignmentService } from './role-assignment.service.js';
 import { signSession, verifySession } from '../../core/security/tokens.js';
 import { Errors } from '../../core/errors.js';
 import type { FastifyRequest } from 'fastify';
@@ -50,6 +53,11 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requireUser(),
     schema: { tags, summary: 'Đăng xuất mọi thiết bị khác đang đăng nhập tài khoản này (máy đang bấm nhận vé mới, vẫn đăng nhập)' },
     handler: async (req) => ok(await accessService.logoutOthers(authOf(req), reissueFor(req))),
+  });
+
+  r.get('/api/v1/users/:id/roles', {
+    preHandler: admin, schema: { tags, summary: 'Vai trò chính và lịch sử gán vai trò bổ sung của một người dùng', params: idParam },
+    handler: async (req) => ok(await roleAssignmentService.list(authOf(req), req.params.id)),
   });
 
   r.get('/api/v1/api-keys', { preHandler: admin, schema: { tags, summary: 'Danh sách khoá API' }, handler: async (req) => ok(await accessService.listKeys(authOf(req))) });
@@ -95,5 +103,25 @@ export const accessWriteActions: AnyActionDef[] = [
     expose: { http: { method: 'DELETE', path: '/api/v1/api-keys/:id' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'api_key', objectId: (i) => String(i.id) },
     handler: (ctx, input) => accessService.revokeKeyIn(ctx.data.tx, ctx.legacyAuth, input.id),
+  }),
+  // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1 (ADR-0027): gán / thu hồi vai trò bổ sung — không cho AI / MCP, chỉ người có users:write
+  defineAction({
+    id: 'core.user.role-assign', title: 'Gán vai trò bổ sung cho người dùng', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: roleAssignSchema.merge(idParam), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/users/:id/roles', status: 201 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'user', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => {
+      const { id, ...body } = input;
+      return roleAssignmentService.assignIn(ctx.data.tx, ctx.legacyAuth, id, body);
+    },
+  }),
+  defineAction({
+    id: 'core.user.role-revoke', title: 'Thu hồi vai trò bổ sung của người dùng', tags,
+    permission: 'users:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: roleRevokeSchema.merge(idParam).extend({ assignmentId: idSchema }), output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/users/:id/roles/:assignmentId/revoke' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'user', objectId: (i) => String(i.id) },
+    handler: (ctx, input) => roleAssignmentService.revokeIn(ctx.data.tx, ctx.legacyAuth, input.id, input.assignmentId, { reason: input.reason }),
   }),
 ];
