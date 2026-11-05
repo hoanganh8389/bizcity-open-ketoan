@@ -3,6 +3,7 @@
  * Thêm màn: import + một <Route> ở đây, mục menu ở menu.ts cùng thư mục.
  */
 import { Navigate, Route, useLocation } from 'react-router-dom';
+import { HieuNghiepVuPage } from './HieuNghiepVuPage';
 import { TongQuanMuaPage } from './tong-quan/TongQuanMuaPage';
 import { ChungTuPage } from './chung-tu/ChungTuPage';
 import { SoKhoTheoMatHangPage, TonKhoTheoMatHangPage } from './bao-cao-kho/BaoCaoKhoPages';
@@ -62,6 +63,7 @@ export const muaHangRoutes = (
     <Route path="mua-hang/bien-the" element={<BienTheMatHangPage />} />
     <Route path="mua-hang/dvt-thung" element={<DvtThungPage />} />
     <Route path="mua-hang/csdl" element={<CsdlPage />} />
+    <Route path="mua-hang/hieu-nghiep-vu" element={<HieuNghiepVuPage />} />
     {/* Đường dẫn cũ (màn nhập nhanh dữ liệu giả, đã bỏ) → màn chứng từ mua hàng */}
     <Route path="mua-hang/phieu-mua" element={<Navigate to="/mua-hang/tong-hop" replace />} />
     <Route path="mua-hang/tra-ncc" element={<Navigate to="/mua-hang/tong-hop" replace />} />

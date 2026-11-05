@@ -6,6 +6,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { db } from '../src/db/client.js';
 import { returnValue } from '@bizcity/kernel/modules/inventory/costing.service';
+import { env } from '@bizcity/platform/config/env';
+import { returnsAtOpening } from '@ketoan/contracts';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -199,6 +201,10 @@ describe('Thu hộ, trả hộ', () => {
 });
 
 describe('Bán nội bộ theo giá bán (XCN) và giá vốn', () => {
+  // Định giá hàng trả theo tồn đầu là công thức của bản thuế (ACC49A)
+  beforeAll(() => { env.BOOK_MODE = 'tax'; });
+  afterAll(() => { env.BOOK_MODE = 'internal'; });
+
   it('Nợ 13681 / Có 51116; giá vốn nội bộ 6326 = giá bán, ghi ngay', async () => {
     await post({ docType: 'purchase', docKey: 'NM-11', branchCode: 'CN01', docNo: 'NM-11', docDate: '2026-11-01', partner: { code: 'NCC01' },
       lines: [{ lineKey: '1', sku: 'SUA02', qty: 10, amountBeforeTax: 700000, taxCode: 'V08', taxAmount: 0 }], totals: { beforeTax: 700000, tax: 0, total: 700000 } });
@@ -239,6 +245,24 @@ describe('Bán nội bộ theo giá bán (XCN) và giá vốn', () => {
     const costs = await call(ctx, 'GET', '/api/v1/inventory/costs?period=2026-12&search=SUA02');
     // (500.000 − 125.000 − 50.000) / (8 − 2 − 1) = 65.000
     expect(costs.body.data[0]).toMatchObject({ inQty: -3, inValue: -175000, unitCost: 65000, closingQty: 10 });
+  });
+
+  it('bản nội bộ: mọi lý do trả lấy thành tiền − thuế, kể cả XTR1', async () => {
+    env.BOOK_MODE = 'internal';
+    try {
+      expect(returnsAtOpening('internal', 'XTR1', true)).toBe(false);
+      expect(returnsAtOpening('tax', 'XTR9', false)).toBe(true);
+      expect(returnsAtOpening('tax', 'XTR3', false)).toBe(false);
+      const r = await call(ctx, 'POST', '/api/v1/inventory/costing', { period: '2026-12' });
+      expect(r.status, JSON.stringify(r.body)).toBe(200);
+      const costs = await call(ctx, 'GET', '/api/v1/inventory/costs?period=2026-12&search=SUA02');
+      expect(costs.body.data[0]).toMatchObject({ openingValue: 500000, inValue: -170000 }); // TN-12 120.000 + XTR3 50.000
+      const f = await call(ctx, 'GET', '/api/v1/inventory/costing/formula');
+      expect(f.body.data.book).toBe('internal');
+      expect(f.body.data.branches).toBeGreaterThan(0);
+    } finally {
+      env.BOOK_MODE = 'tax';
+    }
   });
 
   it('năm trường hợp định giá hàng trả nhà cung cấp', () => {

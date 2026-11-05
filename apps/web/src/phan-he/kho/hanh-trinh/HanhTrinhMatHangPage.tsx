@@ -15,6 +15,7 @@ import { LINEAGE_LANE, type CostExplain, type ItemHistory, type ItemImpact, type
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading, Money } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
+import { dateTime } from '@/lib/format';
 
 interface SearchRow { sku: string; name: string; unit: string; barcode: string; isActive: boolean; isDraft: boolean }
 const LANES: { key: 'in' | 'out' | 'return' | 'move'; title: string }[] = [
@@ -149,7 +150,7 @@ export function HanhTrinhMatHangPage() {
                 <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Mới nhất trước · nguồn: mã có phiên bản, phân loại theo ngày, nhật ký thao tác — không sửa được</div>
                 <table className="grid"><thead><tr><th style={{ width: 150 }}>Lúc</th><th style={{ width: 100 }}>Hiệu lực từ</th><th>Thay đổi</th><th style={{ width: 160 }}>Người</th></tr></thead>
                   <tbody>{hist.data.entries.map((h, i) => (
-                    <tr key={i}><td>{h.at.slice(0, 16).replace('T', ' ')}</td><td>{h.effectiveFrom ?? '—'}</td><td>{h.text}</td><td className="muted">{h.by}</td></tr>
+                    <tr key={i}><td>{dateTime(h.at)}</td><td>{h.effectiveFrom ?? '—'}</td><td>{h.text}</td><td className="muted">{h.by}</td></tr>
                   ))}</tbody></table>
                 {hist.data.truncated && <div className="muted" style={{ fontSize: 12 }}>Danh sách bị cắt — xem nhật ký đầy đủ ở Bàn điều tra.</div>}
               </div>

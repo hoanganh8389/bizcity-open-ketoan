@@ -272,7 +272,7 @@ function ReasonForm({ value, onClose }: { value: Partial<Reason> & { isNew?: boo
       <Field label="Tuỳ chọn" full>
         <label className="checkbox"><input type="checkbox" checked={Boolean(flags.giftCostToPromotion)} onChange={(e) => set({ flags: { ...flags, giftCostToPromotion: e.target.checked } })} /> Giá vốn hàng tặng ghi vào chi phí khuyến mãi</label>
       </Field>
-      <Field label="Tính giá vốn" full hint="Cách hàng mang lý do này được đưa vào công thức giá vốn bình quân tháng (ACC49)">
+      <Field label="Tính giá vốn" full hint="Cách hàng mang lý do này được đưa vào công thức giá vốn bình quân tháng (ACC49). Định giá theo tồn đầu chỉ có tác dụng ở bản thuế (ACC49A)">
         <div style={{ display: 'grid', gap: 4 }}>
           <label className="checkbox"><input type="checkbox" checked={Boolean(flags.costAtSalePrice)} onChange={(e) => set({ flags: { ...flags, costAtSalePrice: e.target.checked } })} /> Xuất theo giá trị chứng từ: giá vốn = tiền hàng trên phiếu, trừ khỏi tử và mẫu (xuất bán chi nhánh khác, xuất tặng thưởng)</label>
           <label className="checkbox"><input type="checkbox" checked={Boolean(flags.returnAtOpeningCost)} onChange={(e) => set({ flags: { ...flags, returnAtOpeningCost: e.target.checked } })} /> Hàng trả nhà cung cấp định giá theo tồn đầu (bỏ chọn: lấy thành tiền − thuế trên phiếu)</label>

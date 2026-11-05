@@ -270,7 +270,7 @@ export const inventoryReportService = {
        GROUP BY 1, 2, 3`.execute(db);
     const sub = await sql<{ branch_code: string; sku: string; name: string; qty: string; val: string | null; uncosted: string }>`
       WITH mv AS (${valuedMovements({ tenantId: auth.tenantId, to, branchIds: s.branchIds, search })})
-      SELECT b.code AS branch_code, mv.cur AS sku, MAX(mv.name) AS name, SUM(mv.qty) AS qty, SUM(mv.val) AS val, COUNT(*) FILTER (WHERE mv.uncosted) AS uncosted
+      SELECT b.code AS branch_code, mv.cur AS sku, COALESCE(bizcity_item_name_now(${auth.tenantId}::bigint, mv.cur), MAX(mv.name)) AS name, SUM(mv.qty) AS qty, SUM(mv.val) AS val, COUNT(*) FILTER (WHERE mv.uncosted) AS uncosted
         FROM mv JOIN branches b ON b.id = mv.branch_id
        GROUP BY 1, 2`.execute(db);
 

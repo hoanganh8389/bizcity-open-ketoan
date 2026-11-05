@@ -27,6 +27,7 @@ export const keToanMenu: MenuItem[] = [
       { key: 'phieu-bao-no', label: 'Phiếu báo nợ', path: '/nghiep-vu/phieu-bao-no', code: 'ACC53' },
       sec('cuoi-ky', 'Cuối kỳ'),
       { key: 'gia-von', label: 'Tính giá vốn', path: '/nghiep-vu/tinh-gia-von', code: 'ACC49' },
+      { key: 'cong-thuc-gia-von', label: 'Công thức giá vốn', path: '/nghiep-vu/cong-thuc-gia-von', code: 'ACC49A' },
       { key: 'ket-chuyen', label: 'Kết chuyển lãi/lỗ', path: '/nghiep-vu/ket-chuyen', code: 'ACC6' },
       { key: 'so-du', label: 'Số dư tài khoản', path: '/nghiep-vu/so-du-tai-khoan', code: 'ACC15' },
       { key: 'ky-khoa-so', label: 'Đóng / mở kỳ kế toán', path: '/cau-hinh/ky-ke-toan', code: 'ACC2' },

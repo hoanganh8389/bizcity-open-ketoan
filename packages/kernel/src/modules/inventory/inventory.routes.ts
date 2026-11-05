@@ -16,6 +16,9 @@ import { z } from 'zod';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
 import { idParamSchema, ok } from '@bizcity/platform/core/http';
 import { costingService } from './costing.service.js';
+import { sql } from 'kysely';
+import { db } from '@bizcity/platform/db/client';
+import { env } from '@bizcity/platform/config/env';
 import { defineAction, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Kho và giá vốn'];
@@ -28,6 +31,17 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     preHandler: requirePermission('reports:read'),
     schema: { tags, summary: 'Bảng đơn giá vốn của một tháng', querystring: z.object({ period, search: z.string().optional() }) },
     handler: async (req) => ok(await costingService.list(authOf(req), req.query)),
+  });
+  // [2026-11-05 09:30 PM Nguyễn Văn Thủy] PHASE-026 — màn Công thức giá vốn ACC49A (đóng góp)
+  r.get('/api/v1/inventory/costing/formula', {
+    preHandler: requirePermission('reports:read'),
+    schema: { tags, summary: 'Công thức giá vốn của bản cài đang chạy và số chi nhánh đã gán đơn vị hạch toán' },
+    handler: async (req) => {
+      const c = await sql<{ branches: string; with_unit: string; units: string }>`
+        SELECT COUNT(*) AS branches, COUNT(accounting_unit_id) AS with_unit, COUNT(DISTINCT accounting_unit_id) AS units
+          FROM branches WHERE tenant_id = ${authOf(req).tenantId}`.execute(db);
+      return ok({ book: env.BOOK_MODE, branches: Number(c.rows[0]!.branches), withUnit: Number(c.rows[0]!.with_unit), units: Number(c.rows[0]!.units) });
+    },
   });
   mountActions(app, inventoryWriteActions);
 }

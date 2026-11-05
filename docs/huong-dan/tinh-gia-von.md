@@ -17,7 +17,8 @@ Các chi nhánh cùng **đơn vị hạch toán** dùng chung một đơn giá c
 - Tháng không nhập gì (mẫu số bằng 0) thì dùng đơn giá gần nhất của các tháng trước.
 - **Hàng bán nội bộ theo giá bán** (lý do XCN): giá vốn đã ghi ngay bằng giá bán, và bị **trừ khỏi cả tử và mẫu** của công thức trên.
 - **Hàng bán nội bộ theo giá bán, xuất tặng thưởng khách hàng** (lý do có đánh dấu "Xuất theo giá trị chứng từ", mặc định XCN, XTA1.4): như trên.
-- **Hàng trả nhà cung cấp với lý do có đánh dấu "định giá theo tồn đầu"** (mặc định XTR1, XTR9) được định giá theo tồn đầu, không lấy thẳng tiền trên phiếu trả:
+- **Hàng trả nhà cung cấp:** bản nội bộ lấy thành tiền − thuế cho mọi lý do; phần dưới đây áp cho bản thuế, xem [Công thức giá vốn](cong-thuc-gia-von.md).
+- **Hàng trả nhà cung cấp với lý do XTR1, XTR9 hoặc có đánh dấu "định giá theo tồn đầu"** được định giá theo tồn đầu, không lấy thẳng tiền trên phiếu trả:
 
   | Trường hợp | Giá trị đưa vào công thức |
   |---|---|
