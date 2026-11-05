@@ -12,7 +12,7 @@
 | S028-3 | W0: ADR-0027 (Đề xuất) | W0 | P0 | ✅ 2026-11-05 |
 | S028-4 | Chủ dự án duyệt D-AUTH-01..10 | W0 | P0 | ✅ 2026-11-05 — D-AUTH-03 bản sửa (owner / vai trò quản trị cao vẫn tự có quyền module) <!-- [2026-11-05 06:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chủ duyệt, giữ chỗ W1 --> |
 | S028-5 | PR tài liệu W0 merge vào `main` (R-FLOW) | W0 | P0 | ⛔ chờ PR |
-| S028-6 | W1: `user_role_assignments` (0074), quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, `ADMIN_ROLES`, action gán / thu hồi — chữ chốt [00 §4a](00-MASTER-PLAN.md) | W1 | P0 | ☐ giữ chỗ ở CLAIMS.md |
+| S028-6 | W1: `user_role_assignments` (0075) <!-- [2026-11-05 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0074 → 0075 (W-13: 0072 tên lúc ghi, 0073 / 0074 PHASE-026 đợt 2 / 3 giữ) -->, quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, `ADMIN_ROLES`, action gán / thu hồi — chữ chốt [00 §4a](00-MASTER-PLAN.md) | W1 | P0 | ☐ giữ chỗ ở CLAIMS.md |
 | S028-7 | W2: `module_grants` — cấp thêm quyền module cho vai trò ngoài `ADMIN_ROLES` (D-AUTH-03 bản sửa: không thu quyền của owner) | W2 | P0 | ☐ |
 | S028-8 | W3: đóng 17 route ghi thô còn lại, `requireScope()` | W3 | P1 | ☐ |
 | S028-9 | W4: Role Editor UI (mã màn — Q028-1) | W4 | P1 | ☐ |

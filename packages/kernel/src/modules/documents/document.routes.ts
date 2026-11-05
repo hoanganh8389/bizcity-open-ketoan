@@ -29,6 +29,7 @@ import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcit
 import { documentService } from './document.service.js';
 import { defineAction, mountActions, registerActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 import { documentActions, submitActions } from './document.actions.js';
+import { documentHistoryRoutes } from './document-history.routes.js';
 
 const tags = ['Chứng từ'];
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -67,6 +68,8 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
   registerActions(documentActions);
   // [2026-11-02 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — core.document.submit có route HTTP (POST /api/v1/documents/submit), trước route /documents/:id
   mountActions(app, submitActions);
+  // [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: GET /api/v1/documents/history (lịch sử chứng từ), đăng ký TRƯỚC route /documents/:id
+  await documentHistoryRoutes(app);
   const r = app.withTypeProvider<ZodTypeProvider>();
 
   // @bizcity-route: cửa nạp (ADR-0014) — chứng từ bị từ chối giữ ở bể chờ bằng giao dịch riêng; idempotent theo docKey + version

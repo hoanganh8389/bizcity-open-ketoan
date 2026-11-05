@@ -18,6 +18,8 @@ export interface DraftLine {
   partnerId?: string | null;
   taxCode?: string | null;
   productSku?: string | null;
+  /** [2026-11-05 07:40 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: tên lúc ghi. Để trống thì trigger điền theo item_id; bút toán đảo truyền tên của dòng gốc. */
+  productName?: string | null;
   description?: string;
   sourceLineKey?: string | null;
   dims?: Record<string, unknown>;

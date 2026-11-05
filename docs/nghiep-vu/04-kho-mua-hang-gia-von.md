@@ -47,7 +47,7 @@ Ví dụ: tháng 9 nhập 10 hộp × 70.000 → tồn 10 hộp = 700.000. Thán
 
 Tháng 10 bán 5 hộp, kiểm kê thiếu 1 → giá vốn 5 × 73.000 = 365.000; thiếu 73.000; tồn cuối 14 hộp = 1.022.000.
 
-**Ghi sổ giá vốn.** Trong tháng, hệ thống bán hàng thường chưa biết giá vốn, nên khi định khoản, mỗi mặt hàng của phiếu bán, hoàn, chuyển kho, điều chỉnh, xuất điều chỉnh có sẵn **cặp dòng giá vốn 0 đồng** ngay trong bút toán của phiếu. Cuối tháng kế toán bấm **Tính giá vốn (ACC49)**: phần mềm tính đơn giá rồi **ghi đè số tiền** lên các dòng đó (tính lại cũng ghi đè, không sinh bút toán ghi số âm — ngoại lệ có chủ đích của nguyên tắc "sổ cái chỉ thêm", chỉ áp cho dòng giá vốn chờ tính, để sổ nhẹ). Phiếu định khoản trước khi có dòng giá vốn sẵn thì vẫn ghi vào **một chứng từ "Giá vốn hàng xuất"** của từng chi nhánh (ngày cuối tháng).
+**Ghi sổ giá vốn.** Phiếu bán, hoàn, chuyển kho, điều chỉnh, xuất điều chỉnh không mang dòng giá vốn. Cuối tháng kế toán bấm **Tính giá vốn (ACC49)**: phần mềm tính đơn giá rồi sinh mỗi chi nhánh **một chứng từ "Giá vốn hàng xuất"** liệt kê từng mã hàng, ngày cuối tháng. Tính lại thì đảo bút toán cũ, ghi bút toán mới.
 
 Thứ tự cuối tháng: **khoá nhận chứng từ → tính giá vốn → tính khấu hao, phân bổ → kết chuyển lãi lỗ → khoá sổ.**
 
@@ -64,7 +64,7 @@ Thứ tự cuối tháng: **khoá nhận chứng từ → tính giá vốn → t
 Hai luật riêng trong công thức:
 
 - Hàng **bán nội bộ theo giá bán** (XCN) bị trừ khỏi cả tử (theo giá bán) và mẫu trước khi chia.
-- Hàng **trả nhà cung cấp** định giá theo tồn đầu (5 trường hợp, xem hướng dẫn màn Tính giá vốn); tồn kho trên sổ vẫn giảm theo tiền trên phiếu.
+- Hàng **trả nhà cung cấp**: bản nội bộ (`BOOK_MODE=internal`) lấy thành tiền − thuế cho mọi lý do. Bản thuế (`BOOK_MODE=tax`) định giá XTR1, XTR9 theo tồn đầu (5 trường hợp, xem màn Công thức giá vốn ACC49A); tồn kho trên sổ vẫn giảm theo tiền trên phiếu.
 
 ## 5. Tiền giữa các chi nhánh
 
