@@ -41,6 +41,7 @@ Hợp đồng = thoả thuận có phiên bản giữa lõi và bên dùng (phâ
 | `bizcity_domain@1` | [BIZCITY-DOMAIN-v1.md](BIZCITY-DOMAIN-v1.md) | mọi module, kênh, AI chạm tiền | Chấp nhận — Domain Contract (lớp 1/4, [CONG-BO-KIEN-TRUC](../CONG-BO-KIEN-TRUC.md)) | trigger CSDL, `modules/{documents,posting,ledger}` |
 | `bizcity_compliance@1` | [BIZCITY-COMPLIANCE-v1.md](BIZCITY-COMPLIANCE-v1.md) · [ma trận máy đọc](../standard/compliance-matrix.json) | kế toán trưởng, kiểm toán, người duyệt PR | Chấp nhận — Compliance Contract (lớp kiểm soát 3/3) | bảng điểm `SCOREBOARD.md` mục Ma trận tuân thủ; SC-CMP-1 |
 | `bizcity_errors@1` | [BIZCITY-ERRORS-v1.md](BIZCITY-ERRORS-v1.md) | mọi bên gọi HTTP / MCP, giao diện | Chấp nhận | `packages/contracts/src/errors.ts` (ERROR_CATALOG), `core/errors.ts`, `core/http.ts` |
+| `bizcity_authorization@1` <!-- [2026-11-06 00:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chữ chốt bộ tính quyền --> | [BIZCITY-AUTHORIZATION-v1.md](BIZCITY-AUTHORIZATION-v1.md) | mọi module, API, giao diện, Role Editor | Nháp — mô hình Cho / Nới / Cấm, phạm vi, điều kiện, mã lý do ([ADR-0027](../adr/ADR-0027-core-authorization-plugin-role-editor.md)) | `packages/platform/src/core/authz/` (đề xuất — vào main cùng PR code W3 đợt 1) |
 | `bizcity_preset@1` | [BIZCITY-PRESET-v1.md](BIZCITY-PRESET-v1.md) · [schema](BIZCITY-PRESET-v1.schema.json) | người cài, lập trình viên module (dữ liệu thử) | Chấp nhận | `presets/<id>/`, `scripts/cai-preset.mjs` |
 
 ## Quy tắc phiên bản
