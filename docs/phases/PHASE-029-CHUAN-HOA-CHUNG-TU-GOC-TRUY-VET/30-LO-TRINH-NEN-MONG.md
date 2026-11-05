@@ -60,3 +60,21 @@ Phép kiểm chặn mới là thứ dùng chung (R-FLOW §3) — mục này là 
 | Ca tự kiểm | gốc mẫu `fixtures/foundations-bad` (đề xuất): một lõi thiếu, một tín hiệu `co` trỏ tệp không có, một trụ cột `dat` còn `chua` |
 | Quan hệ SC-PILLAR-1 | SC-PILLAR-1 (S026-15) kiểm `tru-cot.json`; SC-CORE-1 kiểm `nen-mong.json`. Khi S029-18 thêm trường `foundation` vào `tru-cot.json`, hai phép kiểm dùng chung bộ đọc tín hiệu — không viết hai lần |
 | Đổi mã → sửa tài liệu | đổi / dời thư mục ở `code` của một lõi → sửa `nen-mong.json` trong cùng PR (SC-CORE-1 báo) |
+
+<!-- [2026-11-06 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §5 chữ chốt E2 đợt 1 (S029-10): cấu hình kiểu options, chỉ thêm, phạm vi, hiệu lực -->
+## 5. Chữ chốt E2 đợt 1 — cấu hình có phiên bản, phạm vi, ngày hiệu lực (S029-10)
+
+Thiết kế đầy đủ: [`bizcity_settings@1` 1.1.0-draft §2](../../contracts/BIZCITY-SETTINGS-MATRIX-v1.md). Tóm tắt quyết định:
+
+| Mục | Chốt | Vì sao |
+|---|---|---|
+| Kho | một bảng `setting_values` chỉ thêm (mỗi lần ghi = một phiên bản) + `tenants.config_version` | lịch sử là chính bảng; không bảng history riêng; một khoá huỷ đệm |
+| Phạm vi | `user` → `branch` → `accounting_unit` → `tenant` → mặc định registry | đúng R-MATRIX §1; `user` cho tuỳ chọn giao diện (thay localStorage dần) |
+| Khoá cũ ở `tenants.settings` | ghi song song (mirror) ở phạm vi đơn vị; hiện hành đọc nhánh JSON cũ; không nhận ngày tương lai ở đợt 1 | hơn 8 chỗ đọc thô không vỡ; chuyển dần ở đợt 2 |
+| Khuôn giá trị | trường `valueType` máy đọc trong registry; khoá chưa có `valueType` không đi đường chung | không ghi mù khoá có bí mật / khuôn phức |
+| Đăng ký route | `settings-values.routes.ts` gọi từ `catalog-rules.routes.ts` (tệp cấu hình HT09) | `system.routes.ts` đang thuộc dòng E1; `loi.ts` thuộc dòng xương cá |
+| Kiểu Kysely | không sửa `db/types.ts` ở đợt 1 (dòng PHASE-026 đợt 3 giữ) — truy vấn bằng `sql` có tham số | không chồng phạm vi |
+| Số migration | `0076` (0073 / 0074 PHASE-026, 0075 PHASE-028 W1) | W-13 |
+| Kiểm bằng | test `cau-hinh-gia-tri`: ưu tiên phạm vi, theo ngày, lịch sử, chỉ thêm (trigger), mirror, `config_version`, quyền, lý do loại A; `ctx.settings.get` đọc qua kho mới | LEAN-7 |
+
+Đợt 2 (S029-32): chuyển route ghi riêng sang `setSetting`, `valueType` cho module, phép kiểm chặn đọc thô, xuất / nhập, đệm theo `config_version`, mục `schema-catalog`.
