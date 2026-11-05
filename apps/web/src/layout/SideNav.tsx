@@ -20,6 +20,12 @@ const write = (key: string, v: unknown) => { try { localStorage.setItem(key, JSO
 
 const ICONS: Record<string, LucideIcon> = { Building2, Landmark, LayoutGrid, List, ListEnd, Network, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench };
 
+/** Biểu tượng của nhóm, dùng chung cho menu trái và trang Tổng quan. */
+export function GonIcon({ name, size, color }: { name: string; size?: number; color?: string }) {
+  const Icon = ICONS[name] ?? List;
+  return <Icon size={size} color={color} />;
+}
+
 /** Số cột của danh sách bung theo số dòng, để danh mục dài không phải cuộn. */
 const columnsOf = (g: GonGroup) => {
   const rows = g.sections.reduce((n, s) => n + s.items.length + (s.label ? 1 : 0), 0);
@@ -61,11 +67,10 @@ export function SideNav({ groups, active, onChoose, collapsed, onCollapse, onRes
       <nav className="sidenav-body">
         <NavLink to="/" end className={() => `gon-row${pathname === '/' ? ' active' : ''}`} title="Tổng quan"><Home size={17} /><span>Tổng quan</span></NavLink>
         {groups.map((g) => {
-          const Icon = ICONS[g.icon] ?? List;
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (
             <button key={g.key} type="button" className={`gon-row${isActive ? ' active' : ''}${open?.key === g.key ? ' open' : ''}`} title={g.label} aria-expanded={open?.key === g.key} onClick={(e) => toggle(g, e)}>
-              <Icon size={17} /><span>{g.label}</span><ChevronRight size={14} className="gon-arrow" />
+              <GonIcon name={g.icon} size={17} /><span>{g.label}</span><ChevronRight size={14} className="gon-arrow" />
             </button>
           );
         })}
@@ -79,7 +84,7 @@ export function SideNav({ groups, active, onChoose, collapsed, onCollapse, onRes
       {open && openGroup && createPortal(
         <div ref={fly} className={`gon-fly cot-${columnsOf(openGroup)}`} style={{ top: open.top, left: open.left }}>
           <div className="gon-fly-body">
-            {openGroup.home && <Link className="gon-fly-item" to={openGroup.home} onClick={() => onChoose(openGroup.key)}><span>{openGroup.homeLabel ?? 'Tổng quan'}</span></Link>}
+            <Link className="gon-fly-item" to={openGroup.home} onClick={() => onChoose(openGroup.key)}><span>{openGroup.homeLabel ?? 'Tổng quan'}</span></Link>
             {openGroup.sections.map((s, i) => (
               <div key={s.label ?? i} className="gon-fly-sec">
                 {s.label && <div className="gon-fly-head">{s.label}</div>}
