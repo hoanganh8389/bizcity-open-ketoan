@@ -134,5 +134,5 @@ Bản ghi đọc ổn định:
 
 ## 6. Kiểm chứng
 
-- Test: `apps/api/test/xuong-ca-*.test.ts`, gồm đổi mã, gộp, gộp hai lần, mã cũ qua cửa nạp, cấu hình đi theo mã mới.
+- Test (chưa tách, sẽ có ở `apps/api/test/` tên xuong-ca-dinh-danh): gồm đổi mã, gộp, gộp hai lần, mã cũ qua cửa nạp, cấu hình đi theo mã mới.
 - Bộ kiểm: `node tests/conformance/selfcheck.mjs`.
