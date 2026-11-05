@@ -13,7 +13,7 @@
 | S008-1 | `infrastructure/backup/`: compose override lưu WAL (chỉ PostgreSQL; wal-g / pgBackRest tuỳ chọn), runbook, `scripts/sao-luu-goc.sh` (bản gốc + dọn WAL theo `BASE_KEEP`) | 2.15 · G1-08 | có | ✅ thử trên compose project tách riêng: 3 lần, giữ 2 bản, WAL cũ đã dọn |
 | S008-2 | Diễn tập PITR tới một thời điểm, đo RTO / RPO, biên bản ở `docs/audits/` | 2.15 · G3-07 | có | 🟡 máy dev ĐẠT ([biên bản](../../audits/PITR-2026-10-30.md): RTO 8 giây, RPO ≤ 60 giây, lane diagnostics ĐẠT trên bản khôi phục); ⛔ diễn tập trên máy chủ thật + chủ xác nhận (tín hiệu tay 2.15) |
 | S008-3 | Lịch kiểm khôi phục định kỳ (R-BAK) | 2.15 | có | 🟡 lịch cron đề xuất trong runbook; ⛔ đặt cron trên máy chủ (chủ) |
-| S008-4 | Xác nhận thời hạn lưu trữ | — | — | ⛔ kế toán trưởng / luật sư |
+| S008-4 | Xác nhận thời hạn lưu trữ | — | — | ⛔ kế toán trưởng / luật sư xác nhận. Chủ dự án duyệt mức đề xuất 2026-11-05: chứng từ ghi sổ, sổ kế toán, báo cáo tài chính giữ **tối thiểu 10 năm**; cửa sổ PITR mặc định **14 ngày**, tối đa 30 <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-008 — S008-4 mức đề xuất chủ duyệt --> |
 
 ## Log
 

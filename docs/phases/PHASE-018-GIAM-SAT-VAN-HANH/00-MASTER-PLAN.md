@@ -60,6 +60,8 @@ Bản giao việc đề xuất tạo `/docs/observability/`, `/infra/monitoring/
 
 ## 5. Câu hỏi cần chủ quyết (Q018-*)
 
+> **Chủ chốt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): Q018-1 **có** — đưa phase vào lộ trình; mã việc thêm ở PR riêng cùng Q019-4 / Q020-1 (2.17–2.21 đã thuộc PHASE-021, phải chọn số khác). Q018-4 kênh cảnh báo: **Telegram**; người trực chưa chỉ định (còn mở). Q018-5 **còn mở**: cần số liệu thật của chủ trước W6. Q018-6 **hoãn**: làm khi có nhu cầu, cần ADR riêng. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-018 — chủ chốt Q018-1, -4, -6 -->
+
 | Mã | Câu hỏi | Gợi ý |
 |---|---|---|
 | Q018-1 | Đưa phase vào lộ trình chính thức (`docs/standard/PHASES.md`, `roadmap.json`) với mã việc mới (vd 2.17–2.20 cho W1–W4, 5.10–5.12 cho W5–W7), hay giữ ngoài lộ trình? | Thêm mã — để bảng điểm tự tính tiến độ (SC-PHASE-1). Tệp lộ trình đang được phiên khác sửa: thêm sau khi phiên đó commit. |

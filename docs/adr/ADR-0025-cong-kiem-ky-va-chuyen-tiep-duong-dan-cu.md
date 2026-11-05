@@ -1,7 +1,7 @@
 # ADR-0025 · Cổng đóng góp bảng kiểm khoá kỳ và lớp chuyển tiếp đường dẫn cũ (đề xuất bậc 4)
 <!-- [2026-11-04 12:21 AM Johnny Chu - Chu Hoàng Anh] ADR-0025 — cổng đóng góp bảng kiểm khoá kỳ và lớp chuyển tiếp đường dẫn cũ (đề xuất) -->
 
-- Trạng thái: **Đề xuất** — chờ chủ dự án quyết (R-FLOW §3: đụng thứ dùng chung thì chốt thiết kế bằng PR tài liệu vào `main` trước PR code).
+- Trạng thái: **Chấp nhận** <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] ADR-0025 — chấp nhận --> — chủ dự án (Johnny Chu) duyệt 2026-11-05: *"đồng ý với toàn bộ đề xuất của bro"* — phương án A (`period.check.contributor`) và B (`legacy-routes`). PR code của từng phương án vẫn theo R-FLOW (giữ chỗ trước).
 - Ngày: 2026-11-04 · Người quyết: Johnny Chu – Chu Hoàng Anh · Mức: **K2** (Kernel đọc dữ liệu phân hệ; đường dẫn công khai của API)
 - Phát sinh từ: bước 0 đợt 1 chuyển `quy` sang `modules/quy/` ([ADR-0024](ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md), việc S013-3, PR chữ chốt đợt 1).
 - Quy trình: đề xuất năng lực theo [VERSIONING §5](../standard/VERSIONING.md); chưa viết mã.

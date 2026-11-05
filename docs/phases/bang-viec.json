@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 14
+      "count": 15
     },
     {
       "key": "merging",
@@ -15,7 +15,7 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 15
+      "count": 13
     },
     {
       "key": "todo",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 40
+      "count": 39
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 189
+      "count": 192
     }
   ],
   "items": [
@@ -44,8 +44,8 @@
       "phase": "PHASE-001",
       "title": "Nhóm Lõi duyệt docs/standard/, hợp đồng, CANON",
       "priority": null,
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 11
@@ -187,8 +187,8 @@
       "phase": "PHASE-002",
       "title": "A-17..A-26 thành việc có người nhận (mỗi chỗ SC-MOD-2: action Core thay thế hay chuyển bảng về module)",
       "priority": null,
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md",
       "line": 13
@@ -1899,8 +1899,8 @@
       "phase": "PHASE-019",
       "title": "Kiến trúc: hai chế độ, API trung gian, mẫu truy vấn đóng, bảo mật, bản đồ màn, luật UX, ma trận test (20-KIEN-TRUC)",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 12
@@ -1910,8 +1910,8 @@
       "phase": "PHASE-019",
       "title": "Bản mẫu UI tĩnh (mockups/)",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md",
       "line": 13
@@ -3370,6 +3370,23 @@
       "line": 43
     },
     {
+      "id": "S024-33",
+      "phase": "PHASE-024",
+      "title": "Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'), SC-KERNEL-5 nợ cũ). Chữ chốt: AccountResolver t…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
+        "branch": "feat/phase-024-s024-33-tk-kho",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-024 · S024-33 — bỏ suy tài khoản kho từ tiền tố trong luật chuyển kho (SC-KERNEL-5); chữ chốt…"
+      },
+      "file": "docs/phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md",
+      "line": 44
+    },
+    {
       "id": "S025-1",
       "phase": "PHASE-025",
       "title": "ADR-0021, RULE-CONTINUITY (R-CONT-0..9), CANON §0.1 ba trụ cột",
@@ -3923,8 +3940,8 @@
       "phase": "PHASE-027",
       "title": "Q027-5 SEEDADMINPASSWORD",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 10

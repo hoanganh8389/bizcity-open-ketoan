@@ -214,7 +214,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | G1-03 | Đảo bút toán + phiên bản sự việc | STD-DOM-4, -11 có test | **có** | — | — |
 | G1-04 | Idempotency: `docKey` + `version`; `Idempotency-Key` cho action | CONF-RUN-4 đạt | **có** | 2.5 | — |
 | G1-05 | Cô lập đơn vị: `tenant_id` + **RLS** + test đơn vị A không đọc được đơn vị B | DG-PLAN-5 thành kiểm thật | **có** (RLS 84 bảng + DG-PLAN-5 / `TENANT_ISOLATION` kiểm thật, PHASE-007); bản cài thật đặt `DB_APP_USER=ketoan_app` | 2.4 | — |
-| G1-06 | RBAC: vai trò, quyền, khoá API có phạm vi; registry quyền mở theo module | `permissions.module` available | **một phần** | 3.x | _mở_ |
+| G1-06 | RBAC: vai trò, quyền, khoá API có phạm vi; registry quyền mở theo module | `permissions.module` available | **có** (`permissions.module` available; khoá `mcp_…` có phạm vi làm cùng PHASE-015 — Q009-2) <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — G1-06 khớp bảng điểm --> | 3.x | — |
 | G1-07 | Audit Ledger: bằng chứng chỉ thêm, chuỗi băm, biên nhận | DG-EVD-1, SC-EVD-2 đạt | **có** | 2.6 | — |
 | G1-08 | Sao lưu + **PITR** (WAL archiving: wal-g / pgBackRest ở `infrastructure/backup/`) + kiểm khôi phục | R-BAK-1..3; diễn tập PITR có biên bản | **có** cơ chế + diễn tập máy dev ([biên bản](audits/PITR-2026-10-30.md)); bật trên bản cài thật: việc của chủ | 2.15 | — |
 | G1-09 | Health (L0 / L1 / L3), `/metrics` | `/health/ready`, `/system/diagnostics`, `/metrics` có test | **có** | 2.10, 2.13 | — |
@@ -245,7 +245,7 @@ Mỗi mã việc thuộc đúng một **thư mục phase** ở [docs/phases/](ph
 | Mã | Việc | Xong khi | Trạng thái | PHASES | Người nhận |
 |---|---|---|---|---|---|
 | G3-01 | Registry module + skills (cài module, gói định khoản, kỹ năng AI có chữ ký) | cài một module từ registry bằng một lệnh | **chưa** | 5.8 | _mở_ |
-| G3-02 | Developer CLI: `bizcity module new / check`, `bizcity init --preset` | scaffold module chạy bộ kiểm đạt ngay | **chưa** | 4.1, 4.2 | _mở_ |
+| G3-02 | Developer CLI: `bizcity module new / check`, `bizcity init --preset` | scaffold module chạy bộ kiểm đạt ngay | **một phần** (`packages/cli`: `module new / check / list`, `migrate`, `doctor`, `ledger verify`; `templates/starter-module`; còn `bizcity init --preset`, `events replay`, `evidence verify`) <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — G3-02 khớp mã --> | 4.1, 4.2 | _mở_ |
 | G3-03 | NATS JetStream cho tích hợp liên module (`adapters/nats` chuyển tiếp outbox) | 2 consumer ngoài tiến trình nhận sự kiện, không mất khi NATS tạm ngừng | **chưa** (sau G2-05) | 5.9 | _mở_ |
 | G3-04 | Bizcity Cell API key + dịch vụ AI (đọc hoá đơn, gợi ý lý do định khoản) | `ai.ocr-invoice`, `posting.reason-suggest` available | **chưa** | 5.3, 5.8 | _mở_ |
 | G3-05 | Benchmark tải | 30.000 chứng từ / ngày, p95 ghi sổ < 1 giây, có báo cáo | **chưa** | 5.5 | _mở_ |

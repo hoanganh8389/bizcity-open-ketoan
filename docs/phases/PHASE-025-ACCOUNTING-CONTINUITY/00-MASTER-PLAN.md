@@ -33,6 +33,8 @@ Cả ba phục vụ tôn chỉ (ADR-0020): người dùng quyết định; Core 
 
 ## 3. Quyết định chờ chủ duyệt
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D025-1, D025-3..8 duyệt như bảng dưới; D025-2 / 2b / 2c và hướng D025-6 đã chốt trước đó. [ADR-0021](../../adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md) chuyển **Chấp nhận**. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — chủ duyệt D025-* -->
+
 | Mã | Quyết định | Lý do |
 |---|---|---|
 | D025-1 | Accounting Continuity là **trụ cột III** của Core, ghi vào CANON §0.1 | yêu cầu chủ dự án; ngang tầm sổ cái |

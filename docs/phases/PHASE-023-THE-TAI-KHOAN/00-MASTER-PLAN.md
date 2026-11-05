@@ -65,6 +65,8 @@ Tệp theo chế độ kế toán: `data/giai-nghia-tai-khoan/vn-tt99.json` (và
 
 ## 6. Quyết định đề xuất D023-* (chờ chủ duyệt)
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D023-1..5 duyệt. Nội dung giải nghĩa vẫn phải kế toán trưởng duyệt từng mục (D023-4, S023-5). <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — chủ duyệt D023-* -->
+
 | # | Quyết định | Vì sao |
 |---|---|---|
 | D023-1 | Giải nghĩa là **tệp theo chế độ kế toán** trong repo (`data/giai-nghia-tai-khoan/*.json`), phát hành cùng bản dựng; đơn vị chỉ thêm ghi chú | một nguồn, có review, có phiên bản; như rulepack |
@@ -74,6 +76,8 @@ Tệp theo chế độ kế toán: `data/giai-nghia-tai-khoan/vn-tt99.json` (và
 | D023-5 | Phủ khởi đầu: ~30 tài khoản hay dùng (111, 112, 131, 133, 138, 141, 152–156, 211, 214, 242, 331, 333, 334, 335, 338, 411, 421, 511, 515, 521, 632, 635, 641, 642, 711, 811, 911); mở rộng tới cấp 2 của gói nền trước khi bật SC-ACC-1 block | làm được ngay, có giá trị ngay |
 
 ## 7. Câu hỏi cần chủ chốt (Q023-*)
+
+> **Chủ chốt 2026-11-05:** Q023-1..3 theo cột "Đề xuất" — Q023-1 AI soạn nháp 30 tài khoản theo khuôn + căn cứ TT99, kế toán trưởng sửa và duyệt từng mục; Q023-2 chế độ học bật cho `viewer`, `developer`, người dùng mới dưới 30 ngày; Q023-3 không có `ledger:read` thì chỉ lớp 1 + 2. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — chủ chốt Q023-* -->
 
 | # | Câu hỏi | Đề xuất |
 |---|---|---|

@@ -39,13 +39,15 @@ Khi cộng đồng bắt đầu vibe-code VAT, AR/AP, CRM, kho, agent AI trên c
 | D019-1 | **Không nhúng Grafana.** Bàn điều tra là phân hệ web của Core, đọc qua API trung gian; Grafana chỉ xuất hiện dưới dạng **link sâu** ở chế độ Vận hành | ✅ chủ duyệt 2026-11-01 <!-- [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — chủ duyệt D019-1, Q019-1 (b), Q019-2 (chỉ bản cài một đơn vị). --> |
 | D019-2 | **Hai chế độ:** Đơn vị (mặc định, theo `tenant` của phiên) và Vận hành (sức khoẻ toàn hệ, cảnh báo, Grafana). Chế độ Vận hành bật theo Q019-2 | ✅ 2026-11-01 (theo Q019-2) |
 | D019-3 | **Quyền mới `devtools:read`** (Platform, `core/auth.ts`): cấp cho `owner` và vai trò mới **`developer`** (Q019-1); không cấp cho khoá API; không cấp cho AI | ✅ 2026-11-01 (theo Q019-1) |
-| D019-4 | **Mẫu truy vấn đóng:** mỗi màn một mẫu TraceQL / LogQL / PromQL có tham số; máy chủ gắn `bizcity.tenant` / `tenant`; khung thời gian ≤ 24 giờ (log), ≤ 7 ngày (trace); ≤ 200 dòng / 50 trace; giới hạn tần suất theo người | ☐ |
-| D019-5 | **Trace thuộc đơn vị khi:** có ít nhất một span `bizcity.tenant` = đơn vị của phiên **và** không span nào mang đơn vị khác. Không đạt → trả **404 `NOT_FOUND`** (không 403 — không xác nhận trace tồn tại) | ☐ |
-| D019-6 | **Mã tra cứu ở mọi thông báo lỗi** (`requestId`, `traceId`), có nút chép; nút "Báo lỗi" dựng nội dung theo mẫu `bao-loi.yml` **chỉ gồm mã**, không dữ liệu | ☐ |
-| D019-7 | **Ngăn xếp lỗi (`err.stack`)** chỉ hiện ở chế độ Vận hành; chế độ Đơn vị chỉ thấy `err.type` + mã lỗi (thông điệp lỗi CSDL có thể chứa giá trị dữ liệu) | ☐ — xem Q019-3 |
+| D019-4 | **Mẫu truy vấn đóng:** mỗi màn một mẫu TraceQL / LogQL / PromQL có tham số; máy chủ gắn `bizcity.tenant` / `tenant`; khung thời gian ≤ 24 giờ (log), ≤ 7 ngày (trace); ≤ 200 dòng / 50 trace; giới hạn tần suất theo người | ✅ chủ duyệt 2026-11-05 |
+| D019-5 | **Trace thuộc đơn vị khi:** có ít nhất một span `bizcity.tenant` = đơn vị của phiên **và** không span nào mang đơn vị khác. Không đạt → trả **404 `NOT_FOUND`** (không 403 — không xác nhận trace tồn tại) | ✅ chủ duyệt 2026-11-05 |
+| D019-6 | **Mã tra cứu ở mọi thông báo lỗi** (`requestId`, `traceId`), có nút chép; nút "Báo lỗi" dựng nội dung theo mẫu `bao-loi.yml` **chỉ gồm mã**, không dữ liệu | ✅ chủ duyệt 2026-11-05 |
+| D019-7 | **Ngăn xếp lỗi (`err.stack`)** chỉ hiện ở chế độ Vận hành; chế độ Đơn vị chỉ thấy `err.type` + mã lỗi (thông điệp lỗi CSDL có thể chứa giá trị dữ liệu) | ✅ chủ duyệt 2026-11-05 (theo Q019-3) |
 | D019-8 | **Dùng Bàn điều tra với công cụ AI code:** (1) nút **Chép cho AI** ở Tra mã — khối markdown từ trace đã lọc (tóm tắt, cây span rút gọn, chỗ tìm mã, việc phải làm), không dữ liệu, không đơn vị; (3) mục "Sửa lỗi bằng AI từ Bàn điều tra" trong `AGENTS.md`. (2) công cụ **MCP chỉ đọc cho máy dev** (agent tự tra trace) — **để sau**: cần sửa N1 / `ai: 'deny'` cho riêng môi trường dev, quyết riêng | ✅ (1), (3) chủ duyệt 2026-11-02, làm ở W5; ⏸ (2) để sau <!-- [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — D019-8: chủ chọn làm Chép cho AI + AGENTS.md cùng W5, MCP để sau. --> |
 
 ## 5. Câu hỏi cần chủ quyết (Q019-*)
+
+> **Chủ chốt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D019-4..7 duyệt; Q019-3 chế độ Đơn vị **không** xem `err.stack`; Q019-4 đưa phase vào lộ trình — mã việc thêm ở PR riêng cùng Q018-1 / Q020-1; Q019-5 nút "Báo lỗi" chỉ **chép** nội dung, bản cài có `BUG_REPORT_URL` thì thêm nút mở. D019-8 giữ nguyên trạng thái. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — chủ duyệt D019-4..7, chốt Q019-3..5 -->
 
 | ID | Câu hỏi | Đề xuất / Trả lời |
 |---|---|---|

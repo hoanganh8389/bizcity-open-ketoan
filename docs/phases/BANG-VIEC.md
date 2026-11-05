@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 14 |
+| Đang làm | 15 |
 | Chờ merge | 0 |
-| Bị chặn | 15 |
+| Bị chặn | 13 |
 | Chưa ai nhận | 91 |
-| Chờ đủ tín hiệu | 40 |
+| Chờ đủ tín hiệu | 39 |
 | Hoãn | 1 |
-| Xong | 189 |
-| **Tổng** | **350** |
+| Xong | 192 |
+| **Tổng** | **351** |
 
-## Đang làm (14)
+## Đang làm (15)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -23,6 +23,7 @@
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
 | [S024-11](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L22) | PHASE-024 | Action core.item.upsert / add-code / retire-code / classify / merge-preview / merge / validate / trace; core.… | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
+| [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S026-4](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L10) | PHASE-026 | entitycodes cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng b… | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot3` |
 | [S026-5](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L16) | PHASE-026 | itemclasses.path + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
@@ -37,11 +38,10 @@
 
 —
 
-## Bị chặn (15)
+## Bị chặn (13)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
-| [S001-1](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L11) | PHASE-001 | Nhóm Lõi duyệt docs/standard/, hợp đồng, CANON | — | — |
 | [S001-6](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L16) | PHASE-001 | Luật R-KER / R-SEC / R-REL / R-DIAG, SECURITY.md, CHANGELOG.md | — | — |
 | [S002-1](PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md#L11) | PHASE-002 | Rà REUSE-MAP với người phụ trách từng phân hệ | — | — |
 | [S007-7](PHASE-007-CO-LAP-DON-VI-RLS/40-MASTER-CHECKLIST.md#L19) | PHASE-007 | Bản cài thật: API chạy bằng ketoanapp | — | — |
@@ -55,14 +55,12 @@
 | [S023-5](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L16) | PHASE-023 | Tệp giải nghĩa data/giai-nghia-tai-khoan/vn-tt99.json: 30 tài khoản (D023-5), nháp theo Q023-1; căn cứ trỏ do… | P0 | — |
 | [S024-9](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L20) | PHASE-024 | Migration K3: itemid ở ledgerlines, inventorymovements, inventorycosts, productunits, productprices; điền ngư… | P0 | — |
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
-| [S027-5](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L10) | PHASE-027 | Q027-5 SEEDADMINPASSWORD | P1 | — |
 
 ## Chưa ai nhận (91)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
 | [S001-11](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L21) | PHASE-001 | CSDL dev áp 0030–0037 | — | — |
-| [S002-3](PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md#L13) | PHASE-002 | A-17..A-26 thành việc có người nhận (mỗi chỗ SC-MOD-2: action Core thay thế hay chuyển bảng về module) | — | — |
 | [S005-7](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md#L19) | PHASE-005 | Q-2: kế toán chọn "bản mới nhất" khi định khoản lại (quyền settings:write, lý do, bằng chứng) | — | — |
 | [S011-7](PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md#L18) | PHASE-011 | Extension chạy thật: slot, hook, ctx.actions.call | — | — |
 | [S013-3](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L21) | PHASE-013 | Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu) | — | — |
@@ -148,17 +146,19 @@
 | [S026-13](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L25) | PHASE-026 | Truy vết đối tượng (/lineage/partners/:id) và tài khoản (/lineage/accounts/:code); thẻ Truy vết cho hai loại … | P1 | — |
 | [S026-17](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L26) | PHASE-026 | Nhập Excel đối tượng (hiện chỉ có partners/upsert); mapping chính sách theo phạm vi nhóm | P1 | — |
 | [S026-18](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L28) | PHASE-026 | Phân tích tác động hàng loạt (đổi cây nhóm, đổi chế độ); trợ lý AI hướng dẫn kế toán từ thư viện mã; bộ kiểm … | P2 | — |
+| [S027-5](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L10) | PHASE-027 | Q027-5 SEEDADMINPASSWORD | P1 | — |
 | [S027-6](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L11) | PHASE-027 | Q027-1 giải thích theo vai + SC-ERR-2 | P1 | — |
 | [S027-7](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L12) | PHASE-027 | Q027-2 sổ tay theo action bizcitysotay@1 + SC-SOTAY-1..5, làm thử mua-hang | P1 | — |
 | [S027-8](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L13) | PHASE-027 | Q027-3 quy tắc cho skill | P2 | — |
 | [S027-9](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L14) | PHASE-027 | Q027-4 cổng phát hành (CI xanh, bảo vệ main, SBOM) | P1 | — |
 
-## Chờ đủ tín hiệu (40)
+## Chờ đủ tín hiệu (39)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
 | [S001-2](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L12) | PHASE-001 | CI ci.yml + conformance.yml | — | — |
 | [S001-8](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L18) | PHASE-001 | Kiểm migration sạch + nâng cấp | — | — |
+| [S002-3](PHASE-002-AUDIT-PHAN-LOP/40-MASTER-CHECKLIST.md#L13) | PHASE-002 | A-17..A-26 thành việc có người nhận (mỗi chỗ SC-MOD-2: action Core thay thế hay chuyển bảng về module) | — | — |
 | [S003-14](PHASE-003-ACTION-BANG-CHUNG-MCP-DOC/40-MASTER-CHECKLIST.md#L24) | PHASE-003 | Prometheus + Grafana + cảnh báo | — | — |
 | [S005-5](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md#L17) | PHASE-005 | Màn Cấu hình định khoản: lịch sử bản, phát hành | — | — |
 | [S008-2](PHASE-008-SAO-LUU-PITR/40-MASTER-CHECKLIST.md#L14) | PHASE-008 | Diễn tập PITR tới một thời điểm, đo RTO / RPO, biên bản ở docs/audits/ | — | — |
@@ -169,8 +169,6 @@
 | [S014-1](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L11) | PHASE-014 | @bizcity/cli: doctor, migrate, module new / check, events replay, evidence / ledger verify | — | — |
 | [S014-7](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L17) | PHASE-014 | Thêm preset dịch vụ, sản xuất | — | — |
 | [S014-9](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L20) | PHASE-014 | W2 Chỗ nạp module SDK phía web: modules/<key>/web/index.tsx (defineWebModule) → route, menu, quyền | — | — |
-| [S019-3](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L12) | PHASE-019 | Kiến trúc: hai chế độ, API trung gian, mẫu truy vấn đóng, bảo mật, bản đồ màn, luật UX, ma trận test (20-KIEN… | P0 | — |
-| [S019-4](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L13) | PHASE-019 | Bản mẫu UI tĩnh (mockups/) | P0 | — |
 | [S020-11](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L29) | PHASE-020 | C03 vat-vn + C04 einvoice-vn phạm vi hẹp: registry rà đến điều-khoản-điểm; mock nhà cung cấp hoá đơn; knownex… | P0 | — |
 | [S020-17](PHASE-020-KIEM-CHUAN-PHAP-LY-VN/40-MASTER-CHECKLIST.md#L17) | PHASE-020 | selfcheck.mjs --certify: một lệnh ba cổng + tuân thủ VN (lib/certify.mjs, lib/runtime.mjs, profile.schema.jso… | P0 | — |
 | [S021-4](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L15) | PHASE-021 | Trả lời hai câu hỏi mở ở 10-HIEN-TRANG §3 (Kernel chặn ĐVT / mã hàng / kho? khoá theo ngày ở cửa nạp?) → chốt… | P0 | — |
@@ -204,6 +202,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (189)
+## Xong (192)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

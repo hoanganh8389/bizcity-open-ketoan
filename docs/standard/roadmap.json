@@ -27,7 +27,7 @@
   ],
   "items": [
     { "id": "0.1", "phase": "0", "title": "Nhóm Lõi duyệt docs/standard, 7 hợp đồng, CANON", "areas": ["quality"],
-      "done": [{ "manual": "PR tài liệu chuẩn được merge vào main" }] },
+      "done": [{ "manual": "PR tài liệu chuẩn được merge vào main", "doneAt": "2026-11-05", "by": "Johnny Chu – Chu Hoàng Anh (duyệt docs/standard, bảy hợp đồng, CANON)" }] },
     { "id": "0.2", "phase": "0", "title": "Bật CI", "areas": ["quality"],
       "done": [{ "file": ".github/workflows/ci.yml" }, { "file": ".github/workflows/conformance.yml" }, { "manual": "CI xanh trên main (badge)" }] },
     { "id": "0.3", "phase": "0", "title": "Migration đúng chuẩn: hết trùng số 0028 (A-03), không thiếu migration so với db/types.ts", "areas": ["data"],

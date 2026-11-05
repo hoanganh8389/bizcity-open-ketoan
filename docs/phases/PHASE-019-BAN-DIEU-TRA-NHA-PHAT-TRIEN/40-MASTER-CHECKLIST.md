@@ -9,8 +9,8 @@
 |---|---|---|---|---|---|
 | S019-1 | [Sổ tay điều tra lỗi](../../ops/SO-TAY-DIEU-TRA-LOI.md): 14 tình huống, khuôn chung, ba ngôn ngữ truy vấn, luật an toàn | W0 | P0 | — | ✅ 2026-11-01 (nhãn, số đo, thuộc tính, cột đối chiếu với mã `main` @ e9bde0e) |
 | S019-2 | Khảo sát app cho dev: có / thiếu ([10-HIEN-TRANG](10-HIEN-TRANG.md)) | W0 | P0 | — | ✅ 2026-11-01 |
-| S019-3 | Kiến trúc: hai chế độ, API trung gian, mẫu truy vấn đóng, bảo mật, bản đồ màn, luật UX, ma trận test ([20-KIEN-TRUC](20-KIEN-TRUC.md)) | W0 | P0 | — | 🟡 2026-11-01 viết xong; chủ duyệt D019-1..3, Q019-1, Q019-2 cùng ngày; D019-4..7 theo đề xuất |
-| S019-4 | Bản mẫu UI tĩnh ([mockups/](mockups/README.md)) | W0 | P0 | — | 🟡 2026-11-01 có, chờ duyệt bố cục |
+| S019-3 | Kiến trúc: hai chế độ, API trung gian, mẫu truy vấn đóng, bảo mật, bản đồ màn, luật UX, ma trận test ([20-KIEN-TRUC](20-KIEN-TRUC.md)) | W0 | P0 | — | ✅ 2026-11-05 chủ duyệt D019-4..7, Q019-3..5 (D019-1..3, Q019-1, Q019-2 duyệt 2026-11-01) <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — S019-3 chủ duyệt --> |
+| S019-4 | Bản mẫu UI tĩnh ([mockups/](mockups/README.md)) | W0 | P0 | — | ✅ 2026-11-05 chủ duyệt bố cục <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — S019-4 chủ duyệt --> |
 | S019-5 | `ApiError` giữ `requestId`, `traceId` (+ header `X-Request-Id` khi thân hỏng); thông báo lỗi hiện Mã tra cứu + nút Chép — ca T019-1 | W1 | P0 | có | ✅ 2026-11-01 — khay chung `components/MaTraCuu.tsx` ([20-KIEN-TRUC §4.4](20-KIEN-TRUC.md)); ca T019-1 đạt |
 | S019-6 | Nút **Báo lỗi** dựng nội dung theo `bao-loi.yml`, chỉ mã, không dữ liệu (Q019-5) | W1 | P1 | có | ✅ 2026-11-01 chép nội dung; W2: `BUG_REPORT_URL` có thì chép rồi mở trang báo lỗi |
 | S019-7 | Quyền `devtools:read` + vai trò mới `developer` (= `viewer` + `devtools:read`; Q019-1 chủ chọn b) ở `core/auth.ts` + `@ketoan/contracts` + màn Người dùng — ca T019-8 | W2 | P1 | có | ✅ 2026-11-01 — migration 0050 (đổi từ 0049: trùng số với main); màn Người dùng lấy vai trò từ `ROLE_LABELS` |

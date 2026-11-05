@@ -45,6 +45,8 @@ Vai là **lăng kính** trên cùng một danh mục ca: chọn ca nào hiện, 
 
 ## 5. Quyết định cần chủ duyệt
 
+> **Chủ duyệt 2026-11-05** (Johnny Chu – Chu Hoàng Anh: *"đồng ý với toàn bộ đề xuất của bro"*): D022-1..6 duyệt như bảng dưới. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — chủ duyệt D022-* -->
+
 | Mã | Quyết định đề xuất | Lý do |
 |---|---|---|
 | D022-1 | Mã ca giả định lỗi dạng `F22-<NHÓM>-NN` (vd `F22-STK-03`), tách khỏi mã kiểm (`INVENTORY_NEGATIVE`) và mã tiền kiểm (`IN-*`). Một ca trỏ tới một hoặc nhiều mã kiểm | ca là "tình huống", mã kiểm là "công cụ phát hiện"; một tình huống có thể bị nhiều kiểm bắt |
@@ -55,6 +57,8 @@ Vai là **lăng kính** trên cùng một danh mục ca: chọn ca nào hiện, 
 | D022-6 | Biên bản in cho ban kiểm soát / thanh tra: PDF từ HT08, có danh sách ca, trạng thái, phương án, người đã xác nhận / lý do — **không** số tiền chi tiết, chỉ mã chứng từ | R-DIAG-6; biên bản là tài liệu trao tay |
 
 ## 6. Câu hỏi mở
+
+> **Chủ chốt 2026-11-05:** Q022-1..5 theo cột "Đề xuất" — Q022-1 quyền `review:read` + vai trò `auditor` chỉ xem; Q022-2 ngưỡng đổi được qua tham số ca của rulepack, duyệt tại đơn vị; Q022-3 quỹ âm tính theo cuối ngày; Q022-4 có, app khai `remedy` cho mã của mình; Q022-5 chưa ký số, in + ký tay. <!-- [2026-11-05 04:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — chủ chốt Q022-* -->
 
 | Mã | Câu hỏi | Đề xuất |
 |---|---|---|
