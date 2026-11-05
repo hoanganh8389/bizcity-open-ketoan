@@ -142,3 +142,5 @@ Cập nhật 05/11/2026. Nhánh `feat/xuong-ca-dinh-danh`, dựa trên `feat/pha
 
 - Test (chưa tách, sẽ có ở `apps/api/test/` tên xuong-ca-dinh-danh): gồm đổi mã, gộp, gộp hai lần, mã cũ qua cửa nạp, cấu hình đi theo mã mới.
 - Bộ kiểm: `node tests/conformance/selfcheck.mjs`.
+- Bộ test API đầy đủ trên CSDL trống (05/11/2026): 1.244 ca đạt, 3 ca đỏ. Hai ca (`inventory-reconcile`, lịch sử trong `bien-the-dinh-danh`) đỏ sẵn trên nhánh gốc. Ca thứ ba là `db-rules`, đã sửa bằng cách khai `inventory_movements_cur`.
+- Thử migration trên bản sao CSDL local (42.016 mặt hàng, 573 dòng kho, 5.288 dòng sổ): 0067 mất 1,6 giây, 0070 mất 19,2 giây, 0071 mất 2,3 giây. Tồn theo mã lúc ghi trước và sau trùng nhau (so bằng băm). Không dòng nào thiếu `item_id`. Dữ liệu này còn nhỏ, chưa thay được phép đo S026-14.
