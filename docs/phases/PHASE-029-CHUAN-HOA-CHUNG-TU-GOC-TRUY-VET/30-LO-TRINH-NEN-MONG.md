@@ -74,7 +74,7 @@ Thiết kế đầy đủ: [`bizcity_settings@1` 1.1.0-draft §2](../../contract
 | Khuôn giá trị | trường `valueType` máy đọc trong registry; khoá chưa có `valueType` không đi đường chung | không ghi mù khoá có bí mật / khuôn phức |
 | Đăng ký route | `settings-values.routes.ts` gọi từ `catalog-rules.routes.ts` (tệp cấu hình HT09) | `system.routes.ts` đang thuộc dòng E1; `loi.ts` thuộc dòng xương cá |
 | Kiểu Kysely | không sửa `db/types.ts` ở đợt 1 (dòng PHASE-026 đợt 3 giữ) — truy vấn bằng `sql` có tham số | không chồng phạm vi |
-| Số migration | `0076` (0073 / 0074 PHASE-026, 0075 PHASE-028 W1) | W-13 |
+| Số migration | `0074` — chủ dự án chọn "ai merge trước lấy số trước" (W1 phân quyền `0073`; PHASE-026 đợt 2 / 3 đổi số khi merge) <!-- [2026-11-06 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đổi số 0076 → 0074 --> | W-13, `so-tiep-theo kiem` |
 | Kiểm bằng | test `cau-hinh-gia-tri`: ưu tiên phạm vi, theo ngày, lịch sử, chỉ thêm (trigger), mirror, `config_version`, quyền, lý do loại A; `ctx.settings.get` đọc qua kho mới | LEAN-7 |
 
 Đợt 2 (S029-32): chuyển route ghi riêng sang `setSetting`, `valueType` cho module, phép kiểm chặn đọc thô, xuất / nhập, đệm theo `config_version`, mục `schema-catalog`.
