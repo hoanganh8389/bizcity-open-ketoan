@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 15 |
 | Chờ merge | 0 |
-| Bị chặn | 13 |
-| Chưa ai nhận | 96 |
+| Bị chặn | 15 |
+| Chưa ai nhận | 102 |
 | Chờ đủ tín hiệu | 39 |
 | Hoãn | 1 |
-| Xong | 192 |
-| **Tổng** | **356** |
+| Xong | 195 |
+| **Tổng** | **367** |
 
 ## Đang làm (15)
 
@@ -38,7 +38,7 @@
 
 —
 
-## Bị chặn (13)
+## Bị chặn (15)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -55,8 +55,10 @@
 | [S023-5](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L16) | PHASE-023 | Tệp giải nghĩa data/giai-nghia-tai-khoan/vn-tt99.json: 30 tài khoản (D023-5), nháp theo Q023-1; căn cứ trỏ do… | P0 | — |
 | [S024-9](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L20) | PHASE-024 | Migration K3: itemid ở ledgerlines, inventorymovements, inventorycosts, productunits, productprices; điền ngư… | P0 | — |
 | [S024-19](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L30) | PHASE-024 | bizcitymasterdata@2 (Versioned Master Data Contract): khuôn chung; partnercodes, branchcodes; mã ngoài theo n… | P0 | — |
+| [S028-4](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L13) | PHASE-028 | Chủ dự án duyệt D-AUTH-01..10 | P0 | — |
+| [S028-5](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L14) | PHASE-028 | PR tài liệu W0 merge vào main (R-FLOW) | P0 | — |
 
-## Chưa ai nhận (96)
+## Chưa ai nhận (102)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -156,6 +158,12 @@
 | [S027-7](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L12) | PHASE-027 | Q027-2 sổ tay theo action bizcitysotay@1 + SC-SOTAY-1..5, làm thử mua-hang | P1 | — |
 | [S027-8](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L13) | PHASE-027 | Q027-3 quy tắc cho skill | P2 | — |
 | [S027-9](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L14) | PHASE-027 | Q027-4 cổng phát hành (CI xanh, bảo vệ main, SBOM) | P1 | — |
+| [S028-6](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L15) | PHASE-028 | W1: userroleassignments + bump sessionversion khi đổi users.role | P0 | — |
+| [S028-7](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L16) | PHASE-028 | W2: modulegrants, bỏ owner auto-grant quyền module | P0 | — |
+| [S028-8](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L17) | PHASE-028 | W3: đóng 17 route ghi thô còn lại, requireScope() | P1 | — |
+| [S028-9](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L18) | PHASE-028 | W4: Role Editor UI (mã màn — Q028-1) | P1 | — |
+| [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: TGS mapping 349 mã + luồng mẫu Warehouse transfer | P1 | — |
+| [S028-11](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L20) | PHASE-028 | W6: S-5..S-n vào pillar VII tru-cot.json, SC-AUTH-01..12 | P1 | — |
 
 ## Chờ đủ tín hiệu (39)
 
@@ -207,6 +215,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (192)
+## Xong (195)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
