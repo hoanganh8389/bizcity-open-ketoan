@@ -10,13 +10,14 @@
  * kéo thả thẻ sang vị trí khác để sắp xếp (vạch xanh báo chỗ thả; màn trong thẻ không dựng lại).
  * Danh sách thẻ được nhớ trong phiên (tải lại trang vẫn còn). Tối đa MAX_TABS thẻ: quá thì đóng thẻ cũ nhất.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Routes, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { X } from 'lucide-react';
 import type { MenuItem } from '@ketoan/contracts';
 import { pageRoutes } from '../pages';
 import { inFrame } from '@/lib/auth';
 import { MODULES } from './menu';
+import { GON_DEFS, groupHome, OLD_HOME_ALIASES } from './menu-gon';
 
 interface Tab { pathname: string; search: string; key: number }
 
@@ -24,7 +25,7 @@ const STORE_KEY = 'ketoan.tabs';
 const MAX_TABS = 20;
 let seq = 0;
 /** Đường dẫn cũ đã gộp vào màn khác: không mở thẻ riêng, chuyển thẳng sang màn mới (giữ tham số ?mo, ?loai…). */
-const ALIASES: Record<string, string> = { '/mua-hang/chung-tu': '/mua-hang/tong-hop', '/mua-hang/phieu-mua': '/mua-hang/tong-hop', '/mua-hang/tra-ncc': '/mua-hang/tong-hop' };
+const ALIASES: Record<string, string> = { ...OLD_HOME_ALIASES, '/mua-hang/chung-tu': '/mua-hang/tong-hop', '/mua-hang/phieu-mua': '/mua-hang/tong-hop', '/mua-hang/tra-ncc': '/mua-hang/tong-hop' };
 
 function loadTabs(): Tab[] {
   // Nhúng trong trang quản trị: mỗi khung một màn, không khôi phục thẻ (các khung dùng chung bộ nhớ phiên).
@@ -37,7 +38,7 @@ function loadTabs(): Tab[] {
   }
 }
 
-export function TabWorkspace({ menu }: { menu: MenuItem[] }) {
+export function TabWorkspace({ menu, strip }: { menu: MenuItem[]; strip?: ReactNode }) {
   const location = useLocation();
   const navType = useNavigationType();
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export function TabWorkspace({ menu }: { menu: MenuItem[] }) {
 
   // Tên thẻ: tên chức năng trên menu, kèm mã.
   const titles = useMemo(() => {
-    const m = new Map<string, { label: string; code?: string }>([['/', { label: 'Tổng quan' }], ...MODULES.map((x) => [`/app/${x.key}`, { label: x.label }] as [string, { label: string }])]);
+    const m = new Map<string, { label: string; code?: string }>([['/', { label: 'Tổng quan' }], ['/bao-cao', { label: 'Báo cáo' }], ...GON_DEFS.map((g) => [groupHome(g.key), { label: g.label }] as [string, { label: string }]), ...MODULES.map((x) => [`/app/${x.key}`, { label: x.label }] as [string, { label: string }])]);
     for (const g of menu) for (const c of g.children ?? []) if (c.path && !m.has(c.path)) m.set(c.path, { label: c.label, code: c.code });
     return m;
   }, [menu]);
@@ -165,6 +166,7 @@ export function TabWorkspace({ menu }: { menu: MenuItem[] }) {
             onClick={() => closeTabs((t) => t.pathname === location.pathname)}><X size={13} /> Đóng thẻ khác</button>
         )}
       </div>
+      {strip}
       {tabs.map((t) => (
         <div key={t.key} className="ws-panel" hidden={t.pathname !== location.pathname}>
           <Routes location={{ pathname: t.pathname, search: t.search, hash: '', state: null, key: String(t.key) }}>{pageRoutes}</Routes>
