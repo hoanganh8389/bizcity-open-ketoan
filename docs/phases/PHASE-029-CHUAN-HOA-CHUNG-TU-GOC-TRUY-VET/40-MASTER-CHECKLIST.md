@@ -16,7 +16,8 @@
 | S029-7 | `module check` bắt module nộp sổ không qua W2a; `DG-DOC-*` lane SQL | W3 | P1 | ☐ |
 | S029-8 | Nâng chẩn đoán lên `error` khi bản đo trên bản cài thật = 0 | W3 | P2 | ⛔ cần số đo |
 | S029-9 | <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — mở rộng Enterprise Continuity (ADR-0028): S029-9..28 --> ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá [20](20-DANH-GIA-NEN-MONG.md), lộ trình [30](30-LO-TRINH-NEN-MONG.md); CANON / CONG-BO; sửa `bizcity_master_data@1` §2, `bizcity_data@1` STD-DATA-6, R-MD-2 (mã ≠ định danh) | E0 | P0 | 🟡 2026-11-05 PR tài liệu |
-| S029-10 | Cấu hình theo mô hình `options`: phạm vi, hiệu lực, lịch sử, `settings.set` duy nhất, `config_version`, check đọc thô, khoá thiếu, tiền tệ, thuế suất theo ngày | E2 | P0 | ☐ |
+| S029-10 | <!-- [2026-11-06 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-10 thu về đợt 1; phần còn lại sang S029-32 --> Cấu hình đợt 1 theo mô hình `options` (chữ chốt [30 §5](30-LO-TRINH-NEN-MONG.md)): `setting_values` chỉ thêm, phạm vi user → branch → accounting_unit → tenant, ngày hiệu lực, `getSetting` / `setSetting`, mirror khoá cũ, `config_version`, `valueType`, API `/settings/values` | E2 | P0 | ☐ giữ chỗ ở CLAIMS.md |
+| S029-32 | Cấu hình đợt 2: route ghi riêng → `setSetting`; `valueType` cho module; chặn đọc thô `tenants.settings`; xuất / nhập; đệm theo `config_version`; khoá `idempotency_days`, `event_retention_days`; tiền tệ; thuế suất theo ngày | E2 | P1 | ⛔ sau S029-10 |
 | S029-11 | Chứng từ `documents` + `document_meta` (mô hình `posts` / `postmeta`), `ctx.documents.transition`, quan hệ có đóng hiệu lực | E4 | P1 | ☐ |
 | S029-12 | Xoá an toàn ở CSDL: thu hồi `DELETE`, hàm xoá đọc `md_references`, bỏ `CASCADE`, ngừng dùng cho bảng thiếu cột | E3b | P0 | ⛔ chủ ký K3; sau S026-11 |
 | S029-13 | Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu | E6 | P1 | ☐ |
@@ -46,4 +47,4 @@
 | 2026-11-05 | Claude Code | Mở phase từ đánh giá truy vết; chủ duyệt Q-TR-1..4; chữ chốt W1; giữ chỗ W1. W2a chờ nhả tệp dùng chung. |
 | 2026-11-05 | Claude Code | Chủ dự án yêu cầu mở rộng thành Enterprise Continuity: ADR-0028, R-ECP (ECP-01..13), bốn nhóm nền móng 17 trụ cột, rà codebase, lộ trình E1–E9, S029-9..28. |
 | 2026-11-05 | Claude Code | W1 merge (#92): S029-2..4 xong, bỏ dòng giữ chỗ W1. Giữ chỗ E1 (S029-29 SC-CORE-1, S029-30 thẻ Nền móng). |
-| 2026-11-05 | Claude Code | E1 code: SC-CORE-1 (block, 0 phát hiện sau khi sửa bảng) bắt ngay C5 ghi "đạt" khi trụ cột 09 còn tín hiệu chưa có → hạ C5 về một phần; ba tín hiệu ở nhánh nâng chạy được sau #92. `GET /api/v1/system/foundations`, thẻ Nền móng ở HT10, test nen-mong (4). |
+| 2026-11-06 | Claude Code | Chữ chốt E2 đợt 1 (`bizcity_settings@1` 1.1.0-draft §2, 30 §5); giữ chỗ E2; tách đợt 2 thành S029-32. |
