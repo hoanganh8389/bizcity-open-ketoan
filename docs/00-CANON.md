@@ -59,6 +59,50 @@ Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); m�
 
 Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Trụ cột & mức đạt** và thẻ **Trụ cột** ở trang chủ mỗi phân hệ; đi theo bằng chứng, không tích tay (R-CONT-7).
 
+<!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — ADR-0028 Enterprise Continuity: §0.3 ECP-01..13, §0.4 bốn nhóm nền móng, §0.5 mô hình nhất quán, §0.6 sáu thao tác vòng đời -->
+### 0.3 Mười ba nguyên tắc bất biến Enterprise Continuity (chấp nhận về nguyên tắc — [ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md), luật [R-ECP](rules/RULE-ENTERPRISE-CONTINUITY.md))
+
+Tầng nguyên tắc cao nhất của Core, đứng trên Accounting Continuity (ADR-0021) và Quản trị dữ liệu gốc (ADR-0022), **tham chiếu** chứ không thay; nằm cạnh AP-1..AP-7 ([CONG-BO-KIEN-TRUC](CONG-BO-KIEN-TRUC.md) §1).
+
+| Mã | Nguyên tắc bất biến |
+|---|---|
+| ECP-01 | Mã nghiệp vụ thay đổi được, nhưng định danh chuẩn không được tái sử dụng hoặc thay đổi tuỳ tiện |
+| ECP-02 | Mọi tác vụ nghiệp vụ có tenant, actor, nguồn và correlation context hợp lệ |
+| ECP-03 | Thay đổi ảnh hưởng lịch sử có ngày hiệu lực và phiên bản; dữ liệu đã chốt không bị âm thầm viết lại |
+| ECP-04 | Quan hệ xuyên module tham chiếu định danh chuẩn hoặc một ánh xạ có kiểm chứng |
+| ECP-05 | Mọi bút toán truy ngược được về sự việc kế toán và chứng từ nguồn tương ứng, kể cả phiên bản |
+| ECP-06 | Quyền được kiểm tại thời điểm hành động; lịch sử quyết định phân quyền lưu đủ để kiểm toán |
+| ECP-07 | Module không sửa trực tiếp dữ liệu kế toán hoặc danh mục do Core / module khác sở hữu |
+| ECP-08 | Domain Event thông báo sự thật đã commit; không dùng event chưa commit làm căn cứ xác nhận nghiệp vụ |
+| ECP-09 | Chứng từ sửa, huỷ, thay thế, hoàn trả duy trì quan hệ với chứng từ gốc và xử lý tác động liên quan |
+| ECP-10 | Lỗi dữ liệu không âm thầm bỏ qua: có biên nhận, trạng thái chờ và đường khắc phục |
+| ECP-11 | Bất biến xuyên module có phép đối chiếu và Gate Check, không chỉ validation từng API |
+| ECP-12 | KPI, báo cáo, chỉ tiêu quản trị khai báo nguồn, định nghĩa, phạm vi, phiên bản và cách xử lý dữ liệu điều chỉnh |
+| **ECP-13** | **No Destructive Change to Referenced Business History** — thực thể, chứng từ, chính sách, quan hệ, định danh đã dùng trong nghiệp vụ giữ được lịch sử và truy vết; không xoá hay thay đổi làm mất sự thật nghiệp vụ đã xác lập; huỷ, ngừng dùng, gộp, tách, điều chỉnh đi qua quy trình có kiểm chuẩn, phiên bản, quyền và bằng chứng. Bảo vệ đồng thời bằng **SQL constraints / triggers, SDK, Authorization và Conformance Gate** — không chỉ ẩn nút Xoá trên giao diện |
+
+### 0.4 Bốn nhóm nền móng, mười bảy trụ cột ([standard/NEN-MONG-DOANH-NGHIEP.md](standard/NEN-MONG-DOANH-NGHIEP.md))
+
+| Nhóm | Trụ cột |
+|---|---|
+| A · Nền móng thống nhất của doanh nghiệp | 01 Canonical Identity · 02 Master Data Governance · 03 Enterprise Organization · 04 Identity & Authorization · 05 Configuration & Policy Registry |
+| B · Nền móng xử lý nghiệp vụ và giao dịch | 06 Document SDK & Lifecycle · 07 Workflow & Approval · 08 Command & Event Contracts · 09 Accounting Kernel · 10 Inventory & Cost Continuity |
+| C · Nền móng bảo đảm dữ liệu luôn đúng | 11 Cross-Module Lineage · 12 Validation & Conformance · 13 Reconciliation & Period Integrity · 14 Semantic Metrics & KPI |
+| D · Nền móng để cộng đồng mở rộng | 15 Integration & External Identity · 16 Module SDK & Metadata Registry · 17 Audit, Security & Operations |
+
+Nền móng 0 và tám trụ cột I–VIII ở §0.1–§0.2 **ánh xạ** vào 17 trụ cột này (bảng ở trang nền móng §4), không bị bỏ. Mức đạt chỉ là "đạt" khi trỏ tới tín hiệu chạy được (check, chẩn đoán, test có tên) — tài liệu hay tên migration không phải bằng chứng (R-ECP-SCORE).
+
+### 0.5 Mô hình nhất quán (R-ECP-CONS)
+
+| Tầng | Gồm | Cơ chế |
+|---|---|---|
+| **Strong** — trong một giao dịch PostgreSQL | Nợ = Có, sổ chỉ thêm, kiểm quyền, không ghi vào kỳ khoá, số chứng từ, phiên bản sự việc, outbox | trigger / ràng buộc CSDL + kiểm trong dịch vụ; không dời sang tầng dưới |
+| **Eventual** — sau commit | CRM, POS, HRM, báo cáo, thông báo, webhook, hệ ngoài | outbox, retry có giãn, idempotency, bể lỗi (`dead`), phát lại |
+| **Reconciliation** | projection, hệ ngoài chưa đồng bộ thành công | chẩn đoán đối chiếu có mã, cách sửa, mức chặn khoá kỳ |
+
+### 0.6 Sáu thao tác vòng đời (R-ECP-LC, [standard/DU-LIEU-GOC.md](standard/DU-LIEU-GOC.md))
+
+`CREATE` định danh bất biến · `UPDATE` thuộc tính được phép + lịch sử / phiên bản khi cần · `ARCHIVE` ngừng dùng, giữ tham chiếu cũ · `MERGE` ánh xạ cũ → mới, không viết lại chứng từ lịch sử · `REVERSE` đảo tác động kế toán, giữ bút toán gốc · `DELETE` chỉ khi an toàn, không tham chiếu, không tác động lịch sử. **Mã là phương thức nhận diện, định danh là khoá liên kết bền vững**: hợp đồng ra ngoài vẫn nhận mã, Core phân giải theo nguồn và thời điểm rồi lưu định danh.
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -82,7 +126,8 @@ Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Tr�
 | R-EVENT | [rules/RULE-EVENT.md](rules/RULE-EVENT.md) | 0 | Mọi đầu vào thành event có `docKey` + `version`; idempotent | `ledger-flow.test.ts`, `auto-push.test.ts`, grep CI |
 | R-INTAKE | [rules/RULE-INTAKE.md](rules/RULE-INTAKE.md) | 1 | **Chấp nhận, chưa có mã** (ADR-0014, PHASE-021): Kernel chặn, trạm tiền kiểm dạy — không vứt đầu vào bị từ chối, gom mọi lỗi, giải thích cho người mới, chấm điểm đầu vào; không nới luật Kernel <!-- [2026-11-02 02:38 PM Johnny Chu - Chu Hoàng Anh] ADR-0014 — thêm R-INTAKE vào chỉ mục --> | PHASE-021 PR-I1…I5 |
 | R-POST | [rules/RULE-POSTING.md](rules/RULE-POSTING.md) | 0 | Luật định khoản thuần, không viết cứng tài khoản, xem trước = ghi thật | `posting-modes.test.ts`, test từng luật |
-| R-MD | [rules/RULE-MASTER-DATA.md](rules/RULE-MASTER-DATA.md) | 1 | Danh mục chuẩn do kế toán giữ, tra bằng mã, không xoá cái đã dùng | `catalog-delete.test.ts`, `default-data.test.ts` |
+| R-MD | [rules/RULE-MASTER-DATA.md](rules/RULE-MASTER-DATA.md) | 1 | Danh mục chuẩn do kế toán giữ; ngoài gửi mã, Core phân giải ra định danh rồi lưu định danh <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — R-MD: mã ≠ định danh (ADR-0028 D028-4) -->; không xoá cái đã dùng | `catalog-delete.test.ts`, `default-data.test.ts` |
+| R-ECP <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — ADR-0028 --> | [rules/RULE-ENTERPRISE-CONTINUITY.md](rules/RULE-ENTERPRISE-CONTINUITY.md) | 0 (ECP-04, -05, -07, -13, R-ECP-CONS-1), 1 (còn lại) | **Chấp nhận về nguyên tắc 2026-11-05** ([ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md)): mười ba nguyên tắc ECP; sáu thao tác vòng đời; mô hình nhất quán Strong / Eventual / Reconciliation; bảng điểm theo bằng chứng | từng ECP dẫn check / chẩn đoán / test ở RULE §1; việc còn thiếu ở PHASE-029 S029-9..28 |
 | R-MATRIX | [rules/RULE-SETTINGS-MATRIX.md](rules/RULE-SETTINGS-MATRIX.md) | 1 | Mọi cấu hình khai trong registry, có phạm vi, thứ tự ưu tiên, nhật ký | Registry + test (đợt 2) |
 | R-BOUND | [rules/RULE-MODULE-BOUNDARY.md](rules/RULE-MODULE-BOUNDARY.md) | 1 | Phân hệ không import nhau, không ghi bảng lõi | `phan-he-ranh-gioi.test.ts` |
 | R-API | [rules/RULE-API.md](rules/RULE-API.md) | 1 | Một khuôn phản hồi, mã lỗi ổn định, zod ở cửa vào, `/api/v1` | `api-examples.test.ts`, OpenAPI |
@@ -121,7 +166,7 @@ Mức đạt từng tiêu chí: `docs/standard/tru-cot.json` → màn **HT10 Tr�
 | `bizcity_intake_findings@1` <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1 --> | [contracts/BIZCITY-INTAKE-FINDINGS-v1.md](contracts/BIZCITY-INTAKE-FINDINGS-v1.md) | Đề xuất 0.1 (Kernel, cửa nạp — ADR-0014) | `packages/contracts/src/intake-findings.ts` |
 | `bizcity_api@1` | [contracts/BIZCITY-API-v1.md](contracts/BIZCITY-API-v1.md) | Ổn định | `packages/contracts/src/api.ts`, `apps/api/src/core/http.ts`, `core/errors.ts` |
 | `bizcity_posting_rule@1` | [contracts/BIZCITY-POSTING-RULE-v1.md](contracts/BIZCITY-POSTING-RULE-v1.md) | Ổn định (nội bộ lõi) | `modules/posting/*`, `modules/ledger/ledger.types.ts` |
-| `bizcity_master_data@1` | [contracts/BIZCITY-MASTER-DATA-v1.md](contracts/BIZCITY-MASTER-DATA-v1.md) | Ổn định | `modules/{accounts,branches,partners,products,tax-codes,posting-config}` |
+| `bizcity_master_data@1` | [contracts/BIZCITY-MASTER-DATA-v1.md](contracts/BIZCITY-MASTER-DATA-v1.md) | Ổn định (1.1.0: mã ≠ định danh, tương thích — ADR-0028) <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — master_data 1.1.0 --> | `modules/{accounts,branches,partners,products,tax-codes,posting-config}` |
 | `bizcity_connector@1` | [contracts/BIZCITY-CONNECTOR-v1.md](contracts/BIZCITY-CONNECTOR-v1.md) | Ổn định | `modules/connections`, `packages/contracts/src/connections.ts` |
 | `bizcity_settings@1` | [contracts/BIZCITY-SETTINGS-MATRIX-v1.md](contracts/BIZCITY-SETTINGS-MATRIX-v1.md) | **Đề xuất** | `core/posting-modes.ts`, `core/date-rules.ts` (rải rác) |
 | `bizcity_posting_template@1` | [contracts/BIZCITY-POSTING-TEMPLATE-v1.md](contracts/BIZCITY-POSTING-TEMPLATE-v1.md) | **Đề xuất** — gói định khoản theo ngành, marketplace ([standard/TEMPLATE-MARKETPLACE.md](standard/TEMPLATE-MARKETPLACE.md)) | `posting_reasons`, `account-resolver.ts`; kiểm SC-TPL-1 |
@@ -176,9 +221,14 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Sửa xong một nợ đã biết | `node tests/conformance/selfcheck.mjs --update-baseline` trong cùng PR (CI chạy `--strict`) |
 | Tách / chuyển thư mục giữa Kernel, Platform, module | `standard/REUSE-MAP.md`, `standard/TARGET-LAYOUT.md`, bảng lớp `tests/conformance/lib/layers.mjs` rồi `node scripts/gan-nhan-lop.mjs --write` (R-BOUND-10) |
 | Thêm tệp `apps/api/src/**` | nhãn dòng đầu `// @bizcity-layer`: `node scripts/gan-nhan-lop.mjs --write`; thư mục mới → thêm dòng bảng lớp (SC-LAYER-1) |
+| Thêm loại dữ liệu gốc (Core hoặc module), đổi cách xoá / ngừng dùng / gộp một danh mục <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §5 dòng R-ECP --> | [standard/DU-LIEU-GOC.md](standard/DU-LIEU-GOC.md) §3 (đủ sáu thao tác); nguyên tắc ECP bị đụng ở [rules/RULE-ENTERPRISE-CONTINUITY.md](rules/RULE-ENTERPRISE-CONTINUITY.md) §1 |
+| Đổi mức đạt một trụ cột / tiêu chí | [standard/NEN-MONG-DOANH-NGHIEP.md](standard/NEN-MONG-DOANH-NGHIEP.md) hoặc `standard/tru-cot.json`, kèm tín hiệu chạy được (R-ECP-SCORE) |
 | Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
 
 ## 6. Nhật ký thay đổi CANON
+
+<!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — CANON v1.4 -->
+- **v1.4 (2026-11-05):** Thêm §0.3–§0.6 Enterprise Continuity ([ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md)): ECP-01..13 (ECP-13 không thay đổi phá huỷ lịch sử đã tham chiếu), bốn nhóm nền móng 17 trụ cột, mô hình nhất quán ba tầng, sáu thao tác vòng đời; luật R-ECP; R-MD: mã ≠ định danh.
 
 <!-- [2026-11-03 01:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020 tôn chỉ Core -->
 - **v1.3 (2026-11-03):** Thêm §0 Tôn chỉ ([ADR-0020](adr/ADR-0020-ton-chi-core-nguoi-dung-quyet-dinh-mot-ngon-ngu-ma.md)): người dùng quyết định, Core chỉ đúng chỗ; một ngôn ngữ là thư viện mã có căn cứ; R-GATE-9 / 10 / 11.

@@ -40,7 +40,7 @@ Chuẩn thực thể, schema, quan hệ, migration và cô lập đơn vị cho 
 | STD-DATA-3 | 0 | Module không `INSERT/UPDATE/DELETE/TRUNCATE` bảng ngoài `data.tables` của mình. Phase 3: role CSDL `mod_<key>_rw` chỉ có quyền trên schema mình + `SELECT` trên `bizcity_read` | CONF-STATIC-2, GRANT |
 | STD-DATA-4 | 1 | Cột bắt buộc: `id bigint GENERATED ALWAYS AS IDENTITY`, `tenant_id`, `created_at timestamptz DEFAULT now()`, `created_by text`, `updated_at`, `updated_by`. Chỉ mục đầu tiên bắt đầu bằng `tenant_id` | CONF-MIG-3 |
 | STD-DATA-5 | 1 | Kiểu: tiền `numeric(18,2)`, số lượng `numeric(18,4)`, ngày nghiệp vụ `date`, thời điểm `timestamptz`, mã `text` + `UNIQUE (tenant_id, code)`, trạng thái `text` + `CHECK` | CONF-MIG-4 |
-| STD-DATA-6 | 1 | Quan hệ: trong schema mình dùng khoá ngoại. Tới danh mục chuẩn: lưu **mã** (`partner_code`), kiểm tồn tại qua SDK lúc ghi, khai `referenceCheck` để Core không xoá mã đang dùng ([Extension §4](BIZCITY-EXTENSION-v1.md#4-hook)). Tới module khác: **cấm**, dùng sự kiện / action | CONF-MIG-5 |
+| STD-DATA-6 | 1 | Quan hệ: trong schema mình dùng khoá ngoại. Tới danh mục chuẩn: lưu **định danh** (`partner_id`, `item_id`, `branch_id`) <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — STD-DATA-6: lưu định danh, mã chỉ là ảnh chụp (ADR-0028 D028-4, ECP-04); module đã phát hành lưu mã chuyển dần --> do SDK phân giải từ mã lúc ghi (theo nguồn và ngày chứng từ); mã chỉ được lưu thêm làm **ảnh chụp** để in lại, không làm khoá liên kết; tài khoản kế toán là ngoại lệ (số hiệu là định danh). Module đã phát hành đang lưu mã: giữ chạy, thêm cột định danh ở migration kế tiếp. Khai `referenceCheck` để Core không xoá thứ đang dùng ([Extension §4](BIZCITY-EXTENSION-v1.md#4-hook)). Tới module khác: **cấm**, dùng sự kiện / action | CONF-MIG-5 |
 | STD-DATA-7 | 1 | Migration nằm trong `modules/<key>/migrations/NNNN_<tên>.sql`, đánh số riêng của module, chỉ thêm, không sửa tệp đã phát hành, chỉ DDL trên `mod_<key>` | CONF-MIG-1 |
 | STD-DATA-8 | 1 | Mọi bảng, mọi cột có `COMMENT ON` tiếng Việt có dấu | CONF-MIG-6 |
 | STD-DATA-9 | 1 | Không xoá cứng bản ghi đã được chứng từ / sổ tham chiếu: dùng `archived_at` | review + CONF-RUN-6 |
@@ -73,10 +73,12 @@ export const Contract = entity('contracts', {
 -- modules/hop-dong/migrations/0001_hop_dong.sql
 CREATE SCHEMA IF NOT EXISTS mod_hop_dong;
 
+-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — ví dụ: partner_id là khoá liên kết, partner_code là ảnh chụp (STD-DATA-6)
 CREATE TABLE mod_hop_dong.contracts (
   id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   tenant_id     bigint NOT NULL REFERENCES public.tenants(id),
   code          text   NOT NULL,
+  partner_id    bigint NOT NULL,
   partner_code  text   NOT NULL,
   title         text   NOT NULL,
   signed_date   date   NOT NULL,
@@ -93,8 +95,9 @@ CREATE TABLE mod_hop_dong.contracts (
 ALTER TABLE mod_hop_dong.contracts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON mod_hop_dong.contracts
   USING (tenant_id = current_setting('bizcity.tenant_id')::bigint);
-COMMENT ON TABLE mod_hop_dong.contracts IS 'Hợp đồng với khách hàng (module Hợp đồng). Khách hàng tham chiếu danh mục đối tượng bằng mã.';
-COMMENT ON COLUMN mod_hop_dong.contracts.partner_code IS 'Mã đối tượng (public.partners.code) — kiểm qua SDK khi ghi, không khoá ngoại.';
+COMMENT ON TABLE mod_hop_dong.contracts IS 'Hợp đồng với khách hàng (module Hợp đồng). Khách hàng tham chiếu danh mục đối tượng bằng định danh; mã chỉ là ảnh chụp lúc ghi.';
+COMMENT ON COLUMN mod_hop_dong.contracts.partner_id IS 'Định danh đối tượng (public.partners.id) — SDK phân giải từ mã lúc ghi, không khoá ngoại sang schema Core.';
+COMMENT ON COLUMN mod_hop_dong.contracts.partner_code IS 'Ảnh chụp mã đối tượng lúc ghi (để in lại) — không dùng làm khoá liên kết.';
 -- … COMMENT cho từng cột còn lại
 ```
 

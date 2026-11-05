@@ -19,7 +19,7 @@ Danh mục là "từ điển" mà mọi phân hệ và plugin dùng để nói c
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
 | **R-MD-1** | **Lõi là chủ, nguồn đọc.** Plugin / phân hệ lấy mã qua API rồi gửi đúng mã; không đồng bộ hai chiều; không tạo bản sao danh mục khung kế toán ở nguồn để "tự định khoản" | Thiết kế hợp đồng |
-| **R-MD-2** | **Tham chiếu bằng mã**, không bằng `id`, ở mọi hợp đồng ra ngoài. `id` là số nội bộ, không ổn định giữa các bản cài | `bizcity_ledger_intake@1` |
+| **R-MD-2** | **Ngoài gửi mã, trong lưu định danh.** <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — R-MD-2: mã ≠ định danh (ADR-0028 D028-4, ECP-04) --> Hợp đồng ra ngoài (cửa nạp, API danh mục, POS, app ngoài) nhận **mã** — `id` là số nội bộ, không ổn định giữa các bản cài. Core phân giải mã theo nguồn và ngày chứng từ ra định danh; bảng sổ, bảng module lưu **định danh** (+ ảnh chụp mã / tên khi cần in lại). Mã là phương thức nhận diện, không phải khoá liên kết. Tài khoản kế toán là ngoại lệ (số hiệu là định danh) | `bizcity_ledger_intake@1`; `resolveItem` (mặt hàng), `resolveEntity` (S026-4) |
 | **R-MD-3** | Mã nghiệp vụ duy nhất trong đơn vị: `UNIQUE (tenant_id, code)` (`sku` với mặt hàng) | Ràng buộc CSDL |
 | **R-MD-4** | **Đã dùng thì không xoá.** Danh mục đã có trên sổ / sự việc → API trả `409` kèm hướng dẫn "bỏ tích Đang dùng"; ngừng dùng bằng `is_active = false` | `catalog-delete.test.ts` |
 | **R-MD-5** | Mã lạ trong sự việc **không** chặn nhận: sự việc vẫn lưu `pending`/`error`, xem trước báo rõ mã nào thiếu; kế toán khai bổ sung rồi định khoản | `connections.test.ts` |

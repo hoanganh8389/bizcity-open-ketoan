@@ -44,6 +44,16 @@ Bảy nguyên tắc do Johnny Chu – Chu Hoàng Anh yêu cầu, khoá trong `bi
 | **AP-6** | **Events are replayable, consumers are idempotent** | Có cơ chế phát lại sự kiện, xử lý trùng an toàn; không giả định broker bảo đảm exactly-once end-to-end | R-OUTBOX-3..7; consumer khoá `(consumer, event_id)`; SC-EVT-2, DG-EVT-1 — **có** từ 2026-10-30 (PHASE-006) |
 | **AP-7** | **Compliance is enforced, not documented only** | Bất biến được kiểm trong runtime và CI, không chỉ viết trong tài liệu | ma trận tuân thủ tính tự động trên bảng điểm ([compliance-matrix.json](standard/compliance-matrix.json)); `assertLedgerInvariants` sau mọi tệp test; tự chẩn đoán chặn khoá kỳ |
 
+<!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §1.1 mười ba nguyên tắc ECP, mô hình nhất quán, bốn nhóm nền móng (ADR-0028) -->
+### 1.1 Mười ba nguyên tắc Enterprise Continuity (ECP-01..13)
+
+AP-1..AP-7 giữ **sự thật kế toán**; ECP-01..13 giữ **sự thật nghiệp vụ của doanh nghiệp** — định danh, lịch sử, phiên bản, quyền, đối chiếu, chỉ tiêu — qua mọi module. Danh sách và một câu mỗi nguyên tắc: [CANON §0.3](00-CANON.md); luật, lớp thi hành và hiện trạng: [R-ECP](rules/RULE-ENTERPRISE-CONTINUITY.md); quyết định: [ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md).
+
+- **ECP-13 — không thay đổi phá huỷ lịch sử nghiệp vụ đã được tham chiếu** — được bảo vệ đồng thời bằng ràng buộc / trigger CSDL, SDK, phân quyền và cổng kiểm chuẩn. Ẩn nút Xoá trên giao diện không tính là thi hành.
+- **Sáu thao tác vòng đời** cho mọi dữ liệu gốc: CREATE · UPDATE · ARCHIVE · MERGE · REVERSE · DELETE (chỉ khi an toàn) — [standard/DU-LIEU-GOC.md](standard/DU-LIEU-GOC.md).
+- **Mô hình nhất quán ba tầng** (bổ sung §3.2): **Strong** trong một giao dịch PostgreSQL (Nợ = Có, kiểm quyền, kỳ khoá); **Eventual** sau commit qua outbox, retry, idempotency (CRM, POS, HRM, báo cáo, hệ ngoài); **Reconciliation** — mỗi projection / đồng bộ có phép đối chiếu có mã và đường khắc phục.
+- **Bốn nhóm nền móng, mười bảy trụ cột** — thống nhất doanh nghiệp · xử lý giao dịch · dữ liệu luôn đúng · cộng đồng mở rộng: [standard/NEN-MONG-DOANH-NGHIEP.md](standard/NEN-MONG-DOANH-NGHIEP.md).
+
 ## 2. Ba lớp kiểm soát: điều gì là đúng
 
 | Lớp | Quy định | Hợp đồng | Bản máy đọc / thực thi | Ai được đổi |
