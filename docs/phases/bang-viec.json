@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 17
     },
     {
       "key": "merging",
@@ -15,7 +15,7 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 24
+      "count": 23
     },
     {
       "key": "todo",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 40
+      "count": 41
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 193
+      "count": 196
     }
   ],
   "items": [
@@ -4061,15 +4061,9 @@
       "phase": "PHASE-029",
       "title": "Cổng GET /api/v1/documents/history (id · docKey · entryId), integrity",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc)",
-        "branch": "feat/phase-029-w1-lich-su-chung-tu",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-029 · W1 — cổng lịch sử chứng từ GET /api/v1/documents/history, bốn mã chẩn đoán dữ liệu, phé…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 11
     },
@@ -4078,15 +4072,9 @@
       "phase": "PHASE-029",
       "title": "Ba mã chẩn đoán mới ENTRYNOVERSION, ENTRYVERSIONUNKNOWN, EVENTENTRIESSTALE (dùng lại LEDGERORPHAN có sẵn) + lane DG-DOC-1..3",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc)",
-        "branch": "feat/phase-029-w1-lich-su-chung-tu",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-029 · W1 — cổng lịch sử chứng từ GET /api/v1/documents/history, bốn mã chẩn đoán dữ liệu, phé…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 12
     },
@@ -4095,15 +4083,9 @@
       "phase": "PHASE-029",
       "title": "Phép kiểm tĩnh SC-DOC-7 + ca tự kiểm",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 chứng từ gốc)",
-        "branch": "feat/phase-029-w1-lich-su-chung-tu",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-029 · W1 — cổng lịch sử chứng từ GET /api/v1/documents/history, bốn mã chẩn đoán dữ liệu, phé…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -4150,6 +4132,17 @@
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 17
+    },
+    {
+      "id": "S029-9",
+      "phase": "PHASE-029",
+      "title": "ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CANON / CONG-BO; sửa bizcitymasterdata@1 §2, bizcityd…",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 18
     },
     {
       "id": "S029-10",
@@ -4361,13 +4354,36 @@
       "line": 40
     },
     {
+      "id": "S029-29",
+      "phase": "PHASE-029",
+      "title": "Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu co có thật, …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
+        "branch": "feat/phase-029-e1-sc-core-1",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-029 · E1 — phép kiểm SC-CORE-1 giữ sáu năng lực lõi (chữ chốt 30 §4) + thẻ Nền móng ở màn HT1…"
+      },
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 37
+    },
+    {
       "id": "S029-30",
       "phase": "PHASE-029",
-      "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json",
+      "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json (GET /api/v1/system/foundations, …",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
-      "claim": null,
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
+        "branch": "feat/phase-029-e1-sc-core-1",
+        "state": "đang làm",
+        "since": "2026-11-05",
+        "dot": "PHASE-029 · E1 — phép kiểm SC-CORE-1 giữ sáu năng lực lõi (chữ chốt 30 §4) + thẻ Nền móng ở màn HT1…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 38
     },
