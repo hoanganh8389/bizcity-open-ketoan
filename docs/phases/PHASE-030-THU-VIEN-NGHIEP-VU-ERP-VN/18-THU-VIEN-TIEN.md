@@ -120,7 +120,7 @@ Giới hạn ghi rõ: tính bằng `number` an toàn tới 2⁵³ (≈ 9 triệu
 
 ## 4. Bảng số — golden T030-CORE-6
 
-Mỗi dòng là một `it` trong `apps/api/test/golden/T030-CORE.test.ts` (đã viết, 32 ca xanh). `packages/contracts` không có bộ chạy test riêng nên không đặt `money.test.ts` ở đó. <!-- [2026-11-06 06:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19: bảng số đặt ở golden của apps/api -->
+Mỗi dòng là một `it` trong `packages/contracts/test/money.test.ts` (bảng) và trong `apps/api/test/golden/T030-CORE.test.ts`.
 
 ### 4.1 `allocate`
 
