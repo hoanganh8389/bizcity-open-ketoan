@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 16
+      "count": 17
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 126
+      "count": 125
     },
     {
       "key": "partial",
@@ -4948,8 +4948,14 @@
       "title": "Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ liệu có sẵn",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht13)",
+        "branch": "feat/phase-030-ht13-chi-doc",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-39 — màn HT13 Cấu hình hệ thống bản chỉ đọc: GET /api/v1/settings/overview (24 kho…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 46
     },
