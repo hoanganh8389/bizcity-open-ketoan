@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 16
+      "count": 17
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 215
+      "count": 214
     }
   ],
   "items": [
@@ -4128,8 +4128,14 @@
       "title": "W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027 Phụ lục A, W3 đợt 2; giữ chỗ sau khi W2 đợt 2 nhả…",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w3-shadow-scope",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-028 · W3 đợt 2 — khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow bộ tính core/authz bên …"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 17
     },
@@ -4139,14 +4145,8 @@
       "title": "W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chốt ADR-0027 Phụ lục A, W4",
       "priority": "P1",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w4-role-editor",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-028 · W4 — Role Editor: module modules/phan-quyen/ (ma trận quyền × vai trò, vai trò, người d…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -4948,8 +4948,14 @@
       "title": "Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ liệu có sẵn",
       "priority": "P1",
       "status": "done",
-      "column": "done",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht13)",
+        "branch": "feat/phase-030-ht13-chi-doc",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-39 — màn HT13 Cấu hình hệ thống bản chỉ đọc: GET /api/v1/settings/overview (24 kho…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 46
     },
