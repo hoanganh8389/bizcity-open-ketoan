@@ -1,0 +1,22 @@
+{
+  "name": "@bizcity-module/phan-quyen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Phân quyền — module Bizcity (bizcity_module@1).",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('api','dist/api',{recursive:true,filter:(s)=>!s.endsWith('.ts')})\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
+    "test": "vitest run --root . web"
+  },
+  "dependencies": {
+    "@bizcity/module-sdk": "1.0.0",
+    "@bizcity/ui-kit": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "react": "18.3.1",
+    "typescript": "5.6.3",
+    "vitest": "2.1.5"
+  }
+}
