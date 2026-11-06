@@ -40,6 +40,7 @@ Nguyên tắc: **open-ketoan là chuẩn.** Erp-vn cho *cái gì* (nghiệp vụ
 | Q030-2 | Lô / hạn dùng đặt ở Kernel (`inventory_movements.lot_id`, FEFO trong `costing`) hay giữ ở module kho và Kernel chỉ nhận `lotRef` trong payload? Hiện mua hàng giữ lô ở `purchase_documents.data` | nhóm Lõi (đề xuất năng lực K-030-1) |
 | Q030-3 | Ngân sách: cảnh báo (như Erp-vn) hay **chặn / bắt duyệt** khi vượt (như spec NS03 của chính Erp-vn chưa làm)? Đề nghị: cấu hình `ngan_sach.vuot = canh_bao \| bat_duyet \| chan` | kế toán trưởng |
 | Q030-4 | Bán hàng: có cần "giao hàng" (delivery) là chứng từ riêng giữa đơn bán và hoá đơn không, hay xuất kho = hoá đơn như POS hiện nay? Erp-vn: đơn → picking OUT → hoá đơn | chủ dự án |
+| Q030-5 <!-- [2026-11-06 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — sổ cổng --> | Sổ cổng dạng tệp: giữ STD-EVD-4 (chỉ bảng CSDL, phương án A) hay sửa STD-EVD-4 để thêm **bản lưu trữ niêm phong** xuất hằng ngày từ bảng có chuỗi băm (phương án B, khuyến nghị)? Tệp làm nơi ghi chính (C) không khuyến nghị ([21 §2.4](21-SO-CONG-VA-BANG-DIEU-HANH.md)) | chủ dự án |
 
 ## 5. Đợt
 

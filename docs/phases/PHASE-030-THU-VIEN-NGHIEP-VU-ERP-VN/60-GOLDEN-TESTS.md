@@ -64,8 +64,9 @@ Mỗi `it` là một dòng *cho – khi – thì* của blueprint. Ca thất b�
 | LUONG | T030-LUONG-1..7 | 40 tr; 80 tr trần; 4 tr dưới min; sự việc payroll cân; D02-LT; tạm ứng lương; mô phỏng | [55](55-BP-NHAN-SU-LUONG.md) |
 | DOC <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029 --> | T030-DOC-1..9 | duyệt ≠ ghi sổ; Approval Freeze; sửa trước ghi nhận 0 đảo; điều chỉnh sau ghi nhận 1 lần nộp; cổng cùng phiên bản khác băm; đổi chính sách theo ngày; POS tự xác nhận; chạy lại; đồng thời | [19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md) |
 | AUTH | T030-AUTH-1..5 | phạm vi kho K1 / K2; thu hồi quyền; SoD hai cấp; chữ ký theo phiên bản; `decisionId` + `explain` | [19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md) |
+| GATE <!-- [2026-11-06 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — sổ cổng --> | T030-GATE-1..4 | bị chặn trước handler vẫn có dòng sổ cổng; một dòng mỗi cổng + `evidence_id`; sửa tay → `GATE_CHAIN` báo đứt; không nội dung / PII trong sổ | [21 §5](21-SO-CONG-VA-BANG-DIEU-HANH.md) |
 
-Tổng: 87 ca (73 ca W0 + 14 ca ADR-0029).
+Tổng: 91 ca (73 ca W0 + 14 ca ADR-0029 + 4 ca sổ cổng).
 
 ## 6. Gắn với bộ kiểm cài module
 

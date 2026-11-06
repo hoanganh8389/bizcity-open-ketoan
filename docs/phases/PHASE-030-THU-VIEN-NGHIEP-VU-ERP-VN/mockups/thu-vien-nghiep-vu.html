@@ -2,6 +2,7 @@
 <!-- [2026-11-06 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — bản mẫu sơ đồ luồng nghiệp vụ theo phân hệ (kiểu màn "Quy trình" của Erp-vn), tô màu mức có / một phần / chưa của open-ketoan; dữ liệu JSON nội tuyến -->
 <!-- [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án duyệt hướng: trang Thư viện nghiệp vụ là màn đầu tiên; thêm Tổng quan (6 cơ chế, 12 chuẩn), bản đồ luồng chi tiết Bán hàng / Kho / Lương / Kế toán (SVG sinh từ dữ liệu), Chuẩn chứng từ (hai con trỏ, chính sách duyệt), Thư viện tiền (allocate, schedule chạy thật), Thông báo (findings); danh mục 173 nghiệp vụ giữ ở mục Danh mục -->
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029: tôn chỉ "Lõi bất biến, nghiệp vụ linh hoạt" ở Tổng quan; Chuẩn chứng từ thêm bốn tầng, ba chủ sở hữu, điểm ghi nhận, hai lần đóng băng -->
+<!-- [2026-11-06 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — mục #cong Bàn điều hành chứng từ & cổng (HT11): hàng việc, kết quả từng cổng, xu hướng chặn / giữ, sai luật, sai vai trò, ma trận chuyển, sổ cổng; màu trạng thái theo bảng dataviz, có chú thích rê chuột và bảng số -->
 <!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
 <html lang="vi">
 <head>
@@ -133,7 +134,44 @@ section[hidden]{display:none}
 .presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .ok-line{color:var(--ok);font-weight:600}.bad-line{color:var(--bad);font-weight:600}
 pre{background:var(--soft);border-radius:8px;padding:10px;overflow-x:auto;font:12px/1.5 ui-monospace,Consolas,monospace;margin:6px 0}
+/* bàn điều hành cổng — màu trạng thái cố định (dataviz palette.md), thang xanh một màu */
+:root{--st-good:#0ca30c;--st-warn:#fab219;--st-serious:#ec835a;--st-crit:#d03b3b;--bar-1:#2a78d6;
+  --seq-1:#cde2fb;--seq-2:#9ec5f4;--seq-3:#6da7ec;--seq-4:#3987e5;--seq-5:#256abf;--seq-6:#184f95;--seq-7:#0d366b;--grid:#e3e6eb}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bar-1:#3987e5;--grid:#272b35}}
+:root[data-theme="dark"]{--bar-1:#3987e5;--grid:#272b35}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:0 0 14px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.filters label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.filters select,.filters input{font:inherit;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);max-width:100%}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px;margin-bottom:14px}
+.tile-n{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;min-width:0}
+.tile-n:hover{border-color:var(--accent)}
+.tile-n .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile-n .l{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.tile-n .s{font-size:11.5px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 9px}
+.vbar{display:flex;gap:2px;height:20px;border-radius:4px;overflow:hidden;background:var(--panel)}
+.vbar span{display:block;height:100%;min-width:2px}
+.vrow{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr) 64px;gap:10px;align-items:center;padding:6px 0}
+.vrow .n{font-size:13px}.vrow .t{font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.vlegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:2px 0 8px}
+.vlegend span{display:inline-flex;gap:5px;align-items:center}
+.hbar{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) 40px;gap:10px;align-items:center;padding:4px 0;font-size:13px}
+.hbar .b{height:14px;border-radius:0 4px 4px 0;background:var(--bar-1)}
+.hbar .t{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .ax{fill:var(--muted);font-size:10.5px}
+.heat td{text-align:center;font-variant-numeric:tabular-nums;min-width:56px}
+.heat td.c{cursor:default}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:62px 22px minmax(0,1fr);gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px;align-items:start}
+.tl li:last-child{border-bottom:0}
+.tl .ic{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700}
+.tl small{color:var(--muted);display:block}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:none;max-width:280px}
 @media (max-width:760px){main{padding:12px}}
+@media (max-width:560px){.vrow{grid-template-columns:minmax(0,1fr) 56px}.vrow .n{grid-column:1/-1}.hbar{grid-template-columns:minmax(0,1fr) 40px}.hbar .lbl{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -146,13 +184,14 @@ pre{background:var(--soft);border-radius:8px;padding:10px;overflow-x:auto;font:1
   <nav class="tabs" id="tabs" role="tablist"></nav>
 </header>
 <main id="main"></main>
+<div id="tip" role="tooltip"></div>
 
 <script>
 // ============================================================ dữ liệu
 // Dữ liệu giả lập để duyệt bố cục. Nguồn: 15 / 16 / 17 / 18 và blueprint 50–55 cùng phase.
 const PAGES = [
   ['tong-quan','Tổng quan'],['ban-hang','Bán hàng'],['kho','Kho'],['luong','Lương'],['ke-toan','Kế toán'],
-  ['chung-tu','Chuẩn chứng từ'],['tien','Thư viện tiền'],['thong-bao','Thông báo'],['danh-muc','Danh mục 173 nghiệp vụ']
+  ['chung-tu','Chuẩn chứng từ'],['cong','Bàn điều hành cổng'],['tien','Thư viện tiền'],['thong-bao','Thông báo'],['danh-muc','Danh mục 173 nghiệp vụ']
 ];
 
 const MECHANISMS = [
@@ -552,6 +591,7 @@ function pageOverview() {
   <h3>Bản đồ luồng theo module</h3>
   <div class="grid">${['ban-hang', 'kho', 'luong', 'ke-toan'].map((k) => { const f = FLOWS[k]; return `<a class="card tile" href="#${k}"><h4>${esc(f.title.split(' — ')[0])}</h4><p>${esc(f.title.split(' — ')[1] || '')}</p><p class="k">${esc(f.target)}</p></a>`; }).join('')}
   <a class="card tile" href="#chung-tu"><h4>Chuẩn chứng từ</h4><p>vòng đời, hai con trỏ phiên bản, chính sách duyệt, bút toán tay</p><p class="k">16-CHUAN-CHUNG-TU-DUNG-CHUNG.md</p></a>
+  <a class="card tile" href="#cong"><h4>Bàn điều hành cổng</h4><p>hàng việc, cổng qua / nhắc / giữ / chặn, sai luật, sai vai trò, luồng chuyển, sổ cổng</p><p class="k">21-SO-CONG-VA-BANG-DIEU-HANH.md</p></a>
   <a class="card tile" href="#tien"><h4>Thư viện tiền</h4><p>allocate · schedule · roundMoney — chạy thử ngay trên trang</p><p class="k">18-THU-VIEN-TIEN.md</p></a></div>`;
 }
 
@@ -740,8 +780,147 @@ function mountCatalog() {
   sel('mh');
 }
 
+// ============================================================ bàn điều hành cổng (21-SO-CONG-VA-BANG-DIEU-HANH.md) — số liệu giả lập
+const VERD = [['pass', 'Qua', '✓', 'var(--st-good)'], ['warn', 'Nhắc', '!', 'var(--st-warn)'], ['hold', 'Giữ (bể chờ)', '⏸', 'var(--st-serious)'], ['block', 'Chặn', '✕', 'var(--st-crit)']];
+const QUEUE = [
+  ['Nháp', 38, 'var(--none)', 'chưa trình; 6 cái quá 7 ngày'],
+  ['Chờ duyệt', 21, 'var(--st-warn)', '9 cái chờ bạn; cấp 2: 4'],
+  ['Đã duyệt, chưa ghi nhận', 9, 'var(--info)', 'đề nghị thanh toán chưa chi'],
+  ['Ở bể chờ', 7, 'var(--st-serious)', 'sự việc thiếu điều kiện ghi sổ'],
+  ['Bị chặn cần sửa', 12, 'var(--st-crit)', 'trình / duyệt bị cổng chặn']
+];
+const AGING = [['Đề nghị thanh toán', 6, 9, 3, 1], ['Phiếu mua', 11, 7, 2, 4], ['Phiếu kiểm kê', 1, 2, 0, 0], ['Bảng lương', 0, 1, 0, 0], ['Phiếu kế toán tay', 4, 3, 1, 1]];
+const GATES = [['Kiểm nội dung', 'validation', [812, 96, 0, 41]], ['Phân quyền', 'role', [640, 0, 0, 23]], ['Chuyển trạng thái', 'transition', [588, 0, 0, 17]], ['Nhận sự việc (Kernel)', 'ledger', [402, 0, 7, 3]]];
+const DAYS = ['24/10', '25/10', '26/10', '27/10', '28/10', '29/10', '30/10', '31/10', '01/11', '02/11', '03/11', '04/11', '05/11', '06/11'];
+const TREND = { block: [6, 9, 4, 3, 7, 11, 8, 5, 4, 6, 12, 7, 6, 9], hold: [2, 3, 1, 0, 2, 4, 3, 2, 1, 1, 5, 3, 2, 4] };
+const TOPF = [['BH-CREDIT-001', 'Vượt hạn mức công nợ', 14, 'nội bộ'], ['DOC-LOCK-001', 'Ngày thuộc kỳ đã khoá', 11, 'TT99'], ['PARAM-MISSING-001', 'Thiếu tham số pháp lý tại ngày', 9, 'NĐ74/2024'], ['KHO-LOT-002', 'Lô cận hạn', 8, 'nội bộ'], ['IN-ITEM-001', 'Mặt hàng chưa khai báo', 6, 'TT99'], ['BH-PROMO-001', 'Khuyến mãi vượt 50 %', 4, 'NĐ81/2018']];
+const REVIEW = [
+  ['ban-hang.order:41', 'Đơn bán BH-2026-0041', 'BH-CREDIT-001', 'Chặn', 'u-hoa', '2 ngày'],
+  ['quy.payment_request:118', 'Đề nghị TT DNTT-2026-0118', 'PARAM-MISSING-001', 'Chặn', 'u-lan', '1 ngày'],
+  ['mua-hang.document:902', 'Phiếu nhập PN-2026-0902', 'IN-ITEM-001', 'Giữ (bể chờ)', 'u-son', '4 ngày'],
+  ['kho.stock_count:7', 'Kiểm kê KK-2026-0007', 'KHO-LOT-002', 'Nhắc', 'u-minh', '3 giờ']
+];
+const ROLE = [['Ngoài phạm vi (kho / chi nhánh)', 9], ['SoD: người lập tự duyệt', 6], ['Thiếu quyền', 5], ['Quyền đã thu hồi', 3]];
+const ROLE_ROWS = [
+  ['06/11 14:02', 'u-tuan', 'kho.stock_count.approve', 'kho.stock_count:9 (kho K2)', 'SCOPE_MISMATCH', 'chỉ được duyệt kho K1'],
+  ['06/11 10:47', 'u-hoa', 'ban-hang.order.approve', 'ban-hang.order:41', 'SOD_CREATOR', 'người lập không tự duyệt'],
+  ['05/11 16:30', 'u-lan', 'quy.payment_request.pay', 'quy.payment_request:112', 'PERMISSION_MISSING', 'thiếu quyền quy:pay'],
+  ['05/11 09:15', 'u-binh', 'ban-hang.order.approve', 'ban-hang.order:37', 'ASSIGNMENT_REVOKED', 'vai trò thu hồi 04/11 17:00']
+];
+const TFROM = ['draft', 'submitted', 'approved1', 'approved'], TTO = ['submitted', 'approved1', 'approved', 'draft (từ chối)', 'paid', 'cancelled'];
+const TMAT = [[184, 0, 0, 0, 0, 12], [0, 61, 102, 23, 0, 4], [0, 0, 58, 7, 0, 1], [0, 0, 0, 0, 141, 3]];
+const DWELL = [['draft', '0,8 ngày'], ['submitted', '1,6 ngày'], ['approved1', '2,9 ngày — nghẽn'], ['approved', '0,4 ngày']];
+const JOURNAL = [
+  ['14:02', 'block', 'u-tuan', 'role', 'kho.stock_count.approve', 'kho.stock_count:9 v2', 'SCOPE_MISMATCH', '9f3a…c1'],
+  ['13:55', 'pass', 'u-minh', 'transition', 'kho.stock_count.submit (counting → submitted)', 'kho.stock_count:9 v2', '—', '4be0…77'],
+  ['13:41', 'hold', 'system:pos', 'ledger', 'pos.order.confirm', 'pos.order:88213 v1', 'IN-ITEM-001', 'a1d9…0e'],
+  ['11:20', 'warn', 'u-son', 'validation', 'mua-hang.document.submit', 'mua-hang.document:902 v3', 'KHO-LOT-002', '7c55…3b'],
+  ['10:47', 'block', 'u-hoa', 'role', 'ban-hang.order.approve', 'ban-hang.order:41 v1', 'SOD_CREATOR', '2e81…9a'],
+  ['10:30', 'pass', 'u-an', 'ledger', 'quy.payment_request.pay → bank_payment', 'quy.payment_request:110 v2', '—', 'd04c…51'],
+  ['08:05', 'block', 'u-lan', 'session', 'auth.login', '—', 'LOGIN_FAILED', '61aa…f2']
+];
+const vcol = (v) => VERD.find((x) => x[0] === v);
+function pageGates() {
+  const tot = (a) => a.reduce((s, x) => s + x, 0);
+  const seq = (v, max) => { const i = v === 0 ? 0 : Math.min(7, 1 + Math.floor((v / max) * 6.999)); return i; };
+  const maxM = Math.max(...TMAT.flat());
+  return `<h2>Bàn điều hành chứng từ &amp; cổng <small style="font-weight:400;color:var(--muted);font-size:13px">· HT11 (đề xuất)</small></h2>
+  <p class="lead">Một nơi xem: việc gì cần xử lý, cái gì chưa qua cổng, cái gì sai luật / nguyên tắc kế toán, cái gì sai vai trò, luồng nghẽn ở đâu, ai đã làm gì. Số liệu đọc từ CSDL (view hàng việc + sổ cổng <code>gate_decisions</code>), không từ Prometheus. Tài liệu: <code>21-SO-CONG-VA-BANG-DIEU-HANH.md</code>.</p>
+  <div class="filters"><label>Khoảng<select><option>14 ngày</option><option>Hôm nay</option><option>Tháng này</option></select></label>
+   <label>Chi nhánh<select><option>Tất cả</option><option>HN-01</option><option>HCM-02</option></select></label>
+   <label>Module / loại<select><option>Tất cả</option><option>ban-hang</option><option>kho</option><option>quy</option><option>mua-hang</option></select></label>
+   <label>Người<input placeholder="mã người dùng"></label></div>
+  <h3>① Hàng việc</h3>
+  <div class="tiles">${QUEUE.map(([l, v, c, s]) => `<div class="tile-n" data-tip="${esc(l)}: ${v} chứng từ — bấm để xem danh sách"><div class="l"><i class="dot" style="background:${c}"></i>${esc(l)}</div><div class="v">${v}</div><div class="s">${esc(s)}</div></div>`).join('')}</div>
+  <div class="tbl"><table><thead><tr><th>Loại chứng từ (nháp + chờ duyệt + chưa ghi nhận)</th><th class="num">≤ 1 ngày</th><th class="num">1–3 ngày</th><th class="num">3–7 ngày</th><th class="num">&gt; 7 ngày</th></tr></thead><tbody>
+   ${AGING.map(([n, ...a]) => `<tr><td>${esc(n)}</td>${a.map((x, i) => `<td class="num"${i === 3 && x ? ' style="color:var(--bad);font-weight:600"' : ''}>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <h3>② Cổng — 14 ngày</h3>
+  <div class="grid wide">
+   <div class="card"><h4>Kết quả theo cổng</h4>
+    <div class="vlegend">${VERD.map(([, l, ic, c]) => `<span><i class="dot" style="background:${c}"></i>${ic} ${l}</span>`).join('')}</div>
+    ${GATES.map(([n, k, a]) => { const T = tot(a); return `<div class="vrow"><div class="n">${esc(n)} <code style="color:var(--muted)">${k}</code></div>
+      <div class="vbar">${a.map((x, i) => x ? `<span style="width:${(x / T) * 100}%;background:${VERD[i][3]}" data-tip="${esc(n)} · ${VERD[i][2]} ${VERD[i][1]}: ${vnd(x)} (${((x / T) * 100).toFixed(1).replace('.', ',')} %)"></span>` : '').join('')}</div>
+      <div class="t">${vnd(a[3])} chặn</div></div>`; }).join('')}
+    <details style="margin-top:6px;font-size:12.5px"><summary>Bảng số</summary><div class="tbl" style="margin-top:6px"><table><thead><tr><th>Cổng</th>${VERD.map((v) => `<th class="num">${v[1]}</th>`).join('')}</tr></thead><tbody>${GATES.map(([n, , a]) => `<tr><td>${esc(n)}</td>${a.map((x) => `<td class="num">${vnd(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details></div>
+   <div class="card"><h4>Chặn và giữ theo ngày</h4>
+    <div class="vlegend"><span><i class="dot" style="background:var(--st-crit)"></i>✕ Chặn</span><span><i class="dot" style="background:var(--st-serious)"></i>⏸ Giữ (bể chờ)</span></div>
+    <div class="chart" id="trend"></div></div>
+  </div>
+  <h3>③ Sai luật / nguyên tắc kế toán — cần xem lại</h3>
+  <div class="grid wide">
+   <div class="card"><h4>Mã phát hiện hay gặp (chặn + nhắc)</h4>
+    ${TOPF.map(([c, t, v, b]) => `<div class="hbar" data-tip="${c} · ${esc(t)} · căn cứ: ${esc(b)} · ${v} lần"><div class="lbl"><code>${c}</code> ${esc(t)}</div><div><div class="b" style="width:${(v / TOPF[0][2]) * 100}%"></div></div><div class="t">${v}</div></div>`).join('')}</div>
+   <div class="card"><h4>Chứng từ cần xem lại</h4><div class="tbl" style="margin:0"><table><thead><tr><th>Chứng từ</th><th>Mã</th><th>Mức</th><th>Người lập</th><th>Tuổi</th></tr></thead><tbody>
+    ${REVIEW.map(([r, n, c, l, u, a]) => `<tr><td>${esc(n)}<br><code style="color:var(--muted)">${r}</code></td><td><code>${c}</code></td><td>${esc(l)}</td><td><code>${u}</code></td><td>${a}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+  <h3>④ Sai vai trò</h3>
+  <div class="grid wide">
+   <div class="card"><h4>Bị từ chối theo lý do (cổng phân quyền)</h4>
+    ${ROLE.map(([t, v]) => `<div class="hbar" data-tip="${esc(t)}: ${v} lần"><div class="lbl">${esc(t)}</div><div><div class="b" style="width:${(v / ROLE[0][1]) * 100}%"></div></div><div class="t">${v}</div></div>`).join('')}
+    <p style="margin-top:8px">Quyết định đến từ <code>authorize()</code> PHASE-028; mỗi dòng có <code>decisionId</code> và <code>explain</code>.</p></div>
+   <div class="card"><h4>Gần nhất</h4><div class="tbl" style="margin:0"><table><thead><tr><th>Lúc</th><th>Người</th><th>Việc</th><th>Lý do</th></tr></thead><tbody>
+    ${ROLE_ROWS.map(([t, u, a, d, c, w]) => `<tr><td>${t}</td><td><code>${u}</code></td><td><code>${a}</code><br><small style="color:var(--muted)">${esc(d)}</small></td><td><code>${c}</code><br><small style="color:var(--muted)">${esc(w)}</small></td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+  <h3>⑤ Luồng chuyển trạng thái — đề nghị thanh toán</h3>
+  <div class="grid wide">
+   <div class="card"><h4>Số lần chuyển (nguồn → đích)</h4><div class="tbl heat" style="margin:0"><table><thead><tr><th>từ \\ sang</th>${TTO.map((t) => `<th class="num">${esc(t)}</th>`).join('')}</tr></thead><tbody>
+    ${TMAT.map((r, i) => `<tr><td><code>${TFROM[i]}</code></td>${r.map((v, j) => { const s = seq(v, maxM); return `<td class="c" style="${s ? `background:var(--seq-${s});color:${s >= 4 ? '#fff' : '#0b0b0b'}` : 'color:var(--muted)'}" data-tip="${TFROM[i]} → ${esc(TTO[j])}: ${v} lần">${v || '·'}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+    <p style="margin-top:6px">Đậm hơn = nhiều hơn. 23 lần từ chối ở bước 1, 7 ở bước 2.</p></div>
+   <div class="card"><h4>Thời gian ở mỗi trạng thái (trung vị)</h4><div class="tbl" style="margin:0"><table><tbody>${DWELL.map(([s, d]) => `<tr><td><code>${s}</code></td><td class="num"${/nghẽn/.test(d) ? ' style="color:var(--bad);font-weight:600"' : ''}>${d}</td></tr>`).join('')}</tbody></table></div>
+    <p style="margin-top:6px">Cấp 2 (<code>approved1 → approved</code>) đang nghẽn: gợi ý xem lại chính sách <code>quy.de_nghi_tt.duyet</code> hoặc thêm người duyệt cấp 2.</p></div>
+  </div>
+  <h3>⑥ Sổ cổng — nhật ký hành vi</h3>
+  <div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+    <span class="tag ok">✓ chuỗi băm khớp · 06/11 (chain_seq 18 204 → 18 391)</span><span class="tag warn">Tệp niêm phong: chờ Q030-5</span>
+    <span class="spacer"></span><label style="font-size:12px;color:var(--muted)">Kết quả <select id="jv" style="font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink)"><option value="">tất cả</option>${VERD.map((v) => `<option value="${v[0]}">${v[1]}</option>`).join('')}</select></label></div>
+   <ul class="tl" id="jl"></ul>
+   <p style="margin-top:6px">Mỗi dòng: định danh người (không tên), cổng, việc, chứng từ + phiên bản, mã, băm dòng. Không nội dung chứng từ (R-SEC-10). Bấm một chứng từ → tab <b>Cổng</b> của chứng từ đó.</p></div>`;
+}
+function drawTrend() {
+  const el = $('#trend'); if (!el) return;
+  const W = 520, H = 200, L = 30, R = 64, T = 10, B = 26, n = DAYS.length;
+  const max = Math.ceil(Math.max(...TREND.block, ...TREND.hold) / 4) * 4;
+  const x = (i) => L + (i * (W - L - R)) / (n - 1), y = (v) => T + (1 - v / max) * (H - T - B);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Số lần chặn và giữ theo ngày">`;
+  for (let k = 0; k <= 4; k++) { const v = (max / 4) * k; s += `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`; }
+  DAYS.forEach((d, i) => { if ((i % 3 === 0 && n - 1 - i >= 2) || i === n - 1) s += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${d}</text>`; });
+  [['block', 'var(--st-crit)', 'Chặn'], ['hold', 'var(--st-serious)', 'Giữ']].forEach(([k, c, lbl]) => {
+    const a = TREND[k];
+    s += `<polyline fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" points="${a.map((v, i) => `${x(i)},${y(v)}`).join(' ')}"/>`;
+    s += `<circle cx="${x(n - 1)}" cy="${y(a[n - 1])}" r="4" fill="${c}" stroke="var(--panel)" stroke-width="2"/><text x="${x(n - 1) + 8}" y="${y(a[n - 1]) + 4}" style="fill:var(--ink);font-size:11px">${lbl} ${a[n - 1]}</text>`;
+  });
+  s += `<line id="xh" class="gl" x1="0" x2="0" y1="${T}" y2="${H - B}" style="stroke:var(--muted);display:none"/><rect id="hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"/></svg>`;
+  el.innerHTML = s;
+  const svg = el.querySelector('svg'), hit = el.querySelector('#hit'), xh = el.querySelector('#xh'), tip = $('#tip');
+  hit.addEventListener('mousemove', (e) => {
+    const r = svg.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * W;
+    const i = Math.max(0, Math.min(n - 1, Math.round(((px - L) / (W - L - R)) * (n - 1))));
+    xh.setAttribute('x1', x(i)); xh.setAttribute('x2', x(i)); xh.style.display = '';
+    tip.innerHTML = `<b>${DAYS[i]}</b><br>✕ Chặn: ${TREND.block[i]}<br>⏸ Giữ: ${TREND.hold[i]}`; tip.style.display = 'block';
+    tip.style.left = Math.min(e.clientX + 14, innerWidth - 200) + 'px'; tip.style.top = e.clientY + 14 + 'px';
+  });
+  hit.addEventListener('mouseleave', () => { xh.style.display = 'none'; tip.style.display = 'none'; });
+}
+function drawJournal() {
+  const el = $('#jl'); if (!el) return;
+  const f = $('#jv').value;
+  el.innerHTML = JOURNAL.filter((j) => !f || j[1] === f).map(([t, v, u, g, a, d, c, h]) => { const V = vcol(v); return `<li><span style="font-variant-numeric:tabular-nums;color:var(--muted)">${t}</span><span class="ic" style="background:${V[3]}" title="${V[1]}">${V[2]}</span>
+    <div><b>${esc(V[1])}</b> · <code>${esc(g)}</code> · <code>${esc(u)}</code> — <code>${esc(a)}</code><small>${esc(d)} · mã ${esc(c)} · băm ${esc(h)}</small></div></li>`; }).join('') || '<li><span></span><span></span><div>Không có dòng nào.</div></li>';
+}
+function mountGates() {
+  if (!$('#trend')) return;
+  drawTrend(); drawJournal(); $('#jv').onchange = drawJournal;
+}
+// chú thích khi rê chuột cho mọi phần tử có data-tip
+document.addEventListener('mousemove', (e) => {
+  const t = e.target.closest && e.target.closest('[data-tip]'), tip = $('#tip');
+  if (!t) { if (!e.target.closest('#trend')) tip.style.display = 'none'; return; }
+  tip.textContent = t.dataset.tip; tip.style.display = 'block';
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 290) + 'px'; tip.style.top = e.clientY + 14 + 'px';
+});
+
 // ============================================================ điều hướng
-const RENDER = { 'tong-quan': pageOverview, 'ban-hang': () => pageFlow('ban-hang'), kho: () => pageFlow('kho'), luong: () => pageFlow('luong'), 'ke-toan': () => pageFlow('ke-toan'), 'chung-tu': pageDocStd, tien: pageMoney, 'thong-bao': pageFindings, 'danh-muc': pageCatalog };
+const RENDER = { 'tong-quan': pageOverview, 'ban-hang': () => pageFlow('ban-hang'), kho: () => pageFlow('kho'), luong: () => pageFlow('luong'), 'ke-toan': () => pageFlow('ke-toan'), 'chung-tu': pageDocStd, cong: pageGates, tien: pageMoney, 'thong-bao': pageFindings, 'danh-muc': pageCatalog };
 const OLD = { mh: 'danh-muc', bh: 'ban-hang', ts: 'danh-muc', kt: 'ke-toan', ns: 'luong' };
 const tabsEl = $('#tabs'), mainEl = $('#main');
 tabsEl.innerHTML = PAGES.map(([id, t]) => `<button role="tab" id="tab-${id}" data-p="${id}">${t}</button>`).join('');
@@ -752,7 +931,7 @@ function show() {
   if (!RENDER[id]) id = 'tong-quan';
   tabsEl.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', b.dataset.p === id));
   mainEl.innerHTML = RENDER[id]();
-  mountDocTabs(); mountMoney(); mountCatalog();
+  mountDocTabs(); mountMoney(); mountCatalog(); mountGates();
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', show);

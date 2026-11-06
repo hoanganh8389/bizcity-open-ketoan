@@ -20,6 +20,7 @@
 | `#ke-toan` | tạm ứng / hoàn ứng ◆, đối soát ngân hàng, **phiếu kế toán tay** (số TK là dữ liệu người nhập) ◆, cuối kỳ ◆, khoá kỳ → kết chuyển ◆ → báo cáo | gom cuối kỳ vào một module `ke-toan-ky` hay tách |
 | `#chung-tu` | 5 nhóm trạng thái; **hai con trỏ** (bảng thời gian: sửa nhiều lần, sổ đổi một lần); màn chi tiết chứng từ có tab Nội dung / So sánh / Duyệt / Sổ / Liên kết / Nhật ký; ba loại chứng từ và bút toán tay | bố cục màn chi tiết; nhãn "Bản đang sửa / Bản trên sổ" |
 | `#tien` | `allocate`, `schedule` chạy thật (mã tham chiếu của [18 §3](../18-THU-VIEN-TIEN.md)); bảng phần nguyên / dư / kết quả, Σ = tổng; so sánh làm tròn | — (kỹ thuật) |
+| `#cong` | bàn điều hành chứng từ & cổng (HT11): hàng việc + tuổi, kết quả từng cổng (qua / nhắc / giữ / chặn, màu trạng thái có biểu tượng), chặn / giữ 14 ngày, mã sai luật hay gặp, chứng từ cần xem lại, sai vai trò, ma trận chuyển trạng thái, sổ cổng có kiểm chuỗi băm | sáu khối có đủ chưa; ai được xem; Q030-5 |
 | `#thong-bao` | thư viện thông báo: ba cách hiện (trên trường, nổi, bảng phát hiện), mẫu danh mục mã, câu của bộ kiểm cho dev | giọng văn thông báo |
 | `#danh-muc` | thẻ 173 nghiệp vụ theo 6 nhóm (dữ liệu W0 giữ nguyên) | — |
 

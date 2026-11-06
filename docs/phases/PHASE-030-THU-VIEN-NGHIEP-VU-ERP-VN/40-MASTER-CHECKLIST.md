@@ -32,12 +32,18 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S030-25 | Golden T030-DOC-1..9, T030-AUTH-1..5 ([19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md)) | W2 | P1 | có | ☐ `it.todo` tới khi nền có |
 | S030-26 | Chẩn đoán tuyến nguồn → sổ `DG-DOC-CHAIN-1..5` trên bảng sẵn có ([19 §6](19-RA-SOAT-DUYET-VA-GHI-SO.md)) | W2 | P1 | có | ☐ |
 | S030-27 | Theo dõi cầu nối Workflow ↔ PHASE-028 ([19 §3](19-RA-SOAT-DUYET-VA-GHI-SO.md)): PHASE-028 nhận `authorize` trên tài nguyên chứng từ + điều kiện SoD; PHASE-029 nhận `transition()` dùng quyết định | W2 | P1 | không | ⛔ chủ PHASE-028 / PHASE-029 nhận vào checklist |
+| S030-28 | Hợp đồng `bizcity_gate@1` ([21 §1](21-SO-CONG-VA-BANG-DIEU-HANH.md)): GateInput, GateResult, năm loại cổng, thứ tự ghép, mặc định — PR chốt thiết kế | W2 | P0 | không | ⛔ nhóm Lõi |
+| S030-29 | Sổ cổng `gate_decisions` ([21 §2](21-SO-CONG-VA-BANG-DIEU-HANH.md)): migration ≥ 0076, ghi giao dịch riêng, chuỗi băm theo đơn vị, RLS, hạn giữ; bọc `wf.plan`, `requirePermission`, intake, ledger, đăng nhập / xuất / in; `GATE_CHAIN`, `GATE_JOURNAL_GAP` | W2 | P0 | có | ☐ sau S030-28; chạm `actions.ts` / `audit.ts` khi dòng PHASE-014 đợt 8b nhả |
+| S030-30 | Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong hằng ngày + manifest, `GET /journal/verify` | W2 | P1 | có | ⛔ chủ dự án quyết Q030-5 |
+| S030-31 | Hàng việc: view `bizcity_read.document_queue` + API `queue/summary`, `queue/mine`; thanh "Việc cần làm" thêm nguồn | W2 | P0 | có | ☐ làm được trước sổ cổng |
+| S030-32 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu [#cong](mockups/thu-vien-nghiep-vu.html#cong) | W3 | P1 | có | 🟡 bản mẫu; ☐ code sau S030-29, S030-31 |
+| S030-33 | Golden T030-GATE-1..4 ([21 §5](21-SO-CONG-VA-BANG-DIEU-HANH.md)) | W3 | P1 | có | ☐ |
 | N030-1 | Nợ: kiểm `apps/api/src/modules/assets/depreciation*.ts` làm tròn tháng hay ngày; nếu tháng → sửa tại chỗ theo `tai_san.khau_hao.theo_ngay` | W2 | P1 | có | ☐ |
 | N030-2 | Nợ: `modules/mua-hang/domain/src/engine.ts` có `ACC` số tài khoản (:867), `TAX_RATE` (:295), `allocate` riêng (:514), `Check` riêng (:673) — chuyển sang `reasonCode`, thuế suất từ `tax_codes`, `allocate` dùng chung (K-030-10), `findings` (STD-030-8); `phan-he/mua-hang` đóng băng, sửa khi chuyển | W2 | P1 | có | ☐ sau K-030-10 |
 
 ## Ca bằng chứng
 
-Danh sách 87 ca `T030-*` ở [60 §5](60-GOLDEN-TESTS.md). W0: tất cả `it.todo`. Khi có ca chạy, ghi `evidence/W<n>-<ngày>.md`.
+Danh sách 91 ca `T030-*` ở [60 §5](60-GOLDEN-TESTS.md). W0: tất cả `it.todo`. Khi có ca chạy, ghi `evidence/W<n>-<ngày>.md`.
 
 ## Log
 
@@ -45,3 +51,4 @@ Danh sách 87 ca `T030-*` ở [60 §5](60-GOLDEN-TESTS.md). W0: tất cả `it.t
 - 2026-11-06 — W0 đợt 2: đọc lại cơ chế xuyên suốt (Erp-vn 46 addon × open-ketoan Kernel / Platform / SDK) → [15](15-KINH-NGHIEM-COT-LOI.md); đính chính: `setting_values` E2 chưa có mã, authz PHASE-028 chưa nối; sửa [20 M2](20-MAU-THIET-KE.md); thêm S030-18, N030-2.
 - 2026-11-06 — W0 đợt 3 (chủ dự án duyệt hướng mockup, hỏi chuẩn hoá): [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) chuẩn chứng từ dùng chung (nối `bizcity_document@1`); [17](17-BO-CHUAN-STD-030.md) đóng gói 12 chuẩn thành luật / thư viện / thông báo / phép kiểm / bản mẫu; [18](18-THU-VIEN-TIEN.md) chốt thiết kế thư viện tiền (mã tham chiếu chạy thử 20.000 ca; phát hiện `splitByPercent` có ca ra phần âm); mockup bản 2 (chụp kiểm Chrome headless 1440 px và 360 px, sáng / tối); dòng CLAIMS S030-19; thêm S030-19..21. Nhánh rebase lên `main` 682c03c.
 - 2026-11-06 — W1 (chủ dự án: *"Lõi bất biến, nghiệp vụ linh hoạt"* vào luật tối thượng): ADR-0029, CANON v1.5 §0.9, R-WF-3 / -4 viết lại, R-WF-10..16 (chuyển 10..12 từ 16 sang luật), bản kiến trúc + hướng dẫn dev; rà mã duyệt → ghi sổ và liên kết PHASE-028 ([19](19-RA-SOAT-DUYET-VA-GHI-SO.md)): mua hàng đảo toàn bộ hai lần khi sửa phiếu đã duyệt, cổng Kernel bỏ qua im lặng cùng phiên bản khác nội dung, workflow chưa gọi `authorize`; golden +14 (87); thêm S030-22..27.
+- 2026-11-06 — W1 tiếp (chủ dự án: dashboard quản trị cho bộ cổng, sổ cổng dạng filestore làm trục nhật ký hành vi): [21](21-SO-CONG-VA-BANG-DIEU-HANH.md) — đề xuất `bizcity_gate@1`, sổ cổng `gate_decisions` (giao dịch riêng, chuỗi băm theo đơn vị), bàn điều hành HT11 sáu khối; phát hiện xung đột với STD-EVD-4 (cấm nhật ký nghiệp vụ ra tệp) → câu hỏi Q030-5; mockup mục `#cong` (chụp kiểm sáng / tối); golden +4 (91); thêm S030-28..33.
