@@ -51,6 +51,22 @@ const inputTaxPosted = sql<boolean>`EXISTS (SELECT 1 FROM ledger_entries e JOIN 
     AND l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = a.tenant_id AND tc.direction = 'input' AND tc.account_code IS NOT NULL
                            UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key = 'tax_input'))`;
 
+// [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6: cặp (thuế đầu vào trên sổ, thuế trên sổ hoá đơn) của từng sự việc đã ghi sổ có hoá đơn
+/** Mỗi sự việc trong phạm vi có cả bút toán thuế đầu vào và hoá đơn đầu vào còn hiệu lực: `so` = thuế ròng trên sổ, `hd` = thuế ròng trên hoá đơn. */
+const vatInputPairs = (s: DiagScope) => sql`
+  SELECT a.doc_key, a.doc_date, so.amt AS so, hd.amt AS hd
+    FROM accounting_events a
+    JOIN (SELECT e.event_id, sum(l.debit - l.credit) AS amt
+            FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
+           WHERE e.tenant_id = ${s.tenantId}
+             AND l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = ${s.tenantId} AND tc.direction = 'input' AND tc.account_code IS NOT NULL
+                                    UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = ${s.tenantId} AND d.key = 'tax_input')
+           GROUP BY e.event_id) so ON so.event_id = a.id
+    JOIN (SELECT i.event_id, sum(i.total_tax * i.sign) AS amt FROM tax_invoices i
+           WHERE i.tenant_id = ${s.tenantId} AND i.direction = 'input' AND i.status IN ('valid', 'adjusted')
+           GROUP BY i.event_id) hd ON hd.event_id = a.id
+   WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted'`;
+
 export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
     code: 'LEDGER_BALANCED', layer: 'L3', level: 'error', scoped: true,
@@ -157,6 +173,30 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
            WHERE ${scoped(s, 'a', 'doc_date')} AND a.status = 'posted' AND ${inputTaxPosted} AND a.doc_date < current_date - 30
              AND NOT EXISTS (SELECT 1 FROM tax_invoices i WHERE i.event_id = a.id)
            ORDER BY a.doc_date LIMIT ${SAMPLE}`),
+  },
+  // [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13, 30 §6): sổ đăng ký đối chiếu — VAT_INPUT_INVOICE_MATCH, LEDGER_ROUNDING thay mục 3 / 5 chạy tay của doi-chieu-ke-toan.sql
+  {
+    // Cộng ròng mọi bút toán của sự việc (gốc bị đảo + bút toán đảo triệt tiêu nhau) → số thuế hiện hành trên sổ; hoá đơn thay thế / huỷ không tính.
+    code: 'VAT_INPUT_INVOICE_MATCH', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở Bổ sung thông tin thuế, tìm chứng từ trong mẫu', screen: SCREENS.ACC78 }, { text: 'Thuế trên hoá đơn đúng: sửa chứng từ (dòng thuế / loại thuế) rồi định khoản lại', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Thuế trên sổ đúng: sửa số thuế của hoá đơn trong sổ hoá đơn', screen: SCREENS.ACC78, role: 'accountant' }], owner: 'accountant', verify: { code: 'VAT_INPUT_INVOICE_MATCH' }, forbid: ['Không lập phiếu kế toán tay vào tài khoản thuế để làm khớp số'] },
+    title: 'Thuế GTGT đầu vào trên sổ khớp thuế trên sổ hoá đơn của cùng chứng từ (lệch không quá 0,5 đồng)',
+    fix: 'Chứng từ đã có hoá đơn nhưng số thuế đầu vào ghi sổ khác số thuế trên hoá đơn: bảng kê mua vào và tài khoản thuế đầu vào không cùng một số. Thường do sửa số thuế ở một bên mà không sửa bên kia, hoặc chọn sai loại thuế trên dòng.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM (${vatInputPairs(s)}) x`,
+      sql`SELECT x.doc_key AS key, count(*) OVER ()::int AS total FROM (${vatInputPairs(s)}) x
+           WHERE abs(x.so - x.hd) > 0.5 ORDER BY x.doc_date, x.doc_key LIMIT ${SAMPLE}`),
+  },
+  {
+    code: 'LEDGER_ROUNDING', layer: 'L3', level: 'warn', scoped: true,
+    remedy: { steps: [{ text: 'Mở chứng từ của bút toán trong mẫu, làm tròn đơn giá / thành tiền về đồng ở nguồn', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Nguồn ngoài (POS, kết nối) gửi số lẻ xu: báo người tích hợp làm tròn trước khi gửi' }], owner: 'accountant', verify: { code: 'LEDGER_ROUNDING' } },
+    title: 'Dòng sổ cái ghi số tiền tròn đồng (sổ ghi đồng Việt Nam)',
+    fix: 'Dòng sổ có số lẻ dưới một đồng: tổng trên báo cáo, tờ khai và bảng kê lệch nhau vài đồng sau khi cộng. Làm tròn ở chứng từ nguồn rồi định khoản lại; không làm tròn bằng phiếu tay.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id WHERE ${scoped(s, 'e', 'posting_date')}`,
+      sql`SELECT e.entry_no AS key, count(*) OVER ()::int AS total FROM ledger_entries e
+           WHERE ${scoped(s, 'e', 'posting_date')}
+             AND EXISTS (SELECT 1 FROM ledger_lines l WHERE l.entry_id = e.id AND (l.debit <> round(l.debit) OR l.credit <> round(l.credit)))
+           ORDER BY e.posting_date, e.entry_no LIMIT ${SAMPLE}`),
   },
   {
     // ADR-0009, C-9: bút toán dựng theo luật định khoản ghi đúng phiên bản chính sách áp cho ngày hạch toán.
