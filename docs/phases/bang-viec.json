@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 51
+      "count": 50
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 213
+      "count": 214
     }
   ],
   "items": [
@@ -4925,8 +4925,8 @@
       "phase": "PHASE-030",
       "title": "Cấu hình hệ thống 24: nguyên tắc NC-1..8, chuỗi tham số → cổng → giao diện → nhật ký, đối chiếu menu Cấu hình Erp-vn (21 dòng), màn HT13 + bản mẫu; Bàn điều hà…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 44
@@ -4934,7 +4934,7 @@
     {
       "id": "S030-38",
       "phase": "PHASE-030",
-      "title": "bizcitysettings@1 1.2.0: registry thêm basis, approval, usedBy; settingvalues thêm basis, status, approvedby (24 §5) — PR chốt thiết kế",
+      "title": "bizcitysettings@1 1.2.0: registry thêm basis, usedBy; settingvalues thêm basis (24 §5) — PR chốt thiết kế; không approval / status / approvedby (D030-12)",
       "priority": "P0",
       "status": "blocked",
       "column": "blocked",
@@ -4956,7 +4956,7 @@
     {
       "id": "S030-40",
       "phase": "PHASE-030",
-      "title": "Đổi khoá loại A: đề xuất → xem thử tác động → người thứ hai duyệt; \"xem như trên form\"; golden T030-CFG-1..8",
+      "title": "Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ \"đã đổi trong 30 ngày\"; \"xem như trên form\"; golden T030-CFG-1…",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
