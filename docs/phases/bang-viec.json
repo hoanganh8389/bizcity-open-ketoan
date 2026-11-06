@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 17
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 42
+      "count": 43
     },
     {
       "key": "paused",
@@ -4276,15 +4276,9 @@
       "phase": "PHASE-029",
       "title": "Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → accountingunit → tenant, ngày hiệu lực, getSetting / setS…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 cấu hình)",
-        "branch": "feat/phase-029-e2-cau-hinh",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-029 · E2 đợt 1 — cấu hình có phiên bản, phạm vi, ngày hiệu lực (settingvalues, getSetting / s…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 19
     },

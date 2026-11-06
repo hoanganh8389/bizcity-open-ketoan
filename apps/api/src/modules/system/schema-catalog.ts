@@ -159,6 +159,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // Nền tảng
   tenants: { group: 'platform', label: 'Đơn vị sử dụng', module: 'access', purpose: 'Mỗi công ty dùng phần mềm là một đơn vị; mọi dữ liệu đều có tenant_id.' },
   users: { group: 'platform', label: 'Người dùng', module: 'access', purpose: 'Tài khoản đăng nhập và vai trò.' },
+  // [2026-11-06 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2: danh mục bảng setting_values (0074)
+  setting_values: { group: 'platform', label: 'Giá trị cấu hình có phiên bản', term: 'Cấu hình', module: 'system', purpose: 'Mỗi lần đổi cấu hình là một dòng mới: khoá, phạm vi (đơn vị / đơn vị hạch toán / chi nhánh / người dùng), giá trị, ngày hiệu lực, người ghi, lý do. Không sửa, không xoá — lịch sử cấu hình chính là bảng này (bizcity_settings@1 §2, ECP-03).' },
   // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — danh mục bảng: user_role_assignments (0074)
   // [2026-11-06 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0074 → 0075 (W-13: 0073 / 0074 PHASE-026 đợt 2 / 3 giữ)
   // [2026-11-06 01:35 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đổi số migration W1 0075 → 0073 (chủ dự án chọn: ai merge trước lấy số trước, so-tiep-theo kiem; PHASE-026 đợt 2 / 3 đổi số khi merge)

@@ -73,16 +73,16 @@ Học **cách tổ chức** của `options` WordPress (một kho khoá / giá tr
 
 ### 2.3 Ghi — `setSetting(trx, actor, key, value, { scope, scopeId, validFrom?, reason? })`
 
-Kiểm theo thứ tự, lỗi bằng `Errors.*`: khoá có trong registry và có `valueType` · phạm vi nằm trong `scopes` của khoá · giá trị đúng `valueType` · quyền (`permission` của khoá; phạm vi `user` với chính mình chỉ cần đăng nhập, khoá loại C) · lý do khi bắt buộc · khoá mirror không nhận ngày tương lai. Rồi: thêm dòng (phiên bản kế), mirror nếu có, tăng `config_version`, `writeAudit('settings.set', trước / sau)`.
+Kiểm theo thứ tự, lỗi bằng `Errors.*`: khoá có trong registry và có `valueType` · phạm vi nằm trong `scopes` của khoá · giá trị đúng `valueType` · quyền (`settings:write` ở action + `permission` riêng của khoá; đợt 1 ghi mọi phạm vi kể cả `user` đều cần `settings:write` — người dùng tự đổi tuỳ chọn của mình là đợt 2) · lý do khi bắt buộc · khoá mirror không nhận ngày tương lai. Rồi: thêm dòng (phiên bản kế), mirror nếu có, tăng `config_version`, `writeAudit('settings.set', trước / sau)`.
 
 ### 2.4 HTTP (Core, `defineAction` cho đường ghi)
 
 | Route | Quyền | Việc |
 |---|---|---|
 | `GET /api/v1/settings/values` | đăng nhập | các khoá có `valueType`: lớp, phạm vi, giá trị hiện hành ở phạm vi đơn vị, `configVersion` |
-| `GET /api/v1/settings/values/:key` | đăng nhập | giá trị hiệu lực theo `?branchId&accountingUnitId&date` (+ `userId` = chính mình) và nguồn |
+| `GET /api/v1/settings/values/:key` | đăng nhập; `userId` người khác cần `settings:write` | giá trị hiệu lực theo `?branchId&accountingUnitId&userId&date` (không truyền `userId` = chính người gọi) và nguồn |
 | `GET /api/v1/settings/values/:key/history` | đăng nhập | mọi phiên bản (người, lúc, lý do, hiệu lực, phạm vi) |
-| `PUT /api/v1/settings/values/:key` — action `core.settings.set` | theo khoá | ghi theo §2.3; `ai: 'deny'`, `mcp: false` |
+| `PUT /api/v1/settings/values/:key` — action `core.settings.set` | `settings:write` + quyền của khoá | ghi theo §2.3; `ai: 'deny'`, `mcp: false` |
 
 ### 2.5 Đợt 2 (không làm ở đợt 1)
 
