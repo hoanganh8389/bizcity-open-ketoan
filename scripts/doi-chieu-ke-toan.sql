@@ -3,7 +3,11 @@
 -- Chỉ đọc. Dùng khi rà soát việc của người đóng góp (docs/rules/RULE-REVIEW.md), sau khi nạp bộ tình huống của phân hệ:
 --   docker exec -i <db> psql -U ketoan -d <csdl> -v tenant=<mã đơn vị> -P pager=off < scripts/doi-chieu-ke-toan.sql
 -- Mỗi mục in "lech" — khác 0 là phải giải thích trong biên bản. Mục 3b liệt kê sự việc ghi 1331 mà không có hoá đơn.
-\set t '(select id from tenants where code = ' :'tenant' ')'
+\-- [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1: mục 1 / 2 / 2b / 3 / 3b / 4 / 5 / 6b / 7 nay có mã chẩn đoán chạy trên mọi bản cài
+--   (LEDGER_BALANCED, DEBT_MATCH_LEDGER, VAT_INPUT_INVOICE_MATCH, TAX_INPUT_NO_INVOICE, INVENTORY_LEDGER_MISMATCH, LEDGER_ROUNDING, ITEM_CODE_CASE_DUP,
+--   UNIT_BASE_INVALID — GET /api/v1/system/diagnostics, sổ đăng ký đối chiếu ở docs/ops/DIAGNOSTICS.md §2a). Script giữ để rà soát nhanh một đơn vị
+--   và cho mục 6 / 8 (khuôn mã hàng riêng của phân hệ — không phải luật Core).
+set t '(select id from tenants where code = ' :'tenant' ')'
 
 \echo '== 1. Cân sổ (Nợ − Có, phải 0)'
 select sum(debit) no_, sum(credit) co, sum(debit) - sum(credit) lech from ledger_lines where tenant_id = :t;

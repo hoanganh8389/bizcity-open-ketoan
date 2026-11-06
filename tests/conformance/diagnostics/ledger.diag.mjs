@@ -166,6 +166,17 @@ export const checks = [
           WHERE a.status IN ('pending','error') AND a.received_at < now() - interval '3 days'
           ORDER BY a.received_at LIMIT 200`,
   }),
+  // [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13): DG-REC-2 LEDGER_ROUNDING — dòng sổ tròn đồng (cùng mã với ledger.diagnostics.ts)
+  sqlCheck({
+    id: 'DG-REC-2', code: 'LEDGER_ROUNDING',
+    title: 'Dòng sổ cái ghi số tiền tròn đồng (sổ ghi đồng Việt Nam)',
+    rules: ['R-REV-6'], conf: [], tier: 2, enforce: 'info', weight: 1,
+    count: `SELECT count(*)::int AS n FROM ledger_lines`,
+    sql: `SELECT t.code AS tenant, e.entry_no AS key, json_build_object('posting_date', e.posting_date) AS detail
+          FROM ledger_entries e JOIN tenants t ON t.id = e.tenant_id
+          WHERE EXISTS (SELECT 1 FROM ledger_lines l WHERE l.entry_id = e.id AND (l.debit <> round(l.debit) OR l.credit <> round(l.credit)))
+          ORDER BY e.posting_date LIMIT 200`,
+  }),
   // [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — DG-TAX-1 TAX_INPUT_NO_INVOICE: thuế đầu vào đã vào sổ mà chưa có hoá đơn quá 30 ngày (cùng mã với app).
   sqlCheck({
     id: 'DG-TAX-1', code: 'TAX_INPUT_NO_INVOICE',

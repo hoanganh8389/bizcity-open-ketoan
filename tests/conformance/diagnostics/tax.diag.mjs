@@ -73,4 +73,22 @@ export const checks = [
           WHERE i.direction = 'output' AND i.doc_type = 'sale' AND i.status = 'valid' AND i.invoice_date > i.doc_date
           ORDER BY i.doc_date LIMIT 200`,
   }),
+  // [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13): DG-REC-1 VAT_INPUT_INVOICE_MATCH — thuế đầu vào ròng trên sổ ↔ thuế trên sổ hoá đơn của cùng sự việc (cùng mã với ledger.diagnostics.ts)
+  sqlCheck({
+    id: 'DG-REC-1', code: 'VAT_INPUT_INVOICE_MATCH',
+    title: 'Thuế GTGT đầu vào trên sổ khớp thuế trên sổ hoá đơn của cùng chứng từ (lệch không quá 0,5 đồng)',
+    rules: ['R-REV-6'], conf: [], tier: 2, enforce: 'info', weight: 1,
+    count: `SELECT count(DISTINCT i.event_id)::int AS n FROM tax_invoices i WHERE i.direction = 'input' AND i.status IN ('valid', 'adjusted')`,
+    sql: `WITH so AS (
+            SELECT e.tenant_id, e.event_id, sum(l.debit - l.credit) AS amt
+              FROM ledger_entries e JOIN ledger_lines l ON l.entry_id = e.id
+             WHERE l.account_code IN (SELECT tc.account_code FROM tax_codes tc WHERE tc.tenant_id = e.tenant_id AND tc.direction = 'input' AND tc.account_code IS NOT NULL
+                                      UNION SELECT d.account_code FROM posting_defaults d WHERE d.tenant_id = e.tenant_id AND d.key = 'tax_input')
+             GROUP BY e.tenant_id, e.event_id),
+          hd AS (SELECT i.event_id, sum(i.total_tax * i.sign) AS amt FROM tax_invoices i WHERE i.direction = 'input' AND i.status IN ('valid', 'adjusted') GROUP BY i.event_id)
+          SELECT t.code AS tenant, a.doc_key AS key, json_build_object('doc_type', a.doc_type, 'doc_date', a.doc_date) AS detail
+            FROM so JOIN hd ON hd.event_id = so.event_id JOIN accounting_events a ON a.id = so.event_id JOIN tenants t ON t.id = so.tenant_id
+           WHERE a.status = 'posted' AND abs(so.amt - hd.amt) > 0.5
+           ORDER BY a.doc_date LIMIT 200`,
+  }),
 ];
