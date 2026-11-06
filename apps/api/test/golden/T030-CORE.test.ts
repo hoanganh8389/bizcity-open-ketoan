@@ -1,6 +1,8 @@
 // [2026-11-06 06:02 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19: golden T030-CORE-6 — roundMoney / allocate / schedule (R-MONEY-1..6, PHASE-030 · 18 §4)
 import { describe, expect, it } from 'vitest';
 import { allocate, roundMoney, schedule } from '@ketoan/contracts';
+import { allocate as muaHangAllocate } from '@bizcity/mua-hang-domain';
+import { splitByDays, splitByPercent } from '../../src/modules/assets/depreciation.js';
 
 const sum = (a: readonly number[]) => a.reduce((s, x) => s + x, 0);
 
@@ -144,5 +146,69 @@ describe('T030-CORE-6 · schedule: lịch đều, kỳ cuối nhận dư (R-MONE
       expect(sum(s)).toBe(total);
       expect(s.every((x) => x > 0)).toBe(true);
     }
+  });
+});
+
+describe('T030-CORE-6 · chuyển bản cũ sang bản chung (PHASE-030 · 18 §5)', () => {
+  /** Bản allocate cũ của mua hàng (trước S030-19), giữ lại làm chuẩn so sánh trên đầu vào dương. */
+  function legacyAllocate(total: number, weights: number[]): number[] {
+    const sum = weights.reduce((s, w) => s + w, 0);
+    if (!sum || !total) return weights.map(() => 0);
+    const raw = weights.map((w) => (total * w) / sum);
+    const out = raw.map(Math.floor);
+    let rest = Math.round(total - out.reduce((s, v) => s + v, 0));
+    const order = raw.map((r, i) => ({ i, frac: r - Math.floor(r) })).sort((a, b) => b.frac - a.frac);
+    for (let k = 0; rest > 0 && k < order.length; k++, rest--) out[order[k]!.i]! += 1;
+    return out;
+  }
+
+  it('mua hàng: lớp bọc ra đúng từng số của bản cũ trên 5.000 ca dương ngẫu nhiên', () => {
+    let seed = 777;
+    const rnd = () => { seed = (Math.imul(seed ^ (seed >>> 15), 0x2c1b3c6d) + 0x297a2d39) >>> 0; return seed / 2 ** 32; };
+    for (let k = 0; k < 5000; k++) {
+      const n = 1 + Math.floor(rnd() * 7);
+      const w = Array.from({ length: n }, () => (rnd() < 0.15 ? 0 : Math.floor(rnd() * 5e8)));
+      const total = 1 + Math.floor(rnd() * 2e10);
+      if (!w.some((x) => x > 0)) continue;
+      expect(muaHangAllocate(total, w)).toEqual(legacyAllocate(total, w));
+    }
+  });
+
+  it('mua hàng: không cơ sở phân bổ (trọng số toàn 0) hoặc tổng 0 thì không phân bổ phần nào — khác bản chung vốn chia đều', () => {
+    expect(muaHangAllocate(10, [0, 0])).toEqual([0, 0]);
+    expect(muaHangAllocate(0, [3, 1])).toEqual([0, 0]);
+    expect(allocate(10, [0, 0])).toEqual([5, 5]);
+  });
+
+  it('mua hàng: tổng âm cộng đúng tổng; tổng không nguyên được làm tròn trước; trọng số âm tính là 0', () => {
+    expect(muaHangAllocate(-100, [1, 1, 1])).toEqual([-34, -33, -33]);
+    expect(muaHangAllocate(100.4, [1, 1, 1])).toEqual([34, 33, 33]);
+    expect(muaHangAllocate(100, [-5, 1, 1])).toEqual([0, 50, 50]);
+  });
+
+  it('kịch bản mua hàng kich-ban.ts:133 — thưởng 10 triệu chia theo 240 / 160 / 100 triệu: 4,8 + 3,2 + 2,0 triệu', () => {
+    expect(muaHangAllocate(10_000_000, [240e6, 160e6, 100e6])).toEqual([4_800_000, 3_200_000, 2_000_000]);
+  });
+
+  it('tài sản: splitByPercent không còn ra phần âm hay mất phần 10 % (lỗi của bản làm tròn từng phần)', () => {
+    expect(splitByPercent(1000, [45, 45, 10])).toEqual([500, 400, 100]);
+    expect(splitByPercent(1000, [35, 35, 30])).toEqual([400, 300, 300]);
+    expect(splitByPercent(200, [30, 30, 30, 10])).toEqual([100, 100, 0, 0]);
+  });
+
+  it('tài sản: các ca cũ giữ nguyên số (33,3333 % × 3; chia theo ngày 10 / 21 ngày)', () => {
+    expect(splitByPercent(1_000_000_00, [33.3333, 33.3333, 33.3334])).toEqual([333_333_00, 333_333_00, 333_334_00]);
+    expect(splitByDays(3_100_000_00, { year: 2026, month: 3 }, '2026-03-01', '2026-03-31', [{ from: '0001-01-01', branchId: 'A' }, { from: '2026-03-11', branchId: 'B' }]))
+      .toEqual([['A', 1_000_000_00], ['B', 2_100_000_00]]);
+  });
+
+  it('tài sản: chia tháng cho 3 chi nhánh theo ngày — Σ = tổng, bội số của 100 xu, không đoạn nào âm', () => {
+    const total = 1_000_000_00 + 700; // lẻ 7 đồng để thử phần dư
+    const r = splitByDays(total, { year: 2026, month: 3 }, '2026-03-01', '2026-03-31', [
+      { from: '0001-01-01', branchId: 'A' }, { from: '2026-03-08', branchId: 'B' }, { from: '2026-03-20', branchId: 'C' },
+    ]);
+    expect(r.map(([, v]) => v).reduce((s, v) => s + v, 0)).toBe(total);
+    expect(r.every(([, v]) => v >= 0)).toBe(true);
+    expect(r.slice(1).every(([, v]) => v % 100 === 0)).toBe(true);
   });
 });
