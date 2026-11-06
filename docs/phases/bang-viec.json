@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 32
+      "count": 33
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 124
+      "count": 126
     },
     {
       "key": "partial",
@@ -4836,7 +4836,7 @@
     {
       "id": "S030-28",
       "phase": "PHASE-030",
-      "title": "Hợp đồng bizcitygate@1 (21 §1): GateInput, GateResult, năm loại cổng, thứ tự ghép, mặc định — PR chốt thiết kế",
+      "title": "bizcityaction@1 1.4.0: các bước §4 là cổng, kiểu GateResult trong packages/contracts, error.details.gates, ctx.evidence.gate (21 §1) — PR chốt thiết kế; không …",
       "priority": "P0",
       "status": "blocked",
       "column": "blocked",
@@ -4847,7 +4847,7 @@
     {
       "id": "S030-29",
       "phase": "PHASE-030",
-      "title": "Sổ cổng gatedecisions (21 §2): migration ≥ 0076, ghi giao dịch riêng, chuỗi băm theo đơn vị, RLS, hạn giữ; bọc wf.plan, requirePermission, intake, ledger, đăng…",
+      "title": "bizcityevidence@1 mở rộng = sổ cổng (21 §2): cột gates, source, basisused (migration ≥ 0076); ghi cả lần bị chặn trước handler; đăng nhập / xuất / in có bằng c…",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
@@ -4858,7 +4858,7 @@
     {
       "id": "S030-30",
       "phase": "PHASE-030",
-      "title": "Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong hằng ngày + manifest, GET /journal/verify",
+      "title": "Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong bằng chứng hằng ngày + manifest, GET /evidence/verify",
       "priority": "P1",
       "status": "blocked",
       "column": "blocked",
@@ -4898,6 +4898,39 @@
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 40
+    },
+    {
+      "id": "S030-34",
+      "phase": "PHASE-030",
+      "title": "HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phân tích, diễn giải, số gốc, trần tiền, cấm hạch toá…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 41
+    },
+    {
+      "id": "S030-35",
+      "phase": "PHASE-030",
+      "title": "Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT có hiệu lực; lịch nghỉ lễ; basis.article có cờ đối…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 42
+    },
+    {
+      "id": "S030-36",
+      "phase": "PHASE-030",
+      "title": "Đánh giá gọn phân quyền (22): bỏ Nới, hạn theo ngày chứng từ về dataLock, bỏ statusin, amountmax = hạn mức cá nhân, SoD ở cổng chuyển trạng thái, Role Editor d…",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 43
     }
   ]
 }

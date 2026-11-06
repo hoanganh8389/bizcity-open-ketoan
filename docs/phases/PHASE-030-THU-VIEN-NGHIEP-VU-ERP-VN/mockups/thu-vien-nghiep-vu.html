@@ -3,6 +3,7 @@
 <!-- [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án duyệt hướng: trang Thư viện nghiệp vụ là màn đầu tiên; thêm Tổng quan (6 cơ chế, 12 chuẩn), bản đồ luồng chi tiết Bán hàng / Kho / Lương / Kế toán (SVG sinh từ dữ liệu), Chuẩn chứng từ (hai con trỏ, chính sách duyệt), Thư viện tiền (allocate, schedule chạy thật), Thông báo (findings); danh mục 173 nghiệp vụ giữ ở mục Danh mục -->
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029: tôn chỉ "Lõi bất biến, nghiệp vụ linh hoạt" ở Tổng quan; Chuẩn chứng từ thêm bốn tầng, ba chủ sở hữu, điểm ghi nhận, hai lần đóng băng -->
 <!-- [2026-11-06 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — mục #cong Bàn điều hành chứng từ & cổng (HT11): hàng việc, kết quả từng cổng, xu hướng chặn / giữ, sai luật, sai vai trò, ma trận chuyển, sổ cổng; màu trạng thái theo bảng dataviz, có chú thích rê chuột và bảng số -->
+<!-- [2026-11-06 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — #cong: sổ cổng = bằng chứng (audit_logs.gates), không bảng gate_decisions (bản gọn chủ dự án đồng ý) -->
 <!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
 <html lang="vi">
 <head>
@@ -825,7 +826,7 @@ function pageGates() {
   const seq = (v, max) => { const i = v === 0 ? 0 : Math.min(7, 1 + Math.floor((v / max) * 6.999)); return i; };
   const maxM = Math.max(...TMAT.flat());
   return `<h2>Bàn điều hành chứng từ &amp; cổng <small style="font-weight:400;color:var(--muted);font-size:13px">· HT11 (đề xuất)</small></h2>
-  <p class="lead">Một nơi xem: việc gì cần xử lý, cái gì chưa qua cổng, cái gì sai luật / nguyên tắc kế toán, cái gì sai vai trò, luồng nghẽn ở đâu, ai đã làm gì. Số liệu đọc từ CSDL (view hàng việc + sổ cổng <code>gate_decisions</code>), không từ Prometheus. Tài liệu: <code>21-SO-CONG-VA-BANG-DIEU-HANH.md</code>.</p>
+  <p class="lead">Một nơi xem: việc gì cần xử lý, cái gì chưa qua cổng, cái gì sai luật / nguyên tắc kế toán, cái gì sai vai trò, luồng nghẽn ở đâu, ai đã làm gì. Số liệu đọc từ CSDL: view hàng việc + <b>bằng chứng</b> (<code>audit_logs.gates</code> — sổ cổng) + bể chờ + nhật ký ghi sổ; không từ Prometheus. Tài liệu: <code>21-SO-CONG-VA-BANG-DIEU-HANH.md</code>.</p>
   <div class="filters"><label>Khoảng<select><option>14 ngày</option><option>Hôm nay</option><option>Tháng này</option></select></label>
    <label>Chi nhánh<select><option>Tất cả</option><option>HN-01</option><option>HCM-02</option></select></label>
    <label>Module / loại<select><option>Tất cả</option><option>ban-hang</option><option>kho</option><option>quy</option><option>mua-hang</option></select></label>
@@ -869,12 +870,12 @@ function pageGates() {
    <div class="card"><h4>Thời gian ở mỗi trạng thái (trung vị)</h4><div class="tbl" style="margin:0"><table><tbody>${DWELL.map(([s, d]) => `<tr><td><code>${s}</code></td><td class="num"${/nghẽn/.test(d) ? ' style="color:var(--bad);font-weight:600"' : ''}>${d}</td></tr>`).join('')}</tbody></table></div>
     <p style="margin-top:6px">Cấp 2 (<code>approved1 → approved</code>) đang nghẽn: gợi ý xem lại chính sách <code>quy.de_nghi_tt.duyet</code> hoặc thêm người duyệt cấp 2.</p></div>
   </div>
-  <h3>⑥ Sổ cổng — nhật ký hành vi</h3>
+  <h3>⑥ Sổ cổng = bằng chứng — nhật ký hành vi (ai · khi nào · từ đâu · làm gì · chống sửa · căn cứ)</h3>
   <div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
     <span class="tag ok">✓ chuỗi băm khớp · 06/11 (chain_seq 18 204 → 18 391)</span><span class="tag warn">Tệp niêm phong: chờ Q030-5</span>
     <span class="spacer"></span><label style="font-size:12px;color:var(--muted)">Kết quả <select id="jv" style="font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink)"><option value="">tất cả</option>${VERD.map((v) => `<option value="${v[0]}">${v[1]}</option>`).join('')}</select></label></div>
    <ul class="tl" id="jl"></ul>
-   <p style="margin-top:6px">Mỗi dòng: định danh người (không tên), cổng, việc, chứng từ + phiên bản, mã, băm dòng. Không nội dung chứng từ (R-SEC-10). Bấm một chứng từ → tab <b>Cổng</b> của chứng từ đó.</p></div>`;
+   <p style="margin-top:6px">Mỗi dòng là một bằng chứng (<code>audit_logs</code>) với <code>gates[]</code>: định danh người (không tên), cổng, việc, chứng từ + phiên bản, mã, băm dòng; mở ra thấy <i>từ đâu</i> (phiên, IP rút gọn, trình duyệt) và <i>căn cứ</i> (văn bản, tham số + giá trị tại ngày). Không nội dung chứng từ (R-SEC-10). Bấm một chứng từ → tab <b>Cổng</b> của chứng từ đó.</p></div>`;
 }
 function drawTrend() {
   const el = $('#trend'); if (!el) return;

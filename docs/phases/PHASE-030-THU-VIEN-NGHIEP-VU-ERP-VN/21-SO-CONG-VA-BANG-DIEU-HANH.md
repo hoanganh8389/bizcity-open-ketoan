@@ -1,222 +1,208 @@
-# PHASE-030 · 21 — Bộ cổng chung, sổ cổng (trục nhật ký hành vi), bàn điều hành chứng từ & cổng
+# PHASE-030 · 21 — Cổng trong action, bằng chứng là sổ cổng (trục nhật ký hành vi), bàn điều hành chứng từ & cổng
 <!-- [2026-11-06 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án: "bộ các công cụ gate cần hiển thị dạng dashboard quản trị, thống kê, phân tích … mọi thứ cần có một nhật ký người dùng dạng filestore log để làm sổ cái của các gate, một trục xương sống liên quan tới nhật ký hành vi người dùng"; đề xuất bizcity_gate@1, sổ cổng gate_decisions, bàn điều hành HT11; nêu xung đột với STD-EVD-4 -->
+<!-- [2026-11-06 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án đồng ý bản gọn: không hợp đồng bizcity_gate@1 riêng, không bảng gate_decisions; cổng = các bước bizcity_action@1 §4 trả GateResult; sổ cổng = bizcity_evidence@1 mở rộng (gates[], chặn trước handler, source, basisUsed); thêm luật nhập chứng từ (mở rộng HT09) và nhập tham số pháp lý từ Erp-vn -->
 
-> Nối tiếp: [ADR-0029](../../adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md) (ba chủ sở hữu, cổng nhận sự việc) · [kiến trúc](../../architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md) · [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) · [19](19-RA-SOAT-DUYET-VA-GHI-SO.md). Bản mẫu: [mockups/thu-vien-nghiep-vu.html#cong](mockups/thu-vien-nghiep-vu.html#cong).
-> Mọi chỗ "đã có" dẫn tệp:dòng trên HEAD nhánh này (`main` d487c73).
+> Nối tiếp: [ADR-0029](../../adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md) · [kiến trúc](../../architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md) · [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) · [19](19-RA-SOAT-DUYET-VA-GHI-SO.md) · đánh giá phân quyền: [22](22-DANH-GIA-GON-PHAN-QUYEN.md). Bản mẫu: [mockups/thu-vien-nghiep-vu.html#cong](mockups/thu-vien-nghiep-vu.html#cong).
+> Mọi chỗ "đã có" dẫn tệp:dòng trên HEAD nhánh này.
 
 ## 0. Trả lời ngắn
 
-1. **Các cổng có chung một khuôn.** Validation, Role, Transition và Ledger intake đều nhận `{ai, làm gì, trên cái gì, lúc nào}`, chạy hàm quyết định thuần, trả `GateResult` cùng hình, có mã findings và có bằng chứng. Khác nhau ở câu hỏi, nguồn luật và mặc định khi không chắc (§1).
-2. **Sổ cổng là trục xương sống của nhật ký hành vi.** Mỗi quyết định của mọi cổng, kể cả bị chặn và bị huỷ giữa chừng, thành một dòng chỉ thêm, có chuỗi băm theo đơn vị (§2). Cùng với `audit_logs` (cái gì đã đổi) và phiên đăng nhập, nó dựng được dòng thời gian của từng người dùng và từng chứng từ (§3).
-3. **"Filestore log" đụng luật đang có.** `bizcity_evidence@1` STD-EVD-4 (Tier 1): *"Không ghi nhật ký nghiệp vụ ra tệp. Tệp chỉ cho log kỹ thuật (pino)"* (`docs/contracts/BIZCITY-EVIDENCE-v1.md:72`). Phép kiểm SC-EVD-1 bắt `appendFile` / `createWriteStream` / `.jsonl` (`tests/conformance/checks/action/action.check.mjs:138-157`); tệp JSONL nghiệp vụ duy nhất (`apps/api/src/phan-he/mua-hang/log.ts`) đang trong danh sách *bỏ*. Đề xuất (§2.4, câu hỏi **Q030-5** cho chủ dự án):
-   - nơi ghi chính là **bảng CSDL có chuỗi băm**, như `audit_logs`, ghi ở giao dịch riêng;
-   - **tệp niêm phong theo ngày** (JSONL + manifest băm) là bản **lưu trữ / xuất kiểm toán**, bật khi ADR sửa STD-EVD-4 được duyệt. Bản này cho phép kiểm độc lập với CSDL.
-4. **Bàn điều hành chứng từ & cổng** (màn mới **HT11**, quản trị) trả lời sáu câu (§4):
-   - việc gì cần xử lý: nháp / chờ duyệt / đã duyệt chưa ghi nhận / ở bể chờ;
-   - cái gì chưa qua cổng;
-   - cái gì sai luật hay nguyên tắc kế toán;
-   - cái gì sai vai trò;
-   - luồng chuyển trạng thái nghẽn ở đâu;
-   - ai đã làm gì.
+1. **Không có hợp đồng thứ 25.** [`bizcity_action@1` §4](../../contracts/BIZCITY-ACTION-v1.md) đã là một chuỗi cổng: xác thực → module / năng lực → quyền → kiểm đầu vào → chống trùng → handler (chuyển trạng thái, kiểm nghiệp vụ, ghi sổ) → bằng chứng. Chỉ cần **đặt tên các bước là cổng** và cho mỗi bước trả **một kiểu `GateResult`** dùng chung (LEAN-1, LEAN-2).
+2. **Không có bảng sổ cổng riêng.** **Bằng chứng** ([`bizcity_evidence@1`](../../contracts/BIZCITY-EVIDENCE-v1.md), `audit_logs`: chỉ thêm, chuỗi băm theo đơn vị, giữ ≥ 10 năm) *là* sổ cổng. Mở rộng thêm:
+   - `gates[]`: kết quả từng cổng;
+   - ghi cả lần bị chặn **trước** handler;
+   - `source`: từ đâu;
+   - `basisUsed`: căn cứ và tham số đã dùng.
 
-   Mỗi người dùng thấy **hàng việc của mình** ở thanh "Việc cần làm" sẵn có, cùng nguồn dữ liệu.
+   Một sự thật một chủ (LEAN-3).
+3. **Giống OpenTelemetry nhưng cho nghiệp vụ.** Cùng `trace_id` / `correlation_id`.
+   - Trace (giữ 7 ngày, có lấy mẫu) dành cho dev: chậm ở đâu, lỗi ở bước nào.
+   - Bằng chứng (đủ 100 %, ≥ 10 năm) dành cho chủ, kế toán trưởng, kiểm toán: ai, khi nào, từ đâu, làm gì, được hay bị chặn, theo căn cứ nào.
 
-## 1. `bizcity_gate@1` — một khuôn cho mọi cổng (đề xuất)
+   Mỗi cổng phát thêm span event `bizcity.gate` để hai bên bấm qua lại được.
+4. **Tệp lưu trữ** (Q030-5) vẫn mở: phương án B áp cho **bằng chứng**, xuất niêm phong hằng ngày.
+5. **Bàn điều hành HT11** đọc từ bằng chứng, view hàng việc, bể chờ và nhật ký ghi sổ. Không thêm nguồn.
 
-### 1.1 Bốn loại cổng
+## 1. Cổng là các bước của action
 
-| Cổng (`gate`) | Câu hỏi | Nguồn luật | Mặc định khi không chắc | Hậu quả | Đã có |
+### 1.1 Bản đồ
+
+| Bước `bizcity_action@1` §4 | Cổng (`gate`) | Câu hỏi | Engine sẵn có | Mặc định khi không chắc | Đã ghi bằng chứng? |
 |---|---|---|---|---|---|
-| `validation` | nội dung đúng chưa? | `check()` module, rulepack, danh mục | cho phép, nhắc (R-GATE-9) | `warn` qua kèm lý do; `block` giữ ở nháp / bể chờ | Gate A, Gate B, findings |
-| `role` | người này được làm việc này trên chứng từ này không? | vai trò, phạm vi, điều kiện (PHASE-028) | **đóng**; `deny` / SoD thắng | `block` | `requirePermission`; `authorize` (chưa nối) |
-| `transition` | được làm lúc này, từ trạng thái này không? | workflow YAML, chính sách, khoá kỳ | **đóng** | `block` | `wf.plan`, `dataLock`, `period_locks` |
-| `ledger` | sự việc đủ điều kiện ghi sổ chưa? | Kernel G1–G5 | đóng nhưng không vứt | `hold` vào bể chờ | `postDocumentIn`, `intake_inbox` |
-| (`session`) | đăng nhập / xuất / in | xác thực, quyền xuất | đóng | `block` | ☐ không ghi gì (`apps/api/src/modules/auth/*`) |
+| 1 xác thực | `session` | ai đang gọi? | JWT / khoá API / khoá Cell | đóng | ☐ (`apps/api/src/modules/auth/*` không ghi) |
+| 2 module bật, năng lực | `capability` | module có bật cho đơn vị? | registry module | đóng | ☐ |
+| 3 quyền (+ `expose.ai`) | `role` | người này được làm việc này, ở đây? | `requirePermission` → `authorize` (PHASE-028) | **đóng**; Cấm thắng | ☐ (`actions.ts:388-401` ném trước handler) |
+| 4 kiểm `input` (zod) | `shape` | đúng hình dạng dữ liệu? | zod | đóng | ☐ (STD-EVD-1 miễn) |
+| 5 chống trùng | `idempotency` | lặp lại một yêu cầu? | khoá idempotency | trả phản hồi cũ | ☐ |
+| 7 handler — `wf.plan`, `dataLock`, khoá kỳ | `transition` | được làm lúc này, từ trạng thái này? | workflow YAML, `date-rules.ts`, `period_locks` | **đóng** | ✅ nếu ném trong handler (`actions.ts:571-575`) |
+| 7 handler — `check()`, luật nhập, rulepack | `validation` | nội dung đúng luật / nguyên tắc chưa? | findings, HT09, rulepack | cho phép, nhắc (R-GATE-9) | ✅ khi chặn; ☐ khi chỉ nhắc |
+| 7 handler — `ctx.ledger.submit` | `ledger` | đủ điều kiện ghi sổ? | Kernel G1–G5 | giữ vào bể chờ | ✅ `posting_log`, `intake_inbox` |
 
-### 1.2 Hình chung
+Thứ tự đã cố định trong §4. Hai bước 3 và 4 dừng sớm (không hỏi nội dung với người không có quyền). Bước `validation` gom đủ phát hiện.
+
+### 1.2 Một kiểu chung
 
 ```ts
-// packages/contracts/src/gate.ts (đề xuất)
-type GateKind = 'validation' | 'role' | 'transition' | 'ledger' | 'session';
-type Verdict  = 'pass' | 'warn' | 'hold' | 'block';
-
-interface GateInput {
-  principal: { kind: 'user' | 'apikey' | 'ai' | 'system'; id: string };
-  action: string;                 // id action / chuyển (vd 'quy.payment_request.approve')
-  resource?: { docRef: string; version?: number; contentHash?: string; docType?: string;
-               branchId?: string; warehouseId?: string; amount?: number; docDate?: string; status?: string };
-  at: string;                     // thời điểm quyết; ngày chứng từ trong resource.docDate
-  correlationId: string;
-}
-
+// packages/contracts/src/findings.ts — thêm cạnh Finding (không hợp đồng mới)
+type GateKind = 'session' | 'capability' | 'role' | 'shape' | 'idempotency' | 'transition' | 'validation' | 'ledger';
 interface GateResult {
-  gate: GateKind; verdict: Verdict;
-  findings: Finding[];            // mã từ bizcity_findings@1 (vì sao, cách sửa, căn cứ)
-  decisionId: string;             // uuid; ghi vào bằng chứng và sổ cổng
-  ruleVersion: string;            // authz_version / phiên bản chính sách / rulepack / luật định khoản
-  reasonCode?: string;            // mã lý do của cổng role (AuthzDecision.reasonCode)
-  durationMs: number;
+  gate: GateKind;
+  verdict: 'pass' | 'warn' | 'hold' | 'block';
+  codes: string[];                 // mã bizcity_findings@1 / AUTHZ-* / mã lỗi chuẩn
+  decisionId?: string;             // AuthzDecision.decisionId, id lần nhận ở Kernel…
+  ruleVersion?: string;            // authz_version · phiên bản chính sách · rulepack · luật định khoản
+  basisUsed?: BasisUse[];          // §3.3
 }
 ```
 
-Bọc, không viết lại (LEAN-1, LEAN-2). Mỗi engine sẵn có thêm một hàm chuyển kết quả của nó sang `GateResult`:
-- `wf.plan` hôm nay ném `forbidden(msg)` → bọc thành `block` + mã `DOC-FLOW-*`;
-- `authorize` trả `{allowed, reasonCode, decisionId, authzVersion}` (`packages/platform/src/core/authz/types.ts:11`) → gần như khớp sẵn;
-- intake findings `block|warn|hint` → `hint` gom về `info`;
-- `Check{blocking}` của mua hàng → findings (N030-2).
+`bizcity_action@1` lên **1.4.0**:
+- §4 ghi rõ mỗi bước là một cổng và trả `GateResult`;
+- runtime gom các kết quả thành `gates[]` trong phản hồi lỗi (`error.details.gates`) và trong bằng chứng;
+- handler góp kết quả của nó qua `ctx.evidence.gate(result)`, cùng chỗ với `ctx.evidence.note` sẵn có.
 
-### 1.3 Ghép cổng trong một chuyển
+Không engine nào phải viết lại. `wf.plan`, `authorize`, intake findings, `dataLock` chỉ thêm một hàm đổi kết quả sang `GateResult`.
 
-Thứ tự cố định: `transition` → `role` → `validation` → (Approval Freeze) → `ledger`.
-- `transition` và `role` **dừng sớm**: không hỏi nội dung với người không có quyền, vừa vô nghĩa vừa lộ dữ liệu.
-- `validation` **gom đủ** mọi phát hiện để sửa một lần.
-- Kết quả gộp là verdict nặng nhất; mọi `GateResult` thành phần đều vào sổ cổng.
+## 2. Bằng chứng là sổ cổng
 
-## 2. Sổ cổng (Gate Journal) — sổ cái của các cổng
+### 2.1 Mở rộng `bizcity_evidence@1` (1.x, chỉ thêm)
 
-### 2.1 Vì sao cần, khi đã có `audit_logs`
-
-| Bảng sẵn có | Ghi gì | Thiếu gì cho mục đích này |
+| Thêm | Vì sao | Cách |
 |---|---|---|
-| `audit_logs` (`0001:79`, chuỗi băm `0036:45-84`) | **cái gì đã đổi**: một bản / action ghi; lỗi trong handler ghi `result_ok=false` ở giao dịch riêng (`packages/platform/src/core/actions.ts:571-575`) | lỗi **trước** handler (UNAUTHORIZED, FORBIDDEN, sai đầu vào) không ghi gì (`actions.ts:388-401`); không có quyết định từng cổng; không có chuyển trạng thái nào bị từ chối; action đọc không ghi |
-| `intake_inbox` (`0059:15-41`) | sự việc bị cửa sổ từ chối, giao dịch riêng (`packages/kernel/src/modules/intake/inbox.ts:66-87`) | chỉ cổng ledger; xoá theo hạn giữ 90 ngày |
-| `posting_log` (`0005:304-318`) | mỗi lần nhận / ghi / ghi lại / lỗi / huỷ ở Kernel | chỉ cổng ledger |
-| log pino → Loki, metric, span | mọi lỗi có một dòng kỹ thuật (`packages/platform/src/core/http.ts:59-62`) | không phải sổ: không chuỗi băm, giữ ngắn; metric **cấm** nhãn tenant / actor (R-OBS-4) |
+| `gates jsonb` | biết **vì sao** được / bị chặn, không chỉ cái gì đổi | mảng `GateResult` |
+| ghi cả lần bị chặn ở bước 1–5 của action **ghi** | hôm nay chỉ còn một dòng log kỹ thuật (`packages/platform/src/core/http.ts:59-62`) | giao dịch riêng, như đường `result_ok=false` đã có (`actions.ts:571-575`); `result_code` = mã lỗi chuẩn |
+| `source jsonb` | **từ đâu**: Erp-vn có IP, trình duyệt, phiên; ta chưa ghi | `{ sessionId, ipPrefix, ua }`; IP chỉ giữ đoạn đầu (/24 IPv4, /48 IPv6) vì là dữ liệu cá nhân (NĐ13/2023); chỉ người có quyền xem |
+| `basis_used jsonb` | **theo căn cứ nào**: mã findings đã có `basis`; thêm tham số pháp lý đã dùng | `[{ kind: 'finding' \| 'param' \| 'policy', key, value?, legalRef?, effectiveFrom?, version? }]` |
+| đăng nhập, đăng xuất, xuất, in | Erp-vn ghi; ta chưa | đăng nhập / xuất / in thành action có bằng chứng (STD-EVD-7 đã yêu cầu cho đọc nhạy cảm) |
 
-Không trùng sự thật (LEAN-3):
-- `audit_logs` giữ **hiệu lực** (cái đã đổi);
-- sổ cổng giữ **quyết định** (vì sao được / không được);
-- `intake_inbox` giữ **hàng chờ sửa**.
+Giữ nguyên:
+- chuỗi băm (trigger `0036:45-84`) gồm luôn các cột mới;
+- chỉ thêm (STD-EVD-2);
+- `changes` chỉ trường đổi, trường cá nhân lưu băm (STD-EVD-5);
+- giữ ≥ 10 năm (STD-EVD-8).
 
-Ba bảng nối nhau bằng `correlation_id`, `decision_id`, `evidence_id`, `intake_id`.
+Lần bị chặn ở bước 1 (chưa biết đơn vị, sai mật khẩu) ghi vào bằng chứng của đơn vị đích nếu xác định được, nếu không thì chỉ ghi log kỹ thuật kèm bộ đếm.
 
-### 2.2 Một dòng sổ cổng
+### 2.2 Không ghi gì thêm cho
 
-```sql
--- db/migrations/00NN_so_cong.sql (đề xuất; số ≥ 0076 vì 0073–0075 đã giữ chỗ)
-CREATE TABLE gate_decisions (
-  id uuid PRIMARY KEY, tenant_id uuid NOT NULL,
-  at timestamptz NOT NULL, correlation_id text NOT NULL, request_id text,
-  actor_kind text NOT NULL, actor_id text NOT NULL,             -- định danh, không tên người
-  action text NOT NULL, gate text NOT NULL, verdict text NOT NULL,
-  doc_ref text, doc_type text, doc_version integer, content_hash text,   -- không nội dung chứng từ
-  from_status text, to_status text, branch_id uuid, warehouse_id uuid,
-  finding_codes text[] NOT NULL DEFAULT '{}', reason_code text, rule_version text,
-  evidence_id uuid, intake_id uuid, posting_log_id uuid, duration_ms integer,
-  chain_seq bigint NOT NULL, prev_hash text, hash text NOT NULL   -- chuỗi băm theo đơn vị, như audit_logs
-);
--- RLS theo đơn vị; trigger chỉ thêm (không UPDATE / DELETE / TRUNCATE) như 0036:79-84
--- chỉ mục: (tenant_id, at), (tenant_id, doc_ref, at), (tenant_id, actor_id, at), (tenant_id, gate, verdict, at)
-```
+- action **đọc** thường (giữ khối lượng nhỏ); trừ đọc nhạy cảm (STD-EVD-7);
+- mỗi lần gõ phím ở form: cổng `validation` khi đang soạn trả findings cho giao diện nhưng **không** ghi bằng chứng; chỉ ghi lúc lưu / trình / duyệt.
 
-### 2.3 Đường ghi
+### 2.3 "Ai? Khi nào? Từ đâu? Làm gì? Chống sửa? Căn cứ nào?"
 
-- **Giao dịch riêng, sau khi quyết.** Một chuyển bị chặn thì giao dịch chính bị huỷ; nếu ghi sổ cổng trong cùng giao dịch, dòng đó mất theo. Dùng đúng mẫu đã chạy hai nơi: `recordRejection` (`inbox.ts:66-87`) và `result_ok=false` (`actions.ts:571-575`).
-- Dòng `pass` của chuyển thành công ghi **sau commit** cùng `evidence_id`.
-- **Lỗi ghi sổ không làm hỏng action.** Nếu ghi sổ cổng hỏng thì ghi metric `bizcity_gate_journal_failed_total` cùng một dòng pino, và chẩn đoán `GATE_JOURNAL_GAP` đối chiếu `audit_logs` với `gate_decisions` theo `correlation_id`. Đây là tầng **Eventual / Reconciliation** của R-ECP-CONS: sổ cổng không bao giờ được đọc ngược để quyết quyền (R-OBS-8).
-- **Chuỗi băm** dùng lại cách của `audit_logs`: khoá `pg_advisory_xact_lock` theo đơn vị, `chain_seq + 1`, SHA-256 trên các trường (`0036:45-71`). Chẩn đoán `GATE_CHAIN` kiểm lại như `EVIDENCE_CHAIN`.
-- **Ghi gì:**
-  - mọi chuyển trạng thái (pass / block);
-  - mọi quyết định `role` có mục đích `approve`, và mọi `deny` của mục đích khác;
-  - kết quả `validation` lúc trình / duyệt (không ghi mỗi lần gõ phím);
-  - mọi verdict `ledger`;
-  - đăng nhập (đạt / trượt), xuất, in.
+| Câu hỏi | Trường bằng chứng | Hôm nay |
+|---|---|---|
+| Ai | `actor`, `actor_kind`, `actor_via`, `on_behalf_of` (AI thay người), `gates[role].decisionId` | ✅ trừ `decisionId` |
+| Khi nào | `created_at` | ✅ |
+| Từ đâu | `request_id`, `correlation_id`, `trace_id`, **`source`** | ✅ trừ `source` |
+| Làm gì | `action`, `subject`, `changes` | ✅ |
+| Được hay bị chặn, vì sao | `result_ok`, `result_code`, **`gates[]`** | một phần |
+| Theo căn cứ nào | **`basis_used`** | ☐ |
+| Chống sửa | `chain_seq`, `prev_hash`, `hash`; chẩn đoán EVIDENCE_CHAIN; (B) manifest tệp | ✅ |
 
-  Action đọc thường **không** ghi, để giữ khối lượng nhỏ.
+Màn chi tiết một bằng chứng có đủ các khối như màn "Nhật ký hệ thống" của Erp-vn (ai, khi nào / làm gì / từ đâu / chống sửa / bảng giá trị cũ → mới). Thêm hai khối Erp-vn không có:
+- **Các cổng**: từng bước, kết quả, mã;
+- **Căn cứ**: văn bản, điều khoản, tham số và giá trị tại ngày.
 
-### 2.4 Filestore: bản lưu trữ niêm phong (cần chủ dự án quyết — Q030-5)
+### 2.4 Tệp lưu trữ niêm phong (Q030-5, chờ chủ dự án)
 
-| Phương án | Nơi ghi chính | Tệp | Luật | Đề xuất |
-|---|---|---|---|---|
-| A | bảng `gate_decisions` | không | khớp STD-EVD-4 | tối thiểu |
-| **B** | bảng `gate_decisions` | **xuất niêm phong hằng ngày**: `DATA_DIR/so-cong/<đơn vị>/<yyyy>/<mm>/<dd>.jsonl` + `<dd>.manifest.json` (số dòng, `chain_seq` đầu / cuối, băm cuối, băm tệp), chỉ ghi một lần, không sửa; tuỳ chọn đẩy lên kho lưu trữ ngoài (WORM) | cần **ADR sửa STD-EVD-4**: thêm ngoại lệ *"bản lưu trữ niêm phong do Platform xuất từ bảng có chuỗi băm"*; SC-EVD-1 miễn đúng một tệp `packages/platform/src/core/gate-journal-export.ts` | **khuyến nghị** |
-| C | tệp JSONL là nơi ghi chính | — | trái STD-EVD-4, trái R-ECP-CONS (mất khi nhiều máy chủ, không truy vấn được, khoá ghi theo tiến trình như `mua-hang/log.ts`) | không |
+| Phương án | Nơi ghi chính | Tệp | Luật |
+|---|---|---|---|
+| A | bằng chứng (CSDL) | không | khớp STD-EVD-4 |
+| **B (khuyến nghị)** | bằng chứng (CSDL) | xuất niêm phong hằng ngày `DATA_DIR/bang-chung/<đơn vị>/<yyyy>/<mm>/<dd>.jsonl` + `<dd>.manifest.json` (số dòng, `chain_seq` đầu / cuối, băm cuối, băm tệp); chỉ ghi một lần; tuỳ chọn đẩy kho lưu trữ ngoài (WORM) | **ADR sửa STD-EVD-4**: ngoại lệ đúng một tệp `packages/platform/src/core/evidence-export.ts` |
+| C | tệp JSONL | — | trái STD-EVD-4 và R-ECP-CONS; không khuyến nghị |
 
-B giữ được cả hai điều:
-- **sổ cái truy vấn được**, cho bàn điều hành và golden;
-- **sổ cái cầm được**, cho kiểm toán độc lập, sao lưu ngoài, và chứng minh không ai sửa CSDL: so băm cuối của manifest với `chain_seq` trong bảng.
+## 3. Căn cứ, tham số pháp lý, luật nhập chứng từ
 
-### 2.5 Riêng tư và hạn giữ
+### 3.1 Căn cứ tới điều, khoản, điểm
 
-- **Không nội dung chứng từ**, không tên / số điện thoại / mã số thuế / tài khoản ngân hàng (R-SEC-10, R-TEN-8, R-INTAKE-12). Chỉ định danh, mã, băm.
-- Hạn giữ đề xuất:
-  - quyết định có `evidence_id` hoặc `ledger`: theo bằng chứng, ≥ 10 năm (STD-EVD-8);
-  - `role` bị `deny`, `session` trượt: 2 năm;
-  - `validation` pass / warn không kèm bằng chứng: 1 năm.
+`bizcity_findings@1` hiện ghi căn cứ ở **mức văn bản** (R-GATE-11: điều khoản chỉ thêm khi đã đối chiếu văn bản gốc). Erp-vn ghi tới mức *"Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm k"*.
 
-  Xoá theo hạn chạy bằng tác vụ của Platform. Tệp niêm phong (phương án B) giữ theo bằng chứng.
-- Ai xem:
-  - người dùng xem dòng của chính mình;
-  - quản trị đơn vị, kế toán trưởng, kiểm toán viên xem toàn đơn vị;
-  - quyền mới `system:gate-journal` (rủi ro cao, AI chỉ đọc tổng hợp).
+Đề xuất `basis[]` thêm trường tuỳ chọn `article: { dieu, khoan?, diem? }` kèm `verified: true | false`. Giao diện chỉ hiện điều khoản khi `verified`.
 
-## 3. Trục nhật ký hành vi người dùng
+### 3.2 Nhập tham số pháp lý từ Erp-vn
 
-Không thêm bảng thứ ba. Dòng thời gian **dựng khi hỏi** (D028-13) từ:
+Chủ dự án đã xuất `tham-so-phap-ly-2026-11-06.json` (định dạng `lfood-legal-params` v1):
+- **120 tham số**, 9 nhóm: lao động 28 · thuế TNDN 26 · bảo hiểm 17 · TNCN 16 · GTGT 10 · lương 9 · kế toán 8 · tài sản 1 · khác 5;
+- 118 `law`, 2 `policy`;
+- **mọi** giá trị có `legal_ref` và `date_from` / `date_to`.
 
-| Nguồn | Cho dòng thời gian |
+Mỗi tham số có dạng `{ code, name, group, value_type, kind, values: [{ value, date_from, date_to, legal_ref, state }] }`. Khớp gần một-một với `setting_values` của E2 (khoá, giá trị, hiệu lực, phạm vi) cộng `legalRef`, `kind` (P-030-2).
+
+Việc S030-15 nay có nguồn cụ thể:
+1. viết bộ chuyển đổi `lfood-legal-params@1 → vn-rulepacks`: khoá đổi sang `<nhóm>.<tên>`, giữ mã gốc làm bí danh;
+2. tách `legal_ref` thành `{ văn bản, điều, khoản, điểm }` (`verified: false`);
+3. kế toán trưởng xác nhận giá trị (S030-12);
+4. nạp khi E2 merge.
+
+Hai bảng đi cùng đường này:
+- **thuế suất GTGT có hiệu lực** (vd 8 % từ 01/07/2025 theo NQ 204/2025/QH15, NĐ 174/2025/NĐ-CP);
+- **lịch nghỉ lễ** có căn cứ (Bộ luật Lao động 2019, Điều 112), làm dữ liệu cho `workingDays` (K-030-10).
+
+### 3.3 Luật nhập chứng từ: gợi ý, cảnh báo, hướng dẫn
+
+Erp-vn có "Ràng buộc nhập liệu" (`lfood.entry.rule`):
+- điều kiện theo đầu tài khoản và bên Nợ / Có;
+- bắt buộc đối tượng / khoản mục / diễn giải / số chứng từ;
+- trần số tiền; cấm hạch toán tay (vd 154).
+
+Điểm yếu đã rà ([15 §1 #9](15-KINH-NGHIEM-COT-LOI.md)): luật **chỉ** áp cho màn bút toán, không áp cho phiếu tay thường.
+
+open-ketoan đã có khung đúng cho danh mục: **HT09 Quy định dữ liệu danh mục** (`apps/api/src/modules/system/catalog-rules.routes.ts`). Mỗi luật có mức; đơn vị sửa câu chữ; kế toán trưởng hạ cảnh báo (bắt lý do); chạy ngay (ADR-0020); bản duyệt gắn dấu luật; có căn cứ.
+
+Đề xuất **mở HT09 sang chứng từ**: cùng màn, cùng cách duyệt, thêm loại luật `entry`:
+
+| Phần | Nội dung |
 |---|---|
-| `gate_decisions` | đã thử làm gì, được hay bị chặn, vì sao (mã) |
-| `audit_logs` | cái gì đã thực sự đổi (bằng chứng) |
-| `intake_inbox` | cái gì đang chờ sửa ở bể |
-| `posting_log` | cái gì đã vào sổ / ra sổ |
-| `gate = 'session'` trong `gate_decisions` | đăng nhập, xuất, in |
-
-API đề xuất:
-- `GET /api/v1/journal?actor=&docRef=&from=&to=&gate=&verdict=`: gộp các nguồn, sắp theo `at`, phân trang con trỏ.
-- `GET /api/v1/journal/verify?from=&to=`: kiểm chuỗi băm (và manifest tệp nếu B).
+| Điều kiện | loại chứng từ · `reasonCode` / nhóm lý do · nhóm tài khoản (dữ liệu kế toán trưởng cấu hình, không phải số trong mã) · bên Nợ / Có · chi nhánh |
+| Yêu cầu | chiều phân tích bắt buộc (đối tượng, khoản mục, bộ phận, vụ việc) · diễn giải · số chứng từ gốc · trần số tiền · cấm hạch toán tay |
+| Mức | `info` gợi ý (hiện cạnh ô nhập) · `warn` cảnh báo (qua kèm lý do) · `block` chặn (chỉ cho toàn vẹn dữ liệu) |
+| Lời nói | mã finding `ENTRY-*`, có vì sao, cách sửa, căn cứ, trang học |
+| Áp ở | cổng `validation` của **mọi** đường vào: phiếu tay, chứng từ module, kết nối / POS (Gate B) |
+| Bằng chứng | luật nào chạy, phiên bản luật (dấu luật), mức sau khi đơn vị hạ |
 
 ## 4. Bàn điều hành chứng từ & cổng (HT11)
 
-### 4.1 Sáu câu hỏi, sáu khối
+Sáu khối giữ như bản trước, chỉ đổi nguồn:
 
-| Khối | Trả lời | Nguồn | Hình |
-|---|---|---|---|
-| ① Hàng việc | bao nhiêu chứng từ ở nháp / chờ duyệt / đã duyệt chưa ghi nhận / bể chờ / bị chặn; tuổi (≤ 1 ngày, 1–3, 3–7, > 7) | view `bizcity_read.document_queue` (ADR-0026) gộp trạng thái các bảng chứng từ về 5 nhóm (`payment_requests`, `purchase_documents`, `accounting_events` pending / error, `intake_inbox` open; sau này `module_documents`) | ô số + bảng theo loại × tuổi |
-| ② Cổng hôm nay / 14 ngày | tỷ lệ qua / nhắc / giữ / chặn theo từng cổng; xu hướng chặn và giữ | `gate_decisions` gộp theo ngày | thanh xếp chồng 100 % (màu trạng thái + biểu tượng) · đường 14 ngày |
-| ③ Sai luật / nguyên tắc kế toán | mã findings `block` / `warn` hay gặp nhất, có căn cứ; chứng từ cần xem lại | `gate_decisions.finding_codes` ⋈ `FINDINGS_LIBRARY` (`basis`, `rule`) | thanh ngang theo mã + bảng chứng từ |
-| ④ Sai vai trò | bị từ chối vì phạm vi, SoD, thu hồi quyền, thiếu quyền; theo người / quyền | `gate = 'role' AND verdict = 'block'`, `reason_code` | bảng + thanh theo lý do |
-| ⑤ Luồng chuyển | ma trận trạng thái nguồn → đích (số lần), thời gian ở mỗi trạng thái, điểm nghẽn | `gate = 'transition'` + lịch sử trạng thái | bản đồ nhiệt một màu |
-| ⑥ Nhật ký | dòng thời gian theo người / chứng từ; trạng thái chuỗi băm (+ manifest tệp) | §3 | dòng thời gian + dấu kiểm chuỗi |
+| Khối | Trả lời | Nguồn |
+|---|---|---|
+| ① Hàng việc | nháp / chờ duyệt / đã duyệt chưa ghi nhận / bể chờ / bị chặn, theo tuổi | view `bizcity_read.document_queue` (ADR-0026) gộp trạng thái các bảng chứng từ về 5 nhóm + `intake_inbox` |
+| ② Cổng | tỷ lệ qua / nhắc / giữ / chặn theo cổng; xu hướng 14 ngày | `audit_logs.gates` + `posting_log` + `intake_inbox` |
+| ③ Sai luật / nguyên tắc kế toán | mã hay gặp, căn cứ; chứng từ cần xem lại | `gates[].codes` ⋈ thư viện findings (`basis`) |
+| ④ Sai vai trò | ngoài phạm vi, thiếu quyền, thu hồi, tự duyệt | `gates[role]` + `gates[transition]` (SoD) |
+| ⑤ Luồng chuyển | ma trận nguồn → đích, thời gian ở mỗi trạng thái | `gates[transition]` + lịch sử trạng thái |
+| ⑥ Nhật ký | dòng thời gian theo người / chứng từ; kiểm chuỗi băm (+ manifest) | bằng chứng + `posting_log` + `intake_inbox`, dựng khi hỏi |
 
-Lọc chung ở một hàng phía trên: khoảng ngày, chi nhánh, loại chứng từ / module, người. Mỗi ô và mỗi thanh bấm vào thì ra danh sách chứng từ đã lọc; mỗi chứng từ mở màn chi tiết với tab **Cổng** (mọi quyết định của nó).
+Ai thấy gì:
+- người dùng: hàng việc của mình ở thanh "Việc cần làm" (`apps/web/src/layout/rail/useViec.ts`, thêm nguồn `GET /api/v1/queue/mine`);
+- trưởng bộ phận: theo `scopeOf`;
+- kế toán trưởng / quản trị / kiểm toán viên: toàn đơn vị;
+- trợ lý AI: số tổng hợp, không danh sách người.
 
-### 4.2 Ai thấy gì
-
-| Vai | Thấy |
-|---|---|
-| Người dùng | hàng việc **của mình** ở thanh "Việc cần làm" (`apps/web/src/layout/rail/useViec.ts`, thêm nguồn `GET /api/v1/queue/mine`) và dòng thời gian của mình |
-| Trưởng bộ phận | hàng việc của phạm vi mình (theo `scopeOf`, PHASE-028) |
-| Kế toán trưởng, quản trị, kiểm toán viên | HT11 toàn đơn vị |
-| Trợ lý AI | số tổng hợp và mã (`ai: 'read'`), không danh sách người |
-
-### 4.3 Dùng lại màn sẵn có
-
-- ACC14 (`apps/web/src/features/documents/DocumentsPage.tsx`) và trạm tiền kiểm (`IntakeStation.tsx`) **giữ nguyên**; HT11 dẫn link sang.
-- HT08 Bàn đánh giá (R-GATE-7: tuổi và số lượng bể chờ) lấy khối ① làm nguồn.
-- Bàn điều tra (DEV01–09) vẫn là nơi xem log / trace kỹ thuật; HT11 là nơi xem **nghiệp vụ**.
-- Số liệu HT11 đọc từ CSDL, **không** từ Prometheus (R-OBS-4 cấm nhãn đơn vị / người trên metric).
+Số liệu đọc từ CSDL, không từ Prometheus (R-OBS-4). ACC14, trạm tiền kiểm, HT08, Bàn điều tra giữ nguyên, HT11 dẫn link sang.
 
 ## 5. Golden và chẩn đoán
 
 | Mã | Cho – khi – thì |
 |---|---|
-| T030-GATE-1 | chuyển bị chặn trước handler (FORBIDDEN) → **có** dòng `gate_decisions` dù giao dịch chính huỷ; `audit_logs` không đổi |
-| T030-GATE-2 | chuyển thành công → đúng một dòng mỗi cổng đã chạy, cùng `correlation_id`; dòng `pass` cuối có `evidence_id` |
-| T030-GATE-3 | sửa tay một dòng `gate_decisions` (vượt trigger bằng quyền superuser trong test) → `GATE_CHAIN` báo đứt; (B) manifest ngày đó không khớp |
-| T030-GATE-4 | không dòng nào chứa nội dung chứng từ, tên người, mã số thuế (quét mẫu) |
+| T030-GATE-1 | action ghi bị chặn ở bước quyền (FORBIDDEN) → **có** bằng chứng `result_ok=false`, `gates[role].verdict = 'block'`, mã AUTHZ-*; giao dịch chính huỷ |
+| T030-GATE-2 | chuyển thành công → bằng chứng có đủ `gates[]` theo đúng thứ tự §1.1 và `basis_used` của tham số đã dùng |
+| T030-GATE-3 | sửa tay một dòng bằng chứng (vượt trigger trong test) → EVIDENCE_CHAIN báo đứt; (B) manifest ngày đó không khớp |
+| T030-GATE-4 | không bằng chứng nào chứa nội dung chứng từ, tên người, mã số thuế, IP đầy đủ (quét mẫu) |
 
-Chẩn đoán mới: `GATE_CHAIN` (L3), `GATE_JOURNAL_GAP` (L3, đối chiếu `audit_logs` ↔ `gate_decisions`), `QUEUE_AGING` (L1, chứng từ chờ quá hạn theo chính sách).
+Chẩn đoán:
+- **dùng lại** EVIDENCE_CHAIN;
+- thêm `EVIDENCE_GATES_MISSING` (L3: action ghi không có `gates[]` sau khi bật) và `QUEUE_AGING` (L1: chứng từ chờ quá hạn theo chính sách).
 
-## 6. Việc
+## 6. Việc (thay bản trước)
 
 | Mã | Việc | Chủ | Phụ thuộc |
 |---|---|---|---|
-| S030-28 | Hợp đồng `bizcity_gate@1` (GateInput, GateResult, bốn + một loại cổng, ghép, mặc định) — PR chốt thiết kế | nhóm Lõi | — |
-| S030-29 | Sổ cổng: migration `gate_decisions` (≥ 0076), ghi giao dịch riêng, chuỗi băm, RLS, hạn giữ, `GATE_CHAIN`, `GATE_JOURNAL_GAP`; bọc `wf.plan`, `requirePermission`, intake, ledger | Platform | S030-28; chạm `actions.ts` / `audit.ts` sau khi dòng PHASE-014 đợt 8b nhả |
-| S030-30 | Q030-5 → nếu B: ADR sửa STD-EVD-4, xuất niêm phong theo ngày + manifest + `journal/verify` | chủ dự án quyết; Platform | S030-29 |
-| S030-31 | View `bizcity_read.document_queue` + API `queue/summary`, `queue/mine`; thanh "Việc cần làm" thêm nguồn | Platform + web | — (làm được trước sổ cổng) |
-| S030-32 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) | web | S030-29, S030-31 |
+| S030-28 | `bizcity_action@1` 1.4.0 (§4 = các cổng, `GateResult`, `error.details.gates`, `ctx.evidence.gate`) + kiểu `GateResult` trong `packages/contracts` — PR chốt thiết kế | nhóm Lõi | — |
+| S030-29 | `bizcity_evidence@1` mở rộng: cột `gates`, `source`, `basis_used` (migration ≥ 0076); ghi chặn trước handler; đăng nhập / xuất / in thành action có bằng chứng; `EVIDENCE_GATES_MISSING` | Platform | S030-28; chạm `actions.ts` / `audit.ts` khi dòng PHASE-014 đợt 8b nhả |
+| S030-30 | Q030-5 → nếu B: ADR sửa STD-EVD-4, xuất niêm phong bằng chứng hằng ngày + manifest + `GET /evidence/verify` | chủ dự án quyết; Platform | S030-29 |
+| S030-31 | View `bizcity_read.document_queue` + API `queue/summary`, `queue/mine`; thanh "Việc cần làm" | Platform + web | — (làm được ngay) |
+| S030-32 | Màn HT11 (6 khối) + màn chi tiết bằng chứng (ai / khi nào / từ đâu / làm gì / chống sửa / các cổng / căn cứ) | web | S030-29, S030-31 |
 | S030-33 | Golden T030-GATE-1..4 | Conformance | S030-29 |
-
-Thứ tự hợp lý: S030-31 trước (hàng việc dùng ngay được, chỉ đọc bảng sẵn có), rồi S030-28 → S030-29 → S030-32; S030-30 khi chủ dự án trả lời Q030-5.
+| S030-34 | HT09 mở sang luật nhập chứng từ (`ENTRY-*`), áp ở cổng `validation` mọi đường vào | Platform | S030-28 |
+| S030-35 | Bộ chuyển đổi `lfood-legal-params@1` → `vn-rulepacks` (120 tham số) + thuế suất GTGT có hiệu lực + lịch nghỉ lễ; `basis.article` | Platform + kế toán trưởng | E2 merge, S030-12 |
