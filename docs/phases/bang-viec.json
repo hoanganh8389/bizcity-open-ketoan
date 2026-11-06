@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 19
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 125
+      "count": 124
     },
     {
       "key": "partial",
@@ -4131,7 +4131,7 @@
     {
       "id": "S028-8",
       "phase": "PHASE-028",
-      "title": "W3: đóng 17 route ghi thô còn lại, requireScope()",
+      "title": "W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027 Phụ lục A, W3 đợt 2; giữ chỗ sau khi W2 đợt 2 nhả…",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
@@ -4142,11 +4142,17 @@
     {
       "id": "S028-9",
       "phase": "PHASE-028",
-      "title": "W4: Role Editor UI (mã màn — Q028-1)",
+      "title": "W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chốt ADR-0027 Phụ lục A, W4",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w4-role-editor",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-028 · W4 — Role Editor: module modules/phan-quyen/ (ma trận quyền × vai trò, vai trò, người d…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 18
     },
