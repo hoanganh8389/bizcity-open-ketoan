@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 17
+      "count": 16
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 211
+      "count": 212
     }
   ],
   "items": [
@@ -4727,15 +4727,9 @@
       "phase": "PHASE-030",
       "title": "Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate mua hàng và splitByDays / splitByPercent tài sản; g…",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thu-vien-tien)",
-        "branch": "feat/phase-030-thu-vien-tien",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-19 — thư viện tiền: roundMoney, allocate, schedule (chốt thiết kế 18); chuyển allo…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
