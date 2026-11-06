@@ -10,6 +10,7 @@
  *   POST   /api/v1/purchase/invoices/import          ghi nhiều hoá đơn (trùng bỏ qua)
  *   GET    /api/v1/purchase/invoices/scan/config     đã cấu hình dịch vụ đọc hoá đơn (AI) chưa
  *   POST   /api/v1/purchase/invoices/scan            gửi ảnh / PDF sang dịch vụ đọc hoá đơn → xem trước như prepare
+ *   POST   /api/v1/purchase/invoices/ingest-xml      nhận hoá đơn điện tử XML kèm tệp gốc (màn MH22, cầu nối)
  *   GET    /api/v1/purchase/invoice-aliases          bảng nhận diện mã NCC (dữ liệu học)
  *   DELETE /api/v1/purchase/invoice-aliases/:id      xoá một cách ghi đã học (nhật ký ghi đủ nội dung)
  */
@@ -25,6 +26,7 @@ import { listPolicies } from './store.js';
 import {
   cancelInvoice, deleteAlias, getInvoice, importInvoices, invoiceInputSchema, listAliases, listInvoices, parsedInvoiceSchema, prepareInvoices, saveInvoice, scanConfigured, scanInvoice,
 } from './hoa-don.js';
+import { ingestInvoiceXml, ingestXmlSchema } from './hoa-don-xml.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Mua hàng — Hoá đơn NCC'];
@@ -119,6 +121,17 @@ export const hoaDonRoutesWriteActions: AnyActionDef[] = [
 
 
 export const hoaDonRoutesMoreWriteActions: AnyActionDef[] = [
+  // [2026-11-06 10:25 PM Nguyễn Văn Thủy] MH22 — nhận một hoá đơn điện tử XML kèm tệp gốc; từng hoá đơn một giao dịch để hoá đơn lỗi không kéo theo hoá đơn khác (đóng góp)
+  defineAction({
+    id: 'mua-hang.invoice.ingest-xml', title: 'Nhận hoá đơn điện tử XML kèm tệp gốc', tags,
+    description: 'Đọc XML, kiểm người mua, tìm hoặc tạo NCC theo MST, lưu hoá đơn. Trùng thì chỉ đính thêm tệp mới. Hoá đơn bị thay thế / huỷ không nhập.',
+    permission: 'documents:write', effect: 'write', sideEffects: ['documents', 'masterdata'], idempotency: 'natural',
+    input: ingestXmlSchema, output: anyOut,
+    expose: { http: { method: 'POST', path: '/api/v1/purchase/invoices/ingest-xml', bodyLimit: 24 * 1024 * 1024 }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'invoice', objectId: (_i, o) => (o as { invoiceId?: string } | undefined)?.invoiceId },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx; const a = ctx.legacyAuth; return await sameTx(trx, (trx) => ingestInvoiceXml(trx, a.tenantId, a.actor, a.actorName, input)); },
+  }),
   defineAction({
     id: 'mua-hang.invoice.scan', title: 'Đọc ảnh / PDF hoá đơn bằng dịch vụ ngoài (AI) → xem trước', tags,
     permission: 'documents:write', effect: 'write', sideEffects: ['external'], idempotency: 'natural',

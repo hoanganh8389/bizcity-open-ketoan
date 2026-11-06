@@ -18,6 +18,7 @@ import { dmy } from '../chung';
 import '../mua-hang.css';
 import { HoaDonModal } from './HoaDonModal';
 import { NhapHoaDon } from './NhapHoaDon';
+import { NhapXmlHoaDon } from './NhapXmlHoaDon';
 import { SOURCE_LABEL, STATE_LABEL, invoiceApi, type InvoiceRow, type InvoiceState } from './api';
 
 export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) {
@@ -33,6 +34,7 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
   const [open, setOpen] = useState<{ id?: string } | null>(null);
   const [importMode, setImportMode] = useState<'excel' | 'scan' | null>(null);
   const [aliases, setAliases] = useState(false);
+  const [xmlOpen, setXmlOpen] = useState(false);
   const exportRef = useRef<(() => void) | null>(null);
   const pc = embedPartner ?? partner;
   const q = useQuery({ queryKey: ['mua-hang', 'invoices', pc, from, to], queryFn: () => invoiceApi.list({ partnerCode: pc || undefined, from: from || undefined, to: to || undefined }) });
@@ -75,6 +77,7 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
           <span style={{ fontSize: 13 }}>đến</span><input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           {!embedded && <div style={{ width: 240 }}><PartnerPicker value={partner} onChange={setPartner} placeholder="Mọi nhà cung cấp" /></div>}
           <button className="btn btn-sm btn-primary" onClick={() => setOpen({})}>+ Thêm hoá đơn</button>
+          <button className="btn btn-sm" title="Chọn hoá đơn điện tử XML, kèm PDF / ZIP cùng tên. Phần mềm tự đọc và tìm NCC theo mã số thuế" onClick={() => setXmlOpen(true)}>Nhập XML</button>
           <button className="btn btn-sm" onClick={() => setImportMode('excel')}>Nhập Excel</button>
           <button className="btn btn-sm" onClick={() => setImportMode('scan')} disabled={!scan.data?.configured} title={scan.data?.configured ? 'Đọc ảnh / PDF hoá đơn bằng dịch vụ AI đã cấu hình' : 'Chưa cấu hình dịch vụ đọc hoá đơn (INVOICE_AI_URL) — hỏi bộ phận IT'}>Quét ảnh / PDF (AI)</button>
           <button className="btn btn-sm" onClick={() => setAliases(true)} title="Các cách NCC ghi tên / mã hàng mà phần mềm đã học">Bảng nhận diện mã</button>
@@ -89,6 +92,7 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
       </div>
       {open && <HoaDonModal id={open.id} partnerCode={pc} lockPartner={embedded} onClose={() => setOpen(null)} onSaved={() => void q.refetch()} />}
       {importMode && <NhapHoaDon mode={importMode} partnerCode={pc} lockPartner={embedded} onClose={() => setImportMode(null)} onDone={() => void q.refetch()} />}
+      {xmlOpen && <NhapXmlHoaDon onClose={() => setXmlOpen(false)} onDone={() => void q.refetch()} />}
       {aliases && <BangNhanDien partnerCode={pc} onClose={() => setAliases(false)} />}
     </>
   );

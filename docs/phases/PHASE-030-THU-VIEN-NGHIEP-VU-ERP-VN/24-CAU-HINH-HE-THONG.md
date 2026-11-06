@@ -120,7 +120,7 @@ Mỗi luật / tham số có ô xem trước: ô nhập giả hiện đúng gợ
 
 | Hợp đồng | Thêm gì | Chủ | Ghi chú |
 |---|---|---|---|
-| `bizcity_settings@1` → 1.2.0 | mục registry thêm `basis` (`{ doc, article?, clause?, point?, url?, effectiveFrom? }`) và `usedBy` (cổng / form đọc khoá); `setting_values` thêm `basis jsonb`. **Không** thêm `approval`, `status`, `approved_by` (D030-12) | PHASE-029 E2 | PR chốt riêng — chủ E2 nhận hoặc bác (S030-38) |
+| `bizcity_settings@1` → 1.2.0 | mục registry thêm `basis` (`{ doc, article?, clause?, point?, url?, effectiveFrom? }`) và `usedBy` (cổng / form đọc khoá); `setting_values` thêm `basis jsonb`. **Không** thêm `approval`, `status`, `approved_by` (D030-12) | PHASE-029 E2 | **Chữ chốt đã viết** ở [hợp đồng 1.2.0-draft](../../contracts/BIZCITY-SETTINGS-MATRIX-v1.md) (S030-38); mã ở S030-43 |
 | `bizcity_action@1` → 1.4.0 | cổng `validation` đọc tham số qua `getSetting` theo **ngày chứng từ**, trả `basis[]` trong `GateResult` | nhóm Lõi | đã là S030-28 |
 | `bizcity_evidence@1` | `basis_used` chứa `{ kind: 'param', key, version, value, legalRef }` | PHASE-030 | đã là S030-29 |
 | `vn-rulepacks` | khoá tham số pháp lý + lịch nghỉ lễ + thuế suất có hiệu lực, mỗi khoá có căn cứ | PHASE-030 + kế toán trưởng | đã là S030-35 |

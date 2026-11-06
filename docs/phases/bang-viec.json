@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 32
+      "count": 33
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 124
+      "count": 126
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 214
+      "count": 215
     }
   ],
   "items": [
@@ -4930,8 +4930,8 @@
       "phase": "PHASE-030",
       "title": "bizcitysettings@1 1.2.0: registry thêm basis, usedBy; settingvalues thêm basis (24 §5) — PR chốt thiết kế; không approval / status / approvedby (D030-12)",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 45
@@ -4963,6 +4963,45 @@
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 47
+    },
+    {
+      "id": "S030-41",
+      "phase": "PHASE-030",
+      "title": "Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), T030-EVT-1..5 — Kernel K2",
+      "priority": "P0",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, event-id)",
+        "branch": "feat/phase-030-event-id-bat-buoc",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-41 — ledgerentries.eventid bắt buộc (NOT NULL) ở CSDL: migration an toàn cho bản c…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 48
+    },
+    {
+      "id": "S030-41b",
+      "phase": "PHASE-030",
+      "title": "Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thuộc dòng PHASE-026 P0 đợt 3, R-FLOW-3)",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 49
+    },
+    {
+      "id": "S030-42",
+      "phase": "PHASE-030",
+      "title": "accountingevents.createdby bắt buộc: danh tính tác vụ cho sự việc hệ thống (khấu hao 792, giá vốn 692 dòng rỗng ở ketoantest) — phát hiện F-2 của 25 §4; D030-16",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 50
     }
   ]
 }
