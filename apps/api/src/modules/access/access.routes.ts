@@ -8,6 +8,7 @@
  *   PATCH      /api/v1/users/:id        sửa, khoá, đặt lại mật khẩu (đặt lại / khoá / đổi vai trò → mọi máy của người đó bị đăng xuất)
  *   GET/POST   /api/v1/users/:id/roles  vai trò bổ sung: lịch sử, gán (PHASE-028 W1, không đăng xuất người được gán)
  *   POST       /api/v1/users/:id/roles/:assignmentId/revoke   thu hồi vai trò bổ sung (lý do bắt buộc)
+ *   GET/POST/PATCH /api/v1/roles[...]  vai trò của đơn vị và luật Cho / Cấm (PHASE-028 W2 đợt 2 — tenant-role.routes.ts)
  *   POST       /api/v1/auth/change-password   tự đổi mật khẩu      (mọi người dùng; máy khác bị đăng xuất, máy này nhận vé mới)
  *   POST       /api/v1/auth/logout-others     đăng xuất mọi thiết bị khác (máy này nhận vé mới)
  *   GET/POST   /api/v1/api-keys         danh sách, tạo (khoá chỉ hiện một lần)
@@ -21,6 +22,7 @@ import { ok, idParamSchema, idSchema } from '../../core/http.js';
 import { apiKeyCreateSchema, changePasswordSchema, roleAssignSchema, roleRevokeSchema, userCreateSchema, userUpdateSchema } from './access.schemas.js';
 import { accessService } from './access.service.js';
 import { roleAssignmentService } from './role-assignment.service.js';
+import { tenantRoleActions, tenantRoleReadRoutes } from './tenant-role.routes.js';
 import { signSession, verifySession } from '../../core/security/tokens.js';
 import { Errors } from '../../core/errors.js';
 import type { FastifyRequest } from 'fastify';
@@ -61,7 +63,8 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
   });
 
   r.get('/api/v1/api-keys', { preHandler: admin, schema: { tags, summary: 'Danh sách khoá API' }, handler: async (req) => ok(await accessService.listKeys(authOf(req))) });
-  mountActions(app, accessWriteActions);
+  await tenantRoleReadRoutes(app);
+  mountActions(app, [...accessWriteActions, ...tenantRoleActions]);
 }
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): route ghi qua defineAction — quyền, kiểm input, idempotency, giao dịch, bằng chứng do runtime; đường dẫn / thân yêu cầu / mã 201 như cũ.
