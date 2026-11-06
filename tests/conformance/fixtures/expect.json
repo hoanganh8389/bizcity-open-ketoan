@@ -240,6 +240,10 @@
         "SC-EVD-1": {
           "findings": 1
         },
+        "SC-EVD-9": {
+          "findings": 5,
+          "keys": ["shape:contract", "shape:wx", "shape:link", "overwrite:6"]
+        },
         "SC-STD-5": {
           "findings": 3
         },

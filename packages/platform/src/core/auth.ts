@@ -30,7 +30,8 @@ import { getAppManifest } from './apps.js';
 import { verifySession } from './security/tokens.js';
 import { currentRequest } from './request-context.js';
 import { sessionStillValid } from './security/session-state.js';
-import { extraRoles } from './security/role-assignments.js';
+import { extraAuthz, type ExtraAuthz } from './security/role-assignments.js';
+import { matchPattern } from './authz/engine.js';
 
 /** Danh sách quyền. Thêm quyền mới: khai ở đây và gán cho vai trò bên dưới. */
 export const PERMISSIONS = [
@@ -108,6 +109,20 @@ export function rolePermissions(role: Role): Set<Permission> {
 export function effectivePermissions(roles: readonly Role[]): Set<Permission> {
   const out = new Set<Permission>();
   for (const r of roles) for (const p of rolePermissions(r)) out.add(p);
+  return out;
+}
+
+// [2026-11-06 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2 (ADR-0027 Phụ lục A, chữ chốt bước 3): quyền hiệu lực có vai trò của đơn vị — (vai trò chính ∪ bổ sung ∪ nền + Cho) − Cấm; Cấm không áp cho vai trò quản trị cao
+/**
+ * Quyền hiệu lực của người dùng: hợp quyền các vai trò hệ thống (chính + bổ sung) và vai trò nền của vai trò đơn vị, thêm luật Cho đích
+ * danh (chỉ quyền có trong sổ quyền của code), rồi trừ mọi quyền khớp luật Cấm — Cấm thắng cả quyền của vai trò chính (D-AUTH-04).
+ * Người có một vai trò thuộc ADMIN_ROLES không bị Cấm (chống khoá chủ đơn vị khỏi quản trị).
+ */
+export function effectivePermissionsWithTenantRoles(roles: readonly Role[], extra: Pick<ExtraAuthz, 'baseRoles' | 'allow' | 'deny'>): Set<Permission> {
+  const out = effectivePermissions([...roles, ...extra.baseRoles]);
+  for (const p of extra.allow) if (isKnownPermission(p)) out.add(p);
+  if (!extra.deny.length || roles.some((r) => ADMIN_ROLES.has(r))) return out;
+  for (const p of [...out]) if (extra.deny.some((d) => matchPattern(d, p))) out.delete(p);
   return out;
 }
 
@@ -202,7 +217,8 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
       return { tenantId: claims.tid, actor: `user:${claims.sub}`, actorName: claims.name, kind: 'user', role, permissions: new Set(claims.perms.filter(isKnownPermission)) };
     }
     // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1: quyền hiệu lực = vai trò chính ∪ vai trò bổ sung còn hiệu lực (đệm 15 giây, xoá khi gán / thu hồi)
-    const roles = [...new Set<Role>([role, ...(await extraRoles(claims.sub))])];
+    const extra = await extraAuthz(claims.sub);
+    const roles = [...new Set<Role>([role, ...extra.roles])];
     return {
       tenantId: claims.tid,
       actor: `user:${claims.sub}`,
@@ -210,7 +226,7 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
       kind: 'user',
       role,
       roles,
-      permissions: effectivePermissions(roles),
+      permissions: effectivePermissionsWithTenantRoles(roles, extra),
     };
   }
   return null;
