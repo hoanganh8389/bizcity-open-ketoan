@@ -11,6 +11,8 @@ import { AccountingProfilePage } from './features/system/AccountingProfilePage';
 import { CatalogRulesPage } from './features/system/CatalogRulesPage';
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — HT10 Trụ cột & mức đạt
 import { PillarsPage } from './features/system/PillarsPage';
+// [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: HT13 Cấu hình hệ thống (bản chỉ đọc)
+import { ConfigCenterPage } from './features/system/ConfigCenterPage';
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (HT08)
 import { ReviewBoardPage } from './features/system/ReviewBoardPage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
@@ -122,6 +124,7 @@ export const pageRoutes = (
     <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />
     <Route path="he-thong/quy-dinh-danh-muc" element={<CatalogRulesPage />} />
     <Route path="he-thong/tru-cot" element={<PillarsPage />} />
+    <Route path="he-thong/cau-hinh" element={<ConfigCenterPage />} />
     <Route path="he-thong/ban-danh-gia" element={<ReviewBoardPage />} />
     <Route path="danh-muc/phan-loai-hang" element={<NhomHangPage />} />
     <Route path="danh-muc/bang-gia" element={<PriceListsPage />} />
