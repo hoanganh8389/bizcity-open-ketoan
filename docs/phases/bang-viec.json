@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 214
+      "count": 215
     }
   ],
   "items": [
@@ -4936,8 +4936,8 @@
       "phase": "PHASE-030",
       "title": "bizcitysettings@1 1.2.0: registry thêm basis, usedBy; settingvalues thêm basis (24 §5) — PR chốt thiết kế; không approval / status / approvedby (D030-12)",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 45
