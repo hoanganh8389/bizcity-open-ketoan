@@ -94,8 +94,13 @@ export async function matchSources(trx: Db, tenantId: string, partnerCode: strin
 }
 
 /** Nhận diện các dòng (giữ dòng người dùng đã chọn mã); ĐVT bên mình theo ĐVT đã khai của mã. */
-export async function matchLines(trx: Db, tenantId: string, src: MatchSources, lines: InvoiceLine[]): Promise<InvoiceLine[]> {
-  const first = lines.map((l) => (l.sku && (l.matchSource === 'manual' || l.matchSource === 'alias' || l.matchSource === 'declared' || l.matchSource === 'own_sku') ? l : { ...l, ...matchLine(l, src) }));
+export async function matchLines(trx: Db, tenantId: string, src: MatchSources, lines: InvoiceLine[], opts: { suggest?: boolean } = {}): Promise<InvoiceLine[]> {
+  const first: InvoiceLine[] = [];
+  for (const l of lines) {
+    first.push(l.sku && (l.matchSource === 'manual' || l.matchSource === 'alias' || l.matchSource === 'declared' || l.matchSource === 'own_sku') ? l : { ...l, ...matchLine(l, src, opts.suggest === false ? 0 : undefined) });
+    // Chấm gợi ý tốn CPU: nhường lượt giữa các dòng để API vẫn phục vụ người khác.
+    await new Promise((r) => setImmediate(r));
+  }
   const skus = [...new Set(first.flatMap((l) => [l.sku, ...(l.candidates ?? []).map((c) => c.sku)]).filter(Boolean) as string[])];
   const units = await unitsOf(trx, tenantId, skus);
   return first.map((l) => ({

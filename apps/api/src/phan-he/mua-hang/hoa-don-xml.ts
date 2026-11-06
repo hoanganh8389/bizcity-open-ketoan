@@ -131,7 +131,7 @@ export async function ingestInvoiceXml(trx: Db, tenantId: string, actor: string,
   if (cancelled) return { ...base, status: 'previously_cancelled', message: 'Hoá đơn này đã bị huỷ trên phần mềm trước đó: không tự nhập lại', invoiceId: String(cancelled.id), partnerCode };
 
   const n = normalizeParsed(p);
-  const matched = await matchLines(trx, tenantId, await matchSources(trx, tenantId, partnerCode), n.lines);
+  const matched = await matchLines(trx, tenantId, await matchSources(trx, tenantId, partnerCode), n.lines, { suggest: false });
   const related = inv.related?.no ? `${inv.related.series}-${inv.related.no}` : '';
   const notes = [
     'Nhập từ hoá đơn điện tử',
