@@ -74,6 +74,7 @@ Ký hiệu cột thao tác: ✅ có và được bảo vệ ở CSDL · 🟡 có
 | Người dùng | `users` | `bigint`; actor lưu chữ `user:<id>` | ⬜ (tên, email) | ✅ `is_active` + thu hồi phiên (`session_version`) | — | ✅ không có đường xoá | nối người → S029-23 |
 | Người / nhân viên | — | — | — | — | — | — | ⬜ `persons`, `employees` → S029-23 |
 | Vai trò bổ sung | `user_role_assignments` (PHASE-028 W1, chưa vào `main`) | `bigint` | ✅ chỉ thêm, thu hồi một lần | ✅ `revoked_at` | — | ✅ trigger chặn xoá | PHASE-028 |
+| Vai trò của đơn vị, luật của vai trò <!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: thêm dòng vai trò tuỳ biến (ADR-0027 Phụ lục A) --> | `tenant_roles`, `tenant_role_rules` (PHASE-028 W2, chữ chốt ADR-0027 Phụ lục A, chưa vào `main`) | `bigint`; lần gán trỏ `tenant_role_id` | ✅ mã, loại, vai trò nền bất biến; tên đổi kèm `version`; luật chỉ thêm, gỡ một lần | ✅ `is_active` | — | ✅ không cấp `DELETE` | API quản trị → Phụ lục A bước 3 |
 | Khoá API | `api_keys` | `bigint` | — | ✅ `revoked_at` | — | ✅ chỉ thu hồi | — |
 | Cài đặt app | `app_installations` | `(tenant, app_key)` | ⬜ quyền app | ✅ `status` | — | ✅ không cấp `DELETE` | lịch sử quyền app → PHASE-028 W2 |
 | Cấu hình đơn vị | `tenants.settings` (jsonb) | khoá registry | ⬜ ghi đè | — | — | — | **S029-10 (P0)** |

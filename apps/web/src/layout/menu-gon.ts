@@ -43,7 +43,7 @@ export const GON_DEFS: GonDef[] = [
   {
     key: 'he-thong', label: 'Hệ thống', icon: 'LayoutGrid', description: 'Thông tin đơn vị, người dùng, phân quyền, kiểm soát', color: '#546e7a', module: 'he-thong',
     sections: [
-      { label: 'Đơn vị', paths: ['/cau-hinh/don-vi', '/he-thong/chi-nhanh-lam-viec', '/cau-hinh/mau-in'] },
+      { label: 'Đơn vị', paths: ['/cau-hinh/don-vi', '/he-thong/chi-nhanh-lam-viec', '/cau-hinh/mau-in', '/cau-hinh/khoi-anh'] },
       { label: 'Người dùng', paths: ['/cau-hinh/nguoi-dung', '/cau-hinh/khoa-api'] },
       { label: 'Kiểm soát', paths: ['/he-thong/kiem-chuan', '/he-thong/ho-so-ke-toan', '/he-thong/ban-danh-gia', '/he-thong/quy-dinh-danh-muc', '/he-thong/tru-cot'] },
     ],
