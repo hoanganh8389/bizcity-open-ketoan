@@ -112,8 +112,13 @@ Các tệp dưới đây đã vào `main` ở PR code W3 đợt 1 (#99):
 | Sổ quyền, băm nghĩa, diff nâng cấp | `packages/platform/src/core/authz/catalog.ts` |
 | Chuyển tiếp 6 vai trò hiện có | `packages/platform/src/core/authz/legacy.ts` |
 | Test | `apps/api/test/authz-engine.test.ts` |
+| Lớp đọc (vai trò hệ thống + vai trò đơn vị + lần gán) | `packages/platform/src/core/authz/store.ts` |
+| Shadow: so bộ tính với `auth.ts` ở `requirePermission`, chỉ đếm, không đổi quyết định; khoá `bizcity.authz.shadow` (mặc định off) <!-- [2026-11-06 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W3 đợt 2: shadow, requireScope, SC-AUTH-03 --> | `packages/platform/src/core/authz/shadow.ts`, `apps/api/test/authz-shadow.test.ts` |
+| `requireScope` / `authorizeScoped` / `allowedScope` / `restrictToScope`: quyền theo chi nhánh / kho, đóng an toàn khi tài nguyên không có vị trí; chưa gắn vào route nào (W5) | `packages/platform/src/core/authz/scope.ts`, `apps/api/test/authz-scope.test.ts` |
+| SC-AUTH-03: danh sách đóng route ghi cố ý không là `defineAction` | `tests/conformance/checks/authz/authz.check.mjs`, `route-giu.json` |
 
 ## 10. Nhật ký
 
 - 1.0.0-draft (2026-11-06): bản đầu, chốt hình dạng bộ tính (PHASE-028 W3 đợt 1).
+- 1.0.0-draft (2026-11-06, W3 đợt 2): shadow (`shadow.ts`), `requireScope` (`scope.ts`) và SC-AUTH-03 vào mã; bộ tính không đổi hình dạng. Bất đẳng thức "không cho thừa so với đường cũ" có test (`authz-shadow.test.ts`). <!-- [2026-11-06 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W3 đợt 2: shadow, requireScope, SC-AUTH-03 -->
 - 1.0.0-draft (2026-11-06, bổ sung): nơi lưu vai trò tuỳ biến chốt ở ADR-0027 Phụ lục A; bỏ `module_grants` (PHASE-028 W2). Hình dạng bộ tính không đổi. <!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: nhật ký hợp đồng -->

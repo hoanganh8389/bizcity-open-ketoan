@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 126
+      "count": 125
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 50
+      "count": 51
     },
     {
       "key": "paused",
@@ -4127,8 +4127,8 @@
       "phase": "PHASE-028",
       "title": "W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027 Phụ lục A, W3 đợt 2; giữ chỗ sau khi W2 đợt 2 nhả…",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 17
