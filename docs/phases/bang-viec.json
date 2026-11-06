@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 25
+      "count": 31
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 111
+      "count": 127
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 202
+      "count": 211
     }
   ],
   "items": [
@@ -4116,15 +4116,9 @@
       "phase": "PHASE-028",
       "title": "W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — chữ chốt ADR-0027 Phụ lục A; cấp quyền module = luật…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w2-vai-tro-don-vi",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-028 · W2 đợt 1 — vai trò của đơn vị: tenantroles, tenantrolerules, cột tenantroleid, tenants.…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -4523,6 +4517,408 @@
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 20
+    },
+    {
+      "id": "S030-1",
+      "phase": "PHASE-030",
+      "title": "Ma trận đối chiếu 173 nghiệp vụ 10: trạng thái, nguồn, đích, ưu tiên; tổng hợp; đề xuất K-030-1..6",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 8
+    },
+    {
+      "id": "S030-2",
+      "phase": "PHASE-030",
+      "title": "Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026-11-06); bản 2: Tổng quan, bản đồ luồng Bán hàng /…",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 9
+    },
+    {
+      "id": "S030-3",
+      "phase": "PHASE-030",
+      "title": "Blueprint mua hàng 50",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S030-4",
+      "phase": "PHASE-030",
+      "title": "Blueprint kho 51",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S030-5",
+      "phase": "PHASE-030",
+      "title": "Blueprint bán hàng 52",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S030-6",
+      "phase": "PHASE-030",
+      "title": "Blueprint tài sản 53",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S030-7",
+      "phase": "PHASE-030",
+      "title": "Blueprint kế toán – ngân sách – thuế 54",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S030-8",
+      "phase": "PHASE-030",
+      "title": "Blueprint nhân sự – lương 55",
+      "priority": "P2",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S030-9",
+      "phase": "PHASE-030",
+      "title": "Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S030-10",
+      "phase": "PHASE-030",
+      "title": "Ca chạy được apps/api/test/golden/T030-MH.test.ts (mua hàng đã có mã) + T030-CORE-1..6; chứng minh khuôn; dòng CLAIMS riêng",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S030-11",
+      "phase": "PHASE-030",
+      "title": "Chuyển blueprint P0 về docs/nghiep-vu/ban-hang/, docs/nghiep-vu/kho/; cập nhật docs/nghiep-vu/08-mua-hang.md trỏ 50",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S030-12",
+      "phase": "PHASE-030",
+      "title": "Kế toán trưởng trả Q030-3 (ngân sách), xác nhận công thức TS03 theo ngày, lương – BH – TNCN và giá trị tham số K-030-6",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S030-13",
+      "phase": "PHASE-030",
+      "title": "Nhóm Lõi trả Q030-2 (lô ở Kernel), xếp K-030-1..6 vào phase Kernel; golden vào bizcitymodule@1 (PR chốt thiết kế)",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S030-14",
+      "phase": "PHASE-030",
+      "title": "Chủ dự án trả Q030-1 (nhân sự một hay ba module), Q030-4 (giao hàng tách)",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S030-15",
+      "phase": "PHASE-030",
+      "title": "Seed khoá tham số pháp lý VN vào vn-rulepacks (danh sách khoá + legalRef từ Erp-vn data/legalparams.xml, giá trị do kế toán trưởng xác nhận) — K-030-6",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S030-16",
+      "phase": "PHASE-030",
+      "title": "Mở phase code từng module theo ADR-0024: modules/ban-hang, modules/kho (P0); modules/tam-ung, modules/ngan-hang, modules/ke-toan-ky (P1); modules/nhan-su (P2) …",
+      "priority": "—",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S030-17",
+      "phase": "PHASE-030",
+      "title": "70-REFLECT sau module đầu tiên: khuôn thiếu mục nào; ca nào không viết được bằng bất biến sổ",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S030-18",
+      "phase": "PHASE-030",
+      "title": "Kinh nghiệm cốt lõi 15: phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõi duyệt STD thành kiểm SC-",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S030-19",
+      "phase": "PHASE-030",
+      "title": "Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate mua hàng và splitByDays / splitByPercent tài sản; g…",
+      "priority": "P0",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-tien)",
+        "branch": "feat/phase-030-thu-vien-tien",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-19 — thư viện tiền: roundMoney, allocate, schedule (chốt thiết kế 18); chuyển allo…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S030-20",
+      "phase": "PHASE-030",
+      "title": "Chuẩn chứng từ 16: nhóm Lõi duyệt bizcitydocument@1 1.4.0-draft (defineDocument, hai con trỏ, policy, locks, revision) + R-WF-10..12",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S030-21",
+      "phase": "PHASE-030",
+      "title": "Bộ chuẩn 17: luật R-MSTD-1..12 vào docs/rules/ + CANON §3; họ finding DOC-, PARAM-, <MODULE>- vào bizcityfindings@1; SC-STD-1, -2, -12 (kiểm tĩnh)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S030-22",
+      "phase": "PHASE-030",
+      "title": "ADR-0029 Lõi bất biến, nghiệp vụ linh hoạt: CANON §0.9, R-WF-3 / -4 viết lại (duyệt ≠ ghi sổ), R-WF-10..16, bản kiến trúc + hướng dẫn dev architecture/LOI-BAT-…",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S030-23",
+      "phase": "PHASE-030",
+      "title": "Bỏ đảo thừa (19 §2): phiếu mua đã duyệt sửa qua bản điều chỉnh (không cancelIn), phiếu chi kèm giữ docKey, khoá sửa pendingapproval, updateManualIn đi đường ph…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S030-24",
+      "phase": "PHASE-030",
+      "title": "Cổng nhận sự việc G1–G5: trước hết G5 (cùng phiên bản khác băm → CONFLICT có mã; force lưu bản cũ); trường source trong bizcityledgerintake@1 cho G1 / G2",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S030-25",
+      "phase": "PHASE-030",
+      "title": "Golden T030-DOC-1..9, T030-AUTH-1..5 (19 §5)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 32
+    },
+    {
+      "id": "S030-26",
+      "phase": "PHASE-030",
+      "title": "Chẩn đoán tuyến nguồn → sổ DG-DOC-CHAIN-1..5 trên bảng sẵn có (19 §6)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 33
+    },
+    {
+      "id": "S030-27",
+      "phase": "PHASE-030",
+      "title": "Theo dõi cầu nối Workflow ↔ PHASE-028 (19 §3): PHASE-028 nhận authorize trên tài nguyên chứng từ + điều kiện SoD; PHASE-029 nhận transition() dùng quyết định",
+      "priority": "P1",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 34
+    },
+    {
+      "id": "S030-28",
+      "phase": "PHASE-030",
+      "title": "bizcityaction@1 1.4.0: các bước §4 là cổng, kiểu GateResult trong packages/contracts, error.details.gates, ctx.evidence.gate (21 §1) — PR chốt thiết kế; không …",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 35
+    },
+    {
+      "id": "S030-29",
+      "phase": "PHASE-030",
+      "title": "bizcityevidence@1 mở rộng = sổ cổng (21 §2): cột gates, source, basisused (migration ≥ 0076); ghi cả lần bị chặn trước handler; đăng nhập / xuất / in có bằng c…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 36
+    },
+    {
+      "id": "S030-30",
+      "phase": "PHASE-030",
+      "title": "Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong bằng chứng hằng ngày + manifest, GET /evidence/verify",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 37
+    },
+    {
+      "id": "S030-31",
+      "phase": "PHASE-030",
+      "title": "Hàng việc: view bizcityread.documentqueue + API queue/summary, queue/mine; thanh \"Việc cần làm\" thêm nguồn",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 38
+    },
+    {
+      "id": "S030-32",
+      "phase": "PHASE-030",
+      "title": "Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong",
+      "priority": "P1",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 39
+    },
+    {
+      "id": "S030-33",
+      "phase": "PHASE-030",
+      "title": "Golden T030-GATE-1..4 (21 §5)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 40
+    },
+    {
+      "id": "S030-34",
+      "phase": "PHASE-030",
+      "title": "HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phân tích, diễn giải, số gốc, trần tiền, cấm hạch toá…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 41
+    },
+    {
+      "id": "S030-35",
+      "phase": "PHASE-030",
+      "title": "Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT có hiệu lực; lịch nghỉ lễ; basis.article có cờ đối…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 42
+    },
+    {
+      "id": "S030-36",
+      "phase": "PHASE-030",
+      "title": "Đánh giá gọn phân quyền (22): bỏ Nới, hạn theo ngày chứng từ về dataLock, bỏ statusin, amountmax = hạn mức cá nhân, SoD ở cổng chuyển trạng thái, Role Editor d…",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 43
     }
   ]
 }

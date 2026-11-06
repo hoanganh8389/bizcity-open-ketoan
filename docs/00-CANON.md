@@ -12,6 +12,7 @@
 <!-- [2026-10-30 01:37 PM Johnny Chu - Chu Hoàng Anh] AUDIT — đánh giá kiến trúc 2026-10-30, mục lục phase. -->
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm R-REV: rà soát việc của người đóng góp (phân vai, PR, biên bản, dữ liệu kế toán, mã hàng). -->
 <!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §5: core/errors.ts, core/http.ts nay ở packages/platform -->
+<!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §0.9 Lõi bất biến, nghiệp vụ linh hoạt (ADR-0029); dòng R-WF; nhật ký v1.5 -->
 
 > **Tệp này:** một trang liệt kê **mọi** luật và hợp đồng đang chi phối lõi. Không lặp nội dung luật — chỉ mã, cấp, nơi kiểm.
 > **Dùng khi:** sửa lõi → tra bảng §4 để biết phải sửa tài liệu / hợp đồng nào **trong cùng PR**.
@@ -121,6 +122,34 @@ Sáu năng lực là thư viện, hợp đồng, capability trong Platform / Ker
 
 LEAN-1 **Reuse before Build** · LEAN-2 **Contract First** (bắt buộc chuẩn giao tiếp, không bắt buộc cách triển khai) · LEAN-3 **No Duplicate Truth** (mỗi loại dữ liệu một chủ) · LEAN-4 **Immutable Where It Matters** (bất biến chỉ cho lịch sử đã xác lập) · LEAN-5 **Progressive Complexity** (một cửa hàng và 500 cửa hàng cùng chuẩn, khác cấu hình) · LEAN-6 **Modular Monolith First** (PostgreSQL + outbox; tách khi đo được) · LEAN-7 **Conformance as Code**.
 
+<!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §0.9 tôn chỉ "Lõi bất biến, nghiệp vụ linh hoạt" (ADR-0029, chủ dự án yêu cầu vào luật tối thượng) -->
+### 0.9 Lõi bất biến, nghiệp vụ linh hoạt — Policy Flexibility · Document Finality · Ledger Immutability ([ADR-0029](adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md))
+
+> **Linh hoạt trước khi ghi sổ. Chặt chẽ tại thời điểm ghi sổ. Bất biến đối với lịch sử đã xác lập.**
+
+Open Kế Toán giữ sự chặt chẽ của kế toán ở trung tâm và để doanh nghiệp linh hoạt ở bên ngoài. Bốn câu ở §1 giữ phía **sau** sổ; tôn chỉ này giữ phía **trước** sổ, nơi sinh ra phần lớn sai sót và bút toán đảo thừa.
+
+1. **Chính sách linh hoạt.** Module tự do xây chính sách kinh doanh theo hợp đồng chuẩn, có phiên bản, phạm vi và ngày hiệu lực.
+2. **Chứng từ được chốt.** Chứng từ đi hết vòng đời hợp lệ, được duyệt hoặc tự xác nhận theo thẩm quyền, và được **chốt đúng phiên bản** trước khi nộp sự việc kế toán. **Duyệt không mặc định là ghi sổ**: mỗi loại chứng từ khai điểm ghi nhận của nó (R-WF-3).
+3. **Chỉ sự việc đủ điều kiện vào Kernel.** Kernel là nơi duy nhất định khoản và ghi sổ; nó chỉ nhận phiên bản đã đạt điều kiện ghi nhận.
+4. **Sửa trước sổ là phiên bản, sửa sau sổ là điều chỉnh.** Thay đổi trước ghi sổ là phiên bản chứng từ, không phát sinh bút toán đảo. Thay đổi ảnh hưởng nghiệp vụ đã ghi sổ đi qua điều chỉnh hoặc đảo có đủ lịch sử (R-WF-4).
+5. **Cùng một chuẩn Workflow, không ép cùng một quy trình.** POS được tự xác nhận theo quyền và chính sách đã duyệt; đề nghị thanh toán lớn có thể hai cấp duyệt.
+
+| Tầng | Tính chất | Chủ sở hữu |
+|---|---|---|
+| Chính sách nghiệp vụ | linh hoạt; nhiều phiên bản theo đối tượng, chi nhánh, chương trình, thời gian | Configuration & Policy (C3) — module khai, nền lưu |
+| Chứng từ và Workflow | vòng đời: tạo, sửa, kiểm, trình, duyệt, từ chối, hoàn tất; mỗi lần đổi nội dung là một phiên bản | **Document Contract** (`bizcity_document@1`) sở hữu trạng thái và lịch sử; **Authorization Contract** (`bizcity_authorization@1`, PHASE-028) sở hữu quyền thực hiện hành động |
+| Accounting Intake & Conformance | cửa chuyển nghiệp vụ đã xác lập thành sự việc kế toán chuẩn, có chứng từ nguồn và phiên bản | Kernel (cổng nhận, R-INTAKE) + C6 kiểm chuẩn |
+| Accounting Kernel & Ledger | ghi sổ kép, bảo toàn, kiểm chuẩn, không sửa / xoá lịch sử | **Accounting Kernel** sở hữu quyết định và việc ghi sổ |
+
+Hệ quả bắt buộc:
+- **Hai lần đóng băng** (R-WF-13, R-WF-14). Approval Freeze: duyệt gắn với phiên bản và băm nội dung. Accounting Freeze: chỉ phiên bản đã chốt được nộp sổ.
+- **Quyền thực hiện một chuyển do PHASE-028 quyết** (R-WF-15). Module không tự viết logic duyệt.
+- **Cổng Kernel từ chối có mã** phiên bản trùng số mà khác nội dung, không bỏ qua im lặng.
+- Dev cộng đồng chỉ khai workflow YAML, quyền trong manifest và chính sách; nền giữ thẩm quyền, trạng thái, lịch sử.
+
+Bản kiến trúc và hướng dẫn dev: [architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md](architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md).
+
 ## 1. Bốn câu không thương lượng
 
 1. **Không chứng từ thì không có bút toán.** Mọi dòng sổ cái trỏ về một `accounting_events` (R-EVENT-1).
@@ -151,7 +180,7 @@ LEAN-1 **Reuse before Build** · LEAN-2 **Contract First** (bắt buộc chuẩn
 | R-API | [rules/RULE-API.md](rules/RULE-API.md) | 1 | Một khuôn phản hồi, mã lỗi ổn định, zod ở cửa vào, `/api/v1` | `api-examples.test.ts`, OpenAPI |
 | R-DB | [rules/RULE-DATABASE.md](rules/RULE-DATABASE.md) | 1 | Migration chỉ thêm, số không trùng, COMMENT tiếng Việt, tiền `numeric(18,2)` | `db-rules.test.ts`, kiểm số migration (CI) |
 | R-TEN | [rules/RULE-TENANT-SECURITY.md](rules/RULE-TENANT-SECURITY.md) | 0 | Mọi truy vấn lọc `tenant_id`; mọi route khai quyền; mọi thao tác ghi có nhật ký | `access.test.ts`, `edit-permission.test.ts` |
-| R-WF | [rules/RULE-WORKFLOW.md](rules/RULE-WORKFLOW.md) | 1 | Luồng nghiệp vụ là máy trạng thái khai báo; chỉ trạng thái "đã duyệt" mới sinh event | Test luồng của phân hệ |
+| R-WF | [rules/RULE-WORKFLOW.md](rules/RULE-WORKFLOW.md) | 1 | Luồng nghiệp vụ là máy trạng thái khai báo; duyệt ≠ ghi sổ — chỉ chuyển khai `ledger: true` (điểm ghi nhận của loại chứng từ) mới sinh event; sửa trước ghi nhận là phiên bản, sau ghi nhận là điều chỉnh; hai lần đóng băng; quyền chuyển do PHASE-028 quyết <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029 --> | Test luồng của phân hệ |
 | R-QG | [rules/RULE-QUALITY-GATE.md](rules/RULE-QUALITY-GATE.md) | 1 | Typecheck + test PostgreSQL thật + bằng chứng chạy trước khi merge | `.github/workflows/ci.yml` |
 | R-KER | [rules/RULE-KERNEL.md](rules/RULE-KERNEL.md) | 0 | Sửa Kernel theo bốn mức K0–K3; lớp bảo vệ CSDL chỉ thêm chặt; không đổi bút toán đã ghi; tất định | DG-DB-2, test luật định khoản, mẫu PR |
 | R-SEC | [rules/RULE-SECURITY.md](rules/RULE-SECURITY.md) | 0 | Không bí mật trong git; SQL có tham số; API không chạy superuser; AI chỉ ra nháp; chuỗi cung ứng; báo lỗ hổng | SC-SEC-1..4, DG-SEC-1 |
@@ -244,6 +273,9 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
 
 ## 6. Nhật ký thay đổi CANON
+
+<!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — CANON v1.5 -->
+- **v1.5 (2026-11-06):** Thêm §0.9 tôn chỉ **Lõi bất biến, nghiệp vụ linh hoạt** (Policy Flexibility · Document Finality · Ledger Immutability, [ADR-0029](adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md)): bốn tầng, ba chủ sở hữu (Document / Authorization / Kernel), duyệt ≠ ghi sổ, hai lần đóng băng, cổng nhận sự việc từ chối có mã. Sửa R-WF-3 / R-WF-4, thêm R-WF-10..16.
 
 <!-- [2026-11-05 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — CANON v1.4 -->
 - **v1.4 (2026-11-05):** Thêm §0.7 sáu năng lực lõi, §0.8 bảy nguyên tắc tinh gọn LEAN-1..7 <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — nhật ký §0.7 / §0.8 -->. Thêm §0.3–§0.6 Enterprise Continuity ([ADR-0028](adr/ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md)): ECP-01..13 (ECP-13 không thay đổi phá huỷ lịch sử đã tham chiếu), bốn nhóm nền móng 17 trụ cột, mô hình nhất quán ba tầng, sáu thao tác vòng đời; luật R-ECP; R-MD: mã ≠ định danh.
