@@ -27,3 +27,4 @@
 | 2026-11-05 18:27 | Claude Code | Chủ duyệt D-AUTH-01..10, sửa D-AUTH-03. ADR-0027 chấp nhận. Chữ chốt W1 (00 §4a), giữ chỗ W1 (S028-6). |
 | 2026-11-06 01:10 | Claude Code | W1 code: `user_role_assignments` (migration đổi 0074 → 0075 → 0073: chủ chọn ai merge trước lấy số trước), `ADMIN_ROLES`, quyền hiệu lực nhiều vai trò, `core.user.role-assign` / `role-revoke`; bỏ dòng giữ chỗ W1 (R-FLOW-6). |
 | 2026-11-06 13:29 | Claude Code | Chủ chọn: W2 bỏ `module_grants`, làm ADR-0027 Phụ lục A bước 1–2 (vai trò của đơn vị + lớp đọc cho bộ tính); Q028-2 hết đối tượng. Chữ chốt W2 đợt 1 vào Phụ lục A, giữ chỗ W2 (S028-7); bỏ dòng W3 đợt 1 đã xong (#99). |
+| 2026-11-06 15:10 | Claude Code | Chữ chốt W2 đợt 2 (ADR-0027 Phụ lục A, bước 3): API quản trị vai trò của đơn vị, thi hành Cho + Cấm ở `auth.ts` (chủ chọn), `confirmPassword` cho quyền cao (chủ chọn). Dòng giữ chỗ đợt 2 thêm sau khi PR W2 đợt 1 nhả dòng hiện có (hai dòng không giữ cùng tệp). |
