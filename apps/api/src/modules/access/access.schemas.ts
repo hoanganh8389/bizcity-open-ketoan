@@ -30,8 +30,11 @@ export const changePasswordSchema = z.object({ currentPassword: z.string().min(1
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
 const reason = z.string().trim().min(3, 'Lý do tối thiểu 3 ký tự').max(500);
 
+// [2026-11-06 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2 (ADR-0027 Phụ lục A, chữ chốt bước 3): gán nhận đúng một trong role / tenantRoleId; vai trò của đơn vị có Cho quyền cao đòi confirmPassword
 export const roleAssignSchema = z.object({
-  role,
+  role: role.optional().describe('Vai trò hệ thống bổ sung (đúng một trong role / tenantRoleId)'),
+  tenantRoleId: z.string().regex(/^\d+$/).optional().describe('Vai trò của đơn vị (tenant_roles.id)'),
+  confirmPassword: z.string().min(1).max(200).optional().describe('Mật khẩu của người thao tác — bắt buộc khi vai trò có Cho quyền rủi ro cao'),
   validFrom: isoDate.optional().describe('Mặc định hôm nay (giờ Việt Nam)'),
   validTo: isoDate.optional().describe('Ngày cuối hiệu lực (gồm cả ngày này); bỏ trống = không hạn'),
   reason,
@@ -40,6 +43,36 @@ export type RoleAssign = z.infer<typeof roleAssignSchema>;
 
 export const roleRevokeSchema = z.object({ reason });
 export type RoleRevoke = z.infer<typeof roleRevokeSchema>;
+
+// Vai trò của đơn vị (tenant_roles) và luật của chúng — mã, loại, vai trò nền bất biến sau khi tạo (0075)
+const confirmPassword = z.string().min(1).max(200).optional().describe('Mật khẩu của người thao tác — bắt buộc khi Cho quyền rủi ro cao');
+export const tenantRoleCreateSchema = z.object({
+  code: z.string().regex(/^[a-z][a-z0-9_-]{1,39}$/, 'Mã dạng chữ thường, số, _ hoặc -; 2–40 ký tự, bắt đầu bằng chữ'),
+  label: z.string().trim().min(1).max(120),
+  kind: z.enum(['job', 'privilege', 'restriction']),
+  baseRole: z.enum(['chief_accountant', 'accountant', 'viewer', 'developer', 'auditor']).optional().describe('Vai trò hệ thống làm nền (không owner); loại restriction không có nền'),
+  reason,
+});
+export type TenantRoleCreate = z.infer<typeof tenantRoleCreateSchema>;
+
+export const tenantRoleUpdateSchema = z.object({
+  label: z.string().trim().min(1).max(120).optional(),
+  isActive: z.boolean().optional(),
+  version: z.number().int().min(1).describe('version hiện tại của vai trò (khoá lạc quan)'),
+  reason,
+});
+export type TenantRoleUpdate = z.infer<typeof tenantRoleUpdateSchema>;
+
+export const tenantRuleAddSchema = z.object({
+  permission: z.string().regex(/^[a-z*][a-z0-9*-]*:[a-z*][a-z0-9*-]*$/, 'Quyền dạng <module>:<việc>'),
+  effect: z.enum(['allow', 'deny']),
+  note: z.string().trim().max(300).optional(),
+  reason,
+  confirmPassword,
+});
+export type TenantRuleAdd = z.infer<typeof tenantRuleAddSchema>;
+
+export const tenantRuleRemoveSchema = z.object({ reason });
 
 /** Phạm vi của khoá API (ánh xạ sang quyền ở core/auth.ts → SCOPE_PERMISSIONS). */
 export const API_KEY_SCOPES = ['documents:write', 'reports:read', 'catalog:write'] as const;

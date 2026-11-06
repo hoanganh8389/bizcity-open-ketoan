@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 16
     },
     {
       "key": "merging",
@@ -15,17 +15,17 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 31
+      "count": 32
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 124
+      "count": 126
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 48
+      "count": 51
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 212
+      "count": 213
     }
   ],
   "items": [
@@ -4117,14 +4117,8 @@
       "title": "W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — chữ chốt ADR-0027 Phụ lục A; cấp quyền module = luật…",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w2-api-vai-tro",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-028 · W2 đợt 2 — API quản trị vai trò của đơn vị (tạo / sửa / vô hiệu vai trò, thêm / gỡ luật…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -4316,14 +4310,8 @@
       "title": "Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEINVALID + lane + mục sổ đăng ký ở DIAGNOSTICS.md; p…",
       "priority": "P1",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 đối chiếu)",
-        "branch": "feat/phase-029-e6-doi-chieu",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-029 · E6 đợt 1 — sổ đăng ký đối chiếu: bốn mã chẩn đoán thay phần chạy tay của doi-chieu-ke-t…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -4871,15 +4859,9 @@
       "phase": "PHASE-030",
       "title": "Hàng việc: view bizcityread.documentqueue + core.queue.summary / items / mine + nguồn mới cho thanh \"Việc cần làm\" — chữ chốt 23",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, hang-viec)",
-        "branch": "feat/phase-030-hang-viec",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-31 — hàng việc: view bizcityread.documentqueue, ba action core.queue., nguồn mới c…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -4937,6 +4919,50 @@
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 43
+    },
+    {
+      "id": "S030-37",
+      "phase": "PHASE-030",
+      "title": "Cấu hình hệ thống 24: nguyên tắc NC-1..8, chuỗi tham số → cổng → giao diện → nhật ký, đối chiếu menu Cấu hình Erp-vn (21 dòng), màn HT13 + bản mẫu; Bàn điều hà…",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 44
+    },
+    {
+      "id": "S030-38",
+      "phase": "PHASE-030",
+      "title": "bizcitysettings@1 1.2.0: registry thêm basis, approval, usedBy; settingvalues thêm basis, status, approvedby (24 §5) — PR chốt thiết kế",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 45
+    },
+    {
+      "id": "S030-39",
+      "phase": "PHASE-030",
+      "title": "Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ liệu có sẵn",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 46
+    },
+    {
+      "id": "S030-40",
+      "phase": "PHASE-030",
+      "title": "Đổi khoá loại A: đề xuất → xem thử tác động → người thứ hai duyệt; \"xem như trên form\"; golden T030-CFG-1..8",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 47
     }
   ]
 }

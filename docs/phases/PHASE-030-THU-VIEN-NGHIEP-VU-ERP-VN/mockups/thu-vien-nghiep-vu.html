@@ -825,7 +825,7 @@ function pageGates() {
   const tot = (a) => a.reduce((s, x) => s + x, 0);
   const seq = (v, max) => { const i = v === 0 ? 0 : Math.min(7, 1 + Math.floor((v / max) * 6.999)); return i; };
   const maxM = Math.max(...TMAT.flat());
-  return `<h2>Bàn điều hành chứng từ &amp; cổng <small style="font-weight:400;color:var(--muted);font-size:13px">· HT11 (đề xuất)</small></h2>
+  return `<h2>Bàn điều hành chứng từ &amp; cổng <small style="font-weight:400;color:var(--muted);font-size:13px">· HT12 (đề xuất)</small></h2>
   <p class="lead">Một nơi xem: việc gì cần xử lý, cái gì chưa qua cổng, cái gì sai luật / nguyên tắc kế toán, cái gì sai vai trò, luồng nghẽn ở đâu, ai đã làm gì. Số liệu đọc từ CSDL: view hàng việc + <b>bằng chứng</b> (<code>audit_logs.gates</code> — sổ cổng) + bể chờ + nhật ký ghi sổ; không từ Prometheus. Tài liệu: <code>21-SO-CONG-VA-BANG-DIEU-HANH.md</code>.</p>
   <div class="filters"><label>Khoảng<select><option>14 ngày</option><option>Hôm nay</option><option>Tháng này</option></select></label>
    <label>Chi nhánh<select><option>Tất cả</option><option>HN-01</option><option>HCM-02</option></select></label>

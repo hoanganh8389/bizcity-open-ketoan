@@ -1,4 +1,5 @@
 // [2026-11-06 01:30 AM Nguyễn Văn Thủy] MENU — gom việc cần làm từ các phân hệ, gắn theo nhóm để đổi ưu tiên khi đổi nhóm (đóng góp)
+// [2026-11-06 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-31: thêm nguồn hàng việc /api/v1/queue/mine (nháp, bị trả lại, chờ duyệt, bể chờ, chứng từ lỗi); bỏ dòng so:loi vì trùng ý với chứng từ lỗi của hàng việc (PHASE-030 · 23 §3)
 /**
  * VIỆC CẦN LÀM dùng chung cho thanh mép phải. Mỗi nguồn trả về các việc và nhóm liên quan; một việc có thể thuộc nhiều nhóm
  * (lô sắp hết hạn hiện ở Mua hàng lẫn Kho). Thêm nguồn: thêm một useQuery rồi gộp vào `items`, khai nhóm vào GROUPS_WITH_SOURCE.
@@ -7,7 +8,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { defaultTo, periodFrom } from '@/lib/format';
 
 export type ViecLevel = 'error' | 'warn' | 'info';
 export interface Viec { key: string; level: ViecLevel; text: string; count: number; amount?: number; path: string; groups: string[]; /** Không hiện ở trang Tổng quan vì trùng ý với việc khác. */ homeHidden?: boolean }
@@ -44,14 +44,14 @@ export function useViec() {
   const enabled = can('documents:read');
   const opts = { enabled, retry: false, staleTime: 60_000, refetchInterval: 120_000 } as const;
   const mua = useQuery({ ...opts, queryKey: ['rail', 'purchase-todo'], queryFn: () => api.get<{ items: { key: string; level: ViecLevel; text: string; count: number; amount?: number; path: string }[] }>('/api/v1/purchase/todo') });
-  const so = useQuery({ ...opts, queryKey: ['rail', 'dashboard'], queryFn: () => api.get<{ documents: Record<string, number> }>('/api/v1/reports/dashboard', { from: periodFrom(), to: defaultTo() }) });
   const cn = useQuery({ ...opts, queryKey: ['rail', 'alerts'], queryFn: () => api.get<Alerts>('/api/v1/alerts') });
+  const hv = useQuery({ ...opts, queryKey: ['rail', 'queue-mine'], queryFn: () => api.get<{ viec: Viec[] }>('/api/v1/queue/mine') });
   const items: Viec[] = [
     ...(cn.data ? fromAlerts(cn.data) : []),
     ...(mua.data?.items ?? []).map((v) => ({ ...v, key: `mua:${v.key}`, groups: MUA_GROUPS[v.key] ?? ['mua-hang'] })),
-    ...((so.data?.documents.error ?? 0) > 0 ? [{ key: 'so:loi', level: 'error' as const, text: 'Chứng từ lỗi cần ghi sổ lại', count: so.data!.documents.error!, path: '/chung-tu?status=error', groups: ['tong-hop'] }] : []),
+    ...(hv.data?.viec ?? []),
   ].sort((a, b) => RANK[a.level] - RANK[b.level]);
-  return { items, loading: mua.isLoading || so.isLoading || cn.isLoading, refresh: () => { void mua.refetch(); void so.refetch(); void cn.refetch(); } };
+  return { items, loading: mua.isLoading || cn.isLoading || hv.isLoading, refresh: () => { void mua.refetch(); void cn.refetch(); void hv.refetch(); } };
 }
 
 /** Việc của một nhóm; không có nhóm (trang Tổng quan) thì lấy tất cả. */
