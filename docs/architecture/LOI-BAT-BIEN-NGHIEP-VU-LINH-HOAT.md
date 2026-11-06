@@ -44,7 +44,7 @@ flowchart LR
 | Chữ ký theo vai | Document (`document_signatures`) | đặt vai, chọn ai ký vai nào | mọi người |
 | Số cấp duyệt, ngưỡng | Chính sách (C3) | khai khoá chính sách trong manifest | Document |
 | **Ai được làm chuyển này trên chứng từ này** | **Authorization** (`authorize`, PHASE-028) | khai quyền trong manifest; **không** viết `if role` | Document |
-| Tách nhiệm (người lập ≠ người duyệt) | Workflow `sod` hôm nay → Authorization khi có điều kiện SoD | khai `sod: true` | Document |
+| Tách nhiệm (người lập ≠ người duyệt; mỗi cấp một người) | **Workflow** (`sod`, `distinct_approvers`), dựa lịch sử chuyển — chốt 06/11 <!-- [2026-11-06 06:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án đồng ý 22 §3 (SoD ở cổng chuyển trạng thái) --> | khai `sod: true` | Document |
 | Điểm ghi nhận kế toán | Document (`ledger: true` trên chuyển) | chọn chuyển nào là điểm ghi nhận | Kernel |
 | Dựng sự việc (docType, reasonCode, dòng) | module (hàm thuần) | `ledger.build(doc)` không số tài khoản | Kernel |
 | Nhận sự việc, định khoản, ghi, đảo | **Kernel** | không làm gì | — |
@@ -172,7 +172,7 @@ Chia việc theo chủ:
 
 | Phần | Chủ | Việc |
 |---|---|---|
-| Quyền, vai trò, phạm vi, điều kiện | PHASE-028 | `authorize()` trên tài nguyên chứng từ thực; điều kiện SoD (`not_creator`, `not_previous_approver`) để D-AUTH-04 "SoD thắng" chạy được; `creator: 'branch'` thi hành thật; nối `runAction` (bước 4 ADR-0027) |
+| Quyền, vai trò, phạm vi, điều kiện | PHASE-028 | `authorize()` trên tài nguyên chứng từ thực; `creator: 'branch'` thi hành thật; nối `runAction` (bước 4 ADR-0027); gọn theo [22](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/22-DANH-GIA-GON-PHAN-QUYEN.md) (bỏ Nới, bỏ điều kiện ngày / trạng thái). SoD **không** ở đây mà ở Workflow; D-AUTH-04 "SoD thắng" giữ bằng thứ tự cổng |
 | Phiên bản, Workflow, chữ ký, lịch sử | Document Contract (PHASE-029 E4 / PHASE-030 DOC-030-*) | `transition()` nạp đầu phiếu, gọi `authorize` với `purpose`, ghi `decisionId`; `WorkflowActor.can` → `decide` |
 | Ngưỡng, số cấp | Chính sách (PHASE-029 E2 + PHASE-030 16 §5) | `levelsFor(doc, at)` |
 | Ghi sổ | Kernel | cổng G1–G5 |

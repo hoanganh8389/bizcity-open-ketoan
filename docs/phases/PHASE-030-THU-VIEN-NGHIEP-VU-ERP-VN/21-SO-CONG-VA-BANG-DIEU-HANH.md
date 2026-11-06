@@ -20,7 +20,7 @@
    - Bằng chứng (đủ 100 %, ≥ 10 năm) dành cho chủ, kế toán trưởng, kiểm toán: ai, khi nào, từ đâu, làm gì, được hay bị chặn, theo căn cứ nào.
 
    Mỗi cổng phát thêm span event `bizcity.gate` để hai bên bấm qua lại được.
-4. **Tệp lưu trữ** (Q030-5) vẫn mở: phương án B áp cho **bằng chứng**, xuất niêm phong hằng ngày.
+4. **Tệp lưu trữ** (Q030-5): chủ dự án chọn **B** — bằng chứng ở CSDL là nơi ghi chính, xuất niêm phong hằng ngày; cần ADR sửa STD-EVD-4 trước khi code (S030-30).
 5. **Bàn điều hành HT11** đọc từ bằng chứng, view hàng việc, bể chờ và nhật ký ghi sổ. Không thêm nguồn.
 
 ## 1. Cổng là các bước của action
@@ -103,7 +103,7 @@ Màn chi tiết một bằng chứng có đủ các khối như màn "Nhật ký
 - **Các cổng**: từng bước, kết quả, mã;
 - **Căn cứ**: văn bản, điều khoản, tham số và giá trị tại ngày.
 
-### 2.4 Tệp lưu trữ niêm phong (Q030-5, chờ chủ dự án)
+### 2.4 Tệp lưu trữ niêm phong (Q030-5 — chủ dự án chọn **B**, 2026-11-06)
 
 | Phương án | Nơi ghi chính | Tệp | Luật |
 |---|---|---|---|

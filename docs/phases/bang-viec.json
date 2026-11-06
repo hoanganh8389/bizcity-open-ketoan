@@ -15,12 +15,12 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 33
+      "count": 31
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 126
+      "count": 127
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 210
+      "count": 211
     }
   ],
   "items": [
@@ -4860,8 +4860,8 @@
       "phase": "PHASE-030",
       "title": "Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong bằng chứng hằng ngày + manifest, GET /evidence/verify",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 37
@@ -4926,8 +4926,8 @@
       "phase": "PHASE-030",
       "title": "Đánh giá gọn phân quyền (22): bỏ Nới, hạn theo ngày chứng từ về dataLock, bỏ statusin, amountmax = hạn mức cá nhân, SoD ở cổng chuyển trạng thái, Role Editor d…",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 43

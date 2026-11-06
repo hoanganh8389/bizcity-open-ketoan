@@ -2,7 +2,7 @@
 <!-- [2026-11-06 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án hỏi "hợp đồng authz có gọn được như vậy không" (so với ma trận "Ai được làm gì" của Erp-vn và bản gọn của cổng ở 21); đề xuất cho PHASE-028, không sửa thư mục / hợp đồng của PHASE-028 (dòng giữ chỗ W2) -->
 
 > Đọc: [`bizcity_authorization@1`](../../contracts/BIZCITY-AUTHORIZATION-v1.md) 1.0.0-draft · [ADR-0027](../../adr/ADR-0027-core-authorization-plugin-role-editor.md) (D-AUTH-01..14, Phụ lục A) · `packages/platform/src/core/authz/engine.ts` · `packages/platform/src/core/date-rules.ts` · [21](21-SO-CONG-VA-BANG-DIEU-HANH.md) · [ADR-0029](../../adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md).
-> Đây là **đề xuất** cho chủ PHASE-028. Mỗi dòng ở §3 cần chủ PHASE-028 / chủ dự án nhận hoặc bác trước khi thành chữ chốt.
+> **Chủ dự án đồng ý 2026-11-06 tối** toàn bộ §3 #1–#9 <!-- [2026-11-06 06:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án đồng ý 22 §3 (SoD ở cổng chuyển trạng thái) -->. Thi hành thuộc PHASE-028 (hợp đồng `bizcity_authorization@1` 1.1.0-draft, `engine.ts`) trong dòng giữ chỗ của PHASE-028; §5 đã sửa ở ADR-0029 D-FIN-9, kiến trúc §2 / §7, R-WF-15, 19 §3 / §5.
 
 ## 0. Kết luận
 
@@ -91,7 +91,7 @@ ADR-0029 D-FIN-9 và [kiến trúc §7](../../architecture/LOI-BAT-BIEN-NGHIEP-V
 - *"SoD ở cổng chuyển trạng thái (`sod`, `distinct_approvers`); PHASE-028 cung cấp `authorize` trên tài nguyên chứng từ và thi hành `creator: 'branch'`"*;
 - golden T030-AUTH-3 chuyển thành T030-DOC-*.
 
-Chưa sửa trước khi có quyết định.
+Đã sửa 2026-11-06 sau khi chủ dự án đồng ý.
 
 ## 6. Việc
 

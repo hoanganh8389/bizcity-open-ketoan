@@ -67,7 +67,7 @@ Chia chủ theo ADR-0029 D-FIN-9 (bảng chủ dự án đưa ra):
 
 | Phần | Phase sở hữu | Việc |
 |---|---|---|
-| Quyền, vai trò, phạm vi, điều kiện | PHASE-028 | `authorize()` trên tài nguyên chứng từ thực; điều kiện SoD; thi hành `creator: 'branch'`; nối `runAction` |
+| Quyền, vai trò, phạm vi, điều kiện | PHASE-028 | `authorize()` trên tài nguyên chứng từ thực; thi hành `creator: 'branch'`; nối `runAction` (SoD chuyển sang cổng chuyển trạng thái — [22](22-DANH-GIA-GON-PHAN-QUYEN.md) §3 #5, chủ dự án đồng ý 06/11) |
 | Phiên bản, Workflow, chữ ký, lịch sử | PHASE-029 / Document Contract | `transition()` dùng quyết định đó; tự `saveVersion`; `decisionId` vào bằng chứng |
 | Ghi sổ | Accounting Kernel | chỉ nhận sự việc đủ điều kiện (G1–G5), giữ liên kết phiên bản chứng từ |
 | Golden | Conformance (PHASE-030) | chứng minh không vượt quyền, không bỏ qua duyệt, không đứt lịch sử |
@@ -103,7 +103,7 @@ Tài liệu này **không** sửa thư mục PHASE-028 / PHASE-029: các thư m�
 | T030-DOC-9 | Đồng thời: hai người duyệt cùng chứng từ cùng lúc → một thành công, một `CONFLICT`; một sự việc |
 | T030-AUTH-1 | Người có quyền duyệt phạm vi kho K1: duyệt phiếu K1 được; phiếu K2 → `FORBIDDEN` kèm lý do phạm vi |
 | T030-AUTH-2 | Thu hồi quyền duyệt (tăng `authz_version`) → lần duyệt tiếp theo bị từ chối, kể cả phiên đang mở |
-| T030-AUTH-3 | SoD: người lập không tự duyệt; người duyệt cấp 1 không duyệt cấp 2 khi chính sách bắt khác người |
+| T030-AUTH-3 | SoD (thi hành ở cổng chuyển trạng thái, `sod` / `distinct_approvers`): người lập không tự duyệt; người duyệt cấp 1 không duyệt cấp 2; kết quả chặn có mã `DOC-FLOW-*`, cổng quyền không tham gia |
 | T030-AUTH-4 | Chứng từ đổi nội dung → chữ ký cũ `valid: false` cho phiên bản mới; ký lại mới hợp lệ |
 | T030-AUTH-5 | Mọi chuyển có `decisionId` trong bằng chứng; `explain` tái hiện được lý do cho / từ chối |
 
