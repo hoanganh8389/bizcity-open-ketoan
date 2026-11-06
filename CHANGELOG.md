@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Màn Cấu hình hệ thống (HT13) bản chỉ đọc (PHASE-030, S030-39) <!-- [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39 -->
+
+- **Thêm:** `GET /api/v1/settings/overview` — mọi khoá registry `bizcity_settings@1`: nhóm, lớp A / B / C, phạm vi, nơi lưu, giá trị hiện hành (chỉ khoá có phiên bản và không phải bí mật), số phiên bản, thay đổi gần nhất, bản sắp hiệu lực, căn cứ, sức khoẻ cấu hình (thiếu căn cứ, đổi 30 ngày, sắp hiệu lực, ngày chưa niêm phong). Màn web **Hệ thống → Cấu hình hệ thống (HT13)**, hướng dẫn `docs/huong-dan/cau-hinh-he-thong.md`. Golden T030-CFG-VIEW-1..6. Chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/24-CAU-HINH-HE-THONG.md`.
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không migration). Hôm nay mọi khoá hiện "thiếu căn cứ" vì registry chưa có trường căn cứ (S030-38).
+- **Bảo mật:** chỉ đọc; không bao giờ trả giá trị của khoá bí mật hoặc khoá chưa có phiên bản (D030-13); mọi truy vấn lọc theo đơn vị.
+
 ### Hàng việc: đếm chứng từ theo trạng thái và thanh "Việc cần làm" (PHASE-030, S030-31) <!-- [2026-11-06 08:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-31 -->
 
 - **Thêm:** view chỉ đọc `bizcity_read.document_queue` (migration 0076) gộp `payment_requests`, `purchase_documents`, `accounting_events`, `intake_inbox` về năm nhóm trạng thái chuẩn + cờ; ba action `core.queue.summary`, `core.queue.items`, `core.queue.mine` (quyền `documents:read`). Chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/23-HANG-VIEC.md`.
