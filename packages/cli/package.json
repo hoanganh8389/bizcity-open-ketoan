@@ -12,6 +12,6 @@
     "pg": "8.13.1"
   },
   "scripts": {
-    "test": "node --test test/accounting-cli.test.mjs test/module-accounting.test.mjs test/saving-model.test.mjs"
+    "test": "node --test test/accounting-cli.test.mjs test/module-accounting.test.mjs test/saving-model.test.mjs test/evidence-seal.test.mjs"
   }
 }

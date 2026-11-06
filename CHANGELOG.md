@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bản niêm phong của bằng chứng: tệp theo ngày sinh từ bảng, kiểm ba chiều (PHASE-030, S030-30b–c) <!-- [2026-11-06 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b–c -->
+
+- **Thêm:** `packages/platform/src/core/evidence-export.ts` — tác vụ `evidence.seal` (subscriber `bizcity.clock.daily`) chốt mỗi ngày đã đóng ra `DATA_DIR/bang-chung/<đơn vị>/<yyyy>/<mm>/<dd>.jsonl` + `<dd>.manifest.json` (`bizcity_evidence_seal@1`, nối ngày bằng `prevManifestSha256`), ghi một lần không đè; bản TypeScript của `audit_log_hash` (`hashVersion` 1). `GET /api/v1/evidence/verify` (`core.evidence.verify`, quyền `conformance:run`) và `bizcity evidence verify --dir` (ngoại tuyến) kiểm tệp ↔ manifest ↔ CSDL, chỉ trả số đếm và mã. Chẩn đoán L3 `EVIDENCE_SEAL_MISSING` / `_FILE` / `_DB` / `_CHAIN` (lane DG-EVD-2..5). Phép kiểm `SC-EVD-9`. Golden T030-SEAL-1..8. Chữ chốt [ADR-0030](docs/adr/ADR-0030-ban-niem-phong-bang-chung.md), hợp đồng §8.
+- **Đổi:** `SC-EVD-1` miễn đúng một tệp `evidence-export.ts` (ngoại lệ hẹp STD-EVD-4); hợp đồng `bizcity_evidence@1` 1.2.0-draft ghi rõ ranh giới ngày theo số thứ tự.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** đưa thư mục `DATA_DIR/bang-chung` vào sao lưu (R-BAK), giữ ≥ 10 năm, ứng dụng không xoá. Bản cài cũ: đêm đầu chốt tối đa 400 ngày, các đêm sau đuổi tiếp. Chưa có migration. Chữ ký manifest chưa bật (`signature: null`).
+- **Bảo mật:** niêm phong lộ được việc sửa / xoá bằng chứng trong CSDL sau ngày chốt (kể cả bởi superuser vượt trigger). Kết quả niêm phong không bao giờ được đọc ngược để quyết quyền hay ghi sổ.
+
 ### Thư viện tiền: làm tròn nửa xa số 0, chia dư lớn nhất, lịch đều (PHASE-030, S030-19) <!-- [2026-11-06 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19 -->
 
 - **Thêm:** `roundMoney`, `allocate`, `schedule` ở `@ketoan/contracts`, xuất lại ở `@bizcity/module-sdk` (R-MONEY-1..6, `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/18-THU-VIEN-TIEN.md`). Phép kiểm `SC-STD-5`: tự viết hàm chia tiền hoặc làm tròn tiền bằng `Math.round` trong `modules/**`. Golden `T030-CORE-6`.
