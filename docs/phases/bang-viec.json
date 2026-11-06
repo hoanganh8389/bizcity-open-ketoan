@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 16
+      "count": 15
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 51
+      "count": 52
     },
     {
       "key": "paused",
@@ -4138,15 +4138,9 @@
       "phase": "PHASE-028",
       "title": "W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chốt ADR-0027 Phụ lục A, W4",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w4-role-editor",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-028 · W4 — Role Editor: module modules/phan-quyen/ (ma trận quyền × vai trò, vai trò, người d…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 18
     },
