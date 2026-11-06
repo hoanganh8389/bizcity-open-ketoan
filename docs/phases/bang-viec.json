@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 17
+      "count": 18
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 48
+      "count": 47
     },
     {
       "key": "paused",
@@ -4117,8 +4117,14 @@
       "title": "W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — chữ chốt ADR-0027 Phụ lục A; cấp quyền module = luật…",
       "priority": "P0",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w2-api-vai-tro",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-028 · W2 đợt 2 — API quản trị vai trò của đơn vị (tạo / sửa / vô hiệu vai trò, thêm / gỡ luật…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 16
     },
