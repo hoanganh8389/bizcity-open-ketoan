@@ -260,6 +260,7 @@
 | [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026… | P0 | — |
 | [S030-9](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L16) | PHASE-030 | Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn | P0 | — |
 | [S030-18](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L25) | PHASE-030 | Kinh nghiệm cốt lõi 15: phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõ… | P0 | — |
+| [S030-19](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L26) | PHASE-030 | Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate m… | P0 | — |
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 
 ## Hoãn (1)

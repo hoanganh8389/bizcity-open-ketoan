@@ -10,8 +10,11 @@
 <!-- [2026-11-01 01:01 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — ảnh kiến trúc Core, cài nhanh 3 bước (scripts/cai-nhanh.sh), giám sát Prometheus / Grafana / Loki, kết nối API + MCP để trợ lý AI ghi nhận sổ sách và đọc báo cáo. -->
 <!-- [2026-11-03 03:40 PM Johnny Chu - Chu Hoàng Anh] G3-01 — lối vào "POS của bạn ghi sổ trong 4 bước" + skill kế toán cho AI -->
 <!-- [2026-11-05 11:50 PM Johnny Chu - Chu Hoàng Anh] README — ảnh kiến trúc: bốn ảnh, sửa cú pháp liên kết (ngoặc trong tên tệp mã hoá %28 %29) -->
+<!-- [2026-11-06 06:55 PM Johnny Chu - Chu Hoàng Anh] README — lời giới thiệu của chủ dự án: "Rút gọn thời gian viết ứng dụng", vì sao AE dev cần open-ketoan, không thay thế Misa / Bravo mà là chủ động; mục "Các nguyên tắc quan trọng" -->
 
-**Kế toán mở. Dữ liệu thuộc về doanh nghiệp. Cộng đồng tự do xây dựng ứng dụng.**
+** Rút gọn thời gian viết ứng dụng.**
+
+AE dev thay vì phải nghiên cứu nghiệp vụ kế toán từ đầu, chỉ cần init từ open-ketoan, đã có nền móng kế toán, các rule nghiệp vụ chắc chắn, kỷ luật, tin cậy.
 
 > **open-ketoan** là dự án Accounting Core Framework hướng tới một nền tảng kế toán mở đã chuẩn hóa, tuân thủ nguyên tắc kế toán để bất cứ ai cũng có thể tự triển khai, kết nối và phát triển các module nghiệp vụ kinh doanh, bán hàng, các ứng dụng mới nhưng luôn chắc chắn rằng, số liệu kinh doanh, marketing được phản ánh minh bạch, đúng nghiệp vụ kế toán dù bằng việc tự code hay dùng AI-assisted development (*vibe coding*).
 >
@@ -21,26 +24,18 @@
 
 ## Vì sao có open-ketoan?
 
-Nhiều doanh nghiệp và hộ kinh doanh Việt Nam đang dùng các phần mềm kế toán đóng hoặc SaaS, nhưng khi doanh nghiệp muốn mở rộng một quy trình riêng, kết nối với POS / CRM / kho, tự viết ứng dụng trên dữ liệu kế toán, hay vibe-code thêm module mới để thích ứng với nhu cầu phát triển, bị giới hạn bởi API, quyền truy cập, chi phí và chính sách của nhà cung cấp không cho phép.
+Nhiều ae muốn tự build ERP nội bộ cho mình nhưng lại chưa hiểu quá sâu về nghiệp vụ kế toán hoặc bản chất 1 phần mềm kế toán cần có gì, các nguyên tắc ghi sổ là gì.
+
+Nhiều doanh nghiệp và hộ kinh doanh Việt Nam đang dùng các phần mềm kế toán đóng hoặc SaaS, nhưng khi doanh nghiệp muốn mở rộng một quy trình riêng, kết nối với ERP/ POS / CRM / kho, tự viết ứng dụng trên dữ liệu kế toán, hay vibe-code thêm module mới để thích ứng với nhu cầu phát triển, bị giới hạn bởi API, quyền truy cập, chi phí và chính sách của nhà cung cấp không cho phép.
 
 Điều này làm mất khả năng tự chủ động kỹ thuật trong kỷ nguyên AI với các CEO, Dev.
-
-Doanh nghiệp cần được sở hữu và chủ động với dữ liệu của mình, còn cộng đồng developer, kế toán và AI builders có thể tạo ra những ứng dụng phù hợp với nhu cầu thực tế, thay vì bắt đầu lại từ sổ cái.
+Không phải là câu chuyện thay thế Misa, hay Bravo, các phần mềm kế toán dạng "đóng" truyền thống, mà còn là việc chủ động.
+Chủ doanh nghiệp, IT, Dev cần được sở hữu và chủ động với dữ liệu của mình, còn cộng đồng developer, kế toán và Dev có thể tạo ra những ứng dụng phù hợp với nhu cầu thực tế, thay vì bắt đầu lại từ sổ cái.
 
 ## Open - Kế toán bảo đảm tất cả các sự kiện kinh tế phát sinh ghi vào dữ liệu đều chuẩn theo nguyên tắc của kế toán và quy định của nhà nước.
 
-**Đưa kế toán mở trở thành hạ tầng dữ liệu tin cậy, để chủ doanh nghiệp hoàn toàn làm chủ phần mềm và dữ liệu kế toán của mình. Đó là chuyển đổi số tận gốc cho doanh nghiệp Việt Nam.**
 
-Kế toán là nơi phản ánh tiền, hàng, công nợ, chi phí và kết quả kinh doanh. Nếu có một Accounting Core đáng tin cậy cùng API / contract mở, doanh nghiệp có thể tự phát triển hệ sinh thái ứng dụng xung quanh nó: bán hàng, mua hàng, quản lý kho, CRM, tài sản, nhân sự, hợp đồng, dự án, báo cáo quản trị và trợ lý AI.
-
-Dự án hướng đến 4 vai trò:
-
-- **Doanh nghiệp và hộ kinh doanh:** có lựa chọn tự triển khai, kiểm soát dữ liệu, xuất dữ liệu và kết nối công cụ phù hợp với mình.
-- **Kế toán và chuyên gia nghiệp vụ:** tham gia định nghĩa, phản biện, kiểm thử và duy trì các quy tắc kế toán, gói cấu hình theo ngành.
-- **Developer và AI builders:** sử dụng SDK, API, MCP và các hợp đồng công khai để xây module, không cần và không được sửa trực tiếp sổ cái.
-- **Ready for AI Agentic:** sử dụng trợ lý AI để giao việc qua Zalo, tự động hóa các báo cáo, sổ sách.
-
-## Bốn nguyên tắc quan trọng lưu ý cho AE dev:
+## Các nguyên tắc quan trọng lưu ý cho AE dev:
 
 1. **Không chứng từ / sự việc hợp lệ thì không có bút toán.** Mọi bút toán truy nguyên được nguồn và phiên bản.
 2. **Sổ cái chỉ thêm.** Không âm thầm sửa hoặc xoá bút toán đã ghi; sai sót được xử lý bằng nghiệp vụ điều chỉnh / đảo phù hợp, giữ lại lịch sử.
