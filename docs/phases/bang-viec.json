@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 19
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 48
+      "count": 47
     },
     {
       "key": "paused",
@@ -4855,8 +4855,14 @@
       "title": "Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có ngoại lệ hẹp, STD-EVD-9..10, §8 thuật toán băm đã …",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, niem-phong)",
+        "branch": "feat/phase-030-niem-phong",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-30b, S030-30c — bản niêm phong bằng chứng: evidence-export.ts, tác vụ evidence.sea…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 37
     },
