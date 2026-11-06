@@ -4,6 +4,7 @@
 // [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — quét cả packages/platform/src (LAYER_ROOTS); chỗ hẹn giờ được phép: packages/platform/src/core/events.ts
+// [2026-11-06 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30c: SC-EVD-1 miễn đúng evidence-export.ts; SC-EVD-9 (chỉ tệp đó ghi dưới bang-chung, ghi một lần) — ADR-0030
 /**
  * bizcity_action@1, bizcity_api@1, bizcity_event@1, bizcity_evidence@1 — phần đọc được từ mã nguồn.
  */
@@ -13,6 +14,8 @@ const API = 'apps/api/src';
 /** Mã nguồn quét: apps/api/src + gói Platform (D010-7). */
 const SRC = LAYER_ROOTS;
 const srcOpts = (ctx) => (ctx.mode === 'module' ? { ext: ['.ts', '.mjs', '.js'], not: /(^|\/)(test|tests)\// } : { under: SRC, ext: ['.ts'] });
+/** Tệp duy nhất được ghi bằng chứng ra tệp: bản niêm phong (ADR-0030 D-SEAL-2; SC-EVD-1 miễn, SC-EVD-9 giữ hình dạng). */
+const SEAL_EXPORT = 'packages/platform/src/core/evidence-export.ts';
 const ROUTE_RE = /\b(?:r|app|fastify|server|router|api)\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]*)['"`]/;
 
 export const checks = [
@@ -144,6 +147,7 @@ export const checks = [
       // appendFile / createWriteStream ở đâu cũng là ghi tệp; writeFile chỉ tính khi tệp đó làm việc với .jsonl (đọc tệp seed thì không sao).
       const findings = [];
       for (const file of ctx.repo.files(opts)) {
+        if (file === SEAL_EXPORT) continue; // ngoại lệ hẹp STD-EVD-4 (ADR-0030 D-SEAL-2): bản niêm phong sinh từ bảng; hình dạng do SC-EVD-9 giữ
         const jsonl = /\.jsonl/.test(ctx.repo.read(file));
         ctx.repo.lines(file).forEach((t, i) => {
           if (/^\s*(\/\/|\*)/.test(t)) return;
@@ -153,6 +157,41 @@ export const checks = [
         });
       }
       return { examined: ctx.repo.files(opts).length, findings };
+    },
+  },
+  {
+    id: 'SC-EVD-9',
+    title: 'Chỉ evidence-export.ts ghi dưới bang-chung, và ghi một lần (cờ wx + link, không đè), manifest đúng hợp đồng',
+    gate: 'CONF-STATIC', contract: 'bizcity_evidence', rules: ['STD-EVD-9'], conf: ['CONF-STATIC-13'], tier: 1, enforce: 'block', weight: 2, targets: ['repo', 'module'], scope: 'module',
+    run(ctx) {
+      const opts = srcOpts(ctx);
+      const isComment = (t) => /^\s*(\/\/|\*)/.test(t);
+      const WRITE = /\b(writeFile|writeFileSync|appendFile|appendFileSync|createWriteStream|openSync|open|copyFile|copyFileSync|rename|renameSync|link|linkSync)\(/;
+      const findings = [];
+      let examined = 0;
+      for (const file of ctx.repo.files(opts)) {
+        examined++;
+        const lines = ctx.repo.lines(file);
+        if (file === SEAL_EXPORT) {
+          // ADR-0030 D-SEAL-4 / -6: ghi một lần, không đè, manifest mang đúng tên hợp đồng
+          const text = lines.filter((t) => !isComment(t)).join('\n');
+          for (const [key, re, why] of [
+            ['contract', /'bizcity_evidence_seal@1'/, 'thiếu tên hợp đồng manifest bizcity_evidence_seal@1'],
+            ['wx', /openSync\([^)]*'wx'/, "tệp tạm không mở bằng cờ loại trừ 'wx'"],
+            ['link', /\blinkSync\(/, 'không đặt tên thật bằng linkSync (link không đè tệp có sẵn)'],
+          ]) if (!re.test(text)) findings.push(ctx.finding(file, 1, why, `shape:${key}`));
+          lines.forEach((t, i) => {
+            if (!isComment(t) && /\b(writeFile|writeFileSync|appendFile|appendFileSync|createWriteStream|rename|renameSync)\(/.test(t)) findings.push(ctx.finding(file, i + 1, `${t.trim().slice(0, 120)} — có thể đè / ghi nối tệp niêm phong`, `overwrite:${i + 1}`));
+          });
+          continue;
+        }
+        if (!lines.some((t) => !isComment(t) && /['"`/]bang-chung['"`/]/.test(t))) continue;
+        lines.forEach((t, i) => {
+          if (isComment(t) || !WRITE.test(t)) return;
+          findings.push(ctx.finding(file, i + 1, `${t.trim().slice(0, 120)} — chỉ ${SEAL_EXPORT} được ghi dưới bang-chung`, t.replace(/\s+/g, '')));
+        });
+      }
+      return { examined, findings };
     },
   },
   {

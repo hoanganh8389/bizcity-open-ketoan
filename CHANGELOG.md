@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Hàng việc: đếm chứng từ theo trạng thái và thanh "Việc cần làm" (PHASE-030, S030-31) <!-- [2026-11-06 08:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-31 -->
+
+- **Thêm:** view chỉ đọc `bizcity_read.document_queue` (migration 0076) gộp `payment_requests`, `purchase_documents`, `accounting_events`, `intake_inbox` về năm nhóm trạng thái chuẩn + cờ; ba action `core.queue.summary`, `core.queue.items`, `core.queue.mine` (quyền `documents:read`). Chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/23-HANG-VIEC.md`.
+- **Đổi:** thanh "Việc cần làm" lấy thêm nguồn `/api/v1/queue/mine`; bỏ dòng "chứng từ lỗi" lấy từ dashboard vì trùng với hàng việc.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0076 (chỉ tạo view, không đụng dữ liệu).
+- **Bảo mật:** view `security_invoker`, chặn ghi bằng trigger; mọi truy vấn lọc `tenant_id`.
+
 ### Thư viện tiền: làm tròn nửa xa số 0, chia dư lớn nhất, lịch đều (PHASE-030, S030-19) <!-- [2026-11-06 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19 -->
 
 - **Thêm:** `roundMoney`, `allocate`, `schedule` ở `@ketoan/contracts`, xuất lại ở `@bizcity/module-sdk` (R-MONEY-1..6, `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/18-THU-VIEN-TIEN.md`). Phép kiểm `SC-STD-5`: tự viết hàm chia tiền hoặc làm tròn tiền bằng `Math.round` trong `modules/**`. Golden `T030-CORE-6`.

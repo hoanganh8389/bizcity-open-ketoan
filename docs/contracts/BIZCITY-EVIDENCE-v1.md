@@ -3,6 +3,7 @@
 <!-- [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6). -->
 
 <!-- [2026-11-06 07:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0030: bản niêm phong theo ngày; STD-EVD-4 có ngoại lệ hẹp; STD-EVD-9..10; §8 -->
+<!-- [2026-11-06 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b–c có mã: bỏ chữ "đề xuất" ở SC-EVD-1 / SC-EVD-9 / EVIDENCE_SEAL_*; §8 ghi rõ ranh giới ngày theo số thứ tự, ghi một lần bằng link, chữ ký chưa bật ở v1 -->
 
 > **Phiên bản:** 1.2.0-draft · 2026-11-06 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 6/7)
 > **Luật nền:** R-TEN ("mọi thao tác ghi có nhật ký"), R-LEDGER (sổ chỉ thêm) · **Năng lực:** `evidence.receipt`
@@ -72,13 +73,13 @@ Ai giữ biên nhận (người dùng, Cell, plugin WP) có thể hỏi lại `G
 | STD-EVD-1 | 0 | Mọi action `effect: 'write'` sinh **đúng một** bản ghi bằng chứng, kể cả khi thất bại vì lỗi nghiệp vụ (`result.ok = false`, `code`), trừ `VALIDATION_ERROR` trước khi vào handler | CONF-RUN-11 |
 | STD-EVD-2 | 0 | Bảng bằng chứng chỉ thêm: trigger chặn `UPDATE`, `DELETE`, `TRUNCATE` như sổ cái. Không có ngoại lệ purge trong v1 | CONF-RUN-12, trigger |
 | STD-EVD-3 | 0 | Bằng chứng do runtime ghi; module **không** ghi trực tiếp và không tắt được. Module chỉ bổ sung qua `ctx.evidence.note(key, value)` (ghi vào `changes.notes`) | CONF-STATIC-12 |
-| STD-EVD-4 | 1 | Không ghi nhật ký nghiệp vụ ra tệp, **trừ bản niêm phong do tác vụ `evidence.seal` của Platform xuất từ bảng bằng chứng (§8)**. Tệp khác chỉ cho log kỹ thuật (pino). Module không bao giờ ghi tệp bằng chứng | CONF-STATIC-13 / `SC-EVD-1` (grep `appendFile` …; miễn đúng một tệp Platform do ADR-0030 chốt: `packages/platform/src/core/evidence-export.ts` — **đề xuất, chưa có**) |
+| STD-EVD-4 | 1 | Không ghi nhật ký nghiệp vụ ra tệp, **trừ bản niêm phong do tác vụ `evidence.seal` của Platform xuất từ bảng bằng chứng (§8)**. Tệp khác chỉ cho log kỹ thuật (pino). Module không bao giờ ghi tệp bằng chứng | CONF-STATIC-13 / `SC-EVD-1` (grep `appendFile` …; miễn đúng một tệp Platform do ADR-0030 chốt: `packages/platform/src/core/evidence-export.ts`) |
 | STD-EVD-5 | 1 | `changes` chỉ chứa trường thay đổi; trường `pii` ghi băm (`sha256:…`) thay giá trị; không bao giờ ghi mật khẩu, khoá, token | CONF-RUN-13 |
 | STD-EVD-6 | 1 | Actor AI ghi đủ `kind: 'ai'`, `via`, `onBehalfOf` (người dùng chủ của khoá / kênh) | CONF-RUN-14 |
 | STD-EVD-7 | 1 | Action đọc dữ liệu nhạy cảm (xuất danh sách khách, xuất sổ) khai `evidence: 'sensitive'` → cũng ghi bằng chứng | review |
 | STD-EVD-8 | 2 | Bằng chứng giữ tối thiểu 10 năm (theo thời hạn lưu chứng từ kế toán); phân vùng theo năm khi lớn | vận hành |
-| STD-EVD-9 | 1 | Bản niêm phong chỉ sinh **từ** bảng bằng chứng sau khi ngày đã đóng, ghi **một lần** (cờ loại trừ + `rename` nguyên tử), không bao giờ ghi đè; tệp tự kiểm được không cần CSDL; manifest nối ngày bằng `prevManifestSha256`; thất bại niêm phong không chặn nghiệp vụ và không bao giờ được đọc ngược để quyết quyền hay ghi sổ | `SC-EVD-9` (đề xuất), `EVIDENCE_SEAL_*` |
-| STD-EVD-10 | 2 | `GET /api/v1/evidence/verify` và `bizcity evidence verify` so ba chiều (chuỗi trong CSDL · từng tệp · manifest ↔ CSDL ↔ tệp), chỉ đọc, không trả nội dung dòng | `EVIDENCE_SEAL_*` (đề xuất) |
+| STD-EVD-9 | 1 | Bản niêm phong chỉ sinh **từ** bảng bằng chứng sau khi ngày đã đóng, ghi **một lần** (tệp tạm mở cờ loại trừ `wx` + `fsync`, rồi `link` sang tên thật — `link` không bao giờ đè tệp có sẵn), không bao giờ ghi đè; tệp tự kiểm được không cần CSDL; manifest nối ngày bằng `prevManifestSha256`; thất bại niêm phong không chặn nghiệp vụ và không bao giờ được đọc ngược để quyết quyền hay ghi sổ | `SC-EVD-9`, `EVIDENCE_SEAL_*` |
+| STD-EVD-10 | 2 | `GET /api/v1/evidence/verify` và `bizcity evidence verify` so ba chiều (chuỗi trong CSDL · từng tệp · manifest ↔ CSDL ↔ tệp), chỉ đọc, không trả nội dung dòng | `EVIDENCE_SEAL_*` (DG-EVD-2..5), `apps/api/test/evidence-seal.test.ts`, `packages/cli/test/evidence-seal.test.mjs` |
 
 ## 5. Bảng
 
@@ -127,6 +128,8 @@ Bảng `audit_logs` vẫn là **nơi ghi duy nhất**. Bản niêm phong là b�
 
 **Vị trí.** `DATA_DIR/bang-chung/<đơn vị>/<yyyy>/<mm>/<dd>.jsonl` và `<dd>.manifest.json` (ngày theo UTC+7, ngoài thư mục web, quyền `0640`). Tác vụ `evidence.seal` chạy sau 00:30, chốt ngày `D−1`, an toàn khi chạy lại.
 
+**Ranh giới ngày theo số thứ tự.** `created_at` là giờ *bắt đầu* giao dịch nên số thứ tự (`chain_seq`) có thể xen giữa hai ngày. Gọi `cut(D)` = `chain_seq` lớn nhất có `created_at` trước hết ngày `D` (UTC+7); ngày `D` gồm các dòng `chain_seq ∈ (cut(D−1), cut(D)]`. Các ngày vì vậy nối liền, không sót dòng; dòng trước migration 0036 (không có chuỗi) không được niêm phong. Ngày đầu tiên là ngày của `created_at` nhỏ nhất trong các dòng có chuỗi. Bản cài cũ bật niêm phong lần đầu chốt tối đa 400 ngày mỗi lượt.
+
 **Dòng tệp** (`hashVersion: 1`): mỗi dòng một bản ghi, JSON không khoảng trắng thừa, UTF-8, kết thúc `
 `:
 
@@ -144,6 +147,6 @@ Bảng `audit_logs` vẫn là **nơi ghi duy nhất**. Bản niêm phong là b�
 {"contract":"bizcity_evidence_seal@1","tenant":"1","date":"2026-11-05","hashVersion":1,"firstSeq":9120,"lastSeq":9391,"rows":272,"prevHashOfFirst":"sha256:51be…","lastHash":"sha256:ab12…","fileSha256":"sha256:77e0…","prevManifestSha256":"sha256:0c4d…","sealedAt":"2026-11-06T17:31:05.120Z","sealer":"platform","alg":"sha256","signature":null}
 ```
 
-Ngày không có dòng nào: `rows: 0`, `firstSeq` / `lastSeq` null, `lastHash` = `lastHash` của ngày trước, để chuỗi liên tục. `signature` tuỳ chọn `{ alg: "hmac-sha256" | "ed25519", keyId, value }`, khoá lấy từ biến môi trường.
+Ngày không có dòng nào: `rows: 0`, `firstSeq` / `lastSeq` null, `lastHash` = `lastHash` của ngày trước, để chuỗi liên tục. `signature` tuỳ chọn `{ alg: "hmac-sha256" | "ed25519", keyId, value }`, khoá lấy từ biến môi trường — **bản mã đầu (S030-30b) luôn ghi `null`**; bật chữ ký là việc sau (khai biến môi trường).
 
 **Mã chẩn đoán** (L3, chỉ đọc): `EVIDENCE_SEAL_MISSING` (ngày đã đóng quá 2 ngày chưa niêm phong) · `EVIDENCE_SEAL_FILE` (tệp thiếu / hỏng / sai băm) · `EVIDENCE_SEAL_DB` (CSDL lệch tệp) · `EVIDENCE_SEAL_CHAIN` (manifest nối sai).
