@@ -35,7 +35,7 @@ Phân hệ cũ chưa chuyển (`apps/api/src/phan-he/<key>/`, `apps/web/src/phan
 Phân hệ **được**:
 - đọc danh mục, cấu hình, sổ qua service lõi (`modules/*`) hoặc view;
 - có bảng nghiệp vụ riêng (phiếu nháp, chính sách, lịch…);
-- nộp sự việc qua `postDocumentIn(trx, auth, doc)` khi phiếu đạt trạng thái "đã duyệt" (R-WF-3);
+- nộp sự việc qua `ctx.ledger.submit` (phân hệ cũ: `postDocumentIn(trx, auth, doc)`) **đúng ở điểm ghi nhận** khai cho loại phiếu — chuyển có `ledger: true`, không mặc định là lúc duyệt (R-WF-3, ADR-0029) <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — duyệt ≠ ghi sổ -->;
 - khai quyền, khoá cấu hình mới qua registry (R-MATRIX-2).
 
 Phân hệ **không được**:
