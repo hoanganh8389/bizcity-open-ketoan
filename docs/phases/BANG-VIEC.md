@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 17 |
+| Đang làm | 16 |
 | Chờ merge | 0 |
-| Bị chặn | 33 |
-| Chưa ai nhận | 126 |
-| Chờ đủ tín hiệu | 50 |
+| Bị chặn | 32 |
+| Chưa ai nhận | 124 |
+| Chờ đủ tín hiệu | 52 |
 | Hoãn | 1 |
 | Xong | 215 |
 | **Tổng** | **442** |
 
-## Đang làm (17)
+## Đang làm (16)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -33,8 +33,7 @@
 | [S026-22](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L14) | PHASE-026 | Hợp đồng hệ ngoài: itemId, mergedIntoItemId ở nguồn đổi danh mục, mã external:<nguồn> | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S026-23](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L15) | PHASE-026 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
-| [S028-9](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L18) | PHASE-028 | W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chố… | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w4-role-editor` |
-| [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L48) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | hoanganh8389 (phiên Claude, event-id) · `feat/phase-030-event-id-bat-buoc` |
+| [S030-39](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L46) | PHASE-030 | Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ … | P1 | hoanganh8389 (phiên Claude, ht13) · `feat/phase-030-ht13-chi-doc` |
 
 ## Chờ merge (0)
 
@@ -208,7 +207,7 @@
 | [S030-40](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L47) | PHASE-030 | Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ "đã đổi tron… | P1 | — |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | — |
 
-## Chờ đủ tín hiệu (51)
+## Chờ đủ tín hiệu (52)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -253,6 +252,7 @@
 | [S027-3](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L8) | PHASE-027 | CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế … | P1 | — |
 | [S028-6](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L15) | PHASE-028 | W1: userroleassignments (0073) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / t… | P0 | — |
 | [S028-7](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L16) | PHASE-028 | W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — ch… | P0 | — |
+| [S028-8](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L17) | PHASE-028 | W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027… | P1 | — |
 | [S028-9](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L18) | PHASE-028 | W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chố… | P1 | — |
 | [S029-9](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L18) | PHASE-029 | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CAN… | P0 | — |
 | [S029-10](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L19) | PHASE-029 | Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → account… | P0 | — |

@@ -269,11 +269,29 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
   });
 });
 
+// [2026-11-06 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W3 đợt 2 (ADR-0027 Phụ lục A, W3 đợt 2 mục 2): shadow — so quyết định của bộ tính với đường cũ, không đổi quyết định
+let shadowModule: Promise<typeof import('./authz/shadow.js')> | null = null;
+
+/** Nạp muộn (import động) để auth.ts không nhập authz/* lúc khởi động — tránh vòng nhập. Không bao giờ ném lỗi, không đổi quyết định. */
+async function observeShadow(req: FastifyRequest, auth: AuthContext, needed: readonly Permission[]): Promise<void> {
+  if (auth.kind !== 'user' || !auth.roles) return; // khoá API / vé hệ thống quản trị: không có vai trò để so
+  try {
+    const m = await (shadowModule ??= import('./authz/shadow.js'));
+    if (!(await m.shadowEnabled(auth.tenantId))) return;
+    const userId = auth.actor.slice('user:'.length);
+    const isAdmin = m.hasAdminRole(auth.roles, ADMIN_ROLES);
+    for (const p of needed) await m.shadowCompare({ tenantId: auth.tenantId, userId, permission: p, legacyAllowed: auth.permissions.has(p), isAdmin }, db, req.log);
+  } catch {
+    /* shadow không được làm hỏng yêu cầu */
+  }
+}
+
 /** preHandler kiểm tra quyền. */
 export function requirePermission(...needed: Permission[]) {
   return async (req: FastifyRequest, _reply: FastifyReply) => {
     const auth = req.auth;
     if (!auth) throw Errors.unauthorized();
+    await observeShadow(req, auth, needed);
     for (const p of needed) {
       if (!auth.permissions.has(p)) throw Errors.forbidden();
     }
