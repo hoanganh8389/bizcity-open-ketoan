@@ -16,7 +16,9 @@ import { ReviewBoardPage } from './features/system/ReviewBoardPage';
 import { PrintTemplatesPage } from './features/system/PrintTemplatesPage';
 import { DefaultDataPage } from './features/flow/DefaultDataPages';
 import { Navigate, Route } from 'react-router-dom';
-import { LauncherPage, ModuleHomePage, GroupHomePage } from './features/launcher/LauncherPage';
+import { ModuleHomePage, GroupHomePage } from './features/launcher/LauncherPage';
+import { TongQuanPage } from './features/launcher/TongQuanPage';
+import { ImageBlocksPage } from './features/system/ImageBlocksPage';
 import { DocumentsPage } from './features/documents/DocumentsPage';
 import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
@@ -69,7 +71,7 @@ import { sdkRoutes } from './phan-he/sdk-routes';
 
 export const pageRoutes = (
   <>
-    <Route path="/" element={<LauncherPage />} />
+    <Route path="/" element={<TongQuanPage />} />
     <Route path="/app/:key" element={<ModuleHomePage />} />
     <Route path="/bao-cao" element={<BaoCaoChungPage />} />
     <Route path="/nhom/:key" element={<GroupHomePage />} />
@@ -113,6 +115,7 @@ export const pageRoutes = (
     <Route path="ban-hang/xuat-dieu-chinh" element={<ExportAdjustPage />} />
     <Route path="tien-ich/du-lieu-goc" element={<DefaultDataPage />} />
     <Route path="cau-hinh/don-vi" element={<TenantPage />} />
+    <Route path="cau-hinh/khoi-anh" element={<ImageBlocksPage />} />
     <Route path="cau-hinh/mau-in" element={<PrintTemplatesPage />} />
     <Route path="he-thong/chi-nhanh-lam-viec" element={<ChiNhanhLamViecPage />} />
     <Route path="he-thong/kiem-chuan" element={<ConformancePage />} />

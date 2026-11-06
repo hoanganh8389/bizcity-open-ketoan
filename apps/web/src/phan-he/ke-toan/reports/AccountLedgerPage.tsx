@@ -126,7 +126,7 @@ export function AccountLedgerPage({ preset }: { preset?: LedgerPreset }) {
       <PageHeader
         title={preset?.title ?? 'Sổ chi tiết tài khoản'}
         code={preset?.code ?? 'ACC12'}
-        subtitle={d ? `${d.account.code} — ${d.account.name}` : 'Chọn tài khoản để xem'}
+        note={d ? `${d.account.code} — ${d.account.name}` : 'Chọn tài khoản để xem'}
         helpKey={preset?.helpKey ?? 'so-chi-tiet'}
       />
       <ReportSideLayout panel={panel}>

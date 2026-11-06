@@ -26,6 +26,21 @@ export type UserUpdate = z.infer<typeof userUpdateSchema>;
 
 export const changePasswordSchema = z.object({ currentPassword: z.string().min(1), newPassword: password });
 
+// [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1: gán / thu hồi vai trò bổ sung (chỉ phạm vi cả đơn vị + mục đích operate — chữ chốt 00 §4a)
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
+const reason = z.string().trim().min(3, 'Lý do tối thiểu 3 ký tự').max(500);
+
+export const roleAssignSchema = z.object({
+  role,
+  validFrom: isoDate.optional().describe('Mặc định hôm nay (giờ Việt Nam)'),
+  validTo: isoDate.optional().describe('Ngày cuối hiệu lực (gồm cả ngày này); bỏ trống = không hạn'),
+  reason,
+});
+export type RoleAssign = z.infer<typeof roleAssignSchema>;
+
+export const roleRevokeSchema = z.object({ reason });
+export type RoleRevoke = z.infer<typeof roleRevokeSchema>;
+
 /** Phạm vi của khoá API (ánh xạ sang quyền ở core/auth.ts → SCOPE_PERMISSIONS). */
 export const API_KEY_SCOPES = ['documents:write', 'reports:read', 'catalog:write'] as const;
 

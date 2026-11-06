@@ -65,7 +65,7 @@ export function TabWorkspace({ menu, strip }: { menu: MenuItem[]; strip?: ReactN
   // Tên thẻ: tên chức năng trên menu, kèm mã.
   const titles = useMemo(() => {
     const m = new Map<string, { label: string; code?: string }>([['/', { label: 'Tổng quan' }], ['/bao-cao', { label: 'Báo cáo' }], ...GON_DEFS.map((g) => [groupHome(g.key), { label: g.label }] as [string, { label: string }]), ...MODULES.map((x) => [`/app/${x.key}`, { label: x.label }] as [string, { label: string }])]);
-    for (const g of menu) for (const c of g.children ?? []) if (c.path && !m.has(c.path)) m.set(c.path, { label: c.label, code: c.code });
+    for (const g of menu) for (const c of [g, ...(g.children ?? [])]) if (c.path && !m.has(c.path)) m.set(c.path, { label: c.label, code: c.code });
     return m;
   }, [menu]);
 
