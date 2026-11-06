@@ -44,7 +44,7 @@ Rà mã 2026-11-06 ([PHASE-030 · 19](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP
 **Mất / chi phí:**
 - Mua hàng phải đổi đường sửa phiếu đã duyệt: bỏ "bỏ duyệt để sửa", thay bằng bản điều chỉnh.
 - Cổng Kernel thêm điều kiện, nên luồng kết nối / POS phải gửi kèm phiên bản và băm nguồn.
-- Cầu nối authz phải đợi PHASE-028 W1 / W2 có kho vai trò.
+- Cầu nối authz phải đợi PHASE-028 W2 (vai trò của đơn vị) — W1 vai trò bổ sung đã merge (#102).
 - Một số câu chữ "duyệt = ghi sổ" trong tài liệu và giao diện phải sửa.
 
 **Việc phải làm** (chủ sở hữu ghi trong ngoặc; chi tiết, mã việc và golden ở [PHASE-030 · 19](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/19-RA-SOAT-DUYET-VA-GHI-SO.md)):

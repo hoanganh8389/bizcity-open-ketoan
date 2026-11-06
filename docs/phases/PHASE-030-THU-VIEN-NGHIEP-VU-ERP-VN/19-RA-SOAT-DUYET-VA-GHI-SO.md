@@ -60,7 +60,7 @@ Không phải đảo thừa nhưng cùng gốc:
 | Bên | Đang có | Thiếu để nối |
 |---|---|---|
 | Workflow (`packages/platform/src/core/workflow.ts`) | không import `authz`; `WorkflowActor.can(p)` = `auth.permissions.has(p)` (:72-74); SoD = `doc.createdBy === actor.id` (:167); lỗi `forbidden(msg)` không mã lý do | đầu phiếu đủ trường (chi nhánh, kho, số tiền, ngày, phiên bản); `decide(p, purpose, resource)` trả quyết định; `decisionId` vào bằng chứng; ánh xạ chuyển → `purpose` (`approve` / `operate`) |
-| Authorization (`packages/platform/src/core/authz/engine.ts`) | `authorize` / `explain` / `batchAuthorize` / `scopeOf` thuần (W3 đợt 1 đã merge); tài nguyên `AuthzResourceContext` (`types.ts:134-146`); DENY thắng; điều kiện `amount_max`, `status_in`, `creator` | chưa ai gọi (chỉ `apps/api/test/authz-engine.test.ts`); kho vai trò W1 / W2 đang làm (CLAIMS); **không có điều kiện SoD** (`creator` chỉ self / branch / all); `creator: 'branch'` nhận mà không thi hành (:120); D-AUTH-12: điều kiện / relax chưa lưu được tới bước 4 |
+| Authorization (`packages/platform/src/core/authz/engine.ts`) | `authorize` / `explain` / `batchAuthorize` / `scopeOf` thuần (W3 đợt 1 đã merge); tài nguyên `AuthzResourceContext` (`types.ts:134-146`); DENY thắng; điều kiện `amount_max`, `status_in`, `creator` | chưa ai gọi (chỉ `apps/api/test/authz-engine.test.ts`); kho vai trò: W1 `user_role_assignments` đã merge (#102, migration 0073), W2 `tenant_roles` đang làm; **không có điều kiện SoD** (`creator` chỉ self / branch / all); `creator: 'branch'` nhận mà không thi hành (:120); D-AUTH-12: điều kiện / relax chưa lưu được tới bước 4 |
 | Rủi ro nếu nối vội | chứng từ không mang `branchId` / `warehouseId` → engine coi thuộc **mọi** phạm vi (`engine.ts:71`) → người duyệt kho K1 duyệt được K2 | nạp đầu phiếu từ máy chủ là điều kiện bắt buộc (AUTHZ-11) |
 
 Chia chủ theo ADR-0029 D-FIN-9 (bảng chủ dự án đưa ra):
@@ -72,7 +72,7 @@ Chia chủ theo ADR-0029 D-FIN-9 (bảng chủ dự án đưa ra):
 | Ghi sổ | Accounting Kernel | chỉ nhận sự việc đủ điều kiện (G1–G5), giữ liên kết phiên bản chứng từ |
 | Golden | Conformance (PHASE-030) | chứng minh không vượt quyền, không bỏ qua duyệt, không đứt lịch sử |
 
-Tài liệu này **không** sửa thư mục PHASE-028 / PHASE-029: các thư mục đó đang có dòng giữ chỗ (W1, W2, E2). Đề xuất việc cho hai phase ở §4 để chủ phase nhận vào checklist của mình.
+Tài liệu này **không** sửa thư mục PHASE-028 / PHASE-029: các thư mục đó đang có dòng giữ chỗ (PHASE-028 W2, PHASE-029 E2; W1 đã merge #102). Đề xuất việc cho hai phase ở §4 để chủ phase nhận vào checklist của mình.
 
 ## 4. Kế hoạch theo P0 / P1 của chủ dự án
 
@@ -107,7 +107,7 @@ Tài liệu này **không** sửa thư mục PHASE-028 / PHASE-029: các thư m�
 | T030-AUTH-4 | Chứng từ đổi nội dung → chữ ký cũ `valid: false` cho phiên bản mới; ký lại mới hợp lệ |
 | T030-AUTH-5 | Mọi chuyển có `decisionId` trong bằng chứng; `explain` tái hiện được lý do cho / từ chối |
 
-Tổng tăng từ 73 lên **87** ca (T030-DOC-1..9, T030-AUTH-1..5). Ca AUTH-1 / -2 chạy được sau khi PHASE-028 W1 / W2 merge và cầu nối có; trước đó là `it.todo`.
+Tổng tăng từ 73 lên **87** ca (T030-DOC-1..9, T030-AUTH-1..5). Ca AUTH-1 / -2 chạy được sau khi PHASE-028 W2 merge (W1 đã merge #102) và cầu nối có; trước đó là `it.todo`.
 
 ## 6. Kiểm tuyến nguồn → sổ trên bảng sẵn có (S030-26)
 

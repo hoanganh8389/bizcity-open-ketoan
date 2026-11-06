@@ -252,7 +252,7 @@ transitions:
 | | Có | Thiếu |
 |---|---|---|
 | Document | YAML, `plan` / `allowed`, `levels`, `sod`, `owner`, `requires`; `saveVersion` + băm; chữ ký gắn phiên bản; lịch sử Kernel | `transition()` chung; tự `saveVersion`; nạp đầu phiếu; module chưa ai dùng `saveVersion` / `document_links` |
-| Authorization | engine thuần `authorize` / `explain` / `scopeOf` (W3 đợt 1, đã merge) | kho vai trò (W1 / W2 đang làm); nối `runAction`; điều kiện SoD; thi hành `creator: 'branch'` |
+| Authorization | engine thuần `authorize` / `explain` / `scopeOf` (W3 đợt 1, đã merge) | kho vai trò W2 (đang làm; W1 đã merge #102); nối `runAction`; điều kiện SoD; thi hành `creator: 'branch'` |
 | Kernel | một cửa, phiên bản, đảo phần đổi, giữ chờ không đảo, khoá kỳ | G1, G2, G5 |
 | Mua hàng (đóng băng, ADR-0024) | duyệt = ghi sổ (đúng cho phiếu nhập) | sửa phiếu đã duyệt phải bỏ duyệt → đảo toàn bộ hai lần; phiếu chi đổi số mới mỗi vòng |
 | Đề nghị thanh toán | ghi sổ lúc chi (đúng), hai cấp | không đường "bỏ chi" |
