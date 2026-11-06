@@ -4,7 +4,7 @@
  *  - CSDL chặn: xoá / đổi mã / đổi nền vai trò, sửa / xoá luật, relax, Cho có *, luật trỏ vai trò đơn vị khác, lần gán có hai vai trò.
  *  - RLS cô lập đơn vị; tenants.authz_version tăng ở mỗi lần ghi.
  *  - loadAuthzSnapshot + authorize: nền ∪ Cho, Cấm thắng cả vai trò chính, vai trò vô hiệu không cấp, thu hồi có hiệu lực ngay.
- *  - Quyền hiệu lực của đường yêu cầu (auth.ts) chưa đổi: lần gán vai trò của đơn vị không thêm quyền ở /auth/me.
+ *  - [2026-11-06 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2: đường yêu cầu (auth.ts) nay THI HÀNH vai trò của đơn vị (Cho + Cấm) — kiểm ở vai-tro-don-vi-api.test.ts; ở đây chỉ còn kiểm lớp đọc.
  * Dữ liệu là dữ liệu giả.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -168,7 +168,7 @@ describe('Lớp đọc + bộ tính (shadow, chưa nối đường yêu cầu)',
     expect(await can('catalog:write')).toBe(false);
   });
 
-  it('gán vai trò của đơn vị (nền viewer + Cho catalog:write) → bộ tính cho; /auth/me chưa đổi (bước 4)', async () => {
+  it('gán vai trò của đơn vị (nền viewer + Cho catalog:write) → bộ tính cho; /auth/me có quyền (W2 đợt 2 thi hành)', async () => {
     roleId = await newRole('thu_kho', 'job', 'viewer');
     await addRule(roleId, 'catalog:write', 'allow');
     assignmentId = await assign(roleId);
@@ -176,7 +176,7 @@ describe('Lớp đọc + bộ tính (shadow, chưa nối đường yêu cầu)',
     forgetRoles(viewerId);
     const me = await ctx.app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${viewerToken}` } });
     expect(me.statusCode).toBe(200);
-    expect(me.json().data.permissions).not.toContain('catalog:write');
+    expect(me.json().data.permissions).toContain('catalog:write');
   });
 
   it('lịch sử gán của W1 trả lần gán vai trò của đơn vị', async () => {
