@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 125
+      "count": 124
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 52
+      "count": 51
     },
     {
       "key": "paused",
