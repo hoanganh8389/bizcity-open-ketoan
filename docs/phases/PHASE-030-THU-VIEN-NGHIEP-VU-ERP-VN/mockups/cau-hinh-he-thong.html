@@ -1,5 +1,6 @@
 <!doctype html>
 <!-- [2026-11-06 01:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-37: bản mẫu HT13 Cấu hình hệ thống — tham số có phiên bản, hiệu lực, căn cứ, duyệt, tác động; chuỗi tham số → cổng → giao diện → nhật ký; điểm kiểm soát tới hạn; đổi khoá loại A; xem như trên form; đối chiếu menu Cấu hình của Erp-vn (chữ chốt: ../24-CAU-HINH-HE-THONG.md) -->
+<!-- [2026-11-06 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-37: chủ dự án chốt D030-12 = một người, chỉ ghi nhật ký (bỏ luồng duyệt hai người) -->
 <!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
 <html lang="vi">
 <head>
@@ -112,7 +113,7 @@ footer{color:var(--muted);font-size:12px;padding:8px 16px 24px;max-width:1400px;
 <body>
 <header>
   <div class="top">
-    <div class="brand"><div class="logo">KT</div><div>Cấu hình hệ thống <span class="tag info">HT13 · đề xuất</span><small>Hệ thống › Cấu hình · tham số có phiên bản, hiệu lực, căn cứ, duyệt, tác động</small></div></div>
+    <div class="brand"><div class="logo">KT</div><div>Cấu hình hệ thống <span class="tag info">HT13 · đã chốt hướng</span><small>Hệ thống › Cấu hình · tham số có phiên bản, hiệu lực, căn cứ, duyệt, tác động</small></div></div>
     <div class="spacer"></div>
     <button class="btn sm" id="theme" type="button">Đổi nền sáng / tối</button>
   </div>
@@ -137,75 +138,76 @@ const GROUPS = [
 const CLS = { A: ['k', 'A · ảnh hưởng sổ'], B: ['info', 'B · vận hành'], C: ['none', 'C · hiển thị'], F: ['none', 'cố định theo luật'] };
 const SRC = { registry: 'registry đơn vị', rulepack: 'vn-rulepacks (quốc gia)', core: 'Lõi (không tắt)' };
 
-// versions: [giá trị, từ ngày, đến ngày, căn cứ, người đề xuất, người duyệt, trạng thái]
+// versions: [giá trị, từ ngày, đến ngày, căn cứ, người đổi, lý do, trạng thái] — D030-12: một người có quyền đổi thẳng, chỉ ghi nhật ký
 const PARAMS = [
   { key: 'bizcity.payment.approval_thresholds', name: 'Hạn mức duyệt đề nghị thanh toán', group: 'duyet', cls: 'B', src: 'registry', owner: 'quy',
-    versions: [['cấp 1 ≤ 50.000.000 đ · cấp 2 > 50.000.000 đ', '2026-01-01', null, 'Quy chế tài chính nội bộ số 01/2026', 'ktt', '—', 'cur']],
+    versions: [['cấp 1 ≤ 50.000.000 đ · cấp 2 > 50.000.000 đ', '2026-01-01', null, 'Quy chế tài chính nội bộ số 01/2026', 'ktt', 'Khởi tạo', 'cur']],
     usedBy: ['Cổng duyệt của đề nghị thanh toán (workflow)', 'Hàng việc "chờ bạn duyệt"'], uses: 412 },
   { key: 'bizcity.lock.period', name: 'Khoá kỳ kế toán', group: 'duyet', cls: 'A', src: 'registry', owner: 'core',
-    versions: [['khoá đến hết 31/10/2026', '2026-11-03', null, 'Biên bản khoá sổ tháng 10/2026', 'ktt', 'chu', 'cur']],
+    versions: [['khoá đến hết 31/10/2026', '2026-11-03', null, 'Biên bản khoá sổ tháng 10/2026', 'ktt', 'Theo quyết định của chủ đơn vị', 'cur']],
     usedBy: ['Cổng khoá kỳ của mọi action ghi', 'Form chứng từ: chặn ngày trong kỳ đã khoá'], uses: 1820 },
   { key: 'bizcity.lock.data', name: 'Khoá dữ liệu theo ngày (người dùng thường)', group: 'duyet', cls: 'A', src: 'registry', owner: 'core',
-    versions: [['không sửa chứng từ quá 5 ngày', '2026-01-01', null, null, 'ktt', 'chu', 'cur']],
+    versions: [['không sửa chứng từ quá 5 ngày', '2026-01-01', null, null, 'ktt', 'Theo quyết định của chủ đơn vị', 'cur']],
     usedBy: ['Cổng khoá dữ liệu (date-rules)'], uses: 1820 },
   { key: 'bizcity.posting.modes', name: 'Chế độ định khoản theo loại chứng từ', group: 'ketoan', cls: 'A', src: 'registry', owner: 'core',
-    versions: [['bán hàng: tự động · mua hàng: chờ định khoản (ACC14)', '2026-01-01', null, 'Quyết định của kế toán trưởng', 'ktt', 'chu', 'cur']],
+    versions: [['bán hàng: tự động · mua hàng: chờ định khoản (ACC14)', '2026-01-01', null, 'Quyết định của kế toán trưởng', 'ktt', 'Theo quyết định của chủ đơn vị', 'cur']],
     usedBy: ['Trạm định khoản ACC14', 'Hàng việc "chờ định khoản"'], uses: 2210 },
   { key: 'bizcity.posting.tax_codes', name: 'Mã thuế GTGT và tài khoản', group: 'ketoan', cls: 'A', src: 'registry', owner: 'core',
     versions: [
-      ['V0, V5, V8, V10, KCT', '2025-07-01', '2026-12-31', 'Luật Thuế GTGT 48/2024/QH15', 'kt01', 'ktt', 'cur'],
-      ['V0, V5, V10, KCT (ngừng V8)', '2027-01-01', null, null, 'kt01', '—', 'pend'],
+      ['V0, V5, V8, V10, KCT', '2025-07-01', '2026-12-31', 'Luật Thuế GTGT 48/2024/QH15', 'kt01', 'Áp dụng theo luật', 'cur'],
+      ['V0, V5, V10, KCT (ngừng V8)', '2027-01-01', null, null, 'kt01', 'Hết thời hạn giảm thuế', 'soon'],
     ],
     usedBy: ['Cổng kiểm nội dung: mã thuế hợp lệ tại ngày chứng từ', 'Danh sách chọn mã thuế trên form bán / mua'], uses: 3045 },
   { key: 'bizcity.posting.default_accounts', name: 'Tài khoản ngầm định', group: 'ketoan', cls: 'A', src: 'registry', owner: 'core',
-    versions: [['theo hồ sơ kế toán TT 200', '2026-01-01', null, 'Hồ sơ kế toán HT07', 'ktt', 'chu', 'cur']],
+    versions: [['theo hồ sơ kế toán TT 200', '2026-01-01', null, 'Hồ sơ kế toán HT07', 'ktt', 'Theo quyết định của chủ đơn vị', 'cur']],
     usedBy: ['Luật định khoản (AccountResolver)'], uses: 5120 },
   { key: 'NGUONG_TSCD', name: 'Nguyên giá tối thiểu của tài sản cố định', group: 'ketoan', cls: 'A', src: 'rulepack',
-    versions: [['30.000.000 đ', '2013-06-10', null, 'Thông tư 45/2013/TT-BTC, sửa đổi bởi Thông tư 30/2025/TT-BTC', 'gói vn 2026.11', '—', 'cur']],
+    versions: [['30.000.000 đ', '2013-06-10', null, 'Thông tư 45/2013/TT-BTC, sửa đổi bởi Thông tư 30/2025/TT-BTC', 'gói vn 2026.11', 'Cập nhật theo gói luật', 'cur']],
     usedBy: ['Form ghi tăng tài sản: nhắc khi nguyên giá dưới ngưỡng', 'Cổng kiểm nội dung của ghi tăng TSCĐ'], uses: 18 },
   { key: 'DU_PHONG_PTKD_THANG_1', name: 'Dự phòng phải thu: số tháng quá hạn bậc 1', group: 'ketoan', cls: 'A', src: 'rulepack',
-    versions: [['6 tháng', '2019-10-10', null, 'Thông tư 48/2019/TT-BTC, Điều 6', 'gói vn 2026.11', '—', 'cur']],
+    versions: [['6 tháng', '2019-10-10', null, 'Thông tư 48/2019/TT-BTC, Điều 6', 'gói vn 2026.11', 'Cập nhật theo gói luật', 'cur']],
     usedBy: ['Bút toán trích lập dự phòng cuối kỳ'], uses: 2 },
   { key: 'NGUONG_TT_KHONG_TIEN_MAT', name: 'Ngưỡng bắt buộc thanh toán không dùng tiền mặt', group: 'phaply', cls: 'A', src: 'rulepack',
-    versions: [['5.000.000 đ', '2025-07-01', null, 'Luật Thuế GTGT 48/2024/QH15, Nghị định 181/2025/NĐ-CP, Nghị định 320/2025/NĐ-CP', 'gói vn 2026.11', '—', 'cur']],
+    versions: [['5.000.000 đ', '2025-07-01', null, 'Luật Thuế GTGT 48/2024/QH15, Nghị định 181/2025/NĐ-CP, Nghị định 320/2025/NĐ-CP', 'gói vn 2026.11', 'Cập nhật theo gói luật', 'cur']],
     usedBy: ['Form phiếu chi / phiếu mua: nhắc khi trả tiền mặt từ ngưỡng', 'Cổng kiểm nội dung: khấu trừ GTGT đầu vào'], uses: 96 },
   { key: 'LUONG_CO_SO', name: 'Lương cơ sở', group: 'phaply', cls: 'A', src: 'rulepack',
     versions: [
-      ['2.340.000 đ', '2024-07-01', '2026-06-30', 'Lương cơ sở từ 01/7/2024', 'gói vn 2025.01', '—', 'old'],
-      ['2.530.000 đ', '2026-07-01', null, 'Nghị định 161/2026/NĐ-CP', 'gói vn 2026.11', '—', 'cur'],
+      ['2.340.000 đ', '2024-07-01', '2026-06-30', 'Lương cơ sở từ 01/7/2024', 'gói vn 2025.01', 'Cập nhật theo gói luật', 'old'],
+      ['2.530.000 đ', '2026-07-01', null, 'Nghị định 161/2026/NĐ-CP', 'gói vn 2026.11', 'Cập nhật theo gói luật', 'cur'],
     ],
     usedBy: ['Bảng lương (modules/nhan-su, P2)', 'Trần đóng bảo hiểm'], uses: 0 },
   { key: 'TNCN_GIAM_TRU_BAN_THAN', name: 'Giảm trừ gia cảnh bản thân', group: 'phaply', cls: 'A', src: 'rulepack',
-    versions: [['15.500.000 đ / tháng', '2026-01-01', null, 'Nghị quyết 110/2025/UBTVQH15; Luật Thuế TNCN 109/2025/QH15', 'gói vn 2026.11', '—', 'cur']],
+    versions: [['15.500.000 đ / tháng', '2026-01-01', null, 'Nghị quyết 110/2025/UBTVQH15; Luật Thuế TNCN 109/2025/QH15', 'gói vn 2026.11', 'Cập nhật theo gói luật', 'cur']],
     usedBy: ['Tính thuế TNCN (modules/nhan-su, P2)'], uses: 0 },
   { key: 'BHXH_NLD', name: 'BHXH người lao động đóng (hưu trí, tử tuất)', group: 'phaply', cls: 'A', src: 'rulepack',
-    versions: [['8 %', '2025-07-01', null, 'Luật Bảo hiểm xã hội 41/2024/QH15, Điều 33', 'gói vn 2026.11', '—', 'cur']],
+    versions: [['8 %', '2025-07-01', null, 'Luật Bảo hiểm xã hội 41/2024/QH15, Điều 33', 'gói vn 2026.11', 'Cập nhật theo gói luật', 'cur']],
     usedBy: ['Bảng lương, nộp bảo hiểm (P2)'], uses: 0 },
   { key: 'LICH_NGHI_LE_2027', name: 'Lịch nghỉ lễ, Tết năm 2027', group: 'phaply', cls: 'B', src: 'rulepack',
     versions: [],
     usedBy: ['Ngày làm việc (workingDays, K-030-10)', 'Hạn thanh toán, hạn nộp'], uses: 0, missing: 'Chưa có dữ liệu. Căn cứ: Bộ luật Lao động 2019, Điều 112 (S030-35).' },
   { key: 'bizcity.intake.accept_roles', name: 'Vai được nhận chứng từ từ bể chờ', group: 'nhaplieu', cls: 'C', src: 'registry', owner: 'core',
-    versions: [['kế toán, kế toán trưởng', '2026-01-01', null, null, 'ktt', '—', 'cur']], usedBy: ['Trạm tiền kiểm, bể chờ'], uses: 74 },
+    versions: [['kế toán, kế toán trưởng', '2026-01-01', null, null, 'ktt', 'Khởi tạo', 'cur']], usedBy: ['Trạm tiền kiểm, bể chờ'], uses: 74 },
   { key: 'bizcity.item.auto_create', name: 'Tự tạo mặt hàng khi chứng từ có mã lạ', group: 'nhaplieu', cls: 'C', src: 'registry', owner: 'core',
-    versions: [['tắt', '2026-01-01', null, null, 'ktt', '—', 'cur']], usedBy: ['Cửa nạp sự việc'], uses: 0 },
+    versions: [['tắt', '2026-01-01', null, null, 'ktt', 'Khởi tạo', 'cur']], usedBy: ['Cửa nạp sự việc'], uses: 0 },
   { key: 'ENTRY-*', name: 'Luật nhập chứng từ (HT09 mở sang chứng từ)', group: 'nhaplieu', cls: 'B', src: 'registry',
     versions: [], usedBy: ['Cổng kiểm nội dung mọi đường vào'], uses: 0, missing: 'Chưa có: HT09 hiện chỉ cho danh mục (S030-34).' },
   { key: 'bizcity.intake.retention_days', name: 'Giữ mục bể chờ đã đóng', group: 'luutru', cls: 'C', src: 'registry', owner: 'core',
-    versions: [['90 ngày', '2026-01-01', null, null, 'ktt', '—', 'cur']], usedBy: ['Dọn bể chờ mỗi đêm'], uses: 0 },
+    versions: [['90 ngày', '2026-01-01', null, null, 'ktt', 'Khởi tạo', 'cur']], usedBy: ['Dọn bể chờ mỗi đêm'], uses: 0 },
   { key: 'bang-chung', name: 'Giữ bằng chứng và tệp niêm phong', group: 'luutru', cls: 'F', src: 'core',
-    versions: [['≥ 10 năm, ứng dụng không xoá', '2026-11-06', null, 'Luật Kế toán 2015, Điều 41; ADR-0030', 'Lõi', '—', 'cur']],
+    versions: [['≥ 10 năm, ứng dụng không xoá', '2026-11-06', null, 'Luật Kế toán 2015, Điều 41; ADR-0030', 'Lõi', 'Cố định theo luật', 'cur']],
     usedBy: ['Tác vụ evidence.seal (01:00)', 'GET /api/v1/evidence/verify'], uses: 0, fixed: true },
   { key: 'chung-thu-so', name: 'Chứng thư số (ký hoá đơn, tờ khai)', group: 'luutru', cls: 'B', src: 'registry', secret: true,
     versions: [], usedBy: ['Ký hoá đơn điện tử, tờ khai (chưa có)'], uses: 0, missing: 'Chưa khai. Bí mật nằm ở kho bí mật; màn này chỉ hiện trạng thái và hạn dùng (NC-8).' },
 ];
 
 const cur = (p) => p.versions.find((v) => v[6] === 'cur');
-const pend = (p) => p.versions.find((v) => v[6] === 'pend');
+const soon = (p) => p.versions.find((v) => v[6] === 'soon');
 const flags = (p) => {
   const f = [];
   if (!p.versions.length) f.push('missing');
   else if (p.versions.some((v) => !v[3])) f.push('nobasis');
-  if (pend(p)) f.push('pending');
+  if (soon(p)) f.push('soon');
+  if (p.cls === 'A' && p.versions.some((v) => v[1] >= '2026-10-07' && v[1] <= TODAY)) f.push('recent');
   const c = cur(p);
   if (c && c[2] && c[2] <= '2027-01-06') f.push('expiring');
   return f;
@@ -213,7 +215,7 @@ const flags = (p) => {
 const status = (p) => {
   const f = flags(p);
   if (f.includes('missing')) return '<span class="tag bad">✕ chưa có</span>';
-  if (f.includes('pending')) return '<span class="tag warn">◷ có bản chờ duyệt</span>';
+  if (f.includes('soon')) return '<span class="tag info">◷ có bản sắp hiệu lực</span>';
   if (f.includes('nobasis')) return '<span class="tag warn">! thiếu căn cứ</span>';
   return '<span class="tag ok">✓ đang áp</span>';
 };
@@ -231,7 +233,7 @@ function healthTiles() {
   const count = (fl) => PARAMS.filter((p) => flags(p).includes(fl)).length;
   const tiles = [
     ['nobasis', count('nobasis') + count('missing'), 'tham số thiếu căn cứ hoặc chưa có'],
-    ['pending', count('pending'), 'bản khoá A đang chờ người thứ hai duyệt'],
+    ['recent', count('recent'), 'khoá loại A đã đổi trong 30 ngày qua (xem lại khi cần)'],
     ['expiring', count('expiring'), 'phiên bản hết hiệu lực trong 60 ngày'],
     ['seal', 0, 'ngày đã đóng chưa niêm phong bằng chứng'],
   ];
@@ -265,16 +267,16 @@ function detailCard() {
   let body = '';
   if (p.missing) body = `<div class="msg block"><span class="ic">✕</span><div>${esc(p.missing)}</div></div>`;
   if (state.sub === 'gia-tri') {
-    body += p.versions.length ? `<ul class="tl">${p.versions.map((v) => `<li class="${v[6] === 'cur' ? 'cur' : v[6] === 'pend' ? 'pend' : ''}"><b>${p.secret ? 'đã khai' : esc(v[0])}</b><div class="muted">từ ${fmtDate(v[1])}${v[2] ? ' đến ' + fmtDate(v[2]) : ''} · ${v[6] === 'cur' ? 'đang áp' : v[6] === 'pend' ? 'chờ duyệt' : 'đã hết hiệu lực'}</div></li>`).join('')}</ul>` : '';
+    body += p.versions.length ? `<ul class="tl">${p.versions.map((v) => `<li class="${v[6] === 'cur' ? 'cur' : v[6] === 'soon' ? 'pend' : ''}"><b>${p.secret ? 'đã khai' : esc(v[0])}</b><div class="muted">từ ${fmtDate(v[1])}${v[2] ? ' đến ' + fmtDate(v[2]) : ''} · ${v[6] === 'cur' ? 'đang áp' : v[6] === 'soon' ? 'sắp hiệu lực' : 'đã hết hiệu lực'}</div></li>`).join('')}</ul>` : '';
     body += `<p class="muted" style="font-size:12.5px">Chứng từ ngày D dùng phiên bản có “từ ngày” ≤ D lớn nhất. Chứng từ cũ giữ phiên bản cũ.</p>`;
-    if (p.cls === 'A' && !p.fixed && p.src === 'registry') body += `<button class="btn sm pri" type="button" data-goto="doi">Đề xuất giá trị mới…</button>`;
+    if (p.cls === 'A' && !p.fixed && p.src === 'registry') body += `<button class="btn sm pri" type="button" data-goto="doi">Đổi giá trị…</button>`;
     if (p.src === 'rulepack') body += `<p class="muted" style="font-size:12.5px">Tham số quốc gia: đơn vị không sửa giá trị, chỉ chọn gói hoặc ghi đè ở lớp đơn vị kèm lý do (D030-14).</p>`;
   } else if (state.sub === 'can-cu') {
     body += p.versions.length ? `<dl>${p.versions.map((v) => `<dt>${fmtDate(v[1])}</dt><dd>${v[3] ? esc(v[3]) : '<span class="tag warn">! chưa nhập căn cứ</span>'}</dd>`).join('')}</dl>` : '';
     body += `<p class="muted" style="font-size:12.5px">Căn cứ tới văn bản, điều, khoản, điểm; chứng từ dùng tham số ghi lại căn cứ trong bằng chứng (<span class="mono">basis_used</span>, S030-29).</p>`;
   } else if (state.sub === 'lich-su') {
-    body += p.versions.length ? `<div class="tbl"><table class="static"><thead><tr><th>Phiên bản</th><th>Đề xuất</th><th>Duyệt</th><th>Bằng chứng</th></tr></thead><tbody>${p.versions.map((v, i) => `<tr><td>V${i + 1} · ${fmtDate(v[1])}</td><td>${esc(v[4])}</td><td>${v[5] === '—' ? (p.cls === 'A' && p.src === 'registry' ? '<span class="tag warn">chờ</span>' : '<span class="muted">không cần</span>') : esc(v[5])}</td><td class="mono">#${48200 + i * 37}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Chưa có lần ghi nào.</p>';
-    body += `<p class="muted" style="font-size:12.5px">Mỗi lần ghi là một action có bằng chứng (<span class="mono">core.settings.set</span>), niêm phong theo ngày.</p>`;
+    body += p.versions.length ? `<div class="tbl"><table class="static"><thead><tr><th>Phiên bản</th><th>Người đổi</th><th>Lý do</th><th>Bằng chứng</th></tr></thead><tbody>${p.versions.map((v, i) => `<tr><td>V${i + 1} · ${fmtDate(v[1])}</td><td>${esc(v[4])}</td><td>${esc(v[5])}</td><td class="mono">#${48200 + i * 37}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Chưa có lần ghi nào.</p>';
+    body += `<p class="muted" style="font-size:12.5px">Mỗi lần đổi là một action có bằng chứng (<span class="mono">core.settings.set</span>): người đổi, lý do, giá trị cũ → mới; niêm phong theo ngày. Không có bước duyệt (D030-12).</p>`;
   } else {
     body += `<h3 style="margin-top:0">Ai đọc tham số này</h3><ul style="margin:0;padding-left:18px">${p.usedBy.map((u) => `<li>${esc(u)}</li>`).join('')}</ul>`;
     body += `<h3>Đã dùng</h3><p>${p.uses ? `${p.uses.toLocaleString('vi-VN')} chứng từ ghi phiên bản đang áp trong bằng chứng.` : '<span class="muted">Chưa có chứng từ nào dùng.</span>'}</p>`;
@@ -286,7 +288,7 @@ function detailCard() {
 
 function viewThamSo() {
   const counts = Object.fromEntries(GROUPS.map((g) => [g.id, PARAMS.filter((p) => p.group === g.id).length]));
-  return `<h2>Tham số của đơn vị</h2><p class="lead">Mỗi tham số là một bản ghi có phiên bản: giá trị, phạm vi, ngày hiệu lực, căn cứ, người đề xuất, người duyệt. Danh mục (tài khoản, kho, loại tài sản…) ở màn Danh mục; màn này dẫn sang.</p>
+  return `<h2>Tham số của đơn vị</h2><p class="lead">Mỗi tham số là một bản ghi có phiên bản: giá trị, phạm vi, ngày hiệu lực, căn cứ, người đổi, lý do. Danh mục (tài khoản, kho, loại tài sản…) ở màn Danh mục; màn này dẫn sang.</p>
     ${healthTiles()}
     <div class="layout">
       <nav class="panel groups" aria-label="Nhóm tham số"><button type="button" data-group="" aria-pressed="${!state.group}">Tất cả <small>${PARAMS.length}</small></button>${GROUPS.map((g) => `<button type="button" data-group="${g.id}" aria-pressed="${state.group === g.id}">${esc(g.label)} <small>${counts[g.id]}</small></button>`).join('')}</nav>
@@ -327,9 +329,9 @@ function viewKiemSoat() {
   const ROWS = [
     ['Đề nghị thanh toán', [core('payments:approve'), core('lock.period, lock.data'), pol('NGUONG_TT_KHONG_TIEN_MAT'), pol('approval_thresholds'), core('chi → ghi sổ')]],
     ['Phiếu mua hàng', [core('documents:write'), core('lock.period'), pol('posting.tax_codes · luật nhập'), pol('hạn mức theo pháp nhân'), core('duyệt = ghi sổ')]],
-    ['Phiếu kế toán tay', [core('documents:write'), core('lock.period'), pol('luật nhập: cấm hạch toán tay vào TK chọn sẵn'), core('hai người'), core('eventStore.post')]],
+    ['Phiếu kế toán tay', [core('documents:write'), core('lock.period'), pol('luật nhập: cấm hạch toán tay vào TK chọn sẵn'), core('duyệt theo chính sách'), core('eventStore.post')]],
     ['Ghi tăng tài sản', [core('documents:write'), core('lock.period'), pol('NGUONG_TSCD'), pol('hạn mức'), core('khấu hao theo kỳ')]],
-    ['Đổi tham số loại A', [core('settings:write'), core('không lùi vào kỳ đã khoá'), pol('có căn cứ'), core('người thứ hai'), core('bằng chứng, niêm phong')]],
+    ['Đổi tham số loại A', [core('settings:write'), core('không lùi vào kỳ đã khoá'), pol('nhắc khi thiếu căn cứ'), core('không có bước duyệt: một người đổi thẳng'), core('bằng chứng, niêm phong')]],
   ];
   return `<h2>Điểm kiểm soát tới hạn</h2><p class="lead">Không phải danh sách gõ tay: đọc từ khai báo action và workflow của từng loại chứng từ. Cổng của Lõi không tắt được (ADR-0029); đơn vị chỉ chỉnh ngưỡng của cổng thuộc chính sách.</p>
     <div class="panel tbl"><table class="static"><thead><tr><th>Loại chứng từ</th>${COLS.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${ROWS.map(([n, cells]) => `<tr><td><b>${esc(n)}</b></td>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
@@ -340,28 +342,26 @@ function viewDoi() {
   const s = state.step;
   const st = (n) => (s > n ? 'done' : s === n ? 'on' : '');
   const steps = [
-    ['1. Đề xuất', 'Giá trị mới, ngày hiệu lực, căn cứ, lý do'],
-    ['2. Xem thử tác động', 'Chạy thử, không ghi: chứng từ nào đổi kết quả cổng; ngày có rơi vào kỳ đã khoá không'],
-    ['3. Người thứ hai duyệt', 'Khác người đề xuất (đơn vị một người: Q030-6)'],
-    ['4. Có hiệu lực', 'Từ ngày đã chọn; chứng từ cũ giữ phiên bản cũ; bằng chứng ghi đề xuất và duyệt'],
+    ['1. Nhập', 'Giá trị mới, ngày hiệu lực, lý do (bắt buộc); căn cứ nên có'],
+    ['2. Xem tác động', 'Hiện sẵn, không chặn: chứng từ nào đổi kết quả cổng; thiếu căn cứ chỉ nhắc'],
+    ['3. Lưu', 'Có hiệu lực từ ngày đã chọn; chứng từ cũ giữ phiên bản cũ; ghi nhật ký, không có bước duyệt'],
   ];
   let panel = '';
   if (s === 1) panel = `<div class="form">
       <div><label for="d-key">Tham số</label><select id="d-key"><option>bizcity.posting.tax_codes — Mã thuế GTGT</option></select></div>
       <div><label for="d-val">Giá trị mới</label><input id="d-val" value="V0, V5, V10, KCT (ngừng V8)"></div>
       <div><label for="d-from">Ngày hiệu lực</label><input id="d-from" type="date" value="2027-01-01"></div>
-      <div><label for="d-basis">Căn cứ (văn bản, điều, khoản)</label><input id="d-basis" placeholder="vd: Luật Thuế GTGT 48/2024/QH15, Điều …"></div>
-      <div><label for="d-reason">Lý do</label><input id="d-reason" value="Hết thời hạn giảm thuế"></div></div>
-      <div id="d-msg"></div><button class="btn pri" type="button" id="d-next1">Xem thử tác động →</button>`;
-  if (s === 2) panel = `<div class="msg pass"><span class="ic">✓</span><div>Ngày hiệu lực 01/01/2027 không rơi vào kỳ đã khoá (khoá đến 31/10/2026).</div></div>
-      <div class="msg warn"><span class="ic">!</span><div><b>12 chứng từ</b> nháp / chờ duyệt có ngày từ 01/01/2027 đang dùng mã V8: kết quả cổng kiểm nội dung sẽ đổi từ <b>qua</b> sang <b>chặn</b>.<small>Đọc từ hàng việc (bizcity_read.document_queue) + chạy thử cổng; không ghi gì.</small></div></div>
+      <div><label for="d-reason">Lý do <span class="muted">(bắt buộc)</span></label><input id="d-reason" value="Hết thời hạn giảm thuế"></div>
+      <div><label for="d-basis">Căn cứ <span class="muted">(nên có)</span></label><input id="d-basis" placeholder="vd: Luật Thuế GTGT 48/2024/QH15, Điều …"></div></div>
+      <div id="d-msg"></div><button class="btn pri" type="button" id="d-next1">Xem tác động →</button>`;
+  if (s === 2) panel = `<div class="msg pass"><span class="ic">✓</span><div>Ngày hiệu lực không rơi vào kỳ đã khoá (khoá đến 31/10/2026).</div></div>
+      <div class="msg warn"><span class="ic">!</span><div><b>12 chứng từ</b> nháp / chờ duyệt có ngày từ 01/01/2027 đang dùng mã V8: kết quả cổng kiểm nội dung sẽ đổi từ <b>qua</b> sang <b>chặn</b>.<small>Đọc từ hàng việc (bizcity_read.document_queue) + chạy thử cổng; không ghi gì. Chỉ để biết, không chặn việc lưu.</small></div></div>
+      ${state.noBasis ? '<div class="msg hint"><span class="ic">i</span><div>Chưa nhập căn cứ: vẫn lưu được; tham số sẽ hiện "thiếu căn cứ" ở đầu trang HT13.</div></div>' : ''}
       <div class="msg hint"><span class="ic">i</span><div>3.045 chứng từ đã ghi sổ giữ phiên bản V1, không đổi.</div></div>
-      <button class="btn" type="button" data-step="1">← Sửa đề xuất</button> <button class="btn pri" type="button" data-step="3">Gửi duyệt →</button>`;
-  if (s === 3) panel = `<div class="msg warn"><span class="ic">◷</span><div>Chờ <b>kế toán trưởng</b> duyệt. Người đề xuất (kt01) không tự duyệt được.<small>Hàng việc của kế toán trưởng có một mục “Duyệt tham số loại A”.</small></div></div>
-      <button class="btn" type="button" data-step="2">← Quay lại</button> <button class="btn pri" type="button" data-step="4">Đăng nhập là kế toán trưởng: Duyệt</button>`;
-  if (s === 4) panel = `<div class="msg pass"><span class="ic">✓</span><div>Phiên bản V2 có hiệu lực từ 01/01/2027. Bằng chứng #48237 (đề xuất kt01, duyệt ktt, căn cứ, lý do).<small>Niêm phong cùng ngày 06/11 trong tệp bang-chung.</small></div></div>
+      <button class="btn" type="button" data-step="1">← Sửa</button> <button class="btn pri" type="button" data-step="3">Lưu</button>`;
+  if (s === 3) panel = `<div class="msg pass"><span class="ic">✓</span><div>Đã lưu: phiên bản V2 có hiệu lực từ 01/01/2027. Bằng chứng #48237 ghi người đổi (kt01), lý do, giá trị cũ → mới.<small>Niêm phong cùng ngày trong tệp bang-chung. Muốn quay lại: đổi về giá trị V1 (thành V3, không xoá lịch sử).</small></div></div>
       <button class="btn" type="button" data-step="1">Làm lại</button>`;
-  return `<h2>Đổi một khoá loại A</h2><p class="lead">Khoá loại A ảnh hưởng sổ: hai người, có căn cứ, xem thử tác động, không lùi vào kỳ đã khoá (D030-12).</p>
+  return `<h2>Đổi một khoá loại A</h2><p class="lead">Khoá loại A ảnh hưởng sổ: <b>một người có quyền đổi thẳng, chỉ ghi nhật ký</b> (D030-12, small win). Bắt buộc có lý do; chặn duy nhất là ngày hiệu lực rơi vào kỳ đã khoá.</p>
     <div class="steps">${steps.map((x, i) => `<div class="step ${st(i + 1)}"><b>${esc(x[0])}</b><span class="muted" style="font-size:12.5px">${esc(x[1])}</span></div>`).join('')}</div>
     <div class="panel card">${panel}</div>`;
 }
@@ -435,12 +435,13 @@ function render() {
   }
   if (state.tab === 'doi' && state.step === 1) {
     document.getElementById('d-next1').addEventListener('click', () => {
-      const basis = document.getElementById('d-basis').value.trim();
-      if (!basis) {
-        document.getElementById('d-msg').innerHTML = '<div class="msg block"><span class="ic">✕</span><div><b>Chặn:</b> khoá loại A phải có căn cứ trước khi gửi.<small>NC-1, D030-12</small></div></div>';
-        document.getElementById('d-basis').focus();
+      const reason = document.getElementById('d-reason').value.trim();
+      if (reason.length < 3) {
+        document.getElementById('d-msg').innerHTML = '<div class="msg block"><span class="ic">✕</span><div><b>Chặn:</b> khoá loại A phải có lý do (tối thiểu 3 ký tự).<small>NC-3, D030-12</small></div></div>';
+        document.getElementById('d-reason').focus();
         return;
       }
+      state.noBasis = !document.getElementById('d-basis').value.trim();
       state.step = 2;
       render();
     });

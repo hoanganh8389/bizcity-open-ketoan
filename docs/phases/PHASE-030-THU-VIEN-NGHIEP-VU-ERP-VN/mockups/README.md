@@ -2,6 +2,7 @@
 <!-- [2026-11-06 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — bản mẫu sơ đồ luồng nghiệp vụ theo phân hệ, học từ màn "Quy trình" của Erp-vn -->
 <!-- [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — bản 2: trang Thư viện nghiệp vụ là màn đầu tiên; chín mục; bản đồ luồng SVG sinh từ dữ liệu; thư viện tiền chạy thật -->
 <!-- [2026-11-06 01:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-37: 24 Cấu hình hệ thống HT13 + bản mẫu; Bàn điều hành đổi HT11 → HT12 (HT11 đã là Khối ảnh) -->
+<!-- [2026-11-06 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-37: chủ dự án chốt D030-12 = một người, chỉ ghi nhật ký (bỏ luồng duyệt hai người) -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
 
@@ -42,10 +43,10 @@ Không vẽ form chi tiết; form thật dùng `@bizcity/ui-kit` khi module đư
 
 | Mục (`#…`) | Cho thấy | Chủ dự án duyệt |
 |---|---|---|
-| `#thamso` | sức khoẻ cấu hình (thiếu căn cứ, chờ duyệt, sắp hết hiệu lực, chưa niêm phong); năm nhóm; bảng tham số; thẻ bốn tab Giá trị & hiệu lực · Căn cứ · Lịch sử · Tác động | D030-10, cách nhóm |
+| `#thamso` | sức khoẻ cấu hình (thiếu căn cứ, khoá A đã đổi trong 30 ngày, sắp hết hiệu lực, chưa niêm phong); năm nhóm; bảng tham số; thẻ bốn tab Giá trị & hiệu lực · Căn cứ · Lịch sử · Tác động | D030-10, cách nhóm |
 | `#chuoi` | chuỗi tham số → luật → cổng → GateResult → giao diện → nhật ký; bảy bề mặt (gợi ý, danh sách chọn, nhắc, giữ, chặn, thông báo, nhật ký) | cách nói của từng mức |
 | `#kiemsoat` | điểm kiểm soát tới hạn theo loại chứng từ: cổng Lõi (không tắt) và cổng chính sách (chỉnh ngưỡng) | — |
-| `#doi` | đổi khoá loại A bốn bước: đề xuất (bắt buộc căn cứ) → xem thử tác động → người thứ hai duyệt → hiệu lực | D030-12, Q030-6 |
+| `#doi` | đổi khoá loại A một người, ba bước: nhập (lý do bắt buộc, căn cứ nên có) → xem tác động (không chặn) → lưu; không có bước duyệt | D030-12 (đã chốt) |
 | `#form` | phiếu chi thử: ngày trong kỳ đã khoá → chặn; tiền mặt từ 5.000.000 đ → nhắc; > 50 triệu → giữ; từ 01/01/2027 danh sách mã thuế bỏ V8 | giọng văn thông báo |
 | `#doichieu` | 21 dòng đối chiếu menu Cấu hình của Erp-vn | thứ tự ưu tiên |
 
