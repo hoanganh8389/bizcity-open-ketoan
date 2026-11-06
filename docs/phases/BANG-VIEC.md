@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 16 |
+| Đang làm | 17 |
 | Chờ merge | 0 |
 | Bị chặn | 31 |
 | Chưa ai nhận | 127 |
-| Chờ đủ tín hiệu | 49 |
+| Chờ đủ tín hiệu | 48 |
 | Hoãn | 1 |
 | Xong | 211 |
 | **Tổng** | **435** |
 
-## Đang làm (16)
+## Đang làm (17)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -34,6 +34,7 @@
 | [S026-23](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L15) | PHASE-026 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
 | [S028-7](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L16) | PHASE-028 | W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — ch… | P0 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w2-vai-tro-don-vi` |
+| [S030-19](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L26) | PHASE-030 | Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate m… | P0 | hoanganh8389 (phiên Claude, thu-vien-tien) · `feat/phase-030-thu-vien-tien` |
 
 ## Chờ merge (0)
 
@@ -207,7 +208,7 @@
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
 
-## Chờ đủ tín hiệu (49)
+## Chờ đủ tín hiệu (48)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
