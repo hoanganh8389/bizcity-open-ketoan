@@ -39,7 +39,7 @@ Vì vậy cần một **ngoại lệ hẹp**, không xoá luật.
 
 ## Phương án đã loại
 
-- **Tệp làm nơi ghi chính (phương án C).** Trái STD-EVD-4, mất khi nhiều máy chủ, không truy vấn được cho bàn điều hành HT11, khoá ghi theo tiến trình như `mua-hang/log.ts`.
+- **Tệp làm nơi ghi chính (phương án C).** Trái STD-EVD-4, mất khi nhiều máy chủ, không truy vấn được cho bàn điều hành HT12, khoá ghi theo tiến trình như `mua-hang/log.ts`.
 - **Chỉ bảng CSDL (phương án A).** Khớp luật hiện hành nhưng không trả lời được mối lo "CSDL bị sửa bởi người có quyền cao" và không cho kiểm toán độc lập.
 - **Ghi tệp song song lúc chạy action.** Hai nơi ghi là hai nguồn sự thật, và đưa việc ghi tệp (chậm, có thể lỗi) vào đường yêu cầu.
 
