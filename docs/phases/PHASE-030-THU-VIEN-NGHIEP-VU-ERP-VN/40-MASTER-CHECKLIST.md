@@ -1,0 +1,59 @@
+# PHASE-030 · 40 — Checklist
+<!-- [2026-11-06 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — việc con S030-*, ca T030-*, log -->
+
+Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nhóm.
+
+| ID | Việc | Đợt | Ưu tiên | Code? | Trạng thái |
+|---|---|---|---|---|---|
+| S030-1 | Ma trận đối chiếu 173 nghiệp vụ [10](10-DOI-CHIEU-ERP-VN.md): trạng thái, nguồn, đích, ưu tiên; tổng hợp; đề xuất K-030-1..6 | W0 | P0 | không | ✅ 2026-11-06 |
+| S030-2 | Mockup [mockups/thu-vien-nghiep-vu.html](mockups/thu-vien-nghiep-vu.html) — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026-11-06); bản 2: Tổng quan, bản đồ luồng Bán hàng / Kho / Lương / Kế toán, Chuẩn chứng từ, Thư viện tiền, Thông báo, Danh mục | W0–W1 | P0 | không | 🟡 bản 2; ⛔ chủ duyệt chi tiết từng luồng |
+| S030-3 | Blueprint mua hàng [50](50-BP-MUA-HANG.md) | W0 | P1 | không | ✅ 2026-11-06 |
+| S030-4 | Blueprint kho [51](51-BP-KHO.md) | W0 | P0 | không | ✅ 2026-11-06 |
+| S030-5 | Blueprint bán hàng [52](52-BP-BAN-HANG.md) | W0 | P0 | không | ✅ 2026-11-06 |
+| S030-6 | Blueprint tài sản [53](53-BP-TAI-SAN.md) | W0 | P1 | không | ✅ 2026-11-06 |
+| S030-7 | Blueprint kế toán – ngân sách – thuế [54](54-BP-KE-TOAN-NGAN-SACH-THUE.md) | W0 | P1 | không | ✅ 2026-11-06 |
+| S030-8 | Blueprint nhân sự – lương [55](55-BP-NHAN-SU-LUONG.md) | W0 | P2 | không | ✅ 2026-11-06 |
+| S030-9 | Khuôn golden test [60](60-GOLDEN-TESTS.md) + danh sách 73 ca; nhóm Lõi duyệt khuôn | W0–W1 | P0 | không | 🟡 bản W0; ⛔ nhóm Lõi |
+| S030-10 | Ca chạy được `apps/api/test/golden/T030-MH.test.ts` (mua hàng đã có mã) + `T030-CORE-1..6`; chứng minh khuôn; dòng CLAIMS riêng | W2 | P0 | có | ☐ |
+| S030-11 | Chuyển blueprint P0 về `docs/nghiep-vu/ban-hang/`, `docs/nghiep-vu/kho/`; cập nhật `docs/nghiep-vu/08-mua-hang.md` trỏ 50 | W2 | P0 | không | ☐ |
+| S030-12 | Kế toán trưởng trả Q030-3 (ngân sách), xác nhận công thức TS03 theo ngày, lương – BH – TNCN và giá trị tham số K-030-6 | W1 | P0 | không | ⛔ kế toán trưởng |
+| S030-13 | Nhóm Lõi trả Q030-2 (lô ở Kernel), xếp K-030-1..6 vào phase Kernel; `golden` vào `bizcity_module@1` (PR chốt thiết kế) | W1 | P0 | không | ⛔ nhóm Lõi |
+| S030-14 | Chủ dự án trả Q030-1 (nhân sự một hay ba module), Q030-4 (giao hàng tách) | W1 | P1 | không | ⛔ chủ dự án |
+| S030-15 | Seed khoá tham số pháp lý VN vào `vn-rulepacks` (danh sách khoá + `legalRef` từ Erp-vn `data/legal_params.xml`, giá trị do kế toán trưởng xác nhận) — K-030-6 | W2 | P1 | có | ☐ sau S030-12, E2 merge |
+| S030-16 | Mở phase code từng module theo ADR-0024: `modules/ban-hang`, `modules/kho` (P0); `modules/tam-ung`, `modules/ngan-hang`, `modules/ke-toan-ky` (P1); `modules/nhan-su` (P2) — mỗi module một phase / dòng CLAIMS | W3 | — | có | ☐ ngoài phạm vi 030 |
+| S030-17 | 70-REFLECT sau module đầu tiên: khuôn thiếu mục nào; ca nào không viết được bằng bất biến sổ | W4 | P2 | không | ☐ |
+| S030-18 | Kinh nghiệm cốt lõi [15](15-KINH-NGHIEM-COT-LOI.md): phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõi duyệt STD thành kiểm `SC-*` | W0–W1 | P0 | không | 🟡 bản W0; ⛔ nhóm Lõi |
+| S030-19 | Thư viện tiền [18](18-THU-VIEN-TIEN.md): `roundMoney`, `allocate`, `schedule` vào `packages/contracts`, xuất ở `module-sdk`; chuyển `allocate` mua hàng và `splitByDays` / `splitByPercent` tài sản; golden T030-CORE-6; SC-STD-5 | W1 | P0 | có | ☐ giữ chỗ ở CLAIMS (PR này) |
+| S030-20 | Chuẩn chứng từ [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md): nhóm Lõi duyệt `bizcity_document@1` 1.4.0-draft (`defineDocument`, hai con trỏ, `policy`, `locks`, `revision`) + R-WF-10..12 | W1 | P0 | không | ⛔ nhóm Lõi |
+| S030-21 | Bộ chuẩn [17](17-BO-CHUAN-STD-030.md): luật R-MSTD-1..12 vào `docs/rules/` + CANON §3; họ finding `DOC-*`, `PARAM-*`, `<MODULE>-*` vào `bizcity_findings@1`; SC-STD-1, -2, -12 (kiểm tĩnh) | W2 | P0 | có | ☐ sau khi nhóm Lõi duyệt S030-18 |
+| S030-22 | ADR-0029 *Lõi bất biến, nghiệp vụ linh hoạt*: CANON §0.9, R-WF-3 / -4 viết lại (duyệt ≠ ghi sổ), R-WF-10..16, bản kiến trúc + hướng dẫn dev [architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md](../../architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md) | W1 | P0 | không | ✅ 2026-11-06 (trong PR này) |
+| S030-23 | Bỏ đảo thừa ([19 §2](19-RA-SOAT-DUYET-VA-GHI-SO.md)): phiếu mua đã duyệt sửa qua bản điều chỉnh (không `cancelIn`), phiếu chi kèm giữ docKey, khoá sửa `pending_approval`, `updateManualIn` đi đường phiên bản Kernel, chuyển `unpay` đề nghị thanh toán | W2 | P0 | có | ☐ khi chuyển sang `modules/` (ADR-0024); phần Kernel mở dòng CLAIMS riêng |
+| S030-24 | Cổng nhận sự việc G1–G5: trước hết G5 (cùng phiên bản khác băm → `CONFLICT` có mã; `force` lưu bản cũ); trường `source` trong `bizcity_ledger_intake@1` cho G1 / G2 | W2 | P0 | có | ☐ nhóm Lõi (K2) |
+| S030-25 | Golden T030-DOC-1..9, T030-AUTH-1..5 ([19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md)) | W2 | P1 | có | ☐ `it.todo` tới khi nền có |
+| S030-26 | Chẩn đoán tuyến nguồn → sổ `DG-DOC-CHAIN-1..5` trên bảng sẵn có ([19 §6](19-RA-SOAT-DUYET-VA-GHI-SO.md)) | W2 | P1 | có | ☐ |
+| S030-27 | Theo dõi cầu nối Workflow ↔ PHASE-028 ([19 §3](19-RA-SOAT-DUYET-VA-GHI-SO.md)): PHASE-028 nhận `authorize` trên tài nguyên chứng từ + điều kiện SoD; PHASE-029 nhận `transition()` dùng quyết định | W2 | P1 | không | ⛔ chủ PHASE-028 / PHASE-029 nhận vào checklist |
+| S030-28 | `bizcity_action@1` 1.4.0: các bước §4 là cổng, kiểu `GateResult` trong `packages/contracts`, `error.details.gates`, `ctx.evidence.gate` ([21 §1](21-SO-CONG-VA-BANG-DIEU-HANH.md)) — PR chốt thiết kế; **không** hợp đồng `bizcity_gate@1` riêng (chủ dự án đồng ý bản gọn) | W2 | P0 | không | ⛔ nhóm Lõi |
+| S030-29 | `bizcity_evidence@1` mở rộng = sổ cổng ([21 §2](21-SO-CONG-VA-BANG-DIEU-HANH.md)): cột `gates`, `source`, `basis_used` (migration ≥ 0076); ghi cả lần bị chặn trước handler; đăng nhập / xuất / in có bằng chứng; `EVIDENCE_GATES_MISSING`; **không** bảng `gate_decisions` | W2 | P0 | có | ☐ sau S030-28; chạm `actions.ts` / `audit.ts` khi dòng PHASE-014 đợt 8b nhả |
+| S030-30 | Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong **bằng chứng** hằng ngày + manifest, `GET /evidence/verify` | W2 | P1 | có | ☐ Q030-5 = **B** (chủ dự án đồng ý 2026-11-06); cần ADR sửa STD-EVD-4 trước khi code |
+| S030-31 | Hàng việc: view `bizcity_read.document_queue` + API `queue/summary`, `queue/mine`; thanh "Việc cần làm" thêm nguồn | W2 | P0 | có | ☐ làm được trước sổ cổng |
+| S030-32 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu [#cong](mockups/thu-vien-nghiep-vu.html#cong) | W3 | P1 | có | 🟡 bản mẫu; ☐ code sau S030-29, S030-31 |
+| S030-33 | Golden T030-GATE-1..4 ([21 §5](21-SO-CONG-VA-BANG-DIEU-HANH.md)) | W3 | P1 | có | ☐ |
+| S030-34 | HT09 mở sang luật nhập chứng từ `ENTRY-*` (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phân tích, diễn giải, số gốc, trần tiền, cấm hạch toán tay; mức gợi ý / cảnh báo / chặn) áp ở cổng `validation` mọi đường vào ([21 §3.3](21-SO-CONG-VA-BANG-DIEU-HANH.md)) | W2 | P1 | có | ☐ sau S030-28 |
+| S030-35 | Bộ chuyển đổi `lfood-legal-params@1` (120 tham số Erp-vn, chủ dự án xuất 06/11) → `vn-rulepacks`; thuế suất GTGT có hiệu lực; lịch nghỉ lễ; `basis.article` có cờ đối chiếu ([21 §3.1–3.2](21-SO-CONG-VA-BANG-DIEU-HANH.md)) — làm rõ S030-15 | W2 | P1 | có | ☐ sau S030-12 (E2 đã merge #105) |
+| S030-36 | Đánh giá gọn phân quyền ([22](22-DANH-GIA-GON-PHAN-QUYEN.md)): bỏ Nới, hạn theo ngày chứng từ về `dataLock`, bỏ `status_in`, `amount_max` = hạn mức cá nhân, SoD ở cổng chuyển trạng thái, Role Editor dạng ma trận, một đường thi hành — chủ PHASE-028 nhận / bác từng dòng | W2 | P1 | không | ✅ chủ dự án đồng ý 2026-11-06; ☐ PHASE-028 thi hành (hợp đồng 1.1.0-draft, `engine.ts`) |
+| N030-1 | Nợ: kiểm `apps/api/src/modules/assets/depreciation*.ts` làm tròn tháng hay ngày; nếu tháng → sửa tại chỗ theo `tai_san.khau_hao.theo_ngay` | W2 | P1 | có | ☐ |
+| N030-2 | Nợ: `modules/mua-hang/domain/src/engine.ts` có `ACC` số tài khoản (:867), `TAX_RATE` (:295), `allocate` riêng (:514), `Check` riêng (:673) — chuyển sang `reasonCode`, thuế suất từ `tax_codes`, `allocate` dùng chung (K-030-10), `findings` (STD-030-8); `phan-he/mua-hang` đóng băng, sửa khi chuyển | W2 | P1 | có | ☐ sau K-030-10 |
+
+## Ca bằng chứng
+
+Danh sách 91 ca `T030-*` ở [60 §5](60-GOLDEN-TESTS.md). W0: tất cả `it.todo`. Khi có ca chạy, ghi `evidence/W<n>-<ngày>.md`.
+
+## Log
+
+- 2026-11-06 — W0: mở phase; clone + dựng Erp-vn chạy local (Docker, 46 addon cài không lỗi); kiểm kê hai bên; viết 10 / 20 / 30 / 50–55 / 60; mockup; PR tài liệu. Tài liệu thuần, không giữ chỗ (R-FLOW).
+- 2026-11-06 — W0 đợt 2: đọc lại cơ chế xuyên suốt (Erp-vn 46 addon × open-ketoan Kernel / Platform / SDK) → [15](15-KINH-NGHIEM-COT-LOI.md); đính chính: `setting_values` E2 chưa có mã, authz PHASE-028 chưa nối; sửa [20 M2](20-MAU-THIET-KE.md); thêm S030-18, N030-2.
+- 2026-11-06 — W0 đợt 3 (chủ dự án duyệt hướng mockup, hỏi chuẩn hoá): [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) chuẩn chứng từ dùng chung (nối `bizcity_document@1`); [17](17-BO-CHUAN-STD-030.md) đóng gói 12 chuẩn thành luật / thư viện / thông báo / phép kiểm / bản mẫu; [18](18-THU-VIEN-TIEN.md) chốt thiết kế thư viện tiền (mã tham chiếu chạy thử 20.000 ca; phát hiện `splitByPercent` có ca ra phần âm); mockup bản 2 (chụp kiểm Chrome headless 1440 px và 360 px, sáng / tối); dòng CLAIMS S030-19; thêm S030-19..21. Nhánh rebase lên `main` 682c03c.
+- 2026-11-06 — W1 (chủ dự án: *"Lõi bất biến, nghiệp vụ linh hoạt"* vào luật tối thượng): ADR-0029, CANON v1.5 §0.9, R-WF-3 / -4 viết lại, R-WF-10..16 (chuyển 10..12 từ 16 sang luật), bản kiến trúc + hướng dẫn dev; rà mã duyệt → ghi sổ và liên kết PHASE-028 ([19](19-RA-SOAT-DUYET-VA-GHI-SO.md)): mua hàng đảo toàn bộ hai lần khi sửa phiếu đã duyệt, cổng Kernel bỏ qua im lặng cùng phiên bản khác nội dung, workflow chưa gọi `authorize`; golden +14 (87); thêm S030-22..27.
+- 2026-11-06 — W1 tiếp (chủ dự án: dashboard quản trị cho bộ cổng, sổ cổng dạng filestore làm trục nhật ký hành vi): [21](21-SO-CONG-VA-BANG-DIEU-HANH.md) — đề xuất `bizcity_gate@1`, sổ cổng `gate_decisions` (giao dịch riêng, chuỗi băm theo đơn vị), bàn điều hành HT11 sáu khối; phát hiện xung đột với STD-EVD-4 (cấm nhật ký nghiệp vụ ra tệp) → câu hỏi Q030-5; mockup mục `#cong` (chụp kiểm sáng / tối); golden +4 (91); thêm S030-28..33.
+- 2026-11-06 — W1 tiếp (chủ dự án đồng ý bản gọn; hỏi phân quyền có gọn được không): 21 viết lại — không `bizcity_gate@1` riêng, không bảng `gate_decisions`; cổng = bước `bizcity_action@1` §4 trả `GateResult`; bằng chứng mở rộng là sổ cổng (`gates`, `source`, `basis_used`, chặn trước handler); luật nhập chứng từ (mở HT09); nhập 120 tham số pháp lý Erp-vn. [22](22-DANH-GIA-GON-PHAN-QUYEN.md) đánh giá phân quyền: điều kiện 8 → 5, hiệu lực 3 → 2, SoD ở cổng chuyển trạng thái. Thêm S030-34..36.
+- 2026-11-06 — chủ dự án *"ok đồng ý"*: Q030-5 = phương án B (bằng chứng ở CSDL + tệp niêm phong hằng ngày; cần ADR sửa STD-EVD-4); nhận toàn bộ 22 §3 (gọn phân quyền) — SoD chuyển sang cổng chuyển trạng thái, sửa ADR-0029 D-FIN-9, kiến trúc, R-WF-15, 19; đẩy nhánh, mở PR tài liệu.

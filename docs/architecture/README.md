@@ -95,6 +95,9 @@ Bốn câu không thương lượng ([AGENTS.md](../../AGENTS.md)):
 3. Một cửa vào sổ.
 4. Không viết số tài khoản trong code định khoản.
 
+<!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — trỏ bản kiến trúc ADR-0029 -->
+**Phía trước sổ** (CANON §0.9, [ADR-0029](../adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md)): *linh hoạt trước khi ghi sổ, chặt chẽ tại thời điểm ghi sổ, bất biến với lịch sử đã xác lập*. Ba chủ sở hữu Document / Authorization / Kernel, điểm ghi nhận theo loại chứng từ (duyệt ≠ ghi sổ), hai lần đóng băng, cổng nhận sự việc, cầu nối Workflow ↔ PHASE-028 và hướng dẫn dev: [LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md](LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md).
+
 ## 4. Module tương lai phát triển trên Kernel thế nào
 
 Mọi module nghiệp vụ, từ bán hàng tới sản xuất, đi **một khuôn**:
