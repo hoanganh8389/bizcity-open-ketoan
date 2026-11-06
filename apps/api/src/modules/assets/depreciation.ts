@@ -1,4 +1,6 @@
 // @bizcity-layer D modules/tai-san
+// [2026-11-06 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19: splitByDays / splitByPercent chia bằng allocate chung (dư lớn nhất, bước 100 xu), thay cách "làm tròn từng phần, phần cuối nhận còn lại" từng cho phần âm (PHASE-030 · 18 §4.3)
+import { allocate, roundMoney } from '@ketoan/contracts';
 /**
  * Công thức khấu hao / phân bổ một tháng của một tài sản (đường thẳng), tách riêng để kiểm thử.
  *
@@ -135,7 +137,8 @@ export function scheduleAfter(a: DepreciableAsset, p: Period, postedThrough: num
 
 /**
  * Chia số trích của một tháng cho các đoạn chi nhánh (điều chuyển giữa tháng) theo số ngày dùng ở mỗi nơi.
- * `segments`: các mốc [ngày bắt đầu ở chi nhánh, chi nhánh], sắp theo ngày. Trả về [chi nhánh, xu]; phần lẻ dồn đoạn cuối.
+ * `segments`: các mốc [ngày bắt đầu ở chi nhánh, chi nhánh], sắp theo ngày. Trả về [chi nhánh, xu]; chia bằng `allocate` (dư lớn nhất,
+ * bước 100 xu = tròn đồng, R-MONEY-3): Σ các đoạn = tổng, không đoạn nào âm.
  */
 export function splitByDays(total: number, p: Period, usedFrom: string, usedTo: string, segments: { from: string; branchId: string }[]): [string, number][] {
   if (segments.length <= 1) return [[segments[0]?.branchId ?? '', total]];
@@ -151,21 +154,11 @@ export function splitByDays(total: number, p: Period, usedFrom: string, usedTo: 
     if (days > 0) parts.push([s.branchId, days]);
   }
   if (!parts.length || totalDays <= 0) return [[segments[segments.length - 1]!.branchId, total]];
-  let left = total;
-  return parts.map(([b, d], i) => {
-    const v = i === parts.length - 1 ? left : toDong((total * d) / totalDays);
-    left -= v;
-    return [b, v] as [string, number];
-  });
+  const shares = allocate(roundMoney(total), parts.map(([, d]) => d), { unit: 100 });
+  return parts.map(([b], i) => [b, shares[i]!] as [string, number]);
 }
 
-/** Chia một số tiền theo tỷ lệ phần trăm; phần lẻ dồn dòng cuối, tròn đồng. */
+/** Chia một số tiền theo tỷ lệ phần trăm bằng `allocate` (dư lớn nhất, bước 100 xu = tròn đồng): Σ = tổng, không phần nào âm. */
 export function splitByPercent(total: number, percents: number[]): number[] {
-  const sum = percents.reduce((s, x) => s + x, 0) || 1;
-  let left = total;
-  return percents.map((pc, i) => {
-    const v = i === percents.length - 1 ? left : toDong((total * pc) / sum);
-    left -= v;
-    return v;
-  });
+  return allocate(roundMoney(total), percents, { unit: 100 });
 }

@@ -1828,6 +1828,180 @@
           "message": "\"Bảng tổng hợp thuế GTGT\" chưa có docs/huong-dan/th-thue.md — nút Hướng dẫn hiện \"Chưa có hướng dẫn\""
         }
       ]
+    },
+    "SC-STD-5": {
+      "title": "Tiền trong modules/**: làm tròn bằng roundMoney, chia bằng allocate / schedule (STD-030-5, R-MONEY)",
+      "debts": [
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/dat-hang.ts|round:priceDiffPct:receivedPrice!==null&&x.orderPrice?Math.round(((receivedPrice-x.orderPrice)/x",
+          "file": "modules/mua-hang/domain/src/dat-hang.ts",
+          "message": "priceDiffPct: receivedPrice !== null && x.orderPrice ? Math.round(((receivedPrice - x.orderPrice) / x.orderPrice) * 10000) / 100 : — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:exportconsttradeTimes=(p:Policy,net:number)=>(!tradeDiscountReady(p,net)?0:isRepeat(p)?Mat",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "export const tradeTimes = (p: Policy, net: number) => (!tradeDiscountReady(p, net) ? 0 : isRepeat(p) ? Math.floor(net / num(p.rule — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constgross=l.lineType==='buy'?Math.round(l.qty*l.price):0;",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const gross = l.lineType === 'buy' ? Math.round(l.qty * l.price) : 0; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:if(hit.item.pct)pct=hit.item.pct;elseamt=Math.round((hit.item.amount??0)*hit.factor*l.qty)",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "if (hit.item.pct) pct = hit.item.pct; else amt = Math.round((hit.item.amount ?? 0) * hit.factor * l.qty); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constlineDiscount=Math.min(gross,Math.round((gross*Math.min(100,pct??0))/100)+Math.round(a",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const lineDiscount = Math.min(gross, Math.round((gross * Math.min(100, pct ?? 0)) / 100) + Math.round(amt ?? 0)); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constorderDisc=od?.pct?Math.round((net*od.pct)/100):Math.round(od?.amount??0);",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const orderDisc = od?.pct ? Math.round((net * od.pct) / 100) : Math.round(od?.amount ?? 0); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:if(doc.priceIncludesVat){l.beforeTax=Math.round(l.after/(1+rate/100));l.tax=l.after-l.befo",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "if (doc.priceIncludesVat) { l.beforeTax = Math.round(l.after / (1 + rate / 100)); l.tax = l.after - l.beforeTax; } — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:else{l.beforeTax=l.after;l.tax=Math.round((l.after*rate)/100);}",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "else { l.beforeTax = l.after; l.tax = Math.round((l.after * rate) / 100); } — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:l.realUnitCost=l.lineType==='gift_consumer'||!s?.qty?0:Math.round((s.value/s.qty)*rt(l.sku",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "l.realUnitCost = l.lineType === 'gift_consumer' || !s?.qty ? 0 : Math.round((s.value / s.qty) * rt(l.sku, l.unit) * 100) / 100; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constckttExpected=ckttPct?Math.round((payable*ckttPct)/100):undefined;",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const ckttExpected = ckttPct ? Math.round((payable * ckttPct) / 100) : undefined; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constamount=Math.round((payable*pct)/100);",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const amount = Math.round((payable * pct) / 100); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constsameBasis=(price:number,includesVat:boolean)=>(includesVat===doc.priceIncludesVat?pri",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const sameBasis = (price: number, includesVat: boolean) => (includesVat === doc.priceIncludesVat ? price : includesVat ? Math.roun — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:if(Math.abs(diff)>warnPct)out.push({level:Math.abs(diff)>warnPct*2?'error':'warn',code:'pr",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "if (Math.abs(diff) > warnPct) out.push({ level: Math.abs(diff) > warnPct * 2 ? 'error' : 'warn', code: 'price_fixed', lineKey: l.l — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constlp=Math.round(sameBasis(last.unitPrice,last.includesVat)*k*10000)/10000;",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const lp = Math.round(sameBasis(last.unitPrice, last.includesVat) * k * 10000) / 10000; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:if(Math.abs(diff)>warnPct)out.push({level:'warn',code:'price_last',lineKey:l.lineKey,text:",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "if (Math.abs(diff) > warnPct) out.push({ level: 'warn', code: 'price_last', lineKey: l.lineKey, text: `${l.sku}: đơn giá ${diff >  — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:return{policy:p.code,kind:p.kind,base:sales.total,rate,amount:Math.round((sales.total*rate",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "return { policy: p.code, kind: p.kind, base: sales.total, rate, amount: Math.round((sales.total * rate) / 100), detail }; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constpct=target?Math.floor((sales.total/target)*10000)/100:0;",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const pct = target ? Math.floor((sales.total / target) * 10000) / 100 : 0; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:return{policy:p.code,kind:p.kind,base:sales.total,rate,amount:Math.round((sales.total*rate",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "return { policy: p.code, kind: p.kind, base: sales.total, rate, amount: Math.round((sales.total * rate) / 100), detail }; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:constamt=ok?(s.amount??Math.round(((cumulative?base-paidBase:base)*(s.pct??0))/100)):0;",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const amt = ok ? (s.amount ?? Math.round(((cumulative ? base - paidBase : base) * (s.pct ?? 0)) / 100)) : 0; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:exportconstgiftLineValue=(l:PLine,giftValue?:(sku:string)=>number)=>Math.round(l.qty*(l.pr",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "export const giftLineValue = (l: PLine, giftValue?: (sku: string) => number) => Math.round(l.qty * (l.price || giftValue?.(l.sku)  — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:if(rate)e.push({debit:A.vatIn,credit:A.payable,amount:Math.round((num(doc.amount)*rate)/10",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "if (rate) e.push({ debit: A.vatIn, credit: A.payable, amount: Math.round((num(doc.amount) * rate) / 100), text: 'Thuế GTGT đầu vào — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:if(rate)e.push({debit:A.payable,credit:A.vatIn,amount:Math.round((num(doc.amount)*rate)/10",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "if (rate) e.push({ debit: A.payable, credit: A.vatIn, amount: Math.round((num(doc.amount) * rate) / 100), text: 'Giảm thuế GTGT đầ — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:conststock=Math.round((amount*Math.min(onHandQty,purchasedQty))/purchasedQty);",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "const stock = Math.round((amount * Math.min(onHandQty, purchasedQty)) / purchasedQty); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/engine.ts|round:exportconstamountTax=(d:Pick<PDoc,'amount'|'taxCode'>)=>Math.round((num(d.amount)*(TAX_RAT",
+          "file": "modules/mua-hang/domain/src/engine.ts",
+          "message": "export const amountTax = (d: Pick<PDoc, 'amount' | 'taxCode'>) => Math.round((num(d.amount) * (TAX_RATE[d.taxCode ?? ''] ?? 0)) /  — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/gia-mua.ts|round:returnfrom&&to?{row:best,price:Math.round((Number(best.price)/from)*to*10000)/10000}:undef",
+          "file": "modules/mua-hang/domain/src/gia-mua.ts",
+          "message": "return from && to ? { row: best, price: Math.round((Number(best.price) / from) * to * 10000) / 10000 } : undefined; — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/hoa-don.ts|round:price:Math.round(price*10000)/10000,discountAmount:disc,amount:isGift?0:amount,taxRate:rat",
+          "file": "modules/mua-hang/domain/src/hoa-don.ts",
+          "message": "price: Math.round(price * 10000) / 10000, discountAmount: disc, amount: isGift ? 0 : amount, taxRate: rate, — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/hoa-don.ts|round:taxAmount:l.taxAmount!==undefined?num(l.taxAmount):rate?Math.round((amount*rate)/100):0,is",
+          "file": "modules/mua-hang/domain/src/hoa-don.ts",
+          "message": "taxAmount: l.taxAmount !== undefined ? num(l.taxAmount) : rate ? Math.round((amount * rate) / 100) : 0, isGift, sku: null, unit: n — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        },
+        {
+          "fp": "SC-STD-5|modules/mua-hang/domain/src/hoa-don.ts|round:exportconsttaxCodeOfRate=(rate:number|null)=>(rate===null?'V13K':`V${String(Math.round(rat",
+          "file": "modules/mua-hang/domain/src/hoa-don.ts",
+          "message": "export const taxCodeOfRate = (rate: number | null) => (rate === null ? 'V13K' : `V${String(Math.round(rate)).padStart(2, '0')}`); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
+          "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
+        }
+      ],
+      "ref": "STD-030-5 · R-MONEY-2 · PHASE-030 N030-2 (mua hàng chuyển sang roundMoney khi domain về modules/, ADR-0024)"
     }
   }
 }
