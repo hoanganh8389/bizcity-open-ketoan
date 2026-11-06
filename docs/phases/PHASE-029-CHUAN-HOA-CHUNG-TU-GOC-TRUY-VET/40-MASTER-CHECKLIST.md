@@ -49,3 +49,4 @@
 | 2026-11-05 | Claude Code | W1 merge (#92): S029-2..4 xong, bỏ dòng giữ chỗ W1. Giữ chỗ E1 (S029-29 SC-CORE-1, S029-30 thẻ Nền móng). |
 | 2026-11-06 | Claude Code | Chữ chốt E2 đợt 1 (`bizcity_settings@1` 1.1.0-draft §2, 30 §5); giữ chỗ E2; tách đợt 2 thành S029-32. |
 | 2026-11-06 | Claude Code | E6 đợt 1 code: `VAT_INPUT_INVOICE_MATCH`, `LEDGER_ROUNDING` (ledger), `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` (inventory) + lane DG-REC-1 / -2, DG-MD-1 / -2; DIAGNOSTICS.md §2a sổ đăng ký đối chiếu. Phát hiện: cửa nạp nhận số lẻ xu vào sổ — nay LEDGER_ROUNDING báo. |
+| 2026-11-06 14:50 | Claude Code | E6 đợt 1 code: `VAT_INPUT_INVOICE_MATCH`, `LEDGER_ROUNDING`, `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` + lane DG-REC-1/2, DG-MD-1/2, sổ đăng ký đối chiếu ở DIAGNOSTICS.md; phát hiện thật: cửa nạp nhận số lẻ xu vào sổ. Bỏ dòng giữ chỗ E6 đợt 1 (R-FLOW-6). |
