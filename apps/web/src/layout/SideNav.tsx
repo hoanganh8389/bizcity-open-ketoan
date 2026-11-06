@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BarChart3, Building2, ChevronRight, Home, Landmark, LayoutGrid, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
+import { BarChart3, Building2, ChevronRight, Landmark, LayoutGrid, List, ListEnd, Network, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Scale, ShoppingBag, ShoppingCart, Wallet, Warehouse, Wrench, type LucideIcon } from 'lucide-react';
 import { usePins } from './pins';
 import { matchLen, REPORT_PAGE, type GonGroup } from './menu-gon';
 
@@ -65,7 +65,6 @@ export function SideNav({ groups, active, onChoose, collapsed, onCollapse, onRes
   return (
     <aside className={`sidenav gon${collapsed ? ' collapsed' : ''}`} aria-label="Menu chức năng" ref={root}>
       <nav className="sidenav-body">
-        <NavLink to="/" end className={() => `gon-row${pathname === '/' ? ' active' : ''}`} title="Tổng quan"><Home size={17} /><span>Tổng quan</span></NavLink>
         {groups.map((g) => {
           const isActive = active?.key === g.key && pathname !== REPORT_PAGE;
           return (

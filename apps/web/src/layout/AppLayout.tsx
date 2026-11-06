@@ -1,3 +1,4 @@
+// [2026-11-06 01:30 AM Nguyễn Văn Thủy] MENU — thêm thanh mép phải, trợ lý và thông báo chuyển vào đó
 // [2026-11-05 11:50 PM Nguyễn Văn Thủy] MENU — bỏ thanh phân hệ, menu trái gọn luôn hiện, thêm thẻ của nhóm
 /**
  * Khung trang sau khi đăng nhập: thanh trên cùng (logo, màn đã ghim, tìm chức năng, người dùng),
@@ -8,9 +9,8 @@ import { WindowDock } from './WindowDock';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { BarChart3, KeyRound, LogOut, Menu } from 'lucide-react';
+import { BarChart3, Menu } from 'lucide-react';
 import { ChangePasswordModal } from '@/features/access/ChangePasswordModal';
-import { ROLE_LABELS, type Role } from '@ketoan/contracts';
 import { api } from '@/lib/api';
 import { useAuth, inFrame } from '@/lib/auth';
 import { SideNav, sideNavCollapsed, sideNavWidth } from './SideNav';
@@ -19,22 +19,22 @@ import { MenuSearch } from './MenuSearch';
 import { TabWorkspace } from './TabWorkspace';
 import { useActiveModule } from './ModuleBar';
 import { useGon } from './useGon';
+import { UserMenu } from './UserMenu';
+import { useGhiHayDung } from './hay-dung';
 import { TheNhom } from './TheNhom';
 import { useFitTables } from './fitTables';
 import { MobileNav } from './MobileNav';
-import { AssistantBubble, TroLyDock } from '../addins/tro-ly/AssistantBubble';
+import { RightRail } from './rail/RightRail';
 import { useAddIns, useAppMenu } from './useAppMenu';
 import { NutChiNhanh } from '@/components/ChiNhanhLamViec';
 import { DangOnline } from './DangOnline';
-// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4): chuông thông báo
-import { ThongBao } from './ThongBao';
 import { workBranch } from '@/lib/workBranch';
 import { MaTraCuu } from '@/components/MaTraCuu';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: dòng nhắc sau khi lưu danh mục
 import { SavedFlash } from '@/components/WhyPanel';
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   // Chi nhánh đang làm việc lưu theo đơn vị × người dùng.
   workBranch.setScope(user ? `${user.tenant.id}:${user.id}` : '');
   const [changingPassword, setChangingPassword] = useState(false);
@@ -63,11 +63,14 @@ export function AppLayout() {
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
   };
+  // Bề rộng menu trái cho thanh cửa sổ dưới đáy, để thanh nằm đúng trong vùng làm việc.
+  useEffect(() => { document.documentElement.style.setProperty('--nav-w', `${collapsed ? 48 : navWidth}px`); }, [collapsed, navWidth]);
   const addins = useAddIns();
   const menu = useAppMenu();
   const { data: tenant } = useTenant();
   const mod = useActiveModule(menu);
   const gon = useGon(menu);
+  useGhiHayDung(menu);
   useFitTables();
   // Bản cài sổ thuế (BOOK_MODE=tax): nhãn đỏ cạnh tên để không nhầm với sổ nội bộ.
   const sysInfo = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<{ bookMode?: string; envLabel?: string }>('/api/v1/system/health'), staleTime: Infinity }).data;
@@ -135,22 +138,11 @@ export function AppLayout() {
         </Link>
         <PinBar menu={menu} />
         <div className="topbar-right">
-          {/* Robot trợ lý khi đã bấm "Ẩn": thu gọn thành biểu tượng ở đây. */}
-          {addins.some((a) => a.id === 'tro-ly') && <TroLyDock />}
-          <ThongBao />
           <SavedFlash />
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />
-          <span className="user-chip" title={user?.email}>
-            {user?.fullName} <small>{ROLE_LABELS[user?.role as Role] ?? user?.role}</small>
-          </span>
-          <button className="btn btn-sm btn-ghost" style={{ color: 'var(--topbar-ink)' }} onClick={() => setChangingPassword(true)} title="Đổi mật khẩu">
-            <KeyRound size={16} />
-          </button>
-          <button className="btn btn-sm btn-ghost" style={{ color: 'var(--topbar-ink)' }} onClick={logout} title="Đăng xuất">
-            <LogOut size={16} />
-          </button>
+          <UserMenu onChangePassword={() => setChangingPassword(true)} />
         </div>
       </header>
       {/* Menu trái: nhóm theo việc, bấm mới bung danh sách màn. */}
@@ -168,8 +160,8 @@ export function AppLayout() {
         </div>
       </main>
       </div>
-      {/* Robot trợ lý góc màn hình: chỉ khi add-in Trợ lý đang bật. */}
-      {addins.some((a) => a.id === 'tro-ly') && <AssistantBubble menu={menu} />}
+      {/* Thanh mép phải: việc cần làm, trợ lý, thông báo. */}
+      <RightRail menu={menu} groups={gon.groups} active={gon.active} assistant={addins.some((a) => a.id === 'tro-ly')} />
       {mobileNav && <MobileNav modules={mod.modules} current={mod.current.key} menu={menu} onChoose={mod.choose} onClose={() => setMobileNav(false)} />}
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
       {/* Mã tra cứu của lỗi API gần nhất (PHASE-019 W1): người dùng chép gửi dev. */}
