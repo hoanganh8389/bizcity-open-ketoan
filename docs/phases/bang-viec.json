@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 16
+      "count": 17
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 126
+      "count": 125
     },
     {
       "key": "partial",
@@ -4128,8 +4128,14 @@
       "title": "W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027 Phụ lục A, W3 đợt 2; giữ chỗ sau khi W2 đợt 2 nhả…",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w3-shadow-scope",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-028 · W3 đợt 2 — khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow bộ tính core/authz bên …"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 17
     },
