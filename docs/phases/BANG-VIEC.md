@@ -11,8 +11,8 @@
 | Chưa ai nhận | 127 |
 | Chờ đủ tín hiệu | 50 |
 | Hoãn | 1 |
-| Xong | 212 |
-| **Tổng** | **439** |
+| Xong | 213 |
+| **Tổng** | **435** |
 
 ## Đang làm (17)
 
@@ -34,7 +34,6 @@
 | [S026-23](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L15) | PHASE-026 | Giao diện Đổi mã, Gộp mã, Lịch sử trên form mặt hàng | P0 | Nguyễn Văn Thủy (phiên Claude, xương cá) · `feat/xuong-ca-dinh-danh` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
 | [S029-13](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L23) | PHASE-029 | Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEI… | P1 | hoanganh8389 (phiên Claude, PHASE-029 đối chiếu) · `feat/phase-029-e6-doi-chieu` |
-| [S030-31](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L38) | PHASE-030 | Hàng việc: view bizcityread.documentqueue + core.queue.summary / items / mine + nguồn mới cho thanh "Việc cần… | P0 | hoanganh8389 (phiên Claude, hang-viec) · `feat/phase-030-hang-viec` |
 
 ## Chờ merge (0)
 
@@ -270,6 +269,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (212)
+## Xong (213)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
