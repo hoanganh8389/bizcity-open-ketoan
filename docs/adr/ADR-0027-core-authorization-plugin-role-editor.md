@@ -78,3 +78,27 @@ Cả hai bảng mới có `tenant_id`, bật và ép RLS (`bizcity_tenant_visibl
 | 4 | Nới, điều kiện, nối bộ tính vào `requirePermission` / `runAction` | shadow sạch (không cấp thừa) |
 
 Chưa thuộc phụ lục này: khoá API và trợ lý AI nhận vai trò tuỳ biến (giữ phạm vi khoá như hôm nay); nhóm đơn vị (D-AUTH-10).
+
+### Bỏ `module_grants` (chủ dự án chọn 2026-11-06)
+<!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: bỏ bảng module_grants, cấp quyền module = luật Cho của vai trò tuỳ biến (một nguồn sự thật); Q028-2 hết đối tượng -->
+
+Cấp quyền module cho một nhóm người = luật **Cho** trên vai trò tuỳ biến (vd "Kế toán kho": base `accountant` + Cho `kho:xuat`) rồi gán vai trò đó. **Không** có bảng `module_grants` riêng: hai nơi cùng cấp quyền module là hai nguồn sự thật ([ADR-0028](ADR-0028-enterprise-continuity-nen-mong-doanh-nghiep.md) LEAN-3). Chỗ D-AUTH-03 / D-AUTH-07 / `bizcity_authorization@1` §8 nhắc `module_grants` đọc là "luật Cho của `tenant_role_rules`". Hành vi hôm nay giữ nguyên: `ADMIN_ROLES` tự có quyền module, vai trò hệ thống có quyền module khai `roles` trong manifest. W2 chỉ **cấp thêm**, không bớt mặc định của manifest (bớt = luật Cấm, nối vào đường yêu cầu ở bước 4). Q028-2 (hạn của lần cấp) hết đối tượng: luật không có hạn, hạn nằm ở lần gán (`valid_to` của W1).
+
+### Chữ chốt bước 1–2 (PHASE-028 W2 đợt 1)
+<!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 1: chữ chốt migration vai trò của đơn vị + lớp đọc cho bộ tính (RULE-FLOW §3) -->
+
+1. **Migration `0075_vai_tro_don_vi.sql`** (số theo `so-tiep-theo`; E2 giữ 0074). Đi sau W1 (sửa `user_role_assignments` của 0073).
+2. **`tenant_roles`:** `code` dạng `^[a-z][a-z0-9_-]{1,39}$`, duy nhất theo đơn vị, không trùng 6 mã vai trò hệ thống. `kind` ∈ `job` · `privilege` · `restriction`. Loại `restriction` không có `base_role` (chỉ để Cấm). `base_role` ∈ `chief_accountant` · `accountant` · `viewer` · `developer` · `auditor` hoặc NULL (D-AUTH-14: không `owner`). **Bất biến** (trigger): `tenant_id`, `code`, `kind`, `base_role`, `created_*`. Đổi base hoặc loại = tạo vai trò mới (ECP-13: lần gán cũ vẫn trỏ đúng nghĩa cũ). Sửa được `label`, `is_active` kèm `version` = cũ + 1 và `updated_by` / `updated_at`. Không xoá: vô hiệu bằng `is_active = false`. Vai trò API không có `DELETE`.
+3. **`tenant_role_rules`:** chỉ thêm. Gỡ luật bằng `removed_by` / `removed_at` / `remove_reason` đặt một lần (như W1), lịch sử luật giữ nguyên. Khoá ngoại ghép `(tenant_id, tenant_role_id)` nên luật không trỏ sang vai trò của đơn vị khác. `effect` ∈ `allow` · `deny`; `relax` để bước 4, CHECK chặn. Cho phải đích danh (`<a>:<b>`, không `*`); Cấm được dùng `*`. `conditions` là object, bước 1 phải là `{}` (CHECK). Một luật đang mở cho mỗi (vai trò, quyền, hiệu lực). "Quyền có trong sổ, chưa `removed`" (luật cứng 1) và "loại `restriction` chỉ có Cấm" kiểm ở API bước 3, vì CSDL không thấy sổ quyền của code.
+4. **`user_role_assignments`** (bảng của W1): `role` bỏ NOT NULL, thêm `tenant_role_id`, CHECK đúng một trong hai. Khoá ngoại ghép `(tenant_id, tenant_role_id)`. Bộ bất biến của trigger W1 thêm `tenant_role_id`. Chỉ mục "một dòng đang mở" thay bằng bản tính cả `tenant_role_id`.
+5. **Đệm (luật cứng 4):** `tenants.authz_version bigint`, tăng bằng **trigger** mỗi lần INSERT / UPDATE ở ba bảng trên (code không quên được). Lớp đọc trả số này làm `authzVersion` của bộ tính. Đệm 15 giây của W1 giữ nguyên tới bước 4.
+6. **Lớp đọc** `packages/platform/src/core/authz/store.ts` (bước 2): `loadAuthzSnapshot(conn, tenantId, userId)` trả `{ authzVersion, roles, assignments }` theo `bizcity_authorization@1`.
+   - Vai trò hệ thống lấy từ `legacy.ts`. Vai trò tuỳ biến có mã `tenant:<id>`, luật = Cho của `base_role` (tính từ code) + Cho + Cấm của đơn vị. Vai trò vô hiệu: `isActive = false`.
+   - Lần gán = `users.role` (`legacyAssignment`) + các dòng của `user_role_assignments`. Phạm vi `tenant` đổi thành `all`, `branch` / `warehouse` giữ nguyên; mỗi dòng một mục đích.
+   - Hàm thuần `tenantRoleToAuthz` tách riêng để test không cần CSDL.
+7. **Chưa đổi quyền hiệu lực ở đợt này.** Yêu cầu vẫn tính quyền qua `auth.ts` như W1. `extraRoles` của W1 bỏ qua dòng `tenant_role_id`. Chưa có API tạo vai trò tuỳ biến (bước 3), nên giao diện không tạo được dòng "đăng ký mà không thi hành" (AUTHZ-16). Nối bộ tính (shadow trước) là bước 4.
+8. **Test** (`apps/api/test/vai-tro-don-vi.test.ts`, CSDL test):
+   - Trigger chặn: xoá vai trò, đổi `code` / `base_role`, sửa luật, xoá luật, `relax`, Cho có `*`, luật trỏ vai trò của đơn vị khác, lần gán có cả `role` lẫn `tenant_role_id`.
+   - RLS cô lập đơn vị.
+   - `authz_version` tăng ở mỗi lần ghi.
+   - Lớp đọc + `authorize`: base ∪ Cho, Cấm thắng cả quyền của vai trò chính, vai trò vô hiệu không cấp, thu hồi lần gán có hiệu lực ngay.
