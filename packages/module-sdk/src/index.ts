@@ -42,6 +42,8 @@ export { z } from 'zod';
 export { sql } from 'kysely';
 /** Tiền numeric(18,2): cộng trừ bằng xu, không cộng số thực. */
 export { toCents, fromCents, sumMoney, roundDong, moneyEquals } from '@ketoan/contracts';
+// [2026-11-06 06:02 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19: làm tròn nửa xa số 0, chia dư lớn nhất, lịch đều kỳ cuối nhận dư (R-MONEY, PHASE-030 · 18).
+export { roundMoney, allocate, schedule } from '@ketoan/contracts';
 export type { DocRef, IngestResult, LedgerQuery, LedgerQueryRow } from '@ketoan/contracts';
 
 /** docRef của chứng từ module: `<module>.<loại>:<id>` (bizcity_document@1 §3) — dùng cho ctx.documents.*, sự kiện, liên kết. */
