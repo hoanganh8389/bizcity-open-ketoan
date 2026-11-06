@@ -8,6 +8,7 @@
  *   PATCH      /api/v1/users/:id        sửa, khoá, đặt lại mật khẩu (đặt lại / khoá / đổi vai trò → mọi máy của người đó bị đăng xuất)
  *   GET/POST   /api/v1/users/:id/roles  vai trò bổ sung: lịch sử, gán (PHASE-028 W1, không đăng xuất người được gán)
  *   POST       /api/v1/users/:id/roles/:assignmentId/revoke   thu hồi vai trò bổ sung (lý do bắt buộc)
+ *   GET        /api/v1/users/:id/effective-permissions  "Xem như": quyền hiệu lực của một người (chỉ đọc)
  *   GET/POST/PATCH /api/v1/roles[...]  vai trò của đơn vị và luật Cho / Cấm (PHASE-028 W2 đợt 2 — tenant-role.routes.ts)
  *   POST       /api/v1/auth/change-password   tự đổi mật khẩu      (mọi người dùng; máy khác bị đăng xuất, máy này nhận vé mới)
  *   POST       /api/v1/auth/logout-others     đăng xuất mọi thiết bị khác (máy này nhận vé mới)
@@ -60,6 +61,11 @@ export async function accessRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/users/:id/roles', {
     preHandler: admin, schema: { tags, summary: 'Vai trò chính và lịch sử gán vai trò bổ sung của một người dùng', params: idParam },
     handler: async (req) => ok(await roleAssignmentService.list(authOf(req), req.params.id)),
+  });
+
+  r.get('/api/v1/users/:id/effective-permissions', {
+    preHandler: admin, schema: { tags, summary: 'Xem như: quyền hiệu lực của một người dùng và nguồn của nó', params: idParam },
+    handler: async (req) => ok(await roleAssignmentService.effective(authOf(req), req.params.id)),
   });
 
   r.get('/api/v1/api-keys', { preHandler: admin, schema: { tags, summary: 'Danh sách khoá API' }, handler: async (req) => ok(await accessService.listKeys(authOf(req))) });

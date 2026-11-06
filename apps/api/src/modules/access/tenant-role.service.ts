@@ -13,7 +13,11 @@ import { db, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
 import { isHighRiskPermission, isKnownPermission, listModulePermissions, PERMISSIONS, rolePermissions, type AuthContext } from '@bizcity/platform/core/auth';
-import { matchPattern } from '@bizcity/platform/core/authz/engine';
+import { batchAuthorize, matchPattern } from '@bizcity/platform/core/authz/engine';
+import { buildCatalog, codePermissions } from '@bizcity/platform/core/authz/catalog';
+import { systemRoles, SYSTEM_ROLE_PREFIX } from '@bizcity/platform/core/authz/legacy';
+import { AUTHZ_REASONS, type AuthzRole } from '@bizcity/platform/core/authz/types';
+import { tenantRoleToAuthz, TENANT_ROLE_PREFIX } from '@bizcity/platform/core/authz/store';
 import { CORE_PERMISSION_META } from '@bizcity/platform/core/authz/catalog';
 import { forgetAllRoles } from '@bizcity/platform/core/security/role-assignments';
 import { verifyPassword } from '../../core/security/password.js';
@@ -81,6 +85,39 @@ export const tenantRoleService = {
     return {
       id: role.id, code: role.code, label: role.label, kind: role.kind, baseRole: role.base_role, isActive: role.is_active, version: role.version,
       rules: rows.map((r) => ({ id: r.id, permission: r.permission, effect: r.effect, note: r.note, createdBy: r.created_by, createdAt: r.created_at, removedBy: r.removed_by, removedAt: r.removed_at, removeReason: r.remove_reason, active: !r.removed_at })),
+    };
+  },
+
+  // [2026-11-06 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2 (PHASE-030 22 đề xuất #7): ma trận "ai được làm gì" — hàng = quyền trong sổ, cột = vai trò hệ thống + vai trò của đơn vị, ô = Có / Cấm / —; tính bằng batchAuthorize trên VAI TRÒ (một lần gán giả toàn đơn vị)
+  /** Ma trận quyền × vai trò cho Role Editor. Ô: allow (Có) · deny (Cấm) · không có trong cả hai danh sách (—). */
+  async matrix(auth: AuthContext) {
+    const defs = codePermissions();
+    const catalog = buildCatalog(defs);
+    const roles = new Map<string, AuthzRole>(systemRoles());
+    const { rows: trs } = await sql<TenantRoleRow>`SELECT id::text, code, label, kind, base_role, is_active, version FROM tenant_roles WHERE tenant_id = ${auth.tenantId} ORDER BY created_at, id`.execute(db);
+    const { rows: rules } = await sql<{ id: string; tenant_role_id: string; permission: string; effect: 'allow' | 'deny' }>`
+      SELECT id::text, tenant_role_id::text, permission, effect FROM tenant_role_rules WHERE tenant_id = ${auth.tenantId} AND removed_at IS NULL`.execute(db);
+    for (const t of trs) roles.set(`${TENANT_ROLE_PREFIX}${t.id}`, tenantRoleToAuthz(t, rules));
+    const keys = defs.map((d) => d.key);
+    const now = new Date();
+    const cells: Record<string, { allow: string[]; deny: string[] }> = {};
+    for (const roleId of roles.keys()) {
+      const decisions = batchAuthorize({
+        principal: { kind: 'user', id: 'matrix' }, purpose: 'operate', now, authzVersion: 0, catalog, roles,
+        assignments: [{ id: 'matrix', principalKind: 'user', principalId: 'matrix', roleId, scopes: [{ kind: 'all' }], purposes: ['operate'] }],
+      }, keys);
+      const allow: string[] = []; const deny: string[] = [];
+      for (const [k, d] of decisions) { if (d.allowed) allow.push(k); else if (d.reasonCode === AUTHZ_REASONS.DENIED_BY_RULE) deny.push(k); }
+      cells[roleId] = { allow: allow.sort(), deny: deny.sort() };
+    }
+    return {
+      permissions: defs.map((d) => ({ key: d.key, label: d.label, module: d.module, risk: d.risk ?? 'low', resource: d.resource ?? null, operation: d.operation ?? null })),
+      roles: [
+        ...[...systemRoles().values()].map((r) => ({ id: r.id, code: r.code, label: r.label, kind: 'system', isActive: true, baseRole: null as Role | null, system: true })),
+        ...trs.map((t) => ({ id: `${TENANT_ROLE_PREFIX}${t.id}`, code: t.code, label: t.label, kind: t.kind, isActive: t.is_active, baseRole: t.base_role, system: false })),
+      ],
+      cells,
+      systemRolePrefix: SYSTEM_ROLE_PREFIX,
     };
   },
 

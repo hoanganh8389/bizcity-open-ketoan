@@ -259,3 +259,53 @@ describe('Chống leo thang, vai trò quản trị, cô lập đơn vị', () =>
     expect((await call(other, 'POST', `/api/v1/users/${otherUser}/roles`, { tenantRoleId: mine.id, reason: 'Gán vai trò đơn vị khác' })).status).toBe(404);
   });
 });
+
+describe('Ma trận quyền × vai trò và "Xem như"', () => {
+  let grantRole = '';
+  let denyRole = '';
+  let targetId = '';
+
+  beforeAll(async () => {
+    grantRole = (await newRole({ code: 'ma_tran_cho', label: 'Ma trận Cho', kind: 'job', baseRole: 'viewer' })).body.data.id;
+    await addRule(grantRole, { permission: 'catalog:write', effect: 'allow' });
+    denyRole = (await newRole({ code: 'ma_tran_cam', label: 'Ma trận Cấm', kind: 'restriction' })).body.data.id;
+    await addRule(denyRole, { permission: 'ledger:*', effect: 'deny' });
+    targetId = String((await call(ctx, 'POST', '/api/v1/users', { email: 'mt@ketoan.local', fullName: 'Người xem ma trận', role: 'viewer', password: 'Xem@12345' })).body.data.id);
+  });
+
+  it('ma trận: sổ quyền, vai trò hệ thống + vai trò đơn vị, ô Có / Cấm', async () => {
+    const res = await call(ctx, 'GET', '/api/v1/roles/matrix');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const m = res.body.data;
+    expect(m.permissions.map((p: any) => p.key)).toEqual(expect.arrayContaining(['catalog:write', 'users:write', 'periods:lock']));
+    expect(m.roles.filter((r: any) => r.system).map((r: any) => r.code).sort()).toEqual(['accountant', 'auditor', 'chief_accountant', 'developer', 'owner', 'viewer']);
+    expect(m.cells['system:owner'].allow).toContain('users:write');
+    expect(m.cells['system:viewer'].allow).toContain('catalog:read');
+    expect(m.cells['system:viewer'].allow).not.toContain('documents:write');
+    expect(m.cells['tenant:' + grantRole].allow).toEqual(expect.arrayContaining(['catalog:read', 'catalog:write']));
+    expect(m.cells['tenant:' + denyRole].deny).toEqual(expect.arrayContaining(['ledger:read']));
+    expect(m.cells['tenant:' + denyRole].allow).toEqual([]);
+  });
+
+  it('ma trận chỉ cho người có users:write', async () => {
+    expect((await withToken(viewerToken, 'GET', '/api/v1/roles/matrix')).statusCode).toBe(403);
+  });
+
+  it('Xem như: quyền hiệu lực khớp /auth/me của chính người đó và nêu nguồn', async () => {
+    expect((await assign(targetId, { tenantRoleId: grantRole })).status).toBe(201);
+    expect((await assign(targetId, { tenantRoleId: denyRole })).status).toBe(201);
+    const res = await call(ctx, 'GET', '/api/v1/users/' + targetId + '/effective-permissions');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const e = res.body.data;
+    expect(e).toMatchObject({ primaryRole: 'viewer', baseRoles: ['viewer'], allow: ['catalog:write'], deny: ['ledger:*'] });
+    expect(e.permissions).toContain('catalog:write');
+    expect(e.permissions).not.toContain('ledger:read');
+    const token = await login(ctx, 'mt@ketoan.local', 'Xem@12345');
+    expect([...(await permsOf(token))].sort()).toEqual(e.permissions);
+  });
+
+  it('Xem như: người không tồn tại 404; người không có users:write 403', async () => {
+    expect((await call(ctx, 'GET', '/api/v1/users/999999999/effective-permissions')).status).toBe(404);
+    expect((await withToken(viewerToken, 'GET', '/api/v1/users/' + targetId + '/effective-permissions')).statusCode).toBe(403);
+  });
+});

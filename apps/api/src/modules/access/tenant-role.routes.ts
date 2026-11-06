@@ -3,6 +3,7 @@
 /**
  * Vai trò của đơn vị:
  *   GET  /api/v1/roles                                    danh sách (số luật, số người giữ)
+ *   GET  /api/v1/roles/matrix                             ma trận quyền × vai trò (Role Editor)
  *   GET  /api/v1/roles/:id                                chi tiết + luật (cả luật đã gỡ)
  *   POST /api/v1/roles                                    core.role.create
  *   PATCH /api/v1/roles/:id                               core.role.update (tên, bật / tắt; version hiện tại)
@@ -26,6 +27,10 @@ export async function tenantRoleReadRoutes(app: FastifyInstance): Promise<void> 
   const r = app.withTypeProvider<ZodTypeProvider>();
   const admin = requirePermission('users:write');
   r.get('/api/v1/roles', { preHandler: admin, schema: { tags, summary: 'Danh sách vai trò của đơn vị' }, handler: async (req) => ok(await tenantRoleService.list(authOf(req))) });
+  r.get('/api/v1/roles/matrix', {
+    preHandler: admin, schema: { tags, summary: 'Ma trận quyền × vai trò (Có / Cấm / —) cho Role Editor' },
+    handler: async (req) => ok(await tenantRoleService.matrix(authOf(req))),
+  });
   r.get('/api/v1/roles/:id', {
     preHandler: admin, schema: { tags, summary: 'Một vai trò của đơn vị kèm luật (cả luật đã gỡ)', params: idParamSchema },
     handler: async (req) => ok(await tenantRoleService.get(authOf(req), req.params.id)),

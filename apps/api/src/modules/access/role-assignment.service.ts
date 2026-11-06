@@ -16,9 +16,9 @@ import type { Role } from '@ketoan/contracts';
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { writeAudit } from '../../core/audit.js';
-import { rolePermissions, type AuthContext } from '@bizcity/platform/core/auth';
+import { effectivePermissionsWithTenantRoles, rolePermissions, type AuthContext } from '@bizcity/platform/core/auth';
 import { assertConfirmPassword, assertHolds, isHighPermission, tenantRoleGrants } from './tenant-role.service.js';
-import { forgetRoles } from '@bizcity/platform/core/security/role-assignments';
+import { extraAuthz, forgetRoles } from '@bizcity/platform/core/security/role-assignments';
 import type { ActionTx } from '@bizcity/platform/core/actions';
 import { accessRepository } from './access.repository.js';
 import type { RoleAssign, RoleRevoke } from './access.schemas.js';
@@ -68,6 +68,18 @@ export const roleAssignmentService = {
   },
 
   // [2026-11-06 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2 (ADR-0027 Phụ lục A, chữ chốt bước 3): gán nhận đúng một trong role / tenantRoleId; vai trò đơn vị có Cho quyền cao đòi confirmPassword; chống leo thang theo nền + Cho
+  // [2026-11-06 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2: "Xem như người X" — quyền hiệu lực của một người, cùng công thức với đường yêu cầu (auth.ts), chỉ đọc
+  /** Quyền hiệu lực của một người (vai trò chính ∪ bổ sung ∪ nền + Cho − Cấm) và các phần tạo nên nó. Không đọc đệm. */
+  async effective(auth: AuthContext, userId: string) {
+    const user = await accessRepository.findUser(db, auth.tenantId, userId);
+    if (!user) throw Errors.notFound('người dùng');
+    forgetRoles(userId);
+    const extra = await extraAuthz(userId);
+    const roles = [...new Set<Role>([user.role as Role, ...extra.roles])];
+    const permissions = [...effectivePermissionsWithTenantRoles(roles, extra)].sort();
+    return { userId, isActive: user.is_active, primaryRole: user.role, roles, baseRoles: extra.baseRoles, allow: [...extra.allow].sort(), deny: [...extra.deny].sort(), permissions };
+  },
+
   async assignIn(trx: ActionTx, auth: AuthContext, userId: string, input: RoleAssign) {
     if ((input.role === undefined) === (input.tenantRoleId === undefined)) throw Errors.validation('Gửi đúng một trong role (vai trò hệ thống) hoặc tenantRoleId (vai trò của đơn vị)');
     const from = input.validFrom ?? todayVn();
