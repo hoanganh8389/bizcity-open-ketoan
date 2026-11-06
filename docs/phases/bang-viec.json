@@ -4716,6 +4716,17 @@
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 24
+    },
+    {
+      "id": "S030-18",
+      "phase": "PHASE-030",
+      "title": "Kinh nghiệm cốt lõi 15: phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõi duyệt STD thành kiểm SC-",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 25
     }
   ]
 }

@@ -12,7 +12,7 @@
 | Chờ đủ tín hiệu | 45 |
 | Hoãn | 1 |
 | Xong | 209 |
-| **Tổng** | **416** |
+| **Tổng** | **417** |
 
 ## Đang làm (17)
 
@@ -243,6 +243,7 @@
 | [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
 | [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | Mockup luồng mockups/thu-vien-nghiep-vu.html — chủ dự án duyệt bố cục, cách nói, ưu tiên D030-9 | P0 | — |
 | [S030-9](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L16) | PHASE-030 | Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn | P0 | — |
+| [S030-18](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L25) | PHASE-030 | Kinh nghiệm cốt lõi 15: phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõ… | P0 | — |
 
 ## Hoãn (1)
 

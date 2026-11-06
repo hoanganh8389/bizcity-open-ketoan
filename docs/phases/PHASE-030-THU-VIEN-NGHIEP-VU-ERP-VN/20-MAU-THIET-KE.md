@@ -13,7 +13,7 @@ Mỗi mẫu: **Erp-vn làm gì** (đọc từ mã, tệp tính từ `erp/addons/
 ## M2. Tham số pháp lý có ngày hiệu lực, có mô phỏng
 
 - **Erp-vn:** `lfood.legal.param` (code, nhóm, kiểu, `kind` law / policy) ↔ nhiều `lfood.legal.param.value` (value, `date_from`, `date_to`, `legal_ref`, draft / approved). `get_value(code, date, default)` lấy dòng approved phủ ngày; context `lfood_param_sim={code: v}` ghi đè để **mô phỏng** (CH03). Duyệt: `kind=law` bắt `legal_ref`; dòng mở trước đó tự đóng ở `date_from − 1`; chồng ngày → lỗi; đã duyệt không sửa giá trị / ngày, không xoá. Bảng bậc TNCN lưu phẳng `TNCN_BAC_n_DEN`, `TNCN_THUE_SUAT_n`.
-- **open-ketoan đã có:** PHASE-029 E2 `setting_values` chỉ thêm, phạm vi user → branch → accounting_unit → tenant, ngày hiệu lực, `getSetting / setSetting`, `config_version` (S029-10 đang làm).
+- **open-ketoan đã có:** *thiết kế* PHASE-029 E2 `setting_values` (chỉ thêm, phạm vi user → branch → accounting_unit → tenant, ngày hiệu lực, `getSetting / setSetting`, `config_version`) ở hợp đồng `BIZCITY-SETTINGS-MATRIX-v1.md`; **mã chưa có** (S029-10 giữ chỗ, migration cao nhất 0072 — đính chính ở [15 §7](15-KINH-NGHIEM-COT-LOI.md)). Đang chạy: `posting_policy_versions` (`selectPolicy(asOf)`), `ctx.settings.get` (không ngày hiệu lực).
 - **Đặt ở đâu:** (1) thêm thuộc tính `legalRef` + `kind: law | policy` vào registry `bizcity-settings.registry.json` (đề xuất cho dòng E2 sau khi merge); (2) seed khoá VN ở `vn-rulepacks` (K-030-6); (3) mô phỏng = `getSetting(key, { at, overrides })` dùng trong *xem trước* của action (dry-run đã có ở PHASE-003).
 - **Golden:** `T030-CORE-3` đổi tham số có hiệu lực từ ngày D → chứng từ ngày D−1 tính theo giá trị cũ, ngày D theo giá trị mới; `T030-CORE-4` tham số `law` không có `legalRef` → từ chối.
 

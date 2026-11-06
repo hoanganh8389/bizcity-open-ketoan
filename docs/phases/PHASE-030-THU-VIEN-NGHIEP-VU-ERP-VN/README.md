@@ -29,6 +29,7 @@ Chi tiết kiểm kê hai bên: [10-DOI-CHIEU-ERP-VN](10-DOI-CHIEU-ERP-VN.md).
 |---|---|
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | vì sao, quyết định D030-*, câu hỏi Q030-*, đợt W0–W4, "ai dùng gì" |
 | [10-DOI-CHIEU-ERP-VN](10-DOI-CHIEU-ERP-VN.md) | ma trận 173 nghiệp vụ × open-ketoan (có / một phần / chưa) × nguồn Erp-vn × module đích × ưu tiên |
+| [15-KINH-NGHIEM-COT-LOI](15-KINH-NGHIEM-COT-LOI.md) | kinh nghiệm cốt lõi rút từ cơ chế xuyên suốt hai bên: phân tầng Kernel / Platform / SDK / gói dữ liệu / module, 12 chuẩn STD-030-*, Kernel học gì (K-030-7..12), nền tảng học gì (P-030-1..8), sợi truy vết, phản mẫu khi duyệt PR, thứ tự làm |
 | [20-MAU-THIET-KE](20-MAU-THIET-KE.md) | 12 mẫu thiết kế xuyên suốt rút từ mã Erp-vn (duyệt theo ngưỡng, tham số hiệu lực, chứng từ phiên bản, tự tính lại, FEFO, bình quân di động, khấu hao theo ngày, lương–bảo hiểm–TNCN, ngân sách…) và chỗ đặt trong open-ketoan |
 | [30-KHUON-BLUEPRINT](30-KHUON-BLUEPRINT.md) | khuôn một blueprint nghiệp vụ (9 mục) + cách dev / AI dùng blueprint để sinh module theo `bizcity_module@1` |
 | [50-BP-MUA-HANG](50-BP-MUA-HANG.md) | MH01–MH13: yêu cầu mua, báo giá, đơn mua, hợp đồng khung, đối chiếu 3 bên, hoá đơn vào, phân bổ chi phí, nông sản không hoá đơn, nhập khẩu, đánh giá NCC |
