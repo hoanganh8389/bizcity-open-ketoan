@@ -116,7 +116,7 @@ Việc của **người đang đăng nhập**, chia bốn phần, kèm mảng `v
 | `purchase_document` / `pending_approval` | `documents:write` |
 | `accounting_event` / `pending`, `error`; `intake` | `documents:write` |
 
-**Tách nhiệm:** người lập không thấy việc của chính mình ở `toApprove` (đang đúng với `sod` của luồng, [22 §3 #5](22-DANH-GIA-GON-PHAN-QUYEN.md)).
+**Tách nhiệm:** hàng việc **không đưa việc của chính người lập vào `toApprove`** — đây là lựa chọn hiển thị theo ý định tách nhiệm ([22 §3 #5](22-DANH-GIA-GON-PHAN-QUYEN.md)), **không** phải hệ thống đã chặn: hôm nay hai luồng (`payment-request.workflow.yaml`, `purchase-document.workflow.yaml`) chưa bật `sod`, nên người lập có quyền vẫn tự duyệt được nếu mở thẳng chứng từ. Bật `sod` là việc của S029-25 / S030-27, không thuộc S030-31.
 
 **Chưa làm ở bản này:** lọc theo phạm vi chi nhánh / kho của người dùng (cần `scopeOf` của PHASE-028 được nối). Hôm nay người xem thấy hàng việc của **cả đơn vị** theo quyền; ghi rõ ở mô tả action.
 
