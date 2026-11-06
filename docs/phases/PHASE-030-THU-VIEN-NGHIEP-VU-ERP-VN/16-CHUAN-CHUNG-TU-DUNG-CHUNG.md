@@ -96,13 +96,7 @@ revision:                                             # mới: luồng điều c
   requires: [reason]
 ```
 
-Luật đi kèm, **đề xuất** nối tiếp [R-WF](../../rules/RULE-WORKFLOW.md); định nghĩa ở đây cho tới khi nhóm Lõi duyệt rồi chuyển sang `RULE-WORKFLOW.md` (S030-20):
-
-| Mã | Luật | Kiểm bằng |
-|---|---|---|
-| R-WF-10 | Từ chối luôn về một trạng thái **đã khai** thuộc nhóm `draft`; không tự chế `refused` / `rejected` cuối (Erp-vn có cả `action_reject → draft` lẫn `action_refuse → refused`) | `SC-STD-3` |
-| R-WF-11 | Ngưỡng / cấp duyệt chỉ qua `policy:` (§5); `levels:` cứng chỉ còn cho tương thích ngược | `SC-STD-3` |
-| R-WF-12 | Trạng thái giữ tài nguyên (`locks`) — kho đang đếm, kỳ lương đang chốt — do nền giữ và nhả; action khác đụng tài nguyên đang khoá nhận finding `block` của nền (`DOC-LOCK-002`) | golden T030-KHO-6 |
+Luật đi kèm đã vào [R-WF](../../rules/RULE-WORKFLOW.md) theo [ADR-0029](../../adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md) (2026-11-06): R-WF-10 từ chối về nhóm `draft` (Erp-vn có cả `action_reject → draft` lẫn `action_refuse → refused`), R-WF-11 ngưỡng qua `policy:`, R-WF-12 khoá tài nguyên (`DOC-LOCK-002`), R-WF-13 / -14 hai lần đóng băng, R-WF-15 quyền chuyển do PHASE-028 quyết, R-WF-16 tự xác nhận. R-WF-3 nay nói **duyệt ≠ ghi sổ**: điểm ghi nhận khai theo từng loại chứng từ.
 
 Một trang tra cho người dùng: mỗi YAML sinh một sơ đồ trạng thái (dùng ở bản mẫu [mockups](mockups/thu-vien-nghiep-vu.html) mục *Chuẩn chứng từ*), nên tài liệu luồng (R-WF-5) không lệch khỏi mã.
 

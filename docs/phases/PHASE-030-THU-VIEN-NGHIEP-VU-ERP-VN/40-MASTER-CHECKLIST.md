@@ -26,15 +26,22 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S030-19 | Thư viện tiền [18](18-THU-VIEN-TIEN.md): `roundMoney`, `allocate`, `schedule` vào `packages/contracts`, xuất ở `module-sdk`; chuyển `allocate` mua hàng và `splitByDays` / `splitByPercent` tài sản; golden T030-CORE-6; SC-STD-5 | W1 | P0 | có | ☐ giữ chỗ ở CLAIMS (PR này) |
 | S030-20 | Chuẩn chứng từ [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md): nhóm Lõi duyệt `bizcity_document@1` 1.4.0-draft (`defineDocument`, hai con trỏ, `policy`, `locks`, `revision`) + R-WF-10..12 | W1 | P0 | không | ⛔ nhóm Lõi |
 | S030-21 | Bộ chuẩn [17](17-BO-CHUAN-STD-030.md): luật R-MSTD-1..12 vào `docs/rules/` + CANON §3; họ finding `DOC-*`, `PARAM-*`, `<MODULE>-*` vào `bizcity_findings@1`; SC-STD-1, -2, -12 (kiểm tĩnh) | W2 | P0 | có | ☐ sau khi nhóm Lõi duyệt S030-18 |
+| S030-22 | ADR-0029 *Lõi bất biến, nghiệp vụ linh hoạt*: CANON §0.9, R-WF-3 / -4 viết lại (duyệt ≠ ghi sổ), R-WF-10..16, bản kiến trúc + hướng dẫn dev [architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md](../../architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md) | W1 | P0 | không | ✅ 2026-11-06 (trong PR này) |
+| S030-23 | Bỏ đảo thừa ([19 §2](19-RA-SOAT-DUYET-VA-GHI-SO.md)): phiếu mua đã duyệt sửa qua bản điều chỉnh (không `cancelIn`), phiếu chi kèm giữ docKey, khoá sửa `pending_approval`, `updateManualIn` đi đường phiên bản Kernel, chuyển `unpay` đề nghị thanh toán | W2 | P0 | có | ☐ khi chuyển sang `modules/` (ADR-0024); phần Kernel mở dòng CLAIMS riêng |
+| S030-24 | Cổng nhận sự việc G1–G5: trước hết G5 (cùng phiên bản khác băm → `CONFLICT` có mã; `force` lưu bản cũ); trường `source` trong `bizcity_ledger_intake@1` cho G1 / G2 | W2 | P0 | có | ☐ nhóm Lõi (K2) |
+| S030-25 | Golden T030-DOC-1..9, T030-AUTH-1..5 ([19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md)) | W2 | P1 | có | ☐ `it.todo` tới khi nền có |
+| S030-26 | Chẩn đoán tuyến nguồn → sổ `DG-DOC-CHAIN-1..5` trên bảng sẵn có ([19 §6](19-RA-SOAT-DUYET-VA-GHI-SO.md)) | W2 | P1 | có | ☐ |
+| S030-27 | Theo dõi cầu nối Workflow ↔ PHASE-028 ([19 §3](19-RA-SOAT-DUYET-VA-GHI-SO.md)): PHASE-028 nhận `authorize` trên tài nguyên chứng từ + điều kiện SoD; PHASE-029 nhận `transition()` dùng quyết định | W2 | P1 | không | ⛔ chủ PHASE-028 / PHASE-029 nhận vào checklist |
 | N030-1 | Nợ: kiểm `apps/api/src/modules/assets/depreciation*.ts` làm tròn tháng hay ngày; nếu tháng → sửa tại chỗ theo `tai_san.khau_hao.theo_ngay` | W2 | P1 | có | ☐ |
 | N030-2 | Nợ: `modules/mua-hang/domain/src/engine.ts` có `ACC` số tài khoản (:867), `TAX_RATE` (:295), `allocate` riêng (:514), `Check` riêng (:673) — chuyển sang `reasonCode`, thuế suất từ `tax_codes`, `allocate` dùng chung (K-030-10), `findings` (STD-030-8); `phan-he/mua-hang` đóng băng, sửa khi chuyển | W2 | P1 | có | ☐ sau K-030-10 |
 
 ## Ca bằng chứng
 
-Danh sách 73 ca `T030-*` ở [60 §5](60-GOLDEN-TESTS.md). W0: tất cả `it.todo`. Khi có ca chạy, ghi `evidence/W<n>-<ngày>.md`.
+Danh sách 87 ca `T030-*` ở [60 §5](60-GOLDEN-TESTS.md). W0: tất cả `it.todo`. Khi có ca chạy, ghi `evidence/W<n>-<ngày>.md`.
 
 ## Log
 
 - 2026-11-06 — W0: mở phase; clone + dựng Erp-vn chạy local (Docker, 46 addon cài không lỗi); kiểm kê hai bên; viết 10 / 20 / 30 / 50–55 / 60; mockup; PR tài liệu. Tài liệu thuần, không giữ chỗ (R-FLOW).
 - 2026-11-06 — W0 đợt 2: đọc lại cơ chế xuyên suốt (Erp-vn 46 addon × open-ketoan Kernel / Platform / SDK) → [15](15-KINH-NGHIEM-COT-LOI.md); đính chính: `setting_values` E2 chưa có mã, authz PHASE-028 chưa nối; sửa [20 M2](20-MAU-THIET-KE.md); thêm S030-18, N030-2.
 - 2026-11-06 — W0 đợt 3 (chủ dự án duyệt hướng mockup, hỏi chuẩn hoá): [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) chuẩn chứng từ dùng chung (nối `bizcity_document@1`); [17](17-BO-CHUAN-STD-030.md) đóng gói 12 chuẩn thành luật / thư viện / thông báo / phép kiểm / bản mẫu; [18](18-THU-VIEN-TIEN.md) chốt thiết kế thư viện tiền (mã tham chiếu chạy thử 20.000 ca; phát hiện `splitByPercent` có ca ra phần âm); mockup bản 2 (chụp kiểm Chrome headless 1440 px và 360 px, sáng / tối); dòng CLAIMS S030-19; thêm S030-19..21. Nhánh rebase lên `main` 682c03c.
+- 2026-11-06 — W1 (chủ dự án: *"Lõi bất biến, nghiệp vụ linh hoạt"* vào luật tối thượng): ADR-0029, CANON v1.5 §0.9, R-WF-3 / -4 viết lại, R-WF-10..16 (chuyển 10..12 từ 16 sang luật), bản kiến trúc + hướng dẫn dev; rà mã duyệt → ghi sổ và liên kết PHASE-028 ([19](19-RA-SOAT-DUYET-VA-GHI-SO.md)): mua hàng đảo toàn bộ hai lần khi sửa phiếu đã duyệt, cổng Kernel bỏ qua im lặng cùng phiên bản khác nội dung, workflow chưa gọi `authorize`; golden +14 (87); thêm S030-22..27.

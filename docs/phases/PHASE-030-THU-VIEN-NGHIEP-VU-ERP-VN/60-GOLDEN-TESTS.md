@@ -62,8 +62,10 @@ Mỗi `it` là một dòng *cho – khi – thì* của blueprint. Ca thất b�
 | THUE | T030-THUE-1..5 | vãng lai 10 %; lãi vay liên kết 30 %; chậm nộp 0,03 %; nhà thầu gross-up; quyết toán TNCN | [54](54-BP-KE-TOAN-NGAN-SACH-THUE.md), [55](55-BP-NHAN-SU-LUONG.md) |
 | NSU | T030-NSU-1..7 | phụ thuộc theo tháng; HĐ gia hạn lần 2; ăn ca 730 k; làm thêm 40 h; phép; kỷ luật phạt tiền; trợ cấp thôi việc | [55](55-BP-NHAN-SU-LUONG.md) |
 | LUONG | T030-LUONG-1..7 | 40 tr; 80 tr trần; 4 tr dưới min; sự việc payroll cân; D02-LT; tạm ứng lương; mô phỏng | [55](55-BP-NHAN-SU-LUONG.md) |
+| DOC <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029 --> | T030-DOC-1..9 | duyệt ≠ ghi sổ; Approval Freeze; sửa trước ghi nhận 0 đảo; điều chỉnh sau ghi nhận 1 lần nộp; cổng cùng phiên bản khác băm; đổi chính sách theo ngày; POS tự xác nhận; chạy lại; đồng thời | [19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md) |
+| AUTH | T030-AUTH-1..5 | phạm vi kho K1 / K2; thu hồi quyền; SoD hai cấp; chữ ký theo phiên bản; `decisionId` + `explain` | [19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md) |
 
-Tổng: 73 ca W0.
+Tổng: 87 ca (73 ca W0 + 14 ca ADR-0029).
 
 ## 6. Gắn với bộ kiểm cài module
 

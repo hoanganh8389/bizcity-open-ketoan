@@ -1,6 +1,7 @@
 <!doctype html>
 <!-- [2026-11-06 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — bản mẫu sơ đồ luồng nghiệp vụ theo phân hệ (kiểu màn "Quy trình" của Erp-vn), tô màu mức có / một phần / chưa của open-ketoan; dữ liệu JSON nội tuyến -->
 <!-- [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án duyệt hướng: trang Thư viện nghiệp vụ là màn đầu tiên; thêm Tổng quan (6 cơ chế, 12 chuẩn), bản đồ luồng chi tiết Bán hàng / Kho / Lương / Kế toán (SVG sinh từ dữ liệu), Chuẩn chứng từ (hai con trỏ, chính sách duyệt), Thư viện tiền (allocate, schedule chạy thật), Thông báo (findings); danh mục 173 nghiệp vụ giữ ở mục Danh mục -->
+<!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029: tôn chỉ "Lõi bất biến, nghiệp vụ linh hoạt" ở Tổng quan; Chuẩn chứng từ thêm bốn tầng, ba chủ sở hữu, điểm ghi nhận, hai lần đóng băng -->
 <!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
 <html lang="vi">
 <head>
@@ -537,6 +538,9 @@ const LEGEND = `<div class="mlegend">
 function pageOverview() {
   return `<h2>Thư viện nghiệp vụ</h2>
   <p class="lead">Màn đầu tiên cho người làm module: luồng nghiệp vụ đã duyệt, chuẩn bắt buộc, thư viện dùng chung. Học thiết kế từ ERP LiFeOOD (173 nghiệp vụ), open-ketoan là chuẩn.</p>
+  <div class="note" style="border-left-color:var(--k)"><b style="font-size:15px">Lõi bất biến, nghiệp vụ linh hoạt</b> — CANON §0.9 · ADR-0029<br>
+   <b>Linh hoạt trước khi ghi sổ. Chặt chẽ tại thời điểm ghi sổ. Bất biến đối với lịch sử đã xác lập.</b><br>
+   <span style="color:var(--muted)">Document Contract sở hữu trạng thái và lịch sử chứng từ · Authorization (PHASE-028) sở hữu quyền thực hiện hành động · Accounting Kernel sở hữu quyết định và việc ghi sổ. Duyệt ≠ ghi sổ: mỗi loại chứng từ khai điểm ghi nhận của nó.</span> <a href="#chung-tu">Xem chuẩn chứng từ →</a></div>
   <h3>Sáu cơ chế dùng chung — cái làm một ERP chạy đúng</h3>
   <div class="grid">${MECHANISMS.map((m, i) => `<div class="card"><h4>${i + 1}. ${esc(m.n)} ${tag(m.s)}</h4>
     <p><b>Có:</b> <code>${esc(m.where)}</code></p><p><b>Thiếu:</b> ${esc(m.gap)}</p><p class="k">tài liệu: ${esc(m.doc)}</p></div>`).join('')}</div>
@@ -573,15 +577,34 @@ function pageDocStd() {
     ['version (bản đang sửa)', 'v3', 'v4', 'v4', 'v4', 'v4', 'v4'],
     ['posted_version (bản trên sổ)', 'v3', 'v3', 'v3', 'v3', 'v3', 'v4'],
     ['revision', '—', 'draft', 'draft', 'draft', 'pending', '—'],
-    ['Sổ cái', 'bút toán v3', 'không đổi', 'không đổi', 'không đổi', 'không đổi', 'đảo v3 + ghi v4'],
+    ['Sổ cái', 'bút toán v3', 'không đổi', 'không đổi', 'không đổi', 'không đổi', 'đảo phần đổi của v3 + ghi v4'],
     ['Báo cáo đọc', 'v3', 'v3', 'v3', 'v3', 'v3', 'v4']
   ];
   return `<h2>Chuẩn chứng từ dùng chung</h2>
   <p class="lead">Một lời khai <code>defineDocument</code> + một tệp <code>*.workflow.yaml</code> cho mỗi loại chứng từ; nền làm phần chung: số, phiên bản, khoá kỳ, duyệt, ghi sổ, lịch sử. Nối tiếp <code>bizcity_document@1</code> (đề xuất 1.4.0). Tài liệu: <code>16-CHUAN-CHUNG-TU-DUNG-CHUNG.md</code>.</p>
+  <h3>Bốn tầng, ba chủ sở hữu (ADR-0029)</h3>
+  <div class="grid">
+   <div class="card" style="border-top:4px solid var(--ok)"><h4>① Chính sách nghiệp vụ</h4><p>Linh hoạt: nhiều phiên bản theo khách, NCC, chi nhánh, chương trình, thời gian.</p><p class="k">chủ: Configuration &amp; Policy (C3)</p></div>
+   <div class="card" style="border-top:4px solid var(--info)"><h4>② Chứng từ + Workflow</h4><p>Vòng đời; mỗi lần đổi nội dung là một phiên bản; duyệt hoặc tự xác nhận theo thẩm quyền.</p><p class="k">chủ: Document Contract · quyền: Authorization PHASE-028</p></div>
+   <div class="card" style="border-top:4px solid var(--warn)"><h4>③ Cổng nhận sự việc</h4><p>Chỉ nhận phiên bản đã chốt: đúng điểm ghi nhận, băm khớp bản đã duyệt, chính sách có phiên bản, kỳ mở. Cùng phiên bản khác nội dung → từ chối có mã.</p><p class="k">chủ: Kernel + C6</p></div>
+   <div class="card" style="border-top:4px solid var(--k)"><h4>④ Kernel + Sổ cái</h4><p>Định khoản, ghi sổ kép, chỉ thêm; sửa sau ghi nhận chỉ đảo phần đổi.</p><p class="k">chủ: Accounting Kernel</p></div>
+  </div>
+  <h3>Điểm ghi nhận: duyệt ≠ ghi sổ (R-WF-3)</h3>
+  <div class="tbl"><table><thead><tr><th>Loại chứng từ</th><th>Điểm ghi nhận (<code>ledger: true</code>)</th><th>Trước điểm này</th></tr></thead><tbody>
+   <tr><td>Báo giá, đơn đặt, yêu cầu mua</td><td>không bao giờ</td><td>sửa tự do, 0 bút toán</td></tr>
+   <tr><td>Phiếu nhập mua</td><td><code>approve</code></td><td>phiên bản, 0 bút toán</td></tr>
+   <tr><td>Đề nghị thanh toán (2 cấp duyệt)</td><td><code>pay</code> — không phải duyệt</td><td>duyệt 2 cấp, 0 bút toán</td></tr>
+   <tr><td>POS</td><td><code>confirm</code> tự động (<code>system:pos</code>, R-WF-16)</td><td>—</td></tr>
+   <tr><td>Chuyển kho đi đường</td><td><code>ship</code> + <code>receive</code></td><td>0 bút toán</td></tr>
+   <tr><td>Phiếu kế toán thủ công</td><td><code>approve</code> theo chính sách</td><td>phiên bản, 0 bút toán</td></tr>
+  </tbody></table></div>
+  <div class="grid"><div class="card"><h4>Approval Freeze (R-WF-13)</h4><p>Duyệt gắn phiên bản + băm; nội dung đổi → phải trình lại, chữ ký cũ hết hiệu lực.</p></div>
+  <div class="card"><h4>Accounting Freeze (R-WF-14)</h4><p>Chỉ phiên bản đã chốt được nộp sổ; sự việc mang <code>source{docRef, version, hash, decisionId}</code>.</p></div>
+  <div class="card"><h4>Quyền do PHASE-028 quyết (R-WF-15)</h4><p><code>authorize(người, quyền, approve, đầu phiếu)</code> — module không viết <code>if role</code>.</p></div></div>
   <h3>Vòng đời: năm nhóm trạng thái chuẩn</h3>
   <div class="life">${L.map(([g, t]) => `<span class="pill ${g}">${t} · ${g}</span>`).join('<span>→</span>')}<span style="color:var(--muted)">· từ nháp / chờ duyệt / đã duyệt có thể</span><span class="pill cancelled">Huỷ · cancelled</span></div>
-  <div class="grid"><div class="card"><h4>Chỉ nhóm đã duyệt / hoàn tất / huỷ chạm sổ</h4><p>R-WF-3: nháp không bao giờ có bút toán; huỷ chứng từ đã ghi = đảo.</p></div>
-  <div class="card"><h4>Từ chối luôn về nhóm nháp</h4><p>R-WF-10 (đề xuất): không tự chế trạng thái <code>refused</code> cuối.</p></div>
+  <div class="grid"><div class="card"><h4>Nháp / chờ duyệt không bao giờ chạm sổ</h4><p>R-WF-3: chỉ chuyển khai <code>ledger: true</code> nộp sự việc; huỷ chứng từ đã ghi nhận = đảo, một lần.</p></div>
+  <div class="card"><h4>Từ chối luôn về nhóm nháp</h4><p>R-WF-10: không tự chế trạng thái <code>refused</code> cuối.</p></div>
   <div class="card"><h4>Trạng thái giữ tài nguyên</h4><p>R-WF-12: kho đang kiểm kê, kỳ công đã chốt — nền khoá và nhả, báo <code>DOC-LOCK-002</code>.</p></div></div>
   <h3>Hai con trỏ: sửa nhiều lần, sổ chỉ đổi một lần</h3>
   <div class="tbl tl"><table><tbody>${tl.map((r, i) => `<tr>${r.map((c, j) => i === 0 ? `<th>${esc(c)}</th>` : `<td class="${j === 6 && (i === 3 || i === 5) ? 'ledger' : (j > 1 && j < 6 && i === 4 ? 'on' : '')}">${j === 0 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>

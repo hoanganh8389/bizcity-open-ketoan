@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 18 |
 | Chờ merge | 0 |
-| Bị chặn | 29 |
-| Chưa ai nhận | 117 |
+| Bị chặn | 30 |
+| Chưa ai nhận | 121 |
 | Chờ đủ tín hiệu | 46 |
 | Hoãn | 1 |
-| Xong | 209 |
-| **Tổng** | **420** |
+| Xong | 210 |
+| **Tổng** | **426** |
 
 ## Đang làm (18)
 
@@ -41,7 +41,7 @@
 
 —
 
-## Bị chặn (29)
+## Bị chặn (30)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -74,8 +74,9 @@
 | [S030-13](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L20) | PHASE-030 | Nhóm Lõi trả Q030-2 (lô ở Kernel), xếp K-030-1..6 vào phase Kernel; golden vào bizcitymodule@1 (PR chốt thiết… | P0 | — |
 | [S030-14](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L21) | PHASE-030 | Chủ dự án trả Q030-1 (nhân sự một hay ba module), Q030-4 (giao hàng tách) | P1 | — |
 | [S030-20](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L27) | PHASE-030 | Chuẩn chứng từ 16: nhóm Lõi duyệt bizcitydocument@1 1.4.0-draft (defineDocument, hai con trỏ, policy, locks, … | P0 | — |
+| [S030-27](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L34) | PHASE-030 | Theo dõi cầu nối Workflow ↔ PHASE-028 (19 §3): PHASE-028 nhận authorize trên tài nguyên chứng từ + điều kiện … | P1 | — |
 
-## Chưa ai nhận (117)
+## Chưa ai nhận (121)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -196,6 +197,10 @@
 | [S030-16](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L23) | PHASE-030 | Mở phase code từng module theo ADR-0024: modules/ban-hang, modules/kho (P0); modules/tam-ung, modules/ngan-ha… | — | — |
 | [S030-17](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L24) | PHASE-030 | 70-REFLECT sau module đầu tiên: khuôn thiếu mục nào; ca nào không viết được bằng bất biến sổ | P2 | — |
 | [S030-21](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L28) | PHASE-030 | Bộ chuẩn 17: luật R-MSTD-1..12 vào docs/rules/ + CANON §3; họ finding DOC-, PARAM-, <MODULE>- vào bizcityfind… | P0 | — |
+| [S030-23](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L30) | PHASE-030 | Bỏ đảo thừa (19 §2): phiếu mua đã duyệt sửa qua bản điều chỉnh (không cancelIn), phiếu chi kèm giữ docKey, kh… | P0 | — |
+| [S030-24](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L31) | PHASE-030 | Cổng nhận sự việc G1–G5: trước hết G5 (cùng phiên bản khác băm → CONFLICT có mã; force lưu bản cũ); trường so… | P0 | — |
+| [S030-25](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L32) | PHASE-030 | Golden T030-DOC-1..9, T030-AUTH-1..5 (19 §5) | P1 | — |
+| [S030-26](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L33) | PHASE-030 | Chẩn đoán tuyến nguồn → sổ DG-DOC-CHAIN-1..5 trên bảng sẵn có (19 §6) | P1 | — |
 
 ## Chờ đủ tín hiệu (46)
 
@@ -254,6 +259,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (209)
+## Xong (210)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
