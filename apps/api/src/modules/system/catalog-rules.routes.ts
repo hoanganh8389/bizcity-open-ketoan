@@ -26,6 +26,8 @@ import { ok } from '../../core/http.js';
 import { writeAudit } from '../../core/audit.js';
 import { defineAction, mountActions } from '../../core/actions.js';
 import { settingsValuesRoutes } from './settings-values.routes.js';
+// [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: tổng quan cấu hình cho màn HT13
+import { settingsOverviewRoutes } from './settings-overview.routes.js';
 
 const tags = ['Quy định dữ liệu danh mục'];
 const FINDING_BASIS_TITLES = (code: string) => basisOf(code).map((b) => b.title);
@@ -163,6 +165,7 @@ export async function catalogRulesRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, CATALOG_RULE_ACTIONS);
   // [2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1: đường đọc / ghi cấu hình chung đăng ký cùng tệp cấu hình HT09 (system.routes.ts / loi.ts đang thuộc dòng giữ chỗ khác — 30 §5)
   await settingsValuesRoutes(app);
+  await settingsOverviewRoutes(app);
   app.get('/api/v1/settings/item-auto-create', {
     preHandler: requirePermission('catalog:read'),
     schema: { tags, summary: 'Chế độ tự thêm mặt hàng từ chứng từ (on / off) và lần đổi gần nhất' },
