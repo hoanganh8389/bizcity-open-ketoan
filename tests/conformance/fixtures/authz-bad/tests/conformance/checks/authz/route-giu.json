@@ -1,0 +1,11 @@
+{
+  "classes": { "cong-khai": "công khai", "quyen": "quản trị" },
+  "routes": [
+    { "route": "POST /api/v1/x/cong-khai-thieu", "class": "cong-khai" },
+    { "route": "POST /api/v1/x/quyen-thieu", "class": "quyen" },
+    { "route": "POST /api/v1/x/ma-coi", "class": "quyen" },
+    { "route": "POST /api/v1/x/dung", "class": "cong-khai" },
+    { "route": "POST /api/v1/x/dung", "class": "cong-khai" },
+    { "route": "POST /api/v1/x/lop-la", "class": "khong-co" }
+  ]
+}
