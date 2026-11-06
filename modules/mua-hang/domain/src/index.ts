@@ -8,3 +8,4 @@ export * from './gia-mua.js';
 export * from './khuyen-mai.js';
 export * from './ton-max.js';
 export * from './hoa-don.js';
+export * from './hoa-don-xml.js';

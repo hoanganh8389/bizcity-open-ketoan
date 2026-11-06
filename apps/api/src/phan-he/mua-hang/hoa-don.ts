@@ -137,7 +137,7 @@ async function loadInvoices(trx: Db, tenantId: string, f: { id?: string; ids?: s
 }
 
 /** Hoá đơn còn hiệu lực trùng NCC × ký hiệu × số (bỏ số 0 đầu). */
-async function findDuplicate(trx: Db, tenantId: string, partnerCode: string, series: string, no: string, exceptId?: string) {
+export async function findDuplicate(trx: Db, tenantId: string, partnerCode: string, series: string, no: string, exceptId?: string) {
   let q = trx.selectFrom('supplier_invoices').select(['id', 'invoice_series', 'invoice_no']).where('tenant_id', '=', tenantId).where('partner_code', '=', partnerCode).where('status', '=', 'active')
     .where(sql<boolean>`ltrim(invoice_no, '0') = ltrim(${no}, '0')`).where(sql<boolean>`lower(invoice_series) = lower(${series})`);
   if (exceptId) q = q.where('id', '!=', exceptId);
