@@ -6,6 +6,7 @@
 <!-- [2026-10-31 08:27 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7) có: ctx.ledger.query, khung nhìn bizcity_read.* -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — modules/reports → phan-he/ke-toan/reports (Q012-2); documentChecks về Kernel; callAction / ctx.actions.call thay import chéo -->
 <!-- [2026-11-01 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §3.1: 22 tệp Platform dời sang packages/platform (D010-7 chặng 2) -->
+<!-- [2026-11-06 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §3.1: core/evidence-export.ts (bản niêm phong bằng chứng, ADR-0030) lớp P audit -->
 <!-- [2026-11-02 08:12 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — 2.8: bộ máy mua hàng thành gói @bizcity/mua-hang-domain (modules/mua-hang/domain) -->
 
 > **Kết quả Phase 1** ([PHASES.md](PHASES.md)). Quét ngày 2026-10-29 trên `apps/api/src` (27.816 dòng TS), `apps/web/src`, `packages/contracts`. Số dòng là số dòng tệp `.ts`/`.tsx`, để ước độ lớn, không phải thước đo chất lượng.
@@ -46,6 +47,7 @@
 | `core/errors.ts`, `core/http.ts` | 150 | P | `packages/actions` (lỗi, khuôn phản hồi) | `ERROR_CODES` lẫn mã kế toán (`PERIOD_LOCKED`, `POSTING_FAILED`, `UNBALANCED_ENTRY`): giữ mã, chuyển định nghĩa sang Kernel đăng ký thêm |
 | `core/auth.ts`, `core/security/*` | 220 | P | `packages/permissions` | `PERMISSIONS` là danh sách **đóng** chứa quyền kế toán (`ledger:read`, `payments:approve`…) → thành registry mở, Kernel và module đăng ký quyền (A-23) |
 | `core/audit.ts` | 29 | P | `packages/audit` | Thành lõi của Evidence; thêm `actor_kind`, `request_id`, `result`, biên nhận |
+| `core/evidence-export.ts` (ở `packages/platform`) | 420 | P | `packages/audit` | Bản niêm phong của bằng chứng ([ADR-0030](../adr/ADR-0030-ban-niem-phong-bang-chung.md)): tệp **duy nhất** được ghi bằng chứng ra tệp (STD-EVD-4 ngoại lệ hẹp, SC-EVD-1 miễn, SC-EVD-9 giữ hình dạng); chỉ đọc `audit_logs`, không ghi CSDL |
 | `core/addins.ts` | 57 | P | `packages/module-sdk` | Gộp với `phan-he/types.ts` thành `defineModule()` |
 | `core/date-rules.ts` | 58 | P | `packages/documents` (khoá theo ngày) | Khoá theo ngày là luật chung của chứng từ; đọc `tenants.settings.dataLock` → chuyển sang settings registry |
 | `core/workflow.ts` | 190 | P | `packages/documents` (máy trạng thái) | Đọc `*.workflow.yaml` (năng lực `documents.workflow`); `PERMISSIONS` đóng → khi quyền thành registry mở (A-23), YAML khai quyền module |
