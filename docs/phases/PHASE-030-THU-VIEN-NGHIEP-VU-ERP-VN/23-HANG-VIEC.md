@@ -1,21 +1,21 @@
 # PHASE-030 · 23 — Hàng việc: view `bizcity_read.document_queue`, ba API `core.queue.*`, nguồn mới cho thanh "Việc cần làm" (chữ chốt S030-31)
 <!-- [2026-11-06 07:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-31: chữ chốt hàng việc theo R-FLOW-2 — view chỉ đọc gộp trạng thái của bốn bảng có sẵn, API tổng hợp / danh sách / việc của tôi, nguồn mới cho useViec; chưa mã -->
 
-> Nối tiếp [21 §4](21-SO-CONG-VA-BANG-DIEU-HANH.md) (bàn điều hành HT11, khối ① *Hàng việc*) và [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) (5 nhóm trạng thái). **Việc này làm được ngay**: chỉ **đọc** các bảng đã có, không cần `defineDocument`, sổ cổng hay PHASE-028.
+> Nối tiếp [21 §4](21-SO-CONG-VA-BANG-DIEU-HANH.md) (bàn điều hành HT12, khối ① *Hàng việc*) và [16](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) (5 nhóm trạng thái). **Việc này làm được ngay**: chỉ **đọc** các bảng đã có, không cần `defineDocument`, sổ cổng hay PHASE-028.
 > Mọi chỗ "đã có" dẫn tệp:dòng trên `main` (`a9ae6ae`). Mã đi PR riêng sau khi dòng giữ chỗ S030-31 và tài liệu này vào `main`.
 
 ## 0. Trả lời ngắn
 
 1. Hôm nay **không có nơi nào** trả lời "bao nhiêu chứng từ đang nháp / chờ duyệt / chờ ghi sổ / ở bể chờ": `reportService.dashboard` chỉ đếm `accounting_events` (`apps/api/src/phan-he/ke-toan/reports/report.service.ts:648-658`), thanh "Việc cần làm" lấy từ ba nguồn rời nhau (`/purchase/todo`, `/reports/dashboard`, `/alerts`, `apps/web/src/layout/rail/useViec.ts`). Không có API đếm cho `payment_requests`, `purchase_documents`.
 2. Đề xuất **một view chỉ đọc** `bizcity_read.document_queue` gộp bốn bảng có sẵn về **một hình**: 5 nhóm trạng thái chuẩn ([16 §3](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md)) + một cờ (`held` ở bể chờ, `blocked` bị chặn / lỗi, `returned` bị trả lại), và **ba API đọc** `core.queue.summary | items | mine`.
-3. Thanh "Việc cần làm" thêm một nguồn (`/queue/mine`) và bỏ dòng `so:loi` đang trùng ý. Màn HT11 (S030-32) đọc cùng view, không thêm nguồn.
+3. Thanh "Việc cần làm" thêm một nguồn (`/queue/mine`) và bỏ dòng `so:loi` đang trùng ý. Màn HT12 (S030-32) đọc cùng view, không thêm nguồn.
 4. **View là chỗ tạm cho phân hệ cũ.** Bốn nguồn dưới đây là các bảng hiện có. Khi `defineDocument` có (P-030-1, `module_documents`), chứng từ mới tự nằm trong đó và view thêm **một** nhánh `UNION`; nhánh của `payment_requests` / `purchase_documents` được bỏ khi hai phân hệ chuyển sang `modules/` (ADR-0024).
 
 ## 1. Bốn nguồn → một hình
 
 ### 1.1 Chỉ lấy việc đang mở
 
-Hàng việc là việc **cần ai đó làm gì**; chứng từ xong (`posted`, `paid`, `cancelled`) không có mặt. Số liệu "đã xong" thuộc khối ② (cổng) của HT11, đọc từ bằng chứng.
+Hàng việc là việc **cần ai đó làm gì**; chứng từ xong (`posted`, `paid`, `cancelled`) không có mặt. Số liệu "đã xong" thuộc khối ② (cổng) của HT12, đọc từ bằng chứng.
 
 | Nguồn (`source`) | Bảng | Dòng lấy | Chỉ mục sẵn có |
 |---|---|---|---|
@@ -61,7 +61,7 @@ CREATE OR REPLACE VIEW bizcity_read.document_queue WITH (security_invoker = true
 |---|---|
 | `tenant_id` | đơn vị; RLS của bảng gốc áp qua `security_invoker` |
 | `source`, `source_id` | nguồn và khoá trong bảng nguồn (để mở đúng màn) |
-| `doc_ref` | khoá ổn định dạng [`bizcity_document@1`](../../contracts/BIZCITY-DOCUMENT-v1.md) §3 (`quy.payment_request:42`). Với phân hệ cũ là khoá **tổng hợp** để màn HT11 và liên kết dùng được sớm; khi chuyển sang `defineDocument` thì thành `docRef` thật mà không đổi giá trị |
+| `doc_ref` | khoá ổn định dạng [`bizcity_document@1`](../../contracts/BIZCITY-DOCUMENT-v1.md) §3 (`quy.payment_request:42`). Với phân hệ cũ là khoá **tổng hợp** để màn HT12 và liên kết dùng được sớm; khi chuyển sang `defineDocument` thì thành `docRef` thật mà không đổi giá trị |
 | `doc_type`, `doc_no`, `doc_date`, `branch_code`, `amount` | để hiện và lọc; `NULL` khi nguồn không có |
 | `status_raw` | trạng thái gốc của nguồn |
 | `status_group`, `flag` | §1.2 |
@@ -124,7 +124,7 @@ Việc của **người đang đăng nhập**, chia bốn phần, kèm mảng `v
 
 - `apps/web/src/layout/rail/useViec.ts`: thêm một `useQuery` cho `/api/v1/queue/mine`, gộp `viec` vào `items` với khoá `hv:*`. Nhóm của từng việc: `payment_request` → `cong-no`; `purchase_document` → `mua-hang`; `accounting_event`, `intake` → `tong-hop`. Nguồn lỗi hoặc không có quyền thì bỏ qua (đúng khuôn của hook).
 - **Bỏ** dòng `so:loi` (*"Chứng từ lỗi cần ghi sổ lại"*, đếm `documents.error` của dashboard) vì `blocked` của hàng việc đã cùng số liệu; để hai dòng là đếm đôi.
-- Màn HT11 ([21 §4](21-SO-CONG-VA-BANG-DIEU-HANH.md)) là S030-32: dùng `queue/summary` và `queue/items`, không thêm nguồn dữ liệu.
+- Màn HT12 ([21 §4](21-SO-CONG-VA-BANG-DIEU-HANH.md)) là S030-32: dùng `queue/summary` và `queue/items`, không thêm nguồn dữ liệu.
 
 ## 4. Kiểm
 
@@ -158,4 +158,4 @@ Chạy `node tests/conformance/selfcheck.mjs --strict` và `npm run typecheck`. 
 | Mã | Việc | Chủ |
 |---|---|---|
 | S030-31 | **cả đợt:** migration 0076, `queue.routes.ts` (3 action), đăng ký trong `system.routes.ts` (một dòng `mountActions`, như `notifyActions`), `useViec.ts`, `hang-viec.test.ts` | Platform + web (một PR code sau khi tài liệu này và dòng giữ chỗ vào `main`). `CHANGELOG.md` đang thuộc dòng S030-19: thêm mục của S030-31 bằng một lần mở rộng phạm vi **sau khi** S030-19 trả chỗ |
-| S030-32 | HT11 dùng `summary` / `items` | web, sau S030-31 |
+| S030-32 | HT12 dùng `summary` / `items` | web, sau S030-31 |

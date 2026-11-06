@@ -4,6 +4,7 @@
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-31 08:18 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — R-BOUND-3 thêm chặt: ngoài Kernel đọc sổ qua bizcity_read.* / ledgerQuery, SC-KERNEL-7 chặn -->
 <!-- [2026-10-31 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — R-BOUND-1: dùng chung qua action đọc công khai (callAction / ctx.actions.call) hoặc route lắp ở phan-he/loi.ts -->
+<!-- [2026-11-06 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ma trận: ghi tệp niêm phong bằng chứng chỉ ở core/evidence-export.ts (ADR-0030 D-SEAL-2) -->
 
 > **Cấp:** Tier 1 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 
@@ -31,3 +32,4 @@
 | Bảng CSDL riêng | — | ✓ | ✓ tiền tố | ✓ `addin_` | — |
 | Thêm quyền | `core/auth.ts` | PR lõi | PR lõi | PR lõi | — |
 | Thêm khoá cấu hình | registry | registry | registry (nhánh riêng) | registry (nhánh riêng) | — |
+| Ghi tệp niêm phong bằng chứng (`DATA_DIR/bang-chung`) | ✗ | chỉ `core/evidence-export.ts` ([ADR-0030](../adr/ADR-0030-ban-niem-phong-bang-chung.md), SC-EVD-9) | ✗ | ✗ | ✗ |

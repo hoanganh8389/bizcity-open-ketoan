@@ -52,6 +52,8 @@ import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './m
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
 import { registerDiagnostics } from './modules/system/diagnostics.js';
+// [2026-11-06 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: bản niêm phong bằng chứng (ADR-0030) — tác vụ evidence.seal + chẩn đoán EVIDENCE_SEAL_*
+import { evidenceSealSubscriber, SEAL_DIAGNOSTICS } from '@bizcity/platform/core/evidence-export';
 import { ASSET_DIAGNOSTICS } from './modules/assets/asset.diagnostics.js';
 import { BALANCE_DIAGNOSTICS, CONFORMANCE_DIAGNOSTICS, INTAKE_DIAGNOSTICS, INVENTORY_DIAGNOSTICS, LEDGER_DIAGNOSTICS, PERIOD_DIAGNOSTICS, PROFILE_DIAGNOSTICS, TAX_DIAGNOSTICS, conformanceNightlySubscriber, collectLedgerMetrics, collectPostingMetrics, collectTenantMetrics, documentNumbers, ledgerQuery, registerIncomingPreparer, submitDocumentIn, requestCancelIn, documentStatusIn, allocateByDocKeysIn, intakeRetentionSubscriber, recheckInboxForSkus } from './kernel/public.js';
 // [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: mặt hàng kích hoạt → bể chờ kiểm lại (danh mục không import Kernel)
@@ -117,7 +119,7 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)
   // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: dọn bể chờ theo hạn giữ (bizcity.clock.daily)
   // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): kỳ hợp đồng "đã chi" theo sự kiện yêu cầu thanh toán
-  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber, contractSchedulePaidSubscriber]);
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber, contractSchedulePaidSubscriber, evidenceSealSubscriber]);
   // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {
@@ -133,6 +135,7 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   provideThuePorts({ assetRegister: (auth, q) => assetService.register(auth, q) });
   provideMuaHangPorts({ valuedMovements });
   registerDiagnostics(LEDGER_DIAGNOSTICS);
+  registerDiagnostics(SEAL_DIAGNOSTICS);
   // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 (hồ sơ kế toán, gói cùng chế độ) cho Conformance Engine (ADR-0012)
   registerDiagnostics(PROFILE_DIAGNOSTICS);
   // [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm L3 lớp Doanh nghiệp (tồn kho âm, việc cuối kỳ) cho Conformance Engine (S020-19)

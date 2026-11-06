@@ -1,9 +1,11 @@
 // @bizcity-layer P audit
 // [2026-10-30 11:27 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — bằng chứng chỉ thêm, chuỗi băm theo đơn vị, biên nhận (PHASES 2.6).
+// [2026-11-06 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: GET /api/v1/evidence/verify — kiểm ba chiều bản niêm phong (ADR-0030 D-SEAL-7, STD-EVD-10)
 /**
  * Bằng chứng (bizcity_evidence@1 §3): ai giữ biên nhận (người dùng, Cell, plugin WP) hỏi lại một bản ghi và tự kiểm.
  *   GET /api/v1/evidence/:id   core.evidence.get — bản ghi + kiểm: hash tính lại có khớp không, có nối đúng dòng liền trước không
  * Kiểm cả chuỗi của đơn vị: tự chẩn đoán EVIDENCE_CHAIN (GET /api/v1/system/diagnostics).
+ *   GET /api/v1/evidence/verify   core.evidence.verify — bản niêm phong theo ngày: tệp ↔ manifest ↔ CSDL; chỉ số đếm và mã, không nội dung dòng
  */
 import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
@@ -11,6 +13,7 @@ import { z } from 'zod';
 import { Errors } from '../../core/errors.js';
 import { idSchema } from '../../core/http.js';
 import { defineAction, mountActions } from '../../core/actions.js';
+import { addDays, SEAL_MAX_DAYS, verifySeals, vnToday } from '@bizcity/platform/core/evidence-export';
 
 const evidenceSchema = z.object({
   id: z.string(),
@@ -63,6 +66,32 @@ const getEvidence = defineAction({
   },
 });
 
+const SEAL_CODES = ['EVIDENCE_SEAL_MISSING', 'EVIDENCE_SEAL_FILE', 'EVIDENCE_SEAL_DB', 'EVIDENCE_SEAL_CHAIN'] as const;
+const dateSchema = z.string().regex(/^d{4}-d{2}-d{2}$/);
+
+const verifySealsAction = defineAction({
+  id: 'core.evidence.verify', title: 'Kiểm bản niêm phong bằng chứng theo ngày', tags: ['Bằng chứng'],
+  description: 'So ba chiều cho từng ngày trong khoảng (mặc định 31 ngày tới hôm qua): tệp tự kiểm (băm dòng, nối dòng, băm tệp), manifest nối ngày, manifest ↔ CSDL. Chỉ trả số đếm, mã và ngày — không nội dung bằng chứng (ADR-0030).',
+  permission: 'conformance:run', effect: 'read', idempotency: 'none',
+  input: z.object({ from: dateSchema.optional(), to: dateSchema.optional() }),
+  output: z.object({
+    from: z.string(), to: z.string(), days: z.number(), sealed: z.number(), rows: z.number(), ok: z.boolean(),
+    counts: z.record(z.string(), z.number()),
+    findings: z.array(z.object({ code: z.enum(SEAL_CODES), date: z.string(), detail: z.string() })).describe('Tối đa 100 dòng'),
+  }),
+  expose: { http: { method: 'GET', path: '/api/v1/evidence/verify' }, mcp: true, ai: 'read' },
+  handler: async (ctx, input) => {
+    const today = vnToday();
+    const to = input.to ?? addDays(today, -1);
+    const from = input.from ?? addDays(to, -30);
+    if (from > to) throw Errors.validation('from phải không sau to');
+    if (Date.parse(to) - Date.parse(from) > (SEAL_MAX_DAYS - 1) * 86_400_000) throw Errors.validation(`Khoảng kiểm tối đa ${SEAL_MAX_DAYS} ngày`);
+    const r = await verifySeals(ctx.data.tx, ctx.tenant.id, from, to, today);
+    const counts = Object.fromEntries(SEAL_CODES.map((c) => [c, r.findings.filter((f) => f.code === c).length]));
+    return { ...r, ok: r.findings.length === 0, counts, findings: r.findings.slice(0, 100) };
+  },
+});
+
 export async function evidenceRoutes(app: FastifyInstance): Promise<void> {
-  mountActions(app, [getEvidence]);
+  mountActions(app, [verifySealsAction, getEvidence]);
 }

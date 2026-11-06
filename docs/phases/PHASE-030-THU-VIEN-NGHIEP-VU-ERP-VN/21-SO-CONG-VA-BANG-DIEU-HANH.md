@@ -21,7 +21,7 @@
 
    Mỗi cổng phát thêm span event `bizcity.gate` để hai bên bấm qua lại được.
 4. **Tệp lưu trữ** (Q030-5): chủ dự án chọn **B** — bằng chứng ở CSDL là nơi ghi chính, xuất niêm phong hằng ngày; **ADR-0030 đã viết** ([adr](../../adr/ADR-0030-ban-niem-phong-bang-chung.md)); mã ở S030-30b..d.
-5. **Bàn điều hành HT11** đọc từ bằng chứng, view hàng việc, bể chờ và nhật ký ghi sổ. Không thêm nguồn.
+5. **Bàn điều hành HT12** đọc từ bằng chứng, view hàng việc, bể chờ và nhật ký ghi sổ. Không thêm nguồn.
 
 ## 1. Cổng là các bước của action
 
@@ -160,7 +160,7 @@ open-ketoan đã có khung đúng cho danh mục: **HT09 Quy định dữ liệu
 | Áp ở | cổng `validation` của **mọi** đường vào: phiếu tay, chứng từ module, kết nối / POS (Gate B) |
 | Bằng chứng | luật nào chạy, phiên bản luật (dấu luật), mức sau khi đơn vị hạ |
 
-## 4. Bàn điều hành chứng từ & cổng (HT11)
+## 4. Bàn điều hành chứng từ & cổng (HT12)
 
 Sáu khối giữ như bản trước, chỉ đổi nguồn:
 
@@ -179,7 +179,7 @@ Ai thấy gì:
 - kế toán trưởng / quản trị / kiểm toán viên: toàn đơn vị;
 - trợ lý AI: số tổng hợp, không danh sách người.
 
-Số liệu đọc từ CSDL, không từ Prometheus (R-OBS-4). ACC14, trạm tiền kiểm, HT08, Bàn điều tra giữ nguyên, HT11 dẫn link sang.
+Số liệu đọc từ CSDL, không từ Prometheus (R-OBS-4). ACC14, trạm tiền kiểm, HT08, Bàn điều tra giữ nguyên, HT12 dẫn link sang.
 
 ## 5. Golden và chẩn đoán
 
@@ -202,7 +202,7 @@ Chẩn đoán:
 | S030-29 | `bizcity_evidence@1` mở rộng: cột `gates`, `source`, `basis_used` (migration ≥ 0076); ghi chặn trước handler; đăng nhập / xuất / in thành action có bằng chứng; `EVIDENCE_GATES_MISSING` | Platform | S030-28; chạm `actions.ts` / `audit.ts` khi dòng PHASE-014 đợt 8b nhả |
 | S030-30 | Q030-5 → nếu B: ADR sửa STD-EVD-4, xuất niêm phong bằng chứng hằng ngày + manifest + `GET /evidence/verify` | chủ dự án quyết; Platform | S030-29 |
 | S030-31 | View `bizcity_read.document_queue` + API `queue/summary`, `queue/mine`; thanh "Việc cần làm" | Platform + web | — (làm được ngay) |
-| S030-32 | Màn HT11 (6 khối) + màn chi tiết bằng chứng (ai / khi nào / từ đâu / làm gì / chống sửa / các cổng / căn cứ) | web | S030-29, S030-31 |
+| S030-32 | Màn HT12 (6 khối) + màn chi tiết bằng chứng (ai / khi nào / từ đâu / làm gì / chống sửa / các cổng / căn cứ) | web | S030-29, S030-31 |
 | S030-33 | Golden T030-GATE-1..4 | Conformance | S030-29 |
 | S030-34 | HT09 mở sang luật nhập chứng từ (`ENTRY-*`), áp ở cổng `validation` mọi đường vào | Platform | S030-28 |
 | S030-35 | Bộ chuyển đổi `lfood-legal-params@1` → `vn-rulepacks` (120 tham số) + thuế suất GTGT có hiệu lực + lịch nghỉ lễ; `basis.article` | Platform + kế toán trưởng | S030-12 (E2 đã merge #105) |
