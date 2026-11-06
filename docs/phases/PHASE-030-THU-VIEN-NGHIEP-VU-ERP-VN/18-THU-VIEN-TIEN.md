@@ -120,7 +120,7 @@ Giới hạn ghi rõ: tính bằng `number` an toàn tới 2⁵³ (≈ 9 triệu
 
 ## 4. Bảng số — golden T030-CORE-6
 
-Mỗi dòng là một `it` trong `packages/contracts/test/money.test.ts` (bảng) và trong `apps/api/test/golden/T030-CORE.test.ts`.
+Mỗi dòng là một `it` trong `apps/api/test/golden/T030-CORE.test.ts` (đã viết). `packages/contracts` không có bộ chạy test riêng nên không đặt `money.test.ts` ở đó. <!-- [2026-11-06 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19: bảng số đặt ở golden của apps/api -->
 
 ### 4.1 `allocate`
 
@@ -166,7 +166,7 @@ Hai dòng in đậm là lý do phải đổi. Làm tròn từng phần rồi đ�
 
 | Bản | Việc | Đổi số? | Điều kiện |
 |---|---|---|---|
-| `modules/mua-hang/domain/src/engine.ts:514` `allocate` | thay thân hàm bằng `export { allocate } from '@ketoan/contracts'` (giữ tên để `posting.ts`, `reports.ts`, `kich-ban.ts` không đổi import) | chỉ với tổng âm hoặc trọng số toàn 0 | test mua hàng + `kich-ban` xanh; ghi CHANGELOG |
+| `modules/mua-hang/domain/src/engine.ts:514` `allocate` | thân hàm thành **bọc mỏng** quanh `allocate` chung (giữ tên và chữ ký để `posting.ts`, `reports.ts`, `kich-ban.ts` không đổi import); bọc giữ hai quy ước nghiệp vụ: không cơ sở phân bổ (trọng số toàn 0) hoặc tổng 0 thì không chia phần nào, trọng số âm tính là 0. Gói domain khai phụ thuộc `@ketoan/contracts` | không đổi với số dương (đã so từng số trên 5.000 ca) | test mua hàng + `kich-ban` xanh; ghi CHANGELOG |
 | `apps/api/src/modules/assets/depreciation.ts:140` `splitByDays`, `:163` `splitByPercent` | đổi lõi sang `allocate(totalCents, weights, { unit: 100 })`, giữ chữ ký hàm | có, khi làm tròn từng phần làm lệch (§4.3) | chỉ áp cho **kỳ chưa ghi sổ**; bút toán đã ghi không đổi (R-POST-8); test tài sản cập nhật số có giải thích |
 | `apps/api/src/modules/assets/asset.service.ts:704` (phần trích bổ sung tròn trăm xu) | `roundMoney(x, 100)` | không với số dương | — |
 | `packages/contracts/src/money.ts:29` `roundDong` | **giữ nguyên**, gắn `@deprecated` trỏ `roundMoney` | — | đổi hành vi `roundDong` là việc Kernel K-level riêng, sau khi chẩn đoán xác nhận không có số tiền ,5 âm trên sổ |
@@ -209,7 +209,7 @@ Ba điều không làm:
 
 ## 8. Dòng CLAIMS và điều kiện xong
 
-- **Việc:** S030-19 · **Phạm vi:** `packages/contracts/src/money.ts`; `packages/contracts/test/money.test.ts`; `packages/module-sdk/src/index.ts` (một dòng xuất); `modules/mua-hang/domain/src/engine.ts` (thân `allocate`); `apps/api/src/modules/assets/depreciation.ts` (`splitByDays`, `splitByPercent`); `apps/api/test/golden/T030-CORE.test.ts`; `tests/conformance/checks/module/money.check.mjs` (SC-STD-5) · **Nhánh:** `feat/phase-030-thu-vien-tien`.
+- **Việc:** S030-19 · **Phạm vi:** `packages/contracts/src/money.ts`; `packages/module-sdk/src/index.ts` (một dòng xuất); `modules/mua-hang/domain/src/engine.ts` (thân `allocate`); `apps/api/src/modules/assets/depreciation.ts` (`splitByDays`, `splitByPercent`); `apps/api/test/golden/T030-CORE.test.ts`; `tests/conformance/checks/module/money.check.mjs` (SC-STD-5) · **Nhánh:** `feat/phase-030-thu-vien-tien`.
 - **Xong khi:**
   - bảng §4 xanh, kèm 20.000 ca ngẫu nhiên Σ = tổng;
   - test mua hàng, tài sản xanh, số đổi có giải thích;
