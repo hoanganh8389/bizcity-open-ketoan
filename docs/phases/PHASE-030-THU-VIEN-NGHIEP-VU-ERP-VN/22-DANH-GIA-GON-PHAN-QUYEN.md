@@ -75,6 +75,10 @@ Sau khi gọn, điều kiện còn **5**:
 - `view_window_days` (báo cáo);
 - `step_up_minutes` (xác thực lại cho quyền rủi ro cao).
 
+**Ghi chú sau #107** <!-- [2026-11-06 06:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — đọc chữ chốt bước 3 của W2 (ADR-0027 Phụ lục A) -->:
+- ADR-0027 Phụ lục A bước 3 thi hành Cho + Cấm **trong `auth.ts`**, có chống leo thang và `confirmPassword`. Đến bước 4 có hai cách tính quyền song song: `auth.ts` và bộ tính `core/authz`. Đề xuất #8 vì vậy gấp hơn: bước 4 nên đặt hạn (vd hai tuần shadow sạch) để `auth.ts` chỉ còn gọi `authorize`.
+- Màn `modules/phan-quyen` là đợt 3. Đề xuất #7 (mở bằng ma trận) nên vào ngay chữ chốt của đợt đó.
+
 ## 4. Không nên bớt
 
 | Giữ | Vì sao |
