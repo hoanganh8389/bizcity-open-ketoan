@@ -46,6 +46,11 @@ const asSchemaOwner = (q: ReturnType<typeof sql>) => db.transaction().execute(as
   await sql`SET LOCAL ROLE NONE`.execute(trx);
   return q.execute(trx);
 });
+/** Chạy như vai trò API (ketoan_app) bất kể bộ test có đặt DB_SET_ROLE hay không. */
+const asAppRole = (q: ReturnType<typeof sql>) => db.transaction().execute(async (trx) => {
+  await sql`SET LOCAL ROLE ketoan_app`.execute(trx);
+  return q.execute(trx);
+});
 
 async function can(permission: string): Promise<boolean> {
   const snap = await loadAuthzSnapshot(db, tenantId, viewerId);
@@ -80,7 +85,7 @@ describe('Bất biến CSDL của vai trò của đơn vị (0075)', () => {
 
   it('không xoá vai trò; không đổi mã / nền; sửa tên phải tăng version đúng 1', async () => {
     const id = await newRole('vt_bat_bien', 'job', 'viewer');
-    await expect(sql`DELETE FROM tenant_roles WHERE id = ${id}`.execute(db)).rejects.toThrow(/permission denied/);
+    await expect(asAppRole(sql`DELETE FROM tenant_roles WHERE id = ${id}`)).rejects.toThrow(/permission denied/);
     await expect(asSchemaOwner(sql`DELETE FROM tenant_roles WHERE id = ${id}`)).rejects.toThrow(/không xoá/);
     await expect(sql`UPDATE tenant_roles SET code = 'vt_moi', version = 2, updated_by = 'user:test', updated_at = now() WHERE id = ${id}`.execute(db)).rejects.toThrow(/bất biến/);
     await expect(sql`UPDATE tenant_roles SET base_role = 'accountant', version = 2, updated_by = 'user:test', updated_at = now() WHERE id = ${id}`.execute(db)).rejects.toThrow(/bất biến/);
@@ -100,7 +105,7 @@ describe('Bất biến CSDL của vai trò của đơn vị (0075)', () => {
   it('luật chỉ thêm: không xoá, không sửa; gỡ một lần, có lý do', async () => {
     const id = await newRole('vt_go_luat', 'job', 'viewer');
     const rule = await addRule(id, 'catalog:write', 'allow');
-    await expect(sql`DELETE FROM tenant_role_rules WHERE id = ${rule}`.execute(db)).rejects.toThrow(/permission denied/);
+    await expect(asAppRole(sql`DELETE FROM tenant_role_rules WHERE id = ${rule}`)).rejects.toThrow(/permission denied/);
     await expect(asSchemaOwner(sql`DELETE FROM tenant_role_rules WHERE id = ${rule}`)).rejects.toThrow(/không xoá/);
     await expect(sql`UPDATE tenant_role_rules SET permission = 'documents:write' WHERE id = ${rule}`.execute(db)).rejects.toThrow(/chỉ thêm/);
     await expect(sql`UPDATE tenant_role_rules SET removed_by = 'user:test', removed_at = now() WHERE id = ${rule}`.execute(db)).rejects.toThrow();
