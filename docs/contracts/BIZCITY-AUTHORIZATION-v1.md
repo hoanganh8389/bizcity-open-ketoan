@@ -103,15 +103,15 @@ scopeOf(input): { all: true } | { all: false; branchIds: string[]; warehouseIds:
 
 ## 9. Mã nguồn sự thật
 
-Các tệp dưới đây là **đề xuất**: vào `main` cùng PR code W3 đợt 1 (nhánh `feat/phase-028-w3-engine`); bản này được ghi trước theo R-FLOW-2.
+Các tệp dưới đây đã vào `main` ở PR code W3 đợt 1 (#99):
 
 | Phần | Tệp |
 |---|---|
-| (đề xuất) Kiểu, hằng, mã lý do | `packages/platform/src/core/authz/types.ts` (chuyển sang `@ketoan/contracts` khi dòng giữ chỗ PHASE-026 nhả `index.ts`) |
-| (đề xuất) Bộ tính thuần | `packages/platform/src/core/authz/engine.ts` |
-| (đề xuất) Sổ quyền, băm nghĩa, diff nâng cấp | `packages/platform/src/core/authz/catalog.ts` |
-| (đề xuất) Chuyển tiếp 6 vai trò hiện có | `packages/platform/src/core/authz/legacy.ts` |
-| (đề xuất) Test | `apps/api/test/authz-engine.test.ts` |
+| Kiểu, hằng, mã lý do | `packages/platform/src/core/authz/types.ts` (chuyển sang `@ketoan/contracts` khi dòng giữ chỗ PHASE-026 nhả `index.ts`) |
+| Bộ tính thuần | `packages/platform/src/core/authz/engine.ts` |
+| Sổ quyền, băm nghĩa, diff nâng cấp | `packages/platform/src/core/authz/catalog.ts` |
+| Chuyển tiếp 6 vai trò hiện có | `packages/platform/src/core/authz/legacy.ts` |
+| Test | `apps/api/test/authz-engine.test.ts` |
 
 ## 10. Nhật ký
 
