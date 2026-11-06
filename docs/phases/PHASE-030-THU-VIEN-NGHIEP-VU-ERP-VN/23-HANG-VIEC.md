@@ -22,7 +22,7 @@ Hàng việc là việc **cần ai đó làm gì**; chứng từ xong (`posted`,
 | `payment_request` | `payment_requests` | `status IN (draft, submitted, approved1, approved, rejected)` | `payment_requests_status (tenant_id, status, due_date)` — `0005:679` |
 | `purchase_document` | `purchase_documents` | `status IN (draft, pending_approval)` | `purchase_documents_status_idx (tenant_id, status, kind)` — `0010:40` |
 | `accounting_event` | `accounting_events` | `status IN (pending, error)` | `accounting_events_status` một phần, `WHERE status <> 'posted'` — `0005:649` |
-| `intake` | `intake_inbox` | `status IN (open, trial)` | `intake_inbox_status_idx (tenant_id, status, received_at DESC)` — `0059:45` |
+| `intake` | `intake_inbox` | `status = 'open'` (`trial` là chạy thử `preflight`, giữ 7 ngày, không phải việc cần làm) | `intake_inbox_status_idx (tenant_id, status, received_at DESC)` — `0059:45` |
 
 `purchase_documents.status = 'approved'` **không** vào hàng việc: duyệt phiếu mua là điểm ghi nhận, đã ghi sổ ([19 §1](19-RA-SOAT-DUYET-VA-GHI-SO.md)). `payment_requests.status = 'approved'` **có** vào: đã duyệt nhưng **chưa chi**, nên chưa chạm sổ.
 
@@ -38,7 +38,7 @@ Hàng việc là việc **cần ai đó làm gì**; chứng từ xong (`posted`,
 | | `pending_approval` | `pending` | — | duyệt |
 | `accounting_event` | `pending` | `pending` | `held` | định khoản (ACC14) |
 | | `error` | `draft` | `blocked` | sửa rồi ghi lại |
-| `intake` | `open`, `trial` | `pending` | `held` | sửa ở trạm tiền kiểm rồi nộp lại |
+| `intake` | `open` | `pending` | `held` | sửa ở trạm tiền kiểm rồi nộp lại |
 
 ### 1.3 Khuôn view
 
@@ -157,5 +157,5 @@ Chạy `node tests/conformance/selfcheck.mjs --strict` và `npm run typecheck`. 
 
 | Mã | Việc | Chủ |
 |---|---|---|
-| S030-31 | **cả đợt:** migration 0076, `queue.routes.ts` (3 action), đăng ký trong `app.ts` (một dòng), `useViec.ts`, `hang-viec.test.ts` | Platform + web (một PR code sau khi tài liệu này và dòng giữ chỗ vào `main`). `CHANGELOG.md` đang thuộc dòng S030-19: thêm mục của S030-31 bằng một lần mở rộng phạm vi **sau khi** S030-19 trả chỗ |
+| S030-31 | **cả đợt:** migration 0076, `queue.routes.ts` (3 action), đăng ký trong `system.routes.ts` (một dòng `mountActions`, như `notifyActions`), `useViec.ts`, `hang-viec.test.ts` | Platform + web (một PR code sau khi tài liệu này và dòng giữ chỗ vào `main`). `CHANGELOG.md` đang thuộc dòng S030-19: thêm mục của S030-31 bằng một lần mở rộng phạm vi **sau khi** S030-19 trả chỗ |
 | S030-32 | HT11 dùng `summary` / `items` | web, sau S030-31 |
