@@ -1,41 +1,42 @@
+// [2026-11-06 01:30 AM Nguyễn Văn Thủy] MENU — thêm thanh mép phải, trợ lý và thông báo chuyển vào đó
+// [2026-11-05 11:50 PM Nguyễn Văn Thủy] MENU — bỏ thanh phân hệ, menu trái gọn luôn hiện, thêm thẻ của nhóm
 /**
- * Khung trang sau khi đăng nhập: thanh trên cùng (logo, thanh phân hệ, màn đã ghim, tìm chức năng, người dùng),
- * thanh menu chức năng bên trái (theo phân hệ đang chọn) và vùng làm việc nhiều thẻ.
+ * Khung trang sau khi đăng nhập: thanh trên cùng (logo, màn đã ghim, tìm chức năng, người dùng),
+ * thanh menu trái theo nhóm việc và vùng làm việc nhiều thẻ.
  */
 import { useTenant } from '../features/system/TenantPage';
 import { WindowDock } from './WindowDock';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { BarChart3, KeyRound, LogOut, Menu } from 'lucide-react';
+import { BarChart3, Menu } from 'lucide-react';
 import { ChangePasswordModal } from '@/features/access/ChangePasswordModal';
-import { ROLE_LABELS, type Role } from '@ketoan/contracts';
 import { api } from '@/lib/api';
 import { useAuth, inFrame } from '@/lib/auth';
 import { SideNav, sideNavCollapsed, sideNavWidth } from './SideNav';
 import { PinBar } from './PinBar';
 import { MenuSearch } from './MenuSearch';
 import { TabWorkspace } from './TabWorkspace';
-import { ModuleBar, useActiveModule } from './ModuleBar';
+import { useActiveModule } from './ModuleBar';
+import { useGon } from './useGon';
+import { UserMenu } from './UserMenu';
+import { useGhiHayDung } from './hay-dung';
+import { TheNhom } from './TheNhom';
 import { useFitTables } from './fitTables';
 import { MobileNav } from './MobileNav';
-import { AssistantBubble, TroLyDock } from '../addins/tro-ly/AssistantBubble';
+import { RightRail } from './rail/RightRail';
 import { useAddIns, useAppMenu } from './useAppMenu';
-import { ModuleIcon } from '../phan-he/icons';
 import { NutChiNhanh } from '@/components/ChiNhanhLamViec';
 import { DangOnline } from './DangOnline';
-// [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4): chuông thông báo
-import { ThongBao } from './ThongBao';
 import { workBranch } from '@/lib/workBranch';
 import { MaTraCuu } from '@/components/MaTraCuu';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: dòng nhắc sau khi lưu danh mục
 import { SavedFlash } from '@/components/WhyPanel';
 
 export function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   // Chi nhánh đang làm việc lưu theo đơn vị × người dùng.
   workBranch.setScope(user ? `${user.tenant.id}:${user.id}` : '');
-  const { pathname } = useLocation();
   const [changingPassword, setChangingPassword] = useState(false);
   // Điện thoại / máy tính bảng dọc: menu trượt mở bằng nút ☰.
   const [mobileNav, setMobileNav] = useState(false);
@@ -62,13 +63,15 @@ export function AppLayout() {
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
   };
+  // Bề rộng menu trái cho thanh cửa sổ dưới đáy, để thanh nằm đúng trong vùng làm việc.
+  useEffect(() => { document.documentElement.style.setProperty('--nav-w', `${collapsed ? 48 : navWidth}px`); }, [collapsed, navWidth]);
   const addins = useAddIns();
   const menu = useAppMenu();
   const { data: tenant } = useTenant();
   const mod = useActiveModule(menu);
+  const gon = useGon(menu);
+  useGhiHayDung(menu);
   useFitTables();
-  // Trang Tổng quan (lưới phân hệ) rộng hết màn; các trang khác có menu chức năng của phân hệ ở bên trái.
-  const sideNav = pathname !== '/';
   // Bản cài sổ thuế (BOOK_MODE=tax): nhãn đỏ cạnh tên để không nhầm với sổ nội bộ.
   const sysInfo = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<{ bookMode?: string; envLabel?: string }>('/api/v1/system/health'), staleTime: Infinity }).data;
   const bookMode = sysInfo?.bookMode;
@@ -133,32 +136,20 @@ export function AppLayout() {
             <small>{user?.tenant.name}</small>
           </span>
         </Link>
-        <ModuleBar modules={mod.modules} current={mod.current.key} />
         <PinBar menu={menu} />
         <div className="topbar-right">
-          {/* Robot trợ lý khi đã bấm "Ẩn": thu gọn thành biểu tượng ở đây. */}
-          {addins.some((a) => a.id === 'tro-ly') && <TroLyDock />}
-          <ThongBao />
           <SavedFlash />
           <DangOnline menu={menu} />
           <NutChiNhanh />
           <MenuSearch items={menu} />
-          <span className="user-chip" title={user?.email}>
-            {user?.fullName} <small>{ROLE_LABELS[user?.role as Role] ?? user?.role}</small>
-          </span>
-          <button className="btn btn-sm btn-ghost" style={{ color: 'var(--topbar-ink)' }} onClick={() => setChangingPassword(true)} title="Đổi mật khẩu">
-            <KeyRound size={16} />
-          </button>
-          <button className="btn btn-sm btn-ghost" style={{ color: 'var(--topbar-ink)' }} onClick={logout} title="Đăng xuất">
-            <LogOut size={16} />
-          </button>
+          <UserMenu onChangePassword={() => setChangingPassword(true)} />
         </div>
       </header>
-      {/* Menu trái: chức năng của phân hệ đang chọn (trang Tổng quan không có). */}
-      <div className={`shell ${!sideNav ? 'no-nav' : collapsed ? 'nav-collapsed' : ''}`} style={sideNav && !collapsed ? { gridTemplateColumns: `${navWidth}px minmax(0, 1fr)` } : undefined}>
-      {sideNav && <SideNav title={<Link to={`/app/${mod.current.key}`} className="sidenav-module" style={{ color: 'inherit' }}><span className="sidenav-module-icon" style={{ background: mod.current.color }}><ModuleIcon name={mod.current.icon} size={14} color="#fff" /></span>{mod.current.label}</Link>} items={mod.items} collapsed={collapsed} onCollapse={collapse} onResizeStart={startResize} />}
+      {/* Menu trái: nhóm theo việc, bấm mới bung danh sách màn. */}
+      <div className={`shell ${collapsed ? 'nav-collapsed' : ''}`} style={!collapsed ? { gridTemplateColumns: `${navWidth}px minmax(0, 1fr)` } : undefined}>
+      <SideNav groups={gon.groups} active={gon.active} onChoose={gon.choose} collapsed={collapsed} onCollapse={collapse} onResizeStart={startResize} />
       <main className="page">
-        <TabWorkspace menu={menu} />
+        <TabWorkspace menu={menu} strip={<TheNhom group={gon.active} />} />
         {/* Thanh dưới đáy: hộp thoại đang mở / đã thu nhỏ, ô "Màn chính". */}
         <WindowDock />
         {/* Chỉ hiện khi in sổ, báo cáo: các ô chữ ký cuối trang. */}
@@ -169,8 +160,8 @@ export function AppLayout() {
         </div>
       </main>
       </div>
-      {/* Robot trợ lý góc màn hình: chỉ khi add-in Trợ lý đang bật. */}
-      {addins.some((a) => a.id === 'tro-ly') && <AssistantBubble menu={menu} />}
+      {/* Thanh mép phải: việc cần làm, trợ lý, thông báo. */}
+      <RightRail menu={menu} groups={gon.groups} active={gon.active} assistant={addins.some((a) => a.id === 'tro-ly')} />
       {mobileNav && <MobileNav modules={mod.modules} current={mod.current.key} menu={menu} onChoose={mod.choose} onClose={() => setMobileNav(false)} />}
       {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
       {/* Mã tra cứu của lỗi API gần nhất (PHASE-019 W1): người dùng chép gửi dev. */}

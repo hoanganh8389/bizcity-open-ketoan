@@ -1,7 +1,7 @@
 /**
  * Menu trên điện thoại / máy tính bảng dọc (màn ≤ 900px): nút ☰ ở thanh trên mở khung trượt từ bên trái, gồm mọi
  * phân hệ (Kế toán, Quỹ, Bán hàng…) → nhóm → chức năng (kèm tiêu đề mục con). Bấm chức năng thì mở màn và đóng khung.
- * Trên màn rộng không hiện (dùng thanh phân hệ + menu trái như máy tính).
+ * Trên màn rộng không hiện (dùng menu trái).
  */
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';

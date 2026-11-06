@@ -38,7 +38,7 @@ import { postingModesSchema } from '@ketoan/contracts';
 // [2026-11-03 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-LAYER-2)
 import { readPostingModes } from '@ketoan/contracts';
 import { env } from '../../config/env.js';
-import { BUILD_VERSION, PILLARS, STANDARD } from '../../core/version.js';
+import { BUILD_VERSION, FOUNDATIONS, PILLARS, STANDARD } from '../../core/version.js';
 import { listDiagnostics, runDiagnostics, saveDiagnosticRun } from './diagnostics.js';
 import { listActions, mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { disabledModules } from '@bizcity/platform/core/module-registry';
@@ -55,6 +55,8 @@ const tenantDto = (t: { code: string; name: string; tax_code: string | null; add
   logo: String((t.settings as { logo?: unknown } | null)?.logo ?? '') || null,
 });
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày dạng YYYY-MM-DD');
+const IMAGE_BLOCK_MAX = 900_000;
+const IMAGE_DATA_URL = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 
 export async function systemRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -73,6 +75,16 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     handler: async (req) => {
       const t = await db.selectFrom('tenants').select('settings').where('id', '=', authOf(req).tenantId).executeTakeFirstOrThrow();
       return ok(readPostingModes(t.settings));
+    },
+  });
+
+  // [2026-11-06 02:40 AM Nguyễn Văn Thủy] MENU — khối ảnh của đơn vị (màn HT11)
+  r.get('/api/v1/tenant/image-blocks', {
+    preHandler: requirePermission('documents:read'),
+    schema: { tags: ['Hệ thống'], summary: 'Ảnh đơn vị đã cài theo từng khối (máy tính, điện thoại); khối chưa cài dùng ảnh mặc định của giao diện' },
+    handler: async (req) => {
+      const t = await db.selectFrom('tenants').select('settings').where('id', '=', authOf(req).tenantId).executeTakeFirstOrThrow();
+      return ok((t.settings as { imageBlocks?: unknown } | null)?.imageBlocks ?? {});
     },
   });
 
@@ -170,6 +182,16 @@ export async function systemRoutes(app: FastifyInstance): Promise<void> {
     handler: async () => {
       if (!PILLARS) throw Errors.notFound('bảng trụ cột (docs/standard/tru-cot.json không có trong bản cài)');
       return ok(PILLARS);
+    },
+  });
+
+  // [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1 (S029-30): bản đồ nền móng (bizcity_foundations@1) — chỉ đọc, thuộc bản dựng; mức đạt đổi bằng sửa mã + tệp nguồn, SC-CORE-1 kiểm (R-ECP-SCORE)
+  app.get('/api/v1/system/foundations', {
+    preHandler: requireAuthenticated(),
+    schema: { tags: ['Hệ thống'], summary: 'Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột × ECP × tín hiệu kiểm (docs/standard/nen-mong.json) — cho thẻ Nền móng ở màn Trụ cột & mức đạt' },
+    handler: async () => {
+      if (!FOUNDATIONS) throw Errors.notFound('bản đồ nền móng (docs/standard/nen-mong.json không có trong bản cài)');
+      return ok(FOUNDATIONS);
     },
   });
 
@@ -308,6 +330,41 @@ export const systemMoreWriteActions: AnyActionDef[] = [
         await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'settings.data-lock', objectType: 'tenant', objectId: auth.tenantId, before, after: b });
       });
       return { ...b, today: todayVN(), bypass: auth.permissions.has('documents:bypass-date-lock') };
+    },
+  }),
+  // [2026-11-06 02:40 AM Nguyễn Văn Thủy] MENU — cài ảnh một khối; lưu ở tenants.settings.imageBlocks như logo
+  defineAction({
+    id: 'core.tenant.image-block', title: 'Cài ảnh một khối giao diện (máy tính, điện thoại)', tags: ['Hệ thống'],
+    permission: 'settings:write', effect: 'write', sideEffects: ['settings'], idempotency: 'natural',
+    input: z.object({
+        key: z.string().regex(/^[a-z0-9-]{1,64}$/, 'Mã khối không hợp lệ'),
+        /** Data URL ảnh; null = bỏ ảnh; không gửi = giữ nguyên. */
+        desktop: z.string().max(IMAGE_BLOCK_MAX).nullable().optional(),
+        mobile: z.string().max(IMAGE_BLOCK_MAX).nullable().optional(),
+      }), output: anyOut,
+    expose: { http: { method: 'PUT', path: '/api/v1/tenant/image-blocks/:key' }, mcp: false, ai: 'deny' },
+    evidence: { objectType: 'tenant' },
+    handler: async (ctx, input) => {
+      const trx = ctx.data.tx;
+      const auth = ctx.legacyAuth;
+      for (const v of [input.desktop, input.mobile]) if (v && !IMAGE_DATA_URL.test(v)) throw Errors.validation('Ảnh phải là PNG, JPEG hoặc WebP');
+      return sameTx(trx, async (trx) => {
+        const cur = await trx.selectFrom('tenants').select('settings').where('id', '=', auth.tenantId).executeTakeFirstOrThrow();
+        const settings = { ...((cur.settings as Record<string, unknown>) ?? {}) };
+        const blocks = { ...((settings.imageBlocks as Record<string, Record<string, string>>) ?? {}) };
+        const block = { ...(blocks[input.key] ?? {}) };
+        for (const slot of ['desktop', 'mobile'] as const) {
+          const v = input[slot];
+          if (v === undefined) continue;
+          if (v) block[slot] = v; else delete block[slot];
+        }
+        if (Object.keys(block).length) blocks[input.key] = block; else delete blocks[input.key];
+        settings.imageBlocks = blocks;
+        await trx.updateTable('tenants').set({ settings: JSON.stringify(settings) }).where('id', '=', auth.tenantId).execute();
+        // Nhật ký chỉ ghi khối nào đổi, không chép nội dung ảnh.
+        await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'tenant.image-block', objectType: 'tenant', objectId: auth.tenantId, after: { key: input.key, desktop: input.desktop === undefined ? 'giữ' : input.desktop ? 'cài' : 'bỏ', mobile: input.mobile === undefined ? 'giữ' : input.mobile ? 'cài' : 'bỏ' } });
+        return blocks;
+      });
     },
   }),
   defineAction({

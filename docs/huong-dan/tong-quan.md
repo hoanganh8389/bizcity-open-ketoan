@@ -1,6 +1,6 @@
-# Tổng quan
+# Bảng điều khiển
 
-Màn hình đầu tiên sau khi đăng nhập, cho biết nhanh tình hình trong khoảng ngày chọn (mặc định từ đầu tháng tới hôm nay). Số liệu lấy từ **sổ kế toán**, cập nhật ngay khi chứng từ được ghi sổ.
+Xem kỹ theo kỳ tự chọn, cho biết nhanh tình hình trong khoảng ngày chọn (mặc định từ đầu tháng tới hôm nay). Số liệu lấy từ **sổ kế toán**, cập nhật ngay khi chứng từ được ghi sổ.
 
 | Ô | Cách tính |
 |---|---|

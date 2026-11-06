@@ -20,7 +20,7 @@
 | S029-32 | Cấu hình đợt 2: route ghi riêng → `setSetting`; `valueType` cho module; chặn đọc thô `tenants.settings`; xuất / nhập; đệm theo `config_version`; khoá `idempotency_days`, `event_retention_days`; tiền tệ; thuế suất theo ngày | E2 | P1 | ⛔ sau S029-10 |
 | S029-11 | Chứng từ `documents` + `document_meta` (mô hình `posts` / `postmeta`), `ctx.documents.transition`, quan hệ có đóng hiệu lực | E4 | P1 | ☐ |
 | S029-12 | Xoá an toàn ở CSDL: thu hồi `DELETE`, hàm xoá đọc `md_references`, bỏ `CASCADE`, ngừng dùng cho bảng thiếu cột | E3b | P0 | ⛔ chủ ký K3; sau S026-11 |
-| S029-13 | Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu | E6 | P1 | ☐ |
+| S029-13 | <!-- [2026-11-06 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-13 đợt 1: chữ chốt 30 §6, giữ chỗ --> Sổ đăng ký đối chiếu đợt 1 (chữ chốt [30 §6](30-LO-TRINH-NEN-MONG.md)): `VAT_INPUT_INVOICE_MATCH`, `LEDGER_ROUNDING`, `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` + lane + mục sổ đăng ký ở DIAGNOSTICS.md; projection khai đối chiếu ở đợt 2 (S029-21) | E6 | P1 | ☐ giữ chỗ ở CLAIMS.md |
 | S029-14 | Kiểm đường ghi ngoài action mang tenant / actor / nguồn / correlation (ECP-02) | E9 | P2 | ☐ |
 | S029-15 | Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ | E7 | P1 | ☐ |
 | S029-16 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | E8 | P2 | ☐ |
@@ -35,8 +35,8 @@
 | S029-25 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa `bizcity_document@1` §5.1 | E4 | P1 | ☐ |
 | S029-26 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | E8 | P2 | ⛔ sau S029-23 |
 | S029-27 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | E6 | P2 | ☐ |
-| S029-29 | <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-29..31: sáu năng lực lõi, SC-CORE-1, ma trận kiểm chuẩn --> Phép kiểm SC-CORE-1 trên `docs/standard/nen-mong.json`: sáu lõi có capability `available`, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu `co` có thật, "đạt" chỉ khi không còn `chua`; ca tự kiểm | E1 | P0 | ☐ giữ chỗ ở CLAIMS.md; chữ chốt [30](30-LO-TRINH-NEN-MONG.md) §4 |
-| S029-30 | Màn HT10 theo bản mẫu [ma trận nền móng](mockups/ma-tran-nen-mong.html): năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc `nen-mong.json` (`GET /api/v1/system/foundations`, đề xuất); thẻ Nền móng trong màn HT10 — không thêm mục menu <!-- [2026-11-05 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-30 không chờ S026-15: đọc nen-mong.json, không đụng tru-cot.json --> | E1 | P1 | ☐ giữ chỗ ở CLAIMS.md |
+| S029-29 | <!-- [2026-11-05 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-29..31: sáu năng lực lõi, SC-CORE-1, ma trận kiểm chuẩn --> Phép kiểm SC-CORE-1 trên `docs/standard/nen-mong.json`: sáu lõi có capability `available`, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu `co` có thật, "đạt" chỉ khi không còn `chua`; ca tự kiểm | E1 | P0 | ✅ 2026-11-06 (#95) |
+| S029-30 | Màn HT10 theo bản mẫu [ma trận nền móng](mockups/ma-tran-nen-mong.html): năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc `nen-mong.json` (`GET /api/v1/system/foundations`, đề xuất); thẻ Nền móng trong màn HT10 — không thêm mục menu (thẻ `?xem=nen-mong`) <!-- [2026-11-05 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-30 không chờ S026-15: đọc nen-mong.json, không đụng tru-cot.json --> | E1 | P1 | ✅ 2026-11-06 (#95) |
 | S029-31 | Bản mẫu ma trận kiểm chuẩn + `nen-mong.json` (`bizcity_foundations@1` 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-0028 / CANON §0.7–§0.8 | E0 | P0 | 🟡 2026-11-05 PR tài liệu |
 | S029-28 | Khớp danh mục sự kiện với hợp đồng (`module.enabled` / `disabled`, sự kiện chưa phát); hạn idempotency vào registry | E9 | P2 | ☐ |
 
@@ -49,3 +49,4 @@
 | 2026-11-05 | Claude Code | W1 merge (#92): S029-2..4 xong, bỏ dòng giữ chỗ W1. Giữ chỗ E1 (S029-29 SC-CORE-1, S029-30 thẻ Nền móng). |
 | 2026-11-06 | Claude Code | Chữ chốt E2 đợt 1 (`bizcity_settings@1` 1.1.0-draft §2, 30 §5); giữ chỗ E2; tách đợt 2 thành S029-32. |
 | 2026-11-06 | Claude Code | E2 đợt 1 code: `setting_values` + `tenants.config_version`, `getSetting` / `setSetting`, `/settings/values`, `valueType` cho 5 khoá + khoá mẫu `bizcity.ui.theme`; sửa lỗi `jsonb_set` không tạo nhánh cha khi ghi song song; thêm `setting_values` vào `schema-catalog.ts` (test db-rules bắt); đổi số migration 0076 → 0074 (chủ chọn ai merge trước lấy số trước); trụ cột 05 nâng tín hiệu `cau-hinh-gia-tri` (SC-CORE-1). |
+| 2026-11-06 14:40 | Claude Code | Gộp `main` sau W1 (#102, migration 0073): E2 giữ 0074. Bỏ dòng giữ chỗ E2 đợt 1 (R-FLOW-6); bàn giao `schema-catalog.ts` cho dòng PHASE-028 W2. |

@@ -20,3 +20,16 @@ Bảng là **kim chỉ nam**: làm tiêu chí P0 chưa đạt trước; mỗi ti
 ## Thẻ "Trụ cột" ở trang chủ phân hệ
 
 Cạnh thẻ *Quy trình* và *Tất cả chức năng*: cùng bảng, chỉ hiện tiêu chí gắn với phân hệ đang mở — để người mới hiểu luật nào đang bảo vệ số liệu của phân hệ, và dev biết việc kế tiếp của phân hệ đó.
+
+<!-- [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — thẻ Nền móng (S029-30, ADR-0028) -->
+## Thẻ "Nền móng"
+
+Bấm **Nền móng** ở đầu màn (hoặc mở `/he-thong/tru-cot?xem=nen-mong`). Thẻ này nhìn Core theo **sáu năng lực lõi** — Định danh & danh mục, Phân quyền & ngữ cảnh, Cấu hình & chính sách, Chứng từ & luồng duyệt, Sự kiện & kế toán, Liên tục & kiểm chuẩn — và **17 trụ cột** chia bốn nhóm nền móng. Có năm góc nhìn:
+
+- **Sáu năng lực lõi**: mỗi năng lực làm gì, dev nhận sẵn gì (không phải tự xây lại), gọi bằng gì, nằm ở thư mục mã nào, còn thiếu gì.
+- **Ma trận 17 trụ cột**: mỗi trụ cột thuộc năng lực nào, mức đạt, thanh tín hiệu kiểm; bấm một dòng để xem từng tín hiệu và nguyên tắc ECP nó giữ.
+- **ECP × trụ cột**: 13 nguyên tắc bất biến Enterprise Continuity do trụ cột nào thi hành.
+- **Tín hiệu kiểm**: mọi check / mã chẩn đoán / test làm bằng chứng — *chạy được*, *ở nhánh* (chưa vào bản chính), *chưa có*.
+- **Tinh gọn & SDK**: bảy nguyên tắc Small Core, Strong Contracts.
+
+Mức **Đạt** chỉ có khi không còn tín hiệu *chưa có*; bộ kiểm SC-CORE-1 chặn ghi "đạt" sai và báo khi một tín hiệu đã có mà bảng chưa nâng. Nguồn: `docs/standard/nen-mong.json`.

@@ -75,7 +75,29 @@ Thiết kế đầy đủ: [`bizcity_settings@1` 1.1.0-draft §2](../../contract
 | Đăng ký route | `settings-values.routes.ts` gọi từ `catalog-rules.routes.ts` (tệp cấu hình HT09) | `system.routes.ts` đang thuộc dòng E1; `loi.ts` thuộc dòng xương cá |
 | Danh mục bảng | thêm mục `setting_values` vào `schema-catalog.ts` (test `db-rules` đòi mọi bảng có nhóm) — tệp này cũng ở dòng PHASE-028 W1: hai dòng merge lần lượt |
 | Kiểu Kysely | không sửa `db/types.ts` ở đợt 1 (dòng PHASE-026 đợt 3 giữ) — truy vấn bằng `sql` có tham số | không chồng phạm vi |
-| Số migration | `0076` (0073 / 0074 PHASE-026, 0075 PHASE-028 W1) | W-13 |
+| Số migration | `0074` — chủ dự án chọn "ai merge trước lấy số trước" (W1 phân quyền `0073`; PHASE-026 đợt 2 / 3 đổi số khi merge) <!-- [2026-11-06 01:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đổi số 0076 → 0074 --> | W-13, `so-tiep-theo kiem` |
 | Kiểm bằng | test `cau-hinh-gia-tri`: ưu tiên phạm vi, theo ngày, lịch sử, chỉ thêm (trigger), mirror, `config_version`, quyền, lý do loại A; `ctx.settings.get` đọc qua kho mới | LEAN-7 |
 
 Đợt 2 (S029-32): chuyển route ghi riêng sang `setSetting`, `valueType` cho module, phép kiểm chặn đọc thô, xuất / nhập, đệm theo `config_version`.
+
+<!-- [2026-11-06 09:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — §6 chữ chốt E6 đợt 1 (S029-13): sổ đăng ký đối chiếu, bốn mã chẩn đoán thay phần chạy tay -->
+## 6. Chữ chốt E6 đợt 1 — sổ đăng ký đối chiếu (S029-13)
+
+`scripts/doi-chieu-ke-toan.sql` (R-REV-6) chạy tay theo đơn vị. Mục nào đã có mã chẩn đoán thì giữ mã đó; mục còn chạy tay mà là **luật Core** thành chẩn đoán L3 `warn` (D029-6: cảnh báo trước, nâng mức khi đo trên bản cài thật), chạy trên mọi bản cài, vào khoá kỳ theo cơ chế sẵn có (R-DIAG-4). Quy ước mã hàng riêng của phân hệ (`SKU_RULE`, mục 6 / 8) **ở lại** công cụ rà soát — không phải luật Core.
+
+| Mục script | Mã | Trạng thái |
+|---|---|---|
+| 1 cân sổ | `LEDGER_BALANCED` | có |
+| 2 / 2b công nợ ↔ 331 / 131 | `DEBT_MATCH_LEDGER` | có |
+| 3b hoá đơn thiếu quá 30 ngày | `TAX_INPUT_NO_INVOICE` | có |
+| 3 / 3b thuế đầu vào trên sổ ≠ thuế trên sổ hoá đơn của **cùng** sự việc (đã có hoá đơn), lệch > 0,5 đồng | `VAT_INPUT_INVOICE_MATCH` | **mới** — tài khoản thuế đầu vào đọc từ cấu hình (loại thuế đầu vào + ngầm định `tax_input`), không viết số tài khoản |
+| 4 kho ↔ tài khoản hàng tồn | `INVENTORY_LEDGER_MISMATCH` | có |
+| 5 dòng sổ không tròn đồng | `LEDGER_ROUNDING` | **mới** — sổ ghi đồng Việt Nam |
+| 6b mã hàng trùng khi bỏ khoảng trắng / hoa thường | `ITEM_CODE_CASE_DUP` | **mới** |
+| 7 mặt hàng có ĐVT nhưng không đúng một ĐVT gốc tỉ lệ 1, hoặc hơn một ĐVT mua mặc định | `UNIT_BASE_INVALID` | **mới** |
+| 6 / 8 khuôn mã hàng của mua hàng | — | ở lại `scripts/doi-chieu-ke-toan.sql` |
+
+- Mỗi mã có lane SQL cùng mã (SC-DIAG-1): `ledger.diag.mjs` (`LEDGER_ROUNDING`), `tax.diag.mjs` (`VAT_INPUT_INVOICE_MATCH`), `masterdata.diag.mjs` mới (`ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID`); mẫu không chứa số tiền (R-DIAG-6); có phương án khắc phục (`bizcity_remedy@1`).
+- **Sổ đăng ký đối chiếu** = mục mới trong `docs/ops/DIAGNOSTICS.md`: mọi phép đối chiếu (bên A ↔ bên B, mã, tầng nhất quán R-ECP-CONS, mức, chặn khoá kỳ) — gồm cả mã có sẵn; R-ECP-CONS-3 trỏ về đây.
+- Test `doi-chieu-tu-dong`: mỗi mã mới đỏ đúng khi cài lệch, xanh khi sạch.
+- Đợt 2: mỗi projection (CRM, POS, kết nối ngoài) khai phép đối chiếu của nó qua đăng ký chẩn đoán của module (S029-21).

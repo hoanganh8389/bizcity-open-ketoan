@@ -673,6 +673,32 @@
       }
     },
     {
+      "$comment": "[2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1: ca tự kiểm SC-CORE-1 (sáu năng lực lõi, tín hiệu có thật, đạt không còn chưa có)",
+      "root": "foundations-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-CORE-1": {
+          "findings": 14,
+          "keys": [
+            "core:missing:C6",
+            "cap:unknown:C1:ghost.cap",
+            "code:C1:packages/khong-co",
+            "cap:planned:C2:x.planned",
+            "contract:C3:bizcity_khong_co@1",
+            "pillars:set",
+            "ecp:set",
+            "ecp:uncovered:ECP-02",
+            "pillar:group:02",
+            "pillar:core:02",
+            "signal:absent:01:test:apps/api/test/khong-co.test.ts",
+            "signal:stale:02:check:SC-X-9",
+            "dat:pillar:01",
+            "dat:core:C1"
+          ]
+        }
+      }
+    },
+    {
       "root": "document-bad",
       "mode": "repo",
       "checks": {

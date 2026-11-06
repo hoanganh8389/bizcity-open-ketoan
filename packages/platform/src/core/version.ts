@@ -33,6 +33,9 @@ export const STANDARD = readJson('docs/standard/bizcity-standard.json');
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bảng trụ cột × mức đạt (bizcity_pillars@1) cho HT10 và thẻ Trụ cột ở trang chủ phân hệ
 /** Bảng trụ cột × tiêu chí × mức đạt của Core (docs/standard/tru-cot.json); không có tệp thì null. */
 export const PILLARS = readJson('docs/standard/tru-cot.json');
+// [2026-11-05 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E1 (S029-30): bản đồ sáu năng lực lõi × 17 trụ cột × tín hiệu kiểm (bizcity_foundations@1) cho thẻ Nền móng ở HT10
+/** Sáu năng lực lõi × bốn nhóm nền móng × 17 trụ cột (docs/standard/nen-mong.json); SC-CORE-1 giữ tệp khớp repo. Không có tệp thì null. */
+export const FOUNDATIONS = readJson('docs/standard/nen-mong.json');
 
 const version = readVersion('package.json') ?? '0.0.0';
 
