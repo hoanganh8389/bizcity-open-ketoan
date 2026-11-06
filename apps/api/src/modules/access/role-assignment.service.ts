@@ -23,7 +23,7 @@ import { accessRepository } from './access.repository.js';
 import type { RoleAssign, RoleRevoke } from './access.schemas.js';
 
 interface AssignmentRow {
-  id: string; role: Role; scope_type: string; scope_id: string | null; purpose: string; valid_from: string; valid_to: string | null;
+  id: string; role: Role | null; tenant_role_id: string | null; scope_type: string; scope_id: string | null; purpose: string; valid_from: string; valid_to: string | null;
   reason: string; granted_by: string; granted_at: Date; revoked_by: string | null; revoked_at: Date | null; revoke_reason: string | null; active: boolean;
 }
 
@@ -46,12 +46,13 @@ async function targetUser(trx: ActionTx, auth: AuthContext, userId: string) {
 }
 
 export const roleAssignmentService = {
+  // [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 1: lịch sử gán trả cả lần gán vai trò của đơn vị (tenantRoleId, role NULL)
   /** Lịch sử gán vai trò của một người (cả dòng đã thu hồi), mới nhất trước. */
   async list(auth: AuthContext, userId: string) {
     const user = await accessRepository.findUser(db, auth.tenantId, userId);
     if (!user) throw Errors.notFound('người dùng');
     const { rows } = await sql<AssignmentRow>`
-      SELECT id, role, scope_type, scope_id, purpose, valid_from::text, valid_to::text, reason, granted_by, granted_at, revoked_by, revoked_at, revoke_reason,
+      SELECT id, role, tenant_role_id, scope_type, scope_id, purpose, valid_from::text, valid_to::text, reason, granted_by, granted_at, revoked_by, revoked_at, revoke_reason,
              (revoked_at IS NULL AND valid_from <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
               AND (valid_to IS NULL OR valid_to >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)) AS active
         FROM user_role_assignments WHERE tenant_id = ${auth.tenantId} AND user_id = ${userId}
@@ -59,7 +60,7 @@ export const roleAssignmentService = {
     return {
       primaryRole: user.role,
       assignments: rows.map((r) => ({
-        id: String(r.id), role: r.role, scopeType: r.scope_type, scopeId: r.scope_id, purpose: r.purpose, validFrom: r.valid_from, validTo: r.valid_to,
+        id: String(r.id), role: r.role, tenantRoleId: r.tenant_role_id, scopeType: r.scope_type, scopeId: r.scope_id, purpose: r.purpose, validFrom: r.valid_from, validTo: r.valid_to,
         reason: r.reason, grantedBy: r.granted_by, grantedAt: r.granted_at, revokedBy: r.revoked_by, revokedAt: r.revoked_at, revokeReason: r.revoke_reason, active: r.active,
       })),
     };

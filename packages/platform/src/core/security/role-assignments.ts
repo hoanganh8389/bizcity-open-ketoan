@@ -17,9 +17,10 @@ const cache = new Map<string, { roles: Role[]; at: number }>();
 export async function extraRoles(userId: string, conn: Db = db): Promise<Role[]> {
   const hit = cache.get(userId);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.roles;
+  // [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 1: bỏ qua lần gán vai trò của đơn vị (tenant_role_id, role NULL) — chưa cấp quyền cho tới bước 4 (ADR-0027 Phụ lục A)
   const { rows } = await sql<{ role: Role }>`
     SELECT DISTINCT role FROM user_role_assignments
-     WHERE user_id = ${userId} AND revoked_at IS NULL AND scope_type = 'tenant' AND purpose = 'operate'
+     WHERE user_id = ${userId} AND role IS NOT NULL AND revoked_at IS NULL AND scope_type = 'tenant' AND purpose = 'operate'
        AND valid_from <= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
        AND (valid_to IS NULL OR valid_to >= (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)`.execute(conn);
   const roles = rows.map((r) => r.role);
