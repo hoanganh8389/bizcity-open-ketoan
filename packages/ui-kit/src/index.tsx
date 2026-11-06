@@ -20,6 +20,8 @@ export interface UiKitApi {
   get<T>(path: string, query?: ApiQuery): Promise<T>;
   post<T>(path: string, body?: unknown): Promise<T>;
   put<T>(path: string, body: unknown): Promise<T>;
+  // [2026-11-06 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W4: thêm patch (core.role.update là PATCH); thêm, không đổi phần cũ
+  patch<T>(path: string, body: unknown): Promise<T>;
   delete<T>(path: string): Promise<T>;
 }
 
