@@ -7,7 +7,7 @@
  *   Dòng hàng không số lượng mà trừ đi mới khớp tổng trên hoá đơn: NCC ghi sai loại, tính là chiết khấu.
  *   Dòng dịch vụ không ghi số lượng: coi là 1, đơn giá = thành tiền.
  */
-import type { ParsedInvoice } from './hoa-don.js';
+import { invoiceNoShown, type ParsedInvoice } from './hoa-don.js';
 
 export type XmlNode = Record<string, unknown>;
 export interface GdtInvoice {
@@ -65,7 +65,8 @@ export function readGdtInvoice(root: XmlNode): GdtInvoice {
   const list = isNode(body.DSHHDVu) ? body.DSHHDVu.HHDVu : undefined;
   const rows = (Array.isArray(list) ? list : list === undefined ? [] : [list]).filter(isNode);
 
-  const no = text(head.SHDon);
+  // Lưu số đúng như cổng thuế hiện: 00002328 là 2328. Số nguyên văn vẫn nằm trong tệp XML gốc đính kèm.
+  const no = invoiceNoShown(text(head.SHDon));
   const sellerTaxCode = text(seller.MST);
   const date = text(head.NLap).slice(0, 10);
   if (!no) throw new Error('Hoá đơn thiếu số (SHDon)');
@@ -140,6 +141,33 @@ export function readGdtInvoice(root: XmlNode): GdtInvoice {
     sellerAddress: text(seller.DChi), buyerName: text(buyer.Ten) || text(buyer.HVTNMHang), mccqt: text(hdon.MCCQT), currency: text(head.DVTTe) || 'VND',
     related: rel ? { kind: text(rel.TCHDon), form: text(rel.KHMSHDCLQuan), series: text(rel.KHHDCLQuan), no: text(rel.SHDCLQuan), date: text(rel.NLHDCLQuan) } : null,
     discountLines, noteLines, notices, warnings,
+  };
+}
+
+export interface GdtHeader {
+  form?: string; series?: string; no: string; date: string; sellerTaxCode: string; sellerName?: string; sellerAddress?: string; buyerTaxCode?: string; buyerName?: string;
+  totalBeforeTax: number; totalTax: number; total: number;
+}
+
+/**
+ * Hoá đơn không mã: cổng thuế chỉ có bản xem, không có XML. Lấy đúng đầu hoá đơn và tổng tiền của cổng thuế, gộp thành một dòng;
+ * không đọc dòng hàng từ HTML để khỏi sai. Thuế suất chỉ ghi khi khớp đúng một mức, còn lại để trống và giữ nguyên tiền thuế.
+ */
+export function gdtInvoiceFromHeader(h: GdtHeader): GdtInvoice {
+  const no = invoiceNoShown(h.no);
+  if (!no) throw new Error('Hoá đơn thiếu số');
+  if (!h.sellerTaxCode) throw new Error('Hoá đơn thiếu mã số thuế người bán');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(h.date)) throw new Error(`Ngày lập hoá đơn không đọc được: "${h.date}"`);
+  const before = h.totalBeforeTax, tax = h.totalTax;
+  const rate = [0, 5, 8, 10].find((r) => Math.abs((before * r) / 100 - tax) <= 2) ?? null;
+  return {
+    parsed: {
+      form: h.form ?? '', series: h.series ?? '', no, date: h.date, sellerTaxCode: h.sellerTaxCode, sellerName: h.sellerName ?? '', buyerTaxCode: h.buyerTaxCode ?? '',
+      totalBeforeTax: before, totalTax: tax, total: h.total, totalDiscount: 0,
+      lines: [{ nccSku: '', nccName: 'Hàng hoá, dịch vụ theo hoá đơn (xem bản đính kèm)', nccUnit: '', qty: before < 0 ? -1 : 1, price: Math.abs(before), discountAmount: 0, amount: before, taxRate: rate, taxAmount: tax, isGift: false }],
+    },
+    sellerAddress: h.sellerAddress ?? '', buyerName: h.buyerName ?? '', mccqt: '', currency: 'VND', related: null, discountLines: [], noteLines: [],
+    notices: ['Hoá đơn không mã, cổng thuế không có XML: số tiền theo cổng thuế, dòng hàng xem bản đính kèm'], warnings: [],
   };
 }
 

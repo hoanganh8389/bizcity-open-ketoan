@@ -276,7 +276,15 @@ export function normalizeParsed(p: ParsedInvoice): Omit<SupplierInvoice, 'partne
 export const taxCodeOfRate = (rate: number | null) => (rate === null ? 'V13K' : `V${String(Math.round(rate)).padStart(2, '0')}`);
 
 /** Số hoá đơn hiển thị: ký hiệu + số. */
-export const invoiceLabel = (x: Pick<SupplierInvoice, 'series' | 'no'>) => (x.series ? `${x.series}-${x.no}` : x.no);
+// [2026-11-07 12:25 AM Nguyễn Văn Thủy] MH22 — số hoá đơn hiện bỏ số 0 đầu như cổng thuế: 00002328 là 2328 (đóng góp)
+export const invoiceNoShown = (no: string) => String(no ?? '').trim().replace(/^0+(?=\d)/, '');
+export const invoiceLabel = (x: Pick<SupplierInvoice, 'series' | 'no'>) => (x.series ? `${x.series}-${invoiceNoShown(x.no)}` : invoiceNoShown(x.no));
+
+/** Tình trạng hoá đơn trên cổng thuế (tthai): tên hiện trên màn, có cần kế toán chú ý không. */
+export const GDT_STATUS: Record<number, { label: string; warn: boolean }> = {
+  1: { label: 'Gốc', warn: false }, 2: { label: 'Thay thế', warn: true }, 3: { label: 'Điều chỉnh', warn: true },
+  4: { label: 'Bị thay thế', warn: true }, 5: { label: 'Bị điều chỉnh', warn: true }, 6: { label: 'Bị huỷ', warn: true },
+};
 
 /** Cùng một hoá đơn: số giống nhau (bỏ số 0 đầu), ký hiệu giống nhau khi cả hai có ký hiệu. */
 export const sameInvoice = (a: { no: string; series?: string }, b: { no: string; series?: string }) => {

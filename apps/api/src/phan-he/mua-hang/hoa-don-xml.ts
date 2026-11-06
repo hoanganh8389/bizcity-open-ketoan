@@ -11,7 +11,7 @@
 import { sql } from 'kysely';
 import { XMLParser } from 'fast-xml-parser';
 import { z } from 'zod';
-import { invoiceLabel, normalizeParsed, readGdtInvoice, sameTaxRoot, type GdtInvoice, type XmlNode } from '@bizcity/mua-hang-domain';
+import { gdtInvoiceFromHeader, invoiceLabel, normalizeParsed, readGdtInvoice, sameTaxRoot, type GdtInvoice, type XmlNode } from '@bizcity/mua-hang-domain';
 import type { Db } from '../../db/client.js';
 import { writeAudit } from '../../core/audit.js';
 import { Errors } from '../../core/errors.js';
@@ -24,10 +24,17 @@ const GIOI_HAN_XML = 5 * 1024 * 1024;
 
 export const ingestXmlSchema = z.object({
   fileName: z.string().trim().min(1).max(200),
-  xmlBase64: z.string().min(1).describe('Nội dung tệp XML gốc, mã hoá base64'),
+  xmlBase64: z.string().min(1).optional().describe('Nội dung tệp XML gốc, mã hoá base64'),
+  header: z.object({
+    form: z.coerce.string().max(20).optional(), series: z.string().max(20).optional(), no: z.coerce.string().min(1).max(30), date: z.string(),
+    sellerTaxCode: z.string().max(20), sellerName: z.string().max(300).optional(), sellerAddress: z.string().max(500).optional(), buyerTaxCode: z.string().max(20).optional(), buyerName: z.string().max(300).optional(),
+    totalBeforeTax: z.number().finite(), totalTax: z.number().finite(), total: z.number().finite(),
+  }).optional().describe('Hoá đơn không mã, không có XML: đầu hoá đơn và tổng tiền theo cổng thuế'),
   gdt: z.object({
     tthai: z.coerce.number().int().optional().describe('Tình trạng hoá đơn trên cổng thuế: 1 gốc, 2 thay thế, 3 điều chỉnh, 4 bị thay thế, 5 bị điều chỉnh, 6 bị huỷ'),
     ttxly: z.coerce.number().int().optional().describe('Tình trạng xử lý trên cổng thuế'),
+    maTraCuu: z.string().max(100).optional().describe('Mã tra cứu hoá đơn ở nhà cung cấp hoá đơn điện tử'),
+    linkTraCuu: z.string().max(500).optional().describe('Trang tra cứu hoá đơn'),
   }).default({}),
   files: z.array(z.object({
     fileName: z.string().trim().min(1).max(200),
@@ -79,10 +86,10 @@ async function resolvePartner(trx: Db, tenantId: string, actor: string, inv: Gdt
 }
 
 /** Đính XML gốc đúng từng byte và các tệp gửi kèm. Cùng nội dung đã đính thì không đính lại. Trả về số tệp mới. */
-async function attachFiles(trx: Db, tenantId: string, actor: string, invoiceId: string, input: IngestXmlInput): Promise<number> {
+async function attachFiles(trx: Db, tenantId: string, actorName: string, invoiceId: string, input: IngestXmlInput): Promise<number> {
   const before = await countAttachments(trx, tenantId, invoiceId);
-  await addAttachment(trx, tenantId, actor, { ownerType: 'invoice', ownerId: invoiceId, kind: 'hoa_don_xml', fileName: input.fileName, mime: 'application/xml', dataBase64: input.xmlBase64 });
-  for (const f of input.files) await addAttachment(trx, tenantId, actor, { ownerType: 'invoice', ownerId: invoiceId, kind: f.kind, fileName: f.fileName, mime: f.mime, dataBase64: f.dataBase64, note: f.note });
+  if (input.xmlBase64) await addAttachment(trx, tenantId, actorName, { ownerType: 'invoice', ownerId: invoiceId, kind: 'hoa_don_xml', fileName: input.fileName, mime: 'application/xml', dataBase64: input.xmlBase64 });
+  for (const f of input.files) await addAttachment(trx, tenantId, actorName, { ownerType: 'invoice', ownerId: invoiceId, kind: f.kind, fileName: f.fileName, mime: f.mime, dataBase64: f.dataBase64, note: f.note });
   return (await countAttachments(trx, tenantId, invoiceId)) - before;
 }
 const countAttachments = async (trx: Db, tenantId: string, invoiceId: string) => Number((await trx.selectFrom('document_attachments').select(sql<string>`COUNT(*)`.as('n')).where('tenant_id', '=', tenantId)
@@ -92,7 +99,10 @@ const NOTE_REPLACED = 'Cổng thuế báo hoá đơn này đã bị thay thế';
 const NOTE_CANCELLED = 'Cổng thuế báo hoá đơn này đã bị huỷ';
 
 export async function ingestInvoiceXml(trx: Db, tenantId: string, actor: string, actorName: string, input: IngestXmlInput): Promise<IngestResult> {
-  const inv = parseXml(Buffer.from(input.xmlBase64, 'base64'));
+  if (!input.xmlBase64 && !input.header) throw Errors.validation('Thiếu tệp XML hoặc đầu hoá đơn');
+  let inv: GdtInvoice;
+  if (input.xmlBase64) inv = parseXml(Buffer.from(input.xmlBase64, 'base64'));
+  else { try { inv = gdtInvoiceFromHeader(input.header!); } catch (e) { throw Errors.validation((e as Error).message); } }
   const p = inv.parsed;
   const label = invoiceLabel({ series: p.series ?? '', no: p.no });
   const tthai = input.gdt.tthai;
@@ -115,7 +125,7 @@ export async function ingestInvoiceXml(trx: Db, tenantId: string, actor: string,
   const dup = await findDuplicate(trx, tenantId, partnerCode, p.series ?? '', p.no);
   if (dup) {
     const invoiceId = String(dup.id);
-    const attached = await attachFiles(trx, tenantId, actor, invoiceId, input);
+    const attached = await attachFiles(trx, tenantId, actorName, invoiceId, input);
     const cur = await trx.selectFrom('supplier_invoices').select(['note', 'data']).where('id', '=', invoiceId).executeTakeFirstOrThrow();
     const data = (typeof cur.data === 'string' ? JSON.parse(cur.data) : cur.data) as Record<string, unknown>;
     const note = gone && !cur.note.includes(goneNote) ? [cur.note, goneNote].filter(Boolean).join('. ').slice(0, 1000) : cur.note;
@@ -150,7 +160,7 @@ export async function ingestInvoiceXml(trx: Db, tenantId: string, actor: string,
   });
   if (!parsedInput.success) throw Errors.validation(`Hoá đơn ${label}: ${parsedInput.error.issues.slice(0, 3).map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`);
   const saved = await saveInvoice(trx, tenantId, actorName, parsedInput.data);
-  const attached = await attachFiles(trx, tenantId, actor, saved.id!, input);
+  const attached = await attachFiles(trx, tenantId, actorName, saved.id!, input);
   if (partner.created) await logEvents(tenantId, [{ event: 'partner_created_from_invoice', docNo: label, user: actorName, data: { partnerCode, name: p.sellerName } }]);
   return { ...base, status: 'saved', message: partner.created ? `Đã nhập, tạo mới NCC ${partnerCode}` : 'Đã nhập', invoiceId: saved.id!, partnerCode, partnerCreated: partner.created, lines: saved.lines.length, unmatched: saved.lines.filter((l) => !l.sku).length, attached };
 }

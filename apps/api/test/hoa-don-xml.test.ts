@@ -4,7 +4,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { XMLParser } from 'fast-xml-parser';
-import { gdtTaxRate, readGdtInvoice, sameTaxRoot } from '@bizcity/mua-hang-domain';
+import { gdtTaxRate, invoiceLabel, readGdtInvoice, sameTaxRoot } from '@bizcity/mua-hang-domain';
 import { db } from '../src/db/client.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
@@ -55,6 +55,11 @@ describe('Đọc XML (hàm thuần)', () => {
     expect(g.parsed.lines[0]).toMatchObject({ qty: -1, price: 30000, amount: -30000 });
   });
   it('cộng dòng lệch tổng thì có cảnh báo', () => { expect(doc(xml({ tong: 999999 })).warnings).toHaveLength(1); });
+  it('số hoá đơn bỏ số 0 đầu như cổng thuế', () => {
+    expect(doc(xml({ no: '00002328' })).parsed.no).toBe('2328');
+    expect(doc(xml({ no: '0' })).parsed.no).toBe('0');
+    expect(invoiceLabel({ series: 'C26TYY', no: '00002328' })).toBe('C26TYY-2328');
+  });
   it('hoá đơn chỉ có chiết khấu số âm: giữ thành dòng giảm tiền, không mất số âm', () => {
     const g = doc(xml({ tong: -100000, dong: '<HHDVu><TChat>3</TChat><THHDVu>Tích luỹ doanh số A</THHDVu><ThTien>-60000</ThTien><TSuat>8%</TSuat></HHDVu><HHDVu><TChat>3</TChat><THHDVu>Tích luỹ doanh số B</THHDVu><ThTien>-40000</ThTien><TSuat>8%</TSuat></HHDVu>' }));
     expect(g.parsed.lines).toHaveLength(2);
@@ -116,6 +121,8 @@ describe('API nhận XML', () => {
     const tai = await t.app.inject({ method: 'GET', url: `/api/v1/purchase/attachments/${ds[0]!.id}/file`, headers: { authorization: `Bearer ${t.token}` } });
     expect(tai.statusCode).toBe(200);
     expect(tai.rawPayload.toString('utf8')).toBe(x);
+    const ca = (await db.selectFrom('document_attachments').select('created_by').where('doc_ref', '=', `mua-hang.invoice:${d.invoiceId}`).executeTakeFirstOrThrow()).created_by;
+    expect(ca).not.toMatch(/^(apikey|user):/);
     const one = (await call(t, 'GET', `/api/v1/purchase/invoices/${d.invoiceId}`)).body.data.invoice;
     expect(one).toMatchObject({ source: 'api', form: '1', series: 'C26TAA', total: 162000, totalDiscount: 50000 });
     expect(one.data).toMatchObject({ mccqt: '00ABC', gdt: { tthai: 1, ttxly: 5 } });
@@ -155,6 +162,32 @@ describe('API nhận XML', () => {
     expect(one).toMatchObject({ totalBeforeTax: -100000, totalTax: -8000, total: -108000 });
     expect(one.lines[0]).toMatchObject({ qty: -1, price: 100000, amount: -100000, taxAmount: -8000 });
     expect(one.note).toContain('không lập phiếu nhập');
+  });
+
+  it('hoá đơn không mã không có XML: nhập đầu hoá đơn theo cổng thuế, một dòng tổng hợp, đính bản xem', async () => {
+    const header = { form: '1', series: 'K26TDA', no: '486806', date: '2026-11-02', sellerTaxCode: '0100100417-004', sellerName: 'Điện lực', sellerAddress: 'Phú Thọ', buyerTaxCode: MUA, buyerName: 'Bên mua', totalBeforeTax: 4245744, totalTax: 339660, total: 4585404 };
+    const body = { fileName: 'km_GDT_html.html', header, gdt: { tthai: 1, ttxly: 6 }, files: [{ fileName: 'km_GDT_html.html', mime: 'text/html', kind: 'khac', dataBase64: b64('<html>ban xem</html>') }] };
+    const r = await call(t, 'POST', URL_XML, body);
+    expect(r.status).toBe(200);
+    expect(r.body.data).toMatchObject({ status: 'saved', partnerCreated: true, lines: 1, unmatched: 1, attached: 1 });
+    const one = (await call(t, 'GET', `/api/v1/purchase/invoices/${r.body.data.invoiceId}`)).body.data.invoice;
+    expect(one).toMatchObject({ totalBeforeTax: 4245744, totalTax: 339660, total: 4585404, source: 'api' });
+    expect(one.lines[0]).toMatchObject({ qty: 1, amount: 4245744, taxRate: 8, taxAmount: 339660 });
+    expect(one.note).toContain('không mã');
+    expect((await call(t, 'POST', URL_XML, body)).body.data).toMatchObject({ status: 'duplicate', attached: 0 });
+    expect((await call(t, 'POST', URL_XML, { fileName: 'x.xml' })).status).toBe(400);
+  });
+
+  it('danh sách có tệp xem nhanh, mã và trang tra cứu; gửi lại cập nhật mã tra cứu', async () => {
+    const x = xml({ no: '00002328' });
+    const pdf = { fileName: 'hd.pdf', mime: 'application/pdf', kind: 'hoa_don', dataBase64: b64('%PDF-thu') };
+    const r1 = await gui(x, { gdt: { tthai: 1 }, files: [pdf] });
+    expect(r1.body.data.label).toBe('C26TAA-2328');
+    await gui(x, { gdt: { tthai: 1, maTraCuu: 'ABC123', linkTraCuu: 'https://tra.example.vn/' }, files: [pdf] });
+    const row = (await call(t, 'GET', '/api/v1/purchase/invoices?partnerCode=0101234567')).body.data.find((v: { id: string }) => v.id === r1.body.data.invoiceId);
+    expect(row).toMatchObject({ no: '2328', attachments: 2, pdf: { fileName: 'hd.pdf', mime: 'application/pdf' }, xml: { fileName: 'hd.xml' } });
+    expect(row.viewHtml).toBeUndefined();
+    expect(row.data.gdt).toMatchObject({ maTraCuu: 'ABC123', linkTraCuu: 'https://tra.example.vn/' });
   });
 
   it('hoá đơn thay thế có ghi chú nêu hoá đơn gốc', async () => {

@@ -16,7 +16,9 @@ export const MATCH_LABEL: Record<InvoiceLine['matchSource'], string> = { alias: 
 
 export interface InvoiceRow extends Omit<SupplierInvoice, 'lines'> {
   lineCount: number; unmatched: number; receipts: { id: string; docNo: string; status: string; docDate: string }[]; state: InvoiceState; issues: string[]; attachments: number;
+  pdf?: InvoiceFileRef; xml?: InvoiceFileRef; viewHtml?: InvoiceFileRef;
 }
+export interface InvoiceFileRef { id: string; kind: string; fileName: string; mime: string; size: number }
 export interface InvoiceDetail { invoice: SupplierInvoice; receipts: { id: string; docNo: string; status: string; docDate: string; total: number }[]; reconcile: ReconcileResult | null }
 export type Prepared = Omit<SupplierInvoice, 'source' | 'status' | 'note'> & { duplicateOf?: string; warnings: string[] };
 export type InvoiceInput = Omit<SupplierInvoice, 'id' | 'status' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt' | 'cancelledBy' | 'cancelledAt' | 'cancelReason'>;
