@@ -10,6 +10,8 @@ Mở từ menu **Mua hàng → Hoá đơn đầu vào của NCC**, hoặc trong 
 |---|---|
 | **Nhập Excel** | NCC gửi bảng kê / báo cáo hoá đơn dạng Excel. Mỗi dòng một mặt hàng; các dòng cùng **ký hiệu + số hoá đơn** gom thành một hoá đơn. Cột nhận theo tên tiêu đề (bấm "Hướng dẫn cột" để xem và tải tệp mẫu). |
 | **Quét ảnh / PDF (AI)** | Có ảnh chụp / tệp PDF hoá đơn. Phần mềm gửi tệp sang dịch vụ đọc hoá đơn đơn vị đã cấu hình (ChatGPT, Claude…), kết quả hiện ra để **kiểm tra trước khi ghi**. Nút mờ = chưa cấu hình, hỏi bộ phận IT. |
+| **Nhập XML** | Có file hoá đơn điện tử. Chọn cùng lúc XML, PDF, ZIP; tệp cùng tên được đính vào cùng hoá đơn. Không có bước xem trước, dòng chưa nhận diện chọn sau ở danh sách. |
+| **Tự động từ máy tải hoá đơn** | Cầu nối trên máy Windows chạy ngầm và gửi hoá đơn lên giống Nhập XML. Nguồn hiện là **API**. |
 | **Thêm hoá đơn** | Gõ tay khi chỉ có vài dòng. |
 
 Trước khi ghi luôn có bước **xem trước**:
@@ -20,6 +22,16 @@ Trước khi ghi luôn có bước **xem trước**:
 - Có cảnh báo khi hoá đơn **trùng**, thiếu ngày, hoặc cộng dòng khác tổng ghi trên hoá đơn.
 
 Hoá đơn trùng (cùng NCC + ký hiệu + số; số "0000101" và "101" là một) không ghi lại.
+
+### Hoá đơn nhập từ XML
+
+- **NCC:** tìm theo mã số thuế người bán. Chưa có thì tự tạo NCC, mã là mã số thuế. Hai đối tượng cùng mã số thuế mà không rõ NCC nào thì báo **Trùng MST** để kế toán xử lý.
+- **Tệp gốc:** XML, PDF, ZIP và dữ liệu cổng thuế nằm ở thẻ **Tệp đính kèm** của hoá đơn. Gửi lại hoá đơn đã có thì chỉ đính thêm tệp mới.
+- **Sai người mua:** mã số thuế người mua khác đơn vị thì không nhập.
+- **Hoá đơn bị thay thế / bị huỷ trên cổng thuế:** không nhập, tránh tính tiền hai lần. Nếu đã nhập từ trước thì hoá đơn vẫn còn và có ghi chú để kế toán xem lại.
+- **Hoá đơn thay thế / điều chỉnh:** vẫn nhập, ghi chú nêu hoá đơn gốc. Hoá đơn điều chỉnh cần kiểm tra lại số tiền.
+- **Hoá đơn đã huỷ trên phần mềm:** không tự nhập lại. Cần nhập lại thì gõ tay.
+- **Chưa kiểm chữ ký số:** phần mềm đọc nội dung XML, chưa xác thực chữ ký. Tệp XML gốc được giữ đúng từng byte để kiểm khi cần.
 
 ## Phần mềm nhận diện mã thế nào
 
