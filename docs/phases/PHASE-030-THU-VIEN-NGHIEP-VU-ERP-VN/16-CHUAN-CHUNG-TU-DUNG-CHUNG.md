@@ -96,11 +96,13 @@ revision:                                             # mới: luồng điều c
   requires: [reason]
 ```
 
-Luật đi kèm (thêm vào R-WF, đề xuất R-WF-10..12):
+Luật đi kèm, **đề xuất** nối tiếp [R-WF](../../rules/RULE-WORKFLOW.md); định nghĩa ở đây cho tới khi nhóm Lõi duyệt rồi chuyển sang `RULE-WORKFLOW.md` (S030-20):
 
-- **R-WF-10** Từ chối luôn về một trạng thái **đã khai** thuộc nhóm `draft`; không tự chế `refused` / `rejected` cuối (Erp-vn có cả `action_reject → draft` lẫn `action_refuse → refused`).
-- **R-WF-11** Ngưỡng / cấp duyệt chỉ qua `policy:` (§5); `levels:` cứng chỉ còn cho tương thích ngược.
-- **R-WF-12** Trạng thái giữ tài nguyên (`locks`) — kho đang đếm, kỳ lương đang chốt — do nền giữ và nhả; action khác đụng tài nguyên đang khoá nhận finding `block` của nền (`DOC-LOCK-001`).
+| Mã | Luật | Kiểm bằng |
+|---|---|---|
+| R-WF-10 | Từ chối luôn về một trạng thái **đã khai** thuộc nhóm `draft`; không tự chế `refused` / `rejected` cuối (Erp-vn có cả `action_reject → draft` lẫn `action_refuse → refused`) | `SC-STD-3` |
+| R-WF-11 | Ngưỡng / cấp duyệt chỉ qua `policy:` (§5); `levels:` cứng chỉ còn cho tương thích ngược | `SC-STD-3` |
+| R-WF-12 | Trạng thái giữ tài nguyên (`locks`) — kho đang đếm, kỳ lương đang chốt — do nền giữ và nhả; action khác đụng tài nguyên đang khoá nhận finding `block` của nền (`DOC-LOCK-002`) | golden T030-KHO-6 |
 
 Một trang tra cho người dùng: mỗi YAML sinh một sơ đồ trạng thái (dùng ở bản mẫu [mockups](mockups/thu-vien-nghiep-vu.html) mục *Chuẩn chứng từ*), nên tài liệu luồng (R-WF-5) không lệch khỏi mã.
 

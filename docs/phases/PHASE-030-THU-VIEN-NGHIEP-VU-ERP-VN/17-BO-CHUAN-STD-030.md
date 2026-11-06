@@ -176,7 +176,24 @@ Trợ lý AI đọc cùng mã bằng `core.findings.explain`. Thông báo cho **
 
 ## 4. Luật đề xuất: R-MSTD (`docs/rules/RULE-MODULE-STANDARD.md`)
 
-Khi nhóm Lõi duyệt, 12 chuẩn thành R-MSTD-1..12 với cấp như §2. Cùng PR đó thêm một dòng vào CANON §3 và mục §5 *"Đổi code X → sửa tài liệu Y"*. Nằm ở phase này cho tới khi duyệt, vì luật chỉ có hiệu lực khi vào `main` qua PR chốt thiết kế (R-FLOW-7).
+Khi nhóm Lõi duyệt, 12 chuẩn thành R-MSTD-1..12 với cấp như §2. Cùng PR đó thêm một dòng vào CANON §3 và mục §5 *"Đổi code X → sửa tài liệu Y"*. Bảng dưới là **định nghĩa đề xuất**, nằm ở phase này cho tới khi duyệt rồi chuyển nguyên sang `docs/rules/RULE-MODULE-STANDARD.md` (S030-21).
+
+| Mã | Cấp | Luật | Kiểm bằng |
+|---|---|---|---|
+| R-MSTD-1 | T0 | Module chỉ ghi sổ qua `ctx.ledger.submit`; không gọi cửa Kernel, không đọc / ghi bảng sổ | `SC-STD-1` |
+| R-MSTD-2 | T0 | Không số tài khoản trong mã module; chỉ `reasonCode` / `methodCode` | `SC-STD-2` |
+| R-MSTD-3 | T1 | Mọi chứng từ module có workflow YAML hợp lệ, runtime tự nạp | `SC-STD-3` |
+| R-MSTD-4 | T0 | Khoá kỳ và `dataLock` áp cho `doc_date` của mọi chứng từ, trước khi lưu | golden INV-9 |
+| R-MSTD-5 | T0 | Tiền: số nguyên, `roundMoney`, `allocate`, `schedule` (R-MONEY-1..6) | `SC-STD-5`, T030-CORE-6 |
+| R-MSTD-6 | T1 | Lý do chuyển trạng thái là trường chung của bằng chứng | `SC-STD-6` |
+| R-MSTD-7 | T0 | Tham số có `legalRef` không có giá trị mặc định trong mã; đọc theo ngày chứng từ | `SC-STD-7` |
+| R-MSTD-8 | T1 | Kết quả kiểm nghiệp vụ là `Finding[]` của `bizcity_findings@1`; mã khai trong manifest | `SC-STD-8` |
+| R-MSTD-9 | T1 | Mỗi chứng từ có `docRef`; liên kết nguồn / thanh toán / thay thế khai bằng `document_links` | `SC-STD-9` |
+| R-MSTD-10 | T1 | Mã nghiệp vụ (`bizCodes`) và `golden[]` nằm trong manifest | `SC-STD-10` |
+| R-MSTD-11 | T1 | Bộ tính là hàm thuần ở `domain/`, có bảng test số | `SC-STD-11` |
+| R-MSTD-12 | T0 | Gỡ / tắt module không xoá, không sửa dữ liệu sổ; docType, reasonCode đã dùng thì `retired` | `SC-STD-12` |
+
+Tóm tắt theo cấp:
 
 | Cấp | Chuẩn |
 |---|---|
