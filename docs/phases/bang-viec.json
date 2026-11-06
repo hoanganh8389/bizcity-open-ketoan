@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 17
+      "count": 19
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 127
+      "count": 125
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 47
+      "count": 48
     },
     {
       "key": "paused",
@@ -4852,10 +4852,10 @@
     {
       "id": "S030-30",
       "phase": "PHASE-030",
-      "title": "Q030-5: nếu phương án B — ADR sửa STD-EVD-4, xuất niêm phong bằng chứng hằng ngày + manifest, GET /evidence/verify",
+      "title": "Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có ngoại lệ hẹp, STD-EVD-9..10, §8 thuật toán băm đã …",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 37
@@ -4863,11 +4863,17 @@
     {
       "id": "S030-31",
       "phase": "PHASE-030",
-      "title": "Hàng việc: view bizcityread.documentqueue + API queue/summary, queue/mine; thanh \"Việc cần làm\" thêm nguồn",
+      "title": "Hàng việc: view bizcityread.documentqueue + core.queue.summary / items / mine + nguồn mới cho thanh \"Việc cần làm\" — chữ chốt 23",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, hang-viec)",
+        "branch": "feat/phase-030-hang-viec",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-31 — hàng việc: view bizcityread.documentqueue, ba action core.queue., nguồn mới c…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 38
     },

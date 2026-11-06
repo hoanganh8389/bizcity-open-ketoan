@@ -65,8 +65,9 @@ Mỗi `it` là một dòng *cho – khi – thì* của blueprint. Ca thất b�
 | DOC <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — ADR-0029 --> | T030-DOC-1..9 | duyệt ≠ ghi sổ; Approval Freeze; sửa trước ghi nhận 0 đảo; điều chỉnh sau ghi nhận 1 lần nộp; cổng cùng phiên bản khác băm; đổi chính sách theo ngày; POS tự xác nhận; chạy lại; đồng thời | [19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md) |
 | AUTH | T030-AUTH-1..5 | phạm vi kho K1 / K2; thu hồi quyền; SoD hai cấp; chữ ký theo phiên bản; `decisionId` + `explain` | [19 §5](19-RA-SOAT-DUYET-VA-GHI-SO.md) |
 | GATE <!-- [2026-11-06 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — sổ cổng --> | T030-GATE-1..4 | bị chặn ở bước quyền vẫn có bằng chứng với `gates[role]`; `gates[]` đủ thứ tự + `basis_used`; sửa tay → EVIDENCE_CHAIN báo đứt; không nội dung / PII trong sổ | [21 §5](21-SO-CONG-VA-BANG-DIEU-HANH.md) |
+| QUEUE <!-- [2026-11-06 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — hàng việc --> | T030-QUEUE-1..7 | ánh xạ trạng thái 4 nguồn; bucket tuổi; "việc của tôi" và tách nhiệm; cô lập đơn vị; view chỉ đọc; phân trang con trỏ; chỉ mục / ngân sách | [23 §4](23-HANG-VIEC.md) |
 
-Tổng: 91 ca (73 ca W0 + 14 ca ADR-0029 + 4 ca sổ cổng).
+Tổng: 98 ca (73 ca W0 + 14 ca ADR-0029 + 4 ca sổ cổng + 7 ca hàng việc).
 
 ## 6. Gắn với bộ kiểm cài module
 
