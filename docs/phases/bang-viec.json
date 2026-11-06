@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 18
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 43
+      "count": 42
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 200
+      "count": 202
     }
   ],
   "items": [
@@ -4103,17 +4103,11 @@
     {
       "id": "S028-6",
       "phase": "PHASE-028",
-      "title": "W1: userroleassignments (0075) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
+      "title": "W1: userroleassignments (0073) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / thu hồi — chữ chốt 00 §4a",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w1-vai-tro-bo-sung",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-028 · W1 — vai trò bổ sung userroleassignments, quyền hiệu lực nhiều vai trò, ADMINROLES (chữ…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -4503,8 +4497,8 @@
       "phase": "PHASE-029",
       "title": "Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu co có thật, …",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 38
@@ -4514,8 +4508,8 @@
       "phase": "PHASE-029",
       "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json (GET /api/v1/system/foundations, …",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 39

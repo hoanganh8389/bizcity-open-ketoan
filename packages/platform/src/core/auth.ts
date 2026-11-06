@@ -30,6 +30,7 @@ import { getAppManifest } from './apps.js';
 import { verifySession } from './security/tokens.js';
 import { currentRequest } from './request-context.js';
 import { sessionStillValid } from './security/session-state.js';
+import { extraRoles } from './security/role-assignments.js';
 
 /** Danh sách quyền. Thêm quyền mới: khai ở đây và gán cho vai trò bên dưới. */
 export const PERMISSIONS = [
@@ -89,10 +90,24 @@ export const isKnownPermission = (p: string): p is Permission => (PERMISSIONS as
 /** Quyền module rủi ro cao: không cấp cho trợ lý AI, khoá API (BIZCITY-MODULE §3). */
 export const isHighRiskPermission = (p: string): boolean => modulePermissions.get(p)?.risk === 'high';
 
-/** Quyền của vai trò: quyền Core theo bảng + quyền module có vai trò trong `roles` (chủ đơn vị: mọi quyền module). */
+// [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1 (ADR-0027 D-AUTH-03 bản chủ duyệt): tập vai trò quản trị cao thay so sánh cứng role === 'owner'; quyền hiệu lực của nhiều vai trò
+/**
+ * Vai trò quản trị cao (ADR-0027 D-AUTH-03): nhận mọi quyền module, kể cả quyền module không khai `roles`. Vai trò khác chỉ nhận quyền
+ * module khai mình trong `roles` — không khai là mặc định cấm. Thêm vai trò quản trị (vd `admin`) = thêm vào tập này.
+ */
+export const ADMIN_ROLES: ReadonlySet<Role> = new Set<Role>(['owner']);
+
+/** Quyền của vai trò: quyền Core theo bảng + quyền module có vai trò trong `roles` (vai trò quản trị cao: mọi quyền module). */
 export function rolePermissions(role: Role): Set<Permission> {
   const out = new Set<Permission>(ROLE_PERMISSIONS[role] ?? []);
-  for (const p of modulePermissions.values()) if (role === 'owner' || p.roles?.includes(role)) out.add(p.key as Permission);
+  for (const p of modulePermissions.values()) if (ADMIN_ROLES.has(role) || p.roles?.includes(role)) out.add(p.key as Permission);
+  return out;
+}
+
+/** Quyền hiệu lực của nhiều vai trò (vai trò chính + vai trò bổ sung): hợp các tập quyền — trong phạm vi đơn vị (D-AUTH-04). */
+export function effectivePermissions(roles: readonly Role[]): Set<Permission> {
+  const out = new Set<Permission>();
+  for (const r of roles) for (const p of rolePermissions(r)) out.add(p);
   return out;
 }
 
@@ -131,7 +146,10 @@ export interface AuthContext {
   actor: string;
   actorName: string;
   kind: 'user' | 'apikey';
+  /** Vai trò chính (users.role, ghi trong vé). */
   role: Role | null;
+  /** Vai trò chính + vai trò bổ sung còn hiệu lực (user_role_assignments, PHASE-028 W1). Khoá API / phiên quyền quản trị cấp: không có. */
+  roles?: readonly Role[];
   permissions: ReadonlySet<Permission>;
   /** Khoá của app ngoài tiến trình (kind 'apikey'): khoá app. Cửa nạp buộc docKey `<app>:…`, bằng chứng ghi via `app:<app>`. */
   app?: string;
@@ -179,16 +197,20 @@ async function resolveAuth(req: FastifyRequest): Promise<AuthContext | null> {
     // Vé cấp trước khi có cơ chế không ghi sv → 0 = mặc định users.session_version (0029): dùng được tới lần thu hồi đầu.
     if (!(await sessionStillValid(claims.sub, claims.sv ?? 0))) return null;
     const role = claims.role as Role;
+    // Đăng nhập qua hệ thống quản trị: quyền theo phân quyền bên đó (trong phiên); còn lại theo vai trò chính + vai trò bổ sung.
+    if (claims.perms) {
+      return { tenantId: claims.tid, actor: `user:${claims.sub}`, actorName: claims.name, kind: 'user', role, permissions: new Set(claims.perms.filter(isKnownPermission)) };
+    }
+    // [2026-11-05 06:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W1: quyền hiệu lực = vai trò chính ∪ vai trò bổ sung còn hiệu lực (đệm 15 giây, xoá khi gán / thu hồi)
+    const roles = [...new Set<Role>([role, ...(await extraRoles(claims.sub))])];
     return {
       tenantId: claims.tid,
       actor: `user:${claims.sub}`,
       actorName: claims.name,
       kind: 'user',
       role,
-      // Đăng nhập qua hệ thống quản trị: quyền theo phân quyền bên đó (trong phiên); còn lại theo vai trò.
-      permissions: claims.perms
-        ? new Set(claims.perms.filter(isKnownPermission))
-        : rolePermissions(role),
+      roles,
+      permissions: effectivePermissions(roles),
     };
   }
   return null;
