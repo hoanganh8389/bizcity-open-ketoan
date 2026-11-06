@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thư viện tiền: làm tròn nửa xa số 0, chia dư lớn nhất, lịch đều (PHASE-030, S030-19) <!-- [2026-11-06 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19 -->
+
+- **Thêm:** `roundMoney`, `allocate`, `schedule` ở `@ketoan/contracts`, xuất lại ở `@bizcity/module-sdk` (R-MONEY-1..6, `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/18-THU-VIEN-TIEN.md`). Phép kiểm `SC-STD-5`: tự viết hàm chia tiền hoặc làm tròn tiền bằng `Math.round` trong `modules/**`. Golden `T030-CORE-6`.
+- **Đổi:** `allocate` của phân hệ Mua hàng là lớp bọc mỏng quanh bản chung (giữ tên, chữ ký và quy ước "không có cơ sở phân bổ thì không chia"); gói `@bizcity/mua-hang-domain` khai phụ thuộc `@ketoan/contracts`. `splitByDays`, `splitByPercent` của Tài sản chia bằng `allocate` (dư lớn nhất, bước 100 xu). `roundDong` đánh dấu `@deprecated`, giữ hành vi.
+- **Sửa:** chia số trích khấu hao theo tỷ lệ phần trăm có thể ra phần âm hoặc mất trắng một phần (vd 200 xu theo 30/30/30/10 % ra 100/100/100/−100); nay Σ = tổng, không phần nào âm.
+- **Thay đổi định khoản:** không đổi luật định khoản. Số trích khấu hao chia theo tỷ lệ phần trăm có thể khác ở các ca làm tròn từng phần từng sai; chứng từ đã ghi giữ nguyên (R-POST-8).
+- **Nâng cấp cần làm:** `npm run build -w @ketoan/contracts` trước khi build gói mua hàng. Chưa có migration.
+- **Bảo mật:** không.
+
 ### Xương cá: định danh xuyên suốt (PHASE-026, S024-11, S026-19..23) <!-- [2026-11-05 02:40 PM Nguyễn Văn Thủy] PHASE-026 (đóng góp) -->
 
 - **Thêm:** `item_id` trên `products` và dòng JSON phiếu mua, đề nghị chuyển hàng, đăng ký tồn max; cửa nạp nhận `itemId`; `core.item.retire-code`, `classify`, `upsert`; `bizcity_read.items`, `item_codes`; tài liệu nghiệp vụ mục 10, mục Định danh ở TI10. Đổi mã, thêm mã (mã vạch, bí danh, `external:<nguồn>`), xem trước gộp, gộp mã nhiều lần; đọc mặt hàng theo định danh cho hệ ngoài; thẻ Lịch sử, nút Đổi mã, Gộp mã trên form mặt hàng; `item_id` trên giá NCC, bí danh NCC, dòng hoá đơn NCC, tồn max, cài đặt theo mã, dòng hoá đơn thuế; khung nhìn `inventory_movements_cur`.

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 17
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 211
+      "count": 212
     }
   ],
   "items": [
@@ -4310,8 +4310,14 @@
       "title": "Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEINVALID + lane + mục sổ đăng ký ở DIAGNOSTICS.md; p…",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 đối chiếu)",
+        "branch": "feat/phase-029-e6-doi-chieu",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-029 · E6 đợt 1 — sổ đăng ký đối chiếu: bốn mã chẩn đoán thay phần chạy tay của doi-chieu-ke-t…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -4727,8 +4733,8 @@
       "phase": "PHASE-030",
       "title": "Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate mua hàng và splitByDays / splitByPercent tài sản; g…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 26
