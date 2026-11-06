@@ -30,6 +30,9 @@ Chi tiết kiểm kê hai bên: [10-DOI-CHIEU-ERP-VN](10-DOI-CHIEU-ERP-VN.md).
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | vì sao, quyết định D030-*, câu hỏi Q030-*, đợt W0–W4, "ai dùng gì" |
 | [10-DOI-CHIEU-ERP-VN](10-DOI-CHIEU-ERP-VN.md) | ma trận 173 nghiệp vụ × open-ketoan (có / một phần / chưa) × nguồn Erp-vn × module đích × ưu tiên |
 | [15-KINH-NGHIEM-COT-LOI](15-KINH-NGHIEM-COT-LOI.md) | kinh nghiệm cốt lõi rút từ cơ chế xuyên suốt hai bên: phân tầng Kernel / Platform / SDK / gói dữ liệu / module, 12 chuẩn STD-030-*, Kernel học gì (K-030-7..12), nền tảng học gì (P-030-1..8), sợi truy vết, phản mẫu khi duyệt PR, thứ tự làm |
+| [16-CHUAN-CHUNG-TU-DUNG-CHUNG](16-CHUAN-CHUNG-TU-DUNG-CHUNG.md) | chuẩn chứng từ cho mọi module: `defineDocument`, workflow YAML bắt buộc, hai con trỏ (bản đang sửa / bản trên sổ), chính sách duyệt dùng chung, ranh giới bút toán tay — đề xuất `bizcity_document@1` 1.4.0 |
+| [17-BO-CHUAN-STD-030](17-BO-CHUAN-STD-030.md) | 12 chuẩn STD-030 đóng gói thành luật R-MSTD, hợp đồng, thư viện, thông báo (`bizcity_findings@1`), phép kiểm SC-STD-*, bản mẫu; tiết kiệm ở đâu; 6 cơ chế đã vào tài liệu chưa |
+| [18-THU-VIEN-TIEN](18-THU-VIEN-TIEN.md) | chốt thiết kế `roundMoney` / `allocate` / `schedule`: luật R-MONEY, mã tham chiếu đã chạy, bảng số golden, cách chuyển các bản đang có, hướng dẫn dev |
 | [20-MAU-THIET-KE](20-MAU-THIET-KE.md) | 12 mẫu thiết kế xuyên suốt rút từ mã Erp-vn (duyệt theo ngưỡng, tham số hiệu lực, chứng từ phiên bản, tự tính lại, FEFO, bình quân di động, khấu hao theo ngày, lương–bảo hiểm–TNCN, ngân sách…) và chỗ đặt trong open-ketoan |
 | [30-KHUON-BLUEPRINT](30-KHUON-BLUEPRINT.md) | khuôn một blueprint nghiệp vụ (9 mục) + cách dev / AI dùng blueprint để sinh module theo `bizcity_module@1` |
 | [50-BP-MUA-HANG](50-BP-MUA-HANG.md) | MH01–MH13: yêu cầu mua, báo giá, đơn mua, hợp đồng khung, đối chiếu 3 bên, hoá đơn vào, phân bổ chi phí, nông sản không hoá đơn, nhập khẩu, đánh giá NCC |

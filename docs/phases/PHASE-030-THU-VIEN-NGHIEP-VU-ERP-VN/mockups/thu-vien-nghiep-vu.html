@@ -1,5 +1,6 @@
 <!doctype html>
 <!-- [2026-11-06 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — bản mẫu sơ đồ luồng nghiệp vụ theo phân hệ (kiểu màn "Quy trình" của Erp-vn), tô màu mức có / một phần / chưa của open-ketoan; dữ liệu JSON nội tuyến -->
+<!-- [2026-11-06 02:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — chủ dự án duyệt hướng: trang Thư viện nghiệp vụ là màn đầu tiên; thêm Tổng quan (6 cơ chế, 12 chuẩn), bản đồ luồng chi tiết Bán hàng / Kho / Lương / Kế toán (SVG sinh từ dữ liệu), Chuẩn chứng từ (hai con trỏ, chính sách duyệt), Thư viện tiền (allocate, schedule chạy thật), Thông báo (findings); danh mục 173 nghiệp vụ giữ ở mục Danh mục -->
 <!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
 <html lang="vi">
 <head>
@@ -10,17 +11,17 @@
 :root{
   --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
   --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
-  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;
+  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;--info-bg:#e8f0fc;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
   --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
-  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
 }}
 :root[data-theme="dark"]{
   --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
   --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
-  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
 }
 *{box-sizing:border-box}
 html,body{overflow-x:clip}
@@ -34,45 +35,104 @@ header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px
 .brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
 .spacer{flex:1}
 .btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
 .tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
 .tabs button small{color:var(--muted);font:11px ui-monospace,Consolas,monospace;margin-left:4px}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.subtabs button{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:4px 12px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.subtabs button[aria-selected="true"]{color:var(--ink);border-color:var(--accent);font-weight:600}
 main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
 h2{margin:0 0 4px;font-size:18px}
+h3{font-size:14.5px;margin:18px 0 8px}
 .lead{color:var(--muted);margin:0 0 12px}
-.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;margin-bottom:12px}
 .tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
-.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}.tag.k{background:var(--k-bg);color:var(--k)}.tag.none{background:var(--soft);color:var(--none)}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}.tag.k{background:var(--k-bg);color:var(--k)}.tag.none{background:var(--soft);color:var(--none)}.tag.info{background:var(--info-bg);color:var(--info)}
 .todo{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px}
-.todo b{font-weight:650}
-.flow{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;margin-bottom:14px}
-.lane{background:var(--soft);border-radius:10px;padding:10px;font-size:12.5px}
-.lane b{display:block;font-size:13px;margin-bottom:2px}
-.lane span{color:var(--muted)}
-.steps{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;align-items:stretch}
-.step{position:relative;flex:0 0 250px;background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--none);border-radius:10px;padding:10px 12px;min-width:0}
-.step.ok{border-top-color:var(--ok)}.step.warn{border-top-color:var(--warn)}.step.bad{border-top-color:var(--bad)}.step.k{border-top-color:var(--k)}
-.step .n{position:absolute;top:-12px;left:10px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
-.step h3{margin:4px 0 2px;font-size:13.5px;font-weight:650;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
-.step h3 code{color:var(--muted)}
-.step p{margin:2px 0 6px;color:var(--muted);font-size:12.5px}
-.states{display:flex;flex-wrap:wrap;gap:3px;margin:4px 0}
-.states i{font-style:normal;font:11px ui-monospace,Consolas,monospace;padding:1px 6px;border-radius:5px;background:var(--soft);color:var(--ink)}
-.states i.g{background:var(--ok-bg)}
-.post{font:11.5px ui-monospace,Consolas,monospace;color:var(--k);word-break:break-word;margin-top:4px}
-.src{font:11px ui-monospace,Consolas,monospace;color:var(--muted);word-break:break-word;margin-top:6px}
-.arrow{align-self:center;color:var(--none);font-size:20px;flex:0 0 auto}
-.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px;margin-bottom:14px}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:10px 0 14px;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:10px;margin-bottom:14px}
+.grid.wide{grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
-.card h3{margin:0 0 6px;font-size:13.5px;font-weight:600}
-.card ul{margin:0;padding-left:16px;font-size:12.5px}
-.card li{margin:2px 0}
+.card h4{margin:0 0 4px;font-size:13.5px;font-weight:650;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.card p{margin:2px 0;color:var(--muted);font-size:12.5px}
+.card ul{margin:4px 0 0;padding-left:16px;font-size:12.5px}
+.card .k{font:11.5px ui-monospace,Consolas,monospace;color:var(--k);word-break:break-word}
+a.tile{display:block;text-decoration:none;color:inherit}
+a.tile:hover{border-color:var(--accent)}
+.tbl{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--muted);font-weight:600;font-size:12px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
 section[hidden]{display:none}
-@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}.step{flex-basis:220px}}
+/* bản đồ luồng */
+.map{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto;margin-bottom:10px}
+.map svg{display:block}
+.map .lane-bg{fill:var(--soft)}
+.map .lane-bg.alt{fill:var(--panel)}
+.map .lane-t{fill:var(--muted);font-size:11.5px;font-weight:600}
+.map .nd{fill:var(--panel);stroke:var(--line);stroke-width:1.2}
+.map .nd.g-draft{stroke:var(--none)}.map .nd.g-pending{stroke:var(--warn)}.map .nd.g-approved{stroke:var(--info)}.map .nd.g-done{stroke:var(--ok)}.map .nd.g-cancelled{stroke:var(--bad)}
+.map .bar.g-draft{fill:var(--none)}.map .bar.g-pending{fill:var(--warn)}.map .bar.g-approved{fill:var(--info)}.map .bar.g-done{fill:var(--ok)}.map .bar.g-cancelled{fill:var(--bad)}
+.map .gate{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1.2}
+.map .post{fill:var(--k-bg);stroke:var(--k);stroke-width:1.2}
+.map .calc{fill:var(--panel);stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 3}
+.map .t1{fill:var(--ink);font-size:12px;font-weight:650}
+.map .t2{fill:var(--muted);font-size:10.5px;font-family:ui-monospace,Consolas,monospace}
+.map .tk{fill:var(--k);font-size:10.5px;font-family:ui-monospace,Consolas,monospace}
+.map .e{fill:none;stroke:var(--none);stroke-width:1.4}
+.map .e.link{stroke-dasharray:5 4;stroke:var(--accent)}
+.map .el{fill:var(--muted);font-size:10px}
+.map .elbg{fill:var(--panel)}
+.map .ah{fill:var(--none)}.map .ah.link{fill:var(--accent)}
+.mlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:0 0 12px}
+.mlegend span{display:inline-flex;gap:5px;align-items:center}
+.sw{width:14px;height:10px;border-radius:3px;display:inline-block;border:1.5px solid}
+/* chuẩn chứng từ */
+.life{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
+.pill{padding:4px 10px;border-radius:99px;font-size:12.5px;font-weight:600;border:1.5px solid}
+.pill.draft{color:var(--none);border-color:var(--none)}.pill.pending{color:var(--warn);border-color:var(--warn)}.pill.approved{color:var(--info);border-color:var(--info)}.pill.done{color:var(--ok);border-color:var(--ok)}.pill.cancelled{color:var(--bad);border-color:var(--bad)}
+.tl td.on{background:var(--info-bg);font-weight:600}
+.tl td.ledger{background:var(--k-bg);color:var(--k);font-weight:600}
+.doc{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:14px;min-width:0}
+.doc-h{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.doc-h b{font-size:15px}
+.ptr{display:flex;gap:6px;flex-wrap:wrap}
+.ptr span{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--soft)}
+.ptr span.cur{background:var(--warn-bg);color:var(--warn);font-weight:600}
+.ptr span.led{background:var(--k-bg);color:var(--k);font-weight:600}
+.doc-t{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--line);overflow-x:auto}
+.doc-t button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 10px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.doc-t button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.doc-b{padding:12px 14px}
+.diff del{background:var(--bad-bg);color:var(--bad);text-decoration:line-through}
+.diff ins{background:var(--ok-bg);color:var(--ok);text-decoration:none}
+.steps-v{list-style:none;margin:0;padding:0}
+.steps-v li{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.steps-v li:last-child{border-bottom:0}
+.steps-v .dot{width:20px;height:20px;border-radius:50%;flex:0 0 20px;display:grid;place-items:center;font-size:11px;color:#fff;background:var(--none)}
+.steps-v .dot.ok{background:var(--ok)}.steps-v .dot.warn{background:var(--warn)}
+/* findings */
+.fd{display:flex;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:13px;border:1px solid var(--line)}
+.fd.block{background:var(--bad-bg);border-color:transparent}.fd.warn{background:var(--warn-bg);border-color:transparent}.fd.info{background:var(--info-bg);border-color:transparent}
+.fd .lv{font-weight:700;min-width:58px}
+.fd.block .lv{color:var(--bad)}.fd.warn .lv{color:var(--warn)}.fd.info .lv{color:var(--info)}
+.fd small{display:block;color:var(--muted)}
+.toast{max-width:380px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:10px;padding:10px 12px;box-shadow:0 6px 18px rgba(0,0,0,.12);font-size:13px}
+.field{display:grid;gap:4px;max-width:380px}
+.field input{font:inherit;padding:6px 9px;border-radius:8px;border:1.5px solid var(--bad);background:var(--panel);color:var(--ink)}
+.field .hint{color:var(--bad);font-size:12px}
+/* tiền */
+.form{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:10px}
+.form label{display:grid;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+.form input,.form select{font:inherit;padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);min-width:0;max-width:100%}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ok-line{color:var(--ok);font-weight:600}.bad-line{color:var(--bad);font-weight:600}
+pre{background:var(--soft);border-radius:8px;padding:10px;overflow-x:auto;font:12px/1.5 ui-monospace,Consolas,monospace;margin:6px 0}
+@media (max-width:760px){main{padding:12px}}
 </style>
 </head>
 <body>
@@ -80,7 +140,6 @@ section[hidden]{display:none}
   <div class="top">
     <div class="brand"><div class="logo">B</div><div>Thư viện nghiệp vụ<small>PHASE-030 · bản mẫu tĩnh · học từ ERP LiFeOOD, chuẩn open-ketoan</small></div></div>
     <div class="spacer"></div>
-    <span class="tag ok">✅ có</span><span class="tag warn">🟡 một phần</span><span class="tag bad">☐ chưa</span><span class="tag k">K Kernel cần</span>
     <button class="btn" id="theme" aria-label="Đổi sáng tối">◐</button>
   </div>
   <nav class="tabs" id="tabs" role="tablist"></nav>
@@ -88,7 +147,166 @@ section[hidden]{display:none}
 <main id="main"></main>
 
 <script>
-// Dữ liệu giả lập để duyệt bố cục. Mỗi bước: code (mã Erp-vn), name, status ok|warn|bad|k, doc (docType module), states, post (reasonCode / docType Kernel), src (nguồn Erp-vn), target (module đích).
+// ============================================================ dữ liệu
+// Dữ liệu giả lập để duyệt bố cục. Nguồn: 15 / 16 / 17 / 18 và blueprint 50–55 cùng phase.
+const PAGES = [
+  ['tong-quan','Tổng quan'],['ban-hang','Bán hàng'],['kho','Kho'],['luong','Lương'],['ke-toan','Kế toán'],
+  ['chung-tu','Chuẩn chứng từ'],['tien','Thư viện tiền'],['thong-bao','Thông báo'],['danh-muc','Danh mục 173 nghiệp vụ']
+];
+
+const MECHANISMS = [
+  {n:'Ghi sổ một cửa, khoá chứng từ nguồn', s:'ok', where:'postDocumentIn · ctx.ledger.submit · UNIQUE(tenant_id, doc_key)', gap:'SC-STD-1 cho modules/**; chưa module nào dùng ctx.ledger.submit', doc:'15 §1 #1 · 16 §2'},
+  {n:'Sửa sau ghi sổ = đảo + ghi lại', s:'ok', where:'Kernel version / posted_version · append-only (0049)', gap:'luồng điều chỉnh hai con trỏ ở chứng từ module (DOC-030-3, K-030-8)', doc:'16 §4'},
+  {n:'Tham số pháp lý có ngày hiệu lực', s:'bad', where:'hợp đồng BIZCITY-SETTINGS-MATRIX-v1 (chưa mã)', gap:'E2 setting_values đang làm (S029-10); thêm legalRef + mô phỏng (P-030-2), seed VN (K-030-6)', doc:'17 STD-030-7'},
+  {n:'Nhật ký kiểm toán chuỗi băm', s:'ok', where:'audit_logs chuỗi băm (0036) · writeEvidence', gap:'lý do thành trường chung (STD-030-6)', doc:'17 STD-030-6'},
+  {n:'Đối soát sổ cái ↔ sổ chi tiết', s:'warn', where:'scripts/doi-chieu-ke-toan.sql · assertLedgerInvariants', gap:'khai bằng dữ liệu cho sổ chi tiết mới (K-030-12)', doc:'15 §3 · 60 §4'},
+  {n:'Một hàm chia tiền không lệch đồng', s:'bad', where:'chưa có ở packages/ — 2 bản riêng (mua-hang, tài sản)', gap:'allocate / schedule / roundMoney (S030-19)', doc:'18'}
+];
+
+const STDS = [
+  [1,'Chỉ ghi sổ qua ctx.ledger.submit','T0','ctx.ledger.*, defineDocument.ledger'],
+  [2,'Không số tài khoản trong mã module','T0','reasonCode, ensurePostingReason'],
+  [3,'Mọi chứng từ có workflow YAML','T1','defineDocument.workflow, wf.explain'],
+  [4,'Khoá kỳ theo ngày chứng từ, kể cả phiếu không ghi sổ','T0','nền gọi dataLock + period_locks'],
+  [5,'Tiền số nguyên, làm tròn nửa xa số 0, chia bằng allocate','T0','allocate, schedule, roundMoney'],
+  [6,'Lý do là trường chung của bằng chứng','T1','notes.audit[].reason'],
+  [7,'Tham số pháp lý không mặc định cứng trong mã','T0','ctx.settings.get(key, {at})'],
+  [8,'Một hình kết quả kiểm findings[]','T1','Finding, finding(code)'],
+  [9,'Mỗi chứng từ có docRef và liên kết','T1','ctx.documents.link'],
+  [10,'Mã nghiệp vụ nằm trong manifest','T1','bizCodes, golden[]'],
+  [11,'Bộ tính là hàm thuần có bảng test số','T1','domain/src + *.test.ts'],
+  [12,'Gỡ module không bao giờ chạm sổ','T0','retired, không cascade']
+];
+
+// Bản đồ luồng: lanes = vai; nodes {id, lane, col, kind: doc|gate|post|calc, t (tên), s (dòng phụ, '|' xuống dòng), g (nhóm trạng thái)}; edges [từ, tới, nhãn, 'link']
+const FLOWS = {
+ 'ban-hang': {
+  title:'Bán hàng — từ báo giá tới thu tiền', target:'modules/ban-hang (P0)', blueprint:'52-BP-BAN-HANG.md',
+  lanes:['Nhân viên|kinh doanh','Trưởng|bộ phận','Kho','Kế toán','Hệ thống|Kernel'],
+  nodes:[
+   {id:'bg',lane:0,col:0,kind:'doc',t:'Báo giá',s:'ban-hang.order|draft',g:'draft'},
+   {id:'don',lane:0,col:1,kind:'doc',t:'Đơn bán',s:'submit|kiểm KM + hạn mức',g:'pending'},
+   {id:'hm',lane:1,col:1,kind:'gate',t:'Hạn mức?',s:'nợ + đơn mở|+ đơn này'},
+   {id:'vuot',lane:1,col:2,kind:'doc',t:'Duyệt vượt',s:'pending_credit|policy han_muc.vuot',g:'pending'},
+   {id:'xk',lane:2,col:3,kind:'doc',t:'Phiếu xuất',s:'confirmed · giữ tồn|FEFO (K-030-1)',g:'approved'},
+   {id:'hd',lane:3,col:4,kind:'doc',t:'Hoá đơn',s:'ban-hang.invoice|issued',g:'approved'},
+   {id:'p1',lane:4,col:4,kind:'post',t:'sale · XBA',s:'doanh thu, thuế,|giá vốn, 131'},
+   {id:'thu',lane:3,col:5,kind:'doc',t:'Thu tiền',s:'customer_payment',g:'done'},
+   {id:'p2',lane:4,col:5,kind:'post',t:'TTKH',s:'settles hoá đơn'},
+   {id:'dc',lane:3,col:6,kind:'doc',t:'Điều chỉnh /|thay thế · trả lại',s:'revision v n+1|sale_return',g:'approved'},
+   {id:'p3',lane:4,col:6,kind:'post',t:'đảo v n + ghi v n+1',s:'NTH1 khi trả lại'}
+  ],
+  edges:[['bg','don'],['don','hm'],['hm','vuot','vượt'],['hm','xk','trong hạn mức'],['vuot','xk'],['xk','hd'],['hd','p1','ghi sổ'],['hd','thu','settles','link'],['thu','p2'],['hd','dc','replaces','link'],['dc','p3']],
+  steps:[
+   ['BH02','Báo giá','ban-hang.order:<id> (draft)','save · submit','BH-PROMO-001','T030-BH-6'],
+   ['BH03','Đơn bán','ban-hang.order:<id>','submit · confirm · cancel(reason)','BH-CREDIT-001 · DOC-LOCK-001','T030-BH-2, -3'],
+   ['BH06','Hạn mức công nợ','policy ban_hang.han_muc','approve-credit (sod)','BH-CREDIT-001 · DOC-APPROVE-001','T030-BH-4'],
+   ['BH05','Khuyến mãi NĐ81','ban-hang.promotion:<id>','activate · close','BH-PROMO-001 (KM > 50 %)','T030-BH-6'],
+   ['BH08','Hoá đơn điện tử','ban-hang.invoice:<id> → sale','issue · post (ledger)','DOC-LINK-001','T030-BH-2'],
+   ['KT04','Thu tiền','customer_payment (Kernel)','post','—','INV-4 công nợ ↔ 131'],
+   ['BH09','Điều chỉnh / thay thế','revision của invoice','revise · approve-revision','DOC-REV-001 · BH-INV-002 (replace sai lý do)','T030-BH-8..10'],
+   ['BH10','Trả lại','sale_return · NTH1','post','—','T030-BH-9']
+  ]},
+ 'kho': {
+  title:'Kho — nhập theo lô, chuyển, xuất FEFO, kiểm kê, tiêu huỷ, giá vốn', target:'modules/kho (P0) · Kernel K-030-1 lô', blueprint:'51-BP-KHO.md',
+  lanes:['Thủ kho','QC / trưởng|kho','Kế toán kho','Kế toán|trưởng','Hệ thống|Kernel'],
+  nodes:[
+   {id:'nh',lane:0,col:0,kind:'doc',t:'Nhập theo lô',s:'phiếu nhập + lot, hạn|approved',g:'approved'},
+   {id:'p1',lane:4,col:0,kind:'post',t:'purchase · NMH1',s:'+ lô (K-030-1)'},
+   {id:'qc',lane:1,col:1,kind:'doc',t:'Cách ly / QC',s:'lô hold → released',g:'pending'},
+   {id:'ck',lane:0,col:2,kind:'doc',t:'Chuyển kho',s:'kho.transfer|in_transit',g:'approved'},
+   {id:'p2',lane:4,col:2,kind:'post',t:'transfer · XCKho',s:'đi đường → nhận'},
+   {id:'xk',lane:0,col:3,kind:'doc',t:'Xuất FEFO',s:'pickLots (hook)|lô hạn gần trước',g:'approved'},
+   {id:'p3',lane:4,col:3,kind:'post',t:'sale · XBA',s:'+ lô'},
+   {id:'kk',lane:0,col:4,kind:'doc',t:'Kiểm kê',s:'counting|khoá kho khi đếm',g:'draft'},
+   {id:'nop',lane:2,col:4,kind:'doc',t:'Nộp chênh lệch',s:'submitted',g:'pending'},
+   {id:'dk',lane:3,col:5,kind:'gate',t:'Duyệt chênh',s:'kho.kiem_ke.duyet'},
+   {id:'p4',lane:4,col:5,kind:'post',t:'stock_adjustment',s:'NDC / XDC theo dòng'},
+   {id:'th',lane:1,col:6,kind:'doc',t:'Tiêu huỷ',s:'kho.disposal|hồ sơ, biên bản',g:'approved'},
+   {id:'p5',lane:4,col:6,kind:'post',t:'stock_adjustment',s:'XHUY (K2)'},
+   {id:'gv',lane:3,col:7,kind:'calc',t:'Giá vốn tháng',s:'bình quân gia quyền|costing.service'},
+   {id:'p6',lane:4,col:7,kind:'post',t:'cogs',s:'điền cost_fill'}
+  ],
+  edges:[['nh','p1','ghi sổ'],['nh','qc','lô mới'],['qc','ck','released'],['ck','p2'],['ck','xk'],['xk','p3'],['xk','kk'],['kk','nop'],['nop','dk'],['dk','p4','duyệt'],['nop','th','hỏng / hết hạn','link'],['th','p5'],['p5','gv','cuối tháng'],['gv','p6']],
+  steps:[
+   ['KHO01','Nhập theo lô','purchase (Kernel) + lô','post','KHO-LOT-001 (thiếu hạn dùng)','T030-KHO-1'],
+   ['KHO09','Cách ly / QC','trạng thái lô hold','hold · release (quyền QC)','KHO-LOT-003 (lô đang cách ly)','T030-KHO-3, -9'],
+   ['KHO03','Chuyển kho','kho.transfer:<id>','approve · ship · receive','KHO-TRF-001 (chênh khi nhận)','T030-KHO-4'],
+   ['KHO02','Xuất FEFO','hook inventory.pickLots','—','KHO-LOT-002 (lô cận hạn)','T030-KHO-2'],
+   ['KHO07','Kiểm kê','kho.stock_count:<id>','start · submit · approve · cancel','KHO-COUNT-001 (kho đang kiểm kê) · DOC-LOCK-002','T030-KHO-6, -7'],
+   ['KHO08','Tiêu huỷ','kho.disposal:<id>','approve (sod) · done','KHO-DSP-001 (thiếu biên bản)','T030-KHO-8'],
+   ['KHO12','Giá vốn tháng','cogs (Kernel)','closing preview · run','—','T030-KHO-11 · INV-4 kho ↔ 15x']
+  ]},
+ 'luong': {
+  title:'Lương — hồ sơ, chấm công, tính lương, duyệt, ghi sổ, chi trả', target:'modules/nhan-su (P2) · Kernel K-030-3 payroll · K-030-6 tham số', blueprint:'55-BP-NHAN-SU-LUONG.md',
+  lanes:['Nhân sự','Trưởng|bộ phận','Kế toán lương','Kế toán trưởng|/ Giám đốc','Hệ thống|Kernel'],
+  nodes:[
+   {id:'hs',lane:0,col:0,kind:'doc',t:'Hồ sơ + HĐLĐ',s:'nhan-su.employee|contract · phụ thuộc',g:'approved'},
+   {id:'cc',lane:1,col:1,kind:'doc',t:'Chấm công',s:'công · làm thêm · phép|chốt kỳ → khoá ngày',g:'done'},
+   {id:'tl',lane:2,col:2,kind:'calc',t:'Tính lương',s:'luong.ts thuần|tham số @ ngày'},
+   {id:'bl',lane:2,col:3,kind:'doc',t:'Bảng lương',s:'nhan-su.payroll|submitted',g:'pending'},
+   {id:'dy',lane:3,col:4,kind:'gate',t:'Duyệt',s:'nhan_su.luong.duyet'},
+   {id:'p1',lane:4,col:4,kind:'post',t:'payroll · LUONG',s:'K-030-3 (đề xuất)'},
+   {id:'chi',lane:2,col:5,kind:'doc',t:'Chi lương',s:'bank_payment|settles bảng lương',g:'done'},
+   {id:'p2',lane:4,col:5,kind:'post',t:'CHILUONG',s:'334 → tiền'},
+   {id:'nop',lane:2,col:6,kind:'doc',t:'Nộp BH, thuế',s:'D02-LT · 05/KK',g:'done'},
+   {id:'p3',lane:4,col:6,kind:'post',t:'nộp BH / TNCN',s:'338x · 3335'}
+  ],
+  edges:[['hs','cc'],['cc','tl','công đã chốt'],['tl','bl'],['bl','dy'],['dy','p1','duyệt'],['dy','chi'],['chi','p2'],['chi','nop','settles','link'],['nop','p3']],
+  steps:[
+   ['NSU02/03','Hồ sơ, hợp đồng','nhan-su.employee / contract','draft · running · terminated','NSU-CON-001 (gia hạn lần 2)','T030-NSU-2'],
+   ['NSU06','Chấm công, phép','nhan-su.attendance','submit · approve · lock','DOC-LOCK-001 (kỳ công đã chốt)','T030-NSU-4, -5'],
+   ['LUONG02','Tính lương','luong.ts (hàm thuần)','—','PARAM-MISSING-001 · LUONG-SI-001 (dưới min vùng)','T030-LUONG-1..3'],
+   ['LUONG02','Bảng lương','nhan-su.payroll:<kỳ>','submit · approve · revise','DOC-APPROVE-001','T030-LUONG-4'],
+   ['LUONG11','Chi lương','bank_payment · CHILUONG','post','—','INV-4 334 = lương thực trả'],
+   ['LUONG07','Tăng giảm lao động','nhan-su.insurance_change','submit · confirm','—','T030-LUONG-5']
+  ],
+  golden:[['Lương gross','40.000.000'],['Người phụ thuộc','1'],['BH NLĐ 10,5 %','4.200.000'],['Thu nhập tính thuế','14.100.000'],['TNCN','910.000'],['Thực lĩnh','34.890.000']]},
+ 'ke-toan': {
+  title:'Kế toán — tạm ứng, đối soát ngân hàng, phiếu tay, cuối kỳ, khoá sổ', target:'modules/tam-ung · ngan-hang · ke-toan-ky (P1) · Kernel', blueprint:'54-BP-KE-TOAN-NGAN-SACH-THUE.md',
+  lanes:['Nhân viên','Kế toán viên','Kế toán trưởng','Hệ thống|Kernel'],
+  nodes:[
+   {id:'tu',lane:0,col:0,kind:'doc',t:'Đề nghị tạm ứng',s:'tam-ung.advance|submitted',g:'pending'},
+   {id:'dtu',lane:2,col:1,kind:'gate',t:'Duyệt',s:'tam_ung.duyet|còn ứng quá hạn?'},
+   {id:'p1',lane:3,col:1,kind:'post',t:'employee_advance',s:'TAMUNG (K-030-3)'},
+   {id:'hu',lane:0,col:2,kind:'doc',t:'Hoàn ứng',s:'chứng từ chi|thừa / thiếu',g:'done'},
+   {id:'p2',lane:3,col:2,kind:'post',t:'quyết toán ứng',s:'settles tạm ứng'},
+   {id:'nh',lane:1,col:3,kind:'doc',t:'Đối soát NH',s:'ngan-hang.statement|khớp dòng sao kê',g:'done'},
+   {id:'tay',lane:1,col:4,kind:'doc',t:'Phiếu kế toán tay',s:'manual · số TK|do người nhập',g:'pending'},
+   {id:'dtay',lane:2,col:4,kind:'gate',t:'Duyệt',s:'ke_toan.phieu.duyet'},
+   {id:'p3',lane:3,col:4,kind:'post',t:'manual',s:'TK người nhập'},
+   {id:'ck',lane:1,col:5,kind:'doc',t:'Cuối kỳ',s:'trích trước · dự phòng|tỷ giá (manual_journal)',g:'approved'},
+   {id:'p4',lane:3,col:5,kind:'post',t:'accrual · provision',s:'fx (K-030-2/3)'},
+   {id:'khoa',lane:2,col:6,kind:'doc',t:'Khoá kỳ',s:'period_locks|Gate C sạch',g:'done'},
+   {id:'p5',lane:3,col:7,kind:'post',t:'closing',s:'closing_rules (dữ liệu)'},
+   {id:'bc',lane:2,col:7,kind:'calc',t:'Báo cáo',s:'B01 · B02 · B03'}
+  ],
+  edges:[['tu','dtu'],['dtu','p1','chi ứng'],['dtu','hu'],['hu','p2'],['p2','nh','sao kê','link'],['nh','tay'],['tay','dtay'],['dtay','p3','duyệt'],['tay','ck'],['ck','p4'],['ck','khoa'],['khoa','p5','kết chuyển'],['p5','bc']],
+  steps:[
+   ['KT07','Tạm ứng, hoàn ứng','tam-ung.advance:<id>','submit · approve · pay · settle','TU-OVD-001 (còn ứng quá hạn)','T030-KT-2'],
+   ['KT03','Đối soát ngân hàng','ngan-hang.statement:<id>','match · done','NH-MATCH-001 (dòng chưa khớp)','T030-KT-1'],
+   ['KT15','Phiếu kế toán tay','manual (Kernel, số TK là dữ liệu)','submit · approve (policy) · revise','DOC-APPROVE-001 · DOC-REV-001','INV-1, INV-2'],
+   ['KT10','Trích trước','manual_journal / accrual','approve (ledger)','PARAM-MISSING-001','T030-KT-3'],
+   ['KT12','Dự phòng TT48','ke-toan-ky.provision','approve (ledger)','—','T030-KT-5'],
+   ['KT11','Tỷ giá cuối kỳ','fx_revaluation (K-030-2)','approve (ledger)','—','T030-KT-4'],
+   ['KT14','Khoá kỳ, kết chuyển','period_locks · closing','lock(reason) · run','DOC-LOCK-001','INV-4 · R-CONT']
+  ]}
+};
+
+const FINDINGS = [
+  ['BH-CREDIT-001','block','Vượt hạn mức công nợ','Nợ hiện tại + đơn đang mở + đơn này vượt hạn mức đã duyệt cho khách','Thu bớt nợ, giảm đơn, hoặc gửi duyệt vượt hạn mức','module ban-hang'],
+  ['BH-PROMO-001','block','Khuyến mãi vượt 50 % giá trị hàng','NĐ81/2018 giới hạn tổng giá trị hàng khuyến mãi','Giảm mức khuyến mãi hoặc tách chương trình','module ban-hang · NĐ81/2018'],
+  ['KHO-COUNT-001','block','Kho đang kiểm kê','Phiếu kiểm kê KK-2026-0007 đang đếm kho HN-01 — mọi nhập / xuất kho này bị giữ','Đợi nộp kết quả kiểm kê hoặc chọn kho khác','module kho'],
+  ['KHO-LOT-002','warn','Lô cận hạn','Lô L240915 còn 12 ngày, dưới ngưỡng kho.han_dung.ngay_can_han = 30','Ưu tiên xuất, hoặc ghi lý do khi vẫn xuất lô khác','module kho'],
+  ['LUONG-SI-001','warn','Lương đóng BH dưới mức tối thiểu vùng','4.000.000 < lương tối thiểu vùng I tại 01/07/2026','Kiểm lại hợp đồng; hệ thống dùng mức sàn để tính BH','module nhan-su'],
+  ['PARAM-MISSING-001','block','Thiếu tham số pháp lý tại ngày chứng từ','Chưa có giá trị "Lương cơ sở" hiệu lực ngày 01/07/2026','Kế toán trưởng khai ở Cấu hình › Tham số pháp lý','Platform · NOT_READY'],
+  ['DOC-LOCK-001','block','Ngày chứng từ thuộc kỳ đã khoá','Ngày 28/10/2026 thuộc kỳ 10/2026 đã khoá','Đổi ngày chứng từ hoặc xin mở khoá kỳ (cần lý do)','Platform · PERIOD_LOCKED'],
+  ['DOC-APPROVE-001','info','Vì sao cần duyệt','Đơn 120 tr ≥ ngưỡng 50 tr của chính sách ban_hang.order.duyet (hiệu lực 01/11/2026) → 1 cấp: Duyệt bán hàng; người lập không tự duyệt','—','Platform · chính sách duyệt'],
+  ['DOC-REV-001','info','Đang có bản điều chỉnh chờ duyệt','Bản v4 đang chờ duyệt — sổ và báo cáo vẫn dùng bản v3','Duyệt hoặc bỏ bản điều chỉnh','Platform · hai con trỏ'],
+  ['DOC-REASON-001','block','Cần lý do','Từ chối / huỷ phải có lý do (R-WF-7)','Nhập lý do','Platform']
+];
+
+// Danh mục 173 nghiệp vụ (W0) — giữ nguyên dữ liệu bước theo nhóm.
 const GROUPS = [
  {id:'mh', title:'Mua hàng', sub:'từ yêu cầu nội bộ đến trả tiền NCC', target:'phan-he/mua-hang (giữ) + modules/mua-hang (mới)',
   todo:[['MH01','yêu cầu mua chưa có — đơn mua đang là điểm bắt đầu'],['MH05','đối chiếu 3 bên với hoá đơn NCC còn là cảnh báo']],
@@ -110,7 +328,6 @@ const GROUPS = [
     {code:'MH11',name:'Nông sản không hoá đơn',status:'bad',doc:'mua-hang.tally',states:['draft','confirmed'],post:'purchase (KCT) · bảng kê 01/TNDN',src:'tally.py',target:'modules/mua-hang'},
     {code:'MH12',name:'Nhập khẩu',status:'k',doc:'xuat-nhap-khau.import_declaration',states:['draft','submitted','cleared','posted'],post:'purchase nguyên tệ + VATNK (K-030-2)',src:'lfood_trade/importing.py',target:'modules/xuat-nhap-khau'},
     {code:'MH13',name:'Đánh giá NCC',status:'bad',doc:'mua-hang.supplier_evaluation',states:['draft','done'],post:'—',src:'supplier_eval.py',target:'modules/mua-hang'}]}]},
-
  {id:'kho', title:'Kho, lô, mã vạch', sub:'lô ở Kernel là điều kiện tiên quyết', target:'modules/kho (mới, P0) · Kernel K-030-1',
   todo:[['K-030-1','inventory_movements chưa có lô / hạn — FEFO, kiểm kê theo lô, cách ly đều chờ'],['KHO07','chưa có phiếu kiểm kê — chỉ có điều chỉnh NDC / XDC']],
   lanes:[
@@ -129,7 +346,6 @@ const GROUPS = [
     {code:'KHO08',name:'Cận hạn, tiêu huỷ',status:'warn',doc:'kho.disposal',states:['draft','approved','done'],post:'stock_adjustment · XHUY (K2)',src:'stock.disposal TT20/2026',target:'modules/kho'},
     {code:'KHO04',name:'Chuyển 2 pháp nhân',status:'bad',doc:'kho.intercompany_transfer',states:['draft','approved','done'],post:'sale (A) + purchase (B), chiều intercompany',src:'lfood_intercompany/transfer.py',target:'modules/kho'},
     {code:'KHO11',name:'Quét mã, in tem lô',status:'warn',doc:'kho.scan.resolve',states:['—'],post:'—',src:'barcode.py scan.mixin',target:'modules/kho'}]}]},
-
  {id:'bh', title:'Bán hàng, CRM, TMĐT', sub:'khoảng trống lớn nhất đang có người dùng', target:'modules/ban-hang (mới, P0)',
   todo:[['BH03','màn BH10 / BH11 đang chạy JSON mẫu — không có đơn bán nội bộ, chỉ POS / Woo đổ sale vào'],['BH06','hạn mức công nợ chỉ kiểm phía mua']],
   lanes:[
@@ -151,7 +367,6 @@ const GROUPS = [
     {code:'BH12',name:'Trade marketing',status:'bad',doc:'ban-hang.trade_program',states:['draft','active','settled'],post:'CPTM (K2)',src:'trade.program',target:'modules/ban-hang'},
     {code:'BH13',name:'Đơn sàn, đối soát phí',status:'warn',doc:'tmdt.settlement',states:['draft','matched','posted'],post:'PHISAN (K2) + bank_receipt',src:'ecommerce.py',target:'modules/tmdt'},
     {code:'BH14',name:'Xuất khẩu',status:'k',doc:'xuat-nhap-khau.export_declaration',states:['draft','cleared','posted'],post:'sale 0 % nguyên tệ (K-030-2)',src:'exporting.py',target:'modules/xuat-nhap-khau'}]}]},
-
  {id:'ts', title:'Tài sản, CCDC, bảo trì, xe', sub:'phân hệ cũ giữ; chốt khấu hao theo ngày', target:'phan-he/tai-san (giữ) · modules/tai-san · modules/thiet-bi',
   todo:[['TS03','N030-1: kiểm phân hệ đang làm tròn tháng hay ngày'],['TS10','XDCB dở dang chưa có']],
   lanes:[
@@ -168,7 +383,6 @@ const GROUPS = [
     {code:'TS07',name:'Kiểm kê TSCĐ',status:'warn',doc:'asset_events.audit',states:['—'],post:'increase / decrease chênh',src:'—',target:'phan-he/tai-san'},
     {code:'TS08',name:'Thẻ S23, sổ S24 / S25',status:'warn',doc:'print_template_settings',states:['—'],post:'—',src:'TT99 phụ lục IV',target:'phan-he/tai-san'},
     {code:'TS11',name:'Bảo trì, đội xe',status:'bad',doc:'thiet-bi.maintenance, vehicle, fuel_log',states:['draft','scheduled','done'],post:'chi phí chiều equipment / vehicle',src:'lfood_equipment/equipment.py',target:'modules/thiet-bi'}]}]},
-
  {id:'kt', title:'Kế toán tiền, công nợ, kỳ', sub:'chỉ phần còn thiếu', target:'modules/ngan-hang · modules/tam-ung · modules/ke-toan-ky · modules/vay',
   todo:[['K-030-3','loại sự việc accrual / provision / fx_revaluation / employee_advance / loan_interest chưa có ở Kernel'],['K-030-2','nguyên tệ + tỷ giá trên dòng sổ chưa có']],
   lanes:[
@@ -190,7 +404,6 @@ const GROUPS = [
     {code:'NS01',name:'Lập trên cây khoản mục',status:'warn',doc:'ngan-sach.budget',states:['draft','approved','locked'],post:'—',src:'budget.py spread',target:'modules/ngan-sach'},
     {code:'NS03',name:'Kiểm khi phát sinh (Q030-3)',status:'bad',doc:'hook document.beforeSubmit',states:['canh_bao | bat_duyet | chan'],post:'—',src:'budget.check_over (chỉ cảnh báo)',target:'modules/ngan-sach'},
     {code:'NS05',name:'Phân bổ chi phí chung',status:'bad',doc:'ngan-sach.allocation',states:['draft','posted'],post:'manual chuyển chiều',src:'allocation.py',target:'modules/ngan-sach'}]}]},
-
  {id:'ns', title:'Nhân sự, lương', sub:'chưa có mã nào ở open-ketoan', target:'modules/nhan-su (mới, P2) · Kernel K-030-3 payroll · K-030-6 tham số',
   todo:[['Q030-1','một module hay ba (nhân sự / lương / bảo hiểm)'],['K-030-6','seed tham số: lương cơ sở, min vùng, trần BHXH / BHTN, tỷ lệ, giảm trừ, 5 bậc TNCN']],
   lanes:[
@@ -213,32 +426,315 @@ const GROUPS = [
     {code:'CH03',name:'Mô phỏng tham số',status:'bad',doc:'nhan-su.payroll_simulation',states:['—'],post:'không ghi',src:'simulation.py lfood_param_sim',target:'modules/nhan-su'}]}]}
 ];
 
-const STATUS = {ok:'✅ có', warn:'🟡 một phần', bad:'☐ chưa', k:'K cần Kernel'};
-const tabs = document.getElementById('tabs'), main = document.getElementById('main');
-function count(g){const c={ok:0,warn:0,bad:0,k:0};g.lanes.forEach(l=>l.steps.forEach(s=>c[s.status]++));return c;}
-GROUPS.forEach((g,i)=>{
-  const c=count(g);
-  const b=document.createElement('button');b.role='tab';b.id='tab-'+g.id;b.innerHTML=`${g.title}<small>${c.ok}/${c.warn}/${c.bad+c.k}</small>`;
-  b.onclick=()=>show(g.id);tabs.appendChild(b);
-  const s=document.createElement('section');s.id=g.id;s.hidden=true;
-  s.innerHTML=`<h2>${g.title}</h2><p class="lead">${g.sub} · <b>Đích:</b> <code>${g.target}</code> · ✅ ${c.ok} · 🟡 ${c.warn} · ☐ ${c.bad} · K ${c.k}</p>
-  <div class="todo"><b>Việc cần làm</b><ul>${g.todo.map(t=>`<li><code>${t[0]}</code> ${t[1]}</li>`).join('')}</ul></div>
-  ${g.lanes.map(l=>`<div class="flow"><div class="lane"><b>${l.name}</b><span>${l.note||''}</span></div><div class="steps">${l.steps.map((st,j)=>`
-    <div class="step ${st.status}"><div class="n">${j+1}</div>
-      <h3>${st.name} <code>${st.code}</code> <span class="tag ${st.status}">${STATUS[st.status]}</span></h3>
-      <p><code>${st.doc}</code></p>
-      <div class="states">${st.states.map((x,k)=>`<i class="${k===st.states.length-1?'g':''}">${x}</i>`).join('<span style="color:var(--none)">→</span>')}</div>
-      <div class="post">sổ: ${st.post}</div>
-      <div class="src">nguồn: ${st.src} · đích: ${st.target}</div>
-    </div>${j<l.steps.length-1?'<div class="arrow">→</div>':''}`).join('')}</div></div>`).join('')}
-  <div class="side"><div class="card"><h3>Đọc tiếp</h3><ul><li>Blueprint: <code>docs/phases/PHASE-030-…/5x-BP-*.md</code> (mục 1–9 từng mã)</li><li>Golden test: <code>60-GOLDEN-TESTS.md</code> mã <code>T030-${g.id.toUpperCase()}-*</code></li><li>Ma trận: <code>10-DOI-CHIEU-ERP-VN.md</code></li></ul></div>
-  <div class="card"><h3>Luật không thương lượng</h3><ul><li>Không sự việc, không bút toán; đơn / báo giá / yêu cầu <b>không</b> ghi sổ</li><li>Sửa sau ghi sổ = phiên bản mới cùng docKey (đảo + ghi lại)</li><li>Không số tài khoản trong module: chỉ <code>reasonCode</code></li><li>Tham số = <code>setting_values</code> có ngày hiệu lực, có <code>legalRef</code></li></ul></div></div>`;
-  main.appendChild(s);
-});
-function show(id){GROUPS.forEach(g=>{document.getElementById(g.id).hidden=g.id!==id;document.getElementById('tab-'+g.id).setAttribute('aria-selected',g.id===id);});history.replaceState(null,'','#'+id);}
-show((location.hash||'#mh').slice(1).replace(/[^a-z]/g,'')||'mh');
-window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
-document.getElementById('theme').onclick=()=>{const r=document.documentElement;const cur=r.getAttribute('data-theme');const dark=cur?cur==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.setAttribute('data-theme',dark?'light':'dark');};
+// ============================================================ thư viện tiền (mã tham chiếu 18 §3 — bản chạy thật)
+function roundMoney(amount, unit = 1) {
+  const r = Math.floor(Math.abs(amount) / unit + 0.5) * unit;
+  return amount < 0 ? -r : r;
+}
+function allocate(total, weights, opts = {}) {
+  const unit = opts.unit ?? 1;
+  if (!Number.isSafeInteger(total)) throw new RangeError('total phải là số nguyên đồng');
+  if (!Number.isSafeInteger(unit) || unit < 1) throw new RangeError('unit phải là số nguyên ≥ 1');
+  if (weights.length === 0) { if (total !== 0) throw new RangeError('không có dòng để chia'); return []; }
+  if (weights.some((w) => !Number.isFinite(w) || w < 0)) throw new RangeError('trọng số phải ≥ 0');
+  const w = weights.every((x) => x === 0) ? weights.map(() => 1) : weights;
+  const W = w.reduce((s, x) => s + x, 0);
+  const abs = Math.abs(total), units = Math.floor(abs / unit), tail = abs - units * unit;
+  const raw = w.map((x) => (units * x) / W);
+  const out = raw.map(Math.floor);
+  const base = out.slice();
+  const order = w.map((_, i) => i).filter((i) => w[i] > 0).sort((i, j) => (raw[j] - out[j]) - (raw[i] - out[i]) || i - j);
+  for (let k = 0, rest = units - out.reduce((s, x) => s + x, 0); rest > 0; k++, rest--) out[order[k % order.length]] += 1;
+  const res = out.map((x) => x * unit);
+  res[order[0]] += tail;
+  return { res: res.map((x) => (total < 0 ? -x : x) + 0), raw, base, out, order, units, tail };
+}
+function schedule(total, periods, opts = {}) {
+  const unit = opts.unit ?? 1;
+  if (!Number.isSafeInteger(total) || total < 0) throw new RangeError('total phải là số nguyên đồng ≥ 0');
+  if (!Number.isInteger(periods) || periods < 1) throw new RangeError('periods phải ≥ 1');
+  const partial = opts.firstDays != null && opts.firstDays < opts.daysInFirstMonth;
+  const count = periods + (partial ? 1 : 0);
+  const monthly = roundMoney(total / periods, unit);
+  const out = [];
+  let remaining = total;
+  for (let i = 0; i < count && remaining > 0; i++) {
+    let amount = i === 0 && partial ? roundMoney((monthly * opts.firstDays) / opts.daysInFirstMonth, unit) : monthly;
+    amount = i === count - 1 ? remaining : Math.min(Math.max(amount, 1), remaining);
+    out.push(amount); remaining -= amount;
+  }
+  return out;
+}
+
+// ============================================================ tiện ích
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const vnd = (n) => n.toLocaleString('vi-VN');
+const LV = {ok:['ok','✅ có'], warn:['warn','🟡 một phần'], bad:['bad','☐ chưa'], k:['k','K cần Kernel']};
+const tag = (s) => `<span class="tag ${LV[s][0]}">${LV[s][1]}</span>`;
+
+// ============================================================ vẽ bản đồ luồng (SVG từ dữ liệu)
+function flowSvg(f) {
+  const CW = 194, LH = 92, LW = 92, NW = 148, NH = 60;
+  const cols = Math.max(...f.nodes.map((n) => n.col)) + 1;
+  const W = LW + cols * CW + 8, H = f.lanes.length * LH;
+  const at = {}; f.nodes.forEach((n) => { at[n.id] = { ...n, x: LW + n.col * CW + (CW - NW) / 2, y: n.lane * LH + (LH - NH) / 2 }; });
+  const lines = (txt, x, y, cls, dy = 13) => txt.split('|').map((t, i) => `<text class="${cls}" x="${x}" y="${y + i * dy}" text-anchor="middle">${esc(t)}</text>`).join('');
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(f.title)}">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  <marker id="ahl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah link" d="M0,0 L10,5 L0,10 z"/></marker></defs>`;
+  f.lanes.forEach((l, i) => {
+    s += `<rect class="lane-bg ${i % 2 ? 'alt' : ''}" x="0" y="${i * LH}" width="${W}" height="${LH}"/>`;
+    const parts = l.split('|');
+    s += parts.map((p, k) => `<text class="lane-t" x="10" y="${i * LH + LH / 2 - (parts.length - 1) * 7 + k * 14 + 4}">${esc(p)}</text>`).join('');
+  });
+  // cạnh trước, nút sau để nút nằm trên
+  f.edges.forEach(([a, b, label, kind]) => {
+    const A = at[a], B = at[b]; if (!A || !B) return;
+    let d, lx, ly;
+    if (A.col === B.col) {
+      const down = B.lane > A.lane;
+      const x = A.x + NW / 2, y1 = down ? A.y + NH : A.y, y2 = down ? B.y : B.y + NH;
+      d = `M${x},${y1} V${y2}`; lx = x + 4; ly = (y1 + y2) / 2;
+    } else {
+      const fwd = B.col > A.col;
+      const x1 = fwd ? A.x + NW : A.x, y1 = A.y + NH / 2, x2 = fwd ? B.x : B.x + NW, y2 = B.y + NH / 2;
+      const mx = fwd ? x2 - (CW - NW) / 2 : x1 - (CW - NW) / 2;
+      d = A.lane === B.lane ? `M${x1},${y1} H${x2}` : `M${x1},${y1} H${mx} V${y2} H${x2}`;
+      lx = A.lane === B.lane ? (x1 + x2) / 2 : mx + 4; ly = A.lane === B.lane ? y1 - 5 : (y1 + y2) / 2;
+    }
+    s += `<path class="e ${kind || ''}" d="${d}" marker-end="url(#${kind === 'link' ? 'ahl' : 'ah'})"/>`;
+    if (label) { const tw = label.length * 5.6 + 6; s += `<rect class="elbg" x="${lx - 2}" y="${ly - 9}" width="${tw}" height="13" rx="3"/><text class="el" x="${lx + 1}" y="${ly + 1}">${esc(label)}</text>`; }
+  });
+  f.nodes.forEach((n) => {
+    const { x, y } = at[n.id], cx = x + NW / 2;
+    const tl = n.t.split('|').length, sl = (n.s || '').split('|').length;
+    const top = y + NH / 2 - ((tl + sl) * 12.5) / 2 + 10;
+    if (n.kind === 'gate') {
+      s += `<polygon class="gate" points="${cx},${y - 4} ${x + NW + 4},${y + NH / 2} ${cx},${y + NH + 4} ${x - 4},${y + NH / 2}"/>`;
+    } else if (n.kind === 'post') {
+      s += `<rect class="post" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="6"/><text class="tk" x="${x + 6}" y="${y + 12}">◆ ghi sổ</text>`;
+    } else if (n.kind === 'calc') {
+      s += `<rect class="calc" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="8"/>`;
+    } else {
+      s += `<rect class="nd g-${n.g}" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="8"/><rect class="bar g-${n.g}" x="${x}" y="${y + 6}" width="4" height="${NH - 12}" rx="2"/>`;
+    }
+    const off = n.kind === 'post' ? 5 : 0;
+    s += lines(n.t, cx, top + off, 't1', 13) + lines(n.s || '', cx, top + off + tl * 13, n.kind === 'post' ? 'tk' : 't2', 12);
+  });
+  return s + '</svg>';
+}
+
+const LEGEND = `<div class="mlegend">
+ <span><i class="sw" style="border-color:var(--none)"></i>nháp</span><span><i class="sw" style="border-color:var(--warn)"></i>chờ duyệt</span>
+ <span><i class="sw" style="border-color:var(--info)"></i>đã duyệt</span><span><i class="sw" style="border-color:var(--ok)"></i>hoàn tất</span>
+ <span><i class="sw" style="background:var(--warn-bg);border-color:var(--warn);transform:rotate(45deg);width:10px"></i>duyệt theo chính sách</span>
+ <span><i class="sw" style="background:var(--k-bg);border-color:var(--k)"></i>◆ ghi sổ: ctx.ledger.submit (docType · reasonCode)</span>
+ <span><i class="sw" style="border-color:var(--accent);border-style:dashed"></i>bộ tính thuần</span>
+ <span>— luồng · <span style="color:var(--accent)">- - liên kết chứng từ (source / settles / replaces)</span></span></div>`;
+
+// ============================================================ các trang
+function pageOverview() {
+  return `<h2>Thư viện nghiệp vụ</h2>
+  <p class="lead">Màn đầu tiên cho người làm module: luồng nghiệp vụ đã duyệt, chuẩn bắt buộc, thư viện dùng chung. Học thiết kế từ ERP LiFeOOD (173 nghiệp vụ), open-ketoan là chuẩn.</p>
+  <h3>Sáu cơ chế dùng chung — cái làm một ERP chạy đúng</h3>
+  <div class="grid">${MECHANISMS.map((m, i) => `<div class="card"><h4>${i + 1}. ${esc(m.n)} ${tag(m.s)}</h4>
+    <p><b>Có:</b> <code>${esc(m.where)}</code></p><p><b>Thiếu:</b> ${esc(m.gap)}</p><p class="k">tài liệu: ${esc(m.doc)}</p></div>`).join('')}</div>
+  <h3>Mười hai chuẩn bắt buộc cho mọi module (STD-030)</h3>
+  <div class="tbl"><table><thead><tr><th>Mã</th><th>Chuẩn</th><th>Cấp</th><th>Dùng gì</th><th>Kiểm bằng</th></tr></thead><tbody>
+  ${STDS.map(([n, t, c, lib]) => `<tr><td><code>STD-030-${n}</code></td><td>${esc(t)}</td><td><span class="tag ${c === 'T0' ? 'bad' : 'warn'}">${c}</span></td><td><code>${esc(lib)}</code></td><td><code>SC-STD-${n}</code></td></tr>`).join('')}
+  </tbody></table></div>
+  <p class="lead">T0 = chặn merge, không ngoại lệ · T1 = chặn merge, ngoại lệ cần ADR. Chi tiết từng chuẩn: <code>17-BO-CHUAN-STD-030.md</code>.</p>
+  <h3>Bản đồ luồng theo module</h3>
+  <div class="grid">${['ban-hang', 'kho', 'luong', 'ke-toan'].map((k) => { const f = FLOWS[k]; return `<a class="card tile" href="#${k}"><h4>${esc(f.title.split(' — ')[0])}</h4><p>${esc(f.title.split(' — ')[1] || '')}</p><p class="k">${esc(f.target)}</p></a>`; }).join('')}
+  <a class="card tile" href="#chung-tu"><h4>Chuẩn chứng từ</h4><p>vòng đời, hai con trỏ phiên bản, chính sách duyệt, bút toán tay</p><p class="k">16-CHUAN-CHUNG-TU-DUNG-CHUNG.md</p></a>
+  <a class="card tile" href="#tien"><h4>Thư viện tiền</h4><p>allocate · schedule · roundMoney — chạy thử ngay trên trang</p><p class="k">18-THU-VIEN-TIEN.md</p></a></div>`;
+}
+
+function pageFlow(key) {
+  const f = FLOWS[key];
+  let h = `<h2>${esc(f.title)}</h2><p class="lead"><b>Đích:</b> <code>${esc(f.target)}</code> · blueprint <code>${esc(f.blueprint)}</code></p>${LEGEND}
+  <div class="map">${flowSvg(f)}</div>
+  <p class="lead" style="font-size:12px">Trên điện thoại: vuốt ngang trong khung để xem hết luồng.</p>
+  <h3>Từng bước: chứng từ, chuyển trạng thái, thông báo, ca kiểm</h3>
+  <div class="tbl"><table><thead><tr><th>Mã</th><th>Bước</th><th>Chứng từ / docRef</th><th>Chuyển (workflow YAML)</th><th>Thông báo có thể gặp</th><th>Golden</th></tr></thead><tbody>
+  ${f.steps.map((r) => `<tr><td><code>${esc(r[0])}</code></td><td>${esc(r[1])}</td><td><code>${esc(r[2])}</code></td><td>${esc(r[3])}</td><td><code>${esc(r[4])}</code></td><td><code>${esc(r[5])}</code></td></tr>`).join('')}
+  </tbody></table></div>`;
+  if (f.golden) h += `<h3>Ca số T030-LUONG-1 (bộ tính thuần phải ra đúng)</h3><div class="tbl"><table><tbody>${f.golden.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="num">${esc(b)}</td></tr>`).join('')}</tbody></table></div>`;
+  h += `<div class="note">Mọi điểm ◆ đi qua <code>ctx.ledger.submit</code> với <code>docType</code> + <code>reasonCode</code>; không số tài khoản trong mã module (STD-030-1, -2). Ngưỡng duyệt là khoá chính sách có ngày hiệu lực, không hằng trong mã (16 §5).</div>`;
+  return h;
+}
+
+function pageDocStd() {
+  const L = [['draft', 'Nháp'], ['pending', 'Chờ duyệt'], ['approved', 'Đã duyệt'], ['done', 'Hoàn tất']];
+  const tl = [
+    ['', 'v3 đã duyệt', 'Điều chỉnh', 'Sửa lần 1', 'Sửa lần 2', 'Gửi duyệt', 'Duyệt điều chỉnh'],
+    ['Trạng thái chính', 'approved', 'approved', 'approved', 'approved', 'approved', 'approved'],
+    ['version (bản đang sửa)', 'v3', 'v4', 'v4', 'v4', 'v4', 'v4'],
+    ['posted_version (bản trên sổ)', 'v3', 'v3', 'v3', 'v3', 'v3', 'v4'],
+    ['revision', '—', 'draft', 'draft', 'draft', 'pending', '—'],
+    ['Sổ cái', 'bút toán v3', 'không đổi', 'không đổi', 'không đổi', 'không đổi', 'đảo v3 + ghi v4'],
+    ['Báo cáo đọc', 'v3', 'v3', 'v3', 'v3', 'v3', 'v4']
+  ];
+  return `<h2>Chuẩn chứng từ dùng chung</h2>
+  <p class="lead">Một lời khai <code>defineDocument</code> + một tệp <code>*.workflow.yaml</code> cho mỗi loại chứng từ; nền làm phần chung: số, phiên bản, khoá kỳ, duyệt, ghi sổ, lịch sử. Nối tiếp <code>bizcity_document@1</code> (đề xuất 1.4.0). Tài liệu: <code>16-CHUAN-CHUNG-TU-DUNG-CHUNG.md</code>.</p>
+  <h3>Vòng đời: năm nhóm trạng thái chuẩn</h3>
+  <div class="life">${L.map(([g, t]) => `<span class="pill ${g}">${t} · ${g}</span>`).join('<span>→</span>')}<span style="color:var(--muted)">· từ nháp / chờ duyệt / đã duyệt có thể</span><span class="pill cancelled">Huỷ · cancelled</span></div>
+  <div class="grid"><div class="card"><h4>Chỉ nhóm đã duyệt / hoàn tất / huỷ chạm sổ</h4><p>R-WF-3: nháp không bao giờ có bút toán; huỷ chứng từ đã ghi = đảo.</p></div>
+  <div class="card"><h4>Từ chối luôn về nhóm nháp</h4><p>R-WF-10 (đề xuất): không tự chế trạng thái <code>refused</code> cuối.</p></div>
+  <div class="card"><h4>Trạng thái giữ tài nguyên</h4><p>R-WF-12: kho đang kiểm kê, kỳ công đã chốt — nền khoá và nhả, báo <code>DOC-LOCK-002</code>.</p></div></div>
+  <h3>Hai con trỏ: sửa nhiều lần, sổ chỉ đổi một lần</h3>
+  <div class="tbl tl"><table><tbody>${tl.map((r, i) => `<tr>${r.map((c, j) => i === 0 ? `<th>${esc(c)}</th>` : `<td class="${j === 6 && (i === 3 || i === 5) ? 'ledger' : (j > 1 && j < 6 && i === 4 ? 'on' : '')}">${j === 0 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <div class="note">Không có hai con trỏ: sửa 3 lần = 3 lần đảo + 3 lần ghi, báo cáo nhảy theo từng lần. Có hai con trỏ: sổ chỉ đổi đúng một lần lúc duyệt điều chỉnh, trong cùng một giao dịch (K-030-8). Bỏ điều chỉnh → sổ không đổi.</div>
+  <h3>Màn chi tiết chứng từ (bản mẫu)</h3>
+  <div class="doc">
+   <div class="doc-h"><b>Đơn bán BH-2026-0012</b><code>ban-hang.order:12</code><span class="pill approved">Đã duyệt</span>
+    <div class="ptr"><span class="cur">Bản đang sửa v4 · chờ duyệt</span><span class="led">Bản trên sổ v3</span></div><div class="spacer"></div>
+    <button class="btn sm">Bỏ điều chỉnh</button><button class="btn sm pri">Duyệt điều chỉnh</button></div>
+   <div class="doc-t" id="doctabs"></div><div class="doc-b" id="docbody"></div>
+  </div>
+  <h3>Bút toán tay: được, đúng cửa</h3>
+  <div class="tbl"><table><thead><tr><th>Loại</th><th>Ví dụ</th><th>Số tài khoản</th><th>Chuẩn áp dụng</th></tr></thead><tbody>
+   <tr><td>A. Chứng từ nghiệp vụ</td><td>đơn bán, kiểm kê, bảng lương</td><td>không — chỉ <code>reasonCode</code></td><td rowspan="3">workflow YAML · chính sách duyệt · hai con trỏ · khoá kỳ theo ngày · bằng chứng</td></tr>
+   <tr><td>B. Phiếu kế toán module lập (<code>manual_journal</code>)</td><td>trích trước, phân bổ</td><td>không — khuôn <code>strict</code> từ chối trường tài khoản</td></tr>
+   <tr><td>C. Phiếu kế toán thủ công (<code>manual</code>)</td><td>bút toán điều chỉnh của kế toán</td><td><b>có</b> — dữ liệu người nhập, không phải hằng trong mã</td></tr>
+  </tbody></table></div>`;
+}
+const DOCTABS = {
+  'Nội dung': `<div class="tbl"><table><thead><tr><th>Dòng</th><th>Mặt hàng</th><th class="num">SL</th><th class="num">Đơn giá</th><th class="num">Thành tiền</th></tr></thead><tbody>
+    <tr><td>L1</td><td>Sữa Anlene Gold 800 g</td><td class="num">100</td><td class="num">480.000</td><td class="num">48.000.000</td></tr>
+    <tr><td>L2</td><td>Ngũ cốc Calbee 600 g</td><td class="num">300</td><td class="num">240.000</td><td class="num">72.000.000</td></tr></tbody></table></div>`,
+  'So sánh v3 ↔ v4': `<div class="diff"><p>L2 số lượng: <del>250</del> <ins>300</ins></p><p>L2 thành tiền: <del>60.000.000</del> <ins>72.000.000</ins></p><p>Tổng: <del>108.000.000</del> <ins>120.000.000</ins></p><p class="lead">Lý do điều chỉnh (bắt buộc): khách xác nhận tăng số lượng qua email 05/11.</p></div>`,
+  'Duyệt': `<ul class="steps-v"><li><span class="dot ok">✓</span><div><b>Lập điều chỉnh</b> — Nguyễn An · 06/11 09:12</div></li>
+    <li><span class="dot warn">!</span><div><b>Chờ: Duyệt bán hàng (cấp 1/1)</b><br><small>Đơn 120 tr ≥ ngưỡng 50 tr của chính sách <code>ban_hang.order.duyet</code> (hiệu lực 01/11/2026). Người lập không tự duyệt.</small></div></li></ul>`,
+  'Sổ': `<div class="tbl"><table><thead><tr><th>Phiên bản</th><th>Bút toán</th><th>Lý do</th><th class="num">Số tiền</th><th>Ghi chú</th></tr></thead><tbody>
+    <tr><td>v3</td><td>BT-2026-01844</td><td><code>XBA</code></td><td class="num">108.000.000</td><td>đang hiệu lực</td></tr>
+    <tr><td>v4</td><td>—</td><td>—</td><td class="num">—</td><td>chưa ghi; khi duyệt: đảo BT-2026-01844 + ghi bản mới</td></tr></tbody></table></div>`,
+  'Liên kết': `<p><code>ban-hang.order:12</code> → <code>source</code> → <code>ban-hang.invoice:31</code> → <code>ledger</code> → <code>sale:ban-hang.invoice:31</code></p><p><code>customer_payment:PT-2026-0207</code> → <code>settles</code> → <code>ban-hang.invoice:31</code></p>`,
+  'Nhật ký': `<ul class="steps-v"><li><span class="dot ok">✓</span>05/11 15:02 · approve v3 · Trần Bình · bằng chứng #8841</li><li><span class="dot ok">✓</span>06/11 09:12 · revise → v4 · Nguyễn An · lý do: khách tăng SL</li></ul>`
+};
+function mountDocTabs() {
+  const tabs = $('#doctabs'), body = $('#docbody'); if (!tabs) return;
+  const names = Object.keys(DOCTABS);
+  tabs.innerHTML = names.map((n, i) => `<button role="tab" aria-selected="${i === 0}">${n}</button>`).join('');
+  const sel = (i) => { [...tabs.children].forEach((b, j) => b.setAttribute('aria-selected', j === i)); body.innerHTML = DOCTABS[names[i]] + (names[i] === 'Nội dung' ? `<h4 style="margin:12px 0 6px">Phát hiện</h4>${fd(FINDINGS[8])}${fd(FINDINGS[7])}` : ''); };
+  [...tabs.children].forEach((b, i) => (b.onclick = () => sel(i))); sel(0);
+}
+const LVL = { block: 'Chặn', warn: 'Cảnh báo', info: 'Thông tin' };
+const fd = (f) => `<div class="fd ${f[1]}"><span class="lv">${LVL[f[1]]}</span><div><b>${esc(f[2])}</b> <code>${f[0]}</code><small>${esc(f[3])}</small>${f[4] !== '—' ? `<small>Cách sửa: ${esc(f[4])}</small>` : ''}</div></div>`;
+
+function pageMoney() {
+  return `<h2>Thư viện tiền</h2>
+  <p class="lead">Mỗi việc đúng một hàm, cho mọi module: <code>import { allocate, schedule, roundMoney } from '@bizcity/module-sdk'</code>. Tài liệu chốt thiết kế: <code>18-THU-VIEN-TIEN.md</code>. Hàm dưới đây là mã tham chiếu chạy thật.</p>
+  <div class="grid wide">
+   <div class="card"><h4>allocate — chia một khoản theo tỷ trọng</h4><p>Phân bổ phí vận chuyển, chiết khấu tổng đơn, ngân sách, chi phí chung. Dư lớn nhất; Σ phần = tổng, tuyệt đối.</p>
+    <div class="form"><label>Tổng (đồng)<input id="aT" value="1000000" inputmode="numeric"></label><label>Tỷ trọng (cách dấu phẩy)<input id="aW" value="3,3,1"></label>
+     <label>Bước tròn<select id="aU"><option>1</option><option>100</option><option>1000</option></select></label></div>
+    <div class="presets">${[[100, '1,1,1', 1], [1000000, '3,3,1', 1], [-100, '1,1,1', 1], [10000000, '1,1,1', 1000], [10000500, '1,1,1', 1000], [10, '0,0', 1]].map((p) => `<button class="btn sm" data-a='${JSON.stringify(p)}'>allocate(${vnd(p[0])}, [${p[1]}]${p[2] > 1 ? ', ' + p[2] : ''})</button>`).join('')}</div>
+    <div id="aOut"></div></div>
+   <div class="card"><h4>schedule — lịch đều, kỳ cuối nhận dư</h4><p>Khấu hao, CCDC, trả trước, trả góp. Kỳ đầu tính theo ngày khi bắt đầu giữa tháng.</p>
+    <div class="form"><label>Tổng (đồng)<input id="sT" value="1000000000" inputmode="numeric"></label><label>Số kỳ<input id="sN" value="60" inputmode="numeric"></label>
+     <label>Ngày dùng tháng đầu<input id="sD" value="15" inputmode="numeric"></label><label>Số ngày tháng đầu<input id="sM" value="30" inputmode="numeric"></label></div>
+    <div class="presets"><button class="btn sm" data-s='[1000000000,60,15,30]'>1 tỷ / 60 tháng từ 16/09 (T030-TS-1)</button><button class="btn sm" data-s='[120000000,12,"",""]'>120 tr / 12 tháng</button><button class="btn sm" data-s='[100,3,"",""]'>100 / 3 kỳ</button></div>
+    <div id="sOut"></div></div>
+  </div>
+  <h3>Làm tròn: nửa xa số 0</h3>
+  <div class="tbl"><table><thead><tr><th>Giá trị</th><th class="num">roundMoney</th><th class="num">Math.round (JS)</th><th class="num">round (Python, Erp-vn)</th></tr></thead><tbody>
+   <tr><td>2,5</td><td class="num">${roundMoney(2.5)}</td><td class="num">${Math.round(2.5)}</td><td class="num">2</td></tr>
+   <tr><td>−2,5</td><td class="num">${roundMoney(-2.5)}</td><td class="num bad-line">${Math.round(-2.5)}</td><td class="num">−2</td></tr>
+   <tr><td>1.234.567 bước 1.000</td><td class="num">${vnd(roundMoney(1234567, 1000))}</td><td class="num">—</td><td class="num">—</td></tr></tbody></table></div>
+  <div class="note">Hai bản đang có sẽ chuyển về đây: <code>modules/mua-hang/domain/src/engine.ts:514</code> (cùng cách chia, khác ở tổng âm và trọng số toàn 0) và <code>apps/api/src/modules/assets/depreciation.ts:163</code> <code>splitByPercent</code> (làm tròn từng phần, dòng cuối nhận dư). Chi tiết so sánh: 18 §5.</div>`;
+}
+function runAllocate() {
+  const T = Number(String($('#aT').value).replace(/[.\s]/g, '')), W = $('#aW').value.split(',').map((x) => Number(x.trim())), U = Number($('#aU').value);
+  try {
+    const r = allocate(T, W, { unit: U }), sum = r.res.reduce((s, x) => s + x, 0);
+    const extra = r.out.map((x, i) => x - r.base[i]);
+    $('#aOut').innerHTML = `<div class="tbl"><table><thead><tr><th>#</th><th class="num">Tỷ trọng</th><th class="num">Phần đúng</th><th class="num">Phần nguyên</th><th class="num">+ dư</th><th class="num">Kết quả</th></tr></thead><tbody>
+    ${r.res.map((x, i) => `<tr><td>${i + 1}</td><td class="num">${W[i]}</td><td class="num">${(r.raw[i] * U).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}</td><td class="num">${vnd(r.base[i] * U)}</td><td class="num">${extra[i] ? '+' + vnd(extra[i] * U) : ''}${r.tail && i === r.order[0] ? ' +' + r.tail : ''}</td><td class="num"><b>${vnd(x)}</b></td></tr>`).join('')}
+    </tbody></table></div><p class="${sum === T ? 'ok-line' : 'bad-line'}">Σ = ${vnd(sum)} ${sum === T ? '= tổng ✔' : '≠ tổng ✘'}</p>`;
+  } catch (e) { $('#aOut').innerHTML = `<div class="fd block"><span class="lv">Lỗi</span><div>${esc(e.message)}</div></div>`; }
+}
+function runSchedule() {
+  const n = (id) => { const v = String($(id).value).replace(/[.\s]/g, ''); return v === '' ? null : Number(v); };
+  try {
+    const opts = n('#sD') != null ? { firstDays: n('#sD'), daysInFirstMonth: n('#sM') } : {};
+    const r = schedule(n('#sT'), n('#sN'), opts), sum = r.reduce((s, x) => s + x, 0);
+    const rows = r.length <= 6 ? r.map((x, i) => [i + 1, x]) : [...r.slice(0, 3).map((x, i) => [i + 1, x]), ['…', null], ...r.slice(-2).map((x, i) => [r.length - 1 + i, x])];
+    $('#sOut').innerHTML = `<div class="tbl"><table><thead><tr><th>Kỳ</th><th class="num">Số tiền</th></tr></thead><tbody>${rows.map(([k, x]) => `<tr><td>${k}</td><td class="num">${x == null ? '…' : vnd(x)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="${sum === n('#sT') ? 'ok-line' : 'bad-line'}">${r.length} kỳ · Σ = ${vnd(sum)} ${sum === n('#sT') ? '= tổng ✔' : '≠ tổng ✘'}</p>`;
+  } catch (e) { $('#sOut').innerHTML = `<div class="fd block"><span class="lv">Lỗi</span><div>${esc(e.message)}</div></div>`; }
+}
+function mountMoney() {
+  if (!$('#aT')) return;
+  ['#aT', '#aW', '#aU'].forEach((id) => ($(id).oninput = runAllocate));
+  ['#sT', '#sN', '#sD', '#sM'].forEach((id) => ($(id).oninput = runSchedule));
+  document.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => { const [t, w, u] = JSON.parse(b.dataset.a); $('#aT').value = t; $('#aW').value = w; $('#aU').value = u; runAllocate(); }));
+  document.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { const [t, k, d, m] = JSON.parse(b.dataset.s); $('#sT').value = t; $('#sN').value = k; $('#sD').value = d; $('#sM').value = m; runSchedule(); }));
+  runAllocate(); runSchedule();
+}
+
+function pageFindings() {
+  return `<h2>Thư viện thông báo</h2>
+  <p class="lead">Mọi lời hệ thống nói với người dùng đến từ <code>bizcity_findings@1</code> và gửi bằng <code>notifyFinding</code> (R-GATE-10). Module khai mã của mình trong manifest <code>findings[]</code> theo dạng <code>&lt;MODULE&gt;-&lt;NHÓM&gt;-&lt;nnn&gt;</code>; nền thêm họ <code>DOC-*</code>, <code>PARAM-*</code>. Trợ lý AI đọc cùng mã qua <code>core.findings.explain</code>.</p>
+  <h3>Ba cách hiện, một nguồn chữ</h3>
+  <div class="grid wide">
+   <div class="card"><h4>Trên trường</h4><div class="field"><label style="font-size:12px;color:var(--muted)">Ngày chứng từ</label><input value="28/10/2026"><span class="hint">Ngày thuộc kỳ 10/2026 đã khoá · DOC-LOCK-001</span></div></div>
+   <div class="card"><h4>Thông báo nổi</h4><div class="toast"><b>Vượt hạn mức công nợ</b> <code>BH-CREDIT-001</code><br><small style="color:var(--muted)">Thu bớt nợ, giảm đơn, hoặc gửi duyệt vượt hạn mức</small></div></div>
+   <div class="card"><h4>Bảng phát hiện đầu màn chứng từ</h4>${fd(FINDINGS[0])}${fd(FINDINGS[3])}${fd(FINDINGS[8])}</div>
+  </div>
+  <h3>Mẫu danh mục mã</h3>
+  <div class="tbl"><table><thead><tr><th>Mã</th><th>Mức</th><th>Tiêu đề</th><th>Vì sao</th><th>Cách sửa</th><th>Chủ / căn cứ</th></tr></thead><tbody>
+  ${FINDINGS.map((f) => `<tr><td><code>${f[0]}</code></td><td><span class="tag ${f[1] === 'block' ? 'bad' : f[1] === 'warn' ? 'warn' : 'info'}">${LVL[f[1]]}</span></td><td>${esc(f[2])}</td><td>${esc(f[3])}</td><td>${esc(f[4])}</td><td><code>${esc(f[5])}</code></td></tr>`).join('')}
+  </tbody></table></div>
+  <h3>Thông báo cho dev (bộ kiểm)</h3>
+  <pre>$ bizcity module check kho
+  ✓ SC-STD-1  ghi sổ một cửa
+  ✗ SC-STD-2  modules/kho/domain/src/dieu-chinh.ts:41 có '1561' — khai reasonCode NDC, để kế toán trưởng gán tài khoản trong pack (17 §STD-030-2)
+  ✓ SC-STD-3  2 chứng từ, 2 workflow, 11 trạng thái thuộc 5 nhóm
+  ⚠ SC-STD-5  modules/kho/domain/src/gia-von.ts:88 Math.round trên 'amount' — dùng roundMoney (18 §3)
+  ✓ golden T030-KHO-6, T030-KHO-7 · assertLedgerInvariants · đối soát kho ↔ 15x = 0
+  KẾT QUẢ: KHÔNG ĐẠT (1 chặn, 1 cảnh báo)</pre>`;
+}
+
+function pageCatalog() {
+  const c = (g) => { const r = { ok: 0, warn: 0, bad: 0, k: 0 }; g.lanes.forEach((l) => l.steps.forEach((s) => r[s.status]++)); return r; };
+  return `<h2>Danh mục nghiệp vụ theo nhóm</h2><p class="lead">Mỗi thẻ = một mã nghiệp vụ Erp-vn, chứng từ, trạng thái, điểm ghi sổ, nguồn, module đích. Viền màu = mức open-ketoan đang có. Ma trận đủ 173 dòng: <code>10-DOI-CHIEU-ERP-VN.md</code>.</p>
+  <div class="subtabs" id="gtabs">${GROUPS.map((g) => { const r = c(g); return `<button data-g="${g.id}">${g.title} <small>${r.ok}/${r.warn}/${r.bad + r.k}</small></button>`; }).join('')}</div><div id="gbody"></div>`;
+}
+function mountCatalog() {
+  const tabs = $('#gtabs'); if (!tabs) return;
+  const sel = (id) => {
+    const g = GROUPS.find((x) => x.id === id) || GROUPS[0];
+    tabs.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', b.dataset.g === g.id));
+    $('#gbody').innerHTML = `<p class="lead">${esc(g.sub)} · <b>Đích:</b> <code>${esc(g.target)}</code></p>
+    <div class="todo"><b>Việc cần làm</b><ul>${g.todo.map((t) => `<li><code>${t[0]}</code> ${esc(t[1])}</li>`).join('')}</ul></div>
+    ${g.lanes.map((l) => `<h3>${esc(l.name)}${l.note ? ` <small style="color:var(--muted);font-weight:400">· ${esc(l.note)}</small>` : ''}</h3><div class="grid">${l.steps.map((st) => `<div class="card" style="border-top:4px solid var(--${st.status === 'bad' ? 'bad' : st.status === 'k' ? 'k' : st.status})">
+      <h4>${esc(st.name)} <code>${st.code}</code> ${tag(st.status)}</h4><p><code>${esc(st.doc)}</code></p>
+      <p>${st.states.map(esc).join(' → ')}</p><p class="k">sổ: ${esc(st.post)}</p><p style="font-size:11.5px">nguồn: ${esc(st.src)} · đích: ${esc(st.target)}</p></div>`).join('')}</div>`).join('')}`;
+  };
+  tabs.querySelectorAll('button').forEach((b) => (b.onclick = () => sel(b.dataset.g)));
+  sel('mh');
+}
+
+// ============================================================ điều hướng
+const RENDER = { 'tong-quan': pageOverview, 'ban-hang': () => pageFlow('ban-hang'), kho: () => pageFlow('kho'), luong: () => pageFlow('luong'), 'ke-toan': () => pageFlow('ke-toan'), 'chung-tu': pageDocStd, tien: pageMoney, 'thong-bao': pageFindings, 'danh-muc': pageCatalog };
+const OLD = { mh: 'danh-muc', bh: 'ban-hang', ts: 'danh-muc', kt: 'ke-toan', ns: 'luong' };
+const tabsEl = $('#tabs'), mainEl = $('#main');
+tabsEl.innerHTML = PAGES.map(([id, t]) => `<button role="tab" id="tab-${id}" data-p="${id}">${t}</button>`).join('');
+tabsEl.querySelectorAll('button').forEach((b) => (b.onclick = () => (location.hash = b.dataset.p)));
+function show() {
+  let id = (location.hash || '#tong-quan').slice(1);
+  if (OLD[id]) id = OLD[id];
+  if (!RENDER[id]) id = 'tong-quan';
+  tabsEl.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', b.dataset.p === id));
+  mainEl.innerHTML = RENDER[id]();
+  mountDocTabs(); mountMoney(); mountCatalog();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', show);
+show();
+$('#theme').onclick = () => { const r = document.documentElement; const cur = r.getAttribute('data-theme'); const dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.setAttribute('data-theme', dark ? 'light' : 'dark'); };
 </script>
 </body>
 </html>

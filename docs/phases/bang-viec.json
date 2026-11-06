@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 17
+      "count": 18
     },
     {
       "key": "merging",
@@ -15,17 +15,17 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 28
+      "count": 29
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 116
+      "count": 117
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 45
+      "count": 46
     },
     {
       "key": "paused",
@@ -4544,7 +4544,7 @@
     {
       "id": "S030-2",
       "phase": "PHASE-030",
-      "title": "Mockup luồng mockups/thu-vien-nghiep-vu.html — chủ dự án duyệt bố cục, cách nói, ưu tiên D030-9",
+      "title": "Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026-11-06); bản 2: Tổng quan, bản đồ luồng Bán hàng /…",
       "priority": "P0",
       "status": "partial",
       "column": "partial",
@@ -4727,6 +4727,45 @@
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 25
+    },
+    {
+      "id": "S030-19",
+      "phase": "PHASE-030",
+      "title": "Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate mua hàng và splitByDays / splitByPercent tài sản; g…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-tien)",
+        "branch": "feat/phase-030-thu-vien-tien",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-19 — thư viện tiền: roundMoney, allocate, schedule (chốt thiết kế 18); chuyển allo…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S030-20",
+      "phase": "PHASE-030",
+      "title": "Chuẩn chứng từ 16: nhóm Lõi duyệt bizcitydocument@1 1.4.0-draft (defineDocument, hai con trỏ, policy, locks, revision) + R-WF-10..12",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S030-21",
+      "phase": "PHASE-030",
+      "title": "Bộ chuẩn 17: luật R-MSTD-1..12 vào docs/rules/ + CANON §3; họ finding DOC-, PARAM-, <MODULE>- vào bizcityfindings@1; SC-STD-1, -2, -12 (kiểm tĩnh)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 28
     }
   ]
 }
