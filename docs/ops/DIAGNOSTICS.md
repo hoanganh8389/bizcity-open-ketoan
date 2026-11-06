@@ -69,6 +69,10 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `INVENTORY_LEDGER_MISMATCH` <!-- [2026-11-03 07:17 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trụ cột 7: F22-STK-11 --> | L3 | Giá trị tồn theo sổ chi tiết kho ≠ số dư tài khoản hàng tồn kho (tài khoản kho của các nhóm hạch toán) tới cuối phạm vi, theo (chi nhánh, mặt hàng); bỏ qua cặp còn dòng chưa định giá; mẫu `<chi nhánh>:<mã hàng>`, mã rỗng = bút toán kho không gắn mặt hàng. Chi tiết số: `GET /api/v1/inventory/reconcile` | warn | có | DG-STK-3 |
 | `DEPRECIATION_OPEN` | L3 | Tháng đã qua 30 ngày (24 tháng gần nhất) có tài sản cần khấu hao / phân bổ mà chưa trích (tính cả khoảng dồn khi trích bù); mẫu `<chi nhánh>:<YYYY-MM>` | warn | có | DG-FA-1 |
 | `CONFORMANCE_STALE` | L3 | Lượt Kiểm chuẩn gần nhất quá 2 ngày (lịch đêm không chạy); đơn vị tạo chưa tới 2 ngày thì không báo | warn | có | DG-CONF-1 |
+| `VAT_INPUT_INVOICE_MATCH` <!-- [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13) --> | L3 | Chứng từ đã có hoá đơn đầu vào mà thuế ròng trên sổ (tài khoản thuế đầu vào từ cấu hình; cộng ròng mọi bút toán của sự việc) lệch thuế trên sổ hoá đơn (hoá đơn `valid` / `adjusted`) quá 0,5 đồng; mẫu `doc_key` | warn | có | DG-REC-1 |
+| `LEDGER_ROUNDING` | L3 | Bút toán có dòng sổ không tròn đồng (sổ ghi đồng Việt Nam); mẫu `entry_no` | warn | có | DG-REC-2 |
+| `ITEM_CODE_CASE_DUP` | L3 | Mã hàng trùng nhau khi bỏ khoảng trắng / không phân biệt hoa thường (không theo ngày); mẫu mã đã chuẩn hoá | warn | có | DG-MD-1 |
+| `UNIT_BASE_INVALID` | L3 | Mặt hàng có khai ĐVT nhưng không đúng một ĐVT gốc tỉ lệ 1, hoặc hơn một ĐVT mua mặc định (không theo ngày); mẫu mã hàng | warn | có | DG-MD-2 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
 | `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
@@ -113,6 +117,26 @@ Phản hồi (mức: `pass` · `empty` (không có gì để xét, R-DIAG-7) · 
 ```bash
 BIZCITY_PSQL="docker exec -i ketoan-db-1 psql -U ketoan -d ketoan" node tests/conformance/selfcheck.mjs --lane diagnostics
 ```
+
+<!-- [2026-11-06 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E6 đợt 1 (S029-13) -->
+## 2a. Sổ đăng ký đối chiếu (R-ECP-CONS-3)
+
+Mỗi phép đối chiếu: hai bên so với nhau, mã chẩn đoán, tầng nhất quán ([R-ECP-CONS](../rules/RULE-ENTERPRISE-CONTINUITY.md)), mức. Mức `warn` vào bảng khoá kỳ như cảnh báo; mức `error` chặn khoá kỳ (R-DIAG-4). Thêm projection / đồng bộ mới phải thêm một dòng ở đây cùng PR (đợt 2: module tự khai, S029-21). Phần còn chạy tay (khuôn mã hàng riêng của phân hệ) ở `scripts/doi-chieu-ke-toan.sql`.
+
+| Bên A | Bên B | Mã | Tầng | Mức |
+|---|---|---|---|---|
+| tổng Nợ | tổng Có | `LEDGER_BALANCED` | Strong (trigger) + kiểm lại | error |
+| số dư theo ngày (`ledger_balances_daily`) | dòng sổ | `LEDGER_BALANCES_DAILY` | Strong (cùng giao dịch) + kiểm lại | error |
+| khoản công nợ mở (`debt_items`) | số dư tài khoản công nợ theo đối tượng | `DEBT_MATCH_LEDGER` | Strong + kiểm lại | warn |
+| sổ chi tiết kho | số dư tài khoản hàng tồn kho | `INVENTORY_LEDGER_MISMATCH` | Reconciliation | warn |
+| phiếu giá vốn tháng | chứng từ kho đổi sau đó | `COGS_STALE` | Eventual (tính lại theo lô) | warn |
+| thuế đầu vào trên sổ | sổ hoá đơn (có hay không) | `TAX_INPUT_NO_INVOICE` | Reconciliation | warn |
+| thuế đầu vào trên sổ | thuế trên sổ hoá đơn cùng chứng từ | `VAT_INPUT_INVOICE_MATCH` | Reconciliation | warn |
+| dòng sổ | làm tròn đồng | `LEDGER_ROUNDING` | Reconciliation | warn |
+| mã hàng | mã hàng khác (bỏ khoảng trắng, hoa / thường) | `ITEM_CODE_CASE_DUP` | Reconciliation (danh mục) | warn |
+| ĐVT của mặt hàng | luật một ĐVT gốc, một ĐVT mua mặc định | `UNIT_BASE_INVALID` | Reconciliation (danh mục) | warn |
+| bút toán | phiên bản chứng từ đã tạo ra nó | `ENTRY_NO_VERSION`, `ENTRY_VERSION_UNKNOWN`, `EVENT_ENTRIES_STALE` | Reconciliation | warn |
+| sự kiện miền đã phát | người nhận | `EVENT_DEAD` (+ phát lại) | Eventual | warn |
 
 ## 3. Nhật ký có cấu trúc
 
