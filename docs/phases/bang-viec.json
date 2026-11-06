@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 18
+      "count": 17
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 212
+      "count": 213
     }
   ],
   "items": [
@@ -4865,15 +4865,9 @@
       "phase": "PHASE-030",
       "title": "Hàng việc: view bizcityread.documentqueue + core.queue.summary / items / mine + nguồn mới cho thanh \"Việc cần làm\" — chữ chốt 23",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, hang-viec)",
-        "branch": "feat/phase-030-hang-viec",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-31 — hàng việc: view bizcityread.documentqueue, ba action core.queue., nguồn mới c…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 38
     },
