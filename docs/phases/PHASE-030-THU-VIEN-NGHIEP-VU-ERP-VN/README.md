@@ -39,7 +39,7 @@ Chi tiết kiểm kê hai bên: [10-DOI-CHIEU-ERP-VN](10-DOI-CHIEU-ERP-VN.md).
 | [20-MAU-THIET-KE](20-MAU-THIET-KE.md) | 12 mẫu thiết kế xuyên suốt rút từ mã Erp-vn (duyệt theo ngưỡng, tham số hiệu lực, chứng từ phiên bản, tự tính lại, FEFO, bình quân di động, khấu hao theo ngày, lương–bảo hiểm–TNCN, ngân sách…) và chỗ đặt trong open-ketoan |
 | [22-DANH-GIA-GON-PHAN-QUYEN](22-DANH-GIA-GON-PHAN-QUYEN.md) | đánh giá `bizcity_authorization@1` so với ma trận "Ai được làm gì" của Erp-vn: đã gọn ở đâu, gọn thêm ở đâu (bỏ Nới, điều kiện về đúng chủ, SoD ở cổng chuyển trạng thái), không nên bớt gì |
 | [23-HANG-VIEC](23-HANG-VIEC.md) | chữ chốt hàng việc (S030-31): view chỉ đọc `bizcity_read.document_queue` gộp 4 bảng có sẵn về 5 nhóm trạng thái + cờ, ba action `core.queue.*`, nguồn mới cho thanh "Việc cần làm", ca T030-QUEUE-1..7 |
-| [24-CAU-HINH-HE-THONG](24-CAU-HINH-HE-THONG.md) | cấu hình hệ thống HT13: tham số có phiên bản, hiệu lực, căn cứ, duyệt hai người cho khoá loại A; chuỗi tham số → cổng → gợi ý / danh sách chọn / nhắc / giữ / chặn / thông báo / nhật ký; đối chiếu menu Cấu hình Erp-vn; D030-10..14 |
+| [24-CAU-HINH-HE-THONG](24-CAU-HINH-HE-THONG.md) | cấu hình hệ thống HT13: tham số có phiên bản, hiệu lực, căn cứ, một người có quyền đổi khoá loại A, chỉ ghi nhật ký (D030-12); chuỗi tham số → cổng → gợi ý / danh sách chọn / nhắc / giữ / chặn / thông báo / nhật ký; đối chiếu menu Cấu hình Erp-vn; D030-10..14 đã chốt |
 | [30-KHUON-BLUEPRINT](30-KHUON-BLUEPRINT.md) | khuôn một blueprint nghiệp vụ (9 mục) + cách dev / AI dùng blueprint để sinh module theo `bizcity_module@1` |
 | [50-BP-MUA-HANG](50-BP-MUA-HANG.md) | MH01–MH13: yêu cầu mua, báo giá, đơn mua, hợp đồng khung, đối chiếu 3 bên, hoá đơn vào, phân bổ chi phí, nông sản không hoá đơn, nhập khẩu, đánh giá NCC |
 | [51-BP-KHO](51-BP-KHO.md) | KHO01–KHO12: lô / hạn dùng, FEFO, chuyển kho, liên pháp nhân, kiểm kê, cận hạn / tiêu huỷ, cách ly, tồn tối thiểu, mã vạch, giá xuất |
@@ -50,7 +50,7 @@ Chi tiết kiểm kê hai bên: [10-DOI-CHIEU-ERP-VN](10-DOI-CHIEU-ERP-VN.md).
 | [60-GOLDEN-TESTS](60-GOLDEN-TESTS.md) | khuôn ca kiểm chuẩn `T030-<nhóm>-<n>` độc lập module; cách gắn với `bizcity_compliance@1` và bộ kiểm cài module |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S030-*`, log |
 | [mockups/thu-vien-nghiep-vu.html](mockups/thu-vien-nghiep-vu.html) | bản mẫu tĩnh: sơ đồ luồng từng phân hệ theo kiểu màn "Quy trình" (bước → trạng thái → chứng từ → sổ), tô màu theo mức có / một phần / chưa của open-ketoan |
-| [mockups/cau-hinh-he-thong.html](mockups/cau-hinh-he-thong.html) | bản mẫu tĩnh HT13: bảng tham số + thẻ bốn tab, chuỗi cổng, điểm kiểm soát tới hạn, đổi khoá loại A, form thử chạy thật, đối chiếu Erp-vn |
+| [mockups/cau-hinh-he-thong.html](mockups/cau-hinh-he-thong.html) | bản mẫu tĩnh HT13: bảng tham số + thẻ bốn tab, chuỗi cổng, điểm kiểm soát tới hạn, đổi khoá loại A một người, form thử chạy thật, đối chiếu Erp-vn |
 
 ## Trả lời ngắn
 

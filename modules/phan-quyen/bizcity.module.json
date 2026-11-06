@@ -1,0 +1,13 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.phan-quyen",
+  "key": "phan-quyen",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Phân quyền",
+  "description": "Role Editor: ma trận quyền × vai trò, vai trò của đơn vị với luật Cho / Cấm, gán vai trò và Xem như người dùng. Chỉ giao diện trên API Core (ADR-0027).",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": { "capabilities": [] },
+  "ui": { "icon": "ShieldCheck", "color": "#7c3aed", "order": 90 }
+}
