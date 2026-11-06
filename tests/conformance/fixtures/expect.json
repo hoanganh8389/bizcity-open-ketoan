@@ -240,6 +240,9 @@
         "SC-EVD-1": {
           "findings": 1
         },
+        "SC-STD-5": {
+          "findings": 3
+        },
         "SC-DATA-1": {
           "findings": 2,
           "keys": [

@@ -11,7 +11,7 @@
 | Chưa ai nhận | 125 |
 | Chờ đủ tín hiệu | 48 |
 | Hoãn | 1 |
-| Xong | 211 |
+| Xong | 212 |
 | **Tổng** | **435** |
 
 ## Đang làm (19)
@@ -267,6 +267,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (211)
+## Xong (212)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

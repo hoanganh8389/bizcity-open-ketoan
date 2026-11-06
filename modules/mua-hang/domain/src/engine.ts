@@ -16,6 +16,7 @@
  *   postingFor      bút toán xem trước (Nợ / Có) theo bảng hạch toán
  *   addDays         cộng ngày làm việc (trừ cuối tuần, ngày nghỉ / lễ) hoặc ngày lịch
  */
+import { allocate as moneyAllocate, roundMoney } from '@ketoan/contracts';
 import { priceFor, ratioOf, type ProductUnit, type SupplierProduct } from './gia-mua.js';
 
 /* ------------------------------------------------------------------ kiểu dữ liệu */
@@ -510,16 +511,19 @@ export interface DocCalc {
   trace: TraceItem[];
 }
 
-/** Phân bổ `total` theo trọng số, làm tròn đồng, phần dư dồn vào dòng lớn nhất → tổng khớp tuyệt đối. */
+// [2026-11-06 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-19: allocate là bọc mỏng quanh bản chung của @ketoan/contracts (R-MONEY-3, PHASE-030 · 18 §5); giữ tên và chữ ký để posting.ts, reports.ts, kich-ban.ts không đổi
+/**
+ * Phân bổ `total` theo trọng số, làm tròn đồng, phần dư theo dư lớn nhất → tổng khớp tuyệt đối. Lõi là `allocate` chung của
+ * `@ketoan/contracts`; lớp bọc này chỉ giữ hai quy ước nghiệp vụ của phân hệ:
+ *   - không có cơ sở phân bổ (mọi trọng số ≤ 0) hoặc tổng = 0 → không phân bổ phần nào (thưởng giai đoạn không đạt không chia cho mã
+ *     không mua), khác bản chung vốn chia đều khi trọng số toàn 0;
+ *   - trọng số âm (dòng giá trị âm) tính là 0; `total` không nguyên được làm tròn nửa xa số 0 trước khi chia.
+ */
 export function allocate(total: number, weights: number[]): number[] {
-  const sum = weights.reduce((s, w) => s + w, 0);
-  if (!sum || !total) return weights.map(() => 0);
-  const raw = weights.map((w) => (total * w) / sum);
-  const out = raw.map(Math.floor);
-  let rest = Math.round(total - out.reduce((s, v) => s + v, 0));
-  const order = raw.map((r, i) => ({ i, frac: r - Math.floor(r) })).sort((a, b) => b.frac - a.frac);
-  for (let k = 0; rest > 0 && k < order.length; k++, rest--) out[order[k]!.i]! += 1;
-  return out;
+  const w = weights.map((x) => (x > 0 ? x : 0));
+  const t = roundMoney(total);
+  if (!t || !w.some((x) => x > 0)) return w.map(() => 0);
+  return moneyAllocate(t, w);
 }
 
 /**
