@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cellOf, columnSummary, explainCell, groupPermissions, matchPattern, needsPassword, roleDbId, validReason,
   type MatrixData, type MatrixRole, type RoleDetail,
-} from './matrix';
+} from '../web/lib/matrix';
 
 const perms = [
   { key: 'catalog:read', label: 'Xem danh mục', module: 'core', risk: 'low' as const, resource: 'catalog', operation: 'read' },

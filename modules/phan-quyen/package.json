@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node -e \"require('fs').cpSync('api','dist/api',{recursive:true,filter:(s)=>!s.endsWith('.ts')})\"",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
-    "test": "vitest run --root . web"
+    "test": "vitest run --root . test"
   },
   "dependencies": {
     "@bizcity/module-sdk": "1.0.0",

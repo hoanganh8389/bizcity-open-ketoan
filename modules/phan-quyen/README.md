@@ -39,7 +39,7 @@ Chưa phát, chưa nghe sự kiện nào.
 
 | Tệp | Việc |
 |---|---|
-| `web/lib/matrix.ts` | Logic thuần: gom nhóm, đọc ô, giải thích ô (test `web/lib/matrix.test.ts`, chạy `npm test -w @bizcity-module/phan-quyen`) |
+| `web/lib/matrix.ts` | Logic thuần: gom nhóm, đọc ô, giải thích ô (test `test/matrix.test.ts`, chạy `npm test -w @bizcity-module/phan-quyen`) |
 | `web/screens/*.tsx` | Màn (chỉ `@bizcity/ui-kit`, `react`) |
 
 ## Chưa có
