@@ -1,0 +1,479 @@
+<!doctype html>
+<!-- [2026-11-06 01:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-37: bản mẫu HT13 Cấu hình hệ thống — tham số có phiên bản, hiệu lực, căn cứ, duyệt, tác động; chuỗi tham số → cổng → giao diện → nhật ký; điểm kiểm soát tới hạn; đổi khoá loại A; xem như trên form; đối chiếu menu Cấu hình của Erp-vn (chữ chốt: ../24-CAU-HINH-HE-THONG.md) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cấu hình hệ thống</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
+  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;--info-bg:#e8f0fc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
+h2{margin:0 0 4px;font-size:18px}
+h3{font-size:14.5px;margin:16px 0 8px}
+.lead{color:var(--muted);margin:0 0 12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.k{background:var(--k-bg);color:var(--k)}.tag.info{background:var(--info-bg);color:var(--info)}.tag.none{background:var(--soft);color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13px}
+.health{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.tile:hover,.tile[aria-pressed="true"]{border-color:var(--accent)}
+.tile b{display:block;font-size:22px;line-height:1.1}
+.tile span{color:var(--muted);font-size:12.5px}
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr) 380px;gap:12px;align-items:start}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.groups{display:flex;flex-wrap:wrap;gap:6px}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.groups{padding:6px}
+.groups button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:7px 9px;font:inherit;color:var(--ink);cursor:pointer}
+@media (max-width:1100px){.groups button{width:auto;border:1px solid var(--line)}}
+.groups button[aria-pressed="true"]{background:var(--info-bg);color:var(--info);font-weight:600}
+.groups small{color:var(--muted);margin-left:4px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+@media (max-width:700px){.tbl table{min-width:640px}}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft);position:sticky;top:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--soft)}
+tbody tr[aria-selected="true"]{background:var(--info-bg)}
+.static tbody tr{cursor:default}
+.static tbody tr:hover{background:none}
+.k{font:11.5px ui-monospace,Consolas,monospace;color:var(--k);word-break:break-word}
+.muted{color:var(--muted)}
+.card{padding:12px}
+.card h4{margin:0 0 2px;font-size:15px}
+.subtabs{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0}
+.subtabs button{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:3px 10px;font:inherit;font-size:12.5px;color:var(--muted);cursor:pointer}
+.subtabs button[aria-selected="true"]{color:var(--ink);border-color:var(--accent);font-weight:600}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{border-left:2px solid var(--line);padding:0 0 10px 12px;position:relative}
+.tl li::before{content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--line)}
+.tl li.cur::before{background:var(--ok)}
+.tl li.pend::before{background:var(--warn)}
+dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 10px;margin:0;font-size:13px}
+dt{color:var(--muted)}
+dd{margin:0;min-width:0;word-break:break-word}
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-bottom:14px}
+.chain .box{flex:1 1 150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.chain .box b{display:block;font-size:13px}
+.chain .box small{color:var(--muted);font-size:12px}
+.chain .arrow{align-self:center;color:var(--muted);font-size:18px}
+@media (max-width:700px){.chain .arrow{display:none}}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-bottom:14px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.step.on{border-color:var(--accent)}
+.step.done{border-color:var(--ok)}
+.step b{display:block;margin-bottom:4px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:12px}
+label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:3px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.msg{border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13px;display:flex;gap:8px;align-items:flex-start}
+.msg.hint{background:var(--info-bg);color:var(--ink)}.msg.warn{background:var(--warn-bg);color:var(--ink)}.msg.block{background:var(--bad-bg);color:var(--ink)}.msg.pass{background:var(--ok-bg);color:var(--ink)}
+.msg .ic{font-weight:800;flex:none}
+.msg.hint .ic{color:var(--info)}.msg.warn .ic{color:var(--warn)}.msg.block .ic{color:var(--bad)}.msg.pass .ic{color:var(--ok)}
+.msg small{display:block;color:var(--muted)}
+.hidden{display:none}
+footer{color:var(--muted);font-size:12px;padding:8px 16px 24px;max-width:1400px;margin:0 auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">KT</div><div>Cấu hình hệ thống <span class="tag info">HT13 · đề xuất</span><small>Hệ thống › Cấu hình · tham số có phiên bản, hiệu lực, căn cứ, duyệt, tác động</small></div></div>
+    <div class="spacer"></div>
+    <button class="btn sm" id="theme" type="button">Đổi nền sáng / tối</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</header>
+<main id="main"></main>
+<footer>Bản mẫu tĩnh (PHASE-030 · S030-37). Chữ chốt: <a href="../24-CAU-HINH-HE-THONG.md">24-CAU-HINH-HE-THONG.md</a>. Giá trị và căn cứ tham số pháp lý lấy từ tệp <span class="mono">lfood-legal-params@1</span> chủ dự án xuất từ Erp-vn ngày 06/11, <b>chưa được kế toán trưởng xác nhận</b>; khoá registry là khoá thật của <span class="mono">bizcity-settings.registry.json</span>; hạn mức duyệt, quy chế nội bộ, số chứng từ, người dùng và mã bằng chứng là minh hoạ.</footer>
+<script>
+'use strict';
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const vnd = (n) => n.toLocaleString('vi-VN') + ' đ';
+const fmtDate = (d) => d ? d.split('-').reverse().join('/') : '—';
+const TODAY = '2026-11-06';
+
+const GROUPS = [
+  { id: 'duyet', label: 'Pháp nhân & duyệt' },
+  { id: 'ketoan', label: 'Kế toán & thuế' },
+  { id: 'phaply', label: 'Pháp lý & lịch' },
+  { id: 'nhaplieu', label: 'Nhập liệu & kiểm soát' },
+  { id: 'luutru', label: 'Lưu trữ & bảo mật' },
+];
+const CLS = { A: ['k', 'A · ảnh hưởng sổ'], B: ['info', 'B · vận hành'], C: ['none', 'C · hiển thị'], F: ['none', 'cố định theo luật'] };
+const SRC = { registry: 'registry đơn vị', rulepack: 'vn-rulepacks (quốc gia)', core: 'Lõi (không tắt)' };
+
+// versions: [giá trị, từ ngày, đến ngày, căn cứ, người đề xuất, người duyệt, trạng thái]
+const PARAMS = [
+  { key: 'bizcity.payment.approval_thresholds', name: 'Hạn mức duyệt đề nghị thanh toán', group: 'duyet', cls: 'B', src: 'registry', owner: 'quy',
+    versions: [['cấp 1 ≤ 50.000.000 đ · cấp 2 > 50.000.000 đ', '2026-01-01', null, 'Quy chế tài chính nội bộ số 01/2026', 'ktt', '—', 'cur']],
+    usedBy: ['Cổng duyệt của đề nghị thanh toán (workflow)', 'Hàng việc "chờ bạn duyệt"'], uses: 412 },
+  { key: 'bizcity.lock.period', name: 'Khoá kỳ kế toán', group: 'duyet', cls: 'A', src: 'registry', owner: 'core',
+    versions: [['khoá đến hết 31/10/2026', '2026-11-03', null, 'Biên bản khoá sổ tháng 10/2026', 'ktt', 'chu', 'cur']],
+    usedBy: ['Cổng khoá kỳ của mọi action ghi', 'Form chứng từ: chặn ngày trong kỳ đã khoá'], uses: 1820 },
+  { key: 'bizcity.lock.data', name: 'Khoá dữ liệu theo ngày (người dùng thường)', group: 'duyet', cls: 'A', src: 'registry', owner: 'core',
+    versions: [['không sửa chứng từ quá 5 ngày', '2026-01-01', null, null, 'ktt', 'chu', 'cur']],
+    usedBy: ['Cổng khoá dữ liệu (date-rules)'], uses: 1820 },
+  { key: 'bizcity.posting.modes', name: 'Chế độ định khoản theo loại chứng từ', group: 'ketoan', cls: 'A', src: 'registry', owner: 'core',
+    versions: [['bán hàng: tự động · mua hàng: chờ định khoản (ACC14)', '2026-01-01', null, 'Quyết định của kế toán trưởng', 'ktt', 'chu', 'cur']],
+    usedBy: ['Trạm định khoản ACC14', 'Hàng việc "chờ định khoản"'], uses: 2210 },
+  { key: 'bizcity.posting.tax_codes', name: 'Mã thuế GTGT và tài khoản', group: 'ketoan', cls: 'A', src: 'registry', owner: 'core',
+    versions: [
+      ['V0, V5, V8, V10, KCT', '2025-07-01', '2026-12-31', 'Luật Thuế GTGT 48/2024/QH15', 'kt01', 'ktt', 'cur'],
+      ['V0, V5, V10, KCT (ngừng V8)', '2027-01-01', null, null, 'kt01', '—', 'pend'],
+    ],
+    usedBy: ['Cổng kiểm nội dung: mã thuế hợp lệ tại ngày chứng từ', 'Danh sách chọn mã thuế trên form bán / mua'], uses: 3045 },
+  { key: 'bizcity.posting.default_accounts', name: 'Tài khoản ngầm định', group: 'ketoan', cls: 'A', src: 'registry', owner: 'core',
+    versions: [['theo hồ sơ kế toán TT 200', '2026-01-01', null, 'Hồ sơ kế toán HT07', 'ktt', 'chu', 'cur']],
+    usedBy: ['Luật định khoản (AccountResolver)'], uses: 5120 },
+  { key: 'NGUONG_TSCD', name: 'Nguyên giá tối thiểu của tài sản cố định', group: 'ketoan', cls: 'A', src: 'rulepack',
+    versions: [['30.000.000 đ', '2013-06-10', null, 'Thông tư 45/2013/TT-BTC, sửa đổi bởi Thông tư 30/2025/TT-BTC', 'gói vn 2026.11', '—', 'cur']],
+    usedBy: ['Form ghi tăng tài sản: nhắc khi nguyên giá dưới ngưỡng', 'Cổng kiểm nội dung của ghi tăng TSCĐ'], uses: 18 },
+  { key: 'DU_PHONG_PTKD_THANG_1', name: 'Dự phòng phải thu: số tháng quá hạn bậc 1', group: 'ketoan', cls: 'A', src: 'rulepack',
+    versions: [['6 tháng', '2019-10-10', null, 'Thông tư 48/2019/TT-BTC, Điều 6', 'gói vn 2026.11', '—', 'cur']],
+    usedBy: ['Bút toán trích lập dự phòng cuối kỳ'], uses: 2 },
+  { key: 'NGUONG_TT_KHONG_TIEN_MAT', name: 'Ngưỡng bắt buộc thanh toán không dùng tiền mặt', group: 'phaply', cls: 'A', src: 'rulepack',
+    versions: [['5.000.000 đ', '2025-07-01', null, 'Luật Thuế GTGT 48/2024/QH15, Nghị định 181/2025/NĐ-CP, Nghị định 320/2025/NĐ-CP', 'gói vn 2026.11', '—', 'cur']],
+    usedBy: ['Form phiếu chi / phiếu mua: nhắc khi trả tiền mặt từ ngưỡng', 'Cổng kiểm nội dung: khấu trừ GTGT đầu vào'], uses: 96 },
+  { key: 'LUONG_CO_SO', name: 'Lương cơ sở', group: 'phaply', cls: 'A', src: 'rulepack',
+    versions: [
+      ['2.340.000 đ', '2024-07-01', '2026-06-30', 'Lương cơ sở từ 01/7/2024', 'gói vn 2025.01', '—', 'old'],
+      ['2.530.000 đ', '2026-07-01', null, 'Nghị định 161/2026/NĐ-CP', 'gói vn 2026.11', '—', 'cur'],
+    ],
+    usedBy: ['Bảng lương (modules/nhan-su, P2)', 'Trần đóng bảo hiểm'], uses: 0 },
+  { key: 'TNCN_GIAM_TRU_BAN_THAN', name: 'Giảm trừ gia cảnh bản thân', group: 'phaply', cls: 'A', src: 'rulepack',
+    versions: [['15.500.000 đ / tháng', '2026-01-01', null, 'Nghị quyết 110/2025/UBTVQH15; Luật Thuế TNCN 109/2025/QH15', 'gói vn 2026.11', '—', 'cur']],
+    usedBy: ['Tính thuế TNCN (modules/nhan-su, P2)'], uses: 0 },
+  { key: 'BHXH_NLD', name: 'BHXH người lao động đóng (hưu trí, tử tuất)', group: 'phaply', cls: 'A', src: 'rulepack',
+    versions: [['8 %', '2025-07-01', null, 'Luật Bảo hiểm xã hội 41/2024/QH15, Điều 33', 'gói vn 2026.11', '—', 'cur']],
+    usedBy: ['Bảng lương, nộp bảo hiểm (P2)'], uses: 0 },
+  { key: 'LICH_NGHI_LE_2027', name: 'Lịch nghỉ lễ, Tết năm 2027', group: 'phaply', cls: 'B', src: 'rulepack',
+    versions: [],
+    usedBy: ['Ngày làm việc (workingDays, K-030-10)', 'Hạn thanh toán, hạn nộp'], uses: 0, missing: 'Chưa có dữ liệu. Căn cứ: Bộ luật Lao động 2019, Điều 112 (S030-35).' },
+  { key: 'bizcity.intake.accept_roles', name: 'Vai được nhận chứng từ từ bể chờ', group: 'nhaplieu', cls: 'C', src: 'registry', owner: 'core',
+    versions: [['kế toán, kế toán trưởng', '2026-01-01', null, null, 'ktt', '—', 'cur']], usedBy: ['Trạm tiền kiểm, bể chờ'], uses: 74 },
+  { key: 'bizcity.item.auto_create', name: 'Tự tạo mặt hàng khi chứng từ có mã lạ', group: 'nhaplieu', cls: 'C', src: 'registry', owner: 'core',
+    versions: [['tắt', '2026-01-01', null, null, 'ktt', '—', 'cur']], usedBy: ['Cửa nạp sự việc'], uses: 0 },
+  { key: 'ENTRY-*', name: 'Luật nhập chứng từ (HT09 mở sang chứng từ)', group: 'nhaplieu', cls: 'B', src: 'registry',
+    versions: [], usedBy: ['Cổng kiểm nội dung mọi đường vào'], uses: 0, missing: 'Chưa có: HT09 hiện chỉ cho danh mục (S030-34).' },
+  { key: 'bizcity.intake.retention_days', name: 'Giữ mục bể chờ đã đóng', group: 'luutru', cls: 'C', src: 'registry', owner: 'core',
+    versions: [['90 ngày', '2026-01-01', null, null, 'ktt', '—', 'cur']], usedBy: ['Dọn bể chờ mỗi đêm'], uses: 0 },
+  { key: 'bang-chung', name: 'Giữ bằng chứng và tệp niêm phong', group: 'luutru', cls: 'F', src: 'core',
+    versions: [['≥ 10 năm, ứng dụng không xoá', '2026-11-06', null, 'Luật Kế toán 2015, Điều 41; ADR-0030', 'Lõi', '—', 'cur']],
+    usedBy: ['Tác vụ evidence.seal (01:00)', 'GET /api/v1/evidence/verify'], uses: 0, fixed: true },
+  { key: 'chung-thu-so', name: 'Chứng thư số (ký hoá đơn, tờ khai)', group: 'luutru', cls: 'B', src: 'registry', secret: true,
+    versions: [], usedBy: ['Ký hoá đơn điện tử, tờ khai (chưa có)'], uses: 0, missing: 'Chưa khai. Bí mật nằm ở kho bí mật; màn này chỉ hiện trạng thái và hạn dùng (NC-8).' },
+];
+
+const cur = (p) => p.versions.find((v) => v[6] === 'cur');
+const pend = (p) => p.versions.find((v) => v[6] === 'pend');
+const flags = (p) => {
+  const f = [];
+  if (!p.versions.length) f.push('missing');
+  else if (p.versions.some((v) => !v[3])) f.push('nobasis');
+  if (pend(p)) f.push('pending');
+  const c = cur(p);
+  if (c && c[2] && c[2] <= '2027-01-06') f.push('expiring');
+  return f;
+};
+const status = (p) => {
+  const f = flags(p);
+  if (f.includes('missing')) return '<span class="tag bad">✕ chưa có</span>';
+  if (f.includes('pending')) return '<span class="tag warn">◷ có bản chờ duyệt</span>';
+  if (f.includes('nobasis')) return '<span class="tag warn">! thiếu căn cứ</span>';
+  return '<span class="tag ok">✓ đang áp</span>';
+};
+
+const state = { tab: 'thamso', group: null, filter: null, sel: 'bizcity.posting.tax_codes', sub: 'gia-tri', step: 1 };
+const TABS = [
+  ['thamso', 'Tham số'], ['chuoi', 'Chuỗi cổng'], ['kiemsoat', 'Điểm kiểm soát tới hạn'], ['doi', 'Đổi khoá loại A'], ['form', 'Xem như trên form'], ['doichieu', 'Đối chiếu Erp-vn'],
+];
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = TABS.map(([id, label]) => `<button role="tab" aria-selected="${state.tab === id}" data-tab="${id}">${esc(label)}</button>`).join('');
+}
+
+function healthTiles() {
+  const count = (fl) => PARAMS.filter((p) => flags(p).includes(fl)).length;
+  const tiles = [
+    ['nobasis', count('nobasis') + count('missing'), 'tham số thiếu căn cứ hoặc chưa có'],
+    ['pending', count('pending'), 'bản khoá A đang chờ người thứ hai duyệt'],
+    ['expiring', count('expiring'), 'phiên bản hết hiệu lực trong 60 ngày'],
+    ['seal', 0, 'ngày đã đóng chưa niêm phong bằng chứng'],
+  ];
+  return `<div class="health">${tiles.map(([id, n, t]) => `<button class="tile" type="button" data-filter="${id}" aria-pressed="${state.filter === id}"><b>${n}</b><span>${esc(t)}</span></button>`).join('')}</div>`;
+}
+
+function paramTable() {
+  let rows = PARAMS.filter((p) => !state.group || p.group === state.group);
+  if (state.filter === 'nobasis') rows = rows.filter((p) => flags(p).some((f) => f === 'nobasis' || f === 'missing'));
+  else if (state.filter && state.filter !== 'seal') rows = rows.filter((p) => flags(p).includes(state.filter));
+  if (state.filter === 'seal') return '<div class="card"><p class="muted">Không có ngày nào chưa niêm phong. Xem chi tiết ở tham số <b>Giữ bằng chứng và tệp niêm phong</b> hoặc <span class="mono">GET /api/v1/evidence/verify</span>.</p></div>';
+  if (!rows.length) return '<div class="card"><p class="muted">Không có tham số nào khớp bộ lọc.</p></div>';
+  return `<div class="tbl"><table><thead><tr><th>Tham số</th><th>Giá trị đang áp</th><th>Từ ngày</th><th>Loại</th><th>Căn cứ</th><th>Trạng thái</th><th>Đã dùng</th></tr></thead><tbody>${rows.map((p) => {
+    const c = cur(p);
+    const [cc, cl] = CLS[p.cls];
+    return `<tr data-key="${esc(p.key)}" aria-selected="${state.sel === p.key}" tabindex="0">
+      <td><b>${esc(p.name)}</b><div class="k">${esc(p.key)}</div><div class="muted" style="font-size:12px">${esc(SRC[p.src])}</div></td>
+      <td>${p.secret ? '<span class="muted">không hiện (bí mật)</span>' : esc(c ? c[0] : '—')}</td>
+      <td>${fmtDate(c && c[1])}</td>
+      <td><span class="tag ${cc}">${esc(cl)}</span></td>
+      <td>${c && c[3] ? '<span class="tag ok">✓ có</span>' : '<span class="tag warn">! thiếu</span>'}</td>
+      <td>${status(p)}</td>
+      <td>${p.uses ? p.uses.toLocaleString('vi-VN') + ' chứng từ' : '<span class="muted">—</span>'}</td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+
+function detailCard() {
+  const p = PARAMS.find((x) => x.key === state.sel) ?? PARAMS[0];
+  const [cc, cl] = CLS[p.cls];
+  const subs = [['gia-tri', 'Giá trị & hiệu lực'], ['can-cu', 'Căn cứ'], ['lich-su', 'Lịch sử'], ['tac-dong', 'Tác động']];
+  let body = '';
+  if (p.missing) body = `<div class="msg block"><span class="ic">✕</span><div>${esc(p.missing)}</div></div>`;
+  if (state.sub === 'gia-tri') {
+    body += p.versions.length ? `<ul class="tl">${p.versions.map((v) => `<li class="${v[6] === 'cur' ? 'cur' : v[6] === 'pend' ? 'pend' : ''}"><b>${p.secret ? 'đã khai' : esc(v[0])}</b><div class="muted">từ ${fmtDate(v[1])}${v[2] ? ' đến ' + fmtDate(v[2]) : ''} · ${v[6] === 'cur' ? 'đang áp' : v[6] === 'pend' ? 'chờ duyệt' : 'đã hết hiệu lực'}</div></li>`).join('')}</ul>` : '';
+    body += `<p class="muted" style="font-size:12.5px">Chứng từ ngày D dùng phiên bản có “từ ngày” ≤ D lớn nhất. Chứng từ cũ giữ phiên bản cũ.</p>`;
+    if (p.cls === 'A' && !p.fixed && p.src === 'registry') body += `<button class="btn sm pri" type="button" data-goto="doi">Đề xuất giá trị mới…</button>`;
+    if (p.src === 'rulepack') body += `<p class="muted" style="font-size:12.5px">Tham số quốc gia: đơn vị không sửa giá trị, chỉ chọn gói hoặc ghi đè ở lớp đơn vị kèm lý do (D030-14).</p>`;
+  } else if (state.sub === 'can-cu') {
+    body += p.versions.length ? `<dl>${p.versions.map((v) => `<dt>${fmtDate(v[1])}</dt><dd>${v[3] ? esc(v[3]) : '<span class="tag warn">! chưa nhập căn cứ</span>'}</dd>`).join('')}</dl>` : '';
+    body += `<p class="muted" style="font-size:12.5px">Căn cứ tới văn bản, điều, khoản, điểm; chứng từ dùng tham số ghi lại căn cứ trong bằng chứng (<span class="mono">basis_used</span>, S030-29).</p>`;
+  } else if (state.sub === 'lich-su') {
+    body += p.versions.length ? `<div class="tbl"><table class="static"><thead><tr><th>Phiên bản</th><th>Đề xuất</th><th>Duyệt</th><th>Bằng chứng</th></tr></thead><tbody>${p.versions.map((v, i) => `<tr><td>V${i + 1} · ${fmtDate(v[1])}</td><td>${esc(v[4])}</td><td>${v[5] === '—' ? (p.cls === 'A' && p.src === 'registry' ? '<span class="tag warn">chờ</span>' : '<span class="muted">không cần</span>') : esc(v[5])}</td><td class="mono">#${48200 + i * 37}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Chưa có lần ghi nào.</p>';
+    body += `<p class="muted" style="font-size:12.5px">Mỗi lần ghi là một action có bằng chứng (<span class="mono">core.settings.set</span>), niêm phong theo ngày.</p>`;
+  } else {
+    body += `<h3 style="margin-top:0">Ai đọc tham số này</h3><ul style="margin:0;padding-left:18px">${p.usedBy.map((u) => `<li>${esc(u)}</li>`).join('')}</ul>`;
+    body += `<h3>Đã dùng</h3><p>${p.uses ? `${p.uses.toLocaleString('vi-VN')} chứng từ ghi phiên bản đang áp trong bằng chứng.` : '<span class="muted">Chưa có chứng từ nào dùng.</span>'}</p>`;
+  }
+  return `<div class="card"><h4>${esc(p.name)}</h4><div class="k">${esc(p.key)}</div>
+    <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag ${cc}">${esc(cl)}</span>${status(p)}${p.secret ? '<span class="tag none">🔒 bí mật</span>' : ''}</div>
+    <div class="subtabs" role="tablist">${subs.map(([id, l]) => `<button role="tab" aria-selected="${state.sub === id}" data-sub="${id}">${esc(l)}</button>`).join('')}</div>${body}</div>`;
+}
+
+function viewThamSo() {
+  const counts = Object.fromEntries(GROUPS.map((g) => [g.id, PARAMS.filter((p) => p.group === g.id).length]));
+  return `<h2>Tham số của đơn vị</h2><p class="lead">Mỗi tham số là một bản ghi có phiên bản: giá trị, phạm vi, ngày hiệu lực, căn cứ, người đề xuất, người duyệt. Danh mục (tài khoản, kho, loại tài sản…) ở màn Danh mục; màn này dẫn sang.</p>
+    ${healthTiles()}
+    <div class="layout">
+      <nav class="panel groups" aria-label="Nhóm tham số"><button type="button" data-group="" aria-pressed="${!state.group}">Tất cả <small>${PARAMS.length}</small></button>${GROUPS.map((g) => `<button type="button" data-group="${g.id}" aria-pressed="${state.group === g.id}">${esc(g.label)} <small>${counts[g.id]}</small></button>`).join('')}</nav>
+      <section class="panel">${paramTable()}</section>
+      <aside class="panel">${detailCard()}</aside>
+    </div>`;
+}
+
+function viewChuoi() {
+  const boxes = [
+    ['Tham số (HT13)', 'giá trị, hiệu lực, căn cứ — getSetting(ngày chứng từ)'],
+    ['Luật', 'registry, vn-rulepacks, HT09 luật nhập'],
+    ['Cổng của action', 'bizcity_action@1 §4: quyền → khoá kỳ → kiểm nội dung → duyệt → ghi sổ'],
+    ['GateResult', 'qua · nhắc · giữ · chặn + mã + căn cứ'],
+    ['Giao diện', 'gợi ý, danh sách chọn, nhắc, chặn, thông báo'],
+    ['Nhật ký', 'bằng chứng audit_logs + niêm phong theo ngày'],
+  ];
+  const SURF = [
+    ['Gợi ý khi gõ', 'hint', 'luật mức gợi ý + giá trị mặc định có nguồn', 'ô thuế suất tự điền mức đang hiệu lực kèm tên văn bản', '✅ danh mục · ☐ chứng từ'],
+    ['Danh sách chọn', 'pass', 'tham số / danh mục còn hiệu lực tại ngày chứng từ', 'mã thuế V8 không còn trong danh sách cho chứng từ có ngày từ 01/01/2027', '🟡'],
+    ['Nhắc', 'warn', 'cổng kiểm nội dung, kết quả “nhắc”', 'trả tiền mặt từ 5.000.000 đ: GTGT đầu vào không được khấu trừ', '☐ S030-28'],
+    ['Giữ', 'warn', 'kết quả “giữ” → hàng việc', 'vượt hạn mức cấp 1 → chờ cấp 2 duyệt', '✅ hàng việc · ☐ kết quả'],
+    ['Chặn', 'block', 'kết quả “chặn” + mã lỗi + cách sửa', 'ngày trong kỳ đã khoá (PERIOD_LOCKED) → mở Hồ sơ kế toán', '✅'],
+    ['Thông báo', 'hint', 'sự kiện sau cổng, notifyFinding', 'kế toán trưởng nhận “3 chứng từ chờ bạn duyệt quá 3 ngày”', '🟡'],
+    ['Nhật ký hệ thống', 'pass', 'bằng chứng có cổng + căn cứ đã dùng', 'ai đổi mã thuế, phiên bản nào, căn cứ gì, ai duyệt', '✅ bằng chứng · ☐ cột cổng'],
+  ];
+  const ic = { hint: 'i', warn: '!', block: '✕', pass: '✓' };
+  return `<h2>Chuỗi cổng: từ tham số tới ô nhập và nhật ký</h2><p class="lead">Một luật, dùng hai nơi: form gọi chính action ở chế độ chạy thử để nhận kết quả cổng trước khi lưu; máy chủ chạy lại cùng luật lúc lưu thật. Giao diện không giữ luật riêng.</p>
+    <div class="chain">${boxes.map((b, i) => `${i ? '<span class="arrow" aria-hidden="true">→</span>' : ''}<div class="box"><b>${esc(b[0])}</b><small>${esc(b[1])}</small></div>`).join('')}</div>
+    <div class="panel tbl"><table class="static"><thead><tr><th>Bề mặt</th><th>Lấy từ đâu</th><th>Ví dụ</th><th>Đã có</th></tr></thead><tbody>${SURF.map((s) => `<tr><td><div class="msg ${s[1]}" style="margin:0"><span class="ic">${ic[s[1]]}</span><b>${esc(s[0])}</b></div></td><td>${esc(s[2])}</td><td>${esc(s[3])}</td><td>${esc(s[4])}</td></tr>`).join('')}</tbody></table></div>
+    <div class="note">Cổng cụ thể hoá được khi hai hợp đồng chốt: <span class="mono">bizcity_action@1</span> 1.4.0 (các bước là cổng, S030-28, chờ nhóm Lõi) và phân quyền gọn (doc 22, chờ chủ PHASE-028).</div>`;
+}
+
+function viewKiemSoat() {
+  const COLS = ['Quyền', 'Khoá kỳ / dữ liệu', 'Kiểm nội dung', 'Duyệt', 'Ghi sổ'];
+  const core = (t) => `<span class="tag k">Lõi</span> ${esc(t)}`;
+  const pol = (t) => `<span class="tag info">chính sách</span> ${esc(t)}`;
+  const ROWS = [
+    ['Đề nghị thanh toán', [core('payments:approve'), core('lock.period, lock.data'), pol('NGUONG_TT_KHONG_TIEN_MAT'), pol('approval_thresholds'), core('chi → ghi sổ')]],
+    ['Phiếu mua hàng', [core('documents:write'), core('lock.period'), pol('posting.tax_codes · luật nhập'), pol('hạn mức theo pháp nhân'), core('duyệt = ghi sổ')]],
+    ['Phiếu kế toán tay', [core('documents:write'), core('lock.period'), pol('luật nhập: cấm hạch toán tay vào TK chọn sẵn'), core('hai người'), core('eventStore.post')]],
+    ['Ghi tăng tài sản', [core('documents:write'), core('lock.period'), pol('NGUONG_TSCD'), pol('hạn mức'), core('khấu hao theo kỳ')]],
+    ['Đổi tham số loại A', [core('settings:write'), core('không lùi vào kỳ đã khoá'), pol('có căn cứ'), core('người thứ hai'), core('bằng chứng, niêm phong')]],
+  ];
+  return `<h2>Điểm kiểm soát tới hạn</h2><p class="lead">Không phải danh sách gõ tay: đọc từ khai báo action và workflow của từng loại chứng từ. Cổng của Lõi không tắt được (ADR-0029); đơn vị chỉ chỉnh ngưỡng của cổng thuộc chính sách.</p>
+    <div class="panel tbl"><table class="static"><thead><tr><th>Loại chứng từ</th>${COLS.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${ROWS.map(([n, cells]) => `<tr><td><b>${esc(n)}</b></td>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="muted" style="font-size:12.5px"><span class="tag k">Lõi</span> bất biến · <span class="tag info">chính sách</span> đơn vị chỉnh ngưỡng trong HT13, có phiên bản và bằng chứng.</p>`;
+}
+
+function viewDoi() {
+  const s = state.step;
+  const st = (n) => (s > n ? 'done' : s === n ? 'on' : '');
+  const steps = [
+    ['1. Đề xuất', 'Giá trị mới, ngày hiệu lực, căn cứ, lý do'],
+    ['2. Xem thử tác động', 'Chạy thử, không ghi: chứng từ nào đổi kết quả cổng; ngày có rơi vào kỳ đã khoá không'],
+    ['3. Người thứ hai duyệt', 'Khác người đề xuất (đơn vị một người: Q030-6)'],
+    ['4. Có hiệu lực', 'Từ ngày đã chọn; chứng từ cũ giữ phiên bản cũ; bằng chứng ghi đề xuất và duyệt'],
+  ];
+  let panel = '';
+  if (s === 1) panel = `<div class="form">
+      <div><label for="d-key">Tham số</label><select id="d-key"><option>bizcity.posting.tax_codes — Mã thuế GTGT</option></select></div>
+      <div><label for="d-val">Giá trị mới</label><input id="d-val" value="V0, V5, V10, KCT (ngừng V8)"></div>
+      <div><label for="d-from">Ngày hiệu lực</label><input id="d-from" type="date" value="2027-01-01"></div>
+      <div><label for="d-basis">Căn cứ (văn bản, điều, khoản)</label><input id="d-basis" placeholder="vd: Luật Thuế GTGT 48/2024/QH15, Điều …"></div>
+      <div><label for="d-reason">Lý do</label><input id="d-reason" value="Hết thời hạn giảm thuế"></div></div>
+      <div id="d-msg"></div><button class="btn pri" type="button" id="d-next1">Xem thử tác động →</button>`;
+  if (s === 2) panel = `<div class="msg pass"><span class="ic">✓</span><div>Ngày hiệu lực 01/01/2027 không rơi vào kỳ đã khoá (khoá đến 31/10/2026).</div></div>
+      <div class="msg warn"><span class="ic">!</span><div><b>12 chứng từ</b> nháp / chờ duyệt có ngày từ 01/01/2027 đang dùng mã V8: kết quả cổng kiểm nội dung sẽ đổi từ <b>qua</b> sang <b>chặn</b>.<small>Đọc từ hàng việc (bizcity_read.document_queue) + chạy thử cổng; không ghi gì.</small></div></div>
+      <div class="msg hint"><span class="ic">i</span><div>3.045 chứng từ đã ghi sổ giữ phiên bản V1, không đổi.</div></div>
+      <button class="btn" type="button" data-step="1">← Sửa đề xuất</button> <button class="btn pri" type="button" data-step="3">Gửi duyệt →</button>`;
+  if (s === 3) panel = `<div class="msg warn"><span class="ic">◷</span><div>Chờ <b>kế toán trưởng</b> duyệt. Người đề xuất (kt01) không tự duyệt được.<small>Hàng việc của kế toán trưởng có một mục “Duyệt tham số loại A”.</small></div></div>
+      <button class="btn" type="button" data-step="2">← Quay lại</button> <button class="btn pri" type="button" data-step="4">Đăng nhập là kế toán trưởng: Duyệt</button>`;
+  if (s === 4) panel = `<div class="msg pass"><span class="ic">✓</span><div>Phiên bản V2 có hiệu lực từ 01/01/2027. Bằng chứng #48237 (đề xuất kt01, duyệt ktt, căn cứ, lý do).<small>Niêm phong cùng ngày 06/11 trong tệp bang-chung.</small></div></div>
+      <button class="btn" type="button" data-step="1">Làm lại</button>`;
+  return `<h2>Đổi một khoá loại A</h2><p class="lead">Khoá loại A ảnh hưởng sổ: hai người, có căn cứ, xem thử tác động, không lùi vào kỳ đã khoá (D030-12).</p>
+    <div class="steps">${steps.map((x, i) => `<div class="step ${st(i + 1)}"><b>${esc(x[0])}</b><span class="muted" style="font-size:12.5px">${esc(x[1])}</span></div>`).join('')}</div>
+    <div class="panel card">${panel}</div>`;
+}
+
+const TAX = [{ code: 'V0', from: '2025-07-01', to: null }, { code: 'V5', from: '2025-07-01', to: null }, { code: 'V8', from: '2025-07-01', to: '2026-12-31' }, { code: 'V10', from: '2025-07-01', to: null }, { code: 'KCT', from: '2025-07-01', to: null }];
+function viewForm() {
+  return `<h2>Xem như trên form</h2><p class="lead">Thử một phiếu chi: đổi số tiền, cách trả, ngày, mã thuế để thấy gợi ý, danh sách chọn, nhắc, chặn sinh từ tham số. Cùng kết quả mà cổng trả khi lưu thật.</p>
+    <div class="panel card"><div class="form">
+      <div><label for="f-date">Ngày chứng từ</label><input id="f-date" type="date" value="2026-11-06"></div>
+      <div><label for="f-amt">Số tiền (đ)</label><input id="f-amt" type="number" min="0" step="100000" value="6000000"></div>
+      <div><label for="f-pay">Cách trả</label><select id="f-pay"><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option></select></div>
+      <div><label for="f-tax">Mã thuế <span class="muted">(chỉ mã còn hiệu lực tại ngày chứng từ)</span></label><select id="f-tax"></select></div>
+    </div><div id="f-out" aria-live="polite"></div></div>`;
+}
+function evalForm() {
+  const date = document.getElementById('f-date').value;
+  const amt = Number(document.getElementById('f-amt').value || 0);
+  const pay = document.getElementById('f-pay').value;
+  const sel = document.getElementById('f-tax');
+  const keep = sel.value;
+  const valid = TAX.filter((t) => t.from <= date && (!t.to || t.to >= date));
+  sel.innerHTML = valid.map((t) => `<option ${t.code === keep ? 'selected' : ''}>${t.code}</option>`).join('');
+  const out = [];
+  const m = (k, icon, text, basis) => out.push(`<div class="msg ${k}"><span class="ic">${icon}</span><div>${text}${basis ? `<small>${basis}</small>` : ''}</div></div>`);
+  if (date && date <= '2026-10-31') m('block', '✕', `<b>Chặn:</b> ngày ${fmtDate(date)} thuộc kỳ đã khoá (khoá đến 31/10/2026). Chọn ngày khác hoặc nhờ kế toán trưởng mở kỳ.`, 'Mã PERIOD_LOCKED · tham số bizcity.lock.period V1 · cách sửa: Hồ sơ kế toán HT07');
+  if (pay === 'cash' && amt >= 5000000) m('warn', '!', `<b>Nhắc:</b> trả tiền mặt ${vnd(amt)} — từ 5.000.000 đ trở lên, thuế GTGT đầu vào không được khấu trừ. Vẫn lưu được nếu ghi lý do.`, 'Tham số NGUONG_TT_KHONG_TIEN_MAT V1 · Luật Thuế GTGT 48/2024/QH15, NĐ 181/2025/NĐ-CP, NĐ 320/2025/NĐ-CP');
+  else if (pay === 'cash' && amt >= 4000000) m('hint', 'i', `<b>Gợi ý:</b> gần ngưỡng 5.000.000 đ; cân nhắc chuyển khoản nếu cần khấu trừ thuế.`, 'Tham số NGUONG_TT_KHONG_TIEN_MAT V1');
+  if (date >= '2027-01-01') m('hint', 'i', 'Danh sách mã thuế đã bỏ V8 (hết hiệu lực 31/12/2026).', 'Tham số bizcity.posting.tax_codes, phiên bản theo ngày chứng từ');
+  if (amt > 50000000) m('warn', '◷', `<b>Giữ:</b> vượt hạn mức cấp 1 (50.000.000 đ) — sau khi lưu vào hàng việc “chờ cấp 2 duyệt”.`, 'Tham số bizcity.payment.approval_thresholds V1 · Quy chế tài chính nội bộ số 01/2026');
+  if (!out.length) m('pass', '✓', 'Qua mọi cổng. Lưu được.', 'Bằng chứng sẽ ghi các tham số đã dùng (basis_used)');
+  document.getElementById('f-out').innerHTML = out.join('');
+}
+
+const DOICHIEU = [
+  ['Pháp nhân, hạn mức duyệt', 'chi nhánh, sơ đồ tổ chức; approval_thresholds (quỹ)', 'B', '🟡', 'S030-20'],
+  ['Hệ thống tài khoản', 'ACC1, chính sách có phiên bản (0040)', 'A', '✅', '—'],
+  ['Tài khoản ngân hàng', 'DM09', 'A', '✅', '—'],
+  ['Khoản mục chi phí', 'ACC24', 'A', '✅', '—'],
+  ['Tham số pháp lý', 'kho setting_values, chưa căn cứ', 'A', '☐', 'S030-35'],
+  ['Lịch sử và gói tham số', 'setting_values có phiên bản (6 khoá)', 'A', '🟡', 'E2 đợt 2'],
+  ['Tính thử tham số mới', 'chưa', '—', '☐', 'S030-40'],
+  ['Lịch nghỉ lễ, Tết', 'chưa', 'B', '☐', 'S030-35'],
+  ['Thuế suất GTGT', 'posting.tax_codes + chính sách theo ngày', 'A', '🟡', 'S030-35'],
+  ['Ràng buộc nhập liệu', 'HT09 cho danh mục', 'B', '🟡', 'S030-34'],
+  ['Loại tài sản', 'ACC37', 'A', '✅', '—'],
+  ['Kho', 'DM12', 'B', '✅', '—'],
+  ['Khoản lương, ca làm việc', 'chưa', 'A', '☐', 'modules/nhan-su (P2)'],
+  ['Điều khoản thanh toán', 'chưa', 'B', '☐', 'P1'],
+  ['Chứng thư số', 'chưa', '—', '☐', 'ADR riêng'],
+  ['Điểm kiểm soát tới hạn', 'cổng có, danh sách chưa', 'A', '☐', 'sau S030-28'],
+  ['Ma trận phân quyền', 'vai trò đơn vị (0075, PHASE-028)', 'A', '🟡', 'PHASE-028'],
+  ['Nhập dữ liệu ban đầu', 'phiếu opening qua eventStore', 'A', '✅', '—'],
+  ['Thời hạn lưu trữ', 'bể chờ cấu hình được; bằng chứng ≥ 10 năm cố định', 'C', '🟡', '—'],
+  ['(open-ketoan) Khoá sổ, khoá dữ liệu', 'lock.period, lock.data', 'A', '✅', '—'],
+  ['(open-ketoan) Chế độ định khoản', 'posting.modes', 'A', '✅', '—'],
+];
+function viewDoiChieu() {
+  const n = (s) => DOICHIEU.filter((r) => r[3] === s).length;
+  const lab = { '✅': 'ok', '🟡': 'warn', '☐': 'none' };
+  return `<h2>Đối chiếu menu Cấu hình của Erp-vn</h2><p class="lead">20 mục Erp-vn (gộp khoản lương với ca làm việc) và hai mục open-ketoan có sẵn: ✅ ${n('✅')} · 🟡 ${n('🟡')} · ☐ ${n('☐')}. Phần thiếu tập trung ở tham số pháp lý có căn cứ và luồng duyệt khoá loại A.</p>
+    <div class="panel tbl"><table class="static"><thead><tr><th>Mục</th><th>open-ketoan hôm nay</th><th>Loại</th><th>Mức</th><th>Việc</th></tr></thead><tbody>${DOICHIEU.map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td><span class="tag ${lab[r[3]]}">${r[3]} ${r[3] === '✅' ? 'có' : r[3] === '🟡' ? 'một phần' : 'chưa'}</span></td><td class="mono">${esc(r[4])}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+const VIEWS = { thamso: viewThamSo, chuoi: viewChuoi, kiemsoat: viewKiemSoat, doi: viewDoi, form: viewForm, doichieu: viewDoiChieu };
+function render() {
+  renderTabs();
+  document.getElementById('main').innerHTML = VIEWS[state.tab]();
+  if (state.tab === 'form') {
+    for (const id of ['f-date', 'f-amt', 'f-pay', 'f-tax']) document.getElementById(id).addEventListener('input', evalForm);
+    evalForm();
+  }
+  if (state.tab === 'doi' && state.step === 1) {
+    document.getElementById('d-next1').addEventListener('click', () => {
+      const basis = document.getElementById('d-basis').value.trim();
+      if (!basis) {
+        document.getElementById('d-msg').innerHTML = '<div class="msg block"><span class="ic">✕</span><div><b>Chặn:</b> khoá loại A phải có căn cứ trước khi gửi.<small>NC-1, D030-12</small></div></div>';
+        document.getElementById('d-basis').focus();
+        return;
+      }
+      state.step = 2;
+      render();
+    });
+  }
+  try { localStorage.setItem('ht13-tab', state.tab); } catch { /* không có bộ nhớ trình duyệt: bỏ qua */ }
+}
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab],[data-group],[data-filter],[data-key],[data-sub],[data-step],[data-goto]');
+  if (!t) return;
+  if (t.dataset.tab) state.tab = t.dataset.tab;
+  else if (t.dataset.group !== undefined) { state.group = t.dataset.group || null; }
+  else if (t.dataset.filter) state.filter = state.filter === t.dataset.filter ? null : t.dataset.filter;
+  else if (t.dataset.key) state.sel = t.dataset.key;
+  else if (t.dataset.sub) state.sub = t.dataset.sub;
+  else if (t.dataset.step) state.step = Number(t.dataset.step);
+  else if (t.dataset.goto) { state.tab = t.dataset.goto; state.step = 1; }
+  render();
+});
+document.addEventListener('keydown', (e) => {
+  const tr = e.target.closest && e.target.closest('tr[data-key]');
+  if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); state.sel = tr.dataset.key; render(); }
+});
+document.getElementById('theme').addEventListener('click', () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+});
+try { const t = localStorage.getItem('ht13-tab'); if (t && VIEWS[t]) state.tab = t; } catch { /* bỏ qua */ }
+const hashTab = location.hash.slice(1);
+if (VIEWS[hashTab]) state.tab = hashTab;
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (VIEWS[h]) { state.tab = h; render(); } });
+render();
+</script>
+</body>
+</html>

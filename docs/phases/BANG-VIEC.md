@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 19 |
 | Chờ merge | 0 |
-| Bị chặn | 31 |
-| Chưa ai nhận | 125 |
-| Chờ đủ tín hiệu | 47 |
+| Bị chặn | 32 |
+| Chưa ai nhận | 127 |
+| Chờ đủ tín hiệu | 48 |
 | Hoãn | 1 |
 | Xong | 212 |
-| **Tổng** | **435** |
+| **Tổng** | **439** |
 
 ## Đang làm (19)
 
@@ -42,7 +42,7 @@
 
 —
 
-## Bị chặn (31)
+## Bị chặn (32)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -77,8 +77,9 @@
 | [S030-20](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L27) | PHASE-030 | Chuẩn chứng từ 16: nhóm Lõi duyệt bizcitydocument@1 1.4.0-draft (defineDocument, hai con trỏ, policy, locks, … | P0 | — |
 | [S030-27](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L34) | PHASE-030 | Theo dõi cầu nối Workflow ↔ PHASE-028 (19 §3): PHASE-028 nhận authorize trên tài nguyên chứng từ + điều kiện … | P1 | — |
 | [S030-28](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L35) | PHASE-030 | bizcityaction@1 1.4.0: các bước §4 là cổng, kiểu GateResult trong packages/contracts, error.details.gates, ct… | P0 | — |
+| [S030-38](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L45) | PHASE-030 | bizcitysettings@1 1.2.0: registry thêm basis, approval, usedBy; settingvalues thêm basis, status, approvedby … | P0 | — |
 
-## Chưa ai nhận (125)
+## Chưa ai nhận (127)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -207,8 +208,10 @@
 | [S030-33](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L40) | PHASE-030 | Golden T030-GATE-1..4 (21 §5) | P1 | — |
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
+| [S030-39](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L46) | PHASE-030 | Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ … | P1 | — |
+| [S030-40](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L47) | PHASE-030 | Đổi khoá loại A: đề xuất → xem thử tác động → người thứ hai duyệt; "xem như trên form"; golden T030-CFG-1..8 | P1 | — |
 
-## Chờ đủ tín hiệu (47)
+## Chờ đủ tín hiệu (48)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -258,7 +261,8 @@
 | [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026… | P0 | — |
 | [S030-9](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L16) | PHASE-030 | Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn | P0 | — |
 | [S030-18](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L25) | PHASE-030 | Kinh nghiệm cốt lõi 15: phân tầng 20 cơ chế, STD-030-1..12, K-030-7..12, P-030-1..8, phản mẫu A1–A12; nhóm Lõ… | P0 | — |
-| [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
+| [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT12 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
+| [S030-37](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L44) | PHASE-030 | Cấu hình hệ thống 24: nguyên tắc NC-1..8, chuỗi tham số → cổng → giao diện → nhật ký, đối chiếu menu Cấu hình… | P0 | — |
 
 ## Hoãn (1)
 
