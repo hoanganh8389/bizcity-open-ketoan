@@ -45,7 +45,7 @@ export const GON_DEFS: GonDef[] = [
     sections: [
       { label: 'Đơn vị', paths: ['/cau-hinh/don-vi', '/he-thong/chi-nhanh-lam-viec', '/cau-hinh/mau-in', '/cau-hinh/khoi-anh'] },
       { label: 'Người dùng', paths: ['/cau-hinh/nguoi-dung', '/cau-hinh/khoa-api'] },
-      { label: 'Kiểm soát', paths: ['/he-thong/kiem-chuan', '/he-thong/ho-so-ke-toan', '/he-thong/ban-danh-gia', '/he-thong/quy-dinh-danh-muc', '/he-thong/tru-cot'] },
+      { label: 'Kiểm soát', paths: ['/he-thong/kiem-chuan', '/he-thong/ho-so-ke-toan', '/he-thong/ban-danh-gia', '/he-thong/quy-dinh-danh-muc', '/he-thong/tru-cot', '/he-thong/cau-hinh'] },
     ],
   },
   {
