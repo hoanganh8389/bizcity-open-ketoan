@@ -53,6 +53,7 @@ export const LAYER_MAP = [
   ['core/security/', 'P', 'permissions'],
   ['core/authz/', 'P', 'permissions'], // [2026-11-06 00:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W3 đợt 1: bộ tính quyền thuần
   ['core/audit.ts', 'P', 'audit'],
+  ['core/evidence-export.ts', 'P', 'audit'], // [2026-11-06 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: bản niêm phong bằng chứng (ADR-0030)
   ['core/catalog-warn.ts', 'P', 'audit'], // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-023 — ghi nhận cảnh báo mềm form danh mục
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/module-manifest.ts', 'P', 'module-sdk'],

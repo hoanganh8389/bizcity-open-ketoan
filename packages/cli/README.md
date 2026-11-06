@@ -1,5 +1,6 @@
 # @bizcity/cli — lệnh `bizcity`
 <!-- [2026-11-03 08:22 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — README gói: lệnh, nguồn sự thật, test -->
+<!-- [2026-11-06 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: evidence verify (ADR-0030) -->
 
 Một cửa lệnh cho developer. **CLI không giữ luật riêng**: mỗi lệnh gọi lại công cụ sẵn có của repo (bộ kiểm chuẩn, hàm của `@ketoan/contracts`, API của đơn vị). Thiếu bản dựng hoặc máy chủ thì báo **SKIP** kèm lý do, không bao giờ coi là PASS.
 
@@ -17,6 +18,7 @@ Chạy ở gốc repo: `npx bizcity <lệnh>`. Chưa `npm install` thì dùng `n
 | `explain <MÃ>` | Nghĩa, vì sao, ai sửa, theo vai | — |
 | `skills install [--to]` | Chép skill kế toán cho AI | — |
 | `migrate`, `ledger verify`, `doctor` | Migration, toàn vẹn sổ, kiểm môi trường | CSDL |
+| `evidence verify --dir <thư mục>` | Bản niêm phong bằng chứng của một đơn vị (`DATA_DIR/bang-chung/<đơn vị>`): băm tệp, băm từng dòng, manifest nối ngày ([ADR-0030](../../docs/adr/ADR-0030-ban-niem-phong-bang-chung.md)); chiều CSDL ở `GET /api/v1/evidence/verify` | — (chỉ thư mục) |
 
 Máy chủ: `BIZCITY_SERVER` + `BIZCITY_API_KEY`, hoặc `--server` / `--key`. Mã thoát: `0` PASS, `1` FAIL, `2` SKIP hoặc lỗi dùng lệnh. Chi tiết cách đọc kết quả: [docs/core/02](../../docs/core/02-cong-cu-kiem.md).
 

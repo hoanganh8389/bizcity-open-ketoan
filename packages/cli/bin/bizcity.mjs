@@ -12,6 +12,8 @@
  *   module list           module SDK trong modules/
  *   migrate               migration Core rồi migration từng module SDK (CSDL theo DATABASE_URL)
  *   ledger verify         lane diagnostics (SQL đọc sổ) ở mức strict — sổ có toàn vẹn không
+ *   evidence verify --dir <DATA_DIR/bang-chung/<đơn vị>> [--json]
+ *                         kiểm bản niêm phong bằng chứng không cần CSDL: băm tệp, băm từng dòng, manifest nối ngày (ADR-0030)
  *   doctor                Node, gói đã dựng, CSDL kết nối được, migration còn chờ, module SDK đã chạy migration chưa
  *   event check <tệp.json|-> [--submit] [--json]
  *                         kiểm một chứng từ trước khi vào sổ: khuôn + tổng tiền (offline) → tiền kiểm L1–L4 → định khoản thử L5 (dryRun) → nộp
@@ -223,6 +225,17 @@ async function skillsInstall(args) {
   }
 }
 
+// [2026-11-06 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: evidence verify (ngoại tuyến, cho kiểm toán viên)
+async function evidenceVerify(args) {
+  const dir = flag(args, '--dir');
+  if (!dir) usage('evidence verify --dir <DATA_DIR/bang-chung/<đơn vị>>');
+  if (!existsSync(dir)) fail(`Không có thư mục ${dir}`);
+  const { verifyDir, formatReport } = await import('../lib/evidence-seal.mjs');
+  const r = verifyDir(path.resolve(dir));
+  out(args.includes('--json') ? JSON.stringify(r, null, 2) : formatReport(r));
+  process.exitCode = r.findings.length ? 1 : 0;
+}
+
 const HELP = readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith(' *   ')).map((l) => l.slice(3)).join('\n');
 const [cmd, sub, ...rest] = process.argv.slice(2);
 if (cmd === 'module' && sub === 'new') moduleNew(rest);
@@ -231,6 +244,7 @@ else if (cmd === 'module' && sub === 'accounting-check') await moduleAccounting(
 else if (cmd === 'module' && sub === 'list') out(sdkModules().join('\n') || '(chưa có module SDK nào trong modules/)');
 else if (cmd === 'migrate') migrate();
 else if (cmd === 'ledger' && sub === 'verify') ledgerVerify();
+else if (cmd === 'evidence' && sub === 'verify') await evidenceVerify(rest);
 else if (cmd === 'doctor') await doctor();
 else if (cmd === 'event' && sub === 'check') await eventCheck(rest);
 else if (cmd === 'flow' && sub === 'check') await flowCheck(rest);
