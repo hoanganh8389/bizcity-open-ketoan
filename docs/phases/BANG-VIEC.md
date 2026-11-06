@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 20 |
+| Đang làm | 19 |
 | Chờ merge | 0 |
 | Bị chặn | 25 |
-| Chưa ai nhận | 112 |
-| Chờ đủ tín hiệu | 41 |
+| Chưa ai nhận | 111 |
+| Chờ đủ tín hiệu | 43 |
 | Hoãn | 1 |
 | Xong | 200 |
 | **Tổng** | **399** |
 
-## Đang làm (20)
+## Đang làm (19)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -36,8 +36,7 @@
 | [S028-6](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L15) | PHASE-028 | W1: userroleassignments (0075) , quyền hiệu lực = vai trò chính ∪ vai trò bổ sung, ADMINROLES, action gán / t… | P0 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w1-vai-tro-bo-sung` |
 | [S028-8](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L17) | PHASE-028 | W3: đóng 17 route ghi thô còn lại, requireScope() | P1 | hoanganh8389 (phiên Claude, PHASE-028 engine) · `feat/phase-028-w3-engine` |
 | [S029-10](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L19) | PHASE-029 | Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → account… | P0 | hoanganh8389 (phiên Claude, PHASE-029 cấu hình) · `feat/phase-029-e2-cau-hinh` |
-| [S029-29](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L38) | PHASE-029 | Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại,… | P0 | hoanganh8389 (phiên Claude, PHASE-029 nền móng) · `feat/phase-029-e1-sc-core-1` |
-| [S029-30](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L39) | PHASE-029 | Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đ… | P1 | hoanganh8389 (phiên Claude, PHASE-029 nền móng) · `feat/phase-029-e1-sc-core-1` |
+| [S029-13](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L23) | PHASE-029 | Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEI… | P1 | hoanganh8389 (phiên Claude, PHASE-029 đối chiếu) · `feat/phase-029-e6-doi-chieu` |
 
 ## Chờ merge (0)
 
@@ -73,7 +72,7 @@
 | [S029-26](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L36) | PHASE-029 | Quan hệ người dùng ↔ nhân viên trong báo cáo bán hàng / KPI | P2 | — |
 | [S029-32](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L20) | PHASE-029 | Cấu hình đợt 2: route ghi riêng → setSetting; valueType cho module; chặn đọc thô tenants.settings; xuất / nhậ… | P1 | — |
 
-## Chưa ai nhận (112)
+## Chưa ai nhận (111)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -179,7 +178,6 @@
 | [S028-11](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L20) | PHASE-028 | W6: S-5..S-n vào pillar VII tru-cot.json, SC-AUTH-01..12 | P1 | — |
 | [S029-7](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L16) | PHASE-029 | module check bắt module nộp sổ không qua W2a; DG-DOC- lane SQL | P1 | — |
 | [S029-11](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L21) | PHASE-029 | Chứng từ documents + documentmeta (mô hình posts / postmeta), ctx.documents.transition, quan hệ có đóng hiệu … | P1 | — |
-| [S029-13](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L23) | PHASE-029 | Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu | P1 | — |
 | [S029-14](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L24) | PHASE-029 | Kiểm đường ghi ngoài action mang tenant / actor / nguồn / correlation (ECP-02) | P2 | — |
 | [S029-15](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L25) | PHASE-029 | Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ | P1 | — |
 | [S029-16](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L26) | PHASE-029 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | P2 | — |
@@ -190,7 +188,7 @@
 | [S029-27](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L37) | PHASE-029 | Báo cáo tài chính, cân đối phát sinh, tuổi nợ đi thẳng tới bút toán | P2 | — |
 | [S029-28](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L41) | PHASE-029 | Khớp danh mục sự kiện với hợp đồng (module.enabled / disabled, sự kiện chưa phát); hạn idempotency vào regist… | P2 | — |
 
-## Chờ đủ tín hiệu (41)
+## Chờ đủ tín hiệu (43)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -234,6 +232,8 @@
 | [S027-2](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L7) | PHASE-027 | CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), sk… | P0 | — |
 | [S027-3](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L8) | PHASE-027 | CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế … | P1 | — |
 | [S029-9](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L18) | PHASE-029 | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CAN… | P0 | — |
+| [S029-29](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L38) | PHASE-029 | Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại,… | P0 | — |
+| [S029-30](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L39) | PHASE-029 | Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đ… | P1 | — |
 | [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
 
 ## Hoãn (1)

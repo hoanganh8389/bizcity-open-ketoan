@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 20
+      "count": 19
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 112
+      "count": 111
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 41
+      "count": 43
     },
     {
       "key": "paused",
@@ -4319,11 +4319,17 @@
     {
       "id": "S029-13",
       "phase": "PHASE-029",
-      "title": "Sổ đăng ký đối chiếu: phần chạy tay thành chẩn đoán có mã; mỗi projection một phép đối chiếu",
+      "title": "Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEINVALID + lane + mục sổ đăng ký ở DIAGNOSTICS.md; p…",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-029 đối chiếu)",
+        "branch": "feat/phase-029-e6-doi-chieu",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-029 · E6 đợt 1 — sổ đăng ký đối chiếu: bốn mã chẩn đoán thay phần chạy tay của doi-chieu-ke-t…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 23
     },
@@ -4498,14 +4504,8 @@
       "title": "Phép kiểm SC-CORE-1 trên docs/standard/nen-mong.json: sáu lõi có capability available, mã + hợp đồng tồn tại, trụ cột thuộc đúng một lõi, tín hiệu co có thật, …",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
-        "branch": "feat/phase-029-e1-sc-core-1",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-029 · E1 — phép kiểm SC-CORE-1 giữ sáu năng lực lõi (chữ chốt 30 §4) + thẻ Nền móng ở màn HT1…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 38
     },
@@ -4515,14 +4515,8 @@
       "title": "Màn HT10 theo bản mẫu ma trận nền móng: năm thẻ (sáu lõi · 17 trụ cột · ECP · tín hiệu · tinh gọn), API chỉ đọc nen-mong.json (GET /api/v1/system/foundations, …",
       "priority": "P1",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-029 nền móng)",
-        "branch": "feat/phase-029-e1-sc-core-1",
-        "state": "đang làm",
-        "since": "2026-11-05",
-        "dot": "PHASE-029 · E1 — phép kiểm SC-CORE-1 giữ sáu năng lực lõi (chữ chốt 30 §4) + thẻ Nền móng ở màn HT1…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 39
     },

@@ -21,3 +21,12 @@ Phần mềm chia thành các **phân hệ**, mỗi phân hệ là một "ứng 
 - Một chức năng có thể nằm ở nhiều phân hệ (vd Nhập xuất tồn ở cả Kế toán và Kho; Danh mục mặt hàng ở Kế toán, Bán hàng, Mua hàng, Kho). Mở ở đâu cũng là cùng một màn, cùng dữ liệu.
 - Mở một màn bằng ô **Tìm chức năng** (Ctrl + K) hay thẻ đã ghim thì phần mềm tự chuyển sang phân hệ chứa màn đó.
 - **Bảng điều khiển số liệu** (doanh thu, thuế, tiền thu, chứng từ lỗi): liên kết dưới lưới phân hệ, hoặc Kế toán → Bảng điều khiển.
+
+## Tìm màn ở đâu
+
+- **Trang Tổng quan** là bảng điều hành: truy cập nhanh (Phân hệ, Hay dùng), tình hình tài chính, lịch công việc. Bấm một ô số để xem báo cáo gốc; bấm một ngày trên lịch để xem việc ngày đó. Ô phân hệ mở trang chủ của nhóm: sơ đồ các bước, bấm bước nào mở màn đó. Hàng **Tiện ích** bên dưới có danh mục liên quan; ở Mua hàng có thêm **Luồng chi tiết**.
+- **Menu trái** chia theo việc: Tiền, Mua hàng, Bán hàng, Kho, Công nợ, Tài sản, Thuế, Tổng hợp, Danh mục, Số dư ban đầu. Bấm một nhóm để bung danh sách màn.
+- **Thẻ dưới dải màn đang mở** là các màn chính của nhóm đang làm, bấm một lần để chuyển.
+- **Báo cáo** nằm ở một trang riêng, mở từ cuối menu trái hoặc thẻ Báo cáo của nhóm.
+- **Thanh mép phải** có Việc cần làm (dấu `!` là có việc gấp ở nhóm đang làm), Trợ lý và Thông báo. Bấm icon để mở; đưa chuột ra ngoài hoặc bấm nút thu nhỏ để thu lại; bấm ghim nếu muốn giữ bảng mở.
+- Biết mã màn thì bấm Ctrl + K rồi gõ mã, mã vẫn dùng như cũ.

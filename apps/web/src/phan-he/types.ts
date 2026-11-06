@@ -6,6 +6,6 @@ import type { ModuleMeta } from '@ketoan/contracts';
  */
 export interface WebModule extends ModuleMeta {
   groups: string[];
-  /** false = không hiện trên thanh phân hệ trên cùng (vẫn có ở trang Tổng quan); mặc định hiện. */
+  /** Không còn tác dụng từ khi bỏ thanh phân hệ trên cùng; giữ để manifest cũ không phải đổi. */
   topBar?: boolean;
 }
