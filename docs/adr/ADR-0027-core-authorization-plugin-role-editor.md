@@ -102,3 +102,33 @@ Cấp quyền module cho một nhóm người = luật **Cho** trên vai trò tu
    - RLS cô lập đơn vị.
    - `authz_version` tăng ở mỗi lần ghi.
    - Lớp đọc + `authorize`: base ∪ Cho, Cấm thắng cả quyền của vai trò chính, vai trò vô hiệu không cấp, thu hồi lần gán có hiệu lực ngay.
+
+### Chữ chốt bước 3 — API quản trị vai trò của đơn vị và thi hành Cho + Cấm (PHASE-028 W2 đợt 2)
+<!-- [2026-11-06 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2 đợt 2: chữ chốt API quản trị + thi hành Cho / Cấm ở auth.ts (RULE-FLOW §3, đụng thứ dùng chung); chủ chọn thi hành luôn và confirmPassword -->
+
+Chủ dự án chọn 2026-11-06: (a) thi hành luôn Cho + Cấm cho lần gán phạm vi cả đơn vị + mục đích `operate` (như W1), không để lần gán "đăng ký mà không thi hành" (AUTHZ-16); (b) nhập lại mật khẩu bằng trường `confirmPassword` trong thân yêu cầu. Chi nhánh / kho, mục đích khác, Nới, điều kiện, nối bộ tính đầy đủ vẫn ở bước 4.
+
+1. **Quyền hiệu lực** (`core/auth.ts`, đường vé người dùng): `P = (quyền vai trò chính ∪ quyền các vai trò bổ sung W1 ∪ [nền + Cho] của mọi vai trò của đơn vị còn hiệu lực) − (mọi quyền khớp một luật Cấm của các vai trò của đơn vị còn hiệu lực)`. Cấm thắng cả quyền của vai trò chính (D-AUTH-04). Chỉ dòng `scope_type = 'tenant'` và `purpose = 'operate'`; vai trò vô hiệu (`is_active = false`) không cấp và không cấm. **Cấm không áp cho người có vai trò chính hoặc bổ sung thuộc `ADMIN_ROLES`** (chống khoá chủ đơn vị khỏi quản trị). Khoá API, khoá app, vé đăng nhập qua hệ thống quản trị (`claims.perms`): không đổi.
+2. **Nguồn đọc:** mở rộng `extraRoles` của W1 thành một lần đọc trả `{ roles, allow, deny }` (vai trò hệ thống bổ sung, quyền Cho đích danh, mẫu Cấm), đệm 15 giây theo người dùng như hôm nay. Ghi vai trò / luật / lần gán trong tiến trình xoá đệm **của mọi người đang giữ vai trò đó** ngay; giữa các tiến trình, đệm cũ tối đa 15 giây (`authz_version` dùng ở bước 4 để bỏ khoảng này).
+3. **API** (quyền `users:write`, `ai: 'deny'`, `mcp: false`, idempotency `natural`, mọi thay đổi `writeAudit` có lý do):
+
+   | Việc | Action | Đường |
+   |---|---|---|
+   | Danh sách / chi tiết vai trò của đơn vị (kèm luật đang áp dụng, số người giữ) | — (đọc) | `GET /api/v1/roles`, `GET /api/v1/roles/:id` |
+   | Tạo vai trò | `core.role.create` | `POST /api/v1/roles` |
+   | Sửa tên, bật / tắt | `core.role.update` | `PATCH /api/v1/roles/:id` (kèm `version` hiện tại, sai → 409) |
+   | Thêm luật | `core.role.rule-add` | `POST /api/v1/roles/:id/rules` |
+   | Gỡ luật | `core.role.rule-remove` | `POST /api/v1/roles/:id/rules/:ruleId/remove` (lý do ≥ 3 ký tự) |
+   | Gán vai trò của đơn vị | `core.user.role-assign` (mở rộng của W1: đúng một trong `role` / `tenantRoleId`) | `POST /api/v1/users/:id/roles` |
+   | Thu hồi | `core.user.role-revoke` (W1, giữ nguyên) | như cũ |
+
+4. **Luật cứng thi hành ở máy chủ** (ADR-0027 Phụ lục A, luật cứng 1–4):
+   - Cho: quyền đích danh, **có trong sổ quyền của code** (`isKnownPermission`) và không `removed`. Cấm: mẫu phải khớp ít nhất một quyền đang biết. Loại `restriction` chỉ nhận Cấm.
+   - **Chống leo thang:** người thêm luật Cho phải tự có quyền đó; người gán phải có mọi quyền của vai trò (nền + Cho). Cấm: không giới hạn.
+   - **Nhập lại mật khẩu (`confirmPassword`, kiểm bằng `verifyPassword` của chính người thao tác)** khi thêm Cho quyền `risk: high`, hoặc gán vai trò của đơn vị đang có Cho quyền `risk: high`. Sai / thiếu → `VALIDATION`, không ghi gì.
+   - Không tự gán cho chính mình (W1). Vai trò vô hiệu: không gán mới được; lần gán cũ còn nhưng không cấp gì.
+   - Mã vai trò dạng `^[a-z][a-z0-9_-]{1,39}$`, nền ∈ năm vai trò không quản trị (CSDL cũng chặn).
+5. **Danh mục quyền tra cho giao diện:** dùng `GET /api/v1/system/permissions` đã có; không tạo nguồn quyền thứ hai (client không gửi định nghĩa quyền).
+6. **Chưa làm ở đợt này:** màn `modules/phan-quyen` (đợt 3, chỉ giao diện trên API này); "Xem như" người dùng; `authz_version` thay đệm; nối `core/authz` bộ tính vào `requirePermission` / `runAction` (bước 4).
+7. **Test** (`apps/api/test/vai-tro-don-vi-api.test.ts`): tạo / sửa / vô hiệu; luật Cho đích danh và quyền lạ bị chặn; leo thang bị chặn; quyền cao đòi `confirmPassword`; gán → `/auth/me` có quyền Cho ngay trên vé cũ; Cấm bỏ được quyền của vai trò chính; owner không bị Cấm; thu hồi / gỡ luật / vô hiệu có hiệu lực ngay; đơn vị khác không thấy và không gán được; vai trò hệ thống không đổi hành vi (`vai-tro-bo-sung` vẫn xanh).
+8. **Tệp dự kiến** (dòng giữ chỗ W2 đợt 2, thêm sau khi PR W2 đợt 1 nhả dòng hiện có): `packages/platform/src/core/auth.ts`, `packages/platform/src/core/security/role-assignments.ts`, `apps/api/src/modules/access/**` (thêm `tenant-role.service.ts`, `tenant-role.routes.ts`), `apps/api/test/vai-tro-don-vi-api.test.ts`, `apps/api/src/modules/system/schema-catalog.ts` (không đổi trừ khi cần), thư mục phase.
