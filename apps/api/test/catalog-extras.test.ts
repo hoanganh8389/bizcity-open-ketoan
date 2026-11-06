@@ -70,6 +70,23 @@ describe('Thông tin đơn vị', () => {
   });
 });
 
+describe('Khối ảnh', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PzWvWQAAAABJRU5ErkJggg==';
+  const URL = '/api/v1/tenant/image-blocks';
+  it('cài, giữ nguyên ảnh kia, bỏ ảnh; từ chối ảnh sai loại, mã sai; không ảnh hưởng thông tin đơn vị', async () => {
+    expect((await call(ctx, 'GET', URL)).body.data).toEqual({});
+    expect((await call(ctx, 'PUT', `${URL}/banner-a`, { desktop: png })).body.data).toEqual({ 'banner-a': { desktop: png } });
+    expect((await call(ctx, 'PUT', `${URL}/banner-a`, { mobile: png })).body.data['banner-a']).toEqual({ desktop: png, mobile: png });
+    expect((await call(ctx, 'PUT', `${URL}/banner-a`, { desktop: null })).body.data['banner-a']).toEqual({ mobile: png });
+    expect((await call(ctx, 'PUT', `${URL}/banner-a`, { desktop: 'data:image/svg+xml;base64,PHN2Zz4=' })).status).toBe(400);
+    expect((await call(ctx, 'PUT', `${URL}/BANNER_A`, { desktop: png })).status).toBe(400);
+    const before = (await call(ctx, 'GET', '/api/v1/tenant')).body.data;
+    expect((await call(ctx, 'PUT', '/api/v1/tenant', { name: before.name, taxCode: before.taxCode })).status).toBe(200);
+    expect((await call(ctx, 'GET', URL)).body.data['banner-a']).toEqual({ mobile: png });
+    expect((await call(ctx, 'PUT', `${URL}/banner-a`, { mobile: null })).body.data).toEqual({});
+  });
+});
+
 describe('Nhóm công cụ dụng cụ, mục đích sử dụng', () => {
   it('danh mục có sẵn hai nhóm; thẻ công cụ gắn nhóm, mục đích; mã lạ bị từ chối', async () => {
     const groups = (await call(ctx, 'GET', '/api/v1/dimensions/tool_group')).body.data.map((d: { code: string }) => d.code);

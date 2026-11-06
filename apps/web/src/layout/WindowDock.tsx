@@ -1,16 +1,16 @@
+// [2026-11-06 03:20 AM Nguyễn Văn Thủy] MENU — bỏ ô Màn chính, thanh nằm trong vùng làm việc để không che menu trái
 /**
  * THANH CỬA SỔ DƯỚI ĐÁY (như thanh tác vụ) — mọi hộp thoại (Modal, phiếu mua hàng, phiếu thu chi…) thu nhỏ được xuống đây:
  *   - nút "—" cạnh ✕ trên hộp thoại: ẩn hộp thoại nhưng GIỮ NGUYÊN mọi thứ đang gõ (component vẫn dựng, chỉ ẩn);
  *   - mỗi hộp thoại một ô: tên phiếu, chấm cam = chưa lưu; bấm ô = mở lại đúng chỗ đang dở (tự chuyển sang thẻ chứa nó);
  *     bấm ô đang mở = thu nhỏ; × trên ô = đóng như bấm ✕;
- *   - ô "Màn chính" luôn ở đầu: thu nhỏ hết hộp thoại đang mở, quay về màn đang làm;
  *   - nút "Đóng tất cả" ở cuối và chuột phải vào ô (đóng ô này / các ô khác / tất cả, thu nhỏ tất cả); có phiếu chưa lưu thì hỏi lại.
  * Thanh chỉ hiện khi có ít nhất một hộp thoại (không chiếm chỗ khi không cần). Hộp thoại lồng trong hộp thoại khác (vd sửa
  * ĐVT mở từ phiếu) không tạo ô riêng — đi theo hộp thoại cha. Mở lại một hộp thoại thì hộp thoại khác cùng thẻ tự thu nhỏ.
  */
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Minus, X, XCircle } from 'lucide-react';
+import { Minus, X, XCircle } from 'lucide-react';
 
 interface Win { id: string; key?: string; label: string; tab: string; minimized: boolean; dirty: boolean; order: number; minimize: () => void; restore: () => void; close: () => void }
 
@@ -107,7 +107,6 @@ export function WindowDock() {
   useEffect(() => { document.body.classList.toggle('has-dock', list.length > 0); return () => document.body.classList.remove('has-dock'); }, [list.length]);
   if (!list.length) return null;
   const cur = here();
-  const open = list.filter((w) => !w.minimized && w.tab.split('?')[0] === cur);
   /** Đóng nhiều hộp thoại một lượt; có phiếu chưa lưu thì hỏi lại một lần. */
   const closeMany = (ws: Win[]) => {
     const dirty = ws.filter((w) => w.dirty);
@@ -119,10 +118,6 @@ export function WindowDock() {
   const target = menu?.id ? list.find((w) => w.id === menu.id) : undefined;
   return (
     <nav className="win-dock" aria-label="Hộp thoại đang mở" onContextMenu={(e) => ctx(e)}>
-      <button type="button" className={`win-chip win-home${open.length ? '' : ' on'}`} title="Về màn chính: thu nhỏ mọi hộp thoại đang mở (không mất dữ liệu)" onClick={() => open.forEach((w) => w.minimize())}>
-        <Home size={14} /> Màn chính
-      </button>
-      <span className="win-sep" />
       {[...list].sort((a, b) => a.order - b.order).map((w) => {
         const active = !w.minimized && w.tab.split('?')[0] === cur;
         return (
@@ -146,7 +141,7 @@ export function WindowDock() {
             {list.length > 1 && <button type="button" className="danger" onClick={() => closeMany(list.filter((w) => w.id !== target.id))}>Đóng các ô khác ({list.length - 1})</button>}
             <hr />
           </>}
-          <button type="button" onClick={() => { list.forEach((w) => !w.minimized && w.minimize()); setMenu(null); }}>Thu nhỏ tất cả — về màn chính</button>
+          <button type="button" onClick={() => { list.forEach((w) => !w.minimized && w.minimize()); setMenu(null); }}>Thu nhỏ tất cả</button>
           <button type="button" className="danger" onClick={() => closeMany(list)}>Đóng tất cả ({list.length})</button>
         </div>
       )}

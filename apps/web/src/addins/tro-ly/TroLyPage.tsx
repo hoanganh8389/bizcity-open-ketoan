@@ -8,7 +8,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { BookOpen, Bot, GraduationCap, ListTree, MessageCircleQuestion, Play, Search } from 'lucide-react';
+import { BookOpen, Bot, ListTree, Play, Search } from 'lucide-react';
 import { api, errorText } from '@/lib/api';
 import { money } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
@@ -18,8 +18,7 @@ import { ErrorBox, Loading } from '@/components/ui';
 import { getGuide, listGuides } from '@/help/guides';
 import { CORE_MENU, flattenMenu, mergeAddInMenu, type AddInManifestDto } from '@/layout/menu';
 import { FLOWS, PART_TEXT, type Flow } from './flows';
-import { FAQ, fold, safeMarkdown, trainedFaq, useTraining } from './knowledge';
-import { TrainingTab } from './TrainingTab';
+import { fold, safeMarkdown } from './knowledge';
 
 interface Reason { code: string; name: string; kind: string; counterAccount: string | null; isActive: boolean; flags?: Record<string, unknown> | null }
 interface TaxCode { code: string; name: string; rate: number; direction: string; isActive: boolean }
@@ -251,44 +250,17 @@ function SearchTab() {
   );
 }
 
-function FaqTab() {
-  const [text, setText] = useState('');
-  const [open, setOpen] = useState<number | null>(0);
-  const qf = fold(text.trim());
-  const trained = trainedFaq(useTraining().data);
-  const list = [...trained, ...FAQ].map((x, i) => ({ ...x, i })).filter((x) => !qf || fold(`${x.q} ${x.a} ${(x.keywords ?? []).join(' ')}`).includes(qf));
-  return (
-    <div style={{ display: 'grid', gap: 8, maxWidth: 980 }}>
-      <div className="row" style={{ gap: 8 }}>
-        <Search size={16} className="muted" />
-        <input className="input" style={{ flex: 1, maxWidth: 520 }} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tìm câu hỏi: chờ huỷ, đảo bút toán, giá vốn, chiết khấu…" />
-        <span className="muted">{list.length} câu hỏi</span>
-      </div>
-      {list.map((x) => (
-        <div key={x.i} className="card">
-          <button type="button" className="troly-faq-q" onClick={() => setOpen(open === x.i ? null : x.i)}>{open === x.i ? '▾' : '▸'} {x.q}{x.id && <span className="badge badge-ok" style={{ marginLeft: 8, fontWeight: 400 }}>huấn luyện</span>}</button>
-          {/* safeMarkdown: chặn HTML thô, chỉ nhận liên kết / ảnh an toàn (mục huấn luyện do người dùng nhập). */}
-          {open === x.i && <div className="doc card-body" style={{ paddingTop: 0 }} dangerouslySetInnerHTML={{ __html: safeMarkdown(x.a) }} />}
-        </div>
-      ))}
-      {list.length === 0 && <div className="empty">Chưa có câu hỏi phù hợp. Thêm câu hỏi ở thẻ "Dữ liệu huấn luyện".</div>}
-    </div>
-  );
-}
-
 export function TroLyPage() {
-  const [tab, setTab] = useState<'flow' | 'search' | 'faq' | 'train'>('flow');
+  const [tab, setTab] = useState<'flow' | 'search'>('flow');
   return (
     <>
-      <PageHeader title="Trợ lý" code="TI12" subtitle="Luồng bút toán theo cấu hình hiện tại, tìm tính năng, hỏi đáp thường gặp, dữ liệu huấn luyện robot"
-        actions={<button className="btn" onClick={() => window.dispatchEvent(new Event('troly:open'))} title="Robot trợ lý ở góc phải dưới màn hình"><Bot size={15} /> Mở robot trợ lý</button>} />
+      <PageHeader title="Trợ lý" code="TI12" subtitle="Luồng bút toán theo cấu hình hiện tại, tìm tính năng" helpKey="tro-ly"
+        actions={<button className="btn" onClick={() => window.dispatchEvent(new Event('troly:open'))} title="Mở Trợ lý ở thanh mép phải"><Bot size={16} /> Mở Trợ lý</button>} />
       <div className="tabs" style={{ marginBottom: 10, padding: 0 }}>
         <button className={`tab ${tab === 'flow' ? 'active' : ''}`} onClick={() => setTab('flow')}><ListTree size={14} style={{ verticalAlign: -2 }} /> Luồng bút toán</button>
         <button className={`tab ${tab === 'search' ? 'active' : ''}`} onClick={() => setTab('search')}><BookOpen size={14} style={{ verticalAlign: -2 }} /> Tìm tính năng</button>
-        <button className={`tab ${tab === 'faq' ? 'active' : ''}`} onClick={() => setTab('faq')}><MessageCircleQuestion size={14} style={{ verticalAlign: -2 }} /> Hỏi đáp</button>
-        <button className={`tab ${tab === 'train' ? 'active' : ''}`} onClick={() => setTab('train')}><GraduationCap size={14} style={{ verticalAlign: -2 }} /> Dữ liệu huấn luyện</button>
       </div>
-      {tab === 'flow' ? <FlowTab /> : tab === 'search' ? <SearchTab /> : tab === 'faq' ? <FaqTab /> : <TrainingTab />}
+      {tab === 'flow' ? <FlowTab /> : <SearchTab />}
     </>
   );
 }
