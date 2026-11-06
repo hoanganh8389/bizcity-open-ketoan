@@ -132,7 +132,7 @@ Việc S030-15 nay có nguồn cụ thể:
 1. viết bộ chuyển đổi `lfood-legal-params@1 → vn-rulepacks`: khoá đổi sang `<nhóm>.<tên>`, giữ mã gốc làm bí danh;
 2. tách `legal_ref` thành `{ văn bản, điều, khoản, điểm }` (`verified: false`);
 3. kế toán trưởng xác nhận giá trị (S030-12);
-4. nạp khi E2 merge.
+4. nạp: E2 đã merge (#105). Vì `setting_values` gắn **một đơn vị** mỗi dòng, tham số **luật** (quốc gia, giống nhau mọi đơn vị) đi vào `vn-rulepacks` làm **mặc định theo ngày** cho mọi đơn vị (có phiên bản, duyệt khi cài — ADR-0016); `setting_values` chỉ giữ 2 tham số `policy` và giá trị đơn vị **ghi đè** (bắt lý do). `getSetting` đọc: đơn vị ghi đè → mặc định rulepack tại ngày → mặc định registry. Cần thêm vào registry `legalRef`, `kind` (P-030-2).
 
 Hai bảng đi cùng đường này:
 - **thuế suất GTGT có hiệu lực** (vd 8 % từ 01/07/2025 theo NQ 204/2025/QH15, NĐ 174/2025/NĐ-CP);
@@ -205,4 +205,4 @@ Chẩn đoán:
 | S030-32 | Màn HT11 (6 khối) + màn chi tiết bằng chứng (ai / khi nào / từ đâu / làm gì / chống sửa / các cổng / căn cứ) | web | S030-29, S030-31 |
 | S030-33 | Golden T030-GATE-1..4 | Conformance | S030-29 |
 | S030-34 | HT09 mở sang luật nhập chứng từ (`ENTRY-*`), áp ở cổng `validation` mọi đường vào | Platform | S030-28 |
-| S030-35 | Bộ chuyển đổi `lfood-legal-params@1` → `vn-rulepacks` (120 tham số) + thuế suất GTGT có hiệu lực + lịch nghỉ lễ; `basis.article` | Platform + kế toán trưởng | E2 merge, S030-12 |
+| S030-35 | Bộ chuyển đổi `lfood-legal-params@1` → `vn-rulepacks` (120 tham số) + thuế suất GTGT có hiệu lực + lịch nghỉ lễ; `basis.article` | Platform + kế toán trưởng | S030-12 (E2 đã merge #105) |

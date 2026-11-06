@@ -198,7 +198,7 @@ const PAGES = [
 const MECHANISMS = [
   {n:'Ghi sổ một cửa, khoá chứng từ nguồn', s:'ok', where:'postDocumentIn · ctx.ledger.submit · UNIQUE(tenant_id, doc_key)', gap:'SC-STD-1 cho modules/**; chưa module nào dùng ctx.ledger.submit', doc:'15 §1 #1 · 16 §2'},
   {n:'Sửa sau ghi sổ = đảo + ghi lại', s:'ok', where:'Kernel version / posted_version · append-only (0049)', gap:'luồng điều chỉnh hai con trỏ ở chứng từ module (DOC-030-3, K-030-8)', doc:'16 §4'},
-  {n:'Tham số pháp lý có ngày hiệu lực', s:'bad', where:'hợp đồng BIZCITY-SETTINGS-MATRIX-v1 (chưa mã)', gap:'E2 setting_values đang làm (S029-10); thêm legalRef + mô phỏng (P-030-2), seed VN (K-030-6)', doc:'17 STD-030-7'},
+  {n:'Tham số pháp lý có ngày hiệu lực', s:'warn', where:'setting_values (E2, #105): phạm vi, valid_from, phiên bản', gap:'legalRef + kind + gói luật VN theo ngày; nạp 120 tham số Erp-vn (S030-35)', doc:'17 STD-030-7'},
   {n:'Nhật ký kiểm toán chuỗi băm', s:'ok', where:'audit_logs chuỗi băm (0036) · writeEvidence', gap:'lý do thành trường chung (STD-030-6)', doc:'17 STD-030-6'},
   {n:'Đối soát sổ cái ↔ sổ chi tiết', s:'warn', where:'scripts/doi-chieu-ke-toan.sql · assertLedgerInvariants', gap:'khai bằng dữ liệu cho sổ chi tiết mới (K-030-12)', doc:'15 §3 · 60 §4'},
   {n:'Một hàm chia tiền không lệch đồng', s:'bad', where:'chưa có ở packages/ — 2 bản riêng (mua-hang, tài sản)', gap:'allocate / schedule / roundMoney (S030-19)', doc:'18'}

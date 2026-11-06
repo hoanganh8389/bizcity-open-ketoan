@@ -33,7 +33,7 @@
 |---|---|---|---|---|
 | Ghi sổ một cửa, khoá chứng từ nguồn | 15 §1 #1, 16 §2, STD-030-1 | CANON câu 1 & 3, R-EVENT, STD-DOC-1, ADR-0015 | ✅ `postDocumentIn`, `UNIQUE(tenant_id, doc_key)`, `ctx.ledger.submit` | SC-STD-1 cho `modules/**`; chưa module nào dùng `ctx.ledger.submit` |
 | Sửa sau ghi sổ = đảo + ghi lại | 15 §1 #2–3, **16 §4** (hai con trỏ) | CANON câu 2, R-LEDGER, STD-DOC-5, R-WF-4, DOC-04 | ✅ Kernel `version` / `posted_version`, append-only (0049) | luồng điều chỉnh ở chứng từ module (DOC-030-3, K-030-8) |
-| Tham số pháp lý có ngày hiệu lực | 15 §1 #5, 20 M2, STD-030-7 | R-MATRIX (chưa có ngày hiệu lực), ADR-0009 (chính sách định khoản) | ☐ `setting_values` E2 chưa có mã — **đang giữ chỗ** ở CLAIMS (PHASE-029 S029-10, đợt 1) | P-030-2 (thêm `legalRef`, `kind`, mô phỏng sau đợt 1) + seed VN (K-030-6) |
+| Tham số pháp lý có ngày hiệu lực | 15 §1 #5, 20 M2, STD-030-7 | R-MATRIX (chưa có ngày hiệu lực), ADR-0009 (chính sách định khoản) | 🟡 `setting_values` E2 **đã merge** (#105): phạm vi, ngày hiệu lực, phiên bản; chưa `legalRef` / `kind` / duyệt | P-030-2 (thêm `legalRef`, `kind`, mô phỏng sau đợt 1) + seed VN (K-030-6) |
 | Nhật ký kiểm toán chuỗi băm | 15 §1 #12, STD-030-6 | R-TEN, bizcity_evidence@1 | ✅ `audit_logs` chuỗi băm (0036), `writeEvidence` | lý do thành trường chung (STD-030-6) |
 | Đối soát sổ cái ↔ sổ chi tiết | 15 §1, K-030-12, 60 §4 (INV-4) | R-CONT (sổ chi tiết = sổ cái), R-DIAG | 🟡 `scripts/doi-chieu-ke-toan.sql` viết tay, `assertLedgerInvariants` | khai bằng dữ liệu cho sổ chi tiết mới (K-030-12) |
 | Một hàm chia tiền không lệch đồng | 15 §0 #4, STD-030-5, **18** | — | ☐ chưa có ở `packages/`; có 2 cách chia khác nhau (mua hàng, tài sản) | **18** (chốt thiết kế + dòng CLAIMS) |

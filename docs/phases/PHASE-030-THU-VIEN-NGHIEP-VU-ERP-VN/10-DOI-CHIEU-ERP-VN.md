@@ -26,7 +26,7 @@ Kiểm kê 2026-11-06 trên `origin/main` (dee8bf4) của open-ketoan và `main`
 | HT11 | Bảo vệ dữ liệu cá nhân (NĐ 356/2025) | ☐ | — | `lfood_privacy/models/privacy.py` | modules/nhan-su | P3 |
 | HT12 | Nhắc hạn tự động | 🟡 | `ctx.notify`, `bizcity.clock.daily`; chưa bộ gom nhắc theo nhóm | `lfood_reminder/models/reminder.py` | core | P2 |
 | HT13 | Ký số chứng từ | 🟡 | `document_signatures`; chưa đăng ký chứng thư / hạn | `lfood_signature/models/signature.py` | core | P3 |
-| CH01–CH02, CH08 | Tham số pháp lý theo ngày hiệu lực, cập nhật, lịch sử | 🟡 | `setting_values` (PHASE-029 E2 đang làm); chưa seed tham số pháp lý VN | `lfood_voucher/models/legal_param.py`, `*/data/legal_params.xml` | core + `vn-rulepacks` | **P1** |
+| CH01–CH02, CH08 | Tham số pháp lý theo ngày hiệu lực, cập nhật, lịch sử | 🟡 | `setting_values` (PHASE-029 E2 đã merge #105; chưa `legalRef`); chưa seed tham số pháp lý VN | `lfood_voucher/models/legal_param.py`, `*/data/legal_params.xml` | core + `vn-rulepacks` | **P1** |
 | CH03 | Mô phỏng ảnh hưởng trước khi áp | ☐ | — | context `lfood_param_sim`, `lfood_payroll/models/simulation.py` | core | P2 |
 | CH04 | Biểu thuế luỹ tiến, bảng bậc | ☐ | — | tham số `TNCN_BAC_n_DEN`, `TNCN_THUE_SUAT_n` | `vn-rulepacks` | P2 |
 | CH05 | Địa bàn, vùng lương tối thiểu | ☐ | — | `lfood_payroll/models/payroll.py` (`employee.region`) | modules/nhan-su | P2 |
