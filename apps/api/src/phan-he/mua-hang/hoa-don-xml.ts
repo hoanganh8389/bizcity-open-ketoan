@@ -139,6 +139,7 @@ export async function ingestInvoiceXml(trx: Db, tenantId: string, actor: string,
     tthai === 3 ? `Hoá đơn điều chỉnh${related ? ` cho ${related}` : ''}: kiểm tra lại số tiền` : '',
     tthai === 5 ? 'Hoá đơn này đã bị điều chỉnh bởi hoá đơn khác' : '',
     inv.currency.toUpperCase() !== 'VND' ? `Ngoại tệ ${inv.currency}: số tiền giữ nguyên theo hoá đơn` : '',
+    ...inv.notices,
     ...inv.warnings,
   ].filter(Boolean);
   const parsedInput = invoiceInputSchema.safeParse({
