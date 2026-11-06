@@ -97,9 +97,9 @@ scopeOf(input): { all: true } | { all: false; branchIds: string[]; warehouseIds:
 
 ## 8. Chưa thuộc bản này (đề xuất, chờ đợt riêng)
 
-- Nơi lưu vai trò **tuỳ biến** (ngoài 6 vai trò hệ thống) và luật của chúng: ADR-0027 chưa có bảng cho việc này; cần chữ chốt riêng trước khi làm Role Editor.
+- Nơi lưu vai trò **tuỳ biến** (ngoài 6 vai trò hệ thống) và luật của chúng: ~~ADR-0027 chưa có bảng cho việc này~~ đã chốt ở [ADR-0027 Phụ lục A](../adr/ADR-0027-core-authorization-plugin-role-editor.md) (`tenant_roles`, `tenant_role_rules`, lớp đọc `core/authz/store.ts` — PHASE-028 W2 đợt 1). Bảng `module_grants` **bỏ**: cấp quyền module = luật Cho của vai trò tuỳ biến. <!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: nơi lưu vai trò tuỳ biến đã chốt (Phụ lục A), bỏ module_grants -->
 - Khai siêu dữ liệu quyền trong manifest (`resource`, `operation`, `sensitive`, `scopeKinds`, `aliases`): tuỳ chọn, tương thích ngược, thêm khi `bizcity_module@1` mở minor.
-- Nối bộ tính vào `requirePermission` / `runAction`, đọc lần gán từ `user_role_assignments` (W1), `module_grants` (W2).
+- Nối bộ tính vào `requirePermission` / `runAction`, đọc lần gán từ `user_role_assignments` (W1) và vai trò tuỳ biến (W2) qua `loadAuthzSnapshot` — Phụ lục A bước 4. <!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: thay module_grants bằng vai trò tuỳ biến -->
 
 ## 9. Mã nguồn sự thật
 
@@ -116,3 +116,4 @@ Các tệp dưới đây đã vào `main` ở PR code W3 đợt 1 (#99):
 ## 10. Nhật ký
 
 - 1.0.0-draft (2026-11-06): bản đầu, chốt hình dạng bộ tính (PHASE-028 W3 đợt 1).
+- 1.0.0-draft (2026-11-06, bổ sung): nơi lưu vai trò tuỳ biến chốt ở ADR-0027 Phụ lục A; bỏ `module_grants` (PHASE-028 W2). Hình dạng bộ tính không đổi. <!-- [2026-11-06 01:29 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W2: nhật ký hợp đồng -->
