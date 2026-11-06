@@ -4727,7 +4727,7 @@
       "phase": "PHASE-030",
       "title": "Thư viện tiền 18: roundMoney, allocate, schedule vào packages/contracts, xuất ở module-sdk; chuyển allocate mua hàng và splitByDays / splitByPercent tài sản; g…",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, thu-vien-tien)",
