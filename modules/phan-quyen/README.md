@@ -44,4 +44,4 @@ Chưa phát, chưa nghe sự kiện nào.
 
 ## Chưa có
 
-Phạm vi chi nhánh / kho trong màn gán (chờ W3 đợt 2), điều kiện của luật, thẻ nhật ký phân quyền, nhập / xuất vai trò.
+Phạm vi kho trong màn gán (chi nhánh đã có từ W5 đợt 1 — chỉ có tác dụng ở cửa nạp chứng từ), điều kiện của luật, thẻ nhật ký phân quyền, nhập / xuất vai trò.

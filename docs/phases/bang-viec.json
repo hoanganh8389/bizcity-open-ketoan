@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 12
+      "count": 11
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 52
+      "count": 53
     },
     {
       "key": "paused",
@@ -4113,15 +4113,9 @@
       "phase": "PHASE-028",
       "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w5-quyen-chi-nhanh",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-028 · W5 đợt 1 — quyền theo chi nhánh ở cửa nạp chứng từ: requireScope ở POST /documents + /b…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
