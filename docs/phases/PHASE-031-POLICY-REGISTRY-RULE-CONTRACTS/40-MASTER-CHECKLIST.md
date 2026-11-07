@@ -1,5 +1,6 @@
 # PHASE-031 · 40 — Checklist
 <!-- [2026-11-06 09:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — việc con S031-*, ca T031-*, log -->
+<!-- [2026-11-07 09:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án chốt tài liệu + bản mẫu ("ok, chốt mockup và tài liệu này, merge về main để code"); D031-11: Policy Registry là năng lực Core / Platform, không module nghiệp vụ riêng; màn chung ở Hệ thống → Chính sách -->
 <!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án trả Q031-1..3: Policy Registry là trụ cột nền móng ngang MDG; L4b mặc định cảnh báo, POS tự động; online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
 
 Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nhóm.
@@ -7,7 +8,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | ID | Việc | Đợt | Ưu tiên | Code? | Trạng thái |
 |---|---|---|---|---|---|
 | S031-1 | ADR-0031 đề xuất, README (hiện trạng đọc mã), [00](00-MASTER-PLAN.md), [10](10-THIET-KE.md), checklist | W0 | P0 | không | ✅ 2026-11-06 |
-| S031-2 | Chủ dự án duyệt D031-0..10, trả Q031-1..3 | W0 | P0 | không | 🟡 Q031-1..3 ✅ 2026-11-07; chờ duyệt toàn bộ D031-* |
+| S031-2 | Chủ dự án duyệt D031-0..11, trả Q031-1..3 | W0 | P0 | không | ✅ 2026-11-07 |
 | S031-3 | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | W0 | P0 | không | ⛔ nhóm Lõi |
 | S031-4 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản `published`) + `policies.register / publish / resolve` ở Platform | W1 | P0 | có | ☐ |
 | S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | ☐ |
@@ -30,7 +31,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-22 | Nhánh `policy_review` trong `bizcity_read.document_queue`; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — [20 §3](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ |
 | S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
 | S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
-| S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | 🟡 bản 1 2026-11-07; chờ chủ dự án |
+| S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
 
 ## Ca bằng chứng (golden)
 
@@ -57,3 +58,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 
 - 2026-11-06 — W0: chủ dự án đưa đề bài *"chính sách nghiệp vụ được quản lý tập trung tại module … plugin bên ngoài sử dụng chính sách đã phát hành … Conformance gate … phối hợp với Accounting Rules để dựng bút toán dự kiến trước khi ghi sổ … chính sách được quản trị tập trung, nhưng không bắt buộc tính toán tập trung"*. Rà mã origin/main `c8afd39`: mua hàng có engine chính sách thuần nhưng không phiên bản; bán hàng không có luật ở Core; tiền kiểm L1–L5 và Conformance Engine không kiểm chính sách nghiệp vụ; L5 chạy thử sẵn là bút toán dự kiến. Viết ADR-0031 (đề xuất), README, 00, 10, checklist. Chờ S031-2, S031-3.
 - 2026-11-07 — chủ dự án trả **Q031-1** (trụ cột nền móng ngang MDG: *"quan trọng không kém master data … giữ chính sách xuyên suốt, liên quan đến định nghĩa nhiều hơn"*), **Q031-2** (L4b mặc định cảnh báo, POS tự động: đúng), **Q031-3** (online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry); chốt **ba yếu tố** của bộ: nhất quán cross-module · xuyên suốt · truy vết, kèm luật lean (D031-0). Thêm [20](20-TRUY-VET-VA-THEO-DOI.md) (tín hiệu đo ba yếu tố, truy vết bằng hai khung nhìn chỉ đọc, hàng việc = nhánh `policy_review` của `document_queue`, bảng theo dõi) và bản mẫu [chinh-sach.html](mockups/chinh-sach.html) bốn tab; S031-20..25, T031-TR-1..3, T031-RC-3; mã `POL-REF-000`.
+- 2026-11-07 — chủ dự án hỏi có nên làm module chính sách riêng → không: năng lực Core / Platform, màn chung ở *Hệ thống → Chính sách* (D031-11). Chủ dự án *"ok, chốt mockup và tài liệu này, merge về main để code"*: ADR-0031 chấp nhận, S031-2 và S031-25 ✅, W0 xong. Bước tiếp: PR giữ chỗ CLAIMS cho W1 (S031-4..6); W2 cần PR chốt thiết kế cửa nạp (S031-8) và nhóm Lõi trả Q031-4, Q031-6.

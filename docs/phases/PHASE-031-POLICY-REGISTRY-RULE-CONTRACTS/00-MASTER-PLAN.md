@@ -1,4 +1,5 @@
 # PHASE-031 · 00 — Master plan
+<!-- [2026-11-07 09:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án chốt tài liệu + bản mẫu ("ok, chốt mockup và tài liệu này, merge về main để code"); D031-11: Policy Registry là năng lực Core / Platform, không module nghiệp vụ riêng; màn chung ở Hệ thống → Chính sách -->
 <!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án trả Q031-1..3: Policy Registry là trụ cột nền móng ngang MDG; L4b mặc định cảnh báo, POS tự động; online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
 <!-- [2026-11-06 09:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — vì sao, D031-1..10 (ánh xạ D-POL-1..10 của ADR-0031), Q031-1..6, đợt W0–W4, ai làm gì -->
 
@@ -20,7 +21,7 @@ ADR-0029 nói *linh hoạt trước khi ghi sổ* và đặt tầng ① là chí
 - Conformance Engine hiện có **không** biến thành nơi chặn giao dịch hay tự ghi sổ.
 - **Không hai kho chính sách**: module sở hữu dữ liệu, Registry là bề mặt chung.
 
-## 3. Quyết định (D031-*, chờ chủ dự án duyệt)
+## 3. Quyết định (D031-*, chủ dự án chốt 2026-11-07)
 
 Chi tiết và lý do ở [ADR-0031](../../adr/ADR-0031-policy-registry-rule-contracts.md); thiết kế ở [10](10-THIET-KE.md).
 
@@ -37,6 +38,7 @@ Chi tiết và lý do ở [ADR-0031](../../adr/ADR-0031-policy-registry-rule-con
 | D031-9 | D-POL-9 | `GET /api/v1/policies` + sự kiện `policy.published` / `policy.retired` |
 | D031-0 | D-POL-0 | Ba yếu tố: nhất quán cross-module · xuyên suốt · truy vết, mỗi yếu tố có tín hiệu đo; luật lean |
 | D031-10 | D-POL-10 | Trụ cột **nền móng ngang MDG**: V của `tru-cot.json` lên `nền móng`, 05 của ADR-0028 đổi tên *Policy Registry & Rule Contracts*; khoá cấu hình = chính sách vô hướng; không đánh số lại |
+| D031-11 | D-POL-11 | Năng lực Core / Platform, không module nghiệp vụ riêng; màn chung ở *Hệ thống → Chính sách*; chính sách không chủ module → `he-thong`, `store: inline` |
 
 ## 4. Câu hỏi (Q031-*)
 

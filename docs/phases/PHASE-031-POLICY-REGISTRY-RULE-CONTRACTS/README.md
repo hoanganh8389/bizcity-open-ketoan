@@ -1,13 +1,14 @@
 # PHASE-031 — Policy Registry & Rule Contracts: chính sách nghiệp vụ quản trị tập trung, plugin dùng bản đã phát hành, cửa nạp kiểm lại trước khi ghi sổ
+<!-- [2026-11-07 09:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án chốt tài liệu + bản mẫu ("ok, chốt mockup và tài liệu này, merge về main để code"); D031-11: Policy Registry là năng lực Core / Platform, không module nghiệp vụ riêng; màn chung ở Hệ thống → Chính sách -->
 <!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án trả Q031-1..3: Policy Registry là trụ cột nền móng ngang MDG; L4b mặc định cảnh báo, POS tự động; online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
 <!-- [2026-11-06 09:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — mở phase từ đề bài chủ dự án 06/11: chính sách bán hàng / mua hàng / nhân sự do module sở hữu, Registry phát hành có phiên bản, plugin POS dùng theo và gửi sự kiện về, Conformance / Intake Gate kiểm lại, Kernel dựng bút toán dự kiến; ADR-0031 đề xuất -->
 
-> **Trạng thái:** 🟡 W0 tài liệu 2026-11-06; Q031-1..3 trả 2026-11-07, bản mẫu màn 2026-11-07 · **Code:** chưa
+> **Trạng thái:** ✅ W0 chốt 2026-11-07 (tài liệu + bản mẫu, ADR-0031 chấp nhận) · **Code:** chưa — W1 mở bằng dòng giữ chỗ CLAIMS
 > **Mức Kernel:** W1 K1 (Platform: phong bì Registry, phiên bản chính sách mua hàng); W2 K2 (cửa nạp nhận `policyRefs`, tầng L4b, Commit Guard); W3–W4 K1
 > **Mục tiêu:** Lấp nửa *Policy* còn thiếu của trụ cột 05 *Configuration & Policy Registry* (ADR-0028). Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) do **module sở hữu**, **phát hành có phiên bản** qua một Registry chung; plugin ngoài (POS WordPress, Woo, sàn) **dùng bản đã phát hành** và gửi tham chiếu về cùng sự việc; cửa nạp **tính lại để kiểm** rồi để Kernel dựng **bút toán dự kiến**. Truy vết được *bút toán → sự việc → chứng từ → chính sách căn cứ (phiên bản, băm)*.
 > **Việc lộ trình:** —
 > **Checklist công bố:** —
-> **Quyết định (ADR):** [ADR-0031](../../adr/ADR-0031-policy-registry-rule-contracts.md) (đề xuất); D031-* ở [00-MASTER-PLAN](00-MASTER-PLAN.md)
+> **Quyết định (ADR):** [ADR-0031](../../adr/ADR-0031-policy-registry-rule-contracts.md) (chấp nhận 2026-11-07); D031-* ở [00-MASTER-PLAN](00-MASTER-PLAN.md)
 > **Phụ thuộc:** ADR-0029 (tầng ① Chính sách nghiệp vụ), PHASE-021 (tiền kiểm L1–L5, bể chờ), PHASE-020 (Conformance Engine, tư vấn), PHASE-029 E2 (`setting_values`), PHASE-030 · 16 §5 (chính sách duyệt), · 21 (`GateResult`), · 50 / 52 (blueprint mua / bán)
 > **Nguồn yêu cầu:** chủ dự án 2026-11-06: *"chính sách nghiệp vụ được quản lý tập trung tại module Mua hàng, Bán hàng, Nhân sự… các plugin bên ngoài sử dụng chính sách đã phát hành, thay vì mỗi plugin tự định nghĩa một bộ quy tắc riêng … Chính sách được quản trị tập trung, nhưng không bắt buộc tính toán tập trung … Phía plugin POS wp ánh xạ theo chính sách này, bán hàng, và trả sự kiện bán hàng về theo luồng event driven, CONFORMANCE / ACCOUNTING INTAKE GATE check lại rồi ghi sổ."*
 > **Luật đi kèm:** [R-FLOW](../../rules/RULE-FLOW.md) (W0 tài liệu thuần; mỗi đợt code giữ chỗ riêng), [R-INTAKE](../../rules/RULE-INTAKE.md), [R-WF](../../rules/RULE-WORKFLOW.md) (R-WF-11, R-WF-16), [R-ECP](../../rules/RULE-ENTERPRISE-CONTINUITY.md) (ECP-13)
@@ -19,6 +20,7 @@
 | Có phải trụ cột mới? | **Trụ cột nền móng ngang Master Data** (chủ dự án 07/11). MDG giữ *cái gì*, Policy Registry giữ *theo luật nào* và giữ nó xuyên suốt mọi module. Gọn: trụ cột V của `tru-cot.json` lên vai `nền móng`, trụ cột 05 của ADR-0028 đổi tên *Policy Registry & Rule Contracts*; không đánh số lại |
 | Ba yếu tố? | **Nhất quán cross-module · xuyên suốt · truy vết**, mỗi yếu tố có tín hiệu đo ([20 §1](20-TRUY-VET-VA-THEO-DOI.md)) |
 | Hai kho chính sách? | Không. Module giữ nội dung; Registry giữ phong bì (khoá, phiên bản, phạm vi, hiệu lực, băm, Rule Contract) |
+| Có module "Chính sách" riêng? | Không. Registry là **năng lực Core / Platform** (Kernel phải đọc được kể cả khi module tắt); nội dung ở module chủ; màn chung ở *Hệ thống → Chính sách* (D031-11) |
 | Ai tính? | POS trực tuyến gọi `POST /api/v1/policies/evaluate`; ngoại tuyến tự tính bằng hàm viết lại theo bản mô tả JSON của Registry; module tính cho chứng từ nội bộ. Cùng một hàm tính tất định của Rule Contract; cửa nạp tính lại để **kiểm**, không thay |
 | Conformance Engine có thành cổng chặn? | Không. Engine PHASE-020 giữ vai tư vấn cấp đơn vị. Kiểm từng chứng từ là tầng **L4b** của cửa nạp, mặc định **cảnh báo** (mềm) |
 | Bút toán dự kiến ở đâu ra? | **L5 chạy thử** đã có (savepoint rồi lùi). Rule Contract chỉ chỉ `reasonCode`; Posting Rules và Ledger chỉ thuộc Kernel |
