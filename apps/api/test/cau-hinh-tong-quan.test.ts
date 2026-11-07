@@ -6,7 +6,7 @@
  *   T030-CFG-VIEW-3  khoá bí mật: có dòng, có cờ secret, KHÔNG có giá trị — kể cả khi đơn vị đã lưu bí mật trong cấu hình (D030-13)
  *   T030-CFG-VIEW-4  đổi một khoá: số phiên bản, thay đổi gần nhất (người, lý do) và bản sắp hiệu lực hiện đúng; sức khoẻ đếm đúng
  *   T030-CFG-VIEW-5  cô lập đơn vị; người chỉ xem đọc được; chưa đăng nhập 401
- *   T030-CFG-VIEW-6  mọi khoá "thiếu căn cứ" (registry chưa có trường căn cứ — nói thẳng, S030-38)
+ *   T030-CFG-VIEW-6  căn cứ: khoá loại A có căn cứ mặc định ở registry, khoá còn lại thiếu (S030-43)
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
@@ -125,10 +125,18 @@ describe('T030-CFG-VIEW — tổng quan cấu hình (HT13 chỉ đọc)', () => 
     expect(anon.statusCode).toBe(401);
   });
 
-  it('T030-CFG-VIEW-6 mọi khoá thiếu căn cứ — registry chưa có trường căn cứ', async () => {
+  it('T030-CFG-VIEW-6 căn cứ: khoá loại A đã khai có căn cứ mặc định ở registry, khoá chưa khai thì thiếu (S030-43)', async () => {
     const d = await overview(ctx);
-    expect(d.items.every((i) => i.basis === null)).toBe(true);
-    expect(d.health.missingBasis).toBe(d.health.total);
+    const reg = settingsRegistry();
+    for (const i of d.items) {
+      const want = reg.get(i.key)?.basis ?? null;
+      expect(i.basis, i.key).toEqual(want);
+      expect(i.basisFrom, i.key).toBe(want ? 'registry' : null);
+    }
+    expect(d.health.withBasis).toBe(d.items.filter((i) => i.basis !== null).length);
+    expect(d.health.missingBasis).toBe(d.items.length - d.health.withBasis!);
+    expect(d.items.find((i) => i.key === 'bizcity.lock.period')?.basis).toBeTruthy();
+    expect(d.items.find((i) => i.key === 'bizcity.tenant.logo')?.basis).toBeNull();
     expect(d.health.sealMissing === null || typeof d.health.sealMissing === 'number').toBe(true);
   });
 });

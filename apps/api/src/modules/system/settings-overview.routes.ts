@@ -4,7 +4,7 @@
  * TỔNG QUAN CẤU HÌNH (HT13, chỉ đọc):
  *   GET /api/v1/settings/overview   mọi khoá của registry `bizcity_settings@1` — lớp A / B / C, nhóm, phạm vi, nơi lưu, có phiên bản hay chưa,
  *                                   giá trị hiện hành (chỉ khoá có phiên bản và không phải bí mật), số phiên bản, thay đổi gần nhất, bản sắp hiệu lực,
- *                                   căn cứ (hôm nay registry chưa có trường căn cứ → mọi khoá "thiếu căn cứ", S030-38), sức khoẻ cấu hình.
+ *                                   căn cứ đang áp (1.2: của phiên bản hiện hành, không thì căn cứ mặc định ở registry, không thì thiếu), nơi dùng (usedBy), sức khoẻ cấu hình.
  * Không ghi gì. Không bao giờ trả giá trị của khoá bí mật hoặc khoá chưa đi đường chung (D030-13, NC-8): màn chỉ hiện trạng thái.
  * Lịch sử từng khoá: GET /api/v1/settings/values/:key/history (đã có, chỉ khoá có phiên bản).
  */
@@ -14,7 +14,7 @@ import { db } from '@bizcity/platform/db/client';
 import { authOf, requireAuthenticated } from '@bizcity/platform/core/auth';
 import { ok } from '@bizcity/platform/core/http';
 import { addDays, verifySeals, vnToday } from '@bizcity/platform/core/evidence-export';
-import { getSetting, settingsRegistry, settingsToday } from '@bizcity/platform/core/settings';
+import { getSetting, settingsRegistry, settingsToday, type SettingBasis } from '@bizcity/platform/core/settings';
 
 const tags = ['Cấu hình'];
 
@@ -62,9 +62,11 @@ export async function settingsOverviewRoutes(app: FastifyInstance): Promise<void
           const secret = isSecretKey(e.key);
           const versioned = Boolean(e.valueType);
           let current: { value: unknown; source: unknown } | null = null;
+          let versionBasis: SettingBasis | null = null;
           if (versioned && !secret) {
             const r = await getSetting(trx, auth.tenantId, e.key);
             current = { value: r.value, source: r.source };
+            versionBasis = r.basis ?? null;
           }
           const st = statByKey.get(e.key);
           const l = lastByKey.get(e.key);
@@ -73,8 +75,10 @@ export async function settingsOverviewRoutes(app: FastifyInstance): Promise<void
             key: e.key, group: groupOf(e.key), class: e.class ?? null, owner: e.owner, scopes: e.scopes, storage: e.storage,
             valueType: e.valueType ?? null, permission: e.permission ?? null,
             versioned, secret,
-            // Registry chưa có trường căn cứ (bizcity_settings@1 1.2.0, S030-38): mọi khoá "thiếu căn cứ", nói thẳng thay vì giấu.
-            basis: null as null,
+            // Căn cứ đang áp (1.2): của phiên bản hiện hành nếu có, không thì căn cứ mặc định của khoá ở registry, không thì null = "thiếu căn cứ".
+            basis: (versionBasis ?? e.basis ?? null) as SettingBasis | null,
+            basisFrom: (versionBasis ? 'version' : e.basis ? 'registry' : null) as 'version' | 'registry' | null,
+            usedBy: e.usedBy ?? [],
             current,
             versions: st ? Number(st.versions) : 0,
             lastChange: l ? { version: Number(l.version), by: l.created_by, at: new Date(l.created_at).toISOString(), reason: l.reason, validFrom: l.valid_from } : null,
@@ -95,6 +99,7 @@ export async function settingsOverviewRoutes(app: FastifyInstance): Promise<void
         const health = {
           total: items.length,
           missingBasis: items.filter((i) => i.basis === null).length,
+          withBasis: items.filter((i) => i.basis !== null).length,
           changedRecently: items.filter((i) => statByKey.get(i.key)?.recent).length,
           changedRecentlyClassA: items.filter((i) => i.class === 'A' && statByKey.get(i.key)?.recent).length,
           upcoming: items.filter((i) => i.upcoming).length,

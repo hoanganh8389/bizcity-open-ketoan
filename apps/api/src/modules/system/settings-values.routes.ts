@@ -5,7 +5,7 @@
  *   GET /api/v1/settings/values                 khoá đi đường chung: lớp, phạm vi được phép, giá trị hiện hành của đơn vị, configVersion
  *   GET /api/v1/settings/values/:key            giá trị hiệu lực theo ?branchId&accountingUnitId&userId&date + nguồn (phạm vi / bản cũ / mặc định)
  *   GET /api/v1/settings/values/:key/history    mọi phiên bản: người, lúc, lý do, hiệu lực, phạm vi
- *   PUT /api/v1/settings/values/:key            core.settings.set — ghi phiên bản mới (settings:write + quyền riêng của khoá; loại A bắt buộc lý do)
+ *   PUT /api/v1/settings/values/:key            core.settings.set — ghi phiên bản mới (settings:write + quyền riêng của khoá; loại A bắt buộc lý do; basis? căn cứ tuỳ chọn, 1.2)
  * Route ghi riêng cũ (/settings/posting-modes, /data-lock, /item-auto-create…) còn chạy tới đợt 2; khoá của chúng vẫn đọc đúng qua đây.
  */
 import type { FastifyInstance } from 'fastify';
@@ -44,15 +44,17 @@ const setValue = defineAction({
     scopeId: idText.optional(),
     validFrom: date.optional(),
     reason: z.string().max(500).optional(),
+    // Căn cứ của phiên bản này (bizcity_settings@1 1.2): khuôn do setSetting kiểm (câu lỗi tiếng Việt), không bắt buộc kể cả khoá loại A (D030-12).
+    basis: z.record(z.string(), z.unknown()).nullable().optional(),
   }),
-  output: z.object({ key: z.string(), value: z.unknown(), before: z.unknown(), source: z.unknown(), configVersion: z.number() }),
+  output: z.object({ key: z.string(), value: z.unknown(), before: z.unknown(), source: z.unknown(), configVersion: z.number(), basis: z.unknown().optional() }),
   expose: { http: { method: 'PUT', path: '/api/v1/settings/values/:key' }, mcp: false, ai: 'deny' },
   evidence: { objectType: 'setting', objectId: (input) => input.key },
   handler: async (ctx, input) => {
     sharedKey(input.key);
     if (input.value === undefined) throw Errors.validation('Thiếu value');
     return setSetting(ctx.data.tx, { tenantId: ctx.tenant.id, actor: ctx.legacyAuth.actor, can: (p) => ctx.can(p as never) }, input.key, {
-      value: input.value, scope: input.scope, scopeId: input.scopeId, validFrom: input.validFrom, reason: input.reason,
+      value: input.value, scope: input.scope, scopeId: input.scopeId, validFrom: input.validFrom, reason: input.reason, basis: input.basis as never,
     });
   },
 });

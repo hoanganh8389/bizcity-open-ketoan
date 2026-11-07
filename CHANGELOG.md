@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Căn cứ của khoá cấu hình: setting_values.basis, basis / usedBy ở registry (PHASE-030, S030-43) <!-- [2026-11-06 04:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43 -->
+
+- **Thêm:** migration `0078_setting_values_can_cu.sql` — cột `setting_values.basis` (căn cứ của một phiên bản: văn bản, điều, khoản, điểm, đường dẫn, ngày hiệu lực). `core.settings.set` nhận `basis?` (khuôn kiểm, không bắt buộc kể cả khoá loại A — D030-12); lịch sử phiên bản trả căn cứ. Registry `bizcity_settings@1` 1.2.0-draft: `basis` (căn cứ mặc định của khoá) và `usedBy` (nơi đọc khoá). `GET /api/v1/settings/overview` trả `basis`, `basisFrom`, `usedBy`; màn HT13 hiện thẻ Căn cứ và nơi dùng. Golden T030-CFG-BASIS-1..6. Chữ chốt `docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md` 1.2.0-draft.
+- **Đổi:** `getSetting` trả thêm `basis` (căn cứ của phiên bản đang áp), kể cả khoá còn đường lưu cũ ở `tenants.settings`. 10 khoá loại A có căn cứ mặc định là quy tắc nội bộ kiểm được trong repo (không phải điều luật).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0078 (chỉ thêm cột, không đổi dòng nào). Căn cứ pháp lý (luật, thông tư) chưa điền: chờ kế toán trưởng xác nhận (S030-12 / S030-35).
+- **Bảo mật:** `url` trong căn cứ chỉ nhận `https://`; trường lạ bị từ chối; không đổi quyền ghi (`settings:write`).
+
 ### Màn Cấu hình hệ thống (HT13) bản chỉ đọc (PHASE-030, S030-39) <!-- [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39 -->
 
 - **Thêm:** `GET /api/v1/settings/overview` — mọi khoá registry `bizcity_settings@1`: nhóm, lớp A / B / C, phạm vi, nơi lưu, giá trị hiện hành (chỉ khoá có phiên bản và không phải bí mật), số phiên bản, thay đổi gần nhất, bản sắp hiệu lực, căn cứ, sức khoẻ cấu hình (thiếu căn cứ, đổi 30 ngày, sắp hiệu lực, ngày chưa niêm phong). Màn web **Hệ thống → Cấu hình hệ thống (HT13)**, hướng dẫn `docs/huong-dan/cau-hinh-he-thong.md`. Golden T030-CFG-VIEW-1..6. Chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/24-CAU-HINH-HE-THONG.md`.
