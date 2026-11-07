@@ -55,6 +55,18 @@ Xác thực: `X-Api-Key` có phạm vi `documents:write`. Header tuỳ chọn `X
 | `sourceRef` | `{ type, id, label?, url? }` | | Phiếu gốc ở nguồn (tra cứu, lọc, mở phiếu) — không dùng định khoản |
 | `extra` | object | | Dữ liệu riêng của nguồn, lưu nguyên |
 
+### 3.1 Tham chiếu chính sách (1.6.0-draft)
+<!-- [2026-11-07 10:32 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a chữ chốt (S031-8, ADR-0031 D-POL-5): policyRefs đầu phiếu, policyRef ở dòng; tuỳ chọn, nguồn cũ không đổi -->
+
+> **Trạng thái:** đề xuất (PHASE-031 · 00 §8). Có hiệu lực khi mã W2a merge; đến lúc đó cửa nạp **bỏ qua** hai trường này như trường lạ của `extra`.
+
+| Trường | Kiểu | Bắt buộc | Nghĩa |
+|---|---|---|---|
+| `policyRefs` | `{ key, version, hash, policyId? }[]` ≤ 50 | | Chính sách nghiệp vụ đã phát hành mà nguồn dùng để lập chứng từ này ([ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md)). `key` = mã chính sách ở sổ đăng ký; `version` ≥ 1; `hash` = `contentHash` của bản (64 hex, lấy từ sổ đăng ký chính sách — API đọc cho nguồn ngoài ở PHASE-031 W3 — hoặc từ vết của module); `policyId` khi nguồn biết định danh |
+| `lines[].policyRef` | `{ key, version, line? }` | | Dòng này sinh ra từ chính sách nào (vd dòng quà tặng). `key` phải có trong `policyRefs` |
+
+Cửa nạp lưu nguyên văn trong `payload`, kiểm ở tầng L4 (`IN-POL-001` tham chiếu / băm sai, `IN-POL-002` bản không hiệu lực tại `docDate`, `IN-POL-003` đã có bản mới hơn — đều `warn`, cửa nạp vẫn nhận) và ghi kết quả vào `policy_check` của sự việc. Đơn vị đặt `bizcity.intake.policy_check = strict` thì sự việc có các mã này **chờ duyệt** thay vì ghi ngay. Không gửi `policyRefs` → như mọi bản trước.
+
 ## 4. Phần riêng theo `docType`
 
 | `docType` | Trường riêng (bắt buộc in đậm) | Tổng |
