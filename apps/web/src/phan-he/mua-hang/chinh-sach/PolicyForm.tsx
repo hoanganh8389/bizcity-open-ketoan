@@ -10,9 +10,10 @@ import { errorText } from '@/lib/api';
 import { BranchPicker } from '@/components/filters';
 import { ItemPicker, PartnerPicker } from '@/components/pickers';
 import { CODE_PREFIX, KIND_HINT, RuleEditor, TEMPLATES, defaultRule, ruleText } from './quyTac';
-import { monthStart, purchaseApi, useBrands, useNames, useSupplierBrands } from '../du-lieu';
+import { monthStart, purchaseApi, today, useBrands, useNames, useSupplierBrands } from '../du-lieu';
 import { BrandInput } from '../chung';
 import { LichSu } from '../thanh-phan/LichSu';
+import { PhienBan } from './PhienBan';
 
 /** Loại chính sách lập được ở màn Chính sách (tồn min–max đã chuyển sang màn Tồn max MH16 — bảng stock_levels). */
 export const ALL_KINDS: PolicyKind[] = Object.keys(POLICY_LABEL) as PolicyKind[];
@@ -48,6 +49,9 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   const [touched, setTouched] = useState({ code: !isNew, name: !isNew });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): sửa nội dung = bản mới, áp cho chứng từ từ ngày (mặc định hôm nay), kèm lý do
+  const [effectiveFrom, setEffectiveFrom] = useState(today());
+  const [reason, setReason] = useState('');
   useEffect(() => { if (!touched.name) setP((x) => ({ ...x, name: autoName(x) })); }, [names.partnerName(p.scope.partnerCode ?? '')]); // eslint-disable-line react-hooks/exhaustive-deps
   const upd = (next: Policy) => setP({ ...next, code: touched.code ? next.code : autoCode(next), name: touched.name ? next.name : autoName(next) });
   const viewAgain = useViewAgain();
@@ -55,7 +59,9 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
   const save = async () => {
     const x = { ...p, code: p.code || autoCode(p), name: p.name || autoName(p) };
     setBusy(true); setErr('');
-    try { await purchaseApi.savePolicy({ ...x, validFrom: x.validFrom || undefined, validTo: x.validTo || undefined }); onSaved(x.code, !isNew); if (!isNew) viewAgain[1](); } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
+    const { versions: _versions, ...body } = x;
+    const version = isNew ? {} : { effectiveFrom: effectiveFrom || undefined, reason: reason.trim() || undefined };
+    try { await purchaseApi.savePolicy({ ...body, validFrom: x.validFrom || undefined, validTo: x.validTo || undefined, ...version } as Policy); onSaved(x.code, !isNew); if (!isNew) { setReason(''); viewAgain[1](); } } catch (e) { setErr(errorText(e)); } finally { setBusy(false); }
   };
   const setScope = (k: keyof Policy['scope'], v: string) => upd({ ...p, scope: { ...p.scope, [k]: v || undefined } });
   const templates = TEMPLATES[p.kind] ?? [];
@@ -93,6 +99,9 @@ export function PolicyForm({ value, all, kinds = ALL_KINDS, lockPartner, onClose
       <Field label="Đến (trống = không thời hạn)"><input className="input" type="date" value={p.validTo ?? ''} onChange={(e) => setP({ ...p, validTo: e.target.value || undefined })} /></Field>
       <Field label="Ưu tiên (2 chính sách cùng phạm vi, hoặc 2 chương trình áp riêng: số lớn thắng)"><input className="input num" value={p.priority ?? 0} onChange={(e) => setP({ ...p, priority: Number(e.target.value) || 0 })} /></Field>
       <Field label="Trạng thái"><select className="select input" value={p.isActive ? '1' : '0'} onChange={(e) => setP({ ...p, isActive: e.target.value === '1' })}><option value="1">Đang áp</option><option value="0">Tắt</option></select></Field>
+      {!isNew && <Field label="Nội dung đổi thì áp cho chứng từ từ ngày (phiếu trước ngày này giữ bản cũ)"><input className="input" type="date" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} /></Field>}
+      {!isNew && <Field label={`Lý do đổi${effectiveFrom && effectiveFrom < today() ? ' (bắt buộc khi áp lùi về trước hôm nay)' : ''}`}><input className="input" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>}
+      {!isNew && <PhienBan id={value.id} />}
       {!isNew && <div className="full" style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}><LichSu docNo={value.code} title="Lịch sử thay đổi của chính sách (ai, lúc nào, đổi gì)" empty="Chưa có lần sửa nào được ghi (chính sách nạp từ dữ liệu cũ)." /></div>}
       {!isNew && <div className="muted full" style={{ fontSize: 12 }}>Tạo bởi {p.createdBy || '—'} lúc {p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN') : '—'} · Sửa gần nhất {p.updatedBy || '—'} lúc {p.updatedAt ? new Date(p.updatedAt).toLocaleString('vi-VN') : '—'}</div>}
       {err && <div className="alert alert-bad full">{err}</div>}
