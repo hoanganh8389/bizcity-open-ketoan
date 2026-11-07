@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 17
+      "count": 18
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 216
+      "count": 215
     }
   ],
   "items": [
@@ -4976,8 +4976,14 @@
       "title": "Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), T030-EVT-1..5 — Kernel K2",
       "priority": "P0",
       "status": "done",
-      "column": "done",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, event-id)",
+        "branch": "feat/phase-030-event-id-bat-buoc",
+        "state": "đang làm",
+        "since": "2026-11-06",
+        "dot": "PHASE-030 · S030-41 — ledgerentries.eventid bắt buộc (NOT NULL) ở CSDL: migration an toàn cho bản c…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 48
     },
