@@ -2001,6 +2001,13 @@
           "message": "\"PHASE-031 · W2a — cửa nạp nhận\" và \"PHASE-030 · S030-45 — thư viện\" chồng phạm vi: packages/contracts/src/legal-basis.ts ~ packages/contracts/src/legal-basis.ts (R-FLOW-3: một phạm vi một người)",
           "why": "PHASE-031 W2a CHỈ THÊM ba khoá IN-POL-001..003 vào FINDING_BASIS (findings.check bắt mọi mã có căn cứ); không sửa khoá nào của S030-45. Chủ dự án duyệt cùng PR chốt W2a. Tạm: hết khi một trong hai dòng nhả.",
           "ref": "PHASE-031 · 00 §8; CLAIMS dòng PHASE-031 · W2a"
+        },
+        {
+          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:feat/phase-031-w2a-tham-chieu:feat/s030-45-thu-vien-dot-a:docs/huong-dan/ma-loi/README.md:docs/huong-dan/ma-loi",
+          "file": "docs/phases/CLAIMS.md",
+          "message": "\"PHASE-031 · W2a — cửa nạp nhận\" và \"PHASE-030 · S030-45 — thư viện\" chồng phạm vi: docs/huong-dan/ma-loi/README.md ~ docs/huong-dan/ma-loi/** (R-FLOW-3: một phạm vi một người)",
+          "why": "Trang tra mã docs/huong-dan/ma-loi/README.md là tệp SINH TỰ ĐỘNG (scripts/sinh-ma-loi.mjs) từ thư viện mã; W2a chỉ thêm ba dòng IN-POL-001..003, S030-45 thêm LIB-*. Ai merge sau chạy lại trình sinh là đủ cả hai; không ai sửa tay.",
+          "ref": "PHASE-031 · 00 §8; CLAIMS dòng PHASE-031 · W2a; SC-FIND-1"
         }
       ]
     }
