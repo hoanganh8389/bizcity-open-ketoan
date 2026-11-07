@@ -2,6 +2,7 @@
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-11-01 10:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — P0-1 (AUDIT-2026-11-01): migration 0049 khoá ledger_entries (chặn DELETE, UPDATE chỉ ba lối), accounting_events (chặn DELETE / đổi định danh / lùi phiên bản), accounting_event_versions chỉ thêm; E2 hết ⚠ A-07 -->
+<!-- [2026-11-06 03:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-41 (D030-15): R-LEDGER-12 có NOT NULL ở CSDL (migration 0077) -->
 
 > **Cấp:** Tier 0 · **Phiên bản:** 1.0 · 2026-10-28 · **Chỉ mục:** [../00-CANON.md](../00-CANON.md)
 > **Mã:** `apps/api/src/modules/ledger/*`, `db/migrations/0006_goc_so_cai.sql`
@@ -21,7 +22,7 @@
 | **R-LEDGER-9** | Không ghi vào kỳ đã **khoá** cho (kỳ × chi nhánh × loại chứng từ), và không vi phạm khoá dữ liệu theo ngày trừ khi có quyền `documents:bypass-date-lock` | `period-locks.test.ts`, `closing-controls.test.ts` |
 | **R-LEDGER-10** | **Số bút toán liên tục**, không trùng (`BTyy-nnnnnnn`, `ledger_entry_sequences`) | UNIQUE `(tenant_id, entry_no)` |
 | **R-LEDGER-11** | Bảng dẫn xuất (`ledger_balances_daily`, `debt_items`, `tax_invoices`, `inventory_movements`) cập nhật **trong cùng giao dịch** với dòng sổ, và **dựng lại được** từ sổ + sự việc | `integrity-checks.test.ts` |
-| **R-LEDGER-12** | Mọi bút toán có `event_id` trỏ về một `accounting_events` (không có bút toán mồ côi) | Khoá ngoại; `assertLedgerInvariants` (Giai đoạn 1) |
+| **R-LEDGER-12** | Mọi bút toán có `event_id` trỏ về một `accounting_events` (không có bút toán mồ côi) | Khoá ngoại; **`NOT NULL` ở CSDL (migration 0077, [PHASE-030 · 25](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/25-BUT-TOAN-LUON-CO-CHUNG-TU.md))**; `ledgerService.post()` từ chối thiếu chứng từ gốc; `LEDGER_ORPHAN`; `apps/api/test/event-id-bat-buoc.test.ts`, `apps/api/test/db-migration-event-id.test.ts` |
 
 ## Ngoại lệ có kiểm soát (đóng danh sách — thêm ngoại lệ = ADR)
 
