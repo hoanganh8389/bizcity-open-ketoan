@@ -129,7 +129,7 @@ retirePolicy(trx, tenantId, policyId, actor, reason)
 | `IN-POL-002` | L4 | warn | advice | 10 | bản `version` không phủ `docDate` (trước ngày áp, sau ngày đóng, hoặc khoảng rỗng) |
 | `IN-POL-003` | L4 | warn | advice | 5 | bản gửi vẫn hợp lệ nhưng sổ đăng ký đã có bản mới hơn phủ `docDate` (nguồn ngoại tuyến dùng bản cũ) |
 
-Cả ba `acceptable: true` — kế toán trưởng chấp nhận có lý do bằng đường sẵn có của bể chờ (= nút *Đánh dấu đã xem* của [20 §3](20-TRUY-VET-VA-THEO-DOI.md)). Thiếu lý do định khoản cho kết quả **không** thêm mã: `IN-POST-001` đã có. Mỗi mã có bài học `docs/huong-dan/loi-dau-vao/IN-POL-00n.md`, căn cứ ở `legal-basis.ts` (`NOI-BO` + ADR-0031), remedy theo `bizcity_remedy@1`.
+Cả ba `acceptable: true` — kế toán trưởng chấp nhận có lý do bằng đường sẵn có của bể chờ (= nút *Đánh dấu đã xem* của [20 §3](20-TRUY-VET-VA-THEO-DOI.md)). Thiếu lý do định khoản cho kết quả **không** thêm mã: `IN-POST-001` đã có. Mỗi mã có bài học `docs/huong-dan/loi-dau-vao/IN-POL-00n.md`, căn cứ ở `legal-basis.ts` (`NOI-BO` + ADR-0031) — tệp này đang thuộc dòng giữ chỗ S030-45, W2a **chỉ thêm** ba khoá (đề nghị dùng chung, chủ dự án duyệt cùng PR này), remedy theo `bizcity_remedy@1`.
 
 **3. Khoá cấu hình `bizcity.intake.policy_check`** (registry, `enum(advice|strict)`, mặc định `advice`, loại A, owner `core`): `advice` = ghi sổ như thường, mã `IN-POL-*` lưu kèm để xem lại (chế độ *tự động*, mặc định cho mọi đơn vị và POS — Q031-2); `strict` = có `IN-POL-*` thì cửa nạp nhận sự việc nhưng **giữ chờ duyệt** bằng `hold` sẵn có của `postDocumentIn` (màn chờ ACC14), kế toán duyệt mới ghi (chế độ *gợi ý*). Không trạng thái mới.
 

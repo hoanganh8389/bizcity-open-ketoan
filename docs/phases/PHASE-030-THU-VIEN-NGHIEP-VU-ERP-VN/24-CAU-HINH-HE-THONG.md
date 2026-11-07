@@ -8,7 +8,7 @@
 
 ## 0. Trả lời ngắn
 
-- **Đã có căn cứ cho cấu hình hệ thống chưa?** Một phần. Registry có **24 khoá**: 9 loại A (ảnh hưởng sổ), 6 loại B (vận hành), 9 loại C (hiển thị) theo R-MATRIX-1. Nhưng chỉ **6 khoá** đi đường chung có phiên bản và ngày hiệu lực (`setting_values`, 0074), và **chưa khoá nào có trường căn cứ pháp lý** (`legalRef`). Chính sách định khoản đã có phiên bản theo ngày (0040), tham số pháp lý quốc gia chưa có (S030-35).
+- **Đã có căn cứ cho cấu hình hệ thống chưa?** Một phần. Registry có **24 khoá**: 9 loại A (ảnh hưởng sổ), 6 loại B (vận hành), 9 loại C (hiển thị) theo R-MATRIX-1. Nhưng chỉ **6 khoá** đi đường chung có phiên bản và ngày hiệu lực (`setting_values`, 0074), và căn cứ chỉ mới có cho **10 khoá loại A** (S030-43), là quy tắc nội bộ kiểm được trong repo; **căn cứ pháp lý** (luật, thông tư) chờ kế toán trưởng (S030-12 / S030-35). Chính sách định khoản đã có phiên bản theo ngày (0040), tham số pháp lý quốc gia chưa có (S030-35).
 - **Đã có bản mẫu màn cấu hình chưa?** Chưa có trước tài liệu này. Danh mục có bản mẫu Master Data Center (PHASE-026), Hệ thống có HT06–HT10, nhưng không có màn tổng cho tham số. Bản mẫu HT13 đi kèm tài liệu này: [mockups/cau-hinh-he-thong.html](mockups/cau-hinh-he-thong.html).
 - **Từ cấu hình tới cảnh báo trên ô nhập đi đường nào?** Một chuỗi, một luật dùng hai nơi (§2): tham số (HT13) → luật (registry, rulepack, HT09) → cổng của action (`bizcity_action@1` §4, S030-28) → `GateResult` → giao diện (gợi ý, danh sách chọn, nhắc, chặn, thông báo) → bằng chứng (`audit_logs`, niêm phong theo ngày). Giao diện **không giữ luật riêng**: form hỏi máy chủ cùng luật mà cổng dùng.
 - **Vì sao phải chờ `bizcity_action@1` và phân quyền?** Vì cổng chỉ cụ thể hoá được khi biết *bước nào* chạy *theo thứ tự nào* với *quyền của ai*. `bizcity_action@1` đang 1.3.0-draft; bản 1.4.0 (các bước §4 là cổng, `GateResult`) là S030-28, chờ nhóm Lõi. Phân quyền PHASE-028 W1–W3 đã vào main, bản gọn doc 22 chờ chủ PHASE-028 nhận. Tài liệu này viết sẵn phần cấu hình để khi hai hợp đồng chốt, cổng `validation` có chỗ đọc tham số ngay.
@@ -65,7 +65,7 @@ Mức: ✅ có · 🟡 một phần · ☐ chưa. Loại: A / B / C theo R-MATRI
 | Khoản mục chi phí | ACC24 | A | — | giữ ở Danh mục | ✅ |
 | Tham số pháp lý | chưa (kho `setting_values` có, chưa `legalRef`) | A | 120 tham số Erp-vn có `legal_ref` (tệp chủ dự án xuất 06/11) | `vn-rulepacks` + căn cứ tới điều | ☐ S030-35 |
 | Lịch sử và gói tham số | `setting_values` có phiên bản (6 khoá) | A | — | mọi khoá A / B có phiên bản; "gói" = rulepack có phiên bản | 🟡 E2 đợt 2 |
-| Tính thử tham số mới (bảng lương) | chưa | — | — | xem thử tác động (§4.3) cho mọi khoá A | ☐ S030-40 |
+| Tính thử tham số mới (bảng lương) | chưa | — | — | xem thử tác động (§4.3) cho mọi khoá A | ✅ S030-40 (bước xem trước tác động ở HT13; chạy thử bảng lương thuộc nhóm khác) |
 | Lịch nghỉ lễ, Tết | chưa | B | Bộ luật Lao động 2019 Điều 112 | dữ liệu rulepack + ngày bù của đơn vị; dùng cho `workingDays` | ☐ S030-35 |
 | Thuế suất GTGT | `posting.tax_codes` + chính sách theo ngày (0040) | A | Luật thuế GTGT, nghị định giảm thuế theo từng thời kỳ | thuế suất có hiệu lực + căn cứ văn bản giảm thuế | 🟡 S030-35 |
 | Ràng buộc nhập liệu | HT09 cho danh mục | B | quy chế nội bộ / luật | HT09 mở sang chứng từ (`ENTRY-*`) | 🟡 S030-34 |
@@ -159,6 +159,6 @@ Không có hợp đồng `bizcity_config@1` riêng: cấu hình là `bizcity_set
 | S030-37 | Tài liệu này + bản mẫu HT13; đổi mã Bàn điều hành sang HT12 | PHASE-030 | — (PR này) |
 | S030-38 | PR chốt `bizcity_settings@1` 1.2.0: `basis`, `usedBy`; `setting_values.basis` | chủ PHASE-029 E2 nhận | D030-12 |
 | S030-39 | Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ liệu đã có | web + Platform | D030-10 |
-| S030-40 | Đổi khoá A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ "đã đổi trong 30 ngày"; "xem như trên form" | Platform + web | S030-38, S030-28 |
+| S030-40 | Đổi khoá A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ "đã đổi trong 30 ngày" — ✅ 2026-11-07; "xem như trên form" còn chờ S030-28 | Platform + web | S030-38 (xong), S030-28 (cho phần "xem như trên form") |
 
 Lịch nghỉ lễ, thuế suất có hiệu lực và tham số pháp lý đã nằm ở S030-35; luật nhập chứng từ ở S030-34.

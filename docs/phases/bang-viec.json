@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 21
+      "count": 17
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 54
+      "count": 58
     },
     {
       "key": "paused",
@@ -4114,14 +4114,8 @@
       "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
       "priority": "P1",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w5-thu-vien-tgs",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4922,7 +4916,7 @@
       "phase": "PHASE-030",
       "title": "Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ \"đã đổi trong 30 ngày\"; \"xem như trên form\"; golden T030-CFG-1…",
       "priority": "P1",
-      "status": "todo",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, doi-khoa-a)",
@@ -5045,14 +5039,8 @@
       "title": "Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / resolve ở Platform",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w1-registry",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -5062,14 +5050,8 @@
       "title": "Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store: module",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w1-registry",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -5079,14 +5061,8 @@
       "title": "policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w1-registry",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 15
     },
