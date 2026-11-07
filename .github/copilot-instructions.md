@@ -17,6 +17,16 @@
 
 `git fetch` → có việc dở thì `git stash push -u` → `git merge --ff-only origin/main` → `git stash pop` (xung đột: gộp cả hai ý) → `npm run build -w @ketoan/contracts && npm run build -w @bizcity/mua-hang-domain` nếu `packages/contracts` hoặc `modules/*/domain` đổi → `node tests/conformance/selfcheck.mjs` phải ĐẠT rồi mới sửa tiếp. Không rebase nhánh đã đẩy, không `push --force`. Chi tiết: AGENTS.md "Trước khi code".
 
+## Nhiều PR cùng lúc: tránh xung đột tệp chung
+<!-- [2026-11-07 01:48 PM Johnny Chu - Chu Hoàng Anh] R-SIG — bài học PHASE-030: ba PR cùng sinh lại bảng việc nên xung đột ba vòng; dòng giữ chỗ mất khỏi main ba lần. -->
+
+- **Tệp sinh tự động** (`docs/phases/BANG-VIEC.md`, `docs/phases/bang-viec.json`) không sửa tay khi xung đột: gộp `origin/main`, lấy bản bất kỳ, chạy `node scripts/bang-viec.mjs --write` để sinh lại.
+- **Sau mỗi lần gộp**, trước `git add`: tìm dấu `<<<<<<<` / `=======` / `>>>>>>>` ở MỌI tệp (nhất là `CLAIMS.md`, `CHANGELOG.md`); không `git add -A` khi `git status` còn `UU`. Rồi `node scripts/nhan-viec.mjs kiem` và `selfcheck --strict` phải ĐẠT mới đẩy.
+- **Nhiều PR tài liệu cùng sinh lại bảng việc** thì merge lần lượt: mỗi PR sau gộp lại `main` ngay trước khi merge; hoặc gộp thành một PR.
+- **Dòng giữ chỗ có thể bị PR khác ghi đè khi gộp xung đột.** Sau mỗi lần merge, kiểm lại trên `origin/main` bằng `node scripts/nhan-viec.mjs`, không tin giao diện GitHub.
+- **Phạm vi giữ chỗ phải liệt kê đủ ngay từ đầu**, kể cả test, tài liệu, tệp migration. Thiếu một tệp là thêm một vòng PR tài liệu (R-FLOW-3).
+- **Gói đã build có thể cũ** sau khi gộp `main`: lỗi kiểu "Property … does not exist" ở tệp bạn không sửa thì `npm run build -w @ketoan/contracts` và `-w @bizcity/mua-hang-domain` trước khi kết luận.
+
 ## Rà soát việc của người đóng góp (R-REV)
 <!-- [2026-10-31 04:04 PM Johnny Chu - Chu Hoàng Anh] R-REV — nhắc phân vai và rà soát mỗi lần nhận việc của người đóng góp. -->
 
