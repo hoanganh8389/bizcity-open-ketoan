@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 18 |
+| Đang làm | 16 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
 | Chưa ai nhận | 141 |
-| Chờ đủ tín hiệu | 48 |
+| Chờ đủ tín hiệu | 49 |
 | Hoãn | 1 |
-| Xong | 232 |
+| Xong | 233 |
 | **Tổng** | **470** |
 
-## Đang làm (18)
+## Đang làm (16)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -28,9 +28,7 @@
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-027-ck3-mat-khau` |
 | [S027-5](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L10) | PHASE-027 | Q027-5 SEEDADMINPASSWORD | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-027-ck3-mat-khau` |
-| [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S029-17](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L27) | PHASE-029 | Trigger kỳ khoá trên ledgerentries | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-k3-dot1` |
-| [S030-40](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L47) | PHASE-030 | Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ "đã đổi tron… | P1 | hoanganh8389 (phiên Claude, doi-khoa-a) · `feat/phase-030-doi-khoa-a` |
 | [S030-42](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L51) | PHASE-030 | accountingevents.createdby bắt buộc: danh tính tác vụ cho sự việc hệ thống (khấu hao 792, giá vốn 692 dòng rỗ… | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-k3-dot1` |
 | [S030-45](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L53) | PHASE-030 | Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bi… | P0 | hoanganh8389 (phiên Claude, thu-vien-dot-a) · `feat/s030-45-thu-vien-dot-a` |
 | [S031-4](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L13) | PHASE-031 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / r… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
@@ -222,7 +220,7 @@
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
-## Chờ đủ tín hiệu (48)
+## Chờ đủ tín hiệu (49)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -266,6 +264,7 @@
 | [S028-7](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L16) | PHASE-028 | W2: ~~modulegrants~~ vai trò của đơn vị (tenantroles, tenantrolerules, 0075) + lớp đọc loadAuthzSnapshot — ch… | P0 | — |
 | [S028-8](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L17) | PHASE-028 | W3 đợt 2: khoá danh sách 17 route ghi thô (SC-AUTH-03), shadow core/authz, requireScope() — chữ chốt ADR-0027… | P1 | — |
 | [S028-9](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L18) | PHASE-028 | W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chố… | P1 | — |
+| [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | — |
 | [S029-9](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L18) | PHASE-029 | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CAN… | P0 | — |
 | [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
 | [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026… | P0 | — |
@@ -281,6 +280,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (232)
+## Xong (233)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

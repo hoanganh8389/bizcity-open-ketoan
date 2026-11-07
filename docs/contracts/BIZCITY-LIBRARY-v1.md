@@ -1,7 +1,7 @@
 # `bizcity_library@1` — Thư viện dùng chung
 <!-- [2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 (ADR-0032): hợp đồng khuôn chung cho thư viện tham chiếu — phong bì, mục, phiên bản ba tầng, luật khai báo, gợi ý, mã LIB-*, ô chọn, API -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-11-07 · **Trạng thái:** Đề xuất — thiết kế đã chấp nhận ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md)), mã ở S030-45 (chưa có)
+> **Phiên bản:** 1.0.1-draft · 2026-11-07 · **Trạng thái:** Đề xuất — thiết kế đã chấp nhận ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md)), mã ở S030-45 (chưa có)
 > **Lược đồ máy đọc:** [BIZCITY-LIBRARY-v1.schema.json](BIZCITY-LIBRARY-v1.schema.json) · **Kiểu TypeScript (đợt A, chưa có):** `packages/platform/src/core/libraries/types.ts`; mã `LIB-*` ở `packages/contracts/src/library-findings.ts` (gom vào `findings.ts`) · **Kiểm:** SC-LIB-1
 > **Liên quan:** [`bizcity_findings@1`](BIZCITY-FINDINGS-v1.md) (mã `LIB-*`), [`bizcity_settings@1`](BIZCITY-SETTINGS-MATRIX-v1.md) (giá trị của đơn vị), [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) (chính sách của đơn vị)
 
@@ -110,7 +110,7 @@ Thứ tự đọc một tham số (ADR-0032 D-LIB-8): giá trị đơn vị ghi 
 | mã không có (cả `code` lẫn `aliases`) | `LIB-UNKNOWN-001` | block | ≤ 5 mục `active` gần nhất theo `selector.search` (trùng tiền tố, chứa, khoảng cách sửa ≤ 2, bỏ dấu) |
 | mã đã `deprecated` | `LIB-DEPRECATED-001` | warn | `replacedBy` |
 | mã đã `removed` | `LIB-REMOVED-001` | block | `replacedBy` (nếu có) |
-| không có giá trị tại ngày `at` | `LIB-NOT-EFFECTIVE-001` | block | khoảng gần `at` nhất, kèm ngày |
+| không có giá trị tại ngày `at` | `LIB-EFFECTIVE-001` | block | khoảng gần `at` nhất, kèm ngày |
 | `fields` / `payload` sai `itemSchema` | `LIB-SCHEMA-001` | block | trường sai, khuôn đúng |
 | `value` khác giá trị thư viện tại ngày | `LIB-VALUE-001` | warn | giá trị thư viện tại ngày + căn cứ |
 | mục `verified: false` | `LIB-UNVERIFIED-001` | info | `owner` của thư viện |
@@ -121,7 +121,7 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
 
 ```json
 {
-  "code": "PIT-001",
+  "code": "PIT-EXEMPT-001",
   "level": "warn",
   "title": "Khoản lương miễn thuế cần mã tham số miễn thuế",
   "why": "Khoản miễn thuế TNCN có trần theo luật; thiếu tham số thì không tính được phần vượt trần.",
@@ -134,7 +134,7 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
 
 - `when`: `all` / `any` / `not` lồng nhau trên điều kiện `{ field, op, value? }`. `field` là đường `input.*` (ô nhập) hoặc `item.*` (mục thư viện đã khớp). `op`: `eq`, `ne`, `in`, `nin`, `gt`, `gte`, `lt`, `lte`, `exists`, `missing`, `matches` (biểu thức chính quy, ≤ 200 ký tự). **Không** có hàm, phép tính, gọi ra ngoài.
 - `suggest`: `{ value }` cố định · `{ field: 'item.<đường>' }` lấy từ mục · `{ fromLibrary, filter }` gợi ý mục của thư viện khác (phải tồn tại).
-- Mã luật = `codePrefix-NNN`, không trùng bất kỳ mã nào trong `bizcity_findings@1`.
+- Mã luật = `<codePrefix>-<NHÓM>-<NNN>` (vd `TSPL-LAW-001`, ba khúc như mọi mã của `bizcity_findings@1`), không trùng mã nào trong thư viện phát hiện; `codePrefix` không lấy `LIB`, `IN`, `ACC`, `PART`, `ITEM`, `ENTRY`.
 - Luật cần tính toán (cộng dồn, so sánh giữa nhiều chứng từ, tra CSDL) **không** đặt ở đây: Rule Contract của Policy Registry (ADR-0031) hoặc phép kiểm của module.
 
 ### 6.3 Kết quả
@@ -144,13 +144,13 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
   "ok": false,
   "library": { "id": "vn.tham-so-phap-ly", "version": "1.0.0", "hash": "sha256:…" },
   "resolved": "LUONG_CO_SO",
-  "at": "2026-11-07",
+  "at": "2026-03-01",
   "value": 2340000,
   "findings": [
     {
       "code": "LIB-VALUE-001", "level": "warn", "path": "value", "got": 1800000, "expected": 2340000,
-      "message": "Giá trị khác thư viện tại ngày 2026-11-07",
-      "suggestions": [ { "value": 2340000, "label": "2.340.000 (từ 2024-07-01)", "why": "Nghị định 73/2024/NĐ-CP", "confidence": "cao" } ]
+      "message": "Giá trị khác thư viện tại ngày 2026-03-01",
+      "suggestions": [ { "value": 2340000, "label": "2.340.000 (2024-07-01 → 2026-06-30)", "why": "Lương cơ sở từ 01/7/2024 (chưa duyệt)", "confidence": "cao" } ]
     }
   ]
 }
@@ -161,7 +161,7 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
 ## 7. Mã lỗi
 
 - Bảy mã `LIB-*` ở §6.1 vào `bizcity_findings@1` 1.2.0 với cổng mới `L` (thư viện), `source: 'bizcity_library'`, `step` = tên kiểm. Mỗi mã có `title`, `why`, `fix`, `basis: ['NOI-BO']` như mọi mã khác.
-- Mã luật riêng (`<codePrefix>-NNN`) gom vào cùng thư viện phát hiện với `source: 'bizcity_library:<id>'`, cổng `L`.
+- Mã luật riêng (`<codePrefix>-<NHÓM>-<NNN>`) gom vào cùng thư viện phát hiện với `source: 'bizcity_library:<id>'`, cổng `L`.
 - SC-FIND-1 (đã có) chặn trùng mã giữa mọi nguồn; trang [Tra mã phát hiện](../huong-dan/ma-loi/README.md) có cả mã `LIB-*` và mã luật; `npx bizcity explain <mã>` và MCP `core.findings.explain` trả nghĩa.
 
 ## 8. Hướng dẫn và căn cứ
@@ -222,3 +222,4 @@ Với mỗi `libraries/*/library.json`:
 | Phiên bản | Ngày | Thay đổi |
 |---|---|---|
 | 1.0.0-draft | 2026-11-07 | Bản đầu: phong bì, mục, phiên bản ba tầng, kiểm chuẩn + luật khai báo + gợi ý, mã `LIB-*`, ô chọn, API, SC-LIB-1 (ADR-0032) |
+| 1.0.1-draft | 2026-11-07 | Sửa khi viết mã (S030-45): `LIB-NOT-EFFECTIVE-001` → `LIB-EFFECTIVE-001`; mã luật ba khúc `<codePrefix>-<NHÓM>-<NNN>`; ví dụ §6.3 đúng khoảng hiệu lực <!-- [2026-11-07 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 --> |
