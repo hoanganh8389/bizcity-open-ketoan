@@ -85,7 +85,7 @@ Tầng nguyên tắc cao nhất của Core, đứng trên Accounting Continuity 
 
 | Nhóm | Trụ cột |
 |---|---|
-| A · Nền móng thống nhất của doanh nghiệp | 01 Canonical Identity · 02 Master Data Governance · 03 Enterprise Organization · 04 Identity & Authorization · 05 Configuration & Policy Registry |
+| A · Nền móng thống nhất của doanh nghiệp | 01 Canonical Identity · 02 Master Data Governance · 03 Enterprise Organization · 04 Identity & Authorization · 05 Policy Registry & Rule Contracts |
 | B · Nền móng xử lý nghiệp vụ và giao dịch | 06 Document SDK & Lifecycle · 07 Workflow & Approval · 08 Command & Event Contracts · 09 Accounting Kernel · 10 Inventory & Cost Continuity |
 | C · Nền móng bảo đảm dữ liệu luôn đúng | 11 Cross-Module Lineage · 12 Validation & Conformance · 13 Reconciliation & Period Integrity · 14 Semantic Metrics & KPI |
 | D · Nền móng để cộng đồng mở rộng | 15 Integration & External Identity · 16 Module SDK & Metadata Registry · 17 Audit, Security & Operations |

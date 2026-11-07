@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 140
+      "count": 139
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 53
+      "count": 55
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 228
+      "count": 227
     }
   ],
   "items": [
@@ -4114,14 +4114,8 @@
       "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
       "priority": "P1",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w5-thu-vien-tgs",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4923,8 +4917,14 @@
       "title": "Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ \"đã đổi trong 30 ngày\"; \"xem như trên form\"; golden T030-CFG-1…",
       "priority": "P1",
       "status": "done",
-      "column": "done",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, doi-khoa-a)",
+        "branch": "feat/phase-030-doi-khoa-a",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-030 · S030-40 — đổi khoá loại A một người (D030-12 = B): setSetting chặn PERIODLOCKED khi ngà…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 47
     },
@@ -5221,8 +5221,8 @@
       "phase": "PHASE-031",
       "title": "nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 28
