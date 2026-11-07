@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 13
+      "count": 15
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 54
+      "count": 53
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 226
+      "count": 227
     }
   ],
   "items": [
@@ -4114,8 +4114,14 @@
       "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w5-thu-vien-tgs",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -4971,6 +4977,34 @@
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 48
+    },
+    {
+      "id": "S030-44",
+      "phase": "PHASE-030",
+      "title": "Chữ chốt thư viện dùng chung bizcitylibrary@1 (ADR-0032, hợp đồng): phong bì, phiên bản ba tầng, kiểm chuẩn + luật khai báo + gợi ý, mã LIB-, ô chọn, API, SC-L…",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 52
+    },
+    {
+      "id": "S030-45",
+      "phase": "PHASE-030",
+      "title": "Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bizcityfindings@1 1.2.0 (cổng L); core.library.list …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-dot-a)",
+        "branch": "feat/s030-45-thu-vien-dot-a",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-030 · S030-45 — thư viện dùng chung đợt A: bizcitylibrary@1 (bộ nạp, bộ kiểm có gợi ý, mã LIB…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 53
     },
     {
       "id": "S031-1",
