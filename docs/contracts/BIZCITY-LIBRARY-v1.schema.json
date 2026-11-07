@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bizcity.vn/contracts/bizcity_library@1.schema.json",
+  "$comment": "[2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 (ADR-0032): lược đồ phong bì bizcity_library@1 — kiểm bởi SC-LIB-1; payload của mục kiểm theo itemSchema thư viện tự khai",
+  "title": "bizcity_library@1",
+  "type": "object",
+  "required": ["contract", "id", "kind", "title", "description", "version", "released", "contentHash", "owner", "sources", "itemSchema", "selector", "changelog", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "contract": { "const": "bizcity_library@1" },
+    "id": { "type": "string", "pattern": "^(core|vn|authz|nghiep-vu|bao-cao|nhap|mau)\\.[a-z0-9][a-z0-9-]{1,48}$" },
+    "kind": { "enum": ["param", "calendar", "code-list", "permission-template", "business-map", "rule-set", "report-list", "import-template", "master-sample"] },
+    "title": { "type": "string", "minLength": 3, "maxLength": 120 },
+    "description": { "type": "string", "minLength": 3 },
+    "version": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$" },
+    "released": { "type": "string", "format": "date" },
+    "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "owner": { "type": "string", "minLength": 2 },
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["title", "kind"], "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string" },
+          "kind": { "enum": ["law", "internal", "reference", "generated"] },
+          "date": { "type": "string", "format": "date" },
+          "license": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "generatedBy": { "type": "string" },
+    "itemSchema": { "type": "object" },
+    "codePrefix": { "type": "string", "pattern": "^[A-Z]{2,8}$" },
+    "selector": {
+      "type": "object", "required": ["value", "label", "search"], "additionalProperties": false,
+      "properties": {
+        "value": { "type": "string" },
+        "label": { "type": "string" },
+        "search": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "group": { "type": "string" },
+        "filters": { "type": "array", "items": { "type": "object", "required": ["field", "label"], "additionalProperties": false, "properties": { "field": { "type": "string" }, "label": { "type": "string" } } } },
+        "sort": { "type": "array", "items": { "type": "string" } },
+        "showValueAt": { "type": "boolean" }
+      }
+    },
+    "rules": { "type": "array", "items": { "$ref": "#/$defs/rule" } },
+    "changelog": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["version", "date", "hash", "notes"], "additionalProperties": false,
+        "properties": {
+          "version": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "items": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+  },
+  "$defs": {
+    "basis": {
+      "type": "object", "required": ["ref", "verified"], "additionalProperties": false,
+      "properties": {
+        "ref": { "type": "string" },
+        "key": { "type": "string" },
+        "article": { "type": "object", "required": ["dieu"], "additionalProperties": false, "properties": { "dieu": { "type": "string" }, "khoan": { "type": "string" }, "diem": { "type": "string" } } },
+        "verified": { "type": "boolean" }
+      }
+    },
+    "hint": {
+      "type": "object", "required": ["kind", "text"], "additionalProperties": false,
+      "properties": { "kind": { "enum": ["how", "why", "example", "warning"] }, "text": { "type": "string" }, "link": { "type": "string" } }
+    },
+    "effective": {
+      "type": "object", "required": ["from", "to", "value"], "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "format": "date" },
+        "to": { "type": ["string", "null"], "format": "date" },
+        "value": {},
+        "basis": { "type": "array", "items": { "$ref": "#/$defs/basis" } },
+        "note": { "type": "string" }
+      }
+    },
+    "item": {
+      "type": "object", "required": ["code", "name", "status", "since", "verified"], "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "name": { "type": "string", "minLength": 1 },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "group": { "type": "string" },
+        "status": { "enum": ["active", "deprecated", "removed"] },
+        "since": { "type": "string" },
+        "replacedBy": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "confidence": { "enum": ["cao", "vua", "thap"] },
+        "effective": { "type": "array", "items": { "$ref": "#/$defs/effective" } },
+        "payload": { "type": "object" },
+        "hints": { "type": "array", "items": { "$ref": "#/$defs/hint" } },
+        "basis": { "type": "array", "items": { "$ref": "#/$defs/basis" } }
+      }
+    },
+    "condition": {
+      "oneOf": [
+        { "type": "object", "required": ["all"], "additionalProperties": false, "properties": { "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/condition" } } } },
+        { "type": "object", "required": ["any"], "additionalProperties": false, "properties": { "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/condition" } } } },
+        { "type": "object", "required": ["not"], "additionalProperties": false, "properties": { "not": { "$ref": "#/$defs/condition" } } },
+        {
+          "type": "object", "required": ["field", "op"], "additionalProperties": false,
+          "properties": {
+            "field": { "type": "string", "pattern": "^(input|item)(\\.[A-Za-z0-9_]+)+$" },
+            "op": { "enum": ["eq", "ne", "in", "nin", "gt", "gte", "lt", "lte", "exists", "missing", "matches"] },
+            "value": {}
+          }
+        }
+      ]
+    },
+    "rule": {
+      "type": "object", "required": ["code", "level", "title", "why", "when"], "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z]{2,8}-\\d{3}$" },
+        "level": { "enum": ["block", "warn", "info"] },
+        "title": { "type": "string" },
+        "why": { "type": "string" },
+        "fix": { "type": "string" },
+        "when": { "$ref": "#/$defs/condition" },
+        "suggest": {
+          "oneOf": [
+            { "type": "object", "required": ["value"], "additionalProperties": false, "properties": { "value": {} } },
+            { "type": "object", "required": ["field"], "additionalProperties": false, "properties": { "field": { "type": "string", "pattern": "^item(\\.[A-Za-z0-9_]+)+$" } } },
+            { "type": "object", "required": ["fromLibrary"], "additionalProperties": false, "properties": { "fromLibrary": { "type": "string" }, "filter": { "type": "object" } } }
+          ]
+        },
+        "basis": { "type": "array", "items": { "$ref": "#/$defs/basis" } }
+      }
+    }
+  }
+}
