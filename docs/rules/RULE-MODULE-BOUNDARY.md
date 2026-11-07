@@ -19,7 +19,7 @@
 | **R-BOUND-7** | Add-in tuân như phân hệ; thêm: route chỉ dưới `/api/v1/addins/<id>` | `core/addins.ts` |
 | **R-BOUND-8** | Plugin ngoài chỉ dùng HTTP + hợp đồng có phiên bản; không đọc CSDL lõi, không dùng route chưa nằm trong hợp đồng (route giao diện nội bộ có thể đổi không báo) | `bizcity_api@1` §Phạm vi |
 | **R-BOUND-9** | Mỗi phân hệ có người phụ trách trong `.github/CODEOWNERS` cho **cả hai** thư mục `apps/api/src/phan-he/<key>/` và `apps/web/src/phan-he/<key>/` | Duyệt PR |
-| **R-BOUND-10** | Mọi tệp `apps/api/src/**` mở đầu bằng nhãn lớp `// @bizcity-layer <lớp> <đích>` (lớp `K`, `P`, `M`, `D`, `A`, `U`; ghép bằng `+`) khớp bảng lớp [`tests/conformance/lib/layers.mjs`](../../tests/conformance/lib/layers.mjs), chép từ [REUSE-MAP §3](../standard/REUSE-MAP.md). Tệp mới: `node scripts/gan-nhan-lop.mjs --write`. Đổi phân loại: sửa REUSE-MAP + bảng lớp trong cùng PR | SC-LAYER-1 |
+| **R-BOUND-10** | Mọi tệp `apps/api/src/**` mở đầu bằng nhãn lớp `// @bizcity-layer <lớp> <đích>` (lớp `K`, `P`, `M`, `D`, `A`, `U`; ghép bằng `+`) khớp bảng lớp [`tests/conformance/lib/layers.mjs`](../../tests/conformance/lib/layers.mjs), chép từ [REUSE-MAP §3](../standard/REUSE-MAP.md). Tệp mới: `node scripts/gan-nhan-lop.mjs --write`; tệp mới **cùng lớp / đích với tệp sẵn có cạnh nó** (vd `core/policies.ts` cạnh `core/settings.ts`, cùng `P bizcity.config`) chỉ cần thêm một dòng bảng lớp trong PR của tệp đó — làm theo khuôn đã chốt, không cần chữ chốt riêng (RULE-FLOW §3) <!-- [2026-11-07 11:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — R-BOUND-10 làm rõ: thêm dòng lớp cho tệp mới cùng lớp không phải đổi phân loại -->. Đổi phân loại: sửa REUSE-MAP + bảng lớp trong cùng PR | SC-LAYER-1 |
 
 ## Ma trận được / không được
 
