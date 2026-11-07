@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 20
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 134
+      "count": 133
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 53
+      "count": 50
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 233
+      "count": 236
     }
   ],
   "items": [
@@ -4120,8 +4120,14 @@
       "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w5-thu-vien-tgs",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -5050,8 +5056,8 @@
       "phase": "PHASE-031",
       "title": "Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / resolve ở Platform",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 13
@@ -5061,8 +5067,8 @@
       "phase": "PHASE-031",
       "title": "Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store: module",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 14
@@ -5072,8 +5078,8 @@
       "phase": "PHASE-031",
       "title": "policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 15
@@ -5233,8 +5239,8 @@
       "phase": "PHASE-031",
       "title": "nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 28
