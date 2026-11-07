@@ -47,5 +47,6 @@ Phát hiện **cụ thể** cho một bản khai / một chứng từ thêm các
 
 ## 5. Changelog
 
+- **1.2.0 (đề xuất, S030-45 — ADR-0032):** cổng `L` (thư viện), nguồn `bizcity_library` (bảy mã `LIB-*`) và `bizcity_library:<id>` (mã luật riêng của từng thư viện), khuôn ở [BIZCITY-LIBRARY-v1 §7](BIZCITY-LIBRARY-v1.md). <!-- [2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44: báo trước 1.2.0 -->
 - **1.1.0-draft (2026-11-03):** trường `basis` (R-GATE-11); `notifyFinding` + SC-FIND-2 (R-GATE-10); `status` không còn là cổng chờ duyệt (ADR-0020); thêm `ITEM-HINT-002` (nhắc mặt hàng tự thêm), `IN-ITEM-001` — 39 mã.
 - **1.0.0-draft (2026-11-02):** khuôn chung; gom 12 mã Gate A + 20 mã Gate B; API và công cụ MCP tra mã; SC-FIND-1.
