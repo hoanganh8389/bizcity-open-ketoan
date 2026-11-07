@@ -85,10 +85,19 @@ export const roleAssignmentService = {
     const from = input.validFrom ?? todayVn();
     if (input.validTo && input.validTo < from) throw Errors.validation('validTo phải từ validFrom (mặc định hôm nay) trở đi');
     const user = await targetUser(trx, auth, userId);
+    // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: phạm vi chi nhánh — kiểm chi nhánh thuộc đơn vị; không thành quyền toàn đơn vị (extraAuthz chỉ đọc dòng tenant)
+    const scopeType = input.scopeType ?? 'tenant';
+    if (scopeType === 'tenant' && input.scopeId) throw Errors.validation('scopeId chỉ dùng khi scopeType = branch');
+    if (scopeType === 'branch') {
+      if (!input.scopeId) throw Errors.validation('scopeType = branch cần scopeId (id chi nhánh)');
+      const b = await trx.selectFrom('branches').select('id').where('tenant_id', '=', auth.tenantId).where('id', '=', input.scopeId).executeTakeFirst();
+      if (!b) throw Errors.notFound('chi nhánh');
+    }
+    const scopeId = scopeType === 'branch' ? input.scopeId! : null;
     let label: string;
     if (input.role) {
       assertNotEscalating(auth, input.role);
-      if (user.role === input.role) throw Errors.conflict(`${input.role} đã là vai trò chính của người này`);
+      if (user.role === input.role && scopeType === 'tenant') throw Errors.conflict(`${input.role} đã là vai trò chính của người này`);
       label = input.role;
     } else {
       const { role, grants, allow } = await tenantRoleGrants(trx, auth.tenantId, input.tenantRoleId!);
@@ -100,17 +109,17 @@ export const roleAssignmentService = {
     const { rows: open } = await sql<{ id: string }>`
       SELECT id FROM user_role_assignments
        WHERE tenant_id = ${auth.tenantId} AND user_id = ${userId} AND role IS NOT DISTINCT FROM ${input.role ?? null} AND tenant_role_id IS NOT DISTINCT FROM ${input.tenantRoleId ?? null}
-         AND scope_type = 'tenant' AND purpose = 'operate' AND revoked_at IS NULL`.execute(trx);
+         AND scope_type = ${scopeType} AND scope_id IS NOT DISTINCT FROM ${scopeId}::bigint AND purpose = 'operate' AND revoked_at IS NULL`.execute(trx);
     if (open.length) throw Errors.conflict(`Người này đang có vai trò bổ sung ${label} (dòng ${open[0]!.id}) — thu hồi dòng cũ trước khi gán lại`);
     const { rows } = await sql<{ id: string }>`
-      INSERT INTO user_role_assignments (tenant_id, user_id, role, tenant_role_id, valid_from, valid_to, reason, granted_by)
-      VALUES (${auth.tenantId}, ${userId}, ${input.role ?? null}, ${input.tenantRoleId ?? null},
+      INSERT INTO user_role_assignments (tenant_id, user_id, role, tenant_role_id, scope_type, scope_id, valid_from, valid_to, reason, granted_by)
+      VALUES (${auth.tenantId}, ${userId}, ${input.role ?? null}, ${input.tenantRoleId ?? null}, ${scopeType}, ${scopeId}::bigint,
               ${from}::date, ${input.validTo ?? null}::date, ${input.reason}, ${auth.actor})
       RETURNING id`.execute(trx);
     const id = String(rows[0]!.id);
-    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'user.role_assign', objectType: 'user', objectId: userId, after: { assignmentId: id, role: input.role, tenantRoleId: input.tenantRoleId, validFrom: from, validTo: input.validTo, reason: input.reason } });
+    await writeAudit(trx, { tenantId: auth.tenantId, actor: auth.actor, action: 'user.role_assign', objectType: 'user', objectId: userId, after: { assignmentId: id, role: input.role, tenantRoleId: input.tenantRoleId, scopeType, scopeId, validFrom: from, validTo: input.validTo, reason: input.reason } });
     forgetRoles(userId);
-    return { id, userId, role: input.role ?? null, tenantRoleId: input.tenantRoleId ?? null };
+    return { id, userId, role: input.role ?? null, tenantRoleId: input.tenantRoleId ?? null, scopeType, scopeId };
   },
 
   async revokeIn(trx: ActionTx, auth: AuthContext, userId: string, assignmentId: string, input: RoleRevoke) {

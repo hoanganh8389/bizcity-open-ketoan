@@ -114,7 +114,7 @@ Các tệp dưới đây đã vào `main` ở PR code W3 đợt 1 (#99):
 | Test | `apps/api/test/authz-engine.test.ts` |
 | Lớp đọc (vai trò hệ thống + vai trò đơn vị + lần gán) | `packages/platform/src/core/authz/store.ts` |
 | Shadow: so bộ tính với `auth.ts` ở `requirePermission`, chỉ đếm, không đổi quyết định; khoá `bizcity.authz.shadow` (mặc định off) <!-- [2026-11-06 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W3 đợt 2: shadow, requireScope, SC-AUTH-03 --> | `packages/platform/src/core/authz/shadow.ts`, `apps/api/test/authz-shadow.test.ts` |
-| `requireScope` / `authorizeScoped` / `allowedScope` / `restrictToScope`: quyền theo chi nhánh / kho, đóng an toàn khi tài nguyên không có vị trí; chưa gắn vào route nào (W5) | `packages/platform/src/core/authz/scope.ts`, `apps/api/test/authz-scope.test.ts` |
+| `requireScope` / `authorizeScoped` / `allowedScope` / `restrictToScope`: quyền theo chi nhánh / kho, đóng an toàn khi tài nguyên không có vị trí. Gắn ở cửa nạp `POST /api/v1/documents` + `/batch` theo `branchCode` của chứng từ (W5 đợt 1, `document.routes.ts`, test `authz-scope-intake.test.ts`) <!-- [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: requireScope gắn vào cửa nạp chứng từ --> | `packages/platform/src/core/authz/scope.ts`, `apps/api/test/authz-scope.test.ts` |
 | SC-AUTH-03: danh sách đóng route ghi cố ý không là `defineAction` | `tests/conformance/checks/authz/authz.check.mjs`, `route-giu.json` |
 
 ## 10. Nhật ký
