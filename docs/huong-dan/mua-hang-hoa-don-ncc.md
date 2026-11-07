@@ -27,6 +27,9 @@ Hoá đơn trùng (cùng NCC + ký hiệu + số; số "0000101" và "101" là m
 
 - **NCC:** tìm theo mã số thuế người bán. Chưa có thì tự tạo NCC, mã là mã số thuế. Hai đối tượng cùng mã số thuế mà không rõ NCC nào thì báo **Trùng MST** để kế toán xử lý.
 - **Tệp gốc:** XML, PDF, ZIP và dữ liệu cổng thuế nằm ở thẻ **Tệp đính kèm** của hoá đơn. Gửi lại hoá đơn đã có thì chỉ đính thêm tệp mới.
+- **Xem nhanh trên danh sách:** cột **PDF** mở PDF, không có PDF thì mở bản xem từ cổng thuế; cột **XML** mở nội dung XML gốc. Cột **Mã tra cứu**, **Trang tra cứu** dùng để đối chiếu ở nhà cung cấp hoá đơn.
+- **Hoá đơn không mã:** cổng thuế không có XML. Số tiền và thuế theo cổng thuế, hoá đơn có một dòng tổng hợp, dòng hàng xem ở bản đính kèm. Dòng tổng hợp không có mã hàng nên hiện **Chưa nhận diện mã**.
+- **Cột Trên cổng thuế:** Gốc, Thay thế, Điều chỉnh, Bị thay thế, Bị điều chỉnh, Bị huỷ, theo tình trạng lúc nhập.
 - **Sai người mua:** mã số thuế người mua khác đơn vị thì không nhập.
 - **Hoá đơn bị thay thế / bị huỷ trên cổng thuế:** không nhập, tránh tính tiền hai lần. Nếu đã nhập từ trước thì hoá đơn vẫn còn và có ghi chú để kế toán xem lại.
 - **Hoá đơn thay thế / điều chỉnh:** vẫn nhập, ghi chú nêu hoá đơn gốc. Hoá đơn điều chỉnh cần kiểm tra lại số tiền.
