@@ -3,7 +3,9 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FINDINGS_LIBRARY } from '@ketoan/contracts';
+import { libraryRuleFindings } from '@bizcity/platform/core/libraries/index';
 import { call, setupTenant, type TestCtx } from './helpers.js';
+// [2026-11-08 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032 D-LIB-5): tổng mã = mã tĩnh (cổng A, B, L) + mã luật riêng của thư viện
 
 let ctx: TestCtx;
 beforeAll(async () => { ctx = await setupTenant(); });
@@ -13,7 +15,7 @@ describe('GET /api/v1/findings', () => {
   it('liệt kê đủ mã hai cổng, lọc theo cổng / mức / chữ', async () => {
     const all = await call(ctx, 'GET', '/api/v1/findings');
     expect(all.status, JSON.stringify(all.body)).toBe(200);
-    expect(all.body.data.total).toBe(FINDINGS_LIBRARY.length);
+    expect(all.body.data.total).toBe(FINDINGS_LIBRARY.length + libraryRuleFindings().length);
     const b = await call(ctx, 'GET', '/api/v1/findings?gate=B&level=block');
     expect(b.body.data.items.length).toBeGreaterThan(0);
     expect(b.body.data.items.every((f: { gate: string; level: string; fix: string }) => f.gate === 'B' && f.level === 'block' && f.fix.length > 0)).toBe(true);
