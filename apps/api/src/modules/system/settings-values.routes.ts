@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-07 02:04 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-40: GET /settings/values/:key/impact (xem trước tác động của một lần đổi, không chặn); PUT chặn PERIOD_LOCKED ở setSetting
 // [2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1 (S029-10, bizcity_settings@1 1.1.0-draft §2.4): một đường đọc / ghi cấu hình có phạm vi, ngày hiệu lực, phiên bản
 /**
  * GIÁ TRỊ CẤU HÌNH (bizcity_settings@1 §2) — một kho, một đường ghi cho mọi khoá registry có `valueType`:
@@ -15,7 +16,7 @@ import { authOf, requireAuthenticated } from '@bizcity/platform/core/auth';
 import { Errors } from '@bizcity/platform/core/errors';
 import { ok } from '@bizcity/platform/core/http';
 import { defineAction, mountActions } from '@bizcity/platform/core/actions';
-import { getSetting, setSetting, settingHistory, settingsRegistry, type SettingScope } from '@bizcity/platform/core/settings';
+import { getSetting, setSetting, settingHistory, settingImpact, settingsRegistry, type SettingScope } from '@bizcity/platform/core/settings';
 
 const tags = ['Cấu hình'];
 const KEY_RE = /^bizcity\.[a-z0-9_]+(\.[a-z0-9_]+)+$/;
@@ -63,6 +64,8 @@ export const SETTINGS_VALUE_ACTIONS = [setValue];
 
 const readQuery = z.object({ branchId: idText.optional(), accountingUnitId: idText.optional(), userId: idText.optional(), date: date.optional() });
 
+const impactQuery = z.object({ scope: z.enum(['tenant', 'accounting_unit', 'branch', 'user']).optional(), scopeId: idText.optional(), validFrom: date.optional() });
+
 export async function settingsValuesRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, SETTINGS_VALUE_ACTIONS);
 
@@ -98,6 +101,19 @@ export async function settingsValuesRoutes(app: FastifyInstance): Promise<void> 
       if (q.data.userId && q.data.userId !== self && !auth.permissions.has('settings:write')) throw Errors.forbidden('Đọc cấu hình của người dùng khác cần quyền settings:write');
       const scope: SettingScope = { ...q.data, userId: q.data.userId ?? self };
       return db.transaction().execute(async (trx) => ok(await getSetting(trx, auth.tenantId, req.params.key, scope)));
+    },
+  });
+
+  app.get<{ Params: { key: string }; Querystring: Record<string, string> }>('/api/v1/settings/values/:key/impact', {
+    preHandler: requireAuthenticated(),
+    schema: { tags, summary: 'Xem trước tác động của một lần đổi khoá (không ghi gì, không chặn): kỳ khoá, phiên bản muộn hơn, mục chờ, căn cứ' },
+    handler: async (req) => {
+      const auth = authOf(req);
+      sharedKey(req.params.key);
+      if (!auth.permissions.has('settings:write')) throw Errors.forbidden('Xem tác động của việc đổi cấu hình cần quyền settings:write');
+      const q = impactQuery.safeParse(req.query);
+      if (!q.success) throw Errors.validation(q.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
+      return db.transaction().execute(async (trx) => ok(await settingImpact(trx, auth.tenantId, req.params.key, q.data)));
     },
   });
 
