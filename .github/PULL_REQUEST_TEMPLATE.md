@@ -7,7 +7,7 @@
 
 ## Tầng bị đụng
 
-- [ ] T0 Nhân (`core/`, `modules/{documents,posting,ledger}`, `packages/contracts`, trigger sổ cái) → **2 người duyệt, 1 thuộc nhóm Lõi**
+- [ ] T0 Nhân (`core/`, `modules/{documents,posting,ledger}`, `packages/contracts`, trigger sổ cái) → **1 người duyệt**; ghi mức K0–K3 và (K2 / K3) mục **K**: đụng gì, số đo, đường lui
 - [ ] T1 Dịch vụ lõi (`modules/*` khác, `features/`, `components/`)
 - [ ] T2 Phân hệ: `<key>`
 - [ ] T3 Add-in: `<id>`

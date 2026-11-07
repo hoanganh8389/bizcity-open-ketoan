@@ -41,6 +41,6 @@ Grep CI (`scripts/kiem-chuan.sh`): `cost_overwrite` chỉ trong `db/migrations/`
 
 ## Khi sửa module ledger
 
-- Hai người duyệt, một thuộc nhóm Lõi.
+- Một người duyệt (R-KER-2 bản smallwin); mô tả PR có mục **K** (đụng gì, số đo, đường lui).
 - Dán bằng chứng `npm test` đầy đủ (không chỉ file liên quan).
 - Không thêm tham số cho phép bỏ qua kiểm tra (`skipBalance`, `force`…) vào `post()`.
