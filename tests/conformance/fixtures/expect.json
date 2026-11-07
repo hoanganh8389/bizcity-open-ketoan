@@ -736,6 +736,34 @@
           ]
         }
       }
+    },
+    {
+      "$comment": "[2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: ca tự kiểm SC-LIB-1 (thư viện sạch không phát hiện; thư viện lỗi: trùng mã, replacedBy mồ côi, payload sai, ngày chồng, băm sai, tiền tố dành riêng, luật thiếu fix / op lạ, mã nguồn trong sources/, thiếu README; thư mục lệch id)",
+      "root": "library-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-LIB-1": {
+          "findings": 16,
+          "keys": [
+            "core.lech:id-dir",
+            "core.loi:envelope:/rules/0/code",
+            "core.loi:envelope:/rules/0/when",
+            "core.loi:readme",
+            "core.loi:dup:X",
+            "core.loi:replaced:Y",
+            "core.loi:payload:Z:n",
+            "core.loi:payload:Z:la",
+            "core.loi:eff-overlap:E:1",
+            "core.loi:hash",
+            "core.loi:changelog",
+            "core.loi:prefix-reserved",
+            "core.loi:rule-code:LIB-X-001",
+            "core.loi:rule-fix:LIB-X-001",
+            "core.loi:rule-when:LIB-X-001:when",
+            "core.loi:sources-code:dich-nguoc.py"
+          ]
+        }
+      }
     }
   ]
 }

@@ -1,5 +1,5 @@
 # Tra mã phát hiện — hai cổng kiểm chuẩn
-<!-- TỆP SINH TỰ ĐỘNG bởi scripts/sinh-ma-loi.mjs từ packages/contracts/src/{catalog-hint,intake-findings}.ts — không sửa tay; SC-FIND-1 kiểm. -->
+<!-- TỆP SINH TỰ ĐỘNG bởi scripts/sinh-ma-loi.mjs từ packages/contracts/src/{catalog-hint,intake-findings,library-findings}.ts và libraries/*/library.json — không sửa tay; SC-FIND-1 kiểm. -->
 <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — trang tra mã bizcity_findings@1 (ADR-0019, R-GATE-5) -->
 
 > Gặp một mã trong thông báo, trong phản hồi API hay ở Trạm kiểm tra đầu vào: tìm mã ở đây. Máy đọc: `GET /api/v1/findings/<mã>`
@@ -70,3 +70,23 @@ Bước L1 khuôn · L2 số học · L3 danh mục · L4 nghiệp vụ · L5 đ
 | `IN-BIZ-005` | ⚠ cảnh báo | L4 | Cùng phiên bản nhưng nội dung khác bản đã nhận | Cửa nạp coi cùng phiên bản là "không đổi" và bỏ qua — nội dung sửa sẽ KHÔNG vào sổ. | Sửa chứng từ thì tăng version; gửi lại đúng nội dung cũ thì không sao. | R-EVENT-4 · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-005.md) | Quy ước phần mềm |
 | `IN-BIZ-006` | ⚠ cảnh báo | L4 | Số hoá đơn đã có ở chứng từ khác | Một số hoá đơn chỉ thuộc một chứng từ; trùng thì có thể kê khai thuế hai lần. | Kiểm số / ký hiệu hoá đơn; hoá đơn thay thế / điều chỉnh thì khai relation. | Sổ hoá đơn, R-POST · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-006.md) | Nghị định 123/2020/NĐ-CP; Luật Thuế GTGT số 48/2024/QH15 |
 | `IN-BIZ-007` | ℹ nhắc | L4 | Ngày hoá đơn cách ngày chứng từ hơn 5 ngày | Hoá đơn lập xa ngày giao hàng / thu tiền có thể sai thời điểm lập hoá đơn theo quy định. | Kiểm ngày hoá đơn và ngày chứng từ ở hệ thống nguồn. | Sổ hoá đơn · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-007.md) | Nghị định 123/2020/NĐ-CP |
+
+## Cổng L — thư viện dùng chung (7 mã chung · 1 mã luật)
+
+Bộ kiểm của mọi thư viện [bizcity_library@1](../../contracts/BIZCITY-LIBRARY-v1.md) trả các mã này kèm **gợi ý** lấy từ chính thư viện (mã gần nhất, mã thay thế, giá trị đúng ngày). Máy đọc: `POST /api/v1/libraries/<id>/validate`.
+
+| Mã | Mức | Bước | Nghĩa | Vì sao | Cách sửa | Luật | Căn cứ |
+|---|---|---|---|---|---|---|---|
+| `LIB-UNKNOWN-001` | ✘ chặn | code | Mã không có trong thư viện | Giá trị phải lấy từ thư viện để mọi đơn vị, mọi kênh hiểu cùng một nghĩa; mã lạ thường là gõ nhầm hoặc mã của phần mềm khác. | Chọn một mã trong danh sách gợi ý (gần nhất theo mã / tên), hoặc chọn từ ô chọn của thư viện. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+| `LIB-DEPRECATED-001` | ⚠ cảnh báo | status | Mã đã ngừng dùng | Mã vẫn đọc được cho chứng từ cũ nhưng không nên dùng cho dữ liệu mới; thư viện đã có mã thay thế. | Đổi sang mã thay thế (replacedBy) trong gợi ý. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+| `LIB-REMOVED-001` | ✘ chặn | status | Mã đã bỏ | Mã chỉ còn để tra nghĩa của dữ liệu cũ; không nhận cho dữ liệu mới. | Dùng mã thay thế trong gợi ý, hoặc chọn lại từ ô chọn. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+| `LIB-EFFECTIVE-001` | ✘ chặn | effective | Không có giá trị tại ngày này | Tham số chỉ có hiệu lực trong các khoảng ngày theo văn bản; ngày chứng từ nằm ngoài mọi khoảng. | Kiểm lại ngày chứng từ, hoặc dùng khoảng hiệu lực gần nhất trong gợi ý nếu văn bản mới chưa được cập nhật vào thư viện. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+| `LIB-SCHEMA-001` | ✘ chặn | schema | Dữ liệu sai khuôn của thư viện | Mỗi thư viện khai khuôn dữ liệu (itemSchema); dữ liệu sai khuôn thì máy không đọc đúng được. | Sửa trường được chỉ ra theo khuôn đúng trong gợi ý. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+| `LIB-VALUE-001` | ⚠ cảnh báo | value | Giá trị khác thư viện tại ngày | Giá trị nhập khác giá trị thư viện có hiệu lực ở ngày đó; thường là dùng số cũ hoặc gõ nhầm. | Dùng giá trị thư viện trong gợi ý; nếu văn bản mới đã thay, ghi căn cứ và báo người giữ thư viện. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+| `LIB-UNVERIFIED-001` | ℹ nhắc | verified | Mục thư viện chưa được duyệt | Mục được nạp từ nguồn nhưng người giữ thư viện chưa đối chiếu văn bản gốc. | Đối chiếu căn cứ trước khi dùng để tính tiền; người giữ thư viện xác nhận rồi đặt verified. | ADR-0032 · [học](../../../docs/contracts/BIZCITY-LIBRARY-v1.md) | Quy ước phần mềm |
+
+### Mã luật riêng của từng thư viện
+
+| Mã | Mức | Thư viện | Nghĩa | Vì sao | Cách sửa | Căn cứ |
+|---|---|---|---|---|---|---|
+| `TSPL-LAW-001` | ⚠ cảnh báo | [`vn.tham-so-phap-ly`](../../../libraries/vn.tham-so-phap-ly/README.md) | Ghi đè tham số theo luật | Tham số loại luật áp như nhau cho mọi đơn vị; giá trị khác thư viện thường là nhập nhầm hoặc văn bản đã đổi mà thư viện chưa cập nhật. | Dùng giá trị thư viện tại ngày; nếu văn bản mới đã thay, ghi căn cứ và báo người giữ thư viện cập nhật. | Quy ước phần mềm (ADR-0032 D-LIB-8) |

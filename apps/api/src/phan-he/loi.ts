@@ -25,6 +25,8 @@ import { evidenceRoutes } from '../modules/system/evidence.routes.js';
 import { eventRoutes } from '../modules/system/events.routes.js';
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — CORE_ROUTES thêm findingsRoutes (thư viện mã hai cổng, ADR-0019)
 import { findingsRoutes } from '../modules/system/findings.routes.js';
+// [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: CORE_ROUTES thêm librariesRoutes (thư viện dùng chung bizcity_library@1, ADR-0032)
+import { librariesRoutes } from '../modules/system/libraries.routes.js';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — CORE_ROUTES thêm catalogRulesRoutes (HT09 Quy định dữ liệu danh mục)
 import { catalogRulesRoutes } from '../modules/system/catalog-rules.routes.js';
 // [2026-11-01 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W2: CORE_ROUTES thêm devtoolsRoutes (Bàn điều tra — API trung gian chỉ đọc)
@@ -62,7 +64,7 @@ import { stockTransferRoutes } from './kho/stock-transfers.js';
 import { inventoryReportRoutes } from '../modules/inventory/inventory-report.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
-  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
+  authRoutes, systemRoutes, evidenceRoutes, eventRoutes, findingsRoutes, librariesRoutes, catalogRulesRoutes, devtoolsRoutes, mcpRoutes, metricsRoutes, presenceRoutes, accessRoutes, appsRoutes,
   accountRoutes, branchRoutes, orgUnitRoutes, warehouseRoutes, unitNameRoutes, partnerRoutes, taxCodeRoutes, postingConfigRoutes, periodRoutes,
   documentRoutes, connectionRoutes, dimensionRoutes, contractScheduleRoutes, defaultDataRoutes, bankAccountRoutes,
   productRoutes, catalogRoutes, itemRoutes, voucherTemplateRoutes, signatureRoutes, printTemplateRoutes, taxInfoRoutes, referenceDocumentRoutes, docRefRoutes,
