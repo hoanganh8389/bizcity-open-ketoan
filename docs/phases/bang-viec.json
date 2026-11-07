@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 16
+      "count": 19
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 141
+      "count": 134
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 49
+      "count": 53
     },
     {
       "key": "paused",
@@ -5051,14 +5051,8 @@
       "title": "Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / resolve ở Platform",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w1-registry",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -5068,14 +5062,8 @@
       "title": "Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store: module",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w1-registry",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -5085,14 +5073,8 @@
       "title": "policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w1-registry",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -5112,8 +5094,8 @@
       "phase": "PHASE-031",
       "title": "PR chốt thiết kế cửa nạp: bizcityledgerintake@1 1.6.0 (policyRefs, policyRef), JSON Schema, ingestDocumentSchema",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 17
@@ -5124,8 +5106,14 @@
       "title": "Tầng L4b trong preflight.ts + Commit Guard băm policyRefs; GateResult.ruleVersion",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2a-tham-chieu",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W2a — cửa nạp nhận tham chiếu chính sách: policyRefs (bizcityledgerintake@1 1.6.0), IN-…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 18
     },
@@ -5135,8 +5123,14 @@
       "title": "Họ mã POL- (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào bizcityfindings@1, có căn cứ và câu giải thích",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2a-tham-chieu",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W2a — cửa nạp nhận tham chiếu chính sách: policyRefs (bizcityledgerintake@1 1.6.0), IN-…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -5157,8 +5151,14 @@
       "title": "Khoá intake.policy.severity, intake.policy.mode vào registry cấu hình (loại A, mặc định cho phép)",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2a-tham-chieu",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W2a — cửa nạp nhận tham chiếu chính sách: policyRefs (bizcityledgerintake@1 1.6.0), IN-…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 21
     },
@@ -5245,8 +5245,14 @@
       "title": "Hai cột policyrefs, policycheck trên accountingeventversions (gộp migration S031-9) — 20 §2",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2a-tham-chieu",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W2a — cửa nạp nhận tham chiếu chính sách: policyRefs (bizcityledgerintake@1 1.6.0), IN-…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5256,8 +5262,14 @@
       "title": "Khung nhìn bizcityread.policyapplication + hàm policylineage(eventid); nhánh UNION mua hàng",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2a-tham-chieu",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W2a — cửa nạp nhận tham chiếu chính sách: policyRefs (bizcityledgerintake@1 1.6.0), IN-…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -5267,8 +5279,14 @@
       "title": "Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2a-tham-chieu",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W2a — cửa nạp nhận tham chiếu chính sách: policyRefs (bizcityledgerintake@1 1.6.0), IN-…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 31
     },
