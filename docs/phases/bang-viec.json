@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 15
+      "count": 18
     },
     {
       "key": "merging",
@@ -15,17 +15,17 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 34
+      "count": 30
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 140
+      "count": 141
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 53
+      "count": 48
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 227
+      "count": 232
     }
   ],
   "items": [
@@ -3909,8 +3909,8 @@
       "phase": "PHASE-027",
       "title": "Tài liệu W0: README, 00, checklist; ADR-0023; dòng phase ở docs/phases/README.md",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 6
@@ -3920,8 +3920,8 @@
       "phase": "PHASE-027",
       "title": "CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), skills install; bộ skill cho AI; ví dụ POS mini; API…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 7
@@ -3931,8 +3931,8 @@
       "phase": "PHASE-027",
       "title": "CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế ở RULE-QUALITY-GATE",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 8
@@ -3942,14 +3942,14 @@
       "phase": "PHASE-027",
       "title": "CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD)",
       "priority": "P0",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
-        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
-        "branch": "feat/core-ke-toan-ck3",
+        "who": "hoanganh8389 (phiên Claude, p030-queue)",
+        "branch": "feat/phase-027-ck3-mat-khau",
         "state": "đang làm",
-        "since": "2026-11-03",
-        "dot": "PHASE-027 · CK-3 — SC-SEC-5 (bí mật không có giá trị mặc định trong mã); bỏ mật khẩu mặc định của c…"
+        "since": "2026-11-07",
+        "dot": "PHASE-027 · CK-3 + Q027-5 — SC-SEC-5 (bí mật không có giá trị mặc định trong mã); bỏ mật khẩu viết …"
       },
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 9
@@ -3959,9 +3959,15 @@
       "phase": "PHASE-027",
       "title": "Q027-5 SEEDADMINPASSWORD",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, p030-queue)",
+        "branch": "feat/phase-027-ck3-mat-khau",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-027 · CK-3 + Q027-5 — SC-SEC-5 (bí mật không có giá trị mặc định trong mã); bỏ mật khẩu viết …"
+      },
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -4196,8 +4202,8 @@
       "phase": "PHASE-029",
       "title": "Migration người sửa / lý do cho phiên bản sự việc; IN-DOC-REASON (warn)",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 15
@@ -4240,8 +4246,8 @@
       "phase": "PHASE-029",
       "title": "Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → accountingunit → tenant, ngày hiệu lực, getSetting / setS…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 19
@@ -4262,8 +4268,8 @@
       "phase": "PHASE-029",
       "title": "Xoá an toàn ở CSDL: thu hồi DELETE, hàm xoá đọc mdreferences, bỏ CASCADE, ngừng dùng cho bảng thiếu cột",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 22
@@ -4273,8 +4279,8 @@
       "phase": "PHASE-029",
       "title": "Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEINVALID + lane + mục sổ đăng ký ở DIAGNOSTICS.md; p…",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 23
@@ -4317,9 +4323,15 @@
       "phase": "PHASE-029",
       "title": "Trigger kỳ khoá trên ledgerentries",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, p030-queue)",
+        "branch": "feat/phase-029-k3-dot1",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-029 / PHASE-030 · gói K3 đợt 1 — accountingevents.createdby bắt buộc (D030-16 / S030-42, migr…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -4961,9 +4973,15 @@
       "phase": "PHASE-030",
       "title": "accountingevents.createdby bắt buộc: danh tính tác vụ cho sự việc hệ thống (khấu hao 792, giá vốn 692 dòng rỗng ở ketoantest) — phát hiện F-2 của 25 §4; D030-16",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, p030-queue)",
+        "branch": "feat/phase-029-k3-dot1",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-029 / PHASE-030 · gói K3 đợt 1 — accountingevents.createdby bắt buộc (D030-16 / S030-42, migr…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 51
     },
