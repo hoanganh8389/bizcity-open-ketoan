@@ -36,7 +36,7 @@ PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh. Từ 02/11/
 | **Gói định khoản theo ngành** | [BIZCITY-POSTING-TEMPLATE-v1](docs/contracts/BIZCITY-POSTING-TEMPLATE-v1.md), kiểm `--module <thư mục gói>` (SC-TPL-1) | 1 người hiểu nghiệp vụ kế toán |
 | **Preset cài nhanh** | [presets/README.md](presets/README.md), dữ liệu **hư cấu** (SC-PRESET-1) | 1 người |
 | **Sửa lỗi** | issue theo mẫu [Báo lỗi](.github/ISSUE_TEMPLATE/bao-loi.yml); viết test tái hiện **trước** khi sửa | theo tầng bị đụng (§4) |
-| **Kernel** (định khoản, sổ, kỳ, cửa nạp) | [RULE-KERNEL](docs/rules/RULE-KERNEL.md): ghi mức K0–K3; K3 cần ADR | K0–K1: 1 người nhóm Lõi · K2: 2 người, 1 hiểu nghiệp vụ · K3: 2 người Lõi + ADR + kế toán trưởng |
+| **Kernel** (định khoản, sổ, kỳ, cửa nạp) | [RULE-KERNEL](docs/rules/RULE-KERNEL.md): ghi mức K0–K3; K2 / K3 có mục **K** trong mô tả PR (đụng gì, số đo, đường lui) | 1 người duyệt cho mọi mức (R-KER-2 bản smallwin, 2026-11-07) |
 | **Năng lực Core mới** module cần | đề xuất theo [VERSIONING §5](docs/standard/VERSIONING.md) trước, code sau | nhóm Lõi |
 | **Tài liệu** | sửa thẳng; liên kết phải tới được (SC-DOC-1) | 1 người |
 | **Lỗ hổng bảo mật** | **không** mở issue công khai, xem [SECURITY.md](SECURITY.md) | — |
@@ -55,7 +55,7 @@ PR vi phạm một trong bốn câu sẽ bị đóng, dù test xanh. Từ 02/11/
 
 | Tầng | Đường dẫn | Duyệt |
 |---|---|---|
-| T0 Nhân | `packages/kernel/`, `packages/platform/` (từ 01/11/2026), `apps/api/src/core/`, `modules/{documents,posting,ledger,periods}`, `packages/contracts`, trigger sổ cái, `db/migrations` | 2 người, 1 nhóm Lõi ([CODEOWNERS](.github/CODEOWNERS)) |
+| T0 Nhân | `packages/kernel/`, `packages/platform/` (từ 01/11/2026), `apps/api/src/core/`, `modules/{documents,posting,ledger,periods}`, `packages/contracts`, trigger sổ cái, `db/migrations` | 1 người duyệt ([CODEOWNERS](.github/CODEOWNERS)); mục **K** trong mô tả PR khi đụng Kernel |
 | T1 Dịch vụ lõi | `apps/api/src/modules/*` khác, `apps/web/src/{features,components}` | 1 nhóm Lõi |
 | T2 Phân hệ / module | **`modules/<key>/`** (mới, bắt buộc — [ADR-0024](docs/adr/ADR-0024-phan-he-nam-o-modules-phan-he-dong-bang.md)); phân hệ cũ ở `apps/*/src/phan-he/<key>/` đóng băng, chuyển theo đợt | người phụ trách module |
 | T3 Add-in, preset, gói định khoản | `apps/*/src/addins/<id>/`, `presets/`, gói | người phụ trách |
