@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 9
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 53
+      "count": 54
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 225
+      "count": 226
     }
   ],
   "items": [
@@ -4928,14 +4928,8 @@
       "title": "Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), T030-EVT-1..5 — Kernel K2",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, event-id)",
-        "branch": "feat/phase-030-event-id-bat-buoc",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-41 — ledgerentries.eventid bắt buộc (NOT NULL) ở CSDL: migration an toàn cho bản c…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 49
     },
@@ -4966,15 +4960,9 @@
       "phase": "PHASE-030",
       "title": "Mã bizcitysettings@1 1.2.0: cột settingvalues.basis (migration), basis / usedBy ở registry, basis? ở setSetting / core.settings.set, overview trả basis, màn HT…",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, can-cu)",
-        "branch": "feat/phase-030-can-cu",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-43 — mã bizcitysettings@1 1.2.0: cột settingvalues.basis, basis / usedBy ở registr…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 48
     },

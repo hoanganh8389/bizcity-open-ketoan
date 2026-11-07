@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Căn cứ của khoá cấu hình: setting_values.basis, basis / usedBy ở registry (PHASE-030, S030-43) <!-- [2026-11-06 04:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43 -->
+
+- **Thêm:** migration `0078_setting_values_can_cu.sql` — cột `setting_values.basis` (căn cứ của một phiên bản: văn bản, điều, khoản, điểm, đường dẫn, ngày hiệu lực). `core.settings.set` nhận `basis?` (khuôn kiểm, không bắt buộc kể cả khoá loại A — D030-12); lịch sử phiên bản trả căn cứ. Registry `bizcity_settings@1` 1.2.0-draft: `basis` (căn cứ mặc định của khoá) và `usedBy` (nơi đọc khoá). `GET /api/v1/settings/overview` trả `basis`, `basisFrom`, `usedBy`; màn HT13 hiện thẻ Căn cứ và nơi dùng. Golden T030-CFG-BASIS-1..6. Chữ chốt `docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md` 1.2.0-draft.
+- **Đổi:** `getSetting` trả thêm `basis` (căn cứ của phiên bản đang áp), kể cả khoá còn đường lưu cũ ở `tenants.settings`. 10 khoá loại A có căn cứ mặc định là quy tắc nội bộ kiểm được trong repo (không phải điều luật).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0078 (chỉ thêm cột, không đổi dòng nào). Căn cứ pháp lý (luật, thông tư) chưa điền: chờ kế toán trưởng xác nhận (S030-12 / S030-35).
+- **Bảo mật:** `url` trong căn cứ chỉ nhận `https://`; trường lạ bị từ chối; không đổi quyền ghi (`settings:write`).
+
 ### Mọi bút toán có chứng từ gốc: event_id bắt buộc ở CSDL (PHASE-030, S030-41) <!-- [2026-11-06 03:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-41 -->
 
 - **Thêm:** migration `0077_event_id_but_toan_bat_buoc.sql` — `ledger_entries.event_id` NOT NULL (R-LEDGER-12, chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/25-BUT-TOAN-LUON-CO-CHUNG-TU.md`). Golden T030-EVT-1..5, trong đó EVT-5 chạy migration trên CSDL tạm có sẵn dòng rỗng.

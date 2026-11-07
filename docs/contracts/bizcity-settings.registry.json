@@ -1,6 +1,6 @@
 {
   "contract": "bizcity_settings@1",
-  "version": "1.1.0-draft",
+  "version": "1.2.0-draft",
   "updated": "2026-11-06",
   "note": "Ảnh chụp các khoá cấu hình đang có trong code. Thêm khoá mới phải thêm mục ở đây trong cùng PR (R-MATRIX-2). Trường 'gap' ghi chỗ chưa đạt chuẩn.",
   "scopesOrder": [
@@ -28,7 +28,11 @@
       "writeBy": ".env",
       "permission": "server",
       "audit": null,
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-POSTING.md",
+        "article": "R-POST-10 (một sổ nhật ký chung mỗi đơn vị; sổ thuế là bản cài riêng BOOK_MODE=tax)"
+      }
     },
     {
       "key": "bizcity.install.modules",
@@ -93,7 +97,17 @@
       "writeBy": "PUT /api/v1/settings/posting-modes",
       "permission": "settings:write",
       "audit": "settings.posting-modes",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-SETTINGS-MATRIX.md",
+        "article": "R-MATRIX-1 (loại A) và S4 (chế độ định khoản theo loại chứng từ)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "cổng nhận chứng từ: tự định khoản hay chờ định khoản (ACC14)"
+        }
+      ]
     },
     {
       "key": "bizcity.lock.data",
@@ -109,7 +123,17 @@
       "writeBy": "PUT /api/v1/settings/data-lock",
       "permission": "settings:write",
       "audit": "settings.data-lock",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-LEDGER.md",
+        "article": "R-LEDGER-9 (không vi phạm khoá dữ liệu theo ngày)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "khoá dữ liệu theo ngày — core/date-rules.ts"
+        }
+      ]
     },
     {
       "key": "bizcity.lock.period",
@@ -128,7 +152,18 @@
       "writeBy": "API kỳ kế toán (ACC2)",
       "permission": "periods:lock",
       "audit": "period_lock_events (bắt buộc lý do khi mở)",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-LEDGER.md",
+        "article": "R-LEDGER-9 (không ghi vào kỳ đã khoá)",
+        "clause": "docs/rules/RULE-CONTINUITY.md R-CONT-6 (khoá kỳ đòi chuỗi lành)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "khoá kỳ — ledgerService.post (periodRepository.isLocked)"
+        }
+      ]
     },
     {
       "key": "bizcity.posting.default_accounts",
@@ -144,7 +179,18 @@
       "writeBy": "PUT /api/v1/posting/defaults",
       "permission": "settings:write",
       "audit": "có",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-POSTING.md",
+        "article": "R-POST-2 (không viết cứng số tài khoản; tra qua AccountResolver)",
+        "clause": "docs/adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md (chính sách kế toán có phiên bản và ngày hiệu lực)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "định khoản — AccountResolver (R-POST-2)"
+        }
+      ]
     },
     {
       "key": "bizcity.posting.reasons",
@@ -161,7 +207,18 @@
       "writeBy": "PUT /api/v1/posting/reasons/:code",
       "permission": "settings:write",
       "audit": "có",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-POSTING.md",
+        "article": "R-POST-2 (không viết cứng số tài khoản; tra qua AccountResolver)",
+        "clause": "docs/adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md (chính sách kế toán có phiên bản và ngày hiệu lực)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "định khoản — AccountResolver (R-POST-2)"
+        }
+      ]
     },
     {
       "key": "bizcity.posting.product_groups",
@@ -178,7 +235,18 @@
       "writeBy": "PUT /api/v1/posting/groups/:code",
       "permission": "settings:write",
       "audit": "có",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-POSTING.md",
+        "article": "R-POST-2 (không viết cứng số tài khoản; tra qua AccountResolver)",
+        "clause": "docs/adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md (chính sách kế toán có phiên bản và ngày hiệu lực)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "định khoản — AccountResolver (R-POST-2)"
+        }
+      ]
     },
     {
       "key": "bizcity.posting.payment_methods",
@@ -195,7 +263,18 @@
       "writeBy": "PUT /api/v1/posting/payment-methods/:code",
       "permission": "settings:write",
       "audit": "có",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-POSTING.md",
+        "article": "R-POST-2 (không viết cứng số tài khoản; tra qua AccountResolver)",
+        "clause": "docs/adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md (chính sách kế toán có phiên bản và ngày hiệu lực)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "định khoản — AccountResolver (R-POST-2)"
+        }
+      ]
     },
     {
       "key": "bizcity.posting.tax_codes",
@@ -212,7 +291,18 @@
       "writeBy": "POST /api/v1/tax-codes",
       "permission": "settings:write",
       "audit": "có",
-      "affectsPosting": true
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/rules/RULE-POSTING.md",
+        "article": "R-POST-2 (không viết cứng số tài khoản; tra qua AccountResolver)",
+        "clause": "docs/adr/ADR-0009-chinh-sach-ke-toan-co-phien-ban.md (chính sách kế toán có phiên bản và ngày hiệu lực)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "định khoản — AccountResolver (R-POST-2)"
+        }
+      ]
     },
     {
       "key": "bizcity.payment.approval_thresholds",
@@ -330,7 +420,13 @@
       "audit": "chưa có",
       "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb không kiểm khuôn (PHASE-021 W3)",
-      "valueType": "integer[1..3650]"
+      "valueType": "integer[1..3650]",
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "trạm tiền kiểm — dọn bể chờ theo hạn giữ"
+        }
+      ]
     },
     {
       "key": "bizcity.intake.trial_retention_days",
@@ -348,7 +444,13 @@
       "audit": "chưa có",
       "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb không kiểm khuôn (PHASE-021 W3)",
-      "valueType": "integer[1..3650]"
+      "valueType": "integer[1..3650]",
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "trạm tiền kiểm — dọn bể chờ theo hạn giữ"
+        }
+      ]
     },
     {
       "key": "bizcity.intake.accept_roles",
@@ -366,7 +468,13 @@
       "audit": "chưa có",
       "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb (PHASE-021 W3 — mặc định đủ dùng)",
-      "valueType": "enum[](owner|chief_accountant|accountant)"
+      "valueType": "enum[](owner|chief_accountant|accountant)",
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "trạm tiền kiểm — vai được chấp nhận mã cảnh báo (acceptItem)"
+        }
+      ]
     },
     {
       "key": "bizcity.intake.open_alert_days",
@@ -384,7 +492,13 @@
       "audit": "chưa có",
       "affectsPosting": false,
       "gap": "Chưa có API ghi; đọc thẳng jsonb (PHASE-021 W4)",
-      "valueType": "integer[1..365]"
+      "valueType": "integer[1..365]",
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "trạm tiền kiểm — nhắc mục mở quá hạn"
+        }
+      ]
     },
     {
       "key": "bizcity.item.auto_create",
@@ -440,7 +554,17 @@
       "permission": "settings:write",
       "audit": "settings.set (có lý do)",
       "affectsPosting": false,
-      "note": "PHASE-028 W3 đợt 2: on = mỗi yêu cầu của người dùng đăng nhập qua requirePermission được so với bộ tính core/authz (match / only_legacy / only_engine), chỉ đếm và ghi nhật ký, KHÔNG đổi quyết định. Mỗi yêu cầu nạp lại lần gán từ CSDL nên chỉ bật khi chạy thử một thời gian; tắt là mặc định. Lệch only_engine (bộ tính cho thừa) chặn việc bỏ đường cũ (ADR-0027 Phụ lục A, W3 đợt 2 mục 3)."
+      "note": "PHASE-028 W3 đợt 2: on = mỗi yêu cầu của người dùng đăng nhập qua requirePermission được so với bộ tính core/authz (match / only_legacy / only_engine), chỉ đếm và ghi nhật ký, KHÔNG đổi quyết định. Mỗi yêu cầu nạp lại lần gán từ CSDL nên chỉ bật khi chạy thử một thời gian; tắt là mặc định. Lệch only_engine (bộ tính cho thừa) chặn việc bỏ đường cũ (ADR-0027 Phụ lục A, W3 đợt 2 mục 3).",
+      "basis": {
+        "doc": "docs/adr/ADR-0027-core-authorization-plugin-role-editor.md",
+        "article": "Phụ lục A, W3 đợt 2 mục 3 (bật chạy bóng, lệch only_engine chặn việc bỏ đường cũ)"
+      },
+      "usedBy": [
+        {
+          "kind": "gate",
+          "ref": "requirePermission — so quyền cũ với bộ tính core/authz (shadowEnabled)"
+        }
+      ]
     }
   ],
   "$comment": "[2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1: valueType (khuôn máy đọc), phạm vi user, khoá mới lưu setting_values; khoá có valueType ghi qua core.settings.set (bizcity_settings@1 1.1.0-draft §2)"
