@@ -106,4 +106,6 @@ retirePolicy(trx, tenantId, policyId, actor, reason)
 - Route đọc `GET /api/v1/purchase/policies/:id/versions` (quyền đọc mua hàng).
 - Giao diện: tab *Phiên bản* ở chi tiết chính sách; ô *Áp từ ngày* + *Lý do* ở form; vết chính sách trên phiếu hiện `mã@bản`.
 
+**Bảng lớp:** `core/policies.ts` là tệp mới của Platform nên thêm **một dòng** `['core/policies.ts', 'P', 'bizcity.config']` vào `tests/conformance/lib/layers.mjs` (SC-LAYER-1), cùng lớp / đích với `core/settings.ts` — theo khuôn đã chốt, không đổi luật lớp (RULE-MODULE-BOUNDARY giữ nguyên). <!-- [2026-11-07 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — bổ sung phạm vi W1: layers.mjs (SC-LAYER-1 đòi dòng cho tệp mới) -->
+
 **Golden:** T031-REG-1 (sửa bản `published` → trigger chặn), T031-TR-2 (mọi ngày đúng một bản, đổi bản không khoảng trống), T031-MH-1 (đổi chiết khấu NCC từ 16/11: phiếu ngày 15/11 tính lại ra số cũ, `policyTrace` trỏ bản cũ; phiếu 16/11 ra số mới).
