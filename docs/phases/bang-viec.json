@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 9
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 226
+      "count": 227
     }
   ],
   "items": [
@@ -4916,15 +4916,9 @@
       "phase": "PHASE-030",
       "title": "Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ \"đã đổi trong 30 ngày\"; \"xem như trên form\"; golden T030-CFG-1…",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, doi-khoa-a)",
-        "branch": "feat/phase-030-doi-khoa-a",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-030 · S030-40 — đổi khoá loại A một người (D030-12 = B): setSetting chặn PERIODLOCKED khi ngà…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 47
     },

@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Đổi khoá cấu hình loại A một người: chặn kỳ đã khoá, xem trước tác động, form ở HT13 (PHASE-030, S030-40) <!-- [2026-11-07 02:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-40 -->
+
+- **Thêm:** `GET /api/v1/settings/values/:key/impact` (cần `settings:write`): xem trước tác động của một lần đổi — kỳ khoá, hiệu lực lùi, phiên bản hiệu lực muộn hơn, số mục chờ ở bể chờ đầu vào, thiếu căn cứ; không ghi gì, không chặn. Màn HT13 có nút **Đổi giá trị** (nhập → xem tác động → lưu); nút chỉ hiện cho người có quyền của khoá, khoá có phiên bản, không bí mật. Hàm `settingImpact`, `lockedPeriodAt` ở `core/settings`. Golden T030-CFG-2, 3, 7, T030-CFG-IMP-1..3.
+- **Đổi:** `core.settings.set` trên khoá loại A trả `PERIOD_LOCKED` khi ngày hiệu lực rơi vào kỳ đã khoá chung (mọi loại chứng từ; khoá theo chi nhánh tính khi đặt khoá phạm vi chi nhánh). Đây là chỗ chặn duy nhất của việc đổi khoá A (D030-12); khoá riêng một loại chứng từ, khoá loại B/C không bị chặn.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không có migration.
+- **Bảo mật:** xem trước tác động cần `settings:write`; khoá bí mật không vào form và không hiện giá trị (D030-13).
+
 ### Căn cứ của khoá cấu hình: setting_values.basis, basis / usedBy ở registry (PHASE-030, S030-43) <!-- [2026-11-06 04:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43 -->
 
 - **Thêm:** migration `0078_setting_values_can_cu.sql` — cột `setting_values.basis` (căn cứ của một phiên bản: văn bản, điều, khoản, điểm, đường dẫn, ngày hiệu lực). `core.settings.set` nhận `basis?` (khuôn kiểm, không bắt buộc kể cả khoá loại A — D030-12); lịch sử phiên bản trả căn cứ. Registry `bizcity_settings@1` 1.2.0-draft: `basis` (căn cứ mặc định của khoá) và `usedBy` (nơi đọc khoá). `GET /api/v1/settings/overview` trả `basis`, `basisFrom`, `usedBy`; màn HT13 hiện thẻ Căn cứ và nơi dùng. Golden T030-CFG-BASIS-1..6. Chữ chốt `docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md` 1.2.0-draft.
