@@ -1,7 +1,8 @@
 # PHASE-031 — Policy Registry & Rule Contracts: chính sách nghiệp vụ quản trị tập trung, plugin dùng bản đã phát hành, cửa nạp kiểm lại trước khi ghi sổ
+<!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án trả Q031-1..3: Policy Registry là trụ cột nền móng ngang MDG; L4b mặc định cảnh báo, POS tự động; online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
 <!-- [2026-11-06 09:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — mở phase từ đề bài chủ dự án 06/11: chính sách bán hàng / mua hàng / nhân sự do module sở hữu, Registry phát hành có phiên bản, plugin POS dùng theo và gửi sự kiện về, Conformance / Intake Gate kiểm lại, Kernel dựng bút toán dự kiến; ADR-0031 đề xuất -->
 
-> **Trạng thái:** 🟡 W0 tài liệu 2026-11-06 · **Code:** chưa
+> **Trạng thái:** 🟡 W0 tài liệu 2026-11-06; Q031-1..3 trả 2026-11-07, bản mẫu màn 2026-11-07 · **Code:** chưa
 > **Mức Kernel:** W1 K1 (Platform: phong bì Registry, phiên bản chính sách mua hàng); W2 K2 (cửa nạp nhận `policyRefs`, tầng L4b, Commit Guard); W3–W4 K1
 > **Mục tiêu:** Lấp nửa *Policy* còn thiếu của trụ cột 05 *Configuration & Policy Registry* (ADR-0028). Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) do **module sở hữu**, **phát hành có phiên bản** qua một Registry chung; plugin ngoài (POS WordPress, Woo, sàn) **dùng bản đã phát hành** và gửi tham chiếu về cùng sự việc; cửa nạp **tính lại để kiểm** rồi để Kernel dựng **bút toán dự kiến**. Truy vết được *bút toán → sự việc → chứng từ → chính sách căn cứ (phiên bản, băm)*.
 > **Việc lộ trình:** —
@@ -15,9 +16,10 @@
 
 | Câu hỏi | Trả lời |
 |---|---|
-| Có phải trụ cột mới? | **Không phải trụ cột thứ 18.** Là nửa *Policy* của trụ cột **05** (ADR-0028), ánh xạ trụ cột **V** của ADR-0022, mở rộng V từ "chế độ kế toán có phiên bản" sang cả chính sách nghiệp vụ. Vai trò ngang Master Data: MDG giữ *cái gì* (mặt hàng, đối tượng), Policy Registry giữ *theo luật nào* — có phiên bản, hiệu lực, căn cứ, được chứng từ tham chiếu (Q031-1) |
+| Có phải trụ cột mới? | **Trụ cột nền móng ngang Master Data** (chủ dự án 07/11). MDG giữ *cái gì*, Policy Registry giữ *theo luật nào* và giữ nó xuyên suốt mọi module. Gọn: trụ cột V của `tru-cot.json` lên vai `nền móng`, trụ cột 05 của ADR-0028 đổi tên *Policy Registry & Rule Contracts*; không đánh số lại |
+| Ba yếu tố? | **Nhất quán cross-module · xuyên suốt · truy vết**, mỗi yếu tố có tín hiệu đo ([20 §1](20-TRUY-VET-VA-THEO-DOI.md)) |
 | Hai kho chính sách? | Không. Module giữ nội dung; Registry giữ phong bì (khoá, phiên bản, phạm vi, hiệu lực, băm, Rule Contract) |
-| Ai tính? | Bên nào cũng được: POS tính tại chỗ (offline được), module tính cho chứng từ nội bộ. Cùng một hàm tính tất định của Rule Contract; cửa nạp tính lại để **kiểm**, không thay |
+| Ai tính? | POS trực tuyến gọi `POST /api/v1/policies/evaluate`; ngoại tuyến tự tính bằng hàm viết lại theo bản mô tả JSON của Registry; module tính cho chứng từ nội bộ. Cùng một hàm tính tất định của Rule Contract; cửa nạp tính lại để **kiểm**, không thay |
 | Conformance Engine có thành cổng chặn? | Không. Engine PHASE-020 giữ vai tư vấn cấp đơn vị. Kiểm từng chứng từ là tầng **L4b** của cửa nạp, mặc định **cảnh báo** (mềm) |
 | Bút toán dự kiến ở đâu ra? | **L5 chạy thử** đã có (savepoint rồi lùi). Rule Contract chỉ chỉ `reasonCode`; Posting Rules và Ledger chỉ thuộc Kernel |
 | Gợi ý hay tự động? | Cả hai, theo khoá `intake.policy.mode`: *gợi ý* đưa sự việc lệch vào hàng việc kế toán kèm bút toán dự kiến; *tự động* (mặc định cho POS) ghi luôn, xem lại sau |
@@ -49,6 +51,8 @@
 |---|---|
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | vì sao, quyết định D031-*, câu hỏi Q031-*, đợt W0–W4, ai làm gì |
 | [10-THIET-KE](10-THIET-KE.md) | phong bì Registry, Rule Contract, vòng đời phát hành, phân phối cho plugin, `policyRefs`, tầng L4b, bút toán dự kiến, vai Conformance Engine, ví dụ SALE-PROMO-001 mua 2 tặng 1 |
+| [20-TRUY-VET-VA-THEO-DOI](20-TRUY-VET-VA-THEO-DOI.md) | ba yếu tố và tín hiệu đo; truy vết bằng khoá thật (hai khung nhìn chỉ đọc, không bảng mới); hàng việc *Chờ kế toán xem* = một nhánh của `document_queue`; bảng theo dõi thực hiện chính sách |
+| [mockups/chinh-sach.html](mockups/chinh-sach.html) | bản mẫu bốn tab: Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện (dữ liệu giả; mở `#que`, `#tra`, `#das` để vào thẳng tab) |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con S031-*, ca T031-*, nhật ký |
 
 ## Xong khi

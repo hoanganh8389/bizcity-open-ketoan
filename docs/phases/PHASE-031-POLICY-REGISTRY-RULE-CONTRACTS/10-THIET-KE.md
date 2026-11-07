@@ -102,7 +102,7 @@ Không có `DELETE` cho bản đã phát hành (ADR-0028 D028-3).
 }
 ```
 
-Nguồn cũ không gửi `policyRefs` vẫn được nhận như hôm nay; L4b khi đó chỉ chạy phần *"nghiệp vụ này lẽ ra có chính sách"* ở mức `info` (đơn vị chọn nâng lên `warn`).
+Nguồn cũ không gửi `policyRefs` vẫn được nhận như hôm nay; L4b khi đó chỉ chạy phần *"nghiệp vụ này lẽ ra có chính sách"* (`POL-REF-000`) ở mức `info` (đơn vị chọn nâng lên `warn`).
 
 ## 6. Tầng kiểm L4b ở cửa nạp
 
@@ -110,6 +110,7 @@ Thứ tự trong tiền kiểm hiện có (`packages/kernel/src/modules/intake/p
 
 | Mã | Câu hỏi | Mặc định |
 |---|---|---|
+| `POL-REF-000` | Nghiệp vụ có chính sách hiệu lực nhưng nguồn không gửi `policyRefs` | `info` (đơn vị nâng lên `warn`) |
 | `POL-REF-001` | Tham chiếu tồn tại, băm khớp bản đã phát hành | `warn` |
 | `POL-EFF-001` | Bản đó hiệu lực tại `docDate` cho chi nhánh / kênh / khách của sự việc | `warn` |
 | `POL-STALE-001` | Đã có bản mới hơn hiệu lực tại `docDate` (POS offline dùng bản cũ) | `warn` |

@@ -1,12 +1,13 @@
 # PHASE-031 · 40 — Checklist
 <!-- [2026-11-06 09:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — việc con S031-*, ca T031-*, log -->
+<!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án trả Q031-1..3: Policy Registry là trụ cột nền móng ngang MDG; L4b mặc định cảnh báo, POS tự động; online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
 
 Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nhóm.
 
 | ID | Việc | Đợt | Ưu tiên | Code? | Trạng thái |
 |---|---|---|---|---|---|
 | S031-1 | ADR-0031 đề xuất, README (hiện trạng đọc mã), [00](00-MASTER-PLAN.md), [10](10-THIET-KE.md), checklist | W0 | P0 | không | ✅ 2026-11-06 |
-| S031-2 | Chủ dự án duyệt D031-1..10, trả Q031-1..3 | W0 | P0 | không | ⛔ chủ dự án |
+| S031-2 | Chủ dự án duyệt D031-0..10, trả Q031-1..3 | W0 | P0 | không | 🟡 Q031-1..3 ✅ 2026-11-07; chờ duyệt toàn bộ D031-* |
 | S031-3 | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | W0 | P0 | không | ⛔ nhóm Lõi |
 | S031-4 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản `published`) + `policies.register / publish / resolve` ở Platform | W1 | P0 | có | ☐ |
 | S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | ☐ |
@@ -17,13 +18,19 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-10 | Họ mã `POL-*` (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào `bizcity_findings@1`, có căn cứ và câu giải thích | W2 | P0 | có | ☐ |
 | S031-11 | Rule Contract `purchase.*@1` bọc `engine.ts` (không đổi kết quả; hồi quy mua hàng) | W2 | P1 | có | ☐ |
 | S031-12 | Khoá `intake.policy.severity`, `intake.policy.mode` vào registry cấu hình (loại A, mặc định cho phép) | W2 | P1 | có | ☐ |
-| S031-13 | `GET /api/v1/policies`, phạm vi khoá `policies:read`; sự kiện `policy.published` / `policy.retired` qua outbox | W3 | P0 | có | ☐ |
+| S031-13 | `GET /api/v1/policies`, `POST /api/v1/policies/evaluate` (Q031-3), bản mô tả JSON từng Rule Contract, phạm vi khoá `policies:read`; sự kiện `policy.published` / `policy.retired` qua outbox | W3 | P0 | có | ☐ |
 | S031-14 | Kế toán trưởng xác nhận bảng `reasonCode` theo loại kết quả (Q031-5) | W3 | P0 | không | ⛔ kế toán trưởng |
 | S031-15 | Rule Contract bán hàng `sale.price_list@1`, `sale.promo.discount@1`, `sale.promo.buy_x_get_y@1`, `sale.credit_limit@1` cùng `modules/ban-hang` (S030-16); `publishChecks` trần NĐ81 | W3 | P0 | có | ☐ sau S031-14 |
 | S031-16 | POS WP: tải chính sách, tính theo Rule Contract, gửi `policyRefs`; bỏ luật khuyến mại riêng của plugin (repo plugin, dòng CLAIMS riêng) | W3 | P1 | có | ☐ |
 | S031-17 | Rulepack `policy` cho Conformance Engine (§9 của [10](10-THIET-KE.md)), chỉ đọc | W4 | P1 | có | ☐ |
 | S031-18 | Màn *Chính sách* (phiên bản, phạm vi, chứng từ đã áp) + nút *Chính sách căn cứ* trên màn truy vết | W4 | P1 | có | ☐ |
 | S031-19 | `nen-mong.json` / `NEN-MONG-DOANH-NGHIEP.md`: trụ cột 05 hai nửa, tín hiệu nửa Policy; `tru-cot.json` V theo Q031-1 | W4 | P1 | không | ☐ sau Q031-1 |
+| S031-20 | Hai cột `policy_refs`, `policy_check` trên `accounting_event_versions` (gộp migration S031-9) — [20 §2](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ |
+| S031-21 | Khung nhìn `bizcity_read.policy_application` + hàm `policy_lineage(event_id)`; nhánh `UNION` mua hàng | W2 | P0 | có | ☐ |
+| S031-22 | Nhánh `policy_review` trong `bizcity_read.document_queue`; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — [20 §3](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ |
+| S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
+| S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
+| S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | 🟡 bản 1 2026-11-07; chờ chủ dự án |
 
 ## Ca bằng chứng (golden)
 
@@ -40,8 +47,13 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | T031-INT-4 | `reasonCode` của `treatment` chưa có trong chính sách định khoản tại ngày → `hold`, vào bể chờ, kích hoạt chính sách định khoản → bể tự kiểm lại | W2 |
 | T031-INT-5 | băm `policyRefs` không khớp bản đã phát hành → `POL-REF-001` | W2 |
 | T031-INT-6 | chính sách đổi giữa tiền kiểm và ghi → Commit Guard `IN-GUARD-001` | W2 |
-| T031-INT-7 | nguồn cũ không gửi `policyRefs` → nhận như hôm nay, L4b `info` | W2 |
+| T031-INT-7 | nguồn cũ không gửi `policyRefs` → nhận như hôm nay, L4b `POL-REF-000` `info` | W2 |
+| T031-TR-1 | mọi dòng sổ của sự việc có `policy_refs` đi ngược tới phong bì; băm khớp; 0 mồ côi | W2 |
+| T031-TR-2 | chọn ngày D bất kỳ → đúng một bản hiệu lực mỗi khoá × phạm vi; đổi bản không tạo khoảng trống | W1 |
+| T031-TR-3 | bảng theo dõi và rulepack `policy` đếm cùng một số trên cùng dữ liệu | W4 |
+| T031-RC-3 | endpoint `evaluate` và bản viết lại theo mô tả JSON ra cùng kết quả trên cùng bảng số | W3 |
 
 ## Nhật ký
 
 - 2026-11-06 — W0: chủ dự án đưa đề bài *"chính sách nghiệp vụ được quản lý tập trung tại module … plugin bên ngoài sử dụng chính sách đã phát hành … Conformance gate … phối hợp với Accounting Rules để dựng bút toán dự kiến trước khi ghi sổ … chính sách được quản trị tập trung, nhưng không bắt buộc tính toán tập trung"*. Rà mã origin/main `c8afd39`: mua hàng có engine chính sách thuần nhưng không phiên bản; bán hàng không có luật ở Core; tiền kiểm L1–L5 và Conformance Engine không kiểm chính sách nghiệp vụ; L5 chạy thử sẵn là bút toán dự kiến. Viết ADR-0031 (đề xuất), README, 00, 10, checklist. Chờ S031-2, S031-3.
+- 2026-11-07 — chủ dự án trả **Q031-1** (trụ cột nền móng ngang MDG: *"quan trọng không kém master data … giữ chính sách xuyên suốt, liên quan đến định nghĩa nhiều hơn"*), **Q031-2** (L4b mặc định cảnh báo, POS tự động: đúng), **Q031-3** (online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry); chốt **ba yếu tố** của bộ: nhất quán cross-module · xuyên suốt · truy vết, kèm luật lean (D031-0). Thêm [20](20-TRUY-VET-VA-THEO-DOI.md) (tín hiệu đo ba yếu tố, truy vết bằng hai khung nhìn chỉ đọc, hàng việc = nhánh `policy_review` của `document_queue`, bảng theo dõi) và bản mẫu [chinh-sach.html](mockups/chinh-sach.html) bốn tab; S031-20..25, T031-TR-1..3, T031-RC-3; mã `POL-REF-000`.

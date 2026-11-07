@@ -1,4 +1,5 @@
 # PHASE-031 · 00 — Master plan
+<!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án trả Q031-1..3: Policy Registry là trụ cột nền móng ngang MDG; L4b mặc định cảnh báo, POS tự động; online gọi endpoint, offline viết lại theo bản mô tả JSON ánh xạ từ Registry; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
 <!-- [2026-11-06 09:47 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — vì sao, D031-1..10 (ánh xạ D-POL-1..10 của ADR-0031), Q031-1..6, đợt W0–W4, ai làm gì -->
 
 ## 1. Vì sao
@@ -34,15 +35,16 @@ Chi tiết và lý do ở [ADR-0031](../../adr/ADR-0031-policy-registry-rule-con
 | D031-7 | D-POL-7 | Bút toán dự kiến = L5 chạy thử sẵn có; Commit Guard thêm băm `policyRefs` |
 | D031-8 | D-POL-8 | Conformance Engine thêm rulepack `policy` cấp đơn vị, chỉ đọc |
 | D031-9 | D-POL-9 | `GET /api/v1/policies` + sự kiện `policy.published` / `policy.retired` |
-| D031-10 | D-POL-10 | Không trụ cột 18; nửa Policy của trụ cột 05; ngưỡng duyệt ở `setting_values` được đánh chỉ mục, không chép |
+| D031-0 | D-POL-0 | Ba yếu tố: nhất quán cross-module · xuyên suốt · truy vết, mỗi yếu tố có tín hiệu đo; luật lean |
+| D031-10 | D-POL-10 | Trụ cột **nền móng ngang MDG**: V của `tru-cot.json` lên `nền móng`, 05 của ADR-0028 đổi tên *Policy Registry & Rule Contracts*; khoá cấu hình = chính sách vô hướng; không đánh số lại |
 
 ## 4. Câu hỏi (Q031-*)
 
 | Mã | Hỏi ai | Câu hỏi | Đề nghị |
 |---|---|---|---|
-| Q031-1 | chủ dự án | Trụ cột: nửa Policy của 05 (giữ 17) hay tách thành trụ cột riêng ngang MDG? | **giữ 17**, đổi mô tả 05 thành hai nửa *Configuration* · *Policy* với tín hiệu riêng trong `nen-mong.json`; trụ cột V của `tru-cot.json` mở rộng tên thành "Chính sách nghiệp vụ và chế độ kế toán có phiên bản" |
-| Q031-2 | chủ dự án | L4b mặc định `warn` cho mọi đơn vị; POS mặc định chế độ *tự động*? | đồng ý — đúng R-GATE-9 (mặc định cho phép, nhắc khi sai) |
-| Q031-3 | chủ dự án | Plugin PHP tính lại bằng cách nào: viết lại theo bản mô tả JSON + golden chung, hay gọi `POST /api/v1/policies/evaluate` khi online? | **cả hai**: endpoint cho lúc online (không lệch), bản viết lại cho lúc offline; golden `T031-RC-*` là chuẩn chung |
+| Q031-1 | chủ dự án | Trụ cột riêng hay nửa của 05? | ✅ **2026-11-07: trụ cột nền móng ngang MDG** — *"quan trọng không kém master data … giữ chính sách xuyên suốt, liên quan đến định nghĩa nhiều hơn"* → D031-10 |
+| Q031-2 | chủ dự án | L4b mặc định `warn`; POS mặc định *tự động*? | ✅ **2026-11-07: đúng** |
+| Q031-3 | chủ dự án | Plugin tính lại bằng cách nào? | ✅ **2026-11-07: online gọi `POST /api/v1/policies/evaluate`; offline viết lại hàm theo bản mô tả JSON**, căn cứ chính sách đã phát hành ở Registry ánh xạ sang; golden `T031-RC-*` chung |
 | Q031-4 | nhóm Lõi | Phiên bản chính sách mua hàng: bảng `purchase_policy_versions` cạnh `purchase_policies`, hay dồn nội dung vào `inline` của Registry? | **bảng phiên bản tại module** — giữ D031-2, không đổi engine |
 | Q031-5 | kế toán trưởng | Bảng `reasonCode` cho từng loại kết quả: tặng kèm bán (XTA1.4), tặng không kèm mua / mẫu (XQUA), chiết khấu thương mại trên hoá đơn vs sau hoá đơn, chiết khấu thanh toán, thưởng doanh số NPP (CKNPP) | xác nhận bảng ở S031-14 trước khi phát hành Rule Contract bán hàng |
 | Q031-6 | nhóm Lõi | `policy.resolve(ref, at)` cho Kernel đọc nội dung chính sách qua Platform: chấp nhận hướng phụ thuộc Kernel → Platform registry (chỉ đọc)? | đồng ý nếu đi qua cổng đọc `bizcity_read` (ADR-0026), Kernel không đọc bảng module |
@@ -53,9 +55,9 @@ Chi tiết và lý do ở [ADR-0031](../../adr/ADR-0031-policy-registry-rule-con
 |---|---|---|---|
 | **W0** | K0 | ADR-0031 đề xuất, README, 10 thiết kế, checklist (tài liệu này) | — |
 | **W1** small win | K1 | Phong bì Registry (migration + `policies.register / publish / resolve`); phiên bản + băm cho chính sách mua hàng; `policyTrace` ghi `code@version#hash`; golden không sửa bản đã phát hành | Q031-4; dòng CLAIMS |
-| **W2** | K2 | `bizcity_ledger_intake@1` 1.6.0 `policyRefs`; tầng L4b trong `preflight.ts`; Commit Guard; mã `POL-*` vào `bizcity_findings@1`; `GateResult.ruleVersion`; Rule Contract `purchase.*@1` bọc engine mua hàng | W1; PR chốt thiết kế (đụng cửa nạp, dùng chung) |
-| **W3** | K1 | `GET /api/v1/policies`, `policy.published` / `.retired`; Rule Contract bán hàng (`sale.price_list@1`, `sale.promo.*@1`, `sale.credit_limit@1`) đi cùng `modules/ban-hang` (S030-16); POS WP đổi sang dùng chính sách phát hành | W2; Q031-3, Q031-5 |
-| **W4** | K1 | Rulepack `policy` cho Conformance Engine; màn *Chính sách* (danh sách, phiên bản, chứng từ đã áp); nút *Chính sách căn cứ* trên màn truy vết; `nen-mong.json` trụ cột 05 nửa Policy | W3 |
+| **W2** | K2 | `bizcity_ledger_intake@1` 1.6.0 `policyRefs`; cột `policy_refs` / `policy_check` + khung nhìn `policy_application`, nhánh `policy_review` của hàng việc ([20](20-TRUY-VET-VA-THEO-DOI.md)); tầng L4b trong `preflight.ts`; Commit Guard; mã `POL-*` vào `bizcity_findings@1`; `GateResult.ruleVersion`; Rule Contract `purchase.*@1` bọc engine mua hàng | W1; PR chốt thiết kế (đụng cửa nạp, dùng chung) |
+| **W3** | K1 | `GET /api/v1/policies`, `POST /api/v1/policies/evaluate`, bản mô tả JSON của Rule Contract, `policy.published` / `.retired`; Rule Contract bán hàng (`sale.price_list@1`, `sale.promo.*@1`, `sale.credit_limit@1`) đi cùng `modules/ban-hang` (S030-16); POS WP đổi sang dùng chính sách phát hành | W2; Q031-3, Q031-5 |
+| **W4** | K1 | Rulepack `policy` cho Conformance Engine; màn *Chính sách*, *Truy vết*, *Theo dõi thực hiện* theo [bản mẫu](mockups/chinh-sach.html) ([20](20-TRUY-VET-VA-THEO-DOI.md)); làn `policy` của `bizcity_lineage@1`; `nen-mong.json` trụ cột 05 nửa Policy | W3 |
 
 ## 6. Ai làm gì
 
