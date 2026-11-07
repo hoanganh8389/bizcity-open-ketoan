@@ -6,20 +6,25 @@
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { invoiceLabel } from '@bizcity/mua-hang-domain';
+import { Eye } from 'lucide-react';
+import { GDT_STATUS, invoiceNoShown } from '@bizcity/mua-hang-domain';
 import { api, errorText } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { DataGrid, type Column } from '@/components/DataGrid';
 import { ErrorBox, Loading, Modal } from '@/components/ui';
 import { PartnerPicker } from '@/components/pickers';
 import { NccInfo } from '../thanh-phan/NccInfo';
-import { STATUS_LABEL, monthStart, today, useNames } from '../du-lieu';
+import { STATUS_LABEL, monthStart, today, useNames, type Attachment } from '../du-lieu';
 import { dmy } from '../chung';
 import '../mua-hang.css';
 import { HoaDonModal } from './HoaDonModal';
 import { NhapHoaDon } from './NhapHoaDon';
 import { NhapXmlHoaDon } from './NhapXmlHoaDon';
-import { SOURCE_LABEL, STATE_LABEL, invoiceApi, type InvoiceRow, type InvoiceState } from './api';
+import { SOURCE_LABEL, STATE_LABEL, invoiceApi, type InvoiceFileRef, type InvoiceRow, type InvoiceState } from './api';
+import { XemTep } from '../dinh-kem/XemTep';
+
+const gdtOf = (r: InvoiceRow) => (r.data?.gdt ?? {}) as { tthai?: unknown; maTraCuu?: string; linkTraCuu?: string };
+const gdtStatusOf = (r: InvoiceRow) => GDT_STATUS[Number(gdtOf(r).tthai)];
 
 export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) {
   const names = useNames();
@@ -35,6 +40,7 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
   const [importMode, setImportMode] = useState<'excel' | 'scan' | null>(null);
   const [aliases, setAliases] = useState(false);
   const [xmlOpen, setXmlOpen] = useState(false);
+  const [xemTep, setXemTep] = useState<InvoiceFileRef | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
   const pc = embedPartner ?? partner;
   const q = useQuery({ queryKey: ['mua-hang', 'invoices', pc, from, to], queryFn: () => invoiceApi.list({ partnerCode: pc || undefined, from: from || undefined, to: to || undefined }) });
@@ -43,13 +49,23 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
   const rows = all.filter((r) => !state || r.state === state);
   const count = (s: InvoiceState) => all.filter((r) => r.state === s).length;
   const columns: Column<InvoiceRow>[] = [
+    { key: 'form', header: 'Mẫu số', type: 'code', width: 60 },
+    { key: 'series', header: 'Ký hiệu', type: 'code', width: 90 },
+    { key: 'no', header: 'Số HĐ', type: 'code', width: 100, value: (r) => invoiceNoShown(r.no), render: (r) => <button type="button" className="btn btn-xs btn-ghost" title="Mở hoá đơn" onClick={() => setOpen({ id: r.id })}>{invoiceNoShown(r.no)}</button> },
     { key: 'date', header: 'Ngày HĐ', width: 90, value: (r) => dmy(r.date) },
-    { key: 'label', header: 'Ký hiệu - Số HĐ', type: 'code', width: 140, value: (r) => invoiceLabel(r), render: (r) => <button type="button" className="btn btn-xs btn-ghost" onClick={() => setOpen({ id: r.id })}>{invoiceLabel(r)}</button> },
+    { key: 'pdfFile', header: 'PDF', width: 62, value: (r) => (r.pdf ? 'PDF' : r.viewHtml ? 'Bản xem' : ''), render: (r) => {
+      const f = r.pdf ?? r.viewHtml;
+      return f ? <button type="button" data-view-ok className="btn btn-xs btn-ghost" title={r.pdf ? 'Xem PDF hoá đơn' : 'Không có PDF: xem bản hoá đơn từ cổng thuế'} onClick={() => setXemTep(f)}><Eye size={12} /> {r.pdf ? 'PDF' : 'Xem'}</button> : <span className="muted" title="Chưa có PDF hay bản xem. Cầu nối tự đính thêm khi tool tải được">Chưa có</span>;
+    } },
+    { key: 'xmlFile', header: 'XML', width: 62, value: (r) => (r.xml ? 'XML' : ''), render: (r) => (r.xml ? <button type="button" data-view-ok className="btn btn-xs btn-ghost" title="Xem nội dung XML gốc" onClick={() => setXemTep(r.xml!)}><Eye size={12} /> XML</button> : <span className="muted" title="Hoá đơn không có XML, thường là hoá đơn không mã">Không có</span>) },
     ...(embedded ? [] : [
       { key: 'partner', header: 'Mã NCC', type: 'code', width: 120, value: (r: InvoiceRow) => r.partnerCode, render: (r: InvoiceRow) => <span className="row" style={{ gap: 4, alignItems: 'center' }}>{r.partnerCode}<NccInfo code={r.partnerCode} showName={false} /></span> },
-      { key: 'partnerName', header: 'Tên NCC', width: 220, value: (r: InvoiceRow) => names.partnerName(r.partnerCode) },
+      // Tên trên hoá đơn đi cùng từng dòng, không phụ thuộc danh sách NCC đã tải về máy.
+      { key: 'partnerName', header: 'Tên NCC', width: 260, value: (r: InvoiceRow) => r.sellerName || names.partnerName(r.partnerCode) },
     ] as Column<InvoiceRow>[]),
-    { key: 'sellerTaxCode', header: 'MST người bán', type: 'code', width: 110 },
+    { key: 'sellerTaxCode', header: 'MST người bán', type: 'code', width: 130 },
+    { key: 'buyerTaxCode', header: 'MST người mua', type: 'code', width: 130 },
+    { key: 'gdtStatus', header: 'Trên cổng thuế', width: 105, value: (r) => gdtStatusOf(r)?.label ?? '', render: (r) => { const s = gdtStatusOf(r); return s ? <span className={`badge ${s.warn ? 'badge-warn' : 'badge-gray'}`} title="Tình trạng hoá đơn trên cổng thuế, lấy lúc nhập">{s.label}</span> : ''; } },
     { key: 'totalBeforeTax', header: 'Tiền hàng', type: 'money', width: 120 },
     { key: 'totalTax', header: 'Tiền thuế', type: 'money', width: 100 },
     { key: 'total', header: 'Tổng thanh toán', type: 'money', width: 130 },
@@ -59,6 +75,8 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
     { key: 'issues', header: 'Chỗ lệch', width: 260, value: (r) => r.issues.join('; '), render: (r) => <span title={r.issues.join('\n')}>{r.issues.join('; ')}</span> },
     { key: 'receipts', header: 'Phiếu nhập', width: 180, value: (r) => r.receipts.map((x) => x.docNo).join(', '),
       render: (r) => <span>{r.receipts.map((x) => <a key={x.id} href={`/mua-hang/chung-tu?mo=${encodeURIComponent(x.id)}`} style={{ marginRight: 6 }} title={`${dmy(x.docDate)} · ${STATUS_LABEL[x.status as keyof typeof STATUS_LABEL] ?? x.status}`}>{x.docNo || '(nháp)'}</a>)}</span> },
+    { key: 'maTraCuu', header: 'Mã tra cứu', type: 'code', width: 150, value: (r) => gdtOf(r).maTraCuu ?? '' },
+    { key: 'linkTraCuu', header: 'Trang tra cứu', width: 170, value: (r) => gdtOf(r).linkTraCuu ?? '', render: (r) => { const u = gdtOf(r).linkTraCuu ?? ''; return /^https?:\/\/[^/\s]+\.[^/\s]+/i.test(u) ? <a href={u} target="_blank" rel="noopener noreferrer" title="Mở trang tra cứu của nhà cung cấp hoá đơn, dán Mã tra cứu để xem hoá đơn">{new URL(u).hostname}</a> : ''; } },
     { key: 'source', header: 'Nguồn', width: 80, value: (r) => SOURCE_LABEL[r.source] },
     { key: 'attachments', header: 'Tệp', type: 'number', width: 55 },
     { key: 'createdBy', header: 'Người tạo', width: 160 },
@@ -86,12 +104,13 @@ export function HoaDonNccPage({ embedPartner }: { embedPartner?: string } = {}) 
         <div className="filters" style={{ paddingTop: 0 }}>{(['chua_nhan_dien', 'chua_co_phieu', 'lech', 'khop', 'da_huy'] as InvoiceState[]).map(chip)}</div>
         <ErrorBox error={q.error ? errorText(q.error) : null} />
         {q.isLoading ? <Loading /> : (
-          <DataGrid storageKey="mh-hoa-don-ncc" exportName="hoa-don-ncc" exportRef={exportRef} rows={rows} rowKey={(r) => r.id!} columns={columns} onRowDoubleClick={(r) => setOpen({ id: r.id })}
+          <DataGrid storageKey="mh-hoa-don-ncc-2" exportName="hoa-don-ncc" exportRef={exportRef} rows={rows} rowKey={(r) => r.id!} columns={columns} onRowDoubleClick={(r) => setOpen({ id: r.id })}
             emptyText="Chưa có hoá đơn NCC trong kỳ — bấm Nhập Excel / Thêm hoá đơn" />
         )}
       </div>
       {open && <HoaDonModal id={open.id} partnerCode={pc} lockPartner={embedded} onClose={() => setOpen(null)} onSaved={() => void q.refetch()} />}
       {importMode && <NhapHoaDon mode={importMode} partnerCode={pc} lockPartner={embedded} onClose={() => setImportMode(null)} onDone={() => void q.refetch()} />}
+      {xemTep && <XemTep file={xemTep as unknown as Attachment} onClose={() => setXemTep(null)} />}
       {xmlOpen && <NhapXmlHoaDon onClose={() => setXmlOpen(false)} onDone={() => void q.refetch()} />}
       {aliases && <BangNhanDien partnerCode={pc} onClose={() => setAliases(false)} />}
     </>
