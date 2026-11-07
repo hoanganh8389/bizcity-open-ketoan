@@ -86,6 +86,8 @@ Không có `DELETE` cho bản đã phát hành (ADR-0028 D028-3).
 
 **Đọc:** `GET /api/v1/policies?domain=sale&branch=HN01&channel=pos&at=2026-11-15` → danh sách `{ policyKey, policyId, version, ruleContract, scope, validFrom, validTo, contentHash, params }`. Khoá API phạm vi `policies:read`. Sự kiện `policy.published` / `policy.retired` qua outbox cho plugin kéo lại.
 
+**Tính (chủ dự án, Q031-3):** trực tuyến → `POST /api/v1/policies/evaluate { policyRefs, lines, docDate, scope }` trả kết quả của Rule Contract (dòng tặng, giảm giá, giá) — POS dùng thẳng, không lệch. Ngoại tuyến → plugin chạy hàm viết lại theo **bản mô tả JSON** Registry xuất kèm mỗi Rule Contract (`GET /api/v1/rule-contracts/:id`), tham số lấy từ bản đã phát hành đã tải. Cả hai qua cùng bộ golden `T031-RC-*`; L4b vẫn tính lại để kiểm.
+
 **Gửi:** `bizcity_ledger_intake@1` 1.6.0 (minor, thêm trường tuỳ chọn):
 
 ```jsonc
