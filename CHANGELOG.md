@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 05:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
+
+- **Thêm:** migration `0081_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.
+- **Đổi:** migration `0080_nguoi_tao_su_viec_bat_buoc.sql` — `accounting_events.created_by` NOT NULL và không rỗng. `eventStore.saveVersion` (khấu hao, giá vốn, khoá sổ…) ghi `auth.actor` khi không truyền người tạo.
+- **Sửa:** sự việc do Kernel tự lập không còn rỗng người tạo (trước: 1.484 / 68.923 dòng trên `ketoan_test`, toàn bộ khấu hao và giá vốn).
+- **Thay đổi định khoản:** không. Không đổi bút toán nào.
+- **Nâng cấp cần làm:** chạy migration 0080, 0081. 0080 điền dòng rỗng bằng `system:<doc_type>`; gặp người tạo là chuỗi trắng thì **dừng** bằng câu tiếng Việt, không tự sửa — xem và ghi đúng người tạo rồi chạy lại. Đường lui: `DROP NOT NULL` + bỏ ràng buộc (0080), `DROP TRIGGER` (0081).
+- **Bảo mật:** 0080 tắt riêng trigger `accounting_events_no_delete` trong chính giao dịch migration (khoá độc quyền bảng) chỉ để điền dòng rỗng; người lập đã có giá trị vẫn không đổi được.
+
 ### Sổ đăng ký chính sách và phiên bản chính sách mua hàng (PHASE-031 W1, ADR-0031) <!-- [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 -->
 
 - **Thêm:** migration `0079_so_dang_ky_chinh_sach.sql` — bảng `policy_registry` (phong bì từng bản chính sách: khoá, bản, phạm vi, hiệu lực của bản theo ngày chứng từ, băm, Rule Contract, người phát hành; bản đã phát hành không sửa, chỉ ngừng hoặc đóng hiệu lực một lần) và `purchase_policy_versions` (chỉ thêm); mỗi chính sách mua hàng đang có được nạp ngược thành bản 1. `packages/platform/src/core/policies.ts`: `registerPolicyVersion`, `resolvePolicy`, `listPolicyVersions`, `retirePolicy`. Route `GET /api/v1/purchase/policies/:id/versions`. Form chính sách có ô *áp cho chứng từ từ ngày*, *lý do đổi*, khối *Phiên bản*.
