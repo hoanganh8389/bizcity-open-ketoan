@@ -474,7 +474,8 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
     const amt = (t: TraceItem) => (t.amount ? ` = ${t.kind === 'payment_discount' ? '' : '−'}${vnd(t.amount)}` : '');
     return [
       ...trace.filter((t) => ['item_discount', 'qty_tier', 'trade_discount', 'payment_discount', 'promo_gift', 'manual'].includes(t.kind))
-        .map((t, i): PromoRow => ({ key: `chot|${i}`, status: 'applied', kind: t.kind, policy: t.policy, name: data.policies.find((p) => p.code === t.policy)?.name ?? t.policy, text: `${t.text}${amt(t)}` })),
+        // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-6): vết chốt có bản chính sách → ghi "bản N" (đối chiếu khối Phiên bản của chính sách); mã giữ nguyên làm khoá
+        .map((t, i): PromoRow => ({ key: `chot|${i}`, status: 'applied', kind: t.kind, policy: t.policy, name: data.policies.find((p) => p.code === t.policy)?.name ?? t.policy, text: `${t.text}${amt(t)}${t.version ? ` · bản ${t.version}` : ''}` })),
       ...promoBoard(v, data.policies, calc).filter((r) => r.kind === 'promo_gift' && r.status !== 'hint'),
     ];
   }, [v, data.policies, calc, stored]);

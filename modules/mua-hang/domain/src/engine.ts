@@ -166,6 +166,28 @@ export interface Policy {
   isActive: boolean;
   /** Khuôn theo kind — xem RULE_HINT. */
   rule: Record<string, unknown>;
+  // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): bản chính sách (sổ đăng ký 0079); engine chọn bản theo ngày chứng từ
+  /** Bản đang mang nội dung trên (purchase_policy_versions / policy_registry) và băm nội dung. */
+  version?: number;
+  contentHash?: string;
+  /** Mọi bản, cũ trước — máy chủ điền khi đọc; engine đổi nội dung về bản của ngày chứng từ (policyAt). */
+  versions?: PolicyVersion[];
+}
+/** Nội dung một bản chính sách (ảnh chụp lúc lưu). */
+export type PolicySnapshot = Pick<Policy, 'code' | 'kind' | 'name' | 'scope' | 'rule' | 'isActive'> & { validFrom: string | null; validTo: string | null; priority: number };
+export interface PolicyVersion { version: number; effectiveFrom: string | null; hash: string; snapshot: PolicySnapshot }
+
+/**
+ * Chính sách như ở ngày chứng từ `date`: bản mới nhất có ngày áp ≤ date (bản 1 áp từ đầu). Không có danh sách bản → giữ nguyên.
+ * Nhờ đó phiếu ngày cũ tính lại vẫn ra số cũ sau khi chính sách đổi (ADR-0031 D-POL-0, xuyên suốt; T031-MH-1).
+ */
+export function policyAt(p: Policy, date: string | undefined): Policy {
+  if (!p.versions?.length || !date) return p;
+  const v = [...p.versions].reverse().find((x) => x.effectiveFrom === null || x.effectiveFrom <= date) ?? p.versions[0]!;
+  if (v.version === p.version) return p;
+  const s = v.snapshot;
+  return { ...p, name: s.name, scope: s.scope ?? {}, rule: s.rule ?? {}, isActive: s.isActive, priority: s.priority,
+    validFrom: s.validFrom ?? undefined, validTo: s.validTo ?? undefined, version: v.version, contentHash: v.hash };
 }
 
 export const POLICY_LABEL: Record<PolicyKind, string> = {
@@ -203,7 +225,8 @@ export const RULE_HINT: Record<PolicyKind, string> = {
 };
 
 /** Chính sách còn áp cho phiếu: bỏ các chính sách người dùng đã bỏ tích trên phiếu (doc.skipPolicies). */
-export const policiesFor = (doc: Pick<PDoc, 'skipPolicies'>, policies: Policy[]) => (doc.skipPolicies?.length ? policies.filter((p) => !doc.skipPolicies!.includes(p.code)) : policies);
+export const policiesFor = (doc: Pick<PDoc, 'skipPolicies'> & Partial<Pick<PDoc, 'docDate'>>, policies: Policy[]) =>
+  (doc.skipPolicies?.length ? policies.filter((p) => !doc.skipPolicies!.includes(p.code)) : policies).map((p) => policyAt(p, doc.docDate));
 
 /** Mức tổng đơn tối thiểu để chính sách CK trên đơn được tự áp (CK số tiền không khai mức: phải lớn hơn số CK). */
 export const tradeDiscountMin = (p: Policy) => num(p.rule.minOrder) || (num(p.rule.pct) ? 0 : num(p.rule.amount) + 1);
@@ -500,7 +523,14 @@ export interface LineCalc extends PLine {
   /** Giá vốn thực tế / ĐVT (trước thuế, sau CK, đã chia quà người bán). */
   realUnitCost: number;
 }
-export interface TraceItem { policy: string; kind: PolicyKind | 'manual'; text: string; amount?: number }
+/** `version` / `hash`: bản chính sách đã áp (PHASE-031 W1) — vết trên phiếu trỏ đúng bản, không chỉ mã. */
+export interface TraceItem { policy: string; kind: PolicyKind | 'manual'; text: string; amount?: number; version?: number; hash?: string }
+
+/** Gắn bản + băm của chính sách vào từng dòng vết (dòng 'Trên phiếu' / thủ công giữ nguyên). */
+export function traceWithVersions(trace: TraceItem[], policies: Policy[]): TraceItem[] {
+  const by = new Map(policies.map((p) => [p.code, p]));
+  return trace.map((t) => { const p = by.get(t.policy); return p?.version ? { ...t, version: p.version, ...(p.contentHash ? { hash: p.contentHash } : {}) } : t; });
+}
 export interface DocCalc {
   lines: LineCalc[];
   gross: number; lineDiscount: number; orderDiscount: number; beforeTax: number; tax: number; payable: number;
@@ -642,7 +672,7 @@ export function computeDoc(doc: PDoc, policies: Policy[], opts: { holidays?: str
   return {
     lines, gross: sum((l) => l.gross), lineDiscount: sum((l) => l.lineDiscount), orderDiscount: orderDisc, beforeTax: sum((l) => l.beforeTax), tax: sum((l) => l.tax), payable,
     buyQty: sum((l) => (l.lineType === 'buy' ? l.qty : 0)), giftSellerQty: sum((l) => (l.lineType === 'gift_seller' ? l.qty : 0)), giftConsumerQty: sum((l) => (l.lineType === 'gift_consumer' ? l.qty : 0)),
-    dueDate, ckttExpected, exchange, trace,
+    dueDate, ckttExpected, exchange, trace: traceWithVersions(trace, policies),
   };
 }
 

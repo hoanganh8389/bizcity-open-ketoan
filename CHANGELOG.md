@@ -12,14 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
-### Đổi khoá cấu hình loại A một người: chặn kỳ đã khoá, xem trước tác động, form ở HT13 (PHASE-030, S030-40) <!-- [2026-11-07 02:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-40 -->
+### Sổ đăng ký chính sách và phiên bản chính sách mua hàng (PHASE-031 W1, ADR-0031) <!-- [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 -->
 
-- **Thêm:** `GET /api/v1/settings/values/:key/impact` (cần `settings:write`): xem trước tác động của một lần đổi — kỳ khoá, hiệu lực lùi, phiên bản hiệu lực muộn hơn, số mục chờ ở bể chờ đầu vào, thiếu căn cứ; không ghi gì, không chặn. Màn HT13 có nút **Đổi giá trị** (nhập → xem tác động → lưu); nút chỉ hiện cho người có quyền của khoá, khoá có phiên bản, không bí mật. Hàm `settingImpact`, `lockedPeriodAt` ở `core/settings`. Golden T030-CFG-2, 3, 7, T030-CFG-IMP-1..3.
-- **Đổi:** `core.settings.set` trên khoá loại A trả `PERIOD_LOCKED` khi ngày hiệu lực rơi vào kỳ đã khoá chung (mọi loại chứng từ; khoá theo chi nhánh tính khi đặt khoá phạm vi chi nhánh). Đây là chỗ chặn duy nhất của việc đổi khoá A (D030-12); khoá riêng một loại chứng từ, khoá loại B/C không bị chặn.
+- **Thêm:** migration `0079_so_dang_ky_chinh_sach.sql` — bảng `policy_registry` (phong bì từng bản chính sách: khoá, bản, phạm vi, hiệu lực của bản theo ngày chứng từ, băm, Rule Contract, người phát hành; bản đã phát hành không sửa, chỉ ngừng hoặc đóng hiệu lực một lần) và `purchase_policy_versions` (chỉ thêm); mỗi chính sách mua hàng đang có được nạp ngược thành bản 1. `packages/platform/src/core/policies.ts`: `registerPolicyVersion`, `resolvePolicy`, `listPolicyVersions`, `retirePolicy`. Route `GET /api/v1/purchase/policies/:id/versions`. Form chính sách có ô *áp cho chứng từ từ ngày*, *lý do đổi*, khối *Phiên bản*.
+- **Đổi:** lưu chính sách mua hàng mà nội dung đổi → bản mới (áp lùi về trước hôm nay cần lý do). Engine chọn bản theo **ngày chứng từ** (`policyAt` trong `policiesFor`): phiếu ngày cũ tính lại ra số cũ. Vết chính sách trên phiếu (`policyTrace`) ghi thêm `version`, `hash`. Xoá chính sách chưa áp → các bản chuyển `retired` ở sổ đăng ký.
 - **Sửa:** không.
 - **Thay đổi định khoản:** không.
-- **Nâng cấp cần làm:** không có migration.
-- **Bảo mật:** xem trước tác động cần `settings:write`; khoá bí mật không vào form và không hiện giá trị (D030-13).
 
 ### Căn cứ của khoá cấu hình: setting_values.basis, basis / usedBy ở registry (PHASE-030, S030-43) <!-- [2026-11-06 04:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43 -->
 
