@@ -88,4 +88,29 @@ export const checks = [
       return { examined: uses, unitBy: 'key', findings };
     },
   },
+  {
+    // [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3: SC-SEC-5 (thiết kế ở RULE-QUALITY-GATE)
+    id: 'SC-SEC-5',
+    title: 'Bí mật không có giá trị mặc định viết trong mã (process.env.X || "…" / ?? "…")',
+    gate: 'CONF-STATIC', contract: 'kernel', rules: ['R-SEC-1'], conf: [], tier: 0, enforce: 'block', weight: 3, targets: ['repo'],
+    run(ctx) {
+      // Giá trị mặc định rỗng ('') không phải bí mật: quên đặt biến thì chạy hỏng, không chạy bằng một mật khẩu ai cũng biết.
+      const re = /process\.env\.([A-Z0-9_]+)\s*(?:\|\||\?\?)\s*(['"`])((?:(?!\2).)+)\2/g;
+      const SECRET_NAME = /PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|PRIVATE_KEY/;
+      const opts = { under: LAYER_ROOTS, ext: ['.ts', '.tsx', '.js', '.mjs', '.cjs'] };
+      const files = ctx.repo.files(opts).filter((f) => !/(^|\/)test\/|\.test\.[cm]?[jt]sx?$|\.spec\./.test(f));
+      const findings = [];
+      for (const file of files) {
+        ctx.repo.lines(file).forEach((t, i) => {
+          if (/^\s*(\/\/|\*)/.test(t)) return;
+          for (const m of t.matchAll(re)) {
+            if (!SECRET_NAME.test(m[1])) continue;
+            // Không in giá trị: chỉ tên biến và độ dài.
+            findings.push(ctx.finding(file, i + 1, `${m[1]} có giá trị mặc định viết trong mã (${m[3].length} ký tự) — bỏ mặc định: thiếu biến thì tắt tính năng kèm câu hướng dẫn, hoặc tự sinh và in một lần`, m[1]));
+          }
+        });
+      }
+      return { examined: files.length, unitBy: 'key', findings };
+    },
+  },
 ];
