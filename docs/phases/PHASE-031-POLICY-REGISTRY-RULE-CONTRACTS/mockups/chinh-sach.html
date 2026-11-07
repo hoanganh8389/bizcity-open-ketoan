@@ -1,0 +1,376 @@
+<!doctype html>
+<!-- [2026-11-07 08:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — bản mẫu: màn Chính sách (phiên bản, xem tại ngày, nơi dùng, chứng từ đã áp), hàng việc Chờ kế toán xem (so nguồn ↔ tính lại, bút toán dự kiến), Truy vết hai chiều, Theo dõi thực hiện chính sách; ba yếu tố nhất quán cross-module · xuyên suốt · truy vết -->
+<!-- [2026-11-07 09:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án chốt tài liệu + bản mẫu ("ok, chốt mockup và tài liệu này, merge về main để code"); D031-11: Policy Registry là năng lực Core / Platform, không module nghiệp vụ riêng; màn chung ở Hệ thống → Chính sách -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chính sách nghiệp vụ</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
+  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;--info-bg:#e8f0fc;
+  --bar:#2f6fc9;--bar-soft:#c9d8ef;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+  --bar:#6ea2ec;--bar-soft:#2a3a55;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+  --bar:#6ea2ec;--bar-soft:#2a3a55;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:12px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.tabs .cnt{background:var(--warn-bg);color:var(--warn);border-radius:99px;padding:0 6px;font-size:11.5px;margin-left:4px;font-weight:700}
+main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
+h2{margin:0 0 4px;font-size:18px}
+h3{font-size:14.5px;margin:16px 0 8px}
+h4{margin:0 0 2px;font-size:15px}
+.lead{color:var(--muted);margin:0 0 12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.k{background:var(--k-bg);color:var(--k)}.tag.info{background:var(--info-bg);color:var(--info)}.tag.none{background:var(--soft);color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13px}
+.tenets{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tenets span{font-size:12px;border:1px solid var(--line);border-radius:99px;padding:2px 10px;background:var(--panel);color:var(--muted)}
+.tenets b{color:var(--ink)}
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;align-items:start}
+.layout.q{grid-template-columns:380px minmax(0,1fr)}
+@media (max-width:1000px){.layout,.layout.q{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.card{padding:12px}
+.list button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;font:inherit;color:var(--ink);cursor:pointer}
+.list button:last-child{border-bottom:0}
+.list button[aria-pressed="true"]{background:var(--info-bg)}
+.list .t{display:flex;gap:6px;align-items:center;justify-content:space-between}
+.list small{color:var(--muted);display:block}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+select,input[type=date],input[type=text]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.k{font:11.5px ui-monospace,Consolas,monospace;color:var(--k);word-break:break-word}
+.muted{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.kv{display:grid;grid-template-columns:140px minmax(0,1fr);gap:4px 10px;font-size:13px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.subtabs{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0}
+.subtabs button{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:3px 10px;font:inherit;font-size:12.5px;color:var(--muted);cursor:pointer}
+.subtabs button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:600}
+/* dòng thời gian phiên bản */
+.tl{position:relative;margin:8px 0 4px;padding-top:18px}
+.tl .axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);position:absolute;top:0;left:0;right:0}
+.tl .row{position:relative;height:26px;margin-bottom:4px;background:var(--soft);border-radius:6px}
+.tl .seg{position:absolute;top:2px;bottom:2px;border-radius:4px;background:var(--bar-soft);color:var(--ink);font-size:11.5px;display:flex;align-items:center;padding:0 6px;white-space:nowrap;overflow:hidden;border:2px solid var(--panel)}
+.tl .seg.on{background:var(--bar);color:#fff;font-weight:600}
+.tl .at{position:absolute;top:14px;bottom:0;width:2px;background:var(--ink)}
+.tl .at::after{content:attr(data-l);position:absolute;top:-14px;left:4px;font-size:11px;white-space:nowrap}
+/* truy vết */
+.chain{display:flex;flex-direction:column;gap:0}
+.node{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);position:relative}
+.node h5{margin:0 0 2px;font-size:13.5px}
+.node .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.link{margin-left:22px;border-left:2px dashed var(--line);padding:4px 0 4px 14px;font-size:12px;color:var(--muted)}
+.link .tag{margin-left:4px}
+/* tiles + bars */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile b{display:block;font-size:22px;line-height:1.15}
+.tile span{color:var(--muted);font-size:12.5px}
+.tile .tn{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:4px 0 8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.sbar{display:grid;grid-template-columns:150px minmax(0,1fr) 64px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.sbar .track{display:flex;height:16px;gap:2px}
+.sbar .track span{height:100%;border-radius:0}
+.sbar .track span:first-child{border-radius:4px 0 0 4px}
+.sbar .track span:last-child{border-radius:0 4px 4px 0}
+.sbar .track span:only-child{border-radius:4px}
+.s-ok{background:var(--ok)}.s-warn{background:var(--warn)}.s-bad{background:var(--bad)}.s-none{background:var(--none)}
+.hbar{display:grid;grid-template-columns:minmax(120px,220px) minmax(80px,1fr) 100px;gap:8px;align-items:center;margin:7px 0;font-size:13px}
+.hbar .track{position:relative;height:14px;background:var(--soft);border-radius:4px}
+.hbar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--bar);border-radius:0 4px 4px 0}
+.hbar .cap{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--panel);font-size:12px;padding:5px 8px;border-radius:6px;display:none;max-width:260px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.diff td.bad{color:var(--bad);font-weight:600}
+.toggle{font-size:12px;color:var(--muted);cursor:pointer;background:none;border:0;padding:0;text-decoration:underline}
+@media (max-width:700px){.sbar{grid-template-columns:100px minmax(0,1fr) 48px}.hbar{grid-template-columns:120px minmax(0,1fr) 80px}.kv{grid-template-columns:110px minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">OK</div><div>Chính sách nghiệp vụ<small>Hệ thống → Chính sách · Policy Registry & Rule Contracts (năng lực Core) · PHASE-031 · bản mẫu, dữ liệu giả</small></div></div>
+    <div class="spacer"></div>
+    <label class="muted" style="font-size:12.5px">Đơn vị <select><option>Công ty Mẫu · HO</option></select></label>
+    <button class="btn sm" id="theme">Sáng / tối</button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="pol" aria-selected="true">Chính sách</button>
+    <button role="tab" data-tab="que">Chờ kế toán xem <span class="cnt" id="qcnt"></span></button>
+    <button role="tab" data-tab="tra">Truy vết</button>
+    <button role="tab" data-tab="das">Theo dõi thực hiện</button>
+  </nav>
+</header>
+<main>
+  <div class="tenets"><span><b>Nhất quán cross-module</b> · một nghiệp vụ một chính sách, mọi nguồn cùng bản</span><span><b>Xuyên suốt</b> · bản hiệu lực tại ngày chứng từ</span><span><b>Truy vết</b> · bút toán ↔ sự việc ↔ chứng từ ↔ chính sách@bản#băm</span></div>
+  <section id="tab-pol"></section>
+  <section id="tab-que" hidden></section>
+  <section id="tab-tra" hidden></section>
+  <section id="tab-das" hidden></section>
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+const MONTH = { from: '2026-11-01', to: '2026-11-30' };
+const POLICIES = [
+  { key:'SALE-PROMO-001', name:'Mua 2 A tặng 1 B', module:'ban-hang', rc:'sale.promo.buy_x_get_y@1', scope:'HN01 · kênh POS, online', legal:'NĐ81/2018 Điều 9; TT219 Điều 7 k5',
+    treat:[['dòng tặng kèm bán','XTA1.4','hàng tặng, giá tính thuế 0']],
+    checks:['POL-EFF-001 hiệu lực tại ngày chứng từ','POL-EVAL-001 số quà đúng điều kiện','POL-DATA-001 quà có itemId, kho, lô','POL-ACC-001 có lý do định khoản XTA1.4'],
+    params:[['Điều kiện','2 × A (SP-A001)'],['Tặng','1 × B (SP-B010)'],['Lặp','có — 4 A → 2 B'],['Trần giá trị quà','≤ 50 % giá A (đạt: 38 %)']],
+    versions:[
+      { v:1, from:'2026-10-15', to:'2026-10-31', hash:'4a07…e2', by:'Lan (Bán hàng)', note:'chạy thử tháng 10' },
+      { v:2, from:'2026-11-01', to:'2026-11-09', hash:'71bd…09', by:'Lan (Bán hàng)', note:'mở rộng kênh online' },
+      { v:3, from:'2026-11-10', to:'2026-11-30', hash:'9c1e…5f', by:'Lan (Bán hàng)', note:'B đổi sang SP-B010 (hết SP-B007)' } ],
+    consumers:[['Bán hàng nội bộ (modules/ban-hang)',3,'trực tuyến'],['POS WP · HN01',3,'offline, tải 10/11 07:02'],['Woo · web',2,'chưa làm mới từ 09/11'],['Sàn Shopee',null,'không gửi tham chiếu']],
+    applied:{ docs:1284, pass:1219, warn:58, hold:7 } },
+  { key:'SALE-PRICE-HN01', name:'Bảng giá bán lẻ HN01', module:'ban-hang', rc:'sale.price_list@1', scope:'HN01 · bán lẻ', legal:'',
+    treat:[['giá dòng','—','không sinh dòng sổ riêng']], checks:['POL-EFF-001','POL-EVAL-001 đơn giá = bảng giá'], params:[['Số dòng giá','412'],['Bậc số lượng','có']],
+    versions:[{v:7,from:'2026-10-01',to:'2026-11-14',hash:'aa31…7c',by:'Minh (Bán hàng)',note:''},{v:8,from:'2026-11-15',to:'',hash:'b902…11',by:'Minh (Bán hàng)',note:'tăng giá nhóm đồ uống 3 %'}],
+    consumers:[['Bán hàng nội bộ',8,'trực tuyến'],['POS WP · HN01',8,'tải 15/11 06:58']], applied:{docs:9310,pass:9302,warn:8,hold:0} },
+  { key:'SALE-CREDIT-STD', name:'Hạn mức công nợ khách sỉ', module:'ban-hang', rc:'sale.credit_limit@1', scope:'mọi chi nhánh · khách sỉ', legal:'Quy chế tín dụng nội bộ',
+    treat:[['vượt hạn mức','—','giữ đơn ở pending_credit, không ghi sổ']], checks:['nợ + đơn mở + đơn này ≤ hạn mức'], params:[['Hạn mức mặc định','200.000.000 ₫'],['Nợ quá hạn','cảnh báo đỏ']],
+    versions:[{v:1,from:'2026-01-01',to:'',hash:'0c55…3d',by:'Hà (KTT)',note:''}], consumers:[['Bán hàng nội bộ',1,'trực tuyến']], applied:{docs:342,pass:331,warn:11,hold:0} },
+  { key:'PUR-DISC-NCCX', name:'Chiết khấu thương mại NCC Xuân Phát', module:'mua-hang', rc:'purchase.trade_discount@1', scope:'mọi chi nhánh · NCC Xuân Phát', legal:'Hợp đồng nguyên tắc 12/2026',
+    treat:[['chiết khấu trên hoá đơn','GGHM','giảm giá hàng mua']], checks:['POL-EVAL-001 % chiết khấu theo bậc'], params:[['Bậc','≥ 50 tr: 2 %; ≥ 200 tr: 3,5 %']],
+    versions:[{v:1,from:'2026-07-01',to:'2026-11-15',hash:'d7e0…aa',by:'Tuấn (Mua hàng)',note:'trước đây sửa đè — bản 1 tạo khi chuyển'},{v:2,from:'2026-11-16',to:'',hash:'e118…42',by:'Tuấn (Mua hàng)',note:'bậc 2 lên 3,5 %'}],
+    consumers:[['Mua hàng (modules/mua-hang)',2,'trực tuyến']], applied:{docs:61,pass:61,warn:0,hold:0} },
+  { key:'quy.de_nghi_tt.duyet', name:'Ngưỡng duyệt đề nghị thanh toán', module:'quy', rc:'approval.levels@1', scope:'đơn vị', legal:'Quy chế tài chính nội bộ', store:'settings',
+    treat:[['cấp duyệt','—','không sinh dòng sổ']], checks:['số cấp theo số tiền'], params:[['≥ 50 tr','1 cấp'],['≥ 500 tr','2 cấp, SoD']],
+    versions:[{v:4,from:'2026-09-01',to:'',hash:'setting_values #188',by:'Hà (KTT)',note:'giữ ở setting_values, Registry chỉ đánh chỉ mục'}], consumers:[['Quỹ (đề nghị thanh toán)',4,'trực tuyến']], applied:{docs:204,pass:204,warn:0,hold:0} },
+  { key:'HR-ALLOW-001', name:'Phụ cấp ăn ca', module:'nhan-su', rc:'hr.allowance@1', scope:'mọi chi nhánh', legal:'TT 96/2015 Điều 4', draft:true,
+    treat:[['phụ cấp','PCAC','chi phí nhân viên']], checks:['mức ≤ trần miễn thuế TNCN'], params:[['Mức','730.000 ₫ / tháng']],
+    versions:[{v:1,from:'2027-01-01',to:'',hash:'—',by:'',note:'nháp — chờ modules/nhan-su'}], consumers:[], applied:{docs:0,pass:0,warn:0,hold:0} },
+];
+const QUEUE = [
+  { id:'EV-88123', doc:'wp-pos:hn01:sale:88123', src:'POS WP · HN01', date:'2026-11-15', mode:'gợi ý', status:'review', pol:'SALE-PROMO-001@3', codes:['POL-EVAL-001'],
+    why:'Chính sách cho 1 × B mỗi 2 × A; đơn ghi 2 × B. 1 × B dư không thuộc khuyến mại đăng ký — có thể là biếu tặng riêng (XQUA) hoặc bán giá 0 nhầm.',
+    cmp:[['SP-A001 × số lượng','2','2',false],['SP-B010 tặng','2','1',true],['Giá trị hàng tặng (giá vốn)','96.000','48.000',true],['Tổng tiền hàng','300.000','300.000',false]],
+    je:[['Nợ 131 / 1111','Doanh thu bán hàng','330.000',''],['Có 5111','','','300.000'],['Có 33311','','','30.000'],['Nợ 632','Giá vốn A','180.000',''],['Nợ 632','Giá vốn B tặng kèm (XTA1.4) × 2','96.000',''],['Có 1561','','','276.000']] },
+  { id:'EV-88207', doc:'woo:web:sale:5521', src:'Woo · web', date:'2026-11-16', mode:'tự động', status:'info', pol:'SALE-PROMO-001@2', codes:['POL-STALE-001'],
+    why:'Đơn ngày 16/11 dùng bản 2; bản hiệu lực tại ngày chứng từ là bản 3 (từ 10/11). Kết quả tính lại giống nhau trên đơn này, đã ghi sổ — chỉ cần làm mới Woo.',
+    cmp:[['SP-A001 × số lượng','4','4',false],['Quà','2 × SP-B007','2 × SP-B010',true]],
+    je:[['(đã ghi)','theo bản 2 — kết quả cùng giá trị','',''] ] },
+  { id:'EV-88311', doc:'wp-pos:hn01:sale:88311', src:'POS WP · HN01', date:'2026-11-17', mode:'gợi ý', status:'review', pol:'SALE-PROMO-001@3', codes:['POL-DATA-001'],
+    why:'Dòng quà SP-B010 không có kho xuất và số lô; mặt hàng quản lý lô. Không xác định được lô xuất để tính giá vốn đúng.',
+    cmp:[['Kho xuất của quà','—','HN01-K1 (mặc định chi nhánh)',true],['Số lô','—','bắt buộc',true]],
+    je:[['Nợ 632','Giá vốn B tặng kèm (XTA1.4)','48.000',''],['Có 1561','kho HN01-K1, lô ?','','48.000']] },
+  { id:'EV-88400', doc:'shopee:hn01:order:240119', src:'Sàn Shopee', date:'2026-11-17', mode:'gợi ý', status:'review', pol:'—', codes:['POL-REF-000'],
+    why:'Nghiệp vụ bán A + B có chính sách hiệu lực (SALE-PROMO-001@3) nhưng nguồn không gửi tham chiếu chính sách. Không kiểm được quà có đúng chương trình hay không.',
+    cmp:[['Tham chiếu chính sách','—','SALE-PROMO-001@3',true]], je:[['Nợ 131','','330.000',''],['Có 5111','','','300.000'],['Có 33311','','','30.000']] },
+];
+const fmt = n => n.toLocaleString('vi-VN');
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mod = { 'ban-hang':'Bán hàng','mua-hang':'Mua hàng','quy':'Quỹ','nhan-su':'Nhân sự' };
+let st = { pol:0, at:'2026-11-15', ptab:'ver', q:0, tdir:'back' };
+try { const s = JSON.parse(localStorage.getItem('p031') || '{}'); if (s.tab) st.tab = s.tab; } catch (e) {}
+
+function effective(p, at){ return p.versions.find(v => v.from <= at && (!v.to || at <= v.to)); }
+function dayPos(d){ const a = Date.parse('2026-10-01'), b = Date.parse('2026-12-31'); return Math.max(0, Math.min(100, (Date.parse(d) - a) / (b - a) * 100)); }
+
+function renderPol(){
+  const p = POLICIES[st.pol], ev = effective(p, st.at);
+  const list = POLICIES.map((x, i) => {
+    const e = effective(x, st.at);
+    const tag = x.draft ? '<span class="tag none">nháp</span>' : e ? `<span class="tag ok">bản ${e.v}</span>` : '<span class="tag none">không hiệu lực</span>';
+    return `<button aria-pressed="${i === st.pol}" data-pol="${i}"><div class="t"><b class="mono">${esc(x.key)}</b>${tag}</div><small>${esc(x.name)} · ${mod[x.module]}</small></button>`;
+  }).join('');
+  const rows = p.versions.map(v => {
+    const l = dayPos(v.from), r = v.to ? dayPos(v.to) : 100;
+    return `<div class="row"><div class="seg ${ev && ev.v === v.v ? 'on' : ''}" style="left:${l}%;width:${Math.max(4, r - l)}%" data-tip="Bản ${v.v}: ${v.from} → ${v.to || 'chưa đóng'} · băm ${v.hash}">bản ${v.v}</div></div>`;
+  }).join('');
+  const body = {
+    ver: `<div class="tl"><div class="axis"><span>01/10</span><span>01/11</span><span>01/12</span><span>31/12</span></div>${rows}<div class="at" style="left:${dayPos(st.at)}%" data-l="${st.at.slice(8)}/${st.at.slice(5,7)}"></div></div>
+      <div class="tbl"><table><thead><tr><th>Bản</th><th>Hiệu lực</th><th>Băm nội dung</th><th>Phát hành</th><th>Ghi chú</th></tr></thead><tbody>${p.versions.map(v => `<tr><td>${v.v}${ev && ev.v === v.v ? ' <span class="tag ok">tại ngày</span>' : ''}</td><td>${v.from} → ${v.to || '…'}</td><td class="mono">${esc(v.hash)}</td><td>${esc(v.by)}</td><td class="muted">${esc(v.note)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:12.5px">Bản đã phát hành không sửa. Đổi = bản mới; bản cũ tự đóng ở ngày trước hiệu lực bản mới, không có khoảng trống.</p>`,
+    rule: `<div class="grid2"><div><h3>Tham số</h3><dl class="kv">${p.params.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}</dl></div>
+      <div><h3>Phép kiểm gắn theo</h3><ul style="margin:0;padding-left:18px">${p.checks.map(c => `<li class="mono" style="font-size:12.5px">${esc(c)}</li>`).join('')}</ul>
+      <h3>Cách ghi nhận kế toán</h3><table><thead><tr><th>Kết quả</th><th>Lý do định khoản</th><th>Nghĩa</th></tr></thead><tbody>${p.treat.map(t => `<tr><td>${esc(t[0])}</td><td class="mono">${esc(t[1])}</td><td class="muted">${esc(t[2])}</td></tr>`).join('')}</tbody></table>
+      <p class="muted" style="font-size:12.5px">Rule Contract chỉ chỉ lý do định khoản. Số tài khoản do chính sách định khoản của Kernel quyết tại ngày chứng từ.</p></div></div>`,
+    use: p.consumers.length ? `<div class="tbl"><table><thead><tr><th>Nơi dùng</th><th>Bản đang giữ</th><th>So với bản tại ngày</th><th>Trạng thái</th></tr></thead><tbody>${p.consumers.map(([n, v, s]) => {
+        const t = v == null ? '<span class="tag bad">không gửi tham chiếu</span>' : ev && v === ev.v ? '<span class="tag ok">khớp</span>' : '<span class="tag warn">bản cũ</span>';
+        return `<tr><td>${esc(n)}</td><td>${v == null ? '—' : 'bản ' + v}</td><td>${t}</td><td class="muted">${esc(s)}</td></tr>`; }).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:12.5px">Nhất quán cross-module: mọi nguồn của cùng nghiệp vụ phải giữ đúng bản tại ngày. Nguồn lệch nhận sự kiện <span class="mono">policy.published</span> để làm mới.</p>` : '<p class="muted">Chưa có nơi dùng.</p>',
+    doc: `<div class="tiles"><div class="tile"><b>${fmt(p.applied.docs)}</b><span>sự việc đã áp</span></div><div class="tile"><b style="color:var(--ok)">${fmt(p.applied.pass)}</b><span>đạt</span></div><div class="tile"><b style="color:var(--warn)">${fmt(p.applied.warn)}</b><span>cảnh báo</span></div><div class="tile"><b style="color:var(--bad)">${fmt(p.applied.hold)}</b><span>giữ ở bể chờ</span></div></div>
+      <div class="tbl"><table><thead><tr><th>Chứng từ</th><th>Ngày</th><th>Nguồn</th><th>Bản</th><th>L4b</th></tr></thead><tbody>
+      <tr><td class="mono">wp-pos:hn01:sale:88102</td><td>15/11</td><td>POS WP</td><td>3</td><td><span class="tag ok">✓ đạt</span></td></tr>
+      <tr><td class="mono">wp-pos:hn01:sale:88123</td><td>15/11</td><td>POS WP</td><td>3</td><td><span class="tag warn">⚠ POL-EVAL-001</span></td></tr>
+      <tr><td class="mono">woo:web:sale:5521</td><td>16/11</td><td>Woo</td><td>2</td><td><span class="tag warn">⚠ POL-STALE-001</span></td></tr>
+      <tr><td class="mono">ban-hang.order:HN01-1102</td><td>16/11</td><td>Bán hàng nội bộ</td><td>3</td><td><span class="tag ok">✓ đạt</span></td></tr></tbody></table></div>
+      <p class="muted" style="font-size:12.5px">Đọc <span class="mono">bizcity_read.policy_application</span> — cùng khung nhìn với bảng theo dõi và rulepack tư vấn.</p>`
+  }[st.ptab];
+  $('#tab-pol').innerHTML = `
+    <h2>Chính sách</h2><p class="lead">Module sở hữu nội dung; Registry giữ phong bì: khoá, bản, phạm vi, hiệu lực, băm, Rule Contract. Plugin chỉ dùng bản đã phát hành.</p>
+    <div class="layout"><div class="panel"><div class="filters"><label>Xem tại ngày <input type="date" id="at" value="${st.at}"></label></div><div class="list">${list}</div></div>
+    <div class="panel card">
+      <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:220px"><h4><span class="mono">${esc(p.key)}</span> · ${esc(p.name)}</h4>
+      <div class="muted" style="font-size:12.5px">${mod[p.module]} sở hữu · <span class="k">${esc(p.rc)}</span>${p.store ? ' · nội dung ở <span class="mono">setting_values</span>' : ''} · ${esc(p.scope)}${p.legal ? ' · căn cứ ' + esc(p.legal) : ''}</div></div>
+      ${p.draft ? '<span class="tag none">nháp</span>' : ev ? `<span class="tag ok">bản ${ev.v} hiệu lực ${st.at.slice(8)}/${st.at.slice(5,7)}</span>` : '<span class="tag none">không hiệu lực tại ngày</span>'}
+      <button class="btn sm">Lập bản mới</button><button class="btn sm pri" ${p.draft ? '' : 'disabled'}>Phát hành</button></div>
+      <div class="subtabs">${[['ver','Phiên bản'],['rule','Luật & cách ghi nhận'],['use','Nơi dùng'],['doc','Chứng từ đã áp']].map(([k, l]) => `<button data-ptab="${k}" aria-pressed="${st.ptab === k}">${l}</button>`).join('')}</div>
+      ${body}</div></div>`;
+}
+
+function renderQue(){
+  const it = QUEUE[st.q];
+  const tag = s => s === 'review' ? '<span class="tag warn">⚠ chờ xem</span>' : s === 'info' ? '<span class="tag info">ℹ đã ghi, xem lại</span>' : '<span class="tag bad">⛔ bể chờ</span>';
+  $('#qcnt').textContent = QUEUE.filter(q => q.status === 'review').length;
+  $('#tab-que').innerHTML = `
+    <h2>Chờ kế toán xem</h2><p class="lead">Sự việc lệch chính sách ở tầng L4b. Không sự việc nào bị mất, không đơn nào bị chặn bán. Đây là một nhánh của hàng việc chung (<span class="mono">document_queue</span>), không phải hàng việc riêng.</p>
+    <div class="note">Chế độ <b>gợi ý</b>: chưa ghi sổ, kế toán quyết. Chế độ <b>tự động</b> (mặc định POS): đã ghi, chỉ xem lại. Thiếu cách ghi sổ (<span class="mono">POL-ACC-001</span>) thì nằm ở Bể chờ như hôm nay.</div>
+    <div class="layout q"><div class="panel"><div class="filters"><select><option>Mọi nguồn</option><option>POS WP</option><option>Woo</option><option>Sàn</option></select><select><option>Mọi mã</option><option>POL-EVAL-001</option><option>POL-STALE-001</option><option>POL-DATA-001</option></select></div>
+      <div class="list">${QUEUE.map((q, i) => `<button aria-pressed="${i === st.q}" data-q="${i}"><div class="t"><b class="mono" style="font-size:12.5px">${esc(q.doc)}</b>${tag(q.status)}</div><small>${esc(q.src)} · ${q.date.slice(8)}/${q.date.slice(5,7)} · ${esc(q.pol)} · <span class="mono">${q.codes.join(', ')}</span></small></button>`).join('')}</div></div>
+    <div class="panel card">
+      <h4 class="mono">${esc(it.doc)}</h4><div class="muted" style="font-size:12.5px">${esc(it.src)} · ngày chứng từ ${it.date} · chế độ ${it.mode} · chính sách <a href="#" data-goto="pol">${esc(it.pol)}</a></div>
+      <div class="note" style="margin-top:10px;border-left-color:var(--warn)"><b class="mono">${it.codes.join(', ')}</b> — ${esc(it.why)}</div>
+      <h3>Nguồn gửi ↔ tính lại theo chính sách</h3>
+      <div class="tbl"><table class="diff"><thead><tr><th>Mục</th><th class="num">Nguồn gửi</th><th class="num">Theo chính sách</th></tr></thead><tbody>${it.cmp.map(([a, b, c, d]) => `<tr><td>${esc(a)}</td><td class="num ${d ? 'bad' : ''}">${esc(b)}</td><td class="num">${esc(c)}</td></tr>`).join('')}</tbody></table></div>
+      <h3>Bút toán dự kiến <span class="muted" style="font-weight:400;font-size:12.5px">(L5 chạy thử của Kernel, chính sách định khoản bản 12)</span></h3>
+      <div class="tbl"><table><thead><tr><th>Tài khoản</th><th>Diễn giải</th><th class="num">Nợ</th><th class="num">Có</th></tr></thead><tbody>${it.je.map(r => `<tr><td class="mono">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="num">${esc(r[2])}</td><td class="num">${esc(r[3])}</td></tr>`).join('')}</tbody></table></div>
+      <div class="acts">${it.status === 'review' ? '<button class="btn pri">Ghi sổ đúng bản đã kiểm</button>' : '<button class="btn pri">Đánh dấu đã xem</button>'}<button class="btn">Trả về nguồn</button><button class="btn" ${it.status === 'info' ? '' : 'disabled'}>Điều chỉnh</button><button class="btn" data-goto="tra">Xem truy vết</button></div>
+      <p class="muted" style="font-size:12.5px">Mỗi nút là một action có quyền, ghi bằng chứng. Không nút nào sửa sự việc: muốn khác thì nguồn gửi bản mới, hoặc điều chỉnh sau ghi sổ.</p>
+    </div></div>`;
+}
+
+function renderTra(){
+  const back = st.tdir === 'back';
+  const N = (lbl, h, body, ok) => `<div class="node"><div class="lbl">${lbl}</div><h5>${h}</h5><div class="muted" style="font-size:12.5px">${body}</div></div>`;
+  const L = (t, tag) => `<div class="link">${t}${tag || ''}</div>`;
+  const ok = '<span class="tag ok">✓ khớp</span>';
+  const chainBack = [
+    N('Dòng sổ', 'Nợ 632 · 48.000 ₫ · bút toán BT-2611-00431', 'ledger_lines · source_line_key = 2'),
+    L('event_id EV-88102 (bắt buộc từ 0077)', ok),
+    N('Sự việc kế toán · bản 1', 'sale wp-pos:hn01:sale:88102', 'accounting_event_versions · policy_refs + policy_check (L4b: đạt) · posting_log: chính sách định khoản bản 12'),
+    L('doc_key, version', ok),
+    N('Chứng từ nguồn', 'Hoá đơn POS 88102 · HN01 · 15/11/2026', 'POS WP · dòng 2: SP-B010 × 1, giá 0, kho HN01-K1, lô L2611'),
+    L('policy_refs[0] = SALE-PROMO-001@3 · băm 9c1e…5f', ok),
+    N('Chính sách căn cứ', 'SALE-PROMO-001 bản 3 · sale.promo.buy_x_get_y@1', 'hiệu lực 10–30/11/2026 tại HN01 · nội dung ở mod_ban_hang.promotions #77'),
+    L('audit_logs', ''),
+    N('Phát hành', 'Lan (Bán hàng) · 09/11/2026 16:20 · lý do: B đổi sang SP-B010', 'căn cứ NĐ81/2018 Điều 9 · kiểm lúc phát hành: trần 50 % đạt (38 %), XTA1.4 có trong định khoản')
+  ];
+  const chainFwd = [
+    N('Chính sách', 'SALE-PROMO-001 bản 3', '1.284 sự việc tham chiếu · 3 nguồn'),
+    L('bizcity_read.policy_application', ''),
+    N('Chứng từ đã áp', '1.219 đạt · 58 cảnh báo · 7 bể chờ', 'POS WP 1.102 · Bán hàng nội bộ 141 · Woo 41 (bản 2)'),
+    L('event_id', ''),
+    N('Bút toán', '1.277 bút toán đã ghi · 7 chưa ghi (bể chờ)', 'hàng tặng XTA1.4: 1.318 × SP-B010 · giá vốn 63,3 tr ₫'),
+    L('item_id', ''),
+    N('Hành trình mặt hàng', 'SP-B010 — làn policy', '“dòng này tặng theo SALE-PROMO-001@3” trên Hành trình mặt hàng sẵn có')
+  ];
+  $('#tab-tra').innerHTML = `
+    <h2>Truy vết</h2><p class="lead">Nối bằng khoá thật trên bảng đã có. Không bảng truy vết riêng. Mỗi mũi nối kiểm khớp (băm, phiên bản).</p>
+    <div class="filters panel" style="margin-bottom:12px;border-radius:10px"><div class="subtabs" style="margin:0"><button data-tdir="back" aria-pressed="${back}">Ngược: bút toán → chính sách</button><button data-tdir="fwd" aria-pressed="${!back}">Xuôi: chính sách → bút toán</button></div>
+      <input type="text" value="${back ? 'BT-2611-00431' : 'SALE-PROMO-001@3'}" aria-label="Mã tra" style="min-width:200px"><button class="btn sm pri">Tra</button></div>
+    <div class="grid2"><div class="chain">${(back ? chainBack : chainFwd).join('')}</div>
+    <div class="panel card"><h4>Ba yếu tố trên chuỗi này</h4>
+      <dl class="kv" style="margin-top:8px"><dt>Nhất quán</dt><dd>cùng bản 3 cho POS WP và Bán hàng nội bộ; Woo còn bản 2 → hiện ở <a href="#" data-goto="das">Theo dõi</a></dd>
+      <dt>Xuyên suốt</dt><dd>bản chọn theo ngày chứng từ 15/11, không theo hôm nay; tính lại đơn này năm sau vẫn ra 1 × B</dd>
+      <dt>Truy vết</dt><dd>3 / 3 mũi nối kiểm được đều khớp; băm chính sách khớp <span class="mono">content_hash</span>; 0 dòng sổ mồ côi</dd></dl>
+      <h3>Nguồn dữ liệu</h3><ul style="margin:0;padding-left:18px;font-size:12.5px" class="muted"><li><span class="mono">bizcity_read.policy_lineage(event_id)</span></li><li><span class="mono">ledger_lines · accounting_event_versions · posting_log · audit_logs</span></li><li>phong bì Registry</li></ul></div></div>`;
+}
+
+function renderDas(){
+  const src = [['POS WP · HN01',1102,1068,30,4],['Bán hàng nội bộ',141,139,2,0],['Woo · web',41,12,26,3],['Sàn Shopee',236,0,0,0,236]];
+  const sbar = src.map(([n, t, o, w, h, none]) => { const tot = none || t; const seg = (v, c, l) => v ? `<span class="${c}" style="width:${v / tot * 100}%" data-tip="${esc(n)}: ${l} ${fmt(v)} / ${fmt(tot)}"></span>` : '';
+    return `<div class="sbar"><span>${esc(n)}</span><div class="track">${seg(o,'s-ok','đạt')}${seg(w,'s-warn','cảnh báo')}${seg(h,'s-bad','bể chờ')}${seg(none || 0,'s-none','không gửi tham chiếu')}</div><span class="muted num" style="text-align:right">${none ? '0 %' : Math.round(o / t * 100) + ' %'}</span></div>`; }).join('');
+  const prog = [['SALE-PROMO-001 · quà B',63.3,80],['PUR-DISC-NCCX · CK nhận',41.2,null],['KM-1111 · giảm 20 % (đã đóng)',118.5,120]];
+  const pmax = 130;
+  const hbar = prog.map(([n, v, cap]) => `<div class="hbar"><span>${esc(n)}</span><div class="track"><div class="fill" style="width:${v / pmax * 100}%" data-tip="${esc(n)}: ${v} tr ₫${cap ? ' / ngân sách ' + cap + ' tr ₫' : ''}"></div>${cap ? `<div class="cap" style="left:${cap / pmax * 100}%" data-tip="ngân sách ${cap} tr ₫"></div>` : ''}</div><span class="num muted">${v} tr${cap ? ' / ' + cap : ''}</span></div>`).join('');
+  $('#tab-das').innerHTML = `
+    <h2>Theo dõi thực hiện chính sách</h2><p class="lead">Mọi ô đọc một khung nhìn <span class="mono">bizcity_read.policy_application</span>; rulepack tư vấn của Conformance Engine đếm trên cùng khung nhìn, nên hai bên ra cùng một số.</p>
+    <div class="filters panel" style="margin-bottom:12px;border-radius:10px"><select><option>Tháng 11/2026</option></select><select><option>Mọi chi nhánh</option><option>HN01</option></select><select><option>Mọi nguồn</option></select><select><option>Mọi module</option><option>Bán hàng</option><option>Mua hàng</option></select><select><option>Mọi chính sách</option></select></div>
+    <div class="tiles">
+      <div class="tile"><b>95,0 %</b><span>sự việc đạt chính sách</span><span class="tn">truy vết · 1.219 / 1.284 có tham chiếu</span></div>
+      <div class="tile"><b>84 %</b><span>độ phủ tham chiếu</span><span class="tn">nhất quán · 1.284 / 1.520 nghiệp vụ có chính sách</span></div>
+      <div class="tile"><b style="color:var(--warn)">1 nguồn</b><span>đang bán bằng bản cũ</span><span class="tn">nhất quán · Woo giữ bản 2</span></div>
+      <div class="tile"><b>0</b><span>khoảng trống hiệu lực</span><span class="tn">xuyên suốt · 6 khoá, 14 bản</span></div>
+      <div class="tile"><b style="color:var(--bad)">7</b><span>sự việc ở bể chờ</span><span class="tn">thiếu cách ghi sổ / dữ liệu</span></div>
+    </div>
+    <div class="dgrid">
+      <div class="panel card"><h4>Kết quả L4b theo nguồn</h4><div class="legend"><span><i class="s-ok"></i>✓ đạt</span><span><i class="s-warn"></i>⚠ cảnh báo</span><span><i class="s-bad"></i>⛔ bể chờ</span><span><i class="s-none"></i>không gửi tham chiếu</span></div>${sbar}
+        <button class="toggle" data-tbl="t1">Xem bảng số</button><div class="tbl" id="t1" hidden><table><thead><tr><th>Nguồn</th><th class="num">Sự việc</th><th class="num">Đạt</th><th class="num">Cảnh báo</th><th class="num">Bể chờ</th></tr></thead><tbody>${src.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${fmt(r[5] || r[1])}</td><td class="num">${fmt(r[2])}</td><td class="num">${fmt(r[3])}</td><td class="num">${fmt(r[4])}</td></tr>`).join('')}</tbody></table></div></div>
+      <div class="panel card"><h4>Lệch theo mã</h4><div class="tbl"><table><thead><tr><th>Mã</th><th>Nghĩa</th><th class="num">Số</th></tr></thead><tbody>
+        <tr><td class="mono">POL-REF-000</td><td>nguồn không gửi tham chiếu</td><td class="num">236</td></tr>
+        <tr><td class="mono">POL-STALE-001</td><td>dùng bản cũ tại ngày chứng từ</td><td class="num">26</td></tr>
+        <tr><td class="mono">POL-EVAL-001</td><td>tính lại khác nguồn gửi</td><td class="num">21</td></tr>
+        <tr><td class="mono">POL-DATA-001</td><td>quà thiếu kho / lô</td><td class="num">11</td></tr>
+        <tr><td class="mono">POL-ACC-001</td><td>chưa có lý do định khoản</td><td class="num">7</td></tr></tbody></table></div></div>
+      <div class="panel card"><h4>Thực hiện chương trình trong kỳ</h4><p class="muted" style="font-size:12.5px;margin:0 0 6px">Giá trị đã chi (triệu ₫); vạch đứng = ngân sách (<span class="mono">gift_budget</span>) nếu có.</p>${hbar}</div>
+      <div class="panel card"><h4>Độ trễ phiên bản theo nơi dùng</h4><div class="tbl"><table><thead><tr><th>Nơi dùng</th><th>Chính sách</th><th>Giữ</th><th>Tại ngày</th><th></th></tr></thead><tbody>
+        <tr><td>POS WP · HN01</td><td class="mono">SALE-PROMO-001</td><td>3</td><td>3</td><td><span class="tag ok">khớp</span></td></tr>
+        <tr><td>Woo · web</td><td class="mono">SALE-PROMO-001</td><td>2</td><td>3</td><td><span class="tag warn">trễ 1 bản · 7 ngày</span></td></tr>
+        <tr><td>POS WP · HN01</td><td class="mono">SALE-PRICE-HN01</td><td>8</td><td>8</td><td><span class="tag ok">khớp</span></td></tr>
+        <tr><td>Sàn Shopee</td><td class="mono">SALE-PROMO-001</td><td>—</td><td>3</td><td><span class="tag bad">không gửi</span></td></tr></tbody></table></div></div>
+    </div>
+    <h3>Sức khoẻ Registry</h3>
+    <div class="panel"><div class="tbl"><table><thead><tr><th>Việc</th><th>Chính sách</th><th>Yếu tố</th><th></th></tr></thead><tbody>
+      <tr><td>Sắp hết hạn, nguồn vẫn gửi</td><td class="mono">SALE-PROMO-001 (30/11)</td><td>xuyên suốt</td><td><button class="btn sm">Lập bản mới / ngừng</button></td></tr>
+      <tr><td>Thuộc diện thông báo Sở Công Thương, chưa có số</td><td class="mono">KM-1201</td><td>truy vết</td><td><button class="btn sm">Bổ sung</button></td></tr>
+      <tr><td>Nghiệp vụ có chính sách, nguồn chưa tích hợp</td><td class="mono">Sàn Shopee</td><td>nhất quán</td><td><button class="btn sm">Hướng dẫn kết nối</button></td></tr>
+    </tbody></table></div></div>`;
+}
+
+const R = { pol: renderPol, que: renderQue, tra: renderTra, das: renderDas };
+function show(tab){
+  document.querySelectorAll('[role=tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  Object.keys(R).forEach(k => $('#tab-' + k).hidden = k !== tab);
+  R[tab](); st.tab = tab;
+  try { localStorage.setItem('p031', JSON.stringify({ tab })); } catch (e) {}
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,a'); if (!t) return;
+  if (t.dataset.tab) show(t.dataset.tab);
+  else if (t.dataset.pol) { st.pol = +t.dataset.pol; renderPol(); }
+  else if (t.dataset.ptab) { st.ptab = t.dataset.ptab; renderPol(); }
+  else if (t.dataset.q) { st.q = +t.dataset.q; renderQue(); }
+  else if (t.dataset.tdir) { st.tdir = t.dataset.tdir; renderTra(); }
+  else if (t.dataset.goto) { e.preventDefault(); show(t.dataset.goto); }
+  else if (t.dataset.tbl) { const x = document.getElementById(t.dataset.tbl); x.hidden = !x.hidden; }
+  else if (t.id === 'theme') { const r = document.documentElement; const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; }
+});
+document.addEventListener('change', e => { if (e.target.id === 'at') { st.at = e.target.value || st.at; renderPol(); } });
+const tip = $('#tip');
+document.addEventListener('mousemove', e => { const t = e.target.closest('[data-tip]'); if (!t) { tip.style.display = 'none'; return; } tip.textContent = t.dataset.tip; tip.style.display = 'block'; tip.style.left = Math.min(e.clientX + 12, innerWidth - 270) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; });
+renderQue();
+const h = location.hash.slice(1);
+show(R[h] ? h : st.tab || 'pol');
+</script>
+</body>
+</html>
