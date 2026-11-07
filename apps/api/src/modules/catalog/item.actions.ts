@@ -14,6 +14,8 @@ import { Errors } from '../../core/errors.js';
 import type { Db } from '../../db/client.js';
 import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
 import { applyItemGate } from '../products/item.hints.js';
+// [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: core.item.add-child, khoá đổi mã có đuôi (đóng góp)
+import { addChildProduct, guardMerge, guardRename } from './san-pham-con.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -59,9 +61,11 @@ const renameCode = defineAction({
     if (busy) throw Errors.conflict(`Mã ${i.newSku} đang là mặt hàng khác`);
     const taken = await sql<{ id: string | null }>`SELECT bizcity_item_code_taken(${tenantId}::bigint, ${i.newSku}) AS id`.execute(tx);
     if (taken.rows[0]?.id) throw Errors.conflict(`Mã ${i.newSku} đã từng thuộc mặt hàng khác, không dùng lại được`);
+    const followVariant = await guardRename(tx, tenantId, cur.sku, i.newSku);
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const n = await tx.updateTable('products').set({ sku: i.newSku, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', cur.sku).executeTakeFirst();
     if (!Number(n.numUpdatedRows)) throw Errors.notFound(`mặt hàng ${cur.sku} trong danh mục`);
+    if (followVariant) await sql`UPDATE products SET variant_code = ${followVariant} WHERE tenant_id = ${tenantId} AND sku = ${i.newSku}`.execute(tx);
     await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key, replaced_by_item_id) VALUES (${tenantId}, 'product', ${cur.sku}, ${cur.itemId})`.execute(tx);
     const out = { itemId: cur.itemId, fromSku: cur.sku, toSku: i.newSku, validFrom: await openFrom(tx, cur.itemId), reason: i.reason };
     ctx.evidence.note('result', out);
@@ -197,6 +201,7 @@ const merge = defineAction({
     const tenantId = ctx.tenant.id;
     const p = await preview(tx, tenantId, i);
     if (!p.canMerge) throw Errors.conflict(p.blocks.map((b) => b.text).join('; '));
+    await guardMerge(tx, tenantId, p.fromSku, p.toSku);
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const res = (await sql<{ r: { fromSku: string | null; toSku: string; droppedConfig: number; mergedAt: string } }>`
       SELECT bizcity_item_merge(${tenantId}::bigint, ${p.fromItemId}, ${p.toItemId}, ${ctx.legacyAuth.actor}, ${i.reason}) AS r`.execute(tx)).rows[0]!.r;
@@ -207,4 +212,25 @@ const merge = defineAction({
   },
 });
 
-export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge];
+const addChild = defineAction({
+  id: 'core.item.add-child', title: 'Thêm sản phẩm con', tags,
+  description: 'Tạo mặt hàng mới có item_id riêng, mã = mã cha + 2 số, lấy đơn vị tính, nhóm, thuế theo mã cha.',
+  permission: 'catalog:write', effect: 'write', idempotency: 'natural', sideEffects: ['masterdata'],
+  input: z.object({
+    parentSku: z.string().trim().min(1).max(64),
+    name: z.string().trim().min(1, 'Nhập tên sản phẩm con').max(255),
+    variantCode: z.string().trim().min(1).max(32).default('normal'),
+    barcode: z.string().trim().max(500).optional(),
+    note: z.string().trim().max(500).optional(),
+    noSaleParent: z.boolean().optional(),
+  }),
+  output: z.custom<object>((v) => typeof v === 'object'),
+  expose: { http: { method: 'POST', path: '/api/v1/items/add-child' }, ai: 'deny' },
+  evidence: { objectType: 'item' },
+  handler: async (ctx, i) => {
+    await setSession(ctx.data.tx, ctx.legacyAuth.actor, `Thêm sản phẩm con của ${i.parentSku}`);
+    return await addChildProduct(ctx.data.tx, ctx.tenant.id, ctx.legacyAuth.actor, i);
+  },
+});
+
+export const itemActions: AnyActionDef[] = [renameCode, addCode, retireCode, classify, mergePreview, merge, addChild];

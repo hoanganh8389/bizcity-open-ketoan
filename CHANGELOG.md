@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sản phẩm con và ô Biến thể, giai đoạn 1 chuyển mã số (PHASE-026) <!-- [2026-11-07 06:20 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1 (đóng góp) -->
+
+- **Thêm:** bảng `item_variant_kinds`, cột `products.variant_code` tự điền theo đuôi mã (migration 0078); `POST /api/v1/items/add-child`, `GET /api/v1/items/variant-kinds`; nút Thêm sản phẩm con và cột Biến thể ở DM10; bảng Biến thể ở MH26; loại hàng chuẩn. Phương án: `docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md`.
+- **Đổi:** MH22 không tự nhận khi NCC dùng lại mã cho hàng khác hẳn, đưa về gợi ý. Đổi mã có đuôi `K`, `M`, `Q`, `T`, `Z` phải giữ đuôi. Không gộp hàng Nội bộ với hàng có sang thuế.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Phần mềm vẫn xử lý theo đuôi mã, ô Biến thể mới chỉ ghi nhận.
+- **Nâng cấp cần làm:** chạy migration 0078. Khoảng 9 giây trên 42.016 dòng; không đổi `updated_at`, hệ thống bán hàng không phải kéo lại danh mục.
+- **Bảo mật:** không.
+
 ### Màn Cấu hình hệ thống (HT13) bản chỉ đọc (PHASE-030, S030-39) <!-- [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39 -->
 
 - **Thêm:** `GET /api/v1/settings/overview` — mọi khoá registry `bizcity_settings@1`: nhóm, lớp A / B / C, phạm vi, nơi lưu, giá trị hiện hành (chỉ khoá có phiên bản và không phải bí mật), số phiên bản, thay đổi gần nhất, bản sắp hiệu lực, căn cứ, sức khoẻ cấu hình (thiếu căn cứ, đổi 30 ngày, sắp hiệu lực, ngày chưa niêm phong). Màn web **Hệ thống → Cấu hình hệ thống (HT13)**, hướng dẫn `docs/huong-dan/cau-hinh-he-thong.md`. Golden T030-CFG-VIEW-1..6. Chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/24-CAU-HINH-HE-THONG.md`.

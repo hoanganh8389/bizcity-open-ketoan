@@ -1,6 +1,6 @@
 # 12. Phương án bỏ chữ khỏi mã hàng
 
-Đề xuất của team công nghệ. Chưa có dòng code nào làm theo phương án này. Nền nghiệp vụ xem ở tài liệu 11.
+Đề xuất của team công nghệ. Tiến độ làm theo phương án này: tài liệu 13. Nền nghiệp vụ xem ở tài liệu 11.
 
 ## 1. Tóm tắt phương án
 
@@ -255,7 +255,7 @@ Mỗi giai đoạn đều dừng lại được, và phần mềm vẫn chạy b
 | 6 | Đổi mã cũ theo từng đợt, nhóm ít rủi ro trước | Trộn | Đối chiếu tồn, giá vốn trước và sau mỗi đợt không đổi | Đổi lại mã |
 | 7 | Mã cũ chỉ còn để tra cứu lịch sử | Toàn số | Hết mã có chữ đang dùng | |
 
-**Khoá an toàn đến hết GĐ 2:** quầy bán và phiếu mua vẫn nhận biến thể bằng chữ cuối mã. Nên trước GĐ 3, mã con toàn số chỉ mở cho Biến thể Thường, và không cho đổi mã có đuôi sang mã số. Nếu không, hàng `Z` đổi sang số sẽ không còn được tách và bị **sang thuế**.
+**Khoá an toàn đến hết GĐ 2:** quầy bán và phiếu mua vẫn nhận biến thể bằng chữ cuối mã. Nên trước GĐ 3, mã con toàn số chỉ mở cho Biến thể Thường, không cho đổi mã có đuôi sang mã số, và không cho gộp hàng Nội bộ với hàng có sang thuế. Nếu không, hàng `Z` đổi sang số sẽ không còn được tách và bị **sang thuế**.
 
 **Đổi mã chứ không gộp mã:** `item_id` giữ nguyên, nên lịch sử, tồn và giá vốn đi theo. Gộp sẽ làm mất phần tồn và đơn giá riêng.
 

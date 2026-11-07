@@ -12,6 +12,49 @@ import { P } from '../du-lieu';
 import '../mua-hang.css';
 
 interface SuffixRow { suffix: string; label: string; count: number; samples: { sku: string; name: string; parentSku: string }[]; separate: boolean }
+interface VariantKind { code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; allowNumeric: boolean; note: string; products: number }
+
+// [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: bảng biến thể thay chữ cuối mã, chỉ đọc (đóng góp)
+const TAX_FLOW: Record<string, string> = { invoice: 'Theo hoá đơn', never: 'Không bao giờ', undecided: 'Chưa quyết định' };
+const TAX_SKU: Record<string, string> = { self: 'Chính nó', parent: 'Mã cha', invoice: 'Theo hoá đơn', none: 'Không sang' };
+
+/** Biến thể thay cho chữ cuối mã. Chỉ đọc: tới giai đoạn phần mềm xử lý theo ô mới có hiệu lực. */
+function BangBienThe() {
+  const q = useQuery({ queryKey: ['variant-kinds'], queryFn: () => api.get<VariantKind[]>('/api/v1/items/variant-kinds') });
+  return (
+    <section className="mh-panel" style={{ marginBottom: 12 }}>
+      <b style={{ fontSize: 14 }}>Biến thể thay cho chữ cuối mã</b>
+      <div className="muted" style={{ fontSize: 12.5, margin: '4px 0 8px' }}>Phần mềm đã tự điền theo đuôi mã. Hiện vẫn xử lý theo đuôi, các cột cách xử lý chỉ để đối chiếu.</div>
+      <ErrorBox error={q.error ? errorText(q.error) : null} />
+      {q.isLoading ? <Loading /> : (
+        <div className="table-wrap"><table className="grid">
+          <thead><tr>
+            <th title="Tên biến thể, chọn ở mặt hàng">Biến thể</th>
+            <th title="Đuôi mã cũ có cùng ý nghĩa">Đuôi cũ</th>
+            <th className="num" title="Số mặt hàng đang mang biến thể này">Số mã</th>
+            <th title="Hàng có được đưa sang dữ liệu thuế không">Sang thuế</th>
+            <th title="Khi sang thuế thì ghi theo mã nào">Mã khi sang thuế</th>
+            <th title="Có dùng được với mã toàn số chưa. Biến thể ảnh hưởng thuế chỉ mở khi quầy bán đã đọc ô này">Mã số</th>
+            <th title="Giải thích ngắn">Ghi chú</th>
+          </tr></thead>
+          <tbody>
+            {(q.data ?? []).map((k) => (
+              <tr key={k.code}>
+                <td><b>{k.name}</b></td>
+                <td className="mono">{k.legacySuffix}</td>
+                <td className="num">{k.products.toLocaleString('vi-VN')}</td>
+                <td className={k.taxFlow === 'never' ? 'neg' : ''}>{TAX_FLOW[k.taxFlow] ?? k.taxFlow}</td>
+                <td>{TAX_SKU[k.taxSku] ?? k.taxSku}</td>
+                <td>{k.allowNumeric ? 'Đã mở' : 'Chưa'}</td>
+                <td className="muted" style={{ fontSize: 12 }}>{k.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      )}
+    </section>
+  );
+}
 
 export function BienTheMatHangPage() {
   const q = useQuery({ queryKey: ['mua-hang', 'variants'], queryFn: () => api.get<{ separate: string[]; suffixes: SuffixRow[] }>(`${P}/variants`) });
@@ -41,6 +84,7 @@ export function BienTheMatHangPage() {
         </>} />
       <ErrorBox error={q.error ? errorText(q.error) : null} />
       {msg && <div className={`alert ${msg.ok ? 'alert-ok' : 'alert-bad'}`} style={{ margin: '0 0 8px' }}>{msg.text}</div>}
+      <BangBienThe />
       {!q.data || !sep ? <Loading /> : (
         <section className="mh-panel">
           <div className="muted" style={{ fontSize: 12.5, marginBottom: 8 }}>

@@ -12,7 +12,13 @@ import { loadSettings, saveSettings } from './analysis.js';
 export const DEFAULT_VARIANT_SEPARATE = ['Q', 'T'];
 
 /** Đuôi của mã con so với mã gốc (mã con = mã gốc + đuôi); không bắt đầu bằng mã gốc thì lấy ký tự cuối. */
-export const suffixOf = (sku: string, parentSku: string) => (sku.startsWith(parentSku) ? sku.slice(parentSku.length) : sku.slice(-1)).toUpperCase();
+export const suffixOf = (sku: string, parentSku: string) => {
+  const sf = (sku.startsWith(parentSku) ? sku.slice(parentSku.length) : sku.slice(-1)).toUpperCase();
+  // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: mọi sản phẩm con toàn số gom một dòng, số thứ tự không mang nghĩa (đóng góp)
+  return /^\d+$/.test(sf) ? NUMERIC_CHILD : sf;
+};
+/** Dòng đại diện cho sản phẩm con toàn số ở MH26. */
+export const NUMERIC_CHILD = '##';
 
 /** Các đuôi phân tích đặt hàng TÁCH RIÊNG (không gộp vào mã gốc). */
 export async function variantSeparate(trx: Db, tenantId: string): Promise<string[]> {
@@ -42,7 +48,7 @@ export async function variantOverview(trx: Db, tenantId: string) {
   const suffixes = [...new Set([...known, ...by.keys()])].filter(Boolean).map((suffix) => ({
     suffix,
     // Mã đuôi T không được tự gắn mã cha khi quét danh mục (catalog.service) — chỉ gộp được mã T đã chọn tay mã cha ở mặt hàng.
-    label: `${SKU_SUFFIXES.find((x) => x.suffix === suffix)?.label ?? `${suffix} — đuôi khác (đang có trong danh mục)`}${suffix === 'T' ? ' · không tự gắn mã cha (chọn tay ở mặt hàng mới gộp được)' : ''}`,
+    label: suffix === NUMERIC_CHILD ? 'Sản phẩm con mã số (màu, size…)' : `${SKU_SUFFIXES.find((x) => x.suffix === suffix)?.label ?? `${suffix} — đuôi khác (đang có trong danh mục)`}${suffix === 'T' ? ' · không tự gắn mã cha (chọn tay ở mặt hàng mới gộp được)' : ''}`,
     count: by.get(suffix)?.count ?? 0, samples: by.get(suffix)?.samples ?? [], separate: separate.includes(suffix),
   }));
   return { separate, suffixes };

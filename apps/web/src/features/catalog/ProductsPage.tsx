@@ -15,6 +15,8 @@ import { CatalogToolbar } from '@/components/CatalogToolbar';
 import { ExcelImport, type ImportColumn } from '@/components/ExcelImport';
 import { GroupTree } from '../posting/ProductAccountsPage';
 import { ProductFullForm } from './ProductFullForm';
+// [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: cột Biến thể cạnh mã, lọc theo biến thể, Loại hàng (đóng góp)
+import { useVariantKinds, variantLabel } from './ThemSanPhamCon';
 import { PrintButton } from '@/components/print';
 import { PRODUCT_LABEL_TEMPLATES, loadLabelItems } from './productPrint';
 // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — D024-3: dải báo cáo mặt hàng tự thêm, kích hoạt hàng loạt mặt hàng nháp
@@ -32,6 +34,7 @@ interface Product {
   note: string; exciseRate: number | null; taxOutCode: string | null; taxInCode: string | null;
   /** Mã hàng cha (họ mã 1 cấp). */
   parentSku?: string | null;
+  variantCode?: string;
 }
 interface PostingGroup { code: string; name: string; isDefault: boolean }
 
@@ -110,7 +113,9 @@ export function ProductsPage() {
   const [search, setSearch] = useState('');
   const [applied, setApplied] = useState('');
   const [group, setGroup] = useState<string | null>(null);
-  const [f, setF] = useState<Record<string, string>>({ postingGroup: '', status: 'all' });
+  const [f, setF] = useState<Record<string, string>>({ postingGroup: '', status: 'all', variant: '' });
+  const kinds = useVariantKinds().data ?? [];
+  const kindOf = (c?: string) => kinds.find((k) => k.code === c);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<(Partial<Product> & { isNew?: boolean }) | null>(null);
   const [sel, setSel] = useState<Product | null>(null);
@@ -162,6 +167,7 @@ export function ProductsPage() {
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
+    { key: 'variantCode', header: 'Biến thể', width: 130, title: 'Nghĩa của đuôi mã cũ. Thường để trống. Tạm thời phần mềm vẫn xử lý theo đuôi mã', value: (p) => (p.variantCode && p.variantCode !== 'normal' ? variantLabel(kindOf(p.variantCode), p.variantCode) : '') },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },
@@ -173,7 +179,7 @@ export function ProductsPage() {
     { key: 'exciseRate', header: 'Thuế TTĐB', type: 'number', width: 85 },
     { key: 'postingGroupCode', header: 'Nhóm hạch toán', type: 'code', width: 120, value: (p) => p.postingGroupCode ?? '(mặc định)' },
     { key: 'isActive', header: 'Theo dõi', type: 'check', width: 70 },
-    { key: 'typeCode', header: 'Loại hàng', width: 120, hidden: true, value: (p) => nameOf('type', p.typeCode) },
+    { key: 'typeCode', header: 'Loại hàng', width: 130, title: 'Hàng bán, quà, vật tư, công cụ, tài sản… Để lọc và báo cáo, không làm đổi định khoản', value: (p) => nameOf('type', p.typeCode) },
     { key: 'sourceSystem', header: 'Nguồn', width: 130, hidden: true, value: (p) => SOURCE[p.sourceSystem] ?? p.sourceSystem },
   ];
 
@@ -228,6 +234,10 @@ export function ProductsPage() {
                   <option value="">Mọi nhóm hạch toán</option><option value="-">(Chưa gán — nhóm mặc định)</option>
                   {(groups.data ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} — {g.name}</option>)}
                 </select>
+                <select className="select input" style={{ height: 30 }} value={f.variant} title="Lọc theo biến thể" onChange={(e) => set({ variant: e.target.value })}>
+                  <option value="">Mọi biến thể</option>
+                  {kinds.map((k) => <option key={k.code} value={k.code}>{variantLabel(k)}</option>)}
+                </select>
                 <select className="select input" style={{ height: 30 }} value={f.status} onChange={(e) => set({ status: e.target.value })}>
                   <option value="all">Tất cả</option><option value="active">Đang theo dõi</option><option value="draft">Nháp (chưa kích hoạt)</option><option value="inactive">Ngừng</option>
                 </select>
@@ -238,7 +248,7 @@ export function ProductsPage() {
           <AutoCreatedBanner onActivate={canWrite ? () => setBulk(true) : undefined} />
           {q.isLoading ? <Loading /> : (
             <DataGrid
-              storageKey="dm10-v2"
+              storageKey="dm10-v3"
               exportName="mat-hang"
               groupable
               exportRef={exportRef}

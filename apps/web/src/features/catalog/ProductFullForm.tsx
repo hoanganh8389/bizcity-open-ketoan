@@ -18,6 +18,8 @@ import { ItemPicker, ListPicker } from '@/components/pickers';
 import { HelpDrawer } from '@/components/HelpDrawer';
 // [2026-11-05 02:20 PM Nguyễn Văn Thủy] PHASE-026 — S026-23: đổi mã, gộp mã, lịch sử (đóng góp)
 import { DoiMaModal, GopMaModal, LichSuMatHang } from './DoiMaGopMa';
+// [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể, Loại hàng ở thẻ Thông tin, nút Thêm sản phẩm con (đóng góp)
+import { ThemSanPhamCon, useVariantKinds, VariantBadge, variantLabel } from './ThemSanPhamCon';
 import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
 import { DvtQuyDoi, GiaBan } from './DvtGiaBan';
@@ -40,6 +42,8 @@ interface FullProduct {
   isMain: boolean; isUnder24m: boolean; noSale: boolean; exportAdjust: boolean; isKct: boolean; trackIdentifier: boolean;
   /** Mã hàng cha (họ mã 1 cấp); null = không có. */
   parentSku?: string | null;
+  /** Biến thể (nghĩa của đuôi mã cũ). Đợt này chỉ đọc, phần mềm vẫn xử lý theo đuôi. */
+  variantCode?: string;
   units: Unit[]; prices: Price[];
   /** Nháp (PHASE-024): khai báo còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
@@ -103,6 +107,8 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
   const [taxDetail, setTaxDetail] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [merging, setMerging] = useState(false);
+  const [addingChild, setAddingChild] = useState(false);
+  const kinds = useVariantKinds().data;
   const set = (p: Partial<FullProduct>) => setV((x) => ({ ...x, ...p }));
 
   const loaded = useQuery({ queryKey: ['catalog-product', sku], queryFn: () => api.get<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(sku!)}`), enabled: !isNew });
@@ -217,7 +223,7 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
       const units = v.units.filter((u) => u.unit.trim()).map((u) => ({ unit: u.unit.trim(), ratio: Number(u.ratio), isDefault: u.isDefault, isPurchaseDefault: Boolean(u.isPurchaseDefault), weightKg: u.weightKg, note: u.note }));
       const unitNames = new Set(units.map((u) => u.unit));
       const prices = v.prices.filter((p) => unitNames.has(p.unit)).map((p) => ({ priceListCode: p.priceListCode, unit: p.unit, price: p.price, isDefaultUnit: p.isDefaultUnit, note: p.note }));
-      const { sku: _s, unit: _u, units: _us, prices: _ps, ...rest } = v;
+      const { sku: _s, unit: _u, units: _us, prices: _ps, variantCode: _vc, ...rest } = v;
       return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, units, prices, warnAck });
     },
     onSuccess: () => {
@@ -246,7 +252,8 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
   return (<>
     <Modal key="form" viewAgain={viewAgain} viewFirst={!isNew && !startEditing} wide title={isNew ? 'Thêm mặt hàng' : `Mặt hàng ${v.sku} — ${v.name}`} onClose={onClose}
       footer={<>
-        {!isNew && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Tạo mã mới = mã này + chữ đuôi (K chia giá, M khuyến mại, Q kẹp quà, T có tem, Z / B…): chép nhóm, nhãn, ĐVT, thuế; tên đặt theo quy định" onClick={() => setChooseVariant(true)}>Tạo mã biến thể…</button>}
+        {!isNew && !v.parentSku && /^\d+$/.test(v.sku) && <button className="btn" data-view-ok title="Tạo mặt hàng con: gõ tên kèm màu, size. Mã tự cấp = mã này + 2 số" onClick={() => setAddingChild(true)}>Thêm sản phẩm con…</button>}
+        {!isNew && !/^\d{10,}$/.test(v.sku) && <button className="btn" data-view-ok style={{ marginRight: 'auto' }} title="Tạm thời dùng cho kẹp quà, khuyến mại, chia giá, có tem, nội bộ: tạo mã mới = mã này + chữ đuôi (K, M, Q, T, Z, B…). Chép nhóm, nhãn, ĐVT, thuế; tên đặt theo quy định" onClick={() => setChooseVariant(true)}>Tạo mã có đuôi…</button>}
         {!isNew && <button className="btn" data-view-ok title="Đổi sang mã mới từ hôm nay, sổ cũ giữ mã cũ" onClick={() => setRenaming(true)}>Đổi mã</button>}
         {!isNew && <button className="btn" data-view-ok title="Gộp mã này vào mặt hàng khác từ hôm nay, sổ cũ giữ nguyên" onClick={() => setMerging(true)}>Gộp mã</button>}
         <button className="btn btn-primary" disabled={save.isPending || !v.sku.trim() || !v.name.trim()} title={blockCount ? 'Còn lỗi chặn: mặt hàng được lưu NHÁP, chưa dùng được trên chứng từ cho tới khi sửa xong' : undefined}
@@ -282,7 +289,13 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
             <MaHangGiaiThich sku={v.sku} hint={skuHint} auto={skuAuto} isNew={isNew} />
           </Field>
           <Field label="Barcode" hint="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
-          <MaHangCha sku={v.sku} isNew={isNew} value={v.parentSku ?? null} onChange={(parentSku) => set({ parentSku })} />
+          <MaHangCha sku={v.sku} isNew={isNew} value={v.parentSku ?? null} onChange={(parentSku) => set({ parentSku })} kinds={kinds} />
+          {!isNew && (
+            <Field label="Biến thể" hint="Tự theo đuôi mã. Tạm thời phần mềm vẫn xử lý theo đuôi, ô này để đối chiếu">
+              <input className="input" disabled value={variantLabel(kinds?.find((k) => k.code === v.variantCode), v.variantCode ?? 'normal')} title={kinds?.find((k) => k.code === v.variantCode)?.note} />
+            </Field>
+          )}
+          {classes.type.length > 0 && <Field label="Loại hàng" hint="Để lọc và báo cáo, không làm đổi định khoản"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
           <Field label="Tên hàng (*)" full><input className="input" value={v.name} onChange={(e) => set({ name: e.target.value })} /></Field>
           {(() => {
             // Có nhóm hàng và ngành / nhãn khớp cây nhóm: chỉ hiện (một chỗ khai — nhóm hàng); chưa khớp thì vẫn chọn tay được.
@@ -356,7 +369,6 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
               <Field label="Thuế tiêu thụ đặc biệt (%)" hint="Chỉ hàng chịu thuế TTĐB (rượu, bia, nước ngọt có đường…). Sữa, bỉm, đồ dùng: để trống."><input className="input num" value={v.exciseRate ?? ''} onChange={(e) => set({ exciseRate: parseNum(e.target.value) })} /></Field>
             </>
           )}
-          {classes.type.length > 0 && <Field label="Loại hàng"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
         </fieldset>
       )}
       {v.isDraft && <div className="alert alert-warn full"><b>Nháp</b> — mặt hàng chưa kích hoạt, chưa dùng được trên chứng từ (cửa nạp giữ chứng từ ở Trạm kiểm tra với mã IN-ITEM-009). Sửa các lỗi chặn bên dưới, Ghi → tự kích hoạt.</div>}
@@ -366,6 +378,7 @@ export function ProductFullForm({ sku, initial, initialSuffix = '', classes, gro
     </Modal>
     {renaming && <DoiMaModal sku={v.sku} onClose={() => setRenaming(false)} onDone={() => { setRenaming(false); onClose(); }} />}
     {merging && <GopMaModal sku={v.sku} onClose={() => setMerging(false)} onDone={() => { setMerging(false); onClose(); }} />}
+    {addingChild && <ThemSanPhamCon parentSku={v.sku} parentName={v.name} parentNoSale={v.noSale} onClose={() => setAddingChild(false)} />}
     {chooseVariant && <ChonDuoiMa base={baseOf(v.sku)} name={v.name} onClose={() => setChooseVariant(false)} onPick={(sf) => { setChooseVariant(false); setVariant(sf); }} />}
     {/* Form mã biến thể đặt NGOÀI và SAU form đang xem: nằm trên, nhận phím; form xem khoá mọi ô / nút bên trong nó. */}
     {variant && <ProductFullForm sku={null} classes={classes} groupPath={groupPath} initialSuffix={variant} onClose={() => setVariant(null)}
@@ -386,10 +399,11 @@ function MaHangGiaiThich({ sku, hint, auto, isNew }: { sku: string; hint: SkuPre
   return (
     <div className="sku-explain">
       {info.kind === 'other'
-        ? <span className="mh-warn">Mã không theo quy tắc mã hàng (9 ký tự: ngành 2 + nhãn 3 + nhóm 1 + số 3) — vẫn lưu được nếu là mã đặc biệt</span>
+        ? (/^\d{10,}$/.test(sku) ? <span className="muted">Sản phẩm con toàn số</span> : <span className="mh-warn">Mã không theo quy tắc mã hàng (9 ký tự: ngành 2 + nhãn 3 + nhóm 1 + số 3) — vẫn lưu được nếu là mã đặc biệt</span>)
         : <>
           {chip(info.kind === 'gift' ? 'Quà' : 'Ngành', info.industry, src(0))}{chip('Nhãn', info.brand, src(1))}{chip('Nhóm', info.group, src(2))}{chip('Số', info.seq, 'Số tự sinh: số lớn nhất đang có của cùng tiền tố + 1')}
           {info.suffix && chip('Đuôi', `${info.suffix} · ${info.label}`, info.hint)}
+          {info.child && chip('Con', info.child, 'Số thứ tự sản phẩm con, không mang nghĩa')}
           {info.kind === 'combo' && <span className="badge badge-warn" title={info.hint}>Combo (nhóm 8)</span>}
         </>}
       {isNew && <span className="muted">{auto ? '· tự sinh theo nhóm' : '· gõ tay'}</span>}
@@ -457,7 +471,7 @@ function ChonDuoiMa({ base, name, onPick, onClose }: { base: string; name: strin
  * MÃ HÀNG CHA (họ mã 1 cấp): mã con trỏ về mã cha — mã kẹp quà / khuyến mại / chia giá / Z, B… của cùng sản phẩm (tự quét theo mã),
  * hoặc mã đặt tên khác nhưng bản chất là sản phẩm ấy (chọn tay). Phân tích đặt hàng cộng dồn cả họ vào mã cha. Mã cha thì liệt kê mã con.
  */
-function MaHangCha({ sku, isNew, value, onChange }: { sku: string; isNew: boolean; value: string | null; onChange: (v: string | null) => void }) {
+function MaHangCha({ sku, isNew, value, onChange, kinds }: { sku: string; isNew: boolean; value: string | null; onChange: (v: string | null) => void; kinds?: Parameters<typeof VariantBadge>[0]['kinds'] }) {
   const m = /^(\d{9})([A-Z]{1,3})$/.exec(sku.trim().toUpperCase());
   const suggest = m && m[2] !== 'T' ? m[1]! : '';
   // Mã mới: tự điền mã cha theo mã (bỏ đuôi) khi gõ mã — nhìn thấy ngay, bấm "Bỏ" / chọn mã khác thì thôi tự điền.
@@ -467,13 +481,13 @@ function MaHangCha({ sku, isNew, value, onChange }: { sku: string; isNew: boolea
   const ok = Boolean(exists.data?.some((p) => p.sku === suggest));
   useEffect(() => { if (isNew && !touched && (value ?? '') !== (ok ? suggest : '')) onChange(ok ? suggest : null); }, [isNew, touched, suggest, ok]); // eslint-disable-line react-hooks/exhaustive-deps
   const pick = (v: string | null) => { setTouched(true); onChange(v); };
-  const kids = useQuery({ queryKey: ['products', 'children', sku], enabled: Boolean(sku) && !isNew, queryFn: () => api.get<{ sku: string; name: string }[]>('/api/v1/products', { parent: sku, pageSize: 200 }) });
+  const kids = useQuery({ queryKey: ['products', 'children', sku], enabled: Boolean(sku) && !isNew, queryFn: () => api.get<{ sku: string; name: string; variantCode?: string }[]>('/api/v1/products', { parent: sku, pageSize: 200 }) });
   const list = kids.data ?? [];
   return (
     <Field label="Mã hàng cha (họ mã)" hint={list.length ? undefined : 'Trống = không thuộc họ mã nào. Mã có đuôi (Z, Q, K, M, B…) tự nhận mã gốc; mã đặt tên khác nhưng là cùng sản phẩm thì chọn tay. Đuôi T (có tem) đặt riêng — chỉ gán khi muốn gộp.'}>
       {list.length ? (
         <div style={{ fontSize: 12.5 }} title="Mã này là mã cha — phân tích đặt hàng cộng dồn các mã con vào mã này">
-          <b>Là mã cha của {list.length} mã:</b> {list.map((k) => <span key={k.sku} className="badge badge-gray" style={{ marginRight: 4 }} title={k.name}>{k.sku}</span>)}
+          <b>Là mã cha của {list.length} mã:</b> {list.map((k) => <span key={k.sku} style={{ marginRight: 6, whiteSpace: 'nowrap' }}><span className="badge badge-gray" title={k.name}>{k.sku}</span> <VariantBadge code={k.variantCode} kinds={kinds} /></span>)}
         </div>
       ) : (
         <div className="row" style={{ gap: 6, alignItems: 'center' }}>

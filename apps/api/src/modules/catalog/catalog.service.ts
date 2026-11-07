@@ -43,6 +43,7 @@ type ProductRow = {
   barcode: string; image_url: string; description: string; weight_kg: string | null; origin: string;
   is_main: boolean; is_under_24m: boolean; no_sale: boolean; export_adjust: boolean; is_kct: boolean; track_identifier: boolean; updated_at: Date; parent_sku: string | null;
   is_draft: boolean; draft_codes: string[];
+  variant_code?: string; // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể (0078) (đóng góp)
 };
 
 const num = (v: string | null | undefined) => (v === null || v === undefined ? null : Number(v));
@@ -54,7 +55,7 @@ export function productDto(p: ProductRow) {
     postingGroupCode: p.posting_group_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, exciseRate: num(p.excise_rate), isActive: p.is_active,
     barcode: p.barcode, imageUrl: p.image_url, description: p.description, weightKg: num(p.weight_kg), origin: p.origin,
     isMain: p.is_main, isUnder24m: p.is_under_24m, noSale: p.no_sale, exportAdjust: p.export_adjust, isKct: p.is_kct, trackIdentifier: p.track_identifier,
-    parentSku: p.parent_sku, updatedAt: p.updated_at, isDraft: p.is_draft, draftCodes: p.draft_codes,
+    parentSku: p.parent_sku, updatedAt: p.updated_at, isDraft: p.is_draft, draftCodes: p.draft_codes, variantCode: p.variant_code,
   };
 }
 
@@ -167,7 +168,7 @@ export function inheritUnits(own: UnitInput[] | undefined, parent: UnitInput[]):
 // ----------------------------------------------------------------------------------------------- một mặt hàng
 
 export async function getProduct(trx: Db, tenantId: string, sku: string) {
-  const p = await trx.selectFrom('products').select([...PRODUCT_COLS]).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
+  const p = await trx.selectFrom('products').select([...PRODUCT_COLS, sql<string>`variant_code`.as('variant_code')]).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (!p) throw Errors.notFound(`mặt hàng ${sku}`);
   const [units, prices] = await Promise.all([
     trx.selectFrom('product_units').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).orderBy('ratio').orderBy('unit').execute(),

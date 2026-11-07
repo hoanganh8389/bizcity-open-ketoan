@@ -20,7 +20,7 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 | GĐ | Việc | Trạng thái |
 |---|---|---|
 | 0 | Chốt phương án (tài liệu 12) | Xong |
-| 1 | Ô Biến thể, Loại hàng; tự điền từ đuôi cũ; Thêm sản phẩm con; cảnh báo NCC dùng lại mã | Đang làm |
+| 1 | Ô Biến thể, Loại hàng; tự điền từ đuôi cũ; Thêm sản phẩm con; cảnh báo NCC dùng lại mã | Xong trên nhánh `feat/ma-so-cha-con`, chờ họp chốt mới vào `main`, `test` |
 | 2 | Đối chiếu luật đọc ô với luật đọc chữ trên đơn thật | Chưa làm |
 | 3 | Phần mềm chuyển sang đọc ô, mở mã số cho các biến thể còn lại | Chưa làm |
 | 4 | Website bán hàng theo `item_id`, biết đổi mã | Chưa làm |
@@ -33,6 +33,7 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 
 - Mã con toàn số chỉ mở cho Biến thể Thường.
 - Không đổi mã có đuôi `K`, `M`, `Q`, `T`, `Z` sang mã số trước GĐ 3.
+- Không gộp hàng Nội bộ với hàng có sang thuế.
 
 Lý do: quầy bán tách bill Z bằng chữ cuối mã. Đổi trước khi quầy đọc ô thì hàng nội bộ sẽ sang thuế.
 
@@ -49,3 +50,4 @@ Lý do: quầy bán tách bill Z bằng chữ cuối mã. Đổi trước khi qu
 | Ngày | Nội dung |
 |---|---|
 | 07/11/2026 | Chốt phương án, mở GĐ 1 |
+| 07/11/2026 | GĐ 1 làm xong trên nhánh. Chạy thử trên dữ liệu máy phát triển: 2.526 mã tận cùng `Z` đều mang Biến thể Nội bộ, không lệch mã nào so với cách quầy bán nhận `Z` |
