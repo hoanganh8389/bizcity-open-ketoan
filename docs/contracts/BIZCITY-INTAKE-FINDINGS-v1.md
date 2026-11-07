@@ -69,20 +69,16 @@
 | `IN-BIZ-005` | L4 | warn | advice | 20 | Cùng phiên bản nhưng nội dung khác bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-005.md) |
 | `IN-BIZ-006` | L4 | warn | advice | 20 | Số hoá đơn đã có ở chứng từ khác | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-006.md) |
 | `IN-BIZ-007` | L4 | hint | advice | 0 | Ngày hoá đơn cách ngày chứng từ hơn 5 ngày | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-007.md) |
+| `IN-POL-001` | L4 | warn | advice | 10 | Tham chiếu chính sách không có trong sổ đăng ký hoặc băm khác bản đã phát hành | [bài học](../huong-dan/loi-dau-vao/IN-POL-001.md) |
+| `IN-POL-002` | L4 | warn | advice | 10 | Bản chính sách không hiệu lực tại ngày chứng từ | [bài học](../huong-dan/loi-dau-vao/IN-POL-002.md) |
+| `IN-POL-003` | L4 | warn | advice | 5 | Đã có bản chính sách mới hơn hiệu lực tại ngày chứng từ | [bài học](../huong-dan/loi-dau-vao/IN-POL-003.md) |
 | `IN-GUARD-001` | L5 | block | door | 0 | Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn (Commit Guard, R-GATE-8) | [bài học](../huong-dan/loi-dau-vao/IN-GUARD-001.md) |
 
 L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh Kernel (ĐVT, kho thuộc chi nhánh, bán nợ thiếu đối tượng, kỳ khoá) thêm ở W5 / S021-4.
 
 ### 3.1 Tham chiếu chính sách (0.9.0-draft, PHASE-031 W2a)
-<!-- [2026-11-07 10:32 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W2a: IN-POL-001..003 (L4, warn, advice, chấp nhận được); IN-POL-000 / 004 / 005 để W2b -->
 
-Dự kiến (vào bảng §3 cùng PR mã W2a, khi danh mục `intake-findings.ts` và trang bài học có thật — SC-INTAKE-1):
-
-- **IN-POL-001** · L4 · warn · advice · trọng số 10 — tham chiếu chính sách không có trong sổ đăng ký, hoặc băm khác bản đã phát hành;
-- **IN-POL-002** · L4 · warn · advice · 10 — bản chính sách không hiệu lực tại ngày chứng từ;
-- **IN-POL-003** · L4 · warn · advice · 5 — đã có bản mới hơn hiệu lực tại ngày chứng từ.
-
-Để sau (W2b, cần Rule Contract chạy được): `IN-POL-000` nghiệp vụ có chính sách hiệu lực mà nguồn không gửi tham chiếu (`hint`), `IN-POL-004` tính lại theo chính sách khác kết quả nguồn gửi, `IN-POL-005` kết quả thiếu dữ liệu gốc (quà thiếu kho / lô). Thiếu lý do định khoản cho kết quả chính sách dùng `IN-POST-001` sẵn có.
+Ba mã `IN-POL-001..003` đã vào bảng §3. Để sau (W2b, cần Rule Contract chạy được): `IN-POL-000` nghiệp vụ có chính sách hiệu lực mà nguồn không gửi tham chiếu (`hint`), `IN-POL-004` tính lại theo chính sách khác kết quả nguồn gửi, `IN-POL-005` kết quả thiếu dữ liệu gốc (quà thiếu kho / lô). Thiếu lý do định khoản cho kết quả chính sách dùng `IN-POST-001` sẵn có.
 
 ## 4. Nhật ký
 

@@ -78,7 +78,25 @@ function ingestLines(calc: DocCalc, units: Units, filter: (l: DocCalc['lines'][n
   }); });
 }
 
-async function ingest(trx: Db, auth: AuthContext, raw: Record<string, unknown>, role: string, warehouseCode?: string): Promise<Link> {
+// [2026-11-08 12:25 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9): tham chiếu chính sách đi kèm sự việc (bizcity_ledger_intake@1 §3.1)
+/**
+ * Mỗi chính sách ĐÃ CÓ BẢN trong vết tính của phiếu (policyTrace.version + hash, từ W1) thành một mục policyRefs. Vết không có bản
+ * (phiếu duyệt trước W1) hoặc dòng thủ công ("Trên phiếu") thì bỏ qua — không đoán. Không gửi policyId: Kernel tra theo mã ở sổ đăng ký
+ * (mã chính sách mua hàng duy nhất trong đơn vị — UNIQUE (tenant_id, code)).
+ */
+export function policyRefsOf(calc: DocCalc): { key: string; version: number; hash: string }[] {
+  const seen = new Set<string>();
+  const out: { key: string; version: number; hash: string }[] = [];
+  for (const t of calc.trace) {
+    if (!t.version || !t.hash || seen.has(t.policy)) continue;
+    seen.add(t.policy);
+    out.push({ key: t.policy, version: t.version, hash: t.hash });
+  }
+  return out;
+}
+
+async function ingest(trx: Db, auth: AuthContext, raw: Record<string, unknown>, role: string, warehouseCode?: string, policyRefs: ReturnType<typeof policyRefsOf> = []): Promise<Link> {
+  if (policyRefs.length) raw = { ...raw, policyRefs };
   // Phân kho của phiếu mua → từng dòng hàng (dòng chưa ghi kho riêng).
   if (warehouseCode && Array.isArray(raw.lines)) raw = { ...raw, lines: (raw.lines as Record<string, unknown>[]).map((l) => (l.warehouseCode ? l : { ...l, warehouseCode })) };
   const parsed = ingestDocumentSchema.safeParse(raw);
@@ -216,7 +234,7 @@ export async function postPurchase(trx: Db, auth: AuthContext, d: StoredDoc, cal
     case 'order': break;
     case 'receipt': {
       const lines = ingestLines(calc, units);
-      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'purchase', invoice, dueDate: receiptDue(d, calc.dueDate), lines, payments: [], totals: { beforeTax: calc.beforeTax, tax: calc.tax, total: calc.beforeTax + calc.tax } }, 'Nhập mua', d.warehouseCode));
+      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'purchase', invoice, dueDate: receiptDue(d, calc.dueDate), lines, payments: [], totals: { beforeTax: calc.beforeTax, tax: calc.tax, total: calc.beforeTax + calc.tax } }, 'Nhập mua', d.warehouseCode, policyRefsOf(calc)));
       // Ứng trước theo cùng đơn đặt → đối trừ ngay, không ghi trả trùng.
       const pre = docs.filter((x) => x.kind === 'prepayment' && x.status === 'approved' && (x.refIds ?? []).some((r) => (d.refIds ?? []).includes(r)));
       if (pre.length) await offset(trx, auth, pre.flatMap((x) => x.links.map((l) => l.eventId)), [links[0]!.eventId], d.docDate, `Đối trừ ứng trước — phiếu nhập ${d.docNo}`);
@@ -224,7 +242,7 @@ export async function postPurchase(trx: Db, auth: AuthContext, d: StoredDoc, cal
     }
     case 'return': {
       const orig = docs.find((x) => x.kind === 'receipt' && (d.refIds ?? []).includes(x.id));
-      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'purchase_return', originalDocKey: orig ? `mh:${orig.id}` : undefined, invoice, lines: ingestLines(calc, units), payments: [], totals: { beforeTax: calc.beforeTax, tax: calc.tax, total: calc.beforeTax + calc.tax } }, 'Trả hàng NCC', d.warehouseCode));
+      links.push(await ingest(trx, auth, { ...base(d, partner, key, version), docType: 'purchase_return', originalDocKey: orig ? `mh:${orig.id}` : undefined, invoice, lines: ingestLines(calc, units), payments: [], totals: { beforeTax: calc.beforeTax, tax: calc.tax, total: calc.beforeTax + calc.tax } }, 'Trả hàng NCC', d.warehouseCode, policyRefsOf(calc)));
       // Trừ ngay vào khoản nợ của hoá đơn gốc (phần còn nợ, đợt sớm nhất trước) — công nợ đến hạn / tuổi nợ đúng số sau trả.
       if (orig) await offset(trx, auth, [links[links.length - 1]!.eventId], orig.links.map((l) => l.eventId), d.docDate, `Trừ hàng trả ${d.docNo} vào ${orig.docNo}`);
       break;
@@ -233,8 +251,8 @@ export async function postPurchase(trx: Db, auth: AuthContext, d: StoredDoc, cal
       const x = calc.exchange!;
       const out = ingestLines(calc, units, (l) => l.dir === 'out');
       const inn = ingestLines(calc, units, (l) => (l.dir ?? 'in') === 'in');
-      if (out.length) links.push(await ingest(trx, auth, { ...base(d, partner, `${key}:tra`, version), docType: 'purchase_return', docNo: `${d.docNo}-T`, lines: out, payments: [], totals: { beforeTax: x.outBeforeTax, tax: x.outTax, total: x.outBeforeTax + x.outTax } }, 'Hàng trả đi', d.warehouseCode));
-      if (inn.length) links.push(await ingest(trx, auth, { ...base(d, partner, `${key}:nhan`, version), docType: 'purchase', docNo: `${d.docNo}-N`, invoice, lines: inn, payments: [], totals: { beforeTax: x.inBeforeTax, tax: x.inTax, total: x.inBeforeTax + x.inTax } }, 'Hàng nhận về', d.warehouseCode));
+      if (out.length) links.push(await ingest(trx, auth, { ...base(d, partner, `${key}:tra`, version), docType: 'purchase_return', docNo: `${d.docNo}-T`, lines: out, payments: [], totals: { beforeTax: x.outBeforeTax, tax: x.outTax, total: x.outBeforeTax + x.outTax } }, 'Hàng trả đi', d.warehouseCode, policyRefsOf(calc)));
+      if (inn.length) links.push(await ingest(trx, auth, { ...base(d, partner, `${key}:nhan`, version), docType: 'purchase', docNo: `${d.docNo}-N`, invoice, lines: inn, payments: [], totals: { beforeTax: x.inBeforeTax, tax: x.inTax, total: x.inBeforeTax + x.inTax } }, 'Hàng nhận về', d.warehouseCode, policyRefsOf(calc)));
       const outEv = links.filter((l) => l.role === 'Hàng trả đi').map((l) => l.eventId), inEv = links.filter((l) => l.role === 'Hàng nhận về').map((l) => l.eventId);
       await offset(trx, auth, outEv, inEv, d.docDate, `Bù trừ đổi hàng ${d.docNo}`);
       if (x.diff > 0 && d.settle === 'pay') links.push(await payVoucher(trx, auth, d, A, x.diff, inEv, 'Trả chênh lệch'));

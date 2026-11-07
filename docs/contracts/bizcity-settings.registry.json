@@ -565,6 +565,28 @@
           "ref": "requirePermission — so quyền cũ với bộ tính core/authz (shadowEnabled)"
         }
       ]
+    },
+    {
+      "key": "bizcity.intake.policy_check",
+      "class": "A",
+      "owner": "core",
+      "scopes": [
+        "tenant"
+      ],
+      "storage": "setting_values",
+      "type": "enum advice|strict",
+      "valueType": "enum(advice|strict)",
+      "default": "\"advice\"",
+      "readBy": "policyCheckMode() (packages/kernel/src/modules/intake/policy-check.ts) — cửa nạp postDocumentIn, tiền kiểm L4",
+      "writeBy": "core.settings.set (PUT /api/v1/settings/values/:key)",
+      "permission": "settings:write",
+      "audit": "settings.set (có lý do)",
+      "affectsPosting": true,
+      "basis": {
+        "doc": "docs/adr/ADR-0031-policy-registry-rule-contracts.md",
+        "article": "D-POL-6 (L4b mặc định cảnh báo; strict = chờ duyệt) — quy ước nội bộ, không phải văn bản pháp luật"
+      },
+      "note": "PHASE-031 W2a: advice (mặc định cho mọi đơn vị, R-GATE-9) = sự việc có IN-POL-001..003 vẫn ghi sổ, mã lưu ở policy_check và hiện ở hàng việc để xem lại; strict = có IN-POL-* thì chờ duyệt ở ACC14 bằng hold sẵn có, kế toán duyệt mới ghi. Không có policyRefs thì khoá này không tác dụng."
     }
   ],
   "$comment": "[2026-11-06 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — E2 đợt 1: valueType (khuôn máy đọc), phạm vi user, khoá mới lưu setting_values; khoá có valueType ghi qua core.settings.set (bizcity_settings@1 1.1.0-draft §2)"
