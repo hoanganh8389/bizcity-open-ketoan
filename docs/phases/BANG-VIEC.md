@@ -8,10 +8,10 @@
 | Đang làm | 20 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
-| Chưa ai nhận | 134 |
-| Chờ đủ tín hiệu | 52 |
+| Chưa ai nhận | 133 |
+| Chờ đủ tín hiệu | 51 |
 | Hoãn | 1 |
-| Xong | 233 |
+| Xong | 236 |
 | **Tổng** | **470** |
 
 ## Đang làm (20)
@@ -78,7 +78,7 @@
 | [S031-3](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L12) | PHASE-031 | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | P0 | — |
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 
-## Chưa ai nhận (134)
+## Chưa ai nhận (133)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -213,11 +213,10 @@
 | [S031-16](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L25) | PHASE-031 | POS WP: tải chính sách, tính theo Rule Contract, gửi policyRefs; bỏ luật khuyến mại riêng của plugin (repo pl… | P1 | — |
 | [S031-17](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L26) | PHASE-031 | Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc | P1 | — |
 | [S031-18](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L27) | PHASE-031 | Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết | P1 | — |
-| [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
-## Chờ đủ tín hiệu (52)
+## Chờ đủ tín hiệu (51)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -269,10 +268,8 @@
 | [S030-30](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L37) | PHASE-030 | Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có … | P1 | — |
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
-| [S031-4](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L13) | PHASE-031 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / r… | P0 | — |
-| [S031-5](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L14) | PHASE-031 | Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store… | P0 | — |
-| [S031-6](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L15) | PHASE-031 | policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp | P0 | — |
 | [S031-8](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L17) | PHASE-031 | PR chốt thiết kế cửa nạp: bizcityledgerintake@1 1.6.0 (policyRefs, policyRef), JSON Schema, ingestDocumentSch… | P0 | — |
+| [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 
 ## Hoãn (1)
 
@@ -280,6 +277,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (233)
+## Xong (236)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
