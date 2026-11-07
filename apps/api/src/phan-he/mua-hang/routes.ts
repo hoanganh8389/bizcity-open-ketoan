@@ -30,11 +30,13 @@ import { stockLedgerBySku, stockOnHandBySku } from './bao-cao-kho.js';
 import { saveVariantSeparate, variantOverview, variantSeparate } from './bien-the.js';
 import { skuInfoRows } from './thong-tin-ma.js';
 import { deleteEmptyThungRows, emptyThungRows, thungApply, thungPlan } from './dvt-thung.js';
-import { deletePolicy, listDocs, listPolicies, policyInputSchema, savePolicy } from './store.js';
+import { deletePolicy, listDocs, listPolicies, policyInputSchema, policyVersions, savePolicy } from './store.js';
 import { defineAction, mountActions, type AnyActionDef, sameTx } from '@bizcity/platform/core/actions';
 
 const tags = ['Mua hàng'];
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/** Lưu chính sách: áp bản mới cho chứng từ từ ngày nào, vì sao (PHASE-031 W1). */
+const policyVersionInput = z.object({ effectiveFrom: day.nullish(), reason: z.string().trim().max(500).nullish() });
 
 // [2026-11-03 04:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 3 (SC-ACT-1): trợ giúp dời ra cấp tệp để action dùng chung
 const ctxOf = async (tenantId: string) => loadCtx(db, tenantId, await listDocs(db, tenantId), { full: true });
@@ -76,6 +78,9 @@ export async function purchaseRoutes(app: FastifyInstance): Promise<void> {
 
   // ---------------- Chính sách
   r.get('/api/v1/purchase/policies', { preHandler: read, schema: { tags, summary: 'Danh sách chính sách mua hàng' }, handler: async (req) => ok(await listPolicies(db, authOf(req).tenantId)) });
+  // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): các bản của một chính sách (sổ đăng ký 0079)
+  r.get('/api/v1/purchase/policies/:id/versions', { preHandler: read, schema: { tags, summary: 'Các bản của chính sách mua hàng: nội dung, áp từ ngày, đến ngày, người phát hành, lý do', params: idParamSchema },
+    handler: async (req) => ok(await policyVersions(db, authOf(req).tenantId, (req.params as { id: string }).id)) });
 
   // ---------------- Báo cáo
   r.get('/api/v1/purchase/credit', { preHandler: read, schema: { tags, summary: 'Hạn mức NCC / nhãn theo chi nhánh, chỉ tiêu cung ứng', querystring: z.object({ asOf: day.optional() }) },
@@ -345,8 +350,10 @@ export const routesWriteActions: AnyActionDef[] = [
       const auth = ctx.legacyAuth;
       const trx = ctx.data.tx;
       const p = policyInputSchema.parse(body);
+      // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5): nội dung đổi → bản mới, áp cho chứng từ từ ngày effectiveFrom (mặc định hôm nay)
+      const ver = policyVersionInput.parse(body);
       const before = id ? (await listPolicies(trx, auth.tenantId)).find((x) => x.id === id) : undefined;
-      const saved = await savePolicy(trx, auth.tenantId, auth.actorName, p, id);
+      const saved = await savePolicy(trx, auth.tenantId, auth.actorName, p, id, false, ver);
       await logEvents(auth.tenantId, [{ event: id ? 'policy_changed' : 'policy_created', docNo: p.code, user: auth.actorName, data: { code: p.code, kind: p.kind, name: p.name, partnerCode: p.scope.partnerCode, rule: p.rule, scope: p.scope, isActive: p.isActive, validFrom: p.validFrom, validTo: p.validTo, ...(before ? { before: { name: before.name, rule: before.rule, scope: before.scope, isActive: before.isActive, validFrom: before.validFrom, validTo: before.validTo } } : {}) } }]);
       return { id: String(saved) };
     },

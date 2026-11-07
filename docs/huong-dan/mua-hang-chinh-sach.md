@@ -42,6 +42,22 @@ Kết quả theo ngày chứng từ:
 - Đơn ngày 25/09: giảm 84.000 × 2 = 168.000.
 - Ngoài hai giai đoạn: không giảm.
 
+## Sửa chính sách là thêm bản — phiếu cũ không đổi số
+<!-- [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1: phiên bản chính sách mua hàng (sổ đăng ký chính sách, ADR-0031) -->
+
+Mỗi lần **nội dung** chính sách đổi (mức chiết khấu, bảng mã, bậc, phạm vi, hiệu lực, bật / tắt…), phần mềm giữ bản cũ và thêm một **bản mới**. Bấm **Ghi** mà không đổi gì thì không thêm bản.
+
+| Ô trên form | Nghĩa |
+|---|---|
+| **Nội dung đổi thì áp cho chứng từ từ ngày** | Mặc định hôm nay. Phiếu có **ngày chứng từ** trước ngày này vẫn tính bằng bản cũ; từ ngày này tính bằng bản mới. Không chọn được ngày sớm hơn ngày áp của bản đang dùng (không viết lại quá khứ) |
+| **Lý do đổi** | Bắt buộc khi áp lùi về trước hôm nay; nên ghi cả khi áp từ hôm nay (ví dụ *"NCC nâng chiết khấu từ 16/11 theo phụ lục 03"*) |
+
+Khối **Phiên bản** ở cuối form liệt kê các bản: bản số mấy, áp cho chứng từ từ ngày nào đến ngày nào, ai ghi, lúc nào, lý do, và **băm** (dấu nội dung). Sửa hai lần trong cùng một ngày thì bản trước ghi *"bị thay ngay trong ngày"*: không phiếu nào tính bằng bản đó.
+
+Trên phiếu đã duyệt, bảng khuyến mại ghi **"bản N"** cạnh từng chính sách đã áp, để đối chiếu đúng bản trong khối Phiên bản. Ví dụ: CK 2 % đổi thành 5 % áp từ 16/11 → phiếu ngày 15/11 mở lại hay tính lại vẫn là 2 % (bản 1), phiếu ngày 16/11 là 5 % (bản 2).
+
+**Xoá** chính sách chưa áp vào phiếu nào: dòng chính sách mất khỏi danh sách nhưng các bản của nó vẫn được giữ trong sổ đăng ký chính sách (ngừng, không xoá).
+
 ## Chiết khấu thương mại trên đơn — điều kiện áp
 
 - **Theo %** hoặc **Số tiền cố định** trên tổng đơn.

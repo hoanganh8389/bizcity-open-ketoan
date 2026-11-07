@@ -58,6 +58,7 @@ export const LAYER_MAP = [
   ['core/addins.ts', 'P', 'module-sdk'],
   ['core/module-manifest.ts', 'P', 'module-sdk'],
   ['core/settings.ts', 'P', 'bizcity.config'],
+  ['core/policies.ts', 'P', 'bizcity.config'], // [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1: sổ đăng ký chính sách (ADR-0031), cùng lớp cấu hình
   ['core/apps.ts', 'P', 'apps.external'],
   ['core/module-registry.ts', 'P', 'module-sdk'],
   ['core/module-lifecycle.ts', 'P', 'module-sdk'],
