@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 15
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 143
+      "count": 140
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 226
+      "count": 227
     }
   ],
   "items": [
@@ -4979,6 +4979,34 @@
       "line": 48
     },
     {
+      "id": "S030-44",
+      "phase": "PHASE-030",
+      "title": "Chữ chốt thư viện dùng chung bizcitylibrary@1 (ADR-0032, hợp đồng): phong bì, phiên bản ba tầng, kiểm chuẩn + luật khai báo + gợi ý, mã LIB-, ô chọn, API, SC-L…",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 52
+    },
+    {
+      "id": "S030-45",
+      "phase": "PHASE-030",
+      "title": "Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bizcityfindings@1 1.2.0 (cổng L); core.library.list …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-dot-a)",
+        "branch": "feat/s030-45-thu-vien-dot-a",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-030 · S030-45 — thư viện dùng chung đợt A: bizcitylibrary@1 (bộ nạp, bộ kiểm có gợi ý, mã LIB…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 53
+    },
+    {
       "id": "S031-1",
       "phase": "PHASE-031",
       "title": "ADR-0031 đề xuất, README (hiện trạng đọc mã), 00, 10, checklist",
@@ -5016,9 +5044,15 @@
       "phase": "PHASE-031",
       "title": "Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / resolve ở Platform",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w1-registry",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 13
     },
@@ -5027,9 +5061,15 @@
       "phase": "PHASE-031",
       "title": "Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store: module",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w1-registry",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 14
     },
@@ -5038,9 +5078,15 @@
       "phase": "PHASE-031",
       "title": "policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w1-registry",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-031 · W1 — Policy Registry (phong bì policyregistry, core/policies.ts) + phiên bản chính sách…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 15
     },

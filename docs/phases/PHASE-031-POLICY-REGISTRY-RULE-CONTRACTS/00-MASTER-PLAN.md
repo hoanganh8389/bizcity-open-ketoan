@@ -73,3 +73,39 @@ Chi tiết và lý do ở [ADR-0031](../../adr/ADR-0031-policy-registry-rule-con
 | Accounting Kernel | Posting Rules, ghi sổ, lưu `policyRefs` trong phiên bản sự việc | đọc bảng module |
 | Conformance Engine | tư vấn cấp đơn vị trên Registry + sổ | chặn giao dịch, ghi sổ |
 | Kế toán | xem hàng việc lệch, chọn ghi / trả về; chọn mức nghiêm | — |
+
+## 7. Chữ chốt W1 (K1, Platform + Mua hàng; R-FLOW-2)
+<!-- [2026-11-07 09:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W1 trước khi code: migration 0079, core/policies.ts, phiên bản chính sách mua hàng; Q031-4 theo đề nghị (bảng phiên bản tại module); không đụng db/types.ts (withTables) và schema-catalog.ts (đang có dòng giữ chỗ khác) -->
+
+Phạm vi: S031-4, S031-5, S031-6 (+ golden T031-REG-1, T031-TR-2, T031-MH-1). **Q031-4 chọn theo đề nghị** — bảng phiên bản ở module mua hàng, engine không đổi khuôn; nhóm Lõi đổi ý thì sửa ở PR code trước khi merge.
+
+**Migration `0079_so_dang_ky_chinh_sach.sql`** (số lấy bằng `scripts/so-tiep-theo.mjs`):
+
+| Bảng | Cột chính | Luật |
+|---|---|---|
+| `policy_registry` (phong bì, [10 §2](10-THIET-KE.md)) | `id` bigserial · `tenant_id` · `policy_key` (mã hiển thị) · `policy_id` text (định danh ổn định, mua hàng = `mua-hang:purchase_policies:<id>`) · `version` int · `owner_module` · `rule_contract` (`purchase.<kind>@1`) · `scope` jsonb · `effective_from` / `effective_to` date (hiệu lực **của bản** theo ngày chứng từ; `NULL` = từ đầu / chưa đóng) · `status` (`published` · `retired`) · `store` (`module` · `settings` · `inline`) · `store_ref` · `content_hash` · `legal_ref` · `published_by` / `published_at` · `reason` · `findings` jsonb | `UNIQUE (tenant_id, policy_id, version)`; RLS `bizcity_tenant_visible` như 0074; trigger: chặn `DELETE`; `UPDATE` chỉ cho `status` `published → retired` và `effective_to` `NULL → ngày` (đóng bản cũ) — mọi cột khác bất biến |
+| `purchase_policy_versions` | `tenant_id` · `policy_id` bigint (id `purchase_policies`, **không FK** để lịch sử còn khi xoá chính sách chưa dùng) · `version` · `effective_from` date · `snapshot` jsonb (`code, kind, name, scope, rule, validFrom, validTo, priority, isActive`) · `content_hash` · `created_by` / `created_at` · `reason` | `UNIQUE (tenant_id, policy_id, version)`; chỉ thêm (trigger chặn `UPDATE` / `DELETE`); RLS |
+| `purchase_policies` | thêm `version int NOT NULL DEFAULT 1`, `content_hash text` | dòng vẫn là **bản hiện hành** cho engine |
+
+Nạp ngược: mỗi chính sách đang có → `purchase_policy_versions` bản 1 (`effective_from NULL`) + một dòng `policy_registry` `published`. Bảng mới khai bằng `withTables` (mẫu `org-unit.schemas.ts`), **không** sửa `packages/platform/src/db/types.ts`; chưa khai `schema-catalog.ts` (bảng rơi vào nhóm "Khác", thêm ở W4).
+
+**`packages/platform/src/core/policies.ts`** (tệp mới, nhập bằng `@bizcity/platform/core/policies`):
+
+```ts
+registerPolicyVersion(trx, { tenantId, ownerModule, policyKey, policyId, version, ruleContract, scope, effectiveFrom, store, storeRef, content, actor, reason, legalRef? })
+  // băm content bằng contentHash() của core/documents.ts; đóng bản trước: effective_to = effectiveFrom − 1 ngày; cùng giao dịch
+resolvePolicy(trx, tenantId, policyId, at) → envelope | undefined     // đúng một bản phủ ngày at (T031-TR-2)
+listPolicyVersions(trx, tenantId, policyId) → envelope[]
+retirePolicy(trx, tenantId, policyId, actor, reason)
+```
+
+**Mua hàng:**
+- `savePolicy`: băm nội dung; khác băm bản hiện hành → `version + 1`, ghi `purchase_policy_versions` + `registerPolicyVersion` trong cùng giao dịch; giống băm → không tạo bản. Đầu vào thêm tuỳ chọn `effectiveFrom` (*"áp cho chứng từ từ ngày"*, mặc định hôm nay) và `reason`. `effectiveFrom` sớm hơn bản hiện hành → `VALIDATION_ERROR` (không viết lại quá khứ).
+- `listPolicies` gắn `versions[]` (một truy vấn). Engine thêm hàm thuần `policyAt(p, date)`; `computeDoc` đổi chính sách về bản của `doc.date` ở đầu hàm. `TraceItem` thêm `version`, `hash` → `policyTrace` ghi `{ policy, kind, text, version, hash }` (giữ `policy` = mã để kiểm xoá hiện có vẫn đúng). Các nơi khác gọi engine không đổi.
+- `deletePolicy` (chỉ khi chưa áp) → `retirePolicy`; bản lịch sử giữ.
+- Route đọc `GET /api/v1/purchase/policies/:id/versions` (quyền đọc mua hàng).
+- Giao diện: tab *Phiên bản* ở chi tiết chính sách; ô *Áp từ ngày* + *Lý do* ở form; vết chính sách trên phiếu hiện `mã@bản`.
+
+**Bảng lớp:** `core/policies.ts` là tệp mới của Platform nên thêm **một dòng** `['core/policies.ts', 'P', 'bizcity.config']` vào `tests/conformance/lib/layers.mjs` (SC-LAYER-1), cùng lớp / đích với `core/settings.ts` — theo khuôn đã chốt, không đổi luật lớp (RULE-MODULE-BOUNDARY giữ nguyên). <!-- [2026-11-07 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — bổ sung phạm vi W1: layers.mjs (SC-LAYER-1 đòi dòng cho tệp mới) -->
+
+**Golden:** T031-REG-1 (sửa bản `published` → trigger chặn), T031-TR-2 (mọi ngày đúng một bản, đổi bản không khoảng trống), T031-MH-1 (đổi chiết khấu NCC từ 16/11: phiếu ngày 15/11 tính lại ra số cũ, `policyTrace` trỏ bản cũ; phiếu 16/11 ra số mới).
