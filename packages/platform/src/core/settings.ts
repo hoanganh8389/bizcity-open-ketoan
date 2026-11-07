@@ -280,6 +280,11 @@ export async function setSetting(
   if ((entry.class === 'A' || validFrom < today) && (!reason || reason.length < 3)) {
     throw Errors.validation(entry.class === 'A' ? `Khoá loại A "${key}" ảnh hưởng sổ — cần lý do (≥ 3 ký tự)` : 'Hiệu lực lùi về trước hôm nay — cần lý do (≥ 3 ký tự)');
   }
+  // D030-12 (S030-40): đổi khoá loại A chỉ ghi nhật ký, KHÔNG duyệt; chặn duy nhất là ngày hiệu lực rơi vào kỳ đã khoá (bất biến sổ, R-LEDGER-9).
+  if (entry.class === 'A') {
+    const locked = await lockedPeriodAt(trx, who.tenantId, validFrom, scope === 'branch' ? scopeId : null);
+    if (locked) throw Errors.periodLocked(`Ngày hiệu lực ${validFrom} rơi vào kỳ ${String(locked.month).padStart(2, '0')}/${locked.year} đã khoá — chọn ngày hiệu lực trong kỳ đang mở, hoặc mở khoá kỳ trước`);
+  }
   if (input.basis != null) {
     const badBasis = checkSettingBasis(input.basis);
     if (badBasis) throw Errors.validation(`Căn cứ của "${key}" ${badBasis}`);
@@ -316,6 +321,56 @@ export async function setSetting(
   });
   const cv = await configVersion(trx, who.tenantId);
   return { key, value: input.value, before, source: { scope, scopeId, validFrom, version }, configVersion: cv, basis };
+}
+
+/** Kỳ đã khoá (khoá chung mọi loại chứng từ; thêm khoá riêng của chi nhánh khi khoá đặt theo chi nhánh) chứa `date`, hoặc null. */
+export async function lockedPeriodAt(trx: Db, tenantId: string, date: string, branchId: string | null): Promise<{ year: number; month: number } | null> {
+  const r = await sql<{ year: number; month: number }>`
+    SELECT p.year::int AS year, p.month::int AS month FROM fiscal_periods p
+    JOIN period_locks l ON l.period_id = p.id AND l.tenant_id = p.tenant_id AND l.doc_type = '*'
+    WHERE p.tenant_id = ${tenantId} AND ${date}::date BETWEEN p.start_date AND p.end_date
+      AND (l.branch_id IS NULL OR l.branch_id = ${branchId}::bigint) LIMIT 1`.execute(trx);
+  return r.rows[0] ?? null;
+}
+
+export interface SettingImpact {
+  key: string; class: 'A' | 'B' | 'C' | null; scope: SettingScopeType; scopeId: string; validFrom: string; today: string;
+  /** Ngày hiệu lực lùi về trước hôm nay: chứng từ đã lập từ ngày đó không đổi, chỉ phép tính sau này đọc phiên bản mới. */
+  retroactive: boolean;
+  /** Không null ⇒ lưu sẽ bị chặn PERIOD_LOCKED. Đây là chỗ chặn duy nhất (D030-12). */
+  periodLocked: { year: number; month: number } | null;
+  /** Phiên bản cùng phạm vi có hiệu lực muộn hơn: phiên bản mới chỉ áp trong khoảng [validFrom, ngày đó). */
+  laterVersions: Array<{ version: number; validFrom: string }>;
+  /** Mục đang mở / chạy thử trong bể chờ đầu vào — gửi lại sẽ đọc phiên bản mới (bể không ghi ngày chứng từ nên không lọc theo ngày hiệu lực). */
+  pendingIntake: number;
+  /** Nhắc, không chặn: khoá loại A chưa có căn cứ ở registry. */
+  missingBasis: boolean;
+}
+
+/** Xem trước tác động của một lần đổi (không ghi gì, không chặn): người đổi thấy hậu quả trước khi bấm lưu (D030-12 bước 2). */
+export async function settingImpact(
+  trx: Db, tenantId: string, key: string, input: { scope?: SettingScopeType; scopeId?: string; validFrom?: string },
+): Promise<SettingImpact> {
+  const entry = knownEntry(key);
+  const scope = input.scope ?? 'tenant';
+  const scopeId = scope === 'tenant' ? '' : (input.scopeId ?? '').trim();
+  if (!entry.scopes.includes(scope)) throw Errors.validation(`Khoá "${key}" không đặt theo phạm vi ${scope} (chỉ: ${entry.scopes.join(', ')})`);
+  if (scope !== 'tenant' && !/^d+$/.test(scopeId)) throw Errors.validation(`Phạm vi ${scope} cần scopeId là định danh số`);
+  const today = settingsToday();
+  const validFrom = input.validFrom ?? today;
+  if (!DATE_RE.test(validFrom)) throw Errors.validation(`validFrom "${validFrom}" sai khuôn YYYY-MM-DD`);
+  const later = await sql<{ version: number; valid_from: string }>`
+    SELECT version, to_char(valid_from, 'YYYY-MM-DD') AS valid_from FROM setting_values
+    WHERE tenant_id = ${tenantId} AND key = ${key} AND scope_type = ${scope} AND scope_id = ${scopeId} AND valid_from > ${validFrom}::date
+    ORDER BY valid_from, version`.execute(trx);
+  const pending = await sql<{ n: number }>`SELECT count(*)::int AS n FROM intake_inbox WHERE tenant_id = ${tenantId} AND status IN ('open', 'trial')`.execute(trx);
+  return {
+    key, class: entry.class ?? null, scope, scopeId, validFrom, today, retroactive: validFrom < today,
+    periodLocked: await lockedPeriodAt(trx, tenantId, validFrom, scope === 'branch' ? scopeId : null),
+    laterVersions: later.rows.map((x) => ({ version: x.version, validFrom: x.valid_from })),
+    pendingIntake: pending.rows[0]?.n ?? 0,
+    missingBasis: entry.class === 'A' && !entry.basis,
+  };
 }
 
 const scopeFor = (scope: SettingScopeType, id: string, date: string): SettingScope =>
