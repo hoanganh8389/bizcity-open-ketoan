@@ -1,10 +1,11 @@
+// [2026-11-07 02:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-40: nút "Đổi giá trị" mở form đổi khoá (ConfigChangeForm) cho người có quyền; khoá bí mật / chưa có phiên bản / không đặt theo đơn vị thì không có nút
 // [2026-11-06 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43: thẻ Căn cứ hiện căn cứ thật (của phiên bản hoặc mặc định ở registry) và nơi dùng; lịch sử hiện căn cứ từng phiên bản
 // [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: HT13 Cấu hình hệ thống, bản chỉ đọc (chữ chốt: docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/24-CAU-HINH-HE-THONG.md; bản mẫu mockups/cau-hinh-he-thong.html)
 /**
- * CẤU HÌNH HỆ THỐNG (HT13, chỉ đọc). Một bảng cho mọi khoá của registry `bizcity_settings@1`: lớp A / B / C, giá trị đang áp
+ * CẤU HÌNH HỆ THỐNG (HT13). Một bảng cho mọi khoá của registry `bizcity_settings@1`: lớp A / B / C, giá trị đang áp
  * (chỉ khoá có phiên bản và không phải bí mật), số phiên bản, thay đổi gần nhất, bản sắp hiệu lực, căn cứ, sức khoẻ cấu hình.
- * Nguồn: GET /api/v1/settings/overview và GET /api/v1/settings/values/:key/history. Không có nút sửa: đổi cấu hình vẫn ở màn của từng khoá
- * (đổi loại A một người, chỉ ghi nhật ký — D030-12 — là S030-40).
+ * Nguồn: GET /api/v1/settings/overview và GET /api/v1/settings/values/:key/history. Nút "Đổi giá trị" (ConfigChangeForm, S030-40) chỉ có cho khoá có phiên bản; khoá khác đổi ở màn của từng khoá
+ * (đổi một người, chỉ ghi nhật ký — D030-12).
  * Không bao giờ hiện giá trị của khoá bí mật hoặc khoá chưa đi đường chung (D030-13): chỉ trạng thái.
  */
 import { useMemo, useState } from 'react';
@@ -12,6 +13,8 @@ import { useQuery } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { Empty, ErrorBox, Loading } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { ConfigChangeForm } from './ConfigChangeForm';
 
 type Group = 'duyet' | 'ketoan' | 'nhaplieu' | 'he-thong';
 type Filter = null | 'basis' | 'recent' | 'upcoming' | 'seal';
@@ -137,7 +140,7 @@ export function ConfigCenterPage() {
                   </table>
                 )}
               </section>
-              <aside style={{ flex: '1 1 300px', minWidth: 0 }}>{item ? <Detail item={item} tab={tab} setTab={setTab} /> : null}</aside>
+              <aside style={{ flex: '1 1 300px', minWidth: 0 }}>{item ? <Detail item={item} today={data.today} tab={tab} setTab={setTab} /> : null}</aside>
               </div>
             </>
           )}
@@ -165,7 +168,7 @@ function BasisView({ basis, from }: { basis: Basis; from: Item['basisFrom'] }) {
   );
 }
 
-function Detail({ item, tab, setTab }: { item: Item; tab: 'gia-tri' | 'can-cu' | 'lich-su'; setTab: (t: 'gia-tri' | 'can-cu' | 'lich-su') => void }) {
+function Detail({ item, today, tab, setTab }: { item: Item; today: string; tab: 'gia-tri' | 'can-cu' | 'lich-su'; setTab: (t: 'gia-tri' | 'can-cu' | 'lich-su') => void }) {
   const tabs: ['gia-tri' | 'can-cu' | 'lich-su', string][] = [['gia-tri', 'Giá trị & hiệu lực'], ['can-cu', 'Căn cứ'], ['lich-su', 'Lịch sử']];
   return (
     <section className="card card-body" style={{ marginTop: 0 }}>
@@ -191,6 +194,7 @@ function Detail({ item, tab, setTab }: { item: Item; tab: 'gia-tri' | 'can-cu' |
           <dt className="muted">Nơi dùng</dt><dd style={{ margin: 0 }}>{item.usedBy.length ? <ul style={{ margin: 0, paddingLeft: 16 }}>{item.usedBy.map((u) => <li key={`${u.kind}-${u.ref}`}>{USE_LABEL[u.kind]}: {u.ref}</li>)}</ul> : <span className="muted">chưa khai</span>}</dd>
         </dl>
       )}
+      {tab === 'gia-tri' && <ChangeSection key={item.key} item={item} today={today} />}
       {tab === 'can-cu' && (
         item.basis
           ? <BasisView basis={item.basis} from={item.basisFrom} />
@@ -199,6 +203,15 @@ function Detail({ item, tab, setTab }: { item: Item; tab: 'gia-tri' | 'can-cu' |
       {tab === 'lich-su' && <History item={item} />}
     </section>
   );
+}
+
+/** Nút + form đổi giá trị: chỉ cho người có quyền của khoá và khoá đi đường có phiên bản, đặt theo đơn vị, không bí mật (D030-13: không bao giờ đưa giá trị bí mật vào form). */
+function ChangeSection({ item, today }: { item: Item; today: string }) {
+  const { can } = useAuth();
+  const [open, setOpen] = useState(false);
+  if (item.secret || !item.versioned || !item.valueType || !item.scopes.includes('tenant') || !can(item.permission ?? 'settings:write')) return null;
+  if (!open) return <button type="button" className="btn" style={{ marginTop: 10 }} onClick={() => setOpen(true)}>Đổi giá trị</button>;
+  return <ConfigChangeForm target={{ key: item.key, valueType: item.valueType, current: item.current?.value, today, hasRegistryBasis: item.basisFrom === 'registry' }} onClose={() => setOpen(false)} />;
 }
 
 function History({ item }: { item: Item }) {
