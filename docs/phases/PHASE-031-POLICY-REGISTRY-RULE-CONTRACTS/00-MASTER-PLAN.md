@@ -87,7 +87,7 @@ Phạm vi: S031-4, S031-5, S031-6 (+ golden T031-REG-1, T031-TR-2, T031-MH-1). *
 | `purchase_policy_versions` | `tenant_id` · `policy_id` bigint (id `purchase_policies`, **không FK** để lịch sử còn khi xoá chính sách chưa dùng) · `version` · `effective_from` date · `snapshot` jsonb (`code, kind, name, scope, rule, validFrom, validTo, priority, isActive`) · `content_hash` · `created_by` / `created_at` · `reason` | `UNIQUE (tenant_id, policy_id, version)`; chỉ thêm (trigger chặn `UPDATE` / `DELETE`); RLS |
 | `purchase_policies` | thêm `version int NOT NULL DEFAULT 1`, `content_hash text` | dòng vẫn là **bản hiện hành** cho engine |
 
-Nạp ngược: mỗi chính sách đang có → `purchase_policy_versions` bản 1 (`effective_from NULL`) + một dòng `policy_registry` `published`. Bảng mới khai bằng `withTables` (mẫu `org-unit.schemas.ts`), **không** sửa `packages/platform/src/db/types.ts`; chưa khai `schema-catalog.ts` (bảng rơi vào nhóm "Khác", thêm ở W4).
+Nạp ngược: mỗi chính sách đang có → `purchase_policy_versions` bản 1 (`effective_from NULL`) + một dòng `policy_registry` `published`. Bảng mới khai bằng `withTables` (mẫu `org-unit.schemas.ts`), **không** sửa `packages/platform/src/db/types.ts`; ~~chưa khai `schema-catalog.ts`~~ → **đính chính 2026-11-07:** test `apps/api/test/db-rules.test.ts` đòi mọi bảng có nhóm trong `schema-catalog.ts`, nên W1 **chỉ thêm** hai khoá `policy_registry`, `purchase_policy_versions`; tệp thuộc dòng giữ chỗ khác, chủ dự án cho phép dùng chung. <!-- [2026-11-07 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — đính chính chữ chốt W1: schema-catalog bắt buộc (db-rules), chủ dự án cho thêm 2 khoá -->
 
 **`packages/platform/src/core/policies.ts`** (tệp mới, nhập bằng `@bizcity/platform/core/policies`):
 
