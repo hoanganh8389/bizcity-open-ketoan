@@ -8,7 +8,10 @@ import { sql } from 'kysely';
 import { documentNumbers } from '../../kernel/public.js';
 import { z } from 'zod';
 import { unitsOf } from './gia-mua.js';
-import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind } from '@bizcity/mua-hang-domain';
+import { PURCHASE_KINDS, amountTax, termFromRule, type DocCalc, type PDoc, type Policy, type PolicyKind, type PolicySnapshot, type PolicyVersion } from '@bizcity/mua-hang-domain';
+import { contentHash } from '@bizcity/platform/core/documents';
+import { listPolicyVersions, registerPolicyVersion, retirePolicy } from '@bizcity/platform/core/policies';
+import { settingsToday } from '@bizcity/platform/core/settings';
 import { db, toNumber, type Db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 
@@ -371,13 +374,81 @@ export async function listPolicies(trx: Db, tenantId: string, opts: { exclude?: 
   let q = trx.selectFrom('purchase_policies').selectAll().where('tenant_id', '=', tenantId);
   if (opts.exclude?.length) q = q.where('kind', 'not in', opts.exclude);
   const rows = await q.orderBy('kind').orderBy('code').execute();
-  return rows.map((r) => ({
-    id: String(r.id), code: r.code, kind: r.kind as PolicyKind, name: r.name, scope: (r.scope ?? {}) as Policy['scope'],
-    validFrom: r.valid_from ? String(r.valid_from).slice(0, 10) : undefined, validTo: r.valid_to ? String(r.valid_to).slice(0, 10) : undefined,
-    priority: r.priority, isActive: r.is_active, rule: (r.rule ?? {}) as Record<string, unknown>,
-    createdBy: r.created_by, createdAt: new Date(r.created_at as unknown as string).toISOString(), updatedBy: r.updated_by, updatedAt: new Date(r.updated_at as unknown as string).toISOString(),
-  }));
+  const versions = rows.length ? await policyVersionsByPolicy(trx, tenantId) : new Map<string, PolicyVersion[]>();
+  return rows.map((r) => {
+    const vs = versions.get(String(r.id)) ?? [];
+    return {
+      id: String(r.id), code: r.code, kind: r.kind as PolicyKind, name: r.name, scope: (r.scope ?? {}) as Policy['scope'],
+      validFrom: r.valid_from ? String(r.valid_from).slice(0, 10) : undefined, validTo: r.valid_to ? String(r.valid_to).slice(0, 10) : undefined,
+      priority: r.priority, isActive: r.is_active, rule: (r.rule ?? {}) as Record<string, unknown>,
+      createdBy: r.created_by, createdAt: new Date(r.created_at as unknown as string).toISOString(), updatedBy: r.updated_by, updatedAt: new Date(r.updated_at as unknown as string).toISOString(),
+      ...(vs.length ? { version: vs.at(-1)!.version, contentHash: vs.at(-1)!.hash, versions: vs } : {}),
+    };
+  });
 }
+
+/* ------------------------------------------------------------------ phiên bản chính sách */
+// [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-5, chữ chốt PHASE-031 · 00 §7): mỗi lần nội dung đổi là một bản (purchase_policy_versions, 0079) + một phong bì ở sổ đăng ký; purchase_policies vẫn là bản hiện hành cho engine
+
+/** Định danh ổn định của chính sách mua hàng trong sổ đăng ký (policy_registry.policy_id). */
+export const purchasePolicyRef = (id: string) => `mua-hang:purchase_policies:${id}`;
+
+/** Nội dung một bản — cùng khoá với ảnh chụp nạp ngược của 0079, để so "có đổi không" bằng contentHash trên cả hai. */
+export function policySnapshot(p: PolicyInput): PolicySnapshot {
+  return {
+    code: p.code, kind: p.kind, name: p.name, scope: Object.fromEntries(Object.entries(p.scope).filter(([, x]) => x)) as Policy['scope'],
+    rule: p.rule, validFrom: p.validFrom ?? null, validTo: p.validTo ?? null, priority: p.priority, isActive: p.isActive,
+  };
+}
+
+type VersionRow = { policy_id: string; version: number; effective_from: string | null; content_hash: string; snapshot: PolicySnapshot };
+async function policyVersionsByPolicy(trx: Db, tenantId: string, policyId?: string): Promise<Map<string, PolicyVersion[]>> {
+  const r = await sql<VersionRow>`
+    SELECT policy_id::text AS policy_id, version, effective_from::text AS effective_from, content_hash, snapshot
+    FROM purchase_policy_versions WHERE tenant_id = ${tenantId} ${policyId ? sql`AND policy_id = ${policyId}` : sql``}
+    ORDER BY policy_id, version`.execute(trx);
+  const out = new Map<string, PolicyVersion[]>();
+  for (const v of r.rows) {
+    const list = out.get(v.policy_id) ?? [];
+    list.push({ version: Number(v.version), effectiveFrom: v.effective_from, hash: v.content_hash, snapshot: v.snapshot });
+    out.set(v.policy_id, list);
+  }
+  return out;
+}
+
+/** Các bản của một chính sách (cũ trước) kèm phong bì ở sổ đăng ký: hiệu lực đến ngày, người phát hành, lý do. */
+export async function policyVersions(trx: Db, tenantId: string, id: string) {
+  const [vs, env] = await Promise.all([policyVersionsByPolicy(trx, tenantId, id), listPolicyVersions(trx, tenantId, purchasePolicyRef(id))]);
+  const byVersion = new Map(env.map((e) => [e.version, e]));
+  return (vs.get(id) ?? []).map((v) => {
+    const e = byVersion.get(v.version);
+    return { ...v, effectiveTo: e?.effectiveTo ?? null, status: e?.status ?? 'published', publishedBy: e?.publishedBy ?? '', publishedAt: e?.publishedAt ?? null, reason: e?.reason ?? null };
+  });
+}
+
+/**
+ * Ghi bản mới nếu nội dung khác bản hiện hành. Bản 1 áp từ đầu; bản sau áp cho chứng từ từ `effectiveFrom` (mặc định hôm nay),
+ * không lùi về trước ngày áp của bản trước; lùi về trước hôm nay cần lý do. Cùng giao dịch với dòng purchase_policies.
+ */
+async function recordPolicyVersion(trx: Db, tenantId: string, actor: string, id: string, p: PolicyInput, opts: PolicyVersionOpts): Promise<void> {
+  const snap = policySnapshot(p);
+  const last = (await policyVersionsByPolicy(trx, tenantId, id)).get(id)?.at(-1);
+  const hash = contentHash(snap);
+  if (last && contentHash(last.snapshot) === hash) return;
+  const version = (last?.version ?? 0) + 1;
+  const today = settingsToday();
+  const effectiveFrom = last ? (opts.effectiveFrom ?? today) : null;
+  const reason = opts.reason?.trim() || null;
+  if (effectiveFrom && effectiveFrom < today && (!reason || reason.length < 3)) throw Errors.validation(`Chính sách ${p.code}: áp cho chứng từ từ ${effectiveFrom} (trước hôm nay) — cần lý do (≥ 3 ký tự)`);
+  await registerPolicyVersion(trx, {
+    tenantId, ownerModule: 'mua-hang', policyKey: p.code, policyId: purchasePolicyRef(id), version, ruleContract: `purchase.${p.kind}@1`,
+    scope: { ...snap.scope }, effectiveFrom, store: 'module', storeRef: `purchase_policy_versions:${id}@${version}`, content: snap, hash, actor, reason,
+  });
+  await sql`INSERT INTO purchase_policy_versions (tenant_id, policy_id, version, effective_from, snapshot, content_hash, reason, created_by)
+    VALUES (${tenantId}, ${id}, ${version}, ${effectiveFrom}::date, ${JSON.stringify(snap)}::jsonb, ${hash}, ${reason}, ${actor})`.execute(trx);
+  await sql`UPDATE purchase_policies SET version = ${version}, content_hash = ${hash} WHERE tenant_id = ${tenantId} AND id = ${id}`.execute(trx);
+}
+export interface PolicyVersionOpts { effectiveFrom?: string | null; reason?: string | null }
 
 /**
  * Xoá chính sách: chỉ khi CHƯA áp vào chứng từ nào còn hiệu lực (vết tính policyTrace, chương trình KM trên dòng hàng,
@@ -394,6 +465,7 @@ export async function deletePolicy(trx: Db, tenantId: string, id: string): Promi
     ])).limit(5).execute();
   if (used.length) throw Errors.conflict(`Chính sách ${p.code} đã áp vào phiếu ${used.map((u) => u.doc_no).join(', ')}${used.length === 5 ? '…' : ''} — không xoá được (phiếu cũ cần tra lại cách tính). Bỏ tích "Áp dụng" để ngừng.`);
   await trx.deleteFrom('purchase_policies').where('tenant_id', '=', tenantId).where('id', '=', id).execute();
+  await retirePolicy(trx, tenantId, purchasePolicyRef(id)); // các bản giữ trong sổ đăng ký + purchase_policy_versions (PHASE-031 W1)
   return p;
 }
 
@@ -420,7 +492,13 @@ async function withGiftRatios(trx: Db, tenantId: string, p: PolicyInput): Promis
   return { ...p, scope: { ...p.scope, sku: undefined }, rule: { ...p.rule, items: out } };
 }
 
-export async function savePolicy(trx: Db, tenantId: string, actor: string, input: PolicyInput, id?: string, isDemo = false): Promise<string> {
+export async function savePolicy(trx: Db, tenantId: string, actor: string, input: PolicyInput, id?: string, isDemo = false, opts: PolicyVersionOpts = {}): Promise<string> {
+  const saved = await savePolicyRow(trx, tenantId, actor, input, id, isDemo);
+  await recordPolicyVersion(trx, tenantId, actor, saved.id, saved.p, opts);
+  return saved.id;
+}
+
+async function savePolicyRow(trx: Db, tenantId: string, actor: string, input: PolicyInput, id: string | undefined, isDemo: boolean): Promise<{ id: string; p: PolicyInput }> {
   const p = await withGiftRatios(trx, tenantId, input);
   const values = {
     code: p.code, kind: p.kind, name: p.name, scope: JSON.stringify(Object.fromEntries(Object.entries(p.scope).filter(([, x]) => x))),
@@ -431,9 +509,9 @@ export async function savePolicy(trx: Db, tenantId: string, actor: string, input
   if (id) {
     const r = await trx.updateTable('purchase_policies').set(values).where('tenant_id', '=', tenantId).where('id', '=', id).returning('id').executeTakeFirst();
     if (!r) throw Errors.notFound('chính sách');
-    return String(r.id);
+    return { id: String(r.id), p };
   }
-  return String((await trx.insertInto('purchase_policies').values({ tenant_id: tenantId, is_demo: isDemo, created_by: actor, ...values }).returning('id').executeTakeFirstOrThrow()).id);
+  return { id: String((await trx.insertInto('purchase_policies').values({ tenant_id: tenantId, is_demo: isDemo, created_by: actor, ...values }).returning('id').executeTakeFirstOrThrow()).id), p };
 }
 
 export { db };

@@ -39,8 +39,8 @@ flowchart LR
 | dòng sổ → dòng chứng từ | `ledger_lines.source_line_key` = `lineKey` | ✅ |
 | sự việc → chứng từ nguồn | `doc_key`, `version` | ✅ |
 | sự việc → chính sách định khoản | `posting_log.policy_version` | ✅ |
-| sự việc → chính sách nghiệp vụ | `accounting_event_versions.policy_refs` (jsonb, nguyên văn từ nguồn, có `line`) | ☐ S031-9 (cột thêm, không bảng) |
-| sự việc → kết quả kiểm | `accounting_event_versions.policy_check` (`GateResult[]` của L4b) | ☐ S031-9 |
+| sự việc → chính sách nghiệp vụ | `payload->'policyRefs'` của `accounting_events` / `accounting_event_versions` (nguyên văn từ nguồn, có `line`) — **không thêm cột** (đính chính 2026-11-07, [00 §8](00-MASTER-PLAN.md)) | ☐ S031-8 (khuôn nạp) |
+| sự việc → kết quả kiểm | `accounting_events.policy_check` + `accounting_event_versions.policy_check` (mã `IN-POL-*` của L4b) | ☐ S031-20 |
 | chính sách → người phát hành, căn cứ | phong bì + `audit_logs` | ☐ S031-4 |
 | chứng từ mua → chính sách | `policyTrace[].policy` thêm `@version#hash` | ☐ S031-6 |
 

@@ -12,6 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ đăng ký chính sách và phiên bản chính sách mua hàng (PHASE-031 W1, ADR-0031) <!-- [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 -->
+
+- **Thêm:** migration `0079_so_dang_ky_chinh_sach.sql` — bảng `policy_registry` (phong bì từng bản chính sách: khoá, bản, phạm vi, hiệu lực của bản theo ngày chứng từ, băm, Rule Contract, người phát hành; bản đã phát hành không sửa, chỉ ngừng hoặc đóng hiệu lực một lần) và `purchase_policy_versions` (chỉ thêm); mỗi chính sách mua hàng đang có được nạp ngược thành bản 1. `packages/platform/src/core/policies.ts`: `registerPolicyVersion`, `resolvePolicy`, `listPolicyVersions`, `retirePolicy`. Route `GET /api/v1/purchase/policies/:id/versions`. Form chính sách có ô *áp cho chứng từ từ ngày*, *lý do đổi*, khối *Phiên bản*.
+- **Đổi:** lưu chính sách mua hàng mà nội dung đổi → bản mới (áp lùi về trước hôm nay cần lý do). Engine chọn bản theo **ngày chứng từ** (`policyAt` trong `policiesFor`): phiếu ngày cũ tính lại ra số cũ. Vết chính sách trên phiếu (`policyTrace`) ghi thêm `version`, `hash`. Xoá chính sách chưa áp → các bản chuyển `retired` ở sổ đăng ký.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+
 ### Căn cứ của khoá cấu hình: setting_values.basis, basis / usedBy ở registry (PHASE-030, S030-43) <!-- [2026-11-06 04:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43 -->
 
 - **Thêm:** migration `0078_setting_values_can_cu.sql` — cột `setting_values.basis` (căn cứ của một phiên bản: văn bản, điều, khoản, điểm, đường dẫn, ngày hiệu lực). `core.settings.set` nhận `basis?` (khuôn kiểm, không bắt buộc kể cả khoá loại A — D030-12); lịch sử phiên bản trả căn cứ. Registry `bizcity_settings@1` 1.2.0-draft: `basis` (căn cứ mặc định của khoá) và `usedBy` (nơi đọc khoá). `GET /api/v1/settings/overview` trả `basis`, `basisFrom`, `usedBy`; màn HT13 hiện thẻ Căn cứ và nơi dùng. Golden T030-CFG-BASIS-1..6. Chữ chốt `docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md` 1.2.0-draft.
