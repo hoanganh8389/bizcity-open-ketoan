@@ -10,9 +10,9 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-1 | ADR-0031 đề xuất, README (hiện trạng đọc mã), [00](00-MASTER-PLAN.md), [10](10-THIET-KE.md), checklist | W0 | P0 | không | ✅ 2026-11-06 |
 | S031-2 | Chủ dự án duyệt D031-0..11, trả Q031-1..3 | W0 | P0 | không | ✅ 2026-11-07 |
 | S031-3 | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | W0 | P0 | không | ⛔ nhóm Lõi |
-| S031-4 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản `published`) + `policies.register / publish / resolve` ở Platform | W1 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w1-registry` 2026-11-07, chờ merge |
-| S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w1-registry` 2026-11-07, chờ merge |
-| S031-6 | `policyTrace` của chứng từ mua ghi `code@version#hash`; màn chứng từ hiện bản đã áp | W1 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w1-registry` 2026-11-07, chờ merge |
+| S031-4 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản `published`) + `policies.register / publish / resolve` ở Platform | W1 | P0 | có | ✅ 2026-11-07 (#152) |
+| S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | ✅ 2026-11-07 (#152) |
+| S031-6 | `policyTrace` của chứng từ mua ghi `code@version#hash`; màn chứng từ hiện bản đã áp | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-7 | Đánh chỉ mục khoá ngưỡng duyệt (`setting_values`, 16 §5) vào Registry với `approval.levels@1`, `store: settings` | W1 | P2 | có | ☐ sau DOC-030-4 |
 | S031-8 | PR chốt thiết kế cửa nạp: `bizcity_ledger_intake@1` 1.6.0 (`policyRefs`, `policyRef`), JSON Schema, `ingestDocumentSchema` | W2 | P0 | không | ☐ |
 | S031-9 | Tầng L4b trong `preflight.ts` + Commit Guard băm `policyRefs`; `GateResult.ruleVersion` | W2 | P0 | có | ☐ sau S031-8 |
@@ -66,3 +66,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-07 — SC-FLOW-1 chặn hai dòng đang làm cùng giữ `schema-catalog.ts` (phép kiểm không có ngoại lệ theo dòng). Ghi **một nợ đã biết** vào `tests/conformance/baseline.json` (khoá `chong:main:feat/phase-031-w1-registry:…schema-catalog.ts`, `why` + `ref` ghi chủ dự án cho phép); nợ tự thành "đã sửa" khi một trong hai dòng nhả — PR cuối của W1 xoá mục nợ cùng lúc xoá dòng giữ chỗ.
 - 2026-11-07 — S031-19 phần tài liệu theo Q031-1: `tru-cot.json` trụ cột V `role: nền móng` (ngang MDG), tên *Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản*, thêm tiêu chí P-5 (nhất quán cross-module), P-6 (xuyên suốt), P-7 (truy vết) — đều `tai-lieu` tới khi W1 / W2a vào main; `nen-mong.json`, `NEN-MONG-DOANH-NGHIEP.md`, CANON: trụ cột 05 đổi tên, không đánh số lại.
 - 2026-11-07 — dòng giữ chỗ W1 lại mất phần bổ sung (`layers.mjs`, `schema-catalog.ts`) khi #154 (`8ba8318`) gộp xung đột lấy bản cũ — lần thứ hai sau #148. Khôi phục trong PR S031-19; #154 cũng xoá dòng PHASE-028 · W5 đợt 2 và thêm lại dòng S030-40 đã xong — báo chủ dự án, không tự sửa dòng của phiên khác.
+- 2026-11-07 — **W1 xong** (#152 merge): S031-4, S031-5, S031-6 ✅; golden T031-REG-1, T031-TR-2, T031-MH-1 xanh. Xoá dòng giữ chỗ W1 (R-FLOW-6) và mục nợ SC-FLOW-1 của nó ở `baseline.json`. `tru-cot.json` P-6 lên `mot-phan` (có mã trên main cho chính sách mua hàng).

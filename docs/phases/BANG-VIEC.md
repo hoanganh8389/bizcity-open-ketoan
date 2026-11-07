@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 14 |
+| Đang làm | 11 |
 | Chờ merge | 0 |
 | Bị chặn | 34 |
 | Chưa ai nhận | 139 |
 | Chờ đủ tín hiệu | 55 |
 | Hoãn | 1 |
-| Xong | 227 |
+| Xong | 230 |
 | **Tổng** | **470** |
 
-## Đang làm (14)
+## Đang làm (11)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -29,9 +29,6 @@
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
 | [S030-40](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L47) | PHASE-030 | Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ "đã đổi tron… | P1 | hoanganh8389 (phiên Claude, doi-khoa-a) · `feat/phase-030-doi-khoa-a` |
 | [S030-45](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L53) | PHASE-030 | Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bi… | P0 | hoanganh8389 (phiên Claude, thu-vien-dot-a) · `feat/s030-45-thu-vien-dot-a` |
-| [S031-4](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L13) | PHASE-031 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / r… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
-| [S031-5](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L14) | PHASE-031 | Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
-| [S031-6](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L15) | PHASE-031 | policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
 
 ## Chờ merge (0)
 
@@ -286,6 +283,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (227)
+## Xong (230)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
