@@ -51,7 +51,8 @@ export const checks = [
         // Mẫu phổ biến: const read = requirePermission('…') rồi preHandler: read
         const guards = [...text.matchAll(/(?:const|let)\s+(\w+)\s*=\s*requirePermission\(/g)].map((m) => m[1]);
         // requireUser() / requireAuthenticated(): route tự phục vụ — vẫn là khai báo tường minh (R-API-6).
-        const guarded = new RegExp(String.raw`requirePermission\(|requireUser\(|requireAuthenticated\(|config:\s*\{\s*public:\s*true` + (guards.length ? String.raw`|preHandler:\s*\[?[^\]\n]*\b(` + guards.join('|') + String.raw`)\b` : ''));
+        // [2026-11-07 10:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: requireScope(<quyền>, …) cũng là khai quyền (toàn đơn vị hoặc theo chi nhánh / kho, core/authz/scope.ts)
+        const guarded = new RegExp(String.raw`requirePermission\(|requireScope\(|requireUser\(|requireAuthenticated\(|config:\s*\{\s*public:\s*true` + (guards.length ? String.raw`|preHandler:\s*\[?[^\]\n]*\b(` + guards.join('|') + String.raw`)\b` : ''));
         const starts = [];
         ls.forEach((t, i) => { const m = ROUTE_RE.exec(t); if (m) starts.push([i, m[1], m[2]]); });
         starts.forEach(([i, method, url], n) => {

@@ -25,6 +25,10 @@ import { z } from 'zod';
 import { VOUCHER_MONEY, ingestBatchSchema, type VoucherType } from '@ketoan/contracts';
 import { db, toNumber } from '@bizcity/platform/db/client';
 import { authOf, requirePermission } from '@bizcity/platform/core/auth';
+// [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1 (ADR-0027 Phụ lục A, W5 đợt 1; chủ duyệt K3): cửa nạp kiểm quyền theo chi nhánh của chứng từ — có documents:write toàn đơn vị thì như cũ, không thì theo lần gán phạm vi chi nhánh
+import { requireScope } from '@bizcity/platform/core/authz/scope';
+import type { AuthzResourceContext } from '@bizcity/platform/core/authz/types';
+import type { FastifyRequest } from 'fastify';
 import { ok, pageMeta, pageQuerySchema, idParamSchema, queryBool } from '@bizcity/platform/core/http';
 import { documentService } from './document.service.js';
 import { defineAction, mountActions, registerActions, type AnyActionDef } from '@bizcity/platform/core/actions';
@@ -74,7 +78,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
 
   // @bizcity-route: cửa nạp (ADR-0014) — chứng từ bị từ chối giữ ở bể chờ bằng giao dịch riêng; idempotent theo docKey + version
   r.post('/api/v1/documents', {
-    preHandler: requirePermission('documents:write'),
+    preHandler: requireScope('documents:write', (req) => branchesOfDocs(req, [req.body])),
     schema: {
       tags,
       summary: 'Gửi một chứng từ',
@@ -92,7 +96,7 @@ export async function documentRoutes(app: FastifyInstance): Promise<void> {
 
   // @bizcity-route: cửa nạp theo lô — như POST /documents; gom một giao dịch có thể khoá chéo với bể chờ (kết nối riêng)
   r.post('/api/v1/documents/batch', {
-    preHandler: requirePermission('documents:write'),
+    preHandler: requireScope('documents:write', (req) => branchesOfDocs(req, (req.body as { documents?: unknown[] }).documents ?? [])),
     schema: { tags, summary: 'Gửi nhiều chứng từ', body: ingestBatchSchema },
     handler: async (req) => {
       const results = await documentService.ingestBatch(authOf(req), req.body.documents);
@@ -273,3 +277,20 @@ export const documentWriteActions: AnyActionDef[] = [
     handler: (ctx, input) => documentService.confirmReceiptsIn(ctx.data.tx, ctx.legacyAuth, input.ids, input.note),
   }),
 ];
+
+// [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: vị trí của chứng từ ở cửa nạp
+/**
+ * Vị trí của các chứng từ đang nạp: `branchCode` của từng chứng từ tra ra `branches.id` CỦA ĐƠN VỊ ĐANG ĐĂNG NHẬP (không tin thẳng thân
+ * yêu cầu, AUTHZ-11). Thiếu `branchCode` hoặc mã không có trong đơn vị → vị trí rỗng (`{}`) → requireScope từ chối (đóng an toàn).
+ * Chỉ chạy khi người gọi KHÔNG có documents:write toàn đơn vị (requireScope đi đường nhanh trước).
+ */
+async function branchesOfDocs(req: FastifyRequest, docs: readonly unknown[]): Promise<AuthzResourceContext[]> {
+  const auth = authOf(req);
+  const codes = docs.map((d) => (d && typeof d === 'object' && typeof (d as { branchCode?: unknown }).branchCode === 'string' ? (d as { branchCode: string }).branchCode.trim() : ''));
+  const wanted = [...new Set(codes.filter(Boolean))];
+  const rows = wanted.length
+    ? await db.selectFrom('branches').select(['id', 'code']).where('tenant_id', '=', auth.tenantId).where('code', 'in', wanted).execute()
+    : [];
+  const idOf = new Map(rows.map((b) => [b.code, String(b.id)]));
+  return codes.map((c) => (c && idOf.has(c) ? { type: 'document', branchId: idOf.get(c)! } : {}));
+}

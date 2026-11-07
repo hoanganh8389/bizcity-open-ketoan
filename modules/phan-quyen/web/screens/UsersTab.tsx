@@ -9,9 +9,11 @@ import { WriteDialog } from './WriteDialog';
 
 interface UserRow { id: string; email: string; fullName: string; role: string; isActive: boolean }
 interface Effective { userId: string; isActive: boolean; primaryRole: string; roles: string[]; baseRoles: string[]; allow: string[]; deny: string[]; permissions: string[] }
-interface Assignment { id: string; role: string | null; tenantRoleId: string | null; validFrom: string; validTo: string | null; reason: string; grantedBy: string; revokedAt: string | null; revokeReason: string | null; active: boolean }
+interface Assignment { id: string; role: string | null; tenantRoleId: string | null; scopeType: string; scopeId: string | null; validFrom: string; validTo: string | null; reason: string; grantedBy: string; revokedAt: string | null; revokeReason: string | null; active: boolean }
 interface History { primaryRole: string; assignments: Assignment[] }
 interface TenantRole { id: string; code: string; label: string; isActive: boolean }
+// PHASE-028 W5 đợt 1: gán có phạm vi chi nhánh — chỉ có tác dụng ở cửa nạp chứng từ (route kiểm theo chi nhánh)
+interface Branch { id: string; code: string; name: string; isActive: boolean }
 
 const SYSTEM_ROLES: { value: string; label: string }[] = [
   { value: 'owner', label: 'Chủ đơn vị' }, { value: 'chief_accountant', label: 'Kế toán trưởng' }, { value: 'accountant', label: 'Kế toán' },
@@ -30,9 +32,13 @@ export function UsersTab() {
   const [role, setRole] = useState('viewer');
   const [tenantRoleId, setTenantRoleId] = useState('');
   const [validTo, setValidTo] = useState('');
+  const [scopeType, setScopeType] = useState<'tenant' | 'branch'>('tenant');
+  const [branchId, setBranchId] = useState('');
 
   const users = useQuery({ queryKey: ['phan-quyen', 'users'], queryFn: () => api.get<UserRow[]>('/api/v1/users') });
   const roles = useQuery({ queryKey: ['phan-quyen', 'roles'], queryFn: () => api.get<TenantRole[]>('/api/v1/roles') });
+  const branches = useQuery({ queryKey: ['phan-quyen', 'branches'], queryFn: () => api.get<Branch[]>('/api/v1/branches') });
+  const branchName = (id: string | null): string => { const b = branches.data?.find((x) => String(x.id) === String(id)); return b ? `${b.code} · ${b.name}` : `chi nhánh ${id}`; };
   const effective = useQuery({ queryKey: ['phan-quyen', 'effective', userId], queryFn: () => api.get<Effective>(`/api/v1/users/${userId}/effective-permissions`), enabled: !!userId });
   const history = useQuery({ queryKey: ['phan-quyen', 'history', userId], queryFn: () => api.get<History>(`/api/v1/users/${userId}/roles`), enabled: !!userId });
   const refresh = () => qc.invalidateQueries({ queryKey: ['phan-quyen'] });
@@ -42,8 +48,8 @@ export function UsersTab() {
   const activeTenantRoles = (roles.data ?? []).filter((r) => r.isActive);
   const roleName = (a: Assignment): string => a.role ?? roles.data?.find((r) => r.id === a.tenantRoleId)?.label ?? `vai trò đơn vị ${a.tenantRoleId}`;
 
-  const closeAssign = () => { setAssigning(false); setValidTo(''); };
-  const assignValid = (mode === 'system' ? !!role : !!tenantRoleId) && (!validTo || DATE_RE.test(validTo));
+  const closeAssign = () => { setAssigning(false); setValidTo(''); setScopeType('tenant'); setBranchId(''); };
+  const assignValid = (mode === 'system' ? !!role : !!tenantRoleId) && (!validTo || DATE_RE.test(validTo)) && (scopeType === 'tenant' || !!branchId);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 340px) 1fr', gap: 16, alignItems: 'start' }}>
@@ -77,11 +83,12 @@ export function UsersTab() {
               {history.isLoading ? <Loading /> : history.error ? <ErrorBox error={errorText(history.error)} /> : !history.data?.assignments.length ? <Empty text="Chưa gán vai trò bổ sung." /> : (
                 <div className="table-wrap">
                   <table className="grid">
-                    <thead><tr><th>Vai trò</th><th>Từ</th><th>Đến</th><th>Lý do</th><th>Trạng thái</th><th /></tr></thead>
+                    <thead><tr><th>Vai trò</th><th>Phạm vi</th><th>Từ</th><th>Đến</th><th>Lý do</th><th>Trạng thái</th><th /></tr></thead>
                     <tbody>
                       {history.data.assignments.map((a) => (
                         <tr key={a.id} style={{ opacity: a.active ? 1 : 0.6 }}>
                           <td>{roleName(a)}{a.tenantRoleId ? <> <span className="badge badge-info">đơn vị</span></> : null}</td>
+                          <td>{a.scopeType === 'branch' ? branchName(a.scopeId) : a.scopeType === 'tenant' ? 'Cả đơn vị' : a.scopeType}</td>
                           <td>{a.validFrom}</td><td>{a.validTo ?? '—'}</td><td>{a.reason}</td>
                           <td>{a.revokedAt ? <span className="badge">Đã thu hồi{a.revokeReason ? `: ${a.revokeReason}` : ''}</span> : a.active ? <span className="badge badge-ok">Đang hiệu lực</span> : <span className="badge badge-warn">Chưa / hết hiệu lực</span>}</td>
                           <td>{!a.revokedAt ? <button type="button" className="btn btn-xs" onClick={() => setRevoking(a)}>Thu hồi</button> : null}</td>
@@ -101,6 +108,7 @@ export function UsersTab() {
           onSubmit={async (v) => {
             await api.post(`/api/v1/users/${userId}/roles`, {
               ...(mode === 'system' ? { role } : { tenantRoleId }),
+              ...(scopeType === 'branch' ? { scopeType, scopeId: branchId } : {}),
               ...(validTo ? { validTo } : {}), ...v,
             });
             await refresh();
@@ -121,6 +129,20 @@ export function UsersTab() {
               </select>
             </Field>
           )}
+          <Field label="Phạm vi" hint={scopeType === 'branch' ? 'Chỉ có tác dụng khi nộp chứng từ của chi nhánh này (cửa nạp); không thành quyền ở chỗ khác' : undefined}>
+            <select className="select" value={scopeType} onChange={(e) => setScopeType(e.target.value as 'tenant' | 'branch')}>
+              <option value="tenant">Cả đơn vị</option>
+              <option value="branch">Một chi nhánh</option>
+            </select>
+          </Field>
+          {scopeType === 'branch' ? (
+            <Field label="Chi nhánh">
+              <select className="select" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+                <option value="">— chọn —</option>
+                {(branches.data ?? []).filter((b) => b.isActive).map((b) => <option key={b.id} value={String(b.id)}>{b.code} · {b.name}</option>)}
+              </select>
+            </Field>
+          ) : null}
           <Field label="Hết hiệu lực sau ngày" hint="Bỏ trống = không hạn. Dạng YYYY-MM-DD, gồm cả ngày này">
             <input className="input" placeholder="2026-12-31" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
           </Field>
