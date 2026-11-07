@@ -109,20 +109,56 @@ const tokens = (s: string) => normText(s).split(' ').filter((t) => t.length > 1 
 /** Quy cách trong tên (400g, 1.7kg, 180ml, 48 hộp…) — khác quy cách thì không phải cùng hàng dù tên gần giống. */
 const specs = (s: string) => new Set(normText(s).match(/\d+(?:\.\d+)?(?:g|gr|kg|ml|l|lit|lon|hop|goi|chai|tui|vien|%)?/g) ?? []);
 
+// [2026-11-06 11:45 PM Nguyễn Văn Thủy] MH22 — nhớ phần tách tên và chỉ chấm mặt hàng có chung từ: hoá đơn 87 dòng × 21.000 mặt hàng từng chặn API 37 giây (đóng góp)
+interface NameFeatures { tokens: string[]; tokenSet: Set<string>; bigrams: string[]; bigramCount: Map<string, number>; specs: Set<string> }
+const FEATURE_CACHE_MAX = 200_000;
+const featureCache = new Map<string, NameFeatures>();
+function featuresOf(s: string): NameFeatures {
+  let f = featureCache.get(s);
+  if (f) return f;
+  const x = normText(s).replace(/\s/g, '');
+  const bigrams: string[] = [];
+  for (let i = 0; i < x.length - 1; i++) bigrams.push(x.slice(i, i + 2));
+  const bigramCount = new Map<string, number>();
+  for (const g of bigrams) bigramCount.set(g, (bigramCount.get(g) ?? 0) + 1);
+  const t = tokens(s);
+  f = { tokens: t, tokenSet: new Set(t), bigrams, bigramCount, specs: specs(s) };
+  if (featureCache.size >= FEATURE_CACHE_MAX) featureCache.clear();
+  featureCache.set(s, f);
+  return f;
+}
+
+/** Bảng từ → mặt hàng của một danh sách, dựng một lần cho cả hoá đơn. */
+type ProductList = { sku: string; name: string; unit?: string }[];
+const productIndexes = new WeakMap<ProductList, Map<string, ProductList>>();
+function productsSharingToken(products: ProductList, name: string): ProductList {
+  let index = productIndexes.get(products);
+  if (!index) {
+    index = new Map();
+    for (const p of products) for (const t of featuresOf(p.name).tokenSet) {
+      const list = index.get(t);
+      if (list) list.push(p); else index.set(t, [p]);
+    }
+    productIndexes.set(products, index);
+  }
+  const seen = new Set<ProductList[number]>();
+  for (const t of featuresOf(name).tokenSet) for (const p of index.get(t) ?? []) seen.add(p);
+  return [...seen];
+}
+
 /** Điểm giống nhau 0–1 giữa hai tên hàng: trùng từ (Dice) + trùng cụm 2 ký tự; lệch quy cách thì giảm mạnh. */
 export function nameScore(a: string, b: string): number {
-  const ta = tokens(a), tb = tokens(b);
+  const fa = featuresOf(a), fb = featuresOf(b);
+  const ta = fa.tokens, tb = fb.tokens;
   if (!ta.length || !tb.length) return 0;
-  const sb = new Set(tb);
-  const common = ta.filter((t) => sb.has(t)).length;
+  const common = ta.filter((t) => fb.tokenSet.has(t)).length;
   const dice = (2 * common) / (ta.length + tb.length);
-  const big = (s: string) => { const x = normText(s).replace(/\s/g, ''); const o: string[] = []; for (let i = 0; i < x.length - 1; i++) o.push(x.slice(i, i + 2)); return o; };
-  const ba = big(a), bb = big(b);
-  const pool = new Map<string, number>(); for (const g of bb) pool.set(g, (pool.get(g) ?? 0) + 1);
+  const ba = fa.bigrams, bb = fb.bigrams;
+  const pool = new Map(fb.bigramCount);
   let hit = 0; for (const g of ba) { const n = pool.get(g) ?? 0; if (n > 0) { hit++; pool.set(g, n - 1); } }
   const bigram = ba.length + bb.length ? (2 * hit) / (ba.length + bb.length) : 0;
   let score = 0.55 * dice + 0.45 * bigram;
-  const sa = specs(a), sp = specs(b);
+  const sa = fa.specs, sp = fb.specs;
   if (sa.size && sp.size) {
     const same = [...sa].some((x) => sp.has(x));
     score *= same ? 1 : 0.55;
@@ -183,8 +219,10 @@ export function matchLine(line: Pick<InvoiceLine, 'nccSku' | 'nccName' | 'nccUni
   // 3. NCC ghi đúng mã của mình.
   const own = ns ? src.products.find((p) => p.sku.toLowerCase() === ns) : undefined;
   if (own) return pick(own.sku, undefined, 'own_sku');
+  // Nhập tự động không lưu gợi ý: khỏi tốn công chấm điểm.
+  if (maxCandidates <= 0) return { sku: null, unit: null, matchSource: 'none', candidates: [] };
   // Gợi ý: so tên NCC ghi với tên hàng của mình + tên NCC đã khai / đã học (mặt hàng của NCC này được cộng điểm).
-  const nccSkus = new Set([...src.declared.map((d) => d.sku), ...src.aliases.map((a) => a.sku)]);
+  const nccSkus =new Set([...src.declared.map((d) => d.sku), ...src.aliases.map((a) => a.sku)]);
   const nameOf = new Map(src.products.map((p) => [p.sku, p.name]));
   const best = new Map<string, MatchCandidate>();
   const consider = (sku: string, text: string, why: string, bonus: number) => {
@@ -196,7 +234,7 @@ export function matchLine(line: Pick<InvoiceLine, 'nccSku' | 'nccName' | 'nccUni
   };
   for (const d of src.declared) consider(d.sku, d.nccName ?? '', 'giống tên hàng NCC đã khai', 0.05);
   for (const a of src.aliases) consider(a.sku, a.nccName, 'giống cách ghi đã học', 0.05);
-  for (const p of src.products) consider(p.sku, p.name, nccSkus.has(p.sku) ? 'giống tên — mặt hàng NCC này có bán' : 'giống tên hàng', nccSkus.has(p.sku) ? 0.08 : 0);
+  for (const p of productsSharingToken(src.products, line.nccName)) consider(p.sku, p.name, nccSkus.has(p.sku) ? 'giống tên — mặt hàng NCC này có bán' : 'giống tên hàng', nccSkus.has(p.sku) ? 0.08 : 0);
   const candidates = [...best.values()].sort((x, y) => y.score - x.score || x.sku.localeCompare(y.sku)).slice(0, maxCandidates);
   return { sku: null, unit: null, matchSource: 'none', candidates };
 }
@@ -238,7 +276,15 @@ export function normalizeParsed(p: ParsedInvoice): Omit<SupplierInvoice, 'partne
 export const taxCodeOfRate = (rate: number | null) => (rate === null ? 'V13K' : `V${String(Math.round(rate)).padStart(2, '0')}`);
 
 /** Số hoá đơn hiển thị: ký hiệu + số. */
-export const invoiceLabel = (x: Pick<SupplierInvoice, 'series' | 'no'>) => (x.series ? `${x.series}-${x.no}` : x.no);
+// [2026-11-07 12:25 AM Nguyễn Văn Thủy] MH22 — số hoá đơn hiện bỏ số 0 đầu như cổng thuế: 00002328 là 2328 (đóng góp)
+export const invoiceNoShown = (no: string) => String(no ?? '').trim().replace(/^0+(?=\d)/, '');
+export const invoiceLabel = (x: Pick<SupplierInvoice, 'series' | 'no'>) => (x.series ? `${x.series}-${invoiceNoShown(x.no)}` : invoiceNoShown(x.no));
+
+/** Tình trạng hoá đơn trên cổng thuế (tthai): tên hiện trên màn, có cần kế toán chú ý không. */
+export const GDT_STATUS: Record<number, { label: string; warn: boolean }> = {
+  1: { label: 'Gốc', warn: false }, 2: { label: 'Thay thế', warn: true }, 3: { label: 'Điều chỉnh', warn: true },
+  4: { label: 'Bị thay thế', warn: true }, 5: { label: 'Bị điều chỉnh', warn: true }, 6: { label: 'Bị huỷ', warn: true },
+};
 
 /** Cùng một hoá đơn: số giống nhau (bỏ số 0 đầu), ký hiệu giống nhau khi cả hai có ký hiệu. */
 export const sameInvoice = (a: { no: string; series?: string }, b: { no: string; series?: string }) => {

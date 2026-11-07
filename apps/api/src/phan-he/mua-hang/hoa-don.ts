@@ -94,8 +94,13 @@ export async function matchSources(trx: Db, tenantId: string, partnerCode: strin
 }
 
 /** Nhận diện các dòng (giữ dòng người dùng đã chọn mã); ĐVT bên mình theo ĐVT đã khai của mã. */
-export async function matchLines(trx: Db, tenantId: string, src: MatchSources, lines: InvoiceLine[]): Promise<InvoiceLine[]> {
-  const first = lines.map((l) => (l.sku && (l.matchSource === 'manual' || l.matchSource === 'alias' || l.matchSource === 'declared' || l.matchSource === 'own_sku') ? l : { ...l, ...matchLine(l, src) }));
+export async function matchLines(trx: Db, tenantId: string, src: MatchSources, lines: InvoiceLine[], opts: { suggest?: boolean } = {}): Promise<InvoiceLine[]> {
+  const first: InvoiceLine[] = [];
+  for (const l of lines) {
+    first.push(l.sku && (l.matchSource === 'manual' || l.matchSource === 'alias' || l.matchSource === 'declared' || l.matchSource === 'own_sku') ? l : { ...l, ...matchLine(l, src, opts.suggest === false ? 0 : undefined) });
+    // Chấm gợi ý tốn CPU: nhường lượt giữa các dòng để API vẫn phục vụ người khác.
+    await new Promise((r) => setImmediate(r));
+  }
   const skus = [...new Set(first.flatMap((l) => [l.sku, ...(l.candidates ?? []).map((c) => c.sku)]).filter(Boolean) as string[])];
   const units = await unitsOf(trx, tenantId, skus);
   return first.map((l) => ({
@@ -137,7 +142,7 @@ async function loadInvoices(trx: Db, tenantId: string, f: { id?: string; ids?: s
 }
 
 /** Hoá đơn còn hiệu lực trùng NCC × ký hiệu × số (bỏ số 0 đầu). */
-async function findDuplicate(trx: Db, tenantId: string, partnerCode: string, series: string, no: string, exceptId?: string) {
+export async function findDuplicate(trx: Db, tenantId: string, partnerCode: string, series: string, no: string, exceptId?: string) {
   let q = trx.selectFrom('supplier_invoices').select(['id', 'invoice_series', 'invoice_no']).where('tenant_id', '=', tenantId).where('partner_code', '=', partnerCode).where('status', '=', 'active')
     .where(sql<boolean>`ltrim(invoice_no, '0') = ltrim(${no}, '0')`).where(sql<boolean>`lower(invoice_series) = lower(${series})`);
   if (exceptId) q = q.where('id', '!=', exceptId);
@@ -176,15 +181,29 @@ export async function reconcileWith(trx: Db, tenantId: string, inv: SupplierInvo
 export type InvoiceState = 'chua_nhan_dien' | 'chua_co_phieu' | 'lech' | 'khop' | 'da_huy';
 export interface InvoiceListRow extends Omit<SupplierInvoice, 'lines'> {
   lineCount: number; unmatched: number; receipts: { id: string; docNo: string; status: string; docDate: string }[]; state: InvoiceState; issues: string[]; attachments: number;
+  /** Tệp mở nhanh trên danh sách; bản xem là HTML khi không có PDF. */
+  pdf?: InvoiceFileRef; xml?: InvoiceFileRef; viewHtml?: InvoiceFileRef;
 }
+export interface InvoiceFileRef { id: string; kind: string; fileName: string; mime: string; size: number }
 
 /** Danh sách hoá đơn + tình trạng: chưa nhận diện mã / chưa có phiếu nhập / lệch phiếu / khớp. */
 export async function listInvoices(trx: Db, tenantId: string, docs: StoredDoc[], policies: Policy[], f: { partnerCode?: string; from?: string; to?: string; status?: string } = {}): Promise<InvoiceListRow[]> {
   const list = await loadInvoices(trx, tenantId, f);
   // Tệp của hoá đơn: đính kèm chung (0046), docRef mua-hang.invoice:<id>.
-  const atts = list.length ? await trx.selectFrom('document_attachments').select(['doc_ref', sql<string>`COUNT(*)`.as('n')]).where('tenant_id', '=', tenantId).where('archived_at', 'is', null)
-    .where('doc_ref', 'in', list.map((x) => `mua-hang.invoice:${x.id!}`)).groupBy('doc_ref').execute() : [];
-  const attOf = new Map(atts.map((a) => [a.doc_ref.slice('mua-hang.invoice:'.length), toNumber(a.n)]));
+  const atts = list.length ? await trx.selectFrom('document_attachments').select(['id', 'doc_ref', 'kind', 'file_name', 'content_type', 'size_bytes']).where('tenant_id', '=', tenantId).where('archived_at', 'is', null)
+    .where('doc_ref', 'in', list.map((x) => `mua-hang.invoice:${x.id!}`)).orderBy('id').execute() : [];
+  const attOf = new Map<string, { n: number; pdf?: InvoiceFileRef; xml?: InvoiceFileRef; viewHtml?: InvoiceFileRef }>();
+  for (const a of atts) {
+    const key = a.doc_ref.slice('mua-hang.invoice:'.length);
+    const cur = attOf.get(key) ?? { n: 0 };
+    cur.n += 1;
+    const ref: InvoiceFileRef = { id: String(a.id), kind: a.kind, fileName: a.file_name, mime: a.content_type, size: toNumber(a.size_bytes) };
+    const name = a.file_name.toLowerCase();
+    if (name.endsWith('.pdf')) cur.pdf = ref;
+    else if (name.endsWith('.xml')) cur.xml = ref;
+    else if (name.endsWith('.html') || name.endsWith('.htm')) cur.viewHtml = ref;
+    attOf.set(key, cur);
+  }
   const out: InvoiceListRow[] = [];
   for (const inv of list) {
     const recs = receiptsOfInvoice(inv, docs);
@@ -195,7 +214,8 @@ export async function listInvoices(trx: Db, tenantId: string, docs: StoredDoc[],
     else if (!recs.length) state = 'chua_co_phieu';
     else { const rc = await reconcileWith(trx, tenantId, inv, recs, policies); issues = rc.issues; state = rc.ok ? 'khop' : 'lech'; }
     const { lines, ...head } = inv;
-    out.push({ ...head, lineCount: lines.length, unmatched, receipts: recs.map((d) => ({ id: d.id, docNo: d.docNo, status: d.status, docDate: d.docDate })), state, issues, attachments: attOf.get(inv.id!) ?? 0 });
+    const f = attOf.get(inv.id!);
+    out.push({ ...head, lineCount: lines.length, unmatched, receipts: recs.map((d) => ({ id: d.id, docNo: d.docNo, status: d.status, docDate: d.docDate })), state, issues, attachments: f?.n ?? 0, pdf: f?.pdf, xml: f?.xml, viewHtml: f?.viewHtml });
   }
   return out;
 }

@@ -286,6 +286,7 @@ Bảng: `supplier_invoices` (đầu hoá đơn), `supplier_invoice_lines` (dòng
 | POST | `/invoices/import` `{ invoices }` | Ghi nhiều hoá đơn, trùng bỏ qua → `{ saved, skipped }` |
 | GET | `/invoices/scan/config` | `{ configured }` — đã đặt `INVOICE_AI_URL` chưa |
 | POST | `/invoices/scan` `{ partnerCode, fileName, mime, dataBase64 }` | Gửi tệp sang dịch vụ đọc hoá đơn (`INVOICE_AI_URL`, `INVOICE_AI_KEY`) → trả như `prepare`. Khuôn trao đổi: docs/huong-dan/mua-hang-hoa-don-ncc.md |
+| POST | `/invoices/ingest-xml` `{ fileName, xmlBase64 \| header, gdt?: { tthai, ttxly, maTraCuu, linkTraCuu }, files?: [{ fileName, mime, kind, dataBase64 }] }` | Nhận một hoá đơn điện tử XML kèm tệp gốc, tối đa 24 MB. Hoá đơn không mã không có XML thì gửi `header` (đầu hoá đơn và tổng tiền theo cổng thuế). Trả `status`: `saved` · `duplicate` (chỉ đính thêm tệp mới) · `replaced_or_cancelled` · `previously_cancelled` · `wrong_buyer` · `partner_ambiguous`. XML sai khuôn → 400. Chạy lại an toàn |
 | GET | `/invoice-aliases?partnerCode` | Bảng nhận diện mã đã học |
 | DELETE | `/invoice-aliases/:id` | Xoá một cách ghi (nhật ký ghi đủ nội dung) |
 

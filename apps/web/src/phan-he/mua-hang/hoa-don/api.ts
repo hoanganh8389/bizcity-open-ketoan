@@ -16,10 +16,14 @@ export const MATCH_LABEL: Record<InvoiceLine['matchSource'], string> = { alias: 
 
 export interface InvoiceRow extends Omit<SupplierInvoice, 'lines'> {
   lineCount: number; unmatched: number; receipts: { id: string; docNo: string; status: string; docDate: string }[]; state: InvoiceState; issues: string[]; attachments: number;
+  pdf?: InvoiceFileRef; xml?: InvoiceFileRef; viewHtml?: InvoiceFileRef;
 }
+export interface InvoiceFileRef { id: string; kind: string; fileName: string; mime: string; size: number }
 export interface InvoiceDetail { invoice: SupplierInvoice; receipts: { id: string; docNo: string; status: string; docDate: string; total: number }[]; reconcile: ReconcileResult | null }
 export type Prepared = Omit<SupplierInvoice, 'source' | 'status' | 'note'> & { duplicateOf?: string; warnings: string[] };
 export type InvoiceInput = Omit<SupplierInvoice, 'id' | 'status' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt' | 'cancelledBy' | 'cancelledAt' | 'cancelReason'>;
+export type IngestStatus = 'saved' | 'duplicate' | 'replaced_or_cancelled' | 'previously_cancelled' | 'wrong_buyer' | 'partner_ambiguous';
+export interface IngestResult { status: IngestStatus; message: string; label: string; invoiceId?: string; partnerCode?: string; partnerCreated?: boolean; lines?: number; unmatched?: number; attached: number; warnings: string[] }
 
 /** Bỏ trường chỉ để hiện (gợi ý) trước khi gửi máy chủ. */
 const clean = (x: InvoiceInput): InvoiceInput => ({ ...x, lines: x.lines.map(({ candidates: _c, ...l }) => l) });
@@ -33,6 +37,7 @@ export const invoiceApi = {
   import: (invoices: InvoiceInput[]) => api.post<{ saved: { id: string; label: string }[]; skipped: { label: string; reason: string }[] }>(`${P}/invoices/import`, { invoices: invoices.map(clean) }),
   scanConfig: () => api.get<{ configured: boolean }>(`${P}/invoices/scan/config`),
   scan: (b: { partnerCode: string; fileName: string; mime: string; dataBase64: string }) => api.post<Prepared[]>(`${P}/invoices/scan`, b),
+  ingestXml: (b: { fileName: string; xmlBase64: string; files: { fileName: string; mime: string; kind: 'hoa_don' | 'khac'; dataBase64: string }[] }) => api.post<IngestResult>(`${P}/invoices/ingest-xml`, b),
   aliases: (partnerCode?: string) => api.get<(ItemAlias & { productName: string })[]>(`${P}/invoice-aliases`, { partnerCode }),
   deleteAlias: (id: string) => api.delete(`${P}/invoice-aliases/${id}`),
 };

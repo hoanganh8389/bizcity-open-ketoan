@@ -107,7 +107,7 @@
     "mua-hang.stock.init-max-preview",
     "mua-hang.stock.init-max-import",
     "mua-hang.purchase.documents-unapprove",
-    "mua-hang.invoice.scan",
+    "mua-hang.invoice.scan", "mua-hang.invoice.ingest-xml",
     "mua-hang.sku-info.lookup",
     "mua-hang.unit.thung-empty-rows-delete",
     "mua-hang.transfer-request.done",
