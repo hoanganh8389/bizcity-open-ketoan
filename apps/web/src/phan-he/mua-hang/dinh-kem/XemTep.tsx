@@ -12,13 +12,13 @@ import { errorText } from '@/lib/api';
 import { purchaseApi, type Attachment } from '../du-lieu';
 import { readStyledWorkbook, type XSheet } from './excelView';
 
-type View = { kind: 'url'; url: string; type: 'pdf' | 'img' } | { kind: 'sheets'; sheets: XSheet[] } | { kind: 'docx'; buf: ArrayBuffer } | { kind: 'text'; text: string } | { kind: 'none' };
+type View = { kind: 'url'; url: string; type: 'pdf' | 'img' } | { kind: 'sheets'; sheets: XSheet[] } | { kind: 'docx'; buf: ArrayBuffer } | { kind: 'text'; text: string } | { kind: 'html'; html: string } | { kind: 'none' };
 
 /** Tên cột kiểu Excel: 0 → A, 25 → Z, 26 → AA. */
 const colName = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : colName(Math.floor(i / 26) - 1) + String.fromCharCode(65 + (i % 26)));
 const ext = (n: string) => n.toLowerCase().split('.').pop() ?? '';
 const IMG = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'];
-export const canPreview = (f: Pick<Attachment, 'fileName' | 'mime'>) => /pdf|image|sheet|excel|csv|text|wordprocessingml/.test(f.mime) || ['pdf', ...IMG, 'xlsx', 'xlsm', 'xls', 'csv', 'txt', 'docx'].includes(ext(f.fileName));
+export const canPreview = (f: Pick<Attachment, 'fileName' | 'mime'>) => /pdf|image|sheet|excel|csv|text|wordprocessingml|xml|html/.test(f.mime) || ['pdf', ...IMG, 'xlsx', 'xlsm', 'xls', 'csv', 'txt', 'docx', 'xml', 'html', 'htm'].includes(ext(f.fileName));
 
 export function XemTep({ file, onClose }: { file: Attachment; onClose: () => void }) {
   const [view, setView] = useState<View | null>(null);
@@ -35,7 +35,9 @@ export function XemTep({ file, onClose }: { file: Attachment; onClose: () => voi
         if (file.mime.startsWith('image/') || IMG.includes(e)) { url = URL.createObjectURL(e === 'svg' ? new Blob([blob], { type: 'image/svg+xml' }) : blob); setView({ kind: 'url', url, type: 'img' }); return; }
         if (e === 'docx' || file.mime.includes('wordprocessingml')) { setView({ kind: 'docx', buf: await blob.arrayBuffer() }); return; }
         if (/sheet|excel|csv/.test(file.mime) || ['xlsx', 'xlsm', 'xls', 'csv'].includes(e)) { setView({ kind: 'sheets', sheets: await readStyledWorkbook(await blob.arrayBuffer(), file.fileName) }); return; }
-        if (file.mime.startsWith('text/') || e === 'txt') { setView({ kind: 'text', text: await blob.text() }); return; }
+        // [2026-11-07 12:40 AM Nguyễn Văn Thủy] MH22 — xem bản hoá đơn HTML trong khung cách ly (không chạy script), xem XML dạng chữ (đóng góp)
+        if (file.mime.includes('html') || e === 'html' || e === 'htm') { setView({ kind: 'html', html: await blob.text() }); return; }
+        if (file.mime.startsWith('text/') || file.mime.includes('xml') || ['txt', 'xml'].includes(e)) { setView({ kind: 'text', text: await blob.text() }); return; }
         setView({ kind: 'none' });
       } catch (x) { setErr(errorText(x)); }
     })();
@@ -55,6 +57,7 @@ export function XemTep({ file, onClose }: { file: Attachment; onClose: () => voi
           </div>
         )}
         {view?.kind === 'docx' && <WordView buf={view.buf} />}
+        {view?.kind === 'html' && <iframe title={file.fileName} sandbox="" srcDoc={view.html} style={{ width: '100%', height: '74vh', border: '1px solid var(--line)', borderRadius: 6, background: '#fff' }} />}
         {view?.kind === 'text' && <pre style={{ maxHeight: '74vh', overflow: 'auto', whiteSpace: 'pre-wrap', fontSize: 12.5 }}>{view.text}</pre>}
         {view?.kind === 'none' && <div className="alert alert-info">Loại tệp này chưa xem được trên web (vd Word .doc đời cũ) — bấm <b>Tải về</b> để mở bằng phần mềm trên máy.</div>}
         {view?.kind === 'sheets' && sh && <>

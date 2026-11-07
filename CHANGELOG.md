@@ -21,6 +21,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** chạy migration 0078 (chỉ thêm cột, không đổi dòng nào). Căn cứ pháp lý (luật, thông tư) chưa điền: chờ kế toán trưởng xác nhận (S030-12 / S030-35).
 - **Bảo mật:** `url` trong căn cứ chỉ nhận `https://`; trường lạ bị từ chối; không đổi quyền ghi (`settings:write`).
 
+### Mọi bút toán có chứng từ gốc: event_id bắt buộc ở CSDL (PHASE-030, S030-41) <!-- [2026-11-06 03:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-41 -->
+
+- **Thêm:** migration `0077_event_id_but_toan_bat_buoc.sql` — `ledger_entries.event_id` NOT NULL (R-LEDGER-12, chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/25-BUT-TOAN-LUON-CO-CHUNG-TU.md`). Golden T030-EVT-1..5, trong đó EVT-5 chạy migration trên CSDL tạm có sẵn dòng rỗng.
+- **Đổi:** `DraftEntry.sourceDocumentId` bắt buộc (không còn `?` / `null`); `ledgerService.post()` từ chối ngay đầu hàm khi thiếu chứng từ gốc (`POSTING_FAILED`); `reverse()` không đảo bút toán có `event_id` rỗng.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không đổi luật định khoản. Mọi đường ghi sổ hiện có đã truyền chứng từ gốc nên không đổi hành vi.
+- **Nâng cấp cần làm:** chạy migration 0077. Nếu bản cài có bút toán rỗng `event_id`, migration **dừng** với câu tiếng Việt nêu số dòng và số bút toán đầu, không tự sửa sổ: báo nhóm Lõi (PHASE-030 · 25 §2 D030-15b). Chưa gặp bản cài nào như vậy (0 / 89.547 và 0 / 123 ở hai CSDL test).
+- **Bảo mật:** không.
+
 ### Màn Cấu hình hệ thống (HT13) bản chỉ đọc (PHASE-030, S030-39) <!-- [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39 -->
 
 - **Thêm:** `GET /api/v1/settings/overview` — mọi khoá registry `bizcity_settings@1`: nhóm, lớp A / B / C, phạm vi, nơi lưu, giá trị hiện hành (chỉ khoá có phiên bản và không phải bí mật), số phiên bản, thay đổi gần nhất, bản sắp hiệu lực, căn cứ, sức khoẻ cấu hình (thiếu căn cứ, đổi 30 ngày, sắp hiệu lực, ngày chưa niêm phong). Màn web **Hệ thống → Cấu hình hệ thống (HT13)**, hướng dẫn `docs/huong-dan/cau-hinh-he-thong.md`. Golden T030-CFG-VIEW-1..6. Chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/24-CAU-HINH-HE-THONG.md`.
