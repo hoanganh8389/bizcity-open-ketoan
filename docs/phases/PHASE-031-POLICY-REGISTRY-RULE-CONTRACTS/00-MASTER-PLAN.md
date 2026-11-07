@@ -109,3 +109,37 @@ retirePolicy(trx, tenantId, policyId, actor, reason)
 **Bảng lớp:** `core/policies.ts` là tệp mới của Platform nên thêm **một dòng** `['core/policies.ts', 'P', 'bizcity.config']` vào `tests/conformance/lib/layers.mjs` (SC-LAYER-1), cùng lớp / đích với `core/settings.ts` — theo khuôn đã chốt, không đổi luật lớp (RULE-MODULE-BOUNDARY giữ nguyên). <!-- [2026-11-07 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — bổ sung phạm vi W1: layers.mjs (SC-LAYER-1 đòi dòng cho tệp mới) -->
 
 **Golden:** T031-REG-1 (sửa bản `published` → trigger chặn), T031-TR-2 (mọi ngày đúng một bản, đổi bản không khoảng trống), T031-MH-1 (đổi chiết khấu NCC từ 16/11: phiếu ngày 15/11 tính lại ra số cũ, `policyTrace` trỏ bản cũ; phiếu 16/11 ra số mới).
+
+## 8. Chữ chốt W2a (K2, cửa nạp nhận tham chiếu chính sách; S031-8, R-FLOW-2)
+<!-- [2026-11-07 10:32 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W2a: bizcity_ledger_intake@1 1.6.0-draft (policyRefs), IN-POL-001..003 (L4, warn, advice), cột policy_check, khoá bizcity.intake.policy_check (advice | strict → hold), Commit Guard băm tham chiếu, mua hàng nộp kèm tham chiếu, khung nhìn policy_application + nhánh hàng việc; W2b (tính lại theo Rule Contract) sau W3 -->
+
+**Chia nhỏ W2 cho gọn.** W2a chỉ kiểm **tham chiếu** (có trong sổ đăng ký, băm khớp, hiệu lực tại ngày chứng từ, có bản mới hơn chưa) — đủ cho truy vết và cho POS gửi đúng bản. **W2b** (`IN-POL-004` tính lại khác nguồn, `IN-POL-005` thiếu dữ liệu gốc của kết quả, `IN-POL-000` nghiệp vụ có chính sách mà không gửi tham chiếu) cần Rule Contract bán hàng chạy được, nên đi sau W3. Phụ thuộc: W1 (#152, migration 0079, `core/policies.ts`) merge trước.
+
+**1. Hợp đồng `bizcity_ledger_intake@1` 1.6.0-draft (minor, chỉ thêm trường tuỳ chọn)** — [BIZCITY-LEDGER-INTAKE-v1 §3.1](../../contracts/BIZCITY-LEDGER-INTAKE-v1.md):
+- đầu phiếu `policyRefs?: { key, version, hash, policyId? }[]` (≤ 50); dòng hàng `policyRef?: { key, version, line? }`;
+- `key` = mã chính sách (`policy_registry.policy_key`), `version` ≥ 1, `hash` 64 hex; `policyId` khi nguồn biết định danh (`mua-hang:purchase_policies:42`); `line` = vai của dòng trong kết quả (`gift`, `discount`…), chỉ để đọc;
+- dòng có `policyRef` mà `key` không có trong `policyRefs` → `VALIDATION_ERROR` (L1, `IN-SHAPE-001` có đường dẫn);
+- lưu nguyên văn trong `payload` như mọi trường khác — **không thêm cột tham chiếu** (sửa [20 §2](20-TRUY-VET-VA-THEO-DOI.md): `accounting_events.payload` / `accounting_event_versions.payload` đã giữ đúng bản đã gửi).
+
+**2. Tầng L4b trong tiền kiểm và cửa nạp** — hàm thuần mới `packages/kernel/src/modules/intake/policy-check.ts` `policyFindings(trx, tenantId, doc)`, gọi ở cả `preflight.ts` (L4) và `postDocumentIn` (một chỗ luật, R-INTAKE-4). Kernel đọc sổ đăng ký qua `resolvePolicy` / `listPolicyVersions` của `@bizcity/platform/core/policies` (Kernel → Platform đúng chiều SC-LAYER-2; **trả Q031-6**: không cần khung nhìn riêng, Kernel không đọc bảng module).
+
+| Mã (`bizcity_intake_findings@1` 0.9.0-draft) | Tầng | Mức | Stage | Trọng số | Khi nào |
+|---|---|---|---|---|---|
+| `IN-POL-001` | L4 | warn | advice | 10 | `key` / `policyId` không có trong sổ đăng ký, hoặc `hash` khác `content_hash` của bản `version` |
+| `IN-POL-002` | L4 | warn | advice | 10 | bản `version` không phủ `docDate` (trước ngày áp, sau ngày đóng, hoặc khoảng rỗng) |
+| `IN-POL-003` | L4 | warn | advice | 5 | bản gửi vẫn hợp lệ nhưng sổ đăng ký đã có bản mới hơn phủ `docDate` (nguồn ngoại tuyến dùng bản cũ) |
+
+Cả ba `acceptable: true` — kế toán trưởng chấp nhận có lý do bằng đường sẵn có của bể chờ (= nút *Đánh dấu đã xem* của [20 §3](20-TRUY-VET-VA-THEO-DOI.md)). Thiếu lý do định khoản cho kết quả **không** thêm mã: `IN-POST-001` đã có. Mỗi mã có bài học `docs/huong-dan/loi-dau-vao/IN-POL-00n.md`, căn cứ ở `legal-basis.ts` (`NOI-BO` + ADR-0031) — tệp này đang thuộc dòng giữ chỗ S030-45, W2a **chỉ thêm** ba khoá (đề nghị dùng chung, chủ dự án duyệt cùng PR này), remedy theo `bizcity_remedy@1`.
+
+**3. Khoá cấu hình `bizcity.intake.policy_check`** (registry, `enum(advice|strict)`, mặc định `advice`, loại A, owner `core`): `advice` = ghi sổ như thường, mã `IN-POL-*` lưu kèm để xem lại (chế độ *tự động*, mặc định cho mọi đơn vị và POS — Q031-2); `strict` = có `IN-POL-*` thì cửa nạp nhận sự việc nhưng **giữ chờ duyệt** bằng `hold` sẵn có của `postDocumentIn` (màn chờ ACC14), kế toán duyệt mới ghi (chế độ *gợi ý*). Không trạng thái mới.
+
+**4. Lưu kết quả kiểm** — migration `0080_kiem_chinh_sach_su_viec.sql` (số nối sau 0079 của W1; kiểm lại bằng `so-tiep-theo kiem` trước khi merge):
+- `accounting_events.policy_check jsonb` và `accounting_event_versions.policy_check jsonb` (NULL = sự việc không có `policyRefs`): `{ checkedAt, findings: IntakeFinding[], refs: [{ key, version, policyId, ok }] }`; `archiveVersion` cất kèm;
+- khung nhìn chỉ đọc `bizcity_read.policy_application` (`security_invoker`, trigger chỉ đọc như 0076): bung `payload->'policyRefs'` + `policy_check` của bản hiện hành và các bản cũ → `tenant_id, policy_key, version, policy_id, event_id, doc_key, doc_version, doc_date, branch_id, source_system, codes[], posted`;
+- nhánh `UNION` `source = 'policy_review'` trong `bizcity_read.document_queue` (0076): sự việc `posted` có `IN-POL-*` chưa chấp nhận (chế độ `advice`); sự việc chờ duyệt vì `strict` đã hiện ở nhánh `accounting_event` sẵn có.
+
+**5. Commit Guard** — `guard.ts` thêm vào dấu cấu hình: băm của các phong bì `policy_registry` mà `policyRefs` trỏ tới (bản + `effective_to` + `status`). Chính sách đổi giữa *Kiểm thử* và *Nộp* → `IN-GUARD-001` như đổi cấu hình.
+
+**6. Mua hàng nộp kèm tham chiếu** — `apps/api/src/phan-he/mua-hang/posting.ts`: dựng `policyRefs` từ `policyTrace` của phiếu (mỗi `policy@version` một mục, `policyId = mua-hang:purchase_policies:<id>`, `hash`). Vết không có bản (phiếu cũ trước W1) thì bỏ qua, không đoán.
+
+**Golden W2a:** T031-INT-1 (đúng bản → không `IN-POL-*`, `policy_check` lưu, khung nhìn thấy), T031-INT-3 (bản 2 khi bản 3 đã hiệu lực tại ngày → `IN-POL-003`), T031-INT-5 (băm sai → `IN-POL-001`), T031-INT-6 (chính sách đổi giữa kiểm thử và nộp → `IN-GUARD-001`), T031-INT-7 (không `policyRefs` → như hôm nay, `policy_check` NULL), mới **T031-INT-8** (`strict` + `IN-POL-002` → sự việc chờ duyệt, không bút toán; duyệt → ghi), **T031-INT-9** (phiếu mua hàng duyệt → sự việc mang `policyRefs` đúng bản + băm của `policyTrace`). Cặp tiền kiểm ⇔ cửa nạp (R-INTAKE-4): cùng mã `IN-POL-*` ở cả hai đường.

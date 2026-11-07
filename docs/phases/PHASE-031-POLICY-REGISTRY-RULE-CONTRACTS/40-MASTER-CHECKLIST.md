@@ -14,11 +14,11 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-6 | `policyTrace` của chứng từ mua ghi `code@version#hash`; màn chứng từ hiện bản đã áp | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-7 | Đánh chỉ mục khoá ngưỡng duyệt (`setting_values`, 16 §5) vào Registry với `approval.levels@1`, `store: settings` | W1 | P2 | có | ☐ sau DOC-030-4 |
-| S031-8 | PR chốt thiết kế cửa nạp: `bizcity_ledger_intake@1` 1.6.0 (`policyRefs`, `policyRef`), JSON Schema, `ingestDocumentSchema` | W2 | P0 | không | ☐ |
-| S031-9 | Tầng L4b trong `preflight.ts` + Commit Guard băm `policyRefs`; `GateResult.ruleVersion` | W2 | P0 | có | ☐ sau S031-8 |
-| S031-10 | Họ mã `POL-*` (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào `bizcity_findings@1`, có căn cứ và câu giải thích | W2 | P0 | có | ☐ |
+| S031-8 | PR chốt thiết kế cửa nạp: `bizcity_ledger_intake@1` 1.6.0 (`policyRefs`, `policyRef`), JSON Schema, `ingestDocumentSchema` | W2 | P0 | không | 🟡 chữ chốt [00 §8](00-MASTER-PLAN.md) 2026-11-07 (PR chốt thiết kế, chờ duyệt) |
+| S031-9 | Tầng L4b trong `preflight.ts` + Commit Guard băm `policyRefs`; `GateResult.ruleVersion` | W2 | P0 | có | ☐ W2a giữ chỗ (nhánh `feat/phase-031-w2a-tham-chieu`), sau khi chữ chốt merge |
+| S031-10 | Họ mã `POL-*` (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào `bizcity_findings@1`, có căn cứ và câu giải thích | W2 | P0 | có | ☐ W2a giữ chỗ (nhánh `feat/phase-031-w2a-tham-chieu`), sau khi chữ chốt merge |
 | S031-11 | Rule Contract `purchase.*@1` bọc `engine.ts` (không đổi kết quả; hồi quy mua hàng) | W2 | P1 | có | ☐ |
-| S031-12 | Khoá `intake.policy.severity`, `intake.policy.mode` vào registry cấu hình (loại A, mặc định cho phép) | W2 | P1 | có | ☐ |
+| S031-12 | Khoá `intake.policy.severity`, `intake.policy.mode` vào registry cấu hình (loại A, mặc định cho phép) | W2 | P1 | có | ☐ W2a giữ chỗ (nhánh `feat/phase-031-w2a-tham-chieu`), sau khi chữ chốt merge |
 | S031-13 | `GET /api/v1/policies`, `POST /api/v1/policies/evaluate` (Q031-3), bản mô tả JSON từng Rule Contract, phạm vi khoá `policies:read`; sự kiện `policy.published` / `policy.retired` qua outbox | W3 | P0 | có | ☐ |
 | S031-14 | Kế toán trưởng xác nhận bảng `reasonCode` theo loại kết quả (Q031-5) | W3 | P0 | không | ⛔ kế toán trưởng |
 | S031-15 | Rule Contract bán hàng `sale.price_list@1`, `sale.promo.discount@1`, `sale.promo.buy_x_get_y@1`, `sale.credit_limit@1` cùng `modules/ban-hang` (S030-16); `publishChecks` trần NĐ81 | W3 | P0 | có | ☐ sau S031-14 |
@@ -26,9 +26,9 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-17 | Rulepack `policy` cho Conformance Engine (§9 của [10](10-THIET-KE.md)), chỉ đọc | W4 | P1 | có | ☐ |
 | S031-18 | Màn *Chính sách* (phiên bản, phạm vi, chứng từ đã áp) + nút *Chính sách căn cứ* trên màn truy vết | W4 | P1 | có | ☐ |
 | S031-19 | `nen-mong.json` / `NEN-MONG-DOANH-NGHIEP.md`: trụ cột 05 hai nửa, tín hiệu nửa Policy; `tru-cot.json` V theo Q031-1 | W4 | P1 | không | 🟡 phần tài liệu 2026-11-07 (V lên nền móng, 05 đổi tên, P-5..7); tín hiệu nửa Policy ở nen-mong.json khi W1 / W2a vào main |
-| S031-20 | Hai cột `policy_refs`, `policy_check` trên `accounting_event_versions` (gộp migration S031-9) — [20 §2](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ |
-| S031-21 | Khung nhìn `bizcity_read.policy_application` + hàm `policy_lineage(event_id)`; nhánh `UNION` mua hàng | W2 | P0 | có | ☐ |
-| S031-22 | Nhánh `policy_review` trong `bizcity_read.document_queue`; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — [20 §3](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ |
+| S031-20 | Hai cột `policy_refs`, `policy_check` trên `accounting_event_versions` (gộp migration S031-9) — [20 §2](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ W2a giữ chỗ (nhánh `feat/phase-031-w2a-tham-chieu`), sau khi chữ chốt merge |
+| S031-21 | Khung nhìn `bizcity_read.policy_application` + hàm `policy_lineage(event_id)`; nhánh `UNION` mua hàng | W2 | P0 | có | ☐ W2a giữ chỗ (nhánh `feat/phase-031-w2a-tham-chieu`), sau khi chữ chốt merge |
+| S031-22 | Nhánh `policy_review` trong `bizcity_read.document_queue`; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — [20 §3](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ W2a giữ chỗ (nhánh `feat/phase-031-w2a-tham-chieu`), sau khi chữ chốt merge |
 | S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
 | S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
 | S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
@@ -67,3 +67,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-07 — S031-19 phần tài liệu theo Q031-1: `tru-cot.json` trụ cột V `role: nền móng` (ngang MDG), tên *Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản*, thêm tiêu chí P-5 (nhất quán cross-module), P-6 (xuyên suốt), P-7 (truy vết) — đều `tai-lieu` tới khi W1 / W2a vào main; `nen-mong.json`, `NEN-MONG-DOANH-NGHIEP.md`, CANON: trụ cột 05 đổi tên, không đánh số lại.
 - 2026-11-07 — dòng giữ chỗ W1 lại mất phần bổ sung (`layers.mjs`, `schema-catalog.ts`) khi #154 (`8ba8318`) gộp xung đột lấy bản cũ — lần thứ hai sau #148. Khôi phục trong PR S031-19; #154 cũng xoá dòng PHASE-028 · W5 đợt 2 và thêm lại dòng S030-40 đã xong — báo chủ dự án, không tự sửa dòng của phiên khác.
 - 2026-11-07 — **W1 xong** (#152 merge): S031-4, S031-5, S031-6 ✅; golden T031-REG-1, T031-TR-2, T031-MH-1 xanh. Xoá dòng giữ chỗ W1 (R-FLOW-6) và mục nợ SC-FLOW-1 của nó ở `baseline.json`. `tru-cot.json` P-6 lên `mot-phan` (có mã trên main cho chính sách mua hàng).
+- 2026-11-07 — W2 chia W2a / W2b. Chữ chốt W2a [00 §8](00-MASTER-PLAN.md): `bizcity_ledger_intake@1` §3.1 1.6.0-draft (`policyRefs`, `lines[].policyRef`), `IN-POL-001..003` (L4, warn, advice), khoá `bizcity.intake.policy_check` (`advice` | `strict` → `hold` sẵn có), migration 0080 (cột `policy_check`, khung nhìn `policy_application`, nhánh hàng việc `policy_review`), Commit Guard băm phong bì, mua hàng nộp kèm tham chiếu từ `policyTrace`. Đính chính 20 §2: tham chiếu nằm trong `payload`, không thêm cột `policy_refs`. Q031-6 trả: Kernel đọc qua `core/policies` (đúng chiều lớp). W2b (`IN-POL-000/004/005`) sau W3.
