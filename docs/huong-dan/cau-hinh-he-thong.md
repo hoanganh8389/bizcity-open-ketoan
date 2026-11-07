@@ -6,7 +6,7 @@
 ## Đọc thế nào
 
 - **Bốn ô đầu trang** (bấm để lọc):
-  - *Khoá thiếu căn cứ* — hôm nay mọi khoá đều thiếu, vì hệ thống chưa có chỗ ghi căn cứ pháp lý; trường này được thêm ở bản sau (S030-38).
+  - *Khoá chưa khai căn cứ* — căn cứ là văn bản, điều, khoản của quy định mà khoá dựa vào. Hôm nay **10 khoá loại A** có căn cứ mặc định là quy tắc nội bộ của phần mềm (ví dụ khoá kỳ dựa vào R-LEDGER-9); các khoá còn lại chưa khai. Căn cứ **pháp lý** (luật, thông tư) sẽ do kế toán trưởng xác nhận và khai sau (S030-35), không tự điền.
   - *Khoá đã đổi trong 30 ngày qua* — chỉ tính khoá đã có bảng phiên bản. Khoá chưa có bảng phiên bản vẫn có nhật ký thao tác nhưng chưa đếm ở đây.
   - *Khoá có bản sắp hiệu lực* — đã đặt ngày hiệu lực trong tương lai.
   - *Ngày chưa niêm phong bằng chứng* — ngày đã đóng quá 2 ngày mà tệp niêm phong chưa có; xem Kiểm chuẩn để biết ngày nào.
@@ -14,7 +14,7 @@
   - **A** ảnh hưởng sổ (mã thuế, chế độ định khoản, khoá kỳ…);
   - **B** vận hành (hạn mức duyệt, kết nối…);
   - **C** hiển thị (giao diện, thời hạn giữ bể chờ…).
-- **Thẻ bên phải** (bấm một dòng): *Giá trị & hiệu lực* (nguồn của giá trị, phạm vi, nơi lưu, quyền sửa), *Căn cứ*, *Lịch sử* (từng phiên bản: ai, khi nào, lý do).
+- **Thẻ bên phải** (bấm một dòng): *Giá trị & hiệu lực* (nguồn của giá trị, phạm vi, nơi lưu, quyền sửa, **nơi dùng** — cổng nào đọc khoá này), *Căn cứ* (văn bản, điều, khoản; cho biết căn cứ khai ở phiên bản đang áp hay là căn cứ mặc định của khoá), *Lịch sử* (từng phiên bản: ai, khi nào, lý do, căn cứ).
 
 ## Cần biết
 
