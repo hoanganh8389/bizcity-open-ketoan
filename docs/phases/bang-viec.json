@@ -4939,7 +4939,7 @@
       "phase": "PHASE-030",
       "title": "Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), T030-EVT-1..5 — Kernel K2",
       "priority": "P0",
-      "status": "partial",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, event-id)",

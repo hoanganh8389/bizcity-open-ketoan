@@ -98,6 +98,8 @@ function sortKeys(o: Record<string, unknown>): [string, unknown][] {
 
 export const ledgerService = {
   async post(trx: Db, tenantId: string, actor: string, entry: DraftEntry, accounts: Map<string, Account>): Promise<{ id: string; entryNo: string }> {
+    // R-LEDGER-12 (PHASE-030 · 25 D030-15): kiểm đầu tiên, trước tài khoản và kỳ khoá — kiểu đã bắt buộc, đây là lớp phòng thủ cho lời gọi từ JS / any.
+    if (!entry.sourceDocumentId) throw Errors.posting('Bút toán phải gắn chứng từ gốc (sự việc kế toán) — không sự việc, không bút toán (R-LEDGER-12)');
     validateLines(entry, accounts);
 
 
@@ -116,7 +118,7 @@ export const ledgerService = {
       period_id: period.id,
       entry_no: entryNo,
       doc_type: entry.docType,
-      event_id: entry.sourceDocumentId ?? null,
+      event_id: entry.sourceDocumentId,
       event_version: entry.sourceVersion ?? null,
       doc_no: entry.docNo,
       invoice_no: entry.invoiceNo ?? null,
@@ -173,6 +175,8 @@ export const ledgerService = {
     const original = await ledgerRepository.findEntry(trx, tenantId, entryId);
     if (!original) throw Errors.notFound('bút toán');
     if (original.status === 'reversed') throw Errors.conflict('Bút toán đã được đảo trước đó');
+    // Bút toán đảo giữ cùng chứng từ gốc với bút toán gốc (R-LEDGER-12). Sổ cũ (trước 0077) có thể còn dòng rỗng: không đảo mù.
+    if (!original.event_id) throw Errors.posting(`Bút toán ${original.entry_no} không có chứng từ gốc (event_id rỗng), không đảo được — báo nhóm Lõi (R-LEDGER-12)`);
     const lines = await ledgerRepository.findLines(trx, entryId);
 
     const draft: DraftEntry = {
