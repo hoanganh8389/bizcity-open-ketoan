@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 9 |
+| Đang làm | 12 |
 | Chờ merge | 0 |
 | Bị chặn | 34 |
-| Chưa ai nhận | 143 |
+| Chưa ai nhận | 140 |
 | Chờ đủ tín hiệu | 54 |
 | Hoãn | 1 |
 | Xong | 227 |
 | **Tổng** | **468** |
 
-## Đang làm (9)
+## Đang làm (12)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -27,6 +27,9 @@
 | [S026-5](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L16) | PHASE-026 | itemclasses.path + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3 | P0 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-026-p0-dot2` |
 | [S027-4](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L9) | PHASE-027 | CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD) | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/core-ke-toan-ck3` |
+| [S031-4](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L13) | PHASE-031 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / r… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
+| [S031-5](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L14) | PHASE-031 | Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
+| [S031-6](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L15) | PHASE-031 | policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w1-registry` |
 
 ## Chờ merge (0)
 
@@ -71,7 +74,7 @@
 | [S031-3](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L12) | PHASE-031 | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | P0 | — |
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 
-## Chưa ai nhận (143)
+## Chưa ai nhận (140)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -198,9 +201,6 @@
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | — |
-| [S031-4](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L13) | PHASE-031 | Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / r… | P0 | — |
-| [S031-5](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L14) | PHASE-031 | Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store… | P0 | — |
-| [S031-6](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L15) | PHASE-031 | policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp | P0 | — |
 | [S031-7](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L16) | PHASE-031 | Đánh chỉ mục khoá ngưỡng duyệt (settingvalues, 16 §5) vào Registry với approval.levels@1, store: settings | P2 | — |
 | [S031-8](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L17) | PHASE-031 | PR chốt thiết kế cửa nạp: bizcityledgerintake@1 1.6.0 (policyRefs, policyRef), JSON Schema, ingestDocumentSch… | P0 | — |
 | [S031-9](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L18) | PHASE-031 | Tầng L4b trong preflight.ts + Commit Guard băm policyRefs; GateResult.ruleVersion | P0 | — |
