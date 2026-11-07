@@ -119,7 +119,7 @@
     "rule": {
       "type": "object", "required": ["code", "level", "title", "why", "when"], "additionalProperties": false,
       "properties": {
-        "code": { "type": "string", "pattern": "^[A-Z]{2,8}-\\d{3}$" },
+        "code": { "type": "string", "pattern": "^[A-Z]{2,8}-[A-Z]{2,12}-\\d{3}$" },
         "level": { "enum": ["block", "warn", "info"] },
         "title": { "type": "string" },
         "why": { "type": "string" },
