@@ -28,7 +28,7 @@ Biên bản đã có:
 - Phát hiện mức **chặn** của review ⇒ không đóng phiên bản, không phát hành (cùng tinh thần R-REV-5, R-REL-4). Phát hiện **nặng** ⇒ phải có việc `S###-n` kèm người nhận trước khi đóng phiên bản.
 - Review **không âm thầm sửa mã**. Nó ghi việc, trỏ luật gốc, trỏ tệp mẫu làm đúng trong repo (R-REV-16), để người đóng góp tự sửa và lần sau không lặp.
 
-## Cách làm một lần review (≤ 4 bước, R-LEAN)
+## Cách làm một lần review (≤ 4 bước)
 
 1. **Đo.** `git fetch`; dựng worktree sạch ở `origin/main`; chạy `node tests/conformance/selfcheck.mjs --strict` (có CSDL test thì thêm lane diagnostics); ghi commit, ngày, số đo.
 2. **Đọc theo 12 trục.** Mỗi trục: đọc tài liệu phase sở hữu rồi **đối chiếu mã** (không chấm từ tài liệu). Ghi bằng chứng `tệp:dòng`; đánh dấu rõ cái gì **đã thấy trong mã** và cái gì là **suy luận**.
