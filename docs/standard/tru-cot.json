@@ -2,7 +2,7 @@
   "$comment": "[2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bizcity_pillars@1: bảng trụ cột × tiêu chí × mức đạt của Core. NGUỒN cho màn HT10 (Hệ thống → Trụ cột & mức đạt) và thẻ 'Trụ cột' ở trang chủ phân hệ. Mức đạt hôm nay ghi tay có bằng chứng (source=manual); ADR-0022 D026-6: chuyển dần sang engine (selfcheck / test) ghi (source=check). Không ai 'tích đạt' trên giao diện (R-CONT-7).",
   "contract": "bizcity_pillars@1",
   "version": "0.1.0-draft",
-  "updated": "2026-11-04",
+  "updated": "2026-11-07",
   "doc": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/10-DANH-GIA-ADAPT.md",
   "statuses": {
     "dat": "Đạt — có code, có test hoặc check bảo vệ",
@@ -80,13 +80,16 @@
       ]
     },
     {
-      "id": "V", "key": "policy", "role": "trụ cột", "title": "Chính sách và chế độ kế toán có phiên bản",
-      "one": "Đổi thông tư, đổi luật định khoản, đổi phương pháp tính giá là tạo phiên bản từ ngày hiệu lực — không làm lại dữ liệu lịch sử.",
+      "id": "V", "key": "policy", "role": "nền móng", "title": "Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản",
+      "one": "Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) và chế độ kế toán quản trị tập trung ở module chủ, phát hành có phiên bản qua một sổ đăng ký; mọi module và plugin dùng cùng bản, chọn theo ngày chứng từ, truy vết được tới bản đã áp — ngang Master Data: MDG giữ cái gì, Policy Registry giữ theo luật nào (ADR-0031).",
       "criteria": [
         { "id": "P-1", "text": "Luật định khoản có phiên bản; dòng sổ ghi policy_version", "status": "dat", "evidence": "posting_policy_versions (0040, ADR-0009)", "gap": "", "next": "", "phase": "PHASE-005", "level": "P0", "modules": ["ke-toan"] },
         { "id": "P-2", "text": "Hồ sơ kế toán (chế độ, năm tài chính) theo năm", "status": "dat", "evidence": "accounting_profiles (0054), HT07", "gap": "", "next": "", "phase": "PHASE-020", "level": "P0", "modules": ["he-thong"] },
         { "id": "P-3", "text": "Đổi chế độ: phiên bản hệ thống TK + ánh xạ + phiếu chuyển số dư", "status": "tai-lieu", "evidence": "ADR-0018 §tài khoản", "gap": "", "next": "S026-8", "phase": "PHASE-026", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "P-4", "text": "Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi", "status": "chua", "evidence": "", "gap": "chính sách hôm nay theo tenant", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["ke-toan"] }
+        { "id": "P-4", "text": "Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi", "status": "chua", "evidence": "", "gap": "chính sách hôm nay theo tenant", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["ke-toan"] },
+        { "id": "P-5", "text": "Nhất quán cross-module: một nghiệp vụ một chính sách; mọi nguồn (module, POS, Woo, sàn) dùng cùng mã@bản và cùng hàm tính", "status": "tai-lieu", "evidence": "ADR-0031 D-POL-0 / D-POL-1; PHASE-031 · 20 §1", "gap": "chưa có Rule Contract và API phát hành cho nguồn ngoài", "next": "S031-13, S031-15", "phase": "PHASE-031", "level": "P0", "modules": ["ban-hang", "mua-hang"] },
+        { "id": "P-6", "text": "Xuyên suốt: chính sách chọn theo ngày chứng từ; đổi bản không đổi chứng từ cũ, không khoảng trống hiệu lực", "status": "mot-phan", "evidence": "policy_registry + purchase_policy_versions (0079), core/policies.ts, policyAt trong engine mua hàng; golden T031-TR-2, T031-MH-1 (#152)", "gap": "mới có cho chính sách mua hàng", "next": "S031-4, S031-5", "phase": "PHASE-031", "level": "P0", "modules": ["mua-hang"] },
+        { "id": "P-7", "text": "Truy vết: bút toán → sự việc → chứng từ → chính sách@bản#băm → người phát hành, căn cứ — hai chiều", "status": "tai-lieu", "evidence": "policyTrace có version + hash (W1, #152); policyRefs ở cửa nạp (chữ chốt W2a, #153)", "gap": "cửa nạp chưa nhận tham chiếu; chưa có khung nhìn policy_application", "next": "S031-6, S031-9, S031-21", "phase": "PHASE-031", "level": "P0", "modules": ["ke-toan", "mua-hang"] }
       ]
     },
     {
