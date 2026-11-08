@@ -22,6 +22,15 @@
  *                         một mặt hàng có liền mạch mua → kho → bán → giá vốn → lãi lỗ → đóng kỳ không (đọc báo cáo của đơn vị)
  *   explain <MÃ> [--role dev|chief_accountant|auditor|tax_inspector] [--json]
  *                         giải thích một mã (IN-*, ACC-*, PART-*, mã lỗi API, F22-*, DG-*): vì sao, ai sửa, sửa ở đâu, kiểm lại
+ *   library list [--json]       thư viện dùng chung (libraries/*, bizcity_library@1): loại, phiên bản, số mục, đã đối chiếu
+ *   library search <từ khoá> [--lib <id>] [--at YYYY-MM-DD] [--json]
+ *                         tìm mục theo mã / tên / bí danh (không dấu) — lấy mã đúng thay vì đoán
+ *   library check <id> <giá trị | {json} | @tệp.json> [--at YYYY-MM-DD] [--source <nguồn>] [--json]
+ *                         kiểm ô nhập bằng bộ kiểm của Core: máy chủ (BIZCITY_SERVER + BIZCITY_API_KEY) → bản dựng platform → SKIP; PASS 0 · FAIL 1 · SKIP 2 · WARN 3
+ *   library new <id> --kind <loại> --title "Tên" --source "Nguồn" [--source-kind law|internal|reference] [--owner "Người duyệt"]
+ *                         khung libraries/<id>/ (library.json đã đóng dấu + README.md), qua SC-LIB-1 ngay
+ *   library diff <id> [--base origin/main] [--json]
+ *                         thay đổi so với main, bản cần lên (major / minor / patch) so với bản đã khai, lỗi khuôn SC-LIB-1
  *   skills install [--to <thư mục dự án>]
  *                         chép skill kế toán (skills/*) vào <dự án>/.claude/skills + .agents/skills, ghi .bizcity/ketoan.json
  *
@@ -236,6 +245,49 @@ async function evidenceVerify(args) {
   process.exitCode = r.findings.length ? 1 : 0;
 }
 
+// [2026-11-08 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-50: library list / search / check / new / diff (packages/cli/lib/library.mjs)
+async function library(sub, args) {
+  const L = await import('../lib/library.mjs');
+  const json = args.includes('--json');
+  const VALUE_FLAGS = ['--lib', '--at', '--source', '--server', '--key', '--kind', '--title', '--source-kind', '--owner', '--description', '--base'];
+  const pos = args.filter((a, i) => !a.startsWith('--') && !VALUE_FLAGS.includes(args[i - 1]));
+  const at = flag(args, '--at');
+  if (at && !/^\d{4}-\d{2}-\d{2}$/.test(at)) usage('--at phải là YYYY-MM-DD');
+  if (sub === 'list') {
+    const r = await L.loadLibraries();
+    out(json ? JSON.stringify({ libraries: r.libs.map(L.envelopeOf), errors: r.errors }, null, 2) : L.formatList(r));
+    process.exitCode = r.errors.length ? 1 : 0;
+  } else if (sub === 'search') {
+    if (!pos[0]) usage('cần từ khoá: npx bizcity library search "nghỉ lễ" [--lib vn.ngay-nghi-le]');
+    const r = L.searchItems((await L.loadLibraries()).libs, pos[0], { lib: flag(args, '--lib') });
+    out(json ? JSON.stringify(r, null, 2) : L.formatSearch(r, pos[0], at));
+    process.exitCode = r.total ? 0 : 1;
+  } else if (sub === 'check') {
+    if (!pos[0] || pos[1] === undefined) usage('cần thư viện và giá trị: npx bizcity library check vn.ngay-nghi-le 2026-02-16');
+    let payload;
+    try { payload = L.parseInput(pos[1]); } catch (err) { usage(`không đọc được giá trị: ${err.message}`); }
+    const r = await L.checkInput(pos[0], payload, { ...serverOf(args), at, source: flag(args, '--source', 'cli') });
+    out(json ? JSON.stringify(r, null, 2) : L.formatCheck(r, pos[0]));
+    process.exitCode = L.EXIT[r.verdict];
+  } else if (sub === 'new') {
+    try {
+      const r = await L.newLibrary({ id: pos[0], kind: flag(args, '--kind'), title: flag(args, '--title'), description: flag(args, '--description'),
+        source: flag(args, '--source'), sourceKind: flag(args, '--source-kind'), owner: flag(args, '--owner') });
+      out(`Đã tạo thư viện ${r.library.id} (${r.library.kind}, ${r.library.version}):`);
+      for (const f of r.files) out(`  + ${f}`);
+      out('Tiếp: thêm mục (nên viết build.mjs + sources/ và khai generatedBy), sửa README, rồi npx bizcity library diff ' + r.library.id);
+    } catch (err) {
+      usage(err.message);
+    }
+  } else if (sub === 'diff') {
+    if (!pos[0]) usage('cần thư viện: npx bizcity library diff vn.tham-so-phap-ly [--base origin/main]');
+    let r;
+    try { r = await L.diffLibrary(pos[0], { base: flag(args, '--base', 'origin/main') }); } catch (err) { fail(err.message); }
+    out(json ? JSON.stringify(r, null, 2) : L.formatDiff(r));
+    process.exitCode = r.verdict === 'PASS' ? 0 : 1;
+  } else usage('library list | search | check | new | diff — xem npx bizcity');
+}
+
 const HELP = readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith(' *   ')).map((l) => l.slice(3)).join('\n');
 const [cmd, sub, ...rest] = process.argv.slice(2);
 if (cmd === 'module' && sub === 'new') moduleNew(rest);
@@ -249,5 +301,6 @@ else if (cmd === 'doctor') await doctor();
 else if (cmd === 'event' && sub === 'check') await eventCheck(rest);
 else if (cmd === 'flow' && sub === 'check') await flowCheck(rest);
 else if (cmd === 'explain') await explain([sub, ...rest].filter((x) => x !== undefined));
+else if (cmd === 'library') await library(sub, rest);
 else if (cmd === 'skills' && sub === 'install') await skillsInstall(rest);
 else { out(`bizcity — lệnh cho developer Bizcity Core\n\n${HELP}`); process.exit(cmd ? 1 : 0); }
