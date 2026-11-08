@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 12
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 138
+      "count": 137
     },
     {
       "key": "partial",
@@ -5401,9 +5401,15 @@
       "phase": "PHASE-031",
       "title": "Sự kiện miền policy.published / policy.retired qua outbox (khai ở bizcityevent@1); POS đổi từ hỏi etag sang nghe sự kiện",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w3b-su-kien-chinh-sach",
+        "state": "đang làm",
+        "since": "2026-11-08",
+        "dot": "PHASE-031 · W3b — sự kiện bizcity.policy.published / .retired qua outbox sẵn có (POS / sàn nghe bằn…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 35
     },
