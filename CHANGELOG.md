@@ -12,6 +12,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+<<<<<<< HEAD
 ### Sự kiện chính sách qua outbox: `bizcity.policy.published` / `.retired` (PHASE-031 W3b, ADR-0031) <!-- [2026-11-08 11:59 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b -->
 
 - **Thêm:** `registerPolicyVersion` phát `bizcity.policy.published` và `retirePolicy` phát `bizcity.policy.retired` qua outbox, cùng giao dịch với việc ghi sổ đăng ký (`data` chỉ định danh + băm + `closes`, không nội dung; `dedupeKey` chống phát đôi). Hợp đồng: `bizcity_event@1` 1.3.0-draft §7, `bizcity_policy@1` 1.1.0-draft §10; test `policy-events.test.ts` (T031-EV-1..5). App ngoài nhận bằng webhook sẵn có (§7a).
@@ -20,6 +21,16 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không (không migration). POS / sàn muốn nghe sự kiện thì khai `events.subscribes` hai loại mới.
 - **Bảo mật:** `data` không chứa nội dung chính sách; người nhận phải có quyền `catalog:read` để tải nội dung.
+=======
+### SC-PILLAR-1: tiêu chí "đạt" của bảng trụ cột phải có bằng chứng có thật (PHASE-026 S026-15 đợt 1) <!-- [2026-11-08 04:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 -->
+
+- **Thêm:** bộ kiểm **SC-PILLAR-1** (chặn, `tests/conformance/checks/pillar/`): mỗi tiêu chí `status: "dat"` ở `docs/standard/tru-cot.json` phải dẫn tới ít nhất một thứ có thật trong repo (migration, test, mã check, tuyến API, đường dẫn, tên tệp, định danh trong mã) và không dẫn tới thứ đã mất. Tiêu chí có mã check có thật ghi `source = check`, còn lại `manual` (đếm ở ghi chú). Ca mẫu `repo-bad/docs/standard/tru-cot.json`. Dòng SC-PILLAR-1 ở `RULE-QUALITY-GATE`.
+- **Đổi:** không. Trên dữ liệu thật 0 phát hiện (27 tiêu chí đạt: 2 `source = check`, 25 `manual`), không thêm nợ baseline.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+>>>>>>> origin/main
 
 ### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
 
