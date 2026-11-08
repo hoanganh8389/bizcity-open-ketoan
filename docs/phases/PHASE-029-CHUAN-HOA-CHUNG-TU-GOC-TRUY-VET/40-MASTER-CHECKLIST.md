@@ -26,7 +26,7 @@
 | S029-16 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | E8 | P2 | ☐ |
 | S029-17 | Trigger kỳ khoá trên `ledger_entries` | E5 | P0 | ✅ 2026-11-08 (gói K3 đợt 1: trigger `ledger_entries_period_lock`, migration 0082; T029-K3-3..5) |
 | S029-18 | Bảng điểm 17 trụ cột theo bằng chứng (`signal`, `foundation`), HT10 theo bốn nhóm | E1 | P0 | ☐ 2026-11-08 S026-15 đợt 1 đã xong (SC-PILLAR-1); chưa ai nhận |
-| S029-19 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test `T029-ECP-P001` | E3 | P0 | ☐ 2026-11-08 nền S026-4 đợt 1 đã xong (partner / branch / warehouse có `entity_codes`); chưa ai nhận |
+| S029-19 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test `T029-ECP-P001` | E3 | P0 | 🟡 2026-11-08 chữ chốt [36](36-THUOC-TINH-CO-HIEU-LUC.md) (hai đợt: đợt 1 bảng thuộc tính + tên lúc ghi, đợt 2 báo cáo), giữ chỗ đợt 1 — migration 0086 |
 | S029-20 | Gộp đối tượng theo khuôn 0068 | E3 | P1 | ☐ 2026-11-08 nền S026-4 đợt 1 đã xong; chưa ai nhận |
 | S029-21 | SDK: module đăng ký chẩn đoán / luật kiểm; manifest `objects` / `fields` / `rules` / `diagnostics` | E9 | P1 | ☐ |
 | S029-22 | Khoá checksum migration 0034 → hiện tại; `migrate.ts` ghi checksum | E9 | P1 | ☐ |
@@ -59,3 +59,4 @@
 | 2026-11-08 11:33 | Claude Code | `main` đỏ `SC-DATA-1`: W2a và gói K3 cùng merge với số migration 0080. Theo quy ước (ai merge sau thì đổi số): K3 đổi 0080 → 0081, 0081 → 0082; `RENAMED` (`migrate.ts`) ghi nhận tên mới cho bản cài đã áp tên cũ, không chạy lại; test `migrate-rename` thêm ca. Bài học: hai PR cùng mang migration thì phải đổi số TRƯỚC khi merge cái thứ hai — `so-tiep-theo kiem` đã cảnh báo, nhưng cả hai vào `main` trong cùng một lượt |
 | 2026-11-08 04:07 | Claude Code | S026-4 đợt 1 vào (entity_codes cho đối tượng / chi nhánh / kho): S029-19 và S029-20 hết chờ PHASE-026 — chuyển ⛔ thành ☐, chưa ai nhận |
 | 2026-11-08 04:43 | Claude Code | S026-15 đợt 1 vào (SC-PILLAR-1): S029-18 hết chờ PHASE-026 — chuyển ⛔ thành ☐, chưa ai nhận |
+| 2026-11-08 04:51 | Claude Code | Chữ chốt S029-19 ([36](36-THUOC-TINH-CO-HIEU-LUC.md)): chia hai đợt theo smallwin. Đợt 1 = `entity_attributes` (tên / MST / địa chỉ có hiệu lực, chỉ thêm, trigger đồng bộ) + `partner_name` lúc ghi trên dòng và đầu bút toán (như 0072), không đổi báo cáo nào; đợt 2 = báo cáo đọc tên theo ngày, mỗi PR một nhóm, mở bằng công nợ. Hơn 12 tệp báo cáo đang nối `partners.name` hiện tại nên không gộp một PR. Ba quyết định chờ chủ dự án (D029-19-1..3, đề xuất sẵn trong tài liệu) |

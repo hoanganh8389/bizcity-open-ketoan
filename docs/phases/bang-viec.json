@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 11
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 140
+      "count": 139
     },
     {
       "key": "partial",
@@ -4349,9 +4349,15 @@
       "phase": "PHASE-029",
       "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, p030-queue)",
+        "branch": "feat/phase-029-thuoc-tinh-hieu-luc",
+        "state": "đang làm",
+        "since": "2026-11-08",
+        "dot": "PHASE-029 · S029-19 đợt 1 — entityattributes (thuộc tính có hiệu lực: tên, MST, địa chỉ của đối tượ…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
     },
