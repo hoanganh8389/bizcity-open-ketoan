@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Không còn mật khẩu viết sẵn trong mã: SC-SEC-5, mật khẩu công cụ, mật khẩu quản trị ban đầu (PHASE-027, CK-3 + Q027-5) <!-- [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3 -->
+
+- **Thêm:** bộ kiểm **SC-SEC-5** (chặn) — biến bí mật (`PASSWORD`, `SECRET`, `TOKEN`, `API_KEY`, `PRIVATE_KEY`) có giá trị mặc định viết trong mã các lớp (`process.env.X || "…"`, `?? "…"`); không in giá trị, chỉ tên biến và độ dài. `core/security/tool-password.ts` (`checkToolPassword`, so sánh thời gian hằng). Golden T027-SEC-1..4.
+- **Đổi:** công cụ dữ liệu mẫu (nạp / xoá dữ liệu tình huống mua hàng, quét cha – con cả danh mục) đọc mật khẩu từ `PURCHASE_SEED_PASSWORD`, **không còn mặc định trong mã**: chưa đặt biến thì công cụ tắt và báo cách bật. `npm run db:seed` khi bỏ trống `SEED_ADMIN_PASSWORD` tự sinh mật khẩu quản trị 16 ký tự và in một lần (trước: mặc định `Admin@123`).
+- **Sửa:** gỡ mục nợ SC-CON-7 `PURCHASE_SEED_PASSWORD` đã hết khỏi `baseline.json` (biến nay khai ở [DEPLOY D-10](docs/ops/DEPLOY.md)).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** cài bằng docker / `scripts/cai-nhanh.sh` không đổi (`.env` vẫn đặt `SEED_ADMIN_PASSWORD`). Muốn dùng công cụ dữ liệu mẫu thì đặt `PURCHASE_SEED_PASSWORD` trong `.env` rồi khởi động lại API; bản thật nên để trống ([DEPLOY D-10](docs/ops/DEPLOY.md)).
+- **Bảo mật:** hai mật khẩu đã công bố trong git (`Admin@123`, mật khẩu công cụ cũ) không còn mở được gì nếu chưa đặt biến; bản cài đang dùng mật khẩu công cụ cũ nên đặt `PURCHASE_SEED_PASSWORD` mới.
+
 ### Sổ đăng ký chính sách và phiên bản chính sách mua hàng (PHASE-031 W1, ADR-0031) <!-- [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 -->
 
 - **Thêm:** migration `0079_so_dang_ky_chinh_sach.sql` — bảng `policy_registry` (phong bì từng bản chính sách: khoá, bản, phạm vi, hiệu lực của bản theo ngày chứng từ, băm, Rule Contract, người phát hành; bản đã phát hành không sửa, chỉ ngừng hoặc đóng hiệu lực một lần) và `purchase_policy_versions` (chỉ thêm); mỗi chính sách mua hàng đang có được nạp ngược thành bản 1. `packages/platform/src/core/policies.ts`: `registerPolicyVersion`, `resolvePolicy`, `listPolicyVersions`, `retirePolicy`. Route `GET /api/v1/purchase/policies/:id/versions`. Form chính sách có ô *áp cho chứng từ từ ngày*, *lý do đổi*, khối *Phiên bản*.
