@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bộ review theo nhịp và bản đồ phase → phiên bản (docs/reviews/, R1 nền móng) <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — R1 -->
+
+- **Thêm:** thư mục `docs/reviews/` — tiêu chí 12 trục (thang 0–4, trục cổng A2 · A7 · A12), bảng điểm matrix, bản đồ 31 phase vào sáu phiên bản v0.1.0 → v1.0.0 (đề xuất), bản máy đọc `review-board.json`; biên bản R1 (`main` @ 886f4f95): **ĐẠT có điều kiện 27/48**, 18 phát hiện RV-R1-01…18, trong đó 3 chặn (cờ thoát `allow_ledger_purge` tự bật được; SQLSTATE của trigger bị gộp thành `POSTING_FAILED`; trùng số migration 0080). Nhịp: 3 phase mở mới ⇒ 1 review, trước khi đóng phiên bản.
+- **Đổi:** `docs/README.md`, `docs/phases/README.md` trỏ tới `docs/reviews/`.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (chỉ tài liệu).
+- **Bảo mật:** biên bản R1 ghi nhận RV-R1-01 (vai trò ứng dụng có `DELETE` trên `ledger_*` và cờ thoát trigger là biến phiên) là việc chặn trước khi đóng v0.1.0 — chưa sửa trong PR này.
+
 ### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 10:31 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
 
 - **Thêm:** migration `0081_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.

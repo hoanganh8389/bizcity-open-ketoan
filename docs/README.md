@@ -49,6 +49,7 @@ Từ 2026-10-29 repo còn là **Bizcity Core Framework**: hạ tầng ứng dụ
 | [adr/](adr/) | Quyết định kiến trúc (vì sao chọn thế này) | Lịch sử, chỉ thêm |
 | [../tests/conformance/](../tests/conformance/README.md) | Bộ kiểm chuẩn một chỗ: selfcheck (tĩnh) + diagnostics (CSDL) song song, bảng điểm, baseline nợ | **Thực thi** chuẩn — `node tests/conformance/selfcheck.mjs` |
 | [audits/](audits/) | Kết quả rà soát code so với chuẩn, việc cần sửa | Ảnh chụp theo ngày |
+| [reviews/](reviews/README.md) | **Review theo nhịp** (3 phase / 1 lần): 12 trục chấm Core "chặt trong, mềm ngoài", bảng điểm matrix, bản đồ phase → phiên bản, biên bản từng lần <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — thêm thư mục docs/reviews/ --> | Chấm điểm có bằng chứng; chỉ thêm |
 | [api/](api/) | Hướng dẫn chi tiết cho bên gửi từng loại chứng từ, JSON mẫu đã kiểm | Tham chiếu (thực thi `bizcity_ledger_intake@1`) |
 | [nghiep-vu/](nghiep-vu/) | Kế toán cho lập trình viên, tình huống ghi sổ | Tham chiếu nghiệp vụ |
 | [can-cu/](can-cu/) | Căn cứ pháp lý (TT99/2025, luật thuế…) | Tham chiếu |

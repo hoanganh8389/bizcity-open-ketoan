@@ -202,7 +202,6 @@
 | [S030-33](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L40) | PHASE-030 | Golden T030-GATE-1..4 (21 §5) | P1 | — |
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
-| [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | — |
 | [S030-47](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L55) | PHASE-030 | B1 — HT14 bản chỉ đọc (modules/thu-vien/), LibraryPicker trong ui-kit (A2), trụ cột IX vào tru-cot.json (26 §… | P0 | — |
 | [S030-48](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L56) | PHASE-030 | B2 — theo dõi sử dụng: libraryusagedaily, bộ đếm sau commit, core.library.usage, tab Tổng quan có số liệu (26… | P1 | — |
 | [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
