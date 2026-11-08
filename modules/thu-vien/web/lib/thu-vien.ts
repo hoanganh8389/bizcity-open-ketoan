@@ -125,3 +125,35 @@ export function parseTestInput(code: string, rawValue: string, override: boolean
   if (override) out.override = true;
   return out;
 }
+
+/** Số liệu sử dụng (core.library.usage) — khuôn trả về của API. */
+export interface UsageCounts { pass: number; warn: number; block: number }
+export interface UsageReport {
+  from: string;
+  to: string;
+  total: UsageCounts;
+  byLibrary: (UsageCounts & { libraryId: string })[];
+  bySource: (UsageCounts & { source: string; libraryId: string; deprecated: number })[];
+  topFindings: { code: string; libraryId: string; outcome: 'pass' | 'warn' | 'block'; count: number }[];
+  unknown: { libraryId: string; source: string; count: number }[];
+}
+
+export const usageTotal = (u: UsageCounts): number => u.pass + u.warn + u.block;
+
+/** Tỉ lệ phần trăm một chữ số thập phân; không có lượt → null (hiện "—", không vẽ 0 % giả). */
+export function usagePct(part: number, u: UsageCounts): number | null {
+  const t = usageTotal(u);
+  return t ? Math.round((part * 1000) / t) / 10 : null;
+}
+
+/**
+ * Tình trạng một nguồn trên số liệu 30 ngày (26 §9, lớp "sử dụng"). Kết luận ĐẠT / KHÔNG ĐẠT theo module cần độ phủ trường
+ * khai trong manifest — có ở B5; ở đây chỉ nói điều số liệu chứng minh được.
+ */
+export function sourceStatus(r: UsageCounts & { deprecated: number }): { badge: 'badge-ok' | 'badge-warn' | 'badge-bad'; text: string } {
+  const blockPct = usagePct(r.block, r) ?? 0;
+  if (blockPct >= 1) return { badge: 'badge-bad', text: `chặn ${blockPct} % lượt` };
+  if (r.deprecated > 0) return { badge: 'badge-warn', text: `dùng mã ngừng ${r.deprecated} lượt` };
+  if (r.warn > 0) return { badge: 'badge-warn', text: `cảnh báo ${usagePct(r.warn, r)} % lượt` };
+  return { badge: 'badge-ok', text: 'qua thư viện' };
+}

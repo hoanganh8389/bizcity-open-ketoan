@@ -1,15 +1,22 @@
 // @bizcity-layer P module-sdk
+// [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 (B2, PHASE-030 · 26 §8–§9): validate nhận `source` và đếm lượt dùng (gom theo lượt, không hẹn giờ); core.library.usage cho bảng đánh giá; ghi hết khi máy chủ tắt
 // [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032, BIZCITY-LIBRARY-v1 §10): API thư viện dùng chung — danh sách, phong bì, dòng ô chọn theo ngày, kiểm ô nhập có gợi ý; mở cho MCP (ai: 'read')
 /**
  *   GET  /api/v1/libraries                       core.library.list      — mọi thư viện: id, loại, phiên bản, số mục, tỉ lệ đã duyệt
  *   GET  /api/v1/libraries/:id                   core.library.get       — phong bì (không items) + README
  *   GET  /api/v1/libraries/:id/items             core.library.items     — dòng ô chọn: ?q=&at=&group=&status=&limit=
- *   POST /api/v1/libraries/:id/validate          core.library.validate  — { input | inputs[], at? } → phát hiện LIB-* + gợi ý (không ghi gì)
+ *   POST /api/v1/libraries/:id/validate          core.library.validate  — { input | inputs[], at?, source? } → phát hiện LIB-* + gợi ý (không ghi gì vào sổ;
+ *                                                đếm một lượt / giá trị vào library_usage_daily — chỉ mã, không giá trị nhập)
+ *   GET  /api/v1/libraries/usage                 core.library.usage     — ?from=&to=&library=&source= → lượt qua / cảnh báo / chặn theo thư viện,
+ *                                                theo nguồn, mã phát hiện nhiều nhất, mã lạ (bảng đánh giá HT14)
  * Nội dung không phụ thuộc đơn vị (tệp của bản dựng). Quyền catalog:read như thư viện mã phát hiện.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { getLibrary, libraryReadme, listLibraries, selectorRows, validateInLibrary } from '@bizcity/platform/core/libraries/index';
+import {
+  flushLibraryUsage, getLibrary, libraryReadme, libraryUsage, listLibraries, recordLibraryUsage, selectorRows, shouldFlush, validateInLibrary,
+} from '@bizcity/platform/core/libraries/index';
+import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { defineAction, mountActions } from '../../core/actions.js';
 
@@ -88,19 +95,62 @@ const validate = defineAction({
   description: 'Chỉ đọc: kiểm một (input) hoặc nhiều (inputs) giá trị theo thư viện tại ngày `at` — mã có không, còn dùng không, có hiệu lực không, '
     + 'đúng khuôn không, giá trị có khớp thư viện không, luật riêng của thư viện. Mỗi phát hiện có mã LIB-* (hoặc mã luật) và gợi ý; Core không tự sửa.',
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
-  input: z.object({ id, input: input.optional(), inputs: z.array(input).max(200).optional(), at: date.optional() }),
+  input: z.object({
+    id, input: input.optional(), inputs: z.array(input).max(200).optional(), at: date.optional(),
+    source: z.string().trim().max(80).optional().describe('module / action / kênh gọi (vd modules/luong) — để bảng đánh giá biết ai dùng; không gửi = api'),
+  }),
   output: z.object({ results: z.array(result) }),
   expose: { http: { method: 'POST', path: '/api/v1/libraries/:id/validate' }, mcp: true, ai: 'read' },
-  handler: async (_ctx, i) => {
+  handler: async (ctx, i) => {
     need(i.id);
     if ((i.input === undefined) === (i.inputs === undefined)) throw Errors.validation('gửi đúng một trong input hoặc inputs');
     const list: (string | Record<string, unknown>)[] = i.inputs ?? (i.input === undefined ? [] : [i.input]);
-    return { results: list.map((x) => validateInLibrary(i.id, x, { at: i.at })!) };
+    const results = list.map((x) => {
+      const r = validateInLibrary(i.id, x, { at: i.at })!;
+      recordLibraryUsage(ctx.tenant.id, r, x, i.source);
+      return r;
+    });
+    // Gom theo lượt (26 §8): ghi khi đủ 30 giây / 200 dòng; số đếm là quan sát — lỗi ghi không làm hỏng lượt kiểm.
+    if (shouldFlush()) await flushUsage();
+    return { results };
   },
 });
 
-export const LIBRARY_ACTIONS = [list, get, items, validate];
+let flushLog: (msg: string) => void = () => undefined;
+async function flushUsage(): Promise<void> {
+  const r = await flushLibraryUsage(db);
+  if (r.error) flushLog(`library_usage_daily: bỏ một lô số đếm — ${r.error}`);
+}
+
+const usage = defineAction({
+  id: 'core.library.usage', title: 'Lượt dùng thư viện', tags,
+  description: 'Bảng đánh giá thư viện (HT14): trong khoảng ngày, số lượt qua / cảnh báo / chặn theo thư viện và theo nguồn (module, kênh), '
+    + 'mã phát hiện nhiều nhất, số lượt mã lạ (ứng viên bổ sung thư viện). Chỉ đếm, không có giá trị người nhập.',
+  permission: 'catalog:read', effect: 'read', idempotency: 'none',
+  input: z.object({ from: date.optional(), to: date.optional(), library: id.optional(), source: z.string().trim().max(80).optional() }),
+  output: z.object({
+    from: z.string(), to: z.string(),
+    total: z.object({ pass: z.number(), warn: z.number(), block: z.number() }),
+    byLibrary: z.array(z.object({ libraryId: z.string(), pass: z.number(), warn: z.number(), block: z.number() })),
+    bySource: z.array(z.object({ source: z.string(), libraryId: z.string(), pass: z.number(), warn: z.number(), block: z.number(), deprecated: z.number() })),
+    topFindings: z.array(z.object({ code: z.string(), libraryId: z.string(), outcome: z.enum(['pass', 'warn', 'block']), count: z.number() })),
+    unknown: z.array(z.object({ libraryId: z.string(), source: z.string(), count: z.number() })),
+  }),
+  expose: { http: { method: 'GET', path: '/api/v1/libraries/usage' }, mcp: true, ai: 'read' },
+  handler: async (ctx, i) => {
+    await flushUsage(); // số liệu gồm cả lượt còn trong bộ nhớ
+    const to = i.to ?? new Date().toISOString().slice(0, 10);
+    const from = i.from ?? new Date(Date.parse(`${to}T00:00:00Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
+    if (from > to) throw Errors.validation('from phải trước hoặc bằng to');
+    return libraryUsage(ctx.data.tx, ctx.tenant.id, { from, to, library: i.library, source: i.source });
+  },
+});
+
+export const LIBRARY_ACTIONS = [list, get, items, validate, usage];
 
 export async function librariesRoutes(app: FastifyInstance): Promise<void> {
+  flushLog = (msg) => app.log.warn(msg);
   mountActions(app, LIBRARY_ACTIONS);
+  // Máy chủ tắt: ghi nốt số đếm còn trong bộ nhớ.
+  app.addHook('onClose', async () => { await flushUsage(); });
 }

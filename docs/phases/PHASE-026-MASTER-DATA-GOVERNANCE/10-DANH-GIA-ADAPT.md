@@ -16,7 +16,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | VI | Bằng chứng và quan sát được | **70 %** | 2 | 3 | 0 | 0 |
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
-| Nền móng | Thư viện tham chiếu có phiên bản (bizcity_library@1) | **53 %** | 3 | 1 | 3 | 1 |
+| Nền móng | Thư viện tham chiếu có phiên bản (bizcity_library@1) | **56 %** | 3 | 2 | 2 | 1 |
 
 ## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 53 %
 
@@ -140,7 +140,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | M-4 | Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái | 🟡 Một phần | ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master) | chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành | S026-2 (PHASE-026) | P0 |
 | M-5 | Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng | ☐ Chưa | — | — | S026-14 (PHASE-026) | P2 |
 
-## Nền móng · Thư viện tham chiếu có phiên bản (bizcity_library@1) — 53 %
+## Nền móng · Thư viện tham chiếu có phiên bản (bizcity_library@1) — 56 %
 
 > Dữ liệu tham chiếu chung mọi đơn vị (tham số pháp lý, lịch, mã chức năng, sườn nghiệp vụ, luật kiểm, mẫu) có một khuôn, có phiên bản, đọc tại ngày, kiểm được ô nhập với mã chung LIB-* và gợi ý; đơn vị chỉ đọc, ghi đè có lý do, xác nhận căn cứ; mọi lần dùng để lại dấu — ngang Master Data (giữ cái gì của đơn vị) và Policy Registry (đơn vị quyết theo luật nào) (ADR-0032).
 
@@ -151,6 +151,6 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | L-3 | Đọc được ở mọi nơi: API core.library.*, MCP chỉ đọc, ô chọn LibraryPicker, màn HT14 Kho thư viện | ✅ Đạt | GET /api/v1/libraries, LibraryPicker (ui-kit), modules/thu-vien (S030-47) | — | — | P0 |
 | L-4 | Căn cứ pháp lý là thư viện; mục trỏ căn cứ bằng mã; kế toán trưởng xác nhận theo đơn vị | 📄 Tài liệu | PHASE-030 · 26 §6 (chốt 2026-11-08, Q030-L2) | LEGAL_BASES và legal-sources.json còn hai sổ; căn cứ trong thư viện là chuỗi tự do | S030-49 (PHASE-030) | P1 |
 | L-5 | Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện | 📄 Tài liệu | PHASE-030 · 26 §7 (Q030-L3) | — | S030-49 (PHASE-030) | P1 |
-| L-6 | Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT) | 📄 Tài liệu | PHASE-030 · 26 §8–§9; bản mẫu mockups/kho-thu-vien.html | chưa có library_usage_daily | S030-48 (PHASE-030) | P1 |
+| L-6 | Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT) | 🟡 Một phần | library_usage_daily (0083), core.library.usage, thẻ Tổng quan HT14 có số liệu; test thu-vien-su-dung.test.ts (S030-48) | kết luận ĐẠT / KHÔNG ĐẠT theo module cần độ phủ trường khai trong manifest | S030-51 (PHASE-030) | P1 |
 | L-7 | Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI | 🟡 Một phần | ô chọn + API + SC-LIB-1 có | chưa gắn vào action (ctx.libraries) và cửa nạp; chưa SC-LIB-2 | S030-51 (PHASE-030) | P1 |
 | L-8 | Skill + CLI cho dev và AI: tìm, kiểm, thêm, cập nhật thư viện | ☐ Chưa | — | — | S030-50 (PHASE-030) | P1 |
