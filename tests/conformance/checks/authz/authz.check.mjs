@@ -7,6 +7,13 @@
  *   3. lớp `cong-khai`: khối route phải khai `public: true`; lớp `quyen`: khối route phải có preHandler; lớp lạ → báo.
  */
 import { LAYER_ROOTS } from '../../lib/layers.mjs';
+// [2026-11-07 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 2: SC-AUTH-04 — thư viện phân quyền mẫu TGS khớp nguồn, ánh xạ không cho thừa
+import { build as buildTgs, OUT_CODES as TGS_CODES, OUT_GROUPS as TGS_GROUPS, SOURCE as TGS_SOURCE } from '../../../../scripts/phan-quyen/tgs-anh-xa.mjs';
+
+const TGS_CATALOG = 'packages/platform/src/core/authz/catalog.ts';
+const TGS_AUTH = 'packages/platform/src/core/auth.ts';
+/** Quyền chỉ đọc — báo cáo chỉ được ánh xạ ra những quyền này (hoặc quyền đề xuất chưa tồn tại). */
+const READ_ONLY = (p) => p.endsWith(':read');
 
 const LIST = 'tests/conformance/checks/authz/route-giu.json';
 const ROUTE_RE = /\b(?:r|app|fastify|server|router|api)\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]*)['"`]/;
@@ -54,6 +61,50 @@ export const checks = [
         if (!seen.has(route)) findings.push(ctx.finding(LIST, lineOf(route), `${route} có trong danh sách nhưng không còn route khai @bizcity-route trong mã — bỏ dòng hoặc khôi phục chú thích`, `stale:${route}`));
       }
       return { examined: Math.max(examined, entries.size), findings, notes: [`${entries.size} route ghi cố ý trong danh sách đóng; ${seen.size} route khai trong mã`] };
+    },
+  },
+  {
+    id: 'SC-AUTH-04',
+    title: 'Thư viện phân quyền mẫu TGS (docs/standard/phan-quyen): khớp bản sinh lại từ CSV nguồn, quyền Core có thật, báo cáo không ra quyền ghi, quyền suy ra không thừa',
+    gate: 'CONF-STATIC', contract: 'bizcity_action', rules: ['STD-ACT-1'], conf: [], tier: 2, enforce: 'block', weight: 2, targets: ['repo'],
+    run(ctx) {
+      const r = ctx.repo;
+      if (!r.exists(TGS_SOURCE)) return { examined: 0, findings: [], notes: ['chưa có thư viện TGS'] };
+      const findings = [];
+      for (const f of [TGS_CODES, TGS_GROUPS, TGS_CATALOG, TGS_AUTH]) if (!r.exists(f)) findings.push(ctx.finding(f, 1, `thiếu ${f}`, `missing:${f}`));
+      if (findings.length) return { examined: 1, findings };
+      let codes; let groups;
+      try { codes = r.json(TGS_CODES); groups = r.json(TGS_GROUPS); } catch (e) { return { examined: 1, findings: [ctx.finding(TGS_CODES, 1, `JSON hỏng: ${e.message}`, 'json')] }; }
+      // 1. khớp bản sinh lại (không chỉnh tay JSON)
+      const again = buildTgs(r.read(TGS_SOURCE), r.read(TGS_CATALOG));
+      if (JSON.stringify(again.codes) !== JSON.stringify(codes) || JSON.stringify(again.groups) !== JSON.stringify(groups)) {
+        findings.push(ctx.finding(TGS_CODES, 1, 'thư viện TGS lệch bản sinh lại từ CSV nguồn — chạy node scripts/phan-quyen/tgs-anh-xa.mjs (không chỉnh tay JSON)', 'stale'));
+      }
+      // 2. quyền Core có thật
+      const authText = r.read(TGS_AUTH);
+      const block = authText.slice(authText.indexOf('export const PERMISSIONS'), authText.indexOf('] as const', authText.indexOf('export const PERMISSIONS')));
+      const known = new Set([...block.matchAll(/'([a-z][a-z0-9-]*:[a-z][a-z0-9-]*)'/g)].map((m) => m[1]));
+      const lines = r.lines(TGS_CODES);
+      const lineOf = (needle) => Math.max(1, lines.findIndex((l) => l.includes(needle)) + 1);
+      const byCode = new Map(codes.items.map((c) => [c.code, c]));
+      for (const c of codes.items) {
+        for (const m of c.mapsTo) {
+          if (m.status === 'core' && !known.has(m.permission)) findings.push(ctx.finding(TGS_CODES, lineOf(`"code": "${c.code}"`), `${c.code}: quyền Core ${m.permission} không có trong PERMISSIONS`, `unknown:${c.code}:${m.permission}`));
+          // 3. báo cáo không ra quyền ghi
+          if (c.kind === 'report' && m.status !== 'de-xuat' && !READ_ONLY(m.permission)) findings.push(ctx.finding(TGS_CODES, lineOf(`"code": "${c.code}"`), `${c.code} là báo cáo nhưng ánh xạ ra quyền ghi ${m.permission}`, `report-write:${c.code}`));
+        }
+      }
+      // 4. quyền suy ra của nhóm chỉ đến từ ánh xạ có thật, độ tin cậy cao hoặc đã duyệt, trên thao tác nhóm được cấp
+      const glines = r.lines(TGS_GROUPS);
+      for (const g of groups.items) {
+        const justified = new Set();
+        for (const [code, ops] of Object.entries(g.grants)) {
+          const c = byCode.get(code);
+          for (const m of c?.mapsTo ?? []) if (ops.includes(m.op) && (m.status === 'core' || m.status === 'module') && (m.confidence === 'cao' || c.verified === 'da-duyet')) justified.add(m.permission);
+        }
+        for (const p of g.derived) if (!justified.has(p)) findings.push(ctx.finding(TGS_GROUPS, Math.max(1, glines.findIndex((l) => l.includes(`"code": "${g.code}"`)) + 1), `nhóm ${g.code} có quyền suy ra ${p} không có ánh xạ chứng minh (cao / đã duyệt)`, `derived:${g.code}:${p}`));
+      }
+      return { examined: codes.items.length + groups.items.length, findings, notes: [`${codes.items.length} mã · ${groups.items.length} nhóm · ${codes.rows} dòng nguồn`] };
     },
   },
 ];

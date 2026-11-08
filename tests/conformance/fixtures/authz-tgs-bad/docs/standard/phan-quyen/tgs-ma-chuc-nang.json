@@ -1,0 +1,139 @@
+{
+  "contract": "bizcity_authz_tgs_codes@1",
+  "source": "docs/standard/phan-quyen/tgs-nguon.csv",
+  "title": "Bảng phân quyền tổng hợp TGS – 03.11.2026 · Chi tiết phân quyền",
+  "rows": 3,
+  "codes": 3,
+  "groups": 1,
+  "generatedBy": "scripts/phan-quyen/tgs-anh-xa.mjs",
+  "rule": "ADR-0027 Phụ lục A, W5 đợt 2; D-AUTH-08: không mã nào thành quyền thật khi chưa duyệt; cờ chỉ tính khi có Thêm / Sửa / Xóa (đóng an toàn); bí danh đọc ứng Tìm / In, bí danh ghi ứng Thêm / Sửa / Xóa",
+  "items": [
+    {
+      "code": "BC2",
+      "names": [
+        "Tồn kho"
+      ],
+      "kind": "report",
+      "area": "bao-cao",
+      "ops": [
+        "read",
+        "print",
+        "export"
+      ],
+      "mapsTo": [
+        {
+          "op": "read",
+          "permission": "reports:read",
+          "status": "core",
+          "confidence": "cao"
+        },
+        {
+          "op": "print",
+          "permission": "reports:read",
+          "status": "core",
+          "confidence": "vua"
+        },
+        {
+          "op": "export",
+          "permission": "bao-cao:bc2-export",
+          "status": "de-xuat",
+          "confidence": "thap"
+        },
+        {
+          "op": "read",
+          "permission": "documents:write",
+          "status": "core",
+          "confidence": "vua"
+        }
+      ],
+      "verified": "chua-duyet",
+      "groups": 1,
+      "notes": []
+    },
+    {
+      "code": "BH5",
+      "names": [
+        "Xuất-nhập kho nội bộ"
+      ],
+      "kind": "function",
+      "area": "ban-hang",
+      "ops": [
+        "read",
+        "create",
+        "update",
+        "cancel",
+        "print",
+        "export"
+      ],
+      "mapsTo": [
+        {
+          "op": "read",
+          "permission": "documents:read",
+          "status": "core",
+          "confidence": "vua"
+        },
+        {
+          "op": "create",
+          "permission": "documents:write",
+          "status": "core",
+          "confidence": "vua"
+        },
+        {
+          "op": "update",
+          "permission": "documents:write",
+          "status": "core",
+          "confidence": "vua"
+        },
+        {
+          "op": "cancel",
+          "permission": "documents:write",
+          "status": "core",
+          "confidence": "vua"
+        },
+        {
+          "op": "print",
+          "permission": "documents:read",
+          "status": "core",
+          "confidence": "vua"
+        },
+        {
+          "op": "export",
+          "permission": "ban-hang:bh5-export",
+          "status": "de-xuat",
+          "confidence": "thap"
+        },
+        {
+          "op": "read",
+          "permission": "khong:co",
+          "status": "core",
+          "confidence": "vua"
+        }
+      ],
+      "verified": "chua-duyet",
+      "groups": 1,
+      "notes": []
+    },
+    {
+      "code": "HT10",
+      "names": [
+        "#Được phép sửa dữ liệu trong quá khứ"
+      ],
+      "kind": "flag",
+      "area": "he-thong",
+      "ops": [
+        "grant"
+      ],
+      "mapsTo": [
+        {
+          "op": "grant",
+          "permission": "documents:bypass-date-lock",
+          "status": "core",
+          "confidence": "cao"
+        }
+      ],
+      "verified": "chua-duyet",
+      "groups": 1,
+      "notes": []
+    }
+  ]
+}
