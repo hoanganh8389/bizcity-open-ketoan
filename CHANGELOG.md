@@ -12,14 +12,23 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sửa trùng số migration 0080: gói K3 đổi sang 0081 / 0082 (PHASE-029) <!-- [2026-11-08 11:33 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — sửa trùng số 0080 -->
+
+- **Sửa:** PHASE-031 W2a (#159) và gói K3 (#165) cùng merge với số 0080, `main` đỏ `SC-DATA-1`. K3 merge sau nên đổi: `0080_nguoi_tao_su_viec_bat_buoc.sql` → `0081_…`, `0081_khoa_ky_o_csdl.sql` → `0082_…`. `0080_kiem_chinh_sach_su_viec.sql` (W2a) giữ nguyên.
+- **Đổi:** `RENAMED` ở `migrate.ts` thêm hai cặp tên: bản cài đã áp tên cũ chỉ ghi nhận tên mới, **không chạy lại** (chạy lại sẽ lỗi vì hàm và trigger đã có). Nội dung hai migration không đổi.
+- **Thêm:** hai ca ở `migrate-rename.test.ts` (đã áp tên cũ thì không chạy lại; thư mục không còn số trùng).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy `npm run db:migrate` như thường. Bản cài đã kéo `main` trong khoảng 2026-11-08 và đã áp tên cũ sẽ tự ghi nhận tên mới.
+- **Bảo mật:** không.
+
 ### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 10:31 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
 
-- **Thêm:** migration `0081_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.
-- **Đổi:** migration `0080_nguoi_tao_su_viec_bat_buoc.sql` — `accounting_events.created_by` NOT NULL và không rỗng. `eventStore.saveVersion` (khấu hao, giá vốn, khoá sổ…) ghi `auth.actor` khi không truyền người tạo.
+- **Thêm:** migration `0082_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.
+- **Đổi:** migration `0081_nguoi_tao_su_viec_bat_buoc.sql` — `accounting_events.created_by` NOT NULL và không rỗng. `eventStore.saveVersion` (khấu hao, giá vốn, khoá sổ…) ghi `auth.actor` khi không truyền người tạo.
 - **Sửa:** sự việc do Kernel tự lập không còn rỗng người tạo (trước: 1.484 / 68.923 dòng trên `ketoan_test`, toàn bộ khấu hao và giá vốn).
 - **Thay đổi định khoản:** không. Không đổi bút toán nào.
-- **Nâng cấp cần làm:** chạy migration 0080, 0081. 0080 điền dòng rỗng bằng `system:<doc_type>`; gặp người tạo là chuỗi trắng thì **dừng** bằng câu tiếng Việt, không tự sửa — xem và ghi đúng người tạo rồi chạy lại. Đường lui: `DROP NOT NULL` + bỏ ràng buộc (0080), `DROP TRIGGER` (0081).
-- **Bảo mật:** 0080 tắt riêng trigger `accounting_events_no_delete` trong chính giao dịch migration (khoá độc quyền bảng) chỉ để điền dòng rỗng; người lập đã có giá trị vẫn không đổi được.
+- **Nâng cấp cần làm:** chạy migration 0081, 0082. 0081 điền dòng rỗng bằng `system:<doc_type>`; gặp người tạo là chuỗi trắng thì **dừng** bằng câu tiếng Việt, không tự sửa — xem và ghi đúng người tạo rồi chạy lại. Đường lui: `DROP NOT NULL` + bỏ ràng buộc (0081), `DROP TRIGGER` (0082).
+- **Bảo mật:** 0081 tắt riêng trigger `accounting_events_no_delete` trong chính giao dịch migration (khoá độc quyền bảng) chỉ để điền dòng rỗng; người lập đã có giá trị vẫn không đổi được.
 
 ### Không còn mật khẩu viết sẵn trong mã: SC-SEC-5, mật khẩu công cụ, mật khẩu quản trị ban đầu (PHASE-027, CK-3 + Q027-5) <!-- [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3 -->
 

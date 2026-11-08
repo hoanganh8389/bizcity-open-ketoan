@@ -25,8 +25,8 @@
 
 ## 3. Đường lui
 
-- **0080 (`created_by NOT NULL`)**: `ALTER TABLE accounting_events ALTER COLUMN created_by DROP NOT NULL` trả lại như cũ. Các dòng đã điền `system:<doc_type>` giữ nguyên; đó là thông tin đúng, không cần gỡ.
-- **0081 (trigger khoá kỳ)**: `DROP TRIGGER`. Không đổi dòng nào.
+- **0081 (`created_by NOT NULL`)**: `ALTER TABLE accounting_events ALTER COLUMN created_by DROP NOT NULL` trả lại như cũ. Các dòng đã điền `system:<doc_type>` giữ nguyên; đó là thông tin đúng, không cần gỡ.
+- **0082 (trigger khoá kỳ)**: `DROP TRIGGER`. Không đổi dòng nào.
 - Cả hai không đổi bút toán đã ghi ([R-KER-4](../../rules/RULE-KERNEL.md)).
 
 ## 4. Golden
@@ -34,7 +34,7 @@
 | Mã | Đạt khi |
 |---|---|
 | T029-K3-1 | Mọi sự việc mới (chứng từ nhận từ nguồn, khấu hao, giá vốn, khoá sổ) có `created_by` khác rỗng |
-| T029-K3-2 | Migration 0080 trên CSDL có sự việc rỗng `created_by`: điền `system:<doc_type>`, rồi `NOT NULL`. Chèn rỗng sau đó bị CSDL từ chối |
+| T029-K3-2 | Migration 0081 trên CSDL có sự việc rỗng `created_by`: điền `system:<doc_type>`, rồi `NOT NULL`. Chèn rỗng sau đó bị CSDL từ chối |
 | T029-K3-3 | Chèn thẳng (bỏ qua ứng dụng) một bút toán vào kỳ đã khoá chung → CSDL từ chối, mã `PERIOD_LOCKED` |
 | T029-K3-4 | Khoá riêng một chi nhánh / một loại chứng từ chỉ chặn đúng chi nhánh / loại đó |
 | T029-K3-5 | Mở khoá kỳ (xoá dòng khoá) → ghi lại được; cặp bút toán đảo cho kỳ đang mở không bị chặn |
