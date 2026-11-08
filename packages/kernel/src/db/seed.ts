@@ -2,6 +2,7 @@
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
 // [2026-10-30 10:52 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — cấu hình định khoản (thuế, lý do, nhóm hạch toán, hình thức TT, ngầm định) chuyển sang gói nền db/packs/vn-tt99-nen, cài bằng installPack baseline (S012-3b, Q012-1).
+// [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — Q027-5 (S027-5): SEED_ADMIN_PASSWORD không có mặc định trong mã — chưa đặt thì tự sinh và in một lần (SC-SEC-5)
 // [2026-11-01 04:39 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — dời từ apps/api/src/db/seed.ts sang packages/kernel (@bizcity/kernel, D010-7 chặng 3); import Platform qua @bizcity/platform
 /**
  * Dữ liệu khởi tạo cho một đơn vị mới.
@@ -16,7 +17,7 @@
  *   SEED_TENANT_CODE   mã đơn vị            (mặc định "demo")
  *   SEED_TENANT_NAME   tên đơn vị
  *   SEED_ADMIN_EMAIL   email quản trị       (mặc định admin@ketoan.local)
- *   SEED_ADMIN_PASSWORD mật khẩu quản trị   (mặc định "Admin@123", nhớ đổi)
+ *   SEED_ADMIN_PASSWORD mật khẩu quản trị   (bỏ trống = tự sinh và in một lần khi tạo người quản trị; nhớ đổi sau khi đăng nhập)
  *   SEED_API_KEY       khoá API cố định cho tích hợp (bỏ trống = sinh ngẫu nhiên và in ra)
  */
 import { readFile } from 'node:fs/promises';
@@ -24,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, closeDb } from '@bizcity/platform/db/client';
 import { runMigrations } from '@bizcity/platform/db/migrate';
+import { randomBytes } from 'node:crypto';
 import { generateApiKey, hashApiKey, hashPassword } from '@bizcity/platform/core/security/password';
 import { PACKS_DIR, SEEDS_DIR } from '@bizcity/platform/db/paths';
 import { installPack, parsePack } from '../modules/posting-config/pack.js';
@@ -88,11 +90,21 @@ const ASSET_CATEGORIES = [
   { code: 'TRUOC', name: 'Chi phí trả trước (thuê nhà, bảo hiểm…)', kind: 'prepaid', asset_account: null, depreciation_account: '24218', expense_account: '64278', useful_life_months: 12 },
 ];
 
+/**
+ * Mật khẩu quản trị ban đầu: lấy từ SEED_ADMIN_PASSWORD; bỏ trống thì tự sinh (16 ký tự, đủ chữ hoa / thường / số / ký hiệu).
+ * Không có mật khẩu viết sẵn trong mã: mật khẩu ai đọc repo cũng biết thì bản cài nào quên đổi cũng mở cửa (Q027-5).
+ */
+export function initialAdminPassword(env: NodeJS.ProcessEnv = process.env): { password: string; generated: boolean } {
+  const given = env.SEED_ADMIN_PASSWORD?.trim();
+  if (given) return { password: given, generated: false };
+  return { password: `Bc${randomBytes(9).toString('base64url')}#7`, generated: true };
+}
+
 export async function seed(): Promise<void> {
   const tenantCode = process.env.SEED_TENANT_CODE ?? 'demo';
   const tenantName = process.env.SEED_TENANT_NAME ?? 'Công ty Demo';
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@ketoan.local').toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'Admin@123';
+  const admin = initialAdminPassword();
 
   await db.transaction().execute(async (trx) => {
     // Đơn vị
@@ -106,8 +118,10 @@ export async function seed(): Promise<void> {
     // Người dùng quản trị
     const user = await trx.selectFrom('users').select('id').where('tenant_id', '=', tid).where('email', '=', adminEmail).executeTakeFirst();
     if (!user) {
-      await trx.insertInto('users').values({ tenant_id: tid, email: adminEmail, full_name: 'Quản trị', password_hash: await hashPassword(adminPassword), role: 'owner' }).execute();
-      console.log(`+ Người dùng ${adminEmail} (mật khẩu: ${adminPassword} — hãy đổi)`);
+      await trx.insertInto('users').values({ tenant_id: tid, email: adminEmail, full_name: 'Quản trị', password_hash: await hashPassword(admin.password), role: 'owner' }).execute();
+      console.log(admin.generated
+        ? `+ Người dùng ${adminEmail} — mật khẩu tự sinh (chỉ in lần này, lưu lại rồi đổi sau khi đăng nhập): ${admin.password}`
+        : `+ Người dùng ${adminEmail} (mật khẩu lấy từ SEED_ADMIN_PASSWORD — hãy đổi sau khi đăng nhập)`);
     }
 
     // Khoá API tích hợp
