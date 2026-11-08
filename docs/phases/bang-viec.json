@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 254
+      "count": 255
     }
   ],
   "items": [
@@ -517,15 +517,9 @@
       "phase": "PHASE-004",
       "title": "Đường E2 có điều kiện (D-R1-1): chốt (trước hết ở 00-MASTER-PLAN, sau đó đưa vào RULE-LEDGER khi dòng giữ chỗ sửa trùng 0080 đã nhả) danh sách trường được sửa …",
       "priority": null,
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-004-s004-13-e2-audit",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-13 — E2 bảy cột ghi auditlogs trước / sau (K1), theo chữ chốt PHASE-004 · 20 D004-…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 25
     },
