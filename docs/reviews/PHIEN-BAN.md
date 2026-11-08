@@ -1,7 +1,7 @@
 # Phase → phiên bản Core: đóng gì, khi nào, nhật ký Kernel theo phiên bản
 <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — bản đồ 31 phase vào sáu phiên bản v0.1 → v1.0, điều kiện đóng từng phiên bản (cổng R-REL-4 + review ĐẠT + checklist), nhật ký Kernel K0–K3 theo phiên bản; trạng thái: ĐỀ XUẤT chờ chủ dự án duyệt nhóm phase -->
 
-> **Trạng thái: Đề xuất** (nhóm phase vào phiên bản chờ chủ dự án duyệt; đánh số theo [standard/VERSIONING.md](../standard/VERSIONING.md), phát hành theo [RULE-RELEASE](../rules/RULE-RELEASE.md)).
+> **Trạng thái: Đã duyệt nhóm phase → phiên bản (chủ dự án, 2026-11-08)** <!-- [2026-11-08 01:21 PM Johnny Chu - Chu Hoàng Anh] REVIEW — chủ dự án duyệt nhóm phase vào sáu phiên bản --> (việc đóng từng phiên bản vẫn theo §3; đánh số theo [standard/VERSIONING.md](../standard/VERSIONING.md), phát hành theo [RULE-RELEASE](../rules/RULE-RELEASE.md)).
 > Hôm nay `package.json` gốc, `packages/kernel`, `packages/platform`, `packages/contracts` đều `0.1.0`; **chưa có tag phát hành nào**; toàn bộ thay đổi nằm trong `## [Chưa phát hành]` của `CHANGELOG.md`. Tệp này cho mọi người thấy **một phase đóng thì đi vào phiên bản nào**, và **phiên bản đóng cần gì**, để cộng đồng làm song song mà vẫn biết mình đang góp vào bản nào.
 
 ## 1. Vì sao gom phase thành phiên bản
@@ -54,4 +54,5 @@ Mỗi dòng: mức K lớn nhất, thay đổi định khoản có / không, nâ
 
 ## Nhật ký tệp
 
-- **2026-11-08** — khởi tạo (đề xuất) sau review R1; chờ chủ dự án duyệt nhóm phase và tên phiên bản.
+- **2026-11-08** — khởi tạo (đề xuất) sau review R1.
+- **2026-11-08 01:21 PM** — chủ dự án duyệt nhóm phase → phiên bản v0.1.0 … v1.0.0 như §2. RV-R1-12, RV-R1-14 vẫn là câu hỏi mở cho chủ dự án (chưa quyết).

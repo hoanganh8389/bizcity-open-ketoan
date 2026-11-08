@@ -1,5 +1,5 @@
 {
-  "$comment": "[2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — bizcity_review_board@1: bản máy đọc của bộ review theo nhịp (docs/reviews/). Trục và thang theo TIEU-CHI.md v1.0; điểm và phát hiện của từng review chỉ thêm, không sửa; phiên bản theo PHIEN-BAN.md (đề xuất). Không ghi giờ sinh để cùng nguồn luôn ra cùng tệp.",
+  "$comment": "[2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — bizcity_review_board@1: bản máy đọc của bộ review theo nhịp (docs/reviews/). Trục và thang theo TIEU-CHI.md v1.0; điểm và phát hiện của từng review chỉ thêm, không sửa; phiên bản theo PHIEN-BAN.md (nhóm phase chủ dự án duyệt 2026-11-08). Không ghi giờ sinh để cùng nguồn luôn ra cùng tệp.",
   "contract": "bizcity_review_board@1",
   "version": "0.1.0-draft",
   "criteriaVersion": "1.0",

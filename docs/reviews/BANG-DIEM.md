@@ -43,7 +43,7 @@ Nền móng 01–17 (`nen-mong.json`): 1 đạt (08 Command & Event Contracts) �
 
 ## 3. Phase × phiên bản × trạng thái
 
-Trạng thái phase chép từ [phases/README.md](../phases/README.md) tại ngày review (không phải nguồn). Phiên bản theo [PHIEN-BAN.md](PHIEN-BAN.md) (đề xuất, chờ chủ dự án duyệt).
+Trạng thái phase chép từ [phases/README.md](../phases/README.md) tại ngày review (không phải nguồn). Phiên bản theo [PHIEN-BAN.md](PHIEN-BAN.md) (chủ dự án duyệt nhóm phase 2026-11-08).
 
 | Phiên bản | Phase | Trạng thái phase (2026-11-08) | Phát hiện R1 chạm vào | Đóng được? |
 |---|---|---|---|---|
