@@ -1,0 +1,60 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.can-cu-phap-ly",
+  "kind": "code-list",
+  "title": "Căn cứ thử",
+  "description": "Ca tự kiểm basis key",
+  "version": "1.0.0",
+  "released": "2026-11-08",
+  "contentHash": "sha256:fe25f022e7852d7e5ef2da9ece60ed0f30a83b81b51d9b882d3c8f4f249d9e8c",
+  "owner": "Nhóm Lõi",
+  "sources": [
+    {
+      "title": "tự lập",
+      "kind": "internal"
+    }
+  ],
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "n"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "n": {
+        "type": "integer"
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{name}",
+    "search": [
+      "code",
+      "name"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-08",
+      "hash": "sha256:fe25f022e7852d7e5ef2da9ece60ed0f30a83b81b51d9b882d3c8f4f249d9e8c",
+      "notes": "bản đầu"
+    }
+  ],
+  "items": [
+    {
+      "code": "vn.law.88-2015-qh13",
+      "name": "Luật Kế toán (88/2015/QH13)",
+      "aliases": [
+        "LKT"
+      ],
+      "status": "active",
+      "since": "1.0.0",
+      "verified": false,
+      "payload": {
+        "n": 1
+      }
+    }
+  ]
+}

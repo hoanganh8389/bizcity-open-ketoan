@@ -8,8 +8,8 @@
 | Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 139 |
-| Chờ đủ tín hiệu | 51 |
+| Chưa ai nhận | 138 |
+| Chờ đủ tín hiệu | 52 |
 | Hoãn | 1 |
 | Xong | 255 |
 | **Tổng** | **483** |
@@ -65,7 +65,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (139)
+## Chưa ai nhận (138)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -195,7 +195,6 @@
 | [S030-33](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L40) | PHASE-030 | Golden T030-GATE-1..4 (21 §5) | P1 | — |
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
-| [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
 | [S030-50](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L58) | PHASE-030 | B4 — CLI npx bizcity library search / check / new / diff + skill use-bizcity-library (26 §10) | P1 | — |
 | [S030-51](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L59) | PHASE-030 | B5 — gắn vào action (ctx.libraries, bizcitymodule@1 1.3.0 libraries[]) và cửa nạp (trường ↔ thư viện, chữ chố… | P1 | — |
 | [S030-52](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L60) | PHASE-030 | Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không … | P1 | — |
@@ -209,7 +208,7 @@
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
-## Chờ đủ tín hiệu (51)
+## Chờ đủ tín hiệu (52)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -263,6 +262,7 @@
 | [S030-30](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L37) | PHASE-030 | Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có … | P1 | — |
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
+| [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 
 ## Hoãn (1)

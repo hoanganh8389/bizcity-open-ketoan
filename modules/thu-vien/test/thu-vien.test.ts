@@ -1,6 +1,6 @@
 /** Logic thuần của màn Kho thư viện: điều kiện đọc bằng lời, độ tươi, sức khoẻ, ô Kiểm thử. */
 import { describe, expect, it } from 'vitest';
-import { attention, conditionText, freshnessDays, healthSummary, parseTestInput, shortHash, showValue, sourceStatus, usagePct } from '../web/lib/thu-vien';
+import { attention, conditionText, freshnessDays, healthSummary, parseTestInput, shortHash, showValue, sourceStatus, usagePct, attestationState, basisList } from '../web/lib/thu-vien';
 
 describe('Kho thư viện — logic màn', () => {
   it('điều kiện khai báo đọc bằng lời', () => {
@@ -44,5 +44,23 @@ describe('Kho thư viện — số liệu sử dụng (B2)', () => {
     expect(sourceStatus({ pass: 999, warn: 0, block: 1, deprecated: 2 }).badge).toBe('badge-warn');
     expect(sourceStatus({ pass: 9, warn: 1, block: 0, deprecated: 0 })).toEqual({ badge: 'badge-warn', text: 'cảnh báo 10 % lượt' });
     expect(sourceStatus({ pass: 5, warn: 0, block: 0, deprecated: 0 }).badge).toBe('badge-ok');
+  });
+});
+
+describe('Kho thư viện — căn cứ và xác nhận (B3a)', () => {
+  it('nhãn xác nhận: chưa / đã gỡ / hết hiệu lực / đã đối chiếu', () => {
+    const base = { code: 'x', version: '1.0.0', itemHash: 'h', by: 'u', at: '2026-11-08T00:00:00Z', reason: 'r', evidenceId: '1' };
+    expect(attestationState(undefined).text).toBe('chưa xác nhận');
+    expect(attestationState({ ...base, attested: false, valid: false }).text).toBe('đã gỡ xác nhận');
+    expect(attestationState({ ...base, attested: true, valid: false })).toEqual({ badge: 'badge-warn', text: 'hết hiệu lực — mục đã đổi sau bản 1.0.0' });
+    expect(attestationState({ ...base, attested: true, valid: true }).badge).toBe('badge-ok');
+  });
+
+  it('căn cứ của mục gộp với căn cứ từng khoảng, không lặp', () => {
+    const item = {
+      basis: [{ ref: 'Luật Kế toán', key: 'LKT', verified: false }],
+      effective: [{ basis: [{ ref: 'NĐ 73/2024', verified: false }] }, { basis: [{ ref: 'NĐ 73/2024', verified: false }, { ref: 'Luật Kế toán', key: 'LKT', verified: false }] }],
+    };
+    expect(basisList(item).map((b) => b.ref)).toEqual(['Luật Kế toán', 'NĐ 73/2024']);
   });
 });
