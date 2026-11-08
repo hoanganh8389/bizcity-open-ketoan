@@ -158,6 +158,12 @@ Skill mới ở `skills/use-bizcity-library/SKILL.md`, cài được sang dự �
 
 Skill nêu rõ: chỉ báo "xong" khi `library check` ra PASS và `selfcheck --only SC-LIB` ĐẠT — SKIP không phải PASS (cùng luật với `event check`).
 
+### 10.1 Chữ chốt B4 (S030-50) <!-- [2026-11-08 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-50: CLI library + skill use-bizcity-library -->
+
+- `library list`, `library search`, `library new`, `library diff` chạy **ngoại tuyến** trên `libraries/*/library.json` (diff so với bản trên `origin/main`, phân loại thay đổi → bản nên lên: major khi bỏ / đổi nghĩa mục, minor khi thêm mục / khoảng hiệu lực / ngừng dùng, patch khi chỉ đổi chữ).
+- `library check` dùng **đúng bộ kiểm của Core**, không chép luật vào CLI: có `BIZCITY_SERVER` + `BIZCITY_API_KEY` → gọi `core.library.validate`; không có → dùng bản dựng `packages/platform/dist` (`npm run build -w @bizcity/platform`); không có cả hai → **SKIP** (SKIP không phải PASS). Kết luận PASS (0) · FAIL (1, có chặn) · SKIP (2) · WARN (3, có cảnh báo).
+- Skill `skills/use-bizcity-library/SKILL.md` dạy bốn việc (tìm · kiểm · thêm · cập nhật / thêm căn cứ); chỉ báo "xong" khi `library check` PASS và `selfcheck --only SC-LIB` ĐẠT; không đoán mã, nghĩa mã lấy từ `npx bizcity explain`. Cài sang dự án khác bằng `npx bizcity skills install` như các skill có sẵn.
+
 ## 11. Đợt và việc
 
 | Mã | Việc | Phụ thuộc |
