@@ -1,6 +1,7 @@
 // [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 (D026-3): kiểu của entity_codes và resolveEntity — mã có phiên bản cho đối tượng / chi nhánh / kho
+// [2026-11-08 05:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: đổi số migration 0083 → 0085 khi gộp main (0083 thuộc S030-48, 0084 thuộc PHASE-031 W2c — so-tiep-theo kiem)
 /**
- * MÃ THỰC THỂ (entity_codes, 0083). Đối tượng, chi nhánh, kho giữ bảng riêng với `id` bất biến; mã là thứ đổi được và có hiệu lực theo
+ * MÃ THỰC THỂ (entity_codes, 0085). Đối tượng, chi nhánh, kho giữ bảng riêng với `id` bất biến; mã là thứ đổi được và có hiệu lực theo
  * ngày. `resolveEntity(type, ref, asOf)` trả định danh và mã hiện hành tại ngày — chứng từ cũ ghi bằng mã cũ vẫn tra ra đúng thực thể.
  * Chỉ ĐỌC. Mã lỗi viết thẳng ở đây (không phải mã chẩn đoán của cửa nạp): người gọi quyết định xử lý.
  */

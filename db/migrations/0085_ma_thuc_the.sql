@@ -1,6 +1,7 @@
+-- [2026-11-08 05:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: đổi số migration 0083 → 0085 khi gộp main (0083 thuộc S030-48, 0084 thuộc PHASE-031 W2c — so-tiep-theo kiem)
 -- [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 (D026-3, MD-001): entity_codes — mã có phiên bản cho đối tượng / chi nhánh / kho — chữ chốt docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/20-KIEN-TRUC.md §2
 -- =============================================================================
--- 0083 Mã có phiên bản cho đối tượng (partners), chi nhánh (branches), kho (warehouses).
+-- 0085 Mã có phiên bản cho đối tượng (partners), chi nhánh (branches), kho (warehouses).
 --   Cùng khuôn item_codes (0065): bảng chỉ thêm; UPDATE duy nhất = đóng valid_to (và sửa ghi chú); chặn chồng hiệu lực cùng
 --   (đơn vị, loại thực thể, loại mã, mã). `id` của bảng thực thể là định danh bất biến; cột `code` hiện có thành ẢNH CHỤP mã hiện hành
 --   (giữ cho tương thích), trigger giữ entity_codes khớp MỌI đường ghi (form, Excel, API, module…) — không cửa phụ.
@@ -32,7 +33,7 @@ CREATE OR REPLACE FUNCTION bizcity_entity_truncate_guard() RETURNS trigger LANGU
 BEGIN
   RAISE EXCEPTION 'Không TRUNCATE bảng mã thực thể (entity_codes): mã là lịch sử, chỉ thêm.' USING ERRCODE = 'integrity_constraint_violation';
 END $$;
-COMMENT ON FUNCTION bizcity_entity_truncate_guard() IS 'Chặn TRUNCATE entity_codes (0083, D026-3).';
+COMMENT ON FUNCTION bizcity_entity_truncate_guard() IS 'Chặn TRUNCATE entity_codes (0085, D026-3).';
 CREATE TRIGGER entity_codes_no_truncate BEFORE TRUNCATE ON entity_codes FOR EACH STATEMENT EXECUTE FUNCTION bizcity_entity_truncate_guard();
 
 CREATE OR REPLACE FUNCTION bizcity_entity_codes_guard() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -68,7 +69,7 @@ BEGIN
   END IF;
   RAISE EXCEPTION 'Mã thực thể chỉ thêm: không xoá, chỉ đóng hiệu lực (valid_to).' USING ERRCODE = 'integrity_constraint_violation';
 END $$;
-COMMENT ON FUNCTION bizcity_entity_codes_guard() IS 'Bất biến entity_codes (0083): thực thể phải có thật cùng đơn vị, chỉ thêm, UPDATE duy nhất là đóng valid_to, chặn chồng hiệu lực cùng (đơn vị, loại thực thể, loại mã, mã).';
+COMMENT ON FUNCTION bizcity_entity_codes_guard() IS 'Bất biến entity_codes (0085): thực thể phải có thật cùng đơn vị, chỉ thêm, UPDATE duy nhất là đóng valid_to, chặn chồng hiệu lực cùng (đơn vị, loại thực thể, loại mã, mã).';
 CREATE TRIGGER entity_codes_guard BEFORE INSERT OR UPDATE OR DELETE ON entity_codes FOR EACH ROW EXECUTE FUNCTION bizcity_entity_codes_guard();
 
 -- Định danh của thực thể không đổi (id là khoá bất biến; cột code mới là thứ đổi được).
@@ -79,7 +80,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_entity_identity_guard() IS 'Không đổi id / tenant_id của đối tượng, chi nhánh, kho (0083, D026-3).';
+COMMENT ON FUNCTION bizcity_entity_identity_guard() IS 'Không đổi id / tenant_id của đối tượng, chi nhánh, kho (0085, D026-3).';
 CREATE TRIGGER partners_identity_guard   BEFORE UPDATE OF id, tenant_id ON partners   FOR EACH ROW EXECUTE FUNCTION bizcity_entity_identity_guard();
 CREATE TRIGGER branches_identity_guard   BEFORE UPDATE OF id, tenant_id ON branches   FOR EACH ROW EXECUTE FUNCTION bizcity_entity_identity_guard();
 CREATE TRIGGER warehouses_identity_guard BEFORE UPDATE OF id, tenant_id ON warehouses FOR EACH ROW EXECUTE FUNCTION bizcity_entity_identity_guard();
@@ -118,20 +119,20 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
-COMMENT ON FUNCTION bizcity_entity_codes_sync() IS 'Giữ entity_codes khớp cột code của partners / branches / warehouses ở mọi đường ghi (0083): thêm → mã đầu; đổi code → đóng cũ + thêm mới; xoá → đóng mã.';
+COMMENT ON FUNCTION bizcity_entity_codes_sync() IS 'Giữ entity_codes khớp cột code của partners / branches / warehouses ở mọi đường ghi (0085): thêm → mã đầu; đổi code → đóng cũ + thêm mới; xoá → đóng mã.';
 CREATE TRIGGER partners_entity_codes_sync   AFTER INSERT OR UPDATE OF code OR DELETE ON partners   FOR EACH ROW EXECUTE FUNCTION bizcity_entity_codes_sync();
 CREATE TRIGGER branches_entity_codes_sync   AFTER INSERT OR UPDATE OF code OR DELETE ON branches   FOR EACH ROW EXECUTE FUNCTION bizcity_entity_codes_sync();
 CREATE TRIGGER warehouses_entity_codes_sync AFTER INSERT OR UPDATE OF code OR DELETE ON warehouses FOR EACH ROW EXECUTE FUNCTION bizcity_entity_codes_sync();
 
 -- ── Điền ban đầu (chạy lại an toàn: chỉ thực thể chưa có mã đang mở) ───────────────────────────────────────────────
 INSERT INTO entity_codes (tenant_id, entity_type, entity_id, kind, code, created_by, note)
-SELECT p.tenant_id, 'partner', p.id, 'code', p.code, 'system:backfill-0083', 'điền từ cột code lúc thêm bảng' FROM partners p
+SELECT p.tenant_id, 'partner', p.id, 'code', p.code, 'system:backfill-0085', 'điền từ cột code lúc thêm bảng' FROM partners p
  WHERE NOT EXISTS (SELECT 1 FROM entity_codes e WHERE e.tenant_id = p.tenant_id AND e.entity_type = 'partner' AND e.entity_id = p.id AND e.kind = 'code' AND e.valid_to IS NULL);
 INSERT INTO entity_codes (tenant_id, entity_type, entity_id, kind, code, created_by, note)
-SELECT b.tenant_id, 'branch', b.id, 'code', b.code, 'system:backfill-0083', 'điền từ cột code lúc thêm bảng' FROM branches b
+SELECT b.tenant_id, 'branch', b.id, 'code', b.code, 'system:backfill-0085', 'điền từ cột code lúc thêm bảng' FROM branches b
  WHERE NOT EXISTS (SELECT 1 FROM entity_codes e WHERE e.tenant_id = b.tenant_id AND e.entity_type = 'branch' AND e.entity_id = b.id AND e.kind = 'code' AND e.valid_to IS NULL);
 INSERT INTO entity_codes (tenant_id, entity_type, entity_id, kind, code, created_by, note)
-SELECT w.tenant_id, 'warehouse', w.id, 'code', w.code, 'system:backfill-0083', 'điền từ cột code lúc thêm bảng' FROM warehouses w
+SELECT w.tenant_id, 'warehouse', w.id, 'code', w.code, 'system:backfill-0085', 'điền từ cột code lúc thêm bảng' FROM warehouses w
  WHERE NOT EXISTS (SELECT 1 FROM entity_codes e WHERE e.tenant_id = w.tenant_id AND e.entity_type = 'warehouse' AND e.entity_id = w.id AND e.kind = 'code' AND e.valid_to IS NULL);
 
 -- ── Cô lập đơn vị (RLS) như item_codes ──────────────────────────────────────────────────────────────────────────────
@@ -139,7 +140,7 @@ ALTER TABLE entity_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE entity_codes FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON entity_codes USING (bizcity_tenant_visible(tenant_id)) WITH CHECK (bizcity_tenant_visible(tenant_id));
 
-COMMENT ON TABLE entity_codes IS 'Mã có phiên bản của đối tượng / chi nhánh / kho (0083, D026-3): một mã tại một ngày trỏ một thực thể; chỉ thêm, đổi mã = đóng cũ + thêm mới. Cột code của bảng thực thể là ảnh chụp mã hiện hành, trigger giữ khớp.';
+COMMENT ON TABLE entity_codes IS 'Mã có phiên bản của đối tượng / chi nhánh / kho (0085, D026-3): một mã tại một ngày trỏ một thực thể; chỉ thêm, đổi mã = đóng cũ + thêm mới. Cột code của bảng thực thể là ảnh chụp mã hiện hành, trigger giữ khớp.';
 COMMENT ON COLUMN entity_codes.id IS 'Khoá nội bộ.';
 COMMENT ON COLUMN entity_codes.tenant_id IS 'Đơn vị (cùng đơn vị với thực thể).';
 COMMENT ON COLUMN entity_codes.entity_type IS 'partner (đối tượng) · branch (chi nhánh) · warehouse (kho).';

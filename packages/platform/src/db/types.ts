@@ -24,6 +24,7 @@
 // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: module_registry, tenant_modules, event_deliveries.status 'skipped' (0052)
 // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10: schema_migrations.module (0053)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: intake_inbox (0054)
+// [2026-11-08 05:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: đổi số migration 0083 → 0085 khi gộp main (0083 thuộc S030-48, 0084 thuộc PHASE-031 W2c — so-tiep-theo kiem)
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1767,7 +1768,7 @@ export interface ItemCodesTable {
   note: Generated<string>;
 }
 
-/** Mã có phiên bản của đối tượng / chi nhánh / kho (0083, D026-3). */
+/** Mã có phiên bản của đối tượng / chi nhánh / kho (0085, D026-3). */
 export interface EntityCodesTable {
   id: Generated<string>;
   tenant_id: string;
