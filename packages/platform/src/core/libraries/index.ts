@@ -78,3 +78,6 @@ export function libraryReadme(id: string): string | null {
   const f = path.join(LIBRARIES_DIR, id, 'README.md');
   return getLibrary(id) && existsSync(f) ? readFileSync(f, 'utf8') : null;
 }
+
+// [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48: bộ đếm lượt dùng thư viện (B2)
+export { flushLibraryUsage, libraryUsage, normalizeSource, outcomeOf, pendingUsageRows, recordLibraryUsage, resetLibraryUsage, shouldFlush, type UsageReport } from './usage.js';

@@ -35,7 +35,7 @@ POST /api/v1/libraries/vn.tham-so-phap-ly/validate
 { "input": { "code": "LUONG_CO_SO", "value": 1800000 }, "at": "2026-03-01" }
 ```
 
-Gửi `input` (một) hoặc `inputs` (tối đa 200), không cả hai. `input` là một mã (`"2026-02-16"`) hoặc đối tượng `{ code, value?, fields?, … }`; các trường khác đi vào `input.*` của luật khai báo.
+Gửi `input` (một) hoặc `inputs` (tối đa 200), không cả hai. `source` (tuỳ chọn): module / action / kênh gọi (vd `modules/mua-hang`) để bảng đánh giá biết ai dùng; không gửi thì là `api`. `input` là một mã (`"2026-02-16"`) hoặc đối tượng `{ code, value?, fields?, … }`; các trường khác đi vào `input.*` của luật khai báo.
 
 ```json
 { "results": [ {
@@ -52,7 +52,18 @@ Gửi `input` (một) hoặc `inputs` (tối đa 200), không cả hai. `input` 
 
 `ok` = không có phát hiện `block`. Không ghi gì; Core gợi ý, người dùng quyết. Nghĩa từng mã: [Tra mã phát hiện](../huong-dan/ma-loi/README.md) mục Cổng L, hoặc `GET /api/v1/findings/<mã>`.
 
-## 4. Gọi trong máy chủ
+## 4. Lượt dùng (bảng đánh giá)
+<!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48: core.library.usage -->
+
+Mỗi giá trị đi qua `validate` được **đếm** vào `library_usage_daily` (đơn vị, ngày, thư viện, bản, nguồn, mã mục, kết quả, mã phát hiện). Không lưu giá trị người nhập — mã lạ ghi là `?`. Số đếm gom trong bộ nhớ và ghi theo lượt (≥ 30 giây hoặc ≥ 200 dòng), ghi nốt trước khi đọc và khi máy chủ tắt: đây là số **quan sát**, không phải sự thật kế toán.
+
+```http
+GET /api/v1/libraries/usage?from=2026-10-10&to=2026-11-08&library=vn.tham-so-phap-ly&source=modules/mua-hang
+```
+
+Mặc định 30 ngày tới hôm nay. Trả `total` (qua / cảnh báo / chặn), `byLibrary`, `bySource` (kèm số lượt dùng mã ngừng), `topFindings` (10 mã nhiều nhất), `unknown` (lượt mã lạ theo thư viện × nguồn — ứng viên bổ sung thư viện). Quyền `catalog:read`; MCP chỉ đọc (`core.library.usage`).
+
+## 5. Gọi trong máy chủ
 
 Module, add-in trong cùng tiến trình gọi thẳng bộ kiểm, không qua HTTP:
 
