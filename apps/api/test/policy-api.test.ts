@@ -204,7 +204,7 @@ describe('Tính → nạp → kiểm lại (T031-E2E-1)', () => {
   });
 
   const withRefs = (n: number, extra: Record<string, unknown> = {}) => {
-    const d = saleDoc({ docKey: `e2e:CN01:${n}`, docNo: `E2E${n}`, policyRefs: refs, ...extra }) as ReturnType<typeof saleDoc> & { lines: Record<string, unknown>[] };
+    const d = saleDoc({ docKey: `e2e:CN01:${n}`, docNo: `E2E${n}`, policyRefs: refs, ...extra }) as unknown as { lines: Record<string, unknown>[] } & Record<string, unknown>;
     d.lines[1] = { ...d.lines[1], policyRef: { key: 'E2E-PROMO', version: 1, line: 'gift' } };
     return d;
   };
