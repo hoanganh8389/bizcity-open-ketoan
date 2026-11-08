@@ -34,7 +34,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
 | S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | ✅ 2026-11-08 (#196); POS WP nghe sự kiện ở S031-16 |
 | S031-27 | ~~Đổi số migration W2a `0080` → `0082`~~ — **rút**: phiên PHASE-029 (K3) sửa trùng `0080` bằng cách đổi **số của K3** (`0081`, `0082`), migration W2a giữ `0080`; đổi W2a sang `0082` sẽ trùng `0082_khoa_ky_o_csdl` ([00 §9.7](00-MASTER-PLAN.md)) | W3a | P0 | không | ⛔ rút 2026-11-08 (phiên PHASE-029 đã nhận) |
-| S031-28 | W4a: API đọc — `core.policy.registry`, `core.policy.applications`, `core.policy.tracking`, `core.policy.lineage` ([00 §12](00-MASTER-PLAN.md)); thay hàm SQL `policy_lineage` của S031-21; không migration | W4a | P1 | có | 🟡 chữ chốt 2026-11-09; chưa code |
+| S031-28 | W4a: API đọc — `core.policy.registry`, `core.policy.applications`, `core.policy.tracking`, `core.policy.lineage` ([00 §12](00-MASTER-PLAN.md)); thay hàm SQL `policy_lineage` của S031-21; không migration | W4a | P1 | có | 🟡 code xong trên nhánh `feat/phase-031-w4a-api-doc-chinh-sach` 2026-11-09; màn hình ở W4b |
 
 ## Ca bằng chứng (golden)
 
@@ -89,3 +89,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-09 — chữ chốt W4a ([00 §12](00-MASTER-PLAN.md)): tách W4 — số liệu trước (4 action đọc, 0 migration), màn hình ở W4b; *Thực hiện chương trình* hoãn tới IN-POL-004.
 
 - 2026-11-08 — **W3b vào main (#196)**: `bizcity.policy.published` / `.retired` qua outbox; dòng giữ chỗ W3b nhả (R-FLOW-6). Còn lại của PHASE-031: S031-11 / S031-15 (Rule Contract mua hàng, bán hàng; S031-15 chờ S031-14), W2b (IN-POL-004), W4 (màn hình Chính sách, dashboard), S031-16 (POS WP, repo plugin).
+- 2026-11-09 — W4a code xong trên nhánh: `policy-insight.ts` + bốn action ở `policy.routes.ts` (không migration); `policy-insight.test.ts` 11 ca xanh; phá thử hai chỗ (bộ lọc IN-POL-003 → INS-4 đỏ; kiểm băm → INS-5 đỏ) — bản đầu dữ liệu đối xứng nên chưa bắt được bộ lọc mã, đã thêm chứng từ thứ hai dùng bản cũ. Hợp đồng `bizcity_policy@1` 1.2.0-draft.
