@@ -14,7 +14,7 @@
 
 ** Rút gọn thời gian viết ứng dụng.**
 
-AE dev thay vì phải nghiên cứu nghiệp vụ kế toán từ đầu, chỉ cần init từ open-ketoan, đã có nền móng kế toán, các rule nghiệp vụ chắc chắn, kỷ luật, tin cậy.
+Anh em Dev muốn viết ERP nội bộ, POS, pm bán hàng, CRM , quản lý mua hàng, tài sản, nhân sự cho công ty dùng, chỉ cần init Repo này dùng luôn, không cần phải xây dựng nghiệp vụ kế toán lại từ đầu, bởi vì tất cả kho, bán hàng, mua hàng, nhân sự đều phải ghi và khai báo về kế toán.
 
 > **open-ketoan** là dự án Accounting Core Framework hướng tới một nền tảng kế toán mở đã chuẩn hóa, tuân thủ nguyên tắc kế toán để bất cứ ai cũng có thể tự triển khai, kết nối và phát triển các module nghiệp vụ kinh doanh, bán hàng, các ứng dụng mới nhưng luôn chắc chắn rằng, số liệu kinh doanh, marketing được phản ánh minh bạch, đúng nghiệp vụ kế toán dù bằng việc tự code hay dùng AI-assisted development (*vibe coding*).
 >
