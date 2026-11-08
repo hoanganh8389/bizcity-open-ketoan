@@ -21,6 +21,8 @@ Mỗi mã việc thuộc **đúng một** phase; check **SC-PHASE-1** báo khi t
 - Codebase đáp ứng **khoảng 50%** kiến trúc công bố: G1 77%, G2 60%, G3 0%.
 - Lộ trình 33%, ma trận tuân thủ 59%.
 
+**Review theo nhịp:** cứ 3 phase mở mới thì 1 lần review Core theo 12 trục ở [reviews/](../reviews/README.md); R1 (nền móng, 2026-11-08, PHASE-001 → 031): **ĐẠT có điều kiện** 27/48. Phase đóng đi vào phiên bản nào: [reviews/PHIEN-BAN.md](../reviews/PHIEN-BAN.md). <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — nhịp 3 phase / 1 review, trỏ docs/reviews/ -->
+
 ## Danh sách (chụp 2026-10-30)
 
 Cột "Tiến độ" là trung bình tín hiệu máy của các việc lộ trình trong phase — **sinh bằng `node scripts/tien-do-phase.mjs --write`**, không gõ tay; chấm khi bộ kiểm có CSDL test đã chạy test (`DATABASE_URL`, như job diagnostics của CI), vì tín hiệu `DG-*` cần dữ liệu. Phase không khai việc lộ trình (mở rộng, chờ đưa vào lộ trình) ghi "—": tiến độ đọc ở checklist của phase. <!-- [2026-11-02 06:49 PM Johnny Chu - Chu Hoàng Anh] TIEN-DO — cột Tiến độ sinh từ lộ trình máy đọc. --> Ký hiệu trạng thái: ☐ chưa làm · 🟡 có mã, chưa đủ tín hiệu · ✅ xong · ⛔ chờ chủ / người ngoài nhóm.
