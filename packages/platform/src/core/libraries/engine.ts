@@ -8,6 +8,8 @@
  *   selectorRows(lib, { q, at, group, status, limit })    dòng ô chọn §9
  */
 import crypto from 'node:crypto';
+// [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: bộ kiểm / ô chọn nhận cấu hình đơn vị — ghi đè giá trị tại ngày (D-LIB-8), hạ mức luật thư viện
+import type { LibraryConfig, OverrideEntry } from './settings.js';
 import type {
   Condition, JsonSchema, Library, LibraryFinding, LibraryInput, LibraryItem, LibraryRule, SelectorRow, Suggestion, ValidateResult,
 } from './types.js';
@@ -74,6 +76,11 @@ export const valueSchemaOf = (lib: Library, item: LibraryItem): JsonSchema | und
 /** Khoảng hiệu lực tại ngày (from ≤ at ≤ to). */
 export function effectiveAt(item: LibraryItem, at: string) {
   return item.effective?.find((e) => e.from <= at && (e.to === null || at <= e.to));
+}
+
+/** Khoảng ghi đè của đơn vị có hiệu lực tại ngày (from lớn nhất ≤ at) — S030-49b. */
+export function overrideAt(cfg: LibraryConfig | undefined, code: string, at: string): OverrideEntry | undefined {
+  return (cfg?.overrides?.[code] ?? []).filter((o) => o.from <= at).sort((a, b) => b.from.localeCompare(a.from))[0];
 }
 
 /** Đọc trường theo đường `a.b.c`. */
@@ -177,11 +184,11 @@ function ruleSuggestions(rule: LibraryRule, lib: Library, item: LibraryItem, at:
 }
 
 /** Bảy kiểm chuẩn + luật khai báo của thư viện (hợp đồng §6). Không ghi gì; Core chỉ gợi ý. */
-export function validateAgainstLibrary(lib: Library, raw: LibraryInput, opts: { at?: string; lookup?: (id: string) => Library | undefined } = {}): ValidateResult {
+export function validateAgainstLibrary(lib: Library, raw: LibraryInput, opts: { at?: string; lookup?: (id: string) => Library | undefined; config?: LibraryConfig } = {}): ValidateResult {
   const at = opts.at ?? new Date().toISOString().slice(0, 10);
   const input: Record<string, unknown> = typeof raw === 'string' ? { code: raw } : { ...raw };
   const findings: LibraryFinding[] = [];
-  const extra: { resolved?: string; value?: unknown } = {};
+  const extra: { resolved?: string; value?: unknown; valueSource?: 'library' | 'tenant' } = {};
   const out = (): ValidateResult => ({ ok: !findings.some((f) => f.level === 'block'), library: { id: lib.id, version: lib.version, hash: lib.contentHash }, at, findings, ...extra });
   const code = typeof input.code === 'string' ? input.code.trim() : '';
   if (!code) {
@@ -207,7 +214,13 @@ export function validateAgainstLibrary(lib: Library, raw: LibraryInput, opts: { 
   if (item.status === 'removed') findings.push({ code: 'LIB-REMOVED-001', level: 'block', path: 'code', got: item.code, message: `${item.code} đã bỏ`, suggestions: replacedSuggestion });
   // 3. hiệu lực + giá trị
   if (item.effective?.length) {
-    const e = effectiveAt(item, at);
+    // Ghi đè của đơn vị có hiệu lực tại ngày thắng giá trị thư viện (D-LIB-8); căn cứ ghi rõ là của đơn vị.
+    const ov = overrideAt(opts.config, item.code, at);
+    const lib0 = effectiveAt(item, at);
+    const e = ov
+      ? { from: ov.from, to: null, value: ov.value, basis: [{ ref: `giá trị đơn vị ghi đè: ${ov.reason}`, ...(ov.basisKey ? { key: ov.basisKey } : {}), verified: false }] }
+      : lib0;
+    if (e) extra.valueSource = ov ? 'tenant' : 'library';
     if (!e) {
       const near = [...item.effective].sort((a, b) => Math.abs(Date.parse(a.from) - Date.parse(at)) - Math.abs(Date.parse(b.from) - Date.parse(at)))[0];
       findings.push({
@@ -222,7 +235,7 @@ export function validateAgainstLibrary(lib: Library, raw: LibraryInput, opts: { 
         for (const x of bad) findings.push({ code: 'LIB-SCHEMA-001', level: 'block', path: x.path, got: input.value, message: x.message, suggestions: [{ value: e.value, label: fmt(e.value), why: basisText(e.basis), confidence: 'vua' }] });
         if (!bad.length && canonical(input.value) !== canonical(e.value)) {
           findings.push({
-            code: 'LIB-VALUE-001', level: 'warn', path: 'value', got: input.value, expected: e.value, message: `giá trị khác thư viện tại ngày ${at}`,
+            code: 'LIB-VALUE-001', level: 'warn', path: 'value', got: input.value, expected: e.value, message: ov ? `giá trị khác giá trị đơn vị đang dùng (ghi đè từ ${ov.from}) tại ngày ${at}` : `giá trị khác thư viện tại ngày ${at}`,
             suggestions: [{ value: e.value, label: `${fmt(e.value)} (${rangeText(e)})`, why: basisText(e.basis), confidence: e.basis?.every((b) => b.verified) && item.verified ? 'cao' : 'vua' }],
           });
         }
@@ -237,31 +250,33 @@ export function validateAgainstLibrary(lib: Library, raw: LibraryInput, opts: { 
   if (!item.verified) findings.push({ code: 'LIB-UNVERIFIED-001', level: 'info', path: 'code', got: item.code, message: `${item.code} chưa được ${lib.owner} duyệt`, suggestions: [] });
   // 6. luật khai báo
   for (const r of lib.rules ?? []) {
-    if (evalCondition(r.when, { input, item })) findings.push({ code: r.code, level: r.level, path: 'code', message: r.title, suggestions: ruleSuggestions(r, lib, item, at, opts.lookup) });
+    if (evalCondition(r.when, { input, item })) findings.push({ code: r.code, level: opts.config?.ruleLevels?.[r.code] ?? r.level, path: 'code', message: r.title, suggestions: ruleSuggestions(r, lib, item, at, opts.lookup) });
   }
   return out();
 }
 
 /** Dòng ô chọn (hợp đồng §9): mặc định chỉ active; lọc theo chữ, nhóm, ngày. */
-export function selectorRows(lib: Library, opts: { q?: string; at?: string; group?: string; status?: 'active' | 'deprecated' | 'removed' | 'all'; limit?: number } = {}): { rows: SelectorRow[]; total: number } {
+export function selectorRows(lib: Library, opts: { q?: string; at?: string; group?: string; status?: 'active' | 'deprecated' | 'removed' | 'all'; limit?: number; config?: LibraryConfig } = {}): { rows: SelectorRow[]; total: number } {
   const at = opts.at ?? new Date().toISOString().slice(0, 10);
   const status = opts.status ?? 'active';
   const groupField = lib.selector.group;
   let list = lib.items.filter((i) => (status === 'all' ? i.status !== 'removed' : i.status === status));
   if (opts.group && groupField) list = list.filter((i) => String(pick(i, groupField) ?? '') === opts.group);
-  if (lib.kind === 'param') list = list.filter((i) => !i.effective?.length || effectiveAt(i, at));
+  if (lib.kind === 'param') list = list.filter((i) => !i.effective?.length || effectiveAt(i, at) || overrideAt(opts.config, i.code, at));
   let scored = list.map((i) => ({ i, s: opts.q ? score(lib, i, opts.q) : 1 })).filter((x) => x.s > 0);
   const sortKeys = lib.selector.sort ?? [lib.selector.value];
   scored = scored.sort((a, b) => b.s - a.s || sortKeys.map((k) => String(pick(a.i, k) ?? '').localeCompare(String(pick(b.i, k) ?? ''))).find((x) => x !== 0) || 0);
   const total = scored.length;
   const rows = scored.slice(0, Math.min(opts.limit ?? 50, 500)).map(({ i }): SelectorRow => {
-    const e = effectiveAt(i, at);
+    const ov = overrideAt(opts.config, i.code, at);
+    const e = ov ? { value: ov.value } : effectiveAt(i, at);
     const hint = i.hints?.find((h) => h.kind === 'how' || h.kind === 'why')?.text;
     return {
       value: pick(i, lib.selector.value), label: renderLabel(lib.selector.label, i), deprecated: i.status !== 'active', verified: i.verified, item: i,
       ...(groupField && pick(i, groupField) !== undefined ? { group: String(pick(i, groupField)) } : {}),
       ...(hint ? { hint } : {}),
       ...(lib.selector.showValueAt && e ? { valueAt: e.value } : {}),
+      ...(ov ? { overridden: true } : {}),
     };
   });
   return { rows, total };

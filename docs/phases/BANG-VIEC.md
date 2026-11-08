@@ -5,19 +5,21 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 9 |
+| Đang làm | 11 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 142 |
-| Chờ đủ tín hiệu | 52 |
+| Chưa ai nhận | 140 |
+| Chờ đủ tín hiệu | 51 |
 | Hoãn | 1 |
-| Xong | 257 |
+| Xong | 258 |
 | **Tổng** | **489** |
 
-## Đang làm (9)
+## Đang làm (11)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
+| [S004-14](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L26) | PHASE-004 | Dấu vết ở CSDL cho E2: trigger AFTER UPDATE trên ledgerentries ghi auditlogs trước / sau mọi thay đổi bảy cột… | — | hoanganh8389 (phiên Claude, review-r1) · `fix/phase-004-s004-14-vet-e2-csdl` |
+| [S004-18](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tìn… | — | hoanganh8389 (phiên Claude, review-r1) · `chore/phase-004-s004-18-do-lech-tai-khoan` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S014-15](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L26) | PHASE-014 | W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh ac… | — | hoanganh8389 (phiên Claude, audit-in-action) · `feat/phase-014-audit-in-action` |
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
@@ -65,16 +67,14 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (142)
+## Chưa ai nhận (140)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
 | [S001-11](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L21) | PHASE-001 | CSDL dev áp 0030–0037 | — | — |
-| [S004-14](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L26) | PHASE-004 | Dấu vết ở CSDL cho E2: trigger AFTER UPDATE trên ledgerentries ghi auditlogs trước / sau mọi thay đổi bảy cột… | — | — |
 | [S004-15](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L27) | PHASE-004 | Cảnh báo: chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (sửa đầu bút toán ngoài ứng dụng), số đo + luật cảnh báo, và… | — | — |
 | [S004-16](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L28) | PHASE-004 | Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab "Sửa đầu bút toán" ở Bàn điều tra; bản mẫu HT… | — | — |
 | [S004-17](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L29) | PHASE-004 | E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-… | — | — |
-| [S004-18](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tìn… | — | — |
 | [S005-7](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md#L19) | PHASE-005 | Q-2: kế toán chọn "bản mới nhất" khi định khoản lại (quyền settings:write, lý do, bằng chứng) | — | — |
 | [S011-7](PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md#L18) | PHASE-011 | Extension chạy thật: slot, hook, ctx.actions.call | — | — |
 | [S013-3](PHASE-013-UI-KIT-CHUYEN-MODULE/40-MASTER-CHECKLIST.md#L21) | PHASE-013 | Đợt 1: quy → modules/quy/ (đường thử đầu tiên; phân định lõi / phân hệ, tương thích đường dẫn, dữ liệu) | — | — |
@@ -212,7 +212,7 @@
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
-## Chờ đủ tín hiệu (52)
+## Chờ đủ tín hiệu (51)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -266,7 +266,6 @@
 | [S030-30](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L37) | PHASE-030 | Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có … | P1 | — |
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
-| [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 
 ## Hoãn (1)
@@ -275,6 +274,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (257)
+## Xong (258)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

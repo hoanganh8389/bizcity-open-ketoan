@@ -13,6 +13,10 @@ export interface LibrarySummary {
   owner: string;
   count: number;
   verified: number;
+  /** B3b: thư viện tuỳ chọn, đơn vị có đang dùng, phiên bản cấu hình của đơn vị. */
+  optional?: boolean;
+  enabled?: boolean;
+  configVersion?: number | null;
 }
 
 export type Condition =
@@ -177,3 +181,26 @@ export function basisList(item: Record<string, unknown>): { ref: string; key?: s
   const seen = new Set<string>();
   return [...own, ...eff].filter((b) => { const k = `${b.key ?? ''}|${b.ref}`; if (seen.has(k)) return false; seen.add(k); return true; });
 }
+
+/** Cấu hình thư viện của đơn vị (core.library.config, B3b). */
+export interface LibraryConfig {
+  enabled?: boolean;
+  atPolicy?: 'docDate' | 'today';
+  ruleLevels?: Record<string, 'warn' | 'info'>;
+  overrides?: Record<string, { from: string; value: unknown; reason: string; basisKey?: string }[]>;
+}
+export interface LibraryConfigVersion { version: number; config: LibraryConfig; reason: string; createdBy: string; createdAt: string }
+
+/** Phiếu đề xuất cập nhật thư viện (core.library.proposals, B3b). */
+export interface Proposal {
+  id: string; libraryId: string; itemCode: string | null; kind: 'them-muc' | 'sua-gia-tri' | 'can-cu' | 'bao-sai' | 'ngung-dung'; content: string; basisKey: string | null;
+  status: 'gui' | 'nhan' | 'da-vao' | 'tu-choi' | 'rut'; resolvedVersion: string | null; statusNote: string | null;
+  createdBy: string; createdAt: string; updatedBy: string | null; updatedAt: string | null;
+}
+export const PROPOSAL_KIND_LABEL: Record<Proposal['kind'], string> = {
+  'them-muc': 'thêm mục', 'sua-gia-tri': 'sửa giá trị', 'can-cu': 'thêm / sửa căn cứ', 'bao-sai': 'báo sai', 'ngung-dung': 'ngừng dùng mục',
+};
+export const PROPOSAL_STATUS_LABEL: Record<Proposal['status'], { badge: string; text: string }> = {
+  gui: { badge: 'badge-info', text: 'đã gửi' }, nhan: { badge: 'badge-warn', text: 'Nhóm Lõi đã nhận' }, 'da-vao': { badge: 'badge-ok', text: 'đã vào bản' },
+  'tu-choi': { badge: 'badge-bad', text: 'từ chối' }, rut: { badge: 'badge-gray', text: 'đã rút' },
+};

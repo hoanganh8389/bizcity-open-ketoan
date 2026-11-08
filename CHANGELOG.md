@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### API đọc chính sách: sổ đăng ký, theo dõi thực hiện, truy vết ngược (PHASE-031 W4a, ADR-0031) <!-- [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a -->
+
+- **Thêm:** bốn action đọc `catalog:read` — `GET /api/v1/policy-registry` (+ `/:policyId/applications`), `/policy-tracking`, `/policy-lineage` — đọc `policy_registry` và `bizcity_read.policy_application`; hợp đồng `bizcity_policy@1` 1.2.0-draft mục 11. Test `policy-insight.test.ts` (T031-INS-1..6).
+- **Đổi:** không. Không migration, không bảng tổng hợp.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc, lọc `tenant_id`; khoá API cần `catalog:read`.
+
 ### Cập nhật thông tin đầu bút toán (E2) có nhật ký trước / sau (PHASE-004 S004-13, review R1 RV-R1-14) <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 -->
 
 - **Thêm:** `posting.service.ts` ghi nhật ký `ledger.entry.header_update` mỗi khi định khoản lại chỉ đổi thông tin đầu của một bút toán đã ghi (đường E2): `before` / `after` chỉ gồm các cột **thật sự đổi** trong bảy cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`; `objectType = ledger_entry`, `objectId` = id bút toán. Hằng `E2_COLUMNS` dùng chung và test `e2-header-audit.test.ts` (T004-E2-1…3) so danh sách đó với trigger `guard_ledger_entry_mutation` trong CSDL.
