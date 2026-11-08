@@ -21,6 +21,20 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không (chỉ tài liệu).
 - **Bảo mật:** biên bản R1 ghi nhận RV-R1-01 (vai trò ứng dụng có `DELETE` trên `ledger_*` và cờ thoát trigger là biến phiên) là việc chặn trước khi đóng v0.1.0 — chưa sửa trong PR này.
 
+### API chính sách cho nguồn ngoài: lấy, tính, phát hành inline (PHASE-031 W3a, ADR-0031) <!-- [2026-11-08 04:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a -->
+
+- **Thêm:** hợp đồng [`bizcity_policy@1`](docs/contracts/BIZCITY-POLICY-v1.md) — `GET /api/v1/policies` (bản đang hiệu lực tại `at`, lọc `domain` / `branch` / `channel`, có `etag`), `GET /api/v1/rule-contracts[/:id]` (tham số, `spec` để plugin viết lại, `vectors` để tự kiểm), `POST /api/v1/policies/evaluate` (tính theo chính sách, trả `applied` / `skipped` kèm lý do / `gifts` / `policyRefs`), `POST /api/v1/policies` (phát hành bản inline). Rule Contract đầu tiên `sale.promo.buy_x_get_y@1` (mua X tặng Y; `itemId`, `repeat`, `maxGiftQty`, dung sai số lẻ). `core/policies.ts`: `listPublishedPolicies`, `publishInlinePolicy`, `inlinePolicyId`.
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Quyền đọc và tính là `catalog:read` (khoá `documents:write`, `reports:read`, `catalog:write` đều có); **không thêm scope**. Chưa kiểm trần pháp lý hàng khuyến mại (NĐ81); nhiều chính sách áp độc lập, cộng dồn.
+
+### Cửa nạp nhận tham chiếu chính sách (PHASE-031 W2a, ADR-0031) <!-- [2026-11-08 04:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (mục CHANGELOG còn thiếu khi merge #159) -->
+
+- **Thêm:** `policyRefs[]` ở phiếu và `lines[].policyRef` ở dòng hàng (`bizcity_ledger_intake@1` 1.6.0, tuỳ chọn, lưu nguyên văn trong `payload`); `IN-POL-001..003` (L4, cảnh báo, chấp nhận được); `policy_check` ở `accounting_events` / `accounting_event_versions`; khung nhìn `bizcity_read.policy_application`; khoá `bizcity.intake.policy_check` (`advice` mặc định | `strict` → chờ duyệt bằng `hold` sẵn có); Commit Guard băm phong bì chính sách được trỏ tới; phiếu mua hàng nộp kèm `policyRefs` từ `policyTrace`.
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+
 ### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 10:31 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
 
 - **Thêm:** migration `0081_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.
