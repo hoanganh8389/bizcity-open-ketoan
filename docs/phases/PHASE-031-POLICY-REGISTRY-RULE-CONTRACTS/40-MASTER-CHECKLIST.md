@@ -32,7 +32,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
 | S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
 | S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
-| S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | 🟡 code xong trên nhánh `feat/phase-031-w3b-su-kien-chinh-sach` 2026-11-08; POS WP nghe sự kiện ở S031-16 |
+| S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | ✅ 2026-11-08 (#196); POS WP nghe sự kiện ở S031-16 |
 | S031-27 | ~~Đổi số migration W2a `0080` → `0082`~~ — **rút**: phiên PHASE-029 (K3) sửa trùng `0080` bằng cách đổi **số của K3** (`0081`, `0082`), migration W2a giữ `0080`; đổi W2a sang `0082` sẽ trùng `0082_khoa_ky_o_csdl` ([00 §9.7](00-MASTER-PLAN.md)) | W3a | P0 | không | ⛔ rút 2026-11-08 (phiên PHASE-029 đã nhận) |
 
 ## Ca bằng chứng (golden)
@@ -85,3 +85,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 
 - 2026-11-08 — chữ chốt W3b ([00 §11](00-MASTER-PLAN.md)): `bizcity.policy.published` / `.retired` phát trong `registerPolicyVersion` / `retirePolicy` qua outbox sẵn có; `data` chỉ định danh + băm + `closes`; không migration.
 - 2026-11-08 — W3b code xong trên nhánh: `policies.ts` phát `bizcity.policy.published` / `.retired` (không migration); `policy-events.test.ts` 5 ca xanh, phá thử bỏ `dedupeKey` → T031-EV-4 đỏ; hợp đồng `bizcity_event@1` 1.3.0-draft, `bizcity_policy@1` 1.1.0-draft. Hạn chế: chính sách mua hàng bị xoá phát `retired` với tác nhân `system` (`store.ts` ngoài phạm vi W3b — truyền `actor` khi PHASE mua hàng nhả).
+- 2026-11-08 — **W3b vào main (#196)**: `bizcity.policy.published` / `.retired` qua outbox; dòng giữ chỗ W3b nhả (R-FLOW-6). Còn lại của PHASE-031: S031-11 / S031-15 (Rule Contract mua hàng, bán hàng; S031-15 chờ S031-14), W2b (IN-POL-004), W4 (màn hình Chính sách, dashboard), S031-16 (POS WP, repo plugin).
