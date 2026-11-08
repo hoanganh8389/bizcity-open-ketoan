@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 17 |
+| Đang làm | 16 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
 | Chưa ai nhận | 139 |
 | Chờ đủ tín hiệu | 50 |
 | Hoãn | 1 |
-| Xong | 241 |
+| Xong | 242 |
 | **Tổng** | **478** |
 
-## Đang làm (17)
+## Đang làm (16)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -27,7 +27,6 @@
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-pillar-evidence` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-entity-codes` |
-| [S030-45](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L53) | PHASE-030 | Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bi… | P0 | hoanganh8389 (phiên Claude, thu-vien-dot-a) · `feat/s030-45-thu-vien-dot-a` |
 | [S030-47](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L55) | PHASE-030 | B1 — HT14 bản chỉ đọc (modules/thu-vien/), LibraryPicker trong ui-kit (A2), trụ cột IX vào tru-cot.json (26 §… | P0 | hoanganh8389 (phiên Claude, thu-vien-b1) · `feat/s030-47-kho-thu-vien-b1` |
 | [S031-9](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L18) | PHASE-031 | Tầng L4b trong preflight.ts + Commit Guard băm policyRefs; GateResult.ruleVersion | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2a-tham-chieu` |
 | [S031-10](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L19) | PHASE-031 | Họ mã POL- (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào bizcityfindings@1, có căn cứ và câu giải thích | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2a-tham-chieu` |
@@ -280,6 +279,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (241)
+## Xong (242)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
