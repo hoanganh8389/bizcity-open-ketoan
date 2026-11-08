@@ -1,4 +1,5 @@
 // @bizcity-layer M data/masterdata
+// [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3: mật khẩu công cụ qua checkToolPassword (không mặc định trong mã, SC-SEC-5)
 /**
  * Danh mục hàng chuẩn — khai ở phần mềm kế toán, hệ thống bán hàng kéo về (xem catalog.service.ts).
  *
@@ -28,7 +29,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { ok, queryBool } from '../../core/http.js';
 import { mountActions, defineAction, type AnyActionDef, sameTx } from '../../core/actions.js';
 import { masterdataActions } from './masterdata.actions.js';
-import { Errors } from '../../core/errors.js';
+import { checkToolPassword } from '@bizcity/platform/core/security/tool-password';
 import {
   deletePriceList, deleteProduct, feedMeta, feedPrices, feedProducts, getProduct, importCatalog, listPriceLists, listPriceRows, saveProduct, savePriceList, savePriceRows, scanParents, setPriceListBranches,
 } from './catalog.service.js';
@@ -140,8 +141,8 @@ export const catalogWriteActions: AnyActionDef[] = [
     handler: async (ctx, input) => {
       const trx = ctx.data.tx;
       const auth = ctx.legacyAuth;
-      // Công cụ chạy cho cả danh mục → hỏi mật khẩu công cụ (cùng mật khẩu nạp dữ liệu mẫu, đổi bằng PURCHASE_SEED_PASSWORD).
-      if (input.password !== (process.env.PURCHASE_SEED_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu công cụ');
+      // Công cụ chạy cho cả danh mục → hỏi mật khẩu công cụ (cùng mật khẩu nạp dữ liệu mẫu, biến PURCHASE_SEED_PASSWORD; chưa đặt thì tắt — SC-SEC-5).
+      checkToolPassword(input.password, 'quét cha – con');
       return await sameTx(trx, (trx) => scanParents(trx, auth.tenantId, { overwrite: input.overwrite }));
     },
   }),
