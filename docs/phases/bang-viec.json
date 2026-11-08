@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 138
+      "count": 143
     },
     {
       "key": "partial",
@@ -522,6 +522,61 @@
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 25
+    },
+    {
+      "id": "S004-14",
+      "phase": "PHASE-004",
+      "title": "Dấu vết ở CSDL cho E2: trigger AFTER UPDATE trên ledgerentries ghi auditlogs trước / sau mọi thay đổi bảy cột, kể cả UPDATE thẳng bằng SQL; chữ chốt 21 D004-11…",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S004-15",
+      "phase": "PHASE-004",
+      "title": "Cảnh báo: chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (sửa đầu bút toán ngoài ứng dụng), số đo + luật cảnh báo, vào bảng kiểm khoá kỳ; D004-13. K1",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S004-16",
+      "phase": "PHASE-004",
+      "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S004-17",
+      "phase": "PHASE-004",
+      "title": "E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-4). K3 thêm chặt",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S004-18",
+      "phase": "PHASE-004",
+      "title": "Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi…",
+      "priority": null,
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 30
     },
     {
       "id": "S005-1",

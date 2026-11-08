@@ -112,7 +112,7 @@ await writeEntryHeaderAudit(trx, ctx, header, before, after);   // chỉ cột k
 |---|---|---|
 | **Q004-4** | Có chuyển cờ E1 `cost_overwrite` sang hàm `SECURITY DEFINER` chỉ `ledger.service` gọi được, để ứng dụng không tự đặt cờ? | Để sau S004-12; không chặn v0.1.0. Giữ E1 như hôm nay, ghi vào sổ nợ |
 | **Q004-5** | `reason_code`, `partner_id`, `event_version` ở E2 có cần **chặn** (đổi bút toán đã ghi phải đảo) thay vì chỉ có dấu vết? | Dấu vết trước (D004-10). Nếu sau một kỳ thấy các cột này đổi thật, thu hẹp E2 còn `doc_no`, `invoice_no`, `description` bằng chữ chốt mới |
-| **Q004-6** | Sau S004-12 + S004-13, `tru-cot.json` trụ cột I · L-2 chuyển `mot-phan` → `dat`? | Có, kèm bằng chứng test phá thử và golden E2; **không** thêm trạng thái "đạt có điều kiện" (từ vựng trạng thái cố định `dat / mot-phan / tai-lieu / chua`). Ghi giới hạn vào ô `gap`: "chủ bảng / superuser vẫn tắt được trigger; chờ 0.7" |
+| **Q004-6** *(đính chính 2026-11-08: tiêu chí đúng là L-1, đã `dat`; xem [21 §6](21-CHOT-VET-E2-CSDL-VA-E1.md))* | Sau S004-12 + S004-13, `tru-cot.json` trụ cột I chuyển `mot-phan` → `dat`? | ~~Có, kèm bằng chứng test phá thử và golden E2; **không** thêm trạng thái "đạt có điều kiện" (từ vựng trạng thái cố định `dat / mot-phan / tai-lieu / chua`). Ghi giới hạn vào ô `gap`: "chủ bảng / superuser vẫn tắt được trigger; chờ 0.7" |
 
 ## 7. Việc và thứ tự (bốn bước: Chữ chốt → Mã → Tự kiểm → Ghi)
 
@@ -121,6 +121,6 @@ await writeEntryHeaderAudit(trx, ctx, header, before, after);   // chỉ cột k
 | 1 | Chữ chốt này vào `main` (chủ duyệt D004-6…10, Q004-4…6) | tài liệu |
 | 2 | **S004-12**: test đổi sang `replica` + migration + SC-KERNEL-4 + chẩn đoán + ca phá thử + RULE-LEDGER / CANON §5 / CHANGELOG | mã, K3 thêm chặt |
 | 3 | **S004-13**: `E2_COLUMNS`, `audit_logs` trước / sau, golden E2 | mã, K1 |
-| 4 | Ghi: checklist ✅, `tru-cot.json` L-2, review R2 chấm lại A2 | tài liệu |
+| 4 | Ghi: checklist ✅, `tru-cot.json` trụ cột I (L-1 bổ sung bằng chứng, thêm L-5), review R2 chấm lại A2 | tài liệu |
 
 **Kiểm bằng:** `apps/api/test/app-role.test.ts` (2 ca phá thử), `apps/api/test/db-rules.test.ts`, `apps/api/test/lich-su-chung-tu.test.ts` (đổi cách bỏ trigger), golden mới `T004-E2-1…3`, SC-KERNEL-4, `DG-*` cho chẩn đoán mới, `bash scripts/kiem-chuan.sh`, `selfcheck --strict`.
