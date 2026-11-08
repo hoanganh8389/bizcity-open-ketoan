@@ -1,5 +1,5 @@
 // @bizcity-layer P data
-// [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 + S030-41b: kiểu bảng entity_codes (0083); LedgerEntriesTable.event_id: string (NOT NULL từ 0077)
+// [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 + S030-41b: kiểu bảng entity_codes (0085); LedgerEntriesTable.event_id: string (NOT NULL từ 0077)
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng accounting_profiles (0049, ADR-0013).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng conformance_runs (0051, ADR-0012).
 // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: kiểu bảng rulepack_approvals (0053).

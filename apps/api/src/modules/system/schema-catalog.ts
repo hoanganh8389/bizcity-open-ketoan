@@ -1,5 +1,5 @@
 // @bizcity-layer P module-sdk
-// [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: thêm entity_codes (0083) và giải thích bốn hàm trigger mã thực thể.
+// [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: thêm entity_codes (0085) và giải thích bốn hàm trigger mã thực thể.
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm accounting_profiles (0049).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm conformance_runs (0051).
 // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: thêm rulepack_approvals (0053).
@@ -227,7 +227,7 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_item_codes_guard: 'Mã hàng chỉ thêm (R-ITEM-0): UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một mặt hàng (DG-ITEM-1); không xoá.',
   bizcity_item_classification_guard: 'Phân loại hạch toán theo ngày (R-ITEM-5 / 7): không chồng hiệu lực; bản đã đóng không sửa; không xoá.',
   bizcity_item_truncate_guard: 'Chặn xoá sạch bảng định danh mặt hàng bằng TRUNCATE (R-ITEM-0).',
-  // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: trigger mã có phiên bản của đối tượng / chi nhánh / kho (0083)
+  // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: trigger mã có phiên bản của đối tượng / chi nhánh / kho (0085)
   bizcity_entity_codes_guard: 'Mã thực thể chỉ thêm: thực thể phải có thật và cùng đơn vị; UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một thực thể.',
   bizcity_entity_codes_sync: 'Mọi đường ghi đối tượng / chi nhánh / kho giữ entity_codes khớp cột code: thêm → mã đầu; đổi code → đóng mã cũ + thêm mã mới; xoá → đóng mã (lịch sử mã giữ lại).',
   bizcity_entity_identity_guard: 'Định danh của đối tượng / chi nhánh / kho không đổi: không đổi id, không đổi đơn vị. Đổi mã bằng cột code, mã cũ được giữ trong entity_codes.',

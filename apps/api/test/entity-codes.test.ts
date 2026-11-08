@@ -1,4 +1,4 @@
-// [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 (D026-3): T026-EC-1..9 — entity_codes (0083) và resolveEntity cho đối tượng / chi nhánh / kho (chữ chốt: docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/20-KIEN-TRUC.md §2)
+// [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 (D026-3): T026-EC-1..9 — entity_codes (0085) và resolveEntity cho đối tượng / chi nhánh / kho (chữ chốt: docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/20-KIEN-TRUC.md §2)
 /**
  *   T026-EC-1  thêm đối tượng / chi nhánh / kho → có mã chính đang mở (ảnh chụp từ cột code), người ghi system:entity-sync
  *   T026-EC-2  đổi cột code → đóng mã cũ + thêm mã mới, id giữ nguyên; tra theo ngày: ngày cũ ra mã cũ, hôm nay ra mã mới, cùng entityId
