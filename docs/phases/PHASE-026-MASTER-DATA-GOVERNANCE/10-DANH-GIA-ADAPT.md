@@ -8,7 +8,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | Tầng | Trụ cột | Mức | Đạt | Một phần | Tài liệu | Chưa |
 |---|---|---|---|---|---|---|
 | Nền móng | Quản trị dữ liệu gốc (Master Data Governance) | **53 %** | 2 | 12 | 0 | 1 |
-| I | Sổ cái bất biến | **88 %** | 3 | 1 | 0 | 0 |
+| I | Sổ cái bất biến | **80 %** | 3 | 2 | 0 | 0 |
 | II | Định danh bất biến, mã có phiên bản | **61 %** | 4 | 0 | 1 | 2 |
 | III | Liên tục kế toán (Accounting Continuity) | **39 %** | 2 | 0 | 3 | 2 |
 | IV | Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã | **90 %** | 4 | 1 | 0 | 0 |
@@ -40,16 +40,17 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | UI-4 | Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết | 🟡 Một phần | mặt hàng đủ 4/4 trên Hành trình mặt hàng: Lịch sử (S026-10), Tác động (S026-11), Kiểm chuẩn (khung Vì sao Gate A), Truy vết (ACC95, họ mặt hàng) | chưa gom thành khung chung MasterDataFrame trên form danh mục DM10; thực thể khác chưa | S026-12, S026-4 (PHASE-026) | P0 |
 | SCALE-1 | Danh mục hàng triệu mã, hàng trăm cửa hàng: đo và giữ hiệu năng | ☐ Chưa | đo 20.985 mặt hàng: đồng bộ Item Master +0,7 ms / mặt hàng; khoá chống chồng hiệu lực theo đơn vị | chưa có benchmark triệu SKU, chưa có nạp theo lô (FOR EACH STATEMENT), chưa có EXCLUDE gist | S026-14 (PHASE-026) | P2 |
 
-## Trụ cột I · Sổ cái bất biến — 88 %
+## Trụ cột I · Sổ cái bất biến — 80 %
 
 > Sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có; không chứng từ thì không có bút toán.
 
 | Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp | Ưu tiên |
 |---|---|---|---|---|---|---|
-| L-1 | Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL) | ✅ Đạt | guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); test db-rules, item-id-so-kho | — | — | P0 |
+| L-1 | Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL) | ✅ Đạt | guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); 0086 gỡ cờ thoát allow_ledger_purge khỏi chín trigger và thu DELETE / TRUNCATE của ketoan_app; test db-rules (đặt cờ rồi xoá vẫn bị từ chối), app-role, item-id-so-kho; chẩn đoán LEDGER_TRIGGERS ở lane diagnostics | — | — | P0 |
 | L-2 | Tổng Nợ = tổng Có cuối giao dịch | ✅ Đạt | assert_entry_balanced (constraint trigger hoãn) | — | — | P0 |
 | L-3 | Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản | ✅ Đạt | accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1 | — | — | P0 |
 | L-4 | Dòng sổ mang ảnh chụp mã + định danh mặt hàng | 🟡 Một phần | libraries/vn.can-cu-phap-ly (18 mục, bí danh LEGAL_BASES), SC-LIB-1 kiểm basis[].key, core.library.attest / attestations (bằng chứng), thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a) | chưa văn bản nào được người có trách nhiệm rà bản gốc (review pending); căn cứ của tham số pháp lý phần lớn chưa liên kết mã | S030-12 (PHASE-024) | P0 |
+| L-5 | Đầu bút toán chỉ đổi theo đường E2 (bảy cột), mỗi lần đổi có dấu vết ở tầng CSDL, sửa ngoài ứng dụng bị cảnh báo | 🟡 Một phần | E2_COLUMNS + nhật ký ledger.entry.header_update ở posting.service.ts; test e2-header-audit (S004-13); trigger guard_ledger_entry_mutation ép các cột còn lại | UPDATE thẳng bằng ketoan_app vào bảy cột vẫn không để lại dấu vết; chưa có cảnh báo và bảng theo dõi (S004-14…16) | S004-14, S004-15, S004-16 (PHASE-004) | P0 |
 
 ## Trụ cột II · Định danh bất biến, mã có phiên bản — 61 %
 
