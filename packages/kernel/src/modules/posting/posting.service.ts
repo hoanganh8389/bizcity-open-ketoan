@@ -17,6 +17,7 @@
 import { isCashDocument, skusOf, type IngestDocument } from '@ketoan/contracts';
 import type { Db } from '@bizcity/platform/db/client';
 import { Errors } from '@bizcity/platform/core/errors';
+import { writeAudit } from '@bizcity/platform/core/audit';
 import { entryBodyHash, entryContentHash, ledgerService } from '../ledger/ledger.service.js';
 import type { DraftEntry } from '../ledger/ledger.types.js';
 import { postingConfigRepository } from '../posting-config/posting-config.repository.js';
@@ -27,6 +28,12 @@ import { buildPurchaseParts, buildPurchaseReturnParts } from './rules/purchase.r
 import { buildStockAdjustmentLines, buildTransferParts, type PostingPart } from './rules/stock.rule.js';
 import { buildCashTransferParts, buildPaymentParts } from './rules/cash.rule.js';
 import { buildManualJournalParts } from './rules/journal.rule.js';
+
+// [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 (D004-10): danh sách đóng bảy cột E2 — khớp trigger guard_ledger_entry_mutation (0049); test db-rules / e2-header-audit so với CSDL
+/** Cột của ledger_entries mà đường E2 (cập nhật thông tin đầu) được đổi. Thêm cột = đổi trigger + chữ chốt (RULE-LEDGER E2), không chỉ sửa hằng này. */
+export const E2_COLUMNS = ['doc_no', 'invoice_no', 'reason_code', 'partner_id', 'description', 'content_hash', 'event_version'] as const;
+/** So hai giá trị cột: null ngang null; bigint của pg là chuỗi còn giá trị nhập có thể là số. */
+const sameValue = (a: unknown, b: unknown): boolean => (a == null || b == null ? a == null && b == null : String(a) === String(b));
 
 type Doc<T extends IngestDocument['docType']> = Extract<IngestDocument, { docType: T }>;
 type RuleFn = (doc: IngestDocument, ctx: RuleContext) => PostingPart[];
@@ -174,10 +181,20 @@ export const postingService = {
         // Chỉ thông tin đầu đổi (ví dụ vừa phát hành hoá đơn): cập nhật tại chỗ, không đảo / ghi lại bút toán.
         const header = takeReuse(entryBodyHash(draft), ctx.reuseBody, [ctx.reuse]);
         if (header) {
-          await trx.updateTable('ledger_entries').set({
+          // [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 (D004-10, review R1 RV-R1-14): E2 ghi dấu vết trước / sau của các cột thật sự đổi
+          const before = await trx.selectFrom('ledger_entries').select([...E2_COLUMNS]).where('id', '=', header).executeTakeFirstOrThrow();
+          const next = {
             doc_no: draft.docNo, invoice_no: draft.invoiceNo ?? null, reason_code: draft.reasonCode ?? null, partner_id: draft.partnerId ?? null,
             description: draft.description, content_hash: full, event_version: draft.sourceVersion ?? null,
-          }).where('id', '=', header).execute();
+          };
+          await trx.updateTable('ledger_entries').set(next).where('id', '=', header).execute();
+          const changed = E2_COLUMNS.filter((c) => !sameValue(before[c], next[c]));
+          if (changed.length) {
+            await writeAudit(trx, {
+              tenantId: ctx.tenantId, actor: ctx.actor, action: 'ledger.entry.header_update', objectType: 'ledger_entry', objectId: String(header),
+              before: Object.fromEntries(changed.map((c) => [c, before[c] ?? null])), after: Object.fromEntries(changed.map((c) => [c, next[c] ?? null])),
+            });
+          }
           ctx.kept?.push(header);
           ctx.updated?.push(header);
           continue;
