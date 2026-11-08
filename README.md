@@ -74,6 +74,20 @@ flowchart TB
   E -.-> M
 ```
 
+**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
+
+| | Địa chỉ | Ghi chú |
+|---|---|---|
+| Kế toán | <https://ketoan.bizcity.vn/> | Kế toán:
+* Mã đơn vị: otchuong
+* Email: admin@otchuongmart.local
+* Mật khẩu: Otcfa8719fd1c0b!
+[Cài đặt](#cài-đặt)
+
+| | Quản trị kho, POS | 
+|---|---|---|
+| POS bán hàng |<https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
+
 **Accounting Kernel** giữ các bất biến: chứng từ, phiên bản, định khoản, khoá kỳ, sổ cái chỉ thêm, cân Nợ / Có, sổ phụ và biên nhận. **Module** quản lý dữ liệu và quy trình riêng, tương tác với Kernel bằng năng lực được cấp quyền. **Platform** cung cấp xác thực, Action Runtime, chứng từ, sự kiện, audit, quan sát hệ thống và SDK.
 
 Kiến trúc gốc được công bố tại [CONG-BO-KIEN-TRUC.md](docs/CONG-BO-KIEN-TRUC.md). Tài liệu này là nguồn chi tiết cho ranh giới và quyền thay đổi của từng lớp. Sơ đồ bối cảnh, lớp, luồng chứng từ và triển khai: [docs/architecture/README.md](docs/architecture/README.md). Quyết định kiến trúc: [docs/adr/](docs/adr/README.md).
@@ -153,16 +167,6 @@ Dành cho dev xây **ERP nội bộ cho công ty mình**, hoặc module **bán h
 - Giá vốn mặc định là bình quân gia quyền theo tháng; FIFO và đổi mã hàng có phiên bản (`item_id`) chưa có.
 - Core không thay kế toán trưởng (chính sách, lý do, duyệt gói) và không phải tư vấn pháp lý.
 
-**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
-
-| | Địa chỉ | Ghi chú |
-|---|---|---|
-| Kế toán | <https://ketoan.bizcity.vn/> | Kế toán:
-* Mã đơn vị: otchuong
-* Email: admin@otchuongmart.local
-* Mật khẩu: Otcfa8719fd1c0b!
-[Cài đặt](#cài-đặt) |
-| Quản trị kho, POS | <https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c
 
 Bộ hướng dẫn đọc theo vai (kế toán, CEO, dev, cộng đồng, AI): [docs/core/](docs/core/README.md).
 
