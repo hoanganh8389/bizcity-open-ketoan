@@ -26,8 +26,8 @@
 | S029-16 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | E8 | P2 | ☐ |
 | S029-17 | Trigger kỳ khoá trên `ledger_entries` | E5 | P0 | ✅ 2026-11-08 (gói K3 đợt 1: trigger `ledger_entries_period_lock`, migration 0082; T029-K3-3..5) |
 | S029-18 | Bảng điểm 17 trụ cột theo bằng chứng (`signal`, `foundation`), HT10 theo bốn nhóm | E1 | P0 | ⛔ sau S026-15 |
-| S029-19 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test `T029-ECP-P001` | E3 | P0 | ⛔ sau S026-4 |
-| S029-20 | Gộp đối tượng theo khuôn 0068 | E3 | P1 | ⛔ sau S026-4 |
+| S029-19 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test `T029-ECP-P001` | E3 | P0 | ☐ 2026-11-08 nền S026-4 đợt 1 đã xong (partner / branch / warehouse có `entity_codes`); chưa ai nhận |
+| S029-20 | Gộp đối tượng theo khuôn 0068 | E3 | P1 | ☐ 2026-11-08 nền S026-4 đợt 1 đã xong; chưa ai nhận |
 | S029-21 | SDK: module đăng ký chẩn đoán / luật kiểm; manifest `objects` / `fields` / `rules` / `diagnostics` | E9 | P1 | ☐ |
 | S029-22 | Khoá checksum migration 0034 → hiện tại; `migrate.ts` ghi checksum | E9 | P1 | ☐ |
 | S029-23 | Người / nhân viên tách người dùng | E9 | P2 | ⛔ phối hợp PHASE-028 |
@@ -57,3 +57,4 @@
 | 2026-11-07 15:29 | Claude Code | Chủ dự án bỏ yêu cầu hai người nhóm Lõi (R-KER-2 bản smallwin). Chốt gói K3 [35](35-GOI-K3.md): đợt 1 = D030-16 (`created_by` bắt buộc, 0081) + S029-17 (trigger khoá kỳ, 0082), số đo 1.484 sự việc hệ thống rỗng người tạo, 0 bút toán tạo sau lúc khoá; đợt 2 = S029-6 (chờ S029-5), đợt 3 = S029-12 (sau S026-11). Sửa trạng thái cũ: S029-10, S029-13 đã vào `main` từ 2026-11-06 |
 | 2026-11-08 10:31 | Claude Code | Gói K3 đợt 1 code xong ([35](35-GOI-K3.md)): 0082 trigger khoá kỳ (cùng điều kiện `isLocked`: kỳ, chi nhánh trống hoặc đúng, loại `*` hoặc đúng); 0081 người tạo sự việc bắt buộc (D030-16). Phát hiện khi chạy thật: trigger 0049 coi người lập là định danh, cấm đổi kể cả rỗng → có giá trị — 0081 tắt riêng trigger đó trong chính giao dịch migration (khoá ACCESS EXCLUSIVE), chỉ điền dòng rỗng, bật lại ngay; không dùng cờ E4 `ketoan.allow_ledger_purge`. T029-K3-1..5 xanh (9 ca), 19 tệp test sổ / khoá kỳ / khoá sổ / khấu hao / giá vốn xanh (171 ca); phá thử 3 lần (bỏ ghi người tạo, trigger bỏ điều kiện loại, 0081 bỏ bước dừng) đều bị bắt. Nhả dòng giữ chỗ |
 | 2026-11-08 11:33 | Claude Code | `main` đỏ `SC-DATA-1`: W2a và gói K3 cùng merge với số migration 0080. Theo quy ước (ai merge sau thì đổi số): K3 đổi 0080 → 0081, 0081 → 0082; `RENAMED` (`migrate.ts`) ghi nhận tên mới cho bản cài đã áp tên cũ, không chạy lại; test `migrate-rename` thêm ca. Bài học: hai PR cùng mang migration thì phải đổi số TRƯỚC khi merge cái thứ hai — `so-tiep-theo kiem` đã cảnh báo, nhưng cả hai vào `main` trong cùng một lượt |
+| 2026-11-08 04:07 | Claude Code | S026-4 đợt 1 vào (entity_codes cho đối tượng / chi nhánh / kho): S029-19 và S029-20 hết chờ PHASE-026 — chuyển ⛔ thành ☐, chưa ai nhận |

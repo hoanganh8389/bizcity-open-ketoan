@@ -30,6 +30,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không.
 - **Bảo mật:** không.
 
+### Mã có phiên bản cho đối tượng / chi nhánh / kho: entity_codes và resolveEntity (PHASE-026 S026-4 đợt 1) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — đợt 1 entity_codes -->
+
+- **Thêm:** migration `0085_ma_thuc_the.sql` — bảng `entity_codes` (mã có phiên bản cho partner / branch / warehouse): chỉ thêm, đổi mã = đóng `valid_to` + thêm mã mới, chặn chồng hiệu lực, RLS theo đơn vị. Trigger giữ cột `code` của `partners` / `branches` / `warehouses` khớp ở mọi đường ghi; điền ban đầu từ cột `code` hiện có. `resolveEntity` / `resolveEntities` (mã chính, bí danh, mã ngoài, tra theo ngày), kiểu `EntityRef` / `EntityResolveResult` ở `@ketoan/contracts`. Golden T026-EC-1..9.
+- **Đổi:** `id` và `tenant_id` của đối tượng / chi nhánh / kho không đổi được (guard ở CSDL). Xoá thực thể vẫn được, chỉ đóng mã. Kiểu Kysely `LedgerEntriesTable.event_id` thành `string` (S030-41b).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0085 (tự điền mã cho dữ liệu có sẵn, chạy lại an toàn). Đợt này chưa có đơn vị tính, lý do.
+- **Bảo mật:** `entity_codes` có RLS cô lập theo đơn vị như `item_codes`.
+
 ### Lỗi trigger sổ cái ra đúng mã hợp đồng: không cân, khoá kỳ, sổ chỉ thêm (PHASE-029 S029-33, review R1 RV-R1-02) <!-- [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33 -->
 
 - **Thêm:** `classifyLedgerTriggerError` (`packages/platform/src/core/errors.ts`) — một nơi nhận ra lỗi trigger sổ cái theo SQLSTATE + câu chữ; `core/http.ts` và `errorCodeOf` (trace) cùng gọi. Golden T029-ERR-1…5 (`apps/api/test/db-error-mapping.test.ts`) dùng lỗi sinh từ trigger thật trên PostgreSQL.

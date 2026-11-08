@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 13
+      "count": 11
     },
     {
       "key": "merging",
@@ -15,17 +15,17 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 31
+      "count": 29
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 137
+      "count": 139
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 49
+      "count": 50
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 252
+      "count": 253
     }
   ],
   "items": [
@@ -3705,15 +3705,9 @@
       "phase": "PHASE-026",
       "title": "entitycodes cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột code; resolveEntity; điền ban đầu",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, p030-queue)",
-        "branch": "feat/phase-026-entity-codes",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-026 · P0 đợt 3 — entitycodes mã có phiên bản cho đối tượng / chi nhánh / kho (D026-3, 20 §2):…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -4361,8 +4355,8 @@
       "phase": "PHASE-029",
       "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
@@ -4372,8 +4366,8 @@
       "phase": "PHASE-029",
       "title": "Gộp đối tượng theo khuôn 0068",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 30
@@ -4977,15 +4971,9 @@
       "phase": "PHASE-030",
       "title": "Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thuộc dòng PHASE-026 P0 đợt 3, R-FLOW-3)",
       "priority": "P2",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, p030-queue)",
-        "branch": "feat/phase-026-entity-codes",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-026 · P0 đợt 3 — entitycodes mã có phiên bản cho đối tượng / chi nhánh / kho (D026-3, 20 §2):…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 50
     },
