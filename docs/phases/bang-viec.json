@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 20
     },
     {
       "key": "merging",
@@ -4120,8 +4120,14 @@
       "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — thư viện phân quyền mẫu TGS (349 m…",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
+        "branch": "feat/phase-028-w5-thu-vien-tgs",
+        "state": "đang làm",
+        "since": "2026-11-07",
+        "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
+      },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
     },
