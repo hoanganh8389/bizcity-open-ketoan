@@ -32,7 +32,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
 | S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
 | S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
-| S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | ☐ |
+| S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | 🟡 chữ chốt [00 §11](00-MASTER-PLAN.md) 2026-11-08; chưa code |
 | S031-27 | ~~Đổi số migration W2a `0080` → `0082`~~ — **rút**: phiên PHASE-029 (K3) sửa trùng `0080` bằng cách đổi **số của K3** (`0081`, `0082`), migration W2a giữ `0080`; đổi W2a sang `0082` sẽ trùng `0082_khoa_ky_o_csdl` ([00 §9.7](00-MASTER-PLAN.md)) | W3a | P0 | không | ⛔ rút 2026-11-08 (phiên PHASE-029 đã nhận) |
 
 ## Ca bằng chứng (golden)
@@ -81,3 +81,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-08 — **W3a vào main (#172)**: API chính sách, Rule Contract `sale.promo.buy_x_get_y@1`, hợp đồng `bizcity_policy@1`; dòng giữ chỗ W3a nhả (R-FLOW-6). Còn S031-26 (sự kiện outbox), S031-15 (thêm Rule Contract bán hàng, chờ S031-14).
 - 2026-11-08 — chữ chốt W2c ([00 §10](00-MASTER-PLAN.md)): nhánh `policy_review` (cờ `policy`, không nhóm trạng thái mới), bảng bằng chứng `policy_review_acks` khoá theo `checked_at`, action `core.queue.policy-review.ack`; *Ghi sổ* / *Trả về nguồn* / *Điều chỉnh* hoãn.
 - 2026-11-08 — W2c code xong trên nhánh: migration `0084_xem_lai_chinh_sach` (`policy_review_acks` + nhánh `policy_review`), `queue.routes.ts` (nguồn, cờ `policy`, phần `policy` của `mine`, action `core.queue.policy-review.ack`), `policy-review.test.ts` 8 ca xanh cùng `hang-viec` 15 ca; đã phá thử một chỗ (bỏ khoá theo `checked_at` → T031-Q-3 đỏ). Đính chính ở [00 §10](00-MASTER-PLAN.md).
+- 2026-11-08 — chữ chốt W3b ([00 §11](00-MASTER-PLAN.md)): `bizcity.policy.published` / `.retired` phát trong `registerPolicyVersion` / `retirePolicy` qua outbox sẵn có; `data` chỉ định danh + băm + `closes`; không migration.

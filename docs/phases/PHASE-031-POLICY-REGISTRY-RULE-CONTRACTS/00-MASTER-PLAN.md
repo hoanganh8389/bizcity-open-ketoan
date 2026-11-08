@@ -222,3 +222,25 @@ Phạm vi: S031-22 **phần đóng được việc** (golden T031-Q-1..5). *Ghi 
 **Golden.** T031-Q-1 sự việc có finding đã ghi sổ hiện ở hàng việc với cờ `policy`; sự việc `pending` chỉ hiện một dòng (nhánh `accounting_event`) · T031-Q-2 ack đóng việc, ack lặp idempotent · T031-Q-3 kiểm lại (`checkedAt` mới) mở lại · T031-Q-4 cô lập đơn vị + ack bảng chỉ thêm · T031-Q-5 `documents:read` không ack được (403).
 
 **Đính chính khi code (W2c, 2026-11-08).** (1) *Không thêm mã lỗi mới:* việc không còn mở trả `409 CONFLICT` kèm `details.reason = POLICY_REVIEW_NOT_OPEN` (danh mục `bizcity_errors@1` giữ nguyên — gọn). (2) `core.queue.summary`: `byFlag` giữ **ba khoá đã phát hành** (`held`, `blocked`, `returned`); số việc chính sách đếm ở `bySource[].policy` — tránh đổi hình hợp đồng đã phát hành; thêm `byFlag.policy` khi có đợt đổi hợp đồng hàng việc. (3) Chưa thêm `hang-viec.test.ts` (đang trong phạm vi dòng PHASE-029): ca phủ `policy_review` nằm ở `policy-review.test.ts`. (4) Fixture test dựng bằng **cửa nạp thật** (`policyRefs` trỏ mã không có trong sổ → IN-POL-001), không chèn tay vì sổ của đơn vị test phải qua bất biến `EVENT_POSTED_VERSION`.
+
+## 11. Chữ chốt W3b (K1, Platform; R-FLOW-2): sự kiện `policy.published` / `policy.retired` qua outbox
+<!-- [2026-11-08 11:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W3b trước khi code: dùng outbox + webhook sẵn có (bizcity_event@1), không bảng / migration / hạ tầng mới -->
+
+Phạm vi: S031-26 (golden T031-EV-1..5). **Lean:** `bizcity_event@1` đã có outbox giao ít nhất một lần, thử lại, `dead`, `replay`, và webhook ký HMAC cho app ngoài tiến trình (§7a). POS WP / sàn là app `kind: "app"` nghe hai loại sự kiện mới — **không** thêm đường giao thứ hai.
+
+**1. Hai loại Core phát** (thêm vào [bizcity_event@1 §7](../../contracts/BIZCITY-EVENT-v1.md) và danh sách `docs/standard/bizcity-standard.json`; minor, thêm không phá):
+
+| `type` | Khi nào | `subject` | `data` |
+|---|---|---|---|
+| `bizcity.policy.published` | `registerPolicyVersion` ghi một bản (mọi đường: phát hành inline, lưu chính sách mua hàng, module khác) | `policy:<policyId>` | `{ policyId, policyKey, version, ownerModule, ruleContract, effectiveFrom, contentHash, closes: { version, effectiveTo } \| null }` |
+| `bizcity.policy.retired` | `retirePolicy` đổi `published → retired` (số bản bị ngừng > 0) | `policy:<policyId>` | `{ policyId, retiredVersions }` |
+
+**2. Cùng giao dịch với việc ghi** (STD-EVT-1, R-OUTBOX-1): phát ngay trong `registerPolicyVersion` / `retirePolicy` ở `packages/platform/src/core/policies.ts` — giao dịch huỷ thì không có sự kiện. `dedupeKey` = `policy.published:<policyId>:<version>` (ghi lặp cùng bản không phát đôi), `policy.retired:<policyId>:<số bản lớn nhất>`. `source = 'bizcity.platform'`; actor lấy từ chuỗi `user:<id>` / `apikey:<id>` đã có (`publishedBy`); `retirePolicy` thêm tham số `actor` tuỳ chọn (không đổi chữ ký cũ), thiếu thì `system`.
+
+**3. `data` không mang nội dung chính sách.** Chỉ định danh + băm: nguồn nhận sự kiện rồi **tải lại** bằng `GET /api/v1/policies` (etag) — một nguồn sự thật, nội dung không rò qua kênh phụ (nhất quán). `closes` cho biết bản trước bị đóng ở ngày nào (xuyên suốt: nguồn ngoại tuyến biết bản nào hết hiệu lực khi nào). Truy vết: `correlationId` của yêu cầu phát hành đi cùng sự kiện, nối được vào audit.
+
+**4. Không làm ở W3b.** Plugin POS WP nghe sự kiện (repo plugin, S031-16); `policy.review.rejected` / *Trả về nguồn* (hoãn, cần thiết kế riêng); đổi `etag` (giữ nguyên — vẫn là đường dự phòng khi mất webhook).
+
+**Ba yếu tố.** *Nhất quán:* một kênh, một nguồn nội dung. *Xuyên suốt:* `closes` giữ liền mạch hiệu lực. *Truy vết:* `correlationId` + `dedupeKey`. *Gọn:* không bảng, không migration, ~30 dòng ở `policies.ts`.
+
+**Golden.** T031-EV-1 phát hành inline → đúng một `published` có `closes` đúng · T031-EV-2 giao dịch huỷ → không có sự kiện · T031-EV-3 lưu chính sách mua hàng → `published` (đường module), xoá chính sách → `retired` · T031-EV-4 ghi lặp cùng bản không phát đôi · T031-EV-5 `data` không có `content`/`params`.
