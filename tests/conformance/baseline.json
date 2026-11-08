@@ -1991,18 +1991,6 @@
         }
       ],
       "ref": "STD-030-5 · R-MONEY-2 · PHASE-030 N030-2 (mua hàng chuyển sang roundMoney khi domain về modules/, ADR-0024)"
-    },
-    "SC-FLOW-1": {
-      "title": "Bảng giữ chỗ CLAIMS.md đúng khuôn, các dòng đang làm không chồng phạm vi và mỗi nhánh một dòng (R-FLOW-1 / 3 / 6)",
-      "debts": [
-        {
-          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:main:feat/s030-48-kho-thu-vien-b2:apps/api/src/modules/system/schema-catalog.ts:apps/api/src/modules/system/schema-catalog.ts",
-          "file": "docs/phases/CLAIMS.md",
-          "message": "\"PHASE-026 · mã số cha – con GĐ\" và \"PHASE-030 · S030-48 — Kho thư \" chồng phạm vi: apps/api/src/modules/system/schema-catalog.ts ~ apps/api/src/modules/system/schema-catalog.ts (R-FLOW-3: một phạm vi một người)",
-          "why": "S030-48 CHỈ THÊM một khoá library_usage_daily vào danh mục bảng (test db-rules đòi mọi bảng có nhóm); không sửa khoá nào của dòng PHASE-026 mã số cha – con. Chủ dự án cho phép 2026-11-08 (như PHASE-031 W1). Hết khi một trong hai dòng nhả.",
-          "ref": "CLAIMS dòng PHASE-030 · S030-48; dòng PHASE-026 · mã số cha – con"
-        }
-      ]
     }
   }
 }
