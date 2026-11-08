@@ -90,6 +90,14 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'IN-INV-001': ['ND123', 'LGTGT'],
   'IN-INV-002': ['ND123'],
   'IN-CFG-001': ['TT99'],
+  // ── Cổng L — thư viện dùng chung (ADR-0032) ── [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: mã LIB-* là quy ước phần mềm
+  'LIB-UNKNOWN-001': ['NOI-BO'],
+  'LIB-DEPRECATED-001': ['NOI-BO'],
+  'LIB-REMOVED-001': ['NOI-BO'],
+  'LIB-EFFECTIVE-001': ['NOI-BO'],
+  'LIB-SCHEMA-001': ['NOI-BO'],
+  'LIB-VALUE-001': ['NOI-BO'],
+  'LIB-UNVERIFIED-001': ['NOI-BO'],
 };
 
 /** Căn cứ của một mã (tên văn bản + trang tra). Mã chưa khai → rỗng (SC-FIND-1 báo). */

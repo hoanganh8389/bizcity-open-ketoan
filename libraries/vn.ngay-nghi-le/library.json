@@ -1,0 +1,235 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.ngay-nghi-le",
+  "kind": "calendar",
+  "title": "Ngày nghỉ lễ, Tết",
+  "description": "Ngày nghỉ hưởng nguyên lương theo Bộ luật Lao động 2019 Điều 112 và lịch nghỉ hằng năm. Dùng để đếm ngày làm việc (hạn thanh toán, chấm công, hạn nộp).",
+  "version": "1.0.0",
+  "released": "2026-11-07",
+  "contentHash": "sha256:2f13b007fe229284aa72700cfd28d3b1bce40bb4844244ae7e0a73e58c07858f",
+  "owner": "kế toán trưởng / nhân sự",
+  "sources": [
+    {
+      "title": "Ngày nghỉ lễ Tết (lfood.holiday) xuất từ Erp-vn",
+      "kind": "reference",
+      "date": "2026-11-07",
+      "note": "Chưa đủ: thiếu Giỗ Tổ Hùng Vương và Quốc khánh 2026 — bổ sung theo thông báo lịch nghỉ chính thức"
+    }
+  ],
+  "generatedBy": "libraries/vn.ngay-nghi-le/build.mjs",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "date",
+      "kind"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "date": {
+        "type": "string",
+        "format": "date"
+      },
+      "kind": {
+        "enum": [
+          "le-tet",
+          "nghi-bu"
+        ],
+        "description": "le-tet = ngày lễ, Tết theo luật; nghi-bu = nghỉ bù khi lễ trùng ngày nghỉ hằng tuần"
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ],
+    "group": "group",
+    "filters": [
+      {
+        "field": "group",
+        "label": "Năm"
+      }
+    ],
+    "sort": [
+      "code"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-07",
+      "hash": "sha256:2f13b007fe229284aa72700cfd28d3b1bce40bb4844244ae7e0a73e58c07858f",
+      "notes": "Bản đầu: 9 ngày từ Erp-vn (07/11/2026)"
+    }
+  ],
+  "items": [
+    {
+      "code": "2026-01-01",
+      "name": "Tết Dương lịch",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-01-01",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-02-16",
+      "name": "Tết Âm lịch Bính Ngọ",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-02-16",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        },
+        {
+          "ref": "lịch nghỉ 14-22/02/2026",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-02-17",
+      "name": "Tết Âm lịch Bính Ngọ",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-02-17",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-02-18",
+      "name": "Tết Âm lịch Bính Ngọ",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-02-18",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-02-19",
+      "name": "Tết Âm lịch Bính Ngọ",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-02-19",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-02-20",
+      "name": "Tết Âm lịch Bính Ngọ",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-02-20",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-04-30",
+      "name": "Ngày Chiến thắng",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-04-30",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2026-05-01",
+      "name": "Ngày Quốc tế Lao động",
+      "group": "2026",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2026-05-01",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "2027-01-01",
+      "name": "Tết Dương lịch",
+      "group": "2027",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "date": "2027-01-01",
+        "kind": "le-tet"
+      },
+      "basis": [
+        {
+          "ref": "Bộ luật Lao động 2019, Điều 112",
+          "verified": false
+        }
+      ],
+      "since": "1.0.0"
+    }
+  ]
+}
