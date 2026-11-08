@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Lỗi trigger sổ cái ra đúng mã hợp đồng: không cân, khoá kỳ, sổ chỉ thêm (PHASE-029 S029-33, review R1 RV-R1-02) <!-- [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33 -->
+
+- **Thêm:** `classifyLedgerTriggerError` (`packages/platform/src/core/errors.ts`) — một nơi nhận ra lỗi trigger sổ cái theo SQLSTATE + câu chữ; `core/http.ts` và `errorCodeOf` (trace) cùng gọi. Golden T029-ERR-1…5 (`apps/api/test/db-error-mapping.test.ts`) dùng lỗi sinh từ trigger thật trên PostgreSQL.
+- **Đổi:** theo [BIZCITY-ERRORS-v1](docs/contracts/BIZCITY-ERRORS-v1.md) 1.3.0-draft §5: `23514` + "không cân" → `UNBALANCED_ENTRY` (422); `23514` + `PERIOD_LOCKED:` → `PERIOD_LOCKED` (**409**); `42501` + "chỉ được thêm" → `CONFLICT` (**409**) + `details.reason = LEDGER_APPEND_ONLY`. CHECK / quyền khác vẫn `POSTING_FAILED` (422).
+- **Sửa:** trước đây mọi lỗi cân, khoá kỳ và sửa sổ ở tầng CSDL đều ra `POSTING_FAILED` vì trigger ném `23514` / `42501` chứ không phải `P0001` như bảng §5 cũ giả định; bên gọi rẽ nhánh theo `code` không phân biệt được ba trường hợp này.
+- **Thay đổi định khoản:** không (K0 cho mã; không đổi migration, không đổi bút toán).
+- **Nâng cấp cần làm:** bên tích hợp đang rẽ nhánh theo `POSTING_FAILED` cho lỗi khoá kỳ / sửa sổ cần xử lý thêm `PERIOD_LOCKED` và `CONFLICT` + `LEDGER_APPEND_ONLY` (HTTP 422 → 409). Chưa có tag phát hành nào dùng hành vi cũ.
+- **Bảo mật:** không.
+
 ### Bộ review theo nhịp và bản đồ phase → phiên bản (docs/reviews/, R1 nền móng) <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — R1 -->
 
 - **Thêm:** thư mục `docs/reviews/` — tiêu chí 12 trục (thang 0–4, trục cổng A2 · A7 · A12), bảng điểm matrix, bản đồ 31 phase vào sáu phiên bản v0.1.0 → v1.0.0 (đề xuất), bản máy đọc `review-board.json`; biên bản R1 (`main` @ 886f4f95): **ĐẠT có điều kiện 27/48**, 18 phát hiện RV-R1-01…18, trong đó 3 chặn (cờ thoát `allow_ledger_purge` tự bật được; SQLSTATE của trigger bị gộp thành `POSTING_FAILED`; trùng số migration 0080). Nhịp: 3 phase mở mới ⇒ 1 review, trước khi đóng phiên bản.
