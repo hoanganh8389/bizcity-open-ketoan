@@ -1996,11 +1996,11 @@
       "title": "Bảng giữ chỗ CLAIMS.md đúng khuôn, các dòng đang làm không chồng phạm vi và mỗi nhánh một dòng (R-FLOW-1 / 3 / 6)",
       "debts": [
         {
-          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:main:feat/phase-031-w2c-cho-ke-toan-xem:apps/api/src/modules/system/schema-catalog.ts:apps/api/src/modules/system/schema-catalog.ts",
+          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:main:feat/s030-49b-cau-hinh-thu-vien:apps/api/src/modules/system/schema-catalog.ts:apps/api/src/modules/system/schema-catalog.ts",
           "file": "docs/phases/CLAIMS.md",
-          "message": "PHASE-026 · mã số cha – con GĐ ~ PHASE-031 · W2c chồng phạm vi schema-catalog.ts (R-FLOW-3)",
-          "why": "W2c CHỈ THÊM một khoá policy_review_acks vào danh mục bảng (test db-rules đòi mọi bảng có nhóm); không sửa khoá nào của dòng khác. Chủ dự án cho phép 2026-11-08 (như PHASE-031 W1 và S030-48 #185). Hết khi một trong hai dòng nhả.",
-          "ref": "CLAIMS dòng PHASE-031 · W2c; dòng PHASE-026 · mã số cha – con"
+          "message": "\"PHASE-026 · mã số cha – con GĐ\" và \"PHASE-030 · S030-49b — Kho thư\" chồng phạm vi: apps/api/src/modules/system/schema-catalog.ts ~ apps/api/src/modules/system/schema-catalog.ts (R-FLOW-3: một phạm vi một người)",
+          "why": "S030-49b CHỈ THÊM hai khoá library_settings, library_change_requests vào danh mục bảng (test db-rules đòi mọi bảng có nhóm); không sửa khoá nào của dòng PHASE-026 mã số cha – con. Chủ dự án cho phép 2026-11-08. Hết khi một trong hai dòng nhả.",
+          "ref": "CLAIMS dòng PHASE-030 · S030-49b; dòng PHASE-026 · mã số cha – con"
         }
       ]
     }

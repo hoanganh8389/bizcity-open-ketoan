@@ -1,7 +1,7 @@
 # `bizcity_policy@1` — Chính sách nghiệp vụ cho nguồn ngoài: lấy, tính, gửi tham chiếu
 <!-- [2026-11-08 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, ADR-0031, chữ chốt PHASE-031 · 00 §9): hợp đồng API chính sách — GET /policies, GET /rule-contracts, POST /policies/evaluate, POST /policies; Rule Contract sale.promo.buy_x_get_y@1 -->
 
-> **Phiên bản:** 1.0.0-draft · 2026-11-08 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
+> **Phiên bản:** 1.1.0-draft · 2026-11-08 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
 > **Nguồn sự thật:** `apps/api/src/modules/system/policy.routes.ts` (route) · `apps/api/src/modules/system/rule-contracts/` (Rule Contract, dịch vụ) · `packages/platform/src/core/policies.ts` (sổ đăng ký, bảng `policy_registry`)
 > **Quyết định:** [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) · **Kế hoạch:** [PHASE-031 · 00 §9](../phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/00-MASTER-PLAN.md) · **Đi cùng:** [`bizcity_ledger_intake@1` §3.1](BIZCITY-LEDGER-INTAKE-v1.md) (`policyRefs`)
 
@@ -113,11 +113,25 @@ giftQty = min(times × get.qty, maxGiftQty nếu có), làm tròn 4 chữ số t
 
 - Áp độc lập, cộng dồn; chưa có "áp riêng".
 - Chưa kiểm trần pháp lý của hàng khuyến mại.
-- Chưa có sự kiện outbox (`etag` thay thế).
+- Sự kiện `bizcity.policy.published` / `.retired` đã có từ 1.1.0 (mục 10); `etag` vẫn là đường dự phòng khi mất webhook.
 - Chưa có Rule Contract bán hàng khác (bảng giá, chiết khấu, hạn mức) và chưa có bọc cho chính sách mua hàng.
 - Chưa có tính lại ở cửa nạp để kiểm kết quả (`IN-POL-004`): cửa nạp mới kiểm tham chiếu (mã, bản, băm, ngày).
 - Chủ `ban-hang` chỉ là nhãn cho tới khi tách được module bán hàng (S030-16, chưa tách).
 
 ## 9. Changelog
 
+- **1.1.0-draft (2026-11-08):** PHASE-031 W3b — sự kiện `bizcity.policy.published` / `.retired` (mục 10). Thêm, không phá.
 - **1.0.0-draft (2026-11-08):** PHASE-031 W3a — bốn endpoint, Rule Contract đầu tiên `sale.promo.buy_x_get_y@1`.
+
+## 10. Sự kiện (W3b)
+
+Core phát hai loại qua outbox ([bizcity_event@1 §7](BIZCITY-EVENT-v1.md)), **cùng giao dịch** với việc ghi sổ đăng ký (giao dịch huỷ thì không có sự kiện):
+
+| `type` | `subject` | `data` |
+|---|---|---|
+| `bizcity.policy.published` | `policy:<policyId>` | `{ policyId, policyKey, version, ownerModule, ruleContract, effectiveFrom, contentHash, closes: { version, effectiveTo } \| null }` |
+| `bizcity.policy.retired` | `policy:<policyId>` | `{ policyId, retiredVersions[] }` |
+
+- **Không mang nội dung chính sách.** Nhận sự kiện rồi gọi `GET /api/v1/policies` (có `etag`) để lấy bản mới — một nguồn sự thật. `closes` cho biết bản trước hết hiệu lực ngày nào, nên nguồn ngoại tuyến cập nhật được mà không đoán.
+- App ngoài (POS WP, sàn) là app `kind: "app"` có `events.subscribes` hai loại này và `app.webhook.url`; nhận bằng webhook ký HMAC, giao ít nhất một lần, `Idempotency-Key = id sự kiện` ([bizcity_event@1 §7a](BIZCITY-EVENT-v1.md)).
+- Chống phát đôi: `dedupeKey` = `policy.published:<policyId>:<version>` / `policy.retired:<policyId>:<số bản lớn nhất>`.

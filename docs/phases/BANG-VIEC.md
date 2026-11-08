@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 140 |
-| Chờ đủ tín hiệu | 51 |
+| Chưa ai nhận | 138 |
+| Chờ đủ tín hiệu | 52 |
 | Hoãn | 1 |
-| Xong | 255 |
+| Xong | 257 |
 | **Tổng** | **483** |
 
-## Đang làm (8)
+## Đang làm (7)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -24,8 +24,7 @@
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
-| [S031-22](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L31) | PHASE-031 | Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3 | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2c-cho-ke-toan-xem` |
-| [S031-26](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L35) | PHASE-031 | Sự kiện miền policy.published / policy.retired qua outbox (khai ở bizcityevent@1); POS đổi từ hỏi etag sang n… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w3b-su-kien-chinh-sach` |
+| [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-thuoc-tinh-hieu-luc` |
 
 ## Chờ merge (0)
 
@@ -64,7 +63,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (140)
+## Chưa ai nhận (138)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -173,7 +172,6 @@
 | [S029-15](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L25) | PHASE-029 | Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ | P1 | — |
 | [S029-16](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L26) | PHASE-029 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | P2 | — |
 | [S029-18](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L28) | PHASE-029 | Bảng điểm 17 trụ cột theo bằng chứng (signal, foundation), HT10 theo bốn nhóm | P0 | — |
-| [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | — |
 | [S029-20](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L30) | PHASE-029 | Gộp đối tượng theo khuôn 0068 | P1 | — |
 | [S029-21](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L31) | PHASE-029 | SDK: module đăng ký chẩn đoán / luật kiểm; manifest objects / fields / rules / diagnostics | P1 | — |
 | [S029-22](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L32) | PHASE-029 | Khoá checksum migration 0034 → hiện tại; migrate.ts ghi checksum | P1 | — |
@@ -195,7 +193,6 @@
 | [S030-33](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L40) | PHASE-030 | Golden T030-GATE-1..4 (21 §5) | P1 | — |
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
-| [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
 | [S030-50](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L58) | PHASE-030 | B4 — CLI npx bizcity library search / check / new / diff + skill use-bizcity-library (26 §10) | P1 | — |
 | [S030-51](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L59) | PHASE-030 | B5 — gắn vào action (ctx.libraries, bizcitymodule@1 1.3.0 libraries[]) và cửa nạp (trường ↔ thư viện, chữ chố… | P1 | — |
 | [S030-52](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L60) | PHASE-030 | Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không … | P1 | — |
@@ -209,7 +206,7 @@
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
-## Chờ đủ tín hiệu (51)
+## Chờ đủ tín hiệu (52)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -263,6 +260,7 @@
 | [S030-30](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L37) | PHASE-030 | Q030-5 = B: bản niêm phong của bằng chứng. S030-30a ✅ ADR-0030 + bizcityevidence@1 1.2.0-draft (STD-EVD-4 có … | P1 | — |
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
+| [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 
 ## Hoãn (1)
@@ -271,6 +269,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (255)
+## Xong (257)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

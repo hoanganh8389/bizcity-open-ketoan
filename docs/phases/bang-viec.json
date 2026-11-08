@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 140
+      "count": 138
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 51
+      "count": 52
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 255
+      "count": 257
     }
   ],
   "items": [
@@ -4337,9 +4337,15 @@
       "phase": "PHASE-029",
       "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, p030-queue)",
+        "branch": "feat/phase-029-thuoc-tinh-hieu-luc",
+        "state": "đang làm",
+        "since": "2026-11-08",
+        "dot": "PHASE-029 · S029-19 đợt 1 — entityattributes (thuộc tính có hiệu lực: tên, MST, địa chỉ của đối tượ…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5041,8 +5047,8 @@
       "phase": "PHASE-030",
       "title": "B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettings + ghi đè qua settingvalues, librarychangereques…",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 57
@@ -5327,15 +5333,9 @@
       "phase": "PHASE-031",
       "title": "Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w2c-cho-ke-toan-xem",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-031 · W2c — hàng việc \"Chờ kế toán xem\": nhánh policyreview ở bizcityread.documentqueue, bảng…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 31
     },
@@ -5377,15 +5377,9 @@
       "phase": "PHASE-031",
       "title": "Sự kiện miền policy.published / policy.retired qua outbox (khai ở bizcityevent@1); POS đổi từ hỏi etag sang nghe sự kiện",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w3b-su-kien-chinh-sach",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-031 · W3b — sự kiện bizcity.policy.published / .retired qua outbox sẵn có (POS / sàn nghe bằn…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 35
     },

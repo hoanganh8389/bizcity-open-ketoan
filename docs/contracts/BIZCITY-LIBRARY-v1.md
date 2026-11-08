@@ -1,7 +1,7 @@
 # `bizcity_library@1` — Thư viện dùng chung
 <!-- [2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 (ADR-0032): hợp đồng khuôn chung cho thư viện tham chiếu — phong bì, mục, phiên bản ba tầng, luật khai báo, gợi ý, mã LIB-*, ô chọn, API -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
+> **Phiên bản:** 1.3.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
 > **Lược đồ máy đọc:** [BIZCITY-LIBRARY-v1.schema.json](BIZCITY-LIBRARY-v1.schema.json) · **Kiểu TypeScript + bộ kiểm:** `packages/platform/src/core/libraries/` (`types.ts`, `engine.ts`, `index.ts`) · **Dùng chung với bộ kiểm chuẩn:** `scripts/thu-vien/thu-vien.mjs` · **API:** [docs/api/16-thu-vien.md](../api/16-thu-vien.md); mã `LIB-*` ở `packages/contracts/src/library-findings.ts` (gom vào `findings.ts`) · **Kiểm:** SC-LIB-1
 > **Liên quan:** [`bizcity_findings@1`](BIZCITY-FINDINGS-v1.md) (mã `LIB-*`), [`bizcity_settings@1`](BIZCITY-SETTINGS-MATRIX-v1.md) (giá trị của đơn vị), [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) (chính sách của đơn vị)
 
@@ -176,7 +176,9 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
 
 ### 8.2 Căn cứ
 
-`basis[]` = `{ ref, key?, article?: { dieu, khoan?, diem? }, verified }`. `ref` là chuỗi tự do theo nguồn (vd "Nghị định 73/2024/NĐ-CP, Điều 3"); `key` khi văn bản có trong `LEGAL_BASES` (`packages/contracts/src/legal-basis.ts`). Giao diện chỉ hiện điều khoản khi `verified: true` ([21 §3.1](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/21-SO-CONG-VA-BANG-DIEU-HANH.md)).
+`basis[]` = `{ ref, key?, article?: { dieu, khoan?, diem? }, verified }`. `ref` là chuỗi tự do theo nguồn (vd "Nghị định 73/2024/NĐ-CP, Điều 3"); `key` là **mã hoặc bí danh trong thư viện `vn.can-cu-phap-ly`** (khoá cũ của `LEGAL_BASES` là bí danh) — SC-LIB-1 chặn `key` không có ở đó. Không có `key` → giao diện ghi "chưa liên kết". <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a -->
+
+**Xác nhận theo đơn vị** (S030-49a): `core.library.attest` ghi một bằng chứng (`audit_logs`, `object_type = 'library-item'`, `object_id = '<id>:<mã>'`, `after_data.notes.attest = { version, itemHash, attested }`); `itemHash` = băm canonical của đúng mục. Xác nhận còn hiệu lực khi băm của mục ở bản đang chạy bằng băm đã xác nhận. Không đổi `verified` của thư viện. Giao diện chỉ hiện điều khoản khi `verified: true` ([21 §3.1](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/21-SO-CONG-VA-BANG-DIEU-HANH.md)).
 
 ## 9. Ô chọn
 
@@ -230,3 +232,4 @@ Với mỗi `libraries/*/library.json`:
 | 1.0.1-draft | 2026-11-07 | Sửa khi viết mã (S030-45): `LIB-NOT-EFFECTIVE-001` → `LIB-EFFECTIVE-001`; mã luật ba khúc `<codePrefix>-<NHÓM>-<NNN>`; ví dụ §6.3 đúng khoảng hiệu lực <!-- [2026-11-07 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 --> |
 | 1.1.0-draft | 2026-11-07 | Thi hành đợt A (S030-45): bộ nạp + bộ kiểm có gợi ý ở Platform, `core.library.list / get / items / validate`, cổng L trong `bizcity_findings@1`, SC-LIB-1, thư viện `vn.tham-so-phap-ly` và `vn.ngay-nghi-le`; `percent` không giới hạn trên (làm thêm 150 / 200 / 300 %) <!-- [2026-11-07 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 --> |
 | 1.2.0-draft | 2026-11-08 | Lượt dùng (S030-48): `source` ở `core.library.validate`, `core.library.usage`, bảng `library_usage_daily` §10.1 — chỉ mã, không giá trị nhập <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 --> |
+| 1.3.0-draft | 2026-11-08 | Căn cứ (S030-49a): `basis[].key` trỏ `vn.can-cu-phap-ly` (SC-LIB-1 kiểm), xác nhận theo đơn vị bằng bằng chứng `core.library.attest` / `core.library.attestations` <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a --> |
