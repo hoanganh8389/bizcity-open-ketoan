@@ -71,6 +71,11 @@ Thêm mã = thay đổi tương thích; đổi nghĩa mã = phá vỡ.
 | MCP | `POST /mcp` (JSON-RPC 2.0 — [bizcity_mcp@1](BIZCITY-MCP-v1.md)); đi qua nginx của container `web` | phiên / khoá API; công cụ lọc theo quyền |
 | Bằng chứng | `GET /evidence/:id` (bản ghi + kiểm băm, nối chuỗi — kiểm biên nhận `meta.receipt` của action ghi) | `documents:read` |
 
+### 5.1 Chính sách (bản nháp, chưa cam kết ổn định)
+<!-- [2026-11-08 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a: endpoint chính sách cho nguồn ngoài; chưa vào bảng cam kết ổn định cho tới khi POS dùng thật -->
+
+Chạy được từ PHASE-031 W3a, đặc tả ở [bizcity_policy@1](BIZCITY-POLICY-v1.md): `GET /policies`, `GET /rule-contracts`, `GET /rule-contracts/:id`, `POST /policies/evaluate` (quyền `catalog:read` — khoá `documents:write`, `reports:read`, `catalog:write` đều có), `POST /policies` (`settings:write`). Chưa nằm trong bảng trên vì chưa ai dùng thật; chuyển vào bảng khi POS dùng ổn định.
+
 Mọi endpoint khác phục vụ giao diện nội bộ và **có thể đổi không báo** (R-API-8).
 
 ## 6. Giới hạn

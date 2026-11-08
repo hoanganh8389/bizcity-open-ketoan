@@ -118,6 +118,62 @@ export async function registerPolicyVersion(trx: Db, input: RegisterPolicyInput)
   return toEnvelope(r.rows[0]!);
 }
 
+// [2026-11-08 01:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, chữ chốt PHASE-031 · 00 §9): liệt kê bản đang hiệu lực kèm nội dung inline; phát hành một bản inline
+export interface PublishedPolicy extends PolicyEnvelope {
+  /** Nội dung khi `store = inline`; null khi nội dung ở bảng của module chủ. */
+  content: unknown;
+}
+
+/**
+ * Các bản `published` phủ ngày `at` (hiệu lực của BẢN, theo ngày chứng từ). Mỗi chính sách tối đa một bản vì sổ đăng ký bảo đảm
+ * mỗi ngày đúng một bản. `ruleContractPrefix` lọc theo miền, vd "sale." (bản ngừng và bản ngoài ngày không có mặt).
+ */
+export async function listPublishedPolicies(trx: Db, tenantId: string, opts: { at: string; ruleContractPrefix?: string }): Promise<PublishedPolicy[]> {
+  if (!DATE_RE.test(opts.at)) throw Errors.validation(`Ngày "${opts.at}" sai khuôn YYYY-MM-DD`);
+  const prefix = opts.ruleContractPrefix ? `${opts.ruleContractPrefix.replace(/[\\%_]/g, '\\$&')}%` : '%';
+  const r = await sql<Row & { content: unknown }>`
+    SELECT ${COLS}, content FROM policy_registry
+    WHERE tenant_id = ${tenantId} AND status = 'published'
+      AND (effective_from IS NULL OR effective_from <= ${opts.at}::date) AND (effective_to IS NULL OR effective_to >= ${opts.at}::date)
+      AND rule_contract LIKE ${prefix}
+    ORDER BY policy_key, version`.execute(trx);
+  return r.rows.map((x) => ({ ...toEnvelope(x), content: x.content ?? null }));
+}
+
+export interface PublishInlineInput {
+  tenantId: string;
+  /** Module chủ (vd ban-hang): phần đầu của policyId. */
+  ownerModule: string;
+  policyKey: string;
+  ruleContract: string;
+  scope?: Record<string, unknown>;
+  /** Bắt buộc: chính sách inline không có "áp từ đầu" như bản nạp ngược của mua hàng. */
+  effectiveFrom: string;
+  content: unknown;
+  actor: string;
+  reason?: string | null;
+  legalRef?: string | null;
+}
+
+/** policyId ổn định của một chính sách inline: <module>:inline:<mã>. */
+export const inlinePolicyId = (ownerModule: string, policyKey: string) => `${ownerModule}:inline:${policyKey}`;
+
+/**
+ * Phát hành một bản chính sách inline (nội dung ở cột content). Bản kế = bản cuối + 1; bản trước tự đóng ở ngày áp − 1
+ * (registerPolicyVersion). Chính sách đã ngừng không nhận thêm bản — dùng mã mới.
+ */
+export async function publishInlinePolicy(trx: Db, input: PublishInlineInput): Promise<PolicyEnvelope> {
+  if (!DATE_RE.test(input.effectiveFrom)) throw Errors.validation(`Ngày áp "${input.effectiveFrom}" sai khuôn YYYY-MM-DD`);
+  const policyId = inlinePolicyId(input.ownerModule, input.policyKey);
+  const prev = (await listPolicyVersions(trx, input.tenantId, policyId)).at(-1);
+  if (prev?.status === 'retired') throw Errors.conflict(`Chính sách ${input.policyKey} đã ngừng — không phát hành thêm bản, dùng mã mới`);
+  return registerPolicyVersion(trx, {
+    tenantId: input.tenantId, ownerModule: input.ownerModule, policyKey: input.policyKey, policyId, version: (prev?.version ?? 0) + 1,
+    ruleContract: input.ruleContract, scope: input.scope, effectiveFrom: input.effectiveFrom, store: 'inline', storeRef: '',
+    content: input.content, actor: input.actor, reason: input.reason, legalRef: input.legalRef,
+  });
+}
+
 /** Ngừng chính sách: các bản đang dùng được chuyển retired; chứng từ cũ vẫn trỏ được. Trả số bản đổi. */
 export async function retirePolicy(trx: Db, tenantId: string, policyId: string): Promise<number> {
   const r = await sql`UPDATE policy_registry SET status = 'retired' WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND status = 'published'`.execute(trx);
