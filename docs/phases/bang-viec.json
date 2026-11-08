@@ -510,10 +510,10 @@
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "docs/phase-004-chot-co-purge-e2",
+        "branch": "fix/phase-004-s004-12-go-co-thoat",
         "state": "đang làm",
         "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-12, S004-13 — chữ chốt thiết kế (chỉ tài liệu, R-FLOW-2): khoá cờ allowledgerpurge…"
+        "dot": "PHASE-004 · S004-12, S004-13 — mã theo chữ chốt PHASE-004 · 20 (đã vào main): gỡ cờ allowledgerpurg…"
       },
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 24
@@ -527,10 +527,10 @@
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "docs/phase-004-chot-co-purge-e2",
+        "branch": "fix/phase-004-s004-12-go-co-thoat",
         "state": "đang làm",
         "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-12, S004-13 — chữ chốt thiết kế (chỉ tài liệu, R-FLOW-2): khoá cờ allowledgerpurge…"
+        "dot": "PHASE-004 · S004-12, S004-13 — mã theo chữ chốt PHASE-004 · 20 (đã vào main): gỡ cờ allowledgerpurg…"
       },
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 25

@@ -12,6 +12,24 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
+
+- **Thêm:** migration `0084_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).
+- **Đổi:** `QUEUE_SOURCES` thêm `policy_review`, `QUEUE_FLAGS` thêm `policy`; `core.queue.mine` thêm phần `policy` cho người có quyền ghi chứng từ; `core.queue.summary` đếm `policy` theo từng nguồn (`bySource[].policy`), `byFlag` giữ ba khoá cũ.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Sự việc cũ có `policy_check` mang phát hiện sẽ hiện ở hàng việc cho tới khi được đánh dấu đã xem.
+- **Bảo mật:** hành động ghi cần `documents:write`; bảng bằng chứng có RLS theo đơn vị và trigger chặn sửa / xoá.
+
+### Xem trước tác động cấu hình nhận scopeId số (PHASE-030, review R1 RV-R1-05) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — RV-R1-05 -->
+
+- **Thêm:** ca hồi quy T030-CFG-IMP-4 (`apps/api/test/cau-hinh-doi-khoa-a.test.ts`): phạm vi `branch` / `user` với `scopeId` là số được xem trước (200); `scopeId` không phải số vẫn 400.
+- **Sửa:** `settingImpact` kiểm `scopeId` bằng `/^d+$/` (thiếu dấu gạch chéo ngược trước chữ d), nên `GET /api/v1/settings/values/:key/impact?scope=branch&scopeId=12` luôn trả 400 "cần scopeId là định danh số". Hàm ghi `setSetting` đã dùng đúng mẫu số; chỉ phần xem trước bị lỗi.
+- **Đổi:** không.
+- **Thay đổi định khoản:** không (K0, một dòng, không đổi dữ liệu).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
 ### Mã có phiên bản cho đối tượng / chi nhánh / kho: entity_codes và resolveEntity (PHASE-026 S026-4 đợt 1) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — đợt 1 entity_codes -->
 
 - **Thêm:** migration `0083_ma_thuc_the.sql` — bảng `entity_codes` (mã có phiên bản cho partner / branch / warehouse): chỉ thêm, đổi mã = đóng `valid_to` + thêm mã mới, chặn chồng hiệu lực, RLS theo đơn vị. Trigger giữ cột `code` của `partners` / `branches` / `warehouses` khớp ở mọi đường ghi; điền ban đầu từ cột `code` hiện có. `resolveEntity` / `resolveEntities` (mã chính, bí danh, mã ngoài, tra theo ngày), kiểu `EntityRef` / `EntityResolveResult` ở `@ketoan/contracts`. Golden T026-EC-1..9.
