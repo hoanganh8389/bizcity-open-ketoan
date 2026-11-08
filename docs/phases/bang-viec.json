@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 11
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 141
+      "count": 140
     },
     {
       "key": "partial",
@@ -5126,8 +5126,14 @@
       "title": "B4 — CLI npx bizcity library search / check / new / diff + skill use-bizcity-library (26 §10)",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-b4)",
+        "branch": "feat/s030-50-cli-skill-thu-vien",
+        "state": "đang làm",
+        "since": "2026-11-08",
+        "dot": "PHASE-030 · S030-50 — Kho thư viện B4: CLI npx bizcity library list / search / check / new / diff +…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 58
     },
