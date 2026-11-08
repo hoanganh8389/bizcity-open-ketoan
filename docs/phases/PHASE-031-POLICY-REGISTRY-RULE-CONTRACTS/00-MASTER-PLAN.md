@@ -197,7 +197,7 @@ Không dùng `zod-to-json-schema` (không có trong repo, không thêm phụ thu
 - **T031-RC-2** `publishChecks`: `qty ≤ 0`, `sku` rỗng, `validTo < validFrom` bị từ chối; khoá `describe().params` khớp `.shape` của zod.
 - **T031-RC-3** mọi `vectors` của `describe()` chạy qua **hàm thuần và qua endpoint `evaluate`** ra cùng kết quả (đây là bộ chuẩn cho plugin viết lại).
 - **T031-REG-3** phát hành bản 2 đóng bản 1 ở ngày − 1; `GET /policies?at=` trả đúng một bản mỗi ngày (T031-TR-2 qua HTTP); bản `retired` không hiện.
-- **T031-API-1** quyền: khoá `documents:write` đọc và tính được; khoá chỉ `reports:read` → 403; phát hành cần `settings:write`.
+- **T031-API-1** quyền. `SCOPE_PERMISSIONS` (`core/auth.ts:143`) cấp `catalog:read` cho khoá API phạm vi **`documents:write`, `reports:read` và `catalog:write`** — cả ba đọc và tính được (định nghĩa chính sách là dữ liệu đọc; chấp nhận khoá báo cáo đọc được). Khoá chỉ có phạm vi không được ánh xạ (vd `ledger:read`) nhận tập quyền **rỗng** → 403; không khoá → 401. Phát hành cần `settings:write`: khoá API → 403, chủ đơn vị / kế toán trưởng → được. *(Đính chính 2026-11-08: bản đầu ghi "khoá chỉ `reports:read` → 403", sai vì `reports:read` cũng được cấp `catalog:read`; phát hiện khi đọc `SCOPE_PERMISSIONS` trước khi viết test.)*
 - **T031-API-2** `etag` đổi sau khi phát hành, không đổi khi không có gì mới.
 - **T031-E2E-1** `evaluate` → nạp `sale` kèm quà và `policyRefs` đúng như API trả → `posted`, `policy_check` đạt; đổi băm → `IN-POL-001`; ngày trước `effectiveFrom` → `IN-POL-002`.
 - **T031-MIG-1** áp lại `0082` trên cơ sở dữ liệu đã có cột / khung nhìn của tên cũ không lỗi.
