@@ -12,7 +12,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
-### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 05:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
+### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 10:31 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
 
 - **Thêm:** migration `0081_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.
 - **Đổi:** migration `0080_nguoi_tao_su_viec_bat_buoc.sql` — `accounting_events.created_by` NOT NULL và không rỗng. `eventStore.saveVersion` (khấu hao, giá vốn, khoá sổ…) ghi `auth.actor` khi không truyền người tạo.

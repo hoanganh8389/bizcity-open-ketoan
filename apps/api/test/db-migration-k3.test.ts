@@ -1,6 +1,6 @@
 // [2026-11-07 03:57 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 (PHASE-030 D030-16): T029-K3-2 — migration 0080, 0081 trên CSDL tạm có sẵn dữ liệu cũ (chữ chốt: docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/35-GOI-K3.md)
 /**
- * T029-K3-2 — Migration 0080 / 0081 an toàn cho bản cài có dữ liệu. Dựng một CSDL TẠM, áp 0001..0079, rồi:
+ * T029-K3-2 — Migration 0080 / 0081 an toàn cho bản cài có dữ liệu. Dựng một CSDL TẠM, áp mọi migration trước 0080, rồi:
  *   - có sự việc người tạo là chuỗi trắng → 0080 DỪNG bằng câu tiếng Việt, cả migration lùi (dòng rỗng chưa bị điền), cột vẫn nullable;
  *   - chỉ còn dòng rỗng (sự việc hệ thống) → 0080 áp được: điền system:<doc_type>, NOT NULL, chèn rỗng / trắng bị từ chối;
  *   - 0081 áp được trên CSDL đã có dữ liệu (phép chặn chèn vào kỳ khoá kiểm ở khoa-ky-csdl.test.ts với bút toán thật).
