@@ -1,7 +1,8 @@
 # PHASE-030 · 26 — Kho thư viện: trụ cột `bizcity_library@1`, cập nhật, căn cứ, cấu hình, theo dõi sử dụng, bảng đánh giá, skill cho dev
 <!-- [2026-11-08 11:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-46: thiết kế Kho thư viện (đợt B của ADR-0032) — trụ cột IX, màn HT14, sáu điểm gắn bộ kiểm, hai đường cập nhật, căn cứ pháp lý thành thư viện, cấu hình theo đơn vị, theo dõi sử dụng, bảng pass / không pass, skill use-bizcity-library; bản mẫu mockups/kho-thu-vien.html -->
 
-> **Trạng thái:** Đề xuất — chờ chủ dự án duyệt bản mẫu [mockups/kho-thu-vien.html](mockups/kho-thu-vien.html) và trả Q030-L1..L5 (§12). Đợt A (bộ nạp, bộ kiểm, 4 thư viện) ở S030-45 / PR #166.
+> **Trạng thái:** Chấp nhận 2026-11-08 — chủ dự án duyệt bản mẫu [mockups/kho-thu-vien.html](mockups/kho-thu-vien.html) và chốt Q030-L1..L5 theo cột Đề xuất (§12): *"đồng ý phương án của bro, code nhé"*. Đợt A (bộ nạp, bộ kiểm, 4 thư viện) ở S030-45 / PR #166.
+<!-- [2026-11-08 12:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-46: chủ dự án chốt thiết kế Kho thư viện và Q030-L1..L5 = đề xuất -->
 > **Nguồn:** chủ dự án 2026-11-08 — *"mockup việc thể hiện được kho thư viện và trụ cột bizcity_library@1 kết hợp với skill để luôn giúp được dev theo chuẩn thư viện, update được thư viện, bổ sung được các căn cứ pháp lý cho thư viện, cấu hình thư viện, theo dõi việc sử dụng thư viện, dashboard đánh giá … cái nào pass thư viện, cái nào không? Các validator sử dụng thư viện thế nào"*.
 > **Liên quan:** [ADR-0032](../../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), [BIZCITY-LIBRARY-v1](../../contracts/BIZCITY-LIBRARY-v1.md), [24 Cấu hình hệ thống](24-CAU-HINH-HE-THONG.md), [21 Sổ cổng](21-SO-CONG-VA-BANG-DIEU-HANH.md), [ADR-0031 Policy Registry](../../adr/ADR-0031-policy-registry-rule-contracts.md).
 
@@ -150,10 +151,10 @@ Skill nêu rõ: chỉ báo "xong" khi `library check` ra PASS và `selfcheck --o
 
 ## 12. Câu hỏi cho chủ dự án
 
-| Mã | Câu hỏi | Đề xuất |
+| Mã | Câu hỏi | Đề xuất — **đã chốt 2026-11-08** |
 |---|---|---|
 | Q030-L1 | Thư viện là **trụ cột IX** riêng, hay gộp vào IV (một ngôn ngữ mã) / 0 (MDG)? | IX riêng — ranh giới khác MDG và Policy Registry (§2) |
 | Q030-L2 | Xác nhận căn cứ theo **đơn vị** (attestation) có cần không, hay chỉ Nhóm Lõi duyệt ở repo? | có — kế toán trưởng mỗi đơn vị chịu trách nhiệm số liệu của mình |
 | Q030-L3 | Đơn vị được ghi đè mục **luật** (`law`) không? | được, kèm cảnh báo và hiện đỏ trên bảng đánh giá (ADR-0020: người dùng quyết) |
 | Q030-L4 | Cửa nạp kiểm theo thư viện ở mức nào mặc định: cảnh báo hay chặn? | cảnh báo (`LIB-VALUE-001`), chặn chỉ cho `LIB-UNKNOWN-001` ở trường bắt buộc |
-| Q030-L5 | `db/seeds/` có đối tượng / nhân viên / tài khoản ngân hàng thật trên repo công khai — giữ, hay gỡ (cần viết lại lịch sử)? | gỡ khỏi bản phát hành; thư viện mẫu chỉ lấy danh mục chuẩn |
+| Q030-L5 | `db/seeds/` có đối tượng / nhân viên / tài khoản ngân hàng thật trên repo công khai — giữ, hay gỡ (cần viết lại lịch sử)? | gỡ khỏi bản phát hành; thư viện mẫu chỉ lấy danh mục chuẩn — việc S030-53 (không viết lại lịch sử git trong việc này; nếu cần thì chủ dự án quyết riêng) |
