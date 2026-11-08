@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 13
+      "count": 14
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 139
+      "count": 138
     },
     {
       "key": "partial",
@@ -5369,9 +5369,15 @@
       "phase": "PHASE-031",
       "title": "Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2c-cho-ke-toan-xem",
+        "state": "đang làm",
+        "since": "2026-11-08",
+        "dot": "PHASE-031 · W2c — hàng việc \"Chờ kế toán xem\": nhánh policyreview ở bizcityread.documentqueue, bảng…"
+      },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 31
     },
