@@ -110,6 +110,21 @@ Bảng `library_settings` (đơn vị × thư viện), đổi qua `core.library.
 | `overrides` | ghi đè giá trị tham số → `setting_values` khoá `library.<id>.<mã>` có hiệu lực, căn cứ | chỉ mục `kind: policy`; mục `law` ghi đè được nhưng kèm cảnh báo `TSPL-LAW-001` và hiện trên bảng đánh giá |
 | `bindings` | gắn trường của module do đơn vị tự dựng ↔ thư viện (bổ sung cho khai ở manifest) | chỉ thêm, không gỡ khai của manifest |
 
+### 7.1 Chữ chốt B3b (S030-49b) <!-- [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: chủ dự án chốt — ghi đè lưu trong cấu hình thư viện có phiên bản (không setting_values), hai bảng mới 0087, dùng chung schema-catalog.ts -->
+
+Chủ dự án 2026-11-08: ghi đè giá trị **nằm trong cấu hình thư viện có phiên bản**, không dùng `setting_values` (registry cấu hình chỉ nhận khoá khai sẵn — không mở cho khoá động `library.<id>.<mã>`).
+
+| Bảng (migration 0087) | Khuôn | Ghi |
+|---|---|---|
+| `library_settings` | (đơn vị, thư viện, **phiên bản**) → `config` jsonb, lý do, người, lúc. **Chỉ thêm** (trigger chặn sửa / xoá, như `setting_values`); bản hiện hành = phiên bản lớn nhất | `core.library.configure` (`settings:write`, lý do bắt buộc, `Idempotency-Key`) |
+| `library_change_requests` | phiếu: thư viện, mã mục (tuỳ chọn), loại `them-muc · sua-gia-tri · can-cu · bao-sai · ngung-dung`, nội dung, khoá căn cứ (tuỳ chọn), trạng thái `gui → nhan → da-vao · tu-choi`, `rut` (người gửi), bản đã vào | `core.library.propose` (`catalog:write`), `core.library.proposal.update` (`settings:write`; người gửi chỉ `rut`) — mỗi lần là một bằng chứng |
+
+`config` = `{ enabled?, atPolicy?, ruleLevels?, overrides? }`:
+- `enabled: false` chỉ với thư viện khai `optional: true` trong phong bì (hợp đồng 1.4.0 — `authz.tgs-*` là tuỳ chọn); thư viện tắt thì `validate` / `items` trả lỗi `NOT_FOUND` cho đơn vị đó.
+- `atPolicy`: `docDate` (mặc định) · `today` — chỉ thư viện `param`.
+- `ruleLevels`: `{ <mã luật thư viện>: 'warn' | 'info' }` — **chỉ hạ**, không nâng; không áp cho `LIB-*` chuẩn (toàn vẹn dữ liệu).
+- `overrides`: `{ <mã mục>: [{ from, value, reason, basisKey? }] }` — chỉ mục có `effective[]`; giá trị theo khuôn của mục; `from` rơi vào **kỳ đã khoá** → chặn (như HT13, D030-12); ghi đè mục loại **luật** được (Q030-L3) nhưng HT14 hiện đỏ. Bộ kiểm đọc: ghi đè đơn vị có hiệu lực tại ngày → thư viện tại ngày (D-LIB-8); `LIB-VALUE-001` so với giá trị đơn vị đang dùng và ghi rõ nguồn.
+
 ## 8. Theo dõi sử dụng
 
 - Bảng **`library_usage_daily`** (đơn vị, ngày, thư viện, bản, nguồn = module / action / kênh, mã mục hoặc `?`, kết quả `pass / warn / block`, mã phát hiện, số lần). Ghi **sau commit** (eventual — ECP: số đếm không phải sự thật kế toán), gom trong bộ nhớ ≤ 60 giây rồi `upsert … count = count + n`; mất vài lượt đếm khi tiến trình chết là chấp nhận được, có đối chiếu: tổng lượt có bằng chứng (③ ④) ≤ tổng đếm.
