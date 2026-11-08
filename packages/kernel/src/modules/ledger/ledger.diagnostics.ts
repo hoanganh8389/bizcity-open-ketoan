@@ -263,16 +263,19 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
     code: 'LEDGER_TRIGGERS', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Vận hành chạy lại migration để dựng lại trigger', role: 'operator' }, { text: 'Tra nhật ký CSDL ai / lúc nào tắt trigger, lập biên bản (R-KER-3)', role: 'owner' }, { text: 'Chạy lại toàn bộ tự chẩn đoán L3' }], owner: 'operator', verify: { code: 'LEDGER_TRIGGERS' }, stopTheLine: true },
-    title: 'Trigger bảo vệ sổ (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ và đang bật',
-    fix: 'Sổ đang mất lớp bảo vệ: có thể sửa / xoá bút toán. Không ghi sổ tiếp; chạy lại migration (db-migrate) và tìm ai đã tắt trigger (R-KER-3).',
+    title: 'Trigger bảo vệ sổ (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ, đang bật và không còn cờ thoát',
+    fix: 'Sổ đang mất lớp bảo vệ: có thể sửa / xoá bút toán. Không ghi sổ tiếp; chạy lại migration (db-migrate) và tìm ai đã tắt trigger hoặc đưa lại cờ thoát vào trigger (R-KER-3).',
     async run(trx) {
       const want = await declaredTriggers();
-      const rows = await sql<{ name: string; table: string; enabled: string }>`
-        SELECT t.tgname AS name, CASE WHEN n.nspname = 'public' THEN c.relname ELSE n.nspname || '.' || c.relname END AS "table", t.tgenabled AS enabled
+      // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-9): cột bypass dò trigger còn nhắc cờ thoát allow_ledger_purge (đã gỡ ở 0086); migration sau này vô tình đưa cờ trở lại thì đỏ ngay
+      const rows = await sql<{ name: string; table: string; enabled: string; bypass: boolean }>`
+        SELECT t.tgname AS name, CASE WHEN n.nspname = 'public' THEN c.relname ELSE n.nspname || '.' || c.relname END AS "table", t.tgenabled AS enabled,
+               pg_get_triggerdef(t.oid) LIKE '%allow_ledger_purge%' AS bypass
           FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
          WHERE NOT t.tgisinternal AND n.nspname NOT IN ('pg_catalog', 'information_schema')`.execute(trx);
       const have = new Map(rows.rows.map((r) => [`${r.table}.${r.name}`, r.enabled]));
       const bad = want.filter((k) => !have.has(k) || have.get(k) === 'D').map((k) => (have.has(k) ? `tắt:${k}` : `thiếu:${k}`));
+      for (const r of rows.rows) if (r.bypass) bad.push(`cờ thoát:${r.table}.${r.name}`);
       return { examined: want.length, count: bad.length, sample: bad };
     },
   },

@@ -126,9 +126,8 @@ describe('Chuỗi đứt được báo, không bị giấu', () => {
     const h = (await get(`docKey=${DOC2}`)).body.data;
     ev2 = h.id;
     const entry = h.versions[0].entries[0];
-    // Mô phỏng bút toán ghi trước khi có cột phiên bản: gỡ trigger đóng băng đầu bút toán trong một giao dịch của test.
+    // Mô phỏng bút toán ghi trước khi có cột phiên bản: event_version nằm trong bảy cột E2 nên đổi được không cần vượt trigger (S004-12: cờ thoát trigger đã gỡ, 0086).
     await db.transaction().execute(async (trx) => {
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
       await sql`UPDATE ledger_entries SET event_version = NULL WHERE id = ${entry.id}`.execute(trx);
     });
     const after = (await get(`docKey=${DOC2}`)).body.data;
@@ -147,7 +146,6 @@ describe('Chuỗi đứt được báo, không bị giấu', () => {
     const h = (await get(`id=${ev2}`)).body.data;
     const entryId = h.unversionedEntries[0].id;
     await db.transaction().execute(async (trx) => {
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
       await sql`UPDATE ledger_entries SET event_version = 7 WHERE id = ${entryId}`.execute(trx);
     });
     const after = (await get(`id=${ev2}`)).body.data;
@@ -161,7 +159,6 @@ describe('Chuỗi đứt được báo, không bị giấu', () => {
     const entryId = h.unversionedEntries[0].id;
     // Phiên bản 7 không có thật: dựng phiên bản 2 thật để chỉ còn lệch posted_version.
     await db.transaction().execute(async (trx) => {
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
       await sql`UPDATE ledger_entries SET event_version = 1 WHERE id = ${entryId}`.execute(trx);
       await sql`UPDATE accounting_events SET posted_version = 2, version = 2 WHERE id = ${ev2}`.execute(trx);
       await sql`INSERT INTO accounting_event_versions (event_id, version, payload, received_at) VALUES (${ev2}, 1, '{}'::jsonb, now())`.execute(trx);
