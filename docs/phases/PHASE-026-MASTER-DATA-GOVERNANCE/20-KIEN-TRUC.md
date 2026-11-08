@@ -87,6 +87,8 @@ intercompany_refs (group_id, ref, from_tenant_id, from_doc_key, to_tenant_id, to
 docs/standard/tru-cot.json  ──▶  GET /api/v1/system/pillars  ──▶  HT10 (PillarMatrix) + thẻ "Trụ cột" trang chủ phân hệ (lọc modules[])
         ▲
         └── đợt sau: selfcheck ghi status theo bằng chứng (evidenceIds → test / check / migration tồn tại); SC-PILLAR-1 kiểm "đạt" phải có bằng chứng
+
+- **Đã làm (2026-11-08):** SC-PILLAR-1 (`tests/conformance/checks/pillar/pillar.check.mjs`) kiểm "đạt" phải dẫn tới thứ có thật và không dẫn tới thứ đã mất; đếm `source = check` / `manual` ở ghi chú của bộ kiểm. **Chưa làm:** đưa `source` lên `GET /api/v1/system/pillars` và HT10 (cần PR riêng vì `system.routes.ts` không thuộc đợt này); tự chuyển `status` theo kết quả check (D026-6 đợt sau) <!-- [2026-11-08 04:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 -->.
 ```
 
 ## 8. Quy mô (SCALE-1)
