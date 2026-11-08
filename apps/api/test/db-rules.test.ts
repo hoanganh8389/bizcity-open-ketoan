@@ -3,8 +3,9 @@
  * Chạy trên PostgreSQL thật: thử ghi thẳng vào bảng, bỏ qua tầng nghiệp vụ, để chắc trigger chặn được.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { sql } from 'kysely';
+import { sql, type Transaction } from 'kysely';
 import { db } from '../src/db/client.js';
+import { LEDGER_DIAGNOSTICS } from '@bizcity/kernel/modules/ledger/ledger.diagnostics';
 import { call, saleDoc, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -52,6 +53,51 @@ describe('Sổ cái chỉ được thêm (trigger)', () => {
 
   it('không xoá được dòng sổ đã ghi', async () => {
     await expect(sql`DELETE FROM ledger_lines WHERE tenant_id = ${tenantId}`.execute(db)).rejects.toThrow(/chỉ được thêm/);
+  });
+
+  // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-9, review R1 RV-R1-01): cờ allow_ledger_purge đã gỡ khỏi trigger (0086); đặt cờ không còn mở được sổ
+  it('S004-12: đặt cờ allow_ledger_purge cũng KHÔNG xoá / sửa / TRUNCATE được sổ (cờ đã gỡ khỏi trigger, 0086)', async () => {
+    // Không lọc theo đơn vị: đơn vị của tệp này có thể không có dòng ở bảng đó, khi đó trigger theo dòng không kích hoạt và ca thử không chứng minh gì.
+    // Luôn lùi giao dịch: nếu một câu lệnh lọt qua, ca thử trả 'ĐÃ CHẠY ĐƯỢC' (test đỏ) mà không phá dữ liệu.
+    const ROLLBACK = new Error('lùi giao dịch thử');
+    const withFlag = (run: (trx: Transaction<any>) => Promise<unknown>) =>
+      db.transaction().execute(async (trx) => {
+        await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
+        await run(trx);
+        throw ROLLBACK;
+      }).catch((e) => { if (e === ROLLBACK) return 'ĐÃ CHẠY ĐƯỢC'; throw e; });
+    const attempts: Array<[string, string, RegExp]> = [
+      ['DELETE ledger_lines', 'DELETE FROM ledger_lines', /chỉ được thêm/],
+      ['UPDATE ledger_lines', "UPDATE ledger_lines SET description = 'sửa lén'", /chỉ được thêm/],
+      ['DELETE ledger_entries', 'DELETE FROM ledger_entries', /chỉ được thêm/],
+      ['DELETE ledger_links', 'DELETE FROM ledger_links', /chỉ được thêm/],
+      ['DELETE accounting_events', 'DELETE FROM accounting_events', /không được xoá|chỉ được thêm/],
+      ['DELETE accounting_event_versions', 'DELETE FROM accounting_event_versions', /chỉ được thêm|chỉ thêm|không sửa/i],
+      ['TRUNCATE ledger_lines', 'TRUNCATE ledger_lines CASCADE', /TRUNCATE|chỉ được thêm/i],
+      ['TRUNCATE ledger_entries', 'TRUNCATE ledger_entries CASCADE', /TRUNCATE|chỉ được thêm/i],
+      ['TRUNCATE accounting_events', 'TRUNCATE accounting_events CASCADE', /TRUNCATE|chỉ được thêm/i],
+      ['TRUNCATE accounting_event_versions', 'TRUNCATE accounting_event_versions CASCADE', /TRUNCATE|chỉ được thêm/i],
+    ];
+    for (const [name, stmt, deny] of attempts) {
+      await expect(withFlag((trx) => sql.raw(stmt).execute(trx)), name).rejects.toThrow(deny);
+    }
+  });
+
+  // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-9): chẩn đoán LEDGER_TRIGGERS báo trigger còn nhắc cờ thoát (chống tái phạm)
+  it('S004-12: chẩn đoán LEDGER_TRIGGERS xanh khi sạch, và ĐỎ nếu một trigger bị đưa lại mệnh đề cờ allow_ledger_purge', async () => {
+    const check = LEDGER_DIAGNOSTICS.find((c) => c.code === 'LEDGER_TRIGGERS')!;
+    const ROLLBACK = new Error('lùi giao dịch thử');
+    const clean = await db.transaction().execute((trx) => check.run(trx, {} as never));
+    expect(clean.count, JSON.stringify(clean.sample)).toBe(0);
+    const probe = await db.transaction().execute(async (trx) => {
+      await sql`CREATE TEMP TABLE bypass_probe (id int)`.execute(trx);
+      await sql`CREATE TRIGGER bypass_probe_no_update BEFORE DELETE OR UPDATE ON bypass_probe FOR EACH ROW
+                WHEN ((current_setting('ketoan.allow_ledger_purge'::text, true) IS DISTINCT FROM 'on'::text)) EXECUTE FUNCTION forbid_ledger_mutation()`.execute(trx);
+      const res = await check.run(trx, {} as never);
+      throw Object.assign(ROLLBACK, { res });
+    }).catch((e) => { if (e === ROLLBACK) return (e as typeof ROLLBACK & { res: { count: number; sample?: string[] } }).res; throw e; });
+    expect(probe.count).toBe(1);
+    expect(probe.sample?.[0]).toMatch(/^cờ thoát:.*bypass_probe_no_update/);
   });
 
   // P0-1 (AUDIT-2026-11-01, migration 0049): đầu bút toán và sự việc kế toán bị khoá ở tầng CSDL.
@@ -151,7 +197,8 @@ describe('Sổ cái chỉ được thêm (trigger)', () => {
       await trx.insertInto('ledger_lines')
         .values({ ...line, id: undefined as never, line_no: 95, debit: 0, credit: 0, product_sku: 'KM01', cost_fill: null, dims: JSON.stringify(line.dims) })
         .execute();
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
+      // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-8): dọn dòng thử bằng đường của E3 (superuser, bỏ trigger trong giao dịch), không dùng cờ allow_ledger_purge nữa
+      await sql`SET LOCAL session_replication_role = replica`.execute(trx);
       await trx.deleteFrom('ledger_lines').where('entry_id', '=', line.entry_id).where('line_no', '=', 95).execute();
     });
   });
