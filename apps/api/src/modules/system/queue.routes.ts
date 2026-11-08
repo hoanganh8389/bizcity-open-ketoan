@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-08 09:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c (S031-22, chữ chốt PHASE-031 · 00 §10): nguồn policy_review, cờ policy, action core.queue.policy-review.ack
 // [2026-11-06 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-31: hàng việc — tổng hợp, danh sách, việc của tôi trên khung nhìn bizcity_read.document_queue (chữ chốt: docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/23-HANG-VIEC.md)
 /**
  * HÀNG VIỆC — chứng từ đang mở cần ai đó làm gì (nháp, chờ duyệt, đã duyệt chưa ghi nhận, ở bể chờ, bị chặn). Chỉ đọc.
@@ -19,9 +20,9 @@ import { Errors } from '../../core/errors.js';
 
 const tags = ['Hàng việc'];
 
-export const QUEUE_SOURCES = ['payment_request', 'purchase_document', 'accounting_event', 'intake'] as const;
+export const QUEUE_SOURCES = ['payment_request', 'purchase_document', 'accounting_event', 'intake', 'policy_review'] as const;
 export const QUEUE_GROUPS = ['draft', 'pending', 'approved'] as const;
-export const QUEUE_FLAGS = ['held', 'blocked', 'returned'] as const;
+export const QUEUE_FLAGS = ['held', 'blocked', 'returned', 'policy'] as const;
 export const QUEUE_AGES = ['d1', 'd3', 'd7', 'over7'] as const;
 type Source = (typeof QUEUE_SOURCES)[number];
 /** Quyền dạng `<module>:<việc>` (khớp kiểu của `ctx.can`). */
@@ -46,7 +47,7 @@ export function queuePath(source: Source, statusRaw: string): string {
 
 /** Nhóm của thanh mép phải (apps/web/src/layout/rail/useViec.ts). */
 const RAIL_GROUPS: Record<Source, string[]> = {
-  payment_request: ['cong-no'], purchase_document: ['mua-hang'], accounting_event: ['tong-hop'], intake: ['tong-hop'],
+  payment_request: ['cong-no'], purchase_document: ['mua-hang'], accounting_event: ['tong-hop'], intake: ['tong-hop'], policy_review: ['tong-hop'],
 };
 
 /** Quyền làm bước tiếp theo, đúng như thi hành hôm nay (chuyển sang `authorize` của PHASE-028 khi cầu nối có — R-WF-15). */
@@ -58,10 +59,11 @@ const NEXT_PERMISSION: Record<string, Perm> = {
   'accounting_event:pending': 'documents:write',
   'accounting_event:error': 'documents:write',
   'intake:open': 'documents:write',
+  'policy_review:posted': 'documents:write',
 };
 
 const SOURCE_LABEL: Record<Source, string> = {
-  payment_request: 'Đề nghị thanh toán', purchase_document: 'Phiếu mua', accounting_event: 'Chứng từ', intake: 'Chứng từ ở bể chờ',
+  payment_request: 'Đề nghị thanh toán', purchase_document: 'Phiếu mua', accounting_event: 'Chứng từ', intake: 'Chứng từ ở bể chờ', policy_review: 'Chứng từ chờ kế toán xem chính sách',
 };
 
 const where = (parts: RawBuilder<unknown>[]) => sql.join(parts, sql` AND `);
@@ -72,7 +74,7 @@ const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 export type ViecLevel = 'error' | 'warn' | 'info';
 export interface Viec { key: string; level: ViecLevel; text: string; count: number; amount?: number; path: string; groups: string[] }
 export interface MineRow { source: Source; statusRaw: string; statusGroup: string; flag: string | null; mine: boolean; count: number; amount: number; oldestDays: number }
-export type MinePart = 'returned' | 'drafts' | 'waiting' | 'toApprove' | 'blocked' | 'held';
+export type MinePart = 'returned' | 'drafts' | 'waiting' | 'toApprove' | 'blocked' | 'held' | 'policy';
 export interface MineEntry { part: MinePart; source: Source; statusRaw: string; count: number; amount: number; oldestDays: number }
 
 const PART_LEVEL: Record<MinePart, (oldest: number) => ViecLevel> = {
@@ -82,6 +84,7 @@ const PART_LEVEL: Record<MinePart, (oldest: number) => ViecLevel> = {
   toApprove: (o) => (o > 7 ? 'error' : 'warn'),
   blocked: () => 'error',
   held: () => 'warn',
+  policy: () => 'info',
 };
 
 function partText(part: MinePart, source: Source, statusRaw: string): string {
@@ -91,6 +94,7 @@ function partText(part: MinePart, source: Source, statusRaw: string): string {
     case 'drafts': return `${s} nháp chưa trình`;
     case 'waiting': return `${s} đang chờ người duyệt`;
     case 'blocked': return source === 'accounting_event' ? 'Chứng từ lỗi cần ghi sổ lại' : `${s} bị chặn`;
+    case 'policy': return `${s}, cần xem`;
     case 'held': return source === 'intake' ? 'Ở bể chờ, cần sửa rồi nộp lại' : 'Chứng từ chờ định khoản (ACC14)';
     case 'toApprove':
       if (source === 'payment_request' && statusRaw === 'approved') return 'Đề nghị thanh toán đã duyệt, chờ chi tiền';
@@ -110,7 +114,7 @@ export function buildMine(rows: MineRow[], can: (permission: Perm) => boolean): 
     acc.set(k, e);
   };
   for (const r of rows) {
-    if (r.flag === 'blocked' || r.flag === 'held') { if (canWrite) add(r.flag, r); continue; }
+    if (r.flag === 'blocked' || r.flag === 'held' || r.flag === 'policy') { if (canWrite) add(r.flag, r); continue; }
     if (r.mine) {
       if (r.flag === 'returned') add('returned', r);
       else if (r.statusGroup === 'draft') add('drafts', r);
@@ -122,7 +126,7 @@ export function buildMine(rows: MineRow[], can: (permission: Perm) => boolean): 
     if ((r.statusGroup === 'pending' || r.statusGroup === 'approved') && !r.flag && need && can(need)
       && (r.source === 'payment_request' || r.source === 'purchase_document')) add('toApprove', r);
   }
-  const order: MinePart[] = ['blocked', 'toApprove', 'returned', 'held', 'waiting', 'drafts'];
+  const order: MinePart[] = ['blocked', 'toApprove', 'returned', 'held', 'policy', 'waiting', 'drafts'];
   const entries = [...acc.values()].sort((a, b) => order.indexOf(a.part) - order.indexOf(b.part) || a.source.localeCompare(b.source));
   const viec: Viec[] = entries.map((e) => ({
     key: `hv:${e.part}:${e.source}:${e.statusRaw}`,
@@ -147,7 +151,7 @@ function decodeCursor(raw: string): z.infer<typeof cursorSchema> {
 // ── action ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const sourceEnum = z.enum(QUEUE_SOURCES);
-const counts = z.object({ draft: z.number(), pending: z.number(), approved: z.number(), held: z.number(), blocked: z.number(), returned: z.number() });
+const counts = z.object({ draft: z.number(), pending: z.number(), approved: z.number(), held: z.number(), blocked: z.number(), returned: z.number(), policy: z.number() });
 const aging = z.object({ d1: z.number(), d3: z.number(), d7: z.number(), over7: z.number() });
 const itemSchema = z.object({
   source: sourceEnum, sourceId: z.string(), docRef: z.string(), docType: z.string(), docNo: z.string(), docDate: z.string().nullable(), branchCode: z.string().nullable(),
@@ -181,7 +185,7 @@ const summary = defineAction({
              coalesce(max(age), 0)::int AS oldest
         FROM (SELECT source, status_group, flag, ${AGE_SQL} AS age FROM bizcity_read.document_queue WHERE ${where(conds)}) q
        GROUP BY source, status_group, flag`.execute(ctx.data.tx);
-    const empty = () => ({ draft: 0, pending: 0, approved: 0, held: 0, blocked: 0, returned: 0, total: 0, aging: { d1: 0, d3: 0, d7: 0, over7: 0 }, oldestDays: 0 });
+    const empty = () => ({ draft: 0, pending: 0, approved: 0, held: 0, blocked: 0, returned: 0, policy: 0, total: 0, aging: { d1: 0, d3: 0, d7: 0, over7: 0 }, oldestDays: 0 });
     const by = new Map<Source, ReturnType<typeof empty>>(QUEUE_SOURCES.map((s) => [s, empty()]));
     const byGroup = { draft: 0, pending: 0, approved: 0 };
     const byFlag = { held: 0, blocked: 0, returned: 0 };
@@ -190,7 +194,7 @@ const summary = defineAction({
       const s = by.get(r.source)!;
       s.total += r.n; total += r.n;
       s[r.status_group as 'draft' | 'pending' | 'approved'] += r.n; byGroup[r.status_group as 'draft' | 'pending' | 'approved'] += r.n;
-      if (r.flag) { s[r.flag as 'held' | 'blocked' | 'returned'] += r.n; byFlag[r.flag as 'held' | 'blocked' | 'returned'] += r.n; }
+      if (r.flag) { s[r.flag as 'held' | 'blocked' | 'returned' | 'policy'] += r.n; if (r.flag !== 'policy') byFlag[r.flag as 'held' | 'blocked' | 'returned'] += r.n; } // 'policy' đếm theo nguồn (bySource.policy_review.policy); byFlag giữ ba khoá của hợp đồng đã phát hành
       s.aging.d1 += r.d1; s.aging.d3 += r.d3; s.aging.d7 += r.d7; s.aging.over7 += r.over7; s.oldestDays = Math.max(s.oldestDays, r.oldest);
     }
     return { asOf: new Date().toISOString(), total, byGroup, byFlag, bySource: QUEUE_SOURCES.map((s) => ({ source: s, ...by.get(s)! })) };
@@ -256,7 +260,7 @@ const mine = defineAction({
   permission: 'documents:read', effect: 'read', idempotency: 'none',
   input: z.object({}),
   output: z.object({
-    entries: z.array(z.object({ part: z.enum(['returned', 'drafts', 'waiting', 'toApprove', 'blocked', 'held']), source: sourceEnum, statusRaw: z.string(), count: z.number(), amount: z.number(), oldestDays: z.number() })),
+    entries: z.array(z.object({ part: z.enum(['returned', 'drafts', 'waiting', 'toApprove', 'blocked', 'held', 'policy']), source: sourceEnum, statusRaw: z.string(), count: z.number(), amount: z.number(), oldestDays: z.number() })),
     viec: z.array(z.object({ key: z.string(), level: z.enum(['error', 'warn', 'info']), text: z.string(), count: z.number(), amount: z.number().optional(), path: z.string(), groups: z.array(z.string()) })),
   }),
   expose: { http: { method: 'GET', path: '/api/v1/queue/mine' }, mcp: true, ai: 'read' },
@@ -274,4 +278,34 @@ const mine = defineAction({
   },
 });
 
-export const queueActions: AnyActionDef[] = [summary, items, mine];
+/** Đóng một việc "chờ kế toán xem": một dòng bằng chứng bất biến cho đúng bản kiểm hiện hành của sự việc; không sửa sự việc (00 §10). */
+const policyReviewAck = defineAction({
+  id: 'core.queue.policy-review.ack', title: 'Hàng việc: đánh dấu đã xem phát hiện chính sách của một chứng từ', tags,
+  description: 'Ghi một dòng bằng chứng rằng người dùng đã xem các phát hiện chính sách (IN-POL-*) của bản kiểm hiện hành của sự việc; việc rời hàng việc. '
+    + 'Gọi lặp trên cùng bản kiểm trả kết quả cũ. Sự việc được kiểm lại (bản kiểm mới) thì việc mở lại. Không sửa sự việc, không ghi sổ.',
+  permission: 'documents:write', effect: 'write', sideEffects: ['documents'], idempotency: 'required',
+  input: z.object({ eventId: z.coerce.number().int().positive(), note: z.string().trim().max(500).optional() }),
+  output: z.object({ eventId: z.number(), checkedAt: z.string(), ackedBy: z.string(), ackedAt: z.string(), alreadyAcked: z.boolean() }),
+  expose: { http: { method: 'POST', path: '/api/v1/queue/policy-review/:eventId/ack' }, mcp: false, ai: 'deny' },
+  evidence: { objectType: 'accounting_event', objectId: (input) => String(input.eventId) },
+  handler: async (ctx, input) => {
+    const ev = await sql<{ checked_at: string | null; n: number }>`
+      SELECT policy_check->>'checkedAt' AS checked_at, jsonb_array_length(COALESCE(policy_check->'findings', '[]'::jsonb))::int AS n
+        FROM accounting_events WHERE tenant_id = ${ctx.tenant.id} AND id = ${input.eventId}`.execute(ctx.data.tx);
+    const row = ev.rows[0];
+    if (!row) throw Errors.notFound(`sự việc ${input.eventId}`);
+    if (!row.checked_at || row.n === 0) throw Errors.conflict('Sự việc không có phát hiện chính sách nào cần xem', { reason: 'POLICY_REVIEW_NOT_OPEN' });
+    const ins = await sql<{ acked_by: string; acked_at: string }>`
+      INSERT INTO policy_review_acks (tenant_id, event_id, checked_at, acked_by, note)
+      VALUES (${ctx.tenant.id}, ${input.eventId}, ${row.checked_at}, ${ctx.actor.id}, ${input.note ?? null})
+      ON CONFLICT (tenant_id, event_id, checked_at) DO NOTHING
+      RETURNING acked_by, to_char(acked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS acked_at`.execute(ctx.data.tx);
+    if (ins.rows[0]) return { eventId: input.eventId, checkedAt: row.checked_at, ackedBy: ins.rows[0].acked_by, ackedAt: ins.rows[0].acked_at, alreadyAcked: false };
+    const prev = await sql<{ acked_by: string; acked_at: string }>`
+      SELECT acked_by, to_char(acked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS acked_at
+        FROM policy_review_acks WHERE tenant_id = ${ctx.tenant.id} AND event_id = ${input.eventId} AND checked_at = ${row.checked_at}`.execute(ctx.data.tx);
+    return { eventId: input.eventId, checkedAt: row.checked_at, ackedBy: prev.rows[0]!.acked_by, ackedAt: prev.rows[0]!.acked_at, alreadyAcked: true };
+  },
+});
+
+export const queueActions: AnyActionDef[] = [summary, items, mine, policyReviewAck];
