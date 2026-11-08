@@ -25,12 +25,12 @@ Anh em Dev muốn viết ERP nội bộ, POS, pm bán hàng, CRM , quản lý mu
 
 **Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
 
-| | Kế toán | Đăng nhập |
+| Kế toán | Đăng nhập |
 |---|---|---|
 | <https://ketoan.bizcity.vn/> | Mã đơn vị: otchuong / Email: admin@otchuongmart.local  / Mật khẩu: Otcfa8719fd1c0b! |
 
 
-| | Quản trị kho, POS |  Đăng nhập |
+| Quản trị kho, POS |  Đăng nhập |
 |---|---|---|
 | <https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
 
