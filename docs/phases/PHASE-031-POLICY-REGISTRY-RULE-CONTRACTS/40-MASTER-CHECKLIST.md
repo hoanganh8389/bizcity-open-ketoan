@@ -14,24 +14,26 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-5 | Phiên bản chính sách mua hàng (`purchase_policy_versions` theo Q031-4), sửa = bản mới, đăng ký vào Registry `store: module` | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-6 | `policyTrace` của chứng từ mua ghi `code@version#hash`; màn chứng từ hiện bản đã áp | W1 | P0 | có | ✅ 2026-11-07 (#152) |
 | S031-7 | Đánh chỉ mục khoá ngưỡng duyệt (`setting_values`, 16 §5) vào Registry với `approval.levels@1`, `store: settings` | W1 | P2 | có | ☐ sau DOC-030-4 |
-| S031-8 | PR chốt thiết kế cửa nạp: `bizcity_ledger_intake@1` 1.6.0 (`policyRefs`, `policyRef`), JSON Schema, `ingestDocumentSchema` | W2 | P0 | không | 🟡 chữ chốt [00 §8](00-MASTER-PLAN.md) 2026-11-07 (PR chốt thiết kế, chờ duyệt) |
-| S031-9 | Tầng L4b trong `preflight.ts` + Commit Guard băm `policyRefs`; `GateResult.ruleVersion` | W2 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w2a-tham-chieu` 2026-11-08, chờ merge |
-| S031-10 | Họ mã `POL-*` (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào `bizcity_findings@1`, có căn cứ và câu giải thích | W2 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w2a-tham-chieu` 2026-11-08, chờ merge |
+| S031-8 | PR chốt thiết kế cửa nạp: `bizcity_ledger_intake@1` 1.6.0 (`policyRefs`, `policyRef`), JSON Schema, `ingestDocumentSchema` | W2 | P0 | không | ✅ 2026-11-07 (#153; đính chính #163) |
+| S031-9 | Tầng L4b trong `preflight.ts` + Commit Guard băm `policyRefs`; `GateResult.ruleVersion` | W2 | P0 | có | ✅ 2026-11-08 (#159; số migration đổi ở S031-27) |
+| S031-10 | Họ mã `POL-*` (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào `bizcity_findings@1`, có căn cứ và câu giải thích | W2 | P0 | có | ✅ 2026-11-08 (#159; số migration đổi ở S031-27) |
 | S031-11 | Rule Contract `purchase.*@1` bọc `engine.ts` (không đổi kết quả; hồi quy mua hàng) | W2 | P1 | có | ☐ |
-| S031-12 | Khoá `intake.policy.severity`, `intake.policy.mode` vào registry cấu hình (loại A, mặc định cho phép) | W2 | P1 | có | 🟡 code xong trên nhánh `feat/phase-031-w2a-tham-chieu` 2026-11-08, chờ merge |
-| S031-13 | `GET /api/v1/policies`, `POST /api/v1/policies/evaluate` (Q031-3), bản mô tả JSON từng Rule Contract, phạm vi khoá `policies:read`; sự kiện `policy.published` / `policy.retired` qua outbox | W3 | P0 | có | ☐ |
+| S031-12 | Khoá `intake.policy.severity`, `intake.policy.mode` vào registry cấu hình (loại A, mặc định cho phép) | W2 | P1 | có | ✅ 2026-11-08 (#159; số migration đổi ở S031-27) |
+| S031-13 | API cho nguồn ngoài: `GET /api/v1/policies`, `GET /api/v1/rule-contracts[/:id]`, `POST /api/v1/policies/evaluate` (Q031-3), `POST /api/v1/policies` (phát hành inline) — quyền `catalog:read` / `settings:write`, **không** scope mới (sửa D-POL-9; [00 §9](00-MASTER-PLAN.md)); sự kiện outbox tách S031-26 | W3 | P0 | có | 🟡 giữ chỗ W3a 2026-11-08 (nhánh `feat/phase-031-w3a-api-chinh-sach`) |
 | S031-14 | Kế toán trưởng xác nhận bảng `reasonCode` theo loại kết quả (Q031-5) | W3 | P0 | không | ⛔ kế toán trưởng |
-| S031-15 | Rule Contract bán hàng `sale.price_list@1`, `sale.promo.discount@1`, `sale.promo.buy_x_get_y@1`, `sale.credit_limit@1` cùng `modules/ban-hang` (S030-16); `publishChecks` trần NĐ81 | W3 | P0 | có | ☐ sau S031-14 |
+| S031-15 | Rule Contract bán hàng `sale.price_list@1`, `sale.promo.discount@1`, `sale.promo.buy_x_get_y@1`, `sale.credit_limit@1` cùng `modules/ban-hang` (S030-16); `publishChecks` trần NĐ81 | W3 | P0 | có | ☐ sau S031-14 — `sale.promo.buy_x_get_y@1` làm trước ở W3a làm mẫu; còn price_list, discount, credit_limit, "áp riêng", trần NĐ81 |
 | S031-16 | POS WP: tải chính sách, tính theo Rule Contract, gửi `policyRefs`; bỏ luật khuyến mại riêng của plugin (repo plugin, dòng CLAIMS riêng) | W3 | P1 | có | ☐ |
 | S031-17 | Rulepack `policy` cho Conformance Engine (§9 của [10](10-THIET-KE.md)), chỉ đọc | W4 | P1 | có | ☐ |
 | S031-18 | Màn *Chính sách* (phiên bản, phạm vi, chứng từ đã áp) + nút *Chính sách căn cứ* trên màn truy vết | W4 | P1 | có | ☐ |
 | S031-19 | `nen-mong.json` / `NEN-MONG-DOANH-NGHIEP.md`: trụ cột 05 hai nửa, tín hiệu nửa Policy; `tru-cot.json` V theo Q031-1 | W4 | P1 | không | 🟡 phần tài liệu 2026-11-07 (V lên nền móng, 05 đổi tên, P-5..7); tín hiệu nửa Policy ở nen-mong.json khi W1 / W2a vào main |
-| S031-20 | Hai cột `policy_refs`, `policy_check` trên `accounting_event_versions` (gộp migration S031-9) — [20 §2](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w2a-tham-chieu` 2026-11-08, chờ merge |
-| S031-21 | Khung nhìn `bizcity_read.policy_application` + hàm `policy_lineage(event_id)`; nhánh `UNION` mua hàng | W2 | P0 | có | 🟡 code xong trên nhánh `feat/phase-031-w2a-tham-chieu` 2026-11-08, chờ merge |
+| S031-20 | Hai cột `policy_refs`, `policy_check` trên `accounting_event_versions` (gộp migration S031-9) — [20 §2](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ✅ 2026-11-08 (#159; số migration đổi ở S031-27) |
+| S031-21 | Khung nhìn `bizcity_read.policy_application` + hàm `policy_lineage(event_id)`; nhánh `UNION` mua hàng | W2 | P0 | có | ✅ 2026-11-08 (#159; số migration đổi ở S031-27) |
 | S031-22 | Nhánh `policy_review` trong `bizcity_read.document_queue`; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — [20 §3](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ☐ tách khỏi W2a → W2c: nhánh `policy_review` đi cùng action *Đánh dấu đã xem* (xem 00 §8 đính chính) |
 | S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
 | S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
 | S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
+| S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | ☐ |
+| S031-27 | Đổi số migration W2a `0080_kiem_chinh_sach_su_viec` → `0082_kiem_chinh_sach_su_viec`, viết lại idempotent ([00 §9.7](00-MASTER-PLAN.md)); `main` đang có hai `0080` (R-DB-3 đỏ) | W3a | P0 | có | 🟡 giữ chỗ W3a 2026-11-08 |
 
 ## Ca bằng chứng (golden)
 
@@ -72,3 +74,4 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 - 2026-11-07 — `docs/huong-dan/ma-loi/README.md` chồng `ma-loi/**` của S030-45 (SC-FLOW-1). Là tệp sinh tự động → ghi một nợ ở baseline.json có why / ref; hết khi một trong hai dòng nhả.
 
 - 2026-11-08 — W2a code xong trên nhánh: `policyRefs` / `lines[].policyRef` ở khuôn nạp, `IN-POL-001..003` (+ remedy, căn cứ, bài học, bảng §3), `policy-check.ts` (một hàm cho tiền kiểm và cửa nạp), `policy_check` ở `accounting_events` / `accounting_event_versions` (0080), khung nhìn `bizcity_read.policy_application`, khoá `bizcity.intake.policy_check` (advice | strict → hold sẵn có), Commit Guard băm phong bì, mua hàng nộp kèm `policyRefs` từ `policyTrace`. Golden T031-INT-1, 3, 5, 6, 7, 8, 9 (`intake-policy-check.test.ts`, 11 ca xanh); phá thử bỏ `policyOnHold` → INT-8 đỏ, bỏ phần chính sách ở guard → INT-6 đỏ. Phát hiện và sửa khi viết mã: IN-POL-003 như chữ chốt đầu không bao giờ kích hoạt (xem 00 §8). S031-22 tách sang W2c.
+- 2026-11-08 — **W2a xong** (#159 mã, #163 đính chính): S031-8, 9, 10, 12, 20, 21 ✅. Rà `main` sau merge: **hai `0080`** (W2a + K3 #165) → `R-DB-3` đỏ; bộ chạy khoá theo tên tệp nên không mất dữ liệu (sắp `0080_kiem…` trước `0080_nguoi…`). Chữ chốt W3a [00 §9](00-MASTER-PLAN.md): quyền `catalog:read` (không scope mới — sửa D-POL-9), mã ở `modules/system/` (không đụng `layers.mjs` / `contracts/index.ts`), `sale.promo.buy_x_get_y@1` đầu tiên, phát hành inline, đổi số migration → 0082 (S031-27). Nợ N031-1: dời Rule Contract xuống Platform khi W2b cần.

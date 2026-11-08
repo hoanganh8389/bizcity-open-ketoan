@@ -149,3 +149,55 @@ Cả ba `acceptable: true` — kế toán trưởng chấp nhận có lý do b�
 - **Kiểm tham chiếu chéo dòng ↔ phiếu ở Kernel, không ở zod** (union phân biệt cần ZodObject): dòng trỏ key không khai ở `policyRefs` → `IN-POL-001` đường dẫn `lines[i].policyRef.key`.
 - **S031-22 (nhánh hàng việc `policy_review`) tách khỏi W2a.** Hàng việc cần cờ mới + nguồn mới ở `queue.routes.ts` (`QUEUE_SOURCES`, bảng quyền, nhãn) và một action *Đánh dấu đã xem* để việc đóng được — thiếu action thì dòng nằm mãi trong hàng đợi. Chế độ `strict` đã hiện ở nhánh `accounting_event` sẵn có (pending / held), đủ cho chế độ *gợi ý*. Làm cùng action ở W2c.
 - **Commit Guard** băm `(mã, bản, hiệu lực, trạng thái, băm nội dung)` của các phong bì được trỏ tới; chứng từ không có `policyRefs` giữ nguyên dấu cũ.
+
+## 9. Chữ chốt W3a (K1, Platform + API; R-FLOW-2): POS lấy chính sách đã phát hành và tính theo nó
+<!-- [2026-11-08 12:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W3a: GET /policies, GET /rule-contracts, POST /policies/evaluate, POST /policies (phát hành inline); Rule Contract đầu tiên sale.promo.buy_x_get_y@1; dùng catalog:read, không thêm scope; mã ở modules/system để không đụng layers.mjs / contracts index.ts; đổi số migration 0080 → 0082 -->
+
+**Vì sao đây là việc quan trọng nhất.** W2a mới làm nửa sau của vòng (cửa nạp nhận `policyRefs`, kiểm, lưu). Nửa đầu — POS **lấy** chính sách đã phát hành và **tính** theo nó — chưa có: chưa API cho nguồn ngoài, chưa Rule Contract, bán hàng chưa có chính sách nào ở Core. W3a đóng nửa đó bằng phần **không chờ kế toán trưởng** (S031-14): `treatment` chỉ là gợi ý chưa xác nhận.
+
+**Phạm vi W3a** = S031-13 (phần API; sự kiện outbox tách W3b) + Rule Contract đầu tiên `sale.promo.buy_x_get_y@1` làm mẫu cho S031-15 + sửa số migration (S031-27). POS WP (S031-16) ở repo plugin, ngoài phạm vi; W3a chỉ cấp API và bộ ca mẫu để plugin viết lại và tự kiểm.
+
+**1. Quyền — sửa D-POL-9: không thêm scope `policies:read`.** Khoá app có `documents:write` **ngầm kéo theo `catalog:read`** (`core/auth.ts:144`), nên POS hiện có đọc được ngay. Thêm scope mới phải sửa `core/apps.ts` (`APP_SCOPES`), `core/auth.ts`, `core/authz/catalog.ts` và ma trận test phân quyền của PHASE-028 — chi phí lớn, lợi ích chưa có (chưa ai cần tách quyền đọc chính sách khỏi quyền nạp). Đọc và tính: `catalog:read`. Phát hành: `settings:write` (chủ đơn vị, kế toán trưởng). Khi có nhu cầu tách thật thì thêm scope bằng PR riêng.
+
+**2. Nơi đặt mã.** `apps/api/src/modules/system/rule-contracts/**` (khuôn + `sale.promo.buy_x_get_y@1`) và `apps/api/src/modules/system/policy.routes.ts`, mount bằng một dòng trong `system.routes.ts`. Tiền tố `modules/system/` **đã có dòng ở bảng lớp** (`P module-sdk`) nên không phải sửa `layers.mjs`; không đụng `packages/contracts/src/index.ts` — hai tệp đang thuộc dòng giữ chỗ khác (S030-45), tránh nợ SC-FLOW-1 lần thứ ba. **Nợ N031-1:** W2b (Kernel tính lại để kiểm, `IN-POL-004`) cần Rule Contract ở chỗ Kernel import được → khi đó dời xuống Platform. Phần đọc / phát hành dùng `core/policies.ts` của W1 (thêm hàm, tệp đã có bảng lớp).
+
+**3. Bốn endpoint** (hợp đồng mới `bizcity_policy@1`, tài liệu `docs/contracts/BIZCITY-POLICY-v1.md` viết cùng mã để SC-DOC-5 đối chiếu route với mã):
+
+| Endpoint | Quyền | Việc |
+|---|---|---|
+| `GET /api/v1/policies?domain=&branch=&channel=&at=` | `catalog:read` | các bản `published` phủ ngày `at` (mặc định hôm nay) và có cửa sổ nội dung phủ ngày đó; mỗi mục `{ policyKey, policyId, version, ruleContract, scope, effectiveFrom, effectiveTo, contentHash, params, treatment }`; kèm `asOf` và `etag` (băm danh sách) để POS hỏi lại rẻ |
+| `GET /api/v1/rule-contracts` · `GET /api/v1/rule-contracts/:id` | `catalog:read` | khuôn luật: `id`, `domain`, danh sách tham số (tên, kiểu, bắt buộc), **`spec`** (thuật toán viết bằng dữ liệu để plugin PHP / JS viết lại) và **`vectors`** (đầu vào → đầu ra chuẩn để plugin tự kiểm) |
+| `POST /api/v1/policies/evaluate` | `catalog:read` | `{ docDate, branchCode?, channel?, lines[{ lineKey, sku, qty, itemId? }], policies?[{ key, version? }] }` → `{ applied[{ policyRef{key,version,hash}, ruleContract, result, explain }], skipped[{ key, reason }], policyRefs[], gifts[{ sku, qty, isGift:true, policyRef }] }`. Bỏ `policies` = mọi chính sách `sale` phủ `docDate` và phạm vi. `policyRefs` là **đúng mảng** nguồn gắn vào chứng từ nạp |
+| `POST /api/v1/policies` | `settings:write` | phát hành một bản chính sách **inline** (xem 5); action có bằng chứng và nhật ký như `mua-hang.policy.*` |
+
+Không phát sự kiện `policy.published` / `.retired` ở W3a (cần khai loại sự kiện ở `bizcity_event@1`): POS làm mới bằng `etag`. Sự kiện = **W3b** (S031-26).
+
+**4. Khuôn Rule Contract** (TypeScript, thuần, không I/O, không đồng hồ — POS và Core chạy cùng hàm):
+```ts
+interface RuleContract<P, I, O> {
+  id: `${string}@${number}`; domain: 'sale';            // purchase.* bọc engine mua hàng ở S031-11, không ở W3a
+  params: ZodType<P>; publishChecks(p: P): Finding[];    // POL-PUB-*: cấu trúc; trần pháp lý chưa làm (xem 8)
+  evaluate(p: P, input: I): O;                           // tất định
+  treatment(o: O): { on: string; reasonCode: string; confirmed: boolean }[];
+  describe(): { params: Field[]; spec: unknown; vectors: { name: string; params: P; input: I; output: O }[] };
+}
+```
+Không dùng `zod-to-json-schema` (không có trong repo, không thêm phụ thuộc): `describe().params` viết tay; test kiểm danh sách khoá khớp `.shape` của zod để không lệch.
+
+**5. `sale.promo.buy_x_get_y@1`.** Tham số `{ buy:{ sku, qty>0 }, get:{ sku, qty>0 }, repeat:boolean=true, maxGiftQty?:number>0, validFrom?, validTo? }`. `evaluate`: `T` = tổng `qty` các dòng có `sku = buy.sku` (**qty tính theo đơn vị nhỏ nhất**, như `bizcity_ledger_intake@1`); `times = repeat ? floor(T / buy.qty) : (T ≥ buy.qty ? 1 : 0)`; `giftQty = min(times × get.qty, maxGiftQty ?? ∞)`; trả `{ times, gifts:[{ sku: get.sku, qty: giftQty }] }` (rỗng khi 0). Ngày: `validFrom/validTo` **trong nội dung** là cửa sổ chiến dịch; ngày hiệu lực của **bản** nằm ở sổ đăng ký (như mua hàng). Áp dụng khi cả hai phủ `docDate`. `treatment`: quà → `reasonCode: 'XTA1.4'` (có trong `db/packs/vn-tt99-nen.posting-pack.json`), `confirmed:false` cho tới khi kế toán trưởng trả Q031-5. **Giới hạn nói rõ:** nhiều chính sách áp **độc lập, cộng dồn**, chưa có "áp riêng" (`exclusive`) như engine mua hàng — để S031-15.
+
+**6. Phát hành inline.** Chỉ `domain = sale`, chủ `ban-hang` (module `modules/ban-hang` chưa có, S030-16), `policyId = ban-hang:inline:<KEY>`, `KEY` dạng `[A-Z0-9][A-Z0-9_.-]{0,63}`; nội dung lưu ở cột `policy_registry.content` (`store = inline`). `effectiveFrom` **bắt buộc** (khác mua hàng nạp ngược: khuyến mại không được "áp từ đầu"); bản sau cùng khoá chuỗi bản với `registerPolicyVersion` (đóng bản trước ở ngày − 1, không lùi). Lùi về trước hôm nay cần `reason` ≥ 3 ký tự. `publishChecks` W3a chỉ kiểm cấu trúc (qty > 0, sku không rỗng, cửa sổ ngày hợp lệ); **trần NĐ81 (quà ≤ 50 % giá) chưa làm** vì cần tham số pháp lý (S030-35) và giá — không chặn trá hình, ghi rõ ở tài liệu. Chủ `ban-hang` chuyển sang module thật ở S030-16 bằng một `policyId` mới, không sửa bản đã phát hành.
+
+**7. Đổi số migration (S031-27).** `main` hiện có **hai `0080`**: `0080_kiem_chinh_sach_su_viec.sql` (W2a) và `0080_nguoi_tao_su_viec_bat_buoc.sql` (K3), vì #159 và #165 cùng merge mà không ai đổi số → `R-DB-3` / `SC-DATA-1` đỏ. Bộ chạy khoá theo **tên tệp** nên chưa mất dữ liệu, nhưng vi phạm luật. Đổi tệp của W2a thành `0082_kiem_chinh_sach_su_viec.sql` (sau `0081` của K3, không hở số) và viết lại **idempotent** (`ADD COLUMN IF NOT EXISTS`, `DROP TRIGGER IF EXISTS` trước `CREATE TRIGGER`) để cơ sở dữ liệu đã áp tên cũ không lỗi khi áp tên mới. Được phép vì migration chưa phát hành (`locks/migrations.lock.json` chỉ khoá bản phát hành).
+
+**8. Chưa làm ở W3a (ghi để không ai tưởng đã có):** sự kiện outbox (W3b); trần pháp lý NĐ81 (chờ S030-35); "áp riêng"; `sale.price_list`, `sale.promo.discount`, `sale.credit_limit` (S031-15, sau S031-14); Rule Contract mua hàng bọc engine (S031-11); tính lại ở cửa nạp `IN-POL-004` (W2b); bản nháp / duyệt hai bước; màn hình (W4).
+
+**Golden W3a** (`apps/api/test/rule-contracts.test.ts`, `apps/api/test/policy-api.test.ts`):
+- **T031-RC-1** bảng số `buy_x_get_y`: 2A→1B · 3A→1B · 4A→2B · 4A không `repeat`→1B · 1A→0 · `maxGiftQty` chặn · nhiều dòng cùng `sku` cộng dồn.
+- **T031-RC-2** `publishChecks`: `qty ≤ 0`, `sku` rỗng, `validTo < validFrom` bị từ chối; khoá `describe().params` khớp `.shape` của zod.
+- **T031-RC-3** mọi `vectors` của `describe()` chạy qua **hàm thuần và qua endpoint `evaluate`** ra cùng kết quả (đây là bộ chuẩn cho plugin viết lại).
+- **T031-REG-3** phát hành bản 2 đóng bản 1 ở ngày − 1; `GET /policies?at=` trả đúng một bản mỗi ngày (T031-TR-2 qua HTTP); bản `retired` không hiện.
+- **T031-API-1** quyền: khoá `documents:write` đọc và tính được; khoá chỉ `reports:read` → 403; phát hành cần `settings:write`.
+- **T031-API-2** `etag` đổi sau khi phát hành, không đổi khi không có gì mới.
+- **T031-E2E-1** `evaluate` → nạp `sale` kèm quà và `policyRefs` đúng như API trả → `posted`, `policy_check` đạt; đổi băm → `IN-POL-001`; ngày trước `effectiveFrom` → `IN-POL-002`.
+- **T031-MIG-1** áp lại `0082` trên cơ sở dữ liệu đã có cột / khung nhìn của tên cũ không lỗi.
