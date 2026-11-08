@@ -22,6 +22,22 @@ Anh em Dev muốn viết ERP nội bộ, POS, pm bán hàng, CRM , quản lý mu
 
 **Đi nhanh:** [Cài nhanh 3 bước](#cài-nhanh-3-bước-trên-máy-của-bạn) · [Kết nối API và trợ lý AI](#kết-nối-api-và-trợ-lý-ai-với-bizcity) · [Giám sát](#giám-sát-vận-hành-prometheus--grafana--loki) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)
 
+
+**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
+
+| | Địa chỉ | Ghi chú |
+|---|---|---|
+| Kế toán | <https://ketoan.bizcity.vn/> | Kế toán:
+* Mã đơn vị: otchuong
+* Email: admin@otchuongmart.local
+* Mật khẩu: Otcfa8719fd1c0b!
+[Cài đặt](#cài-đặt)
+
+| | Quản trị kho, POS |  Ghi chú
+|---|---|---|
+| POS bán hàng |<https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
+
+
 ## Vì sao có open-ketoan?
 
 Nhiều ae muốn tự build ERP nội bộ cho mình nhưng lại chưa hiểu quá sâu về nghiệp vụ kế toán hoặc bản chất 1 phần mềm kế toán cần có gì, các nguyên tắc ghi sổ là gì.
@@ -73,20 +89,6 @@ flowchart TB
   K --> E
   E -.-> M
 ```
-
-**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
-
-| | Địa chỉ | Ghi chú |
-|---|---|---|
-| Kế toán | <https://ketoan.bizcity.vn/> | Kế toán:
-* Mã đơn vị: otchuong
-* Email: admin@otchuongmart.local
-* Mật khẩu: Otcfa8719fd1c0b!
-[Cài đặt](#cài-đặt)
-
-| | Quản trị kho, POS | 
-|---|---|---|
-| POS bán hàng |<https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
 
 **Accounting Kernel** giữ các bất biến: chứng từ, phiên bản, định khoản, khoá kỳ, sổ cái chỉ thêm, cân Nợ / Có, sổ phụ và biên nhận. **Module** quản lý dữ liệu và quy trình riêng, tương tác với Kernel bằng năng lực được cấp quyền. **Platform** cung cấp xác thực, Action Runtime, chứng từ, sự kiện, audit, quan sát hệ thống và SDK.
 
