@@ -14,7 +14,7 @@ Mỗi bản ghi đủ sáu mục:
 
 ### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
 
-- **Thêm:** migration `0083_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).
+- **Thêm:** migration `0084_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).
 - **Đổi:** `QUEUE_SOURCES` thêm `policy_review`, `QUEUE_FLAGS` thêm `policy`; `core.queue.mine` thêm phần `policy` cho người có quyền ghi chứng từ; `core.queue.summary` đếm `policy` theo từng nguồn (`bySource[].policy`), `byFlag` giữ ba khoá cũ.
 - **Sửa:** không.
 - **Thay đổi định khoản:** không.

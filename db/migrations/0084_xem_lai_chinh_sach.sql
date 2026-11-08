@@ -1,6 +1,6 @@
 -- [2026-11-08 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c (S031-22, chữ chốt PHASE-031 · 00 §10, ADR-0031): bằng chứng "đã xem chính sách" + nhánh policy_review của hàng việc
 -- =============================================================================
--- 0083 Hàng việc "Chờ kế toán xem" (PHASE-031 W2c).
+-- 0084 Hàng việc "Chờ kế toán xem" (PHASE-031 W2c).
 --   policy_review_acks: mỗi lần kế toán xem một bản kiểm chính sách của sự việc là MỘT dòng bằng chứng, chỉ thêm, không sửa sự việc.
 --   Khoá (tenant_id, event_id, checked_at): sự việc nhận bản mới / kiểm lại thì policy_check.checkedAt đổi -> việc mở lại.
 --   View document_queue thêm một nhánh policy_review (cờ policy, nhóm pending; không thêm nhóm trạng thái).

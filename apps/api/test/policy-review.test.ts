@@ -1,6 +1,6 @@
 // [2026-11-08 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c (S031-22, chữ chốt PHASE-031 · 00 §10): hàng việc "Chờ kế toán xem" + Đánh dấu đã xem
 /**
- * Nhánh policy_review của bizcity_read.document_queue (migration 0083) và action core.queue.policy-review.ack.
+ * Nhánh policy_review của bizcity_read.document_queue (migration 0084) và action core.queue.policy-review.ack.
  *   T031-Q-1  sự việc đã ghi sổ có phát hiện chính sách hiện ở hàng việc (cờ policy); pending chỉ một dòng; không phát hiện / đã huỷ thì không
  *   T031-Q-2  ack đóng việc; ack lặp trả kết quả cũ, không thêm dòng
  *   T031-Q-3  bản kiểm mới (checkedAt đổi) mở lại việc
