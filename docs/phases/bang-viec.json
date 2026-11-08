@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -5393,6 +5393,23 @@
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 36
+    },
+    {
+      "id": "S031-28",
+      "phase": "PHASE-031",
+      "title": "W4a: API đọc — core.policy.registry, core.policy.applications, core.policy.tracking, core.policy.lineage (00 §12); thay hàm SQL policylineage của S031-21; khôn…",
+      "priority": "P1",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w4a-api-doc-chinh-sach",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-031 · W4a — API đọc cho màn Chính sách và Theo dõi thực hiện: core.policy.registry / .applica…"
+      },
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 37
     }
   ]
 }
