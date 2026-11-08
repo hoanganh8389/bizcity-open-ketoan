@@ -1,6 +1,6 @@
 -- [2026-11-07 03:57 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 (S029-17): khoá kỳ ở CSDL — chữ chốt docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/35-GOI-K3.md
 -- =============================================================================
--- 0081 Bút toán không vào được kỳ đã khoá, kể cả khi bỏ qua ứng dụng (R-LEDGER-9).
+-- 0082 Bút toán không vào được kỳ đã khoá, kể cả khi bỏ qua ứng dụng (R-LEDGER-9).
 --   Trước đây chỉ ledgerService.post / repost kiểm (periodRepository.isLocked). Trigger này chặn đường vòng (SQL tay, script, mã mới
 --   quên kiểm). Cùng điều kiện với isLocked: khoá cùng kỳ, chi nhánh trống (mọi chi nhánh) hoặc đúng chi nhánh, loại '*' hoặc đúng loại.
 --   Đo 2026-11-07 trên ketoan_test: 0 bút toán được tạo sau lúc khoá kỳ (591 bút toán thuộc kỳ đã khoá, đều ghi trước khi khoá) —
@@ -35,4 +35,4 @@ $$;
 CREATE TRIGGER ledger_entries_period_lock BEFORE INSERT ON public.ledger_entries
   FOR EACH ROW EXECUTE FUNCTION public.ledger_entries_period_lock_guard();
 
-COMMENT ON FUNCTION public.ledger_entries_period_lock_guard() IS 'Chặn chèn bút toán vào kỳ đã khoá (cùng điều kiện periodRepository.isLocked: kỳ, chi nhánh trống hoặc đúng, loại * hoặc đúng). 0081, S029-17, R-LEDGER-9.';
+COMMENT ON FUNCTION public.ledger_entries_period_lock_guard() IS 'Chặn chèn bút toán vào kỳ đã khoá (cùng điều kiện periodRepository.isLocked: kỳ, chi nhánh trống hoặc đúng, loại * hoặc đúng). 0082, S029-17, R-LEDGER-9.';

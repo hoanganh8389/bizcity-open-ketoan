@@ -59,4 +59,4 @@ Bút toán đảo giữ cùng `event_id` với bút toán gốc (`reverses_entry
 |---|---|---|
 | S030-41 | Migration `0077` + `ledger.types.ts` + `ledger.service.ts` + RULE-LEDGER cột "Kiểm bằng" + T030-EVT-1..5 | PHASE-030, Kernel K2 |
 | S030-41b | Kiểu Kysely `LedgerEntriesTable.event_id`: `string` (một dòng ở `packages/platform/src/db/types.ts`) | sau khi dòng PHASE-026 P0 đợt 3 nhả tệp; không chặn S030-41 (`post()` đã bắt buộc ở kiểu `DraftEntry`) |
-| D030-16 | `accounting_events.created_by` bắt buộc, danh tính tác vụ cho sự việc hệ thống (F-2) | **chốt 2026-11-07** — gói K3 [PHASE-029 · 35](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/35-GOI-K3.md) đợt 1, migration 0080 |
+| D030-16 | `accounting_events.created_by` bắt buộc, danh tính tác vụ cho sự việc hệ thống (F-2) | **chốt 2026-11-07** — gói K3 [PHASE-029 · 35](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/35-GOI-K3.md) đợt 1, migration 0081 |

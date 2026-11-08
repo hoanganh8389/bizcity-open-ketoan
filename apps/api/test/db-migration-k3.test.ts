@@ -1,9 +1,9 @@
-// [2026-11-07 03:57 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 (PHASE-030 D030-16): T029-K3-2 — migration 0080, 0081 trên CSDL tạm có sẵn dữ liệu cũ (chữ chốt: docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/35-GOI-K3.md)
+// [2026-11-07 03:57 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 (PHASE-030 D030-16): T029-K3-2 — migration 0081, 0082 trên CSDL tạm có sẵn dữ liệu cũ (chữ chốt: docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/35-GOI-K3.md)
 /**
- * T029-K3-2 — Migration 0080 / 0081 an toàn cho bản cài có dữ liệu. Dựng một CSDL TẠM, áp mọi migration trước 0080, rồi:
- *   - có sự việc người tạo là chuỗi trắng → 0080 DỪNG bằng câu tiếng Việt, cả migration lùi (dòng rỗng chưa bị điền), cột vẫn nullable;
- *   - chỉ còn dòng rỗng (sự việc hệ thống) → 0080 áp được: điền system:<doc_type>, NOT NULL, chèn rỗng / trắng bị từ chối;
- *   - 0081 áp được trên CSDL đã có dữ liệu (phép chặn chèn vào kỳ khoá kiểm ở khoa-ky-csdl.test.ts với bút toán thật).
+ * T029-K3-2 — Migration 0081 / 0082 an toàn cho bản cài có dữ liệu. Dựng một CSDL TẠM, áp mọi migration trước 0081, rồi:
+ *   - có sự việc người tạo là chuỗi trắng → 0081 DỪNG bằng câu tiếng Việt, cả migration lùi (dòng rỗng chưa bị điền), cột vẫn nullable;
+ *   - chỉ còn dòng rỗng (sự việc hệ thống) → 0081 áp được: điền system:<doc_type>, NOT NULL, chèn rỗng / trắng bị từ chối;
+ *   - 0082 áp được trên CSDL đã có dữ liệu (phép chặn chèn vào kỳ khoá kiểm ở khoa-ky-csdl.test.ts với bút toán thật).
  * CSDL tạm luôn bị xoá ở cuối.
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -39,7 +39,7 @@ beforeAll(async () => {
   tmp = new pg.Client({ connectionString: withDb(env.DATABASE_URL, NAME) });
   await tmp.connect();
   await tmp.query('CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
-  for (const f of readdirSync(MIGRATIONS).filter((x) => /^\d{4}_.+\.sql$/.test(x)).sort().filter((x) => x < '0080')) {
+  for (const f of readdirSync(MIGRATIONS).filter((x) => /^\d{4}_.+\.sql$/.test(x)).sort().filter((x) => x < '0081')) {
     try {
       await tmp.query('BEGIN');
       await tmp.query(readFileSync(path.join(MIGRATIONS, f), 'utf8'));
@@ -65,25 +65,25 @@ const oldEvent = (key: string, docType: string, createdBy: string | null) => tmp
 const createdBy = async (key: string) => (await tmp.query('SELECT created_by FROM accounting_events WHERE doc_key = $1', [key])).rows[0]?.created_by;
 const nullable = async () => (await tmp.query("SELECT is_nullable FROM information_schema.columns WHERE table_name = 'accounting_events' AND column_name = 'created_by'")).rows[0].is_nullable;
 
-describe('T029-K3-2 — migration 0080 / 0081 trên CSDL có sẵn dữ liệu cũ', () => {
-  it('0080: còn sự việc người tạo là chuỗi trắng → dừng bằng câu tiếng Việt, lùi cả migration', async () => {
+describe('T029-K3-2 — migration 0081 / 0082 trên CSDL có sẵn dữ liệu cũ', () => {
+  it('0081: còn sự việc người tạo là chuỗi trắng → dừng bằng câu tiếng Việt, lùi cả migration', async () => {
     await tmp.query('BEGIN');
     await tmp.query('SET LOCAL session_replication_role = replica');
     await oldEvent('K3-KH-1', 'depreciation', null);
     await oldEvent('K3-GV-1', 'cogs', null);
     await oldEvent('K3-LA-1', 'sale', '   ');
     await tmp.query('COMMIT');
-    await expect(apply('0080')).rejects.toThrow(/Migration 0080 dừng: có ít nhất 1 sự việc có người tạo là chuỗi trắng.*K3-LA-1.*KHÔNG tự sửa/);
+    await expect(apply('0081')).rejects.toThrow(/Migration 0081 dừng: có ít nhất 1 sự việc có người tạo là chuỗi trắng.*K3-LA-1.*KHÔNG tự sửa/);
     expect(await nullable()).toBe('YES');
     expect(await createdBy('K3-KH-1')).toBeNull(); // bước điền cũng lùi theo
   });
 
-  it('0080: chỉ còn sự việc hệ thống rỗng → điền system:<doc_type>, NOT NULL, chèn rỗng / trắng bị từ chối', async () => {
+  it('0081: chỉ còn sự việc hệ thống rỗng → điền system:<doc_type>, NOT NULL, chèn rỗng / trắng bị từ chối', async () => {
     await tmp.query('BEGIN');
     await tmp.query('SET LOCAL session_replication_role = replica');
     await tmp.query("UPDATE accounting_events SET created_by = 'user:1' WHERE doc_key = 'K3-LA-1'"); // người xem đã ghi đúng người tạo
     await tmp.query('COMMIT');
-    await apply('0080');
+    await apply('0081');
     expect(await nullable()).toBe('NO');
     expect(await createdBy('K3-KH-1')).toBe('system:depreciation');
     expect(await createdBy('K3-GV-1')).toBe('system:cogs');
@@ -94,8 +94,8 @@ describe('T029-K3-2 — migration 0080 / 0081 trên CSDL có sẵn dữ liệu c
     expect(c.rows[0].d).toMatch(/system:<doc_type>/);
   });
 
-  it('0081: áp được trên CSDL có dữ liệu, có trigger chặn chèn vào kỳ khoá (phép chặn kiểm ở khoa-ky-csdl.test.ts)', async () => {
-    await apply('0081');
+  it('0082: áp được trên CSDL có dữ liệu, có trigger chặn chèn vào kỳ khoá (phép chặn kiểm ở khoa-ky-csdl.test.ts)', async () => {
+    await apply('0082');
     const t = await tmp.query("SELECT tgname FROM pg_trigger WHERE tgrelid = 'ledger_entries'::regclass AND tgname = 'ledger_entries_period_lock'");
     expect(t.rows).toHaveLength(1);
   });

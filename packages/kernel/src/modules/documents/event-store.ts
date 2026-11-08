@@ -69,7 +69,7 @@ export const eventStore = {
     }
     const created = await documentRepository.insert(trx, {
       tenant_id: auth.tenantId, source_system: v.sourceSystem ?? 'manual', doc_key: v.docKey, doc_type: v.docType, doc_no: v.docNo,
-      // Người tạo bắt buộc (0080, D030-16): sự việc Kernel tự lập (khấu hao, giá vốn, khoá sổ…) ghi người / khoá đã chạy tác vụ.
+      // Người tạo bắt buộc (0081, D030-16): sự việc Kernel tự lập (khấu hao, giá vốn, khoá sổ…) ghi người / khoá đã chạy tác vụ.
       invoice_no: null, partner_id: null, created_by: v.createdBy || auth.actor, ...v.fields, version,
     });
     return { id: created.id, version };
