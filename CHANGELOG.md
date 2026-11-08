@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### API đọc chính sách: sổ đăng ký, theo dõi thực hiện, truy vết ngược (PHASE-031 W4a, ADR-0031) <!-- [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a -->
+
+- **Thêm:** bốn action đọc `catalog:read` — `GET /api/v1/policy-registry` (+ `/:policyId/applications`), `/policy-tracking`, `/policy-lineage` — đọc `policy_registry` và `bizcity_read.policy_application`; hợp đồng `bizcity_policy@1` 1.2.0-draft mục 11. Test `policy-insight.test.ts` (T031-INS-1..6).
+- **Đổi:** không. Không migration, không bảng tổng hợp.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc, lọc `tenant_id`; khoá API cần `catalog:read`.
+
 ### Sự kiện chính sách qua outbox: `bizcity.policy.published` / `.retired` (PHASE-031 W3b, ADR-0031) <!-- [2026-11-08 11:59 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b -->
 
 - **Thêm:** `registerPolicyVersion` phát `bizcity.policy.published` và `retirePolicy` phát `bizcity.policy.retired` qua outbox, cùng giao dịch với việc ghi sổ đăng ký (`data` chỉ định danh + băm + `closes`, không nội dung; `dedupeKey` chống phát đôi). Hợp đồng: `bizcity_event@1` 1.3.0-draft §7, `bizcity_policy@1` 1.1.0-draft §10; test `policy-events.test.ts` (T031-EV-1..5). App ngoài nhận bằng webhook sẵn có (§7a).
