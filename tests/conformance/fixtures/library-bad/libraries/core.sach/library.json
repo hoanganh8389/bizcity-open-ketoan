@@ -14,6 +14,7 @@
       "kind": "internal"
     }
   ],
+  "codePrefix": "SACH",
   "itemSchema": {
     "type": "object",
     "required": [
@@ -35,6 +36,30 @@
       "name"
     ]
   },
+  "rules": [
+    {
+      "code": "SACH-THU-001",
+      "level": "info",
+      "title": "thử căn cứ",
+      "why": "ca tự kiểm",
+      "when": {
+        "field": "input.a",
+        "op": "exists"
+      },
+      "basis": [
+        {
+          "ref": "Luật Kế toán",
+          "key": "LKT",
+          "verified": false
+        },
+        {
+          "ref": "văn bản không có",
+          "key": "KHONG-CO",
+          "verified": false
+        }
+      ]
+    }
+  ],
   "changelog": [
     {
       "version": "1.0.0",

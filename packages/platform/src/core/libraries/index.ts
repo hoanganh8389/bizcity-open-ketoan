@@ -81,3 +81,6 @@ export function libraryReadme(id: string): string | null {
 
 // [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48: bộ đếm lượt dùng thư viện (B2)
 export { flushLibraryUsage, libraryUsage, normalizeSource, outcomeOf, pendingUsageRows, recordLibraryUsage, resetLibraryUsage, shouldFlush, type UsageReport } from './usage.js';
+
+// [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: xác nhận căn cứ theo đơn vị (bằng chứng core.library.attest)
+export { ATTEST_ACTION, ATTEST_OBJECT, itemHash, libraryAttestations, type Attestation, type AttestNote } from './attest.js';

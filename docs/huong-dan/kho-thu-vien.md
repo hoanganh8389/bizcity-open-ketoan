@@ -13,6 +13,7 @@ Thư viện là dữ liệu tham chiếu **chung mọi đơn vị**, đi theo b�
   - *Mục*: ô chọn giống ô chọn trên các phiếu; đổi **Ngày đọc giá trị** để xem giá trị đúng ngày (vd lương cơ sở trước và sau 01/07/2026).
   - *Phiên bản*: các bản đã phát hành và thay đổi; bản đã phát hành không bị sửa.
   - *Luật*: luật kiểm riêng của thư viện, mức (chặn / cảnh báo / nhắc), điều kiện viết bằng lời.
+  - *Căn cứ* <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a -->: căn cứ của từng mục (văn bản đã liên kết hay chỉ ghi chữ) và đơn vị mình đã **đối chiếu** chưa. Kế toán trưởng / chủ đơn vị bấm **Xác nhận** (ghi lý do, nơi đã đối chiếu) hoặc **Gỡ**. Xác nhận được lưu làm bằng chứng; khi phần mềm cập nhật thư viện mà nội dung mục đó đổi, nhãn chuyển sang "hết hiệu lực" để đối chiếu lại. Thư viện **Căn cứ pháp lý** (`vn.can-cu-phap-ly`) liệt kê các văn bản dùng làm căn cứ, hiệu lực và văn bản thay thế.
   - *Kiểm thử*: nhập mã, giá trị, ngày chứng từ → hệ thống kiểm như khi lưu phiếu và **gợi ý** giá trị đúng; bấm gợi ý để điền. Không ghi gì vào sổ.
 
 ## Nhãn

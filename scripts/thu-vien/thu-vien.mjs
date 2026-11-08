@@ -1,4 +1,5 @@
 // [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032): phần dùng chung của thư viện bizcity_library@1 — băm nội dung, kiểm khuôn payload (tập con JSON Schema), kiểm cả thư viện (SC-LIB-1), đóng dấu phiên bản cho script sinh
+// [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: kiểm basis[].key trỏ mã / bí danh có thật trong vn.can-cu-phap-ly (basisKeysOf)
 /**
  * Chạy bằng node trần (không cần npm install, không build): SC-LIB-1 (tests/conformance/checks/library/) và các
  * libraries/<id>/build.mjs import tệp này. Bộ nạp / bộ kiểm lúc chạy của máy chủ ở packages/platform/src/core/libraries/
@@ -100,7 +101,8 @@ function lintCondition(c, add, where) {
 
 /**
  * Mọi lỗi khuôn của một thư viện (SC-LIB-1 mục 1–6 của hợp đồng §11).
- * o: { dir (tên thư mục), hasReadme, previous (bản trên origin/main, nếu có), libraryIds (Set id mọi thư viện), prefixes (Map codePrefix → id), envelopeSchema }
+ * o: { dir (tên thư mục), hasReadme, previous (bản trên origin/main, nếu có), libraryIds (Set id mọi thư viện), prefixes (Map codePrefix → id), envelopeSchema,
+ *      basisKeys (Set mã + bí danh của vn.can-cu-phap-ly — có thì kiểm basis[].key, S030-49a) }
  */
 export function lintLibrary(lib, o = {}) {
   const out = [];
@@ -181,8 +183,22 @@ export function lintLibrary(lib, o = {}) {
     lintCondition(r.when, (m) => add(`luật ${r.code}: ${m}`, `rule-when:${r.code}:${m.split(':')[0]}`), 'when');
     if (r.suggest?.fromLibrary && o.libraryIds && !o.libraryIds.has(r.suggest.fromLibrary)) add(`luật ${r.code}: suggest.fromLibrary ${r.suggest.fromLibrary} không tồn tại`, `rule-lib:${r.code}`);
   }
+  // 7. căn cứ trỏ bằng mã (S030-49a): basis[].key phải là mã / bí danh của vn.can-cu-phap-ly
+  if (o.basisKeys) {
+    const check = (list, where) => {
+      for (const b of list ?? []) if (b.key !== undefined && !o.basisKeys.has(b.key)) add(`${where}: căn cứ key "${b.key}" không có trong vn.can-cu-phap-ly (mã hoặc bí danh)`, `basis-key:${where}:${b.key}`);
+    };
+    for (const it of items) {
+      check(it.basis, it.code);
+      (it.effective ?? []).forEach((e, i) => check(e.basis, `${it.code}.effective[${i}]`));
+    }
+    for (const r of rules) check(r.basis, r.code);
+  }
   return out;
 }
+
+/** Mã + bí danh của thư viện căn cứ (S030-49a) — tập khoá hợp lệ cho basis[].key. */
+export const basisKeysOf = (lib) => new Set((lib?.items ?? []).flatMap((i) => [i.code, ...(i.aliases ?? [])]));
 
 /**
  * Đóng dấu cho script sinh: tính contentHash; so với bản trước (prev — library.json đang có):

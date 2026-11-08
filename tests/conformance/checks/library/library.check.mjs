@@ -10,7 +10,8 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validate } from '../../lib/jsonschema.mjs';
-import { lintLibrary, serialize } from '../../../../scripts/thu-vien/thu-vien.mjs';
+import { basisKeysOf, lintLibrary, serialize } from '../../../../scripts/thu-vien/thu-vien.mjs';
+// [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: basis[].key của mọi thư viện phải có trong vn.can-cu-phap-ly (khi thư viện đó có)
 
 const ROOT = 'libraries';
 const SCHEMA = 'docs/contracts/BIZCITY-LIBRARY-v1.schema.json';
@@ -48,6 +49,8 @@ export const checks = [
       const libraryIds = new Set(libs.map((x) => x.lib.id));
       const prefixes = new Map();
       for (const { lib } of libs) if (lib.codePrefix && !prefixes.has(lib.codePrefix)) prefixes.set(lib.codePrefix, lib.id);
+      const basisLib = libs.find((x) => x.lib.id === 'vn.can-cu-phap-ly')?.lib;
+      const basisKeys = basisLib ? basisKeysOf(basisLib) : undefined;
       let items = 0;
       for (const { d, file, lib } of libs) {
         items += lib.items?.length ?? 0;
@@ -56,7 +59,7 @@ export const checks = [
         const add = (message, key) => findings.push(ctx.finding(file, lineOf(key.split(':')[1] ?? '"contract"'), `${d}: ${message}`, `${d}:${key}`));
         // Mục (items) do lintLibrary kiểm chi tiết hơn; ở đây chỉ phong bì, tối đa 5 lỗi.
         if (envelopeSchema) for (const e of validate(envelopeSchema, lib).filter((x) => !x.path.startsWith('/items/')).slice(0, 5)) add(`phong bì ${e.path} ${e.message}`, `envelope:${e.path}`);
-        for (const p of lintLibrary(lib, { dir: d, hasReadme: r.exists(`${ROOT}/${d}/README.md`), previous: onMain(r.root, file), libraryIds, prefixes })) add(p.message, p.key);
+        for (const p of lintLibrary(lib, { dir: d, hasReadme: r.exists(`${ROOT}/${d}/README.md`), previous: onMain(r.root, file), libraryIds, prefixes, basisKeys })) add(p.message, p.key);
         // 4b. sinh lại khớp
         if (lib.generatedBy) {
           const script = lib.generatedBy;
