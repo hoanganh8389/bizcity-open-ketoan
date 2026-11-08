@@ -145,3 +145,8 @@ Chủ dự án đồng ý hướng xử lý đề xuất ở biên bản này (2
 | **D-R1-2** (RV-R1-12) | **Hợp nhất**: một khuôn băm cho mọi bản chính sách, và đăng ký chính sách định khoản vào `policy_registry`, làm ở **W3 của PHASE-031**. | Không đổi bút toán đã ghi (R-KER-4); bản `posting_policy_versions` cũ nạp ngược thành bản 1 như đã làm với chính sách mua hàng (0079); `setting_values` giữ riêng vì là cấu hình, không phải chính sách nghiệp vụ — ghi lý do vào chữ chốt W3. | PHASE-031 — mở Q031-x (khuôn băm chung) và S031-x (đăng ký chính sách định khoản) |
 
 Thứ tự việc chặn của v0.1.0 giữ như §5: (1) đổi số migration `0080`, (2) khoá cờ `allow_ledger_purge`, (3) ánh xạ SQLSTATE đúng mã hợp đồng; việc 4 trong §5 nay đã có quyết định D-R1-1, còn phần thi hành nằm ở PHASE-004.
+
+## 8. Đính chính
+<!-- [2026-11-08 01:45 PM Johnny Chu - Chu Hoàng Anh] REVIEW — đính chính RV-R1-02 sau khi đọc lại BIZCITY-ERRORS-v1 §5 khi làm S029-33 -->
+
+- **RV-R1-02 (2026-11-08, khi làm S029-33).** Biên bản §3 viết "module không nhận mã như §5 hứa". Đọc lại: dòng chung của §5 ghi đúng `23514`, `42501` → `POSTING_FAILED`, nên mã **làm đúng chữ của bảng**. Chỗ sai là **bảng tự mâu thuẫn với CSDL**: hai dòng trigger của §5 (`assert_entry_balanced` → `UNBALANCED_ENTRY`; `forbid_*` → `LEDGER_APPEND_ONLY`) đặt điều kiện `P0001`, còn các trigger sổ cái thật ném `23514` / `42501`; `PERIOD_LOCKED` do trigger không có dòng nào. Kết luận mức **chặn** giữ nguyên (module vẫn nhận sai mã), nhưng cách sửa là **chốt hợp đồng trước** (ERRORS 1.3.0-draft), rồi sửa mã; không phải "sửa mã cho khớp hợp đồng". Mức K của S029-33 vẫn K0 cho mã, kèm một PR hợp đồng.
