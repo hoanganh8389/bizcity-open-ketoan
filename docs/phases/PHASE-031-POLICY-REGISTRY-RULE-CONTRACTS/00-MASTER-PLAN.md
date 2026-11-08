@@ -244,3 +244,28 @@ Phạm vi: S031-26 (golden T031-EV-1..5). **Lean:** `bizcity_event@1` đã có o
 **Ba yếu tố.** *Nhất quán:* một kênh, một nguồn nội dung. *Xuyên suốt:* `closes` giữ liền mạch hiệu lực. *Truy vết:* `correlationId` + `dedupeKey`. *Gọn:* không bảng, không migration, ~30 dòng ở `policies.ts`.
 
 **Golden.** T031-EV-1 phát hành inline → đúng một `published` có `closes` đúng · T031-EV-2 giao dịch huỷ → không có sự kiện · T031-EV-3 lưu chính sách mua hàng → `published` (đường module), xoá chính sách → `retired` · T031-EV-4 ghi lặp cùng bản không phát đôi · T031-EV-5 `data` không có `content`/`params`.
+
+## 12. Chữ chốt W4a (K1, API đọc; R-FLOW-2): đọc sổ đăng ký, theo dõi thực hiện, truy vết ngược
+<!-- [2026-11-09 08:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W4a trước khi code: tách W4 thành W4a (API đọc, đợt này) và W4b (màn hình, đợt sau); không migration, không bảng tổng hợp -->
+
+**Tách W4.** W4 ([20 §4](20-TRUY-VET-VA-THEO-DOI.md), mockup `chinh-sach.html`) gồm màn hình và số liệu. Làm **số liệu trước** (W4a, chỉ API đọc): màn hình chỉ vẽ lại, và Conformance Engine (S031-17) dùng cùng nguồn số (D-POL-8: dashboard và Engine không có hai cách đếm). **W4b** (màn *Chính sách*, *Theo dõi thực hiện*, nút *Chính sách căn cứ*) sau khi W4a vào main.
+
+**1. Ba action đọc** (`catalog:read`, `mcp:false`, `ai:'deny'`; tiền tố `/api/v1/policy-*` để không đụng `GET /policies` của W3a, mà `policyId` có dấu `:`):
+
+| Action | Đường | Trả |
+|---|---|---|
+| `core.policy.registry` | `GET /api/v1/policy-registry?owner&status&q` | mỗi chính sách: các bản (số, `effectiveFrom/To`, `status`, `contentHash`, `scope`), số chứng từ đã áp theo bản (đếm `policy_application`), bản đang hiệu lực hôm nay, **khoảng trống** giữa các bản, bản sắp hết hạn |
+| `core.policy.applications` | `GET /api/v1/policy-registry/:policyId/applications?version&cursor` | chứng từ đã áp một chính sách (doc_key, ngày, nguồn, mã `IN-POL-*`, `ok`), phân trang con trỏ — đọc `policy_application` |
+| `core.policy.tracking` | `GET /api/v1/policy-tracking?from&to&branch&source&owner` | các ô của [20 §4](20-TRUY-VET-VA-THEO-DOI.md) tính được từ dữ liệu có sẵn (mục 2) |
+| `core.policy.lineage` | `GET /api/v1/policy-lineage?eventId` hoặc `docKey` | chuỗi ngược: sự việc → mỗi `policyRef` → phong bì bản đó (+ **băm khớp?**, ngày chứng từ có nằm trong hiệu lực?) → `policy_check` lúc nhận. Gộp thành action thay cho hàm SQL `policy_lineage` của S031-21 (không migration; đủ cho một sự việc) |
+
+**2. Ô theo dõi ở W4a** (đều đọc `bizcity_read.policy_application` + `policy_registry`; không bảng tổng hợp, không job đêm — đo ở 1 triệu sự việc rồi mới quyết view vật chất hoá, S031-24):
+*Đạt chính sách* (`ok` / tổng, theo kỳ `doc_date`) · *Lệch theo mã* (đếm `codes[]`) · *Độ phủ theo nguồn* (sự việc có `policyRefs` / sự việc cùng `doc_type` thuộc miền có chính sách hiệu lực, theo `source_system`) · *Độ trễ phiên bản* (`IN-POL-003` theo nguồn × chính sách, bản cuối mỗi nguồn đã gửi) · *Dòng thời gian* (bản hiệu lực trong kỳ, khoảng trống) · *Sức khoẻ Registry* (chính sách sắp hết hạn trong 30 ngày, chính sách không còn bản `published`). **Hoãn:** *Thực hiện chương trình* (lượng / giá trị hàng tặng, ngân sách) — cần lưu kết quả tính của nguồn (IN-POL-004, W2b); W4a chỉ cho **số đơn áp** và **tổng tiền** của chứng từ đã áp.
+
+**3. Lọc.** `from/to` theo `doc_date` (mặc định 30 ngày), `branch` theo mã chi nhánh, `source` theo `source_system`, `owner` theo `owner_module`. Mọi truy vấn có `tenant_id` (R-TEN), chạy qua `ctx.data.tx`.
+
+**4. Vị trí mã.** `apps/api/src/modules/system/policy-insight.ts` (truy vấn thuần, có test) + thêm hàng `defineAction` ở `policy.routes.ts` (mảng `policyActions`). Hợp đồng: `bizcity_policy@1` mục 11 (minor 1.2.0-draft). **Không migration.**
+
+**Ba yếu tố.** *Nhất quán:* một khung nhìn cho dashboard, lineage và Engine. *Xuyên suốt:* khoảng trống giữa các bản và độ trễ phiên bản lộ ra theo ngày chứng từ. *Truy vết:* `lineage` kiểm băm và hiệu lực từng tham chiếu. *Gọn:* 4 action đọc, 0 bảng, 0 migration.
+
+**Golden.** T031-INS-1 registry liệt kê bản, đếm chứng từ đã áp theo bản, phát hiện khoảng trống · T031-INS-2 applications phân trang đúng, lọc theo bản · T031-INS-3 tracking: tỉ lệ đạt và đếm mã khớp dữ liệu dựng (cả ca không có dữ liệu → 0, không chia cho 0) · T031-INS-4 độ trễ phiên bản chỉ tính `IN-POL-003` · T031-INS-5 lineage báo băm lệch khi bản bị đổi nội dung giả định và ngày chứng từ ngoài hiệu lực · T031-INS-6 cô lập đơn vị; quyền `catalog:read`.
