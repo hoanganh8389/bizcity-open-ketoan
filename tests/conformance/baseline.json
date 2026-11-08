@@ -80,17 +80,6 @@
         }
       ]
     },
-    "SC-CON-7": {
-      "title": "Biến môi trường đọc trong code có trong .env.example hoặc settings registry",
-      "ref": "R-MATRIX-8 · khai biến vào .env.example hoặc docs/ops/DEPLOY.md",
-      "debts": [
-        {
-          "fp": "SC-CON-7|apps/api/src/modules/catalog/catalog.routes.ts|PURCHASE_SEED_PASSWORD",
-          "file": "apps/api/src/modules/catalog/catalog.routes.ts",
-          "message": "PURCHASE_SEED_PASSWORD chưa khai ở .env.example, registry, docker-compose.yml hay docs/ops"
-        }
-      ]
-    },
     "SC-DATA-1": {
       "title": "Migration: tên NNNN_ten.sql, số không trùng, không hở",
       "ref": "Audit A-03 (trùng 0028); 0015 hở từ trước — ghi chú trong migrate.ts",

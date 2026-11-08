@@ -242,7 +242,12 @@
         },
         "SC-EVD-9": {
           "findings": 5,
-          "keys": ["shape:contract", "shape:wx", "shape:link", "overwrite:6"]
+          "keys": [
+            "shape:contract",
+            "shape:wx",
+            "shape:link",
+            "overwrite:6"
+          ]
         },
         "SC-STD-5": {
           "findings": 3
@@ -521,6 +526,12 @@
           "findings": 1,
           "keys": [
             "guide:khong-huong-dan"
+          ]
+        },
+        "SC-SEC-5": {
+          "findings": 1,
+          "keys": [
+            "TOOL_PASSWORD"
           ]
         }
       }

@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/mua-hang
+// [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3: mật khẩu nạp dữ liệu qua checkToolPassword (không mặc định trong mã, SC-SEC-5)
 /**
  * DỮ LIỆU TÌNH HUỐNG (db/seeds/mua-hang/*.json): 25 tình huống của tài liệu yêu cầu + ví dụ bổ sung (VD1–VD8) — nạp vào SỔ
  * THẬT của đơn vị đang đăng nhập để cả nhóm xem luồng như vận hành: thêm chi nhánh, nhà cung cấp, mặt hàng còn thiếu (mã đã
@@ -18,6 +19,7 @@ import { voucherService, documentService } from '../../kernel/public.js';
 import { warehouseService } from '../../modules/warehouses/warehouse.routes.js';
 // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): danh mục mẫu qua catalogEnsure của lõi (không ghi thẳng bảng danh mục)
 import { catalogEnsure } from '@bizcity/platform/masterdata/catalog-ensure';
+import { checkToolPassword } from '@bizcity/platform/core/security/tool-password';
 import { loadSettings, resolveAccounts, saveSettings } from './analysis.js';
 import { purchaseService } from './service.js';
 import { policyInputSchema, savePolicy } from './store.js';
@@ -33,9 +35,9 @@ interface GiftOut { id: string; date: string; branchCode: string; sku: string; q
 /** Trong cùng ngày: phiếu hàng trước, rồi đơn đặt, ứng trước, trả tiền, thưởng (đơn đặt phải có trước phiếu ứng trước gắn nó). */
 const RANK = (k: string) => ({ order: 1, prepayment: 2, payment: 3, rebate: 4 } as Record<string, number>)[k] ?? 0;
 
-/** Mật khẩu nạp / xoá dữ liệu tình huống (đổi bằng biến môi trường PURCHASE_SEED_PASSWORD). */
+/** Mật khẩu nạp / xoá dữ liệu tình huống: biến môi trường PURCHASE_SEED_PASSWORD, không có mặc định trong mã (chưa đặt thì công cụ tắt — SC-SEC-5). */
 export function checkSeedPassword(password: string | undefined) {
-  if ((password ?? '') !== (process.env.PURCHASE_SEED_PASSWORD || 'Thuy!@#')) throw Errors.forbidden('Sai mật khẩu nạp dữ liệu');
+  checkToolPassword(password, 'nạp dữ liệu');
 }
 
 export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}) {
