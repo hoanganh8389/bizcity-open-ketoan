@@ -21,6 +21,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** chạy `npm run db:migrate`. Script hay SQL tự viết dùng cờ `allow_ledger_purge` để dọn sổ sẽ không còn hiệu lực: dùng đường E3 (`scripts/xoa-chung-tu.sh`, superuser, có sao lưu). TRUNCATE chưa từng được cấp cho `ketoan_app`; thu thêm cho chắc. Bản cài chưa chạy API bằng `ketoan_app` (PHASE-001 mục 0.7) thì chỉ lớp trigger có tác dụng; chủ bảng / superuser vẫn tắt được trigger (`DISABLE TRIGGER`) — chẩn đoán `LEDGER_TRIGGERS` phát hiện sau đó.
 - **Bảo mật:** đóng cửa sau cho phép bất kỳ phiên nào xoá hoặc sửa bút toán chỉ bằng một câu `set_config`.
 
+### SC-PILLAR-1: tiêu chí "đạt" của bảng trụ cột phải có bằng chứng có thật (PHASE-026 S026-15 đợt 1) <!-- [2026-11-08 04:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 -->
+
+- **Thêm:** bộ kiểm **SC-PILLAR-1** (chặn, `tests/conformance/checks/pillar/`): mỗi tiêu chí `status: "dat"` ở `docs/standard/tru-cot.json` phải dẫn tới ít nhất một thứ có thật trong repo (migration, test, mã check, tuyến API, đường dẫn, tên tệp, định danh trong mã) và không dẫn tới thứ đã mất. Tiêu chí có mã check có thật ghi `source = check`, còn lại `manual` (đếm ở ghi chú). Ca mẫu `repo-bad/docs/standard/tru-cot.json`. Dòng SC-PILLAR-1 ở `RULE-QUALITY-GATE`.
+- **Đổi:** không. Trên dữ liệu thật 0 phát hiện (27 tiêu chí đạt: 2 `source = check`, 25 `manual`), không thêm nợ baseline.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
 ### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
 
 - **Thêm:** migration `0084_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).

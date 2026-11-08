@@ -93,6 +93,10 @@ Khai gắn là căn cứ cho tab Nơi dùng (§3), cho SC-LIB-2 (⑤) và cho b�
 - `basis[]` của mục / luật thư viện thêm `key` trỏ mã văn bản; SC-LIB-1 kiểm `key` có trong `vn.can-cu-phap-ly` (chuỗi `ref` tự do vẫn được, nhưng hiện là "chưa liên kết").
 - **Xác nhận theo đơn vị** (attestation): kế toán trưởng đánh dấu "đã đối chiếu" một mục / căn cứ cho đơn vị mình → `library_attestations` (đơn vị, thư viện, bản, mã, người, lúc, ghi chú, tệp). Không đổi `verified` của repo; màn hiện hai nhãn: *Nhóm Lõi đã duyệt* / *đơn vị đã đối chiếu*. Bản thư viện mới đổi giá trị của mục → xác nhận cũ hết hiệu lực (gắn theo băm của mục).
 - Văn bản hết hiệu lực mà còn mục trỏ tới → bảng đánh giá báo "căn cứ hết hạn".
+- **Chữ chốt bổ sung B3a (S030-49a)** <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: xác nhận theo đơn vị lưu bằng bằng chứng của action, không bảng riêng; nguồn thư viện căn cứ là vn-rulepacks/registry/legal-sources.json -->:
+  - `vn.can-cu-phap-ly` sinh từ `packages/vn-rulepacks/registry/legal-sources.json` (17 văn bản: hiệu lực, sửa đổi / thay thế, điều khoản) cộng `LEGAL_BASES` (khoá cũ `LKT`, `TT99`, `NOI-BO`… là **bí danh** — không đổi `legal-basis.ts`, SC-FIND-1 giữ nguyên). Mã mục = id của sổ (vd `vn.law.88-2015-qh13`).
+  - **Xác nhận theo đơn vị = bằng chứng**, không bảng `library_attestations`: action ghi `core.library.attest` (`settings:write` — chủ đơn vị, kế toán trưởng; lý do bắt buộc) → đúng một bản ghi `audit_logs` có `object_type = 'library-item'`, `object_id = '<thư viện>:<mã>'`, `after_data` mang bản thư viện + **băm của mục**. Đọc: `core.library.attestations`. Xác nhận **hết hiệu lực** khi băm của mục ở bản đang chạy khác băm đã xác nhận. Không migration, không sửa danh mục bảng.
+  - SC-LIB-1 thêm: `basis[].key` (nếu có) phải là mã hoặc bí danh trong `vn.can-cu-phap-ly`.
 
 ## 7. Cấu hình thư viện theo đơn vị
 
