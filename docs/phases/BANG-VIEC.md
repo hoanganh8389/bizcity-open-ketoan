@@ -30,6 +30,7 @@
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S029-33](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L42) | PHASE-029 | Ánh xạ lỗi trigger sổ cái đúng mã hợp đồng BIZCITY-ERRORS-v1 §5: http.ts nhận ra "không cân" (23514) → UNBALA… | P0 | hoanganh8389 (phiên Claude, review-r1) · `fix/phase-029-s029-33-sqlstate` |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-entity-codes` |
+| [S030-47](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L55) | PHASE-030 | B1 — HT14 bản chỉ đọc (modules/thu-vien/), LibraryPicker trong ui-kit (A2), trụ cột IX vào tru-cot.json (26 §… | P0 | hoanganh8389 (phiên Claude, thu-vien-b1) · `feat/s030-47-kho-thu-vien-b1` |
 | [S031-13](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L22) | PHASE-031 | API cho nguồn ngoài: GET /api/v1/policies, GET /api/v1/rule-contracts[/:id], POST /api/v1/policies/evaluate (… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w3a-api-chinh-sach` |
 
 ## Chờ merge (0)
