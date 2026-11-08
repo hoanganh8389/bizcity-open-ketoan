@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 139
+      "count": 138
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 50
+      "count": 51
     },
     {
       "key": "paused",
@@ -5059,8 +5059,8 @@
       "phase": "PHASE-030",
       "title": "B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettings + ghi đè qua settingvalues, librarychangereques…",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 57

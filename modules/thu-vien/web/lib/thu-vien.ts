@@ -157,3 +157,23 @@ export function sourceStatus(r: UsageCounts & { deprecated: number }): { badge: 
   if (r.warn > 0) return { badge: 'badge-warn', text: `cảnh báo ${usagePct(r.warn, r)} % lượt` };
   return { badge: 'badge-ok', text: 'qua thư viện' };
 }
+
+/** Lần xác nhận / gỡ mới nhất của một mục ở đơn vị (core.library.attestations, B3a). */
+export interface Attestation { code: string; attested: boolean; valid: boolean; version: string; itemHash: string; by: string; at: string; reason: string; evidenceId: string }
+
+/** Nhãn tình trạng xác nhận của đơn vị. */
+export function attestationState(a: Attestation | undefined): { badge: 'badge-ok' | 'badge-warn' | 'badge-gray'; text: string } {
+  if (!a) return { badge: 'badge-gray', text: 'chưa xác nhận' };
+  if (!a.attested) return { badge: 'badge-gray', text: 'đã gỡ xác nhận' };
+  if (!a.valid) return { badge: 'badge-warn', text: `hết hiệu lực — mục đã đổi sau bản ${a.version}` };
+  return { badge: 'badge-ok', text: 'đã đối chiếu' };
+}
+
+/** Mọi căn cứ của một mục: căn cứ của mục + căn cứ của từng khoảng giá trị (không lặp). */
+export function basisList(item: Record<string, unknown>): { ref: string; key?: string; verified: boolean }[] {
+  type B = { ref: string; key?: string; verified: boolean };
+  const own = (item.basis as B[] | undefined) ?? [];
+  const eff = ((item.effective as { basis?: B[] }[] | undefined) ?? []).flatMap((e) => e.basis ?? []);
+  const seen = new Set<string>();
+  return [...own, ...eff].filter((b) => { const k = `${b.key ?? ''}|${b.ref}`; if (seen.has(k)) return false; seen.add(k); return true; });
+}

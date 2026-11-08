@@ -63,7 +63,19 @@ GET /api/v1/libraries/usage?from=2026-10-10&to=2026-11-08&library=vn.tham-so-pha
 
 Mặc định 30 ngày tới hôm nay. Trả `total` (qua / cảnh báo / chặn), `byLibrary`, `bySource` (kèm số lượt dùng mã ngừng), `topFindings` (10 mã nhiều nhất), `unknown` (lượt mã lạ theo thư viện × nguồn — ứng viên bổ sung thư viện). Quyền `catalog:read`; MCP chỉ đọc (`core.library.usage`).
 
-## 5. Gọi trong máy chủ
+## 5. Căn cứ và xác nhận của đơn vị
+<!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: core.library.attest / attestations -->
+
+Căn cứ pháp lý là thư viện `vn.can-cu-phap-ly` (văn bản, hiệu lực, sửa đổi / thay thế). `basis[].key` ở mọi thư viện trỏ mã hoặc bí danh trong đó (khoá cũ `LKT`, `TT99`, `NOI-BO`… vẫn dùng được).
+
+```http
+POST /api/v1/libraries/vn.can-cu-phap-ly/attest   { "code": "vn.law.88-2015-qh13", "reason": "Đã đối chiếu văn bản hợp nhất" }
+GET  /api/v1/libraries/vn.can-cu-phap-ly/attestations
+```
+
+`core.library.attest` (quyền `settings:write` — kế toán trưởng, chủ đơn vị; cần `Idempotency-Key`): đơn vị xác nhận đã đối chiếu một mục, hoặc gỡ (`"revoke": true`). Lý do bắt buộc (≥ 5 ký tự); mã phải là **mã chuẩn** (không bí danh). Mỗi lần là một **bằng chứng** (`meta.receipt`), không đổi thư viện gốc, không đổi trạng thái duyệt của Nhóm Lõi. `core.library.attestations` trả lần mới nhất của từng mục: `attested`, `valid` (còn hiệu lực — mục chưa đổi từ lúc xác nhận), bản, người, lúc, lý do. Trợ lý AI chỉ đọc (`ai: 'deny'` cho xác nhận).
+
+## 6. Gọi trong máy chủ
 
 Module, add-in trong cùng tiến trình gọi thẳng bộ kiểm, không qua HTTP:
 

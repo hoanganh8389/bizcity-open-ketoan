@@ -770,7 +770,7 @@
       "mode": "repo",
       "checks": {
         "SC-LIB-1": {
-          "findings": 16,
+          "findings": 17,
           "keys": [
             "core.lech:id-dir",
             "core.loi:envelope:/rules/0/code",
@@ -787,7 +787,8 @@
             "core.loi:rule-code:LIB-X-001",
             "core.loi:rule-fix:LIB-X-001",
             "core.loi:rule-when:LIB-X-001:when",
-            "core.loi:sources-code:dich-nguoc.py"
+            "core.loi:sources-code:dich-nguoc.py",
+            "core.sach:basis-key:SACH-THU-001:KHONG-CO"
           ]
         }
       }

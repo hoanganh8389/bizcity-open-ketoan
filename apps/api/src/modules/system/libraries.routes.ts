@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a (B3a, PHASE-030 · 26 §6): core.library.attest (xác nhận căn cứ theo đơn vị — bằng chứng, settings:write, lý do bắt buộc) và core.library.attestations
 // [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 (B2, PHASE-030 · 26 §8–§9): validate nhận `source` và đếm lượt dùng (gom theo lượt, không hẹn giờ); core.library.usage cho bảng đánh giá; ghi hết khi máy chủ tắt
 // [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032, BIZCITY-LIBRARY-v1 §10): API thư viện dùng chung — danh sách, phong bì, dòng ô chọn theo ngày, kiểm ô nhập có gợi ý; mở cho MCP (ai: 'read')
 /**
@@ -9,12 +10,15 @@
  *                                                đếm một lượt / giá trị vào library_usage_daily — chỉ mã, không giá trị nhập)
  *   GET  /api/v1/libraries/usage                 core.library.usage     — ?from=&to=&library=&source= → lượt qua / cảnh báo / chặn theo thư viện,
  *                                                theo nguồn, mã phát hiện nhiều nhất, mã lạ (bảng đánh giá HT14)
+ *   POST /api/v1/libraries/:id/attest            core.library.attest    — { code, reason, revoke? } → đơn vị xác nhận / gỡ xác nhận một mục (bằng chứng)
+ *   GET  /api/v1/libraries/:id/attestations      core.library.attestations — lần xác nhận mới nhất của từng mục; hết hiệu lực khi mục đổi
  * Nội dung không phụ thuộc đơn vị (tệp của bản dựng). Quyền catalog:read như thư viện mã phát hiện.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
-  flushLibraryUsage, getLibrary, libraryReadme, libraryUsage, listLibraries, recordLibraryUsage, selectorRows, shouldFlush, validateInLibrary,
+  ATTEST_OBJECT, flushLibraryUsage, getLibrary, itemHash, libraryAttestations, libraryReadme, libraryUsage, listLibraries, recordLibraryUsage, selectorRows,
+  shouldFlush, validateInLibrary,
 } from '@bizcity/platform/core/libraries/index';
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -146,7 +150,48 @@ const usage = defineAction({
   },
 });
 
-export const LIBRARY_ACTIONS = [list, get, items, validate, usage];
+const attest = defineAction({
+  id: 'core.library.attest', title: 'Xác nhận mục thư viện cho đơn vị', tags,
+  description: 'Kế toán trưởng / chủ đơn vị xác nhận đã đối chiếu một mục thư viện (vd một văn bản căn cứ, một tham số pháp lý) cho đơn vị mình, '
+    + 'hoặc gỡ xác nhận (revoke). Không đổi thư viện gốc, không đổi trạng thái duyệt của Nhóm Lõi. Lưu thành bằng chứng; '
+    + 'xác nhận hết hiệu lực khi bản thư viện mới đổi nội dung mục đó.',
+  permission: 'settings:write', effect: 'write', idempotency: 'required', sideEffects: ['settings'],
+  input: z.object({
+    id, code: z.string().trim().min(1).max(80),
+    reason: z.string().trim().min(5, 'ghi lý do / nơi đã đối chiếu (ít nhất 5 ký tự)').max(500),
+    revoke: z.boolean().optional(),
+  }),
+  output: z.object({ libraryId: z.string(), code: z.string(), version: z.string(), itemHash: z.string(), attested: z.boolean() }),
+  expose: { http: { method: 'POST', path: '/api/v1/libraries/:id/attest' }, ai: 'deny' },
+  evidence: { objectType: ATTEST_OBJECT, objectId: (i) => `${i.id}:${i.code}` },
+  handler: async (ctx, i) => {
+    const lib = need(i.id);
+    const h = itemHash(lib, i.code);
+    if (!h) throw Errors.notFound(`mục ${i.code} trong thư viện ${i.id} (dùng mã chuẩn, không dùng bí danh)`);
+    const note = { libraryId: lib.id, code: i.code, version: lib.version, itemHash: h, attested: !i.revoke };
+    ctx.evidence.note('attest', note); // libraryAttestations đọc từ after_data.notes.attest
+    return note;
+  },
+});
+
+const attestations = defineAction({
+  id: 'core.library.attestations', title: 'Xác nhận mục thư viện của đơn vị', tags,
+  description: 'Lần xác nhận (hoặc gỡ) mới nhất của từng mục trong thư viện cho đơn vị đang đăng nhập: ai, lúc nào, lý do, còn hiệu lực không '
+    + '(hết hiệu lực khi bản thư viện mới đổi nội dung mục).',
+  permission: 'catalog:read', effect: 'read', idempotency: 'none',
+  input: z.object({ id }),
+  output: z.object({
+    library: z.object({ id: z.string(), version: z.string() }),
+    items: z.array(z.object({ code: z.string(), attested: z.boolean(), valid: z.boolean(), version: z.string(), itemHash: z.string(), by: z.string(), at: z.string(), reason: z.string(), evidenceId: z.string() })),
+  }),
+  expose: { http: { method: 'GET', path: '/api/v1/libraries/:id/attestations' }, mcp: true, ai: 'read' },
+  handler: async (ctx, i) => {
+    const lib = need(i.id);
+    return { library: { id: lib.id, version: lib.version }, items: await libraryAttestations(ctx.data.tx, ctx.tenant.id, lib) };
+  },
+});
+
+export const LIBRARY_ACTIONS = [list, get, items, validate, usage, attest, attestations];
 
 export async function librariesRoutes(app: FastifyInstance): Promise<void> {
   flushLog = (msg) => app.log.warn(msg);
