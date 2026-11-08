@@ -1,5 +1,5 @@
 # PHASE-026 · 10 — Đánh giá mức adapt: trụ cột × tiêu chí × mức đạt
-<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — SINH TỰ ĐỘNG từ docs/standard/tru-cot.json (bizcity_pillars@1 0.1.0-draft, cập nhật 2026-11-07) bằng scripts/tru-cot-md.mjs — sửa ở tệp JSON rồi chạy lại, không sửa tay ở đây -->
+<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — SINH TỰ ĐỘNG từ docs/standard/tru-cot.json (bizcity_pillars@1 0.1.0-draft, cập nhật 2026-11-08) bằng scripts/tru-cot-md.mjs — sửa ở tệp JSON rồi chạy lại, không sửa tay ở đây -->
 
 Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **Trụ cột** ở trang chủ phân hệ. Mức đạt đi theo bằng chứng (migration, test, check); không ai tích tay (R-CONT-7). Trọng số: đạt 1 · một phần ½ · tài liệu ¼ · chưa 0.
 
@@ -16,6 +16,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | VI | Bằng chứng và quan sát được | **70 %** | 2 | 3 | 0 | 0 |
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
+| Nền móng | Thư viện tham chiếu có phiên bản (bizcity_library@1) | **53 %** | 3 | 1 | 3 | 1 |
 
 ## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 53 %
 
@@ -138,3 +139,18 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | M-3 | Module đọc định danh qua ctx.data (items*, khung nhìn bizcity_read) | ☐ Chưa | — | — | S024-11 (PHASE-024) | P0 |
 | M-4 | Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái | 🟡 Một phần | ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master) | chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành | S026-2 (PHASE-026) | P0 |
 | M-5 | Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng | ☐ Chưa | — | — | S026-14 (PHASE-026) | P2 |
+
+## Nền móng · Thư viện tham chiếu có phiên bản (bizcity_library@1) — 53 %
+
+> Dữ liệu tham chiếu chung mọi đơn vị (tham số pháp lý, lịch, mã chức năng, sườn nghiệp vụ, luật kiểm, mẫu) có một khuôn, có phiên bản, đọc tại ngày, kiểm được ô nhập với mã chung LIB-* và gợi ý; đơn vị chỉ đọc, ghi đè có lý do, xác nhận căn cứ; mọi lần dùng để lại dấu — ngang Master Data (giữ cái gì của đơn vị) và Policy Registry (đơn vị quyết theo luật nào) (ADR-0032).
+
+| Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp | Ưu tiên |
+|---|---|---|---|---|---|---|
+| L-1 | Khuôn chung bizcity_library@1: phong bì cứng, payload theo itemSchema, phiên bản ba tầng (thư viện · mục · giá trị theo ngày), băm + changelog | ✅ Đạt | libraries/*/library.json, scripts/thu-vien/thu-vien.mjs, SC-LIB-1 + ca tự kiểm library-bad (S030-45) | — | — | P0 |
+| L-2 | Một bộ kiểm chung, 7 mã LIB-* trong thư viện mã (cổng L), gợi ý lấy từ thư viện; luật khai báo của từng thư viện | ✅ Đạt | packages/platform/src/core/libraries (validateAgainstLibrary), library-findings.ts, thu-vien.test.ts | — | — | P0 |
+| L-3 | Đọc được ở mọi nơi: API core.library.*, MCP chỉ đọc, ô chọn LibraryPicker, màn HT14 Kho thư viện | ✅ Đạt | GET /api/v1/libraries, LibraryPicker (ui-kit), modules/thu-vien (S030-47) | — | — | P0 |
+| L-4 | Căn cứ pháp lý là thư viện; mục trỏ căn cứ bằng mã; kế toán trưởng xác nhận theo đơn vị | 📄 Tài liệu | PHASE-030 · 26 §6 (chốt 2026-11-08, Q030-L2) | LEGAL_BASES và legal-sources.json còn hai sổ; căn cứ trong thư viện là chuỗi tự do | S030-49 (PHASE-030) | P1 |
+| L-5 | Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện | 📄 Tài liệu | PHASE-030 · 26 §7 (Q030-L3) | — | S030-49 (PHASE-030) | P1 |
+| L-6 | Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT) | 📄 Tài liệu | PHASE-030 · 26 §8–§9; bản mẫu mockups/kho-thu-vien.html | chưa có library_usage_daily | S030-48 (PHASE-030) | P1 |
+| L-7 | Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI | 🟡 Một phần | ô chọn + API + SC-LIB-1 có | chưa gắn vào action (ctx.libraries) và cửa nạp; chưa SC-LIB-2 | S030-51 (PHASE-030) | P1 |
+| L-8 | Skill + CLI cho dev và AI: tìm, kiểm, thêm, cập nhật thư viện | ☐ Chưa | — | — | S030-50 (PHASE-030) | P1 |

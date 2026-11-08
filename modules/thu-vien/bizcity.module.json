@@ -1,0 +1,13 @@
+{
+  "contract": "bizcity_module@1",
+  "id": "bizcity.thu-vien",
+  "key": "thu-vien",
+  "kind": "module",
+  "version": "0.1.0",
+  "label": "Kho thư viện",
+  "description": "Kho thư viện (HT14): xem các thư viện tham chiếu bizcity_library@1 — phiên bản, mục và giá trị theo ngày, luật kiểm, kiểm thử ô nhập bằng bộ kiểm của máy chủ. Chỉ giao diện trên API Core core.library.* (ADR-0032, PHASE-030 · 26).",
+  "owners": ["@hoanganh8389"],
+  "standard": "^1.0",
+  "requires": { "capabilities": [] },
+  "ui": { "icon": "BookMarked", "color": "#0b5cad", "order": 95 }
+}

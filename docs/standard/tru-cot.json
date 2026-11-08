@@ -2,7 +2,7 @@
   "$comment": "[2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bizcity_pillars@1: bảng trụ cột × tiêu chí × mức đạt của Core. NGUỒN cho màn HT10 (Hệ thống → Trụ cột & mức đạt) và thẻ 'Trụ cột' ở trang chủ phân hệ. Mức đạt hôm nay ghi tay có bằng chứng (source=manual); ADR-0022 D026-6: chuyển dần sang engine (selfcheck / test) ghi (source=check). Không ai 'tích đạt' trên giao diện (R-CONT-7).",
   "contract": "bizcity_pillars@1",
   "version": "0.1.0-draft",
-  "updated": "2026-11-07",
+  "updated": "2026-11-08",
   "doc": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/10-DANH-GIA-ADAPT.md",
   "statuses": {
     "dat": "Đạt — có code, có test hoặc check bảo vệ",
@@ -122,6 +122,21 @@
         { "id": "M-3", "text": "Module đọc định danh qua ctx.data (items*, khung nhìn bizcity_read)", "status": "chua", "evidence": "", "gap": "", "next": "S024-11", "phase": "PHASE-024", "level": "P0", "modules": ["he-thong"] },
         { "id": "M-4", "text": "Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái", "status": "mot-phan", "evidence": "ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master)", "gap": "chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành", "next": "S026-2", "phase": "PHASE-026", "level": "P0", "modules": ["he-thong"] },
         { "id": "M-5", "text": "Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng", "status": "chua", "evidence": "", "gap": "", "next": "S026-14", "phase": "PHASE-026", "level": "P2", "modules": ["he-thong"] }
+      ]
+    },
+    {
+      "$comment": "[2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-47: trụ cột IX Thư viện tham chiếu có phiên bản (Q030-L1 = trụ cột riêng, PHASE-030 · 26 §2)",
+      "id": "IX", "key": "library", "role": "nền móng", "title": "Thư viện tham chiếu có phiên bản (bizcity_library@1)",
+      "one": "Dữ liệu tham chiếu chung mọi đơn vị (tham số pháp lý, lịch, mã chức năng, sườn nghiệp vụ, luật kiểm, mẫu) có một khuôn, có phiên bản, đọc tại ngày, kiểm được ô nhập với mã chung LIB-* và gợi ý; đơn vị chỉ đọc, ghi đè có lý do, xác nhận căn cứ; mọi lần dùng để lại dấu — ngang Master Data (giữ cái gì của đơn vị) và Policy Registry (đơn vị quyết theo luật nào) (ADR-0032).",
+      "criteria": [
+        { "id": "L-1", "text": "Khuôn chung bizcity_library@1: phong bì cứng, payload theo itemSchema, phiên bản ba tầng (thư viện · mục · giá trị theo ngày), băm + changelog", "status": "dat", "evidence": "libraries/*/library.json, scripts/thu-vien/thu-vien.mjs, SC-LIB-1 + ca tự kiểm library-bad (S030-45)", "gap": "", "next": "", "phase": "PHASE-030", "level": "P0", "modules": ["he-thong"] },
+        { "id": "L-2", "text": "Một bộ kiểm chung, 7 mã LIB-* trong thư viện mã (cổng L), gợi ý lấy từ thư viện; luật khai báo của từng thư viện", "status": "dat", "evidence": "packages/platform/src/core/libraries (validateAgainstLibrary), library-findings.ts, thu-vien.test.ts", "gap": "", "next": "", "phase": "PHASE-030", "level": "P0", "modules": ["he-thong"] },
+        { "id": "L-3", "text": "Đọc được ở mọi nơi: API core.library.*, MCP chỉ đọc, ô chọn LibraryPicker, màn HT14 Kho thư viện", "status": "dat", "evidence": "GET /api/v1/libraries, LibraryPicker (ui-kit), modules/thu-vien (S030-47)", "gap": "", "next": "", "phase": "PHASE-030", "level": "P0", "modules": ["he-thong"] },
+        { "id": "L-4", "text": "Căn cứ pháp lý là thư viện; mục trỏ căn cứ bằng mã; kế toán trưởng xác nhận theo đơn vị", "status": "tai-lieu", "evidence": "PHASE-030 · 26 §6 (chốt 2026-11-08, Q030-L2)", "gap": "LEGAL_BASES và legal-sources.json còn hai sổ; căn cứ trong thư viện là chuỗi tự do", "next": "S030-49", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-5", "text": "Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện", "status": "tai-lieu", "evidence": "PHASE-030 · 26 §7 (Q030-L3)", "gap": "", "next": "S030-49", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-6", "text": "Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT)", "status": "tai-lieu", "evidence": "PHASE-030 · 26 §8–§9; bản mẫu mockups/kho-thu-vien.html", "gap": "chưa có library_usage_daily", "next": "S030-48", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-7", "text": "Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI", "status": "mot-phan", "evidence": "ô chọn + API + SC-LIB-1 có", "gap": "chưa gắn vào action (ctx.libraries) và cửa nạp; chưa SC-LIB-2", "next": "S030-51", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-8", "text": "Skill + CLI cho dev và AI: tìm, kiểm, thêm, cập nhật thư viện", "status": "chua", "evidence": "", "gap": "", "next": "S030-50", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] }
       ]
     }
   ]

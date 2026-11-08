@@ -1991,18 +1991,6 @@
         }
       ],
       "ref": "STD-030-5 · R-MONEY-2 · PHASE-030 N030-2 (mua hàng chuyển sang roundMoney khi domain về modules/, ADR-0024)"
-    },
-    "SC-FLOW-1": {
-      "title": "Bảng giữ chỗ CLAIMS.md đúng khuôn, các dòng đang làm không chồng phạm vi và mỗi nhánh một dòng (R-FLOW-1 / 3 / 6)",
-      "debts": [
-        {
-          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:feat/hoa-don-xml-cau-noi:feat/s030-47-kho-thu-vien-b1:package-lock.json:package-lock.json",
-          "file": "docs/phases/CLAIMS.md",
-          "message": "\"MH22 · nhập hoá đơn điện tử từ\" và \"PHASE-030 · S030-47 — Kho thư \" chồng phạm vi: package-lock.json ~ package-lock.json (R-FLOW-3: một phạm vi một người)",
-          "why": "S030-47 CHỈ THÊM mục workspace modules/thu-vien vào package-lock.json (npm ci đòi lockfile khớp workspace); MH22 sửa phụ thuộc của nó. Không đổi phiên bản gói nào; ai merge sau chạy npm install là đủ cả hai. Chủ dự án duyệt dùng chung 2026-11-08 (\"duyệt nhé bro\"). Hết khi một trong hai dòng nhả.",
-          "ref": "CLAIMS dòng PHASE-030 · S030-47; dòng MH22"
-        }
-      ]
     }
   }
 }
