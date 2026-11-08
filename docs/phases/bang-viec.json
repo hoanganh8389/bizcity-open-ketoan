@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 17
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 237
+      "count": 239
     }
   ],
   "items": [
@@ -3942,15 +3942,9 @@
       "phase": "PHASE-027",
       "title": "CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD)",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, p030-queue)",
-        "branch": "feat/phase-027-ck3-mat-khau",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-027 · CK-3 + Q027-5 — SC-SEC-5 (bí mật không có giá trị mặc định trong mã); bỏ mật khẩu viết …"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -3959,15 +3953,9 @@
       "phase": "PHASE-027",
       "title": "Q027-5 SEEDADMINPASSWORD",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, p030-queue)",
-        "branch": "feat/phase-027-ck3-mat-khau",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-027 · CK-3 + Q027-5 — SC-SEC-5 (bí mật không có giá trị mặc định trong mã); bỏ mật khẩu viết …"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 10
     },

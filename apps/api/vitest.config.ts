@@ -1,3 +1,4 @@
+// [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3: đặt PURCHASE_SEED_PASSWORD cho test (mã không còn mặc định)
 // [2026-11-02 04:00 PM Johnny Chu - Chu Hoàng Anh] FIX — test chạy trên CSDL riêng (mặc định ketoan_test), từ chối CSDL không phải CSDL test
 import { defineConfig } from 'vitest/config';
 
@@ -25,7 +26,8 @@ export default defineConfig({
   ssr: { resolve: { conditions: ['development'] } },
   test: {
     // Kiểm thử chạy trên PostgreSQL thật (CSDL test ở trên), mỗi lần tạo một đơn vị riêng nên các tệp không đụng dữ liệu của nhau.
-    env: { NODE_ENV: 'test', DATABASE_URL: databaseUrl },
+    // PURCHASE_SEED_PASSWORD: mật khẩu công cụ dữ liệu mẫu chỉ cho test (mã không có giá trị mặc định — SC-SEC-5).
+    env: { NODE_ENV: 'test', DATABASE_URL: databaseUrl, PURCHASE_SEED_PASSWORD: 'Thuy!@#' },
     globalSetup: ['./test/global-setup.ts'],
     testTimeout: 60_000,
     hookTimeout: 120_000,
