@@ -39,9 +39,19 @@ Theo smallwin: **hai đợt nhỏ**, mỗi đợt một PR. Đợt 1 là phần 
 
 **Đã làm (đợt 1, 2026-11-08):** migration `0087_thuoc_tinh_thuc_the.sql` (số 0086 đã bị PHASE-004 dùng), `entity_attributes` có `version`, trigger đồng bộ ở `partners` / `branches` / `warehouses`, `bizcity_entity_attr_at`; `ledger_entries` / `ledger_lines` thêm `partner_name` + `partner_attr_id` (trigger BEFORE INSERT theo ngày chứng từ; bút toán đảo và dòng cùng đối tượng lấy của đầu / bút toán gốc); `resolveEntity` trả `attributes` (`attributeId`, `version`, `validFrom`, `validTo`). Test `entity-attributes.test.ts` T029-ECP-P001 và T029-EA-1..8 (9 ca). Giới hạn đã biết: đổi thuộc tính qua cột có hiệu lực từ **hôm nay** (sửa lần hai trong cùng ngày có hiệu lực từ ngày kế tiếp); ngày hiệu lực chọn tay (lùi / tới) làm ở đợt sau cùng màn hình sửa; sửa đầu bút toán E2 (RV-14 của review R1) không làm mới tên lúc ghi <!-- [2026-11-08 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 1 entity_attributes -->.
 
-## 2. Đợt 2 — báo cáo đọc tên theo ngày (PR riêng, chờ đợt 1)
+## 2. Đợt 2 — báo cáo đọc tên theo ngày (chia nhỏ, mỗi PR một nhóm)
 
-Báo cáo đọc `COALESCE(l.partner_name, p.name)` thay cho `p.name` và có thể hiện phiên bản của tên (`version`, `valid_from`) khi người dùng cần truy vết: nhóm sổ nhật ký, công nợ, đối chiếu. **Mỗi PR một nhóm báo cáo**, mở bằng nhóm công nợ (`debt-reports.ts`) vì đây là nơi tên đối tượng lệch dễ gây tranh cãi nhất. Chi tiết và phạm vi tệp chốt ở PR giữ chỗ của đợt 2, sau khi đợt 1 vào `main`.
+**Tên nào hiện ở đâu** (chốt 2026-11-08, theo cùng quy tắc nguồn sự thật §0):
+
+| Chỗ hiện tên đối tượng | Tên hiện | Vì sao |
+|---|---|---|
+| **Tiêu đề / dòng tổng hợp theo đối tượng** của báo cáo "đến ngày D" (công nợ, số dư, đối chiếu) | tên hiệu lực tại **ngày D = ngày kết thúc kỳ báo cáo** (`bizcity_entity_attr_at`) | báo cáo nói về tình hình tại D thì gọi đối tượng bằng tên đúng tại D, không phải tên của hôm nay |
+| **Từng chứng từ / dòng sổ** (sổ nhật ký, sổ chi tiết, in chứng từ) | `partner_name` **lúc ghi** (`COALESCE(partner_name, tên hiện tại)`) | chứng từ phải giữ tên đúng tại ngày phát sinh; dòng cũ chưa có cột thì dùng tên hiện tại |
+
+**Thứ tự PR** (mỗi PR một nhóm báo cáo, có test đổi tên giữa kỳ như T029-ECP-P001):
+- **2a — công nợ** (`debtByEmployee`, `debtByItem` ở `debt-reports.ts`): chỉ hiện tên ở **tiêu đề đối tượng**, nên chỉ cần tên tại ngày kết thúc kỳ; **không cần** khung nhìn. Đây là PR đầu.
+- **2b — khung nhìn + sổ nhật ký / sổ chi tiết**: `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` liệt kê cột tường minh (0072 từng thêm `product_name` vào đó) nên PHẢI cập nhật để báo cáo thấy `partner_name` / `partner_attr_id` (migration riêng); rồi `journals.ts`, sổ cái.
+- **2c — các báo cáo còn lại** theo nhóm (`dimension-reports.ts`, `control-reports.ts`, `report.repository.ts`, kho, bán hàng, thuế…), mỗi nhóm một PR.
 
 ## 3. Ngoài phạm vi (cố ý)
 

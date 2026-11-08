@@ -22,6 +22,22 @@ Anh em Dev muốn viết ERP nội bộ, POS, pm bán hàng, CRM , quản lý mu
 
 **Đi nhanh:** [Cài nhanh 3 bước](#cài-nhanh-3-bước-trên-máy-của-bạn) · [Kết nối API và trợ lý AI](#kết-nối-api-và-trợ-lý-ai-với-bizcity) · [Giám sát](#giám-sát-vận-hành-prometheus--grafana--loki) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)
 
+
+**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
+
+| | Địa chỉ | Đăng nhập |
+|---|---|---|
+| Kế toán | <https://ketoan.bizcity.vn/> |
+* Mã đơn vị: otchuong
+* Email: admin@otchuongmart.local
+* Mật khẩu: Otcfa8719fd1c0b! |
+[Cài đặt](#cài-đặt)
+
+| | Quản trị kho, POS |  Đăng nhập |
+|---|---|---|
+| POS bán hàng |<https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
+
+
 ## Vì sao có open-ketoan?
 
 Nhiều ae muốn tự build ERP nội bộ cho mình nhưng lại chưa hiểu quá sâu về nghiệp vụ kế toán hoặc bản chất 1 phần mềm kế toán cần có gì, các nguyên tắc ghi sổ là gì.
@@ -153,12 +169,6 @@ Dành cho dev xây **ERP nội bộ cho công ty mình**, hoặc module **bán h
 - Giá vốn mặc định là bình quân gia quyền theo tháng; FIFO và đổi mã hàng có phiên bản (`item_id`) chưa có.
 - Core không thay kế toán trưởng (chính sách, lý do, duyệt gói) và không phải tư vấn pháp lý.
 
-**Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
-
-| | Địa chỉ | Ghi chú |
-|---|---|---|
-| Kế toán | <https://ketoan.bizcity.vn/> | Mã đơn vị `demo`, email `admin@ketoan.local`, mật khẩu mặc định như mục [Cài đặt](#cài-đặt) |
-| Quản trị kho, POS | <https://quantri.bizcity.vn/> | Tài khoản không công bố trong repo, liên hệ ban quản trị |
 
 Bộ hướng dẫn đọc theo vai (kế toán, CEO, dev, cộng đồng, AI): [docs/core/](docs/core/README.md).
 

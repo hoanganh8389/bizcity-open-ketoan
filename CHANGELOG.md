@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Cập nhật thông tin đầu bút toán (E2) có nhật ký trước / sau (PHASE-004 S004-13, review R1 RV-R1-14) <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 -->
+
+- **Thêm:** `posting.service.ts` ghi nhật ký `ledger.entry.header_update` mỗi khi định khoản lại chỉ đổi thông tin đầu của một bút toán đã ghi (đường E2): `before` / `after` chỉ gồm các cột **thật sự đổi** trong bảy cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`; `objectType = ledger_entry`, `objectId` = id bút toán. Hằng `E2_COLUMNS` dùng chung và test `e2-header-audit.test.ts` (T004-E2-1…3) so danh sách đó với trigger `guard_ledger_entry_mutation` trong CSDL.
+- **Đổi:** không đổi hành vi ghi sổ, không đổi bút toán, không migration. Trong action nhật ký nằm ở `notes.audit[]` của bằng chứng (ACTION §4.4, phương án C); ngoài action là dòng `audit_logs`.
+- **Sửa:** trước đây dấu vết duy nhất của E2 là một con số trong `posting_log` ("cập nhật thông tin đầu M"), không biết cột nào của bút toán nào đã đổi từ giá trị nào.
+- **Thay đổi định khoản:** không (K1).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** nhật ký chỉ phủ đường của ứng dụng (`posting.service`). Một câu `UPDATE ledger_entries` viết thẳng bằng vai trò `ketoan_app` vào bảy cột này vẫn được trigger cho phép và **không để lại nhật ký**; chặn hoặc kiểm bằng trigger là câu hỏi Q004-5 của chủ dự án.
+
 ### Thuộc tính có hiệu lực của đối tượng / chi nhánh / kho và tên đối tượng lúc ghi trên sổ cái (PHASE-029 S029-19 đợt 1) <!-- [2026-11-08 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 1 entity_attributes -->
 
 - **Thêm:** migration `0087_thuoc_tinh_thuc_the.sql` — bảng `entity_attributes` (tên, MST, địa chỉ có `version` và hiệu lực; chỉ thêm; nguồn sự thật tại một ngày), trigger đồng bộ ở `partners` / `branches` / `warehouses` (cột trên bảng thực thể vẫn là ảnh chụp hiện hành), hàm `bizcity_entity_attr_at`. `ledger_entries` và `ledger_lines` thêm `partner_name` + `partner_attr_id`: trigger BEFORE INSERT điền tên đối tượng **theo ngày chứng từ** (chứng từ nhập muộn vẫn mang tên đúng tại ngày phát sinh) và bản thuộc tính đã dùng; bút toán đảo mang tên của bút toán gốc. `resolveEntity` trả thêm `attributes` (`attributeId`, `version`, `validFrom`, `validTo`). Golden T029-ECP-P001 và T029-EA-1..8.
