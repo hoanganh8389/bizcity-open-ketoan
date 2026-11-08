@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 14
+      "count": 13
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 248
+      "count": 249
     }
   ],
   "items": [
@@ -5270,15 +5270,9 @@
       "phase": "PHASE-031",
       "title": "API cho nguồn ngoài: GET /api/v1/policies, GET /api/v1/rule-contracts[/:id], POST /api/v1/policies/evaluate (Q031-3), POST /api/v1/policies (phát hành inline) …",
       "priority": "P0",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w3a-api-chinh-sach",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-031 · W3a — POS lấy chính sách đã phát hành và tính theo nó: GET /policies, GET /rule-contrac…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 22
     },
