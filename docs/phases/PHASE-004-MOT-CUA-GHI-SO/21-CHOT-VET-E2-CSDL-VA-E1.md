@@ -1,7 +1,7 @@
 # PHASE-004 · 21 — Chữ chốt (đề xuất): dấu vết E2 ở tầng CSDL, cảnh báo, bảng theo dõi; phương án cho E1; RV-R1-07
 <!-- [2026-11-08 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — chữ chốt đề xuất S004-14…18 (R-FLOW-2): yêu cầu chủ dự án 2026-11-08 sau S004-13; phương án E1 (Q004-4); thu hẹp RV-R1-07 -->
 
-> **Trạng thái:** Chữ chốt đề xuất, **chờ chủ dự án duyệt trước khi viết mã** (R-FLOW-2). Chưa có dòng mã nào.
+> **Trạng thái:** **Đã duyệt** — chủ dự án đồng ý các phương án ngày 2026-11-08: D004-11…14 (Q004-7), phương án E1 ở §4 (Q004-4), hướng "đo trước" cho RV-R1-07 ở §5 (Q004-8). Được viết mã theo thứ tự ở §3 (giữ chỗ mã ở CLAIMS.md trước).
 > **Nguồn:** yêu cầu của chủ dự án 2026-11-08: *"UPDATE ledger_entries viết thẳng bằng ketoan_app vào 7 cột này vẫn được trigger cho phép và cần phải để lại dấu vết, cảnh báo rõ ràng. Dấu vết rõ, cảnh báo rõ, dashboard rõ để trace."*; câu hỏi Q004-4 (E1) và RV-R1-07; tiếp [20-CHOT-CO-THOAT-VA-E2](20-CHOT-CO-THOAT-VA-E2.md).
 
 ## 1. Khoảng trống còn lại sau S004-13 (đã đo)
@@ -79,3 +79,16 @@ Chốt thay thế (đã làm trong PR này, `docs/standard/tru-cot.json`):
 | **Q004-7** | Duyệt D004-11…14 (dấu vết ở CSDL, phân biệt bằng `_txid`, cảnh báo vào khoá kỳ, bảng theo dõi trong Bàn điều tra)? | Duyệt. Mở S004-14 trước (K3 thêm chặt) |
 | **Q004-4** | Chọn phương án E1 ở §4 (hàm `SECURITY DEFINER`) hay giữ nguyên? | Chọn §4; làm sau S004-14 |
 | **Q004-8** | RV-R1-07: duyệt hướng "đo trước" (S004-18) rồi mới quyết K1 / K2? | Duyệt; không sửa mã mua hàng khi chưa có bảng lệch |
+
+## 8. Quyết định của chủ dự án
+<!-- [2026-11-08 10:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — chủ dự án duyệt Q004-7, Q004-4, Q004-8 (R-FLOW-7: quyết định vào tài liệu sở hữu) -->
+
+Chủ dự án **đồng ý các phương án** (2026-11-08):
+
+| # | Quyết định | Việc mở |
+|---|---|---|
+| **Q004-7** | Duyệt D004-11…14 | S004-14 (trước, K3 thêm chặt), rồi S004-15, S004-16 (bản mẫu HTML trước) |
+| **Q004-4** | Chọn phương án E1 ở §4 (hàm `SECURITY DEFINER`) | S004-17, làm sau S004-14 (hai việc K3 không chạy song song: cùng sửa trigger `ledger_*`) |
+| **Q004-8** | Duyệt hướng "đo trước" cho RV-R1-07 | S004-18 (K0) song song được, không đụng sổ |
+
+Thứ tự mã: S004-14 và S004-18 trước (không phụ thuộc nhau); S004-15, S004-16, S004-17 sau S004-14.
