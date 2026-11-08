@@ -1,6 +1,7 @@
+-- [2026-11-08 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: đổi số migration 0087 → 0088 khi gộp main (0087 thuộc PHASE-029 S029-19 — so-tiep-theo kiem)
 -- [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b (B3b, chữ chốt PHASE-030 · 26 §7.1, ADR-0032): cấu hình thư viện theo đơn vị có phiên bản (chỉ thêm) và phiếu đề xuất cập nhật thư viện
 -- =============================================================================
--- 0087 Cấu hình thư viện theo đơn vị + phiếu đề xuất (bizcity_library@1).
+-- 0088 Cấu hình thư viện theo đơn vị + phiếu đề xuất (bizcity_library@1).
 --   library_settings: mỗi lần đổi cấu hình là MỘT dòng mới (phiên bản tăng dần, chỉ thêm — như setting_values, ECP-03 / ECP-13).
 --     config = { enabled?, atPolicy?, ruleLevels?, overrides? } — kiểm khuôn ở packages/platform/src/core/libraries/settings.ts.
 --     Không đổi thư viện gốc; bộ kiểm đọc: ghi đè đơn vị có hiệu lực tại ngày → thư viện tại ngày (D-LIB-8).

@@ -24,16 +24,17 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-15 | Rule Contract bán hàng `sale.price_list@1`, `sale.promo.discount@1`, `sale.promo.buy_x_get_y@1`, `sale.credit_limit@1` cùng `modules/ban-hang` (S030-16); `publishChecks` trần NĐ81 | W3 | P0 | có | ☐ sau S031-14 — `sale.promo.buy_x_get_y@1` làm trước ở W3a làm mẫu; còn price_list, discount, credit_limit, "áp riêng", trần NĐ81 |
 | S031-16 | POS WP: tải chính sách, tính theo Rule Contract, gửi `policyRefs`; bỏ luật khuyến mại riêng của plugin (repo plugin, dòng CLAIMS riêng) | W3 | P1 | có | ☐ |
 | S031-17 | Rulepack `policy` cho Conformance Engine (§9 của [10](10-THIET-KE.md)), chỉ đọc | W4 | P1 | có | ☐ |
-| S031-18 | Màn *Chính sách* (phiên bản, phạm vi, chứng từ đã áp) + nút *Chính sách căn cứ* trên màn truy vết | W4 | P1 | có | ☐ |
+| S031-18 | Màn *Chính sách* (phiên bản, phạm vi, chứng từ đã áp) + nút *Chính sách căn cứ* trên màn truy vết | W4 | P1 | có | ☐ làm ở W4b sau W4a (S031-28) |
 | S031-19 | `nen-mong.json` / `NEN-MONG-DOANH-NGHIEP.md`: trụ cột 05 hai nửa, tín hiệu nửa Policy; `tru-cot.json` V theo Q031-1 | W4 | P1 | không | 🟡 phần tài liệu 2026-11-07 (V lên nền móng, 05 đổi tên, P-5..7); tín hiệu nửa Policy ở nen-mong.json khi W1 / W2a vào main |
 | S031-20 | Hai cột `policy_refs`, `policy_check` trên `accounting_event_versions` (gộp migration S031-9) — [20 §2](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ✅ 2026-11-08 (#159) |
 | S031-21 | Khung nhìn `bizcity_read.policy_application` + hàm `policy_lineage(event_id)`; nhánh `UNION` mua hàng | W2 | P0 | có | ✅ 2026-11-08 (#159) |
 | S031-22 | Nhánh `policy_review` trong `bizcity_read.document_queue`; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — [20 §3](20-TRUY-VET-VA-THEO-DOI.md) | W2 | P0 | có | ✅ 2026-11-08 (#191; *Ghi sổ* / *Trả về nguồn* / *Điều chỉnh* hoãn, xem S031-26) |
 | S031-23 | Làn `policy` của `bizcity_lineage@1` (0.4.0-draft) | W4 | P2 | có | ☐ |
-| S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ |
+| S031-24 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view | W4 | P1 | có | ☐ số liệu ở W4a (S031-28); màn hình ở W4b |
 | S031-25 | Bản mẫu [mockups/chinh-sach.html](mockups/chinh-sach.html): Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng | W0 | P0 | không | ✅ 2026-11-07 |
 | S031-26 | Sự kiện miền `policy.published` / `policy.retired` qua outbox (khai ở `bizcity_event@1`); POS đổi từ hỏi `etag` sang nghe sự kiện | W3b | P1 | có | ✅ 2026-11-08 (#196); POS WP nghe sự kiện ở S031-16 |
 | S031-27 | ~~Đổi số migration W2a `0080` → `0082`~~ — **rút**: phiên PHASE-029 (K3) sửa trùng `0080` bằng cách đổi **số của K3** (`0081`, `0082`), migration W2a giữ `0080`; đổi W2a sang `0082` sẽ trùng `0082_khoa_ky_o_csdl` ([00 §9.7](00-MASTER-PLAN.md)) | W3a | P0 | không | ⛔ rút 2026-11-08 (phiên PHASE-029 đã nhận) |
+| S031-28 | W4a: API đọc — `core.policy.registry`, `core.policy.applications`, `core.policy.tracking`, `core.policy.lineage` ([00 §12](00-MASTER-PLAN.md)); thay hàm SQL `policy_lineage` của S031-21; không migration | W4a | P1 | có | 🟡 chữ chốt 2026-11-09; chưa code |
 
 ## Ca bằng chứng (golden)
 
@@ -85,4 +86,6 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 
 - 2026-11-08 — chữ chốt W3b ([00 §11](00-MASTER-PLAN.md)): `bizcity.policy.published` / `.retired` phát trong `registerPolicyVersion` / `retirePolicy` qua outbox sẵn có; `data` chỉ định danh + băm + `closes`; không migration.
 - 2026-11-08 — W3b code xong trên nhánh: `policies.ts` phát `bizcity.policy.published` / `.retired` (không migration); `policy-events.test.ts` 5 ca xanh, phá thử bỏ `dedupeKey` → T031-EV-4 đỏ; hợp đồng `bizcity_event@1` 1.3.0-draft, `bizcity_policy@1` 1.1.0-draft. Hạn chế: chính sách mua hàng bị xoá phát `retired` với tác nhân `system` (`store.ts` ngoài phạm vi W3b — truyền `actor` khi PHASE mua hàng nhả).
+- 2026-11-09 — chữ chốt W4a ([00 §12](00-MASTER-PLAN.md)): tách W4 — số liệu trước (4 action đọc, 0 migration), màn hình ở W4b; *Thực hiện chương trình* hoãn tới IN-POL-004.
+
 - 2026-11-08 — **W3b vào main (#196)**: `bizcity.policy.published` / `.retired` qua outbox; dòng giữ chỗ W3b nhả (R-FLOW-6). Còn lại của PHASE-031: S031-11 / S031-15 (Rule Contract mua hàng, bán hàng; S031-15 chờ S031-14), W2b (IN-POL-004), W4 (màn hình Chính sách, dashboard), S031-16 (POS WP, repo plugin).

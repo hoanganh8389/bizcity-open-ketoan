@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-08 06:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-19 đợt 1: thêm entity_attributes (0087) và giải thích sáu hàm trigger thuộc tính / tên lúc ghi.
 // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: thêm entity_codes (0085) và giải thích bốn hàm trigger mã thực thể.
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm accounting_profiles (0049).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm conformance_runs (0051).
@@ -166,6 +167,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   setting_values: { group: 'platform', label: 'Giá trị cấu hình có phiên bản', term: 'Cấu hình', module: 'system', purpose: 'Mỗi lần đổi cấu hình là một dòng mới: khoá, phạm vi (đơn vị / đơn vị hạch toán / chi nhánh / người dùng), giá trị, ngày hiệu lực, người ghi, lý do. Không sửa, không xoá — lịch sử cấu hình chính là bảng này (bizcity_settings@1 §2, ECP-03).' },
   // [2026-11-08 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48: lượt dùng thư viện (0083); chỉ thêm khoá này (chủ dự án cho phép, tệp thuộc dòng giữ chỗ khác)
   // [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: cấu hình thư viện + phiếu đề xuất (0087); chỉ thêm hai khoá này (chủ dự án cho phép, tệp thuộc dòng giữ chỗ khác)
+  // [2026-11-08 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: đổi số migration 0087 → 0088 khi gộp main (0087 thuộc PHASE-029 S029-19 — so-tiep-theo kiem)
   library_settings: { group: 'platform', label: 'Cấu hình thư viện của đơn vị', term: 'Thư viện', module: 'system', purpose: 'Mỗi lần đơn vị đổi cấu hình một thư viện là một phiên bản mới (chỉ thêm): bật / tắt thư viện tuỳ chọn, đọc theo ngày, mức luật đã hạ, giá trị ghi đè có ngày hiệu lực. Không đổi thư viện gốc (PHASE-030 · 26 §7.1).' },
   library_change_requests: { group: 'platform', label: 'Phiếu đề xuất cập nhật thư viện', term: 'Thư viện', module: 'system', purpose: 'Đơn vị đề xuất Nhóm Lõi thêm mục, sửa giá trị, căn cứ, báo sai, ngừng dùng; trạng thái gửi → nhận → đã vào bản / từ chối, người gửi rút được. Không xoá, không sửa nội dung.' },
   library_usage_daily: { group: 'platform', label: 'Lượt dùng thư viện', term: 'Thư viện', module: 'system', purpose: 'Đếm lượt dùng thư viện bizcity_library@1 theo ngày: thư viện, bản, nguồn (module / kênh), mã mục, kết quả qua / cảnh báo / chặn, mã phát hiện. Chỉ mã, không lưu giá trị người nhập; ghi gom sau khi kiểm — số quan sát, không phải sự thật kế toán (PHASE-030 · 26 §8).' },
@@ -194,6 +196,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-19: hai khung nhìn đọc mới của lõi, 0070 (đóng góp)
   items: { group: 'platform', label: 'Mặt hàng — định danh bất biến', term: 'Item Master', module: 'catalog', purpose: 'item_id ULID bất biến của mặt hàng (không đổi, không xoá, không dùng lại); tên, đơn vị gốc, trạng thái nháp / đang dùng / ngừng. Chạy song song với products, đồng bộ bằng trigger (B2a).' },
   item_codes: { group: 'platform', label: 'Mã hàng có phiên bản', term: 'Item Master', module: 'catalog', purpose: 'Mã hàng (sku, mã vạch, bí danh, mã ngoài) → mặt hàng, có ngày hiệu lực; chỉ thêm, đổi mã = đóng mã cũ + thêm mã mới. Một mã tại một ngày chỉ trỏ một mặt hàng.' },
+  entity_attributes: { group: 'platform', label: 'Thuộc tính có hiệu lực của đối tượng / chi nhánh / kho', term: 'Master Data', module: 'catalog', purpose: 'Tên, MST, địa chỉ theo từng phiên bản và ngày hiệu lực — nguồn sự thật tại một ngày; chỉ thêm, đổi thuộc tính = đóng phiên bản cũ + thêm phiên bản mới. Sổ cái ghi partner_attr_id trỏ đúng phiên bản đã dùng.' },
   entity_codes: { group: 'platform', label: 'Mã có phiên bản của đối tượng / chi nhánh / kho', term: 'Master Data', module: 'catalog', purpose: 'Mã (chính, bí danh, mã ngoài) → đối tượng, chi nhánh hoặc kho, có ngày hiệu lực; chỉ thêm, đổi mã = đóng mã cũ + thêm mã mới. Cột code của bảng thực thể là ảnh chụp mã hiện hành, trigger giữ khớp.' },
   item_classification: { group: 'platform', label: 'Phân loại hạch toán theo ngày', term: 'Item Master', module: 'catalog', purpose: 'Loại, nhóm hạch toán, thuế, theo dõi của mặt hàng theo ngày hiệu lực; lịch sử không bị sửa. Chưa phân loại = loại để trống (R-ITEM-8).' },
   catalog_rule_reviews: { group: 'platform', label: 'Duyệt luật nhắc danh mục', term: 'Quy định dữ liệu danh mục', module: 'system', purpose: 'Kế toán trưởng của đơn vị duyệt luật nhắc khung Vì sao: đồng ý, sửa câu chữ, hạ cảnh báo mềm xuống nhắc (D023-8). Lịch sử ở nhật ký thao tác.' },
@@ -237,6 +240,13 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_entity_codes_sync: 'Mọi đường ghi đối tượng / chi nhánh / kho giữ entity_codes khớp cột code: thêm → mã đầu; đổi code → đóng mã cũ + thêm mã mới; xoá → đóng mã (lịch sử mã giữ lại).',
   bizcity_entity_identity_guard: 'Định danh của đối tượng / chi nhánh / kho không đổi: không đổi id, không đổi đơn vị. Đổi mã bằng cột code, mã cũ được giữ trong entity_codes.',
   bizcity_entity_truncate_guard: 'Chặn xoá sạch bảng mã thực thể (entity_codes) bằng TRUNCATE: mã là lịch sử, chỉ thêm.',
+  // [2026-11-08 06:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-19: trigger thuộc tính có hiệu lực và tên đối tượng lúc ghi (0087)
+  bizcity_entity_attr_guard: 'Thuộc tính thực thể chỉ thêm: thực thể phải có thật cùng đơn vị; phiên bản liên tục theo ngày; UPDATE duy nhất là đóng hiệu lực (valid_to); chặn chồng hiệu lực.',
+  bizcity_entity_attr_truncate_guard: 'Chặn xoá sạch bảng thuộc tính thực thể (entity_attributes) bằng TRUNCATE: lịch sử tên / MST / địa chỉ chỉ thêm.',
+  bizcity_entity_attr_at: 'Tra bản thuộc tính (tên, MST, địa chỉ) hiệu lực tại một ngày; không có bản hiệu lực thì bản gần nhất; không có bản nào thì rỗng (không bịa).',
+  bizcity_entity_attrs_sync: 'Mọi đường ghi đối tượng / chi nhánh / kho giữ entity_attributes khớp cột name / tax_code / address: thêm → phiên bản 1; đổi → đóng bản cũ + thêm bản mới từ hôm nay; xoá → đóng.',
+  bizcity_set_entry_partner: 'Bút toán mới tự lưu tên đối tượng và bản thuộc tính đã dùng theo NGÀY CHỨNG TỪ; bút toán đảo lấy của bút toán gốc. Không đổi về sau.',
+  bizcity_set_line_partner: 'Dòng sổ mới tự lưu tên đối tượng và bản thuộc tính đã dùng: cùng đối tượng với đầu bút toán thì cùng bản, khác thì tra theo ngày chứng từ. Không đổi về sau.',
   // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng
   bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
   bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',

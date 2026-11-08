@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 51
+      "count": 52
     },
     {
       "key": "paused",
@@ -4344,14 +4344,8 @@
       "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, p030-queue)",
-        "branch": "feat/phase-029-thuoc-tinh-hieu-luc",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-029 · S029-19 đợt 1 — entityattributes (thuộc tính có hiệu lực: tên, MST, địa chỉ của đối tượ…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5399,6 +5393,23 @@
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 36
+    },
+    {
+      "id": "S031-28",
+      "phase": "PHASE-031",
+      "title": "W4a: API đọc — core.policy.registry, core.policy.applications, core.policy.tracking, core.policy.lineage (00 §12); thay hàm SQL policylineage của S031-21; khôn…",
+      "priority": "P1",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w4a-api-doc-chinh-sach",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-031 · W4a — API đọc cho màn Chính sách và Theo dõi thực hiện: core.policy.registry / .applica…"
+      },
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 37
     }
   ]
 }
