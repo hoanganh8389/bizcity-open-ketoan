@@ -1,6 +1,6 @@
 /** Logic thuần của màn Kho thư viện: điều kiện đọc bằng lời, độ tươi, sức khoẻ, ô Kiểm thử. */
 import { describe, expect, it } from 'vitest';
-import { attention, conditionText, freshnessDays, healthSummary, parseTestInput, shortHash, showValue } from '../web/lib/thu-vien';
+import { attention, conditionText, freshnessDays, healthSummary, parseTestInput, shortHash, showValue, sourceStatus, usagePct } from '../web/lib/thu-vien';
 
 describe('Kho thư viện — logic màn', () => {
   it('điều kiện khai báo đọc bằng lời', () => {
@@ -33,5 +33,16 @@ describe('Kho thư viện — logic màn', () => {
     expect(showValue(2340000)).toBe((2340000).toLocaleString('vi-VN'));
     expect(showValue(null)).toBe('—');
     expect(shortHash('sha256:bebd189444d9d90c6b043e34680b330d93e1527b284e2b2dca48a3d4f74d6d2e')).toBe('bebd18…6d2e');
+  });
+});
+
+describe('Kho thư viện — số liệu sử dụng (B2)', () => {
+  it('tỉ lệ và tình trạng nguồn: không lượt thì không vẽ 0 %; chặn ≥ 1 % là đỏ; mã ngừng / cảnh báo là vàng', () => {
+    expect(usagePct(0, { pass: 0, warn: 0, block: 0 })).toBeNull();
+    expect(usagePct(1, { pass: 2, warn: 0, block: 1 })).toBe(33.3);
+    expect(sourceStatus({ pass: 99, warn: 0, block: 1, deprecated: 0 })).toEqual({ badge: 'badge-bad', text: 'chặn 1 % lượt' });
+    expect(sourceStatus({ pass: 999, warn: 0, block: 1, deprecated: 2 }).badge).toBe('badge-warn');
+    expect(sourceStatus({ pass: 9, warn: 1, block: 0, deprecated: 0 })).toEqual({ badge: 'badge-warn', text: 'cảnh báo 10 % lượt' });
+    expect(sourceStatus({ pass: 5, warn: 0, block: 0, deprecated: 0 }).badge).toBe('badge-ok');
   });
 });

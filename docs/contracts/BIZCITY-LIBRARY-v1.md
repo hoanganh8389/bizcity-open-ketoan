@@ -1,7 +1,7 @@
 # `bizcity_library@1` — Thư viện dùng chung
 <!-- [2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 (ADR-0032): hợp đồng khuôn chung cho thư viện tham chiếu — phong bì, mục, phiên bản ba tầng, luật khai báo, gợi ý, mã LIB-*, ô chọn, API -->
 
-> **Phiên bản:** 1.1.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
+> **Phiên bản:** 1.2.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
 > **Lược đồ máy đọc:** [BIZCITY-LIBRARY-v1.schema.json](BIZCITY-LIBRARY-v1.schema.json) · **Kiểu TypeScript + bộ kiểm:** `packages/platform/src/core/libraries/` (`types.ts`, `engine.ts`, `index.ts`) · **Dùng chung với bộ kiểm chuẩn:** `scripts/thu-vien/thu-vien.mjs` · **API:** [docs/api/16-thu-vien.md](../api/16-thu-vien.md); mã `LIB-*` ở `packages/contracts/src/library-findings.ts` (gom vào `findings.ts`) · **Kiểm:** SC-LIB-1
 > **Liên quan:** [`bizcity_findings@1`](BIZCITY-FINDINGS-v1.md) (mã `LIB-*`), [`bizcity_settings@1`](BIZCITY-SETTINGS-MATRIX-v1.md) (giá trị của đơn vị), [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) (chính sách của đơn vị)
 
@@ -202,9 +202,14 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
 | `GET /api/v1/libraries` | `core.library.list` | id, kind, title, version, released, số mục, `verified` (tỉ lệ) |
 | `GET /api/v1/libraries/:id` | `core.library.get` | phong bì (không `items`) + README |
 | `GET /api/v1/libraries/:id/items?q=&at=&group=&status=&limit=` | `core.library.items` | mục theo khuôn ô chọn `{ value, label, group, hint, deprecated, valueAt? }` + mục đầy đủ |
-| `POST /api/v1/libraries/:id/validate` | `core.library.validate` | `{ input \| inputs[], at? }` → kết quả §6.3 (không ghi gì) |
+| `POST /api/v1/libraries/:id/validate` | `core.library.validate` | `{ input \| inputs[], at?, source? }` → kết quả §6.3 (không ghi gì vào sổ; đếm một lượt / giá trị — §10.1) |
+| `GET /api/v1/libraries/usage` | `core.library.usage` | `?from=&to=&library=&source=` → lượt qua / cảnh báo / chặn theo thư viện, nguồn; mã phát hiện nhiều nhất; mã lạ |
 
 Quyền: `catalog:read`. MCP: `ai: 'read'` cả bốn action (đọc đúng nguồn, không đoán nghĩa mã). Máy chủ đọc thư viện từ tệp lúc khởi động, giữ trong bộ nhớ theo `version` + `contentHash` (không CSDL). Module gọi bộ kiểm ở máy chủ qua `@bizcity/platform/core/libraries` (đợt A); qua `ctx` của SDK là đề xuất đợt B.
+
+### 10.1 Lượt dùng <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 -->
+
+Bảng `library_usage_daily` (migration 0083): khoá (đơn vị, ngày, thư viện, bản, nguồn, mã mục, kết quả, mã phát hiện) → số lần. **Không lưu giá trị nhập** (R-SEC-10): mã mục là mã chuẩn đã khớp, mã lạ ghi `?`; nguồn ngoài khuôn `[a-z0-9._/:-]` thành `api`. Kết quả lượt: `block` nếu có chặn, `warn` nếu có cảnh báo, còn lại `pass` (mức nhắc không tính); mã phát hiện là mã nặng nhất. Ghi gom theo lượt, không hẹn giờ (SC-EVT-1): ≥ 30 giây hoặc ≥ 200 dòng; ghi nốt trước khi đọc và khi máy chủ tắt; lỗi ghi bỏ lô — số đếm là quan sát (eventual), không đọc để ghi sổ.
 
 ## 11. Bảo đảm (SC-LIB-1, block)
 
@@ -224,3 +229,4 @@ Với mỗi `libraries/*/library.json`:
 | 1.0.0-draft | 2026-11-07 | Bản đầu: phong bì, mục, phiên bản ba tầng, kiểm chuẩn + luật khai báo + gợi ý, mã `LIB-*`, ô chọn, API, SC-LIB-1 (ADR-0032) |
 | 1.0.1-draft | 2026-11-07 | Sửa khi viết mã (S030-45): `LIB-NOT-EFFECTIVE-001` → `LIB-EFFECTIVE-001`; mã luật ba khúc `<codePrefix>-<NHÓM>-<NNN>`; ví dụ §6.3 đúng khoảng hiệu lực <!-- [2026-11-07 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 --> |
 | 1.1.0-draft | 2026-11-07 | Thi hành đợt A (S030-45): bộ nạp + bộ kiểm có gợi ý ở Platform, `core.library.list / get / items / validate`, cổng L trong `bizcity_findings@1`, SC-LIB-1, thư viện `vn.tham-so-phap-ly` và `vn.ngay-nghi-le`; `percent` không giới hạn trên (làm thêm 150 / 200 / 300 %) <!-- [2026-11-07 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 --> |
+| 1.2.0-draft | 2026-11-08 | Lượt dùng (S030-48): `source` ở `core.library.validate`, `core.library.usage`, bảng `library_usage_daily` §10.1 — chỉ mã, không giá trị nhập <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 --> |
