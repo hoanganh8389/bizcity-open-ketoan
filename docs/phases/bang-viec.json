@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 19
+      "count": 18
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 236
+      "count": 237
     }
   ],
   "items": [
@@ -5000,15 +5000,9 @@
       "phase": "PHASE-030",
       "title": "Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bizcityfindings@1 1.2.0 (cổng L); core.library.list …",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thu-vien-dot-a)",
-        "branch": "feat/s030-45-thu-vien-dot-a",
-        "state": "đang làm",
-        "since": "2026-11-07",
-        "dot": "PHASE-030 · S030-45 — thư viện dùng chung đợt A: bizcitylibrary@1 (bộ nạp, bộ kiểm có gợi ý, mã LIB…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 53
     },

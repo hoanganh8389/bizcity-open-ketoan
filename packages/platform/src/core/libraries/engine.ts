@@ -114,7 +114,12 @@ function score(lib: Library, item: LibraryItem, q: string): number {
     if (t.startsWith(fq)) best = Math.max(best, 0.9);
     else if (t.includes(fq)) best = Math.max(best, 0.7);
     else if (fq.includes(t) && t.length >= 3) best = Math.max(best, 0.5);
-    else if (editDistance(t, fq) <= 2) best = Math.max(best, 0.6);
+    else {
+      // Gõ nhầm: cách 1 ký tự gần hơn cách 2 (ACC03 → ACC3 trước ACC1, ACC10).
+      const d = editDistance(t, fq);
+      if (d === 1) best = Math.max(best, 0.65);
+      else if (d === 2) best = Math.max(best, 0.55);
+    }
   }
   return best;
 }

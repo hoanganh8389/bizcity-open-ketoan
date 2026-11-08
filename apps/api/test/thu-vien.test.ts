@@ -40,7 +40,7 @@ function mini(): Library {
 describe('Bộ kiểm thuần', () => {
   it('Platform và SC-LIB-1 cho cùng băm, cùng lỗi khuôn; thư viện thật nạp đủ, băm đúng', () => {
     expect(libraryLoadErrors()).toEqual([]);
-    for (const id of ['vn.tham-so-phap-ly', 'vn.ngay-nghi-le']) {
+    for (const id of ['vn.tham-so-phap-ly', 'vn.ngay-nghi-le', 'authz.tgs-chuc-nang', 'authz.tgs-nhom']) {
       const lib = getLibrary(id)!;
       expect(hashItems(lib.items)).toBe(lib.contentHash);
       expect(shared.hashItems(lib.items)).toBe(lib.contentHash);
@@ -119,6 +119,19 @@ describe('Bộ kiểm thuần', () => {
     expect(selectorRows(mini(), { status: 'all' }).rows.map((r) => r.value).sort()).toEqual(['CU', 'MOI']);
   });
 
+  it('thư viện TGS: mã báo cáo không nhận thao tác ghi (TGS-REPORT-001), cờ chỉ Tìm → TGS-FLAG-001; tìm theo tên không dấu', () => {
+    const tgs = getLibrary('authz.tgs-chuc-nang')!;
+    expect(tgs.items).toHaveLength(349);
+    expect(codes(validateAgainstLibrary(tgs, { code: 'BC2', op: 'create' }))).toContain('TGS-REPORT-001');
+    expect(codes(validateAgainstLibrary(tgs, { code: 'BC2', op: 'read' }))).not.toContain('TGS-REPORT-001');
+    expect(codes(validateAgainstLibrary(tgs, { code: 'HT10', op: 'read' }))).toContain('TGS-FLAG-001');
+    expect(validateAgainstLibrary(tgs, 'ACC03').findings[0]!.suggestions.map((s) => s.value)).toContain('ACC3');
+    expect(selectorRows(tgs, { q: 'so cai' }).rows.map((r) => r.value)).toEqual(expect.arrayContaining(['ACC3', 'ACC88']));
+    const nhom = getLibrary('authz.tgs-nhom')!;
+    expect(nhom.items).toHaveLength(28);
+    expect(nhom.items.every((i) => i.verified === false && i.hints?.[0]?.kind === 'how')).toBe(true);
+  });
+
   it('gợi ý từ thư viện khác (suggest.fromLibrary) qua bộ nạp', () => {
     expect(validateInLibrary('khong.co', 'X')).toBeUndefined();
     expect(validateInLibrary('vn.ngay-nghi-le', '2026-02-16')!.findings.map((f) => f.code)).toEqual(['LIB-UNVERIFIED-001']);
@@ -135,7 +148,7 @@ describe('API thư viện', () => {
 
   it('danh sách, phong bì + README, dòng ô chọn tại ngày', async () => {
     const list = (await call(ctx, 'GET', '/api/v1/libraries')).body.data.items as any[];
-    expect(list.map((l) => l.id)).toEqual(expect.arrayContaining(['vn.tham-so-phap-ly', 'vn.ngay-nghi-le']));
+    expect(list.map((l) => l.id)).toEqual(expect.arrayContaining(['vn.tham-so-phap-ly', 'vn.ngay-nghi-le', 'authz.tgs-chuc-nang', 'authz.tgs-nhom']));
     expect(list.find((l) => l.id === 'vn.tham-so-phap-ly')).toMatchObject({ kind: 'param', count: 120, verified: 0 });
     const env = (await call(ctx, 'GET', '/api/v1/libraries/vn.tham-so-phap-ly')).body.data;
     expect(env.library.items).toBeUndefined();

@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 19 |
+| Đang làm | 18 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
 | Chưa ai nhận | 133 |
 | Chờ đủ tín hiệu | 51 |
 | Hoãn | 1 |
-| Xong | 236 |
+| Xong | 237 |
 | **Tổng** | **470** |
 
-## Đang làm (19)
+## Đang làm (18)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -30,7 +30,6 @@
 | [S027-5](PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md#L10) | PHASE-027 | Q027-5 SEEDADMINPASSWORD | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-027-ck3-mat-khau` |
 | [S029-17](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L27) | PHASE-029 | Trigger kỳ khoá trên ledgerentries | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-k3-dot1` |
 | [S030-42](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L51) | PHASE-030 | accountingevents.createdby bắt buộc: danh tính tác vụ cho sự việc hệ thống (khấu hao 792, giá vốn 692 dòng rỗ… | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-k3-dot1` |
-| [S030-45](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L53) | PHASE-030 | Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bi… | P0 | hoanganh8389 (phiên Claude, thu-vien-dot-a) · `feat/s030-45-thu-vien-dot-a` |
 | [S031-9](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L18) | PHASE-031 | Tầng L4b trong preflight.ts + Commit Guard băm policyRefs; GateResult.ruleVersion | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2a-tham-chieu` |
 | [S031-10](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L19) | PHASE-031 | Họ mã POL- (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào bizcityfindings@1, có căn cứ và câu giải thích | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2a-tham-chieu` |
 | [S031-12](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L21) | PHASE-031 | Khoá intake.policy.severity, intake.policy.mode vào registry cấu hình (loại A, mặc định cho phép) | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2a-tham-chieu` |
@@ -277,6 +276,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (236)
+## Xong (237)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

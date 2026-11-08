@@ -71,7 +71,7 @@ Bước L1 khuôn · L2 số học · L3 danh mục · L4 nghiệp vụ · L5 đ
 | `IN-BIZ-006` | ⚠ cảnh báo | L4 | Số hoá đơn đã có ở chứng từ khác | Một số hoá đơn chỉ thuộc một chứng từ; trùng thì có thể kê khai thuế hai lần. | Kiểm số / ký hiệu hoá đơn; hoá đơn thay thế / điều chỉnh thì khai relation. | Sổ hoá đơn, R-POST · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-006.md) | Nghị định 123/2020/NĐ-CP; Luật Thuế GTGT số 48/2024/QH15 |
 | `IN-BIZ-007` | ℹ nhắc | L4 | Ngày hoá đơn cách ngày chứng từ hơn 5 ngày | Hoá đơn lập xa ngày giao hàng / thu tiền có thể sai thời điểm lập hoá đơn theo quy định. | Kiểm ngày hoá đơn và ngày chứng từ ở hệ thống nguồn. | Sổ hoá đơn · [học](../../../docs/huong-dan/loi-dau-vao/IN-BIZ-007.md) | Nghị định 123/2020/NĐ-CP |
 
-## Cổng L — thư viện dùng chung (7 mã chung · 1 mã luật)
+## Cổng L — thư viện dùng chung (7 mã chung · 3 mã luật)
 
 Bộ kiểm của mọi thư viện [bizcity_library@1](../../contracts/BIZCITY-LIBRARY-v1.md) trả các mã này kèm **gợi ý** lấy từ chính thư viện (mã gần nhất, mã thay thế, giá trị đúng ngày). Máy đọc: `POST /api/v1/libraries/<id>/validate`.
 
@@ -89,4 +89,6 @@ Bộ kiểm của mọi thư viện [bizcity_library@1](../../contracts/BIZCITY-
 
 | Mã | Mức | Thư viện | Nghĩa | Vì sao | Cách sửa | Căn cứ |
 |---|---|---|---|---|---|---|
+| `TGS-REPORT-001` | ⚠ cảnh báo | [`authz.tgs-chuc-nang`](../../../libraries/authz.tgs-chuc-nang/README.md) | Cấp Thêm / Sửa / Xóa cho mã báo cáo | Báo cáo chỉ đọc: có nghĩa với Tìm, In, Xuất. Bảng gốc có chỗ đánh Thêm / Sửa / Xóa trên báo cáo; thư viện bỏ các thao tác đó khi suy quyền. | Chỉ cấp Tìm / In / Xuất cho mã báo cáo; quyền ghi cấp ở mã chức năng (phiếu, danh mục) tương ứng. | ADR-0027 Phụ lục A, W5 đợt 2 — báo cáo chỉ Tìm / In / Xuất |
+| `TGS-FLAG-001` | ℹ nhắc | [`authz.tgs-chuc-nang`](../../../libraries/authz.tgs-chuc-nang/README.md) | Cờ chỉ cấp khi có Thêm / Sửa / Xóa | Cờ (#…) như "được phép sửa dữ liệu trong quá khứ" là quyền rủi ro cao; chỉ Tìm / In / Xuất không đủ để cấp (đóng an toàn). | Muốn cấp cờ, đánh Sửa (hoặc Thêm / Xóa) ở dòng cờ và để quản trị viên duyệt vai trò ở HT12. | ADR-0027 Phụ lục A, W5 đợt 2 — cờ đóng an toàn |
 | `TSPL-LAW-001` | ⚠ cảnh báo | [`vn.tham-so-phap-ly`](../../../libraries/vn.tham-so-phap-ly/README.md) | Ghi đè tham số theo luật | Tham số loại luật áp như nhau cho mọi đơn vị; giá trị khác thư viện thường là nhập nhầm hoặc văn bản đã đổi mà thư viện chưa cập nhật. | Dùng giá trị thư viện tại ngày; nếu văn bản mới đã thay, ghi căn cứ và báo người giữ thư viện cập nhật. | Quy ước phần mềm (ADR-0032 D-LIB-8) |
