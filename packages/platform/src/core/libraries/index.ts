@@ -59,9 +59,10 @@ export const getLibrary = (id: string): Library | undefined => load().libs.get(i
 
 export const libraryLoadErrors = () => [...load().errors];
 
-export function validateInLibrary(id: string, input: LibraryInput, opts: { at?: string } = {}): ValidateResult | undefined {
+// [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: nhận cấu hình đơn vị (ghi đè, hạ mức luật)
+export function validateInLibrary(id: string, input: LibraryInput, opts: { at?: string; config?: import('./settings.js').LibraryConfig } = {}): ValidateResult | undefined {
   const lib = getLibrary(id);
-  return lib ? validateAgainstLibrary(lib, input, { at: opts.at, lookup: getLibrary }) : undefined;
+  return lib ? validateAgainstLibrary(lib, input, { at: opts.at, lookup: getLibrary, config: opts.config }) : undefined;
 }
 
 /** Mã luật riêng của mọi thư viện, theo khuôn FindingEntry của bizcity_findings@1 (cổng L). */
@@ -84,3 +85,7 @@ export { flushLibraryUsage, libraryUsage, normalizeSource, outcomeOf, pendingUsa
 
 // [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: xác nhận căn cứ theo đơn vị (bằng chứng core.library.attest)
 export { ATTEST_ACTION, ATTEST_OBJECT, itemHash, libraryAttestations, type Attestation, type AttestNote } from './attest.js';
+
+// [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: cấu hình thư viện theo đơn vị + phiếu đề xuất
+export { checkLibraryConfig, currentLibraryConfig, libraryConfigHistory, overrideAt, saveLibraryConfig, tenantLibraryConfigs, type LibraryConfig, type LibraryConfigVersion, type OverrideEntry } from './settings.js';
+export { createProposal, listProposals, updateProposal, PROPOSAL_KINDS, PROPOSAL_STATUSES, type Proposal, type ProposalKind, type ProposalStatus } from './proposals.js';

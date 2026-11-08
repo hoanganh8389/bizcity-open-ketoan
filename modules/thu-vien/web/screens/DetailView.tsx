@@ -1,16 +1,18 @@
 /**
  * Chi tiết thư viện (26 §3): Mục (ô chọn thật LibraryPicker + bảng theo ngày / nhóm / chữ) · Phiên bản · Luật · Kiểm thử
- * (gọi đúng bộ kiểm của máy chủ core.library.validate) · Căn cứ (B3a: căn cứ từng mục, đơn vị xác nhận). Nơi dùng, Cấu hình có ở B3b / B5.
+ * (gọi đúng bộ kiểm của máy chủ core.library.validate) · Căn cứ (B3a: căn cứ từng mục, đơn vị xác nhận) · Cấu hình, Đề xuất (B3b). Nơi dùng có ở B5.
  */
 import { useState } from 'react';
 import { Empty, ErrorBox, Field, LibraryPicker, Loading, errorText, useApi, useMutation, useQuery, type LibraryItemsResult } from '@bizcity/ui-kit';
 import { LEVEL_LABEL, conditionText, parseTestInput, shortHash, showValue, type LibraryEnvelope } from '../lib/thu-vien';
 import { today, useLibraries } from './OverviewTab';
 import { CanCuPanel } from './CanCuPanel';
+import { CauHinhPanel } from './CauHinhPanel';
+import { DeXuatPanel } from './DeXuatPanel';
 
-type Sub = 'muc' | 'phien-ban' | 'luat' | 'can-cu' | 'kiem';
+type Sub = 'muc' | 'phien-ban' | 'luat' | 'can-cu' | 'cau-hinh' | 'de-xuat' | 'kiem';
 const SUBS: { key: Sub; label: string }[] = [
-  { key: 'muc', label: 'Mục' }, { key: 'phien-ban', label: 'Phiên bản' }, { key: 'luat', label: 'Luật' }, { key: 'can-cu', label: 'Căn cứ' }, { key: 'kiem', label: 'Kiểm thử' },
+  { key: 'muc', label: 'Mục' }, { key: 'phien-ban', label: 'Phiên bản' }, { key: 'luat', label: 'Luật' }, { key: 'can-cu', label: 'Căn cứ' }, { key: 'cau-hinh', label: 'Cấu hình' }, { key: 'de-xuat', label: 'Đề xuất' }, { key: 'kiem', label: 'Kiểm thử' },
 ];
 
 interface Suggestion { value: unknown; label: string; why: string; confidence: string }
@@ -49,7 +51,7 @@ export function DetailView({ libId, onPick }: { libId: string | null; onPick: (i
           <button key={s.key} type="button" className={`tab${sub === s.key ? ' active' : ''}`} onClick={() => setSub(s.key)}>{s.label}</button>
         ))}
       </div>
-      {sub === 'muc' ? <ItemsPanel lib={lib} /> : sub === 'phien-ban' ? <VersionsPanel lib={lib} /> : sub === 'luat' ? <RulesPanel lib={lib} /> : sub === 'can-cu' ? <CanCuPanel lib={lib} /> : <TestPanel lib={lib} />}
+      {sub === 'muc' ? <ItemsPanel lib={lib} /> : sub === 'phien-ban' ? <VersionsPanel lib={lib} /> : sub === 'luat' ? <RulesPanel lib={lib} /> : sub === 'can-cu' ? <CanCuPanel lib={lib} /> : sub === 'cau-hinh' ? <CauHinhPanel lib={lib} /> : sub === 'de-xuat' ? <DeXuatPanel lib={lib} /> : <TestPanel lib={lib} />}
       {env.data!.readme ? (
         <details style={{ marginTop: 12 }}><summary>Hướng dẫn của thư viện (README)</summary><pre style={{ whiteSpace: 'pre-wrap' }}>{env.data!.readme}</pre></details>
       ) : null}
