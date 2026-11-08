@@ -21,6 +21,14 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** chạy `npm run db:migrate`. Sự việc cũ có `policy_check` mang phát hiện sẽ hiện ở hàng việc cho tới khi được đánh dấu đã xem.
 - **Bảo mật:** hành động ghi cần `documents:write`; bảng bằng chứng có RLS theo đơn vị và trigger chặn sửa / xoá.
 
+### Lỗi trigger sổ cái ra đúng mã hợp đồng: không cân, khoá kỳ, sổ chỉ thêm (PHASE-029 S029-33, review R1 RV-R1-02) <!-- [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33 -->
+
+- **Thêm:** `classifyLedgerTriggerError` (`packages/platform/src/core/errors.ts`) — một nơi nhận ra lỗi trigger sổ cái theo SQLSTATE + câu chữ; `core/http.ts` và `errorCodeOf` (trace) cùng gọi. Golden T029-ERR-1…5 (`apps/api/test/db-error-mapping.test.ts`) dùng lỗi sinh từ trigger thật trên PostgreSQL.
+- **Đổi:** theo [BIZCITY-ERRORS-v1](docs/contracts/BIZCITY-ERRORS-v1.md) 1.3.0-draft §5: `23514` + "không cân" → `UNBALANCED_ENTRY` (422); `23514` + `PERIOD_LOCKED:` → `PERIOD_LOCKED` (**409**); `42501` + "chỉ được thêm" → `CONFLICT` (**409**) + `details.reason = LEDGER_APPEND_ONLY`. CHECK / quyền khác vẫn `POSTING_FAILED` (422).
+- **Sửa:** trước đây mọi lỗi cân, khoá kỳ và sửa sổ ở tầng CSDL đều ra `POSTING_FAILED` vì trigger ném `23514` / `42501` chứ không phải `P0001` như bảng §5 cũ giả định; bên gọi rẽ nhánh theo `code` không phân biệt được ba trường hợp này.
+- **Thay đổi định khoản:** không (K0 cho mã; không đổi migration, không đổi bút toán).
+- **Nâng cấp cần làm:** bên tích hợp đang rẽ nhánh theo `POSTING_FAILED` cho lỗi khoá kỳ / sửa sổ cần xử lý thêm `PERIOD_LOCKED` và `CONFLICT` + `LEDGER_APPEND_ONLY` (HTTP 422 → 409). Chưa có tag phát hành nào dùng hành vi cũ.
+
 ### Sửa trùng số migration 0080: gói K3 đổi sang 0081 / 0082 (PHASE-029) <!-- [2026-11-08 11:33 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — sửa trùng số 0080 -->
 
 - **Sửa:** PHASE-031 W2a (#159) và gói K3 (#165) cùng merge với số 0080, `main` đỏ `SC-DATA-1`. K3 merge sau nên đổi: `0080_nguoi_tao_su_viec_bat_buoc.sql` → `0081_…`, `0081_khoa_ky_o_csdl.sql` → `0082_…`. `0080_kiem_chinh_sach_su_viec.sql` (W2a) giữ nguyên.
