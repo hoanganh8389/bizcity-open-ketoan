@@ -1,4 +1,5 @@
 // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: SC-FIND-1 thêm căn cứ (R-GATE-11); SC-FIND-2 mọi thông báo của Core dựng từ thư viện mã (R-GATE-10)
+// [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032 D-LIB-5): SC-FIND-1 đọc thêm cổng L — mã LIB-* (library-findings.ts) và mã luật riêng của thư viện (libraries/*/library.json rules[]); không trùng mã giữa mọi nguồn
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 (ADR-0019, R-GATE-2 / R-GATE-5): SC-FIND-1 — một thư viện phát hiện cho hai cổng: mã không trùng, đủ vì sao / cách sửa, trang tra mã đủ mã
 /**
  * bizcity_findings@1: hai danh mục nguồn (Gate A `catalog-hint.ts`, Gate B `intake-findings.ts`) gom về một thư viện. Kiểm:
@@ -14,6 +15,8 @@ const INTAKE = 'packages/contracts/src/intake-findings.ts';
 const PAGE = 'docs/huong-dan/ma-loi/README.md';
 const BASIS = 'packages/contracts/src/legal-basis.ts';
 const LAW_PAGE = 'docs/can-cu/01-danh-muc-van-ban.md';
+const LIBRARY = 'packages/contracts/src/library-findings.ts';
+const LIB_ROW = /^ {2}'(LIB-[A-Z]+-\d{3})': \{ level: '(block|warn|info)', step: '[a-z]+', title: '([^']*)', why: '([^']*)', fix: '([^']*)' \},/;
 const INTAKE_ROW = /^ {2}'(IN-[A-Z]+-\d{3})': \{[^\n]*severity: '(block|warn|hint)'[^\n]*title: '([^']*)', why: '([^']*)', fix: '([^']*)'/;
 
 /** Các mục của CATALOG_HINTS: khối `  'MÃ': {` … `  },`. */
@@ -40,8 +43,18 @@ export default {
     const hints = hintEntries(ctx.repo.read(HINTS) ?? '');
     const intake = (ctx.repo.read(INTAKE) ?? '').split(/\r?\n/).map((l) => INTAKE_ROW.exec(l)).filter(Boolean)
       .map((m) => ({ code: m[1], level: m[2] === 'hint' ? 'info' : m[2], title: m[3], why: m[4], fix: m[5] }));
+    const lib = (ctx.repo.read(LIBRARY) ?? '').split(/\r?\n/).map((l) => LIB_ROW.exec(l)).filter(Boolean)
+      .map((m) => ({ code: m[1], level: m[2], title: m[3], why: m[4], fix: m[5] }));
+    // Mã luật riêng của từng thư viện: căn cứ khai ngay trong luật (basis[]), không ở FINDING_BASIS — kiểm trùng + chữ ở đây, khuôn ở SC-LIB-1.
+    const ruleSources = [];
+    for (const d of ctx.repo.list('libraries')) {
+      const file = `libraries/${d}/library.json`;
+      if (!ctx.repo.exists(file)) continue;
+      try { ruleSources.push([file, (ctx.repo.json(file).rules ?? []).map((r) => ({ code: r.code, level: r.level, title: r.title, why: r.why, fix: r.fix, rule: true }))]); } catch { /* JSON hỏng: SC-LIB-1 báo */ }
+    }
+    const ruleCodes = new Set(ruleSources.flatMap(([, l]) => l.map((x) => x.code)));
     const seen = new Map();
-    for (const [file, list] of [[HINTS, hints], [INTAKE, intake]]) {
+    for (const [file, list] of [[HINTS, hints], [INTAKE, intake], [LIBRARY, lib], ...ruleSources]) {
       for (const e of list) {
         if (seen.has(e.code)) add(file, `mã ${e.code} trùng với ${seen.get(e.code)}`, `dup:${e.code}`);
         else seen.set(e.code, file);
@@ -65,12 +78,13 @@ export default {
       const lawPage = ctx.repo.read(LAW_PAGE) ?? '';
       for (const [key, title] of laws) if (key !== 'NOI-BO' && !lawPage.includes(`**${title}**`)) add(BASIS, `căn cứ ${key} "${title}" không có trong ${LAW_PAGE} — thêm văn bản vào danh mục (có ngày rà soát) hoặc sửa tên`, `basis-law:${key}`);
       for (const code of seen.keys()) {
+        if (ruleCodes.has(code)) continue; // mã luật của thư viện: căn cứ ở basis[] của luật
         const keys = rows.get(code);
         if (!keys?.length) { add(BASIS, `${code}: chưa có căn cứ — khai ở FINDING_BASIS (văn bản trong docs/can-cu, hoặc NOI-BO = quy ước phần mềm)`, `basis-missing:${code}`); continue; }
         for (const k of keys) if (!laws.has(k)) add(BASIS, `${code}: căn cứ ${k} không có trong LEGAL_BASES`, `basis-unknown:${code}:${k}`);
       }
       for (const code of rows.keys()) if (!seen.has(code)) add(BASIS, `FINDING_BASIS có ${code} nhưng thư viện không có mã này`, `basis-extra:${code}`);
     }
-    return { examined: seen.size, unitBy: 'key', findings, metrics: { gateA: hints.length, gateB: intake.length } };
+    return { examined: seen.size, unitBy: 'key', findings, metrics: { gateA: hints.length, gateB: intake.length, gateL: lib.length + ruleSources.reduce((n, [, l]) => n + l.length, 0) } };
   },
 };
