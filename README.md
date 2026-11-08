@@ -20,22 +20,19 @@ Anh em Dev muốn viết ERP nội bộ, POS, pm bán hàng, CRM , quản lý mu
 >
 > **Định hướng kiến trúc:** *Accounting Core ổn định — Module mở rộng — Hợp đồng rõ ràng — Dữ liệu do người dùng kiểm soát.*
 
-**Đi nhanh:** [Cài nhanh 3 bước](#cài-nhanh-3-bước-trên-máy-của-bạn) · [Kết nối API và trợ lý AI](#kết-nối-api-và-trợ-lý-ai-với-bizcity) · [Giám sát](#giám-sát-vận-hành-prometheus--grafana--loki) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md)
-
+**Đi nhanh:** [Cài nhanh 3 bước](#cài-nhanh-3-bước-trên-máy-của-bạn) · [Kết nối API và trợ lý AI](#kết-nối-api-và-trợ-lý-ai-với-bizcity) · [Giám sát](#giám-sát-vận-hành-prometheus--grafana--loki) · [Sử dụng](#sử-dụng) · [Viết module](#phát-triển-và-viết-module) · [Vận hành](#vận-hành) · [Đóng góp](CONTRIBUTING.md) · [Bản công bố kiến trúc](docs/CONG-BO-KIEN-TRUC.md )
+[Cài đặt](#cài-đặt)
 
 **Xem thử** (hệ thống chung, đừng nhập dữ liệu thật; dữ liệu có thể được đặt lại; bản demo có thể chạy phiên bản cũ hơn repo):
 
-| | Địa chỉ | Đăng nhập |
-|---|---|---|
-| Kế toán | <https://ketoan.bizcity.vn/> |
-* Mã đơn vị: otchuong
-* Email: admin@otchuongmart.local
-* Mật khẩu: Otcfa8719fd1c0b! |
-[Cài đặt](#cài-đặt)
+| | Kế toán | Đăng nhập |
+|---|---|
+| <https://ketoan.bizcity.vn/> | * Mã đơn vị: otchuong * Email: admin@otchuongmart.local * Mật khẩu: Otcfa8719fd1c0b! |
+
 
 | | Quản trị kho, POS |  Đăng nhập |
-|---|---|---|
-| POS bán hàng |<https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
+|---|---|
+| <https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c | 
 
 
 ## Vì sao có open-ketoan?
