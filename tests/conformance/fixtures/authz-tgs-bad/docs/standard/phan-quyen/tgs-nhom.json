@@ -1,0 +1,44 @@
+{
+  "contract": "bizcity_authz_tgs_groups@1",
+  "source": "docs/standard/phan-quyen/tgs-nguon.csv",
+  "title": "Bảng phân quyền tổng hợp TGS – 03.11.2026 · Chi tiết phân quyền",
+  "rows": 3,
+  "codes": 3,
+  "groups": 1,
+  "generatedBy": "scripts/phan-quyen/tgs-anh-xa.mjs",
+  "rule": "ADR-0027 Phụ lục A, W5 đợt 2; D-AUTH-08: không mã nào thành quyền thật khi chưa duyệt; cờ chỉ tính khi có Thêm / Sửa / Xóa (đóng an toàn); bí danh đọc ứng Tìm / In, bí danh ghi ứng Thêm / Sửa / Xóa",
+  "items": [
+    {
+      "code": "tgs-nhom-thu",
+      "label": "Nhóm thử",
+      "sheet": "thu",
+      "baseRole": "viewer",
+      "functions": 3,
+      "grants": {
+        "BC2": [
+          "read",
+          "print",
+          "export"
+        ],
+        "BH5": [
+          "read",
+          "create",
+          "update",
+          "print",
+          "export"
+        ],
+        "HT10": [
+          "grant"
+        ]
+      },
+      "derived": [
+        "documents:bypass-date-lock",
+        "reports:read",
+        "documents:edit-all"
+      ],
+      "anomalies": [
+        "quyền rủi ro cao suy ra: documents:bypass-date-lock — kiểm kỹ trước khi bật vai trò"
+      ]
+    }
+  ]
+}
