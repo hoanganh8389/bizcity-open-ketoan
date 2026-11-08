@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 13 |
+| Đang làm | 12 |
 | Chờ merge | 0 |
 | Bị chặn | 31 |
 | Chưa ai nhận | 139 |
-| Chờ đủ tín hiệu | 49 |
+| Chờ đủ tín hiệu | 50 |
 | Hoãn | 1 |
 | Xong | 250 |
 | **Tổng** | **483** |
 
-## Đang làm (13)
+## Đang làm (12)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -30,7 +30,6 @@
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S029-33](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L42) | PHASE-029 | Ánh xạ lỗi trigger sổ cái đúng mã hợp đồng BIZCITY-ERRORS-v1 §5: http.ts nhận ra "không cân" (23514) → UNBALA… | P0 | hoanganh8389 (phiên Claude, review-r1) · `fix/phase-029-s029-33-sqlstate` |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-entity-codes` |
-| [S031-22](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L31) | PHASE-031 | Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3 | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2c-cho-ke-toan-xem` |
 
 ## Chờ merge (0)
 
@@ -216,7 +215,7 @@
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 | [S031-26](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L35) | PHASE-031 | Sự kiện miền policy.published / policy.retired qua outbox (khai ở bizcityevent@1); POS đổi từ hỏi etag sang n… | P1 | — |
 
-## Chờ đủ tín hiệu (49)
+## Chờ đủ tín hiệu (50)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -269,6 +268,7 @@
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
+| [S031-22](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L31) | PHASE-031 | Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3 | P0 | — |
 
 ## Hoãn (1)
 
