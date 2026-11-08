@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: thêm entity_codes (0083) và giải thích bốn hàm trigger mã thực thể.
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm accounting_profiles (0049).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — thêm conformance_runs (0051).
 // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: thêm rulepack_approvals (0053).
@@ -187,6 +188,7 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
   // [2026-11-05 02:05 PM Nguyễn Văn Thủy] PHASE-026 — S026-19: hai khung nhìn đọc mới của lõi, 0070 (đóng góp)
   items: { group: 'platform', label: 'Mặt hàng — định danh bất biến', term: 'Item Master', module: 'catalog', purpose: 'item_id ULID bất biến của mặt hàng (không đổi, không xoá, không dùng lại); tên, đơn vị gốc, trạng thái nháp / đang dùng / ngừng. Chạy song song với products, đồng bộ bằng trigger (B2a).' },
   item_codes: { group: 'platform', label: 'Mã hàng có phiên bản', term: 'Item Master', module: 'catalog', purpose: 'Mã hàng (sku, mã vạch, bí danh, mã ngoài) → mặt hàng, có ngày hiệu lực; chỉ thêm, đổi mã = đóng mã cũ + thêm mã mới. Một mã tại một ngày chỉ trỏ một mặt hàng.' },
+  entity_codes: { group: 'platform', label: 'Mã có phiên bản của đối tượng / chi nhánh / kho', term: 'Master Data', module: 'catalog', purpose: 'Mã (chính, bí danh, mã ngoài) → đối tượng, chi nhánh hoặc kho, có ngày hiệu lực; chỉ thêm, đổi mã = đóng mã cũ + thêm mã mới. Cột code của bảng thực thể là ảnh chụp mã hiện hành, trigger giữ khớp.' },
   item_classification: { group: 'platform', label: 'Phân loại hạch toán theo ngày', term: 'Item Master', module: 'catalog', purpose: 'Loại, nhóm hạch toán, thuế, theo dõi của mặt hàng theo ngày hiệu lực; lịch sử không bị sửa. Chưa phân loại = loại để trống (R-ITEM-8).' },
   catalog_rule_reviews: { group: 'platform', label: 'Duyệt luật nhắc danh mục', term: 'Quy định dữ liệu danh mục', module: 'system', purpose: 'Kế toán trưởng của đơn vị duyệt luật nhắc khung Vì sao: đồng ý, sửa câu chữ, hạ cảnh báo mềm xuống nhắc (D023-8). Lịch sử ở nhật ký thao tác.' },
   app_installations: { group: 'platform', label: 'App đã kết nối', term: 'Ứng dụng kết nối', module: 'apps', purpose: 'App chạy riêng (ADR-0011 mức 2) đã kết nối với đơn vị: phạm vi quyền và sự kiện chủ đơn vị đồng ý, trạng thái bật / tắt, muối của bí mật webhook (bí mật không lưu).' },
@@ -224,6 +226,11 @@ export const TRIGGER_NOTES: Record<string, string> = {
   bizcity_item_codes_guard: 'Mã hàng chỉ thêm (R-ITEM-0): UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một mặt hàng (DG-ITEM-1); không xoá.',
   bizcity_item_classification_guard: 'Phân loại hạch toán theo ngày (R-ITEM-5 / 7): không chồng hiệu lực; bản đã đóng không sửa; không xoá.',
   bizcity_item_truncate_guard: 'Chặn xoá sạch bảng định danh mặt hàng bằng TRUNCATE (R-ITEM-0).',
+  // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: trigger mã có phiên bản của đối tượng / chi nhánh / kho (0083)
+  bizcity_entity_codes_guard: 'Mã thực thể chỉ thêm: thực thể phải có thật và cùng đơn vị; UPDATE duy nhất là đóng hiệu lực (valid_to); một mã tại một ngày chỉ trỏ một thực thể.',
+  bizcity_entity_codes_sync: 'Mọi đường ghi đối tượng / chi nhánh / kho giữ entity_codes khớp cột code: thêm → mã đầu; đổi code → đóng mã cũ + thêm mã mới; xoá → đóng mã (lịch sử mã giữ lại).',
+  bizcity_entity_identity_guard: 'Định danh của đối tượng / chi nhánh / kho không đổi: không đổi id, không đổi đơn vị. Đổi mã bằng cột code, mã cũ được giữ trong entity_codes.',
+  bizcity_entity_truncate_guard: 'Chặn xoá sạch bảng mã thực thể (entity_codes) bằng TRUNCATE: mã là lịch sử, chỉ thêm.',
   // [2026-11-04 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-3: họ mặt hàng
   bizcity_items_parent_guard: 'Họ mặt hàng (R-ITEM-3): mặt hàng cha cùng đơn vị, không tự làm cha mình, không tạo vòng.',
   bizcity_items_sync_parent: 'Giữ items.parent_item_id khớp mã cha (products.parent_sku) theo ĐỊNH DANH: đổi mã cha / con không đứt họ; mặt hàng cha thêm sau con thì nhận các con đang chờ.',
