@@ -24,7 +24,7 @@
 | S029-14 | Kiểm đường ghi ngoài action mang tenant / actor / nguồn / correlation (ECP-02) | E9 | P2 | ☐ |
 | S029-15 | Ánh xạ định danh ngoài, con trỏ đồng bộ, nhật ký từng lần kéo, đối chiếu theo cửa sổ | E7 | P1 | ☐ |
 | S029-16 | Sổ KPI có phiên bản; dòng báo cáo tài chính thành định nghĩa có phiên bản | E8 | P2 | ☐ |
-| S029-17 | Trigger kỳ khoá trên `ledger_entries` | E5 | P0 | 🟡 2026-11-07 đã chốt ([35](35-GOI-K3.md) đợt 1), giữ chỗ — migration 0081 |
+| S029-17 | Trigger kỳ khoá trên `ledger_entries` | E5 | P0 | ✅ 2026-11-08 (gói K3 đợt 1: trigger `ledger_entries_period_lock`, migration 0081; T029-K3-3..5) |
 | S029-18 | Bảng điểm 17 trụ cột theo bằng chứng (`signal`, `foundation`), HT10 theo bốn nhóm | E1 | P0 | ⛔ sau S026-15 |
 | S029-19 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test `T029-ECP-P001` | E3 | P0 | ⛔ sau S026-4 |
 | S029-20 | Gộp đối tượng theo khuôn 0068 | E3 | P1 | ⛔ sau S026-4 |
@@ -53,3 +53,4 @@
 | 2026-11-06 | Claude Code | E6 đợt 1 code: `VAT_INPUT_INVOICE_MATCH`, `LEDGER_ROUNDING` (ledger), `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` (inventory) + lane DG-REC-1 / -2, DG-MD-1 / -2; DIAGNOSTICS.md §2a sổ đăng ký đối chiếu. Phát hiện: cửa nạp nhận số lẻ xu vào sổ — nay LEDGER_ROUNDING báo. |
 | 2026-11-06 14:50 | Claude Code | E6 đợt 1 code: `VAT_INPUT_INVOICE_MATCH`, `LEDGER_ROUNDING`, `ITEM_CODE_CASE_DUP`, `UNIT_BASE_INVALID` + lane DG-REC-1/2, DG-MD-1/2, sổ đăng ký đối chiếu ở DIAGNOSTICS.md; phát hiện thật: cửa nạp nhận số lẻ xu vào sổ. Bỏ dòng giữ chỗ E6 đợt 1 (R-FLOW-6). |
 | 2026-11-07 15:29 | Claude Code | Chủ dự án bỏ yêu cầu hai người nhóm Lõi (R-KER-2 bản smallwin). Chốt gói K3 [35](35-GOI-K3.md): đợt 1 = D030-16 (`created_by` bắt buộc, 0080) + S029-17 (trigger khoá kỳ, 0081), số đo 1.484 sự việc hệ thống rỗng người tạo, 0 bút toán tạo sau lúc khoá; đợt 2 = S029-6 (chờ S029-5), đợt 3 = S029-12 (sau S026-11). Sửa trạng thái cũ: S029-10, S029-13 đã vào `main` từ 2026-11-06 |
+| 2026-11-08 10:31 | Claude Code | Gói K3 đợt 1 code xong ([35](35-GOI-K3.md)): 0081 trigger khoá kỳ (cùng điều kiện `isLocked`: kỳ, chi nhánh trống hoặc đúng, loại `*` hoặc đúng); 0080 người tạo sự việc bắt buộc (D030-16). Phát hiện khi chạy thật: trigger 0049 coi người lập là định danh, cấm đổi kể cả rỗng → có giá trị — 0080 tắt riêng trigger đó trong chính giao dịch migration (khoá ACCESS EXCLUSIVE), chỉ điền dòng rỗng, bật lại ngay; không dùng cờ E4 `ketoan.allow_ledger_purge`. T029-K3-1..5 xanh (9 ca), 19 tệp test sổ / khoá kỳ / khoá sổ / khấu hao / giá vốn xanh (171 ca); phá thử 3 lần (bỏ ghi người tạo, trigger bỏ điều kiện loại, 0080 bỏ bước dừng) đều bị bắt. Nhả dòng giữ chỗ |
