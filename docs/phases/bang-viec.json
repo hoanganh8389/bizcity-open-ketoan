@@ -5055,15 +5055,9 @@
       "phase": "PHASE-030",
       "title": "B1 — HT14 bản chỉ đọc (modules/thu-vien/), LibraryPicker trong ui-kit (A2), trụ cột IX vào tru-cot.json (26 §2–§3)",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thu-vien-b1)",
-        "branch": "feat/s030-47-kho-thu-vien-b1",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-030 · S030-47 — Kho thư viện B1: màn HT14 chỉ đọc (modules/thu-vien/), LibraryPicker trong ui…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 55
     },
