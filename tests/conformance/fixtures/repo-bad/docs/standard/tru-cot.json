@@ -1,0 +1,21 @@
+{
+  "$comment": "[2026-11-08 04:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15: ca mẫu SC-PILLAR-1 — một tiêu chí đạt có bằng chứng thật, ba tiêu chí đạt sai kiểu khác nhau, một tiêu chí chưa đạt (không bị kiểm).",
+  "contract": "bizcity_pillars@1",
+  "version": "0.0.0-fixture",
+  "pillars": [
+    {
+      "id": "0",
+      "key": "mau",
+      "role": "nền móng",
+      "title": "Trụ cột mẫu",
+      "criteria": [
+        { "id": "OK-1", "text": "Đạt, bằng chứng là một migration có thật trong repo mẫu", "status": "dat", "evidence": "db/migrations/0005_khoa_theo_ma.sql (0005)" },
+        { "id": "NO-1", "text": "Đạt nhưng bằng chứng không dẫn tới thứ gì kiểm được", "status": "dat", "evidence": "đã làm xong, kiểm tay" },
+        { "id": "DM-1", "text": "Đạt, có một bằng chứng thật nhưng nêu thêm migration không tồn tại", "status": "dat", "evidence": "db/migrations/0005_khoa_theo_ma.sql; migration 0999" },
+        { "id": "DT-1", "text": "Đạt, có một bằng chứng thật nhưng nêu thêm một test không tồn tại", "status": "dat", "evidence": "db/migrations/0005_khoa_theo_ma.sql; test khong-co-tep" },
+        { "id": "DC-1", "text": "Đạt, có một bằng chứng thật nhưng nêu thêm mã check không tồn tại", "status": "dat", "evidence": "db/migrations/0005_khoa_theo_ma.sql; check SC-KHONG-9" },
+        { "id": "PA-1", "text": "Một phần: được phép chưa có bằng chứng, không bị kiểm", "status": "mot-phan", "evidence": "chưa làm, đang chờ" }
+      ]
+    }
+  ]
+}
