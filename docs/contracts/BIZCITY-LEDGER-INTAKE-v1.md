@@ -65,7 +65,7 @@ Xác thực: `X-Api-Key` có phạm vi `documents:write`. Header tuỳ chọn `X
 | `policyRefs` | `{ key, version, hash, policyId? }[]` ≤ 50 | | Chính sách nghiệp vụ đã phát hành mà nguồn dùng để lập chứng từ này ([ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md)). `key` = mã chính sách ở sổ đăng ký; `version` ≥ 1; `hash` = `contentHash` của bản (64 hex, lấy từ sổ đăng ký chính sách — API đọc cho nguồn ngoài ở PHASE-031 W3 — hoặc từ vết của module); `policyId` khi nguồn biết định danh |
 | `lines[].policyRef` | `{ key, version, line? }` | | Dòng này sinh ra từ chính sách nào (vd dòng quà tặng). `key` phải có trong `policyRefs` |
 
-Cửa nạp lưu nguyên văn trong `payload`, kiểm ở tầng L4 (`IN-POL-001` không có trong sổ đăng ký / băm sai / dòng trỏ key không khai, `IN-POL-002` bản không phủ `docDate` và không bản nào mới hơn phủ, `IN-POL-003` bản không phủ `docDate` nhưng có bản mới hơn phủ — đều `warn`, cửa nạp vẫn nhận) và ghi kết quả vào `policy_check` của sự việc. Đơn vị đặt `bizcity.intake.policy_check = strict` thì sự việc có các mã này **chờ duyệt** thay vì ghi ngay. Không gửi `policyRefs` → như mọi bản trước.
+Cửa nạp lưu nguyên văn trong `payload`, kiểm ở tầng L4 (`IN-POL-001` tham chiếu / băm sai, `IN-POL-002` bản không hiệu lực tại `docDate`, `IN-POL-003` đã có bản mới hơn — đều `warn`, cửa nạp vẫn nhận) và ghi kết quả vào `policy_check` của sự việc. Đơn vị đặt `bizcity.intake.policy_check = strict` thì sự việc có các mã này **chờ duyệt** thay vì ghi ngay. Không gửi `policyRefs` → như mọi bản trước.
 
 ## 4. Phần riêng theo `docType`
 

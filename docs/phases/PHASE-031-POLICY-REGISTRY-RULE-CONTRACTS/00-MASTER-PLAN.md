@@ -125,9 +125,9 @@ retirePolicy(trx, tenantId, policyId, actor, reason)
 
 | Mã (`bizcity_intake_findings@1` 0.9.0-draft) | Tầng | Mức | Stage | Trọng số | Khi nào |
 |---|---|---|---|---|---|
-| `IN-POL-001` | L4 | warn | advice | 10 | `key` / `policyId` không có trong sổ đăng ký, hoặc `hash` khác `content_hash` của bản `version`, hoặc dòng trỏ `key` không khai ở `policyRefs` |
-| `IN-POL-002` | L4 | warn | advice | 10 | bản `version` không phủ `docDate` và không bản nào mới hơn phủ (chưa áp / khoảng rỗng) — *đã đính chính, xem cuối mục* |
-| `IN-POL-003` | L4 | warn | advice | 5 | bản `version` không phủ `docDate` nhưng có bản mới hơn phủ (nguồn ngoại tuyến dùng bản cũ) — *đã đính chính* |
+| `IN-POL-001` | L4 | warn | advice | 10 | `key` / `policyId` không có trong sổ đăng ký, hoặc `hash` khác `content_hash` của bản `version` |
+| `IN-POL-002` | L4 | warn | advice | 10 | bản `version` không phủ `docDate` (trước ngày áp, sau ngày đóng, hoặc khoảng rỗng) |
+| `IN-POL-003` | L4 | warn | advice | 5 | bản gửi vẫn hợp lệ nhưng sổ đăng ký đã có bản mới hơn phủ `docDate` (nguồn ngoại tuyến dùng bản cũ) |
 
 Cả ba `acceptable: true` — kế toán trưởng chấp nhận có lý do bằng đường sẵn có của bể chờ (= nút *Đánh dấu đã xem* của [20 §3](20-TRUY-VET-VA-THEO-DOI.md)). Thiếu lý do định khoản cho kết quả **không** thêm mã: `IN-POST-001` đã có. Mỗi mã có bài học `docs/huong-dan/loi-dau-vao/IN-POL-00n.md`, căn cứ ở `legal-basis.ts` (`NOI-BO` + ADR-0031) — tệp này đang thuộc dòng giữ chỗ S030-45, W2a **chỉ thêm** ba khoá (đề nghị dùng chung, chủ dự án duyệt cùng PR này), remedy theo `bizcity_remedy@1`.
 
@@ -143,9 +143,3 @@ Cả ba `acceptable: true` — kế toán trưởng chấp nhận có lý do b�
 **6. Mua hàng nộp kèm tham chiếu** — `apps/api/src/phan-he/mua-hang/posting.ts`: dựng `policyRefs` từ `policyTrace` của phiếu (mỗi `policy@version` một mục, `policyId = mua-hang:purchase_policies:<id>`, `hash`). Vết không có bản (phiếu cũ trước W1) thì bỏ qua, không đoán.
 
 **Golden W2a:** T031-INT-1 (đúng bản → không `IN-POL-*`, `policy_check` lưu, khung nhìn thấy), T031-INT-3 (bản 2 khi bản 3 đã hiệu lực tại ngày → `IN-POL-003`), T031-INT-5 (băm sai → `IN-POL-001`), T031-INT-6 (chính sách đổi giữa kiểm thử và nộp → `IN-GUARD-001`), T031-INT-7 (không `policyRefs` → như hôm nay, `policy_check` NULL), mới **T031-INT-8** (`strict` + `IN-POL-002` → sự việc chờ duyệt, không bút toán; duyệt → ghi), **T031-INT-9** (phiếu mua hàng duyệt → sự việc mang `policyRefs` đúng bản + băm của `policyTrace`). Cặp tiền kiểm ⇔ cửa nạp (R-INTAKE-4): cùng mã `IN-POL-*` ở cả hai đường.
-
-**Đính chính khi viết mã W2a ([2026-11-08 01:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031):**
-- **IN-POL-002 / 003 loại trừ nhau.** Bản chữ chốt đầu để 003 = "bản hợp lệ nhưng có bản mới hơn phủ cùng ngày" — không bao giờ xảy ra vì sổ đăng ký bảo đảm mỗi ngày đúng một bản (T031-TR-2); phát hiện nhờ ca kiểm T031-INT-3 đỏ. Định nghĩa đúng: bản gửi **không phủ** ngày chứng từ; có bản mới hơn phủ ngày đó → **003** (nguồn dùng bản cũ, làm mới); không bản nào phủ → **002** (chưa áp / khoảng rỗng: sai ngày hoặc sai bản).
-- **Kiểm tham chiếu chéo dòng ↔ phiếu ở Kernel, không ở zod** (union phân biệt cần ZodObject): dòng trỏ key không khai ở `policyRefs` → `IN-POL-001` đường dẫn `lines[i].policyRef.key`.
-- **S031-22 (nhánh hàng việc `policy_review`) tách khỏi W2a.** Hàng việc cần cờ mới + nguồn mới ở `queue.routes.ts` (`QUEUE_SOURCES`, bảng quyền, nhãn) và một action *Đánh dấu đã xem* để việc đóng được — thiếu action thì dòng nằm mãi trong hàng đợi. Chế độ `strict` đã hiện ở nhánh `accounting_event` sẵn có (pending / held), đủ cho chế độ *gợi ý*. Làm cùng action ở W2c.
-- **Commit Guard** băm `(mã, bản, hiệu lực, trạng thái, băm nội dung)` của các phong bì được trỏ tới; chứng từ không có `policyRefs` giữ nguyên dấu cũ.
