@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 11 |
+| Đang làm | 13 |
 | Chờ merge | 0 |
 | Bị chặn | 31 |
-| Chưa ai nhận | 140 |
+| Chưa ai nhận | 138 |
 | Chờ đủ tín hiệu | 49 |
 | Hoãn | 1 |
 | Xong | 251 |
 | **Tổng** | **483** |
 
-## Đang làm (11)
+## Đang làm (13)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -29,6 +29,8 @@
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-pillar-evidence` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-entity-codes` |
+| [S030-48](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L56) | PHASE-030 | B2 — theo dõi sử dụng: libraryusagedaily, bộ đếm sau commit, core.library.usage, tab Tổng quan có số liệu (26… | P1 | hoanganh8389 (phiên Claude, thu-vien-b2) · `feat/s030-48-kho-thu-vien-b2` |
+| [S031-22](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L31) | PHASE-031 | Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3 | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2c-cho-ke-toan-xem` |
 
 ## Chờ merge (0)
 
@@ -70,7 +72,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (140)
+## Chưa ai nhận (138)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -198,7 +200,6 @@
 | [S030-33](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L40) | PHASE-030 | Golden T030-GATE-1..4 (21 §5) | P1 | — |
 | [S030-34](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L41) | PHASE-030 | HT09 mở sang luật nhập chứng từ ENTRY- (điều kiện theo loại / lý do / nhóm tài khoản / bên; yêu cầu chiều phâ… | P1 | — |
 | [S030-35](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L42) | PHASE-030 | Bộ chuyển đổi lfood-legal-params@1 (120 tham số Erp-vn, chủ dự án xuất 06/11) → vn-rulepacks; thuế suất GTGT … | P1 | — |
-| [S030-48](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L56) | PHASE-030 | B2 — theo dõi sử dụng: libraryusagedaily, bộ đếm sau commit, core.library.usage, tab Tổng quan có số liệu (26… | P1 | — |
 | [S030-49](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L57) | PHASE-030 | B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettin… | P1 | — |
 | [S030-50](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L58) | PHASE-030 | B4 — CLI npx bizcity library search / check / new / diff + skill use-bizcity-library (26 §10) | P1 | — |
 | [S030-51](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L59) | PHASE-030 | B5 — gắn vào action (ctx.libraries, bizcitymodule@1 1.3.0 libraries[]) và cửa nạp (trường ↔ thư viện, chữ chố… | P1 | — |
@@ -210,7 +211,6 @@
 | [S031-16](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L25) | PHASE-031 | POS WP: tải chính sách, tính theo Rule Contract, gửi policyRefs; bỏ luật khuyến mại riêng của plugin (repo pl… | P1 | — |
 | [S031-17](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L26) | PHASE-031 | Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc | P1 | — |
 | [S031-18](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L27) | PHASE-031 | Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết | P1 | — |
-| [S031-22](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L31) | PHASE-031 | Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3 | P0 | — |
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 | [S031-26](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L35) | PHASE-031 | Sự kiện miền policy.published / policy.retired qua outbox (khai ở bizcityevent@1); POS đổi từ hỏi etag sang n… | P1 | — |

@@ -2,7 +2,7 @@
 /**
  *   T029-K3-1a  sự việc Kernel tự lập (eventStore.saveVersion, đường của khấu hao / giá vốn / khoá sổ) không truyền người tạo → ghi auth.actor
  *   T029-K3-1b  chứng từ nhận từ nguồn và phiếu tay giữ người tạo như cũ; cả đơn vị không còn sự việc nào rỗng người tạo
- *   T029-K3-1c  CSDL từ chối sự việc rỗng / chuỗi trắng người tạo (0080)
+ *   T029-K3-1c  CSDL từ chối sự việc rỗng / chuỗi trắng người tạo (0081)
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
