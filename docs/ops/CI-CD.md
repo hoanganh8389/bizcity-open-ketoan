@@ -2,6 +2,7 @@
 <!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn. -->
 <!-- [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh. -->
+<!-- [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12: allowlist cờ allow_ledger_purge thu hẹp (0086) -->
 
 > **Tệp chạy:** [../../.github/workflows/ci.yml](../../.github/workflows/ci.yml) · **Luật:** [R-QG](../rules/RULE-QUALITY-GATE.md)
 
@@ -35,7 +36,7 @@ Viết ở [`scripts/kiem-chuan.sh`](../../scripts/kiem-chuan.sh) (chạy đư�
 | Ghi sổ cái | `insertInto\('ledger_` · `updateTable\('ledger_` · `INSERT INTO ledger_` | `modules/ledger/` trong `packages/kernel/src` hoặc `apps/api/src` (+ ngoại lệ E2: `modules/posting/posting.service.ts` cập nhật đầu bút toán) |
 | Ghi sự việc | `insertInto\('(accounting_events\|accounting_event_versions\|posting_log)'\)` | `modules/documents/` trong `packages/kernel/src` hoặc `apps/api/src` |
 | Gọi thẳng ledger | `ledgerService\.(post\|reverse)\(` | `modules/{ledger,posting,documents}`; không còn danh sách miễn trừ (nơi khác ghi sổ qua `eventStore`, `scripts/kiem-chuan.sh` dòng 25) |
-| Cờ thoát trigger | `cost_overwrite` · `allow_ledger_purge` · `session_replication_role` | lần lượt: `db/migrations/` + `modules/ledger/` + test · `db/migrations/` + test · `scripts/xoa-chung-tu.sh` + test (chứng minh vai trò ứng dụng không đặt được) |
+| Cờ thoát trigger | `cost_overwrite` · `allow_ledger_purge` · `session_replication_role` | lần lượt: `db/migrations/` + `modules/ledger/` + test · `db/migrations/` (lịch sử) + hai ca phá thử + chẩn đoán `LEDGER_TRIGGERS` (cờ đã gỡ khỏi trigger, 0086) · `scripts/xoa-chung-tu.sh` + test (chứng minh vai trò ứng dụng không đặt được) |
 | Trùng số migration | `ls db/migrations \| cut -c1-4 \| uniq -d` | — **chặn** (đã sửa `0028` trùng ngày 2026-10-30: `0028_thue_kkkn` → `0031`, ghi nhận qua `RENAMED` trong `packages/platform/src/db/migrate.ts`) |
 
 Danh sách nợ đặt trong biến `DEBT_LEDGER_CALLERS` ở đầu script; xoá phần tử nào thì quy tắc tự chặt lại.

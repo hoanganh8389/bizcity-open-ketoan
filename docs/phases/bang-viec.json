@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 10
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 253
+      "count": 254
     }
   ],
   "items": [
@@ -506,15 +506,9 @@
       "phase": "PHASE-004",
       "title": "Khoá cờ thoát ketoan.allowledgerpurge: chỉ vai trò bảo trì bật được (không còn là biến phiên tự đặt), bỏ DELETE trên ledger khỏi ketoanapp, test phá thử \"vai t…",
       "priority": null,
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "fix/phase-004-s004-12-go-co-thoat",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-12, S004-13 — mã theo chữ chốt PHASE-004 · 20 (đã vào main): gỡ cờ allowledgerpurg…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 24
     },
@@ -527,10 +521,10 @@
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "fix/phase-004-s004-12-go-co-thoat",
+        "branch": "feat/phase-004-s004-13-e2-audit",
         "state": "đang làm",
         "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-12, S004-13 — mã theo chữ chốt PHASE-004 · 20 (đã vào main): gỡ cờ allowledgerpurg…"
+        "dot": "PHASE-004 · S004-13 — E2 bảy cột ghi auditlogs trước / sau (K1), theo chữ chốt PHASE-004 · 20 D004-…"
       },
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 25

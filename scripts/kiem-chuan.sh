@@ -47,12 +47,13 @@ rule "R-LEDGER-4: chỉ posting / documents / ledger gọi ledgerService (nơi k
 check "$(grep -rnE "ledgerService\.[A-Za-z]+\(" $SRCS --include=*.ts \
   | grep -vE "^$K/modules/(ledger|posting|documents)/")"
 
-rule "R-LEDGER E1–E4: cờ thoát trigger chỉ ở chỗ được phép"
+# [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-8): allow_ledger_purge chỉ còn ở hai ca phá thử, chẩn đoán LEDGER_TRIGGERS và tệp này (cờ đã gỡ khỏi trigger, 0086); nhóm E4 bỏ
+rule "R-LEDGER E1–E3: cờ thoát trigger chỉ ở chỗ được phép (allow_ledger_purge đã gỡ)"
 check "$( {
   grep -rnE "cost_overwrite" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh \
     | grep -vE "^($K/modules/ledger/|apps/api/test/|scripts/kiem-chuan.sh)"
   grep -rnE "allow_ledger_purge" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
-    | grep -vE "^(apps/api/test/|scripts/kiem-chuan.sh)"
+    | grep -vE "^(apps/api/test/(app-role|db-rules).test.ts|packages/kernel/src/modules/ledger/ledger.diagnostics.ts|scripts/kiem-chuan.sh)"
   grep -rnE "session_replication_role" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(scripts/xoa-chung-tu.sh|scripts/kiem-chuan.sh|apps/api/test/)"
 } )"

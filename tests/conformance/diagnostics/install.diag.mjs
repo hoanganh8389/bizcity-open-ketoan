@@ -26,11 +26,13 @@ function declaredTriggers(repo) {
 export const checks = [
   {
     id: 'DG-DB-2', code: 'LEDGER_TRIGGERS',
-    title: 'Trigger bảo vệ sổ cái (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ và đang bật',
+    title: 'Trigger bảo vệ sổ cái (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ, đang bật và không còn cờ thoát',
     gate: 'CONF-RUN', contract: 'kernel', rules: ['R-LEDGER-1', 'R-DB-2', 'R-KER-3', 'R-DIAG-2'], conf: ['CONF-RUN-17'], tier: 0, enforce: 'block', weight: 5,
     async run(ctx) {
-      const want = declaredTriggers(ctx.repo);
-      const rows = await ctx.db.query(`SELECT t.tgname AS name, n.nspname AS schema, c.relname AS "table", t.tgenabled AS enabled
+      // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-9): trigger được tạo lại ở 0086 nên khai trùng giữa các migration: gộp theo bảng.trigger; thêm dò trigger còn nhắc cờ thoát allow_ledger_purge
+      const want = [...new Map(declaredTriggers(ctx.repo).map((w) => [`${w.table}.${w.name}`, w])).values()];
+      const rows = await ctx.db.query(`SELECT t.tgname AS name, n.nspname AS schema, c.relname AS "table", t.tgenabled AS enabled,
+                                              pg_get_triggerdef(t.oid) LIKE '%allow_ledger_purge%' AS bypass
                                        FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
                                        JOIN pg_namespace n ON n.oid = c.relnamespace
                                        WHERE NOT t.tgisinternal AND n.nspname NOT IN ('pg_catalog', 'information_schema')`);
@@ -41,6 +43,7 @@ export const checks = [
         if (!have.has(k)) findings.push(ctx.finding(`db/migrations/${w.file}`, null, `trigger ${k} khai trong migration nhưng KHÔNG có trong CSDL`, `missing:${k}`));
         else if (have.get(k) === 'D') findings.push(ctx.finding(`db/migrations/${w.file}`, null, `trigger ${k} đang bị TẮT (ALTER TABLE … DISABLE TRIGGER)`, `disabled:${k}`));
       }
+      for (const r of rows) if (r.bypass) findings.push(ctx.finding('db/migrations', null, `trigger ${qualify(r.schema, r.table)}.${r.name} còn nhắc cờ thoát allow_ledger_purge (đã gỡ ở 0086)`, `bypass:${qualify(r.schema, r.table)}.${r.name}`));
       return { examined: want.length, unitBy: 'key', findings, metrics: { declared: want.length, inDb: rows.length } };
     },
   },
