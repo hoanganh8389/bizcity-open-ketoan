@@ -1,0 +1,435 @@
+<!doctype html>
+<!-- [2026-11-08 11:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-46: bản mẫu HT14 Kho thư viện — trụ cột IX bizcity_library@1, bảng đánh giá pass / không pass, chi tiết thư viện, căn cứ, cấu hình theo đơn vị, đề xuất cập nhật, sáu điểm gắn bộ kiểm, skill cho dev (thiết kế: ../26-KHO-THU-VIEN.md) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kho thư viện</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
+  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;--info-bg:#e8f0fc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
+h2{margin:0 0 4px;font-size:18px}
+h3{font-size:14.5px;margin:18px 0 8px}
+.lead{color:var(--muted);margin:0 0 12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.k{background:var(--k-bg);color:var(--k)}.tag.info{background:var(--info-bg);color:var(--info)}.tag.none{background:var(--soft);color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13px}
+.note.demo{border-left-color:var(--warn)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile b{display:block;font-size:22px;line-height:1.1}
+.tile span{color:var(--muted);font-size:12.5px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.pad{padding:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+@media (max-width:700px){.tbl table{min-width:620px}}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.k{font:11.5px ui-monospace,Consolas,monospace;color:var(--k);word-break:break-word}
+.muted{color:var(--muted)}
+.bar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--soft);min-width:120px}
+.bar i{display:block;height:100%}
+.bar .p{background:var(--ok)}.bar .w{background:var(--warn)}.bar .b{background:var(--bad)}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin:6px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:12px}
+.lib{padding:12px;display:flex;flex-direction:column;gap:6px}
+.lib h4{margin:0;font-size:15px}
+.lib .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.subtabs{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0}
+.subtabs button{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:3px 10px;font:inherit;font-size:12.5px;color:var(--muted);cursor:pointer}
+.subtabs button[aria-selected="true"]{color:var(--ink);border-color:var(--accent);font-weight:600}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:100%}
+.form{display:grid;grid-template-columns:140px minmax(0,1fr);gap:8px 10px;align-items:center}
+@media (max-width:600px){.form{grid-template-columns:minmax(0,1fr)}}
+.result{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;background:var(--soft)}
+.finding{border-left:3px solid var(--line);padding:4px 10px;margin:6px 0;background:var(--panel);border-radius:6px}
+.finding.block{border-left-color:var(--bad)}.finding.warn{border-left-color:var(--warn)}.finding.info{border-left-color:var(--info)}
+.sugg{display:inline-flex;gap:6px;align-items:center;border:1px dashed var(--accent);border-radius:8px;padding:2px 8px;margin:4px 6px 0 0;font-size:12.5px;cursor:pointer;background:none;color:var(--ink)}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px}
+.step{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel)}
+.step .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:12px;margin-right:6px}
+pre{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;font:12.5px ui-monospace,Consolas,monospace;margin:6px 0}
+.picker{position:relative;max-width:420px}
+.picker ul{list-style:none;margin:4px 0 0;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:240px;overflow:auto}
+.picker li{padding:5px 8px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.picker li:hover{background:var(--soft)}
+.picker li small{color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">L</div><div>HT14 · Kho thư viện<small>Hệ thống → Kho thư viện · trụ cột IX <code>bizcity_library@1</code></small></div></div>
+    <div class="spacer"></div>
+    <span class="tag none">bản mẫu tĩnh — S030-46</span>
+    <button class="btn sm" id="theme" type="button">Đổi nền</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</header>
+<main id="main"></main>
+
+<script>
+// Dữ liệu thư viện: lấy từ libraries/*/library.json của đợt A (S030-45). Số liệu sử dụng: MINH HOẠ.
+const LIBS = [
+  { id:'vn.tham-so-phap-ly', kind:'param', title:'Tham số pháp lý Việt Nam', version:'1.0.0', released:'2026-11-07', owner:'kế toán trưởng (S030-12)', items:120, verified:0, attested:34, rules:1, groups:9, core:true, sources:'lfood-legal-params v1 (Erp-vn, 07/11)', fresh:1 },
+  { id:'vn.ngay-nghi-le', kind:'calendar', title:'Ngày nghỉ lễ, Tết', version:'1.0.0', released:'2026-11-07', owner:'kế toán trưởng / nhân sự', items:9, verified:0, attested:9, rules:0, groups:2, core:true, sources:'lfood.holiday (Erp-vn, 07/11)', fresh:1, warn:'thiếu Giỗ Tổ, Quốc khánh 2026' },
+  { id:'authz.tgs-chuc-nang', kind:'code-list', title:'Mã chức năng phân quyền mẫu (TGS)', version:'1.0.0', released:'2026-11-08', owner:'Nhóm Lõi + kế toán trưởng', items:349, verified:0, attested:0, rules:2, groups:12, core:false, sources:'Bảng phân quyền TGS 03.11.2026', fresh:0 },
+  { id:'authz.tgs-nhom', kind:'permission-template', title:'Nhóm vai trò mẫu (TGS)', version:'1.0.0', released:'2026-11-08', owner:'Nhóm Lõi + quản trị đơn vị', items:28, verified:0, attested:0, rules:0, groups:1, core:false, sources:'Bảng phân quyền TGS 03.11.2026', fresh:0 },
+  { id:'vn.can-cu-phap-ly', kind:'code-list', title:'Căn cứ pháp lý', version:'—', released:'đợt B3', owner:'kế toán trưởng', items:26, verified:9, attested:0, rules:0, groups:5, core:true, sources:'LEGAL_BASES (9) + legal-sources.json (17)', planned:true },
+  { id:'core.khoan-muc', kind:'code-list', title:'Khoản mục chi phí', version:'—', released:'S030-52', owner:'kế toán trưởng', items:296, verified:0, attested:0, rules:0, groups:0, core:true, sources:'db/seeds/khoan-muc.jsonl (cây cha – con)', planned:true },
+  { id:'vn.loai-thue', kind:'code-list', title:'Loại thuế', version:'—', released:'S030-52', owner:'kế toán trưởng', items:52, verified:0, attested:0, rules:0, groups:0, core:true, sources:'db/seeds/loai-thue.jsonl', planned:true },
+];
+// Sử dụng 30 ngày (MINH HOẠ): pass / warn / block theo thư viện.
+const USAGE = {
+  'vn.tham-so-phap-ly': { p: 4210, w: 386, b: 12 },
+  'vn.ngay-nghi-le': { p: 1902, w: 0, b: 0 },
+  'authz.tgs-chuc-nang': { p: 288, w: 41, b: 9 },
+  'authz.tgs-nhom': { p: 28, w: 0, b: 0 },
+};
+const SOURCES = [
+  { src:'modules/luong · core.payroll.calc', lib:'vn.tham-so-phap-ly', fields:'6/6', p:3120, w:301, b:0, deprecated:0, verdict:'dat-dk', why:'dùng 38 mục chưa duyệt' },
+  { src:'phan-he/ke-toan · voucher.save', lib:'vn.tham-so-phap-ly', fields:'2/3', p:840, w:85, b:12, deprecated:0, verdict:'khong', why:'thiếu gắn trường "tỷ lệ BH" — còn mã cứng 0.105 ở posting.ts' },
+  { src:'kết nối POS · intake L4', lib:'vn.tham-so-phap-ly', fields:'1/1', p:250, w:0, b:0, deprecated:0, verdict:'dat', why:'' },
+  { src:'modules/cham-cong · ngày công', lib:'vn.ngay-nghi-le', fields:'1/1', p:1902, w:0, b:0, deprecated:0, verdict:'dat-dk', why:'lịch 2026 chưa đủ' },
+  { src:'scripts/phan-quyen · nạp vai trò', lib:'authz.tgs-chuc-nang', fields:'—', p:288, w:41, b:9, deprecated:0, verdict:'dat-dk', why:'TGS-REPORT-001 × 41 (đánh Sửa trên báo cáo)' },
+];
+const TOP_FINDINGS = [
+  { code:'LIB-UNVERIFIED-001', level:'info', n:3920, lib:'vn.tham-so-phap-ly', fix:'kế toán trưởng đối chiếu và xác nhận nhóm bảo hiểm, TNCN' },
+  { code:'LIB-VALUE-001', level:'warn', n:386, lib:'vn.tham-so-phap-ly', fix:'phiếu dùng lương cơ sở 2.340.000 sau 01/07/2026' },
+  { code:'TGS-REPORT-001', level:'warn', n:41, lib:'authz.tgs-chuc-nang', fix:'bỏ Sửa / Xóa trên mã báo cáo' },
+  { code:'LIB-EFFECTIVE-001', level:'block', n:12, lib:'vn.tham-so-phap-ly', fix:'ngày chứng từ trước 2019 cho DU_PHONG_PTKD_*' },
+  { code:'LIB-UNKNOWN-001', level:'block', n:9, lib:'authz.tgs-chuc-nang', fix:'"BC2A", "ACC03" — gõ nhầm, gợi ý BC2 / ACC3' },
+];
+const UNKNOWN = [
+  { got:'TRAN_BHXH', n:5, lib:'vn.tham-so-phap-ly', sugg:'HE_SO_TRAN_BHXH', act:'thêm bí danh' },
+  { got:'BC2A', n:4, lib:'authz.tgs-chuc-nang', sugg:'BC2', act:'gõ nhầm' },
+  { got:'2026-09-02', n:3, lib:'vn.ngay-nghi-le', sugg:'—', act:'ứng viên thêm mục (Quốc khánh)' },
+];
+const ITEMS = [
+  { code:'LUONG_CO_SO', name:'Lương cơ sở', group:'bao-hiem', type:'money', kind:'law', eff:[['2024-07-01','2026-06-30',2340000,'Lương cơ sở từ 01/7/2024'],['2026-07-01',null,2530000,'Nghị định 161/2026/NĐ-CP']], attested:true },
+  { code:'LUONG_TOI_THIEU_VUNG_I', name:'Lương tối thiểu vùng I', group:'luong', type:'money', kind:'law', eff:[['2024-07-01',null,4960000,'Nghị định 74/2024/NĐ-CP']], attested:true },
+  { code:'BHXH_NLD', name:'Tỷ lệ BHXH người lao động đóng', group:'bao-hiem', type:'percent', kind:'law', eff:[['2016-01-01',null,8,'Luật BHXH 2014']], attested:false },
+  { code:'LAM_THEM_LE_TET', name:'Làm thêm ngày lễ, Tết', group:'lao-dong', type:'percent', kind:'law', eff:[['2021-01-01',null,300,'Bộ luật Lao động 2019, Điều 98']], attested:false },
+  { code:'GIO_LAM_VIEC_NGAY', name:'Giờ làm việc một ngày', group:'lao-dong', type:'number', kind:'policy', eff:[['2021-01-01',null,8,'Bộ luật Lao động 2019, Điều 105']], attested:false, override:{ value:7.5, from:'2026-01-01', reason:'Nội quy công ty 2026' } },
+  { code:'TNCN_GIAM_TRU_BAN_THAN', name:'Giảm trừ gia cảnh bản thân', group:'thue-tncn', type:'money', kind:'law', eff:[['2020-07-01','2025-12-31',11000000,'NQ 954/2020/UBTVQH14'],['2026-01-01',null,15500000,'NQ 110/2025/UBTVQH15']], attested:false },
+];
+const VERSIONS = [ { v:'1.0.0', d:'2026-11-07', h:'sha256:bebd18…6d2e', n:'Bản đầu: 120 tham số từ lfood-legal-params v1 (07/11/2026), căn cứ chưa đối chiếu' } ];
+const BASES = [
+  { code:'LKT-88-2015', title:'Luật Kế toán số 88/2015/QH13', alias:'LKT', state:'con', refs:12 },
+  { code:'TT-99-2025', title:'Thông tư 99/2025/TT-BTC', alias:'TT99', state:'con', refs:31 },
+  { code:'ND-123-2020', title:'Nghị định 123/2020/NĐ-CP', alias:'ND123', state:'con', refs:8 },
+  { code:'NQ-204-2025', title:'Nghị quyết 204/2025/QH15 (giảm GTGT 8 %)', alias:'NQ204', state:'sap-het', refs:3, note:'hết 31/12/2026' },
+  { code:'ND-73-2024', title:'Nghị định 73/2024/NĐ-CP (lương cơ sở)', alias:'—', state:'het', refs:1, note:'thay bởi ND-161-2026 từ 01/07/2026' },
+  { code:'BLLD-2019', title:'Bộ luật Lao động 2019', alias:'—', state:'con', refs:46 },
+];
+const REQUESTS = [
+  { id:'DX-0007', lib:'vn.ngay-nghi-le', type:'thêm mục', what:'2026-09-01, 2026-09-02 — Quốc khánh', basis:'Thông báo lịch nghỉ 2026 (tệp đính kèm)', by:'KTT · đơn vị t101', state:'gui' },
+  { id:'DX-0006', lib:'vn.tham-so-phap-ly', type:'sửa căn cứ', what:'LUONG_CO_SO 2.340.000: thêm "Nghị định 73/2024/NĐ-CP, Điều 3"', basis:'ND-73-2024', by:'KTT · đơn vị t101', state:'nhan' },
+  { id:'DX-0004', lib:'vn.tham-so-phap-ly', type:'báo sai', what:'TNCN_GIAM_TRU_NPT từ 01/01/2026 = 6.200.000', basis:'NQ 110/2025/UBTVQH15', by:'KTT · đơn vị t087', state:'da-vao', ver:'1.1.0' },
+];
+
+const TABS = [
+  ['tong-quan','Tổng quan'], ['danh-sach','Danh sách'], ['chi-tiet','Chi tiết thư viện'], ['can-cu','Căn cứ pháp lý'],
+  ['cau-hinh','Cấu hình'], ['de-xuat','Đề xuất cập nhật'], ['bo-kiem','Bộ kiểm dùng thư viện'], ['dev','Dev & skill'],
+];
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const fmt = (n) => typeof n === 'number' ? n.toLocaleString('vi-VN') : esc(n);
+const pct = (a, b) => b ? Math.round(a * 1000 / b) / 10 + ' %' : '—';
+const KIND = { param:'tham số', calendar:'lịch', 'code-list':'danh mục mã', 'permission-template':'mẫu vai trò' };
+const LEVEL = { block:['bad','✘ chặn'], warn:['warn','⚠ cảnh báo'], info:['info','ℹ nhắc'] };
+const VERDICT = { dat:['ok','ĐẠT'], 'dat-dk':['warn','ĐẠT có điều kiện'], khong:['bad','KHÔNG ĐẠT'] };
+const bar = (u) => { const t = u.p + u.w + u.b || 1; return `<div class="bar" title="${fmt(u.p)} qua · ${fmt(u.w)} cảnh báo · ${fmt(u.b)} chặn"><i class="p" style="width:${u.p*100/t}%"></i><i class="w" style="width:${u.w*100/t}%"></i><i class="b" style="width:${u.b*100/t}%"></i></div>`; };
+
+let tab = location.hash.slice(1) || 'tong-quan';
+let libSel = 'vn.tham-so-phap-ly';
+let sub = 'muc';
+
+function nav() {
+  $('#tabs').innerHTML = TABS.map(([k, l]) => `<button role="tab" aria-selected="${k === tab}" data-t="${k}">${l}</button>`).join('');
+  $('#tabs').onclick = (e) => { const t = e.target.dataset.t; if (t) { tab = t; location.hash = t; render(); } };
+}
+
+function tongQuan() {
+  const live = LIBS.filter((l) => !l.planned);
+  const items = live.reduce((a, l) => a + l.items, 0);
+  const all = Object.values(USAGE).reduce((a, u) => ({ p:a.p+u.p, w:a.w+u.w, b:a.b+u.b }), { p:0, w:0, b:0 });
+  const total = all.p + all.w + all.b;
+  return `<h2>Tổng quan — thư viện nào khoẻ, dữ liệu nào qua thư viện</h2>
+  <p class="lead">Ba lớp đánh giá (26 §9): <b>thư viện</b> (duyệt, căn cứ, độ tươi) · <b>sử dụng</b> (qua / cảnh báo / chặn) · <b>module</b> (độ phủ, mã cứng).</p>
+  <div class="note demo">Số liệu sử dụng ở màn này là <b>minh hoạ</b> — bảng <code>library_usage_daily</code> có ở đợt B2 (S030-48). Số thư viện / mục / duyệt là số thật của đợt A.</div>
+  <div class="tiles">
+    <div class="tile"><b>${live.length}</b><span>thư viện đang phục vụ · ${LIBS.length - live.length} dự kiến</span></div>
+    <div class="tile"><b>${fmt(items)}</b><span>mục</span></div>
+    <div class="tile"><b>0 %</b><span>mục Nhóm Lõi đã duyệt (repo)</span></div>
+    <div class="tile"><b>${pct(43, 129)}</b><span>tham số + ngày nghỉ đơn vị đã đối chiếu</span></div>
+    <div class="tile"><b>${fmt(total)}</b><span>lượt kiểm 30 ngày</span></div>
+    <div class="tile"><b>${pct(all.p, total)}</b><span>qua · ${pct(all.w, total)} cảnh báo · ${pct(all.b, total)} chặn</span></div>
+  </div>
+  <div class="grid2">
+    <div class="panel pad"><h3 style="margin-top:0">Theo thư viện</h3>
+      <div class="legend"><span><i style="background:var(--ok)"></i>qua</span><span><i style="background:var(--warn)"></i>cảnh báo</span><span><i style="background:var(--bad)"></i>chặn</span></div>
+      <div class="tbl"><table><thead><tr><th>Thư viện</th><th>Lượt</th><th>Kết quả</th><th>Duyệt / đối chiếu</th></tr></thead><tbody>
+      ${live.map((l) => { const u = USAGE[l.id]; return `<tr><td><span class="k">${l.id}</span><br><span class="muted">${esc(l.title)}</span></td><td class="num">${fmt(u.p+u.w+u.b)}</td><td>${bar(u)}<span class="muted">${pct(u.p, u.p+u.w+u.b)} qua</span></td><td>${l.verified}/${l.items} · <span class="${l.attested ? '' : 'muted'}">${l.attested} đối chiếu</span>${l.warn ? `<br><span class="tag warn">${esc(l.warn)}</span>` : ''}</td></tr>`; }).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="panel pad"><h3 style="margin-top:0">Mã phát hiện nhiều nhất</h3>
+      <div class="tbl"><table><thead><tr><th>Mã</th><th>Mức</th><th class="num">Lượt</th><th>Việc nên làm</th></tr></thead><tbody>
+      ${TOP_FINDINGS.map((f) => `<tr><td class="k">${f.code}</td><td><span class="tag ${LEVEL[f.level][0]}">${LEVEL[f.level][1]}</span></td><td class="num">${fmt(f.n)}</td><td>${esc(f.fix)}<br><span class="muted">${f.lib}</span></td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+  </div>
+  <h3>Theo module / kênh — ai theo chuẩn thư viện</h3>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Nguồn</th><th>Thư viện</th><th>Trường đã gắn</th><th>Kết quả 30 ngày</th><th>Kết luận</th><th>Vì sao</th></tr></thead><tbody>
+  ${SOURCES.map((s) => `<tr><td>${esc(s.src)}</td><td class="k">${s.lib}</td><td>${s.fields}</td><td>${bar(s)}</td><td><span class="tag ${VERDICT[s.verdict][0]}">${VERDICT[s.verdict][1]}</span></td><td>${esc(s.why) || '<span class="muted">—</span>'}</td></tr>`).join('')}
+  </tbody></table></div></div>
+  <p class="muted">Kết luận module (26 §9): ĐẠT khi gắn đủ trường bắt buộc, SC-LIB-2 sạch, chặn &lt; 1 % lượt; ĐẠT có điều kiện khi còn mã ngừng / mục chưa duyệt; KHÔNG ĐẠT khi thiếu gắn hoặc còn mã cứng trùng thư viện.</p>
+  <h3>Mã lạ hay gặp — ứng viên bổ sung thư viện</h3>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Giá trị nhập</th><th class="num">Lượt</th><th>Thư viện</th><th>Gợi ý gần nhất</th><th>Đề xuất</th><th></th></tr></thead><tbody>
+  ${UNKNOWN.map((u) => `<tr><td class="k">${esc(u.got)}</td><td class="num">${u.n}</td><td class="k">${u.lib}</td><td class="k">${esc(u.sugg)}</td><td>${esc(u.act)}</td><td><button class="btn sm" data-go="de-xuat">Lập đề xuất</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+}
+
+function danhSach() {
+  return `<h2>Danh sách thư viện</h2><p class="lead">Mỗi thẻ là một thư mục <code>libraries/&lt;id&gt;/</code>. Thư viện Core bắt buộc không tắt được; thư viện tuỳ chọn bật ở tab Cấu hình.</p>
+  <div class="cards">${LIBS.map((l) => `<div class="panel lib">
+    <div class="row"><span class="k">${l.id}</span>${l.planned ? '<span class="tag none">dự kiến</span>' : `<span class="tag info">v${l.version}</span>`}${l.core ? '<span class="tag k">Core</span>' : '<span class="tag none">tuỳ chọn</span>'}</div>
+    <h4>${esc(l.title)}</h4>
+    <div class="row muted">${KIND[l.kind]} · ${fmt(l.items)} mục · ${l.rules} luật · phát hành ${esc(l.released)}</div>
+    <div class="row">Duyệt repo <b>${l.verified}/${l.items}</b> · đơn vị đối chiếu <b>${l.attested}</b></div>
+    <div class="muted" style="font-size:12.5px">Nguồn: ${esc(l.sources)} · Chủ duyệt: ${esc(l.owner)}</div>
+    ${l.warn ? `<div><span class="tag warn">${esc(l.warn)}</span></div>` : ''}
+    <div class="row" style="margin-top:4px">${l.planned ? '<button class="btn sm" disabled>Chưa phát hành</button>' : `<button class="btn sm pri" data-lib="${l.id}">Mở</button><button class="btn sm" data-lib="${l.id}" data-sub="kiem">Kiểm thử</button>`}</div>
+  </div>`).join('')}</div>`;
+}
+
+function valueAt(it, at) { return it.eff.find(([f, t]) => f <= at && (!t || at <= t)); }
+
+function chiTiet() {
+  const l = LIBS.find((x) => x.id === libSel);
+  const subs = [['muc','Mục'],['phien-ban','Phiên bản'],['can-cu','Căn cứ'],['luat','Luật'],['noi-dung','Nơi dùng'],['kiem','Kiểm thử']];
+  let body = '';
+  if (sub === 'muc') {
+    const at = '2026-11-08';
+    body = `<div class="form" style="margin-bottom:8px"><label>Ô chọn (LibraryPicker)</label><div class="picker"><input id="pq" placeholder="gõ không dấu: luong co so, bhxh…" style="width:100%"><ul id="pl"></ul></div></div>
+    <div class="tbl"><table><thead><tr><th>Mã</th><th>Tên</th><th>Nhóm</th><th>Loại</th><th>Giá trị tại ${at}</th><th>Căn cứ</th><th>Duyệt</th><th>Đơn vị ghi đè</th></tr></thead><tbody>
+    ${ITEMS.map((it) => { const e = valueAt(it, at); return `<tr><td class="k">${it.code}</td><td>${esc(it.name)}</td><td>${it.group}</td><td><span class="tag ${it.kind === 'law' ? 'k' : 'info'}">${it.kind === 'law' ? 'luật' : 'chính sách'}</span></td><td class="num">${e ? fmt(e[2]) + (it.type === 'percent' ? ' %' : '') : '—'}</td><td>${e ? esc(e[3]) : ''}</td><td><span class="tag none">Lõi: chưa</span> ${it.attested ? '<span class="tag ok">đơn vị: đã đối chiếu</span>' : '<span class="tag warn">đơn vị: chưa</span>'}</td><td>${it.override ? `<b>${it.override.value}</b> từ ${it.override.from}<br><span class="muted">${esc(it.override.reason)}</span>` : '<span class="muted">—</span>'}</td></tr>`; }).join('')}
+    </tbody></table></div><p class="muted">Bản mẫu hiện 6 / 120 mục. Lọc theo nhóm, ngày, trạng thái như <code>GET /api/v1/libraries/:id/items?q=&amp;at=&amp;group=&amp;status=</code>.</p>`;
+  } else if (sub === 'phien-ban') {
+    body = `<div class="tbl"><table><thead><tr><th>Bản</th><th>Ngày</th><th>Băm nội dung</th><th>Thay đổi</th></tr></thead><tbody>${VERSIONS.map((v) => `<tr><td><span class="tag info">${v.v}</span></td><td>${v.d}</td><td class="k">${v.h}</td><td>${esc(v.n)}</td></tr>`).join('')}
+    <tr><td><span class="tag none">1.1.0</span></td><td class="muted">sắp</td><td class="muted">—</td><td>Từ đề xuất DX-0004: TNCN_GIAM_TRU_NPT 6.200.000 từ 01/01/2026 · căn cứ trỏ mã <span class="k">vn.can-cu-phap-ly</span></td></tr></tbody></table></div>
+    <p class="muted">Bản đã phát hành không sửa (băm cố định); chứng từ ghi <span class="k">vn.tham-so-phap-ly:LUONG_CO_SO@1.0.0#bebd18…</span> trong bằng chứng nên tính lại đúng giá trị cũ.</p>`;
+  } else if (sub === 'can-cu') {
+    body = `<div class="tbl"><table><thead><tr><th>Mục</th><th>Khoảng</th><th>Căn cứ (chuỗi nguồn)</th><th>Liên kết văn bản</th><th>Trạng thái</th><th></th></tr></thead><tbody>
+    ${ITEMS.flatMap((it) => it.eff.map(([f, t, v, b], i) => `<tr><td class="k">${it.code}</td><td>${f} → ${t ?? 'nay'}</td><td>${esc(b)}</td><td>${/Nghị định 74|161|Luật|Bộ luật|NQ/.test(b) ? `<span class="k">${b.includes('Bộ luật') ? 'BLLD-2019' : b.includes('161') ? 'ND-161-2026' : b.includes('NQ 110') ? 'NQ-110-2025' : b.includes('74') ? 'ND-74-2024' : 'LBHXH-2014'}</span>` : '<span class="tag warn">chưa liên kết</span>'}</td><td>${it.attested ? '<span class="tag ok">đơn vị đã đối chiếu</span>' : '<span class="tag warn">chưa đối chiếu</span>'}</td><td><button class="btn sm">Xác nhận</button> <button class="btn sm" data-go="de-xuat">Sửa căn cứ</button></td></tr>`)).join('')}
+    </tbody></table></div><p class="muted">"Xác nhận" ghi <code>library_attestations</code> (người, lúc, tệp văn bản) cho đơn vị này; hết hiệu lực khi bản mới đổi giá trị của mục (26 §6).</p>`;
+  } else if (sub === 'luat') {
+    body = `<div class="tbl"><table><thead><tr><th>Mã</th><th>Mức gốc</th><th>Mức ở đơn vị</th><th>Khi nào (đọc bằng lời)</th><th>Cách sửa</th></tr></thead><tbody>
+    <tr><td class="k">TSPL-LAW-001</td><td><span class="tag warn">⚠ cảnh báo</span></td><td><select><option>cảnh báo</option><option>nhắc (cần lý do)</option></select></td><td>mục là tham số <b>luật</b> <i>và</i> ô nhập đang <b>ghi đè</b></td><td>Dùng giá trị thư viện tại ngày; văn bản mới thì ghi căn cứ và đề xuất cập nhật.</td></tr>
+    <tr><td class="k">LIB-VALUE-001</td><td><span class="tag warn">⚠ cảnh báo</span></td><td><span class="muted">chuẩn — theo cấu hình cổng</span></td><td>giá trị nhập ≠ giá trị thư viện tại ngày chứng từ</td><td>Dùng giá trị gợi ý.</td></tr>
+    <tr><td class="k">LIB-EFFECTIVE-001</td><td><span class="tag bad">✘ chặn</span></td><td><span class="muted">không hạ được (toàn vẹn)</span></td><td>ngày chứng từ ngoài mọi khoảng hiệu lực</td><td>Kiểm lại ngày chứng từ.</td></tr>
+    </tbody></table></div>`;
+  } else if (sub === 'noi-dung') {
+    body = `<p class="lead">Khai ở <code>bizcity.module.json → libraries[]</code> hoặc gắn ở tab Cấu hình. Căn cứ cho SC-LIB-2 và bảng đánh giá.</p><div class="tbl"><table><thead><tr><th>Module / kênh</th><th>Trường</th><th>Đọc theo</th><th>Bắt buộc</th><th>Khai ở</th></tr></thead><tbody>
+    <tr><td>modules/luong</td><td class="k">payroll.insuranceRate</td><td>ngày chứng từ</td><td>có</td><td>manifest</td></tr>
+    <tr><td>modules/luong</td><td class="k">payroll.baseSalary</td><td>ngày chứng từ</td><td>có</td><td>manifest</td></tr>
+    <tr><td>phan-he/ke-toan</td><td class="k">voucher.lines[].insuranceRate</td><td>ngày chứng từ</td><td>có</td><td><span class="tag bad">chưa gắn — mã cứng 0.105</span></td></tr>
+    <tr><td>kết nối POS</td><td class="k">sale.lines[].pitExemptParam</td><td>ngày chứng từ</td><td>không</td><td>cấu hình đơn vị</td></tr></tbody></table></div>`;
+  } else {
+    body = kiemThu();
+  }
+  return `<h2><span class="k" style="font-size:15px">${l.id}</span> · ${esc(l.title)}</h2>
+  <p class="lead">v${l.version} · ${KIND[l.kind]} · ${fmt(l.items)} mục · chủ duyệt ${esc(l.owner)} · nguồn ${esc(l.sources)}</p>
+  <div class="row" style="display:flex;gap:6px;flex-wrap:wrap">${LIBS.filter((x) => !x.planned).map((x) => `<button class="btn sm${x.id === libSel ? ' pri' : ''}" data-lib="${x.id}">${x.id}</button>`).join('')}</div>
+  ${l.id !== 'vn.tham-so-phap-ly' ? '<div class="note demo">Bản mẫu chỉ dựng dữ liệu chi tiết cho <span class="k">vn.tham-so-phap-ly</span>; các thư viện khác dùng cùng màn.</div>' : ''}
+  <div class="subtabs" id="subs">${subs.map(([k, t]) => `<button aria-selected="${k === sub}" data-sub="${k}" data-lib="${l.id}">${t}</button>`).join('')}</div>
+  <div class="panel pad">${body}</div>`;
+}
+
+function kiemThu() {
+  return `<p class="lead">Dán giá trị → chạy đúng bộ kiểm của máy chủ (<code>POST /api/v1/libraries/vn.tham-so-phap-ly/validate</code>). Bản mẫu mô phỏng 4 ca.</p>
+  <div class="form"><label>Mã</label><input id="vc" value="LUONG_CO_SO"><label>Giá trị</label><input id="vv" value="2340000"><label>Ngày chứng từ</label><input id="va" type="date" value="2026-08-01"><label>Ghi đè</label><label><input id="vo" type="checkbox"> đơn vị ghi đè giá trị</label><span></span><div><button class="btn pri" id="vrun">Kiểm</button> <span class="muted">thử: <code>luong_co_so</code>, <code>LUONG_CO_SOO</code>, ngày 2019-01-01</span></div></div>
+  <div id="vres"></div>`;
+}
+
+function runCheck() {
+  const code = $('#vc').value.trim(); const val = $('#vv').value.trim(); const at = $('#va').value; const ov = $('#vo').checked;
+  const it = ITEMS.find((i) => i.code === code) ?? ITEMS.find((i) => i.code.toLowerCase() === code.toLowerCase());
+  const out = []; let resolved = '';
+  if (!it) out.push({ code:'LIB-UNKNOWN-001', level:'block', msg:`"${code}" không có trong vn.tham-so-phap-ly`, s:[['LUONG_CO_SO','Lương cơ sở','gần nhất theo mã / tên']] });
+  else {
+    if (it.code !== code) resolved = it.code;
+    const e = valueAt(it, at);
+    if (!e) out.push({ code:'LIB-EFFECTIVE-001', level:'block', msg:`${it.code} không có giá trị tại ${at}`, s:[[it.eff[0][2], fmt(it.eff[0][2]) + ` (${it.eff[0][0]} →)`, it.eff[0][3] + ' (chưa duyệt)']] });
+    else if (val !== '' && Number(val) !== e[2]) out.push({ code:'LIB-VALUE-001', level:'warn', msg:`giá trị khác thư viện tại ngày ${at}`, s:[[e[2], fmt(e[2]) + ` (${e[0]} → ${e[1] ?? 'nay'})`, e[3] + ' (chưa duyệt)']] });
+    if (ov && it.kind === 'law') out.push({ code:'TSPL-LAW-001', level:'warn', msg:'Ghi đè tham số theo luật', s:[] });
+    if (!it.attested) out.push({ code:'LIB-UNVERIFIED-001', level:'info', msg:`${it.code} chưa được kế toán trưởng duyệt`, s:[] });
+  }
+  const ok = !out.some((f) => f.level === 'block');
+  $('#vres').innerHTML = `<div class="result"><b>${ok ? '<span class="tag ok">ok: true</span>' : '<span class="tag bad">ok: false</span>'}</b> <span class="muted">vn.tham-so-phap-ly@1.0.0 · tại ${at}${resolved ? ` · resolved → <span class="k">${resolved}</span>` : ''}</span>
+  ${out.length ? out.map((f) => `<div class="finding ${f.level}"><span class="k">${f.code}</span> <span class="tag ${LEVEL[f.level][0]}">${LEVEL[f.level][1]}</span> ${esc(f.msg)}<div>${f.s.map(([v, l, w]) => `<button class="sugg" data-v="${esc(v)}">↳ ${esc(l)} <small class="muted">${esc(w)}</small></button>`).join('')}</div></div>`).join('') : '<div class="finding">không có phát hiện</div>'}</div>`;
+}
+
+function canCu() {
+  const ST = { con:['ok','còn hiệu lực'], 'sap-het':['warn','sắp hết'], het:['bad','hết hiệu lực'] };
+  return `<h2>Căn cứ pháp lý — thư viện <span class="k">vn.can-cu-phap-ly</span> (dự kiến B3)</h2>
+  <p class="lead">Gộp <code>LEGAL_BASES</code> (9) và <code>vn-rulepacks/registry/legal-sources.json</code> (17) thành một thư viện; mã cũ là bí danh. Mục thư viện trỏ căn cứ bằng mã → biết văn bản nào hết hạn mà còn được dùng.</p>
+  <div class="tiles"><div class="tile"><b>26</b><span>văn bản</span></div><div class="tile"><b>1</b><span>hết hiệu lực còn được trỏ</span></div><div class="tile"><b>1</b><span>sắp hết (≤ 60 ngày)</span></div><div class="tile"><b>87</b><span>mục thư viện căn cứ "chưa liên kết"</span></div></div>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Mã</th><th>Văn bản</th><th>Bí danh cũ</th><th>Trạng thái</th><th class="num">Mục trỏ tới</th><th>Ghi chú</th></tr></thead><tbody>
+  ${BASES.map((b) => `<tr><td class="k">${b.code}</td><td>${esc(b.title)}</td><td class="k">${b.alias}</td><td><span class="tag ${ST[b.state][0]}">${ST[b.state][1]}</span></td><td class="num">${b.refs}</td><td>${esc(b.note ?? '')}</td></tr>`).join('')}
+  </tbody></table></div></div>
+  <h3>Thêm căn cứ cho một mục</h3>
+  <div class="panel pad"><div class="form"><label>Thư viện / mục</label><span class="k">vn.tham-so-phap-ly · LUONG_CO_SO · khoảng 2026-07-01 →</span><label>Văn bản</label><select><option>ND-161-2026 — Nghị định 161/2026/NĐ-CP</option><option>+ văn bản mới (đề xuất vào vn.can-cu-phap-ly)</option></select><label>Điều / khoản / điểm</label><div><input placeholder="Điều" size="4"> <input placeholder="Khoản" size="4"> <input placeholder="Điểm" size="4"></div><label>Tệp văn bản</label><input type="file"><label></label><div><button class="btn pri">Xác nhận cho đơn vị</button> <button class="btn">Gửi đề xuất cho Nhóm Lõi</button></div></div>
+  <p class="muted">Xác nhận cho đơn vị: có hiệu lực ngay ở đơn vị này (nhãn "đã đối chiếu"). Gửi đề xuất: vào bản thư viện sau khi Nhóm Lõi nhận (PR, SC-LIB-1).</p></div>`;
+}
+
+function cauHinh() {
+  return `<h2>Cấu hình thư viện — đơn vị t101</h2><p class="lead">Mọi thay đổi cần quyền <code>settings:write</code>, lý do, ghi nhật ký (<code>core.library.configure</code>). Không đổi thư viện gốc.</p>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Thư viện</th><th>Bật</th><th>Đọc giá trị theo</th><th>Hạ mức luật</th><th>Ghi đè</th><th>Gắn trường thêm</th></tr></thead><tbody>
+  ${LIBS.filter((l) => !l.planned).map((l) => `<tr><td class="k">${l.id}</td><td>${l.core ? '<span class="tag k">bắt buộc</span>' : '<label><input type="checkbox"> bật</label>'}</td><td>${l.kind === 'param' ? '<select><option>ngày chứng từ</option><option>hôm nay</option></select>' : '<span class="muted">—</span>'}</td><td>${l.rules ? `${l.rules} luật · <button class="btn sm">Sửa</button>` : '<span class="muted">—</span>'}</td><td>${l.kind === 'param' ? '1 mục · <button class="btn sm">Thêm</button>' : '<span class="muted">—</span>'}</td><td><button class="btn sm">Gắn</button></td></tr>`).join('')}
+  </tbody></table></div></div>
+  <h3>Ghi đè đang có</h3>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Khoá</th><th>Thư viện tại ngày</th><th>Đơn vị dùng</th><th>Từ ngày</th><th>Lý do / căn cứ</th><th>Cảnh báo</th></tr></thead><tbody>
+  <tr><td class="k">library.vn.tham-so-phap-ly.GIO_LAM_VIEC_NGAY</td><td class="num">8</td><td class="num"><b>7,5</b></td><td>2026-01-01</td><td>Nội quy công ty 2026</td><td><span class="tag ok">chính sách — được ghi đè</span></td></tr>
+  <tr><td class="k">library.vn.tham-so-phap-ly.LUONG_CO_SO</td><td class="num">2.530.000</td><td class="num"><b>2.340.000</b></td><td>2026-07-01</td><td>chờ văn bản</td><td><span class="tag bad">TSPL-LAW-001 · ghi đè tham số luật</span></td></tr>
+  </tbody></table></div></div>
+  <p class="muted">Ghi đè nằm trong <code>setting_values</code> (đường có sẵn của HT13: phiên bản, hiệu lực, căn cứ, chặn kỳ đã khoá). Khi thư viện ra bản trùng giá trị đơn vị đang ghi đè → nhắc "có thể bỏ ghi đè".</p>`;
+}
+
+function deXuat() {
+  const ST = { gui:['info','đã gửi'], nhan:['warn','Nhóm Lõi đã nhận'], 'da-vao':['ok','đã vào bản'] };
+  return `<h2>Đề xuất cập nhật thư viện</h2><p class="lead">Đơn vị không sửa thư viện gốc — gửi đề xuất kèm căn cứ; Nhóm Lõi đưa vào bản mới qua PR (SC-LIB-1). Cần giá trị ngay thì ghi đè ở tab Cấu hình.</p>
+  <div class="panel"><div class="tbl"><table><thead><tr><th>Số</th><th>Thư viện</th><th>Loại</th><th>Nội dung</th><th>Căn cứ</th><th>Người gửi</th><th>Trạng thái</th></tr></thead><tbody>
+  ${REQUESTS.map((r) => `<tr><td class="k">${r.id}</td><td class="k">${r.lib}</td><td>${r.type}</td><td>${esc(r.what)}</td><td>${esc(r.basis)}</td><td>${esc(r.by)}</td><td><span class="tag ${ST[r.state][0]}">${ST[r.state][1]}${r.ver ? ' ' + r.ver : ''}</span></td></tr>`).join('')}
+  </tbody></table></div></div>
+  <h3>Lập đề xuất</h3>
+  <div class="panel pad"><div class="form"><label>Thư viện</label><select>${LIBS.filter((l) => !l.planned).map((l) => `<option>${l.id}</option>`).join('')}</select>
+  <label>Loại</label><select><option>thêm mục</option><option>sửa giá trị (khoảng hiệu lực mới)</option><option>thêm / sửa căn cứ</option><option>báo sai</option><option>ngừng dùng mục (kèm mã thay thế)</option></select>
+  <label>Nội dung</label><textarea rows="3" placeholder="vd: thêm 2026-09-01 và 2026-09-02 — nghỉ Quốc khánh"></textarea>
+  <label>Căn cứ</label><select><option>chọn văn bản trong vn.can-cu-phap-ly…</option></select><label>Tệp</label><input type="file"><label></label><div><button class="btn pri">Gửi</button> <button class="btn">Xuất JSON cho Nhóm Lõi</button></div></div>
+  <p class="muted">Lưu <code>library_change_requests</code>; không chứa dữ liệu khách / số tiền chứng từ (R-SEC-10).</p></div>`;
+}
+
+function boKiem() {
+  const P = [
+    ['Ô chọn','<code>LibraryPicker</code> (ui-kit)','lúc gõ / chọn','không chặn — chỉ mục còn dùng, nhãn chưa duyệt, giá trị tại ngày','A2'],
+    ['API kiểm','<code>POST /api/v1/libraries/:id/validate</code>','form trước khi lưu · app ngoài · AI (MCP)','trả ok; bên gọi quyết','có'],
+    ['Trong action','<code>ctx.libraries.validate(id, v, { at })</code>','trong giao dịch, trước khi ghi','block → lỗi kèm LIB-*; warn → cần lý do (cổng validation)','B5'],
+    ['Cửa nạp (Gate B)','bảng trường ↔ thư viện theo loại chứng từ','L3 / L4, mọi kênh','mặc định cảnh báo; chặn khi mã lạ ở trường bắt buộc','B5 · K1/K2'],
+    ['Bộ kiểm tĩnh','SC-LIB-1 · SC-LIB-2','mỗi PR, CI','chặn PR: thư viện sai khuôn; trường khai sai; mã cứng trùng thư viện','SC-LIB-1 có'],
+    ['Skill / CLI','<code>npx bizcity library check</code>','khi dev / AI viết module','PASS / WARN / FAIL như event check','B4'],
+  ];
+  return `<h2>Bộ kiểm dùng thư viện thế nào</h2><p class="lead">Một bộ kiểm (<code>validateAgainstLibrary</code>, Platform), sáu chỗ gọi, cùng một khuôn kết quả: <code>{ ok, library@bản#băm, at, resolved?, value?, findings[{ code, level, path, suggestions[] }] }</code>.</p>
+  <div class="flow">${P.map(([t, w, when, lv, st], i) => `<div class="step"><div><span class="n">${i + 1}</span><b>${t}</b> <span class="tag ${st === 'có' || st.startsWith('SC-LIB-1') ? 'ok' : 'none'}">${st}</span></div><div style="margin:6px 0">${w}</div><div class="muted" style="font-size:12.5px">Khi: ${when}<br>Mức: ${lv}</div></div>`).join('')}</div>
+  <h3>Một lượt kiểm đi qua những gì</h3>
+  <div class="flow">
+    <div class="step"><b>1 · Tìm mục</b><div class="muted" style="font-size:12.5px">mã · bí danh · không phân biệt hoa thường → <span class="k">resolved</span>; không thấy → LIB-UNKNOWN-001 + 5 mục gần nhất</div></div>
+    <div class="step"><b>2 · Trạng thái</b><div class="muted" style="font-size:12.5px">deprecated → LIB-DEPRECATED-001 gợi ý replacedBy · removed → LIB-REMOVED-001</div></div>
+    <div class="step"><b>3 · Hiệu lực tại ngày</b><div class="muted" style="font-size:12.5px">ngày chứng từ (hoặc hôm nay theo cấu hình) → giá trị · ngoài khoảng → LIB-EFFECTIVE-001</div></div>
+    <div class="step"><b>4 · Giá trị & khuôn</b><div class="muted" style="font-size:12.5px">ghi đè đơn vị (nếu có) → so giá trị → LIB-VALUE-001 · sai khuôn → LIB-SCHEMA-001</div></div>
+    <div class="step"><b>5 · Luật riêng</b><div class="muted" style="font-size:12.5px">rules[] khai báo (all / any / not, 11 phép) · mức sau khi đơn vị hạ · gợi ý từ thư viện khác</div></div>
+    <div class="step"><b>6 · Dấu vết</b><div class="muted" style="font-size:12.5px">bằng chứng basis_used (thư viện@bản#băm, mã, ngày, giá trị) · một dòng đếm library_usage_daily (sau commit)</div></div>
+  </div>
+  <h3>Khai trong manifest (đề xuất bizcity_module@1 1.3.0)</h3>
+<pre>"libraries": [
+  { "id": "vn.tham-so-phap-ly", "fields": ["payroll.insuranceRate", "payroll.baseSalary"], "at": "docDate", "required": true },
+  { "id": "core.khoan-muc",     "fields": ["voucher.lines[].costItem"], "required": true }
+]</pre>
+  <p class="muted">Không có trong bảng này: luật cần tính toán (cộng dồn, so nhiều chứng từ) → Rule Contract của Policy Registry (ADR-0031). Thư viện không sinh bút toán, không cấp quyền (D-LIB-8).</p>`;
+}
+
+function dev() {
+  return `<h2>Dev & skill — luôn theo chuẩn thư viện</h2><p class="lead">Skill <code>skills/use-bizcity-library/SKILL.md</code> (cài sang dự án khác bằng <code>npx bizcity skills install</code>) dạy dev / trợ lý AI bốn việc; chỉ báo "xong" khi lệnh ra PASS và <code>selfcheck --only SC-LIB</code> ĐẠT.</p>
+  <div class="grid2">
+  <div class="panel pad"><h3 style="margin-top:0">1 · Tìm thư viện cho một ô</h3><pre>$ npx bizcity library search "ty le bhxh"
+vn.tham-so-phap-ly  BHXH_NLD   Tỷ lệ BHXH người lao động đóng  8 %  (chưa duyệt)
+vn.tham-so-phap-ly  BHXH_DN_*  …3 mục
+→ gắn: "libraries": [{ "id": "vn.tham-so-phap-ly", "fields": ["…"] }]</pre><p class="muted">Không tự đặt danh sách cứng khi thư viện đã có.</p></div>
+  <div class="panel pad"><h3 style="margin-top:0">2 · Kiểm giá trị</h3><pre>$ npx bizcity library check vn.tham-so-phap-ly LUONG_CO_SO \\
+    --value 2340000 --at 2026-08-01
+⚠ LIB-VALUE-001  giá trị khác thư viện tại ngày 2026-08-01
+   ↳ gợi ý 2.530.000 (2026-07-01 → nay) — Nghị định 161/2026/NĐ-CP (chưa duyệt)
+ℹ LIB-UNVERIFIED-001
+KẾT LUẬN: WARN</pre><p class="muted">Nghĩa mã: <code>npx bizcity explain LIB-VALUE-001</code> — không đoán.</p></div>
+  <div class="panel pad"><h3 style="margin-top:0">3 · Thêm thư viện</h3><pre>$ npx bizcity library new core.khoan-muc --kind code-list
+libraries/core.khoan-muc/library.json   khung + itemSchema + selector
+libraries/core.khoan-muc/README.md      hướng dẫn (bắt buộc)
+libraries/core.khoan-muc/build.mjs      sinh từ sources/
+$ node libraries/core.khoan-muc/build.mjs &amp;&amp; npx bizcity library check core.khoan-muc --all</pre></div>
+  <div class="panel pad"><h3 style="margin-top:0">4 · Cập nhật / thêm căn cứ</h3><pre>$ node libraries/vn.tham-so-phap-ly/build.mjs
+$ npx bizcity library diff vn.tham-so-phap-ly
+  ~ TNCN_GIAM_TRU_NPT  + khoảng 2026-01-01 → nay = 6.200.000
+  basis.key → NQ-110-2025 (vn.can-cu-phap-ly)
+  bản sẽ lên: 1.0.0 → 1.1.0 (minor: thêm khoảng hiệu lực)
+$ node tests/conformance/selfcheck.mjs --only SC-LIB</pre><p class="muted">Không sửa tay library.json; không xoá mục (deprecated → removed).</p></div>
+  </div>
+  <h3>Trợ lý AI (MCP, chỉ đọc)</h3>
+  <div class="panel pad"><code>core.library.list</code> · <code>core.library.get</code> · <code>core.library.items</code> · <code>core.library.validate</code> · <code>core.findings.explain</code> — AI tra đúng nguồn, không bịa mã, không tự đặt thuế suất / tham số.</div>`;
+}
+
+function render() {
+  nav();
+  const R = { 'tong-quan': tongQuan, 'danh-sach': danhSach, 'chi-tiet': chiTiet, 'can-cu': canCu, 'cau-hinh': cauHinh, 'de-xuat': deXuat, 'bo-kiem': boKiem, dev };
+  $('#main').innerHTML = (R[tab] ?? tongQuan)();
+  if (tab === 'chi-tiet' && sub === 'kiem') { $('#vrun').onclick = runCheck; runCheck(); }
+  if (tab === 'chi-tiet' && sub === 'muc') {
+    const draw = () => {
+      const q = $('#pq').value.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase().trim();
+      const at = '2026-11-08';
+      const rows = ITEMS.filter((i) => !q || (i.code + ' ' + i.name).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase().includes(q));
+      $('#pl').innerHTML = rows.map((i) => { const e = valueAt(i, at); return `<li><span>${esc(i.name)} <small class="k">${i.code}</small></span><small>${e ? fmt(e[2]) : '—'} · chưa duyệt</small></li>`; }).join('') || '<li class="muted">không có — LIB-UNKNOWN-001 sẽ gợi ý mục gần nhất</li>';
+    };
+    $('#pq').oninput = draw; draw();
+  }
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.go) { tab = b.dataset.go; location.hash = tab; render(); return; }
+  if (b.dataset.lib) { libSel = b.dataset.lib; tab = 'chi-tiet'; sub = b.dataset.sub || (b.closest('#subs') ? sub : 'muc'); location.hash = tab; render(); return; }
+  if (b.classList.contains('sugg') && $('#vv')) { $('#vv').value = b.dataset.v; runCheck(); }
+});
+$('#theme').onclick = () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; };
+window.addEventListener('hashchange', () => { tab = location.hash.slice(1) || 'tong-quan'; render(); });
+render();
+</script>
+</body>
+</html>
