@@ -157,8 +157,12 @@ Dành cho dev xây **ERP nội bộ cho công ty mình**, hoặc module **bán h
 
 | | Địa chỉ | Ghi chú |
 |---|---|---|
-| Kế toán | <https://ketoan.bizcity.vn/> | Mã đơn vị `demo`, email `admin@ketoan.local`, mật khẩu mặc định như mục [Cài đặt](#cài-đặt) |
-| Quản trị kho, POS | <https://quantri.bizcity.vn/> | Tài khoản không công bố trong repo, liên hệ ban quản trị |
+| Kế toán | <https://ketoan.bizcity.vn/> | Kế toán:
+* Mã đơn vị: otchuong
+* Email: admin@otchuongmart.local
+* Mật khẩu: Otcfa8719fd1c0b!
+[Cài đặt](#cài-đặt) |
+| Quản trị kho, POS | <https://quantri.bizcity.vn/> | Quản trị: admin / Otc-464cb5973c
 
 Bộ hướng dẫn đọc theo vai (kế toán, CEO, dev, cộng đồng, AI): [docs/core/](docs/core/README.md).
 
