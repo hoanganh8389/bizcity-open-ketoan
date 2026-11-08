@@ -49,6 +49,17 @@ export const invoiceInputSchema = z.object({
 export type InvoiceInput = z.infer<typeof invoiceInputSchema>;
 
 /** Một dòng hàng. */
+/** Mã chính sách ở sổ đăng ký (policy_registry.policy_key). */
+const policyKey = z.string().trim().min(1).max(128);
+/** Tham chiếu một bản chính sách đã phát hành (bizcity_ledger_intake@1 §3.1, ADR-0031 D-POL-5). `hash` = contentHash của bản. */
+export const policyRefSchema = z.object({
+  key: policyKey,
+  version: z.number().int().min(1),
+  hash: z.string().trim().regex(/^[0-9a-f]{64}$/, 'hash không đúng khuôn (64 ký tự hex)'),
+  policyId: z.string().trim().max(200).optional(),
+});
+export type PolicyRef = z.infer<typeof policyRefSchema>;
+
 export const documentLineSchema = z.object({
   lineKey: z.string().trim().min(1).max(64).describe('Khoá dòng ở hệ thống nguồn'),
   sku: z.string().trim().max(64).default(''),
@@ -80,6 +91,8 @@ export const documentLineSchema = z.object({
   expDate: isoDate.optional(),
   /** Ghi chú của dòng hàng (thông tin). */
   note: z.string().trim().max(500).optional(),
+  // [2026-11-07 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-8, bizcity_ledger_intake@1 1.6.0 §3.1): dòng này sinh ra từ chính sách nào (vd dòng quà tặng); key có trong policyRefs của phiếu — Kernel kiểm ở L4 (IN-POL-001), không kiểm ở zod vì union phân biệt cần ZodObject
+  policyRef: z.object({ key: policyKey, version: z.number().int().min(1), line: z.string().trim().max(32).optional() }).optional(),
   /** Giá vốn của dòng nếu nguồn đã có. Để trống thì ghi giá vốn sau. */
   cost: money.optional(),
 });
@@ -131,6 +144,8 @@ const baseDocument = {
   sourceRef: z.object({ type: z.string().trim().max(64), id: z.string().trim().max(64), label: z.string().trim().max(120).optional(), url: z.string().trim().max(500).optional() }).optional(),
   /** Dữ liệu thêm của hệ thống nguồn, lưu nguyên để tra cứu, không dùng để định khoản. */
   extra: z.record(z.unknown()).optional(),
+  // [2026-11-07 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-8): chính sách nghiệp vụ nguồn đã dùng để lập chứng từ; tuỳ chọn, nguồn cũ không đổi
+  policyRefs: z.array(policyRefSchema).max(50).optional(),
 };
 
 export const saleDocumentSchema = z.object({

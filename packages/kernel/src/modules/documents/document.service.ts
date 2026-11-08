@@ -58,6 +58,7 @@ import { settleByInvoiceKeys, settleLinkedTo, settleOffsets } from '../debts/deb
 import { documentRepository, type DocumentListFilter } from './document.repository.js';
 import { applyTaxFlags, applyTaxPatch, loadTaxPatch } from '../tax-info/tax-patch.js';
 import { applyReceiptConfirmation, confirmationMatches, isoTime, loadReceiptConfirmation } from './receipt-confirmation.js';
+import { policyFindings, policyHold } from '../intake/policy-check.js';
 import { sql } from 'kysely';
 
 // [2026-11-01 03:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — cửa nạp không import adapter kết nối: adapter đăng ký bộ chuẩn hoá chứng từ đẩy vào (registerIncomingPreparer ở app.ts)
@@ -389,6 +390,11 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   if (doc.employee?.code) await ensureEmployee(trx, auth.tenantId, doc.employee.code, doc.employee.name);
   const stock = await stockContext(trx, auth.tenantId, doc, branch);
   const existing = await documentRepository.findByKeyForUpdate(trx, auth.tenantId, doc.docKey);
+  // [2026-11-08 12:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9): kiểm THAM CHIẾU chính sách (policyRefs, IN-POL-001..003) — cảnh báo, cửa nạp vẫn nhận; kết quả lưu ở policy_check.
+  // Cùng hàm với tiền kiểm (R-INTAKE-4). strict + có IN-POL-* → chờ duyệt bằng hold sẵn có, không trạng thái mới.
+  const { check: policyCheck } = await policyFindings(trx, auth.tenantId, doc);
+  const policyOnHold = policyHold(policyCheck);
+  const oldPolicyCheck = existing ? (await sql<{ pc: unknown }>`SELECT policy_check AS pc FROM accounting_events WHERE id = ${existing.id}`.execute(trx)).rows[0]?.pc ?? null : null;
 
   if (existing) {
     if (existing.version > doc.version) {
@@ -422,18 +428,20 @@ export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocu
   const newVersion = !existing || existing.version !== doc.version;
   if (existing) {
     docId = existing.id;
-    if (existing.version !== doc.version) await documentRepository.archiveVersion(trx, existing.id, existing.version, existing.payload, existing.received_at);
+    if (existing.version !== doc.version) await documentRepository.archiveVersion(trx, existing.id, existing.version, existing.payload, existing.received_at, oldPolicyCheck);
     // Nguồn gửi lại phiếu (phiên bản mới) sau khi đã báo xoá: phiếu còn → bỏ đánh dấu Chờ huỷ.
     await documentRepository.update(trx, existing.id, { ...fields, received_at: new Date(), ...(newVersion ? { cancel_requested_at: null, cancel_reason: null } : {}) });
   } else {
     docId = (await documentRepository.insert(trx, { tenant_id: auth.tenantId, doc_key: doc.docKey, created_by: auth.actor, ...fields })).id;
   }
+  // [2026-11-08 12:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9): policy_check của bản hiện hành (cột 0080); NULL = bản này không gửi policyRefs
+  await sql`UPDATE accounting_events SET policy_check = ${policyCheck ? JSON.stringify(policyCheck) : null}::jsonb WHERE id = ${docId}`.execute(trx);
   const log = (action: 'receive' | 'post' | 'repost', extra: { entryIds?: string[]; reversed?: number; message?: string; policyVersion?: number | null } = {}) =>
     logPosting(trx, { tenantId: auth.tenantId, eventId: docId, docType: doc.docType, docNo: doc.docNo, version: doc.version, action, total: doc.totals.total, actor: auth.actor, ...extra });
 
   // Chưa định khoản: chờ ở trạm ACC14.
   // hold: chứng từ kéo về từ hệ thống kết nối luôn chờ, không theo chế độ định khoản của loại chứng từ.
-  if (!opts.post && (opts.hold || (await needsApproval(trx, auth.tenantId, doc.docType)))) {
+  if (!opts.post && (opts.hold || policyOnHold || (await needsApproval(trx, auth.tenantId, doc.docType)))) {
     await documentRepository.update(trx, docId, { status: 'pending', error_code: null, error_message: null });
     if (newVersion) await log('receive', existing?.posted_version ? { message: `Phiên bản mới; sổ đang theo phiên bản ${existing.posted_version}` } : {});
     return { docKey: doc.docKey, version: doc.version, status: 'pending' as const };
