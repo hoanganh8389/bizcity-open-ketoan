@@ -9,7 +9,7 @@
 | Chờ merge | 0 |
 | Bị chặn | 30 |
 | Chưa ai nhận | 133 |
-| Chờ đủ tín hiệu | 51 |
+| Chờ đủ tín hiệu | 50 |
 | Hoãn | 1 |
 | Xong | 236 |
 | **Tổng** | **470** |
@@ -215,7 +215,7 @@
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
-## Chờ đủ tín hiệu (51)
+## Chờ đủ tín hiệu (50)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
