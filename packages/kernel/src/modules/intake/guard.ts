@@ -10,6 +10,8 @@
  *
  * Dấu gồm (chỉ phần chứng từ chạm tới, để sửa danh mục khác không làm lệch): mặt hàng trên dòng (nháp, ĐVT, nhóm hạch toán,
  * đang dùng, lần sửa), chi nhánh, đối tượng, phiên bản chính sách kế toán, sự kiện khoá / mở kỳ gần nhất.
+ * [2026-11-08 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9): thêm phong bì các chính sách nghiệp vụ mà policyRefs trỏ tới (bản, hiệu lực, trạng thái) — chính sách đổi giữa Kiểm thử và Nộp
+ * thì dấu lệch như cấu hình đổi (IN-GUARD-001).
  */
 import { createHash } from 'node:crypto';
 import { sql } from 'kysely';
@@ -29,6 +31,15 @@ export async function commitGuard(trx: Db, tenantId: string, raw: unknown): Prom
   const branchCode = str(r.branchCode);
   const partnerCode = str((r.partner as { code?: unknown } | undefined)?.code) ?? str(r.partnerCode);
 
+  // [2026-11-08 12:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9): khoá (mã, bản) của các tham chiếu chính sách; không có policyRefs thì không thêm gì vào dấu (dấu cũ giữ nguyên)
+  const refKeys = Array.isArray(r.policyRefs)
+    ? (r.policyRefs as { key?: unknown; version?: unknown }[]).filter((x) => str(x?.key) && Number.isInteger(x?.version)).map((x) => [str(x.key)!, Number(x.version)] as const)
+    : [];
+  const policyRows = refKeys.length
+    ? (await sql<{ policy_key: string; version: number; effective_from: string | null; effective_to: string | null; status: string; content_hash: string }>`
+        SELECT policy_key, version, effective_from::text AS effective_from, effective_to::text AS effective_to, status, content_hash FROM policy_registry
+        WHERE tenant_id = ${tenantId} AND policy_key = ANY(${refKeys.map((k) => k[0])}::text[]) ORDER BY policy_key, version`.execute(trx)).rows
+    : [];
   const [products, branch, partner, policy, lock] = await Promise.all([
     skus.length
       ? trx.selectFrom('products').select(['sku', 'is_draft', 'unit', 'posting_group_code', 'is_active', 'updated_at'])
@@ -50,6 +61,7 @@ export async function commitGuard(trx: Db, tenantId: string, raw: unknown): Prom
     o: partner ? [partner.id, partner.is_active, iso(partner.updated_at)] : null,
     v: policy ? [policy.version, policy.hash] : null,
     k: lock?.last ?? null,
+    ...(policyRows.length ? { r: policyRows.map((x) => [x.policy_key, x.version, x.effective_from, x.effective_to, x.status, x.content_hash]) } : {}),
   };
   return GUARD_PREFIX + createHash('sha256').update(JSON.stringify(parts)).digest('hex').slice(0, 32);
 }

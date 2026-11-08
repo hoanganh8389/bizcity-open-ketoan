@@ -47,12 +47,14 @@ export const documentRepository = {
     return db.insertInto('accounting_events').values(v).returning(['id']).executeTakeFirstOrThrow();
   },
 
-  archiveVersion(db: Db, sourceDocumentId: string, version: number, payload: unknown, receivedAt: Date) {
-    return db
+  // [2026-11-08 12:05 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9): cất kèm policy_check của phiên bản cũ (cột 0080) để truy vết chính sách theo từng phiên bản sự việc
+  async archiveVersion(db: Db, sourceDocumentId: string, version: number, payload: unknown, receivedAt: Date, policyCheck?: unknown) {
+    await db
       .insertInto('accounting_event_versions')
       .values({ event_id: sourceDocumentId, version, payload: JSON.stringify(payload), received_at: receivedAt })
       .onConflict((oc) => oc.columns(['event_id', 'version']).doNothing())
       .execute();
+    if (policyCheck != null) await sql`UPDATE accounting_event_versions SET policy_check = ${JSON.stringify(policyCheck)}::jsonb WHERE event_id = ${sourceDocumentId} AND version = ${version}`.execute(db);
   },
 
   update(db: Db, id: string, patch: Record<string, unknown>) {
