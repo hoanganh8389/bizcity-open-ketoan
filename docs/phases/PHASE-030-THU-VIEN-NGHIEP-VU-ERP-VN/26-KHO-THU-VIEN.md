@@ -110,6 +110,8 @@ Bảng `library_settings` (đơn vị × thư viện), đổi qua `core.library.
 
 - Bảng **`library_usage_daily`** (đơn vị, ngày, thư viện, bản, nguồn = module / action / kênh, mã mục hoặc `?`, kết quả `pass / warn / block`, mã phát hiện, số lần). Ghi **sau commit** (eventual — ECP: số đếm không phải sự thật kế toán), gom trong bộ nhớ ≤ 60 giây rồi `upsert … count = count + n`; mất vài lượt đếm khi tiến trình chết là chấp nhận được, có đối chiếu: tổng lượt có bằng chứng (③ ④) ≤ tổng đếm.
 - Không lưu giá trị nhập (tránh dữ liệu cá nhân / số tiền — R-SEC-10): chỉ mã thư viện, mã mục, mã phát hiện.
+- **Gom không hẹn giờ** (chữ chốt S030-48 <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48: thay "gom ≤ 60 giây" bằng gom theo lượt, vì SC-EVT-1 cấm setInterval / setTimeout -->): lượt đếm giữ trong bộ nhớ; ghi xuống khi có lượt mới mà đã ≥ 30 giây từ lần ghi trước **hoặc** đã gom ≥ 200 dòng; ghi hết trước khi đọc số liệu (`core.library.usage`) và khi máy chủ tắt (`onClose`). Ghi một câu `INSERT … ON CONFLICT DO UPDATE SET count = count + EXCLUDED.count` cho cả lô; lỗi ghi thì bỏ lô (số đếm là quan sát, không phải sự thật kế toán) và ghi nhật ký.
+- Đợt B2 đếm điểm gắn ② (`core.library.validate`, `source` tuỳ chọn trong thân yêu cầu; không gửi thì nguồn = `api`) và hàm `recordLibraryUsage()` cho Platform; điểm ③ ④ đếm khi gắn ở B5.
 - `GET /api/v1/libraries/usage?from=&to=&library=&source=` (`core.library.usage`) cho bảng đánh giá; MCP chỉ đọc.
 
 ## 9. Bảng đánh giá — cái gì pass thư viện, cái gì không
