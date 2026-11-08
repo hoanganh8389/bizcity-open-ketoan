@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sự kiện chính sách qua outbox: `bizcity.policy.published` / `.retired` (PHASE-031 W3b, ADR-0031) <!-- [2026-11-08 11:59 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b -->
+
+- **Thêm:** `registerPolicyVersion` phát `bizcity.policy.published` và `retirePolicy` phát `bizcity.policy.retired` qua outbox, cùng giao dịch với việc ghi sổ đăng ký (`data` chỉ định danh + băm + `closes`, không nội dung; `dedupeKey` chống phát đôi). Hợp đồng: `bizcity_event@1` 1.3.0-draft §7, `bizcity_policy@1` 1.1.0-draft §10; test `policy-events.test.ts` (T031-EV-1..5). App ngoài nhận bằng webhook sẵn có (§7a).
+- **Đổi:** `retirePolicy` thêm tham số `actor` tuỳ chọn (chữ ký cũ vẫn chạy; thiếu thì tác nhân `system`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không migration). POS / sàn muốn nghe sự kiện thì khai `events.subscribes` hai loại mới.
+- **Bảo mật:** `data` không chứa nội dung chính sách; người nhận phải có quyền `catalog:read` để tải nội dung.
+
 ### Gỡ cờ thoát allow_ledger_purge khỏi trigger sổ cái, thu quyền xoá của ketoan_app (PHASE-004 S004-12, review R1 RV-R1-01) <!-- [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 -->
 
 - **Thêm:** migration `0086_go_co_thoat_so_cai.sql` — tạo lại chín trigger bảo vệ sổ (`ledger_entries`, `ledger_lines`, `ledger_links`, `accounting_events`, `accounting_event_versions`) **không còn mệnh đề `WHEN`** theo cờ `ketoan.allow_ledger_purge`; tên trigger và hàm trigger giữ nguyên; `REVOKE DELETE, TRUNCATE` khỏi `ketoan_app` trên sáu bảng sổ (kể cả `posting_log`); tự kiểm cuối dừng migration nếu còn trigger nhắc cờ. Ca phá thử: `app-role.test.ts` (quyền) và `db-rules.test.ts` (đặt cờ rồi DELETE / UPDATE / TRUNCATE đều bị từ chối). Chẩn đoán `LEDGER_TRIGGERS` (DG-DB-2) báo thêm trigger còn nhắc cờ (`cờ thoát:…`).

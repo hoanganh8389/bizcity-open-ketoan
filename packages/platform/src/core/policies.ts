@@ -1,4 +1,5 @@
 // @bizcity-layer P bizcity.config
+// [2026-11-08 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b (S031-26, chữ chốt PHASE-031 · 00 §11): bizcity.policy.published / .retired qua outbox, cùng giao dịch với việc ghi
 // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-4, chữ chốt PHASE-031 · 00 §7): sổ đăng ký chính sách — đăng ký bản, đóng bản cũ, tìm bản hiệu lực tại ngày chứng từ, liệt kê, ngừng
 /**
  * SỔ ĐĂNG KÝ CHÍNH SÁCH (Policy Registry, ADR-0031; bảng policy_registry, migration 0079).
@@ -13,8 +14,15 @@ import { sql } from 'kysely';
 import type { Db } from '../db/client.js';
 import { contentHash } from './documents.js';
 import { Errors } from './errors.js';
+import { emitEvent, type EventActorKind } from './events.js';
 
 export type PolicyStore = 'module' | 'settings' | 'inline';
+
+/** "user:5" / "apikey:3" → tác nhân của sự kiện; chuỗi khác (test, hệ thống) là system. */
+function eventActor(actor: string | undefined): { kind: EventActorKind; id: string } {
+  const m = /^(user|apikey):(.+)$/.exec(actor ?? '');
+  return m ? { kind: m[1] as EventActorKind, id: m[2]! } : { kind: 'system', id: actor || 'system' };
+}
 
 export interface PolicyEnvelope {
   policyKey: string;
@@ -97,6 +105,7 @@ export async function registerPolicyVersion(trx: Db, input: RegisterPolicyInput)
   const { tenantId, policyId, version } = input;
   if (input.effectiveFrom !== null && !DATE_RE.test(input.effectiveFrom)) throw Errors.validation(`Ngày áp "${input.effectiveFrom}" sai khuôn YYYY-MM-DD`);
   const prev = (await listPolicyVersions(trx, tenantId, policyId)).at(-1);
+  let closes: { version: number; effectiveTo: string } | null = null;
   if (version !== (prev?.version ?? 0) + 1) throw Errors.conflict(`Chính sách ${input.policyKey}: bản ${version} không nối tiếp bản ${prev?.version ?? 0} — có người vừa lưu, tải lại rồi lưu lại`);
   if (prev) {
     if (input.effectiveFrom === null) throw Errors.validation(`Chính sách ${input.policyKey}: bản ${version} phải có ngày áp cho chứng từ`);
@@ -105,8 +114,10 @@ export async function registerPolicyVersion(trx: Db, input: RegisterPolicyInput)
       throw Errors.validation(`Chính sách ${input.policyKey}: ngày áp ${input.effectiveFrom} sớm hơn ngày áp của bản ${prev.version} (${prev.effectiveFrom}) — không viết lại quá khứ`);
     }
     if (prev.effectiveTo !== null) throw Errors.conflict(`Chính sách ${input.policyKey}: bản ${prev.version} đã đóng ở ${prev.effectiveTo} — không nối thêm bản`);
-    await sql`UPDATE policy_registry SET effective_to = ${input.effectiveFrom}::date - 1
-      WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND version = ${prev.version} AND effective_to IS NULL`.execute(trx);
+    const closed = await sql<{ effective_to: string }>`UPDATE policy_registry SET effective_to = ${input.effectiveFrom}::date - 1
+      WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND version = ${prev.version} AND effective_to IS NULL
+      RETURNING effective_to::text AS effective_to`.execute(trx);
+    closes = closed.rows[0] ? { version: prev.version, effectiveTo: closed.rows[0].effective_to } : null;
   }
   const hash = input.hash ?? contentHash(input.content);
   const inline = input.store === 'inline' ? JSON.stringify(input.content ?? null) : null;
@@ -115,7 +126,14 @@ export async function registerPolicyVersion(trx: Db, input: RegisterPolicyInput)
     VALUES (${tenantId}, ${input.policyKey}, ${policyId}, ${version}, ${input.ownerModule}, ${input.ruleContract}, ${JSON.stringify(input.scope ?? {})}::jsonb,
             ${input.effectiveFrom}::date, ${input.store}, ${input.storeRef ?? ''}, ${inline}::jsonb, ${hash}, ${input.legalRef ?? null}, ${input.actor}, ${input.reason?.trim() || null})
     RETURNING ${COLS}`.execute(trx);
-  return toEnvelope(r.rows[0]!);
+  const env = toEnvelope(r.rows[0]!);
+  // Chỉ định danh + băm, KHÔNG nội dung: nguồn nhận sự kiện rồi tải lại bằng GET /api/v1/policies (một nguồn sự thật, 00 §11).
+  await emitEvent(trx, {
+    tenantId, type: 'bizcity.policy.published', subject: `policy:${policyId}`, source: 'bizcity.platform', actor: eventActor(input.actor),
+    dedupeKey: `policy.published:${policyId}:${version}`,
+    data: { policyId, policyKey: env.policyKey, version, ownerModule: env.ownerModule, ruleContract: env.ruleContract, effectiveFrom: env.effectiveFrom, contentHash: env.contentHash, closes },
+  });
+  return env;
 }
 
 // [2026-11-08 01:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, chữ chốt PHASE-031 · 00 §9): liệt kê bản đang hiệu lực kèm nội dung inline; phát hành một bản inline
@@ -175,7 +193,13 @@ export async function publishInlinePolicy(trx: Db, input: PublishInlineInput): P
 }
 
 /** Ngừng chính sách: các bản đang dùng được chuyển retired; chứng từ cũ vẫn trỏ được. Trả số bản đổi. */
-export async function retirePolicy(trx: Db, tenantId: string, policyId: string): Promise<number> {
-  const r = await sql`UPDATE policy_registry SET status = 'retired' WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND status = 'published'`.execute(trx);
-  return Number(r.numAffectedRows ?? 0);
+export async function retirePolicy(trx: Db, tenantId: string, policyId: string, actor?: string): Promise<number> {
+  const r = await sql<{ version: number }>`UPDATE policy_registry SET status = 'retired' WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND status = 'published' RETURNING version`.execute(trx);
+  if (!r.rows.length) return 0;
+  const last = Math.max(...r.rows.map((x) => Number(x.version)));
+  await emitEvent(trx, {
+    tenantId, type: 'bizcity.policy.retired', subject: `policy:${policyId}`, source: 'bizcity.platform', actor: eventActor(actor),
+    dedupeKey: `policy.retired:${policyId}:${last}`, data: { policyId, retiredVersions: r.rows.map((x) => Number(x.version)).sort((a, b) => a - b) },
+  });
+  return r.rows.length;
 }
