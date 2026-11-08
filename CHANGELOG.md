@@ -21,6 +21,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** chạy `npm run db:migrate`. Sự việc cũ có `policy_check` mang phát hiện sẽ hiện ở hàng việc cho tới khi được đánh dấu đã xem.
 - **Bảo mật:** hành động ghi cần `documents:write`; bảng bằng chứng có RLS theo đơn vị và trigger chặn sửa / xoá.
 
+### Xem trước tác động cấu hình nhận scopeId số (PHASE-030, review R1 RV-R1-05) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — RV-R1-05 -->
+
+- **Thêm:** ca hồi quy T030-CFG-IMP-4 (`apps/api/test/cau-hinh-doi-khoa-a.test.ts`): phạm vi `branch` / `user` với `scopeId` là số được xem trước (200); `scopeId` không phải số vẫn 400.
+- **Sửa:** `settingImpact` kiểm `scopeId` bằng `/^d+$/` (thiếu dấu gạch chéo ngược trước chữ d), nên `GET /api/v1/settings/values/:key/impact?scope=branch&scopeId=12` luôn trả 400 "cần scopeId là định danh số". Hàm ghi `setSetting` đã dùng đúng mẫu số; chỉ phần xem trước bị lỗi.
+- **Đổi:** không.
+- **Thay đổi định khoản:** không (K0, một dòng, không đổi dữ liệu).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
 ### Lỗi trigger sổ cái ra đúng mã hợp đồng: không cân, khoá kỳ, sổ chỉ thêm (PHASE-029 S029-33, review R1 RV-R1-02) <!-- [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33 -->
 
 - **Thêm:** `classifyLedgerTriggerError` (`packages/platform/src/core/errors.ts`) — một nơi nhận ra lỗi trigger sổ cái theo SQLSTATE + câu chữ; `core/http.ts` và `errorCodeOf` (trace) cùng gọi. Golden T029-ERR-1…5 (`apps/api/test/db-error-mapping.test.ts`) dùng lỗi sinh từ trigger thật trên PostgreSQL.
