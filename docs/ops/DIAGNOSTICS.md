@@ -10,6 +10,7 @@
 <!-- [2026-10-31 05:07 PM Johnny Chu - Chu Hoàng Anh] R-REV — thêm TAX_INPUT_NO_INVOICE / DG-TAX-1 (thuế đầu vào chờ hoá đơn). -->
 <!-- [2026-10-30 09:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-007 — cô lập đơn vị bằng RLS. -->
 <!-- [2026-11-02 10:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — S020-19: thêm INVENTORY_NEGATIVE / DG-INV-1, PERIOD_CLOSE_OPEN / DG-CLOSE-1 (lớp Doanh nghiệp); COST_FILL_OPEN không viết nữa. -->
+<!-- [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12: LEDGER_TRIGGERS dò thêm trigger còn nhắc cờ thoát (0086) -->
 
 > **Luật tự chẩn đoán** (năm tầng L0–L4, chỉ đọc, lịch chạy, chặn khoá kỳ, cảnh báo, gói hỗ trợ): [../rules/RULE-SELF-DIAGNOSTICS.md](../rules/RULE-SELF-DIAGNOSTICS.md). Tệp này giữ danh sách mã kiểm và khuôn kết quả.
 > Kiểm bản cài đã có trong bộ kiểm: `LEDGER_TRIGGERS` (DG-DB-2: trigger bảo vệ sổ còn và đang bật), `DB_APP_ROLE` (DG-SEC-1: vai trò `ketoan_app` đúng chuẩn), `DB_CONNECTION_ROLE` (DG-SEC-2: kết nối đang dùng không superuser), `DB_SETTINGS` (DG-DB-3: phiên bản PostgreSQL, múi giờ, UTF8).
@@ -74,7 +75,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `ITEM_CODE_CASE_DUP` | L3 | Mã hàng trùng nhau khi bỏ khoảng trắng / không phân biệt hoa thường (không theo ngày); mẫu mã đã chuẩn hoá | warn | có | DG-MD-1 |
 | `UNIT_BASE_INVALID` | L3 | Mặt hàng có khai ĐVT nhưng không đúng một ĐVT gốc tỉ lệ 1, hoặc hơn một ĐVT mua mặc định (không theo ngày); mẫu mã hàng | warn | có | DG-MD-2 |
 | `MIGRATIONS_PENDING` | L1 | Còn migration chưa áp | error | có | DG-DB-1 |
-| `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ và đang bật | error | có | DG-DB-2 |
+| `LEDGER_TRIGGERS` | L1 | Trigger khai trong migration còn đủ, đang bật và không còn nhắc cờ thoát `allow_ledger_purge` (0086) | error | có | DG-DB-2 |
 | `DB_WRITABLE` | L1 | CSDL là bản chính, ghi được | error | có | DG-DB-4 |
 | `TENANT_ISOLATION` | L1 | Mọi bảng có `tenant_id` bật RLS + FORCE + có chính sách (migration 0041, STD-DATA-1). Vai trò kết nối không vượt RLS: DG-SEC-1 / -2 | error | có | DG-PLAN-5 |
 | `PROFILE_DECLARED` <!-- [2026-11-02 03:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — hai kiểm L5 của Conformance Engine. --> | L5 | Đơn vị đã khai hồ sơ kế toán (năm tài chính, chế độ, loại pháp nhân) áp cho ngày xét (ADR-0013) | warn | có | DG-PROFILE-1 |

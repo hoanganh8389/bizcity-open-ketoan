@@ -57,13 +57,14 @@ export const checks = [
   },
   {
     id: 'SC-KERNEL-4',
-    title: 'Cờ thoát trigger sổ cái (E1–E4) chỉ ở chỗ được phép',
+    title: 'Cờ thoát trigger sổ cái (E1–E3) chỉ ở chỗ được phép; cờ allow_ledger_purge đã gỡ (chỉ còn ca phá thử và chẩn đoán nhắc tên)',
     gate: 'KERNEL', contract: 'kernel', rules: ['R-LEDGER-1', 'R-LEDGER-4'], conf: [], tier: 0, enforce: 'block', weight: 5, targets: ['repo'],
     run(ctx) {
       const opts = { under: ['apps', 'packages', 'scripts'], ext: ['.ts', '.mjs', '.sh'] };
       const allow = {
         cost_overwrite: /^(apps\/api\/src\/modules\/ledger\/|packages\/kernel\/src\/modules\/ledger\/|apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
-        allow_ledger_purge: /^(apps\/api\/test\/|scripts\/kiem-chuan\.sh)/,
+        // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-8): cờ đã gỡ khỏi trigger (0086), nhóm E4 bỏ. Chỉ còn tên cờ ở: hai ca phá thử (app-role, db-rules) chứng minh nó vô tác dụng, chẩn đoán LEDGER_TRIGGERS dò trigger còn cờ, và kiem-chuan.sh
+        allow_ledger_purge: /^(apps\/api\/test\/(app-role|db-rules)\.test\.ts|packages\/kernel\/src\/modules\/ledger\/ledger\.diagnostics\.ts|scripts\/kiem-chuan\.sh)$/,
         // test được nhắc tên cờ để chứng minh vai trò ứng dụng KHÔNG đặt được (app-role.test.ts)
         session_replication_role: /^(scripts\/xoa-chung-tu\.sh|scripts\/kiem-chuan\.sh|apps\/api\/test\/)/,
       };

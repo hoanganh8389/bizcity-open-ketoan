@@ -12,6 +12,24 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Gỡ cờ thoát allow_ledger_purge khỏi trigger sổ cái, thu quyền xoá của ketoan_app (PHASE-004 S004-12, review R1 RV-R1-01) <!-- [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 -->
+
+- **Thêm:** migration `0086_go_co_thoat_so_cai.sql` — tạo lại chín trigger bảo vệ sổ (`ledger_entries`, `ledger_lines`, `ledger_links`, `accounting_events`, `accounting_event_versions`) **không còn mệnh đề `WHEN`** theo cờ `ketoan.allow_ledger_purge`; tên trigger và hàm trigger giữ nguyên; `REVOKE DELETE, TRUNCATE` khỏi `ketoan_app` trên sáu bảng sổ (kể cả `posting_log`); tự kiểm cuối dừng migration nếu còn trigger nhắc cờ. Ca phá thử: `app-role.test.ts` (quyền) và `db-rules.test.ts` (đặt cờ rồi DELETE / UPDATE / TRUNCATE đều bị từ chối). Chẩn đoán `LEDGER_TRIGGERS` (DG-DB-2) báo thêm trigger còn nhắc cờ (`cờ thoát:…`).
+- **Đổi:** nhóm ngoại lệ E4 của RULE-LEDGER gỡ; SC-KERNEL-4 và `scripts/kiem-chuan.sh` chỉ cho tên cờ ở hai ca phá thử và chẩn đoán. Test cần dọn dòng thử dùng đường của E3 (`SET LOCAL session_replication_role = replica`). `lich-su-chung-tu.test.ts` bỏ ba lần đặt cờ vì `event_version` nằm trong bảy cột E2, đổi được không cần vượt trigger.
+- **Sửa:** trước đây cờ là biến của phiên: phiên nào cũng `set_config` được rồi xoá / sửa sổ, và `ketoan_app` có `DELETE` trên các bảng này (0032). Cờ chỉ test dùng.
+- **Thay đổi định khoản:** không (K3 **thêm chặt** nên minor; không đổi dữ liệu, không đổi bút toán).
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Script hay SQL tự viết dùng cờ `allow_ledger_purge` để dọn sổ sẽ không còn hiệu lực: dùng đường E3 (`scripts/xoa-chung-tu.sh`, superuser, có sao lưu). TRUNCATE chưa từng được cấp cho `ketoan_app`; thu thêm cho chắc. Bản cài chưa chạy API bằng `ketoan_app` (PHASE-001 mục 0.7) thì chỉ lớp trigger có tác dụng; chủ bảng / superuser vẫn tắt được trigger (`DISABLE TRIGGER`) — chẩn đoán `LEDGER_TRIGGERS` phát hiện sau đó.
+- **Bảo mật:** đóng cửa sau cho phép bất kỳ phiên nào xoá hoặc sửa bút toán chỉ bằng một câu `set_config`.
+
+### SC-PILLAR-1: tiêu chí "đạt" của bảng trụ cột phải có bằng chứng có thật (PHASE-026 S026-15 đợt 1) <!-- [2026-11-08 04:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 -->
+
+- **Thêm:** bộ kiểm **SC-PILLAR-1** (chặn, `tests/conformance/checks/pillar/`): mỗi tiêu chí `status: "dat"` ở `docs/standard/tru-cot.json` phải dẫn tới ít nhất một thứ có thật trong repo (migration, test, mã check, tuyến API, đường dẫn, tên tệp, định danh trong mã) và không dẫn tới thứ đã mất. Tiêu chí có mã check có thật ghi `source = check`, còn lại `manual` (đếm ở ghi chú). Ca mẫu `repo-bad/docs/standard/tru-cot.json`. Dòng SC-PILLAR-1 ở `RULE-QUALITY-GATE`.
+- **Đổi:** không. Trên dữ liệu thật 0 phát hiện (27 tiêu chí đạt: 2 `source = check`, 25 `manual`), không thêm nợ baseline.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
 ### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
 
 - **Thêm:** migration `0084_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).
@@ -29,6 +47,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không (K0, một dòng, không đổi dữ liệu).
 - **Nâng cấp cần làm:** không.
 - **Bảo mật:** không.
+
+### Mã có phiên bản cho đối tượng / chi nhánh / kho: entity_codes và resolveEntity (PHASE-026 S026-4 đợt 1) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — đợt 1 entity_codes -->
+
+- **Thêm:** migration `0085_ma_thuc_the.sql` — bảng `entity_codes` (mã có phiên bản cho partner / branch / warehouse): chỉ thêm, đổi mã = đóng `valid_to` + thêm mã mới, chặn chồng hiệu lực, RLS theo đơn vị. Trigger giữ cột `code` của `partners` / `branches` / `warehouses` khớp ở mọi đường ghi; điền ban đầu từ cột `code` hiện có. `resolveEntity` / `resolveEntities` (mã chính, bí danh, mã ngoài, tra theo ngày), kiểu `EntityRef` / `EntityResolveResult` ở `@ketoan/contracts`. Golden T026-EC-1..9.
+- **Đổi:** `id` và `tenant_id` của đối tượng / chi nhánh / kho không đổi được (guard ở CSDL). Xoá thực thể vẫn được, chỉ đóng mã. Kiểu Kysely `LedgerEntriesTable.event_id` thành `string` (S030-41b).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0085 (tự điền mã cho dữ liệu có sẵn, chạy lại an toàn). Đợt này chưa có đơn vị tính, lý do.
+- **Bảo mật:** `entity_codes` có RLS cô lập theo đơn vị như `item_codes`.
 
 ### Lỗi trigger sổ cái ra đúng mã hợp đồng: không cân, khoá kỳ, sổ chỉ thêm (PHASE-029 S029-33, review R1 RV-R1-02) <!-- [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33 -->
 
