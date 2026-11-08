@@ -39,7 +39,7 @@
         { "id": "L-1", "text": "Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL)", "status": "dat", "evidence": "guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); test db-rules, item-id-so-kho", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
         { "id": "L-2", "text": "Tổng Nợ = tổng Có cuối giao dịch", "status": "dat", "evidence": "assert_entry_balanced (constraint trigger hoãn)", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
         { "id": "L-3", "text": "Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản", "status": "dat", "evidence": "accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1", "gap": "", "next": "", "phase": "PHASE-004", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "L-4", "text": "Dòng sổ mang ảnh chụp mã + định danh mặt hàng", "status": "dat", "evidence": "ledger_lines.product_sku (ảnh chụp) + item_id (0066); đổi item_id bị chặn", "gap": "đối tượng (partner_id) và tài khoản (account_code) chưa có định danh có phiên bản", "next": "S026-4", "phase": "PHASE-024", "level": "P0", "modules": ["ke-toan"] }
+        { "id": "L-4", "text": "Dòng sổ mang ảnh chụp mã + định danh mặt hàng", "status": "mot-phan", "evidence": "libraries/vn.can-cu-phap-ly (18 mục, bí danh LEGAL_BASES), SC-LIB-1 kiểm basis[].key, core.library.attest / attestations (bằng chứng), thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a)", "gap": "chưa văn bản nào được người có trách nhiệm rà bản gốc (review pending); căn cứ của tham số pháp lý phần lớn chưa liên kết mã", "next": "S030-12", "phase": "PHASE-024", "level": "P0", "modules": ["ke-toan"] }
       ]
     },
     {
