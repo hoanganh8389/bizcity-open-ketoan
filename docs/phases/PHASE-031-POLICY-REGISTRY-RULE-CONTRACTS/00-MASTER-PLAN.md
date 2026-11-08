@@ -201,3 +201,22 @@ Không dùng `zod-to-json-schema` (không có trong repo, không thêm phụ thu
 - **T031-API-2** `etag` đổi sau khi phát hành, không đổi khi không có gì mới.
 - **T031-E2E-1** `evaluate` → nạp `sale` kèm quà và `policyRefs` đúng như API trả → `posted`, `policy_check` đạt; đổi băm → `IN-POL-001`; ngày trước `effectiveFrom` → `IN-POL-002`.
 - ~~**T031-MIG-1** áp lại `0082` idempotent~~ — rút cùng S031-27 (không còn đổi tên migration).
+
+## 10. Chữ chốt W2c (K1, Kernel đọc + API; R-FLOW-2): hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem
+<!-- [2026-11-08 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W2c trước khi code: nhánh policy_review của document_queue, bảng bằng chứng policy_review_acks, action ack; không đổi sự việc, không thêm trạng thái -->
+
+Phạm vi: S031-22 **phần đóng được việc** (golden T031-Q-1..5). *Ghi sổ*, *Trả về nguồn*, *Điều chỉnh* của [20 §3](20-TRUY-VET-VA-THEO-DOI.md) **chưa làm** ở đợt này: chế độ *gợi ý* (mặc định, Q031-2) đã ghi sổ ngay, nên việc duy nhất còn lại là xem rồi đóng; *Ghi sổ* chỉ cần khi `strict` — mà sự việc `strict` đã nằm ở nhánh `accounting_event` (pending) sẵn có. *Trả về nguồn* cần sự kiện outbox (S031-26).
+
+**1. Nhánh khung nhìn (migration `0083_xem_lai_chinh_sach.sql`, `CREATE OR REPLACE VIEW bizcity_read.document_queue`).** Thêm một nhánh `UNION ALL` trên `accounting_events`: sự việc có `policy_check->'findings'` khác rỗng, `status` **không** thuộc `pending` / `error` (hai trạng thái đó đã hiện ở nhánh `accounting_event` — không lặp một việc hai dòng), và **chưa có** dòng ở `policy_review_acks` cùng `(tenant_id, event_id, checked_at)`. Cột: `source = 'policy_review'`, `source_id = event_id`, `doc_*` như nhánh `accounting_event`, `status_group = 'pending'`, `flag = 'policy'`, `waiting_since = (policy_check->>'checkedAt')`. **Không thêm nhóm trạng thái mới** (năm nhóm chuẩn của `bizcity_document@1` §5 giữ nguyên — sửa 20 §3 cột `status_group` theo đây); cờ `policy` là giá trị mới của `flag` (đã tính ở đính chính §8).
+
+**2. Bằng chứng, không sửa sự việc.** Bảng `policy_review_acks` (`tenant_id`, `event_id`, `checked_at` text — lấy từ `policy_check.checkedAt` tại lúc xem, `acked_by`, `acked_at`, `note`), `UNIQUE (tenant_id, event_id, checked_at)`, chỉ thêm (trigger chặn `UPDATE` / `DELETE`), RLS như 0074. Khoá theo `checked_at` để **bản mới của sự việc (kiểm lại) mở lại việc** mà không cần sửa dòng cũ (xuyên suốt: mỗi lần kiểm là một việc; truy vết: ai xem bản nào, lúc nào).
+
+**3. Action.** `core.queue.policy-review.ack` — `POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write` (đúng bậc ghi chứng từ; không scope mới), `Idempotency-Key`, thân `{ note? }`, `mcp:false`, `ai:'deny'`. Gọi lần hai cùng `checked_at` trả đúng kết quả lần đầu (không lỗi). Sự việc không có `policy_check` / không có finding → `409` `POLICY_REVIEW_NOT_OPEN`. Mã lỗi vào `docs/huong-dan/` theo `sinh-ma-loi.mjs`.
+
+**4. Hàng việc.** `QUEUE_SOURCES` thêm `policy_review`; `QUEUE_FLAGS` thêm `policy`; `NEXT_PERMISSION['policy_review:*'] = 'documents:write'`; nhãn "Chứng từ chờ kế toán xem chính sách"; `queuePath` → `/chung-tu`; nhóm thanh mép `tong-hop`. Người chỉ có `documents:read` thấy số đếm ở `summary` / `items` nhưng không thấy trong `mine` (như các nguồn khác).
+
+**5. Không làm ở W2c.** Màn hình (W4, S031-18/24); *Ghi sổ* / *Trả về nguồn* / *Điều chỉnh*; đổi `bizcity_lineage@1`.
+
+**Ba yếu tố.** *Nhất quán:* một khung nhìn hàng việc, không hàng việc thứ hai. *Xuyên suốt:* mỗi lần kiểm lại là một việc mới. *Truy vết:* mỗi lần xem một dòng bằng chứng bất biến. *Gọn:* một bảng nhỏ, một nhánh view, một action; không cột mới ở `accounting_events`.
+
+**Golden.** T031-Q-1 sự việc có finding đã ghi sổ hiện ở hàng việc với cờ `policy`; sự việc `pending` chỉ hiện một dòng (nhánh `accounting_event`) · T031-Q-2 ack đóng việc, ack lặp idempotent · T031-Q-3 kiểm lại (`checkedAt` mới) mở lại · T031-Q-4 cô lập đơn vị + ack bảng chỉ thêm · T031-Q-5 `documents:read` không ack được (403).
