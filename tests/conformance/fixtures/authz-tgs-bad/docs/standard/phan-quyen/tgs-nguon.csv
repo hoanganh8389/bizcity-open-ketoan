@@ -1,0 +1,6 @@
+PHÂN QUYỀN CHI TIẾT,,,,,,,,,,,,
+,,,,,,,,,,,,
+STT,Nhóm (sheet gốc),Mã chức năng,Tên chức năng VN,Tìm,Thêm,Sửa,Xóa,In,Xuất,Số quyền được cấp,Danh sách quyền được cấp,Sheet nguồn
+1,Nhóm thử,BC2,Tồn kho,Có,Không,Không,Không,Có,Có,3,"Tìm, In, Xuất",'thu'
+2,Nhóm thử,BH5,Xuất-nhập kho nội bộ,Có,Có,Có,Không,Có,Có,5,"Tìm, Thêm, Sửa, In, Xuất",'thu'
+3,Nhóm thử,HT10,#Được phép sửa dữ liệu trong quá khứ,Có,Không,Có,Không,Không,Không,2,"Tìm, Sửa",'thu'

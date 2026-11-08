@@ -4105,7 +4105,7 @@
     {
       "id": "S028-10",
       "phase": "PHASE-028",
-      "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
+      "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — thư viện phân quyền mẫu TGS (349 m…",
       "priority": "P1",
       "status": "partial",
       "column": "doing",

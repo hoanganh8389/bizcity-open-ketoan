@@ -747,6 +747,22 @@
           ]
         }
       }
+    },
+    {
+      "$comment": "[2026-11-07 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 2: ca tự kiểm SC-AUTH-04 (JSON chỉnh tay lệch bản sinh lại, quyền Core không có thật, báo cáo ra quyền ghi, quyền suy ra không căn cứ)",
+      "root": "authz-tgs-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-AUTH-04": {
+          "findings": 4,
+          "keys": [
+            "stale",
+            "unknown:BH5:khong:co",
+            "report-write:BC2",
+            "derived:tgs-nhom-thu:documents:edit-all"
+          ]
+        }
+      }
     }
   ]
 }
