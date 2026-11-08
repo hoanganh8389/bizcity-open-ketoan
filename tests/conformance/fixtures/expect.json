@@ -533,6 +533,15 @@
           "keys": [
             "TOOL_PASSWORD"
           ]
+        },
+        "SC-PILLAR-1": {
+          "findings": 4,
+          "keys": [
+            "no-evidence:mau/NO-1",
+            "dangling:mau/DM-1:migration:0999",
+            "dangling:mau/DT-1:test:khong-co-tep",
+            "dangling:mau/DC-1:check:SC-KHONG-9"
+          ]
         }
       }
     },
