@@ -133,3 +133,15 @@ Các phát hiện còn lại đi vào phiên bản sở hữu theo [PHIEN-BAN.md
 - Không có CSDL test ⇒ không chạy lane diagnostics, không chạy `npm test`; mọi điểm "3" là theo test đã đọc được trong repo, không phải đã chạy lại.
 - Năm nhóm trục được đọc bởi năm lượt đọc độc lập rồi đối chiếu; hai kết luận trái nhau (NULL của `event_id`; "chưa merge" của W2a) đã kiểm lại trực tiếp và ghi bản đúng ở trên.
 - Chưa đọc mã web từng màn phân hệ ngoài danh sách tệp; điểm A10 / A11 có phần [S].
+
+## 7. Quyết định của chủ dự án sau review
+<!-- [2026-11-08 01:23 PM Johnny Chu - Chu Hoàng Anh] REVIEW — chủ dự án đồng ý hướng xử lý đề xuất cho RV-R1-14 và RV-R1-12; ghi vào tài liệu theo R-FLOW-7 -->
+
+Chủ dự án đồng ý hướng xử lý đề xuất ở biên bản này (2026-11-08). Hai câu hỏi mở được chốt như sau; việc thi hành đi qua giữ chỗ `CLAIMS.md` của phase sở hữu (R-FLOW-1), không làm trong PR review.
+
+| Mã | Quyết định | Điều kiện thi hành | Phase · việc cần mở |
+|---|---|---|---|
+| **D-R1-1** (RV-R1-14) | **Giữ đường E2** (sửa thông tin đầu bút toán đã ghi). | (1) Danh sách trường được sửa chốt thành văn bản trong [RULE-LEDGER](../rules/RULE-LEDGER.md) ngoại lệ E2, xuất phát từ ba trường hiện có (`partner_id`, `doc_no`, `description`); thêm trường là đổi thứ dùng chung, phải có chữ chốt trước (R-FLOW-2). (2) Mỗi lần sửa ghi `audit_logs` trước / sau. (3) Khi (1) và (2) xong, `tru-cot.json` I · L-2 ghi "đạt có điều kiện E2" kèm bằng chứng, không ghi "đạt" trơn. | PHASE-004 — mở Q004-x (chữ chốt danh sách trường) và S004-x (ghi `audit_logs`, test phá thử) |
+| **D-R1-2** (RV-R1-12) | **Hợp nhất**: một khuôn băm cho mọi bản chính sách, và đăng ký chính sách định khoản vào `policy_registry`, làm ở **W3 của PHASE-031**. | Không đổi bút toán đã ghi (R-KER-4); bản `posting_policy_versions` cũ nạp ngược thành bản 1 như đã làm với chính sách mua hàng (0079); `setting_values` giữ riêng vì là cấu hình, không phải chính sách nghiệp vụ — ghi lý do vào chữ chốt W3. | PHASE-031 — mở Q031-x (khuôn băm chung) và S031-x (đăng ký chính sách định khoản) |
+
+Thứ tự việc chặn của v0.1.0 giữ như §5: (1) đổi số migration `0080`, (2) khoá cờ `allow_ledger_purge`, (3) ánh xạ SQLSTATE đúng mã hợp đồng; việc 4 trong §5 nay đã có quyết định D-R1-1, còn phần thi hành nằm ở PHASE-004.

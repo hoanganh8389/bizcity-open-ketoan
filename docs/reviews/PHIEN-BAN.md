@@ -32,7 +32,7 @@ Phase mở sau 031 (032, 033, …) được gán phiên bản **khi mở** (dòn
 
 | Phiên bản | Trạng thái | Việc chặn còn lại | Review xét |
 |---|---|---|---|
-| v0.1.0 | **chưa đóng** | RV-R1-01 (cờ thoát), RV-R1-02 (ánh xạ lỗi), RV-R1-03 (`main` đỏ), RV-R1-07 (hai cửa), RV-R1-14 (chủ chốt E2); PHASE-001 việc tay 0.2 / 0.6 / 0.7; PHASE-008 diễn tập máy chủ thật (⛔) | R1 → xét lại ở R2 |
+| v0.1.0 | **chưa đóng** | RV-R1-01 (cờ thoát), RV-R1-02 (ánh xạ lỗi), RV-R1-03 (`main` đỏ), RV-R1-07 (hai cửa), thi hành D-R1-1 (E2 có điều kiện: danh sách trường + audit); PHASE-001 việc tay 0.2 / 0.6 / 0.7; PHASE-008 diễn tập máy chủ thật (⛔) | R1 → xét lại ở R2 |
 | v0.2.0 | chưa đóng | PHASE-013 S013-3..8, S013-12; PHASE-014 lane runtime 4.3, ca chuẩn 4.5–4.7; RV-R1-11 | R2 |
 | v0.3.0 | chưa đóng | PHASE-020 10/24; PHASE-021 S021-17, -21; PHASE-022 W1+; RV-R1-06, RV-R1-09, RV-R1-10 | R3 |
 | v0.4.0 | chưa đóng | PHASE-023 / 026 W1+; PHASE-024 B2c+; PHASE-025 W2+ (giá vốn, Gate C); RV-R1-17 | — |
@@ -55,4 +55,5 @@ Mỗi dòng: mức K lớn nhất, thay đổi định khoản có / không, nâ
 ## Nhật ký tệp
 
 - **2026-11-08** — khởi tạo (đề xuất) sau review R1.
-- **2026-11-08 01:21 PM** — chủ dự án duyệt nhóm phase → phiên bản v0.1.0 … v1.0.0 như §2. RV-R1-12, RV-R1-14 vẫn là câu hỏi mở cho chủ dự án (chưa quyết).
+- **2026-11-08 01:21 PM** — chủ dự án duyệt nhóm phase → phiên bản v0.1.0 … v1.0.0 như §2.
+- **2026-11-08 01:23 PM** — chủ dự án đồng ý hướng xử lý đề xuất: D-R1-1 giữ E2 có điều kiện (RV-R1-14), D-R1-2 hợp nhất khuôn băm và đăng ký chính sách định khoản ở PHASE-031 W3 (RV-R1-12). Xem [biên bản R1 §7](REVIEW-R1-FOUNDATION-2026-11-08.md).
