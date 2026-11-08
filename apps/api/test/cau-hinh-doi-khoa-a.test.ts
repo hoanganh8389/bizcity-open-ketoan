@@ -116,4 +116,15 @@ describe('T030-CFG-IMP — xem trước tác động (không ghi, không chặn)
     expect((await impact('?scope=branch')).status).toBe(400); // khoá này chỉ đặt theo đơn vị
     expect((await impact('', ctx, 'bizcity.khong.co')).status).toBe(404);
   });
+
+  // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — RV-R1-05 (review R1): regex scopeId của settingImpact thiếu dấu \ nên mọi phạm vi chi nhánh bị từ chối
+  it('T030-CFG-IMP-4 phạm vi chi nhánh / người dùng với scopeId là số được xem trước (200); scopeId không phải số → 400', async () => {
+    const branch = await impact('?scope=branch&scopeId=12', ctx, C);
+    expect(branch.status, JSON.stringify(branch.body)).toBe(200);
+    expect(branch.body.data).toMatchObject({ key: C, scope: 'branch' });
+    const user = await impact('?scope=user&scopeId=7', ctx, C);
+    expect(user.status, JSON.stringify(user.body)).toBe(200);
+    expect(user.body.data).toMatchObject({ scope: 'user' });
+    expect((await impact('?scope=branch&scopeId=CN01', ctx, C)).status).toBe(400); // mã không phải định danh số
+  });
 });

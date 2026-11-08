@@ -355,7 +355,8 @@ export async function settingImpact(
   const scope = input.scope ?? 'tenant';
   const scopeId = scope === 'tenant' ? '' : (input.scopeId ?? '').trim();
   if (!entry.scopes.includes(scope)) throw Errors.validation(`Khoá "${key}" không đặt theo phạm vi ${scope} (chỉ: ${entry.scopes.join(', ')})`);
-  if (scope !== 'tenant' && !/^d+$/.test(scopeId)) throw Errors.validation(`Phạm vi ${scope} cần scopeId là định danh số`);
+  // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — RV-R1-05: /^d+$/ thiếu dấu \ nên scopeId số nào cũng bị từ chối (hàm ghi ở trên dùng đúng \d)
+  if (scope !== 'tenant' && !/^\d+$/.test(scopeId)) throw Errors.validation(`Phạm vi ${scope} cần scopeId là định danh số`);
   const today = settingsToday();
   const validFrom = input.validFrom ?? today;
   if (!DATE_RE.test(validFrom)) throw Errors.validation(`validFrom "${validFrom}" sai khuôn YYYY-MM-DD`);
