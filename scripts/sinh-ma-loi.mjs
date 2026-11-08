@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032): thêm cổng L — bảy mã LIB-* và mã luật riêng của từng thư viện (libraries/*/library.json)
 // [2026-11-03 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — ADR-0020: cột Căn cứ (R-GATE-11); bỏ ghi chú nháp chờ kế toán trưởng
 // [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-27 (ADR-0019, R-GATE-5): sinh trang tra mã docs/huong-dan/ma-loi/README.md từ thư viện phát hiện bizcity_findings@1
 /**
@@ -8,7 +9,7 @@
  *   node scripts/sinh-ma-loi.mjs           in khác biệt (không ghi)
  *   node scripts/sinh-ma-loi.mjs --write   ghi trang
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,6 +19,20 @@ const { FINDINGS_LIBRARY } = await import(new URL('../packages/contracts/dist/fi
 
 const LEVEL = { block: '✘ chặn', warn: '⚠ cảnh báo', info: 'ℹ nhắc' };
 const cell = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+const LIB_DIR = path.join(ROOT, 'libraries');
+/** Mã luật riêng của từng thư viện, theo thứ tự thư mục rồi thứ tự khai. */
+const LIB_RULES = (existsSync(LIB_DIR) ? readdirSync(LIB_DIR).sort() : []).flatMap((d) => {
+  const file = path.join(LIB_DIR, d, 'library.json');
+  if (!existsSync(file)) return [];
+  const lib = JSON.parse(readFileSync(file, 'utf8'));
+  return (lib.rules ?? []).map((r) => ({ ...r, library: lib.id }));
+});
+const ruleTable = () => [
+  '| Mã | Mức | Thư viện | Nghĩa | Vì sao | Cách sửa | Căn cứ |',
+  '|---|---|---|---|---|---|---|',
+  ...LIB_RULES.map((r) =>
+    `| \`${r.code}\` | ${LEVEL[r.level]} | [\`${r.library}\`](../../../libraries/${r.library}/README.md) | ${cell(r.title)} | ${cell(r.why)} | ${cell(r.fix) || '—'} | ${(r.basis ?? []).map((b) => cell(b.ref)).join('; ') || '—'} |`),
+].join('\n');
 const table = (gate) => [
   '| Mã | Mức | Bước | Nghĩa | Vì sao | Cách sửa | Luật | Căn cứ |',
   '|---|---|---|---|---|---|---|---|',
@@ -26,7 +41,7 @@ const table = (gate) => [
 ].join('\n');
 
 const text = `# Tra mã phát hiện — hai cổng kiểm chuẩn
-<!-- TỆP SINH TỰ ĐỘNG bởi scripts/sinh-ma-loi.mjs từ packages/contracts/src/{catalog-hint,intake-findings}.ts — không sửa tay; SC-FIND-1 kiểm. -->
+<!-- TỆP SINH TỰ ĐỘNG bởi scripts/sinh-ma-loi.mjs từ packages/contracts/src/{catalog-hint,intake-findings,library-findings}.ts và libraries/*/library.json — không sửa tay; SC-FIND-1 kiểm. -->
 <!-- [2026-11-02 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — trang tra mã bizcity_findings@1 (ADR-0019, R-GATE-5) -->
 
 > Gặp một mã trong thông báo, trong phản hồi API hay ở Trạm kiểm tra đầu vào: tìm mã ở đây. Máy đọc: \`GET /api/v1/findings/<mã>\`
@@ -45,6 +60,16 @@ ${table('A')}
 Bước L1 khuôn · L2 số học · L3 danh mục · L4 nghiệp vụ · L5 định khoản thử ([R-INTAKE](../../rules/RULE-INTAKE.md)).
 
 ${table('B')}
+
+## Cổng L — thư viện dùng chung (${FINDINGS_LIBRARY.filter((f) => f.gate === 'L').length} mã chung · ${LIB_RULES.length} mã luật)
+
+Bộ kiểm của mọi thư viện [bizcity_library@1](../../contracts/BIZCITY-LIBRARY-v1.md) trả các mã này kèm **gợi ý** lấy từ chính thư viện (mã gần nhất, mã thay thế, giá trị đúng ngày). Máy đọc: \`POST /api/v1/libraries/<id>/validate\`.
+
+${table('L')}
+
+### Mã luật riêng của từng thư viện
+
+${ruleTable()}
 `;
 
 let current = '';

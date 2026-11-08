@@ -51,3 +51,18 @@ Không vẽ form chi tiết; form thật dùng `@bizcity/ui-kit` khi module đư
 | `#doichieu` | 21 dòng đối chiếu menu Cấu hình của Erp-vn | thứ tự ưu tiên |
 
 Giá trị và căn cứ tham số pháp lý lấy từ tệp `lfood-legal-params@1` (Erp-vn, 06/11), **chưa được kế toán trưởng xác nhận**; hạn mức, quy chế nội bộ, số chứng từ, người dùng là minh hoạ.
+
+## Kho thư viện (HT14) <!-- [2026-11-08 11:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-46 -->
+
+[kho-thu-vien.html](kho-thu-vien.html) — bản mẫu tĩnh của màn **HT14 Kho thư viện** (thiết kế: [26-KHO-THU-VIEN](../26-KHO-THU-VIEN.md)). Số thư viện / mục / phiên bản lấy từ 4 thư viện thật của đợt A (S030-45); **số liệu sử dụng là minh hoạ** (bảng `library_usage_daily` có ở B2).
+
+| Tab (`#…`) | Cho thấy | Chủ dự án duyệt |
+|---|---|---|
+| `#tong-quan` | bảng đánh giá ba lớp: thư viện (duyệt, đối chiếu) · sử dụng (qua / cảnh báo / chặn) · module (độ phủ, kết luận ĐẠT / có điều kiện / KHÔNG ĐẠT); mã phát hiện nhiều nhất; mã lạ — ứng viên bổ sung | chỉ số và ngưỡng kết luận |
+| `#danh-sach` | thẻ từng thư viện (loại, bản, chủ duyệt, Core / tuỳ chọn, dự kiến) | — |
+| `#chi-tiet` | Mục (ô chọn tìm không dấu, giá trị tại ngày, ghi đè đơn vị) · Phiên bản · Căn cứ · Luật (hạ mức) · Nơi dùng · Kiểm thử (bộ kiểm mô phỏng: UNKNOWN, VALUE, EFFECTIVE, resolved) | cách hiện "chưa duyệt" / "đã đối chiếu" |
+| `#can-cu` | thư viện `vn.can-cu-phap-ly`: văn bản còn / sắp hết / hết, mục trỏ tới; thêm căn cứ, xác nhận cho đơn vị | Q030-L2 |
+| `#cau-hinh` | bật thư viện tuỳ chọn, đọc theo ngày, hạ mức luật, ghi đè (chính sách / luật), gắn trường | Q030-L3 |
+| `#de-xuat` | phiếu đề xuất cập nhật của đơn vị → Nhóm Lõi → vào bản | — |
+| `#bo-kiem` | sáu điểm gắn bộ kiểm, sáu bước một lượt kiểm, khai `libraries[]` trong manifest | Q030-L4 |
+| `#dev` | skill `use-bizcity-library`: `library search / check / new / diff`, công cụ MCP | — |

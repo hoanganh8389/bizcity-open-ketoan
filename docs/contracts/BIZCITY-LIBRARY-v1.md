@@ -1,8 +1,8 @@
 # `bizcity_library@1` — Thư viện dùng chung
 <!-- [2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 (ADR-0032): hợp đồng khuôn chung cho thư viện tham chiếu — phong bì, mục, phiên bản ba tầng, luật khai báo, gợi ý, mã LIB-*, ô chọn, API -->
 
-> **Phiên bản:** 1.0.1-draft · 2026-11-07 · **Trạng thái:** Đề xuất — thiết kế đã chấp nhận ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md)), mã ở S030-45 (chưa có)
-> **Lược đồ máy đọc:** [BIZCITY-LIBRARY-v1.schema.json](BIZCITY-LIBRARY-v1.schema.json) · **Kiểu TypeScript (đợt A, chưa có):** `packages/platform/src/core/libraries/types.ts`; mã `LIB-*` ở `packages/contracts/src/library-findings.ts` (gom vào `findings.ts`) · **Kiểm:** SC-LIB-1
+> **Phiên bản:** 1.1.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
+> **Lược đồ máy đọc:** [BIZCITY-LIBRARY-v1.schema.json](BIZCITY-LIBRARY-v1.schema.json) · **Kiểu TypeScript + bộ kiểm:** `packages/platform/src/core/libraries/` (`types.ts`, `engine.ts`, `index.ts`) · **Dùng chung với bộ kiểm chuẩn:** `scripts/thu-vien/thu-vien.mjs` · **API:** [docs/api/16-thu-vien.md](../api/16-thu-vien.md); mã `LIB-*` ở `packages/contracts/src/library-findings.ts` (gom vào `findings.ts`) · **Kiểm:** SC-LIB-1
 > **Liên quan:** [`bizcity_findings@1`](BIZCITY-FINDINGS-v1.md) (mã `LIB-*`), [`bizcity_settings@1`](BIZCITY-SETTINGS-MATRIX-v1.md) (giá trị của đơn vị), [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) (chính sách của đơn vị)
 
 ## 1. Thư viện là gì
@@ -223,3 +223,4 @@ Với mỗi `libraries/*/library.json`:
 |---|---|---|
 | 1.0.0-draft | 2026-11-07 | Bản đầu: phong bì, mục, phiên bản ba tầng, kiểm chuẩn + luật khai báo + gợi ý, mã `LIB-*`, ô chọn, API, SC-LIB-1 (ADR-0032) |
 | 1.0.1-draft | 2026-11-07 | Sửa khi viết mã (S030-45): `LIB-NOT-EFFECTIVE-001` → `LIB-EFFECTIVE-001`; mã luật ba khúc `<codePrefix>-<NHÓM>-<NNN>`; ví dụ §6.3 đúng khoảng hiệu lực <!-- [2026-11-07 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 --> |
+| 1.1.0-draft | 2026-11-07 | Thi hành đợt A (S030-45): bộ nạp + bộ kiểm có gợi ý ở Platform, `core.library.list / get / items / validate`, cổng L trong `bizcity_findings@1`, SC-LIB-1, thư viện `vn.tham-so-phap-ly` và `vn.ngay-nghi-le`; `percent` không giới hạn trên (làm thêm 150 / 200 / 300 %) <!-- [2026-11-07 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 --> |

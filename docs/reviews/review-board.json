@@ -1,0 +1,74 @@
+{
+  "$comment": "[2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — bizcity_review_board@1: bản máy đọc của bộ review theo nhịp (docs/reviews/). Trục và thang theo TIEU-CHI.md v1.0; điểm và phát hiện của từng review chỉ thêm, không sửa; phiên bản theo PHIEN-BAN.md (nhóm phase chủ dự án duyệt 2026-11-08). Không ghi giờ sinh để cùng nguồn luôn ra cùng tệp.",
+  "contract": "bizcity_review_board@1",
+  "version": "0.1.0-draft",
+  "criteriaVersion": "1.0",
+  "updated": "2026-11-08",
+  "doc": "docs/reviews/README.md",
+  "levels": {
+    "0": "chưa có",
+    "1": "chỉ tài liệu / ADR / mockup",
+    "2": "có mã, chưa đủ (thiếu test, còn lỗ hổng, hoặc một phân hệ dùng)",
+    "3": "mã + test / check bảo vệ",
+    "4": "mã + test + bằng chứng chạy thật"
+  },
+  "cadence": { "everyPhases": 3, "rule": "RV-7", "next": { "review": "R2", "afterPhase": "PHASE-034", "versionsToJudge": ["v0.1.0", "v0.2.0"] } },
+  "axes": [
+    { "id": "A1", "title": "Nền tảng lõi & hợp đồng", "side": "trong", "gate": false, "pillars": ["I", "IV", "VIII"], "foundations": ["08", "09", "16"], "compliance": [] },
+    { "id": "A2", "title": "Bảo toàn số & một cửa ghi sổ", "side": "trong", "gate": true, "pillars": ["I", "V"], "foundations": ["09", "13"], "compliance": ["C-2", "C-3", "C-4", "C-7"] },
+    { "id": "A3", "title": "Liên tục & truy vết chứng từ gốc", "side": "trong", "gate": false, "pillars": ["III", "VI"], "foundations": ["10", "11"], "compliance": ["C-1", "C-6"] },
+    { "id": "A4", "title": "Cross-module & sự kiện", "side": "trong", "gate": false, "pillars": ["VIII", "III"], "foundations": ["08", "11"], "compliance": ["C-5"] },
+    { "id": "A5", "title": "Minh bạch & nhật ký vận hành", "side": "ngoai+trong", "gate": false, "pillars": ["VI"], "foundations": ["17"], "compliance": ["C-8"] },
+    { "id": "A6", "title": "Cổng kiểm & thư viện lỗi", "side": "ngoai", "gate": false, "pillars": ["IV"], "foundations": ["12"], "compliance": ["C-1"] },
+    { "id": "A7", "title": "Kernel báo lỗi cho module", "side": "trong->ngoai", "gate": true, "pillars": ["IV", "VI"], "foundations": ["09", "12"], "compliance": [] },
+    { "id": "A8", "title": "Chứng từ: phiên bản · workflow · transition · quyền", "side": "trong", "gate": false, "pillars": ["III", "VII"], "foundations": ["06", "07"], "compliance": ["C-1", "C-3", "C-6"] },
+    { "id": "A9", "title": "Policy Registry: chặt trong, mềm ngoài", "side": "trong+ngoai", "gate": false, "pillars": ["V", "0"], "foundations": ["02", "05"], "compliance": ["C-9"] },
+    { "id": "A10", "title": "Cấu hình UI/UX & tài liệu dev", "side": "ngoai", "gate": false, "pillars": ["0", "V", "VII"], "foundations": ["02", "04"], "compliance": [] },
+    { "id": "A11", "title": "Module thi hành", "side": "ngoai", "gate": false, "pillars": ["VIII"], "foundations": ["15", "16"], "compliance": [] },
+    { "id": "A12", "title": "Lean & vận hành cộng đồng", "side": "ngoai", "gate": true, "pillars": ["VIII"], "foundations": ["12", "16"], "compliance": [] }
+  ],
+  "target_v1": { "A1": 4, "A2": 4, "A3": 3, "A4": 4, "A5": 3, "A6": 4, "A7": 4, "A8": 3, "A9": 3, "A10": 3, "A11": 3, "A12": 3, "total": 41 },
+  "reviews": [
+    {
+      "id": "R1",
+      "kind": "foundation",
+      "date": "2026-11-08",
+      "commit": "886f4f95",
+      "phases": ["PHASE-001", "PHASE-002", "PHASE-003", "PHASE-004", "PHASE-005", "PHASE-006", "PHASE-007", "PHASE-008", "PHASE-009", "PHASE-010", "PHASE-011", "PHASE-012", "PHASE-013", "PHASE-014", "PHASE-015", "PHASE-016", "PHASE-017", "PHASE-018", "PHASE-019", "PHASE-020", "PHASE-021", "PHASE-022", "PHASE-023", "PHASE-024", "PHASE-025", "PHASE-026", "PHASE-027", "PHASE-028", "PHASE-029", "PHASE-030", "PHASE-031"],
+      "doc": "docs/reviews/REVIEW-R1-FOUNDATION-2026-11-08.md",
+      "selfcheck": { "result": "KHONG_DAT", "failing": ["SC-DATA-1"], "conformance": 98.6, "standardReadiness": 77.2, "ruleCoverage": 43, "roadmap": 71, "compliance": 77, "diagnostics": "skipped: no test database" },
+      "scores": { "A1": 3, "A2": 2, "A3": 2, "A4": 3, "A5": 2, "A6": 3, "A7": 2, "A8": 2, "A9": 2, "A10": 2, "A11": 2, "A12": 2 },
+      "total": 27,
+      "max": 48,
+      "verdict": "dat-co-dieu-kien",
+      "findings": [
+        { "id": "RV-R1-01", "level": "chan", "axis": "A2", "title": "Cờ thoát sổ chỉ thêm (ketoan.allow_ledger_purge) tự bật được; ketoan_app có DELETE", "evidence": ["db/migrations/0006_goc_so_cai.sql:640-676", "db/migrations/0049_khoa_dau_but_toan.sql:64-97", "db/migrations/0032_vai_tro_ung_dung.sql:28"], "rule": "RULE-LEDGER; R-KER-4", "phase": "PHASE-004", "task": "đề xuất S004-x", "kLevel": "K3 thêm chặt" },
+        { "id": "RV-R1-02", "level": "chan", "axis": "A7", "title": "SQLSTATE 23514 / 42501 bị gộp thành POSTING_FAILED; module không nhận UNBALANCED_ENTRY / PERIOD_LOCKED / LEDGER_APPEND_ONLY", "evidence": ["packages/platform/src/core/http.ts:76", "db/migrations/0006_goc_so_cai.sql:25-26", "db/migrations/0081_khoa_ky_o_csdl.sql:27-29"], "rule": "BIZCITY-ERRORS-v1 §5", "phase": "PHASE-029", "task": "đề xuất S029-x", "kLevel": "K0" },
+        { "id": "RV-R1-03", "level": "chan", "axis": "A12", "title": "main đỏ: hai migration cùng số 0080 (SC-DATA-1)", "evidence": ["db/migrations/0080_kiem_chinh_sach_su_viec.sql", "db/migrations/0080_nguoi_tao_su_viec_bat_buoc.sql"], "rule": "R-FLOW-5", "phase": "PHASE-029", "task": "fix/phase-029-k3-doi-so-0081 (đã giữ chỗ)", "kLevel": "K0" },
+        { "id": "RV-R1-04", "level": "nang", "axis": "A9", "title": "Chính sách đã ngừng vẫn qua kiểm: retirePolicy không đóng effective_to, covers() bỏ status", "evidence": ["packages/platform/src/core/policies.ts:117-121", "packages/kernel/src/modules/intake/policy-check.ts:32"], "rule": "ADR-0031", "phase": "PHASE-031", "task": "đề xuất S031-x", "kLevel": "K1" },
+        { "id": "RV-R1-05", "level": "nang", "axis": "A9", "title": "Regex /^d+$/ thiếu dấu \\ ở settingImpact", "evidence": ["packages/platform/src/core/settings.ts:358"], "rule": "RULE-SETTINGS-MATRIX; D030-12", "phase": "PHASE-030", "task": "sửa một tệp + test", "kLevel": "K0" },
+        { "id": "RV-R1-06", "level": "nang", "axis": "A7", "title": "Lỗi Kernel không mang docKey / eventId / kỳ / remedy", "evidence": ["packages/kernel/src/modules/ledger/ledger.service.ts:65", "packages/kernel/src/modules/ledger/ledger.service.ts:108", "packages/contracts/src/errors.ts:23-37"], "rule": "BIZCITY-REMEDY-v1; ADR-0020", "phase": "PHASE-022", "task": "đề xuất details chuẩn + remedy cho ERROR_CATALOG", "kLevel": "K1" },
+        { "id": "RV-R1-07", "level": "nang", "axis": "A2", "title": "Hai cửa ghi (eventStore.post dùng ngoài Kernel ở assets); mua hàng gửi số tài khoản", "evidence": ["apps/api/src/modules/assets/asset.service.ts:29", "apps/api/src/phan-he/mua-hang/posting.ts:111"], "rule": "câu không thương lượng 3, 4; RULE-POSTING", "phase": "PHASE-004", "task": "đề xuất; cùng đợt chuyển mua hàng PHASE-013", "kLevel": "K2" },
+        { "id": "RV-R1-08", "level": "nang", "axis": "A8", "title": "Cùng phiên bản khác nội dung bị ghi đè im lặng, không archiveVersion", "evidence": ["packages/kernel/src/modules/documents/document.service.ts:403-433", "apps/api/src/phan-he/mua-hang/posting.ts:105"], "rule": "RULE-EVENT; BIZCITY-DOCUMENT-v1 §7", "phase": "PHASE-029", "task": "S029-5 + đề xuất VERSION_CONTENT_MISMATCH", "kLevel": "K1" },
+        { "id": "RV-R1-09", "level": "nang", "axis": "A5", "title": "Không API / màn xem từng sự kiện vào; last_error không lộ; dead bị xoá sau 90 ngày", "evidence": ["apps/api/src/modules/system/events.routes.ts:15-29", "packages/platform/src/core/events.ts:353-375"], "rule": "BIZCITY-EVENT-v1", "phase": "PHASE-019", "task": "S029-28, S029-32 + đề xuất events/items", "kLevel": "K1" },
+        { "id": "RV-R1-10", "level": "nang", "axis": "A9", "title": "Commit Guard chỉ chặn khi lệch dấu và còn lỗi chặn; bút toán thật có thể khác bút toán dự kiến", "evidence": ["packages/kernel/src/modules/intake/preflight.ts:209", "packages/kernel/src/modules/intake/guard.ts:35-62"], "rule": "RULE-GATE; PHASE-031 10 §7", "phase": "PHASE-031", "task": "đề xuất S031-x", "kLevel": "K1" },
+        { "id": "RV-R1-11", "level": "vua", "axis": "A8", "title": "Transition không ghi quyền / vai; không bảng lịch sử; chỉ 2 YAML; mua hàng chưa SoD", "evidence": ["packages/platform/src/core/workflow.ts:219-245", "apps/api/src/phan-he/mua-hang/purchase-document.workflow.yaml"], "rule": "RULE-WORKFLOW", "phase": "PHASE-029", "task": "S029-11, S029-25; PHASE-028 W3", "kLevel": "K1" },
+        { "id": "RV-R1-12", "level": "vua", "axis": "A9", "title": "Ba cơ chế phiên bản chính sách song song, ba khuôn băm; chính sách định khoản chưa vào Registry", "evidence": ["db/migrations/0079_so_dang_ky_chinh_sach.sql", "packages/platform/src/core/policies.ts", "packages/platform/src/core/settings.ts"], "rule": "ADR-0009; ADR-0031; LEAN-3", "phase": "PHASE-031", "task": "Q031-x + S031-x (D-R1-2: hợp nhất khuôn băm, đăng ký chính sách định khoản ở W3)", "decision": "D-R1-2 hợp nhất ở PHASE-031 W3, chủ dự án 2026-11-08", "kLevel": "—" },
+        { "id": "RV-R1-13", "level": "vua", "axis": "A3", "title": "correlation_id / trace_id thiếu ở posting_log và intake_inbox; không tra theo correlation", "evidence": ["db/migrations/"], "rule": "BIZCITY-EVIDENCE-v1; ECP-04", "phase": "PHASE-029", "task": "S029-14 mở rộng", "kLevel": "K1" },
+        { "id": "RV-R1-14", "level": "vua", "axis": "A2", "title": "Nhánh E2 cho UPDATE partner_id / doc_no / description trên bút toán posted không cần cờ — chưa có chữ chốt phạm vi", "evidence": ["db/migrations/0049_khoa_dau_but_toan.sql:36-44"], "rule": "RULE-LEDGER ngoại lệ E2", "phase": "PHASE-004", "task": "Q004-x + S004-x (D-R1-1: giữ E2, chốt danh sách trường, ghi audit_logs)", "decision": "D-R1-1 giữ E2 có điều kiện, chủ dự án 2026-11-08", "kLevel": "—" },
+        { "id": "RV-R1-15", "level": "vua", "axis": "A12", "title": "Tài liệu chậm hơn mã: PHASE-031 README 'Code: chưa', CANON §4 event@1, phat-trien.md §4b trái ADR-0024, HT12 trùng, tru-cot P-7 lỗi thời", "evidence": ["docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/README.md", "docs/00-CANON.md", "docs/phat-trien.md", "modules/phan-quyen/web/index.tsx:8"], "rule": "R-FLOW-7; CANON §5", "phase": "PHASE-027", "task": "CK-2", "kLevel": "K0" },
+        { "id": "RV-R1-16", "level": "nhe", "axis": "A10", "title": "ui-kit 8 thành phần; template không có màn cấu hình; GateResult chưa chốt chặn 3 màn", "evidence": ["packages/ui-kit/src/index.tsx", "templates/starter-module/"], "rule": "BIZCITY-EXTENSION-v1", "phase": "PHASE-013", "task": "S013-12, S026-12, S030-28", "kLevel": "K1" },
+        { "id": "RV-R1-17", "level": "nhe", "axis": "A3", "title": "Liên tục kế toán chỉ thiết kế: không valuation_layers, Gate C, CT-*; bút toán → báo cáo chưa có", "evidence": ["packages/kernel/src/modules/lineage/"], "rule": "ADR-0021; ADR-0028; RULE-CONTINUITY", "phase": "PHASE-025", "task": "S025-5..18; S029-6; S029-27", "kLevel": "K2" },
+        { "id": "RV-R1-18", "level": "nhe", "axis": "A11", "title": "Ngoài mua hàng, phân hệ thiếu workflow / chính sách / họ mã lỗi; chuyển modules/ ≈ 10–15 %", "evidence": ["apps/api/src/phan-he/", "modules/"], "rule": "ADR-0024", "phase": "PHASE-013", "task": "S013-3..8; S030-16; S030-21; S031-15", "kLevel": "K1" }
+      ]
+    }
+  ],
+  "versions": [
+    { "id": "v0.1.0", "name": "Nền móng", "phases": ["PHASE-001", "PHASE-002", "PHASE-003", "PHASE-004", "PHASE-005", "PHASE-006", "PHASE-007", "PHASE-008", "PHASE-009", "PHASE-010"], "status": "chua-dong", "blockers": ["RV-R1-01", "RV-R1-02", "RV-R1-03", "RV-R1-07", "thi hành D-R1-1", "PHASE-001 0.2/0.6/0.7", "PHASE-008 máy chủ thật"], "maxKernelLevel": "K3", "judgedBy": ["R1", "R2"] },
+    { "id": "v0.2.0", "name": "Module SDK", "phases": ["PHASE-011", "PHASE-012", "PHASE-013", "PHASE-014"], "status": "chua-dong", "blockers": ["S013-3..8", "S013-12", "4.3", "4.5", "4.6", "4.7", "RV-R1-11"], "maxKernelLevel": "K1", "judgedBy": ["R2"] },
+    { "id": "v0.3.0", "name": "Kiểm chuẩn & bằng chứng", "phases": ["PHASE-018", "PHASE-019", "PHASE-020", "PHASE-021", "PHASE-022"], "status": "chua-dong", "blockers": ["PHASE-020 10/24", "S021-17", "S021-21", "PHASE-022 W1+", "RV-R1-06", "RV-R1-09", "RV-R1-10"], "maxKernelLevel": "K1", "judgedBy": ["R3"] },
+    { "id": "v0.4.0", "name": "Dữ liệu gốc & liên tục", "phases": ["PHASE-023", "PHASE-024", "PHASE-025", "PHASE-026"], "status": "chua-dong", "blockers": ["PHASE-024 B2c+", "PHASE-025 W2+", "RV-R1-17"], "maxKernelLevel": "K2", "judgedBy": [] },
+    { "id": "v0.5.0", "name": "Enterprise continuity & chính sách", "phases": ["PHASE-027", "PHASE-028", "PHASE-029", "PHASE-030", "PHASE-031"], "status": "chua-dong", "blockers": ["RV-R1-04", "RV-R1-05", "RV-R1-08", "RV-R1-12", "RV-R1-13", "RV-R1-15"], "maxKernelLevel": "K3", "judgedBy": [] },
+    { "id": "v1.0.0", "name": "Hệ sinh thái", "phases": ["PHASE-015", "PHASE-016", "PHASE-017"], "status": "chua-mo", "blockers": ["cần Hub", "R-REL-4"], "maxKernelLevel": "—", "judgedBy": [] }
+  ]
+}
