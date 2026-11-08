@@ -5,19 +5,21 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 11 |
+| Đang làm | 14 |
 | Chờ merge | 0 |
 | Bị chặn | 31 |
 | Chưa ai nhận | 140 |
 | Chờ đủ tín hiệu | 49 |
 | Hoãn | 1 |
 | Xong | 248 |
-| **Tổng** | **480** |
+| **Tổng** | **483** |
 
-## Đang làm (11)
+## Đang làm (14)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
+| [S004-12](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L24) | PHASE-004 | Khoá cờ thoát ketoan.allowledgerpurge: chỉ vai trò bảo trì bật được (không còn là biến phiên tự đặt), bỏ DELE… | — | hoanganh8389 (phiên Claude, review-r1) · `docs/phase-004-chot-co-purge-e2` |
+| [S004-13](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L25) | PHASE-004 | Đường E2 có điều kiện (D-R1-1): chốt (trước hết ở 00-MASTER-PLAN, sau đó đưa vào RULE-LEDGER khi dòng giữ chỗ… | — | hoanganh8389 (phiên Claude, review-r1) · `docs/phase-004-chot-co-purge-e2` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S014-15](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L26) | PHASE-014 | W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh ac… | — | hoanganh8389 (phiên Claude, audit-in-action) · `feat/phase-014-audit-in-action` |
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
@@ -26,6 +28,7 @@
 | [S026-4](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L10) | PHASE-026 | entitycodes cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng b… | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-entity-codes` |
 | [S026-15](PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md#L22) | PHASE-026 | SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = chec… | P1 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-pillar-evidence` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
+| [S029-33](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L42) | PHASE-029 | Ánh xạ lỗi trigger sổ cái đúng mã hợp đồng BIZCITY-ERRORS-v1 §5: http.ts nhận ra "không cân" (23514) → UNBALA… | P0 | hoanganh8389 (phiên Claude, review-r1) · `fix/phase-029-s029-33-sqlstate` |
 | [S030-41b](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L50) | PHASE-030 | Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thu… | P2 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-026-entity-codes` |
 | [S030-47](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L55) | PHASE-030 | B1 — HT14 bản chỉ đọc (modules/thu-vien/), LibraryPicker trong ui-kit (A2), trụ cột IX vào tru-cot.json (26 §… | P0 | hoanganh8389 (phiên Claude, thu-vien-b1) · `feat/s030-47-kho-thu-vien-b1` |
 | [S031-13](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L22) | PHASE-031 | API cho nguồn ngoài: GET /api/v1/policies, GET /api/v1/rule-contracts[/:id], POST /api/v1/policies/evaluate (… | P0 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w3a-api-chinh-sach` |
