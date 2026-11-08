@@ -75,7 +75,25 @@ GET  /api/v1/libraries/vn.can-cu-phap-ly/attestations
 
 `core.library.attest` (quyền `settings:write` — kế toán trưởng, chủ đơn vị; cần `Idempotency-Key`): đơn vị xác nhận đã đối chiếu một mục, hoặc gỡ (`"revoke": true`). Lý do bắt buộc (≥ 5 ký tự); mã phải là **mã chuẩn** (không bí danh). Mỗi lần là một **bằng chứng** (`meta.receipt`), không đổi thư viện gốc, không đổi trạng thái duyệt của Nhóm Lõi. `core.library.attestations` trả lần mới nhất của từng mục: `attested`, `valid` (còn hiệu lực — mục chưa đổi từ lúc xác nhận), bản, người, lúc, lý do. Trợ lý AI chỉ đọc (`ai: 'deny'` cho xác nhận).
 
-## 6. Gọi trong máy chủ
+## 6. Cấu hình của đơn vị và phiếu đề xuất
+<!-- [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b -->
+
+```http
+GET  /api/v1/libraries/vn.tham-so-phap-ly/config
+POST /api/v1/libraries/vn.tham-so-phap-ly/config   { "config": { "overrides": { "GIO_LAM_VIEC_NGAY": [{ "from": "2026-01-01", "value": 7.5, "reason": "Nội quy công ty 2026" }] } }, "reason": "Áp nội quy 2026" }
+```
+
+`core.library.configure` (`settings:write`, `Idempotency-Key`, lý do bắt buộc) ghi **phiên bản cấu hình mới** (chỉ thêm) cho đơn vị: `enabled` (chỉ thư viện `optional`), `atPolicy` (`docDate` · `today`, thư viện tham số), `ruleLevels` (hạ mức luật riêng của thư viện; `LIB-*` không hạ được), `overrides` (giá trị ghi đè có ngày hiệu lực; ngày rơi vào kỳ đã khoá → `PERIOD_LOCKED`). Sau đó `validate` trả `valueSource: "tenant"` khi dùng giá trị đơn vị, `items` ghi `overridden: true`; thư viện đã tắt trả `NOT_FOUND` cho đơn vị đó. `GET …/config` trả bản hiện hành và lịch sử; `GET /api/v1/libraries` có thêm `optional`, `enabled`, `configVersion`.
+
+```http
+POST /api/v1/libraries/vn.ngay-nghi-le/proposals    { "kind": "them-muc", "content": "Thêm 2026-09-01, 2026-09-02 — nghỉ Quốc khánh", "basisKey": "vn.law.88-2015-qh13" }
+GET  /api/v1/libraries/proposals?library=vn.ngay-nghi-le&status=gui
+POST /api/v1/libraries/proposals/12/status          { "status": "da-vao", "resolvedVersion": "1.1.0" }
+```
+
+Phiếu đề xuất (`core.library.propose`, `catalog:write`): `kind` = `them-muc` · `sua-gia-tri` · `can-cu` · `bao-sai` · `ngung-dung` (trừ `them-muc`, cần `itemCode`); `basisKey` phải có trong `vn.can-cu-phap-ly`. Trạng thái (`core.library.proposal.update`): `gui → nhan → da-vao` (kèm bản) `| tu-choi` — người có `settings:write`; `rut` — chỉ người gửi; sai vòng → `CONFLICT`. Phiếu không xoá, nội dung không sửa (trigger CSDL).
+
+## 7. Gọi trong máy chủ
 
 Module, add-in trong cùng tiến trình gọi thẳng bộ kiểm, không qua HTTP:
 

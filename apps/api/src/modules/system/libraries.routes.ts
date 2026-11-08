@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b (B3b, 26 §7.1): cấu hình thư viện theo đơn vị (configure / config — tắt thư viện tuỳ chọn, hạ mức luật, ghi đè giá trị) áp vào list / get / items / validate; phiếu đề xuất (propose / proposals / proposal.update)
 // [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a (B3a, PHASE-030 · 26 §6): core.library.attest (xác nhận căn cứ theo đơn vị — bằng chứng, settings:write, lý do bắt buộc) và core.library.attestations
 // [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 (B2, PHASE-030 · 26 §8–§9): validate nhận `source` và đếm lượt dùng (gom theo lượt, không hẹn giờ); core.library.usage cho bảng đánh giá; ghi hết khi máy chủ tắt
 // [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 (ADR-0032, BIZCITY-LIBRARY-v1 §10): API thư viện dùng chung — danh sách, phong bì, dòng ô chọn theo ngày, kiểm ô nhập có gợi ý; mở cho MCP (ai: 'read')
@@ -12,13 +13,19 @@
  *                                                theo nguồn, mã phát hiện nhiều nhất, mã lạ (bảng đánh giá HT14)
  *   POST /api/v1/libraries/:id/attest            core.library.attest    — { code, reason, revoke? } → đơn vị xác nhận / gỡ xác nhận một mục (bằng chứng)
  *   GET  /api/v1/libraries/:id/attestations      core.library.attestations — lần xác nhận mới nhất của từng mục; hết hiệu lực khi mục đổi
+ *   GET  /api/v1/libraries/:id/config            core.library.config    — cấu hình hiện hành của đơn vị + lịch sử phiên bản
+ *   POST /api/v1/libraries/:id/config            core.library.configure — { config, reason } → phiên bản cấu hình mới (chỉ thêm; ghi đè rơi kỳ khoá → PERIOD_LOCKED)
+ *   GET  /api/v1/libraries/proposals             core.library.proposals — phiếu đề xuất của đơn vị (?library=&status=)
+ *   POST /api/v1/libraries/:id/proposals         core.library.propose   — { kind, content, itemCode?, basisKey? } → phiếu mới
+ *   POST /api/v1/libraries/proposals/:pid/status core.library.proposal.update — { status, resolvedVersion?, note? } (rút: người gửi; nhận / vào bản / từ chối: settings:write)
  * Nội dung không phụ thuộc đơn vị (tệp của bản dựng). Quyền catalog:read như thư viện mã phát hiện.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
-  ATTEST_OBJECT, flushLibraryUsage, getLibrary, itemHash, libraryAttestations, libraryReadme, libraryUsage, listLibraries, recordLibraryUsage, selectorRows,
-  shouldFlush, validateInLibrary,
+  ATTEST_OBJECT, PROPOSAL_KINDS, PROPOSAL_STATUSES, createProposal, currentLibraryConfig, flushLibraryUsage, getLibrary, itemHash, libraryAttestations,
+  libraryConfigHistory, libraryReadme, libraryUsage, listLibraries, listProposals, recordLibraryUsage, saveLibraryConfig, selectorRows, shouldFlush,
+  tenantLibraryConfigs, updateProposal, validateInLibrary, type LibraryConfig,
 } from '@bizcity/platform/core/libraries/index';
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
@@ -33,6 +40,19 @@ const need = (libId: string) => {
   return lib;
 };
 
+/** Thư viện + cấu hình hiện hành của đơn vị; thư viện đơn vị đã tắt → NOT_FOUND (26 §7.1). */
+async function needFor(tx: Parameters<typeof currentLibraryConfig>[0], tenantId: string, libId: string): Promise<{ lib: ReturnType<typeof need>; config: LibraryConfig | undefined }> {
+  const lib = need(libId);
+  const cur = await currentLibraryConfig(tx, tenantId, lib.id);
+  if (cur?.config.enabled === false) throw Errors.notFound(`thư viện ${libId} — đơn vị đã tắt (bật lại ở Kho thư viện → Cấu hình)`);
+  return { lib, config: cur?.config };
+}
+/** Khoá căn cứ hợp lệ cho basisKey (mã + bí danh của vn.can-cu-phap-ly). */
+const basisKeys = (): Set<string> | undefined => {
+  const b = getLibrary('vn.can-cu-phap-ly');
+  return b ? new Set(b.items.flatMap((x) => [x.code, ...(x.aliases ?? [])])) : undefined;
+};
+
 const suggestion = z.object({ value: z.unknown(), label: z.string(), why: z.string(), confidence: z.enum(['cao', 'vua', 'thap']) });
 const finding = z.object({
   code: z.string(), level: z.enum(['block', 'warn', 'info']), path: z.string(), message: z.string(),
@@ -40,7 +60,7 @@ const finding = z.object({
 });
 const result = z.object({
   ok: z.boolean(), library: z.object({ id: z.string(), version: z.string(), hash: z.string() }), at: z.string(),
-  resolved: z.string().optional(), value: z.unknown().optional(), findings: z.array(finding),
+  resolved: z.string().optional(), value: z.unknown().optional(), valueSource: z.enum(['library', 'tenant']).optional(), findings: z.array(finding),
 });
 const input = z.union([z.string().trim().min(1).max(120), z.record(z.unknown())]);
 
@@ -49,14 +69,24 @@ const list = defineAction({
   description: 'Mọi thư viện tham chiếu (bizcity_library@1): tham số pháp lý, ngày nghỉ, phân quyền mẫu… — id, loại, phiên bản, ngày phát hành, số mục, số mục đã duyệt.',
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({}),
-  output: z.object({ items: z.array(z.object({ id: z.string(), kind: z.string(), title: z.string(), version: z.string(), released: z.string(), contentHash: z.string(), owner: z.string(), count: z.number(), verified: z.number() })) }),
+  output: z.object({ items: z.array(z.object({
+    id: z.string(), kind: z.string(), title: z.string(), version: z.string(), released: z.string(), contentHash: z.string(), owner: z.string(), count: z.number(), verified: z.number(),
+    optional: z.boolean(), enabled: z.boolean(), configVersion: z.number().nullable(),
+  })) }),
   expose: { http: { method: 'GET', path: '/api/v1/libraries' }, mcp: true, ai: 'read' },
-  handler: async () => ({
-    items: listLibraries().map((l) => {
-      const lib = need(l.id);
-      return { id: l.id, kind: l.kind, title: l.title, version: l.version, released: l.released, contentHash: l.contentHash, owner: l.owner, count: lib.items.length, verified: lib.items.filter((i) => i.verified).length };
-    }),
-  }),
+  handler: async (ctx) => {
+    const cfgs = await tenantLibraryConfigs(ctx.data.tx, ctx.tenant.id);
+    return {
+      items: listLibraries().map((l) => {
+        const lib = need(l.id);
+        const c = cfgs.get(l.id);
+        return {
+          id: l.id, kind: l.kind, title: l.title, version: l.version, released: l.released, contentHash: l.contentHash, owner: l.owner, count: lib.items.length,
+          verified: lib.items.filter((i) => i.verified).length, optional: !!lib.optional, enabled: c?.config.enabled !== false, configVersion: c?.version ?? null,
+        };
+      }),
+    };
+  },
 });
 
 const get = defineAction({
@@ -66,8 +96,9 @@ const get = defineAction({
   input: z.object({ id }),
   output: z.object({ library: z.record(z.unknown()), readme: z.string().nullable() }),
   expose: { http: { method: 'GET', path: '/api/v1/libraries/:id' }, mcp: true, ai: 'read' },
-  handler: async (_ctx, i) => {
-    const { items: _items, ...envelope } = need(i.id);
+  handler: async (ctx, i) => {
+    const { lib } = await needFor(ctx.data.tx, ctx.tenant.id, i.id);
+    const { items: _items, ...envelope } = lib;
     return { library: envelope, readme: libraryReadme(i.id) };
   },
 });
@@ -83,13 +114,13 @@ const items = defineAction({
   }),
   output: z.object({
     library: z.object({ id: z.string(), version: z.string(), hash: z.string() }), at: z.string(), total: z.number(),
-    rows: z.array(z.object({ value: z.unknown(), label: z.string(), group: z.string().optional(), hint: z.string().optional(), deprecated: z.boolean(), verified: z.boolean(), valueAt: z.unknown().optional(), item: z.record(z.unknown()) })),
+    rows: z.array(z.object({ value: z.unknown(), label: z.string(), group: z.string().optional(), hint: z.string().optional(), deprecated: z.boolean(), verified: z.boolean(), valueAt: z.unknown().optional(), overridden: z.boolean().optional(), item: z.record(z.unknown()) })),
   }),
   expose: { http: { method: 'GET', path: '/api/v1/libraries/:id/items' }, mcp: true, ai: 'read' },
-  handler: async (_ctx, i) => {
-    const lib = need(i.id);
-    const at = i.at ?? new Date().toISOString().slice(0, 10);
-    const { rows, total } = selectorRows(lib, { q: i.q, at, group: i.group, status: i.status, limit: i.limit });
+  handler: async (ctx, i) => {
+    const { lib, config } = await needFor(ctx.data.tx, ctx.tenant.id, i.id);
+    const at = (config?.atPolicy === 'today' ? undefined : i.at) ?? new Date().toISOString().slice(0, 10);
+    const { rows, total } = selectorRows(lib, { q: i.q, at, group: i.group, status: i.status, limit: i.limit, config });
     return { library: { id: lib.id, version: lib.version, hash: lib.contentHash }, at, total, rows: rows as never };
   },
 });
@@ -106,11 +137,12 @@ const validate = defineAction({
   output: z.object({ results: z.array(result) }),
   expose: { http: { method: 'POST', path: '/api/v1/libraries/:id/validate' }, mcp: true, ai: 'read' },
   handler: async (ctx, i) => {
-    need(i.id);
+    const { config } = await needFor(ctx.data.tx, ctx.tenant.id, i.id);
     if ((i.input === undefined) === (i.inputs === undefined)) throw Errors.validation('gửi đúng một trong input hoặc inputs');
     const list: (string | Record<string, unknown>)[] = i.inputs ?? (i.input === undefined ? [] : [i.input]);
+    const at = config?.atPolicy === 'today' ? undefined : i.at;
     const results = list.map((x) => {
-      const r = validateInLibrary(i.id, x, { at: i.at })!;
+      const r = validateInLibrary(i.id, x, { at, config })!;
       recordLibraryUsage(ctx.tenant.id, r, x, i.source);
       return r;
     });
@@ -191,7 +223,96 @@ const attestations = defineAction({
   },
 });
 
-export const LIBRARY_ACTIONS = [list, get, items, validate, usage, attest, attestations];
+const overrideEntry = z.object({ from: date, value: z.unknown(), reason: z.string().trim().min(5).max(500), basisKey: z.string().trim().min(1).max(80).optional() });
+const libraryConfig = z.object({
+  enabled: z.boolean().optional(),
+  atPolicy: z.enum(['docDate', 'today']).optional(),
+  ruleLevels: z.record(z.enum(['warn', 'info'])).optional(),
+  overrides: z.record(z.array(overrideEntry).min(1).max(50)).optional(),
+}).strict();
+const configVersion = z.object({ version: z.number(), config: z.record(z.unknown()), reason: z.string(), createdBy: z.string(), createdAt: z.string() });
+
+const config = defineAction({
+  id: 'core.library.config', title: 'Cấu hình thư viện của đơn vị', tags,
+  description: 'Cấu hình hiện hành của đơn vị cho một thư viện (bật / tắt, đọc theo ngày, mức luật đã hạ, giá trị ghi đè) và lịch sử các phiên bản.',
+  permission: 'catalog:read', effect: 'read', idempotency: 'none',
+  input: z.object({ id }),
+  output: z.object({ library: z.object({ id: z.string(), version: z.string(), optional: z.boolean() }), current: configVersion.nullable(), history: z.array(configVersion) }),
+  expose: { http: { method: 'GET', path: '/api/v1/libraries/:id/config' }, mcp: true, ai: 'read' },
+  handler: async (ctx, i) => {
+    const lib = need(i.id);
+    const history = await libraryConfigHistory(ctx.data.tx, ctx.tenant.id, lib.id);
+    return { library: { id: lib.id, version: lib.version, optional: !!lib.optional }, current: (history[0] as never) ?? null, history: history as never };
+  },
+});
+
+const configure = defineAction({
+  id: 'core.library.configure', title: 'Đổi cấu hình thư viện của đơn vị', tags,
+  description: 'Ghi phiên bản cấu hình mới (chỉ thêm) cho một thư viện ở đơn vị: tắt thư viện tuỳ chọn, đọc giá trị theo ngày chứng từ / hôm nay, '
+    + 'hạ mức luật của thư viện (không hạ mã LIB-* chuẩn), ghi đè giá trị mục có hiệu lực theo ngày (ngày rơi vào kỳ đã khoá thì bị chặn). '
+    + 'Không đổi thư viện gốc. Lý do bắt buộc.',
+  permission: 'settings:write', effect: 'write', idempotency: 'required', sideEffects: ['settings'],
+  input: z.object({ id, config: libraryConfig, reason: z.string().trim().min(5, 'ghi lý do (ít nhất 5 ký tự)').max(500) }),
+  output: configVersion,
+  expose: { http: { method: 'POST', path: '/api/v1/libraries/:id/config' }, ai: 'deny' },
+  evidence: { objectType: 'library-config', objectId: (i) => i.id },
+  handler: async (ctx, i) => {
+    const lib = need(i.id);
+    return (await saveLibraryConfig(ctx.data.tx, ctx.tenant.id, lib, i.config as LibraryConfig, i.reason, ctx.actor.id, basisKeys())) as never;
+  },
+});
+
+const proposal = z.object({
+  id: z.string(), libraryId: z.string(), itemCode: z.string().nullable(), kind: z.enum(PROPOSAL_KINDS), content: z.string(), basisKey: z.string().nullable(),
+  status: z.enum(PROPOSAL_STATUSES), resolvedVersion: z.string().nullable(), statusNote: z.string().nullable(),
+  createdBy: z.string(), createdAt: z.string(), updatedBy: z.string().nullable(), updatedAt: z.string().nullable(),
+});
+
+const propose = defineAction({
+  id: 'core.library.propose', title: 'Gửi đề xuất cập nhật thư viện', tags,
+  description: 'Đơn vị đề xuất Nhóm Lõi cập nhật thư viện: thêm mục, sửa giá trị (khoảng hiệu lực mới), thêm / sửa căn cứ, báo sai, ngừng dùng mục. '
+    + 'Không đổi thư viện gốc; vào bản mới qua PR. Không ghi dữ liệu khách / số tiền chứng từ.',
+  permission: 'catalog:write', effect: 'write', idempotency: 'required', sideEffects: ['masterdata'],
+  input: z.object({
+    id, kind: z.enum(PROPOSAL_KINDS), content: z.string().trim().min(5).max(2000),
+    itemCode: z.string().trim().min(1).max(80).optional(), basisKey: z.string().trim().min(1).max(80).optional(),
+  }),
+  output: proposal,
+  expose: { http: { method: 'POST', path: '/api/v1/libraries/:id/proposals' }, ai: 'deny' },
+  evidence: { objectType: 'library-proposal', objectId: (_i, o) => o.id },
+  handler: async (ctx, i) => {
+    const lib = need(i.id);
+    if (i.itemCode && !lib.items.some((x) => x.code === i.itemCode)) throw Errors.validation(`mục ${i.itemCode} không có trong ${lib.id} (đề xuất thêm mục mới thì để trống mã)`);
+    if (i.kind !== 'them-muc' && !i.itemCode) throw Errors.validation('đề xuất sửa / căn cứ / báo sai / ngừng dùng cần mã mục');
+    const keys = basisKeys();
+    if (i.basisKey && keys && !keys.has(i.basisKey)) throw Errors.validation(`căn cứ ${i.basisKey} không có trong vn.can-cu-phap-ly`);
+    return createProposal(ctx.data.tx, ctx.tenant.id, { libraryId: lib.id, itemCode: i.itemCode, kind: i.kind, content: i.content, basisKey: i.basisKey }, ctx.actor.id);
+  },
+});
+
+const proposals = defineAction({
+  id: 'core.library.proposals', title: 'Phiếu đề xuất cập nhật thư viện', tags,
+  description: 'Phiếu đề xuất của đơn vị (mới nhất trước), lọc theo thư viện / trạng thái.',
+  permission: 'catalog:read', effect: 'read', idempotency: 'none',
+  input: z.object({ library: id.optional(), status: z.enum(PROPOSAL_STATUSES).optional() }),
+  output: z.object({ items: z.array(proposal) }),
+  expose: { http: { method: 'GET', path: '/api/v1/libraries/proposals' }, mcp: true, ai: 'read' },
+  handler: async (ctx, i) => ({ items: await listProposals(ctx.data.tx, ctx.tenant.id, { libraryId: i.library, status: i.status }) }),
+});
+
+const proposalUpdate = defineAction({
+  id: 'core.library.proposal.update', title: 'Đổi trạng thái phiếu đề xuất', tags,
+  description: 'Người gửi rút phiếu (rut). Người có quyền cấu hình ghi Nhóm Lõi đã nhận (nhan), đã vào bản (da-vao, kèm bản thư viện) hoặc từ chối (tu-choi). '
+    + 'Sai vòng trạng thái → CONFLICT.',
+  permission: 'catalog:write', effect: 'write', idempotency: 'required', sideEffects: ['masterdata'],
+  input: z.object({ pid: z.string().regex(/^\d+$/), status: z.enum(PROPOSAL_STATUSES), resolvedVersion: z.string().regex(/^\d+\.\d+\.\d+$/).optional(), note: z.string().trim().max(500).optional() }),
+  output: proposal,
+  expose: { http: { method: 'POST', path: '/api/v1/libraries/proposals/:pid/status' }, ai: 'deny' },
+  evidence: { objectType: 'library-proposal', objectId: (i) => i.pid },
+  handler: async (ctx, i) => updateProposal(ctx.data.tx, ctx.tenant.id, i.pid, { status: i.status, resolvedVersion: i.resolvedVersion, note: i.note }, ctx.actor.id, ctx.can('settings:write')),
+});
+
+export const LIBRARY_ACTIONS = [list, get, items, validate, usage, attest, attestations, config, configure, propose, proposals, proposalUpdate];
 
 export async function librariesRoutes(app: FastifyInstance): Promise<void> {
   flushLog = (msg) => app.log.warn(msg);

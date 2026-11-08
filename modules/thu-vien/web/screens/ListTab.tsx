@@ -15,7 +15,7 @@ export function ListTab({ onOpen }: { onOpen: (id: string) => void }) {
       {list.map((l) => (
         <div key={l.id} className="card">
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div><code>{l.id}</code> <span className="badge badge-info">v{l.version}</span></div>
+            <div><code>{l.id}</code> <span className="badge badge-info">v{l.version}</span>{l.optional ? <span className="badge badge-gray" style={{ marginLeft: 4 }}>tuỳ chọn</span> : null}{l.enabled === false ? <span className="badge badge-warn" style={{ marginLeft: 4 }}>đơn vị đã tắt</span> : null}{l.configVersion ? <span className="badge badge-info" style={{ marginLeft: 4 }}>cấu hình riêng v{l.configVersion}</span> : null}</div>
             <strong>{l.title}</strong>
             <div className="muted">{KIND_LABEL[l.kind] ?? l.kind} · {l.count.toLocaleString('vi-VN')} mục · phát hành {l.released}</div>
             <div>Đã duyệt <strong>{l.verified}/{l.count}</strong> · chủ duyệt: {l.owner}</div>

@@ -68,6 +68,8 @@ export interface Library {
   owner: string;
   sources: { title: string; kind: 'law' | 'internal' | 'reference' | 'generated'; date?: string; license?: string; note?: string }[];
   generatedBy?: string;
+  /** Thư viện tuỳ chọn: đơn vị tắt được (S030-49b, hợp đồng 1.4.0). */
+  optional?: boolean;
   codePrefix?: string;
   itemSchema: JsonSchema;
   selector: Selector;
@@ -119,6 +121,8 @@ export interface ValidateResult {
   resolved?: string;
   /** Giá trị thư viện tại ngày (mục có effective[]). */
   value?: unknown;
+  /** Nguồn của `value`: thư viện, hay giá trị đơn vị ghi đè (S030-49b, D-LIB-8). */
+  valueSource?: 'library' | 'tenant';
   findings: LibraryFinding[];
 }
 
@@ -131,5 +135,7 @@ export interface SelectorRow {
   deprecated: boolean;
   verified: boolean;
   valueAt?: unknown;
+  /** valueAt là giá trị đơn vị ghi đè (S030-49b). */
+  overridden?: boolean;
   item: LibraryItem;
 }
