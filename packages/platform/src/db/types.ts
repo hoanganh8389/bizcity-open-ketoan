@@ -1,4 +1,5 @@
 // @bizcity-layer P data
+// [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 + S030-41b: kiểu bảng entity_codes (0083); LedgerEntriesTable.event_id: string (NOT NULL từ 0077)
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng accounting_profiles (0049, ADR-0013).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng conformance_runs (0051, ADR-0012).
 // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: kiểu bảng rulepack_approvals (0053).
@@ -1050,7 +1051,7 @@ export interface LedgerEntriesTable {
   period_id: string;
   entry_no: string;
   doc_type: string;
-  event_id: string | null;
+  event_id: string; // NOT NULL từ 0077 (R-LEDGER-12, S030-41b)
   event_version: number | null;
   doc_no: string;
   invoice_no: string | null;
@@ -1766,6 +1767,21 @@ export interface ItemCodesTable {
   note: Generated<string>;
 }
 
+/** Mã có phiên bản của đối tượng / chi nhánh / kho (0083, D026-3). */
+export interface EntityCodesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  entity_type: 'partner' | 'branch' | 'warehouse';
+  entity_id: string;
+  kind: Generated<string>;
+  code: string;
+  valid_from: ColumnType<string, string | undefined, never>;
+  valid_to: ColumnType<string | null, string | null | undefined, string | null>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  note: Generated<string>;
+}
+
 /** Phân loại hạch toán theo ngày hiệu lực (0065). */
 export interface ItemClassificationTable {
   id: Generated<string>;
@@ -1790,6 +1806,7 @@ export interface Database {
   // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: khung nhìn sổ kho theo mã hiện hành, 0069 (đóng góp)
   inventory_movements_cur: InventoryMovementsTable & { snapshot_sku: string; root_item_id: string | null };
   item_codes: ItemCodesTable;
+  entity_codes: EntityCodesTable;
   item_classification: ItemClassificationTable;
   catalog_rule_reviews: CatalogRuleReviewsTable;
   tenants: TenantsTable;
