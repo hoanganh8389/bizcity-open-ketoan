@@ -21,6 +21,24 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không.
 - **Bảo mật:** chỉ đọc, lọc `tenant_id`; khoá API cần `catalog:read`.
 
+### Cập nhật thông tin đầu bút toán (E2) có nhật ký trước / sau (PHASE-004 S004-13, review R1 RV-R1-14) <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 -->
+
+- **Thêm:** `posting.service.ts` ghi nhật ký `ledger.entry.header_update` mỗi khi định khoản lại chỉ đổi thông tin đầu của một bút toán đã ghi (đường E2): `before` / `after` chỉ gồm các cột **thật sự đổi** trong bảy cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`; `objectType = ledger_entry`, `objectId` = id bút toán. Hằng `E2_COLUMNS` dùng chung và test `e2-header-audit.test.ts` (T004-E2-1…3) so danh sách đó với trigger `guard_ledger_entry_mutation` trong CSDL.
+- **Đổi:** không đổi hành vi ghi sổ, không đổi bút toán, không migration. Trong action nhật ký nằm ở `notes.audit[]` của bằng chứng (ACTION §4.4, phương án C); ngoài action là dòng `audit_logs`.
+- **Sửa:** trước đây dấu vết duy nhất của E2 là một con số trong `posting_log` ("cập nhật thông tin đầu M"), không biết cột nào của bút toán nào đã đổi từ giá trị nào.
+- **Thay đổi định khoản:** không (K1).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** nhật ký chỉ phủ đường của ứng dụng (`posting.service`). Một câu `UPDATE ledger_entries` viết thẳng bằng vai trò `ketoan_app` vào bảy cột này vẫn được trigger cho phép và **không để lại nhật ký**; chặn hoặc kiểm bằng trigger là câu hỏi Q004-5 của chủ dự án.
+
+### Thuộc tính có hiệu lực của đối tượng / chi nhánh / kho và tên đối tượng lúc ghi trên sổ cái (PHASE-029 S029-19 đợt 1) <!-- [2026-11-08 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 1 entity_attributes -->
+
+- **Thêm:** migration `0087_thuoc_tinh_thuc_the.sql` — bảng `entity_attributes` (tên, MST, địa chỉ có `version` và hiệu lực; chỉ thêm; nguồn sự thật tại một ngày), trigger đồng bộ ở `partners` / `branches` / `warehouses` (cột trên bảng thực thể vẫn là ảnh chụp hiện hành), hàm `bizcity_entity_attr_at`. `ledger_entries` và `ledger_lines` thêm `partner_name` + `partner_attr_id`: trigger BEFORE INSERT điền tên đối tượng **theo ngày chứng từ** (chứng từ nhập muộn vẫn mang tên đúng tại ngày phát sinh) và bản thuộc tính đã dùng; bút toán đảo mang tên của bút toán gốc. `resolveEntity` trả thêm `attributes` (`attributeId`, `version`, `validFrom`, `validTo`). Golden T029-ECP-P001 và T029-EA-1..8.
+- **Đổi:** không đổi báo cáo nào (đợt 2). Dòng sổ đã ghi giữ nguyên, hai cột mới để trống.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Mức K3 (thêm cột + trigger trên `ledger_*`, một người duyệt): cột nullable chỉ thêm, trigger chỉ điền khi INSERT và khi cột rỗng, tên không vào dấu vân tay bút toán. Đường lui: bỏ hai trigger, hai cột mỗi bảng, rồi `DROP TABLE entity_attributes`.
+- **Nâng cấp cần làm:** chạy migration 0087 (tự điền phiên bản 1 cho dữ liệu có sẵn, chạy lại an toàn).
+- **Bảo mật:** `entity_attributes` có RLS cô lập theo đơn vị như `entity_codes`.
+
 ### Sự kiện chính sách qua outbox: `bizcity.policy.published` / `.retired` (PHASE-031 W3b, ADR-0031) <!-- [2026-11-08 11:59 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b -->
 
 - **Thêm:** `registerPolicyVersion` phát `bizcity.policy.published` và `retirePolicy` phát `bizcity.policy.retired` qua outbox, cùng giao dịch với việc ghi sổ đăng ký (`data` chỉ định danh + băm + `closes`, không nội dung; `dedupeKey` chống phát đôi). Hợp đồng: `bizcity_event@1` 1.3.0-draft §7, `bizcity_policy@1` 1.1.0-draft §10; test `policy-events.test.ts` (T031-EV-1..5). App ngoài nhận bằng webhook sẵn có (§7a).

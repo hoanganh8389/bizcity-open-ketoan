@@ -1,3 +1,4 @@
+// [2026-11-08 06:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-19 đợt 1: thuộc tính có hiệu lực (tên, MST, địa chỉ) kèm phiên bản — EntityAttributesInfo, EntityResolved.attributes
 // [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 (D026-3): kiểu của entity_codes và resolveEntity — mã có phiên bản cho đối tượng / chi nhánh / kho
 // [2026-11-08 05:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: đổi số migration 0083 → 0085 khi gộp main (0083 thuộc S030-48, 0084 thuộc PHASE-031 W2c — so-tiep-theo kiem)
 /**
@@ -23,6 +24,20 @@ export interface EntityRef {
 
 export interface EntityCodeInfo { kind: EntityCodeKind; code: string; validFrom: string; validTo: string | null }
 
+/**
+ * Bản thuộc tính có hiệu lực của một thực thể tại một ngày (entity_attributes, 0087). NGUỒN SỰ THẬT của tên / MST / địa chỉ tại ngày đó.
+ * `attributeId` là định danh bản — cùng giá trị với `partner_attr_id` ghi trên dòng sổ; `version` và `validFrom` cho biết phiên bản nào.
+ */
+export interface EntityAttributesInfo {
+  attributeId: string;
+  version: number;
+  name: string;
+  taxCode: string | null;
+  address: string | null;
+  validFrom: string;
+  validTo: string | null;
+}
+
 export type EntityResolveFailureCode =
   /** Không có mã nào như vậy trong danh mục, hoặc id không thuộc đơn vị. */
   | 'ENTITY_NOT_FOUND'
@@ -42,6 +57,8 @@ export interface EntityResolved {
   code: EntityCodeInfo | null;
   /** Mã được tra đi qua bí danh / mã ngoài thì ghi mã đã gửi ở đây. */
   matched?: EntityCodeInfo;
+  /** Tên / MST / địa chỉ và phiên bản hiệu lực tại ngày hỏi; null nếu thực thể chưa có bản nào (không bịa). */
+  attributes: EntityAttributesInfo | null;
 }
 
 export type EntityResolveResult = EntityResolved | EntityResolveFailure;

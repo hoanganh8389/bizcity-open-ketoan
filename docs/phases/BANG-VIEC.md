@@ -5,27 +5,26 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 9 |
+| Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 138 |
 | Chờ đủ tín hiệu | 52 |
 | Hoãn | 1 |
-| Xong | 256 |
+| Xong | 257 |
 | **Tổng** | **484** |
 
-## Đang làm (9)
+## Đang làm (8)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
-| [S004-13](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L25) | PHASE-004 | Đường E2 có điều kiện (D-R1-1): chốt (trước hết ở 00-MASTER-PLAN, sau đó đưa vào RULE-LEDGER khi dòng giữ chỗ… | — | hoanganh8389 (phiên Claude, review-r1) · `feat/phase-004-s004-13-e2-audit` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S014-15](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L26) | PHASE-014 | W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh ac… | — | hoanganh8389 (phiên Claude, audit-in-action) · `feat/phase-014-audit-in-action` |
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
-| [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-thuoc-tinh-hieu-luc` |
+| [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-bao-cao-ten-theo-ngay` |
 | [S031-28](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L37) | PHASE-031 | W4a: API đọc — core.policy.registry, core.policy.applications, core.policy.tracking, core.policy.lineage (00 … | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4a-api-doc-chinh-sach` |
 
 ## Chờ merge (0)
@@ -271,6 +270,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (256)
+## Xong (257)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
