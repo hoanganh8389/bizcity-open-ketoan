@@ -1,0 +1,3218 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.tham-so-phap-ly",
+  "kind": "param",
+  "title": "Tham số pháp lý Việt Nam",
+  "description": "Lương cơ sở, lương tối thiểu vùng, tỷ lệ bảo hiểm, thuế TNCN / TNDN / GTGT nhà thầu, giới hạn lao động… mỗi giá trị có ngày hiệu lực và căn cứ. Mặc định chung mọi đơn vị; đơn vị ghi đè ở cấu hình.",
+  "version": "1.0.0",
+  "released": "2026-11-07",
+  "contentHash": "sha256:bebd189444d9d90c6b043e34680b330d93e1527b284e2b2dca48a3d4f74d6d2e",
+  "owner": "kế toán trưởng (S030-12)",
+  "sources": [
+    {
+      "title": "Tham số pháp lý xuất từ Erp-vn (lfood-legal-params v1)",
+      "kind": "reference",
+      "date": "2026-11-07",
+      "note": "Chủ dự án xuất; căn cứ ghi theo nguồn, chưa đối chiếu văn bản gốc"
+    }
+  ],
+  "generatedBy": "libraries/vn.tham-so-phap-ly/build.mjs",
+  "codePrefix": "TSPL",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "valueType",
+      "kind"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "valueType": {
+        "enum": [
+          "number",
+          "percent",
+          "money"
+        ],
+        "description": "kiểu giá trị: số, phần trăm (có thể trên 100, vd làm thêm 150), tiền đồng"
+      },
+      "kind": {
+        "enum": [
+          "law",
+          "policy"
+        ],
+        "description": "law = theo luật, đơn vị không đổi; policy = mặc định, đơn vị được ghi đè"
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{name}",
+    "search": [
+      "code",
+      "name"
+    ],
+    "group": "group",
+    "filters": [
+      {
+        "field": "group",
+        "label": "Nhóm"
+      },
+      {
+        "field": "payload.kind",
+        "label": "Loại"
+      }
+    ],
+    "sort": [
+      "group",
+      "code"
+    ],
+    "showValueAt": true
+  },
+  "rules": [
+    {
+      "code": "TSPL-LAW-001",
+      "level": "warn",
+      "title": "Ghi đè tham số theo luật",
+      "why": "Tham số loại luật áp như nhau cho mọi đơn vị; giá trị khác thư viện thường là nhập nhầm hoặc văn bản đã đổi mà thư viện chưa cập nhật.",
+      "fix": "Dùng giá trị thư viện tại ngày; nếu văn bản mới đã thay, ghi căn cứ và báo người giữ thư viện cập nhật.",
+      "when": {
+        "all": [
+          {
+            "field": "item.payload.kind",
+            "op": "eq",
+            "value": "law"
+          },
+          {
+            "field": "input.override",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "basis": [
+        {
+          "ref": "Quy ước phần mềm (ADR-0032 D-LIB-8)",
+          "key": "NOI-BO",
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-07",
+      "hash": "sha256:bebd189444d9d90c6b043e34680b330d93e1527b284e2b2dca48a3d4f74d6d2e",
+      "notes": "Bản đầu: 120 tham số từ lfood-legal-params v1 (07/11/2026), căn cứ chưa đối chiếu"
+    }
+  ],
+  "items": [
+    {
+      "code": "DU_PHONG_PTKD_THANG_1",
+      "name": "Dự phòng phải thu: số tháng quá hạn bậc 1",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 6,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6: quá hạn từ 6 tháng đến dưới 1 năm",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_THANG_2",
+      "name": "Dự phòng phải thu: số tháng quá hạn bậc 2",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6: từ 1 năm đến dưới 2 năm",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_THANG_3",
+      "name": "Dự phòng phải thu: số tháng quá hạn bậc 3",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 24,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6: từ 2 năm đến dưới 3 năm",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_THANG_4",
+      "name": "Dự phòng phải thu: số tháng quá hạn bậc 4",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 36,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6: từ 3 năm trở lên",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_TY_LE_1",
+      "name": "Dự phòng phải thu: tỷ lệ bậc 1",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_TY_LE_2",
+      "name": "Dự phòng phải thu: tỷ lệ bậc 2",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 50,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_TY_LE_3",
+      "name": "Dự phòng phải thu: tỷ lệ bậc 3",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 70,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DU_PHONG_PTKD_TY_LE_4",
+      "name": "Dự phòng phải thu: tỷ lệ bậc 4",
+      "group": "ke-toan",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2019-10-10",
+          "to": null,
+          "value": 100,
+          "basis": [
+            {
+              "ref": "Thông tư 48/2019/TT-BTC, Điều 6",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NGUONG_TSCD",
+      "name": "Nguyên giá tối thiểu của tài sản cố định",
+      "group": "tai-san",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2013-06-10",
+          "to": null,
+          "value": 30000000,
+          "basis": [
+            {
+              "ref": "Thông tư 45/2013/TT-BTC, sửa đổi bởi Thông tư 30/2025/TT-BTC",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BANG_KE_NGUONG_TIEN_MAT",
+      "name": "Ngưỡng phải thanh toán không dùng tiền mặt khi thu mua không có hóa đơn",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-03-16",
+          "to": null,
+          "value": 5000000,
+          "basis": [
+            {
+              "ref": "Thông tư 20/2026/TT-BTC hướng dẫn Luật Thuế TNDN 67/2025/QH15 và Nghị định 320/2025/NĐ-CP; kế toán trưởng xác nhận lại ngày hiệu lực của Thông tư",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "Tổng giá trị mua trong ngày của cùng một hộ, cá nhân từ mức này trở lên mà trả tiền mặt thì khoản chi không được tính vào chi phí được trừ khi tính thuế TNDN. Dùng ở Bảng kê thu mua mẫu 02/TNDN."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GDLK_MIEN_HS_DOANH_THU",
+      "name": "Miễn lập hồ sơ giao dịch liên kết: doanh thu dưới",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 50000000000,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP: doanh thu dưới 50 tỷ đồng và tổng giá trị giao dịch liên kết dưới 30 tỷ đồng",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GDLK_MIEN_HS_DOANH_THU_TSLN",
+      "name": "Miễn lập hồ sơ theo tỷ suất lợi nhuận: doanh thu dưới",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 500000000000.0004,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP (nâng từ 200 tỷ đồng, bỏ điều kiện chức năng đơn giản)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GDLK_MIEN_HS_GIA_TRI_GD",
+      "name": "Miễn lập hồ sơ giao dịch liên kết: tổng giá trị giao dịch liên kết dưới",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 30000000000,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GDLK_TSLN_GIA_CONG",
+      "name": "Tỷ suất lợi nhuận thuần trước lãi vay và thuế tối thiểu: gia công",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 15,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GDLK_TSLN_PHAN_PHOI",
+      "name": "Tỷ suất lợi nhuận thuần trước lãi vay và thuế tối thiểu: phân phối",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GDLK_TSLN_SAN_XUAT",
+      "name": "Tỷ suất lợi nhuận thuần trước lãi vay và thuế tối thiểu: sản xuất",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 10,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KHONG_CHE_LAI_VAY_SO_NAM",
+      "name": "Khống chế chi phí lãi vay: số năm liên tục được chuyển phần vượt",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2020-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Nghị định 132/2020/NĐ-CP và Nghị định 255/2026/NĐ-CP, khoản 3 Điều 16: chuyển liên tục không quá 05 năm",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KHONG_CHE_LAI_VAY_TY_LE",
+      "name": "Khống chế chi phí lãi vay: tỷ lệ trên lợi nhuận thuần cộng lãi vay thuần cộng khấu hao",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2020-01-01",
+          "to": "2025-12-31",
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Nghị định 132/2020/NĐ-CP, khoản 3 Điều 16 (sửa đổi bởi Nghị định 20/2025/NĐ-CP)",
+              "verified": false
+            }
+          ]
+        },
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Nghị định 255/2026/NĐ-CP, khoản 3 Điều 16; hiệu lực 01/7/2026, áp dụng từ kỳ tính thuế TNDN năm 2026",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LAI_VAY_TOI_DA_NAM",
+      "name": "Lãi suất vay tối đa được trừ khi vay ngoài tổ chức tín dụng (%/năm)",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-01-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, áp dụng từ kỳ tính thuế 2025 (chi phí trả lãi vay của tổ chức, cá nhân không phải tổ chức tín dụng vượt mức theo Bộ luật Dân sự không được trừ); Bộ luật Dân sự 2015, Điều 468: lãi suất thỏa thuận không vượt quá 20%/năm",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_CONSTRUCTION",
+      "name": "Thuế nhà thầu nước ngoài - Xây dựng không bao thầu nguyên vật liệu - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 2,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm k",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_GOODS",
+      "name": "Thuế nhà thầu nước ngoài - Cung cấp hàng hóa tại Việt Nam - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 1,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm b",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_HOTEL_MGMT",
+      "name": "Thuế nhà thầu nước ngoài - Quản lý nhà hàng, khách sạn, casino - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 10,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm a",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_INTEREST",
+      "name": "Thuế nhà thầu nước ngoài - Lãi tiền vay - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm e",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_OTHER",
+      "name": "Thuế nhà thầu nước ngoài - Hoạt động khác - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 2,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm k",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_RENTAL",
+      "name": "Thuế nhà thầu nước ngoài - Cho thuê máy móc, thiết bị, phương tiện vận tải - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm đ",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_ROYALTY",
+      "name": "Thuế nhà thầu nước ngoài - Tiền bản quyền - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 10,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm c",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_SERVICE",
+      "name": "Thuế nhà thầu nước ngoài - Dịch vụ - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm a",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_TNDN_TRANSPORT",
+      "name": "Thuế nhà thầu nước ngoài - Vận tải - tỷ lệ TNDN",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 2,
+          "basis": [
+            {
+              "ref": "Nghị định 320/2025/NĐ-CP, Điều 12 khoản 3 điểm k",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_DOANH_THU_MUC_15",
+      "name": "Mức doanh thu năm được áp thuế suất 15%",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 3000000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập doanh nghiệp 67/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "Doanh thu làm căn cứ xác định mức 15% và 17% là tổng doanh thu của kỳ tính thuế TNDN liền kề trước đó."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_DOANH_THU_MUC_17",
+      "name": "Mức doanh thu năm được áp thuế suất 17%",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 50000000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập doanh nghiệp 67/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_SO_NAM_CHUYEN_LO",
+      "name": "Số năm được chuyển lỗ",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập doanh nghiệp 67/2025/QH15: chuyển lỗ liên tục không quá 05 năm kể từ năm tiếp theo năm phát sinh lỗ",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_THUE_SUAT_15",
+      "name": "Thuế suất TNDN khi doanh thu không quá 3 tỷ",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 15,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập doanh nghiệp 67/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_THUE_SUAT_17",
+      "name": "Thuế suất TNDN khi doanh thu trên 3 tỷ đến 50 tỷ",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 17,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập doanh nghiệp 67/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_THUE_SUAT_PHO_THONG",
+      "name": "Thuế suất thuế TNDN phổ thông",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập doanh nghiệp 67/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNDN_TY_LE_TAM_NOP",
+      "name": "Tỷ lệ tối thiểu của tổng tạm nộp 4 quý so với số quyết toán",
+      "group": "thue-tndn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-10-01",
+          "to": null,
+          "value": 80,
+          "basis": [
+            {
+              "ref": "Quy định tạm nộp thuế TNDN của pháp luật quản lý thuế hiện hành; kế toán trưởng rà lại khi có nghị định, thông tư mới",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "Nộp thiếu thì tính tiền chậm nộp trên phần thiếu kể từ ngày tiếp sau ngày cuối cùng của thời hạn tạm nộp thuế quý IV."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHTN_DN",
+      "name": "BHTN doanh nghiệp đóng",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 1,
+          "basis": [
+            {
+              "ref": "Luật Việc làm 74/2025/QH15, Điều 33 (tối đa 1%)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHTN_NLD",
+      "name": "BHTN người lao động đóng",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 1,
+          "basis": [
+            {
+              "ref": "Luật Việc làm 74/2025/QH15, Điều 33 (tối đa 1%)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHXH_DN_HUU_TRI_TU_TUAT",
+      "name": "BHXH doanh nghiệp đóng quỹ hưu trí, tử tuất",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 14,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15, Điều 34",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHXH_DN_OM_DAU_THAI_SAN",
+      "name": "BHXH doanh nghiệp đóng quỹ ốm đau, thai sản",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 3,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15, Điều 34",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHXH_DN_TNLD_BNN",
+      "name": "Quỹ tai nạn lao động, bệnh nghề nghiệp",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 0.5,
+          "basis": [
+            {
+              "ref": "Nghị định 158/2025/NĐ-CP, Điều 43 (sửa Nghị định 58/2020/NĐ-CP)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "0,5% mức bình thường; 0,3% nếu doanh nghiệp đủ điều kiện và được chấp thuận theo Điều 5 Nghị định 58/2020/NĐ-CP sửa đổi"
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHXH_NLD",
+      "name": "BHXH người lao động đóng (quỹ hưu trí, tử tuất)",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 8,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15, Điều 33",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHYT_DN",
+      "name": "BHYT doanh nghiệp đóng",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 3,
+          "basis": [
+            {
+              "ref": "Nghị định 188/2025/NĐ-CP, Điều 6: 4,5%, người sử dụng lao động đóng hai phần ba",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BHYT_NLD",
+      "name": "BHYT người lao động đóng",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 1.5,
+          "basis": [
+            {
+              "ref": "Nghị định 188/2025/NĐ-CP, Điều 6: 4,5%, người lao động đóng một phần ba",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DUONG_SUC_TY_LE",
+      "name": "Dưỡng sức phục hồi sức khỏe: mức một ngày so với mức tham chiếu",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15, Điều 46 (tối đa 10 ngày/năm)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "HE_SO_TRAN_BHTN",
+      "name": "Hệ số trần tiền lương đóng BHTN (lần lương tối thiểu vùng)",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Luật Việc làm 74/2025/QH15, Điều 34",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "HE_SO_TRAN_BHXH",
+      "name": "Hệ số trần tiền lương đóng BHXH, BHYT (lần mức tham chiếu)",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15; mức tham chiếu áp dụng bằng lương cơ sở",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LUONG_CO_SO",
+      "name": "Lương cơ sở",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2024-07-01",
+          "to": "2026-06-30",
+          "value": 2340000,
+          "basis": [
+            {
+              "ref": "Lương cơ sở từ 01/7/2024",
+              "verified": false
+            }
+          ]
+        },
+        {
+          "from": "2026-07-01",
+          "to": null,
+          "value": 2530000,
+          "basis": [
+            {
+              "ref": "Nghị định 161/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "Mức trần đóng BHXH, BHYT bằng 20 lần"
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "OM_DAU_TY_LE",
+      "name": "Mức hưởng ốm đau so với tiền lương đóng BHXH tháng liền kề",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 75,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15, Điều 45",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TRO_CAP_SINH_CON_LAN_THAM_CHIEU",
+      "name": "Trợ cấp một lần khi sinh con: số lần mức tham chiếu cho mỗi con",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 2,
+          "basis": [
+            {
+              "ref": "Luật Bảo hiểm xã hội 41/2024/QH15, Điều 58",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TY_LE_BH_DN",
+      "name": "Tỷ lệ bảo hiểm doanh nghiệp đóng",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 21.5,
+          "basis": [
+            {
+              "ref": "Luật BHXH 2024, Luật Việc làm 2025",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TY_LE_BH_NLD",
+      "name": "Tỷ lệ bảo hiểm người lao động đóng",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 10.5,
+          "basis": [
+            {
+              "ref": "Luật BHXH 2024, Luật Việc làm 2025",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TY_LE_KPCD",
+      "name": "Kinh phí công đoàn",
+      "group": "bao-hiem",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 2,
+          "basis": [
+            {
+              "ref": "Luật Công đoàn 2024, Nghị định 105/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "BAO_CAO_LAO_DONG_HAN_6_THANG",
+      "name": "Báo cáo tình hình thay đổi lao động 6 tháng: hạn nộp (ngày tháng 6)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-02-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Nghị định 145/2020/NĐ-CP, khoản 2 Điều 4: trước ngày 05 tháng 6 và trước ngày 05 tháng 12, Mẫu số 01/PLI, gửi Sở Nội vụ qua Cổng Dịch vụ công quốc gia",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DIEU_CHUYEN_BAO_TRUOC",
+      "name": "Tạm chuyển làm công việc khác: báo trước tối thiểu (ngày làm việc)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 3,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, khoản 2 Điều 29",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DIEU_CHUYEN_TOI_DA_NGAY",
+      "name": "Tạm chuyển làm công việc khác: tối đa ngày làm việc cộng dồn trong năm (không cần đồng ý)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 60,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, khoản 1, 2 Điều 29",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "DIEU_CHUYEN_TY_LE_LUONG",
+      "name": "Tạm chuyển làm công việc khác: lương công việc mới tối thiểu so với lương cũ",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 85,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, khoản 3 Điều 29 (không thấp hơn lương tối thiểu; giữ lương cũ 30 ngày làm việc nếu lương mới thấp hơn)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GIOI_HAN_LAM_THEM_NAM",
+      "name": "Làm thêm tối đa trong năm (giờ)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 200,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 107",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "200 giờ; một số ngành, nghề theo khoản 3 Điều 107 được tới 300 giờ và phải thông báo cơ quan lao động. Công ty thuộc diện này thì Kế toán trưởng thêm mức 300 có văn bản căn cứ."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GIOI_HAN_LAM_THEM_NGAY_PT",
+      "name": "Làm thêm tối đa trong ngày so với giờ làm việc bình thường",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 50,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 107",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GIOI_HAN_LAM_THEM_THANG",
+      "name": "Làm thêm tối đa trong tháng (giờ)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 40,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 107",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GIO_LAM_VIEC_NGAY",
+      "name": "Giờ làm việc bình thường một ngày theo nội quy",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "policy"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 8,
+          "basis": [
+            {
+              "ref": "Nội quy lao động của công ty",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "Quy chế công ty, dùng để tính lương giờ và giới hạn làm thêm trong ngày."
+        },
+        {
+          "kind": "how",
+          "text": "Tham số chính sách: đơn vị được ghi đè bằng cấu hình (setting_values, bắt lý do); giá trị ở đây là mặc định."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "GIO_LAM_VIEC_TUAN",
+      "name": "Giờ làm việc bình thường tối đa một tuần",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 48,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 105 khoản 1",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "HD_XAC_DINH_TOI_DA_THANG",
+      "name": "Thời hạn tối đa của hợp đồng xác định thời hạn (tháng)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 36,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 20",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KHAM_SUC_KHOE_DINH_KY_THANG",
+      "name": "Khám sức khỏe định kỳ người lao động: tối đa giữa hai lần (tháng)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2016-07-01",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Luật An toàn, vệ sinh lao động 2015, khoản 1 Điều 21: ít nhất 1 lần/năm; nghề nặng nhọc, độc hại ít nhất 6 tháng/lần",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KY_LUAT_THOI_HIEU_TAI_CHINH_THANG",
+      "name": "Thời hiệu xử lý kỷ luật với vi phạm về tài chính, tài sản, bí mật (tháng)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, khoản 1 Điều 123",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KY_LUAT_THOI_HIEU_THANG",
+      "name": "Thời hiệu xử lý kỷ luật lao động (tháng)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 6,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, khoản 1 Điều 123",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NGHI_CHUYEN_CA_GIO",
+      "name": "Giờ nghỉ tối thiểu trước khi chuyển sang ca khác",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 109 khoản 2",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "PHEP_NAM_BINH_THUONG",
+      "name": "Phép năm: điều kiện bình thường (ngày)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 113",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "PHEP_NAM_BUOC_THAM_NIEN",
+      "name": "Số năm làm việc để được thêm 1 ngày phép",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 114",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "PHEP_NAM_DAC_BIET",
+      "name": "Phép năm: đặc biệt nặng nhọc, độc hại (ngày)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 16,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 113",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "PHEP_NAM_NANG_NHOC",
+      "name": "Phép năm: nặng nhọc, độc hại; chưa thành niên; khuyết tật (ngày)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 14,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 113",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "THU_VIEC_CAO_DANG",
+      "name": "Thử việc tối đa: trình độ cao đẳng trở lên (ngày)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 60,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 25",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "THU_VIEC_KHAC",
+      "name": "Thử việc tối đa: công việc khác (ngày làm việc)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 6,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 25",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "THU_VIEC_QUAN_LY",
+      "name": "Thử việc tối đa: người quản lý doanh nghiệp (ngày)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 180,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 25",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "THU_VIEC_TRUNG_CAP",
+      "name": "Thử việc tối đa: trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ (ngày)",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 25",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "THU_VIEC_TY_LE_LUONG",
+      "name": "Lương thử việc tối thiểu so với lương chính thức",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 85,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 26",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNLD_BT_THANG_CO_BAN",
+      "name": "Tai nạn lao động: bồi thường tối thiểu (tháng lương) khi suy giảm 5% đến 10%",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2016-07-01",
+          "to": null,
+          "value": 1.5,
+          "basis": [
+            {
+              "ref": "Luật An toàn, vệ sinh lao động 2015, Điều 38 khoản 4 điểm a",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNLD_BT_THANG_MOI_PT",
+      "name": "Tai nạn lao động: cộng thêm (tháng lương) cho mỗi 1% suy giảm từ 11% đến 80%",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2016-07-01",
+          "to": null,
+          "value": 0.4,
+          "basis": [
+            {
+              "ref": "Luật An toàn, vệ sinh lao động 2015, Điều 38 khoản 4 điểm a",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNLD_BT_THANG_TOI_DA",
+      "name": "Tai nạn lao động: bồi thường tối thiểu (tháng lương) khi suy giảm từ 81% hoặc chết",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2016-07-01",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Luật An toàn, vệ sinh lao động 2015, Điều 38 khoản 4 điểm b",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNLD_TRO_CAP_LOI_NLD_PT",
+      "name": "Tai nạn do lỗi người lao động: trợ cấp bằng tỷ lệ của mức bồi thường",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2016-07-01",
+          "to": null,
+          "value": 40,
+          "basis": [
+            {
+              "ref": "Luật An toàn, vệ sinh lao động 2015, Điều 38 khoản 5",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TUYEN_DUNG_LUU_HO_SO_THANG",
+      "name": "Số tháng lưu hồ sơ ứng viên không trúng tuyển",
+      "group": "lao-dong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "policy"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Quy chế công ty (mặc định, chờ công ty chốt); Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "how",
+          "text": "Tham số chính sách: đơn vị được ghi đè bằng cấu hình (setting_values, bắt lý do); giá trị ở đây là mặc định."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "CONG_BO_HOP_QUY_TOI_DA_NAM",
+      "name": "Bản công bố hợp quy: thời hạn tối đa (năm)",
+      "group": "khac",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-26",
+          "to": null,
+          "value": 3,
+          "basis": [
+            {
+              "ref": "Nghị định 46/2026/NĐ-CP, khoản 1 Điều 6",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "CONG_BO_KIEM_NGHIEM_THANG",
+      "name": "Công bố sản phẩm: phiếu kiểm nghiệm có giá trị trong (tháng)",
+      "group": "khac",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-27",
+          "to": null,
+          "value": 12,
+          "basis": [
+            {
+              "ref": "Nghị quyết 66.13/2026/NQ-CP (phiếu kết quả kiểm nghiệm trong 12 tháng, phòng thử nghiệm đạt ISO/IEC 17025)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KM_HAN_MUC_GIA_TRI",
+      "name": "Khuyến mại: giá trị tặng, mức giảm tối đa so với giá bán ngay trước khuyến mại",
+      "group": "khac",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2024-12-01",
+          "to": null,
+          "value": 50,
+          "basis": [
+            {
+              "ref": "Nghị định 81/2018/NĐ-CP Điều 6 khoản 1, Điều 7 khoản 1, sửa đổi bởi Nghị định 128/2024/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "KM_NGAY_THONG_BAO",
+      "name": "Khuyến mại: số ngày làm việc tối thiểu nộp thông báo trước khi thực hiện",
+      "group": "khac",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2024-12-01",
+          "to": null,
+          "value": 3,
+          "basis": [
+            {
+              "ref": "Nghị định 81/2018/NĐ-CP Điều 17, sửa đổi bởi Nghị định 128/2024/NĐ-CP và Nghị định 239/2026/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TIEN_CHAM_NOP_TY_LE_NGAY",
+      "name": "Tiền chậm nộp thuế: tỷ lệ mỗi ngày",
+      "group": "khac",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2020-07-01",
+          "to": "2026-06-30",
+          "value": 0.03,
+          "basis": [
+            {
+              "ref": "Luật Quản lý thuế 38/2019/QH14, Điều 59",
+              "verified": false
+            }
+          ]
+        },
+        {
+          "from": "2026-07-01",
+          "to": null,
+          "value": 0.03,
+          "basis": [
+            {
+              "ref": "Luật Quản lý thuế 108/2025/QH15, Điều 16; Nghị định 252/2026/NĐ-CP, Điều 26",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_BAC_1_DEN",
+      "name": "Thuế TNCN bậc 1: thu nhập tính thuế tháng đến",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 10000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_BAC_2_DEN",
+      "name": "Thuế TNCN bậc 2: thu nhập tính thuế tháng đến",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 30000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_BAC_3_DEN",
+      "name": "Thuế TNCN bậc 3: thu nhập tính thuế tháng đến",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 60000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_BAC_4_DEN",
+      "name": "Thuế TNCN bậc 4: thu nhập tính thuế tháng đến",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 100000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_GIAM_TRU_BAN_THAN",
+      "name": "Giảm trừ gia cảnh bản thân",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 15500000,
+          "basis": [
+            {
+              "ref": "Nghị quyết 110/2025/UBTVQH15; Luật Thuế TNCN 109/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_GIAM_TRU_NPT",
+      "name": "Giảm trừ mỗi người phụ thuộc",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 6200000,
+          "basis": [
+            {
+              "ref": "Nghị quyết 110/2025/UBTVQH15; Luật Thuế TNCN 109/2025/QH15",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_MIEN_LAM_THEM_BAN_DEM",
+      "name": "Miễn thuế TNCN toàn bộ tiền lương làm thêm giờ, làm việc ban đêm, ngày không nghỉ phép",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "number",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 1,
+          "basis": [
+            {
+              "ref": "Luật Thuế thu nhập cá nhân 109/2025/QH15: miễn thuế toàn bộ tiền lương làm việc ban đêm, làm thêm giờ và tiền lương trả cho những ngày không nghỉ phép; áp dụng từ kỳ tính thuế 2026 với cá nhân cư trú",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "1 là miễn toàn bộ khoản; 0 là tính vào thu nhập chịu thuế. Gắn vào khoản lương bằng ô Mã tham số miễn thuế TNCN."
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_NGUONG_KHAU_TRU_VANG_LAI",
+      "name": "Ngưỡng mỗi lần chi trả phải khấu trừ thuế TNCN (không ký hợp đồng lao động hoặc dưới 03 tháng)",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2015-01-01",
+          "to": "2026-06-30",
+          "value": 2000000,
+          "basis": [
+            {
+              "ref": "Thông tư 111/2013/TT-BTC, Điều 25 khoản 1 điểm i",
+              "verified": false
+            }
+          ]
+        },
+        {
+          "from": "2026-07-01",
+          "to": null,
+          "value": 5000000,
+          "basis": [
+            {
+              "ref": "Nghị định 253/2026/NĐ-CP, Điều 50 khoản 2",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_QT_THU_NHAP_KHAC_BQ_THANG",
+      "name": "Thu nhập nơi khác bình quân tháng tối đa (đã khấu trừ 10%) vẫn được ủy quyền quyết toán",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-07-01",
+          "to": null,
+          "value": 15000000,
+          "basis": [
+            {
+              "ref": "Nghị định 253/2026/NĐ-CP, Điều 51 khoản 1 điểm b, khoản 2 điểm b",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_THUE_SUAT_1",
+      "name": "Thuế suất TNCN bậc 1",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_THUE_SUAT_2",
+      "name": "Thuế suất TNCN bậc 2",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 10,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_THUE_SUAT_3",
+      "name": "Thuế suất TNCN bậc 3",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_THUE_SUAT_4",
+      "name": "Thuế suất TNCN bậc 4",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_THUE_SUAT_5",
+      "name": "Thuế suất TNCN bậc 5",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 35,
+          "basis": [
+            {
+              "ref": "Luật Thuế TNCN 109/2025/QH15, Điều 9",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_THUE_SUAT_KHONG_CU_TRU",
+      "name": "Thuế suất TNCN tiền lương, tiền công của cá nhân không cư trú",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2015-01-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Nghị định 253/2026/NĐ-CP, Điều 64 khoản 1 (trước đó Luật Thuế TNCN 2007, Điều 26)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "TNCN_TY_LE_VANG_LAI",
+      "name": "Tỷ lệ khấu trừ thuế TNCN thu nhập vãng lai của cá nhân cư trú",
+      "group": "thue-tncn",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2015-01-01",
+          "to": null,
+          "value": 10,
+          "basis": [
+            {
+              "ref": "Nghị định 253/2026/NĐ-CP, Điều 50 khoản 2 (trước đó Thông tư 111/2013/TT-BTC, Điều 25)",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LAM_DEM_THEM",
+      "name": "Trả thêm khi làm việc ban đêm (tối thiểu)",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 30,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 98",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LAM_THEM_DEM_THEM",
+      "name": "Trả thêm khi làm thêm vào ban đêm, trên đơn giá ban ngày",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 20,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 98",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LAM_THEM_LE_TET",
+      "name": "Lương làm thêm ngày lễ, tết (tối thiểu, chưa kể lương ngày lễ)",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 300,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 98",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LAM_THEM_NGAY_THUONG",
+      "name": "Lương làm thêm ngày thường (tối thiểu)",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 150,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 98",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LAM_THEM_NGHI_TUAN",
+      "name": "Lương làm thêm ngày nghỉ hằng tuần (tối thiểu)",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2021-01-01",
+          "to": null,
+          "value": 200,
+          "basis": [
+            {
+              "ref": "Bộ luật Lao động 2019, Điều 98",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LUONG_TOI_THIEU_VUNG_I",
+      "name": "Lương tối thiểu vùng I",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5310000,
+          "basis": [
+            {
+              "ref": "Nghị định 293/2025/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LUONG_TOI_THIEU_VUNG_II",
+      "name": "Lương tối thiểu vùng II",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 4730000,
+          "basis": [
+            {
+              "ref": "Nghị định 293/2025/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LUONG_TOI_THIEU_VUNG_III",
+      "name": "Lương tối thiểu vùng III",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 4140000,
+          "basis": [
+            {
+              "ref": "Nghị định 293/2025/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "LUONG_TOI_THIEU_VUNG_IV",
+      "name": "Lương tối thiểu vùng IV",
+      "group": "luong",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 3700000,
+          "basis": [
+            {
+              "ref": "Nghị định 293/2025/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NGUONG_TT_KHONG_TIEN_MAT",
+      "name": "Ngưỡng bắt buộc thanh toán không dùng tiền mặt",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "money",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2025-07-01",
+          "to": null,
+          "value": 5000000,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Nghị định 181/2025/NĐ-CP, Nghị định 320/2025/NĐ-CP",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "hints": [
+        {
+          "kind": "why",
+          "text": "Khấu trừ thuế GTGT đầu vào và chi phí được trừ thuế TNDN; cảnh báo trên chứng từ"
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_CONSTRUCTION",
+      "name": "Thuế nhà thầu nước ngoài - Xây dựng không bao thầu nguyên vật liệu - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b2",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_GOODS",
+      "name": "Thuế nhà thầu nước ngoài - Cung cấp hàng hóa tại Việt Nam - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 1,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b1",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_HOTEL_MGMT",
+      "name": "Thuế nhà thầu nước ngoài - Quản lý nhà hàng, khách sạn, casino - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b2",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_INTEREST",
+      "name": "Thuế nhà thầu nước ngoài - Lãi tiền vay - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 0,
+          "basis": [
+            {
+              "ref": "Dịch vụ cấp tín dụng không chịu thuế GTGT (Luật Thuế GTGT, Điều 5) - kế toán xác định",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_OTHER",
+      "name": "Thuế nhà thầu nước ngoài - Hoạt động khác - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 2,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b4",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_RENTAL",
+      "name": "Thuế nhà thầu nước ngoài - Cho thuê máy móc, thiết bị, phương tiện vận tải - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b2",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_ROYALTY",
+      "name": "Thuế nhà thầu nước ngoài - Tiền bản quyền - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 0,
+          "basis": [
+            {
+              "ref": "Chuyển nhượng quyền sở hữu trí tuệ không chịu thuế GTGT (Luật Thuế GTGT, Điều 5) - kế toán xác định",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_SERVICE",
+      "name": "Thuế nhà thầu nước ngoài - Dịch vụ - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 5,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b2",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    },
+    {
+      "code": "NHA_THAU_GTGT_TRANSPORT",
+      "name": "Thuế nhà thầu nước ngoài - Vận tải - tỷ lệ GTGT",
+      "group": "thue-gtgt",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "valueType": "percent",
+        "kind": "law"
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 3,
+          "basis": [
+            {
+              "ref": "Luật Thuế GTGT 48/2024/QH15, Điều 12 khoản 2 điểm b3",
+              "verified": false
+            }
+          ]
+        }
+      ],
+      "since": "1.0.0"
+    }
+  ]
+}

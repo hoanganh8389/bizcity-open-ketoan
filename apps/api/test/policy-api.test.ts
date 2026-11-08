@@ -1,4 +1,4 @@
-// [2026-11-08 02:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, S031-27): API chính sách cho nguồn ngoài — T031-REG-3, T031-RC-3, T031-API-1, T031-API-2, T031-E2E-1, T031-MIG-1
+// [2026-11-08 02:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13): API chính sách cho nguồn ngoài — T031-REG-3, T031-RC-3, T031-API-1, T031-API-2, T031-E2E-1
 /**
  * Đường đi trọn vòng của POS (chữ chốt PHASE-031 · 00 §9):
  *   - phát hành inline → bản kế đóng bản trước ở ngày − 1; GET /policies?at= trả đúng một bản mỗi ngày, chiến dịch hết hạn không hiện (T031-REG-3);
@@ -6,11 +6,8 @@
  *   - quyền: khoá documents:write / reports:read / catalog:write đọc và tính được, khoá không được ánh xạ → 403, không khoá → 401, phát hành cần settings:write (T031-API-1);
  *   - etag đổi khi và chỉ khi có gì mới (T031-API-2);
  *   - tính → nạp sale kèm policyRefs đúng như API trả → ghi sổ, policy_check đạt; sai băm → IN-POL-001; ngày chưa áp → IN-POL-002 (T031-E2E-1);
- *   - áp lại migration 0082 trên cơ sở dữ liệu đã có đủ đối tượng không lỗi (T031-MIG-1).
  * Ngày cố định, luôn truyền `reason` — kết quả không đổi theo ngày chạy.
  */
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { retirePolicy } from '@bizcity/platform/core/policies';
@@ -225,21 +222,5 @@ describe('Tính → nạp → kiểm lại (T031-E2E-1)', () => {
     const early = withRefs(3, { docDate: '2026-09-20', invoice: { no: '0000124', serial: 'C26TAA', form: '1', date: '2026-09-20' } });
     expect((await door(early)).statusCode).toBeLessThan(300);
     expect((await eventOf('e2e:CN01:3'))?.policy_check?.refs).toMatchObject([{ ok: false, codes: ['IN-POL-002'] }]);
-  });
-});
-
-describe('Migration 0082 idempotent (T031-MIG-1)', () => {
-  it('áp lại nguyên tệp trên cơ sở dữ liệu đã có cột, khung nhìn và trigger của tên cũ không lỗi; kết quả giữ nguyên', async () => {
-    const file = path.resolve(__dirname, '../../../db/migrations/0082_kiem_chinh_sach_su_viec.sql');
-    const script = readFileSync(file, 'utf8');
-    const before = await sql<{ n: string }>`SELECT count(*) AS n FROM accounting_events WHERE tenant_id = ${tenantId} AND policy_check IS NOT NULL`.execute(db);
-    await sql.raw(script).execute(db);
-    await sql.raw(script).execute(db);
-    const after = await sql<{ n: string }>`SELECT count(*) AS n FROM accounting_events WHERE tenant_id = ${tenantId} AND policy_check IS NOT NULL`.execute(db);
-    expect(after.rows[0]!.n).toBe(before.rows[0]!.n);
-    const trg = await sql<{ n: string }>`SELECT count(*) AS n FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace s ON s.oid = c.relnamespace WHERE s.nspname = 'bizcity_read' AND c.relname = 'policy_application' AND t.tgname = 'bizcity_read_only'`.execute(db);
-    expect(trg.rows[0]!.n).toBe('1');
-    const v = await sql<{ n: string }>`SELECT count(*) AS n FROM bizcity_read.policy_application WHERE tenant_id = ${tenantId}`.execute(db);
-    expect(Number(v.rows[0]!.n)).toBeGreaterThanOrEqual(0);
   });
 });

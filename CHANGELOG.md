@@ -12,10 +12,19 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Bộ review theo nhịp và bản đồ phase → phiên bản (docs/reviews/, R1 nền móng) <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — R1 -->
+
+- **Thêm:** thư mục `docs/reviews/` — tiêu chí 12 trục (thang 0–4, trục cổng A2 · A7 · A12), bảng điểm matrix, bản đồ 31 phase vào sáu phiên bản v0.1.0 → v1.0.0 (đề xuất), bản máy đọc `review-board.json`; biên bản R1 (`main` @ 886f4f95): **ĐẠT có điều kiện 27/48**, 18 phát hiện RV-R1-01…18, trong đó 3 chặn (cờ thoát `allow_ledger_purge` tự bật được; SQLSTATE của trigger bị gộp thành `POSTING_FAILED`; trùng số migration 0080). Nhịp: 3 phase mở mới ⇒ 1 review, trước khi đóng phiên bản.
+- **Đổi:** `docs/README.md`, `docs/phases/README.md` trỏ tới `docs/reviews/`.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (chỉ tài liệu).
+- **Bảo mật:** biên bản R1 ghi nhận RV-R1-01 (vai trò ứng dụng có `DELETE` trên `ledger_*` và cờ thoát trigger là biến phiên) là việc chặn trước khi đóng v0.1.0 — chưa sửa trong PR này.
+
 ### API chính sách cho nguồn ngoài: lấy, tính, phát hành inline (PHASE-031 W3a, ADR-0031) <!-- [2026-11-08 04:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a -->
 
 - **Thêm:** hợp đồng [`bizcity_policy@1`](docs/contracts/BIZCITY-POLICY-v1.md) — `GET /api/v1/policies` (bản đang hiệu lực tại `at`, lọc `domain` / `branch` / `channel`, có `etag`), `GET /api/v1/rule-contracts[/:id]` (tham số, `spec` để plugin viết lại, `vectors` để tự kiểm), `POST /api/v1/policies/evaluate` (tính theo chính sách, trả `applied` / `skipped` kèm lý do / `gifts` / `policyRefs`), `POST /api/v1/policies` (phát hành bản inline). Rule Contract đầu tiên `sale.promo.buy_x_get_y@1` (mua X tặng Y; `itemId`, `repeat`, `maxGiftQty`, dung sai số lẻ). `core/policies.ts`: `listPublishedPolicies`, `publishInlinePolicy`, `inlinePolicyId`.
-- **Đổi:** số migration của W2a `0080_kiem_chinh_sach_su_viec` → `0082_kiem_chinh_sach_su_viec`, viết lại idempotent: `main` có **hai `0080`** (W2a + K3) làm `R-DB-3` / `SC-DATA-1` đỏ. Bộ chạy khoá theo tên tệp nên cơ sở dữ liệu đã áp tên cũ áp tên mới không lỗi (cột `IF NOT EXISTS`, trigger `DROP … IF EXISTS`).
+- **Đổi:** không.
 - **Sửa:** không.
 - **Thay đổi định khoản:** không. Quyền đọc và tính là `catalog:read` (khoá `documents:write`, `reports:read`, `catalog:write` đều có); **không thêm scope**. Chưa kiểm trần pháp lý hàng khuyến mại (NĐ81); nhiều chính sách áp độc lập, cộng dồn.
 

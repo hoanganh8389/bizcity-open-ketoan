@@ -63,6 +63,8 @@ COPY docs/standard/bizcity-standard.json docs/standard/bizcity-standard.json
 COPY docs/standard/tru-cot.json docs/standard/tru-cot.json
 # Registry khoá cấu hình cho ctx.settings.get (packages/platform/src/core/settings.ts).
 COPY docs/contracts/bizcity-settings.registry.json docs/contracts/bizcity-settings.registry.json
+# [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: thư viện dùng chung (packages/platform/src/core/libraries đọc libraries/*/library.json lúc chạy; thiếu thư mục thì API trả danh sách rỗng)
+COPY libraries libraries
 COPY docker/api-entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 WORKDIR /app/apps/api

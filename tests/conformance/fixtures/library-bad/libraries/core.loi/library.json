@@ -1,0 +1,125 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "core.loi",
+  "kind": "code-list",
+  "title": "Thư viện thử",
+  "description": "Ca tự kiểm SC-LIB-1",
+  "version": "1.0.0",
+  "released": "2026-11-07",
+  "contentHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "owner": "Nhóm Lõi",
+  "sources": [
+    {
+      "title": "tự lập",
+      "kind": "internal"
+    }
+  ],
+  "codePrefix": "LIB",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "n"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "n": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ]
+  },
+  "rules": [
+    {
+      "code": "LIB-X-001",
+      "level": "block",
+      "title": "thiếu cách sửa",
+      "why": "thử",
+      "when": {
+        "field": "input.a",
+        "op": "eval"
+      }
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-07",
+      "hash": "sha256:da1995e8269b8d2a1271da544347840203f18ab88d8410aeaa1c2553644f58ec",
+      "notes": "bản đầu"
+    }
+  ],
+  "items": [
+    {
+      "code": "X",
+      "name": "Mục X",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      }
+    },
+    {
+      "code": "X",
+      "name": "Mục X",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      }
+    },
+    {
+      "code": "Y",
+      "name": "Mục Y",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      },
+      "replacedBy": "KHONG"
+    },
+    {
+      "code": "Z",
+      "name": "Mục Z",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": -1,
+        "la": true
+      }
+    },
+    {
+      "code": "E",
+      "name": "Mục E",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      },
+      "effective": [
+        {
+          "from": "2026-01-01",
+          "to": null,
+          "value": 1
+        },
+        {
+          "from": "2026-06-01",
+          "to": null,
+          "value": 2
+        }
+      ]
+    }
+  ]
+}
