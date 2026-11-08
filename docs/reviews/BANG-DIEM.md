@@ -30,7 +30,7 @@ Mức trụ cột lấy từ `docs/standard/tru-cot.json` (`updated` 2026-11-07,
 | Trụ cột | Tiêu chí (đạt / một phần / tài liệu / chưa) | Trục review tựa vào | R1 | Lệch cần xem lại |
 |---|---|---|---|---|
 | 0 Quản trị dữ liệu gốc | 2 / 12 / 0 / 1 | A9, A10 | 2 | — |
-| I Sổ cái bất biến | **4 / 0 / 0 / 0** | A2 | **2** | **L-2 (chỉ thêm) đang "đạt" nhưng RV-R1-01 cờ thoát tự bật, RV-R1-14 E2 sửa đầu không cờ** |
+| I Sổ cái bất biến | **4 / 0 / 0 / 0** | A2 | **2** | **L-1 (dòng sổ không sửa / xoá) đang "đạt" nhưng RV-R1-01 cờ thoát tự bật, RV-R1-14 E2 sửa đầu không cờ** |
 | II Định danh, mã có phiên bản | 4 / 0 / 1 / 2 | A1, A9 | 3 | — |
 | III Liên tục kế toán | 2 / 0 / 3 / 2 | A3, A8 | 2 | khớp (RV-R1-17) |
 | IV Một cửa nạp, cổng kiểm, một ngôn ngữ mã | 4 / 1 / 0 / 0 | A6, A7 | 3 / **2** | **G-2…G-5 "đạt" nhưng lỗi Kernel trả sai mã (RV-R1-02) — "một ngôn ngữ mã" đứt ở tầng CSDL → HTTP** |
