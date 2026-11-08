@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
+
+- **Thêm:** migration `0083_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).
+- **Đổi:** `QUEUE_SOURCES` thêm `policy_review`, `QUEUE_FLAGS` thêm `policy`; `core.queue.mine` thêm phần `policy` cho người có quyền ghi chứng từ; `core.queue.summary` đếm `policy` theo từng nguồn (`bySource[].policy`), `byFlag` giữ ba khoá cũ.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Sự việc cũ có `policy_check` mang phát hiện sẽ hiện ở hàng việc cho tới khi được đánh dấu đã xem.
+- **Bảo mật:** hành động ghi cần `documents:write`; bảng bằng chứng có RLS theo đơn vị và trigger chặn sửa / xoá.
+
 ### Sửa trùng số migration 0080: gói K3 đổi sang 0081 / 0082 (PHASE-029) <!-- [2026-11-08 11:33 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — sửa trùng số 0080 -->
 
 - **Sửa:** PHASE-031 W2a (#159) và gói K3 (#165) cùng merge với số 0080, `main` đỏ `SC-DATA-1`. K3 merge sau nên đổi: `0080_nguoi_tao_su_viec_bat_buoc.sql` → `0081_…`, `0081_khoa_ky_o_csdl.sql` → `0082_…`. `0080_kiem_chinh_sach_su_viec.sql` (W2a) giữ nguyên.

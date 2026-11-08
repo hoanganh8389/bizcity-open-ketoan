@@ -62,7 +62,7 @@ Không hàng việc mới. Thêm **một nhánh** vào `bizcity_read.document_qu
 | `source` | `policy_review` |
 | `source_id` | `event_id` của sự việc |
 | `doc_type` | `docType` sự việc |
-| `status_group` | `review` khi chế độ *gợi ý* và L4b `warn`; `info` khi chế độ *tự động* (đã ghi, xem lại sau); `hold` khi vào bể chờ (`POL-ACC-001`) — nhánh `intake` sẵn có đã hiện, không lặp |
+| `status_group` | `pending` (không thêm nhóm trạng thái mới — [00 §10](00-MASTER-PLAN.md)); chế độ *tự động* cũng `pending` tới khi được xem; sự việc `strict` đang chờ nằm ở nhánh `accounting_event` sẵn có, không lặp |
 | cờ | các mã `POL-*` |
 
 Thao tác trên một việc (đều là action có quyền, ghi bằng chứng; không thao tác nào sửa sự việc):
