@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 277
+      "count": 278
     }
   ],
   "items": [
@@ -2994,14 +2994,8 @@
       "title": "BIZCITY-ERRORS 1.6.0 §4c: thêm mã chi tiết theo vùng vào ERRORREASONS + check SC-ERR-2 (R-ERR-11: reason viết trong mã phải có trong danh mục). Nối từng chỗ né…",
       "priority": "P2",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-022-error-reasons",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-022 · S022-21 — BIZCITY-ERRORS 1.6.0 §4c: hằng số ERRORREASONS + SC-ERR-2 (chủ dự án duyệt 20…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 33
     },
