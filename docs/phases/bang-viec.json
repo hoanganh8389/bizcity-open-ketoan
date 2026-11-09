@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 266
+      "count": 267
     }
   ],
   "items": [
@@ -5481,17 +5481,28 @@
       "phase": "PHASE-031",
       "title": "W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPolicyRecompute ở Kernel (00 §14); IN-POL-000 / 005 để…",
       "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 38
+    },
+    {
+      "id": "S031-30",
+      "phase": "PHASE-031",
+      "title": "W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL-004) + khối ở tab Theo dõi (00 §15); giá trị hàng…",
+      "priority": "P1",
       "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w2b-in-pol-004",
+        "branch": "feat/phase-031-w4c-thuc-hien-chuong-trinh",
         "state": "đang làm",
         "since": "2026-11-09",
-        "dot": "PHASE-031 · W2b — IN-POL-004: cửa nạp tính lại quà theo bản chính sách nguồn nêu và so với dòng quà…"
+        "dot": "PHASE-031 · W4c — ô Thực hiện chương trình: program[] ở core.policy.tracking (chứng từ áp, quà đã t…"
       },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
-      "line": 38
+      "line": 39
     }
   ]
 }
