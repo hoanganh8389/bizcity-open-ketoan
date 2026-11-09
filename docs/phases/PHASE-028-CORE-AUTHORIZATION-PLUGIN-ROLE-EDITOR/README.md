@@ -14,6 +14,7 @@
 |---|---|
 | [00-MASTER-PLAN](00-MASTER-PLAN.md) | sự thật đọc mã (file:line), 10 quyết định D-AUTH-01..10 có phương án đề xuất, 7 wave W0–W6, câu hỏi chờ chủ chốt |
 | [10-AS-IS-AUDIT](10-AS-IS-AUDIT.md) | bảng kiểm kê EXISTS / PARTIAL / MISSING / CONFLICT theo đúng các mục đề bài nêu, dẫn `file:line` |
+| [30-UI-UX](30-UI-UX.md) | đặc tả HT12 Role Editor + bảng điểm; §0 đối chiếu mockup với mã đã merge; mockup chạy được ở [mockups/role-editor.html](mockups/role-editor.html), [mockups/authz-scoreboard.html](mockups/authz-scoreboard.html) |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S028-*` của W0; log |
 
 ## Trả lời ngắn
