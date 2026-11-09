@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Chia nhỏ để chốt — lõi chặt chẽ, cách dùng dễ (CANON v1.6, R-FLOW-9) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON — §0.10, LEAN-8, R-FLOW-9 -->
+
+- **Thêm:** CANON §0.10 và LEAN-8 *Small Wins*; luật [R-FLOW-9](docs/rules/RULE-FLOW.md): master plan mỗi phase có bảng bước thắng nhỏ, mỗi bước một PR và người dùng dùng được ngay; câu hỏi mở dùng mặc định tạm ghi rõ trên màn.
+- **Đổi:** phase đang mở bổ sung bảng bước trước khi giữ chỗ đợt kế tiếp. Lõi không nới: chữ chốt, K3, danh sách chặn giữ nguyên.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không đổi.
+
 ### Lỗi Kernel mang ngữ cảnh chứng từ và phương án khắc phục (PHASE-022 S022-17, RV-R1-06) <!-- [2026-11-10 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 -->
 
 - **Thêm:** `details.context` (`docKey`, `docType`, `docNo`, `eventId`, `version`, `entryNo`, `period`, `branchCode`, `postingDate`, `step`) và `details.remedy` (`bizcity_remedy@1`, bảng `ERROR_REMEDY`) cho `UNBALANCED_ENTRY`, `PERIOD_LOCKED`, `POSTING_FAILED` và lỗi trigger CSDL (`step = db-trigger`, kể cả `LEDGER_APPEND_ONLY`); `UNBALANCED_ENTRY` thêm `difference`, `PERIOD_LOCKED` thêm `scope` (`period` / `branch` / `doc-type`, `periodRepository.lockScope`). `withErrorContext` (Platform) bổ sung khoá còn thiếu, `postDocumentIn` bọc ngữ cảnh chứng từ. Chữ chốt BIZCITY-ERRORS-v1 §4b (1.4.0-draft). Test `error-context` (6 ca).
