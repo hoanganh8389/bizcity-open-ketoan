@@ -188,9 +188,10 @@ function keepInView(node: ReactNode): ReactNode[] {
 }
 
 /** Ô nhập có nhãn. */
-export function Field({ label, children, full, hint }: { label: string; children: ReactNode; full?: boolean; hint?: string }) {
+// [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — Field.tip: giải thích để ở chú thích rê chuột, màn gọn chữ (đóng góp)
+export function Field({ label, children, full, hint, tip }: { label: string; children: ReactNode; full?: boolean; hint?: string; tip?: string }) {
   return (
-    <div className={`field ${full ? 'full' : ''}`}>
+    <div className={`field ${full ? 'full' : ''}`} title={tip}>
       <label>{label}</label>
       {children}
       {hint && <span className="muted" style={{ fontSize: 12 }}>{hint}</span>}

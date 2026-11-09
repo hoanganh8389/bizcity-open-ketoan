@@ -314,3 +314,25 @@ Phạm vi: **một mã** `IN-POL-004` (golden T031-RC-4, T031-INT-10..13). `IN-P
 **Golden.** T031-INT-10 quà đúng → không mã · T031-INT-11 thiếu quà / thừa quà / lệch số lượng → `IN-POL-004` có `details` · T031-INT-12 tính theo **bản được nêu** (bản cũ còn tính đúng dù bản mới đổi số quà; bản nêu sai ngày vẫn `IN-POL-002/003` riêng) · T031-INT-13 chưa đăng ký hàm / chính sách nội dung ở module chủ / không dòng quà và không tính ra quà → im lặng; Kiểm thử và cửa nạp ra cùng mã (R-INTAKE-4); `strict` → chờ duyệt.
 
 **Đính chính khi code (W2b, 2026-11-09).** (1) Điểm mở rộng `registerPolicyRecompute` đặt ở **`packages/platform/src/core/policies.ts`**, không ở `packages/kernel/.../policy-recompute.ts` như mục 2: SC-KERNEL-6 chỉ cho code ngoài Kernel đi qua cổng gốc `@bizcity/kernel` (`packages/kernel/src/index.ts` ngoài phạm vi); platform trung lập — Kernel gọi, `apps/api` đăng ký. Nợ N031-1 (dời Rule Contract xuống platform) **đóng** bằng điểm mở rộng này. (2) Cổng thêm: chỉ tính lại khi bản có thật **và băm khớp** (băm lệch đã là `IN-POL-001`); (3) cửa sổ chiến dịch trong nội dung và phạm vi chi nhánh / kênh được kiểm — ngoài thì không tính (im lặng).
+
+## 15. Chữ chốt W4c (K1, API đọc + giao diện; R-FLOW-2): ô *Thực hiện chương trình*
+<!-- [2026-11-09 09:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W4c trước khi code: một ô mới của core.policy.tracking, đọc quà nguồn đã gửi trong payload; không migration; ngân sách và giá trị hàng tặng hoãn có lý do -->
+
+Phạm vi: S031-30. Mở ô cuối còn thiếu của [20 §4](20-TRUY-VET-VA-THEO-DOI.md) — *chương trình đã chạy tới đâu*. **Làm phần dữ liệu có thật hôm nay; hoãn phần chưa có nguồn, ghi rõ.**
+
+**1. Có thật hôm nay (làm).** Từ `accounting_events` đã có `policyRefs` (cùng khung nhìn `policy_application`) và các dòng quà **nguồn đã gửi** (`payload.lines[]` có `isGift = true` và `policyRef.key` = mã chính sách): với mỗi *(chính sách, bản)* trong kỳ → **số chứng từ áp**, **số lượng quà đã tặng theo mặt hàng**, **số chứng từ có quà lệch** (`IN-POL-004` — nhờ W2b), kèm tỉ lệ lệch. Một nguồn số: quà lấy từ chính chứng từ đã ghi sổ, không tính lại ở API (tính lại là việc cửa nạp, W2b).
+
+**2. Hoãn có lý do.**
+- *Giá trị hàng tặng:* dòng quà gửi `amountBeforeTax = 0` (đúng khuôn `bizcity_ledger_intake@1`); giá trị phải lấy từ **giá vốn / giá bán** của mặt hàng ở ngày chứng từ — chưa có nguồn đọc thống nhất ở Core (Costing nối sau sổ cái, PHASE-025). Màn hiện "—" kèm câu giải thích, không ước lượng.
+- *Ngân sách (`gift_budget`) và "đã chạy tới đâu so với ngân sách":* Rule Contract `sale.promo.buy_x_get_y@1` **chưa có tham số ngân sách** — thêm là đổi khuôn tham số công bố cho nguồn ngoài (STD: thêm trường tuỳ chọn = minor), cần chủ dự án / kế toán trưởng quyết ngân sách tính theo số lượng hay giá trị. **Câu hỏi mở Q031-7** (không chặn W4c). Khi có: ô thêm thanh tiến độ, không đổi khung đã làm.
+- *Chiết khấu đã cho:* chưa có Rule Contract `sale.promo.discount@1` (S031-15).
+
+**3. API.** Thêm khoá `program` vào kết quả `core.policy.tracking` (cùng bộ lọc kỳ · chi nhánh · nguồn · module chủ): `program[] { policyId, policyKey, version, orders, giftsBySku[] { sku, qty }, mismatched, mismatchRate }`. Thêm khoá vào đối tượng trả = **minor** của `bizcity_policy@1` (1.3.0-draft), không đổi khoá cũ. Truy vấn thuần ở `policy-insight.ts`, một câu SQL gom từ `jsonb_array_elements(payload->'lines')` rồi đối chiếu `policy_application`; không bảng tổng hợp (đo hiệu năng ở S031-24).
+
+**4. Màn hình.** Tab *Theo dõi thực hiện* thêm khối *Thực hiện chương trình* (bảng chính sách × bản: chứng từ áp, quà theo mặt hàng, lệch); giá trị hàng tặng và ngân sách hiện "—" kèm chú thích. Hướng dẫn `docs/huong-dan/chinh-sach.md` cập nhật bảng ô.
+
+**Ba yếu tố.** *Nhất quán:* quà lấy từ chứng từ đã ghi sổ, lệch lấy từ `policy_check` — cùng một nguồn với tab Truy vết. *Xuyên suốt:* tách theo **bản** nên chương trình đổi bản giữa kỳ thấy rõ từng giai đoạn. *Truy vết:* mỗi số quy được về danh sách chứng từ (tab *Chính sách* → *Chứng từ đã áp*). *Gọn:* một khoá, một câu SQL, không migration.
+
+**Golden.** T031-PRG-1 đếm đúng chứng từ áp và quà theo mặt hàng theo từng bản · T031-PRG-2 chứng từ có quà lệch (`IN-POL-004`) được tính vào `mismatched` và tỉ lệ; chứng từ không quà không lệch · T031-PRG-3 quà của chính sách khác trên cùng chứng từ không bị cộng nhầm · T031-PRG-4 kỳ rỗng → `program: []`, tỉ lệ `null` · T031-PRG-5 lọc nguồn / chi nhánh / module chủ; cô lập đơn vị · UI: khối hiện đúng số API, "—" ở ô hoãn (chạy thật, như W4b).
+
+**Đính chính khi code (W4c, 2026-11-09).** (1) Quà đếm theo **cặp (khoá chính sách, số bản)** của `policyRef` trên dòng quà — chỉ so số bản thì nhầm khi hai chính sách cùng số bản (bắt được nhờ phá thử). (2) Quà chỉ tính ở chứng từ đã vào `policy_application` (có `policyRefs` và qua cửa nạp); dòng quà nguồn không nêu `policyRef` không thuộc chương trình nào. (3) Q031-7 (ngân sách theo số lượng hay giá trị) vẫn **mở**.

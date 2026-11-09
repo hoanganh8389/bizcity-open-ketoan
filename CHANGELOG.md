@@ -12,6 +12,60 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sản phẩm con và ô Biến thể, giai đoạn 1 chuyển mã số (PHASE-026) <!-- [2026-11-07 06:20 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1 (đóng góp) --> <!-- [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm, migration 0092 (đóng góp) -->
+
+- **Thêm:** bảng `item_variant_kinds`, cột `products.variant_code` tự điền theo đuôi mã (migration 0092); `POST /api/v1/items/add-child`, `GET /api/v1/items/variant-kinds`; nút Thêm sản phẩm con (tên + Biến thể, chọn được mọi biến thể) và cột Biến thể ở DM10; ô Biến thể sửa được (`variantCode` ở `PUT /api/v1/catalog/products/:sku`); luồng `/api/v1/catalog/feed/products` gửi `variantCode`; bảng Biến thể ở MH26; loại hàng chuẩn. Phương án: `docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md`; xuyên suốt với WordPress: `docs/nghiep-vu/14-ma-so-bien-the-xuyen-suot.md`.
+- **Đổi:** MH22 không tự nhận khi NCC dùng lại mã cho hàng khác hẳn, đưa về gợi ý. Đổi mã không làm đổi biến thể (biến thể đi theo mặt hàng). Không gộp hàng Nội bộ với hàng có sang thuế. Bỏ cách tạo mã có đuôi ở DM10 (chọn đuôi, nút Tạo mã có đuôi).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0092. Khoảng 9 giây trên 42.016 dòng; không đổi `updated_at`. Hệ thống bán hàng (tgs_accounting_bridge) tự kéo lại danh mục một lượt để nhận `itemId` và `variantCode`.
+### Màn "Sửa đầu bút toán" (SC02) và xác nhận của kế toán trưởng (PHASE-004 S004-16, D004-14, D004-16) <!-- [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 -->
+
+- **Thêm:** `GET /api/v1/ledger/entry-edits` (quyền `ledger:read`) — mọi lần đổi đầu bút toán từ nhật ký của trigger 0089, nguồn **Ứng dụng** / **Ngoài ứng dụng** (ghép `_txid`), cột trước → sau, vai trò / đăng nhập / ứng dụng / máy, trạng thái xác nhận, tóm tắt; lọc ngày hạch toán, nguồn, cột, số bút toán, trạng thái. Action `core.ledger.header-edit-ack` (`POST …/entry-edits/ack`, quyền `periods:lock`, chỉ người dùng, lý do ≥ 10 ký tự): bằng chứng của action là bản ghi xác nhận, chỉ thêm. Màn **SC02** ở menu Kế toán › Định khoản (bộ lọc trên địa chỉ, cột `content_hash` ẩn mặc định). Hướng dẫn `docs/huong-dan/sua-dau-but-toan.md`. Test `entry-edits` (5 ca).
+- **Đổi:** chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` (và lane DG-LEDGER-5) bỏ lần sửa đã được xác nhận — khoá kỳ hết chặn sau khi kế toán trưởng xem. Màn đặt ở menu Kế toán thay vì Bàn điều tra (D004-14 đổi: kế toán trưởng không có `devtools:read`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần 0089).
+- **Bảo mật:** đọc nhật ký theo đơn vị; xác nhận không sửa / xoá dấu vết cũ; khoá API không xác nhận được.
+
+
+### Nhật ký chi tiền theo khoản mục hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2d) <!-- [2026-11-09 11:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2d -->
+
+- **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-DIM-1..2.
+- **Đổi:** **sổ nhật ký chi tiền theo khoản mục** (ACC75) hiện tên đối tượng **lúc ghi** (tên của dòng Nợ nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ, kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên, vẫn hiện tên cũ. Số tiền và cột khoản mục không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0090 đã chạy).
+- **Bảo mật:** không đổi.
+
+### Sổ chi tiết tài khoản và nhật ký chung hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2c) <!-- [2026-11-09 11:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2c -->
+
+- **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-LED-1..3.
+- **Đổi:** **sổ chi tiết tài khoản** và **sổ nhật ký chung** hiện tên đối tượng **lúc ghi** (tên của dòng nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ, kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên, vẫn hiện tên cũ. Mã đối tượng và số tiền không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0090 đã chạy).
+- **Bảo mật:** không đổi.
+
+### E1 (điền giá vốn) qua hàm SECURITY DEFINER; ứng dụng không còn sửa trực tiếp số tiền sổ cái (PHASE-004 S004-17, D004-15) <!-- [2026-11-09 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-17 -->
+
+- **Đổi:** migration `0091` — vai trò `ketoan_ledger_cost` (NOLOGIN) sở hữu hai hàm `ledger_fill_cost_lines` / `ledger_fill_entry_totals` (SECURITY DEFINER, `search_path` cố định, `EXECUTE` chỉ cho `ketoan_app`), tự kiểm dòng `cost_fill`, bút toán `posted` không đảo, số ≥ 0, ghi `audit_logs` `ledger.cost_fill`. Trigger sổ cái chỉ cho đổi số tiền khi `current_user = 'ketoan_ledger_cost'` (cờ phiên `ketoan.cost_overwrite` hết tác dụng). `ketoan_app` mất `UPDATE` số tiền: `ledger_lines` chỉ còn cột `item_id`; `ledger_entries` không còn cột `total` (cột mới thêm về sau mặc nhiên không sửa được). `overwriteCostPairs` gọi hai hàm.
+- **Thêm:** test `e1-cost-fill` (7 ca: cờ cũ vô tác dụng, qua hàm đổi được và có dấu vết, hàm từ chối dữ liệu sai, không thay / sửa hàm, cân Nợ = Có, đường thật `overwriteCostPairs`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** người cài đặt cần quyền tạo vai trò `ketoan_ledger_cost`; nếu không migration dừng và in lệnh `CREATE ROLE` để quản trị CSDL chạy trước. Giá trị tiền không đổi; hiệu năng giữ nguyên (cùng `unnest` theo lô 10.000).
+- **Bảo mật:** thu hẹp từ "mọi dòng sổ cái, không dấu vết" xuống "chỉ dòng giá vốn chờ, có dấu vết"; hàm là bề mặt mới (không SQL động, kiểm tham số). Chưa được: `ketoan_app` vẫn gọi hàm với số tiền tuỳ ý cho dòng giá vốn chờ (bản chất của việc điền giá vốn).
+
+
+### Sổ nhật ký hiện tên đối tượng lúc ghi; khung nhìn bizcity_read thêm partner_name (PHASE-029 S029-19 đợt 2b) <!-- [2026-11-09 11:13 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2b -->
+
+- **Thêm:** migration `0090_khung_nhin_ten_doi_tuong.sql` — `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` thêm `partner_name` + `partner_attr_id` ở cuối (`CREATE OR REPLACE VIEW` chỉ thêm cột, giữ thứ tự cột cũ, giữ `security_invoker` và quyền). Báo cáo đọc sổ qua khung nhìn nên đây là điều kiện để đọc được tên lúc ghi của 0087. Golden T029-JNL-1..4.
+- **Đổi:** sổ nhật ký **thu / chi tiền** (`cash-journal`), **bán hàng** (`sales-journal`) và **mua hàng** (`purchase-journal`) hiện tên đối tượng **lúc ghi** (tên của dòng nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ — kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên — vẫn hiện tên cũ. Dòng sổ ghi trước 0087 (chưa có tên lúc ghi) vẫn hiện tên hiện tại. Mã đối tượng và số tiền không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** chạy migration 0090 (đã có 0087 của đợt 1).
+- **Bảo mật:** không đổi (khung nhìn giữ `security_invoker`).
+
 ### Cảnh báo sửa đầu bút toán ngoài ứng dụng (PHASE-004 S004-15a, D004-13) <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a -->
 
 - **Thêm:** chẩn đoán L3 `LEDGER_HEADER_EDIT_UNATTRIBUTED` (mức **error**, có phạm vi kỳ / chi nhánh): liệt kê bút toán có lần sửa đầu **ngoài ứng dụng** = dòng nhật ký của trigger 0089 (`_source = db`) không có dòng của ứng dụng (`_source = app`) cùng `_txid`. Vì là lỗi L3 mức error nên khoá kỳ chặn như mọi lỗi L3 (kế toán trưởng ghi lý do thì khoá được). Lane DG-LEDGER-5 cùng bộ mã (R-DIAG-9). Test `e2-unattributed-warning`.
@@ -30,6 +84,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
 - **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
+
+### Thực hiện chương trình khuyến mại: `program[]` ở theo dõi chính sách (PHASE-031 W4c, ADR-0031) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c -->
+
+- **Thêm:** khoá `program[]` ở `GET /api/v1/policy-tracking` — mỗi *(chính sách, bản)* có chứng từ trong kỳ: số chứng từ áp, **số lượng quà đã tặng theo mặt hàng** (từ các dòng quà nguồn đã gửi trong chứng từ đã ghi sổ), số chứng từ có quà lệch (`IN-POL-004`) và tỉ lệ. Khối *Thực hiện chương trình* ở tab *Theo dõi thực hiện* của màn Chính sách. `bizcity_policy@1` 1.3.0-draft; test T031-PRG-1..5.
+- **Đổi:** không. Thêm khoá, không đổi khoá cũ; không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc, lọc `tenant_id`; cần `catalog:read`.
 
 ### Cửa nạp tính lại quà theo chính sách: `IN-POL-004` (PHASE-031 W2b, ADR-0031) <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b -->
 

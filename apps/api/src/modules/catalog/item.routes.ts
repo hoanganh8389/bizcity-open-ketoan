@@ -15,6 +15,7 @@ import { authOf, requirePermission } from '../../core/auth.js';
 import { Errors } from '../../core/errors.js';
 import { ok } from '../../core/http.js';
 import { itemActions } from './item.actions.js';
+import { listVariantKinds } from './san-pham-con.js';
 
 const tags = ['Mặt hàng'];
 
@@ -37,6 +38,13 @@ async function itemRecord(trx: Db, tenantId: string, itemId: string) {
 export async function itemRoutes(app: FastifyInstance): Promise<void> {
   mountActions(app, itemActions);
   const r = app.withTypeProvider<ZodTypeProvider>();
+
+  // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: danh mục biến thể cho DM10, MH26 (đóng góp)
+  r.get('/api/v1/items/variant-kinds', {
+    preHandler: requirePermission('catalog:read'),
+    schema: { tags, summary: 'Danh mục biến thể mặt hàng: nghĩa của đuôi mã cũ, cách xử lý dự kiến, số mặt hàng' },
+    handler: async (req) => ok(await db.transaction().execute((trx) => listVariantKinds(trx, authOf(req).tenantId))),
+  });
 
   r.get('/api/v1/items/resolve', {
     preHandler: requirePermission('catalog:read'),

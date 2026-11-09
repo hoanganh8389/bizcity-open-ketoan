@@ -33,6 +33,20 @@
 
 Chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` đọc `audit_logs` theo tên `ledger.entry.header_update` để ghép dòng mức ứng dụng (`_source = app`) với dòng của trigger (`_source = db`) theo `_txid`. Nếu E2 chạy trong một action, `writeAudit` đưa dòng ứng dụng vào `notes.audit[]` (ACTION §4.4) và mọi lần sửa hợp lệ bị báo nhầm. **Quyết định:** thêm mục `{ action: 'ledger.entry.header_update' }` vào `AUDIT_KEEP` (`packages/platform/src/core/audit.ts`); SC-AUDIT-1 kiểm. Dòng tương ứng ở bảng ACTION §4.4 thêm khi PHASE-030 S030-51a nhả `docs/contracts/BIZCITY-ACTION-v1.md` (ghi ở checklist S004-15a).
 
+### 3b. Chủ duyệt bản mẫu S004-16 — D004-16 <!-- [2026-11-09 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16: chủ dự án trả lời bốn điểm của bản mẫu mockups/sua-dau-but-toan.html -->
+
+Chủ dự án duyệt [bản mẫu](mockups/sua-dau-but-toan.html) ngày 2026-11-09 và chọn:
+
+1. **Xác nhận** một lần sửa ngoài ứng dụng là việc của **kế toán trưởng** (quyền `periods:lock`), bắt buộc lý do ≥ 10 ký tự. Xác nhận là một **action** `core.ledger.header-edit-ack` (`POST /api/v1/ledger/entry-edits/ack`, chỉ người dùng, không MCP / AI): bằng chứng của action là bản ghi xác nhận (chỉ thêm), `object_id` = id bút toán, `input.txid` = giao dịch của lần sửa. Không sửa, không xoá dòng nhật ký cũ.
+2. **Khoá kỳ**: chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` (L3, error) đếm lần sửa ngoài ứng dụng **chưa được xác nhận**; còn thì khoá kỳ chặn như mọi lỗi L3, kế toán trưởng ghi lý do thì khoá được (không thêm cơ chế mới).
+3. Lần sửa **qua ứng dụng** (có dòng `_source = app` cùng `_txid`) hiện trong danh sách, **không cần** xác nhận.
+4. Cột `content_hash` **ẩn mặc định**, nút "Hiện cột kỹ thuật" bật lại.
+
+**Hình dạng:**
+- `GET /api/v1/ledger/entry-edits` (quyền `ledger:read`; hệ thống chưa có `audit:read` nên D004-14 dùng quyền xem sổ): lọc `from` / `to` (ngày hạch toán của bút toán, cùng phạm vi với chẩn đoán và khoá kỳ), `source` = `app` | `db`, `column`, `entry` (số bút toán), `status` = `unacked` | `acked`, phân trang. Mỗi dòng = một dòng nhật ký của trigger 0089: bút toán, chứng từ gốc, các cột trước → sau, nguồn, vai trò / đăng nhập / ứng dụng / máy, `txid`, xác nhận (người, giờ, lý do). Kèm `summary` (tổng, ngoài ứng dụng, chưa xác nhận, cột bị sửa nhiều nhất).
+- Màn **SC02 "Sửa đầu bút toán"** (`/so-cai/sua-dau-but-toan`) ở **menu Kế toán › Định khoản**, cạnh "Bút toán sổ cái" — **đổi D004-14** (không đặt trong Bàn điều tra): Bàn điều tra cần `devtools:read`, kế toán trưởng không có; và thư mục `apps/web/src/phan-he/dev/**` đang thuộc giữ chỗ PHASE-018 W6 (chủ dự án chọn 2026-11-09). Quyền `ledger:read`; bộ lọc trên địa chỉ; bốn trạng thái tải / rỗng / lỗi / không quyền; nút xác nhận chỉ hiện với `periods:lock`. Bản mẫu vẽ thanh "Bàn điều tra" — phần thân màn giữ nguyên.
+- Chẩn đoán và lane DG-LEDGER-5 bỏ lần đã có bằng chứng xác nhận thành công cùng bút toán và `txid`. Đọc theo **id action** ba phần nên SC-AUDIT-1 miễn (ACTION §4.4 mục 6), không thêm `AUDIT_KEEP`.
+
 ## 4. E1 (`ketoan.cost_overwrite`) — phương án cụ thể cho Q004-4
 
 **Hiện trạng [M].** E1 có đúng **một** nơi ghi: `ledgerService.overwriteCostPairs` (`ledger.service.ts`). Nó bật cờ phiên `ketoan.cost_overwrite`, rồi `UPDATE ledger_lines` (theo lô, `unnest`, tối đa 10.000 dòng một câu) và `UPDATE ledger_entries.total`. Trigger chỉ cho đổi `debit` / `credit` ≥ 0 của dòng có `cost_fill`, bút toán `posted`, không đảo, mọi cột khác giữ nguyên. Cờ do ứng dụng tự đặt nên **bất kỳ phiên `ketoan_app` nào** đặt cờ rồi `UPDATE` được số tiền các dòng giá vốn, **không để lại dấu vết**, miễn mỗi cặp dòng vẫn cân.
@@ -45,7 +59,7 @@ Chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` đọc `audit_logs` theo tên `l
    - `ledger_fill_entry_totals(ids bigint[], deltas numeric[])`
    Mỗi hàm **tự kiểm lại** điều kiện hiện nằm trong trigger (dòng có `cost_fill`, bút toán `posted`, không đảo, số ≥ 0), rồi `UPDATE` theo lô như hôm nay (cùng `unnest`, hiệu năng giữ nguyên) và ghi **một dòng `audit_logs` `costing.fill`** với tổng trước / sau và số dòng.
 3. Trigger `guard_ledger_line_mutation` và nhánh (c) của `guard_ledger_entry_mutation` đổi điều kiện từ `current_setting('ketoan.cost_overwrite') = 'on'` thành `current_user = 'ketoan_ledger_cost'` (trong hàm `SECURITY DEFINER`, `current_user` là chủ hàm; ứng dụng không thể đặt).
-4. `REVOKE UPDATE ON ledger_lines FROM ketoan_app` (đây là nơi duy nhất ứng dụng ghi `ledger_lines`); trên `ledger_entries` thu `UPDATE` rồi `GRANT UPDATE (status, doc_no, invoice_no, reason_code, partner_id, description, content_hash, event_version)`, **bỏ `total`**.
+4. `REVOKE UPDATE ON ledger_lines FROM ketoan_app` rồi `GRANT UPDATE (item_id)` — **chỉnh khi làm S004-17 (2026-11-09):** `bizcity_item_fill_refs` (0066) chạy bằng quyền người gọi và điền `item_id` một lần (NULL → có giá trị), nên cột này giữ lại; mọi cột khác của dòng thì không; trên `ledger_entries` thu `UPDATE` rồi `GRANT UPDATE (status, doc_no, invoice_no, reason_code, partner_id, description, content_hash, event_version)`, **bỏ `total`**.
 5. `overwriteCostPairs` gọi hai hàm thay vì `UPDATE` trực tiếp.
 
 **Được:** ứng dụng không còn sửa trực tiếp được số tiền sổ cái; E1 chỉ qua hàm có điều kiện cố định và có dấu vết. **Chưa được:** `ketoan_app` vẫn gọi được hàm với số tiền tuỳ ý cho các dòng `cost_fill` (đó là bản chất của việc điền giá vốn); phương án thu hẹp từ "mọi dòng, không dấu vết" xuống "chỉ dòng giá vốn chờ, có dấu vết và đối soát". **Chi phí:** một migration (K3 thêm chặt), hai hàm, đổi một hàm TypeScript; `costing.test.ts` giữ nguyên làm hồi quy; ca phá thử "đặt cờ cũ rồi `UPDATE ledger_lines` ⇒ bị từ chối vì quyền". **Rủi ro:** hàm `SECURITY DEFINER` là bề mặt tấn công mới (phải `SET search_path`, không dùng SQL động, kiểm kỹ tham số); cần quyền tạo vai trò / chủ hàm ở bản cài (một bước thủ công như `ketoan_app`). **Không làm:** để nguyên cờ phiên (phương án 0). Việc: S004-17.

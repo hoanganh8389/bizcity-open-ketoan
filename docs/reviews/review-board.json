@@ -3,7 +3,7 @@
   "contract": "bizcity_review_board@1",
   "version": "0.1.0-draft",
   "criteriaVersion": "1.0",
-  "updated": "2026-11-08",
+  "updated": "2026-11-09",
   "doc": "docs/reviews/README.md",
   "levels": {
     "0": "chưa có",
@@ -63,12 +63,39 @@
       ]
     }
   ],
+  "followUps": {
+    "$comment": "[2026-11-09 03:20 PM Johnny Chu - Chu Hoàng Anh] REVIEW — theo dõi sau R1: trạng thái từng phát hiện của review đã chấm (điểm review KHÔNG sửa; R2 chấm lại). status: xong | mot-phan | chua. Cập nhật mỗi khi một việc theo phát hiện vào main.",
+    "updated": "2026-11-09",
+    "R1": [
+      { "finding": "RV-R1-01", "status": "xong", "by": ["S004-12"], "evidence": ["db/migrations/0086_go_co_thoat_so_cai.sql", "apps/api/test/app-role.test.ts", "apps/api/test/db-rules.test.ts", "LEDGER_TRIGGERS cột bypass"] },
+      { "finding": "RV-R1-02", "status": "xong", "by": ["S029-33"], "evidence": ["packages/platform/src/core/errors.ts classifyLedgerTriggerError", "apps/api/test/db-error-mapping.test.ts"] },
+      { "finding": "RV-R1-03", "status": "xong", "by": ["đổi số 0081 (PR của chủ)"], "evidence": ["SC-DATA-1 đạt"], "note": "main đỏ lại ngày 2026-11-09 vì lý do khác: SC-SIG-1/2, SC-DOC-1 ở tài liệu PHASE-028 — không thuộc phát hiện này" },
+      { "finding": "RV-R1-04", "status": "chua", "by": [], "remaining": "retirePolicy chưa đóng effective_to; covers() ở cửa nạp chưa xét status (packages/platform/src/core/policies.ts, packages/kernel/src/modules/intake/policy-check.ts)" },
+      { "finding": "RV-R1-05", "status": "xong", "by": ["PR #187"], "evidence": ["packages/platform/src/core/settings.ts:358"] },
+      { "finding": "RV-R1-06", "status": "chua", "by": [], "remaining": "details chuẩn + remedy cho lỗi Kernel (docKey / eventId / kỳ)" },
+      { "finding": "RV-R1-07", "status": "mot-phan", "by": ["S004-18"], "evidence": ["scripts/mua-hang/do-lech-tai-khoan.mjs", "evidence/lech-tai-khoan-mua-hang.md"], "remaining": "đo trên bản sao ẩn danh dữ liệu thật để chốt K1 / K2; rồi bước 2–3 (doc 21 §5)" },
+      { "finding": "RV-R1-08", "status": "chua", "by": [], "remaining": "S029-5 (⛔ chờ) + VERSION_CONTENT_MISMATCH" },
+      { "finding": "RV-R1-09", "status": "chua", "by": [], "remaining": "S029-28, S029-32 (⛔ chờ) + events/items" },
+      { "finding": "RV-R1-10", "status": "chua", "by": [], "remaining": "Commit Guard (PHASE-031)" },
+      { "finding": "RV-R1-11", "status": "chua", "by": [], "remaining": "S029-11, S029-25; PHASE-028 W3" },
+      { "finding": "RV-R1-12", "status": "chua", "by": [], "remaining": "D-R1-2 (PHASE-031 W3)" },
+      { "finding": "RV-R1-13", "status": "chua", "by": [], "remaining": "S029-14 mở rộng" },
+      { "finding": "RV-R1-14", "status": "mot-phan", "by": ["S004-13", "S004-14", "S004-15a", "S004-16", "S004-17"], "evidence": ["posting.service.ts E2_COLUMNS + nhật ký app", "0089 trigger dấu vết", "LEDGER_HEADER_EDIT_UNATTRIBUTED", "màn SC02 + core.ledger.header-edit-ack", "0091 E1 qua hàm SECURITY DEFINER"], "remaining": "S004-15b số đo + luật cảnh báo (chờ PHASE-018 W6); Q004-9 (partner_name / partner_attr_id)" },
+      { "finding": "RV-R1-15", "status": "mot-phan", "by": ["docs/rv-r1-15-tai-lieu-khop-ma"], "evidence": ["PHASE-031 README: Code đã vào main", "00-CANON §4: bizcity_event@1 trỏ events.ts", "phat-trien.md §4b: modules/<key> theo ADR-0024"], "remaining": "mã màn HT12 dùng cho hai màn (modules/phan-quyen/web/index.tsx, PHASE-028 đang làm); tru-cot.json P-7 (tệp đang thuộc giữ chỗ S030-51a)" },
+      { "finding": "RV-R1-16", "status": "chua", "by": [], "remaining": "S013-12, S026-12, S030-28 (⛔)" },
+      { "finding": "RV-R1-17", "status": "chua", "by": [], "remaining": "S025-5..18; S029-6; S029-27" },
+      { "finding": "RV-R1-18", "status": "chua", "by": [], "remaining": "S013-3..8; S030-16; S030-21; S031-15" }
+    ],
+    "decisions": [
+      { "id": "D-R1-1", "status": "xong", "by": ["S004-12", "S004-13", "S004-14", "S004-15a", "S004-16", "S004-17"], "remaining": "S004-15b" }
+    ]
+  },
   "versions": [
-    { "id": "v0.1.0", "name": "Nền móng", "phases": ["PHASE-001", "PHASE-002", "PHASE-003", "PHASE-004", "PHASE-005", "PHASE-006", "PHASE-007", "PHASE-008", "PHASE-009", "PHASE-010"], "status": "chua-dong", "blockers": ["RV-R1-01", "RV-R1-02", "RV-R1-03", "RV-R1-07", "thi hành D-R1-1", "PHASE-001 0.2/0.6/0.7", "PHASE-008 máy chủ thật"], "maxKernelLevel": "K3", "judgedBy": ["R1", "R2"] },
+    { "id": "v0.1.0", "name": "Nền móng", "phases": ["PHASE-001", "PHASE-002", "PHASE-003", "PHASE-004", "PHASE-005", "PHASE-006", "PHASE-007", "PHASE-008", "PHASE-009", "PHASE-010"], "status": "chua-dong", "blockers": ["RV-R1-07 (chờ số đo dữ liệu thật)", "PHASE-001 0.2/0.6/0.7", "PHASE-008 máy chủ thật", "diễn tập R-KER-6 0086 / 0089 / 0091 trên bản sao"], "blockersDone": ["RV-R1-01", "RV-R1-02", "RV-R1-03", "thi hành D-R1-1 (còn S004-15b, không chặn)"], "maxKernelLevel": "K3", "judgedBy": ["R1", "R2"] },
     { "id": "v0.2.0", "name": "Module SDK", "phases": ["PHASE-011", "PHASE-012", "PHASE-013", "PHASE-014"], "status": "chua-dong", "blockers": ["S013-3..8", "S013-12", "4.3", "4.5", "4.6", "4.7", "RV-R1-11"], "maxKernelLevel": "K1", "judgedBy": ["R2"] },
     { "id": "v0.3.0", "name": "Kiểm chuẩn & bằng chứng", "phases": ["PHASE-018", "PHASE-019", "PHASE-020", "PHASE-021", "PHASE-022"], "status": "chua-dong", "blockers": ["PHASE-020 10/24", "S021-17", "S021-21", "PHASE-022 W1+", "RV-R1-06", "RV-R1-09", "RV-R1-10"], "maxKernelLevel": "K1", "judgedBy": ["R3"] },
     { "id": "v0.4.0", "name": "Dữ liệu gốc & liên tục", "phases": ["PHASE-023", "PHASE-024", "PHASE-025", "PHASE-026"], "status": "chua-dong", "blockers": ["PHASE-024 B2c+", "PHASE-025 W2+", "RV-R1-17"], "maxKernelLevel": "K2", "judgedBy": [] },
-    { "id": "v0.5.0", "name": "Enterprise continuity & chính sách", "phases": ["PHASE-027", "PHASE-028", "PHASE-029", "PHASE-030", "PHASE-031"], "status": "chua-dong", "blockers": ["RV-R1-04", "RV-R1-05", "RV-R1-08", "RV-R1-12", "RV-R1-13", "RV-R1-15"], "maxKernelLevel": "K3", "judgedBy": [] },
+    { "id": "v0.5.0", "name": "Enterprise continuity & chính sách", "phases": ["PHASE-027", "PHASE-028", "PHASE-029", "PHASE-030", "PHASE-031"], "status": "chua-dong", "blockers": ["RV-R1-04", "RV-R1-08", "RV-R1-12", "RV-R1-13", "RV-R1-15"], "maxKernelLevel": "K3", "judgedBy": [] },
     { "id": "v1.0.0", "name": "Hệ sinh thái", "phases": ["PHASE-015", "PHASE-016", "PHASE-017"], "status": "chua-mo", "blockers": ["cần Hub", "R-REL-4"], "maxKernelLevel": "—", "judgedBy": [] }
   ]
 }

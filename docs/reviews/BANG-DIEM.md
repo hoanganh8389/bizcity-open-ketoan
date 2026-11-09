@@ -23,6 +23,17 @@
 | **Tổng** | | **27 / 48 · 56 %** | **41 / 48** | |
 | **Kết luận** | | **ĐẠT có điều kiện** | ĐẠT | |
 
+### Theo dõi sau R1 (không đổi điểm R1; R2 chấm lại) <!-- [2026-11-09 03:20 PM Johnny Chu - Chu Hoàng Anh] REVIEW — theo dõi sau R1 -->
+
+Nguồn: `followUps.R1` ở [review-board.json](review-board.json), cập nhật 2026-11-09.
+
+| | Xong | Một phần | Chưa |
+|---|---|---|---|
+| Phát hiện (18) | **4** — 01, 02, 03, 05 (và quyết định D-R1-1) | **3** — 07 (chờ số đo dữ liệu thật), 14 (còn S004-15b, Q004-9), 15 (còn HT12, tru-cot P-7) | **11** — 04, 06, 08–13, 16–18 |
+| Chặn v0.1.0 | 01, 02, 03, thi hành D-R1-1 | 07 | việc tay của chủ: PHASE-001 0.2 / 0.6 / 0.7, PHASE-008, diễn tập R-KER-6 0086 / 0089 / 0091 |
+
+Trục có cơ sở lên điểm ở R2: **A2** (cờ thoát gỡ, E1 qua hàm, E2 có dấu vết hai mức + cảnh báo + màn SC02), **A7** (SQLSTATE → mã hợp đồng). Chưa chấm lại ở đây.
+
 ## 2. Trục × trụ cột 0–VIII — chỗ hai bảng nói khác nhau
 
 Mức trụ cột lấy từ `docs/standard/tru-cot.json` (`updated` 2026-11-07, nguồn ghi tay có bằng chứng). Cột cuối chỉ ra tiêu chí mà review R1 **tìm được kẽ hở** dù trụ cột đang ghi "đạt" — đó là nơi phải chạy bộ kiểm chứ không ghi tay (R-ECP-SCORE, D026-6).

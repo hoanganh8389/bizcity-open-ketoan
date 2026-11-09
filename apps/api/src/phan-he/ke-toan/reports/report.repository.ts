@@ -140,7 +140,7 @@ export const reportRepository = {
                WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                  AND ${otherSide()}
                ORDER BY o.line_no LIMIT 1) AS counter_note,
-             l.partner_id, p.code AS partner_code, p.name AS partner_name, br.code AS branch_code, e.reason_code, l.dims,
+             l.partner_id, p.code AS partner_code, COALESCE(CASE WHEN l.partner_id IS NOT NULL THEN l.partner_name ELSE e.partner_name END, p.name) AS partner_name, br.code AS branch_code, e.reason_code, l.dims,
              l.product_sku, COALESCE(l.product_name, pr.name) AS product_name
         FROM bizcity_read.ledger_lines l
         JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
@@ -200,7 +200,7 @@ export const reportRepository = {
                 FROM bizcity_read.ledger_lines o
                WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id
                  AND ${otherSide()}) AS counter_accounts,
-             p.code AS partner_code, p.name AS partner_name, br.code AS branch_code, e.is_reversal, e.status AS entry_status,
+             p.code AS partner_code, COALESCE(CASE WHEN l.partner_id IS NOT NULL THEN l.partner_name ELSE e.partner_name END, p.name) AS partner_name, br.code AS branch_code, e.is_reversal, e.status AS entry_status,
              l.product_sku, COALESCE(l.product_name, pr.name) AS product_name,
              -- Loại phiếu ở nguồn (export_adjust = phiếu xuất điều chỉnh, ghi sổ như phiếu bán nội bộ có lý do).
              (SELECT ev.payload->'sourceRef'->>'type' FROM accounting_events ev WHERE ev.id = e.event_id) AS source_type

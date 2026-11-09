@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 6
     },
     {
       "key": "merging",
@@ -20,22 +20,22 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 135
+      "count": 134
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 52
+      "count": 53
     },
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 3
+      "count": 2
     },
     {
       "key": "done",
       "label": "Xong",
-      "count": 267
+      "count": 270
     }
   ],
   "items": [
@@ -561,8 +561,8 @@
       "phase": "PHASE-004",
       "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
       "priority": null,
-      "status": "paused",
-      "column": "paused",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 29
@@ -572,15 +572,9 @@
       "phase": "PHASE-004",
       "title": "E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-4). K3 thêm chặt",
       "priority": null,
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-004-s004-17-e1-ham-security-definer",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-004 · S004-17 — E1 costoverwrite qua hàm SECURITY DEFINER (vai trò ketoanledgercost), thu UPD…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 30
     },
@@ -589,8 +583,8 @@
       "phase": "PHASE-004",
       "title": "Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi…",
       "priority": null,
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 31
@@ -5481,17 +5475,28 @@
       "phase": "PHASE-031",
       "title": "W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPolicyRecompute ở Kernel (00 §14); IN-POL-000 / 005 để…",
       "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 38
+    },
+    {
+      "id": "S031-30",
+      "phase": "PHASE-031",
+      "title": "W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL-004) + khối ở tab Theo dõi (00 §15); giá trị hàng…",
+      "priority": "P1",
       "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w2b-in-pol-004",
+        "branch": "feat/phase-031-w4c-thuc-hien-chuong-trinh",
         "state": "đang làm",
         "since": "2026-11-09",
-        "dot": "PHASE-031 · W2b — IN-POL-004: cửa nạp tính lại quà theo bản chính sách nguồn nêu và so với dòng quà…"
+        "dot": "PHASE-031 · W4c — ô Thực hiện chương trình: program[] ở core.policy.tracking (chứng từ áp, quà đã t…"
       },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
-      "line": 38
+      "line": 39
     }
   ]
 }
