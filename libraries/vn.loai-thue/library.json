@@ -1,0 +1,746 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.loai-thue",
+  "kind": "code-list",
+  "title": "Loại thuế GTGT",
+  "description": "Loại thuế GTGT chuẩn: mã, tên, thuế suất, chiều (đầu ra / đầu vào) và nhóm trên bảng kê. Không mang số tài khoản — tài khoản thuế lấy từ chính sách hạch toán qua AccountResolver.",
+  "version": "1.0.0",
+  "released": "2026-11-09",
+  "contentHash": "sha256:9624ef51c559d93cb96b660d4f432da8bb90fee64be7eec3edc73c3780ddeab1",
+  "owner": "kế toán thuế",
+  "sources": [
+    {
+      "title": "Danh mục loại thuế (ACC43) trong db/seeds/loai-thue.jsonl",
+      "kind": "internal",
+      "date": "2026-11-09",
+      "note": "Danh mục mẫu của công ty cung cấp; chưa đối chiếu với văn bản thuế hiện hành (verified: false). Cột account_code của nguồn không đưa vào thư viện."
+    }
+  ],
+  "generatedBy": "libraries/vn.loai-thue/build.mjs",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "rate",
+      "direction",
+      "reportGroup"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "rate": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "thuế suất %, 0 cho loại không chịu thuế / không kê khai"
+      },
+      "direction": {
+        "enum": [
+          "output",
+          "input"
+        ],
+        "description": "output = thuế đầu ra (bán); input = thuế đầu vào (mua)"
+      },
+      "reportGroup": {
+        "enum": [
+          "KCT",
+          "KKK",
+          "0",
+          "5",
+          "8",
+          "10"
+        ],
+        "description": "nhóm trên bảng kê: KCT không chịu thuế · KKK không kê khai · 0 · 5 · 8 · 10 (%)"
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ],
+    "group": "group",
+    "filters": [
+      {
+        "field": "group",
+        "label": "Chiều"
+      }
+    ],
+    "sort": [
+      "code"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-09",
+      "hash": "sha256:9624ef51c559d93cb96b660d4f432da8bb90fee64be7eec3edc73c3780ddeab1",
+      "notes": "Bản đầu: 51 loại thuế từ db/seeds (không số tài khoản)"
+    }
+  ],
+  "items": [
+    {
+      "code": "KCT",
+      "name": "Không chịu thuế GTGT",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "KCT"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "KKKN",
+      "name": "HH, DV không phải kê khai, tính nộp VAT",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "KKK"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R00",
+      "name": "Thuế GTGT đầu ra 0% (xuất khẩu)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R00C",
+      "name": "Điều chỉnh thuế đầu ra cho Dự án đầu tư",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R00D",
+      "name": "Điều chỉnh thuế đầu ra cho SXKD",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R00K",
+      "name": "Hàng hoá dịch vụ bán ra không chịu thuế VAT",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "KCT"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R00L",
+      "name": "Hàng hoá dịch vụ bán lẻ",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R05",
+      "name": "Thuế GTGT đầu ra 5%",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "output",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R05A",
+      "name": "Thuế GTGT đầu ra 5% (Giá có thuế)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "output",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R05B",
+      "name": "Thuế GTGT đầu ra 5% (Người dùng tự nhập)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R05C",
+      "name": "Thuế GTGT 5% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "output",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R08",
+      "name": "Thuế GTGT đầu ra 8%",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 8,
+        "direction": "output",
+        "reportGroup": "8"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R08A",
+      "name": "Thuế GTGT đầu ra 8% (Giá có thuế)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 8,
+        "direction": "output",
+        "reportGroup": "8"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R08B",
+      "name": "Thuế GTGT đầu ra 8% (Người dùng tự nhập)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R08C",
+      "name": "Thuế GTGT 8% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 8,
+        "direction": "output",
+        "reportGroup": "8"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R10",
+      "name": "Thuế GTGT đầu ra 10%",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "output",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R10A",
+      "name": "Thuế GTGT đầu ra 10% (Giá có thuế)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "output",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R10B",
+      "name": "Thuế GTGT đầu ra 10% (Người dùng tự nhập)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "output",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "R10C",
+      "name": "Thuế GTGT 10% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)",
+      "group": "đầu ra",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "output",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V00",
+      "name": "Thuế GTGT đầu vào 0%",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V00C",
+      "name": "Điều chỉnh thuế đầu vào cho Dự án đầu tư",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V00D",
+      "name": "Điều chỉnh thuế đầu vào cho SXKD",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V00K",
+      "name": "Hàng hoá mua vào không có hoá đơn",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V051",
+      "name": "Thuế GTGT đầu vào 5% (HH, DV dùng riêng cho SXKD chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V053",
+      "name": "Thuế GTGT đầu vào 5% (HH, DV chịu VAT và không chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V054",
+      "name": "Thuế GTGT đầu vào 5% (HH,DV dùng cho Dự án đầu tư đủ ĐK KT)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V05B",
+      "name": "Thuế GTGT đầu vào 5% (có phụ phí) dùng cho SXKD",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V05C",
+      "name": "Thuế GTGT 5% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V05S",
+      "name": "Thuế GTGT đầu vào 5% (có phụ phí) dùng cho Dự án đầu tư",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V071",
+      "name": "Thuế GTGT đầu vào 7% (HH, DV dùng riêng cho SXKD chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 7,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V081",
+      "name": "Thuế GTGT đầu vào 8% (HH, DV dùng riêng cho SXKD chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 8,
+        "direction": "input",
+        "reportGroup": "8"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V083",
+      "name": "Thuế GTGT đầu vào 8% (HH, DV chịu VAT và không chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 8,
+        "direction": "input",
+        "reportGroup": "8"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V101",
+      "name": "Thuế GTGT đầu vào 10% (HH,DV dùng riêng cho SXKD chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V103",
+      "name": "Thuế GTGT đầu vào 10% (HH, DV chịu VAT và không chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V104",
+      "name": "Thuế GTGT đầu vào 10% (HH,DV dùng cho Dự án đầu tư đủ ĐK KT)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V105",
+      "name": "Thuế GTGT đầu vào 10% Báo cáo kỳ sau",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V10B",
+      "name": "Thuế GTGT đầu vào 10% (có phụ phí) dùng cho SXKD",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V10C",
+      "name": "Thuế GTGT 10% (HHDV không phải tổng hợp trên tờ khai 01/GTGT)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V11A",
+      "name": "Thuế GTGT đầu vào 10% (Giá bao gồm thuế)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V11B",
+      "name": "Thuế GTGT đầu vào 10% (có phụ phí) dùng cho Dự án đầu tư",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V13A",
+      "name": "Thuế GTGT đầu vào 10% (Giá bao gồm thuế)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V13B",
+      "name": "Thuế GTGT đầu vào 10% (HH, DV chịu VAT và không chịu VAT đủ ĐK)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V13K",
+      "name": "Thuế GTGT đầu vào 0% (không chịu VAT)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V14A",
+      "name": "Thuế GTGT đầu vào 10% (Giá bao gồm thuế)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V20",
+      "name": "Thuế đầu vào kỳ sau",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 0,
+        "direction": "input",
+        "reportGroup": "0"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V51A",
+      "name": "Thuế GTGT đầu vào 5% (Giá bao gồm thuế)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V53A",
+      "name": "Thuế GTGT đầu vào 5% (Giá bao gồm thuế)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V54A",
+      "name": "Thuế GTGT đầu vào 5% (Giá bao gồm thuế)",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V05",
+      "name": "Thuế GTGT đầu vào 5%",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 5,
+        "direction": "input",
+        "reportGroup": "5"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V08",
+      "name": "Thuế GTGT đầu vào 8%",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 8,
+        "direction": "input",
+        "reportGroup": "8"
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "V10",
+      "name": "Thuế GTGT đầu vào 10%",
+      "group": "đầu vào",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "rate": 10,
+        "direction": "input",
+        "reportGroup": "10"
+      },
+      "since": "1.0.0"
+    }
+  ]
+}
