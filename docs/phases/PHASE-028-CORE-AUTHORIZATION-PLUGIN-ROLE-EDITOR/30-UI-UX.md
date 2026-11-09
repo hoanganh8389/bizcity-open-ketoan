@@ -1,7 +1,7 @@
 # PHASE-028 · 30 — Giao diện: Role Editor và bảng điểm
 <!-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W0: đặc tả màn HT12 Role Editor (kiểu WordPress User Role Editor + phạm vi + Giải thích) và tiêu chí AZ-* trên HT10; hai bản mẫu tương tác chạy được -->
 
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa mockup HT12 từ bản draft W0 (worktree authz) vào main; đối chiếu với mã W1–W5 đã merge -->
+<!-- [2026-11-09 07:19 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa mockup HT12 từ bản draft W0 (worktree authz) vào main; đối chiếu với mã W1–W5 đã merge -->
 
 ## 0. Trạng thái so với mã đã merge (đối chiếu 2026-11-09, `origin/main` f02d5029)
 

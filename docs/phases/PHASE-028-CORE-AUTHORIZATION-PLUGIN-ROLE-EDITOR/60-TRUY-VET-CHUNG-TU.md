@@ -1,6 +1,6 @@
 # PHASE-028 · 60 — Vòng đời chứng từ và truy vết kế toán
 <!-- [2026-11-05 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chủ dự án bổ sung: sáu nguyên tắc DOC-01..06, ví dụ phiên bản phiếu nhập kho, nhóm tiêu chí TRACE-01..08 cho bảng điểm; mức đạt chấm theo mã trên main b820e30 -->
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
+<!-- [2026-11-09 07:19 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
 
 ## 0. Đối chiếu với mã đã merge (2026-11-09)
 
