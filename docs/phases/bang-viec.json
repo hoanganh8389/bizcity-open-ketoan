@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 12
+      "count": 11
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 260
+      "count": 261
     }
   ],
   "items": [
@@ -528,15 +528,9 @@
       "phase": "PHASE-004",
       "title": "Dấu vết ở CSDL cho E2: trigger AFTER UPDATE trên ledgerentries ghi auditlogs trước / sau mọi thay đổi bảy cột, kể cả UPDATE thẳng bằng SQL; chữ chốt 21 D004-11…",
       "priority": null,
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "fix/phase-004-s004-14-vet-e2-csdl",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-14 — dấu vết E2 ở CSDL: trigger ledgerentriesheaderaudit ghi auditlogs mọi thay đổ…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 26
     },

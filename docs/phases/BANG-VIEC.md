@@ -5,20 +5,19 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 12 |
+| Đang làm | 11 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 138 |
 | Chờ đủ tín hiệu | 51 |
 | Hoãn | 1 |
-| Xong | 260 |
+| Xong | 261 |
 | **Tổng** | **490** |
 
-## Đang làm (12)
+## Đang làm (11)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
-| [S004-14](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L26) | PHASE-004 | Dấu vết ở CSDL cho E2: trigger AFTER UPDATE trên ledgerentries ghi auditlogs trước / sau mọi thay đổi bảy cột… | — | hoanganh8389 (phiên Claude, review-r1) · `fix/phase-004-s004-14-vet-e2-csdl` |
 | [S004-18](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tìn… | — | hoanganh8389 (phiên Claude, review-r1) · `chore/phase-004-s004-18-do-lech-tai-khoan` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S014-15](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L26) | PHASE-014 | W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh ac… | — | hoanganh8389 (phiên Claude, audit-in-action) · `feat/phase-014-audit-in-action` |
@@ -273,6 +272,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (260)
+## Xong (261)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
