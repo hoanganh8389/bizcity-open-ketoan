@@ -269,3 +269,23 @@ Phạm vi: S031-26 (golden T031-EV-1..5). **Lean:** `bizcity_event@1` đã có o
 **Ba yếu tố.** *Nhất quán:* một khung nhìn cho dashboard, lineage và Engine. *Xuyên suốt:* khoảng trống giữa các bản và độ trễ phiên bản lộ ra theo ngày chứng từ. *Truy vết:* `lineage` kiểm băm và hiệu lực từng tham chiếu. *Gọn:* 4 action đọc, 0 bảng, 0 migration.
 
 **Golden.** T031-INS-1 registry liệt kê bản, đếm chứng từ đã áp theo bản, phát hiện khoảng trống · T031-INS-2 applications phân trang đúng, lọc theo bản · T031-INS-3 tracking: tỉ lệ đạt và đếm mã khớp dữ liệu dựng (cả ca không có dữ liệu → 0, không chia cho 0) · T031-INS-4 độ trễ phiên bản chỉ tính `IN-POL-003` · T031-INS-5 lineage báo băm lệch khi bản bị đổi nội dung giả định và ngày chứng từ ngoài hiệu lực · T031-INS-6 cô lập đơn vị; quyền `catalog:read`.
+
+## 13. Chữ chốt W4b (K1, giao diện; R-FLOW-2): màn *Chính sách* ở Hệ thống
+<!-- [2026-11-09 01:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chữ chốt W4b trước khi code: một màn bốn tab theo mockup đã duyệt, chỉ dùng API đã có (W2c, W3a, W4a), không API mới, không migration -->
+
+Phạm vi: S031-18, S031-24 (phần màn hình). **Một trang, bốn tab** đúng [mockup chinh-sach.html](mockups/chinh-sach.html) — D031-11: năng lực Core, màn chung ở *Hệ thống → Chính sách*, **không** module nghiệp vụ riêng.
+
+| Tab | Nguồn API (đã có) | Làm gì |
+|---|---|---|
+| **Chính sách** | `GET /api/v1/policy-registry` (W4a) | danh sách + chi tiết: các bản theo thời gian, hiệu lực, phạm vi, băm, số chứng từ đã áp; khoảng trống / sắp hết hạn nổi lên; bấm một bản → danh sách chứng từ đã áp (`/applications`, phân trang) |
+| **Chờ kế toán xem** | `GET /api/v1/queue/items?source=policy_review&flag=policy` (W2c) + `POST /queue/policy-review/:eventId/ack` | hàng việc; nút *Đánh dấu đã xem* (`documents:write`, có ghi chú tuỳ chọn); số đếm hiện ở nhãn tab |
+| **Truy vết** | `GET /api/v1/policy-lineage` (W4a) | nhập số chứng từ → chuỗi sự việc → chính sách@bản, **băm khớp / lệch**, **ngày ngoài hiệu lực** nổi bật; *Chính sách căn cứ* mở từ màn truy vết chứng từ hiện có (nút, không màn mới) |
+| **Theo dõi thực hiện** | `GET /api/v1/policy-tracking` (W4a) | các ô: đạt chính sách, lệch theo mã, độ phủ theo nguồn, độ trễ phiên bản, dòng thời gian, sức khoẻ; lọc kỳ · chi nhánh · nguồn · module chủ; mỗi ô bấm → danh sách sự việc cùng khung nhìn |
+
+**Quy tắc màn hình.** (1) Một cách đếm: số trên màn là số API trả, không tính lại ở trình duyệt (D-POL-8). (2) `rate = null` hiện "—", không 0%. (3) Không nút sửa chính sách ở màn này — phát hành đi qua module chủ / API (W3a); màn chỉ đọc và đóng việc xem. (4) Quyền: xem cần `catalog:read`; *Đánh dấu đã xem* cần `documents:write`, thiếu quyền thì nút ẩn (không báo lỗi sau). (5) Trạng thái rỗng giải thích bằng một câu (chưa có chính sách / chưa chứng từ nào gửi tham chiếu). (6) Mọi chữ qua từ điển thuật ngữ sẵn có; mã `IN-POL-*` bấm ra trang giải thích `docs/huong-dan/loi-dau-vao`.
+
+**Vị trí mã.** `apps/web/src/features/policy/` (`PolicyPage.tsx` + một tệp mỗi tab); một dòng route ở `apps/web/src/pages.tsx`, một mục ở `apps/web/src/phan-he/he-thong/menu.ts` (mã HT lấy số kế tiếp còn trống **bằng grep ngay trước khi code**, quyền `catalog:read`), một đường dẫn ở nhóm *Kiểm soát* của `menu-gon.ts`. Không đổi `packages/ui-kit`.
+
+**Kiểm.** Web chưa có khung test: bảo đảm bằng `npm run typecheck -w @ketoan/web` + `vite build` + chạy thật (`/run`) chụp bốn tab với dữ liệu dựng bằng cửa nạp (như `policy-insight.test.ts`) và ghi vào PR; kèm golden T031-UI-1..4 mô tả (hiện đúng số API · rate null · ẩn nút khi thiếu quyền · ack đóng việc và số đếm giảm).
+
+**Ba yếu tố.** *Nhất quán:* cùng nguồn số với API và Engine. *Xuyên suốt:* dòng thời gian + khoảng trống ở tab đầu. *Truy vết:* tab Truy vết với băm / hiệu lực. *Gọn:* một trang, không API mới, không migration.
