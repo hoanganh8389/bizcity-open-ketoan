@@ -63,7 +63,13 @@ describe('Vai trò ketoan_app', () => {
       expect(await p('TRUNCATE', `public.${t}`), `TRUNCATE ${t}`).toBe(false);
       expect(await p('INSERT', `public.${t}`), `INSERT ${t}`).toBe(true);
     }
-    for (const t of ['ledger_entries', 'ledger_lines', 'accounting_events']) expect(await p('UPDATE', `public.${t}`), `UPDATE ${t}`).toBe(true);
+    expect(await p('UPDATE', 'public.accounting_events'), 'UPDATE accounting_events').toBe(true);
+    // [2026-11-09 10:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-17 (D004-15): số tiền sổ cái không còn UPDATE được bằng ketoan_app (0091); chỉ còn cột trạng thái / đầu và item_id
+    const c = (table: string, col: string) => pool.query<{ ok: boolean }>('SELECT has_column_privilege($1, $2, $3, $4) AS ok', ['ketoan_app', table, col, 'UPDATE']).then((x) => x.rows[0]!.ok);
+    for (const col of ['status', 'doc_no', 'invoice_no', 'reason_code', 'partner_id', 'description', 'content_hash', 'event_version']) expect(await c('public.ledger_entries', col), `UPDATE ledger_entries.${col}`).toBe(true);
+    expect(await c('public.ledger_entries', 'total'), 'UPDATE ledger_entries.total').toBe(false);
+    expect(await c('public.ledger_lines', 'item_id'), 'UPDATE ledger_lines.item_id').toBe(true);
+    for (const col of ['debit', 'credit', 'account_code', 'cost_fill']) expect(await c('public.ledger_lines', col), `UPDATE ledger_lines.${col}`).toBe(false);
   });
 
   it('S004-12 (phá thử, lớp quyền): đặt cờ allow_ledger_purge rồi DELETE bảng sổ vẫn bị từ chối vì thiếu quyền', async () => {

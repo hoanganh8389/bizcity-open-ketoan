@@ -88,7 +88,7 @@ describe('T004-DB — UPDATE thẳng bằng ketoan_app vào bảy cột E2 để
   it('T004-DB-3 UPDATE không đổi giá trị bảy cột (hoặc chỉ cột khác): không thêm dòng', async () => {
     const r = await asApp(async (c) => {
       await c.query(`UPDATE ledger_entries SET description = description, doc_no = doc_no WHERE id = $1`, [entryId]);
-      await c.query(`UPDATE ledger_entries SET total = total WHERE id = $1`, [entryId]);
+      await c.query(`UPDATE ledger_entries SET status = status WHERE id = $1`, [entryId]); // total không còn UPDATE được bằng ketoan_app (0091, S004-17)
       return headerAudit(c);
     });
     expect(r.error?.message).toBeUndefined();
