@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 271
+      "count": 272
     }
   ],
   "items": [
@@ -2967,14 +2967,8 @@
       "title": "RV-R1-06: hợp đồng ma-tra-cuu.ts mang details.context.step + remedy; chép / báo lỗi thêm dòng Bước, không chép docKey, số chứng từ, kỳ (T022-MT-1)",
       "priority": "P2",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-022-trace-remedy",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-022 · S022-18 — RV-R1-06: mã tra cứu mang step + remedy ở hợp đồng ma-tra-cuu.ts. K1"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 30
     },
