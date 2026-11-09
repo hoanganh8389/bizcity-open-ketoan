@@ -159,3 +159,74 @@ describe('T031-INS-6 · cô lập đơn vị và quyền', () => {
     expect((await ctx.app.inject({ method: 'GET', url: '/api/v1/policy-registry' })).statusCode).toBe(401);
   });
 });
+
+// [2026-11-09 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c (S031-30, chữ chốt PHASE-031 · 00 §15): program[] — thực hiện chương trình
+/**
+ *   T031-PRG-1  chứng từ áp và quà đã tặng theo mặt hàng, tách theo bản
+ *   T031-PRG-2  chứng từ có quà lệch (IN-POL-004) vào mismatched + tỉ lệ; không dòng quà cũng lệch
+ *   T031-PRG-3  quà của chính sách khác trên cùng chứng từ không bị cộng nhầm
+ *   T031-PRG-4  kỳ rỗng → program []; lọc nguồn không có → []
+ *   T031-PRG-5  cô lập đơn vị
+ * Đơn vị riêng (không đổi số của các ca INS ở trên).
+ */
+describe('Thực hiện chương trình (W4c)', () => {
+  let t: TestCtx, o: TestCtx;
+  let tid = '';
+  const hh: Record<string, string> = {};
+  let n2 = 0;
+
+  beforeAll(async () => {
+    t = await setupTenant();
+    o = await setupTenant();
+    tid = String((await db.selectFrom('tenants').select('id').where('code', '=', t.tenantCode).executeTakeFirstOrThrow()).id);
+    const pub = (key: string, get: { sku: string; qty: number }, from: string) => call(t, 'POST', '/api/v1/policies', {
+      key, ruleContract: 'sale.promo.buy_x_get_y@1', params: { buy: { sku: 'SUA01', qty: 1 }, get, repeat: true }, effectiveFrom: from, reason: 'Chiến dịch thử',
+    });
+    expect((await pub('PRG-A', { sku: 'QUA01', qty: 1 }, '2026-10-01')).status).toBe(201);
+    expect((await pub('PRG-A', { sku: 'QUA01', qty: 2 }, '2026-11-01')).status).toBe(201);
+    expect((await pub('PRG-B', { sku: 'QUA02', qty: 1 }, '2026-10-01')).status).toBe(201);
+    expect((await pub('PRG-B', { sku: 'QUA02', qty: 1 }, '2026-11-01')).status).toBe(201); // bản 2 CÙNG số bản với PRG-A@2: chỉ khoá chính sách mới tách được quà
+    for (const r of (await sql<{ policy_key: string; version: number; content_hash: string }>`SELECT policy_key, version, content_hash FROM policy_registry WHERE tenant_id = ${tid}`.execute(db)).rows) hh[`${r.policy_key}@${r.version}`] = r.content_hash;
+
+    const ingest = async (date: string, refs: { key: string; version: number }[], gifts: { key: string; version: number; sku: string; qty: number }[]) => {
+      n2 += 1;
+      const base = saleDoc({ docKey: `prg:CN01:${n2}`, docNo: `PRG${n2}`, docDate: date, invoice: { no: String(7000 + n2), serial: 'C26TAA', form: '1', date: date } }) as { lines: Record<string, unknown>[] } & Record<string, unknown>;
+      const [l1, l2] = [base.lines[0]!, base.lines[1]!];
+      const lines = [l1, ...gifts.map((g, i) => ({ ...l2, lineKey: `g${i}`, sku: g.sku, qty: g.qty, policyRef: { key: g.key, version: g.version, line: 'gift' } }))];
+      const doc = { ...base, lines, policyRefs: refs.map((r) => ({ key: r.key, version: r.version, hash: hh[`${r.key}@${r.version}`]!, policyId: `ban-hang:inline:${r.key}` })) };
+      const r = await t.app.inject({ method: 'POST', url: '/api/v1/documents', payload: doc as never, headers: { authorization: `Bearer ${t.token}` } });
+      expect(r.statusCode, r.body).toBeLessThan(300);
+    };
+    await ingest('2026-10-15', [{ key: 'PRG-A', version: 1 }], [{ key: 'PRG-A', version: 1, sku: 'QUA01', qty: 1 }]);   // đúng
+    await ingest('2026-10-16', [{ key: 'PRG-A', version: 1 }], [{ key: 'PRG-A', version: 1, sku: 'QUA01', qty: 3 }]);   // thừa → lệch
+    await ingest('2026-11-15', [{ key: 'PRG-A', version: 2 }], [{ key: 'PRG-A', version: 2, sku: 'QUA01', qty: 2 }]);   // đúng
+    await ingest('2026-11-16', [{ key: 'PRG-A', version: 2 }], []);                                                     // thiếu quà → lệch
+    await ingest('2026-11-17', [{ key: 'PRG-A', version: 2 }, { key: 'PRG-B', version: 2 }], [
+      { key: 'PRG-A', version: 2, sku: 'QUA01', qty: 2 }, { key: 'PRG-B', version: 2, sku: 'QUA02', qty: 1 }]);          // hai chính sách trên một chứng từ
+  });
+  afterAll(async () => { await t.app.close(); await o.app.close(); });
+
+  const program = async (c: TestCtx, q = RANGE) => (await call(c, 'GET', `/api/v1/policy-tracking?${q}`)).body.data.program as { policyKey: string; version: number; orders: number; giftsBySku: { sku: string; qty: number }[]; mismatched: number; mismatchRate: number | null }[];
+  const row = (p: Awaited<ReturnType<typeof program>>, key: string, v: number) => p.find((x) => x.policyKey === key && x.version === v);
+
+  it('T031-PRG-1/2: chứng từ áp, quà theo mặt hàng, lệch — tách theo bản', async () => {
+    const p = await program(t);
+    expect(row(p, 'PRG-A', 1)).toMatchObject({ orders: 2, giftsBySku: [{ sku: 'QUA01', qty: 4 }], mismatched: 1, mismatchRate: 0.5 });
+    expect(row(p, 'PRG-A', 2)).toMatchObject({ orders: 3, giftsBySku: [{ sku: 'QUA01', qty: 4 }], mismatched: 1, mismatchRate: 0.3333 });
+  });
+
+  it('T031-PRG-3: quà của chính sách khác trên cùng chứng từ không cộng nhầm', async () => {
+    const p = await program(t);
+    expect(row(p, 'PRG-B', 2)).toMatchObject({ orders: 1, giftsBySku: [{ sku: 'QUA02', qty: 1 }], mismatched: 0, mismatchRate: 0 });
+    expect(row(p, 'PRG-A', 2)!.giftsBySku.map((g) => g.sku)).toEqual(['QUA01']); // không có QUA02
+  });
+
+  it('T031-PRG-4: kỳ rỗng / lọc nguồn không có → []', async () => {
+    expect(await program(t, 'from=2025-01-01&to=2025-01-31')).toEqual([]);
+    expect(await program(t, `${RANGE}&source=khong-co`)).toEqual([]);
+  });
+
+  it('T031-PRG-5: cô lập đơn vị', async () => {
+    expect(await program(o)).toEqual([]);
+  });
+});

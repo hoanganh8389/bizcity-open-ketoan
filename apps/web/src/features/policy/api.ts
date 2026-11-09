@@ -1,3 +1,4 @@
+// [2026-11-09 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c (S031-30): kiểu program[] của core.policy.tracking
 // [2026-11-09 02:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b (S031-18 / S031-24, chữ chốt PHASE-031 · 00 §13): kiểu dữ liệu + truy vấn của màn Chính sách
 /** Kiểu theo bizcity_policy@1 §11 (W4a) và hàng việc policy_review (W2c). Số trên màn là số API trả — không tính lại ở trình duyệt (D-POL-8). */
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +26,7 @@ export interface Tracking {
     noPublished: { policyId: string; policyKey: string }[];
     gaps: { policyId: string; policyKey: string; gaps: { after: number; from: string; to: string }[] }[];
   };
+  program: { policyId: string | null; policyKey: string; version: number; orders: number; giftsBySku: { sku: string; qty: number }[]; mismatched: number; mismatchRate: number | null }[];
 }
 export interface Lineage {
   event: { eventId: number; docKey: string; docType: string; docDate: string | null; status: string; sourceSystem: string };
