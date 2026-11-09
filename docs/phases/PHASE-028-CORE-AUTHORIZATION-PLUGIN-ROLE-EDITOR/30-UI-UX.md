@@ -119,7 +119,7 @@ Không màn mới: tiêu chí **AZ-*** thêm vào **trụ VII "Cô lập đơn v
 - Lọc: nhóm, mức, P0/P1/P2, phân hệ, tìm, chỉ việc mở; Xuất CSV.
 - Mở một dòng: tiêu chí → nguồn (`check` / `manual`) + `checkId` → test → commit → bằng chứng → khoảng cách → việc tiếp.
 - Không có nút chấm. Schema [authz-compliance.schema.draft.json](data/authz-compliance.schema.draft.json) từ chối `dat` thiếu `checkId` (nguồn `check`) hoặc thiếu `testId` + `repoCommit`.
-- Mức hôm nay (bản nháp, đọc `b820e30`): 33 tiêu chí (25 AZ-* + 8 TRACE-*) — 6 đạt, 11 một phần, 3 mới tài liệu, 12 chưa, 1 chưa xác minh; 37 %; 20 tiêu chí P0 mở. Nhóm "Document Lifecycle & Traceability" 63 % ([60](60-TRUY-VET-CHUNG-TU.md)). <!-- [2026-11-05 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — thêm nhóm TRACE -->
+- Mức hôm nay (bản nháp, đọc `b820e30`): 33 tiêu chí (25 AZ-* + 8 TRACE-*) — 6 đạt, 11 một phần, 3 mới tài liệu, 12 chưa, 1 chưa xác minh; 37 %; 20 tiêu chí P0 mở. Nhóm "Document Lifecycle & Traceability" 63 % ([60](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/37-DOC-TRACE-TU-PHASE-028.md)). <!-- [2026-11-05 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — thêm nhóm TRACE -->
 
 ## 3. Checklist thiết kế
 

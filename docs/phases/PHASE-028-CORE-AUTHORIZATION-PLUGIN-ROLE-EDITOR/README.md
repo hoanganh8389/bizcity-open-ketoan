@@ -16,7 +16,7 @@
 | [10-AS-IS-AUDIT](10-AS-IS-AUDIT.md) | bảng kiểm kê EXISTS / PARTIAL / MISSING / CONFLICT theo đúng các mục đề bài nêu, dẫn `file:line` |
 | [20-KIEN-TRUC](20-KIEN-TRUC.md) | kiến trúc đích W0 (năm cổng, ba trục, cách tính, chuyển đổi, đe doạ); §0 đối chiếu với mã |
 | [30-UI-UX](30-UI-UX.md) | đặc tả HT12 Role Editor + bảng điểm; §0 đối chiếu mockup với mã đã merge; mockup chạy được ở [mockups/role-editor.html](mockups/role-editor.html), [mockups/authz-scoreboard.html](mockups/authz-scoreboard.html) |
-| [45-CA-BANG-CHUNG](45-CA-BANG-CHUNG.md) · [50-TGS-MAPPING](50-TGS-MAPPING.md) · [60-TRUY-VET-CHUNG-TU](60-TRUY-VET-CHUNG-TU.md) · [70-CONFORMANCE-SECURITY](70-CONFORMANCE-SECURITY.md) | ca T028-* + vai trò mẫu · phân tích 349 mã TGS · DOC / TRACE · luật AUTHZ + phép kiểm SC-AUTH (mỗi tệp có §0 đối chiếu mã) |
+| [45-CA-BANG-CHUNG](45-CA-BANG-CHUNG.md) · [50-TGS-MAPPING](50-TGS-MAPPING.md) · [truy vết → PHASE-029 · 37](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/37-DOC-TRACE-TU-PHASE-028.md) · [70-CONFORMANCE-SECURITY](70-CONFORMANCE-SECURITY.md) | ca T028-* + vai trò mẫu · phân tích 349 mã TGS · DOC / TRACE (đã chuyển PHASE-029) · luật AUTHZ + phép kiểm SC-AUTH (mỗi tệp có §0 đối chiếu mã) |
 | [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md) | việc con `S028-*` của W0; log |
 
 ## Trả lời ngắn

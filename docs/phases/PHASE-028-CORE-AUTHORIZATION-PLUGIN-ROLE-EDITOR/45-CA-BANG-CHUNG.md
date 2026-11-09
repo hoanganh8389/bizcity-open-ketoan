@@ -3,7 +3,7 @@
 
 > Nguồn: bản draft `40-MASTER-CHECKLIST` ngày 05/11. **Trạng thái việc con** vẫn ở [40](40-MASTER-CHECKLIST.md); tệp này chỉ giữ danh sách ca và vai trò mẫu.
 >
-> **Đối chiếu 2026-11-09:** `T028-1`, `T028-2`, `T028-4`, `T028-5`, `T028-8`, `T028-9`, `T028-13`, `T028-16`, `T028-18`, `T028-22` có xuất hiện trong test của `apps/api` / `tests` (tìm theo mã, **chưa chạy lại**, chưa xác nhận từng ca đủ điều kiện "Đạt khi"). Các ca còn lại chưa có test mang mã đó. Ca T028-21 viết theo `authz:manage` (không tồn tại, màn dùng `users:write`) — cần viết lại. Ca T028-23..26 thuộc truy vết, xem [60](60-TRUY-VET-CHUNG-TU.md) §0.
+> **Đối chiếu 2026-11-09:** `T028-1`, `T028-2`, `T028-4`, `T028-5`, `T028-8`, `T028-9`, `T028-13`, `T028-16`, `T028-18`, `T028-22` có xuất hiện trong test của `apps/api` / `tests` (tìm theo mã, **chưa chạy lại**, chưa xác nhận từng ca đủ điều kiện "Đạt khi"). Các ca còn lại chưa có test mang mã đó. Ca T028-21 viết theo `authz:manage` (không tồn tại, màn dùng `users:write`) — cần viết lại. Ca T028-23..26 (truy vết) **đã chuyển sang PHASE-029** ([37](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/37-DOC-TRACE-TU-PHASE-028.md)), giữ mã ca.
 >
 > **Vai trò mẫu:** bản draft; 28 vai trò TGS đã nạp bản nháp vô hiệu ở `docs/standard/phan-quyen/`, còn các mẫu dưới đây (`cashier`, `warehouse_keeper`…) **chưa là mã**. Dòng `tenant_owner` "không tự có quyền module mới" **lỗi thời** (D-AUTH-03 bản sửa).
 
@@ -31,10 +31,7 @@
 | T028-18 `BULK_100_BRANCHES` | `batchAuthorize` = gọi lẻ; báo cáo không N+1; công bố số đo | W3 | §8 kiến trúc |
 | T028-19 `SOD_CONFLICT` | người lập không tự duyệt phiếu khi luồng đòi người độc lập | W5 | AUTHZ-13 |
 | T028-20 `SCOREBOARD_EVIDENCE` | tiêu chí `dat` thiếu `checkId` / `testId + repoCommit` → schema từ chối; giao diện không có nút chấm | W6 | AUTHZ-16 |
-| T028-23 `POSTED_SNAPSHOT` | sau V2, đọc bút toán E1 trả nội dung V1, không phải V2 | W5 | DOC-03, TRACE-02 |
-| T028-24 `DOC_TO_LEDGER_CHAIN` | từ `doc_ref` của module ra đủ sự việc → bút toán (kể cả đảo) và đi ngược lại | W5 | DOC-05, TRACE-03 |
-| T028-25 `REVERSAL_REASON` | mọi bút toán đảo có lý do không rỗng | W5 | TRACE-05 |
-| T028-26 `CHAIN_ACROSS_VERSIONS` | mua 100 → bán 60 → sửa phiếu mua thành 90 → tính lại giá vốn: tồn 30, sổ cân, mỗi bút toán chỉ đúng V1 / V2 | W5 | TRACE-08 |
+| T028-23..26 | **đã chuyển PHASE-029** — `POSTED_SNAPSHOT`, `DOC_TO_LEDGER_CHAIN`, `REVERSAL_REASON`, `CHAIN_ACROSS_VERSIONS` | — | — | [PHASE-029 · 37](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/37-DOC-TRACE-TU-PHASE-028.md) |
 | T028-21 `LAST_OWNER` | thu hồi gán `authz:manage` cuối cùng bị từ chối (🟡 API chặn thu hồi lần gán chủ đơn vị cuối, có test; chưa có `authz:manage`) | W1b | [20](20-KIEN-TRUC.md) §6 |
 | T028-22 `RELAX_NOT_GRANT` | Nới `*:update {edit_window: 3d}` không mở màn người đó chưa có Cho | W1b | D-AUTH-04 |
 

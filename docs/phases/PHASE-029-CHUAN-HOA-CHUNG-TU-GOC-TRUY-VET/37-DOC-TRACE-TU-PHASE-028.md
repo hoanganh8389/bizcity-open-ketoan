@@ -1,15 +1,21 @@
-# PHASE-028 · 60 — Vòng đời chứng từ và truy vết kế toán
+# PHASE-029 · 37 — Vòng đời chứng từ và truy vết kế toán (chuyển từ PHASE-028 · 60)
 <!-- [2026-11-05 07:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — chủ dự án bổ sung: sáu nguyên tắc DOC-01..06, ví dụ phiên bản phiếu nhập kho, nhóm tiêu chí TRACE-01..08 cho bảng điểm; mức đạt chấm theo mã trên main b820e30 -->
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
+<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-029 — chủ dự án chốt: ca T028-23..26 và nhóm tiêu chí DOC / TRACE chuyển từ PHASE-028 sang PHASE-029 (luồng D); tệp gốc là 60-TRUY-VET-CHUNG-TU của PHASE-028 -->
 
-## 0. Đối chiếu với mã đã merge (2026-11-09)
+## 0. Chủ sở hữu và đối chiếu (2026-11-09)
 
-> Sáu nguyên tắc DOC-01..06 **trùng ý** với luật R-ECP (ECP-05 truy bút toán về sự việc và phiên bản; ECP-13 không xoá thật) và công việc của [PHASE-029](../PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/README.md) (luồng D). Mức đạt ở §1 và §3 đo ở `b820e30` ngày 05/11, **chưa đo lại**.
+> **Chuyển giao:** chủ dự án chốt 2026-11-09 — phần truy vết thuộc **PHASE-029** (luồng D, [R-ECP](../../rules/RULE-ENTERPRISE-CONTINUITY.md) ECP-05, ECP-13), không thuộc PHASE-028. PHASE-028 chỉ còn phần phân quyền; bảng điểm phân quyền ([mockup B](../PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/mockups/authz-scoreboard.html)) vẫn hiển thị nhóm TRACE-* để xem chung, nhưng **chấm và việc con do PHASE-029 giữ**.
 >
-> Các ca **T028-23..26** (`POSTED_SNAPSHOT`, `DOC_TO_LEDGER_CHAIN`, `REVERSAL_REASON`, `CHAIN_ACROSS_VERSIONS`) chưa có trong checklist PHASE-029 và chưa có test. **Cần chủ chốt:** giữ ở 028 hay chuyển sang PHASE-029 (khuyến nghị: chuyển, tránh hai phase cùng sửa một ca).
+> **Mã ca giữ nguyên** `T028-23..26` để không gãy tham chiếu trong bảng điểm và dữ liệu tiêu chí; khi viết test, đặt tên theo quy ước test của PHASE-029 và ghi lại mã cũ trong chú thích.
 
+| Ca | Nội dung | Đạt khi | Kiểm cho | Test |
+|---|---|---|---|---|
+| T028-23 `POSTED_SNAPSHOT` | ảnh chụp nội dung lúc ghi sổ | sau V2, đọc bút toán E1 trả nội dung V1, không phải V2 | DOC-03, TRACE-02 | chưa có |
+| T028-24 `DOC_TO_LEDGER_CHAIN` | chuỗi chứng từ → sự việc → bút toán | từ `doc_ref` của module ra đủ sự việc → bút toán (kể cả đảo) và đi ngược lại | DOC-05, TRACE-03 | chưa có |
+| T028-25 `REVERSAL_REASON` | lý do bút toán đảo | mọi bút toán đảo có lý do không rỗng | TRACE-05 | chưa có |
+| T028-26 `CHAIN_ACROSS_VERSIONS` | chuỗi mua → bán → sửa → giá vốn | mua 100 → bán 60 → sửa phiếu mua thành 90 → tính lại giá vốn: tồn 30, sổ cân, mỗi bút toán chỉ đúng V1 / V2 | TRACE-08 | chưa có |
 
-> Nguồn: chủ dự án bổ sung ngày 2026-11-05 (sáu nguyên tắc, ví dụ phiên bản, đề xuất nhóm tiêu chí "Document Lifecycle & Accounting Traceability"). Mức đạt dưới đây đọc từ mã và test trên `origin/main` @ `b820e30`. Không tiêu chí nào chấm "Đạt" khi thiếu test hoặc phép kiểm.
+> Mức đạt ở §1 và §3 đo ở `b820e30` ngày 05/11, **chưa đo lại**. **Việc cho người giữ PHASE-029:** cấp mã `S029-n` cho bốn ca (xem cách cấp ở checklist PHASE-029); tôi **không** thêm vào checklist ở PR này vì đó là tệp nóng nhiều phiên cùng sửa. Liên kết `data/` và `mockups/` bên dưới trỏ về PHASE-028.
 
 ## 1. Sáu nguyên tắc bắt buộc
 
@@ -42,7 +48,7 @@
 
 ## 3. Nhóm tiêu chí TRACE (bảng điểm)
 
-Đặt thành nhóm **"Document Lifecycle & Traceability"** trong dữ liệu bảng điểm nháp ([data/authz-criteria.draft.json](data/authz-criteria.draft.json)), hiện cùng bản mẫu [mockups/authz-scoreboard.html](mockups/authz-scoreboard.html). Nơi đặt chính thức trong `tru-cot.json` chờ chủ dự án quyết (D-AUTH-16, §4).
+Đặt thành nhóm **"Document Lifecycle & Traceability"** trong dữ liệu bảng điểm nháp ([data/authz-criteria.draft.json](../PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/data/authz-criteria.draft.json)), hiện cùng bản mẫu [mockups/authz-scoreboard.html](../PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/mockups/authz-scoreboard.html). Nơi đặt chính thức trong `tru-cot.json` chờ chủ dự án quyết (D-AUTH-16, §4).
 
 | Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp |
 |---|---|---|---|---|---|

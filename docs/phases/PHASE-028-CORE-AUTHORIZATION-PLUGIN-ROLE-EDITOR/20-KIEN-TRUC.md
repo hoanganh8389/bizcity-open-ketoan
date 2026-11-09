@@ -26,7 +26,7 @@ Quyết định gốc: [ADR-0027](../../adr/ADR-0027-core-authorization-plugin-r
 
 ```text
            MODULE / APP / AGENT ── manifest: permissions[] · menu · actions[] · app.scopes[]
-                                      │ kiểm tĩnh (SC-CON-2, SC-AUTH-01..12)
+                                      │ kiểm tĩnh (SC-CON-2, SC-AUTH-01..14)
 ┌───────────────────────── OPEN KẾ TOÁN CORE ─────────────────────────────────────┐
 │ PLATFORM (điều khiển)                                                            │
 │   users (đã có) · authz_roles · authz_role_rules · authz_assignments             │
