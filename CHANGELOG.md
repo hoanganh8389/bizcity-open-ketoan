@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Ngừng chính sách đóng hiệu lực (PHASE-031 S031-31, RV-R1-04) <!-- [2026-11-10 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — S031-31 -->
+
+- **Đổi:** `retirePolicy` (Platform) đóng `effective_to` của bản còn mở bằng **ngày ngừng** (tham số `effectiveTo`, mặc định hôm nay; không sớm hơn `effective_from − 1`) cùng lúc chuyển `retired`. Chứng từ có ngày ≤ ngày ngừng vẫn hợp lệ; **sau** ngày ngừng cửa nạp báo **IN-POL-002** (trước đây chứng từ mới trỏ bản đã ngừng không bị báo). Sự kiện `bizcity.policy.retired` thêm `data.effectiveTo`. Chữ chốt: PHASE-031 · 00 §16.
+- **Thêm:** test `policy-retire` (6 ca).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không đổi cách tính; chứng từ gửi sau ngày ngừng của một chính sách đã ngừng nay nhận cảnh báo IN-POL-002 (advice: vẫn ghi sổ; strict: chờ duyệt).
+- **Nâng cấp cần làm:** không. Bản đã `retired` trước đây vẫn có `effective_to = NULL` (không có ngày ngừng đáng tin) — việc gỡ nợ là S031-32.
+- **Bảo mật:** không đổi.
+
+
 ### Sản phẩm con và ô Biến thể, giai đoạn 1 chuyển mã số (PHASE-026) <!-- [2026-11-07 06:20 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1 (đóng góp) --> <!-- [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm, migration 0092 (đóng góp) -->
 
 - **Thêm:** bảng `item_variant_kinds`, cột `products.variant_code` tự điền theo đuôi mã (migration 0092); `POST /api/v1/items/add-child`, `GET /api/v1/items/variant-kinds`; nút Thêm sản phẩm con (tên + Biến thể, chọn được mọi biến thể) và cột Biến thể ở DM10; ô Biến thể sửa được (`variantCode` ở `PUT /api/v1/catalog/products/:sku`); luồng `/api/v1/catalog/feed/products` gửi `variantCode`; bảng Biến thể ở MH26; loại hàng chuẩn. Phương án: `docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md`; xuyên suốt với WordPress: `docs/nghiep-vu/14-ma-so-bien-the-xuyen-suot.md`.
