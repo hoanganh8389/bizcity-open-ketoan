@@ -1,0 +1,10 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.can-cu-phap-ly",
+  "kind": "code-list",
+  "title": "Căn cứ pháp lý (mẫu cho SC-LIB-2)",
+  "version": "1.0.0",
+  "items": [
+    { "code": "TT99", "name": "Thông tư 99/2025/TT-BTC", "status": "active", "since": "1.0.0", "verified": false }
+  ]
+}

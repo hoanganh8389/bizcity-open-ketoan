@@ -7,7 +7,8 @@ Thư viện là dữ liệu tham chiếu **chung mọi đơn vị**, đi theo b�
 
 ## Ba thẻ
 
-- **Tổng quan** — có bao nhiêu thư viện, bao nhiêu mục, bao nhiêu mục đã được duyệt; thư viện nào cần chú ý (còn mục chưa duyệt, bản cuối đã lâu). Từ bản này có **số lượt dùng 30 ngày** <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 -->: mỗi thư viện bao nhiêu lượt qua / cảnh báo / chặn; mỗi phân hệ, kênh (POS, kết nối…) dùng thư viện thế nào (đỏ khi bị chặn từ 1 % lượt, vàng khi dùng mã ngừng hoặc có cảnh báo); mã thông báo gặp nhiều nhất; số lượt nhập **mã lạ** — gợi ý bổ sung thư viện. Hệ thống chỉ đếm, không lưu giá trị người nhập. Số liệu có thể trễ vài chục giây.
+- **Tổng quan** <!-- [2026-11-09 01:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a: thêm bảng Theo module --> — có bao nhiêu thư viện, bao nhiêu mục, bao nhiêu mục đã được duyệt; thư viện nào cần chú ý (còn mục chưa duyệt, bản cuối đã lâu). Từ bản này có **số lượt dùng 30 ngày** <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 -->: mỗi thư viện bao nhiêu lượt qua / cảnh báo / chặn; mỗi phân hệ, kênh (POS, kết nối…) dùng thư viện thế nào (đỏ khi bị chặn từ 1 % lượt, vàng khi dùng mã ngừng hoặc có cảnh báo); mã thông báo gặp nhiều nhất; số lượt nhập **mã lạ** — gợi ý bổ sung thư viện. Hệ thống chỉ đếm, không lưu giá trị người nhập. Số liệu có thể trễ vài chục giây.
+  Có thêm bảng **Theo module — kết luận**: module nào khai dùng thư viện, 30 ngày qua dùng thế nào, và kết luận ĐẠT / ĐẠT có điều kiện / KHÔNG ĐẠT (chỉ phần thời gian chạy; mã cứng trùng thư viện do dev kiểm bằng `npx bizcity module check`).
 - **Danh sách** — mỗi thư viện một thẻ: loại, bản, ngày phát hành, người duyệt nội dung. Bấm **Mở** để xem chi tiết.
 - **Chi tiết thư viện**:
   - *Mục*: ô chọn giống ô chọn trên các phiếu; đổi **Ngày đọc giá trị** để xem giá trị đúng ngày (vd lương cơ sở trước và sau 01/07/2026).

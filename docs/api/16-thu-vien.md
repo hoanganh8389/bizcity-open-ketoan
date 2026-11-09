@@ -63,6 +63,14 @@ GET /api/v1/libraries/usage?from=2026-10-10&to=2026-11-08&library=vn.tham-so-pha
 
 Mặc định 30 ngày tới hôm nay. Trả `total` (qua / cảnh báo / chặn), `byLibrary`, `bySource` (kèm số lượt dùng mã ngừng), `topFindings` (10 mã nhiều nhất), `unknown` (lượt mã lạ theo thư viện × nguồn — ứng viên bổ sung thư viện). Quyền `catalog:read`; MCP chỉ đọc (`core.library.usage`).
 
+### 4.1 Module dùng thư viện <!-- [2026-11-09 01:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a -->
+
+```http
+GET /api/v1/libraries/modules?to=2026-11-09
+```
+
+Theo module (từ `libraries[]` trong `bizcity.module.json` của module SDK và nguồn `modules/<key>` trong số đếm 30 ngày): thư viện đã khai (`exists`, `enabled` theo đơn vị, `required`, `at`, `fields`, `calls`), `usage` (`total` / `pass` / `warn` / `block` / `deprecated`) và `verdict.status` = `dat` · `co-dieu-kien` · `khong-dat` kèm `reasons[]` (26 §9). **Chỉ là phần thời gian chạy**: API không đọc mã nguồn, nên mã cứng trùng thư viện và thư viện khai mà không dùng do SC-LIB-2 kiểm (`npx bizcity module check <key>`). Quyền `catalog:read`.
+
 ## 5. Căn cứ và xác nhận của đơn vị
 <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a: core.library.attest / attestations -->
 
@@ -102,4 +110,12 @@ import { validateInLibrary, selectorRows, getLibrary } from '@bizcity/platform/c
 const r = validateInLibrary('vn.ngay-nghi-le', '2026-02-16');
 ```
 
-Qua `ctx` của SDK module là việc đợt B (đề xuất).
+Trong `defineAction` của module dùng `ctx.libraries` (đã áp cấu hình đơn vị, ghi bằng chứng, đếm sử dụng) <!-- [2026-11-09 01:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a -->, không import thẳng:
+
+```ts
+const r = await ctx.libraries.validate('vn.ngay-nghi-le', ngay);                       // không ném lỗi
+await ctx.libraries.require('vn.tham-so-phap-ly', { code: 'GIO_LAM_VIEC_NGAY', value: gio }, { at: ngayChungTu, field: 'luong.tinh#gioLam' });
+// block → Errors.validation (details.code = LIB-*); warn → meta.libraryWarnings; thư viện tuỳ chọn đơn vị đã tắt → null
+```
+
+Khai thư viện module dùng trong `bizcity.module.json`: `"libraries": [{ "id": "vn.tham-so-phap-ly", "fields": ["luong.tinh#gioLam"], "at": "docDate", "required": true }]`. Hợp đồng: [ACTION §4.5](../contracts/BIZCITY-ACTION-v1.md), [MODULE `libraries[]`](../contracts/BIZCITY-MODULE-v1.md).

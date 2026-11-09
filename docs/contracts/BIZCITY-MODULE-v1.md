@@ -6,8 +6,9 @@
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: kind "app" (app ngoài tiến trình, ADR-0011 mức 2): app.scopes, app.webhook.url, ui.origin / ui.entry; §3a -->
 <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.3.0-draft: §5 vòng đời chạy thật (module_registry × tenant_modules, nạp theo hash, MODULE_DISABLED, skipped) -->
 <!-- [2026-11-02 06:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.4.0-draft: trường seed[] (dữ liệu mẫu qua core.*.upsert, ADR-0015 Q4) -->
+<!-- [2026-11-09 12:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a: 1.5.0-draft: trường libraries[] (thư viện dùng chung bizcity_library@1 module dùng; SC-LIB-2) -->
 
-> **Phiên bản:** 1.4.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
+> **Phiên bản:** 1.5.0-draft · 2026-11-09 · **Trạng thái:** Đề xuất · **Thuộc:** [Bizcity Framework Standard v1](../standard/README.md) (hợp đồng 1/7)
 > **JSON Schema:** [BIZCITY-MODULE-v1.schema.json](BIZCITY-MODULE-v1.schema.json) · **Ví dụ đầy đủ:** [../standard/examples/hop-dong.bizcity.module.json](../standard/examples/hop-dong.bizcity.module.json)
 > **Thay thế:** `ApiModule` (`apps/api/src/phan-he/types.ts`), `WebModule`/`ModuleMeta` (`apps/web/src/phan-he/types.ts`, `packages/contracts/src/module.ts`), `AddInManifest` (`apps/api/src/core/addins.ts`)
 
@@ -42,6 +43,7 @@ Một phân hệ hiện khai ở 5 nơi (A-25); quyền, bảng sở hữu, sự
 | `settings[]` | | khoá cấu hình `bizcity.<key_>.<tên>` | [Settings](BIZCITY-SETTINGS-MATRIX-v1.md) |
 | `extensions` | | `menu`, `slots`, `hooks`, `print` | [Extension](BIZCITY-EXTENSION-v1.md) |
 | `ui` | | `icon` (lucide), `color`, `order`; **chỉ app:** `origin`, `entry` (§3a) | lưới ứng dụng; khung nhúng app |
+| `libraries[]` | | thư viện dùng chung module dùng: `{ id, fields[], at?: "docDate" \| "today", required? }`. `fields` dạng `<mã action>#<đường trường>` (nhãn, đếm độ phủ). `at: "docDate"` = action phải truyền `{ at }` cho `ctx.libraries` ([ACTION §4.5](BIZCITY-ACTION-v1.md)); `required` = module không chạy đúng nếu thiếu thư viện | HT14 tab Module (`core.library.modules`), SC-LIB-2; xem [PHASE-030 · 26 §4.1](../phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/26-KHO-THU-VIEN.md) |
 | `seed[]` | | dữ liệu mẫu hư cấu: `{ action: core.partner.upsert \| core.product.upsert, input }` (ADR-0015 Q4) | `POST /api/v1/system/modules/:key/seed` (quyền `catalog:write`, dry-run được) gọi từng action — có bằng chứng, chạy lại không trùng; module không ghi bảng danh mục |
 | `app` | ✓ khi `kind: "app"` | `scopes[]`, `webhook.url` (§3a) | phạm vi khoá app, webhook |
 | `waivers[]` | | miễn trừ luật Tier 1: `rule`, `reason`, `adr`, `expires` (**bắt buộc** ngoài ví dụ trong `docs/`) | bộ kiểm (SC-CON-2) bỏ qua đúng phát hiện của luật đó và in vào ghi chú bảng điểm; thiếu `expires` hoặc quá hạn thì báo, không miễn. Hiện miễn được: `STD-ACT-6` (tiền tố action). Luật về sự thật kế toán (docType, năng lực, schema) không miễn được |
@@ -102,6 +104,7 @@ khai báo ──► kiểm (bizcity module check) ──► cài (migration + GR
 
 ## 7. Nhật ký
 
+- **1.5.0-draft (2026-11-09):** thêm `libraries[]` (tuỳ chọn, tương thích) — PHASE-030 S030-51a; bộ kiểm SC-LIB-2 chỉ xét module có khai hoặc có gọi `ctx.libraries`.
 - **1.4.0-draft (2026-11-02):** thêm `seed[]` (tuỳ chọn, tương thích) — ADR-0015 Q4, PHASES 3.17.
 - **1.3.0-draft (2026-11-02):** §5 vòng đời chạy thật: `module_registry` × `tenant_modules`, nạp theo hash, `MODULE_DISABLED`, sự kiện `skipped`, lệnh `module` (PHASES 3.13). Không đổi trường manifest.
 - **1.2.0-draft (2026-11-02):** thêm `kind: "app"` (tương thích): `app.scopes`, `app.webhook.url`, `ui.origin`, `ui.entry`; schema chặn app khai `data` / `documents` / `actions` / `settings` / `extensions`, chặn module / add-in khai `app` / `ui.origin` (PHASES 3.14, ADR-0011 mức 2). SC-MOD-3 phủ `apps/api/src/ung-dung/<key>`.

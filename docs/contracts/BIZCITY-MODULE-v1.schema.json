@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bizcity.vn/contracts/bizcity_module/1.2.0",
+  "$id": "https://bizcity.vn/contracts/bizcity_module/1.5.0",
   "title": "bizcity_module@1",
   "description": "Manifest module / add-in theo Bizcity Framework Standard v1 (docs/contracts/BIZCITY-MODULE-v1.md).",
   "type": "object",
@@ -159,6 +159,19 @@
         "entry": { "type": "string", "pattern": "^/\\S*$" }
       },
       "additionalProperties": false
+    },
+    "libraries": {
+      "type": "array", "maxItems": 50,
+      "items": {
+        "type": "object", "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^(core|vn|authz|nghiep-vu|bao-cao|nhap|mau)\\.[a-z0-9][a-z0-9-]{1,48}$" },
+          "fields": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z0-9.-]+#[A-Za-z0-9_.\\[\\]-]+$" } },
+          "at": { "enum": ["docDate", "today"] },
+          "required": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
     },
     "seed": {
       "type": "array", "maxItems": 500,

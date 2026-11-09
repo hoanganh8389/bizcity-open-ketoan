@@ -1991,18 +1991,6 @@
         }
       ],
       "ref": "STD-030-5 · R-MONEY-2 · PHASE-030 N030-2 (mua hàng chuyển sang roundMoney khi domain về modules/, ADR-0024)"
-    },
-    "SC-FLOW-1": {
-      "title": "Bảng giữ chỗ CLAIMS.md đúng khuôn, các dòng đang làm không chồng phạm vi và mỗi nhánh một dòng (R-FLOW-1 / 3 / 6)",
-      "debts": [
-        {
-          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:feat/phase-014-audit-in-action:feat/s030-51a-ctx-libraries:packages/platform/src/core/actions.ts:packages/platform/src/core/actions.ts",
-          "file": "docs/phases/CLAIMS.md",
-          "message": "\"PHASE-014 · W6 đợt 8b — nhật k\" và \"PHASE-030 · S030-51a — Kho thư\" chồng phạm vi: packages/platform/src/core/actions.ts ~ packages/platform/src/core/actions.ts (R-FLOW-3: một phạm vi một người)",
-          "why": "S030-51a CHỈ THÊM một chỗ gắn ctx.libraries vào bối cảnh action (cạnh ctx.evidence / ctx.meta, tệp mới libraries/context.ts giữ logic). Dòng PHASE-014 W6 đợt 8b không có commit từ 2026-11-04 (R-FLOW-6: coi như đã nhả, phải hỏi chủ); chủ dự án duyệt chồng phạm vi 2026-11-09. Nhánh nào vào sau gộp tay hai phần.",
-          "ref": "CLAIMS dòng PHASE-030 · S030-51a; dòng PHASE-014 W6 đợt 8b; 26 §4.1"
-        }
-      ]
     }
   }
 }
