@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 135
+      "count": 134
     },
     {
       "key": "partial",
@@ -2967,8 +2967,14 @@
       "title": "RV-R1-06 phần ghi details.context vào trace và hiện remedy.steps ở khay Mã tra cứu (sau S022-17)",
       "priority": "P2",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, review-r1)",
+        "branch": "feat/phase-022-trace-remedy",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-022 · S022-18 — RV-R1-06: khay Mã tra cứu mang details.context.step + hiện remedy.steps; hợp …"
+      },
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 30
     },
