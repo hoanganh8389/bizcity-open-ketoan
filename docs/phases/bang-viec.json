@@ -2993,7 +2993,7 @@
       "phase": "PHASE-022",
       "title": "BIZCITY-ERRORS 1.6.0 §4c: thêm mã chi tiết theo vùng vào ERRORREASONS + check SC-ERR-2 (R-ERR-11: reason viết trong mã phải có trong danh mục). Nối từng chỗ né…",
       "priority": "P2",
-      "status": "todo",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, review-r1)",
