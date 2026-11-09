@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "GPL-2.0-or-later",
   "private": true,
-  "description": "Lệnh `bizcity` cho developer (PHASES 4.1): module new / check / list, migrate, ledger verify, doctor; event check, explain, skills install cho skill kế toán (G3-01). Điều phối công cụ sẵn có của repo.",
+  "description": "Lệnh `bizcity` cho developer (PHASES 4.1): module new / check / list, migrate, ledger verify, doctor; event check, explain, skills install cho skill kế toán (G3-01); library list / search / check / new / diff (PHASE-030 S030-50). Điều phối công cụ sẵn có của repo.",
   "type": "module",
   "bin": {
     "bizcity": "./bin/bizcity.mjs"
@@ -12,6 +12,6 @@
     "pg": "8.13.1"
   },
   "scripts": {
-    "test": "node --test test/accounting-cli.test.mjs test/module-accounting.test.mjs test/saving-model.test.mjs test/evidence-seal.test.mjs"
+    "test": "node --test test/accounting-cli.test.mjs test/module-accounting.test.mjs test/saving-model.test.mjs test/evidence-seal.test.mjs test/library-cli.test.mjs"
   }
 }
