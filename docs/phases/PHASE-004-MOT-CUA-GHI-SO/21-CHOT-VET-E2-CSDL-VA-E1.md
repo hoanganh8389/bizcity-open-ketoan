@@ -27,7 +27,7 @@
 |---|---|---|---|
 | S004-14 | migration trigger + `_txid` ở nhật ký S004-13 + ca phá thử + chẩn đoán `LEDGER_TRIGGERS` biết trigger mới | K3 thêm chặt | chủ duyệt D004-11, D004-12 |
 | S004-15 | `LEDGER_HEADER_EDIT_UNATTRIBUTED` + số đo + luật cảnh báo + bảng kiểm khoá kỳ | K1 | S004-14 |
-| S004-16 | API `entry-edits` + thẻ Bàn điều tra; **bản mẫu trước** | K1 | S004-14, chủ duyệt bản mẫu |
+| S004-16 | API `entry-edits` + thẻ Bàn điều tra; **bản mẫu trước** ([bản mẫu](mockups/sua-dau-but-toan.html)) | K1 | S004-14, chủ duyệt bản mẫu |
 
 ## 4. E1 (`ketoan.cost_overwrite`) — phương án cụ thể cho Q004-4
 

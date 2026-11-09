@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 138
+      "count": 137
     },
     {
       "key": "partial",
@@ -30,7 +30,7 @@
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 1
+      "count": 2
     },
     {
       "key": "done",
@@ -550,8 +550,8 @@
       "phase": "PHASE-004",
       "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
       "priority": null,
-      "status": "todo",
-      "column": "todo",
+      "status": "paused",
+      "column": "paused",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 28
