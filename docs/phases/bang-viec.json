@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 264
+      "count": 265
     }
   ],
   "items": [
@@ -540,14 +540,8 @@
       "title": "Cảnh báo (phần 1, 3): chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (mức error, sửa đầu bút toán ngoài ứng dụng) và đưa vào bảng kiểm trước khi khoá kỳ; D004-13. K1",
       "priority": null,
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-004-s004-15a-chan-doan-sua-dau",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-004 · S004-15a — cảnh báo sửa đầu bút toán ngoài ứng dụng (D004-13, phần 1 và 3): chẩn đoán L…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 27
     },
