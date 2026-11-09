@@ -106,7 +106,8 @@ export async function dimensionReportRoutes(app: FastifyInstance): Promise<void>
       const { branchIds } = await resolveScope(auth, q.branchCodes);
       // Mỗi dòng Có tài khoản tiền: tách theo các dòng Nợ cùng cặp (một Có nhiều Nợ thì lấy số của từng dòng Nợ).
       const res = await sql<{ entry_id: string; posting_date: string; doc_no: string; event_id: string | null; description: string; branch_code: string; partner_name: string | null; cash_account: string; debit_account: string; cost_item: string | null; amount: string }>`
-        SELECT l.entry_id, l.posting_date::text, e.doc_no, e.event_id, COALESCE(NULLIF(d.description, ''), e.description) AS description, b.code AS branch_code, p.name AS partner_name,
+        SELECT l.entry_id, l.posting_date::text, e.doc_no, e.event_id, COALESCE(NULLIF(d.description, ''), e.description) AS description, b.code AS branch_code,
+               COALESCE(CASE WHEN d.partner_id IS NOT NULL THEN d.partner_name ELSE e.partner_name END, p.name) AS partner_name,
                l.account_code AS cash_account, d.account_code AS debit_account, d.dims->>'costItem' AS cost_item,
                CASE WHEN (SELECT COUNT(*) FROM bizcity_read.ledger_lines x WHERE x.entry_id = l.entry_id AND x.pair_no = l.pair_no AND x.debit > 0) = 1 THEN l.credit ELSE d.debit END AS amount
           FROM bizcity_read.ledger_lines l

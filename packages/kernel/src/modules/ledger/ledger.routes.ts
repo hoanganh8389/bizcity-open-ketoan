@@ -8,6 +8,7 @@
  *   GET /api/v1/ledger/entries/:id    chi tiết bút toán
  *   GET /api/v1/ledger/vouchers       màn Chứng từ kế toán (Tiện ích, như CtrlLedger HTsoft): mode = all | unlinked | unbalanced | source-diff
  *   POST /api/v1/ledger/vouchers/unpost  bỏ định khoản phiếu gốc của các bút toán được chọn (nút Xoá của HTsoft)
+ *   GET /api/v1/ledger/entry-edits     các lần sửa đầu bút toán (màn SC02, S004-16); POST …/entry-edits/ack kế toán trưởng xác nhận
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -19,6 +20,7 @@ import { Errors } from '@bizcity/platform/core/errors';
 import { ledgerRepository } from './ledger.repository.js';
 import { listVouchers, VOUCHER_MODES } from './ledger-vouchers.js';
 import { documentService } from '../documents/document.service.js';
+import { entryEditsQuerySchema, headerEditAckAction, listEntryEdits } from './ledger-entry-edits.js';
 import { defineAction, itemMessage, mountActions, type AnyActionDef } from '@bizcity/platform/core/actions';
 
 const tags = ['Sổ cái'];
@@ -109,6 +111,16 @@ export async function ledgerRoutes(app: FastifyInstance): Promise<void> {
   });
 
   mountActions(app, ledgerWriteActions);
+
+  // [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-16): danh sách sửa đầu bút toán, chỉ đọc
+  r.get('/api/v1/ledger/entry-edits', {
+    preHandler: requirePermission('ledger:read'),
+    schema: { tags, summary: 'Các lần sửa đầu bút toán (qua ứng dụng / ngoài ứng dụng) và trạng thái xác nhận', querystring: entryEditsQuerySchema },
+    handler: async (req) => {
+      const res = await listEntryEdits(db, authOf(req).tenantId, req.query);
+      return ok({ items: res.items, summary: res.summary }, pageMeta(req.query, res.total));
+    },
+  });
 
   r.get('/api/v1/ledger/entries/:id', {
     preHandler: requirePermission('ledger:read'),
@@ -209,6 +221,7 @@ export async function ledgerRoutes(app: FastifyInstance): Promise<void> {
 
 // [2026-11-03 10:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 6 (action theo lô): bỏ định khoản hàng loạt — cả lô một giao dịch, mỗi phiếu gốc một SAVEPOINT (phiếu lỗi được báo, phiếu khác vẫn bỏ)
 export const ledgerWriteActions: AnyActionDef[] = [
+  headerEditAckAction as AnyActionDef, // [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16: kế toán trưởng xác nhận lần sửa ngoài ứng dụng
   defineAction({
     id: 'core.ledger.unpost', title: 'Bỏ định khoản phiếu gốc của các bút toán được chọn: đảo bút toán, chứng từ về Chờ định khoản (ACC14)', tags,
     permission: 'documents:write', effect: 'write', sideEffects: ['ledger'], idempotency: 'natural',

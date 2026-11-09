@@ -50,7 +50,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `LEDGER_ORPHAN` | L3 | Mọi `ledger_entries.event_id` tồn tại | error | có | DG-LEDGER-4 |
 | `EVENT_POSTED_VERSION` | L3 | `status = posted` ⇒ `posted_version = version` (trừ sự việc nội bộ) | error | có | DG-EVENT-1 |
 | `EVENT_HAS_ENTRY` | L3 | Sự việc `posted` có bút toán hiệu lực | warn | có | DG-EVENT-2 |
-| `LEDGER_HEADER_EDIT_UNATTRIBUTED` | L3 | Mọi lần sửa đầu bút toán đi qua ứng dụng: dòng nhật ký của trigger (`_source = db`) phải có dòng của ứng dụng cùng `_txid` <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a, D004-13 --> | error | có | DG-LEDGER-5 |
+| `LEDGER_HEADER_EDIT_UNATTRIBUTED` | L3 | Mọi lần sửa đầu bút toán đi qua ứng dụng: dòng nhật ký của trigger (`_source = db`) phải có dòng của ứng dụng cùng `_txid`, hoặc đã được kế toán trưởng xác nhận ở màn SC02 (action `core.ledger.header-edit-ack`, S004-16) <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a, D004-13 --> | error | có | DG-LEDGER-5 |
 | `ENTRY_NO_VERSION` | L3 | Bút toán gắn sự việc có `event_version` (phiên bản chứng từ đã tạo ra nó) <!-- [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: DOC-01 --> | warn | có | DG-DOC-1 |
 | `ENTRY_VERSION_UNKNOWN` | L3 | Phiên bản chứng từ của bút toán còn nội dung lưu <!-- [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: DOC-03 --> | warn | có | DG-DOC-2 |
 | `EVENT_ENTRIES_STALE` | L3 | Bút toán hiệu lực của sự việc đã ghi sổ thuộc đúng `posted_version` <!-- [2026-11-05 08:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — W1: DOC-04 --> | warn | có | DG-DOC-3 |

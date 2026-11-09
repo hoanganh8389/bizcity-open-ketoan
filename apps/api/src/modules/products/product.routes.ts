@@ -142,6 +142,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         postingGroup: z.string().optional().describe('Mã nhóm hạch toán; "-" = chưa gán'),
         status: z.enum(['all', 'active', 'inactive', 'draft']).default('all').describe('active = đang dùng, KHÔNG gồm nháp (ô chọn của phiếu); draft = chỉ nháp'),
         parent: z.string().trim().max(64).optional().describe('Mã hàng cha: liệt kê các mã con của mã này'),
+        variant: z.string().trim().max(32).optional().describe('Mã biến thể (0078)'),
       }),
     },
     handler: async (req) => {
@@ -169,6 +170,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
       else if (f.status === 'active') q = q.where('is_active', '=', true).where('is_draft', '=', false);
       else if (f.status === 'inactive') q = q.where('is_active', '=', false);
       if (f.parent) q = q.where('parent_sku', '=', f.parent);
+      if (f.variant) q = q.where(sql<boolean>`variant_code = ${f.variant}`);
       const [rows, total] = await Promise.all([
         q.selectAll().orderBy('sku').limit(f.pageSize).offset((f.page - 1) * f.pageSize).execute(),
         db.selectFrom(q.select(sql`1`.as('x')).limit(COUNT_CAP + 1).as('c')).select((eb) => eb.fn.countAll<string>().as('n')).executeTakeFirst(),
@@ -177,6 +179,7 @@ export async function productRoutes(app: FastifyInstance): Promise<void> {
         sku: p.sku, name: p.name, unit: p.unit, postingGroupCode: p.posting_group_code, brandCode: p.brand_code, industryCode: p.industry_code,
         groupCode: p.group_code, typeCode: p.type_code, isActive: p.is_active, isDraft: p.is_draft, draftCodes: p.draft_codes, sourceSystem: p.source_system,
         note: p.note, exciseRate: p.excise_rate === null ? null : Number(p.excise_rate), taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, updatedAt: p.updated_at, parentSku: p.parent_sku,
+        variantCode: (p as unknown as { variant_code: string }).variant_code,
       })), pageMeta(f, Number(total?.n ?? 0)));
     },
   });

@@ -20,7 +20,7 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 | GĐ | Việc | Trạng thái |
 |---|---|---|
 | 0 | Chốt phương án (tài liệu 12) | Xong |
-| 1 | Ô Biến thể, Loại hàng; tự điền từ đuôi cũ; Thêm sản phẩm con; cảnh báo NCC dùng lại mã | Đang làm |
+| 1 | Ô Biến thể, Loại hàng; tự điền từ đuôi cũ; Thêm sản phẩm con; cảnh báo NCC dùng lại mã | Xong trên nhánh `feat/ma-so-cha-con`, chờ họp chốt mới vào `main`, `test` |
 | 2 | Đối chiếu luật đọc ô với luật đọc chữ trên đơn thật | Chưa làm |
 | 3 | Phần mềm chuyển sang đọc ô, mở mã số cho các biến thể còn lại | Chưa làm |
 | 4 | Website bán hàng theo `item_id`, biết đổi mã | Chưa làm |
@@ -29,12 +29,12 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 | 7 | Mã cũ chỉ còn để tra cứu | Chưa làm |
 | Sau | Đồng bộ danh mục sang thuế, tự chuyển phiếu mua và chuyển kho, lựa chọn "Loại khỏi thuế" ở chương trình | Chưa làm |
 
-## Khoá an toàn đang áp dụng
+## Luật đang áp dụng (09/11/2026)
 
-- Mã con toàn số chỉ mở cho Biến thể Thường.
-- Không đổi mã có đuôi `K`, `M`, `Q`, `T`, `Z` sang mã số trước GĐ 3.
-
-Lý do: quầy bán tách bill Z bằng chữ cuối mã. Đổi trước khi quầy đọc ô thì hàng nội bộ sẽ sang thuế.
+- Mọi biến thể là sản phẩm con mã số; tên tuỳ ý, phần mềm chỉ đọc ô Biến thể.
+- Đổi mã có đuôi sang mã số được; biến thể và `item_id` đi theo mặt hàng.
+- Không gộp hàng Nội bộ với hàng có sang thuế.
+- Quầy bán, hoá đơn, chính sách trên WordPress đọc ô qua `TGS_Item_Variant` (tài liệu 14).
 
 ## Việc của từng bên
 
@@ -49,3 +49,4 @@ Lý do: quầy bán tách bill Z bằng chữ cuối mã. Đổi trước khi qu
 | Ngày | Nội dung |
 |---|---|
 | 07/11/2026 | Chốt phương án, mở GĐ 1 |
+| 07/11/2026 | GĐ 1 làm xong trên nhánh. Chạy thử trên dữ liệu máy phát triển: 2.526 mã tận cùng `Z` đều mang Biến thể Nội bộ, không lệch mã nào so với cách quầy bán nhận `Z` |
