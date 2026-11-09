@@ -27,7 +27,7 @@
 | S004-15a | **Cảnh báo (phần 1, 3)**: chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` (mức `error`, sửa đầu bút toán ngoài ứng dụng) và đưa vào bảng kiểm trước khi khoá kỳ; D004-13. K1 | 2.1 | có | ✅ `e2-unattributed-warning` 4/4; DG-LEDGER-5; `AUDIT_KEEP` thêm `ledger.entry.header_update` (doc 21 §3a); còn thêm dòng ở bảng ACTION §4.4 khi S030-51a nhả `BIZCITY-ACTION-v1.md` |
 | S004-15b | **Cảnh báo (phần 2)**: số đo `bizcity_ledger_header_edit_unattributed_total` + luật cảnh báo `alerts.yml`; D004-13. K1 | 2.1 | chưa | ⏸ chờ PHASE-018 W6 nhả `infrastructure/monitoring/**` và `docs/ops/OBSERVABILITY.md` |
 | S004-16 | **Bảng theo dõi**: API chỉ đọc `GET /api/v1/ledger/entry-edits` + tab "Sửa đầu bút toán" ở Bàn điều tra; **bản mẫu HTML trước**, chủ duyệt rồi mới code; D004-14. K1 | 2.1 | chưa | ⏸ chờ chủ duyệt bản mẫu: [mockups/sua-dau-but-toan.html](mockups/sua-dau-but-toan.html) (S004-14 đã xong) |
-| S004-17 | E1 `cost_overwrite`: ghi giá vốn qua hàm `SECURITY DEFINER`, thu `UPDATE ledger_lines` khỏi `ketoan_app`; D004-15 (Q004-4). K3 thêm chặt | 2.1 | có | ✅ 0091 + `e1-cost-fill` 6/6; `costing`, `db-rules`, `app-role` giữ nguyên làm hồi quy |
+| S004-17 | E1 `cost_overwrite`: ghi giá vốn qua hàm `SECURITY DEFINER`, thu `UPDATE ledger_lines` khỏi `ketoan_app`; D004-15 (Q004-4). K3 thêm chặt | 2.1 | có | ✅ 0091 + `e1-cost-fill` 7/7; `costing`, `db-rules`, `app-role` giữ nguyên làm hồi quy |
 | S004-18 | Đo lệch tài khoản mặc định giữa `resolveAccounts` của mua hàng và `AccountResolver` của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi mã; quyết định mức K (K1 hay K2) từ kết quả; §5 của 21. K0 | 2.1 | chưa | ☐ |
 
 ## Ca bằng chứng
