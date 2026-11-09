@@ -34,6 +34,36 @@ export interface SettingEntry {
   permission?: string;
   /** Khuôn máy đọc (§1 1.1): có trường này mới ghi / liệt kê qua đường chung. */
   valueType?: string;
+  /** Căn cứ mặc định của khoá (1.2): văn bản, điều, khoản… — căn cứ của một phiên bản (setting_values.basis) thắng căn cứ này. */
+  basis?: SettingBasis;
+  /** Nơi đọc khoá (1.2), để màn HT13 trả lời "đổi khoá này ảnh hưởng gì". */
+  usedBy?: SettingUse[];
+}
+
+/** Căn cứ pháp lý / quy tắc (bizcity_settings@1 1.2.0 §1). */
+export interface SettingBasis { doc: string; article?: string; clause?: string; point?: string; url?: string; effectiveFrom?: string }
+export type SettingUseKind = 'gate' | 'action' | 'form' | 'report';
+export interface SettingUse { kind: SettingUseKind; ref: string }
+
+const BASIS_TEXT_MAX = 500;
+const BASIS_FIELDS = ['doc', 'article', 'clause', 'point', 'url', 'effectiveFrom'] as const;
+
+/**
+ * Kiểm khuôn căn cứ. Trả câu lỗi (tiếng Việt) hoặc null khi hợp lệ: đối tượng có `doc` (chuỗi 1..500), các trường còn lại tuỳ chọn
+ * (chuỗi ≤ 500; `url` bắt đầu `https://`; `effectiveFrom` YYYY-MM-DD); trường lạ bị từ chối.
+ */
+export function checkSettingBasis(b: unknown): string | null {
+  if (b === null || typeof b !== 'object' || Array.isArray(b)) return 'phải là đối tượng { doc, article?, clause?, point?, url?, effectiveFrom? }';
+  const o = b as Record<string, unknown>;
+  const extra = Object.keys(o).filter((k) => !(BASIS_FIELDS as readonly string[]).includes(k));
+  if (extra.length) return `có trường lạ: ${extra.join(', ')}`;
+  if (typeof o.doc !== 'string' || !o.doc.trim() || o.doc.length > BASIS_TEXT_MAX) return 'doc (văn bản) bắt buộc, chuỗi 1..500 ký tự';
+  for (const k of ['article', 'clause', 'point'] as const) {
+    if (o[k] !== undefined && (typeof o[k] !== 'string' || (o[k] as string).length > BASIS_TEXT_MAX)) return `${k} phải là chuỗi ≤ ${BASIS_TEXT_MAX} ký tự`;
+  }
+  if (o.url !== undefined && (typeof o.url !== 'string' || !/^https:\/\/\S{1,480}$/.test(o.url))) return 'url phải bắt đầu https://';
+  if (o.effectiveFrom !== undefined && (typeof o.effectiveFrom !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.effectiveFrom))) return 'effectiveFrom phải là YYYY-MM-DD';
+  return null;
 }
 
 const REGISTRY_FILE = 'docs/contracts/bizcity-settings.registry.json';
@@ -115,8 +145,8 @@ const SCOPE_ORDER: readonly SettingScopeType[] = ['user', 'branch', 'accounting_
 
 export interface SettingScope { accountingUnitId?: string; branchId?: string; userId?: string; date?: string }
 export type SettingSource = { scope: SettingScopeType; scopeId: string; validFrom: string; version: number } | 'legacy' | 'default';
-export interface SettingRead { key: string; value: unknown; source: SettingSource; configVersion: number }
-export interface SettingVersion { scope: SettingScopeType; scopeId: string; value: unknown; validFrom: string; version: number; reason: string | null; by: string; at: string }
+export interface SettingRead { key: string; value: unknown; source: SettingSource; configVersion: number; /** Căn cứ của phiên bản đang áp (1.2); null khi nguồn là giá trị cũ / mặc định hoặc phiên bản chưa khai căn cứ. */ basis?: SettingBasis | null }
+export interface SettingVersion { scope: SettingScopeType; scopeId: string; value: unknown; validFrom: string; version: number; reason: string | null; basis: SettingBasis | null; by: string; at: string }
 
 /** Hôm nay theo giờ Việt Nam (YYYY-MM-DD) — ngày hiệu lực của cấu hình tính theo lịch Việt Nam như ngày chứng từ. */
 export function settingsToday(): string {
@@ -190,14 +220,20 @@ export async function getSetting(trx: Db, tenantId: string, key: string, scope: 
   for (const s of scopeChain(entry, scope)) {
     if (s.type === 'tenant' && legacy && date >= today) {
       const v = await legacyValue(trx, tenantId, legacy);
-      if (v !== null) return { key, value: v, source: 'legacy', configVersion: cv };
+      if (v !== null) {
+        // Giá trị hiện hành lấy từ nhánh JSON cũ (bản sao của phiên bản mới nhất): căn cứ vẫn là của phiên bản hiện hành trong setting_values.
+        const b = await sql<{ basis: SettingBasis | null }>`
+          SELECT basis FROM setting_values WHERE tenant_id = ${tenantId} AND key = ${key} AND scope_type = 'tenant' AND scope_id = '' AND valid_from <= ${date}::date
+          ORDER BY valid_from DESC, version DESC LIMIT 1`.execute(trx);
+        return { key, value: v, source: 'legacy', configVersion: cv, basis: b.rows[0]?.basis ?? null };
+      }
     }
-    const r = await sql<{ value: unknown; valid_from: string; version: number }>`
-      SELECT value, to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version FROM setting_values
+    const r = await sql<{ value: unknown; valid_from: string; version: number; basis: SettingBasis | null }>`
+      SELECT value, to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version, basis FROM setting_values
       WHERE tenant_id = ${tenantId} AND key = ${key} AND scope_type = ${s.type} AND scope_id = ${s.id} AND valid_from <= ${date}::date
       ORDER BY valid_from DESC, version DESC LIMIT 1`.execute(trx);
     const row = r.rows[0];
-    if (row) return { key, value: row.value, source: { scope: s.type, scopeId: s.id, validFrom: row.valid_from, version: Number(row.version) }, configVersion: cv };
+    if (row) return { key, value: row.value, source: { scope: s.type, scopeId: s.id, validFrom: row.valid_from, version: Number(row.version) }, configVersion: cv, basis: row.basis ?? null };
     // Ngày quá khứ chưa có phiên bản nào: giá trị nhánh JSON cũ là điều duy nhất biết được (có từ trước khi có lịch sử).
     if (s.type === 'tenant' && legacy) {
       const v = await legacyValue(trx, tenantId, legacy);
@@ -213,6 +249,8 @@ export interface SetSettingInput {
   scopeId?: string;
   validFrom?: string;
   reason?: string;
+  /** Căn cứ của phiên bản này (1.2), tuỳ chọn — kể cả khoá loại A (D030-12). */
+  basis?: SettingBasis | null;
 }
 
 /**
@@ -242,6 +280,16 @@ export async function setSetting(
   if ((entry.class === 'A' || validFrom < today) && (!reason || reason.length < 3)) {
     throw Errors.validation(entry.class === 'A' ? `Khoá loại A "${key}" ảnh hưởng sổ — cần lý do (≥ 3 ký tự)` : 'Hiệu lực lùi về trước hôm nay — cần lý do (≥ 3 ký tự)');
   }
+  // D030-12 (S030-40): đổi khoá loại A chỉ ghi nhật ký, KHÔNG duyệt; chặn duy nhất là ngày hiệu lực rơi vào kỳ đã khoá (bất biến sổ, R-LEDGER-9).
+  if (entry.class === 'A') {
+    const locked = await lockedPeriodAt(trx, who.tenantId, validFrom, scope === 'branch' ? scopeId : null);
+    if (locked) throw Errors.periodLocked(`Ngày hiệu lực ${validFrom} rơi vào kỳ ${String(locked.month).padStart(2, '0')}/${locked.year} đã khoá — chọn ngày hiệu lực trong kỳ đang mở, hoặc mở khoá kỳ trước`);
+  }
+  if (input.basis != null) {
+    const badBasis = checkSettingBasis(input.basis);
+    if (badBasis) throw Errors.validation(`Căn cứ của "${key}" ${badBasis}`);
+  }
+  const basis = input.basis ?? null;
   const legacy = legacyPath(entry);
   if (legacy && validFrom > today) throw Errors.validation(`Khoá "${key}" còn đường đọc cũ (${entry.storage}) — chưa nhận ngày hiệu lực tương lai (đợt 2)`);
   if (scope !== 'tenant') await assertScopeExists(trx, who.tenantId, scope, scopeId);
@@ -252,8 +300,8 @@ export async function setSetting(
     WHERE tenant_id = ${who.tenantId} AND key = ${key} AND scope_type = ${scope} AND scope_id = ${scopeId}`.execute(trx);
   const version = Number(next.rows[0]!.v);
   await sql`
-    INSERT INTO setting_values (tenant_id, key, scope_type, scope_id, value, valid_from, version, reason, created_by)
-    VALUES (${who.tenantId}, ${key}, ${scope}, ${scopeId}, ${JSON.stringify(input.value)}::jsonb, ${validFrom}::date, ${version}, ${reason}, ${who.actor})`.execute(trx);
+    INSERT INTO setting_values (tenant_id, key, scope_type, scope_id, value, valid_from, version, reason, basis, created_by)
+    VALUES (${who.tenantId}, ${key}, ${scope}, ${scopeId}, ${JSON.stringify(input.value)}::jsonb, ${validFrom}::date, ${version}, ${reason}, ${basis === null ? null : JSON.stringify(basis)}::jsonb, ${who.actor})`.execute(trx);
   // Ghi song song nhánh JSON cũ chỉ khi phiên bản này là hiện hành (không có phiên bản đơn vị hiệu lực muộn hơn mà đã tới ngày).
   const newer = await sql<{ n: number }>`
     SELECT count(*)::int AS n FROM setting_values WHERE tenant_id = ${who.tenantId} AND key = ${key} AND scope_type = 'tenant'
@@ -269,10 +317,61 @@ export async function setSetting(
   await sql`UPDATE tenants SET config_version = config_version + 1 WHERE id = ${who.tenantId}`.execute(trx);
   await writeAudit(trx, {
     tenantId: who.tenantId, actor: who.actor, action: 'settings.set', objectType: 'setting', objectId: key,
-    before: { value: before }, after: { value: input.value, scope, scopeId, validFrom, version, reason },
+    before: { value: before }, after: { value: input.value, scope, scopeId, validFrom, version, reason, basis },
   });
   const cv = await configVersion(trx, who.tenantId);
-  return { key, value: input.value, before, source: { scope, scopeId, validFrom, version }, configVersion: cv };
+  return { key, value: input.value, before, source: { scope, scopeId, validFrom, version }, configVersion: cv, basis };
+}
+
+/** Kỳ đã khoá (khoá chung mọi loại chứng từ; thêm khoá riêng của chi nhánh khi khoá đặt theo chi nhánh) chứa `date`, hoặc null. */
+export async function lockedPeriodAt(trx: Db, tenantId: string, date: string, branchId: string | null): Promise<{ year: number; month: number } | null> {
+  const r = await sql<{ year: number; month: number }>`
+    SELECT p.year::int AS year, p.month::int AS month FROM fiscal_periods p
+    JOIN period_locks l ON l.period_id = p.id AND l.tenant_id = p.tenant_id AND l.doc_type = '*'
+    WHERE p.tenant_id = ${tenantId} AND ${date}::date BETWEEN p.start_date AND p.end_date
+      AND (l.branch_id IS NULL OR l.branch_id = ${branchId}::bigint) LIMIT 1`.execute(trx);
+  return r.rows[0] ?? null;
+}
+
+export interface SettingImpact {
+  key: string; class: 'A' | 'B' | 'C' | null; scope: SettingScopeType; scopeId: string; validFrom: string; today: string;
+  /** Ngày hiệu lực lùi về trước hôm nay: chứng từ đã lập từ ngày đó không đổi, chỉ phép tính sau này đọc phiên bản mới. */
+  retroactive: boolean;
+  /** Không null ⇒ lưu sẽ bị chặn PERIOD_LOCKED. Đây là chỗ chặn duy nhất (D030-12). */
+  periodLocked: { year: number; month: number } | null;
+  /** Phiên bản cùng phạm vi có hiệu lực muộn hơn: phiên bản mới chỉ áp trong khoảng [validFrom, ngày đó). */
+  laterVersions: Array<{ version: number; validFrom: string }>;
+  /** Mục đang mở / chạy thử trong bể chờ đầu vào — gửi lại sẽ đọc phiên bản mới (bể không ghi ngày chứng từ nên không lọc theo ngày hiệu lực). */
+  pendingIntake: number;
+  /** Nhắc, không chặn: khoá loại A chưa có căn cứ ở registry. */
+  missingBasis: boolean;
+}
+
+/** Xem trước tác động của một lần đổi (không ghi gì, không chặn): người đổi thấy hậu quả trước khi bấm lưu (D030-12 bước 2). */
+export async function settingImpact(
+  trx: Db, tenantId: string, key: string, input: { scope?: SettingScopeType; scopeId?: string; validFrom?: string },
+): Promise<SettingImpact> {
+  const entry = knownEntry(key);
+  const scope = input.scope ?? 'tenant';
+  const scopeId = scope === 'tenant' ? '' : (input.scopeId ?? '').trim();
+  if (!entry.scopes.includes(scope)) throw Errors.validation(`Khoá "${key}" không đặt theo phạm vi ${scope} (chỉ: ${entry.scopes.join(', ')})`);
+  // [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — RV-R1-05: /^d+$/ thiếu dấu \ nên scopeId số nào cũng bị từ chối (hàm ghi ở trên dùng đúng \d)
+  if (scope !== 'tenant' && !/^\d+$/.test(scopeId)) throw Errors.validation(`Phạm vi ${scope} cần scopeId là định danh số`);
+  const today = settingsToday();
+  const validFrom = input.validFrom ?? today;
+  if (!DATE_RE.test(validFrom)) throw Errors.validation(`validFrom "${validFrom}" sai khuôn YYYY-MM-DD`);
+  const later = await sql<{ version: number; valid_from: string }>`
+    SELECT version, to_char(valid_from, 'YYYY-MM-DD') AS valid_from FROM setting_values
+    WHERE tenant_id = ${tenantId} AND key = ${key} AND scope_type = ${scope} AND scope_id = ${scopeId} AND valid_from > ${validFrom}::date
+    ORDER BY valid_from, version`.execute(trx);
+  const pending = await sql<{ n: number }>`SELECT count(*)::int AS n FROM intake_inbox WHERE tenant_id = ${tenantId} AND status IN ('open', 'trial')`.execute(trx);
+  return {
+    key, class: entry.class ?? null, scope, scopeId, validFrom, today, retroactive: validFrom < today,
+    periodLocked: await lockedPeriodAt(trx, tenantId, validFrom, scope === 'branch' ? scopeId : null),
+    laterVersions: later.rows.map((x) => ({ version: x.version, validFrom: x.valid_from })),
+    pendingIntake: pending.rows[0]?.n ?? 0,
+    missingBasis: entry.class === 'A' && !entry.basis,
+  };
 }
 
 const scopeFor = (scope: SettingScopeType, id: string, date: string): SettingScope =>
@@ -288,10 +387,10 @@ async function assertScopeExists(trx: Db, tenantId: string, scope: SettingScopeT
 /** Mọi phiên bản của `key` trong đơn vị (mới trước). */
 export async function settingHistory(trx: Db, tenantId: string, key: string): Promise<SettingVersion[]> {
   knownEntry(key);
-  const r = await sql<{ scope_type: SettingScopeType; scope_id: string; value: unknown; valid_from: string; version: number; reason: string | null; created_by: string; created_at: Date }>`
-    SELECT scope_type, scope_id, value, to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version, reason, created_by, created_at
+  const r = await sql<{ scope_type: SettingScopeType; scope_id: string; value: unknown; valid_from: string; version: number; reason: string | null; basis: SettingBasis | null; created_by: string; created_at: Date }>`
+    SELECT scope_type, scope_id, value, to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version, reason, basis, created_by, created_at
     FROM setting_values WHERE tenant_id = ${tenantId} AND key = ${key} ORDER BY created_at DESC, id DESC LIMIT 500`.execute(trx);
-  return r.rows.map((x) => ({ scope: x.scope_type, scopeId: x.scope_id, value: x.value, validFrom: x.valid_from, version: Number(x.version), reason: x.reason, by: x.created_by, at: new Date(x.created_at).toISOString() }));
+  return r.rows.map((x) => ({ scope: x.scope_type, scopeId: x.scope_id, value: x.value, validFrom: x.valid_from, version: Number(x.version), reason: x.reason, basis: x.basis ?? null, by: x.created_by, at: new Date(x.created_at).toISOString() }));
 }
 
 // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): ghi một mục cấu hình của module trong tenants.settings — phân hệ không UPDATE bảng tenants

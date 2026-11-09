@@ -10,7 +10,7 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError, z } from 'zod';
 import { ERROR_CATALOG, ERROR_CODES, type ApiSuccess, type ErrorCode, type ErrorReason, type PageMeta } from '@ketoan/contracts';
-import { AppError } from './errors.js';
+import { AppError, classifyLedgerTriggerError } from './errors.js';
 import { currentTraceId } from './tracing.js';
 
 /** Phản hồi thành công. */
@@ -73,6 +73,9 @@ export function registerErrorHandler(app: FastifyInstance): void {
     if (anyErr.validation) return send(ERROR_CODES.VALIDATION, ERROR_CATALOG.VALIDATION_ERROR.message, validationTexts(anyErr.validation));
     // Lỗi ràng buộc / trigger ở CSDL: thông điệp tiếng Việt có chủ đích (bút toán không cân, sổ cái chỉ thêm…)
     const pgCode = (err as { code?: string }).code;
+    // [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33: trigger sổ cái (cân, khoá kỳ, chỉ thêm) ra đúng mã §5 trước khi rơi về POSTING_FAILED
+    const trigger = classifyLedgerTriggerError(err);
+    if (trigger) return send(trigger.code, err.message, trigger.reason ? withReason(trigger.reason) : undefined);
     if (pgCode === '23514' || pgCode === '42501') return send(ERROR_CODES.POSTING_FAILED, err.message);
     if (pgCode === '23505') return send(ERROR_CODES.CONFLICT, 'Dữ liệu bị trùng (mã đã tồn tại)', withReason('DB_UNIQUE_VIOLATION'));
     if (pgCode === '23503' && /update or delete/i.test(err.message)) {

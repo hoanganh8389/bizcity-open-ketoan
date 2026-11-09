@@ -260,19 +260,42 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
                           AND e.event_version IS NOT NULL AND e.event_version <> a.posted_version)
            LIMIT ${SAMPLE}`),
   },
+  // [2026-11-09 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a (D004-13): sửa đầu bút toán NGOÀI ứng dụng = dòng nhật ký của trigger 0089 (_source = db) không có dòng của ứng dụng (_source = app) cùng _txid; level error nên vào bảng kiểm khoá kỳ như mọi lỗi L3
+  {
+    code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED', layer: 'L3', level: 'error', scoped: true,
+    remedy: { steps: [{ text: 'Mở lịch sử chứng từ của bút toán trong mẫu: xem cột đổi, giá trị trước / sau, vai trò và giờ sửa', screen: SCREENS.ACC14 }, { text: 'Hỏi người sửa lý do; sửa sai thì định khoản lại chứng từ để bút toán về đúng nội dung', screen: SCREENS.ACC14, role: 'chief_accountant' }, { text: 'Không khoá kỳ khi còn lỗi này, trừ khi kế toán trưởng ghi lý do', role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED' } },
+    title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng, hoặc đã được kế toán trưởng xác nhận',
+    fix: 'Đầu bút toán (số chứng từ, số hoá đơn, lý do, đối tượng, diễn giải, dấu vân tay, phiên bản sự việc, tên đối tượng) bị UPDATE thẳng bằng SQL, không qua đường E2 của ứng dụng. Mở bút toán trong mẫu, hỏi người sửa (vai trò trong nhật ký), sửa lại nếu sai; kế toán trưởng ghi lý do nếu cần khoá kỳ.',
+    run: (trx, s) => sqlCounts(trx,
+      sql`SELECT count(*)::int AS n FROM audit_logs a JOIN ledger_entries e ON e.id::text = a.object_id AND e.tenant_id = a.tenant_id
+           WHERE ${scoped(s, 'e', 'posting_date')} AND a.action = 'ledger.entry.header_update' AND a.after_data->>'_source' = 'db'`,
+      sql`SELECT x.key, count(*) OVER ()::int AS total FROM (
+            SELECT DISTINCT e.entry_no AS key, e.posting_date
+              FROM audit_logs a JOIN ledger_entries e ON e.id::text = a.object_id AND e.tenant_id = a.tenant_id
+             WHERE ${scoped(s, 'e', 'posting_date')} AND a.action = 'ledger.entry.header_update' AND a.after_data->>'_source' = 'db'
+               AND NOT EXISTS (SELECT 1 FROM audit_logs b WHERE b.tenant_id = a.tenant_id AND b.object_id = a.object_id AND b.action = a.action
+                                AND b.after_data->>'_source' = 'app' AND b.after_data->>'_txid' = a.after_data->>'_txid')
+               -- [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-16): lần đã được kế toán trưởng xác nhận (bằng chứng action core.ledger.header-edit-ack) không còn chặn khoá kỳ
+               AND NOT EXISTS (SELECT 1 FROM audit_logs k WHERE k.tenant_id = a.tenant_id AND k.action = 'core.ledger.header-edit-ack' AND k.result_ok
+                                AND k.object_id = a.object_id AND k.after_data->'input'->>'txid' = a.after_data->>'_txid')
+          ) x ORDER BY x.posting_date, x.key LIMIT ${SAMPLE}`),
+  },
   {
     code: 'LEDGER_TRIGGERS', layer: 'L1', level: 'error', scoped: false,
     remedy: { steps: [STOP_THE_LINE_STEP, { text: 'Vận hành chạy lại migration để dựng lại trigger', role: 'operator' }, { text: 'Tra nhật ký CSDL ai / lúc nào tắt trigger, lập biên bản (R-KER-3)', role: 'owner' }, { text: 'Chạy lại toàn bộ tự chẩn đoán L3' }], owner: 'operator', verify: { code: 'LEDGER_TRIGGERS' }, stopTheLine: true },
-    title: 'Trigger bảo vệ sổ (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ và đang bật',
-    fix: 'Sổ đang mất lớp bảo vệ: có thể sửa / xoá bút toán. Không ghi sổ tiếp; chạy lại migration (db-migrate) và tìm ai đã tắt trigger (R-KER-3).',
+    title: 'Trigger bảo vệ sổ (chỉ thêm, cân Nợ = Có, chặn TRUNCATE) còn đủ, đang bật và không còn cờ thoát',
+    fix: 'Sổ đang mất lớp bảo vệ: có thể sửa / xoá bút toán. Không ghi sổ tiếp; chạy lại migration (db-migrate) và tìm ai đã tắt trigger hoặc đưa lại cờ thoát vào trigger (R-KER-3).',
     async run(trx) {
       const want = await declaredTriggers();
-      const rows = await sql<{ name: string; table: string; enabled: string }>`
-        SELECT t.tgname AS name, CASE WHEN n.nspname = 'public' THEN c.relname ELSE n.nspname || '.' || c.relname END AS "table", t.tgenabled AS enabled
+      // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-9): cột bypass dò trigger còn nhắc cờ thoát allow_ledger_purge (đã gỡ ở 0086); migration sau này vô tình đưa cờ trở lại thì đỏ ngay
+      const rows = await sql<{ name: string; table: string; enabled: string; bypass: boolean }>`
+        SELECT t.tgname AS name, CASE WHEN n.nspname = 'public' THEN c.relname ELSE n.nspname || '.' || c.relname END AS "table", t.tgenabled AS enabled,
+               pg_get_triggerdef(t.oid) LIKE '%allow_ledger_purge%' AS bypass
           FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
          WHERE NOT t.tgisinternal AND n.nspname NOT IN ('pg_catalog', 'information_schema')`.execute(trx);
       const have = new Map(rows.rows.map((r) => [`${r.table}.${r.name}`, r.enabled]));
       const bad = want.filter((k) => !have.has(k) || have.get(k) === 'D').map((k) => (have.has(k) ? `tắt:${k}` : `thiếu:${k}`));
+      for (const r of rows.rows) if (r.bypass) bad.push(`cờ thoát:${r.table}.${r.name}`);
       return { examined: want.length, count: bad.length, sample: bad };
     },
   },

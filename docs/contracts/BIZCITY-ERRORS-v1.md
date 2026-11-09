@@ -90,10 +90,19 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `23505` | khoá duy nhất | `CONFLICT` (409) | `DB_UNIQUE_VIOLATION` | Dữ liệu bị trùng (mã đã tồn tại) |
 | `23503` + `update or delete` | khoá ngoại khi xoá | `CONFLICT` (409) | `DB_IN_USE` | Mã đang được dùng ở dữ liệu khác nên không xoá được |
 | `23503` | khoá ngoại khi thêm | `VALIDATION_ERROR` (422) | `DB_REFERENCE_MISSING` | Tham chiếu tới mã chưa khai báo trong danh mục |
-| `23514`, `42501` | CHECK, quyền | `POSTING_FAILED` (422) | — | câu của ràng buộc |
-| `P0001` + "không cân" | trigger `assert_entry_balanced` | `UNBALANCED_ENTRY` (422) | — | câu của trigger |
+| `23514` + "không cân" | trigger `assert_entry_balanced` (ném `check_violation`) | `UNBALANCED_ENTRY` (422) | — | câu của trigger |
+| `23514` + tiền tố `PERIOD_LOCKED:` | trigger `ledger_entries_period_lock` (ném `check_violation`) | `PERIOD_LOCKED` (409) | — | câu của trigger |
+| `42501` + "chỉ được thêm" hoặc "chỉ thêm" | trigger bảo vệ sổ / bằng chứng / chứng từ chỉ thêm (ném `insufficient_privilege`) | `CONFLICT` (409) | `LEDGER_APPEND_ONLY` | câu của trigger (tiếng Việt) |
+| `23514`, `42501` còn lại | CHECK, quyền | `POSTING_FAILED` (422) | — | câu của ràng buộc |
+| `P0001` + "không cân" | trigger ném `P0001` mà câu có "không cân" | `UNBALANCED_ENTRY` (422) | — | câu của trigger |
 | `P0001` khác | trigger bảo vệ (`forbid_*`: sổ chỉ thêm, bằng chứng chỉ thêm…) | `CONFLICT` (409) | `LEDGER_APPEND_ONLY` | câu của trigger (tiếng Việt) |
 | khác | — | `INTERNAL_ERROR` (500) | — | Lỗi hệ thống (chi tiết chỉ ở log) |
+
+Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
+
+- Xét theo thứ tự từ trên xuống; dòng cụ thể thắng dòng chung. **Trigger của sổ cái ném `check_violation` (`23514`) và `insufficient_privilege` (`42501`)**, không ném `P0001`; vì vậy điều kiện nhận ra trigger nằm ở **câu chữ** của nó. Câu chữ đó là một phần của hợp đồng: đổi câu của `assert_entry_balanced`, `ledger_entries_period_lock` hay các trigger chỉ thêm thì phải đổi bảng này cùng PR (R-REL-3).
+- Một nơi duy nhất quyết định (hàm dùng chung của Platform), cả `core/http.ts` lẫn `errorCodeOf` (trace) gọi nó, để lỗi trả cho người gọi và lỗi ghi vào trace luôn cùng mã.
+- Test dùng **SQLSTATE thật** của trigger (`23514` / `42501`), không dùng `P0001` giả.
 
 ## 6. Giao diện và bên tích hợp xử lý theo mã
 
@@ -112,3 +121,5 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 - **1.2.1-draft (2026-11-02):** `details` của `VALIDATION_ERROR` do sai khuôn luôn là **mảng câu** (`<trường>: <vì sao>`), như lỗi kiểm của route. Năm chỗ trước trả object `flatten()` của zod (nộp chứng từ trong giao dịch, gói định khoản, phiếu nháp, phân hệ mua hàng) — giao diện không hiện được trường sai. Không đổi mã, HTTP.
 - **1.2.0-draft (2026-11-02, ADR-0014):** thêm trường tuỳ chọn `error.intake` cho lỗi cửa nạp chứng từ (bể chờ). Không đổi mã, HTTP, `details`.
 - **1.1.0-draft (2026-11-01, ADR-0010):** thêm trường tuỳ chọn `error.traceId` (tương thích: bên gọi cũ bỏ qua được). Không đổi mã, HTTP, nghĩa.
+<!-- [2026-11-08 01:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33: chữ chốt ánh xạ SQLSTATE của trigger sổ cái (review R1, RV-R1-02) -->
+- **1.3.0-draft (2026-11-08, PHASE-029 S029-33):** §5 tách ba dòng cụ thể khỏi dòng chung `23514` / `42501`: `23514` + "không cân" → `UNBALANCED_ENTRY` (422); `23514` + `PERIOD_LOCKED:` → `PERIOD_LOCKED` (409); `42501` + "chỉ được thêm" / "chỉ thêm" → `CONFLICT` (409) + `LEDGER_APPEND_ONLY`. Dòng cũ `P0001` + "không cân" giữ. **Thực tế trước đây:** các trigger sổ cái ném `23514` / `42501` nên mọi lỗi cân, khoá kỳ, sửa sổ ở tầng CSDL đều ra `POSTING_FAILED` (422), trái ý các dòng trigger đã ghi ở bản 1.0.0 (chúng viết điều kiện `P0001` trong khi trigger không dùng `P0001`). **Ảnh hưởng:** bên gọi rẽ nhánh theo `code` sẽ thấy `PERIOD_LOCKED` / `CONFLICT` / `UNBALANCED_ENTRY` thay cho `POSTING_FAILED` ở ba trường hợp này (HTTP 422 → 409 với hai trường hợp đầu); `POSTING_FAILED` vẫn cho CHECK / quyền khác. Không thêm mã, không thêm `reason` mới. Mã: S029-33.

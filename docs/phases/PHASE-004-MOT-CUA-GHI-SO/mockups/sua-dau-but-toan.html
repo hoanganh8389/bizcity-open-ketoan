@@ -1,0 +1,292 @@
+<!doctype html>
+<!-- [2026-11-09 10:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-14): bản mẫu thẻ "Sửa đầu bút toán" trong Bàn điều tra: nhìn mọi lần đổi đầu bút toán (ứng dụng / ngoài ứng dụng), lọc, xem trước-sau, xác nhận. CHỜ CHỦ DUYỆT trước khi viết giao diện thật -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sửa đầu bút toán</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--accent:#0b5cad;
+  --ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--info-bg:#e8f0fc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;
+  --ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--accent:#5b9cf0;
+  --ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.tabs .cnt{background:var(--bad-bg);color:var(--bad);border-radius:99px;padding:0 6px;font-size:11.5px;margin-left:4px;font-weight:700}
+main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
+h2{margin:0 0 4px;font-size:18px}
+.lead{color:var(--muted);margin:0 0 12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.info{background:var(--info-bg);color:var(--info)}.tag.none{background:var(--soft);color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13px}
+.note.warn{border-left-color:var(--warn)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px;margin:0 0 14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.tile b{display:block;font-size:22px}
+.tile span{color:var(--muted);font-size:12.5px}
+.tile.bad b{color:var(--bad)}.tile.warn b{color:var(--warn)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px}
+.filters label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.filters select,.filters input{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;min-width:130px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media(min-width:1100px){.layout.has-panel{grid-template-columns:minmax(0,1fr) 380px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.card h3{margin:0;padding:10px 14px;border-bottom:1px solid var(--line);font-size:14.5px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:13px}
+th{color:var(--muted);font-weight:600;font-size:12px;white-space:nowrap}
+tr.row{cursor:pointer}
+tr.row:hover,tr.row[aria-selected="true"]{background:var(--soft)}
+tr.row.out td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+.diff{display:grid;gap:2px}
+.diff .b{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
+.diff .a{color:var(--ok)}
+.pager{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;color:var(--muted);font-size:12.5px}
+.panel-body{padding:12px 14px;display:grid;gap:10px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 8px;font-size:13px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.pair{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px}
+.pair.miss{border-color:var(--bad);background:var(--bad-bg)}
+.skel{height:14px;border-radius:6px;background:linear-gradient(90deg,var(--soft),var(--line),var(--soft));background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.state{padding:28px 16px;text-align:center;color:var(--muted)}
+.state h4{margin:6px 0;color:var(--ink);font-size:15px}
+.errbox{margin:16px;border:1px solid var(--bad);background:var(--bad-bg);border-radius:10px;padding:12px 14px}
+.errbox dl{display:grid;grid-template-columns:90px 1fr;gap:2px 8px;margin:6px 0 0}
+.errbox dt{color:var(--muted)}.errbox dd{margin:0}
+.switch{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.switch button{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:99px;padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.switch button[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);font-weight:600}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.qlist{margin:6px 0 0;padding-left:18px}
+.qlist li{margin:3px 0}
+/* Điện thoại: bảng thành thẻ */
+@media(max-width:700px){
+  thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr.row{border-bottom:1px solid var(--line);padding:8px 10px}
+  td{border:0;padding:2px 0}
+  td[data-l]::before{content:attr(data-l)": ";color:var(--muted);font-size:12px}
+  .kv{grid-template-columns:90px 1fr}
+}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><span class="logo">K</span><div>Bàn điều tra<small>Sổ cái › Sửa đầu bút toán</small></div></div>
+    <span class="spacer"></span>
+    <span class="tag none">Dữ liệu minh hoạ — không phải số thật</span>
+    <button class="btn sm" id="theme" type="button">Giao diện sáng / tối</button>
+  </div>
+  <nav class="tabs" aria-label="Bàn điều tra">
+    <button type="button">Theo dấu yêu cầu</button>
+    <button type="button">Sự kiện</button>
+    <button type="button" aria-selected="true">Sửa đầu bút toán <span class="cnt" id="cnt">3</span></button>
+    <button type="button">Chẩn đoán sổ</button>
+  </nav>
+</header>
+
+<main>
+  <h2>Sửa đầu bút toán</h2>
+  <p class="lead">Mọi lần đổi <b>số chứng từ, số hoá đơn, lý do, đối tượng, diễn giải, dấu vân tay, phiên bản sự việc, tên đối tượng</b> của bút toán đã ghi. Nguồn dữ liệu: nhật ký <code>ledger.entry.header_update</code> (trigger <code>0089</code>), cộng nhật ký của ứng dụng để biết lần nào đã được <i>khai báo</i>.</p>
+
+  <div class="switch" role="group" aria-label="Trạng thái bản mẫu (chỉ để xem bản mẫu)">
+    <span style="color:var(--muted);font-size:12.5px;align-self:center">Xem trạng thái:</span>
+    <button type="button" data-s="data" aria-pressed="true">Có dữ liệu</button>
+    <button type="button" data-s="loading" aria-pressed="false">Đang tải</button>
+    <button type="button" data-s="empty" aria-pressed="false">Rỗng</button>
+    <button type="button" data-s="error" aria-pressed="false">Lỗi</button>
+    <button type="button" data-s="denied" aria-pressed="false">Không có quyền</button>
+  </div>
+
+  <div id="s-data">
+    <div class="note warn"><b>3 lần sửa ngoài ứng dụng chưa xác nhận</b> trong kỳ 10/2026. Còn chưa xác nhận thì kỳ này <b>không khoá được</b> (trừ khi kế toán trưởng ghi lý do). <a href="#" onclick="return false">Xem bảng kiểm khoá kỳ</a></div>
+
+    <div class="tiles">
+      <div class="tile"><b>14</b><span>lần sửa đầu trong kỳ</span></div>
+      <div class="tile bad"><b>3</b><span>ngoài ứng dụng</span></div>
+      <div class="tile warn"><b>2</b><span>chưa xác nhận</span></div>
+      <div class="tile"><b>event_version</b><span>cột bị sửa nhiều nhất (6 lần)</span></div>
+    </div>
+
+    <form class="filters" onsubmit="return false" aria-label="Bộ lọc">
+      <label>Kỳ<select><option>10/2026</option><option>09/2026</option><option>Tất cả</option></select></label>
+      <label>Nguồn<select id="f-src"><option value="">Tất cả</option><option value="app">Ứng dụng</option><option value="db">Ngoài ứng dụng</option></select></label>
+      <label>Cột<select><option>Tất cả</option><option>doc_no</option><option>invoice_no</option><option>reason_code</option><option>partner_id</option><option>description</option><option>event_version</option><option>partner_name</option></select></label>
+      <label>Người / vai trò<input placeholder="vd ketoan_app, user:12" aria-label="Người hoặc vai trò"></label>
+      <label>Bút toán / chứng từ<input placeholder="số bút toán hoặc mã chứng từ" aria-label="Bút toán hoặc chứng từ"></label>
+      <label>Trạng thái<select><option>Tất cả</option><option>Chưa xác nhận</option><option>Đã xác nhận</option></select></label>
+      <button class="btn" type="button">Xoá lọc</button>
+    </form>
+    <div class="legend"><span>Bộ lọc nằm trên địa chỉ (<code>?nguon=db&amp;ky=2026-10</code>): tải lại trang vẫn đúng chỗ.</span></div>
+
+    <div class="layout has-panel" id="layout" style="margin-top:12px">
+      <section class="card" aria-label="Danh sách lần sửa">
+        <h3>14 lần sửa · kỳ 10/2026</h3>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>Giờ</th><th>Bút toán</th><th>Cột</th><th>Trước → sau</th><th>Nguồn</th><th>Người / vai trò</th><th>Trạng thái</th></tr></thead>
+          <tbody id="rows">
+            <tr class="row out" data-src="db" data-open="1" aria-selected="true">
+              <td data-l="Giờ">10/10 21:44</td>
+              <td data-l="Bút toán"><a href="#" onclick="return false">PT-2026-000187</a><br><span style="color:var(--muted)">HD0001 · bán hàng</span></td>
+              <td data-l="Cột"><code>event_version</code></td>
+              <td data-l="Trước → sau"><div class="diff"><span class="b">2</span><span class="a">(trống)</span></div></td>
+              <td data-l="Nguồn"><span class="tag bad">Ngoài ứng dụng</span></td>
+              <td data-l="Người" class="mono">ketoan_app</td>
+              <td data-l="Trạng thái"><span class="tag warn">Chưa xác nhận</span></td>
+            </tr>
+            <tr class="row out" data-src="db">
+              <td data-l="Giờ">10/10 21:44</td>
+              <td data-l="Bút toán"><a href="#" onclick="return false">PT-2026-000187</a><br><span style="color:var(--muted)">HD0001 · bán hàng</span></td>
+              <td data-l="Cột"><code>description</code></td>
+              <td data-l="Trước → sau"><div class="diff"><span class="b">Bán hàng HD0001</span><span class="a">sửa lén bằng SQL</span></div></td>
+              <td data-l="Nguồn"><span class="tag bad">Ngoài ứng dụng</span></td>
+              <td data-l="Người" class="mono">ketoan_app</td>
+              <td data-l="Trạng thái"><span class="tag warn">Chưa xác nhận</span></td>
+            </tr>
+            <tr class="row out" data-src="db">
+              <td data-l="Giờ">08/10 09:12</td>
+              <td data-l="Bút toán"><a href="#" onclick="return false">PT-2026-000152</a><br><span style="color:var(--muted)">MH0045 · mua hàng</span></td>
+              <td data-l="Cột"><code>partner_id</code></td>
+              <td data-l="Trước → sau"><div class="diff"><span class="b">NCC Hưng Thịnh (id 41)</span><span class="a">NCC Phúc An (id 57)</span></div></td>
+              <td data-l="Nguồn"><span class="tag bad">Ngoài ứng dụng</span></td>
+              <td data-l="Người" class="mono">ketoan_app</td>
+              <td data-l="Trạng thái"><span class="tag ok">Đã xác nhận</span><br><span style="color:var(--muted);font-size:12px">KTT Lan, 09/10: nhập nhầm NCC, đã đối chiếu</span></td>
+            </tr>
+            <tr class="row" data-src="app">
+              <td data-l="Giờ">07/10 16:30</td>
+              <td data-l="Bút toán"><a href="#" onclick="return false">PT-2026-000140</a><br><span style="color:var(--muted)">HD0233 · bán hàng</span></td>
+              <td data-l="Cột"><code>invoice_no</code></td>
+              <td data-l="Trước → sau"><div class="diff"><span class="b">(trống)</span><span class="a">0000456</span></div></td>
+              <td data-l="Nguồn"><span class="tag ok">Ứng dụng</span></td>
+              <td data-l="Người">Thu ngân Mai (user:12)</td>
+              <td data-l="Trạng thái"><span class="tag none">Đã khai báo</span></td>
+            </tr>
+            <tr class="row" data-src="app">
+              <td data-l="Giờ">07/10 16:30</td>
+              <td data-l="Bút toán"><a href="#" onclick="return false">PT-2026-000140</a><br><span style="color:var(--muted)">HD0233 · bán hàng</span></td>
+              <td data-l="Cột"><code>content_hash</code></td>
+              <td data-l="Trước → sau"><div class="diff"><span class="b">4db52409…</span><span class="a">9a1f03c7…</span></div></td>
+              <td data-l="Nguồn"><span class="tag ok">Ứng dụng</span></td>
+              <td data-l="Người">Thu ngân Mai (user:12)</td>
+              <td data-l="Trạng thái"><span class="tag none">Đã khai báo</span></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="pager"><span>Hiện 5 / 14 dòng · mới nhất trước</span><span><button class="btn sm" type="button" disabled>Trước</button> <button class="btn sm" type="button">Sau</button></span></div>
+      </section>
+
+      <aside class="card" aria-label="Chi tiết lần sửa" id="panel">
+        <h3>Chi tiết · PT-2026-000187</h3>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>Chứng từ gốc</dt><dd><a href="#" onclick="return false">pos:CN01:HD0001</a> (v2) · <a href="#" onclick="return false">Mở lịch sử chứng từ</a></dd>
+            <dt>Cột</dt><dd><code>event_version</code>, <code>description</code> (cùng một giao dịch)</dd>
+            <dt>Giao dịch</dt><dd class="mono">txid 1048293</dd>
+            <dt>Vai trò</dt><dd class="mono">ketoan_app (đăng nhập: ketoan_app)</dd>
+            <dt>Ứng dụng / máy</dt><dd class="mono">psql · 10.0.4.17</dd>
+          </dl>
+          <div class="pair miss"><b>Nhật ký mức ứng dụng:</b> <b>không có</b> dòng nào cùng <code>txid 1048293</code> ⇒ thay đổi này <b>không đi qua ứng dụng</b>.</div>
+          <div class="pair"><b>Nhật ký mức CSDL (trigger):</b> có 1 dòng, <code>_source = db</code>, ghi lúc 10/10 21:44.</div>
+          <h4 style="margin:6px 0 0;font-size:13.5px">Các lần sửa khác của bút toán này</h4>
+          <div style="font-size:12.5px;color:var(--muted)">Chưa có lần nào khác.</div>
+          <label style="font-size:12.5px;color:var(--muted)">Lý do xác nhận (≥ 10 ký tự)<br><input id="reason" style="width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit" placeholder="vd: đã hỏi người sửa, đúng yêu cầu của kế toán trưởng"></label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" type="button">Xác nhận đã xem (kế toán trưởng)</button><button class="btn" type="button">Mở bảng kiểm khoá kỳ</button></div>
+          <div style="font-size:12px;color:var(--muted)">Xác nhận <b>chỉ thêm</b> một dòng nhật ký mới (<code>ledger.entry.header_edit.ack</code>), không sửa hay xoá dòng cũ. Cần quyền <code>periods:lock</code>.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="s-loading" class="card hidden" role="status" aria-live="polite">
+    <h3>Đang tải lần sửa đầu bút toán…</h3>
+    <div class="panel-body"><div class="skel" style="width:60%"></div><div class="skel"></div><div class="skel" style="width:80%"></div><div class="skel"></div><div class="skel" style="width:45%"></div></div>
+  </div>
+
+  <div id="s-empty" class="card hidden">
+    <div class="state"><h4>Kỳ 10/2026 không có lần sửa đầu bút toán nào</h4><p>Khi có bút toán đổi số chứng từ, hoá đơn, lý do, đối tượng… (qua ứng dụng hoặc ngoài ứng dụng), nó sẽ hiện ở đây. Thử bỏ bộ lọc hoặc chọn kỳ khác.</p><button class="btn" type="button">Chọn kỳ khác</button></div>
+  </div>
+
+  <div id="s-error" class="card hidden">
+    <div class="errbox" role="alert">
+      <b>Không tải được danh sách lần sửa</b>
+      <dl><dt>Mã</dt><dd class="mono">INTERNAL_ERROR</dd><dt>Nội dung</dt><dd>Lỗi hệ thống khi đọc nhật ký sổ cái.</dd><dt>Gợi ý</dt><dd>Thử lại sau ít phút; lặp lại thì gửi mã yêu cầu cho bộ phận hỗ trợ.</dd><dt>Mã yêu cầu</dt><dd class="mono">req-7f3a91c2</dd></dl>
+      <div style="margin-top:10px"><button class="btn pri" type="button">Thử lại</button></div>
+    </div>
+  </div>
+
+  <div id="s-denied" class="card hidden">
+    <div class="state"><h4>Bạn không có quyền xem mục này</h4><p>Xem lần sửa đầu bút toán cần quyền <code>audit:read</code> và xem sổ cái. Nhờ quản trị đơn vị cấp quyền.</p></div>
+  </div>
+
+  <div class="note" style="margin-top:18px">
+    <b>Cần chủ dự án duyệt bản mẫu này trước khi viết giao diện thật.</b>
+    <ol class="qlist">
+      <li><b>Xác nhận</b> là một dòng nhật ký mới (chỉ thêm), do kế toán trưởng (<code>periods:lock</code>) ghi kèm lý do ≥ 10 ký tự. Đồng ý, hay ai khác được xác nhận?</li>
+      <li><b>Chặn khoá kỳ</b> khi còn lần sửa <i>ngoài ứng dụng</i> chưa xác nhận (như các lỗi L3 hiện nay: ghi lý do thì khoá được). Đồng ý?</li>
+      <li>Lần sửa <i>qua ứng dụng</i> (đã khai báo) hiện ở đây nhưng <b>không cần xác nhận</b>. Đồng ý?</li>
+      <li>Cột <code>content_hash</code> luôn đổi cùng mỗi lần ứng dụng cập nhật đầu: ẩn mặc định ("Hiện cột kỹ thuật") để đỡ nhiễu?</li>
+    </ol>
+  </div>
+</main>
+
+<script>
+(function(){
+  var states=['data','loading','empty','error','denied'];
+  function show(s){
+    states.forEach(function(x){document.getElementById('s-'+x).classList.toggle('hidden',x!==s);});
+    document.querySelectorAll('.switch button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.s===s?'true':'false');});
+    document.getElementById('cnt').classList.toggle('hidden',s!=='data');
+  }
+  document.querySelectorAll('.switch button').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.s);});});
+  document.getElementById('f-src').addEventListener('change',function(e){
+    var v=e.target.value;
+    document.querySelectorAll('#rows tr').forEach(function(r){r.classList.toggle('hidden',v!==''&&r.dataset.src!==v);});
+  });
+  document.querySelectorAll('#rows tr').forEach(function(r){r.addEventListener('click',function(){
+    document.querySelectorAll('#rows tr').forEach(function(x){x.setAttribute('aria-selected','false');});
+    r.setAttribute('aria-selected','true');
+  });});
+  document.getElementById('theme').addEventListener('click',function(){
+    var root=document.documentElement;
+    var dark=root.getAttribute('data-theme')==='dark'||(!root.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);
+    root.setAttribute('data-theme',dark?'light':'dark');
+  });
+})();
+</script>
+</body>
+</html>

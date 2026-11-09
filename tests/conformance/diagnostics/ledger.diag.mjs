@@ -80,6 +80,22 @@ export const checks = [
           WHERE e.event_id IS NULL OR NOT EXISTS (SELECT 1 FROM accounting_events a WHERE a.id = e.event_id)
           LIMIT 200`,
   }),
+  // [2026-11-09 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a (D004-13): cùng bộ mã với LEDGER_DIAGNOSTICS (R-DIAG-9); sửa đầu bút toán ngoài ứng dụng
+  sqlCheck({
+    id: 'DG-LEDGER-5', code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED',
+    title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng (dòng của ứng dụng cùng _txid) hoặc đã được kế toán trưởng xác nhận',
+    rules: ['R-LEDGER-1'], conf: [], tier: 1, enforce: 'info', weight: 3,
+    count: `SELECT count(*)::int AS n FROM audit_logs WHERE action = 'ledger.entry.header_update' AND after_data->>'_source' = 'db'`,
+    sql: `SELECT t.code AS tenant, e.entry_no AS key,
+                 json_build_object('role', a.after_data->>'_role', 'txid', a.after_data->>'_txid', 'at', a.created_at) AS detail
+          FROM audit_logs a JOIN ledger_entries e ON e.id::text = a.object_id AND e.tenant_id = a.tenant_id JOIN tenants t ON t.id = a.tenant_id
+          WHERE a.action = 'ledger.entry.header_update' AND a.after_data->>'_source' = 'db'
+            AND NOT EXISTS (SELECT 1 FROM audit_logs b WHERE b.tenant_id = a.tenant_id AND b.object_id = a.object_id AND b.action = a.action
+                             AND b.after_data->>'_source' = 'app' AND b.after_data->>'_txid' = a.after_data->>'_txid')
+            AND NOT EXISTS (SELECT 1 FROM audit_logs k WHERE k.tenant_id = a.tenant_id AND k.action = 'core.ledger.header-edit-ack' AND k.result_ok
+                             AND k.object_id = a.object_id AND k.after_data->'input'->>'txid' = a.after_data->>'_txid')
+          LIMIT 200`,
+  }),
   sqlCheck({
     id: 'DG-EVENT-1', code: 'EVENT_POSTED_VERSION',
     title: 'Sự việc posted có posted_version = version (sự việc vào qua cửa nạp sổ / phiếu tay)',

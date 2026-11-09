@@ -85,7 +85,7 @@ Tầng nguyên tắc cao nhất của Core, đứng trên Accounting Continuity 
 
 | Nhóm | Trụ cột |
 |---|---|
-| A · Nền móng thống nhất của doanh nghiệp | 01 Canonical Identity · 02 Master Data Governance · 03 Enterprise Organization · 04 Identity & Authorization · 05 Configuration & Policy Registry |
+| A · Nền móng thống nhất của doanh nghiệp | 01 Canonical Identity · 02 Master Data Governance · 03 Enterprise Organization · 04 Identity & Authorization · 05 Policy Registry & Rule Contracts |
 | B · Nền móng xử lý nghiệp vụ và giao dịch | 06 Document SDK & Lifecycle · 07 Workflow & Approval · 08 Command & Event Contracts · 09 Accounting Kernel · 10 Inventory & Cost Continuity |
 | C · Nền móng bảo đảm dữ liệu luôn đúng | 11 Cross-Module Lineage · 12 Validation & Conformance · 13 Reconciliation & Period Integrity · 14 Semantic Metrics & KPI |
 | D · Nền móng để cộng đồng mở rộng | 15 Integration & External Identity · 16 Module SDK & Metadata Registry · 17 Audit, Security & Operations |
@@ -206,7 +206,7 @@ Bản kiến trúc và hướng dẫn dev: [architecture/LOI-BAT-BIEN-NGHIEP-VU-
 | `bizcity_data@1` | [contracts/BIZCITY-DATA-v1.md](contracts/BIZCITY-DATA-v1.md) | **Đề xuất** (Standard 2/7) | `packages/platform/src/db/client.ts`, `packages/platform/src/db/migrate.ts` |
 | `bizcity_document@1` | [contracts/BIZCITY-DOCUMENT-v1.md](contracts/BIZCITY-DOCUMENT-v1.md) | **Đề xuất** (Standard 3/7; gồm luồng duyệt, thay `bizcity_workflow@1`) | `modules/{signatures,reference-documents}`, `payment_requests` |
 | `bizcity_action@1` | [contracts/BIZCITY-ACTION-v1.md](contracts/BIZCITY-ACTION-v1.md) | **Đề xuất** (Standard 4/7) | `core/{http,errors,auth}.ts` |
-| `bizcity_event@1` | [contracts/BIZCITY-EVENT-v1.md](contracts/BIZCITY-EVENT-v1.md) | **Đề xuất** (Standard 5/7) — sự kiện miền | chưa có (`catalog-notify.ts`) |
+| `bizcity_event@1` | [contracts/BIZCITY-EVENT-v1.md](contracts/BIZCITY-EVENT-v1.md) | **Đề xuất** (Standard 5/7) — sự kiện miền | `packages/platform/src/core/events.ts` (outbox `event_outbox` / `event_deliveries`, `emitEvent`, subscriber; PHASE-006) <!-- [2026-11-09 03:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — RV-R1-15: tài liệu khớp mã (R1: CANON còn ghi "chưa có") --> |
 | `bizcity_evidence@1` | [contracts/BIZCITY-EVIDENCE-v1.md](contracts/BIZCITY-EVIDENCE-v1.md) | **Đề xuất** (Standard 6/7) | `core/audit.ts`, `audit_logs` |
 | `bizcity_extension@1` | [contracts/BIZCITY-EXTENSION-v1.md](contracts/BIZCITY-EXTENSION-v1.md) | **Đề xuất** (Standard 7/7) | `apps/web/src/phan-he/*`, `core/addins.ts` |
 | `bizcity_ledger_intake@1` | [contracts/BIZCITY-LEDGER-INTAKE-v1.md](contracts/BIZCITY-LEDGER-INTAKE-v1.md) | Ổn định (Kernel; trước 2026-10-29 tên `bizcity_event@1`) | `packages/contracts/src/documents.ts` |

@@ -2,7 +2,7 @@
   "$comment": "[2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — bizcity_pillars@1: bảng trụ cột × tiêu chí × mức đạt của Core. NGUỒN cho màn HT10 (Hệ thống → Trụ cột & mức đạt) và thẻ 'Trụ cột' ở trang chủ phân hệ. Mức đạt hôm nay ghi tay có bằng chứng (source=manual); ADR-0022 D026-6: chuyển dần sang engine (selfcheck / test) ghi (source=check). Không ai 'tích đạt' trên giao diện (R-CONT-7).",
   "contract": "bizcity_pillars@1",
   "version": "0.1.0-draft",
-  "updated": "2026-11-04",
+  "updated": "2026-11-08",
   "doc": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/10-DANH-GIA-ADAPT.md",
   "statuses": {
     "dat": "Đạt — có code, có test hoặc check bảo vệ",
@@ -36,10 +36,11 @@
       "id": "I", "key": "ledger", "role": "trụ cột", "title": "Sổ cái bất biến",
       "one": "Sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có; không chứng từ thì không có bút toán.",
       "criteria": [
-        { "id": "L-1", "text": "Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL)", "status": "dat", "evidence": "guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); test db-rules, item-id-so-kho", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
+        { "id": "L-1", "text": "Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL)", "status": "dat", "evidence": "guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); 0086 gỡ cờ thoát allow_ledger_purge khỏi chín trigger và thu DELETE / TRUNCATE của ketoan_app; test db-rules (đặt cờ rồi xoá vẫn bị từ chối), app-role, item-id-so-kho; chẩn đoán LEDGER_TRIGGERS ở lane diagnostics", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
         { "id": "L-2", "text": "Tổng Nợ = tổng Có cuối giao dịch", "status": "dat", "evidence": "assert_entry_balanced (constraint trigger hoãn)", "gap": "", "next": "", "phase": "PHASE-001", "level": "P0", "modules": ["ke-toan"] },
         { "id": "L-3", "text": "Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản", "status": "dat", "evidence": "accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1", "gap": "", "next": "", "phase": "PHASE-004", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "L-4", "text": "Dòng sổ mang ảnh chụp mã + định danh mặt hàng", "status": "dat", "evidence": "ledger_lines.product_sku (ảnh chụp) + item_id (0066); đổi item_id bị chặn", "gap": "đối tượng (partner_id) và tài khoản (account_code) chưa có định danh có phiên bản", "next": "S026-4", "phase": "PHASE-024", "level": "P0", "modules": ["ke-toan"] }
+        { "id": "L-4", "text": "Dòng sổ mang ảnh chụp mã + định danh mặt hàng", "status": "mot-phan", "evidence": "libraries/vn.can-cu-phap-ly (18 mục, bí danh LEGAL_BASES), SC-LIB-1 kiểm basis[].key, core.library.attest / attestations (bằng chứng), thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a)", "gap": "chưa văn bản nào được người có trách nhiệm rà bản gốc (review pending); căn cứ của tham số pháp lý phần lớn chưa liên kết mã", "next": "S030-12", "phase": "PHASE-024", "level": "P0", "modules": ["ke-toan"] },
+        { "id": "L-5", "text": "Đầu bút toán chỉ đổi theo đường E2 (bảy cột), mỗi lần đổi có dấu vết ở tầng CSDL, sửa ngoài ứng dụng bị cảnh báo", "status": "mot-phan", "evidence": "E2_COLUMNS + nhật ký ledger.entry.header_update ở posting.service.ts (S004-13); trigger ledger_entries_header_audit (0089) ghi audit_logs mọi thay đổi chín cột kể cả UPDATE thẳng bằng ketoan_app; test e2-db-audit, e2-header-audit; trigger guard_ledger_entry_mutation ép các cột còn lại", "gap": "chưa có cảnh báo sửa ngoài ứng dụng và bảng theo dõi (S004-15, S004-16); partner_name / partner_attr_id (0087) chưa được ép bất biến (Q004-9)", "next": "S004-15, S004-16", "phase": "PHASE-004", "level": "P0", "modules": ["ke-toan"] }
       ]
     },
     {
@@ -80,13 +81,16 @@
       ]
     },
     {
-      "id": "V", "key": "policy", "role": "trụ cột", "title": "Chính sách và chế độ kế toán có phiên bản",
-      "one": "Đổi thông tư, đổi luật định khoản, đổi phương pháp tính giá là tạo phiên bản từ ngày hiệu lực — không làm lại dữ liệu lịch sử.",
+      "id": "V", "key": "policy", "role": "nền móng", "title": "Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản",
+      "one": "Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) và chế độ kế toán quản trị tập trung ở module chủ, phát hành có phiên bản qua một sổ đăng ký; mọi module và plugin dùng cùng bản, chọn theo ngày chứng từ, truy vết được tới bản đã áp — ngang Master Data: MDG giữ cái gì, Policy Registry giữ theo luật nào (ADR-0031).",
       "criteria": [
         { "id": "P-1", "text": "Luật định khoản có phiên bản; dòng sổ ghi policy_version", "status": "dat", "evidence": "posting_policy_versions (0040, ADR-0009)", "gap": "", "next": "", "phase": "PHASE-005", "level": "P0", "modules": ["ke-toan"] },
         { "id": "P-2", "text": "Hồ sơ kế toán (chế độ, năm tài chính) theo năm", "status": "dat", "evidence": "accounting_profiles (0054), HT07", "gap": "", "next": "", "phase": "PHASE-020", "level": "P0", "modules": ["he-thong"] },
         { "id": "P-3", "text": "Đổi chế độ: phiên bản hệ thống TK + ánh xạ + phiếu chuyển số dư", "status": "tai-lieu", "evidence": "ADR-0018 §tài khoản", "gap": "", "next": "S026-8", "phase": "PHASE-026", "level": "P0", "modules": ["ke-toan"] },
-        { "id": "P-4", "text": "Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi", "status": "chua", "evidence": "", "gap": "chính sách hôm nay theo tenant", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["ke-toan"] }
+        { "id": "P-4", "text": "Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi", "status": "chua", "evidence": "", "gap": "chính sách hôm nay theo tenant", "next": "S026-6", "phase": "PHASE-026", "level": "P1", "modules": ["ke-toan"] },
+        { "id": "P-5", "text": "Nhất quán cross-module: một nghiệp vụ một chính sách; mọi nguồn (module, POS, Woo, sàn) dùng cùng mã@bản và cùng hàm tính", "status": "tai-lieu", "evidence": "ADR-0031 D-POL-0 / D-POL-1; PHASE-031 · 20 §1", "gap": "chưa có Rule Contract và API phát hành cho nguồn ngoài", "next": "S031-13, S031-15", "phase": "PHASE-031", "level": "P0", "modules": ["ban-hang", "mua-hang"] },
+        { "id": "P-6", "text": "Xuyên suốt: chính sách chọn theo ngày chứng từ; đổi bản không đổi chứng từ cũ, không khoảng trống hiệu lực", "status": "mot-phan", "evidence": "policy_registry + purchase_policy_versions (0079), core/policies.ts, policyAt trong engine mua hàng; golden T031-TR-2, T031-MH-1 (#152)", "gap": "mới có cho chính sách mua hàng", "next": "S031-4, S031-5", "phase": "PHASE-031", "level": "P0", "modules": ["mua-hang"] },
+        { "id": "P-7", "text": "Truy vết: bút toán → sự việc → chứng từ → chính sách@bản#băm → người phát hành, căn cứ — hai chiều", "status": "tai-lieu", "evidence": "policyTrace có version + hash (W1, #152); policyRefs ở cửa nạp (chữ chốt W2a, #153)", "gap": "cửa nạp chưa nhận tham chiếu; chưa có khung nhìn policy_application", "next": "S031-6, S031-9, S031-21", "phase": "PHASE-031", "level": "P0", "modules": ["ke-toan", "mua-hang"] }
       ]
     },
     {
@@ -119,6 +123,21 @@
         { "id": "M-3", "text": "Module đọc định danh qua ctx.data (items*, khung nhìn bizcity_read)", "status": "chua", "evidence": "", "gap": "", "next": "S024-11", "phase": "PHASE-024", "level": "P0", "modules": ["he-thong"] },
         { "id": "M-4", "text": "Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái", "status": "mot-phan", "evidence": "ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master)", "gap": "chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành", "next": "S026-2", "phase": "PHASE-026", "level": "P0", "modules": ["he-thong"] },
         { "id": "M-5", "text": "Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng", "status": "chua", "evidence": "", "gap": "", "next": "S026-14", "phase": "PHASE-026", "level": "P2", "modules": ["he-thong"] }
+      ]
+    },
+    {
+      "$comment": "[2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-47: trụ cột IX Thư viện tham chiếu có phiên bản (Q030-L1 = trụ cột riêng, PHASE-030 · 26 §2)",
+      "id": "IX", "key": "library", "role": "nền móng", "title": "Thư viện tham chiếu có phiên bản (bizcity_library@1)",
+      "one": "Dữ liệu tham chiếu chung mọi đơn vị (tham số pháp lý, lịch, mã chức năng, sườn nghiệp vụ, luật kiểm, mẫu) có một khuôn, có phiên bản, đọc tại ngày, kiểm được ô nhập với mã chung LIB-* và gợi ý; đơn vị chỉ đọc, ghi đè có lý do, xác nhận căn cứ; mọi lần dùng để lại dấu — ngang Master Data (giữ cái gì của đơn vị) và Policy Registry (đơn vị quyết theo luật nào) (ADR-0032).",
+      "criteria": [
+        { "id": "L-1", "text": "Khuôn chung bizcity_library@1: phong bì cứng, payload theo itemSchema, phiên bản ba tầng (thư viện · mục · giá trị theo ngày), băm + changelog", "status": "dat", "evidence": "libraries/*/library.json, scripts/thu-vien/thu-vien.mjs, SC-LIB-1 + ca tự kiểm library-bad (S030-45)", "gap": "", "next": "", "phase": "PHASE-030", "level": "P0", "modules": ["he-thong"] },
+        { "id": "L-2", "text": "Một bộ kiểm chung, 7 mã LIB-* trong thư viện mã (cổng L), gợi ý lấy từ thư viện; luật khai báo của từng thư viện", "status": "dat", "evidence": "packages/platform/src/core/libraries (validateAgainstLibrary), library-findings.ts, thu-vien.test.ts", "gap": "", "next": "", "phase": "PHASE-030", "level": "P0", "modules": ["he-thong"] },
+        { "id": "L-3", "text": "Đọc được ở mọi nơi: API core.library.*, MCP chỉ đọc, ô chọn LibraryPicker, màn HT14 Kho thư viện", "status": "dat", "evidence": "GET /api/v1/libraries, LibraryPicker (ui-kit), modules/thu-vien (S030-47)", "gap": "", "next": "", "phase": "PHASE-030", "level": "P0", "modules": ["he-thong"] },
+        { "id": "L-4", "text": "Căn cứ pháp lý là thư viện; mục trỏ căn cứ bằng mã; kế toán trưởng xác nhận theo đơn vị", "status": "dat", "evidence": "libraries/vn.can-cu-phap-ly (18 mục, gộp LEGAL_BASES + legal-sources.json), SC-LIB-1 kiểm basis[].key, library_attestations qua core.library.attest / attestations, thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a)", "gap": "nội dung: chưa văn bản nào được rà bản gốc; căn cứ của tham số pháp lý phần lớn chưa liên kết mã — việc rà soát nội dung, không phải cơ chế", "next": "", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-5", "text": "Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện", "status": "mot-phan", "evidence": "library_settings + library_change_requests (0088), core.library.configure / config / propose / proposals / proposal.update, thẻ Cấu hình + Đề xuất HT14; test thu-vien-cau-hinh.test.ts (S030-49b)", "gap": "gắn trường ↔ thư viện theo đơn vị (bindings) chờ B5b", "next": "S030-51b", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-6", "text": "Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT)", "status": "mot-phan", "evidence": "library_usage_daily (0083), core.library.usage, core.library.modules + bảng Theo module HT14 có kết luận ĐẠT / có điều kiện / KHÔNG ĐẠT; test thu-vien-su-dung.test.ts, thu-vien-module.test.ts (S030-48, S030-51a)", "gap": "kết luận module mới là phần thời gian chạy + SC-LIB-2; độ phủ theo trường của chứng từ (cửa nạp) chờ B5b", "next": "S030-51b", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-7", "text": "Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI", "status": "mot-phan", "evidence": "ô chọn + API + SC-LIB-1 + ctx.libraries trong action (context.ts) + SC-LIB-2 + CLI library check; test thu-vien-module.test.ts, fixture module-libraries-bad (S030-51a)", "gap": "chưa gắn vào cửa nạp (bảng trường ↔ thư viện, B5b)", "next": "S030-51b", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] },
+        { "id": "L-8", "text": "Skill + CLI cho dev và AI: tìm, kiểm, thêm, cập nhật thư viện", "status": "dat", "evidence": "npx bizcity library list / search / check / new / diff (packages/cli/lib/library.mjs), skill skills/use-bizcity-library; test packages/cli/test/library-cli.test.mjs (9 ca, phá thử 3 chỗ) (S030-50)", "gap": "check qua bản dựng platform không có cấu hình riêng của đơn vị (cần máy chủ)", "next": "", "phase": "PHASE-030", "level": "P1", "modules": ["he-thong"] }
       ]
     }
   ]

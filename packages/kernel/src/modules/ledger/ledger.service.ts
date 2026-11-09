@@ -98,6 +98,8 @@ function sortKeys(o: Record<string, unknown>): [string, unknown][] {
 
 export const ledgerService = {
   async post(trx: Db, tenantId: string, actor: string, entry: DraftEntry, accounts: Map<string, Account>): Promise<{ id: string; entryNo: string }> {
+    // R-LEDGER-12 (PHASE-030 · 25 D030-15): kiểm đầu tiên, trước tài khoản và kỳ khoá — kiểu đã bắt buộc, đây là lớp phòng thủ cho lời gọi từ JS / any.
+    if (!entry.sourceDocumentId) throw Errors.posting('Bút toán phải gắn chứng từ gốc (sự việc kế toán) — không sự việc, không bút toán (R-LEDGER-12)');
     validateLines(entry, accounts);
 
 
@@ -116,7 +118,7 @@ export const ledgerService = {
       period_id: period.id,
       entry_no: entryNo,
       doc_type: entry.docType,
-      event_id: entry.sourceDocumentId ?? null,
+      event_id: entry.sourceDocumentId,
       event_version: entry.sourceVersion ?? null,
       doc_no: entry.docNo,
       invoice_no: entry.invoiceNo ?? null,
@@ -173,6 +175,8 @@ export const ledgerService = {
     const original = await ledgerRepository.findEntry(trx, tenantId, entryId);
     if (!original) throw Errors.notFound('bút toán');
     if (original.status === 'reversed') throw Errors.conflict('Bút toán đã được đảo trước đó');
+    // Bút toán đảo giữ cùng chứng từ gốc với bút toán gốc (R-LEDGER-12). Sổ cũ (trước 0077) có thể còn dòng rỗng: không đảo mù.
+    if (!original.event_id) throw Errors.posting(`Bút toán ${original.entry_no} không có chứng từ gốc (event_id rỗng), không đảo được — báo nhóm Lõi (R-LEDGER-12)`);
     const lines = await ledgerRepository.findLines(trx, entryId);
 
     const draft: DraftEntry = {
@@ -217,7 +221,7 @@ export const ledgerService = {
    * GHI ĐÈ số tiền các cặp dòng giá vốn chờ tính giá (cost_fill) — NGOẠI LỆ CÓ CHỦ ĐÍCH của luật "sổ cái chỉ thêm":
    * tính giá vốn (lần đầu hay tính lại) sửa thẳng số tiền, không ghi bút toán đảo, cho nhẹ sổ (người dùng chốt
    * 20/10/2026, tạm thời). Cập nhật cả số dư theo ngày, tổng tiền bút toán, khoản công nợ (nếu dòng gắn đối tượng).
-   * Trigger DB chỉ cho sửa khi giao dịch bật ketoan.cost_overwrite và dòng thuộc bút toán còn hiệu lực.
+   * Từ 0091 chỉ sửa được qua hàm ledger_fill_cost_lines / ledger_fill_entry_totals (SECURITY DEFINER, chủ ketoan_ledger_cost); trigger DB kiểm chủ hàm và dòng thuộc bút toán còn hiệu lực.
    */
   async overwriteCostPairs(
     trx: Db,
@@ -226,7 +230,6 @@ export const ledgerService = {
     accounts: Map<string, Account>,
   ): Promise<number> {
     if (!pairs.length) return 0;
-    await sql`SELECT set_config('ketoan.cost_overwrite', 'on', true)`.execute(trx);
     // Theo lô (một tháng 70 cửa hàng có thể hàng trăm nghìn dòng): đọc mọi dòng chờ của các bút toán liên quan một lượt.
     const want = new Map(pairs.map((p) => [`${p.entryId}|${p.pairNo}`, toCents(p.amount)]));
     const entryIds = [...new Set(pairs.map((p) => p.entryId))];
@@ -283,20 +286,14 @@ export const ledgerService = {
       if (dl.event_id && (dl.partner_id || cl.partner_id)) touchedEvents.add(dl.event_id);
       changed += 1;
     }
+    // [2026-11-09 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-17 (D004-15): E1 qua hàm SECURITY DEFINER (0091); ketoan_app không còn UPDATE được số tiền sổ cái, mỗi lô ghi một dòng audit_logs 'ledger.cost_fill'
     for (let i = 0; i < ids.length; i += 10000) {
-      await sql`
-        UPDATE ledger_lines l SET debit = v.debit, credit = v.credit
-          FROM (SELECT unnest(${ids.slice(i, i + 10000)}::bigint[]) AS id, unnest(${debits.slice(i, i + 10000)}::numeric[]) AS debit,
-                       unnest(${credits.slice(i, i + 10000)}::numeric[]) AS credit) v
-         WHERE l.id = v.id`.execute(trx);
+      await sql`SELECT ledger_fill_cost_lines(${ids.slice(i, i + 10000)}::bigint[], ${debits.slice(i, i + 10000)}::numeric[], ${credits.slice(i, i + 10000)}::numeric[])`.execute(trx);
     }
     const eIds = [...entryDelta.keys()];
     for (let i = 0; i < eIds.length; i += 10000) {
       const part = eIds.slice(i, i + 10000);
-      await sql`
-        UPDATE ledger_entries e SET total = e.total + v.delta
-          FROM (SELECT unnest(${part}::bigint[]) AS id, unnest(${part.map((id) => fromCents(entryDelta.get(id)!))}::numeric[]) AS delta) v
-         WHERE e.id = v.id`.execute(trx);
+      await sql`SELECT ledger_fill_entry_totals(${part}::bigint[], ${part.map((id) => fromCents(entryDelta.get(id)!))}::numeric[])`.execute(trx);
     }
     const bal = [...balance.values()].map((b) => ({ ...b, debit: fromCents(b.debit), credit: fromCents(b.credit) }));
     for (let i = 0; i < bal.length; i += 1000) await ledgerRepository.addDailyBalances(trx, bal.slice(i, i + 1000));

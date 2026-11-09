@@ -40,7 +40,8 @@ export interface DraftEntry {
   reasonCode?: string | null;
   partnerId?: string | null;
   description: string;
-  sourceDocumentId?: string | null;
+  /** Chứng từ gốc (accounting_events.id) — BẮT BUỘC (R-LEDGER-12, PHASE-030 · 25): không sự việc, không bút toán. */
+  sourceDocumentId: string;
   sourceVersion?: number | null;
   /** Bút toán đảo (ghi số âm): dòng cùng bên với bút toán gốc, số tiền âm. */
   isReversal?: boolean;

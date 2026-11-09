@@ -10,7 +10,7 @@
  * (core/http.ts) đổi thành phản hồi { ok: false, error: {...} } với mã HTTP phù hợp.
  */
 import { ZodError } from 'zod';
-import { ERROR_CATALOG, ERROR_CODES, type ErrorCode } from '@ketoan/contracts';
+import { ERROR_CATALOG, ERROR_CODES, type ErrorCode, type ErrorReason } from '@ketoan/contracts';
 
 export class AppError extends Error {
   constructor(
@@ -56,6 +56,21 @@ export function errorKind(code: string | null | undefined): 'rejected' | 'error'
   return entry && BUSINESS_CATEGORIES.has(entry.category) ? 'rejected' : 'error';
 }
 
+// [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33: ánh xạ lỗi trigger sổ cái đúng BIZCITY-ERRORS-v1 §5 (1.3.0-draft); một nơi cho core/http.ts và errorCodeOf
+/**
+ * Lỗi do trigger bảo vệ sổ cái ném ra (BIZCITY-ERRORS-v1 §5, 1.3.0-draft). Các trigger này ném `check_violation` (23514) và
+ * `insufficient_privilege` (42501), KHÔNG ném P0001, nên chỉ nhận ra được bằng câu chữ của trigger — câu chữ là một phần của hợp đồng
+ * (đổi câu của trigger thì đổi bảng §5 cùng PR). Trả undefined khi không phải ba trường hợp này: bên gọi rơi về POSTING_FAILED (CHECK / quyền khác).
+ */
+export function classifyLedgerTriggerError(err: unknown): { code: ErrorCode; reason?: ErrorReason } | undefined {
+  const pg = (err as { code?: unknown } | null)?.code;
+  const msg = String((err as { message?: unknown } | null)?.message ?? '');
+  if (pg === '23514' && /không cân/i.test(msg)) return { code: ERROR_CODES.UNBALANCED };
+  if (pg === '23514' && /^PERIOD_LOCKED:/.test(msg)) return { code: ERROR_CODES.PERIOD_LOCKED };
+  if (pg === '42501' && /chỉ được thêm|chỉ thêm/i.test(msg)) return { code: ERROR_CODES.CONFLICT, reason: 'LEDGER_APPEND_ONLY' };
+  return undefined;
+}
+
 /**
  * Mã lỗi (bizcity_errors@1) của một lỗi bất kỳ, khớp cách core/http.ts trả cho người gọi: AppError giữ mã; lỗi kiểm dữ liệu →
  * VALIDATION_ERROR; lỗi trigger / ràng buộc của CSDL theo SQLSTATE; còn lại INTERNAL_ERROR. Dùng cho trace (core/tracing.ts).
@@ -63,6 +78,8 @@ export function errorKind(code: string | null | undefined): 'rejected' | 'error'
 export function errorCodeOf(err: unknown): ErrorCode {
   if (err instanceof AppError) return err.code;
   if (err instanceof ZodError || (err as { validation?: unknown } | null)?.validation) return ERROR_CODES.VALIDATION;
+  const trigger = classifyLedgerTriggerError(err);
+  if (trigger) return trigger.code;
   const pg = (err as { code?: unknown } | null)?.code;
   if (pg === '23514' || pg === '42501') return ERROR_CODES.POSTING_FAILED;
   if (pg === 'P0001') return /không cân/i.test(String((err as Error).message)) ? ERROR_CODES.UNBALANCED : ERROR_CODES.CONFLICT;

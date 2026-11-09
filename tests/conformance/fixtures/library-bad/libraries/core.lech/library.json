@@ -1,0 +1,58 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "core.khac",
+  "kind": "code-list",
+  "title": "Thư viện thử",
+  "description": "Ca tự kiểm SC-LIB-1",
+  "version": "1.0.0",
+  "released": "2026-11-07",
+  "contentHash": "sha256:adaf0e4ab2dce1a96ce2a72a98271b2b2c5a7595a7a6bbec8008726e2a641b00",
+  "owner": "Nhóm Lõi",
+  "sources": [
+    {
+      "title": "tự lập",
+      "kind": "internal"
+    }
+  ],
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "n"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "n": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-07",
+      "hash": "sha256:adaf0e4ab2dce1a96ce2a72a98271b2b2c5a7595a7a6bbec8008726e2a641b00",
+      "notes": "bản đầu"
+    }
+  ],
+  "items": [
+    {
+      "code": "A",
+      "name": "Mục A",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      }
+    }
+  ]
+}

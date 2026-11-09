@@ -5,7 +5,7 @@
 
 > Tài liệu nền cho cả người và AI: [docs/core/](../docs/core/README.md) (trụ cột 0–VIII, công cụ kiểm, mã hàng và vòng đời, [hướng dẫn cho AI](../docs/core/04-huong-dan-cho-ai.md)). <!-- [2026-11-03 07:23 PM Johnny Chu - Chu Hoàng Anh] ADR-0020 — trỏ tới bộ hướng dẫn docs/core/ -->
 
-Bảy skill giúp AI (Claude Code, Codex, Cursor, Copilot…) xây POS, bán hàng online, CRM, MRP, kho vật tư, quản lý tài sản, ERP ghi sổ qua open-ketoan **mà không cần biết kế toán**, và luôn đạt sáu chuẩn kế toán. AI đọc hợp đồng, sinh code tích hợp, chạy lệnh kiểm. AI **không** tự nghĩ tài khoản, bút toán hay luật thuế: Kernel và danh mục của đơn vị quyết định những thứ đó.
+Tám skill giúp AI (Claude Code, Codex, Cursor, Copilot…) xây POS, bán hàng online, CRM, MRP, kho vật tư, quản lý tài sản, ERP ghi sổ qua open-ketoan **mà không cần biết kế toán**, và luôn đạt sáu chuẩn kế toán. AI đọc hợp đồng, sinh code tích hợp, chạy lệnh kiểm. AI **không** tự nghĩ tài khoản, bút toán hay luật thuế: Kernel và danh mục của đơn vị quyết định những thứ đó.
 
 | Skill | Khi nào AI dùng | Lệnh nó chạy |
 |---|---|---|
@@ -15,6 +15,7 @@ Bảy skill giúp AI (Claude Code, Codex, Cursor, Copilot…) xây POS, bán hà
 | [validate-accounting-event](validate-accounting-event/SKILL.md) | một chứng từ: trước khi nộp, khi bị từ chối, trong CI | `bizcity event check <tệp>` |
 | [check-accounting-flow](check-accounting-flow/SKILL.md) | chuỗi chứng từ: mua → kho → bán → giá vốn → lãi lỗ → đóng kỳ | `bizcity flow check --sku --period [--to]` |
 | [explain-accounting-error](explain-accounting-error/SKILL.md) | API trả mã lỗi, tiền kiểm có phát hiện | `bizcity explain <MÃ>` |
+| [use-bizcity-library](use-bizcity-library/SKILL.md) <!-- [2026-11-08 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-50: skill thư viện dùng chung --> | cần tham số pháp lý, ngày nghỉ, căn cứ, mã chuẩn; thêm / sửa `libraries/*`; API trả `LIB-*` | `bizcity library search / check / new / diff` |
 | [contribute-production-module](contribute-production-module/SKILL.md) | mở cổng sản xuất / MRP cho lõi (cộng đồng đóng góp) | ADR → hợp đồng → Kernel → F22 + conformance |
 
 ## Sáu chuẩn, và hôm nay Kernel đã thi hành tới đâu

@@ -3,7 +3,7 @@
  * ghi từ V1, bút toán nào đảo V1, nội dung V1 là gì, chuỗi có đứt không. Kịch bản đúng ví dụ của đề bài: ghi V1 → sửa thành V2 → huỷ.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { sql } from 'kysely';
+import { sql, type RawBuilder, type Transaction } from 'kysely';
 import { closeDb, db } from '../src/db/client.js';
 import { runDiagnostics, registerDiagnostics } from '../src/modules/system/diagnostics.js';
 import { LEDGER_DIAGNOSTICS } from '@bizcity/kernel/modules/ledger/ledger.diagnostics';
@@ -117,6 +117,13 @@ describe('Khoá truy vấn và quyền', () => {
   });
 });
 
+// [2026-11-09 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a: sửa đầu NGOÀI ứng dụng là lỗi L3 (LEDGER_HEADER_EDIT_UNATTRIBUTED). Các ca dưới mô phỏng dữ liệu cũ bằng UPDATE thẳng nên kèm dòng nhật ký mức ứng dụng cùng giao dịch (= đã khai báo)
+async function declaredEdit(trx: Transaction<any>, entryId: unknown, update: RawBuilder<unknown>) {
+  await update.execute(trx);
+  await sql`INSERT INTO audit_logs (tenant_id, actor, action, object_type, object_id, after_data)
+            VALUES (${tenantId}, 'test', 'ledger.entry.header_update', 'ledger_entry', ${String(entryId)}, jsonb_build_object('_source', 'app', '_txid', pg_current_xact_id()::text))`.execute(trx);
+}
+
 describe('Chuỗi đứt được báo, không bị giấu', () => {
   const DOC2 = 'pos:CN01:LS0002';
   let ev2 = '';
@@ -126,10 +133,9 @@ describe('Chuỗi đứt được báo, không bị giấu', () => {
     const h = (await get(`docKey=${DOC2}`)).body.data;
     ev2 = h.id;
     const entry = h.versions[0].entries[0];
-    // Mô phỏng bút toán ghi trước khi có cột phiên bản: gỡ trigger đóng băng đầu bút toán trong một giao dịch của test.
+    // Mô phỏng bút toán ghi trước khi có cột phiên bản: event_version nằm trong bảy cột E2 nên đổi được không cần vượt trigger (S004-12: cờ thoát trigger đã gỡ, 0086).
     await db.transaction().execute(async (trx) => {
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
-      await sql`UPDATE ledger_entries SET event_version = NULL WHERE id = ${entry.id}`.execute(trx);
+      await declaredEdit(trx, entry.id, sql`UPDATE ledger_entries SET event_version = NULL WHERE id = ${entry.id}`);
     });
     const after = (await get(`docKey=${DOC2}`)).body.data;
     expect(after.unversionedEntries.map((e: any) => e.id)).toContain(entry.id);
@@ -147,8 +153,7 @@ describe('Chuỗi đứt được báo, không bị giấu', () => {
     const h = (await get(`id=${ev2}`)).body.data;
     const entryId = h.unversionedEntries[0].id;
     await db.transaction().execute(async (trx) => {
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
-      await sql`UPDATE ledger_entries SET event_version = 7 WHERE id = ${entryId}`.execute(trx);
+      await declaredEdit(trx, entryId, sql`UPDATE ledger_entries SET event_version = 7 WHERE id = ${entryId}`);
     });
     const after = (await get(`id=${ev2}`)).body.data;
     expect(after.integrity.issues.map((i: any) => i.code)).toContain('ENTRY_VERSION_UNKNOWN');
@@ -161,8 +166,7 @@ describe('Chuỗi đứt được báo, không bị giấu', () => {
     const entryId = h.unversionedEntries[0].id;
     // Phiên bản 7 không có thật: dựng phiên bản 2 thật để chỉ còn lệch posted_version.
     await db.transaction().execute(async (trx) => {
-      await sql`SELECT set_config('ketoan.allow_ledger_purge', 'on', true)`.execute(trx);
-      await sql`UPDATE ledger_entries SET event_version = 1 WHERE id = ${entryId}`.execute(trx);
+      await declaredEdit(trx, entryId, sql`UPDATE ledger_entries SET event_version = 1 WHERE id = ${entryId}`);
       await sql`UPDATE accounting_events SET posted_version = 2, version = 2 WHERE id = ${ev2}`.execute(trx);
       await sql`INSERT INTO accounting_event_versions (event_id, version, payload, received_at) VALUES (${ev2}, 1, '{}'::jsonb, now())`.execute(trx);
     });

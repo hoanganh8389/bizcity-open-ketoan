@@ -43,6 +43,8 @@ import { currentRequest } from './request-context.js';
 import { withSpan } from './tracing.js';
 import { documents } from './documents.js';
 import { readSetting } from './settings.js';
+// [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a (B5a, 26 §4.1 ①): ctx.libraries — kiểm theo thư viện dùng chung trong action
+import { flushLibraryUsageIfDue, makeLibraryContext, type ActionLibraries } from './libraries/context.js';
 import { isHighRiskPermission, isKnownPermission, type AuthContext, type Permission } from './auth.js';
 
 export type ActionEffect = 'read' | 'write';
@@ -78,6 +80,12 @@ export interface ActionContext {
     item<T>(fn: (tx: Transaction<Database>) => Promise<T>): Promise<ItemResult<T>>;
   };
   evidence: { note(key: string, value: unknown): void };
+  /**
+   * Thư viện dùng chung (bizcity_library@1) trong action — [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 S030-51a: `validate` (không ném lỗi) và `require`
+   * (block → Errors.validation mã LIB-*, warn → ctx.meta('libraryWarnings')), đã áp cấu hình đơn vị; ghi bằng chứng `libraries`
+   * và đếm lượt dùng (nguồn modules/<key>). Chi tiết: docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/26-KHO-THU-VIEN.md §4.1.
+   */
+  libraries: ActionLibraries;
   // [2026-11-03 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W6 đợt 8a: ctx.meta theo hợp đồng ACTION 1.2.0 §4.1: hàm `ctx.meta(khoá, giá trị)` thêm trường vào meta của phản hồi (gate, findings, held…); khoá runtime (requestId, receipt, idempotency, dryRun) bị cấm; chạy thử giữ meta; gửi lặp không phát lại. Gán thuộc tính / Object.assign (mã cũ) vẫn nhận.
   readonly meta: ActionMeta;
   /**
@@ -440,6 +448,7 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           return { data: prev.response as z.infer<O>, status: prev.status_code, meta: { ...meta, idempotency: 'replayed' as const, ...(receipt ? { receipt } : {}) } };
         }
       }
+      const ctxMeta = makeMeta(def.id, responseMeta);
       const ctx: ActionContext = {
         actor: { id: auth?.actor ?? 'public', name: auth?.actorName ?? '', kind: auth?.kind ?? 'user' },
         tenant: { id: tenantId },
@@ -453,7 +462,8 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
           item: (fn) => inSavepoint(trx, fn),
         },
         evidence: { note: (k, v) => { notes[k] = v; } },
-        meta: makeMeta(def.id, responseMeta),
+        meta: ctxMeta,
+        libraries: makeLibraryContext({ trx, tenantId, actionId: def.id, dryRun, note: (k, v) => { notes[k] = v; }, meta: (k, v) => ctxMeta(k, v) }),
         events: {
           emit: (type, data, o) => {
             const mod = def.id.split('.')[0]!;
@@ -562,8 +572,10 @@ async function runActionUntraced<I extends z.AnyZodObject, O extends z.ZodTypeAn
     metrics.actions.inc({ action: def.id, result: 'ok', code: '' });
     // [2026-11-01 12:04 AM Johnny Chu - Chu Hoàng Anh] PHASE-018 — bizcity_idempotency_requests_total: đếm sau commit (new / replayed), xung đột khoá ở nhánh lỗi
     if (key) metrics.idempotency.inc({ result: res.meta.idempotency === 'replayed' ? 'replayed' : 'new' });
+    await flushLibraryUsageIfDue(db);
     return res;
   } catch (err) {
+    await flushLibraryUsageIfDue(db);
     if (err instanceof DryRunRollback) return { data: err.output as z.infer<O>, status: 200, meta: { ...responseMeta, ...meta, dryRun: true } };
     if (key && err instanceof AppError && err.code === ERROR_CODES.IDEMPOTENCY_CONFLICT) metrics.idempotency.inc({ result: 'conflict' });
     metrics.actions.inc({ action: def.id, result: 'error', code: err instanceof AppError ? err.code : err instanceof z.ZodError ? ERROR_CODES.VALIDATION : ERROR_CODES.INTERNAL });

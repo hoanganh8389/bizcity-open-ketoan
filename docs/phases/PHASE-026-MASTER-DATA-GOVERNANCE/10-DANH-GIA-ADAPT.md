@@ -1,5 +1,5 @@
 # PHASE-026 · 10 — Đánh giá mức adapt: trụ cột × tiêu chí × mức đạt
-<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — SINH TỰ ĐỘNG từ docs/standard/tru-cot.json (bizcity_pillars@1 0.1.0-draft, cập nhật 2026-11-04) bằng scripts/tru-cot-md.mjs — sửa ở tệp JSON rồi chạy lại, không sửa tay ở đây -->
+<!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — SINH TỰ ĐỘNG từ docs/standard/tru-cot.json (bizcity_pillars@1 0.1.0-draft, cập nhật 2026-11-08) bằng scripts/tru-cot-md.mjs — sửa ở tệp JSON rồi chạy lại, không sửa tay ở đây -->
 
 Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **Trụ cột** ở trang chủ phân hệ. Mức đạt đi theo bằng chứng (migration, test, check); không ai tích tay (R-CONT-7). Trọng số: đạt 1 · một phần ½ · tài liệu ¼ · chưa 0.
 
@@ -8,14 +8,15 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | Tầng | Trụ cột | Mức | Đạt | Một phần | Tài liệu | Chưa |
 |---|---|---|---|---|---|---|
 | Nền móng | Quản trị dữ liệu gốc (Master Data Governance) | **53 %** | 2 | 12 | 0 | 1 |
-| I | Sổ cái bất biến | **100 %** | 4 | 0 | 0 | 0 |
+| I | Sổ cái bất biến | **80 %** | 3 | 2 | 0 | 0 |
 | II | Định danh bất biến, mã có phiên bản | **61 %** | 4 | 0 | 1 | 2 |
 | III | Liên tục kế toán (Accounting Continuity) | **39 %** | 2 | 0 | 3 | 2 |
 | IV | Một cửa nạp, các cổng kiểm chuẩn, một ngôn ngữ mã | **90 %** | 4 | 1 | 0 | 0 |
-| V | Chính sách và chế độ kế toán có phiên bản | **56 %** | 2 | 0 | 1 | 1 |
+| Nền móng | Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản | **46 %** | 2 | 1 | 3 | 1 |
 | VI | Bằng chứng và quan sát được | **70 %** | 2 | 3 | 0 | 0 |
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
+| Nền móng | Thư viện tham chiếu có phiên bản (bizcity_library@1) | **81 %** | 5 | 3 | 0 | 0 |
 
 ## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 53 %
 
@@ -39,16 +40,17 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | UI-4 | Mỗi màn danh mục có bốn khả năng: Lịch sử · Tác động · Kiểm chuẩn · Truy vết | 🟡 Một phần | mặt hàng đủ 4/4 trên Hành trình mặt hàng: Lịch sử (S026-10), Tác động (S026-11), Kiểm chuẩn (khung Vì sao Gate A), Truy vết (ACC95, họ mặt hàng) | chưa gom thành khung chung MasterDataFrame trên form danh mục DM10; thực thể khác chưa | S026-12, S026-4 (PHASE-026) | P0 |
 | SCALE-1 | Danh mục hàng triệu mã, hàng trăm cửa hàng: đo và giữ hiệu năng | ☐ Chưa | đo 20.985 mặt hàng: đồng bộ Item Master +0,7 ms / mặt hàng; khoá chống chồng hiệu lực theo đơn vị | chưa có benchmark triệu SKU, chưa có nạp theo lô (FOR EACH STATEMENT), chưa có EXCLUDE gist | S026-14 (PHASE-026) | P2 |
 
-## Trụ cột I · Sổ cái bất biến — 100 %
+## Trụ cột I · Sổ cái bất biến — 80 %
 
 > Sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có; không chứng từ thì không có bút toán.
 
 | Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp | Ưu tiên |
 |---|---|---|---|---|---|---|
-| L-1 | Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL) | ✅ Đạt | guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); test db-rules, item-id-so-kho | — | — | P0 |
+| L-1 | Dòng sổ cái không sửa / xoá / TRUNCATE (trigger CSDL) | ✅ Đạt | guard_ledger_line_mutation, ledger_lines_no_truncate (0006 / 0049 / 0066); 0086 gỡ cờ thoát allow_ledger_purge khỏi chín trigger và thu DELETE / TRUNCATE của ketoan_app; test db-rules (đặt cờ rồi xoá vẫn bị từ chối), app-role, item-id-so-kho; chẩn đoán LEDGER_TRIGGERS ở lane diagnostics | — | — | P0 |
 | L-2 | Tổng Nợ = tổng Có cuối giao dịch | ✅ Đạt | assert_entry_balanced (constraint trigger hoãn) | — | — | P0 |
 | L-3 | Mọi dòng sổ trỏ về một sự việc kế toán có phiên bản | ✅ Đạt | accounting_events (doc_key, version) → ledger_entries → ledger_lines; R-EVENT-1 | — | — | P0 |
-| L-4 | Dòng sổ mang ảnh chụp mã + định danh mặt hàng | ✅ Đạt | ledger_lines.product_sku (ảnh chụp) + item_id (0066); đổi item_id bị chặn | đối tượng (partner_id) và tài khoản (account_code) chưa có định danh có phiên bản | S026-4 (PHASE-024) | P0 |
+| L-4 | Dòng sổ mang ảnh chụp mã + định danh mặt hàng | 🟡 Một phần | libraries/vn.can-cu-phap-ly (18 mục, bí danh LEGAL_BASES), SC-LIB-1 kiểm basis[].key, core.library.attest / attestations (bằng chứng), thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a) | chưa văn bản nào được người có trách nhiệm rà bản gốc (review pending); căn cứ của tham số pháp lý phần lớn chưa liên kết mã | S030-12 (PHASE-024) | P0 |
+| L-5 | Đầu bút toán chỉ đổi theo đường E2 (bảy cột), mỗi lần đổi có dấu vết ở tầng CSDL, sửa ngoài ứng dụng bị cảnh báo | 🟡 Một phần | E2_COLUMNS + nhật ký ledger.entry.header_update ở posting.service.ts (S004-13); trigger ledger_entries_header_audit (0089) ghi audit_logs mọi thay đổi chín cột kể cả UPDATE thẳng bằng ketoan_app; test e2-db-audit, e2-header-audit; trigger guard_ledger_entry_mutation ép các cột còn lại | chưa có cảnh báo sửa ngoài ứng dụng và bảng theo dõi (S004-15, S004-16); partner_name / partner_attr_id (0087) chưa được ép bất biến (Q004-9) | S004-15, S004-16 (PHASE-004) | P0 |
 
 ## Trụ cột II · Định danh bất biến, mã có phiên bản — 61 %
 
@@ -90,9 +92,9 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | G-4 | Thư viện mã một khuôn, có căn cứ pháp lý; thông báo dựng từ mã | ✅ Đạt | bizcity_findings@1, legal-basis.ts, notifyFinding, check SC-FIND-1 / SC-FIND-2 (R-GATE-10 / 11) | IN-ITEM-002 / 008, CT-* chưa vào thư viện | S024-7, S025-9 (PHASE-024) | P0 |
 | G-5 | Mặc định cho phép, nhắc khi sai (R-GATE-9); không có luồng 'chờ kế toán trưởng' | ✅ Đạt | bizcity.item.auto_create mặc định bật; ADR-0020; HT09 | — | — | P0 |
 
-## Trụ cột V · Chính sách và chế độ kế toán có phiên bản — 56 %
+## Nền móng · Policy Registry & Rule Contracts — chính sách nghiệp vụ và chế độ kế toán có phiên bản — 46 %
 
-> Đổi thông tư, đổi luật định khoản, đổi phương pháp tính giá là tạo phiên bản từ ngày hiệu lực — không làm lại dữ liệu lịch sử.
+> Chính sách nghiệp vụ (giá, chiết khấu, khuyến mại, hạn mức, ngưỡng duyệt) và chế độ kế toán quản trị tập trung ở module chủ, phát hành có phiên bản qua một sổ đăng ký; mọi module và plugin dùng cùng bản, chọn theo ngày chứng từ, truy vết được tới bản đã áp — ngang Master Data: MDG giữ cái gì, Policy Registry giữ theo luật nào (ADR-0031).
 
 | Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp | Ưu tiên |
 |---|---|---|---|---|---|---|
@@ -100,6 +102,9 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | P-2 | Hồ sơ kế toán (chế độ, năm tài chính) theo năm | ✅ Đạt | accounting_profiles (0054), HT07 | — | — | P0 |
 | P-3 | Đổi chế độ: phiên bản hệ thống TK + ánh xạ + phiếu chuyển số dư | 📄 Tài liệu | ADR-0018 §tài khoản | — | S026-8 (PHASE-026) | P0 |
 | P-4 | Chính sách theo phạm vi (pháp nhân / nhóm đơn vị) khi chạy chuỗi | ☐ Chưa | — | chính sách hôm nay theo tenant | S026-6 (PHASE-026) | P1 |
+| P-5 | Nhất quán cross-module: một nghiệp vụ một chính sách; mọi nguồn (module, POS, Woo, sàn) dùng cùng mã@bản và cùng hàm tính | 📄 Tài liệu | ADR-0031 D-POL-0 / D-POL-1; PHASE-031 · 20 §1 | chưa có Rule Contract và API phát hành cho nguồn ngoài | S031-13, S031-15 (PHASE-031) | P0 |
+| P-6 | Xuyên suốt: chính sách chọn theo ngày chứng từ; đổi bản không đổi chứng từ cũ, không khoảng trống hiệu lực | 🟡 Một phần | policy_registry + purchase_policy_versions (0079), core/policies.ts, policyAt trong engine mua hàng; golden T031-TR-2, T031-MH-1 (#152) | mới có cho chính sách mua hàng | S031-4, S031-5 (PHASE-031) | P0 |
+| P-7 | Truy vết: bút toán → sự việc → chứng từ → chính sách@bản#băm → người phát hành, căn cứ — hai chiều | 📄 Tài liệu | policyTrace có version + hash (W1, #152); policyRefs ở cửa nạp (chữ chốt W2a, #153) | cửa nạp chưa nhận tham chiếu; chưa có khung nhìn policy_application | S031-6, S031-9, S031-21 (PHASE-031) | P0 |
 
 ## Trụ cột VI · Bằng chứng và quan sát được — 70 %
 
@@ -135,3 +140,18 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | M-3 | Module đọc định danh qua ctx.data (items*, khung nhìn bizcity_read) | ☐ Chưa | — | — | S024-11 (PHASE-024) | P0 |
 | M-4 | Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái | 🟡 Một phần | ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master) | chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành | S026-2 (PHASE-026) | P0 |
 | M-5 | Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng | ☐ Chưa | — | — | S026-14 (PHASE-026) | P2 |
+
+## Nền móng · Thư viện tham chiếu có phiên bản (bizcity_library@1) — 81 %
+
+> Dữ liệu tham chiếu chung mọi đơn vị (tham số pháp lý, lịch, mã chức năng, sườn nghiệp vụ, luật kiểm, mẫu) có một khuôn, có phiên bản, đọc tại ngày, kiểm được ô nhập với mã chung LIB-* và gợi ý; đơn vị chỉ đọc, ghi đè có lý do, xác nhận căn cứ; mọi lần dùng để lại dấu — ngang Master Data (giữ cái gì của đơn vị) và Policy Registry (đơn vị quyết theo luật nào) (ADR-0032).
+
+| Mã | Tiêu chí | Mức | Bằng chứng | Khoảng cách | Việc tiếp | Ưu tiên |
+|---|---|---|---|---|---|---|
+| L-1 | Khuôn chung bizcity_library@1: phong bì cứng, payload theo itemSchema, phiên bản ba tầng (thư viện · mục · giá trị theo ngày), băm + changelog | ✅ Đạt | libraries/*/library.json, scripts/thu-vien/thu-vien.mjs, SC-LIB-1 + ca tự kiểm library-bad (S030-45) | — | — | P0 |
+| L-2 | Một bộ kiểm chung, 7 mã LIB-* trong thư viện mã (cổng L), gợi ý lấy từ thư viện; luật khai báo của từng thư viện | ✅ Đạt | packages/platform/src/core/libraries (validateAgainstLibrary), library-findings.ts, thu-vien.test.ts | — | — | P0 |
+| L-3 | Đọc được ở mọi nơi: API core.library.*, MCP chỉ đọc, ô chọn LibraryPicker, màn HT14 Kho thư viện | ✅ Đạt | GET /api/v1/libraries, LibraryPicker (ui-kit), modules/thu-vien (S030-47) | — | — | P0 |
+| L-4 | Căn cứ pháp lý là thư viện; mục trỏ căn cứ bằng mã; kế toán trưởng xác nhận theo đơn vị | ✅ Đạt | libraries/vn.can-cu-phap-ly (18 mục, gộp LEGAL_BASES + legal-sources.json), SC-LIB-1 kiểm basis[].key, library_attestations qua core.library.attest / attestations, thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a) | nội dung: chưa văn bản nào được rà bản gốc; căn cứ của tham số pháp lý phần lớn chưa liên kết mã — việc rà soát nội dung, không phải cơ chế | — | P1 |
+| L-5 | Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện | 🟡 Một phần | library_settings + library_change_requests (0088), core.library.configure / config / propose / proposals / proposal.update, thẻ Cấu hình + Đề xuất HT14; test thu-vien-cau-hinh.test.ts (S030-49b) | gắn trường ↔ thư viện theo đơn vị (bindings) chờ B5b | S030-51b (PHASE-030) | P1 |
+| L-6 | Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT) | 🟡 Một phần | library_usage_daily (0083), core.library.usage, core.library.modules + bảng Theo module HT14 có kết luận ĐẠT / có điều kiện / KHÔNG ĐẠT; test thu-vien-su-dung.test.ts, thu-vien-module.test.ts (S030-48, S030-51a) | kết luận module mới là phần thời gian chạy + SC-LIB-2; độ phủ theo trường của chứng từ (cửa nạp) chờ B5b | S030-51b (PHASE-030) | P1 |
+| L-7 | Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI | 🟡 Một phần | ô chọn + API + SC-LIB-1 + ctx.libraries trong action (context.ts) + SC-LIB-2 + CLI library check; test thu-vien-module.test.ts, fixture module-libraries-bad (S030-51a) | chưa gắn vào cửa nạp (bảng trường ↔ thư viện, B5b) | S030-51b (PHASE-030) | P1 |
+| L-8 | Skill + CLI cho dev và AI: tìm, kiểm, thêm, cập nhật thư viện | ✅ Đạt | npx bizcity library list / search / check / new / diff (packages/cli/lib/library.mjs), skill skills/use-bizcity-library; test packages/cli/test/library-cli.test.mjs (9 ca, phá thử 3 chỗ) (S030-50) | check qua bản dựng platform không có cấu hình riêng của đơn vị (cần máy chủ) | — | P1 |

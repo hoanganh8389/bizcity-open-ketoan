@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/intake
+// [2026-11-07 03:57 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 (PHASE-030, D030-16): sự việc tự lập luôn ghi created_by (auth.actor khi không truyền)
 // [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn.
 // [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id.
 // [2026-10-30 09:03 PM Johnny Chu - Chu Hoàng Anh] PHASE-005 — chính sách kế toán có phiên bản + ngày hiệu lực (ADR-0009).
@@ -68,7 +69,8 @@ export const eventStore = {
     }
     const created = await documentRepository.insert(trx, {
       tenant_id: auth.tenantId, source_system: v.sourceSystem ?? 'manual', doc_key: v.docKey, doc_type: v.docType, doc_no: v.docNo,
-      invoice_no: null, partner_id: null, ...(v.createdBy ? { created_by: v.createdBy } : {}), ...v.fields, version,
+      // Người tạo bắt buộc (0081, D030-16): sự việc Kernel tự lập (khấu hao, giá vốn, khoá sổ…) ghi người / khoá đã chạy tác vụ.
+      invoice_no: null, partner_id: null, created_by: v.createdBy || auth.actor, ...v.fields, version,
     });
     return { id: created.id, version };
   },

@@ -1,3 +1,4 @@
+// [2026-11-08 10:31 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1: dữ liệu mẫu chèn thẳng có created_by (0081 bắt buộc)
 // [2026-11-06 08:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-31: hàng việc — T030-QUEUE-1..7 (chữ chốt: docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/23-HANG-VIEC.md)
 /**
  * Hàng việc: view `bizcity_read.document_queue` (migration 0076) và ba action `core.queue.summary | items | mine`.
@@ -41,8 +42,8 @@ async function pd(t: string, no: string, status: string, by: string, kind = 'rec
             VALUES (${t}, ${kind}, ${status}, ${no}, '2026-10-12', 'CN01', 'NCC-Q', 2000000, ${by}, ${ago(days)})`.execute(db);
 }
 async function ev(t: string, key: string, status: string, days = 0) {
-  await sql`INSERT INTO accounting_events (tenant_id, doc_key, doc_type, branch_id, doc_no, doc_date, payload, status, total, received_at)
-            VALUES (${t}, ${key}, 'sale', ${branchId}, ${key}, '2026-10-12', '{}'::jsonb, ${status}, 3000000, ${ago(days)})`.execute(db);
+  await sql`INSERT INTO accounting_events (tenant_id, doc_key, doc_type, branch_id, doc_no, doc_date, payload, status, total, received_at, created_by)
+            VALUES (${t}, ${key}, 'sale', ${branchId}, ${key}, '2026-10-12', '{}'::jsonb, ${status}, 3000000, ${ago(days)}, 'test')`.execute(db);
 }
 async function ib(t: string, key: string, status: string, days = 0) {
   await sql`INSERT INTO intake_inbox (tenant_id, channel, actor, doc_key, doc_type, payload_raw, payload_hash, payload_bytes, score, status, received_at)

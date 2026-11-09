@@ -35,6 +35,9 @@ export const roleAssignSchema = z.object({
   role: role.optional().describe('Vai trò hệ thống bổ sung (đúng một trong role / tenantRoleId)'),
   tenantRoleId: z.string().regex(/^\d+$/).optional().describe('Vai trò của đơn vị (tenant_roles.id)'),
   confirmPassword: z.string().min(1).max(200).optional().describe('Mật khẩu của người thao tác — bắt buộc khi vai trò có Cho quyền rủi ro cao'),
+  // [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: phạm vi chi nhánh của lần gán (chỉ có tác dụng ở route gọi requireScope — cửa nạp chứng từ)
+  scopeType: z.enum(['tenant', 'branch']).default('tenant').describe('tenant: cả đơn vị (mặc định); branch: một chi nhánh — chỉ có tác dụng ở route kiểm theo chi nhánh (cửa nạp chứng từ)'),
+  scopeId: z.string().regex(/^\d+$/).optional().describe('id chi nhánh (branches.id) khi scopeType = branch'),
   validFrom: isoDate.optional().describe('Mặc định hôm nay (giờ Việt Nam)'),
   validTo: isoDate.optional().describe('Ngày cuối hiệu lực (gồm cả ngày này); bỏ trống = không hạn'),
   reason,

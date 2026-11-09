@@ -26,6 +26,7 @@ import { draftItemFindings, itemAutoCreate } from './draft-items.js';
 import { commitGuard } from './guard.js';
 import { takeTrial, trialPosting } from './trial-posting.js';
 import { taxFindings } from './tax-findings.js';
+import { policyFindings } from './policy-check.js';
 
 export interface PreflightResult {
   findings: IntakeFinding[];
@@ -192,6 +193,9 @@ export async function preflight(trx: Db, auth: AuthContext, raw: unknown, opts: 
 
   // ── L4 thuế / hoá đơn / hồ sơ kế toán (S021-25): cảnh báo, cùng luật với tự chẩn đoán thuế ──
   if (parsed.success) findings.push(...await taxFindings(trx, auth.tenantId, parsed.data));
+
+  // ── L4 tham chiếu chính sách ([2026-11-08 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-9), IN-POL-001..003): cảnh báo, cùng hàm với cửa nạp (R-INTAKE-4); không policyRefs → không gì ──
+  findings.push(...(await policyFindings(trx, auth.tenantId, parsed.success ? parsed.data : (r as Record<string, unknown>))).findings);
 
   // ── L5 định khoản thử (R-INTAKE-3, R-EVENT-11): chỉ khi L1–L4 không còn lỗi chặn; hoàn tác hết, giới hạn 3 giây + lượt mỗi phút ──
   let l5: PreflightResult['l5'] = 'off';

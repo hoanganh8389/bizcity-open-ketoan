@@ -1,4 +1,5 @@
 # `bizcity_intake_findings@1` — Danh mục phát hiện tiền kiểm
+<!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b: §3 thêm IN-POL-004 (số phiên bản đầu tệp + bizcity-standard.json nâng sau khi dòng S030-51a nhả) (tính lại quà theo bản nguồn nêu, so với dòng quà nguồn gửi) -->
 <!-- [2026-11-02 07:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W1: hợp đồng 0.1.0-draft — danh mục mã IN-*, khuôn phát hiện, điểm (ADR-0014 D3, D11) -->
 <!-- [2026-11-02 08:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: 0.2.0-draft — §5 bể chờ: error.intake, API /api/v1/intake, hạn giữ -->
 <!-- [2026-11-03 12:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-28: thêm IN-ITEM-009 (mặt hàng còn nháp, ADR-0019) -->
@@ -69,9 +70,17 @@
 | `IN-BIZ-005` | L4 | warn | advice | 20 | Cùng phiên bản nhưng nội dung khác bản đã nhận | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-005.md) |
 | `IN-BIZ-006` | L4 | warn | advice | 20 | Số hoá đơn đã có ở chứng từ khác | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-006.md) |
 | `IN-BIZ-007` | L4 | hint | advice | 0 | Ngày hoá đơn cách ngày chứng từ hơn 5 ngày | [bài học](../huong-dan/loi-dau-vao/IN-BIZ-007.md) |
+| `IN-POL-001` | L4 | warn | advice | 10 | Tham chiếu chính sách không có trong sổ đăng ký hoặc băm khác bản đã phát hành | [bài học](../huong-dan/loi-dau-vao/IN-POL-001.md) |
+| `IN-POL-002` | L4 | warn | advice | 10 | Bản chính sách không hiệu lực tại ngày chứng từ | [bài học](../huong-dan/loi-dau-vao/IN-POL-002.md) |
+| `IN-POL-003` | L4 | warn | advice | 5 | Đã có bản chính sách mới hơn hiệu lực tại ngày chứng từ | [bài học](../huong-dan/loi-dau-vao/IN-POL-003.md) |
+| `IN-POL-004` | L4 | warn | advice | 10 | Quà tính lại theo chính sách khác quà nguồn gửi | [bài học](../huong-dan/loi-dau-vao/IN-POL-004.md) |
 | `IN-GUARD-001` | L5 | block | door | 0 | Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn (Commit Guard, R-GATE-8) | [bài học](../huong-dan/loi-dau-vao/IN-GUARD-001.md) |
 
 L5 (`IN-POST-*`, định khoản thử) và các mã danh mục cần xác minh Kernel (ĐVT, kho thuộc chi nhánh, bán nợ thiếu đối tượng, kỳ khoá) thêm ở W5 / S021-4.
+
+### 3.1 Tham chiếu chính sách (0.9.0-draft, PHASE-031 W2a)
+
+Ba mã `IN-POL-001..003` đã vào bảng §3. `IN-POL-004` (W2b): tính lại quà theo **đúng bản nguồn nêu** trên các dòng không phải quà, so với dòng quà nguồn gửi mang `policyRef.key` của chính sách đó; thiếu / thừa / lệch số lượng → `IN-POL-004` kèm `got` (nguồn) ↔ `expected` (tính lại); chỉ khi bản có thật và băm khớp; im lặng khi không tính được (nội dung ở module chủ, khuôn không có quà, ngoài phạm vi). Để sau: `IN-POL-000` nghiệp vụ có chính sách hiệu lực mà nguồn không gửi tham chiếu (`hint`), `IN-POL-005` kết quả thiếu dữ liệu gốc (quà thiếu kho / lô). Thiếu lý do định khoản cho kết quả chính sách dùng `IN-POST-001` sẵn có.
 
 ## 4. Nhật ký
 

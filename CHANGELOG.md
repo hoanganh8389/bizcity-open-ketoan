@@ -19,6 +19,270 @@ Mỗi bản ghi đủ sáu mục:
 - **Sửa:** không.
 - **Thay đổi định khoản:** không. Phần mềm vẫn xử lý theo đuôi mã, ô Biến thể mới chỉ ghi nhận.
 - **Nâng cấp cần làm:** chạy migration 0078. Khoảng 9 giây trên 42.016 dòng; không đổi `updated_at`, hệ thống bán hàng không phải kéo lại danh mục.
+### Màn "Sửa đầu bút toán" (SC02) và xác nhận của kế toán trưởng (PHASE-004 S004-16, D004-14, D004-16) <!-- [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 -->
+
+- **Thêm:** `GET /api/v1/ledger/entry-edits` (quyền `ledger:read`) — mọi lần đổi đầu bút toán từ nhật ký của trigger 0089, nguồn **Ứng dụng** / **Ngoài ứng dụng** (ghép `_txid`), cột trước → sau, vai trò / đăng nhập / ứng dụng / máy, trạng thái xác nhận, tóm tắt; lọc ngày hạch toán, nguồn, cột, số bút toán, trạng thái. Action `core.ledger.header-edit-ack` (`POST …/entry-edits/ack`, quyền `periods:lock`, chỉ người dùng, lý do ≥ 10 ký tự): bằng chứng của action là bản ghi xác nhận, chỉ thêm. Màn **SC02** ở menu Kế toán › Định khoản (bộ lọc trên địa chỉ, cột `content_hash` ẩn mặc định). Hướng dẫn `docs/huong-dan/sua-dau-but-toan.md`. Test `entry-edits` (5 ca).
+- **Đổi:** chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` (và lane DG-LEDGER-5) bỏ lần sửa đã được xác nhận — khoá kỳ hết chặn sau khi kế toán trưởng xem. Màn đặt ở menu Kế toán thay vì Bàn điều tra (D004-14 đổi: kế toán trưởng không có `devtools:read`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần 0089).
+- **Bảo mật:** đọc nhật ký theo đơn vị; xác nhận không sửa / xoá dấu vết cũ; khoá API không xác nhận được.
+
+
+### Nhật ký chi tiền theo khoản mục hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2d) <!-- [2026-11-09 11:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2d -->
+
+- **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-DIM-1..2.
+- **Đổi:** **sổ nhật ký chi tiền theo khoản mục** (ACC75) hiện tên đối tượng **lúc ghi** (tên của dòng Nợ nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ, kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên, vẫn hiện tên cũ. Số tiền và cột khoản mục không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0090 đã chạy).
+- **Bảo mật:** không đổi.
+
+### Sổ chi tiết tài khoản và nhật ký chung hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2c) <!-- [2026-11-09 11:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2c -->
+
+- **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-LED-1..3.
+- **Đổi:** **sổ chi tiết tài khoản** và **sổ nhật ký chung** hiện tên đối tượng **lúc ghi** (tên của dòng nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ, kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên, vẫn hiện tên cũ. Mã đối tượng và số tiền không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0090 đã chạy).
+- **Bảo mật:** không đổi.
+
+### E1 (điền giá vốn) qua hàm SECURITY DEFINER; ứng dụng không còn sửa trực tiếp số tiền sổ cái (PHASE-004 S004-17, D004-15) <!-- [2026-11-09 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-17 -->
+
+- **Đổi:** migration `0091` — vai trò `ketoan_ledger_cost` (NOLOGIN) sở hữu hai hàm `ledger_fill_cost_lines` / `ledger_fill_entry_totals` (SECURITY DEFINER, `search_path` cố định, `EXECUTE` chỉ cho `ketoan_app`), tự kiểm dòng `cost_fill`, bút toán `posted` không đảo, số ≥ 0, ghi `audit_logs` `ledger.cost_fill`. Trigger sổ cái chỉ cho đổi số tiền khi `current_user = 'ketoan_ledger_cost'` (cờ phiên `ketoan.cost_overwrite` hết tác dụng). `ketoan_app` mất `UPDATE` số tiền: `ledger_lines` chỉ còn cột `item_id`; `ledger_entries` không còn cột `total` (cột mới thêm về sau mặc nhiên không sửa được). `overwriteCostPairs` gọi hai hàm.
+- **Thêm:** test `e1-cost-fill` (7 ca: cờ cũ vô tác dụng, qua hàm đổi được và có dấu vết, hàm từ chối dữ liệu sai, không thay / sửa hàm, cân Nợ = Có, đường thật `overwriteCostPairs`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** người cài đặt cần quyền tạo vai trò `ketoan_ledger_cost`; nếu không migration dừng và in lệnh `CREATE ROLE` để quản trị CSDL chạy trước. Giá trị tiền không đổi; hiệu năng giữ nguyên (cùng `unnest` theo lô 10.000).
+- **Bảo mật:** thu hẹp từ "mọi dòng sổ cái, không dấu vết" xuống "chỉ dòng giá vốn chờ, có dấu vết"; hàm là bề mặt mới (không SQL động, kiểm tham số). Chưa được: `ketoan_app` vẫn gọi hàm với số tiền tuỳ ý cho dòng giá vốn chờ (bản chất của việc điền giá vốn).
+
+
+### Sổ nhật ký hiện tên đối tượng lúc ghi; khung nhìn bizcity_read thêm partner_name (PHASE-029 S029-19 đợt 2b) <!-- [2026-11-09 11:13 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2b -->
+
+- **Thêm:** migration `0090_khung_nhin_ten_doi_tuong.sql` — `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` thêm `partner_name` + `partner_attr_id` ở cuối (`CREATE OR REPLACE VIEW` chỉ thêm cột, giữ thứ tự cột cũ, giữ `security_invoker` và quyền). Báo cáo đọc sổ qua khung nhìn nên đây là điều kiện để đọc được tên lúc ghi của 0087. Golden T029-JNL-1..4.
+- **Đổi:** sổ nhật ký **thu / chi tiền** (`cash-journal`), **bán hàng** (`sales-journal`) và **mua hàng** (`purchase-journal`) hiện tên đối tượng **lúc ghi** (tên của dòng nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ — kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên — vẫn hiện tên cũ. Dòng sổ ghi trước 0087 (chưa có tên lúc ghi) vẫn hiện tên hiện tại. Mã đối tượng và số tiền không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** chạy migration 0090 (đã có 0087 của đợt 1).
+- **Bảo mật:** không đổi (khung nhìn giữ `security_invoker`).
+
+### Cảnh báo sửa đầu bút toán ngoài ứng dụng (PHASE-004 S004-15a, D004-13) <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a -->
+
+- **Thêm:** chẩn đoán L3 `LEDGER_HEADER_EDIT_UNATTRIBUTED` (mức **error**, có phạm vi kỳ / chi nhánh): liệt kê bút toán có lần sửa đầu **ngoài ứng dụng** = dòng nhật ký của trigger 0089 (`_source = db`) không có dòng của ứng dụng (`_source = app`) cùng `_txid`. Vì là lỗi L3 mức error nên khoá kỳ chặn như mọi lỗi L3 (kế toán trưởng ghi lý do thì khoá được). Lane DG-LEDGER-5 cùng bộ mã (R-DIAG-9). Test `e2-unattributed-warning`.
+- **Đổi:** không. Số đo `bizcity_ledger_header_edit_unattributed_total` và luật cảnh báo là S004-15b (chờ PHASE-018 W6).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần migration 0089 đã chạy). Lần sửa trực tiếp trước đây vẫn hiện nếu đã có dòng nhật ký của trigger.
+- **Bảo mật:** chỉ đọc `audit_logs` theo đơn vị.
+
+
+### Báo cáo công nợ hiện tên đối tượng tại ngày kết thúc kỳ (PHASE-029 S029-19 đợt 2a) <!-- [2026-11-09 09:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2a -->
+
+- **Đổi:** báo cáo **công nợ theo nhân viên** (`GET /api/v1/reports/debt-by-employee`) và **công nợ theo mặt hàng** (`debt-by-item`) hiện tên đối tượng ở tiêu đề theo **tên hiệu lực tại ngày kết thúc kỳ** (`to`), không phải tên hiện tại: đổi tên đối tượng rồi xem báo cáo của kỳ kết thúc trước ngày đổi tên vẫn ra tên cũ, kỳ kết thúc từ ngày đổi tên trở đi ra tên mới. Số liệu và mã đối tượng không đổi. Hàm dùng chung `partnerNamesAt` (`reports/ten-doi-tuong.ts`) cho các báo cáo sau. Golden T029-RPT-1..4.
+- **Thêm:** không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
+- **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
+
+### Thực hiện chương trình khuyến mại: `program[]` ở theo dõi chính sách (PHASE-031 W4c, ADR-0031) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c -->
+
+- **Thêm:** khoá `program[]` ở `GET /api/v1/policy-tracking` — mỗi *(chính sách, bản)* có chứng từ trong kỳ: số chứng từ áp, **số lượng quà đã tặng theo mặt hàng** (từ các dòng quà nguồn đã gửi trong chứng từ đã ghi sổ), số chứng từ có quà lệch (`IN-POL-004`) và tỉ lệ. Khối *Thực hiện chương trình* ở tab *Theo dõi thực hiện* của màn Chính sách. `bizcity_policy@1` 1.3.0-draft; test T031-PRG-1..5.
+- **Đổi:** không. Thêm khoá, không đổi khoá cũ; không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc, lọc `tenant_id`; cần `catalog:read`.
+
+### Cửa nạp tính lại quà theo chính sách: `IN-POL-004` (PHASE-031 W2b, ADR-0031) <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b -->
+
+- **Thêm:** mã `IN-POL-004` (L4, cảnh báo, 10 điểm) — tính lại quà theo **đúng bản chính sách nguồn nêu** trên các dòng không phải quà, so với dòng quà nguồn gửi (thiếu / thừa / lệch số lượng), kèm cặp nguồn ↔ tính lại; chỉ khi bản có thật và băm khớp; im lặng khi không tính được. `getPolicyVersion` (đọc một bản kèm nội dung inline) và điểm mở rộng `registerPolicyRecompute` ở `@bizcity/platform/core/policies` — `apps/api` đăng ký hàm tính (`rule-contracts/recompute.ts`) cùng luật với `POST /policies/evaluate`. `bizcity_intake_findings@1` (§3 thêm mã; số phiên bản nâng sau); trang `loi-dau-vao/IN-POL-004.md`; test `intake-policy-recompute.test.ts` (T031-INT-10..14).
+- **Đổi:** `policy_check.findings`, khung nhìn `policy_application.codes` và ô *Lệch theo mã* mang thêm mã mới (không đổi mã nào). Chế độ `strict` coi `IN-POL-004` như mọi `IN-POL-*` (chờ duyệt). Mặc định vẫn chỉ cảnh báo.
+- **Sửa:** không. Không migration.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc; cảnh báo không lộ nội dung chính sách ngoài số lượng quà.
+
+### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
+
+- **Thêm:** màn *Hệ thống → Chính sách* (HT15, quyền `catalog:read`, `/he-thong/chinh-sach`) với bốn tab: *Chính sách* (các bản, hiệu lực, băm, chứng từ đã áp, khoảng trống), *Chờ kế toán xem* (hàng việc `policy_review` + nút *Đánh dấu đã xem*, ẩn khi thiếu `documents:write`), *Truy vết* (chứng từ → chính sách@bản, băm khớp / lệch, ngày ngoài hiệu lực), *Theo dõi thực hiện* (đạt chính sách, lệch theo mã, độ phủ, độ trễ phiên bản, dòng thời gian, sức khoẻ). Đường dẫn sâu `?xem=truy-vet&chung-tu=<docKey>` để màn khác mở thẳng chuỗi chính sách căn cứ.
+- **Đổi:** không. Chỉ dùng API đã có (W2c, W4a); không API mới, không migration. Tỉ lệ `null` hiện "—".
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** màn chỉ đọc; nút *Đánh dấu đã xem* cần `documents:write` và đi qua action có bằng chứng (W2c).
+
+### Dấu vết ở CSDL cho mọi thay đổi đầu bút toán, kể cả UPDATE viết thẳng (PHASE-004 S004-14, review R1 RV-R1-14) <!-- [2026-11-09 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-14 -->
+
+- **Thêm:** migration `0089_vet_dau_but_toan.sql` — trigger `ledger_entries_header_audit` (`AFTER UPDATE`, chỉ chạy khi cột đổi) ghi một dòng `audit_logs` `ledger.entry.header_update` cho **mọi** thay đổi chín cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`, `partner_name`, `partner_attr_id` của bút toán, từ mọi đường kể cả `UPDATE` viết thẳng bằng `ketoan_app`. `before_data` / `after_data` chỉ gồm cột thật sự đổi; `after_data` thêm `_source = db`, `_txid`, `_role`, `_login`, `_app`, `_client`. Nhật ký mức ứng dụng của S004-13 thêm `_source = app` và cùng `_txid` để đối chiếu. Hằng `E2_DB_COLUMNS`; test `e2-db-audit.test.ts` (T004-DB-1…5, phá thử dưới `ketoan_app`: không tắt / gỡ trigger, không xoá / sửa nhật ký) và `e2-header-audit.test.ts` (T004-E2-3 buộc danh sách cột và trigger dấu vết khớp trigger bất biến).
+- **Đổi:** nhật ký E2 mức ứng dụng nay mang `_source` và `_txid` trong `after`. Mỗi lần E2 qua ứng dụng có **hai** dòng cùng `_txid` (ứng dụng và CSDL).
+- **Sửa:** trước đây `UPDATE ledger_entries SET event_version = NULL` (hay đổi `description`, `partner_id`…) bằng `ketoan_app` được trigger cho phép và không để lại dấu vết. Phát hiện kèm: `partner_name` và `partner_attr_id` (0087) ghi chú "không đổi về sau" nhưng trigger bất biến không ép nên đổi được; chưa đóng băng (chờ chủ S029-19, Q004-9), nay có dấu vết.
+- **Thay đổi định khoản:** không (K3 thêm chặt; không đổi dữ liệu, không đổi hành vi ghi sổ).
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Mỗi lần định khoản lại đổi thông tin đầu sinh thêm một dòng `audit_logs` (sự kiện hiếm). Cảnh báo "sửa ngoài ứng dụng" và bảng theo dõi là S004-15 / S004-16 (chưa có).
+- **Bảo mật:** đóng kẽ hở sửa đầu bút toán không để lại dấu vết. Giới hạn: chủ bảng / superuser vẫn tắt được trigger (chẩn đoán `LEDGER_TRIGGERS` phát hiện sau).
+
+### API đọc chính sách: sổ đăng ký, theo dõi thực hiện, truy vết ngược (PHASE-031 W4a, ADR-0031) <!-- [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a -->
+
+- **Thêm:** bốn action đọc `catalog:read` — `GET /api/v1/policy-registry` (+ `/:policyId/applications`), `/policy-tracking`, `/policy-lineage` — đọc `policy_registry` và `bizcity_read.policy_application`; hợp đồng `bizcity_policy@1` 1.2.0-draft mục 11. Test `policy-insight.test.ts` (T031-INS-1..6).
+- **Đổi:** không. Không migration, không bảng tổng hợp.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc, lọc `tenant_id`; khoá API cần `catalog:read`.
+
+### Cập nhật thông tin đầu bút toán (E2) có nhật ký trước / sau (PHASE-004 S004-13, review R1 RV-R1-14) <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-13 -->
+
+- **Thêm:** `posting.service.ts` ghi nhật ký `ledger.entry.header_update` mỗi khi định khoản lại chỉ đổi thông tin đầu của một bút toán đã ghi (đường E2): `before` / `after` chỉ gồm các cột **thật sự đổi** trong bảy cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`; `objectType = ledger_entry`, `objectId` = id bút toán. Hằng `E2_COLUMNS` dùng chung và test `e2-header-audit.test.ts` (T004-E2-1…3) so danh sách đó với trigger `guard_ledger_entry_mutation` trong CSDL.
+- **Đổi:** không đổi hành vi ghi sổ, không đổi bút toán, không migration. Trong action nhật ký nằm ở `notes.audit[]` của bằng chứng (ACTION §4.4, phương án C); ngoài action là dòng `audit_logs`.
+- **Sửa:** trước đây dấu vết duy nhất của E2 là một con số trong `posting_log` ("cập nhật thông tin đầu M"), không biết cột nào của bút toán nào đã đổi từ giá trị nào.
+- **Thay đổi định khoản:** không (K1).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** nhật ký chỉ phủ đường của ứng dụng (`posting.service`). Một câu `UPDATE ledger_entries` viết thẳng bằng vai trò `ketoan_app` vào bảy cột này vẫn được trigger cho phép và **không để lại nhật ký**; chặn hoặc kiểm bằng trigger là câu hỏi Q004-5 của chủ dự án.
+
+### Thuộc tính có hiệu lực của đối tượng / chi nhánh / kho và tên đối tượng lúc ghi trên sổ cái (PHASE-029 S029-19 đợt 1) <!-- [2026-11-08 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 1 entity_attributes -->
+
+- **Thêm:** migration `0087_thuoc_tinh_thuc_the.sql` — bảng `entity_attributes` (tên, MST, địa chỉ có `version` và hiệu lực; chỉ thêm; nguồn sự thật tại một ngày), trigger đồng bộ ở `partners` / `branches` / `warehouses` (cột trên bảng thực thể vẫn là ảnh chụp hiện hành), hàm `bizcity_entity_attr_at`. `ledger_entries` và `ledger_lines` thêm `partner_name` + `partner_attr_id`: trigger BEFORE INSERT điền tên đối tượng **theo ngày chứng từ** (chứng từ nhập muộn vẫn mang tên đúng tại ngày phát sinh) và bản thuộc tính đã dùng; bút toán đảo mang tên của bút toán gốc. `resolveEntity` trả thêm `attributes` (`attributeId`, `version`, `validFrom`, `validTo`). Golden T029-ECP-P001 và T029-EA-1..8.
+- **Đổi:** không đổi báo cáo nào (đợt 2). Dòng sổ đã ghi giữ nguyên, hai cột mới để trống.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Mức K3 (thêm cột + trigger trên `ledger_*`, một người duyệt): cột nullable chỉ thêm, trigger chỉ điền khi INSERT và khi cột rỗng, tên không vào dấu vân tay bút toán. Đường lui: bỏ hai trigger, hai cột mỗi bảng, rồi `DROP TABLE entity_attributes`.
+- **Nâng cấp cần làm:** chạy migration 0087 (tự điền phiên bản 1 cho dữ liệu có sẵn, chạy lại an toàn).
+- **Bảo mật:** `entity_attributes` có RLS cô lập theo đơn vị như `entity_codes`.
+
+### Sự kiện chính sách qua outbox: `bizcity.policy.published` / `.retired` (PHASE-031 W3b, ADR-0031) <!-- [2026-11-08 11:59 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b -->
+
+- **Thêm:** `registerPolicyVersion` phát `bizcity.policy.published` và `retirePolicy` phát `bizcity.policy.retired` qua outbox, cùng giao dịch với việc ghi sổ đăng ký (`data` chỉ định danh + băm + `closes`, không nội dung; `dedupeKey` chống phát đôi). Hợp đồng: `bizcity_event@1` 1.3.0-draft §7, `bizcity_policy@1` 1.1.0-draft §10; test `policy-events.test.ts` (T031-EV-1..5). App ngoài nhận bằng webhook sẵn có (§7a).
+- **Đổi:** `retirePolicy` thêm tham số `actor` tuỳ chọn (chữ ký cũ vẫn chạy; thiếu thì tác nhân `system`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (không migration). POS / sàn muốn nghe sự kiện thì khai `events.subscribes` hai loại mới.
+- **Bảo mật:** `data` không chứa nội dung chính sách; người nhận phải có quyền `catalog:read` để tải nội dung.
+
+### Gỡ cờ thoát allow_ledger_purge khỏi trigger sổ cái, thu quyền xoá của ketoan_app (PHASE-004 S004-12, review R1 RV-R1-01) <!-- [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 -->
+
+- **Thêm:** migration `0086_go_co_thoat_so_cai.sql` — tạo lại chín trigger bảo vệ sổ (`ledger_entries`, `ledger_lines`, `ledger_links`, `accounting_events`, `accounting_event_versions`) **không còn mệnh đề `WHEN`** theo cờ `ketoan.allow_ledger_purge`; tên trigger và hàm trigger giữ nguyên; `REVOKE DELETE, TRUNCATE` khỏi `ketoan_app` trên sáu bảng sổ (kể cả `posting_log`); tự kiểm cuối dừng migration nếu còn trigger nhắc cờ. Ca phá thử: `app-role.test.ts` (quyền) và `db-rules.test.ts` (đặt cờ rồi DELETE / UPDATE / TRUNCATE đều bị từ chối). Chẩn đoán `LEDGER_TRIGGERS` (DG-DB-2) báo thêm trigger còn nhắc cờ (`cờ thoát:…`).
+- **Đổi:** nhóm ngoại lệ E4 của RULE-LEDGER gỡ; SC-KERNEL-4 và `scripts/kiem-chuan.sh` chỉ cho tên cờ ở hai ca phá thử và chẩn đoán. Test cần dọn dòng thử dùng đường của E3 (`SET LOCAL session_replication_role = replica`). `lich-su-chung-tu.test.ts` bỏ ba lần đặt cờ vì `event_version` nằm trong bảy cột E2, đổi được không cần vượt trigger.
+- **Sửa:** trước đây cờ là biến của phiên: phiên nào cũng `set_config` được rồi xoá / sửa sổ, và `ketoan_app` có `DELETE` trên các bảng này (0032). Cờ chỉ test dùng.
+- **Thay đổi định khoản:** không (K3 **thêm chặt** nên minor; không đổi dữ liệu, không đổi bút toán).
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Script hay SQL tự viết dùng cờ `allow_ledger_purge` để dọn sổ sẽ không còn hiệu lực: dùng đường E3 (`scripts/xoa-chung-tu.sh`, superuser, có sao lưu). TRUNCATE chưa từng được cấp cho `ketoan_app`; thu thêm cho chắc. Bản cài chưa chạy API bằng `ketoan_app` (PHASE-001 mục 0.7) thì chỉ lớp trigger có tác dụng; chủ bảng / superuser vẫn tắt được trigger (`DISABLE TRIGGER`) — chẩn đoán `LEDGER_TRIGGERS` phát hiện sau đó.
+- **Bảo mật:** đóng cửa sau cho phép bất kỳ phiên nào xoá hoặc sửa bút toán chỉ bằng một câu `set_config`.
+
+### SC-PILLAR-1: tiêu chí "đạt" của bảng trụ cột phải có bằng chứng có thật (PHASE-026 S026-15 đợt 1) <!-- [2026-11-08 04:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-15 -->
+
+- **Thêm:** bộ kiểm **SC-PILLAR-1** (chặn, `tests/conformance/checks/pillar/`): mỗi tiêu chí `status: "dat"` ở `docs/standard/tru-cot.json` phải dẫn tới ít nhất một thứ có thật trong repo (migration, test, mã check, tuyến API, đường dẫn, tên tệp, định danh trong mã) và không dẫn tới thứ đã mất. Tiêu chí có mã check có thật ghi `source = check`, còn lại `manual` (đếm ở ghi chú). Ca mẫu `repo-bad/docs/standard/tru-cot.json`. Dòng SC-PILLAR-1 ở `RULE-QUALITY-GATE`.
+- **Đổi:** không. Trên dữ liệu thật 0 phát hiện (27 tiêu chí đạt: 2 `source = check`, 25 `manual`), không thêm nợ baseline.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
+### Hàng việc "Chờ kế toán xem" và nút Đánh dấu đã xem (PHASE-031 W2c, ADR-0031) <!-- [2026-11-08 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2c -->
+
+- **Thêm:** migration `0084_xem_lai_chinh_sach`: bảng `policy_review_acks` (bằng chứng đã xem, chỉ thêm, RLS) và nhánh `policy_review` của `bizcity_read.document_queue` — sự việc đã ghi sổ có phát hiện chính sách (IN-POL-*) mà bản kiểm hiện hành chưa ai xem, cờ `policy`, nhóm `pending`. Action `core.queue.policy-review.ack` (`POST /api/v1/queue/policy-review/:eventId/ack`, quyền `documents:write`, `Idempotency-Key`) ghi một dòng bằng chứng; gọi lặp trả kết quả cũ; bản kiểm mới (`checkedAt` đổi) mở lại việc. Test `policy-review.test.ts` (T031-Q-1..5).
+- **Đổi:** `QUEUE_SOURCES` thêm `policy_review`, `QUEUE_FLAGS` thêm `policy`; `core.queue.mine` thêm phần `policy` cho người có quyền ghi chứng từ; `core.queue.summary` đếm `policy` theo từng nguồn (`bySource[].policy`), `byFlag` giữ ba khoá cũ.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Sự việc cũ có `policy_check` mang phát hiện sẽ hiện ở hàng việc cho tới khi được đánh dấu đã xem.
+- **Bảo mật:** hành động ghi cần `documents:write`; bảng bằng chứng có RLS theo đơn vị và trigger chặn sửa / xoá.
+
+### Xem trước tác động cấu hình nhận scopeId số (PHASE-030, review R1 RV-R1-05) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — RV-R1-05 -->
+
+- **Thêm:** ca hồi quy T030-CFG-IMP-4 (`apps/api/test/cau-hinh-doi-khoa-a.test.ts`): phạm vi `branch` / `user` với `scopeId` là số được xem trước (200); `scopeId` không phải số vẫn 400.
+- **Sửa:** `settingImpact` kiểm `scopeId` bằng `/^d+$/` (thiếu dấu gạch chéo ngược trước chữ d), nên `GET /api/v1/settings/values/:key/impact?scope=branch&scopeId=12` luôn trả 400 "cần scopeId là định danh số". Hàm ghi `setSetting` đã dùng đúng mẫu số; chỉ phần xem trước bị lỗi.
+- **Đổi:** không.
+- **Thay đổi định khoản:** không (K0, một dòng, không đổi dữ liệu).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
+### Mã có phiên bản cho đối tượng / chi nhánh / kho: entity_codes và resolveEntity (PHASE-026 S026-4 đợt 1) <!-- [2026-11-08 04:07 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — đợt 1 entity_codes -->
+
+- **Thêm:** migration `0085_ma_thuc_the.sql` — bảng `entity_codes` (mã có phiên bản cho partner / branch / warehouse): chỉ thêm, đổi mã = đóng `valid_to` + thêm mã mới, chặn chồng hiệu lực, RLS theo đơn vị. Trigger giữ cột `code` của `partners` / `branches` / `warehouses` khớp ở mọi đường ghi; điền ban đầu từ cột `code` hiện có. `resolveEntity` / `resolveEntities` (mã chính, bí danh, mã ngoài, tra theo ngày), kiểu `EntityRef` / `EntityResolveResult` ở `@ketoan/contracts`. Golden T026-EC-1..9.
+- **Đổi:** `id` và `tenant_id` của đối tượng / chi nhánh / kho không đổi được (guard ở CSDL). Xoá thực thể vẫn được, chỉ đóng mã. Kiểu Kysely `LedgerEntriesTable.event_id` thành `string` (S030-41b).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0085 (tự điền mã cho dữ liệu có sẵn, chạy lại an toàn). Đợt này chưa có đơn vị tính, lý do.
+- **Bảo mật:** `entity_codes` có RLS cô lập theo đơn vị như `item_codes`.
+
+### Lỗi trigger sổ cái ra đúng mã hợp đồng: không cân, khoá kỳ, sổ chỉ thêm (PHASE-029 S029-33, review R1 RV-R1-02) <!-- [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33 -->
+
+- **Thêm:** `classifyLedgerTriggerError` (`packages/platform/src/core/errors.ts`) — một nơi nhận ra lỗi trigger sổ cái theo SQLSTATE + câu chữ; `core/http.ts` và `errorCodeOf` (trace) cùng gọi. Golden T029-ERR-1…5 (`apps/api/test/db-error-mapping.test.ts`) dùng lỗi sinh từ trigger thật trên PostgreSQL.
+- **Đổi:** theo [BIZCITY-ERRORS-v1](docs/contracts/BIZCITY-ERRORS-v1.md) 1.3.0-draft §5: `23514` + "không cân" → `UNBALANCED_ENTRY` (422); `23514` + `PERIOD_LOCKED:` → `PERIOD_LOCKED` (**409**); `42501` + "chỉ được thêm" → `CONFLICT` (**409**) + `details.reason = LEDGER_APPEND_ONLY`. CHECK / quyền khác vẫn `POSTING_FAILED` (422).
+- **Sửa:** trước đây mọi lỗi cân, khoá kỳ và sửa sổ ở tầng CSDL đều ra `POSTING_FAILED` vì trigger ném `23514` / `42501` chứ không phải `P0001` như bảng §5 cũ giả định; bên gọi rẽ nhánh theo `code` không phân biệt được ba trường hợp này.
+- **Thay đổi định khoản:** không (K0 cho mã; không đổi migration, không đổi bút toán).
+- **Nâng cấp cần làm:** bên tích hợp đang rẽ nhánh theo `POSTING_FAILED` cho lỗi khoá kỳ / sửa sổ cần xử lý thêm `PERIOD_LOCKED` và `CONFLICT` + `LEDGER_APPEND_ONLY` (HTTP 422 → 409). Chưa có tag phát hành nào dùng hành vi cũ.
+
+### Sửa trùng số migration 0080: gói K3 đổi sang 0081 / 0082 (PHASE-029) <!-- [2026-11-08 11:33 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — sửa trùng số 0080 -->
+
+- **Sửa:** PHASE-031 W2a (#159) và gói K3 (#165) cùng merge với số 0080, `main` đỏ `SC-DATA-1`. K3 merge sau nên đổi: `0080_nguoi_tao_su_viec_bat_buoc.sql` → `0081_…`, `0081_khoa_ky_o_csdl.sql` → `0082_…`. `0080_kiem_chinh_sach_su_viec.sql` (W2a) giữ nguyên.
+- **Đổi:** `RENAMED` ở `migrate.ts` thêm hai cặp tên: bản cài đã áp tên cũ chỉ ghi nhận tên mới, **không chạy lại** (chạy lại sẽ lỗi vì hàm và trigger đã có). Nội dung hai migration không đổi.
+- **Thêm:** hai ca ở `migrate-rename.test.ts` (đã áp tên cũ thì không chạy lại; thư mục không còn số trùng).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy `npm run db:migrate` như thường. Bản cài đã kéo `main` trong khoảng 2026-11-08 và đã áp tên cũ sẽ tự ghi nhận tên mới.
+- **Bảo mật:** không.
+
+### Bộ review theo nhịp và bản đồ phase → phiên bản (docs/reviews/, R1 nền móng) <!-- [2026-11-08 12:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — R1 -->
+
+- **Thêm:** thư mục `docs/reviews/` — tiêu chí 12 trục (thang 0–4, trục cổng A2 · A7 · A12), bảng điểm matrix, bản đồ 31 phase vào sáu phiên bản v0.1.0 → v1.0.0 (đề xuất), bản máy đọc `review-board.json`; biên bản R1 (`main` @ 886f4f95): **ĐẠT có điều kiện 27/48**, 18 phát hiện RV-R1-01…18, trong đó 3 chặn (cờ thoát `allow_ledger_purge` tự bật được; SQLSTATE của trigger bị gộp thành `POSTING_FAILED`; trùng số migration 0080). Nhịp: 3 phase mở mới ⇒ 1 review, trước khi đóng phiên bản.
+- **Đổi:** `docs/README.md`, `docs/phases/README.md` trỏ tới `docs/reviews/`.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (chỉ tài liệu).
+- **Bảo mật:** biên bản R1 ghi nhận RV-R1-01 (vai trò ứng dụng có `DELETE` trên `ledger_*` và cờ thoát trigger là biến phiên) là việc chặn trước khi đóng v0.1.0 — chưa sửa trong PR này.
+
+### API chính sách cho nguồn ngoài: lấy, tính, phát hành inline (PHASE-031 W3a, ADR-0031) <!-- [2026-11-08 04:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a -->
+
+- **Thêm:** hợp đồng [`bizcity_policy@1`](docs/contracts/BIZCITY-POLICY-v1.md) — `GET /api/v1/policies` (bản đang hiệu lực tại `at`, lọc `domain` / `branch` / `channel`, có `etag`), `GET /api/v1/rule-contracts[/:id]` (tham số, `spec` để plugin viết lại, `vectors` để tự kiểm), `POST /api/v1/policies/evaluate` (tính theo chính sách, trả `applied` / `skipped` kèm lý do / `gifts` / `policyRefs`), `POST /api/v1/policies` (phát hành bản inline). Rule Contract đầu tiên `sale.promo.buy_x_get_y@1` (mua X tặng Y; `itemId`, `repeat`, `maxGiftQty`, dung sai số lẻ). `core/policies.ts`: `listPublishedPolicies`, `publishInlinePolicy`, `inlinePolicyId`.
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Quyền đọc và tính là `catalog:read` (khoá `documents:write`, `reports:read`, `catalog:write` đều có); **không thêm scope**. Chưa kiểm trần pháp lý hàng khuyến mại (NĐ81); nhiều chính sách áp độc lập, cộng dồn.
+
+### Cửa nạp nhận tham chiếu chính sách (PHASE-031 W2a, ADR-0031) <!-- [2026-11-08 04:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (mục CHANGELOG còn thiếu khi merge #159) -->
+
+- **Thêm:** `policyRefs[]` ở phiếu và `lines[].policyRef` ở dòng hàng (`bizcity_ledger_intake@1` 1.6.0, tuỳ chọn, lưu nguyên văn trong `payload`); `IN-POL-001..003` (L4, cảnh báo, chấp nhận được); `policy_check` ở `accounting_events` / `accounting_event_versions`; khung nhìn `bizcity_read.policy_application`; khoá `bizcity.intake.policy_check` (`advice` mặc định | `strict` → chờ duyệt bằng `hold` sẵn có); Commit Guard băm phong bì chính sách được trỏ tới; phiếu mua hàng nộp kèm `policyRefs` từ `policyTrace`.
+- **Đổi:** không.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+
+### Gói K3 đợt 1: người tạo sự việc bắt buộc, khoá kỳ ở CSDL (PHASE-029 S029-17, PHASE-030 S030-42 / D030-16) <!-- [2026-11-08 10:31 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — gói K3 đợt 1 -->
+
+- **Thêm:** migration `0082_khoa_ky_o_csdl.sql` — trigger `ledger_entries_period_lock` (BEFORE INSERT) chặn bút toán vào kỳ đã khoá kể cả khi bỏ qua ứng dụng, cùng điều kiện `periodRepository.isLocked`; câu lỗi `PERIOD_LOCKED: kỳ MM/YYYY đã khoá…`. Golden T029-K3-1..5.
+- **Đổi:** migration `0081_nguoi_tao_su_viec_bat_buoc.sql` — `accounting_events.created_by` NOT NULL và không rỗng. `eventStore.saveVersion` (khấu hao, giá vốn, khoá sổ…) ghi `auth.actor` khi không truyền người tạo.
+- **Sửa:** sự việc do Kernel tự lập không còn rỗng người tạo (trước: 1.484 / 68.923 dòng trên `ketoan_test`, toàn bộ khấu hao và giá vốn).
+- **Thay đổi định khoản:** không. Không đổi bút toán nào.
+- **Nâng cấp cần làm:** chạy migration 0081, 0082. 0081 điền dòng rỗng bằng `system:<doc_type>`; gặp người tạo là chuỗi trắng thì **dừng** bằng câu tiếng Việt, không tự sửa — xem và ghi đúng người tạo rồi chạy lại. Đường lui: `DROP NOT NULL` + bỏ ràng buộc (0081), `DROP TRIGGER` (0082).
+- **Bảo mật:** 0081 tắt riêng trigger `accounting_events_no_delete` trong chính giao dịch migration (khoá độc quyền bảng) chỉ để điền dòng rỗng; người lập đã có giá trị vẫn không đổi được.
+
+### Không còn mật khẩu viết sẵn trong mã: SC-SEC-5, mật khẩu công cụ, mật khẩu quản trị ban đầu (PHASE-027, CK-3 + Q027-5) <!-- [2026-11-07 03:34 PM Johnny Chu - Chu Hoàng Anh] PHASE-027 — CK-3 -->
+
+- **Thêm:** bộ kiểm **SC-SEC-5** (chặn) — biến bí mật (`PASSWORD`, `SECRET`, `TOKEN`, `API_KEY`, `PRIVATE_KEY`) có giá trị mặc định viết trong mã các lớp (`process.env.X || "…"`, `?? "…"`); không in giá trị, chỉ tên biến và độ dài. `core/security/tool-password.ts` (`checkToolPassword`, so sánh thời gian hằng). Golden T027-SEC-1..4.
+- **Đổi:** công cụ dữ liệu mẫu (nạp / xoá dữ liệu tình huống mua hàng, quét cha – con cả danh mục) đọc mật khẩu từ `PURCHASE_SEED_PASSWORD`, **không còn mặc định trong mã**: chưa đặt biến thì công cụ tắt và báo cách bật. `npm run db:seed` khi bỏ trống `SEED_ADMIN_PASSWORD` tự sinh mật khẩu quản trị 16 ký tự và in một lần (trước: mặc định `Admin@123`).
+- **Sửa:** gỡ mục nợ SC-CON-7 `PURCHASE_SEED_PASSWORD` đã hết khỏi `baseline.json` (biến nay khai ở [DEPLOY D-10](docs/ops/DEPLOY.md)).
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** cài bằng docker / `scripts/cai-nhanh.sh` không đổi (`.env` vẫn đặt `SEED_ADMIN_PASSWORD`). Muốn dùng công cụ dữ liệu mẫu thì đặt `PURCHASE_SEED_PASSWORD` trong `.env` rồi khởi động lại API; bản thật nên để trống ([DEPLOY D-10](docs/ops/DEPLOY.md)).
+- **Bảo mật:** hai mật khẩu đã công bố trong git (`Admin@123`, mật khẩu công cụ cũ) không còn mở được gì nếu chưa đặt biến; bản cài đang dùng mật khẩu công cụ cũ nên đặt `PURCHASE_SEED_PASSWORD` mới.
+
+### Sổ đăng ký chính sách và phiên bản chính sách mua hàng (PHASE-031 W1, ADR-0031) <!-- [2026-11-07 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 -->
+
+- **Thêm:** migration `0079_so_dang_ky_chinh_sach.sql` — bảng `policy_registry` (phong bì từng bản chính sách: khoá, bản, phạm vi, hiệu lực của bản theo ngày chứng từ, băm, Rule Contract, người phát hành; bản đã phát hành không sửa, chỉ ngừng hoặc đóng hiệu lực một lần) và `purchase_policy_versions` (chỉ thêm); mỗi chính sách mua hàng đang có được nạp ngược thành bản 1. `packages/platform/src/core/policies.ts`: `registerPolicyVersion`, `resolvePolicy`, `listPolicyVersions`, `retirePolicy`. Route `GET /api/v1/purchase/policies/:id/versions`. Form chính sách có ô *áp cho chứng từ từ ngày*, *lý do đổi*, khối *Phiên bản*.
+- **Đổi:** lưu chính sách mua hàng mà nội dung đổi → bản mới (áp lùi về trước hôm nay cần lý do). Engine chọn bản theo **ngày chứng từ** (`policyAt` trong `policiesFor`): phiếu ngày cũ tính lại ra số cũ. Vết chính sách trên phiếu (`policyTrace`) ghi thêm `version`, `hash`. Xoá chính sách chưa áp → các bản chuyển `retired` ở sổ đăng ký.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+
+### Căn cứ của khoá cấu hình: setting_values.basis, basis / usedBy ở registry (PHASE-030, S030-43) <!-- [2026-11-06 04:35 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-43 -->
+
+- **Thêm:** migration `0078_setting_values_can_cu.sql` — cột `setting_values.basis` (căn cứ của một phiên bản: văn bản, điều, khoản, điểm, đường dẫn, ngày hiệu lực). `core.settings.set` nhận `basis?` (khuôn kiểm, không bắt buộc kể cả khoá loại A — D030-12); lịch sử phiên bản trả căn cứ. Registry `bizcity_settings@1` 1.2.0-draft: `basis` (căn cứ mặc định của khoá) và `usedBy` (nơi đọc khoá). `GET /api/v1/settings/overview` trả `basis`, `basisFrom`, `usedBy`; màn HT13 hiện thẻ Căn cứ và nơi dùng. Golden T030-CFG-BASIS-1..6. Chữ chốt `docs/contracts/BIZCITY-SETTINGS-MATRIX-v1.md` 1.2.0-draft.
+- **Đổi:** `getSetting` trả thêm `basis` (căn cứ của phiên bản đang áp), kể cả khoá còn đường lưu cũ ở `tenants.settings`. 10 khoá loại A có căn cứ mặc định là quy tắc nội bộ kiểm được trong repo (không phải điều luật).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0078 (chỉ thêm cột, không đổi dòng nào). Căn cứ pháp lý (luật, thông tư) chưa điền: chờ kế toán trưởng xác nhận (S030-12 / S030-35).
+- **Bảo mật:** `url` trong căn cứ chỉ nhận `https://`; trường lạ bị từ chối; không đổi quyền ghi (`settings:write`).
+
+### Mọi bút toán có chứng từ gốc: event_id bắt buộc ở CSDL (PHASE-030, S030-41) <!-- [2026-11-06 03:25 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-41 -->
+
+- **Thêm:** migration `0077_event_id_but_toan_bat_buoc.sql` — `ledger_entries.event_id` NOT NULL (R-LEDGER-12, chữ chốt `docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/25-BUT-TOAN-LUON-CO-CHUNG-TU.md`). Golden T030-EVT-1..5, trong đó EVT-5 chạy migration trên CSDL tạm có sẵn dòng rỗng.
+- **Đổi:** `DraftEntry.sourceDocumentId` bắt buộc (không còn `?` / `null`); `ledgerService.post()` từ chối ngay đầu hàm khi thiếu chứng từ gốc (`POSTING_FAILED`); `reverse()` không đảo bút toán có `event_id` rỗng.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không đổi luật định khoản. Mọi đường ghi sổ hiện có đã truyền chứng từ gốc nên không đổi hành vi.
+- **Nâng cấp cần làm:** chạy migration 0077. Nếu bản cài có bút toán rỗng `event_id`, migration **dừng** với câu tiếng Việt nêu số dòng và số bút toán đầu, không tự sửa sổ: báo nhóm Lõi (PHASE-030 · 25 §2 D030-15b). Chưa gặp bản cài nào như vậy (0 / 89.547 và 0 / 123 ở hai CSDL test).
 - **Bảo mật:** không.
 
 ### Màn Cấu hình hệ thống (HT13) bản chỉ đọc (PHASE-030, S030-39) <!-- [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39 -->

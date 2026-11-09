@@ -1,0 +1,7 @@
+{
+  "contract": "bizcity_module@1",
+  "key": "sach",
+  "libraries": [
+    { "id": "vn.ngay-nghi-le", "fields": ["sach.dang-ky.nghi#ngay"] }
+  ]
+}

@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-11-09 09:33 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-19 đợt 2a: tiêu đề đối tượng hiện tên hiệu lực tại NGÀY KẾT THÚC KỲ (entity_attributes), không phải tên hiện tại
 // [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Báo cáo công nợ theo nhân viên và theo mặt hàng.
@@ -10,6 +11,7 @@
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, toNumber } from '../../../db/client.js';
+import { partnerNamesAt } from './ten-doi-tuong.js';
 
 interface Scope { tenantId: string; from: string; to: string; branchIds: string[] | null }
 
@@ -37,10 +39,10 @@ export async function debtByEmployee(a: Scope & { accountPrefix: string; employe
 
   const partnerIds = [...new Set(res.rows.map((r) => r.partner_id).filter((x): x is string => Boolean(x)))];
   const [partners, employees] = await Promise.all([
-    partnerIds.length ? db.selectFrom('partners').select(['id', 'code', 'name']).where('tenant_id', '=', a.tenantId).where('id', 'in', partnerIds).execute() : [],
+    partnerNamesAt(a.tenantId, partnerIds, a.to),
     db.selectFrom('dimensions').select(['code', 'name']).where('tenant_id', '=', a.tenantId).where('kind', '=', 'employee').execute(),
   ]);
-  const pInfo = new Map(partners.map((p) => [p.id, p]));
+  const pInfo = partners; // đối tượng → mã và tên hiệu lực tại a.to (ngày kết thúc kỳ)
   const eName = new Map(employees.map((e) => [e.code, e.name]));
 
   const rows = res.rows
@@ -137,6 +139,9 @@ export async function debtByItem(a: Scope & { accountPrefix: string; partnerCode
     HAVING SUM(l.debit - l.credit) <> 0
      ORDER BY l.partner_id NULLS FIRST, 6, 4`.execute(db);
 
+  // Tên đối tượng ở tiêu đề: hiệu lực tại ngày kết thúc kỳ (a.to), không phải tên hiện tại (S029-19 đợt 2a).
+  const namesAt = await partnerNamesAt(a.tenantId, [...new Set(res.rows.map((r) => r.partner_id).filter((x): x is string => Boolean(x)))], a.to);
+
   // Thành phần mặt hàng của các chứng từ làm tăng nợ.
   const upEvents = [...new Set(res.rows.filter((r) => r.event_id && (payable ? toNumber(r.net) < 0 : toNumber(r.net) > 0)).map((r) => r.event_id!))];
   const items = new Map<string, { name: string; unit: string }>();
@@ -193,7 +198,7 @@ export async function debtByItem(a: Scope & { accountPrefix: string; partnerCode
   while (i < res.rows.length) {
     const pid = res.rows[i]!.partner_id;
     const pCode = res.rows[i]!.partner_code ?? '';
-    const pName = res.rows[i]!.partner_name ?? '(không theo dõi đối tượng)';
+    const pName = (pid ? namesAt.get(pid)?.name : undefined) ?? res.rows[i]!.partner_name ?? '(không theo dõi đối tượng)';
     const pKey = pid ?? '';
     const queue: { items: Map<string, number> }[] = [];
     let advance = 0;

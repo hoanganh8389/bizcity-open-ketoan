@@ -1,4 +1,5 @@
 // @bizcity-layer P+A data
+// [2026-11-08 11:33 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — sửa trùng số migration 0080 (W2a và gói K3 cùng merge): RENAMED thêm 0081_nguoi_tao_su_viec_bat_buoc, 0082_khoa_ky_o_csdl (R-DB-3)
 // [2026-10-29 10:24 PM Johnny Chu - Chu Hoàng Anh] INIT — khởi tạo Bizcity Core Framework: sổ cái chỉ thêm, cửa nạp sự việc, CANON, hợp đồng, bộ kiểm chuẩn.
 // [2026-10-30 12:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-001 — migration đúng chuẩn, vai trò CSDL thường cho API, bộ test xanh.
 // [2026-10-30 09:58 AM Johnny Chu - Chu Hoàng Anh] PHASE-002 — nhãn lớp @bizcity-layer, đồ thị phụ thuộc mốc, bản nháp API module-sdk.
@@ -39,6 +40,9 @@ const LAST_OLD = '0067_danh_muc_hang_chuan.sql';
  */
 const RENAMED: Readonly<Record<string, string>> = {
   '0031_thue_kkkn.sql': '0028_thue_kkkn.sql',
+  // 2026-11-08: 0080 bị trùng giữa PHASE-031 W2a (0080_kiem_chinh_sach_su_viec) và gói K3 — K3 merge sau nên đổi số.
+  '0081_nguoi_tao_su_viec_bat_buoc.sql': '0080_nguoi_tao_su_viec_bat_buoc.sql',
+  '0082_khoa_ky_o_csdl.sql': '0081_khoa_ky_o_csdl.sql',
 };
 
 /** Ghi nhận tên mới cho file đã đổi tên mà tên cũ đã áp. Trả danh sách vừa ghi nhận. */

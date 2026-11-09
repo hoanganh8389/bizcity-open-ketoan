@@ -11,6 +11,7 @@ import { AccountingProfilePage } from './features/system/AccountingProfilePage';
 import { CatalogRulesPage } from './features/system/CatalogRulesPage';
 // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — HT10 Trụ cột & mức đạt
 import { PillarsPage } from './features/system/PillarsPage';
+import { PolicyPage } from './features/policy/PolicyPage'; // PHASE-031 W4b
 // [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: HT13 Cấu hình hệ thống (bản chỉ đọc)
 import { ConfigCenterPage } from './features/system/ConfigCenterPage';
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá (HT08)
@@ -25,6 +26,7 @@ import { DocumentsPage } from './features/documents/DocumentsPage';
 import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
 import { EntriesPage } from './features/ledger/EntriesPage';
+import { SuaDauButToanPage } from './phan-he/ke-toan/ledger/SuaDauButToanPage'; // [2026-11-10 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16
 import { AccountingVouchersPage } from './features/ledger/AccountingVouchersPage';
 import { AccountsPage } from './features/catalog/AccountsPage';
 import { BranchesPage } from './features/catalog/BranchesPage';
@@ -81,6 +83,7 @@ export const pageRoutes = (
     <Route path="chung-tu/bang-diem" element={<IntakeScorePage />} />
     <Route path="quy/phieu-chuyen-tien" element={<CashTransfersPage />} />
     <Route path="so-cai/but-toan" element={<EntriesPage />} />
+    <Route path="so-cai/sua-dau-but-toan" element={<SuaDauButToanPage />} />
     <Route path="tien-ich/chung-tu-ke-toan" element={<AccountingVouchersPage key="all" mode="all" />} />
     <Route path="tien-ich/ct-mat-lien-ket" element={<AccountingVouchersPage key="unlinked" mode="unlinked" />} />
     <Route path="tien-ich/ct-lech-than-chi-tiet" element={<AccountingVouchersPage key="unbalanced" mode="unbalanced" />} />
@@ -124,6 +127,7 @@ export const pageRoutes = (
     <Route path="he-thong/ho-so-ke-toan" element={<AccountingProfilePage />} />
     <Route path="he-thong/quy-dinh-danh-muc" element={<CatalogRulesPage />} />
     <Route path="he-thong/tru-cot" element={<PillarsPage />} />
+    <Route path="he-thong/chinh-sach" element={<PolicyPage />} />
     <Route path="he-thong/cau-hinh" element={<ConfigCenterPage />} />
     <Route path="he-thong/ban-danh-gia" element={<ReviewBoardPage />} />
     <Route path="danh-muc/phan-loai-hang" element={<NhomHangPage />} />

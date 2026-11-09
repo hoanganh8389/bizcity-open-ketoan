@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 12
+      "count": 7
     },
     {
       "key": "merging",
@@ -15,27 +15,27 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 32
+      "count": 28
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 124
+      "count": 134
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 52
+      "count": 53
     },
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 1
+      "count": 2
     },
     {
       "key": "done",
       "label": "Xong",
-      "count": 221
+      "count": 269
     }
   ],
   "items": [
@@ -500,6 +500,94 @@
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 23
+    },
+    {
+      "id": "S004-12",
+      "phase": "PHASE-004",
+      "title": "Khoá cờ thoát ketoan.allowledgerpurge: chỉ vai trò bảo trì bật được (không còn là biến phiên tự đặt), bỏ DELETE trên ledger khỏi ketoanapp, test phá thử \"vai t…",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S004-13",
+      "phase": "PHASE-004",
+      "title": "Đường E2 có điều kiện (D-R1-1): chốt (trước hết ở 00-MASTER-PLAN, sau đó đưa vào RULE-LEDGER khi dòng giữ chỗ sửa trùng 0080 đã nhả) danh sách trường được sửa …",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S004-14",
+      "phase": "PHASE-004",
+      "title": "Dấu vết ở CSDL cho E2: trigger AFTER UPDATE trên ledgerentries ghi auditlogs trước / sau mọi thay đổi bảy cột, kể cả UPDATE thẳng bằng SQL; chữ chốt 21 D004-11…",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S004-15a",
+      "phase": "PHASE-004",
+      "title": "Cảnh báo (phần 1, 3): chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (mức error, sửa đầu bút toán ngoài ứng dụng) và đưa vào bảng kiểm trước khi khoá kỳ; D004-13. K1",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S004-15b",
+      "phase": "PHASE-004",
+      "title": "Cảnh báo (phần 2): số đo bizcityledgerheadereditunattributedtotal + luật cảnh báo alerts.yml; D004-13. K1",
+      "priority": null,
+      "status": "paused",
+      "column": "paused",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S004-16",
+      "phase": "PHASE-004",
+      "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S004-17",
+      "phase": "PHASE-004",
+      "title": "E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-4). K3 thêm chặt",
+      "priority": null,
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S004-18",
+      "phase": "PHASE-004",
+      "title": "Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi…",
+      "priority": null,
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 31
     },
     {
       "id": "S005-1",
@@ -1448,14 +1536,8 @@
       "title": "W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh action trong runAction, writeAudit ghi vào changes.n…",
       "priority": null,
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, audit-in-action)",
-        "branch": "feat/phase-014-audit-in-action",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-014 · W6 đợt 8b — nhật ký nghiệp vụ trong action theo ACTION §4.4 (phương án C): AUDITKEEP, b…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -3671,15 +3753,9 @@
       "phase": "PHASE-026",
       "title": "entitycodes cho đối tượng / chi nhánh / kho / đơn vị tính / lý do; guard chỉ thêm, chặn chồng; trigger đồng bộ từ cột code; resolveEntity; điền ban đầu",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-026-p0-dot3",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-026 · P0 đợt 3 — mã có phiên bản cho đối tượng / chi nhánh / kho (entitycodes)"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 10
     },
@@ -3689,14 +3765,8 @@
       "title": "itemclasses.path + kiểm vòng; quan hệ cha–con có hiệu lực; báo cáo kho gom theo cấp bất kỳ — ca T026-G3",
       "priority": "P0",
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-026-p0-dot2",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-026 · P0 đợt 2 — SC-PILLAR-1 (kiểm bảng trụ cột) + cây nhóm hàng nhiều cấp (DB)"
-      },
+      "column": "todo",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -3804,15 +3874,9 @@
       "phase": "PHASE-026",
       "title": "SC-PILLAR-1: tiêu chí dat phải có bằng chứng tồn tại (tệp test / check / migration); engine ghi source = check cho tiêu chí có check",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-026 MDG)",
-        "branch": "feat/phase-026-p0-dot2",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-026 · P0 đợt 2 — SC-PILLAR-1 (kiểm bảng trụ cột) + cây nhóm hàng nhiều cấp (DB)"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-026-MASTER-DATA-GOVERNANCE/40-MASTER-CHECKLIST.md",
       "line": 22
     },
@@ -3909,8 +3973,8 @@
       "phase": "PHASE-027",
       "title": "Tài liệu W0: README, 00, checklist; ADR-0023; dòng phase ở docs/phases/README.md",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 6
@@ -3920,8 +3984,8 @@
       "phase": "PHASE-027",
       "title": "CK-1 công cụ kiểm (§6 của 00): event check, flow check [--to], explain, module accounting-check (AC-1..6), skills install; bộ skill cho AI; ví dụ POS mini; API…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 7
@@ -3931,8 +3995,8 @@
       "phase": "PHASE-027",
       "title": "CK-2 SC-DOC-4 (đường dẫn), SC-DOC-5 (route), SC-DOC-6 (mục menu có hướng dẫn, nợ cũ vào baseline) — thiết kế ở RULE-QUALITY-GATE",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 8
@@ -3942,15 +4006,9 @@
       "phase": "PHASE-027",
       "title": "CK-3 SC-SEC-5; bỏ mật khẩu mặc định của công cụ dữ liệu mẫu (PURCHASESEEDPASSWORD)",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, core-ke-toan)",
-        "branch": "feat/core-ke-toan-ck3",
-        "state": "đang làm",
-        "since": "2026-11-03",
-        "dot": "PHASE-027 · CK-3 — SC-SEC-5 (bí mật không có giá trị mặc định trong mã); bỏ mật khẩu mặc định của c…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 9
     },
@@ -3959,8 +4017,8 @@
       "phase": "PHASE-027",
       "title": "Q027-5 SEEDADMINPASSWORD",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-027-CORE-KE-TOAN-CHO-DEV/40-MASTER-CHECKLIST.md",
       "line": 10
@@ -4111,16 +4169,16 @@
     {
       "id": "S028-10",
       "phase": "PHASE-028",
-      "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — ánh xạ 349 mã TGS (cần bảng xuất C…",
+      "title": "W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 đợt 1); đợt 2 — thư viện phân quyền mẫu TGS (349 m…",
       "priority": "P1",
-      "status": "todo",
+      "status": "partial",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-028 authz)",
-        "branch": "feat/phase-028-w5-quyen-chi-nhanh",
+        "branch": "feat/phase-028-w5-thu-vien-tgs",
         "state": "đang làm",
         "since": "2026-11-07",
-        "dot": "PHASE-028 · W5 đợt 1 — quyền theo chi nhánh ở cửa nạp chứng từ: requireScope ở POST /documents + /b…"
+        "dot": "PHASE-028 · W5 đợt 2 — thư viện phân quyền mẫu từ bảng TGS: docs/standard/phan-quyen/ (349 mã, 28 n…"
       },
       "file": "docs/phases/PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md",
       "line": 19
@@ -4196,8 +4254,8 @@
       "phase": "PHASE-029",
       "title": "Migration người sửa / lý do cho phiên bản sự việc; IN-DOC-REASON (warn)",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 15
@@ -4240,8 +4298,8 @@
       "phase": "PHASE-029",
       "title": "Cấu hình đợt 1 theo mô hình options (chữ chốt 30 §5): settingvalues chỉ thêm, phạm vi user → branch → accountingunit → tenant, ngày hiệu lực, getSetting / setS…",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 19
@@ -4262,8 +4320,8 @@
       "phase": "PHASE-029",
       "title": "Xoá an toàn ở CSDL: thu hồi DELETE, hàm xoá đọc mdreferences, bỏ CASCADE, ngừng dùng cho bảng thiếu cột",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 22
@@ -4273,8 +4331,8 @@
       "phase": "PHASE-029",
       "title": "Sổ đăng ký đối chiếu đợt 1 (chữ chốt 30 §6): VATINPUTINVOICEMATCH, LEDGERROUNDING, ITEMCODECASEDUP, UNITBASEINVALID + lane + mục sổ đăng ký ở DIAGNOSTICS.md; p…",
       "priority": "P1",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 23
@@ -4317,8 +4375,8 @@
       "phase": "PHASE-029",
       "title": "Trigger kỳ khoá trên ledgerentries",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 27
@@ -4328,8 +4386,8 @@
       "phase": "PHASE-029",
       "title": "Bảng điểm 17 trụ cột theo bằng chứng (signal, foundation), HT10 theo bốn nhóm",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 28
@@ -4339,8 +4397,8 @@
       "phase": "PHASE-029",
       "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
@@ -4350,8 +4408,8 @@
       "phase": "PHASE-029",
       "title": "Gộp đối tượng theo khuôn 0068",
       "priority": "P1",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "todo",
+      "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 30
@@ -4487,6 +4545,17 @@
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 20
+    },
+    {
+      "id": "S029-33",
+      "phase": "PHASE-029",
+      "title": "Ánh xạ lỗi trigger sổ cái đúng mã hợp đồng BIZCITY-ERRORS-v1 §5: http.ts nhận ra \"không cân\" (23514) → UNBALANCEDENTRY, PERIODLOCKED: (23514) → PERIODLOCKED, \"…",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 42
     },
     {
       "id": "S030-1",
@@ -4912,14 +4981,8 @@
       "title": "Màn HT13 bản chỉ đọc: registry + giá trị đang hiệu lực + phiên bản + bằng chứng + sức khoẻ cấu hình, trên dữ liệu có sẵn",
       "priority": "P1",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht13)",
-        "branch": "feat/phase-030-ht13-chi-doc",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-39 — màn HT13 Cấu hình hệ thống bản chỉ đọc: GET /api/v1/settings/overview (24 kho…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 46
     },
@@ -4928,8 +4991,8 @@
       "phase": "PHASE-030",
       "title": "Đổi khoá loại A một người: lý do bắt buộc, xem trước tác động (không chặn), chặn kỳ đã khoá, thẻ \"đã đổi trong 30 ngày\"; \"xem như trên form\"; golden T030-CFG-1…",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 47
@@ -4940,38 +5003,506 @@
       "title": "Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), T030-EVT-1..5 — Kernel K2",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, event-id)",
-        "branch": "feat/phase-030-event-id-bat-buoc",
-        "state": "đang làm",
-        "since": "2026-11-06",
-        "dot": "PHASE-030 · S030-41 — ledgerentries.eventid bắt buộc (NOT NULL) ở CSDL: migration an toàn cho bản c…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
-      "line": 48
+      "line": 49
     },
     {
       "id": "S030-41b",
       "phase": "PHASE-030",
       "title": "Kiểu Kysely LedgerEntriesTable.eventid thành string (một dòng packages/platform/src/db/types.ts; tệp đang thuộc dòng PHASE-026 P0 đợt 3, R-FLOW-3)",
       "priority": "P2",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
-      "line": 49
+      "line": 50
     },
     {
       "id": "S030-42",
       "phase": "PHASE-030",
       "title": "accountingevents.createdby bắt buộc: danh tính tác vụ cho sự việc hệ thống (khấu hao 792, giá vốn 692 dòng rỗng ở ketoantest) — phát hiện F-2 của 25 §4; D030-16",
       "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 51
+    },
+    {
+      "id": "S030-43",
+      "phase": "PHASE-030",
+      "title": "Mã bizcitysettings@1 1.2.0: cột settingvalues.basis (migration), basis / usedBy ở registry, basis? ở setSetting / core.settings.set, overview trả basis, màn HT…",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 48
+    },
+    {
+      "id": "S030-44",
+      "phase": "PHASE-030",
+      "title": "Chữ chốt thư viện dùng chung bizcitylibrary@1 (ADR-0032, hợp đồng): phong bì, phiên bản ba tầng, kiểm chuẩn + luật khai báo + gợi ý, mã LIB-, ô chọn, API, SC-L…",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 52
+    },
+    {
+      "id": "S030-45",
+      "phase": "PHASE-030",
+      "title": "Thư viện đợt A (ADR-0032 §Đợt): kiểu + bộ nạp + bộ kiểm packages/platform/src/core/libraries/; mã LIB- vào bizcityfindings@1 1.2.0 (cổng L); core.library.list …",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 53
+    },
+    {
+      "id": "S030-46",
+      "phase": "PHASE-030",
+      "title": "Chữ chốt Kho thư viện 26 + bản mẫu kho-thu-vien.html",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 54
+    },
+    {
+      "id": "S030-47",
+      "phase": "PHASE-030",
+      "title": "B1 — HT14 bản chỉ đọc (modules/thu-vien/), LibraryPicker trong ui-kit (A2), trụ cột IX vào tru-cot.json (26 §2–§3)",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 55
+    },
+    {
+      "id": "S030-48",
+      "phase": "PHASE-030",
+      "title": "B2 — theo dõi sử dụng: libraryusagedaily, bộ đếm sau commit, core.library.usage, tab Tổng quan có số liệu (26 §8–§9)",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 56
+    },
+    {
+      "id": "S030-49",
+      "phase": "PHASE-030",
+      "title": "B3 — vn.can-cu-phap-ly (gộp LEGALBASES + legal-sources.json), basis[].key, libraryattestations, librarysettings + ghi đè qua settingvalues, librarychangereques…",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 57
+    },
+    {
+      "id": "S030-50",
+      "phase": "PHASE-030",
+      "title": "B4 — CLI npx bizcity library list / search / check / new / diff + skill use-bizcity-library (26 §10)",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 58
+    },
+    {
+      "id": "S030-51a",
+      "phase": "PHASE-030",
+      "title": "B5a — ctx.libraries trong action, libraries[] trong manifest (bizcitymodule@1 1.5.0-draft), SC-LIB-2, core.library.modules + tab Module (26 §4.1)",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 59
+    },
+    {
+      "id": "S030-51b",
+      "phase": "PHASE-030",
+      "title": "B5b — cửa nạp: bảng gắn trường ↔ thư viện, kiểm ở L3, K1 (26 §4.1 ⑤)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 60
+    },
+    {
+      "id": "S030-52",
+      "phase": "PHASE-030",
+      "title": "Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không đối tượng / nhân viên / ngân hàng (26 §11)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-s52)",
+        "branch": "feat/s030-52-thu-vien-danh-muc",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-030 · S030-52 — Kho thư viện: ba thư viện danh mục chuẩn core.khoan-muc, vn.loai-thue, core.l…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 61
+    },
+    {
+      "id": "S030-53",
+      "phase": "PHASE-030",
+      "title": "Gỡ dữ liệu thật khỏi bản phát hành (Q030-L5): db/seeds/ đối tượng, nhân viên, tài khoản ngân hàng, chi nhánh / kho / bộ phận / sơ đồ tổ chức của một công ty → …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 62
+    },
+    {
+      "id": "S031-1",
+      "phase": "PHASE-031",
+      "title": "ADR-0031 đề xuất, README (hiện trạng đọc mã), 00, 10, checklist",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S031-2",
+      "phase": "PHASE-031",
+      "title": "Chủ dự án duyệt D031-0..11, trả Q031-1..3",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S031-3",
+      "phase": "PHASE-031",
+      "title": "Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard)",
+      "priority": "P0",
       "status": "blocked",
       "column": "blocked",
       "claim": null,
-      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
-      "line": 50
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S031-4",
+      "phase": "PHASE-031",
+      "title": "Migration phong bì Registry (chỉ thêm, RLS, trigger chặn sửa bản published) + policies.register / publish / resolve ở Platform",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S031-5",
+      "phase": "PHASE-031",
+      "title": "Phiên bản chính sách mua hàng (purchasepolicyversions theo Q031-4), sửa = bản mới, đăng ký vào Registry store: module",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S031-6",
+      "phase": "PHASE-031",
+      "title": "policyTrace của chứng từ mua ghi code@version#hash; màn chứng từ hiện bản đã áp",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S031-7",
+      "phase": "PHASE-031",
+      "title": "Đánh chỉ mục khoá ngưỡng duyệt (settingvalues, 16 §5) vào Registry với approval.levels@1, store: settings",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S031-8",
+      "phase": "PHASE-031",
+      "title": "PR chốt thiết kế cửa nạp: bizcityledgerintake@1 1.6.0 (policyRefs, policyRef), JSON Schema, ingestDocumentSchema",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S031-9",
+      "phase": "PHASE-031",
+      "title": "Tầng L4b trong preflight.ts + Commit Guard băm policyRefs; GateResult.ruleVersion",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S031-10",
+      "phase": "PHASE-031",
+      "title": "Họ mã POL- (REF, EFF, STALE, EVAL, DATA, ACC, PUB) vào bizcityfindings@1, có căn cứ và câu giải thích",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S031-11",
+      "phase": "PHASE-031",
+      "title": "Rule Contract purchase.@1 bọc engine.ts (không đổi kết quả; hồi quy mua hàng)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S031-12",
+      "phase": "PHASE-031",
+      "title": "Khoá intake.policy.severity, intake.policy.mode vào registry cấu hình (loại A, mặc định cho phép)",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S031-13",
+      "phase": "PHASE-031",
+      "title": "API cho nguồn ngoài: GET /api/v1/policies, GET /api/v1/rule-contracts[/:id], POST /api/v1/policies/evaluate (Q031-3), POST /api/v1/policies (phát hành inline) …",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S031-14",
+      "phase": "PHASE-031",
+      "title": "Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5)",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S031-15",
+      "phase": "PHASE-031",
+      "title": "Rule Contract bán hàng sale.pricelist@1, sale.promo.discount@1, sale.promo.buyxgety@1, sale.creditlimit@1 cùng modules/ban-hang (S030-16); publishChecks trần N…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S031-16",
+      "phase": "PHASE-031",
+      "title": "POS WP: tải chính sách, tính theo Rule Contract, gửi policyRefs; bỏ luật khuyến mại riêng của plugin (repo plugin, dòng CLAIMS riêng)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S031-17",
+      "phase": "PHASE-031",
+      "title": "Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S031-18",
+      "phase": "PHASE-031",
+      "title": "Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S031-19",
+      "phase": "PHASE-031",
+      "title": "nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1",
+      "priority": "P1",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S031-20",
+      "phase": "PHASE-031",
+      "title": "Hai cột policyrefs, policycheck trên accountingeventversions (gộp migration S031-9) — 20 §2",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S031-21",
+      "phase": "PHASE-031",
+      "title": "Khung nhìn bizcityread.policyapplication + hàm policylineage(eventid); nhánh UNION mua hàng",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S031-22",
+      "phase": "PHASE-031",
+      "title": "Nhánh policyreview trong bizcityread.documentqueue; action Ghi sổ / Đánh dấu đã xem / Trả về nguồn — 20 §3",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S031-23",
+      "phase": "PHASE-031",
+      "title": "Làn policy của bizcitylineage@1 (0.4.0-draft)",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 32
+    },
+    {
+      "id": "S031-24",
+      "phase": "PHASE-031",
+      "title": "Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 33
+    },
+    {
+      "id": "S031-25",
+      "phase": "PHASE-031",
+      "title": "Bản mẫu mockups/chinh-sach.html: Chính sách · Chờ kế toán xem · Truy vết · Theo dõi thực hiện; chủ dự án duyệt hướng",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 34
+    },
+    {
+      "id": "S031-26",
+      "phase": "PHASE-031",
+      "title": "Sự kiện miền policy.published / policy.retired qua outbox (khai ở bizcityevent@1); POS đổi từ hỏi etag sang nghe sự kiện",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 35
+    },
+    {
+      "id": "S031-27",
+      "phase": "PHASE-031",
+      "title": "~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081, 0082), migration W2a giữ 0080; đổi W2a sang 0082…",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 36
+    },
+    {
+      "id": "S031-28",
+      "phase": "PHASE-031",
+      "title": "W4a: API đọc — core.policy.registry, core.policy.applications, core.policy.tracking, core.policy.lineage (00 §12); thay hàm SQL policylineage của S031-21; khôn…",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 37
+    },
+    {
+      "id": "S031-29",
+      "phase": "PHASE-031",
+      "title": "W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPolicyRecompute ở Kernel (00 §14); IN-POL-000 / 005 để…",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 38
+    },
+    {
+      "id": "S031-30",
+      "phase": "PHASE-031",
+      "title": "W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL-004) + khối ở tab Theo dõi (00 §15); giá trị hàng…",
+      "priority": "P1",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w4c-thuc-hien-chuong-trinh",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-031 · W4c — ô Thực hiện chương trình: program[] ở core.policy.tracking (chứng từ áp, quà đã t…"
+      },
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 39
     }
   ]
 }

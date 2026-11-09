@@ -1,0 +1,9 @@
+{
+  "contract": "bizcity_module@1",
+  "key": "lech",
+  "libraries": [
+    { "id": "vn.khong-co", "fields": ["lech.tinh.luong#x"] },
+    { "id": "vn.ngay-nghi-le", "fields": ["lech.tinh.luong#ngay"] },
+    { "id": "vn.tham-so-phap-ly", "fields": ["lech.tinh.luong#luong"], "at": "docDate", "required": true }
+  ]
+}

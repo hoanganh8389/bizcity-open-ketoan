@@ -1,4 +1,6 @@
 // @bizcity-layer P data
+// [2026-11-08 06:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-19 đợt 1: kiểu bảng entity_attributes (0087); cột partner_name / partner_attr_id trên ledger_entries và ledger_lines
+// [2026-11-08 01:49 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4 + S030-41b: kiểu bảng entity_codes (0085); LedgerEntriesTable.event_id: string (NOT NULL từ 0077)
 // [2026-11-02 02:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng accounting_profiles (0049, ADR-0013).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểu bảng conformance_runs (0051, ADR-0012).
 // [2026-11-02 05:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — ADR-0016: kiểu bảng rulepack_approvals (0053).
@@ -23,6 +25,7 @@
 // [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.13: module_registry, tenant_modules, event_deliveries.status 'skipped' (0052)
 // [2026-11-02 04:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.10: schema_migrations.module (0053)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: intake_inbox (0054)
+// [2026-11-08 05:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-026 — S026-4: đổi số migration 0083 → 0085 khi gộp main (0083 thuộc S030-48, 0084 thuộc PHASE-031 W2c — so-tiep-theo kiem)
 /**
  * Khai báo kiểu cho từng bảng — Kysely dùng để kiểm tra câu truy vấn lúc biên dịch.
  *
@@ -1050,7 +1053,7 @@ export interface LedgerEntriesTable {
   period_id: string;
   entry_no: string;
   doc_type: string;
-  event_id: string | null;
+  event_id: string; // NOT NULL từ 0077 (R-LEDGER-12, S030-41b)
   event_version: number | null;
   doc_no: string;
   invoice_no: string | null;
@@ -1065,6 +1068,9 @@ export interface LedgerEntriesTable {
   content_hash: string | null;
   /** Mã băm phần số liệu (migration 0062). */
   body_hash: ColumnType<string | null, string | null | undefined, string | null>;
+  /** Tên đối tượng tại NGÀY CHỨNG TỪ lúc ghi + bản thuộc tính đã dùng (0087): trigger điền, không đổi về sau. */
+  partner_name: ColumnType<string | null, string | null | undefined, never>;
+  partner_attr_id: ColumnType<string | null, string | null | undefined, never>;
   /** Phiên bản chính sách kế toán bút toán được dựng theo (0040, ADR-0009). */
   policy_version: ColumnType<number | null, number | null | undefined, number | null>;
   is_reversal: Generated<boolean>;
@@ -1088,6 +1094,9 @@ export interface LedgerLinesTable {
   part: string;
   product_sku: string | null;
   product_name: string | null;
+  /** Tên đối tượng tại NGÀY CHỨNG TỪ lúc ghi + bản thuộc tính đã dùng (0087): trigger điền, không đổi về sau. */
+  partner_name: ColumnType<string | null, string | null | undefined, never>;
+  partner_attr_id: ColumnType<string | null, string | null | undefined, never>;
   description: Generated<string>;
   source_line_key: string | null;
   dims: JsonDefault;
@@ -1766,6 +1775,38 @@ export interface ItemCodesTable {
   note: Generated<string>;
 }
 
+/** Thuộc tính có hiệu lực (tên, MST, địa chỉ) của đối tượng / chi nhánh / kho (0087, S029-19): nguồn sự thật tại một ngày, có phiên bản. */
+export interface EntityAttributesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  entity_type: 'partner' | 'branch' | 'warehouse';
+  entity_id: string;
+  version: ColumnType<number, number | undefined, never>;
+  name: string;
+  tax_code: string | null;
+  address: string | null;
+  valid_from: ColumnType<string, string | undefined, never>;
+  valid_to: ColumnType<string | null, string | null | undefined, string | null>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  note: Generated<string>;
+}
+
+/** Mã có phiên bản của đối tượng / chi nhánh / kho (0085, D026-3). */
+export interface EntityCodesTable {
+  id: Generated<string>;
+  tenant_id: string;
+  entity_type: 'partner' | 'branch' | 'warehouse';
+  entity_id: string;
+  kind: Generated<string>;
+  code: string;
+  valid_from: ColumnType<string, string | undefined, never>;
+  valid_to: ColumnType<string | null, string | null | undefined, string | null>;
+  created_by: Generated<string>;
+  created_at: TimestampDefault;
+  note: Generated<string>;
+}
+
 /** Phân loại hạch toán theo ngày hiệu lực (0065). */
 export interface ItemClassificationTable {
   id: Generated<string>;
@@ -1790,6 +1831,8 @@ export interface Database {
   // [2026-11-05 01:50 PM Nguyễn Văn Thủy] PHASE-026 — S026-21: khung nhìn sổ kho theo mã hiện hành, 0069 (đóng góp)
   inventory_movements_cur: InventoryMovementsTable & { snapshot_sku: string; root_item_id: string | null };
   item_codes: ItemCodesTable;
+  entity_codes: EntityCodesTable;
+  entity_attributes: EntityAttributesTable;
   item_classification: ItemClassificationTable;
   catalog_rule_reviews: CatalogRuleReviewsTable;
   tenants: TenantsTable;

@@ -19,7 +19,8 @@ import type { AuthzDecision, AuthzPurpose, AuthzResourceContext, AuthzScopeResul
 
 export type ScopeVia = 'tenant' | 'scope' | 'none';
 export interface ScopedDecision { allowed: boolean; via: ScopeVia; reasonCode: string; decision?: AuthzDecision }
-export type ScopeResolver = (req: FastifyRequest) => Promise<AuthzResourceContext> | AuthzResourceContext;
+// [2026-11-07 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 1: resolver trả một hoặc nhiều vị trí (cửa nạp theo lô) — mọi vị trí phải được phép; danh sách rỗng = không vị trí = từ chối
+export type ScopeResolver = (req: FastifyRequest) => Promise<AuthzResourceContext | AuthzResourceContext[]> | AuthzResourceContext | AuthzResourceContext[];
 
 /** Mã lý do bổ sung của lớp này (ngoài AUTHZ_REASONS của bộ tính). */
 export const SCOPE_REASONS = { TENANT: 'AUTHZ-SCOPE-TENANT', NO_LOCATION: 'AUTHZ-SCOPE-NO-LOCATION', NOT_USER: 'AUTHZ-SCOPE-NOT-USER' } as const;
@@ -50,15 +51,22 @@ export async function authorizeScoped(auth: AuthContext, permission: Permission,
 }
 
 /**
- * preHandler: cho qua khi `authorizeScoped` cho phép, ngược lại FORBIDDEN. `resolve` nạp vị trí từ bản ghi (không từ thân yêu cầu).
- * Không thay `requirePermission` ở route toàn đơn vị — chỉ dùng cho route có tài nguyên theo chi nhánh / kho.
+ * preHandler: cho qua khi `authorizeScoped` cho phép MỌI vị trí resolver trả về, ngược lại FORBIDDEN. `resolve` nạp vị trí ở máy chủ
+ * (từ bản ghi, hoặc tra chi nhánh thật của đơn vị — không tin thẳng thân yêu cầu). Có quyền toàn đơn vị thì qua NGAY, không gọi resolver
+ * (route nóng như cửa nạp không tốn thêm truy vấn). Chỉ dùng cho route có tài nguyên theo chi nhánh / kho.
  */
 export function requireScope(permission: Permission, resolve: ScopeResolver, opts: { purpose?: AuthzPurpose } = {}) {
   return async (req: FastifyRequest, _reply: FastifyReply): Promise<void> => {
     const auth = req.auth;
     if (!auth) throw Errors.unauthorized();
-    const d = await authorizeScoped(auth, permission, await resolve(req), opts.purpose ?? 'operate');
-    if (!d.allowed) throw Errors.forbidden(`Không có quyền ${permission} tại chi nhánh / kho này (${d.reasonCode})`);
+    if (auth.permissions.has(permission)) return;
+    const got = await resolve(req);
+    const resources = Array.isArray(got) ? got : [got];
+    if (!resources.length) throw Errors.forbidden(`Không có quyền ${permission} (${SCOPE_REASONS.NO_LOCATION})`);
+    for (const r of resources) {
+      const d = await authorizeScoped(auth, permission, r, opts.purpose ?? 'operate');
+      if (!d.allowed) throw Errors.forbidden(`Không có quyền ${permission} tại chi nhánh / kho này (${d.reasonCode})`);
+    }
   };
 }
 

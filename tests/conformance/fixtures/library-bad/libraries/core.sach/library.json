@@ -1,0 +1,94 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "core.sach",
+  "kind": "code-list",
+  "title": "Thư viện thử",
+  "description": "Ca tự kiểm SC-LIB-1",
+  "version": "1.0.0",
+  "released": "2026-11-07",
+  "contentHash": "sha256:1d02ef65fed310931fc3c547c792effe45ae7daa18c91c3187b0b9269a6a8a62",
+  "owner": "Nhóm Lõi",
+  "sources": [
+    {
+      "title": "tự lập",
+      "kind": "internal"
+    }
+  ],
+  "codePrefix": "SACH",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "n"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "n": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ]
+  },
+  "rules": [
+    {
+      "code": "SACH-THU-001",
+      "level": "info",
+      "title": "thử căn cứ",
+      "why": "ca tự kiểm",
+      "when": {
+        "field": "input.a",
+        "op": "exists"
+      },
+      "basis": [
+        {
+          "ref": "Luật Kế toán",
+          "key": "LKT",
+          "verified": false
+        },
+        {
+          "ref": "văn bản không có",
+          "key": "KHONG-CO",
+          "verified": false
+        }
+      ]
+    }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-07",
+      "hash": "sha256:1d02ef65fed310931fc3c547c792effe45ae7daa18c91c3187b0b9269a6a8a62",
+      "notes": "bản đầu"
+    }
+  ],
+  "items": [
+    {
+      "code": "A",
+      "name": "Mục A",
+      "status": "active",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      }
+    },
+    {
+      "code": "B",
+      "name": "Mục B",
+      "status": "deprecated",
+      "since": "1.0.0",
+      "verified": true,
+      "payload": {
+        "n": 1
+      },
+      "replacedBy": "A"
+    }
+  ]
+}

@@ -55,6 +55,30 @@ describe('Vai trò ketoan_app', () => {
     expect((await asApp('DROP TABLE ledger_links'))?.message).toMatch(/must be owner|phải là chủ/i);
   });
 
+  // [2026-11-08 04:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-12 (D004-7, D004-9, review R1 RV-R1-01): ketoan_app không còn DELETE / TRUNCATE trên bảng sổ; đặt cờ allow_ledger_purge rồi xoá vẫn bị từ chối
+  it('S004-12: không còn DELETE / TRUNCATE trên sáu bảng sổ, vẫn INSERT / UPDATE được (đảo, E1, E2, đổi trạng thái sự việc cần)', async () => {
+    const p = (priv: string, table: string) => pool.query<{ ok: boolean }>('SELECT has_table_privilege($1, $2, $3) AS ok', ['ketoan_app', table, priv]).then((x) => x.rows[0]!.ok);
+    for (const t of ['ledger_entries', 'ledger_lines', 'ledger_links', 'accounting_events', 'accounting_event_versions', 'posting_log']) {
+      expect(await p('DELETE', `public.${t}`), `DELETE ${t}`).toBe(false);
+      expect(await p('TRUNCATE', `public.${t}`), `TRUNCATE ${t}`).toBe(false);
+      expect(await p('INSERT', `public.${t}`), `INSERT ${t}`).toBe(true);
+    }
+    expect(await p('UPDATE', 'public.accounting_events'), 'UPDATE accounting_events').toBe(true);
+    // [2026-11-09 10:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-17 (D004-15): số tiền sổ cái không còn UPDATE được bằng ketoan_app (0091); chỉ còn cột trạng thái / đầu và item_id
+    const c = (table: string, col: string) => pool.query<{ ok: boolean }>('SELECT has_column_privilege($1, $2, $3, $4) AS ok', ['ketoan_app', table, col, 'UPDATE']).then((x) => x.rows[0]!.ok);
+    for (const col of ['status', 'doc_no', 'invoice_no', 'reason_code', 'partner_id', 'description', 'content_hash', 'event_version']) expect(await c('public.ledger_entries', col), `UPDATE ledger_entries.${col}`).toBe(true);
+    expect(await c('public.ledger_entries', 'total'), 'UPDATE ledger_entries.total').toBe(false);
+    expect(await c('public.ledger_lines', 'item_id'), 'UPDATE ledger_lines.item_id').toBe(true);
+    for (const col of ['debit', 'credit', 'account_code', 'cost_fill']) expect(await c('public.ledger_lines', col), `UPDATE ledger_lines.${col}`).toBe(false);
+  });
+
+  it('S004-12 (phá thử, lớp quyền): đặt cờ allow_ledger_purge rồi DELETE bảng sổ vẫn bị từ chối vì thiếu quyền', async () => {
+    for (const t of ['ledger_lines', 'ledger_entries', 'ledger_links', 'accounting_events', 'accounting_event_versions', 'posting_log']) {
+      const err = await asApp(`SELECT set_config('ketoan.allow_ledger_purge', 'on', true); DELETE FROM ${t} WHERE false`);
+      expect(err?.message, `DELETE ${t}`).toMatch(/permission denied|không có quyền/i);
+    }
+  });
+
   it('bảng tạo sau (bởi vai trò chạy migration) tự cấp quyền cho ketoan_app', async () => {
     const c = await pool.connect();
     try {

@@ -242,7 +242,12 @@
         },
         "SC-EVD-9": {
           "findings": 5,
-          "keys": ["shape:contract", "shape:wx", "shape:link", "overwrite:6"]
+          "keys": [
+            "shape:contract",
+            "shape:wx",
+            "shape:link",
+            "overwrite:6"
+          ]
         },
         "SC-STD-5": {
           "findings": 3
@@ -522,6 +527,21 @@
           "keys": [
             "guide:khong-huong-dan"
           ]
+        },
+        "SC-SEC-5": {
+          "findings": 1,
+          "keys": [
+            "TOOL_PASSWORD"
+          ]
+        },
+        "SC-PILLAR-1": {
+          "findings": 4,
+          "keys": [
+            "no-evidence:mau/NO-1",
+            "dangling:mau/DM-1:migration:0999",
+            "dangling:mau/DT-1:test:khong-co-tep",
+            "dangling:mau/DC-1:check:SC-KHONG-9"
+          ]
         }
       }
     },
@@ -733,6 +753,68 @@
             "class:prehandler:POST /api/v1/x/quyen-thieu",
             "unlisted:POST /api/v1/x/lach",
             "stale:POST /api/v1/x/ma-coi"
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "[2026-11-07 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W5 đợt 2: ca tự kiểm SC-AUTH-04 (JSON chỉnh tay lệch bản sinh lại, quyền Core không có thật, báo cáo ra quyền ghi, quyền suy ra không căn cứ)",
+      "root": "authz-tgs-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-AUTH-04": {
+          "findings": 4,
+          "keys": [
+            "stale",
+            "unknown:BH5:khong:co",
+            "report-write:BC2",
+            "derived:tgs-nhom-thu:documents:edit-all"
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "[2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: ca tự kiểm SC-LIB-1 (thư viện sạch không phát hiện; thư viện lỗi: trùng mã, replacedBy mồ côi, payload sai, ngày chồng, băm sai, tiền tố dành riêng, luật thiếu fix / op lạ, mã nguồn trong sources/, thiếu README; thư mục lệch id)",
+      "root": "library-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-LIB-1": {
+          "findings": 17,
+          "keys": [
+            "core.lech:id-dir",
+            "core.loi:envelope:/rules/0/code",
+            "core.loi:envelope:/rules/0/when",
+            "core.loi:readme",
+            "core.loi:dup:X",
+            "core.loi:replaced:Y",
+            "core.loi:payload:Z:n",
+            "core.loi:payload:Z:la",
+            "core.loi:eff-overlap:E:1",
+            "core.loi:hash",
+            "core.loi:changelog",
+            "core.loi:prefix-reserved",
+            "core.loi:rule-code:LIB-X-001",
+            "core.loi:rule-fix:LIB-X-001",
+            "core.loi:rule-when:LIB-X-001:when",
+            "core.loi:sources-code:dich-nguoc.py",
+            "core.sach:basis-key:SACH-THU-001:KHONG-CO"
+          ]
+        }
+      }
+    },
+    {
+      "$comment": "[2026-11-09 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a: ca tự kiểm SC-LIB-2 (module \"lech\": khai thư viện không có, khai mà không dùng, gọi ctx.libraries chưa khai, viết cứng ngày lễ và lương tối thiểu — dòng có // library-ok: được miễn; module \"sach\" khai đúng, không phát hiện)",
+      "root": "module-libraries-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-LIB-2": {
+          "findings": 5,
+          "keys": [
+            "lech:missing:vn.khong-co",
+            "lech:unused:vn.ngay-nghi-le",
+            "lech:undeclared:vn.can-cu-phap-ly",
+            "lech:hard-str:2026-02-16",
+            "lech:hard-num:5310000"
           ]
         }
       }

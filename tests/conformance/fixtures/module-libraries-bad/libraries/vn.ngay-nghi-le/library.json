@@ -1,0 +1,11 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.ngay-nghi-le",
+  "kind": "calendar",
+  "title": "Ngày nghỉ lễ (mẫu cho SC-LIB-2)",
+  "version": "1.0.0",
+  "items": [
+    { "code": "2026-02-16", "name": "Tết Âm lịch", "status": "active", "since": "1.0.0", "verified": false },
+    { "code": "2026-04-30", "name": "Giải phóng miền Nam", "status": "active", "since": "1.0.0", "verified": false }
+  ]
+}

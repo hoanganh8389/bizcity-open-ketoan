@@ -56,6 +56,12 @@ export const INTAKE_CATALOG = {
   'IN-ITEM-009': { layer: 'L3', severity: 'block', stage: 'door', weight: 0, title: 'Mặt hàng còn nháp, chưa kích hoạt', why: 'Mặt hàng lưu nháp vì khai báo còn thiếu (đơn vị tính, nhóm hạch toán); ghi sổ với nó thì kho, giá vốn hoặc tài khoản sẽ sai.', fix: 'Mở mặt hàng ở danh mục, sửa phần còn thiếu để mặt hàng tự kích hoạt; chứng từ ở Trạm kiểm tra được kiểm lại tự động, rồi nộp lại.', ref: 'R-GATE-6, ADR-0019', acceptable: false },
   'IN-MD-005': { layer: 'L3', severity: 'warn', stage: 'advice', weight: 10, title: 'Mã số thuế đối tượng sai định dạng', why: 'Mã số thuế sai thì hoá đơn, bảng kê và tra cứu doanh nghiệp đều sai; cơ quan thuế loại hoá đơn.', fix: 'Mã số thuế gồm 10 chữ số, hoặc 10 chữ số + "-" + 3 chữ số (chi nhánh); không khoảng trắng.', ref: 'R-MD', acceptable: true },
   // [2026-11-03 09:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — S024-29: IN-GUARD-001 — Commit Guard: cấu hình đổi giữa tiền kiểm và ghi sổ, chạy lại vẫn còn lỗi chặn (R-GATE-8)
+  // [2026-11-07 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-8/10, bizcity_intake_findings@1 0.9.0-draft): tham chiếu chính sách nghiệp vụ (ADR-0031) — L4, cảnh báo, cửa nạp vẫn nhận
+  'IN-POL-001': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Tham chiếu chính sách không có trong sổ đăng ký hoặc băm khác bản đã phát hành', why: 'Chứng từ nói đã áp một chính sách, nhưng sổ đăng ký không có bản đó hoặc nội dung bản đã khác lúc nguồn tải. Không truy vết được chứng từ về đúng chính sách căn cứ.', fix: 'Ở nguồn: tải lại chính sách đã phát hành, tính lại theo bản đó rồi gửi lại đúng mã, bản và băm; chính sách tự lập ở nguồn thì đưa về module chủ để phát hành.', ref: 'ADR-0031 D-POL-5, D-POL-6', acceptable: true },
+  'IN-POL-002': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Bản chính sách không hiệu lực tại ngày chứng từ', why: 'Chính sách chọn theo ngày chứng từ. Bản được nêu chưa áp hoặc đã hết áp vào ngày đó, nên chứng từ đang dùng luật không đúng thời điểm.', fix: 'Ở nguồn: dùng bản hiệu lực tại ngày chứng từ; nếu ngày chứng từ sai thì sửa ngày rồi gửi bản mới (tăng version).', ref: 'ADR-0031 D-POL-0, R-ECP', acceptable: true },
+  // [2026-11-09 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b (S031-29, bizcity_intake_findings@1 0.10.0-draft): IN-POL-004
+  'IN-POL-004': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Quà tính lại theo chính sách khác quà nguồn gửi', why: 'Tính lại theo đúng bản chính sách nguồn nêu, trên các dòng bán, ra số quà khác dòng quà nguồn gửi (thiếu quà, thừa quà hoặc lệch số lượng). Số liệu khuyến mại của chứng từ có thể không đúng chính sách đã phát hành.', fix: 'Ở nguồn: tính lại bằng đúng bản chính sách đã nêu (tải về hoặc gọi POST /api/v1/policies/evaluate) rồi gửi lại dòng quà theo kết quả; chứng từ đã bán đúng thực tế mà chính sách chưa phản ánh thì kế toán trưởng chấp nhận cảnh báo kèm lý do.', ref: 'ADR-0031 D-POL-8', acceptable: true },
+  'IN-POL-003': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 5, title: 'Đã có bản chính sách mới hơn hiệu lực tại ngày chứng từ', why: 'Nguồn (thường là máy bán hàng làm việc ngoại tuyến) đang dùng bản cũ trong khi sổ đăng ký đã có bản mới phủ ngày chứng từ. Số liệu có thể lệch so với chính sách hiện hành.', fix: 'Ở nguồn: làm mới chính sách đã phát hành rồi tính lại; chứng từ đã lập đúng bản nguồn có thì kế toán trưởng chấp nhận cảnh báo kèm lý do.', ref: 'ADR-0031 D-POL-9', acceptable: true },
   'IN-GUARD-001': { layer: 'L5', severity: 'block', stage: 'door', weight: 0, title: 'Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn', why: 'Nguồn đã Kiểm thử chứng từ với danh mục / chính sách / khoá kỳ cũ; trước khi ghi sổ cấu hình đổi và chứng từ không còn đạt. Ghi theo kết quả Kiểm thử cũ thì sổ sẽ sai với cấu hình hiện hành.', fix: 'Xem các lỗi chặn đi kèm (là kết quả chạy lại theo cấu hình mới), sửa rồi Kiểm thử lại để lấy dấu mới trước khi nộp.', ref: 'R-GATE-8, ADR-0019', acceptable: false },
   // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22): L5 định khoản thử (IN-POST-*) và kỳ khoá (IN-BIZ-001), stage posting — thành sự việc rồi mới biết chưa ghi sổ được
   'IN-BIZ-001': { layer: 'L4', severity: 'block', stage: 'posting', weight: 0, title: 'Kỳ kế toán của ngày chứng từ đã khoá', why: 'Kỳ đã khoá thì sổ của kỳ đó đã chốt, báo cáo và tờ khai đã lập; thêm hay sửa chứng từ vào kỳ đó làm số báo cáo đổi theo.', fix: 'Kế toán trưởng mở khoá kỳ nếu được phép; không thì lập chứng từ vào kỳ đang mở theo quy định của đơn vị.', ref: 'Period Lock Gate, R-LEDGER', acceptable: false },
@@ -298,6 +304,26 @@ export const INTAKE_REMEDIES: Record<IntakeCodeNeedingRemedy, Remedy> & Partial<
     steps: [{ text: 'Tăng version của chứng từ đã sửa ở hệ thống nguồn' }, RESEND],
     owner: 'creator', verify: { code: 'IN-BIZ-005' },
     forbid: ['Không gửi lại nội dung đã sửa với cùng version — cửa nạp coi là không đổi, phần sửa không vào sổ'],
+  },
+  // [2026-11-07 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-8/10, bizcity_intake_findings@1 0.9.0-draft)
+  'IN-POL-001': {
+    steps: [{ text: 'Ở hệ thống nguồn: tải lại chính sách đã phát hành (mã, bản, băm) rồi tính lại theo đúng bản đó' }, { text: 'Chính sách tự lập ở nguồn: đưa về module chủ (Bán hàng, Mua hàng…) để phát hành, không dùng bản riêng', role: 'chief_accountant' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-POL-001' },
+    forbid: ['Không sửa băm cho khớp mà không tải lại chính sách — băm là dấu của đúng bản đã phát hành'],
+  },
+  'IN-POL-002': {
+    steps: [{ text: 'Dùng bản chính sách hiệu lực tại ngày chứng từ; nếu ngày chứng từ sai thì sửa ngày và tăng version ở nguồn' }, RESEND],
+    owner: 'creator', verify: { code: 'IN-POL-002' },
+    forbid: ['Không đổi ngày chứng từ chỉ để khớp một bản chính sách khác — ngày quyết định kỳ kế toán'],
+  },
+  'IN-POL-003': {
+    steps: [{ text: 'Làm mới chính sách đã phát hành ở nguồn rồi tính lại theo bản mới' }, { text: 'Chứng từ lập đúng bản nguồn có tại thời điểm bán: kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' }],
+    owner: 'creator', verify: { code: 'IN-POL-003' },
+  },
+  'IN-POL-004': {
+    steps: [{ text: 'Tính lại theo đúng bản chính sách đã nêu (POST /api/v1/policies/evaluate hoặc luật đã tải) rồi gửi lại dòng quà theo kết quả' }, { text: 'Quà đã giao đúng thực tế mà chính sách chưa phản ánh: kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' }],
+    owner: 'creator', verify: { code: 'IN-POL-004' },
+    forbid: ['Không xoá dòng quà đã giao thật chỉ để khớp kết quả tính lại — quà đã giao phải có chứng từ'],
   },
   'IN-BIZ-006': {
     steps: [

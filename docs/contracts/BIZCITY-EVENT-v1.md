@@ -5,9 +5,10 @@
 <!-- [2026-10-30 07:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — một cửa ghi sổ: eventStore cho phiếu tay, kết chuyển, khấu hao, giá vốn. -->
 <!-- [2026-10-30 07:46 PM Johnny Chu - Chu Hoàng Anh] PHASE-006 — transactional outbox, subscriber, đồng hồ, correlation_id. -->
 <!-- [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.1.0-draft: §7a webhook cho app ngoài tiến trình (ADR-0011 mức 2) — subscriber <app>.webhook, chữ ký HMAC-SHA256, Idempotency-Key = id sự kiện; SubscriberDef.accepts lọc theo đơn vị lúc phát -->
+<!-- [2026-11-08 11:59 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — 1.3.0-draft: §7 thêm bizcity.policy.published / .retired (W3b, S031-26), thêm không phá -->
 <!-- [2026-11-02 04:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 1.2.0-draft: việc giao 'skipped' khi module của subscriber tắt ở đơn vị (ADR-0011 D1); sự kiện bizcity.module.toggled -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-02 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
+> **Phiên bản:** 1.3.0-draft · 2026-11-08 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 5/7)
 > **Năng lực:** `events.outbox`, `events.subscribe`, `events.clock`
 > **Lớp kiểm soát 2/3** của [Bản công bố kiến trúc](../CONG-BO-KIEN-TRUC.md) (Domain · **Event** · Compliance). Sự kiện được phát, phiên bản (`version`), cấu trúc payload (schema theo `type` + `version`), nguồn phát (`source`), ý nghĩa nghiệp vụ.
 > - **AP-2:** sự kiện **báo** việc đã xảy ra sau commit, không dùng để ra lệnh ghi sổ.
@@ -131,6 +132,8 @@ Gửi ra ngoài (webhook tới WooCommerce, Cell) là một subscriber đặc bi
 | `bizcity.module.enabled` / `.disabled` | bật / tắt module cho đơn vị | `module:<id>` |
 | `bizcity.intake.rejected` <!-- [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W4 (S021-20) --> | cửa nạp từ chối, tạo mục bể chờ mới (gửi trùng không phát lại); `data` = `{ inboxId, docKey, docType, channel, appKey, codes, score }` — chỉ mã và số, không nguyên văn (R-INTAKE-12) | `intake:<id>` |
 | `bizcity.intake.resolved` | mục bể đóng (`fixed_at_source`, `resubmitted`, `accepted`, `dismissed`); `data` = `{ inboxId, docKey, status, eventId, patched }` | `intake:<id>` |
+| `bizcity.policy.published` | một bản chính sách được ghi vào sổ đăng ký (phát hành inline, lưu chính sách của module…); `data` = `{ policyId, policyKey, version, ownerModule, ruleContract, effectiveFrom, contentHash, closes }`, `closes` = `{ version, effectiveTo }` của bản trước bị đóng hoặc `null`. **Không mang nội dung**: nguồn tải lại bằng `GET /api/v1/policies` ([bizcity_policy@1](BIZCITY-POLICY-v1.md)) | `policy:<policyId>` |
+| `bizcity.policy.retired` | chính sách bị ngừng (các bản `published` → `retired`); `data` = `{ policyId, retiredVersions[] }` | `policy:<policyId>` |
 
 Module dùng `bizcity.ledger.entry.posted` để biết **chắc chắn** sổ đã ghi (ví dụ đổi kỳ hợp đồng sang "đã thu" chỉ khi bút toán thu tiền đã vào sổ, kể cả ở chế độ chờ duyệt của kế toán).
 

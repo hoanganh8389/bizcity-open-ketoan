@@ -72,6 +72,11 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'IN-BIZ-003': ['NOI-BO'],
   'IN-BIZ-004': ['NOI-BO'],
   'IN-BIZ-005': ['NOI-BO'],
+  // [2026-11-07 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-8/10, bizcity_intake_findings@1 0.9.0-draft)
+  'IN-POL-001': ['NOI-BO'],
+  'IN-POL-002': ['NOI-BO'],
+  'IN-POL-003': ['NOI-BO'],
+  'IN-POL-004': ['NOI-BO'],
   'IN-BIZ-006': ['ND123', 'LGTGT'],
   'IN-BIZ-007': ['ND123'],
   // [2026-11-03 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — căn cứ cho 10 mã PHASE-021 W5 (gộp từ main), MỨC VĂN BẢN theo R-GATE-11, lấy từ docs/can-cu; chưa đối chiếu điều khoản ở văn bản gốc.
@@ -86,6 +91,14 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'IN-INV-001': ['ND123', 'LGTGT'],
   'IN-INV-002': ['ND123'],
   'IN-CFG-001': ['TT99'],
+  // ── Cổng L — thư viện dùng chung (ADR-0032) ── [2026-11-07 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45: mã LIB-* là quy ước phần mềm
+  'LIB-UNKNOWN-001': ['NOI-BO'],
+  'LIB-DEPRECATED-001': ['NOI-BO'],
+  'LIB-REMOVED-001': ['NOI-BO'],
+  'LIB-EFFECTIVE-001': ['NOI-BO'],
+  'LIB-SCHEMA-001': ['NOI-BO'],
+  'LIB-VALUE-001': ['NOI-BO'],
+  'LIB-UNVERIFIED-001': ['NOI-BO'],
 };
 
 /** Căn cứ của một mã (tên văn bản + trang tra). Mã chưa khai → rỗng (SC-FIND-1 báo). */

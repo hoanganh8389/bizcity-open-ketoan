@@ -1,12 +1,13 @@
 # Cấu hình hệ thống (HT13)
 <!-- [2026-11-06 02:41 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-39: hướng dẫn màn HT13 (bản chỉ đọc) -->
+<!-- [2026-11-07 02:06 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-40: thêm mục "Đổi một giá trị" (một người, xem tác động, chỉ ghi nhật ký) -->
 
-**Màn này trả lời một câu:** đơn vị của bạn đang cấu hình những gì, khoá nào ảnh hưởng sổ, ai đổi lần cuối và vì sao. Chỉ **xem** — đổi cấu hình vẫn ở màn của từng khoá.
+**Màn này trả lời một câu:** đơn vị của bạn đang cấu hình những gì, khoá nào ảnh hưởng sổ, ai đổi lần cuối và vì sao. **Xem** ở đây; người có quyền cấu hình có thể **đổi giá trị** ngay tại thẻ bên phải (mục dưới). Khoá chưa có bảng phiên bản vẫn đổi ở màn của từng khoá.
 
 ## Đọc thế nào
 
 - **Bốn ô đầu trang** (bấm để lọc):
-  - *Khoá thiếu căn cứ* — hôm nay mọi khoá đều thiếu, vì hệ thống chưa có chỗ ghi căn cứ pháp lý; trường này được thêm ở bản sau (S030-38).
+  - *Khoá chưa khai căn cứ* — căn cứ là văn bản, điều, khoản của quy định mà khoá dựa vào. Hôm nay **10 khoá loại A** có căn cứ mặc định là quy tắc nội bộ của phần mềm (ví dụ khoá kỳ dựa vào R-LEDGER-9); các khoá còn lại chưa khai. Căn cứ **pháp lý** (luật, thông tư) sẽ do kế toán trưởng xác nhận và khai sau (S030-35), không tự điền.
   - *Khoá đã đổi trong 30 ngày qua* — chỉ tính khoá đã có bảng phiên bản. Khoá chưa có bảng phiên bản vẫn có nhật ký thao tác nhưng chưa đếm ở đây.
   - *Khoá có bản sắp hiệu lực* — đã đặt ngày hiệu lực trong tương lai.
   - *Ngày chưa niêm phong bằng chứng* — ngày đã đóng quá 2 ngày mà tệp niêm phong chưa có; xem Kiểm chuẩn để biết ngày nào.
@@ -14,7 +15,19 @@
   - **A** ảnh hưởng sổ (mã thuế, chế độ định khoản, khoá kỳ…);
   - **B** vận hành (hạn mức duyệt, kết nối…);
   - **C** hiển thị (giao diện, thời hạn giữ bể chờ…).
-- **Thẻ bên phải** (bấm một dòng): *Giá trị & hiệu lực* (nguồn của giá trị, phạm vi, nơi lưu, quyền sửa), *Căn cứ*, *Lịch sử* (từng phiên bản: ai, khi nào, lý do).
+- **Thẻ bên phải** (bấm một dòng): *Giá trị & hiệu lực* (nguồn của giá trị, phạm vi, nơi lưu, quyền sửa, **nơi dùng** — cổng nào đọc khoá này), *Căn cứ* (văn bản, điều, khoản; cho biết căn cứ khai ở phiên bản đang áp hay là căn cứ mặc định của khoá), *Lịch sử* (từng phiên bản: ai, khi nào, lý do, căn cứ).
+
+## Đổi một giá trị
+
+Chọn một khoá có phiên bản (không phải khoá bí mật), mở thẻ *Giá trị & hiệu lực*, bấm **Đổi giá trị**:
+
+1. Nhập **giá trị mới**, **ngày hiệu lực** và **lý do** (ít nhất 3 ký tự). Căn cứ là tuỳ chọn; thiếu căn cứ chỉ nhắc, vẫn lưu được.
+2. Bấm **Xem tác động**: màn cho biết kỳ chứa ngày hiệu lực đã khoá chưa, có phiên bản nào hiệu lực muộn hơn không, và còn bao nhiêu mục chờ ở bể chờ đầu vào. Xem trước không ghi gì và không chặn.
+3. Bấm **Lưu thay đổi**. Không có bước duyệt. Giá trị mới áp từ ngày hiệu lực; chứng từ đã lập giữ giá trị cũ.
+
+**Chỗ duy nhất bị chặn:** ngày hiệu lực của khoá loại A rơi vào **kỳ đã khoá** (mã `PERIOD_LOCKED`). Chọn ngày trong kỳ đang mở, hoặc mở khoá kỳ trước. Mỗi lần đổi ghi lại người đổi, lý do, căn cứ, giá trị cũ → mới.
+
+Nút **Đổi giá trị** chỉ hiện cho người có quyền cấu hình.
 
 ## Cần biết
 
