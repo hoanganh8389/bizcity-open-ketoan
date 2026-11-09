@@ -81,7 +81,7 @@
       { "finding": "RV-R1-12", "status": "chua", "by": [], "remaining": "D-R1-2 (PHASE-031 W3)" },
       { "finding": "RV-R1-13", "status": "chua", "by": [], "remaining": "S029-14 mở rộng" },
       { "finding": "RV-R1-14", "status": "mot-phan", "by": ["S004-13", "S004-14", "S004-15a", "S004-16", "S004-17"], "evidence": ["posting.service.ts E2_COLUMNS + nhật ký app", "0089 trigger dấu vết", "LEDGER_HEADER_EDIT_UNATTRIBUTED", "màn SC02 + core.ledger.header-edit-ack", "0091 E1 qua hàm SECURITY DEFINER"], "remaining": "S004-15b số đo + luật cảnh báo (chờ PHASE-018 W6); Q004-9 (partner_name / partner_attr_id)" },
-      { "finding": "RV-R1-15", "status": "chua", "by": [], "remaining": "CK-2 tài liệu khớp mã" },
+      { "finding": "RV-R1-15", "status": "mot-phan", "by": ["docs/rv-r1-15-tai-lieu-khop-ma"], "evidence": ["PHASE-031 README: Code đã vào main", "00-CANON §4: bizcity_event@1 trỏ events.ts", "phat-trien.md §4b: modules/<key> theo ADR-0024"], "remaining": "mã màn HT12 dùng cho hai màn (modules/phan-quyen/web/index.tsx, PHASE-028 đang làm); tru-cot.json P-7 (tệp đang thuộc giữ chỗ S030-51a)" },
       { "finding": "RV-R1-16", "status": "chua", "by": [], "remaining": "S013-12, S026-12, S030-28 (⛔)" },
       { "finding": "RV-R1-17", "status": "chua", "by": [], "remaining": "S025-5..18; S029-6; S029-27" },
       { "finding": "RV-R1-18", "status": "chua", "by": [], "remaining": "S013-3..8; S030-16; S030-21; S031-15" }
