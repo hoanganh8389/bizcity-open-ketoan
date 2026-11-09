@@ -801,6 +801,23 @@
           ]
         }
       }
+    },
+    {
+      "$comment": "[2026-11-09 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a: ca tự kiểm SC-LIB-2 (module \"lech\": khai thư viện không có, khai mà không dùng, gọi ctx.libraries chưa khai, viết cứng ngày lễ và lương tối thiểu — dòng có // library-ok: được miễn; module \"sach\" khai đúng, không phát hiện)",
+      "root": "module-libraries-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-LIB-2": {
+          "findings": 5,
+          "keys": [
+            "lech:missing:vn.khong-co",
+            "lech:unused:vn.ngay-nghi-le",
+            "lech:undeclared:vn.can-cu-phap-ly",
+            "lech:hard-str:2026-02-16",
+            "lech:hard-num:5310000"
+          ]
+        }
+      }
     }
   ]
 }

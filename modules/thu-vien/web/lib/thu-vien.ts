@@ -204,3 +204,15 @@ export const PROPOSAL_STATUS_LABEL: Record<Proposal['status'], { badge: string; 
   gui: { badge: 'badge-info', text: 'đã gửi' }, nhan: { badge: 'badge-warn', text: 'Nhóm Lõi đã nhận' }, 'da-vao': { badge: 'badge-ok', text: 'đã vào bản' },
   'tu-choi': { badge: 'badge-bad', text: 'từ chối' }, rut: { badge: 'badge-gray', text: 'đã rút' },
 };
+
+// [2026-11-09 01:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a: khuôn trả về của core.library.modules (26 §4.1 ④)
+export interface ModuleRow {
+  module: string; label: string;
+  libraries: { id: string; exists: boolean; enabled: boolean; required: boolean; at: string; fields: string[]; calls: number }[];
+  usage: { total: number; pass: number; warn: number; block: number; deprecated: number };
+  verdict: { status: 'dat' | 'co-dieu-kien' | 'khong-dat'; reasons: string[] };
+}
+export interface ModulesReport { from: string; to: string; items: ModuleRow[] }
+export const MODULE_VERDICT_LABEL: Record<ModuleRow['verdict']['status'], { badge: string; text: string }> = {
+  dat: { badge: 'badge-ok', text: 'ĐẠT' }, 'co-dieu-kien': { badge: 'badge-warn', text: 'ĐẠT có điều kiện' }, 'khong-dat': { badge: 'badge-bad', text: 'KHÔNG ĐẠT' },
+};

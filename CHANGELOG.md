@@ -21,6 +21,16 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** chạy migration 0090 (đã có 0087 của đợt 1).
 - **Bảo mật:** không đổi (khung nhìn giữ `security_invoker`).
 
+### Cảnh báo sửa đầu bút toán ngoài ứng dụng (PHASE-004 S004-15a, D004-13) <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a -->
+
+- **Thêm:** chẩn đoán L3 `LEDGER_HEADER_EDIT_UNATTRIBUTED` (mức **error**, có phạm vi kỳ / chi nhánh): liệt kê bút toán có lần sửa đầu **ngoài ứng dụng** = dòng nhật ký của trigger 0089 (`_source = db`) không có dòng của ứng dụng (`_source = app`) cùng `_txid`. Vì là lỗi L3 mức error nên khoá kỳ chặn như mọi lỗi L3 (kế toán trưởng ghi lý do thì khoá được). Lane DG-LEDGER-5 cùng bộ mã (R-DIAG-9). Test `e2-unattributed-warning`.
+- **Đổi:** không. Số đo `bizcity_ledger_header_edit_unattributed_total` và luật cảnh báo là S004-15b (chờ PHASE-018 W6).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần migration 0089 đã chạy). Lần sửa trực tiếp trước đây vẫn hiện nếu đã có dòng nhật ký của trigger.
+- **Bảo mật:** chỉ đọc `audit_logs` theo đơn vị.
+
+
 ### Báo cáo công nợ hiện tên đối tượng tại ngày kết thúc kỳ (PHASE-029 S029-19 đợt 2a) <!-- [2026-11-09 09:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2a -->
 
 - **Đổi:** báo cáo **công nợ theo nhân viên** (`GET /api/v1/reports/debt-by-employee`) và **công nợ theo mặt hàng** (`debt-by-item`) hiện tên đối tượng ở tiêu đề theo **tên hiệu lực tại ngày kết thúc kỳ** (`to`), không phải tên hiện tại: đổi tên đối tượng rồi xem báo cáo của kỳ kết thúc trước ngày đổi tên vẫn ra tên cũ, kỳ kết thúc từ ngày đổi tên trở đi ra tên mới. Số liệu và mã đối tượng không đổi. Hàm dùng chung `partnerNamesAt` (`reports/ten-doi-tuong.ts`) cho các báo cáo sau. Golden T029-RPT-1..4.
@@ -29,6 +39,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Thay đổi định khoản:** không.
 - **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
 - **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
+
+### Cửa nạp tính lại quà theo chính sách: `IN-POL-004` (PHASE-031 W2b, ADR-0031) <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b -->
+
+- **Thêm:** mã `IN-POL-004` (L4, cảnh báo, 10 điểm) — tính lại quà theo **đúng bản chính sách nguồn nêu** trên các dòng không phải quà, so với dòng quà nguồn gửi (thiếu / thừa / lệch số lượng), kèm cặp nguồn ↔ tính lại; chỉ khi bản có thật và băm khớp; im lặng khi không tính được. `getPolicyVersion` (đọc một bản kèm nội dung inline) và điểm mở rộng `registerPolicyRecompute` ở `@bizcity/platform/core/policies` — `apps/api` đăng ký hàm tính (`rule-contracts/recompute.ts`) cùng luật với `POST /policies/evaluate`. `bizcity_intake_findings@1` (§3 thêm mã; số phiên bản nâng sau); trang `loi-dau-vao/IN-POL-004.md`; test `intake-policy-recompute.test.ts` (T031-INT-10..14).
+- **Đổi:** `policy_check.findings`, khung nhìn `policy_application.codes` và ô *Lệch theo mã* mang thêm mã mới (không đổi mã nào). Chế độ `strict` coi `IN-POL-004` như mọi `IN-POL-*` (chờ duyệt). Mặc định vẫn chỉ cảnh báo.
+- **Sửa:** không. Không migration.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc; cảnh báo không lộ nội dung chính sách ngoài số lượng quà.
 
 ### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
 

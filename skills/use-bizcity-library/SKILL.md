@@ -39,7 +39,8 @@ Mã thoát `library check`: `0` PASS · `1` FAIL (có chặn, hoặc thư viện
 
 1. `npx bizcity library search <từ khoá>` để lấy **mã chuẩn** và thư viện chứa nó.
 2. Màn nhập dùng ô chọn của ui-kit (`LibraryPicker` trong `@bizcity/ui-kit`, đọc `GET /api/v1/libraries/:id/items`) thay cho ô gõ tự do.
-3. Máy chủ / action: kiểm ô nhập bằng `POST /api/v1/libraries/:id/validate` `{ input | inputs[], at: <ngày chứng từ>, source: "modules/<key>" }`. Gửi `source` để bảng đánh giá HT14 biết module nào dùng, qua / cảnh báo / chặn bao nhiêu.
+3. **Trong action của module:** dùng `ctx.libraries.validate / require(id, giá trị, { at: <ngày chứng từ>, field })` (không import `@bizcity/platform/core/libraries`) và khai thư viện đó trong `libraries[]` của `bizcity.module.json` (`{ id, fields, at: "docDate", required? }`). `require`: block → lỗi `VALIDATION_ERROR` mã `LIB-*`; warn → `meta.libraryWarnings`. Gọi `ctx.libraries` mà chưa khai, khai mà không gọi, hoặc viết cứng mã / giá trị trùng thư viện → `selfcheck --only SC-LIB-2` đỏ (đường thoát có lý do: `// library-ok: <lý do>` dòng trên).
+   Ngoài action (app ngoài, form): kiểm ô nhập bằng `POST /api/v1/libraries/:id/validate` `{ input | inputs[], at: <ngày chứng từ>, source: "modules/<key>" }`. Gửi `source` để bảng đánh giá HT14 biết module nào dùng, qua / cảnh báo / chặn bao nhiêu.
 4. Phát hiện `LIB-*` (hoặc mã luật của thư viện) mức **block** → không cho lưu, hiện `message` + `suggestions[]`; **warn** → cho lưu, hiện cảnh báo. Không tự thay giá trị người dùng bằng gợi ý.
 5. Nghĩa của mã: `npx bizcity explain <MÃ>`; mã không có trong danh mục thì nói thẳng, không đoán.
 
@@ -60,6 +61,7 @@ Mã thoát `library check`: `0` PASS · `1` FAIL (có chặn, hoặc thư viện
 ## Chỉ báo "xong" khi
 
 - `npx bizcity library check …` ra **PASS** cho các ô mẫu của việc (WARN thì nêu rõ cảnh báo nào và người dùng đã đồng ý);
+- module dùng thư viện: `node tests/conformance/selfcheck.mjs --only SC-LIB-2` ĐẠT (hoặc `npx bizcity module check <key>`);
 - việc có sửa `libraries/*`: `npx bizcity library diff <id>` PASS **và** `node tests/conformance/selfcheck.mjs --only SC-LIB` ĐẠT.
 
 Không có máy chủ và chưa dựng platform thì `library check` ra SKIP — báo người dùng là **chưa kiểm**, kèm lệnh dựng; không ghi "đạt".

@@ -29,6 +29,10 @@
 | S004-15 | `LEDGER_HEADER_EDIT_UNATTRIBUTED` + số đo + luật cảnh báo + bảng kiểm khoá kỳ | K1 | S004-14 |
 | S004-16 | API `entry-edits` + thẻ Bàn điều tra; **bản mẫu trước** ([bản mẫu](mockups/sua-dau-but-toan.html)) | K1 | S004-14, chủ duyệt bản mẫu |
 
+### 3a. Bổ sung sổ AUDIT_KEEP cho S004-15a <!-- [2026-11-09 08:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a, chữ chốt R-FLOW-2 -->
+
+Chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` đọc `audit_logs` theo tên `ledger.entry.header_update` để ghép dòng mức ứng dụng (`_source = app`) với dòng của trigger (`_source = db`) theo `_txid`. Nếu E2 chạy trong một action, `writeAudit` đưa dòng ứng dụng vào `notes.audit[]` (ACTION §4.4) và mọi lần sửa hợp lệ bị báo nhầm. **Quyết định:** thêm mục `{ action: 'ledger.entry.header_update' }` vào `AUDIT_KEEP` (`packages/platform/src/core/audit.ts`); SC-AUDIT-1 kiểm. Dòng tương ứng ở bảng ACTION §4.4 thêm khi PHASE-030 S030-51a nhả `docs/contracts/BIZCITY-ACTION-v1.md` (ghi ở checklist S004-15a).
+
 ## 4. E1 (`ketoan.cost_overwrite`) — phương án cụ thể cho Q004-4
 
 **Hiện trạng [M].** E1 có đúng **một** nơi ghi: `ledgerService.overwriteCostPairs` (`ledger.service.ts`). Nó bật cờ phiên `ketoan.cost_overwrite`, rồi `UPDATE ledger_lines` (theo lô, `unnest`, tối đa 10.000 dòng một câu) và `UPDATE ledger_entries.total`. Trigger chỉ cho đổi `debit` / `credit` ≥ 0 của dòng có `cost_fill`, bút toán `posted`, không đảo, mọi cột khác giữ nguyên. Cờ do ứng dụng tự đặt nên **bất kỳ phiên `ketoan_app` nào** đặt cờ rồi `UPDATE` được số tiền các dòng giá vốn, **không để lại dấu vết**, miễn mỗi cặp dòng vẫn cân.
