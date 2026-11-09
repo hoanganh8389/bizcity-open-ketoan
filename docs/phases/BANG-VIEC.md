@@ -11,8 +11,8 @@
 | Chưa ai nhận | 137 |
 | Chờ đủ tín hiệu | 52 |
 | Hoãn | 2 |
-| Xong | 261 |
-| **Tổng** | **490** |
+| Xong | 263 |
+| **Tổng** | **491** |
 
 ## Đang làm (10)
 
@@ -26,8 +26,7 @@
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S030-51a](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L59) | PHASE-030 | B5a — ctx.libraries trong action, libraries[] trong manifest (bizcitymodule@1 1.5.0-draft), SC-LIB-2, core.li… | P1 | hoanganh8389 (phiên Claude, thu-vien-b5a) · `feat/s030-51a-ctx-libraries` |
-| [S031-18](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L27) | PHASE-031 | Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4b-man-chinh-sach` |
-| [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4b-man-chinh-sach` |
+| [S031-29](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L38) | PHASE-031 | W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPoli… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2b-in-pol-004` |
 
 ## Chờ merge (0)
 
@@ -272,6 +271,6 @@
 | [S004-16](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L28) | PHASE-004 | Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab "Sửa đầu bút toán" ở Bàn điều tra; bản mẫu HT… | — | — |
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (261)
+## Xong (263)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
