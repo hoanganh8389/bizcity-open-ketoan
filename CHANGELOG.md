@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo công nợ hiện tên đối tượng tại ngày kết thúc kỳ (PHASE-029 S029-19 đợt 2a) <!-- [2026-11-09 09:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2a -->
+
+- **Đổi:** báo cáo **công nợ theo nhân viên** (`GET /api/v1/reports/debt-by-employee`) và **công nợ theo mặt hàng** (`debt-by-item`) hiện tên đối tượng ở tiêu đề theo **tên hiệu lực tại ngày kết thúc kỳ** (`to`), không phải tên hiện tại: đổi tên đối tượng rồi xem báo cáo của kỳ kết thúc trước ngày đổi tên vẫn ra tên cũ, kỳ kết thúc từ ngày đổi tên trở đi ra tên mới. Số liệu và mã đối tượng không đổi. Hàm dùng chung `partnerNamesAt` (`reports/ten-doi-tuong.ts`) cho các báo cáo sau. Golden T029-RPT-1..4.
+- **Thêm:** không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
+- **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
+
 ### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
 
 - **Thêm:** màn *Hệ thống → Chính sách* (HT15, quyền `catalog:read`, `/he-thong/chinh-sach`) với bốn tab: *Chính sách* (các bản, hiệu lực, băm, chứng từ đã áp, khoảng trống), *Chờ kế toán xem* (hàng việc `policy_review` + nút *Đánh dấu đã xem*, ẩn khi thiếu `documents:write`), *Truy vết* (chứng từ → chính sách@bản, băm khớp / lệch, ngày ngoài hiệu lực), *Theo dõi thực hiện* (đạt chính sách, lệch theo mã, độ phủ, độ trễ phiên bản, dòng thời gian, sức khoẻ). Đường dẫn sâu `?xem=truy-vet&chung-tu=<docKey>` để màn khác mở thẳng chuỗi chính sách căn cứ.
