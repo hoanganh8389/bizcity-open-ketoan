@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 270
+      "count": 271
     }
   ],
   "items": [
@@ -2949,15 +2949,9 @@
       "phase": "PHASE-022",
       "title": "RV-R1-06: details.context + details.remedy cho lỗi Kernel (UNBALANCEDENTRY, PERIODLOCKED, POSTINGFAILED, LEDGERAPPENDONLY), withErrorContext, bảng ERRORREMEDY;…",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-022-error-context",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-022 · S022-17 — RV-R1-06: details.context + details.remedy cho lỗi Kernel, withErrorContext, …"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 29
     },
