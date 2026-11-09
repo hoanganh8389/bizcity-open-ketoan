@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 7
     },
     {
       "key": "merging",
@@ -30,12 +30,12 @@
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 2
+      "count": 3
     },
     {
       "key": "done",
       "label": "Xong",
-      "count": 262
+      "count": 265
     }
   ],
   "items": [
@@ -535,15 +535,32 @@
       "line": 26
     },
     {
-      "id": "S004-15",
+      "id": "S004-15a",
       "phase": "PHASE-004",
-      "title": "Cảnh báo: chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (sửa đầu bút toán ngoài ứng dụng), số đo + luật cảnh báo, vào bảng kiểm khoá kỳ; D004-13. K1",
+      "title": "Cảnh báo (phần 1, 3): chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (mức error, sửa đầu bút toán ngoài ứng dụng) và đưa vào bảng kiểm trước khi khoá kỳ; D004-13. K1",
       "priority": null,
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, review-r1)",
+        "branch": "feat/phase-004-s004-15a-chan-doan-sua-dau",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-004 · S004-15a — cảnh báo sửa đầu bút toán ngoài ứng dụng (D004-13, phần 1 và 3): chẩn đoán L…"
+      },
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 27
+    },
+    {
+      "id": "S004-15b",
+      "phase": "PHASE-004",
+      "title": "Cảnh báo (phần 2): số đo bizcityledgerheadereditunattributedtotal + luật cảnh báo alerts.yml; D004-13. K1",
+      "priority": null,
+      "status": "paused",
+      "column": "paused",
+      "claim": null,
+      "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
+      "line": 28
     },
     {
       "id": "S004-16",
@@ -554,7 +571,7 @@
       "column": "paused",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
-      "line": 28
+      "line": 29
     },
     {
       "id": "S004-17",
@@ -565,7 +582,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
-      "line": 29
+      "line": 30
     },
     {
       "id": "S004-18",
@@ -573,16 +590,10 @@
       "title": "Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi…",
       "priority": null,
       "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "chore/phase-004-s004-18-do-lech-tai-khoan",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-004 · S004-18 — đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolv…"
-      },
+      "column": "todo",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
-      "line": 30
+      "line": 31
     },
     {
       "id": "S005-1",
@@ -1531,14 +1542,8 @@
       "title": "W6 đợt 8b Nhật ký nghiệp vụ trong action (ACTION 1.3.0 §4.4, phương án C, đã chốt): sổ AUDITKEEP, bối cảnh action trong runAction, writeAudit ghi vào changes.n…",
       "priority": null,
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, audit-in-action)",
-        "branch": "feat/phase-014-audit-in-action",
-        "state": "đang làm",
-        "since": "2026-11-04",
-        "dot": "PHASE-014 · W6 đợt 8b — nhật ký nghiệp vụ trong action theo ACTION §4.4 (phương án C): AUDITKEEP, b…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -5355,15 +5360,9 @@
       "phase": "PHASE-031",
       "title": "Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w4b-man-chinh-sach",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-031 · W4b — màn Chính sách ở Hệ thống (một trang bốn tab: Chính sách · Chờ kế toán xem · Truy…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -5428,14 +5427,8 @@
       "title": "Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view",
       "priority": "P1",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w4b-man-chinh-sach",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-031 · W4b — màn Chính sách ở Hệ thống (một trang bốn tab: Chính sách · Chờ kế toán xem · Truy…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -5482,6 +5475,23 @@
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 37
+    },
+    {
+      "id": "S031-29",
+      "phase": "PHASE-031",
+      "title": "W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPolicyRecompute ở Kernel (00 §14); IN-POL-000 / 005 để…",
+      "priority": "P1",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2b-in-pol-004",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-031 · W2b — IN-POL-004: cửa nạp tính lại quà theo bản chính sách nguồn nêu và so với dòng quà…"
+      },
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 38
     }
   ]
 }
