@@ -31,6 +31,14 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không. Bản đã `retired` trước đây vẫn có `effective_to = NULL` (không có ngày ngừng đáng tin) — việc gỡ nợ là S031-32.
 - **Bảo mật:** không đổi.
 
+### Mua hàng đi đúng đường thuế theo mã (PHASE-026) <!-- [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — đường thuế mua hàng (đóng góp) -->
+
+- **Thêm:** `taxPathChecks` (mua-hang-domain): hàng mua có hoá đơn vào mã không gửi thuế → chặn `tax_path_invoice`; hàng / quà không hoá đơn vào mã gửi thuế → chặn `tax_path_gift` (chỉ mã quà cùng họ, chưa có thì báo khai báo danh mục); quà có hoá đơn / xuất quà bằng mã gửi thuế → nhắc `tax_path_invoiced_gift`. `noTaxFamily` gợi ý mã. Kịch bản NT-MH-003, test `mua-hang-duong-thue`.
+- **Đổi:** `autoLineType` suy loại dòng theo Biến thể / Loại hàng / Gửi lên thuế của mặt hàng, không theo chữ cuối mã (mã M không còn tự thành quà). Dữ liệu mẫu 25 tình huống: mã quà không hoá đơn khai không gửi thuế.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (PHASE-026) <!-- [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá gửi thuế (đóng góp) -->
 
 - **Đổi:** lưu mặt hàng mà làm đổi `send_to_tax` (trực tiếp, hoặc qua đổi biến thể sang / khỏi Nội bộ) khi đã có `inventory_movements` (theo mã hoặc định danh) → 409. `GET /api/v1/catalog/products/:sku` trả `hasMovements`; DM10 khoá ô.

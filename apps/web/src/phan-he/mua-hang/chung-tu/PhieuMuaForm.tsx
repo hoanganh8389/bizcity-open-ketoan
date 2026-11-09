@@ -53,7 +53,7 @@ const num = (s: string) => { const n = Number(s.replace(/\./g, '').replace(',', 
 const fmt = (n: number | undefined) => (n ? n.toLocaleString('vi-VN', { maximumFractionDigits: 4 }) : '');
 let seq = 0;
 const newKey = () => `L${Date.now().toString(36)}${(seq++).toString(36)}`;
-interface CatalogProduct { sku: string; name: string; unit: string; taxInCode: string | null; brandCode?: string | null }
+interface CatalogProduct { sku: string; name: string; unit: string; taxInCode: string | null; brandCode?: string | null; variantCode?: string; typeCode?: string | null; sendToTax?: boolean; parentSku?: string | null }
 
 export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value: PDoc; data: MhData; onClose: () => void; onSaved: () => void; onOpen?: (d: PDoc) => void }) {
   const [v, setV] = useState<PDoc>(value);
@@ -263,13 +263,15 @@ export function PhieuMuaForm({ value, data, onClose, onSaved, onOpen }: { value:
       const rate = TAX_RATE[taxCode] ?? 0;
       const conv = (price: number, inc: boolean) => (inc === v.priceIncludesVat ? price : inc ? roundPrice(price / (1 + rate / 100)) : roundPrice(price * (1 + rate / 100)));
       const price = isBuy && fixed ? conv(fixed.price, fixed.row.priceIncludesVat) : line?.price ?? 0;
-      const kind = skuInfo(sku).kind;
       // Tên, ĐVT, thuế suất, nhãn: theo danh mục mặt hàng (không sửa tay trên phiếu).
       // Mặt hàng của NCC: ghi chú khai sẵn tự điền vào ghi chú dòng (dòng chưa ghi), kèm mã / tên hàng bên NCC.
       const own = v.partnerCode ? sp.rows.find((r) => r.partnerCode === v.partnerCode && r.sku === sku && (r.note || r.nccSku || r.nccName)) : undefined;
       const meta = { sku, name: p.name, unit, taxCode, brandCode: p.brandCode ?? undefined, ...(own ? { nccSku: own.nccSku || line?.nccSku, nccName: own.nccName || line?.nccName, ...(!line?.note && own.note ? { note: own.note } : {}) } : {}) };
-      if (kind === 'promo' || kind === 'gift') setLine(key, { ...meta, price: 0, lineType: 'gift_consumer' });
-      else setLine(key, { ...meta, price, lineType: isBuy || price > 0 ? 'buy' : autoLineType(sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }) });
+      // [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp): loại dòng theo ô của mặt hàng (Biến thể, Loại hàng, Gửi lên thuế), không theo chữ cuối mã.
+      const item = { variantCode: p.variantCode, typeCode: p.typeCode, sendToTax: p.sendToTax, parentSku: p.parentSku };
+      const giftItem = p.variantCode === 'promo' || p.typeCode === 'QUA' || p.sendToTax === false;
+      if (giftItem) setLine(key, { ...meta, price: 0, lineType: 'gift_consumer' });
+      else setLine(key, { ...meta, price, lineType: isBuy || price > 0 ? 'buy' : autoLineType(sku, 0, { policies: data.policies, date: v.docDate, partnerCode: v.partnerCode, branchCode: v.branchCode }, undefined, item) });
     } catch { /* mã chưa có trong danh mục hàng */ }
   };
   /** Nhập dòng hàng từ Excel: thêm dòng, tên / thuế / nhãn / ĐVT mặc định / giá NCC lấy như khi chọn mã, rồi ghi đè các cột tệp có ghi. */

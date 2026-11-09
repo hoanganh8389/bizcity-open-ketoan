@@ -102,20 +102,21 @@ export function variantName(baseName: string, suffix: string): string {
 }
 
 /**
- * Loại dòng tự suy ra (thay ô "Loại dòng" chọn tay):
- *  - mã M / quà KM, hoặc dòng giá 0 không được chia giá → hàng tặng người tiêu dùng (0 đồng, vào sổ quà);
- *  - mã K, hoặc dòng giá 0 được chia giá → hàng tặng chia vào giá vốn hàng mua cùng phiếu;
+ * Loại dòng tự suy ra (thay ô "Loại dòng" chọn tay), theo Ô CỦA MẶT HÀNG, không theo chữ cuối mã ([2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp)):
+ *  - Biến thể Khuyến mại, Loại hàng Quà, hoặc mã không gửi thuế, hay dòng giá 0 không được chia giá → hàng tặng người tiêu dùng;
+ *  - Biến thể Chia giá, hoặc dòng giá 0 được chia giá → hàng tặng chia vào giá vốn hàng mua cùng phiếu;
  *  - còn lại → hàng mua.
  * Dòng giá 0 của mã thường: theo chính sách khuyến mại của NCC cho mã đó (splitIntoCost), không có chính sách thì mặc định
  * CHIA GIÁ (đúng định nghĩa "hàng chia giá" của TGS) — người dùng bỏ tích "Chia vào giá vốn" nếu là quà cho khách.
  */
-export function autoLineType(sku: string, price: number, ctx: { policies: Policy[]; date: string; partnerCode?: string; brandCode?: string; branchCode?: string }, share?: boolean): LineType {
-  const info = skuInfo(sku);
-  if (info.kind === 'promo' || info.kind === 'gift') return 'gift_consumer';
+export function autoLineType(sku: string, price: number, ctx: { policies: Policy[]; date: string; partnerCode?: string; brandCode?: string; branchCode?: string }, share?: boolean,
+  item?: { variantCode?: string; typeCode?: string | null; sendToTax?: boolean; parentSku?: string | null }): LineType {
+  if (item?.variantCode === 'promo' || item?.typeCode === 'QUA' || item?.sendToTax === false) return 'gift_consumer';
   if (price > 0) return 'buy';
   if (share !== undefined) return share ? 'gift_seller' : 'gift_consumer';
-  if (info.kind === 'share') return 'gift_seller';
-  const promo = ctx.policies.find((p) => p.kind === 'promo_gift' && policyApplies(p, { ...ctx, sku: info.base }));
+  if (item?.variantCode === 'share') return 'gift_seller';
+  // Chính sách KM khai theo mã cha: sản phẩm con dò theo mã cha.
+  const promo = ctx.policies.find((p) => p.kind === 'promo_gift' && policyApplies(p, { ...ctx, sku: item?.parentSku || sku }));
   if (promo) return promo.rule.splitIntoCost ? 'gift_seller' : 'gift_consumer';
   return 'gift_seller';
 }

@@ -130,7 +130,7 @@ describe('Mua hàng — chứng từ và ghi sổ', () => {
     const retOk = await approve(ret.id);
     expect(retOk.links[0].role).toBe('Trả hàng NCC');
 
-    await call(ctx, 'PUT', '/api/v1/catalog/products/QUA-THUNG?new=true', { name: 'Thùng sữa tặng', unit: 'Thùng', taxInCode: 'V08', units: [{ unit: 'Thùng', ratio: 1, isDefault: true }] });
+    await call(ctx, 'PUT', '/api/v1/catalog/products/QUA-THUNG?new=true', { name: 'Thùng sữa tặng', unit: 'Thùng', taxInCode: 'V08', sendToTax: false, units: [{ unit: 'Thùng', ratio: 1, isDefault: true }] });
     const gift = await save({ kind: 'gift_in', docDate: '2026-10-03', branchCode: 'CN01', partnerCode: 'NCC-TH', priceIncludesVat: false, gift: { source: 'ncc_extra', hasVat: false }, lines: [{ lineKey: 'g1', sku: 'QUA-THUNG', name: 'Thùng sữa tặng', unit: 'Thùng', qty: 5, price: 480000, taxCode: 'V08', lineType: 'gift_consumer' }] });
     const g = await approve(gift.id);
     const gev = (await call(ctx, 'GET', `/api/v1/documents/${g.links[0].eventId}`)).body.data;

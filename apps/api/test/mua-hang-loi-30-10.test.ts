@@ -87,9 +87,16 @@ describe('Đợt test 30/10', () => {
   });
 
   it('TH20 — mua / nhận quà làm vượt ngân sách chương trình thì cảnh báo ngay trên phiếu', async () => {
+    // [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp): quà không hoá đơn phải vào mã không gửi thuế; mã hàng chính bị chặn và được chỉ sang mã quà cùng họ.
+    const QSKU = `${SKU}-QUA`;
+    const q = await call(t, 'PUT', `/api/v1/catalog/products/${QSKU}?new=1`, { name: 'Hàng thử 30/10 quà', unit: 'Lon', taxInCode: 'V08', parentSku: SKU, sendToTax: false, units: [{ unit: 'Lon', ratio: 1, isDefault: true, isPurchaseDefault: true }] });
+    expect(q.status, JSON.stringify(q.body)).toBe(200);
     await policy({ code: 'NS3010', kind: 'gift_budget', name: 'Ngân sách quà thử 1 triệu', validFrom: '2026-10-01', validTo: '2026-12-31', rule: { program: 'P3010', amount: 1_000_000 } });
     const gift = (qty: number) => ({ kind: 'gift_in', docDate: '2026-10-05', branchCode: 'CN-NA', partnerCode: 'NCC-QA3010', priceIncludesVat: false, gift: { source: 'ncc_program', program: 'P3010', hasVat: false },
-      lines: [line(qty, 100_000, { taxCode: 'KKKN', lineType: 'gift_consumer', program: 'P3010' })] });
+      lines: [line(qty, 100_000, { sku: QSKU, taxCode: 'KKKN', lineType: 'gift_consumer', program: 'P3010' })] });
+    const wrong = (await analyze({ ...gift(1), lines: [line(1, 100_000, { taxCode: 'KKKN', lineType: 'gift_consumer', program: 'P3010' })] })).find((c) => c.code === 'tax_path_gift');
+    expect(wrong).toMatchObject({ level: 'error', blocking: true });
+    expect(wrong?.text).toContain(QSKU);
     await approve((await save(gift(8))).id); // 800.000
     const w = (await analyze(gift(3))).find((c) => c.code === 'gift_budget_over');
     expect(w?.level).toBe('warn');

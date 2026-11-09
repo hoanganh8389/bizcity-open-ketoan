@@ -78,8 +78,23 @@ export async function withBrands<T extends Pick<PDoc, 'lines' | 'brandCode'>>(tr
 
 export async function loadProducts(trx: Db, tenantId: string, skus: string[]): Promise<Product[]> {
   if (!skus.length) return [];
-  const rows = await trx.selectFrom('products').select(['sku', 'name', 'unit', 'brand_code', 'group_code', 'tax_in_code']).where('tenant_id', '=', tenantId).where('sku', 'in', [...new Set(skus)]).execute();
-  return rows.map((r) => ({ sku: r.sku, name: r.name, unit: r.unit, brandCode: r.brand_code ?? '', groupCode: r.group_code ?? undefined, taxCode: r.tax_in_code ?? 'V08' }));
+  // [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp): ô Gửi lên thuế, Biến thể, Loại hàng, mã cha để kiểm đường thuế.
+  const rows = await trx.selectFrom('products').select(['sku', 'name', 'unit', 'brand_code', 'group_code', 'tax_in_code', 'type_code', 'parent_sku',
+    sql<boolean>`send_to_tax`.as('send_to_tax'), sql<string>`variant_code`.as('variant_code')]).where('tenant_id', '=', tenantId).where('sku', 'in', [...new Set(skus)]).execute();
+  return rows.map((r) => ({ sku: r.sku, name: r.name, unit: r.unit, brandCode: r.brand_code ?? '', groupCode: r.group_code ?? undefined, taxCode: r.tax_in_code ?? 'V08',
+    sendToTax: r.send_to_tax, variantCode: r.variant_code, typeCode: r.type_code, parentSku: r.parent_sku }));
+}
+
+/** Mã không gửi thuế cùng họ (cùng mã cha) với từng mã: gợi ý khi phiếu chọn sai đường thuế. */
+export async function noTaxFamily(trx: Db, tenantId: string, products: Product[]): Promise<(sku: string) => string[]> {
+  const roots = [...new Set(products.map((p) => p.parentSku || p.sku))];
+  if (!roots.length) return () => [];
+  const rows = await sql<{ sku: string; root: string }>`
+    SELECT sku, COALESCE(parent_sku, sku) AS root FROM products
+     WHERE tenant_id = ${tenantId} AND is_active AND NOT send_to_tax AND COALESCE(parent_sku, sku) = ANY(${roots}::text[]) ORDER BY sku`.execute(trx);
+  const by = new Map<string, string[]>();
+  for (const r of rows.rows) by.set(r.root, [...(by.get(r.root) ?? []), r.sku]);
+  return (sku) => { const p = products.find((x) => x.sku === sku); return by.get(p?.parentSku || sku) ?? []; };
 }
 
 const evKeys = (d: StoredDoc) => d.links.map((l) => l.eventId).filter(Boolean);
@@ -283,10 +298,11 @@ export async function analyze(trx: Db, tenantId: string, doc: PDoc, ctx: Ctx): P
   let checks: Check[] = [];
   if (GOODS.includes(doc.kind)) {
     const products = await loadProducts(trx, tenantId, doc.lines.map((l) => l.sku));
+    const noTaxFor = await noTaxFamily(trx, tenantId, products);
     const dupInvoice = doc.invoice?.no ? docs.filter((d) => d.partnerCode === doc.partnerCode && d.invoice?.no === doc.invoice?.no) : [];
     checks = checkDoc(doc, calc, {
       policies, products, credit, prices, units, otherDocs: dupInvoice, prepaymentAvailable: pre.amount, priceWarnPct: settings.priceWarnPct,
-      priceHistory: (sku) => history[sku] ?? [],
+      priceHistory: (sku) => history[sku] ?? [], noTaxFor,
     }).filter((c) => doc.kind === 'receipt' || doc.kind === 'order' || !['no_invoice', 'gift_qty', 'price_last', 'price_fixed'].includes(c.code))
       .filter((c) => !(['gift_in', 'gift_out', 'return', 'exchange'].includes(doc.kind) && (c.code === 'near_expiry' || c.code === 'expired')));
     if (doc.kind === 'gift_out') checks = checks.filter((c) => c.code !== 'lot_missing');

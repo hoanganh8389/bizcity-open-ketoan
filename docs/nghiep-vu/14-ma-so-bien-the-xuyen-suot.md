@@ -21,7 +21,8 @@ Bản tương ứng phía WordPress: `tgs_shop_management/docs/ma-hang-so-va-bie
 2. Ô **Gửi lên thuế** là căn cứ duy nhất để tách khỏi thuế. Nội bộ luôn tắt.
 3. **Mặt hàng đã có nhập xuất thì không đổi được ô Gửi lên thuế**, kể cả gián tiếp qua đổi biến thể sang / khỏi Nội bộ. Cần đường thuế khác thì tạo mã con mới; hàng đang có chuyển bằng phiếu chuyển đổi.
 4. **Quà phải là mã không gửi thuế** (mã quà con, Nội bộ). Tặng mã có gửi thuế: hệ thống bán hàng cảnh báo (mặc định) hoặc chặn.
-5. Hết tồn mã quà thì lập **phiếu chuyển đổi** mã chính → mã quà cùng họ, có duyệt, ngân sách. Chưa làm: chờ kế toán chốt cách ghi sổ thuế.
+5. **Mua hàng, kho theo đường thuế** (10/11/2026): hàng mua có hoá đơn chỉ vào mã gửi thuế; hàng / quà không hoá đơn chỉ vào mã không gửi thuế; xuất quà chỉ từ mã không gửi thuế. Sai thì chặn và chỉ mã đúng cùng họ, chưa có mã thì báo khai báo danh mục tạo sản phẩm con. Loại dòng phiếu mua suy theo ô của mặt hàng, không theo chữ cuối mã. Kịch bản test: NT-MH-003.
+6. Hết tồn mã quà thì lập **phiếu chuyển đổi** mã chính → mã quà cùng họ, có duyệt, ngân sách. Chưa làm: chờ kế toán chốt cách ghi sổ thuế.
 
 ## 2. Biến thể
 

@@ -63,7 +63,11 @@ describe('Mã hàng theo quy tắc mã hàng và hàng tặng tự nhận', () =
     const ctx = { policies: [] as Policy[], date: '2026-04-23', partnerCode: 'NC100227' };
     expect(autoLineType('130181002', 5389, ctx)).toBe('buy');
     expect(autoLineType('130181002', 0, ctx)).toBe('gift_seller');
-    expect(autoLineType('110154016M', 0, ctx)).toBe('gift_consumer');
+    // Loại dòng theo ô của mặt hàng, không theo chữ cuối mã.
+    expect(autoLineType('110154016M', 0, ctx)).toBe('gift_seller');
+    expect(autoLineType('11015401601', 0, ctx, undefined, { variantCode: 'promo' })).toBe('gift_consumer');
+    expect(autoLineType('11015401602', 0, ctx, undefined, { sendToTax: false })).toBe('gift_consumer');
+    expect(autoLineType('11015401603', 0, ctx, undefined, { variantCode: 'share' })).toBe('gift_seller');
     const promo: Policy = { id: '1', code: 'KM', kind: 'promo_gift', name: '', scope: { partnerCode: 'NC100227' }, isActive: true, rule: { buy: 10, get: 1, splitIntoCost: false } };
     expect(autoLineType('130181002', 0, { ...ctx, policies: [promo] })).toBe('gift_consumer');
     expect(autoLineType('130181002', 0, ctx, false)).toBe('gift_consumer');

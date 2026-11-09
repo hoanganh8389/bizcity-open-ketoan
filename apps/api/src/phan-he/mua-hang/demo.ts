@@ -59,11 +59,15 @@ export async function seedDemo(auth: AuthContext, opts: { reset?: boolean } = {}
   for (const b of [...new Set(products.map((p) => p.brandCode).filter(Boolean))]) {
     await catalogEnsure.itemClass(db, auth.tenantId, { kind: 'brand', code: b!, name: BRAND_NAMES[b!] ?? b! });
   }
+  const existed = new Set((await db.selectFrom('products').select('sku').where('tenant_id', '=', auth.tenantId).where('sku', 'in', products.map((p) => p.sku).concat([''])).execute()).map((r) => r.sku));
   for (const p of products) {
     // ĐVT nhiều cấp (Hộp / Lốc / Thùng) chỉ thêm khi mặt hàng chưa có ĐVT nào — không đụng ĐVT của danh mục thật.
     if (p.units) await catalogEnsure.productUnitsIfNone(db, auth.tenantId, p.sku, p.units.map((u) => ({ unit: u.unit, ratio: String(u.ratio), is_default: Boolean(u.isDefault), is_purchase_default: Boolean(u.isPurchaseDefault) })));
     await catalogEnsure.product(db, auth.tenantId, { sku: p.sku, name: p.name, unit: p.unit, brand_code: p.brandCode, group_code: p.groupCode ?? null, industry_code: p.industry ?? null, tax_in_code: p.taxCode === 'KKKN' ? null : p.taxCode });
   }
+  // [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp): mã quà của bộ mẫu (nhận quà, xuất quà) là mã KHÔNG gửi thuế. Chỉ đặt cho mã do bộ mẫu tạo, không đụng danh mục thật.
+  const giftSkus = [...new Set(docs.filter((d) => (d.kind === 'gift_in' || d.gift) && !d.gift?.hasVat).flatMap((d) => d.lines.map((l) => l.sku)))].filter((s) => s && !existed.has(s));
+  if (giftSkus.length) await sql`UPDATE products SET send_to_tax = false WHERE tenant_id = ${auth.tenantId} AND sku = ANY(${giftSkus}::text[])`.execute(db);
   // Mã thuế đầu vào "không kê khai" cho hàng / quà không có hoá đơn VAT (hệ thống tài khoản chuẩn đã có; bản trống thì thêm).
   await catalogEnsure.taxCode(db, auth.tenantId, { code: 'KKKN', name: 'Không kê khai, nộp thuế GTGT', rate: '0', direction: 'input', account_code: null, report_group: 'KKKN' });
   const settings = await loadSettings(db, auth.tenantId);

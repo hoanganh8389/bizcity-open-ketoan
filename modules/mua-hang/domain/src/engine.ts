@@ -146,7 +146,9 @@ export interface PDoc {
   warehouseCode?: string;
 }
 
-export interface Product { sku: string; name: string; unit: string; brandCode: string; groupCode?: string; taxCode: string; trackLot?: boolean; isGiftItem?: boolean; giftValue?: number }
+export interface Product { sku: string; name: string; unit: string; brandCode: string; groupCode?: string; taxCode: string; trackLot?: boolean; isGiftItem?: boolean; giftValue?: number;
+  /** Gửi lên thuế (0093): mỗi mã đi trọn một đường thuế. [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp) */
+  sendToTax?: boolean; variantCode?: string; typeCode?: string | null; parentSku?: string | null }
 export interface Partner { code: string; name: string; taxCode?: string; group?: string; address?: string; openingDebt?: number }
 
 export type PolicyKind = 'trade_discount' | 'item_discount' | 'qty_tier' | 'payment_discount' | 'promo_gift' | 'period_rebate' | 'target_rebate' | 'stage_rebate'
@@ -716,6 +718,8 @@ export interface CheckCtx {
   otherDocs: PDoc[];
   partnerTaxCode?: string;
   prepaymentAvailable?: number;
+  /** Mã không gửi thuế cùng họ với một mã (gợi ý khi chọn sai đường thuế). */
+  noTaxFor?: (sku: string) => string[];
   /** Đơn đặt hàng mà phiếu nhập này giao theo (đối chiếu 3 bên). */
   refOrder?: PDoc;
   /** Mặt hàng & giá mua của NCC (supplier_products) + ĐVT của các mã — so giá cố định. */
@@ -765,6 +769,46 @@ export function giftPlan(doc: PDoc, policies: Policy[]): GiftPlanRow[] {
           lineType, expected: m.expected, got: Math.round(got * 1000) / 1000, repeat: m.repeat, toNext: m.toNext, row: m.index });
       }
     }
+  }
+  return out;
+}
+
+/**
+ * ĐƯỜNG THUẾ THEO MÃ ([2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — mua hàng đi đúng đường thuế theo mã (đóng góp)).
+ * Mỗi mã đi trọn một đường thuế, để mã GỬI thuế không bao giờ nhận hàng không hoá đơn:
+ *   - Hàng / quà KHÔNG hoá đơn (nhận quà ngoài hợp đồng, quà theo chương trình không VAT, quà tự mua không VAT): chỉ vào
+ *     mã KHÔNG gửi thuế. Dùng mã gửi thuế → chặn, chỉ mã quà cùng họ; chưa có thì báo khai báo danh mục tạo sản phẩm con.
+ *   - Hàng mua thường có hoá đơn (phiếu nhập, đơn đặt): chỉ vào mã GỬI thuế. Dùng mã không gửi thuế → chặn.
+ *   - Quà CÓ hoá đơn (KM người tiêu dùng ghi trên hoá đơn NCC, quà tự mua có VAT) và xuất quà từ mã gửi thuế: chỉ nhắc —
+ *     cách ghi sổ thuế cho quà có hoá đơn chờ kế toán chốt.
+ */
+export function taxPathChecks(doc: PDoc, c: Pick<CheckCtx, 'products' | 'noTaxFor'>): Check[] {
+  const out: Check[] = [];
+  const prod = (sku: string) => c.products.find((p) => p.sku === sku);
+  const sends = (sku: string) => prod(sku)?.sendToTax !== false;
+  const hint = (sku: string) => {
+    const alt = (c.noTaxFor?.(sku) ?? []).filter((x) => x !== sku);
+    return alt.length ? `dùng mã ${alt.slice(0, 3).join(', ')}` : `chưa có mã không gửi thuế cho ${sku}: nhờ bộ phận khai báo danh mục tạo sản phẩm con (DM10 → Thêm sản phẩm con, bỏ tích Gửi lên thuế)`;
+  };
+  const lines = doc.lines.filter((l) => l.sku && l.qty > 0 && prod(l.sku));
+  const giftDoc = doc.kind === 'gift_in' || Boolean(doc.gift);
+  const noInvoice = giftDoc && !doc.gift?.hasVat;
+  if (noInvoice && (doc.kind === 'gift_in' || doc.kind === 'receipt')) {
+    for (const l of lines.filter((x) => sends(x.sku))) {
+      out.push({ level: 'error', code: 'tax_path_gift', blocking: true, lineKey: l.lineKey, text: `${l.sku}: hàng / quà không hoá đơn phải vào mã không gửi thuế — ${hint(l.sku)}` });
+    }
+  }
+  if ((doc.kind === 'receipt' || doc.kind === 'order') && !giftDoc) {
+    for (const l of lines.filter((x) => x.lineType !== 'gift_consumer' && !sends(x.sku))) {
+      out.push({ level: 'error', code: 'tax_path_invoice', blocking: true, lineKey: l.lineKey, text: `${l.sku}: hàng mua có hoá đơn phải vào mã gửi thuế (mã này không gửi thuế) — chọn mã chuẩn của sản phẩm` });
+    }
+  }
+  const invoicedGifts = doc.kind === 'gift_out'
+    ? lines.filter((x) => sends(x.sku))
+    : (doc.kind === 'receipt' && !giftDoc ? lines.filter((x) => x.lineType === 'gift_consumer' && sends(x.sku)) : []);
+  if (invoicedGifts.length) {
+    out.push({ level: 'warn', code: 'tax_path_invoiced_gift', lineKey: invoicedGifts[0]!.lineKey,
+      text: `Quà dùng mã gửi thuế (${[...new Set(invoicedGifts.map((x) => x.sku))].slice(0, 3).join(', ')}): ở quầy chỉ tặng được mã không gửi thuế; cách ghi sổ thuế cho quà có hoá đơn chờ kế toán chốt` });
   }
   return out;
 }
@@ -841,6 +885,7 @@ export function checkDoc(doc: PDoc, calc: DocCalc, c: CheckCtx): Check[] {
   } else if (doc.kind === 'receipt') {
     out.push({ level: 'info', code: 'no_invoice', text: 'Chưa có hoá đơn: hàng về trước, bổ sung hoá đơn sau (thuế đầu vào chưa khấu trừ)' });
   }
+  out.push(...taxPathChecks(doc, c));
   if (c.refOrder) {
     const bad = threeWayMatch(c.refOrder, doc).filter((m) => !m.ok);
     out.push(bad.length
