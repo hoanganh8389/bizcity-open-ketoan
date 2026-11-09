@@ -4,6 +4,7 @@
 
 > **Trạng thái:** Nháp, chờ chủ dự án đọc. Mã nằm ở các nhánh cục bộ (chưa đẩy) — bảng §4.
 > **Đọc trên:** `origin/main` @ `6b295c15` (2026-11-09). Khác `main` thì `main` thắng (R-FLOW-7).
+> **Chi tiết sửa lõi:** [81-CHI-TIET-SUA-LOI](81-CHI-TIET-SUA-LOI.md) — từng tệp Platform / Kernel / hợp đồng / bộ kiểm: trước / sau, vì sao, ảnh hưởng, rủi ro, cách lùi, test.
 > **Liên quan:** [ADR-0027](../../adr/ADR-0027-core-authorization-plugin-role-editor.md) Phụ lục A · [20 §0](20-KIEN-TRUC.md) · [45](45-CA-BANG-CHUNG.md) · [PHASE-030 / 22](../PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/22-DANH-GIA-GON-PHAN-QUYEN.md) · [`bizcity_authorization@1`](../../contracts/BIZCITY-AUTHORIZATION-v1.md)
 
 ## 1. Vì sao có tệp này
