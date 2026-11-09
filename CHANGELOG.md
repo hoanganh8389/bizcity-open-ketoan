@@ -12,6 +12,33 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo công nợ hiện tên đối tượng tại ngày kết thúc kỳ (PHASE-029 S029-19 đợt 2a) <!-- [2026-11-09 09:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2a -->
+
+- **Đổi:** báo cáo **công nợ theo nhân viên** (`GET /api/v1/reports/debt-by-employee`) và **công nợ theo mặt hàng** (`debt-by-item`) hiện tên đối tượng ở tiêu đề theo **tên hiệu lực tại ngày kết thúc kỳ** (`to`), không phải tên hiện tại: đổi tên đối tượng rồi xem báo cáo của kỳ kết thúc trước ngày đổi tên vẫn ra tên cũ, kỳ kết thúc từ ngày đổi tên trở đi ra tên mới. Số liệu và mã đối tượng không đổi. Hàm dùng chung `partnerNamesAt` (`reports/ten-doi-tuong.ts`) cho các báo cáo sau. Golden T029-RPT-1..4.
+- **Thêm:** không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
+- **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
+
+### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
+
+- **Thêm:** màn *Hệ thống → Chính sách* (HT15, quyền `catalog:read`, `/he-thong/chinh-sach`) với bốn tab: *Chính sách* (các bản, hiệu lực, băm, chứng từ đã áp, khoảng trống), *Chờ kế toán xem* (hàng việc `policy_review` + nút *Đánh dấu đã xem*, ẩn khi thiếu `documents:write`), *Truy vết* (chứng từ → chính sách@bản, băm khớp / lệch, ngày ngoài hiệu lực), *Theo dõi thực hiện* (đạt chính sách, lệch theo mã, độ phủ, độ trễ phiên bản, dòng thời gian, sức khoẻ). Đường dẫn sâu `?xem=truy-vet&chung-tu=<docKey>` để màn khác mở thẳng chuỗi chính sách căn cứ.
+- **Đổi:** không. Chỉ dùng API đã có (W2c, W4a); không API mới, không migration. Tỉ lệ `null` hiện "—".
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** màn chỉ đọc; nút *Đánh dấu đã xem* cần `documents:write` và đi qua action có bằng chứng (W2c).
+
+### Dấu vết ở CSDL cho mọi thay đổi đầu bút toán, kể cả UPDATE viết thẳng (PHASE-004 S004-14, review R1 RV-R1-14) <!-- [2026-11-09 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-14 -->
+
+- **Thêm:** migration `0089_vet_dau_but_toan.sql` — trigger `ledger_entries_header_audit` (`AFTER UPDATE`, chỉ chạy khi cột đổi) ghi một dòng `audit_logs` `ledger.entry.header_update` cho **mọi** thay đổi chín cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`, `partner_name`, `partner_attr_id` của bút toán, từ mọi đường kể cả `UPDATE` viết thẳng bằng `ketoan_app`. `before_data` / `after_data` chỉ gồm cột thật sự đổi; `after_data` thêm `_source = db`, `_txid`, `_role`, `_login`, `_app`, `_client`. Nhật ký mức ứng dụng của S004-13 thêm `_source = app` và cùng `_txid` để đối chiếu. Hằng `E2_DB_COLUMNS`; test `e2-db-audit.test.ts` (T004-DB-1…5, phá thử dưới `ketoan_app`: không tắt / gỡ trigger, không xoá / sửa nhật ký) và `e2-header-audit.test.ts` (T004-E2-3 buộc danh sách cột và trigger dấu vết khớp trigger bất biến).
+- **Đổi:** nhật ký E2 mức ứng dụng nay mang `_source` và `_txid` trong `after`. Mỗi lần E2 qua ứng dụng có **hai** dòng cùng `_txid` (ứng dụng và CSDL).
+- **Sửa:** trước đây `UPDATE ledger_entries SET event_version = NULL` (hay đổi `description`, `partner_id`…) bằng `ketoan_app` được trigger cho phép và không để lại dấu vết. Phát hiện kèm: `partner_name` và `partner_attr_id` (0087) ghi chú "không đổi về sau" nhưng trigger bất biến không ép nên đổi được; chưa đóng băng (chờ chủ S029-19, Q004-9), nay có dấu vết.
+- **Thay đổi định khoản:** không (K3 thêm chặt; không đổi dữ liệu, không đổi hành vi ghi sổ).
+- **Nâng cấp cần làm:** chạy `npm run db:migrate`. Mỗi lần định khoản lại đổi thông tin đầu sinh thêm một dòng `audit_logs` (sự kiện hiếm). Cảnh báo "sửa ngoài ứng dụng" và bảng theo dõi là S004-15 / S004-16 (chưa có).
+- **Bảo mật:** đóng kẽ hở sửa đầu bút toán không để lại dấu vết. Giới hạn: chủ bảng / superuser vẫn tắt được trigger (chẩn đoán `LEDGER_TRIGGERS` phát hiện sau).
+
 ### API đọc chính sách: sổ đăng ký, theo dõi thực hiện, truy vết ngược (PHASE-031 W4a, ADR-0031) <!-- [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a -->
 
 - **Thêm:** bốn action đọc `catalog:read` — `GET /api/v1/policy-registry` (+ `/:policyId/applications`), `/policy-tracking`, `/policy-lineage` — đọc `policy_registry` và `bizcity_read.policy_application`; hợp đồng `bizcity_policy@1` 1.2.0-draft mục 11. Test `policy-insight.test.ts` (T031-INS-1..6).

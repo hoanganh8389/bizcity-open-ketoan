@@ -289,3 +289,5 @@ Phạm vi: S031-18, S031-24 (phần màn hình). **Một trang, bốn tab** đú
 **Kiểm.** Web chưa có khung test: bảo đảm bằng `npm run typecheck -w @ketoan/web` + `vite build` + chạy thật (`/run`) chụp bốn tab với dữ liệu dựng bằng cửa nạp (như `policy-insight.test.ts`) và ghi vào PR; kèm golden T031-UI-1..4 mô tả (hiện đúng số API · rate null · ẩn nút khi thiếu quyền · ack đóng việc và số đếm giảm).
 
 **Ba yếu tố.** *Nhất quán:* cùng nguồn số với API và Engine. *Xuyên suốt:* dòng thời gian + khoảng trống ở tab đầu. *Truy vết:* tab Truy vết với băm / hiệu lực. *Gọn:* một trang, không API mới, không migration.
+
+**Đính chính khi code (W4b, 2026-11-09).** (1) Mã chức năng **HT15**. (2) Nút *Chính sách căn cứ* trên màn truy vết chứng từ hiện có **hoãn**: tệp đó ngoài phạm vi dòng W4b; thay bằng đường dẫn sâu `/he-thong/chinh-sach?xem=truy-vet&chung-tu=<docKey>` đã chạy (tab *Chờ kế toán xem* dùng chính nó cho nút *Truy vết*). (3) Chưa có `helpKey` / trang `docs/huong-dan/chinh-sach.md` (thư mục ngoài phạm vi). (4) Mỗi ô của tab *Theo dõi* **chưa bấm được** sang danh sách sự việc (mục `§4` của 20): hiện chỉ lọc kỳ · chi nhánh · nguồn · module chủ.
