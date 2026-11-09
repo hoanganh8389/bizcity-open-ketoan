@@ -48,10 +48,20 @@ Theo smallwin: **hai đợt nhỏ**, mỗi đợt một PR. Đợt 1 là phần 
 | **Tiêu đề / dòng tổng hợp theo đối tượng** của báo cáo "đến ngày D" (công nợ, số dư, đối chiếu) | tên hiệu lực tại **ngày D = ngày kết thúc kỳ báo cáo** (`bizcity_entity_attr_at`) | báo cáo nói về tình hình tại D thì gọi đối tượng bằng tên đúng tại D, không phải tên của hôm nay |
 | **Từng chứng từ / dòng sổ** (sổ nhật ký, sổ chi tiết, in chứng từ) | `partner_name` **lúc ghi** (`COALESCE(partner_name, tên hiện tại)`) | chứng từ phải giữ tên đúng tại ngày phát sinh; dòng cũ chưa có cột thì dùng tên hiện tại |
 
-**Thứ tự PR** (mỗi PR một nhóm báo cáo, có test đổi tên giữa kỳ như T029-ECP-P001):
-- **2a — công nợ** (`debtByEmployee`, `debtByItem` ở `debt-reports.ts`): chỉ hiện tên ở **tiêu đề đối tượng**, nên chỉ cần tên tại ngày kết thúc kỳ; **không cần** khung nhìn. Đây là PR đầu.
-- **2b — khung nhìn + sổ nhật ký / sổ chi tiết**: `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` liệt kê cột tường minh (0072 từng thêm `product_name` vào đó) nên PHẢI cập nhật để báo cáo thấy `partner_name` / `partner_attr_id` (migration riêng); rồi `journals.ts`, sổ cái.
-- **2c — các báo cáo còn lại** theo nhóm (`dimension-reports.ts`, `control-reports.ts`, `report.repository.ts`, kho, bán hàng, thuế…), mỗi nhóm một PR.
+**Thứ tự PR và tiến độ thật** <!-- [2026-11-09 02:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — cập nhật §2 theo tiến độ thật, chốt 2e -->
+
+Mỗi PR một nhóm báo cáo, có test đổi tên giữa kỳ (T029-ECP-P001 và các ca sau). Quy tắc chung của mọi đợt: tên hiện **lúc ghi** là `COALESCE(CASE WHEN dòng có đối tượng THEN tên lúc ghi của dòng ELSE tên lúc ghi của đầu bút toán END, tên hiện tại)`; nhánh `tên hiện tại` chỉ dành cho dòng sổ ghi trước 0087 (cột còn NULL).
+
+| Đợt | Nhóm | PR | Trạng thái |
+|---|---|---|---|
+| 1 | bảng thuộc tính + cột tên lúc ghi (0087) | #204 | ✅ |
+| 2a | công nợ (`debt-reports.ts`): chỉ tiêu đề đối tượng → tên tại ngày cuối kỳ | #218 | ✅ |
+| 2b | khung nhìn `bizcity_read.ledger_lines` / `ledger_entries` thêm cột (0090, giống 0072) + sổ nhật ký thu / chi tiền, bán hàng, mua hàng (`journals.ts`) | #227 | ✅ |
+| 2c | sổ chi tiết tài khoản và nhật ký chung (`report.repository.ts`) | #233 | ✅ |
+| 2d | nhật ký chi tiền theo khoản mục (`dimension-reports.ts`) | #236 | ✅ |
+| 2e | báo cáo **không đọc tên từ sổ**: `control-reports.ts`, `balance-sheet.ts` | chưa mở | ☐ — quy tắc chốt ở D029-19-4 |
+
+**Giới hạn đã biết:** nhánh `tên hiện tại` của `COALESCE` (dòng sổ ghi trước 0087) không dựng được thành test vì sổ chỉ thêm; chỉ kiểm bằng đọc mã. **Chưa rà (chưa kết luận):** các chỗ khác đọc tên đối tượng từ `partners` — báo cáo bán hàng (`modules/sales/sales-report.*`), kho (`modules/inventory/inventory-report.service.ts`), thuế (`report.service.ts` bảng kê, `phan-he/thue/statements/*`), mua hàng (`phan-he/mua-hang/reports.ts`, `analysis.ts`), xác nhận công nợ (`debt-confirmation.ts`), đề nghị chi (`payment-requests`), kế hoạch (`planning.routes.ts`). Phiếu R8 giao rà từng chỗ: cái nào hiện tên của **chứng từ** thì cần đợt riêng, cái nào chỉ là danh mục đối tượng (tên hiện tại là đúng) thì ghi rõ lý do.
 
 ## 3. Ngoài phạm vi (cố ý)
 
@@ -66,3 +76,22 @@ Theo smallwin: **hai đợt nhỏ**, mỗi đợt một PR. Đợt 1 là phần 
 | D029-19-1 | Tên lúc ghi lấy theo **ngày chứng từ** hay **lúc ghi sổ**? | **Ngày chứng từ** — nguồn sự thật, phiên bản hiện rõ (§0) |
 | D029-19-2 | Cột `partner_name` đặt ở dòng sổ, đầu bút toán, hay cả hai? | **Cả hai** (kèm `partner_attr_id`); cùng một hàm trigger |
 | D029-19-3 | Có lưu `phone` / `email` của đối tượng thành thuộc tính có hiệu lực không? | **Không**: chỉ `name`, `tax_code`, `address` |
+| D029-19-4 | 2e: báo cáo không đọc tên từ sổ lấy tên theo ngày nào? <!-- [2026-11-09 02:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — D029-19-4 chủ dự án đồng ý theo đề xuất 2026-11-09 --> | **Theo chỗ hiện, cùng §2:** (i) dòng **tổng hợp theo đối tượng** (tuổi nợ `control-reports` dòng gom, tên đối tượng của hợp đồng) → tên tại **ngày cuối kỳ**; (ii) dòng **từng chứng từ** (tuổi nợ chi tiết theo `debt_items`) → tên tại **ngày chứng từ** (`doc_date`), qua `bizcity_entity_attr_at`, không thêm cột; (iii) **ghi chú chuyển dài hạn** ở `balance-sheet` (`long_term_balances`) → tên tại **ngày lập bảng**, vì đó là ghi chú của khai báo thủ công chứ không phải chứng từ. Không migration |
+
+## 5. Phiếu rà soát (một người rà, smallwin) <!-- [2026-11-09 02:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — phiếu rà soát S029-19 theo yêu cầu chủ dự án -->
+
+**Người rà soát:** Nguyễn Văn Thủy (một người, kể cả K3 — theo SMALLWIN). **Người nhờ:** Johnny Chu – Chu Hoàng Anh. Rà xong ghi kết quả vào bảng dưới (đạt / cần sửa + PR) và một dòng ở [40-MASTER-CHECKLIST](40-MASTER-CHECKLIST.md).
+
+| # | Rà gì | Cách rà | Kết quả |
+|---|---|---|---|
+| R1 | Trigger điền tên lúc ghi lấy đúng **theo `doc_date`**, không theo lúc ghi sổ | đọc `db/migrations/0087_thuoc_tinh_thuc_the.sql`; chạy `entity-attributes.test.ts` (T029-EA-*) | ☐ |
+| R2 | Bút toán đảo chép đúng tên của bút toán gốc (không tính lại theo ngày hôm nay) | T029-EA-6b | ☐ |
+| R3 | Khung nhìn `bizcity_read.*` chỉ **thêm** cột ở cuối, giữ `security_invoker` | đọc `0090_khung_nhin_ten_doi_tuong.sql`; T029-JNL-1 | ☐ |
+| R4 | Sổ nhật ký (bán / mua / thu chi tiền): chứng từ nhập muộn mang tên cũ | `so-nhat-ky-ten-theo-ngay.test.ts` (T029-JNL-1..4) | ☐ |
+| R5 | Sổ chi tiết + nhật ký chung: cả đường dòng (111) và đường đầu bút toán (511) | `so-cai-ten-theo-ngay.test.ts` (T029-LED-1..3) | ☐ |
+| R6 | Nhật ký chi tiền theo khoản mục: dòng Nợ 33111 và đầu bút toán 64231 | `bao-cao-chieu-ten-theo-ngay.test.ts` (T029-DIM-1..2) | ☐ |
+| R7 | Báo cáo công nợ lấy tên tại ngày cuối kỳ | `cong-no-ten-theo-ngay.test.ts` | ☐ |
+| R8 | Còn chỗ nào hiện tên đối tượng của **chứng từ** mà chưa theo quy tắc? | duyệt danh sách **Chưa rà** ở §2: mỗi chỗ ghi "danh mục (đúng)" hoặc "cần đợt riêng" kèm lý do; lệnh gợi ý `grep -rn "p.name|partner_name" apps/api/src` | ☐ |
+| R9 | Giới hạn đã biết ở §2 chấp nhận được | đọc đoạn **Giới hạn đã biết** | ☐ |
+
+Cách chạy: DB thử riêng (`ketoan_test_*`), `DATABASE_URL=postgres://ketoan:ketoan@localhost:5434/<db> npx vitest run <tệp>` trong `apps/api`. Đừng chạy cả bộ cùng lúc với người khác (dùng chung CSDL thử).
