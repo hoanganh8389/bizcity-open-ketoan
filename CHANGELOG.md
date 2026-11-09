@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ chi tiết tài khoản và nhật ký chung hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2c) <!-- [2026-11-09 11:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2c -->
+
+- **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-LED-1..3.
+- **Đổi:** **sổ chi tiết tài khoản** và **sổ nhật ký chung** hiện tên đối tượng **lúc ghi** (tên của dòng nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ, kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên, vẫn hiện tên cũ. Mã đối tượng và số tiền không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0090 đã chạy).
+- **Bảo mật:** không đổi.
+
 ### Sổ nhật ký hiện tên đối tượng lúc ghi; khung nhìn bizcity_read thêm partner_name (PHASE-029 S029-19 đợt 2b) <!-- [2026-11-09 11:13 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2b -->
 
 - **Thêm:** migration `0090_khung_nhin_ten_doi_tuong.sql` — `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` thêm `partner_name` + `partner_attr_id` ở cuối (`CREATE OR REPLACE VIEW` chỉ thêm cột, giữ thứ tự cột cũ, giữ `security_invoker` và quyền). Báo cáo đọc sổ qua khung nhìn nên đây là điều kiện để đọc được tên lúc ghi của 0087. Golden T029-JNL-1..4.
