@@ -114,6 +114,18 @@ Khai gắn là căn cứ cho tab Nơi dùng (§3), cho SC-LIB-2 (⑤) và cho b�
 **Không làm:** không để module tự đếm hay tự ghi `basis_used` (chỉ qua `ctx.libraries`); không cho `ctx.libraries` ghi cấu hình hay đề xuất; không lấy kết luận module từ ý kiến — chỉ từ manifest, mã nguồn và số đếm.
 
 
+### 4.2 Chữ chốt B5b (S030-51b) — cửa nạp, chỉ cảnh báo, kênh riêng <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: chủ dự án chốt "chỉ cảnh báo, kênh riêng"; K1, không đổi bút toán -->
+
+Chủ dự án chốt phạm vi (2026-11-09): **chỉ cảnh báo, kênh riêng.** Kết quả kiểm theo thư viện **không** đi vào `findings[]` mã `IN-*` và **không** vào điểm `score` — để không đụng bảng mã `IntakeCode`, trọng số điểm và từng trang hướng dẫn mã. Mức **K1** (thêm, tương thích): bút toán của chứng từ mới và cũ không đổi.
+
+- **Bảng gắn trong hợp đồng**, không trong module: `packages/contracts/src/library-bindings.ts` → `LIBRARY_BINDINGS: { id, path, library, at: 'docDate', field?: 'code' }[]`. Ba gắn đầu tiên, đều có thư viện thật: `taxcode-line` (`lines[].taxCode` ↔ `vn.loai-thue`), `reason` (`reasonCode` ↔ `core.ly-do-dinh-khoan`), `reason-to` (`toReasonCode` ↔ `core.ly-do-dinh-khoan`). `path` chỉ gồm tên trường, `[]` cho mảng, dấu chấm cho lồng; thêm một gắn là thêm một dòng ở đây (K1), không viết mã.
+- **Hàm kiểm:** `libraryFindings(trx, tenantId, doc)` ở `packages/kernel/src/modules/intake/library-check.ts`: với mỗi gắn, lấy giá trị có thật trong chứng từ (bỏ trống thì bỏ qua), gọi **cùng bộ kiểm** `validateInLibrary` với `at` = ngày chứng từ và cấu hình của đơn vị (§7.1: thư viện tuỳ chọn đã tắt → bỏ qua). Trả `LibraryFindingEntry[]` = `{ binding, library, path, code, level, message, suggestions }` — chỉ `warn` và `info` (không bao giờ `block`, dù thư viện có luật mức chặn: hạ xuống `warn` kèm `blockedBy` để ghi nhận). Chỉ đọc, không ghi sổ.
+- **Hai đường, một hàm (R-INTAKE-4):** tiền kiểm (`preflight.ts`) trả thêm `libraryFindings[]` cạnh `findings[]`; cửa nạp (`document.service.ts`) gọi đúng hàm đó, **không** từ chối, **không** hold, chỉ **đếm lượt dùng** (nguồn `intake/<sourceSystem>`, mã mục, kết quả) vào `library_usage_daily` để bảng đánh giá thấy dữ liệu đi qua thư viện từ kênh nào. Không migration, không cột mới trên sự việc.
+- **Đơn vị hạ hoặc tắt từng gắn** bằng khoá `bindings` trong cấu hình thư viện có phiên bản (§7.1): `{ "<id gắn>": "off" | "info" }` (chỉ hạ: `warn` → `info`, hoặc tắt). `checkLibraryConfig` kiểm id gắn có thật và thuộc thư viện này; lưu thành phiên bản mới như mọi cấu hình. Thẻ Cấu hình ở HT14 hiện các gắn của thư viện đang xem.
+- **Chặn `LIB-UNKNOWN-001` ở trường bắt buộc (Q030-L4) chưa làm trong đợt này:** chưa gắn nào bắt buộc. Khi có gắn `required` thật, làm đợt riêng (cần đưa `LIB-*` vào luồng `IN-*` — chạm `IntakeCode`, điểm, hướng dẫn từng mã — chữ chốt K1/K2 riêng).
+- **Bằng chứng kiểm:** test so định khoản thử (`dryRun`) của cùng bộ chứng từ trước / sau bật kiểm — bút toán y hệt; mã lạ → `libraryFindings` có `LIB-UNKNOWN-001` mà `findings` và `score` không đổi; phá thử (gắn sai thư viện, bỏ `at`) phải đỏ. Kiểm tĩnh mới **SC-LIB-3**: mỗi gắn trỏ thư viện có thật, id duy nhất, `path` đúng khuôn.
+- **Không làm:** không đổi `IntakeCode` / `INTAKE_CATALOG` / trọng số điểm; không hold chứng từ vì thư viện; không ghi gì vào bảng sổ; không để module gắn riêng (bảng gắn chỉ ở hợp đồng).
+
 ## 5. Cập nhật thư viện — hai đường
 
 | Đường | Ai | Làm gì | Kết quả |
@@ -210,7 +222,7 @@ Skill nêu rõ: chỉ báo "xong" khi `library check` ra PASS và `selfcheck --o
 | S030-49 | **B3** — căn cứ: thư viện `vn.can-cu-phap-ly` (gộp hai sổ), `basis[].key`, `library_attestations`, tab Căn cứ; cấu hình `library_settings` + ghi đè qua `setting_values`; phiếu đề xuất `library_change_requests` | S030-47; Q030-L2, L3 |
 | S030-50 | **B4** — CLI `npx bizcity library search / check / new / diff` + skill `use-bizcity-library` | S030-47 |
 | S030-51a | **B5a** — `ctx.libraries`, `libraries[]` (bizcity_module@1 1.5.0-draft), SC-LIB-2, `core.library.modules` + tab Module (§4.1) | S030-48, S030-50 |
-| S030-51b | **B5b** — cửa nạp: bảng gắn trường ↔ thư viện, kiểm ở L3, K1 (§4.1 ⑤) | S030-51a, S030-52; Q030-L4 |
+| S030-51b | **B5b** — cửa nạp: bảng gắn trường ↔ thư viện, chỉ cảnh báo, kênh riêng `libraryFindings[]`, K1 (§4.2) | S030-51a, S030-52; Q030-L4 |
 | S030-52 | Thư viện dữ liệu: `core.khoan-muc`, `vn.loai-thue`, `core.ly-do-dinh-khoan` (lọc từ `db/seeds`, chỉ danh mục chuẩn — không đối tượng / nhân viên / ngân hàng) | S030-45; Q030-L5 |
 
 ### 11.1 Chữ chốt S030-52 <!-- [2026-11-09 03:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-52: chủ dự án chốt "chỉ lấy danh mục chuẩn (khoản mục, loại thuế, lý do định khoản)"; thư viện không mang số tài khoản -->
