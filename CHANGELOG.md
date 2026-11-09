@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Sổ nhật ký hiện tên đối tượng lúc ghi; khung nhìn bizcity_read thêm partner_name (PHASE-029 S029-19 đợt 2b) <!-- [2026-11-09 11:13 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2b -->
+
+- **Thêm:** migration `0090_khung_nhin_ten_doi_tuong.sql` — `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` thêm `partner_name` + `partner_attr_id` ở cuối (`CREATE OR REPLACE VIEW` chỉ thêm cột, giữ thứ tự cột cũ, giữ `security_invoker` và quyền). Báo cáo đọc sổ qua khung nhìn nên đây là điều kiện để đọc được tên lúc ghi của 0087. Golden T029-JNL-1..4.
+- **Đổi:** sổ nhật ký **thu / chi tiền** (`cash-journal`), **bán hàng** (`sales-journal`) và **mua hàng** (`purchase-journal`) hiện tên đối tượng **lúc ghi** (tên của dòng nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ — kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên — vẫn hiện tên cũ. Dòng sổ ghi trước 0087 (chưa có tên lúc ghi) vẫn hiện tên hiện tại. Mã đối tượng và số tiền không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** chạy migration 0090 (đã có 0087 của đợt 1).
+- **Bảo mật:** không đổi (khung nhìn giữ `security_invoker`).
+
 ### Cảnh báo sửa đầu bút toán ngoài ứng dụng (PHASE-004 S004-15a, D004-13) <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a -->
 
 - **Thêm:** chẩn đoán L3 `LEDGER_HEADER_EDIT_UNATTRIBUTED` (mức **error**, có phạm vi kỳ / chi nhánh): liệt kê bút toán có lần sửa đầu **ngoài ứng dụng** = dòng nhật ký của trigger 0089 (`_source = db`) không có dòng của ứng dụng (`_source = app`) cùng `_txid`. Vì là lỗi L3 mức error nên khoá kỳ chặn như mọi lỗi L3 (kế toán trưởng ghi lý do thì khoá được). Lane DG-LEDGER-5 cùng bộ mã (R-DIAG-9). Test `e2-unattributed-warning`.
