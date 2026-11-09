@@ -5,7 +5,7 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 10 |
+| Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 137 |
@@ -14,7 +14,7 @@
 | Xong | 263 |
 | **Tổng** | **491** |
 
-## Đang làm (10)
+## Đang làm (9)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
