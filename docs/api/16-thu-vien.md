@@ -101,6 +101,10 @@ POST /api/v1/libraries/proposals/12/status          { "status": "da-vao", "resol
 
 Phiếu đề xuất (`core.library.propose`, `catalog:write`): `kind` = `them-muc` · `sua-gia-tri` · `can-cu` · `bao-sai` · `ngung-dung` (trừ `them-muc`, cần `itemCode`); `basisKey` phải có trong `vn.can-cu-phap-ly`. Trạng thái (`core.library.proposal.update`): `gui → nhan → da-vao` (kèm bản) `| tu-choi` — người có `settings:write`; `rut` — chỉ người gửi; sai vòng → `CONFLICT`. Phiếu không xoá, nội dung không sửa (trigger CSDL).
 
+### 6.1 Gắn với chứng từ (cửa nạp) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b -->
+
+`GET /api/v1/libraries/:id/config` trả thêm `bindings[]` — các gắn trường chứng từ ↔ thư viện này (`{ id, path, label }`). Đơn vị hạ hoặc tắt từng gắn: `{ "config": { "bindings": { "taxcode-line": "info" } }, "reason": "…" }` (`off` = tắt, `info` = chỉ nhắc; không nâng mức). Kết quả kiểm của cửa nạp là `libraryFindings[]` trong `POST /api/v1/intake/preflight` ([BIZCITY-INTAKE-FINDINGS §9](../contracts/BIZCITY-INTAKE-FINDINGS-v1.md)): chỉ cảnh báo, không đổi `findings`, `score` hay bút toán.
+
 ## 7. Gọi trong máy chủ
 
 Module, add-in trong cùng tiến trình gọi thẳng bộ kiểm, không qua HTTP:

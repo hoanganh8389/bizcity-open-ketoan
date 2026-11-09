@@ -16,7 +16,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | VI | Bằng chứng và quan sát được | **70 %** | 2 | 3 | 0 | 0 |
 | VII | Cô lập đơn vị và phân quyền | **50 %** | 2 | 0 | 0 | 2 |
 | VIII | Mở rộng bằng module, kiểm chuẩn tự động | **50 %** | 2 | 1 | 0 | 2 |
-| Nền móng | Thư viện tham chiếu có phiên bản (bizcity_library@1) | **81 %** | 5 | 3 | 0 | 0 |
+| Nền móng | Thư viện tham chiếu có phiên bản (bizcity_library@1) | **100 %** | 8 | 0 | 0 | 0 |
 
 ## Nền móng · Quản trị dữ liệu gốc (Master Data Governance) — 53 %
 
@@ -141,7 +141,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | M-4 | Golden Tests: đổi mã, đổi nhóm, đổi chế độ không phá FIFO / sổ cái | 🟡 Một phần | ca đổi mã giữa tháng (item-id-so-kho); đổi phân loại theo ngày (item-master) | chưa có bộ Golden Tests đặt tên, chạy như một cổng phát hành | S026-2 (PHASE-026) | P0 |
 | M-5 | Benchmark triệu SKU, hàng trăm cửa hàng; kiểm soát hiệu năng | ☐ Chưa | — | — | S026-14 (PHASE-026) | P2 |
 
-## Nền móng · Thư viện tham chiếu có phiên bản (bizcity_library@1) — 81 %
+## Nền móng · Thư viện tham chiếu có phiên bản (bizcity_library@1) — 100 %
 
 > Dữ liệu tham chiếu chung mọi đơn vị (tham số pháp lý, lịch, mã chức năng, sườn nghiệp vụ, luật kiểm, mẫu) có một khuôn, có phiên bản, đọc tại ngày, kiểm được ô nhập với mã chung LIB-* và gợi ý; đơn vị chỉ đọc, ghi đè có lý do, xác nhận căn cứ; mọi lần dùng để lại dấu — ngang Master Data (giữ cái gì của đơn vị) và Policy Registry (đơn vị quyết theo luật nào) (ADR-0032).
 
@@ -151,7 +151,7 @@ Cùng một nguồn với màn **HT10 Trụ cột & mức đạt** và thẻ **T
 | L-2 | Một bộ kiểm chung, 7 mã LIB-* trong thư viện mã (cổng L), gợi ý lấy từ thư viện; luật khai báo của từng thư viện | ✅ Đạt | packages/platform/src/core/libraries (validateAgainstLibrary), library-findings.ts, thu-vien.test.ts | — | — | P0 |
 | L-3 | Đọc được ở mọi nơi: API core.library.*, MCP chỉ đọc, ô chọn LibraryPicker, màn HT14 Kho thư viện | ✅ Đạt | GET /api/v1/libraries, LibraryPicker (ui-kit), modules/thu-vien (S030-47) | — | — | P0 |
 | L-4 | Căn cứ pháp lý là thư viện; mục trỏ căn cứ bằng mã; kế toán trưởng xác nhận theo đơn vị | ✅ Đạt | libraries/vn.can-cu-phap-ly (18 mục, gộp LEGAL_BASES + legal-sources.json), SC-LIB-1 kiểm basis[].key, library_attestations qua core.library.attest / attestations, thẻ Căn cứ HT14; test thu-vien-can-cu.test.ts (S030-49a) | nội dung: chưa văn bản nào được rà bản gốc; căn cứ của tham số pháp lý phần lớn chưa liên kết mã — việc rà soát nội dung, không phải cơ chế | — | P1 |
-| L-5 | Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện | 🟡 Một phần | library_settings + library_change_requests (0088), core.library.configure / config / propose / proposals / proposal.update, thẻ Cấu hình + Đề xuất HT14; test thu-vien-cau-hinh.test.ts (S030-49b) | gắn trường ↔ thư viện theo đơn vị (bindings) chờ B5b | S030-51b (PHASE-030) | P1 |
-| L-6 | Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT) | 🟡 Một phần | library_usage_daily (0083), core.library.usage, core.library.modules + bảng Theo module HT14 có kết luận ĐẠT / có điều kiện / KHÔNG ĐẠT; test thu-vien-su-dung.test.ts, thu-vien-module.test.ts (S030-48, S030-51a) | kết luận module mới là phần thời gian chạy + SC-LIB-2; độ phủ theo trường của chứng từ (cửa nạp) chờ B5b | S030-51b (PHASE-030) | P1 |
-| L-7 | Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI | 🟡 Một phần | ô chọn + API + SC-LIB-1 + ctx.libraries trong action (context.ts) + SC-LIB-2 + CLI library check; test thu-vien-module.test.ts, fixture module-libraries-bad (S030-51a) | chưa gắn vào cửa nạp (bảng trường ↔ thư viện, B5b) | S030-51b (PHASE-030) | P1 |
+| L-5 | Cấu hình theo đơn vị: ghi đè giá trị có lý do, hạ mức luật, gắn trường ↔ thư viện | ✅ Đạt | library_settings + library_change_requests (0088), core.library.configure / config / propose / proposals / proposal.update, thẻ Cấu hình + Đề xuất HT14, khoá bindings (hạ / tắt gắn của cửa nạp); test thu-vien-cau-hinh.test.ts, library-bindings.test.ts (S030-49b, S030-51b) | — | — | P1 |
+| L-6 | Theo dõi sử dụng + bảng đánh giá: thư viện khoẻ, dữ liệu qua thư viện, module theo chuẩn (ĐẠT / có điều kiện / KHÔNG ĐẠT) | ✅ Đạt | library_usage_daily (0083), core.library.usage, core.library.modules + bảng Theo module HT14 (ĐẠT / có điều kiện / KHÔNG ĐẠT), nguồn kênh cửa nạp; test thu-vien-su-dung.test.ts, thu-vien-module.test.ts, library-bindings.test.ts (S030-48, S030-51a, S030-51b) | — | — | P1 |
+| L-7 | Bộ kiểm ở mọi đường vào dùng chung thư viện: ô chọn, API, action của module, cửa nạp, bộ kiểm tĩnh, CLI | ✅ Đạt | ô chọn + API + ctx.libraries trong action + cửa nạp (libraryFindings[], bảng gắn LIBRARY_BINDINGS) + SC-LIB-1 / 2 / 3 + CLI library check; test thu-vien-module.test.ts, library-bindings.test.ts (S030-51a, S030-51b) | — | — | P1 |
 | L-8 | Skill + CLI cho dev và AI: tìm, kiểm, thêm, cập nhật thư viện | ✅ Đạt | npx bizcity library list / search / check / new / diff (packages/cli/lib/library.mjs), skill skills/use-bizcity-library; test packages/cli/test/library-cli.test.mjs (9 ca, phá thử 3 chỗ) (S030-50) | check qua bản dựng platform không có cấu hình riêng của đơn vị (cần máy chủ) | — | P1 |
