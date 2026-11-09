@@ -2973,7 +2973,7 @@
         "branch": "feat/phase-022-trace-remedy",
         "state": "đang làm",
         "since": "2026-11-09",
-        "dot": "PHASE-022 · S022-18 — RV-R1-06: khay Mã tra cứu mang details.context.step + hiện remedy.steps; hợp …"
+        "dot": "PHASE-022 · S022-18 — RV-R1-06: mã tra cứu mang step + remedy ở hợp đồng ma-tra-cuu.ts. K1"
       },
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 30
