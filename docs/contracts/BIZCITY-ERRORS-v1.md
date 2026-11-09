@@ -126,6 +126,63 @@ MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error:
 
 Module thêm mã chi tiết của mình ở mục này (tiền tố = key module viết hoa, `-` → `_`, vd `HOP_DONG_INSTALLMENT_ALREADY_PAID`).
 
+## 4c. Mã chi tiết theo vùng mới (1.6.0-draft — ĐỀ XUẤT, chờ chủ dự án duyệt) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — rà soát mã lỗi sau thư viện, phân quyền, chính sách, chứng từ nhiều phiên bản -->
+
+**Vì sao (rà soát ngày 2026-11-09).** Mã `code` vẫn đủ (14 mã, không thêm). Thiếu là ở `details.reason`: trong ≈ 780 chỗ `Errors.*` của `packages/` và `apps/api/src`, chỉ 2 chỗ mang `reason` (`LEDGER_APPEND_ONLY` và `POLICY_REVIEW_NOT_OPEN`; mã sau chưa khai ở §4). Bên gọi và khay Mã tra cứu chỉ có câu chữ để rẽ nhánh. Cụ thể:
+
+- **Phân hệ quyền** (`packages/platform/src/core/authz/`): máy quyết định quyền đã có 12 mã quyết định `AUTHZ-*`, nhưng `scope.ts` nhét mã vào **câu thông báo** (`Errors.forbidden(\`… (${d.reasonCode})\`)`), không vào `details`. Khay Mã tra cứu không đọc được (nó chỉ nhận `reason` dạng `UPPER_SNAKE`).
+- **Kho thư viện** (`core/libraries/context.ts`): mục thư viện chặn trả `VALIDATION_ERROR` với `details.code = LIB-…`, không có `reason`.
+- **Chính sách** (`core/policies.ts`): bốn trường hợp `CONFLICT` / `VALIDATION_ERROR` khác nhau (bản không nối tiếp, bản đã đóng, chính sách đã ngừng, ngày áp lùi) cùng không `reason`.
+- **Chứng từ / phiên bản** (`kernel/.../document.service.ts`, `voucher.service.ts`, `intake/repair.ts`): "đã có phiên bản mới hơn", "phiếu đã huỷ", "không phải phiếu nháp", "chứng từ nhận từ hệ thống khác", "mục bể chờ đã đóng" đều là `CONFLICT` trống.
+- **Định khoản** (`kernel/.../posting/`): 22 chỗ `POSTING_FAILED` — thiếu luật, thiếu cấu hình lý do / tài khoản, lý do sai loại — không phân biệt được.
+- **Kho / giá vốn** (`kernel/.../inventory/costing.service.ts`): chỉ có lỗi khuôn đầu vào (`VALIDATION_ERROR`). Khi có lớp giá vốn và cổng Gate C (RV-R1-17) mới cần họ `COSTING_` — chưa khai ở bản này.
+
+**Quy ước thêm (minor, không đổi mã / HTTP / reason đã phát hành):**
+
+1. Mã quyết định quyền `AUTHZ-X-Y` đi ra `details.reason = AUTHZ_X_Y` (đổi `-` thành `_`, 1 : 1), kèm `details.permission` và, khi có, `details.condition` (điều kiện trượt, không giá trị dữ liệu). Câu thông báo không chứa mã nữa.
+2. Thư viện chặn: `details.reason = LIBRARY_BLOCKED`, giữ `details.library`, `details.code` (`LIB-…`), `details.path`.
+3. **R-ERR-11 (đề xuất):** mọi `reason` viết bằng chữ trong mã phải có trong `ERROR_REASONS` (check **SC-ERR-2**, quét `reason: '…'`). Họ mã của module dùng tiền tố key module như R-ERR-6.
+
+| `reason` | Đi với `code` | Khi nào | Chỗ ném hiện nay |
+|---|---|---|---|
+| **Chứng từ, phiên bản** | | | |
+| `VERSION_STALE` | `CONFLICT` | Đã có phiên bản mới hơn bản gửi lên | `document.service.ts` (kiểm `existing.version > doc.version`) |
+| `VERSION_CONTENT_MISMATCH` | `CONFLICT` | (đã chốt ở §4, [DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)) | chưa nối — S029-34 |
+| `DOC_NOT_DRAFT` | `CONFLICT` | Thao tác chỉ cho phiếu nháp; phiếu đã ghi sổ / chờ huỷ | `voucher.service.ts` |
+| `DOC_CANCELLED` | `CONFLICT` | Phiếu đã huỷ | `voucher.service.ts` |
+| `DOC_SOURCE_READONLY` | `CONFLICT` | Chứng từ nhận từ hệ thống khác: sửa ở nguồn rồi gửi lại | `voucher.service.ts`, `intake/repair.ts` (khoá app) |
+| `DOC_ALREADY_CONFIRMED` | `CONFLICT` | Đã xác nhận nhận tiền trước đó | `document.service.ts` |
+| `INTAKE_ITEM_CLOSED` | `CONFLICT` | Mục bể chờ đã đóng, không sửa được | `intake/repair.ts` |
+| **Sổ cái** | | | |
+| `LEDGER_ALREADY_REVERSED` | `CONFLICT` | Bút toán đã đảo trước đó | `ledger.service.ts` |
+| `LEDGER_NO_SOURCE_EVENT` | `POSTING_FAILED` | Bút toán không gắn sự việc gốc (không ghi / không đảo được) | `ledger.service.ts` |
+| `LEDGER_HEADER_EDIT_FROM_APP` | `VALIDATION_ERROR` | Xác nhận một lần sửa đầu bút toán đã đi qua ứng dụng (không cần xác nhận) | `ledger-entry-edits.ts` |
+| **Định khoản** | | | |
+| `POSTING_RULE_MISSING` | `POSTING_FAILED` | Chưa có luật định khoản cho loại chứng từ | `posting.service.ts` |
+| `POSTING_CONFIG_MISSING` | `POSTING_FAILED` | Thiếu lý do / tài khoản / nhóm hạch toán mặc định; `details` là danh sách thiếu | `account-resolver.ts` |
+| `POSTING_REASON_KIND` | `POSTING_FAILED` | Lý do sai loại cho chứng từ (vd lý do ghi nợ dùng cho phiếu tiền) | `cash.rule.ts`, `journal.rule.ts` |
+| **Phân quyền** (1 : 1 với mã quyết định `AUTHZ-*`) | | | |
+| `AUTHZ_PERM_UNK2026-11-09 10:30 PMN` · `AUTHZ_PERM_REMOVED` · `AUTHZ_PERM_NOT_GRANTED_YET` | `FORBIDDEN` | Quyền không có trong sổ / đã bỏ / chưa duyệt cấp | `authz/engine.ts` |
+| `AUTHZ_HIGH_RISK_DELEGATION` | `FORBIDDEN` | Quyền rủi ro cao, người gọi là khoá API / trợ lý | `authz/engine.ts`, `actions.ts` |
+| `AUTHZ_DENIED_BY_RULE` · `AUTHZ_CONDITION` · `AUTHZ_NO_ALLOW` · `AUTHZ_NO_ASSIGNMENT` | `FORBIDDEN` | Luật cấm; điều kiện trượt; không luật cho; chưa gán vai | `authz/engine.ts` |
+| `AUTHZ_SCOPE_NO_LOCATION` · `AUTHZ_SCOPE_NOT_USER` · `AUTHZ_SCOPE_TENANT` | `FORBIDDEN` | Tài nguyên không có vị trí; phạm vi chỉ cho người dùng; khác đơn vị | `authz/scope.ts` |
+| `AUTHZ_USER_ONLY` | `FORBIDDEN` | Thao tác chỉ cho người đăng nhập, không qua khoá API | `auth.ts`, `ledger.routes.ts`, `ledger-entry-edits.ts`, `access.service.ts` |
+| `AUTHZ_OWN_DOCUMENT_ONLY` | `FORBIDDEN` | Chỉ thao tác trên phiếu do mình lập | `auth.ts` |
+| `AUTHZ_SELF_ASSIGN` · `AUTHZ_ROLE_EXCEEDS_GRANTOR` | `FORBIDDEN` | Tự gán vai cho mình; vai có quyền người gán không có | `role-assignment.service.ts` |
+| `AUTHZ_LAST_OWNER` | `CONFLICT` | Phải còn ít nhất một chủ sở hữu | `access.service.ts` |
+| **Thư viện** | | | |
+| `LIBRARY_BLOCKED` | `VALIDATION_ERROR` | Mục thư viện chặn giá trị; `details.code = LIB-…` | `libraries/context.ts` |
+| `LIBRARY_DISABLED` | `NOT_FOUND` | Đơn vị đã tắt thư viện | `libraries.routes.ts` |
+| `LIBRARY_PROPOSAL_STATE` | `CONFLICT` | Phiếu đề xuất không chuyển được từ trạng thái hiện tại | `libraries/proposals.ts` |
+| **Chính sách** | | | |
+| `POLICY_VERSION_GAP` | `CONFLICT` | Bản không nối tiếp bản trước (có người vừa lưu) | `policies.ts` |
+| `POLICY_VERSION_CLOSED` | `CONFLICT` | Bản trước đã đóng `effective_to` | `policies.ts` |
+| `POLICY_RETIRED` | `CONFLICT` | Chính sách đã ngừng, dùng mã mới | `policies.ts` |
+| `POLICY_BACK2026-11-09D` | `VALIDATION_ERROR` | Ngày áp sớm hơn bản trước (không viết lại quá khứ) | `policies.ts` |
+| `POLICY_REVIEW_NOT_OPEN` | `CONFLICT` | Sự việc không có phát hiện chính sách cần xem (**đã dùng trong mã, chưa khai**) | `queue.routes.ts` |
+
+**Thứ tự làm (đề xuất):** (1) duyệt bảng này; (2) thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
+
 ## 5. Ánh xạ lỗi CSDL (R-ERR-8)
 
 | SQLSTATE | Nguồn | `code` (HTTP) | `reason` | `message` |
@@ -159,6 +216,7 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 
 ## 7. Changelog
 
+- **1.6.0-draft (2026-11-09, đề xuất):** §4c — mã chi tiết theo vùng (chứng từ / phiên bản, sổ cái, định khoản, phân quyền, thư viện, chính sách), R-ERR-11 / SC-ERR-2 đề xuất. Chưa nối vào mã. Không thêm `code`.
 - **1.5.0-draft (2026-11-09, PHASE-029 S029-34):** thêm `details.reason` `VERSION_CONTENT_MISMATCH` (`CONFLICT` 409) cho cùng phiên bản khác nội dung ([DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)). Không thêm mã `code`. **Ảnh hưởng:** bên gửi nào gửi lại cùng `version` với nội dung đổi sẽ nhận 409 thay vì bị ghi đè im lặng; xử lý theo cột "CONFLICT" ở §6 (tăng `version`).
 <!-- [2026-11-10 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — RV-R1-06 -->
 - **1.4.0-draft (2026-11-10, RV-R1-06):** thêm `details.context` (khoá tuỳ chọn: `docKey`, `docType`, `docNo`, `eventId`, `version`, `entryNo`, `period`, `branchCode`, `postingDate`, `step`) và `details.remedy` (`bizcity_remedy@1`, bảng `ERROR_REMEDY`); `UNBALANCED_ENTRY` thêm `difference`, `PERIOD_LOCKED` thêm `scope`. Không đổi mã, HTTP, `reason` đã phát hành.
