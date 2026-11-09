@@ -15,6 +15,14 @@ Bản tương ứng phía WordPress: `tgs_shop_management/docs/ma-hang-so-va-bie
 6. **Ô Gửi lên thuế là căn cứ duy nhất cho mọi việc tách khỏi thuế.** Mọi mặt hàng (cả mã cha) có ô này, mặc định bật. Tắt thì không lên hoá đơn thuế: dòng 0đ tách sang bill Z, dòng có thu tiền ở lại bill chính nhưng bị loại khỏi hoá đơn. Biến thể Nội bộ luôn tắt, khoá ở CSDL. Phần mềm không cần biết biến thể là gì để quyết định thuế. (09/11/2026, migration 0093)
 7. Mã cha luôn là hàng Thường, không có Biến thể; vẫn có ô Gửi lên thuế.
 
+**Quy tắc thuế theo mã (chốt 09–10/11/2026):**
+
+1. "Không gửi thuế" gắn vào **mã**, không gắn vào chương trình hay từng lần bán. Mỗi mã đi trọn một đường thuế: nhập có hoá đơn vào mã nào thì xuất có hoá đơn từ mã đó. Có vậy tồn thuế, giá vốn, ngân sách quà mới đối chiếu được.
+2. Ô **Gửi lên thuế** là căn cứ duy nhất để tách khỏi thuế. Nội bộ luôn tắt.
+3. **Mặt hàng đã có nhập xuất thì không đổi được ô Gửi lên thuế**, kể cả gián tiếp qua đổi biến thể sang / khỏi Nội bộ. Cần đường thuế khác thì tạo mã con mới; hàng đang có chuyển bằng phiếu chuyển đổi.
+4. **Quà phải là mã không gửi thuế** (mã quà con, Nội bộ). Tặng mã có gửi thuế: hệ thống bán hàng cảnh báo (mặc định) hoặc chặn.
+5. Hết tồn mã quà thì lập **phiếu chuyển đổi** mã chính → mã quà cùng họ, có duyệt, ngân sách. Chưa làm: chờ kế toán chốt cách ghi sổ thuế.
+
 ## 2. Biến thể
 
 Cột *Sang thuế* là giá trị ban đầu của ô **Gửi lên thuế** (`products.send_to_tax`); trừ Nội bộ, người dùng tắt được.

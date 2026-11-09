@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { matchLine, skuInfo } from '@bizcity/mua-hang-domain';
 import { db } from '../src/db/client.js';
+import { todayVN } from '../src/core/date-rules.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
 
 let ctx: TestCtx;
@@ -218,6 +219,28 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     const k = await addChild({ parentSku: '170521001', name: 'Thử chia giá không thuế', variantCode: 'share', sendToTax: false });
     expect(await sendOf(k.body.data.sku)).toBe(false);
     expect(await sendOf('190000001Z') ?? false).toBe(false);
+  });
+
+  // [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi đã có nhập xuất (đóng góp)
+  it('đã có nhập xuất thì không đổi được Gửi lên thuế, kể cả qua đổi biến thể; chưa có thì đổi tự do', async () => {
+    const kid = await addChild({ parentSku: '170521001', name: 'Thử khoá gửi thuế', variantCode: 'clip' });
+    const sku = kid.body.data.sku as string;
+    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', sendToTax: false, ...ack })).status).toBe(200);
+    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', sendToTax: true, ...ack })).status).toBe(200);
+    const r = await call(ctx, 'POST', '/api/v1/documents', {
+      docType: 'purchase', docKey: `SPC-KHOA-${sku}`, branchCode: 'CN01', docNo: 'SPC-KHOA', docDate: todayVN(), partner: { code: 'NCC-01', name: 'Nhà cung cấp 01' },
+      lines: [{ lineKey: 'l1', sku, name: 'Thử khoá gửi thuế', unit: 'Hộp', qty: 5, amountBeforeTax: 50000, taxCode: 'V08', taxAmount: 0 }], totals: { beforeTax: 50000, tax: 0, total: 50000 },
+    });
+    expect(r.body.data.status, JSON.stringify(r.body)).toBe('posted');
+    expect((await call(ctx, 'GET', `/api/v1/catalog/products/${sku}`)).body.data.hasMovements).toBe(true);
+    const off = await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', sendToTax: false, ...ack });
+    expect(off.status).toBe(409);
+    expect(JSON.stringify(off.body)).toContain('đã có nhập xuất');
+    const toInternal = await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế', variantCode: 'internal', ...ack });
+    expect(toInternal.status).toBe(409);
+    expect((await call(ctx, 'GET', `/api/v1/catalog/products/${sku}`)).body.data).toMatchObject({ sendToTax: true, variantCode: 'clip' });
+    // Không đổi ô thuế thì vẫn sửa được các thứ khác.
+    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${sku}`, { name: 'Thử khoá gửi thuế 2', sendToTax: true, variantCode: 'program', ...ack })).status).toBe(200);
   });
 
   it('luồng kéo danh mục gửi itemId, parentItemId và variantCode', async () => {

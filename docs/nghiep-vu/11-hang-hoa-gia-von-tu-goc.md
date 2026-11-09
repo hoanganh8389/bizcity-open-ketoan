@@ -422,6 +422,8 @@ Ngoài mã đuôi `Z`, quầy còn tự tách quà 0đ của đơn có sữa dư
 
 **[Đang chạy]** Từ 09/11/2026 tách bill không còn đọc đuôi `Z`: mọi mặt hàng có ô **Gửi lên thuế** (`products.send_to_tax`, mặc định bật; biến thể Nội bộ luôn tắt). Tắt thì dòng 0đ tách sang bill Z, dòng có tiền ở lại bill chính nhưng bị loại khỏi hoá đơn. Quà 0đ của đơn sữa dưới 24 tháng vẫn tự tách như trước.
 
+**[Quy định nội bộ, 10/11/2026]** "Không gửi thuế" gắn vào **mã**, không gắn vào chương trình: mỗi mã đi trọn một đường thuế để tồn thuế và giá vốn không lệch. Mã đã có nhập xuất thì không đổi được ô này. Quà phải là mã không gửi thuế; hết quà thì lập phiếu chuyển đổi mã chính → mã quà (chờ kế toán chốt cách ghi sổ thuế).
+
 **[Đang chạy]** Dấu `is_under_24m` đang dành cho sữa, còn các mã `Z` đều chưa bật dấu này. Nên `Z` không thể chỉ đổi thành dấu "dưới 24 tháng"; cần tách hai ý: hàng này thuộc nhóm sữa dưới 24 tháng, và hàng này có được sang thuế không. **[Góp ý]** đồng ý với hướng thêm dấu "có sang thuế hay không" như một lớp giảm rủi ro.
 
 ## 10. Hai dữ liệu: nội bộ và thuế

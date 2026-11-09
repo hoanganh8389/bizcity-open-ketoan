@@ -35,6 +35,8 @@ Mọi biến thể đều là sản phẩm con: màu, size, hàng nội bộ, k�
 
 **Gửi lên thuế** (mọi mặt hàng, cả mã cha): mặc định tích. Bỏ tích thì mặt hàng không lên hoá đơn thuế; quầy bán tự tách dòng 0đ sang bill Z, dòng có tiền thì giữ ở bill chính nhưng không đưa lên hoá đơn. Hàng *Nội bộ* luôn bỏ tích, không bật lại được. Mã cha không có ô Biến thể.
 
+**Mặt hàng đã có nhập xuất thì ô Gửi lên thuế bị khoá** (đổi biến thể sang hoặc khỏi *Nội bộ* cũng bị chặn), vì mỗi mã phải đi trọn một đường thuế. Cần đường thuế khác thì tạo sản phẩm con mới. Quà phải dùng mã không gửi thuế.
+
 Đổi mã: biến thể đi theo mặt hàng, ví dụ `110051001Z` đổi thành `11005100103` vẫn là *Nội bộ*. Gộp mã: không gộp hàng Nội bộ với hàng có sang thuế.
 
 ### 2. Đơn vị tính

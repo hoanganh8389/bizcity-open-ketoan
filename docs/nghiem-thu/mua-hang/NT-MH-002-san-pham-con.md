@@ -60,6 +60,9 @@ Mã cha `170521001`, đơn vị Hộp và Thùng (24 Hộp), thuế R08, V08, c�
 | Thêm con cho mã con | Từ chối, họ mã một cấp |
 | Mã cha còn chữ | Từ chối, đổi sang số trước |
 | Biến thể không có trong danh mục | Từ chối |
+| Mã cha chọn biến thể khác Thường | Từ chối |
+| Nội bộ gửi bật Gửi lên thuế | Vẫn tắt (CSDL ép) |
+| Đã có phiếu nhập, đổi Gửi lên thuế hoặc đổi biến thể sang Nội bộ | Từ chối (409); sửa thông tin khác vẫn được |
 | Đổi mã thường sang mã có `Z` | Biến thể vẫn Thường: phần mềm không đọc chữ cuối mã |
 | Gộp hàng Nội bộ với hàng thường, cả hai chiều | Từ chối |
 | NCC đổi cách ghi tên, giữ mã | Vẫn tự nhận |

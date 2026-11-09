@@ -36,6 +36,8 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 - Không gộp hàng Nội bộ với hàng có sang thuế.
 - **Ô Gửi lên thuế là căn cứ duy nhất cho mọi việc tách khỏi thuế.** Mọi mặt hàng (cả mã cha) có ô này, mặc định bật. Tắt thì không lên hoá đơn thuế: dòng 0đ tách sang bill Z, dòng có thu tiền ở lại bill chính nhưng bị loại khỏi hoá đơn. Biến thể Nội bộ luôn tắt, khoá ở CSDL. Phần mềm không cần biết biến thể là gì để quyết định thuế.
 - Mã cha không có Biến thể, vẫn có ô Gửi lên thuế.
+- Đã có nhập xuất thì không đổi được Gửi lên thuế (kể cả qua đổi biến thể). Cần đường thuế khác thì tạo mã con mới.
+- Quà phải là mã không gửi thuế; hết quà thì phiếu chuyển đổi (chưa làm, chờ kế toán chốt ghi sổ thuế).
 - Quầy bán, hoá đơn, chính sách trên WordPress đọc ô qua `TGS_Item_Variant` (tài liệu 14).
 
 ## Việc của từng bên

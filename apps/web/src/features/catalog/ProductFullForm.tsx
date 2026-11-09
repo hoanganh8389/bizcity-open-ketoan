@@ -48,6 +48,8 @@ interface FullProduct {
   variantCode?: string;
   /** Gửi lên thuế; Biến thể Nội bộ luôn tắt. [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp) */
   sendToTax?: boolean;
+  /** Đã có nhập xuất: khoá ô Gửi lên thuế. [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (đóng góp) */
+  hasMovements?: boolean;
   units: Unit[]; prices: Price[];
   /** Nháp (PHASE-024): khai báo còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
@@ -287,9 +289,9 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
             </Field>
           )}
           {/* [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp): mọi mặt hàng (cả mã cha); Nội bộ thì tự tắt, khoá. */}
-          <Field label="Gửi lên thuế" tip={v.variantCode === 'internal' ? 'Hàng Nội bộ không bao giờ gửi lên thuế' : 'Bỏ tích: mặt hàng không lên hoá đơn / dữ liệu thuế'}>
+          <Field label="Gửi lên thuế" tip={v.variantCode === 'internal' ? 'Hàng Nội bộ không bao giờ gửi lên thuế' : v.hasMovements ? 'Đã có nhập xuất: không đổi được (mỗi mã đi trọn một đường thuế). Cần đổi thì tạo mã con mới' : 'Bỏ tích: mặt hàng không lên hoá đơn / dữ liệu thuế'}>
             <label className="checkbox" style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 32 }}>
-              <input type="checkbox" checked={v.variantCode !== 'internal' && v.sendToTax !== false} disabled={v.variantCode === 'internal'} onChange={(e) => set({ sendToTax: e.target.checked })} />
+              <input type="checkbox" checked={v.variantCode !== 'internal' && v.sendToTax !== false} disabled={v.variantCode === 'internal' || Boolean(v.hasMovements)} onChange={(e) => set({ sendToTax: e.target.checked })} />
               <span>{v.variantCode === 'internal' ? 'Không (Nội bộ)' : v.sendToTax === false ? 'Không gửi' : 'Có'}</span>
             </label>
           </Field>

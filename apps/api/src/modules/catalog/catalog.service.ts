@@ -48,6 +48,7 @@ type ProductRow = {
   is_main: boolean; is_under_24m: boolean; no_sale: boolean; export_adjust: boolean; is_kct: boolean; track_identifier: boolean; updated_at: Date; parent_sku: string | null;
   is_draft: boolean; draft_codes: string[];
   variant_code?: string; // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể (0078) (đóng góp)
+  has_movements?: boolean; // [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (đóng góp)
   send_to_tax?: boolean; // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
 };
 
@@ -60,7 +61,7 @@ export function productDto(p: ProductRow) {
     postingGroupCode: p.posting_group_code, taxOutCode: p.tax_out_code, taxInCode: p.tax_in_code, exciseRate: num(p.excise_rate), isActive: p.is_active,
     barcode: p.barcode, imageUrl: p.image_url, description: p.description, weightKg: num(p.weight_kg), origin: p.origin,
     isMain: p.is_main, isUnder24m: p.is_under_24m, noSale: p.no_sale, exportAdjust: p.export_adjust, isKct: p.is_kct, trackIdentifier: p.track_identifier,
-    parentSku: p.parent_sku, updatedAt: p.updated_at, isDraft: p.is_draft, draftCodes: p.draft_codes, variantCode: p.variant_code, sendToTax: p.send_to_tax ?? true,
+    parentSku: p.parent_sku, updatedAt: p.updated_at, isDraft: p.is_draft, draftCodes: p.draft_codes, variantCode: p.variant_code, sendToTax: p.send_to_tax ?? true, hasMovements: p.has_movements ?? false,
   };
 }
 
@@ -173,7 +174,7 @@ export function inheritUnits(own: UnitInput[] | undefined, parent: UnitInput[]):
 // ----------------------------------------------------------------------------------------------- một mặt hàng
 
 export async function getProduct(trx: Db, tenantId: string, sku: string) {
-  const p = await trx.selectFrom('products').select([...PRODUCT_COLS, sql<string>`variant_code`.as('variant_code'), sql<boolean>`send_to_tax`.as('send_to_tax')]).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
+  const p = await trx.selectFrom('products').select([...PRODUCT_COLS, sql<string>`variant_code`.as('variant_code'), sql<boolean>`send_to_tax`.as('send_to_tax'), sql<boolean>`EXISTS (SELECT 1 FROM inventory_movements m WHERE m.tenant_id = products.tenant_id AND m.sku = products.sku)`.as('has_movements')]).where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (!p) throw Errors.notFound(`mặt hàng ${sku}`);
   const [units, prices] = await Promise.all([
     trx.selectFrom('product_units').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).orderBy('ratio').orderBy('unit').execute(),
@@ -235,6 +236,9 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
   // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — ô Biến thể sửa được, lưu qua saveProduct; luồng kéo danh mục gửi variantCode (đóng góp)
+  // [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (đóng góp)
+  // Mỗi mã đi trọn một đường thuế: đã có nhập xuất thì không đổi Gửi lên thuế, kể cả gián tiếp qua đổi biến thể sang / khỏi Nội bộ.
+  const taxBefore = exists ? (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx)).rows[0]?.s : undefined;
   if (b.variantCode !== undefined) {
     const k = await sql<{ code: string }>`SELECT code FROM item_variant_kinds WHERE tenant_id = ${tenantId} AND code = ${b.variantCode} AND is_active`.execute(trx);
     if (!k.rows[0]) throw Errors.validation(`Biến thể ${b.variantCode} không có hoặc đã ngừng dùng`);
@@ -248,6 +252,12 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093): trigger CSDL ép false cho biến thể Nội bộ (đóng góp)
   if (b.sendToTax !== undefined) {
     await sql`UPDATE products SET send_to_tax = ${b.sendToTax}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND send_to_tax <> ${b.sendToTax}`.execute(trx);
+  }
+  if (taxBefore !== undefined) {
+    const taxAfter = (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx)).rows[0]?.s;
+    if (taxAfter !== taxBefore && await hasMovements(trx, tenantId, sku)) {
+      throw Errors.conflict(`Mặt hàng ${sku} đã có nhập xuất, không đổi được Gửi lên thuế (mỗi mã đi trọn một đường thuế). Cần đổi thì tạo mã con mới; hàng đang có chuyển bằng phiếu chuyển đổi`);
+    }
   }
   // Hàng KCT (thuế bán ra KCT / R00K) chưa khai thuế mua vào → V13K (không chịu thuế đầu vào), không để phiếu mua tự lấy 8%.
   await trx.updateTable('products').set({ tax_in_code: 'V13K' }).where('tenant_id', '=', tenantId).where('sku', '=', sku).where('tax_in_code', 'is', null).where('tax_out_code', 'in', [...KCT_OUT_CODES]).execute();
@@ -296,6 +306,16 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
 }
 
 /** Xoá mặt hàng chưa có nhập xuất (kèm đơn vị tính, giá) và báo hệ thống bán hàng xoá theo. */
+/** Mặt hàng đã có nhập xuất chưa: theo mã hiện tại hoặc theo định danh (kể cả mã cũ trước khi đổi). [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (đóng góp) */
+export async function hasMovements(trx: Db, tenantId: string, sku: string): Promise<boolean> {
+  const r = await sql<{ x: number }>`
+    SELECT 1 AS x FROM inventory_movements m
+     WHERE m.tenant_id = ${tenantId}
+       AND (m.sku = ${sku} OR m.item_id = (SELECT c.item_id FROM item_codes c WHERE c.tenant_id = ${tenantId} AND c.kind = 'sku' AND c.code = ${sku} AND c.valid_to IS NULL LIMIT 1))
+     LIMIT 1`.execute(trx);
+  return r.rows.length > 0;
+}
+
 export async function deleteProduct(trx: Db, tenantId: string, actor: string, sku: string) {
   const before = await trx.selectFrom('products').selectAll().where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
   if (!before) throw Errors.notFound(`mặt hàng ${sku}`);

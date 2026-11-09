@@ -31,6 +31,14 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không. Bản đã `retired` trước đây vẫn có `effective_to = NULL` (không có ngày ngừng đáng tin) — việc gỡ nợ là S031-32.
 - **Bảo mật:** không đổi.
 
+### Khoá ô Gửi lên thuế khi mặt hàng đã có nhập xuất (PHASE-026) <!-- [2026-11-10 09:00 AM Nguyễn Văn Thủy] PHASE-026 — khoá gửi thuế (đóng góp) -->
+
+- **Đổi:** lưu mặt hàng mà làm đổi `send_to_tax` (trực tiếp, hoặc qua đổi biến thể sang / khỏi Nội bộ) khi đã có `inventory_movements` (theo mã hoặc định danh) → 409. `GET /api/v1/catalog/products/:sku` trả `hasMovements`; DM10 khoá ô.
+- **Thêm:** `hasMovements()` ở catalog.service. Quy tắc thuế theo mã: tài liệu 14.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+
 ### Ô Gửi lên thuế trên mặt hàng (PHASE-026) <!-- [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — 0093 (đóng góp) -->
 
 - **Thêm:** cột `products.send_to_tax` (migration 0093), mặc định bật; trigger ép tắt với biến thể không sang thuế (Nội bộ). `sendToTax` ở `PUT /api/v1/catalog/products/:sku`, `POST /api/v1/items/add-child`, danh sách và luồng `/api/v1/catalog/feed/products`. Ô *Gửi lên thuế* ở DM10 (mọi mặt hàng, cả mã cha) và form Thêm sản phẩm con; cột *Gửi thuế* ở danh sách.
