@@ -24,7 +24,7 @@ import { toCents, fromCents } from '@ketoan/contracts';
 import type { Db } from '@bizcity/platform/db/client';
 import { toNumber } from '@bizcity/platform/db/client';
 import type { Account } from '@bizcity/platform/db/types';
-import { Errors } from '@bizcity/platform/core/errors';
+import { Errors, withErrorContext } from '@bizcity/platform/core/errors';
 import { periodRepository } from '../periods/period.repository.js';
 import { NO_PARTNER_ID, ledgerRepository } from './ledger.repository.js';
 import { syncDebtItems } from '../debts/debt.service.js';
@@ -62,7 +62,11 @@ function validateLines(entry: DraftEntry, accounts: Map<string, Account>): void 
     }
   });
   if (problems.length) throw Errors.posting('Bút toán không hợp lệ', [...new Set(problems)]);
-  if (debit !== credit) throw Errors.unbalanced(undefined, { debit: fromCents(debit), credit: fromCents(credit) });
+  // [2026-11-10 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 (RV-R1-06): lỗi không cân nói chứng từ nào, bước nào (BIZCITY-ERRORS-v1 §4b)
+  if (debit !== credit) {
+    throw withErrorContext(Errors.unbalanced(undefined, { debit: fromCents(debit), credit: fromCents(credit) }),
+      { eventId: entry.sourceDocumentId, docType: entry.docType, docNo: entry.docNo, postingDate: entry.postingDate, step: 'ledger-validate' });
+  }
 }
 
 /**
@@ -105,7 +109,10 @@ export const ledgerService = {
 
     const period = await periodRepository.ensurePeriodFor(trx, tenantId, entry.postingDate);
     if (await periodRepository.isLocked(trx, tenantId, period.id, entry.branchId, entry.docType)) {
-      throw Errors.periodLocked();
+      const branch = await trx.selectFrom('branches').select('code').where('id', '=', entry.branchId).executeTakeFirst();
+      const scope = await periodRepository.lockScope(trx, tenantId, period.id, entry.branchId, entry.docType);
+      throw withErrorContext(Errors.periodLocked(undefined, scope ? { scope } : undefined),
+        { eventId: entry.sourceDocumentId, docType: entry.docType, docNo: entry.docNo, period: `${period.year}-${String(period.month).padStart(2, '0')}`, branchCode: branch?.code, postingDate: entry.postingDate, step: 'period-check' });
     }
 
     const seq = await ledgerRepository.nextEntryNo(trx, tenantId, period.year);

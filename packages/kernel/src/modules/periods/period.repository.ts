@@ -47,6 +47,24 @@ export const periodRepository = {
     return Boolean(row);
   },
 
+  // [2026-11-10 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 (RV-R1-06): lỗi PERIOD_LOCKED nói khoá theo kỳ, chi nhánh hay loại chứng từ
+  /** Phạm vi của khoá đang chặn (cùng điều kiện với isLocked): 'period' (mọi chi nhánh, mọi loại) · 'branch' (một chi nhánh, mọi loại) · 'doc-type' (một loại chứng từ). */
+  async lockScope(db: Db, tenantId: string, periodId: string, branchId: string, docType: string): Promise<'period' | 'branch' | 'doc-type' | undefined> {
+    const row = await db
+      .selectFrom('period_locks')
+      .select(['branch_id', 'doc_type'])
+      .where('tenant_id', '=', tenantId)
+      .where('period_id', '=', periodId)
+      .where((eb) => eb.or([eb('branch_id', 'is', null), eb('branch_id', '=', branchId)]))
+      .where((eb) => eb.or([eb('doc_type', '=', '*'), eb('doc_type', '=', docType)]))
+      .orderBy('doc_type', 'desc')
+      .limit(1)
+      .executeTakeFirst();
+    if (!row) return undefined;
+    if (row.doc_type !== '*') return 'doc-type';
+    return row.branch_id === null ? 'period' : 'branch';
+  },
+
   /** Danh sách kỳ kèm số khoá đang có. */
   listWithLocks(db: Db, tenantId: string, year?: number) {
     let q = db

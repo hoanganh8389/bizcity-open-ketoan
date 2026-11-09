@@ -5,6 +5,7 @@
  * docs/contracts/BIZCITY-ERRORS-v1.md §3 — check SC-ERR-1 so hai nơi. Mỗi mã một dòng (bộ kiểm đọc tệp này bằng regex).
  */
 import type { ErrorCode } from './api.js';
+import { SCREENS, STOP_THE_LINE_STEP, type Remedy } from './remedy.js';
 
 export type ErrorCategory = 'input' | 'auth' | 'state' | 'ledger' | 'platform' | 'server';
 
@@ -54,3 +55,51 @@ export const ERROR_REASONS = {
   DB_REFERENCE_MISSING: 'Tham chiếu tới mã chưa khai báo',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
+
+// [2026-11-10 10:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 (RV-R1-06, chữ chốt BIZCITY-ERRORS-v1 §4b, 1.4.0-draft): ngữ cảnh chuẩn + phương án khắc phục của lỗi Kernel
+/** Bước của đường ghi sổ nơi lỗi xảy ra (`details.context.step`). */
+export const ERROR_STEPS = ['intake', 'posting-rules', 'ledger-validate', 'ledger-insert', 'period-check', 'db-trigger'] as const;
+export type ErrorStep = (typeof ERROR_STEPS)[number];
+
+/** Khoá được phép của `details.context` (mọi khoá tuỳ chọn; không SQL, tên bảng, đường dẫn, dữ liệu cá nhân — R-ERR-3). */
+export const ERROR_CONTEXT_KEYS = ['docKey', 'docType', 'docNo', 'eventId', 'version', 'entryNo', 'period', 'branchCode', 'postingDate', 'step'] as const;
+export type ErrorContextKey = (typeof ERROR_CONTEXT_KEYS)[number];
+export interface ErrorContext {
+  docKey?: string;
+  docType?: string;
+  docNo?: string;
+  eventId?: string;
+  version?: number;
+  entryNo?: string;
+  /** Kỳ kế toán dạng `YYYY-MM`. */
+  period?: string;
+  branchCode?: string;
+  postingDate?: string;
+  step?: ErrorStep;
+}
+
+/** Khoá bị khoá của `PERIOD_LOCKED.details.scope`. */
+export type PeriodLockScope = 'period' | 'branch' | 'doc-type';
+
+/**
+ * Phương án khắc phục theo `reason` (thắng) hoặc `code` — một nguồn cho mọi nơi trả lỗi (§4b mục 2). Màn dẫn tới là SCREENS (SC-FIX-1).
+ * Không chứa lệnh sửa dữ liệu (R-FIX-2).
+ */
+export const ERROR_REMEDY: Partial<Record<ErrorCode | ErrorReason, Remedy>> = {
+  UNBALANCED_ENTRY: {
+    steps: [STOP_THE_LINE_STEP, { text: 'Mở chứng từ theo khoá trong ngữ cảnh, xem nhật ký định khoản', screen: SCREENS.ACC14 }, { text: 'Báo nhóm Lõi kèm mã tra cứu: luật định khoản sinh bút toán lệch', role: 'core_team' }],
+    owner: 'core_team', verify: { code: 'LEDGER_BALANCED' }, stopTheLine: true, forbid: ['Không sửa tay bút toán cho cân'],
+  },
+  PERIOD_LOCKED: {
+    steps: [{ text: 'Xem kỳ và phạm vi khoá trong ngữ cảnh', screen: SCREENS.ACC2 }, { text: 'Kế toán trưởng mở khoá kỳ (hoặc lập chứng từ ở kỳ đang mở)', screen: SCREENS.ACC2, role: 'chief_accountant' }, { text: 'Gửi lại chứng từ sau khi mở khoá' }],
+    owner: 'chief_accountant', verify: { screen: SCREENS.ACC2 },
+  },
+  POSTING_FAILED: {
+    steps: [{ text: 'Mở chứng từ theo khoá trong ngữ cảnh, xem nhật ký định khoản và lý do', screen: SCREENS.ACC14 }, { text: 'Bổ sung cấu hình định khoản còn thiếu (lý do, tài khoản ngầm định)', screen: SCREENS.ACC18, role: 'chief_accountant' }, { text: 'Định khoản lại chứng từ', screen: SCREENS.ACC14, role: 'accountant' }],
+    owner: 'accountant', verify: { screen: SCREENS.ACC14 },
+  },
+  LEDGER_APPEND_ONLY: {
+    steps: [{ text: 'Không sửa hay xoá sổ cái: ghi bút toán đảo qua định khoản lại chứng từ', screen: SCREENS.ACC14, role: 'accountant' }, { text: 'Nghi có đường ghi vòng qua ứng dụng: báo nhóm Lõi kèm mã tra cứu', role: 'core_team' }],
+    owner: 'accountant', verify: { code: 'LEDGER_TRIGGERS' }, forbid: ['Không tắt trigger bảo vệ sổ'],
+  },
+};

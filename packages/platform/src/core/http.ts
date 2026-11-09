@@ -10,7 +10,7 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError, z } from 'zod';
 import { ERROR_CATALOG, ERROR_CODES, type ApiSuccess, type ErrorCode, type ErrorReason, type PageMeta } from '@ketoan/contracts';
-import { AppError, classifyLedgerTriggerError } from './errors.js';
+import { AppError, classifyLedgerTriggerError, withRemedy } from './errors.js';
 import { currentTraceId } from './tracing.js';
 
 /** Phản hồi thành công. */
@@ -75,8 +75,10 @@ export function registerErrorHandler(app: FastifyInstance): void {
     const pgCode = (err as { code?: string }).code;
     // [2026-11-08 02:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-33: trigger sổ cái (cân, khoá kỳ, chỉ thêm) ra đúng mã §5 trước khi rơi về POSTING_FAILED
     const trigger = classifyLedgerTriggerError(err);
-    if (trigger) return send(trigger.code, err.message, trigger.reason ? withReason(trigger.reason) : undefined);
-    if (pgCode === '23514' || pgCode === '42501') return send(ERROR_CODES.POSTING_FAILED, err.message);
+    // [2026-11-10 10:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 (RV-R1-06): lỗi từ trigger CSDL mang step = db-trigger và phương án khắc phục (BIZCITY-ERRORS-v1 §4b mục 4)
+    const dbStep = { context: { step: 'db-trigger' } };
+    if (trigger) return send(trigger.code, err.message, withRemedy(trigger.code, { ...(trigger.reason ? withReason(trigger.reason) : {}), ...dbStep }, trigger.reason));
+    if (pgCode === '23514' || pgCode === '42501') return send(ERROR_CODES.POSTING_FAILED, err.message, withRemedy(ERROR_CODES.POSTING_FAILED, dbStep));
     if (pgCode === '23505') return send(ERROR_CODES.CONFLICT, 'Dữ liệu bị trùng (mã đã tồn tại)', withReason('DB_UNIQUE_VIOLATION'));
     if (pgCode === '23503' && /update or delete/i.test(err.message)) {
       // Xoá một mã còn dữ liệu khác trỏ tới.
@@ -86,8 +88,8 @@ export function registerErrorHandler(app: FastifyInstance): void {
     if (pgCode === 'P0001') {
       // RAISE EXCEPTION của trigger bảo vệ sổ / bằng chứng: câu đã viết cho người dùng, không phải lỗi hệ thống.
       return /không cân/i.test(err.message)
-        ? send(ERROR_CODES.UNBALANCED, err.message)
-        : send(ERROR_CODES.CONFLICT, err.message, withReason('LEDGER_APPEND_ONLY'));
+        ? send(ERROR_CODES.UNBALANCED, err.message, withRemedy(ERROR_CODES.UNBALANCED, dbStep))
+        : send(ERROR_CODES.CONFLICT, err.message, withRemedy(ERROR_CODES.CONFLICT, { ...withReason('LEDGER_APPEND_ONLY'), ...dbStep }, 'LEDGER_APPEND_ONLY'));
     }
     const status = anyErr.statusCode && anyErr.statusCode < 500 ? anyErr.statusCode : 500;
     return status >= 500

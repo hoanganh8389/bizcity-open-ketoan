@@ -36,7 +36,7 @@ import {
   isCashDocument,
 } from '@ketoan/contracts';
 import { db, toNumber, type Db } from '@bizcity/platform/db/client';
-import { AppError, Errors } from '@bizcity/platform/core/errors';
+import { AppError, Errors, withErrorContext } from '@bizcity/platform/core/errors';
 import { zodIssueTexts } from '@bizcity/platform/core/http';
 import { writeAudit } from '@bizcity/platform/core/audit';
 import { assertCanModify, type AuthContext } from '@bizcity/platform/core/auth';
@@ -367,7 +367,16 @@ export async function logPosting(trx: Db, v: {
  *    (sổ hoá đơn, số liệu bán hàng, hàng vào / ra kho); posted_version = phiên bản vừa định khoản. Không xoá gì.
  * Mỗi bước ghi nhật ký định khoản (posting_log).
  */
+// [2026-11-10 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 (RV-R1-06): một chỗ gắn ngữ cảnh chứng từ vào lỗi Kernel (BIZCITY-ERRORS-v1 §4b mục 4)
 export async function postDocumentIn(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; hold?: boolean; guard?: string } = {}): Promise<IngestResult> {
+  try {
+    return await postDocumentInner(trx, auth, doc, opts);
+  } catch (err) {
+    throw withErrorContext(err, { docKey: doc.docKey, docType: doc.docType, docNo: doc.docNo, version: doc.version });
+  }
+}
+
+async function postDocumentInner(trx: Db, auth: AuthContext, doc: IngestDocument, opts: { force?: boolean; post?: boolean; hold?: boolean; guard?: string } = {}): Promise<IngestResult> {
   // [2026-11-02 10:43 AM Johnny Chu - Chu Hoàng Anh] PHASE-011 — 3.14 (ADR-0011 D5 mức 2): khoá app chỉ nộp chứng từ của app — docKey `<app>:…`, sourceSystem = app; một chỗ chặn cho mọi cửa nạp
   // Khoá app ngoài tiến trình (ADR-0011 mức 2): như module mức 1, chỉ nộp / sửa chứng từ mang tiền tố của app. Đặt ở đây để
   // mọi cửa (POST /documents, /documents/submit, nhận theo lô) cùng một luật.

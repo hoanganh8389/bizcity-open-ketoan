@@ -118,7 +118,9 @@ MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error:
 
 5. **Lộ ra ngoài.** `details.context` và `details.remedy` đi nguyên ra REST (`error.details`) và MCP (`error.details`); trace giữ `errCode` như hiện nay; ghi thêm các khoá `context` vào trace là bước sau (S022-18, không thuộc đợt này). Giao diện hiện `remedy.steps` dưới `message` là bước sau (PHASE-019).
 
-**Kiểm bằng:** `apps/api/test/error-context.test.ts` (đề xuất, viết cùng PR code; từng mã ở bảng trên có đủ khoá, qua REST thật; `remedy` khớp `ERROR_REMEDY`; `withErrorContext` không ghi đè khoá có sẵn; lỗi lạ không đổi) và SC-FIX-1 (màn trong `remedy` có ở menu).
+6. **Giới hạn đợt này** <!-- [2026-11-10 11:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17: ghi rõ phần chưa làm -->: `details` dạng **mảng câu** (lỗi kiểm dữ liệu, vd "Bút toán không hợp lệ" kèm danh sách) giữ nguyên — không có `context` / `remedy`; kết quả nạp theo lô (`IngestResult.error { code, message }`, HTTP 200) chưa mang `details` — người gọi đã biết `docKey` của mình; mở rộng khuôn đó là việc riêng (cần sửa `bizcity_ledger_intake@1`).
+
+**Kiểm bằng:** `apps/api/test/error-context.test.ts` (từng mã ở bảng trên có đủ khoá — `PERIOD_LOCKED` qua REST thật (phiếu kế toán), `UNBALANCED_ENTRY` và lỗi trigger qua bộ xử lý lỗi thật; `remedy` khớp `ERROR_REMEDY`; `withErrorContext` không ghi đè khoá có sẵn; lỗi lạ không đổi) và SC-FIX-1 (màn trong `remedy` có ở menu).
 
 Module thêm mã chi tiết của mình ở mục này (tiền tố = key module viết hoa, `-` → `_`, vd `HOP_DONG_INSTALLMENT_ALREADY_PAID`).
 

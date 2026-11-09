@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Lỗi Kernel mang ngữ cảnh chứng từ và phương án khắc phục (PHASE-022 S022-17, RV-R1-06) <!-- [2026-11-10 12:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 -->
+
+- **Thêm:** `details.context` (`docKey`, `docType`, `docNo`, `eventId`, `version`, `entryNo`, `period`, `branchCode`, `postingDate`, `step`) và `details.remedy` (`bizcity_remedy@1`, bảng `ERROR_REMEDY`) cho `UNBALANCED_ENTRY`, `PERIOD_LOCKED`, `POSTING_FAILED` và lỗi trigger CSDL (`step = db-trigger`, kể cả `LEDGER_APPEND_ONLY`); `UNBALANCED_ENTRY` thêm `difference`, `PERIOD_LOCKED` thêm `scope` (`period` / `branch` / `doc-type`, `periodRepository.lockScope`). `withErrorContext` (Platform) bổ sung khoá còn thiếu, `postDocumentIn` bọc ngữ cảnh chứng từ. Chữ chốt BIZCITY-ERRORS-v1 §4b (1.4.0-draft). Test `error-context` (6 ca).
+- **Đổi:** không đổi mã, HTTP hay `reason`; khuôn cũ giữ (`debit`, `credit`). Lỗi có `details` dạng mảng câu và kết quả nạp theo lô (`IngestResult.error`) chưa mang `context` / `remedy` (§4b mục 6).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** `context` chỉ có khoá trong danh sách đóng, không SQL, bảng, đường dẫn, dữ liệu cá nhân.
+
+
 ### Ngừng chính sách đóng hiệu lực (PHASE-031 S031-31, RV-R1-04) <!-- [2026-11-10 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — S031-31 -->
 
 - **Đổi:** `retirePolicy` (Platform) đóng `effective_to` của bản còn mở bằng **ngày ngừng** (tham số `effectiveTo`, mặc định hôm nay; không sớm hơn `effective_from − 1`) cùng lúc chuyển `retired`. Chứng từ có ngày ≤ ngày ngừng vẫn hợp lệ; **sau** ngày ngừng cửa nạp báo **IN-POL-002** (trước đây chứng từ mới trỏ bản đã ngừng không bị báo). Sự kiện `bizcity.policy.retired` thêm `data.effectiveTo`. Chữ chốt: PHASE-031 · 00 §16.

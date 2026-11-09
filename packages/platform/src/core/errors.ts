@@ -10,7 +10,7 @@
  * (core/http.ts) đổi thành phản hồi { ok: false, error: {...} } với mã HTTP phù hợp.
  */
 import { ZodError } from 'zod';
-import { ERROR_CATALOG, ERROR_CODES, type ErrorCode, type ErrorReason } from '@ketoan/contracts';
+import { ERROR_CATALOG, ERROR_CODES, ERROR_CONTEXT_KEYS, ERROR_REMEDY, type ErrorCode, type ErrorContext, type ErrorReason } from '@ketoan/contracts';
 
 export class AppError extends Error {
   constructor(
@@ -30,15 +30,46 @@ export class AppError extends Error {
 /** Lỗi theo danh mục (bizcity_errors@1): HTTP status và thông báo mặc định lấy từ ERROR_CATALOG — một nguồn cho API, MCP, tài liệu. */
 const make = (code: ErrorCode, message?: string, details?: unknown) => new AppError(code, message ?? ERROR_CATALOG[code].message, ERROR_CATALOG[code].http, details);
 
+// [2026-11-10 10:50 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-17 (RV-R1-06, BIZCITY-ERRORS-v1 §4b): lỗi Kernel mang phương án khắc phục (details.remedy) và ngữ cảnh chứng từ (details.context)
+const isPlain = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+/** Gắn `remedy` của mã (hoặc của `reason`, thắng) vào details dạng object; details dạng khác (mảng câu của lỗi kiểm) đi nguyên. */
+export function withRemedy(code: ErrorCode, details?: unknown, reason?: ErrorReason): unknown {
+  if (details !== undefined && !isPlain(details)) return details;
+  const base = { ...(details ?? {}) } as Record<string, unknown>;
+  const r = (reason ? ERROR_REMEDY[reason] : undefined) ?? ERROR_REMEDY[code];
+  if (r && base.remedy === undefined) base.remedy = r;
+  return Object.keys(base).length ? base : undefined;
+}
+/** Mã mang ngữ cảnh chứng từ (§4b mục 3): UNBALANCED_ENTRY, PERIOD_LOCKED, POSTING_FAILED, và CONFLICT kèm reason LEDGER_*. */
+const wantsContext = (e: AppError) => e.code === 'UNBALANCED_ENTRY' || e.code === 'PERIOD_LOCKED' || e.code === 'POSTING_FAILED'
+  || (e.code === 'CONFLICT' && isPlain(e.details) && typeof e.details.reason === 'string' && e.details.reason.startsWith('LEDGER_'));
+/**
+ * Bổ sung ngữ cảnh chứng từ vào `details.context` của lỗi Kernel: chỉ khoá còn THIẾU, không đổi code / message / details khác, không ghi đè khoá có sẵn.
+ * Lỗi không phải AppError, mã ngoài danh sách, hoặc details không phải object đi qua nguyên vẹn.
+ */
+export function withErrorContext<E>(err: E, ctx: ErrorContext): E {
+  if (!(err instanceof AppError) || !wantsContext(err)) return err;
+  if (err.details !== undefined && !isPlain(err.details)) return err;
+  const base = (err.details ?? {}) as Record<string, unknown>;
+  const cur = isPlain(base.context) ? base.context : {};
+  const add: Record<string, unknown> = {};
+  for (const k of ERROR_CONTEXT_KEYS) if (ctx[k] !== undefined && ctx[k] !== null && cur[k] === undefined) add[k] = ctx[k];
+  if (!Object.keys(add).length) return err;
+  const out = new AppError(err.code, err.message, err.httpStatus, { ...base, context: { ...cur, ...add } });
+  out.intake = err.intake;
+  out.stack = err.stack;
+  return out as E;
+}
+
 export const Errors = {
   validation: (message: string, details?: unknown) => make(ERROR_CODES.VALIDATION, message, details),
   unauthorized: (message?: string) => make(ERROR_CODES.UNAUTHORIZED, message),
   forbidden: (message?: string) => make(ERROR_CODES.FORBIDDEN, message),
   notFound: (what: string) => make(ERROR_CODES.NOT_FOUND, `Không tìm thấy ${what}`),
   conflict: (message: string, details?: unknown) => make(ERROR_CODES.CONFLICT, message, details),
-  periodLocked: (message = 'Kỳ kế toán đã khoá: cần mở khoá kỳ trước khi thêm, sửa, xoá phiếu') => make(ERROR_CODES.PERIOD_LOCKED, message),
-  posting: (message: string, details?: unknown) => make(ERROR_CODES.POSTING_FAILED, message, details),
-  unbalanced: (message = 'Tổng Nợ và tổng Có không bằng nhau — kiểm tra lại các dòng', details?: unknown) => make(ERROR_CODES.UNBALANCED, message, details),
+  periodLocked: (message = 'Kỳ kế toán đã khoá: cần mở khoá kỳ trước khi thêm, sửa, xoá phiếu', details?: unknown) => make(ERROR_CODES.PERIOD_LOCKED, message, withRemedy(ERROR_CODES.PERIOD_LOCKED, details)),
+  posting: (message: string, details?: unknown) => make(ERROR_CODES.POSTING_FAILED, message, withRemedy(ERROR_CODES.POSTING_FAILED, details)),
+  unbalanced: (message = 'Tổng Nợ và tổng Có không bằng nhau — kiểm tra lại các dòng', details?: unknown) => make(ERROR_CODES.UNBALANCED, message, withRemedy(ERROR_CODES.UNBALANCED, isPlain(details) && typeof details.debit === 'number' && typeof details.credit === 'number' ? { ...details, difference: Math.round((details.debit - details.credit) * 100) / 100 } : details)),
   notReady: (message: string, details?: unknown) => make(ERROR_CODES.NOT_READY, message, details),
   idempotencyConflict: (message?: string) => make(ERROR_CODES.IDEMPOTENCY_CONFLICT, message),
   capabilityMissing: (capability: string) => make(ERROR_CODES.CAPABILITY_MISSING, `Core chưa có năng lực ${capability}`, { capability }),
