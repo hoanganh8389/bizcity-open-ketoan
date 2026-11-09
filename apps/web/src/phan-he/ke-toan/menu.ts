@@ -130,6 +130,7 @@ export const keToanMenu: MenuItem[] = [
     children: [
       sec('dm-tai-khoan', 'Tài khoản, hạch toán'),
       { key: 'tai-khoan', label: 'DM Tài khoản', path: '/danh-muc/tai-khoan', code: 'ACC1' },
+      { key: 'thiet-ke-hach-toan', label: 'Thiết kế hạch toán', path: '/cau-hinh/thiet-ke-hach-toan', code: 'ACC92' },
       { key: 'tk-ngam-dinh', label: 'Tài khoản ngầm định', path: '/cau-hinh/tai-khoan-ngam-dinh', code: 'ACC41' },
       { key: 'ly-do', label: 'Lý do - Tài khoản', path: '/cau-hinh/ly-do', code: 'ACC18' },
       { key: 'nhom-hach-toan', label: 'Mặt hàng - Tài khoản', path: '/cau-hinh/nhom-hach-toan', code: 'ACC17' },

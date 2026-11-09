@@ -60,6 +60,8 @@ export const SCHEMA_TABLES: Record<string, SchemaTableInfo> = {
 
   // ② Quy tắc
   posting_reasons: { group: 'rules', label: 'Lý do nhập / xuất', term: 'Nghiệp vụ', module: 'posting-config', purpose: 'Mỗi lý do (bán, trả lại, tặng, chuyển kho…) chỉ định tài khoản dùng khi định khoản.' },
+  // [2026-11-10 09:00 PM Nguyễn Văn Thủy] PHASE-026 — lý do theo màn (0095) (đóng góp)
+  screen_reasons: { group: 'rules', label: 'Lý do theo màn', term: 'Nghiệp vụ', module: 'posting-flow', purpose: 'Mỗi màn nghiệp vụ (bán, mua, trả hàng, kho, thu, chi) chỉ dùng vài lý do; màn nhập liệu chỉ hiện các lý do này. Gán ở Thiết kế hạch toán (ACC92).' },
   // [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W4 (G4)
   notifications: { group: 'rules', label: 'Thông báo trong ứng dụng', term: 'Thông báo', module: 'system', purpose: 'Core / module gửi tới một người hoặc mọi người có một quyền (nhắc hạn, việc cần duyệt); chỉ thêm, chống gửi trùng theo khoá.' },
   notification_reads: { group: 'rules', label: 'Đã đọc thông báo', term: 'Thông báo', module: 'system', purpose: 'Người nào đã đọc thông báo nào, lúc nào.' },
