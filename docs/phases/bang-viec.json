@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 268
+      "count": 269
     }
   ],
   "items": [
@@ -562,14 +562,8 @@
       "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
       "priority": null,
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-004-s004-16-bang-sua-dau-but-toan",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-004 · S004-16 — bảng theo dõi sửa đầu bút toán (D004-14, D004-16): API chỉ đọc GET /api/v1/le…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 29
     },
