@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 8
     },
     {
       "key": "merging",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 55
+      "count": 57
     },
     {
       "key": "paused",
@@ -5977,15 +5977,9 @@
       "phase": "PHASE-032",
       "title": "Khoá thử hôm nay đủ năm bước (R-DIAG-14): periods/check + giá vốn tính tạm + closing/preview + kiểm sau kết chuyển + kiểm lúc khoá; không ghi sổ; chạy mỗi sáng…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
-        "branch": "feat/phase-032-b1-khoa-thu",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-032 · B1 — Khoá thử hôm nay trên Bàn làm việc kế toán (HT08 đổi tên, D032-13): ghép kiểm khoá…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 45
     },
@@ -6016,15 +6010,9 @@
       "phase": "PHASE-032",
       "title": "Bàn làm việc kế toán năm thẻ từ HT08 (Việc hôm nay · Khoá thử hôm nay · Kết quả từng tuần, tháng · Sổ theo dõi các tháng · Phần mềm tự kiểm được gì), thuật ngữ…",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
-        "branch": "feat/phase-032-b1-khoa-thu",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-032 · B1 — Khoá thử hôm nay trên Bàn làm việc kế toán (HT08 đổi tên, D032-13): ghép kiểm khoá…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 48
     }
