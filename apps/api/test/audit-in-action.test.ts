@@ -39,6 +39,7 @@ afterAll(async () => {
 describe('AUDIT_KEEP', () => {
   it('khớp tên chính xác, mẫu *.hậu-tố kèm objectType, và từ chối tên khác', () => {
     expect(isAuditKept({ action: 'costing.fill', objectType: 'x' })).toBe(true);
+    expect(isAuditKept({ action: 'ledger.entry.header_update', objectType: 'ledger_entry' })).toBe(true); // S004-15a
     expect(isAuditKept({ action: 'settings.item-auto-create', objectType: 'x' })).toBe(true);
     expect(isAuditKept({ action: 'receipt.update', objectType: 'source_document' })).toBe(true);
     expect(isAuditKept({ action: 'receipt.update', objectType: 'branch' })).toBe(false);

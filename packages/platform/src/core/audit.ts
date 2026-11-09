@@ -44,6 +44,8 @@ export const AUDIT_KEEP: ReadonlyArray<{ action: string; objectType?: string }> 
   { action: 'costing.fill' }, // closing.service: phát hiện kết chuyển lỗi thời
   { action: '*.update', objectType: 'source_document' }, // document.repository: người sửa cuối của chứng từ
   { action: 'settings.item-auto-create' }, // catalog-rules.routes: người và lý do đổi lần cuối
+  // [2026-11-09 08:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a: ledger.diagnostics ghép dòng mức ứng dụng với dòng của trigger 0089 theo _txid
+  { action: 'ledger.entry.header_update' }, // ledger.diagnostics: LEDGER_HEADER_EDIT_UNATTRIBUTED
 ];
 
 export function isAuditKept(e: Pick<AuditEntry, 'action' | 'objectType'>): boolean {
