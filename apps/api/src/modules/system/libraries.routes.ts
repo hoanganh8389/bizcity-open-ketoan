@@ -11,6 +11,7 @@
  *                                                đếm một lượt / giá trị vào library_usage_daily — chỉ mã, không giá trị nhập)
  *   GET  /api/v1/libraries/usage                 core.library.usage     — ?from=&to=&library=&source= → lượt qua / cảnh báo / chặn theo thư viện,
  *                                                theo nguồn, mã phát hiện nhiều nhất, mã lạ (bảng đánh giá HT14)
+ *   GET  /api/v1/libraries/modules               core.library.modules   — module khai libraries[] + lượt dùng 30 ngày + kết luận thời gian chạy (26 §9) <!-- [2026-11-09 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a -->
  *   POST /api/v1/libraries/:id/attest            core.library.attest    — { code, reason, revoke? } → đơn vị xác nhận / gỡ xác nhận một mục (bằng chứng)
  *   GET  /api/v1/libraries/:id/attestations      core.library.attestations — lần xác nhận mới nhất của từng mục; hết hiệu lực khi mục đổi
  *   GET  /api/v1/libraries/:id/config            core.library.config    — cấu hình hiện hành của đơn vị + lịch sử phiên bản
@@ -30,6 +31,7 @@ import {
 import { db } from '../../db/client.js';
 import { Errors } from '../../core/errors.js';
 import { defineAction, mountActions } from '../../core/actions.js';
+import { discoverSdkModules } from '../../core/sdk-modules.js';
 
 const tags = ['Thư viện dùng chung'];
 const id = z.string().trim().regex(/^[a-z0-9-]+\.[a-z0-9][a-z0-9-]{1,48}$/, 'id thư viện dạng <miền>.<tên>');
@@ -182,6 +184,88 @@ const usage = defineAction({
   },
 });
 
+// [2026-11-09 11:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a (26 §4.1 ④): core.library.modules — module khai libraries[] và kết luận thời gian chạy (§9)
+interface ModuleLibDecl { id: string; fields?: string[]; at?: 'docDate' | 'today'; required?: boolean }
+export type ModuleVerdictStatus = 'dat' | 'co-dieu-kien' | 'khong-dat';
+/** Kết luận thời gian chạy một module (26 §9): chỉ từ manifest, cấu hình đơn vị và số đếm 30 ngày. Phần tĩnh (mã cứng, khai mà không dùng) là của SC-LIB-2. */
+export function moduleVerdict(m: {
+  decls: { id: string; required: boolean; exists: boolean; enabled: boolean; deprecatedOnly: boolean; calls: number }[];
+  total: number; block: number; deprecated: number; undeclaredUse: string[];
+}): { status: ModuleVerdictStatus; reasons: string[] } {
+  const bad: string[] = [];
+  const cond: string[] = [];
+  for (const d of m.decls) {
+    if (d.required && !d.exists) bad.push(`thư viện bắt buộc ${d.id} không có trong bản cài`);
+    else if (d.required && !d.enabled) bad.push(`thư viện bắt buộc ${d.id} đã bị đơn vị tắt`);
+    else if (d.required && d.deprecatedOnly) bad.push(`thư viện bắt buộc ${d.id} chỉ còn mục ngừng dùng`);
+    else if (!d.exists) cond.push(`khai thư viện ${d.id} không có trong bản cài`);
+    else if (d.calls === 0) cond.push(`${d.id}: chưa có lượt dùng trong 30 ngày`);
+  }
+  for (const u of m.undeclaredUse) cond.push(`dùng ${u} mà chưa khai libraries[]`);
+  if (m.total > 0 && m.block / m.total >= 0.01) cond.push(`tỉ lệ chặn ${((m.block / m.total) * 100).toFixed(1)} % (≥ 1 %)`);
+  if (m.deprecated > 0) cond.push(`${m.deprecated} lượt dùng mã ngừng`);
+  return { status: bad.length ? 'khong-dat' : cond.length ? 'co-dieu-kien' : 'dat', reasons: [...bad, ...cond] };
+}
+
+const modulesReport = defineAction({
+  id: 'core.library.modules', title: 'Module dùng thư viện', tags,
+  description: 'Bảng đánh giá lớp Module (HT14): module nào khai libraries[] trong bizcity.module.json, thư viện đó có thật / đơn vị đang bật không, '
+    + 'số lượt qua / cảnh báo / chặn 30 ngày theo nguồn modules/<key>, và kết luận thời gian chạy (ĐẠT · ĐẠT có điều kiện · KHÔNG ĐẠT, 26 §9). '
+    + 'Không đọc mã nguồn: mã cứng và khai mà không dùng là phần của SC-LIB-2 (npx bizcity module check).',
+  permission: 'catalog:read', effect: 'read', idempotency: 'none',
+  input: z.object({ to: date.optional() }),
+  output: z.object({
+    from: z.string(), to: z.string(),
+    items: z.array(z.object({
+      module: z.string(), label: z.string(),
+      libraries: z.array(z.object({ id: z.string(), exists: z.boolean(), enabled: z.boolean(), required: z.boolean(), at: z.string(), fields: z.array(z.string()), calls: z.number() })),
+      usage: z.object({ total: z.number(), pass: z.number(), warn: z.number(), block: z.number(), deprecated: z.number() }),
+      verdict: z.object({ status: z.enum(['dat', 'co-dieu-kien', 'khong-dat']), reasons: z.array(z.string()) }),
+    })),
+  }),
+  expose: { http: { method: 'GET', path: '/api/v1/libraries/modules' }, mcp: true, ai: 'read' },
+  handler: async (ctx, i) => {
+    await flushUsage();
+    const to = i.to ?? new Date().toISOString().slice(0, 10);
+    const from = new Date(Date.parse(`${to}T00:00:00Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
+    const report = await libraryUsage(ctx.data.tx, ctx.tenant.id, { from, to });
+    const cfgs = await tenantLibraryConfigs(ctx.data.tx, ctx.tenant.id);
+    const mods = new Map<string, { label: string; decls: ModuleLibDecl[] }>();
+    for (const m of discoverSdkModules()) {
+      const libs = (m.manifest as { libraries?: ModuleLibDecl[] }).libraries;
+      mods.set(m.key, { label: m.manifest.label, decls: Array.isArray(libs) ? libs : [] });
+    }
+    for (const r of report.bySource) {
+      const key = r.source.startsWith('modules/') ? r.source.slice('modules/'.length) : null;
+      if (key && !mods.has(key)) mods.set(key, { label: key, decls: [] });
+    }
+    const items = [...mods.entries()].filter(([key, m]) => m.decls.length > 0 || report.bySource.some((r) => r.source === `modules/${key}`)).map(([key, m]) => {
+      const rows = report.bySource.filter((r) => r.source === `modules/${key}`);
+      const sum = (f: (r: (typeof rows)[number]) => number) => rows.reduce((a, r) => a + f(r), 0);
+      const libraries = m.decls.map((d) => {
+        const lib = getLibrary(d.id);
+        const rs = rows.filter((r) => r.libraryId === d.id);
+        return {
+          id: d.id, exists: !!lib, enabled: cfgs.get(d.id)?.config.enabled !== false, required: d.required === true, at: d.at ?? 'today', fields: d.fields ?? [],
+          calls: rs.reduce((a, r) => a + r.pass + r.warn + r.block, 0), deprecatedOnly: !!lib && lib.items.every((x) => x.status !== 'active'),
+        };
+      });
+      const declared = new Set(m.decls.map((d) => d.id));
+      const verdict = moduleVerdict({
+        decls: libraries, total: sum((r) => r.pass + r.warn + r.block), block: sum((r) => r.block), deprecated: sum((r) => r.deprecated),
+        undeclaredUse: [...new Set(rows.map((r) => r.libraryId))].filter((l) => !declared.has(l)),
+      });
+      return {
+        module: key, label: m.label,
+        libraries: libraries.map(({ deprecatedOnly: _d, ...l }) => l),
+        usage: { total: sum((r) => r.pass + r.warn + r.block), pass: sum((r) => r.pass), warn: sum((r) => r.warn), block: sum((r) => r.block), deprecated: sum((r) => r.deprecated) },
+        verdict,
+      };
+    });
+    return { from, to, items };
+  },
+});
+
 const attest = defineAction({
   id: 'core.library.attest', title: 'Xác nhận mục thư viện cho đơn vị', tags,
   description: 'Kế toán trưởng / chủ đơn vị xác nhận đã đối chiếu một mục thư viện (vd một văn bản căn cứ, một tham số pháp lý) cho đơn vị mình, '
@@ -312,7 +396,7 @@ const proposalUpdate = defineAction({
   handler: async (ctx, i) => updateProposal(ctx.data.tx, ctx.tenant.id, i.pid, { status: i.status, resolvedVersion: i.resolvedVersion, note: i.note }, ctx.actor.id, ctx.can('settings:write')),
 });
 
-export const LIBRARY_ACTIONS = [list, get, items, validate, usage, attest, attestations, config, configure, propose, proposals, proposalUpdate];
+export const LIBRARY_ACTIONS = [list, get, items, validate, usage, modulesReport, attest, attestations, config, configure, propose, proposals, proposalUpdate];
 
 export async function librariesRoutes(app: FastifyInstance): Promise<void> {
   flushLog = (msg) => app.log.warn(msg);

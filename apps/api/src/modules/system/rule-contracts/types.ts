@@ -6,7 +6,7 @@
  * `describe().spec` và tự kiểm bằng `describe().vectors` (đầu vào → đầu ra chuẩn).
  *
  * Nơi đặt (modules/system) là có chủ đích: tiền tố này đã có dòng ở bảng lớp, không phải sửa tests/conformance/lib/layers.mjs hay
- * packages/contracts/src/index.ts. Khi W2b cần Kernel tính lại để kiểm thì dời xuống Platform (nợ N031-1, 00 §9.2).
+ * packages/contracts/src/index.ts. W2b (IN-POL-004) KHÔNG dời xuống Platform: cửa nạp gọi qua `registerPolicyRecompute` ở platform (00 §14); nợ N031-1 đóng.
  */
 import type { ZodType, ZodTypeDef } from 'zod';
 

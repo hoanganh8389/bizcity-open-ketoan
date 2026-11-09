@@ -4,6 +4,7 @@
  * trong manifest — có ở B5; ở đây chỉ hiện điều số liệu chứng minh được.
  */
 import { Empty, ErrorBox, Loading, errorText, useApi, useQuery } from '@bizcity/ui-kit';
+import { ModulesPanel } from './ModulesPanel';
 import {
   KIND_LABEL, attention, freshnessDays, healthSummary, sourceStatus, usagePct, usageTotal,
   type LibrarySummary, type UsageCounts, type UsageReport,
@@ -110,9 +111,11 @@ export function OverviewTab({ onOpen }: { onOpen: (id: string) => void }) {
               );
             })}</tbody>
           </table>
-          <p className="muted" style={{ padding: '0 12px' }}>Kết luận ĐẠT / KHÔNG ĐẠT theo module (độ phủ trường khai trong manifest, mã cứng trùng thư viện) có ở đợt B5.</p>
         </div>
       )}
+
+      <h3>Theo module — kết luận</h3>
+      <ModulesPanel onOpen={onOpen} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginTop: 12 }}>
         <div className="card"><div className="card-body">

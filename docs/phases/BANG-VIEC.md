@@ -5,27 +5,26 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 8 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 30 |
-| Chưa ai nhận | 152 |
+| Chưa ai nhận | 151 |
 | Chờ đủ tín hiệu | 53 |
 | Hoãn | 3 |
-| Xong | 264 |
-| **Tổng** | **510** |
+| Xong | 267 |
+| **Tổng** | **511** |
 
-## Đang làm (8)
+## Đang làm (7)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
-| [S004-15a](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L27) | PHASE-004 | Cảnh báo (phần 1, 3): chẩn đoán LEDGERHEADEREDITUNATTRIBUTED (mức error, sửa đầu bút toán ngoài ứng dụng) và … | — | hoanganh8389 (phiên Claude, review-r1) · `feat/phase-004-s004-15a-chan-doan-sua-dau` |
+| [S004-17](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-… | — | hoanganh8389 (phiên Claude, review-r1) · `feat/phase-004-s004-17-e1-ham-security-definer` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
-| [S030-51a](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L59) | PHASE-030 | B5a — ctx.libraries trong action, libraries[] trong manifest (bizcitymodule@1 1.5.0-draft), SC-LIB-2, core.li… | P1 | hoanganh8389 (phiên Claude, thu-vien-b5a) · `feat/s030-51a-ctx-libraries` |
-| [S031-29](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L38) | PHASE-031 | W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPoli… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2b-in-pol-004` |
+| [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 
 ## Chờ merge (0)
 
@@ -66,12 +65,11 @@
 | [S032-2](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L10) | PHASE-032 | Chủ dự án duyệt bản mẫu + D032-1..7, trả Q032-1..4 | P0 | — |
 | [S032-3](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L11) | PHASE-032 | Kế toán trưởng trả Q032-5 (trần NĐ81 chặn hay cảnh báo); xác nhận bảng reasonCode cùng S031-14. Q032-6 đã chố… | P0 | — |
 
-## Chưa ai nhận (152)
+## Chưa ai nhận (151)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
 | [S001-11](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L21) | PHASE-001 | CSDL dev áp 0030–0037 | — | — |
-| [S004-17](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-… | — | — |
 | [S004-18](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L31) | PHASE-004 | Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tìn… | — | — |
 | [S005-7](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md#L19) | PHASE-005 | Q-2: kế toán chọn "bản mới nhất" khi định khoản lại (quyền settings:write, lý do, bằng chứng) | — | — |
 | [S011-7](PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md#L18) | PHASE-011 | Extension chạy thật: slot, hook, ctx.actions.call | — | — |
@@ -289,6 +287,6 @@
 | [S004-16](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L29) | PHASE-004 | Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab "Sửa đầu bút toán" ở Bàn điều tra; bản mẫu HT… | — | — |
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (264)
+## Xong (267)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

@@ -5,7 +5,7 @@
 <!-- [2026-10-30 11:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-003 — runtime action defineAction, idempotency, dry-run (PHASES 2.5). -->
 <!-- [2026-10-30 12:50 PM Johnny Chu - Chu Hoàng Anh] CONG-BO — bản công bố kiến trúc: 4 lớp hợp đồng, luật hạ tầng, checklist nhận việc. -->
 
-> **Phiên bản:** 1.3.0-draft · 2026-11-03 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
+> **Phiên bản:** 1.4.0-draft · 2026-11-09 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 4/7)
 > **Vận chuyển HTTP:** [`bizcity_api@1`](BIZCITY-API-v1.md) · **Luật nền:** [R-API](../rules/RULE-API.md) · **Năng lực:** `actions.runtime`, `actions.idempotency`, `actions.dry-run`, `mcp.tools`
 
 ## 1. Mục đích
@@ -141,6 +141,21 @@ Một thao tác nhiều mục (trạm định khoản, kết chuyển nhiều ch
 
 **Thứ tự làm.** Mã (đợt 8b) làm sau đợt 8a (cùng sửa `core/actions.ts`); dòng giữ chỗ 8b thêm sau khi 8a merge.
 
+### 4.5 `ctx.libraries` — kiểm theo thư viện dùng chung (1.4.0, **đã chốt**) <!-- [2026-11-09 12:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51a: chữ chốt PHASE-030 · 26 §4.1 -->
+
+Thư viện `bizcity_library@1` ([BIZCITY-LIBRARY-v1](BIZCITY-LIBRARY-v1.md)) là dữ liệu tham chiếu chung; action đọc nó qua `ctx.libraries`, không import `@bizcity/platform/core/libraries`:
+
+| Hàm | Làm gì |
+|---|---|
+| `ctx.libraries.validate(id, input, { at?, field? })` | Kiểm một giá trị / mã; trả `ValidateResult`, **không ném lỗi**. |
+| `ctx.libraries.require(id, input, { at?, field? })` | Như trên; có phát hiện `block` → `Errors.validation` (`details: { library, code: 'LIB-…', path, field?, suggestions }`), cả action huỷ; `warn` → không chặn, gom vào `ctx.meta('libraryWarnings')`. |
+
+- Áp **cấu hình của đơn vị** (bật / tắt, ghi đè có ngày, hạ mức luật, đọc theo hôm nay). Thư viện tuỳ chọn mà đơn vị tắt → trả `null`.
+- `at` (YYYY-MM-DD) mặc định hôm nay; module khai `libraries[].at = "docDate"` trong manifest thì **bắt buộc truyền** (thiếu → `VALIDATION_ERROR`, không đoán ngày chứng từ). Đơn vị đặt `atPolicy: today` thì thắng.
+- **Bằng chứng:** action ghi thêm `notes.libraries[]` = `{ library, version, hash, at, field?, code?, value?, valueSource, outcome }` — mã mục và giá trị thư viện, **không** giá trị người nhập. Khoá `libraries` do runtime giữ.
+- **Đếm sử dụng** (`library_usage_daily`, nguồn `modules/<key>`); `dryRun` không đếm. Chỉ đọc: không ghi sổ, danh mục hay cấu hình. Không dùng trong `ctx.data.module(fn)` (vai trò module không đọc được cấu hình thư viện).
+- Kết quả của module hiện ở HT14 (tab Module) và `GET /api/v1/libraries/modules`; phần tĩnh do SC-LIB-2 kiểm.
+
 ## 5. Luật
 
 | Mã | Cấp | Luật | Kiểm bằng |
@@ -208,3 +223,4 @@ Giữ nguyên các mã hiện có trong `packages/contracts/src/api.ts` và thê
 | 1.1.0-draft | 2026-11-02 | Thêm `sideEffects: 'analysis'` — action chỉ lưu kết quả phân tích của Core (vd `core.conformance.run`, ADR-0012), không đổi chứng từ, sổ, danh mục, cấu hình |
 | 1.2.0-draft | 2026-11-03 | Chốt `ctx.meta(key, value)` (§4.1), action theo lô `ctx.data.item` (§4.2), che bí mật và lược `input` lớn trong bằng chứng (§4.3), `expose.http.query` / `bodyLimit` và thân tuỳ chọn (§3.1). Đề xuất chờ chốt: nhật ký nghiệp vụ trong action (§4.4) |
 | 1.3.0-draft | 2026-11-03 | Chốt §4.4 phương án C: `writeAudit` trong action ghi vào `changes.notes.audit[]` của bằng chứng, trừ sổ `AUDIT_KEEP` (ba mục có chỗ đọc); phép kiểm SC-AUDIT-1 |
+| 1.4.0-draft | 2026-11-09 | Chốt §4.5 `ctx.libraries` (validate / require theo thư viện dùng chung, cấu hình đơn vị, bằng chứng `notes.libraries`, đếm sử dụng) — PHASE-030 S030-51a. Cộng tương thích: action không dùng thì không đổi. |
