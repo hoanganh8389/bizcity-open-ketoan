@@ -163,7 +163,7 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POSTING_CONFIG_MISSING` | `POSTING_FAILED` | Thiếu lý do / tài khoản / nhóm hạch toán mặc định; `details` là danh sách thiếu | `account-resolver.ts` |
 | `POSTING_REASON_KIND` | `POSTING_FAILED` | Lý do sai loại cho chứng từ (vd lý do ghi nợ dùng cho phiếu tiền) | `cash.rule.ts`, `journal.rule.ts` |
 | **Phân quyền** (1 : 1 với mã quyết định `AUTHZ-*`) | | | |
-| `AUTHZ_PERM_UNK2026-11-09 10:30 PMN` · `AUTHZ_PERM_REMOVED` · `AUTHZ_PERM_NOT_GRANTED_YET` | `FORBIDDEN` | Quyền không có trong sổ / đã bỏ / chưa duyệt cấp | `authz/engine.ts` |
+| `AUTHZ_PERM_UNKNOWN` · `AUTHZ_PERM_REMOVED` · `AUTHZ_PERM_NOT_GRANTED_YET` | `FORBIDDEN` | Quyền không có trong sổ / đã bỏ / chưa duyệt cấp | `authz/engine.ts` |
 | `AUTHZ_HIGH_RISK_DELEGATION` | `FORBIDDEN` | Quyền rủi ro cao, người gọi là khoá API / trợ lý | `authz/engine.ts`, `actions.ts` |
 | `AUTHZ_DENIED_BY_RULE` · `AUTHZ_CONDITION` · `AUTHZ_NO_ALLOW` · `AUTHZ_NO_ASSIGNMENT` | `FORBIDDEN` | Luật cấm; điều kiện trượt; không luật cho; chưa gán vai | `authz/engine.ts` |
 | `AUTHZ_SCOPE_NO_LOCATION` · `AUTHZ_SCOPE_NOT_USER` · `AUTHZ_SCOPE_TENANT` | `FORBIDDEN` | Tài nguyên không có vị trí; phạm vi chỉ cho người dùng; khác đơn vị | `authz/scope.ts` |
@@ -179,7 +179,7 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POLICY_VERSION_GAP` | `CONFLICT` | Bản không nối tiếp bản trước (có người vừa lưu) | `policies.ts` |
 | `POLICY_VERSION_CLOSED` | `CONFLICT` | Bản trước đã đóng `effective_to` | `policies.ts` |
 | `POLICY_RETIRED` | `CONFLICT` | Chính sách đã ngừng, dùng mã mới | `policies.ts` |
-| `POLICY_BACK2026-11-09D` | `VALIDATION_ERROR` | Ngày áp sớm hơn bản trước (không viết lại quá khứ) | `policies.ts` |
+| `POLICY_BACKDATED` | `VALIDATION_ERROR` | Ngày áp sớm hơn bản trước (không viết lại quá khứ) | `policies.ts` |
 | `POLICY_REVIEW_NOT_OPEN` | `CONFLICT` | Sự việc không có phát hiện chính sách cần xem (**đã dùng trong mã, chưa khai**) | `queue.routes.ts` |
 
 **Thứ tự làm:** (1) duyệt (2026-11-09); (2) S022-21: thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
