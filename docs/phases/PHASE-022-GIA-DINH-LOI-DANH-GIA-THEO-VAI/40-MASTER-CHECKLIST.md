@@ -30,6 +30,7 @@
 | S022-18 | RV-R1-06: hợp đồng `ma-tra-cuu.ts` mang `details.context.step` + `remedy`; chép / báo lỗi thêm dòng Bước, không chép docKey, số chứng từ, kỳ (T022-MT-1) | W5 | P2 | có | ✅ |
 | S022-19 | RV-R1-06: khay Mã tra cứu hiện nút "Cách khắc phục" (RemedyView) (nút bật / tắt + `RemedyView compact` dưới dòng mã) và dòng "bước" — `e.step`, `e.remedy` đã có ở hợp đồng (S022-18); chờ PHASE-018 W6 nhả `MaTraCuu.tsx` | W5 | P2 | có | ☐ |
 | S022-20 | RV-R1-06: ghi bước lỗi vào span OTel (`bizcity.error.step` trong TRACE_ATTRIBUTES + OBSERVABILITY §1.1) — chờ PHASE-018 W6 nhả `OBSERVABILITY.md` | W5 | P3 | có | ☐ |
+| S022-21 | BIZCITY-ERRORS 1.6.0 §4c: thêm mã chi tiết theo vùng vào `ERROR_REASONS` + check SC-ERR-2 (R-ERR-11: `reason` viết trong mã phải có trong danh mục). Nối từng chỗ ném ở PR của chủ tệp (PHASE-028 phân quyền, PHASE-030 thư viện, PHASE-031 chính sách, PHASE-029 / 004 chứng từ, sổ cái, định khoản) | W5 | P2 | có | ☐ |
 
 ## Ca bằng chứng
 

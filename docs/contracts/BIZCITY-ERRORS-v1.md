@@ -45,6 +45,7 @@ MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error:
 | **R-ERR-8** | 1 | Lỗi CSDL ánh xạ cố định (§5). Trigger bảo vệ sổ ném lỗi bằng câu tiếng Việt: câu đó là `message`, không thành 500 | `core/http.ts`; test |
 | **R-ERR-9** | 2 | Mỗi mã có số đo `bizcity_http_errors_total{code}` và log `errCode` (OBSERVABILITY). Cảnh báo dựa trên mã, không dựa trên câu chữ | `/metrics` |
 | **R-ERR-10** | 2 | Tiếng Anh (`message_en`) là tuỳ chọn, cho tích hợp ngoài; tiếng Việt luôn có | catalog |
+| **R-ERR-11** | 1 | Mọi `reason` viết bằng chữ trong mã (`reason: '…'`) có trong `ERROR_REASONS` và bảng §4 / §4c <!-- [2026-11-09 10:42 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-21 --> | SC-ERR-2 |
 
 ## 3. Bảng mã lỗi
 
@@ -126,7 +127,7 @@ MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error:
 
 Module thêm mã chi tiết của mình ở mục này (tiền tố = key module viết hoa, `-` → `_`, vd `HOP_DONG_INSTALLMENT_ALREADY_PAID`).
 
-## 4c. Mã chi tiết theo vùng mới (1.6.0-draft — ĐỀ XUẤT, chờ chủ dự án duyệt) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — rà soát mã lỗi sau thư viện, phân quyền, chính sách, chứng từ nhiều phiên bản -->
+## 4c. Mã chi tiết theo vùng mới (1.6.0-draft — chủ dự án duyệt 2026-11-09) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — rà soát mã lỗi sau thư viện, phân quyền, chính sách, chứng từ nhiều phiên bản -->
 
 **Vì sao (rà soát ngày 2026-11-09).** Mã `code` vẫn đủ (14 mã, không thêm). Thiếu là ở `details.reason`: trong ≈ 780 chỗ `Errors.*` của `packages/` và `apps/api/src`, chỉ 2 chỗ mang `reason` (`LEDGER_APPEND_ONLY` và `POLICY_REVIEW_NOT_OPEN`; mã sau chưa khai ở §4). Bên gọi và khay Mã tra cứu chỉ có câu chữ để rẽ nhánh. Cụ thể:
 
@@ -141,7 +142,7 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 
 1. Mã quyết định quyền `AUTHZ-X-Y` đi ra `details.reason = AUTHZ_X_Y` (đổi `-` thành `_`, 1 : 1), kèm `details.permission` và, khi có, `details.condition` (điều kiện trượt, không giá trị dữ liệu). Câu thông báo không chứa mã nữa.
 2. Thư viện chặn: `details.reason = LIBRARY_BLOCKED`, giữ `details.library`, `details.code` (`LIB-…`), `details.path`.
-3. **R-ERR-11 (đề xuất):** mọi `reason` viết bằng chữ trong mã phải có trong `ERROR_REASONS` (check **SC-ERR-2**, quét `reason: '…'`). Họ mã của module dùng tiền tố key module như R-ERR-6.
+3. **R-ERR-11:** mọi `reason` viết bằng chữ trong mã phải có trong `ERROR_REASONS` (check **SC-ERR-2**, quét `reason: '…'`). Họ mã của module dùng tiền tố key module như R-ERR-6.
 
 | `reason` | Đi với `code` | Khi nào | Chỗ ném hiện nay |
 |---|---|---|---|
@@ -181,7 +182,7 @@ Module thêm mã chi tiết của mình ở mục này (tiền tố = key module
 | `POLICY_BACK2026-11-09D` | `VALIDATION_ERROR` | Ngày áp sớm hơn bản trước (không viết lại quá khứ) | `policies.ts` |
 | `POLICY_REVIEW_NOT_OPEN` | `CONFLICT` | Sự việc không có phát hiện chính sách cần xem (**đã dùng trong mã, chưa khai**) | `queue.routes.ts` |
 
-**Thứ tự làm (đề xuất):** (1) duyệt bảng này; (2) thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
+**Thứ tự làm:** (1) duyệt (2026-11-09); (2) S022-21: thêm các mã vào `ERROR_REASONS` + SC-ERR-2 (một PR, chỉ hằng số và check); (3) nối từng vùng ở PR của chủ tệp — phân quyền (PHASE-028), thư viện (PHASE-030), chính sách (PHASE-031), chứng từ / sổ cái / định khoản (PHASE-029 / 004) — mỗi chỗ ném thêm `{ reason }`, không đổi `code` / HTTP / câu chữ.
 
 ## 5. Ánh xạ lỗi CSDL (R-ERR-8)
 
@@ -216,7 +217,7 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 
 ## 7. Changelog
 
-- **1.6.0-draft (2026-11-09, đề xuất):** §4c — mã chi tiết theo vùng (chứng từ / phiên bản, sổ cái, định khoản, phân quyền, thư viện, chính sách), R-ERR-11 / SC-ERR-2 đề xuất. Chưa nối vào mã. Không thêm `code`.
+- **1.6.0-draft (2026-11-09, đề xuất):** §4c — mã chi tiết theo vùng (chứng từ / phiên bản, sổ cái, định khoản, phân quyền, thư viện, chính sách), R-ERR-11 / SC-ERR-2; chủ dự án duyệt 2026-11-09. Hằng số + SC-ERR-2 ở S022-21; nối từng chỗ ném ở PR của chủ tệp. Không thêm `code`.
 - **1.5.0-draft (2026-11-09, PHASE-029 S029-34):** thêm `details.reason` `VERSION_CONTENT_MISMATCH` (`CONFLICT` 409) cho cùng phiên bản khác nội dung ([DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)). Không thêm mã `code`. **Ảnh hưởng:** bên gửi nào gửi lại cùng `version` với nội dung đổi sẽ nhận 409 thay vì bị ghi đè im lặng; xử lý theo cột "CONFLICT" ở §6 (tăng `version`).
 <!-- [2026-11-10 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — RV-R1-06 -->
 - **1.4.0-draft (2026-11-10, RV-R1-06):** thêm `details.context` (khoá tuỳ chọn: `docKey`, `docType`, `docNo`, `eventId`, `version`, `entryNo`, `period`, `branchCode`, `postingDate`, `step`) và `details.remedy` (`bizcity_remedy@1`, bảng `ERROR_REMEDY`); `UNBALANCED_ENTRY` thêm `difference`, `PERIOD_LOCKED` thêm `scope`. Không đổi mã, HTTP, `reason` đã phát hành.
