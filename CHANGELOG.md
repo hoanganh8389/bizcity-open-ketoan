@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### E1 (điền giá vốn) qua hàm SECURITY DEFINER; ứng dụng không còn sửa trực tiếp số tiền sổ cái (PHASE-004 S004-17, D004-15) <!-- [2026-11-09 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-17 -->
+
+- **Đổi:** migration `0091` — vai trò `ketoan_ledger_cost` (NOLOGIN) sở hữu hai hàm `ledger_fill_cost_lines` / `ledger_fill_entry_totals` (SECURITY DEFINER, `search_path` cố định, `EXECUTE` chỉ cho `ketoan_app`), tự kiểm dòng `cost_fill`, bút toán `posted` không đảo, số ≥ 0, ghi `audit_logs` `ledger.cost_fill`. Trigger sổ cái chỉ cho đổi số tiền khi `current_user = 'ketoan_ledger_cost'` (cờ phiên `ketoan.cost_overwrite` hết tác dụng). `ketoan_app` mất `UPDATE` số tiền: `ledger_lines` chỉ còn cột `item_id`; `ledger_entries` không còn cột `total` (cột mới thêm về sau mặc nhiên không sửa được). `overwriteCostPairs` gọi hai hàm.
+- **Thêm:** test `e1-cost-fill` (6 ca: cờ cũ vô tác dụng, qua hàm đổi được và có dấu vết, hàm từ chối dữ liệu sai, không thay / sửa hàm, cân Nợ = Có).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** người cài đặt cần quyền tạo vai trò `ketoan_ledger_cost`; nếu không migration dừng và in lệnh `CREATE ROLE` để quản trị CSDL chạy trước. Giá trị tiền không đổi; hiệu năng giữ nguyên (cùng `unnest` theo lô 10.000).
+- **Bảo mật:** thu hẹp từ "mọi dòng sổ cái, không dấu vết" xuống "chỉ dòng giá vốn chờ, có dấu vết"; hàm là bề mặt mới (không SQL động, kiểm tham số). Chưa được: `ketoan_app` vẫn gọi hàm với số tiền tuỳ ý cho dòng giá vốn chờ (bản chất của việc điền giá vốn).
+
+
 ### Cảnh báo sửa đầu bút toán ngoài ứng dụng (PHASE-004 S004-15a, D004-13) <!-- [2026-11-09 08:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a -->
 
 - **Thêm:** chẩn đoán L3 `LEDGER_HEADER_EDIT_UNATTRIBUTED` (mức **error**, có phạm vi kỳ / chi nhánh): liệt kê bút toán có lần sửa đầu **ngoài ứng dụng** = dòng nhật ký của trigger 0089 (`_source = db`) không có dòng của ứng dụng (`_source = app`) cùng `_txid`. Vì là lỗi L3 mức error nên khoá kỳ chặn như mọi lỗi L3 (kế toán trưởng ghi lý do thì khoá được). Lane DG-LEDGER-5 cùng bộ mã (R-DIAG-9). Test `e2-unattributed-warning`.

@@ -572,7 +572,7 @@
       "phase": "PHASE-004",
       "title": "E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-4). K3 thêm chặt",
       "priority": null,
-      "status": "todo",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, review-r1)",
