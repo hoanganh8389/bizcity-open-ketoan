@@ -11,8 +11,8 @@
 | Chưa ai nhận | 135 |
 | Chờ đủ tín hiệu | 52 |
 | Hoãn | 3 |
-| Xong | 266 |
-| **Tổng** | **492** |
+| Xong | 267 |
+| **Tổng** | **493** |
 
 ## Đang làm (8)
 
@@ -25,7 +25,7 @@
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S030-52](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L61) | PHASE-030 | Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không … | P1 | hoanganh8389 (phiên Claude, thu-vien-s52) · `feat/s030-52-thu-vien-danh-muc` |
-| [S031-29](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L38) | PHASE-031 | W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPoli… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w2b-in-pol-004` |
+| [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
 
 ## Chờ merge (0)
 
@@ -269,6 +269,6 @@
 | [S004-16](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L29) | PHASE-004 | Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab "Sửa đầu bút toán" ở Bàn điều tra; bản mẫu HT… | — | — |
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (266)
+## Xong (267)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

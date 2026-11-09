@@ -1,4 +1,5 @@
 // @bizcity-layer D modules/ke-toan
+// [2026-11-09 10:37 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-19 đợt 2b: sổ nhật ký hiện tên đối tượng LÚC GHI (partner_name của dòng, rồi của đầu bút toán, rồi tên hiện tại) — chữ chốt 36 §2
 // [2026-10-31 08:24 PM Johnny Chu - Chu Hoàng Anh] PHASE-012 — ledger.query (PHASES 3.7): đọc sổ qua khung nhìn bizcity_read.* thay bảng ledger_* (SC-KERNEL-7)
 /**
  * Các sổ nhật ký và bảng kê đọc thẳng sổ cái:
@@ -43,7 +44,7 @@ export async function cashJournal(a: Scope & { accountPrefix: string; direction:
   const res = await sql<{ entry_id: string; posting_date: string; doc_no: string; doc_type: string; description: string; partner_code: string | null; partner_name: string | null; branch_code: string; amount: string; counter: string | null }>`
     SELECT l.entry_id, l.posting_date::text AS posting_date, e.doc_no, e.doc_type,
            COALESCE(NULLIF(l.description, ''), e.description) AS description,
-           p.code AS partner_code, p.name AS partner_name, br.code AS branch_code,
+           p.code AS partner_code, COALESCE(CASE WHEN l.partner_id IS NOT NULL THEN l.partner_name ELSE e.partner_name END, p.name) AS partner_name, br.code AS branch_code,
            CASE WHEN l.debit <> 0 THEN l.debit ELSE l.credit END AS amount,
            (SELECT o.account_code FROM bizcity_read.ledger_lines o
              WHERE o.entry_id = l.entry_id AND o.pair_no = l.pair_no AND o.id <> l.id AND ${otherSide()} AND o.account_code <> l.account_code
@@ -106,7 +107,7 @@ export async function salesJournal(a: Scope & { partnerCode?: string; account?: 
   // khoản cùng có mặt) thì lấy bên gắn đối tượng (đối tượng ghi phía công nợ), rồi bên Nợ của cặp tiền hàng.
   const res = await sql<{ entry_id: string; event_id: string; posting_date: string; doc_date: string; created_date: string; doc_no: string; invoice_no: string | null; description: string; reason_code: string | null; partner_code: string | null; partner_name: string | null; branch_code: string; counter: string; revenue: string; amount: string }>`
     WITH l AS (
-      SELECT l.entry_id, l.pair_no, l.part, l.account_code, l.debit, l.credit, l.partner_id
+      SELECT l.entry_id, l.pair_no, l.part, l.account_code, l.debit, l.credit, l.partner_id, l.partner_name
         FROM bizcity_read.ledger_lines l
         JOIN bizcity_read.ledger_entries e ON e.id = l.entry_id
        WHERE l.tenant_id = ${a.tenantId}
@@ -128,7 +129,7 @@ export async function salesJournal(a: Scope & { partnerCode?: string; account?: 
     g AS (
       SELECT dr.entry_id, ctr.account_code AS counter,
              (cr.account_code = ctr.account_code AND dr.account_code <> ctr.account_code) AS flipped,
-             dr.account_code AS dr_account, cr.account_code AS cr_account, dr.debit, dr.partner_id AS dr_partner, cr.partner_id AS cr_partner
+             dr.account_code AS dr_account, cr.account_code AS cr_account, dr.debit, dr.partner_id AS dr_partner, cr.partner_id AS cr_partner, dr.partner_name AS dr_pname, cr.partner_name AS cr_pname
         FROM l dr
         JOIN l cr ON cr.entry_id = dr.entry_id AND cr.pair_no = dr.pair_no AND cr.credit <> 0
         JOIN ctr ON ctr.entry_id = dr.entry_id
@@ -138,19 +139,20 @@ export async function salesJournal(a: Scope & { partnerCode?: string; account?: 
       SELECT entry_id, counter,
              CASE WHEN flipped THEN dr_account ELSE cr_account END AS revenue,
              CASE WHEN flipped THEN -debit ELSE debit END AS amount,
-             CASE WHEN flipped THEN cr_partner ELSE dr_partner END AS partner_id
+             CASE WHEN flipped THEN cr_partner ELSE dr_partner END AS partner_id,
+             CASE WHEN flipped THEN cr_pname ELSE dr_pname END AS partner_name
         FROM g
     )
     SELECT g.entry_id, e.event_id, e.posting_date::text AS posting_date, e.doc_date::text AS doc_date,
            (e.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date::text AS created_date,
-           e.doc_no, e.invoice_no, e.description, e.reason_code, p.code AS partner_code, p.name AS partner_name, br.code AS branch_code,
+           e.doc_no, e.invoice_no, e.description, e.reason_code, p.code AS partner_code, COALESCE(CASE WHEN g.partner_id IS NOT NULL THEN g.partner_name ELSE e.partner_name END, p.name) AS partner_name, br.code AS branch_code,
            g.counter, g.revenue, SUM(g.amount) AS amount
       FROM g2 g
       JOIN bizcity_read.ledger_entries e ON e.id = g.entry_id
       JOIN branches br ON br.id = e.branch_id
       LEFT JOIN partners p ON p.id = COALESCE(g.partner_id, e.partner_id)
      WHERE TRUE ${accountFilter} ${partnerFilter}
-     GROUP BY g.entry_id, e.event_id, e.posting_date, e.doc_date, e.created_at, e.doc_no, e.invoice_no, e.description, e.reason_code, p.code, p.name, br.code, g.counter, g.revenue
+     GROUP BY g.entry_id, e.event_id, e.posting_date, e.doc_date, e.created_at, e.doc_no, e.invoice_no, e.description, e.reason_code, p.code, p.name, g.partner_id, g.partner_name, e.partner_name, br.code, g.counter, g.revenue
      ORDER BY br.code, e.posting_date, e.doc_no, g.entry_id`.execute(db);
 
   type Cols = { goods: number; finished: number; service: number; other: number; total: number };
@@ -213,7 +215,7 @@ export async function purchaseJournal(a: Scope & { partnerCode?: string }) {
   const partnerFilter = a.partnerCode ? sql`AND p.code = ${a.partnerCode}` : sql``;
   const res = await sql<{ entry_id: string; posting_date: string; doc_no: string; invoice_no: string | null; description: string; partner_code: string | null; partner_name: string | null; branch_code: string; credit_account: string; debit_account: string; amount: string }>`
     SELECT d.entry_id, d.posting_date::text AS posting_date, e.doc_no, e.invoice_no, e.description,
-           p.code AS partner_code, p.name AS partner_name, br.code AS branch_code,
+           p.code AS partner_code, COALESCE(CASE WHEN c.partner_id IS NOT NULL THEN c.partner_name ELSE e.partner_name END, p.name) AS partner_name, br.code AS branch_code,
            c.account_code AS credit_account, d.account_code AS debit_account, SUM(d.debit) AS amount
       FROM bizcity_read.ledger_lines d
       JOIN bizcity_read.ledger_entries e ON e.id = d.entry_id
@@ -224,7 +226,7 @@ export async function purchaseJournal(a: Scope & { partnerCode?: string }) {
        AND e.doc_type = 'purchase' AND d.part = 'goods' AND d.debit <> 0
        AND d.posting_date BETWEEN ${a.from}::date AND ${a.to}::date
        AND ${ACTIVE} ${branchOf(a, 'd')} ${partnerFilter}
-     GROUP BY d.entry_id, d.posting_date, e.doc_no, e.invoice_no, e.description, p.code, p.name, br.code, c.account_code, d.account_code
+     GROUP BY d.entry_id, d.posting_date, e.doc_no, e.invoice_no, e.description, p.code, p.name, c.partner_id, c.partner_name, e.partner_name, br.code, c.account_code, d.account_code
      ORDER BY br.code, d.posting_date, e.doc_no`.execute(db);
 
   type Cols = { goods: number; materials: number; tools: number; other: number; total: number };
