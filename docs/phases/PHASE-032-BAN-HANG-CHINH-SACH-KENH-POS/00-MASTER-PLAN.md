@@ -1,0 +1,75 @@
+# PHASE-032 · 00 — Master plan
+<!-- [2026-11-09 10:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chỉ đạo: giao Võ Hoàng (nhóm POS TGS) mở phase phần UI / UX, luồng, xử lý chi tiết của chính sách bán hàng trên nền PHASE-031; quy trình pull → phân tích → phase → bản mẫu duyệt → checklist → code trên nhánh PR (chưa duyệt nội dung) -->
+<!-- [2026-11-09 09:30 PM Võ Hoàng] PHASE-032 — vì sao, hiện trạng, nguyên tắc, D032-* đề xuất, Q032-*, đợt W0–W4, đề xuất Core P032-* (đóng góp) -->
+
+## 1. Vì sao
+
+PHASE-031 đã có nền: sổ đăng ký (phong bì có phiên bản, băm), Rule Contract mẫu `sale.promo.buy_x_get_y@1`, API cho nguồn ngoài (`GET /api/v1/policies`, `POST /api/v1/policies/evaluate`, `POST /api/v1/policies`), cửa nạp nhận và kiểm `policyRefs` (IN-POL-001..003), hàng việc *Chờ kế toán xem*, màn *Chính sách* chỉ xem (HT15). Còn thiếu đúng phần người dùng chạm vào:
+
+1. **Không có chỗ soạn CTKM.** Phát hành hôm nay chỉ bằng gọi API với JSON tay. Nhân viên kinh doanh / kế toán không làm được.
+2. **Mới một loại khuyến mại** (mua X tặng Y). CTKM TGS đang chạy phần lớn là giảm giá (% / số tiền, theo dòng / theo đơn) và giá theo bảng — chưa có Rule Contract.
+3. **POS chưa nối.** Plugin `tgs_selling_policy` (WordPress multisite TGS) vẫn tự giữ luật; POS React tính bằng engine riêng. S031-16 chưa ai nhận.
+4. **CTKM đang chạy chưa có đường sang Registry**: cần chuyển một lần, giữ lịch sử, không làm đứt đơn đang bán.
+
+## 2. Hiện trạng đọc mã (origin/main `0bef7c87`, 2026-11-09)
+
+| Sự thật | Chỗ |
+|---|---|
+| Phát hành inline: kiểm mã, Rule Contract, zod, `publishChecks`, áp lùi cần lý do; miền `sale` → chủ `ban-hang` | `apps/api/src/modules/system/rule-contracts/policy-service.ts` (`publishPolicy`, `OWNER_OF_DOMAIN`) |
+| `evaluate` chỉ tính chính sách **đã phát hành**, dòng vào chỉ có `sku / qty / itemId` (không giá) → chỉ tính được quà | `policy-service.ts` (`EvalLine`, `evaluatePolicies`) |
+| Danh sách Rule Contract là mảng cố định trong `modules/system` — module khác chưa đăng ký thêm được (nợ N031-1) | `apps/api/src/modules/system/rule-contracts/index.ts` |
+| Không có action ngừng (retire) chính sách inline; chỉ mua hàng xoá → `retired` | `policy.routes.ts` (9 action, không có retire) |
+| Phân hệ bán hàng cũ ở `apps/*/src/phan-he/ban-hang` (khách, phiếu bán, báo cáo), manifest khoá `ban-hang` | `apps/api/src/phan-he/ban-hang/bizcity.module.json` |
+| `modules/ban-hang` chưa có (S030-16 ☐) | `modules/` chỉ có `mua-hang`, `phan-quyen`, `thu-vien` |
+| Màn *Chính sách* HT15: xem, theo dõi, truy vết, *Chờ kế toán xem*; không nút sửa (chủ ý) | PHASE-031 · 00 §13 |
+| Plugin TGS đã có phần cầu: sổ phiên bản CTKM phía WP (`sha256`, không hở bản), `pos-policies` mang `policyKey / policyVersion / contentHash / ruleContract`; POS React gửi `policyRefs` | repo `tgs_selling_policy` nhánh `policy-registry`, `tgs_pos_react` nhánh `policy-refs` (ngoài repo này) |
+
+## 3. Nguyên tắc
+
+1. **Module giữ nội dung, Registry giữ phong bì** (D031). Màn của phase này chỉ gọi API Core; không bảng chính sách song song.
+2. **Không sửa sự thật kế toán:** Rule Contract chỉ chỉ `reasonCode`; định khoản ở Kernel. Không số tài khoản trong module.
+3. **Một hàm tính**: màn *Thử tính*, POS trực tuyến, cửa nạp (W2b) cùng chạy Rule Contract; POS ngoại tuyến chạy bản viết lại kiểm bằng `describe().vectors`.
+4. **Hiệu lực ngay, có vết**: phát hành là một bước (giữ ý người giữ `tgs_selling_policy`); mọi bản bất biến, ngừng = bản `retired`, không xoá.
+5. **Tránh chồng việc** (R-FLOW): không đụng tệp đang có dòng giữ chỗ; thứ dùng chung thì PR chốt thiết kế trước.
+
+## 4. Quyết định đề xuất (D032-*, chờ chủ dự án)
+
+| Mã | Đề xuất |
+|---|---|
+| D032-1 | Màn sở hữu chính sách bán ở `modules/ban-hang/web` (route `/app/ban-hang/chinh-sach`); HT15 giữ vai xem chung. Nút *Mở ở module chủ* từ HT15 sang màn này |
+| D032-2 | Đợt 1 của `modules/ban-hang` **chỉ** gồm chính sách bán hàng; không chuyển phiếu bán / khách / báo cáo của `phan-he/ban-hang` (việc đó là đợt chuyển riêng theo ADR-0024 §3) |
+| D032-3 | Form soạn **sinh từ `describe().params`** của Rule Contract (một form chung + phần riêng từng loại khi cần), để Rule Contract mới không cần màn mới |
+| D032-4 | Bản nháp lưu ở bảng của module (`mod_ban_hang_policy_drafts`, migration của module) — chỉ để soạn dở / chia sẻ; **không** là bước duyệt. Phát hành = gọi `core.policy.publish` |
+| D032-5 | CTKM TGS ánh xạ: loại 1, 5, 10 → `sale.promo.discount@1`; 2 → `sale.promo.buy_x_get_y@1`; loại còn lại giữ ở plugin, chưa vào Registry (không dùng `custom@1` để phát hành) cho tới khi có Rule Contract |
+| D032-6 | POS lấy chính sách theo `GET /api/v1/policies?at&branch&channel=pos` + `etag`; nghe `policy.published` / `.retired` khi có kênh đẩy; tính bằng bản viết lại (TS dùng chung cho POS React, PHP cho plugin) đạt 100 % vectors |
+| D032-7 | Chuyển CTKM đang chạy: script một lần đọc sổ phiên bản phía WP, phát hành bản hiện hành vào Registry (`effectiveFrom` = ngày chuyển, `reason` ghi nguồn), lưu bảng ánh xạ `policyKey` WP ↔ Registry; sau ngày chuyển plugin chỉ đọc |
+
+## 5. Câu hỏi (Q032-*)
+
+| Mã | Hỏi | Ai trả |
+|---|---|---|
+| Q032-1 | `modules/ban-hang` trùng khoá `ban-hang` với manifest phân hệ cũ — hai manifest cùng khoá có được không, hay đợt 1 dùng khoá khác (vd `ban-hang-chinh-sach`) rồi gộp ở đợt chuyển? | Chủ dự án |
+| Q032-2 | Rule Contract bán hàng mới đặt ở đâu: chờ N031-1 dời xuống Platform rồi thêm vào đó, hay mở điểm đăng ký `registerRuleContract` để module tự khai (P032-1)? | Chủ dự án / nhóm Lõi |
+| Q032-3 | `sale.promo.discount@1` cần giá dòng: mở rộng `EvalLine` thêm `unitPrice` (đã gồm thuế hay chưa?) và kết quả `discounts[]` (P032-2) — chốt khuôn | Chủ dự án |
+| Q032-4 | Nhiều CTKM cùng áp một dòng: giữ "cộng dồn độc lập" như W3a hay thêm `exclusive` / `priority` ngay đợt này? POS TGS hiện chọn CTKM tốt nhất mỗi dòng | Chủ dự án + kế toán |
+| Q032-5 | Trần NĐ81 (quà ≤ 50 % giá) chặn hay cảnh báo trên màn phát hành, khi S030-35 chưa có | Kế toán trưởng |
+| Q032-6 | `reasonCode` cho quà / giảm giá (S031-14): XQUA hay XTA1.4 — Core đang ghi XTA1.4 tính theo giá bán, kế toán TGS trả lời quà theo giá vốn | Kế toán trưởng |
+
+## 6. Các đợt
+
+| Đợt | Mức | Nội dung | Phụ thuộc |
+|---|---|---|---|
+| **W0** | — | Tài liệu này + bản mẫu 4 màn; chủ dự án duyệt D032-\*, trả Q032-1..4 | — |
+| **W1** | K0 | `modules/ban-hang` khung (manifest, menu), màn *Chương trình KM* (danh sách, lọc, xem bản) + *Soạn & phát hành* cho `buy_x_get_y@1` (đã có), bản nháp; thử tính bằng `evaluate` sau phát hành | W0; Q032-1 |
+| **W2** | K1 qua đề xuất | P032-1..4 (Core làm / giao); `sale.promo.discount@1` + vectors; *Thử tính* bản nháp; *Ngừng*; *So sánh bản* | P032-1..3; S031-14 cho `treatment.confirmed` |
+| **W3** | K0 | Kênh POS: bản viết lại TS + PHP đạt vectors; POS React / `tgs_selling_policy` đọc từ Core; gửi `sale` / `sale_return` kèm `policyRefs`; màn *Kênh POS* (đơn vào, lệch IN-POL, độ trễ bản) | W2; W2b của 031 cho IN-POL-004 |
+| **W4** | K0 | Chuyển CTKM đang chạy (D032-7), chạy song song một tuần so kết quả, tắt luật riêng của plugin (đóng S031-16) | W3 |
+
+## 7. Đề xuất Core (P032-*, bậc 4 — chưa viết mã)
+
+| Mã | Đề xuất | Vì sao module không tự làm |
+|---|---|---|
+| P032-1 | Điểm đăng ký Rule Contract (`registerRuleContract(contract)` ở Platform) để module khai Rule Contract của mình; danh sách `GET /api/v1/rule-contracts` gộp | Danh sách đang là mảng cố định trong `modules/system`, đang thuộc dòng W2b |
+| P032-2 | `evaluate` nhận `lines[].unitPrice` (và `lineAmount`), kết quả có `discounts[] { lineKey, amount, policyRef }` bên cạnh `gifts[]` | Khuôn hợp đồng `bizcity_policy@1` |
+| P032-3 | `POST /api/v1/policies/evaluate` nhận `draft: { ruleContract, params }` để thử tính khi chưa phát hành (không ghi gì) | Cùng tệp `policy-service.ts` |
+| P032-4 | `core.policy.retire` cho chính sách inline: đóng bản hiện hành tại ngày (bản `retired`, có lý do), phát `policy.retired` | Sổ đăng ký thuộc Platform |

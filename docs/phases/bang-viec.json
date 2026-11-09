@@ -15,17 +15,17 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 28
+      "count": 30
     },
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 137
+      "count": 151
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 52
+      "count": 53
     },
     {
       "key": "paused",
@@ -5493,6 +5493,193 @@
       },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 38
+    },
+    {
+      "id": "S032-1",
+      "phase": "PHASE-032",
+      "title": "README, 00, 10, checklist, bản mẫu mockups/ban-hang-chinh-sach.html",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 9
+    },
+    {
+      "id": "S032-2",
+      "phase": "PHASE-032",
+      "title": "Chủ dự án duyệt bản mẫu + D032-1..7, trả Q032-1..4",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S032-3",
+      "phase": "PHASE-032",
+      "title": "Kế toán trưởng trả Q032-5, Q032-6 (cùng S031-14)",
+      "priority": "P0",
+      "status": "blocked",
+      "column": "blocked",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S032-4",
+      "phase": "PHASE-032",
+      "title": "Khung modules/ban-hang (npx bizcity module new), manifest, menu Chương trình khuyến mại",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S032-5",
+      "phase": "PHASE-032",
+      "title": "Màn Chương trình KM: danh sách từ GET /api/v1/policy-registry lọc domain = sale, trạng thái 4 loại, lọc chi nhánh / kênh / loại",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S032-6",
+      "phase": "PHASE-032",
+      "title": "Màn Soạn & phát hành: form sinh từ describe().params, lỗi theo path, hộp xác nhận, Idempotency-Key",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S032-7",
+      "phase": "PHASE-032",
+      "title": "Bản nháp: migration của module modbanhangpolicydrafts + action ban-hang.policy-draft.",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S032-8",
+      "phase": "PHASE-032",
+      "title": "Màn Một chương trình: dòng thời gian bản, nội dung từng bản, chứng từ đã áp (core.policy.applications), nút Sửa → bản mới",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S032-9",
+      "phase": "PHASE-032",
+      "title": "Đề xuất P032-1..4 gửi chủ dự án (issue / ADR theo VERSIONING §5)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S032-10",
+      "phase": "PHASE-032",
+      "title": "sale.promo.discount@1 + vectors + publishChecks (sau P032-1, P032-2)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S032-11",
+      "phase": "PHASE-032",
+      "title": "Thử tính bản nháp (P032-3), Ngừng (P032-4), So sánh bản (khác nhau theo trường)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S032-12",
+      "phase": "PHASE-032",
+      "title": "Bản viết lại TS dùng chung cho POS React + PHP cho plugin; bài kiểm chạy hết describe().vectors",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S032-13",
+      "phase": "PHASE-032",
+      "title": "POS React / tgssellingpolicy đọc chính sách từ Core (etag, sự kiện), gửi sale / salereturn kèm policyRefs (S031-16)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S032-14",
+      "phase": "PHASE-032",
+      "title": "Màn Kênh POS: đơn vào theo chi nhánh, tỉ lệ có policyRefs, lệch IN-POL theo mã, độ trễ bản theo máy",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S032-15",
+      "phase": "PHASE-032",
+      "title": "Script chuyển CTKM đang chạy (D032-7) + bảng ánh xạ; chạy song song 1 tuần, so kết quả từng đơn",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S032-16",
+      "phase": "PHASE-032",
+      "title": "Tắt luật riêng của plugin sau ngày chuyển; đóng S031-16",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S032-17",
+      "phase": "PHASE-032",
+      "title": "Hướng dẫn docs/huong-dan/ban-hang-chinh-sach.md (SC-DOC-6 khi thêm menu)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 25
     }
   ]
 }

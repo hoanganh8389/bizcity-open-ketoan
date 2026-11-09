@@ -1,0 +1,434 @@
+<!doctype html>
+<!-- [2026-11-09 10:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chỉ đạo: giao Võ Hoàng (nhóm POS TGS) mở phase phần UI / UX, luồng, xử lý chi tiết của chính sách bán hàng trên nền PHASE-031; quy trình pull → phân tích → phase → bản mẫu duyệt → checklist → code trên nhánh PR (chưa duyệt nội dung) -->
+<!-- [2026-11-09 09:30 PM Võ Hoàng] PHASE-032 — bản mẫu 4 màn: Chương trình KM · Soạn & phát hành · Một chương trình (bản, so sánh, chứng từ) · Kênh POS; dữ liệu giả, chờ chủ dự án duyệt (đóng góp) -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chính sách bán hàng</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
+  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;--info-bg:#e8f0fc;
+  --bar:#2f6fc9;--bar-soft:#c9d8ef;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+  --bar:#6ea2ec;--bar-soft:#2a3a55;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+  --bar:#6ea2ec;--bar-soft:#2a3a55;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:#d93025;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.tabs .cnt{background:var(--warn-bg);color:var(--warn);border-radius:99px;padding:0 6px;font-size:11.5px;margin-left:4px;font-weight:700}
+main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
+h2{margin:0 0 4px;font-size:18px}
+h3{font-size:14.5px;margin:16px 0 8px}
+.lead{color:var(--muted);margin:0 0 12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.k{background:var(--k-bg);color:var(--k)}.tag.info{background:var(--info-bg);color:var(--info)}.tag.none{background:var(--soft);color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13px}
+.note.warn{border-left-color:var(--warn)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.card{padding:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:1000px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.filters input,.filters select{min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:100%}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600;font-size:12.5px;background:var(--soft)}
+.tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--soft)}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px 12px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:3px}
+.field input,.field select{width:100%}
+.field .err{color:var(--bad);font-size:12px;margin-top:2px}
+.field .hint{color:var(--muted);font-size:12px;margin-top:2px}
+.req::after{content:" *";color:var(--bad)}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px;min-width:0}
+legend{font-weight:600;padding:0 4px}
+.types{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px;margin:0 0 12px}
+.types button{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;color:var(--ink);cursor:pointer}
+.types button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:var(--info-bg)}
+.types button:disabled{opacity:.5;cursor:not-allowed}
+.types small{display:block;color:var(--muted)}
+.result{background:var(--soft);border-radius:8px;padding:10px;font-size:13px}
+.result b{font-variant-numeric:tabular-nums}
+.timeline{display:flex;flex-direction:column;gap:0;margin:0;padding:0;list-style:none}
+.timeline li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:10px;padding:0 0 12px;position:relative}
+.timeline li::before{content:"";position:absolute;left:7px;top:14px;bottom:0;width:2px;background:var(--line)}
+.timeline li:last-child::before{display:none}
+.dot{width:16px;height:16px;border-radius:50%;border:3px solid var(--accent);background:var(--panel);margin-top:2px}
+.dot.old{border-color:var(--none)}
+.diff td.chg{background:var(--warn-bg)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:0 0 12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--muted)}
+.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:0 0 14px}
+.flow .st{flex:1 1 150px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+.flow .st b{display:block}
+.flow .ar{align-self:center;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:0;max-width:min(560px,calc(100vw - 32px));width:100%}
+dialog::backdrop{background:rgb(0 0 0 / .35)}
+dialog .hd{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:650}
+dialog .bd{padding:12px 14px}
+dialog .ft{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px;margin:0}
+dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
+.hidden{display:none!important}
+.mockbar{background:var(--k-bg);color:var(--k);font-size:12.5px;padding:4px 16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="mockbar">Bản mẫu PHASE-032 — dữ liệu giả, chưa nối API. Bấm thử được: chọn dòng, đổi loại, thử tính, phát hành, so sánh bản.</div>
+  <div class="top">
+    <div class="brand"><div class="logo">BH</div><div>Bán hàng · Chính sách bán hàng<small>modules/ban-hang · /app/ban-hang/chinh-sach</small></div></div>
+    <div class="spacer"></div>
+    <label class="mono" style="color:var(--muted)">Vai trò
+      <select id="role"><option value="w">Kế toán / quản lý KM (settings:write)</option><option value="r">Nhân viên xem (catalog:read)</option></select>
+    </label>
+    <button class="btn" id="theme" type="button">Sáng / tối</button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="list">Chương trình KM</button>
+    <button role="tab" aria-selected="false" data-tab="edit">Soạn &amp; phát hành</button>
+    <button role="tab" aria-selected="false" data-tab="one">Một chương trình</button>
+    <button role="tab" aria-selected="false" data-tab="pos">Kênh POS <span class="cnt">7</span></button>
+  </nav>
+</header>
+
+<main>
+<!-- ============ 1. DANH SÁCH ============ -->
+<section data-pane="list">
+  <h2>Chương trình khuyến mại</h2>
+  <p class="lead">Mỗi chương trình có nhiều bản; đổi nội dung là ra bản mới, bản cũ giữ nguyên để truy vết. POS chỉ dùng bản đang chạy tại ngày bán.</p>
+  <div class="filters">
+    <input id="q" placeholder="Tìm mã / tên / mã hàng" aria-label="Tìm">
+    <select id="fState" aria-label="Trạng thái"><option value="">Mọi trạng thái</option><option>Đang chạy</option><option>Sắp chạy</option><option>Nháp</option><option>Đã ngừng</option></select>
+    <select aria-label="Loại"><option>Mọi loại</option><option>Mua X tặng Y</option><option>Giảm giá</option></select>
+    <select aria-label="Chi nhánh"><option>Mọi chi nhánh</option><option>CN01 · Bắc Từ Liêm</option><option>CN02 · Cầu Giấy</option></select>
+    <select aria-label="Kênh"><option>Mọi kênh</option><option>POS</option><option>Web</option></select>
+    <span class="spacer"></span>
+    <button class="btn pri w-only" type="button" data-go="edit">+ Chương trình mới</button>
+  </div>
+  <div class="panel scroll">
+    <table class="tbl" id="listTbl">
+      <thead><tr><th>Mã · tên</th><th>Loại</th><th>Bản</th><th>Hiệu lực</th><th>Phạm vi</th><th class="num">Đơn đã áp (tháng)</th><th>Trạng thái</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="lead" style="margin-top:10px">Số đơn đã áp lấy từ <code>core.policy.registry</code> — màn không tự đếm. Chương trình loại combo / giá theo lô / tích điểm chưa có Rule Contract nên vẫn quản lý ở plugin POS (D032-5).</p>
+</section>
+
+<!-- ============ 2. SOẠN & PHÁT HÀNH ============ -->
+<section data-pane="edit" class="hidden">
+  <h2 id="editTitle">Chương trình mới</h2>
+  <p class="lead">Form sinh từ mô tả của Rule Contract. Kiểm bằng chính máy chủ (lỗi hiện dưới đúng ô). Lưu nháp không có hiệu lực; <b>Phát hành</b> là có hiệu lực ngay từ ngày áp.</p>
+  <div class="note warn hidden" id="editNote"></div>
+  <div class="types" id="types">
+    <button type="button" aria-pressed="true" data-rc="bxgy">Mua X tặng Y<small>sale.promo.buy_x_get_y@1</small></button>
+    <button type="button" aria-pressed="false" data-rc="disc">Giảm giá (% / tiền)<small>sale.promo.discount@1 · chờ P032-1, P032-2</small></button>
+    <button type="button" disabled>Giá theo bảng giá<small>sale.price_list@1 · sau</small></button>
+    <button type="button" disabled>Combo, giá theo lô, tích điểm<small>chưa có Rule Contract</small></button>
+  </div>
+  <div class="grid2">
+    <div>
+      <fieldset><legend>Chung</legend>
+        <div class="form">
+          <div class="field"><label class="req" for="fKey">Mã chương trình</label><input id="fKey" value="SALE-PROMO-014" class="mono"><div class="hint">Chữ hoa, số, _ . - ; không đổi được sau khi phát hành</div></div>
+          <div class="field"><label for="fName">Tên hiển thị</label><input id="fName" value="Mua 2 hộp Kun tặng 1 bình nước"></div>
+          <div class="field"><label class="req" for="fFrom">Áp từ ngày</label><input id="fFrom" type="date" value="2026-11-12"><div class="err hidden" id="eFrom"></div></div>
+          <div class="field"><label for="fReason">Lý do (bắt buộc khi áp lùi)</label><input id="fReason" placeholder="vd: bổ sung CTKM đã chạy từ 01/11"><div class="err hidden" id="eReason"></div></div>
+        </div>
+      </fieldset>
+      <fieldset><legend>Phạm vi</legend>
+        <div class="form">
+          <div class="field"><label>Chi nhánh</label><select multiple size="3"><option selected>CN01 · Bắc Từ Liêm</option><option selected>CN02 · Cầu Giấy</option><option>CN09 · Hà Đông</option></select><div class="hint">Không chọn = mọi chi nhánh</div></div>
+          <div class="field"><label>Kênh</label><select multiple size="3"><option selected>POS</option><option>Web</option><option>Sàn TMĐT</option></select></div>
+        </div>
+      </fieldset>
+      <fieldset id="fsBxgy"><legend>Mua X tặng Y</legend>
+        <div class="form">
+          <div class="field"><label class="req">Hàng phải mua</label><input value="KUN-SUA-110 · Sữa Kun 110ml" list="items"><div class="hint">Lưu cả <code>itemId</code>: đổi mã hàng không làm hỏng CTKM</div></div>
+          <div class="field"><label class="req" for="bQty">Số lượng mua mỗi lần</label><input id="bQty" type="number" value="2" min="0" step="any"></div>
+          <div class="field"><label class="req">Hàng tặng</label><input value="QUA-BINH-NUOC · Bình nước (quà)" list="items"></div>
+          <div class="field"><label class="req" for="gQty">Số lượng tặng mỗi lần</label><input id="gQty" type="number" value="1" min="0" step="any"></div>
+          <div class="field"><label for="bRep">Lặp lại</label><select id="bRep"><option value="1">Đủ mấy lần tặng mấy lần</option><option value="0">Chỉ tặng một lần</option></select></div>
+          <div class="field"><label for="bMax">Trần quà / đơn</label><input id="bMax" type="number" placeholder="không giới hạn"><div class="err hidden" id="eMax"></div></div>
+          <div class="field"><label>Chiến dịch từ</label><input type="date" value="2026-11-12"></div>
+          <div class="field"><label>Chiến dịch đến</label><input type="date" value="2026-11-30"></div>
+        </div>
+      </fieldset>
+      <fieldset id="fsDisc" class="hidden"><legend>Giảm giá</legend>
+        <div class="note warn">Rule Contract <code>sale.promo.discount@1</code> chưa có ở Core: cần điểm đăng ký (P032-1) và giá dòng trong <code>evaluate</code> (P032-2). Form dưới là khuôn đề xuất ở 10 §4.</div>
+        <div class="form">
+          <div class="field"><label>Áp trên</label><select id="dTarget"><option value="line">Từng dòng hàng</option><option value="order">Tổng đơn</option></select></div>
+          <div class="field"><label>Hàng áp dụng</label><input value="BIOMIL-400, BIOMIL-800" list="items"></div>
+          <div class="field"><label>Kiểu giảm</label><select id="dKind"><option value="percent">Phần trăm</option><option value="amount">Số tiền</option></select></div>
+          <div class="field"><label for="dVal">Giá trị</label><input id="dVal" type="number" value="10"></div>
+          <div class="field"><label for="dMin">Đơn tối thiểu (₫)</label><input id="dMin" type="number" placeholder="0"></div>
+          <div class="field"><label for="dCap">Giảm tối đa (₫)</label><input id="dCap" type="number" value="50000"></div>
+          <div class="field"><label>Cần mã giảm giá</label><select><option>Không</option><option>Có (POS giữ lượt)</option></select></div>
+        </div>
+      </fieldset>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn w-only" type="button" id="saveDraft">Lưu nháp</button>
+        <button class="btn pri w-only" type="button" id="publish">Phát hành…</button>
+        <span id="draftMsg" class="lead" style="margin:0;align-self:center"></span>
+      </div>
+    </div>
+    <div class="panel card">
+      <h3 style="margin-top:0">Thử tính</h3>
+      <p class="lead">Giỏ mẫu chạy qua chính Rule Contract (P032-3: thử trên bản nháp, không ghi gì).</p>
+      <div class="form" id="cartForm">
+        <div class="field"><label for="cA">SL Sữa Kun 110ml</label><input id="cA" type="number" value="5" min="0" step="any"></div>
+        <div class="field"><label for="cP">Đơn giá (₫, gồm thuế)</label><input id="cP" type="number" value="14000"></div>
+      </div>
+      <div style="margin:10px 0"><button class="btn sm" type="button" id="vecBtn">Dùng ca chuẩn của Rule Contract ▾</button></div>
+      <div class="result" id="tryOut"></div>
+      <h3>Cách kế toán ghi nhận</h3>
+      <div class="result" id="treat"></div>
+    </div>
+  </div>
+  <datalist id="items"><option value="KUN-SUA-110 · Sữa Kun 110ml"><option value="QUA-BINH-NUOC · Bình nước (quà)"><option value="BIOMIL-400 · Biomil 400g"><option value="BIOMIL-800 · Biomil 800g"></datalist>
+</section>
+
+<!-- ============ 3. MỘT CHƯƠNG TRÌNH ============ -->
+<section data-pane="one" class="hidden">
+  <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1;min-width:0">
+      <h2><span class="mono">SALE-PROMO-001</span> · Mua 2 Biomil 400 tặng 1 khăn sữa</h2>
+      <p class="lead"><span class="tag ok">Đang chạy</span> bản 3 · từ 05/11/2026 · CN01, CN02 · POS · <code>sale.promo.buy_x_get_y@1</code></p>
+    </div>
+    <button class="btn w-only" type="button" data-go="edit" data-edit="1">Sửa → bản mới</button>
+    <button class="btn bad w-only" type="button" id="retire">Ngừng…</button>
+    <a class="btn" href="#" onclick="return false">Xem ở Hệ thống → Chính sách</a>
+  </div>
+  <div class="grid2">
+    <div class="panel card">
+      <h3 style="margin-top:0">Các bản</h3>
+      <ol class="timeline">
+        <li><span class="dot"></span><div><b>Bản 3</b> <span class="tag ok">đang chạy</span><br><small class="lead">05/11/2026 → (chưa đóng) · kế toán bán hàng · băm <span class="mono">sha256:9f2c…41ab</span><br>Đổi: trần quà 2 → 3</small></div></li>
+        <li><span class="dot old"></span><div><b>Bản 2</b> <span class="tag none">đã đóng</span><br><small class="lead">01/11/2026 → 04/11/2026 · kế toán bán hàng · <span class="mono">sha256:1b07…c3e0</span><br>Đổi: thêm CN02 vào phạm vi</small></div></li>
+        <li><span class="dot old"></span><div><b>Bản 1</b> <span class="tag none">đã đóng</span><br><small class="lead">20/10/2026 → 31/10/2026 · chuyển từ plugin POS (D032-7) · <span class="mono">sha256:77aa…0d19</span></small></div></li>
+      </ol>
+      <h3>So sánh bản <select id="cmpA" aria-label="Bản trái"><option>2</option><option>1</option></select> ↔ <select aria-label="Bản phải"><option>3</option></select></h3>
+      <div class="scroll"><table class="tbl diff">
+        <thead><tr><th>Trường</th><th>Bản <span id="cmpALbl">2</span></th><th>Bản 3</th></tr></thead>
+        <tbody id="cmpBody"></tbody>
+      </table></div>
+    </div>
+    <div class="panel card">
+      <h3 style="margin-top:0">Chứng từ đã áp</h3>
+      <p class="lead">Từ <code>core.policy.applications</code>. Bấm mã để mở truy vết bút toán.</p>
+      <div class="scroll"><table class="tbl">
+        <thead><tr><th>Chứng từ</th><th>Ngày</th><th>Bản</th><th class="num">Tiền</th><th>Kiểm</th></tr></thead>
+        <tbody>
+          <tr><td><a href="#" class="mono">pos:CN01:sale:0192…a1</a></td><td>09/11</td><td>3</td><td class="num">650.000</td><td><span class="tag ok">khớp</span></td></tr>
+          <tr><td><a href="#" class="mono">pos:CN02:sale:0192…7c</a></td><td>09/11</td><td>3</td><td class="num">1.300.000</td><td><span class="tag ok">khớp</span></td></tr>
+          <tr><td><a href="#" class="mono">pos:CN01:sale:0192…3f</a></td><td>06/11</td><td>2</td><td class="num">650.000</td><td><span class="tag warn" title="Đơn bán ngày 06/11 nhưng gửi bản 2 (đã có bản 3)">IN-POL-003</span></td></tr>
+          <tr><td><a href="#" class="mono">pos:CN02:sale_return:0192…b8</a></td><td>07/11</td><td>2</td><td class="num">−325.000</td><td><span class="tag ok">khớp</span></td></tr>
+        </tbody>
+      </table></div>
+      <h3>Nội dung bản 3</h3>
+      <pre class="result mono" style="white-space:pre-wrap;margin:0">{ "buy": { "sku": "BIOMIL-400", "itemId": "01J…Q7", "qty": 2 },
+  "get": { "sku": "KHAN-SUA", "itemId": "01J…M2", "qty": 1 },
+  "repeat": true, "maxGiftQty": 3,
+  "validFrom": "2026-10-20", "validTo": "2026-12-31" }</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. KÊNH POS ============ -->
+<section data-pane="pos" class="hidden">
+  <h2>Kênh POS</h2>
+  <p class="lead">Đơn POS gửi về cửa nạp kèm tham chiếu chính sách. Màn này cho biết máy bán nào đang dùng bản cũ, đơn nào lệch.</p>
+  <div class="flow">
+    <div class="st"><b>① Tải</b>POS gọi <code>GET /api/v1/policies</code> theo chi nhánh, kênh POS; so <code>etag</code> 5 phút / khi có <code>policy.published</code></div><span class="ar">→</span>
+    <div class="st"><b>② Tính</b>Trên máy, bằng bản viết lại đạt 100 % ca chuẩn (chạy được khi mất mạng)</div><span class="ar">→</span>
+    <div class="st"><b>③ Gửi</b>Chứng từ <code>sale</code> / <code>sale_return</code> kèm <code>policyRefs</code></div><span class="ar">→</span>
+    <div class="st"><b>④ Kiểm</b>Cửa nạp IN-POL-001..003 (+004): cảnh báo, không chặn; lệch vào <i>Chờ kế toán xem</i></div>
+  </div>
+  <div class="filters"><select aria-label="Kỳ"><option>Tháng 11/2026</option><option>Hôm nay</option></select><select aria-label="Chi nhánh"><option>Mọi chi nhánh</option><option>CN01</option><option>CN02</option></select></div>
+  <div class="kpis">
+    <div class="kpi"><small>Đơn POS vào sổ</small><div class="v">4.812</div></div>
+    <div class="kpi"><small>Có tham chiếu chính sách</small><div class="v">1.906</div><small>39,6 % đơn có CTKM</small></div>
+    <div class="kpi"><small>Khớp chính sách</small><div class="v" style="color:var(--ok)">99,6 %</div></div>
+    <div class="kpi"><small>Lệch chờ xem</small><div class="v" style="color:var(--warn)">7</div><small><a href="#">mở hàng việc</a></small></div>
+  </div>
+  <div class="grid2">
+    <div class="panel card">
+      <h3 style="margin-top:0">Lệch theo mã</h3>
+      <table class="tbl"><thead><tr><th>Mã</th><th>Nghĩa</th><th class="num">Đơn</th></tr></thead><tbody>
+        <tr><td><span class="tag warn">IN-POL-003</span></td><td>Gửi bản cũ khi đã có bản mới (thường do bán lúc mất mạng)</td><td class="num">5</td></tr>
+        <tr><td><span class="tag bad">IN-POL-001</span></td><td>Mã chính sách không có trong sổ đăng ký</td><td class="num">1</td></tr>
+        <tr><td><span class="tag bad">IN-POL-002</span></td><td>Băm không khớp bản đã phát hành</td><td class="num">1</td></tr>
+      </tbody></table>
+    </div>
+    <div class="panel card">
+      <h3 style="margin-top:0">Máy bán · bản đang dùng</h3>
+      <div class="scroll"><table class="tbl"><thead><tr><th>Máy</th><th>Lần tải cuối</th><th>Tình trạng</th></tr></thead><tbody>
+        <tr><td>CN01 · Quầy 1</td><td>09/11 21:05</td><td><span class="tag ok">mới nhất</span></td></tr>
+        <tr><td>CN01 · Quầy 2</td><td>09/11 20:58</td><td><span class="tag ok">mới nhất</span></td></tr>
+        <tr><td>CN02 · Quầy 1</td><td>06/11 17:40</td><td><span class="tag warn">chậm 1 bản (SALE-PROMO-001)</span></td></tr>
+      </tbody></table></div>
+      <p class="lead" style="margin:8px 0 0">"Lần tải cuối" lấy theo bản cuối mỗi máy đã gửi (cùng nguồn với ô <i>Độ trễ phiên bản</i> của HT15).</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<dialog id="dlgPub">
+  <div class="hd">Phát hành bản mới</div>
+  <div class="bd">
+    <dl class="kv" id="pubKv"></dl>
+    <p class="lead" style="margin:10px 0 0">Bản đã phát hành <b>không sửa được</b>. Muốn đổi thì phát hành bản tiếp theo; bản trước tự đóng ở ngày áp − 1.</p>
+  </div>
+  <div class="ft"><button class="btn" type="button" data-close>Huỷ</button><button class="btn pri" type="button" id="pubOk">Phát hành</button></div>
+</dialog>
+<dialog id="dlgRet">
+  <div class="hd">Ngừng SALE-PROMO-001</div>
+  <div class="bd">
+    <div class="form"><div class="field"><label class="req">Ngừng từ ngày</label><input type="date" value="2026-11-10"></div><div class="field"><label class="req">Lý do</label><input placeholder="vd: hết quà tặng"></div></div>
+    <p class="lead" style="margin:10px 0 0">Bản 3 đóng ở ngày ngừng − 1; POS thôi áp từ ngày ngừng. Lịch sử và chứng từ đã áp giữ nguyên. Cần Core thêm <code>core.policy.retire</code> (P032-4).</p>
+  </div>
+  <div class="ft"><button class="btn" type="button" data-close>Huỷ</button><button class="btn bad" type="button" data-close>Ngừng</button></div>
+</dialog>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const vnd = (n) => Math.round(n).toLocaleString('vi-VN');
+const TODAY = '2026-11-09';
+const ROWS = [
+  { key: 'SALE-PROMO-001', name: 'Mua 2 Biomil 400 tặng 1 khăn sữa', type: 'Mua X tặng Y', v: 3, from: '05/11/2026', to: '—', scope: 'CN01, CN02 · POS', n: 412, st: 'Đang chạy' },
+  { key: 'SALE-PROMO-007', name: 'Giảm 10% dòng Biomil, tối đa 50.000đ', type: 'Giảm giá', v: 1, from: '01/11/2026', to: '30/11/2026', scope: 'Mọi chi nhánh · POS, Web', n: 1288, st: 'Đang chạy' },
+  { key: 'SALE-PROMO-011', name: 'Đơn từ 500.000đ giảm 30.000đ', type: 'Giảm giá', v: 2, from: '15/11/2026', to: '15/12/2026', scope: 'CN01 · POS', n: 0, st: 'Sắp chạy' },
+  { key: 'SALE-PROMO-014', name: 'Mua 2 hộp Kun tặng 1 bình nước', type: 'Mua X tặng Y', v: '—', from: '12/11/2026', to: '—', scope: 'CN01, CN02 · POS', n: 0, st: 'Nháp' },
+  { key: 'SALE-PROMO-003', name: 'Tặng khăn khi mua Optimum (tháng 10)', type: 'Mua X tặng Y', v: 2, from: '01/10/2026', to: '31/10/2026', scope: 'Mọi chi nhánh · POS', n: 206, st: 'Đã ngừng' },
+];
+const TAG = { 'Đang chạy': 'ok', 'Sắp chạy': 'info', 'Nháp': 'none', 'Đã ngừng': 'none' };
+
+function renderList() {
+  const q = $('#q').value.toLowerCase(), f = $('#fState').value;
+  $('#listTbl tbody').innerHTML = ROWS.filter((r) => (!f || r.st === f) && (!q || (r.key + r.name).toLowerCase().includes(q))).map((r) => `
+    <tr class="click" data-go="${r.st === 'Nháp' ? 'edit' : 'one'}"><td><span class="mono">${r.key}</span><br><small>${r.name}</small></td><td>${r.type}</td><td>${r.v}</td>
+    <td>${r.from} → ${r.to}</td><td>${r.scope}</td><td class="num">${r.st === 'Nháp' ? '—' : vnd(r.n)}</td><td><span class="tag ${TAG[r.st]}">${r.st}</span></td></tr>`).join('')
+    || '<tr><td colspan="7" class="lead">Không có chương trình nào khớp bộ lọc.</td></tr>';
+}
+
+function go(tab) {
+  $$('.tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  $$('[data-pane]').forEach((p) => p.classList.toggle('hidden', p.dataset.pane !== tab));
+  window.scrollTo(0, 0);
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-go]');
+  if (t) {
+    if (t.dataset.edit) { $('#editTitle').textContent = 'Sửa SALE-PROMO-001 → bản 4'; $('#editNote').textContent = 'Bản 4 sẽ thay bản 3 từ ngày áp; bản 3 đóng ở ngày áp − 1. Mã chương trình không đổi được.'; $('#editNote').classList.remove('hidden'); }
+    go(t.dataset.go);
+  }
+  if (e.target.matches('[data-close]')) e.target.closest('dialog').close();
+});
+$$('.tabs button').forEach((b) => b.addEventListener('click', () => go(b.dataset.tab)));
+$('#q').addEventListener('input', renderList); $('#fState').addEventListener('change', renderList);
+
+// Loại chính sách
+let rc = 'bxgy';
+$$('#types button[data-rc]').forEach((b) => b.addEventListener('click', () => {
+  rc = b.dataset.rc;
+  $$('#types button[data-rc]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  $('#fsBxgy').classList.toggle('hidden', rc !== 'bxgy'); $('#fsDisc').classList.toggle('hidden', rc !== 'disc');
+  $('#publish').disabled = rc === 'disc'; $('#cartForm label[for=cA]').textContent = rc === 'bxgy' ? 'SL Sữa Kun 110ml' : 'SL Biomil 400g';
+  $('#cP').value = rc === 'bxgy' ? 14000 : 325000; $('#cA').value = rc === 'bxgy' ? 5 : 2;
+  tryCalc();
+}));
+
+// Thử tính — cùng công thức Rule Contract (bxgy theo spec của sếp; discount theo khuôn đề xuất)
+function tryCalc() {
+  const qty = +$('#cA').value || 0, price = +$('#cP').value || 0;
+  let out, treat;
+  if (rc === 'bxgy') {
+    const bq = +$('#bQty').value, gq = +$('#gQty').value, rep = $('#bRep').value === '1', max = $('#bMax').value ? +$('#bMax').value : undefined;
+    const times = !(bq > 0) ? 0 : rep ? Math.floor(qty / bq + 1e-9) : qty >= bq - 1e-9 ? 1 : 0;
+    const gifts = max !== undefined ? Math.min(times * gq, max) : times * gq;
+    out = gifts > 0 ? `Mua <b>${qty}</b> → đủ <b>${times}</b> lần → tặng <b>${gifts}</b> Bình nước` : `Mua ${qty}: chưa đủ điều kiện (cần ${bq})`;
+    treat = gifts > 0 ? 'Quà: <span class="mono">reasonCode</span> theo bảng S031-14 <span class="tag warn">chưa xác nhận</span><br><small>Q032-6: kế toán TGS trả lời quà ghi theo giá vốn — Core hiện gợi ý XTA1.4 (giá bán), chờ kế toán trưởng.</small>' : 'Không phát sinh ghi nhận.';
+    $('#eMax').classList.toggle('hidden', !(max !== undefined && max < gq)); $('#eMax').textContent = `Trần quà ${max} nhỏ hơn số quà một lần (${gq}) — chính sách không bao giờ tặng được`;
+  } else {
+    const kind = $('#dKind').value, val = +$('#dVal').value || 0, cap = +$('#dCap').value || Infinity, min = +$('#dMin').value || 0;
+    const amount = qty * price; let d = amount < min ? 0 : kind === 'percent' ? amount * val / 100 : val; d = Math.min(d, cap, amount);
+    out = d > 0 ? `Tiền hàng <b>${vnd(amount)} ₫</b> → giảm <b>${vnd(d)} ₫</b>${d === cap ? ' (chạm trần)' : ''}` : `Chưa đủ điều kiện (đơn tối thiểu ${vnd(min)} ₫)`;
+    treat = d > 0 ? 'Giảm giá trên hoá đơn: <span class="mono">reasonCode</span> theo bảng S031-14 <span class="tag warn">chưa xác nhận</span>' : 'Không phát sinh ghi nhận.';
+  }
+  $('#tryOut').innerHTML = out; $('#treat').innerHTML = treat;
+}
+['#cA', '#cP', '#bQty', '#gQty', '#bRep', '#bMax', '#dKind', '#dVal', '#dCap', '#dMin'].forEach((s) => $(s).addEventListener('input', tryCalc));
+$('#vecBtn').addEventListener('click', () => { $('#cA').value = 4; tryCalc(); $('#tryOut').insertAdjacentHTML('beforeend', '<br><small class="lead">Ca chuẩn: "mua 4 A tặng 2 B (repeat)" — đạt</small>'); });
+
+// Áp lùi cần lý do
+function checkBack() {
+  const back = $('#fFrom').value < TODAY, noReason = $('#fReason').value.trim().length < 3;
+  $('#eReason').textContent = 'Áp lùi về trước hôm nay — cần lý do (≥ 3 ký tự)';
+  $('#eReason').classList.toggle('hidden', !(back && noReason));
+  return !(back && noReason);
+}
+$('#fFrom').addEventListener('input', checkBack); $('#fReason').addEventListener('input', checkBack);
+$('#saveDraft').addEventListener('click', () => { $('#draftMsg').textContent = 'Đã lưu nháp lúc ' + new Date().toLocaleTimeString('vi-VN') + ' — chưa có hiệu lực.'; });
+$('#publish').addEventListener('click', () => {
+  if (!checkBack()) return;
+  const from = $('#fFrom').value.split('-').reverse().join('/');
+  $('#pubKv').innerHTML = `<dt>Mã</dt><dd class="mono">${$('#fKey').value}</dd><dt>Bản</dt><dd>1 (mới)</dd><dt>Áp từ</dt><dd>${from}</dd>
+    <dt>Phạm vi</dt><dd>CN01, CN02 · POS</dd><dt>Rule Contract</dt><dd class="mono">sale.promo.buy_x_get_y@1</dd><dt>Băm sẽ ra</dt><dd class="mono">sha256:3e1d…a907</dd>`;
+  $('#dlgPub').showModal();
+});
+$('#pubOk').addEventListener('click', () => { $('#dlgPub').close(); go('one'); });
+$('#retire').addEventListener('click', () => $('#dlgRet').showModal());
+
+// So sánh bản
+const V = { 1: { 'Phạm vi chi nhánh': 'CN01', 'Trần quà / đơn': '2', 'Chiến dịch': '20/10 → 31/12' }, 2: { 'Phạm vi chi nhánh': 'CN01, CN02', 'Trần quà / đơn': '2', 'Chiến dịch': '20/10 → 31/12' }, 3: { 'Phạm vi chi nhánh': 'CN01, CN02', 'Trần quà / đơn': '3', 'Chiến dịch': '20/10 → 31/12' } };
+function renderCmp() {
+  const a = $('#cmpA').value; $('#cmpALbl').textContent = a;
+  $('#cmpBody').innerHTML = Object.keys(V[3]).map((k) => { const c = V[a][k] !== V[3][k] ? ' class="chg"' : ''; return `<tr><td>${k}</td><td${c}>${V[a][k]}</td><td${c}>${V[3][k]}</td></tr>`; }).join('')
+    + '<tr><td>Hàng mua / tặng</td><td>BIOMIL-400 ×2 → KHAN-SUA ×1</td><td>BIOMIL-400 ×2 → KHAN-SUA ×1</td></tr>';
+}
+$('#cmpA').addEventListener('change', renderCmp);
+
+// Vai trò: thiếu settings:write thì ẩn nút
+$('#role').addEventListener('change', (e) => $$('.w-only').forEach((b) => b.classList.toggle('hidden', e.target.value !== 'w')));
+$('#theme').addEventListener('click', () => { const r = document.documentElement; const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; });
+
+renderList(); tryCalc(); renderCmp();
+</script>
+</body>
+</html>

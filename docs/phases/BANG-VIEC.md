@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 9 |
 | Chờ merge | 0 |
-| Bị chặn | 28 |
-| Chưa ai nhận | 137 |
-| Chờ đủ tín hiệu | 52 |
+| Bị chặn | 30 |
+| Chưa ai nhận | 151 |
+| Chờ đủ tín hiệu | 53 |
 | Hoãn | 2 |
 | Xong | 263 |
-| **Tổng** | **491** |
+| **Tổng** | **508** |
 
 ## Đang làm (9)
 
@@ -32,7 +32,7 @@
 
 —
 
-## Bị chặn (28)
+## Bị chặn (30)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -64,8 +64,10 @@
 | [S031-3](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L12) | PHASE-031 | Nhóm Lõi trả Q031-4, Q031-6; duyệt phần K2 (cửa nạp, Guard) | P0 | — |
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
+| [S032-2](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L10) | PHASE-032 | Chủ dự án duyệt bản mẫu + D032-1..7, trả Q032-1..4 | P0 | — |
+| [S032-3](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L11) | PHASE-032 | Kế toán trưởng trả Q032-5, Q032-6 (cùng S031-14) | P0 | — |
 
-## Chưa ai nhận (137)
+## Chưa ai nhận (151)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -206,8 +208,22 @@
 | [S031-16](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L25) | PHASE-031 | POS WP: tải chính sách, tính theo Rule Contract, gửi policyRefs; bỏ luật khuyến mại riêng của plugin (repo pl… | P1 | — |
 | [S031-17](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L26) | PHASE-031 | Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc | P1 | — |
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
+| [S032-4](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L12) | PHASE-032 | Khung modules/ban-hang (npx bizcity module new), manifest, menu Chương trình khuyến mại | P0 | — |
+| [S032-5](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L13) | PHASE-032 | Màn Chương trình KM: danh sách từ GET /api/v1/policy-registry lọc domain = sale, trạng thái 4 loại, lọc chi n… | P0 | — |
+| [S032-6](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L14) | PHASE-032 | Màn Soạn & phát hành: form sinh từ describe().params, lỗi theo path, hộp xác nhận, Idempotency-Key | P0 | — |
+| [S032-7](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L15) | PHASE-032 | Bản nháp: migration của module modbanhangpolicydrafts + action ban-hang.policy-draft. | P1 | — |
+| [S032-8](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L16) | PHASE-032 | Màn Một chương trình: dòng thời gian bản, nội dung từng bản, chứng từ đã áp (core.policy.applications), nút S… | P0 | — |
+| [S032-9](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L17) | PHASE-032 | Đề xuất P032-1..4 gửi chủ dự án (issue / ADR theo VERSIONING §5) | P0 | — |
+| [S032-10](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L18) | PHASE-032 | sale.promo.discount@1 + vectors + publishChecks (sau P032-1, P032-2) | P0 | — |
+| [S032-11](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L19) | PHASE-032 | Thử tính bản nháp (P032-3), Ngừng (P032-4), So sánh bản (khác nhau theo trường) | P1 | — |
+| [S032-12](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L20) | PHASE-032 | Bản viết lại TS dùng chung cho POS React + PHP cho plugin; bài kiểm chạy hết describe().vectors | P0 | — |
+| [S032-13](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L21) | PHASE-032 | POS React / tgssellingpolicy đọc chính sách từ Core (etag, sự kiện), gửi sale / salereturn kèm policyRefs (S0… | P0 | — |
+| [S032-14](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L22) | PHASE-032 | Màn Kênh POS: đơn vào theo chi nhánh, tỉ lệ có policyRefs, lệch IN-POL theo mã, độ trễ bản theo máy | P1 | — |
+| [S032-15](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L23) | PHASE-032 | Script chuyển CTKM đang chạy (D032-7) + bảng ánh xạ; chạy song song 1 tuần, so kết quả từng đơn | P0 | — |
+| [S032-16](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L24) | PHASE-032 | Tắt luật riêng của plugin sau ngày chuyển; đóng S031-16 | P0 | — |
+| [S032-17](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L25) | PHASE-032 | Hướng dẫn docs/huong-dan/ban-hang-chinh-sach.md (SC-DOC-6 khi thêm menu) | P1 | — |
 
-## Chờ đủ tín hiệu (52)
+## Chờ đủ tín hiệu (53)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -263,6 +279,7 @@
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
+| [S032-1](PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md#L9) | PHASE-032 | README, 00, 10, checklist, bản mẫu mockups/ban-hang-chinh-sach.html | P0 | — |
 
 ## Hoãn (2)
 
