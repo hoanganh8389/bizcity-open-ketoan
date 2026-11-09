@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 166
+      "count": 165
     },
     {
       "key": "partial",
@@ -5917,8 +5917,14 @@
       "title": "Mức HARD hẹp / REVIEW có lý do gắn sourceDigest theo 60 §6; sửa R-DIAG-4 cho nhóm HARD — sau khi chủ dự án trả Q032-6; sửa TRANSITNONZERO sang định nghĩa CT-IN…",
       "priority": "P0",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
+        "branch": "feat/phase-032-b2b-hang-di-duong",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-032 · B2b — hết báo sai \"hàng đi đường phải bằng 0\": TRANSITNONZERO chỉ báo phần còn treo quá…"
+      },
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 39
     },
