@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace';
 import { disableTracing, initTracing } from '../src/core/tracing.js';
 import { call, setupTenant, type TestCtx } from './helpers.js';
-import { cauMacDinh, docMaTuPhanHoi, lamSachDuongDan, loaiLoi, noiDungBaoLoi, noiDungChep, tomTatMa } from '@ketoan/contracts';
+import { ERROR_REMEDY, cauMacDinh, docMaTuPhanHoi, lamSachDuongDan, loaiLoi, noiDungBaoLoi, noiDungChep, tomTatMa } from '@ketoan/contracts';
 
 const memory = new InMemorySpanExporter();
 let ctx: TestCtx;
@@ -89,5 +89,23 @@ describe('Mã tra cứu trên web — PHASE-019 W1 (T019-1)', () => {
     expect(lamSachDuongDan('/api/v1/documents/3f2b9c1e-0000-4000-8000-000000000000/post?x=1#a')).toBe('/api/v1/documents/:x/post');
     expect(lamSachDuongDan('/ke-toan/so-cai/PC0001')).toBe('/ke-toan/so-cai/:x');
     expect(lamSachDuongDan('')).toBe('/');
+  });
+
+// [2026-11-09 09:44 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-18: step + remedy của details vào mã tra cứu; sai khuôn thì bỏ; không lộ dữ liệu của context
+  it('T022-MT-1 mang step + remedy từ details; context khác (docKey, số chứng từ) không vào nội dung chép; sai khuôn bị bỏ', () => {
+    const remedy = JSON.parse(JSON.stringify(ERROR_REMEDY.PERIOD_LOCKED));
+    const ma = docMaTuPhanHoi({
+      status: 409, method: 'POST', path: '/api/v1/vouchers', screen: '/ke-toan',
+      error: { code: 'PERIOD_LOCKED', details: { scope: 'period', context: { step: 'period-check', docKey: 'sale:CN01:HD-BÍ-MẬT', docNo: 'HD-BÍ-MẬT', period: '2027-04' }, remedy } },
+    });
+    expect(ma.step).toBe('period-check');
+    expect(ma.remedy).toEqual(remedy);
+    const text = noiDungChep(ma) + noiDungBaoLoi(ma);
+    expect(text).toContain('Bước: period-check');
+    for (const secret of ['HD-BÍ-MẬT', 'sale:CN01', '2027-04']) expect(text).not.toContain(secret);
+    const bad = docMaTuPhanHoi({ status: 409, method: 'POST', path: '/x', screen: '/y', error: { code: 'PERIOD_LOCKED', details: { context: { step: 'tu-bia' }, remedy: { steps: [{ text: 5 }], owner: 'x', verify: {} } } } });
+    expect([bad.step, bad.remedy]).toEqual([undefined, undefined]);
+    const arr = docMaTuPhanHoi({ status: 422, method: 'POST', path: '/x', screen: '/y', error: { code: 'POSTING_FAILED', details: ['Tài khoản 111 đã ngừng'] } });
+    expect([arr.step, arr.remedy, arr.reason]).toEqual([undefined, undefined, undefined]);
   });
 });

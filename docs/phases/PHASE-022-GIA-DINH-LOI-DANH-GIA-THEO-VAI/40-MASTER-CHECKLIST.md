@@ -27,7 +27,9 @@
 | S022-15 | Biên bản in (PDF) theo vai, kèm các lần xác nhận cảnh báo — ca T022-9 | W4 | P1 | có | 🟡 2026-11-02 — biên bản in qua trình duyệt (`@media print`): vai, đơn vị, danh sách ca + trạng thái + phương án, chỗ ký, dòng miễn trừ; các lần xác nhận cảnh báo hiện trên màn (vai auditor), chưa in vào biên bản; chưa xuất PDF phía máy chủ <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4; sửa phần đầu tệp bị lần vá W1 ghi đè --> |
 | S022-16 | Tài liệu dùng: trang hướng dẫn "Bàn đánh giá" + "Kiểm chuẩn" trong nút "? Hướng dẫn"; DIAGNOSTICS cột remedy | W4 | P1 | ☐ | 🟡 2026-11-02 — DIAGNOSTICS có dòng mã mới W2; trang hướng dẫn "Bàn đánh giá" trong nút "? Hướng dẫn" chưa làm <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4; sửa phần đầu tệp bị lần vá W1 ghi đè --> |
 | S022-17 | RV-R1-06: `details.context` + `details.remedy` cho lỗi Kernel (`UNBALANCED_ENTRY`, `PERIOD_LOCKED`, `POSTING_FAILED`, `LEDGER_APPEND_ONLY`), `withErrorContext`, bảng `ERROR_REMEDY`; chữ chốt BIZCITY-ERRORS §4b; K1 | W5 | P1 | có | ✅ 2026-11-10 — `error-context` 6/6; toàn bộ bộ test API 215 file / 1787 test đạt |
-| S022-18 | RV-R1-06 phần ghi `details.context` vào trace và hiện `remedy.steps` ở khay Mã tra cứu (sau S022-17) | W5 | P2 | có | ☐ |
+| S022-18 | RV-R1-06: hợp đồng `ma-tra-cuu.ts` mang `details.context.step` + `remedy`; chép / báo lỗi thêm dòng Bước, không chép docKey, số chứng từ, kỳ (T022-MT-1) | W5 | P2 | có | ✅ |
+| S022-19 | RV-R1-06: khay Mã tra cứu hiện nút "Cách khắc phục" (RemedyView) (nút bật / tắt + `RemedyView compact` dưới dòng mã) và dòng "bước" — `e.step`, `e.remedy` đã có ở hợp đồng (S022-18); chờ PHASE-018 W6 nhả `MaTraCuu.tsx` | W5 | P2 | có | ☐ |
+| S022-20 | RV-R1-06: ghi bước lỗi vào span OTel (`bizcity.error.step` trong TRACE_ATTRIBUTES + OBSERVABILITY §1.1) — chờ PHASE-018 W6 nhả `OBSERVABILITY.md` | W5 | P3 | có | ☐ |
 
 ## Ca bằng chứng
 

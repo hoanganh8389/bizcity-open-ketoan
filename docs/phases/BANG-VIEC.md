@@ -8,11 +8,11 @@
 | Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 135 |
-| Chờ đủ tín hiệu | 53 |
+| Chưa ai nhận | 169 |
+| Chờ đủ tín hiệu | 55 |
 | Hoãn | 2 |
-| Xong | 271 |
-| **Tổng** | **497** |
+| Xong | 276 |
+| **Tổng** | **538** |
 
 ## Đang làm (8)
 
@@ -64,7 +64,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (135)
+## Chưa ai nhận (169)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -111,7 +111,8 @@
 | [S021-17](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L28) | PHASE-021 | Thực tập sinh thử thật trên dữ liệu demo (ba chứng từ hỏng mẫu), biên bản evidence/W3-<ngày>.md | P1 | — |
 | [S021-21](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L32) | PHASE-021 | Trang bài học đủ ví dụ sai / đúng / vì sao cho mọi mã; kế toán trưởng đọc lại câu chữ | P1 | — |
 | [S022-10](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L22) | PHASE-022 | Kiểm mới W2 đợt sau: TAXBOOKMATCH, MANUALSENSITIVE, COSTUNITSPIKE, YEARENDOPEN, DEBT, DEPOSITAGED, TRANSFERUN… | P1 | — |
-| [S022-18](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L30) | PHASE-022 | RV-R1-06 phần ghi details.context vào trace và hiện remedy.steps ở khay Mã tra cứu (sau S022-17) | P2 | — |
+| [S022-19](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L31) | PHASE-022 | RV-R1-06: khay Mã tra cứu hiện nút "Cách khắc phục" (RemedyView) (nút bật / tắt + RemedyView compact dưới dòn… | P2 | — |
+| [S022-20](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L32) | PHASE-022 | RV-R1-06: ghi bước lỗi vào span OTel (bizcity.error.step trong TRACEATTRIBUTES + OBSERVABILITY §1.1) — chờ PH… | P3 | — |
 | [S023-4](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L15) | PHASE-023 | Hợp đồng bizcityaccountcard@1 (docs/contracts/BIZCITY-ACCOUNT-CARD-v1.md + schema), packages/contracts/src/ac… | P0 | — |
 | [S023-6](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L17) | PHASE-023 | Check SC-ACC-1 (DOCS): đủ trường, soDu khớp normalside gói nền, both có viSaoLuongTinh, trackpartner có viSao… | P0 | — |
 | [S023-7](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L18) | PHASE-023 | Action đọc core.account.card (accounts:read; lớp 3 theo ledger:read): dư Nợ / dư Có tách theo đối tượng tại n… | P0 | — |
@@ -203,8 +204,41 @@
 | [S031-17](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L26) | PHASE-031 | Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc | P1 | — |
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
 | [S031-32](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L41) | PHASE-031 | RV-R1-04 phần dữ liệu cũ: đo bản retired có effectiveto NULL trên bản sao thật rồi quyết định đóng (§16 mục 6) | P2 | — |
+| [S032-7](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L16) | PHASE-032 | Chữ chốt W1 (R-FLOW-2): migration lô (số bằng so-tiep-theo), minor bizcityledgerintake@1 (lotRef, originalLin… | P0 | — |
+| [S032-8](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L17) | PHASE-032 | Migration inventorylots + inventorymovements.lotid / linekey / originallineref; lottracking ở phân loại mặt h… | P0 | — |
+| [S032-9](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L18) | PHASE-032 | Cửa nạp: lotRef (tra / tạo lô), originalLineRef; IN-INV-010..013 + bài học loi-dau-vao/IN-INV-01x.md; khoá bi… | P0 | — |
+| [S032-10](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L19) | PHASE-032 | Hook inventory.pickLots (FEFO / FIFO mặc định, exclude / prefer / minShelfDays) + POST /inventory/pick-lots +… | P0 | — |
+| [S032-11](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L20) | PHASE-032 | Chữ chốt W2: khuôn valuationlayers, valuationlayersources, costallocations, costingruns; CostingResult; tham … | P0 | — |
+| [S032-12](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L21) | PHASE-032 | Migration bốn bảng (chỉ thêm, trigger supersededby / journalentryid một lần, không cột account); SC-INV-1 / S… | P0 | — |
+| [S032-13](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L22) | PHASE-032 | Engine bình quân tháng trên lớp (periodpool): hàm thuần packages/contracts/src/costing/average.ts; costing.ru… | P0 | — |
+| [S032-14](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L23) | PHASE-032 | T032-P1 parity trên fixture + bản sao dữ liệu thật (ẩn danh): đơn giá 4 lẻ, giá trị xuất từng dòng, tồn cuối,… | P0 | — |
+| [S032-15](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L24) | PHASE-032 | Rule Contract core.costing.method@1 (weightedaverageperiod · fifo · specificidentification; spec, vectors), đ… | P0 | — |
+| [S032-16](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L25) | PHASE-032 | FIFO + đích danh trên lớp (receipt, lotid); hàm thuần fifo.ts, specific.ts; opening cho kỳ chuyển đổi | P0 | — |
+| [S032-17](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L26) | PHASE-032 | Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLi… | P0 | — |
+| [S032-18](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L27) | PHASE-032 | Chuyển kho giữ giá trị (chuyển lớp), cặp chứng từ liên đơn vị + core.intercompany.pricing@1 — T032-G6, G7 | P1 | — |
+| [S032-19](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L28) | PHASE-032 | stockcount docType (K-030-4) + core.inventory.count.snapshot; chênh → stockadjustment theo lý do; T032-G5 | P1 | — |
+| [S032-20](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L29) | PHASE-032 | Cổng: CT-INV-001..004, DG-CLOSE-1 / 2; Sẵn sàng khoá kỳ đọc costingruns (R-INV-7), chấp nhận có lý do; đối so… | P0 | — |
+| [S032-21](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L30) | PHASE-032 | Golden chặn phát hành T032-G8 (đổi SKU), T032-G9 (đổi phương pháp, kỳ chuyển đổi, trả hàng chéo năm) vào CI c… | P0 | — |
+| [S032-22](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L31) | PHASE-032 | Lineage qua lớp: bizcitylineage@1 0.4.0 thêm nút lot, layer, allocation, run; CostExplain theo phương pháp; m… | P1 | — |
+| [S032-23](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L32) | PHASE-032 | Màn Kho › Lô & hạn dùng; ô chọn lô trong @bizcity/ui-kit (gợi ý, lý do khác gợi ý, cảnh báo); POS dùng pick-l… | P1 | — |
+| [S032-24](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L33) | PHASE-032 | Màn Tính giá vốn theo lần tính (lớp, phân bổ, mã kiểm, so sánh, settle); Sẵn sàng khoá kỳ phần giá vốn; hướng… | P1 | — |
+| [S032-25](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L34) | PHASE-032 | Skill open-ketoan-standard C1 / C2 cập nhật trạng thái thật (FIFO ✅ khi W3 xong; lô ✅ khi W1); docs/core/ hướ… | P2 | — |
+| [S032-26](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L35) | PHASE-032 | Sổ đăng ký phép kiểm một chỗ: mã PC-001..023, nhịp (ngày · tuần · kỳ), mức theo nhịp, remedy, chủ việc; ánh x… | P0 | — |
+| [S032-27](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L36) | PHASE-032 | Hộp việc hằng ngày: chạy chẩn đoán L3 hiện có lúc 01:00 (bizcity.clock.daily, cạnh kiểm chuẩn đêm), lưu lượt,… | P0 | — |
+| [S032-28](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L37) | PHASE-032 | Khoá kỳ kéo theo mọi chi nhánh cùng nhóm tính giá (PC-015); không khoá lẻ một chi nhánh khi giá vốn là của nh… | P0 | — |
+| [S032-29](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L38) | PHASE-032 | sourceDigest lúc kiểm, kiểm lại trong cùng giao dịch khoá (PC-021); đầu kỳ = snapshot cuối kỳ trước, mở lại k… | P0 | — |
+| [S032-30](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L39) | PHASE-032 | Mức HARD hẹp / REVIEW có lý do gắn sourceDigest theo 60 §6; sửa R-DIAG-4 cho nhóm HARD — sau khi chủ dự án tr… | P0 | — |
+| [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | — |
+| [S032-32](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L41) | PHASE-032 | Chốt tuần (mềm): kế toán đánh dấu Đã xem tuần — mọi việc của tuần có người nhận hoặc lý do; không khoá dữ liệ… | P1 | — |
+| [S032-33](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L42) | PHASE-032 | Bảng điểm tháng: tổng các tuần + phép kiểm chỉ chạy ở kỳ + kết quả khoá; lưu cùng nhật ký khoá làm hồ sơ bằng… | P1 | — |
+| [S032-34](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L43) | PHASE-032 | Ma trận thời gian tiêu chí × tuần / tháng (60 §10): đọc bản chụp S032-31 / 33, mốc M0..M4 từ checklist; GET /… | P1 | — |
+| [S032-35](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L44) | PHASE-032 | Trường mới của DiagCheck (closeRef, cadence, stage, severityAtClose, owner, scopeBy); gắn closeRef cho mọi ch… | P0 | — |
+| [S032-36](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L45) | PHASE-032 | Khoá thử hôm nay đủ năm bước (R-DIAG-14): periods/check + giá vốn tính tạm + closing/preview + kiểm sau kết c… | P0 | — |
+| [S032-37](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L46) | PHASE-032 | SDK defineCheck + extensions.checks của bizcitymodule@1 (R-DIAG-15) | P1 | — |
+| [S032-38](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L47) | PHASE-032 | Bảng "trường cần để kiểm" theo loại chứng từ ở bizcityledgerintake@1; trạng thái "không kiểm được" trên bàn (… | P1 | — |
+| [S032-39](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L48) | PHASE-032 | Bàn làm việc kế toán năm thẻ từ HT08 (Việc hôm nay · Khoá thử hôm nay · Kết quả từng tuần, tháng · Sổ theo dõ… | P1 | — |
 
-## Chờ đủ tín hiệu (53)
+## Chờ đủ tín hiệu (55)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -261,6 +295,8 @@
 | [S030-32](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L39) | PHASE-030 | Màn HT11 Bàn điều hành chứng từ & cổng (6 khối, lọc, đi sâu, tab Cổng ở chứng từ) — bản mẫu #cong | P1 | — |
 | [S030-41](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L49) | PHASE-030 | Mọi bút toán có chứng từ gốc 25: ledgerentries.eventid NOT NULL (migration an toàn + kiểu + post() từ chối), … | P0 | — |
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
+| [S032-4](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L13) | PHASE-032 | Hướng dẫn tính giá vốn (docs/huong-dan/tinh-gia-von.md), căn cứ (can-cu/04), nghiệp vụ (11) thêm mục Kiến trú… | P1 | — |
+| [S032-6](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L15) | PHASE-032 | Kế toán trưởng trả Q032-1 (phạm vi nhóm tính giá), Q032-5 (hoàn không có gốc); nhóm Lõi trả Q032-2 (nhịp FIFO… | P0 | — |
 
 ## Hoãn (2)
 
@@ -269,6 +305,6 @@
 | [S004-15b](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L28) | PHASE-004 | Cảnh báo (phần 2): số đo bizcityledgerheadereditunattributedtotal + luật cảnh báo alerts.yml; D004-13. K1 | — | — |
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (271)
+## Xong (276)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
