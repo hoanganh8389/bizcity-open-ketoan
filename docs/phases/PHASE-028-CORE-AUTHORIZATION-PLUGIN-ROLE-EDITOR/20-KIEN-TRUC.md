@@ -1,6 +1,6 @@
 # PHASE-028 · 20 — Kiến trúc, dữ liệu, chuyển đổi
 <!-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W0: năm cổng, mô hình dữ liệu authz_*, cách tính quyền Cho / Nới / Cấm theo phạm vi, thu hồi theo authz_version, chuyển đổi EXPAND → RETIRE -->
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
+<!-- [2026-11-09 07:19 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
 
 ## 0. Đối chiếu với mã đã merge (2026-11-09, `origin/main` f02d5029)
 

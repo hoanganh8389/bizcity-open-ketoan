@@ -1,6 +1,6 @@
 # PHASE-028 · 50 — Ánh xạ TGS → quyền Open Kế Toán
 <!-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W0: đếm lại 349 mã × 28 nhóm × 6 cờ từ dữ liệu gốc, ánh xạ nháp từng mã, mã trùng với repo, quyền đặc biệt thành phạm vi / điều kiện -->
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
+<!-- [2026-11-09 07:19 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
 
 ## 0. Đối chiếu với mã đã merge (2026-11-09)
 

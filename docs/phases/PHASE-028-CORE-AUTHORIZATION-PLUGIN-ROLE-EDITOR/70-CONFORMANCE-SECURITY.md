@@ -1,6 +1,6 @@
 # PHASE-028 · 70 — AUTHZ-STD-001 và phép kiểm SC-AUTH
 <!-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — W0: 16 luật AUTHZ, 12 phép kiểm SC-AUTH (mở rộng bộ kiểm có sẵn, không validator riêng), mức chặn / cảnh báo theo RULE-QUALITY-GATE -->
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
+<!-- [2026-11-09 07:19 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa bản draft W0 (05/11) vào main, thêm §0 đối chiếu với mã W1–W5 -->
 
 ## 0. Đối chiếu với mã đã merge (2026-11-09)
 
