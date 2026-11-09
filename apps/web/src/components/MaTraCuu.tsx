@@ -11,9 +11,10 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Bug, ChevronLeft, ChevronRight, Copy, Search, X } from 'lucide-react';
+import { AlertTriangle, Bug, ChevronLeft, ChevronRight, Copy, ListChecks, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { RemedyView } from '@/components/RemedyView';
 import { khoMaTraCuu, loaiLoi, moTaLyDo, noiDungBaoLoi, noiDungChep, tomTatMa, type PhienBan } from '@/lib/maTraCuu';
 
 /** navigator.clipboard chỉ có ở https / localhost; máy chủ LAN chạy http thì chép bằng ô chữ ẩn. */
@@ -37,6 +38,7 @@ export function MaTraCuu() {
   const ds = useSyncExternalStore(khoMaTraCuu.nghe, khoMaTraCuu.ds);
   const [an, setAn] = useState<string | null>(null);
   const [i, setI] = useState(0);
+  const [moCach, setMoCach] = useState(false);
   const [daChep, setDaChep] = useState<'' | 'chep' | 'bao-loi' | 'loi'>('');
   // Cùng khoá với AppLayout → dùng chung một lần gọi /system/health.
   const pb = useQuery({ queryKey: ['book-mode'], queryFn: () => api.get<PhienBan & { bookMode?: string; envLabel?: string; bugReportUrl?: string | null }>('/api/v1/system/health'), staleTime: Infinity }).data;
@@ -47,7 +49,8 @@ export function MaTraCuu() {
 
   // Lỗi mới về: quay lại lỗi mới nhất, hiện lại khay.
   const moiNhat = ds[0] ? `${ds[0].at}|${ds[0].requestId ?? ''}` : undefined;
-  useEffect(() => { setI(0); setDaChep(''); }, [moiNhat]);
+  useEffect(() => { setI(0); setDaChep(''); setMoCach(false); }, [moiNhat]);
+  useEffect(() => { setMoCach(false); }, [i]);
   useEffect(() => {
     if (!daChep) return;
     const t = window.setTimeout(() => setDaChep(''), 2500);
@@ -73,9 +76,16 @@ export function MaTraCuu() {
           <code title={moTaLyDo(e.reason)}>{e.code}{e.reason ? ` · ${e.reason}` : ''}</code>
         </div>
         <div className="mtc-ids" title={`requestId: ${e.requestId ?? '—'}\ntraceId: ${e.traceId ?? '—'}`}>
-          Mã tra cứu: <code>{tomTatMa(e)}</code>
+          Mã tra cứu: <code>{tomTatMa(e)}</code>{e.step ? <> · bước <code>{e.step}</code></> : null}
         </div>
+        {moCach && e.remedy && <RemedyView remedy={e.remedy} compact />}
         <div className="mtc-actions">
+          {/* [2026-11-09 09:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-18: cách khắc phục (remedy) của lỗi, nếu API trả */}
+          {e.remedy && (
+            <button type="button" className="btn btn-xs" aria-expanded={moCach} onClick={() => setMoCach(!moCach)} title="Các bước khắc phục theo danh mục lỗi">
+              <ListChecks size={12} /> {moCach ? 'Ẩn cách khắc phục' : 'Cách khắc phục'}
+            </button>
+          )}
           <button type="button" className="btn btn-xs" onClick={() => void bam('chep')} title="Chép requestId, traceId, thời điểm, màn">
             <Copy size={12} /> {daChep === 'chep' ? 'Đã chép' : 'Chép'}
           </button>

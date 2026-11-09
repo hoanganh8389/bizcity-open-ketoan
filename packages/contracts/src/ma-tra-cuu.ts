@@ -1,3 +1,4 @@
+// [2026-11-09 09:43 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-18 (RV-R1-06): mã tra cứu mang step + remedy của details (BIZCITY-ERRORS §4b); chép / báo lỗi thêm dòng Bước
 // [2026-11-01 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-019 — W1: mã tra cứu (requestId, traceId) cho mọi lỗi API; nội dung Báo lỗi chỉ gồm mã (D019-6).
 /**
  * Mã tra cứu của lỗi API (PHASE-019 W1, 20-KIEN-TRUC §4.4).
@@ -14,7 +15,8 @@
  * Kho lỗi gần nhất (trạng thái của tab) ở apps/web/src/lib/maTraCuu.ts.
  */
 import type { ErrorCode } from './api.js';
-import { ERROR_CATALOG, ERROR_REASONS } from './errors.js';
+import { ERROR_CATALOG, ERROR_REASONS, ERROR_STEPS } from './errors.js';
+import type { Remedy } from './remedy.js';
 
 export interface LoiTraCuu {
   code: string;
@@ -23,6 +25,10 @@ export interface LoiTraCuu {
   traceId?: string;
   /** `details.reason` khi là mã (chữ hoa, số, `_`, `.`) — không lấy câu chữ. */
   reason?: string;
+  /** `details.context.step` khi thuộc ERROR_STEPS (BIZCITY-ERRORS §4b) — bước của đường ghi sổ nơi lỗi xảy ra. */
+  step?: string;
+  /** `details.remedy` (bizcity_remedy@1) khi đúng khuôn: văn bản tĩnh của danh mục, không chứa dữ liệu. */
+  remedy?: Remedy;
   /** Phương thức + đường dẫn API đã làm sạch, vd `POST /api/v1/documents/:x/post`. */
   api: string;
   /** Màn đang mở, đã làm sạch như trên. */
@@ -45,6 +51,14 @@ export function lamSachDuongDan(path: string): string {
   return bare.split('/').map((s) => (s === '' || PLAIN_SEG_RE.test(s) ? s : ':x')).join('/') || '/';
 }
 
+/** Nhận `details.remedy` chỉ khi đúng khuôn tối thiểu (mảng bước có chữ, owner, verify); sai khuôn thì bỏ, không báo lỗi. */
+function docRemedy(v: unknown): Remedy | undefined {
+  const r = v as Partial<Remedy> | null;
+  if (!r || typeof r !== 'object' || !Array.isArray(r.steps) || r.steps.length === 0 || typeof r.owner !== 'string' || !r.verify || typeof r.verify !== 'object') return undefined;
+  if (!r.steps.every((x) => x && typeof x.text === 'string')) return undefined;
+  return r as Remedy;
+}
+
 /** Đọc phần `error` của thân phản hồi lỗi (và header X-Request-Id khi thân hỏng) thành mã tra cứu. Mã sai khuôn thì bỏ. */
 export function docMaTuPhanHoi(input: {
   status: number;
@@ -58,13 +72,18 @@ export function docMaTuPhanHoi(input: {
   const e = input.error ?? {};
   const reqRaw = typeof e.requestId === 'string' ? e.requestId : input.headerRequestId ?? undefined;
   const traceRaw = typeof e.traceId === 'string' ? e.traceId.toLowerCase() : undefined;
-  const reasonRaw = (e.details as { reason?: unknown } | undefined)?.reason;
+  const det = (e.details && typeof e.details === 'object' && !Array.isArray(e.details) ? e.details : {}) as { reason?: unknown; context?: { step?: unknown }; remedy?: unknown };
+  const reasonRaw = det.reason;
+  const stepRaw = det.context?.step;
+  const remedy = docRemedy(det.remedy);
   return {
     code: typeof e.code === 'string' && REASON_RE.test(e.code) ? e.code : input.status >= 500 || input.status === 0 ? 'INTERNAL_ERROR' : `HTTP_${input.status}`,
     status: input.status,
     ...(reqRaw && REQ_ID_RE.test(reqRaw) ? { requestId: reqRaw } : {}),
     ...(traceRaw && TRACE_ID_RE.test(traceRaw) ? { traceId: traceRaw } : {}),
     ...(typeof reasonRaw === 'string' && REASON_RE.test(reasonRaw) ? { reason: reasonRaw } : {}),
+    ...(typeof stepRaw === 'string' && (ERROR_STEPS as readonly string[]).includes(stepRaw) ? { step: stepRaw } : {}),
+    ...(remedy ? { remedy } : {}),
     api: `${input.method.toUpperCase()} ${lamSachDuongDan(input.path)}`,
     screen: lamSachDuongDan(input.screen),
     at: (input.now ?? new Date()).toISOString(),
@@ -94,6 +113,7 @@ export function noiDungChep(e: LoiTraCuu): string {
     `Mã lỗi: ${e.code}${e.reason ? ` (${e.reason})` : ''} — HTTP ${e.status}`,
     `requestId: ${e.requestId ?? '—'}`,
     `traceId: ${e.traceId ?? '—'}`,
+    ...(e.step ? [`Bước: ${e.step}`] : []),
     `Lúc: ${e.at}`,
     `Màn: ${e.screen}`,
     `API: ${e.api}`,
@@ -111,6 +131,7 @@ export function noiDungBaoLoi(e: LoiTraCuu, pb?: PhienBan): string {
     `**requestId:** ${e.requestId ?? '—'}`,
     `**traceId:** ${e.traceId ?? '—'}`,
     `**Mã lỗi:** ${e.code}${e.reason ? ` / ${e.reason}` : ''} (HTTP ${e.status}) — ${cauMacDinh(e.code)}`,
+    ...(e.step ? [`**Bước:** ${e.step}`] : []),
     `**Lúc:** ${e.at}`,
     `**Màn / API:** ${e.screen} → ${e.api}`,
     '',

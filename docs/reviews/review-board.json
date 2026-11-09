@@ -72,7 +72,7 @@
       { "finding": "RV-R1-03", "status": "xong", "by": ["đổi số 0081 (PR của chủ)"], "evidence": ["SC-DATA-1 đạt"], "note": "main đỏ lại ngày 2026-11-09 vì lý do khác: SC-SIG-1/2, SC-DOC-1 ở tài liệu PHASE-028 — không thuộc phát hiện này" },
       { "finding": "RV-R1-04", "status": "mot-phan", "by": ["S031-31"], "evidence": ["packages/platform/src/core/policies.ts retirePolicy", "apps/api/test/policy-retire.test.ts"], "remaining": "S031-32: bản đã retired trước đây còn effective_to NULL, cần đo trên dữ liệu thật" },
       { "finding": "RV-R1-05", "status": "xong", "by": ["PR #187"], "evidence": ["packages/platform/src/core/settings.ts:358"] },
-      { "finding": "RV-R1-06", "status": "mot-phan", "by": ["S022-17"], "evidence": ["BIZCITY-ERRORS-v1 §4b", "apps/api/test/error-context.test.ts"], "remaining": "S022-18: ghi context vào trace, hiện remedy ở khay Mã tra cứu; kết quả nạp theo lô chưa mang details" },
+      { "finding": "RV-R1-06", "status": "mot-phan", "by": ["S022-17", "S022-18"], "evidence": ["apps/api/test/ma-tra-cuu.test.ts (T022-MT-1)", "BIZCITY-ERRORS-v1 §4b", "apps/api/test/error-context.test.ts"], "remaining": "S022-19: ghi bước lỗi vào span OTel (chờ PHASE-018 W6); kết quả nạp theo lô chưa mang details" },
       { "finding": "RV-R1-07", "status": "mot-phan", "by": ["S004-18"], "evidence": ["scripts/mua-hang/do-lech-tai-khoan.mjs", "evidence/lech-tai-khoan-mua-hang.md"], "remaining": "đo trên bản sao ẩn danh dữ liệu thật để chốt K1 / K2; rồi bước 2–3 (doc 21 §5)" },
       { "finding": "RV-R1-08", "status": "chua", "by": [], "remaining": "S029-5 (⛔ chờ) + VERSION_CONTENT_MISMATCH" },
       { "finding": "RV-R1-09", "status": "chua", "by": [], "remaining": "S029-28, S029-32 (⛔ chờ) + events/items" },
