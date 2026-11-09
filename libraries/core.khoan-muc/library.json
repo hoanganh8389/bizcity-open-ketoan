@@ -1,0 +1,3610 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "core.khoan-muc",
+  "kind": "code-list",
+  "title": "Khoản mục chi phí",
+  "description": "Cây khoản mục chi phí chuẩn (cha – con): mã khoản mục gắn vào bút toán chi phí để lên báo cáo theo khoản mục. Chỉ danh mục chuẩn — không có số tài khoản và không có dữ liệu của đơn vị.",
+  "version": "1.0.0",
+  "released": "2026-11-09",
+  "contentHash": "sha256:b4cbe1bc10baa570713855af35ca026f8a78a55bf261ee5dffe2a07e263af691",
+  "owner": "kế toán trưởng",
+  "sources": [
+    {
+      "title": "Danh mục khoản mục (ACC24) trong db/seeds/khoan-muc.jsonl",
+      "kind": "internal",
+      "date": "2026-11-09",
+      "note": "Danh mục mẫu của công ty cung cấp; chưa kế toán trưởng nào đối chiếu (verified: false)"
+    }
+  ],
+  "generatedBy": "libraries/core.khoan-muc/build.mjs",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "parentCode",
+      "level"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "parentCode": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "mã khoản mục cha; null = khoản mục gốc"
+      },
+      "level": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "cấp trong cây, gốc = 1"
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ],
+    "group": "group",
+    "filters": [
+      {
+        "field": "group",
+        "label": "Khoản mục gốc"
+      }
+    ],
+    "sort": [
+      "code"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-09",
+      "hash": "sha256:b4cbe1bc10baa570713855af35ca026f8a78a55bf261ee5dffe2a07e263af691",
+      "notes": "Bản đầu: 295 khoản mục từ db/seeds"
+    }
+  ],
+  "items": [
+    {
+      "code": "CPBT",
+      "name": "CHI PHÍ PHẠT, KHÁC",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBT01",
+      "name": "Chi phí bồi thường HĐKT",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPBT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBT02",
+      "name": "Nộp phạt QLTT",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPBT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBT03",
+      "name": "Nột phạt CQNN khác",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPBT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBT04",
+      "name": "Lãi chậm nộp BHXH",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPBT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBT05",
+      "name": "Các khoản bồi thường khác",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPBT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBT99",
+      "name": "Các khoản phạt khác",
+      "group": "CPBT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPBT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPDD",
+      "name": "CHI PHÍ THUÊ ĐỊA ĐIỂM KINH DOANH",
+      "group": "CPDD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPDD01",
+      "name": "Tiền Thuê kho, văn phòng",
+      "group": "CPDD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPDD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPDD02",
+      "name": "Tiền Thuê cửa hàng",
+      "group": "CPDD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPDD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPDD03",
+      "name": "Nộp thuế thay chủ nhà khi thuê kho, VP",
+      "group": "CPDD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPDD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPDD04",
+      "name": "Nộp thuế thay chủ nhà khi thuê cửa hàng",
+      "group": "CPDD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPDD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPDD99",
+      "name": "Tiền thuê mặt bằng khác",
+      "group": "CPDD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPDD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD",
+      "name": "CHI PHÍ HOẠT ĐỘNG",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD01",
+      "name": "Tiền điện",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD02",
+      "name": "Cước điện thoại",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD02.01",
+      "name": "Cước điện thoại cố định",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD02.02",
+      "name": "Cước điện thoại di động",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD03",
+      "name": "Cước đường truyền, Internet",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD03.01",
+      "name": "Cước Internet",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD03.02",
+      "name": "Cước dữ liệu camera xe tô tô",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD04",
+      "name": "Nước sinh hoạt",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD05",
+      "name": "Vệ sinh môi trường",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD06",
+      "name": "Thắp hương",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07",
+      "name": "Chi phí Ngoại giao",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.01",
+      "name": "CP ngoại giao QLTT",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.02",
+      "name": "CP ngoại giao CA khu vực",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.03",
+      "name": "CP ngoại giao CQ Thuế",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.04",
+      "name": "CP ngoại giao CQ Bảo hiểm",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.05",
+      "name": "CP ngoại giao với đối tác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.06",
+      "name": "CP tài trợ cho Y tế, giáo dục",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.98",
+      "name": "CP tài trợ, ủng hộ, từ thiện khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD07.99",
+      "name": "Chi phí Ngoại giao khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD07",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD08",
+      "name": "CCDC, đồ dùng, tạp vụ",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD08.01",
+      "name": "Chi phí hao mòn CCDC",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD08.02",
+      "name": "Chi phí thanh lý CCDC",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD08.99",
+      "name": "Chi phí dụng cụ, đồ dùng khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD09",
+      "name": "Vật tư bán hàng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD10",
+      "name": "Văn phòng phẩm",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD11",
+      "name": "Nước uống",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD12",
+      "name": "Bưu phẩm, chuyển phát nhanh",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD13",
+      "name": "Chi phí In ấn, photocopy",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD14",
+      "name": "Sách, báo, tạp chí ….",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD15",
+      "name": "Chi phí trang trí VP, Shop",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD15.01",
+      "name": "Vật tư, đồ dùng trang trí VP, Shop",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD15",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD15.02",
+      "name": "CP thuê ngoài trang trí VP, shop",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD15",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD16",
+      "name": "Chi phí Bảo vệ",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17",
+      "name": "Sửa chữa, Bảo dưỡng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.01",
+      "name": "Sửa chữa, Bảo dưỡng thiết bị văn phòng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.02",
+      "name": "Sửa chữa, Bảo dưỡng hệ thống Camera",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.03",
+      "name": "Sửa chữa, Bảo dưỡng thiết bị kho",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.04",
+      "name": "Sửa chữa, Bảo dưỡng thiết bị shop",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.05",
+      "name": "Sửa chữa văn phòng, nhà ăn",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.06",
+      "name": "Sửa chữa Kho",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.07",
+      "name": "Sửa chữa cửa hàng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD17.99",
+      "name": "CP sửa chữa nhỏ khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD18",
+      "name": "Chi phí vận chuyển",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD18.01",
+      "name": "Xăng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD18",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD18.02",
+      "name": "Dầu",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD18",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD18.03",
+      "name": "Lệ phí giao thông, cầu, đường …",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD18",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD18.99",
+      "name": "CP Vận chuyển khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD18",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19",
+      "name": "Chi phí bảo hiểm",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19.01",
+      "name": "CP Bảo hiểm TNDS Xe ô tô",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD19",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19.02",
+      "name": "CP Bảo hiểm thân vỏ Xe ô tô",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD19",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19.03",
+      "name": "CP Bảo hiểm hàng hóa",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD19",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19.04",
+      "name": "CP Bảo hiểm ĐĐKD",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD19",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19.05",
+      "name": "CP Bảo hiểm TSCĐ khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD19",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD19.99",
+      "name": "CP Bảo hiểm khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD19",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20",
+      "name": "Chi phí CNTT",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.01",
+      "name": "CP tên miền",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.02",
+      "name": "Phí cấp & QL địa chỉ Internet",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.03",
+      "name": "CP servermail",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.04",
+      "name": "CP thuê server",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.05",
+      "name": "CP thuê chỗ đặt server",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.06",
+      "name": "CP hosting",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD20.99",
+      "name": "CP CNTT khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD20",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD21",
+      "name": "Chi phí Tư vấn, kiểm toán",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD21.01",
+      "name": "CP Kiểm toán",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD21",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD21.99",
+      "name": "CP Tư vấn khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD21",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD22",
+      "name": "Chi phí gửi xe",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD23",
+      "name": "Chi phí Tuyển dụng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD23.01",
+      "name": "CP đăng tuyển",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD23",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD23.02",
+      "name": "CP tư vấn, DV tuyển dụng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD23",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD23.99",
+      "name": "CP tuyển dụng khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD23",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD24",
+      "name": "Chi phí Công chứng",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD25",
+      "name": "Công tác phí",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD25.01",
+      "name": "Tiền thuê chỗ ở (KS, nhà nghỉ, phòng nghỉ)",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD25",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD25.02",
+      "name": "Vé máy bay, tàu, xe …..",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD25",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD25.03",
+      "name": "Lệ phí giao thông, cầu, đường…",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD25",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD25.04",
+      "name": "Phụ cấp lưu trú",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD25",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD25.99",
+      "name": "Công tác phí khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD25",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD26",
+      "name": "Chi phí liên hoan, team building",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHD99",
+      "name": "Chi phí khác",
+      "group": "CPHD",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHD",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH",
+      "name": "CHI PHÍ HÀNG HÓA",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH01",
+      "name": "CP Hàng hỏng",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH02",
+      "name": "CP Hàng cận date, hết date",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH03",
+      "name": "CP Mất, thất thoát hàng hóa",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH04",
+      "name": "CP giao nhận hàng hóa trong nước",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH05",
+      "name": "CP nhập khẩu hàng hóa",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH06",
+      "name": "CP Dự phòng giảm giá hàng tồn kho",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPHH99",
+      "name": "CP hàng hóa khác",
+      "group": "CPHH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPHH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH",
+      "name": "CHI PHÍ KHẤU HAO",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH01",
+      "name": "CPKH nhà cửa, vật kiến trúc",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH02",
+      "name": "CPKH máy móc, thiết bị",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH03",
+      "name": "CPKH phương tiện vận tải truyền dẫn",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH04",
+      "name": "CPKH thiết bị dụng cụ quản lý",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH05",
+      "name": "CPKH TSCĐ hữu hình khác",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH06",
+      "name": "CPKH bất động sản đầu tư",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH07",
+      "name": "CPKH Quyền sử dụng đất",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH08",
+      "name": "CPKH Quyền phát hành",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH09",
+      "name": "CPKH Bản quyền, bằng sáng chế",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH10",
+      "name": "CPKH Nhãn hiệu hàng hóa",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH11",
+      "name": "CPKH Chương trình Phần mềm",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH12",
+      "name": "CPKH Giấy phép và giấy phép nhượng quyền",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH13",
+      "name": "CPKH TSCĐ vô hình khác",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKH14",
+      "name": "CP thanh lý nhượng bán TSCĐ",
+      "group": "CPKH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM",
+      "name": "CHI PHÍ KHUYẾCH TRƯƠNG BÁN HÀNG",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM01",
+      "name": "Chi phí khuyến mại cho Hàng chiến lược",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM01.01",
+      "name": "Khuyến mại bằng hàng cho HCL",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM01.02",
+      "name": "Khuyến mại bằng vật phẩm cho HCL",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM01.99",
+      "name": "Khuyến mại khác cho HCL",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM02",
+      "name": "Chi phí khuyến mại cho hàng khác",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM02.01",
+      "name": "Khuyến mại bằng hàng",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM02.02",
+      "name": "Khuyến mại bằng vật phẩm",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPKM02.99",
+      "name": "Khuyến mại khác",
+      "group": "CPKM",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPKM02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH",
+      "name": "CHI PHÍ NGÂN HÀNG",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH01",
+      "name": "Chi phí lãi vay",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH02",
+      "name": "Phí chuyển khoản",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH03",
+      "name": "Chi phí làm hồ sơ tín dụng",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH04",
+      "name": "Phí bảo lãnh ngân hàng",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH05",
+      "name": "Chênh lệch tỉ giá",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNH99",
+      "name": "Chi phí ngân hàng khác",
+      "group": "CPNH",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNH",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV",
+      "name": "CHI PHÍ NHÂN VIÊN",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV01",
+      "name": "Lương cơ bản",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02",
+      "name": "Lương TN, Phụ cấp khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02.01",
+      "name": "Lương trách nhiệm",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02.02",
+      "name": "Phụ cấp Ăn ca",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02.03",
+      "name": "Phụ cấp giao hàng",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02.04",
+      "name": "Phụ cấp lưu động",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02.05",
+      "name": "Hỗ trợ xăng xe",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV02.99",
+      "name": "Phụ cấp khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV03",
+      "name": "Lương làm thêm giờ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV03.01",
+      "name": "Lương làm thêm giờ ngày thường",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV03.02",
+      "name": "Lương làm thêm giờ ngày nghỉ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV03.03",
+      "name": "Lương làm thêm giờ ngày lễ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV03.04",
+      "name": "Lương làm thêm giờ vượt định biên được duyệt",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04",
+      "name": "Lương Doanh số",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.01",
+      "name": "Lương chốt điểm",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.02",
+      "name": "Lương chỉ tiêu QLKD",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.03",
+      "name": "Lương Doanh số Tổng",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.04",
+      "name": "Lương Doanh số Biomil",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.05",
+      "name": "Lương Doanh số Blemil",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.06",
+      "name": "Lương Doanh số Rontamil",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.07",
+      "name": "Lương Doanh số Ron Kid",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.08",
+      "name": "Lương Doanh số Rontameal",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.09",
+      "name": "Lương Doanh số Bimbosan Stage",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.10",
+      "name": "Lương Doanh số Bimbosan Lady",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.11",
+      "name": "Lương Doanh số Lacsure",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.12",
+      "name": "Lương Doanh số Me n' Mil",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.13",
+      "name": "Lương Doanh số Bio Grow",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.14",
+      "name": "Lương Doanh số Bio trái cây",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.15",
+      "name": "Lương Doanh số Yến",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.16",
+      "name": "Lương Doanh số TPCN",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.98",
+      "name": "Lương vượt Doanh số HCL",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV04.99",
+      "name": "Lương Doanh số khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV05",
+      "name": "Lương nghỉ phép",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV06",
+      "name": "Lương tháng 13",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV07",
+      "name": "Lương nhân viên khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV08",
+      "name": "CP Bảo hiểm xã hội",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV08.01",
+      "name": "CP BHXH",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV08.02",
+      "name": "CP BHYT",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV08.03",
+      "name": "CP BHTN",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV08.04",
+      "name": "CP BHTNLĐ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV08",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV09",
+      "name": "Kinh phí Công đoàn",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10",
+      "name": "Các khoản hỗ trợ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10.01",
+      "name": "Hỗ trợ Ăn ca ngoài lương",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV10",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10.02",
+      "name": "Hỗ trợ nghỉ việc",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV10",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10.03",
+      "name": "Hỗ trợ tai nạn lao động",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV10",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10.04",
+      "name": "Hỗ trợ nhà ở",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV10",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10.05",
+      "name": "Hỗ trợ điện thoại",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV10",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV10.99",
+      "name": "Các khoản hỗ trợ khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV10",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV11",
+      "name": "CP Đào tạo nhân viên",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV12",
+      "name": "Chi phí phúc lợi",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV12.01",
+      "name": "Hiếu, Hỉ, Thăm hỏi NV",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV12",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV12.02",
+      "name": "CP khám sức khoẻ định kỳ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV12",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV12.03",
+      "name": "CP Bảo hiểm sức khỏe",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV12",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV12.04",
+      "name": "CP Bảo hiểm nhân thọ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV12",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV12.99",
+      "name": "CP Phúc lợi khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV12",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV13",
+      "name": "Thưởng thành tích công việc",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV13.01",
+      "name": "Thưởng Star shop",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV13",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV13.02",
+      "name": "Thưởng Queen Milk",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV13",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV13.03",
+      "name": "Thưởng sáng kiến công việc",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV13",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV13.04",
+      "name": "Thưởng NV xuất sắc",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV13",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV13.99",
+      "name": "Thưởng thành tích khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV13",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV14",
+      "name": "Thưởng Lễ, Tết",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV14.01",
+      "name": "Thưởng 30/04 & 01/5",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV14",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV14.02",
+      "name": "Thưởng 02/09",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV14",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV14.03",
+      "name": "Thưởng Tết AL",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV14",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV14.04",
+      "name": "Thưởng Tết DL",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV14",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV14.99",
+      "name": "Thưởng các ngày khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV14",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV15",
+      "name": "Các khoản thưởng khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV16",
+      "name": "CP Đồng phục, trang phục",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV17",
+      "name": "CP Thuế TNCN",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV17.01",
+      "name": "Thuế TNCN NV ký HĐLĐ có thời hạn",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV17.02",
+      "name": "Thuế TNCN NV thời vụ",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV17",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPNV99",
+      "name": "CP Nhân viên khác",
+      "group": "CPNV",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPNV",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQC",
+      "name": "CHI PHÍ QUẢNG CÁO",
+      "group": "CPQC",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQC01",
+      "name": "Quảng cáo trên truyền hình",
+      "group": "CPQC",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPQC",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQC02",
+      "name": "Quảng cáo trên báo chí  (Báo đài/ báo mạng...)",
+      "group": "CPQC",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPQC",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQC03",
+      "name": "Tờ rơi/ catalog/ biển bảng quảng cáo",
+      "group": "CPQC",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPQC",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQC99",
+      "name": "Quảng cáo khác",
+      "group": "CPQC",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPQC",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQT",
+      "name": "CHI PHÍ HĐQT, BKS",
+      "group": "CPQT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQT98",
+      "name": "Chi phí của Chủ tịch HĐQT",
+      "group": "CPQT",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPQT",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE",
+      "name": "CHI PHÍ XE Ô TÔ",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE01",
+      "name": "Chi phí đăng kiểm",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE02",
+      "name": "Phí lưu hành đường bộ",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE03",
+      "name": "CP lấy xe ban đầu khác",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE04",
+      "name": "CP Định vị GPS",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05",
+      "name": "Thay thế phụ tùng xe",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.01",
+      "name": "Thay acquy",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.02",
+      "name": "Thay lốp",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.03",
+      "name": "Thay phanh",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.04",
+      "name": "Thay chổi gạt",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.05",
+      "name": "Thay đèn",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.06",
+      "name": "Thay còi",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.07",
+      "name": "Thay thảm, nội thất",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.08",
+      "name": "Thay lọc nhiên liệu",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.09",
+      "name": "Thay kính",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE05.99",
+      "name": "Phụ tùng thay thế khác",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06",
+      "name": "Sửa chữa, bảo dưỡng xe",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.01",
+      "name": "Công Sửa chữa, bảo dưỡng xe",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.02",
+      "name": "Rửa xe",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.03",
+      "name": "Thay dầu máy",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.04",
+      "name": "Bơm Vá săm lốp, cân lốp",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.05",
+      "name": "Sửa điều hòa xe",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.06",
+      "name": "Sửa chữa, bảo dưỡng buồng đốt",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.07",
+      "name": "Sửa chữa, bảo dưỡng phanh",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE06.99",
+      "name": "Sửa chữa, bảo dưỡng xe khác",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPXE99",
+      "name": "Chi phí xe ô tô khác",
+      "group": "CPXE",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CPXE",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CSVC",
+      "name": "CHI PHÍ CƠ SỞ VẬT CHẤT",
+      "group": "CSVC",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX",
+      "name": "CHI PHÍ THUẾ",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX01",
+      "name": "Thuế Môn bài",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX02",
+      "name": "Thuế Thu nhập doanh nghiệp",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX03",
+      "name": "Thuế chuyển quyền sử dụng đất",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX04",
+      "name": "Thuế nhà đất",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX05",
+      "name": "Chi phí Thuế tiêu thụ đặc biệt",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX06",
+      "name": "Phạt thuế/ truy nộp thuế",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX07",
+      "name": "Phí và lệ phí khác",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTAX99",
+      "name": "Chi phí Thuế khác",
+      "group": "CTAX",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTAX",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS",
+      "name": "CHƯƠNG TRÌNH/  CHÍNH SÁCH CỦA HÃNG",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": null,
+        "level": 1
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS01",
+      "name": "CHIẾT KHẤU",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS01.01",
+      "name": "Chiết khấu thẳng trên đơn",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS01.02",
+      "name": "CK trên đơn theo CT hàng tháng bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS01.03",
+      "name": "CK trên đơn theo CT hàng tháng bằng hàng (KM)",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS01.04",
+      "name": "Chiết khấu thanh toán đúng hạn",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS01.99",
+      "name": "Chiết khấu khác",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS01",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS02",
+      "name": "HỖ TRỢ",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS02.01",
+      "name": "NPP Hỗ trợ trên đơn bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS02.02",
+      "name": "NPP Hỗ trợ trên đơn bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS02.03",
+      "name": "Hỗ trợ Shop khai trương/ sinh nhật",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS02.99",
+      "name": "Hỗ trợ trên đơn - khác",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS02",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS03",
+      "name": "TRƯNG BẦY",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS03.01",
+      "name": "Trưng bầy TT trực tiếp trên đơn",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS03.02",
+      "name": "Trưng bầy Trả sau - Bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS03.03",
+      "name": "Trưng bầy Trả sau - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS03.04",
+      "name": "Mua vị trí trưng bầy",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS03",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04",
+      "name": "THƯỞNG",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.01",
+      "name": "Hoàn thành đặt hàng sớm - Bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.02",
+      "name": "Hoàn thành đặt hàng sớm - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.03",
+      "name": "Thưởng đạt doanh số - Bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.04",
+      "name": "Thưởng đạt doanh số - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.05",
+      "name": "Thưởng vượt doanh số - Bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.06",
+      "name": "Thưởng vượt doanh số - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.07",
+      "name": "Thưởng tăng trưởng - Bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.08",
+      "name": "Thưởng tăng trưởng - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.09",
+      "name": "Thưởng theo giai đoạn - Bằng Tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.10",
+      "name": "Thưởng theo giai đoạn - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS04.99",
+      "name": "Thưởng khác",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS04",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05",
+      "name": "TÍCH LŨY",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05.01",
+      "name": "Tích lũy tháng - Tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05.02",
+      "name": "Tích lũy tháng - Hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05.03",
+      "name": "Tích lũy quý - Tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05.04",
+      "name": "Tích lũy quý - Hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05.05",
+      "name": "Tích lũy năm",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS05.99",
+      "name": "Tích lũy khác",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS05",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06",
+      "name": "CÁC TRƯƠNG TRÌNH HỖ TRỢ BH",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS",
+        "level": 2
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.01",
+      "name": "Hotzone",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.02",
+      "name": "Ontop - Bằng tiền",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.03",
+      "name": "Ontop - Bằng hàng",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.04",
+      "name": "Khách hàng thân thiết",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.05",
+      "name": "Thần tài, Thẻ cào, bốc thăm",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.06",
+      "name": "Nhãn hàng tập trung",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.07",
+      "name": "Các khoản hỗ trợ (tiếp thị, vận chuyển ….)",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.08",
+      "name": "Lương + Thưởng PG",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTCS06.99",
+      "name": "Hỗ trợ khác",
+      "group": "CTCS",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "parentCode": "CTCS06",
+        "level": 3
+      },
+      "since": "1.0.0"
+    }
+  ]
+}

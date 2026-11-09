@@ -1,0 +1,1583 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "core.ly-do-dinh-khoan",
+  "kind": "code-list",
+  "title": "Lý do nghiệp vụ (định khoản)",
+  "description": "Lý do nghiệp vụ chuẩn của chứng từ thu, chi, nhập, xuất (reasonCode): mã, tên, loại, mã dòng tiền, cờ. Không mang số tài khoản — tài khoản do chính sách hạch toán và gói định khoản quyết qua AccountResolver.",
+  "version": "1.0.0",
+  "released": "2026-11-09",
+  "contentHash": "sha256:5504ba437382d542073c1b2788c81fec95a0008fc8ed97050da6deb55fe0f242",
+  "owner": "kế toán trưởng",
+  "sources": [
+    {
+      "title": "Danh mục lý do – tài khoản (ACC18) trong db/seeds/ly-do.jsonl",
+      "kind": "internal",
+      "date": "2026-11-09",
+      "note": "Danh mục mẫu của công ty cung cấp; chưa kế toán trưởng nào đối chiếu (verified: false). Ba cột tài khoản của nguồn không đưa vào thư viện."
+    }
+  ],
+  "generatedBy": "libraries/core.ly-do-dinh-khoan/build.mjs",
+  "itemSchema": {
+    "type": "object",
+    "required": [
+      "kind",
+      "cashflowCode",
+      "flags"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "kind": {
+        "enum": [
+          "receipt",
+          "payment",
+          "in",
+          "out"
+        ],
+        "description": "receipt = thu · payment = chi · in = nhập · out = xuất"
+      },
+      "cashflowCode": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "mã dòng tiền (báo cáo lưu chuyển tiền tệ), null = không gắn"
+      },
+      "flags": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "postToLedger": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "giftCostToPromotion": {
+            "type": "boolean"
+          },
+          "costAtSalePrice": {
+            "type": "boolean"
+          },
+          "returnAtOpeningCost": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "value": "code",
+    "label": "{code} · {name}",
+    "search": [
+      "code",
+      "name"
+    ],
+    "group": "group",
+    "filters": [
+      {
+        "field": "group",
+        "label": "Loại"
+      }
+    ],
+    "sort": [
+      "code"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-09",
+      "hash": "sha256:5504ba437382d542073c1b2788c81fec95a0008fc8ed97050da6deb55fe0f242",
+      "notes": "Bản đầu: 98 lý do từ db/seeds (không số tài khoản)"
+    }
+  ],
+  "items": [
+    {
+      "code": "CMH",
+      "name": "Trả tiền mua hàng",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CNBL",
+      "name": "Trả tiền hàng bán trả lại",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CNV01",
+      "name": "33411-TT Lương, Thưởng, Ăn ca",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CNV02",
+      "name": "TT BHXH, BHYT, BHTN",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CNV03",
+      "name": "Các khoản phúc lợi và chi cho NV khác",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPBH",
+      "name": "641-TT CP Bán hàng",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPCT",
+      "name": "Phiếu Chi chuyển tiền",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPMAR",
+      "name": "CP marketing",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CPQL",
+      "name": "TT CP Quản lý",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "DCGV-HKM",
+      "name": "Điều chỉnh Giá vốn HKM",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "DCSD",
+      "name": "4211-Điều Chỉnh số dư",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "ĐGTTK",
+      "name": "Đánh giá hàng tồn kho",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "MCN",
+      "name": "Nhập hàng từ CN khác",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NCK151",
+      "name": "Hàng đang đi đường chưa nhập kho",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NCKhau1",
+      "name": "3312-Nhập Chiết khấu NCC",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NCkhau3",
+      "name": "3312-Nhập CK NCC-6325",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NCKhau9",
+      "name": "13892-Nhập Chiết khấu NCC (Nội Bộ)",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NCKho",
+      "name": "1561-Nhập chuyển kho",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NCN",
+      "name": "33681-Nhập từ chi nhánh khác",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NDC",
+      "name": "Nhập điều chỉnh kho / Mã",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NDC-GV",
+      "name": "3319-6321-Nhập điều chỉnh Giá vốn",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NKKB",
+      "name": "Nhập Kiểm kê thừa được cấn trừ",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NKKT",
+      "name": "Nhập Kiểm kê thừa không cấn trừ",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NMH1",
+      "name": "Nhập mua hàng từ NCC",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NMH3",
+      "name": "Nhập mua hàng dẫn từ Cty dọc",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NMH4",
+      "name": "13881-Nhập mua hàng HĐ chưa về",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NMH9",
+      "name": "3312-Nhập mua hàng từ NCC (Ko HĐTC)",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NNB1",
+      "name": "33688-Nhập Vật tư, CCDC, TS từ CN khác",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NNB3",
+      "name": "13688-Nhập trả Vật tư, CCDC từ CN khác",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NSD1",
+      "name": "ĐC xuất SD vật tư cho BP BH",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NSD2",
+      "name": "64232-ĐC xuất SD vật tư cho BP QL",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NSDK311",
+      "name": "Nhập số dư đk 311",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NTH1",
+      "name": "Nhập trả hàng bán",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NTH9",
+      "name": "52139-NTH9 HCL",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NTR1",
+      "name": "Nhập hàng đổi trả NCC",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NTR9",
+      "name": "13891-Nhập hàng đổi trả NCC (Ko HĐTC)",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NTT1",
+      "name": "Nhập hàng Trả Thưởng",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NTT9",
+      "name": "3312-Nhập hàng Trả Thưởng (Ko HĐTC)",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NVT1",
+      "name": "33111-Nhập Vật tư, CCDC, TS",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NVT4",
+      "name": "33888-Nhập Vật tư (Chưa có HĐ)",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "NVT9",
+      "name": "33111-Nhập Vật tư (Ko HĐTC)",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "PCKT",
+      "name": "Phiếu chi Kế toán",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "PTKT",
+      "name": "Phiếu thu Kế toán",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "SC02",
+      "name": "3311-Sửa chữa, bảo dưỡng TSCĐ",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "Shop01",
+      "name": "3311-CP Set-up Shop",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TBHTM",
+      "name": "Thu tiền bán hàng bằng Tiền mặt",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TBNH",
+      "name": "1316-Thu tiền BH các CN khác",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TKH3",
+      "name": "Thu P.Trả khác",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TPCT",
+      "name": "Phiếu Thu chuyển tiền",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "Tra01",
+      "name": "Trả tiền thuê CH, VP, Kho",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "Tra02",
+      "name": "Nộp Thuế thay chủ nhà",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TTBHK",
+      "name": "Thu tiền bán hàng",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XBA",
+      "name": "11112-Xuất bán tại Cửa hàng",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false,
+          "giftCostToPromotion": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XBB",
+      "name": "Xuất bán tại Chi nhánh",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XBK9",
+      "name": "Chênh lệch DT khác",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XCK151",
+      "name": "Nhập kho hàng đang đi đường",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XCKho",
+      "name": "1561-Xuất chuyển kho",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XCN",
+      "name": "13681-Xuất bán hàng Chi nhánh khác",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "costAtSalePrice": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XCN3",
+      "name": "33681-Xuất trả hàng chi nhánh",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XCXL",
+      "name": "Xuất hàng thiếu chờ xử lý",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDC",
+      "name": "Xuất điều chỉnh kho / Mã",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TDK",
+      "name": "Tồn kho đầu kỳ",
+      "group": "Nhập",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "in",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDC-GV",
+      "name": "Xuất HH áp công nợ bằng GV",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDCKGV",
+      "name": "Xuất điều chỉnh không áp GV",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDCKGV2",
+      "name": "Xuất điều chỉnh không áp GV-NB",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDCKGV3",
+      "name": "Xuất điều chỉnh không áp GV - Vật tư",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDCSD",
+      "name": "6322-Xuất điều chỉnh số dư",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDT_641",
+      "name": "Xuất đào tạo BPBH",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDT_642",
+      "name": "Xuất đào tạo BPQL",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDTK",
+      "name": "Xuất Doanh thu / Thu nhập khác",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDV1",
+      "name": "TGS xuất Hóa đơn DV, Ctr",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XDV2",
+      "name": "13121-13881-TGS xuất Hóa đơn DV,Ctr",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XHH01",
+      "name": "Xuất hủy hàng hỏng",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XHH02",
+      "name": "Mất, thất thoát hàng hóa",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XHH03",
+      "name": "Xuất hủy hàng Cận Date",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XKK",
+      "name": "Xuất xử lý kiểm kê",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XMKT1",
+      "name": "64184-Xuất KH dùng thử sản phẩm",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XNB1",
+      "name": "Xuất Vật tư, CCDC, TS cho CN khác",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XNB3",
+      "name": "33688-Xuất trả CCDC, Vật tư cho CN khác",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XSD1",
+      "name": "Xuất sử dụng Vật tư, HH cho BP BH",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XSD2",
+      "name": "64232-Xuất sử dụng Vật tư cho BP QL",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA",
+      "name": "Xuất tặng nhân viên, đối tác ghi chi phí",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA_64113",
+      "name": "Trả thưởng thi đua, thưởng khác bằng hàng",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA_64118",
+      "name": "--Xuất sử dụng / tặng / thưởng BPBH",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA_642",
+      "name": "-Xuất sử dụng / tặng / thưởng BPQL",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA1.2",
+      "name": "Xuất CP ngoại giao BP Ban hàng",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA1.4",
+      "name": "----Xuất sử dụng / tặng / thưởng KH - 641",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "costAtSalePrice": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA2",
+      "name": "Xuất tặng / ngoại giao - 642",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTA3",
+      "name": "-Xuất sử dụng / tặng / thưởng NV TGS",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTR1",
+      "name": "Xuất trả hàng NCC",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false,
+          "returnAtOpeningCost": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTR2",
+      "name": "Xuất trả Vật tư, CCDC cho NCC",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTR3",
+      "name": "Xuất trả hàng dẫn nhập từ Cty dọc",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTR9",
+      "name": "13891-Xuất trả hàng NCC (Ko HĐTC)",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTT1",
+      "name": "Xuất trả hàng trả thưởng",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "XTT9",
+      "name": "1561-Xuất trả hàng trả thưởng (Ko HĐTC)",
+      "group": "Xuất",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "out",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "CTIEN",
+      "name": "Chuyển tiền giữa chi nhánh",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": null,
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TTKH",
+      "name": "Thu tiền khách hàng",
+      "group": "Thu",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "receipt",
+        "cashflowCode": "01",
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    },
+    {
+      "code": "TTNCC",
+      "name": "Trả tiền nhà cung cấp",
+      "group": "Chi",
+      "status": "active",
+      "verified": false,
+      "payload": {
+        "kind": "payment",
+        "cashflowCode": "02",
+        "flags": {
+          "postToLedger": true,
+          "default": false
+        }
+      },
+      "since": "1.0.0"
+    }
+  ]
+}

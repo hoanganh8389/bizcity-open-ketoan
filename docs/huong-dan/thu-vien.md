@@ -9,6 +9,9 @@ Thư viện là bộ **dữ liệu tham chiếu có sẵn trong open-ketoan**, g
 |---|---|---|
 | [`vn.tham-so-phap-ly`](../../libraries/vn.tham-so-phap-ly/README.md) | 120 tham số pháp lý, 9 nhóm, mỗi giá trị có ngày hiệu lực và căn cứ | chưa duyệt |
 | [`vn.ngay-nghi-le`](../../libraries/vn.ngay-nghi-le/README.md) | ngày nghỉ lễ, Tết để đếm ngày làm việc | chưa đủ, chưa duyệt |
+| [`core.khoan-muc`](../../libraries/core.khoan-muc/README.md) <!-- [2026-11-09 04:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-52 --> | cây khoản mục chi phí (295 mục, nhóm theo khoản mục gốc) | chưa duyệt |
+| [`vn.loai-thue`](../../libraries/vn.loai-thue/README.md) | loại thuế GTGT: mã, thuế suất, chiều, nhóm bảng kê — không số tài khoản | chưa duyệt |
+| [`core.ly-do-dinh-khoan`](../../libraries/core.ly-do-dinh-khoan/README.md) | lý do nghiệp vụ thu / chi / nhập / xuất (`reasonCode`) — không số tài khoản | chưa duyệt |
 
 ## Khi ô nhập báo mã `LIB-…`
 
