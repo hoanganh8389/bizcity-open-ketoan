@@ -21,6 +21,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
 - **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
 
+### Cửa nạp tính lại quà theo chính sách: `IN-POL-004` (PHASE-031 W2b, ADR-0031) <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b -->
+
+- **Thêm:** mã `IN-POL-004` (L4, cảnh báo, 10 điểm) — tính lại quà theo **đúng bản chính sách nguồn nêu** trên các dòng không phải quà, so với dòng quà nguồn gửi (thiếu / thừa / lệch số lượng), kèm cặp nguồn ↔ tính lại; chỉ khi bản có thật và băm khớp; im lặng khi không tính được. `getPolicyVersion` (đọc một bản kèm nội dung inline) và điểm mở rộng `registerPolicyRecompute` ở `@bizcity/platform/core/policies` — `apps/api` đăng ký hàm tính (`rule-contracts/recompute.ts`) cùng luật với `POST /policies/evaluate`. `bizcity_intake_findings@1` 0.10.0-draft; trang `loi-dau-vao/IN-POL-004.md`; test `intake-policy-recompute.test.ts` (T031-INT-10..14).
+- **Đổi:** `policy_check.findings`, khung nhìn `policy_application.codes` và ô *Lệch theo mã* mang thêm mã mới (không đổi mã nào). Chế độ `strict` coi `IN-POL-004` như mọi `IN-POL-*` (chờ duyệt). Mặc định vẫn chỉ cảnh báo.
+- **Sửa:** không. Không migration.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc; cảnh báo không lộ nội dung chính sách ngoài số lượng quà.
+
 ### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
 
 - **Thêm:** màn *Hệ thống → Chính sách* (HT15, quyền `catalog:read`, `/he-thong/chinh-sach`) với bốn tab: *Chính sách* (các bản, hiệu lực, băm, chứng từ đã áp, khoảng trống), *Chờ kế toán xem* (hàng việc `policy_review` + nút *Đánh dấu đã xem*, ẩn khi thiếu `documents:write`), *Truy vết* (chứng từ → chính sách@bản, băm khớp / lệch, ngày ngoài hiệu lực), *Theo dõi thực hiện* (đạt chính sách, lệch theo mã, độ phủ, độ trễ phiên bản, dòng thời gian, sức khoẻ). Đường dẫn sâu `?xem=truy-vet&chung-tu=<docKey>` để màn khác mở thẳng chuỗi chính sách căn cứ.

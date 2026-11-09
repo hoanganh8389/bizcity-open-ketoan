@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-09 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b (S031-29): nạp recompute.ts để đăng ký hàm tính lại cho cửa nạp (IN-POL-004)
 // [2026-11-09 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a (S031-28, chữ chốt PHASE-031 · 00 §12): thêm bốn action đọc cho màn Chính sách và Theo dõi thực hiện
 // [2026-11-08 02:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, chữ chốt PHASE-031 · 00 §9.3): API chính sách cho nguồn ngoài — đọc, tính, phát hành inline
 /**
@@ -19,6 +20,7 @@ import { z } from 'zod';
 import { defineAction } from '@bizcity/platform/core/actions';
 import { Errors } from '@bizcity/platform/core/errors';
 import { RULE_CONTRACTS, getRuleContract } from './rule-contracts/index.js';
+import './rule-contracts/recompute.js'; // đăng ký hàm tính lại cho Kernel (side-effect có chủ đích, như registerSubscribers)
 import { evaluatePolicies, listPolicies, publishPolicy } from './rule-contracts/policy-service.js';
 import { policyApplications, policyLineage, policyRegistry, policyTracking } from './policy-insight.js';
 
