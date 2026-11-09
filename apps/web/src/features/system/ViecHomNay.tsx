@@ -29,9 +29,8 @@ const LV: Record<Level, { text: string; cls: string; icon: string }> = {
 const levelOf = (o: Outcome): Level => (o === 'error' ? 'reason' : o === 'warn' ? 'todo' : o === 'info' ? 'note' : 'pass');
 const ORDER: Level[] = ['reason', 'todo', 'note'];
 /** Phép kiểm còn báo cả trường hợp hợp lệ — nói thẳng với kế toán, sửa ở bước đã ghi. */
-const KNOWN_NOISE: Record<string, string> = {
-  TRANSIT_NONZERO: 'Phép kiểm này hiện báo cả hàng, tiền đi đường hợp lệ (phiếu xuất đã ghi, nơi nhận chưa nhận). Chỉ cần xử lý khi số trên tài khoản trung gian lệch với các phiếu chưa nhận. Sẽ sửa ở bước nâng cấp B2b.',
-};
+// [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b: TRANSIT_NONZERO đã hết báo sai, bỏ ghi chú
+const KNOWN_NOISE: Record<string, string> = {};
 const ownerOf = (c: DiagResult) => c.remedy?.owner ?? 'accountant';
 const ownerLabel = (o: string) => {
   const s = REMEDY_ROLE_LABELS[o as keyof typeof REMEDY_ROLE_LABELS] ?? o;
