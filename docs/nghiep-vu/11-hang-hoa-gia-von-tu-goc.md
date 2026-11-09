@@ -39,6 +39,9 @@ NCC ──► Đơn đặt ──► Phiếu nhập ──► Kho tổng ──�
 Song song: dữ liệu NỘI BỘ giữ mọi chứng từ. Dữ liệu THUẾ chỉ giữ phần có hoá đơn, lấy từ nội bộ sang, không nhập lại.
 ```
 
+<!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — liên kết kiến trúc tổng thể giá vốn và lưu ý mã hàng ≠ mã tài khoản -->
+> **Kiến trúc tổng thể giá vốn → kết chuyển → khoá sổ** (Inventory Engine ↔ Accounting Kernel, bốn liên tục, lô, lớp giá vốn): [PHASE-032 · 10](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/10-KIEN-TRUC.md). Các số tài khoản ở mục 2–3 dưới đây là **kết quả tại ngày theo chế độ**, không phải thuộc tính của hàng: xem [PHASE-032 · 20 Mã hàng ≠ mã tài khoản](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/20-MA-HANG-VA-MA-TAI-KHOAN.md).
+
 Sáu câu cần nhớ:
 
 1. Bán hàng **không biết giá vốn ngay**. Cuối tháng mới tính.

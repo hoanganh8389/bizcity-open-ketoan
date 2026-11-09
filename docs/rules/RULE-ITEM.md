@@ -2,7 +2,7 @@
 <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-ITEM theo ADR-0017: bất biến định danh, sáu nguyên tắc Item Master & Accounting Classification, hành vi cụ thể khi người dùng làm việc -->
 
 > © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework.
-> Cấp: **0** cho R-ITEM-0 (bất biến), **1** cho R-ITEM-1…9. Nguồn: [ADR-0017](../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md). Thi hành: [PHASE-024](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md). Trạng thái: **chấp nhận về nguyên tắc, chưa có mã** — bảng "Kiểm bằng" ghi kiểm sẽ có.
+> Cấp: **0** cho R-ITEM-0 (bất biến), **1** cho R-ITEM-1…10. Nguồn: [ADR-0017](../adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md). Thi hành: [PHASE-024](../phases/PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/README.md). Trạng thái: **chấp nhận về nguyên tắc, chưa có mã** — bảng "Kiểm bằng" ghi kiểm sẽ có.
 
 ## 1. Bất biến (Tier 0)
 
@@ -27,13 +27,14 @@
 | R-ITEM-5 | Thay đổi danh mục không làm sai hoặc viết lại lịch sử đã ghi sổ | Mọi thay đổi có ngày hiệu lực; màn "Lịch sử" của mặt hàng liệt kê từng lần đổi (ai, khi nào, từ → đến); "Gộp mã" chỉ tạo bí danh, kèm xem trước số dòng sổ bị ảnh hưởng = 0 | trigger; DG-ITEM-3; `assertLedgerInvariants` |
 | R-ITEM-6 | Dữ liệu từ POS, ERP, kho, plugin phải qua validation (Item Resolution + IN-ITEM-*) trước khi ảnh hưởng Ledger | Mã lạ / mã hết hiệu lực / mã trỏ hai item / thiếu ĐVT / chưa phân loại → chứng từ vào **Trạm tiền kiểm** với mã lỗi, lý do, nút sửa; không tự thêm mặt hàng (trừ khi đơn vị bật `bizcity.item.auto_create`) | SC-ITEM-1, DG-INTAKE-1, test cửa nạp |
 
-## 3. Luật thi hành (R-ITEM-7…9)
+## 3. Luật thi hành (R-ITEM-7…10)
 
 | Mã | Luật | Kiểm bằng |
 |---|---|---|
 | R-ITEM-7 | Phân loại hạch toán có **phiên bản theo ngày hiệu lực** và được chụp vào chính sách kế toán (ADR-0009); định khoản lại chứng từ cũ dùng phân loại tại ngày hạch toán | `policy.test.ts` mở rộng; DG-ITEM-2 |
 | R-ITEM-8 | Mặt hàng "chưa phân loại" được phép tồn tại nhưng **không được định khoản lặng lẽ** bằng nhóm mặc định: chứng từ dùng nó → `IN-ITEM-004` warn ở trạm, `DG-ITEM-2` đếm; nhóm mặc định chỉ áp khi đơn vị bật `bizcity.item.default_group_fallback` (mặc định tắt cho đơn vị mới, bật cho đơn vị đang chạy tới khi phân loại xong) | DG-ITEM-2; số đo `bizcity_items_unclassified` |
 | R-ITEM-9 | Plugin / module / preset gửi hàng hoá theo `bizcity_item_master@1`; không ghi bảng `items*`, `products*`; muốn tạo mặt hàng thì gọi `core.item.upsert` (có validation) | SC-ITEM-1, SC-MOD-2 |
+| R-ITEM-10 | **Mã hàng ≠ mã tài khoản.** <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — R-ITEM-10 theo ADR-0033 D032-3: tài khoản không là định danh / thuộc tính cố định của hàng --> Một mặt hàng đi qua nhiều tài khoản trong vòng đời (kho, hàng đang chuyển, giá vốn, doanh thu, hàng bán bị trả lại, thiếu / thừa chờ xử lý, phải thu / phải trả nội bộ, xác định kết quả). Không dùng số hiệu tài khoản (156, 632, 511…) làm định danh, nhóm, tiền tố, tên lô hay thuộc tính cố định của hàng; bảng kho / lô / lớp giá vốn / phân bổ **không có cột tài khoản**. Cái bất biến xuyên suốt là `item_id` và chuỗi tham chiếu chứng từ; tài khoản là **kết quả** tra tại ngày theo lý do → nhóm hạch toán → chế độ (R-ITEM-4, R-POST-2). Xem [R-INV-2](RULE-INVENTORY.md) | SC-INV-2 (migration bảng Engine không có `account*`); SC-DOC (tài liệu không gọi "hàng 156") |
 
 ## 4. Mã kiểm (đặt trước, PHASE-024 thi hành)
 

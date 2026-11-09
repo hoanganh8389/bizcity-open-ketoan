@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 136
+      "count": 169
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 53
+      "count": 55
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 272
+      "count": 276
     }
   ],
   "items": [
@@ -5575,6 +5575,435 @@
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 41
+    },
+    {
+      "id": "S032-1",
+      "phase": "PHASE-032",
+      "title": "ADR-0033 đề xuất; README (hiện trạng đọc mã 27407c07); 00; 10; 20; 30; 35; 50; checklist",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 10
+    },
+    {
+      "id": "S032-2",
+      "phase": "PHASE-032",
+      "title": "Luật R-INV (RULE-INVENTORY.md), R-ITEM-10; hợp đồng bizcityinventory@1 0.1.0-draft; dòng CANON §3, chỉ mục ADR, phases README, CHANGELOG",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 11
+    },
+    {
+      "id": "S032-3",
+      "phase": "PHASE-032",
+      "title": "Bản mẫu mockups/inventory-engine.html: kiến trúc tổng thể, mã hàng ≠ mã TK, chọn lô FIFO / FEFO, lớp & phân bổ (trả hàng 500.000 vs 600.000), chín tình huống, …",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 12
+    },
+    {
+      "id": "S032-4",
+      "phase": "PHASE-032",
+      "title": "Hướng dẫn tính giá vốn (docs/huong-dan/tinh-gia-von.md), căn cứ (can-cu/04), nghiệp vụ (11) thêm mục Kiến trúc tổng thể và chú thích \"số tài khoản là ví dụ TT9…",
+      "priority": "P1",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 13
+    },
+    {
+      "id": "S032-5",
+      "phase": "PHASE-032",
+      "title": "Chủ dự án duyệt D032-1..10 (hoặc sửa); ADR-0033 → Chấp nhận",
+      "priority": "P0",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 14
+    },
+    {
+      "id": "S032-6",
+      "phase": "PHASE-032",
+      "title": "Kế toán trưởng trả Q032-1 (phạm vi nhóm tính giá), Q032-5 (hoàn không có gốc); nhóm Lõi trả Q032-2 (nhịp FIFO), Q032-3 (thiếu lớp); chủ dự án trả Q032-4 (modul…",
+      "priority": "P0",
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 15
+    },
+    {
+      "id": "S032-7",
+      "phase": "PHASE-032",
+      "title": "Chữ chốt W1 (R-FLOW-2): migration lô (số bằng so-tiep-theo), minor bizcityledgerintake@1 (lotRef, originalLineRef), hook inventory.pickLots, quyền inventory:; …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 16
+    },
+    {
+      "id": "S032-8",
+      "phase": "PHASE-032",
+      "title": "Migration inventorylots + inventorymovements.lotid / linekey / originallineref; lottracking ở phân loại mặt hàng (có phiên bản); khung nhìn bizcityread.invento…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 17
+    },
+    {
+      "id": "S032-9",
+      "phase": "PHASE-032",
+      "title": "Cửa nạp: lotRef (tra / tạo lô), originalLineRef; IN-INV-010..013 + bài học loi-dau-vao/IN-INV-01x.md; khoá bizcity.intake.lotcheck; mua hàng ánh xạ data.lotNo …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 18
+    },
+    {
+      "id": "S032-10",
+      "phase": "PHASE-032",
+      "title": "Hook inventory.pickLots (FEFO / FIFO mặc định, exclude / prefer / minShelfDays) + POST /inventory/pick-lots + GET /inventory/balances, /lots; action core.inven…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 19
+    },
+    {
+      "id": "S032-11",
+      "phase": "PHASE-032",
+      "title": "Chữ chốt W2: khuôn valuationlayers, valuationlayersources, costallocations, costingruns; CostingResult; tham số Rule Contract core.costing.method@1 (purchaseRe…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 20
+    },
+    {
+      "id": "S032-12",
+      "phase": "PHASE-032",
+      "title": "Migration bốn bảng (chỉ thêm, trigger supersededby / journalentryid một lần, không cột account); SC-INV-1 / SC-INV-2 (phép kiểm tĩnh) + fixture repo-bad",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S032-13",
+      "phase": "PHASE-032",
+      "title": "Engine bình quân tháng trên lớp (periodpool): hàm thuần packages/contracts/src/costing/average.ts; costing.run → draft; costing.settle → CostingResult → eventS…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 22
+    },
+    {
+      "id": "S032-14",
+      "phase": "PHASE-032",
+      "title": "T032-P1 parity trên fixture + bản sao dữ liệu thật (ẩn danh): đơn giá 4 lẻ, giá trị xuất từng dòng, tồn cuối, quà 0, bán nội bộ giá bán, trả NCC theo tồn đầu, …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 23
+    },
+    {
+      "id": "S032-15",
+      "phase": "PHASE-032",
+      "title": "Rule Contract core.costing.method@1 (weightedaverageperiod · fifo · specificidentification; spec, vectors), đăng ký Policy Registry, resolvePolicy theo kỳ; trả…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 24
+    },
+    {
+      "id": "S032-16",
+      "phase": "PHASE-032",
+      "title": "FIFO + đích danh trên lớp (receipt, lotid); hàm thuần fifo.ts, specific.ts; opening cho kỳ chuyển đổi",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 25
+    },
+    {
+      "id": "S032-17",
+      "phase": "PHASE-032",
+      "title": "Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLineRef; CT-COST-010..012; lô quarantine cho hàng tr…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 26
+    },
+    {
+      "id": "S032-18",
+      "phase": "PHASE-032",
+      "title": "Chuyển kho giữ giá trị (chuyển lớp), cặp chứng từ liên đơn vị + core.intercompany.pricing@1 — T032-G6, G7",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 27
+    },
+    {
+      "id": "S032-19",
+      "phase": "PHASE-032",
+      "title": "stockcount docType (K-030-4) + core.inventory.count.snapshot; chênh → stockadjustment theo lý do; T032-G5",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 28
+    },
+    {
+      "id": "S032-20",
+      "phase": "PHASE-032",
+      "title": "Cổng: CT-INV-001..004, DG-CLOSE-1 / 2; Sẵn sàng khoá kỳ đọc costingruns (R-INV-7), chấp nhận có lý do; đối soát sổ chi tiết là dữ liệu cho lô / lớp (K-030-12);…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S032-21",
+      "phase": "PHASE-032",
+      "title": "Golden chặn phát hành T032-G8 (đổi SKU), T032-G9 (đổi phương pháp, kỳ chuyển đổi, trả hàng chéo năm) vào CI cùng T026-G",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 30
+    },
+    {
+      "id": "S032-22",
+      "phase": "PHASE-032",
+      "title": "Lineage qua lớp: bizcitylineage@1 0.4.0 thêm nút lot, layer, allocation, run; CostExplain theo phương pháp; màn Hành trình",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S032-23",
+      "phase": "PHASE-032",
+      "title": "Màn Kho › Lô & hạn dùng; ô chọn lô trong @bizcity/ui-kit (gợi ý, lý do khác gợi ý, cảnh báo); POS dùng pick-lots",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 32
+    },
+    {
+      "id": "S032-24",
+      "phase": "PHASE-032",
+      "title": "Màn Tính giá vốn theo lần tính (lớp, phân bổ, mã kiểm, so sánh, settle); Sẵn sàng khoá kỳ phần giá vốn; hướng dẫn tinh-gia-von.md viết lại; ảnh chụp evidence/",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 33
+    },
+    {
+      "id": "S032-25",
+      "phase": "PHASE-032",
+      "title": "Skill open-ketoan-standard C1 / C2 cập nhật trạng thái thật (FIFO ✅ khi W3 xong; lô ✅ khi W1); docs/core/ hướng dẫn app gửi lotRef / originalLineRef",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 34
+    },
+    {
+      "id": "S032-26",
+      "phase": "PHASE-032",
+      "title": "Sổ đăng ký phép kiểm một chỗ: mã PC-001..023, nhịp (ngày · tuần · kỳ), mức theo nhịp, remedy, chủ việc; ánh xạ mã chẩn đoán hiện có (INVENTORY, LEDGER, DEBTMAT…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 35
+    },
+    {
+      "id": "S032-27",
+      "phase": "PHASE-032",
+      "title": "Hộp việc hằng ngày: chạy chẩn đoán L3 hiện có lúc 01:00 (bizcity.clock.daily, cạnh kiểm chuẩn đêm), lưu lượt, bảng B tối thiểu (HARD đang mở, tuổi việc, lệch k…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 36
+    },
+    {
+      "id": "S032-28",
+      "phase": "PHASE-032",
+      "title": "Khoá kỳ kéo theo mọi chi nhánh cùng nhóm tính giá (PC-015); không khoá lẻ một chi nhánh khi giá vốn là của nhóm",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 37
+    },
+    {
+      "id": "S032-29",
+      "phase": "PHASE-032",
+      "title": "sourceDigest lúc kiểm, kiểm lại trong cùng giao dịch khoá (PC-021); đầu kỳ = snapshot cuối kỳ trước, mở lại kỳ trước thì kỳ sau mất settled (PC-023)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 38
+    },
+    {
+      "id": "S032-30",
+      "phase": "PHASE-032",
+      "title": "Mức HARD hẹp / REVIEW có lý do gắn sourceDigest theo 60 §6; sửa R-DIAG-4 cho nhóm HARD — sau khi chủ dự án trả Q032-6; sửa TRANSITNONZERO sang định nghĩa CT-IN…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 39
+    },
+    {
+      "id": "S032-31",
+      "phase": "PHASE-032",
+      "title": "Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60), sourceDigest; tuần vắt hai tháng tách hai dòng …",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 40
+    },
+    {
+      "id": "S032-32",
+      "phase": "PHASE-032",
+      "title": "Chốt tuần (mềm): kế toán đánh dấu Đã xem tuần — mọi việc của tuần có người nhận hoặc lý do; không khoá dữ liệu; chứng từ ghi lùi vào tuần đã chốt hiện đổi sau …",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 41
+    },
+    {
+      "id": "S032-33",
+      "phase": "PHASE-032",
+      "title": "Bảng điểm tháng: tổng các tuần + phép kiểm chỉ chạy ở kỳ + kết quả khoá; lưu cùng nhật ký khoá làm hồ sơ bằng chứng của kỳ; so tháng trước (phát hiện mới ở cổn…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 42
+    },
+    {
+      "id": "S032-34",
+      "phase": "PHASE-032",
+      "title": "Ma trận thời gian tiêu chí × tuần / tháng (60 §10): đọc bản chụp S032-31 / 33, mốc M0..M4 từ checklist; GET /api/v1/closing/scoreboard chỉ đọc; màn kèm bấm ô r…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 43
+    },
+    {
+      "id": "S032-35",
+      "phase": "PHASE-032",
+      "title": "Trường mới của DiagCheck (closeRef, cadence, stage, severityAtClose, owner, scopeBy); gắn closeRef cho mọi chẩn đoán L3 đang có (70 §3)",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 44
+    },
+    {
+      "id": "S032-36",
+      "phase": "PHASE-032",
+      "title": "Khoá thử hôm nay đủ năm bước (R-DIAG-14): periods/check + giá vốn tính tạm + closing/preview + kiểm sau kết chuyển + kiểm lúc khoá; không ghi sổ; chạy mỗi sáng…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 45
+    },
+    {
+      "id": "S032-37",
+      "phase": "PHASE-032",
+      "title": "SDK defineCheck + extensions.checks của bizcitymodule@1 (R-DIAG-15)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 46
+    },
+    {
+      "id": "S032-38",
+      "phase": "PHASE-032",
+      "title": "Bảng \"trường cần để kiểm\" theo loại chứng từ ở bizcityledgerintake@1; trạng thái \"không kiểm được\" trên bàn (R-DIAG-16)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 47
+    },
+    {
+      "id": "S032-39",
+      "phase": "PHASE-032",
+      "title": "Bàn làm việc kế toán năm thẻ từ HT08 (Việc hôm nay · Khoá thử hôm nay · Kết quả từng tuần, tháng · Sổ theo dõi các tháng · Phần mềm tự kiểm được gì), thuật ngữ…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
+      "line": 48
     }
   ]
 }

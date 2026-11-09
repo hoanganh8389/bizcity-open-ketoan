@@ -1,0 +1,385 @@
+<!doctype html>
+<!-- [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — bản mẫu scoreboard kế toán: 23 PC đối chiếu mã origin/main, số liệu theo nhịp ngày · tuần · kỳ -->
+<!-- [2026-11-10 12:45 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — ma trận thời gian tiêu chí × tuần / tháng kèm mốc -->
+<!-- [2026-11-10 01:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — viết lại bằng lời kế toán thành Bàn làm việc kế toán năm thẻ (70 §5, §7): Việc hôm nay · Khoá thử hôm nay · Kết quả từng tuần, tháng · Sổ theo dõi các tháng · Phần mềm tự kiểm được gì; mức theo kết quả (PC-008 cần giải trình, không chặn) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bàn làm việc kế toán</title>
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;--ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--k:#6d3fc0;--accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--info-bg:#e8f0fc;--k-bg:#f1eafc}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--k:#b08cf0;--accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;--k-bg:#241a3a}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;--ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--k:#b08cf0;--accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--info-bg:#15243d;--k-bg:#241a3a}
+*{box-sizing:border-box}html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+code{font:12px ui-monospace,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.top>*,.ctl>*{min-width:0;max-width:100%}
+.brand{font-weight:650;font-size:15px}.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer;font-size:13px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.tabs{display:flex;gap:2px;padding:0 12px;overflow-x:auto;background:var(--panel)}
+.tabs a{border-bottom:3px solid transparent;color:var(--muted);padding:9px 12px;text-decoration:none;white-space:nowrap;font-size:14px}
+.tabs a[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:650}
+.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+main{padding:16px;max-width:1400px;margin:0 auto;min-width:0}
+section{display:none}section.on{display:block}
+h2{margin:0 0 4px;font-size:19px}h3{margin:16px 0 8px;font-size:15px}
+.lead{color:var(--muted);margin:0 0 12px;max-width:980px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:0 0 14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile b{display:block;font-size:24px;line-height:1.15}.tile span{color:var(--muted);font-size:12.5px}
+.tile.bad b{color:var(--bad)}.tile.warn b{color:var(--warn)}.tile.ok b{color:var(--ok)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0;overflow:hidden}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 12px}
+.ctl.panel{margin-bottom:12px}
+select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:13px}
+.tbl{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:13px;min-width:820px}
+.t th,.t td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.t th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft)}
+.t tbody tr{cursor:pointer}.t tr.sel td{background:var(--info-bg)}
+.tag{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.g-ok{background:var(--ok-bg);color:var(--ok)}.g-part{background:var(--warn-bg);color:var(--warn)}.g-no{background:var(--bad-bg);color:var(--bad)}
+.l-block{background:var(--bad-bg);color:var(--bad)}.l-explain{background:var(--warn-bg);color:var(--warn)}.l-note{background:var(--soft);color:var(--muted)}.l-remind{background:var(--info-bg);color:var(--info)}.l-pass{background:var(--ok-bg);color:var(--ok)}
+.muted{color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:13.5px}
+.note.warn{border-left-color:var(--warn)}.note.bad{border-left-color:var(--bad)}.note.ok{border-left-color:var(--ok)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:12px;align-items:start}
+@media (max-width:980px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.detail{padding:12px 14px}.detail dl{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 10px;margin:8px 0 0;font-size:13px}.detail dt{color:var(--muted)}.detail dd{margin:0}
+.dev{margin-top:10px;font-size:11.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+/* khoá thử */
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 12px}
+@media (max-width:760px){.steps{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-top:4px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);font-size:13px}
+.step b{display:block}.step small{color:var(--muted)}
+.step.ok{border-top-color:var(--ok)}.step.bad{border-top-color:var(--bad)}.step.warn{border-top-color:var(--warn)}
+.verdict{border-radius:12px;padding:14px 16px;margin:0 0 12px;border:1px solid var(--line);background:var(--panel)}
+.verdict b{font-size:18px;display:block}
+.verdict.bad{border-color:var(--bad);background:var(--bad-bg)}.verdict.warn{border-color:var(--warn);background:var(--warn-bg)}.verdict.ok{border-color:var(--ok);background:var(--ok-bg)}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+.list li:last-child{border-bottom:0}
+.list .who{color:var(--muted);font-size:12.5px;margin-left:auto;text-align:right;white-space:nowrap}
+/* sổ theo dõi */
+.mx{border-collapse:separate;border-spacing:3px;font-size:12px}
+.mx th,.mx td{padding:0}
+.mx thead th{font-size:11px;font-weight:600;color:var(--muted);text-align:center;padding:2px 0 4px;white-space:nowrap;vertical-align:bottom}
+.mx thead th.ms{color:var(--k)}
+.mx th.rh{position:sticky;left:0;z-index:2;background:var(--panel);text-align:left;font-weight:500;padding:0 8px 0 2px;white-space:nowrap;min-width:240px}
+.mx th.rh small{color:var(--muted)}
+.mx tr.grp th{position:sticky;left:0;background:var(--panel);text-align:left;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:8px 2px 2px}
+.cell{width:34px;height:26px;border-radius:5px;display:grid;place-items:center;font-size:12px;font-weight:700;cursor:pointer;position:relative;border:2px solid transparent}
+.c-pass{background:var(--ok-bg);color:var(--ok)}.c-warn{background:var(--warn-bg);color:var(--warn)}.c-acc{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}.c-hard{background:var(--bad);color:#fff}
+.c-na{background:var(--soft);color:var(--muted);font-weight:400}
+.c-un{background:repeating-linear-gradient(135deg,var(--soft) 0 4px,transparent 4px 8px);color:var(--muted);font-weight:400}
+.c-plan{border:2px dashed var(--line)}.c-plan.on{border-color:var(--k);color:var(--k)}
+.cell.part::after{content:"";position:absolute;right:2px;top:2px;width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.cell.sel{outline:2px solid var(--accent);outline-offset:1px}
+.mx td.sum{font-size:11px;color:var(--muted);text-align:center;white-space:nowrap;padding:0 4px}
+.mx .now{box-shadow:inset 2px 0 0 var(--accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:99px;padding:2px 10px;background:var(--panel);max-width:100%}.chips b{color:var(--k)}
+footer{color:var(--muted);font-size:12px;padding:16px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">Bàn làm việc kế toán · Bảng kiểm sổ sách<small>Đơn vị Bizcity HN · 9 cửa hàng · nhóm tính giá vốn HN-A, HN-B — bản mẫu, dữ liệu tự dựng, chưa nối phần mềm</small></div>
+    <div class="spacer"></div>
+    <label class="muted" style="font-size:13px">Tôi là <select id="role"><option value="kt">Kế toán viên</option><option value="ktt" selected>Kế toán trưởng</option><option value="ks">Kiểm soát / thanh tra (chỉ xem)</option></select></label>
+    <button class="btn" id="theme">Sáng / tối</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <a href="#viec">Việc hôm nay</a>
+    <a href="#khoa-thu">Khoá thử hôm nay</a>
+    <a href="#ket-qua">Kết quả từng tuần, tháng</a>
+    <a href="#theo-doi">Sổ theo dõi các tháng</a>
+    <a href="#phan-mem">Phần mềm tự kiểm được gì</a>
+  </nav>
+</header>
+<main>
+
+<!-- ============ VIỆC HÔM NAY ============ -->
+<section id="viec">
+  <h2>Việc hôm nay</h2>
+  <p class="lead">Phần mềm tự kiểm sổ mỗi đêm lúc 1 giờ sáng và mỗi sáng thứ Hai. Mỗi dòng dưới đây là <b>một việc</b>, có người phụ trách. Hằng ngày, hằng tuần chỉ <b>nhắc việc</b>, không chặn ai. Chỉ khi khoá sổ cuối tháng mới chặn.</p>
+  <div class="ctl panel">
+    <div class="seg" role="group" aria-label="Kỳ kiểm"><button data-c="d" aria-pressed="true">Kiểm hằng ngày · sáng 10/11</button><button data-c="w" aria-pressed="false">Kiểm hằng tuần · thứ Hai 09/11</button></div>
+    <span class="spacer"></span><button class="btn" id="recheck">Kiểm lại ngay</button>
+  </div>
+  <div class="tiles" id="vTiles"></div>
+  <div class="panel"><ul class="list" id="vList"></ul></div>
+  <div class="note">Cột <b>"Nếu để tới lúc khoá sổ"</b> cho biết việc đó sẽ <span class="tag l-block">Chặn khoá sổ</span> (phải sửa, không giải trình được), <span class="tag l-explain">Cần giải trình</span> (ghi lý do và đính kèm chứng cứ) hay chỉ <span class="tag l-note">Để biết</span>. Làm sớm thì cuối tháng không dồn việc.</div>
+</section>
+
+<!-- ============ KHOÁ THỬ ============ -->
+<section id="khoa-thu">
+  <h2>Khoá thử hôm nay</h2>
+  <p class="lead">Chạy thử đủ các bước như khoá sổ thật, trên số liệu tới hôm nay, để biết <b>nếu khoá sổ tháng 11 ngay bây giờ thì có được không</b>. Khoá thử <b>không ghi gì vào sổ</b>, không đổi trạng thái kỳ, bấm bao nhiêu lần cũng được.</p>
+  <div class="ctl panel">
+    <label>Kỳ <select><option>Tháng 11/2026 · Bizcity HN</option></select></label>
+    <label><input type="checkbox" id="kSettled"> Giả sử đã chốt giá vốn nhóm HN-B và kho đã khớp lại</label>
+    <label><input type="checkbox" id="kExplained"> Giả sử đã giải trình 2 mục</label>
+    <span class="spacer"></span><span class="muted" id="kAt">Lần thử gần nhất: 10/11 07:30 (tự chạy)</span>
+    <button class="btn pri" id="kRun">Khoá thử ngay</button>
+  </div>
+  <div class="steps" id="kSteps"></div>
+  <div class="verdict" id="kVerdict"></div>
+  <div class="grid2">
+    <div class="panel"><ul class="list" id="kList"></ul></div>
+    <div class="panel detail">
+      <h3 style="margin-top:0">Khoá thử khác khoá thật chỗ nào</h3>
+      <ul style="margin:0 0 0 18px;padding:0;font-size:13.5px">
+        <li>Giá vốn chỉ <b>tính tạm</b>, kết chuyển chỉ <b>chạy thử</b>: không sinh bút toán.</li>
+        <li>Khoá thật luôn kiểm lại từ đầu, vì từ lúc thử tới lúc khoá có thể có chứng từ mới (<b>dấu số liệu</b> đổi).</li>
+        <li>Mục <b>đã giải trình</b> ở lần thử vẫn được nhớ, nhưng số liệu đổi thì phải xem lại.</li>
+        <li>Tuần cuối tháng, phần mềm tự khoá thử mỗi sáng và báo kết quả cho kế toán trưởng.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KẾT QUẢ TỪNG TUẦN, THÁNG ============ -->
+<section id="ket-qua">
+  <h2>Kết quả từng tuần, tháng</h2>
+  <p class="lead">Mỗi tuần phần mềm lưu một <b>bản lưu</b> kết quả kiểm, không sửa được. Cuối tuần kế toán trưởng bấm <b>Đã xem tuần</b> khi mọi việc của tuần đã có người nhận hoặc có lý do. "Đã xem tuần" <b>không khoá số liệu</b>; chỉ khoá sổ cuối tháng mới chặn.</p>
+  <div class="ctl panel">
+    <label>Kỳ <select id="cMonth"><option value="11">Tháng 11/2026 (đã khoá sổ 03/12)</option><option value="10">Tháng 10/2026 (đã khoá sổ 08/12, khi chưa kiểm hằng tuần)</option></select></label>
+    <span class="spacer"></span><span class="muted">Tuần tính từ thứ Hai tới Chủ nhật; tuần nằm ở hai tháng thì tách theo tháng</span>
+  </div>
+  <div class="tiles" id="cTiles"></div>
+  <div class="grid2">
+    <div class="panel"><div class="tbl"><table class="t"><thead><tr><th>Tuần</th><th>Điều kiện đạt</th><th>Lỗi chặn còn mở</th><th>Việc mới / đã xong</th><th>Việc để lâu nhất</th><th>Lệch kho với sổ cái</th><th>Đã xem tuần</th></tr></thead><tbody id="cRows"></tbody></table></div></div>
+    <div class="panel detail" id="cDetail"></div>
+  </div>
+  <div class="note">Giá vốn bình quân tháng chỉ đúng khi hết tháng. Số trong tuần là <b>giá vốn tính tạm</b>, dùng để phát hiện sớm thiếu phiếu nhập, tồn âm, lệch kho; không phải số báo cáo.</div>
+</section>
+
+<!-- ============ SỔ THEO DÕI ============ -->
+<section id="theo-doi">
+  <h2>Sổ theo dõi kiểm tra các tháng</h2>
+  <p class="lead">Mỗi dòng là một điều kiện khoá sổ, mỗi cột là một tuần hoặc một tháng. Bên trái vạch <b>"hôm nay"</b> là kết quả đã lưu. Bên phải là các <b>mốc nâng cấp phần mềm</b>: từ cột nào phần mềm tự kiểm được điều kiện đó. Một dòng chưa đạt lặp lại nhiều tháng nghĩa là cần đổi cách làm, không phải lỗi một lần.</p>
+  <div class="ctl panel">
+    <div class="seg" role="group" aria-label="Xem theo"><button data-g="w" aria-pressed="true">Theo tuần</button><button data-g="m" aria-pressed="false">Theo tháng</button></div>
+    <label>Nhóm <select id="dGrp"><option value="all">Tất cả 23 điều kiện</option><option value="g1">Danh mục &amp; chứng từ</option><option value="g2">Kho &amp; giá vốn</option><option value="g3">Thuế · tiền · công nợ · chi phí</option><option value="g4">Kết chuyển &amp; khoá sổ</option></select></label>
+    <label><input type="checkbox" id="dOnlyBad"> chỉ dòng từng chưa đạt</label>
+    <span class="spacer"></span><span class="muted">Giả định hôm nay là đầu tháng 12/2026, tháng 11 đã khoá sổ · ngày nâng cấp là dự kiến</span>
+  </div>
+  <div class="chips" id="dMs"></div>
+  <div class="legend">
+    <span><i class="c-pass" style="display:inline-block"></i>✓ đạt</span>
+    <span><i class="c-warn" style="display:inline-block"></i>! có việc, đã làm xong trong cột</span>
+    <span><i class="c-acc" style="display:inline-block"></i>G đã giải trình</span>
+    <span><i class="c-hard" style="display:inline-block"></i>✕ còn lỗi chặn khoá sổ</span>
+    <span><i class="c-na" style="display:inline-block"></i>· chỉ kiểm cuối tháng</span>
+    <span><i class="c-un" style="display:inline-block;border:1px solid var(--line)"></i>╱ phần mềm chưa tự kiểm — kế toán kiểm tay</span>
+    <span><i style="border:2px dashed var(--k)"></i>N cột bắt đầu tự kiểm sau nâng cấp</span>
+    <span>chấm cam ở góc: phần mềm mới kiểm được một phần</span>
+  </div>
+  <div class="grid2">
+    <div class="panel" style="padding:8px;overflow-x:auto"><table class="mx" id="dMx"></table></div>
+    <div class="panel detail" id="dDetail"><div class="muted">Bấm vào một ô để xem tuần / tháng đó: kết quả, việc, ai xử lý.</div></div>
+  </div>
+</section>
+
+<!-- ============ PHẦN MỀM ============ -->
+<section id="phan-mem">
+  <h2>Phần mềm tự kiểm được gì</h2>
+  <p class="lead">23 điều kiện khoá sổ, đối chiếu với phần mềm đang chạy (09/11/2026). Không ai tích tay: điều kiện chỉ ghi "tự kiểm" khi phần mềm có phép kiểm thật. Dòng <b>kiểm một phần</b> hoặc <b>kế toán kiểm tay</b> là việc kế toán vẫn phải tự kiểm và giữ chứng cứ.</p>
+  <div class="tiles" id="aTiles"></div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="ctl" style="border-bottom:1px solid var(--line)">
+        <label>Phần mềm <select id="fState"><option value="all">Tất cả</option><option value="ok">tự kiểm</option><option value="part">kiểm một phần</option><option value="no">kế toán kiểm tay</option></select></label>
+        <input id="fQ" placeholder="Tìm điều kiện…" style="flex:1;min-width:160px">
+      </div>
+      <div class="tbl"><table class="t"><thead><tr><th>Mã</th><th>Điều kiện</th><th>Phần mềm</th><th>Kiểm khi nào</th><th>Khi khoá sổ</th><th>Nâng cấp</th></tr></thead><tbody id="aRows"></tbody></table></div>
+    </div>
+    <div class="panel detail" id="aDetail"></div>
+  </div>
+</section>
+
+</main>
+<footer>© 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — bản mẫu tĩnh, không máy chủ. Nguồn: PHASE-032 · 60, 70; bản mẫu khoá sổ PHASE-033.</footer>
+<script>
+const $=s=>document.querySelector(s);
+$('#theme').onclick=()=>{const r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark')};
+const LV={block:['Chặn khoá sổ','l-block'],explain:['Cần giải trình','l-explain'],note:['Để biết','l-note'],remind:['Nhắc việc','l-remind'],pass:['Đạt','l-pass']};
+const tag=k=>`<span class="tag ${LV[k][1]}">${LV[k][0]}</span>`;
+const CAD={d:'hằng ngày',w:'hằng tuần',p:'cuối tháng'};
+const ST={ok:['tự kiểm','g-ok'],part:['kiểm một phần','g-part'],no:['kế toán kiểm tay','g-no']};
+// mã, tên, phần mềm, mã kỹ thuật (cho dev), còn thiếu, nâng cấp (N0..N4 hoặc phần khác), kiểm khi nào, khi khoá sổ (lời), mức mặc định khi chưa đạt
+const PC=[
+['001','Danh mục hàng hoá hợp lệ tại ngày chứng từ','part','ENTITY_CODE_NOT_VALID_AT_DATE, IN-ITEM-*, UNIT_BASE_INVALID','kiểm nhóm hạch toán, tài khoản theo ngày','phần danh mục','dwp','Cần giải trình; chặn nếu dòng sổ không có mã hàng','explain'],
+['002','Chứng từ và bút toán đúng trạng thái, không ghi trùng','ok','EVENT_POSTED_VERSION, LEDGER_REVERSED_ONCE','—','','dwp','Chặn khoá sổ','block'],
+['003','Không còn chứng từ chờ xử lý của tháng','ok','EVENT_PENDING_AGE, INTAKE_OPEN_AGE','tách chứng từ lỗi khỏi chứng từ chờ hợp lệ','phần bể chờ','dwp','Cần giải trình từng chứng từ','explain'],
+['004','Tồn kho không âm; kiểm kê đã xử lý','part','INVENTORY_NEGATIVE','tồn theo lô; phiếu kiểm kê','N1, N4','dwp','Cần giải trình; chặn nếu âm tại ngày khoá','explain'],
+['005','Giá vốn đã chốt, không cũ','part','PERIOD_CLOSE_OPEN, COGS_STALE','chốt giá vốn từng nhóm; biết khi số liệu đổi sau khi chốt','N2, N4','wp','Chặn khoá sổ — chốt giá vốn','block'],
+['006','Giá vốn phân bổ khớp số lượng xuất (lớp giá)','no','—','lớp giá vốn theo từng lần nhập','N2','wp','Chặn khoá sổ','block'],
+['007','Xuất lô gần hết hạn trước; lô bị cách ly','no','lô, hạn dùng mới có ở mua hàng','theo dõi lô, hạn dùng trong sổ kho','N1','dp','Để biết; giải trình nếu xuất lô hết hạn','note'],
+['008','Chuyển kho và hàng đang đi đường','part','TRANSIT_NONZERO (đòi 1579 về 0 — chưa đúng)','số dư 1579 = các phiếu chưa nhận; phiếu đi quá 7 ngày','N1, N3','dp','Chặn nếu số dư lệch; giải trình nếu đi quá 7 ngày','explain'],
+['009','Giá trị kho khớp sổ cái','part','INVENTORY_LEDGER_MISMATCH','so theo lớp giá sau khi chốt giá vốn','N2, N4','wp','Chặn khoá sổ sau khi chốt giá vốn','block'],
+['010','Trả hàng hoàn đúng giá vốn của đơn gốc','part','phiếu trả không tìm được đơn gốc','hoàn theo đơn gốc; không trả vượt','N3','dp','Cần giải trình; chặn nếu trả vượt','explain'],
+['011','Thuế và hoá đơn khớp','part','VAT_INPUT_INVOICE_MATCH, TAX_INPUT_NO_INVOICE','doanh thu, thuế đầu ra với hoá đơn đã xuất','phần thuế','dwp','Cần giải trình','explain'],
+['012','Tiền mặt, ngân hàng khớp sao kê','part','CASH_NEGATIVE','đối chiếu sao kê ngân hàng','phần tiền','wp','Cần giải trình; chặn nếu quỹ âm tại ngày khoá','explain'],
+['013','Công nợ khớp sổ cái','ok','DEBT_MATCH_LEDGER','biên bản đối chiếu là chứng cứ','','wp','Chặn nếu lệch; giải trình nếu thiếu biên bản','explain'],
+['014','Chi phí cuối kỳ đã trích, phân bổ','part','DEPRECIATION_OPEN','trả trước, trích trước, dự phòng, tỷ giá','phần cuối kỳ','p','Cần giải trình','explain'],
+['015','Đúng kỳ, đúng phạm vi khoá','part','khoá theo kỳ × chi nhánh × loại chứng từ','khoá kéo đủ chi nhánh cùng nhóm tính giá vốn','N4','p','Chặn khoá sổ','block'],
+['016','Sổ cân, không bút toán mồ côi, không sửa ngầm','ok','LEDGER_ORPHAN, LEDGER_BALANCES_DAILY, LEDGER_HEADER_EDIT_UNATTRIBUTED','—','','dwp','Chặn khoá sổ','block'],
+['017','Đủ điều kiện để kết chuyển','part','luật kết chuyển có phiên bản','đọc giá vốn đã chốt','N4','p','Chặn khoá sổ','block'],
+['018','Kết chuyển không bị cũ','part','PERIOD_CLOSE_OPEN (giá vốn tính sau kết chuyển)','mọi thay đổi sau kết chuyển','N4','dp','Chặn khoá sổ — kết chuyển lại','block'],
+['019','TK 911 hết số dư sau kết chuyển','ok','kết chuyển tự huỷ nếu 911 còn dư','—','','p','Chặn khoá sổ','block'],
+['020','Lợi nhuận, báo cáo khớp 911 và 421','part','báo cáo chỉ đọc sổ','đối chiếu lãi lỗ với 911, 421','phần kết chuyển','p','Chặn khoá sổ','block'],
+['021','Số liệu không đổi tới lúc khoá','no','—','kiểm lại dấu số liệu lúc khoá','N4','p','Chặn khoá sổ — kiểm lại','block'],
+['022','Người khoá có quyền đúng phạm vi','part','quyền khoá kỳ, vai trò có phạm vi','phạm vi theo vai trò','phần phân quyền','p','Chặn nếu không có quyền','block'],
+['023','Số dư đầu kỳ bằng cuối kỳ trước','part','nhật ký mở khoá có lý do','so với bản lưu kỳ trước','N4','p','Chặn khoá sổ','block'],
+].map(r=>({id:'PC-'+r[0],n:r[0],name:r[1],st:r[2],tech:r[3],gap:r[4],up:r[5],cad:r[6],close:r[7],lvl:r[8]}));
+const pcOf=n=>PC.find(r=>r.n===n);
+// ---------- VIỆC HÔM NAY ----------
+// [mã, việc, ngày, ai · ở đâu, mức nếu để tới khoá sổ]
+const TODO={
+ d:[['004','Cửa hàng HN03: sữa 010-025-001 âm 6 hộp từ ngày 07/11 — phiếu nhập PN-041 chưa nạp',3,'Thủ kho HN03 · Nhập xuất tồn','block'],
+    ['003','4 chứng từ bán hàng POS chờ quá 2 ngày',2,'Kế toán viên · Chứng từ chờ','explain'],
+    ['008','Phiếu chuyển CK-118 đi từ 01/11, cửa hàng nhận chưa xác nhận (9 ngày)',9,'Thủ kho HN02 · Phiếu chuyển','explain'],
+    ['011','3 hoá đơn đầu vào chưa khớp tra cứu cơ quan thuế',5,'Kế toán thuế · Hoá đơn mua vào','explain'],
+    ['007','2 lần xuất lô khác gợi ý "hết hạn trước", có ghi lý do khách chọn lô',0,'— (để biết)','note']],
+ w:[['005','Giá vốn tính tạm tuần: 12 dòng xuất chưa có giá vì 2 mã thiếu phiếu nhập',3,'Kế toán trưởng · Tính giá vốn','block'],
+    ['009','Nhóm HN-B: kho 1.248.350.000 ≠ sổ cái TK 156 1.243.350.000 (lệch 5.000.000)',1,'Kế toán trưởng · Đối chiếu kho','block'],
+    ['004','Cửa hàng HN03 âm 6 hộp (chưa xong từ hôm qua)',3,'Thủ kho HN03','block'],
+    ['008','Phiếu CK-118 đi đường 9 ngày',9,'Thủ kho HN02','explain'],
+    ['012','Chưa nhập sao kê Vietcombank tuần 45',7,'Kế toán tiền · Ngân hàng','explain']]};
+let cad='d';
+function renderV(){
+  const L=TODO[cad];const block=L.filter(x=>x[4]==='block').length,exp=L.filter(x=>x[4]==='explain').length,old=Math.max(...L.map(x=>x[2]));
+  $('#vTiles').innerHTML=`<div class="tile"><b>${L.length}</b><span>việc ${cad==='d'?'hôm nay':'tuần này'}</span></div><div class="tile ${block?'bad':'ok'}"><b>${block}</b><span>sẽ chặn khoá sổ nếu để nguyên</span></div><div class="tile ${exp?'warn':'ok'}"><b>${exp}</b><span>sẽ cần giải trình</span></div><div class="tile ${old>7?'bad':old?'warn':'ok'}"><b>${old} ngày</b><span>việc để lâu nhất (nhắc khi quá 7 ngày)</span></div><div class="tile ${cad==='w'?'bad':'ok'}"><b>${cad==='w'?'5.000.000':'0'}</b><span>lệch kho với sổ cái</span></div>`;
+  $('#vList').innerHTML=L.map(x=>{const r=pcOf(x[0]);return `<li><span class="tag l-remind">Nhắc việc</span><div><b>${r.name}</b><br>${x[1]}<br><span class="muted" style="font-size:12.5px">Nếu để tới lúc khoá sổ: ${tag(x[4])} · ${x[2]} ngày</span></div><span class="who">${x[3]}</span></li>`}).join('');
+}
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{cad=b.dataset.c;document.querySelectorAll('[data-c]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderV()});
+$('#recheck').onclick=()=>{$('#recheck').textContent='Đã kiểm lại '+new Date().toLocaleTimeString('vi-VN');renderV()};
+// ---------- KHOÁ THỬ ----------
+function trial(){
+  const settled=$('#kSettled').checked,expl=$('#kExplained').checked;
+  // [mã, mức, nội dung]
+  const F=[];
+  if(!settled){F.push(['005','block','Giá vốn nhóm HN-B mới tính tạm, chưa chốt','Kế toán trưởng · Tính giá vốn → bấm Chốt giá vốn']);F.push(['009','block','Nhóm HN-B: kho lệch sổ cái 5.000.000 (sẽ tính lại sau khi chốt giá vốn)','Kế toán trưởng · Đối chiếu kho']);}
+  F.push(['008',expl?'pass':'explain',expl?'Đã giải trình: CK-118 đi đường 9 ngày, cửa hàng xác nhận nhận ngày 02/12':'Số dư 1579 = 12.400.000 đúng bằng 2 phiếu đi 29–30/11 chưa nhận (hợp lệ). Riêng phiếu CK-118 đi quá 7 ngày — cần giải trình','Thủ kho HN02']);
+  F.push(['012',expl?'pass':'explain',expl?'Đã giải trình: sao kê tài khoản ACB nhận bản giấy, đính kèm ảnh':'Sao kê tháng 11 còn thiếu 1 tài khoản ngân hàng','Kế toán tiền']);
+  const steps=[
+    ['1. Kiểm số liệu','trước kết chuyển', F.some(f=>['008','012','009'].includes(f[0])&&f[1]==='block')?'bad':F.some(f=>f[1]==='explain')?'warn':'ok'],
+    ['2. Tính tạm giá vốn','không ghi sổ', settled?'ok':'bad'],
+    ['3. Kết chuyển thử','không ghi sổ','ok'],
+    ['4. Kiểm sau kết chuyển','911 hết dư · lãi lỗ khớp 421','ok'],
+    ['5. Kiểm lúc khoá','quyền, phạm vi, dấu số liệu','ok']];
+  $('#kSteps').innerHTML=steps.map(s=>`<div class="step ${s[2]}"><b>${s[0]}</b><small>${s[1]}</small><br>${s[2]==='ok'?'✓ đạt':s[2]==='bad'?'✕ có việc phải sửa':'! có việc cần giải trình'}</div>`).join('');
+  const nb=F.filter(f=>f[1]==='block').length,ne=F.filter(f=>f[1]==='explain').length;
+  const v=$('#kVerdict');v.className='verdict '+(nb?'bad':ne?'warn':'ok');
+  v.innerHTML=nb?`<b>Chưa khoá sổ tháng 11 được</b>${nb} việc phải sửa trước, ${ne} việc cần giải trình. Kết chuyển thử: lãi trước thuế 412.580.000; 911 hết số dư.`:ne?`<b>Khoá được sau khi giải trình ${ne} việc</b>Không còn việc phải sửa. Kết chuyển thử: lãi trước thuế 417.580.000; 911 hết số dư.`:`<b>Khoá sổ tháng 11 được</b>Mọi điều kiện đạt hoặc đã giải trình. Khoá thật sẽ kiểm lại từ đầu trong cùng một lần bấm.`;
+  $('#kList').innerHTML=F.map(f=>{const r=pcOf(f[0]);return `<li>${tag(f[1])}<div><b>${r.name}</b><br>${f[2]}</div><span class="who">${f[3]}</span></li>`}).join('')+`<li>${tag('pass')}<div><b>${23-F.length} điều kiện khác đạt</b><br><span class="muted">gồm sổ cân, chứng từ, công nợ, 911 sau kết chuyển thử, số dư đầu kỳ</span></div></li>`;
+  $('#kAt').textContent='Lần thử gần nhất: '+new Date().toLocaleString('vi-VN')+' (bấm tay)';
+}
+$('#kRun').onclick=trial;['#kSettled','#kExplained'].forEach(s=>$(s).addEventListener('input',trial));
+// ---------- KẾT QUẢ TỪNG TUẦN, THÁNG ----------
+const WEEKS={'11':[
+  ['Tuần 44 · 01/11 (phần tháng 11)',23,0,1,1,0,0,'✓ 02/11','',['Chứng từ chờ · 1 chứng từ POS chờ 1 ngày — đã nạp']],
+  ['Tuần 45 · 02–08/11',19,1,6,3,9,5000000,'✓ 09/11 · có lý do','Nhóm HN-B lệch kho 5.000.000 — để lại có lý do "chờ phiếu nhập PN-041"',['Kho khớp sổ cái · HN-B lệch 5.000.000 — xong tuần 46','Tồn kho · HN03 âm 6 hộp — xong tuần 46','Hàng đi đường · CK-118 đi 9 ngày — xong tuần 46','Giá vốn tính tạm · 12 dòng chưa có giá — xong tuần 46','Hoá đơn · 3 hoá đơn chưa khớp cơ quan thuế (xong 2)','Ngân hàng · thiếu sao kê tuần 45 (xong)']],
+  ['Tuần 46 · 09–15/11',22,0,2,5,3,0,'✓ 16/11','',['Hoá đơn · 1 hoá đơn chờ nhà cung cấp điều chỉnh','Lô hàng · 2 lần xuất khác gợi ý hết hạn trước, có lý do (để biết)']],
+  ['Tuần 47 · 16–22/11',23,0,1,1,0,0,'✓ 23/11','',['Chứng từ chờ · 1 chứng từ — đã nạp']],
+  ['Tuần 48 · 23–29/11',22,0,3,2,2,0,'✓ 30/11 → số liệu đổi sau khi đã xem','1 phiếu nhập ghi lùi ngày 28/11 sau khi đã xem tuần — phần mềm lưu thêm bản mới, giữ bản cũ',['Hàng đi đường · 2 phiếu đi 29/11 chưa nhận — hợp lệ','Công nợ · chưa có biên bản đối chiếu nhà cung cấp A (giải trình)','Danh mục · 1 mặt hàng mới chưa chọn nhóm hạch toán']],
+  ['Tuần 49 · 30/11 (phần tháng 11)',22,0,1,0,0,0,'gộp vào khoá sổ','',['Hàng đi đường · phiếu đi 30/11 chưa nhận — hợp lệ']]],'10':[]};
+const MONTH={'11':{gate:'0 việc phải sửa · 2 mục đã giải trình',ok:true,newAtGate:0,closeDays:3,prev:8,weeks:'5 / 5 tuần'},'10':{gate:'4 việc phải sửa lúc khoá · 6 mục giải trình',ok:false,newAtGate:9,closeDays:8,prev:null,weeks:'— (chưa kiểm hằng tuần)'}};
+let wsel=1;const money=n=>n?n.toLocaleString('vi-VN'):'0';
+function renderC(){
+  const m=$('#cMonth').value,W=WEEKS[m],M=MONTH[m];
+  $('#cTiles').innerHTML=`<div class="tile ${M.newAtGate?'bad':'ok'}"><b>${M.newAtGate}</b><span>việc <b>mới</b> chỉ lộ ra lúc khoá sổ (mong muốn: 0)</span></div><div class="tile"><b>${M.closeDays} ngày</b><span>từ cuối tháng tới khi khoá sổ${M.prev?` (tháng trước ${M.prev} ngày)`:''}</span></div><div class="tile"><b>${M.weeks}</b><span>đã xem tuần</span></div><div class="tile ${M.ok?'ok':'bad'}"><b style="font-size:16px;padding-top:6px">${M.gate}</b><span>kết quả khoá sổ</span></div>`;
+  if(!W.length){$('#cRows').innerHTML='<tr><td colspan="7" class="muted">Tháng 10 khoá sổ khi chưa kiểm hằng tuần, nên chỉ có kết quả lúc khoá. 9 việc mới lộ ra đúng ngày khoá sổ — đó là lý do nên kiểm theo tuần.</td></tr>';$('#cDetail').innerHTML='<div class="muted">Chọn tháng 11 để xem từng tuần.</div>';return;}
+  $('#cRows').innerHTML=W.map((w,i)=>`<tr data-i="${i}" class="${i===wsel?'sel':''}"><td><b>${w[0]}</b></td><td><span class="tag ${w[1]===23?'l-pass':w[1]>=21?'l-explain':'l-block'}">${w[1]} / 23</span></td><td><span class="tag ${w[2]?'l-block':'l-pass'}">${w[2]}</span></td><td>${w[3]} / ${w[4]}</td><td><span class="tag ${w[5]>14?'l-block':w[5]>7?'l-explain':'l-pass'}">${w[5]} ngày</span></td><td>${w[6]?`<span class="tag l-block">${money(w[6])}</span>`:'<span class="tag l-pass">0</span>'}</td><td>${/đổi sau/.test(w[7])?`<span class="tag l-explain">${w[7]}</span>`:w[7]}</td></tr>`).join('');
+  document.querySelectorAll('#cRows tr[data-i]').forEach(tr=>tr.onclick=()=>{wsel=+tr.dataset.i;renderC()});
+  const w=W[wsel]||W[0];
+  $('#cDetail').innerHTML=`<div class="muted" style="font-size:12px">Bản lưu tuần · dấu số liệu 3A9F…${wsel}C1</div><h3 style="margin:2px 0 6px">${w[0]}</h3>${w[8]?`<div class="note ${/đổi sau/.test(w[7])?'warn':''}" style="margin:6px 0">${w[8]}</div>`:''}<b style="font-size:13px">Việc của tuần</b><ul style="margin:6px 0 0 18px;padding:0;font-size:13px">${w[9].map(x=>`<li>${x}</li>`).join('')}</ul><p class="muted" style="font-size:12px;margin-top:10px">"Đã xem tuần": mọi việc đã có người nhận hoặc có lý do. Không khoá số liệu.</p>`;
+}
+$('#cMonth').addEventListener('input',()=>{wsel=1;renderC()});
+// ---------- SỔ THEO DÕI ----------
+const GRP={g1:['001','002','003'],g2:['004','005','006','007','008','009','010'],g3:['011','012','013','014'],g4:['015','016','017','018','019','020','021','022','023']};
+const GNAME={g1:'Danh mục & chứng từ',g2:'Kho & giá vốn',g3:'Thuế · tiền · công nợ · chi phí',g4:'Kết chuyển & khoá sổ'};
+const COLS={w:['T44','T45','T46','T47','T48','T49','T50','T51','T52','T53','T01','T02','T03'].map((t,i)=>({t:t.replace('T','Tuần '),s:t,past:i<=5})),
+            m:['07/26','08/26','09/26','10/26','11/26','12/26','01/27','02/27'].map((t,i)=>({t:'Th '+t,s:t,past:i<=4}))};
+const MS=[
+ {id:'N0',w:4,m:4,txt:'bắt đầu kiểm hằng ngày, hằng tuần, lưu kết quả từng tuần',pcs:[]},
+ {id:'N1',w:7,m:5,txt:'theo dõi lô hàng, hạn dùng trong sổ kho',pcs:['007','008']},
+ {id:'N2',w:9,m:5,txt:'giá vốn theo từng lần nhập (lớp giá), đối chiếu kho theo lớp',pcs:['006','009']},
+ {id:'N3',w:11,m:6,txt:'trả hàng hoàn đúng giá vốn đơn gốc; FIFO',pcs:['010']},
+ {id:'N4',w:12,m:6,txt:'khoá sổ tự kiểm đủ điều kiện, khoá thử đủ 5 bước',pcs:['005','015','017','018','021','023']}];
+const startOf=(pc,g)=>{const m=MS.find(x=>x.pcs.includes(pc));return m?m[g]:null};
+const periodOnly=['014','015','017','019','020','021','022','023'];
+const PAST={w:{'003':'pwppwp','004':'pwpppp','005':'pwpppp','008':'pwppwp','009':'phpppp','011':'pwwppp','012':'pwwpwp','013':'pppprp','001':'ppppwp'},
+            m:{'003':'wwwwp','004':'hwhhw','005':'wwhhp','008':'hwwhr','009':'hhwhp','010':'wwwwp','011':'wwwwp','012':'wrwww','013':'rprrr','014':'wwwwp','018':'hppwp','020':'pppwp','001':'wwwwp'}};
+const DET={'w|009|1':'Tuần 45: nhóm HN-B kho 1.248.350.000 ≠ TK 156 1.243.350.000 — phiếu nhập PN-041 chưa nạp. Xong ở tuần 46.','m|009|3':'Tháng 10: lệch kho với sổ cái chỉ lộ ra ngày khoá sổ vì chưa kiểm hằng tuần; khoá chậm 8 ngày.','m|008|0':'Tháng 7: cách kiểm cũ đòi TK 1579 về 0, nên hàng đi đường hợp lệ cũng bị báo đỏ. Đã sửa: 1579 phải bằng các phiếu chưa nhận.','w|012|1':'Phần mềm chưa tự đối chiếu sao kê: kế toán tiền đối chiếu tay, nhập sao kê muộn.','m|013|0':'Thiếu biên bản đối chiếu nhà cung cấp — tháng nào cũng phải giải trình. Nên đổi cách lấy biên bản.'};
+let grain='w',dsel=null;
+function cellOf(pc,ci,g){
+  const col=COLS[g][ci],st=pcOf(pc).st,s0=startOf(pc,g);
+  if(g==='w'&&periodOnly.includes(pc))return {c:'c-na',t:'·',k:'na'};
+  if(!col.past){if(s0!==null&&ci>=s0)return {c:'c-plan on',t:ci===s0?'N':'',k:'plan',ms:MS.find(x=>x.pcs.includes(pc))};if(st==='no')return {c:'c-un',t:'',k:'un'};return {c:'c-plan',t:'',k:'planpart'};}
+  if(st==='no')return {c:'c-un',t:'╱',k:'un'};
+  const ch=((PAST[g][pc]||'')[ci])||'p';
+  const mp={p:['c-pass','✓','pass'],w:['c-warn','!','warn'],r:['c-acc','G','acc'],h:['c-hard','✕','hard']}[ch];
+  return {c:mp[0]+(st==='part'?' part':''),t:mp[1],k:mp[2]};
+}
+function renderD(){
+  const g=grain,cols=COLS[g],now=cols.findIndex(c=>!c.past),fg=$('#dGrp').value,onlyBad=$('#dOnlyBad').checked;
+  $('#dMs').innerHTML=MS.map(m=>`<span><b>Nâng cấp ${m.id.slice(1)}</b> · ${cols[m[g]].t} · ${m.txt}</span>`).join('');
+  let h='<thead><tr><th class="rh"></th>'+cols.map((c,i)=>{const ms=MS.filter(m=>m[g]===i).map(m=>m.id).join(' ');return `<th class="${ms?'ms':''} ${i===now?'now':''}">${ms?ms+'<br>':''}${c.s}${i===now?'<br><span style="color:var(--accent)">▼ hôm nay</span>':''}</th>`}).join('')+'<th>số lần<br>chưa đạt</th></tr></thead><tbody>';
+  const app=cols.map(()=>0),pass=cols.map(()=>0);
+  for(const gk of Object.keys(GRP)){if(fg!=='all'&&fg!==gk)continue;let body='';
+    for(const pc of GRP[gk]){const r=pcOf(pc),cells=cols.map((c,i)=>cellOf(pc,i,g));const bad=cells.filter(x=>x.k==='hard').length,warn=cells.filter(x=>x.k==='warn'||x.k==='acc').length;
+      if(onlyBad&&!bad&&!warn)continue;
+      cells.forEach((x,i)=>{if(cols[i].past&&['pass','warn','acc','hard'].includes(x.k)){app[i]++;if(x.k==='pass')pass[i]++;}});
+      body+=`<tr><th class="rh" title="${r.name}"><b>${r.id}</b> <small>${r.name.length>34?r.name.slice(0,33)+'…':r.name}</small></th>`+cells.map((x,i)=>`<td class="${i===now?'now':''}"><div class="cell ${x.c} ${dsel&&dsel.pc===pc&&dsel.i===i?'sel':''}" data-pc="${pc}" data-i="${i}" title="${r.name} · ${cols[i].t}">${x.t}</div></td>`).join('')+`<td class="sum">${bad?`<span class="tag l-block">${bad}</span>`:''}${warn?` <span class="tag l-explain">${warn}</span>`:''}</td></tr>`;}
+    if(body)h+=`<tr class="grp"><th colspan="${cols.length+2}">${GNAME[gk]}</th></tr>`+body;}
+  h+=`<tr><th class="rh"><small>tỉ lệ đạt (đã kiểm)</small></th>`+cols.map((c,i)=>`<td class="sum ${i===now?'now':''}">${c.past&&app[i]?Math.round(pass[i]/app[i]*100)+'%':''}</td>`).join('')+'<td></td></tr></tbody>';
+  $('#dMx').innerHTML=h;
+  document.querySelectorAll('#dMx .cell').forEach(el=>el.onclick=()=>{dsel={pc:el.dataset.pc,i:+el.dataset.i};renderD();detailD()});
+}
+function detailD(){
+  const g=grain,pc=dsel.pc,i=dsel.i,r=pcOf(pc),x=cellOf(pc,i,g),col=COLS[g][i];
+  const lab={pass:'Đạt',warn:'Có việc, đã làm xong trong cột',acc:'Đã giải trình',hard:'Còn lỗi chặn khoá sổ',na:'Điều kiện này chỉ kiểm cuối tháng',un:'Phần mềm chưa tự kiểm — kế toán kiểm tay và giữ chứng cứ',plan:'Phần mềm tự kiểm được từ Nâng cấp '+(x.ms?x.ms.id.slice(1):''),planpart:'Phần mềm đang kiểm một phần'}[x.k];
+  const cls={pass:'l-pass',warn:'l-explain',acc:'l-explain',hard:'l-block'}[x.k]||'l-note';
+  const d=DET[g+'|'+pc+'|'+i];
+  $('#dDetail').innerHTML=`<div class="muted" style="font-size:12px">${col.t}${col.past?' · bản lưu đã có':' · dự kiến'}</div><h3 style="margin:2px 0 6px">${r.name}</h3><span class="tag ${cls}">${lab}</span><dl><dt>Khi khoá sổ</dt><dd>${r.close}</dd>${x.ms?`<dt>Nâng cấp</dt><dd>${x.ms.txt}</dd>`:''}${d?`<dt>Ghi chú</dt><dd>${d}</dd>`:''}</dl>`;
+}
+document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{grain=b.dataset.g;dsel=null;document.querySelectorAll('[data-g]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));$('#dDetail').innerHTML='<div class="muted">Bấm vào một ô để xem chi tiết.</div>';renderD()});
+['#dGrp','#dOnlyBad'].forEach(s=>$(s).addEventListener('input',renderD));
+// ---------- PHẦN MỀM TỰ KIỂM ----------
+let sel='PC-005';
+function renderA(){
+  const n=k=>PC.filter(r=>r.st===k).length;
+  $('#aTiles').innerHTML=`<div class="tile ok"><b>${n('ok')}</b><span>phần mềm tự kiểm, có hướng dẫn sửa</span></div><div class="tile warn"><b>${n('part')}</b><span>phần mềm kiểm một phần</span></div><div class="tile bad"><b>${n('no')}</b><span>kế toán còn kiểm tay</span></div><div class="tile"><b>12 / 23</b><span>sẽ tự kiểm đủ sau các nâng cấp kho &amp; giá vốn</span></div><div class="tile"><b>6</b><span>trường hợp chặn khoá sổ, phải sửa — không giải trình được</span></div>`;
+  const fs=$('#fState').value,q=$('#fQ').value.toLowerCase();
+  $('#aRows').innerHTML=PC.filter(r=>(fs==='all'||r.st===fs)&&(`${r.id} ${r.name}`.toLowerCase().includes(q))).map(r=>`<tr data-id="${r.id}" class="${r.id===sel?'sel':''}"><td><b>${r.id}</b></td><td>${r.name}</td><td><span class="tag ${ST[r.st][1]}">${ST[r.st][0]}</span></td><td>${[...r.cad].map(c=>CAD[c]).join(', ')}</td><td>${r.close}</td><td>${/^N/.test(r.up)?r.up.replace(/N(\d)/g,'Nâng cấp $1'):`<span class="muted">${r.up||'—'}</span>`}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">Không có dòng khớp</td></tr>';
+  document.querySelectorAll('#aRows tr[data-id]').forEach(tr=>tr.onclick=()=>{sel=tr.dataset.id;renderA()});
+  const r=PC.find(x=>x.id===sel);
+  $('#aDetail').innerHTML=`<div class="muted" style="font-size:12px">${r.id}</div><h3 style="margin:2px 0 6px">${r.name}</h3><span class="tag ${ST[r.st][1]}">${ST[r.st][0]}</span><dl><dt>Còn thiếu</dt><dd>${r.gap}</dd><dt>Kiểm khi nào</dt><dd>${[...r.cad].map(c=>CAD[c]).join(', ')} — hằng ngày, hằng tuần chỉ nhắc việc</dd><dt>Khi khoá sổ</dt><dd>${r.close}</dd></dl>${r.st!=='ok'?`<div class="note warn" style="margin-bottom:0">Trong lúc chờ nâng cấp: kế toán tự kiểm điều kiện này mỗi tháng và giữ chứng cứ.</div>`:''}<div class="dev">Cho người làm phần mềm: <code>${r.tech}</code></div>`;
+}
+['#fState','#fQ'].forEach(s=>$(s).addEventListener('input',renderA));
+// ---------- vai ----------
+$('#role').addEventListener('input',()=>{const ro=$('#role').value;$('#kRun').disabled=ro==='ks';$('#kRun').title=ro==='ks'?'Kiểm soát / thanh tra chỉ xem bản lưu':'';});
+// ---------- thẻ ----------
+const ALIAS={a:'phan-mem',b:'viec',c:'ket-qua',d:'theo-doi','d-thang':'theo-doi'};
+function show(){let h=(location.hash||'#viec').slice(1).toLowerCase();const monthly=h==='d-thang';h=ALIAS[h]||h;if(!document.getElementById(h))h='viec';
+  document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on',s.id===h));document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-selected',String(a.getAttribute('href')==='#'+h)));
+  if(monthly&&grain!=='m')document.querySelector('[data-g="m"]').click();
+  window.scrollTo(0,0);}
+addEventListener('hashchange',show);
+renderV();trial();$('#kAt').textContent='Lần thử gần nhất: 10/11 07:30 (tự chạy)';renderC();renderD();renderA();show();
+</script>
+</body>
+</html>

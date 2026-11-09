@@ -44,6 +44,7 @@ Hệ quả bắt buộc: mặc định cho phép, nhắc khi sai (R-GATE-9); m�
 | I · Sổ cái bất biến | sổ chỉ thêm; sửa = đảo + ghi mới; Nợ = Có | R-LEDGER, §1 |
 | II · Định danh bất biến, mã có phiên bản | `item_id` không đổi; mã hàng, hệ thống tài khoản, chính sách có phiên bản + ngày hiệu lực — đổi thông tư không làm lại dữ liệu | R-ITEM, ADR-0017 / 0018 / 0009 |
 | III · Liên tục kế toán (Accounting Continuity) | mọi con số đi ngược được về nghiệp vụ gốc qua mua → kho → bán → giá vốn → lãi lỗ; lineage giá vốn là sổ thứ hai; kiểm chuẩn vòng đời (Gate C); khoá kỳ đòi chuỗi lành | R-CONT |
+| R-INV <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — R-INV dòng danh mục luật --> | [rules/RULE-INVENTORY.md](rules/RULE-INVENTORY.md) | 1 (R-INV-1..9) | **Chấp nhận 2026-11-09** ([ADR-0033](adr/ADR-0033-inventory-engine-gia-von-kho.md), PHASE-032): Inventory Engine giữ số lượng · lô · lớp giá vốn · phân bổ, **không ghi sổ cái**; mã hàng ≠ mã tài khoản (bảng Engine không có cột tài khoản); quy tắc xuất lô FIFO / FEFO tách khỏi phương pháp tính giá; đảo chiều hoàn đúng phân bổ gốc; kết chuyển chỉ sau khi giá vốn kỳ `settled` | SC-INV-1 / 2, `CT-INV-*`, `CT-COST-*`, `DG-CLOSE-*` (sẽ có) |
 
 <!-- [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — ADR-0022: nền móng + bảng tám trụ cột; mức đạt hiện ở HT10 -->
 ### 0.2 Nền móng và bảng trụ cột (đề xuất — [ADR-0022](adr/ADR-0022-quan-tri-du-lieu-goc-nen-mong.md))
