@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bizcity.vn/schema/authz_compliance/0.1.0-draft.json",
+  "$comment": "[2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — nháp dữ liệu bảng điểm phân quyền. Đề xuất D-AUTH-06: không tạo contract riêng mà thêm tiêu chí AZ-* vào trụ VII của bizcity_pillars@1 (tru-cot.json); schema này mô tả trường MỞ RỘNG thêm cho tiêu chí (tương thích: mọi trường bizcity_pillars@1 giữ nguyên, trường mới tuỳ chọn). Giao diện không có nút chấm điểm.",
+  "title": "authz criterion (extension of bizcity_pillars@1 criterion)",
+  "type": "object",
+  "required": [
+    "id",
+    "text",
+    "status",
+    "evidence",
+    "gap",
+    "next",
+    "phase",
+    "level",
+    "modules"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(AZ-[A-Z]{3}|TRACE)-[0-9]{2}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "dat",
+        "mot-phan",
+        "tai-lieu",
+        "chua",
+        "chua-xac-minh"
+      ],
+      "$comment": "chua-xac-minh: thiếu baseline — thêm vào statuses của tru-cot.json bằng minor version, cần chủ dự án duyệt"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "gap": {
+      "type": "string"
+    },
+    "next": {
+      "type": "string"
+    },
+    "phase": {
+      "type": "string"
+    },
+    "level": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ]
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source": {
+      "enum": [
+        "check",
+        "manual",
+        "review"
+      ],
+      "$comment": "dat chỉ hợp lệ khi source=check, hoặc manual có testId + repoCommit"
+    },
+    "testId": {
+      "type": "string"
+    },
+    "checkId": {
+      "type": "string",
+      "pattern": "^SC-AUTH-[0-9]{2}$"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "lastCheckedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "repoCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "authzVersion": {
+      "type": "integer"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "dat"
+          }
+        }
+      },
+      "then": {
+        "anyOf": [
+          {
+            "properties": {
+              "source": {
+                "const": "check"
+              }
+            },
+            "required": [
+              "source",
+              "checkId"
+            ]
+          },
+          {
+            "required": [
+              "testId",
+              "repoCommit"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

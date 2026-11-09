@@ -1,0 +1,560 @@
+{
+ "$comment": "[2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — nháp tiêu chí AZ-* cho trụ VII (bizcity_pillars@1), mức đạt theo kiểm kê 10-AS-IS-AUDIT trên origin/main b820e30. Chỉ ghi 'dat' khi đã có mã + test / check bảo vệ trên main. Chưa ghép vào docs/standard/tru-cot.json (D-AUTH-06).",
+ "contract": "authz_compliance@0-draft",
+ "baseline": {
+  "repoCommit": "b820e30",
+  "readAt": "2026-11-05",
+  "doc": "docs/phases/PHASE-028-CORE-AUTHORIZATION-ROLE-EDITOR/10-AS-IS-AUDIT.md"
+ },
+ "groups": [
+  "Foundation",
+  "Role Templates",
+  "Module Contracts",
+  "Registration SDK",
+  "Guard Coverage",
+  "Scope / RLS",
+  "Workflow / SoD",
+  "TGS Mapping",
+  "Role Editor",
+  "Security / Agent",
+  "Kernel Safety",
+  "E2E Regression",
+  "Document Lifecycle & Traceability"
+ ],
+ "criteria": [
+  {
+   "id": "AZ-FND-01",
+   "group": "Foundation",
+   "text": "Người dùng có id ổn định; thêm vai trò không đổi created_by của chứng từ cũ",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "users.id identity (0001:232); created_by = 'user:<id>'",
+   "gap": "chưa có bảng gán; chưa test 'thêm vai trò không đổi chứng từ'",
+   "next": "S028-4",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-1"
+  },
+  {
+   "id": "AZ-FND-02",
+   "group": "Foundation",
+   "text": "Một người ≥ 2 vai trò, mỗi vai trò phạm vi riêng, không gộp chéo phạm vi",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "users.role một giá trị (0057:10)",
+   "next": "S028-4",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-1"
+  },
+  {
+   "id": "AZ-FND-03",
+   "group": "Foundation",
+   "text": "user_meta / tenant_options có schema, theo đơn vị, không chứa quyền",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "chỉ tenants.settings jsonb (0001:198)",
+   "next": "S028-4",
+   "phase": "PHASE-028",
+   "level": "P1",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-FND-04",
+   "group": "Foundation",
+   "text": "Đổi vai trò / luật / gán có nhật ký chỉ thêm và authz_version",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "đổi vai trò hiện ghi audit_logs qua action core.user.update",
+   "gap": "chưa có authz_audit, authz_version",
+   "next": "S028-4",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-TPL-01",
+   "group": "Role Templates",
+   "text": "Vai trò mẫu là mẫu: dùng mẫu phải xem danh sách quyền và ghi biên nhận; nâng mẫu không ghi đè vai trò đơn vị đã chỉnh",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "6 vai trò cứng (auth.ts:101-110)",
+   "gap": "chưa có vai trò của đơn vị",
+   "next": "S028-5",
+   "phase": "PHASE-028",
+   "level": "P1",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-CON-01",
+   "group": "Module Contracts",
+   "text": "Quyền module khai trong manifest, khuôn <module>:<việc>, tiền tố = khoá module",
+   "status": "dat",
+   "source": "manual",
+   "evidence": "SC-CON-2 (contract.check.mjs:142-145); registerModulePermissions (auth.ts:76-85); test module-permissions.test.ts",
+   "gap": "",
+   "next": "",
+   "phase": "PHASE-011",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "apps/api/test/module-permissions.test.ts",
+   "repoCommit": "b820e30"
+  },
+  {
+   "id": "AZ-CON-02",
+   "group": "Module Contracts",
+   "text": "Quyền mới / nâng cấp module: mặc định chưa ai có, kể cả chủ đơn vị",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "chủ đơn vị tự có mọi quyền module (auth.ts:95)",
+   "next": "S028-2",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-2"
+  },
+  {
+   "id": "AZ-CON-03",
+   "group": "Module Contracts",
+   "text": "Đổi nhãn / menu không đổi quyền; bí danh không trùng; mã màn không là khoá quyền",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "DM12, ACC89 hai nghĩa; 28 mã TGS trùng",
+   "next": "S028-3",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-16"
+  },
+  {
+   "id": "AZ-SDK-01",
+   "group": "Registration SDK",
+   "text": "registerMenu / registerSubmenu / registerAction có mẫu module + test; module check chạy được",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "defineWebModule kiểm khuôn quyền (web.ts:59-78)",
+   "gap": "chưa wrapper, chưa kiểm quyền tồn tại",
+   "next": "S028-8",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-GRD-01",
+   "group": "Guard Coverage",
+   "text": "Mọi route khai quyền hoặc public; mọi thao tác ghi qua defineAction",
+   "status": "mot-phan",
+   "source": "check",
+   "checkId": "SC-AUTH-03",
+   "evidence": "SC-API-3, SC-ACT-1 (action.check.mjs:39-96); 12 nợ (baseline.json:17-77)",
+   "gap": "12 route nợ; 3 action ghi gác bằng quyền đọc (signature.routes.ts:71,102; notify.actions.ts:30)",
+   "next": "S028-9",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-7"
+  },
+  {
+   "id": "AZ-GRD-02",
+   "group": "Guard Coverage",
+   "text": "Không kiểm theo tên vai trò trong mã",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "signature.routes.ts:39-40,116; documents.ts:233; devtools.routes.ts:51; repair.ts:29",
+   "next": "S028-9",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-GRD-03",
+   "group": "Guard Coverage",
+   "text": "Thu hồi vai trò / quyền có hiệu lực ngay trên vé cũ (API, MCP, nền)",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "bumpSession khi đổi vai trò (access.service.ts:70-71); session-state.ts:17-26",
+   "gap": "đệm 15 s / tiến trình; không thu hồi theo quyền",
+   "next": "S028-10",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-6"
+  },
+  {
+   "id": "AZ-SCP-01",
+   "group": "Scope / RLS",
+   "text": "Cô lập đơn vị ở tầng CSDL",
+   "status": "dat",
+   "source": "manual",
+   "evidence": "RLS 0041; S-1 trụ VII",
+   "gap": "",
+   "next": "",
+   "phase": "PHASE-007",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "apps/api/test/tenant-isolation.test.ts",
+   "repoCommit": "b820e30"
+  },
+  {
+   "id": "AZ-SCP-02",
+   "group": "Scope / RLS",
+   "text": "Báo cáo / xuất không vượt phạm vi chi nhánh / kho được gán (lọc ở server, trước phân trang / tổng)",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "branchCodes do client gửi, rỗng = tất cả (excel-export/index.ts:24,71; report.routes.ts:27,41)",
+   "next": "S028-12",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "ke-toan",
+    "kho",
+    "quy"
+   ],
+   "testId": "T028-8"
+  },
+  {
+   "id": "AZ-SCP-03",
+   "group": "Scope / RLS",
+   "text": "Kho làm việc ≠ kho xem báo cáo; chuyển kho hai đầu hai người",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "không có phạm vi theo người",
+   "next": "S028-12",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "kho"
+   ],
+   "testId": "T028-4"
+  },
+  {
+   "id": "AZ-SOD-01",
+   "group": "Workflow / SoD",
+   "text": "Người lập không tự duyệt khi luồng đòi người độc lập",
+   "status": "chua-xac-minh",
+   "source": "manual",
+   "evidence": "luồng YAML có quyền theo bước (payment-request.workflow.yaml:19-46)",
+   "gap": "chưa đọc / test luật người lập ≠ người duyệt",
+   "next": "S028-12",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "quy",
+    "mua-hang"
+   ],
+   "testId": "T028-19"
+  },
+  {
+   "id": "AZ-TGS-01",
+   "group": "TGS Mapping",
+   "text": "349 mã TGS có bản ghi ánh xạ + trạng thái; mã chưa khớp không tự cấp",
+   "status": "tai-lieu",
+   "source": "manual",
+   "evidence": "data/tgs-mapping.draft.jsonl (349 bản ghi, DRAFT)",
+   "gap": "0 / 349 BA duyệt",
+   "next": "S028-13",
+   "phase": "PHASE-028",
+   "level": "P1",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-TGS-02",
+   "group": "TGS Mapping",
+   "text": "28 nhóm TGS mô phỏng trên bản chụp; bgdd không thành siêu quyền mặc định",
+   "status": "tai-lieu",
+   "source": "manual",
+   "evidence": "data/tgs-role-snapshot.json",
+   "gap": "6 / 28 sheet chưa khớp nhóm nguồn; chưa chạy tương đương",
+   "next": "S028-13",
+   "phase": "PHASE-028",
+   "level": "P1",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-UI-01",
+   "group": "Role Editor",
+   "text": "Role Editor 4 khu + phạm vi + Giải thích + Lịch sử",
+   "status": "tai-lieu",
+   "source": "manual",
+   "evidence": "mockups/role-editor.html",
+   "gap": "chưa mã",
+   "next": "S028-11",
+   "phase": "PHASE-028",
+   "level": "P1",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-UI-02",
+   "group": "Role Editor",
+   "text": "Bảng điểm không cho tick tay; % tính từ tiêu chí có bằng chứng",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "HT10 chỉ đọc tru-cot.json (PillarsPage.tsx:110)",
+   "gap": "AZ-* chưa vào tru-cot.json; chưa có source=check cho trụ VII",
+   "next": "S028-14",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-20"
+  },
+  {
+   "id": "AZ-SEC-01",
+   "group": "Security / Agent",
+   "text": "Quyền rủi ro cao không cho AI / khoá API, không ký tự đại diện",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "actions.ts:392 (chỉ quyền module); MCP xác nhận ghi (mcp.routes.ts)",
+   "gap": "quyền Core chưa có nhãn rủi ro; chưa có ký tự đại diện nên chưa có luật chặn",
+   "next": "S028-7",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ],
+   "testId": "T028-13"
+  },
+  {
+   "id": "AZ-SEC-02",
+   "group": "Security / Agent",
+   "text": "Subscriber / job chạy bằng định danh dịch vụ có quyền tối thiểu",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "actor system (events.ts:256)",
+   "gap": "không gán quyền cho định danh dịch vụ",
+   "next": "S028-10",
+   "phase": "PHASE-028",
+   "level": "P1",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "AZ-KER-01",
+   "group": "Kernel Safety",
+   "text": "Không vai trò nào UPDATE / DELETE / TRUNCATE sổ cái",
+   "status": "dat",
+   "source": "manual",
+   "evidence": "trụ I L-1..L-4 dat; vai trò ketoan_app (0032)",
+   "gap": "",
+   "next": "",
+   "phase": "PHASE-004",
+   "level": "P0",
+   "modules": [
+    "ke-toan"
+   ],
+   "testId": "tests/conformance (trụ I L-1..L-4)",
+   "repoCommit": "b820e30"
+  },
+  {
+   "id": "AZ-KER-02",
+   "group": "Kernel Safety",
+   "text": "Sự việc chưa đạt kiểm chuẩn vào bể chờ bền, không mất",
+   "status": "dat",
+   "source": "manual",
+   "evidence": "ADR-0014, ADR-0019; trụ IV G-2..G-5 dat",
+   "gap": "",
+   "next": "",
+   "phase": "PHASE-021",
+   "level": "P0",
+   "modules": [
+    "ke-toan"
+   ],
+   "testId": "apps/api/test/intake-repair.test.ts",
+   "repoCommit": "b820e30"
+  },
+  {
+   "id": "AZ-E2E-01",
+   "group": "E2E Regression",
+   "text": "20 ca T028-* chạy trong CI",
+   "status": "chua",
+   "source": "manual",
+   "evidence": "",
+   "gap": "",
+   "next": "S028-14",
+   "phase": "PHASE-028",
+   "level": "P0",
+   "modules": [
+    "he-thong"
+   ]
+  },
+  {
+   "id": "TRACE-01",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "100% bút toán có nguồn sự việc kế toán hợp lệ",
+   "status": "dat",
+   "source": "manual",
+   "evidence": "LEDGER_ORPHAN L3 mức lỗi (ledger.diagnostics.ts:101-109); assertLedgerInvariants trên mọi đơn vị test",
+   "gap": "",
+   "next": "",
+   "level": "P0",
+   "testId": "apps/api/test/helpers.ts assertLedgerInvariants",
+   "repoCommit": "b820e30"
+  },
+  {
+   "id": "TRACE-02",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "100% bút toán truy được đúng phiên bản đã ghi sổ",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "event_version trên bút toán; accounting_event_versions; event-store.test.ts:54-71",
+   "gap": "chưa có API / màn đọc nội dung phiên bản của một bút toán; luật SC-TRACE-1",
+   "next": "T028-23",
+   "level": "P0",
+   "testId": "T028-23"
+  },
+  {
+   "id": "TRACE-03",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "Chứng từ gốc truy được toàn bộ bút toán liên quan",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "event_id → bút toán; ledger_links hai chiều (ledger-links.test.ts:46)",
+   "gap": "doc_ref của module → sự việc → bút toán chưa có test xuyên suốt",
+   "next": "T028-24",
+   "level": "P0",
+   "testId": "T028-24"
+  },
+  {
+   "id": "TRACE-04",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "Phiên bản cũ không bị ghi đè hoặc mất lịch sử",
+   "status": "dat",
+   "source": "manual",
+   "evidence": "bản cất phiên bản chỉ thêm (0049:88-92); db-rules.test.ts:93-103; event-store.test.ts:71",
+   "gap": "",
+   "next": "",
+   "level": "P0",
+   "testId": "apps/api/test/db-rules.test.ts",
+   "repoCommit": "b820e30"
+  },
+  {
+   "id": "TRACE-05",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "Bút toán đảo truy ngược được bút toán bị đảo và lý do",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "reverses_entry_id, đảo một lần (0006:586), ledger_links_one_reversal; ledger-links.test.ts:41",
+   "gap": "lý do có thể rỗng khi đảo do phiên bản mới qua API (ledger_links.reason mặc định rỗng)",
+   "next": "T028-25",
+   "level": "P0",
+   "testId": "T028-25"
+  },
+  {
+   "id": "TRACE-06",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "Quan hệ liên phân hệ không đứt khi đổi mã hoặc trạng thái",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "item_id qua đổi mã / gộp mã (xuong-ca-dinh-danh.test.ts); trụ II ID-2, III C-2",
+   "gap": "đối tượng, chi nhánh, kho chưa có mã phiên bản (ID-6)",
+   "next": "S026-4",
+   "level": "P1"
+  },
+  {
+   "id": "TRACE-07",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-028",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "Truy vết tôn trọng phân quyền và phạm vi tenant",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "RLS theo đơn vị (S-1); doc-ref.routes.ts:37 gác documents:read",
+   "gap": "phạm vi chi nhánh / kho chưa có; xuất truy vết chưa lọc phạm vi",
+   "next": "S028-12",
+   "level": "P0"
+  },
+  {
+   "id": "TRACE-08",
+   "group": "Document Lifecycle & Traceability",
+   "phase": "PHASE-025",
+   "modules": [
+    "ke-toan",
+    "kho"
+   ],
+   "text": "Kiểm thử chuỗi mua → kho → bán → giá vốn → Ledger xuyên nhiều phiên bản",
+   "status": "mot-phan",
+   "source": "manual",
+   "evidence": "Golden Tests đổi mã (S026-2); lineage.test.ts:63-132",
+   "gap": "chưa có ca sửa phiếu đã ghi sổ ở giữa chuỗi rồi tính lại giá vốn",
+   "next": "T028-26",
+   "level": "P0",
+   "testId": "T028-26"
+  }
+ ]
+}
