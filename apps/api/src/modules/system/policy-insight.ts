@@ -1,4 +1,5 @@
 // @bizcity-layer P module-sdk
+// [2026-11-09 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c (S031-30, chữ chốt PHASE-031 · 00 §15): program[] — thực hiện chương trình (chứng từ áp, quà đã tặng theo mặt hàng, lệch IN-POL-004)
 // [2026-11-09 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a (S031-28, chữ chốt PHASE-031 · 00 §12): đọc sổ đăng ký, chứng từ đã áp, theo dõi thực hiện, truy vết ngược
 /**
  * Truy vấn chỉ đọc cho màn *Chính sách* và *Theo dõi thực hiện chính sách*. Nguồn duy nhất: `policy_registry` (phong bì) và khung nhìn
@@ -136,6 +137,21 @@ export async function policyTracking(trx: Db, tenantId: string, f: TrackingFilte
        ${f.source ? sql`AND e.source_system = ${f.source}` : sql``}
      GROUP BY e.source_system ORDER BY e.source_system`.execute(trx)).rows : [];
 
+  // Thực hiện chương trình (00 §15): theo (chính sách, bản). Quà lấy từ CHÍNH các dòng quà nguồn đã gửi trong chứng từ đã ghi sổ
+  // (payload.lines[] isGift = true, policyRef.key = mã chính sách, policyRef.version = bản); lệch = chứng từ có IN-POL-004. Giá trị hàng tặng
+  // và ngân sách chưa có nguồn (00 §15 mục 2): không ước lượng.
+  const orders = (await sql<{ policy_id: string | null; policy_key: string; version: number; orders: number; mismatched: number }>`
+    SELECT a.policy_id, a.policy_key, a.version, count(DISTINCT a.event_id)::int AS orders,
+           count(DISTINCT a.event_id) FILTER (WHERE 'IN-POL-004' = ANY(a.codes))::int AS mismatched
+      FROM bizcity_read.policy_application a WHERE ${W}
+     GROUP BY a.policy_id, a.policy_key, a.version ORDER BY a.policy_key, a.version`.execute(trx)).rows;
+  const gifts = orders.length ? (await sql<{ policy_key: string; version: number; sku: string; qty: string }>`
+    SELECT pa.policy_key, pa.version, g->>'sku' AS sku, sum((g->>'qty')::numeric)::text AS qty
+      FROM (SELECT DISTINCT a.event_id, a.policy_key, a.version FROM bizcity_read.policy_application a WHERE ${W}) pa
+      JOIN accounting_events e ON e.id = pa.event_id AND e.tenant_id = ${tenantId}
+      CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(e.payload->'lines') = 'array' THEN e.payload->'lines' ELSE '[]'::jsonb END) g
+     WHERE g->>'isGift' = 'true' AND g->'policyRef'->>'key' = pa.policy_key AND (g->'policyRef'->>'version')::int = pa.version
+     GROUP BY pa.policy_key, pa.version, g->>'sku' ORDER BY pa.policy_key, pa.version, g->>'sku'`.execute(trx)).rows : [];
   const reg = await policyRegistry(trx, tenantId, f.owner ? { owner: f.owner } : {});
   const t = today();
   const soon = addDays(t, 30);
@@ -156,6 +172,11 @@ export async function policyTracking(trx: Db, tenantId: string, f: TrackingFilte
     stale,
     timeline,
     health,
+    program: orders.map((o) => ({
+      policyId: o.policy_id, policyKey: o.policy_key, version: Number(o.version), orders: o.orders,
+      giftsBySku: gifts.filter((g) => g.policy_key === o.policy_key && Number(g.version) === Number(o.version)).map((g) => ({ sku: g.sku, qty: Number(g.qty) })),
+      mismatched: o.mismatched, mismatchRate: ratio(o.mismatched, o.orders),
+    })),
   };
 }
 

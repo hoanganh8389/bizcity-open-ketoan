@@ -1,7 +1,7 @@
 # `bizcity_policy@1` — Chính sách nghiệp vụ cho nguồn ngoài: lấy, tính, gửi tham chiếu
 <!-- [2026-11-08 03:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3a (S031-13, ADR-0031, chữ chốt PHASE-031 · 00 §9): hợp đồng API chính sách — GET /policies, GET /rule-contracts, POST /policies/evaluate, POST /policies; Rule Contract sale.promo.buy_x_get_y@1 -->
 
-> **Phiên bản:** 1.2.0-draft · 2026-11-08 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
+> **Phiên bản:** 1.3.0-draft · 2026-11-08 · **Trạng thái:** Đề xuất — chạy được từ W3a, chưa cam kết ổn định cho tới khi POS dùng thật (xem [BIZCITY-API-v1 §5](BIZCITY-API-v1.md))
 > **Nguồn sự thật:** `apps/api/src/modules/system/policy.routes.ts` (route) · `apps/api/src/modules/system/rule-contracts/` (Rule Contract, dịch vụ) · `packages/platform/src/core/policies.ts` (sổ đăng ký, bảng `policy_registry`)
 > **Quyết định:** [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) · **Kế hoạch:** [PHASE-031 · 00 §9](../phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/00-MASTER-PLAN.md) · **Đi cùng:** [`bizcity_ledger_intake@1` §3.1](BIZCITY-LEDGER-INTAKE-v1.md) (`policyRefs`)
 
@@ -120,6 +120,7 @@ giftQty = min(times × get.qty, maxGiftQty nếu có), làm tròn 4 chữ số t
 
 ## 9. Changelog
 
+- **1.3.0-draft (2026-11-09):** PHASE-031 W4c — `program[]` ở `GET /api/v1/policy-tracking` (mục 11). Thêm khoá, không đổi khoá cũ.
 - **1.2.0-draft (2026-11-09):** PHASE-031 W4a — bốn action đọc cho màn Chính sách và Theo dõi thực hiện (mục 11). Thêm, không phá.
 - **1.1.0-draft (2026-11-08):** PHASE-031 W3b — sự kiện `bizcity.policy.published` / `.retired` (mục 10). Thêm, không phá.
 - **1.0.0-draft (2026-11-08):** PHASE-031 W3a — bốn endpoint, Rule Contract đầu tiên `sale.promo.buy_x_get_y@1`.
@@ -145,7 +146,7 @@ Bốn endpoint đọc, quyền `catalog:read`, không ra MCP / AI. Nguồn: `pol
 |---|---|
 | `GET /api/v1/policy-registry?owner&status&q` | `items[]` mỗi chính sách: `policyId, policyKey, ownerModule, ruleContract, versions[]` (`version, effectiveFrom/To, status, contentHash, scope, publishedBy/At, reason, applied`), `current` (bản hiệu lực hôm nay), `gaps[]`, `expiresOn` |
 | `GET /api/v1/policy-registry/:policyId/applications?version&cursor&limit` | `items[]` (`eventId, docKey, docType, docDate, sourceSystem, status, version, codes[], ok`), `next` = `eventId` dòng cuối (truyền vào `cursor`); `policyId` lạ → 404 |
-| `GET /api/v1/policy-tracking?from&to&branch&source&owner` | `range`, `applied { events, total }`, `pass { events, passed, rate }`, `codes[] { code, n }`, `coverage[] { sourceSystem, events, withRefs, rate }` (miền bán), `stale[]` (`IN-POL-003` theo nguồn × chính sách, kèm bản cuối đã gửi), `timeline[]`, `health { expiringSoon, noPublished, gaps }`. Mặc định 30 ngày theo ngày chứng từ; `rate` là `null` khi mẫu số 0 |
+| `GET /api/v1/policy-tracking?from&to&branch&source&owner` | `range`, `applied { events, total }`, `pass { events, passed, rate }`, `codes[] { code, n }`, `coverage[] { sourceSystem, events, withRefs, rate }` (miền bán), `stale[]` (`IN-POL-003` theo nguồn × chính sách, kèm bản cuối đã gửi), `timeline[]`, `health { expiringSoon, noPublished, gaps }`, `program[]` (1.3.0: mỗi *(chính sách, bản)* có chứng từ trong kỳ — `policyId, policyKey, version, orders, giftsBySku[] { sku, qty }, mismatched, mismatchRate`; quà lấy từ các dòng quà nguồn đã gửi trong chứng từ đã ghi sổ (`isGift`, `policyRef.key` + `policyRef.version`), `mismatched` = chứng từ có `IN-POL-004`). Mặc định 30 ngày theo ngày chứng từ; `rate` là `null` khi mẫu số 0 |
 | `GET /api/v1/policy-lineage?eventId` hoặc `?docKey` | `event`, `refs[]` (`key, version, sentHash, registered, policyId, registryHash, hashMatches, covers, effectiveFrom/To`), `policyCheck` lúc nhận; không thấy sự việc → 404 |
 
-Giới hạn: *Thực hiện chương trình* (số lượng hàng tặng, ngân sách) chưa có — cần lưu kết quả tính của nguồn (IN-POL-004, W2b). Độ phủ chỉ tính miền bán (`doc_type = sale`, có Rule Contract `sale.*` hiệu lực trong kỳ).
+Giới hạn: ô *Thực hiện chương trình* chỉ có số chứng từ áp, số lượng quà theo mặt hàng và số chứng từ lệch; **giá trị hàng tặng** (cần giá vốn / giá bán, chưa có nguồn đọc thống nhất) và **ngân sách** (Rule Contract chưa có tham số ngân sách — Q031-7) chưa có. Độ phủ chỉ tính miền bán (`doc_type = sale`, có Rule Contract `sale.*` hiệu lực trong kỳ).

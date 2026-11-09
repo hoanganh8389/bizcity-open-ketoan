@@ -43,9 +43,10 @@ Các ô trong một kỳ (mặc định 30 ngày theo ngày chứng từ; lọc 
 | Sức khoẻ sổ đăng ký | Chính sách sắp hết hạn (30 ngày), không còn bản phát hành, hoặc có khoảng trống |
 | Độ phủ theo nguồn | Nguồn bán nào chưa gửi tham chiếu dù đã có chính sách hiệu lực |
 | Độ trễ phiên bản | Nguồn nào còn bán bằng bản cũ, và bản cuối nguồn đó đã gửi |
+| Thực hiện chương trình | Mỗi chính sách theo từng bản: số chứng từ áp, **số lượng quà đã tặng theo mặt hàng** (lấy từ dòng quà trong chứng từ đã ghi sổ), số chứng từ có quà **lệch chính sách** (`IN-POL-004`) và tỉ lệ lệch |
 | Dòng thời gian | Các bản có hiệu lực trong kỳ |
 
-Chưa có ô *Thực hiện chương trình* (số lượng hàng tặng, ngân sách): cần nguồn gửi kèm kết quả tính, sẽ có ở đợt sau.
+*Giá trị hàng tặng* và *so với ngân sách chương trình* chưa có (hiện "—"): giá trị cần giá vốn / giá bán của mặt hàng, ngân sách cần khai trong chính sách — sẽ có ở đợt sau.
 
 ## Mã cảnh báo thường gặp
 
@@ -54,6 +55,7 @@ Chưa có ô *Thực hiện chương trình* (số lượng hàng tặng, ngân 
 | `IN-POL-001` | Tham chiếu không có trong sổ đăng ký, hoặc băm khác bản đã phát hành |
 | `IN-POL-002` | Bản được nêu không phủ ngày chứng từ và không có bản mới hơn phủ |
 | `IN-POL-003` | Nguồn dùng bản cũ trong khi đã có bản mới hơn phủ ngày chứng từ — nguồn cần làm mới chính sách |
+| `IN-POL-004` | Quà tính lại theo đúng bản chính sách nguồn nêu khác quà nguồn đã gửi (thiếu, thừa hoặc lệch số lượng) |
 
 Các mã này chỉ **cảnh báo** theo mặc định. Đơn vị muốn chặn thì đặt khoá `bizcity.intake.policy_check` = `strict` (chứng từ có mã này chờ duyệt thay vì ghi sổ ngay).
 
