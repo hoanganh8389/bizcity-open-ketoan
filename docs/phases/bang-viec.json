@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,22 +20,22 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 138
+      "count": 137
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 51
+      "count": 52
     },
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 1
+      "count": 2
     },
     {
       "key": "done",
       "label": "Xong",
-      "count": 261
+      "count": 263
     }
   ],
   "items": [
@@ -550,8 +550,8 @@
       "phase": "PHASE-004",
       "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
       "priority": null,
-      "status": "todo",
-      "column": "todo",
+      "status": "paused",
+      "column": "paused",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 28
@@ -4399,14 +4399,8 @@
       "title": "Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng sổ; báo cáo theo ngày; test T029-ECP-P001",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, p030-queue)",
-        "branch": "feat/phase-029-bao-cao-ten-theo-ngay",
-        "state": "đang làm",
-        "since": "2026-11-08",
-        "dot": "PHASE-029 · S029-19 đợt 2a — báo cáo công nợ (debtByEmployee, debtByItem) hiện tên đối tượng hiệu l…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5367,15 +5361,9 @@
       "phase": "PHASE-031",
       "title": "Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết",
       "priority": "P1",
-      "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w4b-man-chinh-sach",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-031 · W4b — màn Chính sách ở Hệ thống (một trang bốn tab: Chính sách · Chờ kế toán xem · Truy…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 27
     },
@@ -5440,14 +5428,8 @@
       "title": "Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view",
       "priority": "P1",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
-        "branch": "feat/phase-031-w4b-man-chinh-sach",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-031 · W4b — màn Chính sách ở Hệ thống (một trang bốn tab: Chính sách · Chờ kế toán xem · Truy…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 33
     },
@@ -5494,6 +5476,23 @@
       "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 37
+    },
+    {
+      "id": "S031-29",
+      "phase": "PHASE-031",
+      "title": "W2b: IN-POL-004 — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; registerPolicyRecompute ở Kernel (00 §14); IN-POL-000 / 005 để…",
+      "priority": "P1",
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",
+        "branch": "feat/phase-031-w2b-in-pol-004",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-031 · W2b — IN-POL-004: cửa nạp tính lại quà theo bản chính sách nguồn nêu và so với dòng quà…"
+      },
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 38
     }
   ]
 }
