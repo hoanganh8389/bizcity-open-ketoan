@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 136
+      "count": 135
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 270
+      "count": 271
     }
   ],
   "items": [
@@ -5160,11 +5160,17 @@
     {
       "id": "S030-51b",
       "phase": "PHASE-030",
-      "title": "B5b — cửa nạp: bảng gắn trường ↔ thư viện, kiểm ở L3, K1 (26 §4.1 ⑤)",
+      "title": "B5b — cửa nạp: bảng gắn trường ↔ thư viện, chỉ cảnh báo, kênh riêng libraryFindings[], K1 (26 §4.2)",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-b5b)",
+        "branch": "feat/s030-51b-cua-nap-thu-vien",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-030 · S030-51b — Kho thư viện B5b: cửa nạp kiểm theo thư viện, chỉ cảnh báo, kênh riêng libra…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 60
     },
@@ -5174,14 +5180,8 @@
       "title": "Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không đối tượng / nhân viên / ngân hàng (26 §11)",
       "priority": "P1",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thu-vien-s52)",
-        "branch": "feat/s030-52-thu-vien-danh-muc",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-030 · S030-52 — Kho thư viện: ba thư viện danh mục chuẩn core.khoan-muc, vn.loai-thue, core.l…"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 61
     },
