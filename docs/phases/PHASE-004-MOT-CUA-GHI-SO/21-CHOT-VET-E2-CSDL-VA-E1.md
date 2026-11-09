@@ -92,3 +92,14 @@ Chủ dự án **đồng ý các phương án** (2026-11-08):
 | **Q004-8** | Duyệt hướng "đo trước" cho RV-R1-07 | S004-18 (K0) song song được, không đụng sổ |
 
 Thứ tự mã: S004-14 và S004-18 trước (không phụ thuộc nhau); S004-15, S004-16, S004-17 sau S004-14.
+
+## 9. Phát hiện khi làm S004-14: hai cột 0087 chưa được ép bất biến (Q004-9)
+<!-- [2026-11-09 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — Q004-9 -->
+
+Test chống lệch T004-E2-3 (so cột `ledger_entries` với danh sách cột bị trigger ép) đỏ sau khi gộp `main`: migration `0087` (PHASE-029 S029-19, thuộc tính đối tượng có hiệu lực) thêm `partner_name` và `partner_attr_id` vào `ledger_entries` với ghi chú **"không đổi về sau"**, nhưng `guard_ledger_entry_mutation` chỉ liệt kê cột **bị ép** (danh sách đen) nên cột mới mặc nhiên **đổi được** khi bút toán `posted` (cùng đường E2, không dấu vết). `ledger_lines` không bị: trigger của dòng chặn mọi thứ trừ E1.
+
+Không phải việc của S004-14 tự quyết đóng băng, vì có một mâu thuẫn thiết kế cần chủ S029-19 chọn: E2 cho đổi `partner_id` ở đầu bút toán, mà `partner_name` (tên chụp theo ngày chứng từ) không đổi theo, nên hai cột có thể lệch nhau. **Việc đã làm:** trigger dấu vết của 0089 phủ cả chín cột (`E2_DB_COLUMNS`) nên không còn thay đổi im lặng; hành vi không đổi.
+
+| # | Câu hỏi | Gợi ý |
+|---|---|---|
+| **Q004-9** | Đóng băng `partner_name` / `partner_attr_id` ở trigger bất biến (đúng ghi chú của 0087), hay cho E2 cập nhật cùng `partner_id`? | Đóng băng; muốn đổi đối tượng của bút toán đã ghi thì đảo và ghi lại. Cần chủ S029-19 xác nhận. Nếu chọn đóng băng, sửa luôn gốc: đổi `guard_ledger_entry_mutation` từ danh sách cột bị ép sang so **toàn bộ** hàng trừ cột E2 (cột mới mặc nhiên bị ép) |
