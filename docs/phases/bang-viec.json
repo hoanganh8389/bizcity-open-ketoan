@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 134
+      "count": 136
     },
     {
       "key": "partial",
@@ -2964,9 +2964,9 @@
     {
       "id": "S022-18",
       "phase": "PHASE-022",
-      "title": "RV-R1-06 phần ghi details.context vào trace và hiện remedy.steps ở khay Mã tra cứu (sau S022-17)",
+      "title": "RV-R1-06: hợp đồng ma-tra-cuu.ts mang details.context.step + remedy; chép / báo lỗi thêm dòng Bước, không chép docKey, số chứng từ, kỳ (T022-MT-1)",
       "priority": "P2",
-      "status": "todo",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, review-r1)",
@@ -2977,6 +2977,28 @@
       },
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 30
+    },
+    {
+      "id": "S022-19",
+      "phase": "PHASE-022",
+      "title": "RV-R1-06: khay Mã tra cứu hiện nút \"Cách khắc phục\" (RemedyView) (nút bật / tắt + RemedyView compact dưới dòng mã) và dòng \"bước\" — e.step, e.remedy đã có ở hợ…",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 31
+    },
+    {
+      "id": "S022-20",
+      "phase": "PHASE-022",
+      "title": "RV-R1-06: ghi bước lỗi vào span OTel (bizcity.error.step trong TRACEATTRIBUTES + OBSERVABILITY §1.1) — chờ PHASE-018 W6 nhả OBSERVABILITY.md",
+      "priority": "P3",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 32
     },
     {
       "id": "S023-1",
