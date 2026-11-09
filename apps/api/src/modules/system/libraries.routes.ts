@@ -23,6 +23,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { bindingsOfLibrary } from '@ketoan/contracts';
 import {
   ATTEST_OBJECT, PROPOSAL_KINDS, PROPOSAL_STATUSES, createProposal, currentLibraryConfig, flushLibraryUsage, getLibrary, itemHash, libraryAttestations,
   libraryConfigHistory, libraryReadme, libraryUsage, listLibraries, listProposals, recordLibraryUsage, saveLibraryConfig, selectorRows, shouldFlush,
@@ -313,6 +314,8 @@ const libraryConfig = z.object({
   atPolicy: z.enum(['docDate', 'today']).optional(),
   ruleLevels: z.record(z.enum(['warn', 'info'])).optional(),
   overrides: z.record(z.array(overrideEntry).min(1).max(50)).optional(),
+  // [2026-11-09 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b (26 §4.2): hạ / tắt từng gắn trường ↔ thư viện của cửa nạp
+  bindings: z.record(z.enum(['off', 'info'])).optional(),
 }).strict();
 const configVersion = z.object({ version: z.number(), config: z.record(z.unknown()), reason: z.string(), createdBy: z.string(), createdAt: z.string() });
 
@@ -321,12 +324,14 @@ const config = defineAction({
   description: 'Cấu hình hiện hành của đơn vị cho một thư viện (bật / tắt, đọc theo ngày, mức luật đã hạ, giá trị ghi đè) và lịch sử các phiên bản.',
   permission: 'catalog:read', effect: 'read', idempotency: 'none',
   input: z.object({ id }),
-  output: z.object({ library: z.object({ id: z.string(), version: z.string(), optional: z.boolean() }), current: configVersion.nullable(), history: z.array(configVersion) }),
+  output: z.object({ library: z.object({ id: z.string(), version: z.string(), optional: z.boolean() }), current: configVersion.nullable(), history: z.array(configVersion),
+    // [2026-11-09 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b: các gắn của cửa nạp trỏ tới thư viện này (đơn vị hạ / tắt ở `bindings`)
+    bindings: z.array(z.object({ id: z.string(), path: z.string(), label: z.string() })) }),
   expose: { http: { method: 'GET', path: '/api/v1/libraries/:id/config' }, mcp: true, ai: 'read' },
   handler: async (ctx, i) => {
     const lib = need(i.id);
     const history = await libraryConfigHistory(ctx.data.tx, ctx.tenant.id, lib.id);
-    return { library: { id: lib.id, version: lib.version, optional: !!lib.optional }, current: (history[0] as never) ?? null, history: history as never };
+    return { library: { id: lib.id, version: lib.version, optional: !!lib.optional }, current: (history[0] as never) ?? null, history: history as never, bindings: bindingsOfLibrary(lib.id).map((b) => ({ id: b.id, path: b.path, label: b.label })) };
   },
 });
 

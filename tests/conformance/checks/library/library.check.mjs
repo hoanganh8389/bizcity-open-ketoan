@@ -160,4 +160,35 @@ export const checks = [
       return { examined, findings, notes: [`${examined} module dùng thư viện`] };
     },
   },
+  // [2026-11-09 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51b (26 §4.2): SC-LIB-3 — bảng gắn trường ↔ thư viện của cửa nạp đúng khuôn
+  {
+    id: 'SC-LIB-3',
+    title: 'Bảng gắn trường chứng từ ↔ thư viện (packages/contracts/src/library-bindings.ts): id duy nhất, đường trường đúng khuôn, thư viện có thật, gắn theo ngày chứng từ',
+    gate: 'CONF-STATIC', contract: 'contracts', rules: ['R-GATE-2', 'R-INTAKE-4'], conf: [], tier: 2, enforce: 'block', weight: 2, targets: ['repo'],
+    run(ctx) {
+      const r = ctx.repo;
+      const file = 'packages/contracts/src/library-bindings.ts';
+      if (!r.exists(file)) return { examined: 0, findings: [], notes: ['chưa có bảng gắn'] };
+      const findings = [];
+      const libs = new Set(r.list('libraries').filter((d) => r.exists(`libraries/${d}/library.json`)));
+      const PATH_RE = /^[A-Za-z][A-Za-z0-9]*(\[\])?(\.[A-Za-z][A-Za-z0-9]*(\[\])?)*$/;
+      const lines = r.lines(file);
+      const seen = new Set();
+      let n = 0;
+      lines.forEach((t, i) => {
+        const m = /\{\s*id:\s*'([^']*)'\s*,\s*path:\s*'([^']*)'\s*,\s*library:\s*'([^']*)'(?:[^}]*?at:\s*'([^']*)')?/.exec(t);
+        if (!m) return;
+        n++;
+        const [, id, p, lib, at] = m;
+        const add = (msg, key) => findings.push(ctx.finding(file, i + 1, `gắn ${id}: ${msg}`, `${id}:${key}`));
+        if (!/^[a-z][a-z0-9-]*$/.test(id)) add('id phải dạng kebab-case (a-z, 0-9, gạch ngang)', 'id');
+        if (seen.has(id)) add('id trùng', 'dup');
+        seen.add(id);
+        if (!PATH_RE.test(p)) add(`đường trường "${p}" sai khuôn (tên trường, [] cho mảng, dấu chấm cho lồng)`, 'path');
+        if (!libs.has(lib)) add(`thư viện ${lib} không có trong libraries/`, 'lib');
+        if (at !== undefined && at !== 'docDate') add(`at "${at}" chưa hỗ trợ (chỉ docDate)`, 'at');
+      });
+      return { examined: n, findings, notes: [`${n} gắn`] };
+    },
+  },
 ];

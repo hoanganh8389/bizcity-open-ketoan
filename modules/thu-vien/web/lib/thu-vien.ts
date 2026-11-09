@@ -188,6 +188,8 @@ export interface LibraryConfig {
   atPolicy?: 'docDate' | 'today';
   ruleLevels?: Record<string, 'warn' | 'info'>;
   overrides?: Record<string, { from: string; value: unknown; reason: string; basisKey?: string }[]>;
+  /** S030-51b: hạ (info) hoặc tắt (off) từng gắn trường ↔ thư viện của cửa nạp. */
+  bindings?: Record<string, 'off' | 'info'>;
 }
 export interface LibraryConfigVersion { version: number; config: LibraryConfig; reason: string; createdBy: string; createdAt: string }
 

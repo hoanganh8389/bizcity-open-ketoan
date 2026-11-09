@@ -799,6 +799,16 @@
             "core.loi:sources-code:dich-nguoc.py",
             "core.sach:basis-key:SACH-THU-001:KHONG-CO"
           ]
+        },
+        "SC-LIB-3": {
+          "findings": 5,
+          "keys": [
+            "tot:dup",
+            "Sai-Id:id",
+            "Sai-Id:path",
+            "Sai-Id:lib",
+            "Sai-Id:at"
+          ]
         }
       }
     },
