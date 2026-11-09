@@ -63,6 +63,14 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không. Bản đã `retired` trước đây vẫn có `effective_to = NULL` (không có ngày ngừng đáng tin) — việc gỡ nợ là S031-32.
 - **Bảo mật:** không đổi.
 
+### Form mặt hàng gọn hơn, tên không trùng, biến thể Cận date (PHASE-026) <!-- [2026-11-10 04:30 PM Nguyễn Văn Thủy] PHASE-026 — rà form mặt hàng (đóng góp) -->
+
+- **Thêm:** tên mặt hàng không được trùng (gộp khoảng trắng, không phân biệt hoa thường, kể cả mặt hàng đã ngừng): `sameNameProduct`, kiểm ở form, Excel, thêm sản phẩm con khi thêm mới / đổi tên; `GET /api/v1/catalog/name-check` để form báo khi gõ. Dữ liệu cũ đã trùng vẫn sửa được ô khác. Biến thể **Cận date** (`expiry`, mã B cũ): hàng sắp hết hạn, giá bán riêng, gửi thuế theo mã cha; migration 0094 chuyển mã B đang có từ `legacy` sang.
+- **Đổi:** form DM10: Nhóm → Mã → Tên lên đầu; thêm mới là mã cha (không còn ô Mã hàng cha), mã mới chỉ chữ số; Biến thể có câu giải thích, không chọn được Nội bộ khi đã có nhập xuất và đang gửi thuế; nút Thêm sản phẩm con hiện mờ kèm lý do ở mã còn chữ. Hướng dẫn `mat-hang.md` viết lại phần sinh mã, sản phẩm con.
+- **Sửa:** sản phẩm con trước chỉ chặn trùng tên trong cùng họ.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0094.
+
 ### Mua hàng đi đúng đường thuế theo mã (PHASE-026) <!-- [2026-11-10 10:30 AM Nguyễn Văn Thủy] PHASE-026 — đường thuế mua hàng (đóng góp) -->
 
 - **Thêm:** `taxPathChecks` (mua-hang-domain): hàng mua có hoá đơn vào mã không gửi thuế → chặn `tax_path_invoice`; hàng / quà không hoá đơn vào mã gửi thuế → chặn `tax_path_gift` (chỉ mã quà cùng họ, chưa có thì báo khai báo danh mục); quà có hoá đơn / xuất quà bằng mã gửi thuế → nhắc `tax_path_invoiced_gift`. `noTaxFamily` gợi ý mã. Kịch bản NT-MH-003, test `mua-hang-duong-thue`.

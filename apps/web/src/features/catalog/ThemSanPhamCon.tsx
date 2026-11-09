@@ -24,6 +24,23 @@ export function VariantBadge({ code, kinds, showNormal }: { code?: string; kinds
   return <span className={`badge ${tone}`} style={{ fontSize: 11 }} title={k?.note}>{variantLabel(k, code)}</span>;
 }
 
+// [2026-11-10 03:00 PM Nguyễn Văn Thủy] PHASE-026 — tên mặt hàng không trùng: báo ngay khi gõ (đóng góp)
+/** Mặt hàng khác đang dùng tên này (trừ mã except). Hỏi máy chủ sau khi ngừng gõ 300ms; máy chủ vẫn chặn khi lưu. */
+export function useSameName(name: string, except = '') {
+  const n = name.replace(/\s+/g, ' ').trim();
+  const [q, setQ] = useState(n);
+  useEffect(() => { const t = setTimeout(() => setQ(n), 300); return () => clearTimeout(t); }, [n]);
+  const r = useQuery({ queryKey: ['name-check', q.toLowerCase(), except], enabled: Boolean(q), staleTime: 10_000,
+    queryFn: () => api.get<{ same: { sku: string; name: string; isActive: boolean } | null }>('/api/v1/catalog/name-check', { name: q, except }) });
+  return q === n && q ? r.data?.same ?? null : null;
+}
+
+/** Câu báo trùng tên, dùng chung form mặt hàng và thêm sản phẩm con. */
+export function TrungTen({ same }: { same: { sku: string; name: string; isActive: boolean } | null }) {
+  if (!same) return null;
+  return <div className="alert alert-bad full" style={{ marginTop: -4 }}>Tên này đã dùng cho mã <b className="mono">{same.sku}</b>{same.isActive ? '' : ' (đã ngừng theo dõi)'}. Đặt tên khác để quầy, kho không chọn nhầm.</div>;
+}
+
 interface Child { sku: string; name: string; variantCode?: string; isActive: boolean }
 
 export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }: { parentSku: string; parentName: string; parentNoSale: boolean; onClose: () => void }) {
@@ -43,9 +60,10 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   useEffect(() => { const el = nameRef.current; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, [done]);
 
   const trimmed = name.replace(/\s+/g, ' ').trim();
-  const dup = list.find((k) => k.isActive && k.name.replace(/\s+/g, ' ').trim().toLowerCase() === trimmed.toLowerCase());
   const sameAsParent = trimmed.toLowerCase() === parentName.replace(/\s+/g, ' ').trim().toLowerCase();
+  const dup = useSameName(sameAsParent ? '' : trimmed);
   const can = Boolean(trimmed) && !dup && !sameAsParent;
+  const kind = kinds.find((k) => k.code === variantCode);
 
   const save = useMutation({
     mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, variantCode, sendToTax: variantCode !== 'internal' && sendToTax, barcode: barcode.trim() || undefined, note: note.trim() || undefined, noSaleParent: noSaleParent || undefined }),
@@ -70,10 +88,10 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
       <Field label="Tên sản phẩm con (*)" full tip="Đặt tuỳ ý, ví dụ: Bình sữa xanh L, Sữa A hàng tặng">
         <input ref={nameRef} className="input" value={name} maxLength={255} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && can && !save.isPending) { setDone(''); save.mutate(); } }} />
       </Field>
-      {dup && <div className="alert alert-bad full">Đã có <b className="mono">{dup.sku}</b> cùng tên này.</div>}
-      {sameAsParent && trimmed && <div className="muted full" style={{ fontSize: 12 }}>Gõ thêm màu, size để phân biệt với mã cha.</div>}
-      <Field label="Biến thể" tip="Phần mềm xử lý theo ô này, không theo tên">
-        <select className="select input" value={variantCode} onChange={(e) => setVariantCode(e.target.value)}>
+      <TrungTen same={dup} />
+      {sameAsParent && trimmed && <div className="muted full" style={{ fontSize: 12 }}>Gõ thêm phần phân biệt (màu, size, kẹp quà, hàng tặng…) để tên khác mã cha.</div>}
+      <Field label="Biến thể" tip="Phần mềm xử lý theo ô này, không theo tên" hint={kind?.note || undefined}>
+        <select className="select input" value={variantCode} onChange={(e) => { setVariantCode(e.target.value); setSendToTax(true); }}>
           {kinds.filter((k) => k.isActive && k.code !== 'legacy').map((k) => (
             <option key={k.code} value={k.code} title={k.note}>{variantLabel(k)}</option>
           ))}
