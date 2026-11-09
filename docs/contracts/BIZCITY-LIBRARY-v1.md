@@ -1,7 +1,7 @@
 # `bizcity_library@1` — Thư viện dùng chung
 <!-- [2026-11-07 09:28 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-44 (ADR-0032): hợp đồng khuôn chung cho thư viện tham chiếu — phong bì, mục, phiên bản ba tầng, luật khai báo, gợi ý, mã LIB-*, ô chọn, API -->
 
-> **Phiên bản:** 1.3.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
+> **Phiên bản:** 1.4.0-draft · 2026-11-07 · **Trạng thái:** Thi hành đợt A ([ADR-0032](../adr/ADR-0032-thu-vien-dung-chung-bizcity-library.md), S030-45); ô chọn trong ui-kit (A2), đọc tham số qua `getSetting` và `ctx` của SDK (đợt B) là đề xuất
 > **Lược đồ máy đọc:** [BIZCITY-LIBRARY-v1.schema.json](BIZCITY-LIBRARY-v1.schema.json) · **Kiểu TypeScript + bộ kiểm:** `packages/platform/src/core/libraries/` (`types.ts`, `engine.ts`, `index.ts`) · **Dùng chung với bộ kiểm chuẩn:** `scripts/thu-vien/thu-vien.mjs` · **API:** [docs/api/16-thu-vien.md](../api/16-thu-vien.md); mã `LIB-*` ở `packages/contracts/src/library-findings.ts` (gom vào `findings.ts`) · **Kiểm:** SC-LIB-1
 > **Liên quan:** [`bizcity_findings@1`](BIZCITY-FINDINGS-v1.md) (mã `LIB-*`), [`bizcity_settings@1`](BIZCITY-SETTINGS-MATRIX-v1.md) (giá trị của đơn vị), [ADR-0031](../adr/ADR-0031-policy-registry-rule-contracts.md) (chính sách của đơn vị)
 
@@ -46,6 +46,7 @@ libraries/<id>/
 | `owner` | chuỗi | có | ai duyệt nội dung (vd "kế toán trưởng", "Nhóm Lõi") |
 | `sources[]` | `{ title, kind: law · internal · reference · generated, date?, license?, note? }` | có, ≥ 1 | nguồn (ADR-0032 D-LIB-9) |
 | `generatedBy` | đường dẫn script | không | có thì không sửa tay `library.json` |
+| `optional` | boolean | không | thư viện tuỳ chọn — đơn vị tắt được ở cấu hình (1.4.0, S030-49b) <!-- [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b --> |
 | `itemSchema` | JSON Schema (2020-12, tập con §4.2) | có | khuôn `payload` |
 | `selector` | §9 | có | ô chọn |
 | `rules[]` | §6.2 | không | luật riêng |
@@ -205,6 +206,8 @@ Nhập bằng `aliases` không lỗi: kết quả trả `resolved: <code>` để
 | `GET /api/v1/libraries/:id` | `core.library.get` | phong bì (không `items`) + README |
 | `GET /api/v1/libraries/:id/items?q=&at=&group=&status=&limit=` | `core.library.items` | mục theo khuôn ô chọn `{ value, label, group, hint, deprecated, valueAt? }` + mục đầy đủ |
 | `POST /api/v1/libraries/:id/validate` | `core.library.validate` | `{ input \| inputs[], at?, source? }` → kết quả §6.3 (không ghi gì vào sổ; đếm một lượt / giá trị — §10.1) |
+| `GET / POST /api/v1/libraries/:id/config` | `core.library.config` / `core.library.configure` | cấu hình của đơn vị có phiên bản (`library_settings`, chỉ thêm): `enabled` (thư viện `optional`), `atPolicy`, `ruleLevels` (chỉ hạ, không `LIB-*`), `overrides` (ghi đè theo ngày, chặn kỳ khoá) — PHASE-030 · 26 §7.1 |
+| `POST /api/v1/libraries/:id/proposals`, `GET /api/v1/libraries/proposals`, `POST /api/v1/libraries/proposals/:pid/status` | `core.library.propose` / `proposals` / `proposal.update` | phiếu đề xuất của đơn vị (`library_change_requests`): gửi → nhận → đã vào bản / từ chối, người gửi rút |
 | `GET /api/v1/libraries/usage` | `core.library.usage` | `?from=&to=&library=&source=` → lượt qua / cảnh báo / chặn theo thư viện, nguồn; mã phát hiện nhiều nhất; mã lạ |
 
 Quyền: `catalog:read`. MCP: `ai: 'read'` cả bốn action (đọc đúng nguồn, không đoán nghĩa mã). Máy chủ đọc thư viện từ tệp lúc khởi động, giữ trong bộ nhớ theo `version` + `contentHash` (không CSDL). Module gọi bộ kiểm ở máy chủ qua `@bizcity/platform/core/libraries` (đợt A); qua `ctx` của SDK là đề xuất đợt B.
@@ -233,3 +236,4 @@ Với mỗi `libraries/*/library.json`:
 | 1.1.0-draft | 2026-11-07 | Thi hành đợt A (S030-45): bộ nạp + bộ kiểm có gợi ý ở Platform, `core.library.list / get / items / validate`, cổng L trong `bizcity_findings@1`, SC-LIB-1, thư viện `vn.tham-so-phap-ly` và `vn.ngay-nghi-le`; `percent` không giới hạn trên (làm thêm 150 / 200 / 300 %) <!-- [2026-11-07 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-45 --> |
 | 1.2.0-draft | 2026-11-08 | Lượt dùng (S030-48): `source` ở `core.library.validate`, `core.library.usage`, bảng `library_usage_daily` §10.1 — chỉ mã, không giá trị nhập <!-- [2026-11-08 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-48 --> |
 | 1.3.0-draft | 2026-11-08 | Căn cứ (S030-49a): `basis[].key` trỏ `vn.can-cu-phap-ly` (SC-LIB-1 kiểm), xác nhận theo đơn vị bằng bằng chứng `core.library.attest` / `core.library.attestations` <!-- [2026-11-08 05:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49a --> |
+| 1.4.0-draft | 2026-11-08 | Cấu hình theo đơn vị (S030-49b): trường `optional` ở phong bì; `core.library.config / configure` (ghi đè theo ngày → `valueSource`, `overridden`; hạ mức luật; tắt thư viện tuỳ chọn); phiếu đề xuất `core.library.propose / proposals / proposal.update` <!-- [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b --> |

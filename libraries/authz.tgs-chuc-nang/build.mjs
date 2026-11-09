@@ -43,6 +43,7 @@ export function build(readSource, prev) {
     owner: 'Nhóm Lõi + kế toán trưởng (duyệt ánh xạ)',
     sources: [{ title: 'Bảng phân quyền TGS 03.11.2026 (docs/standard/phan-quyen/tgs-nguon.csv)', kind: 'reference', date: '2026-11-07', note: 'Chủ dự án xác nhận được công bố làm thư viện mẫu; ánh xạ do scripts/phan-quyen/tgs-anh-xa.mjs sinh (ADR-0027 Phụ lục A, W5 đợt 2)' }],
     generatedBy: 'libraries/authz.tgs-chuc-nang/build.mjs',
+    optional: true, // [2026-11-08 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-49b: thư viện mẫu — đơn vị tắt được
     codePrefix: 'TGS',
     itemSchema: {
       type: 'object',

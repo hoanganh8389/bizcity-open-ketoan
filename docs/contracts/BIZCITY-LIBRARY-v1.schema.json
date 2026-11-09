@@ -30,6 +30,7 @@
       }
     },
     "generatedBy": { "type": "string" },
+    "optional": { "type": "boolean" },
     "itemSchema": { "type": "object" },
     "codePrefix": { "type": "string", "pattern": "^[A-Z]{2,8}$" },
     "selector": {
