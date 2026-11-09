@@ -2,7 +2,7 @@
 // [2026-11-09 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B1 / D032-13: HT08 đổi tên Bàn làm việc kế toán; thẻ Khoá thử hôm nay (mặc định) + thẻ Rà theo vai (bàn đánh giá cũ, giữ nguyên)
 /**
  * BÀN LÀM VIỆC KẾ TOÁN (HT08; trước là Bàn đánh giá, PHASE-022 30-UI-UX; đổi tên theo PHASE-032 D032-13).
- * Thẻ Khoá thử hôm nay: KhoaThuHomNay.tsx (B1). Thẻ Rà theo vai: phần dưới. Dữ liệu: GET /api/v1/system/review-board?persona= (core.review.board, chỉ đọc).
+ * Thẻ Việc hôm nay: ViecHomNay.tsx (B2a). Thẻ Khoá thử hôm nay: KhoaThuHomNay.tsx (B1). Thẻ Rà theo vai: phần dưới. Dữ liệu: GET /api/v1/system/review-board?persona= (core.review.board, chỉ đọc).
  * Trạng thái luôn có chữ; không điểm %; "Chưa kiểm được" không tính là đạt; không nút sửa sổ / tắt kiểm / bỏ qua.
  * "Kiểm lại" chạy đúng một mã (core.review.recheck). "In biên bản" in khung biên bản (CSS @media print).
  */
@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { RemedyView } from '@/components/RemedyView';
 import { KhoaThuHomNay } from './KhoaThuHomNay';
+import { ViecHomNay } from './ViecHomNay';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { dateTime } from '@/lib/format';
@@ -41,21 +42,22 @@ const ST: Record<Status, { text: string; cls: string; icon: string }> = {
 const ORDER: Status[] = ['error', 'warn', 'ok', 'block_ok', 'untested', 'elsewhere'];
 const actionable = (s: Status) => s === 'warn' || s === 'error';
 
-const TABS = [['khoa-thu', 'Khoá thử hôm nay'], ['ra-theo-vai', 'Rà theo vai']] as const;
+// [2026-11-09 10:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2a: thẻ Việc hôm nay đứng đầu (thứ tự năm thẻ ở 70 §5)
+const TABS = [['viec', 'Việc hôm nay'], ['khoa-thu', 'Khoá thử hôm nay'], ['ra-theo-vai', 'Rà theo vai']] as const;
 type Tab = (typeof TABS)[number][0];
 
 export function ReviewBoardPage() {
   const [params, setParams] = useSearchParams();
-  const tab: Tab = params.get('the') === 'ra-theo-vai' ? 'ra-theo-vai' : 'khoa-thu';
+  const tab: Tab = TABS.some(([k]) => k === params.get('the')) ? (params.get('the') as Tab) : 'viec';
   return (
     <div className="rb">
       <PageHeader title="Bàn làm việc kế toán" code="HT08" subtitle="Xem hôm nay sổ đã khoá được chưa, còn việc gì, và cách sửa — không ghi gì vào sổ" />
       <div className="tabs" role="tablist" style={{ marginBottom: 12 }}>
         {TABS.map(([k, l]) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'tab active' : 'tab'} onClick={() => setParams(k === 'khoa-thu' ? {} : { the: k }, { replace: true })}>{l}</button>
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'tab active' : 'tab'} onClick={() => setParams(k === 'viec' ? {} : { the: k }, { replace: true })}>{l}</button>
         ))}
       </div>
-      {tab === 'khoa-thu' ? <KhoaThuHomNay /> : <RaTheoVai />}
+      {tab === 'viec' ? <ViecHomNay /> : tab === 'khoa-thu' ? <KhoaThuHomNay /> : <RaTheoVai />}
     </div>
   );
 }

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 7
     },
     {
       "key": "merging",
@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 167
+      "count": 166
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 57
+      "count": 58
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 276
+      "count": 278
     }
   ],
   "items": [
@@ -2950,14 +2950,8 @@
       "title": "RV-R1-06: details.context + details.remedy cho lỗi Kernel (UNBALANCEDENTRY, PERIODLOCKED, POSTINGFAILED, LEDGERAPPENDONLY), withErrorContext, bảng ERRORREMEDY;…",
       "priority": "P1",
       "status": "done",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-022-error-context",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-022 · S022-17 — RV-R1-06: details.context + details.remedy cho lỗi Kernel, withErrorContext, …"
-      },
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -2993,6 +2987,17 @@
       "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 32
+    },
+    {
+      "id": "S022-21",
+      "phase": "PHASE-022",
+      "title": "BIZCITY-ERRORS 1.6.0 §4c: thêm mã chi tiết theo vùng vào ERRORREASONS + check SC-ERR-2 (R-ERR-11: reason viết trong mã phải có trong danh mục). Nối từng chỗ né…",
+      "priority": "P2",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 33
     },
     {
       "id": "S023-1",
@@ -5878,8 +5883,8 @@
       "phase": "PHASE-032",
       "title": "Hộp việc hằng ngày: chạy chẩn đoán L3 hiện có lúc 01:00 (bizcity.clock.daily, cạnh kiểm chuẩn đêm), lưu lượt, bảng B tối thiểu (HARD đang mở, tuổi việc, lệch k…",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 36

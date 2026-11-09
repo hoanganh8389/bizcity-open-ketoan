@@ -53,6 +53,50 @@ export const ERROR_REASONS = {
   DB_UNIQUE_VIOLATION: 'Trùng mã / khoá duy nhất',
   DB_IN_USE: 'Xoá một mã còn dữ liệu khác trỏ tới',
   DB_REFERENCE_MISSING: 'Tham chiếu tới mã chưa khai báo',
+  // [2026-11-09 10:44 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — S022-21 (BIZCITY-ERRORS 1.6.0 §4c, chủ dự án duyệt): mã chi tiết theo vùng; nối chỗ ném ở PR của chủ tệp
+  // Chứng từ, phiên bản
+  VERSION_STALE: 'Đã có phiên bản mới hơn bản gửi lên',
+  VERSION_CONTENT_MISMATCH: 'Cùng docKey và version nhưng nội dung khác bản đã ghi sổ / chờ ghi (DOCUMENT §7.3)',
+  DOC_NOT_DRAFT: 'Thao tác chỉ cho phiếu nháp; phiếu đã ghi sổ hoặc đang chờ huỷ',
+  DOC_CANCELLED: 'Phiếu đã huỷ',
+  DOC_SOURCE_READONLY: 'Chứng từ nhận từ hệ thống khác: sửa ở nguồn rồi gửi lại',
+  DOC_ALREADY_CONFIRMED: 'Đã xác nhận nhận tiền trước đó',
+  INTAKE_ITEM_CLOSED: 'Mục bể chờ đã đóng, không sửa được',
+  // Sổ cái
+  LEDGER_ALREADY_REVERSED: 'Bút toán đã đảo trước đó',
+  LEDGER_NO_SOURCE_EVENT: 'Bút toán không gắn sự việc gốc',
+  LEDGER_HEADER_EDIT_FROM_APP: 'Lần sửa đầu bút toán đã đi qua ứng dụng, không cần xác nhận',
+  // Định khoản
+  POSTING_RULE_MISSING: 'Chưa có luật định khoản cho loại chứng từ',
+  POSTING_CONFIG_MISSING: 'Thiếu lý do / tài khoản / nhóm hạch toán mặc định',
+  POSTING_REASON_KIND: 'Lý do sai loại cho chứng từ',
+  // Phân quyền (1 : 1 với mã quyết định AUTHZ-*, đổi - thành _)
+  AUTHZ_PERM_UNKNOWN: 'Quyền không có trong sổ quyền',
+  AUTHZ_PERM_REMOVED: 'Quyền đã bỏ',
+  AUTHZ_PERM_NOT_GRANTED_YET: 'Quyền chưa được duyệt cấp',
+  AUTHZ_HIGH_RISK_DELEGATION: 'Quyền rủi ro cao: khoá API / trợ lý không làm thay được',
+  AUTHZ_DENIED_BY_RULE: 'Luật quyền cấm thao tác này',
+  AUTHZ_CONDITION: 'Điều kiện của luật quyền không đạt',
+  AUTHZ_NO_ALLOW: 'Không luật nào cho phép',
+  AUTHZ_NO_ASSIGNMENT: 'Chưa được gán vai trò',
+  AUTHZ_SCOPE_NO_LOCATION: 'Tài nguyên không có vị trí (chi nhánh / kho) để xét phạm vi',
+  AUTHZ_SCOPE_NOT_USER: 'Phạm vi chỉ áp cho người dùng đăng nhập',
+  AUTHZ_SCOPE_TENANT: 'Tài nguyên thuộc đơn vị khác',
+  AUTHZ_USER_ONLY: 'Thao tác chỉ cho người đăng nhập, không qua khoá API',
+  AUTHZ_OWN_DOCUMENT_ONLY: 'Chỉ thao tác trên phiếu do mình lập',
+  AUTHZ_SELF_ASSIGN: 'Không tự gán / thu hồi vai trò của chính mình',
+  AUTHZ_ROLE_EXCEEDS_GRANTOR: 'Vai trò có quyền người gán không có',
+  AUTHZ_LAST_OWNER: 'Phải còn ít nhất một chủ sở hữu đang hoạt động',
+  // Thư viện
+  LIBRARY_BLOCKED: 'Mục thư viện chặn giá trị (details.code = LIB-…)',
+  LIBRARY_DISABLED: 'Đơn vị đã tắt thư viện',
+  LIBRARY_PROPOSAL_STATE: 'Phiếu đề xuất thư viện không chuyển được từ trạng thái hiện tại',
+  // Chính sách
+  POLICY_VERSION_GAP: 'Bản chính sách không nối tiếp bản trước',
+  POLICY_VERSION_CLOSED: 'Bản chính sách trước đã đóng hiệu lực',
+  POLICY_RETIRED: 'Chính sách đã ngừng, dùng mã mới',
+  POLICY_BACKDATED: 'Ngày áp sớm hơn bản trước (không viết lại quá khứ)',
+  POLICY_REVIEW_NOT_OPEN: 'Sự việc không có phát hiện chính sách cần xem',
 } as const;
 export type ErrorReason = keyof typeof ERROR_REASONS;
 
