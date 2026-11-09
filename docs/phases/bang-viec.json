@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 136
+      "count": 135
     },
     {
       "key": "partial",
@@ -5152,8 +5152,14 @@
       "title": "Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không đối tượng / nhân viên / ngân hàng (26 §11)",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-s52)",
+        "branch": "feat/s030-52-thu-vien-danh-muc",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-030 · S030-52 — Kho thư viện: ba thư viện danh mục chuẩn core.khoan-muc, vn.loai-thue, core.l…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 61
     },
