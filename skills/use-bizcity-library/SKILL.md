@@ -31,7 +31,7 @@ node tests/conformance/selfcheck.mjs --only SC-LIB         # bộ kiểm khuôn 
 
 Chưa `npm install` thì thay `npx bizcity` bằng `node packages/cli/bin/bizcity.mjs`. Ở dự án khác: `node <cli trong .bizcity/ketoan.json>`.
 
-`library check` dùng **đúng bộ kiểm của Core**, theo thứ tự: máy chủ (`BIZCITY_SERVER` + `BIZCITY_API_KEY`, có cấu hình riêng của đơn vị) → bản dựng `packages/platform/dist` (`npm run build -w @bizcity/platform`, không có cấu hình đơn vị) → **SKIP**. SKIP không phải PASS.
+`library check` dùng **đúng bộ kiểm của Core**, theo thứ tự: máy chủ (`BIZCITY_SERVER` + `BIZCITY_API_KEY`, có cấu hình riêng của đơn vị) → bản dựng của gói `@bizcity/platform` (`npm run build -w @bizcity/platform`, không có cấu hình đơn vị) → **SKIP**. SKIP không phải PASS.
 
 Mã thoát `library check`: `0` PASS · `1` FAIL (có chặn, hoặc thư viện không có / đơn vị đã tắt) · `2` SKIP · `3` WARN (có cảnh báo — đọc gợi ý, quyết cùng người dùng).
 

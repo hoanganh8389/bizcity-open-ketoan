@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 11
+      "count": 12
     },
     {
       "key": "merging",
@@ -5132,15 +5132,32 @@
       "line": 58
     },
     {
-      "id": "S030-51",
+      "id": "S030-51a",
       "phase": "PHASE-030",
-      "title": "B5 — gắn vào action (ctx.libraries, bizcitymodule@1 1.3.0 libraries[]) và cửa nạp (trường ↔ thư viện, chữ chốt K1/K2 riêng); SC-LIB-2; kết luận module (26 §4, …",
+      "title": "B5a — ctx.libraries trong action, libraries[] trong manifest (bizcitymodule@1 1.5.0-draft), SC-LIB-2, core.library.modules + tab Module (26 §4.1)",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-b5a)",
+        "branch": "feat/s030-51a-ctx-libraries",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-030 · S030-51a — Kho thư viện B5a: ctx.libraries trong action, libraries[] trong manifest (bi…"
+      },
+      "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
+      "line": 59
+    },
+    {
+      "id": "S030-51b",
+      "phase": "PHASE-030",
+      "title": "B5b — cửa nạp: bảng gắn trường ↔ thư viện, kiểm ở L3, K1 (26 §4.1 ⑤)",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
-      "line": 59
+      "line": 60
     },
     {
       "id": "S030-52",
@@ -5151,7 +5168,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
-      "line": 60
+      "line": 61
     },
     {
       "id": "S030-53",
@@ -5162,7 +5179,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
-      "line": 61
+      "line": 62
     },
     {
       "id": "S031-1",
