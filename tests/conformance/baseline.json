@@ -1,7 +1,7 @@
 {
   "contract": "bizcity_check_baseline@1",
   "note": "Nợ đã biết. Chỉ được BỚT khi đã sửa (chạy --update-baseline). Thêm nợ mới cần người duyệt nhóm Lõi (CODEOWNERS) và trường \"why\"/\"ref\" (ADR, mã audit).",
-  "updatedAt": "2026-11-04",
+  "updatedAt": "2026-11-09",
   "checks": {
     "SC-API-2": {
       "title": "Tham số true/false dùng queryBool, không z.coerce.boolean()",
@@ -800,45 +800,6 @@
           "fp": "SC-DATA-5|db/migrations/0009_goc_tai_san.sql|asset_depreciation_overrides",
           "file": "db/migrations/0009_goc_tai_san.sql",
           "message": "bảng asset_depreciation_overrides không có tenant_id (bảng con phải lọc qua bảng cha — RLS không làm được)"
-        }
-      ]
-    },
-    "SC-EVD-1": {
-      "title": "Không ghi nhật ký nghiệp vụ ra tệp (appendFile / createWriteStream / .jsonl)",
-      "ref": "Audit A-18 · chuyển nhật ký JSONL vào bằng chứng CSDL (PHASES 2.4)",
-      "debts": [
-        {
-          "fp": "SC-EVD-1|apps/api/src/addins/tro-ly/store.ts|writeFile",
-          "file": "apps/api/src/addins/tro-ly/store.ts",
-          "message": "await writeFile(tmp, list.map((x) => JSON.stringify(x)).join('\\n') + (list.length ? '\\n' : ''), 'utf8');"
-        },
-        {
-          "fp": "SC-EVD-1|apps/api/src/addins/tro-ly/store.ts|writeFile",
-          "file": "apps/api/src/addins/tro-ly/store.ts",
-          "message": "await writeFile(path.join(imageDir(), name), buf);"
-        },
-        {
-          "fp": "SC-EVD-1|apps/api/src/phan-he/mua-hang/log.ts|appendFile",
-          "file": "apps/api/src/phan-he/mua-hang/log.ts",
-          "message": "await appendFile(path.join(dir, `${ts.slice(0, 7)}.jsonl`), rows.map((r) => JSON.stringify({ ts, ...r })).join('\\n') + '\\n', 'utf8');"
-        }
-      ]
-    },
-    "SC-KERNEL-5": {
-      "title": "Luật định khoản không viết cứng số tài khoản (tra qua AccountResolver)",
-      "ref": "R-POST-2 · chuyển sang AccountResolver / cờ tài khoản",
-      "debts": [
-        {
-          "fp": "SC-KERNEL-5|packages/kernel/src/modules/posting/rules/stock.rule.ts|account '157'",
-          "file": "packages/kernel/src/modules/posting/rules/stock.rule.ts",
-          "message": "số tài khoản '157' viết cứng: const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));",
-          "why": "Nợ cũ đổi đường dẫn (trước: apps/api/src/modules/posting/rules/stock.rule.ts) khi dời Kernel sang packages/kernel 2026-11-01 (D010-7 chặng 3). 157 nằm trong hàm phân loại tài khoản tồn kho (đầu 15 trừ 157), không phải chỗ định khoản; gỡ khi danh mục tài khoản có thuộc tính tồn kho / hàng đang đi đường.",
-          "ref": "PHASE-010 D010-7"
-        },
-        {
-          "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
-          "file": "apps/api/src/phan-he/mua-hang/posting.ts",
-          "message": "số tài khoản '112' viết cứng: docType: money.startsWith('112') ? 'bank_payment' : 'payment', branchCode: d.branchCode, docDate: d.docDate, docNo: undefined,"
         }
       ]
     },
@@ -1818,8 +1779,48 @@
         }
       ]
     },
+    "SC-EVD-1": {
+      "title": "Không ghi nhật ký nghiệp vụ ra tệp (appendFile / createWriteStream / .jsonl)",
+      "ref": "Audit A-18 · chuyển nhật ký JSONL vào bằng chứng CSDL (PHASES 2.4)",
+      "debts": [
+        {
+          "fp": "SC-EVD-1|apps/api/src/addins/tro-ly/store.ts|writeFile",
+          "file": "apps/api/src/addins/tro-ly/store.ts",
+          "message": "await writeFile(tmp, list.map((x) => JSON.stringify(x)).join('\\n') + (list.length ? '\\n' : ''), 'utf8');"
+        },
+        {
+          "fp": "SC-EVD-1|apps/api/src/addins/tro-ly/store.ts|writeFile",
+          "file": "apps/api/src/addins/tro-ly/store.ts",
+          "message": "await writeFile(path.join(imageDir(), name), buf);"
+        },
+        {
+          "fp": "SC-EVD-1|apps/api/src/phan-he/mua-hang/log.ts|appendFile",
+          "file": "apps/api/src/phan-he/mua-hang/log.ts",
+          "message": "await appendFile(path.join(dir, `${ts.slice(0, 7)}.jsonl`), rows.map((r) => JSON.stringify({ ts, ...r })).join('\\n') + '\\n', 'utf8');"
+        }
+      ]
+    },
+    "SC-KERNEL-5": {
+      "title": "Luật định khoản không viết cứng số tài khoản (tra qua AccountResolver)",
+      "ref": "R-POST-2 · chuyển sang AccountResolver / cờ tài khoản",
+      "debts": [
+        {
+          "fp": "SC-KERNEL-5|packages/kernel/src/modules/posting/rules/stock.rule.ts|account '157'",
+          "file": "packages/kernel/src/modules/posting/rules/stock.rule.ts",
+          "message": "số tài khoản '157' viết cứng: const isInventoryAccount = (code: string | null | undefined) => Boolean(code && code.startsWith('15') && !code.startsWith('157'));",
+          "why": "Nợ cũ đổi đường dẫn (trước: apps/api/src/modules/posting/rules/stock.rule.ts) khi dời Kernel sang packages/kernel 2026-11-01 (D010-7 chặng 3). 157 nằm trong hàm phân loại tài khoản tồn kho (đầu 15 trừ 157), không phải chỗ định khoản; gỡ khi danh mục tài khoản có thuộc tính tồn kho / hàng đang đi đường.",
+          "ref": "PHASE-010 D010-7"
+        },
+        {
+          "fp": "SC-KERNEL-5|apps/api/src/phan-he/mua-hang/posting.ts|account '112'",
+          "file": "apps/api/src/phan-he/mua-hang/posting.ts",
+          "message": "số tài khoản '112' viết cứng: docType: money.startsWith('112') ? 'bank_payment' : 'payment', branchCode: d.branchCode, docDate: d.docDate, docNo: undefined,"
+        }
+      ]
+    },
     "SC-STD-5": {
       "title": "Tiền trong modules/**: làm tròn bằng roundMoney, chia bằng allocate / schedule (STD-030-5, R-MONEY)",
+      "ref": "STD-030-5 · R-MONEY-2 · PHASE-030 N030-2 (mua hàng chuyển sang roundMoney khi domain về modules/, ADR-0024)",
       "debts": [
         {
           "fp": "SC-STD-5|modules/mua-hang/domain/src/dat-hang.ts|round:priceDiffPct:receivedPrice!==null&&x.orderPrice?Math.round(((receivedPrice-x.orderPrice)/x",
@@ -1988,19 +1989,6 @@
           "file": "modules/mua-hang/domain/src/hoa-don.ts",
           "message": "export const taxCodeOfRate = (rate: number | null) => (rate === null ? 'V13K' : `V${String(Math.round(rate)).padStart(2, '0')}`); — làm tròn tiền bằng roundMoney (nửa xa số 0), không Math.round / toFixed (PHASE-030 · 18 §2.1)",
           "why": "Nợ có sẵn của phân hệ Mua hàng (modules/mua-hang/domain): làm tròn tiền bằng Math.round trên số không âm (cho cùng kết quả với roundMoney); đổi sang roundMoney khi domain được rà theo N030-2, không đổi hành vi tính tiền trong PR thư viện."
-        }
-      ],
-      "ref": "STD-030-5 · R-MONEY-2 · PHASE-030 N030-2 (mua hàng chuyển sang roundMoney khi domain về modules/, ADR-0024)"
-    },
-    "SC-FLOW-1": {
-      "title": "Bảng giữ chỗ CLAIMS.md đúng khuôn, các dòng đang làm không chồng phạm vi và mỗi nhánh một dòng (R-FLOW-1 / 3 / 6)",
-      "debts": [
-        {
-          "fp": "SC-FLOW-1|docs/phases/CLAIMS.md|chong:feat/phase-014-audit-in-action:feat/s030-51a-ctx-libraries:packages/platform/src/core/actions.ts:packages/platform/src/core/actions.ts",
-          "file": "docs/phases/CLAIMS.md",
-          "message": "\"PHASE-014 · W6 đợt 8b — nhật k\" và \"PHASE-030 · S030-51a — Kho thư\" chồng phạm vi: packages/platform/src/core/actions.ts ~ packages/platform/src/core/actions.ts (R-FLOW-3: một phạm vi một người)",
-          "why": "S030-51a CHỈ THÊM một chỗ gắn ctx.libraries vào bối cảnh action (cạnh ctx.evidence / ctx.meta, tệp mới libraries/context.ts giữ logic). Dòng PHASE-014 W6 đợt 8b không có commit từ 2026-11-04 (R-FLOW-6: coi như đã nhả, phải hỏi chủ); chủ dự án duyệt chồng phạm vi 2026-11-09. Nhánh nào vào sau gộp tay hai phần.",
-          "ref": "CLAIMS dòng PHASE-030 · S030-51a; dòng PHASE-014 W6 đợt 8b; 26 §4.1"
         }
       ]
     }
