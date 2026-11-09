@@ -22,7 +22,7 @@ Mở thẻ là phần mềm tự kiểm toàn bộ sổ (tự chẩn đoán toà
 - Bấm **Cách khắc phục** để xem *Chỗ bị*, *Vì sao* và các bước sửa. Sửa xong bấm **Kiểm lại** ở đúng dòng đó: phần mềm kiểm lại riêng việc ấy và báo ngay.
 - Mục **Đã kiểm, đạt** liệt kê các phép kiểm không thấy vấn đề.
 
-Lưu ý: phép kiểm *hàng, tiền đang chuyển giữa chi nhánh* hiện còn báo cả hàng đi đường hợp lệ. Dòng đó có ghi chú; chỉ cần xử lý khi số trên tài khoản trung gian lệch với các phiếu chưa nhận.
+Phép kiểm *hàng, tiền đang chuyển giữa chi nhánh* không báo hàng đi đường trong 30 ngày: đó là bình thường. Nó chỉ báo khi còn treo quá 30 ngày mà nơi nhận chưa ghi, hoặc khi nơi nhận ghi nhiều hơn nơi xuất.
 
 Chưa có trong bản này: phần mềm tự kiểm lúc 01:00 mỗi đêm, nhắc việc theo ngày / tuần.
 
