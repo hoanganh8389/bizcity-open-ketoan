@@ -12,7 +12,7 @@ import { P } from '../du-lieu';
 import '../mua-hang.css';
 
 interface SuffixRow { suffix: string; label: string; count: number; samples: { sku: string; name: string; parentSku: string }[]; separate: boolean }
-interface VariantKind { code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; allowNumeric: boolean; note: string; products: number }
+interface VariantKind { code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; note: string; products: number }
 
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: bảng biến thể thay chữ cuối mã, chỉ đọc (đóng góp)
 const TAX_FLOW: Record<string, string> = { invoice: 'Theo hoá đơn', never: 'Không bao giờ', undecided: 'Chưa quyết định' };
@@ -34,7 +34,6 @@ function BangBienThe() {
             <th className="num" title="Số mặt hàng đang mang biến thể này">Số mã</th>
             <th title="Hàng có được đưa sang dữ liệu thuế không">Sang thuế</th>
             <th title="Khi sang thuế thì ghi theo mã nào">Mã khi sang thuế</th>
-            <th title="Có dùng được với mã toàn số chưa. Biến thể ảnh hưởng thuế chỉ mở khi quầy bán đã đọc ô này">Mã số</th>
             <th title="Giải thích ngắn">Ghi chú</th>
           </tr></thead>
           <tbody>
@@ -45,7 +44,6 @@ function BangBienThe() {
                 <td className="num">{k.products.toLocaleString('vi-VN')}</td>
                 <td className={k.taxFlow === 'never' ? 'neg' : ''}>{TAX_FLOW[k.taxFlow] ?? k.taxFlow}</td>
                 <td>{TAX_SKU[k.taxSku] ?? k.taxSku}</td>
-                <td>{k.allowNumeric ? 'Đã mở' : 'Chưa'}</td>
                 <td className="muted" style={{ fontSize: 12 }}>{k.note}</td>
               </tr>
             ))}

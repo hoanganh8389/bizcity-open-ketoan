@@ -15,7 +15,7 @@ import type { Db } from '../../db/client.js';
 import { isItemId, ITEM_CODE_KIND_RE } from '@ketoan/contracts';
 import { applyItemGate } from '../products/item.hints.js';
 // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: core.item.add-child, khoá đổi mã có đuôi (đóng góp)
-import { addChildProduct, guardMerge, guardRename } from './san-pham-con.js';
+import { addChildProduct, guardMerge } from './san-pham-con.js';
 
 const tags = ['Mặt hàng'];
 const refShape = { itemId: z.string().trim().max(26).optional(), sku: z.string().trim().max(160).optional() };
@@ -61,11 +61,10 @@ const renameCode = defineAction({
     if (busy) throw Errors.conflict(`Mã ${i.newSku} đang là mặt hàng khác`);
     const taken = await sql<{ id: string | null }>`SELECT bizcity_item_code_taken(${tenantId}::bigint, ${i.newSku}) AS id`.execute(tx);
     if (taken.rows[0]?.id) throw Errors.conflict(`Mã ${i.newSku} đã từng thuộc mặt hàng khác, không dùng lại được`);
-    const followVariant = await guardRename(tx, tenantId, cur.sku, i.newSku);
+    // Biến thể đi theo mặt hàng: đổi 110051001Z → 11005100103 vẫn là Nội bộ (PHASE-026).
     await setSession(tx, ctx.legacyAuth.actor, i.reason);
     const n = await tx.updateTable('products').set({ sku: i.newSku, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', cur.sku).executeTakeFirst();
     if (!Number(n.numUpdatedRows)) throw Errors.notFound(`mặt hàng ${cur.sku} trong danh mục`);
-    if (followVariant) await sql`UPDATE products SET variant_code = ${followVariant} WHERE tenant_id = ${tenantId} AND sku = ${i.newSku}`.execute(tx);
     await sql`INSERT INTO catalog_tombstones (tenant_id, entity, key, replaced_by_item_id) VALUES (${tenantId}, 'product', ${cur.sku}, ${cur.itemId})`.execute(tx);
     const out = { itemId: cur.itemId, fromSku: cur.sku, toSku: i.newSku, validFrom: await openFrom(tx, cur.itemId), reason: i.reason };
     ctx.evidence.note('result', out);

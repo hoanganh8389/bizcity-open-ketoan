@@ -12,13 +12,13 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
-### Sản phẩm con và ô Biến thể, giai đoạn 1 chuyển mã số (PHASE-026) <!-- [2026-11-07 06:20 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1 (đóng góp) -->
+### Sản phẩm con và ô Biến thể, giai đoạn 1 chuyển mã số (PHASE-026) <!-- [2026-11-07 06:20 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1 (đóng góp) --> <!-- [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm, migration 0092 (đóng góp) -->
 
-- **Thêm:** bảng `item_variant_kinds`, cột `products.variant_code` tự điền theo đuôi mã (migration 0078); `POST /api/v1/items/add-child`, `GET /api/v1/items/variant-kinds`; nút Thêm sản phẩm con và cột Biến thể ở DM10; bảng Biến thể ở MH26; loại hàng chuẩn. Phương án: `docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md`.
-- **Đổi:** MH22 không tự nhận khi NCC dùng lại mã cho hàng khác hẳn, đưa về gợi ý. Đổi mã có đuôi `K`, `M`, `Q`, `T`, `Z` phải giữ đuôi. Không gộp hàng Nội bộ với hàng có sang thuế.
+- **Thêm:** bảng `item_variant_kinds`, cột `products.variant_code` tự điền theo đuôi mã (migration 0092); `POST /api/v1/items/add-child`, `GET /api/v1/items/variant-kinds`; nút Thêm sản phẩm con (tên + Biến thể, chọn được mọi biến thể) và cột Biến thể ở DM10; ô Biến thể sửa được (`variantCode` ở `PUT /api/v1/catalog/products/:sku`); luồng `/api/v1/catalog/feed/products` gửi `variantCode`; bảng Biến thể ở MH26; loại hàng chuẩn. Phương án: `docs/nghiep-vu/12-phuong-an-bo-chu-khoi-ma-hang.md`; xuyên suốt với WordPress: `docs/nghiep-vu/14-ma-so-bien-the-xuyen-suot.md`.
+- **Đổi:** MH22 không tự nhận khi NCC dùng lại mã cho hàng khác hẳn, đưa về gợi ý. Đổi mã không làm đổi biến thể (biến thể đi theo mặt hàng). Không gộp hàng Nội bộ với hàng có sang thuế. Bỏ cách tạo mã có đuôi ở DM10 (chọn đuôi, nút Tạo mã có đuôi).
 - **Sửa:** không.
-- **Thay đổi định khoản:** không. Phần mềm vẫn xử lý theo đuôi mã, ô Biến thể mới chỉ ghi nhận.
-- **Nâng cấp cần làm:** chạy migration 0078. Khoảng 9 giây trên 42.016 dòng; không đổi `updated_at`, hệ thống bán hàng không phải kéo lại danh mục.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0092. Khoảng 9 giây trên 42.016 dòng; không đổi `updated_at`. Hệ thống bán hàng (tgs_accounting_bridge) tự kéo lại danh mục một lượt để nhận `itemId` và `variantCode`.
 ### Màn "Sửa đầu bút toán" (SC02) và xác nhận của kế toán trưởng (PHASE-004 S004-16, D004-14, D004-16) <!-- [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 -->
 
 - **Thêm:** `GET /api/v1/ledger/entry-edits` (quyền `ledger:read`) — mọi lần đổi đầu bút toán từ nhật ký của trigger 0089, nguồn **Ứng dụng** / **Ngoài ứng dụng** (ghép `_txid`), cột trước → sau, vai trò / đăng nhập / ứng dụng / máy, trạng thái xác nhận, tóm tắt; lọc ngày hạch toán, nguồn, cột, số bút toán, trạng thái. Action `core.ledger.header-edit-ack` (`POST …/entry-edits/ack`, quyền `periods:lock`, chỉ người dùng, lý do ≥ 10 ký tự): bằng chứng của action là bản ghi xác nhận, chỉ thêm. Màn **SC02** ở menu Kế toán › Định khoản (bộ lọc trên địa chỉ, cột `content_hash` ẩn mặc định). Hướng dẫn `docs/huong-dan/sua-dau-but-toan.md`. Test `entry-edits` (5 ca).

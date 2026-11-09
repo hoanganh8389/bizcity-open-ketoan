@@ -1,11 +1,12 @@
 // @bizcity-layer M data/masterdata
 // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: danh mục biến thể, Thêm sản phẩm con, khoá đổi mã có đuôi (đóng góp)
+// [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm: mọi biến thể dùng được với mã số; đổi mã không đổi biến thể (đóng góp)
 /**
  * SẢN PHẨM CON: mã con = mã cha + 2 số thứ tự, không mang nghĩa (docs/nghiep-vu/12). Họ mã một cấp, quan hệ lưu ở parent_sku / parent_item_id.
  *
- * Khoá an toàn tới GĐ 3: quầy bán và phiếu mua còn nhận biến thể bằng chữ cuối mã. Nên:
- *   - mã con toàn số chỉ mở cho biến thể có allow_numeric (hiện là Thường);
- *   - không đổi mã có đuôi sang mã mất đuôi, nếu không hàng Z sẽ không được tách và bị sang thuế.
+ * Mọi biến thể (Thường, Nội bộ, Kẹp quà…) đều là sản phẩm con: người dùng gõ tên tuỳ ý và tích một biến thể.
+ * Phần mềm chỉ đọc ô Biến thể (products.variant_code), không đọc tên, không đọc chữ cuối mã.
+ * Biến thể thuộc về mặt hàng, không thuộc về mã: đổi mã không làm đổi biến thể.
  * Mọi hàm chạy trong giao dịch của action. Cột variant_code đọc bằng sql vì types.ts đang có người giữ chỗ.
  */
 import { sql } from 'kysely';
@@ -14,15 +15,15 @@ import { Errors } from '../../core/errors.js';
 import { getProduct, saveProduct } from './catalog.service.js';
 
 export interface VariantKind {
-  code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; allowNumeric: boolean; isActive: boolean; note: string; products: number;
+  code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; isActive: boolean; note: string; products: number;
 }
 
-type KindRow = { code: string; name: string; legacy_suffix: string; tax_flow: string; tax_sku: string; allow_numeric: boolean; is_active: boolean; note: string; products: string };
+type KindRow = { code: string; name: string; legacy_suffix: string; tax_flow: string; tax_sku: string; is_active: boolean; note: string; products: string };
 
 /** Danh mục biến thể kèm số mặt hàng. Đơn vị tạo sau migration được nạp bộ chuẩn ở lần đọc đầu. */
 export async function listVariantKinds(trx: Db, tenantId: string): Promise<VariantKind[]> {
   const read = () => sql<KindRow>`
-    SELECT k.code, k.name, k.legacy_suffix, k.tax_flow, k.tax_sku, k.allow_numeric, k.is_active, k.note,
+    SELECT k.code, k.name, k.legacy_suffix, k.tax_flow, k.tax_sku, k.is_active, k.note,
            (SELECT COUNT(*) FROM products p WHERE p.tenant_id = k.tenant_id AND p.variant_code = k.code)::text AS products
       FROM item_variant_kinds k WHERE k.tenant_id = ${tenantId} ORDER BY k.sort_order, k.code`.execute(trx);
   let rows = (await read()).rows;
@@ -30,7 +31,7 @@ export async function listVariantKinds(trx: Db, tenantId: string): Promise<Varia
     await sql`SELECT bizcity_seed_variant_kinds(${tenantId}::bigint)`.execute(trx);
     rows = (await read()).rows;
   }
-  return rows.map((r) => ({ code: r.code, name: r.name, legacySuffix: r.legacy_suffix, taxFlow: r.tax_flow, taxSku: r.tax_sku, allowNumeric: r.allow_numeric, isActive: r.is_active, note: r.note, products: Number(r.products) }));
+  return rows.map((r) => ({ code: r.code, name: r.name, legacySuffix: r.legacy_suffix, taxFlow: r.tax_flow, taxSku: r.tax_sku, isActive: r.is_active, note: r.note, products: Number(r.products) }));
 }
 
 /** Mã con kế tiếp: số lớn nhất từng dùng + 1, kể cả mã đã đổi hoặc đã xoá (mã không dùng lại, R-ITEM-0). Quá 99 thì dùng 3 số. */
@@ -58,9 +59,6 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
   const kinds = await listVariantKinds(trx, tenantId);
   const kind = kinds.find((k) => k.code === i.variantCode);
   if (!kind || !kind.isActive) throw Errors.validation(`Biến thể ${i.variantCode} không có hoặc đã ngừng dùng`);
-  if (!kind.allowNumeric) {
-    throw Errors.validation(`Biến thể ${kind.name} chưa dùng được với mã số, vì quầy bán và phiếu mua còn nhận theo chữ cuối mã. Hiện vẫn tạo bằng mã có đuôi${kind.legacySuffix ? ` ${kind.legacySuffix}` : ''}`);
-  }
 
   const dup = await sql<{ sku: string }>`
     SELECT sku FROM products WHERE tenant_id = ${tenantId} AND parent_sku = ${parentSku}
@@ -77,9 +75,8 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
     exciseRate: parent.excise_rate === null ? null : Number(parent.excise_rate),
     origin: parent.origin, weightKg: parent.weight_kg === null ? null : Number(parent.weight_kg),
     isMain: parent.is_main, isUnder24m: parent.is_under_24m, exportAdjust: parent.export_adjust,
-    units: undefined,
+    units: undefined, variantCode: kind.code,
   }, { isNew: true, source: 'manual' });
-  await sql`UPDATE products SET variant_code = ${kind.code} WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(trx);
   if (i.noSaleParent && !parent.no_sale) {
     await trx.updateTable('products').set({ no_sale: true, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', parentSku).execute();
   }
@@ -98,23 +95,4 @@ export async function guardMerge(trx: Db, tenantId: string, fromSku: string, toS
   if (from && to && (from === 'internal') !== (to === 'internal')) {
     throw Errors.validation(`Không gộp ${fromSku} vào ${toSku}: một mã là hàng Nội bộ không sang thuế, mã kia có sang thuế`);
   }
-}
-
-/**
- * Khoá đổi mã tới GĐ 3: biến thể chưa dùng được với mã số thì mã mới phải giữ đuôi. Trả biến thể mã mới phải mang:
- * mã thường đổi sang mã có đuôi thì ô đi theo đuôi, để ô và cách quầy bán xử lý không lệch nhau.
- */
-export async function guardRename(trx: Db, tenantId: string, fromSku: string, newSku: string): Promise<string | null> {
-  const cur = await sql<{ variant_code: string; allow_numeric: boolean | null; legacy_suffix: string | null; name: string | null }>`
-    SELECT p.variant_code, k.allow_numeric, k.legacy_suffix, k.name FROM products p
-      LEFT JOIN item_variant_kinds k ON k.tenant_id = p.tenant_id AND k.code = p.variant_code
-     WHERE p.tenant_id = ${tenantId} AND p.sku = ${fromSku}`.execute(trx);
-  const row = cur.rows[0];
-  const target = (await sql<{ v: string }>`SELECT bizcity_variant_from_sku(${newSku}) AS v`.execute(trx)).rows[0]!.v;
-  if (!row) return target === 'normal' ? null : target;
-  if (row.variant_code !== 'normal' && row.variant_code !== 'legacy' && row.allow_numeric !== true && target !== row.variant_code) {
-    const sf = row.legacy_suffix ? ` đuôi ${row.legacy_suffix}` : '';
-    throw Errors.validation(`Mã ${fromSku} là biến thể ${row.name ?? row.variant_code}. Tạm thời mã mới phải giữ${sf}, vì quầy bán và phiếu mua còn nhận theo chữ cuối mã. Đổi sang mã số sẽ mở ở giai đoạn sau`);
-  }
-  return target === 'normal' || target === row.variant_code ? null : target;
 }

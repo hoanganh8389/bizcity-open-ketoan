@@ -167,7 +167,7 @@ export function ProductsPage() {
     { key: 'sku', header: 'Mã hàng', type: 'code', width: 150, render: (p) => (isChild(p)
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
-    { key: 'variantCode', header: 'Biến thể', width: 130, title: 'Nghĩa của đuôi mã cũ. Thường để trống. Tạm thời phần mềm vẫn xử lý theo đuôi mã', value: (p) => (p.variantCode && p.variantCode !== 'normal' ? variantLabel(kindOf(p.variantCode), p.variantCode) : '') },
+    { key: 'variantCode', header: 'Biến thể', width: 130, title: 'Biến thể của sản phẩm con: phần mềm tách hàng Nội bộ khỏi thuế và xử lý theo ô này. Thường để trống', value: (p) => (p.variantCode && p.variantCode !== 'normal' ? variantLabel(kindOf(p.variantCode), p.variantCode) : '') },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },

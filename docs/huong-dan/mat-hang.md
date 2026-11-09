@@ -21,19 +21,19 @@ Bấm **Thêm**, hoặc bấm đúp một dòng. Form có 4 thẻ, bấm **Ghi**
 
 ### Sản phẩm con và Biến thể
 
-Mở một mặt hàng, bấm **Thêm sản phẩm con**, gõ tên rồi bấm tạo.
+Mọi biến thể đều là sản phẩm con: màu, size, hàng nội bộ, kẹp quà… Mở mã cha, bấm **Thêm sản phẩm con**, gõ tên, chọn **Biến thể**, bấm tạo.
 
-- **Màu, size ghi vào tên**, ví dụ *Áo gió xanh L*. Ô tên đã điền sẵn tên mã cha.
+- **Tên đặt tuỳ ý**, ví dụ *Bình sữa xanh L*, *Sữa A hàng tặng*. Phần mềm không đọc tên.
+- **Biến thể** quyết định cách xử lý: *Nội bộ* tự tách khỏi thuế ở quầy bán và hoá đơn; *Thường* là hàng bình thường.
 - **Mã tự cấp** = mã cha + 2 số. Hai số này không mang nghĩa.
 - Đơn vị tính, nhóm hàng, thuế, dấu dưới 24 tháng lấy theo mã cha. Giá bán khai sau.
 - **Mã cha vẫn bán bình thường.** Chỉ tích *chỉ để gom* khi sản phẩm không có bản chung.
-- Không chọn được kẹp quà, khuyến mại, chia giá, có tem, nội bộ cho mã số. Các loại này tạm dùng **Tạo mã có đuôi**, vì quầy bán còn nhận theo chữ cuối mã.
 
-Cột **Biến thể** tự điền theo đuôi mã, ví dụ đuôi `Z` là *Nội bộ*. Tạm thời phần mềm vẫn xử lý theo đuôi, ô này để đối chiếu.
+Ô **Biến thể** sửa được ở thẻ Thông tin. Mã cũ còn đuôi thì ô đã điền sẵn theo đuôi, ví dụ đuôi `Z` là *Nội bộ*. Mọi nơi (quầy bán, hoá đơn, chính sách) xử lý theo ô này, không theo chữ cuối mã.
 
 **Loại hàng** (hàng bán, quà, vật tư…) dùng để lọc và báo cáo, không làm đổi định khoản. Mã nào chưa nhận ra thì để trống, người rà tự chọn.
 
-Đổi mã: mã có đuôi `K`, `M`, `Q`, `T`, `Z` tạm thời phải giữ đuôi. Gộp mã: không gộp hàng Nội bộ với hàng có sang thuế.
+Đổi mã: biến thể đi theo mặt hàng, ví dụ `110051001Z` đổi thành `11005100103` vẫn là *Nội bộ*. Gộp mã: không gộp hàng Nội bộ với hàng có sang thuế.
 
 ### 2. Đơn vị tính
 

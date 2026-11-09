@@ -33,6 +33,8 @@ export interface ProductInput {
   isMain?: boolean; isUnder24m?: boolean; noSale?: boolean; exportAdjust?: boolean; isKct?: boolean; trackIdentifier?: boolean;
   /** Mã hàng cha (họ mã 1 cấp); null = không có. Tạo mới mà không gửi → tự gợi ý theo mã (mã 9 số + đuôi, trừ T). */
   parentSku?: string | null;
+  /** Biến thể (item_variant_kinds.code). Căn cứ duy nhất để tách hàng nội bộ, sang thuế; không suy từ mã. */
+  variantCode?: string;
   units?: UnitInput[];
   prices?: PriceInput[];
 }
@@ -229,6 +231,12 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
     await trx.insertInto('products').values({ tenant_id: tenantId, sku, name: b.name ?? '', unit: (patch.unit as string) ?? b.unit ?? '', source_system: opts.source ?? 'manual' }).execute();
   }
   await trx.updateTable('products').set(patch).where('tenant_id', '=', tenantId).where('sku', '=', sku).execute();
+  // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — ô Biến thể sửa được, lưu qua saveProduct; luồng kéo danh mục gửi variantCode (đóng góp)
+  if (b.variantCode !== undefined) {
+    const k = await sql<{ code: string }>`SELECT code FROM item_variant_kinds WHERE tenant_id = ${tenantId} AND code = ${b.variantCode} AND is_active`.execute(trx);
+    if (!k.rows[0]) throw Errors.validation(`Biến thể ${b.variantCode} không có hoặc đã ngừng dùng`);
+    await sql`UPDATE products SET variant_code = ${b.variantCode}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND variant_code <> ${b.variantCode}`.execute(trx);
+  }
   // Hàng KCT (thuế bán ra KCT / R00K) chưa khai thuế mua vào → V13K (không chịu thuế đầu vào), không để phiếu mua tự lấy 8%.
   await trx.updateTable('products').set({ tax_in_code: 'V13K' }).where('tenant_id', '=', tenantId).where('sku', '=', sku).where('tax_in_code', 'is', null).where('tax_out_code', 'in', [...KCT_OUT_CODES]).execute();
 
@@ -433,7 +441,7 @@ export async function feedProducts(trx: Db, tenantId: string, after?: string, li
   const c = parseCursor(after);
   const rows = await trx.selectFrom('products as p')
     .leftJoin('tax_codes as t', (j) => j.onRef('t.tenant_id', '=', 'p.tenant_id').onRef('t.code', '=', 'p.tax_out_code'))
-    .select(['p.id', ...PRODUCT_COLS.map((k) => `p.${k}` as const), 't.rate as tax_rate'])
+    .select(['p.id', ...PRODUCT_COLS.map((k) => `p.${k}` as const), 't.rate as tax_rate', sql<string>`p.variant_code`.as('variant_code')])
     .where('p.tenant_id', '=', tenantId)
     .where((eb) => eb.or([eb('p.updated_at', '>', new Date(c.at)), eb.and([eb('p.updated_at', '=', new Date(c.at)), eb('p.id', '>', c.id)])]))
     .orderBy('p.updated_at').orderBy('p.id').limit(limit).execute();

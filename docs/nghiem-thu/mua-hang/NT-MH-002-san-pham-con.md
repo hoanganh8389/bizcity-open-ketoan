@@ -20,8 +20,8 @@ Danh mục mặt hàng có sẵn. Không cần khai thêm.
 ## 3. Các bước thao tác
 
 1. Vào DM10, xem cột Biến thể, Loại hàng; lọc theo biến thể.
-2. Mở mã thường, bấm **Thêm sản phẩm con**, gõ tên có màu, size, bấm tạo.
-3. Thử đổi mã có đuôi `Z` sang mã số, thử gộp hàng Nội bộ vào hàng thường.
+2. Mở mã thường, bấm **Thêm sản phẩm con**, gõ tên, chọn Biến thể (Thường, Nội bộ…), bấm tạo.
+3. Đổi mã có đuôi `Z` sang mã số, thử gộp hàng Nội bộ vào hàng thường. Sửa ô Biến thể ở thẻ Thông tin.
 4. Vào MH26 xem bảng Biến thể.
 5. Vào MH22, nhận hoá đơn có mã NCC đã học nhưng tên khác hẳn.
 
@@ -42,6 +42,10 @@ Mã cha `170521001`, đơn vị Hộp và Thùng (24 Hộp), thuế R08, V08, c�
 | Mã cha sau khi thêm con | Vẫn bán được, trừ khi tích chỉ để gom |
 | Xoá mã con rồi thêm mới | Không cấp lại số đã dùng |
 | Con thứ 100 | Dùng 3 số |
+| Thêm con chọn Nội bộ, Kẹp quà, Chia giá, Khuyến mại, Theo chương trình | Mã số `170521001NN`, ô mang đúng biến thể |
+| Đổi `110051001Z` → `11005100103`; `M`, `Q`, `T`, `K` → số | Được; biến thể giữ nguyên, `item_id` giữ nguyên |
+| Sửa ô Biến thể ở mặt hàng | Lưu được; biến thể không có thì từ chối |
+| Luồng `/api/v1/catalog/feed/products` | Có `itemId`, `parentItemId`, `variantCode` |
 
 **Bút toán:** không phát sinh. Danh mục không sinh bút toán.
 
@@ -55,18 +59,16 @@ Mã cha `170521001`, đơn vị Hộp và Thùng (24 Hộp), thuế R08, V08, c�
 | Tên trống, mã cha không có | Từ chối |
 | Thêm con cho mã con | Từ chối, họ mã một cấp |
 | Mã cha còn chữ | Từ chối, đổi sang số trước |
-| Chọn Nội bộ, Kẹp quà, Chia giá, Khuyến mại, Theo chương trình cho mã số | Từ chối |
-| Đổi `Z` sang mã mất `Z`, đổi `M`, `Q`, `T`, `K` sang số | Từ chối |
-| Đổi `Z` sang mã khác vẫn có `Z` | Được, giữ `item_id` |
-| Đổi mã thường sang mã có `Z` | Ô đi theo thành Nội bộ |
+| Biến thể không có trong danh mục | Từ chối |
+| Đổi mã thường sang mã có `Z` | Biến thể vẫn Thường: phần mềm không đọc chữ cuối mã |
 | Gộp hàng Nội bộ với hàng thường, cả hai chiều | Từ chối |
-| Gửi ô Biến thể khi lưu mặt hàng | Không đổi |
 | NCC đổi cách ghi tên, giữ mã | Vẫn tự nhận |
 | NCC dùng lại mã cho hàng khác hẳn | Không tự nhận, đưa về gợi ý |
 
 ## 7. Kết quả chạy
 
-Tệp test: `apps/api/test/san-pham-con.test.ts`. Nhánh: `feat/ma-so-cha-con`.
+Tệp test: `apps/api/test/san-pham-con.test.ts` (43 ca đạt, 09/11/2026). Nhánh: `feat/bien-the-san-pham-con`.
+Phía WordPress (tách bill theo ô, danh sách POS, gửi itemId): xem `docs/nghiep-vu/14-ma-so-bien-the-xuyen-suot.md`.
 
 Chạy thử migration trên dữ liệu máy phát triển, có hoàn tác:
 

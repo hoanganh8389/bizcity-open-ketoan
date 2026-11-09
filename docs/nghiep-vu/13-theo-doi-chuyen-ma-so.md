@@ -29,13 +29,12 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 | 7 | Mã cũ chỉ còn để tra cứu | Chưa làm |
 | Sau | Đồng bộ danh mục sang thuế, tự chuyển phiếu mua và chuyển kho, lựa chọn "Loại khỏi thuế" ở chương trình | Chưa làm |
 
-## Khoá an toàn đang áp dụng
+## Luật đang áp dụng (09/11/2026)
 
-- Mã con toàn số chỉ mở cho Biến thể Thường.
-- Không đổi mã có đuôi `K`, `M`, `Q`, `T`, `Z` sang mã số trước GĐ 3.
+- Mọi biến thể là sản phẩm con mã số; tên tuỳ ý, phần mềm chỉ đọc ô Biến thể.
+- Đổi mã có đuôi sang mã số được; biến thể và `item_id` đi theo mặt hàng.
 - Không gộp hàng Nội bộ với hàng có sang thuế.
-
-Lý do: quầy bán tách bill Z bằng chữ cuối mã. Đổi trước khi quầy đọc ô thì hàng nội bộ sẽ sang thuế.
+- Quầy bán, hoá đơn, chính sách trên WordPress đọc ô qua `TGS_Item_Variant` (tài liệu 14).
 
 ## Việc của từng bên
 

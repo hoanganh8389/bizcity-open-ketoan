@@ -1,14 +1,15 @@
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: màn Thêm sản phẩm con, danh mục biến thể dùng chung (đóng góp)
 /**
  * THÊM SẢN PHẨM CON: gõ tên, chọn Biến thể. Màu, size ghi vào tên. Mã tự cấp = mã cha + 2 số, đơn vị tính, nhóm, thuế lấy theo mã cha.
- * Biến thể ảnh hưởng thuế chưa chọn được ở đây: quầy bán còn nhận theo chữ cuối mã (docs/nghiep-vu/12, khoá an toàn).
+ * Mọi biến thể đều là sản phẩm con: Thường (màu, size), Nội bộ, Kẹp quà… Phần mềm chỉ đọc ô Biến thể, không đọc tên.
+ * [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm, chọn được mọi biến thể (đóng góp)
  */
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorText } from '@/lib/api';
 import { ErrorBox, Field, Modal } from '@/components/ui';
 
-export interface VariantKind { code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; allowNumeric: boolean; isActive: boolean; note: string; products: number }
+export interface VariantKind { code: string; name: string; legacySuffix: string; taxFlow: string; taxSku: string; isActive: boolean; note: string; products: number }
 
 export const useVariantKinds = () => useQuery({ queryKey: ['variant-kinds'], queryFn: () => api.get<VariantKind[]>('/api/v1/items/variant-kinds'), staleTime: 60_000 });
 
@@ -20,7 +21,7 @@ export function VariantBadge({ code, kinds, showNormal }: { code?: string; kinds
   if (!code || (code === 'normal' && !showNormal)) return null;
   const k = kinds?.find((x) => x.code === code);
   const tone = code === 'internal' ? 'badge-warn' : 'badge-gray';
-  return <span className={`badge ${tone}`} style={{ fontSize: 11 }} title={k ? `${k.note} Phần mềm tạm thời vẫn xử lý theo đuôi mã.` : undefined}>{variantLabel(k, code)}</span>;
+  return <span className={`badge ${tone}`} style={{ fontSize: 11 }} title={k?.note}>{variantLabel(k, code)}</span>;
 }
 
 interface Child { sku: string; name: string; variantCode?: string; isActive: boolean }
@@ -65,15 +66,15 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
       {done && <div className="alert alert-ok full" style={{ marginBottom: 8 }}>{done}</div>}
-      <Field label="Tên sản phẩm con (*)" full hint="Màu, size ghi luôn vào tên, ví dụ: Áo gió xanh L">
+      <Field label="Tên sản phẩm con (*)" full hint="Đặt tuỳ ý, ví dụ: Bình sữa xanh L, Sữa A hàng tặng">
         <input ref={nameRef} className="input" value={name} maxLength={255} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && can && !save.isPending) { setDone(''); save.mutate(); } }} />
       </Field>
       {dup && <div className="alert alert-bad full">Đã có <b className="mono">{dup.sku}</b> cùng tên này.</div>}
       {sameAsParent && trimmed && <div className="muted full" style={{ fontSize: 12 }}>Gõ thêm màu, size để phân biệt với mã cha.</div>}
-      <Field label="Biến thể" hint="Sản phẩm con mã số hiện chỉ mở cho Thường">
+      <Field label="Biến thể" hint="Phần mềm xử lý theo ô này">
         <select className="select input" value={variantCode} onChange={(e) => setVariantCode(e.target.value)}>
           {kinds.filter((k) => k.isActive && k.code !== 'legacy').map((k) => (
-            <option key={k.code} value={k.code} disabled={!k.allowNumeric} title={k.note}>{variantLabel(k)}{k.allowNumeric ? '' : ' (tạm dùng mã có đuôi)'}</option>
+            <option key={k.code} value={k.code} title={k.note}>{variantLabel(k)}</option>
           ))}
         </select>
       </Field>

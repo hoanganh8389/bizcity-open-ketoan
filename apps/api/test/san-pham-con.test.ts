@@ -3,7 +3,9 @@
  * NT-MH-002 (docs/nghiem-thu/mua-hang/NT-MH-002-san-pham-con.md):
  *   - mã cũ tự mang biến thể theo đuôi, khớp cách quầy bán nhận Z;
  *   - sản phẩm con: item_id riêng, mã cha + 2 số, lấy đơn vị tính và dấu dưới 24 tháng theo cha;
- *   - khoá an toàn: biến thể ảnh hưởng thuế chưa dùng được với mã số, không đổi mã Z thành mã mất Z.
+ *   - mọi biến thể dùng được với mã số; biến thể đi theo mặt hàng, đổi mã không làm đổi biến thể;
+ *   - không gộp hàng Nội bộ với hàng có sang thuế.
+ * [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm: test theo luật mới (đóng góp)
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
@@ -43,11 +45,10 @@ describe('NT-MH-002 — ô Biến thể theo mã cũ', () => {
     expect(skus).not.toContain('110051001');
   });
 
-  it('danh mục biến thể có đủ, chỉ Thường mở cho mã số, Nội bộ không bao giờ sang thuế', async () => {
+  it('danh mục biến thể có đủ, Nội bộ không bao giờ sang thuế', async () => {
     const r = await call(ctx, 'GET', '/api/v1/items/variant-kinds');
-    const kinds = r.body.data as { code: string; allowNumeric: boolean; taxFlow: string; legacySuffix: string }[];
+    const kinds = r.body.data as { code: string; taxFlow: string; legacySuffix: string }[];
     expect(kinds.map((k) => k.code)).toEqual(['normal', 'share', 'promo', 'program', 'clip', 'internal', 'legacy']);
-    expect(kinds.filter((k) => k.allowNumeric).map((k) => k.code)).toEqual(['normal']);
     expect(kinds.find((k) => k.code === 'internal')).toMatchObject({ taxFlow: 'never', legacySuffix: 'Z' });
   });
 });
@@ -102,10 +103,11 @@ describe('NT-MH-002 — Thêm sản phẩm con', () => {
     expect(b.body.data.sku).toBe('17052100202');
   });
 
-  it.each(['internal', 'clip', 'share', 'promo', 'program'])('khoá an toàn: biến thể %s chưa dùng được với mã số', async (variantCode) => {
+  it.each(['internal', 'clip', 'share', 'promo', 'program'])('biến thể %s là sản phẩm con mã số, ô mang đúng biến thể', async (variantCode) => {
     const r = await addChild({ parentSku: '170521001', name: `Thử ${variantCode}`, variantCode });
-    expect(r.status).toBe(400);
-    expect(JSON.stringify(r.body)).toContain('chưa dùng được với mã số');
+    expect(r.status).toBe(200);
+    expect(r.body.data.sku).toMatch(/^170521001\d{2}$/);
+    expect(await variantOf(r.body.data.sku)).toBe(variantCode);
   });
 
   it('biến thể không có thì từ chối', async () => {
@@ -113,38 +115,27 @@ describe('NT-MH-002 — Thêm sản phẩm con', () => {
   });
 });
 
-describe('NT-MH-002 — khoá đổi mã có đuôi', () => {
-  const rename = (sku: string, newSku: string) => call(ctx, 'POST', '/api/v1/items/rename-code', { sku, newSku, reason: 'thử khoá đổi mã' });
+describe('NT-MH-002 — đổi mã: biến thể đi theo mặt hàng', () => {
+  const rename = (sku: string, newSku: string) => call(ctx, 'POST', '/api/v1/items/rename-code', { sku, newSku, reason: 'thử đổi mã' });
 
-  it('mã Z đổi sang mã mất Z bị chặn; giữ nguyên ô và mã', async () => {
+  it('mã Z đổi sang mã số: vẫn Nội bộ, item_id giữ nguyên', async () => {
     expect((await put('190000001Z')).status).toBe(200);
-    const r = await rename('190000001Z', '19000000101');
-    expect(r.status).toBe(400);
-    expect(await variantOf('190000001Z')).toBe('internal');
-  });
-
-  it('mã Z đổi sang mã khác vẫn tận cùng Z thì được, item_id giữ nguyên', async () => {
     const before = await idOf('190000001Z');
-    expect((await rename('190000001Z', '190000002Z')).status).toBe(200);
-    expect(await idOf('190000002Z')).toBe(before);
-    expect(await variantOf('190000002Z')).toBe('internal');
+    expect((await rename('190000001Z', '19000000101')).status).toBe(200);
+    expect(await idOf('19000000101')).toBe(before);
+    expect(await variantOf('19000000101')).toBe('internal');
   });
 
-  it.each([['190000003M', '19000000301'], ['190000004Q', '19000000401'], ['190000005T', '19000000501'], ['190000006K', '19000000601']])('%s sang mã số bị chặn', async (from, to) => {
+  it.each([['190000003M', '19000000301', 'promo'], ['190000004Q', '19000000401', 'clip'], ['190000005T', '19000000501', 'program'], ['190000006K', '19000000601', 'share']])('%s sang mã số %s vẫn mang biến thể %s', async (from, to, variant) => {
     expect((await put(from)).status).toBe(200);
-    expect((await rename(from, to)).status).toBe(400);
+    expect((await rename(from, to)).status).toBe(200);
+    expect(await variantOf(to)).toBe(variant);
   });
 
-  it('mã thường đổi sang mã có Z thì ô đi theo, để quầy bán và ô không lệch nhau', async () => {
+  it('mã thường đổi sang mã khác: biến thể không đổi theo mã mới', async () => {
     expect((await put('190000007')).status).toBe(200);
     expect((await rename('190000007', '190000007Z')).status).toBe(200);
-    expect(await variantOf('190000007Z')).toBe('internal');
-  });
-
-  it('mã thường đổi sang mã số khác vẫn bình thường', async () => {
-    expect((await put('190000008')).status).toBe(200);
-    expect((await rename('190000008', '190000009')).status).toBe(200);
-    expect(await variantOf('190000009')).toBe('normal');
+    expect(await variantOf('190000007Z')).toBe('normal');
   });
 });
 
@@ -193,10 +184,23 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     expect(r.body.data.sku).toBe('170521004');
   });
 
-  it('lưu mặt hàng kèm ô Biến thể không đổi được biến thể', async () => {
+  it('sửa ô Biến thể ở mặt hàng; biến thể không có thì từ chối', async () => {
     const r = await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'internal', ...ack });
     expect(r.status).toBe(200);
-    expect(await variantOf('17052100101')).toBe('normal');
+    expect(await variantOf('17052100101')).toBe('internal');
+    const bad = await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'khong-co', ...ack });
+    expect(bad.status).toBe(400);
+    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'normal', ...ack })).status).toBe(200);
+  });
+
+  it('luồng kéo danh mục gửi itemId, parentItemId và variantCode', async () => {
+    const r = await call(ctx, 'GET', '/api/v1/catalog/feed/products?limit=5000');
+    const items = r.body.data.items as { sku: string; itemId: string | null; parentItemId: string | null; variantCode: string }[];
+    const kid = items.find((x) => x.sku === '17052100101')!;
+    const dad = items.find((x) => x.sku === '170521001')!;
+    expect(kid).toMatchObject({ variantCode: 'normal', parentItemId: dad.itemId });
+    expect(kid.itemId).toMatch(/^[0-9A-Z]{26}$/);
+    expect(items.find((x) => x.sku === '19000000101')?.variantCode).toBe('internal');
   });
 });
 
