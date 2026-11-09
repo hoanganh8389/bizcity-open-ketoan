@@ -53,11 +53,17 @@ chốt đơn ──► POST /api/v1/documents (sale, docKey pos:B:sale:<uuid>)
 Khuôn đề xuất `sale.promo.discount@1` (chốt ở PR thiết kế W2):
 `{ target: 'line' | 'order', items?: {sku,itemId?}[], minQty?, minAmount?, kind: 'percent' | 'amount', value, maxDiscount?, couponRequired?, validFrom?, validTo? }` → `{ discounts: [{ lineKey?, amount }] }`; `treatment: [{ on: 'discount', reasonCode: <S031-14>, confirmed: false }]`.
 
-## 5. Quy tắc màn hình
+<!-- [2026-11-09 11:15 PM Võ Hoàng] PHASE-032 — Q032-6 chốt (quà theo Core: XTA1.4); thêm đề xuất trả lời Q032-1..4; áp sổ tay HUONG-DAN-LAM-VIEC (phiếu nghiệm thu trước khi code, quy ước giao diện §7) (đóng góp) -->
+
+## 5. Quy tắc màn hình (theo [HUONG-DAN-LAM-VIEC §7](../../HUONG-DAN-LAM-VIEC.md))
 
 1. Một cách đếm: số trên màn là số API trả (như HT15).
 2. Không có nút *Xoá* chính sách đã phát hành; chỉ *Ngừng*. Nháp xoá được.
 3. Quyền: xem `catalog:read`; soạn / phát hành / ngừng `settings:write` — thiếu quyền thì **ẩn** nút.
 4. Trạng thái rỗng giải thích một câu; lỗi API hiện theo mã (`IN-POL-*`, lỗi zod) có liên kết `docs/huong-dan`.
 5. Mọi chữ tiếng Việt có dấu, theo từ điển thuật ngữ; tiền dạng `1.234.000 ₫`; ngày `dd/mm/yyyy`.
-6. Màn dùng `@bizcity/ui-kit`; chạy được ở bề ngang điện thoại (cửa hàng xem trên máy POS / điện thoại).
+6. Mỗi màn có nút **Hướng dẫn** mở `docs/huong-dan/<màn>.md`; mọi cột, ô số, tiêu đề có chú thích rê chuột nói **nghĩa + cách tính**.
+7. Form không trắng: điền sẵn ngày áp = mai, phạm vi = chi nhánh đang làm, kênh = POS, mã gợi ý kế tiếp; chọn mặt hàng / chi nhánh bằng **ô tìm**, không xổ xuống dài; chặn số âm ở màn và máy chủ.
+8. Mở chương trình ở chế độ **xem**, bấm *Sửa → bản mới* mới vào form (`viewFirst`); bảng cột kéo giãn được (`lib/colResize.ts`).
+9. Không ghi tên người (người góp ý, kế toán) trong mã, tài liệu, dữ liệu mẫu.
+10. Màn dùng `@bizcity/ui-kit`; chạy được ở bề ngang điện thoại (cửa hàng xem trên máy POS / điện thoại).

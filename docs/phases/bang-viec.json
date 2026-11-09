@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 151
+      "count": 152
     },
     {
       "key": "partial",
@@ -5530,7 +5530,7 @@
     {
       "id": "S032-3",
       "phase": "PHASE-032",
-      "title": "Kế toán trưởng trả Q032-5, Q032-6 (cùng S031-14)",
+      "title": "Kế toán trưởng trả Q032-5 (trần NĐ81 chặn hay cảnh báo); xác nhận bảng reasonCode cùng S031-14. Q032-6 đã chốt 09/11: quà theo Core (XTA1.4)",
       "priority": "P0",
       "status": "blocked",
       "column": "blocked",
@@ -5541,7 +5541,7 @@
     {
       "id": "S032-4",
       "phase": "PHASE-032",
-      "title": "Khung modules/ban-hang (npx bizcity module new), manifest, menu Chương trình khuyến mại",
+      "title": "Khung module (khoá theo Q032-1, đề xuất chinh-sach-ban) (npx bizcity module new), manifest, menu Chương trình khuyến mại",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
@@ -5691,6 +5691,17 @@
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
       "line": 25
+    },
+    {
+      "id": "S032-18",
+      "phase": "PHASE-032",
+      "title": "Phiếu nghiệm thu bán hàng ở docs/nghiem-thu/ (chép MAU.md), Đã chốt với kế toán trước khi code từng đợt: NT-BH-001 phát hành / sửa / ngừng CTKM mua X tặng Y; N…",
+      "priority": "P0",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
+      "line": 26
     }
   ]
 }

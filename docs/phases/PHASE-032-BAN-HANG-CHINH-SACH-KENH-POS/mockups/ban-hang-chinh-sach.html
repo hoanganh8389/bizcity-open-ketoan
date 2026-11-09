@@ -1,6 +1,7 @@
 <!doctype html>
 <!-- [2026-11-09 10:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chỉ đạo: giao Võ Hoàng (nhóm POS TGS) mở phase phần UI / UX, luồng, xử lý chi tiết của chính sách bán hàng trên nền PHASE-031; quy trình pull → phân tích → phase → bản mẫu duyệt → checklist → code trên nhánh PR (chưa duyệt nội dung) -->
 <!-- [2026-11-09 09:30 PM Võ Hoàng] PHASE-032 — bản mẫu 4 màn: Chương trình KM · Soạn & phát hành · Một chương trình (bản, so sánh, chứng từ) · Kênh POS; dữ liệu giả, chờ chủ dự án duyệt (đóng góp) -->
+<!-- [2026-11-09 11:15 PM Võ Hoàng] PHASE-032 — bản mẫu theo HUONG-DAN-LAM-VIEC §7: nút Hướng dẫn, chú thích rê chuột, ô tìm thay ô chọn nhiều dòng; quà ghi XTA1.4 như Core (Q032-6) (đóng góp) -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -106,6 +107,8 @@ dialog .ft{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8
 dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px;margin:0}
 dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
 .hidden{display:none!important}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.chip{background:var(--info-bg);color:var(--info);border-radius:99px;padding:1px 8px;font-size:12.5px}.chip button{background:none;border:0;color:inherit;cursor:pointer;padding:0 0 0 4px}
+[title]{text-decoration-style:dotted}
 .mockbar{background:var(--k-bg);color:var(--k);font-size:12.5px;padding:4px 16px}
 </style>
 </head>
@@ -118,6 +121,7 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
     <label class="mono" style="color:var(--muted)">Vai trò
       <select id="role"><option value="w">Kế toán / quản lý KM (settings:write)</option><option value="r">Nhân viên xem (catalog:read)</option></select>
     </label>
+    <button class="btn" type="button" title="Mở docs/huong-dan/ban-hang-chinh-sach.md: các bước soạn, phát hành, sửa ra bản mới, ngừng; ý nghĩa từng trạng thái">Hướng dẫn</button>
     <button class="btn" id="theme" type="button">Sáng / tối</button>
   </div>
   <nav class="tabs" role="tablist">
@@ -144,7 +148,7 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
   </div>
   <div class="panel scroll">
     <table class="tbl" id="listTbl">
-      <thead><tr><th>Mã · tên</th><th>Loại</th><th>Bản</th><th>Hiệu lực</th><th>Phạm vi</th><th class="num">Đơn đã áp (tháng)</th><th>Trạng thái</th></tr></thead>
+      <thead><tr><th title="Mã chương trình (không đổi suốt đời) và tên hiển thị">Mã · tên</th><th title="Loại khuyến mại = Rule Contract dùng để tính">Loại</th><th title="Số bản đang chạy; mỗi lần đổi nội dung là một bản mới">Bản</th><th title="Ngày bản hiện hành bắt đầu → ngày kết thúc chiến dịch (— là chưa đặt)">Hiệu lực</th><th title="Chi nhánh và kênh được áp; trống = mọi nơi">Phạm vi</th><th class="num" title="Số chứng từ đã gửi kèm tham chiếu tới chương trình này trong tháng — số từ máy chủ, màn không tự đếm">Đơn đã áp (tháng)</th><th title="Nháp · Sắp chạy · Đang chạy · Đã ngừng / hết hạn — theo bản và cửa sổ chiến dịch tại hôm nay">Trạng thái</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -174,8 +178,8 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
       </fieldset>
       <fieldset><legend>Phạm vi</legend>
         <div class="form">
-          <div class="field"><label>Chi nhánh</label><select multiple size="3"><option selected>CN01 · Bắc Từ Liêm</option><option selected>CN02 · Cầu Giấy</option><option>CN09 · Hà Đông</option></select><div class="hint">Không chọn = mọi chi nhánh</div></div>
-          <div class="field"><label>Kênh</label><select multiple size="3"><option selected>POS</option><option>Web</option><option>Sàn TMĐT</option></select></div>
+          <div class="field"><label for="brQ" title="Chương trình chỉ áp ở các chi nhánh chọn; không chọn = mọi chi nhánh">Chi nhánh</label><input id="brQ" placeholder="Gõ mã / tên chi nhánh để thêm" list="branches"><div class="chips"><span class="chip">CN01 · Bắc Từ Liêm<button type="button" aria-label="Bỏ CN01">×</button></span><span class="chip">CN02 · Cầu Giấy<button type="button" aria-label="Bỏ CN02">×</button></span></div><div class="hint">Điền sẵn chi nhánh đang làm</div></div>
+          <div class="field"><label title="Kênh bán được áp: POS (quầy), Web, Sàn TMĐT">Kênh</label><div class="chips"><label class="chip"><input type="checkbox" checked> POS</label><label class="chip"><input type="checkbox"> Web</label><label class="chip"><input type="checkbox"> Sàn TMĐT</label></div></div>
         </div>
       </fieldset>
       <fieldset id="fsBxgy"><legend>Mua X tặng Y</legend>
@@ -221,6 +225,7 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
       <div class="result" id="treat"></div>
     </div>
   </div>
+  <datalist id="branches"><option value="CN01 · Bắc Từ Liêm"><option value="CN02 · Cầu Giấy"><option value="CN09 · Hà Đông"></datalist>
   <datalist id="items"><option value="KUN-SUA-110 · Sữa Kun 110ml"><option value="QUA-BINH-NUOC · Bình nước (quà)"><option value="BIOMIL-400 · Biomil 400g"><option value="BIOMIL-800 · Biomil 800g"></datalist>
 </section>
 
@@ -282,10 +287,10 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
   </div>
   <div class="filters"><select aria-label="Kỳ"><option>Tháng 11/2026</option><option>Hôm nay</option></select><select aria-label="Chi nhánh"><option>Mọi chi nhánh</option><option>CN01</option><option>CN02</option></select></div>
   <div class="kpis">
-    <div class="kpi"><small>Đơn POS vào sổ</small><div class="v">4.812</div></div>
-    <div class="kpi"><small>Có tham chiếu chính sách</small><div class="v">1.906</div><small>39,6 % đơn có CTKM</small></div>
-    <div class="kpi"><small>Khớp chính sách</small><div class="v" style="color:var(--ok)">99,6 %</div></div>
-    <div class="kpi"><small>Lệch chờ xem</small><div class="v" style="color:var(--warn)">7</div><small><a href="#">mở hàng việc</a></small></div>
+    <div class="kpi" title="Số chứng từ sale / sale_return nguồn POS đã ghi sổ trong kỳ"><small>Đơn POS vào sổ</small><div class="v">4.812</div></div>
+    <div class="kpi" title="Đơn có gửi policyRefs (đơn có áp ít nhất một chương trình)"><small>Có tham chiếu chính sách</small><div class="v">1.906</div><small>39,6 % đơn có CTKM</small></div>
+    <div class="kpi" title="Đơn có tham chiếu mà cửa nạp không ra mã IN-POL nào / đơn có tham chiếu"><small>Khớp chính sách</small><div class="v" style="color:var(--ok)">99,6 %</div></div>
+    <div class="kpi" title="Đơn có mã IN-POL đang nằm ở hàng việc Chờ kế toán xem, chưa đánh dấu đã xem"><small>Lệch chờ xem</small><div class="v" style="color:var(--warn)">7</div><small><a href="#">mở hàng việc</a></small></div>
   </div>
   <div class="grid2">
     <div class="panel card">
@@ -383,7 +388,7 @@ function tryCalc() {
     const times = !(bq > 0) ? 0 : rep ? Math.floor(qty / bq + 1e-9) : qty >= bq - 1e-9 ? 1 : 0;
     const gifts = max !== undefined ? Math.min(times * gq, max) : times * gq;
     out = gifts > 0 ? `Mua <b>${qty}</b> → đủ <b>${times}</b> lần → tặng <b>${gifts}</b> Bình nước` : `Mua ${qty}: chưa đủ điều kiện (cần ${bq})`;
-    treat = gifts > 0 ? 'Quà: <span class="mono">reasonCode</span> theo bảng S031-14 <span class="tag warn">chưa xác nhận</span><br><small>Q032-6: kế toán TGS trả lời quà ghi theo giá vốn — Core hiện gợi ý XTA1.4 (giá bán), chờ kế toán trưởng.</small>' : 'Không phát sinh ghi nhận.';
+    treat = gifts > 0 ? 'Quà tặng: <span class="mono">reasonCode XTA1.4</span> — làm giống Core (Q032-6 chốt 09/11) <span class="tag warn" title="Kế toán trưởng chưa xác nhận cả bảng lý do (S031-14)">chờ xác nhận bảng</span>' : 'Không phát sinh ghi nhận.';
     $('#eMax').classList.toggle('hidden', !(max !== undefined && max < gq)); $('#eMax').textContent = `Trần quà ${max} nhỏ hơn số quà một lần (${gq}) — chính sách không bao giờ tặng được`;
   } else {
     const kind = $('#dKind').value, val = +$('#dVal').value || 0, cap = +$('#dCap').value || Infinity, min = +$('#dMin').value || 0;

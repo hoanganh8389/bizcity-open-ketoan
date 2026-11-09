@@ -2,6 +2,8 @@
 <!-- [2026-11-09 10:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chỉ đạo: giao Võ Hoàng (nhóm POS TGS) mở phase phần UI / UX, luồng, xử lý chi tiết của chính sách bán hàng trên nền PHASE-031; quy trình pull → phân tích → phase → bản mẫu duyệt → checklist → code trên nhánh PR (chưa duyệt nội dung) -->
 <!-- [2026-11-09 09:30 PM Võ Hoàng] PHASE-032 — vì sao, hiện trạng, nguyên tắc, D032-* đề xuất, Q032-*, đợt W0–W4, đề xuất Core P032-* (đóng góp) -->
 
+<!-- [2026-11-09 11:15 PM Võ Hoàng] PHASE-032 — Q032-6 chốt (quà theo Core: XTA1.4); thêm đề xuất trả lời Q032-1..4; áp sổ tay HUONG-DAN-LAM-VIEC (phiếu nghiệm thu trước khi code, quy ước giao diện §7) (đóng góp) -->
+
 ## 1. Vì sao
 
 PHASE-031 đã có nền: sổ đăng ký (phong bì có phiên bản, băm), Rule Contract mẫu `sale.promo.buy_x_get_y@1`, API cho nguồn ngoài (`GET /api/v1/policies`, `POST /api/v1/policies/evaluate`, `POST /api/v1/policies`), cửa nạp nhận và kiểm `policyRefs` (IN-POL-001..003), hàng việc *Chờ kế toán xem*, màn *Chính sách* chỉ xem (HT15). Còn thiếu đúng phần người dùng chạm vào:
@@ -48,12 +50,21 @@ PHASE-031 đã có nền: sổ đăng ký (phong bì có phiên bản, băm), Ru
 
 | Mã | Hỏi | Ai trả |
 |---|---|---|
-| Q032-1 | `modules/ban-hang` trùng khoá `ban-hang` với manifest phân hệ cũ — hai manifest cùng khoá có được không, hay đợt 1 dùng khoá khác (vd `ban-hang-chinh-sach`) rồi gộp ở đợt chuyển? | Chủ dự án |
+| Q032-1 | `modules/ban-hang` trùng khoá `ban-hang` với manifest phân hệ cũ — bộ nạp **dừng khi khoá trùng phân hệ** (`apps/api/src/core/sdk-modules.ts` dòng 14) nên không đặt được hai manifest cùng khoá, hay đợt 1 dùng khoá khác (vd `ban-hang-chinh-sach`) rồi gộp ở đợt chuyển? | Chủ dự án |
 | Q032-2 | Rule Contract bán hàng mới đặt ở đâu: chờ N031-1 dời xuống Platform rồi thêm vào đó, hay mở điểm đăng ký `registerRuleContract` để module tự khai (P032-1)? | Chủ dự án / nhóm Lõi |
 | Q032-3 | `sale.promo.discount@1` cần giá dòng: mở rộng `EvalLine` thêm `unitPrice` (đã gồm thuế hay chưa?) và kết quả `discounts[]` (P032-2) — chốt khuôn | Chủ dự án |
 | Q032-4 | Nhiều CTKM cùng áp một dòng: giữ "cộng dồn độc lập" như W3a hay thêm `exclusive` / `priority` ngay đợt này? POS TGS hiện chọn CTKM tốt nhất mỗi dòng | Chủ dự án + kế toán |
 | Q032-5 | Trần NĐ81 (quà ≤ 50 % giá) chặn hay cảnh báo trên màn phát hành, khi S030-35 chưa có | Kế toán trưởng |
-| Q032-6 | `reasonCode` cho quà / giảm giá (S031-14): XQUA hay XTA1.4 — Core đang ghi XTA1.4 tính theo giá bán, kế toán TGS trả lời quà theo giá vốn | Kế toán trưởng |
+| Q032-6 | ~~`reasonCode` cho quà: XQUA hay XTA1.4~~ — **chốt 09/11 (nhóm POS TGS): làm giống Core**, quà dùng `XTA1.4` như `sale.promo.buy_x_get_y@1` đang trả; không thêm mã riêng. `treatment.confirmed` vẫn chờ kế toán trưởng xác nhận cả bảng (S031-14) | ✅ |
+
+### Đề xuất trả lời (nhóm POS TGS, chờ chủ dự án chọn)
+
+| Câu | Đề xuất | Vì sao |
+|---|---|---|
+| Q032-1 | Đợt 1 dùng khoá **`chinh-sach-ban`** (nhãn "Chính sách bán hàng"), gộp vào `ban-hang` ở đợt chuyển phân hệ bán hàng. Chủ sở hữu trong sổ đăng ký vẫn là `ban-hang` (`OWNER_OF_DOMAIN`), nên `policyId` không đổi khi gộp | Không đụng phân hệ cũ, không phải chờ đợt chuyển cả `ban-hang`; bộ nạp không cho trùng khoá |
+| Q032-2 | Chủ dự án làm N031-1 **trong hoặc ngay sau W2b**: dời khuôn Rule Contract xuống Platform kèm `registerRuleContract` (P032-1). Nhóm POS viết `sale.promo.discount@1` (hàm thuần + vectors) ở `modules/chinh-sach-ban/domain`, module tự đăng ký | W2b cũng cần Kernel gọi được Rule Contract — một lần dời dùng cho cả hai; module không phải sửa `modules/system` |
+| Q032-3 | `evaluate` nhận `lines[].unitPrice` **trước thuế**, kết quả `discounts[].amount` **trước thuế** — đúng nghĩa `lines[].discount` / `amountBeforeTax` của khuôn nạp `sale` (docs/api/02) | Cửa nạp (W2b) so được thẳng với dòng nguồn gửi, không quy đổi thuế. POS giá gồm thuế tự quy về trước thuế (POS TGS đã làm vậy khi ghi bản sao) |
+| Q032-4 | Thêm vào phong bì / params: `stacking: 'stack' \| 'exclusive'` (mặc định `stack` = như W3a) và `priority`. Các chính sách `exclusive` cùng chạm một dòng → lấy **mức có lợi nhất cho khách**, hoà thì theo `priority`. Làm ngay ở W2 | POS TGS đang chọn CTKM tốt nhất mỗi dòng; Core cộng dồn thì mọi đơn có 2 CTKM sẽ lệch (IN-POL-004 khi W2b chạy) |
 
 ## 6. Các đợt
 
