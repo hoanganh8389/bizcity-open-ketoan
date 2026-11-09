@@ -1,3 +1,4 @@
+<!-- [2026-11-09 10:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — 1.5.0-draft: reason VERSION_CONTENT_MISMATCH (RV-R1-08) -->
 # `bizcity_errors@1` — Mã lỗi, thông báo, gợi ý
 <!-- [2026-11-03 08:05 PM Johnny Chu - Chu Hoàng Anh] SC-DOC-4 — sửa tham chiếu đường dẫn lỗi thời sau khi tách Kernel / Platform (mã đã dời; gói đích chưa tách ghi rõ "chưa tách") -->
 <!-- [2026-10-30 12:10 PM Johnny Chu - Chu Hoàng Anh] ADR-0007 — chuẩn hoá mã lỗi, quan sát, bộ giám sát, cài nhanh, kiến trúc, đóng góp. -->
@@ -79,6 +80,7 @@ MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error:
 | `LEDGER_APPEND_ONLY` | `CONFLICT` | Trigger chặn sửa / xoá sổ cái hoặc bằng chứng (R-LEDGER-1, STD-EVD-2) |
 | `DB_UNIQUE_VIOLATION` | `CONFLICT` | Trùng mã / khoá duy nhất |
 | `DB_IN_USE` | `CONFLICT` | Xoá một mã còn dữ liệu khác trỏ tới |
+| `VERSION_CONTENT_MISMATCH` | `CONFLICT` | Cùng `docKey` và `version` nhưng băm nội dung khác bản đã ghi sổ / chờ ghi; `details` có `docKey`, `version`, `existingHash`, `incomingHash` ([DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)) |
 | `DB_REFERENCE_MISSING` | `VALIDATION_ERROR` | Tham chiếu tới mã chưa khai báo |
 
 ## 4b. Ngữ cảnh chuẩn `details.context` và `details.remedy` (RV-R1-06, 1.4.0-draft) <!-- [2026-11-10 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — chữ chốt R-FLOW-2 theo chủ dự án (2026-11-10) -->
@@ -157,6 +159,7 @@ Quy tắc đọc bảng §5 (chữ chốt S029-33, 1.3.0-draft):
 
 ## 7. Changelog
 
+- **1.5.0-draft (2026-11-09, PHASE-029 S029-34):** thêm `details.reason` `VERSION_CONTENT_MISMATCH` (`CONFLICT` 409) cho cùng phiên bản khác nội dung ([DOCUMENT §7.3](BIZCITY-DOCUMENT-v1.md)). Không thêm mã `code`. **Ảnh hưởng:** bên gửi nào gửi lại cùng `version` với nội dung đổi sẽ nhận 409 thay vì bị ghi đè im lặng; xử lý theo cột "CONFLICT" ở §6 (tăng `version`).
 <!-- [2026-11-10 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-022 — RV-R1-06 -->
 - **1.4.0-draft (2026-11-10, RV-R1-06):** thêm `details.context` (khoá tuỳ chọn: `docKey`, `docType`, `docNo`, `eventId`, `version`, `entryNo`, `period`, `branchCode`, `postingDate`, `step`) và `details.remedy` (`bizcity_remedy@1`, bảng `ERROR_REMEDY`); `UNBALANCED_ENTRY` thêm `difference`, `PERIOD_LOCKED` thêm `scope`. Không đổi mã, HTTP, `reason` đã phát hành.
 

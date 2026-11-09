@@ -153,6 +153,19 @@ Mọi dòng bút toán truy vết ngược được về chứng từ gốc **đ
 
 Hiện trạng: cổng W1 (PHASE-029); `ctx.ledger.submit` tự `saveVersion` + liên kết `ledger` ở W2a.
 
+### 7.3 Cùng phiên bản, khác nội dung (RV-R1-08, 1.4.0-draft) <!-- [2026-11-09 10:23 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — chữ chốt R-FLOW-2 theo chủ dự án (2026-11-09) -->
+
+Cửa nạp so băm nội dung (`content_hash`) của bản gửi với bản đã nhận **cùng `docKey` và cùng `version`**:
+
+| Băm | Trạng thái bản đã nhận | Kết quả |
+|---|---|---|
+| giống | `posted` / `pending` | `unchanged` (như cũ) |
+| khác | `posted` / `pending` | **409 `CONFLICT` + `details.reason = VERSION_CONTENT_MISMATCH`**, không ghi gì. Bên gửi tăng `version` |
+| khác | `posted` / `pending`, có `force` **kèm `reason` ≥ 10 ký tự** (chỉ người có `documents:write` và không qua khoá API) | ghi đè được, nhưng **luôn `archiveVersion` bản cũ** (kể cả cùng số version) và ghi bằng chứng `core.documents.overwrite-same-version` (băm cũ, băm mới, lý do) |
+| khác | `held` / `rejected` / chưa ghi sổ | như cũ (ghi đè bản chưa vào sổ) |
+
+`post` một mình không còn là cớ ghi đè: chỉ `force` kèm lý do. `details` mang `{ docKey, version, existingHash, incomingHash }` (băm, không nội dung). Tiền kiểm `IN-BIZ-005` giữ mức cảnh báo (báo trước khi nộp); cửa nạp thật chặn. Phân hệ gọi ghi đè cùng phiên bản (mua hàng `posting.ts`) phải tăng `version` hoặc truyền lý do; thời hạn chuyển: một đợt (S029-34 đợt 2).
+
 ## 8. Ánh xạ từ code hiện tại
 
 | Hiện có | Thành |
