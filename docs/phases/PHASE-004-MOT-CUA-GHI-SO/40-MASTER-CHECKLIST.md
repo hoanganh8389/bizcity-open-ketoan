@@ -28,7 +28,7 @@
 | S004-15b | **Cảnh báo (phần 2)**: số đo `bizcity_ledger_header_edit_unattributed_total` + luật cảnh báo `alerts.yml`; D004-13. K1 | 2.1 | chưa | ⏸ chờ PHASE-018 W6 nhả `infrastructure/monitoring/**` và `docs/ops/OBSERVABILITY.md` |
 | S004-16 | **Bảng theo dõi**: API chỉ đọc `GET /api/v1/ledger/entry-edits` + tab "Sửa đầu bút toán" ở Bàn điều tra; **bản mẫu HTML trước**, chủ duyệt rồi mới code; D004-14. K1 | 2.1 | có | ✅ API + action xác nhận + màn SC02; `entry-edits` 5/5; chẩn đoán bỏ lần đã xác nhận (D004-16, doc 21 §3b) |
 | S004-17 | E1 `cost_overwrite`: ghi giá vốn qua hàm `SECURITY DEFINER`, thu `UPDATE ledger_lines` khỏi `ketoan_app`; D004-15 (Q004-4). K3 thêm chặt | 2.1 | có | ✅ 0091 + `e1-cost-fill` 7/7; `costing`, `db-rules`, `app-role` giữ nguyên làm hồi quy |
-| S004-18 | Đo lệch tài khoản mặc định giữa `resolveAccounts` của mua hàng và `AccountResolver` của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi mã; quyết định mức K (K1 hay K2) từ kết quả; §5 của 21. K0 | 2.1 | chưa | ☐ |
+| S004-18 | Đo lệch tài khoản mặc định giữa `resolveAccounts` của mua hàng và `AccountResolver` của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi mã; quyết định mức K (K1 hay K2) từ kết quả; §5 của 21. K0 | 2.1 | có | 🟡 script `scripts/mua-hang/do-lech-tai-khoan.mjs` + số đo trên đơn vị demo (6/8 khớp, 2 chỉ module: giftIncome, finIncome — `evidence/lech-tai-khoan-mua-hang.md`); chờ chủ chạy trên bản sao ẩn danh dữ liệu thật để chốt K1 / K2 |
 
 ## Ca bằng chứng
 
