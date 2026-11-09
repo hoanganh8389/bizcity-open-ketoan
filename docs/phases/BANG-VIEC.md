@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 10 |
+| Đang làm | 11 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 140 |
+| Chưa ai nhận | 138 |
 | Chờ đủ tín hiệu | 51 |
 | Hoãn | 1 |
-| Xong | 259 |
+| Xong | 260 |
 | **Tổng** | **489** |
 
-## Đang làm (10)
+## Đang làm (11)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -27,7 +27,8 @@
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-bao-cao-ten-theo-ngay` |
-| [S031-28](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L37) | PHASE-031 | W4a: API đọc — core.policy.registry, core.policy.applications, core.policy.tracking, core.policy.lineage (00 … | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4a-api-doc-chinh-sach` |
+| [S031-18](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L27) | PHASE-031 | Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4b-man-chinh-sach` |
+| [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4b-man-chinh-sach` |
 
 ## Chờ merge (0)
 
@@ -66,7 +67,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (140)
+## Chưa ai nhận (138)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -207,9 +208,7 @@
 | [S031-15](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L24) | PHASE-031 | Rule Contract bán hàng sale.pricelist@1, sale.promo.discount@1, sale.promo.buyxgety@1, sale.creditlimit@1 cùn… | P0 | — |
 | [S031-16](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L25) | PHASE-031 | POS WP: tải chính sách, tính theo Rule Contract, gửi policyRefs; bỏ luật khuyến mại riêng của plugin (repo pl… | P1 | — |
 | [S031-17](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L26) | PHASE-031 | Rulepack policy cho Conformance Engine (§9 của 10), chỉ đọc | P1 | — |
-| [S031-18](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L27) | PHASE-031 | Màn Chính sách (phiên bản, phạm vi, chứng từ đã áp) + nút Chính sách căn cứ trên màn truy vết | P1 | — |
 | [S031-23](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L32) | PHASE-031 | Làn policy của bizcitylineage@1 (0.4.0-draft) | P2 | — |
-| [S031-24](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L33) | PHASE-031 | Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materializ… | P1 | — |
 
 ## Chờ đủ tín hiệu (51)
 
@@ -273,6 +272,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (259)
+## Xong (260)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
