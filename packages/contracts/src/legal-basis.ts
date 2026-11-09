@@ -76,6 +76,7 @@ export const FINDING_BASIS: Record<string, readonly BasisKey[]> = {
   'IN-POL-001': ['NOI-BO'],
   'IN-POL-002': ['NOI-BO'],
   'IN-POL-003': ['NOI-BO'],
+  'IN-POL-004': ['NOI-BO'],
   'IN-BIZ-006': ['ND123', 'LGTGT'],
   'IN-BIZ-007': ['ND123'],
   // [2026-11-03 08:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — căn cứ cho 10 mã PHASE-021 W5 (gộp từ main), MỨC VĂN BẢN theo R-GATE-11, lấy từ docs/can-cu; chưa đối chiếu điều khoản ở văn bản gốc.

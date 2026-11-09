@@ -59,6 +59,8 @@ export const INTAKE_CATALOG = {
   // [2026-11-07 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2a (S031-8/10, bizcity_intake_findings@1 0.9.0-draft): tham chiếu chính sách nghiệp vụ (ADR-0031) — L4, cảnh báo, cửa nạp vẫn nhận
   'IN-POL-001': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Tham chiếu chính sách không có trong sổ đăng ký hoặc băm khác bản đã phát hành', why: 'Chứng từ nói đã áp một chính sách, nhưng sổ đăng ký không có bản đó hoặc nội dung bản đã khác lúc nguồn tải. Không truy vết được chứng từ về đúng chính sách căn cứ.', fix: 'Ở nguồn: tải lại chính sách đã phát hành, tính lại theo bản đó rồi gửi lại đúng mã, bản và băm; chính sách tự lập ở nguồn thì đưa về module chủ để phát hành.', ref: 'ADR-0031 D-POL-5, D-POL-6', acceptable: true },
   'IN-POL-002': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Bản chính sách không hiệu lực tại ngày chứng từ', why: 'Chính sách chọn theo ngày chứng từ. Bản được nêu chưa áp hoặc đã hết áp vào ngày đó, nên chứng từ đang dùng luật không đúng thời điểm.', fix: 'Ở nguồn: dùng bản hiệu lực tại ngày chứng từ; nếu ngày chứng từ sai thì sửa ngày rồi gửi bản mới (tăng version).', ref: 'ADR-0031 D-POL-0, R-ECP', acceptable: true },
+  // [2026-11-09 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b (S031-29, bizcity_intake_findings@1 0.10.0-draft): IN-POL-004
+  'IN-POL-004': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 10, title: 'Quà tính lại theo chính sách khác quà nguồn gửi', why: 'Tính lại theo đúng bản chính sách nguồn nêu, trên các dòng bán, ra số quà khác dòng quà nguồn gửi (thiếu quà, thừa quà hoặc lệch số lượng). Số liệu khuyến mại của chứng từ có thể không đúng chính sách đã phát hành.', fix: 'Ở nguồn: tính lại bằng đúng bản chính sách đã nêu (tải về hoặc gọi POST /api/v1/policies/evaluate) rồi gửi lại dòng quà theo kết quả; chứng từ đã bán đúng thực tế mà chính sách chưa phản ánh thì kế toán trưởng chấp nhận cảnh báo kèm lý do.', ref: 'ADR-0031 D-POL-8', acceptable: true },
   'IN-POL-003': { layer: 'L4', severity: 'warn', stage: 'advice', weight: 5, title: 'Đã có bản chính sách mới hơn hiệu lực tại ngày chứng từ', why: 'Nguồn (thường là máy bán hàng làm việc ngoại tuyến) đang dùng bản cũ trong khi sổ đăng ký đã có bản mới phủ ngày chứng từ. Số liệu có thể lệch so với chính sách hiện hành.', fix: 'Ở nguồn: làm mới chính sách đã phát hành rồi tính lại; chứng từ đã lập đúng bản nguồn có thì kế toán trưởng chấp nhận cảnh báo kèm lý do.', ref: 'ADR-0031 D-POL-9', acceptable: true },
   'IN-GUARD-001': { layer: 'L5', severity: 'block', stage: 'door', weight: 0, title: 'Cấu hình vừa đổi sau lần Kiểm thử, chạy lại còn lỗi chặn', why: 'Nguồn đã Kiểm thử chứng từ với danh mục / chính sách / khoá kỳ cũ; trước khi ghi sổ cấu hình đổi và chứng từ không còn đạt. Ghi theo kết quả Kiểm thử cũ thì sổ sẽ sai với cấu hình hiện hành.', fix: 'Xem các lỗi chặn đi kèm (là kết quả chạy lại theo cấu hình mới), sửa rồi Kiểm thử lại để lấy dấu mới trước khi nộp.', ref: 'R-GATE-8, ADR-0019', acceptable: false },
   // [2026-11-03 01:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W5 (S021-22): L5 định khoản thử (IN-POST-*) và kỳ khoá (IN-BIZ-001), stage posting — thành sự việc rồi mới biết chưa ghi sổ được
@@ -317,6 +319,11 @@ export const INTAKE_REMEDIES: Record<IntakeCodeNeedingRemedy, Remedy> & Partial<
   'IN-POL-003': {
     steps: [{ text: 'Làm mới chính sách đã phát hành ở nguồn rồi tính lại theo bản mới' }, { text: 'Chứng từ lập đúng bản nguồn có tại thời điểm bán: kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' }],
     owner: 'creator', verify: { code: 'IN-POL-003' },
+  },
+  'IN-POL-004': {
+    steps: [{ text: 'Tính lại theo đúng bản chính sách đã nêu (POST /api/v1/policies/evaluate hoặc luật đã tải) rồi gửi lại dòng quà theo kết quả' }, { text: 'Quà đã giao đúng thực tế mà chính sách chưa phản ánh: kế toán trưởng chấp nhận cảnh báo, ghi lý do', role: 'chief_accountant' }],
+    owner: 'creator', verify: { code: 'IN-POL-004' },
+    forbid: ['Không xoá dòng quà đã giao thật chỉ để khớp kết quả tính lại — quà đã giao phải có chứng từ'],
   },
   'IN-BIZ-006': {
     steps: [
