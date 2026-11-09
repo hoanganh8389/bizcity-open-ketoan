@@ -5428,7 +5428,7 @@
       "phase": "PHASE-031",
       "title": "Màn Theo dõi thực hiện chính sách (đọc khung nhìn); đo hiệu năng ở 1 triệu sự việc trước khi quyết materialized view",
       "priority": "P1",
-      "status": "partial",
+      "status": "done",
       "column": "doing",
       "claim": {
         "who": "hoanganh8389 (phiên Claude, PHASE-031 policy)",

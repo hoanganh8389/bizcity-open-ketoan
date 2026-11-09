@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
+
+- **Thêm:** màn *Hệ thống → Chính sách* (HT15, quyền `catalog:read`, `/he-thong/chinh-sach`) với bốn tab: *Chính sách* (các bản, hiệu lực, băm, chứng từ đã áp, khoảng trống), *Chờ kế toán xem* (hàng việc `policy_review` + nút *Đánh dấu đã xem*, ẩn khi thiếu `documents:write`), *Truy vết* (chứng từ → chính sách@bản, băm khớp / lệch, ngày ngoài hiệu lực), *Theo dõi thực hiện* (đạt chính sách, lệch theo mã, độ phủ, độ trễ phiên bản, dòng thời gian, sức khoẻ). Đường dẫn sâu `?xem=truy-vet&chung-tu=<docKey>` để màn khác mở thẳng chuỗi chính sách căn cứ.
+- **Đổi:** không. Chỉ dùng API đã có (W2c, W4a); không API mới, không migration. Tỉ lệ `null` hiện "—".
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** màn chỉ đọc; nút *Đánh dấu đã xem* cần `documents:write` và đi qua action có bằng chứng (W2c).
+
 ### API đọc chính sách: sổ đăng ký, theo dõi thực hiện, truy vết ngược (PHASE-031 W4a, ADR-0031) <!-- [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a -->
 
 - **Thêm:** bốn action đọc `catalog:read` — `GET /api/v1/policy-registry` (+ `/:policyId/applications`), `/policy-tracking`, `/policy-lineage` — đọc `policy_registry` và `bizcity_read.policy_application`; hợp đồng `bizcity_policy@1` 1.2.0-draft mục 11. Test `policy-insight.test.ts` (T031-INS-1..6).
