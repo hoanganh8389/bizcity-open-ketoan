@@ -21,6 +21,20 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không.
 - **Bảo mật:** `context` chỉ có khoá trong danh sách đóng, không SQL, bảng, đường dẫn, dữ liệu cá nhân.
 
+### Tuổi nợ, sổ công nợ theo hạn, lãi lỗ theo hợp đồng và ghi chú dài hạn hiện tên đối tượng đúng ngày (PHASE-029 S029-19 đợt 2e) <!-- [2026-11-09 07:36 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2e -->
+
+- **Thêm:** không (dùng `bizcity_entity_attr_at` và `partnerNamesAt` của đợt 1 / 2a). Golden T029-CTL-1..5.
+- **Đổi:** tên đối tượng hiện đúng ngày theo chỗ hiện:
+  - **tuổi nợ** (`aging`, `aging-due`): tên tại **ngày xem**;
+  - **sổ công nợ theo hạn** (`debt-by-term`): dòng đối tượng = tên **cuối kỳ**; dòng từng chứng từ và dòng thanh toán = tên tại **ngày chứng từ** (chứng từ nhập muộn vẫn mang tên đúng tại ngày phát sinh);
+  - **lãi lỗ theo hợp đồng** (`profit-by-contract`): tên đối tượng của hợp đồng = tên **cuối kỳ**;
+  - **ghi chú chuyển dài hạn** ở bảng cân đối: tên tại **ngày lập bảng**.
+  Số tiền và mã đối tượng không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0087 đã chạy).
+- **Bảo mật:** không đổi.
+
 
 ### Ngừng chính sách đóng hiệu lực (PHASE-031 S031-31, RV-R1-04) <!-- [2026-11-10 10:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — S031-31 -->
 

@@ -10,6 +10,7 @@
 import { ANALYSIS_DIMS, fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, toNumber } from '../../../db/client.js';
+import { partnerNamesAt } from './ten-doi-tuong.js';
 
 interface Scope { tenantId: string; from: string; to: string; branchIds: string[] | null }
 
@@ -88,7 +89,12 @@ export async function profitByContract(a: Scope & { detail: boolean; contract?: 
   const contracts = await db.selectFrom('dimensions').select(['code', 'name', 'extra']).where('tenant_id', '=', a.tenantId).where('kind', '=', 'contract').execute();
   const info = new Map(contracts.map((c) => [c.code, c]));
   const partnerCodes = [...new Set(contracts.map((c) => String((c.extra as { partnerCode?: string })?.partnerCode ?? '')).filter(Boolean))];
-  const partners = partnerCodes.length ? await db.selectFrom('partners').select(['code', 'name']).where('tenant_id', '=', a.tenantId).where('code', 'in', partnerCodes).execute() : [];
+  // Dòng gom theo hợp đồng của báo cáo "đến ngày D": tên đối tượng hiệu lực tại ngày cuối kỳ (36 §2, D029-19-4).
+  const partners = partnerCodes.length
+    ? (await sql<{ code: string; name: string }>`
+        SELECT p.code, COALESCE((bizcity_entity_attr_at(p.tenant_id, 'partner', p.id, ${a.to}::date)).name, p.name) AS name
+          FROM partners p WHERE p.tenant_id = ${a.tenantId} AND p.code IN (${sql.join(partnerCodes.map((c) => sql`${c}`))})`.execute(db)).rows
+    : [];
   const partnerName = new Map(partners.map((p) => [p.code, p.name]));
   const accounts = a.detail ? await db.selectFrom('accounts').select(['code', 'name']).where('tenant_id', '=', a.tenantId).execute() : [];
   const accName = new Map(accounts.map((x) => [x.code, x.name]));
@@ -143,6 +149,8 @@ export async function aging(a: { tenantId: string; asOf: string; branchIds: stri
   const ids = [...byPartner.keys()];
   const partners = ids.length ? await db.selectFrom('partners').select(['id', 'code', 'name', 'phone', 'group_code', 'payment_term_days', 'credit_limit']).where('tenant_id', '=', a.tenantId).where('id', 'in', ids).execute() : [];
   const info = new Map(partners.map((p) => [p.id, p]));
+  // Dòng gom theo đối tượng: tên hiệu lực tại ngày xem (36 §2, D029-19-4).
+  const namesAt = await partnerNamesAt(a.tenantId, ids.filter((x): x is string => Boolean(x)), a.asOf);
   const asOfMs = Date.parse(a.asOf);
   const totals = { balance: 0, buckets: [0, 0, 0, 0, 0], inTerm: 0, overdue: 0 };
 
@@ -176,7 +184,7 @@ export async function aging(a: { tenantId: string; asOf: string; branchIds: stri
       buckets.forEach((b, i) => (totals.buckets[i]! += b));
       const limit = p?.credit_limit === null || p?.credit_limit === undefined ? null : toNumber(p.credit_limit);
       return {
-        partnerCode: p?.code ?? '', partnerName: p?.name ?? '(không theo dõi đối tượng)', phone: p?.phone ?? '', groupCode: p?.group_code ?? '',
+        partnerCode: p?.code ?? '', partnerName: p ? (namesAt.get(id)?.name ?? p.name) : '(không theo dõi đối tượng)', phone: p?.phone ?? '', groupCode: p?.group_code ?? '',
         balance: fromCents(balance), buckets: buckets.map(fromCents), oldestDate: oldest,
         termDays: term, ownTerm: p?.payment_term_days !== null && p?.payment_term_days !== undefined,
         inTerm: fromCents(inTerm), overdue: fromCents(balance - inTerm),
@@ -214,7 +222,7 @@ export async function agingByDue(a: { tenantId: string; asOf: string; branchIds:
   const partnerFilter = a.partnerCode ? sql`AND p.code = ${a.partnerCode}` : sql``;
   const groupFilter = a.groupCode ? sql`AND p.group_code = ${a.groupCode}` : sql``;
   const res = await sql<{ partner_id: string; code: string; name: string; group_code: string | null; side: string; doc_date: string; due_date: string; remaining: string }>`
-    SELECT i.partner_id, p.code, p.name, p.group_code, i.side, i.doc_date::text AS doc_date, i.due_date::text AS due_date,
+    SELECT i.partner_id, p.code, COALESCE((bizcity_entity_attr_at(i.tenant_id, 'partner', i.partner_id, ${a.asOf}::date)).name, p.name) AS name, p.group_code, i.side, i.doc_date::text AS doc_date, i.due_date::text AS due_date,
            i.amount - COALESCE((SELECT SUM(x.amount) FROM debt_allocations x
                                  WHERE (x.debit_item_id = i.id OR x.credit_item_id = i.id) AND x.alloc_date <= ${a.asOf}::date), 0) AS remaining
       FROM debt_items i JOIN partners p ON p.id = i.partner_id
@@ -265,9 +273,12 @@ export async function debtByTerm(a: { tenantId: string; from: string; to: string
   const branchFilter = a.branchIds ? sql`AND i.branch_id = ANY(${a.branchIds}::bigint[])` : sql``;
   const partnerFilter = a.partnerCode ? sql`AND p.code = ${a.partnerCode}` : sql``;
   const groupFilter = a.groupCode ? sql`AND p.group_code = ${a.groupCode}` : sql``;
-  type Item = { id: string; partner_id: string; code: string; name: string; side: string; amount: string; doc_no: string; doc_date: string; due_date: string; description: string | null; emp_code: string | null; emp_name: string | null; branch_code: string };
+  type Item = { id: string; partner_id: string; code: string; name: string; name_to: string; name_doc: string; side: string; amount: string; doc_no: string; doc_date: string; due_date: string; description: string | null; emp_code: string | null; emp_name: string | null; branch_code: string };
   const items = await sql<Item>`
-    SELECT i.id, i.partner_id, p.code, p.name, i.side, i.amount, i.doc_no, i.doc_date::text AS doc_date, i.due_date::text AS due_date,
+    SELECT i.id, i.partner_id, p.code, p.name,
+           COALESCE((bizcity_entity_attr_at(i.tenant_id, 'partner', i.partner_id, ${a.to}::date)).name, p.name) AS name_to,
+           COALESCE((bizcity_entity_attr_at(i.tenant_id, 'partner', i.partner_id, i.doc_date)).name, p.name) AS name_doc,
+           i.side, i.amount, i.doc_no, i.doc_date::text AS doc_date, i.due_date::text AS due_date,
            e.payload->>'description' AS description,
            COALESCE(e.payload->'employee'->>'code', e.payload->>'employeeCode') AS emp_code, e.payload->'employee'->>'name' AS emp_name, b.code AS branch_code
       FROM debt_items i JOIN partners p ON p.id = i.partner_id JOIN accounting_events e ON e.id = i.event_id JOIN branches b ON b.id = i.branch_id
@@ -314,7 +325,7 @@ export async function debtByTerm(a: { tenantId: string; from: string; to: string
     let credit = 0;
     for (const i of mine.filter((x) => x.doc_date >= a.from)) {
       const amt = toCents(toNumber(i.amount));
-      const base = { ...blank, partnerCode: first.code, partnerName: first.name, docDate: i.doc_date, docNo: i.doc_no, description: i.description ?? '', employeeCode: i.emp_code ?? '', employeeName: empNames.get(i.emp_code ?? '') ?? i.emp_name ?? '', branchCode: i.branch_code };
+      const base = { ...blank, partnerCode: first.code, partnerName: i.name_doc, docDate: i.doc_date, docNo: i.doc_no, description: i.description ?? '', employeeCode: i.emp_code ?? '', employeeName: empNames.get(i.emp_code ?? '') ?? i.emp_name ?? '', branchCode: i.branch_code };
       if (i.side === incSide) {
         const pays = paysOf.get(i.id) ?? [];
         const paid = pays.reduce((s, x) => s + x.amount, 0);
@@ -325,7 +336,7 @@ export async function debtByTerm(a: { tenantId: string; from: string; to: string
         credit += c;
         docs.push({ ...base, kind: 'doc', termDays: term, dueDate: term ? i.due_date : '', debit: fromCents(d), credit: fromCents(c) });
         for (const x of pays) {
-          docs.push({ ...blank, kind: 'pay', partnerCode: first.code, partnerName: first.name, payNo: x.item.doc_no, payDate: x.item.doc_date, payAmount: fromCents(x.amount), branchCode: x.item.branch_code });
+          docs.push({ ...blank, kind: 'pay', partnerCode: first.code, partnerName: i.name_doc, payNo: x.item.doc_no, payDate: x.item.doc_date, payAmount: fromCents(x.amount), branchCode: x.item.branch_code });
           totals.payAmount += x.amount;
         }
       } else {
@@ -344,7 +355,7 @@ export async function debtByTerm(a: { tenantId: string; from: string; to: string
     totals.debit += debit;
     totals.credit += credit;
     totals.closing += closing;
-    out.push({ ...blank, kind: 'partner', partnerCode: first.code, partnerName: first.name, description: first.name, opening: fromCents(opening), debit: fromCents(debit), credit: fromCents(credit), closing: fromCents(closing) });
+    out.push({ ...blank, kind: 'partner', partnerCode: first.code, partnerName: first.name_to, description: first.name_to, opening: fromCents(opening), debit: fromCents(debit), credit: fromCents(credit), closing: fromCents(closing) });
     out.push(...docs);
   }
   return {
