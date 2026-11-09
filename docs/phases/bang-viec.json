@@ -30,7 +30,7 @@
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 2
+      "count": 3
     },
     {
       "key": "done",
@@ -4606,6 +4606,17 @@
       "claim": null,
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 42
+    },
+    {
+      "id": "S029-34",
+      "phase": "PHASE-029",
+      "title": "RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý do ≥ 10 ký tự mới ghi đè và luôn archiveVersion; c…",
+      "priority": "P1",
+      "status": "paused",
+      "column": "paused",
+      "claim": null,
+      "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
+      "line": 43
     },
     {
       "id": "S030-1",
