@@ -5,19 +5,20 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 6 |
+| Đang làm | 7 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 137 |
+| Chưa ai nhận | 136 |
 | Chờ đủ tín hiệu | 52 |
 | Hoãn | 3 |
 | Xong | 266 |
 | **Tổng** | **492** |
 
-## Đang làm (6)
+## Đang làm (7)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
+| [S004-17](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-… | — | hoanganh8389 (phiên Claude, review-r1) · `feat/phase-004-s004-17-e1-ham-security-definer` |
 | [S014-14](PHASE-014-CLI-TEMPLATE-CA-CHUAN/40-MASTER-CHECKLIST.md#L25) | PHASE-014 | FLOW-2 Bảng việc sinh từ main (R-FLOW-8): cột Việc ở CLAIMS.md, scripts/bang-viec.mjs, BANG-VIEC.md + bang-vi… | — | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/flow-2-bang-viec` |
 | [S018-21](PHASE-018-GIAM-SAT-VAN-HANH/40-MASTER-CHECKLIST.md#L38) | PHASE-018 | Giám sát (Loki, Tempo, Prometheus, Grafana) BẬT MẶC ĐỊNH ở bản cài Docker: include: trong docker-compose.yml,… | P1 | hoanganh8389 (phiên Claude, PHASE-026 MDG) · `feat/phase-018-giam-sat-mac-dinh` |
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
@@ -62,12 +63,11 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (137)
+## Chưa ai nhận (136)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
 | [S001-11](PHASE-001-CHOT-CHUAN/40-MASTER-CHECKLIST.md#L21) | PHASE-001 | CSDL dev áp 0030–0037 | — | — |
-| [S004-17](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L30) | PHASE-004 | E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-… | — | — |
 | [S004-18](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L31) | PHASE-004 | Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tìn… | — | — |
 | [S005-7](PHASE-005-CHINH-SACH-CO-PHIEN-BAN/40-MASTER-CHECKLIST.md#L19) | PHASE-005 | Q-2: kế toán chọn "bản mới nhất" khi định khoản lại (quyền settings:write, lý do, bằng chứng) | — | — |
 | [S011-7](PHASE-011-MODULE-SDK/40-MASTER-CHECKLIST.md#L18) | PHASE-011 | Extension chạy thật: slot, hook, ctx.actions.call | — | — |

@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 6
+      "count": 7
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 137
+      "count": 136
     },
     {
       "key": "partial",
@@ -573,8 +573,14 @@
       "title": "E1 costoverwrite: ghi giá vốn qua hàm SECURITY DEFINER, thu UPDATE ledgerlines khỏi ketoanapp; D004-15 (Q004-4). K3 thêm chặt",
       "priority": null,
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, review-r1)",
+        "branch": "feat/phase-004-s004-17-e1-ham-security-definer",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-004 · S004-17 — E1 costoverwrite qua hàm SECURITY DEFINER (vai trò ketoanledgercost), thu UPD…"
+      },
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 30
     },
