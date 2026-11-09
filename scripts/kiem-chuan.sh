@@ -51,7 +51,7 @@ check "$(grep -rnE "ledgerService\.[A-Za-z]+\(" $SRCS --include=*.ts \
 rule "R-LEDGER E1–E3: cờ thoát trigger chỉ ở chỗ được phép (allow_ledger_purge đã gỡ)"
 check "$( {
   grep -rnE "cost_overwrite" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh \
-    | grep -vE "^($K/modules/ledger/|apps/api/test/|scripts/kiem-chuan.sh)"
+    | grep -vE "^(apps/api/test/|scripts/kiem-chuan.sh)"
   grep -rnE "allow_ledger_purge" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
     | grep -vE "^(apps/api/test/(app-role|db-rules).test.ts|packages/kernel/src/modules/ledger/ledger.diagnostics.ts|scripts/kiem-chuan.sh)"
   grep -rnE "session_replication_role" apps packages scripts --exclude-dir=dist --exclude-dir=node_modules --include=*.ts --include=*.mjs --include=*.sh --include=*.sql \
