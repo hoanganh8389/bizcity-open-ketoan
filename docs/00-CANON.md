@@ -293,7 +293,7 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 
 ## 6. Nhật ký thay đổi CANON
 
-<!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON — nhật ký v1.6 (§0.10, LEAN-8, R-FLOW-9) -->
+<!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON v1.6 -->
 - **v1.6 (2026-11-09):** Thêm §0.10 **Chia nhỏ để chốt — lõi chặt chẽ, cách dùng dễ**, LEAN-8 *Small Wins* và luật R-FLOW-9 (mỗi master plan có bảng bước thắng nhỏ). Nguồn: chủ dự án 2026-11-09.
 
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — CANON v1.5 -->
