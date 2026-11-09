@@ -26,6 +26,7 @@ import { DocumentsPage } from './features/documents/DocumentsPage';
 import { IntakeScorePage } from './features/documents/IntakeScorePage';
 import { CashTransfersPage } from './features/documents/CashTransfersPage';
 import { EntriesPage } from './features/ledger/EntriesPage';
+import { SuaDauButToanPage } from './phan-he/ke-toan/ledger/SuaDauButToanPage'; // [2026-11-10 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16
 import { AccountingVouchersPage } from './features/ledger/AccountingVouchersPage';
 import { AccountsPage } from './features/catalog/AccountsPage';
 import { BranchesPage } from './features/catalog/BranchesPage';
@@ -82,6 +83,7 @@ export const pageRoutes = (
     <Route path="chung-tu/bang-diem" element={<IntakeScorePage />} />
     <Route path="quy/phieu-chuyen-tien" element={<CashTransfersPage />} />
     <Route path="so-cai/but-toan" element={<EntriesPage />} />
+    <Route path="so-cai/sua-dau-but-toan" element={<SuaDauButToanPage />} />
     <Route path="tien-ich/chung-tu-ke-toan" element={<AccountingVouchersPage key="all" mode="all" />} />
     <Route path="tien-ich/ct-mat-lien-ket" element={<AccountingVouchersPage key="unlinked" mode="unlinked" />} />
     <Route path="tien-ich/ct-lech-than-chi-tiet" element={<AccountingVouchersPage key="unbalanced" mode="unbalanced" />} />

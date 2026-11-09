@@ -17,6 +17,8 @@ export const keToanMenu: MenuItem[] = [
       { key: 'bang-diem-dau-vao', label: 'Bảng điểm đầu vào', path: '/chung-tu/bang-diem', code: 'ACC94' },
       { key: 'chung-tu-ke-toan', label: 'Chứng từ kế toán', path: '/tien-ich/chung-tu-ke-toan', code: 'ACC3' },
       { key: 'but-toan', label: 'Bút toán sổ cái', path: '/so-cai/but-toan', code: 'SC01' },
+      // [2026-11-10 12:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-16): màn theo dõi sửa đầu bút toán
+      { key: 'sua-dau-but-toan', label: 'Sửa đầu bút toán', path: '/so-cai/sua-dau-but-toan', code: 'SC02', permission: 'ledger:read' },
       { key: 'phieu-ke-toan', label: 'Phiếu kế toán', path: '/nghiep-vu/phieu-ke-toan', code: 'ACC16' },
       { key: 'but-toan-mau', label: 'Bút toán mẫu', path: '/nghiep-vu/but-toan-mau', code: 'BT01' },
       { key: 'but-toan-lap', label: 'Bút toán lặp', path: '/nghiep-vu/but-toan-lap', code: 'BT02' },

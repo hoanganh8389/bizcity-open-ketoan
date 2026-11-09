@@ -264,7 +264,7 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
   {
     code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED', layer: 'L3', level: 'error', scoped: true,
     remedy: { steps: [{ text: 'Mở lịch sử chứng từ của bút toán trong mẫu: xem cột đổi, giá trị trước / sau, vai trò và giờ sửa', screen: SCREENS.ACC14 }, { text: 'Hỏi người sửa lý do; sửa sai thì định khoản lại chứng từ để bút toán về đúng nội dung', screen: SCREENS.ACC14, role: 'chief_accountant' }, { text: 'Không khoá kỳ khi còn lỗi này, trừ khi kế toán trưởng ghi lý do', role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED' } },
-    title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng (không có lần sửa trực tiếp trong CSDL)',
+    title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng, hoặc đã được kế toán trưởng xác nhận',
     fix: 'Đầu bút toán (số chứng từ, số hoá đơn, lý do, đối tượng, diễn giải, dấu vân tay, phiên bản sự việc, tên đối tượng) bị UPDATE thẳng bằng SQL, không qua đường E2 của ứng dụng. Mở bút toán trong mẫu, hỏi người sửa (vai trò trong nhật ký), sửa lại nếu sai; kế toán trưởng ghi lý do nếu cần khoá kỳ.',
     run: (trx, s) => sqlCounts(trx,
       sql`SELECT count(*)::int AS n FROM audit_logs a JOIN ledger_entries e ON e.id::text = a.object_id AND e.tenant_id = a.tenant_id
@@ -275,6 +275,9 @@ export const LEDGER_DIAGNOSTICS: DiagCheck[] = [
              WHERE ${scoped(s, 'e', 'posting_date')} AND a.action = 'ledger.entry.header_update' AND a.after_data->>'_source' = 'db'
                AND NOT EXISTS (SELECT 1 FROM audit_logs b WHERE b.tenant_id = a.tenant_id AND b.object_id = a.object_id AND b.action = a.action
                                 AND b.after_data->>'_source' = 'app' AND b.after_data->>'_txid' = a.after_data->>'_txid')
+               -- [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 (D004-16): lần đã được kế toán trưởng xác nhận (bằng chứng action core.ledger.header-edit-ack) không còn chặn khoá kỳ
+               AND NOT EXISTS (SELECT 1 FROM audit_logs k WHERE k.tenant_id = a.tenant_id AND k.action = 'core.ledger.header-edit-ack' AND k.result_ok
+                                AND k.object_id = a.object_id AND k.after_data->'input'->>'txid' = a.after_data->>'_txid')
           ) x ORDER BY x.posting_date, x.key LIMIT ${SAMPLE}`),
   },
   {

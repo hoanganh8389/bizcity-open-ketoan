@@ -12,6 +12,16 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Màn "Sửa đầu bút toán" (SC02) và xác nhận của kế toán trưởng (PHASE-004 S004-16, D004-14, D004-16) <!-- [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-16 -->
+
+- **Thêm:** `GET /api/v1/ledger/entry-edits` (quyền `ledger:read`) — mọi lần đổi đầu bút toán từ nhật ký của trigger 0089, nguồn **Ứng dụng** / **Ngoài ứng dụng** (ghép `_txid`), cột trước → sau, vai trò / đăng nhập / ứng dụng / máy, trạng thái xác nhận, tóm tắt; lọc ngày hạch toán, nguồn, cột, số bút toán, trạng thái. Action `core.ledger.header-edit-ack` (`POST …/entry-edits/ack`, quyền `periods:lock`, chỉ người dùng, lý do ≥ 10 ký tự): bằng chứng của action là bản ghi xác nhận, chỉ thêm. Màn **SC02** ở menu Kế toán › Định khoản (bộ lọc trên địa chỉ, cột `content_hash` ẩn mặc định). Hướng dẫn `docs/huong-dan/sua-dau-but-toan.md`. Test `entry-edits` (5 ca).
+- **Đổi:** chẩn đoán `LEDGER_HEADER_EDIT_UNATTRIBUTED` (và lane DG-LEDGER-5) bỏ lần sửa đã được xác nhận — khoá kỳ hết chặn sau khi kế toán trưởng xem. Màn đặt ở menu Kế toán thay vì Bàn điều tra (D004-14 đổi: kế toán trưởng không có `devtools:read`).
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần 0089).
+- **Bảo mật:** đọc nhật ký theo đơn vị; xác nhận không sửa / xoá dấu vết cũ; khoá API không xác nhận được.
+
+
 ### Nhật ký chi tiền theo khoản mục hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2d) <!-- [2026-11-09 11:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2d -->
 
 - **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-DIM-1..2.

@@ -83,7 +83,7 @@ export const checks = [
   // [2026-11-09 07:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-15a (D004-13): cùng bộ mã với LEDGER_DIAGNOSTICS (R-DIAG-9); sửa đầu bút toán ngoài ứng dụng
   sqlCheck({
     id: 'DG-LEDGER-5', code: 'LEDGER_HEADER_EDIT_UNATTRIBUTED',
-    title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng (dòng nhật ký của trigger 0089 có dòng của ứng dụng cùng _txid)',
+    title: 'Mọi lần sửa đầu bút toán đi qua ứng dụng (dòng của ứng dụng cùng _txid) hoặc đã được kế toán trưởng xác nhận',
     rules: ['R-LEDGER-1'], conf: [], tier: 1, enforce: 'info', weight: 3,
     count: `SELECT count(*)::int AS n FROM audit_logs WHERE action = 'ledger.entry.header_update' AND after_data->>'_source' = 'db'`,
     sql: `SELECT t.code AS tenant, e.entry_no AS key,
@@ -92,6 +92,8 @@ export const checks = [
           WHERE a.action = 'ledger.entry.header_update' AND a.after_data->>'_source' = 'db'
             AND NOT EXISTS (SELECT 1 FROM audit_logs b WHERE b.tenant_id = a.tenant_id AND b.object_id = a.object_id AND b.action = a.action
                              AND b.after_data->>'_source' = 'app' AND b.after_data->>'_txid' = a.after_data->>'_txid')
+            AND NOT EXISTS (SELECT 1 FROM audit_logs k WHERE k.tenant_id = a.tenant_id AND k.action = 'core.ledger.header-edit-ack' AND k.result_ok
+                             AND k.object_id = a.object_id AND k.after_data->'input'->>'txid' = a.after_data->>'_txid')
           LIMIT 200`,
   }),
   sqlCheck({
