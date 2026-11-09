@@ -34,6 +34,8 @@ Bảng theo dõi chung cho cả team. Phương án và lý do: tài liệu 12. M
 - Mọi biến thể là sản phẩm con mã số; tên tuỳ ý, phần mềm chỉ đọc ô Biến thể.
 - Đổi mã có đuôi sang mã số được; biến thể và `item_id` đi theo mặt hàng.
 - Không gộp hàng Nội bộ với hàng có sang thuế.
+- **Ô Gửi lên thuế là căn cứ duy nhất cho mọi việc tách khỏi thuế.** Mọi mặt hàng (cả mã cha) có ô này, mặc định bật. Tắt thì không lên hoá đơn thuế: dòng 0đ tách sang bill Z, dòng có thu tiền ở lại bill chính nhưng bị loại khỏi hoá đơn. Biến thể Nội bộ luôn tắt, khoá ở CSDL. Phần mềm không cần biết biến thể là gì để quyết định thuế.
+- Mã cha không có Biến thể, vẫn có ô Gửi lên thuế.
 - Quầy bán, hoá đơn, chính sách trên WordPress đọc ô qua `TGS_Item_Variant` (tài liệu 14).
 
 ## Việc của từng bên

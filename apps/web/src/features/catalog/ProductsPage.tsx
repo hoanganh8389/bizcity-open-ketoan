@@ -35,6 +35,7 @@ interface Product {
   /** Mã hàng cha (họ mã 1 cấp). */
   parentSku?: string | null;
   variantCode?: string;
+  sendToTax?: boolean; // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
 }
 interface PostingGroup { code: string; name: string; isDefault: boolean }
 
@@ -168,6 +169,7 @@ export function ProductsPage() {
       ? <span style={{ paddingLeft: 14 }} title={`Mã con của ${fam.parent.get(p.sku)} (họ mã)`}><span className="muted">└ </span>{p.sku}</span>
       : <span>{p.sku}{fam.kids.get(p.sku)?.length ? <span className="badge badge-gray" style={{ marginLeft: 4, fontSize: 10 }} title={`Mã cha của: ${fam.kids.get(p.sku)!.map((k) => k.sku).join(', ')}`}>+{fam.kids.get(p.sku)!.length}</span> : null}</span>) },
     { key: 'variantCode', header: 'Biến thể', width: 130, title: 'Biến thể của sản phẩm con: phần mềm tách hàng Nội bộ khỏi thuế và xử lý theo ô này. Thường để trống', value: (p) => (p.variantCode && p.variantCode !== 'normal' ? variantLabel(kindOf(p.variantCode), p.variantCode) : '') },
+    { key: 'sendToTax', header: 'Gửi thuế', width: 80, title: 'Có đưa lên hoá đơn / dữ liệu thuế không. Biến thể Nội bộ luôn Không', value: (p) => (p.sendToTax === false ? 'Không' : '') },
     { key: 'name', header: 'Tên hàng', width: 280, render: (p) => <>{p.isDraft && <span className="badge badge-warn" style={{ marginRight: 6 }} title={`Nháp — chưa dùng được trên chứng từ. Còn thiếu: ${(p.draftCodes ?? []).join(', ')}`}>Nháp</span>}{isChild(p) ? <span style={{ paddingLeft: 14 }} className="muted">{p.name}</span> : p.name}</> },
     { key: 'note', header: 'Ghi chú', width: 180 },
     { key: 'groupCode', header: 'Nhóm hàng', width: 320, value: (p) => groupPath(p.groupCode) },

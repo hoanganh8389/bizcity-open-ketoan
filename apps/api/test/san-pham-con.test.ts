@@ -201,14 +201,33 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', variantCode: 'normal', ...ack })).status).toBe(200);
   });
 
+  // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
+  it('Gửi lên thuế: mã cha tắt / bật được; Nội bộ luôn tắt, kể cả khi gửi bật', async () => {
+    const sendOf = async (sku: string) => (await sql<{ s: boolean }>`SELECT send_to_tax AS s FROM products WHERE tenant_id = ${tenantId} AND sku = ${sku}`.execute(db)).rows[0]?.s;
+    expect(await sendOf('170521001')).toBe(true);
+    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', sendToTax: false, ...ack })).status).toBe(200);
+    expect(await sendOf('170521001')).toBe(false);
+    expect((await call(ctx, 'GET', '/api/v1/catalog/products/170521001')).body.data.sendToTax).toBe(false);
+    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', sendToTax: true, ...ack })).status).toBe(200);
+    expect(await sendOf('170521001')).toBe(true);
+    const z = await addChild({ parentSku: '170521001', name: 'Thử Nội bộ gửi thuế', variantCode: 'internal', sendToTax: true });
+    expect(z.status).toBe(200);
+    expect(await sendOf(z.body.data.sku)).toBe(false);
+    expect((await call(ctx, 'PUT', `/api/v1/catalog/products/${z.body.data.sku}`, { name: 'Thử Nội bộ gửi thuế', sendToTax: true, ...ack })).status).toBe(200);
+    expect(await sendOf(z.body.data.sku)).toBe(false);
+    const k = await addChild({ parentSku: '170521001', name: 'Thử chia giá không thuế', variantCode: 'share', sendToTax: false });
+    expect(await sendOf(k.body.data.sku)).toBe(false);
+    expect(await sendOf('190000001Z') ?? false).toBe(false);
+  });
+
   it('luồng kéo danh mục gửi itemId, parentItemId và variantCode', async () => {
     const r = await call(ctx, 'GET', '/api/v1/catalog/feed/products?limit=5000');
-    const items = r.body.data.items as { sku: string; itemId: string | null; parentItemId: string | null; variantCode: string }[];
+    const items = r.body.data.items as { sku: string; itemId: string | null; parentItemId: string | null; variantCode: string; sendToTax: boolean }[];
     const kid = items.find((x) => x.sku === '17052100101')!;
     const dad = items.find((x) => x.sku === '170521001')!;
     expect(kid).toMatchObject({ variantCode: 'normal', parentItemId: dad.itemId });
     expect(kid.itemId).toMatch(/^[0-9A-Z]{26}$/);
-    expect(items.find((x) => x.sku === '19000000101')?.variantCode).toBe('internal');
+    expect(items.find((x) => x.sku === '19000000101')).toMatchObject({ variantCode: 'internal', sendToTax: false });
   });
 });
 

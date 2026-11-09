@@ -420,6 +420,8 @@ Hàng tách **vẫn xuất kho thật ở nội bộ**, nên có giá vốn ở 
 
 Ngoài mã đuôi `Z`, quầy còn tự tách quà 0đ của đơn có sữa dưới 24 tháng. Vì vậy nếu bỏ đuôi `Z`, phải giữ đủ cả hai điều kiện.
 
+**[Đang chạy]** Từ 09/11/2026 tách bill không còn đọc đuôi `Z`: mọi mặt hàng có ô **Gửi lên thuế** (`products.send_to_tax`, mặc định bật; biến thể Nội bộ luôn tắt). Tắt thì dòng 0đ tách sang bill Z, dòng có tiền ở lại bill chính nhưng bị loại khỏi hoá đơn. Quà 0đ của đơn sữa dưới 24 tháng vẫn tự tách như trước.
+
 **[Đang chạy]** Dấu `is_under_24m` đang dành cho sữa, còn các mã `Z` đều chưa bật dấu này. Nên `Z` không thể chỉ đổi thành dấu "dưới 24 tháng"; cần tách hai ý: hàng này thuộc nhóm sữa dưới 24 tháng, và hàng này có được sang thuế không. **[Góp ý]** đồng ý với hướng thêm dấu "có sang thuế hay không" như một lớp giảm rủi ro.
 
 ## 10. Hai dữ liệu: nội bộ và thuế
@@ -499,8 +501,8 @@ Không xác định được thì đưa vào chờ xử lý, có lý do rõ ràn
 | Đây là hàng gì | 9 số đầu | Mã số, cha – con |
 | Có tính vào vốn không | Đuôi `K`, `M` | Loại dòng phiếu nhập |
 | Thuộc chương trình nào | Đuôi | Chương trình gắn trên dòng |
-| Có tách bill không | Đuôi `Z` | Dấu trên mặt hàng |
-| Có sang thuế không | Đuôi `Z`, hoặc do người nhập biết | Dấu trên mặt hàng và dòng phiếu |
+| Có tách bill không | Đuôi `Z` | Ô **Gửi lên thuế** trên mặt hàng (đã làm 09/11/2026) |
+| Có sang thuế không | Đuôi `Z`, hoặc do người nhập biết | Ô **Gửi lên thuế** trên mặt hàng (đã làm); dòng phiếu sau |
 | Bán tách được không | Đuôi `Q`, nhóm 8 | Thuộc tính của bộ hàng |
 | Thuộc loại gì | Đầu `Q`, `TS`, `CC`, 8 số đầu `19` | Ô loại hàng |
 

@@ -255,7 +255,7 @@ Mỗi giai đoạn đều dừng lại được, và phần mềm vẫn chạy b
 | 6 | Đổi mã cũ theo từng đợt, nhóm ít rủi ro trước | Trộn | Đối chiếu tồn, giá vốn trước và sau mỗi đợt không đổi | Đổi lại mã |
 | 7 | Mã cũ chỉ còn để tra cứu lịch sử | Toàn số | Hết mã có chữ đang dùng | |
 
-**Cập nhật 09/11/2026:** quầy bán, hoá đơn, chính sách đã đọc ô Biến thể (tài liệu 14), nên bỏ khoá tạm: mọi biến thể là sản phẩm con mã số, đổi mã có đuôi sang mã số được, biến thể đi theo mặt hàng. Vẫn giữ: không gộp hàng Nội bộ với hàng có sang thuế.
+**Cập nhật 09/11/2026:** quầy bán, hoá đơn, chính sách đã đọc ô Biến thể (tài liệu 14), nên bỏ khoá tạm: mọi biến thể là sản phẩm con mã số, đổi mã có đuôi sang mã số được, biến thể đi theo mặt hàng. Vẫn giữ: không gộp hàng Nội bộ với hàng có sang thuế. Từ 09/11/2026 việc tách khỏi thuế đi theo ô **Gửi lên thuế** trên mặt hàng (mọi mặt hàng, cả mã cha; Nội bộ luôn tắt), không theo biến thể (tài liệu 14).
 
 **Đổi mã chứ không gộp mã:** `item_id` giữ nguyên, nên lịch sử, tồn và giá vốn đi theo. Gộp sẽ làm mất phần tồn và đơn giá riêng.
 

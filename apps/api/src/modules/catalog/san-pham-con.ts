@@ -45,7 +45,7 @@ export async function nextChildSku(trx: Db, tenantId: string, parentSku: string)
   return parentSku + String(n).padStart(n > 99 ? 3 : 2, '0');
 }
 
-export interface ChildInput { parentSku: string; name: string; variantCode: string; barcode?: string; note?: string; noSaleParent?: boolean }
+export interface ChildInput { parentSku: string; name: string; variantCode: string; sendToTax?: boolean; barcode?: string; note?: string; noSaleParent?: boolean }
 
 export async function addChildProduct(trx: Db, tenantId: string, actor: string, i: ChildInput) {
   const parentSku = i.parentSku.trim();
@@ -75,7 +75,7 @@ export async function addChildProduct(trx: Db, tenantId: string, actor: string, 
     exciseRate: parent.excise_rate === null ? null : Number(parent.excise_rate),
     origin: parent.origin, weightKg: parent.weight_kg === null ? null : Number(parent.weight_kg),
     isMain: parent.is_main, isUnder24m: parent.is_under_24m, exportAdjust: parent.export_adjust,
-    units: undefined, variantCode: kind.code,
+    units: undefined, variantCode: kind.code, sendToTax: i.sendToTax ?? true,
   }, { isNew: true, source: 'manual' });
   if (i.noSaleParent && !parent.no_sale) {
     await trx.updateTable('products').set({ no_sale: true, updated_at: new Date() }).where('tenant_id', '=', tenantId).where('sku', '=', parentSku).execute();

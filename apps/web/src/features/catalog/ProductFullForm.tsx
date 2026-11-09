@@ -46,6 +46,8 @@ interface FullProduct {
   parentSku?: string | null;
   /** Biến thể: căn cứ duy nhất để tách hàng nội bộ, sang thuế. Phần mềm không đọc chữ cuối mã. */
   variantCode?: string;
+  /** Gửi lên thuế; Biến thể Nội bộ luôn tắt. [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp) */
+  sendToTax?: boolean;
   units: Unit[]; prices: Price[];
   /** Nháp (PHASE-024): khai báo còn lỗi chặn, chưa dùng được trên chứng từ. */
   isDraft?: boolean; draftCodes?: string[];
@@ -218,7 +220,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       const unitNames = new Set(units.map((u) => u.unit));
       const prices = v.prices.filter((p) => unitNames.has(p.unit)).map((p) => ({ priceListCode: p.priceListCode, unit: p.unit, price: p.price, isDefaultUnit: p.isDefaultUnit, note: p.note }));
       const { sku: _s, unit: _u, units: _us, prices: _ps, variantCode, ...rest } = v;
-      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, ...(!isNew && v.parentSku ? { variantCode } : {}), units, prices, warnAck });
+      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, ...(!isNew && v.parentSku ? { variantCode } : {}), sendToTax: v.variantCode === 'internal' ? false : v.sendToTax !== false, units, prices, warnAck });
     },
     onSuccess: () => {
       flashSaved(savedNote(why.findings, { draft: blockCount > 0 }));
@@ -284,6 +286,13 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               </select>
             </Field>
           )}
+          {/* [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp): mọi mặt hàng (cả mã cha); Nội bộ thì tự tắt, khoá. */}
+          <Field label="Gửi lên thuế" tip={v.variantCode === 'internal' ? 'Hàng Nội bộ không bao giờ gửi lên thuế' : 'Bỏ tích: mặt hàng không lên hoá đơn / dữ liệu thuế'}>
+            <label className="checkbox" style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 32 }}>
+              <input type="checkbox" checked={v.variantCode !== 'internal' && v.sendToTax !== false} disabled={v.variantCode === 'internal'} onChange={(e) => set({ sendToTax: e.target.checked })} />
+              <span>{v.variantCode === 'internal' ? 'Không (Nội bộ)' : v.sendToTax === false ? 'Không gửi' : 'Có'}</span>
+            </label>
+          </Field>
           {classes.type.length > 0 && <Field label="Loại hàng" tip="Để lọc và báo cáo, không làm đổi định khoản"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
           <Field label="Tên hàng (*)" full><input className="input" value={v.name} onChange={(e) => set({ name: e.target.value })} /></Field>
           {(() => {

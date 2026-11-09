@@ -12,8 +12,12 @@ Bản tương ứng phía WordPress: `tgs_shop_management/docs/ma-hang-so-va-bie
 3. Phần mềm chỉ đọc **ô Biến thể**. Không đọc tên, không đọc chữ cuối mã.
 4. Mọi mặt hàng có **`item_id`** bất biến. Đổi mã, đổi tên, đổi biến thể đều không đổi `item_id`. Biến thể đi theo mặt hàng, không đi theo mã.
 5. Không gộp hàng Nội bộ với hàng có sang thuế.
+6. **Ô Gửi lên thuế là căn cứ duy nhất cho mọi việc tách khỏi thuế.** Mọi mặt hàng (cả mã cha) có ô này, mặc định bật. Tắt thì không lên hoá đơn thuế: dòng 0đ tách sang bill Z, dòng có thu tiền ở lại bill chính nhưng bị loại khỏi hoá đơn. Biến thể Nội bộ luôn tắt, khoá ở CSDL. Phần mềm không cần biết biến thể là gì để quyết định thuế. (09/11/2026, migration 0093)
+7. Mã cha luôn là hàng Thường, không có Biến thể; vẫn có ô Gửi lên thuế.
 
 ## 2. Biến thể
+
+Cột *Sang thuế* là giá trị ban đầu của ô **Gửi lên thuế** (`products.send_to_tax`); trừ Nội bộ, người dùng tắt được.
 
 | `variantCode` | Tên | Đuôi cũ | Sang thuế |
 |---|---|---|---|
@@ -30,11 +34,11 @@ Nguồn: bảng `item_variant_kinds` (migration 0092). Mã cũ còn đuôi đư�
 ## 3. Dòng dữ liệu
 
 ```
-ERP products.variant_code + items.item_id
-  │  GET /api/v1/catalog/feed/products  →  itemId, parentItemId, variantCode
+ERP products.variant_code + send_to_tax + items.item_id
+  │  GET /api/v1/catalog/feed/products  →  itemId, parentItemId, variantCode, sendToTax
   ▼
-WordPress wp_global_product_name.global_product_item_id / _parent_item_id / _variant   (tgs_accounting_bridge)
-  │  TGS_Item_Variant::is_internal / of / item_id                                       (tgs_shop_management, một chỗ)
+WordPress wp_global_product_name.global_product_item_id / _parent_item_id / _variant / _send_tax   (tgs_accounting_bridge)
+  │  TGS_Item_Variant::sends_tax / of / item_id                                         (tgs_shop_management, một chỗ)
   ▼
 POS tách bill Z · ép 0đ · hoá đơn Viettel loại dòng Nội bộ · chính sách quà < 24 tháng · hoàn hàng
   │  chứng từ gửi về ERP: mỗi dòng kèm itemId                                         (TGS_Acc_Mapper::lines)

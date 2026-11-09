@@ -31,6 +31,13 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không. Bản đã `retired` trước đây vẫn có `effective_to = NULL` (không có ngày ngừng đáng tin) — việc gỡ nợ là S031-32.
 - **Bảo mật:** không đổi.
 
+### Ô Gửi lên thuế trên mặt hàng (PHASE-026) <!-- [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — 0093 (đóng góp) -->
+
+- **Thêm:** cột `products.send_to_tax` (migration 0093), mặc định bật; trigger ép tắt với biến thể không sang thuế (Nội bộ). `sendToTax` ở `PUT /api/v1/catalog/products/:sku`, `POST /api/v1/items/add-child`, danh sách và luồng `/api/v1/catalog/feed/products`. Ô *Gửi lên thuế* ở DM10 (mọi mặt hàng, cả mã cha) và form Thêm sản phẩm con; cột *Gửi thuế* ở danh sách.
+- **Đổi:** mã cha không có Biến thể (máy chủ từ chối). Hệ thống bán hàng tách khỏi thuế theo ô này, không theo biến thể.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** chạy migration 0093 (thêm cột, tắt gửi thuế cho hàng Nội bộ). Hệ thống bán hàng tự kéo lại danh mục một lượt.
 
 ### Sản phẩm con và ô Biến thể, giai đoạn 1 chuyển mã số (PHASE-026) <!-- [2026-11-07 06:20 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1 (đóng góp) --> <!-- [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ khoá tạm, migration 0092 (đóng góp) -->
 

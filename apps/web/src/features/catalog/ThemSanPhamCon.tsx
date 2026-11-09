@@ -33,6 +33,7 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   const list = kids.data ?? [];
   const [name, setName] = useState(`${parentName} `);
   const [variantCode, setVariantCode] = useState('normal');
+  const [sendToTax, setSendToTax] = useState(true); // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
   const [barcode, setBarcode] = useState('');
   const [note, setNote] = useState('');
   const [noSaleParent, setNoSaleParent] = useState(false);
@@ -47,7 +48,7 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
   const can = Boolean(trimmed) && !dup && !sameAsParent;
 
   const save = useMutation({
-    mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, variantCode, barcode: barcode.trim() || undefined, note: note.trim() || undefined, noSaleParent: noSaleParent || undefined }),
+    mutationFn: () => api.post<{ sku: string; name: string }>('/api/v1/items/add-child', { parentSku, name: trimmed, variantCode, sendToTax: variantCode !== 'internal' && sendToTax, barcode: barcode.trim() || undefined, note: note.trim() || undefined, noSaleParent: noSaleParent || undefined }),
     onSuccess: (p) => {
       setDone(`Đã tạo ${p.sku}: ${p.name}`);
       setName(`${parentName} `); setBarcode(''); setNote(''); setNoSaleParent(false);
@@ -66,17 +67,23 @@ export function ThemSanPhamCon({ parentSku, parentName, parentNoSale, onClose }:
       </>}>
       <ErrorBox error={save.error ? errorText(save.error) : null} />
       {done && <div className="alert alert-ok full" style={{ marginBottom: 8 }}>{done}</div>}
-      <Field label="Tên sản phẩm con (*)" full hint="Đặt tuỳ ý, ví dụ: Bình sữa xanh L, Sữa A hàng tặng">
+      <Field label="Tên sản phẩm con (*)" full tip="Đặt tuỳ ý, ví dụ: Bình sữa xanh L, Sữa A hàng tặng">
         <input ref={nameRef} className="input" value={name} maxLength={255} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && can && !save.isPending) { setDone(''); save.mutate(); } }} />
       </Field>
       {dup && <div className="alert alert-bad full">Đã có <b className="mono">{dup.sku}</b> cùng tên này.</div>}
       {sameAsParent && trimmed && <div className="muted full" style={{ fontSize: 12 }}>Gõ thêm màu, size để phân biệt với mã cha.</div>}
-      <Field label="Biến thể" hint="Phần mềm xử lý theo ô này">
+      <Field label="Biến thể" tip="Phần mềm xử lý theo ô này, không theo tên">
         <select className="select input" value={variantCode} onChange={(e) => setVariantCode(e.target.value)}>
           {kinds.filter((k) => k.isActive && k.code !== 'legacy').map((k) => (
             <option key={k.code} value={k.code} title={k.note}>{variantLabel(k)}</option>
           ))}
         </select>
+      </Field>
+      <Field label="Gửi lên thuế" tip={variantCode === 'internal' ? 'Hàng Nội bộ không bao giờ gửi lên thuế' : 'Bỏ tích: mặt hàng không lên hoá đơn / dữ liệu thuế'}>
+        <label className="checkbox" style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 32 }}>
+          <input type="checkbox" checked={variantCode !== 'internal' && sendToTax} disabled={variantCode === 'internal'} onChange={(e) => setSendToTax(e.target.checked)} />
+          <span>{variantCode === 'internal' ? 'Không (Nội bộ)' : sendToTax ? 'Có' : 'Không gửi'}</span>
+        </label>
       </Field>
       <Field label="Barcode"><input className="input mono" value={barcode} onChange={(e) => setBarcode(e.target.value)} title="Mã vạch riêng của sản phẩm con, để quầy quét ra đúng hàng" /></Field>
       <Field label="Ghi chú" full><input className="input" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} placeholder="Vì sao tạo mã, thuộc chương trình nào" title="Chỉ để người đọc, phần mềm không xử lý theo ghi chú" /></Field>

@@ -219,6 +219,7 @@ const addChild = defineAction({
     parentSku: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1, 'Nhập tên sản phẩm con').max(255),
     variantCode: z.string().trim().min(1).max(32).default('normal'),
+    sendToTax: z.boolean().optional(), // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093): bỏ trống = bật (Nội bộ luôn tắt) (đóng góp)
     barcode: z.string().trim().max(500).optional(),
     note: z.string().trim().max(500).optional(),
     noSaleParent: z.boolean().optional(),

@@ -69,6 +69,7 @@ const productSchema = z.object({
   isMain: z.boolean().optional(), isUnder24m: z.boolean().optional(), noSale: z.boolean().optional(), exportAdjust: z.boolean().optional(),
   isKct: z.boolean().optional(), trackIdentifier: z.boolean().optional(),
   parentSku: z.string().trim().max(64).nullable().optional(),
+  sendToTax: z.boolean().optional(), // [2026-11-09 07:30 PM Nguyễn Văn Thủy] PHASE-026 — ô Gửi lên thuế (0093) (đóng góp)
   variantCode: z.string().trim().min(1).max(32).optional(), // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — ô Biến thể sửa được, lưu qua saveProduct; luồng kéo danh mục gửi variantCode (đóng góp)
   units: z.array(unitSchema).max(50).optional(),
   prices: z.array(priceSchema).max(2000).optional(),
