@@ -20,7 +20,8 @@ export const heThongMenu: MenuItem[] = [
       { key: 'kiem-chuan', label: 'Kiểm chuẩn', path: '/he-thong/kiem-chuan', code: 'HT06', permission: 'conformance:read' },
       { key: 'ho-so-ke-toan', label: 'Hồ sơ kế toán', path: '/he-thong/ho-so-ke-toan', code: 'HT07', permission: 'ledger:read' },
       // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: Bàn đánh giá theo vai (HT08, quyền review:read)
-      { key: 'ban-danh-gia', label: 'Bàn đánh giá', path: '/he-thong/ban-danh-gia', code: 'HT08', permission: 'review:read' },
+      // [2026-11-09 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — D032-13: HT08 đổi tên Bàn làm việc kế toán (giữ key, đường dẫn, quyền)
+      { key: 'ban-danh-gia', label: 'Bàn làm việc kế toán', path: '/he-thong/ban-danh-gia', code: 'HT08', permission: 'review:read' },
       // [2026-11-03 11:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-024 — HT09: kế toán trưởng duyệt luật nhắc, tắt / bật tự thêm mặt hàng từ chứng từ (người có catalog:read xem được)
       { key: 'quy-dinh-danh-muc', label: 'Quy định dữ liệu danh mục', path: '/he-thong/quy-dinh-danh-muc', code: 'HT09', permission: 'catalog:read' },
       // [2026-11-04 02:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-026 — HT10: bảng trụ cột × mức đạt của Core (ai đăng nhập cũng xem được — kim chỉ nam chung)
