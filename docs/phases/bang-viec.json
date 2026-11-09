@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 57
+      "count": 58
     },
     {
       "key": "paused",
@@ -5883,15 +5883,9 @@
       "phase": "PHASE-032",
       "title": "Hộp việc hằng ngày: chạy chẩn đoán L3 hiện có lúc 01:00 (bizcity.clock.daily, cạnh kiểm chuẩn đêm), lưu lượt, bảng B tối thiểu (HARD đang mở, tuổi việc, lệch k…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
-        "branch": "feat/phase-032-b2a-viec-hom-nay",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-032 · B2a — thẻ Việc hôm nay trên Bàn làm việc kế toán: tự chẩn đoán L3 khi mở thẻ (API có sẵ…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 36
     },
