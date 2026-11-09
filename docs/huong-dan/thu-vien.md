@@ -28,5 +28,6 @@ Thư viện là bộ **dữ liệu tham chiếu có sẵn trong open-ketoan**, g
 
 - API: [docs/api/16-thu-vien.md](../api/16-thu-vien.md). Hợp đồng: [BIZCITY-LIBRARY-v1](../contracts/BIZCITY-LIBRARY-v1.md).
 - Thêm thư viện: thư mục `libraries/<miền>.<tên>/` với `library.json`, `README.md`, nếu sinh từ nguồn thì `sources/` + `build.mjs` (mẫu: `libraries/vn.ngay-nghi-le/build.mjs`). Phần dùng chung: `scripts/thu-vien/thu-vien.mjs` (băm, đóng dấu phiên bản).
+- Lệnh cho dev <!-- [2026-11-08 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-50 -->: `npx bizcity library list` (có gì), `library search "<từ khoá>" --at <ngày>` (lấy mã đúng, xem giá trị tại ngày), `library check <id> <giá trị>` (kiểm ô bằng bộ kiểm của Core; PASS 0 · FAIL 1 · SKIP 2 · WARN 3), `library new <id> --kind … --title … --source …` (khung thư viện mới), `library diff <id>` (bản cần lên so với main). AI agent: skill [use-bizcity-library](../../skills/use-bizcity-library/SKILL.md).
 - Kiểm: `node tests/conformance/selfcheck.mjs --only SC-LIB-1` — khuôn, mã không mất, băm + phiên bản, sinh lại khớp, luật khai báo.
 - Không xoá mục: đổi `status` sang `deprecated` (kèm `replacedBy`) rồi `removed`. Không sửa tay `library.json` sinh từ nguồn.

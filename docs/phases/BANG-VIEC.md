@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 11 |
+| Đang làm | 10 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 140 |
 | Chờ đủ tín hiệu | 51 |
 | Hoãn | 1 |
-| Xong | 258 |
+| Xong | 259 |
 | **Tổng** | **489** |
 
-## Đang làm (11)
+## Đang làm (10)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -27,7 +27,6 @@
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
 | [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | hoanganh8389 (phiên Claude, p030-queue) · `feat/phase-029-bao-cao-ten-theo-ngay` |
-| [S030-50](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L58) | PHASE-030 | B4 — CLI npx bizcity library search / check / new / diff + skill use-bizcity-library (26 §10) | P1 | hoanganh8389 (phiên Claude, thu-vien-b4) · `feat/s030-50-cli-skill-thu-vien` |
 | [S031-28](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L37) | PHASE-031 | W4a: API đọc — core.policy.registry, core.policy.applications, core.policy.tracking, core.policy.lineage (00 … | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4a-api-doc-chinh-sach` |
 
 ## Chờ merge (0)
@@ -274,6 +273,6 @@
 |---|---|---|---|---|
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (258)
+## Xong (259)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
