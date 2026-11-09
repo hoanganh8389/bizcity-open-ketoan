@@ -2,6 +2,7 @@
 <!-- [2026-11-09 10:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chỉ đạo: giao Võ Hoàng (nhóm POS TGS) mở phase phần UI / UX, luồng, xử lý chi tiết của chính sách bán hàng trên nền PHASE-031; quy trình pull → phân tích → phase → bản mẫu duyệt → checklist → code trên nhánh PR (chưa duyệt nội dung) -->
 <!-- [2026-11-09 09:30 PM Võ Hoàng] PHASE-032 — bản mẫu 4 màn: Chương trình KM · Soạn & phát hành · Một chương trình (bản, so sánh, chứng từ) · Kênh POS; dữ liệu giả, chờ chủ dự án duyệt (đóng góp) -->
 <!-- [2026-11-09 11:15 PM Võ Hoàng] PHASE-032 — bản mẫu theo HUONG-DAN-LAM-VIEC §7: nút Hướng dẫn, chú thích rê chuột, ô tìm thay ô chọn nhiều dòng; quà ghi XTA1.4 như Core (Q032-6) (đóng góp) -->
+<!-- [2026-11-10 09:00 AM Võ Hoàng] PHASE-032 — chốt W0: D032-1..7 và Q032-1..4 theo phương án ở 00 §5 (khoá module chinh-sach-ban); tài liệu viết thuần nghiệp vụ (đóng góp) -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -114,14 +115,14 @@ dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere}
 </head>
 <body>
 <header>
-  <div class="mockbar">Bản mẫu PHASE-032 — dữ liệu giả, chưa nối API. Bấm thử được: chọn dòng, đổi loại, thử tính, phát hành, so sánh bản.</div>
+  <div class="mockbar">Bản mẫu PHASE-032 (W0 đã chốt) — dữ liệu giả, chưa nối API. Bấm thử được: chọn dòng, đổi loại, thử tính, phát hành, so sánh bản.</div>
   <div class="top">
-    <div class="brand"><div class="logo">BH</div><div>Bán hàng · Chính sách bán hàng<small>modules/ban-hang · /app/ban-hang/chinh-sach</small></div></div>
+    <div class="brand"><div class="logo">BH</div><div>Bán hàng · Chính sách bán hàng<small>modules/chinh-sach-ban · /app/chinh-sach-ban</small></div></div>
     <div class="spacer"></div>
     <label class="mono" style="color:var(--muted)">Vai trò
       <select id="role"><option value="w">Kế toán / quản lý KM (settings:write)</option><option value="r">Nhân viên xem (catalog:read)</option></select>
     </label>
-    <button class="btn" type="button" title="Mở docs/huong-dan/ban-hang-chinh-sach.md: các bước soạn, phát hành, sửa ra bản mới, ngừng; ý nghĩa từng trạng thái">Hướng dẫn</button>
+    <button class="btn" type="button" title="Mở docs/huong-dan/chinh-sach-ban.md: các bước soạn, phát hành, sửa ra bản mới, ngừng; ý nghĩa từng trạng thái">Hướng dẫn</button>
     <button class="btn" id="theme" type="button">Sáng / tối</button>
   </div>
   <nav class="tabs" role="tablist">
@@ -379,7 +380,7 @@ $$('#types button[data-rc]').forEach((b) => b.addEventListener('click', () => {
   tryCalc();
 }));
 
-// Thử tính — cùng công thức Rule Contract (bxgy theo spec của sếp; discount theo khuôn đề xuất)
+// Thử tính — cùng công thức Rule Contract (bxgy theo spec của sale.promo.buy_x_get_y@1; discount theo khuôn ở 10 §4)
 function tryCalc() {
   const qty = +$('#cA').value || 0, price = +$('#cP').value || 0;
   let out, treat;

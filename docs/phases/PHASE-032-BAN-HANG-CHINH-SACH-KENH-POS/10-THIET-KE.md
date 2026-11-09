@@ -1,6 +1,7 @@
 # PHASE-032 · 10 — Thiết kế: luồng, màn hình, ánh xạ CTKM TGS
 <!-- [2026-11-09 10:38 AM Johnny Chu - Chu Hoàng Anh] PHASE-032 — chỉ đạo: giao Võ Hoàng (nhóm POS TGS) mở phase phần UI / UX, luồng, xử lý chi tiết của chính sách bán hàng trên nền PHASE-031; quy trình pull → phân tích → phase → bản mẫu duyệt → checklist → code trên nhánh PR (chưa duyệt nội dung) -->
 <!-- [2026-11-09 09:30 PM Võ Hoàng] PHASE-032 — luồng soạn → thử → phát hành → ngừng; POS tải → tính → gửi; hoàn / đổi; ngoại tuyến; ánh xạ; quy tắc màn (đóng góp) -->
+<!-- [2026-11-10 09:00 AM Võ Hoàng] PHASE-032 — chốt W0: D032-1..7 và Q032-1..4 theo phương án ở 00 §5 (khoá module chinh-sach-ban); tài liệu viết thuần nghiệp vụ (đóng góp) -->
 
 ## 1. Vòng đời một chương trình
 

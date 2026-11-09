@@ -15,7 +15,7 @@
     {
       "key": "blocked",
       "label": "Bị chặn",
-      "count": 30
+      "count": 29
     },
     {
       "key": "todo",
@@ -25,7 +25,7 @@
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 53
+      "count": 52
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 267
+      "count": 269
     }
   ],
   "items": [
@@ -5509,22 +5509,22 @@
       "phase": "PHASE-032",
       "title": "README, 00, 10, checklist, bản mẫu mockups/ban-hang-chinh-sach.html",
       "priority": "P0",
-      "status": "partial",
-      "column": "partial",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 9
+      "line": 10
     },
     {
       "id": "S032-2",
       "phase": "PHASE-032",
-      "title": "Chủ dự án duyệt bản mẫu + D032-1..7, trả Q032-1..4",
+      "title": "Chốt bản mẫu, D032-1..7, Q032-1..4 (00 §4–5)",
       "priority": "P0",
-      "status": "blocked",
-      "column": "blocked",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 10
+      "line": 11
     },
     {
       "id": "S032-3",
@@ -5535,18 +5535,18 @@
       "column": "blocked",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 11
+      "line": 12
     },
     {
       "id": "S032-4",
       "phase": "PHASE-032",
-      "title": "Khung module (khoá theo Q032-1, đề xuất chinh-sach-ban) (npx bizcity module new), manifest, menu Chương trình khuyến mại",
+      "title": "Khung modules/chinh-sach-ban (npx bizcity module new), manifest, menu Chương trình khuyến mại",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 12
+      "line": 13
     },
     {
       "id": "S032-5",
@@ -5557,7 +5557,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 13
+      "line": 14
     },
     {
       "id": "S032-6",
@@ -5568,18 +5568,18 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 14
+      "line": 15
     },
     {
       "id": "S032-7",
       "phase": "PHASE-032",
-      "title": "Bản nháp: migration của module modbanhangpolicydrafts + action ban-hang.policy-draft.",
+      "title": "Bản nháp: migration của module modchinhsachbandrafts + action chinh-sach-ban.draft.",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 15
+      "line": 16
     },
     {
       "id": "S032-8",
@@ -5590,18 +5590,18 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 16
+      "line": 17
     },
     {
       "id": "S032-9",
       "phase": "PHASE-032",
-      "title": "Đề xuất P032-1..4 gửi chủ dự án (issue / ADR theo VERSIONING §5)",
+      "title": "Đề xuất P032-1..4 thành issue / ADR theo VERSIONING §5",
       "priority": "P0",
       "status": "todo",
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 17
+      "line": 18
     },
     {
       "id": "S032-10",
@@ -5612,7 +5612,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 18
+      "line": 19
     },
     {
       "id": "S032-11",
@@ -5623,7 +5623,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 19
+      "line": 20
     },
     {
       "id": "S032-12",
@@ -5634,7 +5634,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 20
+      "line": 21
     },
     {
       "id": "S032-13",
@@ -5645,7 +5645,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 21
+      "line": 22
     },
     {
       "id": "S032-14",
@@ -5656,7 +5656,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 22
+      "line": 23
     },
     {
       "id": "S032-15",
@@ -5667,7 +5667,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 23
+      "line": 24
     },
     {
       "id": "S032-16",
@@ -5678,18 +5678,18 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 24
+      "line": 25
     },
     {
       "id": "S032-17",
       "phase": "PHASE-032",
-      "title": "Hướng dẫn docs/huong-dan/ban-hang-chinh-sach.md (SC-DOC-6 khi thêm menu)",
+      "title": "Hướng dẫn docs/huong-dan/chinh-sach-ban.md (SC-DOC-6 khi thêm menu)",
       "priority": "P1",
       "status": "todo",
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 25
+      "line": 26
     },
     {
       "id": "S032-18",
@@ -5700,7 +5700,7 @@
       "column": "todo",
       "claim": null,
       "file": "docs/phases/PHASE-032-BAN-HANG-CHINH-SACH-KENH-POS/40-MASTER-CHECKLIST.md",
-      "line": 26
+      "line": 27
     }
   ]
 }
