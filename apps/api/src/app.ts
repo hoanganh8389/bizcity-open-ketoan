@@ -51,7 +51,7 @@ import { mountActions } from '@bizcity/platform/core/actions';
 import { catalogNotifySubscriber, emitCatalogChanged, isCatalogWrite } from './modules/catalog/catalog-notify.js';
 import { registerRequestContext } from './core/request-context.js';
 import { collectOutboxMetrics, registerSubscribers, retentionSubscriber } from './core/events.js';
-import { registerDiagnostics } from './modules/system/diagnostics.js';
+import { diagnosticsNightlySubscriber, registerDiagnostics } from './modules/system/diagnostics.js';
 // [2026-11-06 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b: bản niêm phong bằng chứng (ADR-0030) — tác vụ evidence.seal + chẩn đoán EVIDENCE_SEAL_*
 import { evidenceSealSubscriber, SEAL_DIAGNOSTICS } from '@bizcity/platform/core/evidence-export';
 import { ASSET_DIAGNOSTICS } from './modules/assets/asset.diagnostics.js';
@@ -119,7 +119,8 @@ export async function buildApp(opts: { modulesDir?: string } = {}): Promise<Fast
   // [2026-11-02 02:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-020 — Kiểm chuẩn mỗi đêm cho từng đơn vị (bizcity.clock.daily 01:00 giờ VN)
   // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-021 — W2: dọn bể chờ theo hạn giữ (bizcity.clock.daily)
   // [2026-11-03 12:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-014 — W5 (SC-MOD-2): kỳ hợp đồng "đã chi" theo sự kiện yêu cầu thanh toán
-  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber, contractSchedulePaidSubscriber, evidenceSealSubscriber]);
+  // [2026-11-09 11:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-1: tự chẩn đoán L3 mỗi đêm (core.diagnostics-nightly, bizcity.clock.daily 01:00 giờ VN)
+  registerSubscribers([retentionSubscriber, catalogNotifySubscriber, conformanceNightlySubscriber, intakeRetentionSubscriber, contractSchedulePaidSubscriber, evidenceSealSubscriber, diagnosticsNightlySubscriber]);
   // Danh mục hàng đổi (thêm / sửa / xoá mặt hàng, ĐVT, giá, bảng giá, nhóm hàng) → sự kiện → báo hệ thống bán hàng kéo về ngay.
   app.addHook('onResponse', async (req, reply) => {
     if (req.auth && isCatalogWrite(req.method, req.url, reply.statusCode)) {

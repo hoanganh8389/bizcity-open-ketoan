@@ -40,6 +40,8 @@ Quyền `reports:read`. Tuỳ chọn:
 
 Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm một dòng kết quả, rồi lưu lượt chạy vào `diagnostic_runs` (chỉ thêm, migration 0034).
 
+**Lịch mỗi đêm** <!-- [2026-11-09 11:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-1: lịch tự chẩn đoán đêm -->: subscriber `core.diagnostics-nightly` (Platform, `system/diagnostics.ts`) nghe `bizcity.clock.daily` (01:00 giờ VN), mỗi đơn vị một lượt L3 cả sổ, lưu `trigger = schedule`, `actor = system:nightly`. Thẻ *Việc hôm nay* ở Bàn làm việc kế toán (HT08) đọc lượt đêm nay nếu có, không thì chạy ngay (PHASE-032 B2c-1).
+
 **Ai khai kiểm nào.** Platform (`modules/system/diagnostics.ts`) giữ sổ đăng ký, bộ chạy và các kiểm L1 chung. Kernel (`modules/ledger/ledger.diagnostics.ts`) khai các kiểm sổ, được đăng ký lúc lắp ráp (`app.ts`). Platform không import Kernel (LAYOUT-1).
 
 | Mã kiểm | Tầng | Kiểm | Mức khi sai | Trong app | Lane bộ kiểm |

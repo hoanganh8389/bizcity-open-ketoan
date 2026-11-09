@@ -5884,14 +5884,8 @@
       "title": "Hộp việc hằng ngày: chạy chẩn đoán L3 hiện có lúc 01:00 (bizcity.clock.daily, cạnh kiểm chuẩn đêm), lưu lượt, bảng B tối thiểu (HARD đang mở, tuổi việc, lệch k…",
       "priority": "P0",
       "status": "partial",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
-        "branch": "feat/phase-032-b2c1-kiem-dem",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-032 · B2c-1 — tự chẩn đoán L3 lúc 01:00 mỗi đêm (subscriber core.diagnostics-nightly trên biz…"
-      },
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 36
     },
@@ -5923,8 +5917,14 @@
       "title": "Mức HARD hẹp / REVIEW có lý do gắn sourceDigest theo 60 §6; sửa R-DIAG-4 cho nhóm HARD — sau khi chủ dự án trả Q032-6; sửa TRANSITNONZERO sang định nghĩa CT-IN…",
       "priority": "P0",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
+        "branch": "feat/phase-032-b2b-hang-di-duong",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-032 · B2b — hết báo sai \"hàng đi đường phải bằng 0\": TRANSITNONZERO chỉ báo phần còn treo quá…"
+      },
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 39
     },

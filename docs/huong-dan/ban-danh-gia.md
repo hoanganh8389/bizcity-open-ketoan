@@ -14,7 +14,7 @@ Cả ba thẻ **chỉ đọc**: không ghi gì vào sổ, không khoá kỳ.
 
 ## Việc hôm nay
 
-Mở thẻ là phần mềm tự kiểm toàn bộ sổ (tự chẩn đoán toàn vẹn sổ). Bấm **Kiểm lại tất cả** để kiểm lại.
+Phần mềm **tự kiểm toàn bộ sổ lúc 01:00 mỗi đêm** (tự chẩn đoán toàn vẹn sổ). Sáng mở thẻ là thấy ngay kết quả đêm qua, dòng đầu ghi *Phần mềm tự kiểm đêm qua lúc …*. Chưa có lượt đêm nay (máy tắt qua đêm, bản cài mới) thì phần mềm kiểm ngay khi mở thẻ. Bấm **Kiểm lại tất cả** để kiểm lại theo số liệu lúc này.
 
 - Dòng đầu đếm **số việc cần xem hôm nay**. Việc là *lỗi toàn vẹn sổ* thì ghi rõ: chưa sửa thì khi khoá kỳ phải ghi lý do chấp nhận.
 - Việc xếp theo **người làm**: kế toán viên, kế toán trưởng, vận hành…
@@ -24,7 +24,7 @@ Mở thẻ là phần mềm tự kiểm toàn bộ sổ (tự chẩn đoán toà
 
 Phép kiểm *hàng, tiền đang chuyển giữa chi nhánh* không báo hàng đi đường trong 30 ngày: đó là bình thường. Nó chỉ báo khi còn treo quá 30 ngày mà nơi nhận chưa ghi, hoặc khi nơi nhận ghi nhiều hơn nơi xuất.
 
-Chưa có trong bản này: phần mềm tự kiểm lúc 01:00 mỗi đêm, nhắc việc theo ngày / tuần.
+Chưa có trong bản này: nhắc việc theo ngày / tuần, mã điều kiện khoá sổ trên từng việc.
 
 ## Khoá thử hôm nay
 

@@ -16,7 +16,22 @@ import { dateTime } from '@/lib/format';
 
 type Outcome = 'pass' | 'empty' | 'info' | 'warn' | 'error';
 interface DiagResult { code: string; level: Outcome; title: string; fix: string; remedy?: Remedy; examined: number; count: number; sample: string[] }
-interface DiagRun { runId: string; at: string; summary: Record<Outcome, number>; checks: DiagResult[] }
+interface DiagRun { runId: string; at: string; summary: Record<Outcome, number>; checks: DiagResult[]; nightly?: boolean }
+interface RunRow { id: string; layer: string; trigger: string; at: string }
+interface RunDetail { id: string; at: string; summary: Record<Outcome, number>; checks: DiagResult[] }
+// [2026-11-09 11:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-1: có lượt tự kiểm đêm nay (trigger schedule) thì đọc lượt đó, không chạy lại
+const localDay = (v: string | Date) => { const d = new Date(v); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+async function loadToday(force: boolean): Promise<DiagRun> {
+  if (!force) {
+    const runs = await api.get<RunRow[]>('/api/v1/system/diagnostics/runs', { limit: 10 });
+    const night = runs.find((x) => x.layer === 'L3' && x.trigger === 'schedule' && localDay(x.at) === localDay(new Date()));
+    if (night) {
+      const d = await api.get<RunDetail>(`/api/v1/system/diagnostics/runs/${night.id}`);
+      return { runId: d.id, at: d.at, summary: d.summary, checks: d.checks, nightly: true };
+    }
+  }
+  return api.get<DiagRun>('/api/v1/system/diagnostics', { layer: 'L3' });
+}
 interface Recheck { code: string; level: Outcome; count: number; sample: string[] }
 
 type Level = 'reason' | 'todo' | 'note' | 'pass';
@@ -38,10 +53,11 @@ const ownerLabel = (o: string) => {
 };
 
 export function ViecHomNay() {
+  const [force, setForce] = useState(0);
   const q = useQuery({
-    queryKey: ['viec-hom-nay'],
+    queryKey: ['viec-hom-nay', force],
     staleTime: 5 * 60_000,
-    queryFn: () => api.get<DiagRun>('/api/v1/system/diagnostics', { layer: 'L3' }),
+    queryFn: () => loadToday(force > 0),
   });
   const [showPass, setShowPass] = useState(false);
   const r = q.data;
@@ -55,8 +71,8 @@ export function ViecHomNay() {
     <div>
       <div className="card card-body rb-head">
         <div className="row" style={{ gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <button type="button" className="btn" onClick={() => void q.refetch()} disabled={q.isFetching}>{q.isFetching ? 'Đang kiểm sổ…' : 'Kiểm lại tất cả'}</button>
-          <span className="muted">Phần mềm tự kiểm toàn bộ sổ khi mở thẻ này. Chỉ đọc, không sửa gì trong sổ.</span>
+          <button type="button" className="btn" onClick={() => (force ? void q.refetch() : setForce(1))} disabled={q.isFetching}>{q.isFetching ? 'Đang kiểm sổ…' : 'Kiểm lại tất cả'}</button>
+          <span className="muted">Phần mềm tự kiểm toàn bộ sổ lúc 01:00 mỗi đêm; chưa có lượt đêm nay thì kiểm ngay khi mở thẻ. Chỉ đọc, không sửa gì trong sổ.</span>
         </div>
       </div>
 
@@ -68,7 +84,7 @@ export function ViecHomNay() {
             </div>
             <div style={{ marginTop: 4 }}>
               {nReason > 0 && <div>{nReason} việc là <b>lỗi toàn vẹn sổ</b>: nếu chưa sửa thì khi khoá kỳ phải ghi lý do chấp nhận.</div>}
-              <div className="muted">{passed.length} phép kiểm đạt{empty.length ? ` · ${empty.length} phép kiểm chưa có dữ liệu để kiểm` : ''} · Kiểm lúc {dateTime(r.at)}</div>
+              <div className="muted">{passed.length} phép kiểm đạt{empty.length ? ` · ${empty.length} phép kiểm chưa có dữ liệu để kiểm` : ''} · {r.nightly ? 'Phần mềm tự kiểm đêm qua lúc' : 'Kiểm lúc'} {dateTime(r.at)}</div>
             </div>
           </div>
 
@@ -89,7 +105,7 @@ export function ViecHomNay() {
               ))}
             </details>
           </div>
-          <p className="muted rb-foot">Cho người làm phần mềm: lượt tự chẩn đoán #{r.runId} (tầng L3), lưu ở lịch sử chẩn đoán.</p>
+          <p className="muted rb-foot">Cho người làm phần mềm: lượt tự chẩn đoán #{r.runId} (tầng L3{r.nightly ? ', lịch đêm core.diagnostics-nightly' : ''}), lưu ở lịch sử chẩn đoán.</p>
         </>
       )}
     </div>
