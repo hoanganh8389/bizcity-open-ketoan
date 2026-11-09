@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Nhật ký chi tiền theo khoản mục hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2d) <!-- [2026-11-09 11:55 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2d -->
+
+- **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-DIM-1..2.
+- **Đổi:** **sổ nhật ký chi tiền theo khoản mục** (ACC75) hiện tên đối tượng **lúc ghi** (tên của dòng Nợ nếu dòng có đối tượng, rồi của đầu bút toán, rồi tên hiện tại): đổi tên đối tượng thì chứng từ cũ, kể cả chứng từ nhập muộn có ngày chứng từ trước ngày đổi tên, vẫn hiện tên cũ. Số tiền và cột khoản mục không đổi.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không. Không đổi bảng, trigger hay dữ liệu.
+- **Nâng cấp cần làm:** không (cần migration 0090 đã chạy).
+- **Bảo mật:** không đổi.
+
 ### Sổ chi tiết tài khoản và nhật ký chung hiện tên đối tượng lúc ghi (PHASE-029 S029-19 đợt 2c) <!-- [2026-11-09 11:29 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2c -->
 
 - **Thêm:** không (dùng cột `partner_name` của migration 0087 / 0090). Golden T029-LED-1..3.
