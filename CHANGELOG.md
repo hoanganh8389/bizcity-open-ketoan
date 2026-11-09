@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Màn Chính sách ở Hệ thống (HT15): một trang bốn tab (PHASE-031 W4b, ADR-0031) <!-- [2026-11-09 03:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b -->
+
+- **Thêm:** màn *Hệ thống → Chính sách* (HT15, quyền `catalog:read`, `/he-thong/chinh-sach`) với bốn tab: *Chính sách* (các bản, hiệu lực, băm, chứng từ đã áp, khoảng trống), *Chờ kế toán xem* (hàng việc `policy_review` + nút *Đánh dấu đã xem*, ẩn khi thiếu `documents:write`), *Truy vết* (chứng từ → chính sách@bản, băm khớp / lệch, ngày ngoài hiệu lực), *Theo dõi thực hiện* (đạt chính sách, lệch theo mã, độ phủ, độ trễ phiên bản, dòng thời gian, sức khoẻ). Đường dẫn sâu `?xem=truy-vet&chung-tu=<docKey>` để màn khác mở thẳng chuỗi chính sách căn cứ.
+- **Đổi:** không. Chỉ dùng API đã có (W2c, W4a); không API mới, không migration. Tỉ lệ `null` hiện "—".
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** màn chỉ đọc; nút *Đánh dấu đã xem* cần `documents:write` và đi qua action có bằng chứng (W2c).
+
 ### Dấu vết ở CSDL cho mọi thay đổi đầu bút toán, kể cả UPDATE viết thẳng (PHASE-004 S004-14, review R1 RV-R1-14) <!-- [2026-11-09 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-004 — S004-14 -->
 
 - **Thêm:** migration `0089_vet_dau_but_toan.sql` — trigger `ledger_entries_header_audit` (`AFTER UPDATE`, chỉ chạy khi cột đổi) ghi một dòng `audit_logs` `ledger.entry.header_update` cho **mọi** thay đổi chín cột `doc_no`, `invoice_no`, `reason_code`, `partner_id`, `description`, `content_hash`, `event_version`, `partner_name`, `partner_attr_id` của bút toán, từ mọi đường kể cả `UPDATE` viết thẳng bằng `ketoan_app`. `before_data` / `after_data` chỉ gồm cột thật sự đổi; `after_data` thêm `_source = db`, `_txid`, `_role`, `_login`, `_app`, `_client`. Nhật ký mức ứng dụng của S004-13 thêm `_source = app` và cùng `_txid` để đối chiếu. Hằng `E2_DB_COLUMNS`; test `e2-db-audit.test.ts` (T004-DB-1…5, phá thử dưới `ketoan_app`: không tắt / gỡ trigger, không xoá / sửa nhật ký) và `e2-header-audit.test.ts` (T004-E2-3 buộc danh sách cột và trigger dấu vết khớp trigger bất biến).
