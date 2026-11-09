@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Báo cáo công nợ hiện tên đối tượng tại ngày kết thúc kỳ (PHASE-029 S029-19 đợt 2a) <!-- [2026-11-09 09:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2a -->
+
+- **Đổi:** báo cáo **công nợ theo nhân viên** (`GET /api/v1/reports/debt-by-employee`) và **công nợ theo mặt hàng** (`debt-by-item`) hiện tên đối tượng ở tiêu đề theo **tên hiệu lực tại ngày kết thúc kỳ** (`to`), không phải tên hiện tại: đổi tên đối tượng rồi xem báo cáo của kỳ kết thúc trước ngày đổi tên vẫn ra tên cũ, kỳ kết thúc từ ngày đổi tên trở đi ra tên mới. Số liệu và mã đối tượng không đổi. Hàm dùng chung `partnerNamesAt` (`reports/ten-doi-tuong.ts`) cho các báo cáo sau. Golden T029-RPT-1..4.
+- **Thêm:** không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
+- **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
+
 ### API đọc chính sách: sổ đăng ký, theo dõi thực hiện, truy vết ngược (PHASE-031 W4a, ADR-0031) <!-- [2026-11-09 11:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4a -->
 
 - **Thêm:** bốn action đọc `catalog:read` — `GET /api/v1/policy-registry` (+ `/:policyId/applications`), `/policy-tracking`, `/policy-lineage` — đọc `policy_registry` và `bizcity_read.policy_application`; hợp đồng `bizcity_policy@1` 1.2.0-draft mục 11. Test `policy-insight.test.ts` (T031-INS-1..6).

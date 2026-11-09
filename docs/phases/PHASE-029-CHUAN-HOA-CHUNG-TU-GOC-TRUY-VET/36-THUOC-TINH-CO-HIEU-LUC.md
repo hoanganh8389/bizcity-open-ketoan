@@ -50,6 +50,7 @@ Theo smallwin: **hai đợt nhỏ**, mỗi đợt một PR. Đợt 1 là phần 
 
 **Thứ tự PR** (mỗi PR một nhóm báo cáo, có test đổi tên giữa kỳ như T029-ECP-P001):
 - **2a — công nợ** (`debtByEmployee`, `debtByItem` ở `debt-reports.ts`): chỉ hiện tên ở **tiêu đề đối tượng**, nên chỉ cần tên tại ngày kết thúc kỳ; **không cần** khung nhìn. Đây là PR đầu.
+- **2a đã xong (2026-11-09):** `debtByEmployee` và `debtByItem` hiện tên đối tượng hiệu lực tại ngày kết thúc kỳ qua `partnerNamesAt` (`ten-doi-tuong.ts`, dùng `bizcity_entity_attr_at`); test `cong-no-ten-theo-ngay.test.ts` T029-RPT-1..4 <!-- [2026-11-09 09:42 AM Johnny Chu - Chu Hoàng Anh] PHASE-029 — đợt 2a -->. Hàm `partnerNamesAt` dùng lại cho các báo cáo 2c.
 - **2b — khung nhìn + sổ nhật ký / sổ chi tiết**: `bizcity_read.ledger_lines` và `bizcity_read.ledger_entries` liệt kê cột tường minh (0072 từng thêm `product_name` vào đó) nên PHẢI cập nhật để báo cáo thấy `partner_name` / `partner_attr_id` (migration riêng); rồi `journals.ts`, sổ cái.
 - **2c — các báo cáo còn lại** theo nhóm (`dimension-reports.ts`, `control-reports.ts`, `report.repository.ts`, kho, bán hàng, thuế…), mỗi nhóm một PR.
 
