@@ -213,6 +213,13 @@ Skill nêu rõ: chỉ báo "xong" khi `library check` ra PASS và `selfcheck --o
 | S030-51b | **B5b** — cửa nạp: bảng gắn trường ↔ thư viện, kiểm ở L3, K1 (§4.1 ⑤) | S030-51a, S030-52; Q030-L4 |
 | S030-52 | Thư viện dữ liệu: `core.khoan-muc`, `vn.loai-thue`, `core.ly-do-dinh-khoan` (lọc từ `db/seeds`, chỉ danh mục chuẩn — không đối tượng / nhân viên / ngân hàng) | S030-45; Q030-L5 |
 
+### 11.1 Chữ chốt S030-52 <!-- [2026-11-09 03:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-52: chủ dự án chốt "chỉ lấy danh mục chuẩn (khoản mục, loại thuế, lý do định khoản)"; thư viện không mang số tài khoản -->
+
+- **Ba thư viện, chỉ danh mục chuẩn:** `core.khoan-muc` (cây khoản mục chi phí, 295 mục, `group` = khoản mục gốc), `vn.loai-thue` (loại thuế GTGT: mã, tên, thuế suất, chiều, nhóm trên bảng kê), `core.ly-do-dinh-khoan` (lý do nghiệp vụ: mã, tên, loại thu / chi / xuất / nhập, mã dòng tiền, cờ). **Không** lấy đối tượng, nhân viên, ngân hàng, hợp đồng, chi nhánh, kho (dữ liệu của đơn vị, không phải danh mục chuẩn).
+- **Thư viện không mang số tài khoản.** `account_code` của loại thuế và `counter_account` / `revenue_account` / `expense_account` của lý do **không** vào payload: tài khoản đi từ chính sách hạch toán qua `AccountResolver` (bốn câu không thương lượng, câu 4), thư viện không sinh bút toán (D-LIB-8). Thư viện chỉ trả lời "mã này có không, còn dùng không, thuộc nhóm nào".
+- Nguồn chép vào `libraries/<id>/sources/*.jsonl` (không đọc thẳng `db/seeds`) để thư viện không phụ thuộc việc S030-53 gỡ dữ liệu thật khỏi `db/seeds`. Mọi mục `verified: false` cho tới khi kế toán trưởng đối chiếu; nguồn ghi rõ là danh mục mẫu của công ty cung cấp.
+- Việc gắn các thư viện này vào trường của chứng từ (vd thuế suất ↔ `vn.loai-thue`) là B5b (S030-51b), không làm trong đợt này.
+
 ## 12. Câu hỏi cho chủ dự án
 
 | Mã | Câu hỏi | Đề xuất — **đã chốt 2026-11-08** |
