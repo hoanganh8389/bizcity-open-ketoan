@@ -59,6 +59,15 @@ Mỗi bản ghi đủ sáu mục:
 - **Nâng cấp cần làm:** không (cần migration 0087 của đợt 1 đã chạy).
 - **Bảo mật:** không đổi; tra tên lọc theo đơn vị.
 
+### Thực hiện chương trình khuyến mại: `program[]` ở theo dõi chính sách (PHASE-031 W4c, ADR-0031) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c -->
+
+- **Thêm:** khoá `program[]` ở `GET /api/v1/policy-tracking` — mỗi *(chính sách, bản)* có chứng từ trong kỳ: số chứng từ áp, **số lượng quà đã tặng theo mặt hàng** (từ các dòng quà nguồn đã gửi trong chứng từ đã ghi sổ), số chứng từ có quà lệch (`IN-POL-004`) và tỉ lệ. Khối *Thực hiện chương trình* ở tab *Theo dõi thực hiện* của màn Chính sách. `bizcity_policy@1` 1.3.0-draft; test T031-PRG-1..5.
+- **Đổi:** không. Thêm khoá, không đổi khoá cũ; không migration.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không.
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** chỉ đọc, lọc `tenant_id`; cần `catalog:read`.
+
 ### Cửa nạp tính lại quà theo chính sách: `IN-POL-004` (PHASE-031 W2b, ADR-0031) <!-- [2026-11-09 07:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b -->
 
 - **Thêm:** mã `IN-POL-004` (L4, cảnh báo, 10 điểm) — tính lại quà theo **đúng bản chính sách nguồn nêu** trên các dòng không phải quà, so với dòng quà nguồn gửi (thiếu / thừa / lệch số lượng), kèm cặp nguồn ↔ tính lại; chỉ khi bản có thật và băm khớp; im lặng khi không tính được. `getPolicyVersion` (đọc một bản kèm nội dung inline) và điểm mở rộng `registerPolicyRecompute` ở `@bizcity/platform/core/policies` — `apps/api` đăng ký hàm tính (`rule-contracts/recompute.ts`) cùng luật với `POST /policies/evaluate`. `bizcity_intake_findings@1` (§3 thêm mã; số phiên bản nâng sau); trang `loi-dau-vao/IN-POL-004.md`; test `intake-policy-recompute.test.ts` (T031-INT-10..14).

@@ -1,3 +1,4 @@
+// [2026-11-09 10:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4c (S031-30): khối Thực hiện chương trình
 // [2026-11-09 02:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W4b (S031-24): tab Theo dõi thực hiện — các ô của core.policy.tracking (W4a)
 import { useState } from 'react';
 import { ErrorBox, Loading } from '@/components/ui';
@@ -49,6 +50,16 @@ function Body({ t }: { t: NonNullable<ReturnType<typeof useTracking>['data']> })
           {t.health.expiringSoon.map((x) => <div key={x.policyId} className="muted" style={{ fontSize: 12 }}>{x.policyKey} hết hạn {x.expiresOn}</div>)}
         </Cell>
       </div>
+      <h3 style={{ fontSize: 14 }}>Thực hiện chương trình</h3>
+      <table className="grid"><thead><tr><th>Chính sách</th><th>Bản</th><th className="num">Chứng từ áp</th><th>Quà đã tặng</th><th className="num">Quà lệch chính sách</th><th className="num">Giá trị hàng tặng</th></tr></thead>
+        <tbody>{t.program.length === 0 ? <tr><td colSpan={6} className="muted">Chưa có chứng từ nào áp chính sách trong kỳ</td></tr> : t.program.map((p) => (
+          <tr key={`${p.policyKey}-${p.version}`}>
+            <td>{p.policyKey}</td><td>{p.version}</td><td className="num">{p.orders}</td>
+            <td>{p.giftsBySku.length === 0 ? <span className="muted">—</span> : p.giftsBySku.map((g) => <span key={g.sku} className="badge" style={{ marginRight: 4 }}>{g.sku} × {g.qty}</span>)}</td>
+            <td className="num">{p.mismatched > 0 ? <span className="badge badge-warn">{p.mismatched} ({pct(p.mismatchRate)})</span> : '0'}</td>
+            <td className="num muted" title="Giá trị cần giá vốn / giá bán của mặt hàng — chưa có nguồn thống nhất">—</td>
+          </tr>))}</tbody></table>
+      <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Quà lấy từ chính các dòng quà trong chứng từ đã ghi sổ. Giá trị hàng tặng và so với ngân sách chương trình chưa có — hiện "—".</div>
       <h3 style={{ fontSize: 14 }}>Độ phủ theo nguồn (miền bán)</h3>
       <table className="grid"><thead><tr><th>Nguồn</th><th className="num">Chứng từ bán</th><th className="num">Có tham chiếu</th><th className="num">Độ phủ</th></tr></thead>
         <tbody>{t.coverage.length === 0 ? <tr><td colSpan={4} className="muted">Chưa có chính sách bán hiệu lực trong kỳ</td></tr> : t.coverage.map((c) => (
