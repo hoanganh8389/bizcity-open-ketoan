@@ -120,7 +120,7 @@ Sáu năng lực là thư viện, hợp đồng, capability trong Platform / Ker
 
 ### 0.8 Small Core, Strong Contracts — bảy nguyên tắc tinh gọn (D028-12)
 
-LEAN-1 **Reuse before Build** · LEAN-2 **Contract First** (bắt buộc chuẩn giao tiếp, không bắt buộc cách triển khai) · LEAN-3 **No Duplicate Truth** (mỗi loại dữ liệu một chủ) · LEAN-4 **Immutable Where It Matters** (bất biến chỉ cho lịch sử đã xác lập) · LEAN-5 **Progressive Complexity** (một cửa hàng và 500 cửa hàng cùng chuẩn, khác cấu hình) · LEAN-6 **Modular Monolith First** (PostgreSQL + outbox; tách khi đo được) · LEAN-7 **Conformance as Code**.
+LEAN-1 **Reuse before Build** · LEAN-2 **Contract First** (bắt buộc chuẩn giao tiếp, không bắt buộc cách triển khai) · LEAN-3 **No Duplicate Truth** (mỗi loại dữ liệu một chủ) · LEAN-4 **Immutable Where It Matters** (bất biến chỉ cho lịch sử đã xác lập) · LEAN-5 **Progressive Complexity** (một cửa hàng và 500 cửa hàng cùng chuẩn, khác cấu hình) · LEAN-6 **Modular Monolith First** (PostgreSQL + outbox; tách khi đo được) · LEAN-7 **Conformance as Code** · LEAN-8 **Small Wins** (chia nhỏ để chốt, mỗi bước người dùng dùng được; §0.10) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON — LEAN-8 -->.
 
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — §0.9 tôn chỉ "Lõi bất biến, nghiệp vụ linh hoạt" (ADR-0029, chủ dự án yêu cầu vào luật tối thượng) -->
 ### 0.9 Lõi bất biến, nghiệp vụ linh hoạt — Policy Flexibility · Document Finality · Ledger Immutability ([ADR-0029](adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md))
@@ -149,6 +149,24 @@ Hệ quả bắt buộc:
 - Dev cộng đồng chỉ khai workflow YAML, quyền trong manifest và chính sách; nền giữ thẩm quyền, trạng thái, lịch sử.
 
 Bản kiến trúc và hướng dẫn dev: [architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md](architecture/LOI-BAT-BIEN-NGHIEP-VU-LINH-HOAT.md).
+
+<!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON — §0.10 chia nhỏ để chốt: lõi chặt chẽ, cách dùng dễ (chủ dự án 2026-11-09); LEAN-8; R-FLOW-9 -->
+### 0.10 Chia nhỏ để chốt — lõi chặt chẽ, cách dùng dễ (chủ dự án 2026-11-09; luật [R-FLOW-9](rules/RULE-FLOW.md))
+
+> **Lõi chặt chẽ. Cách dùng dễ. Chia nhỏ để chốt.**
+
+Nguồn: chủ dự án 2026-11-09, *"nguyên tắc smallwin, chia nhỏ để chốt, cần được áp dụng chung ở các phần việc khác, kernel core chặt chẽ, nhưng cách dùng thì cần dễ sử dụng"*. Áp dụng cho **mọi phase và mọi đợt việc**, không riêng phase nào.
+
+1. **Chia việc, không chia luật.** Mỗi bước nhỏ vẫn giữ nguyên bốn câu ở §1, tôn chỉ §0.9, một cửa ghi sổ, sổ chỉ thêm và danh sách chặn đã chốt. Không bước nào được nới lõi "tạm thời" để kịp ra mắt.
+2. **Mỗi bước, người dùng dùng được một thứ.** Một bước là một nhánh ngắn, một PR (R-FLOW-4). Sau khi gộp, người dùng của bước đó thấy và dùng được ngay một việc, có thể là kế toán, thủ kho hay dev module. Bằng chứng là ảnh chụp màn hình người dùng thao tác, hoặc ví dụ chạy được với dev.
+3. **Chốt từng bước, không chờ cả phase.** Mỗi bước có điều kiện xong riêng. Câu hỏi còn mở không chặn bước: dùng phương án đề nghị làm **mặc định tạm**, ghi rõ trên màn là mặc định tạm. Người trả lời đổi được qua chính sách có phiên bản (ADR-0031), không phải sửa mã.
+4. **Dễ dùng là điều kiện nghiệm thu.** Lời trên màn là lời nghiệp vụ tiếng Việt; với kế toán là thuật ngữ kế toán, không HARD / REVIEW / snapshot. Ít bước, mặc định đúng sẵn. Mặc định cho phép, nhắc khi sai (R-GATE-9): bước mới không thêm chặn ngoài danh sách đã chốt.
+5. **Đi trước bằng phần chỉ đọc.** Bước đầu ưu tiên xem, kiểm, khoá thử trên thứ đã có (LEAN-1). Migration và thay đổi K3 đi sau, vẫn qua chữ chốt và chữ ký đặc tả (R-FLOW-2).
+
+| Phía | Tính chất | Ví dụ |
+|---|---|---|
+| Lõi (Kernel, sổ, hợp đồng) | chặt chẽ, không nới theo bước | một cửa ghi sổ, Nợ = Có, sổ chỉ thêm, chặn hẹp khi khoá kỳ |
+| Cách dùng (màn, lời, mặc định) | dễ, đi từng bước nhỏ | khoá thử hôm nay, việc hôm nay, gợi ý không chặn, mặc định tạm có ghi rõ |
 
 ## 1. Bốn câu không thương lượng
 
@@ -195,7 +213,7 @@ Bản kiến trúc và hướng dẫn dev: [architecture/LOI-BAT-BIEN-NGHIEP-VU-
 | R-ITEM | [rules/RULE-ITEM.md](rules/RULE-ITEM.md) | 0 (R-ITEM-0), 1 (R-ITEM-1..9) | **Chấp nhận về nguyên tắc, chưa có mã** ([ADR-0017](adr/ADR-0017-dinh-danh-hang-hoa-bat-bien.md), PHASE-024): định danh hàng hoá bất biến, mã có phiên bản, sổ đã ghi không đổi theo danh mục; tài khoản từ chính sách, không từ tiền tố mã; dữ liệu ngoài qua validation <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-ITEM --> | trigger, DG-ITEM-1..5, SC-ITEM-1..3 (sẽ có) |
 | R-CONT <!-- [2026-11-03 06:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-025 — ADR-0021 Accounting Continuity --> | [rules/RULE-CONTINUITY.md](rules/RULE-CONTINUITY.md) | 0 (R-CONT-0), 1 (R-CONT-1..9) | **Đề xuất 2026-11-03** ([ADR-0021](adr/ADR-0021-accounting-continuity-lien-tuc-ke-toan.md), PHASE-025): không đứt chuỗi; lineage giá vốn chỉ thêm; phương pháp tính giá là chính sách có phiên bản; trả / huỷ hoàn đúng giá vốn gốc; sổ chi tiết = sổ cái; khoá kỳ đòi Gate C sạch; kết quả do engine tính |
 | R-GATE | [rules/RULE-GATE.md](rules/RULE-GATE.md) | 1 | **Chấp nhận 2026-11-02** ([ADR-0019](adr/ADR-0019-hai-cong-kiem-chuan-nhap-va-be-cho.md)): hai cổng — Gate A danh mục (nháp), Gate B nghiệp vụ (bể chờ, R-INTAKE); không chặn im lặng; một thư viện mã; mức nào hậu quả đó, không lan <!-- [2026-11-02 11:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-024 — luật R-GATE --> | SC-FIND-1 (sẽ có), test bể / nháp |
-| R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7, 2026-11-03). | SC-FLOW-1; `scripts/nhan-viec.mjs kiem`; Bước 0 AGENTS.md |
+| R-FLOW | [rules/RULE-FLOW.md](rules/RULE-FLOW.md) | 1 | **R-FLOW-9 (2026-11-09): chia nhỏ để chốt, mỗi master plan có bảng bước thắng nhỏ (§0.10).** **Chủ dự án đồng ý 2026-11-03:** nhận việc theo thứ tự giữ chỗ vào `main` → chốt thiết kế dùng chung bằng tài liệu → code. Một phạm vi một người ([CLAIMS](phases/CLAIMS.md)); nhánh ngắn; gộp `main` và bộ kiểm xanh trước khi đẩy <!-- [2026-11-03 09:55 PM Johnny Chu - Chu Hoàng Anh] FLOW — luật R-FLOW --> **`main` là nguồn sự thật duy nhất của tài liệu** (R-FLOW-7, 2026-11-03). | SC-FLOW-1; `scripts/nhan-viec.mjs kiem`; Bước 0 AGENTS.md |
 
 ## 4. Hợp đồng (contracts)
 
@@ -273,6 +291,9 @@ Trạng thái: **Ổn định** = đã có code, đổi phá vỡ phải ra `@2`
 | Gỡ được cạnh import ngược chiều lớp | `--update-baseline`; mốc đồ thị mới `node scripts/do-thi-phu-thuoc.mjs` khi xong một Phase (SC-LAYER-2) |
 
 ## 6. Nhật ký thay đổi CANON
+
+<!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON v1.6 -->
+- **v1.6 (2026-11-09):** Thêm §0.10 **Chia nhỏ để chốt — lõi chặt chẽ, cách dùng dễ**, LEAN-8 *Small Wins* và luật R-FLOW-9 (mỗi master plan có bảng bước thắng nhỏ). Nguồn: chủ dự án 2026-11-09.
 
 <!-- [2026-11-06 03:51 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — CANON v1.5 -->
 - **v1.5 (2026-11-06):** Thêm §0.9 tôn chỉ **Lõi bất biến, nghiệp vụ linh hoạt** (Policy Flexibility · Document Finality · Ledger Immutability, [ADR-0029](adr/ADR-0029-loi-bat-bien-nghiep-vu-linh-hoat.md)): bốn tầng, ba chủ sở hữu (Document / Authorization / Kernel), duyệt ≠ ghi sổ, hai lần đóng băng, cổng nhận sự việc từ chối có mã. Sửa R-WF-3 / R-WF-4, thêm R-WF-10..16.
