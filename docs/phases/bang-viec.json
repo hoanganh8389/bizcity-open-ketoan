@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 9
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 269
+      "count": 270
     }
   ],
   "items": [
@@ -5537,15 +5537,9 @@
       "phase": "PHASE-031",
       "title": "RV-R1-04: retirePolicy đóng effectiveto bằng ngày ngừng (§16): code + test policy-retire; K1",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, review-r1)",
-        "branch": "feat/phase-031-retire-dong-effective-to",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-031 · S031-31 — RV-R1-04: retirePolicy đóng effectiveto bằng ngày ngừng; chữ chốt PHASE-031 ·…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 40
     },

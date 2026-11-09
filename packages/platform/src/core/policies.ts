@@ -193,14 +193,23 @@ export async function publishInlinePolicy(trx: Db, input: PublishInlineInput): P
   });
 }
 
-/** Ngừng chính sách: các bản đang dùng được chuyển retired; chứng từ cũ vẫn trỏ được. Trả số bản đổi. */
-export async function retirePolicy(trx: Db, tenantId: string, policyId: string, actor?: string): Promise<number> {
-  const r = await sql<{ version: number }>`UPDATE policy_registry SET status = 'retired' WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND status = 'published' RETURNING version`.execute(trx);
+// [2026-11-10 09:20 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — S031-31 (RV-R1-04, chữ chốt PHASE-031 · 00 §16): ngừng đóng effective_to bằng ngày ngừng
+/**
+ * Ngừng chính sách: các bản đang published chuyển retired VÀ bản còn mở (effective_to NULL) được đóng ở `effectiveTo` (mặc định hôm nay;
+ * không sớm hơn effective_from − 1). Chứng từ có ngày ≤ ngày ngừng vẫn hợp lệ, sau đó cửa nạp báo IN-POL-002; chứng từ cũ vẫn tra được.
+ * Bản đã đóng từ trước (có bản mới thay) giữ nguyên. Trả số bản đổi.
+ */
+export async function retirePolicy(trx: Db, tenantId: string, policyId: string, actor?: string, effectiveTo?: string): Promise<number> {
+  if (effectiveTo !== undefined && !DATE_RE.test(effectiveTo)) throw Errors.validation(`Ngày ngừng "${effectiveTo}" sai khuôn YYYY-MM-DD`);
+  const day = effectiveTo ? sql`${effectiveTo}::date` : sql`current_date`;
+  const r = await sql<{ version: number; effective_to: string }>`UPDATE policy_registry
+      SET status = 'retired', effective_to = CASE WHEN effective_to IS NULL THEN GREATEST(${day}, effective_from - 1) ELSE effective_to END
+    WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND status = 'published' RETURNING version, effective_to::text AS effective_to`.execute(trx);
   if (!r.rows.length) return 0;
-  const last = Math.max(...r.rows.map((x) => Number(x.version)));
+  const last = r.rows.reduce((a, x) => (Number(x.version) > Number(a.version) ? x : a));
   await emitEvent(trx, {
     tenantId, type: 'bizcity.policy.retired', subject: `policy:${policyId}`, source: 'bizcity.platform', actor: eventActor(actor),
-    dedupeKey: `policy.retired:${policyId}:${last}`, data: { policyId, retiredVersions: r.rows.map((x) => Number(x.version)).sort((a, b) => a - b) },
+    dedupeKey: `policy.retired:${policyId}:${last.version}`, data: { policyId, retiredVersions: r.rows.map((x) => Number(x.version)).sort((a, b) => a - b), effectiveTo: last.effective_to },
   });
   return r.rows.length;
 }

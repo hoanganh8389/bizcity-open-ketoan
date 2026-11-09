@@ -37,7 +37,7 @@ Ký hiệu: ☐ chưa · 🟡 đang · ✅ xong · ⛔ chờ người ngoài nh�
 | S031-28 | W4a: API đọc — `core.policy.registry`, `core.policy.applications`, `core.policy.tracking`, `core.policy.lineage` ([00 §12](00-MASTER-PLAN.md)); thay hàm SQL `policy_lineage` của S031-21; không migration | W4a | P1 | có | ✅ 2026-11-09 (#207) |
 | S031-29 | W2b: `IN-POL-004` — cửa nạp tính lại quà theo bản chính sách nguồn nêu, so với dòng quà nguồn gửi; `registerPolicyRecompute` ở Kernel ([00 §14](00-MASTER-PLAN.md)); `IN-POL-000` / `005` để sau | W2b | P1 | có | ✅ 2026-11-09 (#226); `IN-POL-000` / `005` để sau |
 | S031-30 | W4c: ô *Thực hiện chương trình* — `program[]` ở `core.policy.tracking` (chứng từ áp, quà theo mặt hàng, lệch `IN-POL-004`) + khối ở tab Theo dõi ([00 §15](00-MASTER-PLAN.md)); giá trị hàng tặng, ngân sách (Q031-7), chiết khấu hoãn | W4c | P1 | có | 🟡 code xong trên nhánh `feat/phase-031-w4c-thuc-hien-chuong-trinh` 2026-11-09; giá trị hàng tặng, ngân sách (Q031-7), chiết khấu hoãn |
-| S031-31 | RV-R1-04: `retirePolicy` đóng `effective_to` bằng ngày ngừng (§16): code + test `policy-retire`; K1 | W5 | P1 | có | ☐ |
+| S031-31 | RV-R1-04: `retirePolicy` đóng `effective_to` bằng ngày ngừng (§16): code + test `policy-retire`; K1 | W5 | P1 | có | ✅ 2026-11-10 — `policy-retire` 6/6; `policy-registry`, `policy-events`, `policy-api`, `policy-insight`, `intake-policy-check` giữ nguyên |
 | S031-32 | RV-R1-04 phần dữ liệu cũ: đo bản `retired` có `effective_to` NULL trên bản sao thật rồi quyết định đóng (§16 mục 6) | W5 | P2 | không | ☐ |
 
 ## Ca bằng chứng (golden)
