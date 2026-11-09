@@ -1,5 +1,5 @@
 # PHASE-028 · 45 — Ca bằng chứng T028-* và vai trò mẫu
-<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — tách hai mục của checklist draft W0 ra tệp riêng (checklist chính 40 là tệp nóng, nhiều phiên sửa); thêm đối chiếu mã -->
+<!-- [2026-11-09 07:19 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — tách hai mục của checklist draft W0 ra tệp riêng (checklist chính 40 là tệp nóng, nhiều phiên sửa); thêm đối chiếu mã -->
 
 > Nguồn: bản draft `40-MASTER-CHECKLIST` ngày 05/11. **Trạng thái việc con** vẫn ở [40](40-MASTER-CHECKLIST.md); tệp này chỉ giữ danh sách ca và vai trò mẫu.
 >
