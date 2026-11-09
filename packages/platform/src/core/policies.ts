@@ -1,4 +1,5 @@
 // @bizcity-layer P bizcity.config
+// [2026-11-09 06:00 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W2b (S031-29, chữ chốt PHASE-031 · 00 §14): getPolicyVersion — một bản kèm nội dung inline, cho cửa nạp tính lại
 // [2026-11-08 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W3b (S031-26, chữ chốt PHASE-031 · 00 §11): bizcity.policy.published / .retired qua outbox, cùng giao dịch với việc ghi
 // [2026-11-07 09:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-031 — W1 (S031-4, chữ chốt PHASE-031 · 00 §7): sổ đăng ký chính sách — đăng ký bản, đóng bản cũ, tìm bản hiệu lực tại ngày chứng từ, liệt kê, ngừng
 /**
@@ -203,3 +204,36 @@ export async function retirePolicy(trx: Db, tenantId: string, policyId: string, 
   });
   return r.rows.length;
 }
+
+/**
+ * Một bản cụ thể của một chính sách, kèm nội dung khi `store = inline` (null khi nội dung ở bảng của module chủ). Kể cả bản đã đóng /
+ * ngừng — chứng từ cũ vẫn tính lại được theo đúng bản nguồn đã nêu (00 §14 mục 3).
+ */
+export async function getPolicyVersion(trx: Db, tenantId: string, policyId: string, version: number): Promise<PublishedPolicy | undefined> {
+  const r = await sql<Row & { content: unknown }>`SELECT ${COLS}, content FROM policy_registry WHERE tenant_id = ${tenantId} AND policy_id = ${policyId} AND version = ${version}`.execute(trx);
+  return r.rows[0] ? { ...toEnvelope(r.rows[0]), content: r.rows[0].content ?? null } : undefined;
+}
+
+// ── Điểm mở rộng tính lại kết quả (IN-POL-004, 00 §14) ────────────────────────────────────────────────────────────────────
+/**
+ * Kernel không được import Rule Contract (nằm ở apps/api, tầng module-sdk) và code ngoài Kernel chỉ đi qua cổng @bizcity/kernel (SC-KERNEL-6).
+ * Platform là tầng trung lập cả hai cùng dùng: apps/api ĐĂNG KÝ một hàm tính lại khi nạp (cùng kiểu `registerSubscribers` của outbox); cửa nạp
+ * (Kernel, policy-check.ts) gọi nó để kiểm kết quả nguồn gửi. Hàm trả null khi KHÔNG tính được — cửa nạp im lặng, không đoán. Chưa đăng ký → im lặng.
+ */
+export interface RecomputeLine { lineKey?: string; sku: string; itemId?: string; qty: number }
+export interface RecomputeRequest {
+  tenantId: string;
+  /** Phong bì của đúng bản nguồn nêu (không phải bản hiện hành). */
+  envelope: PolicyEnvelope;
+  docDate: string;
+  branchCode?: string;
+  channel?: string;
+  /** Các dòng KHÔNG phải quà — đầu vào của luật. */
+  lines: RecomputeLine[];
+}
+export interface RecomputeResult { gifts: { sku: string; itemId?: string; qty: number }[] }
+export type PolicyRecompute = (trx: Db, req: RecomputeRequest) => Promise<RecomputeResult | null>;
+
+let recomputeImpl: PolicyRecompute | null = null;
+export function registerPolicyRecompute(fn: PolicyRecompute): void { recomputeImpl = fn; }
+export const policyRecompute = (): PolicyRecompute | null => recomputeImpl;
