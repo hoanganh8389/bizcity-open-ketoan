@@ -78,6 +78,42 @@ Mọi điểm ③ ④ ghi **bằng chứng** `basis_used: { kind: 'library', key
 
 Khai gắn là căn cứ cho tab Nơi dùng (§3), cho SC-LIB-2 (⑤) và cho bảng đánh giá theo module (§9).
 
+### 4.1 Chữ chốt B5 (S030-51) <!-- [2026-11-09 09:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-51: chốt thiết kế ctx.libraries, libraries[] trong manifest, SC-LIB-2, kết luận module; tách cửa nạp thành đợt sau -->
+
+**Tách làm hai đợt** để mỗi đợt một mức rủi ro:
+
+| Đợt | Việc | Chạm | Mức |
+|---|---|---|---|
+| **B5a** (S030-51a) | `ctx.libraries` trong action; `libraries[]` trong manifest; SC-LIB-2; `core.library.modules` + tab Module ở HT14 | Platform (`actions.ts` một chỗ gắn, tệp mới `libraries/context.ts`), hợp đồng ACTION 1.4.0-draft và MODULE 1.5.0-draft (cộng tương thích), bộ kiểm; **không Kernel, không migration** | K0 / bậc 5 |
+| **B5b** (S030-51b) | Cửa nạp: bảng gắn trường ↔ thư viện theo loại chứng từ, kiểm ở L3 | Kernel `intake/preflight.ts` — **K1**; làm **sau S030-52** (cần `vn.loai-thue` thật để có ít nhất một gắn chạy thật) | K1 |
+
+*(Kế hoạch cũ ghi `bizcity_module@1` 1.3.0; hợp đồng hiện ở 1.4.0-draft nên bản mới là 1.5.0-draft.)*
+
+**① `ctx.libraries` (B5a).** Hai hàm, cùng bộ kiểm với `POST /api/v1/libraries/:id/validate`, đã áp **cấu hình của đơn vị** (§7.1: bật / tắt, ghi đè có ngày, hạ mức luật):
+
+- `ctx.libraries.validate(id, input, { at?, field? })` → `ValidateResult`; **không ném lỗi**, handler tự quyết.
+- `ctx.libraries.require(id, input, { at?, field? })` → `ValidateResult`; có phát hiện `block` thì ném `Errors.validation` với `details: { library, code: 'LIB-…', path, suggestions }` (giao dịch action rollback như mọi lỗi); `warn` thì **không chặn**, gom vào `ctx.meta('libraryWarnings', [...])` để giao diện hiển thị; `info` bỏ qua. Thư viện tuỳ chọn mà đơn vị đã tắt: trả `null` (bỏ qua, ghi `outcome: 'off'` vào bằng chứng), không phải lỗi.
+- `at` mặc định theo `libraries[].at` của manifest (`docDate` → ngày chứng từ do handler truyền; `today` → ngày hệ thống); manifest khai `docDate` mà handler không truyền `at` → `Errors.validation` (không đoán ngày).
+- **Bằng chứng:** mỗi lần gọi thêm vào `ctx.evidence.note('libraries', [...])` một dòng `{ library, version, hash, at, field?, code?, value?, valueSource: 'library' | 'tenant', outcome: 'pass' | 'warn' | 'block' | 'off' }` (không ghi giá trị người nhập — chỉ mã mục và giá trị thư viện). Khoá `libraries` do runtime giữ; module không tự ghi khoá này.
+- **Đếm sử dụng:** nguồn = `modules/<key>` (từ tiền tố mã action), cộng `field` nếu có; `dryRun` không đếm. Đếm đi qua bộ đếm hiện có (§8), không thêm bảng.
+- Chỉ đọc: không ghi sổ, không ghi danh mục, không đổi cấu hình. Không gọi được từ trong `ctx.data.module(fn)` (cùng quy tắc như `ctx.ledger`).
+
+**② `libraries[]` trong `bizcity.module.json` (B5a).** Mục: `{ id, fields[], at?: "docDate" | "today", required?: boolean }`. `fields` ghi dạng `<mã action>#<đường trường>` (vd `luong.tinh-luong#insuranceRate`) — chỉ để nhãn và đếm độ phủ, không ép khuôn trường. `required: true` = module không chạy đúng nếu thiếu thư viện: HT14 hiện đỏ khi đơn vị tắt thư viện đó (chỉ thư viện tuỳ chọn tắt được).
+
+**③ SC-LIB-2 (B5a)** — bộ kiểm tĩnh, `enforce: block`, **chỉ xét module có khai `libraries[]` hoặc có gọi `ctx.libraries`** (module cũ không bị đẩy vào nợ):
+
+1. `libraries[].id` phải là thư viện có thật trong `libraries/`;
+2. mã nguồn `modules/<key>/` gọi `ctx.libraries.*` với thư viện nào thì thư viện đó phải khai trong `libraries[]`, và mỗi thư viện đã khai phải được gọi ít nhất một lần (khai mà không dùng = báo);
+3. **mã cứng:** chuỗi đúng bằng mã mục của thư viện loại `calendar` / `code-list`, hoặc số ≥ 100000 đúng bằng giá trị hiệu lực của mục thư viện loại `param`, nằm trong mã nguồn module đã khai thư viện đó → báo (đường thoát có lý do: chú thích `// library-ok: <lý do>` ngay dòng trên);
+4. `required: true` mà thư viện không có hoặc đã `deprecated` hết → báo.
+
+**④ Kết luận module (B5a)** — `GET /api/v1/libraries/modules` (`core.library.modules`, quyền `catalog:read`): theo module, thư viện đã khai (từ manifest), số lượt / `pass` / `warn` / `block` 30 ngày theo nguồn (`library_usage_daily`), lượt dùng mã ngừng / mục chưa duyệt, và **kết luận thời gian chạy** theo §9 (ĐẠT · ĐẠT có điều kiện · KHÔNG ĐẠT). Phần tĩnh (SC-LIB-2) vào `npx bizcity module check` qua `selfcheck --module`; hai phần gộp thành kết luận cuối ở màn Module (tab mới của Tổng quan HT14). API **không đọc mã nguồn**, nên không tự báo mã cứng — phần đó chỉ của SC-LIB-2.
+
+**⑤ Cửa nạp (B5b — chữ chốt tại đây, mã làm sau).** Bảng gắn **nằm trong hợp đồng**, không trong module: `packages/contracts/src/library-bindings.ts` → `{ docType, path, library, at: 'docDate', required?: boolean }`. Kiểm ở **L3** của tiền kiểm, cùng hàm `validateAgainstLibrary` và cùng cấu hình đơn vị; không thêm mã `IN-*`, dùng lại `LIB-*` (Q030-L4): mặc định **cảnh báo** (`LIB-VALUE-001`, `LIB-DEPRECATED-001`…), **chặn chỉ** `LIB-UNKNOWN-001` ở trường `required`. Đơn vị hạ hoặc tắt từng gắn bằng khoá `bindings` trong **cấu hình thư viện có phiên bản** (§7.1) — không migration mới. Ghi bằng chứng `basis_used` (S030-29). Là **K1** (kiểm thêm, tương thích): bút toán chứng từ mới và cũ không đổi — test so định khoản thử trước / sau trên bộ chứng từ mẫu, và phá thử (gắn sai thư viện thì phải đỏ). Không đưa vào B5a vì chưa có thư viện thuế thật để gắn (S030-52).
+
+**Không làm:** không để module tự đếm hay tự ghi `basis_used` (chỉ qua `ctx.libraries`); không cho `ctx.libraries` ghi cấu hình hay đề xuất; không lấy kết luận module từ ý kiến — chỉ từ manifest, mã nguồn và số đếm.
+
+
 ## 5. Cập nhật thư viện — hai đường
 
 | Đường | Ai | Làm gì | Kết quả |
@@ -173,7 +209,8 @@ Skill nêu rõ: chỉ báo "xong" khi `library check` ra PASS và `selfcheck --o
 | S030-48 | **B2** — theo dõi sử dụng: migration `library_usage_daily`, bộ đếm sau commit, `core.library.usage`, tab Tổng quan có số liệu | S030-47 |
 | S030-49 | **B3** — căn cứ: thư viện `vn.can-cu-phap-ly` (gộp hai sổ), `basis[].key`, `library_attestations`, tab Căn cứ; cấu hình `library_settings` + ghi đè qua `setting_values`; phiếu đề xuất `library_change_requests` | S030-47; Q030-L2, L3 |
 | S030-50 | **B4** — CLI `npx bizcity library search / check / new / diff` + skill `use-bizcity-library` | S030-47 |
-| S030-51 | **B5** — gắn vào action (`ctx.libraries`, bizcity_module@1 1.3.0 `libraries[]`) và cửa nạp (bảng trường ↔ thư viện, K1/K2 — chữ chốt riêng); SC-LIB-2; kết luận module §9 | S030-48; Q030-L4 |
+| S030-51a | **B5a** — `ctx.libraries`, `libraries[]` (bizcity_module@1 1.5.0-draft), SC-LIB-2, `core.library.modules` + tab Module (§4.1) | S030-48, S030-50 |
+| S030-51b | **B5b** — cửa nạp: bảng gắn trường ↔ thư viện, kiểm ở L3, K1 (§4.1 ⑤) | S030-51a, S030-52; Q030-L4 |
 | S030-52 | Thư viện dữ liệu: `core.khoan-muc`, `vn.loai-thue`, `core.ly-do-dinh-khoan` (lọc từ `db/seeds`, chỉ danh mục chuẩn — không đối tượng / nhân viên / ngân hàng) | S030-45; Q030-L5 |
 
 ## 12. Câu hỏi cho chủ dự án
