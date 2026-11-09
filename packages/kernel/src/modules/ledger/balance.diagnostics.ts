@@ -7,6 +7,7 @@
  * Không số tiền trong mẫu (R-DIAG-6): mẫu là chi nhánh / tài khoản / đối tượng / ngày.
  * SQL chép sang lane diagnostics (tests/conformance/diagnostics/balance.diag.mjs, ledger.diag.mjs). Đổi một bên thì đổi bên kia (R-DIAG-9).
  */
+// [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b (S032-30, CT-INV-003 / 005): TRANSIT_NONZERO chỉ báo phần còn treo quá 30 ngày (số dư − Σ Nợ 30 ngày gần nhất) hoặc nhận nhiều hơn xuất; hàng đi đường trong hạn là hợp lệ
 import { sql, type RawBuilder } from 'kysely';
 import { SCREENS } from '@ketoan/contracts';
 import { sqlCounts, type DiagCheck, type DiagScope } from '@bizcity/platform/system/diagnostics';
@@ -83,18 +84,22 @@ export const BALANCE_DIAGNOSTICS: DiagCheck[] = [
       ],
       owner: 'accountant', verify: { code: 'TRANSIT_NONZERO' },
     },
-    title: 'Tài khoản hàng / tiền đang chuyển giữa chi nhánh về 0 sau 30 ngày (toàn đơn vị)',
-    fix: 'Còn số trên tài khoản trung gian quá 30 ngày (quy chế nội bộ): hàng / tiền "mất" giữa hai nơi — nơi nhận chưa ghi, hoặc lệch đơn giá. Mẫu: <tài khoản>@<ngày xét>.',
+    title: 'Hàng / tiền đang chuyển giữa chi nhánh không treo quá 30 ngày, nơi nhận không ghi nhiều hơn nơi xuất (toàn đơn vị)',
+    fix: 'Hàng / tiền đi đường trong 30 ngày là bình thường. Còn treo quá 30 ngày (quy chế nội bộ) là nơi nhận chưa ghi hoặc lệch đơn giá; số dư âm là nơi nhận ghi nhiều hơn nơi xuất. Mẫu: <tài khoản>:còn treo quá 30 ngày | <tài khoản>:nhận nhiều hơn xuất.',
+    // Còn treo = số dư tại ngày xét − Σ phát sinh Nợ trong TRANSIT_DAYS ngày gần nhất (nhận ghi Có trừ dần khoản đi sớm nhất trước).
+    // Không cần ghép cặp phiếu xuất / phiếu nhận, chạy được cho cả phiếu hai đầu lẫn phiếu một đầu (leg).
     run: (trx, s) => {
-      const at = s.to ? sql`${s.to}::date` : sql`(current_date - ${TRANSIT_DAYS}::int)`;
+      const at = asOf(s);
       return sqlCounts(trx,
         sql`SELECT count(*)::int AS n FROM (${defaultAccounts(s.tenantId, ['goods_in_transit', 'cash_in_transit'])}) x`,
-        sql`SELECT x.account_code || '@' || to_char(${at}, 'YYYY-MM-DD') AS key, count(*) OVER ()::int AS total
-              FROM (SELECT l.account_code, sum(l.debit - l.credit) AS bal FROM ledger_lines l
+        sql`SELECT x.account_code || CASE WHEN x.bal <= -1 THEN ':nhận nhiều hơn xuất' ELSE ':còn treo quá ' || ${TRANSIT_DAYS}::int || ' ngày' END AS key, count(*) OVER ()::int AS total
+              FROM (SELECT l.account_code, sum(l.debit - l.credit) AS bal,
+                           sum(l.debit) FILTER (WHERE l.posting_date > ${at} - ${TRANSIT_DAYS}::int) AS recent_debit
+                      FROM ledger_lines l
                      WHERE l.tenant_id = ${s.tenantId} AND l.account_code IN (${defaultAccounts(s.tenantId, ['goods_in_transit', 'cash_in_transit'])})
                        AND l.posting_date <= ${at}
                      GROUP BY l.account_code) x
-             WHERE abs(x.bal) >= 1
+             WHERE x.bal <= -1 OR x.bal - coalesce(x.recent_debit, 0) >= 1
              ORDER BY 1 LIMIT ${SAMPLE}`);
     },
   },

@@ -89,7 +89,7 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 | `DEBT_MATCH_LEDGER` <!-- [2026-11-02 09:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W2 --> | L3 | Khoản công nợ còn lại theo (đối tượng, tài khoản) = số dư sổ cái của đối tượng trên tài khoản có khoản công nợ; mẫu `<mã đối tượng>:<tài khoản>` | warn | có | DG-PLAN-1 |
 | `TAX_BOOK_MATCH` | L3 | Sổ hoá đơn = phát sinh 33311 / 1331 theo kỳ | warn | chưa | DG-PLAN-2 |
 | `COST_FILL_OPEN` | L3 | Dòng `cost_fill` còn 0 ở tháng đã qua | warn | không viết: từ khi có phiếu giá vốn tháng, dòng chờ về 0 là bình thường; việc giá vốn tháng đã qua xem `PERIOD_CLOSE_OPEN` | DG-PLAN-3 (giữ chỗ) |
-| `TRANSIT_NONZERO` | L3 | Tài khoản hàng / tiền đang chuyển (tài khoản ngầm định `goods_in_transit`, `cash_in_transit` và tài khoản con) còn số tại ngày cách hôm nay 30 ngày (quy chế nội bộ), toàn đơn vị; mẫu `<tài khoản>@<ngày>` | warn | có | DG-PLAN-4 |
+| `TRANSIT_NONZERO` <!-- [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b: định nghĩa còn treo --> | L3 | Tài khoản hàng / tiền đang chuyển (tài khoản ngầm định `goods_in_transit`, `cash_in_transit` và tài khoản con), toàn đơn vị, tại ngày xét: **còn treo** = số dư − Σ phát sinh Nợ trong 30 ngày gần nhất (quy chế nội bộ) ≥ 1 đồng, hoặc số dư ≤ −1 đồng (nơi nhận ghi nhiều hơn nơi xuất). Hàng / tiền đi đường trong 30 ngày là hợp lệ, không báo (PHASE-032 B2b). Mẫu `<tài khoản>:còn treo quá 30 ngày` · `<tài khoản>:nhận nhiều hơn xuất` | warn | có | DG-PLAN-4 |
 
 **Một mã, hai nơi.**
 - Mỗi mã có trong app phải có check DG-* cùng mã ở lane diagnostics (R-DIAG-9). Check **SC-DIAG-1** chặn nếu thiếu.

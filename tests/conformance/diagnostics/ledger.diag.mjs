@@ -259,14 +259,15 @@ export const checks = [
            WHERE abs(p.ledger - p.debt) >= 1 ORDER BY 1, 2 LIMIT 200`,
   }),
   sqlCheck({
-    id: 'DG-PLAN-4', code: 'TRANSIT_NONZERO', title: 'Tài khoản hàng / tiền đang chuyển giữa chi nhánh về 0 sau 30 ngày',
+    // [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b: cùng chữ mới với balance.diagnostics.ts (còn treo quá 30 ngày hoặc nhận nhiều hơn xuất)
+    id: 'DG-PLAN-4', code: 'TRANSIT_NONZERO', title: 'Hàng / tiền đang chuyển giữa chi nhánh không treo quá 30 ngày, nơi nhận không ghi nhiều hơn nơi xuất',
     rules: [], conf: [], tier: 2, enforce: 'info', weight: 2,
     count: "SELECT count(*)::int AS n FROM posting_defaults WHERE key IN ('goods_in_transit', 'cash_in_transit')",
-    sql: `SELECT t.code AS tenant, x.account_code AS key, NULL AS detail
-            FROM (SELECT l.tenant_id, l.account_code, sum(l.debit - l.credit) AS bal FROM ledger_lines l
-                   WHERE l.account_code IN (SELECT a.code FROM accounts a WHERE a.tenant_id = l.tenant_id AND EXISTS (SELECT 1 FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key IN ('goods_in_transit', 'cash_in_transit') AND a.code LIKE d.account_code || '%')) AND l.posting_date <= current_date - 30 GROUP BY 1, 2) x
+    sql: `SELECT t.code AS tenant, x.account_code AS key, CASE WHEN x.bal <= -1 THEN 'nhận nhiều hơn xuất' ELSE 'còn treo quá 30 ngày' END AS detail
+            FROM (SELECT l.tenant_id, l.account_code, sum(l.debit - l.credit) AS bal, sum(l.debit) FILTER (WHERE l.posting_date > current_date - 30) AS recent_debit FROM ledger_lines l
+                   WHERE l.account_code IN (SELECT a.code FROM accounts a WHERE a.tenant_id = l.tenant_id AND EXISTS (SELECT 1 FROM posting_defaults d WHERE d.tenant_id = a.tenant_id AND d.key IN ('goods_in_transit', 'cash_in_transit') AND a.code LIKE d.account_code || '%')) AND l.posting_date <= current_date GROUP BY 1, 2) x
             JOIN tenants t ON t.id = x.tenant_id
-           WHERE abs(x.bal) >= 1 ORDER BY 1, 2 LIMIT 200`,
+           WHERE x.bal <= -1 OR x.bal - coalesce(x.recent_debit, 0) >= 1 ORDER BY 1, 2 LIMIT 200`,
   }),
   // Chưa làm được bằng SQL thuần (cần AccountResolver / quy tắc tài khoản) — giữ chỗ để bảng điểm thấy khoảng trống.
   ...[

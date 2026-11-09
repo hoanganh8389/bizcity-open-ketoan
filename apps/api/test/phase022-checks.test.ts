@@ -53,13 +53,17 @@ describe('Số dư', () => {
     expect((await diag('ACCOUNT_WRONG_SIDE')).sample).not.toContain('1111:dư Có');
   });
 
-  it('TRANSIT_NONZERO: chuyển tiền sang chi nhánh khác chưa xác nhận nhận quá 30 ngày ⇒ tiền đang chuyển còn số', async () => {
+  // [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b: hàng / tiền đi đường trong 30 ngày là hợp lệ (không báo); chỉ báo khi còn treo quá 30 ngày
+  it('TRANSIT_NONZERO: tiền chuyển chi nhánh khác chưa nhận — trong 30 ngày là hợp lệ; quá 30 ngày ⇒ còn treo', async () => {
     expect((await call(ctx, 'POST', '/api/v1/branches', { code: 'CN02', name: 'Cửa hàng 02' })).status).toBeLessThan(300);
     await post({ docType: 'cash_transfer', docKey: 'CT-0305', branchCode: 'CN01', toBranchCode: 'CN02', docNo: 'CT-0305', docDate: '2026-03-05',
       fromMethodCode: 'TM', toMethodCode: 'CK', status: 'sent', totals: { total: 300000 } });
+    // Ngày xét 20/03: phiếu mới đi 15 ngày — đang trên đường, không phải lỗi (trước đây phép kiểm báo sai ca này).
+    expect(await diag('TRANSIT_NONZERO', { to: '2026-03-20' })).toMatchObject({ level: 'pass', count: 0 });
+    // Ngày xét 30/04: đã quá 30 ngày mà nơi nhận chưa ghi ⇒ còn treo.
     const d = await diag('TRANSIT_NONZERO', { to: '2026-04-30' });
     expect(d).toMatchObject({ level: 'warn', count: 1 });
-    expect(d.sample[0]).toMatch(/^11319@2026-04-30$/);
+    expect(d.sample[0]).toMatch(/^11319:còn treo quá 30 ngày$/);
     expect(d.remedy?.verify.code).toBe('TRANSIT_NONZERO');
   });
 
