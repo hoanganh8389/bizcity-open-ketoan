@@ -1,15 +1,19 @@
 // [2026-11-02 10:10 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4: màn Hệ thống → Bàn đánh giá (HT08) theo bản mẫu đã duyệt — ba vai, checklist theo nhóm, bốn khối Hiện tượng · Vì sao · Cách khắc phục · Kiểm lại, biên bản in.
+// [2026-11-09 10:50 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B1 / D032-13: HT08 đổi tên Bàn làm việc kế toán; thẻ Khoá thử hôm nay (mặc định) + thẻ Rà theo vai (bàn đánh giá cũ, giữ nguyên)
 /**
- * BÀN ĐÁNH GIÁ (HT08, PHASE-022 30-UI-UX). Dữ liệu: GET /api/v1/system/review-board?persona= (core.review.board, chỉ đọc).
+ * BÀN LÀM VIỆC KẾ TOÁN (HT08; trước là Bàn đánh giá, PHASE-022 30-UI-UX; đổi tên theo PHASE-032 D032-13).
+ * Thẻ Khoá thử hôm nay: KhoaThuHomNay.tsx (B1). Thẻ Rà theo vai: phần dưới. Dữ liệu: GET /api/v1/system/review-board?persona= (core.review.board, chỉ đọc).
  * Trạng thái luôn có chữ; không điểm %; "Chưa kiểm được" không tính là đạt; không nút sửa sổ / tắt kiểm / bỏ qua.
  * "Kiểm lại" chạy đúng một mã (core.review.recheck). "In biên bản" in khung biên bản (CSS @media print).
  */
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Remedy } from '@ketoan/contracts';
 import { PageHeader } from '@/components/PageHeader';
 import { ErrorBox, Loading } from '@/components/ui';
 import { RemedyView } from '@/components/RemedyView';
+import { KhoaThuHomNay } from './KhoaThuHomNay';
 import { api, errorText } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { dateTime } from '@/lib/format';
@@ -37,7 +41,26 @@ const ST: Record<Status, { text: string; cls: string; icon: string }> = {
 const ORDER: Status[] = ['error', 'warn', 'ok', 'block_ok', 'untested', 'elsewhere'];
 const actionable = (s: Status) => s === 'warn' || s === 'error';
 
+const TABS = [['khoa-thu', 'Khoá thử hôm nay'], ['ra-theo-vai', 'Rà theo vai']] as const;
+type Tab = (typeof TABS)[number][0];
+
 export function ReviewBoardPage() {
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = params.get('the') === 'ra-theo-vai' ? 'ra-theo-vai' : 'khoa-thu';
+  return (
+    <div className="rb">
+      <PageHeader title="Bàn làm việc kế toán" code="HT08" subtitle="Xem hôm nay sổ đã khoá được chưa, còn việc gì, và cách sửa — không ghi gì vào sổ" />
+      <div className="tabs" role="tablist" style={{ marginBottom: 12 }}>
+        {TABS.map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'tab active' : 'tab'} onClick={() => setParams(k === 'khoa-thu' ? {} : { the: k }, { replace: true })}>{l}</button>
+        ))}
+      </div>
+      {tab === 'khoa-thu' ? <KhoaThuHomNay /> : <RaTheoVai />}
+    </div>
+  );
+}
+
+function RaTheoVai() {
   const { user } = useAuth();
   const [persona, setPersona] = useState<Persona>('chief_accountant');
   const q = useQuery({ queryKey: ['review-board', persona], queryFn: () => api.get<Board>('/api/v1/system/review-board', { persona }) });
@@ -46,9 +69,11 @@ export function ReviewBoardPage() {
   const b = q.data;
 
   return (
-    <div className="rb">
-      <PageHeader title="Bàn đánh giá" code="HT08" subtitle="Checklist giả định lỗi theo vai — mọi cảnh báo kèm cách khắc phục cụ thể"
-        actions={<><button type="button" className="btn" onClick={() => void q.refetch()} disabled={q.isFetching}>{q.isFetching ? 'Đang kiểm…' : 'Kiểm lại tất cả'}</button><button type="button" className="btn" onClick={() => window.print()} disabled={!b}>In biên bản</button></>} />
+    <div>
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+        <span className="muted" style={{ flex: 1 }}>Checklist giả định lỗi theo vai — mọi cảnh báo kèm cách khắc phục cụ thể</span>
+        <><button type="button" className="btn" onClick={() => void q.refetch()} disabled={q.isFetching}>{q.isFetching ? 'Đang kiểm…' : 'Kiểm lại tất cả'}</button><button type="button" className="btn" onClick={() => window.print()} disabled={!b}>In biên bản</button></>
+      </div>
       <div className="card card-body rb-head">
         <div className="rb-personas" role="radiogroup" aria-label="Vai">
           {PERSONAS.map(([k, l]) => (
