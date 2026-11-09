@@ -5,16 +5,16 @@
 
 | Cột | Số việc |
 |---|---|
-| Đang làm | 7 |
+| Đang làm | 6 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
 | Chưa ai nhận | 137 |
 | Chờ đủ tín hiệu | 52 |
 | Hoãn | 3 |
-| Xong | 265 |
+| Xong | 266 |
 | **Tổng** | **492** |
 
-## Đang làm (7)
+## Đang làm (6)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -269,6 +269,6 @@
 | [S004-16](PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md#L29) | PHASE-004 | Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab "Sửa đầu bút toán" ở Bàn điều tra; bản mẫu HT… | — | — |
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 
-## Xong (265)
+## Xong (266)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
