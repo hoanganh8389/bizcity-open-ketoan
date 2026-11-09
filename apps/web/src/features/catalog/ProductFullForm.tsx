@@ -20,6 +20,7 @@ import { HelpDrawer } from '@/components/HelpDrawer';
 import { DoiMaModal, GopMaModal, LichSuMatHang } from './DoiMaGopMa';
 // [2026-11-07 05:50 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: ô Biến thể, Loại hàng ở thẻ Thông tin, nút Thêm sản phẩm con (đóng góp)
 // [2026-11-09 10:00 AM Nguyễn Văn Thủy] PHASE-026 — bỏ tạo mã có đuôi (chọn đuôi, ChonDuoiMa): mọi biến thể là sản phẩm con; ô Biến thể sửa được (đóng góp)
+// [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha không có ô Biến thể; thẻ Thông tin gọn: giải thích vào rê chuột, ẩn ngành / nhãn khi đã theo nhóm (đóng góp)
 import { ThemSanPhamCon, useVariantKinds, VariantBadge, variantLabel } from './ThemSanPhamCon';
 import { PRODUCT_TABS } from '../../phan-he/product-tabs';
 import { useEnabledModules } from '../../layout/useAppMenu';
@@ -217,7 +218,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       const unitNames = new Set(units.map((u) => u.unit));
       const prices = v.prices.filter((p) => unitNames.has(p.unit)).map((p) => ({ priceListCode: p.priceListCode, unit: p.unit, price: p.price, isDefaultUnit: p.isDefaultUnit, note: p.note }));
       const { sku: _s, unit: _u, units: _us, prices: _ps, variantCode, ...rest } = v;
-      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, ...(isNew ? {} : { variantCode }), units, prices, warnAck });
+      return api.put<FullProduct>(`/api/v1/catalog/products/${encodeURIComponent(v.sku.trim())}${isNew ? '?new=1' : ''}`, { ...rest, ...(!isNew && v.parentSku ? { variantCode } : {}), units, prices, warnAck });
     },
     onSuccess: () => {
       flashSaved(savedNote(why.findings, { draft: blockCount > 0 }));
@@ -262,7 +263,7 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
       {tab === 'info' && (
         <fieldset className="fgroup">
           <legend>Thông tin mặt hàng</legend>
-          <Field label="Nhóm hàng (ngành → nhãn → nhóm sản phẩm)" full hint="Chọn nhóm là xong: ngành, nhãn tự điền; mặt hàng mới tự sinh mã = ngành (2) + nhãn (3) + nhóm (1) + số thứ tự (3) — quà khuyến mại: Q + nhãn + nhóm + 4 số">
+          <Field label="Nhóm hàng" full tip="Chọn nhóm là xong: ngành, nhãn tự điền; mặt hàng mới tự sinh mã = ngành (2) + nhãn (3) + nhóm (1) + số thứ tự (3)">
             <ListPicker items={pick('group')} value={v.groupCode ?? ''} onChange={pickGroup} placeholder="Gõ tên nhóm / nhãn để tìm — chọn tới nhóm sản phẩm (cấp 3)" nameFirst />
           </Field>
           <Field label="Mã hàng (*)" hint={skuErr || undefined}>
@@ -271,22 +272,25 @@ export function ProductFullForm({ sku, initial, classes, groupPath, onClose, sta
               {isNew && <button type="button" className="btn btn-sm" onClick={() => void genSku(v.groupCode, true)} title="Lấy mã kế tiếp theo nhóm hàng đã chọn (thay mã đang có)">Sinh mã</button>}
               <button type="button" className="btn btn-sm btn-help" onClick={() => setHelp(true)} title="Quy tắc mã hàng, sản phẩm con, cách kiểm tra">?</button>
             </div>
-            <MaHangGiaiThich sku={v.sku} hint={skuHint} auto={skuAuto} isNew={isNew} />
+            {isNew && <MaHangGiaiThich sku={v.sku} hint={skuHint} auto={skuAuto} isNew={isNew} />}
           </Field>
-          <Field label="Barcode" hint="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
+          <Field label="Barcode" tip="Nhiều mã cách nhau dấu /"><input className="input mono" value={v.barcode} onChange={(e) => set({ barcode: e.target.value })} /></Field>
           <MaHangCha sku={v.sku} isNew={isNew} value={v.parentSku ?? null} onChange={(parentSku) => set({ parentSku })} kinds={kinds} />
-          {!isNew && (
-            <Field label="Biến thể" hint="Phần mềm tự tách hàng Nội bộ khỏi thuế và xử lý theo ô này, không theo tên hay mã">
+          {/* Chỉ mã con có Biến thể; mã cha luôn là hàng thường. */}
+          {!isNew && v.parentSku && (
+            <Field label="Biến thể" tip="Phần mềm xử lý theo ô này: Nội bộ tự tách khỏi thuế. Không theo tên hay mã">
               <select className="select input" value={v.variantCode ?? 'normal'} onChange={(e) => set({ variantCode: e.target.value })} title={kinds?.find((k) => k.code === v.variantCode)?.note}>
                 {(kinds ?? []).filter((k) => (k.isActive && k.code !== 'legacy') || k.code === v.variantCode).map((k) => <option key={k.code} value={k.code} title={k.note}>{variantLabel(k)}</option>)}
               </select>
             </Field>
           )}
-          {classes.type.length > 0 && <Field label="Loại hàng" hint="Để lọc và báo cáo, không làm đổi định khoản"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
+          {classes.type.length > 0 && <Field label="Loại hàng" tip="Để lọc và báo cáo, không làm đổi định khoản"><ListPicker items={pick('type')} value={v.typeCode ?? ''} onChange={(c) => set({ typeCode: c || null })} placeholder="Bấm để chọn" nameFirst /></Field>}
           <Field label="Tên hàng (*)" full><input className="input" value={v.name} onChange={(e) => set({ name: e.target.value })} /></Field>
           {(() => {
             // Có nhóm hàng và ngành / nhãn khớp cây nhóm: chỉ hiện (một chỗ khai — nhóm hàng); chưa khớp thì vẫn chọn tay được.
             const locked = Boolean(v.groupCode && skuHint && skuHint.industryCode === v.industryCode && skuHint.brandCode === v.brandCode);
+            // Đã theo nhóm hàng thì ngành, nhãn chỉ lặp lại đường dẫn nhóm: ẩn cho gọn.
+            if (locked) return null;
             return <>
               <Field label="Ngành hàng" hint={locked ? 'Theo nhóm hàng' : undefined}><ListPicker items={pick('industry')} value={v.industryCode ?? ''} onChange={(c) => set({ industryCode: c || null })} placeholder="Tự lấy khi chọn nhóm hàng" nameFirst disabled={locked} /></Field>
               <Field label="Nhãn hàng (Brand)" hint={locked ? 'Theo nhóm hàng — khuyến mại, hạn mức, thưởng theo nhãn dùng nhãn này' : undefined}><ListPicker items={pick('brand')} value={v.brandCode ?? ''} onChange={(c) => set({ brandCode: c || null })} placeholder="Tự lấy khi chọn nhóm hàng" nameFirst disabled={locked} /></Field>

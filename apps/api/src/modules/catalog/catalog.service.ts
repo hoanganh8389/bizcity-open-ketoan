@@ -235,6 +235,11 @@ export async function saveProduct(trx: Db, tenantId: string, actor: string, sku:
   if (b.variantCode !== undefined) {
     const k = await sql<{ code: string }>`SELECT code FROM item_variant_kinds WHERE tenant_id = ${tenantId} AND code = ${b.variantCode} AND is_active`.execute(trx);
     if (!k.rows[0]) throw Errors.validation(`Biến thể ${b.variantCode} không có hoặc đã ngừng dùng`);
+    // [2026-11-09 07:00 PM Nguyễn Văn Thủy] PHASE-026 — mã cha (không có mã cha phía trên) luôn là hàng Thường; biến thể chỉ ở sản phẩm con (đóng góp)
+    if (b.variantCode !== 'normal') {
+      const own = await trx.selectFrom('products').select('parent_sku').where('tenant_id', '=', tenantId).where('sku', '=', sku).executeTakeFirst();
+      if (!own?.parent_sku) throw Errors.validation(`${sku} là mã cha, không chọn biến thể. Biến thể chỉ dành cho sản phẩm con`);
+    }
     await sql`UPDATE products SET variant_code = ${b.variantCode}, updated_at = ${now} WHERE tenant_id = ${tenantId} AND sku = ${sku} AND variant_code <> ${b.variantCode}`.execute(trx);
   }
   // Hàng KCT (thuế bán ra KCT / R00K) chưa khai thuế mua vào → V13K (không chịu thuế đầu vào), không để phiếu mua tự lấy 8%.

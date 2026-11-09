@@ -193,6 +193,14 @@ describe('NT-MH-002 — khoá gộp mã, MH26, lệch chuẩn', () => {
     expect((await call(ctx, 'PUT', '/api/v1/catalog/products/17052100101', { name: 'Bình sữa xanh L', variantCode: 'normal', ...ack })).status).toBe(200);
   });
 
+  it('mã cha không chọn được biến thể khác Thường', async () => {
+    const r = await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', variantCode: 'internal', ...ack });
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('mã cha');
+    expect(await variantOf('170521001')).toBe('normal');
+    expect((await call(ctx, 'PUT', '/api/v1/catalog/products/170521001', { name: 'Hàng 170521001', variantCode: 'normal', ...ack })).status).toBe(200);
+  });
+
   it('luồng kéo danh mục gửi itemId, parentItemId và variantCode', async () => {
     const r = await call(ctx, 'GET', '/api/v1/catalog/feed/products?limit=5000');
     const items = r.body.data.items as { sku: string; itemId: string | null; parentItemId: string | null; variantCode: string }[];
