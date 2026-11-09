@@ -2,6 +2,31 @@
 
 Tính đơn giá vốn **bình quân gia quyền theo tháng** cho từng mặt hàng, rồi ghi sổ giá vốn của hàng đã xuất trong tháng.
 
+<!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — mục Kiến trúc tổng thể cho dev / kế toán / CEO; số tài khoản là ví dụ TT99 -->
+## Kiến trúc tổng thể: giá vốn nằm ở đâu trong hệ thống
+
+Trang này nói **cách tính** của màn ACC49. Để hiểu giá vốn nằm ở đâu trong cả hệ thống (ai tính, ai ghi sổ, khi nào được kết chuyển), đọc sơ đồ một trang ở [PHASE-032 · 10 Kiến trúc](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/10-KIEN-TRUC.md) hoặc mở bản vẽ [inventory-engine.html](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/mockups/inventory-engine.html):
+
+```text
+Master Data & Policy Registry  (item_id bất biến · SKU có phiên bản · phương pháp tính giá có phiên bản)
+        ↓
+Mua hàng · Kho · Bán hàng      (kể sự việc, không ghi sổ)
+        ↓
+Cửa nạp → cổng kiểm chuẩn       (định danh, lô, dòng gốc, chính sách)
+        ↓
+Inventory Engine  ──►  Accounting Kernel
+(số lượng · lô · lớp giá vốn ·  (nơi duy nhất ghi sổ cái; tra tài khoản
+ phân bổ; KHÔNG ghi sổ)          theo lý do → nhóm hạch toán tại ngày)
+        ↓
+Cost Settlement → Period Closing (giá vốn kỳ chốt rồi mới kết chuyển 632 → 911, khoá sổ)
+        ↓
+Báo cáo & truy vết              (lãi gộp theo item_id; bút toán → phân bổ → lớp → phiếu nhập)
+```
+
+Bốn điều hệ thống phải giữ đồng thời: **Identity** (một hàng một `item_id`), **Inventory** (ở đâu, lô nào, còn bao nhiêu), **Cost** (giá gốc, phân bổ, điều chỉnh), **Accounting** (đúng tài khoản, đối chiếu, kết chuyển, khoá kỳ). Hôm nay Kernel tính **bình quân gia quyền tháng** như mô tả dưới đây; mô hình lớp giá vốn + phân bổ, lô ở Kernel, FIFO và cổng *giá vốn chốt trước kết chuyển* là việc của PHASE-032 (đề xuất, chưa có mã).
+
+> **Mã hàng ≠ mã tài khoản.** Các số 156, 632, 1579, 1381… trong trang này là **ví dụ theo gói nền TT99**; luật định khoản tra tài khoản theo *lý do → nhóm hạch toán → chế độ kế toán tại ngày*, không viết cứng và không gắn tài khoản vào mặt hàng ([PHASE-032 · 20](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/20-MA-HANG-VA-MA-TAI-KHOAN.md), R-ITEM-10).
+
 ## Cách tính
 
 Các chi nhánh cùng **đơn vị hạch toán** dùng chung một đơn giá cho mỗi mặt hàng trong tháng:

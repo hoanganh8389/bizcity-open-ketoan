@@ -1,0 +1,449 @@
+<!doctype html>
+<!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — bản mẫu Inventory Engine: kiến trúc tổng thể, mã hàng ≠ mã tài khoản, chọn lô FIFO / FEFO, lớp giá vốn & phân bổ (trả hàng 500.000 vs 600.000), chín tình huống vàng, sẵn sàng khoá kỳ -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventory Engine</title>
+<style>
+:root{
+  --bg:#f5f6f8;--panel:#ffffff;--ink:#16181d;--muted:#5b6270;--line:#e3e6eb;--soft:#eef1f5;
+  --ok:#1a7f4b;--warn:#b26a00;--bad:#c62828;--info:#1f5fbf;--none:#8a919e;--k:#6d3fc0;
+  --accent:#0b5cad;--ok-bg:#e8f5ee;--warn-bg:#fff3e0;--bad-bg:#fdecea;--k-bg:#f1eafc;--info-bg:#e8f0fc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--ink:#e7e9ee;--muted:#9aa1ae;--line:#272b35;--soft:#1e222b;
+  --ok:#3fbf7f;--warn:#e0a03a;--bad:#ef5350;--info:#5b9cf0;--none:#6b7280;--k:#b08cf0;
+  --accent:#5b9cf0;--ok-bg:#12301f;--warn-bg:#33260f;--bad-bg:#3a1717;--k-bg:#241a3a;--info-bg:#15243d;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,.mono{font:12.5px ui-monospace,SFMono-Regular,Consolas,monospace}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 16px;overflow-x:auto;background:var(--panel)}
+.tabs a{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;font:inherit;cursor:pointer;white-space:nowrap;text-decoration:none}
+.tabs a[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1400px;width:100%;min-width:0;margin:0 auto}
+section{display:none}section.on{display:block}
+h2{margin:0 0 4px;font-size:18px}
+h3{font-size:14.5px;margin:16px 0 8px}
+h4{margin:0 0 2px;font-size:14px}
+.lead{color:var(--muted);margin:0 0 12px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}.tag.warn{background:var(--warn-bg);color:var(--warn)}.tag.bad{background:var(--bad-bg);color:var(--bad)}
+.tag.k{background:var(--k-bg);color:var(--k)}.tag.info{background:var(--info-bg);color:var(--info)}.tag.none{background:var(--soft);color:var(--muted)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13px}
+.note.warn{border-left-color:var(--warn)}.note.bad{border-left-color:var(--bad)}.note.ok{border-left-color:var(--ok)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.card{padding:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;background:var(--soft)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.k{font:11.5px ui-monospace,Consolas,monospace;color:var(--k);word-break:break-word}
+.muted{color:var(--muted)}
+select,input[type=number],input[type=text]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+input[type=number]{width:90px}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.ctl label{display:flex;gap:6px;align-items:center;font-size:13px}
+/* kiến trúc */
+.stack{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.layer{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel)}
+.layer h4{font-size:13.5px;letter-spacing:.02em}
+.layer p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+.layer.found{border-color:var(--info);background:var(--info-bg)}
+.layer.engine{border-color:var(--ok)}
+.layer.kernel{border-color:var(--k);background:var(--k-bg)}
+.layer.settle{border-color:var(--warn)}
+.arrow{text-align:center;color:var(--muted);font-size:16px;line-height:1}
+.split{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.split2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:stretch}
+@media (max-width:760px){.split,.split2{grid-template-columns:minmax(0,1fr)}}
+.cont{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px;margin:10px 0}
+.cont div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.cont b{display:block;font-size:13px}.cont span{font-size:12px;color:var(--muted)}
+/* hành trình */
+.journey{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 12px}
+.journey .st{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);font-size:12.5px}
+.journey .st b{display:block;color:var(--k);font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.journey .ar{color:var(--muted)}
+/* lô */
+.lots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:10px 0}
+.lot{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);position:relative}
+.lot.pick{border-color:var(--ok);background:var(--ok-bg)}
+.lot.excl{opacity:.55;border-style:dashed}
+.lot b{font-size:16px}
+.lot .q{position:absolute;right:10px;top:8px;font-size:12px;font-weight:700;color:var(--ok)}
+.lot small{display:block;color:var(--muted)}
+/* lớp */
+.layers{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.lyr{display:grid;grid-template-columns:150px minmax(0,1fr) 180px;gap:10px;align-items:center;font-size:13px}
+@media (max-width:760px){.lyr{grid-template-columns:minmax(0,1fr)}}
+.lyr .bar{height:22px;background:var(--soft);border-radius:6px;position:relative;overflow:hidden}
+.lyr .bar span{position:absolute;top:0;bottom:0;left:0;background:var(--ok);opacity:.85}
+.lyr .bar i{position:absolute;top:0;bottom:0;background:var(--k);opacity:.75}
+.lyr .bar em{position:absolute;top:0;bottom:0;background:var(--warn);opacity:.8}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:4px 0 8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.vs{grid-template-columns:minmax(0,1fr)}}
+.vs .panel{padding:12px}
+.vs .big{font-size:24px;font-weight:700}
+/* cases */
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px}
+.case{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:12px}
+.case ol{margin:6px 0 0 18px;padding:0;font-size:13px}
+.case li{margin:3px 0}
+.case .post{background:var(--k-bg);color:var(--k);border-radius:6px;padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.case .eng{background:var(--ok-bg);color:var(--ok);border-radius:6px;padding:1px 6px;font-size:12px}
+.case .ops{background:var(--soft);color:var(--muted);border-radius:6px;padding:1px 6px;font-size:12px}
+/* readiness */
+.ready li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ready li:last-child{border-bottom:0}
+.ready .dot{width:12px;height:12px;border-radius:50%;margin-top:4px;flex:none}
+.d-ok{background:var(--ok)}.d-warn{background:var(--warn)}.d-bad{background:var(--bad)}.d-none{background:var(--none)}
+footer{color:var(--muted);font-size:12px;padding:16px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><div class="logo">B</div><div>Open Kế Toán · Inventory Engine<small>Bản mẫu PHASE-032 · W0 · ADR-0033 đã duyệt 09/11/2026</small></div></div>
+    <div class="spacer"></div>
+    <span class="tag info">kho · lô · giá vốn liên tục</span>
+    <span class="tag k">chỉ Kernel ghi sổ</span>
+    <button class="btn sm" id="theme">Sáng / tối</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <a href="#kien-truc" aria-selected="true">Kiến trúc tổng thể</a>
+    <a href="#ma-hang">Mã hàng ≠ mã tài khoản</a>
+    <a href="#chon-lo">Chọn lô FIFO / FEFO</a>
+    <a href="#lop-gia-von">Lớp giá vốn &amp; phân bổ</a>
+    <a href="#tinh-huong">Chín tình huống</a>
+    <a href="#khoa-ky">Sẵn sàng khoá kỳ</a>
+  </nav>
+</header>
+<main>
+
+<!-- ============ KIẾN TRÚC ============ -->
+<section id="kien-truc" class="on">
+  <h2>Kiến trúc giá vốn → kết chuyển → khoá sổ</h2>
+  <p class="lead">Một trang cho dev, kế toán, CEO. Bốn liên tục phải đúng đồng thời thì kế toán mới tự động, gợi ý, trợ giúp mà vẫn đúng.</p>
+  <div class="cont">
+    <div><b>1 · Identity Continuity</b><span>một hàng, một <code>item_id</code> bất biến — dù đổi SKU, tên, nhóm, biến thể</span></div>
+    <div><b>2 · Inventory Continuity</b><span>hàng ở đâu, lô nào, nhập từ đâu, đã xuất cho giao dịch nào, còn bao nhiêu</span></div>
+    <div><b>3 · Cost Continuity</b><span>giá gốc bao nhiêu, phân bổ ra sao, mọi điều chỉnh tác động thế nào</span></div>
+    <div><b>4 · Accounting Continuity</b><span>đúng tài khoản, ghi sổ, đối chiếu, kết chuyển, khoá kỳ — không đứt lịch sử</span></div>
+  </div>
+  <div class="stack">
+    <div class="layer found"><h4>MASTER DATA &amp; POLICY REGISTRY <span class="tag info">nền móng</span></h4><p><code>item_id</code> bất biến · SKU có phiên bản · đơn vị quy đổi · nhóm hạch toán có phiên bản · chính sách có phiên bản: <b>phương pháp tính giá</b> · <b>quy tắc xuất lô</b> · giá nội bộ</p></div>
+    <div class="arrow">↓</div>
+    <div class="split">
+      <div class="layer"><h4>MUA HÀNG</h4><p>giá mua, VAT, chi phí mua, chiết khấu, lô nhập (<code>lotRef</code>)</p></div>
+      <div class="layer"><h4>KHO (module)</h4><p>chuyển kho, kiểm kê, cách ly, tiêu huỷ, in tem lô — kể sự việc, không ghi sổ</p></div>
+      <div class="layer"><h4>BÁN HÀNG / POS</h4><p>đơn bán, trả lại (<code>originalLineRef</code>), quà tặng, chọn lô theo gợi ý</p></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="layer"><h4>DOCUMENT SDK → CỬA NẠP → CỔNG KIỂM CHUẨN</h4><p>định danh (<code>resolveItem</code>) · lô · dòng gốc · chính sách (<code>policyRefs</code>) · tiền kiểm L1–L5 · bể chờ · một ngôn ngữ mã <code>IN-*</code></p></div>
+    <div class="arrow">↓</div>
+    <div class="split2">
+      <div class="layer engine"><h4>INVENTORY ENGINE <span class="tag ok">Kernel · không ghi sổ</span></h4><p>số lượng theo (kho, item, lô) · lô &amp; hạn · <b>lớp giá vốn</b> · <b>phân bổ</b> · lần tính giá (<code>draft → settled</code>) · kiểm <code>CT-INV-*</code>, <code>CT-COST-*</code><br><b>Không biết số tài khoản.</b> Gửi <code>CostingResult</code> đã kiểm →</p></div>
+      <div class="layer kernel"><h4>ACCOUNTING KERNEL <span class="tag k">nơi duy nhất ghi sổ cái</span></h4><p>một cửa ghi (<code>eventStore</code>) · lý do → nhóm hạch toán → tài khoản tại ngày · bút toán chỉ thêm, sửa = đảo · trả <code>journal_entry_id</code> về phân bổ</p></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="layer settle"><h4>COST SETTLEMENT → PERIOD CLOSING</h4><p>đối chiếu tồn theo lớp = số dư tài khoản hàng tồn kho · giá vốn kỳ <code>settled</code> → kết chuyển 632 → 911 → khoá sổ. Chưa chốt → <b>chặn có lý do</b>, người có quyền khoá kỳ chấp nhận có ghi lý do</p></div>
+    <div class="arrow">↓</div>
+    <div class="layer"><h4>BÁO CÁO &amp; TRUY VẾT</h4><p>lãi gộp theo <code>item_id</code> / SKU · lãi lỗ cửa hàng · toàn doanh nghiệp · lineage: bút toán → phân bổ → lớp → phiếu nhập → nhà cung cấp · audit</p></div>
+  </div>
+  <h3>Đọc cho ba người</h3>
+  <div class="panel tbl"><table>
+    <tr><th style="width:160px">Người đọc</th><th>Nhìn sơ đồ thấy gì</th></tr>
+    <tr><td><b>CEO</b></td><td>Mọi con số lãi gộp đi ngược được về phiếu nhập; đổi mã, đổi thông tư không mất lịch sử; kết chuyển không chạy trên giá vốn chưa chốt.</td></tr>
+    <tr><td><b>Kế toán</b></td><td>Kho và kế toán là hai sổ nhưng một dữ liệu: sổ chi tiết (lô, lớp) phải bằng số dư tài khoản hàng tồn kho trước khi khoá; tài khoản là kết quả của lý do và nhóm hạch toán tại ngày, không gắn chết vào hàng.</td></tr>
+    <tr><td><b>Dev</b></td><td>Module chỉ kể sự việc kèm <code>lotRef</code> / <code>originalLineRef</code>; Engine tính, Kernel ghi; không import <code>ledgerService</code>, không viết số tài khoản, không tự FIFO trong app.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ MÃ HÀNG ============ -->
+<section id="ma-hang">
+  <h2>Phải tách mã hàng và mã tài khoản kế toán</h2>
+  <p class="lead">Điểm rất dễ thiết kế sai. Một mặt hàng đi qua nhiều tài khoản trong vòng đời, nên <b>không dùng 156, 632 hay 511 làm định danh cố định của hàng</b>.</p>
+  <div class="panel tbl"><table>
+    <tr><th>Thành phần — SKU <code>010-025-001-XD</code></th><th>Cách quản lý</th><th>Nguyên tắc</th></tr>
+    <tr><td class="k">item_id</td><td>ULID bất biến</td><td>không đổi trong toàn bộ vòng đời; mọi liên kết kế toán trỏ vào đây</td></tr>
+    <tr><td class="k">sku</td><td>mã hàng hiển thị</td><td>có thể đổi, có phiên bản + ngày hiệu lực</td></tr>
+    <tr><td class="k">parent_item_id</td><td>sản phẩm cha</td><td>nhóm các biến thể; không là khoá kế toán</td></tr>
+    <tr><td class="k">lot_id</td><td>lô hàng thực tế</td><td>phân biệt các lần nhập, hạn dùng, trạng thái</td></tr>
+    <tr><td class="k">warehouse_id</td><td>kho lưu hàng</td><td>đổi khi chuyển kho; giá trị không đổi trong cùng đơn vị kế toán</td></tr>
+    <tr><td class="k">posting_group</td><td>nhóm hạch toán</td><td>có phiên bản theo thời gian</td></tr>
+    <tr><td class="k">account_code</td><td>TK 156, 632, 511…</td><td><b>kết quả</b> xác định theo nghiệp vụ và chính sách tại ngày — không gắn vào hàng</td></tr>
+  </table></div>
+  <h3>Hành trình hạch toán của <em>cùng một</em> mặt hàng</h3>
+  <div class="journey">
+    <div class="st"><b>156</b>mua nhập</div><span class="ar">→</span>
+    <div class="st"><b>632</b>bán (giá vốn)</div><span class="ar">→</span>
+    <div class="st"><b>156</b>khách trả</div><span class="ar">→</span>
+    <div class="st"><b>1579</b>đang chuyển</div><span class="ar">→</span>
+    <div class="st"><b>156</b>kho đến</div><span class="ar">→</span>
+    <div class="st"><b>1381</b>thiếu chờ xử lý</div><span class="ar">→</span>
+    <div class="st"><b>911</b>kết chuyển</div>
+  </div>
+  <div class="panel tbl"><table>
+    <tr><th>Nghiệp vụ</th><th>Định khoản (ví dụ gói nền TT99)</th><th>Định danh giữ xuyên suốt</th></tr>
+    <tr><td>Mua nhập kho</td><td>Nợ 156 / Có 331</td><td>cùng <code>item_id</code>, tạo lô, tạo lớp</td></tr>
+    <tr><td>Bán hàng</td><td>Nợ 111, 131 / Có 511, 3331</td><td>cùng <code>item_id</code>, trừ lô, dòng xuất chờ phân bổ</td></tr>
+    <tr><td>Ghi nhận giá vốn</td><td>Nợ 632 / Có 156</td><td>cùng <code>item_id</code>, phân bổ → lớp</td></tr>
+    <tr><td>Khách trả hàng nhập lại</td><td>Nợ 156 / Có 632</td><td>cùng <code>item_id</code>, đảo đúng phân bổ gốc</td></tr>
+    <tr><td>Trả hàng nhà cung cấp</td><td>Nợ 331 / Có 156</td><td>cùng <code>item_id</code>, về lớp nhập gốc</td></tr>
+    <tr><td>Huỷ hàng, hao hụt</td><td>Nợ TK theo nguyên nhân / Có 156</td><td>cùng <code>item_id</code>, đúng lô</td></tr>
+    <tr><td>Kết chuyển giá vốn</td><td>Nợ 911 / Có 632</td><td>theo kỳ, đơn vị tài khoản</td></tr>
+  </table></div>
+  <div class="note" style="margin-top:12px">Cùng một <code>item_id</code> đi qua 156 → 632 → 156 → 1579 → 1381 → 911. Điều duy nhất không đổi là <b><code>item_id</code> + chuỗi tham chiếu chứng từ</b>. Số tài khoản trong bảng là ví dụ: luật định khoản không viết cứng số nào (R-POST-2); bảng kho / lô / lớp / phân bổ <b>không có cột tài khoản</b> (R-INV-2, R-ITEM-10).</div>
+</section>
+
+<!-- ============ CHỌN LÔ ============ -->
+<section id="chon-lo">
+  <h2>FIFO và FEFO thực ra là hai bài toán khác nhau</h2>
+  <p class="lead"><b>FIFO xuất lô</b>: lấy lô nhập trước. <b>FEFO</b>: lấy lô hết hạn trước. Cả hai là <b>quy tắc vận hành kho</b>, gợi ý / chặn chọn lô — <b>không đổi giá vốn</b>. Phương pháp tính giá là chính sách khác.</p>
+  <div class="panel">
+    <div class="ctl">
+      <label>Quy tắc <select id="rule"><option value="auto">Tự động (FEFO khi có hạn)</option><option value="fefo">FEFO</option><option value="fifo">FIFO</option></select></label>
+      <label>Số lượng xuất <input type="number" id="qty" value="80" min="1"></label>
+      <label>Ngày xuất <input type="text" id="at" value="2026-11-10" style="width:110px"></label>
+      <label>Hạn còn tối thiểu (khách) <input type="number" id="shelf" value="0" min="0"> ngày</label>
+      <label><input type="checkbox" id="qB"> Lô B đang cách ly</label>
+      <label>Chế độ <select id="mode"><option value="suggest">gợi ý</option><option value="enforce">bắt buộc</option></select></label>
+    </div>
+    <div class="card">
+      <div class="lots" id="lots"></div>
+      <div id="pickmsg"></div>
+      <div class="tbl"><table id="picks"><tr><th>Thứ tự</th><th>Lô</th><th>Hạn dùng</th><th>Ngày nhập</th><th class="num">Số dư</th><th class="num">Lấy</th><th>Ghi chú</th></tr></table></div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="note">FEFO là chiến lược chọn lô để vận hành kho, <b>không</b> tự động là phương pháp tính giá vốn. Theo TT99/2025 áp dụng từ 01/01/2026, phương pháp xác định giá trị hàng tồn kho gồm đích danh, bình quân gia quyền, FIFO; <b>FEFO không được liệt kê</b> là phương pháp tính giá.</div>
+    <div class="note ok">Người xuất chọn khác gợi ý được ở chế độ <b>gợi ý</b> (ghi lý do, <code>IN-INV-011</code> không bật); chế độ <b>bắt buộc</b> → giữ chờ duyệt. Lô hết hạn → <code>IN-INV-013</code> chặn bán (vẫn cho phiếu huỷ / trả NCC).</div>
+  </div>
+</section>
+
+<!-- ============ LỚP GIÁ VỐN ============ -->
+<section id="lop-gia-von">
+  <h2>Lớp giá vốn, phân bổ và nghiệp vụ đảo chiều</h2>
+  <p class="lead">Luật cốt lõi: mọi nghiệp vụ đảo chiều phải biết nó đang đảo <b>giao dịch nào, số lượng nào, giá trị nào, thuộc phiên bản chính sách nào</b>.</p>
+  <div class="panel">
+    <div class="ctl">
+      <label>Phương pháp tính giá <select id="method"><option value="fifo">FIFO</option><option value="avg">Bình quân gia quyền tháng (mặc định)</option></select></label>
+      <label>Bán BH-108 <input type="number" id="sold" value="30" min="1" max="150"></label>
+      <label>Khách trả NTH-012 <input type="number" id="ret" value="5" min="0"></label>
+      <label><input type="checkbox" id="broken"> hàng trả hỏng → cách ly</label>
+      <span class="spacer"></span>
+      <span id="runstate" class="tag warn">lần tính #4 · draft</span>
+      <button class="btn sm pri" id="settle">Chốt (settle) → Kernel ghi sổ</button>
+    </div>
+    <div class="card">
+      <div class="legend"><span><i style="background:var(--ok)"></i>còn trong lớp</span><span><i style="background:var(--k)"></i>đã phân bổ cho bán</span><span><i style="background:var(--warn)"></i>hoàn do trả hàng</span></div>
+      <div class="layers" id="layers"></div>
+      <div class="vs" style="margin-top:12px">
+        <div class="panel"><div class="muted">Đúng — hoàn theo <b>phân bổ gốc</b> của BH-108</div><div class="big" id="rightv">500.000 đ</div><div id="righttxt" class="muted"></div><div style="margin-top:6px"><span class="tag k">Nợ TK kho / Có TK giá vốn</span> <span class="tag ok">reverses_allocation_id = AL-1</span></div></div>
+        <div class="panel" style="border-color:var(--bad)"><div class="muted">Sai — lấy <b>giá nhập gần nhất</b> 120.000</div><div class="big" id="wrongv" style="color:var(--bad)">600.000 đ</div><div id="wrongtxt" class="muted"></div><div style="margin-top:6px"><span class="tag bad">lệch lãi gộp</span> <span id="diff" class="tag bad"></span></div></div>
+      </div>
+      <div id="brokenmsg"></div>
+      <div class="tbl" style="margin-top:12px"><table id="alloc"><tr><th>Phân bổ</th><th>Dòng</th><th>Lớp</th><th class="num">SL</th><th class="num">Đơn giá</th><th class="num">Giá trị</th><th>Đảo của</th><th>Bút toán (Kernel)</th></tr></table></div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:12px">Engine không ghi sổ: bảng trên là <code>cost_allocations</code> (chỉ thêm, <code>superseded_by</code> khi tính lại). Khi <b>settle</b>, <code>CostingResult</code> (dòng, số lượng, giá trị, lý do, băm — <b>không có tài khoản</b>) đi qua <code>eventStore</code>; Kernel tra tài khoản theo lý do → nhóm hạch toán tại ngày và điền <code>journal_entry_id</code> ngược về phân bổ.</div>
+</section>
+
+<!-- ============ TÌNH HUỐNG ============ -->
+<section id="tinh-huong">
+  <h2>Chín tình huống vàng</h2>
+  <p class="lead">Mỗi thẻ: luồng → <span class="eng" style="background:var(--ok-bg);color:var(--ok);border-radius:6px;padding:1px 6px;font-size:12px">Engine</span> làm gì → <span style="background:var(--k-bg);color:var(--k);border-radius:6px;padding:1px 6px;font-size:12px">Kernel</span> ghi gì (tài khoản theo lý do, ví dụ TT99) → mã kiểm. Số liệu chung: lớp L1 PN-021 100 × 100.000 (lô A, hạn 31/12), lớp L2 PN-033 50 × 120.000 (lô B, hạn 30/11); bán BH-108 30 cái.</p>
+  <div class="cases" id="cases"></div>
+</section>
+
+<!-- ============ KHOÁ KỲ ============ -->
+<section id="khoa-ky">
+  <h2>Sẵn sàng khoá kỳ — phần giá vốn (Cost Settlement trước Period Closing)</h2>
+  <p class="lead">Kết chuyển chỉ ổn khi giá vốn của kỳ đã chốt. Không bằng lời dặn, mà bằng cổng có lý do.</p>
+  <div class="panel">
+    <div class="ctl">
+      <label>Kỳ <select><option>11/2026 · Đơn vị hạch toán HN</option></select></label>
+      <span class="spacer"></span>
+      <span id="rstate" class="tag warn">lần tính #4 · draft · 12 dòng chưa phân bổ</span>
+      <button class="btn sm" id="rsettle">Chốt lần tính #4</button>
+      <button class="btn sm pri" id="close" disabled>Kết chuyển 11/2026</button>
+      <button class="btn sm" id="accept">Chấp nhận có lý do (periods:lock)</button>
+    </div>
+    <div class="card"><ul class="ready" id="ready" style="list-style:none;margin:0;padding:0"></ul><div id="readymsg" style="margin-top:10px"></div></div>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="note warn"><b>DG-CLOSE-1</b> — kết chuyển kỳ chạy khi lần tính chưa <code>settled</code>: chặn, người có <code>periods:lock</code> chấp nhận có ghi lý do (R-CONT-6, R-INV-7).</div>
+    <div class="note"><b>DG-CLOSE-2</b> — giá vốn kỳ đổi sau khi đã kết chuyển (phiếu muộn → lần tính mới): kết chuyển của kỳ đánh dấu lệch, không tự ghi lại; kế toán kết chuyển lại.</div>
+  </div>
+</section>
+
+</main>
+<footer>© 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — bản mẫu PHASE-032 W0. Dữ liệu tự dựng. Không máy chủ, không thư viện ngoài.</footer>
+
+<script>
+// ---------- tiện ích ----------
+const $=s=>document.querySelector(s);
+const fmt=n=>Math.round(n).toLocaleString('vi-VN')+' đ';
+const dd=s=>new Date(s+'T00:00:00');
+const days=(a,b)=>Math.round((dd(a)-dd(b))/86400000);
+// chủ đề
+$('#theme').onclick=()=>{const r=document.documentElement;const cur=r.getAttribute('data-theme');r.setAttribute('data-theme',cur==='dark'?'light':'dark');};
+// tabs
+function show(){const h=location.hash||'#kien-truc';document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on','#'+s.id===h));document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-selected',a.getAttribute('href')===h));}
+addEventListener('hashchange',show);show();
+
+// ---------- CHỌN LÔ ----------
+const LOTS=[
+  {id:'A',lotNo:'A',receipt:'2026-11-01',expiry:'2026-12-31',qty:70,status:'available',layer:'L1 · 100.000'},
+  {id:'B',lotNo:'B',receipt:'2026-11-05',expiry:'2026-11-30',qty:50,status:'available',layer:'L2 · 120.000'},
+  {id:'C',lotNo:'C',receipt:'2026-11-08',expiry:'2026-12-15',qty:40,status:'available',layer:'L3 · 118.000'},
+];
+function pick(){
+  const rule=$('#rule').value, need=+$('#qty').value||0, at=$('#at').value||'2026-11-10', shelf=+$('#shelf').value||0, mode=$('#mode').value;
+  const lots=LOTS.map(l=>({...l,status:(l.id==='B'&&$('#qB').checked)?'quarantine':'available'}));
+  const hasExp=lots.some(l=>l.expiry); const eff=rule==='auto'?(hasExp?'fefo':'fifo'):rule;
+  const cand=lots.map(l=>{let excl=null;
+    if(l.status!=='available') excl='cách ly / hold';
+    else if(days(l.expiry,at)<0) excl='hết hạn ('+l.expiry+') — IN-INV-013';
+    else if(shelf&&days(l.expiry,at)<shelf) excl='hạn còn '+days(l.expiry,at)+' ngày < '+shelf+' (khách yêu cầu)';
+    return {...l,excl};});
+  const order=cand.filter(c=>!c.excl).sort((a,b)=>eff==='fefo'?(a.expiry.localeCompare(b.expiry)||a.receipt.localeCompare(b.receipt)):(a.receipt.localeCompare(b.receipt)||a.id.localeCompare(b.id)));
+  let left=need; const picks=[];
+  for(const l of order){if(left<=0)break;const t=Math.min(l.qty,left);picks.push({...l,take:t});left-=t;}
+  // vẽ lô
+  $('#lots').innerHTML=cand.map(l=>{const p=picks.find(x=>x.id===l.id);const near=days(l.expiry,at)<=30&&days(l.expiry,at)>=0;
+    return `<div class="lot ${p?'pick':''} ${l.excl?'excl':''}">${p?`<span class="q">lấy ${p.take}</span>`:''}<b>Lô ${l.lotNo}</b><small>nhập ${l.receipt}</small><small>hạn <span style="color:${days(l.expiry,at)<0?'var(--bad)':near?'var(--warn)':'inherit'}">${l.expiry}</span> · còn ${l.qty}</small><small class="muted">lớp ${l.layer}</small>${l.excl?`<small style="color:var(--warn)">loại: ${l.excl}</small>`:''}</div>`;}).join('');
+  const rows=picks.map((p,i)=>`<tr><td>${i+1}</td><td><b>${p.lotNo}</b></td><td>${p.expiry}</td><td>${p.receipt}</td><td class="num">${p.qty}</td><td class="num"><b>${p.take}</b></td><td class="muted">${eff==='fefo'?'hết hạn sớm hơn':'nhập trước'}</td></tr>`).join('');
+  $('#picks').innerHTML='<tr><th>Thứ tự</th><th>Lô</th><th>Hạn dùng</th><th>Ngày nhập</th><th class="num">Số dư</th><th class="num">Lấy</th><th>Ghi chú</th></tr>'+rows;
+  let msg=`<div class="note ${left>0?'warn':'ok'}">Quy tắc hiệu lực: <b>${eff.toUpperCase()}</b> (chính sách <code>core.inventory.lot_picking@1</code> v2 · chế độ <b>${mode==='suggest'?'gợi ý':'bắt buộc'}</b>) — ưu tiên <b>${picks[0]?'lô '+picks[0].lotNo:'—'}</b>. ${left>0?`<b>Thiếu ${left}</b> — không chặn ở đây; tồn âm tạm sẽ lộ ở <code>CT-INV-001</code> khi chốt.`:'Đủ số lượng.'} <span class="muted">Chọn lô khác gợi ý: ${mode==='suggest'?'được, ghi lý do':'giữ chờ duyệt (IN-INV-011)'}. <b>Giá vốn không đổi theo lô</b> (trừ phương pháp đích danh).</span></div>`;
+  $('#pickmsg').innerHTML=msg;
+}
+['#rule','#qty','#at','#shelf','#qB','#mode'].forEach(s=>$(s).addEventListener('input',pick));pick();
+
+// ---------- LỚP GIÁ VỐN ----------
+const LAYERS=[{id:'L1',doc:'PN-021',lot:'A',qty:100,unit:100000},{id:'L2',doc:'PN-033',lot:'B',qty:50,unit:120000}];
+let settled=false;
+function cost(){
+  const m=$('#method').value, sold=Math.min(+$('#sold').value||0,150), ret=Math.min(+$('#ret').value||0,sold);
+  const allocs=[]; let left=sold;
+  if(m==='fifo'){for(const L of LAYERS){if(left<=0)break;const t=Math.min(L.qty,left);allocs.push({id:'AL-'+(allocs.length+1),line:'BH-108 · dòng 1',layer:L,qty:t,unit:L.unit,value:t*L.unit});left-=t;}}
+  else{const tv=LAYERS.reduce((s,L)=>s+L.qty*L.unit,0),tq=LAYERS.reduce((s,L)=>s+L.qty,0);const u=tv/tq;allocs.push({id:'AL-1',line:'BH-108 · dòng 1',layer:{id:'P-2026-11',doc:'bể tháng 11 (PN-021 + PN-033)',unit:u},qty:sold,unit:u,value:sold*u});}
+  // hoàn theo tỷ lệ của từng phân bổ gốc
+  const total=allocs.reduce((s,a)=>s+a.value,0);
+  let rl=ret; const revs=[];
+  for(const a of allocs){if(rl<=0)break;const t=Math.min(a.qty,rl);revs.push({id:a.id+'R',line:'NTH-012 · dòng 1',layer:a.layer,qty:-t,unit:a.unit,value:-t*a.unit,rev:a.id});rl-=t;}
+  const right=-revs.reduce((s,r)=>s+r.value,0), wrong=ret*120000;
+  $('#rightv').textContent=fmt(right);$('#righttxt').textContent=ret?`${ret} cái × ${revs.map(r=>fmt(r.unit)).join(' / ')} theo ${revs.map(r=>r.rev).join(', ')} (bán ${sold} cái, giá vốn ${fmt(total)})`:'chưa trả';
+  $('#wrongv').textContent=fmt(wrong);$('#wrongtxt').textContent=ret?`${ret} × 120.000 (giá nhập gần nhất) — không liên quan lần bán gốc`:'—';
+  $('#diff').textContent='lệch '+fmt(wrong-right);
+  // thanh lớp
+  $('#layers').innerHTML=(m==='fifo'?LAYERS:[{id:'P-2026-11',doc:'bể bình quân 11/2026',lot:'A+B',qty:150,unit:allocs[0].unit}]).map(L=>{
+    const used=allocs.filter(a=>a.layer.id===L.id).reduce((s,a)=>s+a.qty,0);const back=revs.filter(r=>r.layer.id===L.id).reduce((s,r)=>s-r.qty,0);
+    const pu=(used-back)/L.qty*100, pb=back/L.qty*100;
+    return `<div class="lyr"><div><b>${L.id}</b> <span class="muted">${L.doc}</span><br><small class="muted">lô ${L.lot} · ${L.qty} × ${fmt(L.unit)}</small></div><div class="bar"><span style="width:100%"></span><i style="left:0;width:${pu}%"></i><em style="left:${pu}%;width:${pb}%"></em></div><div class="num">còn ${L.qty-used+back} / ${L.qty}<br><small class="muted">đã phân bổ ${used-back}${back?`, hoàn ${back}`:''}</small></div></div>`;}).join('');
+  const rows=[...allocs,...revs].map(a=>`<tr><td class="k">${a.id}</td><td>${a.line}</td><td>${a.layer.id}</td><td class="num">${a.qty}</td><td class="num">${fmt(a.unit)}</td><td class="num">${fmt(a.value)}</td><td>${a.rev?`<span class="tag warn">đảo ${a.rev}</span>`:'—'}</td><td>${settled?`<span class="tag k">${a.qty>0?'Nợ 632 / Có 156':'Nợ 156 / Có 632'} · BT26-…</span>`:'<span class="tag none">chưa — chờ settle</span>'}</td></tr>`).join('');
+  $('#alloc').innerHTML='<tr><th>Phân bổ</th><th>Dòng</th><th>Lớp</th><th class="num">SL</th><th class="num">Đơn giá</th><th class="num">Giá trị</th><th>Đảo của</th><th>Bút toán (Kernel)</th></tr>'+rows;
+  $('#brokenmsg').innerHTML=$('#broken').checked&&ret?`<div class="note warn" style="margin-top:10px">Hàng trả hỏng: vẫn hoàn <b>${fmt(right)}</b> vào kho (hàng về), lô → <b>quarantine</b> (action <code>core.inventory.lot.status</code>, lý do "hàng trả kiểm tra"); <b>không</b> nhập thẳng vào tồn bán được; xử lý tiếp bằng chứng từ giảm giá trị / huỷ theo lý do (G4). Không hoàn thiếu để "bù".</div>`:'';
+  $('#runstate').textContent=settled?'lần tính #4 · settled':'lần tính #4 · draft';$('#runstate').className='tag '+(settled?'ok':'warn');
+}
+['#method','#sold','#ret','#broken'].forEach(s=>$(s).addEventListener('input',()=>{settled=false;cost();}));
+$('#settle').onclick=()=>{settled=true;cost();};cost();
+
+// ---------- TÌNH HUỐNG ----------
+const CASES=[
+ {id:'G1',t:'Khách trả hàng (5 / 30)',rule:'Tìm đúng đơn bán và lần phân bổ gốc; hoàn đúng giá vốn đó, không lấy giá hiện tại.',steps:[
+  'Phiếu <code>sale_return</code> NTH-012, <code>originalLineRef</code> = BH-108 dòng 1, lô A, 5 cái',
+  '<span class="eng">Engine</span> phân bổ đảo AL-1R: 5 × 100.000 = <b>500.000</b>, <code>reverses_allocation_id = AL-1</code>, cùng <code>policy_version</code>',
+  '<span class="post">Kernel</span> Nợ 156 / Có 632 500.000 (lý do NTH1); doanh thu Nợ 5213 / Có 131 đã ghi lúc nhận phiếu',
+  'Hỏng → lô <code>quarantine</code>, không về tồn bán được; xử lý tiếp bằng chứng từ'],
+  checks:'CT-COST-010 (không gốc) · CT-COST-011 (vượt 30) · T032-G1',bad:'Sai: 5 × 120.000 = 600.000 → lãi gộp nghiệp vụ trả lệch 100.000. Hôm nay Kernel hoàn theo bình quân tháng trả — cũng sai kiểu này.'},
+ {id:'G2',t:'Trả một phần, nhiều lần',rule:'Hoàn đúng số lượng / giá trị phần trả; quản lý phần còn được phép trả.',steps:[
+  'Lần 1 trả 5 → còn được trả 25; lần 2 trả 20 → còn 5',
+  'Lần 3 trả 10 → <span class="eng">Engine</span> <code>CT-COST-011</code> error, cửa nạp warn (strict → hold)',
+  'Đơn bán gốc hiện <b>Đã trả 25 / 30 — còn 5</b>, liệt kê từng phân bổ đảo'],checks:'T032-G2'},
+ {id:'G3',t:'Trả hàng cho nhà cung cấp',rule:'Liên kết lô nhập gốc; giá trị trả, giảm giá mua và chênh lệch có căn cứ.',steps:[
+  'XTR-004 trả 20 lô B, <code>originalLineRef</code> = PN-033; NCC trả 110.000 / cái = 2.200.000',
+  '<span class="eng">Engine</span> xuất đúng lớp L2: 20 × 120.000 = 2.400.000 → L2 còn 30',
+  '<span class="post">Kernel</span> Nợ 331 2.200.000, Nợ TK chênh lệch theo lý do XTR1 200.000 / Có 156 2.400.000',
+  'Không có gốc → lớp cũ nhất + <code>CT-COST-010</code> hint; bình quân bản thuế: quy tắc "theo tồn đầu" là tham số Rule Contract'],checks:'CT-COST-003 · T032-G3'},
+ {id:'G4',t:'Huỷ do hết hạn',rule:'Biết đúng lô bị huỷ, trừ số lượng, giá trị xuất và tài khoản theo nguyên nhân.',steps:[
+  '01/12 lô B hết hạn → <code>status expired</code> (đồng hồ ngày), <code>CT-INV-002</code> nếu không xử lý',
+  'XHH-002 <code>stock_adjustment</code> giảm, lý do huỷ hết hạn, lô B 30 cái',
+  '<span class="eng">Engine</span> trừ lô B; giá trị theo phương pháp: FIFO lấy lớp cũ nhất (30 × 100.000); đích danh lấy đúng L2 (30 × 120.000)',
+  '<span class="post">Kernel</span> Nợ 1381 / 811 / 641… theo lý do / Có 156; lô → <code>disposed</code>'],checks:'IN-INV-013 không bật (nghiệp vụ huỷ) · T032-G4',bad:'FIFO tính giá không nhất thiết trừ đúng tiền lô huỷ — muốn vậy chọn đích danh. Màn huỷ nói rõ.'},
+ {id:'G5',t:'Kiểm kê thiếu / thừa',rule:'Chứng từ kiểm kê, giá trị chênh lệch, trạng thái xử lý.',steps:[
+  'KK-2026-11-HN01 (<code>stock_count</code>): <code>count.snapshot</code> chụp số dư (kho, item, lô); kho khoá xuất qua hook',
+  'Đếm: lô A 68 / sổ 70 → thiếu 2; item khác thừa 3 → dòng <code>stock_adjustment</code> theo lý do XKK / NKK',
+  '<span class="eng">Engine</span> thiếu: phân bổ theo phương pháp (2 × 100.000); thừa: lớp <code>adjustment</code> giá theo chính sách',
+  '<span class="post">Kernel</span> Nợ 1381 / Có 156 · Nợ 156 / Có 3381; trạng thái xử lý: chờ duyệt → đã duyệt → đã xử lý (chứng từ sau trỏ 1381 / 3381)'],checks:'CT-INV-004 (Σ lô = sổ kho) · T032-G5'},
+ {id:'G6',t:'Chuyển kho nội bộ (cùng đơn vị kế toán)',rule:'Giữ nguyên giá trị ghi sổ của hàng chuyển.',steps:[
+  'Chuyển 40 lô A HN01 → HN02, hàng đi 2 ngày',
+  '<span class="eng">Engine</span> <code>transfer_out</code> / <code>transfer_in</code> cùng <code>lot_id</code>; phân bổ <b>chuyển lớp</b>, đơn giá không đổi, không lớp mới — <span class="ops">vận hành</span>',
+  '<span class="post">Kernel</span> Nợ 1579 / Có 156 4.000.000 → Nợ 156 / Có 1579 4.000.000 (lý do XCKho)',
+  'Cuối kỳ <code>CT-INV-003</code>: dư 1579 = Σ phiếu chưa nhận (đi đường qua ngày khoá là hợp lệ); quá 7 ngày → <code>CT-INV-005</code>'],checks:'T032-G6 · R-CONT-8'},
+ {id:'G7',t:'Chuyển giữa hai pháp nhân',rule:'Bản chất giao dịch, chính sách bán / mua nội bộ, đối chiếu công nợ.',steps:[
+  'HN (A) → SG (B) 20 lô A, giá nội bộ 105.000 theo <code>core.intercompany.pricing@1</code>',
+  'Lập <b>cặp chứng từ</b>: A bán nội bộ (XCN) · B mua từ NCC nội bộ',
+  '<span class="eng">Engine A</span> xuất 20 (FIFO 20 × 100.000); <span class="eng">Engine B</span> lô A′ mới, lớp receipt 20 × 105.000',
+  '<span class="post">Kernel</span> A: Nợ 632x / Có 156; Nợ 1368 / Có 5111x 2.100.000 · B: Nợ 156 / Có 3368 2.100.000; hợp nhất loại trừ sau'],checks:'cặp chứng từ trỏ nhau · 1368 = 3368 · T032-G7'},
+ {id:'G8',t:'Đổi mã SKU',rule:'Giữ nguyên item_id, lô, lớp giá, số lượng, giá trị và chứng từ lịch sử.',steps:[
+  '15/11 đổi <code>010-025-001-XD</code> → <code>010-025-001</code>, hiệu lực 15/11 → <code>item_codes</code> thêm phiên bản',
+  '<span class="eng">Engine</span>: lô A, B; lớp L1, L2; phân bổ AL-*; số dư — <b>không đổi</b> (khoá theo <code>item_id</code>)',
+  'Lần tính 11/2026 ra đúng số như trước; chứng từ cũ hiện mã cũ (ảnh chụp), tìm mã cũ vẫn ra hành trình'],checks:'hash CostingResult không đổi · DG-ITEM-3 · T032-G8 (Golden chặn phát hành)'},
+ {id:'G9',t:'Thay đổi phương pháp tính giá',rule:'Phiên bản chính sách, ngày hiệu lực, phê duyệt, kỳ chuyển đổi; không tự viết lại lịch sử.',steps:[
+  '<code>core.costing.method@1</code> bản 2 = FIFO, hiệu lực 01/01/2027, kế toán trưởng duyệt, lý do; bản 1 đóng 31/12/2026',
+  'Kỳ 12/2026 chốt theo bình quân; tồn cuối → lớp <code>opening</code> 01/01/2027 (một lớp / item / nhóm)',
+  'Khách trả 2027 của đơn bán 2026 → hoàn theo phân bổ gốc (bể 12/2026, bản 1), <b>không</b> theo FIFO',
+  'Kỳ ≤ 12/2026 không tính lại; đổi giữa năm cần lý do + cờ thuyết minh BCTC'],checks:'resolvePolicy 31/12 → v1, 01/01 → v2 · CT-COST-012 · T032-G9 (Golden)'},
+];
+$('#cases').innerHTML=CASES.map(c=>`<div class="case"><div style="display:flex;gap:8px;align-items:center"><span class="tag info">${c.id}</span><h4>${c.t}</h4></div><p class="muted" style="margin:4px 0 0;font-size:12.5px"><b>Nguyên tắc:</b> ${c.rule}</p><ol>${c.steps.map(s=>`<li>${s}</li>`).join('')}</ol>${c.bad?`<div class="note bad" style="margin:8px 0 0;padding:6px 10px">${c.bad}</div>`:''}<div style="margin-top:8px"><span class="tag none">kiểm: ${c.checks}</span></div></div>`).join('');
+
+// ---------- KHOÁ KỲ ----------
+let rs='draft', accepted=false, closed=false, changedAfter=false;
+function ready(){
+  const items=[
+    {t:'Lần tính giá vốn 11/2026 ở trạng thái settled',ok:rs==='settled',bad:!accepted&&rs!=='settled',txt:rs==='settled'?'lần tính #4 settled 09/11 23:40 — phương pháp bình quân tháng v1':'lần tính #4 draft — 12 dòng xuất chưa phân bổ (CT-COST-001)',fix:'Tính giá vốn › lần tính #4'},
+    {t:'Σ phân bổ hiện hành = giá vốn trên sổ (CT-COST-003)',ok:rs==='settled',txt:rs==='settled'?'khớp 1.284 dòng':'chờ settle'},
+    {t:'Tồn theo lớp = số dư TK hàng tồn kho (CT-COST-004)',ok:true,txt:'HN: 1.248.350.000 = 1.248.350.000'},
+    {t:'Không lô quá hạn còn available (CT-INV-002)',ok:false,warn:true,txt:'1 lô quá hạn chưa cách ly / huỷ — cảnh báo, không chặn',fix:'Kho › Lô & hạn dùng'},
+    {t:'Hàng đang chuyển = Σ phiếu chưa nhận (CT-INV-003)',ok:true,txt:'dư 1579 = 12.400.000 = 2 phiếu đi 29–30/11 chưa nhận — hợp lệ, không đòi về 0'},
+    {t:'Kết chuyển chưa bị lệch sau khi giá vốn đổi (DG-CLOSE-2)',ok:!changedAfter,warn:changedAfter,txt:changedAfter?'giá vốn đổi sau kết chuyển (lần tính #5) — kết chuyển lại':'—'},
+  ];
+  $('#ready').innerHTML=items.map(i=>`<li><span class="dot ${i.ok?'d-ok':i.warn?'d-warn':'d-bad'}"></span><div><b>${i.t}</b><br><span class="muted">${i.txt}</span>${!i.ok&&i.fix?` · <a href="#">${i.fix} →</a>`:''}</div></li>`).join('');
+  const blocked=rs!=='settled'&&!accepted;
+  $('#close').disabled=blocked||closed;
+  $('#rstate').textContent=rs==='settled'?'lần tính #4 · settled':'lần tính #4 · draft · 12 dòng chưa phân bổ';$('#rstate').className='tag '+(rs==='settled'?'ok':'warn');
+  $('#readymsg').innerHTML=closed?`<div class="note ok">Đã kết chuyển 11/2026 (chứng từ closing:HN:2026-11) ${accepted&&rs!=='settled'?'— <b>có chấp nhận lý do</b> của người có periods:lock, ghi nhật ký':''}. ${changedAfter?'<b>DG-CLOSE-2</b>: giá vốn đổi sau kết chuyển.':''}</div>`:blocked?`<div class="note bad"><b>DG-CLOSE-1</b> — Kết chuyển bị chặn: giá vốn 11/2026 chưa chốt (lần tính #4 draft, 12 dòng chưa phân bổ). Chốt lần tính, hoặc người có <code>periods:lock</code> chấp nhận có lý do.</div>`:`<div class="note ok">Cổng mở: giá vốn đã chốt${accepted?' (chấp nhận có lý do)':''}. Có thể kết chuyển.</div>`;
+}
+$('#rsettle').onclick=()=>{rs='settled';if(closed)changedAfter=true;ready();};
+$('#accept').onclick=()=>{if(rs!=='settled'){const r=prompt('Lý do chấp nhận kết chuyển khi giá vốn chưa chốt (≥ 10 ký tự):','Kỳ thử nghiệm, giá vốn nhập Excel tuần sau');if(r&&r.length>=10){accepted=true;}}ready();};
+$('#close').onclick=()=>{closed=true;ready();};
+ready();
+</script>
+</body>
+</html>

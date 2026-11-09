@@ -12,6 +12,15 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### PHASE-032 W0 — Inventory Engine: kho · lô · giá vốn liên tục (ADR-0033 chấp nhận) <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — W0 tài liệu -->
+
+- **Thêm:** [PHASE-032](docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/README.md) (master plan, kiến trúc tổng thể, mã hàng ≠ mã tài khoản, FIFO / FEFO, chín tình huống vàng, checklist, kế hoạch kiểm thử / PR, bản mẫu `inventory-engine.html`); [ADR-0033](docs/adr/ADR-0033-inventory-engine-gia-von-kho.md) **chấp nhận** 2026-11-09, làm theo chín bước thắng nhỏ B1..B9; quyết định D032-11 (chặn cứng hẹp), D032-12 (R-DIAG-10..16, mở rộng không thêm hợp đồng), D032-13 (HT08 thành Bàn làm việc kế toán); luật [R-INV](docs/rules/RULE-INVENTORY.md) và R-ITEM-10 (mã hàng ≠ mã tài khoản); hợp đồng [`bizcity_inventory@1`](docs/contracts/BIZCITY-INVENTORY-v1.md) 0.1.0-draft; hướng dẫn tính giá vốn và nghiệp vụ 11 thêm mục *Kiến trúc tổng thể*.
+- **Đổi:** CANON §3 thêm dòng R-INV; chỉ mục ADR, phases README.
+- **Sửa:** không.
+- **Thay đổi định khoản:** không (tài liệu thuần; chưa có mã).
+- **Nâng cấp cần làm:** không.
+- **Bảo mật:** không.
+
 ### Chia nhỏ để chốt — lõi chặt chẽ, cách dùng dễ (CANON v1.6, R-FLOW-9) <!-- [2026-11-09 10:30 PM Johnny Chu - Chu Hoàng Anh] CANON — §0.10, LEAN-8, R-FLOW-9 -->
 
 - **Thêm:** CANON §0.10 và LEAN-8 *Small Wins*; luật [R-FLOW-9](docs/rules/RULE-FLOW.md): master plan mỗi phase có bảng bước thắng nhỏ, mỗi bước một PR và người dùng dùng được ngay; câu hỏi mở dùng mặc định tạm ghi rõ trên màn.
