@@ -119,3 +119,24 @@ describe('Đổi nhóm hạch toán hàng loạt', () => {
     expect((await call(ctx, 'POST', '/api/v1/posting-flow/products/posting-group', { targetGroup: 'KHONGCO', search: 'x' })).status).toBe(400);
   });
 });
+
+// [2026-11-11 08:00 AM Nguyễn Văn Thủy] PHASE-026 — lịch sử sửa cấu hình hạch toán (đóng góp)
+describe('Lịch sử thay đổi cấu hình', () => {
+  it('sửa lý do hai lần: lần sau hiện đúng ô đổi, trước → sau; lọc theo loại', async () => {
+    const reasons = (await call<{ data: { code: string; name: string; kind: string; counterAccount: string | null; revenueAccount: string | null; expenseAccount: string | null; flags: Record<string, unknown> }[] }>(ctx, 'GET', '/api/v1/posting/reasons')).body.data;
+    const r = reasons.find((x) => x.kind === 'out' && x.flags?.default === 'sale')!;
+    const body = (rev: string) => ({ name: r.name, kind: r.kind, counterAccount: r.counterAccount ?? '', revenueAccount: rev, expenseAccount: r.expenseAccount ?? '', flags: r.flags, isActive: true });
+    expect((await call(ctx, 'PUT', `/api/v1/posting/reasons/${r.code}`, body('5111'))).status).toBe(200);
+    expect((await call(ctx, 'PUT', `/api/v1/posting/reasons/${r.code}`, body(''))).status).toBe(200);
+    const h = (await call<{ data: { kind: string; object: string; action: string; changes: { field: string; before: string | null; after: string | null }[] }[] }>(ctx, 'GET', '/api/v1/posting-flow/history?kind=reason')).body.data;
+    expect(h.every((x) => x.kind === 'reason')).toBe(true);
+    const latest = h.find((x) => x.object === r.code)!;
+    expect(latest.changes).toEqual([expect.objectContaining({ field: 'revenueAccount', before: '5111', after: null })]);
+  });
+
+  it('gán lý do cho màn và đổi nhóm hàng loạt cũng có trong lịch sử', async () => {
+    const h = (await call<{ data: { kind: string; changes: { after: string | null }[]; note?: string }[] }>(ctx, 'GET', '/api/v1/posting-flow/history')).body.data;
+    expect(h.some((x) => x.kind === 'screen' && x.changes[0]?.after?.startsWith('★'))).toBe(true);
+    expect(h.some((x) => x.kind === 'bulk' && /3 mặt hàng/.test(x.note ?? ''))).toBe(true);
+  });
+});

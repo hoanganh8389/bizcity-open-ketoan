@@ -50,7 +50,16 @@ Thẻ thứ hai. Dùng khi cả một nhóm hàng phải đổi tài khoản (v�
 
 Phải có ít nhất một điều kiện lọc (không đổi toàn bộ danh mục một lần).
 
-## 5. Kiểm thử
+## 5. Lịch sử thay đổi
+
+Thẻ thứ ba. Mỗi lần lưu cấu hình một dòng: **thời gian, người sửa, mục** (lý do, nhóm hạch toán, ngầm định, loại thuế, hình thức, lý do theo màn, đổi nhóm hàng loạt), **đối tượng** và từng ô đổi **trước → sau** (đỏ gạch = giá trị cũ, xanh = giá trị mới).
+
+- Lọc theo loại ở ô **Loại**.
+- "Trước" lấy từ lần lưu liền trước của cùng mục; lần lưu đầu tiên trong nhật ký thì "trước" để trống.
+- Lỡ tay: mở lại ô ở thẻ Dây chuyền, đặt lại giá trị "trước". Chứng từ đã định khoản trong lúc sai thì định khoản lại ở màn chứng từ.
+- Đổi nhóm hàng loạt chỉ ghi lần đổi thật (không ghi lần Xem trước), kèm số mặt hàng đã đổi.
+
+## 6. Kiểm thử
 
 | # | Làm | Kết quả đúng |
 |---|---|---|

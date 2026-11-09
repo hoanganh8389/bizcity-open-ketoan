@@ -286,3 +286,76 @@ export async function bulkPostingGroup(trx: Db, tenantId: string, actor: string,
     after: { classCode: b.classCode ?? null, fromGroup: b.fromGroup ?? null, search: b.search ?? null, changed: res.changed, byCurrent: res.byCurrent } });
   return res;
 }
+
+// ------------------------------------------------------------------------------------------------ lịch sử thay đổi cấu hình hạch toán
+
+/** Thao tác ghi cấu hình hạch toán → đối tượng hiện trên lịch sử. */
+const HISTORY_ACTIONS: Record<string, { kind: string; label: string; fields?: Record<string, string> }> = {
+  'core.posting-reason.upsert': { kind: 'reason', label: 'Lý do', fields: { name: 'Tên', counterAccount: 'TK đối ứng', revenueAccount: 'TK doanh thu (đè)', expenseAccount: 'TK giá vốn / chi phí (đè)', isActive: 'Đang dùng' } },
+  'core.posting-reason.delete': { kind: 'reason', label: 'Lý do' },
+  'core.posting-group.upsert': { kind: 'group', label: 'Nhóm hạch toán', fields: { name: 'Tên', inventoryAccount: 'TK kho', cogsAccount: 'TK giá vốn', revenueAccount: 'TK doanh thu', discountAccount: 'TK chiết khấu', salesReturnAccount: 'TK hàng bán trả lại', isDefault: 'Nhóm mặc định' } },
+  'core.posting-defaults.update': { kind: 'defaults', label: 'Tài khoản ngầm định' },
+  'core.tax-code.create': { kind: 'tax', label: 'Loại thuế', fields: { name: 'Tên', rate: 'Thuế suất', accountCode: 'TK thuế', isActive: 'Đang dùng' } },
+  'core.tax-code.update': { kind: 'tax', label: 'Loại thuế', fields: { name: 'Tên', rate: 'Thuế suất', accountCode: 'TK thuế', isActive: 'Đang dùng' } },
+  'core.tax-code.delete': { kind: 'tax', label: 'Loại thuế' },
+  'core.payment-method.upsert': { kind: 'payment', label: 'Hình thức thanh toán', fields: { name: 'Tên', accountCode: 'TK tiền', isActive: 'Đang dùng' } },
+  'core.payment-method.delete': { kind: 'payment', label: 'Hình thức thanh toán' },
+  'core.posting-flow.screen-reasons': { kind: 'screen', label: 'Lý do theo màn' },
+  'core.posting-flow.bulk-posting-group': { kind: 'bulk', label: 'Đổi nhóm hạch toán hàng loạt' },
+};
+
+export interface HistoryChange { field: string; label: string; before: string | null; after: string | null }
+export interface HistoryRow { id: string; at: string; actor: string; kind: string; label: string; object: string; action: 'save' | 'delete' | 'bulk'; changes: HistoryChange[]; note?: string }
+
+const show = (v: unknown): string | null => (v === undefined || v === null || v === '' ? null : typeof v === 'boolean' ? (v ? 'Có' : 'Không') : typeof v === 'object' ? JSON.stringify(v) : String(v));
+
+/**
+ * Lịch sử sửa cấu hình hạch toán, mới nhất trước. Đọc bằng chứng của các thao tác ghi (audit_logs: mỗi lần lưu một dòng kèm dữ liệu
+ * mới). "Trước" của một ô = giá trị ở lần lưu liền trước của cùng đối tượng; lần lưu đầu tiên trong nhật ký thì "trước" để trống.
+ * Lần lưu không đổi ô nào thì bỏ qua.
+ */
+export async function configHistory(trx: Db, tenantId: string, opts: { kind?: string; limit?: number } = {}): Promise<HistoryRow[]> {
+  const actions = Object.keys(HISTORY_ACTIONS).filter((a) => !opts.kind || HISTORY_ACTIONS[a]!.kind === opts.kind);
+  const rows = (await sql<{ id: string; actor: string; action: string; object_id: string | null; after_data: unknown; created_at: string }>`
+    SELECT id::text, actor, action, object_id, after_data, created_at::text FROM audit_logs
+     WHERE tenant_id = ${tenantId} AND action = ANY(${actions}) AND result_ok IS NOT FALSE
+     ORDER BY created_at, id`.execute(trx)).rows;
+  const last = new Map<string, Record<string, unknown>>();
+  const out: HistoryRow[] = [];
+  for (const r of rows) {
+    const def = HISTORY_ACTIONS[r.action]!;
+    const a = (r.after_data ?? {}) as Record<string, unknown>;
+    const snap = ((a.input ?? a.output ?? a) ?? {}) as Record<string, unknown>;
+    const object = r.object_id ?? String(snap.code ?? snap.key ?? '');
+    const key = `${def.kind}:${object}`;
+    const base = { id: r.id, at: r.created_at, actor: r.actor, kind: def.kind, label: def.label, object };
+    if (r.action.endsWith('.delete')) { out.push({ ...base, action: 'delete', changes: [] }); last.delete(key); continue; }
+    if (def.kind === 'bulk') {
+      // Bỏ lần "Xem trước" và lần chạy không đổi mặt hàng nào; số đã đổi nằm ở ghi chú nhật ký của thao tác.
+      if (snap.dryRun) continue;
+      const audits = ((a.notes as { audit?: { action: string; after?: Record<string, unknown> }[] } | undefined)?.audit ?? []);
+      const res = audits.find((x) => x.action === 'catalog.product.posting_group_bulk')?.after;
+      if (!res) continue;
+      const note = [snap.classCode ? `nhóm hàng ${snap.classCode}` : '', snap.fromGroup !== undefined ? `từ nhóm ${snap.fromGroup || 'chưa gán'}` : '',
+        snap.search ? `mã / tên chứa "${snap.search}"` : '', res.changed !== undefined ? `${res.changed} mặt hàng` : ''].filter(Boolean).join(' · ');
+      out.push({ ...base, action: 'bulk', changes: [{ field: 'targetGroup', label: 'Đổi sang nhóm', before: null, after: show(snap.targetGroup) }], note });
+      continue;
+    }
+    const prev = last.get(key);
+    let changes: HistoryChange[];
+    if (def.kind === 'screen') {
+      const list = (snap.reasons as { code: string; isDefault?: boolean }[] | undefined) ?? [];
+      const text = list.map((x) => (x.isDefault ? `★${x.code}` : x.code)).join(', ') || '(bỏ hết)';
+      changes = [{ field: 'reasons', label: 'Lý do', before: prev ? String(prev.__text) : null, after: text }];
+      last.set(key, { __text: text });
+    } else {
+      const fields = def.fields ?? Object.fromEntries(Object.keys(snap).filter((k) => !['code', 'key', 'warnAck'].includes(k)).map((k) => [k, k]));
+      changes = Object.entries(fields).filter(([f]) => f in snap).map(([f, label]) => ({ field: f, label, before: prev ? show(prev[f]) : null, after: show(snap[f]) }))
+        .filter((c) => !prev || c.before !== c.after);
+      last.set(key, { ...(prev ?? {}), ...snap });
+    }
+    if (prev && !changes.length) continue;
+    out.push({ ...base, action: 'save', changes });
+  }
+  return out.reverse().slice(0, opts.limit ?? 300);
+}

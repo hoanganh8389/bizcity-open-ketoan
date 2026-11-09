@@ -478,8 +478,57 @@ function DoiNhomHangLoat() {
   );
 }
 
+// ------------------------------------------------------------------------------------------------ thẻ 3: lịch sử thay đổi
+// [2026-11-11 08:00 AM Nguyễn Văn Thủy] PHASE-026 — lịch sử sửa cấu hình hạch toán (đóng góp)
+interface HistoryRow { id: string; at: string; actor: string; kind: string; label: string; object: string; action: 'save' | 'delete' | 'bulk'; changes: { field: string; label: string; before: string | null; after: string | null }[]; note?: string }
+const HISTORY_KINDS: [string, string][] = [['', 'Tất cả'], ['reason', 'Lý do'], ['group', 'Nhóm hạch toán'], ['defaults', 'Tài khoản ngầm định'], ['tax', 'Loại thuế'], ['payment', 'Hình thức thanh toán'], ['screen', 'Lý do theo màn'], ['bulk', 'Đổi nhóm hàng loạt']];
+
+function LichSu() {
+  const [kind, setKind] = useState('');
+  const q = useQuery({ queryKey: ['posting-flow', 'history', kind], queryFn: () => api.get<HistoryRow[]>(`/api/v1/posting-flow/history${kind ? `?kind=${kind}` : ''}`) });
+  const rows = q.data ?? [];
+  const when = (s: string) => new Date(s).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+  return (
+    <div>
+      <div className="tkht-toolbar" style={{ alignItems: 'center' }}>
+        <label title="Lọc theo loại cấu hình">Loại
+          <select className="select input" value={kind} onChange={(e) => setKind(e.target.value)}>{HISTORY_KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+        </label>
+        <span className="muted" style={{ fontSize: 12 }}>Mỗi lần lưu một dòng; "trước" lấy từ lần lưu liền trước của cùng mục. Lỡ tay thì mở lại ô ở thẻ Dây chuyền, đặt lại giá trị "trước".</span>
+      </div>
+      <ErrorBox error={q.error ? errorText(q.error) : null} />
+      {q.isLoading ? <Loading /> : (
+        <div className="table-wrap"><table className="grid">
+          <thead><tr><th title="Lúc lưu">Thời gian</th><th title="Người lưu">Người sửa</th><th title="Loại cấu hình">Mục</th><th title="Mã lý do, nhóm, loại thuế, màn…">Đối tượng</th><th title="Ô đã đổi: trước → sau">Thay đổi</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td className="mono" style={{ whiteSpace: 'nowrap' }}>{when(r.at)}</td>
+                <td>{r.actor}</td>
+                <td>{r.label}</td>
+                <td className="mono">{r.object || '—'}</td>
+                <td>
+                  {r.action === 'delete' ? <span className="neg">Đã xoá</span> : r.changes.map((c) => (
+                    <div key={c.field} className="tkht-diff">
+                      <span className="muted">{c.label}:</span>{' '}
+                      {r.action === 'bulk' ? null : <><span className="tkht-before">{c.before ?? '—'}</span> → </>}
+                      <span className="tkht-after">{c.after ?? '(bỏ trống)'}</span>
+                    </div>
+                  ))}
+                  {r.note && <div className="muted" style={{ fontSize: 11.5 }}>{r.note}</div>}
+                </td>
+              </tr>
+            ))}
+            {!rows.length && <tr><td colSpan={5} className="muted">Chưa có lần sửa nào.</td></tr>}
+          </tbody>
+        </table></div>
+      )}
+    </div>
+  );
+}
+
 export function ThietKeHachToanPage() {
-  const [tab, setTab] = useState<'day-chuyen' | 'hang-loat'>('day-chuyen');
+  const [tab, setTab] = useState<'day-chuyen' | 'hang-loat' | 'lich-su'>('day-chuyen');
   return (
     <div className="page tkht-page">
       <PageHeader title="Thiết kế hạch toán" code="ACC92" helpKey="thiet-ke-hach-toan"
@@ -487,6 +536,7 @@ export function ThietKeHachToanPage() {
       <div className="tabs" role="tablist" style={{ marginBottom: 8 }}>
         <button role="tab" className={`tab ${tab === 'day-chuyen' ? 'active' : ''}`} onClick={() => setTab('day-chuyen')}>Dây chuyền định khoản</button>
         <button role="tab" className={`tab ${tab === 'hang-loat' ? 'active' : ''}`} onClick={() => setTab('hang-loat')} title="Đổi nhóm hạch toán cho cả nhóm hàng một lần">Đổi nhóm hạch toán hàng loạt</button>
+        <button role="tab" className={`tab ${tab === 'lich-su' ? 'active' : ''}`} onClick={() => setTab('lich-su')} title="Ai sửa ô nào, lúc nào, trước → sau">Lịch sử thay đổi</button>
       </div>
       <div className="tkht-links" title="ACC92 đọc và sửa chính các bảng này; mở bảng khi cần sửa nhiều dòng một lúc">
         Bảng chi tiết:
@@ -496,7 +546,7 @@ export function ThietKeHachToanPage() {
         <Link to="/danh-muc/loai-thue" title="Loại thuế và tài khoản thuế (ACC43)">Loại thuế</Link>
         <Link to="/cau-hinh/hinh-thuc-thanh-toan" title="Hình thức thanh toán và tài khoản tiền (DM05)">Hình thức thanh toán</Link>
       </div>
-      {tab === 'day-chuyen' ? <DayChuyen /> : <DoiNhomHangLoat />}
+      {tab === 'day-chuyen' ? <DayChuyen /> : tab === 'hang-loat' ? <DoiNhomHangLoat /> : <LichSu />}
     </div>
   );
 }

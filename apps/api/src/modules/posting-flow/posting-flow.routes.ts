@@ -6,6 +6,7 @@
  *   PUT  /api/v1/posting-flow/screens/:key/reasons    thay danh sách lý do của màn
  *   GET  /api/v1/posting-flow/flow?screen=&reason=&group=&taxCode=&method=&amount=&cost=&gift=   sơ đồ dây chuyền định khoản
  *   POST /api/v1/posting-flow/products/posting-group  đổi nhóm hạch toán hàng loạt (dryRun = xem trước)
+ *   GET  /api/v1/posting-flow/history?kind=&limit=   lịch sử sửa cấu hình hạch toán, từng ô trước → sau
  */
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -14,7 +15,7 @@ import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok, queryBool } from '../../core/http.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
-import { buildFlow, bulkPostingGroup, listScreens, screenReasons, setScreenReasons } from './posting-flow.service.js';
+import { buildFlow, bulkPostingGroup, configHistory, listScreens, screenReasons, setScreenReasons } from './posting-flow.service.js';
 
 const tags = ['Thiết kế hạch toán'];
 const anyOut = z.any();
@@ -45,6 +46,14 @@ export async function postingFlowRoutes(app: FastifyInstance): Promise<void> {
       }),
     },
     handler: async (req) => ok(await buildFlow(db, authOf(req).tenantId, req.query)),
+  });
+
+  // [2026-11-11 08:00 AM Nguyễn Văn Thủy] PHASE-026 — lịch sử sửa cấu hình hạch toán (đóng góp)
+  r.get('/api/v1/posting-flow/history', {
+    preHandler: read,
+    schema: { tags, summary: 'Lịch sử sửa cấu hình hạch toán (mới nhất trước)',
+      querystring: z.object({ kind: z.enum(['reason', 'group', 'defaults', 'tax', 'payment', 'screen', 'bulk']).optional(), limit: z.coerce.number().int().min(1).max(1000).optional() }) },
+    handler: async (req) => ok(await configHistory(db, authOf(req).tenantId, req.query)),
   });
 
   mountActions(app, postingFlowActions);
