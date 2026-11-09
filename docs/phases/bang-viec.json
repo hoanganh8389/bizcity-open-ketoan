@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 8
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 271
+      "count": 270
     }
   ],
   "items": [
@@ -2950,8 +2950,14 @@
       "title": "RV-R1-06: details.context + details.remedy cho lỗi Kernel (UNBALANCEDENTRY, PERIODLOCKED, POSTINGFAILED, LEDGERAPPENDONLY), withErrorContext, bảng ERRORREMEDY;…",
       "priority": "P1",
       "status": "done",
-      "column": "done",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, review-r1)",
+        "branch": "feat/phase-022-error-context",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-022 · S022-17 — RV-R1-06: details.context + details.remedy cho lỗi Kernel, withErrorContext, …"
+      },
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 29
     },
@@ -5168,8 +5174,14 @@
       "title": "Thư viện dữ liệu core.khoan-muc, vn.loai-thue, core.ly-do-dinh-khoan — chỉ danh mục chuẩn từ db/seeds, không đối tượng / nhân viên / ngân hàng (26 §11)",
       "priority": "P1",
       "status": "done",
-      "column": "done",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, thu-vien-s52)",
+        "branch": "feat/s030-52-thu-vien-danh-muc",
+        "state": "đang làm",
+        "since": "2026-11-09",
+        "dot": "PHASE-030 · S030-52 — Kho thư viện: ba thư viện danh mục chuẩn core.khoan-muc, vn.loai-thue, core.l…"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 61
     },

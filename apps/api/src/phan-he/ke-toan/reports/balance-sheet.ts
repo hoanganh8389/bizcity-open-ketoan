@@ -27,6 +27,7 @@
 import { fromCents, toCents } from '@ketoan/contracts';
 import { sql } from 'kysely';
 import { db, toNumber, type Db } from '../../../db/client.js';
+import { partnerNamesAt } from './ten-doi-tuong.js';
 
 type Kind = 'debit' | 'credit' | 'contra' | 'debitByPartner' | 'creditByPartner';
 interface LineDef {
@@ -276,6 +277,8 @@ export async function termMoves(trx: Db, a: { tenantId: string; date: string; ba
     .where('l.tenant_id', '=', a.tenantId)
     .where('l.as_of', '=', a.date)
     .execute();
+  // Ghi chú của khoản khai thủ công: tên đối tượng hiệu lực tại ngày lập bảng (36 §4, D029-19-4).
+  const namesAt = await partnerNamesAt(a.tenantId, [...new Set(rows.map((r) => (r.partner_id ? String(r.partner_id) : '')).filter(Boolean))], a.date);
   for (const r of rows) {
     const rule = termRuleFor(r.account_code);
     if (!rule) continue;
@@ -287,7 +290,7 @@ export async function termMoves(trx: Db, a: { tenantId: string; date: string; ba
     const pair = side === 'asset' ? rule.asset! : rule.liability!;
     const available = side === 'asset' ? debit : credit;
     const requested = toCents(toNumber(r.amount));
-    const who = r.partner_code ? ` — ${r.partner_code} ${r.partner_name ?? ''}`.trimEnd() : '';
+    const who = r.partner_code ? ` — ${r.partner_code} ${(r.partner_id ? namesAt.get(String(r.partner_id))?.name : undefined) ?? r.partner_name ?? ''}`.trimEnd() : '';
     moves.push({ account: r.account_code, partnerId: r.partner_id ? String(r.partner_id) : null, from: pair[0], to: pair[1], cents: Math.min(requested, available), requested, source: 'manual', note: `${r.account_code}${who}${r.note ? ` (${r.note})` : ''}` });
   }
   for (const [account, v] of a.prepaid ?? []) {
