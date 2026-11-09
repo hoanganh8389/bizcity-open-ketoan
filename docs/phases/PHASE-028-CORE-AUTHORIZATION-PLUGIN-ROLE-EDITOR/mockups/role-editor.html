@@ -1,0 +1,233 @@
+<!doctype html>
+<!-- [2026-11-09 Johnny Chu - Chu Hoàng Anh] PHASE-028 — đưa vào main, đối chiếu mã W1–W5: mockup đích, dữ liệu giả; mã đã làm: ma trận, vai trò, người dùng + Xem như, chi nhánh (30-UI-UX §0) -->
+<!-- [2026-11-05 05:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — bản mẫu tương tác Role Editor (HT12): chọn vai trò, cây nhóm quyền, lưới tick, quản lý vai trò; thêm phạm vi, điều kiện, Xem như / Giải thích, diff trước khi lưu, xác thực lại cho quyền cao -->
+<!-- [2026-11-05 06:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-028 — dựng lại theo bố cục WordPress User Role Editor (4 khu đánh số); dữ liệu = 18 quyền Core + 6 vai trò hệ thống thật của repo (auth.ts) + quyền module mẫu; vai trò hệ thống chỉ đọc (luật ở code), không có "Thêm quyền" từ giao diện (AUTHZ-04) -->
+<!-- © 2026 Johnny Chu (Chu Hoàng Anh) / BizCity — kiến trúc Bizcity Core Framework. GPL-2.0-or-later; nhãn hiệu BizCity theo TRADEMARK.md. -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Role Editor — bản mẫu</title>
+<style>
+:root{--bg:#f0f0f1;--panel:#fff;--ink:#1d2327;--muted:#646970;--line:#c3c4c7;--soft:#f6f7f7;--accent:#c62828;--accent-bg:#fdecec;--dark:#1d2327;--side:#1d2327;--side-ink:#f0f0f1;--ok:#1a7f4b;--warn:#b26a00;--warn-bg:#fff4e0;--info:#1e5bb8;--info-bg:#e3edfb;--mark:#6c3cc6;--op:#8a94a6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121317;--panel:#1b1d22;--ink:#e9ebef;--muted:#9aa1ad;--line:#33363e;--soft:#22252b;--accent:#ef5350;--accent-bg:#3a1d1f;--dark:#0c0d10;--side:#0c0d10;--ok:#4cbb7f;--warn:#e0a03a;--warn-bg:#33270f;--info:#6ea0ec;--info-bg:#18263b;--mark:#a685ec}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.shell{display:grid;grid-template-columns:170px 1fr;min-height:100vh}
+@media (max-width:900px){.shell{grid-template-columns:1fr}.side{display:none}}
+.side{background:var(--side);color:var(--side-ink);padding:10px 0}
+.side a{display:block;padding:7px 14px;color:#c3c4c7;text-decoration:none;font-size:13px}
+.side a.on{background:var(--accent);color:#fff;font-weight:600}
+.side .sub a{padding-left:24px;font-size:12.5px}
+.main{padding:10px 18px;min-width:0}
+h1{font-size:22px;font-weight:400;margin:4px 0 10px}
+.zone{position:relative;border:2px solid transparent;border-radius:3px}
+.zone.z{border-color:var(--mark)}
+.badge{position:absolute;top:-12px;right:-12px;width:28px;height:28px;border-radius:50%;background:var(--mark);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:2}
+.box{background:var(--panel);border:1px solid var(--line);padding:10px}
+.r1{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.r1 b{font-size:14px}
+select,input[type=text],input[type=search],input[type=password],textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid #8c8f94;border-radius:4px;padding:4px 8px}
+.r1 select{min-width:260px}
+.small{color:var(--muted);font-size:12.5px;display:inline-flex;gap:4px;align-items:center}
+.grid{display:grid;grid-template-columns:220px minmax(0,1fr) 190px;gap:14px;margin-top:16px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:200px minmax(0,1fr)}.col4{grid-column:1/-1}}
+@media (max-width:700px){.grid{grid-template-columns:1fr}}
+.tree .row{display:flex;justify-content:space-between;padding:3px 6px;cursor:pointer;border-radius:2px}
+.tree .row:hover{background:var(--soft)}.tree .row.on{background:#dcdcde;font-weight:600}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tree .row.on{background:#2c2f36}}
+.tree .l1{padding-left:14px}.tree .l2{padding-left:26px}
+.tree small{color:var(--muted)}
+.bar3{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:6px 8px;background:var(--panel);border:1px solid var(--line);margin-bottom:6px}
+.caps{background:var(--panel);border:1px solid var(--line);padding:8px 10px;display:grid;gap:2px 18px}
+.cap{display:flex;gap:6px;align-items:flex-start;padding:2px 0;min-width:0}
+.cap span{word-break:break-all}
+.cap.chg span{background:var(--warn-bg)}
+.cap.dis{color:var(--op)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:4px;vertical-align:1px}
+.d-high{background:var(--accent)}.d-sens{background:var(--warn)}.d-new{background:var(--info)}
+.tag{font-size:10.5px;border-radius:3px;padding:0 4px;margin-left:4px}
+.t-new{background:var(--info-bg);color:var(--info)}.t-dep{background:var(--soft);color:var(--op);text-decoration:line-through}.t-inh{color:var(--info)}
+.btn{display:block;width:100%;font:inherit;border:1px solid #2271b1;background:var(--panel);color:#2271b1;border-radius:3px;padding:5px 8px;cursor:pointer;margin-bottom:6px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;padding:7px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:12px;color:var(--muted);margin-top:6px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 0}
+details{background:var(--panel);border:1px solid var(--line);margin-top:14px}
+details summary{padding:8px 10px;cursor:pointer;font-weight:600}
+details .in{padding:0 10px 10px}
+.line{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px}th,td{text-align:left;padding:5px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted)}
+.ok{color:var(--ok);font-weight:600}.no{color:var(--accent);font-weight:600}
+.step{display:grid;grid-template-columns:20px 1fr;gap:6px;padding:4px 0;border-bottom:1px solid var(--line)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+.modal.on{display:flex}.modal .card{background:var(--panel);border-radius:6px;max-width:560px;width:100%;padding:14px;max-height:90vh;overflow:auto}
+.diff div{font:12px ui-monospace,Consolas,monospace}.add{color:var(--ok)}.rem{color:var(--accent)}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--dark);color:#fff;padding:9px 12px;border-radius:6px;display:none}
+.hint{display:flex;gap:8px;align-items:center;background:var(--accent-bg);color:var(--ink);border-left:3px solid var(--accent);padding:6px 10px;margin-bottom:8px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="side">
+    <a>Tổng quan</a><a>Kế toán</a><a>Quỹ</a><a>Kho</a><a>Bán hàng</a><a>Mua hàng</a><a class="on">Hệ thống</a>
+    <div class="sub"><a>HT01 Người dùng</a><a>HT02 Khoá API</a><a>HT10 Trụ cột &amp; mức đạt</a><a style="color:#fff;font-weight:600">HT12 Role Editor</a></div>
+  </nav>
+  <main class="main">
+    <h1>Role Editor <small class="small">HT12 · authz_version <b id="ver">42</b> · bản mẫu, dữ liệu giả</small></h1>
+    <div class="hint" id="hint"></div>
+
+    <div class="zone z"><span class="badge">1</span>
+      <div class="box r1">
+        <b>Chọn vai trò và đổi quyền:</b> <select id="role"></select>
+        <span id="rkind" class="small"></span>
+        <label class="small"><input type="checkbox" id="human" checked> Hiện tên dễ đọc</label>
+        <label class="small"><input type="checkbox" id="showDep"> Hiện quyền đã ngừng</label>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="zone z"><span class="badge">2</span>
+        <div class="box tree" id="tree"></div>
+      </div>
+      <div class="zone z"><span class="badge">3</span>
+        <div class="bar3">
+          <label class="small" title="Chỉ chọn quyền rủi ro thấp đang hiện; quyền rủi ro cao tick từng ô"><input type="checkbox" id="all"> Chọn tất cả</label>
+          <label class="small">Lọc nhanh: <input type="search" id="q" placeholder="nhãn, mã quyền, tgs:HT17…" style="width:180px"></label>
+          <label class="small"><input type="checkbox" id="granted"> Chỉ đã cấp</label>
+          <label class="small">Cột: <select id="cols"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
+        </div>
+        <div class="caps" id="caps"></div>
+        <div class="legend"><span><i class="dot d-high"></i> rủi ro cao — tick riêng, xác thực lại</span><span><i class="dot d-sens"></i> nhạy cảm (che trường)</span><span><i class="dot d-new"></i> mới, chưa duyệt</span><span class="t-inh">↳ có từ vai trò hệ thống</span></div>
+      </div>
+      <div class="zone z col4"><span class="badge">4</span>
+        <div class="box">
+          <button class="btn pri" id="update" disabled>Cập nhật</button>
+          <button class="btn" id="addRole">Thêm vai trò</button>
+          <button class="btn" id="rename">Đổi tên vai trò</button>
+          <button class="btn" id="clone">Nhân bản vai trò</button>
+          <button class="btn" id="disable">Vô hiệu vai trò</button>
+          <button class="btn" disabled title="Quyền chỉ đến từ sổ quyền trong code (module khai permissions[]) — AUTHZ-04">Thêm quyền</button>
+          <p class="note" id="side"></p>
+        </div>
+      </div>
+    </div>
+
+    <details open><summary>Phạm vi &amp; điều kiện khi gán vai trò này</summary><div class="in">
+      <div class="line">Phạm vi: <select><option>Toàn đơn vị</option><option selected>Miền Bắc › Phú Thọ (cả cây con)</option><option>Chi nhánh 15001</option><option>Kho K1</option></select>
+        Mục đích: <label><input type="checkbox" checked> Làm việc</label><label><input type="checkbox"> Duyệt</label><label><input type="checkbox" checked> Báo cáo</label><label><input type="checkbox"> Xuất dữ liệu</label></div>
+      <div class="line">Điều kiện mặc định: sửa / huỷ <select><option>trong ngày (giờ lập)</option><option>3 ngày</option><option>không giới hạn</option></select> · người lập <select><option>của mình</option><option>cùng chi nhánh</option><option>tất cả</option></select> · hạn mức <input type="text" placeholder="—" style="width:110px"> đ</div>
+      <p class="note">Phạm vi và mục đích nằm trên LẦN GÁN (authz_assignments), không trên vai trò: cùng một vai trò gán cho hai người ở hai chi nhánh. Cho chỉ gộp trong phạm vi chứa tài nguyên.</p>
+    </div></details>
+
+    <details><summary>Xem như / Giải thích quyền hiệu lực</summary><div class="in">
+      <div class="line">Người <select id="asUser"></select> Quyền <select id="asPerm"></select> Tài nguyên ở <select id="asLoc"><option value="pt">15001 Phú Thọ</option><option value="yb">16002 Yên Bái</option></select>
+        Mục đích <select id="asPurpose"><option>operate</option><option>report</option></select> Phiếu lập <select id="asAge"><option value="0">hôm nay</option><option value="2">2 ngày trước</option><option value="5">5 ngày trước</option></select>
+        <button class="btn" style="width:auto;display:inline-block;margin:0" id="explainBtn">Giải thích</button></div>
+      <div id="explain" class="note">Kết quả lấy từ cùng hàm authorize của máy chủ (packages/platform/src/core/authz/engine.ts) — không có quyết định chỉ ở giao diện.</div>
+    </div></details>
+
+    <details><summary>Nhật ký phân quyền (chỉ thêm)</summary><div class="in"><table><thead><tr><th>Lúc</th><th>Ai</th><th>Việc</th><th>Thay đổi</th><th>Lý do</th><th>version</th></tr></thead><tbody id="audit"></tbody></table></div></details>
+  </main>
+</div>
+
+<div class="modal" id="modal"><div class="card">
+  <h3 style="margin-top:0">Xem lại trước khi cập nhật</h3>
+  <div class="diff" id="diff"></div>
+  <p><label>Lý do (bắt buộc)<br><textarea id="reason" rows="2" style="width:100%"></textarea></label></p>
+  <p id="stepup" style="display:none"><label>Có quyền <b>rủi ro cao</b> — nhập lại mật khẩu<br><input type="password" id="pw" style="width:100%"></label></p>
+  <p class="note">Một giao dịch: luật + authz_audit + tenants.authz_version + 1 (recordChange). Người có vai trò này nhận quyền mới ở yêu cầu kế tiếp.</p>
+  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" style="width:auto" id="cancel">Huỷ</button><button class="btn pri" style="width:auto" id="confirm">Xác nhận</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// [khoá, nhãn, nhóm cấp 1, nhóm cấp 2, rủi ro, cờ ('', 'sens', 'new', 'dep'), bí danh] — Core: đúng 18 quyền của packages/platform/src/core/auth.ts
+const P = [
+  ['catalog:read','Xem danh mục','Core','Danh mục','low','',''], ['catalog:write','Thêm / sửa danh mục','Core','Danh mục','low','',''],
+  ['documents:read','Xem chứng từ','Core','Chứng từ','low','',''], ['documents:write','Lập / sửa / huỷ chứng từ','Core','Chứng từ','low','',''],
+  ['documents:edit-all','Sửa / huỷ phiếu của người khác','Core','Chứng từ','high','','tgs:HT21'], ['documents:bypass-date-lock','Vượt khoá dữ liệu theo ngày','Core','Chứng từ','high','','tgs:HT9, HT10, HT47'],
+  ['ledger:read','Xem sổ cái','Core','Sổ & báo cáo','low','','tgs:ACC3'], ['reports:read','Xem báo cáo','Core','Sổ & báo cáo','low','',''],
+  ['payments:approve','Duyệt thanh toán cấp 1','Core','Thanh toán','high','',''], ['payments:approve-final','Duyệt thanh toán cấp 2','Core','Thanh toán','high','',''],
+  ['periods:lock','Khoá / mở kỳ kế toán','Core','Kỳ & cấu hình','high','',''], ['settings:write','Cấu hình đơn vị','Core','Kỳ & cấu hình','high','','tgs:CH10'],
+  ['users:write','Quản trị người dùng, khoá API','Core','Người dùng','high','','tgs:HT4'],
+  ['conformance:read','Xem Kiểm chuẩn','Core','Kiểm chuẩn','low','',''], ['conformance:run','Chạy Kiểm chuẩn','Core','Kiểm chuẩn','low','',''],
+  ['conformance:approve','Duyệt / thu hồi rulepack','Core','Kiểm chuẩn','high','',''], ['review:read','Xem Bàn đánh giá','Core','Kiểm chuẩn','low','',''],
+  ['devtools:read','Bàn điều tra cho nhà phát triển','Core','Nhà phát triển','high','',''],
+  ['ban-hang:retail-invoice-read','Xem hoá đơn bán lẻ','Module','Bán hàng','low','','tgs:BH1'], ['ban-hang:retail-invoice-create','Lập hoá đơn bán lẻ','Module','Bán hàng','low','','tgs:BH1'],
+  ['ban-hang:retail-invoice-cancel','Huỷ hoá đơn bán lẻ (đảo)','Module','Bán hàng','high','','tgs:BH1'], ['ban-hang:price-override','Sửa giá khi bán','Module','Bán hàng','high','new','tgs:BH11'],
+  ['ban-hang:discount-override','Sửa chiết khấu khi bán','Module','Bán hàng','low','','tgs:BH12'], ['ban-hang:sales-order-approve','Duyệt đơn bán','Module','Bán hàng','high','','tgs:HT17'],
+  ['ban-hang:profit-read','Xem lợi nhuận','Module','Bán hàng','high','sens','tgs:BC17'],
+  ['kho:transfer-create','Lập chuyển kho (đầu xuất)','Module','Kho','low','','tgs:BH5'], ['kho:transfer-confirm','Xác nhận nhận hàng (đầu nhận)','Module','Kho','low','','tgs:CK3'],
+  ['kho:transfer-approve','Duyệt chuyển kho','Module','Kho','high','','tgs:CK3'], ['kho:cost-read','Xem giá vốn','Module','Kho','high','sens','tgs:HT16, BH10'],
+  ['kho:report-bc1-read','Sổ kho','Module','Kho','low','','tgs:BC1'],
+  ['quy:receipt-read','Xem phiếu thu','Module','Quỹ','low','','tgs:ACC51'], ['quy:receipt-create','Lập phiếu thu','Module','Quỹ','low','','tgs:ACC51'],
+  ['quy:payment-create','Lập phiếu chi','Module','Quỹ','low','','tgs:ACC52'], ['quy:fund-transfer-confirm','Xác nhận phiếu chuyển tiền','Module','Quỹ','high','','tgs:HT25'],
+  ['quy:cashbook-configure','Cấu hình sổ quỹ','Module','Quỹ','low','dep','tgs:AD14'],
+];
+const BY = Object.fromEntries(P.map((p) => [p[0], p]));
+const CORE = P.filter((p) => p[2]==='Core').map((p) => p[0]);
+const VIEW = ['catalog:read','documents:read','ledger:read','reports:read','conformance:read'];
+// Vai trò hệ thống: ĐÚNG ROLE_PERMISSIONS (auth.ts:101-110); không có quyền module (W1a). Chỉ đọc — luật ở code.
+const ROLES = {
+  owner: { label:'Chủ đơn vị (owner)', sys:true, allow:[...CORE] },
+  chief_accountant: { label:'Kế toán trưởng', sys:true, allow:['catalog:read','catalog:write','documents:read','documents:write','documents:edit-all','documents:bypass-date-lock','payments:approve','ledger:read','reports:read','periods:lock','settings:write','conformance:read','conformance:run','conformance:approve','review:read'] },
+  accountant: { label:'Kế toán', sys:true, allow:['catalog:read','catalog:write','documents:read','documents:write','ledger:read','reports:read','conformance:read','conformance:run','review:read'] },
+  viewer: { label:'Chỉ xem', sys:true, allow:[...VIEW] },
+  developer: { label:'Nhà phát triển', sys:true, allow:[...VIEW,'devtools:read'] },
+  auditor: { label:'Kiểm soát', sys:true, allow:[...VIEW,'review:read'] },
+  cashier: { label:'Thu ngân (mẫu cashier v1)', base:'viewer', allow:['ban-hang:retail-invoice-read','ban-hang:retail-invoice-create','ban-hang:discount-override','quy:receipt-read','quy:receipt-create','kho:report-bc1-read'] },
+  warehouse_keeper: { label:'Thủ kho (mẫu warehouse_keeper v1)', allow:['kho:transfer-create','kho:transfer-confirm','kho:report-bc1-read','documents:read','catalog:read'] },
+  cash_accountant: { label:'Kế toán quỹ', base:'accountant', allow:['quy:receipt-read','quy:receipt-create','quy:payment-create'] },
+};
+const AUDIT = [['04/11 08:05','hệ thống','registry ban-hang 1.1.0','+ ban-hang:price-override (MỚI, chưa ai có)','nâng cấp module',41],['05/11 09:12','kt-truong','rule.set cashier','+ ban-hang:discount-override','CTKM tháng 11',42]];
+let cur = 'cashier', grp = 'all', pending = {};
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inherited = (r, k) => !!(r.base && ROLES[r.base].allow.includes(k));
+const granted = (k) => k in pending ? pending[k] : (ROLES[cur].allow.includes(k) || inherited(ROLES[cur], k));
+function visibleSet(){ const q = $('#q').value.trim().toLowerCase(); return P.filter((p) => (grp==='all' || p[2]===grp || p[2]+'/'+p[3]===grp) && ($('#showDep').checked || p[5]!=='dep') && (!$('#granted').checked || granted(p[0])) && (!q || (p[0]+' '+p[1]+' '+p[6]).toLowerCase().includes(q))); }
+function renderRoles(){ $('#role').innerHTML = Object.entries(ROLES).map(([k,r]) => `<option value="${k}" ${k===cur?'selected':''}>${esc(r.label)}${r.sys?' — hệ thống':''}${r.off?' (vô hiệu)':''}</option>`).join(''); const r = ROLES[cur];
+  $('#rkind').textContent = r.sys ? 'vai trò hệ thống · chỉ đọc · luật ở code' : `vai trò của đơn vị${r.base?` · kế thừa ${ROLES[r.base].label}`:''}`;
+  $('#hint').innerHTML = r.sys ? '<b>Vai trò hệ thống</b> giữ đúng quyền hôm nay (ADR-0027 D7) và không nhận quyền module mới (riêng Chủ đơn vị và vai trò quản trị cao vẫn tự có — D-AUTH-03 bản sửa). Muốn chỉnh: <b>Nhân bản vai trò</b> rồi sửa bản sao.' : 'Tick quyền rồi bấm <b>Cập nhật</b>. Quyền <b>mới</b> của module chưa ai có cho tới khi được tick đích danh; "Chọn tất cả" chỉ phủ quyền rủi ro thấp.';
+  ['rename','disable'].forEach((id) => $('#'+id).disabled = !!r.sys); $('#side').textContent = r.sys ? 'Không đổi tên / vô hiệu vai trò hệ thống.' : 'Vô hiệu giữ lịch sử; không xoá vai trò đang có lần gán.'; }
+function renderTree(){ const count = (f) => { const s = P.filter((p) => f(p) && ($('#showDep').checked || p[5]!=='dep')); return `${s.length}/${s.filter((p) => granted(p[0])).length}`; };
+  const groups = [...new Set(P.map((p) => p[2]))]; let h = `<div class="row ${grp==='all'?'on':''}" data-g="all"><span><b>Nhóm</b> (Tổng/Đã cấp)</span></div><div class="row ${grp==='all'?'on':''}" data-g="all"><span>Tất cả</span><small>(${count(() => true)})</small></div>`;
+  for(const g of groups){ h += `<div class="row l1 ${grp===g?'on':''}" data-g="${g}"><span>– ${g==='Core'?'Core':'Module'}</span><small>(${count((p) => p[2]===g)})</small></div>`;
+    for(const s of [...new Set(P.filter((p) => p[2]===g).map((p) => p[3]))]) h += `<div class="row l2 ${grp===g+'/'+s?'on':''}" data-g="${g}/${s}"><span>– ${esc(s)}</span><small>(${count((p) => p[2]===g && p[3]===s)})</small></div>`; }
+  $('#tree').innerHTML = h; }
+function renderCaps(){ const r = ROLES[cur]; const human = $('#human').checked; $('#caps').style.gridTemplateColumns = `repeat(${$('#cols').value}, minmax(0,1fr))`;
+  const rows = visibleSet().sort((a,b) => (human ? a[1].localeCompare(b[1],'vi') : a[0].localeCompare(b[0])));
+  $('#caps').innerHTML = rows.map((p) => { const inh = inherited(r, p[0]); const locked = r.sys || p[5]==='dep' || inh; const chg = p[0] in pending;
+    return `<label class="cap ${chg?'chg':''} ${locked?'dis':''}" title="${esc(p[0])}${p[6]?' · '+esc(p[6]):''}"><input type="checkbox" data-k="${p[0]}" ${granted(p[0])?'checked':''} ${locked?'disabled':''}><span>${esc(human?p[1]:p[0])}${p[4]==='high'?'<i class="dot d-high"></i>':''}${p[5]==='sens'?'<i class="dot d-sens"></i>':''}${p[5]==='new'?'<i class="dot d-new"></i><span class="tag t-new">MỚI</span>':''}${p[5]==='dep'?'<span class="tag t-dep">ngừng</span>':''}${inh?'<span class="tag t-inh">↳</span>':''}</span></label>`; }).join('') || '<span class="note">Không có quyền nào khớp.</span>';
+  $('#update').disabled = !Object.keys(pending).length; renderTree(); }
+function renderAudit(){ $('#audit').innerHTML = AUDIT.map((a) => `<tr><td>${a[0]}</td><td>${esc(a[1])}</td><td>${esc(a[2])}</td><td>${esc(a[3])}</td><td>${esc(a[4])}</td><td>${a[5]}</td></tr>`).join(''); }
+// Xem như — cùng luật với engine.ts (rút gọn): lần gán theo phạm vi, Cấm thắng, hạn sửa trong ngày theo giờ lập.
+const USERS = { 'ql-pt': [{ role:'cash_accountant', loc:['pt'], purpose:['operate','report'] }, { role:'viewer', loc:['yb'], purpose:['report'] }], 'tn-01': [{ role:'cashier', loc:['pt'], purpose:['operate'] }], 'chu-dv': [{ role:'owner', loc:['pt','yb'], purpose:['operate','report'] }] };
+function explain(){ const u = $('#asUser').value, k = $('#asPerm').value, loc = $('#asLoc').value, pur = $('#asPurpose').value, age = +$('#asAge').value; const p = BY[k]; const st = [];
+  let v; if(p[5]==='dep') v = ['no','AUTHZ-PERM-REMOVED','quyền đã ngừng'];
+  const live = USERS[u].filter((a) => a.loc.includes(loc) && a.purpose.includes(pur)); st.push([live.length?'✓':'✗', `Lần gán chứa tài nguyên, mục đích ${pur}: ${live.map((a) => ROLES[a.role].label).join(', ')||'không có'}`]);
+  if(!v && !live.length) v = ['no','AUTHZ-NO-ASSIGNMENT','không lần gán nào ở phạm vi này với mục đích này'];
+  if(!v){ const g = live.filter((a) => ROLES[a.role].allow.includes(k) || inherited(ROLES[a.role], k)); if(!g.length) v = ['no', p[5]==='new'?'AUTHZ-PERM-NOT-GRANTED-YET':'AUTHZ-NO-ALLOW', p[5]==='new'?'quyền mới, chưa ai được cấp — kể cả chủ đơn vị':'không vai trò nào trong phạm vi này cấp quyền'];
+    else { st.push(['✓', `Luật Cho: ${g.map((a) => ROLES[a.role].label).join(', ')}`]); if(/write|update|cancel/.test(k) && age>0){ v = ['no','AUTHZ-CONDITION',`chỉ sửa / huỷ phiếu lập trong ngày; phiếu này lập ${age} ngày trước`]; st.push(['✗','Điều kiện hạn sửa: trong ngày']); } else v = ['ok','AUTHZ-ALLOW', p[4]==='high'?'được phép — cần nhập lại mật khẩu (5 phút)':'được phép']; } }
+  $('#explain').innerHTML = `<p class="${v[0]}">${v[0]==='ok'?'ĐƯỢC':'TỪ CHỐI'} — ${esc(v[2])} <span class="note">(${v[1]})</span></p>` + st.map((s) => `<div class="step"><b>${s[0]}</b><span>${esc(s[1])}</span></div>`).join(''); }
+function toast(m){ const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); }
+document.addEventListener('change', (e) => { const t = e.target;
+  if(t.id==='role'){ cur = t.value; pending = {}; renderRoles(); renderCaps(); }
+  else if(t.dataset.k){ const k = t.dataset.k, base = ROLES[cur].allow.includes(k); if(t.checked===base) delete pending[k]; else pending[k] = t.checked; renderCaps(); }
+  else if(t.id==='all'){ visibleSet().filter((p) => p[4]==='low' && p[5]!=='dep' && !inherited(ROLES[cur], p[0]) && !ROLES[cur].sys).forEach((p) => { const base = ROLES[cur].allow.includes(p[0]); if(t.checked!==base) pending[p[0]] = t.checked; else delete pending[p[0]]; }); renderCaps(); }
+  else if(['human','showDep','granted','cols'].includes(t.id)) renderCaps(); });
+document.addEventListener('click', (e) => { const t = e.target; const row = t.closest('.tree .row'); if(row){ grp = row.dataset.g; renderCaps(); return; }
+  if(t.id==='update'){ const ch = Object.entries(pending); $('#diff').innerHTML = ch.map(([k,on]) => `<div class="${on?'add':'rem'}">${on?'+':'−'} ${k}${BY[k][4]==='high'?'  [rủi ro cao]':''}</div>`).join(''); $('#stepup').style.display = ch.some(([k,on]) => on && BY[k][4]==='high') ? '' : 'none'; $('#reason').value=''; $('#pw').value=''; $('#modal').classList.add('on'); }
+  if(t.id==='cancel') $('#modal').classList.remove('on');
+  if(t.id==='confirm'){ if(!$('#reason').value.trim()) return toast('Cần lý do.'); if($('#stepup').style.display!=='none' && !$('#pw').value) return toast('Cần nhập lại mật khẩu.'); const r = ROLES[cur]; for(const [k,on] of Object.entries(pending)) r.allow = on ? [...new Set([...r.allow,k])] : r.allow.filter((x) => x!==k); const v = +$('#ver').textContent + 1; AUDIT.push(['vừa xong','bạn','rule.set '+cur, Object.entries(pending).map(([k,on]) => (on?'+ ':'− ')+k).join(', '), $('#reason').value, v]); $('#ver').textContent = v; pending = {}; $('#modal').classList.remove('on'); renderCaps(); renderAudit(); toast('Đã cập nhật (mô phỏng): authz_version → '+v); }
+  if(t.id==='addRole' || t.id==='clone'){ const k = 'role_'+(Object.keys(ROLES).length+1); const src = ROLES[cur]; ROLES[k] = t.id==='clone' ? { label:'Bản sao — '+src.label, allow:[...src.allow, ...(src.base?ROLES[src.base].allow:[])] } : { label:'Vai trò mới '+Object.keys(ROLES).length, allow:[] }; cur = k; pending = {}; renderRoles(); renderCaps(); toast(t.id==='clone'?'Đã nhân bản — bản sao là vai trò của đơn vị, sửa được.':'Đã thêm vai trò rỗng — mặc định không có quyền nào.'); }
+  if(t.id==='rename'){ const n = (ROLES[cur].label + ' (đổi tên)'); ROLES[cur].label = n; renderRoles(); toast('Đổi tên không đổi mã vai trò, không đổi quyền.'); }
+  if(t.id==='disable'){ ROLES[cur].off = true; renderRoles(); toast('Vô hiệu: lần gán giữ làm lịch sử, không còn tác dụng.'); }
+  if(t.id==='explainBtn') explain(); });
+$('#q').addEventListener('input', renderCaps);
+$('#asUser').innerHTML = Object.keys(USERS).map((u) => `<option>${u}</option>`).join(''); $('#asPerm').innerHTML = P.map((p) => `<option value="${p[0]}">${esc(p[1])} — ${p[0]}</option>`).join('');
+renderRoles(); renderCaps(); renderAudit();
+</script>
+</body>
+</html>
