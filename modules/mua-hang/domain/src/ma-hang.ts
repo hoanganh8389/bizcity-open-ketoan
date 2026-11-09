@@ -19,6 +19,8 @@ export interface SkuInfo {
   industry?: string; brand?: string; group?: string;
   /** Số tự sinh (3 số; quà KM 4 số) và ký tự đuôi (K, M, Q, T hoặc đuôi riêng B, Z…). */
   seq?: string; suffix?: string;
+  /** Số thứ tự của sản phẩm con toàn số: mã cha 9 số + 2 số. Không mang nghĩa, biến thể đọc ở ô riêng. */
+  child?: string;
   label: string; hint: string; tone: 'info' | 'ok' | 'warn' | 'gray';
 }
 
@@ -46,6 +48,9 @@ export function skuInfo(sku: string): SkuInfo {
     if (suffix) return mk(({ K: 'share', M: 'promo', Q: 'clip', T: 'stamp' } as Record<string, SkuKind>)[suffix] ?? 'variant', base, parts);
     return mk(parts.group === '8' ? 'combo' : 'normal', base, parts);
   }
+  // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — mã số cha – con GĐ 1: sản phẩm con toàn số là hàng có mã riêng, không suy biến thể từ mã (đóng góp)
+  m = /^(\d{2})(\d{3})(\d)(\d{3})(\d{2,3})$/.exec(s);
+  if (m) return { ...mk(m[3] === '8' ? 'combo' : 'normal', s, { industry: m[1]!, brand: m[2]!, group: m[3]!, seq: m[4]! }), child: m[5]! };
   m = /^Q(\d{3})(\d)(\d{4})$/.exec(s);
   if (m) return mk('gift', s, { industry: 'Q', brand: m[1]!, group: m[2]!, seq: m[3]! });
   return mk('other', s);

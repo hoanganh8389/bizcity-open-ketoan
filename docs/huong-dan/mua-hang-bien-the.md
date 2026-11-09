@@ -25,3 +25,9 @@ Mặc định: **tách riêng Q và T** (hàng kẹp quà, hàng có tem đặt 
 Mỗi lần lưu được ghi vào Nhật ký mua hàng (MH10), gồm cấu hình trước và sau. Cột *Số mã con* và *Ví dụ* cho biết đuôi đó đang có bao nhiêu mã trong danh mục.
 
 **ĐVT của mã con:** mã con tạo mới tự kéo đủ các ĐVT của mã cha (Thùng, Lốc…) và ĐVT mua mặc định. Mã con đã khai ĐVT riêng thì giữ của mã con, chỉ thêm ĐVT mã cha còn thiếu.
+
+## Bảng Biến thể thay cho chữ cuối mã
+
+Bảng đầu màn cho biết mỗi biến thể tương đương đuôi nào, có bao nhiêu mã, và cách xử lý dự kiến về thuế. Bảng chỉ để đối chiếu, hiện phần mềm vẫn xử lý theo đuôi mã.
+
+Dòng **##** là các sản phẩm con mã số (màu, size…). Mặc định cộng về mã cha khi phân tích đặt hàng.

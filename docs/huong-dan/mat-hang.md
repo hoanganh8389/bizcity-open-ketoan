@@ -19,6 +19,22 @@ Bấm **Thêm**, hoặc bấm đúp một dòng. Form có 4 thẻ, bấm **Ghi**
 | Ảnh | Dán đường dẫn ảnh (https://…), ô bên cạnh hiện ảnh xem trước. |
 | Mô tả, xuất xứ, khối lượng, ghi chú | Thông tin thêm. |
 
+### Sản phẩm con và Biến thể
+
+Mọi biến thể đều là sản phẩm con: màu, size, hàng nội bộ, kẹp quà… Mở mã cha, bấm **Thêm sản phẩm con**, gõ tên, chọn **Biến thể**, bấm tạo.
+
+- **Tên đặt tuỳ ý**, ví dụ *Bình sữa xanh L*, *Sữa A hàng tặng*. Phần mềm không đọc tên.
+- **Biến thể** quyết định cách xử lý: *Nội bộ* tự tách khỏi thuế ở quầy bán và hoá đơn; *Thường* là hàng bình thường.
+- **Mã tự cấp** = mã cha + 2 số. Hai số này không mang nghĩa.
+- Đơn vị tính, nhóm hàng, thuế, dấu dưới 24 tháng lấy theo mã cha. Giá bán khai sau.
+- **Mã cha vẫn bán bình thường.** Chỉ tích *chỉ để gom* khi sản phẩm không có bản chung.
+
+Ô **Biến thể** sửa được ở thẻ Thông tin. Mã cũ còn đuôi thì ô đã điền sẵn theo đuôi, ví dụ đuôi `Z` là *Nội bộ*. Mọi nơi (quầy bán, hoá đơn, chính sách) xử lý theo ô này, không theo chữ cuối mã.
+
+**Loại hàng** (hàng bán, quà, vật tư…) dùng để lọc và báo cáo, không làm đổi định khoản. Mã nào chưa nhận ra thì để trống, người rà tự chọn.
+
+Đổi mã: biến thể đi theo mặt hàng, ví dụ `110051001Z` đổi thành `11005100103` vẫn là *Nội bộ*. Gộp mã: không gộp hàng Nội bộ với hàng có sang thuế.
+
 ### 2. Đơn vị tính
 
 Thẻ này **chỉ** khai đơn vị tính và quy đổi. Giá bán ở thẻ **Giá bán**; giá mua ở thẻ **Mua hàng**.

@@ -32,11 +32,11 @@ Phase mở sau 031 (032, 033, …) được gán phiên bản **khi mở** (dòn
 
 | Phiên bản | Trạng thái | Việc chặn còn lại | Review xét |
 |---|---|---|---|
-| v0.1.0 | **chưa đóng** | RV-R1-01 (cờ thoát), RV-R1-02 (ánh xạ lỗi), RV-R1-03 (`main` đỏ), RV-R1-07 (hai cửa), thi hành D-R1-1 (E2 có điều kiện: danh sách trường + audit); PHASE-001 việc tay 0.2 / 0.6 / 0.7; PHASE-008 diễn tập máy chủ thật (⛔) | R1 → xét lại ở R2 |
+| v0.1.0 | **chưa đóng** | <!-- [2026-11-09 03:20 PM Johnny Chu - Chu Hoàng Anh] REVIEW — theo dõi sau R1 --> RV-R1-07 (hai cửa: có số đo demo, chờ đo trên bản sao dữ liệu thật); PHASE-001 việc tay 0.2 / 0.6 / 0.7; PHASE-008 diễn tập máy chủ thật (⛔); diễn tập R-KER-6 cho 0086 / 0089 / 0091 trên bản sao. **Đã xong:** RV-R1-01 (S004-12), RV-R1-02 (S029-33), RV-R1-03, thi hành D-R1-1 (S004-12…17; còn S004-15b số đo + cảnh báo, không chặn) | R1 → xét lại ở R2 |
 | v0.2.0 | chưa đóng | PHASE-013 S013-3..8, S013-12; PHASE-014 lane runtime 4.3, ca chuẩn 4.5–4.7; RV-R1-11 | R2 |
 | v0.3.0 | chưa đóng | PHASE-020 10/24; PHASE-021 S021-17, -21; PHASE-022 W1+; RV-R1-06, RV-R1-09, RV-R1-10 | R3 |
 | v0.4.0 | chưa đóng | PHASE-023 / 026 W1+; PHASE-024 B2c+; PHASE-025 W2+ (giá vốn, Gate C); RV-R1-17 | — |
-| v0.5.0 | chưa đóng | PHASE-027 CK; PHASE-028 W2–W5; PHASE-029 W2+, E1–E9; PHASE-030 W1+; PHASE-031 W2b–W3; RV-R1-04, 05, 08, 12, 13, 15 | — |
+| v0.5.0 | chưa đóng | PHASE-027 CK; PHASE-028 W2–W5; PHASE-029 W2+, E1–E9; PHASE-030 W1+; PHASE-031 W2b–W3; RV-R1-04, 08, 12, 13, 15 (RV-R1-05 xong, PR #187) | — |
 | v1.0.0 | chưa mở | PHASE-015 cần Hub; 016; 017 | — |
 
 ## 5. Nhật ký Kernel theo phiên bản (tóm tắt; chi tiết ở `CHANGELOG.md`)

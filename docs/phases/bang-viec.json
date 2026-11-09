@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,22 +20,22 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 135
+      "count": 136
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 52
+      "count": 53
     },
     {
       "key": "paused",
       "label": "Hoãn",
-      "count": 3
+      "count": 2
     },
     {
       "key": "done",
       "label": "Xong",
-      "count": 268
+      "count": 269
     }
   ],
   "items": [
@@ -561,8 +561,8 @@
       "phase": "PHASE-004",
       "title": "Bảng theo dõi: API chỉ đọc GET /api/v1/ledger/entry-edits + tab \"Sửa đầu bút toán\" ở Bàn điều tra; bản mẫu HTML trước, chủ duyệt rồi mới code; D004-14. K1",
       "priority": null,
-      "status": "paused",
-      "column": "paused",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 29
@@ -583,8 +583,8 @@
       "phase": "PHASE-004",
       "title": "Đo lệch tài khoản mặc định giữa resolveAccounts của mua hàng và AccountResolver của Kernel (8 vai trò, 25 tình huống + bản sao cài đặt thật); chỉ đo, không đổi…",
       "priority": null,
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-004-MOT-CUA-GHI-SO/40-MASTER-CHECKLIST.md",
       "line": 31
@@ -2943,6 +2943,34 @@
       "claim": null,
       "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
       "line": 28
+    },
+    {
+      "id": "S022-17",
+      "phase": "PHASE-022",
+      "title": "RV-R1-06: details.context + details.remedy cho lỗi Kernel (UNBALANCEDENTRY, PERIODLOCKED, POSTINGFAILED, LEDGERAPPENDONLY), withErrorContext, bảng ERRORREMEDY;…",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, review-r1)",
+        "branch": "feat/phase-022-error-context",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-022 · S022-17 — RV-R1-06: details.context + details.remedy cho lỗi Kernel, withErrorContext, …"
+      },
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 29
+    },
+    {
+      "id": "S022-18",
+      "phase": "PHASE-022",
+      "title": "RV-R1-06 phần ghi details.context vào trace và hiện remedy.steps ở khay Mã tra cứu (sau S022-17)",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 30
     },
     {
       "id": "S023-1",
@@ -5503,6 +5531,34 @@
       },
       "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
       "line": 39
+    },
+    {
+      "id": "S031-31",
+      "phase": "PHASE-031",
+      "title": "RV-R1-04: retirePolicy đóng effectiveto bằng ngày ngừng (§16): code + test policy-retire; K1",
+      "priority": "P1",
+      "status": "todo",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, review-r1)",
+        "branch": "feat/phase-031-retire-dong-effective-to",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-031 · S031-31 — RV-R1-04: retirePolicy đóng effectiveto bằng ngày ngừng; chữ chốt PHASE-031 ·…"
+      },
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 40
+    },
+    {
+      "id": "S031-32",
+      "phase": "PHASE-031",
+      "title": "RV-R1-04 phần dữ liệu cũ: đo bản retired có effectiveto NULL trên bản sao thật rồi quyết định đóng (§16 mục 6)",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md",
+      "line": 41
     }
   ]
 }

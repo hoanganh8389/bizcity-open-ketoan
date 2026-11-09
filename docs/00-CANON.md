@@ -206,7 +206,7 @@ Bản kiến trúc và hướng dẫn dev: [architecture/LOI-BAT-BIEN-NGHIEP-VU-
 | `bizcity_data@1` | [contracts/BIZCITY-DATA-v1.md](contracts/BIZCITY-DATA-v1.md) | **Đề xuất** (Standard 2/7) | `packages/platform/src/db/client.ts`, `packages/platform/src/db/migrate.ts` |
 | `bizcity_document@1` | [contracts/BIZCITY-DOCUMENT-v1.md](contracts/BIZCITY-DOCUMENT-v1.md) | **Đề xuất** (Standard 3/7; gồm luồng duyệt, thay `bizcity_workflow@1`) | `modules/{signatures,reference-documents}`, `payment_requests` |
 | `bizcity_action@1` | [contracts/BIZCITY-ACTION-v1.md](contracts/BIZCITY-ACTION-v1.md) | **Đề xuất** (Standard 4/7) | `core/{http,errors,auth}.ts` |
-| `bizcity_event@1` | [contracts/BIZCITY-EVENT-v1.md](contracts/BIZCITY-EVENT-v1.md) | **Đề xuất** (Standard 5/7) — sự kiện miền | chưa có (`catalog-notify.ts`) |
+| `bizcity_event@1` | [contracts/BIZCITY-EVENT-v1.md](contracts/BIZCITY-EVENT-v1.md) | **Đề xuất** (Standard 5/7) — sự kiện miền | `packages/platform/src/core/events.ts` (outbox `event_outbox` / `event_deliveries`, `emitEvent`, subscriber; PHASE-006) <!-- [2026-11-09 03:40 PM Johnny Chu - Chu Hoàng Anh] REVIEW — RV-R1-15: tài liệu khớp mã (R1: CANON còn ghi "chưa có") --> |
 | `bizcity_evidence@1` | [contracts/BIZCITY-EVIDENCE-v1.md](contracts/BIZCITY-EVIDENCE-v1.md) | **Đề xuất** (Standard 6/7) | `core/audit.ts`, `audit_logs` |
 | `bizcity_extension@1` | [contracts/BIZCITY-EXTENSION-v1.md](contracts/BIZCITY-EXTENSION-v1.md) | **Đề xuất** (Standard 7/7) | `apps/web/src/phan-he/*`, `core/addins.ts` |
 | `bizcity_ledger_intake@1` | [contracts/BIZCITY-LEDGER-INTAKE-v1.md](contracts/BIZCITY-LEDGER-INTAKE-v1.md) | Ổn định (Kernel; trước 2026-10-29 tên `bizcity_event@1`) | `packages/contracts/src/documents.ts` |

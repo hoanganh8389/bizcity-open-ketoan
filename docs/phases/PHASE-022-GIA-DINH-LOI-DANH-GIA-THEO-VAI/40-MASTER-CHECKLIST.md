@@ -26,6 +26,8 @@
 | S022-14 | Màn Hệ thống → Bàn đánh giá (HT08) theo [30-UI-UX](30-UI-UX.md) | W4 | P0 | có | ✅ 2026-11-02 — `apps/web/src/features/system/ReviewBoardPage.tsx`, menu HT08, `SCREENS.HT08`; ba vai, đếm 6 trạng thái, "Chỉ hiện việc cần làm", bốn khối, kiểm lại một mã <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4; sửa phần đầu tệp bị lần vá W1 ghi đè --> |
 | S022-15 | Biên bản in (PDF) theo vai, kèm các lần xác nhận cảnh báo — ca T022-9 | W4 | P1 | có | 🟡 2026-11-02 — biên bản in qua trình duyệt (`@media print`): vai, đơn vị, danh sách ca + trạng thái + phương án, chỗ ký, dòng miễn trừ; các lần xác nhận cảnh báo hiện trên màn (vai auditor), chưa in vào biên bản; chưa xuất PDF phía máy chủ <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4; sửa phần đầu tệp bị lần vá W1 ghi đè --> |
 | S022-16 | Tài liệu dùng: trang hướng dẫn "Bàn đánh giá" + "Kiểm chuẩn" trong nút "? Hướng dẫn"; DIAGNOSTICS cột remedy | W4 | P1 | ☐ | 🟡 2026-11-02 — DIAGNOSTICS có dòng mã mới W2; trang hướng dẫn "Bàn đánh giá" trong nút "? Hướng dẫn" chưa làm <!-- [2026-11-02 10:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W4; sửa phần đầu tệp bị lần vá W1 ghi đè --> |
+| S022-17 | RV-R1-06: `details.context` + `details.remedy` cho lỗi Kernel (`UNBALANCED_ENTRY`, `PERIOD_LOCKED`, `POSTING_FAILED`, `LEDGER_APPEND_ONLY`), `withErrorContext`, bảng `ERROR_REMEDY`; chữ chốt BIZCITY-ERRORS §4b; K1 | W5 | P1 | có | ☐ |
+| S022-18 | RV-R1-06 phần ghi `details.context` vào trace và hiện `remedy.steps` ở khay Mã tra cứu (sau S022-17) | W5 | P2 | có | ☐ |
 
 ## Ca bằng chứng
 

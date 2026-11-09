@@ -336,3 +336,18 @@ Phạm vi: S031-30. Mở ô cuối còn thiếu của [20 §4](20-TRUY-VET-VA-TH
 **Golden.** T031-PRG-1 đếm đúng chứng từ áp và quà theo mặt hàng theo từng bản · T031-PRG-2 chứng từ có quà lệch (`IN-POL-004`) được tính vào `mismatched` và tỉ lệ; chứng từ không quà không lệch · T031-PRG-3 quà của chính sách khác trên cùng chứng từ không bị cộng nhầm · T031-PRG-4 kỳ rỗng → `program: []`, tỉ lệ `null` · T031-PRG-5 lọc nguồn / chi nhánh / module chủ; cô lập đơn vị · UI: khối hiện đúng số API, "—" ở ô hoãn (chạy thật, như W4b).
 
 **Đính chính khi code (W4c, 2026-11-09).** (1) Quà đếm theo **cặp (khoá chính sách, số bản)** của `policyRef` trên dòng quà — chỉ so số bản thì nhầm khi hai chính sách cùng số bản (bắt được nhờ phá thử). (2) Quà chỉ tính ở chứng từ đã vào `policy_application` (có `policyRefs` và qua cửa nạp); dòng quà nguồn không nêu `policyRef` không thuộc chương trình nào. (3) Q031-7 (ngân sách theo số lượng hay giá trị) vẫn **mở**.
+
+## 16. Chữ chốt RV-R1-04 (K1, Platform; R-FLOW-2): ngừng chính sách đóng `effective_to` <!-- [2026-11-10 09:00 AM Johnny Chu - Chu Hoàng Anh] PHASE-031 — chủ dự án đồng ý đề xuất sau review R1 (2026-11-10) -->
+
+**Vấn đề (review R1, RV-R1-04).** `retirePolicy` chỉ đổi `status` sang `retired`; `effective_to` của bản đang mở vẫn `NULL`. Cửa nạp (`policy-check.ts`, `covers()`) chỉ xét khoảng ngày nên chứng từ mới trỏ bản đã ngừng vẫn **không bị báo** — "ngừng" chỉ là nhãn.
+
+**Quyết định (chủ dự án, 2026-11-10).** `retirePolicy(trx, tenantId, policyId, actor?, effectiveTo?)` đóng khoảng hiệu lực của mọi bản đang `published` bằng **ngày ngừng** (`effectiveTo`, dạng `YYYY-MM-DD`, mặc định ngày hôm nay theo múi giờ của CSDL):
+
+1. `effective_to := ngày ngừng` cho bản có `effective_to IS NULL` (trigger `bizcity_policy_registry_guard` chỉ cho NULL → ngày, một lần). Bản đã đóng từ trước (có bản mới thay) giữ nguyên.
+2. Ngày ngừng không sớm hơn `effective_from − 1` (ràng buộc `policy_registry_range_chk`): sớm hơn thì dùng `effective_from − 1` (khoảng rỗng — bản chưa từng có hiệu lực).
+3. Chứng từ có **ngày chứng từ ≤ ngày ngừng** vẫn hợp lệ (`covers()` đúng); **sau** ngày ngừng cửa nạp báo **IN-POL-002** (không có bản nào phủ ngày), không cần sửa `policy-check.ts`. Chứng từ cũ vẫn truy được (`getPolicyVersion` đọc cả bản đã ngừng).
+4. `effectiveTo` tương lai là hợp lệ (ngừng có hẹn): `status` chuyển ngay (không phát hành thêm bản), chứng từ đến hết ngày đó vẫn được nhận.
+5. Gọi lại khi không còn bản `published` trả 0, như hiện nay; sự kiện `policy.retired` thêm `data.effectiveTo`.
+6. **Dữ liệu cũ:** bản đã `retired` trước thay đổi này có `effective_to = NULL` và không có ngày ngừng đáng tin; **không** tự đóng (sẽ làm sai chứng từ cũ). Việc gỡ nợ này ghi vào checklist để làm sau khi có số đo trên dữ liệu thật.
+
+**Kiểm bằng:** `apps/api/test/policy-retire.test.ts` (đóng khoảng; trước / đúng / sau ngày ngừng qua cửa nạp; ngày tương lai; ngày sớm hơn `effective_from`; gọi lại).

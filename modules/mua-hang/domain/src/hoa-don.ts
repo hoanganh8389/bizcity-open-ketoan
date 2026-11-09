@@ -194,6 +194,9 @@ export function unitFor(units: ProductUnit[] | undefined, nccUnit: string, fallb
   return (us.find((u) => u.isPurchaseDefault) ?? us.find((u) => u.ratio === 1) ?? us[0])?.unit ?? '';
 }
 
+/** Dưới ngưỡng này coi là NCC dùng lại mã cho hàng khác. Để thấp vì NCC hay đổi cách ghi tên của cùng một hàng. */
+const CODE_REUSE_SCORE = 0.12;
+
 /** Nhận diện một dòng hoá đơn. Có mã chắc chắn → sku + unit; không → chỉ gợi ý (candidates), sku = null. */
 export function matchLine(line: Pick<InvoiceLine, 'nccSku' | 'nccName' | 'nccUnit'>, src: MatchSources, maxCandidates = 5): Pick<InvoiceLine, 'sku' | 'unit' | 'matchSource' | 'candidates'> {
   const ns = line.nccSku.trim().toLowerCase(), nk = nameKey(line.nccName), uk = unitKey(line.nccUnit);
@@ -203,8 +206,16 @@ export function matchLine(line: Pick<InvoiceLine, 'nccSku' | 'nccName' | 'nccUni
     const list = src.aliases.filter(f);
     return list.find((a) => unitKey(a.nccUnit) === uk) ?? list.find((a) => !a.nccUnit);
   };
+  // [2026-11-07 05:40 PM Nguyễn Văn Thủy] PHASE-026 — NCC dùng lại mã cũ cho hàng khác: tên khác xa mọi tên đã học thì không tự nhận, đưa về gợi ý để người xác nhận (đóng góp)
   const a1 = ns ? byAlias((a) => a.nccSku.trim().toLowerCase() === ns) : undefined;
-  if (a1) return pick(a1.sku, a1.unit, 'alias');
+  if (a1) {
+    const learned = src.aliases.filter((a) => a.nccSku.trim().toLowerCase() === ns && nameKey(a.nccName));
+    const bestName = learned.length ? Math.max(...learned.map((a) => nameScore(line.nccName, a.nccName))) : 1;
+    const reused = nk && bestName < CODE_REUSE_SCORE;
+    if (!reused) return pick(a1.sku, a1.unit, 'alias');
+    const name = src.products.find((p) => p.sku === a1.sku)?.name ?? a1.sku;
+    return { sku: null, unit: null, matchSource: 'none', candidates: maxCandidates > 0 ? [{ sku: a1.sku, name, unit: a1.unit || unitFor(src.units[a1.sku], line.nccUnit), score: Math.round(bestName * 100) / 100, why: `Trùng mã NCC nhưng tên khác xa tên đã học ("${learned[0]!.nccName}"), kiểm tra lại` }] : [] };
+  }
   const a2 = nk ? byAlias((a) => !!a.nccName && nameKey(a.nccName) === nk) : undefined;
   if (a2) return pick(a2.sku, a2.unit, 'alias');
   // 2. Khai mặt hàng của NCC.
