@@ -116,7 +116,7 @@ MCP bọc lỗi thành `{ success: false, code, message, hint, help_code, error:
 
 4. **Một chỗ gắn ngữ cảnh.** Nơi biết chứng từ (cửa `postDocumentIn`, `eventStore`, `unpostIn`) bọc lỗi bằng `withErrorContext(err, context)` của Platform: chỉ **bổ sung** khoá còn thiếu vào `details.context`, không đổi `code`, `message` hay `details` khác; lỗi không phải `AppError` đi qua nguyên vẹn. Hàm ánh xạ lỗi CSDL (§5) đặt `step = db-trigger` và `remedy`; `http.ts` không tự sinh ngữ cảnh.
 
-5. **Lộ ra ngoài.** `details.context` và `details.remedy` đi nguyên ra REST (`error.details`) và MCP (`error.details`); trace ghi `errCode`, `reason` và các khoá `context` (không ghi `remedy`). Giao diện hiện `remedy.steps` dưới `message`.
+5. **Lộ ra ngoài.** `details.context` và `details.remedy` đi nguyên ra REST (`error.details`) và MCP (`error.details`); trace giữ `errCode` như hiện nay; ghi thêm các khoá `context` vào trace là bước sau (S022-18, không thuộc đợt này). Giao diện hiện `remedy.steps` dưới `message` là bước sau (PHASE-019).
 
 **Kiểm bằng:** `apps/api/test/error-context.test.ts` (đề xuất, viết cùng PR code; từng mã ở bảng trên có đủ khoá, qua REST thật; `remedy` khớp `ERROR_REMEDY`; `withErrorContext` không ghi đè khoá có sẵn; lỗi lạ không đổi) và SC-FIX-1 (màn trong `remedy` có ở menu).
 

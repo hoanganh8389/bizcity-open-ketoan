@@ -8,11 +8,11 @@
 | Đang làm | 9 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 135 |
+| Chưa ai nhận | 136 |
 | Chờ đủ tín hiệu | 53 |
 | Hoãn | 2 |
 | Xong | 269 |
-| **Tổng** | **496** |
+| **Tổng** | **497** |
 
 ## Đang làm (9)
 
@@ -65,7 +65,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (135)
+## Chưa ai nhận (136)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -112,6 +112,7 @@
 | [S021-17](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L28) | PHASE-021 | Thực tập sinh thử thật trên dữ liệu demo (ba chứng từ hỏng mẫu), biên bản evidence/W3-<ngày>.md | P1 | — |
 | [S021-21](PHASE-021-TRAM-TIEN-KIEM-DAU-VAO/40-MASTER-CHECKLIST.md#L32) | PHASE-021 | Trang bài học đủ ví dụ sai / đúng / vì sao cho mọi mã; kế toán trưởng đọc lại câu chữ | P1 | — |
 | [S022-10](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L22) | PHASE-022 | Kiểm mới W2 đợt sau: TAXBOOKMATCH, MANUALSENSITIVE, COSTUNITSPIKE, YEARENDOPEN, DEBT, DEPOSITAGED, TRANSFERUN… | P1 | — |
+| [S022-18](PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md#L30) | PHASE-022 | RV-R1-06 phần ghi details.context vào trace và hiện remedy.steps ở khay Mã tra cứu (sau S022-17) | P2 | — |
 | [S023-4](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L15) | PHASE-023 | Hợp đồng bizcityaccountcard@1 (docs/contracts/BIZCITY-ACCOUNT-CARD-v1.md + schema), packages/contracts/src/ac… | P0 | — |
 | [S023-6](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L17) | PHASE-023 | Check SC-ACC-1 (DOCS): đủ trường, soDu khớp normalside gói nền, both có viSaoLuongTinh, trackpartner có viSao… | P0 | — |
 | [S023-7](PHASE-023-THE-TAI-KHOAN/40-MASTER-CHECKLIST.md#L18) | PHASE-023 | Action đọc core.account.card (accounts:read; lớp 3 theo ledger:read): dư Nợ / dư Có tách theo đối tượng tại n… | P0 | — |
