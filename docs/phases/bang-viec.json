@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 7
+      "count": 6
     },
     {
       "key": "merging",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 265
+      "count": 266
     }
   ],
   "items": [
@@ -5123,15 +5123,9 @@
       "phase": "PHASE-030",
       "title": "B5a — ctx.libraries trong action, libraries[] trong manifest (bizcitymodule@1 1.5.0-draft), SC-LIB-2, core.library.modules + tab Module (26 §4.1)",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, thu-vien-b5a)",
-        "branch": "feat/s030-51a-ctx-libraries",
-        "state": "đang làm",
-        "since": "2026-11-09",
-        "dot": "PHASE-030 · S030-51a — Kho thư viện B5a: ctx.libraries trong action, libraries[] trong manifest (bi…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 59
     },

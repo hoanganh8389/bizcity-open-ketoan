@@ -1,0 +1,11 @@
+{
+  "contract": "bizcity_library@1",
+  "id": "vn.tham-so-phap-ly",
+  "kind": "param",
+  "title": "Tham số pháp lý (mẫu cho SC-LIB-2)",
+  "version": "1.0.0",
+  "items": [
+    { "code": "LUONG_TOI_THIEU_VUNG_I", "name": "Lương tối thiểu vùng I", "status": "active", "since": "1.0.0", "verified": false, "effective": [{ "from": "2026-01-01", "to": null, "value": 5310000 }] },
+    { "code": "GIO_LAM_VIEC_NGAY", "name": "Giờ làm việc một ngày", "status": "active", "since": "1.0.0", "verified": false, "effective": [{ "from": "2026-01-01", "to": null, "value": 8 }] }
+  ]
+}
