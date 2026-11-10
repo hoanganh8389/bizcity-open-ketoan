@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 8
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 167
+      "count": 166
     },
     {
       "key": "partial",
@@ -5233,9 +5233,15 @@
       "phase": "PHASE-030",
       "title": "Gỡ dữ liệu thật khỏi bản phát hành (Q030-L5): db/seeds/ đối tượng, nhân viên, tài khoản ngân hàng, chi nhánh / kho / bộ phận / sơ đồ tổ chức của một công ty → …",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, seeds-gia-lap)",
+        "branch": "feat/s030-53-seeds-gia-lap",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-030 · S030-53 — gỡ dữ liệu thật khỏi db/seeds/: bộ giả lập sinh tất định cùng khuôn, dữ liệu …"
+      },
       "file": "docs/phases/PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md",
       "line": 62
     },
