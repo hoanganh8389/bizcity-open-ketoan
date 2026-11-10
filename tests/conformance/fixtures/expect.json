@@ -388,6 +388,13 @@
             "doc-missing:BADREASON"
           ]
         },
+        "SC-ACT-2": {
+          "findings": 2,
+          "keys": [
+            "side:alpha.doc.post",
+            "errors:alpha.doc.repost"
+          ]
+        },
         "SC-EVD-2": {
           "findings": 13,
           "keys": [
@@ -822,6 +829,19 @@
             "lech:undeclared:vn.can-cu-phap-ly",
             "lech:hard-str:2026-02-16",
             "lech:hard-num:5310000"
+          ]
+        }
+      }
+    },
+    {
+      "root": "runtime-docs-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-REL-3": {
+          "findings": 2,
+          "keys": [
+            "missing-copy:docs/standard/thieu-copy.json",
+            "missing-file:docs/standard/khong-co.json"
           ]
         }
       }

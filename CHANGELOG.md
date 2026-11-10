@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ Nền móng ở HT10 chạy trên bản cài Docker (PHASE-034 B1, S034-3) <!-- [2026-11-10 12:40 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B1 -->
+
+- **Sửa:** ảnh api chép `docs/standard/nen-mong.json`. Trước đây thẻ *Nền móng* ở Hệ thống → Trụ cột & mức đạt (HT10) báo "Không tìm thấy bản đồ nền móng" trên bản cài Docker (chạy dev thì đúng).
+- **Thêm:** luật R-REL-11 và phép kiểm SC-REL-3: tệp `docs/` mà mã đọc lúc chạy phải có trong repo và có `COPY` trong giai đoạn chạy của `docker/api.Dockerfile`.
+- **Nâng cấp cần làm:** kéo ảnh api mới (`scripts/cap-nhat.sh`).
+
 ### PHASE-032 W0 — Inventory Engine: kho · lô · giá vốn liên tục (ADR-0033 chấp nhận) <!-- [2026-11-09 11:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — W0 tài liệu -->
 
 - **Thêm:** [PHASE-032](docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/README.md) (master plan, kiến trúc tổng thể, mã hàng ≠ mã tài khoản, FIFO / FEFO, chín tình huống vàng, checklist, kế hoạch kiểm thử / PR, bản mẫu `inventory-engine.html`); [ADR-0033](docs/adr/ADR-0033-inventory-engine-gia-von-kho.md) **chấp nhận** 2026-11-09, làm theo chín bước thắng nhỏ B1..B9; quyết định D032-11 (chặn cứng hẹp), D032-12 (R-DIAG-10..16, mở rộng không thêm hợp đồng), D032-13 (HT08 thành Bàn làm việc kế toán); luật [R-INV](docs/rules/RULE-INVENTORY.md) và R-ITEM-10 (mã hàng ≠ mã tài khoản); hợp đồng [`bizcity_inventory@1`](docs/contracts/BIZCITY-INVENTORY-v1.md) 0.1.0-draft; hướng dẫn tính giá vốn và nghiệp vụ 11 thêm mục *Kiến trúc tổng thể*.

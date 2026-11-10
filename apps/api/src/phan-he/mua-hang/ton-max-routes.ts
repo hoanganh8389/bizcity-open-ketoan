@@ -213,7 +213,8 @@ export const tonMaxRoutesWriteActions: AnyActionDef[] = [
   }),
   defineAction({
     id: 'mua-hang.stock.init-reconcile-import', title: 'Cân tồn: mỗi kho một phiếu điều chỉnh kho (+/−), ghi sổ ngay', tags,
-    permission: 'catalog:write', effect: 'write', sideEffects: ['documents'], idempotency: 'natural',
+    // [2026-11-10 09:45 PM Johnny Chu - Chu Hoàng Anh] PHASE-014 — S014-16 (SC-ACT-2, STD-ACT-9): phiếu điều chỉnh kho ghi sổ ngay (reconcileApply → postDocumentIn) → khai 'ledger'
+    permission: 'catalog:write', effect: 'write', sideEffects: ['documents', 'ledger'], idempotency: 'natural',
     input: stockRowsSchema, output: anyOut,
     expose: { http: { method: 'POST', path: '/api/v1/stock/init/reconcile/import' }, mcp: false, ai: 'deny' },
     evidence: { objectType: 'stock' },
