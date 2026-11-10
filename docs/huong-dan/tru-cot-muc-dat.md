@@ -47,7 +47,7 @@ Mức **Đạt** chỉ có khi không còn tín hiệu *chưa có*; bộ kiểm 
 | **Bộ máy** | Mỗi engine (Ghi sổ, Inventory, Document SDK, Workflow, Phân quyền, …) theo hợp đồng nào, còn bao nhiêu mốc | `?xem=bo-may` |
 | **Nhà phát triển** | Công cụ DEV01..09 dùng được tới đâu, chạy ngay tại màn này | `?xem=nha-phat-trien` |
 
-Thẻ *Bộ máy* và *Nhà phát triển* đang hiện **sắp có**: thẻ nói rõ sẽ lấy dữ liệu từ đâu và bước nào làm. Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
+Thẻ *Nhà phát triển* đang hiện **sắp có**: thẻ nói rõ sẽ lấy dữ liệu từ đâu và bước nào làm. Kế hoạch ở `docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE`.
 
 **Thẻ báo "Bản cài chưa có tệp …"**: bản cài Docker dựng từ mã cũ chưa chép tệp nguồn của bảng vào ảnh. Cập nhật bản cài (`./scripts/cap-nhat.sh`) là hết. Phép kiểm SC-REL-3 giữ cho lỗi này không lặp lại.
 
@@ -62,4 +62,15 @@ Dữ liệu đi qua các **cổng** từ ngoài vào trong: *Cổng A* (danh m�
 - *Cổng C* (giá vốn sau ghi sổ), *Khoá kỳ*, *Trigger CSDL*, *Bộ kiểm CI* hiện **chưa có sổ**: ô nói bước nào sẽ làm.
 
 Mã lấy thẳng từ sổ đăng ký trong mã, không ai gõ tay; thêm mã mới trong mã nguồn là thẻ tự có.
+
+<!-- [2026-11-10 11:58 PM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B4 (S034-7): thẻ Bộ máy -->
+## Thẻ "Bộ máy"
+
+**Bộ máy** (engine) là phần tính hoặc quyết định thay người mà module gọi vào chứ không tự viết lại: Ghi sổ, Inventory Engine (kho · lô · giá vốn), Document SDK, Đánh số chứng từ, Workflow, Phân quyền, Policy Registry, Thư viện, Kiểm chuẩn pháp lý VN, Truy vết, Kết chuyển & khoá kỳ, Thuế, Bảng điểm.
+
+- **Thanh mức** của bộ máy = số **mốc** đã xong / số mốc. Mốc là mã việc `S0xx-*` trong checklist của các phase; mốc *chờ đủ tín hiệu* tính ½. Không ai gõ mức.
+- **Chưa có mốc** nghĩa là chưa phase nào lên kế hoạch cho bộ máy đó — đó là khoảng trống, không phải "xong".
+- Bấm một bộ máy để xem: làm gì, gọi bằng gì, hợp đồng, mã nguồn, test, mã kiểm nó phát ra (mở thẻ Cổng & bộ kiểm), và từng mốc với trạng thái.
+
+Nguồn: `docs/standard/bo-may.json` cùng bảng việc `docs/phases/bang-viec.json`; phép kiểm SC-ENG-1 giữ sổ khớp repo.
 
