@@ -1,11 +1,28 @@
-# 18. Bỏ "lý do hạch toán", thay bằng loại nghiệp vụ
+# 18. Công tắc lý do hạch toán (mặc định tắt)
 
 <!-- [2026-11-10 09:30 PM Nguyễn Văn Thủy] PHASE-026 — kế hoạch bỏ lý do khỏi người dùng; tài khoản chỉ khai ở ACC41 + ACC92 (đóng góp) -->
 
-Chốt ngày 10/11/2026:
+Hướng ban đầu (đã thay bằng công tắc, xem mục dưới):
 - Người dùng không còn thấy khái niệm "lý do hạch toán".
 - Tài khoản chỉ khai ở hai nơi: **Tài khoản ngầm định (ACC41)** và **quy tắc ở Thiết kế hạch toán (ACC92)**.
 - Lõi vẫn đọc được mã lý do cũ, để sổ đã ghi và cầu nối website (đang gửi `reasonCode`) không phải sửa.
+
+## Chốt lại (10/11/2026, muộn): giữ lý do, thêm công tắc
+
+Không xoá lý do. Thêm khoá cài đặt **`bizcity.posting.use_reasons`** (Trung tâm cấu hình, có ngày hiệu lực, mặc định **tắt**):
+
+| | Tắt (mặc định) | Bật |
+|---|---|---|
+| Định khoản | Không đọc tài khoản trên lý do. Tài khoản theo **ACC41** + nghiệp vụ của loại chứng từ + nhóm hàng + quy tắc **ACC92** | Tài khoản trên lý do (đối ứng, doanh thu / trả lại, giá vốn, chi phí mua) **đè** lên như phần mềm cũ |
+| Giao diện | Ẩn ô Lý do (phiếu thu chi, phiếu kế toán), ẩn màn ACC18 khỏi menu | Hiện như cũ |
+
+- Đọc theo **ngày chứng từ**: bật / tắt từ một ngày, chứng từ trước ngày đó giữ cách cũ khi định khoản lại.
+- Mã lý do trên chứng từ vẫn nhận (website gửi kèm). Khi tắt, mã chỉ dùng để chọn **nghiệp vụ tự tạo** ở ACC92 (quy tắc riêng) và để báo cáo.
+- Cờ cách tính trên lý do (bán nội bộ theo giá bán, trả NCC theo giá đầu kỳ, khoản mục) chưa theo công tắc.
+- Sau này bỏ hẳn: rà khoá `bizcity.posting.use_reasons` và các chỗ đọc (`useReasonsAt`, `AccountResolver.onReason`, `useUseReasons`).
+- **Sổ thật**: cập nhật bản này xong thì bật tạm công tắc cho tới khi kế toán khai xong quy tắc cho các trường hợp riêng (hàng hỏng, tặng, xuất dùng…), rồi mới tắt.
+
+Phần dưới là phương án "bỏ hẳn" đã cân nhắc trước đó, giữ để tham khảo.
 
 ## Vì sao
 

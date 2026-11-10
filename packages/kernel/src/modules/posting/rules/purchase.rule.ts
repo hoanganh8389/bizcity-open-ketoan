@@ -40,12 +40,12 @@ export function buildPurchaseParts(doc: PurchaseDocument, ctx: RuleContext): Pos
       tags,
       part: 'goods',
       productSku: line.sku,
-      debitAccount: reason.expense_account ?? group.inventory_account,
+      debitAccount: resolver.reasonExpense(reason) ?? group.inventory_account,
       creditAccount: payable,
       amount: line.amountBeforeTax,
       creditPartnerId: partnerId,
       taxCode: line.taxCode,
-      description: reason.expense_account ? 'Mua hàng, dịch vụ vào chi phí' : 'Nhập mua hàng',
+      description: resolver.reasonExpense(reason) ? 'Mua hàng, dịch vụ vào chi phí' : 'Nhập mua hàng',
     });
     b.add({
       tags,
@@ -97,7 +97,7 @@ export function buildPurchaseReturnParts(doc: PurchaseReturnDocument, ctx: RuleC
       part: 'goods',
       productSku: line.sku,
       debitAccount: payable,
-      creditAccount: reason.expense_account ?? group.inventory_account,
+      creditAccount: resolver.reasonExpense(reason) ?? group.inventory_account,
       amount: Math.abs(line.amountBeforeTax),
       debitPartnerId: partnerId,
       taxCode: line.taxCode,
