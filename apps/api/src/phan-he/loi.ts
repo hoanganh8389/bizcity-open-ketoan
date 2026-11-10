@@ -68,6 +68,8 @@ import { reportRoutes } from './ke-toan/reports/report.routes.js';
 import { departmentReportRoutes } from './ke-toan/reports/department-reports.js';
 import { grossProfitRoutes } from './ban-hang/gross-profit.js';
 import { stockTransferRoutes } from './kho/stock-transfers.js';
+// [2026-11-10 08:30 PM Nguyễn Văn Thủy] PHASE-026 — phiếu chuyển kho lập trên phần mềm kế toán (KHO01) (đóng góp)
+import { transferDocRoutes } from './kho/phieu-chuyen-kho.js';
 import { inventoryReportRoutes } from '../modules/inventory/inventory-report.routes.js';
 
 export const CORE_ROUTES: Routes[] = [
@@ -84,4 +86,4 @@ export const CORE_ROUTES: Routes[] = [
 ];
 
 export const LEDGER: Routes[] = [ledgerRoutes, reportRoutes, debtRoutes];
-export const GOODS: Routes[] = [inventoryRoutes, inventoryReportRoutes, grossProfitRoutes, stockTransferRoutes, departmentReportRoutes];
+export const GOODS: Routes[] = [inventoryRoutes, inventoryReportRoutes, grossProfitRoutes, stockTransferRoutes, transferDocRoutes, departmentReportRoutes];

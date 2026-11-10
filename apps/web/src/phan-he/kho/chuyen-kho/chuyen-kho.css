@@ -1,0 +1,22 @@
+/* [2026-11-10 08:30 PM Nguyễn Văn Thủy] PHASE-026 — phiếu chuyển kho KHO01 (đóng góp) */
+.ck-toolbar { gap: 6px; padding: 4px 0 8px; flex-wrap: wrap; align-items: center; }
+.ck-sel { font-size: 12px; margin-top: 6px; }
+.ck-msg { margin: 0; padding: 6px 10px; font-size: 13px; }
+.ck-head { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 10px; align-items: start; }
+.ck-box { margin: 0; }
+.ck-grid { display: grid; grid-template-columns: 110px minmax(0, 1fr) 110px minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+.ck-grid > label, .ck-grid2 > label { white-space: nowrap; }
+.ck-grid .ck-note { grid-column: 2 / span 3; resize: vertical; }
+.ck-grid2 { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+.ck-new { color: var(--bad, #c62828); font-weight: 600; }
+.ck-lines-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 6px 0; }
+.ck-table { width: 100%; min-width: 1180px; }
+.ck-table td .input { width: 100%; }
+.ck-total td { background: var(--total-bg, #fff8dc); }
+.ck-over { color: var(--bad, #c62828); font-weight: 600; }
+.ck-auto { background: var(--info-bg, #eef6ff); }
+@media (max-width: 900px) {
+  .ck-head { grid-template-columns: 1fr; }
+  .ck-grid { grid-template-columns: 100px minmax(0, 1fr); }
+  .ck-grid .ck-note { grid-column: 2; }
+}

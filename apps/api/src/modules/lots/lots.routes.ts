@@ -5,7 +5,7 @@
  *   GET  /api/v1/lots/:id/moves                               thẻ lô: vào / ra ở chứng từ nào
  *   GET  /api/v1/lots/documents?from=&to=&search=&docType=     phiếu có hàng đi theo lô (chọn để xem lô theo phiếu)
  *   GET  /api/v1/lots/document?docKey=                        phân lô của một phiếu (lô nào, tên lúc mua — tra cứu)
- *   GET  /api/v1/lots/suggest?branchCode=&warehouse=&date=&items=SKU*SL,SKU*SL   gợi ý lô khi lập phiếu xuất (hạn sớm trước)
+ *   GET  /api/v1/lots/suggest?branchCode=&warehouse=&date=&items=SKU*SL,SKU*SL&except=   gợi ý lô khi lập phiếu xuất (hạn sớm trước; except = phiếu đang sửa)
  *   POST /api/v1/lots/rebuild                                 phân lô lại theo thứ tự ngày (cả đơn vị hoặc một mã)
  */
 import type { FastifyInstance } from 'fastify';
@@ -40,10 +40,11 @@ export async function lotRoutes(app: FastifyInstance): Promise<void> {
   r.get('/api/v1/lots/suggest', {
     preHandler: requirePermission('documents:read'),
     schema: { tags, summary: 'Gợi ý lô khi lập phiếu xuất: hạn sớm trước, cùng hạn nhập trước',
-      querystring: z.object({ branchCode: z.string().min(1).max(32), warehouse: z.string().max(64).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), items: z.string().min(1).max(20000) }) },
+      querystring: z.object({ branchCode: z.string().min(1).max(32), warehouse: z.string().max(64).optional(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), items: z.string().min(1).max(20000), except: z.string().max(2000).optional() }) },
     handler: async (req) => {
       const items = req.query.items.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 500).map((x) => { const i = x.lastIndexOf('*'); return { sku: i > 0 ? x.slice(0, i) : x, qty: i > 0 ? Number(x.slice(i + 1)) || 0 : 0 }; }).filter((x) => x.sku && x.qty > 0);
-      return ok(await suggestLots(db, authOf(req).tenantId, { branchCode: req.query.branchCode, warehouse: req.query.warehouse, date: req.query.date, items }));
+      // except: khoá chứng từ (cách dấu phẩy) không tính — phiếu đang sửa không giữ chỗ lô của chính nó.
+      return ok(await suggestLots(db, authOf(req).tenantId, { branchCode: req.query.branchCode, warehouse: req.query.warehouse, date: req.query.date, items, except: req.query.except?.split(',').map((x) => x.trim()).filter(Boolean) }));
     },
   });
   r.get('/api/v1/lots/:id/moves', {

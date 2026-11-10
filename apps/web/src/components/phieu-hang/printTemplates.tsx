@@ -118,10 +118,11 @@ function TransferSheet({ d, ctx, internal, compact }: { d: TradeDoc; ctx: PrintC
         { h: 'Mã hàng', w: 90, v: (l) => l.sku },
         { h: 'Tên hàng hoá', v: (l) => l.name },
         { h: 'ĐVT', w: 44, center: true, v: (l) => l.unit },
+        { h: 'Số lô · HSD', w: compact ? 80 : 110, v: (l) => [l.lotNo, l.expDate ? l.expDate.split('-').reverse().join('/') : ''].filter(Boolean).join(' · ') },
         { h: 'SL xuất', w: 60, num: true, v: (l) => qty(l.qty) },
-        { h: 'SL nhận', w: 60, num: true, v: () => '' },
+        { h: 'SL nhận', w: 60, num: true, v: (l) => (l.receivedQty !== undefined ? qty(l.receivedQty) : '') },
         { h: 'Ghi chú', w: compact ? 80 : 120, v: () => '' },
-      ]} foot={<tr><td colSpan={4} className="c">Cộng</td><td className="num">{qty(sumQty(d.lines))}</td><td /><td /></tr>} />
+      ]} foot={<tr><td colSpan={5} className="c">Cộng</td><td className="num">{qty(sumQty(d.lines))}</td><td className="num">{d.lines.some((l) => l.receivedQty !== undefined) ? qty(d.lines.reduce((s, l) => s + (l.receivedQty ?? 0), 0)) : ''}</td><td /></tr>} />
       <Signs date={d.docDate} items={internal
         ? [{ title: 'Người lập phiếu' }, { title: 'Thủ kho xuất' }, { title: 'Người vận chuyển' }, { title: 'Thủ kho nhập' }]
         : [{ title: 'Người lập phiếu' }, { title: 'Thủ kho xuất' }, { title: 'Người vận chuyển' }, { title: 'Thủ kho nhập' }, { title: 'Kế toán' }]} />

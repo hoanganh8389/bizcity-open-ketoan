@@ -118,7 +118,7 @@ export async function documentLots(trx: Db, tenantId: string, docKey: string) {
  * trước, cùng hạn thì nhập trước — đúng thứ tự Kernel tự chọn khi dòng không ghi lô. Phiếu điền lô gợi ý thì ưu tiên lô đó;
  * để trống thì Kernel tự chọn như gợi ý. `shortage` = phần không đủ tồn lô.
  */
-export async function suggestLots(trx: Db, tenantId: string, q: { branchCode: string; warehouse?: string; date?: string; items: { sku: string; qty: number }[] }) {
+export async function suggestLots(trx: Db, tenantId: string, q: { branchCode: string; warehouse?: string; date?: string; items: { sku: string; qty: number }[]; except?: string[] }) {
   const branch = (await sql<{ id: string }>`SELECT id::text FROM branches WHERE tenant_id = ${tenantId} AND code = ${q.branchCode}`.execute(trx)).rows[0];
   if (!branch) throw Errors.validation(`Chi nhánh ${q.branchCode} không có`);
   const date = q.date ?? (await sql<{ d: string }>`SELECT current_date::text AS d`.execute(trx)).rows[0]!.d;
@@ -132,6 +132,7 @@ export async function suggestLots(trx: Db, tenantId: string, q: { branchCode: st
         FROM item_lots l JOIN inventory_lot_moves m ON m.lot_id = l.id
        WHERE l.tenant_id = ${tenantId} AND l.item_key = ${key} AND m.branch_id = ${branch.id}
          ${wh !== undefined ? sql`AND m.warehouse_code = ${wh}` : sql``} AND m.doc_date <= ${date}::date
+         ${q.except?.length ? sql`AND m.event_id NOT IN (SELECT id FROM accounting_events WHERE tenant_id = ${tenantId} AND doc_key = ANY(${q.except}::text[]))` : sql``}
        GROUP BY l.id, m.warehouse_code
       HAVING sum(m.qty) > 0
        ORDER BY l.exp_date NULLS LAST, l.first_date NULLS LAST, l.id, m.warehouse_code`.execute(trx)).rows;

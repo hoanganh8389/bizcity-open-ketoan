@@ -13,9 +13,19 @@
   "standard": "^1.0",
   "requires": {
     "capabilities": [
-      "masterdata.read"
+      "masterdata.read",
+      "ledger.submit",
+      "documents.numbering"
     ]
   },
+  "actions": [
+    "kho.transfer.create",
+    "kho.transfer.update",
+    "kho.transfer.receive",
+    "kho.transfer.unreceive",
+    "kho.transfer.reject",
+    "kho.transfer.cancel"
+  ],
   "ui": {
     "icon": "Warehouse",
     "color": "#7b1fa2",

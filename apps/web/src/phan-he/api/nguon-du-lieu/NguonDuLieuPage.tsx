@@ -9,11 +9,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { KIND_INFO, TRADE_ENDPOINT, TRADE_KINDS, getSource, hasMockChanges, setSource, tradeApi, type DataSource, type TradeKind } from '@/lib/tradeDocs';
 import { PageHeader } from '@/components/PageHeader';
 
-/** Mua hàng, trả NCC làm ở phân hệ Mua hàng (API thật /api/v1/purchase) — không còn màn dữ liệu giả. */
+/** Mua hàng, trả NCC làm ở phân hệ Mua hàng (API thật /api/v1/purchase); chuyển kho ở KHO01 (API thật /api/v1/kho/transfers) — không còn màn dữ liệu giả. */
 const SCREEN: Partial<Record<TradeKind, { path: string; code: string }>> = {
   sale: { path: '/ban-hang/phieu-ban', code: 'BH10' },
   sale_return: { path: '/ban-hang/tra-lai', code: 'BH11' },
-  transfer: { path: '/kho/chuyen-kho', code: 'KHO01' },
 };
 
 export function NguonDuLieuPage() {
