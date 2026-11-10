@@ -16,10 +16,11 @@ Chuyển hàng giữa hai chi nhánh, hoặc giữa hai kho trong cùng một ch
 |---|---|
 | Chi nhánh xuất | Điền sẵn chi nhánh đang làm việc (đổi ở thanh dưới cùng) |
 | Kho xuất / Kho nhập | Chỉ hiện kho của chi nhánh đã chọn, tự chọn kho mặc định. Cùng chi nhánh thì kho nhập tự chọn kho khác |
-| Lý do xuất | Lý do kế toán gán cho màn chuyển kho ở **Thiết kế hạch toán (ACC92)**. Lý do quyết định tài khoản |
 | Mã hàng | Gõ mã / tên / mã vạch rồi Enter. Trùng mã thì cộng số lượng |
 | Dán từ Excel | Chép các cột *Mã hàng · Số lượng · Ghi chú* rồi dán |
 | Tồn | Tồn ở chi nhánh + kho xuất tại ngày phiếu, không tính chính phiếu này. Số chuyển vượt tồn thì tô đỏ, khi ghi sẽ hỏi lại |
+
+Phiếu **không có ô lý do**: tài khoản (Nợ 1579 / Có 1561, khác đơn vị hạch toán dùng 13681) lấy theo **Tài khoản ngầm định (ACC41)** và quy tắc ở **Thiết kế hạch toán (ACC92)**.
 
 ## Lô hàng
 
