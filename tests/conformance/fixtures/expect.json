@@ -899,6 +899,22 @@
           ]
         }
       }
+    },
+    {
+      "root": "gates-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-GATE-1": {
+          "findings": 5,
+          "keys": [
+            "pillar:1:ZZ",
+            "unmapped:LA_HOAC",
+            "stale:codes",
+            "stale:tests",
+            "stale:triggers"
+          ]
+        }
+      }
     }
   ]
 }

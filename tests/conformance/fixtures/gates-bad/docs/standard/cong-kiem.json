@@ -1,0 +1,31 @@
+{
+  "contract": "bizcity_gates@1",
+  "map": [
+    {
+      "match": [
+        "LEDGER_*",
+        "ledger_*"
+      ],
+      "pillars": [
+        "I"
+      ]
+    },
+    {
+      "match": "IN-*",
+      "pillars": [
+        "ZZ"
+      ]
+    }
+  ],
+  "generated": {
+    "codes": {
+      "diag": [
+        "LEDGER_X"
+      ],
+      "finding": []
+    },
+    "tests": {},
+    "ci": [],
+    "triggers": []
+  }
+}

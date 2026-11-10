@@ -12,6 +12,12 @@ Mỗi bản ghi đủ sáu mục:
 
 ## [Chưa phát hành]
 
+### Thẻ Cổng & bộ kiểm đủ: trụ cột, test của từng mã; trigger CSDL và bộ kiểm CI có sổ (PHASE-034 B3b, S034-6) <!-- [2026-11-11 02:30 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B3b -->
+
+- **Thêm:** `docs/standard/cong-kiem.json` (`bizcity_gates@1`): họ mã → trụ cột (sửa tay) và phần sinh từ repo bằng `scripts/cong-kiem.mjs` (test của mã, mọi check SC-* / DG-*, mọi trigger CSDL); phép kiểm SC-GATE-1.
+- **Đổi:** `GET /api/v1/system/gates` trả thêm `pillars`, `tests`, `score` cho từng mã; cổng *Trigger CSDL* và *Bộ kiểm CI* có dữ liệu. Thẻ Cổng & bộ kiểm có cột Test, Trụ cột; mức mỗi mã đủ bốn ý.
+- **Nâng cấp cần làm:** kéo ảnh api mới (ảnh chép thêm `docs/standard/cong-kiem.json`).
+
 ### HT10 có dòng tổng: năm con số nhìn cả Core (PHASE-034 B6, S034-10) <!-- [2026-11-11 01:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-034 — B6 -->
 
 - **Thêm:** đầu màn Hệ thống → Trụ cột & mức đạt có dòng tổng: Tiêu chí · Nền móng · Cổng & bộ kiểm · Bộ máy · Công cụ dev; bấm số để mở thẻ. Không đổi API.
