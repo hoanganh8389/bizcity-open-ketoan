@@ -388,6 +388,13 @@
             "doc-missing:BADREASON"
           ]
         },
+        "SC-UI-1": {
+          "findings": 2,
+          "keys": [
+            "locked#1",
+            "rows === 0#1"
+          ]
+        },
         "SC-ACT-2": {
           "findings": 2,
           "keys": [
@@ -852,6 +859,43 @@
           "keys": [
             "missing-copy:docs/standard/thieu-copy.json",
             "missing-file:docs/standard/khong-co.json"
+          ]
+        }
+      }
+    },
+    {
+      "root": "engines-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-ENG-1": {
+          "findings": 10,
+          "keys": [
+            "id:E1",
+            "dup:E01",
+            "dup-key:a",
+            "manual:E02:status",
+            "path:E02:packages/khong-co",
+            "contract:E02:bizcity_khong@1",
+            "core:E02:C9",
+            "pillar:E02:XX",
+            "task:E02:S9-9",
+            "emit:E02:CHI_TRONG_TEST"
+          ]
+        }
+      }
+    },
+    {
+      "root": "devtools-bad",
+      "mode": "repo",
+      "checks": {
+        "SC-DEV-2": {
+          "findings": 5,
+          "keys": [
+            "missing:DEV02",
+            "stale:DEV01",
+            "extra:DEV03",
+            "path:DEV04",
+            "page:DEV04"
           ]
         }
       }

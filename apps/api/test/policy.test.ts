@@ -35,6 +35,11 @@ const versions = async () => (await call(ctx, 'GET', '/api/v1/posting/policy/ver
 
 beforeAll(async () => {
   ctx = await setupTenant();
+  // [2026-11-11 Nguyễn Văn Thủy] PHASE-026 — tệp này kiểm nhóm hạch toán / lý do: bật công tắc lý do hạch toán (mặc định tắt) (đóng góp)
+  {
+    const on = await call(ctx, 'PUT', '/api/v1/settings/values/bizcity.posting.use_reasons', { value: 'on', validFrom: '2000-01-01', reason: 'Kiểm nhóm hạch toán / lý do' }, { 'idempotency-key': 'bat-ly-do-hach-toan' });
+    if (on.status !== 200) throw new Error(JSON.stringify(on.body));
+  }
   tenantId = (await db.selectFrom('tenants').select('id').where('code', '=', ctx.tenantCode).executeTakeFirstOrThrow()).id;
 });
 afterAll(async () => {

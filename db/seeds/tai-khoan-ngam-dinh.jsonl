@@ -16,3 +16,7 @@
 {"key": "payable", "account_code": "3312", "name": "Phải trả nhà cung cấp"}
 {"key": "stock_surplus", "account_code": "3381", "name": "Hàng thừa chờ xử lý"}
 {"key": "stock_shortage", "account_code": "1381", "name": "Hàng thiếu chờ xử lý"}
+{"key": "revenue", "account_code": "51111", "name": "Doanh thu bán hàng"}
+{"key": "sales_return", "account_code": "52131", "name": "Hàng bán bị trả lại"}
+{"key": "cogs", "account_code": "6321", "name": "Giá vốn hàng bán"}
+{"key": "inventory", "account_code": "1561", "name": "Kho hàng hoá"}

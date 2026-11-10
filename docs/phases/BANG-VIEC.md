@@ -8,11 +8,11 @@
 | Đang làm | 8 |
 | Chờ merge | 0 |
 | Bị chặn | 28 |
-| Chưa ai nhận | 166 |
-| Chờ đủ tín hiệu | 61 |
+| Chưa ai nhận | 163 |
+| Chờ đủ tín hiệu | 62 |
 | Hoãn | 3 |
-| Xong | 286 |
-| **Tổng** | **552** |
+| Xong | 290 |
+| **Tổng** | **554** |
 
 ## Đang làm (8)
 
@@ -23,9 +23,9 @@
 | [S024-16](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L27) | PHASE-024 | SC-ITEM-1..3 + ca tự kiểm fixtures/repo-bad | P0 | hoanganh8389 (phiên Claude, core-ke-toan) · `feat/phase-024-s024-16-sc-item` |
 | [S024-33](PHASE-024-ITEM-MASTER-PHAN-LOAI-HACH-TOAN/40-MASTER-CHECKLIST.md#L44) | PHASE-024 | Bỏ suy tài khoản kho từ tiền tố ở packages/kernel/src/modules/posting/rules/stock.rule.ts:55 (startsWith('15'… | P0 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-024-s024-33-tk-kho` |
 | [S028-10](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L19) | PHASE-028 | W5: đợt 1 — quyền theo chi nhánh ở cửa nạp + luồng mẫu chuyển kho hai chiều (chữ chốt ADR-0027 Phụ lục A, W5 … | P1 | hoanganh8389 (phiên Claude, PHASE-028 authz) · `feat/phase-028-w5-thu-vien-tgs` |
+| [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | hoanganh8389 (phiên Claude, danh-gia-phase) · `feat/phase-029-s029-25-acc14` |
 | [S031-30](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L39) | PHASE-031 | W4c: ô Thực hiện chương trình — program[] ở core.policy.tracking (chứng từ áp, quà theo mặt hàng, lệch IN-POL… | P1 | hoanganh8389 (phiên Claude, PHASE-031 policy) · `feat/phase-031-w4c-thuc-hien-chuong-trinh` |
-| [S032-17](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L26) | PHASE-032 | Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLi… | P0 | hoanganh8389 (phiên Claude, PHASE-032; phụ trách phần giá vốn: Thuy2k) · `feat/phase-032-b3-tra-hang` |
-| [S034-7](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L16) | PHASE-034 | B4 — bo-may.json (bizcityengines@1, 13 dòng), GET /api/v1/system/engines (mốc đọc bang-viec.json), SC-ENG-1, … | P1 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b4-bo-may` |
+| [S034-6](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L15) | PHASE-034 | B3b — docs/standard/cong-kiem.json (map họ mã → trụ cột, sửa tay) + scripts/cong-kiem.mjs sinh test / CI / tr… | P1 | hoanganh8389 (phiên Claude, ht10-bang-hoan-thien) · `feat/phase-034-b3b-cong-kiem` |
 
 ## Chờ merge (0)
 
@@ -64,7 +64,7 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 
-## Chưa ai nhận (166)
+## Chưa ai nhận (163)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -223,19 +223,16 @@
 | [S032-26](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L35) | PHASE-032 | Sổ đăng ký phép kiểm một chỗ: mã PC-001..023, nhịp (ngày · tuần · kỳ), mức theo nhịp, remedy, chủ việc; ánh x… | P0 | — |
 | [S032-28](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L37) | PHASE-032 | Khoá kỳ kéo theo mọi chi nhánh cùng nhóm tính giá (PC-015); không khoá lẻ một chi nhánh khi giá vốn là của nh… | P0 | — |
 | [S032-29](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L38) | PHASE-032 | sourceDigest lúc kiểm, kiểm lại trong cùng giao dịch khoá (PC-021); đầu kỳ = snapshot cuối kỳ trước, mở lại k… | P0 | — |
-| [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | — |
 | [S032-32](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L41) | PHASE-032 | Chốt tuần (mềm): kế toán đánh dấu Đã xem tuần — mọi việc của tuần có người nhận hoặc lý do; không khoá dữ liệ… | P1 | — |
 | [S032-33](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L42) | PHASE-032 | Bảng điểm tháng: tổng các tuần + phép kiểm chỉ chạy ở kỳ + kết quả khoá; lưu cùng nhật ký khoá làm hồ sơ bằng… | P1 | — |
 | [S032-34](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L43) | PHASE-032 | Ma trận thời gian tiêu chí × tuần / tháng (60 §10): đọc bản chụp S032-31 / 33, mốc M0..M4 từ checklist; GET /… | P1 | — |
 | [S032-37](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L46) | PHASE-032 | SDK defineCheck + extensions.checks của bizcitymodule@1 (R-DIAG-15) | P1 | — |
 | [S032-38](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L47) | PHASE-032 | Bảng "trường cần để kiểm" theo loại chứng từ ở bizcityledgerintake@1; trạng thái "không kiểm được" trên bàn (… | P1 | — |
-| [S034-6](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L15) | PHASE-034 | B3b — trường pillars (và pc) cạnh DiagCheck, dòng findings, .check.mjs; scripts/cong-kiem-json.mjs (--kiem) s… | P1 | — |
-| [S034-8](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L17) | PHASE-034 | B5a — cong-cu-dev.json (bizcitydevtools@1), SC-DEV-2 khớp menu.ts, bảng tiến độ T1..T6 | P1 | — |
 | [S034-9](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L18) | PHASE-034 | B5b — tách Body cho DEV01..09; thẻ con "Chạy ở đây" (?cong-cu=DEVxx), quyền devtools:read, nạp lười | P1 | — |
-| [S034-10](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L19) | PHASE-034 | B6 — dòng tổng đầu màn, In cả năm thẻ, cập nhật docs/huong-dan/tru-cot-muc-dat.md | P2 | — |
-| [S034-11](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L20) | PHASE-034 | Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC- | P2 | — |
+| [S034-11](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L21) | PHASE-034 | Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC- | P2 | — |
+| [S034-12](PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md#L20) | PHASE-034 | In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10 | P2 | — |
 
-## Chờ đủ tín hiệu (61)
+## Chờ đủ tín hiệu (62)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -284,7 +281,6 @@
 | [S028-9](PHASE-028-CORE-AUTHORIZATION-PLUGIN-ROLE-EDITOR/40-MASTER-CHECKLIST.md#L18) | PHASE-028 | W4: Role Editor UI — module modules/phan-quyen/, mã màn HT12 (Q028-1 chốt), ma trận quyền × vai trò — chữ chố… | P1 | — |
 | [S029-9](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L18) | PHASE-029 | ADR-0028, R-ECP (ECP-01..13), trang nền móng 17 trụ cột, danh sách dữ liệu gốc, đánh giá 20, lộ trình 30; CAN… | P0 | — |
 | [S029-19](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L29) | PHASE-029 | Thuộc tính có hiệu lực (tên, MST, địa chỉ) cho đối tượng / chi nhánh / kho; ảnh chụp tên đối tượng trên dòng … | P0 | — |
-| [S029-25](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L35) | PHASE-029 | Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1 | P1 | — |
 | [S029-31](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L40) | PHASE-029 | Bản mẫu ma trận kiểm chuẩn + nen-mong.json (bizcityfoundations@1 0.1.0-draft); sáu lõi + LEAN-1..7 vào ADR-00… | P0 | — |
 | [S030-2](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L9) | PHASE-030 | Mockup mockups/thu-vien-nghiep-vu.html — trang Thư viện nghiệp vụ là màn đầu tiên (chủ dự án duyệt hướng 2026… | P0 | — |
 | [S030-9](PHASE-030-THU-VIEN-NGHIEP-VU-ERP-VN/40-MASTER-CHECKLIST.md#L16) | PHASE-030 | Khuôn golden test 60 + danh sách 73 ca; nhóm Lõi duyệt khuôn | P0 | — |
@@ -295,8 +291,10 @@
 | [S031-19](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L28) | PHASE-031 | nen-mong.json / NEN-MONG-DOANH-NGHIEP.md: trụ cột 05 hai nửa, tín hiệu nửa Policy; tru-cot.json V theo Q031-1 | P1 | — |
 | [S032-4](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L13) | PHASE-032 | Hướng dẫn tính giá vốn (docs/huong-dan/tinh-gia-von.md), căn cứ (can-cu/04), nghiệp vụ (11) thêm mục Kiến trú… | P1 | — |
 | [S032-6](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L15) | PHASE-032 | Kế toán trưởng trả Q032-1 (phạm vi nhóm tính giá), Q032-5 (hoàn không có gốc); nhóm Lõi trả Q032-2 (nhịp FIFO… | P0 | — |
+| [S032-17](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L26) | PHASE-032 | Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLi… | P0 | — |
 | [S032-27](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L36) | PHASE-032 | Hộp việc hằng ngày: chạy chẩn đoán L3 hiện có lúc 01:00 (bizcity.clock.daily, cạnh kiểm chuẩn đêm), lưu lượt,… | P0 | — |
 | [S032-30](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L39) | PHASE-032 | Mức HARD hẹp / REVIEW có lý do gắn sourceDigest theo 60 §6; sửa R-DIAG-4 cho nhóm HARD — sau khi chủ dự án tr… | P0 | — |
+| [S032-31](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L40) | PHASE-032 | Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60… | P0 | — |
 | [S032-35](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L44) | PHASE-032 | Trường mới của DiagCheck (closeRef, cadence, stage, severityAtClose, owner, scopeBy); gắn closeRef cho mọi ch… | P0 | — |
 | [S032-36](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L45) | PHASE-032 | Khoá thử hôm nay đủ năm bước (R-DIAG-14): periods/check + giá vốn tính tạm + closing/preview + kiểm sau kết c… | P0 | — |
 | [S032-39](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L48) | PHASE-032 | Bàn làm việc kế toán năm thẻ từ HT08 (Việc hôm nay · Khoá thử hôm nay · Kết quả từng tuần, tháng · Sổ theo dõ… | P1 | — |
@@ -309,6 +307,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (286)
+## Xong (290)
 
 Chỉ đếm; xem từng việc ở checklist của phase.

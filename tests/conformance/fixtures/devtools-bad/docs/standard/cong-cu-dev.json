@@ -1,0 +1,35 @@
+{
+  "contract": "bizcity_devtools@1",
+  "tools": [
+    {
+      "code": "DEV01",
+      "label": "A",
+      "path": "/dev/a",
+      "page": "apps/web/src/phan-he/dev/a/APage.tsx",
+      "api": [],
+      "sources": [],
+      "criteria": {
+        "T1": {
+          "state": "co",
+          "ev": "gõ tay"
+        }
+      }
+    },
+    {
+      "code": "DEV03",
+      "label": "X",
+      "path": "/dev/x",
+      "page": "apps/web/src/phan-he/dev/x/XPage.tsx",
+      "api": [],
+      "sources": []
+    },
+    {
+      "code": "DEV04",
+      "label": "C",
+      "path": "/dev/khac",
+      "page": "apps/web/src/phan-he/dev/khong-co/CPage.tsx",
+      "api": [],
+      "sources": []
+    }
+  ]
+}

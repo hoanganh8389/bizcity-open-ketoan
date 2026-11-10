@@ -2027,6 +2027,2347 @@
           "message": "action kho.transfer.cancel gọi cancelTransfer (có thể sinh bút toán) nhưng sideEffects ['documents'] thiếu 'ledger' — STD-ACT-9"
         }
       ]
+    },
+    "SC-UI-1": {
+      "title": "Nút / ô bị chặn theo điều kiện nói vì sao và cách gỡ (title, blocked, BlockedHint) — R-BLOCK",
+      "ref": "R-BLOCK (docs/rules/RULE-BLOCKED.md §4, chủ dự án 2026-11-10) · S022-22 — nợ đo 2026-11-10; chủ mỗi màn trả khi chạm tệp (bọc BlockedHint)",
+      "debts": [
+        {
+          "fp": "SC-UI-1|apps/web/src/addins/spreadsheet-ai/SpreadsheetAiPage.tsx|!ds.data#1",
+          "file": "apps/web/src/addins/spreadsheet-ai/SpreadsheetAiPage.tsx",
+          "message": "<button disabled={!ds.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/addins/tro-ly/TroLyPage.tsx|!branch || run.isPending#1",
+          "file": "apps/web/src/addins/tro-ly/TroLyPage.tsx",
+          "message": "<button disabled={!branch || run.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/addins/tro-ly/TroLyPage.tsx|!branch || all.isPending#1",
+          "file": "apps/web/src/addins/tro-ly/TroLyPage.tsx",
+          "message": "<button disabled={!branch || all.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/CayDonVi.tsx|!has#1",
+          "file": "apps/web/src/components/CayDonVi.tsx",
+          "message": "<button disabled={!has}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/CayDonVi.tsx|!pick#1",
+          "file": "apps/web/src/components/CayDonVi.tsx",
+          "message": "<button disabled={!pick}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/CayNhomHang.tsx|!ks.length#1",
+          "file": "apps/web/src/components/CayNhomHang.tsx",
+          "message": "<button disabled={!ks.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/DataGrid.tsx|sel.size === 0#1",
+          "file": "apps/web/src/components/DataGrid.tsx",
+          "message": "<button disabled={sel.size === 0}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/ExcelImport.tsx|busy || !parsed?.rows.length || (onCheck ? !check?.ok : false)#1",
+          "file": "apps/web/src/components/ExcelImport.tsx",
+          "message": "<button disabled={busy || !parsed?.rows.length || (onCheck ? !check?.ok : false)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/filters.tsx|disabled#1",
+          "file": "apps/web/src/components/filters.tsx",
+          "message": "<ListPicker disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/MaTraCuu.tsx|i >= ds.length - 1#1",
+          "file": "apps/web/src/components/MaTraCuu.tsx",
+          "message": "<button disabled={i >= ds.length - 1}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/MaTraCuu.tsx|i === 0#1",
+          "file": "apps/web/src/components/MaTraCuu.tsx",
+          "message": "<button disabled={i === 0}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/ChonKho.tsx|true#1",
+          "file": "apps/web/src/components/phieu-hang/ChonKho.tsx",
+          "message": "<select disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/ChonKho.tsx|disabled#1",
+          "file": "apps/web/src/components/phieu-hang/ChonKho.tsx",
+          "message": "<select disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#1",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#2",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<ChonKho disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#3",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<ChonKho disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#4",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#5",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#6",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#7",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<NumInput disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly || l.isGift#1",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<input disabled={readOnly || l.isGift}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#8",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<select disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangForm.tsx|readOnly#9",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/phieu-hang/PhieuHangPage.tsx|!sel#1",
+          "file": "apps/web/src/components/phieu-hang/PhieuHangPage.tsx",
+          "message": "<button disabled={!sel}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/RemedyView.tsx|rechecking#1",
+          "file": "apps/web/src/components/RemedyView.tsx",
+          "message": "<button disabled={rechecking}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/ReportPanel.tsx|!onExport#1",
+          "file": "apps/web/src/components/ReportPanel.tsx",
+          "message": "<button disabled={!onExport}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/ui.tsx|page <= 1#1",
+          "file": "apps/web/src/components/ui.tsx",
+          "message": "<button disabled={page <= 1}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/ui.tsx|page >= pages#1",
+          "file": "apps/web/src/components/ui.tsx",
+          "message": "<button disabled={page >= pages}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/voucher/VoucherListPage.tsx|!canWrite || busy#1",
+          "file": "apps/web/src/components/voucher/VoucherListPage.tsx",
+          "message": "<button disabled={!canWrite || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/voucher/VoucherListPage.tsx|!rows.length#1",
+          "file": "apps/web/src/components/voucher/VoucherListPage.tsx",
+          "message": "<button disabled={!rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/voucher/VoucherModal.tsx|readOnly || saving#1",
+          "file": "apps/web/src/components/voucher/VoucherModal.tsx",
+          "message": "<button disabled={readOnly || saving}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/voucher/VoucherModal.tsx|readOnly || saving#2",
+          "file": "apps/web/src/components/voucher/VoucherModal.tsx",
+          "message": "<button disabled={readOnly || saving}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/voucher/VoucherModal.tsx|!existing#1",
+          "file": "apps/web/src/components/voucher/VoucherModal.tsx",
+          "message": "<button disabled={!existing}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/voucher/VoucherModal.tsx|readOnly || saving#3",
+          "file": "apps/web/src/components/voucher/VoucherModal.tsx",
+          "message": "<button disabled={readOnly || saving}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/components/WhyPanel.tsx|!ack.valid#1",
+          "file": "apps/web/src/components/WhyPanel.tsx",
+          "message": "<button disabled={!ack.valid}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/access/ApiKeysPage.tsx|save.isPending || !name || !scopes.length#1",
+          "file": "apps/web/src/features/access/ApiKeysPage.tsx",
+          "message": "<button disabled={save.isPending || !name || !scopes.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/access/ChangePasswordModal.tsx|save.isPending || save.isSuccess || !currentPassword || newPassword.length < 8 || again !== newPassword#1",
+          "file": "apps/web/src/features/access/ChangePasswordModal.tsx",
+          "message": "<button disabled={save.isPending || save.isSuccess || !currentPassword || newPassword.length < 8 |}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/access/ChangePasswordModal.tsx|others.isPending || others.isSuccess#1",
+          "file": "apps/web/src/features/access/ChangePasswordModal.tsx",
+          "message": "<button disabled={others.isPending || others.isSuccess}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/access/UsersPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/access/UsersPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/auth/LoginPage.tsx|busy || redirecting#1",
+          "file": "apps/web/src/features/auth/LoginPage.tsx",
+          "message": "<button disabled={busy || redirecting}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/AccountsPage.tsx|save.isPending || !v.code || !v.name || why.blocked#1",
+          "file": "apps/web/src/features/catalog/AccountsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.name || why.blocked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/AccountsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/catalog/AccountsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/AccountsPage.tsx|true#1",
+          "file": "apps/web/src/features/catalog/AccountsPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/autoCreate.tsx|!canRun#1",
+          "file": "apps/web/src/features/catalog/autoCreate.tsx",
+          "message": "<button disabled={!canRun}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/BankAccountsPage.tsx|save.isPending || !v.code || !v.bankName || !v.accountNo || !v.accountCode#1",
+          "file": "apps/web/src/features/catalog/BankAccountsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.bankName || !v.accountNo || !v.accountCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/BankAccountsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/catalog/BankAccountsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/BranchesPage.tsx|save.isPending || !v.code?.trim() || !v.name?.trim()#1",
+          "file": "apps/web/src/features/catalog/BranchesPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code?.trim() || !v.name?.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ContractSchedulesPage.tsx|!ready#1",
+          "file": "apps/web/src/features/catalog/ContractSchedulesPage.tsx",
+          "message": "<button disabled={!ready}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ContractSchedulesPage.tsx|!ready#2",
+          "file": "apps/web/src/features/catalog/ContractSchedulesPage.tsx",
+          "message": "<button disabled={!ready}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ContractSchedulesPage.tsx|true#1",
+          "file": "apps/web/src/features/catalog/ContractSchedulesPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ContractSchedulesPage.tsx|true#2",
+          "file": "apps/web/src/features/catalog/ContractSchedulesPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ContractSchedulesPage.tsx|true#3",
+          "file": "apps/web/src/features/catalog/ContractSchedulesPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/DimensionsPage.tsx|save.isPending || !code || !v.name?.trim()#1",
+          "file": "apps/web/src/features/catalog/DimensionsPage.tsx",
+          "message": "<button disabled={save.isPending || !code || !v.name?.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/DimensionsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/catalog/DimensionsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/DimensionsPage.tsx|!gen.first || !n(gen.periods) || !n(gen.amount)#1",
+          "file": "apps/web/src/features/catalog/DimensionsPage.tsx",
+          "message": "<button disabled={!gen.first || !n(gen.periods) || !n(gen.amount)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/DimensionsPage.tsx|x.status !== 'paid'#1",
+          "file": "apps/web/src/features/catalog/DimensionsPage.tsx",
+          "message": "<input disabled={x.status !== 'paid'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/NhomHangPage.tsx|editable || !node#1",
+          "file": "apps/web/src/features/catalog/NhomHangPage.tsx",
+          "message": "<button disabled={editable || !node}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/NhomHangPage.tsx|editable#1",
+          "file": "apps/web/src/features/catalog/NhomHangPage.tsx",
+          "message": "<button disabled={editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/NhomHangPage.tsx|!editable#1",
+          "file": "apps/web/src/features/catalog/NhomHangPage.tsx",
+          "message": "<button disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/NhomHangPage.tsx|!editable#2",
+          "file": "apps/web/src/features/catalog/NhomHangPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/NhomHangPage.tsx|pick !== null && banned.has(pick)#1",
+          "file": "apps/web/src/features/catalog/NhomHangPage.tsx",
+          "message": "<button disabled={pick !== null && banned.has(pick)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/OrgUnitsPage.tsx|Boolean(mode) || !node#1",
+          "file": "apps/web/src/features/catalog/OrgUnitsPage.tsx",
+          "message": "<button disabled={Boolean(mode) || !node}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/OrgUnitsPage.tsx|!mode || !f.name.trim() || (mode === 'add' && !f.code.trim()) || save.isPending#1",
+          "file": "apps/web/src/features/catalog/OrgUnitsPage.tsx",
+          "message": "<button disabled={!mode || !f.name.trim() || (mode === 'add' && !f.code.trim()) || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/OrgUnitsPage.tsx|Boolean(mode)#1",
+          "file": "apps/web/src/features/catalog/OrgUnitsPage.tsx",
+          "message": "<button disabled={Boolean(mode)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/OrgUnitsPage.tsx|!mode#1",
+          "file": "apps/web/src/features/catalog/OrgUnitsPage.tsx",
+          "message": "<button disabled={!mode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/OrgUnitsPage.tsx|!body || !res || res.errorCount > 0 || busy#1",
+          "file": "apps/web/src/features/catalog/OrgUnitsPage.tsx",
+          "message": "<button disabled={!body || !res || res.errorCount > 0 || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|save.isPending || why.blocked#1",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<button disabled={save.isPending || why.blocked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|true#1",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|true#2",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|true#3",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|!isNew#1",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<input disabled={!isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|save.isPending || !e.code || !e.name#1",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<button disabled={save.isPending || !e.code || !e.name}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PartnersPage.tsx|!e.isNew#1",
+          "file": "apps/web/src/features/catalog/PartnersPage.tsx",
+          "message": "<input disabled={!e.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PriceListsPage.tsx|save.isPending || !v.code?.trim() || !v.name?.trim()#1",
+          "file": "apps/web/src/features/catalog/PriceListsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code?.trim() || !v.name?.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PriceListsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/catalog/PriceListsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/PriceRowsPanel.tsx|!dirty.size || save.isPending#1",
+          "file": "apps/web/src/features/catalog/PriceRowsPanel.tsx",
+          "message": "<button disabled={!dirty.size || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ProductFullForm.tsx|v.variantCode === 'internal' || Boolean(v.hasMovements)#1",
+          "file": "apps/web/src/features/catalog/ProductFullForm.tsx",
+          "message": "<input disabled={v.variantCode === 'internal' || Boolean(v.hasMovements)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ProductFullForm.tsx|locked#1",
+          "file": "apps/web/src/features/catalog/ProductFullForm.tsx",
+          "message": "<ListPicker disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ProductFullForm.tsx|locked#2",
+          "file": "apps/web/src/features/catalog/ProductFullForm.tsx",
+          "message": "<ListPicker disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ProductsPage.tsx|labelScope === 'sel' && !sel#1",
+          "file": "apps/web/src/features/catalog/ProductsPage.tsx",
+          "message": "<PrintButton disabled={labelScope === 'sel' && !sel}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ProductsPage.tsx|scan.busy || !scan.pw#1",
+          "file": "apps/web/src/features/catalog/ProductsPage.tsx",
+          "message": "<button disabled={scan.busy || !scan.pw}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/TaxCodesPage.tsx|save.isPending || !v.code || !v.name#1",
+          "file": "apps/web/src/features/catalog/TaxCodesPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.name}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/TaxCodesPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/catalog/TaxCodesPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ThemSanPhamCon.tsx|!can || save.isPending#1",
+          "file": "apps/web/src/features/catalog/ThemSanPhamCon.tsx",
+          "message": "<button disabled={!can || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/ThemSanPhamCon.tsx|variantCode === 'internal'#1",
+          "file": "apps/web/src/features/catalog/ThemSanPhamCon.tsx",
+          "message": "<input disabled={variantCode === 'internal'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/UnitNamesPage.tsx|save.isPending || Boolean(bad) || !canWrite#1",
+          "file": "apps/web/src/features/catalog/UnitNamesPage.tsx",
+          "message": "<button disabled={save.isPending || Boolean(bad) || !canWrite}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/UnitNamesPage.tsx|used#1",
+          "file": "apps/web/src/features/catalog/UnitNamesPage.tsx",
+          "message": "<input disabled={used}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/WarehousesPage.tsx|save.isPending || !v.code?.trim() || !v.branchCode || !v.name?.trim()#1",
+          "file": "apps/web/src/features/catalog/WarehousesPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code?.trim() || !v.branchCode || !v.name?.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/catalog/WarehousesPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/catalog/WarehousesPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!draft || save.isPending#1",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<button disabled={!draft || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit || Boolean(saved)#1",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit || Boolean(saved)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit#1",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit#2",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<select disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit#3",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit#4",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit || c.kind !== 'woocommerce'#1",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit || c.kind !== 'woocommerce'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit || c.kind !== 'woocommerce'#2",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit || c.kind !== 'woocommerce'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit || c.kind !== 'woocommerce'#3",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit || c.kind !== 'woocommerce'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit#5",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<textarea disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!canEdit#6",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<input disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/Connections.tsx|!chosen.size || branchCodes?.length === 0 || pull.isPending#1",
+          "file": "apps/web/src/features/documents/Connections.tsx",
+          "message": "<button disabled={!chosen.size || branchCodes?.length === 0 || pull.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentDetail.tsx|!canPost || post.isPending#1",
+          "file": "apps/web/src/features/documents/DocumentDetail.tsx",
+          "message": "<button disabled={!canPost || post.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentDetail.tsx|!canPost || post.isPending#2",
+          "file": "apps/web/src/features/documents/DocumentDetail.tsx",
+          "message": "<button disabled={!canPost || post.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentDetail.tsx|!canPost || receipt.isPending#1",
+          "file": "apps/web/src/features/documents/DocumentDetail.tsx",
+          "message": "<button disabled={!canPost || receipt.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentDetail.tsx|!canPost || receipt.isPending#2",
+          "file": "apps/web/src/features/documents/DocumentDetail.tsx",
+          "message": "<button disabled={!canPost || receipt.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentsPage.tsx|!canPost || busy || !rows.length#1",
+          "file": "apps/web/src/features/documents/DocumentsPage.tsx",
+          "message": "<button disabled={!canPost || busy || !rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentsPage.tsx|!canPost || busy || !picked.length#1",
+          "file": "apps/web/src/features/documents/DocumentsPage.tsx",
+          "message": "<button disabled={!canPost || busy || !picked.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentsPage.tsx|!draft || save.isPending#1",
+          "file": "apps/web/src/features/documents/DocumentsPage.tsx",
+          "message": "<button disabled={!draft || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/DocumentsPage.tsx|!canEdit#1",
+          "file": "apps/web/src/features/documents/DocumentsPage.tsx",
+          "message": "<select disabled={!canEdit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/ExportAdjustPage.tsx|!picked.length#1",
+          "file": "apps/web/src/features/documents/ExportAdjustPage.tsx",
+          "message": "<PrintButton disabled={!picked.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/IntakeStation.tsx|!chosen.length || reason.trim().length < 3 || m.isPending#1",
+          "file": "apps/web/src/features/documents/IntakeStation.tsx",
+          "message": "<button disabled={!chosen.length || reason.trim().length < 3 || m.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/documents/IntakeStation.tsx|reason.trim().length < 3 || m.isPending#1",
+          "file": "apps/web/src/features/documents/IntakeStation.tsx",
+          "message": "<button disabled={reason.trim().length < 3 || m.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/ledger/AccountingVouchersPage.tsx|!rows.length#1",
+          "file": "apps/web/src/features/ledger/AccountingVouchersPage.tsx",
+          "message": "<button disabled={!rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/policy/LineageTab.tsx|!doc.trim()#1",
+          "file": "apps/web/src/features/policy/LineageTab.tsx",
+          "message": "<button disabled={!doc.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/policy/RegistryTab.tsx|!cursor.length#1",
+          "file": "apps/web/src/features/policy/RegistryTab.tsx",
+          "message": "<button disabled={!cursor.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/policy/RegistryTab.tsx|d.next == null#1",
+          "file": "apps/web/src/features/policy/RegistryTab.tsx",
+          "message": "<button disabled={d.next == null}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/DefaultsPage.tsx|!canWrite#1",
+          "file": "apps/web/src/features/posting/DefaultsPage.tsx",
+          "message": "<AccountPicker disabled={!canWrite}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/DefaultsPage.tsx|!canWrite || save.isPending#1",
+          "file": "apps/web/src/features/posting/DefaultsPage.tsx",
+          "message": "<button disabled={!canWrite || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/GroupsPage.tsx|save.isPending || !v.code#1",
+          "file": "apps/web/src/features/posting/GroupsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/GroupsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/posting/GroupsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/PaymentMethodsPage.tsx|save.isPending || !v.code || !v.name#1",
+          "file": "apps/web/src/features/posting/PaymentMethodsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.name}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/PaymentMethodsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/posting/PaymentMethodsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/PaymentMethodsPage.tsx|Boolean(v.bankAccountCode) && !v.partnerCode && !transit#1",
+          "file": "apps/web/src/features/posting/PaymentMethodsPage.tsx",
+          "message": "<AccountPicker disabled={Boolean(v.bankAccountCode) && !v.partnerCode && !transit}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ProductAccountsPage.tsx|!canWrite#1",
+          "file": "apps/web/src/features/posting/ProductAccountsPage.tsx",
+          "message": "<ExcelImport disabled={!canWrite}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ReasonsPage.tsx|!canWrite#1",
+          "file": "apps/web/src/features/posting/ReasonsPage.tsx",
+          "message": "<ExcelImport disabled={!canWrite}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ReasonsPage.tsx|save.isPending || !v.code || !v.name#1",
+          "file": "apps/web/src/features/posting/ReasonsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.name}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ReasonsPage.tsx|!value.isNew#1",
+          "file": "apps/web/src/features/posting/ReasonsPage.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#1",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<CondInput disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#2",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<AccountPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#3",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<AccountPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#4",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#5",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#6",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<select disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#7",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|readOnly#8",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|disabled#1",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<select disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|disabled#2",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<select disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|disabled#3",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<select disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|disabled#4",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<select disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|!f.name.trim() || (!system && !f.reasonCode.trim()) || save.isPending#1",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<button disabled={!f.name.trim() || (!system && !f.reasonCode.trim()) || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|Boolean(biz)#1",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<select disabled={Boolean(biz)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|Boolean(biz)#2",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<input disabled={Boolean(biz)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/posting/ThietKeHachToanPage.tsx|!reason.trim() || stop.isPending#1",
+          "file": "apps/web/src/features/posting/ThietKeHachToanPage.tsx",
+          "message": "<button disabled={!reason.trim() || stop.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|save.isPending || !f.code || !f.name || !f.sku#1",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<button disabled={save.isPending || !f.code || !f.name || !f.sku}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro || Boolean(program)#1",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<input disabled={ro || Boolean(program)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#1",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<input disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#2",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<select disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#3",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<ItemPicker disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#4",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<button disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#5",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<button disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#6",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<NumInput disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#7",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<NumInput disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#8",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<ItemPicker disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#9",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<select disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#10",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<NumInput disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#11",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<input disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#12",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<input disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#13",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<input disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx|ro#14",
+          "file": "apps/web/src/features/sale-programs/ChuongTrinhBanPage.tsx",
+          "message": "<input disabled={ro}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/AccountingProfilePage.tsx|publish.isPending || v.note.trim().length < 5#1",
+          "file": "apps/web/src/features/system/AccountingProfilePage.tsx",
+          "message": "<button disabled={publish.isPending || v.note.trim().length < 5}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/CatalogRulesPage.tsx|reason.trim().length < WARN_ACK_MIN_REASON || save.isPending#1",
+          "file": "apps/web/src/features/system/CatalogRulesPage.tsx",
+          "message": "<button disabled={reason.trim().length < WARN_ACK_MIN_REASON || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/CatalogRulesPage.tsx|!t.title.trim() || !t.why.trim() || review.isPending#1",
+          "file": "apps/web/src/features/system/CatalogRulesPage.tsx",
+          "message": "<button disabled={!t.title.trim() || !t.why.trim() || review.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/CatalogRulesPage.tsx|t.note.trim().length < WARN_ACK_MIN_REASON || review.isPending#1",
+          "file": "apps/web/src/features/system/CatalogRulesPage.tsx",
+          "message": "<button disabled={t.note.trim().length < WARN_ACK_MIN_REASON || review.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/ConfigChangeForm.tsx|!dateOk || preview.isFetching#1",
+          "file": "apps/web/src/features/system/ConfigChangeForm.tsx",
+          "message": "<button disabled={!dateOk || preview.isFetching}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/ConformancePage.tsx|!ok || send.isPending#1",
+          "file": "apps/web/src/features/system/ConformancePage.tsx",
+          "message": "<button disabled={!ok || send.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/PrintTemplatesPage.tsx|save.isPending || !enabled || x.screen#1",
+          "file": "apps/web/src/features/system/PrintTemplatesPage.tsx",
+          "message": "<input disabled={save.isPending || !enabled || x.screen}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/PrintTemplatesPage.tsx|saving || signs.some((s) => !s.title.trim())#1",
+          "file": "apps/web/src/features/system/PrintTemplatesPage.tsx",
+          "message": "<button disabled={saving || signs.some((s) => !s.title.trim())}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/PrintTemplatesPage.tsx|v.formNote === ''#1",
+          "file": "apps/web/src/features/system/PrintTemplatesPage.tsx",
+          "message": "<input disabled={v.formNote === ''}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/ReviewBoardPage.tsx|!b#1",
+          "file": "apps/web/src/features/system/ReviewBoardPage.tsx",
+          "message": "<button disabled={!b}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/TenantPage.tsx|true#1",
+          "file": "apps/web/src/features/system/TenantPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/TenantPage.tsx|!editable#1",
+          "file": "apps/web/src/features/system/TenantPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/TenantPage.tsx|!editable#2",
+          "file": "apps/web/src/features/system/TenantPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/TenantPage.tsx|!editable#3",
+          "file": "apps/web/src/features/system/TenantPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/TenantPage.tsx|!editable#4",
+          "file": "apps/web/src/features/system/TenantPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/system/TenantPage.tsx|save.isPending || !v.name.trim()#1",
+          "file": "apps/web/src/features/system/TenantPage.tsx",
+          "message": "<button disabled={save.isPending || !v.name.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#1",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|true#1",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#2",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<ListPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#3",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|!existing#1",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<PrintButton disabled={!existing}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis || Boolean(existing)#1",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis || Boolean(existing)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#4",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|true#2",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<select disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|true#3",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#5",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|true#4",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#6",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<button disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#7",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<ListPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#8",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<ListPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#9",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<PartnerPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#10",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#11",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#12",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis || Boolean(existing)#2",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<BranchPicker disabled={dis || Boolean(existing)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|true#5",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#13",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#14",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#15",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<button disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis || activeKey === null#1",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<button disabled={dis || activeKey === null}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#16",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<AccountPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#17",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<PartnerPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#18",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<select disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#19",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<select disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#20",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|dis#21",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVoucherForm.tsx|!picked.size#1",
+          "file": "apps/web/src/features/vouchers/CashVoucherForm.tsx",
+          "message": "<button disabled={!picked.size}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/CashVouchersPage.tsx|!signRole#1",
+          "file": "apps/web/src/features/vouchers/CashVouchersPage.tsx",
+          "message": "<button disabled={!signRole}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#2",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#3",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<ListPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|!existing#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<PrintButton disabled={!existing}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis || Boolean(existing)#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis || Boolean(existing)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#4",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#5",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#6",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<ListPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#7",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<ListPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|true#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<select disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|true#2",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|true#3",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis || Boolean(existing)#2",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<BranchPicker disabled={dis || Boolean(existing)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#8",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<button disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis || activeKey === null#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<button disabled={dis || activeKey === null}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#9",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<AccountPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#10",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<PartnerPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#11",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<select disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#12",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis || !active#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<button disabled={dis || !active}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis || activeCounter === null#1",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<button disabled={dis || activeCounter === null}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#13",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<AccountPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#14",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#15",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<PartnerPicker disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/ManualVoucherForm.tsx|dis#16",
+          "file": "apps/web/src/features/vouchers/ManualVoucherForm.tsx",
+          "message": "<input disabled={dis}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/OffsetPage.tsx|!canSave || save.isPending#1",
+          "file": "apps/web/src/features/vouchers/OffsetPage.tsx",
+          "message": "<button disabled={!canSave || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/TemplatesPage.tsx|!picked.size || gen.isPending#1",
+          "file": "apps/web/src/features/vouchers/TemplatesPage.tsx",
+          "message": "<button disabled={!picked.size || gen.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/TemplatesPage.tsx|Boolean(d.problem)#1",
+          "file": "apps/web/src/features/vouchers/TemplatesPage.tsx",
+          "message": "<input disabled={Boolean(d.problem)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/TemplatesPage.tsx|save.isPending || !v.templateCode || !v.startMonth#1",
+          "file": "apps/web/src/features/vouchers/TemplatesPage.tsx",
+          "message": "<button disabled={save.isPending || !v.templateCode || !v.startMonth}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#1",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<ListPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|!canSave || save.isPending#1",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<button disabled={!canSave || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|!template.isNew#1",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={!template.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#2",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<BranchPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#3",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#4",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#5",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#6",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#7",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<PartnerPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#8",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#9",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<select disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|dimsVisible && !showDims#1",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={dimsVisible && !showDims}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !h.partnerCode#1",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !h.partnerCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#10",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<AccountPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#11",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#12",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#13",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<PartnerPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#14",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<select disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#15",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<select disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !l.taxCode#1",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !l.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !l.taxCode#2",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !l.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !l.taxCode#3",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !l.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !l.taxCode#4",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !l.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !l.taxCode#5",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !l.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly || !l.taxCode#6",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly || !l.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/features/vouchers/VoucherForm.tsx|readOnly#16",
+          "file": "apps/web/src/features/vouchers/VoucherForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/layout/MobileNav.tsx|true#1",
+          "file": "apps/web/src/layout/MobileNav.tsx",
+          "message": "<div disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ban-hang/sales/SalesDetailPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ban-hang/sales/SalesDetailPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ban-hang/sales/SalesPaymentsPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ban-hang/sales/SalesPaymentsPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ban-hang/sales/SalesReceiptsPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ban-hang/sales/SalesReceiptsPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ban-hang/sales/SalesSummaryPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ban-hang/sales/SalesSummaryPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/dev/nhat-ky/NhatKyPage.tsx|!query#1",
+          "file": "apps/web/src/phan-he/dev/nhat-ky/NhatKyPage.tsx",
+          "message": "<button disabled={!query}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|r.status !== 'posted'#1",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<input disabled={r.status !== 'posted'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|!rows.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<button disabled={!rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|!lines.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<button disabled={!lines.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|true#1",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|true#2",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|true#3",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|true#4",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<input disabled={true}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx|!branchCodes.length || preview.isPending#1",
+          "file": "apps/web/src/phan-he/ke-toan/closing/ClosingPage.tsx",
+          "message": "<button disabled={!branchCodes.length || preview.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtConfirmationPage.tsx|!selected.size || busy#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtConfirmationPage.tsx",
+          "message": "<button disabled={!selected.size || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtItemsPage.tsx|!candidates.length || me.remaining <= 0#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtItemsPage.tsx",
+          "message": "<button disabled={!candidates.length || me.remaining <= 0}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtItemsPage.tsx|!picked.length || over || save.isPending#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtItemsPage.tsx",
+          "message": "<button disabled={!picked.length || over || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtItemsPage.tsx|!canWrite#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtItemsPage.tsx",
+          "message": "<input disabled={!canWrite}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx|!picked.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx",
+          "message": "<PrintButton disabled={!picked.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx|!canSave || save.isPending#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx",
+          "message": "<button disabled={!canSave || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx|!v.taxCode#1",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx",
+          "message": "<input disabled={!v.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx|!v.taxCode#2",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx",
+          "message": "<input disabled={!v.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx|!v.taxCode#3",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx",
+          "message": "<input disabled={!v.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx|!v.taxCode#4",
+          "file": "apps/web/src/phan-he/ke-toan/debts/DebtVouchersPage.tsx",
+          "message": "<input disabled={!v.taxCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/ledger/SuaDauButToanPage.tsx|page <= 1#1",
+          "file": "apps/web/src/phan-he/ke-toan/ledger/SuaDauButToanPage.tsx",
+          "message": "<button disabled={page <= 1}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/ledger/SuaDauButToanPage.tsx|page * PAGE_SIZE >= total#1",
+          "file": "apps/web/src/phan-he/ke-toan/ledger/SuaDauButToanPage.tsx",
+          "message": "<button disabled={page * PAGE_SIZE >= total}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/ledger/SuaDauButToanPage.tsx|reason.trim().length < 10 || ack.isPending#1",
+          "file": "apps/web/src/phan-he/ke-toan/ledger/SuaDauButToanPage.tsx",
+          "message": "<button disabled={reason.trim().length < 10 || ack.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|!canSave || save.isPending#1",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<button disabled={!canSave || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<BranchPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#2",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#3",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<AccountPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#4",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<AccountPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#5",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<PartnerPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#6",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx|readOnly#7",
+          "file": "apps/web/src/phan-he/ke-toan/opening/OpeningBalancesPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|!changes.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<button disabled={!changes.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|pending || reason.trim().length < 3#1",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<button disabled={pending || reason.trim().length < 3}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|pending || reason.trim().length < 10#1",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<button disabled={pending || reason.trim().length < 10}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|save.isPending || !gate.ready#1",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<button disabled={save.isPending || !gate.ready}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|!editable#1",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|!editable#2",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|!editable#3",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx|!editable#4",
+          "file": "apps/web/src/phan-he/ke-toan/periods/PeriodsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx|save.isPending || !v.period#1",
+          "file": "apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx",
+          "message": "<button disabled={save.isPending || !v.period}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx|!editable#1",
+          "file": "apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx",
+          "message": "<BranchPicker disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx|!editable#2",
+          "file": "apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx",
+          "message": "<ListPicker disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx|!editable#3",
+          "file": "apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx|!editable#4",
+          "file": "apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx|copy.isPending || !(q.data ?? []).length#1",
+          "file": "apps/web/src/phan-he/ke-toan/planning/PlanningPages.tsx",
+          "message": "<button disabled={copy.isPending || !(q.data ?? []).length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/AccountLedgerPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/AccountLedgerPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/AgingDuePage.tsx|!d || !rows.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/AgingDuePage.tsx",
+          "message": "<PrintButton disabled={!d || !rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/BalanceSheetPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/BalanceSheetPage.tsx",
+          "message": "<button disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/BalanceSheetPage.tsx|!d#2",
+          "file": "apps/web/src/phan-he/ke-toan/reports/BalanceSheetPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/ControlPages.tsx|!q.data#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/ControlPages.tsx",
+          "message": "<PrintButton disabled={!q.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/ControlPages.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/ControlPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DebtByTermPage.tsx|!d || !d.rows.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DebtByTermPage.tsx",
+          "message": "<PrintButton disabled={!d || !d.rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DebtPages.tsx|!d || !d.rows.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DebtPages.tsx",
+          "message": "<PrintButton disabled={!d || !d.rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DebtPages.tsx|!d || !rows.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DebtPages.tsx",
+          "message": "<PrintButton disabled={!d || !rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx|!q.data#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx",
+          "message": "<PrintButton disabled={!q.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx|!q.data#2",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx",
+          "message": "<PrintButton disabled={!q.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx|!q.data#3",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx",
+          "message": "<PrintButton disabled={!q.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx|!q.data#4",
+          "file": "apps/web/src/phan-he/ke-toan/reports/DimensionReportPages.tsx",
+          "message": "<PrintButton disabled={!q.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/IncomeStatementPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/IncomeStatementPage.tsx",
+          "message": "<button disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/IncomeStatementPage.tsx|!d#2",
+          "file": "apps/web/src/phan-he/ke-toan/reports/IncomeStatementPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/JournalPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/JournalPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/JournalsPages.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/JournalsPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/JournalsPages.tsx|!d#2",
+          "file": "apps/web/src/phan-he/ke-toan/reports/JournalsPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/JournalsPages.tsx|!d#3",
+          "file": "apps/web/src/phan-he/ke-toan/reports/JournalsPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/PartnerBalancesPage.tsx|!d || !d.rows.length#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/PartnerBalancesPage.tsx",
+          "message": "<PrintButton disabled={!d || !d.rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/SummaryPages.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/SummaryPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/SummaryPages.tsx|!d#2",
+          "file": "apps/web/src/phan-he/ke-toan/reports/SummaryPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/SummaryPages.tsx|!d#3",
+          "file": "apps/web/src/phan-he/ke-toan/reports/SummaryPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/ke-toan/reports/TrialBalancePage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/ke-toan/reports/TrialBalancePage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/ChuyenKhoPage.tsx|!sel#1",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/ChuyenKhoPage.tsx",
+          "message": "<button disabled={!sel}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#2",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<ChonKho disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#3",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<ChonKho disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#4",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#5",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#6",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<NumInput disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|readOnly#7",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx|!t.trim()#1",
+          "file": "apps/web/src/phan-he/kho/chuyen-kho/PhieuChuyenKhoForm.tsx",
+          "message": "<button disabled={!t.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/inventory/InventoryPages.tsx|!costs.data?.length#1",
+          "file": "apps/web/src/phan-he/kho/inventory/InventoryPages.tsx",
+          "message": "<PrintButton disabled={!costs.data?.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/inventory/InventoryPages.tsx|!d#1",
+          "file": "apps/web/src/phan-he/kho/inventory/InventoryPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/inventory/InventoryPages.tsx|!d#2",
+          "file": "apps/web/src/phan-he/kho/inventory/InventoryPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/reports/GoodsReportPages.tsx|!d#1",
+          "file": "apps/web/src/phan-he/kho/reports/GoodsReportPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/reports/GoodsReportPages.tsx|!d#2",
+          "file": "apps/web/src/phan-he/kho/reports/GoodsReportPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/kho/reports/GoodsReportPages.tsx|!d#3",
+          "file": "apps/web/src/phan-he/kho/reports/GoodsReportPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/bien-the/BienTheMatHangPage.tsx|!dirty || busy#1",
+          "file": "apps/web/src/phan-he/mua-hang/bien-the/BienTheMatHangPage.tsx",
+          "message": "<button disabled={!dirty || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx|!day || s.holidays.includes(day)#1",
+          "file": "apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx",
+          "message": "<button disabled={!day || s.holidays.includes(day)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx|!s.holidays.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx",
+          "message": "<button disabled={!s.holidays.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx|!dirty#1",
+          "file": "apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx",
+          "message": "<button disabled={!dirty}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx|!ok.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/cai-dat/CaiDatMuaPage.tsx",
+          "message": "<button disabled={!ok.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chinh-sach/BangChietKhauMa.tsx|!items.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/chinh-sach/BangChietKhauMa.tsx",
+          "message": "<button disabled={!items.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chinh-sach/BangChietKhauMa.tsx|!bulk.trim() || !rows.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/chinh-sach/BangChietKhauMa.tsx",
+          "message": "<button disabled={!bulk.trim() || !rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chinh-sach/BangChietKhauMa.tsx|!p.ok.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/chinh-sach/BangChietKhauMa.tsx",
+          "message": "<button disabled={!p.ok.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chinh-sach/BangQuaTang.tsx|!items.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/chinh-sach/BangQuaTang.tsx",
+          "message": "<button disabled={!items.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chinh-sach/PolicyForm.tsx|!repeatable#1",
+          "file": "apps/web/src/phan-he/mua-hang/chinh-sach/PolicyForm.tsx",
+          "message": "<input disabled={!repeatable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/ChungTuPage.tsx|!sel#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/ChungTuPage.tsx",
+          "message": "<button disabled={!sel}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/DienMatHang.tsx|!chosen.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/DienMatHang.tsx",
+          "message": "<button disabled={!chosen.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/NhapExcel.tsx|busy || !docs.length || noPartner || noBranch#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/NhapExcel.tsx",
+          "message": "<button disabled={busy || !docs.length || noPartner || noBranch}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly || !v.branchCode#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<select disabled={readOnly || !v.branchCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly#2",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<PartnerPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|Boolean(v.rebate)#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<input disabled={Boolean(v.rebate)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly || !v.branchCode#2",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<select disabled={readOnly || !v.branchCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly#3",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|info.kind === 'promo' || info.kind === 'gift'#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<input disabled={info.kind === 'promo' || info.kind === 'gift'}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly#4",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|readOnly#5",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<fieldset disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|busy || problems.length > 0#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<button disabled={busy || problems.length > 0}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx|busy || problems.length > 0#2",
+          "file": "apps/web/src/phan-he/mua-hang/chung-tu/PhieuMuaForm.tsx",
+          "message": "<button disabled={busy || problems.length > 0}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/chung.tsx|disabled#1",
+          "file": "apps/web/src/phan-he/mua-hang/chung.tsx",
+          "message": "<ListPicker disabled={disabled}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/gia-mua/TonMinMaxForm.tsx|Boolean(value)#1",
+          "file": "apps/web/src/phan-he/mua-hang/gia-mua/TonMinMaxForm.tsx",
+          "message": "<select disabled={Boolean(value)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/gia-mua/TonMinMaxForm.tsx|Boolean(value)#2",
+          "file": "apps/web/src/phan-he/mua-hang/gia-mua/TonMinMaxForm.tsx",
+          "message": "<select disabled={Boolean(value)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/han-muc/HanMucPage.tsx|amount <= 0 || amount > max#1",
+          "file": "apps/web/src/phan-he/mua-hang/han-muc/HanMucPage.tsx",
+          "message": "<button disabled={amount <= 0 || amount > max}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/hoa-don/NhapHoaDon.tsx|lockPartner#1",
+          "file": "apps/web/src/phan-he/mua-hang/hoa-don/NhapHoaDon.tsx",
+          "message": "<PartnerPicker disabled={lockPartner}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/hoa-don/NhapHoaDon.tsx|busy || !partner#1",
+          "file": "apps/web/src/phan-he/mua-hang/hoa-don/NhapHoaDon.tsx",
+          "message": "<button disabled={busy || !partner}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx|!rows.length || busy#1",
+          "file": "apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx",
+          "message": "<button disabled={!rows.length || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx|!pv || busy || !pv.rows.some((r) => r.status === 'new' || r.status === 'update')#1",
+          "file": "apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx",
+          "message": "<button disabled={!pv || busy || !pv.rows.some((r) => r.status === 'new' || r.status === 'update')}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx|!rows.length || busy#2",
+          "file": "apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx",
+          "message": "<button disabled={!rows.length || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx|!pv || !chosen.length || busy#1",
+          "file": "apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx",
+          "message": "<button disabled={!pv || !chosen.length || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx|!rows.length || busy#3",
+          "file": "apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx",
+          "message": "<button disabled={!rows.length || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx|!pv || busy || !(pv.new + pv.update)#1",
+          "file": "apps/web/src/phan-he/mua-hang/khoi-dau/KhoiDauPage.tsx",
+          "message": "<button disabled={!pv || busy || !(pv.new + pv.update)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|busy || !dirty.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<button disabled={busy || !dirty.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|r.fromHistory#1",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<input disabled={r.fromHistory}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|r.fromHistory#2",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<input disabled={r.fromHistory}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|r.fromHistory#3",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<input disabled={r.fromHistory}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|r.fromHistory#4",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<input disabled={r.fromHistory}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|r.fromHistory#5",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<input disabled={r.fromHistory}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|!p.ok.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<button disabled={!p.ok.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx|!p.ok.length#2",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/BangGiaMua.tsx",
+          "message": "<button disabled={!p.ok.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/ChonMatHang.tsx|!fresh.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/ChonMatHang.tsx",
+          "message": "<button disabled={!fresh.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thanh-phan/NhapExcelChung.tsx|!ok.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/thanh-phan/NhapExcelChung.tsx",
+          "message": "<button disabled={!ok.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/thuong/ThuongPage.tsx|!r.amount || !r.allocation.length || Boolean(r.existing) || !partnerCode#1",
+          "file": "apps/web/src/phan-he/mua-hang/thuong/ThuongPage.tsx",
+          "message": "<button disabled={!r.amount || !r.allocation.length || Boolean(r.existing) || !partnerCode}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/chung.tsx|!draft.length#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/chung.tsx",
+          "message": "<button disabled={!draft.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/ChuyenShopPage.tsx|!picked.length || busy#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/ChuyenShopPage.tsx",
+          "message": "<button disabled={!picked.length || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/CongThucPage.tsx|!dirty#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/CongThucPage.tsx",
+          "message": "<button disabled={!dirty}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|!parent#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<button disabled={!parent}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|!parent#2",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<button disabled={!parent}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|Boolean(req)#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<select disabled={Boolean(req)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#2",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<button disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#3",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#4",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#5",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#6",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#7",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#8",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<input disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx|locked#9",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/DangKyMaxPage.tsx",
+          "message": "<textarea disabled={locked}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/ton-max/TonMaxPage.tsx|!dirty || busy#1",
+          "file": "apps/web/src/phan-he/mua-hang/ton-max/TonMaxPage.tsx",
+          "message": "<button disabled={!dirty || busy}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/tong-quan/NapDuLieu.tsx|Boolean(busy)#1",
+          "file": "apps/web/src/phan-he/mua-hang/tong-quan/NapDuLieu.tsx",
+          "message": "<button disabled={Boolean(busy)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/tong-quan/NapDuLieu.tsx|Boolean(busy)#2",
+          "file": "apps/web/src/phan-he/mua-hang/tong-quan/NapDuLieu.tsx",
+          "message": "<button disabled={Boolean(busy)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/mua-hang/tong-quan/NapDuLieu.tsx|Boolean(busy)#3",
+          "file": "apps/web/src/phan-he/mua-hang/tong-quan/NapDuLieu.tsx",
+          "message": "<button disabled={Boolean(busy)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!picked.length#1",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<PrintButton disabled={!picked.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|save.isPending || !v.partnerCode || !(total > 0)#1",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.partnerCode || !(total > 0)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|save.isPending || !v.partnerCode || !(total > 0)#2",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<button disabled={save.isPending || !v.partnerCode || !(total > 0)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|act.isPending || !pay.moneyAccount#1",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<button disabled={act.isPending || !pay.moneyAccount}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!editable#1",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!editable#2",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<BranchPicker disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!editable#3",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!editable#4",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<select disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!editable#5",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx|!editable#6",
+          "file": "apps/web/src/phan-he/quy/debts/PaymentRequestsPage.tsx",
+          "message": "<input disabled={!editable}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!picked.length#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<PrintButton disabled={!picked.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|save.isPending || !v.code || !v.name || !v.startDate || !v.originalCost || !v.usefulLifeMonths || !v.depreciationAccount || !v.expenseAccount || (allocations.length > 0 && Math.abs(allocTotal - 100) > 0.001)#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.name || !v.startDate || !v.originalCost || !v.us}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!value.isNew#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!value.isNew#2",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<BranchPicker disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|readOnly#2",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|save.isPending || !f.assetCode || !f.date#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<button disabled={save.isPending || !f.assetCode || !f.date}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!rows?.length || localErrors.length > 0 || run.isPending || done#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<button disabled={!rows?.length || localErrors.length > 0 || run.isPending || done}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|save.isPending || !v.code || !v.name || !v.depreciationAccount || !v.expenseAccount#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<button disabled={save.isPending || !v.code || !v.name || !v.depreciationAccount || !v.expenseAcco}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!value.isNew#3",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<input disabled={!value.isNew}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!canPost || save.isPending#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<button disabled={!canPost || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|save.isPending || amount === '' || !reason.trim()#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<button disabled={save.isPending || amount === '' || !reason.trim()}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPages.tsx|!d?.rows.length#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPages.tsx",
+          "message": "<PrintButton disabled={!d?.rows.length}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/tai-san/assets/AssetPosting.tsx|!ok || save.isPending#1",
+          "file": "apps/web/src/phan-he/tai-san/assets/AssetPosting.tsx",
+          "message": "<button disabled={!ok || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!editable(k)#1",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<input disabled={!editable(k)}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!d#1",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<button disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!d || save.isPending#1",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<button disabled={!d || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!d || save.isPending#2",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<button disabled={!d || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!d#2",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!p#1",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<button disabled={!p}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!p || !p.supplement.rows.length || save.isPending#1",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<button disabled={!p || !p.supplement.rows.length || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!d#3",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<button disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|!d#4",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<AccountPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|readOnly#2",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<PartnerPicker disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|readOnly#3",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/statements/StatementPages.tsx|readOnly#4",
+          "file": "apps/web/src/phan-he/thue/statements/StatementPages.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/AuthorityInvoicesPage.tsx|del.isPending || !s?.portal#1",
+          "file": "apps/web/src/phan-he/thue/tax/AuthorityInvoicesPage.tsx",
+          "message": "<button disabled={del.isPending || !s?.portal}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/AuthorityInvoicesPage.tsx|pending || !total#1",
+          "file": "apps/web/src/phan-he/thue/tax/AuthorityInvoicesPage.tsx",
+          "message": "<button disabled={pending || !total}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/CitReturnPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/thue/tax/CitReturnPage.tsx",
+          "message": "<button disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/CitReturnPage.tsx|!d || save.isPending#1",
+          "file": "apps/web/src/phan-he/thue/tax/CitReturnPage.tsx",
+          "message": "<button disabled={!d || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/CitReturnPage.tsx|!d || save.isPending#2",
+          "file": "apps/web/src/phan-he/thue/tax/CitReturnPage.tsx",
+          "message": "<button disabled={!d || save.isPending}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/InvoiceRisksPage.tsx|save.isPending || editing.taxCode.trim().length < 10#1",
+          "file": "apps/web/src/phan-he/thue/tax/InvoiceRisksPage.tsx",
+          "message": "<button disabled={save.isPending || editing.taxCode.trim().length < 10}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/SalesInvoicesPage.tsx|!d#1",
+          "file": "apps/web/src/phan-he/thue/tax/SalesInvoicesPage.tsx",
+          "message": "<PrintButton disabled={!d}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx|!canInvoice#1",
+          "file": "apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx",
+          "message": "<input disabled={!canInvoice}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx|readOnly#2",
+          "file": "apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx|readOnly#3",
+          "file": "apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx|readOnly#4",
+          "file": "apps/web/src/phan-he/thue/tax/TaxInfoPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxpayerPage.tsx|save.isPending || !q.data#1",
+          "file": "apps/web/src/phan-he/thue/tax/TaxpayerPage.tsx",
+          "message": "<button disabled={save.isPending || !q.data}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        },
+        {
+          "fp": "SC-UI-1|apps/web/src/phan-he/thue/tax/TaxpayerPage.tsx|readOnly#1",
+          "file": "apps/web/src/phan-he/thue/tax/TaxpayerPage.tsx",
+          "message": "<input disabled={readOnly}> bị chặn mà không nói vì sao / cách gỡ — bọc <BlockedHint blocked={{ why, fix }}> hoặc ghi title (R-BLOCK-1)"
+        }
+      ]
     }
   }
 }

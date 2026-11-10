@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 166
+      "count": 163
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 61
+      "count": 62
     },
     {
       "key": "paused",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 286
+      "count": 290
     }
   ],
   "items": [
@@ -3011,6 +3011,17 @@
       "line": 33
     },
     {
+      "id": "S022-22",
+      "phase": "PHASE-022",
+      "title": "R-BLOCK (RULE-BLOCKED, chủ dự án 2026-11-10): thành phần BlockedHint (lý do + cách gỡ, thấy được khi rê / Tab / chạm) + phép kiểm SC-UI-1 bánh cóc (nút / ô dis…",
+      "priority": "P1",
+      "status": "done",
+      "column": "done",
+      "claim": null,
+      "file": "docs/phases/PHASE-022-GIA-DINH-LOI-DANH-GIA-THEO-VAI/40-MASTER-CHECKLIST.md",
+      "line": 34
+    },
+    {
       "id": "S023-1",
       "phase": "PHASE-023",
       "title": "Tài liệu W0: README, 00, 30; roadmap 4.8",
@@ -4530,8 +4541,14 @@
       "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
       "priority": "P1",
       "status": "partial",
-      "column": "partial",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
+        "branch": "feat/phase-029-s029-25-acc14",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-029 · S029-25 đợt 1b — ghi dấu tự duyệt ở trạm ACC14 (postManyIn), chữ chốt DOCUMENT 1.4.0 §5…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -5778,15 +5795,9 @@
       "phase": "PHASE-032",
       "title": "Đảo chiều hoàn đúng phân bổ gốc (reversesallocationid, tỷ lệ số lượng, còn được trả); bán hàng gửi originalLineRef; CT-COST-010..012; lô quarantine cho hàng tr…",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032; phụ trách phần giá vốn: Thuy2k)",
-        "branch": "feat/phase-032-b3-tra-hang",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-032 · B3 — khách trả hàng lấy đúng giá vốn lúc bán: phiếu trả của lần bán tháng trước nhập lạ…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 26
     },
@@ -5938,8 +5949,8 @@
       "phase": "PHASE-032",
       "title": "Bảng điểm tuần: mỗi (tuần, kỳ, phạm vi) một bản chụp chỉ thêm từ diagnosticruns + đối chiếu (chỉ số §9 của 60), sourceDigest; tuần vắt hai tháng tách hai dòng …",
       "priority": "P0",
-      "status": "todo",
-      "column": "todo",
+      "status": "partial",
+      "column": "partial",
       "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 40
@@ -6090,11 +6101,17 @@
     {
       "id": "S034-6",
       "phase": "PHASE-034",
-      "title": "B3b — trường pillars (và pc) cạnh DiagCheck, dòng findings, .check.mjs; scripts/cong-kiem-json.mjs (--kiem) sinh cong-kiem.json cho SC/DG/trigger/Cổng C giữ ch…",
+      "title": "B3b — docs/standard/cong-kiem.json (map họ mã → trụ cột, sửa tay) + scripts/cong-kiem.mjs sinh test / CI / trigger; SC-GATE-1; cổng Trigger và CI có sổ; mức mã…",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "status": "partial",
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
+        "branch": "feat/phase-034-b3b-cong-kiem",
+        "state": "đang làm",
+        "since": "2026-11-11",
+        "dot": "PHASE-034 · B3b — thẻ Cổng & bộ kiểm đủ tám cổng: docs/standard/cong-kiem.json (họ mã → trụ cột; te…"
+      },
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 15
     },
@@ -6103,15 +6120,9 @@
       "phase": "PHASE-034",
       "title": "B4 — bo-may.json (bizcityengines@1, 13 dòng), GET /api/v1/system/engines (mốc đọc bang-viec.json), SC-ENG-1, thẻ Bộ máy",
       "priority": "P1",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b4-bo-may",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-034 · B4 — thẻ Bộ máy ở HT10: docs/standard/bo-may.json (bizcityengines@1, 13 bộ máy, không c…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 16
     },
@@ -6120,8 +6131,8 @@
       "phase": "PHASE-034",
       "title": "B5a — cong-cu-dev.json (bizcitydevtools@1), SC-DEV-2 khớp menu.ts, bảng tiến độ T1..T6",
       "priority": "P1",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 17
@@ -6140,10 +6151,10 @@
     {
       "id": "S034-10",
       "phase": "PHASE-034",
-      "title": "B6 — dòng tổng đầu màn, In cả năm thẻ, cập nhật docs/huong-dan/tru-cot-muc-dat.md",
+      "title": "B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật docs/huong-dan/tru-cot-muc-dat.md",
       "priority": "P2",
-      "status": "todo",
-      "column": "todo",
+      "status": "done",
+      "column": "done",
       "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 19
@@ -6152,6 +6163,17 @@
       "id": "S034-11",
       "phase": "PHASE-034",
       "title": "Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S034-12",
+      "phase": "PHASE-034",
+      "title": "In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10",
       "priority": "P2",
       "status": "todo",
       "column": "todo",
