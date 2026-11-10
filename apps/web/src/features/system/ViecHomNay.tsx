@@ -4,7 +4,7 @@
  *   GET /api/v1/system/diagnostics?layer=L3          tự chẩn đoán toàn vẹn sổ (READ ONLY, R-DIAG-2); lượt chạy được lưu làm bằng chứng
  *   GET /api/v1/system/review-board/recheck?code=    kiểm lại đúng một mã sau khi sửa
  * Mức theo đúng khoá thật hôm nay (R-DIAG-4): lỗi (error) → khoá kỳ phải ghi lý do; cảnh báo (warn) → nên xử lý; info → để biết.
- * Lịch chạy 01:00 mỗi đêm, mã điều kiện khoá sổ và kỳ kiểm ngày / tuần là bước B2c (cần chữ chốt trường DiagCheck).
+ * Lịch 01:00 mỗi đêm: B2c-1. Điều kiện khoá sổ, kỳ kiểm, bước, mức khi khoá kỳ trên từng việc: B2c-2 (RULE-SELF-DIAGNOSTICS §2b).
  */
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +15,11 @@ import { api, errorText } from '@/lib/api';
 import { dateTime } from '@/lib/format';
 
 type Outcome = 'pass' | 'empty' | 'info' | 'warn' | 'error';
-interface DiagResult { code: string; level: Outcome; title: string; fix: string; remedy?: Remedy; examined: number; count: number; sample: string[] }
+// [2026-11-10 10:15 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): mỗi việc ghi điều kiện khoá sổ, kỳ kiểm, bước, mức khi khoá kỳ bằng lời kế toán
+type Cadence = 'day' | 'week' | 'period';
+type Stage = 'pre' | 'post' | 'lock';
+type AtClose = 'block' | 'explain' | 'note';
+interface DiagResult { code: string; level: Outcome; title: string; fix: string; remedy?: Remedy; examined: number; count: number; sample: string[]; closeRef?: string; closeTitle?: string; cadence?: Cadence[]; stage?: Stage; atClose?: AtClose }
 interface DiagRun { runId: string; at: string; summary: Record<Outcome, number>; checks: DiagResult[]; nightly?: boolean }
 interface RunRow { id: string; layer: string; trigger: string; at: string }
 interface RunDetail { id: string; at: string; summary: Record<Outcome, number>; checks: DiagResult[] }
@@ -46,6 +50,26 @@ const ORDER: Level[] = ['reason', 'todo', 'note'];
 /** Phép kiểm còn báo cả trường hợp hợp lệ — nói thẳng với kế toán, sửa ở bước đã ghi. */
 // [2026-11-09 11:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2b: TRANSIT_NONZERO đã hết báo sai, bỏ ghi chú
 const KNOWN_NOISE: Record<string, string> = {};
+const CADENCE: Record<Cadence, string> = { day: 'hằng ngày', week: 'hằng tuần', period: 'cuối tháng' };
+const STAGE: Record<Stage, string> = { pre: 'trước kết chuyển', post: 'sau kết chuyển', lock: 'lúc khoá' };
+const AT_CLOSE: Record<AtClose, { text: string; cls: string }> = {
+  block: { text: 'chặn khoá sổ, phải sửa', cls: 'badge-bad' },
+  explain: { text: 'cần giải trình (ghi lý do khi khoá)', cls: 'badge-warn' },
+  note: { text: 'để biết, không chặn', cls: 'badge-info' },
+};
+/** Dòng "thuộc điều kiện khoá sổ nào" dưới mỗi việc. Lượt lưu trước B2c-2 không có trường thì nói thẳng. */
+function CloseLine({ c }: { c: DiagResult }) {
+  if (!c.closeRef) return <div className="muted rb-note">Chưa gắn điều kiện khoá sổ (lượt kiểm cũ). Bấm Kiểm lại tất cả để xem.</div>;
+  if (c.closeRef === 'none') return <div className="muted rb-note">Việc vận hành phần mềm, không thuộc điều kiện khoá sổ.</div>;
+  const when = [c.cadence?.length ? `kiểm ${c.cadence.map((x) => CADENCE[x]).join(', ')}` : '', c.stage ? STAGE[c.stage] : ''].filter(Boolean).join(', ');
+  return (
+    <div className="rb-note">
+      Điều kiện khoá sổ: <b>{c.closeTitle ?? c.closeRef}</b> <span className="muted">({c.closeRef})</span>
+      {when && <span className="muted"> · {when}</span>}
+      {c.atClose && <> · khi khoá kỳ: <span className={`badge ${AT_CLOSE[c.atClose].cls}`}>{AT_CLOSE[c.atClose].text}</span></>}
+    </div>
+  );
+}
 const ownerOf = (c: DiagResult) => c.remedy?.owner ?? 'accountant';
 const ownerLabel = (o: string) => {
   const s = REMEDY_ROLE_LABELS[o as keyof typeof REMEDY_ROLE_LABELS] ?? o;
@@ -134,6 +158,7 @@ function Row({ c }: { c: DiagResult }) {
         <button type="button" className="btn btn-xs" disabled={busy} onClick={() => void recheck()}>{busy ? 'Đang kiểm…' : 'Kiểm lại'}</button>
         {fresh && <span className="muted">vừa kiểm: {LV[level].text.toLowerCase()}</span>}
       </div>
+      <CloseLine c={c} />
       {KNOWN_NOISE[c.code] && <div className="muted rb-note">ℹ {KNOWN_NOISE[c.code]}</div>}
       {Boolean(err) && <ErrorBox error={errorText(err)} />}
       {open && (

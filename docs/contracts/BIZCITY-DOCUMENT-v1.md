@@ -5,7 +5,7 @@
 <!-- [2026-11-01 12:47 AM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §8: purchase_attachments đã chuyển sang document_attachments (0046) -->
 <!-- [2026-11-01 03:13 PM Johnny Chu - Chu Hoàng Anh] PHASE-010 — §7.1 / §8: documents.signatures (doc_ref, 0048) -->
 
-> **Phiên bản:** 1.3.0-draft · 2026-11-05 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
+> **Phiên bản:** 1.4.0-draft · 2026-11-10 · **Trạng thái:** Đề xuất · **Thuộc:** [Standard v1](../standard/README.md) (hợp đồng 3/7)
 > **Luật nền:** [R-WF](../rules/RULE-WORKFLOW.md), [R-EVENT](../rules/RULE-EVENT.md) · **Năng lực:** `documents.numbering`, `documents.versions`, `documents.links`, `documents.attachments`, `documents.signatures`, `documents.workflow`, `ledger.submit`
 
 ## 1. Mục đích
@@ -86,7 +86,8 @@ Runtime `apps/api/src/core/workflow.ts` (Platform, sẽ về `packages/documents
 | `label`, `states.<tên>.label`, `transitions.<chuyển>.title` | không (mặc định = tên) | chữ cho thông báo, nút, `statusLabel` |
 | `from`, `to`, `permission` | có (trừ khi khai `levels`) | `permission` là một quyền, hoặc `{ <trạng thái nguồn>: <quyền> }` |
 | `levels: [{ from, to, permission, denied? }]` | | duyệt nhiều cấp: cấp sau `from` = `to` của cấp trước; cấp giữa thuộc nhóm `pending`, cấp cuối sang nhóm `approved`. Chứng từ mang `levelsRequired` (phân hệ tính từ ngưỡng cấu hình, R-WF-6); đủ cấp thì nhảy thẳng sang đích cấp cuối |
-| `sod: true` | | người chuyển khác người lập |
+| `sod: true` | | người chuyển khác người lập (chặn: FORBIDDEN) |
+| `sod: warn` | | **ghi dấu, không chặn** <!-- [2026-11-10 10:05 PM Johnny Chu - Chu Hoàng Anh] PHASE-029 — S029-25 đợt 1 (RV-R1-11, quyết 2026-11-10 "chỉ ghi dấu, chưa chặn"): sod: warn -->: người lập tự chuyển vẫn được, nhưng `plan()` thêm một dòng `workflow.sod.self_approve` (`objectType` = `type` của workflow, `after: { verb, from, to, createdBy }`) vào `notes.audit[]` của bằng chứng action đang chạy (ACTION §4.4). Ngoài action thì không ghi được (không có giao dịch) — luồng nào bật `warn` phải gọi `plan()` trong action. `allowed()` không ghi. Mã chẩn đoán `LEDGER_SELF_APPROVED` (L3, cảnh báo) đếm các lần này trên Bàn điều tra. Đổi `warn` → `true` là quyết định của chủ dự án (PHASE-028 W3) |
 | `owner: <quyền>` | | chỉ người lập được chuyển, trừ khi có quyền này (vd `documents:edit-all`) |
 | `requires: [reason]` | | bắt buộc lý do |
 | `ledger: true` | | chuyển chạm sổ; chỉ hợp lệ khi đích thuộc `approved` / `done` / `cancelled` hoặc nguồn đều thuộc `approved` / `done` (R-WF-3) |
@@ -180,6 +181,8 @@ Cửa nạp so băm nội dung (`content_hash`) của bản gửi với bản đ
 | `purchase_attachments` | **đã** chuyển sang `document_attachments` (migration 0046, 2026-11-01): docRef `mua-hang.<loại chủ>:<mã>` (partner, document, policy, invoice), tệp cũ giữ chỗ (`storage_root = dinh-kem`), băm ở lần tải đầu, `legacy_ref` đối chiếu; bảng cũ khoá thêm / sửa |
 
 ## 9. Nhật ký
+
+- **1.4.0-draft (2026-11-10):** §5.1 thêm `sod: warn` — người lập tự duyệt được ghi dấu `workflow.sod.self_approve` vào bằng chứng, không bị chặn; bật ở duyệt phiếu mua hàng (`approve`, `override`) và duyệt phiếu kế toán (`accounting.journal.approve`, gọi cùng helper `noteSelfApproval`); mã chẩn đoán `LEDGER_SELF_APPROVED` (RV-R1-11, S029-25 đợt 1).
 
 - **1.3.0-draft (2026-11-05):** thêm §7.2 Lịch sử chứng từ — sáu nguyên tắc DOC-01..06, cổng `GET /api/v1/documents/history` (id · docKey · entryId), ba mã chẩn đoán mới (dùng lại `LEDGER_ORPHAN`), phép kiểm `SC-DOC-7`. Không bảng mới, không migration ở W1.
 - **1.2.0-draft (2026-11-01, bổ sung 2):** §7.1 thêm `sign` / `signatures` / `unsign` (documents.signatures, 0048); §8 `document_signatures.doc_ref` có.

@@ -1,4 +1,5 @@
 // @bizcity-layer P audit
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-06 09:30 PM Johnny Chu - Chu Hoàng Anh] PHASE-030 — S030-30b/c: bản niêm phong của bằng chứng (ADR-0030, bizcity_evidence@1 §8) — tác vụ evidence.seal, kiểm ba chiều, băm TS hashVersion 1, chẩn đoán EVIDENCE_SEAL_*
 /**
  * BẢN NIÊM PHONG CỦA BẰNG CHỨNG (ADR-0030, bizcity_evidence@1 §8, STD-EVD-4 ngoại lệ hẹp, STD-EVD-9..10).
@@ -401,28 +402,28 @@ const runSeal = (code: SealCode): DiagCheck['run'] => async (trx, s) => {
 /** Cùng mã với lane tests/conformance/diagnostics/evidence.diag.mjs (SC-DIAG-1). */
 export const SEAL_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'EVIDENCE_SEAL_MISSING', layer: 'L3', level: 'warn', scoped: true,
+    code: 'EVIDENCE_SEAL_MISSING', closeRef: 'PC-016', layer: 'L3', level: 'warn', scoped: true,
     title: 'Ngày đã đóng quá 2 ngày đều đã niêm phong bằng chứng',
     fix: 'Tác vụ evidence.seal không chạy hoặc lỗi: xem sự kiện dead của evidence.seal, sửa nguyên nhân (DATA_DIR ghi được, còn chỗ) rồi phát lại; nghiệp vụ không bị chặn.',
     remedy: { steps: [{ text: 'Xem lỗi giao của evidence.seal (GET /api/v1/system/events)', role: 'operator' }, { text: 'Kiểm DATA_DIR ghi được, còn dung lượng; phát lại sự kiện đồng hồ ngày', role: 'operator' }], owner: 'operator', verify: { code: 'EVIDENCE_SEAL_MISSING' } },
     run: runSeal('EVIDENCE_SEAL_MISSING'),
   },
   {
-    code: 'EVIDENCE_SEAL_FILE', layer: 'L3', level: 'error', scoped: true,
+    code: 'EVIDENCE_SEAL_FILE', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     title: 'Tệp niêm phong bằng chứng đủ, đúng băm, từng dòng tự kiểm được',
     fix: 'Tệp niêm phong bị thiếu, sửa hoặc hỏng sau khi chốt. Không sinh lại tệp; đối chiếu bản sao lưu và báo nhóm Lõi.',
     remedy: { ...REMEDY_TAMPER, verify: { code: 'EVIDENCE_SEAL_FILE' } },
     run: runSeal('EVIDENCE_SEAL_FILE'),
   },
   {
-    code: 'EVIDENCE_SEAL_DB', layer: 'L3', level: 'error', scoped: true,
+    code: 'EVIDENCE_SEAL_DB', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     title: 'Bằng chứng trong CSDL khớp bản niêm phong (khoảng số thứ tự, băm từng dòng)',
     fix: 'CSDL khác bản đã niêm phong: có dòng bị sửa / xoá / chèn trong CSDL sau ngày chốt. Giữ nguyên hiện trạng, báo nhóm Lõi và ban kiểm soát.',
     remedy: { ...REMEDY_TAMPER, verify: { code: 'EVIDENCE_SEAL_DB' } },
     run: runSeal('EVIDENCE_SEAL_DB'),
   },
   {
-    code: 'EVIDENCE_SEAL_CHAIN', layer: 'L3', level: 'error', scoped: true,
+    code: 'EVIDENCE_SEAL_CHAIN', closeRef: 'PC-016', layer: 'L3', level: 'error', scoped: true,
     title: 'Các manifest niêm phong nối liền theo ngày (prevManifestSha256)',
     fix: 'Một ngày niêm phong bị xoá hoặc thay: manifest ngày sau không còn nối đúng. Không sinh lại; đối chiếu bản sao lưu, báo nhóm Lõi.',
     remedy: { ...REMEDY_TAMPER, verify: { code: 'EVIDENCE_SEAL_CHAIN' } },

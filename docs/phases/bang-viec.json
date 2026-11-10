@@ -20,12 +20,12 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 171
+      "count": 170
     },
     {
       "key": "partial",
       "label": "Chờ đủ tín hiệu",
-      "count": 59
+      "count": 60
     },
     {
       "key": "paused",
@@ -4530,8 +4530,14 @@
       "title": "Bật SoD ở luồng duyệt; duyệt phiếu Kernel kiểm người lập ≠ người duyệt; sửa bizcitydocument@1 §5.1",
       "priority": "P1",
       "status": "todo",
-      "column": "todo",
-      "claim": null,
+      "column": "doing",
+      "claim": {
+        "who": "hoanganh8389 (phiên Claude, danh-gia-phase)",
+        "branch": "feat/phase-029-s029-25-sod-warn",
+        "state": "đang làm",
+        "since": "2026-11-10",
+        "dot": "PHASE-029 · S029-25 đợt 1 — tách nhiệm ghi dấu (sod: warn), RV-R1-11; chữ chốt ở DOCUMENT 1.4.0 §5.…"
+      },
       "file": "docs/phases/PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md",
       "line": 35
     },
@@ -5976,15 +5982,9 @@
       "phase": "PHASE-032",
       "title": "Trường mới của DiagCheck (closeRef, cadence, stage, severityAtClose, owner, scopeBy); gắn closeRef cho mọi chẩn đoán L3 đang có (70 §3)",
       "priority": "P0",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, PHASE-032)",
-        "branch": "feat/phase-032-b2c2-dieu-kien-khoa",
-        "state": "đang làm",
-        "since": "2026-11-10",
-        "dot": "PHASE-032 · B2c-2 — phép kiểm mang điều kiện khoá sổ: closeRef + sổ PC (registerCloseConditions), k…"
-      },
+      "status": "partial",
+      "column": "partial",
+      "claim": null,
       "file": "docs/phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md",
       "line": 44
     },

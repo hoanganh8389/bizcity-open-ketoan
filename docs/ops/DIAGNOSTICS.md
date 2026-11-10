@@ -44,6 +44,8 @@ Chạy từng kiểm trong giao dịch `READ ONLY` (R-DIAG-2), mỗi kiểm mộ
 
 **Ai khai kiểm nào.** Platform (`modules/system/diagnostics.ts`) giữ sổ đăng ký, bộ chạy và các kiểm L1 chung. Kernel (`modules/ledger/ledger.diagnostics.ts`) khai các kiểm sổ, được đăng ký lúc lắp ráp (`app.ts`). Platform không import Kernel (LAYOUT-1).
 
+**Điều kiện khoá sổ** <!-- [2026-11-10 10:20 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2: phép kiểm trỏ điều kiện khoá sổ -->: mỗi kiểm khai `closeRef` — mã PC hoặc `none` (việc vận hành). Sổ 23 PC do Kernel khai (`packages/kernel/src/modules/periods/close-conditions.ts`, `CLOSE_CONDITIONS`), `app.ts` đăng ký bằng `registerCloseConditions`. Mỗi kết quả trả thêm `closeRef`, `closeTitle`, `cadence` (`day` / `week` / `period`), `stage` (`pre` / `post` / `lock`) và `atClose` khi có chỗ sai (`explain` cho `error`, `note` cho `warn` / `info`, hoặc theo `severityAtClose` của kiểm). Khoá kỳ thật không đổi (R-DIAG-4). Chữ chốt: [RULE-SELF-DIAGNOSTICS §2b](../rules/RULE-SELF-DIAGNOSTICS.md); bảng gắn: [PHASE-032 · 70 §3a](../phases/PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/70-CHUAN-HOA-BANG-KIEM-KE-TOAN.md). Kiểm mới phải khai `closeRef` (`apps/api/test/close-conditions.test.ts`).
+
 | Mã kiểm | Tầng | Kiểm | Mức khi sai | Trong app | Lane bộ kiểm |
 |---|---|---|---|---|---|
 | `LEDGER_BALANCED` | L3 | Mỗi bút toán: Σ Nợ = Σ Có | error | có | DG-LEDGER-1 |

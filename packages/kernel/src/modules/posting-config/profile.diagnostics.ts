@@ -1,4 +1,5 @@
 // @bizcity-layer K kernel/config
+// [2026-11-10 09:55 PM Johnny Chu - Chu Hoàng Anh] PHASE-032 — B2c-2 (S032-35): phép kiểm trỏ điều kiện khoá sổ closeRef (RULE-SELF-DIAGNOSTICS §2b, PHASE-032 · 70 §3a)
 // [2026-11-02 07:40 PM Johnny Chu - Chu Hoàng Anh] PHASE-022 — W1: remedy có cấu trúc cho từng kiểm (bizcity_remedy@1, R-FIX-1).
 // [2026-11-02 03:10 AM Johnny Chu - Chu Hoàng Anh] PHASE-020 — kiểm cấu hình tầng L5 của Conformance Engine: PROFILE_DECLARED, PROFILE_PACK_REGIME (ADR-0012 T1, ADR-0013); cùng mã với lane DG-PROFILE-1, DG-PROFILE-2.
 /**
@@ -17,7 +18,7 @@ const day = (to?: string) => to ?? new Date().toISOString().slice(0, 10);
 
 export const PROFILE_DIAGNOSTICS: DiagCheck[] = [
   {
-    code: 'PROFILE_DECLARED', layer: 'L5', level: 'warn', scoped: false,
+    code: 'PROFILE_DECLARED', closeRef: 'none', layer: 'L5', level: 'warn', scoped: false,
     remedy: { steps: [{ text: 'Mở Hồ sơ kế toán', screen: SCREENS.HT07 }, { text: 'Chọn năm tài chính, chế độ kế toán, loại pháp nhân; ghi căn cứ', screen: SCREENS.HT07, role: 'chief_accountant' }, { text: 'Phát hành', screen: SCREENS.HT07, role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'PROFILE_DECLARED' } },
     title: 'Đơn vị đã khai hồ sơ kế toán (năm tài chính, chế độ kế toán, loại pháp nhân) áp cho ngày xét',
     fix: 'Chưa khai hồ sơ thì Kiểm chuẩn không chọn được quy định theo chế độ / năm tài chính (ca ra "cần rà soát"). Khai ở Cấu hình hạch toán → Hồ sơ kế toán (accounting.profile.publish). Ghi sổ vẫn chạy bình thường.',
@@ -27,7 +28,7 @@ export const PROFILE_DIAGNOSTICS: DiagCheck[] = [
            WHERE t.id = ${s.tenantId} AND ${regimeAt(day(s.to))} IS NULL`),
   },
   {
-    code: 'PROFILE_PACK_REGIME', layer: 'L5', level: 'warn', scoped: false,
+    code: 'PROFILE_PACK_REGIME', closeRef: 'none', layer: 'L5', level: 'warn', scoped: false,
     remedy: { steps: [{ text: 'Kiểm chế độ trong Hồ sơ kế toán có đúng không', screen: SCREENS.HT07 }, { text: 'Đúng: cài gói định khoản của chế độ đó cho năm tài chính kế tiếp (không đổi giữa năm)', role: 'owner' }, { text: 'Hồ sơ sai: phát hành hồ sơ mới', screen: SCREENS.HT07, role: 'chief_accountant' }], owner: 'chief_accountant', verify: { code: 'PROFILE_PACK_REGIME' } },
     title: 'Gói định khoản đang cài cùng chế độ kế toán với hồ sơ của đơn vị',
     fix: 'Gói định khoản khác chế độ đã khai: tài khoản / lý do có thể không theo chế độ đơn vị áp dụng. Kiểm lại hồ sơ hoặc cài gói đúng chế độ; quyết định là của kế toán trưởng.',
