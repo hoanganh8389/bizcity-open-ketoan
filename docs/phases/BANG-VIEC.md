@@ -7,12 +7,12 @@
 |---|---|
 | Đang làm | 8 |
 | Chờ merge | 0 |
-| Bị chặn | 29 |
-| Chưa ai nhận | 163 |
+| Bị chặn | 30 |
+| Chưa ai nhận | 171 |
 | Chờ đủ tín hiệu | 64 |
 | Hoãn | 3 |
-| Xong | 295 |
-| **Tổng** | **562** |
+| Xong | 296 |
+| **Tổng** | **572** |
 
 ## Đang làm (8)
 
@@ -31,7 +31,7 @@
 
 —
 
-## Bị chặn (29)
+## Bị chặn (30)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -64,8 +64,9 @@
 | [S031-14](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L23) | PHASE-031 | Kế toán trưởng xác nhận bảng reasonCode theo loại kết quả (Q031-5) | P0 | — |
 | [S031-27](PHASE-031-POLICY-REGISTRY-RULE-CONTRACTS/40-MASTER-CHECKLIST.md#L36) | PHASE-031 | ~~Đổi số migration W2a 0080 → 0082~~ — rút: phiên PHASE-029 (K3) sửa trùng 0080 bằng cách đổi số của K3 (0081… | P0 | — |
 | [S035-2](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L11) | PHASE-035 | Chủ dự án duyệt D035-1..8, trả Q035-1..3; giao Thuy2k người rà (issue GitHub) | P0 | — |
+| [S035-2](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L11) | PHASE-035 | Chủ dự án duyệt D035-1..12, trả Q035-1..6 | P0 | — |
 
-## Chưa ai nhận (163)
+## Chưa ai nhận (171)
 
 | Mã | Phase | Việc | Ưu tiên | Người giữ · nhánh |
 |---|---|---|---|---|
@@ -227,11 +228,19 @@
 | [S032-37](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L46) | PHASE-032 | SDK defineCheck + extensions.checks của bizcitymodule@1 (R-DIAG-15) | P1 | — |
 | [S032-38](PHASE-032-INVENTORY-ENGINE-GIA-VON-KHO/40-MASTER-CHECKLIST.md#L47) | PHASE-032 | Bảng "trường cần để kiểm" theo loại chứng từ ở bizcityledgerintake@1; trạng thái "không kiểm được" trên bàn (… | P1 | — |
 | [S035-3](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L12) | PHASE-035 | B1 — docs/standard/modules.json (bizcitymodules@1, 12 × 8, ô liệt kê việc hiện có); R-FLOW-10 vào RULE-FLOW; … | P0 | — |
+| [S035-3](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L12) | PHASE-035 | B1 — tenantEmptiness() + core.setup.status; biểu ngữ đơn vị trắng ở Tổng quan | P0 | — |
 | [S035-4](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L13) | PHASE-035 | B2 — apps/api/src/modules/system/modules.routes.ts: GET /api/v1/system/modules (sổ + mức ô D035-2 + việc kèm … | P0 | — |
+| [S035-4](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L13) | PHASE-035 | B2 — core.setup.plan / core.setup.apply chạy preset ở máy chủ (chạy nền, tiến độ, chạy lại không nhân đôi); c… | P0 | — |
 | [S035-5](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L14) | PHASE-035 | B3 — apps/web/src/features/system/ModulesPage.tsx (HT11, ?xem=<key>, lọc chưa đạt / người làm / ưu tiên, dùng… | P0 | — |
+| [S035-5](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L14) | PHASE-035 | B3 — hộp thoại 4 bước modules/thiet-lap/ (TI09) + Steps ở ui-kit; docs/huong-dan/thiet-lap-nhanh.md | P0 | — |
 | [S035-6](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | B4 — SC-MODS-1 (chặn: phủ 100 % phan-he/ và mã màn menu.ts), SC-MODS-2 (việc có modules[]; baseline phase ≤ 0… | P0 | — |
+| [S035-6](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L15) | PHASE-035 | B4 — bizcitypreset@1 1.1.0 (khối openings, vouchers, assets, close, returns, settings) + gói thuong-mai-ban-l… | P0 | — |
 | [S035-7](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | B6 — docs/huong-dan/modules-muc-dat.md; nếp rà hằng tuần (00 §5) vào AGENTS.md + RULE-FLOW; in HT11 cùng HT10 | P1 | — |
+| [S035-7](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L16) | PHASE-035 | B5 — đơn vị mẫu riêng (tenants.issample, migration, tạo / chuyển đơn vị) + tự nạp ở db-migrate (BIZCITYSAMPLE… | P1 | — |
 | [S035-8](PHASE-035-HT11-MODULES-MUC-DAT/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | B5 — thẻ Việc <phân hệ> hôm nay (kho, mua hàng, bán hàng, quỹ, công nợ, thuế, tài sản, danh mục): component c… | P1 | — |
+| [S035-8](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L17) | PHASE-035 | B6 — TI08 an toàn: xem trước bắt buộc, defaultdatabackups + Lấy lại bản trước, chặn bộ giả lập trên đơn vị có… | P0 | — |
+| [S035-9](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L18) | PHASE-035 | B6 — cap-nhat.sh kiểm bản sao lưu + bảng "cái gì có thể đổi" + cảnh báo SEEDSDIR; sao-luu.sh --kiem, khoi-phu… | P0 | — |
+| [S035-10](PHASE-035-THIET-LAP-NHANH-DU-LIEU-MAU/40-MASTER-CHECKLIST.md#L19) | PHASE-035 | B7 — nghiệm thu T035-1..8 trên CSDL sạch, ảnh màn, cập nhật docs/huong-dan/ | P1 | — |
 
 ## Chờ đủ tín hiệu (64)
 
@@ -310,6 +319,6 @@
 | [S019-19](PHASE-019-BAN-DIEU-TRA-NHA-PHAT-TRIEN/40-MASTER-CHECKLIST.md#L28) | PHASE-019 | Công cụ MCP chỉ đọc cho máy dev — agent tự tra trace (D019-8 (2)) | P3 | — |
 | [S029-34](PHASE-029-CHUAN-HOA-CHUNG-TU-GOC-TRUY-VET/40-MASTER-CHECKLIST.md#L43) | PHASE-029 | RV-R1-08: cửa nạp từ chối cùng phiên bản khác nội dung (409 CONFLICT + VERSIONCONTENTMISMATCH); force kèm lý … | P1 | — |
 
-## Xong (295)
+## Xong (296)
 
 Chỉ đếm; xem từng việc ở checklist của phase.
