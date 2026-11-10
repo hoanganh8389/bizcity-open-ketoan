@@ -15,6 +15,9 @@
  *     sau cùng), cùng hạn thì nhập trước. Thiếu tồn lô → phần thiếu ghi vào lô không số (how = 'shortage') để tồn theo lô luôn
  *     khớp tồn kho; "Phân lô lại" sắp lại theo đúng thứ tự ngày khi chứng từ về muộn.
  *
+ * LÔ THEO TỪNG PHÂN KHO: tồn lô tính riêng từng (chi nhánh, mã kho); tự chọn lô chỉ lấy lô ở đúng kho của dòng. Dòng không ghi mã kho
+ * → kho mặc định của chi nhánh (cùng luật báo cáo kho), để lô nhập ở kho mặc định không bị "lạc" khi bán POS không ghi kho.
+ *
  * Giá vốn KHÔNG đổi (bình quân tháng). Lô chỉ theo dõi số lượng, hạn dùng, tên lúc mua.
  */
 import { sql } from 'kysely';
@@ -65,8 +68,11 @@ async function availableLots(db: Db, tenantId: string, itemKey: string, branchId
 export async function allocateLots(db: Db, tenantId: string, eventId: string, doc: LotDoc, partnerId: string | null = null): Promise<void> {
   await sql`DELETE FROM inventory_lot_moves WHERE event_id = ${eventId}`.execute(db);
   const movements = (await sql<Movement>`
-    SELECT id::text, line_no, kind, item_id, sku, name, unit, qty::text, branch_id::text, warehouse_code, doc_date::text
-      FROM inventory_movements WHERE event_id = ${eventId} ORDER BY (qty < 0) DESC, id`.execute(db)).rows;
+    SELECT im.id::text, im.line_no, im.kind, im.item_id, im.sku, im.name, im.unit, im.qty::text, im.branch_id::text,
+           COALESCE(NULLIF(im.warehouse_code, ''), dw.code, '') AS warehouse_code, im.doc_date::text
+      FROM inventory_movements im
+      LEFT JOIN LATERAL (SELECT w.code FROM warehouses w WHERE w.tenant_id = im.tenant_id AND w.branch_id = im.branch_id AND w.is_default ORDER BY w.id LIMIT 1) dw ON true
+     WHERE im.event_id = ${eventId} ORDER BY (im.qty < 0) DESC, im.id`.execute(db)).rows;
   if (!movements.length) return;
   const lineOf = (m: Movement): LineInfo => doc.lines?.[m.line_no - 1] ?? {};
   const lotOfLine = async (m: Movement, line: LineInfo) => ensureLot(db, tenantId, {

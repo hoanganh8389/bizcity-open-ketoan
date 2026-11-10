@@ -147,4 +147,35 @@ describe('Lô hàng xuyên suốt', () => {
     const how = (await sql<{ how: string }>`SELECT how FROM inventory_lot_moves m JOIN accounting_events e ON e.id = m.event_id WHERE e.tenant_id = ${tenantId} AND e.doc_key = 'BL-LO4'`.execute(db)).rows.map((r) => r.how);
     expect(how).toEqual(['line']);
   });
+
+  it('lô theo từng phân kho: hàng ở kho phụ không bị tự lấy cho dòng kho khác; dòng không ghi kho = kho mặc định; danh sách tách từng kho', async () => {
+    await call(ctx, 'POST', '/api/v1/branches', { code: 'CN03', name: 'Cửa hàng 03' });
+    for (const w of [{ code: 'K3-HH', branchCode: 'CN03', name: 'Kho hàng', isDefault: true }, { code: 'K3-PB', branchCode: 'CN03', name: 'Kho phân bổ' }]) {
+      const r = await call(ctx, 'POST', '/api/v1/warehouses', w);
+      expect(r.status, JSON.stringify(r.body)).toBe(201);
+    }
+    const doc = (docType: string, docKey: string, lines: Record<string, unknown>[]) => call(ctx, 'POST', '/api/v1/documents', {
+      docType, docKey, branchCode: 'CN03', docNo: docKey, docDate: D(20), ...(docType === 'purchase' ? { partner: { code: 'NCC-LO', name: 'NCC lô' } } : { payments: [] }),
+      lines: lines.map((l, i) => ({ lineKey: `l${i + 1}`, name: 'Sữa kho lô', unit: 'Hộp', taxCode: docType === 'purchase' ? 'V08' : 'R08', taxAmount: 0, amountBeforeTax: Number(l.qty) * 100000, ...l })),
+      totals: { beforeTax: lines.reduce((a, l) => a + Number(l.qty) * 100000, 0), tax: 0, total: lines.reduce((a, l) => a + Number(l.qty) * 100000, 0) },
+    });
+    ok(await doc('purchase', 'NM-KHO-PB', [{ sku: 'LO-KHO', qty: 5, lotNo: 'P01', expDate: '2026-12-01', warehouseCode: 'K3-PB' }]));
+    ok(await doc('purchase', 'NM-KHO-HH', [{ sku: 'LO-KHO', qty: 5, lotNo: 'H01', expDate: '2027-06-01' }])); // không ghi kho → K3-HH
+    ok(await doc('sale', 'BL-KHO', [{ sku: 'LO-KHO', qty: 2 }])); // không ghi kho → K3-HH: lấy H01 dù P01 hạn sớm hơn (P01 ở kho khác)
+    const picked = (await sql<{ lot_no: string; warehouse_code: string; how: string }>`SELECT l.lot_no, m.warehouse_code, m.how FROM inventory_lot_moves m JOIN item_lots l ON l.id = m.lot_id
+      JOIN accounting_events e ON e.id = m.event_id WHERE e.tenant_id = ${tenantId} AND e.doc_key = 'BL-KHO'`.execute(db)).rows;
+    expect(picked).toEqual([{ lot_no: 'H01', warehouse_code: 'K3-HH', how: 'fifo' }]);
+    type Row = { lotNo: string; branch: string; warehouse: string; stock: number };
+    const rows = (await call<{ data: Row[] }>(ctx, 'GET', '/api/v1/lots?search=LO-KHO&split=1&branchCodes=CN03')).body.data;
+    expect(rows.map((r) => [r.lotNo, r.warehouse, r.stock])).toEqual([['P01', 'K3-PB', 5], ['H01', 'K3-HH', 3]]);
+    const onlyPb = (await call<{ data: Row[] }>(ctx, 'GET', '/api/v1/lots?search=LO-KHO&split=1&warehouses=K3-PB')).body.data;
+    expect(onlyPb.map((r) => r.lotNo)).toEqual(['P01']);
+    // Gợi ý lô: kho trống = kho mặc định; không truyền kho = mọi kho, mỗi lô kèm kho đang giữ.
+    const sug = async (wh?: string) => (await call<{ data: { lots: { lotNo: string; warehouse: string }[] }[] }>(ctx, 'GET', `/api/v1/lots/suggest?branchCode=CN03&items=LO-KHO*1${wh !== undefined ? `&warehouse=${wh}` : ''}`)).body.data[0]!.lots;
+    expect((await sug('')).map((x) => [x.lotNo, x.warehouse])).toEqual([['H01', 'K3-HH']]);
+    expect((await sug()).map((x) => [x.lotNo, x.warehouse])).toEqual([['P01', 'K3-PB'], ['H01', 'K3-HH']]);
+    // Danh sách phiếu theo lô: lọc theo kho, có nơi.
+    const docs = (await call<{ data: { docNo: string; places: string[] }[] }>(ctx, 'GET', '/api/v1/lots/documents?warehouses=K3-PB')).body.data;
+    expect(docs.map((d) => [d.docNo, d.places])).toEqual([['NM-KHO-PB', ['CN03 · K3-PB']]]);
+  });
 });

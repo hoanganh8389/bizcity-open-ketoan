@@ -1,8 +1,9 @@
 // @bizcity-layer D modules/kho
 // [2026-11-10 06:30 PM Nguyễn Văn Thủy] PHASE-026 — lô hàng: tồn theo lô, thẻ lô, phân lô của phiếu, phân lô lại (đóng góp)
 /**
- *   GET  /api/v1/lots?search=&branchCode=&stock=&expWithin=   tồn theo lô (hạn dùng, tên lúc mua, tồn từng chi nhánh / kho)
+ *   GET  /api/v1/lots?search=&branchCodes=&warehouses=&split=&stock=&expWithin=   tồn theo lô; split=1: mỗi dòng một lô ở một chi nhánh + phân kho
  *   GET  /api/v1/lots/:id/moves                               thẻ lô: vào / ra ở chứng từ nào
+ *   GET  /api/v1/lots/documents?from=&to=&search=&docType=     phiếu có hàng đi theo lô (chọn để xem lô theo phiếu)
  *   GET  /api/v1/lots/document?docKey=                        phân lô của một phiếu (lô nào, tên lúc mua — tra cứu)
  *   GET  /api/v1/lots/suggest?branchCode=&warehouse=&date=&items=SKU*SL,SKU*SL   gợi ý lô khi lập phiếu xuất (hạn sớm trước)
  *   POST /api/v1/lots/rebuild                                 phân lô lại theo thứ tự ngày (cả đơn vị hoặc một mã)
@@ -14,7 +15,7 @@ import { db } from '../../db/client.js';
 import { authOf, requirePermission } from '../../core/auth.js';
 import { ok, queryBool } from '../../core/http.js';
 import { defineAction, mountActions, type AnyActionDef } from '../../core/actions.js';
-import { documentLots, listLots, lotMoves, rebuild, suggestLots } from './lots.service.js';
+import { documentLots, listLots, lotDocuments, lotMoves, rebuild, suggestLots } from './lots.service.js';
 
 const tags = ['Lô hàng'];
 
@@ -23,8 +24,13 @@ export async function lotRoutes(app: FastifyInstance): Promise<void> {
   const read = requirePermission('reports:read');
   r.get('/api/v1/lots', {
     preHandler: read,
-    schema: { tags, summary: 'Tồn theo lô', querystring: z.object({ search: z.string().max(100).optional(), branchCode: z.string().max(32).optional(), stock: queryBool.optional(), expWithin: z.coerce.number().int().min(-3650).max(3650).optional(), limit: z.coerce.number().int().min(1).max(5000).optional() }) },
+    schema: { tags, summary: 'Tồn theo lô', querystring: z.object({ search: z.string().max(100).optional(), branchCode: z.string().max(32).optional(), branchCodes: z.string().max(20000).optional(), warehouses: z.string().max(20000).optional(), split: queryBool.optional(), stock: queryBool.optional(), expWithin: z.coerce.number().int().min(-3650).max(3650).optional(), limit: z.coerce.number().int().min(1).max(5000).optional() }) },
     handler: async (req) => ok(await listLots(db, authOf(req).tenantId, req.query)),
+  });
+  r.get('/api/v1/lots/documents', {
+    preHandler: read,
+    schema: { tags, summary: 'Phiếu có hàng đi theo lô', querystring: z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), search: z.string().max(100).optional(), docType: z.string().max(32).optional(), branchCodes: z.string().max(20000).optional(), warehouses: z.string().max(20000).optional(), limit: z.coerce.number().int().min(1).max(2000).optional() }) },
+    handler: async (req) => ok(await lotDocuments(db, authOf(req).tenantId, req.query)),
   });
   r.get('/api/v1/lots/document', {
     preHandler: read,
@@ -42,8 +48,8 @@ export async function lotRoutes(app: FastifyInstance): Promise<void> {
   });
   r.get('/api/v1/lots/:id/moves', {
     preHandler: read,
-    schema: { tags, summary: 'Thẻ lô', params: z.object({ id: z.string().regex(/^\d+$/) }) },
-    handler: async (req) => ok(await lotMoves(db, authOf(req).tenantId, req.params.id)),
+    schema: { tags, summary: 'Thẻ lô (cả lô, hoặc ở một chi nhánh + kho)', params: z.object({ id: z.string().regex(/^\d+$/) }), querystring: z.object({ branchCode: z.string().max(32).optional(), warehouse: z.string().max(64).optional() }) },
+    handler: async (req) => ok(await lotMoves(db, authOf(req).tenantId, req.params.id, req.query)),
   });
   mountActions(app, lotActions);
 }

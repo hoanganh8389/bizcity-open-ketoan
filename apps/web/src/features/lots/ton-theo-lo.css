@@ -13,3 +13,6 @@
 .grid tr.clickable { cursor: pointer; }
 .grid tr.clickable:hover td { background: #f8fbff; }
 .grid tr.is-warn td { background: #fffbeb; }
+.grid tr.is-selected td { background: #e0ecff; }
+.ttl-link { background: none; border: 0; padding: 0; color: var(--primary, #2563eb); cursor: pointer; font: inherit; text-decoration: underline; }
+.ttl-place { font-size: 11px; color: #475569; background: #f1f5f9; border-radius: 4px; padding: 0 4px; }

@@ -77,9 +77,10 @@ export const GON_DEFS: GonDef[] = [
   },
   {
     key: 'kho', label: 'Kho', icon: 'Warehouse', description: 'Chuyển kho, tính giá vốn, công thức giá vốn', color: '#7b1fa2', module: 'kho',
-    the: ['/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von', '/nghiep-vu/cong-thuc-gia-von'],
-    sections: [{ paths: ['/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von', '/nghiep-vu/cong-thuc-gia-von'] }],
-    reports: [{ label: 'Kho', paths: ['/bao-cao/nhap-xuat-ton', '/kho/ton-theo-lo', '/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/hanh-trinh-mat-hang', '/bao-cao/chuyen-kho'] }],
+    the: ['/kho/chuyen-kho', '/kho/ton-theo-lo', '/nghiep-vu/tinh-gia-von', '/nghiep-vu/cong-thuc-gia-von'],
+    // [2026-11-10 09:40 PM Nguyễn Văn Thủy] PHASE-026 — Tồn theo lô lên menu trái của Kho (màn làm việc hằng ngày), không giấu trong Báo cáo (đóng góp)
+    sections: [{ paths: ['/kho/chuyen-kho', '/nghiep-vu/tinh-gia-von', '/nghiep-vu/cong-thuc-gia-von'] }, { label: 'Lô hàng', paths: ['/kho/ton-theo-lo'] }],
+    reports: [{ label: 'Kho', paths: ['/bao-cao/nhap-xuat-ton', '/bao-cao/so-chi-tiet-hang-hoa', '/bao-cao/hanh-trinh-mat-hang', '/bao-cao/chuyen-kho'] }],
   },
   {
     key: 'cong-no', label: 'Công nợ', icon: 'Scale', description: 'Phải thu, phải trả, đối trừ, đặt cọc, đối chiếu', color: '#c2185b',
