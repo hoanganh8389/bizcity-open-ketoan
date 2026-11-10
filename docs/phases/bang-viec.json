@@ -5,7 +5,7 @@
     {
       "key": "doing",
       "label": "Đang làm",
-      "count": 10
+      "count": 9
     },
     {
       "key": "merging",
@@ -20,7 +20,7 @@
     {
       "key": "todo",
       "label": "Chưa ai nhận",
-      "count": 163
+      "count": 164
     },
     {
       "key": "partial",
@@ -35,7 +35,7 @@
     {
       "key": "done",
       "label": "Xong",
-      "count": 287
+      "count": 288
     }
   ],
   "items": [
@@ -6146,17 +6146,11 @@
     {
       "id": "S034-10",
       "phase": "PHASE-034",
-      "title": "B6 — dòng tổng đầu màn, In cả năm thẻ, cập nhật docs/huong-dan/tru-cot-muc-dat.md",
+      "title": "B6 — dòng tổng đầu màn (năm con số, bấm mở thẻ), cập nhật docs/huong-dan/tru-cot-muc-dat.md",
       "priority": "P2",
-      "status": "todo",
-      "column": "doing",
-      "claim": {
-        "who": "hoanganh8389 (phiên Claude, ht10-bang-hoan-thien)",
-        "branch": "feat/phase-034-b6-dong-tong",
-        "state": "đang làm",
-        "since": "2026-11-11",
-        "dot": "PHASE-034 · B6 — dòng tổng đầu HT10: năm con số (Tiêu chí · Nền móng · Cổng · Bộ máy · Công cụ dev)…"
-      },
+      "status": "done",
+      "column": "done",
+      "claim": null,
       "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
       "line": 19
     },
@@ -6164,6 +6158,17 @@
       "id": "S034-11",
       "phase": "PHASE-034",
       "title": "Q034-1 — đóng gói scoreboard.json của CI vào ảnh phát hành; thẻ Cổng hiện xanh / đỏ của SC-",
+      "priority": "P2",
+      "status": "todo",
+      "column": "todo",
+      "claim": null,
+      "file": "docs/phases/PHASE-034-HT10-BANG-HOAN-THIEN-CORE/40-MASTER-CHECKLIST.md",
+      "line": 21
+    },
+    {
+      "id": "S034-12",
+      "phase": "PHASE-034",
+      "title": "In cả năm thẻ (phụ lục báo cáo kiểm chuẩn) — tách từ S034-10",
       "priority": "P2",
       "status": "todo",
       "column": "todo",
